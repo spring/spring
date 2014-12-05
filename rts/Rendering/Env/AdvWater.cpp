@@ -310,6 +310,7 @@ void CAdvWater::UpdateWater(CGame* game)
 
 	camera->SetDir(camera->GetDir() * float3(1.0f, -1.0f, 1.0f));
 	camera->SetPos(camera->GetPos() * float3(1.0f, -1.0f, 1.0f));
+	camera->SetRotZ(-camera->GetRot().z);
 	camera->Update();
 
 	reflectFBO.Bind();

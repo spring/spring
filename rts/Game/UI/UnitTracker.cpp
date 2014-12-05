@@ -12,6 +12,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
+#include "System/myMath.h"
 
 
 CUnitTracker unitTracker;
@@ -26,7 +27,6 @@ const char* CUnitTracker::modeNames[TrackModeCount] = {
 
 CUnitTracker::CUnitTracker():
 	enabled(false),
-	doRoll(false),
 	firstUpdate(true),
 	trackMode(TrackSingle),
 	trackUnit(0),
@@ -35,12 +35,10 @@ CUnitTracker::CUnitTracker():
 	lastUpdateTime(0.0f),
 	trackPos(500.0f, 100.0f, 500.0f),
 	trackDir(FwdVector),
+	smoothedRight(RgtVector),
 	oldCamDir(RgtVector),
 	oldCamPos(500.0f, 500.0f, 500.0f)
 {
-	for (size_t a = 0; a < 32; ++a) {
-		oldUp[a] = UpVector;
-	}
 }
 
 
@@ -51,6 +49,7 @@ CUnitTracker::~CUnitTracker()
 
 void CUnitTracker::Disable()
 {
+	smoothedRight = RgtVector;
 	enabled = false;
 }
 
@@ -119,6 +118,7 @@ void CUnitTracker::Track()
 
 void CUnitTracker::MakeTrackGroup()
 {
+	smoothedRight = RgtVector;
 	trackGroup.clear();
 	CUnitSet& units = selectedUnitsHandler.selectedUnits;
 	CUnitSet::const_iterator it;
@@ -231,7 +231,6 @@ void CUnitTracker::SetCam()
 {
 	if (firstUpdate) {
 		firstUpdate = false;
-		doRoll = !configHandler->GetInt("ReflectiveWater");
 	}
 
 	CUnit* u = GetTrackUnit();
@@ -286,11 +285,9 @@ void CUnitTracker::SetCam()
 		const float deltaTime = gs->frameNum + globalRendering->timeOffset - lastUpdateTime;
 		lastUpdateTime = gs->frameNum + globalRendering->timeOffset;
 
-		float3 modPlanePos(u->drawPos - (u->frontdir * u->radius * 3));
+		float3 modPlanePos(u->drawMidPos - (u->frontdir * u->radius * 3));
 		const float minHeight = CGround::GetHeightReal(modPlanePos.x, modPlanePos.z, false) + (u->radius * 2);
-		if (modPlanePos.y < minHeight) {
-  			modPlanePos.y = minHeight;
-		}
+		modPlanePos.y = std::max(modPlanePos.y, minHeight);
 
 		trackPos += (modPlanePos - trackPos) * (1 - math::pow(0.95f, deltaTime));
 		trackDir += (u->frontdir - trackDir) * (1 - math::pow(0.90f, deltaTime));
@@ -308,16 +305,9 @@ void CUnitTracker::SetCam()
 		fpsCamera.SetDir(camera->GetDir());
 		fpsCamera.SetPos(trackPos);
 
-		if (doRoll) {
-			oldUp[gs->frameNum % 32] = u->updir;
-			float3 up(ZeroVector);
-			for (size_t a = 0; a < 32; ++a) {
-				up += oldUp[a];
-			}
-			camera->up = up;
-		} else {
-			camera->up = UpVector;
-		}
+		const float3 right = mix<float3>(smoothedRight, mix<float3>(u->rightdir, RgtVector, 0.75f), deltaTime * 0.05f).ANormalize();
+		camera->SetRotZ(std::atan2(right.y, right.Length2D()));
+		smoothedRight = right;
 
 		oldCamDir = camera->GetDir();
 		oldCamPos = camera->GetPos();

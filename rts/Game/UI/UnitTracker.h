@@ -41,7 +41,6 @@ class CUnitTracker
 		
 	protected:
 		bool enabled;
-		bool doRoll;
 		bool firstUpdate;
 
 		int trackMode;
@@ -55,7 +54,7 @@ class CUnitTracker
 		float3 trackPos;
 		float3 trackDir;
 
-		float3 oldUp[32];
+		float3 smoothedRight;
 		float3 oldCamDir;
 		float3 oldCamPos;
 		
