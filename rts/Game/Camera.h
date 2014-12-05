@@ -37,6 +37,7 @@ public:
 	/// @param fov in degree
 	void SetPos(const float3& p) { pos = p; }
 	void SetFov(float fov);
+	void SetDir(float3 dir);
 
 	const float3& GetPos() const { return pos; }
 	float GetFov() const { return fov; }
@@ -46,22 +47,20 @@ public:
 	const float3& GetRight() const   { return right; }
 	const float3& GetUp() const      { return up; }
 
+	const float3& GetRot() { return rot; }
+	void SetRot(const float3 rot);
+	void SetRotX(const float x);
+	void SetRotY(const float y);
+	void SetRotZ(const float z);
+
 	float3 CalcPixelDir(int x,int y) const;
 	float3 CalcWindowCoordinates(const float3& objPos) const;
 
-	// NOTE:
-	//   only FreeController calls this, others just seem to manipulate
-	//   azimuth (.x) and zenith (.y) angles for their own (redundant?)
-	//   copy of Camera::forward (CameraController::dir)
-	//
-	//   <forward> is set by CameraHandler::UpdateCam via CamCon::GetDir
-	//   <right> and <up> are derived from this, never from <rot> directly
-	void UpdateForward(const float3& fwd) { forward = fwd; }
-	void UpdateRightAndUp(bool terrainReflectionPass);
-
 	bool InView(const float3& p, float radius = 0) const;
 	bool InView(const float3& mins, const float3& maxs) const;
+
 	void Update(bool terrainReflectionPass = false);
+	void UpdateRightAndUp(bool terrainReflectionPass);
 
 	void GetFrustumSides(float miny, float maxy, float scale, bool negSide = false);
 	void GetFrustumSide(
@@ -105,6 +104,8 @@ private:
 
 	void myGluPerspective(float aspect, float zNear, float zFar);
 	void myGluLookAt(const float3&, const float3&, const float3&);
+
+	void UpdateDirFromRot();
 
 public:
 	float3 pos;

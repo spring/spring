@@ -222,6 +222,58 @@ void CCamera::SetFov(float myfov)
 }
 
 
+void CCamera::SetDir(float3 dir)
+{
+	if (dir == forward) return;
+	dir.Normalize();
+	rot.x = math::acos(dir.dot(UpVector));
+	rot.y = math::atan2(dir.z, dir.x) + fastmath::HALFPI;
+	UpdateDirFromRot();
+}
+
+
+void CCamera::SetRot(const float3 r)
+{
+	rot = r;
+	UpdateDirFromRot();
+}
+
+
+void CCamera::SetRotX(const float x)
+{
+	rot.x = x;
+	UpdateDirFromRot();
+}
+
+
+void CCamera::SetRotY(const float y)
+{
+	rot.y = y;
+	UpdateDirFromRot();
+}
+
+
+void CCamera::SetRotZ(const float z)
+{
+	rot.z = z;
+	UpdateDirFromRot();
+}
+
+
+void CCamera::UpdateDirFromRot()
+{
+	forward.x = math::sin(rot.x) * math::cos(rot.y - fastmath::HALFPI);
+	forward.z = math::sin(rot.x) * math::sin(rot.y - fastmath::HALFPI);
+	forward.y = math::cos(rot.x);
+
+	right.x = math::sin(rot.z + fastmath::HALFPI) * math::cos(rot.y);
+	right.z = math::sin(rot.z + fastmath::HALFPI) * math::sin(rot.y);
+	right.y = math::cos(rot.z + fastmath::HALFPI);
+
+	up = right.cross(forward);
+}
+
+
 float3 CCamera::CalcPixelDir(int x, int y) const
 {
 	const int vsx = std::max(1, globalRendering->viewSizeX);
