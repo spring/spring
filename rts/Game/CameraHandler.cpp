@@ -170,10 +170,11 @@ void CCameraHandler::SetCameraMode(unsigned int mode)
 
 	CCameraController* oldCamCtrl = currCamCtrl;
 
+	const int oldMode = currCamCtrlNum;
 	currCamCtrlNum = mode;
 	currCamCtrl = camControllers[mode];
 	currCamCtrl->SetPos(oldCamCtrl->SwitchFrom());
-	currCamCtrl->SwitchTo();
+	currCamCtrl->SwitchTo(oldMode);
 	currCamCtrl->Update();
 }
 
@@ -313,9 +314,10 @@ bool CCameraHandler::SetState(const CCameraController::StateMap& sm)
 		}
 		if (camMode != currCamCtrlNum) {
 			CameraTransition(1.0f);
+			const int oldMode = currCamCtrlNum;
 			currCamCtrlNum = camMode;
 			currCamCtrl = camControllers[camMode];
-			currCamCtrl->SwitchTo();
+			currCamCtrl->SwitchTo(oldMode);
 		}
 	}
 	bool result = currCamCtrl->SetState(sm);
@@ -402,10 +404,11 @@ bool CCameraHandler::LoadViewData(const ViewData& vd)
 		const unsigned int currentMode = currCamCtrlNum;
 		if (camMode != currCamCtrlNum) {
 			CameraTransition(1.0f);
+			const int oldMode = currCamCtrlNum;
 			currCamCtrlNum = camMode;
 			currCamCtrl = camControllers[camMode];
 			const bool showMode = (camMode != currentMode);
-			currCamCtrl->SwitchTo(showMode);
+			currCamCtrl->SwitchTo(oldMode, showMode);
 		}
 	}
 	return currCamCtrl->SetState(vd);

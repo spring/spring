@@ -92,7 +92,7 @@ float3 CRotOverheadController::SwitchFrom() const
 }
 
 
-void CRotOverheadController::SwitchTo(bool showText)
+void CRotOverheadController::SwitchTo(const int oldCam, const bool showText)
 {
 	if (showText) {
 		LOG("Switching to Rotatable overhead camera");

@@ -220,13 +220,15 @@ float3 CSpringController::SwitchFrom() const
 }
 
 
-void CSpringController::SwitchTo(bool showText)
+void CSpringController::SwitchTo(const int oldCam, const bool showText)
 {
 	if (showText) {
 		LOG("Switching to Spring style camera");
 	}
-	rot.x = camera->GetRot().x;
-	rot.y = camera->GetRot().y;
+	if (oldCam != CCameraHandler::CAMERA_MODE_OVERVIEW) {
+		rot.x = camera->GetRot().x;
+		rot.y = camera->GetRot().y;
+	}
 }
 
 

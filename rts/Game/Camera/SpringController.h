@@ -23,7 +23,7 @@ public:
 	float3 GetRot() const;
 
 	float3 SwitchFrom() const;
-	void SwitchTo(bool showText);
+	void SwitchTo(const int oldCam, const bool showText);
 
 	void GetState(StateMap& sm) const;
 	bool SetState(const StateMap& sm);
@@ -36,6 +36,8 @@ private:
 	float3 rot;
 	float dist;
 	float maxDist;
+	bool zoomBack;
+	float oldDist;
 };
 
 #endif // _SPRING_CONTROLLER_H

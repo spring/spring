@@ -106,7 +106,7 @@ float3 CFPSController::SwitchFrom() const
 }
 
 
-void CFPSController::SwitchTo(bool showText)
+void CFPSController::SwitchTo(const int oldCam, const bool showText)
 {
 	if (showText) {
 		LOG("Switching to FPS style camera");

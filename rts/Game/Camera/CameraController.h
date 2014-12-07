@@ -41,7 +41,7 @@ public:
 
 	// return the position to send to new controllers SetPos
 	virtual float3 SwitchFrom() const = 0;
-	virtual void SwitchTo(bool showText = true) = 0;
+	virtual void SwitchTo(const int oldCam, const bool showText = true) = 0;
 
 	virtual void GetState(StateMap& sm) const;
 	virtual bool SetState(const StateMap& sm);

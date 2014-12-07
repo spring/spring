@@ -26,7 +26,7 @@ public:
 	void SetPos(const float3& newPos);
 	void SetTrackingInfo(const float3& pos, float radius);
 	float3 SwitchFrom() const;
-	void SwitchTo(bool showText);
+	void SwitchTo(const int oldCam, const bool showText);
 
 	void GetState(StateMap& sm) const;
 	bool SetState(const StateMap& sm);

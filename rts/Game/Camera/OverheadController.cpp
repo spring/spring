@@ -183,7 +183,7 @@ float3 COverheadController::SwitchFrom() const
 	return pos;
 }
 
-void COverheadController::SwitchTo(bool showText)
+void COverheadController::SwitchTo(const int oldCam, const bool showText)
 {
 	if (showText) {
 		LOG("Switching to Overhead (TA) style camera");
