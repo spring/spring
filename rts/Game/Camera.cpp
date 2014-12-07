@@ -64,9 +64,9 @@ void CCamera::CopyState(const CCamera* cam) {
 	lppScale  = cam->lppScale;
 }
 
-void CCamera::Update(bool terrainReflectionPass)
+void CCamera::Update()
 {
-	UpdateRightAndUp(terrainReflectionPass);
+	UpdateDirFromRot();
 
 	const float aspect = globalRendering->aspectRatio;
 	const float viewx = math::tan(aspect * halfFov);
@@ -192,29 +192,7 @@ bool CCamera::InView(const float3& p, float radius) const
 }
 
 
-void CCamera::UpdateRightAndUp(bool terrainReflectionPass)
-{
-	// terrain (not water) cubemap reflection passes set forward
-	// to {+/-}UpVector which would cause vector degeneracy when
-	// calculating right and up
-	//
-	if (std::fabs(forward.y) >= 0.999f) {
-		// make sure we can still yaw at limits of pitch
-		// (since CamHandler only updates forward, which
-		// is derived from rot)
-		right = float3(-std::cos(rot.y), 0.0f, std::sin(rot.y));
-		up = (right.cross(forward)).UnsafeANormalize();
-	} else {
-		// in the terrain reflection pass everything is upside-down!
-		up = UpVector * -Sign(int(terrainReflectionPass));
-
-		right = (forward.cross(up)).UnsafeANormalize();
-		up = (right.cross(forward)).UnsafeANormalize();
-	}
-}
-
-
-void CCamera::SetFov(float myfov)
+void CCamera::SetFov(const float myfov)
 {
 	fov = myfov;
 	halfFov = (fov * 0.5f) * (PI / 180.f);
@@ -222,13 +200,23 @@ void CCamera::SetFov(float myfov)
 }
 
 
-void CCamera::SetDir(float3 dir)
+float3 CCamera::GetRotFromDir(float3 dir)
 {
-	if (dir == forward) return;
 	dir.Normalize();
-	rot.x = math::acos(dir.dot(UpVector));
-	rot.y = math::atan2(dir.z, dir.x) + fastmath::HALFPI;
+	return float3(
+		math::acos(dir.y),
+		math::atan2(dir.x, -dir.z), // azimuth's 0 is on -z axis!
+		0.f
+	);
+}
+
+
+void CCamera::SetDir(const float3 dir)
+{
+	//if (dir == forward) return;
+	rot = GetRotFromDir(dir) + float3(0.f,0.f,rot.z);
 	UpdateDirFromRot();
+	assert(dir.dot(forward) > 0.9f);
 }
 
 
@@ -262,13 +250,13 @@ void CCamera::SetRotZ(const float z)
 
 void CCamera::UpdateDirFromRot()
 {
-	forward.x = math::sin(rot.x) * math::cos(rot.y - fastmath::HALFPI);
-	forward.z = math::sin(rot.x) * math::sin(rot.y - fastmath::HALFPI);
+	forward.x = math::sin(rot.x) * math::sin(rot.y);
+	forward.z = math::sin(rot.x) * (-math::cos(rot.y));
 	forward.y = math::cos(rot.x);
 
-	right.x = math::sin(fastmath::HALFPI - rot.z) * math::cos(rot.y);
-	right.z = math::sin(fastmath::HALFPI - rot.z) * math::sin(rot.y);
-	right.y = math::cos(fastmath::HALFPI - rot.z);
+	right.x = math::sin(HALFPI - rot.z) * math::sin(rot.y + HALFPI); //FIXME
+	right.z = math::sin(HALFPI - rot.z) * (-math::cos(rot.y + HALFPI));
+	right.y = math::cos(HALFPI - rot.z);
 
 	up = right.cross(forward);
 }
@@ -469,7 +457,6 @@ float3 CCamera::GetMoveVectorFromState(bool fromKeyState) const
 	(void) GetMoveDistance(&camDeltaTime, &camMoveSpeed, -1);
 
 	float3 v;
-
 	if (fromKeyState) {
 		v.y += (camDeltaTime * 0.001f * movState[MOVE_STATE_FWD]);
 		v.y -= (camDeltaTime * 0.001f * movState[MOVE_STATE_BCK]);

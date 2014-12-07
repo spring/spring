@@ -10,6 +10,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Input/KeyInput.h"
+#include "System/myMath.h"
 
 using std::max;
 using std::min;
@@ -176,8 +177,8 @@ void CFreeController::Update()
 	// set the new position/rotation
 	if (!tracking) {
 		pos += (vel * ft);
-		camera->SetRot( camera->GetRot()   + (avel        * ft));
-		camera->SetRotX(camera->GetRot().x + (autoTiltVel * ft)); // note that this is not smoothed
+		camera->SetRot( camera->GetRot()   - (avel        * ft));
+		camera->SetRotX(camera->GetRot().x - (autoTiltVel * ft)); // note that this is not smoothed
 	} else {
 		// speed along the tracking direction varies with distance
 		const float3 diff = (pos - trackPos);
@@ -246,15 +247,8 @@ void CFreeController::Update()
 	}
 
 	// angular clamps
-	const float xRotLimit = PI * 0.499f;
-
-	if (camera->GetRot().x >= xRotLimit) {
-		// maximum upward pitch
-		camera->SetRotX(xRotLimit);
-		avel.x = 0.0f;
-	} else if (camera->GetRot().x <= -xRotLimit) {
-		// maximum downward pitch
-		camera->SetRotX(-xRotLimit);
+	if (camera->GetRot().x >= fastmath::PI || camera->GetRot().x<=0) {
+		camera->SetRotX(Clamp(camera->GetRot().x, 0.001f, fastmath::PI - 0.001f));
 		avel.x = 0.0f;
 	}
 

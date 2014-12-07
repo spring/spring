@@ -7,7 +7,9 @@
 #include <vector>
 #include <map>
 
+#include "Game/Camera.h"
 #include "System/float3.h"
+
 
 class CCameraController
 {
@@ -33,13 +35,7 @@ public:
 	        float  GetFOV() const { return fov; }
 	virtual float3 GetPos() const { return pos; }
 	virtual float3 GetDir() const { return dir; }
-	virtual float3 GetRot() const {
-		float3 rot;
-		float3 dir = GetDir();
-		rot.x = math::acos(dir.dot(UpVector));
-		rot.y = math::atan2(dir.z, dir.x) + fastmath::HALFPI;
-		return rot;
-	}
+	virtual float3 GetRot() const { return CCamera::GetRotFromDir(GetDir()); }
 
 	virtual void SetPos(const float3& newPos) { pos = newPos; }
 	virtual void SetDir(const float3& newDir) { dir = newDir; }

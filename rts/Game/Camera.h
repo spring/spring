@@ -34,10 +34,12 @@ public:
 	CCamera();
 	void CopyState(const CCamera*);
 
+	void Update();
+
 	/// @param fov in degree
 	void SetPos(const float3& p) { pos = p; }
-	void SetFov(float fov);
-	void SetDir(float3 dir);
+	void SetFov(const float fov);
+	void SetDir(const float3 dir);
 
 	const float3& GetPos() const { return pos; }
 	float GetFov() const { return fov; }
@@ -58,9 +60,6 @@ public:
 
 	bool InView(const float3& p, float radius = 0) const;
 	bool InView(const float3& mins, const float3& maxs) const;
-
-	void Update(bool terrainReflectionPass = false);
-	void UpdateRightAndUp(bool terrainReflectionPass);
 
 	void GetFrustumSides(float miny, float maxy, float scale, bool negSide = false);
 	void GetFrustumSide(
@@ -99,6 +98,8 @@ public:
 	const bool* GetMovState() const { return movState; }
 	const bool* GetRotState() const { return rotState; }
 
+	static float3 GetRotFromDir(float3 dir);
+
 private:
 	void ComputeViewRange();
 
@@ -109,7 +110,7 @@ private:
 
 public:
 	float3 pos;
-	float3 rot;        ///< x = inclination, y = azimuth, z = roll
+	float3 rot;        ///< x = inclination, y = azimuth (to the -z axis!), z = roll
 	float3 forward;    ///< local z-axis
 	float3 right;      ///< local x-axis
 	float3 up;         ///< local y-axis
