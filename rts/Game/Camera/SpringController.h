@@ -10,7 +10,7 @@ class CSpringController : public CCameraController
 public:
 	CSpringController();
 
-	const std::string GetName() const { return "tw"; }
+	const std::string GetName() const { return "spring"; }
 
 	void KeyMove(float3 move);
 	void MouseMove(float3 move);

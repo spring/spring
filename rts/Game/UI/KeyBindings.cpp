@@ -177,7 +177,7 @@ static const std::vector<DefaultBinding> defaultBindings = {
 
 	{ "Ctrl+f1", "viewfps"  },
 	{ "Ctrl+f2", "viewta"   },
-	{ "Ctrl+f3", "viewtw"   },
+	{ "Ctrl+f3", "viewspring" },
 	{ "Ctrl+f4", "viewrot"  },
 	{ "Ctrl+f5", "viewfree" },
 
