@@ -9,6 +9,16 @@
 #include "System/float3.h"
 #include "System/Matrix44f.h"
 #include "Rendering/GlobalRendering.h"
+#include "System/Config/ConfigHandler.h"
+
+
+CONFIG(float, EdgeMoveWidth)
+	.defaultValue(0.02f)
+	.minimumValue(0.0f)
+	.description("The width (in percent of screen size) of the EdgeMove scrolling area.");
+CONFIG(bool, EdgeMoveDynamic)
+	.defaultValue(true)
+	.description("If EdgeMove scrolling speed should fade with edge distance.");
 
 
 //////////////////////////////////////////////////////////////////////
@@ -463,14 +473,38 @@ float3 CCamera::GetMoveVectorFromState(bool fromKeyState) const
 		v.x += (camDeltaTime * 0.001f * movState[MOVE_STATE_RGT]);
 		v.x -= (camDeltaTime * 0.001f * movState[MOVE_STATE_LFT]);
 	} else {
+		const int screenH = globalRendering->viewSizeY;
 		const int screenW = globalRendering->dualScreenMode?
 			(globalRendering->viewSizeX << 1):
 			(globalRendering->viewSizeX     );
 
-		v.y += (camDeltaTime * 0.001f * (mouse->lasty <                               2));
-		v.y -= (camDeltaTime * 0.001f * (mouse->lasty > (globalRendering->viewSizeY - 2)));
-		v.x += (camDeltaTime * 0.001f * (mouse->lastx >                    (screenW - 2)));
-		v.x -= (camDeltaTime * 0.001f * (mouse->lastx <                               2));
+		const float width  = configHandler->GetFloat("EdgeMoveWidth");
+		const bool dynamic = configHandler->GetBool("EdgeMoveDynamic");
+
+		int2 border;
+		border.x = std::max<int>(1, screenW * width);
+		border.y = std::max<int>(1, screenH * width);
+
+		float2 distToEdge; // must be float, ints don't save the sign in case of 0 and we need it for copysign()
+		distToEdge.x = Clamp(mouse->lastx, 0, screenW);
+		distToEdge.y = Clamp(mouse->lasty, 0, screenH);
+		if ((screenW - distToEdge.x) < distToEdge.x) distToEdge.x = -(screenW - distToEdge.x );
+		if ((screenH - distToEdge.y) < distToEdge.y) distToEdge.y = -(screenH - distToEdge.y);
+		distToEdge.x = -distToEdge.x;
+
+		float2 move;
+		if (dynamic) {
+			move.x = Clamp(float(border.x - std::abs(distToEdge.x)) / border.x, 0.f, 1.f);
+			move.y = Clamp(float(border.y - std::abs(distToEdge.y)) / border.y, 0.f, 1.f);
+		} else {
+			move.x = int(std::abs(distToEdge.x) < border.x);
+			move.y = int(std::abs(distToEdge.y) < border.y);
+		}
+		move.x = std::copysign(move.x, distToEdge.x);
+		move.y = std::copysign(move.y, distToEdge.y);
+
+		v.x = (camDeltaTime * 0.001f * move.x);
+		v.y = (camDeltaTime * 0.001f * move.y);
 	}
 
 	v.z = camMoveSpeed;
