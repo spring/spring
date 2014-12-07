@@ -26,6 +26,8 @@ CSpringController::CSpringController()
 : rot(2.677f, 0.f, 0.f)
 , dist(1500.f)
 , maxDist(std::max(gs->mapx, gs->mapy) * SQUARE_SIZE * 1.333f)
+, zoomBack(false)
+, oldDist(0.f)
 {
 	scrollSpeed = configHandler->GetInt("CamSpringScrollSpeed") * 0.1f;
 	enabled = configHandler->GetBool("CamSpringEnabled");
@@ -89,9 +91,48 @@ void CSpringController::MouseWheelMove(float move)
 		rot.x  = Clamp(rot.x, PI * 0.51f, PI * 0.99f);
 		camera->SetRotX(rot.x);
 	} else {
+		const float3 curPos = GetPos();
+		const float curDist = dist;
+
 		camHandler->CameraTransition(0.15f);
 		dist *= (1.0f + (move * shiftSpeed * 0.007f));
 		dist = std::min(dist, maxDist);
+
+		const float shiftSpeed = (KeyInput::GetKeyModState(KMOD_SHIFT) ? 3.0f : 1.0f);
+		if (move < 0.0f) {
+			// ZOOM IN to mouse cursor instead of mid screen
+			if (KeyInput::GetKeyModState(KMOD_ALT) && zoomBack) {
+				// instazoom in to standard view
+				dist = oldDist;
+				zoomBack = false;
+				camHandler->CameraTransition(0.5f);
+			} else {
+				float newDist = CGround::LineGroundCol(curPos, curPos + mouse->dir * 15000, false);
+				if (newDist > 0.0f) {
+					pos = curPos + mouse->dir * newDist;
+				}
+				camera->SetPos(GetPos());
+				camera->Update();
+				float3 winPos = camera->CalcWindowCoordinates(pos);
+				mouse->WarpMouse(winPos.x, globalRendering->viewSizeY - winPos.y);
+			}
+		} else {
+			// ZOOM OUT from mid screen
+			if (KeyInput::GetKeyModState(KMOD_ALT)) {
+				// instazoom out to maximum height
+				if (!zoomBack) {
+					oldDist = curDist;
+					zoomBack = true;
+				}
+				rot = float3(2.677f, rot.y, 0.f);
+				pos.x = gs->mapx * SQUARE_SIZE * 0.5f;
+				pos.z = gs->mapy * SQUARE_SIZE * 0.55f; // somewhat longer toward bottom
+				dist = pos.Length2D() * 1.5f;
+				camHandler->CameraTransition(1.0f);
+			} else {
+				zoomBack = false;
+			}
+		}
 	}
 
 	Update();
@@ -106,7 +147,7 @@ void CSpringController::Update()
 	rot.x = Clamp(rot.x, PI * 0.51f, PI * 0.99f);
 	dir = camera->GetDir();
 
-	const float dist_ = (configHandler->GetBool("CamSpringCloseUpZoomIn")) ? rot.x * dist : dist;
+	const float dist_ = (configHandler->GetBool("CamSpringCloseUpZoomIn")) ? -dir.y * dist : dist;
 	pixelSize = (camera->GetTanHalfFov() * 2.0f) / globalRendering->viewSizeY * dist_ * 2.0f;
 }
 
@@ -159,7 +200,7 @@ float3 CSpringController::GetRot() const
 
 float3 CSpringController::GetPos() const
 {
-	const float dist_ = (configHandler->GetBool("CamSpringCloseUpZoomIn")) ? rot.x * dist : dist;
+	const float dist_ = (configHandler->GetBool("CamSpringCloseUpZoomIn")) ? -dir.y * dist : dist;
 	float3 cpos = pos - dir * dist_;
 	cpos.y = std::max(cpos.y, CGround::GetHeightAboveWater(cpos.x, cpos.z, false) + 5);
 	return cpos;

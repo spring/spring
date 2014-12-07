@@ -134,8 +134,8 @@ void COverheadController::MouseWheelMove(float move)
 					changeAltHeight = false;
 				}
 				height = maxHeight;
-				pos.x  = gs->mapx * 4;
-				pos.z  = gs->mapy * 4.8f; // somewhat longer toward bottom
+				pos.x  = gs->mapx * SQUARE_SIZE * 0.5f;
+				pos.z  = gs->mapy * SQUARE_SIZE * 0.55f; // somewhat longer toward bottom
 			} else {
 				height *= (1.0f + (altZoomDist / height));
 			}
