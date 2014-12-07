@@ -1,20 +1,18 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _TW_CONTROLLER_H
-#define _TW_CONTROLLER_H
+#ifndef _SPRING_CONTROLLER_H
+#define _SPRING_CONTROLLER_H
 
 #include "CameraController.h"
 
-class CTWController : public CCameraController
+class CSpringController : public CCameraController
 {
 public:
-	CTWController();
+	CSpringController();
 
 	const std::string GetName() const { return "tw"; }
 
 	void KeyMove(float3 move);
-	void MousePress(int x, int y, int button) { /* empty */ }
-	void MouseRelease(int x, int y, int button) { /* empty */ }
 	void MouseMove(float3 move);
 	void ScreenEdgeMove(float3 move);
 	void MouseWheelMove(float move);
@@ -22,6 +20,7 @@ public:
 	void Update();
 	float3 GetPos() const;
 	void SetPos(const float3& newPos);
+	float3 GetRot() const;
 
 	float3 SwitchFrom() const;
 	void SwitchTo(bool showText);
@@ -30,7 +29,13 @@ public:
 	bool SetState(const StateMap& sm);
 
 private:
-	void UpdateVectors();
+	float GetAzimuth() const;
+	float MoveAzimuth(float move);
+
+private:
+	float3 rot;
+	float dist;
+	float maxDist;
 };
 
-#endif // _TW_CONTROLLER_H
+#endif // _SPRING_CONTROLLER_H

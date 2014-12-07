@@ -12,7 +12,7 @@ MakeGlobalVar(sources_engine_Game
 		"${CMAKE_CURRENT_SOURCE_DIR}/Camera/OverheadController.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Camera/OverviewController.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Camera/RotOverheadController.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Camera/TWController.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Camera/SpringController.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/CameraHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/ChatMessage.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/ClientSetup.cpp"

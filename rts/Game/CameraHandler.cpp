@@ -13,7 +13,7 @@
 #include "Camera/RotOverheadController.h"
 #include "Camera/FreeController.h"
 #include "Camera/OverviewController.h"
-#include "Camera/TWController.h"
+#include "Camera/SpringController.h"
 #include "Rendering/GlobalRendering.h"
 #include "System/myMath.h"
 #include "System/Config/ConfigHandler.h"
@@ -33,11 +33,11 @@ static std::string strformat(const char* fmt, ...)
 CONFIG(std::string, CamModeName).defaultValue("");
 
 CONFIG(int, CamMode)
-	.defaultValue(CCameraHandler::CAMERA_MODE_OVERHEAD)
-	.description(strformat("Defines the used camera. Options are:\n%i = FPS\n%i = Overhead\n%i = TotalWar\n%i = RotOverhead\n%i = Free\n%i = Overview",
+	.defaultValue(CCameraHandler::CAMERA_MODE_SPRING)
+	.description(strformat("Defines the used camera. Options are:\n%i = FPS\n%i = Overhead\n%i = Spring\n%i = RotOverhead\n%i = Free\n%i = Overview",
 		(int)CCameraHandler::CAMERA_MODE_FIRSTPERSON,
 		(int)CCameraHandler::CAMERA_MODE_OVERHEAD,
-		(int)CCameraHandler::CAMERA_MODE_TOTALWAR,
+		(int)CCameraHandler::CAMERA_MODE_SPRING,
 		(int)CCameraHandler::CAMERA_MODE_ROTOVERHEAD,
 		(int)CCameraHandler::CAMERA_MODE_FREE,
 		(int)CCameraHandler::CAMERA_MODE_OVERVIEW
@@ -67,7 +67,7 @@ CCameraHandler::CCameraHandler()
 	camControllers.resize(CAMERA_MODE_LAST, nullptr);
 	camControllers[CAMERA_MODE_FIRSTPERSON] = new CFPSController();
 	camControllers[CAMERA_MODE_OVERHEAD   ] = new COverheadController();
-	camControllers[CAMERA_MODE_TOTALWAR   ] = new CTWController();
+	camControllers[CAMERA_MODE_SPRING     ] = new CSpringController();
 	camControllers[CAMERA_MODE_ROTOVERHEAD] = new CRotOverheadController();
 	camControllers[CAMERA_MODE_FREE       ] = new CFreeController();
 	camControllers[CAMERA_MODE_OVERVIEW   ] = new COverviewController();
@@ -92,7 +92,7 @@ CCameraHandler::CCameraHandler()
 
 	RegisterAction("viewfps");
 	RegisterAction("viewta");
-	RegisterAction("viewtw");
+	RegisterAction("viewspring");
 	RegisterAction("viewrot");
 	RegisterAction("viewfree");
 	RegisterAction("viewov");
@@ -341,8 +341,8 @@ void CCameraHandler::PushAction(const Action& action)
 	else if (cmd == "viewta") {
 		SetCameraMode(CAMERA_MODE_OVERHEAD);
 	}
-	else if (cmd == "viewtw") {
-		SetCameraMode(CAMERA_MODE_TOTALWAR);
+	else if (cmd == "viewspring") {
+		SetCameraMode(CAMERA_MODE_SPRING);
 	}
 	else if (cmd == "viewrot") {
 		SetCameraMode(CAMERA_MODE_ROTOVERHEAD);
