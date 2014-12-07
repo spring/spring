@@ -932,7 +932,7 @@ void CGuiHandler::SetShowingMetal(bool show)
 		}
 	} else {
 		if (autoShowMetal) {
-			if (infoTextureHandler->GetMode() == "metal") {
+			if (infoTextureHandler->GetMode() != "metal") {
 				infoTextureHandler->SetMode("metal");
 				showingMetal = true;
 			}
