@@ -13,8 +13,6 @@ public:
 	const std::string GetName() const { return "fps"; }
 
 	void KeyMove(float3 move);
-	void MousePress(int x, int y, int button) { /* empty */ }
-	void MouseRelease(int x, int y, int button) { /* empty */ }
 	void MouseMove(float3 move);
 	void ScreenEdgeMove(float3 move);
 	void MouseWheelMove(float move);

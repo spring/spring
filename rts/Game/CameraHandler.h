@@ -62,10 +62,8 @@ public:
 		CAMERA_MODE_TOTALWAR    = 2,
 		CAMERA_MODE_ROTOVERHEAD = 3,
 		CAMERA_MODE_FREE        = 4,
-		CAMERA_MODE_SMOOTH      = 5,
-		CAMERA_MODE_ORBIT       = 6,
-		CAMERA_MODE_OVERVIEW    = 7,
-		CAMERA_MODE_LAST        = 8,
+		CAMERA_MODE_OVERVIEW    = 5,
+		CAMERA_MODE_LAST        = 6,
 	};
 
 private:

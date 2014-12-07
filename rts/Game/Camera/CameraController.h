@@ -23,8 +23,6 @@ public:
 	virtual const std::string GetName() const = 0;
 
 	virtual void KeyMove(float3 move) = 0;
-	virtual void MousePress(int x, int y, int button) = 0;
-	virtual void MouseRelease(int x, int y, int button) = 0;
 	virtual void MouseMove(float3 move) = 0;
 	virtual void ScreenEdgeMove(float3 move) = 0;
 	virtual void MouseWheelMove(float move) = 0;

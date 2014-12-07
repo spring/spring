@@ -10,12 +10,10 @@
 #include "Camera/CameraController.h"
 #include "Camera/FPSController.h"
 #include "Camera/OverheadController.h"
-#include "Camera/SmoothController.h"
 #include "Camera/RotOverheadController.h"
 #include "Camera/FreeController.h"
 #include "Camera/OverviewController.h"
 #include "Camera/TWController.h"
-#include "Camera/OrbitController.h"
 #include "Rendering/GlobalRendering.h"
 #include "System/myMath.h"
 #include "System/Config/ConfigHandler.h"
@@ -35,15 +33,13 @@ static std::string strformat(const char* fmt, ...)
 CONFIG(std::string, CamModeName).defaultValue("");
 
 CONFIG(int, CamMode)
-	.defaultValue(CCameraHandler::CAMERA_MODE_SMOOTH)
-	.description(strformat("Defines the used camera. Options are:\n%i = FPS\n%i = Overhead\n%i = TotalWar\n%i = RotOverhead\n%i = Free\n%i = SmoothOverhead\n%i = Orbit\n%i = Overview",
+	.defaultValue(CCameraHandler::CAMERA_MODE_OVERHEAD)
+	.description(strformat("Defines the used camera. Options are:\n%i = FPS\n%i = Overhead\n%i = TotalWar\n%i = RotOverhead\n%i = Free\n%i = Overview",
 		(int)CCameraHandler::CAMERA_MODE_FIRSTPERSON,
 		(int)CCameraHandler::CAMERA_MODE_OVERHEAD,
 		(int)CCameraHandler::CAMERA_MODE_TOTALWAR,
 		(int)CCameraHandler::CAMERA_MODE_ROTOVERHEAD,
 		(int)CCameraHandler::CAMERA_MODE_FREE,
-		(int)CCameraHandler::CAMERA_MODE_SMOOTH,
-		(int)CCameraHandler::CAMERA_MODE_ORBIT,
 		(int)CCameraHandler::CAMERA_MODE_OVERVIEW
 	).c_str())
 	.minimumValue(0)
@@ -68,14 +64,12 @@ CCameraHandler::CCameraHandler()
 	startCam.fov    = 90.0f;
 
 	// FPS camera must always be the first one in the list
-	camControllers.resize(CAMERA_MODE_LAST);
+	camControllers.resize(CAMERA_MODE_LAST, nullptr);
 	camControllers[CAMERA_MODE_FIRSTPERSON] = new CFPSController();
 	camControllers[CAMERA_MODE_OVERHEAD   ] = new COverheadController();
 	camControllers[CAMERA_MODE_TOTALWAR   ] = new CTWController();
 	camControllers[CAMERA_MODE_ROTOVERHEAD] = new CRotOverheadController();
 	camControllers[CAMERA_MODE_FREE       ] = new CFreeController();
-	camControllers[CAMERA_MODE_SMOOTH     ] = new SmoothController();
-	camControllers[CAMERA_MODE_ORBIT      ] = new COrbitController();
 	camControllers[CAMERA_MODE_OVERVIEW   ] = new COverviewController();
 
 	for (unsigned int i = 0; i < camControllers.size(); i++) {
@@ -102,8 +96,6 @@ CCameraHandler::CCameraHandler()
 	RegisterAction("viewrot");
 	RegisterAction("viewfree");
 	RegisterAction("viewov");
-	RegisterAction("viewlua");
-	RegisterAction("vieworbit");
 
 	RegisterAction("viewtaflip");
 
@@ -227,28 +219,18 @@ void CCameraHandler::PopMode()
 
 void CCameraHandler::ToggleState()
 {
-
-	CameraTransition(1.0f);
-
-	CCameraController* oldCamCtrl = currCamCtrl;
-	currCamCtrlNum++;
-	if (currCamCtrlNum >= camControllers.size()) {
-		currCamCtrlNum = 0;
-	}
+	auto newMode = currCamCtrlNum + 1;
+	newMode %= camControllers.size();
 
 	int a = 0;
 	const int maxTries = camControllers.size() - 1;
-	while ((a < maxTries) && !camControllers[currCamCtrlNum]->enabled) {
-		currCamCtrlNum++;
-		if (currCamCtrlNum >= camControllers.size()) {
-			currCamCtrlNum = 0;
-		}
+	while ((a < maxTries) && !camControllers[newMode]->enabled) {
+		newMode++;
+		newMode %= camControllers.size();
 		a++;
 	}
 
-	currCamCtrl = camControllers[currCamCtrlNum];
-	currCamCtrl->SetPos(oldCamCtrl->SwitchFrom());
-	currCamCtrl->SwitchTo();
+	SetCameraMode(newMode);
 }
 
 
@@ -371,16 +353,9 @@ void CCameraHandler::PushAction(const Action& action)
 	else if (cmd == "viewov") {
 		SetCameraMode(CAMERA_MODE_OVERVIEW);
 	}
-	else if (cmd == "viewlua") {
-		SetCameraMode(CAMERA_MODE_SMOOTH); // ?
-	}
-	else if (cmd == "vieworbit") {
-		SetCameraMode(CAMERA_MODE_ORBIT);
-	}
 
 	else if (cmd == "viewtaflip") {
 		COverheadController* taCam = dynamic_cast<COverheadController*>(camControllers[CAMERA_MODE_OVERHEAD]);
-		SmoothController* smCam = dynamic_cast<SmoothController*>(camControllers[CAMERA_MODE_SMOOTH]);
 
 		if (taCam) {
 			if (!action.extra.empty()) {
@@ -389,14 +364,6 @@ void CCameraHandler::PushAction(const Action& action)
 				taCam->flipped = !taCam->flipped;
 			}
 			taCam->Update();
-		}
-		if (smCam) {
-			if (!action.extra.empty()) {
-				smCam->flipped = !!atoi(action.extra.c_str());
-			} else {
-				smCam->flipped = !smCam->flipped;
-			}
-			smCam->Update();
 		}
 	}
 	else if (cmd == "viewsave") {
