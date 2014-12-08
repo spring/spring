@@ -256,8 +256,6 @@ bool CCollisionHandler::IntersectPiecesHelper(
 	CMatrix44f unitMat = u->GetTransformMatrix(true);
 	CMatrix44f volMat;
 
-	assert(cq != nullptr);
-
 	float minDistSq = std::numeric_limits<float>::max();
 
 	for (unsigned int n = 0; n < u->localModel->pieces.size(); n++) {
@@ -284,8 +282,12 @@ bool CCollisionHandler::IntersectPiecesHelper(
 
 		minDistSq = cqn.GetHitPos().SqDistance(p0);
 
-		*cq = cqn;
-		cq->SetHitPiece(lmp);
+		if (cq != nullptr) {
+			*cq = cqn;
+			cq->SetHitPiece(lmp);
+		} else {
+			return true;
+		}
 	}
 
 	// true iff at least one piece was intersected
