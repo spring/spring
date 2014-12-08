@@ -50,9 +50,7 @@ CFreeController::CFreeController()
 	dir = float3(0.0f, -2.0f, -1.0f).ANormalize();
 
 	if (camera) {
-		const float hDist = math::sqrt((dir.x * dir.x) + (dir.z * dir.z));
-		camera->SetRotY(math::atan2(dir.x, dir.z)); // yaw
-		camera->SetRotX(math::atan2(dir.y, hDist)); // pitch
+		camera->SetDir(dir);
 	}
 	pos -= (dir * 1000.0f);
 
@@ -93,8 +91,6 @@ void CFreeController::SetTrackingInfo(const float3& target, float radius)
 	} else {
 		camera->SetRotX(math::atan2((trackPos.y - pos.y), len2D));
 	}
-
-	camera->SetDir(GetDir());
 }
 
 
@@ -409,8 +405,8 @@ void CFreeController::GetState(StateMap& sm) const
 	sm["invertAlt"]   = invertAlt ? +1.0f : -1.0f;
 	sm["gndLock"]     = gndLock   ? +1.0f : -1.0f;
 
-	sm["rx"] = camera->GetRot().x;
-	sm["ry"] = camera->GetRot().y;
+	sm["rx"] = fastmath::PI - camera->GetRot().x - fastmath::HALFPI;
+	sm["ry"] = camera->GetRot().y + fastmath::PI;
 	sm["rz"] = camera->GetRot().z;
 
 	sm["vx"] = prevVel.x;
@@ -445,6 +441,10 @@ bool CFreeController::SetState(const StateMap& sm)
 	SetStateFloat(sm, "rx", rot.x);
 	SetStateFloat(sm, "ry", rot.y);
 	SetStateFloat(sm, "rz", rot.z);
+	rot.x += (fastmath::HALFPI);
+	rot.x = fastmath::PI - rot.x;
+	rot.y -= fastmath::PI;
+	LOG("rot.x %f", rot.x);
 	camera->SetRot(rot);
 
 	SetStateFloat(sm, "vx", prevVel.x);

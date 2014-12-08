@@ -305,7 +305,6 @@ void CCameraHandler::GetState(CCameraController::StateMap& sm) const
 
 bool CCameraHandler::SetState(const CCameraController::StateMap& sm)
 {
-
 	CCameraController::StateMap::const_iterator it = sm.find("mode");
 	if (it != sm.end()) {
 		const unsigned int camMode = (unsigned int)it->second;
