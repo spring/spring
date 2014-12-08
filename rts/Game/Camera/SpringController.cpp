@@ -106,16 +106,22 @@ void CSpringController::MouseWheelMove(float move)
 				dist = oldDist;
 				zoomBack = false;
 				camHandler->CameraTransition(0.5f);
-			} else {
-				float newDist = CGround::LineGroundCol(curPos, curPos + mouse->dir * 15000, false);
-				if (newDist > 0.0f) {
-					pos = curPos + mouse->dir * newDist;
-				}
-				camera->SetPos(GetPos());
-				camera->Update();
-				float3 winPos = camera->CalcWindowCoordinates(pos);
-				mouse->WarpMouse(winPos.x, globalRendering->viewSizeY - winPos.y);
 			}
+
+			// zoom into mouse cursor pos
+			float newDist = CGround::LineGroundCol(curPos, curPos + mouse->dir * 15000, false);
+			if (newDist > 0.0f) {
+				pos = curPos + mouse->dir * newDist;
+			}
+			camera->SetPos(GetPos());
+			camera->Update();
+			camHandler->CameraTransition(0.25f);
+
+			warpMouseStart = spring_gettime();
+			warpMousePosOld = int2(mouse->lastx, mouse->lasty);
+			float3 winPos = camera->CalcWindowCoordinates(pos);
+			winPos.y = globalRendering->viewSizeY - winPos.y;
+			warpMousePosNew = int2(winPos.x, winPos.y);
 		} else {
 			// ZOOM OUT from mid screen
 			if (KeyInput::GetKeyModState(KMOD_ALT)) {
@@ -141,6 +147,19 @@ void CSpringController::MouseWheelMove(float move)
 
 void CSpringController::Update()
 {
+	if (warpMouseStart.isTime()) {
+		const float animSecs = 0.15f;
+		spring_time now = spring_gettime();
+		const float a = Clamp((now - warpMouseStart).toSecsf(), 0.f, animSecs) * (1.f / animSecs);
+		int2 mpos;
+		mpos.x = mix<int>(warpMousePosOld.x, warpMousePosNew.x, a);
+		mpos.y = mix<int>(warpMousePosOld.y, warpMousePosNew.y, a);
+		mouse->WarpMouse(mpos.x, mpos.y);
+		if (a >= 1.f) {
+			warpMouseStart = spring_notime;
+		}
+	}
+
 	pos.ClampInMap();
 	pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false) + 5.f;
 

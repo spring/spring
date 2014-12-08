@@ -444,7 +444,6 @@ bool CFreeController::SetState(const StateMap& sm)
 	rot.x += (fastmath::HALFPI);
 	rot.x = fastmath::PI - rot.x;
 	rot.y -= fastmath::PI;
-	LOG("rot.x %f", rot.x);
 	camera->SetRot(rot);
 
 	SetStateFloat(sm, "vx", prevVel.x);
