@@ -6,8 +6,19 @@ Spring changelog
 Major:
  - new shader based InfoTexture
  - new linux crashhandler by Major Bor3d0m
+ - new rotatable default camera
  - bugfixes & improvements
 
+
+Cameras:
+ ! removed TW, Orbital & Smooth camera
+ ! add new default camera: Spring camera
+  - it's a merge of TW & Overhead camera
+  - it's using [alt] as modifier for rotating the camera (in key & middle click scrolling)
+  - also can be rotated with the screen edges of the upper 30% of the screen
+ - add new EdgeMoveWidth & EdgeMoveDynamic config tags
+  - EdgeMoveWidth: defines the screen edge width used for scrolling
+  - EdgeMoveDynamic: if scroll speed depends on the distance to the screen edge (default on)
 
 SpringSettings.cfg:
  ! don't read old config file locations any more:

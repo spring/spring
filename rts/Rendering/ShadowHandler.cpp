@@ -487,10 +487,11 @@ void CShadowHandler::CreateShadows()
 	}
 
 	if (L->GetLightIntensity() > 0.0f) {
-		// move view into sun-space
+		// HACK
+		// needed for particle/billboard rendering
+		// NOT for frustum checking (which is semi broken for shadows)!
 		const float3 camUp = camera->up;
 		const float3 camRgt = camera->right;
-
 		camera->right = sunDirX;
 		camera->up = sunDirY;
 
