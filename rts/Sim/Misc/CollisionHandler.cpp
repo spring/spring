@@ -256,16 +256,12 @@ bool CCollisionHandler::IntersectPiecesHelper(
 	CMatrix44f unitMat = u->GetTransformMatrix(true);
 	CMatrix44f volMat;
 
-	CollisionQuery cqt;
-
-	if (cq == NULL)
-		cq = &cqt;
+	assert(cq != nullptr);
 
 	float minDistSq = std::numeric_limits<float>::max();
-	float curDistSq = std::numeric_limits<float>::max();
 
 	for (unsigned int n = 0; n < u->localModel->pieces.size(); n++) {
-		const LocalModelPiece* lmp = u->localModel->GetPiece(n);
+		      LocalModelPiece* lmp = u->localModel->GetPiece(n);
 		const CollisionVolume* lmpVol = lmp->GetCollisionVolume();
 
 		if (!lmp->scriptSetVisible || lmpVol->IgnoreHits())
@@ -274,19 +270,22 @@ bool CCollisionHandler::IntersectPiecesHelper(
 		volMat = unitMat * lmp->GetModelSpaceMatrix();
 		volMat.Translate(lmpVol->GetOffsets());
 
-		if (!CCollisionHandler::Intersect(lmpVol, volMat, p0, p1, cq))
-			continue;
-		// skip if neither an ingress nor an egress hit
-		if (cq->GetHitPos() == ZeroVector)
+		CollisionQuery cqn;
+		if (!CCollisionHandler::Intersect(lmpVol, volMat, p0, p1, &cqn))
 			continue;
 
-		cq->SetHitPiece(const_cast<LocalModelPiece*>(lmp));
+		// skip if neither an ingress nor an egress hit
+		if (!cqn.AnyHit())
+			continue;
 
 		// save the closest intersection (others are not needed)
-		if ((curDistSq = (cq->GetHitPos() - p0).SqLength()) >= minDistSq)
+		if (cqn.GetHitPos().SqDistance(p0) >= minDistSq)
 			continue;
 
-		minDistSq = curDistSq;
+		minDistSq = cqn.GetHitPos().SqDistance(p0);
+
+		*cq = cqn;
+		cq->SetHitPiece(lmp);
 	}
 
 	// true iff at least one piece was intersected

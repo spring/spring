@@ -12,7 +12,7 @@
 
 struct TeamStatistics
 {
-	CR_DECLARE_STRUCT(TeamStatistics);
+	CR_DECLARE_STRUCT(TeamStatistics)
 
 	TeamStatistics();
 

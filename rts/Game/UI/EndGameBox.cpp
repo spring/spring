@@ -38,7 +38,7 @@ static std::string FloatToSmallString(float num, float mul = 1) {
 	}
 
 	return c;
-};
+}
 
 
 bool CEndGameBox::enabled = true;

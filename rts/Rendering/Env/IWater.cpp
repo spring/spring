@@ -16,6 +16,7 @@
 CONFIG(int, ReflectiveWater)
 .defaultValue(IWater::WATER_RENDERER_REFLECTIVE)
 .safemodeValue(IWater::WATER_RENDERER_BASIC)
+.headlessValue(0)
 .minimumValue(0)
 .maximumValue(IWater::NUM_WATER_RENDERERS - 1)
 .description("Defines the type of water rendering. Can be set in game. Options are: 0 = Basic water, 1 = Reflective water, 2 = Reflective and Refractive water, 3 = Dynamic water, 4 = Bumpmapped water");
@@ -109,8 +110,8 @@ IWater* IWater::GetWater(IWater* currWaterRenderer, int nextWaterRendererMode)
 		case WATER_RENDERER_BUMPMAPPED: {
 			const bool canLoad =
 				GLEW_ARB_shading_language_100 &&
-				GL_ARB_fragment_shader &&
-				GL_ARB_vertex_shader;
+				GLEW_ARB_fragment_shader &&
+				GLEW_ARB_vertex_shader;
 
 			if (canLoad) {
 				try {

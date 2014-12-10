@@ -18,7 +18,7 @@ class LuaTable;
 struct WeaponDef
 {
 private:
-	CR_DECLARE_STRUCT(WeaponDef);
+	CR_DECLARE_STRUCT(WeaponDef)
 
 public:
 	WeaponDef();

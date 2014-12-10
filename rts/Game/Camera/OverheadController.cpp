@@ -18,16 +18,20 @@
 CONFIG(float, MiddleClickScrollSpeed).defaultValue(0.01f);
 CONFIG(int, OverheadScrollSpeed).defaultValue(10);
 CONFIG(float, OverheadTiltSpeed).defaultValue(1.0f);
-CONFIG(bool, OverheadEnabled).defaultValue(true);
+CONFIG(bool, OverheadEnabled).defaultValue(true).headlessValue(false);
 CONFIG(float, OverheadFOV).defaultValue(45.0f);
+
+
+static const float angleStep = fastmath::HALFPI / 14.f;
+
 
 COverheadController::COverheadController()
 	: flipped(false)
-	, zscale(0.5f)
 	, height(1500)
 	, oldAltHeight(1500)
 	, changeAltHeight(true)
 	, maxHeight(10000)
+	, angle(DEFAULT_ANGLE)
 {
 	middleClickScrollSpeed = configHandler->GetFloat("MiddleClickScrollSpeed");
 	scrollSpeed = configHandler->GetInt("OverheadScrollSpeed") * 0.1f;
@@ -92,8 +96,8 @@ void COverheadController::MouseWheelMove(float move)
 	// otherwise holding down LALT uses 'instant-zoom'
 	// from here to the end of the function (smoothed)
 	if (KeyInput::GetKeyModState(KMOD_CTRL)) {
-		zscale *= (1.0f + (0.01f * move * tiltSpeed * shiftSpeed));
-		zscale = Clamp(zscale, 0.05f, 10.0f);
+		angle += (move * tiltSpeed * shiftSpeed * 0.025f) * angleStep;
+		angle = Clamp(angle, 0.01f, fastmath::HALFPI);
 	} else {
 		if (move < 0.0f) {
 			// ZOOM IN to mouse cursor instead of mid screen
@@ -139,7 +143,7 @@ void COverheadController::MouseWheelMove(float move)
 
 		// instant-zoom: turn on the smooth transition and reset the camera tilt
 		if (KeyInput::GetKeyModState(KMOD_ALT)) {
-			zscale = 0.5f;
+			angle = DEFAULT_ANGLE;
 			camHandler->CameraTransition(1.0f);
 		} else {
 			changeAltHeight = true;
@@ -155,7 +159,10 @@ void COverheadController::UpdateVectors()
 	pos.z = Clamp(pos.z, 0.01f, gs->mapy * SQUARE_SIZE - 0.01f);
 	pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false);
 	height = Clamp(height, 60.0f, maxHeight);
-	dir = float3(0.0f, -1.0f, flipped ? zscale : -zscale).ANormalize();
+
+	float alpha = std::roundf(angle / angleStep) * angleStep;
+	alpha = Clamp(alpha, 0.01f, fastmath::HALFPI);
+	dir = float3(0.0f, -fastmath::cos(alpha), flipped ? fastmath::sin(alpha) : -fastmath::sin(alpha));
 }
 
 void COverheadController::Update()
@@ -185,6 +192,8 @@ void COverheadController::SwitchTo(bool showText)
 	if (showText) {
 		LOG("Switching to Overhead (TA) style camera");
 	}
+	angle = DEFAULT_ANGLE;
+	UpdateVectors();
 }
 
 void COverheadController::GetState(StateMap& sm) const
@@ -192,7 +201,7 @@ void COverheadController::GetState(StateMap& sm) const
 	CCameraController::GetState(sm);
 
 	sm["height"]  = height;
-	sm["zscale"]  = zscale;
+	sm["angle"]   = angle;
 	sm["flipped"] = flipped ? +1.0f : -1.0f;
 }
 
@@ -201,8 +210,9 @@ bool COverheadController::SetState(const StateMap& sm)
 	CCameraController::SetState(sm);
 
 	SetStateFloat(sm, "height", height);
-	SetStateFloat(sm, "zscale", zscale);
+	SetStateFloat(sm, "angle", angle);
 	SetStateBool (sm, "flipped", flipped);
+	UpdateVectors();
 
 	return true;
 }

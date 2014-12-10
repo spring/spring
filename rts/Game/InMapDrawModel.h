@@ -20,11 +20,11 @@ class TeamController;
  */
 class CInMapDrawModel
 {
-	CR_DECLARE_STRUCT(CInMapDrawModel);
-	CR_DECLARE_SUB(MapDrawPrimitive);
-	CR_DECLARE_SUB(MapPoint);
-	CR_DECLARE_SUB(MapLine);
-	CR_DECLARE_SUB(DrawQuad);
+	CR_DECLARE_STRUCT(CInMapDrawModel)
+	CR_DECLARE_SUB(MapDrawPrimitive)
+	CR_DECLARE_SUB(MapPoint)
+	CR_DECLARE_SUB(MapLine)
+	CR_DECLARE_SUB(DrawQuad)
 
 public:
 	static const size_t DRAW_QUAD_SIZE;
@@ -48,7 +48,7 @@ public:
 
 
 	struct MapDrawPrimitive {
-		CR_DECLARE(MapDrawPrimitive);
+		CR_DECLARE(MapDrawPrimitive)
 
 	public:
 		MapDrawPrimitive(bool spectator, int teamID, const TeamController* teamController)
@@ -83,7 +83,7 @@ public:
 	};
 
 	struct MapPoint : public MapDrawPrimitive {
-		CR_DECLARE(MapPoint);
+		CR_DECLARE(MapPoint)
 
 	public:
 		MapPoint(bool spectator, int teamID, const TeamController* teamController, const float3& pos, const std::string& label)
@@ -101,7 +101,7 @@ public:
 	};
 
 	struct MapLine : public MapDrawPrimitive {
-		CR_DECLARE(MapLine);
+		CR_DECLARE(MapLine)
 
 	public:
 		MapLine(bool spectator, int teamID, const TeamController* teamController, const float3& pos1, const float3& pos2)
@@ -129,7 +129,7 @@ public:
 	 * cell of a grid structure.
 	 */
 	struct DrawQuad {
-		CR_DECLARE_STRUCT(DrawQuad);
+		CR_DECLARE_STRUCT(DrawQuad)
 		std::list<CInMapDrawModel::MapPoint> points;
 		std::list<CInMapDrawModel::MapLine> lines;
 	};

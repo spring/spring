@@ -13,7 +13,7 @@ class IPathController;
 
 class CGroundMoveType : public AMoveType
 {
-	CR_DECLARE(CGroundMoveType);
+	CR_DECLARE(CGroundMoveType)
 
 public:
 	CGroundMoveType(CUnit* owner);

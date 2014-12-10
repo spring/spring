@@ -13,7 +13,7 @@
 #include "System/myMath.h"
 #include "System/Sync/HsiehHash.h"
 
-CR_BIND_DERIVED_INTERFACE(AMoveType, CObject);
+CR_BIND_DERIVED_INTERFACE(AMoveType, CObject)
 CR_REG_METADATA(AMoveType, (
 	CR_MEMBER(owner),
 	CR_MEMBER(goalPos),
@@ -28,7 +28,7 @@ CR_REG_METADATA(AMoveType, (
 
 	CR_MEMBER(useHeading),
 	CR_ENUM_MEMBER(progressState)
-));
+))
 
 AMoveType::AMoveType(CUnit* owner):
 	owner(owner),
@@ -164,7 +164,7 @@ bool AMoveType::SetMemberValue(unsigned int memberHash, void* memberValue) {
 		SetManeuverLeash(*reinterpret_cast<float*>(memberValue));
 		return true;
 	}
-	
+
 	return false;
 }
 

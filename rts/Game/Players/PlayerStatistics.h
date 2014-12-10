@@ -12,7 +12,7 @@
 struct PlayerStatistics : public TeamControllerStatistics
 {
 public:
-	CR_DECLARE_STRUCT(PlayerStatistics);
+	CR_DECLARE_STRUCT(PlayerStatistics)
 
 	PlayerStatistics();
 

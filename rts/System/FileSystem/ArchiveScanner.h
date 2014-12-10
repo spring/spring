@@ -30,7 +30,7 @@ namespace modtype
 	static const int primary = 1;
 	static const int hidden = 0;
 	static const int map = 3;
-};
+}
 
 class CArchiveScanner
 {
@@ -74,6 +74,7 @@ public:
 		void SetInfoItemValueBool(const std::string& key, bool value);
 
 		bool IsValid(std::string& error) const;
+		bool IsEmpty() const { return info.empty(); }
 
 		static bool IsReservedKey(const std::string& keyLower);
 		static std::string GetKeyDescription(const std::string& keyLower);
@@ -99,21 +100,17 @@ public:
 	CArchiveScanner();
 	~CArchiveScanner();
 
+public:
 	const std::string& GetFilepath() const;
 
+	std::vector<std::string> GetMaps() const;
 	std::vector<ArchiveData> GetPrimaryMods() const;
 	std::vector<ArchiveData> GetAllMods() const;
-	std::vector<std::string> GetArchives(const std::string& root) const {
-		return GetArchives(root, 0);
-	}
-private:
-	std::vector<std::string> GetArchives(const std::string& root, int depth) const;
-public:
-	/**
-	 * Returns the (human-readable) map names.
-	 */
-	std::vector<std::string> GetMaps() const;
+	std::vector<ArchiveData> GetAllArchives() const;
 
+	std::vector<std::string> GetAllArchivesUsedBy(const std::string& root, int depth = 0) const;
+
+public:
 	/// checksum of the given archive (without dependencies)
 	unsigned int GetSingleArchiveChecksum(const std::string& name) const;
 	/// Calculate checksum of the given archive and all its dependencies

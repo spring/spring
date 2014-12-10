@@ -6,7 +6,6 @@
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
 #include "Lua/LuaParser.h"
-#include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -20,6 +19,7 @@
 //#include "Rendering/GL/TimerQuery.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/GL/VBO.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -557,7 +557,6 @@ void CDecalsDrawerGL4::Draw()
 	}
 	glTimer.Start();*/
 
-	const CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 	const CSMFReadMap* smfrm = dynamic_cast<CSMFReadMap*>(readMap);
 
 	glEnable(GL_BLEND);
@@ -570,7 +569,7 @@ void CDecalsDrawerGL4::Draw()
 	//glEnable(GL_DEPTH_TEST);
 
 	decalShader->SetFlag("HAVE_SHADOWS", shadowHandler && shadowHandler->shadowsLoaded);
-	decalShader->SetFlag("HAVE_INFOTEX", gd->DrawExtraTex());
+	decalShader->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
 
 	decalShader->Enable();
 		decalShader->SetUniform3v("camPos", &camera->GetPos()[0]);
@@ -593,7 +592,7 @@ void CDecalsDrawerGL4::Draw()
 	}
 
 	glActiveTexture(GL_TEXTURE3);
-		glBindTexture(GL_TEXTURE_2D, gd->GetActiveInfoTexture());
+		glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
 
 	glActiveTexture(GL_TEXTURE4);
 		glBindTexture(GL_TEXTURE_2D, depthTex);

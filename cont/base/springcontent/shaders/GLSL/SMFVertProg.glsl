@@ -1,10 +1,6 @@
 #define SMF_TEXSQR_SIZE 1024.0
 #define SMF_DETAILTEX_RES 0.02
 
-// uniform vec2 mapSizePO2;   // pwr2map{x,z} * SQUARE_SIZE (TODO programmatically #define this)
-// uniform vec2 mapSize;      //     map{x,z} * SQUARE_SIZE (TODO programmatically #define this)
-// uniform vec2 mapHeights;   // readmap->curr{Min, Max}Height
-
 uniform ivec2 texSquare;
 uniform vec3 cameraPos;
 uniform vec4 lightDir;       // mapInfo->light.sunDir
@@ -26,19 +22,14 @@ void main() {
 	diffuseTexCoords = (floor(gl_Vertex.xz) / SMF_TEXSQR_SIZE) - vec2(texSquare);
 
 	// transform vertex pos
-	gl_Position = gl_ModelViewMatrix * gl_Vertex;
-	gl_ClipVertex = gl_Position;
+	gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+	gl_ClipVertex = gl_ModelViewMatrix * gl_Vertex;
 
-	#if (DEFERRED_MODE == 0)
-	float fogCoord = length(gl_Position.xyz);
-	#endif
-
-	gl_Position = gl_ProjectionMatrix * gl_Position;
-
-	#if (DEFERRED_MODE == 0)
+#ifndef DEFERRED_MODE
 	// emulate linear fog
+	float fogCoord = length(gl_ClipVertex.xyz);
 	fogFactor = (gl_Fog.end - fogCoord) * gl_Fog.scale; // gl_Fog.scale == 1.0 / (gl_Fog.end - gl_Fog.start)
 	fogFactor = clamp(fogFactor, 0.0, 1.0);
-	#endif
+#endif
 }
 

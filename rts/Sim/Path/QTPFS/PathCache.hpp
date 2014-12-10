@@ -57,7 +57,7 @@ namespace QTPFS {
 		std::vector<unsigned int> numCacheHits;
 		std::vector<unsigned int> numCacheMisses;
 	};
-};
+}
 
 #endif
 

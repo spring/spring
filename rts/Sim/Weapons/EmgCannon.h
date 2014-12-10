@@ -7,7 +7,7 @@
 
 class CEmgCannon: public CWeapon
 {
-	CR_DECLARE(CEmgCannon);
+	CR_DECLARE(CEmgCannon)
 public:
 	CEmgCannon(CUnit* owner, const WeaponDef* def);
 

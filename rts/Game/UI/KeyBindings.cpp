@@ -186,10 +186,9 @@ static const std::vector<DefaultBinding> defaultBindings = {
 	{ "Any+f3",  "LastMsgPos"            },
 	{ "Any+f4",  "ShowMetalMap"          },
 	{ "Any+f5",  "HideInterface"         },
-	{ "Any+f6",  "NoSound"               },
+	{ "Any+f6",  "MuteSound"             },
 	{ "Any+f7",  "DynamicSky"            },
-	{  "Any+l",  "togglelos"             },
-	{  "Any+;",  "toggleradarandjammer"  },
+	{ "Any+l",   "togglelos"             },
 
 	{ "Ctrl+Shift+f8",  "savegame" },
 	{ "Ctrl+Shift+f10", "createvideo" },
@@ -285,6 +284,7 @@ CKeyBindings::CKeyBindings()
 
 CKeyBindings::~CKeyBindings()
 {
+	configHandler->RemoveObserver(this);
 }
 
 

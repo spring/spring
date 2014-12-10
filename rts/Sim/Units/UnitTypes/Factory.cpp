@@ -20,15 +20,12 @@
 #include "System/EventHandler.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/Sync/SyncTracer.h"
 
-#define PLAY_SOUNDS 1
-#if (PLAY_SOUNDS == 1)
 #include "Game/GlobalUnsynced.h"
-#endif
 
-CR_BIND_DERIVED(CFactory, CBuilding, );
+CR_BIND_DERIVED(CFactory, CBuilding, )
 
 CR_REG_METADATA(CFactory, (
 	CR_MEMBER(buildSpeed),
@@ -42,7 +39,7 @@ CR_REG_METADATA(CFactory, (
 	CR_MEMBER(finishedBuildCommand),
 	CR_MEMBER(nanoPieceCache),
 	CR_POSTLOAD(PostLoad)
-));
+))
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -206,11 +203,9 @@ void CFactory::StartBuild(const UnitDef* buildeeDef) {
 	curBuild = buildee;
 	curBuildDef = NULL;
 
-	#if (PLAY_SOUNDS == 1)
 	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
-		Channels::General.PlayRandomSample(unitDef->sounds.build, buildPos);
+		Channels::General->PlayRandomSample(unitDef->sounds.build, buildPos);
 	}
-	#endif
 }
 
 void CFactory::UpdateBuild(CUnit* buildee) {
@@ -255,7 +250,7 @@ void CFactory::FinishBuild(CUnit* buildee) {
 	if (unitDef->fullHealthFactory && buildee->health < buildee->maxHealth) { return; }
 
 	{
-		if (group && buildee->group == 0) {
+		if (group && !buildee->group) {
 			buildee->SetGroup(group, true);
 		}
 	}
@@ -312,7 +307,7 @@ void CFactory::StopBuild()
 
 	if (curBuild) {
 		if (curBuild->beingBuilt) {
-			AddMetal(curBuild->metalCost * curBuild->buildProgress, false);
+			AddMetal(curBuild->cost.metal * curBuild->buildProgress, false);
 			curBuild->KillUnit(NULL, false, true);
 		}
 		DeleteDeathDependence(curBuild, DEPENDENCE_BUILD);

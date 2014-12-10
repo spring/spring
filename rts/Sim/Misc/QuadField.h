@@ -18,8 +18,8 @@ class CSolidObject;
 
 class CQuadField : boost::noncopyable
 {
-	CR_DECLARE_STRUCT(CQuadField);
-	CR_DECLARE_SUB(Quad);
+	CR_DECLARE_STRUCT(CQuadField)
+	CR_DECLARE_SUB(Quad)
 
 public:
 	static void Resize(unsigned int nqx, unsigned int nqz);
@@ -103,7 +103,7 @@ public:
 	void RemoveProjectile(CProjectile* projectile);
 
 	struct Quad {
-		CR_DECLARE_STRUCT(Quad);
+		CR_DECLARE_STRUCT(Quad)
 		Quad();
 		std::list<CUnit*> units;
 		std::vector< std::list<CUnit*> > teamUnits;

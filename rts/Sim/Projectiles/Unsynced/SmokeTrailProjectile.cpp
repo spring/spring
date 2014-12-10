@@ -12,7 +12,7 @@
 #include "Sim/Misc/Wind.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CSmokeTrailProjectile, CProjectile, (NULL, ZeroVector, ZeroVector, ZeroVector, ZeroVector, false, false, 0.0f, 0, 0.0f, false, NULL, NULL));
+CR_BIND_DERIVED(CSmokeTrailProjectile, CProjectile, (NULL, ZeroVector, ZeroVector, ZeroVector, ZeroVector, false, false, 0.0f, 0, 0.0f, false, NULL, NULL))
 
 CR_REG_METADATA(CSmokeTrailProjectile,(
 	CR_MEMBER(pos1),
@@ -34,7 +34,7 @@ CR_REG_METADATA(CSmokeTrailProjectile,(
 	CR_MEMBER(drawCallbacker),
 	CR_MEMBER(texture),
 	CR_RESERVED(4)
-));
+))
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

@@ -14,7 +14,7 @@ struct Command;
 class CMobileCAI : public CCommandAI
 {
 public:
-	CR_DECLARE(CMobileCAI);
+	CR_DECLARE(CMobileCAI)
 	CMobileCAI(CUnit* owner);
 	CMobileCAI();
 	virtual ~CMobileCAI() {}

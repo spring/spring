@@ -7,7 +7,7 @@
 
 class CWakeProjectile : public CProjectile
 {
-	CR_DECLARE(CWakeProjectile);
+	CR_DECLARE(CWakeProjectile)
 public:
 	CWakeProjectile(
 		CUnit* owner,

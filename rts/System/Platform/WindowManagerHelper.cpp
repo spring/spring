@@ -11,20 +11,22 @@
 #include "Game/GameVersion.h"
 
 
-SDL_Surface* WindowManagerHelper::currentIcon = NULL;
+namespace WindowManagerHelper {
 
-void WindowManagerHelper::SetIcon(const CBitmap* icon) {
+static SDL_Surface* currentIcon = nullptr;
+
+void SetIcon(const CBitmap* icon) {
 	if (SpringVersion::IsHeadless())
 		return;
 
 	if (icon != NULL) {
 		// 24bit RGB or 32bit RGBA
 		if (((icon->channels != 3) && (icon->channels != 4)) 
-#ifdef    WIN32
+//#ifdef    WIN32
 			// on windows, the icon has to be 32x32
 			|| (icon->xsize != 32)
 			|| (icon->ysize != 32)
-#endif // WIN32
+//#endif
 			) {
 			LOG_L(L_WARNING, "window-manager icon: Trying to set a window-manager icon with the wrong format.");
 			LOG_L(L_WARNING, "window-manager icon: It has to be 24bit or 32bit, and on windows it additionally has to be 32x32 pixels.");
@@ -48,7 +50,8 @@ void WindowManagerHelper::SetIcon(const CBitmap* icon) {
 	}
 }
 
-void WindowManagerHelper::FreeIcon() {
+
+void FreeIcon() {
 	if (globalRendering != NULL)
 		SDL_SetWindowIcon(globalRendering->window, NULL);
 
@@ -62,6 +65,8 @@ void WindowManagerHelper::FreeIcon() {
 }
 
 
-void WindowManagerHelper::SetCaption(const std::string& title) {
+void SetCaption(const std::string& title) {
 	SDL_SetWindowTitle(globalRendering->window, title.c_str());
 }
+
+}; // namespace WindowManagerHelper

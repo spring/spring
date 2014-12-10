@@ -7,7 +7,7 @@
 #include "System/creg/STL_Map.h"
 #include "System/myMath.h"
 
-CR_BIND(CWind, );
+CR_BIND(CWind, )
 
 CR_REG_METADATA(CWind, (
 	CR_MEMBER(maxWind),
@@ -23,7 +23,7 @@ CR_REG_METADATA(CWind, (
 
 	CR_MEMBER(windGens),
 	CR_RESERVED(12)
-));
+))
 
 
 // update all units every 15 secs

@@ -14,12 +14,12 @@
 #include "Sim/Units/Unit.h"
 
 
-CR_BIND_DERIVED(CLightningCannon, CWeapon, (NULL, NULL));
+CR_BIND_DERIVED(CLightningCannon, CWeapon, (NULL, NULL))
 
 CR_REG_METADATA(CLightningCannon,(
 	CR_MEMBER(color),
 	CR_RESERVED(8)
-));
+))
 
 CLightningCannon::CLightningCannon(CUnit* owner, const WeaponDef* def)
 	: CWeapon(owner, def)
@@ -70,7 +70,7 @@ void CLightningCannon::FireImpl(bool scriptCall)
 
 	if (shieldLength < boltLength) {
 		boltLength = shieldLength;
-		hitShield->BeamIntercepted(this);
+		hitShield->BeamIntercepted(this, curPos);
 	}
 
 	if (hitUnit != NULL) {
@@ -102,7 +102,7 @@ void CLightningCannon::FireImpl(bool scriptCall)
 	ProjectileParams pparams = GetProjectileParams();
 	pparams.pos = curPos;
 	pparams.end = curPos + curDir * (boltLength + 10.0f);
-	pparams.ttl = 10;
+	pparams.ttl = weaponDef->beamLaserTTL;
 
 	WeaponProjectileFactory::LoadProjectile(pparams);
 }

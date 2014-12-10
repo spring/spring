@@ -7,15 +7,17 @@
 #include "Map/ReadMap.h" // for the metal map
 #include "Map/MetalMap.h"
 #include "GlobalSynced.h" // for the map size
+#include <float.h>
 
-CR_BIND(CResourceHandler, );
 
+CR_BIND(CResourceHandler, )
 CR_REG_METADATA(CResourceHandler, (
 	CR_MEMBER(resources),
 //	CR_MEMBER(resourceMapAnalyzers),
 	CR_MEMBER(metalResourceId),
 	CR_MEMBER(energyResourceId)
-));
+))
+
 
 CResourceHandler* CResourceHandler::instance;
 
@@ -36,22 +38,18 @@ void CResourceHandler::FreeInstance()
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-// This is the minimum of a max float for all platforms
-// see: http://en.wikipedia.org/wiki/Float.h
-static const float MAX_FLOAT = 1E+37;
-
 CResourceHandler::CResourceHandler()
 {
-	CResource rMetal;
+	CResourceDescription rMetal;
 	rMetal.name = "Metal";
-	rMetal.optimum = MAX_FLOAT;
+	rMetal.optimum = FLT_MAX;
 	rMetal.extractorRadius = mapInfo->map.extractorRadius;
 	rMetal.maxWorth = mapInfo->map.maxMetal;
 	metalResourceId = AddResource(rMetal);
 
-	CResource rEnergy;
+	CResourceDescription rEnergy;
 	rEnergy.name = "Energy";
-	rEnergy.optimum = MAX_FLOAT;
+	rEnergy.optimum = FLT_MAX;
 	rEnergy.extractorRadius = 0.0f;
 	rEnergy.maxWorth = 0.0f;
 	energyResourceId = AddResource(rEnergy);
@@ -61,7 +59,7 @@ CResourceHandler::~CResourceHandler()
 {
 }
 
-int CResourceHandler::AddResource(const CResource& resource) {
+int CResourceHandler::AddResource(const CResourceDescription& resource) {
 
 	resources.push_back(resource);
 	int resourceId = resources.size()-1;
@@ -69,7 +67,7 @@ int CResourceHandler::AddResource(const CResource& resource) {
 	return resourceId;
 }
 
-const CResource* CResourceHandler::GetResource(int resourceId) const
+const CResourceDescription* CResourceHandler::GetResource(int resourceId) const
 {
 	if (IsValidId(resourceId)) {
 		return &resources[resourceId];
@@ -78,7 +76,7 @@ const CResource* CResourceHandler::GetResource(int resourceId) const
 	}
 }
 
-const CResource* CResourceHandler::GetResourceByName(const std::string& resourceName) const
+const CResourceDescription* CResourceHandler::GetResourceByName(const std::string& resourceName) const
 {
 	return GetResource(GetResourceId(resourceName));
 }
@@ -147,18 +145,6 @@ size_t CResourceHandler::GetNumResources() const
 	return resources.size();
 }
 
-
-//bool CResourceHandler::IsMetal(int resourceId) const
-//{
-//	const CResource* res = GetResource(resourceId);
-//	return res && (res->name == "Metal");
-//}
-//
-//bool CResourceHandler::IsEnergy(int resourceId) const
-//{
-//	const CResource* res = GetResource(resourceId);
-//	return res && (res->name == "Energy");
-//}
 
 int CResourceHandler::GetMetalId() const
 {

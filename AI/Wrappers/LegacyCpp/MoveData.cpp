@@ -8,7 +8,7 @@
 
 namespace springLegacyAI {
 
-CR_BIND(MoveData, );
+CR_BIND(MoveData, )
 
 CR_REG_METADATA(MoveData, (
 	CR_ENUM_MEMBER(moveType),
@@ -21,7 +21,6 @@ CR_REG_METADATA(MoveData, (
 	CR_MEMBER(depth),
 	CR_MEMBER(maxSlope),
 	CR_MEMBER(slopeMod),
-	CR_MEMBER(depthMod),
 
 	CR_MEMBER(pathType),
 	CR_MEMBER(crushStrength),
@@ -37,7 +36,7 @@ CR_REG_METADATA(MoveData, (
 	CR_MEMBER(subMarine),
 
 	CR_RESERVED(16)
-));
+))
 
 } // namespace springLegacyAI
 

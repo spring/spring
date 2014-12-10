@@ -35,16 +35,20 @@ CEventHandler::CEventHandler()
 	mouseOwner = NULL;
 
 	// Setup all events
-	#define SETUP_EVENT(name, props) SetupEvent(#name, &list ## name, props)
-	#define SETUP_UNMANAGED_EVENT(name, props) SetupEvent(#name, NULL, props)
+	#define SETUP_EVENT(name, props) SetupEvent(#name, &list ## name, props);
+	#define SETUP_UNMANAGED_EVENT(name, props) SetupEvent(#name, NULL, props);
 		#include "Events.def"
 	#undef SETUP_EVENT
 	#undef SETUP_UNMANAGED_EVENT
+
+	// helper event client (alwayss create)
+	EventBatchHandler::CreateInstance();
 }
 
 
 CEventHandler::~CEventHandler()
 {
+	EventBatchHandler::DeleteInstance();
 }
 
 
@@ -58,9 +62,9 @@ void CEventHandler::AddClient(CEventClient* ec)
 	EventMap::const_iterator it;
 	for (it = eventMap.begin(); it != eventMap.end(); ++it) {
 		const EventInfo& ei = it->second;
-		if (ei.HasPropBit(MANAGED_BIT) && (ei.GetList() != NULL)) {
+		if (ei.HasPropBit(MANAGED_BIT)) {
 			if (ec->WantsEvent(it->first)) {
-				ListInsert(*ei.GetList(), ec);
+				InsertEvent(ec, it->first);
 			}
 		}
 	}
@@ -78,8 +82,8 @@ void CEventHandler::RemoveClient(CEventClient* ec)
 	EventMap::const_iterator it;
 	for (it = eventMap.begin(); it != eventMap.end(); ++it) {
 		const EventInfo& ei = it->second;
-		if (ei.HasPropBit(MANAGED_BIT) && (ei.GetList() != NULL)) {
-			ListRemove(*ei.GetList(), ec);
+		if (ei.HasPropBit(MANAGED_BIT)) {
+			RemoveEvent(ec, it->first);
 		}
 	}
 }
@@ -500,27 +504,14 @@ void CEventHandler::Update()
 
 
 
-void CEventHandler::UpdateUnits() { eventBatchHandler->UpdateUnits(); }
-void CEventHandler::UpdateDrawUnits() { eventBatchHandler->UpdateDrawUnits(); }
 void CEventHandler::DeleteSyncedUnits() { eventBatchHandler->DeleteSyncedUnits(); }
-
-void CEventHandler::UpdateFeatures() { eventBatchHandler->UpdateFeatures(); }
-void CEventHandler::UpdateDrawFeatures() { eventBatchHandler->UpdateDrawFeatures(); }
-void CEventHandler::DeleteSyncedFeatures() { eventBatchHandler->DeleteSyncedFeatures(); }
-
-void CEventHandler::UpdateProjectiles() { eventBatchHandler->UpdateProjectiles(); }
-void CEventHandler::UpdateDrawProjectiles() { eventBatchHandler->UpdateDrawProjectiles(); }
 
 inline void ExecuteAllCallsFromSynced() { } //FIXME delete
 
 void CEventHandler::DeleteSyncedProjectiles() {
 	ExecuteAllCallsFromSynced();
-	eventBatchHandler->DeleteSyncedProjectiles();
 }
 
-void CEventHandler::UpdateObjects() {
-	eventBatchHandler->UpdateObjects();
-}
 void CEventHandler::DeleteSyncedObjects() {
 	ExecuteAllCallsFromSynced();
 }
@@ -572,6 +563,7 @@ DRAW_CALLIN(WorldRefraction)
 DRAW_CALLIN(ScreenEffects)
 DRAW_CALLIN(Screen)
 DRAW_CALLIN(InMiniMap)
+DRAW_CALLIN(InMiniMapBackground)
 
 
 #define DRAW_ENTITY_CALLIN(name, args, args2)     \
@@ -749,6 +741,15 @@ bool CEventHandler::MapDrawCmd(int playerID, int type,
 /******************************************************************************/
 /******************************************************************************/
 
+void CEventHandler::MetalMapChanged(const int x, const int z)
+{
+	ITERATE_EVENTCLIENTLIST(MetalMapChanged, x, z);
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
 void CEventHandler::UnsyncedProjectileCreated(const CProjectile* proj) {
 	//FIXME no real event
 	(eventBatchHandler->GetUnsyncedProjectileCreatedDestroyedBatch()).insert(proj);
@@ -757,11 +758,6 @@ void CEventHandler::UnsyncedProjectileCreated(const CProjectile* proj) {
 void CEventHandler::UnsyncedProjectileDestroyed(const CProjectile* proj) {
 	//FIXME no real event
 	(eventBatchHandler->GetUnsyncedProjectileCreatedDestroyedBatch()).erase_delete(proj);
-}
-
-void CEventHandler::LoadedModelRequested() {
-	//FIXME no real event
-	eventBatchHandler->LoadedModelRequested();
 }
 
 

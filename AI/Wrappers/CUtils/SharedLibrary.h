@@ -25,7 +25,7 @@ extern "C" {
 #ifndef bool
 	#include <stdbool.h>
 #endif
-#include <stddef.h> // for NULL
+#include <stddef.h> /* for NULL */
 
 #ifdef _WIN32
 	#include <windows.h>
@@ -82,4 +82,4 @@ void* sharedLib_findAddress(sharedLib_t sharedLib, const char* symbol);
 } // extern "C"
 #endif
 
-#endif // _SHAREDLIBRARY_H
+#endif /* _SHAREDLIBRARY_H */

@@ -12,7 +12,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "System/Matrix44f.h"
 #include "Sim/Misc/LosHandler.h"
-#include "Sim/Misc/ModInfo.h"
+#include "Sim/Misc/Resource.h"
 
 #define TREE_RADIUS 20
 
@@ -26,7 +26,7 @@ class CFireProjectile;
 
 class CFeature: public CSolidObject, public boost::noncopyable
 {
-	CR_DECLARE(CFeature);
+	CR_DECLARE(CFeature)
 
 public:
 	CFeature();
@@ -54,10 +54,7 @@ public:
 	void UpdateFinalHeight(bool useGroundHeight);
 	void StartFire();
 	void EmitGeoSmoke();
-	float RemainingResource(float res) const;
-	float RemainingMetal() const;
-	float RemainingEnergy() const;
-	int ChunkNumber(float f) const;
+
 	void CalculateTransform();
 	void DependentDied(CObject *o);
 	void ChangeTeam(int newTeam);
@@ -70,6 +67,9 @@ public:
 	//   this matrix is identical in synced and unsynced context!
 	CMatrix44f GetTransformMatrix(const bool synced = false, const bool error = false) const { return transMatrix; }
 	const CMatrix44f& GetTransformMatrixRef() const { return transMatrix; }
+
+private:
+	static int ChunkNumber(float f);
 
 public:
 	int defID;
@@ -85,11 +85,12 @@ public:
 	bool isAtFinalHeight;
 	bool inUpdateQue;
 
-	float resurrectProgress;
-	float reclaimLeft;
 	float finalHeight;
 
+	float resurrectProgress;
+	float reclaimLeft;
 	int lastReclaim;
+	SResourcePack resources;
 
 	/// which drawQuad we are part of
 	int drawQuad;
@@ -103,6 +104,7 @@ public:
 
 	/// the solid object that is on top of the geothermal
 	CSolidObject* solidOnTop;
+
 
 private:
 	void PostLoad();

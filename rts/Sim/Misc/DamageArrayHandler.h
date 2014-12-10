@@ -12,7 +12,7 @@
 class LuaParser;
 class CDamageArrayHandler : public boost::noncopyable
 {
-	CR_DECLARE_STRUCT(CDamageArrayHandler);
+	CR_DECLARE_STRUCT(CDamageArrayHandler)
 
 public:
 	CDamageArrayHandler(LuaParser* defsParser);

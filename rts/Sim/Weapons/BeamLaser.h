@@ -7,8 +7,8 @@
 
 class CBeamLaser: public CWeapon
 {
-	CR_DECLARE(CBeamLaser);
-	CR_DECLARE_SUB(SweepFireState);
+	CR_DECLARE(CBeamLaser)
+	CR_DECLARE_SUB(SweepFireState)
 
 public:
 	CBeamLaser(CUnit* owner, const WeaponDef* def);
@@ -34,7 +34,7 @@ private:
 
 	struct SweepFireState {
 	public:
-		CR_DECLARE_STRUCT(SweepFireState);
+		CR_DECLARE_STRUCT(SweepFireState)
 	
 		SweepFireState() {
 			sweepInitDst = 0.0f;

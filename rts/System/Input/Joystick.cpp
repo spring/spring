@@ -9,7 +9,7 @@
 #include "System/Log/ILog.h"
 #include "System/EventHandler.h"
 
-CONFIG(bool, JoystickEnabled).defaultValue(true);
+CONFIG(bool, JoystickEnabled).defaultValue(true).headlessValue(false);
 CONFIG(int, JoystickUse).defaultValue(0);
 
 Joystick* stick = NULL;
@@ -92,6 +92,12 @@ bool Joystick::HandleEvent(const SDL_Event& event)
 			eventHandler.JoystickEvent("JoyButtonUp", event.jbutton.button, event.jbutton.state);
 			break;
 		}
+		case SDL_JOYDEVICEADDED: //TODO
+			LOG("Joystick has been added");
+			break;
+		case SDL_JOYDEVICEREMOVED:
+			LOG("Joystick has been removed");
+			break;
 		default:
 		{
 		}

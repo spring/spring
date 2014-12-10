@@ -14,6 +14,6 @@ namespace Platform {
 	 * @param  flags   @see errorhandler.h
 	 */
 	void MsgBox(const std::string& message, const std::string& caption, const unsigned int& flags);
-};
+}
 
 #endif // _MESSAGEBOX_H_

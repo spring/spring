@@ -159,7 +159,6 @@ void CCameraHandler::UpdateCam()
 
 void CCameraHandler::CameraTransition(float nsecs)
 {
-
 	UpdateCam(); // prevents camera stutter when multithreading
 
 	nsecs = std::max(nsecs, 0.0f) * cameraTimeFactor;
@@ -393,6 +392,7 @@ void CCameraHandler::PushAction(const Action& action)
 			} else {
 				taCam->flipped = !taCam->flipped;
 			}
+			taCam->KeyMove(ZeroVector); //FIXME add a more clean way to force a call to ::UpdateVectors()
 		}
 		if (smCam) {
 			if (!action.extra.empty()) {
@@ -400,6 +400,7 @@ void CCameraHandler::PushAction(const Action& action)
 			} else {
 				smCam->flipped = !smCam->flipped;
 			}
+			smCam->KeyMove(ZeroVector); //FIXME add a more clean way to force a call to ::UpdateVectors()
 		}
 	}
 	else if (cmd == "viewsave") {

@@ -236,4 +236,35 @@ SafemodeConfigSource::SafemodeConfigSource()
 	}
 }
 
+/**
+ * @brief Fill with dedicated values of declared configuration variables.
+ */
+DedicatedConfigSource::DedicatedConfigSource()
+{
+	const ConfigVariable::MetaDataMap& vars = ConfigVariable::GetMetaDataMap();
+
+	for (ConfigVariable::MetaDataMap::const_iterator it = vars.begin(); it != vars.end(); ++it) {
+		const ConfigVariableMetaData* metadata = it->second;
+		if (metadata->GetDedicatedValue().IsSet()) {
+			data[metadata->GetKey()] = metadata->GetDedicatedValue().ToString();
+		}
+	}
+}
+
+
+/**
+ * @brief Fill with headless values of declared configuration variables.
+ */
+HeadlessConfigSource::HeadlessConfigSource()
+{
+	const ConfigVariable::MetaDataMap& vars = ConfigVariable::GetMetaDataMap();
+
+	for (ConfigVariable::MetaDataMap::const_iterator it = vars.begin(); it != vars.end(); ++it) {
+		const ConfigVariableMetaData* metadata = it->second;
+		if (metadata->GetHeadlessValue().IsSet()) {
+			data[metadata->GetKey()] = metadata->GetHeadlessValue().ToString();
+		}
+	}
+}
+
 /******************************************************************************/

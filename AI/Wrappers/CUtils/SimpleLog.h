@@ -31,7 +31,7 @@ enum SimpleLog_Level {
 	SIMPLELOG_LEVEL_FINEST      = 10
 };
 
-#include <stdbool.h> // bool, true, false
+#include <stdbool.h> /* bool, true, false */
 
 #define EXTERNAL_LOGGER(msg)   log(msg);
 
@@ -70,4 +70,4 @@ const char* simpleLog_levelToStr(int logLevel);
 } // extern "C"
 #endif
 
-#endif // _LOG_H
+#endif /* _LOG_H */

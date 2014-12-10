@@ -13,15 +13,16 @@
 #include "Game/Game.h"
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
+#include "Map/BaseGroundDrawer.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Map/BaseGroundDrawer.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/ProjectileDrawer.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -43,14 +44,14 @@ using std::vector;
 using std::min;
 using std::max;
 
-CONFIG(int, BumpWaterTexSizeReflection).defaultValue(512).minimumValue(32).description("Sets the size of the framebuffer texture used to store the reflection in Bumpmapped water.");
-CONFIG(int, BumpWaterReflection).defaultValue(1).minimumValue(0).maximumValue(2).description("Determines the amount of objects reflected in Bumpmapped water.\n0:=off, 1:=fast (skip terrain), 2:=full");
-CONFIG(int, BumpWaterRefraction).defaultValue(1).minimumValue(0).maximumValue(2).description("Determines the method of refraction with Bumpmapped water.\n0:=off, 1:=screencopy, 2:=own rendering cycle");
+CONFIG(int, BumpWaterTexSizeReflection).defaultValue(512).headlessValue(32).minimumValue(32).description("Sets the size of the framebuffer texture used to store the reflection in Bumpmapped water.");
+CONFIG(int, BumpWaterReflection).defaultValue(1).headlessValue(0).minimumValue(0).maximumValue(2).description("Determines the amount of objects reflected in Bumpmapped water.\n0:=off, 1:=fast (skip terrain), 2:=full");
+CONFIG(int, BumpWaterRefraction).defaultValue(1).headlessValue(0).minimumValue(0).maximumValue(2).description("Determines the method of refraction with Bumpmapped water.\n0:=off, 1:=screencopy, 2:=own rendering cycle");
 CONFIG(float, BumpWaterAnisotropy).defaultValue(0.0f).minimumValue(0.0f);
-CONFIG(bool, BumpWaterUseDepthTexture).defaultValue(true);
+CONFIG(bool, BumpWaterUseDepthTexture).defaultValue(true).headlessValue(false);
 CONFIG(int, BumpWaterDepthBits).defaultValue(24).minimumValue(16).maximumValue(32);
 CONFIG(bool, BumpWaterBlurReflection).defaultValue(false);
-CONFIG(bool, BumpWaterShoreWaves).defaultValue(true).safemodeValue(false).description("Enables rendering of shorewaves.");
+CONFIG(bool, BumpWaterShoreWaves).defaultValue(true).headlessValue(false).safemodeValue(false).description("Enables rendering of shorewaves.");
 CONFIG(bool, BumpWaterEndlessOcean).defaultValue(true).description("Sets whether Bumpmapped water will be drawn beyond the map edge.");
 CONFIG(bool, BumpWaterDynamicWaves).defaultValue(true);
 CONFIG(bool, BumpWaterUseUniforms).defaultValue(false);
@@ -1097,10 +1098,8 @@ void CBumpWater::Draw()
 		glDisable(GL_BLEND);
 	}
 
-	const CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-
 	waterShader->SetFlag("opt_shadows", (shadowHandler && shadowHandler->shadowsLoaded));
-	waterShader->SetFlag("opt_infotex", gd->DrawExtraTex());
+	waterShader->SetFlag("opt_infotex", infoTextureHandler->IsEnabled());
 
 	waterShader->Enable();
 	waterShader->SetUniform3fv(0, &camera->GetPos()[0]);
@@ -1126,7 +1125,7 @@ void CBumpWater::Draw()
 	glActiveTexture(GL_TEXTURE7); glBindTexture(target,        depthTexture);
 	glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, waveRandTexture);
 	//glActiveTexture(GL_TEXTURE9); see above
-	glActiveTexture(GL_TEXTURE10); glBindTexture(GL_TEXTURE_2D, gd->GetActiveInfoTexture());
+	glActiveTexture(GL_TEXTURE10); glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
 	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, normalTexture);
 
 	if (useUniforms) {

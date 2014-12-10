@@ -12,7 +12,7 @@
 #include "System/float3.h"
 #include "System/Log/ILog.h"
 
-CR_BIND_DERIVED(CSimpleParticleSystem, CProjectile, );
+CR_BIND_DERIVED(CSimpleParticleSystem, CProjectile, )
 
 CR_REG_METADATA(CSimpleParticleSystem,
 (
@@ -38,9 +38,9 @@ CR_REG_METADATA(CSimpleParticleSystem,
 	CR_MEMBER_ENDFLAG(CM_Config),
 	CR_MEMBER(particles),
 	CR_RESERVED(16)
-));
+))
 
-CR_BIND(CSimpleParticleSystem::Particle, );
+CR_BIND(CSimpleParticleSystem::Particle, )
 
 CR_REG_METADATA_SUB(CSimpleParticleSystem, Particle,
 (
@@ -52,7 +52,7 @@ CR_REG_METADATA_SUB(CSimpleParticleSystem, Particle,
 	CR_MEMBER(sizeGrowth),
 	CR_MEMBER(sizeMod),
 	CR_RESERVED(8)
-));
+))
 
 CSimpleParticleSystem::CSimpleParticleSystem()
 	: CProjectile()
@@ -191,20 +191,20 @@ void CSimpleParticleSystem::Init(const CUnit* owner, const float3& offset)
 
 
 
-CR_BIND_DERIVED(CSphereParticleSpawner, CSimpleParticleSystem, );
+CR_BIND_DERIVED(CSphereParticleSpawner, CSimpleParticleSystem, )
 
 CR_REG_METADATA(CSphereParticleSpawner,
 (
 	CR_MEMBER_BEGINFLAG(CM_Config),
 	CR_MEMBER_ENDFLAG(CM_Config)
-));
+))
 
 CSphereParticleSpawner::CSphereParticleSpawner(): CSimpleParticleSystem()
 {
 }
 
 
-void CSphereParticleSpawner::Init(CUnit* owner, const float3& offset)
+void CSphereParticleSpawner::Init(const CUnit* owner, const float3& offset)
 {
 	const float3 up = emitVector;
 	const float3 right = up.cross(float3(up.y, up.z, -up.x));

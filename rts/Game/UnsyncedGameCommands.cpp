@@ -27,7 +27,6 @@
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
 #include "Net/GameServer.h"
-#include "Map/BaseGroundDrawer.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
 #include "Map/SMF/SMFGroundDrawer.h"
@@ -49,11 +48,15 @@
 #include "Rendering/TeamHighlight.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/VerticalSync.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
+#include "Rendering/Map/InfoTexture/Modern/Path.h"
 #include "Lua/LuaOpenGL.h"
 #include "Lua/LuaUI.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Scripts/UnitScript.h"
-#include "Sim/Units/Groups/GroupHandler.h"
+#include "Game/UI/Groups/GroupHandler.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "UI/CommandColors.h"
 #include "UI/EndGameBox.h"
@@ -78,7 +81,7 @@
 #include "Net/Protocol/NetProtocol.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Sound/ISound.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/Sync/DumpState.h"
 #include "System/Util.h"
 #include "System/EventHandler.h"
@@ -463,7 +466,7 @@ public:
 
 		if (!action.GetArgs().empty()) {
 			bool enable = true;
-			SetBoolArg(enable, action.GetArgs());
+			InverseOrSetBool(enable, action.GetArgs());
 
 			if (enable != smfGD->ToggleMapBorder())
 				smfGD->ToggleMapBorder();
@@ -533,7 +536,7 @@ public:
 		if (!canUseShaders)
 			return false;
 
-		SetBoolArg(unitDrawer->UseAdvShadingRef(), action.GetArgs());
+		InverseOrSetBool(unitDrawer->UseAdvShadingRef(), action.GetArgs());
 		LogSystemStatus("model shaders", unitDrawer->UseAdvShading());
 		return true;
 	}
@@ -554,7 +557,7 @@ public:
 		if (!canUseShaders)
 			return false;
 
-		SetBoolArg(gd->UseAdvShadingRef(), action.GetArgs());
+		InverseOrSetBool(gd->UseAdvShadingRef(), action.GetArgs());
 		LogSystemStatus("map shaders", gd->UseAdvShading());
 		return true;
 	}
@@ -1266,6 +1269,8 @@ public:
 		game->chatting = true;
 		game->ignoreNextChar = true;
 		game->consoleHistory->ResetPosition();
+		inMapDrawer->SetDrawMode(false);
+
 		return true;
 	}
 
@@ -1337,7 +1342,7 @@ public:
 		// do not need to update lastReadNetTime, gets
 		// done when NETMSG_PAUSE makes the round-trip
 		bool newPause = gs->paused;
-		SetBoolArg(newPause, action.GetArgs());
+		InverseOrSetBool(newPause, action.GetArgs());
 		net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, newPause));
 		return true;
 	}
@@ -1362,21 +1367,33 @@ public:
 };
 
 
-
-// XXX unlucky name; maybe make this "Sound {0|1}" instead (bool arg or toggle)
-class NoSoundActionExecutor : public IUnsyncedActionExecutor {
+class MuteActionExecutor : public IUnsyncedActionExecutor {
 public:
-	NoSoundActionExecutor() : IUnsyncedActionExecutor("NoSound",
-			"Enable/Disable the sound system") {}
+	MuteActionExecutor() : IUnsyncedActionExecutor("MuteSound",
+			"Mute/Unmute the current sound system") {}
 
 	bool Execute(const UnsyncedAction& action) const {
 
 		// toggle
 		sound->Mute();
-		LogSystemStatus("Sound", !sound->IsMuted());
+		LogSystemStatus("Mute", sound->IsMuted());
 		return true;
 	}
 };
+
+class SoundActionExecutor : public IUnsyncedActionExecutor {
+public:
+	SoundActionExecutor() : IUnsyncedActionExecutor("SoundDevice",
+			"Switch the sound output system (currently only OpenAL / NullAudio)") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+
+		// toggle
+		LogSystemStatus("Sound", !sound->ChangeOutput());
+		return true;
+	}
+};
+
 
 
 
@@ -1398,15 +1415,15 @@ public:
 			enable = true;
 
 		if (channel == "UnitReply")
-			Channels::UnitReply.Enable(enable);
+			Channels::UnitReply->Enable(enable);
 		else if (channel == "General")
-			Channels::General.Enable(enable);
+			Channels::General->Enable(enable);
 		else if (channel == "Battle")
-			Channels::Battle.Enable(enable);
+			Channels::Battle->Enable(enable);
 		else if (channel == "UserInterface")
-			Channels::UserInterface.Enable(enable);
+			Channels::UserInterface->Enable(enable);
 		else if (channel == "Music")
-			Channels::BGMusic.Enable(enable);
+			Channels::BGMusic->Enable(enable);
 		else
 			LOG_L(L_WARNING, "/%s: wrong channel name \"%s\"", GetCommand().c_str(), channel.c_str());
 
@@ -1439,7 +1456,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 
-		SetBoolArg(treeDrawer->drawTrees, action.GetArgs());
+		InverseOrSetBool(treeDrawer->drawTrees, action.GetArgs());
 		LogSystemStatus("rendering of engine trees", treeDrawer->drawTrees);
 		return true;
 	}
@@ -1454,7 +1471,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 
-		SetBoolArg(sky->dynamicSky, action.GetArgs());
+		InverseOrSetBool(sky->dynamicSky, action.GetArgs());
 		LogSystemStatus("dynamic-sky rendering", sky->dynamicSky);
 		return true;
 	}
@@ -1470,7 +1487,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 
 		bool dynamicSun = sky->GetLight()->IsDynamic();
-		SetBoolArg(dynamicSun, action.GetArgs());
+		InverseOrSetBool(dynamicSun, action.GetArgs());
 		sky->SetLight(dynamicSun);
 		LogSystemStatus("dynamic-sun rendering", sky->GetLight()->IsDynamic());
 		return true;
@@ -1532,7 +1549,7 @@ public:
 			"Hide/Show the GUI controlls") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		SetBoolArg(game->hideInterface, action.GetArgs());
+		InverseOrSetBool(game->hideInterface, action.GetArgs());
 		return true;
 	}
 };
@@ -1757,7 +1774,7 @@ public:
 			"Disable rendering of all auxiliary map overlays") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->DisableExtraTexture();
+		infoTextureHandler->SetMode("");
 		return true;
 	}
 };
@@ -1770,20 +1787,7 @@ public:
 			"Enable rendering of the auxiliary height-map overlay") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->SetHeightTexture();
-		return true;
-	}
-};
-
-
-
-class ToggleRadarAndJammerActionExecutor : public IUnsyncedActionExecutor {
-public:
-	ToggleRadarAndJammerActionExecutor() : IUnsyncedActionExecutor("ToggleRadarAndJammer",
-			"Enable/Disable rendering of the auxiliary radar- & jammer-map overlay") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->ToggleRadarAndJammer();
+		infoTextureHandler->ToggleMode("height");
 		return true;
 	}
 };
@@ -1796,7 +1800,7 @@ public:
 			"Enable rendering of the auxiliary metal-map overlay") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->SetMetalTexture();
+		infoTextureHandler->ToggleMode("metal");
 		return true;
 	}
 };
@@ -1809,7 +1813,9 @@ public:
 			"Enable rendering of the path traversability-map overlay") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathTrav);
+		CPathTexture* pathTexInfo = dynamic_cast<CPathTexture*>(infoTextureHandler->GetInfoTexture("path"));
+		if (pathTexInfo) pathTexInfo->ShowMoveDef(-1);
+		infoTextureHandler->ToggleMode("path");
 		return true;
 	}
 };
@@ -1820,7 +1826,7 @@ public:
 			"Enable/Disable rendering of the path heat-map overlay", true) {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathHeat);
+		infoTextureHandler->ToggleMode("heat");
 		return true;
 	}
 };
@@ -1831,7 +1837,7 @@ public:
 			"Enable/Disable rendering of the path flow-map overlay", true) {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathFlow);
+		infoTextureHandler->ToggleMode("flow");
 		return true;
 	}
 };
@@ -1842,12 +1848,10 @@ public:
 			"Enable rendering of the path cost-map overlay", true) {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathCost);
+		infoTextureHandler->ToggleMode("pathcost");
 		return true;
 	}
 };
-
-
 
 class ToggleLOSActionExecutor : public IUnsyncedActionExecutor {
 public:
@@ -1855,7 +1859,65 @@ public:
 			"Enable rendering of the auxiliary LOS-map overlay") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->ToggleLosTexture();
+		infoTextureHandler->ToggleMode("los");
+		return true;
+	}
+};
+
+class ToggleInfoActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ToggleInfoActionExecutor() : IUnsyncedActionExecutor("ToggleInfo",
+			"Toggles current info texture view") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		infoTextureHandler->ToggleMode(action.GetArgs());
+		return true;
+	}
+};
+
+
+class ShowPathTypeActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ShowPathTypeActionExecutor() : IUnsyncedActionExecutor("ShowPathType",
+			"Shows path traversability for a given MoveDefName, MoveDefID or UnitDefName") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		CPathTexture* pathTexInfo = dynamic_cast<CPathTexture*>(infoTextureHandler->GetInfoTexture("path"));
+		if (pathTexInfo) {
+			bool set = false;
+
+			if (!action.GetArgs().empty()) {
+				if (!set) {
+					bool failed = false;
+					unsigned int i = StringToInt(action.GetArgs(), &failed);
+					if (failed) i = -1;
+					const MoveDef* md = moveDefHandler->GetMoveDefByName(action.GetArgs());
+					if (!md && i<moveDefHandler->GetNumMoveDefs()) md = moveDefHandler->GetMoveDefByPathType(i);
+					if (md) {
+						set = true;
+						pathTexInfo->ShowMoveDef(md->pathType);
+						LOG("Showing PathView for MoveDef: %s", md->name.c_str());
+					}
+				}
+
+				if (!set) {
+					const UnitDef* ud = unitDefHandler->GetUnitDefByName(action.GetArgs());
+					if (ud) {
+						set = true;
+						pathTexInfo->ShowUnitDef(ud->id);
+						LOG("Showing BuildView for UnitDef: %s", ud->name.c_str());
+					}
+				}
+			}
+
+			if (!set) {
+				pathTexInfo->ShowMoveDef(-1);
+				LOG("Switching back to automatic PathView");
+			}
+
+			if (set && infoTextureHandler->GetMode() != "path")
+				infoTextureHandler->ToggleMode("path");
+		}
 		return true;
 	}
 };
@@ -2013,7 +2075,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 
-		SetBoolArg(game->showClock, action.GetArgs());
+		InverseOrSetBool(game->showClock, action.GetArgs());
 		configHandler->Set("ShowClock", game->showClock ? 1 : 0);
 		LogSystemStatus("small digital clock", game->showClock);
 		return true;
@@ -2063,7 +2125,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 
-		SetBoolArg(game->showFPS, action.GetArgs());
+		InverseOrSetBool(game->showFPS, action.GetArgs());
 		configHandler->Set("ShowFPS", game->showFPS ? 1 : 0);
 		LogSystemStatus("frames-per-second indicator", game->showFPS);
 		return true;
@@ -2079,7 +2141,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 
-		SetBoolArg(game->showSpeed, action.GetArgs());
+		InverseOrSetBool(game->showSpeed, action.GetArgs());
 		configHandler->Set("ShowSpeed", game->showSpeed ? 1 : 0);
 		LogSystemStatus("simulation speed indicator", game->showSpeed);
 		return true;
@@ -2229,7 +2291,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 
 		bool safeMode = LuaOpenGL::GetSafeMode();
-		SetBoolArg(safeMode, action.GetArgs());
+		InverseOrSetBool(safeMode, action.GetArgs());
 		LuaOpenGL::SetSafeMode(safeMode);
 		LogSystemStatus("OpenGL safe-mode", LuaOpenGL::GetSafeMode());
 		return true;
@@ -2247,7 +2309,7 @@ public:
 		if (!resourceBar)
 			return false;
 
-		SetBoolArg(resourceBar->enabled, action.GetArgs());
+		InverseOrSetBool(resourceBar->enabled, action.GetArgs());
 		return true;
 	}
 };
@@ -2264,7 +2326,7 @@ public:
 		if (!tooltip)
 			return false;
 
-		SetBoolArg(tooltip->enabled, action.GetArgs());
+		InverseOrSetBool(tooltip->enabled, action.GetArgs());
 		return true;
 	}
 };
@@ -2280,7 +2342,7 @@ public:
 		if (!game->infoConsole)
 			return false;
 
-		SetBoolArg(game->infoConsole->enabled, action.GetArgs());
+		InverseOrSetBool(game->infoConsole->enabled, action.GetArgs());
 		return true;
 	}
 };
@@ -2293,7 +2355,7 @@ public:
 			"Enables/Disables the statistics graphs shown at the end of the game") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		SetBoolArg(CEndGameBox::enabled, action.GetArgs());
+		InverseOrSetBool(CEndGameBox::enabled, action.GetArgs());
 		return true;
 	}
 };
@@ -2308,7 +2370,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 
 		bool drawHUD = hudDrawer->GetDraw();
-		SetBoolArg(drawHUD, action.GetArgs());
+		InverseOrSetBool(drawHUD, action.GetArgs());
 		hudDrawer->SetDraw(drawHUD);
 		return true;
 	}
@@ -2324,7 +2386,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 
 		bool aiDebugDraw = debugDrawerAI->GetDraw();
-		SetBoolArg(aiDebugDraw, action.GetArgs());
+		InverseOrSetBool(aiDebugDraw, action.GetArgs());
 		debugDrawerAI->SetDraw(aiDebugDraw);
 		LogSystemStatus("SkirmishAI debug drawing", debugDrawerAI->GetDraw());
 		return true;
@@ -2340,7 +2402,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 
-		SetBoolArg(globalRendering->drawMapMarks, action.GetArgs());
+		InverseOrSetBool(globalRendering->drawMapMarks, action.GetArgs());
 		LogSystemStatus("map marks rendering", globalRendering->drawMapMarks);
 		return true;
 	}
@@ -2356,7 +2418,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 
 		bool allMarksVisible = inMapDrawerModel->GetAllMarksVisible();
-		SetBoolArg(allMarksVisible, action.GetArgs());
+		InverseOrSetBool(allMarksVisible, action.GetArgs());
 		inMapDrawerModel->SetAllMarksVisible(allMarksVisible);
 		return true;
 	}
@@ -2386,7 +2448,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 
 		bool luaMapDrawingAllowed = inMapDrawer->GetLuaMapDrawingAllowed();
-		SetBoolArg(luaMapDrawingAllowed, action.GetArgs());
+		InverseOrSetBool(luaMapDrawingAllowed, action.GetArgs());
 		inMapDrawer->SetLuaMapDrawingAllowed(luaMapDrawingAllowed);
 		return true;
 	}
@@ -2467,7 +2529,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 
 		bool modUICtrl = CLuaHandle::GetModUICtrl();
-		SetBoolArg(modUICtrl, action.GetArgs());
+		InverseOrSetBool(modUICtrl, action.GetArgs());
 		CLuaHandle::SetModUICtrl(modUICtrl);
 		configHandler->Set("LuaModUICtrl", modUICtrl ? 1 : 0);
 		return true;
@@ -2479,7 +2541,7 @@ public:
 class MiniMapActionExecutor : public IUnsyncedActionExecutor {
 public:
 	MiniMapActionExecutor() : IUnsyncedActionExecutor("MiniMap",
-			"Show/Hide the mini-map provided by the engine") {}
+			"FIXME document subcommands") {}
 
 	bool Execute(const UnsyncedAction& action) const {
 		if (!minimap)
@@ -2501,7 +2563,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		bool drawDecals = IGroundDecalDrawer::GetDrawDecals();
-		SetBoolArg(drawDecals, action.GetArgs());
+		InverseOrSetBool(drawDecals, action.GetArgs());
 		IGroundDecalDrawer::SetDrawDecals(drawDecals);
 
 		LogSystemStatus("Ground-decals rendering", IGroundDecalDrawer::GetDrawDecals());
@@ -2565,7 +2627,7 @@ public:
 			return false;
 
 		bool gatherMode = guihandler->GetGatherMode();
-		SetBoolArg(gatherMode, action.GetArgs());
+		InverseOrSetBool(gatherMode, action.GetArgs());
 		guihandler->SetGatherMode(gatherMode);
 		LogSystemStatus("Gather-Mode", guihandler->GetGatherMode());
 		return true;
@@ -2719,7 +2781,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-		SetBoolArg(gd->WireFrameModeRef(), action.GetArgs());
+		InverseOrSetBool(gd->WireFrameModeRef(), action.GetArgs());
 		// TODO: make this a separate action
 		// sky->wireframe = gd->WireFrameMode();
 		LogSystemStatus("wireframe map-drawing mode", gd->WireFrameMode());
@@ -2735,7 +2797,7 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const {
-		SetBoolArg(DebugColVolDrawer::enable, action.GetArgs());
+		InverseOrSetBool(DebugColVolDrawer::enable, action.GetArgs());
 		return true;
 	}
 };
@@ -3222,7 +3284,8 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new DebugColVolDrawerActionExecutor());
 	AddActionExecutor(new DebugPathDrawerActionExecutor());
 	AddActionExecutor(new DebugTraceRayDrawerActionExecutor());
-	AddActionExecutor(new NoSoundActionExecutor());
+	AddActionExecutor(new MuteActionExecutor());
+	AddActionExecutor(new SoundActionExecutor());
 	AddActionExecutor(new SoundChannelEnableActionExecutor());
 	AddActionExecutor(new CreateVideoActionExecutor());
 	AddActionExecutor(new DrawTreesActionExecutor());
@@ -3244,13 +3307,14 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new ControlUnitActionExecutor());
 	AddActionExecutor(new ShowStandardActionExecutor());
 	AddActionExecutor(new ShowElevationActionExecutor());
-	AddActionExecutor(new ToggleRadarAndJammerActionExecutor());
 	AddActionExecutor(new ShowMetalMapActionExecutor());
 	AddActionExecutor(new ShowPathTravActionExecutor());
 	AddActionExecutor(new ShowPathHeatActionExecutor());
 	AddActionExecutor(new ShowPathFlowActionExecutor());
 	AddActionExecutor(new ShowPathCostActionExecutor());
 	AddActionExecutor(new ToggleLOSActionExecutor());
+	AddActionExecutor(new ToggleInfoActionExecutor());
+	AddActionExecutor(new ShowPathTypeActionExecutor());
 	AddActionExecutor(new ShareDialogActionExecutor());
 	AddActionExecutor(new QuitMessageActionExecutor());
 	AddActionExecutor(new QuitMenuActionExecutor());

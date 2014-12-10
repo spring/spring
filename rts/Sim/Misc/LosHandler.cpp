@@ -19,9 +19,9 @@
 using std::min;
 using std::max;
 
-CR_BIND(LosInstance, );
-CR_BIND(CLosHandler, );
-CR_BIND(CLosHandler::DelayedInstance, );
+CR_BIND(LosInstance, )
+CR_BIND(CLosHandler, )
+CR_BIND(CLosHandler::DelayedInstance, )
 
 CR_REG_METADATA(LosInstance,(
 	CR_IGNORED(losSquares),
@@ -35,7 +35,7 @@ CR_REG_METADATA(LosInstance,(
 	CR_MEMBER(hashNum),
 	CR_MEMBER(baseHeight),
 	CR_MEMBER(toBeDeleted)
-));
+))
 
 void CLosHandler::PostLoad()
 {
@@ -49,16 +49,30 @@ void CLosHandler::PostLoad()
 }
 
 CR_REG_METADATA(CLosHandler,(
+	CR_IGNORED(losMipLevel),
+	CR_IGNORED(airMipLevel),
+	CR_IGNORED(losDiv),
+	CR_IGNORED(airDiv),
+	CR_IGNORED(invLosDiv),
+	CR_IGNORED(invAirDiv),
+	CR_IGNORED(airSizeX),
+	CR_IGNORED(airSizeY),
+	CR_IGNORED(losSizeX),
+	CR_IGNORED(losSizeY),
+	CR_IGNORED(requireSonarUnderWater),
+
+	CR_MEMBER(losAlgo),
+	CR_MEMBER(losMaps),
+	CR_MEMBER(airLosMaps),
 	CR_MEMBER(instanceHash),
 	CR_MEMBER(toBeDeleted),
 	CR_MEMBER(delayQue),
-	CR_RESERVED(8),
 	CR_POSTLOAD(PostLoad)
-));
+))
 
 CR_REG_METADATA_SUB(CLosHandler,DelayedInstance, (
 	CR_MEMBER(instance),
-	CR_MEMBER(timeoutTime)));
+	CR_MEMBER(timeoutTime)))
 
 
 //////////////////////////////////////////////////////////////////////

@@ -10,7 +10,7 @@
 #include "System/myMath.h"
 #include <cstring> //memset
 
-CR_BIND_DERIVED(CLargeBeamLaserProjectile, CWeaponProjectile, (ProjectileParams()));
+CR_BIND_DERIVED(CLargeBeamLaserProjectile, CWeaponProjectile, (ProjectileParams()))
 
 CR_REG_METADATA(CLargeBeamLaserProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -22,10 +22,11 @@ CR_REG_METADATA(CLargeBeamLaserProjectile,(
 	CR_MEMBER(tilelength),
 	CR_MEMBER(scrollspeed),
 	CR_MEMBER(pulseSpeed),
+	CR_MEMBER(decay),
 	CR_MEMBER(beamtex),
 	CR_MEMBER(sidetex),
 	CR_RESERVED(16)
-));
+))
 
 CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, thickness(0.0f)

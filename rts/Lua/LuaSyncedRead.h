@@ -228,10 +228,10 @@ class LuaSyncedRead {
 
 		static int GetRadarErrorParams(lua_State* L);
 
-		static int TraceRay(lua_State* L);           // not implemented
-		static int TraceRayUnits(lua_State* L);      // not implemented
-		static int TraceRayFeatures(lua_State* L);   // not implemented
-		static int TraceRayGround(lua_State* L);     // not implemented
+		static int TraceRay(lua_State* L);           //TODO: not implemented
+		static int TraceRayUnits(lua_State* L);      //TODO: not implemented
+		static int TraceRayFeatures(lua_State* L);   //TODO: not implemented
+		static int TraceRayGround(lua_State* L);     //TODO: not implemented
 
 		static int GetCOBUnitVar(lua_State* L);
 		static int GetCOBTeamVar(lua_State* L);

@@ -23,7 +23,7 @@ struct UnitDef;
 class CBuilderCAI : public CMobileCAI
 {
 public:
-	CR_DECLARE(CBuilderCAI);
+	CR_DECLARE(CBuilderCAI)
 	CBuilderCAI(CUnit* owner);
 	CBuilderCAI();
 	~CBuilderCAI();

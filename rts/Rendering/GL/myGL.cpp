@@ -21,6 +21,7 @@
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/MessageBox.h"
 #include "System/Platform/Threading.h"
+#include "System/type2.h"
 
 
 CONFIG(bool, DisableCrappyGPUWarning).defaultValue(false).description("Disables the warning an user will receive if (s)he attempts to run Spring on an outdated and underpowered video card.");
@@ -46,24 +47,31 @@ CVertexArray* GetVertexArray()
 
 void PrintAvailableResolutions()
 {
-	std::string modes;
-
 	// Get available fullscreen/hardware modes
-	//FIXME this checks only the main screen
-	const int nummodes = SDL_GetNumDisplayModes(0);
-	for (int i = (nummodes-1); i >= 0; --i) { // reverse order to print them from low to high
-		SDL_DisplayMode mode;
-		SDL_GetDisplayMode(0, i, &mode);
-		if (!modes.empty()) {
-			modes += ", ";
-		}
-		modes += IntToString(mode.w) + "x" + IntToString(mode.h);
-	}
-	if (nummodes < 1) {
-		modes = "NONE";
-	}
+	const int numdisplays = SDL_GetNumVideoDisplays();
+	for(int k=0; k < numdisplays; ++k) {
+		std::string modes;
+		SDL_Rect rect;
+		const int nummodes = SDL_GetNumDisplayModes(k);
+		SDL_GetDisplayBounds(k, &rect);
 
-	LOG("Supported Video modes: %s", modes.c_str());
+		std::set<int2> resolutions;
+		for (int i = 0; i < nummodes; ++i) {
+			SDL_DisplayMode mode;
+			SDL_GetDisplayMode(k, i, &mode);
+			resolutions.insert(int2(mode.w, mode.h));
+		}
+		for (const int2& res: resolutions) {
+			if (!modes.empty()) {
+				modes += ", ";
+			}
+			modes += IntToString(res.x) + "x" + IntToString(res.y);
+		}
+		if (nummodes < 1) {
+			modes = "NONE";
+		}
+		LOG("Supported Video modes on Display %d x:%d y:%d %dx%d:\n\t%s", k+1,rect.x, rect.y, rect.w, rect.h, modes.c_str());
+	}
 }
 
 #ifdef GL_ARB_debug_output
@@ -76,7 +84,8 @@ void PrintAvailableResolutions()
 #else
 	#define _APIENTRY
 #endif
-void _APIENTRY OpenGLDebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, GLvoid* userParam)
+
+void _APIENTRY OpenGLDebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const GLvoid* userParam)
 {
 	std::string sourceStr;
 	std::string typeStr;
@@ -307,6 +316,7 @@ void LoadExtensions()
 	LOG("GLSL version: %s", glslVersion);
 	LOG("GLEW version: %s", glewVersion);
 	LOG("Video RAM:    %s", glVidMemStr);
+	LOG("SwapInterval: %d", SDL_GL_GetSwapInterval());
 
 	ShowCrappyGpuWarning(glVendor, glRenderer);
 
@@ -340,7 +350,8 @@ void LoadExtensions()
 #if defined(GL_ARB_debug_output) && !defined(HEADLESS)
 	if (GLEW_ARB_debug_output && configHandler->GetBool("DebugGL")) {
 		LOG("Installing OpenGL-DebugMessageHandler");
-		glDebugMessageCallbackARB(&OpenGLDebugMessageCallback, NULL);
+		//typecast is a workarround for #4510, signature of the callback message changed :-|
+		glDebugMessageCallbackARB((GLDEBUGPROCARB)&OpenGLDebugMessageCallback, NULL);
 
 		if (configHandler->GetBool("DebugGLStacktraces")) {
 			// The callback should happen in the thread that made the gl call
@@ -415,7 +426,7 @@ void glSpringTexStorage2D(const GLenum target, GLint levels, const GLint interna
 {
 #ifdef GLEW_ARB_texture_storage
 	if (levels < 0)
-		levels = std::ceil(std::log(std::max(width, height) + 1));
+		levels = std::ceil(std::log((float)(std::max(width, height) + 1)));
 
 	if (GLEW_ARB_texture_storage) {
 		glTexStorage2D(target, levels, internalFormat, width, height);

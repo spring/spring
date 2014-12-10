@@ -9,7 +9,7 @@
 #include "Rendering/Textures/TextureAtlas.h"
 
 
-CR_BIND_DERIVED(CMuzzleFlame, CProjectile, (ZeroVector, ZeroVector, ZeroVector, 0));
+CR_BIND_DERIVED(CMuzzleFlame, CProjectile, (ZeroVector, ZeroVector, ZeroVector, 0))
 
 CR_REG_METADATA(CMuzzleFlame,(
 	CR_SERIALIZER(creg_Serialize), // randSmokeDir
@@ -19,9 +19,9 @@ CR_REG_METADATA(CMuzzleFlame,(
 	CR_MEMBER(numSmoke),
 	CR_MEMBER(randSmokeDir),
 	CR_RESERVED(8)
-	));
+	))
 
-void CMuzzleFlame::creg_Serialize(creg::ISerializer& s)
+void CMuzzleFlame::creg_Serialize(creg::ISerializer* s)
 {
 //	s.Serialize(randSmokeDir, numSmoke*sizeof(float3));
 }

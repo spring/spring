@@ -543,8 +543,7 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 	int skippedLines;
 	bool colorChanged;
 	const GlyphInfo* g = NULL;
-	float4 newColor;
-	newColor[3] = 1.0f;
+	float4 newColor = textColor;
 	char32_t c;
 	int i = 0;
 
@@ -601,8 +600,7 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 	int skippedLines;
 	bool colorChanged;
 	const GlyphInfo* g = NULL;
-	float4 newColor;
-	newColor[3] = 1.0f;
+	float4 newColor = textColor;
 	char32_t c;
 	int i = 0;
 
@@ -666,7 +664,7 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 	int skippedLines;
 	bool colorChanged;
 	const GlyphInfo* g = NULL;
-	float4 newColor(0.f, 0.f, 0.f, 1.f);
+	float4 newColor = textColor;
 	char32_t c;
 	int i = 0;
 

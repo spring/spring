@@ -235,10 +235,10 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 		const CTeam* t = teamHandler->Team(a);
 
 		file << "\t\tteamID: " << t->teamNum << " (controller: " << t->GetControllerName() << ")\n";
-		file << "\t\t\tmetal: " << float(t->metal) << ", energy: " << float(t->energy) << "\n";
-		file << "\t\t\tmetalPull: " << t->metalPull << ", energyPull: " << t->energyPull << "\n";
-		file << "\t\t\tmetalIncome: " << t->metalIncome << ", energyIncome: " << t->energyIncome << "\n";
-		file << "\t\t\tmetalExpense: " << t->metalExpense << ", energyExpense: " << t->energyExpense << "\n";
+		file << "\t\t\tmetal: " << float(t->res.metal) << ", energy: " << float(t->res.energy) << "\n";
+		file << "\t\t\tmetalPull: " << t->resPull.metal << ", energyPull: " << t->resPull.energy << "\n";
+		file << "\t\t\tmetalIncome: " << t->resIncome.metal << ", energyIncome: " << t->resIncome.energy << "\n";
+		file << "\t\t\tmetalExpense: " << t->resExpense.metal << ", energyExpense: " << t->resExpense.energy << "\n";
 	}
 	#endif
 

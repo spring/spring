@@ -35,6 +35,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/IWater.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -44,8 +45,8 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
-#include "Sim/Units/Groups/Group.h"
-#include "Sim/Units/Groups/GroupHandler.h"
+#include "Game/UI/Groups/Group.h"
+#include "Game/UI/Groups/GroupHandler.h"
 #include "Net/Protocol/NetProtocol.h"
 #include "System/Config/ConfigVariable.h"
 #include "System/Input/KeyInput.h"
@@ -56,12 +57,12 @@
 #include "System/LoadSave/DemoReader.h"
 #include "System/Log/DefaultFilter.h"
 #include "System/Platform/SDL1_keysym.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/Misc/SpringTime.h"
 
 #if !defined(HEADLESS) && !defined(NO_SOUND)
-	#include "System/Sound/EFX.h"
-	#include "System/Sound/EFXPresets.h"
+	#include "System/Sound/OpenAL/EFX.h"
+	#include "System/Sound/OpenAL/EFXPresets.h"
 #endif
 
 #include <set>
@@ -151,6 +152,8 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetWaterMode);
 	REGISTER_LUA_CFUNC(GetMapDrawMode);
 	REGISTER_LUA_CFUNC(GetMapSquareTexture);
+
+	REGISTER_LUA_CFUNC(GetLosViewColors);
 
 	REGISTER_LUA_CFUNC(GetCameraNames);
 	REGISTER_LUA_CFUNC(GetCameraState);
@@ -971,7 +974,7 @@ int LuaUnsyncedRead::GetVisibleProjectiles(lua_State* L)
 
 	static CVisProjectileQuadDrawer projQuadIter;
 
-	const bool addSyncedProjectiles = luaL_optboolean(L, 2, true);
+	/*const bool addSyncedProjectiles =*/ luaL_optboolean(L, 2, true);
 	const bool addWeaponProjectiles = luaL_optboolean(L, 3, true);
 	const bool addPieceProjectiles = luaL_optboolean(L, 4, true);
 
@@ -1209,16 +1212,14 @@ int LuaUnsyncedRead::GetWaterMode(lua_State* L)
 
 int LuaUnsyncedRead::GetMapDrawMode(lua_State* L)
 {
-	switch (readMap->GetGroundDrawer()->GetDrawMode()) {
-		case CBaseGroundDrawer::drawNormal:   { HSTR_PUSH(L, "normal"            ); break; }
-		case CBaseGroundDrawer::drawHeight:   { HSTR_PUSH(L, "height"            ); break; }
-		case CBaseGroundDrawer::drawMetal:    { HSTR_PUSH(L, "metal"             ); break; }
-		case CBaseGroundDrawer::drawLos:      { HSTR_PUSH(L, "los"               ); break; }
-		case CBaseGroundDrawer::drawPathTrav: { HSTR_PUSH(L, "pathTraversability"); break; }
-		case CBaseGroundDrawer::drawPathHeat: { HSTR_PUSH(L, "pathHeat"          ); break; }
-		case CBaseGroundDrawer::drawPathFlow: { HSTR_PUSH(L, "pathFlow"          ); break; }
-		case CBaseGroundDrawer::drawPathCost: { HSTR_PUSH(L, "pathCost"          ); break; }
-	}
+	std::string mode = infoTextureHandler->GetMode();
+	     if (mode.empty())       { mode = "normal"; }
+	else if (mode == "path")     { mode = "pathTraversability"; }
+	else if (mode == "heat")     { mode = "pathHeat"; }
+	else if (mode == "flow")     { mode = "pathFlow"; }
+	else if (mode == "pathcost") { mode = "pathCost"; }
+
+	lua_pushsstring(L, mode);
 	return 1;
 }
 
@@ -1268,6 +1269,28 @@ int LuaUnsyncedRead::GetMapSquareTexture(lua_State* L)
 	lua_pushboolean(L, groundTextures->GetSquareLuaTexture(texSquareX, texSquareY, tid, txs, tys, texMipLevel));
 	return 1;
 }
+
+
+/******************************************************************************/
+
+int LuaUnsyncedRead::GetLosViewColors(lua_State* L)
+{
+#define PACK_COLOR_VECTOR(color) \
+	lua_createtable(L, 3, 0); \
+	lua_pushnumber(L, color[0] / scale); lua_rawseti(L, -2, 1); \
+	lua_pushnumber(L, color[1] / scale); lua_rawseti(L, -2, 2); \
+	lua_pushnumber(L, color[2] / scale); lua_rawseti(L, -2, 3);
+
+	const float scale = (float)CBaseGroundDrawer::losColorScale;
+	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
+
+	PACK_COLOR_VECTOR(gd->alwaysColor);
+	PACK_COLOR_VECTOR(gd->losColor);
+	PACK_COLOR_VECTOR(gd->radarColor);
+	PACK_COLOR_VECTOR(gd->jamColor);
+	return 4;
+}
+
 
 /******************************************************************************/
 
@@ -1606,8 +1629,8 @@ int LuaUnsyncedRead::DiffTimers(lua_State* L)
 
 int LuaUnsyncedRead::GetSoundStreamTime(lua_State* L)
 {
-	lua_pushnumber(L, Channels::BGMusic.StreamGetPlayTime());
-	lua_pushnumber(L, Channels::BGMusic.StreamGetTime());
+	lua_pushnumber(L, Channels::BGMusic->StreamGetPlayTime());
+	lua_pushnumber(L, Channels::BGMusic->StreamGetTime());
 	return 2;
 }
 

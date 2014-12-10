@@ -74,25 +74,19 @@
 #include "System/Sound/ISound.h"
 #include "System/Sync/FPUCheck.h"
 #include "System/UriParser.h"
+#include "lib/luasocket/src/restrictions.h"
 
 #ifdef WIN32
-	#include <winuser.h> //GetWindowPlacement
-	#include <SDL_syswm.h>
 	#include "System/Platform/Win/WinVersion.h"
-#elif defined(__APPLE__)
-#elif defined(HEADLESS)
-#else
-	#include <X11/Xlib.h>
-	#include "System/Platform/Linux/myX11.h"
 #endif
 
-#include "lib/luasocket/src/restrictions.h"
+
 
 CONFIG(unsigned, SetCoreAffinity).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the main-thread should use.");
 CONFIG(unsigned, SetCoreAffinitySim).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the sim-thread should use.");
 CONFIG(int, FSAALevel).defaultValue(0).minimumValue(0).maximumValue(8).description("If >0 enables FullScreen AntiAliasing.");
-CONFIG(int, SmoothLines).defaultValue(2).safemodeValue(0).minimumValue(0).maximumValue(3).description("Smooth lines.\n 0 := off\n 1 := fastest\n 2 := don't care\n 3 := nicest");
-CONFIG(int, SmoothPoints).defaultValue(2).safemodeValue(0).minimumValue(0).maximumValue(3).description("Smooth points.\n 0 := off\n 1 := fastest\n 2 := don't care\n 3 := nicest");
+CONFIG(int, SmoothLines).defaultValue(2).headlessValue(0).safemodeValue(0).minimumValue(0).maximumValue(3).description("Smooth lines.\n 0 := off\n 1 := fastest\n 2 := don't care\n 3 := nicest");
+CONFIG(int, SmoothPoints).defaultValue(2).headlessValue(0).safemodeValue(0).minimumValue(0).maximumValue(3).description("Smooth points.\n 0 := off\n 1 := fastest\n 2 := don't care\n 3 := nicest");
 CONFIG(float, TextureLODBias).defaultValue(0.0f).minimumValue(-4.0f).maximumValue(4.0f);
 CONFIG(bool, FixAltTab).defaultValue(false);
 CONFIG(std::string, FontFile).defaultValue("fonts/FreeSansBold.otf").description("Sets the font of Spring engine text.");
@@ -103,19 +97,18 @@ CONFIG(int, FontOutlineWidth).defaultValue(3).description("Sets the width of the
 CONFIG(float, FontOutlineWeight).defaultValue(25.0f).description("Sets the opacity of Spring engine text, such as the title screen version number, clock, and basic UI. Does not affect LuaUI elements.");
 CONFIG(int, SmallFontOutlineWidth).defaultValue(2).description("see FontOutlineWidth");
 CONFIG(float, SmallFontOutlineWeight).defaultValue(10.0f).description("see FontOutlineWeight");
-CONFIG(bool, Fullscreen).defaultValue(true).description("Sets whether the game will run in fullscreen, as opposed to a window. For Windowed Fullscreen of Borderless Window, set this to 0, WindowBorderless to 1, and WindowPosX and WindowPosY to 0.");
+CONFIG(bool, Fullscreen).defaultValue(true).headlessValue(false).description("Sets whether the game will run in fullscreen, as opposed to a window. For Windowed Fullscreen of Borderless Window, set this to 0, WindowBorderless to 1, and WindowPosX and WindowPosY to 0.");
 CONFIG(bool, UseHighResTimer).defaultValue(false).description("On Windows, sets whether Spring will use low- or high-resolution timer functions for tasks like graphical interpolation between game frames.");
-CONFIG(int, XResolution).defaultValue(0).minimumValue(0).description("Sets the width of the game screen. If set to 0 Spring will autodetect the current resolution of your desktop.");
-CONFIG(int, YResolution).defaultValue(0).minimumValue(0).description("Sets the height of the game screen. If set to 0 Spring will autodetect the current resolution of your desktop.");
+CONFIG(int, XResolution).defaultValue(0).headlessValue(8).minimumValue(0).description("Sets the width of the game screen. If set to 0 Spring will autodetect the current resolution of your desktop.");
+CONFIG(int, YResolution).defaultValue(0).headlessValue(8).minimumValue(0).description("Sets the height of the game screen. If set to 0 Spring will autodetect the current resolution of your desktop.");
 CONFIG(int, WindowPosX).defaultValue(32).description("Sets the horizontal position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
 CONFIG(int, WindowPosY).defaultValue(32).description("Sets the vertical position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
 CONFIG(int, WindowState).defaultValue(CGlobalRendering::WINSTATE_MAXIMIZED);
 CONFIG(bool, WindowBorderless).defaultValue(false).description("When set and Fullscreen is 0, will put the game in Borderless Window mode, also known as Windowed Fullscreen. When using this, it is generally best to also set WindowPosX and WindowPosY to 0");
 CONFIG(int, PathingThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0);
 CONFIG(std::string, name).defaultValue(UnnamedPlayerName).description("Sets your name in the game. Since this is overridden by lobbies with your lobby username when playing, it usually only comes up when viewing replays or starting the engine directly for testing purposes.");
-#ifdef __linux
-CONFIG(bool, BlockCompositing).defaultValue(true).description("Disables kwin compositing to fix tearing.");
-#endif
+CONFIG(bool, BlockCompositing).defaultValue(false).safemodeValue(true).description("Disables kwin compositing to fix tearing, possible fixes low FPS in windowed mode, too.");
+
 
 static SDL_GLContext sdlGlCtx;
 static SDL_Window* window;
@@ -182,6 +175,18 @@ bool SpringApp::Initialize()
 {
 	assert(cmdline != NULL);
 	assert(configHandler != NULL);
+
+	// list user's config
+	LOG("============== <User Config> ==============");
+	const std::map<std::string, std::string> settings = configHandler->GetDataWithoutDefaults();
+	for (auto& it: settings) {
+		// exclude non-engine configtags
+		if (ConfigVariable::GetMetaData(it.first) == nullptr)
+			continue;
+
+		LOG("%s = %s", it.first.c_str(), it.second.c_str());
+	}
+	LOG("============== </User Config> ==============");
 
 	FileSystemInitializer::InitializeLogOutput();
 	CLogOutput::LogSystemInfo();
@@ -398,11 +403,13 @@ bool SpringApp::CreateSDLWindow(const char* title)
 	streflop::streflop_init<streflop::Simple>();
 #endif
 
-#if defined(__linux) && !defined(HEADLESS)
-	// disable kwin compositing to fix tearing
+#if !defined(HEADLESS)
+	// disable desktop compositing to fix tearing
 	// (happens at 300fps, neither fullscreen nor vsync fixes it, so disable compositing)
+	// On Windows Aero often uses vsync, and so when Spring runs windowed it will run with
+	// vsync too, resulting in bad performance.
 	if (configHandler->GetBool("BlockCompositing")) {
-		MyX11BlockCompositing(window);
+		WindowManagerHelper::BlockCompositing(window);
 	}
 #endif
 
@@ -438,26 +445,7 @@ void SpringApp::GetDisplayGeometry()
 	// Reading window state fails if it is changed via the window manager, like clicking on the titlebar (2013)
 	// https://bugzilla.libsdl.org/show_bug.cgi?id=1508 & https://bugzilla.libsdl.org/show_bug.cgi?id=2282
 	// happens on linux too!
-  #ifdef __APPLE__
-	auto state = SDL_GetWindowFlags(window);
-  #elif defined(WIN32)
-	int state = 0;
-	WINDOWPLACEMENT wp;
-	wp.length = sizeof(WINDOWPLACEMENT);
-
-	struct SDL_SysWMinfo info;
-	SDL_VERSION(&info.version);
-	SDL_GetWindowWMInfo(globalRendering->window, &info);
-
-	if (GetWindowPlacement(info.info.win.window, &wp)) {
-		if (wp.showCmd == SW_SHOWMAXIMIZED)
-			state = SDL_WINDOW_MAXIMIZED;
-		if (wp.showCmd == SW_SHOWMINIMIZED)
-			state = SDL_WINDOW_MINIMIZED;
-	}
-  #else
-	auto state = MyX11GetWindowState(window);
-  #endif
+	const int state = WindowManagerHelper::GetWindowState(window);
 
 	globalRendering->winState = CGlobalRendering::WINSTATE_DEFAULT;
 	if (state & SDL_WINDOW_MAXIMIZED) {
@@ -579,7 +567,8 @@ void SpringApp::InitOpenGL()
 	// Print Final Mode (call after SetupViewportGeometry, which updates viewSizeX/Y)
 	SDL_DisplayMode dmode;
 	SDL_GetWindowDisplayMode(window, &dmode);
-	LOG("[%s] video mode set to %ix%i:%ibit @%iHz %s", __FUNCTION__, globalRendering->viewSizeX, globalRendering->viewSizeY, SDL_BITSPERPIXEL(dmode.format), dmode.refresh_rate, globalRendering->fullScreen ? "" : "(windowed)");
+	bool isBorderless = (SDL_GetWindowFlags(window) & SDL_WINDOW_BORDERLESS) != 0;
+	LOG("[%s] video mode set to %ix%i:%ibit @%iHz %s", __FUNCTION__, globalRendering->viewSizeX, globalRendering->viewSizeY, SDL_BITSPERPIXEL(dmode.format), dmode.refresh_rate, globalRendering->fullScreen ? (isBorderless ? "(borderless)" : "") : "(windowed)");
 }
 
 
@@ -609,7 +598,16 @@ void SpringApp::LoadFonts()
 	}
 }
 
-
+// initialize basic systems for command line help / output
+static void ConsolePrintInitialize(const std::string& configSource, bool safemode)
+{
+	spring_clock::PushTickRate(false);
+	spring_time::setstarttime(spring_time::gettime(true));
+	LOG_DISABLE();
+	FileSystemInitializer::PreInitializeConfigHandler(configSource, safemode);
+	FileSystemInitializer::InitializeLogOutput();
+	LOG_ENABLE();
+}
 
 /**
  * @return whether commandline parsing was successful
@@ -721,18 +719,12 @@ void SpringApp::ParseCmdLine(const std::string& binaryName)
 
 	// mutually exclusive options that cause spring to quit immediately
 	if (cmdline->IsSet("list-ai-interfaces")) {
-		LOG_DISABLE();
-		FileSystemInitializer::PreInitializeConfigHandler(configSource, safemode);
-		FileSystemInitializer::InitializeLogOutput();
-		LOG_ENABLE();
+		ConsolePrintInitialize(configSource, safemode);
 		IAILibraryManager::OutputAIInterfacesInfo();
 		exit(0);
 	}
 	else if (cmdline->IsSet("list-skirmish-ais")) {
-		LOG_DISABLE();
-		FileSystemInitializer::PreInitializeConfigHandler(configSource, safemode);
-		FileSystemInitializer::InitializeLogOutput();
-		LOG_ENABLE();
+		ConsolePrintInitialize(configSource, safemode);
 		IAILibraryManager::OutputSkirmishAIInfo();
 		exit(0);
 	}

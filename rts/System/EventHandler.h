@@ -37,16 +37,9 @@ class CEventHandler
 		bool IsController(const std::string& ciName) const;
 
 	public: // EventBatchHandler
-		void UpdateUnits();
-		void UpdateDrawUnits();
 		void DeleteSyncedUnits();
-		void UpdateFeatures();
-		void UpdateDrawFeatures();
-		void DeleteSyncedFeatures();
-		void UpdateProjectiles();
-		void UpdateDrawProjectiles();
+
 		void DeleteSyncedProjectiles();
-		void UpdateObjects();
 		void DeleteSyncedObjects();
 	public:
 		/**
@@ -252,6 +245,7 @@ class CEventHandler
 		void DrawScreenEffects();
 		void DrawScreen();
 		void DrawInMiniMap();
+		void DrawInMiniMapBackground();
 
 		bool DrawUnit(const CUnit* unit);
 		bool DrawFeature(const CFeature* feature);
@@ -265,10 +259,8 @@ class CEventHandler
 
 		void CollectGarbage();
 		void DbgTimingInfo(DbgTimingInfoType type, const spring_time start, const spring_time end);
+		void MetalMapChanged(const int x, const int z);
 		/// @}
-
-		//FIXME no real event
-		void LoadedModelRequested();
 
 	private:
 		typedef vector<CEventClient*> EventClientList;

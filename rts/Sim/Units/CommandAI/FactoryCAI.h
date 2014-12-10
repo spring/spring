@@ -16,8 +16,8 @@ struct Command;
 class CFactoryCAI : public CCommandAI
 {
 public:
-	CR_DECLARE(CFactoryCAI);
-	CR_DECLARE_SUB(BuildOption);
+	CR_DECLARE(CFactoryCAI)
+	CR_DECLARE_SUB(BuildOption)
 
 	struct BuildOption {
 		CR_DECLARE_STRUCT(BuildOption)

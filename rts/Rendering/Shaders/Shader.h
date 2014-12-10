@@ -90,40 +90,52 @@ namespace Shader {
 		virtual void Reload(bool reloadFromDisk) = 0;
 
 		void PrintInfo();
+		const std::string& GetName() const { return name; }
+
+	private:
+		virtual int GetUniformLoc(const std::string& name) = 0;
+		virtual int GetUniformType(const int loc) = 0;
+
+	private:
+		UniformState* GetNewUniformState(const std::string name);
 
 	public:
 		int GetUniformLocation(const std::string& name) {
 			return GetUniformState(name)->GetLocation();
 		}
+
 		UniformState* GetUniformState(const std::string& name) {
-			return GetUniformState(hashString(name.c_str()), name);
-		}
-		UniformState* GetUniformState(const size_t hash, const std::string& name) {
+			const auto hash = hashString(name.c_str()); // never compiletime const (std::string is never a literal)
 			auto it = uniformStates.find(hash);
 			if (it != uniformStates.end())
 				return &it->second;
-			//UniformState* us = &uniformStates.emplace(h, name).first->second;
-			UniformState* us = &uniformStates.insert(std::pair<size_t, Shader::UniformState>(hash, Shader::UniformState(name))).first->second;
-			us->SetLocation(GetUniformLoc(name));
-			return us;
+			return GetNewUniformState(name);
+		}
+		UniformState* GetUniformState(const char* name) {
+			// (when inlined) hash might be compiletime const cause of constexpr of hashString
+			// WARNING: Cause of a bug in gcc, you _must_ assign the constexpr to a var before
+			//          passing it to a function. I.e. foo.find(hashString(name)) would always
+			//          be runtime evaluated (even when `name` is a literal)!
+			const auto hash = hashString(name);
+			auto it = uniformStates.find(hash);
+			if (it != uniformStates.end())
+				return &it->second;
+			return GetNewUniformState(name);
 		}
 
-	//private:
-		virtual int GetUniformLoc(const std::string& name) = 0;
+	public:
+		template<typename TK, typename TV> inline void SetUniform(const TK& name, TV v0) { SetUniform(GetUniformState(name), v0); }
+		template<typename TK, typename TV> inline void SetUniform(const TK& name, TV v0, TV v1)  { SetUniform(GetUniformState(name), v0, v1); }
+		template<typename TK, typename TV> inline void SetUniform(const TK& name, TV v0, TV v1, TV v2)  { SetUniform(GetUniformState(name), v0, v1, v2); }
+		template<typename TK, typename TV> inline void SetUniform(const TK& name, TV v0, TV v1, TV v2, TV v3)  { SetUniform(GetUniformState(name), v0, v1, v2, v3); }
 
-	//public:
-		template<typename TK, typename TV> inline void SetUniform(const TK& name, TV v0) { SetUniform(GetUniformState(hashString(name), name), v0); }
-		template<typename TK, typename TV> inline void SetUniform(const TK& name, TV v0, TV v1)  { SetUniform(GetUniformState(hashString(name), name), v0, v1); }
-		template<typename TK, typename TV> inline void SetUniform(const TK& name, TV v0, TV v1, TV v2)  { SetUniform(GetUniformState(hashString(name), name), v0, v1, v2); }
-		template<typename TK, typename TV> inline void SetUniform(const TK& name, TV v0, TV v1, TV v2, TV v3)  { SetUniform(GetUniformState(hashString(name), name), v0, v1, v2, v3); }
+		template<typename TK, typename TV> inline void SetUniform2v(const TK& name, const TV* v) { SetUniform2v(GetUniformState(name), v); }
+		template<typename TK, typename TV> inline void SetUniform3v(const TK& name, const TV* v) { SetUniform3v(GetUniformState(name), v); }
+		template<typename TK, typename TV> inline void SetUniform4v(const TK& name, const TV* v) { SetUniform4v(GetUniformState(name), v); }
 
-		template<typename TK, typename TV> inline void SetUniform2v(const TK& name, const TV* v) { SetUniform2v(GetUniformState(hashString(name), name), v); }
-		template<typename TK, typename TV> inline void SetUniform3v(const TK& name, const TV* v) { SetUniform3v(GetUniformState(hashString(name), name), v); }
-		template<typename TK, typename TV> inline void SetUniform4v(const TK& name, const TV* v) { SetUniform4v(GetUniformState(hashString(name), name), v); }
-
-		template<typename TK, typename TV> inline void SetUniformMatrix2x2(const TK& name, bool transp, const TV* v) { SetUniformMatrix2x2(GetUniformState(hashString(name), name), transp, v); }
-		template<typename TK, typename TV> inline void SetUniformMatrix3x3(const TK& name, bool transp, const TV* v) { SetUniformMatrix3x3(GetUniformState(hashString(name), name), transp, v); }
-		template<typename TK, typename TV> inline void SetUniformMatrix4x4(const TK& name, bool transp, const TV* v) { SetUniformMatrix4x4(GetUniformState(hashString(name), name), transp, v); }
+		template<typename TK, typename TV> inline void SetUniformMatrix2x2(const TK& name, bool transp, const TV* v) { SetUniformMatrix2x2(GetUniformState(name), transp, v); }
+		template<typename TK, typename TV> inline void SetUniformMatrix3x3(const TK& name, bool transp, const TV* v) { SetUniformMatrix3x3(GetUniformState(name), transp, v); }
+		template<typename TK, typename TV> inline void SetUniformMatrix4x4(const TK& name, bool transp, const TV* v) { SetUniformMatrix4x4(GetUniformState(name), transp, v); }
 
 
 		virtual void SetUniform(UniformState* uState, int   v0) { SetUniform1i(uState->GetLocation(), v0); }
@@ -142,9 +154,9 @@ namespace Shader {
 		virtual void SetUniform4v(UniformState* uState, const int*   v) { SetUniform4iv(uState->GetLocation(), v); }
 		virtual void SetUniform4v(UniformState* uState, const float* v) { SetUniform4fv(uState->GetLocation(), v); }
 
-		virtual void SetUniformMatrix2x2(UniformState* uState, bool transp, const float*  m) { SetUniformMatrix2fv(uState->GetLocation(), transp, m); }
-		virtual void SetUniformMatrix3x3(UniformState* uState, bool transp, const float*  m) { SetUniformMatrix3fv(uState->GetLocation(), transp, m); }
-		virtual void SetUniformMatrix4x4(UniformState* uState, bool transp, const float*  m) { SetUniformMatrix4fv(uState->GetLocation(), transp, m); }
+		virtual void SetUniformMatrix2x2(UniformState* uState, bool transp, const float* m) { SetUniformMatrix2fv(uState->GetLocation(), transp, m); }
+		virtual void SetUniformMatrix3x3(UniformState* uState, bool transp, const float* m) { SetUniformMatrix3fv(uState->GetLocation(), transp, m); }
+		virtual void SetUniformMatrix4x4(UniformState* uState, bool transp, const float* m) { SetUniformMatrix4fv(uState->GetLocation(), transp, m); }
 
 
 		virtual void SetUniformTarget(int) {}
@@ -182,6 +194,7 @@ namespace Shader {
 
 		virtual void AttachShaderObject(IShaderObject* so) { shaderObjs.push_back(so); }
 		SOVec& GetAttachedShaderObjs() { return shaderObjs; }
+		bool LoadFromLua(const std::string& filename);
 
 		void RecompileIfNeeded();
 
@@ -192,6 +205,10 @@ namespace Shader {
 		unsigned int GetObjID() const { return objID; }
 
 		const std::string& GetLog() const { return log; }
+
+	public:
+		void AddTextureBinding(const int index, const std::string& luaTexName);
+		void BindTextures() const;
 
 	protected:
 		std::string name;
@@ -205,6 +222,7 @@ namespace Shader {
 		SOVec shaderObjs;
 	public:
 		std::unordered_map<std::size_t, UniformState, fast_hash> uniformStates;
+		std::unordered_map<int, std::string> textures;
 	};
 
 	struct NullProgramObject: public Shader::IProgramObject {
@@ -216,6 +234,7 @@ namespace Shader {
 		void Reload(bool reloadFromDisk) {}
 
 		int GetUniformLoc(const std::string& name) { return -1; }
+		int GetUniformType(const int loc) { return -1; }
 
 		void SetUniform1i(int idx, int   v0) {}
 		void SetUniform2i(int idx, int   v0, int   v1) {}
@@ -244,6 +263,7 @@ namespace Shader {
 		void Reload(bool reloadFromDisk);
 
 		int GetUniformLoc(const std::string& name);
+		int GetUniformType(const int loc) { return -1; }
 		void SetUniformTarget(int target);
 		int GetUnitformTarget();
 
@@ -272,6 +292,7 @@ namespace Shader {
 	struct GLSLProgramObject: public Shader::IProgramObject {
 	public:
 		GLSLProgramObject(const std::string& poName);
+		~GLSLProgramObject();
 		void Enable();
 		void Disable();
 		void Link();
@@ -279,6 +300,7 @@ namespace Shader {
 		void Release();
 		void Reload(bool reloadFromDisk);
 
+		int GetUniformType(const int loc);
 		int GetUniformLoc(const std::string& name);
 		void SetUniformLocation(const std::string&);
 

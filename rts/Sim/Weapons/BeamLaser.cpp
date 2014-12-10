@@ -20,7 +20,7 @@
 
 #define SWEEPFIRE_ENABLED 1
 
-CR_BIND_DERIVED(CBeamLaser, CWeapon, (NULL, NULL));
+CR_BIND_DERIVED(CBeamLaser, CWeapon, (NULL, NULL))
 
 CR_REG_METADATA(CBeamLaser,(
 	CR_MEMBER(color),
@@ -28,7 +28,7 @@ CR_REG_METADATA(CBeamLaser,(
 
 	CR_MEMBER(salvoDamageMult),
 	CR_MEMBER(sweepFireState)
-));
+))
 
 CR_BIND(CBeamLaser::SweepFireState, )
 CR_REG_METADATA_SUB(CBeamLaser, SweepFireState, (
@@ -43,7 +43,7 @@ CR_REG_METADATA_SUB(CBeamLaser, SweepFireState, (
 	CR_MEMBER(sweepCurrDst),
 	CR_MEMBER(sweepStartAngle),
 	CR_MEMBER(sweepFiring)
-));
+))
 
 
 
@@ -180,8 +180,8 @@ void CBeamLaser::UpdateSweep()
 	if (reloadStatus > gs->frameNum)
 		return;
 
-	if (teamHandler->Team(owner->team)->metal < metalFireCost) { return; }
-	if (teamHandler->Team(owner->team)->energy < energyFireCost) { return; }
+	if (teamHandler->Team(owner->team)->res.metal < metalFireCost) { return; }
+	if (teamHandler->Team(owner->team)->res.energy < energyFireCost) { return; }
 
 	owner->UseEnergy(energyFireCost / salvoSize);
 	owner->UseMetal(metalFireCost / salvoSize);
@@ -341,7 +341,7 @@ void CBeamLaser::FireInternal(float3 curDir)
 
 		if (shieldLength < beamLength) {
 			beamLength = shieldLength;
-			tryAgain = hitShield->BeamIntercepted(this, salvoDamageMult);
+			tryAgain = hitShield->BeamIntercepted(this, curPos, salvoDamageMult);
 		} else {
 			tryAgain = false;
 		}

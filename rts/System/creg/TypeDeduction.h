@@ -16,7 +16,7 @@ namespace creg {
 
 // Undefined types return 0
 template<typename T>
-struct DeduceType {
+struct DeduceTypeClass {
 	boost::shared_ptr<IType> Get() { return boost::shared_ptr<IType>(IType::CreateObjInstanceType(T::StaticClass())); }
 };
 
@@ -25,9 +25,18 @@ struct IsBasicType {
 	enum {Yes=0, No=1};
 };
 
+
+// Enum type (filter enums & class/structs with c++11's std::is_enum)
+//TODO: is DeduceType<int> really working for all enums? what if enum uses just 1byte?
+//      do the 3 more bytes of int overwrite next class member in suhc cases?
+template<typename T>
+struct DeduceType : public std::conditional<std::is_enum<T>::value, DeduceType<int>, DeduceTypeClass<T>>::type {
+};
+
+
 // Support for a number of fundamental types
 #define CREG_SUPPORT_BASIC_TYPE(T, typeID)			\
-	template<>	 struct DeduceType<T> {		\
+	template<> struct DeduceType<T> {		\
 		boost::shared_ptr<IType> Get() { return IType::CreateBasicType(typeID); }	\
 	};																\
 	template<> struct IsBasicType<T> {							\
@@ -58,7 +67,7 @@ CREG_SUPPORT_BASIC_TYPE(SyncedDouble, crSyncedDouble)
 CREG_SUPPORT_BASIC_TYPE(SyncedBool,   crSyncedBool)
 #endif
 
-
+// helper
 template<typename T>
 class ObjectPointerType : public IType
 {
@@ -125,7 +134,7 @@ boost::shared_ptr<IType> GetType(T& var) {
 	DeduceType<T> deduce;
 	return deduce.Get();
 }
-};
+}
 
 #endif // _TYPE_DEDUCTION_H
 

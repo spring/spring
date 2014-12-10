@@ -85,6 +85,8 @@ set(main_files
 	)
 if (WIN32)
 	LIST(APPEND main_files "${ENGINE_SRC_ROOT}/System/Platform/Win/WinVersion.cpp")
+else (WIN32)
+        LIST(APPEND main_files "${ENGINE_SRC_ROOT}/System/Platform/Linux/ThreadSupport.cpp")
 endif (WIN32)
 
 set(unitsync_files

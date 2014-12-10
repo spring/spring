@@ -53,7 +53,7 @@ protected:
 	virtual void UpdateHeightMapUnsynced(const SRectangle&) = 0;
 
 public:
-	CR_DECLARE(CReadMap);
+	CR_DECLARE(CReadMap)
 
 	static CReadMap* LoadMap(const std::string& mapname);
 	static inline unsigned char EncodeHeight(const float h) {
@@ -61,7 +61,8 @@ public:
 	}
 
 	/// creg serialize callback
-	void Serialize(creg::ISerializer& s);
+	void Serialize(creg::ISerializer* s);
+	void PostLoad();
 
 
 	/**

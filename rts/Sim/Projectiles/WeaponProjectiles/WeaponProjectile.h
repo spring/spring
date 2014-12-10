@@ -20,7 +20,7 @@ class CPlasmaRepulser;
  */
 class CWeaponProjectile : public CProjectile
 {
-	CR_DECLARE(CWeaponProjectile);
+	CR_DECLARE(CWeaponProjectile)
 public:
 	CWeaponProjectile();
 	CWeaponProjectile(const ProjectileParams& params);

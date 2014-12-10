@@ -72,7 +72,7 @@ using std::set;
 #undef far // avoid collision with windef.h
 #undef near
 
-CONFIG(bool, LuaShaders).defaultValue(true).safemodeValue(false);
+CONFIG(bool, LuaShaders).defaultValue(true).headlessValue(false).safemodeValue(false);
 
 static const int MAX_TEXTURE_UNITS = 32;
 
@@ -721,6 +721,16 @@ void LuaOpenGL::ResetDrawScreen()
 
 void LuaOpenGL::EnableDrawInMiniMap()
 {
+	glMatrixMode(GL_TEXTURE); {
+		glPushMatrix();
+	}
+	glMatrixMode(GL_PROJECTION); {
+		glPushMatrix();
+	}
+	glMatrixMode(GL_MODELVIEW); {
+		glPushMatrix();
+	}
+
 	if (drawMode == DRAW_SCREEN) {
 		prevDrawMode = DRAW_SCREEN;
 		drawMode = DRAW_NONE;
@@ -735,16 +745,6 @@ void LuaOpenGL::DisableDrawInMiniMap()
 {
 	if (prevDrawMode != DRAW_SCREEN) {
 		DisableCommon(DRAW_MINIMAP);
-
-		glMatrixMode(GL_TEXTURE); {
-			glLoadIdentity();
-		}
-		glMatrixMode(GL_PROJECTION); {
-			glLoadIdentity();
-		}
-		glMatrixMode(GL_MODELVIEW); {
-			glLoadIdentity();
-		}
 	}
 	else {
 		if (safeMode) {
@@ -757,10 +757,85 @@ void LuaOpenGL::DisableDrawInMiniMap()
 		prevDrawMode = DRAW_NONE;
 		drawMode = DRAW_SCREEN;
 	}
+
+	glMatrixMode(GL_TEXTURE); {
+		glPopMatrix();
+	}
+	glMatrixMode(GL_PROJECTION); {
+		glPopMatrix();
+	}
+	glMatrixMode(GL_MODELVIEW); {
+		glPopMatrix();
+	}
 }
 
 
 void LuaOpenGL::ResetDrawInMiniMap()
+{
+	if (safeMode) {
+		ResetMiniMapMatrices();
+		glCallList(resetStateList);
+	}
+}
+
+
+/******************************************************************************/
+//
+//  MiniMap BG
+//
+
+void LuaOpenGL::EnableDrawInMiniMapBackground()
+{
+	glMatrixMode(GL_TEXTURE); {
+		glPushMatrix();
+	}
+	glMatrixMode(GL_PROJECTION); {
+		glPushMatrix();
+	}
+	glMatrixMode(GL_MODELVIEW); {
+		glPushMatrix();
+	}
+
+	if (drawMode == DRAW_SCREEN) {
+		prevDrawMode = DRAW_SCREEN;
+		drawMode = DRAW_NONE;
+	}
+	EnableCommon(DRAW_MINIMAP_BACKGROUND);
+	resetMatrixFunc = ResetMiniMapMatrices;
+	ResetMiniMapMatrices();
+}
+
+
+void LuaOpenGL::DisableDrawInMiniMapBackground()
+{
+	if (prevDrawMode != DRAW_SCREEN) {
+		DisableCommon(DRAW_MINIMAP_BACKGROUND);
+	}
+	else {
+		if (safeMode) {
+			glPopAttrib();
+		} else {
+			glCallList(resetStateList);
+		}
+		resetMatrixFunc = ResetScreenMatrices;
+		ResetScreenMatrices();
+		prevDrawMode = DRAW_NONE;
+		drawMode = DRAW_SCREEN;
+	}
+
+	glMatrixMode(GL_TEXTURE); {
+		glPopMatrix();
+	}
+	glMatrixMode(GL_PROJECTION); {
+		glPopMatrix();
+	}
+	glMatrixMode(GL_MODELVIEW); {
+		glPopMatrix();
+	}
+}
+
+
+void LuaOpenGL::ResetDrawInMiniMapBackground()
 {
 	if (safeMode) {
 		ResetMiniMapMatrices();

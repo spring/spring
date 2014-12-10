@@ -14,12 +14,12 @@ class CGeoSquareProjectile;
 
 class CGeometricObjects : public boost::noncopyable
 {
-	CR_DECLARE_STRUCT(CGeometricObjects);
-	CR_DECLARE_SUB(GeoGroup);
+	CR_DECLARE_STRUCT(CGeometricObjects)
+	CR_DECLARE_SUB(GeoGroup)
 
 private:
 	struct GeoGroup {
-		CR_DECLARE_STRUCT(GeoGroup);
+		CR_DECLARE_STRUCT(GeoGroup)
 		std::vector<CGeoSquareProjectile*> squares;
 	};
 

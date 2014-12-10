@@ -602,32 +602,32 @@ static int ColVolTable(lua_State* L, const void* data) {
 		return 1;                                              \
 	}
 
-TYPE_FUNC(IsTransportUnit, boolean);
-TYPE_FUNC(IsImmobileUnit, boolean);
-TYPE_FUNC(IsBuildingUnit, boolean);
-TYPE_FUNC(IsBuilderUnit, boolean);
-TYPE_FUNC(IsMobileBuilderUnit, boolean);
-TYPE_FUNC(IsStaticBuilderUnit, boolean);
-TYPE_FUNC(IsFactoryUnit, boolean);
-TYPE_FUNC(IsExtractorUnit, boolean);
-TYPE_FUNC(IsGroundUnit, boolean);
-TYPE_FUNC(IsAirUnit, boolean);
-TYPE_FUNC(IsStrafingAirUnit, boolean);
-TYPE_FUNC(IsHoveringAirUnit, boolean);
-TYPE_FUNC(IsFighterAirUnit, boolean);
-TYPE_FUNC(IsBomberAirUnit, boolean);
+TYPE_FUNC(IsTransportUnit, boolean)
+TYPE_FUNC(IsImmobileUnit, boolean)
+TYPE_FUNC(IsBuildingUnit, boolean)
+TYPE_FUNC(IsBuilderUnit, boolean)
+TYPE_FUNC(IsMobileBuilderUnit, boolean)
+TYPE_FUNC(IsStaticBuilderUnit, boolean)
+TYPE_FUNC(IsFactoryUnit, boolean)
+TYPE_FUNC(IsExtractorUnit, boolean)
+TYPE_FUNC(IsGroundUnit, boolean)
+TYPE_FUNC(IsAirUnit, boolean)
+TYPE_FUNC(IsStrafingAirUnit, boolean)
+TYPE_FUNC(IsHoveringAirUnit, boolean)
+TYPE_FUNC(IsFighterAirUnit, boolean)
+TYPE_FUNC(IsBomberAirUnit, boolean)
 
-TYPE_MODEL_FUNC(ModelHeight, height);
-TYPE_MODEL_FUNC(ModelRadius, radius);
-TYPE_MODEL_FUNC(ModelMinx,   mins.x);
-TYPE_MODEL_FUNC(ModelMidx,   relMidPos.x);
-TYPE_MODEL_FUNC(ModelMaxx,   maxs.x);
-TYPE_MODEL_FUNC(ModelMiny,   mins.y);
-TYPE_MODEL_FUNC(ModelMidy,   relMidPos.y);
-TYPE_MODEL_FUNC(ModelMaxy,   maxs.y);
-TYPE_MODEL_FUNC(ModelMinz,   mins.z);
-TYPE_MODEL_FUNC(ModelMidz,   relMidPos.z);
-TYPE_MODEL_FUNC(ModelMaxz,   maxs.z);
+TYPE_MODEL_FUNC(ModelHeight, height)
+TYPE_MODEL_FUNC(ModelRadius, radius)
+TYPE_MODEL_FUNC(ModelMinx,   mins.x)
+TYPE_MODEL_FUNC(ModelMidx,   relMidPos.x)
+TYPE_MODEL_FUNC(ModelMaxx,   maxs.x)
+TYPE_MODEL_FUNC(ModelMiny,   mins.y)
+TYPE_MODEL_FUNC(ModelMidy,   relMidPos.y)
+TYPE_MODEL_FUNC(ModelMaxy,   maxs.y)
+TYPE_MODEL_FUNC(ModelMinz,   mins.z)
+TYPE_MODEL_FUNC(ModelMidz,   relMidPos.z)
+TYPE_MODEL_FUNC(ModelMaxz,   maxs.z)
 
 
 

@@ -3,6 +3,10 @@ set(FILES
 	mapgenerator/mapinfo_template.lua
 	EngineOptions.lua
 	shaders/GLSL/bumpWaterCoastBlurFS.glsl
+	shaders/GLSL/infoHeight.lua
+	shaders/GLSL/infoLOS.lua
+	shaders/GLSL/infoMetal.lua
+	shaders/GLSL/infoPath.lua
 	shaders/GLSL/ShadowGenVertProg.glsl
 	shaders/GLSL/TreeFragProg.glsl
 	shaders/GLSL/terrainCommon.glsl

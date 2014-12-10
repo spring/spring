@@ -2,19 +2,18 @@
 
 #include "LaserCannon.h"
 #include "WeaponDef.h"
-#include "Game/TraceRay.h"
 #include "Map/Ground.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CLaserCannon, CWeapon, (NULL, NULL));
+CR_BIND_DERIVED(CLaserCannon, CWeapon, (NULL, NULL))
 
 CR_REG_METADATA(CLaserCannon,(
 	CR_MEMBER(color),
 	CR_RESERVED(8)
-));
+))
 
 CLaserCannon::CLaserCannon(CUnit* owner, const WeaponDef* def)
 	: CWeapon(owner, def)

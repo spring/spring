@@ -22,7 +22,7 @@ struct Command;
 class CTransportCAI : public CMobileCAI
 {
 public:
-	CR_DECLARE(CTransportCAI);
+	CR_DECLARE(CTransportCAI)
 	CTransportCAI(CUnit* owner);
 	CTransportCAI();
 	~CTransportCAI();
@@ -71,6 +71,8 @@ private:
 	 * units it carries.
 	 */
 	bool SpotIsClearIgnoreSelf(float3 pos, CUnit* unitToUnload);
+
+private:
 	std::list<float3> dropSpots;
 	bool isFirstIteration;
 	float3 startingDropPos;

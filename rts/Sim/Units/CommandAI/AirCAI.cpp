@@ -12,7 +12,6 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/Groups/Group.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/myMath.h"
@@ -35,7 +34,7 @@ static CStrafeAirMoveType* GetStrafeAirMoveType(const CUnit* owner) {
 
 
 
-CR_BIND_DERIVED(CAirCAI, CMobileCAI, );
+CR_BIND_DERIVED(CAirCAI, CMobileCAI, )
 CR_REG_METADATA(CAirCAI, (
 	CR_MEMBER(basePos),
 	CR_MEMBER(baseDir),
@@ -46,7 +45,7 @@ CR_REG_METADATA(CAirCAI, (
 	CR_MEMBER(lastPC1),
 	CR_MEMBER(lastPC2),
 	CR_RESERVED(16)
-));
+))
 
 CAirCAI::CAirCAI()
 	: CMobileCAI()

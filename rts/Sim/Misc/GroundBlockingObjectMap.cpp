@@ -16,7 +16,7 @@ CGroundBlockingObjectMap* groundBlockingObjectMap;
 CR_BIND(CGroundBlockingObjectMap, (1))
 CR_REG_METADATA(CGroundBlockingObjectMap, (
 	CR_MEMBER(groundBlockingMap)
-));
+))
 
 
 
@@ -44,12 +44,6 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 	object->mapPos = object->GetMapPos();
 	object->groundBlockPos = object->pos;
 
-	if (object->immobile) {
-		// align position to even-numbered squares
-		object->mapPos.x &= 0xfffffe;
-		object->mapPos.y &= 0xfffffe;
-	}
-
 	const int bx = object->mapPos.x, sx = object->xsize;
 	const int bz = object->mapPos.y, sz = object->zsize;
 	const int minXSqr = bx, maxXSqr = bx + sx;
@@ -75,11 +69,6 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, con
 	object->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_BLOCKING);
 	object->mapPos = object->GetMapPos();
 	object->groundBlockPos = object->pos;
-
-	if (object->immobile) {
-		object->mapPos.x &= 0xfffffe;
-		object->mapPos.y &= 0xfffffe;
-	}
 
 	const int bx = object->mapPos.x, sx = object->xsize;
 	const int bz = object->mapPos.y, sz = object->zsize;
@@ -165,37 +154,32 @@ CSolidObject* CGroundBlockingObjectMap::GroundBlocked(const float3& pos) const {
 
 bool CGroundBlockingObjectMap::GroundBlocked(int x, int z, CSolidObject* ignoreObj) const
 {
-	if (x < 0 || x >= gs->mapx || z < 0 || z >= gs->mapy)
+	if ((unsigned)x >= gs->mapx || (unsigned)z >= gs->mapy)
 		return false;
 
-	const int mapSquare = x + z * gs->mapx;
+	const int mapSquare = z * gs->mapx + x;
+	const BlockingMapCell& cell = groundBlockingMap[mapSquare];
 
-	if (groundBlockingMap[mapSquare].empty())
+	if (cell.empty())
 		return false;
 
 	const int objID = GetObjectID(ignoreObj);
-	const BlockingMapCell& cell = groundBlockingMap[mapSquare];
-
 	BlockingMapCellIt it = cell.begin();
 
-	if (it != cell.end()) {
-		if (it->first != objID) {
-			// there are other objects blocking the square
-			return true;
-		} else {
-			// ignoreObj is in the square. Check if there are other objects, too
-			return (cell.size() >= 2);
-		}
+	if (it->first != objID) {
+		// there are other objects blocking the square
+		return true;
 	}
 
-	return false;
+	// ignoreObj is in the square. Check if there are other objects, too
+	return (cell.size() >= 2);
 }
 
 
 bool CGroundBlockingObjectMap::GroundBlocked(const float3& pos, CSolidObject* ignoreObj) const
 {
-	const int xSqr = int(pos.x / SQUARE_SIZE);
-	const int zSqr = int(pos.z / SQUARE_SIZE);
+	const int xSqr = unsigned(pos.x) / SQUARE_SIZE;
+	const int zSqr = unsigned(pos.z) / SQUARE_SIZE;
 	return GroundBlocked(xSqr, zSqr, ignoreObj);
 }
 

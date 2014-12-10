@@ -11,7 +11,7 @@
 
 namespace Shader {
 	struct IProgramObject;
-};
+}
 
 class CCamera;
 class CShadowHandler

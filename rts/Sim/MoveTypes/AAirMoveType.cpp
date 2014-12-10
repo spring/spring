@@ -12,7 +12,7 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 
-CR_BIND_DERIVED_INTERFACE(AAirMoveType, AMoveType);
+CR_BIND_DERIVED_INTERFACE(AAirMoveType, AMoveType)
 
 CR_REG_METADATA(AAirMoveType, (
 	CR_ENUM_MEMBER(aircraftState),
@@ -37,7 +37,7 @@ CR_REG_METADATA(AAirMoveType, (
 
 	CR_MEMBER(lastColWarningType),
 	CR_MEMBER(lastFuelUpdateFrame)
-));
+))
 
 AAirMoveType::AAirMoveType(CUnit* unit):
 	AMoveType(unit),

@@ -16,7 +16,7 @@
 
 namespace springLegacyAI {
 	struct UnitDef;
-};
+}
 using namespace springLegacyAI;
 using namespace std;
 

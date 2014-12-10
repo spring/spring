@@ -33,7 +33,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/Groups/Group.h"
+#include "Game/UI/Groups/Group.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
@@ -132,6 +132,7 @@ CMouseHandler::CMouseHandler()
 
 CMouseHandler::~CMouseHandler()
 {
+	configHandler->RemoveObserver(this);
 	if (hwHide)
 		SDL_ShowCursor(SDL_ENABLE);
 

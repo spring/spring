@@ -67,7 +67,7 @@
 #define PKTCACHE_VECSIZE 1000
 
 using netcode::RawPacket;
-
+using boost::format;
 
 
 CONFIG(int, AutohostPort).defaultValue(0);
@@ -75,11 +75,7 @@ CONFIG(int, SpeedControl).defaultValue(1).minimumValue(1).maximumValue(2)
 	.description("Sets how server adjusts speed according to player's load (CPU), 1: use average, 2: use highest");
 CONFIG(bool, AllowSpectatorJoin).defaultValue(true);
 CONFIG(bool, WhiteListAdditionalPlayers).defaultValue(true);
-#ifdef DEDICATED
-CONFIG(bool, ServerRecordDemos).defaultValue(true);
-#else
-CONFIG(bool, ServerRecordDemos).defaultValue(false);
-#endif
+CONFIG(bool, ServerRecordDemos).defaultValue(false).dedicatedValue(true);
 CONFIG(bool, ServerLogInfoMessages).defaultValue(false);
 CONFIG(bool, ServerLogDebugMessages).defaultValue(false);
 CONFIG(std::string, AutohostIP).defaultValue("127.0.0.1");
@@ -97,29 +93,29 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GAMESERVER)
 
 
 /// frames until a synccheck will time out and a warning is given out
-const unsigned SYNCCHECK_TIMEOUT = 300;
+static const unsigned SYNCCHECK_TIMEOUT = 300;
 
 /// used to prevent msg spam
-const unsigned SYNCCHECK_MSG_TIMEOUT = 400;
+static const unsigned SYNCCHECK_MSG_TIMEOUT = 400;
 
 /// The time interval in msec for sending player statistics to each client
-const spring_time playerInfoTime = spring_secs(2);
+static const spring_time playerInfoTime = spring_secs(2);
 
 /// every n'th frame will be a keyframe (and contain the server's framenumber)
-const unsigned serverKeyframeInterval = 16;
+static const unsigned serverKeyframeInterval = 16;
 
 /// players incoming bandwidth new allowance every X milliseconds
-const unsigned playerBandwidthInterval = 100;
+static const unsigned playerBandwidthInterval = 100;
 
 /// every 10 sec we'll broadcast current frame in a message that skips queue & cache
 /// to let clients that are fast-forwarding to current point to know their loading %
-const unsigned gameProgressFrameInterval = GAME_SPEED * 10;
+static const unsigned gameProgressFrameInterval = GAME_SPEED * 10;
 
-const unsigned syncResponseEchoInterval = GAME_SPEED * 2;
+static const unsigned syncResponseEchoInterval = GAME_SPEED * 2;
 
 
 //FIXME remodularize server commands, so they get registered in word completion etc.
-const std::string SERVER_COMMANDS[] = {
+static const std::string SERVER_COMMANDS[] = {
 	"kick", "kickbynum",
 	"mute", "mutebynum",
 	"setminspeed", "setmaxspeed",
@@ -131,23 +127,9 @@ const std::string SERVER_COMMANDS[] = {
 
 
 
-using boost::format;
-
-namespace {
-	void SetBoolArg(bool& value, const std::string& str)
-	{
-		if (str.empty()) { // toggle
-			value = !value;
-		} else { // set
-			value = (atoi(str.c_str()) != 0);
-		}
-	}
-}
-
-
+CGameServer* gameServer = NULL;
 std::set<std::string> CGameServer::commandBlacklist;
 
-CGameServer* gameServer = NULL;
 
 CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData* const newGameData, const CGameSetup* const mysetup)
 : setup(mysetup)
@@ -338,7 +320,7 @@ void CGameServer::StripGameSetupText(const GameData* const newGameData)
 	for (TdfParser::sectionsMap_t::iterator it = rootSec->sections.begin(); it != rootSec->sections.end(); ++it) {
 		const std::string& sectionKey = StringToLower(it->first);
 
-		if (sectionKey.find("player") != 0)
+		if (!StringStartsWith(sectionKey, "player"))
 			continue;
 
 		TdfParser::TdfSection* playerSec = it->second;
@@ -608,7 +590,7 @@ bool CGameServer::SendDemoData(int targetFrameNum)
 					CommandMessage msg(rpkt);
 					const Action& action = msg.GetAction();
 					if (msg.GetPlayerID() == SERVER_PLAYER && action.command == "cheat")
-						SetBoolArg(cheating, action.extra);
+						InverseOrSetBool(cheating, action.extra);
 				} catch (const netcode::UnpackPacketException& ex) {
 					Message(str(format("Warning: Discarding invalid command message packet in demo: %s") %ex.what()));
 					continue;
@@ -663,7 +645,7 @@ void CGameServer::Message(const std::string& message, bool broadcast)
 		hostif->Message(message);
 
 #ifdef DEDICATED
-	LOG(message.c_str());
+	LOG("%s", message.c_str());
 #endif
 }
 
@@ -2125,8 +2107,8 @@ void CGameServer::PushAction(const Action& action, bool fromAutoHost)
 				bool muteChat = true;
 				bool muteDraw = true;
 
-				if (tokens.size() >= 2) SetBoolArg(muteChat, tokens[1]);
-				if (tokens.size() >= 3) SetBoolArg(muteDraw, tokens[2]);
+				if (tokens.size() >= 2) InverseOrSetBool(muteChat, tokens[1]);
+				if (tokens.size() >= 3) InverseOrSetBool(muteDraw, tokens[2]);
 
 				for (size_t a = 0; a < players.size(); ++a) {
 					const std::string playerLower = StringToLower(players[a].name);
@@ -2153,8 +2135,8 @@ void CGameServer::PushAction(const Action& action, bool fromAutoHost)
 				bool muteChat = true;
 				bool muteDraw = true;
 
-				if (tokens.size() >= 2) SetBoolArg(muteChat, tokens[1]);
-				if (tokens.size() >= 3) SetBoolArg(muteDraw, tokens[2]);
+				if (tokens.size() >= 2) InverseOrSetBool(muteChat, tokens[1]);
+				if (tokens.size() >= 3) InverseOrSetBool(muteDraw, tokens[2]);
 
 				MutePlayer(playerID, muteChat, muteDraw);
 			}
@@ -2179,16 +2161,16 @@ void CGameServer::PushAction(const Action& action, bool fromAutoHost)
 		}
 	}
 	else if (action.command == "nopause") {
-		SetBoolArg(gamePausable, action.extra);
+		InverseOrSetBool(gamePausable, action.extra);
 	}
 	else if (action.command == "nohelp") {
-		SetBoolArg(noHelperAIs, action.extra);
+		InverseOrSetBool(noHelperAIs, action.extra);
 		// sent it because clients have to do stuff when this changes
 		CommandMessage msg(action, SERVER_PLAYER);
 		Broadcast(boost::shared_ptr<const RawPacket>(msg.Pack()));
 	}
 	else if (action.command == "nospecdraw") {
-		SetBoolArg(allowSpecDraw, action.extra);
+		InverseOrSetBool(allowSpecDraw, action.extra, true);
 		// sent it because clients have to do stuff when this changes
 		CommandMessage msg(action, SERVER_PLAYER);
 		Broadcast(boost::shared_ptr<const RawPacket>(msg.Pack()));
@@ -2248,7 +2230,7 @@ void CGameServer::PushAction(const Action& action, bool fromAutoHost)
 		}
 	}
 	else if (action.command == "cheat") {
-		SetBoolArg(cheating, action.extra);
+		InverseOrSetBool(cheating, action.extra);
 		CommandMessage msg(action, SERVER_PLAYER);
 		Broadcast(boost::shared_ptr<const RawPacket>(msg.Pack()));
 	}
@@ -2319,7 +2301,7 @@ void CGameServer::PushAction(const Action& action, bool fromAutoHost)
 				newPausedState = !isPaused;
 			} else {
 				// if a param is given, interpret it as "bool setPaused"
-				SetBoolArg(newPausedState, action.extra);
+				InverseOrSetBool(newPausedState, action.extra);
 			}
 
 			isPaused = newPausedState;

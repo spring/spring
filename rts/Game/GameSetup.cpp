@@ -17,11 +17,11 @@
 #include <cstring>
 #include <boost/format.hpp>
 
-CR_BIND(CGameSetup,);
+CR_BIND(CGameSetup,)
 CR_REG_METADATA(CGameSetup, (
 	CR_MEMBER(gameSetupText),
 	CR_POSTLOAD(PostLoad)
-));
+))
 
 CGameSetup* gameSetup = NULL;
 

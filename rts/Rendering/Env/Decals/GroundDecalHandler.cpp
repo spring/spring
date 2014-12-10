@@ -8,7 +8,6 @@
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Lua/LuaParser.h"
-#include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -17,6 +16,7 @@
 #include "Rendering/Env/ISky.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -702,7 +702,6 @@ void CGroundDecalHandler::Draw()
 	}
 
 	const float3 ambientColor = mapInfo->light.groundAmbientColor * CGlobalRendering::SMF_INTENSITY_MULT;
-	const CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
@@ -722,7 +721,7 @@ void CGroundDecalHandler::Draw()
 		glMultiTexCoord4f(GL_TEXTURE1_ARB, 1.0f,1.0f,1.0f,1.0f); // workaround a nvidia bug with TexGen
 		SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 0);
 
-	if (gd->DrawExtraTex()) {
+	if (infoTextureHandler->IsEnabled()) {
 		glActiveTexture(GL_TEXTURE3);
 		glEnable(GL_TEXTURE_2D);
 		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
@@ -734,7 +733,7 @@ void CGroundDecalHandler::Draw()
 		glMultiTexCoord4f(GL_TEXTURE3_ARB, 1.0f,1.0f,1.0f,1.0f); // workaround a nvidia bug with TexGen
 		SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 0);
 
-		glBindTexture(GL_TEXTURE_2D, gd->GetActiveInfoTexture());
+		glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
 	}
 
 	if (shadowHandler->shadowsLoaded) {

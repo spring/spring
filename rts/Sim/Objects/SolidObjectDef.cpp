@@ -7,7 +7,7 @@
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 
-CR_BIND(SolidObjectDecalDef, );
+CR_BIND(SolidObjectDecalDef, )
 CR_REG_METADATA(SolidObjectDecalDef,
 (
 	CR_MEMBER(groundDecalTypeName),
@@ -25,7 +25,7 @@ CR_REG_METADATA(SolidObjectDecalDef,
 	CR_MEMBER(trackDecalOffset),
 	CR_MEMBER(trackDecalStrength),
 	CR_MEMBER(trackDecalStretch)
-));
+))
 
 SolidObjectDecalDef::SolidObjectDecalDef()
 	: useGroundDecal(false)
@@ -60,7 +60,7 @@ void SolidObjectDecalDef::Parse(const LuaTable& table) {
 	trackDecalStretch  = table.GetFloat("trackStretch",  1.0f);
 }
 
-CR_BIND(SolidObjectDef, );
+CR_BIND(SolidObjectDef, )
 CR_REG_METADATA(SolidObjectDef,
 (
 	CR_MEMBER(id),
@@ -88,7 +88,7 @@ CR_REG_METADATA(SolidObjectDef,
 	CR_MEMBER(modelName),
 
 	CR_MEMBER(customParams)
-));
+))
 
 SolidObjectDef::SolidObjectDef()
 	: id(-1)
@@ -126,8 +126,6 @@ S3DModel* SolidObjectDef::LoadModel() const
 			// not useful, too much spam
 			// LOG_L(L_WARNING, "[SolidObjectDef::%s] object \"%s\" has no model defined", __FUNCTION__, name.c_str());
 		}
-	} else {
-		eventHandler.LoadedModelRequested();
 	}
 
 	return model;

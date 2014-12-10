@@ -28,7 +28,7 @@
 #define SMOKE_TIME 40
 #define NUM_TRAIL_PARTS (sizeof(fireTrailPoints) / sizeof(fireTrailPoints[0]))
 
-CR_BIND_DERIVED(CPieceProjectile, CProjectile, (NULL, NULL, ZeroVector, ZeroVector, 0, 0));
+CR_BIND_DERIVED(CPieceProjectile, CProjectile, (NULL, NULL, ZeroVector, ZeroVector, 0, 0))
 
 CR_REG_METADATA(CPieceProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -49,7 +49,7 @@ CR_REG_METADATA(CPieceProjectile,(
 	CR_MEMBER(drawTrail),
 
 	CR_RESERVED(36)
-));
+))
 
 CPieceProjectile::CPieceProjectile(
 	CUnit* owner,

@@ -10,7 +10,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
 
-CR_BIND_DERIVED(CFlameProjectile, CWeaponProjectile, (ProjectileParams()));
+CR_BIND_DERIVED(CFlameProjectile, CWeaponProjectile, (ProjectileParams()))
 
 CR_REG_METADATA(CFlameProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -19,7 +19,7 @@ CR_REG_METADATA(CFlameProjectile,(
 	CR_MEMBER(physLife),
 	CR_MEMBER(invttl),
 	CR_RESERVED(16)
-));
+))
 
 
 CFlameProjectile::CFlameProjectile(const ProjectileParams& params):CWeaponProjectile(params)
@@ -41,7 +41,7 @@ CFlameProjectile::CFlameProjectile(const ProjectileParams& params):CWeaponProjec
 
 void CFlameProjectile::Collision()
 {
-	const float3 norm = CGround::GetNormal(pos.x, pos.z);
+	const float3& norm = CGround::GetNormal(pos.x, pos.z);
 	const float ns = speed.dot(norm);
 
 	SetVelocityAndSpeed(speed - (norm * ns));

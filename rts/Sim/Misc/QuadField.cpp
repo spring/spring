@@ -15,7 +15,7 @@
 #define CELL_IDX_X(wpx) Clamp(int((wpx) / quadSizeX), 0, numQuadsX - 1)
 #define CELL_IDX_Z(wpz) Clamp(int((wpz) / quadSizeZ), 0, numQuadsZ - 1)
 
-CR_BIND(CQuadField, (1, 1));
+CR_BIND(CQuadField, (1, 1))
 CR_REG_METADATA(CQuadField, (
 	CR_MEMBER(baseQuads),
 	CR_MEMBER(tempQuads),
@@ -23,15 +23,15 @@ CR_REG_METADATA(CQuadField, (
 	CR_MEMBER(numQuadsZ),
 	CR_MEMBER(quadSizeX),
 	CR_MEMBER(quadSizeZ)
-));
+))
 
-CR_BIND(CQuadField::Quad, );
+CR_BIND(CQuadField::Quad, )
 CR_REG_METADATA_SUB(CQuadField, Quad, (
 	CR_MEMBER(units),
 	CR_MEMBER(teamUnits),
 	CR_MEMBER(features),
 	CR_MEMBER(projectiles)
-));
+))
 
 CQuadField* quadField = NULL;
 
@@ -537,10 +537,10 @@ void CQuadField::MovedProjectile(CProjectile* p)
 
 	const CProjectile::QuadFieldCellData& qfcd = p->GetQuadFieldCellData();
 
-	const int2 oldCellCoors = qfcd.GetCoor(0);
+	const int2& oldCellCoors = qfcd.GetCoor(0);
 	const int2 newCellCoors = {
-		std::max(0, std::min(int(p->pos.x / quadSizeX), numQuadsX - 1)),
-		std::max(0, std::min(int(p->pos.z / quadSizeZ), numQuadsZ - 1))
+		Clamp(int(p->pos.x / quadSizeX), 0, numQuadsX - 1),
+		Clamp(int(p->pos.z / quadSizeZ), 0, numQuadsZ - 1)
 	};
 
 	if (newCellCoors != oldCellCoors) {
@@ -863,13 +863,11 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 	int* endQuad = &tempQuads[0];
 
 	// bail early if caches are already full
-	if (numUnits >= units.size())
-		return;
-	if (numFeatures >= features.size())
+	if (numUnits >= units.size() && numFeatures >= features.size())
 		return;
 
-	assert(numUnits == 0 || units[numUnits] == NULL);
-	assert(numFeatures == 0 || features[numFeatures] == NULL);
+	assert(numUnits == 0 || numUnits == units.size() || units[numUnits] == NULL);
+	assert(numFeatures == 0 || numFeatures == features.size() || features[numFeatures] == NULL);
 
 	GetQuads(pos, radius, begQuad, endQuad);
 
@@ -879,8 +877,16 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 	for (int* a = begQuad; a != endQuad; ++a) {
 		const Quad& quad = baseQuads[*a];
 
+		// bail early if caches are already full
+		if (numUnits >= units.size() && numFeatures >= features.size())
+			break;
+
 		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
 			CUnit* u = *ui;
+
+			// bail early if cache is full
+			if (numUnits >= units.size())
+				break;
 
 			// prevent double adding
 			if (u->tempNum == tempNum)
@@ -903,6 +909,10 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 		for (fi = quad.features.begin(); fi != quad.features.end(); ++fi) {
 			CFeature* f = *fi;
 
+			// bail early if cache is full
+			if (numFeatures >= features.size())
+				break;
+
 			// prevent double adding
 			if (f->tempNum == tempNum)
 				continue;
@@ -922,8 +932,8 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 		}
 	}
 
-	assert(numUnits < units.size());
-	assert(numFeatures < features.size());
+	assert(numUnits <= units.size());
+	assert(numFeatures <= features.size());
 
 	// set end-of-list sentinels
 	if (numUnits < units.size())

@@ -11,6 +11,6 @@ namespace ConfigLocater {
 	 * @brief Get the names of the default configuration files
 	 */
 	void GetDefaultLocations(std::vector<std::string>& locations);
-};
+}
 
 #endif // CONFIG_LOCATER_H

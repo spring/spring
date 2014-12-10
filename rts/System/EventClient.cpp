@@ -121,6 +121,7 @@ void CEventClient::DrawWorldRefraction() {}
 void CEventClient::DrawScreenEffects() {}
 void CEventClient::DrawScreen() {}
 void CEventClient::DrawInMiniMap() {}
+void CEventClient::DrawInMiniMapBackground() {}
 
 bool CEventClient::DrawUnit(const CUnit* unit) { return false; }
 bool CEventClient::DrawFeature(const CFeature* feature) { return false; }
@@ -134,6 +135,7 @@ void CEventClient::LoadProgress(const std::string& msg, const bool replace_lastl
 
 void CEventClient::CollectGarbage() {}
 void CEventClient::DbgTimingInfo(DbgTimingInfoType type, const spring_time start, const spring_time end) {}
+void CEventClient::MetalMapChanged(const int x, const int z) {}
 
 // from LuaUI
 bool CEventClient::KeyPress(int key, bool isRepeat) { return false; }

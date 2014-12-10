@@ -329,4 +329,4 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& game, 
 	return str.str();
 }
 
-}; //namespace StartScriptGen
+} //namespace StartScriptGen

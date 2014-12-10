@@ -28,7 +28,7 @@ class CWorldDrawer;
 class CGame : public CGameController
 {
 private:
-	CR_DECLARE_STRUCT(CGame);
+	CR_DECLARE_STRUCT(CGame)
 
 public:
 	CGame(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
@@ -172,7 +172,6 @@ public:
 	bool showFPS;
 	bool showClock;
 	bool showSpeed;
-	int showMTInfo;
 
 	float inputTextPosX;
 	float inputTextPosY;

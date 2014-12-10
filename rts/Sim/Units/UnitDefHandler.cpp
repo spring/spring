@@ -24,7 +24,7 @@
 CUnitDefHandler* unitDefHandler = NULL;
 
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && (_MSC_VER < 1800)
 bool isblank(int c) {
 	return (c == ' ') || (c == '\t') || (c == '\r') || (c == '\n');
 }
@@ -292,7 +292,7 @@ void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef, const std::string&
 		    !LoadBuildPic("unitpics/" + unitDef->name + ".png", bitmap) &&
 		    !LoadBuildPic("unitpics/" + unitDef->name + ".pcx", bitmap) &&
 		    !LoadBuildPic("unitpics/" + unitDef->name + ".bmp", bitmap)) {
-			bitmap.Alloc(1, 1); // last resort
+			bitmap.AllocDummy(SColor(255, 0, 0, 255));
 		}
 	}
 

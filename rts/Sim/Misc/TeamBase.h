@@ -12,7 +12,7 @@
 
 class TeamBase
 {
-	CR_DECLARE(TeamBase);
+	CR_DECLARE(TeamBase)
 
 public:
 	typedef std::map<std::string, std::string> customOpts;

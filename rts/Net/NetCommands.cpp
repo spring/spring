@@ -781,14 +781,14 @@ void CGame::ClientReadNet()
 
 					if (metalShare > 0.0f) {
 						if (eventHandler.AllowResourceTransfer(srcTeam, dstTeam, "m", metalShare)) {
-							teamHandler->Team(srcTeam)->metal -= metalShare;
-							teamHandler->Team(dstTeam)->metal += metalShare;
+							teamHandler->Team(srcTeam)->res.metal -= metalShare;
+							teamHandler->Team(dstTeam)->res.metal += metalShare;
 						}
 					}
 					if (energyShare > 0.0f) {
 						if (eventHandler.AllowResourceTransfer(srcTeam, dstTeam, "e", energyShare)) {
-							teamHandler->Team(srcTeam)->energy -= energyShare;
-							teamHandler->Team(dstTeam)->energy += energyShare;
+							teamHandler->Team(srcTeam)->res.energy -= energyShare;
+							teamHandler->Team(dstTeam)->res.energy += energyShare;
 						}
 					}
 
@@ -847,26 +847,26 @@ void CGame::ClientReadNet()
 				const bool shareUnits = !!inbuf[3];
 				CTeam* srcTeam = teamHandler->Team(srcTeamID);
 				CTeam* dstTeam = teamHandler->Team(dstTeamID);
-				const float metalShare  = Clamp(*(float*)&inbuf[4], 0.0f, (float)srcTeam->metal);
-				const float energyShare = Clamp(*(float*)&inbuf[8], 0.0f, (float)srcTeam->energy);
+				const float metalShare  = Clamp(*(float*)&inbuf[4], 0.0f, (float)srcTeam->res.metal);
+				const float energyShare = Clamp(*(float*)&inbuf[8], 0.0f, (float)srcTeam->res.energy);
 
 				if (metalShare > 0.0f) {
 					if (eventHandler.AllowResourceTransfer(srcTeamID, dstTeamID, "m", metalShare)) {
-						srcTeam->metal                       -= metalShare;
-						srcTeam->metalSent                   += metalShare;
+						srcTeam->res.metal                   -= metalShare;
+						srcTeam->resSent.metal               += metalShare;
 						srcTeam->currentStats->metalSent     += metalShare;
-						dstTeam->metal                       += metalShare;
-						dstTeam->metalReceived               += metalShare;
+						dstTeam->res.metal                   += metalShare;
+						dstTeam->resReceived.metal           += metalShare;
 						dstTeam->currentStats->metalReceived += metalShare;
 					}
 				}
 				if (energyShare > 0.0f) {
 					if (eventHandler.AllowResourceTransfer(srcTeamID, dstTeamID, "e", energyShare)) {
-						srcTeam->energy                       -= energyShare;
-						srcTeam->energySent                   += energyShare;
+						srcTeam->res.energy                   -= energyShare;
+						srcTeam->resSent.energy               += energyShare;
 						srcTeam->currentStats->energySent     += energyShare;
-						dstTeam->energy                       += energyShare;
-						dstTeam->energyReceived               += energyShare;
+						dstTeam->res.energy                   += energyShare;
+						dstTeam->resReceived.energy           += energyShare;
 						dstTeam->currentStats->energyReceived += energyShare;
 					}
 				}
@@ -917,10 +917,10 @@ void CGame::ClientReadNet()
 				float energyShare=*(float*)&inbuf[7];
 
 				if (eventHandler.AllowResourceLevel(team, "m", metalShare)) {
-					teamHandler->Team(team)->metalShare = metalShare;
+					teamHandler->Team(team)->resShare.metal = metalShare;
 				}
 				if (eventHandler.AllowResourceLevel(team, "e", energyShare)) {
-					teamHandler->Team(team)->energyShare = energyShare;
+					teamHandler->Team(team)->resShare.energy = energyShare;
 				}
 				AddTraffic(player, packetCode, dataLength);
 				break;

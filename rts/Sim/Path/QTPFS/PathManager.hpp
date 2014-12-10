@@ -173,7 +173,7 @@ namespace QTPFS {
 		boost::condition_variable* condThreadUpdated;
 		#endif
 	};
-};
+}
 
 #endif
 

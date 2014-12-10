@@ -115,6 +115,6 @@ namespace SpringVersion
 	 * @see GetAdditional
 	 */
 	extern const std::string& GetFull();
-};
+}
 
 #endif // GAME_VERSION_H

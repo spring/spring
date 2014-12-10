@@ -124,7 +124,7 @@ static bool TestCregClasses2()
 			fineClasses++;
 		}
 	}
-	return PostCregTest(fineClasses, brokenClasses, 15);
+	return PostCregTest(fineClasses, brokenClasses, 7);
 }
 
 static bool TestCregClasses3()
@@ -146,7 +146,7 @@ static bool TestCregClasses3()
 
 		// create `map` of the class
 		const creg::Class* c_base = c;
-		while (c_base){
+		while (c_base) {
 			const std::vector<creg::Class::Member*>& classMembers = c_base->members;
 			for (std::vector<creg::Class::Member*>::const_iterator jt = classMembers.begin(); jt != classMembers.end(); ++jt) {
 				const size_t memberOffset = (*jt)->offset;
@@ -257,7 +257,7 @@ static bool TestCregClasses3()
 			fineClasses++;
 		}
 	}
-	return PostCregTest(fineClasses, brokenClasses, 35);
+	return PostCregTest(fineClasses, brokenClasses, 13);
 }
 
 
@@ -280,7 +280,7 @@ static bool TestCregClasses4()
 		const std::string& className = c->name;
 
 		bool incorrectUsage = false;
-		if (c->binder->hasVTable) {
+		if (!c->binder->isCregStruct) {
 			if (!c->base && c->derivedClasses.empty()) {
 				incorrectUsage = true;
 				LOG_L(L_WARNING, "  Class %s has a vTable but isn't derived (should use CR_DECLARE_STRUCT)", className.c_str());
@@ -317,4 +317,4 @@ namespace creg {
 		res &= TestCregClasses4();
 		return res;
 	}
-};
+}

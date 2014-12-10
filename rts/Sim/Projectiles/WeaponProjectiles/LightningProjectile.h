@@ -9,7 +9,7 @@ class CWeapon;
 
 class CLightningProjectile : public CWeaponProjectile
 {
-	CR_DECLARE(CLightningProjectile);
+	CR_DECLARE(CLightningProjectile)
 public:
 	CLightningProjectile(const ProjectileParams& params);
 

@@ -23,10 +23,10 @@
 #include "System/float3.h"
 #include "System/myMath.h"
 #include "System/Sync/SyncTracer.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/Log/ILog.h"
 
-CR_BIND_DERIVED(CWeapon, CObject, (NULL, NULL));
+CR_BIND_DERIVED(CWeapon, CObject, (NULL, NULL))
 
 CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(owner),
@@ -101,7 +101,7 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(errorVectorAdd),
 	CR_MEMBER(targetPos),
 	CR_MEMBER(targetBorderPos)
-));
+))
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -423,7 +423,7 @@ void CWeapon::UpdateFire()
 
 	CTeam* ownerTeam = teamHandler->Team(owner->team);
 
-	if ((weaponDef->stockpile || (ownerTeam->metal >= metalFireCost && ownerTeam->energy >= energyFireCost))) {
+	if ((weaponDef->stockpile || (ownerTeam->res.metal >= metalFireCost && ownerTeam->res.energy >= energyFireCost))) {
 		owner->script->GetEmitDirPos(owner->script->QueryWeapon(weaponNum), relWeaponMuzzlePos, weaponDir);
 
 		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
@@ -464,8 +464,8 @@ void CWeapon::UpdateFire()
 			const int minPeriod = std::max(1, (int)(reloadTime / owner->reloadSpeed));
 			const float averageFactor = 1.0f / minPeriod;
 
-			ownerTeam->energyPull += (averageFactor * energyFireCost);
-			ownerTeam->metalPull += (averageFactor * metalFireCost);
+			ownerTeam->resPull.energy += (averageFactor * energyFireCost);
+			ownerTeam->resPull.metal  += (averageFactor * metalFireCost);
 		}
 	}
 }
@@ -477,14 +477,14 @@ bool CWeapon::UpdateStockpile()
 		if (numStockpileQued > 0) {
 			const float p = 1.0f / stockpileTime;
 
-			if (teamHandler->Team(owner->team)->metal >= metalFireCost*p && teamHandler->Team(owner->team)->energy >= energyFireCost*p) {
+			if (teamHandler->Team(owner->team)->res.metal >= metalFireCost*p && teamHandler->Team(owner->team)->res.energy >= energyFireCost*p) {
 				owner->UseEnergy(energyFireCost * p);
 				owner->UseMetal(metalFireCost * p);
 				buildPercent += p;
 			} else {
 				// update the energy and metal required counts
-				teamHandler->Team(owner->team)->energyPull += (energyFireCost * p);
-				teamHandler->Team(owner->team)->metalPull += (metalFireCost * p);
+				teamHandler->Team(owner->team)->resPull.energy += (energyFireCost * p);
+				teamHandler->Team(owner->team)->resPull.metal  += (metalFireCost * p);
 			}
 			if (buildPercent >= 1) {
 				const int oldCount = numStockpiled;
@@ -1287,7 +1287,7 @@ void CWeapon::Fire(bool scriptCall)
 	FireImpl(scriptCall);
 
 	if (fireSoundId > 0 && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1)) {
-		Channels::Battle.PlaySample(fireSoundId, owner, fireSoundVolume);
+		Channels::Battle->PlaySample(fireSoundId, owner, fireSoundVolume);
 	}
 }
 

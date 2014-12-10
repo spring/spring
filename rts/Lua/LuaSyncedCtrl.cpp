@@ -36,6 +36,7 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/SmoothHeightMesh.h"
 #include "Sim/Misc/Team.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -702,12 +703,12 @@ int LuaSyncedCtrl::UseTeamResource(lua_State* L)
 		const float value = max(0.0f, luaL_checkfloat(L, 3));
 
 		if ((type == "m") || (type == "metal")) {
-			team->metalPull += value;
+			team->resPull.metal += value;
 			lua_pushboolean(L, team->UseMetal(value));
 			return 1;
 		}
 		else if ((type == "e") || (type == "energy")) {
-			team->energyPull += value;
+			team->resPull.energy += value;
 			lua_pushboolean(L, team->UseEnergy(value));
 			return 1;
 		}
@@ -727,9 +728,9 @@ int LuaSyncedCtrl::UseTeamResource(lua_State* L)
 				}
 			}
 		}
-		team->metalPull  += metal;
-		team->energyPull += energy;
-		if ((team->metal >= metal) && (team->energy >= energy)) {
+		team->resPull.metal  += metal;
+		team->resPull.energy += energy;
+		if ((team->res.metal >= metal) && (team->res.energy >= energy)) {
 			team->UseMetal(metal);
 			team->UseEnergy(energy);
 			lua_pushboolean(L, true);
@@ -764,18 +765,18 @@ int LuaSyncedCtrl::SetTeamResource(lua_State* L)
 	const float value = max(0.0f, luaL_checkfloat(L, 3));
 
 	if ((type == "m") || (type == "metal")) {
-		team->metal = min<float>(team->metalStorage, value);
+		team->res.metal = min<float>(team->resStorage.metal, value);
 	}
 	else if ((type == "e") || (type == "energy")) {
-		team->energy = min<float>(team->energyStorage, value);
+		team->res.energy = min<float>(team->resStorage.energy, value);
 	}
 	else if ((type == "ms") || (type == "metalStorage")) {
-		team->metalStorage = value;
-		team->metal = min<float>(team->metal, team->metalStorage);
+		team->resStorage.metal = value;
+		team->res.metal = min<float>(team->res.metal, team->resStorage.metal);
 	}
 	else if ((type == "es") || (type == "energyStorage")) {
-		team->energyStorage = value;
-		team->energy = min<float>(team->energy, team->energyStorage);
+		team->resStorage.energy = value;
+		team->res.energy = min<float>(team->res.energy, team->resStorage.energy);
 	}
 	return 0;
 }
@@ -800,10 +801,10 @@ int LuaSyncedCtrl::SetTeamShareLevel(lua_State* L)
 	const float value = luaL_checkfloat(L, 3);
 
 	if ((type == "m") || (type == "metal")) {
-		team->metalShare = max(0.0f, min(1.0f, value));
+		team->resShare.metal = Clamp(value, 0.0f, 1.0f);
 	}
 	else if ((type == "e") || (type == "energy")) {
-		team->energyShare = max(0.0f, min(1.0f, value));
+		team->resShare.energy = Clamp(value, 0.0f, 1.0f);
 	}
 	return 0;
 }
@@ -836,23 +837,23 @@ int LuaSyncedCtrl::ShareTeamResource(lua_State* L)
 	float amount = luaL_checkfloat(L, 4);
 
 	if (type == "metal") {
-		amount = std::min(amount, (float)team1->metal);
+		amount = std::min(amount, (float)team1->res.metal);
 		if (eventHandler.AllowResourceTransfer(teamID1, teamID2, "m", amount)) { //FIXME can cause an endless loop
-			team1->metal                       -= amount;
-			team1->metalSent                   += amount;
+			team1->res.metal                   -= amount;
+			team1->resSent.metal               += amount;
 			team1->currentStats->metalSent     += amount;
-			team2->metal                       += amount;
-			team2->metalReceived               += amount;
+			team2->res.metal                   += amount;
+			team2->resReceived.metal           += amount;
 			team2->currentStats->metalReceived += amount;
 		}
 	} else if (type == "energy") {
-		amount = std::min(amount, (float)team1->energy);
+		amount = std::min(amount, (float)team1->res.energy);
 		if (eventHandler.AllowResourceTransfer(teamID1, teamID2, "e", amount)) { //FIXME can cause an endless loop
-			team1->energy                       -= amount;
-			team1->energySent                   += amount;
+			team1->res.energy                   -= amount;
+			team1->resSent.energy               += amount;
 			team1->currentStats->energySent     += amount;
-			team2->energy                       += amount;
-			team2->energyReceived               += amount;
+			team2->res.energy                   += amount;
+			team2->resReceived.energy           += amount;
 			team2->currentStats->energyReceived += amount;
 		}
 	}
@@ -1261,9 +1262,9 @@ int LuaSyncedCtrl::SetUnitCosts(lua_State* L)
 		if (key == "buildTime") {
 			unit->buildTime  = max(1.0f, value);
 		} else if (key == "metalCost") {
-			unit->metalCost  = max(1.0f, value);
+			unit->cost.metal  = max(1.0f, value);
 		} else if (key == "energyCost") {
-			unit->energyCost = max(1.0f, value);
+			unit->cost.energy = max(1.0f, value);
 		}
 	}
 	return 0;
@@ -1285,22 +1286,22 @@ static bool SetUnitResourceParam(CUnit* unit, const string& name, float value)
 
 	if (name[0] == 'u') {
 		if (name[1] == 'u') {
-					 if (name[2] == 'm') { unit->uncondUseMetal = value;  return true; }
-			else if (name[2] == 'e') { unit->uncondUseEnergy = value; return true; }
+					 if (name[2] == 'm') { unit->resourcesUncondUse.metal = value;  return true; }
+			else if (name[2] == 'e') { unit->resourcesUncondUse.energy = value; return true; }
 		}
 		else if (name[1] == 'm') {
-					 if (name[2] == 'm') { unit->uncondMakeMetal = value;  return true; }
-			else if (name[2] == 'e') { unit->uncondMakeEnergy = value; return true; }
+					 if (name[2] == 'm') { unit->resourcesUncondMake.metal = value;  return true; }
+			else if (name[2] == 'e') { unit->resourcesUncondMake.energy = value; return true; }
 		}
 	}
 	else if (name[0] == 'c') {
 		if (name[1] == 'u') {
-					 if (name[2] == 'm') { unit->condUseMetal = value;  return true; }
-			else if (name[2] == 'e') { unit->condUseEnergy = value; return true; }
+					 if (name[2] == 'm') { unit->resourcesCondUse.metal = value;  return true; }
+			else if (name[2] == 'e') { unit->resourcesCondUse.energy = value; return true; }
 		}
 		else if (name[1] == 'm') {
-					 if (name[2] == 'm') { unit->condMakeMetal = value;  return true; }
-			else if (name[2] == 'e') { unit->condMakeEnergy = value; return true; }
+					 if (name[2] == 'm') { unit->resourcesCondMake.metal = value;  return true; }
+			else if (name[2] == 'e') { unit->resourcesCondMake.energy = value; return true; }
 		}
 	}
 	return false;
@@ -1714,7 +1715,11 @@ int LuaSyncedCtrl::SetUnitHarvestStorage(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	unit->harvestStorage = luaL_checkfloat(L, 2);
+
+	for (int i = 0; i < SResourcePack::MAX_RESOURCES; ++i) {
+		unit->harvested[i]       = luaL_optfloat(L, 2 + i * 2,     unit->harvested[i]);
+		unit->harvestStorage[i]  = luaL_optfloat(L, 2 + i * 2 + 1, unit->harvestStorage[i]);
+	}
 	return 0;
 }
 
@@ -2359,13 +2364,13 @@ int LuaSyncedCtrl::UseUnitResource(lua_State* L)
 			}
 		}
 		CTeam* team = teamHandler->Team(unit->team);
-		if ((team->metal >= metal) && (team->energy >= energy)) {
+		if ((team->res.metal >= metal) && (team->res.energy >= energy)) {
 			unit->UseMetal(metal);
 			unit->UseEnergy(energy);
 			lua_pushboolean(L, true);
 		} else {
-			team->metalPull  += metal;
-			team->energyPull += energy;
+			team->resPull.metal  += metal;
+			team->resPull.energy += energy;
 			lua_pushboolean(L, false);
 		}
 		return 1;

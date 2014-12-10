@@ -16,11 +16,13 @@
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "ExternalAI/Interface/SSkirmishAICallback.h"
 #include "System/SafeCStrings.h"
+#include "lib/streflop/streflopC.h"
 
 #include <jni.h>
 
 #include <string.h>	// strlen(), strcat(), strcpy()
 #include <stdlib.h>	// malloc(), calloc(), free()
+#include <assert.h>
 
 struct Properties {
 	size_t       size;
@@ -35,7 +37,15 @@ static struct Properties* jvmCfgProps = NULL;
 static size_t  skirmishAIId_sizeMax = 0;
 static size_t* skirmishAIId_skirmishAiImpl;
 
+/**
+ * Marks the actual storage capacity limit for AI implementations.
+ * There can not be more then this many implementations in use at any time.
+ */
 static size_t   skirmishAiImpl_sizeMax = 0;
+/**
+ * No more implementations can be found at indices equal or greater to this one,
+ * though there can also be free indices lower then this one.
+ */
 static size_t   skirmishAiImpl_size = 0;
 static char**   skirmishAiImpl_className;
 static jobject* skirmishAiImpl_instance;
@@ -72,7 +82,7 @@ static jclass g_cls_ai_int = NULL;
 inline void java_establishSpringEnv() {
 
 	//(*g_jvm)->DetachCurrentThread(g_jvm);
-	util_resetEngineEnv();
+	streflop_init_Simple();
 }
 /// The JVM sets the environment it wants automatically, so this is a no-op
 inline void java_establishJavaEnv() {}
@@ -1154,11 +1164,14 @@ bool java_initSkirmishAIClass(
 	for (sai = 0; sai < skirmishAiImpl_size; ++sai) {
 		if (skirmishAiImpl_className[sai] == NULL) {
 			firstFree = sai;
+		} else if (strcmp(skirmishAiImpl_className[sai], className) == 0) {
+			break;
 		}
 	}
 	// sai is now either the instantiated one, or a free one
 
-	// instantiate AI (if needed)
+	// instantiate AI (if not already instantiated)
+	assert(sai < skirmishAiImpl_sizeMax);
 	if (skirmishAiImpl_className[sai] == NULL) {
 		sai = firstFree;
 		java_establishJavaEnv();
@@ -1201,13 +1214,15 @@ bool java_releaseSkirmishAIClass(const char* className) {
 	size_t sai;
 	for (sai = 0; sai < skirmishAiImpl_size; ++sai) {
 		if ((skirmishAiImpl_className[sai] != NULL) &&
-				(strcmp(skirmishAiImpl_className[sai], className) == 0)) {
+				(strcmp(skirmishAiImpl_className[sai], className) == 0))
+		{
 			break;
 		}
 	}
 	// sai is now either the instantiated one, or a free one
 
-	// release AI (if needed)
+	// release AI (if its instance was found)
+	assert(sai < skirmishAiImpl_sizeMax);
 	if (skirmishAiImpl_className[sai] != NULL) {
 		java_establishJavaEnv();
 		JNIEnv* env = java_getJNIEnv();

@@ -49,24 +49,30 @@ CR_REG_METADATA(CReadMap, (
 	CR_IGNORED(currMinHeight),
 	CR_IGNORED(currMaxHeight),
 	CR_MEMBER(mapChecksum),
-	//CR_MEMBER(heightMapSyncedPtr),
-	//CR_MEMBER(heightMapUnsyncedPtr),
+	CR_IGNORED(heightMapSyncedPtr),
+	CR_IGNORED(heightMapUnsyncedPtr),
 	CR_MEMBER(originalHeightMap),
 	CR_IGNORED(centerHeightMap),
 	CR_IGNORED(mipCenterHeightMaps),
-	//CR_MEMBER(mipPointerHeightMaps),
+	CR_IGNORED(mipPointerHeightMaps),
 	CR_IGNORED(visVertexNormals),
 	CR_IGNORED(faceNormalsSynced),
 	CR_IGNORED(faceNormalsUnsynced),
 	CR_IGNORED(centerNormalsSynced),
 	CR_IGNORED(centerNormalsUnsynced),
 	CR_IGNORED(slopeMap),
+	CR_IGNORED(sharedCornerHeightMaps),
+	CR_IGNORED(sharedCenterHeightMaps),
+	CR_IGNORED(sharedFaceNormals),
+	CR_IGNORED(sharedCenterNormals),
+	CR_IGNORED(sharedSlopeMaps),
 	CR_MEMBER(typeMap),
 	CR_MEMBER(unsyncedHeightMapUpdates),
 	CR_MEMBER(unsyncedHeightMapUpdatesTemp),
 	HEIGHTMAP_DIGESTS
+	CR_POSTLOAD(PostLoad),
 	CR_SERIALIZER(Serialize)
-));
+))
 
 
 CReadMap* CReadMap::LoadMap(const std::string& mapname)
@@ -113,16 +119,46 @@ CReadMap* CReadMap::LoadMap(const std::string& mapname)
 }
 
 
-void CReadMap::Serialize(creg::ISerializer& s)
+void CReadMap::Serialize(creg::ISerializer* s)
 {
 	// remove the const
 	const float* cshm = GetCornerHeightMapSynced();
 	      float*  shm = const_cast<float*>(cshm);
 
-	s.Serialize(shm, 4 * gs->mapxp1 * gs->mapyp1);
+	s->Serialize(shm, 4 * gs->mapxp1 * gs->mapyp1);
 
-	if (!s.IsWriting())
+	if (!s->IsWriting())
 		mapDamage->RecalcArea(2, gs->mapx - 3, 2, gs->mapy - 3);
+}
+
+
+void CReadMap::PostLoad()
+{
+	#ifndef USE_UNSYNCED_HEIGHTMAP
+	heightMapUnsyncedPtr = heightMapSyncedPtr;
+	#endif
+
+	sharedCornerHeightMaps[0] = &(*heightMapUnsyncedPtr)[0];
+	sharedCornerHeightMaps[1] = &(*heightMapSyncedPtr)[0];
+
+	sharedCenterHeightMaps[0] = &centerHeightMap[0]; // NO UNSYNCED VARIANT
+	sharedCenterHeightMaps[1] = &centerHeightMap[0];
+
+	sharedFaceNormals[0] = &faceNormalsUnsynced[0];
+	sharedFaceNormals[1] = &faceNormalsSynced[0];
+
+	sharedCenterNormals[0] = &centerNormalsUnsynced[0];
+	sharedCenterNormals[1] = &centerNormalsSynced[0];
+
+	sharedSlopeMaps[0] = &slopeMap[0]; // NO UNSYNCED VARIANT
+	sharedSlopeMaps[1] = &slopeMap[0];
+
+	//FIXME reconstruct
+	/*mipPointerHeightMaps.resize(numHeightMipMaps, NULL);
+	mipPointerHeightMaps[0] = &centerHeightMap[0];
+	for (int i = 1; i < numHeightMipMaps; i++) {
+		mipPointerHeightMaps[i] = &mipCenterHeightMaps[i - 1][0];
+	}*/
 }
 
 

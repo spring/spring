@@ -13,7 +13,7 @@ class CResourceMapAnalyzer;
 
 class CResourceHandler : public boost::noncopyable
 {
-	CR_DECLARE_STRUCT(CResourceHandler);
+	CR_DECLARE_STRUCT(CResourceHandler)
 
 public:
 	static CResourceHandler* GetInstance();
@@ -26,7 +26,7 @@ public:
 	 *
 	 * Adds a CResource to the pool and retun its resourceId.
 	 */
-	int AddResource(const CResource& resource);
+	int AddResource(const CResourceDescription& resource);
 	/**
 	 * @brief	resource
 	 * @param	resourceId index to fetch
@@ -34,7 +34,7 @@ public:
 	 *
 	 * Accesses a CResource instance at a given index
 	 */
-	const CResource* GetResource(int resourceId) const;
+	const CResourceDescription* GetResource(int resourceId) const;
 	/**
 	 * @brief	resource by name
 	 * @param	resourceName name of the resource to fetch
@@ -42,7 +42,7 @@ public:
 	 *
 	 * Accesses a CResource instance by name
 	 */
-	const CResource* GetResourceByName(const std::string& resourceName) const;
+	const CResourceDescription* GetResourceByName(const std::string& resourceName) const;
 	/**
 	 * @brief	resource index by name
 	 * @param	resourceName name of the resource to fetch
@@ -95,8 +95,6 @@ public:
 
 	size_t GetNumResources() const;
 
-//	bool IsMetal(int resourceId) const;
-//	bool IsEnergy(int resourceId) const;
 	int GetMetalId() const;
 	int GetEnergyId() const;
 
@@ -108,7 +106,7 @@ private:
 	CResourceHandler();
 	~CResourceHandler();
 
-	std::vector<CResource> resources;
+	std::vector<CResourceDescription> resources;
 	std::map<int, CResourceMapAnalyzer*> resourceMapAnalyzers;
 
 	int metalResourceId;

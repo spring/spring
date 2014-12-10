@@ -253,7 +253,7 @@ std::string GetModuleFile(std::string moduleName)
 	// this will only be used if moduleFilePath stays empty
 	const char* error = NULL;
 
-#if defined(linux) || defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
 #ifdef __APPLE__
 	#define SHARED_LIBRARY_EXTENSION "dylib"
 #else

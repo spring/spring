@@ -205,7 +205,7 @@ namespace QTPFS {
 		//   float3's are also more convenient to work with (so we take the memory hit)
 		std::vector<float3> netpoints;
 	};
-};
+}
 
 #endif
 

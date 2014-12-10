@@ -40,7 +40,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
-#include "Sim/Units/Groups/Group.h"
+#include "Game/UI/Groups/Group.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Unit.h"
@@ -61,15 +61,15 @@
 
 CUnitDrawer* unitDrawer;
 
-CONFIG(int, UnitLodDist).defaultValue(1000);
-CONFIG(int, UnitIconDist).defaultValue(200);
+CONFIG(int, UnitLodDist).defaultValue(1000).headlessValue(0);
+CONFIG(int, UnitIconDist).defaultValue(200).headlessValue(0);
 CONFIG(float, UnitTransparency).defaultValue(0.7f);
 
 CONFIG(int, MaxDynamicModelLights)
 	.defaultValue(1)
 	.minimumValue(0);
 
-CONFIG(bool, AdvUnitShading).defaultValue(true).safemodeValue(false).description("Determines whether specular highlights and other lighting effects are rendered for units.");
+CONFIG(bool, AdvUnitShading).defaultValue(true).headlessValue(false).safemodeValue(false).description("Determines whether specular highlights and other lighting effects are rendered for units.");
 CONFIG(bool, AllowDeferredModelRendering).defaultValue(false).safemodeValue(false);
 
 CONFIG(float, LODScale).defaultValue(1.0f);
@@ -232,8 +232,6 @@ void CUnitDrawer::Update()
 			tempTransparentDrawUnits.erase(tempTransparentDrawUnits.begin());
 		}
 	}
-
-	eventHandler.UpdateDrawUnits();
 
 	{
 

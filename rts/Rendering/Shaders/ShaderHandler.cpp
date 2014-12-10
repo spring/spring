@@ -88,22 +88,14 @@ Shader::IProgramObject* CShaderHandler::CreateProgramObject(const std::string& p
 
 Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soName, const std::string& soDefs, int soType) {
 	assert(!soName.empty());
-
 	const std::string lowerSoName = StringToLower(soName);
-
 	const bool arbShader = (lowerSoName.find("arb") != std::string::npos);
-/*
-	const bool arbShader =
-		lowerSoName.find(".glsl") == std::string::npos &&
-		lowerSoName.find(".vert") == std::string::npos &&
-		lowerSoName.find(".frag") == std::string::npos;
-*/
 	Shader::IShaderObject* so = Shader::nullShaderObject;
 
 	switch (soType) {
 		case GL_VERTEX_PROGRAM_ARB:
 		case GL_FRAGMENT_PROGRAM_ARB: {
-			assert(arbShader);
+			//assert(arbShader);
 
 			if (globalRendering->haveARB) {
 				so = new Shader::ARBShaderObject(soType, soName);
@@ -112,7 +104,7 @@ Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soN
 
 		default: {
 			// assume GLSL shaders by default
-			assert(!arbShader);
+			//assert(!arbShader);
 
 			if (globalRendering->haveGLSL) {
 				so = new Shader::GLSLShaderObject(soType, soName, soDefs);

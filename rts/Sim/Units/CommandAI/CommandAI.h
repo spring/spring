@@ -17,7 +17,7 @@ struct Command;
 
 class CCommandAI : public CObject
 {
-	CR_DECLARE(CCommandAI);
+	CR_DECLARE(CCommandAI)
 
 public:
 	CCommandAI(CUnit* owner);

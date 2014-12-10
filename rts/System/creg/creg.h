@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <string>
+#include <type_traits> // std::is_polymorphic
 #include <boost/shared_ptr.hpp>
 
 #include "ISerializer.h"
@@ -70,8 +71,6 @@ namespace creg {
 		CF_Synced = 8,
 	};
 
-	struct _DummyStruct {};
-
 	/** Class member flags to use with CR_MEMBER_SETFLAG */
 	enum ClassMemberFlag {
 		CM_NoSerialize = 1, /// Make the serializers skip the member
@@ -85,7 +84,7 @@ namespace creg {
 	{
 	public:
 		ClassBinder(const char* className, unsigned int cf, ClassBinder* base,
-				IMemberRegistrator** mreg, int instanceSize, int instanceAlignment, bool hasVTable,
+				IMemberRegistrator** mreg, int instanceSize, int instanceAlignment, bool hasVTable, bool isCregStruct,
 				void (*constructorProc)(void* instance),
 				void (*destructorProc)(void* instance));
 
@@ -97,6 +96,7 @@ namespace creg {
 		int size; // size of an instance in bytes
 		int alignment;
 		bool hasVTable;
+		bool isCregStruct;
 
 		void (*constructor)(void* instance);
 		/**
@@ -150,7 +150,7 @@ namespace creg {
 		};
 
 		Class();
-		~Class();
+		virtual ~Class();
 
 		/// Returns true if this class is equal to or derived from other
 		bool IsSubclassOf(Class* other) const;
@@ -171,6 +171,11 @@ namespace creg {
 
 		bool IsAbstract() const { return (binder->flags & CF_Abstract) != 0; }
 
+		virtual void CallSerializeProc(void* object, ISerializer* s) = 0;
+		virtual void CallPostLoadProc(void* object) = 0;
+		virtual bool HasSerialize() = 0;
+		virtual bool HasPostLoad() = 0;
+
 		/// Returns all concrete classes that implement this class
 		std::vector<Class*> GetImplementations();
 
@@ -182,10 +187,42 @@ namespace creg {
 		int size;
 		int alignment;
 		Class* base;
-		void (_DummyStruct::*serializeProc)(ISerializer& s);
-		void (_DummyStruct::*postLoadProc)();
 
 		friend class ClassBinder;
+	};
+
+	template<class T>
+	class ClassStrong : public Class
+	{
+	public:
+		ClassStrong() :
+			serializeProc(NULL),
+			postLoadProc(NULL) { }
+
+		virtual ~ClassStrong() { }
+
+		virtual void CallSerializeProc(void* object, ISerializer* s)
+		{
+			(static_cast<T*>(object)->*serializeProc)(s);
+		}
+
+		virtual void CallPostLoadProc(void* object)
+		{
+			(static_cast<T*>(object)->*postLoadProc)();
+		}
+
+		virtual bool HasSerialize()
+		{
+			return !!serializeProc;
+		}
+
+		virtual bool HasPostLoad()
+		{
+			return !!postLoadProc;
+		}
+
+		void (T::*serializeProc)(ISerializer* s);
+		void (T::*postLoadProc)();
 	};
 
 // -------------------------------------------------------------------
@@ -331,30 +368,13 @@ namespace creg {
 		}
 		size_t GetSize() { return size; }
 	};
-};
+}
 
 #include "TypeDeduction.h"
 
-// detect if c++11
-#if __cplusplus <= 199711L
-	template<typename t>
-	size_t alignof_() {
-		return (sizeof(t) > sizeof(int*)) ? sizeof(int*) : sizeof(t);
-	}
-	#define alignof(t) alignof_<t>()
 
-	template<typename T>
-	size_t alignofv(const T& v) {
-		return alignof(T);
-	}
-
-	template<typename T>
-	size_t alignofv(T& v) {
-		return alignof(T);
-	}
-#else
-	#define alignofv(v) alignof(v)
-#endif
+//FIXME: defined cause gcc4.8 still doesn't support c++11's offsetof for non-static members
+#define offsetof_creg(type, member) (std::size_t)(((char*)&null->member) - ((char*)null))
 
 
 namespace creg {
@@ -372,7 +392,8 @@ namespace creg {
 	friend struct TCls##MemberRegistrator;			\
 	inline static creg::Class* StaticClass() { return binder.class_; } \
 	virtual creg::Class* GetClass() const; \
-	static const bool hasVTable = true;
+	static bool creg_hasVTable; \
+	static const bool creg_isStruct = false;
 
 /** @def CR_DECLARE_STRUCT
  * Use this to declare a structure
@@ -389,7 +410,8 @@ namespace creg {
 	friend struct TStr##MemberRegistrator;			\
 	inline static creg::Class* StaticClass() { return binder.class_; } \
 	creg::Class* GetClass() const; \
-	static const bool hasVTable = false;
+	static bool creg_hasVTable; \
+	static const bool creg_isStruct = true;
 
 /** @def CR_DECLARE_SUB
  * Use this to declare a sub class. This should be put in the class definition
@@ -406,11 +428,12 @@ namespace creg {
  * @param ctor_args constructor arguments
  */
 #define CR_BIND_DERIVED(TCls, TBase, ctor_args) \
+	bool TCls::creg_hasVTable = std::is_polymorphic<TCls>::value; \
 	creg::IMemberRegistrator* TCls::memberRegistrator=0;	\
 	creg::Class* TCls::GetClass() const { return binder.class_; } \
 	void TCls::_ConstructInstance(void* d) { new(d) MyType ctor_args; } \
 	void TCls::_DestructInstance(void* d) { ((MyType*)d)->~MyType(); } \
-	creg::ClassBinder TCls::binder(#TCls, 0, &TBase::binder, &TCls::memberRegistrator, sizeof(TCls), alignof(TCls), TCls::hasVTable, TCls::_ConstructInstance, TCls::_DestructInstance);
+	creg::ClassBinder TCls::binder(#TCls, 0, &TBase::binder, &TCls::memberRegistrator, sizeof(TCls), alignof(TCls), TCls::creg_hasVTable, TCls::creg_isStruct, TCls::_ConstructInstance, TCls::_DestructInstance);
 
 /** @def CR_BIND_DERIVED_SUB
  * Bind a derived class inside another class to creg
@@ -421,11 +444,12 @@ namespace creg {
  * @param ctor_args constructor arguments
  */
 #define CR_BIND_DERIVED_SUB(TSuper, TCls, TBase, ctor_args) \
+	bool TSuper::TCls::creg_hasVTable = std::is_polymorphic<TSuper::TCls>::value; \
 	creg::IMemberRegistrator* TSuper::TCls::memberRegistrator=0;	 \
 	creg::Class* TSuper::TCls::GetClass() const { return binder.class_; }  \
 	void TSuper::TCls::_ConstructInstance(void* d) { new(d) TCls ctor_args; }  \
 	void TSuper::TCls::_DestructInstance(void* d) { ((TCls*)d)->~TCls(); }  \
-	creg::ClassBinder TSuper::TCls::binder(#TSuper "::" #TCls, 0, &TBase::binder, &TSuper::TCls::memberRegistrator, sizeof(TSuper::TCls), alignof(TCls), TCls::hasVTable, TSuper::TCls::_ConstructInstance, TSuper::TCls::_DestructInstance);
+	creg::ClassBinder TSuper::TCls::binder(#TSuper "::" #TCls, 0, &TBase::binder, &TSuper::TCls::memberRegistrator, sizeof(TSuper::TCls), alignof(TCls), TCls::creg_hasVTable, TCls::creg_isStruct, TSuper::TCls::_ConstructInstance, TSuper::TCls::_DestructInstance);
 
 /** @def CR_BIND
  * Bind a class not derived from CObject
@@ -434,27 +458,30 @@ namespace creg {
  * @param ctor_args constructor arguments
  */
 #define CR_BIND(TCls, ctor_args) \
+	bool TCls::creg_hasVTable = std::is_polymorphic<TCls>::value; \
 	creg::IMemberRegistrator* TCls::memberRegistrator=0;	\
 	creg::Class* TCls::GetClass() const { return binder.class_; } \
 	void TCls::_ConstructInstance(void* d) { new(d) MyType ctor_args; } \
 	void TCls::_DestructInstance(void* d) { ((MyType*)d)->~MyType(); } \
-	creg::ClassBinder TCls::binder(#TCls, 0, 0, &TCls::memberRegistrator, sizeof(TCls), alignof(TCls), TCls::hasVTable, TCls::_ConstructInstance, TCls::_DestructInstance);
+	creg::ClassBinder TCls::binder(#TCls, 0, 0, &TCls::memberRegistrator, sizeof(TCls), alignof(TCls), TCls::creg_hasVTable, TCls::creg_isStruct, TCls::_ConstructInstance, TCls::_DestructInstance);
 
 #ifdef __clang__
 	// LLVM/Clang expects a different order
 	#define CR_BIND_TEMPLATE(TCls, ctor_args) \
+		template<> bool TCls::creg_hasVTable = std::is_polymorphic<TCls>::value; \
 		template<> creg::IMemberRegistrator* TCls::memberRegistrator=0; \
 		template<> void TCls::_ConstructInstance(void* d) { new(d) MyType ctor_args; } \
 		template<> void TCls::_DestructInstance(void* d) { ((MyType*)d)->~MyType(); } \
-		template<> creg::ClassBinder TCls::binder(#TCls, 0, 0, &TCls::memberRegistrator, sizeof(TCls), alignof(TCls), TCls::hasVTable, TCls::_ConstructInstance, TCls::_DestructInstance); \
+		template<> creg::ClassBinder TCls::binder(#TCls, 0, 0, &TCls::memberRegistrator, sizeof(TCls), alignof(TCls), TCls::creg_hasVTable, TCls::creg_isStruct, TCls::_ConstructInstance, TCls::_DestructInstance); \
 		template<> creg::Class* TCls::GetClass() const { return binder.class_; }
 #else
 	#define CR_BIND_TEMPLATE(TCls, ctor_args) \
+		template<> bool TCls::creg_hasVTable = std::is_polymorphic<TCls>::value; \
 		template<> creg::IMemberRegistrator* TCls::memberRegistrator=0; \
 		template<> creg::Class* TCls::GetClass() const { return binder.class_; } \
 		template<> void TCls::_ConstructInstance(void* d) { new(d) MyType ctor_args; } \
 		template<> void TCls::_DestructInstance(void* d) { ((MyType*)d)->~MyType(); } \
-		template<> creg::ClassBinder TCls::binder(#TCls, 0, 0, &TCls::memberRegistrator, sizeof(TCls), alignof(TCls), TCls::hasVTable, TCls::_ConstructInstance, TCls::_DestructInstance);
+		template<> creg::ClassBinder TCls::binder(#TCls, 0, 0, &TCls::memberRegistrator, sizeof(TCls), alignof(TCls), TCls::creg_hasVTable, TCls::creg_isStruct, TCls::_ConstructInstance, TCls::_DestructInstance);
 #endif
 
 /** @def CR_BIND_DERIVED_INTERFACE
@@ -464,9 +491,10 @@ namespace creg {
  * @param TBase base class of TCls
  */
 #define CR_BIND_DERIVED_INTERFACE(TCls, TBase)	\
+	bool TCls::creg_hasVTable = std::is_polymorphic<TCls>::value; \
 	creg::IMemberRegistrator* TCls::memberRegistrator=0;	\
 	creg::Class* TCls::GetClass() const { return binder.class_; } \
-	creg::ClassBinder TCls::binder(#TCls, (unsigned int)creg::CF_Abstract, &TBase::binder, &TCls::memberRegistrator, sizeof(TCls), alignof(TCls), TCls::hasVTable, 0, 0);
+	creg::ClassBinder TCls::binder(#TCls, (unsigned int)creg::CF_Abstract, &TBase::binder, &TCls::memberRegistrator, sizeof(TCls), alignof(TCls), TCls::creg_hasVTable, TCls::creg_isStruct, 0, 0);
 
 /** @def CR_BIND_INTERFACE
  * Bind an abstract class
@@ -476,9 +504,10 @@ namespace creg {
  * @param TCls abstract class to bind
  */
 #define CR_BIND_INTERFACE(TCls)	\
+	bool TCls::creg_hasVTable = std::is_polymorphic<TCls>::value; \
 	creg::IMemberRegistrator* TCls::memberRegistrator=0;	\
 	creg::Class* TCls::GetClass() const { return binder.class_; } \
-	creg::ClassBinder TCls::binder(#TCls, (unsigned int)creg::CF_Abstract, 0, &TCls::memberRegistrator, sizeof(TCls), alignof(TCls), TCls::hasVTable, 0, 0);
+	creg::ClassBinder TCls::binder(#TCls, (unsigned int)creg::CF_Abstract, 0, &TCls::memberRegistrator, sizeof(TCls), alignof(TCls), TCls::creg_hasVTable, TCls::creg_isStruct, 0, 0);
 
 /** @def CR_REG_METADATA
  * Binds the class metadata to the class itself
@@ -499,8 +528,9 @@ namespace creg {
 	TClass##MemberRegistrator() {				\
 		Type::memberRegistrator=this;				\
 	}												\
-	void RegisterMembers(creg::Class* class_) {		\
-		TClass* null=(Type*)0;						\
+	void RegisterMembers(creg::Class* class_base_) {		\
+		creg::ClassStrong<TClass>* class_ = static_cast<creg::ClassStrong<TClass>*>(class_base_); \
+		Type* null=nullptr;						\
 		(void)null; /*suppress compiler warning if this isn't used*/	\
 		Members; }									\
 	} static TClass##mreg;
@@ -515,8 +545,9 @@ namespace creg {
 	TSubClass##MemberRegistrator() {				\
 		Type::memberRegistrator=this;				\
 	}												\
-	void RegisterMembers(creg::Class* class_) { \
-		Type* null=(Type*)0; \
+	void RegisterMembers(creg::Class* class_base_) { \
+		creg::ClassStrong<TSubClass>* class_ = static_cast<creg::ClassStrong<TSubClass>*>(class_base_); \
+		Type* null=nullptr; \
 		(void)null; \
 		Members; } \
 	} static TSuperClass##TSubClass##mreg;
@@ -538,19 +569,19 @@ namespace creg {
  * For enumerated type members, @see CR_ENUM_MEMBER
  */
 #define CR_MEMBER(Member) \
-	class_->AddMember( #Member, creg::GetType(null->Member), (unsigned int)(((char*)&null->Member)-((char*)0)), alignofv(null->Member))
+	class_->AddMember( #Member, creg::GetType(null->Member), offsetof_creg(Type, Member), alignof(decltype(Type::Member)))
 
 /** @def CR_ENUM_MEMBER
  * Registers a class/struct member variable with an enumerated type
  */
 #define CR_ENUM_MEMBER(Member) \
-	class_->AddMember( #Member, creg::IType::CreateEnumeratedType(sizeof(null->Member)), (unsigned int)(((char*)&null->Member)-((char*)0)), alignofv(null->Member))
+	class_->AddMember( #Member, creg::IType::CreateEnumeratedType(sizeof(Type::Member)), offsetof_creg(Type, Member), alignof(decltype(Type::Member)))
 
 /** @def CR_IGNORED
  * Registers a member variable that isn't saved/loaded
  */
 #define CR_IGNORED(Member) \
-	class_->AddMember( #Member, new creg::IgnoredType(sizeof(null->Member)), (unsigned int)(((char*)&null->Member)-((char*)0)), alignofv(null->Member))
+	class_->AddMember( #Member, new creg::IgnoredType(sizeof(Type::Member)), offsetof_creg(Type, Member), alignof(decltype(Type::Member)))
 
 
 /** @def CR_MEMBER_UN
@@ -621,7 +652,7 @@ namespace creg {
  *   class
  */
 #define CR_SERIALIZER(SerializeFunc) \
-	(class_->serializeProc = (void(creg::_DummyStruct::*)(creg::ISerializer&))&Type::SerializeFunc)
+	(class_->serializeProc = &Type::SerializeFunc)
 
 /** @def CR_POSTLOAD
  * Registers a custom post-loading method for the class/struct
@@ -630,7 +661,7 @@ namespace creg {
  * There can only be one postload method per class/struct
  */
 #define CR_POSTLOAD(PostLoadFunc) \
-	(class_->postLoadProc = (void(creg::_DummyStruct::*)())&Type::PostLoadFunc)
-};
+	(class_->postLoadProc = &Type::PostLoadFunc)
+}
 
 #endif // _CREG_H

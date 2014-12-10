@@ -11,6 +11,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/bitops.h"
 #include "System/Config/ConfigHandler.h"
@@ -187,11 +188,7 @@ void CSMFReadMap::CreateSpecularTex()
 	if (!specularTexBM.Load(mapInfo->smf.specularTexName)) {
 		// maps wants specular lighting, but no moderation
 		specularTexBM.channels = 4;
-		specularTexBM.Alloc(1, 1);
-		specularTexBM.mem[0] = 255;
-		specularTexBM.mem[1] = 255;
-		specularTexBM.mem[2] = 255;
-		specularTexBM.mem[3] = 255;
+		specularTexBM.AllocDummy(SColor(255,255,255,255));
 	}
 
 	specularTex = specularTexBM.CreateTexture(false);
@@ -228,20 +225,12 @@ void CSMFReadMap::CreateSplatDetailTextures()
 	if (!splatDetailTexBM.Load(mapInfo->smf.splatDetailTexName)) {
 		// default detail-texture should be all-grey
 		splatDetailTexBM.channels = 4;
-		splatDetailTexBM.Alloc(1, 1);
-		splatDetailTexBM.mem[0] = 127;
-		splatDetailTexBM.mem[1] = 127;
-		splatDetailTexBM.mem[2] = 127;
-		splatDetailTexBM.mem[3] = 127;
+		splatDetailTexBM.AllocDummy(SColor(127,127,127,127));
 	}
 
 	if (!splatDistrTexBM.Load(mapInfo->smf.splatDistrTexName)) {
 		splatDistrTexBM.channels = 4;
-		splatDistrTexBM.Alloc(1, 1);
-		splatDistrTexBM.mem[0] = 255;
-		splatDistrTexBM.mem[1] = 0;
-		splatDistrTexBM.mem[2] = 0;
-		splatDistrTexBM.mem[3] = 0;
+		splatDistrTexBM.AllocDummy(SColor(255,0,0,0));
 	}
 
 	splatDetailTex = splatDetailTexBM.CreateTexture(true);
@@ -696,14 +685,14 @@ void CSMFReadMap::DrawMinimap() const
 	glBindTexture(GL_TEXTURE_2D, minimapTex);
 	// glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
-	if (groundDrawer->DrawExtraTex()) {
+	if (infoTextureHandler->IsEnabled()) {
 		glActiveTextureARB(GL_TEXTURE2_ARB);
 		glEnable(GL_TEXTURE_2D);
 		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_ADD_SIGNED_ARB);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
-		glBindTexture(GL_TEXTURE_2D, groundDrawer->GetActiveInfoTexture());
-		glActiveTextureARB(GL_TEXTURE0_ARB);
+		glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
 	}
+	glActiveTextureARB(GL_TEXTURE0_ARB);
 
 	static float isx = gs->mapx / float(gs->pwr2mapx);
 	static float isy = gs->mapy / float(gs->pwr2mapy);

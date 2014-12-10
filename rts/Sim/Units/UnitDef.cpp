@@ -81,7 +81,8 @@ UnitDef::UnitDef()
 	, tidalGenerator(0.0f)
 	, metalStorage(0.0f)
 	, energyStorage(0.0f)
-	, harvestStorage(0.0f)
+	, harvestMetalStorage(0.0f)
+	, harvestEnergyStorage(0.0f)
 	, autoHeal(0.0f)
 	, idleAutoHeal(0.0f)
 	, idleTime(0)
@@ -270,7 +271,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	metalStorage  = udTable.GetFloat("metalStorage",  0.0f);
 	energyStorage = udTable.GetFloat("energyStorage", 0.0f);
-	harvestStorage = udTable.GetFloat("harvestStorage", 0.0f);
+	harvestMetalStorage  = udTable.GetFloat("harvestMetalStorage", udTable.GetFloat("harvestStorage", 0.0f));
+	harvestEnergyStorage = udTable.GetFloat("harvestEnergyStorage", 0.0f);
 
 	extractsMetal  = udTable.GetFloat("extractsMetal",  0.0f);
 	windGenerator  = udTable.GetFloat("windGenerator",  0.0f);

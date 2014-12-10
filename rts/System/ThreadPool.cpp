@@ -56,7 +56,11 @@ static void SetThreadNum(const int idx)
 
 int GetMaxThreads()
 {
+#ifndef UNIT_TEST
 	return Threading::GetPhysicalCpuCores();
+#else
+	return 10;
+#endif
 }
 
 int GetNumThreads()
@@ -136,12 +140,11 @@ static bool DoTask(boost::shared_lock<boost::shared_mutex>& lk_)
 static bool DoTask(std::shared_ptr<ITaskGroup> tg)
 {
 	auto p = tg->GetTask();
-	const bool f = p;
-	if (f) {
+	if (p) {
 		SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
 		(*p)();
 	}
-	return f;
+	return static_cast<bool>(p);
 }
 
 
@@ -149,7 +152,9 @@ __FORCE_ALIGN_STACK__
 static void WorkerLoop(int id)
 {
 	SetThreadNum(id);
+#ifndef UNIT_TEST
 	Threading::SetThreadName(IntToString(id, "worker%i"));
+#endif
 	boost::shared_lock<boost::shared_mutex> lk(taskMutex, boost::defer_lock);
 	boost::mutex m;
 	boost::unique_lock<boost::mutex> lk2(m);
@@ -265,7 +270,7 @@ void SetThreadSpinTime(int milliSeconds)
 	spinlockMs = milliSeconds;
 }
 
-};
+}
 
 #endif
 

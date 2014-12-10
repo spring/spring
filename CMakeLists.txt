@@ -27,7 +27,7 @@ CheckMinCMakeVersion(CUSTOM_TARGET_SOURCES_SUPPORT 2 6 3)
 
 
 # check for minimal gcc version
-set(MIN_GCC_VER "4.6")
+set(MIN_GCC_VER "4.7")
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 	if(NOT ${CMAKE_CXX_COMPILER_VERSION} STREQUAL "")
 		if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "${MIN_GCC_VER}")
@@ -141,12 +141,14 @@ else  (UNIX AND NOT MINGW)
 			${MINGWLIBS}/freetype
 			${CMAKE_FIND_ROOT_PATH})
 		set(ENV{OPENALDIR} ${MINGWLIBS}/OpenAL)
-		include_directories(${MINGWLIBS}/zlib/include)
+		include_directories(${ZLIB_INCLUDE_DIR})
 
 		set(BOOST_LIBRARYDIR ${MINGWLIBS}/boost/lib)
 		add_definitions("-DBOOST_ALL_NO_LIB")
 		set(Boost_USE_STATIC_LIBS ON)
 		set(GLEW_STATIC ON)
+		
+		add_definitions("-DNOMINMAX")
 
 		set(EXE_FLAGS WIN32)
 	else(MSVC)
@@ -265,9 +267,6 @@ ENDIF (UNIX AND NOT MINGW)
 # Note the missing REQUIRED, as headless & dedi may not depend on those.
 #  So req. checks are done in the build target's CMakeLists.txt.
 FIND_PACKAGE(SDL2)
-if("${SDL2_VERSION_STRING}" VERSION_LESS "2")
-	message(FATAL_ERROR "Found SDL v${SDL2_VERSION_STRING} while 2 is required!")
-endif()
 
 FIND_PACKAGE_STATIC(DevIL)
 IF    (PREFER_STATIC_LIBS)

@@ -4,7 +4,6 @@
 
 #include "GrassDrawer.h"
 #include "Game/Camera.h"
-#include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -15,6 +14,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -31,7 +31,7 @@
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
 
-CONFIG(int, GrassDetail).defaultValue(7).minimumValue(0).description("Sets how detailed the engine rendered grass will be on any given map.");
+CONFIG(int, GrassDetail).defaultValue(7).headlessValue(0).minimumValue(0).description("Sets how detailed the engine rendered grass will be on any given map.");
 
 static const float turfSize        = 20.0f;            // single turf size
 static const float partTurfSize    = turfSize * 1.0f;  // single turf size
@@ -154,7 +154,7 @@ void CGrassDrawer::ChangeDetail(int detail) {
 	maxDetailedDist = 146 + detail * 24;
 	detailedBlocks = int((maxDetailedDist + 128.f * 1.5f) / bMSsq) + 1;
 	numTurfs = 3 + int(detail_lim * 0.5f);
-	strawPerTurf = std::min(50 + int(std::sqrt(detail_lim) * 10), mapInfo->grass.maxStrawsPerTurf);
+	strawPerTurf = std::min(50 + int(std::sqrt((float)detail_lim) * 10), mapInfo->grass.maxStrawsPerTurf);
 
 	// recreate textures & XBOs
 	CreateGrassDispList(grassDL);
@@ -222,30 +222,31 @@ void CGrassDrawer::LoadGrassShaders() {
 
 
 void CGrassDrawer::EnableShader(const GrassShaderProgram type) {
-	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 	const float3 windSpeed =
 		wind.GetCurrentDirection() *
 		wind.GetCurrentStrength() *
 		mapInfo->grass.bladeWaveScale;
 
 	grassShader = grassShaders[type];
-	grassShader->SetFlag("HAVE_INFOTEX", gd->DrawExtraTex());
+	grassShader->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
 	grassShader->SetFlag("HAVE_SHADOWS", shadowHandler->shadowsLoaded);
 	grassShader->Enable();
 
 	grassShader->SetUniform("frame", gs->frameNum + globalRendering->timeOffset);
-	grassShader->SetUniformMatrix4x4("shadowMatrix", false, &shadowHandler->shadowMatrix.m[0]);
-	grassShader->SetUniform4v("shadowParams", &shadowHandler->GetShadowParams().x);
 	grassShader->SetUniform3v("windSpeed", &windSpeed.x);
 	grassShader->SetUniform3v("camPos",    &camera->GetPos().x);
 	grassShader->SetUniform3v("camDir",    &camera->forward.x);
 	grassShader->SetUniform3v("camUp",     &camera->up.x);
 	grassShader->SetUniform3v("camRight",  &camera->right.x);
+
+	grassShader->SetUniform("groundShadowDensity", mapInfo->light.groundShadowDensity);
+	grassShader->SetUniformMatrix4x4("shadowMatrix", false, &shadowHandler->shadowMatrix.m[0]);
+	grassShader->SetUniform4v("shadowParams", &shadowHandler->GetShadowParams().x);
+
 	grassShader->SetUniform3v("ambientLightColor",  &mapInfo->light.unitAmbientColor.x);
 	grassShader->SetUniform3v("diffuseLightColor",  &mapInfo->light.unitSunColor.x);
 	grassShader->SetUniform3v("specularLightColor", &mapInfo->light.unitSpecularColor.x);
-	grassShader->SetUniform3v("sunDir",    &mapInfo->light.sunDir.x);
-	grassShader->SetUniform("groundShadowDensity", mapInfo->light.groundShadowDensity);
+	grassShader->SetUniform3v("sunDir",             &mapInfo->light.sunDir.x);
 }
 
 
@@ -606,8 +607,6 @@ void CGrassDrawer::DrawShadow()
 
 void CGrassDrawer::SetupGlStateNear()
 {
-	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-
 	// bind textures
 	{
 		glActiveTextureARB(GL_TEXTURE0_ARB);
@@ -616,10 +615,8 @@ void CGrassDrawer::SetupGlStateNear()
 			glBindTexture(GL_TEXTURE_2D, readMap->GetGrassShadingTexture());
 		glActiveTextureARB(GL_TEXTURE2_ARB);
 			glBindTexture(GL_TEXTURE_2D, readMap->GetShadingTexture());
-		if (gd->DrawExtraTex()) {
-			glActiveTextureARB(GL_TEXTURE3_ARB);
-				glBindTexture(GL_TEXTURE_2D, gd->GetActiveInfoTexture());
-		}
+		glActiveTextureARB(GL_TEXTURE3_ARB);
+			glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
 		glActiveTextureARB(GL_TEXTURE5_ARB);
 			glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetSpecularTextureID());
 	}
@@ -659,7 +656,7 @@ void CGrassDrawer::SetupGlStateNear()
 			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_TEXTURE);
 			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_MODULATE);
 			glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 2);
-		if (gd->DrawExtraTex()) {
+		if (infoTextureHandler->IsEnabled()) {
 			glActiveTextureARB(GL_TEXTURE3_ARB);
 				glEnable(GL_TEXTURE_2D);
 				glMultiTexCoord4f(GL_TEXTURE3_ARB, 1.0f,1.0f,1.0f,1.0f); // workaround a nvidia bug with TexGen
@@ -710,7 +707,7 @@ void CGrassDrawer::ResetGlStateNear()
 			glDisable(GL_TEXTURE_GEN_T);
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 			glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 1);
-		if (gd->DrawExtraTex()) {
+		if (infoTextureHandler->IsEnabled()) {
 			glActiveTextureARB(GL_TEXTURE3_ARB);
 				glDisable(GL_TEXTURE_2D);
 				glDisable(GL_TEXTURE_GEN_S);
@@ -728,8 +725,6 @@ void CGrassDrawer::ResetGlStateNear()
 void CGrassDrawer::SetupGlStateFar()
 {
 	assert(globalRendering->haveGLSL);
-
-	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 
 	//glEnable(GL_ALPHA_TEST);
 	//glAlphaFunc(GL_GREATER, 0.01f);
@@ -752,10 +747,8 @@ void CGrassDrawer::SetupGlStateFar()
 		glBindTexture(GL_TEXTURE_2D, readMap->GetGrassShadingTexture());
 	glActiveTextureARB(GL_TEXTURE2_ARB);
 		glBindTexture(GL_TEXTURE_2D, readMap->GetShadingTexture());
-	if (gd->DrawExtraTex()) {
-		glActiveTextureARB(GL_TEXTURE3_ARB);
-			glBindTexture(GL_TEXTURE_2D, gd->GetActiveInfoTexture());
-	}
+	glActiveTextureARB(GL_TEXTURE3_ARB);
+		glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
 	if (shadowHandler->shadowsLoaded) {
 		glActiveTextureARB(GL_TEXTURE4_ARB);
 			glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
@@ -952,7 +945,7 @@ void CGrassDrawer::CreateFarTex()
 
 	// blur non-rendered areas, so in mipmaps color data isn't blurred with background color
 	{
-		const int mipLevels = std::ceil(std::log(std::max(texSizeX, texSizeY) + 1));
+		const int mipLevels = std::ceil(std::log((float)(std::max(texSizeX, texSizeY) + 1)));
 
 		glMatrixMode(GL_MODELVIEW);
 			glLoadIdentity();

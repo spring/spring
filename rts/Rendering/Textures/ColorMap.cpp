@@ -15,14 +15,14 @@
 std::vector<CColorMap*> CColorMap::colorMaps;
 std::map<std::string, CColorMap*> CColorMap::colorMapsMap;
 
-CR_BIND(CColorMap,);
+CR_BIND(CColorMap,)
 CR_REG_METADATA(CColorMap, (
 	CR_MEMBER_UN(map),
 	CR_MEMBER_UN(xsize),
 	CR_MEMBER_UN(nxsize),
 	CR_MEMBER_UN(ysize),
 	CR_MEMBER_UN(nysize)
-));
+))
 
 CColorMap::CColorMap()
 	: xsize(0)

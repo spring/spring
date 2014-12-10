@@ -14,7 +14,7 @@
 #include <algorithm>
 #include <cctype>
 
-CR_BIND(LocalModelPiece, (NULL));
+CR_BIND(LocalModelPiece, (NULL))
 CR_REG_METADATA(LocalModelPiece, (
 	CR_MEMBER(pos),
 	CR_MEMBER(rot),
@@ -36,14 +36,14 @@ CR_REG_METADATA(LocalModelPiece, (
 	CR_IGNORED(original),
 
 	CR_IGNORED(lodDispLists) //FIXME GL idx!
-));
+))
 
-CR_BIND(LocalModel, (NULL));
+CR_BIND(LocalModel, (NULL))
 CR_REG_METADATA(LocalModel, (
 	CR_IGNORED(dirtyPieces),
 	CR_IGNORED(lodCount), //FIXME?
 	CR_MEMBER(pieces)
-));
+))
 
 
 /** ****************************************************************************************************

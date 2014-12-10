@@ -810,7 +810,8 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 			_retVar_out_new = retVar_out_m "_out";
 			_wrappGetInst_params = myWrapVar;
 			_hasRetInd = 0;
-			if (retType != "void") {
+			_inPa_size = split(innerParams, _, ",");
+			if (retType != "void" && (_inPa_size == addInds_size_m || _inPa_size == 0)) {
 				_hasRetInd = 1;
 			}
 			for (ai=1; ai <= (addInds_size_m-_hasRetInd); ai++) {
@@ -886,15 +887,15 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 			# convert to a HashMap
 			conversionCode_post = conversionCode_post "\t\t" _mapVar_oo " = new " _mapType_impl "();" "\n";
 			conversionCode_post = conversionCode_post "\t\t" "for (int i=0; i < " _mapVar_size "; i++) {" "\n";
-			if (_isObj) {
-				if (_isRetSize) {
+#			if (_isObj) {
+#				if (_isRetSize) {
 					conversionCode_post = conversionCode_post "\t\t\t" _mapVar_oo ".put(" _mapVar_keys "[i], " _mapVar_values "[i]);" "\n";
-				} else {
+#				} else {
 					#conversionCode_post = conversionCode_post "\t\t\t" _mapVar_oo ".put(" myPkgA ".Wrapp" _refObj ".getInstance(" myWrapVar _addWrappVars ", " _arrayPaNa "[i]));" "\n";
-				}
-			} else if (_isNative) {
+#				}
+#			} else if (_isNative) {
 				#conversionCode_post = conversionCode_post "\t\t\t" _arrayListVar ".add(" _arrayPaNa "[i]);" "\n";
-			}
+#			}
 			conversionCode_post = conversionCode_post "\t\t" "}" "\n";
 
 			retParamType = _mapType_int;

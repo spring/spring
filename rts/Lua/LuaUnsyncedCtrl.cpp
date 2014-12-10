@@ -39,6 +39,7 @@
 #include "Rendering/IconHandler.h"
 #include "Rendering/LineDrawer.h"
 #include "Rendering/UnitDrawer.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -48,8 +49,8 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-#include "Sim/Units/Groups/Group.h"
-#include "Sim/Units/Groups/GroupHandler.h"
+#include "Game/UI/Groups/Group.h"
+#include "Game/UI/Groups/GroupHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/GlobalConfig.h"
@@ -59,7 +60,7 @@
 #include "System/Net/PackPacket.h"
 #include "System/Util.h"
 #include "System/Sound/ISound.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/DataDirLocater.h"
 #include "System/FileSystem/FileSystem.h"
@@ -70,8 +71,8 @@
 #include "System/Platform/Misc.h"
 
 #if !defined(HEADLESS) && !defined(NO_SOUND)
-	#include "System/Sound/EFX.h"
-	#include "System/Sound/EFXPresets.h"
+#include "System/Sound/OpenAL/EFX.h"
+#include "System/Sound/OpenAL/EFXPresets.h"
 #endif
 
 #include <map>
@@ -207,7 +208,6 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetCameraOffset);
 
-	REGISTER_LUA_CFUNC(UpdateInfoTexture);
 	REGISTER_LUA_CFUNC(SetLosViewColors);
 
 	REGISTER_LUA_CFUNC(Restart);
@@ -521,7 +521,7 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 		}
 
 		//! last argument (with and without pos/speed arguments) is the optional `sfx channel`
-		AudioChannelImpl* channel = &Channels::General;
+		IAudioChannel** channel = &Channels::General;
 		if (args >= index) {
 			if (lua_isstring(L, index)) {
 				string channelStr = lua_tostring(L, index);
@@ -553,12 +553,12 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 
 		if (pos_given) {
 			if (speed_given) {
-				channel->PlaySample(soundID, pos, speed, volume);
+				channel[0]->PlaySample(soundID, pos, speed, volume);
 			} else {
-				channel->PlaySample(soundID, pos, volume);
+				channel[0]->PlaySample(soundID, pos, volume);
 			}
 		} else
-			channel->PlaySample(soundID, volume);
+			channel[0]->PlaySample(soundID, volume);
 
 		success = true;
 	}
@@ -578,7 +578,7 @@ int LuaUnsyncedCtrl::PlaySoundStream(lua_State* L)
 	const float volume = luaL_optnumber(L, 2, 1.0f);
 	bool enqueue = luaL_optboolean(L, 3, false);
 
-	Channels::BGMusic.StreamPlay(soundFile, volume, enqueue);
+	Channels::BGMusic->StreamPlay(soundFile, volume, enqueue);
 
 	// .ogg files don't have sound ID's generated
 	// for them (yet), so we always succeed here
@@ -592,17 +592,17 @@ int LuaUnsyncedCtrl::PlaySoundStream(lua_State* L)
 
 int LuaUnsyncedCtrl::StopSoundStream(lua_State*)
 {
-	Channels::BGMusic.StreamStop();
+	Channels::BGMusic->StreamStop();
 	return 0;
 }
 int LuaUnsyncedCtrl::PauseSoundStream(lua_State*)
 {
-	Channels::BGMusic.StreamPause();
+	Channels::BGMusic->StreamPause();
 	return 0;
 }
 int LuaUnsyncedCtrl::SetSoundStreamVolume(lua_State* L)
 {
-	Channels::BGMusic.SetVolume(luaL_checkfloat(L, 1));
+	Channels::BGMusic->SetVolume(luaL_checkfloat(L, 1));
 	return 0;
 }
 
@@ -1869,23 +1869,6 @@ int LuaUnsyncedCtrl::SetCameraOffset(lua_State* L)
 
 /******************************************************************************/
 
-int LuaUnsyncedCtrl::UpdateInfoTexture(lua_State* L)
-{
-	const int rawMode = CBaseGroundDrawer::BaseGroundDrawMode(luaL_checkint(L, 1));
-	const int texMode = Clamp(rawMode, int(CBaseGroundDrawer::drawLos), int(CBaseGroundDrawer::drawPathCost));
-
-	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-
-	if (gd->GetDrawMode() == CBaseGroundDrawer::drawNormal) {
-		// allow background updates only when no infotex is active
-		lua_pushboolean(L, gd->UpdateExtraTexture(texMode));
-	} else {
-		lua_pushboolean(L, false);
-	}
-
-	return 1;
-}
-
 int LuaUnsyncedCtrl::SetLosViewColors(lua_State* L)
 {
 	float red[4];
@@ -1911,6 +1894,7 @@ int LuaUnsyncedCtrl::SetLosViewColors(lua_State* L)
 	gd->jamColor[0]    = (int)(scale *   red[3]);
 	gd->jamColor[1]    = (int)(scale * green[3]);
 	gd->jamColor[2]    = (int)(scale *  blue[3]);
+	infoTextureHandler->SetMode(infoTextureHandler->GetMode());
 	return 0;
 }
 
@@ -2174,7 +2158,7 @@ int LuaUnsyncedCtrl::SetUnitGroup(lua_State* L)
 	const int groupID = luaL_checkint(L, 2);
 
 	if (groupID == -1) {
-		unit->SetGroup(NULL);
+		unit->SetGroup(nullptr);
 		return 0;
 	}
 
@@ -2510,10 +2494,10 @@ int LuaUnsyncedCtrl::SetShareLevel(lua_State* L)
 	const float shareLevel = max(0.0f, min(1.0f, luaL_checkfloat(L, 2)));
 
 	if (shareType == "metal") {
-		net->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, shareLevel, teamHandler->Team(gu->myTeam)->energyShare));
+		net->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, shareLevel, teamHandler->Team(gu->myTeam)->resShare.energy));
 	}
 	else if (shareType == "energy") {
-		net->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam,	teamHandler->Team(gu->myTeam)->metalShare, shareLevel));
+		net->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, teamHandler->Team(gu->myTeam)->resShare.metal, shareLevel));
 	}
 	else {
 		LOG_L(L_WARNING, "SetShareLevel() unknown resource: %s", shareType.c_str());
@@ -2754,9 +2738,9 @@ int LuaUnsyncedCtrl::SendSkirmishAIMessage(lua_State* L) {
 
 	luaL_checkstack(L, 2, __FUNCTION__);
 	lua_pushboolean(L, eoh->SendLuaMessages(aiTeam, inData, outData));
-	lua_createtable(L, outData.size(), 0);
 
 	// push the AI response(s)
+	lua_createtable(L, outData.size(), 0);
 	for (unsigned int n = 0; n < outData.size(); n++) {
 		lua_pushstring(L, outData[n]);
 		lua_rawseti(L, -2, n + 1);

@@ -50,7 +50,7 @@ namespace QTPFS {
 			// sim-frame at which the search was executed
 			unsigned int searchFrame;
 		};
-	};
+	}
 
 
 	// NOTE:
@@ -184,7 +184,7 @@ namespace QTPFS {
 		bool haveFullPath;
 		bool havePartPath;
 	};
-};
+}
 
 #endif
 

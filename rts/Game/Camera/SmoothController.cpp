@@ -18,8 +18,8 @@
 
 
 CONFIG(int, SmoothScrollSpeed).defaultValue(10);
-CONFIG(float, SmoothTiltSpeed).defaultValue(1.0f);
-CONFIG(bool, SmoothEnabled).defaultValue(true);
+CONFIG(float, SmoothTiltSpeed).defaultValue(1.0f).headlessValue(0.0f);
+CONFIG(bool, SmoothEnabled).defaultValue(true).headlessValue(false);
 CONFIG(float, SmoothFOV).defaultValue(45.0f);
 
 const float SmoothController::maxSpeedFactor = 300;
@@ -252,6 +252,7 @@ bool SmoothController::SetState(const StateMap& sm)
 	SetStateFloat(sm, "height",  height);
 	SetStateFloat(sm, "zscale",  zscale);
 	SetStateBool (sm, "flipped", flipped);
+	UpdateVectors();
 
 	return true;
 }
