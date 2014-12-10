@@ -405,7 +405,7 @@ void CFreeController::GetState(StateMap& sm) const
 	sm["invertAlt"]   = invertAlt ? +1.0f : -1.0f;
 	sm["gndLock"]     = gndLock   ? +1.0f : -1.0f;
 
-	sm["rx"] = fastmath::PI - camera->GetRot().x - fastmath::HALFPI;
+	sm["rx"] = fastmath::PI - (camera->GetRot().x + fastmath::HALFPI);
 	sm["ry"] = camera->GetRot().y + fastmath::PI;
 	sm["rz"] = camera->GetRot().z;
 
@@ -441,8 +441,7 @@ bool CFreeController::SetState(const StateMap& sm)
 	SetStateFloat(sm, "rx", rot.x);
 	SetStateFloat(sm, "ry", rot.y);
 	SetStateFloat(sm, "rz", rot.z);
-	rot.x += (fastmath::HALFPI);
-	rot.x = fastmath::PI - rot.x;
+	rot.x = fastmath::PI - (rot.x + fastmath::HALFPI);
 	rot.y -= fastmath::PI;
 	camera->SetRot(rot);
 

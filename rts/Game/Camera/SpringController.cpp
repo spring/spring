@@ -15,11 +15,12 @@
 #include "System/Input/KeyInput.h"
 
 
-CONFIG(bool, CamSpringEnabled).defaultValue(true).headlessValue(false);
-CONFIG(int, CamSpringScrollSpeed).defaultValue(10);
+CONFIG(bool,  CamSpringEnabled).defaultValue(true).headlessValue(false);
+CONFIG(int,   CamSpringScrollSpeed).defaultValue(10);
 CONFIG(float, CamSpringFOV).defaultValue(45.0f);
-CONFIG(bool, CamSpringLockCardinalDirections).defaultValue(true).description("");
-CONFIG(bool, CamSpringCloseUpZoomIn).defaultValue(false).description("");
+CONFIG(bool,  CamSpringLockCardinalDirections).defaultValue(true).description("");
+CONFIG(bool,  CamSpringCloseUpZoomIn).defaultValue(false).description("");
+CONFIG(bool,  CamSpringWarpMouseToZoomIn).defaultValue(true).description("");
 
 
 CSpringController::CSpringController()
@@ -29,9 +30,7 @@ CSpringController::CSpringController()
 , zoomBack(false)
 , oldDist(0.f)
 {
-	scrollSpeed = configHandler->GetInt("CamSpringScrollSpeed") * 0.1f;
 	enabled = configHandler->GetBool("CamSpringEnabled");
-	fov = configHandler->GetFloat("CamSpringFOV");
 	Update();
 }
 
@@ -117,11 +116,13 @@ void CSpringController::MouseWheelMove(float move)
 			camera->Update();
 			camHandler->CameraTransition(0.25f);
 
-			warpMouseStart = spring_gettime();
-			warpMousePosOld = int2(mouse->lastx, mouse->lasty);
-			float3 winPos = camera->CalcWindowCoordinates(pos);
-			winPos.y = globalRendering->viewSizeY - winPos.y;
-			warpMousePosNew = int2(winPos.x, winPos.y);
+			if (configHandler->GetBool("CamSpringWarpMouseToZoomIn")) {
+				warpMouseStart = spring_gettime();
+				warpMousePosOld = int2(mouse->lastx, mouse->lasty);
+				float3 winPos = camera->CalcWindowCoordinates(pos);
+				winPos.y = globalRendering->viewSizeY - winPos.y;
+				warpMousePosNew = int2(winPos.x, winPos.y);
+			}
 		} else {
 			// ZOOM OUT from mid screen
 			if (KeyInput::GetKeyModState(KMOD_ALT)) {
@@ -168,6 +169,9 @@ void CSpringController::Update()
 
 	const float dist_ = (configHandler->GetBool("CamSpringCloseUpZoomIn")) ? -dir.y * dist : dist;
 	pixelSize = (camera->GetTanHalfFov() * 2.0f) / globalRendering->viewSizeY * dist_ * 2.0f;
+
+	scrollSpeed = configHandler->GetInt("CamSpringScrollSpeed") * 0.1f;
+	fov = configHandler->GetFloat("CamSpringFOV");
 }
 
 
