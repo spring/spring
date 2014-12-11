@@ -47,11 +47,13 @@ CONFIG(int, CamMode)
 
 CONFIG(float, CamTimeFactor)
 	.defaultValue(1.0f)
-	.minimumValue(0.0f);
+	.minimumValue(0.0f)
+	.description("Scales the speed of camera transitions, e.g. zooming or position change.");
 
 CONFIG(float, CamTimeExponent)
 	.defaultValue(4.0f)
-	.minimumValue(0.0f);
+	.minimumValue(0.0f)
+	.description("Camera transitions happen at lerp(old, new, timeNorm ^ CamTimeExponent).");
 
 
 CCameraHandler* camHandler = NULL;

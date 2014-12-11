@@ -18,9 +18,9 @@
 CONFIG(bool,  CamSpringEnabled).defaultValue(true).headlessValue(false);
 CONFIG(int,   CamSpringScrollSpeed).defaultValue(10);
 CONFIG(float, CamSpringFOV).defaultValue(45.0f);
-CONFIG(bool,  CamSpringLockCardinalDirections).defaultValue(true).description("");
-CONFIG(bool,  CamSpringCloseUpZoomIn).defaultValue(false).description("");
-CONFIG(bool,  CamSpringWarpMouseToZoomIn).defaultValue(true).description("");
+CONFIG(bool,  CamSpringLockCardinalDirections).defaultValue(true).description("If when rotating cardinal directions should be `locked` for a short time.");
+CONFIG(bool,  CamSpringCloseUpZoomIn).defaultValue(false).description("If camera should zoom in more the less  high the camera is. (Blizzard-/DOTA-like)");
+CONFIG(bool,  CamSpringWarpMouseToZoomIn).defaultValue(true).description("On zoom-in warp the mouse to the new centered location.");
 
 
 CSpringController::CSpringController()
