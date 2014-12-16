@@ -33,7 +33,7 @@ CAirLosTexture::CAirLosTexture()
 	if (FBO::IsSupported()) {
 		fbo.Bind();
 		fbo.AttachTexture(texture);
-		bool status = fbo.CheckStatus("CAirLosTexture");
+		/*bool status =*/ fbo.CheckStatus("CAirLosTexture");
 		FBO::Unbind();
 	}
 

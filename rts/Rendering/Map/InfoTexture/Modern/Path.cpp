@@ -46,7 +46,7 @@ CPathTexture::CPathTexture()
 	if (FBO::IsSupported()) {
 		fbo.Bind();
 		fbo.AttachTexture(texture);
-		bool status = fbo.CheckStatus("CPathTexture");
+		/*bool status =*/ fbo.CheckStatus("CPathTexture");
 		FBO::Unbind();
 	}
 }
@@ -127,6 +127,7 @@ bool CPathTexture::ShowMoveDef(const int pathType)
 	forcedUnitDef  = -1;
 	forcedPathType = pathType;
 	updateProcess = 0;
+	return true; // TODO: unused
 }
 
 
@@ -135,6 +136,7 @@ bool CPathTexture::ShowUnitDef(const int udefid)
 	forcedUnitDef  = udefid;
 	forcedPathType = -1;
 	updateProcess = 0;
+	return true; // TODO: unused
 }
 
 
