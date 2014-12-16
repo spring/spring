@@ -738,9 +738,9 @@ struct SSkirmishAICallback {
 
 	const char*       (CALLING_CONV *UnitDef_getWreckName)(int skirmishAIId, int unitDefId);
 
-	const char*       (CALLING_CONV *UnitDef_getDeathExplosion)(int skirmishAIId, int unitDefId);
+	int               (CALLING_CONV *UnitDef_getDeathExplosion)(int skirmishAIId, int unitDefId); //$ REF:RETURN->WeaponDef
 
-	const char*       (CALLING_CONV *UnitDef_getSelfDExplosion)(int skirmishAIId, int unitDefId);
+	int               (CALLING_CONV *UnitDef_getSelfDExplosion)(int skirmishAIId, int unitDefId); //$ REF:RETURN->WeaponDef
 
 	/**
 	 * Returns the name of the category this unit is in.
