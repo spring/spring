@@ -87,6 +87,7 @@
 #include "System/EventHandler.h"
 
 #include <SDL_events.h>
+#include <SDL_video.h>
 
 
 static std::vector<std::string> _local_strSpaceTokenize(const std::string& text) {
@@ -1584,8 +1585,11 @@ public:
 			globalRendering->fullScreen = !globalRendering->fullScreen;
 		}
 
+		const int2 res = globalRendering->GetWantedViewSize(globalRendering->fullScreen);
 		const bool borderless = configHandler->GetBool("WindowBorderless");
 		if (globalRendering->fullScreen) {
+			SDL_SetWindowSize(globalRendering->window, res.x, res.y);
+
 			if (borderless) {
 				SDL_SetWindowFullscreen(globalRendering->window, SDL_WINDOW_FULLSCREEN_DESKTOP);
 			} else {
@@ -1594,6 +1598,8 @@ public:
 		} else {
 			SDL_SetWindowFullscreen(globalRendering->window, 0);
 			SDL_SetWindowBordered(globalRendering->window, borderless ? SDL_FALSE : SDL_TRUE);
+			SDL_SetWindowSize(globalRendering->window, res.x, res.y);
+			SDL_SetWindowPosition(globalRendering->window, configHandler->GetInt("WindowPosX"), configHandler->GetInt("WindowPosY"));
 		}
 		return true;
 	}
