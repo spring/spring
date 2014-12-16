@@ -9,6 +9,16 @@
 #include "System/float3.h"
 #include "System/Matrix44f.h"
 #include "Rendering/GlobalRendering.h"
+#include "System/Config/ConfigHandler.h"
+
+
+CONFIG(float, EdgeMoveWidth)
+	.defaultValue(0.02f)
+	.minimumValue(0.0f)
+	.description("The width (in percent of screen size) of the EdgeMove scrolling area.");
+CONFIG(bool, EdgeMoveDynamic)
+	.defaultValue(true)
+	.description("If EdgeMove scrolling speed should fade with edge distance.");
 
 
 //////////////////////////////////////////////////////////////////////
@@ -20,16 +30,16 @@ CCamera* cam2;
 
 
 CCamera::CCamera()
-	: rot(ZeroVector)
+	: pos(ZeroVector)
+	, rot(ZeroVector)
 	, forward(RgtVector)
 	, up(UpVector)
-	, posOffset(ZeroVector)
-	, tiltOffset(ZeroVector)
-	, pos(ZeroVector)
 	, fov(0.0f)
 	, halfFov(0.0f)
 	, tanHalfFov(0.0f)
 	, lppScale(0.0f)
+	, posOffset(ZeroVector)
+	, tiltOffset(ZeroVector)
 {
 	if (gs) {
 		// center map
@@ -64,9 +74,9 @@ void CCamera::CopyState(const CCamera* cam) {
 	lppScale  = cam->lppScale;
 }
 
-void CCamera::Update(bool terrainReflectionPass)
+void CCamera::Update()
 {
-	UpdateRightAndUp(terrainReflectionPass);
+	UpdateDirFromRot();
 
 	const float aspect = globalRendering->aspectRatio;
 	const float viewx = math::tan(aspect * halfFov);
@@ -192,33 +202,73 @@ bool CCamera::InView(const float3& p, float radius) const
 }
 
 
-void CCamera::UpdateRightAndUp(bool terrainReflectionPass)
-{
-	// terrain (not water) cubemap reflection passes set forward
-	// to {+/-}UpVector which would cause vector degeneracy when
-	// calculating right and up
-	//
-	if (std::fabs(forward.y) >= 0.999f) {
-		// make sure we can still yaw at limits of pitch
-		// (since CamHandler only updates forward, which
-		// is derived from rot)
-		right = float3(-std::cos(rot.y), 0.0f, std::sin(camera->rot.y));
-		up = (right.cross(forward)).UnsafeANormalize();
-	} else {
-		// in the terrain reflection pass everything is upside-down!
-		up = UpVector * -Sign(int(terrainReflectionPass));
-
-		right = (forward.cross(up)).UnsafeANormalize();
-		up = (right.cross(forward)).UnsafeANormalize();
-	}
-}
-
-
-void CCamera::SetFov(float myfov)
+void CCamera::SetFov(const float myfov)
 {
 	fov = myfov;
 	halfFov = (fov * 0.5f) * (PI / 180.f);
 	tanHalfFov = math::tan(halfFov);
+}
+
+
+float3 CCamera::GetRotFromDir(float3 dir)
+{
+	dir.Normalize();
+	return float3(
+		math::acos(dir.y),
+		math::atan2(dir.x, -dir.z), // azimuth's 0 is on -z axis!
+		0.f
+	);
+}
+
+
+void CCamera::SetDir(const float3 dir)
+{
+	//if (dir == forward) return;
+	rot = GetRotFromDir(dir) + float3(0.f,0.f,rot.z);
+	UpdateDirFromRot();
+	assert(dir.dot(forward) > 0.9f);
+}
+
+
+void CCamera::SetRot(const float3 r)
+{
+	rot = r;
+	UpdateDirFromRot();
+}
+
+
+void CCamera::SetRotX(const float x)
+{
+	rot.x = x;
+	UpdateDirFromRot();
+}
+
+
+void CCamera::SetRotY(const float y)
+{
+	rot.y = y;
+	UpdateDirFromRot();
+}
+
+
+void CCamera::SetRotZ(const float z)
+{
+	rot.z = z;
+	UpdateDirFromRot();
+}
+
+
+void CCamera::UpdateDirFromRot()
+{
+	forward.x = math::sin(rot.x) * math::sin(rot.y);
+	forward.z = math::sin(rot.x) * (-math::cos(rot.y));
+	forward.y = math::cos(rot.x);
+
+	right.x = math::sin(HALFPI - rot.z) * math::sin(rot.y + HALFPI); //FIXME
+	right.z = math::sin(HALFPI - rot.z) * (-math::cos(rot.y + HALFPI));
+	right.y = math::cos(HALFPI - rot.z);
+
+	up = right.cross(forward);
 }
 
 
@@ -417,21 +467,44 @@ float3 CCamera::GetMoveVectorFromState(bool fromKeyState) const
 	(void) GetMoveDistance(&camDeltaTime, &camMoveSpeed, -1);
 
 	float3 v;
-
 	if (fromKeyState) {
 		v.y += (camDeltaTime * 0.001f * movState[MOVE_STATE_FWD]);
 		v.y -= (camDeltaTime * 0.001f * movState[MOVE_STATE_BCK]);
 		v.x += (camDeltaTime * 0.001f * movState[MOVE_STATE_RGT]);
 		v.x -= (camDeltaTime * 0.001f * movState[MOVE_STATE_LFT]);
 	} else {
+		const int screenH = globalRendering->viewSizeY;
 		const int screenW = globalRendering->dualScreenMode?
 			(globalRendering->viewSizeX << 1):
 			(globalRendering->viewSizeX     );
 
-		v.y += (camDeltaTime * 0.001f * (mouse->lasty <                               2));
-		v.y -= (camDeltaTime * 0.001f * (mouse->lasty > (globalRendering->viewSizeY - 2)));
-		v.x += (camDeltaTime * 0.001f * (mouse->lastx >                    (screenW - 2)));
-		v.x -= (camDeltaTime * 0.001f * (mouse->lastx <                               2));
+		const float width  = configHandler->GetFloat("EdgeMoveWidth");
+		const bool dynamic = configHandler->GetBool("EdgeMoveDynamic");
+
+		int2 border;
+		border.x = std::max<int>(1, screenW * width);
+		border.y = std::max<int>(1, screenH * width);
+
+		float2 distToEdge; // must be float, ints don't save the sign in case of 0 and we need it for copysign()
+		distToEdge.x = Clamp(mouse->lastx, 0, screenW);
+		distToEdge.y = Clamp(mouse->lasty, 0, screenH);
+		if ((screenW - distToEdge.x) < distToEdge.x) distToEdge.x = -(screenW - distToEdge.x );
+		if ((screenH - distToEdge.y) < distToEdge.y) distToEdge.y = -(screenH - distToEdge.y);
+		distToEdge.x = -distToEdge.x;
+
+		float2 move;
+		if (dynamic) {
+			move.x = Clamp(float(border.x - std::abs(distToEdge.x)) / border.x, 0.f, 1.f);
+			move.y = Clamp(float(border.y - std::abs(distToEdge.y)) / border.y, 0.f, 1.f);
+		} else {
+			move.x = int(std::abs(distToEdge.x) < border.x);
+			move.y = int(std::abs(distToEdge.y) < border.y);
+		}
+		move.x = std::copysign(move.x, distToEdge.x);
+		move.y = std::copysign(move.y, distToEdge.y);
+
+		v.x = (camDeltaTime * 0.001f * move.x);
+		v.y = (camDeltaTime * 0.001f * move.y);
 	}
 
 	v.z = camMoveSpeed;

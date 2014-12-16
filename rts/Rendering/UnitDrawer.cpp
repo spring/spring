@@ -370,7 +370,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 		SetUnitGlobalLODFactor(LODScale);
 	}
 
-	camNorm = camera->forward;
+	camNorm = camera->GetDir();
 	camNorm.y = -0.1f;
 	camNorm.ANormalize();
 
@@ -879,8 +879,8 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 	}
 
 	// calculate the vertices
-	const float3 dy = camera->up    * scale;
-	const float3 dx = camera->right * scale;
+	const float3 dy = camera->GetUp()    * scale;
+	const float3 dx = camera->GetRight() * scale;
 	const float3 vn = pos - dx;
 	const float3 vp = pos + dx;
 	const float3 vnn = vn - dy;
@@ -2071,7 +2071,7 @@ unsigned int CUnitDrawer::CalcUnitLOD(const CUnit* unit, unsigned int lastLOD)
 	if (lastLOD == 0) { return 0; }
 
 	const float3 diff = (unit->pos - camera->GetPos());
-	const float dist = diff.dot(camera->forward);
+	const float dist = diff.dot(camera->GetDir());
 	const float lpp = std::max(0.0f, dist * UNIT_GLOBAL_LOD_FACTOR);
 
 	for (/* no-op */; lastLOD != 0; lastLOD--) {

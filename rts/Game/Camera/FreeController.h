@@ -14,8 +14,6 @@ public:
 	void Move(const float3& move, bool tilt, bool strafe, bool upDown);
 
 	void KeyMove(float3 move);
-	void MousePress(int x, int y, int button) { /* empty */ }
-	void MouseRelease(int x, int y, int button) { /* empty */ }
 	void MouseMove(float3 move);
 	void ScreenEdgeMove(float3 move);
 	void MouseWheelMove(float move);
@@ -28,7 +26,7 @@ public:
 	void SetPos(const float3& newPos);
 	void SetTrackingInfo(const float3& pos, float radius);
 	float3 SwitchFrom() const;
-	void SwitchTo(bool showText);
+	void SwitchTo(const int oldCam, const bool showText);
 
 	void GetState(StateMap& sm) const;
 	bool SetState(const StateMap& sm);

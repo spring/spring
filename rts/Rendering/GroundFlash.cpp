@@ -123,7 +123,7 @@ CStandardGroundFlash::CStandardGroundFlash(const float3& p, float circleAlpha, f
 		color[a] = (col[a] * 255.0f);
 	}
 
-	const float3 fw = camera->forward * -1000.0f;
+	const float3 fw = camera->GetDir() * -1000.0f;
 	this->pos.y = CGround::GetHeightReal(p.x, p.z, false) + 1.0f;
 
 	float3 p1(p.x + flashSize, 0, p.z);
@@ -234,7 +234,7 @@ void CSimpleGroundFlash::Init(const CUnit* owner, const float3& offset)
 	agerate = ttl ? 1.0f / ttl : 1.0f;
 
 	const float flashsize = size + (sizeGrowth * ttl);
-	const float3 fw = camera->forward * -1000.0f;
+	const float3 fw = camera->GetDir() * -1000.0f;
 
 	this->pos.y = CGround::GetHeightReal(pos.x, pos.z, false) + 1.0f;
 
@@ -304,7 +304,7 @@ CSeismicGroundFlash::CSeismicGroundFlash(const float3& p, int ttl, int fade, flo
 	}
 
 	const float flashsize = size + sizeGrowth * ttl;
-	const float3 fw = camera->forward * -1000.0f;
+	const float3 fw = camera->GetDir() * -1000.0f;
 
 	this->pos.y = CGround::GetHeightReal(p.x, p.z, false) + 1.0f;
 

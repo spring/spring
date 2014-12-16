@@ -13,6 +13,7 @@
 #include "System/creg/creg_cond.h"
 
 #include <string>
+#include <SDL_video.h>
 
 CONFIG(bool, CompressTextures).defaultValue(false).safemodeValue(true).description("Runtime compress most textures to save VideoRAM."); // in safemode enabled, cause it ways more likely the gpu runs out of memory than this extension cause crashes!
 CONFIG(int, ForceShaders).defaultValue(-1).minimumValue(-1).maximumValue(1);
@@ -31,6 +32,8 @@ CGlobalRendering* globalRendering;
 const float CGlobalRendering::MAX_VIEW_RANGE     = 8000.0f;
 const float CGlobalRendering::NEAR_PLANE         =    2.8f;
 const float CGlobalRendering::SMF_INTENSITY_MULT = 210.0f / 255.0f;
+const int CGlobalRendering::minWinSizeX = 400;
+const int CGlobalRendering::minWinSizeY = 300;
 
 CR_BIND(CGlobalRendering, )
 
@@ -309,11 +312,35 @@ void CGlobalRendering::SetFullScreen(bool configFullScreen, bool cmdLineWindowed
 	}
 }
 
-void CGlobalRendering::SetViewSize(int vsx, int vsy)
+
+int2 CGlobalRendering::GetWantedViewSize(const bool fullscreen)
 {
-	viewSizeX = vsx;
-	viewSizeY = vsy;
+	int2 res = int2(configHandler->GetInt("XResolution"), configHandler->GetInt("YResolution"));
+
+	if (!fullscreen) {
+		res = int2(configHandler->GetInt("XResolutionWindowed"), configHandler->GetInt("YResolutionWindowed"));
+	}
+
+	// Use Native Desktop Resolution
+	// and yes SDL2 can do this itself when sizeX & sizeY are set to zero, but
+	// oh wonder SDL2 fails then when you use Display Cloneing and similar
+	//  -> i.e. DVI monitor runs then at 640x400 and HDMI at full-HD (yes with display _cloning_!)
+	{
+		SDL_DisplayMode dmode;
+		SDL_GetDesktopDisplayMode(0, &dmode); //TODO make screen configurable?
+		if (res.x<=0) res.x = dmode.w;
+		if (res.y<=0) res.y = dmode.h;
+	}
+
+	// In Windowed Mode Limit Minimum Window Size
+	if (!fullscreen) {
+		res.x = std::max(res.x, minWinSizeX);
+		res.y = std::max(res.y, minWinSizeY);
+	}
+
+	return res;
 }
+
 
 void CGlobalRendering::SetDualScreenParams() {
 	dualScreenMode = configHandler->GetBool("DualScreenMode");

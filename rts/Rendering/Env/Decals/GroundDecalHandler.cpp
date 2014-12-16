@@ -1172,7 +1172,7 @@ void CGroundDecalHandler::MoveSolidObject(CSolidObject* object, const float3& po
 	decal->alphaFalloff = decalDef.groundDecalDecaySpeed;
 	decal->alpha = 0.0f;
 	decal->pos = pos;
-	decal->radius = math::sqrtf(float(sizex * sizex + sizey * sizey)) * SQUARE_SIZE + 20.0f;
+	decal->radius = math::sqrt(float(sizex * sizex + sizey * sizey)) * SQUARE_SIZE + 20.0f;
 	decal->facing = object->buildFacing;
 	// convert to heightmap coors
 	decal->xsize = sizex << 1;

@@ -158,8 +158,8 @@ void CFireProjectile::Draw()
 
 		float sinRot = fastmath::sin(rot);
 		float cosRot = fastmath::cos(rot);
-		float3 dir1 = (camera->right*cosRot + camera->up*sinRot) * size;
-		float3 dir2 = (camera->right*sinRot - camera->up*cosRot) * size;
+		float3 dir1 = (camera->GetRight()*cosRot + camera->GetUp()*sinRot) * size;
+		float3 dir2 = (camera->GetRight()*sinRot - camera->GetUp()*cosRot) * size;
 
 		float3 interPos=pi->pos;
 
@@ -180,8 +180,8 @@ void CFireProjectile::Draw()
 
 		float sinRot = fastmath::sin(rot);
 		float cosRot = fastmath::cos(rot);
-		float3 dir1 = (camera->right*cosRot + camera->up*sinRot) * size;
-		float3 dir2 = (camera->right*sinRot - camera->up*cosRot) * size;
+		float3 dir1 = (camera->GetRight()*cosRot + camera->GetUp()*sinRot) * size;
+		float3 dir2 = (camera->GetRight()*sinRot - camera->GetUp()*cosRot) * size;
 
 		float3 interPos = pi->pos;
 
