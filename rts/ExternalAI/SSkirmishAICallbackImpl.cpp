@@ -2519,12 +2519,16 @@ EXPORT(const char*) skirmishAiCallback_UnitDef_getWreckName(int skirmishAIId, in
 	return getUnitDefById(skirmishAIId, unitDefId)->wreckName.c_str();
 }
 
-EXPORT(const char*) skirmishAiCallback_UnitDef_getDeathExplosion(int skirmishAIId, int unitDefId) {
-	return "$$deprecated$$";
+EXPORT(int) skirmishAiCallback_UnitDef_getDeathExplosion(int skirmishAIId, int unitDefId) {
+
+	const WeaponDef* wd = getUnitDefById(skirmishAIId, unitDefId)->deathExpWeaponDef;
+	return (wd == NULL) ? -1 : wd->id;
 }
 
-EXPORT(const char*) skirmishAiCallback_UnitDef_getSelfDExplosion(int skirmishAIId, int unitDefId) {
-	return "$$deprecated$$";
+EXPORT(int) skirmishAiCallback_UnitDef_getSelfDExplosion(int skirmishAIId, int unitDefId) {
+
+	const WeaponDef* wd = getUnitDefById(skirmishAIId, unitDefId)->selfdExpWeaponDef;
+	return (wd == NULL) ? -1 : wd->id;
 }
 
 EXPORT(const char*) skirmishAiCallback_UnitDef_getCategoryString(int skirmishAIId, int unitDefId) {

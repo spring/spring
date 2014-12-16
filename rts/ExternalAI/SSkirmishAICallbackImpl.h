@@ -355,9 +355,9 @@ EXPORT(const char*      ) skirmishAiCallback_UnitDef_getTooltip(int skirmishAIId
 
 EXPORT(const char*      ) skirmishAiCallback_UnitDef_getWreckName(int skirmishAIId, int unitDefId);
 
-EXPORT(const char*      ) skirmishAiCallback_UnitDef_getDeathExplosion(int skirmishAIId, int unitDefId);
+EXPORT(int              ) skirmishAiCallback_UnitDef_getDeathExplosion(int skirmishAIId, int unitDefId);
 
-EXPORT(const char*      ) skirmishAiCallback_UnitDef_getSelfDExplosion(int skirmishAIId, int unitDefId);
+EXPORT(int              ) skirmishAiCallback_UnitDef_getSelfDExplosion(int skirmishAIId, int unitDefId);
 
 EXPORT(const char*      ) skirmishAiCallback_UnitDef_getCategoryString(int skirmishAIId, int unitDefId);
 
