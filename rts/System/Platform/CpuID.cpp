@@ -141,7 +141,7 @@ namespace springproc {
 		currentLevel++;
 		ExecCPUID(&eax, &ebx, &ecx, &edx);
 
-		if ((ebx && 0xFFFF) == 0)
+		if ((ebx & 0xFFFF) == 0)
 			return;
 
 		if (((ecx >> 8) & 0xFF) == 1) {

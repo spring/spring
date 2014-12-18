@@ -292,7 +292,7 @@ bool CCollisionHandler::IntersectPiecesHelper(
 
 	// true iff at least one piece was intersected
 	// (query must have been reset by calling code)
-	return (cq->GetHitPiece() != NULL);
+	return (cq != nullptr) ? (cq->GetHitPiece() != nullptr) : false;
 }
 
 

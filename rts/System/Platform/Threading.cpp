@@ -277,10 +277,11 @@ namespace Threading {
 		boost::uint32_t ompAvailCores = systemCores & ~mainAffinity;
 
 		{
-			int workerCount = -1;
 #ifndef UNIT_TEST
-			workerCount = std::min(ThreadPool::GetMaxThreads() - 1, configHandler->GetUnsigned("WorkerThreadCount"));
+			int workerCount = std::min(ThreadPool::GetMaxThreads() - 1, configHandler->GetUnsigned("WorkerThreadCount"));
 			ThreadPool::SetThreadSpinTime(configHandler->GetUnsigned("WorkerThreadSpinTime"));
+#else
+			int workerCount = -1;
 #endif
 			const int numCores = ThreadPool::GetMaxThreads();
 

@@ -97,7 +97,7 @@ void CSpringController::MouseWheelMove(float move)
 		dist *= (1.0f + (move * shiftSpeed * 0.007f));
 		dist = std::min(dist, maxDist);
 
-		const float shiftSpeed = (KeyInput::GetKeyModState(KMOD_SHIFT) ? 3.0f : 1.0f);
+		//const float shiftSpeed = (KeyInput::GetKeyModState(KMOD_SHIFT) ? 3.0f : 1.0f);
 		if (move < 0.0f) {
 			// ZOOM IN to mouse cursor instead of mid screen
 			if (KeyInput::GetKeyModState(KMOD_ALT) && zoomBack) {

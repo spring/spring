@@ -81,7 +81,7 @@
 #include "Lua/LuaUI.h"
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Lua/LuaUtils.h"
-#include "Map/BaseGroundDrawer.h"
+//#include "Map/BaseGroundDrawer.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -1120,7 +1120,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	camHandler->UpdateCam();
 	camera->Update();
 
-	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
+//	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 	unitDrawer->Update();
 	lineDrawer.UpdateLineStipple();
 	if (doDrawWorld) {
