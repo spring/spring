@@ -451,13 +451,14 @@ void CDynWater::DrawReflection(CGame* game)
 	char realCam[sizeof(CCamera)];
 	new (realCam) CCamera(*camera); // anti-crash workaround for multithreading
 
-	camera->forward.y *= -1.0f;
+	camera->SetDir(camera->GetDir() * float3(1.0f, -1.0f, 1.0f));
 	camera->SetPos(camera->GetPos() * float3(1.0f, -1.0f, 1.0f));
+	camera->SetRotZ(-camera->GetRot().z);
 	camera->Update();
 
-	reflectRight = camera->right;
-	reflectUp = camera->up;
-	reflectForward = camera->forward;
+	reflectRight = camera->GetRight();
+	reflectUp = camera->GetUp();
+	reflectForward = camera->GetDir();
 
 	reflectFBO.Bind();
 	glViewport(0, 0, 512, 512);
@@ -522,9 +523,9 @@ void CDynWater::DrawRefraction(CGame* game)
 	drawRefraction = true;
 	camera->Update();
 
-	refractRight = camera->right;
-	refractUp = camera->up;
-	refractForward = camera->forward;
+	refractRight = camera->GetRight();
+	refractUp = camera->GetUp();
+	refractForward = camera->GetDir();
 
 	refractFBO.Bind();
 	glViewport(0, 0, refractSize, refractSize);

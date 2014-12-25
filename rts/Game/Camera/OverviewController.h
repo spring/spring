@@ -13,8 +13,6 @@ public:
 	const std::string GetName() const { return "ov"; }
 
 	void KeyMove(float3 move);
-	void MousePress(int, int, int) { /* empty */ }
-	void MouseRelease(int, int, int) { /* empty */ }
 	void MouseMove(float3 move);
 	void ScreenEdgeMove(float3 move);
 	void MouseWheelMove(float move);
@@ -22,7 +20,7 @@ public:
 	void SetPos(const float3& newPos);
 	void SetDir(const float3& newDir);
 	float3 SwitchFrom() const;
-	void SwitchTo(bool showText);
+	void SwitchTo(const int oldCam, const bool showText);
 
 	void GetState(StateMap& sm) const;
 	bool SetState(const StateMap& sm);

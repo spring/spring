@@ -439,7 +439,7 @@ void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 
 void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 {
-	const int activeFarTex = treeGen->farTex[camera->forward.z >= 0.0f];
+	const int activeFarTex = treeGen->farTex[camera->GetDir().z >= 0.0f];
 	const bool drawDetailed = ((treeDistance >= 4.0f) || drawReflection);
 
 	Shader::IProgramObject* treeShader = NULL;
@@ -529,13 +529,13 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 
 		if (globalRendering->haveGLSL) {
-			treeShader->SetUniform3fv(0, &camera->right[0]);
-			treeShader->SetUniform3fv(1, &camera->up[0]);
+			treeShader->SetUniform3fv(0, &camera->GetRight()[0]);
+			treeShader->SetUniform3fv(1, &camera->GetUp()[0]);
 			treeShader->SetUniform2f(5, 0.20f * (1.0f / MAX_TREE_HEIGHT), 0.85f);
 		} else {
 			treeShader->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
-			treeShader->SetUniform3f(13, camera->right.x, camera->right.y, camera->right.z);
-			treeShader->SetUniform3f( 9, camera->up.x,    camera->up.y,    camera->up.z   );
+			treeShader->SetUniform3f(13, camera->GetRight().x, camera->GetRight().y, camera->GetRight().z);
+			treeShader->SetUniform3f( 9, camera->GetUp().x,    camera->GetUp().y,    camera->GetUp().z   );
 			treeShader->SetUniform4f(11, light.groundSunColor.x,     light.groundSunColor.y,     light.groundSunColor.z,     0.85f);
 			treeShader->SetUniform4f(14, light.groundAmbientColor.x, light.groundAmbientColor.y, light.groundAmbientColor.z, 0.85f);
 			treeShader->SetUniform4f(12, 0.0f, 0.0f, 0.0f, 0.20f * (1.0f / MAX_TREE_HEIGHT)); // w = alpha/height modifier
@@ -874,7 +874,7 @@ void CAdvTreeSquareShadowPassDrawer::DrawQuad(int x, int y)
 void CAdvTreeDrawer::DrawShadowPass()
 {
 	const float treeDistance = oldTreeDistance;
-	const int activeFarTex = (camera->forward.z < 0.0f)? treeGen->farTex[0] : treeGen->farTex[1];
+	const int activeFarTex = (camera->GetDir().z < 0.0f)? treeGen->farTex[0] : treeGen->farTex[1];
 	const bool drawDetailed = (treeDistance >= 4.0f);
 
 	glActiveTexture(GL_TEXTURE0);
@@ -912,12 +912,12 @@ void CAdvTreeDrawer::DrawShadowPass()
 		po->Enable();
 
 		if (globalRendering->haveGLSL) {
-			po->SetUniform3fv(1, &camera->right[0]);
-			po->SetUniform3fv(2, &camera->up[0]);
+			po->SetUniform3fv(1, &camera->GetRight()[0]);
+			po->SetUniform3fv(2, &camera->GetUp()[0]);
 		} else {
 			po->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
-			po->SetUniform4f(13, camera->right.x, camera->right.y, camera->right.z, 0.0f);
-			po->SetUniform4f(9,  camera->up.x,    camera->up.y,    camera->up.z,    0.0f);
+			po->SetUniform4f(13, camera->GetRight().x, camera->GetRight().y, camera->GetRight().z, 0.0f);
+			po->SetUniform4f(9,  camera->GetUp().x,    camera->GetUp().y,    camera->GetUp().z,    0.0f);
 			po->SetUniform4f(11, 1.0f, 1.0f, 1.0f, 0.85f                           );
 			po->SetUniform4f(12, 0.0f, 0.0f, 0.0f, 0.20f * (1.0f / MAX_TREE_HEIGHT));   // w = alpha/height modifier
 		}

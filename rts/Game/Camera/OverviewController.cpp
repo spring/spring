@@ -59,7 +59,7 @@ float3 COverviewController::SwitchFrom() const
 	return rpos;
 }
 
-void COverviewController::SwitchTo(bool showText)
+void COverviewController::SwitchTo(const int oldCam, const bool showText)
 {
 	if (showText) {
 		LOG("Switching to Overview style camera");

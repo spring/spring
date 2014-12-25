@@ -438,7 +438,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 						p2.z = (blockStates.peNodeOffsets[md->pathType][obBlockNr].y) * SQUARE_SIZE;
 						p2.y = CGround::GetHeightAboveWater(p2.x, p2.z, false) + 10.0f;
 
-					glColor3f(1.0f / math::sqrtf(cost), 1.0f / cost, peBlueValue);
+					glColor3f(1.0f / math::sqrt(cost), 1.0f / cost, peBlueValue);
 					glVertexf3(p1);
 					glVertexf3(p2);
 				}

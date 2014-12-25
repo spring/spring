@@ -265,6 +265,12 @@ extern DECLSPEC int SDL_GL_GetSwapInterval() {
 	return 0;
 }
 
+extern DECLSPEC void SDL_SetWindowPosition(SDL_Window * window, int x, int y) {
+}
+
+extern DECLSPEC void SDL_SetWindowSize(SDL_Window * window, int w, int h) {
+}
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

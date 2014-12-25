@@ -235,9 +235,9 @@ void CGrassDrawer::EnableShader(const GrassShaderProgram type) {
 	grassShader->SetUniform("frame", gs->frameNum + globalRendering->timeOffset);
 	grassShader->SetUniform3v("windSpeed", &windSpeed.x);
 	grassShader->SetUniform3v("camPos",    &camera->GetPos().x);
-	grassShader->SetUniform3v("camDir",    &camera->forward.x);
-	grassShader->SetUniform3v("camUp",     &camera->up.x);
-	grassShader->SetUniform3v("camRight",  &camera->right.x);
+	grassShader->SetUniform3v("camDir",    &camera->GetDir().x);
+	grassShader->SetUniform3v("camUp",     &camera->GetUp().x);
+	grassShader->SetUniform3v("camRight",  &camera->GetRight().x);
 
 	grassShader->SetUniform("groundShadowDensity", mapInfo->light.groundShadowDensity);
 	grassShader->SetUniformMatrix4x4("shadowMatrix", false, &shadowHandler->shadowMatrix.m[0]);
@@ -487,10 +487,10 @@ void CGrassDrawer::DrawNearBillboards(const std::vector<InviewNearGrass>& inview
 void CGrassDrawer::Update()
 {
 	// update visible turfs
-	if (oldCamPos != camera->GetPos() || oldCamDir != camera->forward) {
+	if (oldCamPos != camera->GetPos() || oldCamDir != camera->GetDir()) {
 		SCOPED_TIMER("Grass::Update");
 		oldCamPos = camera->GetPos();
-		oldCamDir = camera->forward;
+		oldCamDir = camera->GetDir();
 		lastVisibilityUpdate = globalRendering->drawFrame;
 
 		drawer.cx = int(camera->GetPos().x / bMSsq);
@@ -679,7 +679,7 @@ void CGrassDrawer::SetupGlStateNear()
 
 void CGrassDrawer::ResetGlStateNear()
 {
-	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
+	//CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 
 	if (globalRendering->haveGLSL) {
 		grassShader->Disable();

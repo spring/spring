@@ -463,7 +463,7 @@ void CProjectileDrawer::DrawProjectile(CProjectile* pro, bool drawReflection, bo
 	DrawProjectileModel(pro, false);
 
 	if (pro->drawSorted) {
-		pro->SetSortDist(pro->pos.dot(camera->forward));
+		pro->SetSortDist(pro->pos.dot(camera->GetDir()));
 		zSortedProjectiles.insert(pro);
 	} else {
 		unsortedProjectiles.push_back(pro);

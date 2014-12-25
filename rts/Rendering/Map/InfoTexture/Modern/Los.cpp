@@ -33,7 +33,7 @@ CLosTexture::CLosTexture()
 	if (FBO::IsSupported()) {
 		fbo.Bind();
 		fbo.AttachTexture(texture);
-		bool status = fbo.CheckStatus("CLosTexture");
+		/*bool status =*/ fbo.CheckStatus("CLosTexture");
 		FBO::Unbind();
 	}
 
