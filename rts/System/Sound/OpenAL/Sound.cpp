@@ -330,10 +330,11 @@ void CSound::StartThread(int maxSounds)
 		maxSounds = GetMaxMonoSources(device, maxSounds);
 
 		LOG("OpenAL info:");
-		if(alcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT"))
+		bool hasAllEnum = alcIsExtensionPresent(NULL, "ALC_ENUMERATE_ALL_EXT");
+		if(hasAllEnum || alcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT"))
 		{
 			LOG("  Available Devices:");
-			const char* deviceSpecifier = alcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER);
+			const char* deviceSpecifier = alcGetString(NULL, hasAllEnum ? ALC_ALL_DEVICES_SPECIFIER : ALC_DEVICE_SPECIFIER);
 			while (*deviceSpecifier != '\0') {
 				LOG("              %s", deviceSpecifier);
 				while (*deviceSpecifier++ != '\0')
