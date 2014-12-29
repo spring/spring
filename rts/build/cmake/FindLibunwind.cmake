@@ -26,11 +26,18 @@ set(LIB_STD_ARGS
           /usr/lib64
           /usr/local/lib
           /usr/local/lib64
+          /usr/lib/system
 )
 
 find_path(LIBUNWIND_INCLUDE_DIRS libunwind.h)
 
-find_library(LIBUNWIND_LIBRARY NAMES unwind ${LIB_STD_ARGS})
+if (APPLE AND LIBUNWIND_INCLUDE_DIRS)
+  # FIXME: OS X 10.10 doesn't have static libunwind.a only dynamic libunwind.dylib;
+  #        link with "-framework Cocoa"
+  set(LIBUNWIND_LIBRARY "-framework Cocoa")
+else ()
+  find_library(LIBUNWIND_LIBRARY NAMES unwind ${LIB_STD_ARGS})
+endif ()
 
 
 if (LIBUNWIND_INCLUDE_DIRS AND LIBUNWIND_LIBRARY)
