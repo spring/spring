@@ -6,8 +6,13 @@
 #undef GL_GLEXT_LEGACY
 #define GL_GLEXT_PROTOTYPES
 #define _GDI32_
-#include <GL/glu.h>
-#include <GL/glext.h>
+#if defined(__APPLE__)
+	#include <OpenGL/glu.h>
+	#include <OpenGL/glext.h>
+#else
+	#include <GL/glu.h>
+	#include <GL/glext.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
