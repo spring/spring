@@ -21,7 +21,7 @@
 CPathTexture::CPathTexture()
 : CPboInfoTexture("path")
 , isCleared(false)
-, updateFrame(0)
+//, updateFrame(0)
 , updateProcess(0)
 , lastSelectedPathType(0)
 , forcedPathType(-1)
