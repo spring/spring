@@ -309,11 +309,21 @@ if    (CMAKE_SIZEOF_VOID_P EQUAL 8)
 	Message(STATUS "Building Spring for 64bit environment")
 	set(MARCH_BITS 64 INTERNAL)
 	if     (MINGW)
-		Message(FATAL_ERROR "Spring's MinGWLibs don't include 64bit libraries (yet). Please, compile as 32bit.")
+	#Setting up mingw flags to compile for the 32bit version as the MinGWLibs currently don't have 64bit libraries 
+		set(CMAKE_CXX_FLAGS " -fpermissive -m32")
+        set(CMAKE_C_FLAGS " -m32")
 	endif  (MINGW)
 else  (CMAKE_SIZEOF_VOID_P EQUAL 8)
 	Message(STATUS "Building Spring for 32bit environment")
 	set(MARCH_BITS 32 INTERNAL)
+	if (MINGW)
+	#Checking to see if mingw have the strnlen function
+		include(CheckFunctionExists)
+		CHECK_FUNCTION_EXISTS(strnlen STRNLEN_FUNCTION_EXIST)
+		if(NOT STRNLEN_FUNCTION_EXIST)
+			message(FATAL_ERROR "ERROR: strnlen fuction is not found")
+		endif(NOT STRNLEN_FUNCTION_EXIST)
+	endif(MINGW)
 endif (CMAKE_SIZEOF_VOID_P EQUAL 8)
 
 
