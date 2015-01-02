@@ -39,9 +39,7 @@
 #include "System/Platform/Watchdog.h"
 #endif
 
-#ifdef __APPLE__
-#define ADDR2LINE "gaddr2line"
-#else
+#if !defined(__APPLE__)
 #define ADDR2LINE "addr2line"
 #endif
 
@@ -63,7 +61,7 @@ struct StackFrame {
 	void*                 ip;       // instruction pointer from libunwind or backtrace()
 	std::string           mangled;  // mangled name retrieved from libunwind (not printed, memoized for debugging)
 	std::string           symbol;   // backtrace_symbols output
-	uintptr_t             addr;     // translated address
+	uintptr_t             addr;     // translated address / load address for OS X
 	std::string           path;     // translated library or module path
 	std::list<StackFunction> entries;  // function names and lines (possibly several inlined) retrieved from addr2line
 	StackFrame() :
@@ -75,6 +73,10 @@ struct StackFrame {
 typedef std::vector<StackFrame> StackTrace;
 
 static int reentrances = 0;
+
+static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int logLevel);
+static void LogStacktrace(const int logLevel, StackTrace& stacktrace);
+
 
 static std::string GetBinaryLocation()
 {
@@ -215,6 +217,38 @@ static uintptr_t HexToInt(const char* hexStr)
 	return (uintptr_t) value;
 }
 
+/**
+ * Consumes (and frees) the lines produced by backtrace_symbols and puts these into the StackTrace fields
+ */
+static void ExtractSymbols(char** lines, StackTrace& stacktrace)
+{
+	int l=0;
+	auto fit = stacktrace.begin();
+	while (fit != stacktrace.end()) {
+		LOG_L(L_DEBUG, "backtrace_symbols: %s", lines[l]);
+		if (strncmp(lines[l], "[(nil)]", 20) != 0) {
+			fit->symbol = lines[l];
+			fit++;
+		} else {
+			fit = stacktrace.erase(fit);
+		}
+		l++;
+	}
+	free(lines);
+}
+
+static int CommonStringLength(const std::string& str1, const std::string& str2, int* len)
+{
+	int n=0, m = std::min(str1.length(), str2.length());
+	while (n < m && str1[n] == str2[n]) { n++; }
+	if (len != nullptr) {
+		*len = n;
+	}
+	return n;
+}
+
+
+#if !defined(__APPLE__)
 
 /**
  * Finds the base memory address in the running process for all the libraries
@@ -274,13 +308,17 @@ static void FindBaseMemoryAddresses(std::map<std::string,uintptr_t>& binPath_bas
 	}
 }
 
-
 /**
  * extracts the library/binary paths from the output of backtrace_symbols()
  */
 static std::string ExtractPath(const std::string& line)
 {
-	// example paths: "./spring" "/usr/lib/AI/Skirmish/NTai/0.666/libSkirmishAI.so"
+	// line examples:
+	//
+	// ./spring() [0x84b7b5]
+	// /usr/lib/libc.so.6(+0x33b20) [0x7fc022c68b20]
+	// /usr/lib/libstdc++.so.6(_ZN9__gnu_cxx27__verbose_terminate_handlerEv+0x16d) [0x7fc023553fcd]
+
 	std::string path;
 	size_t end   = line.find_last_of('('); // if there is a function name
 	if (end == std::string::npos) {
@@ -298,13 +336,17 @@ static std::string ExtractPath(const std::string& line)
 	return path;
 }
 
-
 /**
  * extracts the debug addr's from the output of backtrace_symbols()
  */
 static uintptr_t ExtractAddr(const StackFrame& frame)
 {
-	// example address: "0x89a8206"
+	// frame.symbol examples:
+	//
+	// ./spring() [0x84b7b5]
+	// /usr/lib/libc.so.6(abort+0x16a) [0x7fc022c69e6a]
+	// /usr/lib/libstdc++.so.6(+0x5eea1) [0x7fc023551ea1]
+
 	uintptr_t addr = INVALID_ADDR_INDICATOR;
 	const std::string& line = frame.symbol;
 	size_t begin = line.find_last_of('[');
@@ -329,41 +371,12 @@ static uintptr_t ExtractAddr(const StackFrame& frame)
 }
 
 /**
- * Consumes (and frees) the lines produced by backtrace_symbols and puts these into the StackTrace fields
- */
-static void ExtractSymbols (char** lines, StackTrace& stacktrace) {
-    int l=0;
-    auto fit = stacktrace.begin();
-    while (fit != stacktrace.end()) {
-        LOG_L(L_DEBUG, "backtrace_symbols: %s", lines[l]);
-        if (strncmp(lines[l], "[(nil)]", 20) != 0) {
-            fit->symbol = lines[l];
-            fit++;
-        } else {
-            fit = stacktrace.erase(fit);
-        }
-        l++;
-    }
-    free(lines);
-}
-
-static int CommonStringLength(const std::string& str1, const std::string& str2, int* len)
-{
-    int n=0, m = std::min(str1.length(), str2.length());
-    while (n < m && str1[n] == str2[n]) { n++; }
-    if (len != nullptr) {
-        *len = n;
-    }
-    return n;
-}
-
-/**
  * @brief TranslateStackTrace
  * @param stacktrace These are the lines and addresses produced by backtrace_symbols()
  * Translates the module and address information from backtrace symbols into a vector of StackFrame objects,
  *   each with its own set of entries representing the function call and any inlined functions for that call.
  */
-static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int logLevel )
+static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int logLevel)
 {
 	// Extract important data from backtrace_symbols' output
 	bool containsDriverSo = false; // OpenGL lib -> graphic problem
@@ -519,11 +532,10 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 	LOG_L(L_DEBUG, "TranslateStackTrace[6]");
 
 	return;
-
 }
 
-static void LogStacktrace (const int logLevel, StackTrace& stacktrace) {
-
+static void LogStacktrace(const int logLevel, StackTrace& stacktrace)
+{
 	int colFileline = 0;
 	const std::string& exe_path = Platform::GetProcessExecutablePath();
 	const std::string& cwd_path = Platform::GetOrigCWD();
@@ -579,6 +591,9 @@ static void LogStacktrace (const int logLevel, StackTrace& stacktrace) {
     }
 }
 
+#endif  // !(__APPLE__)
+
+
 __FORCE_ALIGN_STACK__
 static void ForcedExitAfterFiveSecs() {
 	boost::this_thread::sleep(boost::posix_time::seconds(5));
@@ -628,11 +643,16 @@ namespace CrashHandler
 
 		unw_cursor_t cursor;
 		// Effective ucontext_t. If uc not supplied, use unw_getcontext locally. This is appropriate inside signal handlers.
+#if defined(__APPLE__)
+		unw_context_t thisctx;
+		unw_getcontext(&thisctx);
+#else
 		ucontext_t thisctx;
 		if (uc == nullptr) {
 			unw_getcontext(&thisctx);
 			uc = &thisctx;
 		}
+#endif
 		const int BUFR_SZ = 1000;
 		char procbuffer[BUFR_SZ];
 		stacktrace.clear();
@@ -649,7 +669,11 @@ namespace CrashHandler
 			LOG_L(L_DEBUG, "Dereferencing uc_link");
 		}
 		*/
+#if defined(__APPLE__)
+		int err = unw_init_local(&cursor, &thisctx);
+#else
 		int err = unw_init_local(&cursor, uc);
+#endif
 		if (err) {
 			LOG_L(L_ERROR, "unw_init_local returned %d", err);
 			return 0;
