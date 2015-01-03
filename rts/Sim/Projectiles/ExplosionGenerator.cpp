@@ -753,8 +753,8 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		const boost::uint8_t basicTypeSize = basicType->GetSize();
 
 		// check sizeof(member)
-		constexpr std::set<boost::uint8_t> allowedSizeInt = {1,2,4 /*,0,8*/};
-		constexpr std::set<boost::uint8_t> allowedSizeFlt = {4 /*,8*/};
+		const std::set<boost::uint8_t> allowedSizeInt = {1,2,4 /*,0,8*/};
+		const std::set<boost::uint8_t> allowedSizeFlt = {4 /*,8*/};
 		if (basicType->id == creg::crFloat) {
 			if (allowedSizeFlt.find(basicTypeSize) == allowedSizeFlt.end())
 				throw content_error("[CCEG::ParseExplosionCode] incompatible float size \"" + IntToString(basicTypeSize) + "\" (" + script + ")");
