@@ -67,7 +67,7 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(numStockpiled),
 	CR_MEMBER(numStockpileQued),
 	CR_MEMBER(interceptTarget),
-	CR_ENUM_MEMBER(targetType),
+	CR_MEMBER(targetType),
 	CR_MEMBER(sprayAngle),
 	CR_MEMBER(useWeaponPosForAim),
 

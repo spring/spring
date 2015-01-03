@@ -54,7 +54,7 @@ CR_REG_METADATA(CBuilder, (
 	CR_MEMBER(tx1), CR_MEMBER(tx2), CR_MEMBER(tz1), CR_MEMBER(tz2),
 	CR_MEMBER(terraformCenter),
 	CR_MEMBER(terraformRadius),
-	CR_ENUM_MEMBER(terraformType),
+	CR_MEMBER(terraformType),
 	CR_MEMBER(nanoPieceCache),
 	CR_POSTLOAD(PostLoad)
 ))

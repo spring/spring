@@ -15,8 +15,8 @@
 CR_BIND_DERIVED_INTERFACE(AAirMoveType, AMoveType)
 
 CR_REG_METADATA(AAirMoveType, (
-	CR_ENUM_MEMBER(aircraftState),
-	CR_ENUM_MEMBER(padStatus),
+	CR_MEMBER(aircraftState),
+	CR_MEMBER(padStatus),
 
 	CR_MEMBER(oldGoalPos),
 	CR_MEMBER(reservedLandingPos),

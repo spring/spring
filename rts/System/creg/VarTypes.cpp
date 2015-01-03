@@ -124,17 +124,6 @@ boost::shared_ptr<IType> IType::CreateObjInstanceType(Class* objectType)
 	return boost::shared_ptr<IType>(new ObjectInstanceType(objectType));
 }
 
-boost::shared_ptr<IType> IType::CreateEnumeratedType(size_t size)
-{
-	switch (size) {
-		case 1: return boost::shared_ptr<IType>(new BasicType(crUChar));
-		case 2: return boost::shared_ptr<IType>(new BasicType(crUShort));
-		case 4: return boost::shared_ptr<IType>(new BasicType(crUInt));
-		default: assert(false); break;
-	}
-	return boost::shared_ptr<IType>(new EmptyType(0));
-}
-
 string StaticArrayBaseType::GetName()
 {
 	char sstr[16];

@@ -55,7 +55,6 @@ namespace creg {
 		static boost::shared_ptr<IType> CreateBasicType(BasicTypeID t);
 		static boost::shared_ptr<IType> CreateStringType();
 		static boost::shared_ptr<IType> CreateObjInstanceType(Class* objectType);
-		static boost::shared_ptr<IType> CreateEnumeratedType(size_t size);
 	};
 
 	class IMemberRegistrator
@@ -517,7 +516,6 @@ namespace creg {
  * should consist of a series of single expression of metadata macros\n
  * for example: (CR_MEMBER(a),CR_POSTLOAD(PostLoadCallback))
  * @see CR_MEMBER
- * @see CR_ENUM_MEMBER
  * @see CR_SERIALIZER
  * @see CR_POSTLOAD
  * @see CR_MEMBER_SETFLAG
@@ -566,16 +564,10 @@ namespace creg {
  * - a std::string
  * - an array
  * - a pointer/reference to a creg registered struct or class instance
- * For enumerated type members, @see CR_ENUM_MEMBER
+ * - an enum
  */
 #define CR_MEMBER(Member) \
 	class_->AddMember( #Member, creg::GetType(null->Member), offsetof_creg(Type, Member), alignof(decltype(Type::Member)))
-
-/** @def CR_ENUM_MEMBER
- * Registers a class/struct member variable with an enumerated type
- */
-#define CR_ENUM_MEMBER(Member) \
-	class_->AddMember( #Member, creg::IType::CreateEnumeratedType(sizeof(Type::Member)), offsetof_creg(Type, Member), alignof(decltype(Type::Member)))
 
 /** @def CR_IGNORED
  * Registers a member variable that isn't saved/loaded
@@ -627,7 +619,7 @@ namespace creg {
 
 /** @def CR_MEMBER_SETFLAG
  * Set a flag for a class/struct member
- * This should come after the CR_MEMBER or CR_ENUM_MEMBER for the member
+ * This should come after the CR_MEMBER for the member
  * @param Member the class member variable
  * @param Flag the class member flag @see ClassMemberFlag
  * @see ClassMemberFlag
