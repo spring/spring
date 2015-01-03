@@ -258,7 +258,7 @@ void COutputStreamSerializer::SerializeInt(void* data, int byteSize)
 			throw "Unknown int type";
 		}
 	}
-	stream->write((char*)x, 8);
+	stream->write((char*)&x, 8);
 }
 
 
@@ -473,7 +473,7 @@ void CInputStreamSerializer::SerializeInt(void* data, int byteSize)
 	// cause of int-types might differ in size depending on platforms
 	// to make savegames compatible between those we need to so
 	boost::int64_t x = 0;
-	stream->read((char*)x, 8);
+	stream->read((char*)&x, 8);
 	switch (byteSize) {
 		case 1: { *(boost::int8_t* )data = x; break; }
 		case 2: { *(boost::int16_t*)data = x; break; }
