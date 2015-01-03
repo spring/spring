@@ -47,7 +47,7 @@ namespace creg {
 	// List type
 	template<typename T>
 	struct DeduceType< std::list<T> > {
-		boost::shared_ptr<IType> Get() {
+		static boost::shared_ptr<IType> Get() {
 			DeduceType<T> elemtype;
 			return boost::shared_ptr<IType>(new ListType< std::list<T> >(elemtype.Get()));
 		}

@@ -15,13 +15,14 @@ namespace creg
 	class BasicType : public IType
 	{
 	public:
-		BasicType(BasicTypeID ID) : id(ID) {}
+		BasicType(const BasicTypeID ID, const size_t size_) : size(size_), id(ID) {}
 		~BasicType() {}
 
 		void Serialize(ISerializer* s, void* instance);
 		std::string GetName();
 		size_t GetSize();
 
+		size_t size;
 		BasicTypeID id;
 	};
 

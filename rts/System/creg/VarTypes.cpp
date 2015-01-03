@@ -54,36 +54,12 @@ std::string BasicType::GetName()
 
 size_t BasicType::GetSize()
 {
-	switch(id) {
-#if defined(SYNCDEBUG) || defined(SYNCCHECK)
-		case crSyncedSint: return sizeof(int);
-		case crSyncedUint: return sizeof(unsigned);
-		case crSyncedSshort: return sizeof(short);
-		case crSyncedUshort: return sizeof(unsigned short);
-		case crSyncedSchar: return sizeof(char);
-		case crSyncedUchar: return sizeof(unsigned char);
-		case crSyncedFloat: return sizeof(float);
-		case crSyncedDouble: return sizeof(double);
-		case crSyncedBool: return sizeof(bool);
-#endif
-		case crInt: return sizeof(int);
-		case crUInt: return sizeof(unsigned);
-		case crShort: return sizeof(short);
-		case crUShort: return sizeof(unsigned short);
-		case crChar:  return sizeof(char);
-		case crUChar: return sizeof(unsigned char);
-		case crInt64: return sizeof(boost::int64_t);
-		case crUInt64: return sizeof(boost::uint64_t);
-		case crFloat: return sizeof(float);
-		case crDouble: return sizeof(double);
-		case crBool: return sizeof(bool);
-	};
-	return 0; //???
+	return size;
 }
 
-boost::shared_ptr<IType> IType::CreateBasicType(BasicTypeID t)
+boost::shared_ptr<IType> IType::CreateBasicType(BasicTypeID t, size_t size)
 {
-	return boost::shared_ptr<IType>(new BasicType(t));
+	return boost::shared_ptr<IType>(new BasicType(t, size));
 }
 
 std::string StringType::GetName()

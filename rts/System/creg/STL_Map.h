@@ -99,7 +99,7 @@ namespace creg
 	// Map type
 	template<typename TKey, typename TValue>
 	struct DeduceType<std::map<TKey, TValue> > {
-		boost::shared_ptr<IType> Get() {
+		static boost::shared_ptr<IType> Get() {
 			DeduceType<TValue> valuetype;
 			DeduceType<TKey> keytype;
 			return boost::shared_ptr<IType>(new MapType<std::map<TKey, TValue> >(keytype.Get(), valuetype.Get()));
@@ -108,7 +108,7 @@ namespace creg
 	// Multimap
 	template<typename TKey, typename TValue>
 	struct DeduceType<std::multimap<TKey, TValue> > {
-		boost::shared_ptr<IType> Get() {
+		static boost::shared_ptr<IType> Get() {
 			DeduceType<TValue> valuetype;
 			DeduceType<TKey> keytype;
 			return boost::shared_ptr<IType>(new MapType<std::multimap<TKey, TValue> >(keytype.Get(), valuetype.Get()));
@@ -117,7 +117,7 @@ namespace creg
 	// Hash map
 	template<typename TKey, typename TValue>
 	struct DeduceType<SPRING_HASH_MAP<TKey, TValue> > {
-		boost::shared_ptr<IType> Get() {
+		static boost::shared_ptr<IType> Get() {
 			DeduceType<TValue> valuetype;
 			DeduceType<TKey> keytype;
 			return boost::shared_ptr<IType>(new MapType<SPRING_HASH_MAP<TKey, TValue> >(keytype.Get(), valuetype.Get()));
@@ -147,7 +147,7 @@ namespace creg
 	template<typename TFirst, typename TSecond>
 	struct DeduceType<std::pair<TFirst, TSecond> >
 	{
-		boost::shared_ptr<IType> Get() {
+		static boost::shared_ptr<IType> Get() {
 			DeduceType<TFirst> first;
 			DeduceType<TSecond> second;
 			return boost::shared_ptr<IType>(new PairType<std::pair<TFirst, TSecond> >(first.Get(), second.Get()));

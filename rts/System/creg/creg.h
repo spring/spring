@@ -52,7 +52,7 @@ namespace creg {
 		virtual std::string GetName() = 0;
 		virtual size_t GetSize() = 0;
 
-		static boost::shared_ptr<IType> CreateBasicType(BasicTypeID t);
+		static boost::shared_ptr<IType> CreateBasicType(BasicTypeID t, size_t size);
 		static boost::shared_ptr<IType> CreateStringType();
 		static boost::shared_ptr<IType> CreateObjInstanceType(Class* objectType);
 	};
