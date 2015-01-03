@@ -21,6 +21,7 @@
 #include <vector>
 #include <string>
 #include <string.h>
+#include <boost/cstdint.hpp>
 
 using namespace creg;
 using std::string;
@@ -244,30 +245,20 @@ void COutputStreamSerializer::Serialize(void* data, int byteSize)
 
 void COutputStreamSerializer::SerializeInt(void* data, int byteSize)
 {
-	//FIXME transform to template?
-	char buf[8];
+	// always save ints as 64bit
+	// cause of int-types might differ in size depending on platforms
+	// to make savegames compatible between those we need to so
+	boost::int64_t x = 0;
 	switch (byteSize) {
-		case 1: {
-			*(char*)buf = *(char*) data;
-			break;
-		}
-		case 2: {
-			*(short*)buf = swabWord(*(short*) data);
-			break;
-		}
-		case 4: {
-			*(int*)buf = swabDWord(*(int*) data);
-			break;
-		}
-		case 8: {
-			*(boost::int64_t*)buf = swab64(*(boost::int64_t*) data);
-			break;
-		}
+		case 1: { x = *(boost::int8_t* )data; break; }
+		case 2: { x = *(boost::int16_t*)data; break; }
+		case 4: { x = *(boost::int32_t*)data; break; }
+		case 8: { x = *(boost::int64_t*)data; break; }
 		default: {
 			throw "Unknown int type";
 		}
 	}
-	stream->write((char*)data, byteSize); //TODO write buf?
+	stream->write((char*)x, 8);
 }
 
 
@@ -478,25 +469,16 @@ void CInputStreamSerializer::Serialize(void* data, int byteSize)
 
 void CInputStreamSerializer::SerializeInt(void* data, int byteSize)
 {
-	//FIXME transform to template?
-	stream->read((char*)data, byteSize);
+	// always save ints as 64bit
+	// cause of int-types might differ in size depending on platforms
+	// to make savegames compatible between those we need to so
+	boost::int64_t x = 0;
+	stream->read((char*)x, 8);
 	switch (byteSize) {
-		case 1: {
-			*(char*)data = *(char*) data;
-			break;
-		}
-		case 2: {
-			swabWordInPlace(*(boost::int64_t*)data);
-			break;
-		}
-		case 4: {
-			swabDWordInPlace(*(int*)data);
-			break;
-		}
-		case 8: {
-			swab64InPlace(*(boost::int64_t*)data);
-			break;
-		}
+		case 1: { *(boost::int8_t* )data = x; break; }
+		case 2: { *(boost::int16_t*)data = x; break; }
+		case 4: { *(boost::int32_t*)data = x; break; }
+		case 8: { *(boost::int64_t*)data = x; break; }
 		default: {
 			throw "Unknown int type";
 		}
