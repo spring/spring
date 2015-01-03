@@ -256,7 +256,7 @@ bool CShadowHandler::InitDepthTarget()
 
 	// test the FBO
 	glDrawBuffer(useColorTexture ? GL_COLOR_ATTACHMENT0_EXT : GL_NONE);
-	glDrawBuffer(useColorTexture ? GL_COLOR_ATTACHMENT0_EXT : GL_NONE);
+	glReadBuffer(useColorTexture ? GL_COLOR_ATTACHMENT0_EXT : GL_NONE);
 	bool status = fb.CheckStatus("SHADOW");
 	if (!status && !useColorTexture) {
 		status = WorkaroundUnsupportedFboRenderTargets();
@@ -294,7 +294,7 @@ bool CShadowHandler::WorkaroundUnsupportedFboRenderTargets()
 	// ATI sometimes fails without an attached color texture, so check a few formats (not all supported texture formats are renderable)
 	{
 		glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
-		glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+		glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
 
 		// 1st: try the smallest unsupported format (4bit per pixel)
 		glGenTextures(1, &dummyColorTexture);
