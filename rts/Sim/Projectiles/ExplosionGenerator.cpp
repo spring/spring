@@ -750,29 +750,21 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 	}
 	else if (dynamic_cast<creg::BasicType*>(type.get())) {
 		const creg::BasicType* basicType = (creg::BasicType*) type.get();
-		const size_t basicTypeSize = basicType->GetSize();
+		const boost::uint8_t basicTypeSize = basicType->GetSize();
 
-		if (basicType->id == creg::crInt) {
-			switch (basicTypeSize) {
-				//case 0:
-				case 1:
-				case 2:
-				case 4: break;
-				//case 8: break;
-				default:
-					throw content_error("[CCEG::ParseExplosionCode] incompatible integer size \"" + IntToString(basicTypeSize) + "\" (" + script + ")");
-			}
+		// check sizeof(member)
+		constexpr std::set<boost::uint8_t> allowedSizeInt = {1,2,4 /*,0,8*/};
+		constexpr std::set<boost::uint8_t> allowedSizeFlt = {4 /*,8*/};
+		if (basicType->id == creg::crFloat) {
+			if (allowedSizeFlt.find(basicTypeSize) == allowedSizeFlt.end())
+				throw content_error("[CCEG::ParseExplosionCode] incompatible float size \"" + IntToString(basicTypeSize) + "\" (" + script + ")");
 		} else {
-			switch (basicTypeSize) {
-				case 4: break;
-				//case 8: break;
-				default:
-					throw content_error("[CCEG::ParseExplosionCode] incompatible float size \"" + IntToString(basicTypeSize) + "\" (" + script + ")");
-			}
+			if (allowedSizeInt.find(basicTypeSize) == allowedSizeInt.end())
+				throw content_error("[CCEG::ParseExplosionCode] incompatible integer size \"" + IntToString(basicTypeSize) + "\" (" + script + ")");
 		}
 
+		// parse the code
 		int p = 0;
-
 		while (p < script.length()) {
 			char opcode = OP_END;
 			char c = script[p++];
@@ -826,10 +818,10 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			}
 		}
 
+		// store the final value
 		code.push_back((basicType->id == creg::crFloat) ? OP_STOREF : OP_STOREI);
-		code.push_back((boost::uint8_t)basicTypeSize);
+		code.push_back(basicTypeSize);
 		assert(basicTypeSize == code.back());
-
 		boost::uint16_t ofs = offset;
 		code.append((char*)&ofs, (char*)&ofs + 2);
 	}
