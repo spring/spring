@@ -73,8 +73,8 @@ public:
 			s->SerializeObjectPtr(ptr, *ptr ? ((T*)*ptr)->GetClass() : 0);
 		else s->SerializeObjectPtr(ptr, objectClass);
 	}
-	std::string GetName() { return objectClass->name + "*"; }
-	size_t GetSize() { return sizeof(T*); }
+	std::string GetName() const { return objectClass->name + "*"; }
+	size_t GetSize() const { return sizeof(T*); }
 	Class* objectClass;
 };
 

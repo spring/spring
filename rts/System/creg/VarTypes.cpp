@@ -23,36 +23,20 @@ void BasicType::Serialize(ISerializer* s, void* inst)
 	s->SerializeInt(inst, GetSize());
 }
 
-std::string BasicType::GetName()
+std::string BasicType::GetName() const
 {
 	switch(id) {
 #if defined(SYNCDEBUG) || defined(SYNCCHECK)
-		case crSyncedSint: return "int"; //FIXME
-		case crSyncedUint: return "uint";
-		case crSyncedSshort: return "short";
-		case crSyncedUshort: return "ushort";
-		case crSyncedSchar: return "char";
-		case crSyncedUchar: return "uchar";
-		case crSyncedFloat: return "float";
-		case crSyncedDouble: return "double";
-		case crSyncedBool: return "bool";
+		case crSyncedInt:   return "synced int";
+		case crSyncedFloat: return "synced float";
 #endif
-		case crInt: return "int";
-		case crUInt: return "uint";
-		case crShort: return "short";
-		case crUShort: return "ushort";
-		case crChar:  return "char";
-		case crUChar: return "uchar";
-		case crInt64: return "int64";
-		case crUInt64: return "uint64";
+		case crInt:   return "int";
 		case crFloat: return "float";
-		case crDouble: return "double";
-		case crBool: return "bool";
 	};
 	return std::string();
 }
 
-size_t BasicType::GetSize()
+size_t BasicType::GetSize() const
 {
 	return size;
 }
@@ -62,12 +46,12 @@ boost::shared_ptr<IType> IType::CreateBasicType(BasicTypeID t, size_t size)
 	return boost::shared_ptr<IType>(new BasicType(t, size));
 }
 
-std::string StringType::GetName()
+std::string StringType::GetName() const
 {
 	return "string";
 }
 
-size_t StringType::GetSize()
+size_t StringType::GetSize() const
 {
 	return sizeof(std::string);
 }
@@ -85,12 +69,12 @@ void ObjectInstanceType::Serialize(ISerializer* s, void* inst)
 	s->SerializeObjectInstance(inst, objectClass);
 }
 
-std::string ObjectInstanceType::GetName()
+std::string ObjectInstanceType::GetName() const
 {
 	return objectClass->name;
 }
 
-size_t ObjectInstanceType::GetSize()
+size_t ObjectInstanceType::GetSize() const
 {
 	return objectClass->size;
 }
@@ -100,7 +84,7 @@ boost::shared_ptr<IType> IType::CreateObjInstanceType(Class* objectType)
 	return boost::shared_ptr<IType>(new ObjectInstanceType(objectType));
 }
 
-string StaticArrayBaseType::GetName()
+string StaticArrayBaseType::GetName() const
 {
 	char sstr[16];
 	SNPRINTF(sstr, 16, "%d", size);

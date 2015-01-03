@@ -63,8 +63,8 @@ namespace creg
 				}
 			}
 		}
-		std::string GetName() { return "set<" + elemType->GetName() + ">"; }
-		size_t GetSize() { return sizeof(T); }
+		std::string GetName() const { return "set<" + elemType->GetName() + ">"; }
+		size_t GetSize() const { return sizeof(T); }
 	};
 
 

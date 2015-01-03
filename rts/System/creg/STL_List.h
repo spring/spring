@@ -37,8 +37,8 @@ namespace creg {
 				}
 			}
 		}
-		std::string GetName() { return "list<" + elemType->GetName() + ">"; }
-		size_t GetSize() { return sizeof(T); }
+		std::string GetName() const { return "list<" + elemType->GetName() + ">"; }
+		size_t GetSize() const { return sizeof(T); }
 
 		boost::shared_ptr<IType> elemType;
 	};

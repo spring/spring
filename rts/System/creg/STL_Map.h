@@ -92,8 +92,8 @@ namespace creg
 				}
 			}
 		}
-		std::string GetName() { return "map<" + keyType->GetName() + ", " + mappedType->GetName() + ">"; }
-		size_t GetSize() { return sizeof(T); }
+		std::string GetName() const { return "map<" + keyType->GetName() + ", " + mappedType->GetName() + ">"; }
+		size_t GetSize() const { return sizeof(T); }
 	};
 
 	// Map type
@@ -139,8 +139,8 @@ namespace creg
 			firstType->Serialize(s, &p.first);
 			secondType->Serialize(s, &p.second);
 		}
-		std::string GetName() { return "pair<" + firstType->GetName() + "," + secondType->GetName() + ">"; }
-		size_t GetSize() { return sizeof(T); }
+		std::string GetName() const { return "pair<" + firstType->GetName() + "," + secondType->GetName() + ">"; }
+		size_t GetSize() const { return sizeof(T); }
 	};
 
 	// std::pair
