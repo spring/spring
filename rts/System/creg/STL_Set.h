@@ -63,15 +63,15 @@ namespace creg
 				}
 			}
 		}
-		std::string GetName() { return "set<" + elemType->GetName() + ">"; }
-		size_t GetSize() { return sizeof(T); }
+		std::string GetName() const { return "set<" + elemType->GetName() + ">"; }
+		size_t GetSize() const { return sizeof(T); }
 	};
 
 
 	// Set type
 	template<typename T, typename C>
 	struct DeduceType<std::set<T, C> > {
-		boost::shared_ptr<IType> Get() {
+		static boost::shared_ptr<IType> Get() {
 			DeduceType<T> elemtype;
 			return boost::shared_ptr<IType>(new SetType<std::set<T, C> >(elemtype.Get()));
 		}
@@ -79,7 +79,7 @@ namespace creg
 	// Multiset
 	template<typename T>
 	struct DeduceType<std::multiset<T> > {
-		boost::shared_ptr<IType> Get() {
+		static boost::shared_ptr<IType> Get() {
 			DeduceType<T> elemtype;
 			return boost::shared_ptr<IType>(new SetType<std::multiset<T> >(elemtype.Get()));
 		}
@@ -87,7 +87,7 @@ namespace creg
 	// Hash set
 	template<typename T>
 	struct DeduceType<SPRING_HASH_SET<T> > {
-		boost::shared_ptr<IType> Get() {
+		static boost::shared_ptr<IType> Get() {
 			DeduceType<T> elemtype;
 			return boost::shared_ptr<IType>(new SetType<SPRING_HASH_SET<T> >(elemtype.Get()));
 		}

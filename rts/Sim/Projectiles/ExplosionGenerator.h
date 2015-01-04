@@ -246,7 +246,6 @@ public:
 		OP_END      =  0,
 		OP_STOREI   =  1, // int
 		OP_STOREF   =  2, // float
-		OP_STOREC   =  3, // char
 		OP_ADD      =  4,
 		OP_RAND     =  5,
 		OP_DAMAGE   =  6,

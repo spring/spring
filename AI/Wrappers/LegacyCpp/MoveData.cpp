@@ -11,9 +11,9 @@ namespace springLegacyAI {
 CR_BIND(MoveData, )
 
 CR_REG_METADATA(MoveData, (
-	CR_ENUM_MEMBER(moveType),
-	CR_ENUM_MEMBER(moveFamily),
-	CR_ENUM_MEMBER(terrainClass),
+	CR_MEMBER(moveType),
+	CR_MEMBER(moveFamily),
+	CR_MEMBER(terrainClass),
 	CR_MEMBER(followGround),
 
 	CR_MEMBER(xsize),

@@ -8,7 +8,7 @@
 CR_BIND_DERIVED(SkirmishAIBase, TeamController, )
 CR_REG_METADATA(SkirmishAIBase, (
 	CR_MEMBER(hostPlayer),
-	CR_ENUM_MEMBER(status)
+	CR_MEMBER(status)
 ))
 
 

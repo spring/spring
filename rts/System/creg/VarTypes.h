@@ -15,13 +15,14 @@ namespace creg
 	class BasicType : public IType
 	{
 	public:
-		BasicType(BasicTypeID ID) : id(ID) {}
+		BasicType(const BasicTypeID ID, const size_t size_) : size(size_), id(ID) {}
 		~BasicType() {}
 
 		void Serialize(ISerializer* s, void* instance);
-		std::string GetName();
-		size_t GetSize();
+		std::string GetName() const;
+		size_t GetSize() const;
 
+		size_t size;
 		BasicTypeID id;
 	};
 
@@ -31,8 +32,8 @@ namespace creg
 		ObjectInstanceType(Class* objc) : objectClass(objc) {}
 		~ObjectInstanceType() {}
 		void Serialize(ISerializer* s, void* instance);
-		std::string GetName();
-		size_t GetSize();
+		std::string GetName() const;
+		size_t GetSize() const;
 
 		Class* objectClass;
 	};
@@ -41,8 +42,8 @@ namespace creg
 	{
 	public:
 		StringType(boost::shared_ptr<IType> charType);
-		std::string GetName();
-		size_t GetSize();
+		std::string GetName() const;
+		size_t GetSize() const;
 	};
 
 }

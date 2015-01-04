@@ -14,57 +14,51 @@
 
 namespace creg {
 
-// Undefined types return 0
-template<typename T>
-struct DeduceTypeClass {
-	boost::shared_ptr<IType> Get() { return boost::shared_ptr<IType>(IType::CreateObjInstanceType(T::StaticClass())); }
-};
-
-template<typename T>
-struct IsBasicType {
-	enum {Yes=0, No=1};
+// Default
+// If none specialization was found assume it's a class.
+template<typename T, typename Enable = void>
+struct DeduceType {
+	static boost::shared_ptr<IType> Get() { return boost::shared_ptr<IType>(IType::CreateObjInstanceType(T::StaticClass())); }
 };
 
 
-// Enum type (filter enums & class/structs with c++11's std::is_enum)
-//TODO: is DeduceType<int> really working for all enums? what if enum uses just 1byte?
-//      do the 3 more bytes of int overwrite next class member in suhc cases?
+// Class case
+// Covered by default case above
+//WARNING: Defining this one would break any class-specialization as for std::vector & std::string below)
+/*template<typename T>
+struct DeduceType<T, typename std::enable_if<std::is_class<T>::value>::type> {
+	static boost::shared_ptr<IType> Get() { return boost::shared_ptr<IType>(IType::CreateObjInstanceType(T::StaticClass())); }
+};*/
+
+// Enum
 template<typename T>
-struct DeduceType : public std::conditional<std::is_enum<T>::value, DeduceType<int>, DeduceTypeClass<T>>::type {
+struct DeduceType<T, typename std::enable_if<std::is_enum<T>::value>::type> {
+	static boost::shared_ptr<IType> Get() { return IType::CreateBasicType(crInt, sizeof(T)); }
 };
 
+// Integer+Boolean (of any size)
+template<typename T>
+struct DeduceType<T, typename std::enable_if<std::is_integral<T>::value>::type> {
+	static boost::shared_ptr<IType> Get() { return IType::CreateBasicType(crInt, sizeof(T)); }
+};
 
-// Support for a number of fundamental types
-#define CREG_SUPPORT_BASIC_TYPE(T, typeID)			\
-	template<> struct DeduceType<T> {		\
-		boost::shared_ptr<IType> Get() { return IType::CreateBasicType(typeID); }	\
-	};																\
-	template<> struct IsBasicType<T> {							\
-		enum {Yes=1, No=0 };										\
-	};
+// Floating-Point (of any size)
+template<typename T>
+struct DeduceType<T, typename std::enable_if<std::is_floating_point<T>::value>::type> {
+	static boost::shared_ptr<IType> Get() { return IType::CreateBasicType(crFloat, sizeof(T)); }
+};
 
-CREG_SUPPORT_BASIC_TYPE(int, crInt)
-CREG_SUPPORT_BASIC_TYPE(unsigned int, crUInt)
-CREG_SUPPORT_BASIC_TYPE(short, crShort)
-CREG_SUPPORT_BASIC_TYPE(unsigned short, crUShort)
-CREG_SUPPORT_BASIC_TYPE(char, crChar)
-CREG_SUPPORT_BASIC_TYPE(unsigned char, crUChar)
-CREG_SUPPORT_BASIC_TYPE(boost::int64_t, crInt64)
-CREG_SUPPORT_BASIC_TYPE(boost::uint64_t, crUInt64)
-CREG_SUPPORT_BASIC_TYPE(float, crFloat)
-CREG_SUPPORT_BASIC_TYPE(double, crDouble)
-CREG_SUPPORT_BASIC_TYPE(bool, crBool)
-
+// Synced Integer + Float
 #if defined(SYNCDEBUG) || defined(SYNCCHECK)
-CREG_SUPPORT_BASIC_TYPE(SyncedSint,   crSyncedSint)
-CREG_SUPPORT_BASIC_TYPE(SyncedUint,   crSyncedUint)
-CREG_SUPPORT_BASIC_TYPE(SyncedSshort, crSyncedSshort)
-CREG_SUPPORT_BASIC_TYPE(SyncedUshort, crSyncedUshort)
-CREG_SUPPORT_BASIC_TYPE(SyncedSchar,  crSyncedSchar)
-CREG_SUPPORT_BASIC_TYPE(SyncedUchar,  crSyncedUchar)
-CREG_SUPPORT_BASIC_TYPE(SyncedFloat,  crSyncedFloat)
-CREG_SUPPORT_BASIC_TYPE(SyncedDouble, crSyncedDouble)
-CREG_SUPPORT_BASIC_TYPE(SyncedBool,   crSyncedBool)
+template<typename T>
+struct DeduceType<SyncedPrimitive<T>, typename std::enable_if<std::is_integral<T>::value>::type> {
+	static boost::shared_ptr<IType> Get() { return IType::CreateBasicType(crInt /*crSyncedInt*/, sizeof(T)); }
+};
+
+template<typename T>
+struct DeduceType<SyncedPrimitive<T>, typename std::enable_if<std::is_floating_point<T>::value>::type> {
+	static boost::shared_ptr<IType> Get() { return IType::CreateBasicType(crFloat /*crSyncedFloat*/, sizeof(T)); }
+};
 #endif
 
 // helper
@@ -79,27 +73,27 @@ public:
 			s->SerializeObjectPtr(ptr, *ptr ? ((T*)*ptr)->GetClass() : 0);
 		else s->SerializeObjectPtr(ptr, objectClass);
 	}
-	std::string GetName() { return objectClass->name + "*"; }
-	size_t GetSize() { return sizeof(T*); }
+	std::string GetName() const { return objectClass->name + "*"; }
+	size_t GetSize() const { return sizeof(T*); }
 	Class* objectClass;
 };
 
 // Pointer type
 template<typename T>
-struct DeduceType<T*> {
-	boost::shared_ptr<IType> Get() { return boost::shared_ptr<IType>(new ObjectPointerType<T>()); }
+struct DeduceType<T, typename std::enable_if<std::is_pointer<T>::value>::type> {
+	static boost::shared_ptr<IType> Get() { return boost::shared_ptr<IType>(new ObjectPointerType<typename std::remove_pointer<T>::type>()); }
 };
 
 // Reference type, handled as a pointer
 template<typename T>
-struct DeduceType<T&> {
-	boost::shared_ptr<IType> Get() { return boost::shared_ptr<IType>(new ObjectPointerType<T>()); }
+struct DeduceType<T, typename std::enable_if<std::is_reference<T>::value>::type> {
+	static boost::shared_ptr<IType> Get() { return boost::shared_ptr<IType>(new ObjectPointerType<typename std::remove_reference<T>::type>()); }
 };
 
 // Static array type
 template<typename T, size_t ArraySize>
 struct DeduceType<T[ArraySize]> {
-	boost::shared_ptr<IType> Get() {
+	static boost::shared_ptr<IType> Get() {
 		DeduceType<T> subtype;
 		return boost::shared_ptr<IType>(new StaticArrayType<T, ArraySize>(subtype.Get()));
 	}
@@ -107,8 +101,8 @@ struct DeduceType<T[ArraySize]> {
 
 // Vector type (vector<T>)
 template<typename T>
-struct DeduceType<std::vector<T> > {
-	boost::shared_ptr<IType> Get() {
+struct DeduceType<std::vector<T>> {
+	static boost::shared_ptr<IType> Get() {
 		DeduceType<T> elemtype;
 		return boost::shared_ptr<IType>(new DynamicArrayType<std::vector<T> >(elemtype.Get()));
 	}
@@ -116,17 +110,23 @@ struct DeduceType<std::vector<T> > {
 
 // std::vector<bool> is not a std::vector but a BitArray instead!
 template<>
-struct DeduceType<std::vector<bool> > {
-	boost::shared_ptr<IType> Get() {
+struct DeduceType<std::vector<bool>> {
+	static boost::shared_ptr<IType> Get() {
 		DeduceType<bool> elemtype;
 		return boost::shared_ptr<IType>(new BitArrayType<std::vector<bool> >(elemtype.Get()));
 	}
 };
 
 // String type
-template<> struct DeduceType<std::string > {
-	boost::shared_ptr<IType> Get() { return IType::CreateStringType(); }
+template<>
+struct DeduceType<std::string> {
+	static boost::shared_ptr<IType> Get() { return IType::CreateStringType(); }
 };
+
+
+
+
+
 
 // GetType allows to use parameter type deduction to get the template argument for DeduceType
 template<typename T>
