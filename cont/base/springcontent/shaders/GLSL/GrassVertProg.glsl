@@ -67,6 +67,26 @@ void ApplyDetailBending(inout vec3 vPos, vec3 vNormal, float fDetailPhase, float
 	vPos.xyz += vNormal.xyz * vWaves.xxy * fDetailAmp;
 }
 
+mat3 m3( mat4 m )
+{
+	mat3 result;
+
+	result[0][0] = m[0][0];
+	result[0][1] = m[0][1];
+	result[0][2] = m[0][2];
+
+
+	result[1][0] = m[1][0];
+	result[1][1] = m[1][1];
+	result[1][2] = m[1][2];
+
+	result[2][0] = m[2][0];
+	result[2][1] = m[2][1];
+	result[2][2] = m[2][2];
+
+	return result;
+}
+
 
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
@@ -82,7 +102,7 @@ void main() {
 	vec4 worldPos = gl_ModelViewMatrix * gl_Vertex;
 
 	// anim
-	vec3 objPos = mat3(gl_ModelViewMatrix) * gl_Vertex.xyz;
+	vec3 objPos = m3(gl_ModelViewMatrix) * gl_Vertex.xyz;
 	worldPos.xyz += ApplyMainBending(objPos, windSpeed.xz, gl_MultiTexCoord0.s * 0.004 + 0.007) - objPos;
 	ApplyDetailBending(worldPos.xyz, normal,
 			gl_MultiTexCoord0.s,
