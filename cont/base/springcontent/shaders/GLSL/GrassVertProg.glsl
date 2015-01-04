@@ -67,6 +67,8 @@ void ApplyDetailBending(inout vec3 vPos, vec3 vNormal, float fDetailPhase, float
 	vPos.xyz += vNormal.xyz * vWaves.xxy * fDetailAmp;
 }
 
+// workarround for "cannot construct `mat3' from a matrix in GLSL 1.10 (GLSL 1.20 or GLSL ES 1.00 required)"
+// converts a matrix to mat3
 mat3 m3( mat4 m )
 {
 	mat3 result;
