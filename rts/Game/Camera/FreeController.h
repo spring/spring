@@ -37,10 +37,9 @@ private:
 	float3 prevVel;  // previous velocity
 	float3 prevAvel; // previous angular velocity
 
-	bool tracking;
+	float3 rot;
 	float3 trackPos;
 	float trackRadius;
-	bool gndLock;
 
 	float tiltSpeed; // time it takes to max
 	float velTime;   // time it takes to max
@@ -53,6 +52,8 @@ private:
 	float autoTilt;  // <=0: disabled
 	float slide;     // <=0; disabled
 
+	bool tracking;
+	bool gndLock;
 	bool invertAlt;
 	bool goForward;
 };

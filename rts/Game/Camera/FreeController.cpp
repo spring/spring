@@ -38,21 +38,16 @@ CONFIG(float, CamFreeAngVelTime).defaultValue(1.0f);
 //
 
 CFreeController::CFreeController()
-: vel(ZeroVector),
-  avel(ZeroVector),
-  prevVel(ZeroVector),
-  prevAvel(ZeroVector),
+: trackRadius(0.0f),
   tracking(false),
-  trackPos(ZeroVector),
-  trackRadius(0.0f),
   gndLock(false)
 {
 	dir = float3(0.0f, -2.0f, -1.0f).ANormalize();
-
+	pos -= (dir * 1000.0f);
 	if (camera) {
 		camera->SetDir(dir);
+		rot = camera->GetRot();
 	}
-	pos -= (dir * 1000.0f);
 
 	enabled     = configHandler->GetBool("CamFreeEnabled");
 	invertAlt   = configHandler->GetBool("CamFreeInvertAlt");
@@ -124,11 +119,11 @@ void CFreeController::Update()
 	if (gndLock && (autoTilt > 0.0f)) {
 		const float gndHeight = CGround::GetHeightReal(pos.x, pos.z, false);
 		if (pos.y < (gndHeight + gndOffset + 1.0f)) {
-			const float3 hDir(math::sin(camera->GetRot().y), 0.f, math::cos(camera->GetRot().y));
+			const float3 hDir(math::sin(rot.y), 0.f, math::cos(rot.y));
 			const float3 gndNormal = CGround::GetSmoothNormal(pos.x, pos.z, false);
 			const float dot = gndNormal.dot(hDir);
 			const float gndRotX = (float)math::acos(dot) - (PI * 0.5f);
-			const float rotXdiff = (gndRotX - camera->GetRot().x);
+			const float rotXdiff = (gndRotX - rot.x);
 			autoTiltVel = (autoTilt * rotXdiff);
 		}
 	}
@@ -173,8 +168,9 @@ void CFreeController::Update()
 	// set the new position/rotation
 	if (!tracking) {
 		pos += (vel * ft);
-		camera->SetRot( camera->GetRot()   - (avel        * ft));
-		camera->SetRotX(camera->GetRot().x - (autoTiltVel * ft)); // note that this is not smoothed
+		rot   -= (avel        * ft);
+		rot.x -= (autoTiltVel * ft); // note that this is not smoothed
+		camera->SetRot(rot);
 	} else {
 		// speed along the tracking direction varies with distance
 		const float3 diff = (pos - trackPos);
@@ -243,8 +239,9 @@ void CFreeController::Update()
 	}
 
 	// angular clamps
-	if (camera->GetRot().x >= fastmath::PI || camera->GetRot().x<=0) {
-		camera->SetRotX(Clamp(camera->GetRot().x, 0.001f, fastmath::PI - 0.001f));
+	if (rot.x >= fastmath::PI || rot.x<=0) {
+		rot.x = Clamp(rot.x, 0.001f, fastmath::PI - 0.001f);
+		camera->SetRotX(rot.x);
 		avel.x = 0.0f;
 	}
 
@@ -405,9 +402,9 @@ void CFreeController::GetState(StateMap& sm) const
 	sm["invertAlt"]   = invertAlt ? +1.0f : -1.0f;
 	sm["gndLock"]     = gndLock   ? +1.0f : -1.0f;
 
-	sm["rx"] = fastmath::HALFPI - camera->GetRot().x;
-	sm["ry"] = fastmath::PI - camera->GetRot().y;
-	sm["rz"] = camera->GetRot().z;
+	sm["rx"] = fastmath::HALFPI - rot.x;
+	sm["ry"] = fastmath::PI - rot.y;
+	sm["rz"] = rot.z;
 
 	sm["vx"] = prevVel.x;
 	sm["vy"] = prevVel.y;
@@ -437,7 +434,6 @@ bool CFreeController::SetState(const StateMap& sm)
 	SetStateBool (sm, "invertAlt",   invertAlt);
 	SetStateBool (sm, "gndLock",     gndLock);
 
-	float3 rot;
 	SetStateFloat(sm, "rx", rot.x);
 	SetStateFloat(sm, "ry", rot.y);
 	SetStateFloat(sm, "rz", rot.z);
