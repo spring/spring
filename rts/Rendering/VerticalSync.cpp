@@ -9,7 +9,7 @@
 #if defined HEADLESS
 #elif defined WIN32
 	#include <GL/wglew.h>
-#else
+#elif !defined(__APPLE__)
 	#include <GL/glxew.h>
 #endif
 

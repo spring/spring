@@ -8,8 +8,8 @@
 #include "System/Misc/SpringTime.h"
 
 
-class MoveDef;
-class UnitDef;
+struct MoveDef;
+struct UnitDef;
 
 
 class CPathTexture : public CPboInfoTexture
@@ -32,7 +32,7 @@ private:
 
 private:
 	bool isCleared;
-	int updateFrame;
+//	int updateFrame;
 	int updateProcess;
 	unsigned int lastSelectedPathType;
 	int forcedPathType;

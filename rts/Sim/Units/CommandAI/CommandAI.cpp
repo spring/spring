@@ -45,7 +45,7 @@ static const float COMMAND_CANCEL_DIST = 17.0f;
 CR_BIND(CCommandQueue, )
 CR_REG_METADATA(CCommandQueue, (
 	CR_MEMBER(queue),
-	CR_ENUM_MEMBER(queueType),
+	CR_MEMBER(queueType),
 	CR_MEMBER(tagCounter)
 ))
 

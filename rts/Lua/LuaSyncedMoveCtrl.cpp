@@ -603,27 +603,27 @@ int LuaSyncedMoveCtrl::SetGroundMoveTypeData(lua_State* L)
 int LuaSyncedMoveCtrl::SetMoveDef(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	MoveDef* moveDef = NULL;
+	MoveDef* moveDef = nullptr;
 
-	if (unit == NULL) {
+	if (unit == nullptr) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
-	if (unit->moveDef == NULL) {
+	if (unit->moveDef == nullptr) {
 		// aircraft or structure, not supported
 		lua_pushboolean(L, false);
 		return 1;
 	}
 
 	// MoveType instance must already have been assigned
-	assert(unit->moveType != NULL);
+	assert(unit->moveType != nullptr);
 
 	if (lua_isnumber(L, 2))
 		moveDef = moveDefHandler->GetMoveDefByPathType(Clamp(luaL_checkint(L, 2), 0, int(moveDefHandler->GetNumMoveDefs()) - 1));
-	if (lua_isstring(L, 2))
+	if (lua_isstring(L, 2) && (moveDef == nullptr))
 		moveDef = moveDefHandler->GetMoveDefByName(lua_tostring(L, 2));
 
-	if (moveDef == NULL) {
+	if (moveDef == nullptr) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
@@ -631,6 +631,7 @@ int LuaSyncedMoveCtrl::SetMoveDef(lua_State* L)
 	if (moveDef->udRefCount == 0) {
 		// pathfinders contain optimizations that
 		// make unreferenced movedef's non-usable
+		LOG_L(L_ERROR, "SetMoveDef: Tried to use an unreferenced (:=disabled) MoveDef!");
 		lua_pushboolean(L, false);
 		return 1;
 	}

@@ -45,7 +45,7 @@ void CRotOverheadController::MouseMove(float3 move)
 {
 	camera->SetRotY(camera->GetRot().y + mouseScale * move.x);
 	camera->SetRotX(camera->GetRot().x + mouseScale * move.y * move.z);
-	camera->SetRotX(Clamp(camera->GetRot().x, PI*0.4999f, PI));
+	camera->SetRotX(Clamp(camera->GetRot().x, PI*0.4999f, PI*0.9999f));
 	dir = camera->GetDir();
 	Update();
 }

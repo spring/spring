@@ -189,9 +189,9 @@ private:
 	std::map<int, SkirmishAIData> team_localAIsInCreation;
 
 	/// Temporarly stores reason for killing a Skirmish AI
-	std::map<size_t, int> id_dieReason;
+	std::map<unsigned int, int> id_dieReason;
 
-	typedef std::map<size_t, SkirmishAIKey> id_libKey_t;
+	typedef std::map<unsigned int, SkirmishAIKey> id_libKey_t;
 	/// Id -> AI instance library key
 	id_libKey_t id_libKey;
 

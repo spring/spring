@@ -3,7 +3,6 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <signal.h>
-#include <ucontext.h>
 #include <fstream>
 #include <sys/syscall.h>
 #include <boost/thread/tss.hpp>
