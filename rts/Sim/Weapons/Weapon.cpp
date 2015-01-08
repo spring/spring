@@ -398,8 +398,8 @@ bool CWeapon::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRe
 	if (!weaponDef->fireSubmersed && weaponMuzzlePos.y <= 0.0f)
 		return false;
 
-	// sanity check to force new aim, default 90 degrees
-	if (maxForwardAngleDif > -1.0f) {
+	// sanity check to force new aim
+	if (maxAngleAtCanFireCheck > -1.0f) {
 		if (!ignoreRequestedDir && wantedDir.dot(lastRequestedDir) <= maxAngleAtCanFireCheck)
 			return false;
 	}
