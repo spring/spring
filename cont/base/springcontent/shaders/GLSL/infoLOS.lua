@@ -11,6 +11,9 @@ return {
 		}
 	]],
 	fragment = [[#version 130
+	#ifdef HIGH_QUALITY
+	#extension GL_ARB_texture_query_lod : enable
+	#endif
 		uniform float time;
 
 		uniform vec4 alwaysColor;
@@ -24,7 +27,6 @@ return {
 		varying vec2 texCoord;
 
 	#ifdef HIGH_QUALITY
-	#extension GL_ARB_texture_query_lod : enable
 
 		//! source: http://www.ozone3d.net/blogs/lab/20110427/glsl-random-generator/
 		float rand(const in vec2 n)
