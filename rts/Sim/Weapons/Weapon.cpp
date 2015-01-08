@@ -77,6 +77,7 @@ CR_REG_METADATA(CWeapon, (
 
 	CR_MEMBER(slavedTo),
 	CR_MEMBER(maxForwardAngleDif),
+	CR_MEMBER(maxAngleAtCanFireCheck),
 	CR_MEMBER(maxMainDirAngleDif),
 	CR_MEMBER(hasCloseTarget),
 	CR_MEMBER(targetBorder),
@@ -157,6 +158,7 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 
 	slavedTo(NULL),
 	maxForwardAngleDif(0.0f),
+	maxAngleAtCanFireCheck(0.0f),
 	maxMainDirAngleDif(-1.0f),
 	targetBorder(0.f),
 	cylinderTargeting(0.f),
@@ -396,9 +398,11 @@ bool CWeapon::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRe
 	if (!weaponDef->fireSubmersed && weaponMuzzlePos.y <= 0.0f)
 		return false;
 
-	// ~20 degree sanity check to force new aim
-	if (!ignoreRequestedDir && wantedDir.dot(lastRequestedDir) <= 0.94f)
-		return false;
+	// sanity check to force new aim
+	if (maxAngleAtCanFireCheck > -1.0f) {
+		if (!ignoreRequestedDir && wantedDir.dot(lastRequestedDir) <= maxAngleAtCanFireCheck)
+			return false;
+	}
 
 	if ((owner->unitDef->maxFuel != 0) && (owner->currentFuel <= 0.0f) && (fuelUsage != 0.0f))
 		return false;

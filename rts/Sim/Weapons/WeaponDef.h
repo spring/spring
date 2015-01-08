@@ -83,6 +83,7 @@ public:
 	int numBounce;
 
 	float maxAngle;
+	float maxFireAngle;
 
 	float uptime;
 	int flighttime;
