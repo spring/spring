@@ -129,7 +129,7 @@ vec3 GetInfoTex(float outside) {
 //////////////////////////////////////////////////
 // Helpers
 
-void GetWaterHeight(out float waterdepth, out float invwaterdepth, out float outside, Input vec2 coastdist)
+void GetWaterHeight(out float waterdepth, out float invwaterdepth, out float outside, inout vec2 coastdist)
 {
 	outside = 0.0;
 
