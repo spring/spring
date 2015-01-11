@@ -728,8 +728,8 @@ namespace CrashHandler
 	}
 
 	/**
-	 * This is the "classic" stack trace call that has been used until at least 96.0.
-	 * This should be phased out -- the function call admits many combinations of optional parameters.
+	 * FIXME: Needs cleaning.
+	 * Doesn't use same parameters as "classic" stack trace call that has been used until at least 96.0.
 	 */
 	void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadName, const int logLevel)
 	{
@@ -740,7 +740,9 @@ namespace CrashHandler
 			LOG_I(logLevel, "  No Stacktraces for non-MainThread.");
 			return;
 		}
+		PrepareStacktrace();
 		Stacktrace(NULL, &thread, threadName.c_str(), logLevel);
+		CleanupStacktrace();
 	}
 
 	/**
