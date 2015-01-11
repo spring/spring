@@ -272,7 +272,7 @@ bool CSMFGroundTextures::RecompressTiles(bool canRecompress)
 
 inline bool CSMFGroundTextures::TexSquareInView(int btx, int bty) const
 {
-	static const float* hm = readMap->GetCornerHeightMapUnsynced();
+	const float* hm = readMap->GetCornerHeightMapUnsynced();
 
 	static const float bigTexSquareRadius = fastmath::apxsqrt(
 		smfMap->bigTexSize * smfMap->bigTexSize +

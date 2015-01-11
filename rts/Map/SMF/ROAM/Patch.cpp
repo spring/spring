@@ -149,7 +149,7 @@ Patch::Patch()
 void Patch::Init(CSMFGroundDrawer* _drawer, int worldX, int worldZ)
 {
 	smfGroundDrawer = _drawer;
-	heightData = readMap->GetCornerHeightMapUnsynced();;
+	heightData = readMap->GetCornerHeightMapUnsynced();
 	m_WorldX = worldX;
 	m_WorldY = worldZ;
 
@@ -210,7 +210,8 @@ void Patch::UpdateHeightMap(const SRectangle& rect)
 		}
 	}
 
-	static const float* hMap = readMap->GetCornerHeightMapUnsynced();
+	const float* hMap = readMap->GetCornerHeightMapUnsynced();
+
 	for (int z = rect.z1; z <= rect.z2; z++) {
 		for (int x = rect.x1; x <= rect.x2; x++) {
 			const float& h = hMap[(z + m_WorldY) * mapDims.mapxp1 + (x + m_WorldX)];

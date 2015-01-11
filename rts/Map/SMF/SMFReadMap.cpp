@@ -541,12 +541,12 @@ void CSMFReadMap::UpdateShadingTexture(const SRectangle& update)
 
 const float CSMFReadMap::GetCenterHeightUnsynced(const int x, const int y) const
 {
-	static const float* hm = GetCornerHeightMapUnsynced();
-
-	float h = hm[(y    ) * mapDims.mapxp1 + (x    )] +
-	          hm[(y    ) * mapDims.mapxp1 + (x + 1)] +
-	          hm[(y + 1) * mapDims.mapxp1 + (x    )] +
-	          hm[(y + 1) * mapDims.mapxp1 + (x + 1)];
+	const float* hm = GetCornerHeightMapUnsynced();
+	const float h =
+		hm[(y    ) * mapDims.mapxp1 + (x    )] +
+		hm[(y    ) * mapDims.mapxp1 + (x + 1)] +
+		hm[(y + 1) * mapDims.mapxp1 + (x    )] +
+		hm[(y + 1) * mapDims.mapxp1 + (x + 1)];
 
 	return h * 0.25f;
 }
