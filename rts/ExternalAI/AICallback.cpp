@@ -970,12 +970,12 @@ int CAICallback::GetNeutralUnits(int* unitIds, const float3& pos, float radius, 
 
 int CAICallback::GetMapWidth()
 {
-	return gs->mapx;
+	return mapDims.mapx;
 }
 
 int CAICallback::GetMapHeight()
 {
-	return gs->mapy;
+	return mapDims.mapy;
 }
 
 

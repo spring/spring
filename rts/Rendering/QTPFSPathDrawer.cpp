@@ -214,8 +214,8 @@ void QTPFSPathDrawer::DrawSearchExecution(unsigned int pathType, const QTPFS::Pa
 void QTPFSPathDrawer::DrawSearchIteration(unsigned int pathType, const std::list<unsigned int>& nodeIndices, CVertexArray* va) const {
 	std::list<unsigned int>::const_iterator it = nodeIndices.begin();
 
-	unsigned int hmx = (*it) % gs->mapx;
-	unsigned int hmz = (*it) / gs->mapx;
+	unsigned int hmx = (*it) % mapDims.mapx;
+	unsigned int hmz = (*it) / mapDims.mapx;
 
 	const QTPFS::NodeLayer& nodeLayer = pm->nodeLayers[pathType];
 	const QTPFS::QTNode* poppedNode = static_cast<const QTPFS::QTNode*>(nodeLayer.GetNode(hmx, hmz));
@@ -224,8 +224,8 @@ void QTPFSPathDrawer::DrawSearchIteration(unsigned int pathType, const std::list
 	DrawNode(poppedNode, NULL, va, true, false, false);
 
 	for (++it; it != nodeIndices.end(); ++it) {
-		hmx = (*it) % gs->mapx;
-		hmz = (*it) / gs->mapx;
+		hmx = (*it) % mapDims.mapx;
+		hmz = (*it) / mapDims.mapx;
 		pushedNode = static_cast<const QTPFS::QTNode*>(nodeLayer.GetNode(hmx, hmz));
 
 		DrawNode(pushedNode, NULL, va, true, false, false);
@@ -348,10 +348,10 @@ void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int
 				const bool los = (gs->cheatEnabled || gu->spectating);
 
 				for (int ty = starty; ty < endy; ++ty) {
-					for (int tx = 0; tx < gs->hmapx; ++tx) {
+					for (int tx = 0; tx < mapDims.hmapx; ++tx) {
 						const int sqx = (tx << 1);
 						const int sqz = (ty << 1);
-						const int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
+						const int texIdx = ((ty * (mapDims.pwr2mapx >> 1)) + tx) * 4 - offset;
 						const bool losSqr = losHandler->InLos(sqx, sqz, gu->myAllyTeam);
 
 						#if 1
@@ -383,8 +383,8 @@ void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int
 			} else {
 				// we have nothing to show -> draw a dark red overlay
 				for (int ty = starty; ty < endy; ++ty) {
-					for (int tx = 0; tx < gs->hmapx; ++tx) {
-						const int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
+					for (int tx = 0; tx < mapDims.hmapx; ++tx) {
+						const int texIdx = ((ty * (mapDims.pwr2mapx >> 1)) + tx) * 4 - offset;
 
 						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_R] = 100;
 						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_G] = 0;

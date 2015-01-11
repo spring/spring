@@ -9,6 +9,7 @@
 #include "Game/InMapDraw.h"
 #include "Game/Players/Player.h"
 #include "Map/Ground.h"
+#include "Map/ReadMap.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Net/Protocol/NetProtocol.h"
@@ -96,11 +97,11 @@ void CStartPosSelecter::DrawStartBox() const
 	const std::vector<AllyTeam>& allyStartData = CGameSetup::GetAllyStartingData();
 	const AllyTeam& myStartData = allyStartData[gu->myAllyTeam];
 
-	const float by = myStartData.startRectTop * gs->mapy * SQUARE_SIZE;
-	const float bx = myStartData.startRectLeft * gs->mapx * SQUARE_SIZE;
+	const float by = myStartData.startRectTop * mapDims.mapy * SQUARE_SIZE;
+	const float bx = myStartData.startRectLeft * mapDims.mapx * SQUARE_SIZE;
 
-	const float dy = (myStartData.startRectBottom - myStartData.startRectTop) * gs->mapy * SQUARE_SIZE / 10;
-	const float dx = (myStartData.startRectRight - myStartData.startRectLeft) * gs->mapx * SQUARE_SIZE / 10;
+	const float dy = (myStartData.startRectBottom - myStartData.startRectTop) * mapDims.mapy * SQUARE_SIZE / 10;
+	const float dx = (myStartData.startRectRight - myStartData.startRectLeft) * mapDims.mapx * SQUARE_SIZE / 10;
 
 	// draw starting-rectangle restrictions
 	glBegin(GL_QUADS);

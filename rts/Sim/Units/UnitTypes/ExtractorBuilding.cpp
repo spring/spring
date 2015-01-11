@@ -107,9 +107,9 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth)
 	// calculate this extractor's area of control and metalExtract amount
 	metalExtract = 0;
 	int xBegin = std::max(0,                (int) ((pos.x - extractionRange) / METAL_MAP_SQUARE_SIZE));
-	int xEnd   = std::min(gs->mapx / 2 - 1, (int) ((pos.x + extractionRange) / METAL_MAP_SQUARE_SIZE));
+	int xEnd   = std::min(mapDims.mapx / 2 - 1, (int) ((pos.x + extractionRange) / METAL_MAP_SQUARE_SIZE));
 	int zBegin = std::max(0,                (int) ((pos.z - extractionRange) / METAL_MAP_SQUARE_SIZE));
-	int zEnd   = std::min(gs->mapy / 2 - 1, (int) ((pos.z + extractionRange) / METAL_MAP_SQUARE_SIZE));
+	int zEnd   = std::min(mapDims.mapy / 2 - 1, (int) ((pos.z + extractionRange) / METAL_MAP_SQUARE_SIZE));
 
 	metalAreaOfControl.reserve((xEnd - xBegin + 1) * (zEnd - zBegin + 1));
 

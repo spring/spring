@@ -44,10 +44,10 @@ float CMoveMath::yLevel(const MoveDef& moveDef, const float3& pos)
 /* calculate the local speed-modifier for this MoveDef */
 float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare)
 {
-	if (xSquare < 0 || zSquare < 0 || xSquare >= gs->mapx || zSquare >= gs->mapy)
+	if (xSquare < 0 || zSquare < 0 || xSquare >= mapDims.mapx || zSquare >= mapDims.mapy)
 		return 0.0f;
 
-	const int square = (xSquare >> 1) + ((zSquare >> 1) * gs->hmapx);
+	const int square = (xSquare >> 1) + ((zSquare >> 1) * mapDims.hmapx);
 	const int squareTerrType = readMap->GetTypeMapSynced()[square];
 
 	const float height  = readMap->GetMIPHeightMapSynced(1)[square];
@@ -68,10 +68,10 @@ float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare
 
 float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare, const float3& moveDir)
 {
-	if (xSquare < 0 || zSquare < 0 || xSquare >= gs->mapx || zSquare >= gs->mapy)
+	if (xSquare < 0 || zSquare < 0 || xSquare >= mapDims.mapx || zSquare >= mapDims.mapy)
 		return 0.0f;
 
-	const int square = (xSquare >> 1) + ((zSquare >> 1) * gs->hmapx);
+	const int square = (xSquare >> 1) + ((zSquare >> 1) * mapDims.hmapx);
 	const int squareTerrType = readMap->GetTypeMapSynced()[square];
 
 	const float height = readMap->GetMIPHeightMapSynced(1)[square];
@@ -79,7 +79,7 @@ float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare
 
 	const CMapInfo::TerrainType& tt = mapInfo->terrainTypes[squareTerrType];
 
-	float3 sqrNormal = readMap->GetCenterNormalsSynced()[xSquare + zSquare * gs->mapx];
+	float3 sqrNormal = readMap->GetCenterNormalsSynced()[xSquare + zSquare * mapDims.mapx];
 
 	#if 1
 	// with a flat normal, only consider the normalized xz-direction
@@ -206,12 +206,12 @@ bool CMoveMath::IsNonBlocking(const CSolidObject* collidee, const CSolidObject* 
 
 CMoveMath::BlockType CMoveMath::SquareIsBlocked(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider)
 {
-	if ((unsigned)xSquare >= gs->mapx || (unsigned)zSquare >= gs->mapy)
+	if ((unsigned)xSquare >= mapDims.mapx || (unsigned)zSquare >= mapDims.mapy)
 		return BLOCK_IMPASSABLE;
 
 	BlockType r = BLOCK_NONE;
 
-	const BlockingMapCell& c = groundBlockingObjectMap->GetCell(zSquare * gs->mapx + xSquare);
+	const BlockingMapCell& c = groundBlockingObjectMap->GetCell(zSquare * mapDims.mapx + xSquare);
 
 	for (BlockingMapCellIt it = c.begin(); it != c.end(); ++it) {
 		const CSolidObject* collidee = it->second;

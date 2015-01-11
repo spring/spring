@@ -71,8 +71,8 @@ SColor IPathDrawer::GetSpeedModColor(const float sm) {
 float IPathDrawer::GetSpeedModNoObstacles(const MoveDef* md, int sqx, int sqz) {
 	float m = 0.0f;
 
-	const int hmIdx = sqz * gs->mapxp1 + sqx;
-	const int cnIdx = sqz * gs->mapx   + sqx;
+	const int hmIdx = sqz * mapDims.mapxp1 + sqx;
+	const int cnIdx = sqz * mapDims.mapx   + sqx;
 
 	const float height = hm[hmIdx];
 	const float slope = 1.0f - cn[cnIdx].y;

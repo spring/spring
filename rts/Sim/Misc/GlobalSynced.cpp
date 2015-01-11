@@ -26,27 +26,19 @@ CR_BIND(CGlobalSynced, )
 
 CR_REG_METADATA(CGlobalSynced, (
 	CR_MEMBER(frameNum),
+	CR_MEMBER(tempNum),
+
 	CR_MEMBER(speedFactor),
 	CR_MEMBER(wantedSpeedFactor),
+
 	CR_MEMBER(paused),
-	CR_MEMBER(mapx),
-	CR_MEMBER(mapxm1),
-	CR_MEMBER(mapxp1),
-	CR_MEMBER(mapy),
-	CR_MEMBER(mapym1),
-	CR_MEMBER(mapyp1),
-	CR_MEMBER(mapSquares),
-	CR_MEMBER(hmapx),
-	CR_MEMBER(hmapy),
-	CR_MEMBER(pwr2mapx),
-	CR_MEMBER(pwr2mapy),
-	CR_MEMBER(tempNum),
 	CR_MEMBER(godMode),
 	CR_MEMBER(globalLOS),
 	CR_MEMBER(cheatEnabled),
 	CR_MEMBER(noHelperAIs),
 	CR_MEMBER(editDefsEnabled),
 	CR_MEMBER(useLuaGaia),
+
 	CR_MEMBER(randSeed),
 	CR_MEMBER(initRandSeed)
 ))
@@ -57,20 +49,12 @@ CR_REG_METADATA(CGlobalSynced, (
  */
 CGlobalSynced::CGlobalSynced()
 {
-	mapx  = 512;
-	mapy  = 512;
-	mapxm1 = mapx - 1;
-	mapym1 = mapy - 1;
-	mapxp1 = mapx + 1;
-	mapyp1 = mapy + 1;
-	mapSquares = mapx * mapy;
-	hmapx = mapx>>1;
-	hmapy = mapy>>1;
-	pwr2mapx = mapx; //next_power_of_2(mapx);
-	pwr2mapy = mapy; //next_power_of_2(mapy);
 	randSeed = 18655;
 	initRandSeed = randSeed;
+
 	frameNum = 0;
+	tempNum = 2;
+
 	speedFactor = 1;
 	wantedSpeedFactor = 1;
 	paused = false;
@@ -78,7 +62,7 @@ CGlobalSynced::CGlobalSynced()
 	cheatEnabled = false;
 	noHelperAIs = false;
 	editDefsEnabled = false;
-	tempNum = 2;
+
 	useLuaGaia = true;
 
 	memset(globalLOS, 0, sizeof(globalLOS));

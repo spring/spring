@@ -38,7 +38,7 @@
 #include "System/Util.h"
 
 
-CWorldDrawer::CWorldDrawer()
+CWorldDrawer::CWorldDrawer(): numUpdates(0)
 {
 	// rendering components
 	loadscreen->SetLoadMessage("Creating ShadowHandler & DecalHandler");
@@ -96,7 +96,8 @@ CWorldDrawer::~CWorldDrawer()
 
 void CWorldDrawer::Update()
 {
-	readMap->UpdateDraw();
+	readMap->UpdateDraw((numUpdates++) == 0);
+
 	if (globalRendering->drawGround) {
 		SCOPED_TIMER("GroundDrawer::Update");
 		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();

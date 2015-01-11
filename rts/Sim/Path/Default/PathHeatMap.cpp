@@ -24,10 +24,10 @@ void PathHeatMap::FreeInstance(PathHeatMap* phm) {
 
 
 PathHeatMap::PathHeatMap(unsigned int scalex, unsigned int scalez): enabled(true) {
-	xscale = std::max(1, std::min(gs->hmapx, int(scalex)));
-	zscale = std::max(1, std::min(gs->hmapy, int(scalez)));
-	xsize  = gs->hmapx / xscale;
-	zsize  = gs->hmapy / zscale;
+	xscale = std::max(1, std::min(mapDims.hmapx, int(scalex)));
+	zscale = std::max(1, std::min(mapDims.hmapy, int(scalez)));
+	xsize  = mapDims.hmapx / xscale;
+	zsize  = mapDims.hmapy / zscale;
 
 	heatMap.resize(xsize * zsize, HeatCell());
 	heatMapOffset = 0;
@@ -40,7 +40,7 @@ PathHeatMap::~PathHeatMap() {
 unsigned int PathHeatMap::GetHeatMapIndex(unsigned int hmx, unsigned int hmz) const {
 	assert(!heatMap.empty());
 
-	//! x & y are given in gs->mapi coords (:= gs->hmapi * 2)
+	//! x & y are given in mapDims.mapi coords (:= mapDims.hmapi * 2)
 	hmx >>= xscale;
 	hmz >>= zscale;
 

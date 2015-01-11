@@ -101,8 +101,8 @@ CBasicTreeDrawer::CBasicTreeDrawer(): ITreeDrawer()
 	treetex = TexImage.CreateTexture(true);
 
 	lastListClean = 0;
-	treesX = gs->mapx / TREE_SQUARE_SIZE;
-	treesY = gs->mapy / TREE_SQUARE_SIZE;
+	treesX = mapDims.mapx / TREE_SQUARE_SIZE;
+	treesY = mapDims.mapy / TREE_SQUARE_SIZE;
 	nTrees = treesX * treesY;
 	trees = new TreeSquareStruct[nTrees];
 

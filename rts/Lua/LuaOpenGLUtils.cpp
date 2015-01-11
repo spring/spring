@@ -618,7 +618,7 @@ int2 LuaMatTexture::GetSize() const
 			return sqint2(cubeMapHandler->GetSpecularTextureSize());
 		} break;
 		case LUATEX_SHADING: if (gs != nullptr) {
-			return int2(gs->pwr2mapx, gs->pwr2mapy);
+			return int2(mapDims.pwr2mapx, mapDims.pwr2mapy);
 		} break;
 		case LUATEX_GRASS:
 			return int2(1024, 1024);

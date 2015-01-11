@@ -43,7 +43,7 @@ CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm): smfMap(rm)
 {
 	LoadTiles(smfMap->GetFile());
 	LoadSquareTextures(3);
-	ConvolveHeightMap(gs->mapx, 1);
+	ConvolveHeightMap(mapDims.mapx, 1);
 }
 
 CSMFGroundTextures::~CSMFGroundTextures()
@@ -62,7 +62,7 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 	CFileHandler* ifs = file.GetFileHandler();
 	const SMFHeader& header = file.GetHeader();
 
-	if ((gs->mapx != header.mapx) || (gs->mapy != header.mapy)) {
+	if ((mapDims.mapx != header.mapx) || (mapDims.mapy != header.mapy)) {
 		throw content_error("Error loading map: size from header doesn't match map size.");
 	}
 

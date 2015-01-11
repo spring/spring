@@ -588,7 +588,7 @@ void CGame::LoadMap(const std::string& mapName)
 		helper = new CGameHelper();
 
 		readMap = CReadMap::LoadMap(mapName);
-		groundBlockingObjectMap = new CGroundBlockingObjectMap(gs->mapSquares);
+		groundBlockingObjectMap = new CGroundBlockingObjectMap(mapDims.mapSquares);
 	}
 
 	LEAVE_SYNCED_CODE();
@@ -662,7 +662,7 @@ void CGame::PreLoadSimulation()
 
 	loadscreen->SetLoadMessage("Creating QuadField & CEGs");
 	moveDefHandler = new MoveDefHandler(defsParser);
-	quadField = new CQuadField((gs->mapx * SQUARE_SIZE) / CQuadField::BASE_QUAD_SIZE, (gs->mapy * SQUARE_SIZE) / CQuadField::BASE_QUAD_SIZE);
+	quadField = new CQuadField((mapDims.mapx * SQUARE_SIZE) / CQuadField::BASE_QUAD_SIZE, (mapDims.mapy * SQUARE_SIZE) / CQuadField::BASE_QUAD_SIZE);
 	damageArrayHandler = new CDamageArrayHandler(defsParser);
 	explGenHandler = new CExplosionGeneratorHandler();
 }

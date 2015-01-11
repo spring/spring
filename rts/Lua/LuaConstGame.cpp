@@ -76,10 +76,10 @@ bool LuaConstGame::PushEntries(lua_State* L)
 
 	if (readMap) {
 		//FIXME make this available in LoadScreen already!
-		LuaPushNamedNumber(L, "mapX",            gs->mapx / 64);
-		LuaPushNamedNumber(L, "mapY",            gs->mapy / 64);
-		LuaPushNamedNumber(L, "mapSizeX",        gs->mapx * SQUARE_SIZE);
-		LuaPushNamedNumber(L, "mapSizeZ",        gs->mapy * SQUARE_SIZE);
+		LuaPushNamedNumber(L, "mapX",            mapDims.mapx / 64);
+		LuaPushNamedNumber(L, "mapY",            mapDims.mapy / 64);
+		LuaPushNamedNumber(L, "mapSizeX",        mapDims.mapx * SQUARE_SIZE);
+		LuaPushNamedNumber(L, "mapSizeZ",        mapDims.mapy * SQUARE_SIZE);
 	}
 	LuaPushNamedNumber(L, "extractorRadius",     mapInfo->map.extractorRadius);
 	LuaPushNamedNumber(L, "tidal",               mapInfo->map.tidalStrength);

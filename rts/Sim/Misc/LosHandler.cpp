@@ -93,10 +93,10 @@ CLosHandler::CLosHandler() :
 	airDiv(SQUARE_SIZE * (1 << airMipLevel)),
 	invLosDiv(1.0f / losDiv),
 	invAirDiv(1.0f / airDiv),
-	airSizeX(std::max(1, gs->mapx >> airMipLevel)),
-	airSizeY(std::max(1, gs->mapy >> airMipLevel)),
-	losSizeX(std::max(1, gs->mapx >> losMipLevel)),
-	losSizeY(std::max(1, gs->mapy >> losMipLevel)),
+	airSizeX(std::max(1, mapDims.mapx >> airMipLevel)),
+	airSizeY(std::max(1, mapDims.mapy >> airMipLevel)),
+	losSizeX(std::max(1, mapDims.mapx >> losMipLevel)),
+	losSizeY(std::max(1, mapDims.mapy >> losMipLevel)),
 	requireSonarUnderWater(modInfo.requireSonarUnderWater),
 	losAlgo(int2(losSizeX, losSizeY), -1e6f, 15, readMap->GetMIPHeightMapSynced(losMipLevel))
 {

@@ -49,6 +49,15 @@ public:
 	int frameNum;
 
 	/**
+	* @brief temp num
+	*
+	* Used for getting temporary but unique numbers
+	* (increase after each use)
+	*/
+	int tempNum;
+
+
+	/**
 	* @brief speed factor
 	*
 	* Contains the actual gamespeed factor
@@ -68,76 +77,13 @@ public:
 	*/
 	float wantedSpeedFactor;
 
+
 	/**
 	* @brief paused
 	*
 	* Holds whether the game is paused
 	*/
 	bool paused;
-
-	/**
-	* @brief map x
-	*
-	* The map's number of squares in the x direction
-	* (note that the number of vertices is one more)
-	*/
-	int mapx;
-	int mapxm1; // mapx minus one
-	int mapxp1; // mapx plus one
-
-	/**
-	* @brief map y
-	*
-	* The map's number of squares in the y direction
-	*/
-	int mapy;
-	int mapym1; // mapy minus one
-	int mapyp1; // mapy plus one
-
-	/**
-	* @brief map squares
-	*
-	* Total number of squares on the map
-	*/
-	int mapSquares;
-
-	/**
-	* @brief half map x
-	*
-	* Contains half of the number of squares in the x direction
-	*/
-	int hmapx;
-
-	/**
-	* @brief half map y
-	*
-	* Contains half of the number of squares in the y direction
-	*/
-	int hmapy;
-
-	/**
-	* @brief map x power of 2
-	*
-	* Map's size in the x direction rounded
-	* up to the next power of 2
-	*/
-	int pwr2mapx;
-
-	/**
-	* @brief map y power of 2
-	*
-	* Map's size in the y direction rounded
-	* up to the next power of 2
-	*/
-	int pwr2mapy;
-
-	/**
-	* @brief temp num
-	*
-	* Used for getting temporary but unique numbers
-	* (increase after each use)
-	*/
-	int tempNum;
 
 	/**
 	* @brief god mode

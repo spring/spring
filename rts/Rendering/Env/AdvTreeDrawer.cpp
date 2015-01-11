@@ -53,8 +53,8 @@ CAdvTreeDrawer::CAdvTreeDrawer(): ITreeDrawer()
 
 	oldTreeDistance = 4;
 	lastListClean = 0;
-	treesX = gs->mapx / TREE_SQUARE_SIZE;
-	treesY = gs->mapy / TREE_SQUARE_SIZE;
+	treesX = mapDims.mapx / TREE_SQUARE_SIZE;
+	treesY = mapDims.mapy / TREE_SQUARE_SIZE;
 	nTrees = treesX * treesY;
 	trees = new TreeSquareStruct[nTrees];
 
@@ -171,7 +171,7 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 		treeShaders[TREE_PROGRAM_NEAR_BASIC]->Enable();
 		treeShaders[TREE_PROGRAM_NEAR_BASIC]->SetUniform3fv(3, &mapInfo->light.groundAmbientColor[0]);
 		treeShaders[TREE_PROGRAM_NEAR_BASIC]->SetUniform3fv(4, &mapInfo->light.groundSunColor[0]);
-		treeShaders[TREE_PROGRAM_NEAR_BASIC]->SetUniform4f(6, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f);
+		treeShaders[TREE_PROGRAM_NEAR_BASIC]->SetUniform4f(6, 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f);
 		treeShaders[TREE_PROGRAM_NEAR_BASIC]->Disable();
 		treeShaders[TREE_PROGRAM_NEAR_BASIC]->Validate();
 
@@ -494,10 +494,10 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 	if (drawDetailed) {
 		// draw near-trees
-		const int xstart = Clamp(cx - 2, 0, gs->mapx / TREE_SQUARE_SIZE - 1);
-		const int xend   = Clamp(cx + 2, 0, gs->mapx / TREE_SQUARE_SIZE - 1);
-		const int ystart = Clamp(cy - 2, 0, gs->mapy / TREE_SQUARE_SIZE - 1);
-		const int yend   = Clamp(cy + 2, 0, gs->mapy / TREE_SQUARE_SIZE - 1);
+		const int xstart = Clamp(cx - 2, 0, mapDims.mapx / TREE_SQUARE_SIZE - 1);
+		const int xend   = Clamp(cx + 2, 0, mapDims.mapx / TREE_SQUARE_SIZE - 1);
+		const int ystart = Clamp(cy - 2, 0, mapDims.mapy / TREE_SQUARE_SIZE - 1);
+		const int yend   = Clamp(cy + 2, 0, mapDims.mapy / TREE_SQUARE_SIZE - 1);
 
 		if (shadowHandler->shadowsLoaded) {
 			treeShader->Disable();
@@ -520,8 +520,8 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 			treeShader->Enable();
 
 			if (!globalRendering->haveGLSL) {
-				const int mx = gs->pwr2mapx * SQUARE_SIZE;
-				const int my = gs->pwr2mapy * SQUARE_SIZE;
+				const int mx = mapDims.pwr2mapx * SQUARE_SIZE;
+				const int my = mapDims.pwr2mapy * SQUARE_SIZE;
 				treeShader->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 				treeShader->SetUniform4f(15, 1.0f / mx, 1.0f / my, 1.0f / mx, 1.0f);
 			}
@@ -900,10 +900,10 @@ void CAdvTreeDrawer::DrawShadowPass()
 	readMap->GridVisibility(camera, TREE_SQUARE_SIZE, drawer.treeDistance * 2.0f, &drawer, 1);
 
 	if (drawDetailed) {
-		const int xstart = Clamp(cx - 2, 0, gs->mapx / TREE_SQUARE_SIZE - 1);
-		const int xend   = Clamp(cx + 2, 0, gs->mapx / TREE_SQUARE_SIZE - 1);
-		const int ystart = Clamp(cy - 2, 0, gs->mapy / TREE_SQUARE_SIZE - 1);
-		const int yend   = Clamp(cy + 2, 0, gs->mapy / TREE_SQUARE_SIZE - 1);
+		const int xstart = Clamp(cx - 2, 0, mapDims.mapx / TREE_SQUARE_SIZE - 1);
+		const int xend   = Clamp(cx + 2, 0, mapDims.mapx / TREE_SQUARE_SIZE - 1);
+		const int ystart = Clamp(cy - 2, 0, mapDims.mapy / TREE_SQUARE_SIZE - 1);
+		const int yend   = Clamp(cy + 2, 0, mapDims.mapy / TREE_SQUARE_SIZE - 1);
 
 		glBindTexture(GL_TEXTURE_2D, treeGen->barkTex);
 		glEnable(GL_TEXTURE_2D);

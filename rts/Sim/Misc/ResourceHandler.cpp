@@ -110,7 +110,7 @@ size_t CResourceHandler::GetResourceMapSize(int resourceId) const {
 size_t CResourceHandler::GetResourceMapWidth(int resourceId) const {
 
 	if (resourceId == GetMetalId()) {
-		return gs->hmapx;
+		return mapDims.hmapx;
 	} else {
 		return 0;
 	}
@@ -118,7 +118,7 @@ size_t CResourceHandler::GetResourceMapWidth(int resourceId) const {
 size_t CResourceHandler::GetResourceMapHeight(int resourceId) const {
 
 	if (resourceId == GetMetalId()) {
-		return gs->hmapy;
+		return mapDims.hmapy;
 	} else {
 		return 0;
 	}

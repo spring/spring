@@ -135,7 +135,7 @@ void CLuaLoadSaveHandler::SaveHeightmap()
 	// Big chunks of 0s are then very well compressed by zip.
 	const int* currHeightmap = (const int*) (const char*) readMap->GetCornerHeightMapSynced();
 	const int* origHeightmap = (const int*) (const char*) readMap->GetOriginalHeightMapSynced();
-	const int size = gs->mapxp1 * gs->mapyp1;
+	const int size = mapDims.mapxp1 * mapDims.mapyp1;
 	int* temp = new int[size];
 	for (int i = 0; i < size; ++i) {
 		temp[i] = swabDWord(currHeightmap[i] ^ origHeightmap[i]);
@@ -216,7 +216,7 @@ void CLuaLoadSaveHandler::LoadHeightmap()
 	std::vector<boost::uint8_t> buf;
 
 	if (loadfile->GetFile(FILE_HEIGHTMAP, buf)) {
-		const int size = gs->mapxp1 * gs->mapyp1;
+		const int size = mapDims.mapxp1 * mapDims.mapyp1;
 		const int* temp = (const int*) (const char*) &*buf.begin();
 		const int* origHeightmap = (const int*) (const char*) readMap->GetOriginalHeightMapSynced();
 
@@ -225,7 +225,7 @@ void CLuaLoadSaveHandler::LoadHeightmap()
 			const float newHeight = *(const float*) (const char*) &newHeightBits;
 			readMap->SetHeight(i, newHeight);
 		}
-		mapDamage->RecalcArea(0, gs->mapx, 0, gs->mapy);
+		mapDamage->RecalcArea(0, mapDims.mapx, 0, mapDims.mapy);
 	} else {
 		LOG_L(L_ERROR, "Unable to load heightmap from save file \"%s\"", filename.c_str());
 	}

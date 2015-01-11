@@ -374,12 +374,12 @@ void CUnitLoader::FlattenGround(const CUnit* unit)
 	const float hss = 0.5f * SQUARE_SIZE;
 	const int tx1 = (int) std::max(0.0f ,(bi.pos.x - (bi.GetXSize() * hss)) / SQUARE_SIZE);
 	const int tz1 = (int) std::max(0.0f ,(bi.pos.z - (bi.GetZSize() * hss)) / SQUARE_SIZE);
-	const int tx2 = std::min(gs->mapx, tx1 + bi.GetXSize());
-	const int tz2 = std::min(gs->mapy, tz1 + bi.GetZSize());
+	const int tx2 = std::min(mapDims.mapx, tx1 + bi.GetXSize());
+	const int tz2 = std::min(mapDims.mapy, tz1 + bi.GetZSize());
 
 	for (int z = tz1; z <= tz2; z++) {
 		for (int x = tx1; x <= tx2; x++) {
-			readMap->SetHeight(z * gs->mapxp1 + x, bi.pos.y);
+			readMap->SetHeight(z * mapDims.mapxp1 + x, bi.pos.y);
 		}
 	}
 
@@ -402,8 +402,8 @@ void CUnitLoader::RestoreGround(const CUnit* unit)
 	const float hss = 0.5f * SQUARE_SIZE;
 	const int tx1 = (int) std::max(0.0f ,(bi.pos.x - (bi.GetXSize() * hss)) / SQUARE_SIZE);
 	const int tz1 = (int) std::max(0.0f ,(bi.pos.z - (bi.GetZSize() * hss)) / SQUARE_SIZE);
-	const int tx2 = std::min(gs->mapx, tx1 + bi.GetXSize());
-	const int tz2 = std::min(gs->mapy, tz1 + bi.GetZSize());
+	const int tx2 = std::min(mapDims.mapx, tx1 + bi.GetXSize());
+	const int tz2 = std::min(mapDims.mapy, tz1 + bi.GetZSize());
 
 
 	const float* heightmap = readMap->GetCornerHeightMapSynced();
@@ -411,7 +411,7 @@ void CUnitLoader::RestoreGround(const CUnit* unit)
 	float heightdiff = 0.0f;
 	for (int z = tz1; z <= tz2; z++) {
 		for (int x = tx1; x <= tx2; x++) {
-			int index = z * gs->mapxp1 + x;
+			int index = z * mapDims.mapxp1 + x;
 			heightdiff += heightmap[index] - readMap->GetOriginalHeightMapSynced()[index];
 			++num;
 		}
@@ -421,7 +421,7 @@ void CUnitLoader::RestoreGround(const CUnit* unit)
 	heightdiff += unit->pos.y - bi.pos.y;
 	for (int z = tz1; z <= tz2; z++) {
 		for (int x = tx1; x <= tx2; x++) {
-			int index = z * gs->mapxp1 + x;
+			int index = z * mapDims.mapxp1 + x;
 			readMap->SetHeight(index, heightdiff + readMap->GetOriginalHeightMapSynced()[index]);
 		}
 	}
@@ -429,7 +429,7 @@ void CUnitLoader::RestoreGround(const CUnit* unit)
 	heightdiff = bi.pos.y - CGameHelper::Pos2BuildPos(bi, true).y;
 	for (int z = tz1; z <= tz2; z++) {
 		for (int x = tx1; x <= tx2; x++) {
-			int index = z * gs->mapxp1 + x;
+			int index = z * mapDims.mapxp1 + x;
 			readMap->SetHeight(index, heightdiff + heightmap[index]);
 		}
 	}

@@ -648,8 +648,8 @@ bool CPathManager::SetNodeExtraCost(unsigned int x, unsigned int z, float cost, 
 	if (!IsFinalized())
 		return 0.0f;
 
-	if (x >= gs->mapx) { return false; }
-	if (z >= gs->mapy) { return false; }
+	if (x >= mapDims.mapx) { return false; }
+	if (z >= mapDims.mapy) { return false; }
 
 	PathNodeStateBuffer& maxResBuf = maxResPF->GetNodeStateBuffer();
 	PathNodeStateBuffer& medResBuf = medResPE->GetNodeStateBuffer();
@@ -665,8 +665,8 @@ bool CPathManager::SetNodeExtraCosts(const float* costs, unsigned int sizex, uns
 	if (!IsFinalized())
 		return 0.0f;
 
-	if (sizex < 1 || sizex > gs->mapx) { return false; }
-	if (sizez < 1 || sizez > gs->mapy) { return false; }
+	if (sizex < 1 || sizex > mapDims.mapx) { return false; }
+	if (sizez < 1 || sizez > mapDims.mapy) { return false; }
 
 	PathNodeStateBuffer& maxResBuf = maxResPF->GetNodeStateBuffer();
 	PathNodeStateBuffer& medResBuf = medResPE->GetNodeStateBuffer();
@@ -683,8 +683,8 @@ float CPathManager::GetNodeExtraCost(unsigned int x, unsigned int z, bool synced
 	if (!IsFinalized())
 		return 0.0f;
 
-	if (x >= gs->mapx) { return 0.0f; }
-	if (z >= gs->mapy) { return 0.0f; }
+	if (x >= mapDims.mapx) { return 0.0f; }
+	if (z >= mapDims.mapy) { return 0.0f; }
 
 	const PathNodeStateBuffer& maxResBuf = maxResPF->GetNodeStateBuffer();
 	const float cost = maxResBuf.GetNodeExtraCost(x, z, synced);

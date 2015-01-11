@@ -36,7 +36,7 @@ static inline float InterpolateHeight(float x, float z, const float* heightmap)
 	const int isz = z;
 	const float dx = x - isx;
 	const float dz = z - isz;
-	const int hs = isx + isz * gs->mapxp1;
+	const int hs = isx + isz * mapDims.mapxp1;
 
 	float h = 0.0f;
 
@@ -44,7 +44,7 @@ static inline float InterpolateHeight(float x, float z, const float* heightmap)
 		// top-left triangle
 		const float h00 = heightmap[hs                 ];
 		const float h10 = heightmap[hs + 1             ];
-		const float h01 = heightmap[hs     + gs->mapxp1];
+		const float h01 = heightmap[hs     + mapDims.mapxp1];
 		const float xdif = dx * (h10 - h00);
 		const float zdif = dz * (h01 - h00);
 
@@ -52,8 +52,8 @@ static inline float InterpolateHeight(float x, float z, const float* heightmap)
 	} else {
 		// bottom-right triangle
 		const float h10 = heightmap[hs + 1             ];
-		const float h11 = heightmap[hs + 1 + gs->mapxp1];
-		const float h01 = heightmap[hs     + gs->mapxp1];
+		const float h11 = heightmap[hs + 1 + mapDims.mapxp1];
+		const float h01 = heightmap[hs     + mapDims.mapxp1];
 		const float xdif = (1.0f - dx) * (h01 - h11);
 		const float zdif = (1.0f - dz) * (h10 - h11);
 
@@ -72,13 +72,13 @@ static inline float LineGroundSquareCol(
 	const int xs,
 	const int ys)
 {
-	const bool inMap = (xs >= 0) && (ys >= 0) && (xs <= gs->mapxm1) && (ys <= gs->mapym1);
+	const bool inMap = (xs >= 0) && (ys >= 0) && (xs <= mapDims.mapxm1) && (ys <= mapDims.mapym1);
 //	assert(inMap);
 	if (!inMap)
 		return -1.0f;
 
-	const float3& faceNormalTL = normalmap[(ys * gs->mapx + xs) * 2    ];
-	const float3& faceNormalBR = normalmap[(ys * gs->mapx + xs) * 2 + 1];
+	const float3& faceNormalTL = normalmap[(ys * mapDims.mapx + xs) * 2    ];
+	const float3& faceNormalBR = normalmap[(ys * mapDims.mapx + xs) * 2 + 1];
 	float3 cornerVertex;
 
 	// The terrain grid is "composed" of two right-isosceles triangles
@@ -89,7 +89,7 @@ static inline float LineGroundSquareCol(
 	// top-left corner vertex
 	cornerVertex.x = xs * SQUARE_SIZE;
 	cornerVertex.z = ys * SQUARE_SIZE;
-	cornerVertex.y = heightmap[ys * gs->mapxp1 + xs];
+	cornerVertex.y = heightmap[ys * mapDims.mapxp1 + xs];
 
 	// project \<to - cornerVertex\> vector onto the TL-normal
 	// if \<to\> lies below the terrain, this will be negative
@@ -114,7 +114,7 @@ static inline float LineGroundSquareCol(
 	// bottom-right corner vertex
 	cornerVertex.x += SQUARE_SIZE;
 	cornerVertex.z += SQUARE_SIZE;
-	cornerVertex.y = heightmap[(ys + 1) * gs->mapxp1 + (xs + 1)];
+	cornerVertex.y = heightmap[(ys + 1) * mapDims.mapxp1 + (xs + 1)];
 
 	// project \<to - cornerVertex\> vector onto the TL-normal
 	// if \<to\> lies below the terrain, this will be negative
@@ -143,7 +143,7 @@ static inline float LineGroundSquareCol(
 /*
 void CGround::CheckColSquare(CProjectile* p, int x, int y)
 {
-	if (!(x >= 0 && y >= 0 && x < gs->mapx && y < gs->mapy))
+	if (!(x >= 0 && y >= 0 && x < mapDims.mapx && y < mapDims.mapy))
 		return;
 
 	float xp = p->pos.x;
@@ -152,10 +152,10 @@ void CGround::CheckColSquare(CProjectile* p, int x, int y)
 
 	const float* hm = readMap->GetCornerHeightMapSynced();
 	const float3* fn = readMap->GetFaceNormalsSynced();
-	const int hmIdx = (y * gs->mapx + x);
+	const int hmIdx = (y * mapDims.mapx + x);
 	const float xt = x * SQUARE_SIZE;
-	const float& yt0 = hm[ y      * gs->mapxp1 + x    ];
-	const float& yt1 = hm[(y + 1) * gs->mapxp1 + x + 1];
+	const float& yt0 = hm[ y      * mapDims.mapxp1 + x    ];
+	const float& yt1 = hm[(y + 1) * mapDims.mapxp1 + x + 1];
 	const float zt = y * SQUARE_SIZE;
 
 	const float3& fn0 = fn[hmIdx * 2    ];
@@ -235,7 +235,7 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced)
 		const int sx = from.x / SQUARE_SIZE;
 		const int sz = from.z / SQUARE_SIZE;
 
-		if (from.y <= hm[sz * gs->mapxp1 + sx]) {
+		if (from.y <= hm[sz * mapDims.mapxp1 + sx]) {
 			return 0.0f + skippedDist;
 		}
 	}
@@ -247,10 +247,10 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced)
 
 	// Claming is done cause LineGroundSquareCol() operates on the 2 triangles faces each heightmap
 	// square is formed of.
-	const float ffsx = Clamp(from.x / SQUARE_SIZE, 0.0f, (float)gs->mapx);
-	const float ffsz = Clamp(from.z / SQUARE_SIZE, 0.0f, (float)gs->mapy);
-	const float ttsx = Clamp(to.x / SQUARE_SIZE, 0.0f, (float)gs->mapx);
-	const float ttsz = Clamp(to.z / SQUARE_SIZE, 0.0f, (float)gs->mapy);
+	const float ffsx = Clamp(from.x / SQUARE_SIZE, 0.0f, (float)mapDims.mapx);
+	const float ffsz = Clamp(from.z / SQUARE_SIZE, 0.0f, (float)mapDims.mapy);
+	const float ttsx = Clamp(to.x / SQUARE_SIZE, 0.0f, (float)mapDims.mapx);
+	const float ttsz = Clamp(to.z / SQUARE_SIZE, 0.0f, (float)mapDims.mapy);
 	const int fsx = ffsx; // a>=0: int(a):=floor(a)
 	const int fsz = ffsz;
 	const int tsx = ttsx;
@@ -378,16 +378,16 @@ float CGround::GetApproximateHeight(float x, float z, bool synced)
 {
 	const float* heightMap = readMap->GetSharedCenterHeightMap(synced);
 
-	const int xsquare = Clamp(int(x) / SQUARE_SIZE, 0, gs->mapxm1);
-	const int zsquare = Clamp(int(z) / SQUARE_SIZE, 0, gs->mapym1);
-	return heightMap[zsquare * gs->mapx + xsquare];
+	const int xsquare = Clamp(int(x) / SQUARE_SIZE, 0, mapDims.mapxm1);
+	const int zsquare = Clamp(int(z) / SQUARE_SIZE, 0, mapDims.mapym1);
+	return heightMap[zsquare * mapDims.mapx + xsquare];
 }
 
 
 float CGround::GetApproximateHeightUnsafe(int x, int z, bool synced)
 {
 	const float* heightMap = readMap->GetSharedCenterHeightMap(synced);
-	return heightMap[z * gs->mapx + x];
+	return heightMap[z * mapDims.mapx + x];
 }
 
 
@@ -409,11 +409,11 @@ float CGround::GetOrigHeight(float x, float z)
 
 const float3& CGround::GetNormal(float x, float z, bool synced)
 {
-	const int xsquare = Clamp(int(x) / SQUARE_SIZE, 0, gs->mapxm1);
-	const int zsquare = Clamp(int(z) / SQUARE_SIZE, 0, gs->mapym1);
+	const int xsquare = Clamp(int(x) / SQUARE_SIZE, 0, mapDims.mapxm1);
+	const int zsquare = Clamp(int(z) / SQUARE_SIZE, 0, mapDims.mapym1);
 
 	const float3* normalMap = readMap->GetSharedCenterNormals(synced);
-	return normalMap[xsquare + zsquare * gs->mapx];
+	return normalMap[xsquare + zsquare * mapDims.mapx];
 }
 
 const float3& CGround::GetNormalAboveWater(float x, float z, bool synced)
@@ -427,18 +427,18 @@ const float3& CGround::GetNormalAboveWater(float x, float z, bool synced)
 
 float CGround::GetSlope(float x, float z, bool synced)
 {
-	const int xhsquare = Clamp(int(x) / (2 * SQUARE_SIZE), 0, gs->hmapx - 1);
-	const int zhsquare = Clamp(int(z) / (2 * SQUARE_SIZE), 0, gs->hmapy - 1);
+	const int xhsquare = Clamp(int(x) / (2 * SQUARE_SIZE), 0, mapDims.hmapx - 1);
+	const int zhsquare = Clamp(int(z) / (2 * SQUARE_SIZE), 0, mapDims.hmapy - 1);
 	const float* slopeMap = readMap->GetSharedSlopeMap(synced);
 
-	return slopeMap[xhsquare + zhsquare * gs->hmapx];
+	return slopeMap[xhsquare + zhsquare * mapDims.hmapx];
 }
 
 
 float3 CGround::GetSmoothNormal(float x, float z, bool synced)
 {
-	const int sx = Clamp(int(math::floor(x / SQUARE_SIZE)), 1, gs->mapx - 2);
-	const int sz = Clamp(int(math::floor(z / SQUARE_SIZE)), 1, gs->mapy - 2);
+	const int sx = Clamp(int(math::floor(x / SQUARE_SIZE)), 1, mapDims.mapx - 2);
+	const int sz = Clamp(int(math::floor(z / SQUARE_SIZE)), 1, mapDims.mapy - 2);
 
 	const float dx = (x / SQUARE_SIZE) - sx;
 	const float dz = (z / SQUARE_SIZE) - sz;
@@ -469,10 +469,10 @@ float3 CGround::GetSmoothNormal(float x, float z, bool synced)
 
 	const float3* normalMap = readMap->GetSharedCenterNormals(synced);
 
-	const float3& n1 = normalMap[sz  * gs->mapx + sx ] * ifx * ifz;
-	const float3& n2 = normalMap[sz  * gs->mapx + sx2] *  fx * ifz;
-	const float3& n3 = normalMap[sz2 * gs->mapx + sx ] * ifx * fz;
-	const float3& n4 = normalMap[sz2 * gs->mapx + sx2] *  fx * fz;
+	const float3& n1 = normalMap[sz  * mapDims.mapx + sx ] * ifx * ifz;
+	const float3& n2 = normalMap[sz  * mapDims.mapx + sx2] *  fx * ifz;
+	const float3& n3 = normalMap[sz2 * mapDims.mapx + sx ] * ifx * fz;
+	const float3& n4 = normalMap[sz2 * mapDims.mapx + sx2] *  fx * fz;
 
 	return ((n1 + n2 + n3 + n4).Normalize());
 }
@@ -501,4 +501,12 @@ float CGround::TrajectoryGroundCol(float3 from, const float3& flatdir, float len
 
 	return -1.0f;
 }
+
+
+int CGround::GetSquare(const float3& pos) {
+	const int x = Clamp((int(pos.x) / SQUARE_SIZE), 0, mapDims.mapxm1);
+	const int z = Clamp((int(pos.z) / SQUARE_SIZE), 0, mapDims.mapym1);
+
+	return (x + z * mapDims.mapx);
+};
 

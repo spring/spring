@@ -560,22 +560,22 @@ float CShadowHandler::GetOrthoProjectedMapRadius(const float3& sunDir, float3& p
 		if (sunDirXZ.x >= 0.0f) {
 			if (sunDirXZ.z >= 0.0f) {
 				// use diagonal vector from top-right to bottom-left
-				mapVerts[0] = float3(gs->mapx * SQUARE_SIZE, 0.0f,                   0.0f);
-				mapVerts[1] = float3(                  0.0f, 0.0f, gs->mapy * SQUARE_SIZE);
+				mapVerts[0] = float3(mapDims.mapx * SQUARE_SIZE, 0.0f,                   0.0f);
+				mapVerts[1] = float3(                  0.0f, 0.0f, mapDims.mapy * SQUARE_SIZE);
 			} else {
 				// use diagonal vector from top-left to bottom-right
 				mapVerts[0] = float3(                  0.0f, 0.0f,                   0.0f);
-				mapVerts[1] = float3(gs->mapx * SQUARE_SIZE, 0.0f, gs->mapy * SQUARE_SIZE);
+				mapVerts[1] = float3(mapDims.mapx * SQUARE_SIZE, 0.0f, mapDims.mapy * SQUARE_SIZE);
 			}
 		} else {
 			if (sunDirXZ.z >= 0.0f) {
 				// use diagonal vector from bottom-right to top-left
-				mapVerts[0] = float3(gs->mapx * SQUARE_SIZE, 0.0f, gs->mapy * SQUARE_SIZE);
+				mapVerts[0] = float3(mapDims.mapx * SQUARE_SIZE, 0.0f, mapDims.mapy * SQUARE_SIZE);
 				mapVerts[1] = float3(                  0.0f, 0.0f,                   0.0f);
 			} else {
 				// use diagonal vector from bottom-left to top-right
-				mapVerts[0] = float3(                  0.0f, 0.0f, gs->mapy * SQUARE_SIZE);
-				mapVerts[1] = float3(gs->mapx * SQUARE_SIZE, 0.0f,                   0.0f);
+				mapVerts[0] = float3(                  0.0f, 0.0f, mapDims.mapy * SQUARE_SIZE);
+				mapVerts[1] = float3(mapDims.mapx * SQUARE_SIZE, 0.0f,                   0.0f);
 			}
 		}
 
@@ -584,8 +584,8 @@ float CShadowHandler::GetOrthoProjectedMapRadius(const float3& sunDir, float3& p
 
 		curMapDiameter = maxMapDiameter * v2.dot(v1);
 
-		projMidPos.x = (gs->mapx * SQUARE_SIZE) * 0.5f;
-		projMidPos.z = (gs->mapy * SQUARE_SIZE) * 0.5f;
+		projMidPos.x = (mapDims.mapx * SQUARE_SIZE) * 0.5f;
+		projMidPos.z = (mapDims.mapy * SQUARE_SIZE) * 0.5f;
 		projMidPos.y = CGround::GetHeightReal(projMidPos.x, projMidPos.z, false);
 	}
 
@@ -661,7 +661,7 @@ void CShadowHandler::CalcMinMaxView()
 	// intersection points of the camera frustum
 	// with the xz-plane
 	cam2->GetFrustumSides(0.0f, 0.0f, 1.0f, true);
-	cam2->ClipFrustumLines(true, -20000.0f, gs->mapy * SQUARE_SIZE + 20000.0f);
+	cam2->ClipFrustumLines(true, -20000.0f, mapDims.mapy * SQUARE_SIZE + 20000.0f);
 
 	shadowProjMinMax.x = -100.0f;
 	shadowProjMinMax.y =  100.0f;
