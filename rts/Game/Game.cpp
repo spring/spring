@@ -527,16 +527,7 @@ CGame::~CGame()
 	LOG("[%s][12]", __FUNCTION__);
 	SafeDelete(saveFile); // ILoadSaveHandler, depends on vfsHandler via ~IArchive
 	LOG("[%s][13]", __FUNCTION__);
-	SafeDelete(vfsHandler);
-	LOG("[%s][14]", __FUNCTION__);
-	SafeDelete(archiveScanner);
 
-	LOG("[%s][15]", __FUNCTION__);
-	SafeDelete(gameServer);
-	LOG("[%s][16]", __FUNCTION__);
-	ISound::Shutdown();
-
-	LOG("[%s][17]", __FUNCTION__);
 	LEAVE_SYNCED_CODE();
 }
 
