@@ -10,7 +10,7 @@
 #include "Sim/Path/IPathManager.h"
 #include "System/creg/STL_Map.h"
 
-CGroundBlockingObjectMap* groundBlockingObjectMap;
+CGroundBlockingObjectMap* groundBlockingObjectMap = NULL;
 
 CR_BIND(CGroundBlockingObjectMap, (1))
 CR_REG_METADATA(CGroundBlockingObjectMap, (

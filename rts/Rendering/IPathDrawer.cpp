@@ -14,24 +14,24 @@
 IPathDrawer* pathDrawer = NULL;
 
 IPathDrawer* IPathDrawer::GetInstance() {
-	static IPathDrawer* pd = NULL;
-
-	if (pd == NULL) {
+	if (pathDrawer == NULL) {
 		if (dynamic_cast<QTPFS::PathManager*>(pathManager) != NULL) {
-			return (pd = new QTPFSPathDrawer());
+			return (pathDrawer = new QTPFSPathDrawer());
 		}
 		if (dynamic_cast<CPathManager*>(pathManager) != NULL) {
-			return (pd = new DefaultPathDrawer());
+			return (pathDrawer = new DefaultPathDrawer());
 		}
 
-		pd = new IPathDrawer();
+		pathDrawer = new IPathDrawer();
 	}
 
-	return pd;
+	return pathDrawer;
 }
 
 void IPathDrawer::FreeInstance(IPathDrawer* pd) {
+	assert(pd == pathDrawer);
 	delete pd;
+	pathDrawer = NULL;
 }
 
 

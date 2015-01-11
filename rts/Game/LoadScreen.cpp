@@ -188,10 +188,11 @@ CLoadScreen::~CLoadScreen()
 void CLoadScreen::CreateInstance(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile)
 {
 	assert(singleton == NULL);
-
 	singleton = new CLoadScreen(mapName, modName, saveFile);
+
 	// Init() already requires GetInstance() to work.
 	singleton->Init();
+
 	if (!singleton->mtLoading) {
 		game->SetupRenderingParams();
 		CLoadScreen::DeleteInstance();

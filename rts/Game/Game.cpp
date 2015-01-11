@@ -499,7 +499,8 @@ CGame::~CGame()
 	SafeDelete(modelParser);
 
 	LOG("[%s][10]", __FUNCTION__);
-	SafeDelete(pathManager);
+	IPathManager::FreeInstance(pathManager);
+
 	SafeDelete(readMap);
 	SafeDelete(smoothGround);
 	SafeDelete(groundBlockingObjectMap);

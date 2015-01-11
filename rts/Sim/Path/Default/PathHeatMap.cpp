@@ -7,18 +7,20 @@
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Objects/SolidObject.h"
 
+// not extern'ed, so static
+static PathHeatMap* gPathHeatMap = NULL;
+
 PathHeatMap* PathHeatMap::GetInstance() {
-	static PathHeatMap* phm = NULL;
+	if (gPathHeatMap == NULL)
+		gPathHeatMap = new PathHeatMap(PATH_HEATMAP_XSCALE, PATH_HEATMAP_ZSCALE);
 
-	if (phm == NULL) {
-		phm = new PathHeatMap(PATH_HEATMAP_XSCALE, PATH_HEATMAP_ZSCALE);
-	}
-
-	return phm;
+	return gPathHeatMap;
 }
 
 void PathHeatMap::FreeInstance(PathHeatMap* phm) {
+	assert(phm == gPathHeatMap);
 	delete phm;
+	gPathHeatMap = NULL;
 }
 
 

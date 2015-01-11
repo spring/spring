@@ -13,18 +13,20 @@
 #define FLOW_COST_MULT      32.00f
 #define FLOW_NGB_PROJECTION  0
 
+// not extern'ed, so static
+static PathFlowMap* gPathFlowMap = NULL;
+
 PathFlowMap* PathFlowMap::GetInstance() {
-	static PathFlowMap* pfm = NULL;
+	if (gPathFlowMap == NULL)
+		gPathFlowMap = new PathFlowMap(PATH_FLOWMAP_XSCALE, PATH_FLOWMAP_ZSCALE);
 
-	if (pfm == NULL) {
-		pfm = new PathFlowMap(PATH_FLOWMAP_XSCALE, PATH_FLOWMAP_ZSCALE);
-	}
-
-	return pfm;
+	return gPathFlowMap;
 }
 
 void PathFlowMap::FreeInstance(PathFlowMap* pfm) {
+	assert(pfm == gPathFlowMap);
 	delete pfm;
+	gPathFlowMap = NULL;
 }
 
 
