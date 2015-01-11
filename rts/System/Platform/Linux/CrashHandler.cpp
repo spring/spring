@@ -22,7 +22,6 @@
 #include <libunwind.h>
 #include <dlfcn.h>
 
-#include "thread_backtrace.h"
 #include "System/FileSystem/FileSystem.h"
 #include "Game/GameVersion.h"
 #include "System/Log/ILog.h"
@@ -149,13 +148,10 @@ static std::string CreateAbsolutePath(const std::string& relativePath)
  *   -> "/usr/lib/debug/usr/games/spring-dedicated"
  * - "/usr/lib/spring/libunitsync.so"
  *   -> "/usr/lib/debug/usr/lib/spring/libunitsync.so"
- *   -> "/usr/lib/spring/libunitsync.so"
  * - "/usr/lib/AI/Interfaces/Java/0.1/libAIInterface.so"
  *   -> "/usr/lib/debug/usr/lib/AI/Interfaces/Java/0.1/libAIInterface.so"
- *   -> "/usr/lib/AI/Interfaces/Java/0.1/libAIInterface.so"
  * - "/usr/lib/AI/Skirmish/RAI/0.601/libSkirmishAI.so"
  *   -> "/usr/lib/debug/usr/lib/AI/Skirmish/RAI/0.601/libSkirmishAI.so"
- *   -> "/usr/lib/AI/Skirmish/RAI/0.601/libSkirmishAI.so"
  */
 static std::string LocateSymbolFile(const std::string& binaryFile)
 {
@@ -177,14 +173,7 @@ static std::string LocateSymbolFile(const std::string& binaryFile)
 		return symbolFile;
 	}
 
-	symbolFile = binaryFile;
-	if (FileSystem::IsReadableFile(symbolFile)) {
-		return symbolFile;
-	}
-
-	symbolFile = binaryFile;
-
-	return symbolFile;
+	return binaryFile;
 }
 
 
@@ -717,26 +706,14 @@ namespace CrashHandler
 		// Get untranslated stacktrace symbols
 		{
 			// process and analyse the raw stack trace
-			char** lines;
 			void* iparray[MAX_STACKTRACE_DEPTH];
-			int numLines = -1;
-			if (hThread && Threading::GetCurrentThread() != *hThread) {
-				//Threading::ThreadControls* ctls = GetThreadControls(*hThread);
-				// If we don't have a ThreadControls object for this thread, then we can still get an approximate trace from the foreign thread as it is running...
-				LOG_I(logLevel, "  (Note: This stacktrace is not 100%% accurate! It just gives an impression.)");
-				LOG_CLEANUP();
-				numLines = thread_backtrace(*hThread, iparray, MAX_STACKTRACE_DEPTH);    // stack pointers
-			} else {
-				numLines = backtrace(iparray, MAX_STACKTRACE_DEPTH);
+			int numLines = thread_unwind(nullptr, iparray, stacktrace);
+			if (numLines > MAX_STACKTRACE_DEPTH) {
+				LOG_L(L_ERROR, "thread_unwind returned more lines than we allotted space for!");
 			}
-			if(numLines > MAX_STACKTRACE_DEPTH) {
-				LOG_L(L_ERROR, "thread_backtrace or backtrace returned more lines than we allotted space for!");
-			}
-			lines = backtrace_symbols(iparray, numLines); // give them meaningfull names
+			char** lines = backtrace_symbols(iparray, numLines); // give them meaningfull names
 
 			ExtractSymbols(lines, stacktrace);
-
-			free(lines);
 		}
 
 		if (stacktrace.empty()) {
@@ -745,7 +722,7 @@ namespace CrashHandler
 		}
 
 		// Translate it
-		TranslateStackTrace(nullptr, stacktrace, logLevel);
+		TranslateStackTrace(aiCrash, stacktrace, logLevel);
 
 		LogStacktrace(logLevel, stacktrace);
 	}
@@ -790,7 +767,6 @@ namespace CrashHandler
         // Get untranslated stacktrace symbols
         {
             // process and analyse the raw stack trace
-            char** lines;
             void* iparray[MAX_STACKTRACE_DEPTH];
             int numLines = -1;
 
@@ -803,9 +779,9 @@ namespace CrashHandler
             LOG_L(L_DEBUG, "SuspendedStacktrace[2]");
 
             if(numLines > MAX_STACKTRACE_DEPTH) {
-                LOG_L(L_ERROR, "thread_backtrace or backtrace returned more lines than we allotted space for!");
+                LOG_L(L_ERROR, "thread_unwind returned more lines than we allotted space for!");
             }
-            lines = backtrace_symbols(iparray, numLines); // give them meaningfull names
+            char** lines = backtrace_symbols(iparray, numLines); // give them meaningfull names
 
             ExtractSymbols(lines, stacktrace);
         }
@@ -855,7 +831,7 @@ namespace CrashHandler
             LOG_L(L_DEBUG, "HaltedStacktrace[2]");
 
             if(numLines > MAX_STACKTRACE_DEPTH) {
-                LOG_L(L_ERROR, "thread_backtrace or backtrace returned more lines than we allotted space for!");
+                LOG_L(L_ERROR, "thread_unwind returned more lines than we allotted space for!");
             }
 
             char** lines = backtrace_symbols(iparray, numLines); // give them meaningfull names
