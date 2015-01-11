@@ -157,6 +157,7 @@ public:
 	float GetCurrMinHeight() const { return currMinHeight; }
 	float GetInitMaxHeight() const { return initMaxHeight; }
 	float GetCurrMaxHeight() const { return currMaxHeight; }
+	float GetBoundingRadius() const { return boundingRadius; }
 
 	bool IsUnderWater() const { return (currMaxHeight <  0.0f); }
 	bool IsAboveWater() const { return (currMinHeight >= 0.0f); }
@@ -232,6 +233,7 @@ private:
 
 	float initMinHeight, initMaxHeight; //< initial minimum- and maximum-height (before any deformations)
 	float currMinHeight, currMaxHeight; //< current minimum- and maximum-height
+	float boundingRadius;
 };
 
 extern CReadMap* readMap;

@@ -628,9 +628,9 @@ void CSMFReadMap::SunChanged(const float3& sunDir)
 
 void CSMFReadMap::UpdateShadingTexture()
 {
-	static const int xsize = gs->mapx;
-	static const int ysize = gs->mapy;
-	static const int pixels = xsize * ysize;
+	const int xsize = gs->mapx;
+	const int ysize = gs->mapy;
+	const int pixels = xsize * ysize;
 
 	// with GLSL, the shading texture has very limited use (minimap etc) so we reduce the updaterate
 	//FIXME replace with a real check if glsl is used in terrain rendering!
@@ -694,8 +694,8 @@ void CSMFReadMap::DrawMinimap() const
 	}
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 
-	static float isx = gs->mapx / float(gs->pwr2mapx);
-	static float isy = gs->mapy / float(gs->pwr2mapy);
+	const float isx = gs->mapx / float(gs->pwr2mapx);
+	const float isy = gs->mapy / float(gs->pwr2mapy);
 
 	glColor4f(1, 1, 1, 1);
 	glBegin(GL_QUADS);

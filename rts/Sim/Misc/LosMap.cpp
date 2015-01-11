@@ -49,8 +49,8 @@ void CLosMap::SetSize(int2 newSize, bool newSendReadmapEvents)
 void CLosMap::AddMapArea(int2 pos, int allyteam, int radius, int amount)
 {
 	#ifdef USE_UNSYNCED_HEIGHTMAP
-	static const int LOS2HEIGHT_X = gs->mapx / size.x;
-	static const int LOS2HEIGHT_Z = gs->mapy / size.y;
+	const int LOS2HEIGHT_X = gs->mapx / size.x;
+	const int LOS2HEIGHT_Z = gs->mapy / size.y;
 
 	const bool updateUnsyncedHeightMap = (sendReadmapEvents && allyteam >= 0 && (allyteam == gu->myAllyTeam || gu->spectatingFullView));
 	#endif
@@ -105,8 +105,8 @@ void CLosMap::AddMapArea(int2 pos, int allyteam, int radius, int amount)
 void CLosMap::AddMapSquares(const std::vector<int>& squares, int allyteam, int amount)
 {
 	#ifdef USE_UNSYNCED_HEIGHTMAP
-	static const int LOS2HEIGHT_X = gs->mapx / size.x;
-	static const int LOS2HEIGHT_Z = gs->mapy / size.y;
+	const int LOS2HEIGHT_X = gs->mapx / size.x;
+	const int LOS2HEIGHT_Z = gs->mapy / size.y;
 
 	const bool updateUnsyncedHeightMap = (sendReadmapEvents && allyteam >= 0 && (allyteam == gu->myAllyTeam || gu->spectatingFullView));
 	#endif

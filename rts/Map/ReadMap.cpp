@@ -48,6 +48,7 @@ CR_REG_METADATA(CReadMap, (
 	CR_MEMBER(initMaxHeight),
 	CR_IGNORED(currMinHeight),
 	CR_IGNORED(currMaxHeight),
+	CR_IGNORED(boundingRadius),
 	CR_MEMBER(mapChecksum),
 	CR_IGNORED(heightMapSyncedPtr),
 	CR_IGNORED(heightMapUnsyncedPtr),
@@ -171,6 +172,7 @@ CReadMap::CReadMap()
 	, initMaxHeight(0.0f)
 	, currMinHeight(0.0f)
 	, currMaxHeight(0.0f)
+	, boundingRadius(0.0f)
 {
 }
 
@@ -193,6 +195,8 @@ void CReadMap::Initialize()
 	gs->hmapy = gs->mapy >> 1;
 	gs->pwr2mapx = next_power_of_2(gs->mapx);
 	gs->pwr2mapy = next_power_of_2(gs->mapy);
+
+	boundingRadius = math::sqrt(Square(gs->mapx * SQUARE_SIZE) + Square(gs->mapy * SQUARE_SIZE)) * 0.5f;
 
 	{
 		char loadMsg[512];
