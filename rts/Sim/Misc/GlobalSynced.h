@@ -27,6 +27,8 @@ public:
 
 	CGlobalSynced();  //!< Constructor
 	~CGlobalSynced(); //!< Destructor
+
+	void ResetState();
 	void LoadFromSetup(const CGameSetup*);
 
 	int    randInt();    //!< synced random int

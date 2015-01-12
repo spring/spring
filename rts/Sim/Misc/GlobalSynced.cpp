@@ -49,44 +49,56 @@ CR_REG_METADATA(CGlobalSynced, (
  */
 CGlobalSynced::CGlobalSynced()
 {
-	randSeed = 18655;
+	randSeed     = 18655;
 	initRandSeed = randSeed;
 
 	frameNum = 0;
-	tempNum = 2;
+	tempNum  = 2;
 
-	speedFactor = 1;
-	wantedSpeedFactor = 1;
-	paused = false;
-	godMode = false;
-	cheatEnabled = false;
-	noHelperAIs = false;
-	editDefsEnabled = false;
-
-	useLuaGaia = true;
-
-	memset(globalLOS, 0, sizeof(globalLOS));
-	log_framePrefixer_setFrameNumReference(&frameNum);
-
-	teamHandler = new CTeamHandler();
+	assert(teamHandler == NULL);
+	ResetState();
 }
 
 
 CGlobalSynced::~CGlobalSynced()
 {
 	SafeDelete(teamHandler);
+	assert(teamHandler == NULL);
 
 	log_framePrefixer_setFrameNumReference(NULL);
 }
 
 
+void CGlobalSynced::ResetState() {
+	speedFactor       = 1.0f;
+	wantedSpeedFactor = 1.0f;
+
+	paused  = false;
+	godMode = false;
+
+	cheatEnabled    = false;
+	noHelperAIs     = false;
+	editDefsEnabled = false;
+	useLuaGaia      = true;
+
+	memset(globalLOS, 0, sizeof(globalLOS));
+	log_framePrefixer_setFrameNumReference(&frameNum);
+
+	if (teamHandler == NULL) {
+		teamHandler = new CTeamHandler();
+	} else {
+		// less cavemanly than delete + new
+		teamHandler->ResetState();
+	}
+}
+
 void CGlobalSynced::LoadFromSetup(const CGameSetup* setup)
 {
-	noHelperAIs = setup->noHelperAIs;
-	useLuaGaia  = setup->useLuaGaia;
+	noHelperAIs     = setup->noHelperAIs;
+	useLuaGaia      = setup->useLuaGaia;
 
-	skirmishAIHandler.LoadFromSetup(*setup);
 	teamHandler->LoadFromSetup(setup);
+	skirmishAIHandler.LoadFromSetup(*setup);
 }
 
 /**
@@ -119,11 +131,12 @@ float CGlobalSynced::randFloat()
 float3 CGlobalSynced::randVector()
 {
 	float3 ret;
+
 	do {
-		ret.x = randFloat()*2-1;
-		ret.y = randFloat()*2-1;
-		ret.z = randFloat()*2-1;
-	} while(ret.SqLength()>1);
+		ret.x = randFloat() * 2.0f - 1.0f;
+		ret.y = randFloat() * 2.0f - 1.0f;
+		ret.z = randFloat() * 2.0f - 1.0f;
+	} while (ret.SqLength() > 1.0f);
 
 	return ret;
 }
