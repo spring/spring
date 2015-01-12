@@ -104,30 +104,56 @@ const std::vector<AllyTeam>& CGameSetup::GetAllyStartingData()
 
 
 
-CGameSetup::CGameSetup()
-	: fixedAllies(true)
-	, useLuaGaia(true)
-	, noHelperAIs(false)
+void CGameSetup::ResetState()
+{
+	fixedAllies = true;
+	useLuaGaia = true;
+	noHelperAIs = false;
 
-	, ghostedBuildings(true)
-	, disableMapDamage(false)
+	ghostedBuildings = true;
+	disableMapDamage = false;
 
-	, onlyLocal(false)
-	, hostDemo(false)
+	onlyLocal = false;
+	hostDemo = false;
 
-	, mapHash(0)
-	, modHash(0)
-	, mapSeed(0)
+	mapHash = 0;
+	modHash = 0;
+	mapSeed = 0;
 
-	, gameStartDelay(0)
-	, numDemoPlayers(0)
-	, maxUnitsPerTeam(1500)
+	gameStartDelay = 0;
+	numDemoPlayers = 0;
+	maxUnitsPerTeam = 1500;
 
-	, maxSpeed(0.0f)
-	, minSpeed(0.0f)
+	maxSpeed = 0.0f;
+	minSpeed = 0.0f;
 
-	, startPosType(StartPos_Fixed)
-{}
+	startPosType = StartPos_Fixed;
+
+
+	mapName.clear();
+	modName.clear();
+	gameID.clear();
+
+	gameSetupText.clear();
+	demoName.clear();
+	saveName.clear();
+
+
+	playerRemap.clear();
+	teamRemap.clear();
+	allyteamRemap.clear();
+
+	playerStartingData.clear();
+	teamStartingData.clear();
+	allyStartingData.clear();
+	skirmishAIStartingData.clear();
+	mutatorsList.clear();
+
+	restrictedUnits.clear();
+
+	ClearMapOptions();
+	ClearModOptions();
+}
 
 void CGameSetup::PostLoad()
 {
@@ -437,7 +463,8 @@ void CGameSetup::RemapTeams()
 			throw content_error("invalid AI.Team in GameSetup script");
 
 		skirmishAIStartingData[a].team = teamRemap[skirmishAIStartingData[a].team];
-		team_skirmishAI[skirmishAIStartingData[a].team] = &(skirmishAIStartingData[a]);
+		// unused (also seems redundant)
+		// team_skirmishAI[skirmishAIStartingData[a].team] = &(skirmishAIStartingData[a]);
 	}
 }
 
@@ -455,6 +482,8 @@ void CGameSetup::RemapAllyteams()
 // TODO: RemapSkirmishAIs()
 bool CGameSetup::Init(const std::string& buf)
 {
+	ResetState();
+
 	// Copy buffer contents
 	gameSetupText = buf;
 

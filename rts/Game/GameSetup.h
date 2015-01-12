@@ -21,7 +21,7 @@ class CGameSetup
 	CR_DECLARE_STRUCT(CGameSetup)
 
 public:
-	CGameSetup();
+	CGameSetup() { ResetState(); }
 
 	static void LoadSavedScript(const std::string& file, const std::string& script);
 
@@ -32,8 +32,11 @@ public:
 	static const std::vector<TeamBase>& GetTeamStartingData();
 	static const std::vector<AllyTeam>& GetAllyStartingData();
 
+	void ResetState();
 	void PostLoad();
+
 	bool Init(const std::string& script);
+
 	/**
 	 * @brief Load startpositions from map/script
 	 * @pre numTeams and startPosType initialized
@@ -44,6 +47,9 @@ public:
 	 * is not known before CPreGame recieves the gamedata from the server.
 	 */
 	void LoadStartPositions(bool withoutMap = false);
+
+	void ClearMapOptions() { mapOptions.clear(); }
+	void ClearModOptions() { modOptions.clear(); }
 
 	int GetRestrictedUnitLimit(const std::string& name, int defLimit) const {
 		const std::map<std::string, int>::const_iterator it = restrictedUnits.find(name);
@@ -62,6 +68,7 @@ public:
 
 	const std::string MapFile() const;
 
+
 	enum StartPosType {
 		StartPos_Fixed            = 0,
 		StartPos_Random           = 1,
@@ -69,6 +76,7 @@ public:
 		StartPos_ChooseBeforeGame = 3,
 		StartPos_Last             = 3  // last entry in enum (for user input check)
 	};
+
 
 	bool fixedAllies;
 	bool useLuaGaia;
@@ -162,7 +170,6 @@ private:
 	std::vector<SkirmishAIData> skirmishAIStartingData;
 	std::vector<std::string> mutatorsList;
 
-	std::map<int, const SkirmishAIData*> team_skirmishAI;
 	std::map<std::string, int> restrictedUnits;
 
 	std::map<std::string, std::string> mapOptions;
