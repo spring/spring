@@ -11,7 +11,10 @@
 
 class ILoadSaveHandler;
 class GameData;
+class CGameSetup;
 class ClientSetup;
+
+
 namespace netcode {
 	class RawPacket;
 }
@@ -46,6 +49,7 @@ public:
 	bool Update();
 
 private:
+	void AddGameSetupArchivesToVFS(const CGameSetup* setup, bool mapOnly);
 	void StartServer(const std::string& setupscript);
 
 	/// reads out map, mod and script from demos (with or without a gameSetupScript)

@@ -64,6 +64,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileSystemInitializer.h"
+#include "System/FileSystem/VFSHandler.h"
 #include "System/Platform/CmdLineParams.h"
 #include "System/Platform/Misc.h"
 #include "System/Platform/errorhandler.h"
@@ -838,8 +839,10 @@ int SpringApp::Update()
 		glEnable(GL_MULTISAMPLE_ARB);
 
 	int ret = 1;
+
 	if (activeController) {
 		ret = activeController->Update();
+
 		if (ret) {
 			ScopedTimer cputimer("GameController::Draw");
 			ret = activeController->Draw();

@@ -34,7 +34,7 @@
 #include "System/TdfParser.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/ArchiveScanner.h"
-#include "System/FileSystem/FileHandler.h"
+//// #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/LoadSave/DemoRecorder.h"
@@ -173,6 +173,27 @@ bool CPreGame::Update()
 	return true;
 }
 
+void CPreGame::AddGameSetupArchivesToVFS(const CGameSetup* setup, bool mapOnly)
+{
+	LOG("[%s] using map: %s", __FUNCTION__, setup->mapName.c_str());
+	// Load Map archive
+	vfsHandler->AddArchiveWithDeps(setup->mapName, false);
+
+	if (mapOnly)
+		return;
+
+	// Load Mutators (if any)
+	for (const std::string& mut: setup->GetMutatorsCont()) {
+		LOG("[%s] using mutator: %s", __FUNCTION__, mut.c_str());
+		vfsHandler->AddArchiveWithDeps(mut, false);
+	}
+
+	// Load Game archive
+	vfsHandler->AddArchiveWithDeps(setup->modName, false);
+
+	modArchive = archiveScanner->ArchiveFromName(setup->modName);
+	LOG("[%s] using game: %s (archive: %s)", __FUNCTION__, setup->modName.c_str(), modArchive.c_str());
+}
 
 void CPreGame::StartServer(const std::string& setupscript)
 {
@@ -195,7 +216,7 @@ void CPreGame::StartServer(const std::string& setupscript)
 
 	// We must map the map into VFS this early, because server needs the start positions.
 	// Take care that MapInfo isn't loaded here, as map options aren't available to it yet.
-	vfsHandler->AddArchiveWithDeps(setup->mapName, false);
+	AddGameSetupArchivesToVFS(setup, true);
 
 	// Loading the start positions executes the map's Lua.
 	// This means start positions can NOT be influenced by map options.
@@ -466,23 +487,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	}
 
 	// Load archives into VFS
-	{
-		// Load Map archive
-		LOG("Using map: %s", gameSetup->mapName.c_str());
-		vfsHandler->AddArchiveWithDeps(gameSetup->mapName, false);
-
-		// Load Mutators (if any)
-		for (const std::string& mut: gameSetup->GetMutatorsCont()) {
-			LOG("Using mutator: %s", mut.c_str());
-			vfsHandler->AddArchiveWithDeps(mut, false);
-		}
-
-		// Load Game archive
-		LOG("Using game: %s", gameSetup->modName.c_str());
-		vfsHandler->AddArchiveWithDeps(gameSetup->modName, false);
-		modArchive = archiveScanner->ArchiveFromName(gameSetup->modName);
-		LOG("Using game archive: %s", modArchive.c_str());
-	}
+	AddGameSetupArchivesToVFS(gameSetup, false);
 
 	// Check checksums of map & game
 	try {
