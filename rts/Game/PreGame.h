@@ -51,6 +51,7 @@ public:
 private:
 	void AddGameSetupArchivesToVFS(const CGameSetup* setup, bool mapOnly);
 	void StartServer(const std::string& setupscript);
+	void StartServerForDemo(const CGameSetup* tempGameSetup, GameData* demoGameData, const std::string& demoName);
 
 	/// reads out map, mod and script from demos (with or without a gameSetupScript)
 	void ReadDataFromDemo(const std::string& demoName);
@@ -65,8 +66,9 @@ private:
 
 	We won't start until we received this
 	*/
-	boost::shared_ptr<const GameData> gameData;
-	boost::shared_ptr<const ClientSetup> settings;
+	      boost::shared_ptr<const GameData> gameData;
+	const boost::shared_ptr<const ClientSetup> clientSetup;
+
 	std::string modArchive;
 	ILoadSaveHandler* savefile;
 

@@ -59,7 +59,7 @@ CONFIG(bool, DemoFromDemo).defaultValue(false);
 CPreGame* pregame = NULL;
 
 CPreGame::CPreGame(boost::shared_ptr<const ClientSetup> setup)
-	: settings(setup)
+	: clientSetup(setup)
 	, savefile(NULL)
 	, timer(spring_gettime())
 	, wantDemo(true)
@@ -68,16 +68,16 @@ CPreGame::CPreGame(boost::shared_ptr<const ClientSetup> setup)
 	activeController = this;
 
 #ifdef SYNCDEBUG
-	CSyncDebugger::GetInstance()->Initialize(settings->isHost, 64); //FIXME: add actual number of player
+	CSyncDebugger::GetInstance()->Initialize(clientSetup->isHost, 64); //FIXME: add actual number of player
 #endif
 
-	if (!settings->isHost) {
+	if (!clientSetup->isHost) {
 		//don't allow luasocket to connect to the host
-		LOG("Connecting to: %s:%i", settings->hostIP.c_str(), settings->hostPort);
-		luaSocketRestrictions->addRule(CLuaSocketRestrictions::UDP_CONNECT, settings->hostIP, settings->hostPort, false);
-		net->InitClient(settings->hostIP.c_str(), settings->hostPort, settings->myPlayerName, settings->myPasswd, SpringVersion::GetFull());
+		LOG("Connecting to: %s:%i", clientSetup->hostIP.c_str(), clientSetup->hostPort);
+		luaSocketRestrictions->addRule(CLuaSocketRestrictions::UDP_CONNECT, clientSetup->hostIP, clientSetup->hostPort, false);
+		net->InitClient(clientSetup->hostIP.c_str(), clientSetup->hostPort, clientSetup->myPlayerName, clientSetup->myPasswd, SpringVersion::GetFull());
 	} else {
-		LOG("Hosting on: %s:%i", settings->hostIP.c_str(), settings->hostPort);
+		LOG("Hosting on: %s:%i", clientSetup->hostIP.c_str(), clientSetup->hostPort);
 		net->InitLocalClient();
 	}
 }
@@ -93,13 +93,13 @@ CPreGame::~CPreGame()
 
 void CPreGame::LoadSetupscript(const std::string& script)
 {
-	assert(settings->isHost);
+	assert(clientSetup->isHost);
 	StartServer(script);
 }
 
 void CPreGame::LoadDemo(const std::string& demo)
 {
-	assert(settings->isHost);
+	assert(clientSetup->isHost);
 
 	if (!configHandler->GetBool("DemoFromDemo"))
 		wantDemo = false;
@@ -109,7 +109,7 @@ void CPreGame::LoadDemo(const std::string& demo)
 
 void CPreGame::LoadSavefile(const std::string& save)
 {
-	assert(settings->isHost);
+	assert(clientSetup->isHost);
 	savefile = ILoadSaveHandler::Create();
 	savefile->LoadGameStartInfo(save.c_str());
 
@@ -139,7 +139,7 @@ bool CPreGame::Draw()
 	font->Begin();
 
 	if (!net->Connected()) {
-		if (settings->isHost)
+		if (clientSetup->isHost)
 			font->glFormat(0.5f, 0.48f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Waiting for server to start");
 		else
 			font->glFormat(0.5f, 0.48f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Connecting to server (%ds)", (spring_gettime() - timer).toSecsi());
@@ -149,7 +149,7 @@ bool CPreGame::Draw()
 
 	font->glFormat(0.60f, 0.40f, 1.0f, FONT_SCALE | FONT_NORM, "Connecting to:   %s", net->ConnectionStr().c_str());
 
-	font->glFormat(0.60f, 0.35f, 1.0f, FONT_SCALE | FONT_NORM, "User name: %s", settings->myPlayerName.c_str());
+	font->glFormat(0.60f, 0.35f, 1.0f, FONT_SCALE | FONT_NORM, "User name: %s", clientSetup->myPlayerName.c_str());
 
 	font->glFormat(0.5f,0.25f,0.8f,FONT_CENTER | FONT_SCALE | FONT_NORM, "Press SHIFT + ESC to quit");
 	// credits
@@ -230,9 +230,9 @@ void CPreGame::StartServer(const std::string& setupscript)
 
 	good_fpu_control_registers("before CGameServer creation");
 	startupData->SetSetup(setup->gameSetupText);
-	gameServer = new CGameServer(settings->hostIP, settings->hostPort, startupData, setup);
+	gameServer = new CGameServer(clientSetup->hostIP, clientSetup->hostPort, startupData, setup);
 	delete startupData;
-	gameServer->AddLocalClient(settings->myPlayerName, SpringVersion::GetFull());
+	gameServer->AddLocalClient(clientSetup->myPlayerName, SpringVersion::GetFull());
 	good_fpu_control_registers("after CGameServer creation");
 }
 
@@ -348,89 +348,101 @@ void CPreGame::UpdateClientNet()
 	}
 }
 
+
+void CPreGame::StartServerForDemo(const CGameSetup* tempGameSetup, GameData* demoGameData, const std::string& demoName)
+{
+	TdfParser script(demoGameData->GetSetup().c_str(), demoGameData->GetSetup().size());
+	TdfParser::TdfSection* tgame = script.GetRootSection()->sections["game"];
+
+	std::ostringstream moddedDemoScript;
+	std::string playerStr;
+
+	{
+		// modify the demo's start-script so it can be used to watch the demo
+		tgame->AddPair("MapName", tempGameSetup->mapName);
+		tgame->AddPair("Gametype", tempGameSetup->modName);
+		tgame->AddPair("Demofile", demoName);
+		tgame->AddPair("OnlyLocal", 1);
+
+		for (std::map<std::string, TdfParser::TdfSection*>::iterator it = tgame->sections.begin(); it != tgame->sections.end(); ++it) {
+			if (it->first.size() > 6 && it->first.substr(0, 6) == "player") {
+				it->second->AddPair("isfromdemo", 1);
+			}
+		}
+
+		// add local spectator (and assert we didn't already have MAX_PLAYERS players)
+		for (int myPlayerNum = MAX_PLAYERS - 1; myPlayerNum >= 0; --myPlayerNum) {
+			char section[50];
+			sprintf(section, "game\\player%i", myPlayerNum);
+			string s(section);
+
+			if (script.SectionExist(s)) {
+				sprintf(section, "player%i", myPlayerNum + 1);
+				playerStr = std::string(section);
+				break;
+			}
+		}
+
+		assert(!playerStr.empty());
+
+		TdfParser::TdfSection* me = tgame->construct_subsection(playerStr);
+		me->AddPair("name", clientSetup->myPlayerName);
+		me->AddPair("spectator", 1);
+		tgame->AddPair("myplayername", clientSetup->myPlayerName);
+
+		// is this needed?
+		TdfParser::TdfSection* modopts = tgame->construct_subsection("MODOPTIONS");
+		modopts->AddPair("MaxSpeed", 20);
+	}
+
+
+	script.print(moddedDemoScript);
+
+	demoGameData->SetSetup(moddedDemoScript.str());
+	CGameSetup* demoGameSetup = new CGameSetup();
+
+	if (!demoGameSetup->Init(moddedDemoScript.str()))
+		throw content_error("Demo contains incorrect script");
+
+	LOG("[%s] starting GameServer", __FUNCTION__);
+	good_fpu_control_registers("before CGameServer creation");
+
+	gameServer = new CGameServer(clientSetup->hostIP, clientSetup->hostPort, demoGameData, demoGameSetup);
+	gameServer->AddLocalClient(clientSetup->myPlayerName, SpringVersion::GetFull());
+
+	good_fpu_control_registers("after CGameServer creation");
+	LOG("[%s] started GameServer", __FUNCTION__);
+}
+
 void CPreGame::ReadDataFromDemo(const std::string& demoName)
 {
 	ScopedOnceTimer startserver("PreGame::ReadDataFromDemo");
-	assert(!gameServer);
-	LOG("Pre-scanning demo file for game data...");
+	assert(gameServer == NULL);
+	LOG("[%s] pre-scanning demo file for game data...", __FUNCTION__);
 	CDemoReader scanner(demoName, 0);
 
 	boost::shared_ptr<const RawPacket> buf(scanner.GetData(static_cast<float>(FLT_MAX)));
 
 	while (buf) {
 		if (buf->data[0] == NETMSG_GAMEDATA) {
-			GameData* data = NULL;
+			GameData* demoGameData = NULL;
+
 			try {
-				data = new GameData(boost::shared_ptr<const RawPacket>(buf));
+				demoGameData = new GameData(boost::shared_ptr<const RawPacket>(buf));
 			} catch (const netcode::UnpackPacketException& ex) {
 				throw content_error(std::string("Demo contains invalid GameData: ") + ex.what());
 			}
 
-			CGameSetup* demoScript = new CGameSetup();
-			if (!demoScript->Init(data->GetSetup())) {
+			CGameSetup* tempGameSetup = new CGameSetup();
+
+			if (!tempGameSetup->Init(demoGameData->GetSetup())) {
 				throw content_error("Demo contains incorrect script");
 			}
 
-			// modify the startscriptscript so it can be used to watch the demo
-			TdfParser script(data->GetSetup().c_str(), data->GetSetup().size());
-			TdfParser::TdfSection* tgame = script.GetRootSection()->sections["game"];
+			StartServerForDemo(tempGameSetup, demoGameData, demoName);
 
-			tgame->AddPair("MapName", demoScript->mapName);
-			tgame->AddPair("Gametype", demoScript->modName);
-			tgame->AddPair("Demofile", demoName);
-			tgame->AddPair("OnlyLocal", 1);
-
-			for (std::map<std::string, TdfParser::TdfSection*>::iterator it = tgame->sections.begin(); it != tgame->sections.end(); ++it) {
-				if (it->first.size() > 6 && it->first.substr(0, 6) == "player") {
-					it->second->AddPair("isfromdemo", 1);
-				}
-			}
-
-			// add local spectator (and assert we didn't already have MAX_PLAYERS players)
-			int myPlayerNum;
-			string playerStr;
-			for (myPlayerNum = MAX_PLAYERS - 1; myPlayerNum >= 0; --myPlayerNum) {
-				char section[50];
-				sprintf(section, "game\\player%i", myPlayerNum);
-				string s(section);
-
-				if (script.SectionExist(s)) {
-					++myPlayerNum;
-					sprintf(section, "player%i", myPlayerNum);
-					playerStr = std::string(section);
-					break;
-				}
-			}
-
-			assert(!playerStr.empty());
-
-
-			TdfParser::TdfSection* me = tgame->construct_subsection(playerStr);
-			me->AddPair("name", settings->myPlayerName);
-			me->AddPair("spectator", 1);
-			tgame->AddPair("myplayername", settings->myPlayerName);
-
-			TdfParser::TdfSection* modopts = tgame->construct_subsection("MODOPTIONS");
-			modopts->AddPair("MaxSpeed", 20);
-
-			std::ostringstream buf;
-			script.print(buf);
-
-			data->SetSetup(buf.str());
-			CGameSetup* tempSetup = new CGameSetup();
-
-			if (!tempSetup->Init(buf.str())) {
-				throw content_error("Demo contains incorrect script");
-			}
-			LOG("Starting GameServer");
-			good_fpu_control_registers("before CGameServer creation");
-
-			gameServer = new CGameServer(settings->hostIP, settings->hostPort, data, tempSetup);
-			gameServer->AddLocalClient(settings->myPlayerName, SpringVersion::GetFull());
-			delete data;
-
-			good_fpu_control_registers("after CGameServer creation");
-			LOG("GameServer started");
+			delete tempGameSetup;
+			delete demoGameData;
 			break;
 		}
 
@@ -440,7 +452,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 		buf.reset(scanner.GetData(FLT_MAX));
 	}
 
-	assert(gameServer);
+	assert(gameServer != NULL);
 }
 
 void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> packet)
@@ -453,18 +465,19 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 		throw content_error(std::string("Server sent us invalid GameData: ") + ex.what());
 	}
 
-	CGameSetup* temp = new CGameSetup();
+	CGameSetup* tempGameSetup = new CGameSetup();
 
-	if (temp->Init(gameData->GetSetup())) {
-		if (settings->isHost) {
+	if (tempGameSetup->Init(gameData->GetSetup())) {
+		if (clientSetup->isHost) {
 			const std::string& setupTextStr = gameData->GetSetup();
 			std::fstream setupTextFile("_script.txt", std::ios::out);
 
 			setupTextFile.write(setupTextStr.c_str(), setupTextStr.size());
 			setupTextFile.close();
 		}
+
 		// set the global instance
-		gameSetup = temp;
+		gameSetup = tempGameSetup;
 		gu->LoadFromSetup(gameSetup);
 		gs->LoadFromSetup(gameSetup);
 		CPlayer::UpdateControlledTeams();
