@@ -32,32 +32,8 @@ const int* CLuaRules::currentCobArgs = NULL;
 
 static boost::mutex m_singleton;
 
-
-void CLuaRules::LoadHandler()
-{
-	{
-		std::lock_guard<boost::mutex> lk(m_singleton);
-		if (luaRules) return;
-
-		luaRules = new CLuaRules();
-	}
-
-	if (!luaRules->IsValid()) {
-		FreeHandler();
-	}
-}
-
-
-void CLuaRules::FreeHandler()
-{
-	std::lock_guard<boost::mutex> lk(m_singleton);
-	if (!luaRules) return;
-
-	auto* inst = luaRules;
-	luaRules = NULL;
-	inst->KillLua();
-	delete inst;
-}
+DECL_LOAD_HANDLER(CLuaRules, luaRules)
+DECL_FREE_HANDLER(CLuaRules, luaRules)
 
 
 /******************************************************************************/
