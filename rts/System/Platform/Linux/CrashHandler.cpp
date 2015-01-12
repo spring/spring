@@ -531,13 +531,17 @@ static void LogStacktrace(const int logLevel, StackTrace& stacktrace)
 	for (auto fit = stacktrace.begin(); fit != stacktrace.end(); fit++) {
         for (auto eit = fit->entries.begin(); eit != fit->entries.end(); eit++) {
 			eit->abbrev_funcname = eit->funcname;
-			eit->abbrev_fileline  = eit->fileline;
+			std::string fileline = eit->fileline;
+			if (fileline[1] == '?') {  // case "??:?", ":?"
+				fileline = fit->symbol;  // print raw backtrace_symbol
+			}
+			eit->abbrev_fileline = fileline;
 			int abbrev_start = 0;
-			if (eit->fileline[0] == '/') { // See if we can shorten the file/line bit by removing the common path
-				if (CommonStringLength(eit->fileline, exe_path, &abbrev_start) > 1) { // i.e. one char for first '/'
-					eit->abbrev_fileline = std::string(".../") + eit->fileline.substr(abbrev_start, std::string::npos);
-				} else if (CommonStringLength(eit->fileline, cwd_path, &abbrev_start) > 1) {
-					eit->abbrev_fileline = std::string("./") + eit->fileline.substr(abbrev_start, std::string::npos);
+			if (fileline[0] == '/') { // See if we can shorten the file/line bit by removing the common path
+				if (CommonStringLength(fileline, exe_path, &abbrev_start) > 1) { // i.e. one char for first '/'
+					eit->abbrev_fileline = std::string(".../") + fileline.substr(abbrev_start, std::string::npos);
+				} else if (CommonStringLength(fileline, cwd_path, &abbrev_start) > 1) {
+					eit->abbrev_fileline = std::string("./") + fileline.substr(abbrev_start, std::string::npos);
 				}
 			}
 
