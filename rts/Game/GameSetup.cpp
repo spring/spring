@@ -15,6 +15,7 @@
 #include <map>
 #include <cctype>
 #include <cstring>
+#include <fstream>
 #include <boost/format.hpp>
 
 CR_BIND(CGameSetup,)
@@ -26,23 +27,46 @@ CR_REG_METADATA(CGameSetup, (
 CGameSetup* gameSetup = NULL;
 
 
+bool CGameSetup::LoadReceivedScript(const std::string& script, bool isHost)
+{
+	CGameSetup* tempGameSetup = new CGameSetup();
 
-void CGameSetup::LoadSavedScript(const std::string& file, const std::string& script)
+	if (!tempGameSetup->Init(script)) {
+		delete tempGameSetup;
+		return false;
+	}
+
+	if (isHost) {
+		std::fstream setupTextFile("_script.txt", std::ios::out);
+
+		// copy the script to a local file for inspection
+		setupTextFile.write(script.c_str(), script.size());
+		setupTextFile.close();
+	}
+
+	// set the global instance
+	gameSetup = tempGameSetup;
+	return true;
+}
+
+bool CGameSetup::LoadSavedScript(const std::string& file, const std::string& script)
 {
 	if (script.empty())
-		return;
+		return false;
 	if (gameSetup != NULL)
-		return;
+		return false;
 
-	CGameSetup* temp = new CGameSetup();
+	CGameSetup* tempGameSetup = new CGameSetup();
 
-	if (!temp->Init(script)) {
-		delete temp; temp = NULL;
-	} else {
-		temp->saveName = file;
-		// set the global instance
-		gameSetup = temp;
+	if (!tempGameSetup->Init(script)) {
+		delete tempGameSetup;
+		return false;
 	}
+
+	tempGameSetup->saveName = file;
+	// set the global instance
+	gameSetup = tempGameSetup;
+	return true;
 }
 
 

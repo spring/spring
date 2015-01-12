@@ -23,7 +23,8 @@ class CGameSetup
 public:
 	CGameSetup() { ResetState(); }
 
-	static void LoadSavedScript(const std::string& file, const std::string& script);
+	static bool LoadReceivedScript(const std::string& script, bool isHost);
+	static bool LoadSavedScript(const std::string& file, const std::string& script);
 
 	// these return dummy containers if the global gameSetup instance is NULL
 	static const std::map<std::string, std::string>& GetMapOptions();

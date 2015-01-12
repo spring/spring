@@ -1,9 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <map>
-#include <SDL_keycode.h>
-#include <set>
 #include <cfloat>
+
+#include <SDL_keycode.h>
 
 #include "PreGame.h"
 
@@ -199,39 +199,44 @@ void CPreGame::StartServer(const std::string& setupscript)
 {
 	assert(!gameServer);
 	ScopedOnceTimer startserver("PreGame::StartServer");
-	GameData* startupData = new GameData();
-	CGameSetup* setup = new CGameSetup();
-	setup->Init(setupscript);
 
-	startupData->SetRandomSeed(static_cast<unsigned>(gu->RandInt()));
+	GameData* startGameData = new GameData();
+	CGameSetup* startGameSetup = new CGameSetup();
 
-	if (setup->mapName.empty()) {
+	startGameSetup->Init(setupscript);
+	startGameData->SetRandomSeed(static_cast<unsigned>(gu->RandInt()));
+
+	if (startGameSetup->mapName.empty()) {
 		throw content_error("No map selected in startscript");
 	}
 
-	if (setup->mapSeed != 0) {
-		CSimpleMapGenerator gen(setup);
+	if (startGameSetup->mapSeed != 0) {
+		CSimpleMapGenerator gen(startGameSetup);
 		gen.Generate();
 	}
 
 	// We must map the map into VFS this early, because server needs the start positions.
 	// Take care that MapInfo isn't loaded here, as map options aren't available to it yet.
-	AddGameSetupArchivesToVFS(setup, true);
+	AddGameSetupArchivesToVFS(startGameSetup, true);
 
 	// Loading the start positions executes the map's Lua.
 	// This means start positions can NOT be influenced by map options.
 	// (Which is OK, since unitsync does not have map options available either.)
-	setup->LoadStartPositions();
+	startGameSetup->LoadStartPositions();
 
-	const std::string& modArchive = archiveScanner->ArchiveFromName(setup->modName);
-	const std::string& mapArchive = archiveScanner->ArchiveFromName(setup->mapName);
-	startupData->SetModChecksum(archiveScanner->GetArchiveCompleteChecksum(modArchive));
-	startupData->SetMapChecksum(archiveScanner->GetArchiveCompleteChecksum(mapArchive));
+	const std::string& modArchive = archiveScanner->ArchiveFromName(startGameSetup->modName);
+	const std::string& mapArchive = archiveScanner->ArchiveFromName(startGameSetup->mapName);
+	startGameData->SetModChecksum(archiveScanner->GetArchiveCompleteChecksum(modArchive));
+	startGameData->SetMapChecksum(archiveScanner->GetArchiveCompleteChecksum(mapArchive));
 
 	good_fpu_control_registers("before CGameServer creation");
-	startupData->SetSetup(setup->gameSetupText);
-	gameServer = new CGameServer(clientSetup->hostIP, clientSetup->hostPort, startupData, setup);
-	delete startupData;
+	startGameData->SetSetup(startGameSetup->gameSetupText);
+	gameServer = new CGameServer(clientSetup.get(), startGameData, startGameSetup);
+
+	delete startGameData;
+	// GameServer maintains a pointer to this
+	// delete startGameSetup;
+
 	gameServer->AddLocalClient(clientSetup->myPlayerName, SpringVersion::GetFull());
 	good_fpu_control_registers("after CGameServer creation");
 }
@@ -351,7 +356,7 @@ void CPreGame::UpdateClientNet()
 
 void CPreGame::StartServerForDemo(const CGameSetup* tempGameSetup, GameData* demoGameData, const std::string& demoName)
 {
-	TdfParser script(demoGameData->GetSetup().c_str(), demoGameData->GetSetup().size());
+	TdfParser script((demoGameData->GetSetupText()).c_str(), (demoGameData->GetSetupText()).size());
 	TdfParser::TdfSection* tgame = script.GetRootSection()->sections["game"];
 
 	std::ostringstream moddedDemoScript;
@@ -407,7 +412,7 @@ void CPreGame::StartServerForDemo(const CGameSetup* tempGameSetup, GameData* dem
 	LOG("[%s] starting GameServer", __FUNCTION__);
 	good_fpu_control_registers("before CGameServer creation");
 
-	gameServer = new CGameServer(clientSetup->hostIP, clientSetup->hostPort, demoGameData, demoGameSetup);
+	gameServer = new CGameServer(clientSetup.get(), demoGameData, demoGameSetup);
 	gameServer->AddLocalClient(clientSetup->myPlayerName, SpringVersion::GetFull());
 
 	good_fpu_control_registers("after CGameServer creation");
@@ -435,7 +440,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 
 			CGameSetup* tempGameSetup = new CGameSetup();
 
-			if (!tempGameSetup->Init(demoGameData->GetSetup())) {
+			if (!tempGameSetup->Init(demoGameData->GetSetupText())) {
 				throw content_error("Demo contains incorrect script");
 			}
 
@@ -465,21 +470,11 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 		throw content_error(std::string("Server sent us invalid GameData: ") + ex.what());
 	}
 
-	CGameSetup* tempGameSetup = new CGameSetup();
-
-	if (tempGameSetup->Init(gameData->GetSetup())) {
-		if (clientSetup->isHost) {
-			const std::string& setupTextStr = gameData->GetSetup();
-			std::fstream setupTextFile("_script.txt", std::ios::out);
-
-			setupTextFile.write(setupTextStr.c_str(), setupTextStr.size());
-			setupTextFile.close();
-		}
-
-		// set the global instance
-		gameSetup = tempGameSetup;
+	if (CGameSetup::LoadReceivedScript(gameData->GetSetupText(), clientSetup->isHost)) {
+		assert(gameSetup != NULL);
 		gu->LoadFromSetup(gameSetup);
 		gs->LoadFromSetup(gameSetup);
+		// do we really need to do this so early?
 		CPlayer::UpdateControlledTeams();
 	} else {
 		throw content_error("Server sent us incorrect script");
@@ -518,7 +513,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 		assert(net->GetDemoRecorder() == NULL);
 
 		CDemoRecorder* recorder = new CDemoRecorder(gameSetup->mapName, gameSetup->modName, false);
-		recorder->WriteSetupText(gameData->GetSetup());
+		recorder->WriteSetupText(gameData->GetSetupText());
 		recorder->SaveToDemo(packet->data, packet->length, net->GetPacketTime(gs->frameNum));
 		net->SetDemoRecorder(recorder);
 

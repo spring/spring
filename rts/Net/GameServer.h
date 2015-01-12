@@ -40,6 +40,7 @@ class CDemoReader;
 class Action;
 class CDemoRecorder;
 class AutohostInterface;
+class ClientSetup;
 class CGameSetup;
 class ChatMessage;
 class GameParticipant;
@@ -68,7 +69,7 @@ class CGameServer
 {
 	friend class CCregLoadSaveHandler; // For initializing server state after load
 public:
-	CGameServer(const std::string& hostIP, int hostPort, const GameData* const gameData, const CGameSetup* const setup);
+	CGameServer(const ClientSetup* const newClientSetup, const GameData* const newGameData, const CGameSetup* const newGameSetup);
 	~CGameServer();
 
 	CGameServer(const CGameServer&) = delete; // no-copy
@@ -169,8 +170,8 @@ private:
 
 private:
 	/////////////////// game settings ///////////////////
-	boost::scoped_ptr<const CGameSetup> setup;
-	boost::scoped_ptr<const GameData> gameData;
+	boost::scoped_ptr<const CGameSetup> myGameSetup;
+	boost::scoped_ptr<const GameData> myGameData;
 
 	/////////////////// game status variables ///////////////////
 	unsigned char playerNumberMap[256];

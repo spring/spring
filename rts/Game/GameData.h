@@ -25,7 +25,7 @@ public:
 	void SetModChecksum(const unsigned checksum);
 	void SetRandomSeed(const unsigned seed);
 	
-	const std::string& GetSetup() const { return setupText; }
+	const std::string& GetSetupText() const { return setupText; }
 	unsigned GetMapChecksum() const { return mapChecksum; }
 	unsigned GetModChecksum() const { return modChecksum; }
 	unsigned GetRandomSeed() const { return randomSeed; }
