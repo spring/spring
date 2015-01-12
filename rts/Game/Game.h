@@ -64,7 +64,7 @@ private:
 	void PostLoadRendering();
 	void LoadInterface();
 	void LoadLua();
-	void InitSkirmishAIs();
+	void LoadSkirmishAIs();
 	void LoadFinalize();
 	void PostLoad();
 

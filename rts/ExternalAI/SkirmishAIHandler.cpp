@@ -30,19 +30,40 @@ CR_REG_METADATA(CSkirmishAIHandler, (
 ))
 
 
-CSkirmishAIHandler& CSkirmishAIHandler::GetInstance()
+// not extern'ed, so static
+static CSkirmishAIHandler* gSkirmishAIHandler = NULL;
+
+CSkirmishAIHandler* CSkirmishAIHandler::GetInstance()
 {
-	static CSkirmishAIHandler mySingleton;
-	return mySingleton;
+	if (gSkirmishAIHandler == NULL) {
+		gSkirmishAIHandler = new CSkirmishAIHandler();
+	}
+
+	return gSkirmishAIHandler;
 }
 
-CSkirmishAIHandler::CSkirmishAIHandler():
-	gameInitialized(false), currentAIId(MAX_AIS)
+void CSkirmishAIHandler::FreeInstance(CSkirmishAIHandler* handler)
+{
+	assert(handler == gSkirmishAIHandler);
+	delete handler;
+	gSkirmishAIHandler = NULL;
+}
+
+
+
+CSkirmishAIHandler::CSkirmishAIHandler(): currentAIId(MAX_AIS), gameInitialized(false)
 {
 }
 
-CSkirmishAIHandler::~CSkirmishAIHandler()
+void CSkirmishAIHandler::ResetState()
 {
+	id_ai.clear();
+	id_libKey.clear();
+
+	team_localAIsInCreation.clear();
+	id_dieReason.clear();
+
+	luaAIShortNames.clear();
 }
 
 void CSkirmishAIHandler::LoadFromSetup(const CGameSetup& setup) {
@@ -54,20 +75,18 @@ void CSkirmishAIHandler::LoadFromSetup(const CGameSetup& setup) {
 
 void CSkirmishAIHandler::LoadPreGame() {
 
-	if (gameInitialized) {
+	if (gameInitialized)
 		return;
-	}
 
 	// Extract all Lua AI implementations short names
 	const std::vector< std::vector<InfoItem> >& luaAIImpls = luaAIImplHandler.LoadInfos();
-	for (std::vector< std::vector<InfoItem> >::const_iterator impl = luaAIImpls.begin();
-			impl != luaAIImpls.end(); ++impl) {
-		for (std::vector<InfoItem>::const_iterator info = impl->begin();
-				info != impl->end(); ++info) {
-			if (info->key == SKIRMISH_AI_PROPERTY_SHORT_NAME) {
-				assert(info->valueType == INFO_VALUE_TYPE_STRING);
-				luaAIShortNames.insert(info->valueTypeString);
-			}
+	for (auto impl = luaAIImpls.cbegin(); impl != luaAIImpls.cend(); ++impl) {
+		for (auto info = impl->cbegin(); info != impl->cend(); ++info) {
+			if (info->key != SKIRMISH_AI_PROPERTY_SHORT_NAME)
+				continue;
+
+			assert(info->valueType == INFO_VALUE_TYPE_STRING);
+			luaAIShortNames.insert(info->valueTypeString);
 		}
 	}
 
@@ -269,31 +288,45 @@ bool CSkirmishAIHandler::IsLuaAI(const SkirmishAIData& aiData) const {
 	return (luaAIShortNames.find(aiData.shortName) != luaAIShortNames.end());
 }
 
-void CSkirmishAIHandler::CompleteWithDefaultOptionValues(const size_t skirmishAIId) {
+void CSkirmishAIHandler::CompleteWithDefaultOptionValues(const size_t skirmishAIId)
+{
+	if (!gameInitialized)
+		return;
 
-	if (gameInitialized && IsLocalSkirmishAI(skirmishAIId)) {
-		IAILibraryManager* aiLibMan = IAILibraryManager::GetInstance();
-		const IAILibraryManager::T_skirmishAIInfos& aiInfos = aiLibMan->GetSkirmishAIInfos();
-		const SkirmishAIKey* aiKey = GetLocalSkirmishAILibraryKey(skirmishAIId);
-		if (aiKey != NULL) {
-			const IAILibraryManager::T_skirmishAIInfos::const_iterator inf = aiInfos.find(*aiKey);
-			if (inf != aiInfos.end()) {
-				const CSkirmishAILibraryInfo* aiInfo = inf->second;
-				const std::vector<Option>& options = aiInfo->GetOptions();
-				id_ai_t::iterator ai = id_ai.find(skirmishAIId);
-				if (ai != id_ai.end()) {
-					SkirmishAIData& aiData = ai->second;
-					std::vector<Option>::const_iterator oi;
-					for (oi = options.begin(); oi != options.end(); ++oi) {
-						if ((oi->typeCode != opt_error) &&
-								(oi->typeCode != opt_section) &&
-								(aiData.options.find(oi->key) == aiData.options.end())) {
-							aiData.optionKeys.push_back(oi->key);
-							aiData.options[oi->key] = option_getDefString(*oi);
-						}
-					}
-				}
-			}
+	if (!IsLocalSkirmishAI(skirmishAIId))
+		return;
+
+	const IAILibraryManager* aiLibMan = IAILibraryManager::GetInstance();
+	const IAILibraryManager::T_skirmishAIInfos& aiInfos = aiLibMan->GetSkirmishAIInfos();
+	const SkirmishAIKey* aiKey = GetLocalSkirmishAILibraryKey(skirmishAIId);
+
+	if (aiKey == NULL)
+		return;
+
+	const IAILibraryManager::T_skirmishAIInfos::const_iterator inf = aiInfos.find(*aiKey);
+
+	if (inf == aiInfos.end())
+		return;
+
+	const CSkirmishAILibraryInfo* aiInfo = inf->second;
+	const std::vector<Option>& options = aiInfo->GetOptions();
+
+	id_ai_t::iterator ai = id_ai.find(skirmishAIId);
+
+	if (ai == id_ai.end())
+		return;
+
+	SkirmishAIData& aiData = ai->second;
+
+	for (auto oi = options.cbegin(); oi != options.cend(); ++oi) {
+		if (oi->typeCode == opt_error)
+			continue;
+		if (oi->typeCode == opt_section)
+			continue;
+
+		if (aiData.options.find(oi->key) == aiData.options.end()) {
+			aiData.optionKeys.push_back(oi->key);
+			aiData.options[oi->key] = option_getDefString(*oi);
 		}
 	}
 }

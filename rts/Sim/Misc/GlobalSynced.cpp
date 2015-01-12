@@ -85,10 +85,12 @@ void CGlobalSynced::ResetState() {
 	log_framePrefixer_setFrameNumReference(&frameNum);
 
 	if (teamHandler == NULL) {
+		// needs to be available as early as PreGame
 		teamHandler = new CTeamHandler();
 	} else {
 		// less cavemanly than delete + new
 		teamHandler->ResetState();
+		skirmishAIHandler.ResetState();
 	}
 }
 

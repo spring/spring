@@ -551,7 +551,7 @@ void CGame::LoadGame(const std::string& mapName, bool threaded)
 	if (!gu->globalQuit) LoadInterface();
 	if (!gu->globalQuit) LoadLua();
 	if (!gu->globalQuit) LoadFinalize();
-	if (!gu->globalQuit) InitSkirmishAIs();
+	if (!gu->globalQuit) LoadSkirmishAIs();
 	finishedLoading = true;
 
 	if (!gu->globalQuit && saveFile) {
@@ -842,7 +842,7 @@ void CGame::LoadLua()
 	defsParser = NULL;
 }
 
-void CGame::InitSkirmishAIs()
+void CGame::LoadSkirmishAIs()
 {
 	if (gameSetup->hostDemo) {
 		return;
