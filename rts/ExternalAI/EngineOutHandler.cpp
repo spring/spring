@@ -565,18 +565,18 @@ void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 				(unpauseAfterAIInit ?
 				 " The game is auto-unpaused as soon as the AI is ready." :
 				 ""));
-		net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, true));
+		clientNet->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, true));
 	}*/
 
 	const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
 
 	if (aiData->status != SKIRMAISTATE_RELOADING) {
-		net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_INITIALIZING));
+		clientNet->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_INITIALIZING));
 	}
 
 	if (aiData->isLuaAI) {
 		// currently, we need doing nothing for Lua AIs
-		net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_ALIVE));
+		clientNet->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_ALIVE));
 	} else {
 		CSkirmishAIWrapper* aiWrapper = NULL;
 		try {
@@ -609,7 +609,7 @@ void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 				u = uNext;
 			}
 
-			net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_ALIVE));
+			clientNet->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_ALIVE));
 		}
 	}
 }
@@ -654,7 +654,7 @@ void CEngineOutHandler::DestroySkirmishAI(const size_t skirmishAIId) {
 		delete aiWrapper;
 		aiWrapper = NULL;
 
-		net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_DEAD));
+		clientNet->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_DEAD));
 	} CATCH_AI_EXCEPTION;
 }
 

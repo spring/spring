@@ -64,7 +64,7 @@ CPreGame::CPreGame(boost::shared_ptr<ClientSetup> setup)
 	, timer(spring_gettime())
 	, wantDemo(true)
 {
-	net = new CNetProtocol();
+	clientNet = new CNetProtocol();
 	activeController = this;
 
 #ifdef SYNCDEBUG
@@ -75,10 +75,10 @@ CPreGame::CPreGame(boost::shared_ptr<ClientSetup> setup)
 		//don't allow luasocket to connect to the host
 		LOG("Connecting to: %s:%i", clientSetup->hostIP.c_str(), clientSetup->hostPort);
 		luaSocketRestrictions->addRule(CLuaSocketRestrictions::UDP_CONNECT, clientSetup->hostIP, clientSetup->hostPort, false);
-		net->InitClient(clientSetup->hostIP.c_str(), clientSetup->hostPort, clientSetup->myPlayerName, clientSetup->myPasswd, SpringVersion::GetFull());
+		clientNet->InitClient(clientSetup->hostIP.c_str(), clientSetup->hostPort, clientSetup->myPlayerName, clientSetup->myPasswd, SpringVersion::GetFull());
 	} else {
 		LOG("Hosting on: %s:%i", clientSetup->hostIP.c_str(), clientSetup->hostPort);
-		net->InitLocalClient();
+		clientNet->InitLocalClient();
 	}
 }
 
@@ -121,7 +121,7 @@ int CPreGame::KeyPressed(int k, bool isRepeat)
 {
 	if (k == SDLK_ESCAPE) {
 		if (KeyInput::GetKeyModState(KMOD_SHIFT)) {
-			LOG("User exited");
+			LOG("[PreGame] user exited", __FUNCTION__);
 			gu->globalQuit = true;
 		} else {
 			LOG("Use shift-esc to quit");
@@ -139,7 +139,7 @@ bool CPreGame::Draw()
 
 	font->Begin();
 
-	if (!net->Connected()) {
+	if (!clientNet->Connected()) {
 		if (clientSetup->isHost)
 			font->glFormat(0.5f, 0.48f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Waiting for server to start");
 		else
@@ -148,7 +148,7 @@ bool CPreGame::Draw()
 		font->glPrint(0.5f, 0.48f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Waiting for server response");
 	}
 
-	font->glFormat(0.60f, 0.40f, 1.0f, FONT_SCALE | FONT_NORM, "Connecting to:   %s", net->ConnectionStr().c_str());
+	font->glFormat(0.60f, 0.40f, 1.0f, FONT_SCALE | FONT_NORM, "Connecting to:   %s", clientNet->ConnectionStr().c_str());
 
 	font->glFormat(0.60f, 0.35f, 1.0f, FONT_SCALE | FONT_NORM, "User name: %s", clientSetup->myPlayerName.c_str());
 
@@ -167,7 +167,7 @@ bool CPreGame::Update()
 {
 	ENTER_SYNCED_CODE();
 	good_fpu_control_registers("CPreGame::Update");
-	net->Update();
+	clientNet->Update();
 	UpdateClientNet();
 	LEAVE_SYNCED_CODE();
 
@@ -243,7 +243,7 @@ void CPreGame::UpdateClientNet()
 {
 	//FIXME move this code to a external file and move that to rts/Net/
 
-	if (net->CheckTimeout(0, true)) {
+	if (clientNet->CheckTimeout(0, true)) {
 		LOG_L(L_WARNING, "Server not reachable");
 		SetExitCode(1);
 		gu->globalQuit = true;
@@ -252,7 +252,7 @@ void CPreGame::UpdateClientNet()
 
 	boost::shared_ptr<const RawPacket> packet;
 
-	while ((packet = net->GetData(gs->frameNum))) {
+	while ((packet = clientNet->GetData(gs->frameNum))) {
 		const unsigned char* inbuf = packet->data;
 
 		if (packet->length <= 0) {
@@ -510,13 +510,13 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 		LOG_L(L_WARNING, "Incompatible game-checksum: %s", ex.what());
 	}
 
-	if (net != NULL && wantDemo) {
-		assert(net->GetDemoRecorder() == NULL);
+	if (clientNet != NULL && wantDemo) {
+		assert(clientNet->GetDemoRecorder() == NULL);
 
 		CDemoRecorder* recorder = new CDemoRecorder(gameSetup->mapName, gameSetup->modName, false);
 		recorder->WriteSetupText(gameData->GetSetupText());
-		recorder->SaveToDemo(packet->data, packet->length, net->GetPacketTime(gs->frameNum));
-		net->SetDemoRecorder(recorder);
+		recorder->SaveToDemo(packet->data, packet->length, clientNet->GetPacketTime(gs->frameNum));
+		clientNet->SetDemoRecorder(recorder);
 
 		LOG("Recording demo to: %s", (recorder->GetName()).c_str());
 	}

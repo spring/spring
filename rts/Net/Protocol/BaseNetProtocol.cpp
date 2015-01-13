@@ -497,7 +497,3 @@ CBaseNetProtocol::CBaseNetProtocol()
 #endif // SYNCDEBUG
 }
 
-CBaseNetProtocol::~CBaseNetProtocol()
-{
-	//SendQuit();
-}

@@ -841,6 +841,7 @@ void SpringApp::Startup()
 }
 
 
+
 /**
  * @return return code of activecontroller draw function
  *
@@ -926,7 +927,7 @@ void SpringApp::ShutDown()
 	agui::FreeGui();
 
 	LOG("[SpringApp::%s][3]", __FUNCTION__);
-	SafeDelete(net);
+	SafeDelete(clientNet);
 	SafeDelete(gameServer);
 	SafeDelete(gameSetup);
 

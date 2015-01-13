@@ -856,7 +856,7 @@ public:
 			if (!badArgs) {
 				if (kill) {
 					if (share) {
-						net->Send(CBaseNetProtocol::Get().SendGiveAwayEverything(gu->myPlayerNum, teamToReceiveUnitsId, teamToKillId));
+						clientNet->Send(CBaseNetProtocol::Get().SendGiveAwayEverything(gu->myPlayerNum, teamToReceiveUnitsId, teamToKillId));
 						// when the AIs team has no units left,
 						// the AI will be destroyed automatically
 					} else {
@@ -868,7 +868,7 @@ public:
 					}
 				} else {
 					// reload
-					net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_RELOADING));
+					clientNet->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_RELOADING));
 				}
 
 				LOG("Skirmish AI controlling team %i is beeing %sed ...", teamToKillId, actionName.c_str());
@@ -1076,7 +1076,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		const int teamId = atoi(action.GetArgs().c_str());
 		if (teamHandler->IsValidTeam(teamId)) {
-			net->Send(CBaseNetProtocol::Get().SendJoinTeam(gu->myPlayerNum, teamId));
+			clientNet->Send(CBaseNetProtocol::Get().SendJoinTeam(gu->myPlayerNum, teamId));
 		} else {
 			LOG_L(L_WARNING, "/Team: wrong syntax (which is '/Team %%teamid')");
 		}
@@ -1095,7 +1095,7 @@ public:
 		if (gu->spectating)
 			return false;
 
-		net->Send(CBaseNetProtocol::Get().SendResign(gu->myPlayerNum));
+		clientNet->Send(CBaseNetProtocol::Get().SendResign(gu->myPlayerNum));
 		return true;
 	}
 };
@@ -1168,7 +1168,7 @@ public:
 				int state = -1;
 				is >> state;
 				if (state >= 0 && state < 2 && otherAllyTeam >= 0 && otherAllyTeam != gu->myAllyTeam)
-					net->Send(CBaseNetProtocol::Get().SendSetAllied(gu->myPlayerNum, otherAllyTeam, state));
+					clientNet->Send(CBaseNetProtocol::Get().SendSetAllied(gu->myPlayerNum, otherAllyTeam, state));
 				else
 					LOG_L(L_WARNING, "/%s: wrong parameters (usage: /%s <other team> [0|1])", GetCommand().c_str(), GetCommand().c_str());
 			}
@@ -1344,7 +1344,7 @@ public:
 		// done when NETMSG_PAUSE makes the round-trip
 		bool newPause = gs->paused;
 		InverseOrSetBool(newPause, action.GetArgs());
-		net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, newPause));
+		clientNet->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, newPause));
 		return true;
 	}
 
@@ -1721,7 +1721,7 @@ public:
 		} else {
 			speed += 1.0f;
 		}
-		net->Send(CBaseNetProtocol::Get().SendUserSpeed(gu->myPlayerNum, speed));
+		clientNet->Send(CBaseNetProtocol::Get().SendUserSpeed(gu->myPlayerNum, speed));
 		return true;
 	}
 };
@@ -1748,7 +1748,7 @@ public:
 		} else {
 			speed -= 1.0f;
 		}
-		net->Send(CBaseNetProtocol::Get().SendUserSpeed(gu->myPlayerNum, speed));
+		clientNet->Send(CBaseNetProtocol::Get().SendUserSpeed(gu->myPlayerNum, speed));
 		return true;
 	}
 };
@@ -1767,7 +1767,7 @@ public:
 		// we must cause the to-be-controllee to be put in
 		// netSelected[myPlayerNum] by giving it an order
 		selectedUnitsHandler.SendCommand(Command(CMD_STOP));
-		net->Send(CBaseNetProtocol::Get().SendDirectControl(gu->myPlayerNum));
+		clientNet->Send(CBaseNetProtocol::Get().SendDirectControl(gu->myPlayerNum));
 		return true;
 	}
 };
@@ -2000,7 +2000,7 @@ public:
 		return true;
 	}
 	static void Exit() {
-		LOG("User exited");
+		LOG("[QuitAction] user exited");
 		gu->globalQuit = true;
 	}
 };
@@ -2906,11 +2906,11 @@ public:
 					givePos.x, givePos.y, givePos.z);
 
 			CommandMessage pckt(message, gu->myPlayerNum);
-			net->Send(pckt.Pack());
+			clientNet->Send(pckt.Pack());
 		} else {
 			// forward (as synced command)
 			CommandMessage pckt(action.GetInnerAction(), gu->myPlayerNum);
-			net->Send(pckt.Pack());
+			clientNet->Send(pckt.Pack());
 		}
 		return true;
 	}
@@ -2936,7 +2936,7 @@ public:
 			ss << " " << (*it)->id;
 		}
 		CommandMessage pckt(ss.str(), gu->myPlayerNum);
-		net->Send(pckt.Pack());
+		clientNet->Send(pckt.Pack());
 		return true;
 	}
 };
@@ -2950,7 +2950,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		CommandMessage pckt(Action(action.GetArgs()), gu->myPlayerNum);
-		net->Send(pckt.Pack());
+		clientNet->Send(pckt.Pack());
 		return true;
 	}
 };
@@ -3065,7 +3065,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		// redirect as a synced command
 		CommandMessage pckt(action.GetInnerAction(), gu->myPlayerNum);
-		net->Send(pckt.Pack());
+		clientNet->Send(pckt.Pack());
 		return true;
 	}
 };

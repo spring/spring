@@ -2274,7 +2274,7 @@ int LuaUnsyncedCtrl::GiveOrderToUnit(lua_State* L)
 
 	Command cmd = LuaUtils::ParseCommand(L, __FUNCTION__, 2);
 
-	net->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, skirmishAIHandler.GetCurrentAIID(), unit->id, cmd.GetID(), cmd.aiCommandId, cmd.options, cmd.params));
+	clientNet->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, skirmishAIHandler.GetCurrentAIID(), unit->id, cmd.GetID(), cmd.aiCommandId, cmd.options, cmd.params));
 
 	lua_pushboolean(L, true);
 	return 1;
@@ -2437,7 +2437,7 @@ int LuaUnsyncedCtrl::SendLuaUIMsg(lua_State* L)
 		luaL_error(L, "Unknown SendLuaUIMsg() mode");
 	}
 	try {
-		net->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_UI, modeNum, data));
+		clientNet->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_UI, modeNum, data));
 	} catch (const netcode::PackPacketException& ex) {
 		luaL_error(L, "SendLuaUIMsg() packet error: %s", ex.what());
 	}
@@ -2454,7 +2454,7 @@ int LuaUnsyncedCtrl::SendLuaGaiaMsg(lua_State* L)
 	std::vector<boost::uint8_t> data(msg.size());
 	std::copy(msg.begin(), msg.end(), data.begin());
 	try {
-		net->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_GAIA, 0, data));
+		clientNet->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_GAIA, 0, data));
 	} catch (const netcode::PackPacketException& ex) {
 		luaL_error(L, "SendLuaGaiaMsg() packet error: %s", ex.what());
 	}
@@ -2471,7 +2471,7 @@ int LuaUnsyncedCtrl::SendLuaRulesMsg(lua_State* L)
 	std::vector<boost::uint8_t> data(msg.size());
 	std::copy(msg.begin(), msg.end(), data.begin());
 	try {
-		net->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_RULES, 0, data));
+		clientNet->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_RULES, 0, data));
 	} catch (const netcode::PackPacketException& ex) {
 		luaL_error(L, "SendLuaRulesMsg() packet error: %s", ex.what());
 	}
@@ -2494,10 +2494,10 @@ int LuaUnsyncedCtrl::SetShareLevel(lua_State* L)
 	const float shareLevel = max(0.0f, min(1.0f, luaL_checkfloat(L, 2)));
 
 	if (shareType == "metal") {
-		net->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, shareLevel, teamHandler->Team(gu->myTeam)->resShare.energy));
+		clientNet->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, shareLevel, teamHandler->Team(gu->myTeam)->resShare.energy));
 	}
 	else if (shareType == "energy") {
-		net->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, teamHandler->Team(gu->myTeam)->resShare.metal, shareLevel));
+		clientNet->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, teamHandler->Team(gu->myTeam)->resShare.metal, shareLevel));
 	}
 	else {
 		LOG_L(L_WARNING, "SetShareLevel() unknown resource: %s", shareType.c_str());
@@ -2533,16 +2533,16 @@ int LuaUnsyncedCtrl::ShareResources(lua_State* L)
 		// update the selection, and clear the unit command queues
 		Command c(CMD_STOP);
 		selectedUnitsHandler.GiveCommand(c, false);
-		net->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, teamID, 1, 0.0f, 0.0f));
+		clientNet->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, teamID, 1, 0.0f, 0.0f));
 		selectedUnitsHandler.ClearSelected();
 	}
 	else if (args >= 3) {
 		const float amount = lua_tofloat(L, 3);
 		if (type == "metal") {
-			net->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, teamID, 0, amount, 0.0f));
+			clientNet->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, teamID, 0, amount, 0.0f));
 		}
 		else if (type == "energy") {
-			net->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, teamID, 0, 0.0f, amount));
+			clientNet->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, teamID, 0, 0.0f, amount));
 		}
 	}
 	return 0;

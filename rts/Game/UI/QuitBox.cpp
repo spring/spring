@@ -294,11 +294,11 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 	   || (InBox(mx,my,box+giveAwayBox) && !teamHandler->Team(shareTeam)->isDead && !teamHandler->Team(gu->myTeam)->isDead)) {
 		// give away all units (and resources)
 		if(InBox(mx,my,box+giveAwayBox) && !playerHandler->Player(gu->myPlayerNum)->spectator) {
-			net->Send(CBaseNetProtocol::Get().SendGiveAwayEverything(gu->myPlayerNum, shareTeam, playerHandler->Player(gu->myPlayerNum)->team));
+			clientNet->Send(CBaseNetProtocol::Get().SendGiveAwayEverything(gu->myPlayerNum, shareTeam, playerHandler->Player(gu->myPlayerNum)->team));
 		}
 		// resign, so self-d all units
 		if (InBox(mx,my,box+resignBox) && !playerHandler->Player(gu->myPlayerNum)->spectator) {
-			net->Send(CBaseNetProtocol::Get().SendResign(gu->myPlayerNum));
+			clientNet->Send(CBaseNetProtocol::Get().SendResign(gu->myPlayerNum));
 		}
 		// save current game state
 		if (InBox(mx,my,box+saveBox)) {
@@ -321,7 +321,7 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 		}
 	}
 	else if (InBox(mx, my, box + quitBox)) {
-		LOG("User exited");
+		LOG("[QuitBox] user exited");
 		gu->globalQuit = true;
 	}
 	// if we're still in the game, remove the resign box

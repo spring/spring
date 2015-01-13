@@ -219,7 +219,7 @@ void CTeam::Died(bool normalDeath)
 
 	if (normalDeath) {
 		// this message is not relayed to clients, it's only for the server
-		net->Send(CBaseNetProtocol::Get().SendTeamDied(gu->myPlayerNum, teamNum));
+		clientNet->Send(CBaseNetProtocol::Get().SendTeamDied(gu->myPlayerNum, teamNum));
 	}
 
 	KillAIs();

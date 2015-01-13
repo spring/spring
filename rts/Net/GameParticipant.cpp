@@ -35,11 +35,14 @@ void GameParticipant::Connected(boost::shared_ptr<netcode::CConnection> _link, b
 
 void GameParticipant::Kill(const std::string& reason, const bool flush)
 {
-	if (link)
-	{
+	if (link) {
 		link->SendData(CBaseNetProtocol::Get().SendQuit(reason));
-		if (flush) // make sure the Flush() performed by Close() has any effect (forced flushes are undesirable)
-			spring_sleep(spring_msecs(1000)); // it will cause a slight lag in the game server during kick, but not a big deal
+
+		// make sure the Flush() performed by Close() has effect (forced flushes are undesirable)
+		// it will cause a slight lag in the game server during kick, but not a big deal
+		if (flush)
+			spring_sleep(spring_msecs(1000));
+
 		link->Close();
 		link.reset();
 	}

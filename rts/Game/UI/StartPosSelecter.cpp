@@ -50,9 +50,9 @@ bool CStartPosSelecter::Ready(bool luaForcedReady)
 		return false;
 
 	if (luaForcedReady) {
-		net->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, CPlayer::PLAYER_RDYSTATE_FORCED, setStartPos.x, setStartPos.y, setStartPos.z));
+		clientNet->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, CPlayer::PLAYER_RDYSTATE_FORCED, setStartPos.x, setStartPos.y, setStartPos.z));
 	} else {
-		net->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, CPlayer::PLAYER_RDYSTATE_READIED, setStartPos.x, setStartPos.y, setStartPos.z));
+		clientNet->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, CPlayer::PLAYER_RDYSTATE_READIED, setStartPos.x, setStartPos.y, setStartPos.z));
 	}
 
 	delete this;
@@ -76,7 +76,7 @@ bool CStartPosSelecter::MousePress(int x, int y, int button)
 	inMapDrawer->SendErase(setStartPos);
 	startPosSet = true;
 	setStartPos = camera->GetPos() + mouse->dir * dist;
-	net->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, CPlayer::PLAYER_RDYSTATE_UPDATED, setStartPos.x, setStartPos.y, setStartPos.z));
+	clientNet->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, CPlayer::PLAYER_RDYSTATE_UPDATED, setStartPos.x, setStartPos.y, setStartPos.z));
 
 	return true;
 }

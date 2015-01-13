@@ -1005,7 +1005,7 @@ bool CGame::Update()
 	good_fpu_control_registers("CGame::Update");
 
 	JobDispatcher::Update();
-	net->Update();
+	clientNet->Update();
 
 	// When video recording do step by step simulation, so each simframe gets a corresponding videoframe
 	// FIXME: SERVER ALREADY DOES THIS BY ITSELF
@@ -1018,11 +1018,11 @@ bool CGame::Update()
 	ClientReadNet(); // this can issue new SimFrame()s
 
 	if (!gameOver) {
-		if (net->NeedsReconnect()) {
-			net->AttemptReconnect(SpringVersion::GetFull());
+		if (clientNet->NeedsReconnect()) {
+			clientNet->AttemptReconnect(SpringVersion::GetFull());
 		}
 
-		if (net->CheckTimeout(0, gs->frameNum == 0)) {
+		if (clientNet->CheckTimeout(0, gs->frameNum == 0)) {
 			GameEnd(std::vector<unsigned char>(), true);
 		}
 	}
@@ -1247,8 +1247,8 @@ bool CGame::Draw() {
 		// AT 30Hz LHS (MILLISECSF(CT - LSFT)) SHOULD BE ~33ms, RHS SHOULD BE ~0.03
 		assert(currTimeOffset >= 0.0f);
 
-		if (currTimeOffset < 0.0f) LOG_L(L_ERROR, minFmtStr, gs->frameNum, globalRendering->drawFrame, currTimeOffset, globalRendering->weightedSpeedFactor, deltaFrameTime, deltaNetPacketProcTime, deltaReceivedPacketTime, deltaSimFramePacketTime, net->GetNumWaitingServerPackets());
-		if (currTimeOffset > 1.3f) LOG_L(L_ERROR, maxFmtStr, gs->frameNum, globalRendering->drawFrame, currTimeOffset, globalRendering->weightedSpeedFactor, deltaFrameTime, deltaNetPacketProcTime, deltaReceivedPacketTime, deltaSimFramePacketTime, net->GetNumWaitingServerPackets());
+		if (currTimeOffset < 0.0f) LOG_L(L_ERROR, minFmtStr, gs->frameNum, globalRendering->drawFrame, currTimeOffset, globalRendering->weightedSpeedFactor, deltaFrameTime, deltaNetPacketProcTime, deltaReceivedPacketTime, deltaSimFramePacketTime, clientNet->GetNumWaitingServerPackets());
+		if (currTimeOffset > 1.3f) LOG_L(L_ERROR, maxFmtStr, gs->frameNum, globalRendering->drawFrame, currTimeOffset, globalRendering->weightedSpeedFactor, deltaFrameTime, deltaNetPacketProcTime, deltaReceivedPacketTime, deltaSimFramePacketTime, clientNet->GetNumWaitingServerPackets());
 
 		// test for monotonicity, normally should only fail
 		// when SimFrame() advances time or if simframe rate
@@ -1659,7 +1659,7 @@ void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool tim
 	profiler.PrintProfilingInfo();
 #endif // HEADLESS
 
-	CDemoRecorder* record = net->GetDemoRecorder();
+	CDemoRecorder* record = clientNet->GetDemoRecorder();
 
 	if (record != NULL) {
 		// Write CPlayer::Statistics and CTeam::Statistics to demo
@@ -1673,7 +1673,7 @@ void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool tim
 		record->SetWinningAllyTeams(winningAllyTeams);
 
 		// tell everybody about our APM, it's the most important statistic
-		net->Send(CBaseNetProtocol::Get().SendPlayerStat(gu->myPlayerNum, playerHandler->Player(gu->myPlayerNum)->currentStats));
+		clientNet->Send(CBaseNetProtocol::Get().SendPlayerStat(gu->myPlayerNum, playerHandler->Player(gu->myPlayerNum)->currentStats));
 
 		for (int i = 0; i < numPlayers; ++i) {
 			record->SetPlayerStats(i, playerHandler->Player(i)->currentStats);
@@ -1684,13 +1684,13 @@ void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool tim
 			netcode::PackPacket* buf = new netcode::PackPacket(2 + sizeof(CTeam::Statistics), NETMSG_TEAMSTAT);
 			*buf << static_cast<uint8_t>(team->teamNum);
 			*buf << *(team->currentStats);
-			net->Send(buf);
+			clientNet->Send(buf);
 		}
 	}
 
 	if (!timeout) {
 		// pass the winner info to the host in the case it's a dedicated server
-		net->Send(CBaseNetProtocol::Get().SendGameOver(gu->myPlayerNum, winningAllyTeams));
+		clientNet->Send(CBaseNetProtocol::Get().SendGameOver(gu->myPlayerNum, winningAllyTeams));
 	} else {
 		// client timed out, don't send anything (in theory the GAMEOVER
 		// message not be able to reach the server if connection is lost,
@@ -1723,7 +1723,7 @@ void CGame::SendNetChat(std::string message, int destination)
 		message.resize(128); // safety
 	}
 	ChatMessage buf(gu->myPlayerNum, destination, message);
-	net->Send(buf.Pack());
+	clientNet->Send(buf.Pack());
 }
 
 
@@ -2029,7 +2029,7 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 
 	if (serverCommands.find(action.command) != serverCommands.end()) {
 		CommandMessage pckt(action, gu->myPlayerNum);
-		net->Send(pckt.Pack());
+		clientNet->Send(pckt.Pack());
 		return true;
 	}
 

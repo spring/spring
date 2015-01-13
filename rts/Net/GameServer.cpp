@@ -1090,7 +1090,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 		case NETMSG_QUIT: {
 			Message(str(format(PlayerLeft) %players[a].GetType() %players[a].name %" normal quit"));
 			Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(a, 1));
-			players[a].Kill("User exited");
+			players[a].Kill("[GameServer] user exited");
 			if (hostif)
 				hostif->SendPlayerLeft(a, 1);
 			break;

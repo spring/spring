@@ -22,6 +22,9 @@
 
 CONFIG(int, SourcePort).defaultValue(0);
 
+
+CNetProtocol* clientNet = NULL;
+
 CNetProtocol::CNetProtocol() : keepUpdating(false)
 {
 	demoRecorder.reset(NULL);
@@ -29,7 +32,10 @@ CNetProtocol::CNetProtocol() : keepUpdating(false)
 
 CNetProtocol::~CNetProtocol()
 {
-	Send(CBaseNetProtocol::Get().SendQuit(""));
+	// when the client-server connection is deleted, make sure
+	// the server cleans up its corresponding connection to the
+	// client
+	Send(CBaseNetProtocol::Get().SendQuit(__FUNCTION__));
 	Close();
 	LOG("%s", serverConn->Statistics().c_str());
 }
@@ -156,6 +162,4 @@ void CNetProtocol::SetDemoRecorder(CDemoRecorder* r) { demoRecorder.reset(r); }
 CDemoRecorder* CNetProtocol::GetDemoRecorder() const { return demoRecorder.get(); }
 
 unsigned int CNetProtocol::GetNumWaitingServerPackets() const { return (serverConn.get())->GetPacketQueueSize(); }
-
-CNetProtocol* net = NULL;
 
