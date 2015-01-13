@@ -170,7 +170,6 @@ SpringApp::~SpringApp()
 {
 	spring_clock::PopTickRate();
 	creg::System::FreeClasses();
-	delete cmdline;
 }
 
 /**
@@ -746,14 +745,20 @@ void SpringApp::ParseCmdLine(const std::string& binaryName)
 }
 
 
-void SpringApp::RunScript(boost::shared_ptr<ClientSetup> clientSetup, const std::string& buf)
+void SpringApp::RunScript(const std::string& buf)
 {
 	clientSetup->LoadFromStartScript(buf);
+
 	// LoadFromStartScript overrides all values so reset cmdline defined ones
-	if (cmdline->IsSet("server")) { clientSetup->hostIP = cmdline->GetString("server"); clientSetup->isHost = true; }
+	if (cmdline->IsSet("server")) {
+		clientSetup->hostIP = cmdline->GetString("server");
+		clientSetup->isHost = true;
+	}
+
 	clientSetup->SanityCheck();
 
 	pregame = new CPreGame(clientSetup);
+
 	if (clientSetup->isHost)
 		pregame->LoadSetupscript(buf);
 }
@@ -768,19 +773,25 @@ void SpringApp::Startup()
 	const std::string inputFile = cmdline->GetInputFile();
 	const std::string extension = FileSystem::GetExtension(inputFile);
 
-	// create base clientsetup
-	boost::shared_ptr<ClientSetup> startsetup(new ClientSetup());
-	if (cmdline->IsSet("server")) { startsetup->hostIP = cmdline->GetString("server"); startsetup->isHost = true; }
-	startsetup->myPlayerName = configHandler->GetString("name");
-	startsetup->SanityCheck();
+	// note: avoid any .get() leaks between here and GameServer!
+	clientSetup.reset(new ClientSetup());
+
+	// create base client-setup
+	if (cmdline->IsSet("server")) {
+		clientSetup->hostIP = cmdline->GetString("server");
+		clientSetup->isHost = true;
+	}
+
+	clientSetup->myPlayerName = configHandler->GetString("name");
+	clientSetup->SanityCheck();
 
 	// no argument (either game is given or show selectmenu)
 	if (inputFile.empty()) {
-		startsetup->isHost = true;
+		clientSetup->isHost = true;
+
 		if (cmdline->IsSet("game") && cmdline->IsSet("map")) {
 			// --game and --map directly specified, try to run them
-			std::string buf = StartScriptGen::CreateMinimalSetup(cmdline->GetString("game"), cmdline->GetString("map"));
-			RunScript(startsetup, buf);
+			RunScript(StartScriptGen::CreateMinimalSetup(cmdline->GetString("game"), cmdline->GetString("map")));
 		} else {
 			// menu
 		#ifdef HEADLESS
@@ -788,7 +799,7 @@ void SpringApp::Startup()
 				"The headless version of the engine can not be run in interactive mode.\n"
 				"Please supply a start-script, save- or demo-file.", "ERROR", MBF_OK|MBF_EXCL);
 		#endif
-			activeController = new SelectMenu(startsetup);
+			activeController = new SelectMenu(clientSetup);
 		}
 		return;
 	}
@@ -796,20 +807,23 @@ void SpringApp::Startup()
 	// process given argument
 	if (inputFile.find("spring://") == 0) {
 		// url (syntax: spring://username:password@host:port)
-		if (!ParseSpringUri(inputFile, startsetup->myPlayerName, startsetup->myPasswd, startsetup->hostIP, startsetup->hostPort))
+		if (!ParseSpringUri(inputFile, clientSetup->myPlayerName, clientSetup->myPasswd, clientSetup->hostIP, clientSetup->hostPort))
 			throw content_error("invalid url specified: " + inputFile);
-		startsetup->isHost = false;
-		pregame = new CPreGame(startsetup);
+
+		clientSetup->isHost = false;
+		pregame = new CPreGame(clientSetup);
 	} else if (extension == "sdf") {
 		// demo
-		startsetup->isHost        = true;
-		startsetup->myPlayerName += " (spec)";
-		pregame = new CPreGame(startsetup);
+		clientSetup->isHost        = true;
+		clientSetup->myPlayerName += " (spec)";
+
+		pregame = new CPreGame(clientSetup);
 		pregame->LoadDemo(inputFile);
 	} else if (extension == "ssf") {
 		// savegame
-		startsetup->isHost = true;
-		pregame = new CPreGame(startsetup);
+		clientSetup->isHost = true;
+
+		pregame = new CPreGame(clientSetup);
 		pregame->LoadSavefile(inputFile);
 	} else {
 		// startscript
@@ -822,7 +836,7 @@ void SpringApp::Startup()
 		if (!fh.LoadStringData(buf))
 			throw content_error("Setup-script cannot be read: " + inputFile);
 
-		RunScript(startsetup, buf);
+		RunScript(buf);
 	}
 }
 

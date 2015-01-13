@@ -128,18 +128,18 @@ static const std::string SERVER_COMMANDS[] = {
 };
 
 
-
-CGameServer* gameServer = NULL;
 std::set<std::string> CGameServer::commandBlacklist;
 
 
-CGameServer::CGameServer(
-	const ClientSetup* const newClientSetup,
-	const GameData* const newGameData,
-	const CGameSetup* const newGameSetup
-): myGameSetup(newGameSetup)
 
-, quitServer(false)
+CGameServer* gameServer = NULL;
+
+CGameServer::CGameServer(
+	const boost::shared_ptr<const ClientSetup> newClientSetup,
+	const boost::shared_ptr<const    GameData> newGameData,
+	const boost::shared_ptr<const  CGameSetup> newGameSetup
+)
+: quitServer(false)
 , serverFrameNum(0)
 
 , serverStartTime(spring_gettime())
@@ -176,7 +176,29 @@ CGameServer::CGameServer(
 , gameHasStarted(false)
 , generatedGameID(false)
 {
-	assert(myGameSetup);
+	myClientSetup = newClientSetup;
+	myGameData = newGameData;
+	myGameSetup = newGameSetup;
+
+	Initialize();
+}
+
+CGameServer::~CGameServer()
+{
+	quitServer = true;
+
+	LOG_L(L_INFO, "[%s][1]", __FUNCTION__);
+	thread->join();
+	delete thread;
+	LOG_L(L_INFO, "[%s][2]", __FUNCTION__);
+
+	// after this, demoRecorder goes out of scope and its dtor is called
+	WriteDemoData();
+}
+
+
+void CGameServer::Initialize()
+{
 	curSpeedCtrl = configHandler->GetInt("SpeedControl");
 
 	allowSpecJoin = configHandler->GetBool("AllowSpectatorJoin");
@@ -186,13 +208,13 @@ CGameServer::CGameServer(
 	logDebugMessages = configHandler->GetBool("ServerLogDebugMessages");
 
 	if (!myGameSetup->onlyLocal) {
-		UDPNet.reset(new netcode::UDPListener(newClientSetup->hostPort, newClientSetup->hostIP));
+		UDPNet.reset(new netcode::UDPListener(myClientSetup->hostPort, myClientSetup->hostIP));
 	}
 
 	AddAutohostInterface(StringToLower(configHandler->GetString("AutohostIP")), configHandler->GetInt("AutohostPort"));
 
-	rng.Seed((newGameData->GetSetupText()).length());
-	Message(str(format(ServerStart) %newClientSetup->hostPort), false);
+	rng.Seed((myGameData->GetSetupText()).length());
+	Message(str(format(ServerStart) %myClientSetup->hostPort), false);
 
 	lastNewFrameTick = spring_gettime();
 
@@ -200,7 +222,7 @@ CGameServer::CGameServer(
 	minUserSpeed = myGameSetup->minSpeed;
 	noHelperAIs = myGameSetup->noHelperAIs;
 
-	StripGameSetupText(newGameData);
+	StripGameSetupText(myGameData.get());
 
 	if (myGameSetup->hostDemo) {
 		Message(str(format(PlayingDemo) %myGameSetup->demoName));
@@ -276,18 +298,31 @@ CGameServer::CGameServer(
 	}
 }
 
-CGameServer::~CGameServer()
+void CGameServer::PostLoad(int newServerFrameNum)
 {
-	quitServer = true;
+	Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
+	serverFrameNum = newServerFrameNum;
 
-	LOG_L(L_INFO, "[%s][1]", __FUNCTION__);
-	thread->join();
-	delete thread;
-	LOG_L(L_INFO, "[%s][2]", __FUNCTION__);
+	gameHasStarted = (serverFrameNum > 0);
 
-	// after this, demoRecorder goes out of scope and its dtor is called
-	WriteDemoData();
+	// for all GameParticipant's
+	for (auto it = players.begin(); it != players.end(); ++it) {
+		it->lastFrameResponse = newServerFrameNum;
+	}
 }
+
+
+void CGameServer::Reload(const boost::shared_ptr<const CGameSetup> newGameSetup)
+{
+	const boost::shared_ptr<const ClientSetup> clientSetup = gameServer->GetClientSetup();
+	const boost::shared_ptr<const    GameData>    gameData = gameServer->GetGameData();
+
+	delete gameServer;
+
+	// transfer ownership to new instance (assume only GameSetup changes)
+	gameServer = new CGameServer(clientSetup, gameData, newGameSetup);
+}
+
 
 void CGameServer::WriteDemoData()
 {
@@ -317,7 +352,7 @@ void CGameServer::WriteDemoData()
 	*/
 }
 
-void CGameServer::StripGameSetupText(const GameData* const newGameData)
+void CGameServer::StripGameSetupText(const GameData* newGameData)
 {
 	// modify and save GameSetup text (remove passwords)
 	TdfParser parser((newGameData->GetSetupText()).c_str(), (newGameData->GetSetupText()).length());
@@ -336,9 +371,10 @@ void CGameServer::StripGameSetupText(const GameData* const newGameData)
 	std::ostringstream strbuf;
 	parser.print(strbuf);
 
-	GameData* newData = new GameData(*newGameData);
-	newData->SetSetup(strbuf.str());
-	myGameData.reset(newData);
+	GameData* modGameData = new GameData(*newGameData);
+
+	modGameData->SetSetupText(strbuf.str());
+	myGameData.reset(modGameData);
 }
 
 
@@ -382,18 +418,6 @@ void CGameServer::AddAutohostInterface(const std::string& autohostIP, const int 
 	}
 }
 
-void CGameServer::PostLoad(int newServerFrameNum)
-{
-	Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
-	serverFrameNum = newServerFrameNum;
-
-	gameHasStarted = (serverFrameNum > 0);
-
-	std::vector<GameParticipant>::iterator it;
-	for (it = players.begin(); it != players.end(); ++it) {
-		it->lastFrameResponse = newServerFrameNum;
-	}
-}
 
 void CGameServer::SkipTo(int targetFrameNum)
 {

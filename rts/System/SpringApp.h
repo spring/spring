@@ -7,7 +7,6 @@
 #include <boost/cstdint.hpp>
 #include <boost/shared_ptr.hpp>
 
-
 class ClientSetup;
 class CmdLineParams;
 class CGameController;
@@ -27,7 +26,7 @@ public:
 	int Run();                                      //!< Run game loop
 	static void ShutDown();                         //!< Shuts down application
 
-protected:
+private:
 	bool Initialize();                              //!< Initialize app
 	void ParseCmdLine(const std::string&);          //!< Parse command line
 	void Startup();                                 //!< Parses startup data (script etc.) and starts SelectMenu or PreGame
@@ -36,7 +35,6 @@ protected:
 	static void LoadFonts();                        //!< Initialize glFonts (font & smallFont)
 	static bool CreateSDLWindow(const char* title);    //!< Creates a SDL window
 	int Update();                                   //!< Run simulation and draw
-	bool UpdateSim(CGameController *ac);
 
 	static void GetDisplayGeometry();
 	static void SetupViewportGeometry();
@@ -47,11 +45,15 @@ protected:
 	 *
 	 * Pointer to instance of commandline parser
 	 */
-	CmdLineParams* cmdline;
+	boost::shared_ptr<CmdLineParams> cmdline;
+
+	// this gets passed along to PreGame (or SelectMenu then PreGame),
+	// and from thereon to GameServer if this client is also the host
+	boost::shared_ptr<ClientSetup> clientSetup;
 
 private:
 	bool MainEventHandler(const SDL_Event& ev);
-	void RunScript(boost::shared_ptr<ClientSetup> clientSetup, const std::string& buf);
+	void RunScript(const std::string& buf);
 };
 
 /**

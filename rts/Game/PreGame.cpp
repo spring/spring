@@ -58,7 +58,7 @@ CONFIG(bool, DemoFromDemo).defaultValue(false);
 
 CPreGame* pregame = NULL;
 
-CPreGame::CPreGame(boost::shared_ptr<const ClientSetup> setup)
+CPreGame::CPreGame(boost::shared_ptr<ClientSetup> setup)
 	: clientSetup(setup)
 	, savefile(NULL)
 	, timer(spring_gettime())
@@ -85,8 +85,9 @@ CPreGame::CPreGame(boost::shared_ptr<const ClientSetup> setup)
 
 CPreGame::~CPreGame()
 {
-	// don't delete infoconsole, its beeing reused by CGame
-	agui::gui->Draw(); // delete leftover gui elements (remove once the gui is drawn ingame)
+	// delete leftover elements (remove once the gui is drawn ingame)
+	// but do not delete infoconsole, it is reused by CGame
+	agui::gui->Draw();
 
 	pregame = NULL;
 }
@@ -200,8 +201,8 @@ void CPreGame::StartServer(const std::string& setupscript)
 	assert(!gameServer);
 	ScopedOnceTimer startserver("PreGame::StartServer");
 
-	GameData* startGameData = new GameData();
-	CGameSetup* startGameSetup = new CGameSetup();
+	boost::shared_ptr<GameData> startGameData(new GameData());
+	boost::shared_ptr<CGameSetup> startGameSetup(new CGameSetup());
 
 	startGameSetup->Init(setupscript);
 	startGameData->SetRandomSeed(static_cast<unsigned>(gu->RandInt()));
@@ -211,13 +212,13 @@ void CPreGame::StartServer(const std::string& setupscript)
 	}
 
 	if (startGameSetup->mapSeed != 0) {
-		CSimpleMapGenerator gen(startGameSetup);
+		CSimpleMapGenerator gen(startGameSetup.get());
 		gen.Generate();
 	}
 
 	// We must map the map into VFS this early, because server needs the start positions.
 	// Take care that MapInfo isn't loaded here, as map options aren't available to it yet.
-	AddGameSetupArchivesToVFS(startGameSetup, true);
+	AddGameSetupArchivesToVFS(startGameSetup.get(), true);
 
 	// Loading the start positions executes the map's Lua.
 	// This means start positions can NOT be influenced by map options.
@@ -230,12 +231,8 @@ void CPreGame::StartServer(const std::string& setupscript)
 	startGameData->SetMapChecksum(archiveScanner->GetArchiveCompleteChecksum(mapArchive));
 
 	good_fpu_control_registers("before CGameServer creation");
-	startGameData->SetSetup(startGameSetup->gameSetupText);
-	gameServer = new CGameServer(clientSetup.get(), startGameData, startGameSetup);
-
-	delete startGameData;
-	// GameServer maintains a pointer to this
-	// delete startGameSetup;
+	startGameData->SetSetupText(startGameSetup->gameSetupText);
+	gameServer = new CGameServer(clientSetup, startGameData, startGameSetup);
 
 	gameServer->AddLocalClient(clientSetup->myPlayerName, SpringVersion::GetFull());
 	good_fpu_control_registers("after CGameServer creation");
@@ -316,8 +313,6 @@ void CPreGame::UpdateClientNet()
 				// server first sends this to let us know about teams, allyteams
 				// etc. (not if we are joining mid-game as an extra player), see
 				// NETMSG_SETPLAYERNUM
-				if (gameSetup)
-					throw content_error("Duplicate game data received from server");
 				GameDataReceived(packet);
 				break;
 			}
@@ -354,18 +349,21 @@ void CPreGame::UpdateClientNet()
 }
 
 
-void CPreGame::StartServerForDemo(const CGameSetup* tempGameSetup, GameData* demoGameData, const std::string& demoName)
+void CPreGame::StartServerForDemo(const std::string& demoName)
 {
-	TdfParser script((demoGameData->GetSetupText()).c_str(), (demoGameData->GetSetupText()).size());
+	TdfParser script((gameData->GetSetupText()).c_str(), (gameData->GetSetupText()).size());
 	TdfParser::TdfSection* tgame = script.GetRootSection()->sections["game"];
 
 	std::ostringstream moddedDemoScript;
 	std::string playerStr;
 
 	{
+		// server will always use a modified copy of this
+		assert(gameSetup != NULL);
+
 		// modify the demo's start-script so it can be used to watch the demo
-		tgame->AddPair("MapName", tempGameSetup->mapName);
-		tgame->AddPair("Gametype", tempGameSetup->modName);
+		tgame->AddPair("MapName", gameSetup->mapName);
+		tgame->AddPair("Gametype", gameSetup->modName);
 		tgame->AddPair("Demofile", demoName);
 		tgame->AddPair("OnlyLocal", 1);
 
@@ -377,7 +375,7 @@ void CPreGame::StartServerForDemo(const CGameSetup* tempGameSetup, GameData* dem
 
 		// add local spectator (and assert we didn't already have MAX_PLAYERS players)
 		for (int myPlayerNum = MAX_PLAYERS - 1; myPlayerNum >= 0; --myPlayerNum) {
-			char section[50];
+			char section[16];
 			sprintf(section, "game\\player%i", myPlayerNum);
 			string s(section);
 
@@ -402,9 +400,10 @@ void CPreGame::StartServerForDemo(const CGameSetup* tempGameSetup, GameData* dem
 
 
 	script.print(moddedDemoScript);
+	gameData->SetSetupText(moddedDemoScript.str());
 
-	demoGameData->SetSetup(moddedDemoScript.str());
-	CGameSetup* demoGameSetup = new CGameSetup();
+	// create the server-private demo GameSetup containing the additional player
+	boost::shared_ptr<CGameSetup> demoGameSetup(new CGameSetup());
 
 	if (!demoGameSetup->Init(moddedDemoScript.str()))
 		throw content_error("Demo contains incorrect script");
@@ -412,7 +411,7 @@ void CPreGame::StartServerForDemo(const CGameSetup* tempGameSetup, GameData* dem
 	LOG("[%s] starting GameServer", __FUNCTION__);
 	good_fpu_control_registers("before CGameServer creation");
 
-	gameServer = new CGameServer(clientSetup.get(), demoGameData, demoGameSetup);
+	gameServer = new CGameServer(clientSetup, gameData, demoGameSetup);
 	gameServer->AddLocalClient(clientSetup->myPlayerName, SpringVersion::GetFull());
 
 	good_fpu_control_registers("after CGameServer creation");
@@ -430,30 +429,25 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 
 	while (buf) {
 		if (buf->data[0] == NETMSG_GAMEDATA) {
-			GameData* demoGameData = NULL;
-
 			try {
-				demoGameData = new GameData(boost::shared_ptr<const RawPacket>(buf));
+				gameData.reset(new GameData(boost::shared_ptr<const RawPacket>(buf)));
 			} catch (const netcode::UnpackPacketException& ex) {
 				throw content_error(std::string("Demo contains invalid GameData: ") + ex.what());
 			}
 
-			CGameSetup* tempGameSetup = new CGameSetup();
-
-			if (!tempGameSetup->Init(demoGameData->GetSetupText())) {
+			if (CGameSetup::LoadReceivedScript(gameData->GetSetupText(), true)) {
+				StartServerForDemo(demoName);
+			} else {
 				throw content_error("Demo contains incorrect script");
 			}
 
-			StartServerForDemo(tempGameSetup, demoGameData, demoName);
-
-			delete tempGameSetup;
-			delete demoGameData;
 			break;
 		}
 
 		if (scanner.ReachedEnd()) {
 			throw content_error("End of demo reached and no game data found");
 		}
+
 		buf.reset(scanner.GetData(FLT_MAX));
 	}
 
@@ -469,6 +463,13 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	} catch (const netcode::UnpackPacketException& ex) {
 		throw content_error(std::string("Server sent us invalid GameData: ") + ex.what());
 	}
+
+	// for demos, ReadDataFromDemo precedes UpdateClientNet -> GameDataReceived
+	// this means gameSetup contains data from the original game but we need the
+	// modified version (cf StartServerForDemo) which the server already has that
+	// contains an extra player
+	if (gameSetup != NULL)
+		SafeDelete(gameSetup);
 
 	if (CGameSetup::LoadReceivedScript(gameData->GetSetupText(), clientSetup->isHost)) {
 		assert(gameSetup != NULL);

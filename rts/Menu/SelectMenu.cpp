@@ -301,10 +301,12 @@ void SelectMenu::CleanWindow() {
 void SelectMenu::DirectConnect(const std::string& addr)
 {
 	configHandler->SetString("address", addr);
+
 	clientSetup->hostIP = addr;
 	clientSetup->isHost = false;
+
 	pregame = new CPreGame(clientSetup);
-	return agui::gui->RmElement(this);
+	return (agui::gui->RmElement(this));
 	//delete this;
 }
 
