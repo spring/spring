@@ -52,9 +52,6 @@ CGlobalSynced::CGlobalSynced()
 	randSeed     = 18655;
 	initRandSeed = randSeed;
 
-	frameNum = 0;
-	tempNum  = 2;
-
 	assert(teamHandler == NULL);
 	ResetState();
 }
@@ -70,6 +67,9 @@ CGlobalSynced::~CGlobalSynced()
 
 
 void CGlobalSynced::ResetState() {
+	frameNum = 0;
+	tempNum  = 2;
+
 	speedFactor       = 1.0f;
 	wantedSpeedFactor = 1.0f;
 

@@ -175,6 +175,7 @@ CGameServer::CGameServer(
 
 , gameHasStarted(false)
 , generatedGameID(false)
+, reloadingServer(false)
 {
 	myClientSetup = newClientSetup;
 	myGameData = newGameData;
@@ -2500,7 +2501,9 @@ void CGameServer::UpdateLoop()
 
 		if (hostif)
 			hostif->SendQuit();
-		Broadcast(CBaseNetProtocol::Get().SendQuit("Server shutdown"));
+
+		if (!reloadingServer)
+			Broadcast(CBaseNetProtocol::Get().SendQuit("Server shutdown"));
 
 		// flush the quit messages to reduce ugly network error messages on the client side
 		// this is to make sure the Flush has any effect at all (we don't want a forced flush)

@@ -94,6 +94,7 @@ public:
 	void CreateNewFrame(bool fromServerThread, bool fixedFrameTime);
 
 	void SetGamePausable(const bool arg);
+	void SetReloading(const bool arg) { reloadingServer = arg; }
 
 	bool HasStarted() const { return gameHasStarted; }
 	bool HasGameID() const { return generatedGameID; }
@@ -275,6 +276,7 @@ private:
 
 	volatile bool gameHasStarted;
 	volatile bool generatedGameID;
+	volatile bool reloadingServer;
 
 	int linkMinPacketSize;
 
