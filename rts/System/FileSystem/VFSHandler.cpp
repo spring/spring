@@ -99,12 +99,18 @@ bool CVFSHandler::RemoveArchive(const std::string& archiveName)
 {
 	LOG_L(L_DEBUG, "RemoveArchive(archiveName = \"%s\")", archiveName.c_str());
 
-	IArchive* ar = archives[archiveName];
+	const auto it = archives.find(archiveName);
+
+	if (it == archives.end())
+		return true;
+
+	IArchive* ar = it->second;
+
 	if (ar == NULL) {
 		// archive is not loaded
 		return true;
 	}
-	
+
 	// remove the files loaded from the archive-to-remove
 	for (std::map<std::string, FileData>::iterator f = files.begin(); f != files.end();) {
 		if (f->second.ar == ar) {

@@ -68,7 +68,7 @@ public:
 
 	/**
 	 * Removes an archive from the VFS.
-	 * @return true if the archive is not loaded anymore; it may was not loaded
+	 * @return true if the archive is not loaded anymore; it was not loaded
 	 *   in the first place, or was unloaded successfully.
 	 */
 	bool RemoveArchive(const std::string& archiveName);
