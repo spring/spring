@@ -130,6 +130,41 @@ class LuaUtils {
 
 
 
+template<typename ObjectDefType, typename IndexFuncType, typename IterFuncType>
+static void PushObjectDefProxyTable(
+	lua_State* L,
+	const char* indxOpers[3],
+	const char* iterOpers[2],
+	const IndexFuncType indxFuncs[3],
+	const IterFuncType iterFuncs[2],
+	const ObjectDefType* def
+) {
+	lua_pushnumber(L, def->id);
+	lua_newtable(L); { // the proxy table
+
+		lua_newtable(L); // the metatable
+
+		for (unsigned int n = 0; n < (sizeof(indxFuncs) / sizeof(indxFuncs[0])); n++) {
+			HSTR_PUSH(L, indxOpers[n]);
+			lua_pushlightuserdata(L, (void*) def);
+			lua_pushcclosure(L, indxFuncs[n], 1);
+			lua_rawset(L, -3); // closure
+		}
+
+		lua_setmetatable(L, -2);
+	}
+
+	for (unsigned int n = 0; n < (sizeof(iterFuncs) / sizeof(iterFuncs[0])); n++) {
+		HSTR_PUSH(L, iterOpers[n]);
+		lua_pushcfunction(L, iterFuncs[n]);
+		lua_rawset(L, -3);
+	}
+
+	lua_rawset(L, -3); // set the proxy table
+}
+
+
+
 static inline void LuaPushNamedNil(lua_State* L,
                              const string& key)
 {

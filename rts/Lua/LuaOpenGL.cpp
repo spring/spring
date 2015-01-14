@@ -66,8 +66,6 @@
 
 using std::max;
 using std::string;
-using std::vector;
-using std::set;
 
 #undef far // avoid collision with windef.h
 #undef near
@@ -82,15 +80,17 @@ static const int MAX_TEXTURE_UNITS = 32;
 void (*LuaOpenGL::resetMatrixFunc)(void) = NULL;
 
 unsigned int LuaOpenGL::resetStateList = 0;
-set<unsigned int> LuaOpenGL::occlusionQueries;
 
 LuaOpenGL::DrawMode LuaOpenGL::drawMode = LuaOpenGL::DRAW_NONE;
 LuaOpenGL::DrawMode LuaOpenGL::prevDrawMode = LuaOpenGL::DRAW_NONE;
 
 bool  LuaOpenGL::safeMode = true;
 bool  LuaOpenGL::canUseShaders = false;
-float LuaOpenGL::screenWidth = 0.36f;
-float LuaOpenGL::screenDistance = 0.60f;
+
+float LuaOpenGL::screenWidth = 0.0f;
+float LuaOpenGL::screenDistance = 0.0f;
+
+std::set<unsigned int> LuaOpenGL::occlusionQueries;
 
 /******************************************************************************/
 /******************************************************************************/
@@ -105,15 +105,13 @@ void LuaOpenGL::Init()
 
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
-	if (globalRendering->haveGLSL && configHandler->GetBool("LuaShaders")) {
-		canUseShaders = true;
-	}
+	canUseShaders = (globalRendering->haveGLSL && configHandler->GetBool("LuaShaders"));
 }
-
 
 void LuaOpenGL::Free()
 {
 	glDeleteLists(resetStateList, 1);
+	glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
 	if (!globalRendering->haveGLSL)
 		return;
@@ -131,6 +129,18 @@ void LuaOpenGL::Free()
 
 bool LuaOpenGL::PushEntries(lua_State* L)
 {
+	{
+		// these need to be re-initialized here since we might have reloaded
+		resetMatrixFunc = NULL;
+
+		drawMode = LuaOpenGL::DRAW_NONE;
+		prevDrawMode = LuaOpenGL::DRAW_NONE;
+
+		screenWidth = 0.36f;
+		screenDistance = 0.60f;
+	}
+
+
 #define REGISTER_LUA_CFUNC(x) \
 	lua_pushstring(L, #x);      \
 	lua_pushcfunction(L, x);    \
@@ -3909,7 +3919,7 @@ int LuaOpenGL::PushPopMatrix(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 
-	vector<GLenum> matModes;
+	std::vector<GLenum> matModes;
 	int arg;
 	for (arg = 1; lua_isnumber(L, arg); arg++) {
 		const GLenum mode = (GLenum)lua_tonumber(L, arg);

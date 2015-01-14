@@ -88,13 +88,13 @@ bool LuaSyncedCtrl::inGiveOrder = false;
 bool LuaSyncedCtrl::inHeightMap = false;
 bool LuaSyncedCtrl::inSmoothMesh = false;
 
-static int heightMapx1;
-static int heightMapx2;
-static int heightMapz1;
-static int heightMapz2;
-static float heightMapAmountChanged;
+static int heightMapx1 = 0;
+static int heightMapx2 = 0;
+static int heightMapz1 = 0;
+static int heightMapz2 = 0;
 
-static float smoothMeshAmountChanged;
+static float heightMapAmountChanged = 0.0f;
+static float smoothMeshAmountChanged = 0.0f;
 
 
 /******************************************************************************/
@@ -112,6 +112,27 @@ inline void LuaSyncedCtrl::CheckAllowGameChanges(lua_State* L)
 
 bool LuaSyncedCtrl::PushEntries(lua_State* L)
 {
+	{
+		// these need to be re-initialized here since we might have reloaded
+		inCreateUnit = false;
+		inDestroyUnit = false;
+		inTransferUnit = false;
+		inCreateFeature = false;
+		inDestroyFeature = false;
+		inGiveOrder = false;
+		inHeightMap = false;
+		inSmoothMesh = false;
+
+		heightMapx1 = 0;
+		heightMapx2 = 0;
+		heightMapz1 = 0;
+		heightMapz2 = 0;
+
+		heightMapAmountChanged = 0.0f;
+		smoothMeshAmountChanged = 0.0f;
+	}
+
+
 #define REGISTER_LUA_CFUNC(x) \
 	lua_pushstring(L, #x);      \
 	lua_pushcfunction(L, x);    \

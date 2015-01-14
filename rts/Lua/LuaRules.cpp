@@ -42,9 +42,10 @@ DECL_FREE_HANDLER(CLuaRules, luaRules)
 CLuaRules::CLuaRules()
 : CLuaHandleSynced("LuaRules", LUA_HANDLE_ORDER_RULES)
 {
-	if (!IsValid()) {
+	currentCobArgs = NULL;
+
+	if (!IsValid())
 		return;
-	}
 
 	SetFullCtrl(true);
 	SetFullRead(true);
@@ -54,15 +55,12 @@ CLuaRules::CLuaRules()
 	SetSelectTeam(CEventClient::AllAccessTeam);
 
 	Init(LuaRulesSyncedFilename, LuaRulesUnsyncedFilename, SPRING_VFS_MOD);
-
-	if (!IsValid()) {
-		return;
-	}
 }
 
 CLuaRules::~CLuaRules()
 {
 	luaRules = NULL;
+	currentCobArgs = NULL;
 }
 
 
