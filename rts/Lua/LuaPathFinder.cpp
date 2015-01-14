@@ -42,6 +42,10 @@ static void CreatePathMetatable(lua_State* L);
 
 bool LuaPathFinder::PushEntries(lua_State* L)
 {
+	// safety in case of reload
+	costArrayMapSynced.clear();
+	costArrayMapUnsynced.clear();
+
 	CreatePathMetatable(L);
 
 #define REGISTER_LUA_CFUNC(x)   \
@@ -62,9 +66,8 @@ bool LuaPathFinder::PushEntries(lua_State* L)
 
 int LuaPathFinder::PushPathNodes(lua_State* L, const int pathID)
 {
-	if (pathID == 0) {
+	if (pathID == 0)
 		return 0;
-	}
 
 	vector<float3> points;
 	vector<int>    starts;
@@ -107,9 +110,9 @@ static int path_next(lua_State* L)
 {
 	const int* idPtr = (int*)luaL_checkudata(L, 1, "Path");
 	const int pathID = *idPtr;
-	if (pathID == 0) {
+
+	if (pathID == 0)
 		return 0;
-	}
 
 	const int args = lua_gettop(L);
 
@@ -151,9 +154,10 @@ static int path_index(lua_State* L)
 {
 	const int* idPtr = (int*)luaL_checkudata(L, 1, "Path");
 	const int pathID = *idPtr;
-	if (pathID == 0) {
+
+	if (pathID == 0)
 		return 0;
-	}
+
 	const string key = luaL_checkstring(L, 2);
 	if (key == "Next") {
 		lua_pushcfunction(L, path_next);
@@ -175,9 +179,10 @@ static int path_gc(lua_State* L)
 {
 	int* idPtr = (int*)luaL_checkudata(L, 1, "Path");
 	const int pathID = *idPtr;
-	if (pathID == 0) {
+
+	if (pathID == 0)
 		return 0;
-	}
+
 	pathManager->DeletePath(*idPtr);
 	*idPtr = 0;
 	return 0;
@@ -213,9 +218,8 @@ int LuaPathFinder::RequestPath(lua_State* L)
 		moveDef = moveDefHandler->GetMoveDefByPathType(pathType);
 	}
 
-	if (moveDef == NULL) {
+	if (moveDef == NULL)
 		return 0;
-	}
 
 	const float3 start(luaL_checkfloat(L, 2),
 	                   luaL_checkfloat(L, 3),

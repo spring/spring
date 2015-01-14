@@ -39,7 +39,7 @@
 /******************************************************************************/
 /******************************************************************************/
 
-static std::set<std::string> stringSet;
+static std::set<std::string> infoTexNames;
 
 /******************************************************************************/
 /******************************************************************************/
@@ -301,9 +301,9 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 			if (!itex)
 				return false;
 
-			stringSet.insert(infoTexName);
+			infoTexNames.insert(infoTexName);
 			texUnit.type = LuaMatTexture::LUATEX_INFOTEX;
-			texUnit.data = &*stringSet.find(infoTexName);
+			texUnit.data = &*infoTexNames.find(infoTexName);
 		}
 
 		else if (image == "$info"        || image == "$extra"       ) { texUnit.type = LuaMatTexture::LUATEX_INFOTEX_ACTIVE; }
