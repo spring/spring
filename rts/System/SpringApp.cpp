@@ -959,8 +959,8 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 				case SDL_WINDOWEVENT_MOVED: {
 					SaveWindowPosition();
 				} break;
-				//case SDL_WINDOWEVENT_SIZE_CHANGED:
-				case SDL_WINDOWEVENT_RESIZED: {
+				//case SDL_WINDOWEVENT_RESIZED: //this is event is always preceded by:
+				case SDL_WINDOWEVENT_SIZE_CHANGED: {
 					Watchdog::ClearTimer(WDT_MAIN, true);
 					SaveWindowPosition();
 					InitOpenGL();
