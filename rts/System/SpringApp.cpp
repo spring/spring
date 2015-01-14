@@ -857,10 +857,10 @@ void SpringApp::Reload(const std::string& script)
 	if (gameServer != NULL)
 		gameServer->SetReloading(true);
 
-	delete game; game = NULL;
-	delete pregame; pregame = NULL;
-	delete gameServer; gameServer = NULL;
+	SafeDelete(game);
+	SafeDelete(pregame);
 
+	SafeDelete(gameServer);
 	// PreGame allocates clientNet, so we need to delete our old connection
 	SafeDelete(clientNet);
 
@@ -967,10 +967,8 @@ void SpringApp::ShutDown()
 	ThreadPool::SetThreadCount(0);
 	LOG("[SpringApp::%s][2]", __FUNCTION__);
 
+	SafeDelete(game);
 	SafeDelete(pregame);
-	// don't use SafeDelete: many components in ~CGame
-	// expect game-pointer to remain valid during call
-	delete game; game = NULL;
 
 	agui::FreeGui();
 
