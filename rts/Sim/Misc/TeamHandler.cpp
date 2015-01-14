@@ -47,7 +47,9 @@ void CTeamHandler::ResetState()
 
 void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 {
-	ResetState();
+	// must start from a blank slate
+	assert(teams.empty());
+	assert(allyTeams.empty());
 
 	assert(!setup->GetTeamStartingDataCont().empty());
 	assert(setup->GetTeamStartingDataCont().size() <= MAX_TEAMS);
