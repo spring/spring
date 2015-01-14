@@ -113,7 +113,7 @@ public:
 	std::string modName;
 	std::string gameID;
 
-	std::string gameSetupText;
+	std::string setupText;
 	std::string demoName;
 	std::string saveName;
 

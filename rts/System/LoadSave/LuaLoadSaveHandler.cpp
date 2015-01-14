@@ -111,7 +111,7 @@ void CLuaLoadSaveHandler::SaveEventClients()
 
 void CLuaLoadSaveHandler::SaveGameStartInfo()
 {
-	const std::string scriptText = gameSetup->gameSetupText;
+	const std::string scriptText = gameSetup->setupText;
 	SaveEntireFile(FILE_STARTSCRIPT, "game setup", scriptText.data(), scriptText.size());
 }
 

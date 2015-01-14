@@ -13,7 +13,7 @@
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/Camera/CameraController.h"
-#include "Game/Game.h"
+#include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/Players/Player.h"
@@ -210,7 +210,9 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetLosViewColors);
 
+	REGISTER_LUA_CFUNC(Reload);
 	REGISTER_LUA_CFUNC(Restart);
+
 	REGISTER_LUA_CFUNC(SetWMIcon);
 	REGISTER_LUA_CFUNC(SetWMCaption);
 
@@ -1000,9 +1002,6 @@ int LuaUnsyncedCtrl::SetCustomCommandDrawData(lua_State* L)
 
 int LuaUnsyncedCtrl::SetDrawSky(lua_State* L)
 {
-	if (game == NULL) {
-		return 0;
-	}
 	globalRendering->drawSky = !!luaL_checkboolean(L, 1);
 	return 0;
 }
@@ -1010,9 +1009,6 @@ int LuaUnsyncedCtrl::SetDrawSky(lua_State* L)
 
 int LuaUnsyncedCtrl::SetDrawWater(lua_State* L)
 {
-	if (game == NULL) {
-		return 0;
-	}
 	globalRendering->drawWater = !!luaL_checkboolean(L, 1);
 	return 0;
 }
@@ -1020,9 +1016,6 @@ int LuaUnsyncedCtrl::SetDrawWater(lua_State* L)
 
 int LuaUnsyncedCtrl::SetDrawGround(lua_State* L)
 {
-	if (game == NULL) {
-		return 0;
-	}
 	globalRendering->drawGround = !!luaL_checkboolean(L, 1);
 	return 0;
 }
@@ -1047,9 +1040,6 @@ int LuaUnsyncedCtrl::SetDrawModelsDeferred(lua_State* L)
 
 int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 {
-	if (game == NULL) {
-		return 0;
-	}
 	if (!gs->cheatEnabled) {
 		LOG("SetWaterParams() needs cheating enabled");
 		return 0;
@@ -2004,6 +1994,16 @@ int LuaUnsyncedCtrl::CreateDir(lua_State* L)
 
 /******************************************************************************/
 
+int LuaUnsyncedCtrl::Reload(lua_State* L)
+{
+	// signal SpringApp
+	gameSetup->setupText = luaL_checkstring(L, 1);
+	gu->globalReload = true;
+
+	LOG("[Spring.%s] Spring \"%s\" should be reloading", __FUNCTION__, (Platform::GetProcessExecutableFile()).c_str());
+	return 0;
+}
+
 int LuaUnsyncedCtrl::Restart(lua_State* L)
 {
 	const std::string springArguments = luaL_checkstring(L, 1);
@@ -2043,13 +2043,14 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 	return 1;
 }
 
+
 int LuaUnsyncedCtrl::SetWMIcon(lua_State* L)
 {
 	const std::string iconFileName = luaL_checksstring(L, 1);
 
 	CBitmap iconTexture;
-	const bool loaded = iconTexture.Load(iconFileName);
-	if (loaded) {
+
+	if (iconTexture.Load(iconFileName)) {
 		WindowManagerHelper::SetIcon(&iconTexture);
 	} else {
 		luaL_error(L, "Failed to load image from file \"%s\"", iconFileName.c_str());
@@ -2060,8 +2061,7 @@ int LuaUnsyncedCtrl::SetWMIcon(lua_State* L)
 
 int LuaUnsyncedCtrl::SetWMCaption(lua_State* L)
 {
-	const std::string title = luaL_checksstring(L, 1);
-	WindowManagerHelper::SetCaption(title);
+	WindowManagerHelper::SetCaption(luaL_checksstring(L, 1));
 	return 0;
 }
 

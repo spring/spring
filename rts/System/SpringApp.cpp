@@ -938,7 +938,7 @@ int SpringApp::Run()
 		input.PushEvents();
 
 		if (gu->globalReload) {
-			Reload(gameSetup->gameSetupText);
+			Reload(gameSetup->setupText);
 		} else {
 			if (!Update()) {
 				break;

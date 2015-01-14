@@ -1933,7 +1933,7 @@ void CGameServer::GenerateAndSendGameID()
 
 	// Third dword is CRC of setupText.
 	CRC crc;
-	crc.Update(myGameSetup->gameSetupText.c_str(), myGameSetup->gameSetupText.length());
+	crc.Update(myGameSetup->setupText.c_str(), myGameSetup->setupText.length());
 	gameID.intArray[2] = crc.GetDigest();
 
 	CRC entropy;

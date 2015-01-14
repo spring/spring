@@ -20,7 +20,7 @@
 
 CR_BIND(CGameSetup,)
 CR_REG_METADATA(CGameSetup, (
-	CR_MEMBER(gameSetupText),
+	CR_MEMBER(setupText),
 	CR_POSTLOAD(PostLoad)
 ))
 
@@ -158,7 +158,7 @@ void CGameSetup::ResetState()
 	modName.clear();
 	gameID.clear();
 
-	gameSetupText.clear();
+	setupText.clear();
 	demoName.clear();
 	saveName.clear();
 
@@ -181,7 +181,7 @@ void CGameSetup::ResetState()
 
 void CGameSetup::PostLoad()
 {
-	Init(gameSetupText);
+	Init(setupText);
 }
 
 void CGameSetup::LoadUnitRestrictions(const TdfParser& file)
@@ -230,8 +230,8 @@ void CGameSetup::LoadStartPositions(bool withoutMap)
 	if (startPosType == StartPos_Random) {
 		// Server syncs these later, so we can use unsynced rng
 		UnsyncedRNG rng;
-		rng.Seed(gameSetupText.length());
-		rng.Seed((size_t)gameSetupText.c_str());
+		rng.Seed(setupText.length());
+		rng.Seed((size_t) setupText.c_str());
 		std::vector<int> teamStartNum(teamStartingData.size());
 
 		for (size_t i = 0; i < teamStartingData.size(); ++i)
@@ -509,7 +509,7 @@ bool CGameSetup::Init(const std::string& buf)
 	ResetState();
 
 	// Copy buffer contents
-	gameSetupText = buf;
+	setupText = buf;
 
 	// Parse game parameters
 	TdfParser file(buf.c_str(),buf.size());

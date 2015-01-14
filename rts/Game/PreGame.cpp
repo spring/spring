@@ -233,7 +233,7 @@ void CPreGame::StartServer(const std::string& setupscript)
 	startGameData->SetMapChecksum(archiveScanner->GetArchiveCompleteChecksum(mapArchive));
 
 	good_fpu_control_registers("before CGameServer creation");
-	startGameData->SetSetupText(startGameSetup->gameSetupText);
+	startGameData->SetSetupText(startGameSetup->setupText);
 	gameServer = new CGameServer(clientSetup, startGameData, startGameSetup);
 
 	gameServer->AddLocalClient(clientSetup->myPlayerName, SpringVersion::GetFull());

@@ -211,7 +211,7 @@ int main(int argc, char* argv[])
 
 		LOG("starting server...");
 
-		dsGameData->SetSetupText(dsGameSetup->gameSetupText);
+		dsGameData->SetSetupText(dsGameSetup->setupText);
 		server = new CGameServer(dsClientSetup, dsGameData, dsGameSetup);
 
 		while (!server->HasGameID()) {
