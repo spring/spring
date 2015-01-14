@@ -203,16 +203,14 @@ void SelectMenu::Single()
 
 		pregame = new CPreGame(clientSetup);
 		pregame->LoadSetupscript(StartScriptGen::CreateDefaultSetup(selw->userMap, selw->userMod, selw->userScript, clientSetup->myPlayerName));
-		return agui::gui->RmElement(this);
-		//delete this;
+		return (agui::gui->RmElement(this));
 	}
 }
 
 void SelectMenu::Quit()
 {
 	gu->globalQuit = true;
-	return agui::gui->RmElement(this);
-	//delete this;
+	return (agui::gui->RmElement(this));
 }
 
 void SelectMenu::ShowConnectWindow(bool show)
@@ -300,7 +298,6 @@ void SelectMenu::DirectConnect(const std::string& addr)
 
 	pregame = new CPreGame(clientSetup);
 	return (agui::gui->RmElement(this));
-	//delete this;
 }
 
 bool SelectMenu::HandleEventSelf(const SDL_Event& ev)

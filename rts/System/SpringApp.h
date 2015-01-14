@@ -7,9 +7,10 @@
 #include <boost/cstdint.hpp>
 #include <boost/shared_ptr.hpp>
 
-class ClientSetup;
 class CmdLineParams;
+class ClientSetup;
 class CGameController;
+
 union SDL_Event;
 
 /**
@@ -33,10 +34,12 @@ private:
 	void ParseCmdLine(const std::string&);          //!< Parse command line
 	void Startup();                                 //!< Parses startup data (script etc.) and starts SelectMenu or PreGame
 	bool InitWindow(const char* title);             //!< Initializes window
+
+	int Update();                                   //!< Run simulation and draw
+
 	static void InitOpenGL();                       //!< Initializes OpenGL
 	static void LoadFonts();                        //!< Initialize glFonts (font & smallFont)
-	static bool CreateSDLWindow(const char* title);    //!< Creates a SDL window
-	int Update();                                   //!< Run simulation and draw
+	static bool CreateSDLWindow(const char* title); //!< Creates a SDL window
 
 	static void GetDisplayGeometry();
 	static void SetupViewportGeometry();
@@ -55,7 +58,14 @@ private:
 
 private:
 	bool MainEventHandler(const SDL_Event& ev);
-	void RunScript(const std::string& buf);
+
+	CGameController* RunScript(const std::string& buf);
+
+	void SetReloading(bool b) { isReloading = b; }
+	bool IsReloading() const { return isReloading; }
+
+private:
+	bool isReloading;
 };
 
 /**

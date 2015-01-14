@@ -152,6 +152,7 @@ static bool MultisampleVerify()
  */
 SpringApp::SpringApp(int argc, char** argv): cmdline(new CmdLineParams(argc, argv))
 {
+	SetReloading(false);
 	// initializes configHandler which we need
 	ParseCmdLine(argv[0]);
 
@@ -745,7 +746,7 @@ void SpringApp::ParseCmdLine(const std::string& binaryName)
 }
 
 
-void SpringApp::RunScript(const std::string& buf)
+CGameController* SpringApp::RunScript(const std::string& buf)
 {
 	clientSetup->LoadFromStartScript(buf);
 
@@ -759,8 +760,11 @@ void SpringApp::RunScript(const std::string& buf)
 
 	pregame = new CPreGame(clientSetup);
 
-	if (clientSetup->isHost)
+	if (clientSetup->isHost) {
 		pregame->LoadSetupscript(buf);
+	}
+
+	return pregame;
 }
 
 
@@ -791,7 +795,7 @@ void SpringApp::Startup()
 
 		if (cmdline->IsSet("game") && cmdline->IsSet("map")) {
 			// --game and --map directly specified, try to run them
-			RunScript(StartScriptGen::CreateMinimalSetup(cmdline->GetString("game"), cmdline->GetString("map")));
+			activeController = RunScript(StartScriptGen::CreateMinimalSetup(cmdline->GetString("game"), cmdline->GetString("map")));
 		} else {
 			// menu
 		#ifdef HEADLESS
@@ -799,6 +803,7 @@ void SpringApp::Startup()
 				"The headless version of the engine can not be run in interactive mode.\n"
 				"Please supply a start-script, save- or demo-file.", "ERROR", MBF_OK|MBF_EXCL);
 		#endif
+			// not a memory-leak: SelectMenu deletes itself on start
 			activeController = new SelectMenu(clientSetup);
 		}
 		return;
@@ -836,11 +841,48 @@ void SpringApp::Startup()
 		if (!fh.LoadStringData(buf))
 			throw content_error("Setup-script cannot be read: " + inputFile);
 
-		RunScript(buf);
+		activeController = RunScript(buf);
 	}
 }
 
 
+
+void SpringApp::Reload(const std::string& script)
+{
+	if (IsReloading())
+		return;
+
+	SetReloading(true);
+
+	if (gameServer != NULL)
+		gameServer->SetReloading(true);
+
+	delete game; game = NULL;
+	delete pregame; pregame = NULL;
+	delete gameServer; gameServer = NULL;
+
+	// PreGame allocates clientNet, so we need to delete our old connection
+	SafeDelete(clientNet);
+
+	// note: technically we only need to use RemoveArchive
+	FileSystemInitializer::Cleanup(false);
+	FileSystemInitializer::Initialize();
+
+	gu->ResetState();
+	gs->ResetState();
+
+	// must hold or we would loop forever
+	assert(!gu->globalReload);
+
+	if (script.empty()) {
+		// if no script, drop back to menu
+		activeController = new SelectMenu(clientSetup);
+	} else {
+		activeController = RunScript(script);
+	}
+
+	SetReloading(false);
+}
 
 /**
  * @return return code of activecontroller draw function
@@ -855,7 +897,7 @@ int SpringApp::Update()
 
 	int ret = 1;
 
-	if (activeController) {
+	if (activeController != NULL) {
 		ret = activeController->Update();
 
 		if (ret) {
@@ -888,8 +930,14 @@ int SpringApp::Run()
 	while (!gu->globalQuit) {
 		Watchdog::ClearTimer(WDT_MAIN);
 		input.PushEvents();
-		if (!Update())
-			break;
+
+		if (gu->globalReload) {
+			Reload(gameSetup->gameSetupText);
+		} else {
+			if (!Update()) {
+				break;
+			}
+		}
 	}
 	SaveWindowPosition();
 	ShutDown();
