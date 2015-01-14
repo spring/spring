@@ -874,6 +874,10 @@ void SpringApp::Reload(const std::string& script)
 	LuaOpenGL::Free();
 	LuaOpenGL::Init();
 
+	// reload sounds.lua in case we switch to a different game
+	ISound::Shutdown();
+	ISound::Initialize();
+
 	gu->ResetState();
 	gs->ResetState();
 
