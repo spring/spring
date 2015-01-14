@@ -20,6 +20,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Models/ModelDrawer.h"
 #include "Rendering/Shaders/ShaderHandler.h"
+#include "Rendering/Shaders/Shader.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Matrix44f.h"

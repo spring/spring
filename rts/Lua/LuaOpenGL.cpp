@@ -98,9 +98,9 @@ float LuaOpenGL::screenDistance = 0.60f;
 void LuaOpenGL::Init()
 {
 	resetStateList = glGenLists(1);
-	glNewList(resetStateList, GL_COMPILE); {
-		ResetGLState();
-	}
+
+	glNewList(resetStateList, GL_COMPILE);
+	ResetGLState();
 	glEndList();
 
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
@@ -121,6 +121,8 @@ void LuaOpenGL::Free()
 	for (auto it = occlusionQueries.begin(); it != occlusionQueries.end(); ++it) {
 		glDeleteQueries(1, &(*it));
 	}
+
+	occlusionQueries.clear();
 }
 
 

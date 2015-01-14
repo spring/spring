@@ -3,6 +3,7 @@
 #include "Rendering/GL/myGL.h"
 
 #include "Rendering/Shaders/ShaderHandler.h"
+#include "Rendering/Shaders/Shader.h"
 #include "Rendering/GlobalRendering.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
@@ -10,9 +11,31 @@
 #include <cassert>
 
 
+// not extern'ed, so static
+static CShaderHandler* gShaderHandler = NULL;
+
 CShaderHandler* CShaderHandler::GetInstance() {
-	static CShaderHandler shaHandler;
-	return &shaHandler;
+	if (gShaderHandler == NULL)
+		gShaderHandler = new CShaderHandler();
+
+	return gShaderHandler;
+}
+
+void CShaderHandler::FreeInstance(CShaderHandler* sh) {
+	assert(sh == gShaderHandler);
+	delete sh;
+	gShaderHandler = NULL;
+}
+
+
+
+CShaderHandler::~CShaderHandler() {
+	for (auto it = programObjects.begin(); it != programObjects.end(); ++it) {
+		ReleaseProgramObjects(it->first);
+	}
+
+	programObjects.clear();
+	shaderProgramCache.clear();
 }
 
 
@@ -23,7 +46,6 @@ void CShaderHandler::ReloadAll() {
 		}
 	}
 }
-
 
 void CShaderHandler::ReleaseProgramObjects(const std::string& poClass) {
 	if (programObjects.find(poClass) == programObjects.end()) {

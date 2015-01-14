@@ -868,6 +868,12 @@ void SpringApp::Reload(const std::string& script)
 	FileSystemInitializer::Cleanup(false);
 	FileSystemInitializer::Initialize();
 
+	CNamedTextures::Kill();
+	CNamedTextures::Init();
+
+	LuaOpenGL::Free();
+	LuaOpenGL::Init();
+
 	gu->ResetState();
 	gs->ResetState();
 

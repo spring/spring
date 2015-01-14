@@ -463,7 +463,6 @@ CGame::~CGame()
 
 	LOG("[%s][6]", __FUNCTION__);
 	SafeDelete(infoTextureHandler);
-	SafeDelete(worldDrawer);
 	SafeDelete(guihandler); // frees LuaUI
 	SafeDelete(minimap);
 	SafeDelete(resourceBar);
@@ -477,10 +476,9 @@ CGame::~CGame()
 	SafeDelete(mouse); // CMouseHandler*
 	SafeDelete(inMapDrawerModel);
 	SafeDelete(inMapDrawer);
+	SafeDelete(worldDrawer);
 
 	LOG("[%s][7]", __FUNCTION__);
-	SafeDelete(water);
-	SafeDelete(sky);
 	SafeDelete(camHandler);
 	SafeDelete(camera);
 	SafeDelete(cam2);
@@ -666,6 +664,7 @@ void CGame::PostLoadSimulation()
 	loadscreen->SetLoadMessage("Loading Unit Definitions");
 	unitDefHandler = new CUnitDefHandler(defsParser);
 
+	CUnit::InitStatic();
 	CClassicGroundMoveType::CreateLineTable();
 
 	unitHandler = new CUnitHandler();

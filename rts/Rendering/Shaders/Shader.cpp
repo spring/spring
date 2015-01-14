@@ -1,14 +1,17 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "Rendering/Shaders/Shader.h"
+#include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/LuaShaderContainer.h"
 #include "Rendering/Shaders/GLSLCopyState.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GlobalRendering.h"
 #include "Lua/LuaMaterial.h"
+
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Log/ILog.h"
+
 #include <algorithm>
 #ifdef DEBUG
 	#include <string.h> // strncmp
@@ -26,9 +29,6 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_SHADER)
 	#undef LOG_SECTION_CURRENT
 #endif
 #define LOG_SECTION_CURRENT LOG_SECTION_SHADER
-
-
-static std::unordered_map<size_t, GLuint> glslShadersCache;
 
 
 
@@ -290,7 +290,10 @@ namespace Shader {
 
 	UniformState* IProgramObject::GetNewUniformState(const std::string name)
 	{
-		UniformState* us = &uniformStates.emplace(hashString(name.c_str()), name).first->second;
+		const auto it = uniformStates.insert(std::make_pair(hashString(name.c_str()), UniformState(name)));
+		// const auto it = uniformStates.emplace(hashString(name.c_str()), name);
+
+		UniformState* us = &(it.first->second);
 		us->SetLocation(GetUniformLoc(name));
 	#if DEBUG
 		if (us->IsLocationValid())
@@ -358,9 +361,6 @@ namespace Shader {
 	}
 	void ARBProgramObject::Release() {
 		IProgramObject::Release();
-	}
-	void ARBProgramObject::Reload(bool reloadFromDisk) {
-
 	}
 
 	int ARBProgramObject::GetUniformLoc(const std::string& name) {
@@ -482,12 +482,16 @@ namespace Shader {
 		const unsigned int oldHash = curHash;
 		curHash = GetHash();
 
+		std::unordered_map<size_t, GLuint>& shadersCache = shaderHandler->GetShaderProgramCache();
+		std::unordered_map<size_t, GLuint>::iterator shaderCacheIt;
+
+		bool deleteOldShader = false;
+
 		log = "";
 		valid = false;
 
-		if (GetAttachedShaderObjs().empty()) {
+		if (GetAttachedShaderObjs().empty())
 			return;
-		}
 
 		GLuint oldProgID = objID;
 
@@ -495,21 +499,21 @@ namespace Shader {
 			us_pair.second.SetLocation(GL_INVALID_INDEX);
 		}
 
-		bool deleteOldShader = false;
-		if (glslShadersCache.find(oldHash) == glslShadersCache.end()) {
-			glslShadersCache[oldHash] = oldProgID;
+
+		if ((shaderCacheIt = shadersCache.find(oldHash)) == shadersCache.end()) {
+			shadersCache[oldHash] = oldProgID;
 		} else {
 			for (IShaderObject*& so: GetAttachedShaderObjs()) {
 				glDetachShader(oldProgID, so->GetObjID());
 				so->Release();
 			}
+
 			deleteOldShader = true;
 		}
 
-		auto it = glslShadersCache.find(curHash);
-		if (it != glslShadersCache.end()) {
-			objID = it->second;
-			glslShadersCache.erase(it);
+		if ((shaderCacheIt = shadersCache.find(curHash)) != shadersCache.end()) {
+			objID = shaderCacheIt->second;
+			shadersCache.erase(shaderCacheIt);
 		} else {
 			objID = glCreateProgram();
 			for (IShaderObject*& so: GetAttachedShaderObjs()) {
@@ -522,6 +526,7 @@ namespace Shader {
 			}
 			Link();
 		}
+
 
 		GLSLCopyState(objID, oldProgID, &((IProgramObject*)(this))->uniformStates);
 

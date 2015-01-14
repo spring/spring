@@ -5,17 +5,24 @@
 
 #include <string>
 #include <map>
+#include <unordered_map>
 
-#include "Rendering/Shaders/Shader.h"
+namespace Shader {
+	struct IProgramObject;
+	struct IShaderObject;
+};
 
 class CShaderHandler {
 public:
+	~CShaderHandler();
+
 	static CShaderHandler* GetInstance();
+	static void FreeInstance(CShaderHandler*);
 
 	void ReloadAll();
-	Shader::IProgramObject* GetProgramObject(const std::string& poClass, const std::string& poName);
 	void ReleaseProgramObjects(const std::string& poClass);
 
+	Shader::IProgramObject* GetProgramObject(const std::string& poClass, const std::string& poName);
 	Shader::IProgramObject* CreateProgramObject(const std::string& poClass, const std::string& poName, bool arbProgram);
 	/**
 	 * @param soName The filepath to the shader.
@@ -25,11 +32,15 @@ public:
 	 */
 	Shader::IShaderObject* CreateShaderObject(const std::string& soName, const std::string& soDefs, int soType);
 
+	const std::unordered_map<size_t, GLuint>& GetShaderProgramCache() const { return shaderProgramCache; }
+	      std::unordered_map<size_t, GLuint>& GetShaderProgramCache()       { return shaderProgramCache; }
+
 private:
 	typedef std::map<std::string, Shader::IProgramObject*> ProgramObjMap;
 	typedef std::map<std::string, Shader::IProgramObject*>::iterator ProgramObjMapIt;
 
 	std::map<std::string, ProgramObjMap> programObjects;
+	std::unordered_map<size_t, GLuint> shaderProgramCache;
 };
 
 #define shaderHandler (CShaderHandler::GetInstance())

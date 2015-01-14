@@ -72,6 +72,7 @@ struct FontFace {
 	FT_Face face;
 	std::shared_ptr<FT_Byte*> memory;
 };
+
 static std::unordered_set<CFontTexture*> allFonts;
 static std::unordered_map<std::string, std::weak_ptr<FontFace>> fontCache;
 static std::unordered_map<std::string, std::weak_ptr<FT_Byte*>> fontMemCache;
@@ -107,7 +108,7 @@ public:
 	static FT_Library& GetLibrary() {
 		// singleton
 #ifndef WIN32
-		std::call_once(flag, [](){
+		std::call_once(flag, []() {
 			singleton.reset(new FtLibraryHandler());
 		});
 #else

@@ -5,8 +5,8 @@
 
 #include <string>
 #include <vector>
-#include <map>
 #include <unordered_map>
+
 #include "ShaderStates.h"
 
 
@@ -18,10 +18,10 @@ constexpr size_t hashString(const char* str, size_t hash = 5381)
 
 struct fast_hash : public std::unary_function<int, size_t>
 {
-        size_t operator()(const int a) const
-        {
-                return a;
-        }
+	size_t operator()(const int a) const
+	{
+		return a;
+	}
 };
 
 namespace Shader {
@@ -260,7 +260,7 @@ namespace Shader {
 		void Disable();
 		void Link();
 		void Release();
-		void Reload(bool reloadFromDisk);
+		void Reload(bool reloadFromDisk) {}
 
 		int GetUniformLoc(const std::string& name);
 		int GetUniformType(const int loc) { return -1; }

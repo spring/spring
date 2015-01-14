@@ -970,13 +970,13 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 		return;
 	}
 
-	static const unsigned char tiles  = mapInfo->water.numTiles; //! (numTiles <= 16)
-	static const unsigned char ntiles = mapInfo->water.numTiles * mapInfo->water.numTiles;
-	static const float tilesize = 1.0f/mapInfo->water.numTiles;
+	const unsigned char tiles  = mapInfo->water.numTiles; //! (numTiles <= 16)
+	const unsigned char ntiles = tiles * tiles;
 
-	const int f = (gs->frameNum+1) % 60;
+	const float tilesize = 1.0f / tiles;
+	const int modFrameNum = (gs->frameNum + 1) % 60;
 
-	if (f == 0) {
+	if (modFrameNum == 0) {
 		for (unsigned char i = 0; i < ntiles; ++i) {
 			do {
 				tileOffsets[i] = (unsigned char)(gu->RandFloat()*ntiles);
@@ -988,7 +988,7 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, normalTexture2);
 	glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
-	glBlendColor(1.0f, 1.0f, 1.0f, (initialize) ? 1.0f : (f + 1)/600.0f );
+	glBlendColor(1.0f, 1.0f, 1.0f, (initialize) ? 1.0f : (modFrameNum + 1)/600.0f );
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glEnable(GL_BLEND);
 	glDepthMask(GL_FALSE);

@@ -21,6 +21,7 @@
 #include "Rendering/InMapDrawView.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Models/ModelDrawer.h"
+#include "Rendering/Shaders/ShaderHandler.h"
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/HeightMapTexture.h"
@@ -91,6 +92,7 @@ CWorldDrawer::~CWorldDrawer()
 
 	SafeDelete(cubeMapHandler);
 	IGroundDecalDrawer::FreeInstance();
+	CShaderHandler::FreeInstance(CShaderHandler::GetInstance());
 }
 
 
