@@ -188,25 +188,18 @@ bool SelectMenu::Draw()
 
 void SelectMenu::Single()
 {
-	static bool once = false;
-	if (selw->userMod == SelectionWidget::NoModSelect)
-	{
+	if (selw->userMod == SelectionWidget::NoModSelect) {
 		selw->ShowModList();
-	}
-	else if (selw->userMap == SelectionWidget::NoMapSelect)
-	{
+	} else if (selw->userMap == SelectionWidget::NoMapSelect) {
 		selw->ShowMapList();
-	}
-	else if (selw->userScript == SelectionWidget::NoScriptSelect)
-	{
+	} else if (selw->userScript == SelectionWidget::NoScriptSelect) {
 		selw->ShowScriptList();
 	}
-	else if (!once) // in case of double-click
-	{
+	else if (pregame == NULL) {
+		// in case of double-click
 		if (selw->userScript == SelectionWidget::SandboxAI) {
 			selw->userScript.clear();
 		}
-		once = true;
 
 		pregame = new CPreGame(clientSetup);
 		pregame->LoadSetupscript(StartScriptGen::CreateDefaultSetup(selw->userMap, selw->userMod, selw->userScript, clientSetup->myPlayerName));
