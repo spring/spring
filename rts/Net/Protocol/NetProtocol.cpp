@@ -36,9 +36,11 @@ CNetProtocol::~CNetProtocol()
 	// the server cleans up its corresponding connection to the
 	// client
 	Send(CBaseNetProtocol::Get().SendQuit(__FUNCTION__));
-	Close();
+	Close(true);
+
 	LOG("%s", serverConn->Statistics().c_str());
 }
+
 
 void CNetProtocol::InitClient(const char* server_addr, unsigned portnum, const std::string& myName, const std::string& myPasswd, const std::string& myVersion)
 {
@@ -54,6 +56,15 @@ void CNetProtocol::InitClient(const char* server_addr, unsigned portnum, const s
 	LOG("Connecting to %s:%i using name %s", server_addr, portnum, myName.c_str());
 }
 
+void CNetProtocol::InitLocalClient()
+{
+	serverConn.reset(new netcode::CLocalConnection);
+	serverConn->Flush();
+
+	LOG("Connecting to local server");
+}
+
+
 void CNetProtocol::AttemptReconnect(const std::string& myVersion)
 {
 	netcode::UDPConnection* conn = new netcode::UDPConnection(*serverConn);
@@ -66,16 +77,9 @@ void CNetProtocol::AttemptReconnect(const std::string& myVersion)
 	delete conn;
 }
 
+
 bool CNetProtocol::NeedsReconnect() {
 	return serverConn->NeedsReconnect();
-}
-
-void CNetProtocol::InitLocalClient()
-{
-	serverConn.reset(new netcode::CLocalConnection);
-	serverConn->Flush();
-
-	LOG("Connecting to local server");
 }
 
 bool CNetProtocol::CheckTimeout(int nsecs, bool initial) const {

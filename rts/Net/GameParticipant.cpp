@@ -43,7 +43,7 @@ void GameParticipant::Kill(const std::string& reason, const bool flush)
 		if (flush)
 			spring_sleep(spring_msecs(1000));
 
-		link->Close();
+		link->Close(flush);
 		link.reset();
 	}
 	linkData[MAX_AIS].link.reset();

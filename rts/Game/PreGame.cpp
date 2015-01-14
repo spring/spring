@@ -64,6 +64,8 @@ CPreGame::CPreGame(boost::shared_ptr<ClientSetup> setup)
 	, timer(spring_gettime())
 	, wantDemo(true)
 {
+	assert(clientNet == NULL);
+
 	clientNet = new CNetProtocol();
 	activeController = this;
 
