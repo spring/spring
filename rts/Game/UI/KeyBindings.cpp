@@ -39,6 +39,7 @@ static const std::vector<DefaultBinding> defaultBindings = {
 	{            "esc", "quitmessage" },
 	{      "Shift+esc", "quitmenu"    },
 	{ "Ctrl+Shift+esc", "quitforce"   },
+	{ " Alt+Shift+esc", "reloadforce" },
 	{      "Any+pause", "pause"       },
 
 	{ "c", "controlunit"      },

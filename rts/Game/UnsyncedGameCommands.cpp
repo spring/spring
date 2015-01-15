@@ -1992,16 +1992,28 @@ public:
 
 class QuitActionExecutor : public IUnsyncedActionExecutor {
 public:
-	QuitActionExecutor() : IUnsyncedActionExecutor("Quit",
-			"Exits the game immediately") {}
+	QuitActionExecutor() : IUnsyncedActionExecutor("QuitForce", "Exits game to system") {
+	}
 
 	bool Execute(const UnsyncedAction& action) const {
-		Exit();
+		LOG("[QuitAction] user exited to system");
+
+		gu->globalQuit = true;
 		return true;
 	}
-	static void Exit() {
-		LOG("[QuitAction] user exited");
-		gu->globalQuit = true;
+};
+
+class ReloadActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ReloadActionExecutor() : IUnsyncedActionExecutor("ReloadForce", "Exits game to menu") {
+	}
+
+	bool Execute(const UnsyncedAction& action) const {
+		LOG("[ReloadAction] user exited to menu");
+
+		gameSetup->setupText = "";
+		gu->globalReload = true;
+		return true;
 	}
 };
 
@@ -3325,7 +3337,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new QuitMessageActionExecutor());
 	AddActionExecutor(new QuitMenuActionExecutor());
 	AddActionExecutor(new QuitActionExecutor());
-	AddActionExecutor(new AliasActionExecutor(new QuitActionExecutor(), "QuitForce"));
+	AddActionExecutor(new ReloadActionExecutor());
 	AddActionExecutor(new IncreaseGUIOpacityActionExecutor());
 	AddActionExecutor(new DecreaseGUIOpacityActionExecutor());
 	AddActionExecutor(new ScreenShotActionExecutor());
