@@ -77,33 +77,35 @@ void CEngineOutHandler::HandleAIException(const char* description) {
 /////////////////////////////
 
 
-CEngineOutHandler* CEngineOutHandler::singleton = NULL;
+static CEngineOutHandler* singleton = NULL;
+static unsigned int numInstances = 0;
 
 CEngineOutHandler* CEngineOutHandler::GetInstance() {
-	static unsigned int numInstances = 0;
-
-	if (singleton == NULL) {
-		numInstances += 1;
-		singleton = new CEngineOutHandler();
-	}
-
 	// if more than one instance, some code called eoh->func()
 	// and created another after Destroy was already executed
 	// from ~CGame --> usually dtors
 	assert(numInstances == 1);
 	return singleton;
 }
+
+void CEngineOutHandler::Create() {
+	if (singleton == NULL) {
+		singleton = new CEngineOutHandler();
+		numInstances += 1;
+	}
+}
+
 void CEngineOutHandler::Destroy() {
 	if (singleton != NULL) {
 		singleton->PreDestroy();
 
-		CEngineOutHandler* tmp = singleton;
-		singleton = NULL;
-		delete tmp;
-
+		SafeDelete(singleton);
 		IAILibraryManager::Destroy();
+
+		numInstances -= 1;
 	}
 }
+
 
 CEngineOutHandler::~CEngineOutHandler() {
 	// id_skirmishAI should be empty already, but this can not hurt

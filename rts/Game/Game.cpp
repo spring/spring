@@ -13,6 +13,7 @@
 #include <SDL_keyboard.h>
 
 #include "Game.h"
+#include "GameJobDispatcher.h"
 #include "Benchmark.h"
 #include "Camera.h"
 #include "CameraHandler.h"
@@ -249,96 +250,6 @@ CR_REG_METADATA(CGame, (
 
 
 
-class JobDispatcher
-{
-public:
-	struct Job {
-		Job()
-		: freq(0)
-		//, inSim(false)
-		//, inDraw(false)
-		, startDirect(true)
-		, catchUp(false)
-		, name("")
-		{}
-
-		std::function<bool()> f; // allows us to use lambdas
-
-		float freq;
-		//bool inSim;
-		//bool inDraw;
-		bool startDirect;
-		bool catchUp;
-
-		const char* name;
-	};
-
-public:
-	static void AddJob(Job j, const spring_time t) {
-		spring_time jobTime = t;
-
-		// never overwrite one job by another (!)
-		while (jobs.find(jobTime) != jobs.end())
-			jobTime += spring_time(1);
-
-		jobs[jobTime] = j;
-	}
-
-	static void Update() {
-		const spring_time now = spring_gettime();
-
-		std::map<spring_time, Job>::iterator it = jobs.begin();
-
-		while (it != jobs.end()) {
-			if (it->first > now) {
-				++it; continue;
-			}
-
-			Job* j = &it->second;
-
-			if (j->f()) {
-				AddJob(*j, (j->catchUp ? it->first : spring_gettime()) + spring_time(1000.0f / j->freq));
-			}
-
-			jobs.erase(it); //FIXME remove by range? (faster!)
-			it = jobs.begin();
-		}
-	}
-
-private:
-	static std::map<spring_time, Job> jobs;
-};
-
-std::map<spring_time, JobDispatcher::Job> JobDispatcher::jobs;
-
-
-DO_ONCE_FNC(
-	JobDispatcher::Job j;
-	j.f = []() -> bool {
-		SCOPED_TIMER("CollectGarbage");
-		eventHandler.CollectGarbage();
-		CInputReceiver::CollectGarbage();
-		return true;
-	};
-	j.freq = GAME_SPEED;
-	j.name = "EventHandler::CollectGarbage";
-	// static initialization is done BEFORE Spring's time-epoch is set
-	JobDispatcher::AddJob(j, spring_notime + spring_time(j.startDirect ? 0 : (1000.0f / j.freq)));
-)
-
-DO_ONCE_FNC(
-	JobDispatcher::Job j;
-	j.f = []() -> bool {
-		profiler.Update();
-		return true;
-	};
-	j.freq = 1;
-	j.name = "Profiler::Update";
-	JobDispatcher::AddJob(j, spring_notime + spring_time(j.startDirect ? 0 : (1000.0f / j.freq)));
-)
-
-
-
 CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile)
 	: gameDrawMode(gameNotDrawing)
 	, lastSimFrame(-1)
@@ -379,6 +290,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, gameOver(false)
 {
 	game = this;
+	jobDispatcher = new JobDispatcher();
 
 	memset(gameID, 0, sizeof(gameID));
 
@@ -404,20 +316,30 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 
 	CLuaHandle::SetModUICtrl(configHandler->GetBool("LuaModUICtrl"));
 
+
+	modInfo.ResetState();
 	modInfo.Init(modName.c_str());
 
-	// FIXME: THIS HAS ALREADY BEEN CALLED! (SpringApp::Initialize)
-	// Threading::InitThreadPool();
-	Threading::SetThreadScheduler();
-
-	if (!mapInfo) {
-		mapInfo = new CMapInfo(gameSetup->MapFile(), gameSetup->mapName);
-	}
-
+	// needed for LuaIntro (pushes LuaConstGame)
+	assert(mapInfo == nullptr);
+	mapInfo = new CMapInfo(gameSetup->MapFile(), gameSetup->mapName);
 
 	if (!sideParser.Load()) {
 		throw content_error(sideParser.GetErrorLog());
 	}
+
+
+	// after this, other components are able to register chat action-executors
+	SyncedGameCommands::CreateInstance();
+	UnsyncedGameCommands::CreateInstance();
+
+	CResourceHandler::CreateInstance();
+	CCategoryHandler::CreateInstance();
+	CWordCompletion::CreateInstance();
+
+	// FIXME: THIS HAS ALREADY BEEN CALLED! (SpringApp::Initialize)
+	// Threading::InitThreadPool();
+	Threading::SetThreadScheduler();
 }
 
 CGame::~CGame()
@@ -436,100 +358,61 @@ CGame::~CGame()
 	IVideoCapturing::FreeInstance();
 
 	LOG("[%s][2]", __FUNCTION__);
-	CLuaGaia::FreeHandler();
-	LOG("[%s][3]", __FUNCTION__);
-	CLuaRules::FreeHandler();
-	LOG("[%s][4]", __FUNCTION__);
-	LuaOpenGL::Free();
-	LOG("[%s][5]", __FUNCTION__);
-
-	// Kill all teams that are still alive, in
-	// case the game did not do so through Lua.
-	//
-	// must happen after Lua (cause CGame is already
-	// null'ed and Died() causes a Lua event, which
-	// could issue Lua code that tries to access it)
-	for (int t = 0; t < teamHandler->ActiveTeams(); ++t) {
-		teamHandler->Team(t)->Died(false);
-	}
-
-	CEngineOutHandler::Destroy();
-	CResourceHandler::FreeInstance();
-
 	// TODO move these to the end of this dtor, once all action-executors are registered by their respective engine sub-parts
 	UnsyncedGameCommands::DestroyInstance();
 	SyncedGameCommands::DestroyInstance();
+
+	LOG("[%s][3]", __FUNCTION__);
+	KillLua();
+	KillRendering();
+	KillInterface();
+	KillSimulation();
+
+	LOG("[%s][4]", __FUNCTION__);
 	CWordCompletion::DestroyInstance();
-
-	LOG("[%s][6]", __FUNCTION__);
-	SafeDelete(infoTextureHandler);
-	SafeDelete(guihandler); // frees LuaUI
-	SafeDelete(minimap);
-	SafeDelete(resourceBar);
-	SafeDelete(tooltip); // CTooltipConsole*
-	SafeDelete(infoConsole);
-	SafeDelete(consoleHistory);
-	SafeDelete(keyBindings);
-	SafeDelete(keyCodes);
-	SafeDelete(selectionKeys); // CSelectionKeyHandler*
-	SafeDelete(luaInputReceiver);
-	SafeDelete(mouse); // CMouseHandler*
-	SafeDelete(inMapDrawerModel);
-	SafeDelete(inMapDrawer);
-	SafeDelete(worldDrawer);
-
-	LOG("[%s][7]", __FUNCTION__);
-	SafeDelete(camHandler);
-	SafeDelete(camera);
-	SafeDelete(cam2);
-	SafeDelete(icon::iconHandler);
-	SafeDelete(geometricObjects);
-	SafeDelete(texturehandler3DO);
-	SafeDelete(texturehandlerS3O);
-
-	LOG("[%s][8]", __FUNCTION__);
-	SafeDelete(featureHandler); // depends on unitHandler (via ~CFeature)
-	SafeDelete(unitHandler); // depends on modelParser (via ~CUnit)
-	SafeDelete(projectileHandler);
-
-	LOG("[%s][9]", __FUNCTION__);
-	SafeDelete(cubeMapHandler);
-	SafeDelete(modelParser);
-
-	LOG("[%s][10]", __FUNCTION__);
-	IPathManager::FreeInstance(pathManager);
-
-	SafeDelete(readMap);
-	SafeDelete(smoothGround);
-	SafeDelete(groundBlockingObjectMap);
-	SafeDelete(radarHandler);
-	SafeDelete(losHandler);
-	SafeDelete(mapDamage);
-	SafeDelete(quadField);
-	SafeDelete(moveDefHandler);
-	SafeDelete(unitDefHandler);
-	SafeDelete(weaponDefHandler);
-	SafeDelete(damageArrayHandler);
-	SafeDelete(explGenHandler);
-	SafeDelete(helper);
-	SafeDelete((mapInfo = const_cast<CMapInfo*>(mapInfo)));
-
-	LOG("[%s][11]", __FUNCTION__);
-	CClassicGroundMoveType::DeleteLineTable();
 	CCategoryHandler::RemoveInstance();
+	CResourceHandler::FreeInstance();
 
-	for (unsigned int i = 0; i < grouphandlers.size(); i++) {
-		SafeDelete(grouphandlers[i]);
-	}
-	grouphandlers.clear();
-
-	LOG("[%s][12]", __FUNCTION__);
+	LOG("[%s][5]", __FUNCTION__);
 	SafeDelete(saveFile); // ILoadSaveHandler, depends on vfsHandler via ~IArchive
-	LOG("[%s][13]", __FUNCTION__);
+	LOG("[%s][6]", __FUNCTION__);
+	SafeDelete(jobDispatcher);
 
 	LEAVE_SYNCED_CODE();
 }
 
+
+void CGame::AddTimedJobs()
+{
+	{
+		JobDispatcher::Job j;
+
+		j.f = []() -> bool {
+			SCOPED_TIMER("CollectGarbage");
+			eventHandler.CollectGarbage();
+			CInputReceiver::CollectGarbage();
+			return true;
+		};
+		j.freq = GAME_SPEED;
+		j.name = "EventHandler::CollectGarbage";
+
+		// static initialization is done BEFORE Spring's time-epoch is set, so use notime
+		jobDispatcher->AddJob(j, spring_notime + spring_time(j.startDirect ? 0 : (1000.0f / j.freq)));
+	}
+
+	{
+		JobDispatcher::Job j;
+
+		j.f = []() -> bool {
+			profiler.Update();
+			return true;
+		};
+		j.freq = 1;
+		j.name = "Profiler::Update";
+
+		jobDispatcher->AddJob(j, spring_notime + spring_time(j.startDirect ? 0 : (1000.0f / j.freq)));
+	}
+}
 
 void CGame::LoadGame(const std::string& mapName, bool threaded)
 {
@@ -550,6 +433,7 @@ void CGame::LoadGame(const std::string& mapName, bool threaded)
 	if (!gu->globalQuit) LoadLua();
 	if (!gu->globalQuit) LoadFinalize();
 	if (!gu->globalQuit) LoadSkirmishAIs();
+
 	finishedLoading = true;
 
 	if (!gu->globalQuit && saveFile) {
@@ -558,6 +442,7 @@ void CGame::LoadGame(const std::string& mapName, bool threaded)
 	}
 
 	Watchdog::DeregisterThread(WDT_LOAD);
+	AddTimedJobs();
 }
 
 
@@ -566,12 +451,6 @@ void CGame::LoadMap(const std::string& mapName)
 	ENTER_SYNCED_CODE();
 
 	{
-		// after this, other components are able to register chat action-executors
-		SyncedGameCommands::CreateInstance();
-		UnsyncedGameCommands::CreateInstance();
-
-		CWordCompletion::CreateInstance();
-
 		loadscreen->SetLoadMessage("Parsing Map Information");
 
 		// simulation components
@@ -704,7 +583,6 @@ void CGame::PostLoadSimulation()
 
 	CCobInstance::InitVars(teamHandler->ActiveTeams(), teamHandler->ActiveAllyTeams());
 
-	geometricObjects = new CGeometricObjects();
 
 	inMapDrawerModel = new CInMapDrawModel();
 	inMapDrawer = new CInMapDraw();
@@ -717,6 +595,8 @@ void CGame::PostLoadSimulation()
 
 void CGame::PreLoadRendering()
 {
+	geometricObjects = new CGeometricObjects();
+
 	//! these need to be loaded before featureHandler
 	//! (maps with features have their models loaded at startup)
 	modelParser = new C3DModelLoader();
@@ -766,23 +646,28 @@ void CGame::LoadInterface()
 	{
 		ScopedOnceTimer timer("Game::LoadInterface (Console)");
 		consoleHistory = new CConsoleHistory;
+
 		for (int pp = 0; pp < playerHandler->ActivePlayers(); pp++) {
 			wordCompletion->AddWord(playerHandler->Player(pp)->name, false, false, false);
 		}
+
 		// add the Skirmish AIs instance names to word completion,
 		// for various things, eg chatting
 		const CSkirmishAIHandler::id_ai_t& ais = skirmishAIHandler.GetAllSkirmishAIs();
+		// add the available Skirmish AI libraries to word completion, for /aicontrol
+		const IAILibraryManager::T_skirmishAIKeys& aiLibs = aiLibManager->GetSkirmishAIKeys();
+		// add the available Lua AI implementations to word completion, for /aicontrol
+		const std::set<std::string>& luaAIShortNames = skirmishAIHandler.GetLuaAIImplShortNames();
+
 		for (const auto& ai: ais) {
 			wordCompletion->AddWord(ai.second.name + " ", false, false, false);
 		}
-		// add the available Skirmish AI libraries to word completion, for /aicontrol
-		const IAILibraryManager::T_skirmishAIKeys& aiLibs = aiLibManager->GetSkirmishAIKeys();
+
 		for (const auto& aiLib: aiLibs) {
 			wordCompletion->AddWord(aiLib.GetShortName() + " " + aiLib.GetVersion() + " ", false, false, false);
 		}
-		// add the available Lua AI implementations to word completion, for /aicontrol
-		const std::set<std::string>& luaAIShortNames = skirmishAIHandler.GetLuaAIImplShortNames();
-		for (const std::string& sn:  luaAIShortNames) {
+
+		for (const std::string& sn: luaAIShortNames) {
 			wordCompletion->AddWord(sn + " ", false, false, false);
 		}
 
@@ -843,9 +728,10 @@ void CGame::LoadLua()
 
 void CGame::LoadSkirmishAIs()
 {
-	if (gameSetup->hostDemo) {
+	CEngineOutHandler::Create();
+
+	if (gameSetup->hostDemo)
 		return;
-	}
 
 	// create a Skirmish AI if required
 	const CSkirmishAIHandler::ids_t& localAIs = skirmishAIHandler.GetSkirmishAIsByPlayer(gu->myPlayerNum);
@@ -890,14 +776,119 @@ void CGame::LoadFinalize()
 }
 
 
-
 void CGame::PostLoad()
 {
 	GameSetupDrawer::Disable();
+
 	if (gameServer) {
 		gameServer->PostLoad(gs->frameNum);
 	}
 }
+
+
+void CGame::KillLua()
+{
+	LOG("[%s][1]", __FUNCTION__);
+	CLuaGaia::FreeHandler();
+
+	LOG("[%s][2]", __FUNCTION__);
+	CLuaRules::FreeHandler();
+
+	LOG("[%s][3]", __FUNCTION__);
+	// done by ~GUIHandler
+	// CLuaUI::FreeHandler();
+
+	LOG("[%s][4]", __FUNCTION__);
+	LuaOpenGL::Free();
+}
+
+void CGame::KillRendering()
+{
+	LOG("[%s][1]", __FUNCTION__);
+	SafeDelete(infoTextureHandler);
+	SafeDelete(icon::iconHandler);
+	SafeDelete(geometricObjects);
+	SafeDelete(texturehandler3DO);
+	SafeDelete(texturehandlerS3O);
+	SafeDelete(worldDrawer);
+}
+
+void CGame::KillInterface()
+{
+	LOG("[%s][1]", __FUNCTION__);
+	SafeDelete(guihandler); // frees LuaUI
+	SafeDelete(minimap);
+	SafeDelete(resourceBar);
+	SafeDelete(tooltip); // CTooltipConsole*
+	SafeDelete(infoConsole);
+	SafeDelete(consoleHistory);
+	SafeDelete(keyBindings);
+	SafeDelete(keyCodes);
+	SafeDelete(selectionKeys); // CSelectionKeyHandler*
+	SafeDelete(luaInputReceiver);
+	SafeDelete(mouse); // CMouseHandler*
+	SafeDelete(inMapDrawerModel);
+	SafeDelete(inMapDrawer);
+
+	LOG("[%s][2]", __FUNCTION__);
+	SafeDelete(camHandler);
+	SafeDelete(camera);
+	SafeDelete(cam2);
+
+	for (unsigned int i = 0; i < grouphandlers.size(); i++) {
+		SafeDelete(grouphandlers[i]);
+	}
+
+	grouphandlers.clear();
+}
+
+void CGame::KillSimulation()
+{
+	LOG("[%s][1]", __FUNCTION__);
+
+	// Kill all teams that are still alive, in
+	// case the game did not do so through Lua.
+	//
+	// must happen after Lua (cause CGame is already
+	// null'ed and Died() causes a Lua event, which
+	// could issue Lua code that tries to access it)
+	for (int t = 0; t < teamHandler->ActiveTeams(); ++t) {
+		teamHandler->Team(t)->Died(false);
+	}
+
+	LOG("[%s][2]", __FUNCTION__);
+	SafeDelete(featureHandler); // depends on unitHandler (via ~CFeature)
+	SafeDelete(unitHandler); // depends on modelParser (via ~CUnit)
+	SafeDelete(projectileHandler);
+
+	LOG("[%s][3]", __FUNCTION__);
+	SafeDelete(modelParser);
+
+	LOG("[%s][4]", __FUNCTION__);
+	IPathManager::FreeInstance(pathManager);
+
+	SafeDelete(readMap);
+	SafeDelete(smoothGround);
+	SafeDelete(groundBlockingObjectMap);
+	SafeDelete(radarHandler);
+	SafeDelete(losHandler);
+	SafeDelete(mapDamage);
+	SafeDelete(quadField);
+	SafeDelete(moveDefHandler);
+	SafeDelete(unitDefHandler);
+	SafeDelete(weaponDefHandler);
+	SafeDelete(damageArrayHandler);
+	SafeDelete(explGenHandler);
+	SafeDelete(helper);
+	SafeDelete((mapInfo = const_cast<CMapInfo*>(mapInfo)));
+
+	LOG("[%s][5]", __FUNCTION__);
+	CClassicGroundMoveType::DeleteLineTable();
+	CEngineOutHandler::Destroy();
+}
+
+
+
 
 
 void CGame::ResizeEvent()
@@ -1003,7 +994,7 @@ bool CGame::Update()
 
 	good_fpu_control_registers("CGame::Update");
 
-	JobDispatcher::Update();
+	jobDispatcher->Update();
 	clientNet->Update();
 
 	// When video recording do step by step simulation, so each simframe gets a corresponding videoframe

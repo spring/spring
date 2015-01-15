@@ -36,6 +36,7 @@
 
 CUnitLoader* CUnitLoader::GetInstance()
 {
+	// NOTE: UnitLoader has no internal state, so this is fine wrt. reloading
 	static CUnitLoader instance;
 	return &instance;
 }
@@ -46,9 +47,8 @@ CUnit* CUnitLoader::LoadUnit(const std::string& name, const UnitLoadParams& para
 {
 	const_cast<UnitLoadParams&>(params).unitDef = unitDefHandler->GetUnitDefByName(name);
 
-	if (params.unitDef == NULL) {
+	if (params.unitDef == NULL)
 		throw content_error("Couldn't find unittype " +  name);
-	}
 
 	return (LoadUnit(params));
 }

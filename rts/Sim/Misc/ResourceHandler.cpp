@@ -19,14 +19,18 @@ CR_REG_METADATA(CResourceHandler, (
 ))
 
 
-CResourceHandler* CResourceHandler::instance;
+CResourceHandler* CResourceHandler::instance = NULL;
 
-CResourceHandler* CResourceHandler::GetInstance()
+CResourceHandler* CResourceHandler::GetInstance() {
+	assert(instance != NULL);
+	return instance;
+}
+
+void CResourceHandler::CreateInstance()
 {
 	if (instance == NULL) {
 		instance = new CResourceHandler();
 	}
-	return instance;
 }
 void CResourceHandler::FreeInstance()
 {
@@ -55,9 +59,6 @@ CResourceHandler::CResourceHandler()
 	energyResourceId = AddResource(rEnergy);
 }
 
-CResourceHandler::~CResourceHandler()
-{
-}
 
 int CResourceHandler::AddResource(const CResourceDescription& resource) {
 
@@ -69,11 +70,10 @@ int CResourceHandler::AddResource(const CResourceDescription& resource) {
 
 const CResourceDescription* CResourceHandler::GetResource(int resourceId) const
 {
-	if (IsValidId(resourceId)) {
+	if (IsValidId(resourceId))
 		return &resources[resourceId];
-	} else {
-		return NULL;
-	}
+
+	return NULL;
 }
 
 const CResourceDescription* CResourceHandler::GetResourceByName(const std::string& resourceName) const
@@ -83,51 +83,47 @@ const CResourceDescription* CResourceHandler::GetResourceByName(const std::strin
 
 int CResourceHandler::GetResourceId(const std::string& resourceName) const
 {
-	for (size_t r=0; r < resources.size(); ++r) {
+	for (size_t r = 0; r < resources.size(); ++r) {
 		if (resources[r].name == resourceName) {
-			return (int)r;
+			return r;
 		}
 	}
+
 	return -1;
 }
 
 const unsigned char* CResourceHandler::GetResourceMap(int resourceId) const {
-
-	if (resourceId == GetMetalId()) {
+	if (resourceId == GetMetalId())
 		return (readMap->metalMap->GetDistributionMap());
-	} else {
-		return NULL;
-	}
+
+	return NULL;
 }
+
 size_t CResourceHandler::GetResourceMapSize(int resourceId) const {
+	if (resourceId == GetMetalId())
+		return (GetResourceMapWidth(resourceId) * GetResourceMapHeight(resourceId));
 
-	if (resourceId == GetMetalId()) {
-		return GetResourceMapWidth(resourceId) * GetResourceMapHeight(resourceId);
-	} else {
-		return 0;
-	}
+	return 0;
 }
+
 size_t CResourceHandler::GetResourceMapWidth(int resourceId) const {
-
-	if (resourceId == GetMetalId()) {
+	if (resourceId == GetMetalId())
 		return mapDims.hmapx;
-	} else {
-		return 0;
-	}
-}
-size_t CResourceHandler::GetResourceMapHeight(int resourceId) const {
 
-	if (resourceId == GetMetalId()) {
-		return mapDims.hmapy;
-	} else {
-		return 0;
-	}
+	return 0;
 }
+
+size_t CResourceHandler::GetResourceMapHeight(int resourceId) const {
+	if (resourceId == GetMetalId())
+		return mapDims.hmapy;
+
+	return 0;
+}
+
 const CResourceMapAnalyzer* CResourceHandler::GetResourceMapAnalyzer(int resourceId) {
 
-	if (!IsValidId(resourceId)) {
+	if (!IsValidId(resourceId))
 		return NULL;
-	}
 
 	CResourceMapAnalyzer* rma = resourceMapAnalyzers[resourceId];
 
@@ -140,22 +136,8 @@ const CResourceMapAnalyzer* CResourceHandler::GetResourceMapAnalyzer(int resourc
 }
 
 
-size_t CResourceHandler::GetNumResources() const
-{
-	return resources.size();
-}
-
-
-int CResourceHandler::GetMetalId() const
-{
-	return metalResourceId;
-}
-
-int CResourceHandler::GetEnergyId() const
-{
-	return energyResourceId;
-}
 
 bool CResourceHandler::IsValidId(int resourceId) const {
 	return (resourceId >= 0) && (static_cast<size_t>(resourceId) < resources.size());
 }
+

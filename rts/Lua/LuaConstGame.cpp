@@ -172,18 +172,27 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	         archiveScanner->GetArchiveCompleteChecksum(modInfo.filename));
 	LuaPushNamedString(L, "modChecksum", buf);
 
-	const vector<string> &cats =
-		CCategoryHandler::Instance()->GetCategoryNames(~0);
-	lua_pushliteral(L, "springCategories");
-	lua_newtable(L);
-	for (int i = 0; i < (int)cats.size(); i++) {
-		LuaPushNamedNumber(L, StringToLower(cats[i]), i);
-	}
-	lua_rawset(L, -3);
+	// needed for LuaIntro which also pushes ConstGame entries
+	// (but it probably doesn't need to know about categories)
+	if (CCategoryHandler::Instance() != NULL) {
+		const vector<string>& cats = CCategoryHandler::Instance()->GetCategoryNames(~0);
 
-	lua_pushliteral(L, "armorTypes");
-	lua_newtable(L);
-	if (damageArrayHandler) {
+		lua_pushliteral(L, "springCategories");
+		lua_newtable(L);
+
+		for (unsigned int i = 0; i < cats.size(); i++) {
+			LuaPushNamedNumber(L, StringToLower(cats[i]), i);
+		}
+
+		lua_rawset(L, -3);
+	}
+
+	// needed for LuaIntro which also pushes ConstGame entries
+	// (but it probably doesn't need to know about armor-types)
+	if (damageArrayHandler != NULL) {
+		lua_pushliteral(L, "armorTypes");
+		lua_newtable(L);
+
 		const std::vector<std::string>& typeList = damageArrayHandler->GetTypeList();
 		const int typeCount = (int)typeList.size();
 		for (int i = 0; i < typeCount; i++) {
@@ -194,8 +203,9 @@ bool LuaConstGame::PushEntries(lua_State* L)
 			lua_pushsstring(L, typeList[i]);
 			lua_rawseti(L, -2, i);
 		}
+
+		lua_rawset(L, -3);
 	}
-	lua_rawset(L, -3);
 
 	return true;
 }
