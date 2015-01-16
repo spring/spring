@@ -734,10 +734,10 @@
 //SPRING
 #ifndef BUILDING_AI
 	#define LUA_USER_H "LuaUser.h"
-    
+
 //#ifndef NDEBUG
-    #define lua_lock(L)			LuaCheckIfMain(L)
-    #define lua_unlock(L)			LuaCheckIfMain(L)
+	#define lua_lock(L)			LuaCheckIfMain(L)
+	#define lua_unlock(L)			LuaCheckIfMain(L)
 //#endif
 
 #endif
