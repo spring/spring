@@ -22,9 +22,8 @@
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
-#include "Map/MapDamage.h"
-#include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
+#include "Rendering/CommandDrawer.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/LineDrawer.h"
 #include "Rendering/ProjectileDrawer.h"
@@ -36,7 +35,6 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-#include "Game/UI/Groups/Group.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
@@ -1549,15 +1547,18 @@ void CMiniMap::DrawWorldStuff() const
 		projectileDrawer->DrawProjectilesMiniMap();
 	}
 
-	// draw the queued commands
-	//
-	// NOTE: this needlessly adds to the CursorIcons list, but at least
-	//       they are not drawn  (because the input receivers are drawn
-	//       after the command queues)
-	LuaUnsyncedCtrl::DrawUnitCommandQueues();
-	if ((drawCommands > 0) && guihandler->GetQueueKeystate()) {
-		selectedUnitsHandler.DrawCommands();
+	{
+		// draw the queued commands
+		commandDrawer->DrawLuaQueuedUnitSetCommands();
+
+		// NOTE: this needlessly adds to the CursorIcons list, but at least
+		//       they are not drawn  (because the input receivers are drawn
+		//       after the command queues)
+		if ((drawCommands > 0) && guihandler->GetQueueKeystate()) {
+			selectedUnitsHandler.DrawCommands();
+		}
 	}
+
 
 	glLineWidth(2.5f);
 	lineDrawer.DrawAll();

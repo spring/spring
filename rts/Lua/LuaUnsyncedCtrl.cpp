@@ -98,11 +98,6 @@ const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 /******************************************************************************/
 /******************************************************************************/
 
-std::set<int> drawCmdQueueUnits;
-
-/******************************************************************************/
-/******************************************************************************/
-
 bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 {
 #define REGISTER_LUA_CFUNC(x) \
@@ -335,52 +330,6 @@ static inline CUnit* ParseSelectUnit(lua_State* L,
 	return NULL;
 }
 
-
-/******************************************************************************/
-/******************************************************************************/
-
-void LuaUnsyncedCtrl::DrawUnitCommandQueues()
-{
-	if (drawCmdQueueUnits.empty()) {
-		return;
-	}
-
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_DEPTH_TEST);
-
-	lineDrawer.Configure(cmdColors.UseColorRestarts(),
-	                     cmdColors.UseRestartColor(),
-	                     cmdColors.restart,
-	                     cmdColors.RestartAlpha());
-	lineDrawer.SetupLineStipple();
-
-	glEnable(GL_BLEND);
-	glBlendFunc((GLenum)cmdColors.QueuedBlendSrc(),
-	            (GLenum)cmdColors.QueuedBlendDst());
-
-	glLineWidth(cmdColors.QueuedLineWidth());
-
-	std::set<int>::const_iterator ui;
-
-	for (ui = drawCmdQueueUnits.begin(); ui != drawCmdQueueUnits.end(); ++ui) {
-		const CUnit* unit = unitHandler->GetUnit(*ui);
-
-		if (unit == NULL || unit->commandAI == NULL) {
-			continue;
-		}
-
-		commandDrawer->Draw(unit->commandAI);
-	}
-
-	glLineWidth(1.0f);
-	glEnable(GL_DEPTH_TEST);
-}
-
-
-void LuaUnsyncedCtrl::ClearUnitCommandQueues()
-{
-	drawCmdQueueUnits.clear();
-}
 
 
 /******************************************************************************/
@@ -764,21 +713,26 @@ int LuaUnsyncedCtrl::DrawUnitCommands(lua_State* L)
 		const bool isMap = luaL_optboolean(L, 2, false);
 		const int unitArg = isMap ? -2 : -1;
 		const int table = 1;
+
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-			if (lua_israwnumber(L, -2)) {
-				CUnit* unit = ParseAllyUnit(L, __FUNCTION__, unitArg);
-				if (unit != NULL) {
-					drawCmdQueueUnits.insert(unit->id);
-				}
-			}
+			if (!lua_israwnumber(L, -2))
+				continue;
+
+			const CUnit* unit = ParseAllyUnit(L, __FUNCTION__, unitArg);
+
+			if (unit == NULL)
+				continue;
+
+			commandDrawer->AddLuaQueuedUnit(unit);
 		}
-		return 0;
+	} else {
+		const CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+
+		if (unit != NULL) {
+			commandDrawer->AddLuaQueuedUnit(unit);
+		}
 	}
 
-	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
-	if (unit != NULL) {
-		drawCmdQueueUnits.insert(unit->id);
-	}
 	return 0;
 }
 

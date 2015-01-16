@@ -10,6 +10,7 @@
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/IWater.h"
+#include "Rendering/CommandDrawer.h"
 #include "Rendering/DebugColVolDrawer.h"
 #include "Rendering/FarTextureHandler.h"
 #include "Rendering/LineDrawer.h"
@@ -218,9 +219,13 @@ void CWorldDrawer::Draw()
 
 	eventHandler.DrawWorld();
 
-	LuaUnsyncedCtrl::DrawUnitCommandQueues();
-	if (cmdColors.AlwaysDrawQueue() || guihandler->GetQueueKeystate()) {
-		selectedUnitsHandler.DrawCommands();
+	{
+		// note: duplicated in CMiniMap::DrawWorldStuff()
+		commandDrawer->DrawLuaQueuedUnitSetCommands();
+
+		if (cmdColors.AlwaysDrawQueue() || guihandler->GetQueueKeystate()) {
+			selectedUnitsHandler.DrawCommands();
+		}
 	}
 
 	lineDrawer.DrawAll();

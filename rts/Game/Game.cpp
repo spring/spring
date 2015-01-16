@@ -49,8 +49,8 @@
 #include "Rendering/Env/IWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/Fonts/CFontTexture.h"
-#include "Rendering/DebugColVolDrawer.h"
 #include "Rendering/Fonts/glFont.h"
+#include "Rendering/CommandDrawer.h"
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/LineDrawer.h"
 #include "Rendering/Screenshot.h"
@@ -82,7 +82,6 @@
 #include "Lua/LuaUI.h"
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Lua/LuaUtils.h"
-//#include "Map/BaseGroundDrawer.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -1191,9 +1190,9 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	mouse->Update();
 	mouse->UpdateCursors();
 	guihandler->Update();
-	LuaUnsyncedCtrl::ClearUnitCommandQueues();
-	eventHandler.Update();
+	commandDrawer->Update();
 
+	eventHandler.Update();
 	eventHandler.DbgTimingInfo(TIMING_UNSYNCED, currentTime, spring_now());
 	return false;
 }

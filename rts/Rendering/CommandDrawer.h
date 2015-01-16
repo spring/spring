@@ -3,6 +3,8 @@
 #ifndef COMMAND_DRAWER_H
 #define COMMAND_DRAWER_H
 
+#include <set>
+
 struct Command;
 class CCommandAI;
 class CAirCAI;
@@ -16,8 +18,14 @@ struct CommandDrawer {
 public:
 	static CommandDrawer* GetInstance();
 
+	// clear the set after WorldDrawer and MiniMap have both used it
+	void Update() { luaQueuedUnitSet.clear(); }
+
 	void Draw(const CCommandAI*) const;
+	void DrawLuaQueuedUnitSetCommands() const;
 	void DrawQuedBuildingSquares(const CBuilderCAI*) const;
+
+	void AddLuaQueuedUnit(const CUnit* unit);
 
 private:
 	void DrawCommands(const CCommandAI*) const;
@@ -29,6 +37,9 @@ private:
 
 	void DrawWaitIcon(const Command&) const;
 	void DrawDefaultCommand(const Command&, const CUnit*) const;
+
+private:
+	std::set<int> luaQueuedUnitSet;
 };
 
 #define commandDrawer (CommandDrawer::GetInstance())
