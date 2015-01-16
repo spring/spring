@@ -555,13 +555,12 @@ namespace Shader {
 		}
 
 		// either read new program for cache or recompile if not found in it
+		objID = (!reloadFromDisk) ? GlslShaderCache::Find(curSrcHash) : 0;
 		objID = GlslShaderCache::Find(curSrcHash);
 		if (objID == 0) {
 			objID = glCreateProgram();
 			for (IShaderObject*& so: GetAttachedShaderObjs()) {
 				so->Compile(reloadFromDisk); //FIXME check if changed or not (when it did, we can't use shader cache!)
-			}
-			for (IShaderObject*& so: GetAttachedShaderObjs()) {
 				if (so->IsValid()) {
 					glAttachShader(objID, so->GetObjID());
 				}
@@ -579,13 +578,14 @@ namespace Shader {
 	}
 
 	void GLSLProgramObject::AttachShaderObject(IShaderObject* so) {
-		if (so != NULL) {
-			assert(!IsShaderAttached(so));
-			IProgramObject::AttachShaderObject(so);
+		if (so == NULL)
+			return;
 
-			if (so->IsValid()) {
-				glAttachShader(objID, so->GetObjID());
-			}
+		assert(!IsShaderAttached(so));
+		IProgramObject::AttachShaderObject(so);
+
+		if (so->IsValid()) {
+			glAttachShader(objID, so->GetObjID());
 		}
 	}
 
