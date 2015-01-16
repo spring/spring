@@ -35,7 +35,7 @@ public:
 	JobDispatcher() { jobs.clear(); }
 	~JobDispatcher() { jobs.clear(); }
 
-	void AddJob(Job j, const spring_time t) {
+	void AddTimedJob(Job j, const spring_time t) {
 		spring_time jobTime = t;
 
 		// never overwrite one job by another (!)
@@ -58,7 +58,7 @@ public:
 			Job* j = &it->second;
 
 			if (j->f()) {
-				AddJob(*j, (j->catchUp ? it->first : spring_gettime()) + spring_time(1000.0f / j->freq));
+				AddTimedJob(*j, (j->catchUp ? it->first : spring_gettime()) + spring_time(1000.0f / j->freq));
 			}
 
 			jobs.erase(it); //FIXME remove by range? (faster!)
