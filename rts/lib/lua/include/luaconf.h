@@ -732,6 +732,7 @@
 ** extra when a thread is created/deleted/resumed/yielded.
 */
 //SPRING
+#define ENABLE_USERSTATE_LOCKS 0
 #ifndef BUILDING_AI
 	#define LUA_USER_H "LuaUser.h"
 	#define luai_userstateopen(L)		LuaCreateMutex(L)

@@ -29,6 +29,11 @@ static boost::recursive_mutex* GetLuaMutex(lua_State* L)
 
 void LuaCreateMutex(lua_State* L)
 {
+	#if (ENABLE_USERSTATE_LOCKS == 0)
+	assert(Threading::IsMainThread());
+	return;
+	#endif
+
 	luaContextData* lcd = GetLuaContextData(L);
 	if (!lcd) return; // CLuaParser
 	assert(lcd);
@@ -41,6 +46,11 @@ void LuaCreateMutex(lua_State* L)
 
 void LuaDestroyMutex(lua_State* L)
 {
+	#if (ENABLE_USERSTATE_LOCKS == 0)
+	assert(Threading::IsMainThread());
+	return;
+	#endif
+
 	if (!GetLuaContextData(L)) return; // CLuaParser
 	assert(GetLuaContextData(L));
 
@@ -61,6 +71,11 @@ void LuaDestroyMutex(lua_State* L)
 
 void LuaLinkMutex(lua_State* L_parent, lua_State* L_child)
 {
+	#if (ENABLE_USERSTATE_LOCKS == 0)
+	assert(Threading::IsMainThread());
+	return;
+	#endif
+
 	luaContextData* plcd = GetLuaContextData(L_parent);
 	assert(plcd);
 
@@ -76,6 +91,11 @@ void LuaLinkMutex(lua_State* L_parent, lua_State* L_child)
 
 void LuaMutexLock(lua_State* L)
 {
+	#if (ENABLE_USERSTATE_LOCKS == 0)
+	assert(Threading::IsMainThread());
+	return;
+	#endif
+
 	if (!GetLuaContextData(L)) return; // CLuaParser
 
 	boost::recursive_mutex* mutex = GetLuaContextData(L)->luamutex;
@@ -91,6 +111,11 @@ void LuaMutexLock(lua_State* L)
 
 void LuaMutexUnlock(lua_State* L)
 {
+	#if (ENABLE_USERSTATE_LOCKS == 0)
+	assert(Threading::IsMainThread());
+	return;
+	#endif
+
 	if (!GetLuaContextData(L)) return; // CLuaParser
 
 	boost::recursive_mutex* mutex = GetLuaContextData(L)->luamutex;
@@ -100,6 +125,11 @@ void LuaMutexUnlock(lua_State* L)
 
 void LuaMutexYield(lua_State* L)
 {
+	#if (ENABLE_USERSTATE_LOCKS == 0)
+	assert(Threading::IsMainThread());
+	return;
+	#endif
+
 	assert(GetLuaContextData(L));
 	/*mutexes[L]->unlock();
 	if (!mutexes[L]->try_lock()) {
