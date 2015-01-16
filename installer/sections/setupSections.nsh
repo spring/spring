@@ -28,7 +28,6 @@ ${toggleSection} "PORTABLE" ${SEC_PORTABLE}
 
 ; lobbies
 ${toggleSection} "NOSPRINGLOBBY" ${SEC_SPRINGLOBBY}
-${toggleSection} "NOZEROK" ${SEC_ZERO_K_LOBBY}
 
 ; desktop shortcuts
 ${toggleSection} "NODESKTOPLINK" ${SEC_DESKTOP}

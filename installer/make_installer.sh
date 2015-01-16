@@ -26,7 +26,6 @@ fi
 mkdir -p installer/downloads
 cd installer/downloads
 
-$WGET http://zero-k.info/lobby/Zero-K.exe
 $WGET http://www.springlobby.info/windows/latest.zip
 if ! [ -s vcredist_x86.exe ]; then
 	$WGET http://download.microsoft.com/download/e/1/c/e1c773de-73ba-494a-a5ba-f24906ecf088/vcredist_x86.exe
