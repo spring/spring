@@ -8,6 +8,7 @@
 #include "Lua/LuaMaterial.h"
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/Sync/HsiehHash.h"
 #include "System/Log/ILog.h"
 #include <algorithm>
 #ifdef DEBUG
@@ -17,6 +18,8 @@
 	#define GL_INVALID_INDEX -1
 #endif
 
+
+/*****************************************************************/
 
 #define LOG_SECTION_SHADER "Shader"
 LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_SHADER)
@@ -28,9 +31,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_SHADER)
 #define LOG_SECTION_CURRENT LOG_SECTION_SHADER
 
 
-static std::unordered_map<size_t, GLuint> glslShadersCache;
-
-
+/*****************************************************************/
 
 static bool glslIsValid(GLuint obj)
 {
@@ -106,7 +107,35 @@ static bool ExtractGlslVersion(std::string* src, std::string* version)
 	return false;
 }
 
+/*****************************************************************/
 
+namespace GlslShaderCache {
+	static std::unordered_map<unsigned int, GLuint> cache;
+
+	static unsigned int Find(unsigned int hash)
+	{
+		auto it = cache.find(hash);
+		GLuint id = 0;
+		if (it != cache.end()) {
+			id = it->second;
+			cache.erase(it);
+		}
+		return id;
+	}
+
+
+	static bool Push(unsigned int hash, unsigned int objID)
+	{
+		auto it = cache.find(hash);
+		if (it == cache.end()) {
+			cache[hash] = objID;
+			return true;
+		}
+		return false;
+	}
+}
+
+/*****************************************************************/
 
 
 namespace Shader {
@@ -115,6 +144,17 @@ namespace Shader {
 
 	NullShaderObject* nullShaderObject = &nullShaderObject_;
 	NullProgramObject* nullProgramObject = &nullProgramObject_;
+
+
+	/*****************************************************************/
+
+	unsigned int IShaderObject::GetHash() const {
+		unsigned int hash = 127;
+		hash = HsiehHash((const void*)curShaderSrc.data(), curShaderSrc.size(), hash);
+		hash = HsiehHash((const void*)modDefStrs.data(), modDefStrs.size(), hash);
+		hash = HsiehHash((const void*)rawDefStrs.data(), rawDefStrs.size(), hash);
+		return hash;
+	}
 
 
 	/*****************************************************************/
@@ -170,7 +210,7 @@ namespace Shader {
 	}
 
 	void GLSLShaderObject::Compile(bool reloadFromDisk) {
-		if (reloadFromDisk)
+		if (reloadFromDisk || curShaderSrc.empty())
 			curShaderSrc = GetShaderSource(srcFile);
 
 		std::string sourceStr = curShaderSrc;
@@ -219,7 +259,7 @@ namespace Shader {
 
 	/*****************************************************************/
 
-	IProgramObject::IProgramObject(const std::string& poName): name(poName), objID(0), curHash(0), valid(false), bound(false) {
+	IProgramObject::IProgramObject(const std::string& poName): name(poName), objID(0), curFlagsHash(0), valid(false), bound(false) {
 	}
 
 	void IProgramObject::Enable() {
@@ -257,14 +297,11 @@ namespace Shader {
 
 	void IProgramObject::RecompileIfNeeded()
 	{
-		const unsigned int hash = GetHash();
-
-		if (hash == curHash)
+		if (GetHash() == curFlagsHash)
 			return;
 
 		// NOTE: this does not preserve the #version pragma
 		const std::string definitionFlags = GetString();
-
 		for (IShaderObject*& so: shaderObjs) {
 			so->SetDefinitions(definitionFlags);
 		}
@@ -348,6 +385,7 @@ namespace Shader {
 	}
 
 	void ARBProgramObject::Link() {
+		RecompileIfNeeded();
 		bool shaderObjectsValid = true;
 
 		for (const IShaderObject* so: shaderObjs) {
@@ -360,7 +398,9 @@ namespace Shader {
 		IProgramObject::Release();
 	}
 	void ARBProgramObject::Reload(bool reloadFromDisk) {
-
+		for (IShaderObject* so: shaderObjs) {
+			so->Compile(reloadFromDisk);
+		}
 	}
 
 	int ARBProgramObject::GetUniformLoc(const std::string& name) {
@@ -396,8 +436,7 @@ namespace Shader {
 
 	/*****************************************************************/
 
-	GLSLProgramObject::GLSLProgramObject(const std::string& poName): IProgramObject(poName) {
-		objID = 0;
+	GLSLProgramObject::GLSLProgramObject(const std::string& poName): IProgramObject(poName), curSrcHash(0) {
 		objID = glCreateProgram();
 	}
 
@@ -479,38 +518,45 @@ namespace Shader {
 	}
 
 	void GLSLProgramObject::Reload(bool reloadFromDisk) {
-		const unsigned int oldHash = curHash;
-		curHash = GetHash();
-
+		const auto   oldSrcHash = curSrcHash;
+		const bool   oldValid  = IsValid();
+		const GLuint oldProgID = objID;
+		curFlagsHash = GetHash();
 		log = "";
 		valid = false;
 
-		if (GetAttachedShaderObjs().empty()) {
-			return;
+		// create shader source hash
+		curSrcHash = curFlagsHash;
+		for (IShaderObject*& so: GetAttachedShaderObjs()) {
+			curSrcHash ^= so->GetHash();
 		}
 
-		GLuint oldProgID = objID;
-
+		// clear all uniform locations
 		for (auto& us_pair: uniformStates) {
 			us_pair.second.SetLocation(GL_INVALID_INDEX);
 		}
 
-		bool deleteOldShader = false;
-		if (glslShadersCache.find(oldHash) == glslShadersCache.end()) {
-			glslShadersCache[oldHash] = oldProgID;
-		} else {
-			for (IShaderObject*& so: GetAttachedShaderObjs()) {
-				glDetachShader(oldProgID, so->GetObjID());
-				so->Release();
-			}
-			deleteOldShader = true;
+		// early-exit: empty program
+		if (GetAttachedShaderObjs().empty()) {
+			//TODO delete existing program if exists?
+			return;
 		}
 
-		auto it = glslShadersCache.find(curHash);
-		if (it != glslShadersCache.end()) {
-			objID = it->second;
-			glslShadersCache.erase(it);
-		} else {
+		// put old program into cache
+		bool deleteOldShader = false;
+		if (oldValid) {
+			if (!GlslShaderCache::Push(oldSrcHash, oldProgID)) {
+				for (IShaderObject*& so: GetAttachedShaderObjs()) {
+					glDetachShader(oldProgID, so->GetObjID());
+					so->Release();
+				}
+				deleteOldShader = true;
+			}
+		}
+
+		// either read new program for cache or recompile if not found in it
+		objID = GlslShaderCache::Find(curSrcHash);
+		if (objID == 0) {
 			objID = glCreateProgram();
 			for (IShaderObject*& so: GetAttachedShaderObjs()) {
 				so->Compile(reloadFromDisk); //FIXME check if changed or not (when it did, we can't use shader cache!)
@@ -523,8 +569,11 @@ namespace Shader {
 			Link();
 		}
 
+		// copy full program state from old to new program (uniforms etc.)
+		//FIXME if (IsValid())
 		GLSLCopyState(objID, oldProgID, &((IProgramObject*)(this))->uniformStates);
 
+		// delete old program when not further used
 		if (deleteOldShader)
 			glDeleteProgram(oldProgID);
 	}

@@ -118,6 +118,5 @@ Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soN
 		return so;
 	}
 
-	so->Compile(true);
 	return so;
 }

@@ -37,6 +37,7 @@ namespace Shader {
 		virtual void Release() {}
 		unsigned int GetObjID() const { return objID; }
 		unsigned int GetType() const { return type; }
+		unsigned int GetHash() const;
 		bool IsValid() const { return valid; }
 		const std::string& GetLog() const { return log; }
 
@@ -215,7 +216,7 @@ namespace Shader {
 		std::string log;
 
 		unsigned int objID;
-		unsigned int curHash;
+		unsigned int curFlagsHash;
 
 		bool valid;
 		bool bound;
@@ -357,6 +358,7 @@ namespace Shader {
 
 	private:
 		std::vector<size_t> uniformLocs;
+		unsigned int curSrcHash;
 	};
 
 	/*
