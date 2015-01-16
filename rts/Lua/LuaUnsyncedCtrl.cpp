@@ -1994,53 +1994,61 @@ int LuaUnsyncedCtrl::CreateDir(lua_State* L)
 
 /******************************************************************************/
 
+static int ReloadOrRestart(const std::string& springArgs, const std::string& scriptText) {
+	if (springArgs.empty()) {
+		// signal SpringApp
+		gameSetup->setupText = scriptText;
+		gu->globalReload = true;
+
+		LOG("[%s] Spring \"%s\" should be reloading", __FUNCTION__, (Platform::GetProcessExecutableFile()).c_str());
+	} else {
+		const std::string springFullName = Platform::GetProcessExecutableFile();
+		const std::string scriptFullName = dataDirLocater.GetWriteDirPath() + "script.txt";
+
+		std::vector<std::string> processArgs;
+
+		// arguments to Spring binary given by Lua code, if any
+		processArgs.push_back(springArgs);
+
+		if (!scriptText.empty()) {
+			// create file 'script.txt' with contents given by Lua code
+			std::ofstream scriptFile(scriptFullName.c_str());
+
+			scriptFile.write(scriptText.c_str(), scriptText.size());
+			scriptFile.close();
+
+			processArgs.push_back(scriptFullName);
+		}
+
+	#ifdef _WIN32
+		// else OpenAL crashes when using execvp
+		ISound::Shutdown();
+	#endif
+
+		LOG("[%s] Spring \"%s\" should be restarting", __FUNCTION__, springFullName.c_str());
+		Platform::ExecuteProcess(springFullName, processArgs);
+
+		// only reached on failure
+		return 1;
+	}
+
+	return 0;
+}
+
+
 int LuaUnsyncedCtrl::Reload(lua_State* L)
 {
-	// signal SpringApp
-	gameSetup->setupText = luaL_checkstring(L, 1);
-	gu->globalReload = true;
-
-	LOG("[Spring.%s] Spring \"%s\" should be reloading", __FUNCTION__, (Platform::GetProcessExecutableFile()).c_str());
-	return 0;
+	return (ReloadOrRestart("", luaL_checkstring(L, 1)));
 }
 
 int LuaUnsyncedCtrl::Restart(lua_State* L)
 {
-	const std::string springArguments = luaL_checkstring(L, 1);
-	const std::string scriptContents = luaL_checkstring(L, 2);
-
-	const std::string springFullName = Platform::GetProcessExecutableFile();
-	const std::string scriptFullName = dataDirLocater.GetWriteDirPath() + "script.txt";
-
-	std::vector<std::string> processArgs;
-
-	// arguments to Spring binary given by Lua code, if any
-	if (!springArguments.empty()) {
-		processArgs.push_back(springArguments);
+	if (ReloadOrRestart(luaL_checkstring(L, 1), luaL_checkstring(L, 2)) != 0) {
+		lua_pushboolean(L, false);
+		return 1;
 	}
 
-	if (!scriptContents.empty()) {
-		// create file 'script.txt' with contents given by Lua code
-		std::ofstream scriptFile(scriptFullName.c_str());
-
-		scriptFile.write(scriptContents.c_str(), scriptContents.size());
-		scriptFile.close();
-
-		processArgs.push_back(scriptFullName);
-	}
-
-	LOG("[Spring.%s] Spring \"%s\" should be restarting", __FUNCTION__, springFullName.c_str());
-
-#ifdef _WIN32
-	// else OpenAL crashes when using execvp
-	ISound::Shutdown();
-#endif
-
-	Platform::ExecuteProcess(springFullName, processArgs);
-
-	// not reached on success
-	lua_pushboolean(L, false);
-	return 1;
+	return 0;
 }
 
 
