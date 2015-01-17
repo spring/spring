@@ -9,6 +9,8 @@
 
 #ifndef _WIN32
 	#include <mutex>
+	#include <sys/syscall.h>
+	#include <linux/futex.h>
 #endif
 
 #ifdef _WIN32
@@ -17,6 +19,40 @@
 
 #define BOOST_TEST_MODULE Mutex
 #include <boost/test/unit_test.hpp>
+
+
+#ifndef _WIN32
+	typedef boost::uint32_t futex;
+
+	static void futex_init(futex* m)
+	{
+		*m = 0;
+	}
+
+	static void futex_destroy(futex* m)
+	{
+		*m = 0;
+	}
+
+	static void futex_lock(futex* m)
+	{
+		futex c;
+		if ((c = __sync_val_compare_and_swap(m, 0, 1)) != 0)  {
+			do {
+				if ((c == 2) || __sync_val_compare_and_swap(m, 1, 2) != 0)
+					syscall(SYS_futex, m, FUTEX_WAIT_PRIVATE, 2, NULL, NULL, 0);
+			} while((c = __sync_val_compare_and_swap(m, 0, 2)) != 0);
+		}
+	}
+
+	static void futex_unlock(futex* m)
+	{
+		if (__sync_fetch_and_sub(m, 1) != 1) {
+			*m = 0;
+			syscall(SYS_futex, m, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0);
+		}
+	}
+#endif
 
 
 
@@ -55,11 +91,18 @@ BOOST_AUTO_TEST_CASE( Mutex )
 	spring_time tSRMtx = Test("std::recursive_mutex", [&]{ srmtx.lock(); }, [&]{ srmtx.unlock(); });
 #endif
 
+#ifndef _WIN32
+	futex ftx;
+	futex_init(&ftx);
+	spring_time tCrit = Test("futex", [&]{ futex_lock(&ftx); }, [&]{ futex_unlock(&ftx); });
+	futex_init(&ftx);
+#endif
+
 #ifdef _WIN32
 	CRITICAL_SECTION cs;
 	InitializeCriticalSection(&cs);
 	spring_time tCrit = Test("critical section", [&]{ EnterCriticalSection(&cs); }, [&]{ LeaveCriticalSection(&cs); });
-	DeleteCriticalSection(&cs);
+	futex_destroy(&cs);
 #endif
 
 	//BOOST_CHECK(tMtx.toMilliSecsi()  <= 4 * tRaw.toMilliSecsi());
