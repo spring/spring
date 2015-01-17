@@ -197,7 +197,7 @@ void CQuitBox::Draw()
 		}
 		font->glFormat(box.x1 + teamBox.x1 + 0.002f,
 		                box.y1 + teamBox.y2 - 0.025f - teamPos * 0.025f, 0.7f,  FONT_SCALE | FONT_NORM,
-		                "Team%i (%s)%s%s", actualTeam,
+		                "Team %02i (%s)%s%s", actualTeam,
 		                teamName.c_str(), ally.c_str(), dead.c_str());
 	}
 }
