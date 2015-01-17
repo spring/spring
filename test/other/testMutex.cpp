@@ -15,7 +15,7 @@
 
 typedef std::function<void()> voidFnc;
 
-void Test(const char* name, voidFnc pre, voidFnc post)
+spring_time Test(const char* name, voidFnc pre, voidFnc post)
 {
 	ScopedOnceTimer timer(name);
 	volatile int x = 0;
@@ -27,18 +27,20 @@ void Test(const char* name, voidFnc pre, voidFnc post)
 			post();
 		}
 	}
+	return timer.GetDuration();
 }
 
 
 
-BOOST_AUTO_TEST_CASE( Matrix44VectorMultiply )
+BOOST_AUTO_TEST_CASE( Mutex )
 {
 	boost::mutex mtx;
 	boost::recursive_mutex rmtx;
 
-	Test("raw",             []{              },  []{                });
-	Test("mutex",           [&]{ mtx.lock();  }, [&]{ mtx.unlock();  });
-	Test("recursive_mutex", [&]{ rmtx.lock(); }, [&]{ rmtx.unlock(); });
+	spring_time tRaw  = Test("raw",             []{              },  []{                });
+	spring_time tMtx  = Test("mutex",           [&]{ mtx.lock();  }, [&]{ mtx.unlock();  });
+	spring_time tRMtx = Test("recursive_mutex", [&]{ rmtx.lock(); }, [&]{ rmtx.unlock(); });
 
-	//BOOST_CHECK(TestSSE()  == correctHash);
+	BOOST_CHECK(tMtx.toMilliSecsi()  <= 4 * tRaw.toMilliSecsi());
+	BOOST_CHECK(tRMtx.toMilliSecsi() <= 4 * tRaw.toMilliSecsi());
 }
