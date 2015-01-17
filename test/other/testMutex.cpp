@@ -7,6 +7,10 @@
 #include <boost/thread.hpp>
 #include <functional>
 
+#ifndef _WIN32
+	#include <mutex>
+#endif
+
 #ifdef _WIN32
 	#include <windows.h>
 #endif
@@ -40,9 +44,16 @@ BOOST_AUTO_TEST_CASE( Mutex )
 	boost::mutex mtx;
 	boost::recursive_mutex rmtx;
 
-	spring_time tRaw  = Test("raw",             []{              },  []{                });
-	spring_time tMtx  = Test("mutex",           [&]{ mtx.lock();  }, [&]{ mtx.unlock();  });
-	spring_time tRMtx = Test("recursive_mutex", [&]{ rmtx.lock(); }, [&]{ rmtx.unlock(); });
+	spring_time tRaw   = Test("raw",                    []{               }, []{                 });
+	spring_time tMtx   = Test("boost::mutex",           [&]{ mtx.lock();  }, [&]{ mtx.unlock();  });
+	spring_time tRMtx  = Test("boost::recursive_mutex", [&]{ rmtx.lock(); }, [&]{ rmtx.unlock(); });
+
+#ifndef _WIN32
+	std::mutex smtx;
+	std::recursive_mutex srmtx;
+	spring_time tSMtx  = Test("std::mutex",           [&]{ smtx.lock();  }, [&]{ smtx.unlock();  });
+	spring_time tSRMtx = Test("std::recursive_mutex", [&]{ srmtx.lock(); }, [&]{ srmtx.unlock(); });
+#endif
 
 #ifdef _WIN32
 	CRITICAL_SECTION cs;
