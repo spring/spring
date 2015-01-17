@@ -34,7 +34,7 @@ static bool IsUnitTrackable(const CUnit* unit, const CUnit* owner)
 }
 
 CommandDrawer* CommandDrawer::GetInstance() {
-	// luaQueuedUnitSet is cleared each frame, so this is fine wrt. reloading
+	// luaQueuedUnitSet gets cleared each frame, so this is fine wrt. reloading
 	static CommandDrawer drawer;
 	return &drawer;
 }

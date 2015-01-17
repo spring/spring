@@ -314,6 +314,8 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	ParseInputTextGeometry(configHandler->GetString("InputTextGeo"));
 
 	CLuaHandle::SetModUICtrl(configHandler->GetBool("LuaModUICtrl"));
+	// clear left-over receivers in case we reloaded
+	commandConsole.ResetState();
 
 
 	modInfo.ResetState();
@@ -2022,9 +2024,8 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 		return true;
 	}
 
-	if (Console::Instance().ExecuteAction(action)) {
+	if (commandConsole.ExecuteAction(action))
 		return true;
-	}
 
 	return false;
 }
