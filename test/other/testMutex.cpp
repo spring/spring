@@ -77,6 +77,9 @@ spring_time Test(const char* name, voidFnc pre, voidFnc post)
 
 BOOST_AUTO_TEST_CASE( Mutex )
 {
+	spring_clock::PushTickRate();
+	spring_time::setstarttime(spring_time::gettime(true));
+
 	boost::mutex mtx;
 	boost::recursive_mutex rmtx;
 
