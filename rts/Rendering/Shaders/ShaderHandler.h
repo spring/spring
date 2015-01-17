@@ -4,7 +4,6 @@
 #define SPRING_SHADERHANDLER_HDR
 
 #include <string>
-#include <map>
 #include <unordered_map>
 
 namespace Shader {
@@ -32,15 +31,51 @@ public:
 	 */
 	Shader::IShaderObject* CreateShaderObject(const std::string& soName, const std::string& soDefs, int soType);
 
-	const std::unordered_map<size_t, GLuint>& GetShaderProgramCache() const { return shaderProgramCache; }
-	      std::unordered_map<size_t, GLuint>& GetShaderProgramCache()       { return shaderProgramCache; }
+
+	struct ShaderCache {
+	public:
+		void Clear() { cache.clear(); }
+
+		unsigned int Find(unsigned int hash) {
+			const auto it = cache.find(hash);
+
+			GLuint id = 0;
+
+			if (it != cache.end()) {
+				id = it->second;
+				cache.erase(it);
+			}
+
+			return id;
+		}
+
+		bool Push(unsigned int hash, unsigned int objID) {
+			const auto it = cache.find(hash);
+
+			if (it == cache.end()) {
+				cache[hash] = objID;
+				return true;
+			}
+
+			return false;
+		}
+
+	private:
+		std::unordered_map<size_t, GLuint> cache;
+	};
+
+	const ShaderCache& GetShaderCache() const { return shaderCache; }
+	      ShaderCache& GetShaderCache()       { return shaderCache; }
 
 private:
-	typedef std::map<std::string, Shader::IProgramObject*> ProgramObjMap;
-	typedef std::map<std::string, Shader::IProgramObject*>::iterator ProgramObjMapIt;
+	typedef std::unordered_map<std::string, Shader::IProgramObject*> ProgramObjMap;
+	typedef std::unordered_map<std::string, Shader::IProgramObject*>::iterator ProgramObjMapIt;
+	typedef std::unordered_map<std::string, ProgramObjMap> ProgramTable;
 
-	std::map<std::string, ProgramObjMap> programObjects;
-	std::unordered_map<size_t, GLuint> shaderProgramCache;
+	// all created programs, by name
+	ProgramTable programObjects;
+	// all (re)loaded program ID's, by hash
+	ShaderCache shaderCache;
 };
 
 #define shaderHandler (CShaderHandler::GetInstance())
