@@ -323,6 +323,29 @@ if(NOT WIN32)
 endif()
 
 ################################################################################
+### Mutex
+	set(test_name Mutex)
+	Set(test_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/other/testMutex.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
+			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
+			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
+			${test_Log_sources}
+		)
+
+	set(test_libs
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			${Boost_SYSTEM_LIBRARY}
+			${Boost_CHRONO_LIBRARY_WITH_RT}
+			${Boost_THREAD_LIBRARY}
+			${WINMM_LIBRARY}
+			${WS2_32_LIBRARY}
+		)
+
+	set(test_flags "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
+
+################################################################################
 ### EventClient
 	set(test_name EventClient)
 	Set(test_src
