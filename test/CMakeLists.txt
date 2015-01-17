@@ -339,6 +339,7 @@ endif()
 			${Boost_CHRONO_LIBRARY_WITH_RT}
 			${Boost_THREAD_LIBRARY}
 			${WINMM_LIBRARY}
+			${WS2_32_LIBRARY}
 		)
 
 	set(test_flags "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")

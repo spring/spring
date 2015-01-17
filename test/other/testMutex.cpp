@@ -7,6 +7,9 @@
 #include <boost/thread.hpp>
 #include <functional>
 
+#ifdef _WIN32
+	#include <windows.h>
+#endif
 
 #define BOOST_TEST_MODULE Mutex
 #include <boost/test/unit_test.hpp>
@@ -41,6 +44,13 @@ BOOST_AUTO_TEST_CASE( Mutex )
 	spring_time tMtx  = Test("mutex",           [&]{ mtx.lock();  }, [&]{ mtx.unlock();  });
 	spring_time tRMtx = Test("recursive_mutex", [&]{ rmtx.lock(); }, [&]{ rmtx.unlock(); });
 
-	BOOST_CHECK(tMtx.toMilliSecsi()  <= 4 * tRaw.toMilliSecsi());
-	BOOST_CHECK(tRMtx.toMilliSecsi() <= 4 * tRaw.toMilliSecsi());
+#ifdef _WIN32
+	CRITICAL_SECTION cs;
+	InitializeCriticalSection(&cs);
+	spring_time tCrit = Test("critical section", [&]{ EnterCriticalSection(&cs); }, [&]{ LeaveCriticalSection(&cs); });
+	DeleteCriticalSection(&cs);
+#endif
+
+	//BOOST_CHECK(tMtx.toMilliSecsi()  <= 4 * tRaw.toMilliSecsi());
+	//BOOST_CHECK(tRMtx.toMilliSecsi() <= 4 * tRaw.toMilliSecsi());
 }
