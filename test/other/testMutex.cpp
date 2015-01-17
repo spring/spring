@@ -102,7 +102,7 @@ BOOST_AUTO_TEST_CASE( Mutex )
 	CRITICAL_SECTION cs;
 	InitializeCriticalSection(&cs);
 	spring_time tCrit = Test("critical section", [&]{ EnterCriticalSection(&cs); }, [&]{ LeaveCriticalSection(&cs); });
-	futex_destroy(&cs);
+	DeleteCriticalSection(&cs);
 #endif
 
 	//BOOST_CHECK(tMtx.toMilliSecsi()  <= 4 * tRaw.toMilliSecsi());
