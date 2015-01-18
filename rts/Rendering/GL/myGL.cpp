@@ -437,7 +437,8 @@ void glSpringTexStorage2D(const GLenum target, GLint levels, const GLint interna
 		switch (internalFormat) {
 			case GL_RGBA8: format = GL_RGBA; type = GL_UNSIGNED_BYTE; break;
 			case GL_RGB8:  format = GL_RGB;  type = GL_UNSIGNED_BYTE; break;
-			default: LOG_L(L_ERROR, "[%s] Couldn't detct format& type for %i", __FUNCTION__, internalFormat);
+			default: /*LOG_L(L_ERROR, "[%s] Couldn't detect format type for %i", __FUNCTION__, internalFormat);*/
+			break;
 		}
 		glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, nullptr);
 	}
