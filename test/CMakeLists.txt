@@ -331,6 +331,7 @@ endif()
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
 			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
 			${test_Log_sources}
+			${sources_engine_System_Threading}
 		)
 
 	set(test_libs

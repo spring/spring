@@ -4,7 +4,6 @@
 #define LUA_CONTEXT_DATA_H
 
 #include <map>
-#include <boost/thread/recursive_mutex.hpp>
 
 #include "LuaShaders.h"
 #include "LuaTextures.h"
@@ -13,6 +12,7 @@
 #include "LuaDisplayLists.h"
 #include "System/EventClient.h"
 #include "System/Log/ILog.h"
+#include "System/Threading/SpringMutex.h"
 
 class CLuaHandle;
 
@@ -179,7 +179,7 @@ struct luaContextData {
 	, selectTeam(CEventClient::NoAccessTeam) {}
 
 	CLuaHandle* owner;
-	boost::recursive_mutex* luamutex;
+	spring::recursive_mutex* luamutex;
 
 	bool synced;
 	bool allowChanges;

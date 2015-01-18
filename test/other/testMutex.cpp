@@ -2,6 +2,7 @@
 
 #include "System/TimeProfiler.h"
 #include "System/Log/ILog.h"
+#include "System/Threading/SpringMutex.h"
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread.hpp>
@@ -80,12 +81,16 @@ BOOST_AUTO_TEST_CASE( Mutex )
 	spring_clock::PushTickRate();
 	spring_time::setstarttime(spring_time::gettime(true));
 
+	spring::mutex spmtx;
+	spring::recursive_mutex sprmtx;
 	boost::mutex mtx;
 	boost::recursive_mutex rmtx;
 
-	spring_time tRaw   = Test("raw",                    []{               }, []{                 });
-	spring_time tMtx   = Test("boost::mutex",           [&]{ mtx.lock();  }, [&]{ mtx.unlock();  });
-	spring_time tRMtx  = Test("boost::recursive_mutex", [&]{ rmtx.lock(); }, [&]{ rmtx.unlock(); });
+	spring_time tRaw    = Test("raw",                     []{                 }, []{                   });
+	spring_time tSpMtx  = Test("spring::mutex",           [&]{ spmtx.lock();  }, [&]{ spmtx.unlock();  });
+	spring_time tSpRMtx = Test("spring::recursive_mutex", [&]{ sprmtx.lock(); }, [&]{ sprmtx.unlock(); });
+	spring_time tMtx    = Test("boost::mutex",            [&]{ mtx.lock();    }, [&]{ mtx.unlock();    });
+	spring_time tRMtx   = Test("boost::recursive_mutex",  [&]{ rmtx.lock();   }, [&]{ rmtx.unlock();   });
 
 #ifndef _WIN32
 	std::mutex smtx;
