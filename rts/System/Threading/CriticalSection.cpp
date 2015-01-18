@@ -3,31 +3,31 @@
 #include "CriticalSection.h"
 
 
-criticalsection::criticalsection() noexcept
+CriticalSection::CriticalSection() noexcept
 {
 	InitializeCriticalSection(&mtx);
 }
 
 
-criticalsection::~criticalsection()
+CriticalSection::~CriticalSection()
 {
 	DeleteCriticalSection(&mtx);
 }
 
 
-void criticalsection::lock()
+void CriticalSection::lock()
 {
 	EnterCriticalSection(&mtx);
 }
 
 
-bool criticalsection::try_lock() noexcept
+bool CriticalSection::try_lock() noexcept
 {
 	TryEnterCriticalSection(&mtx);
 }
 
 
-void criticalsection::unlock()
+void CriticalSection::unlock()
 {
 	LeaveCriticalSection(&mtx);
 }

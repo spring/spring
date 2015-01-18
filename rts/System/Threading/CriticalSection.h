@@ -6,7 +6,7 @@
 #include <windows.h>
 
 
-class criticalsection
+class CriticalSection
 {
 private:
 	typedef CRITICAL_SECTION native_type;
@@ -14,11 +14,11 @@ private:
 public:
 	typedef native_type* native_handle_type;
 
-	criticalsection() noexcept;
-	~criticalsection();
+	CriticalSection() noexcept;
+	~CriticalSection();
 
-	criticalsection(const criticalsection&) = delete;
-	criticalsection& operator=(const criticalsection&) = delete;
+	CriticalSection(const CriticalSection&) = delete;
+	CriticalSection& operator=(const CriticalSection&) = delete;
 
 	void lock();
 	bool try_lock() noexcept;

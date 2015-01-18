@@ -3,10 +3,10 @@
 #ifndef SPRINGMUTEX_H
 #define SPRINGMUTEX_H
 
-#define USE_FUTEX
+//#define USE_FUTEX
 
 #if   defined(_WIN32)
-	#include "CritSection.h"
+	#include "CriticalSection.h"
 #elif defined(__APPLE__) || !defined(USE_FUTEX)
 	#include <mutex>
 #else
@@ -17,8 +17,8 @@
 
 namespace spring {
 #if   defined(_WIN32)
-	typedef critsection mutex;
-	typedef critsection recursive_mutex;
+	typedef CriticalSection mutex;
+	typedef CriticalSection recursive_mutex;
 #elif defined(__APPLE__) || !defined(USE_FUTEX)
 	typedef std::mutex mutex;
 	typedef std::recursive_mutex recursive_mutex;
