@@ -949,6 +949,7 @@ int SpringApp::Run()
 			}
 		}
 	}
+
 	SaveWindowPosition();
 	ShutDown();
 
