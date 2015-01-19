@@ -190,10 +190,12 @@ public:
 	virtual void FreeInfoMap(const std::string& name, unsigned char* data) = 0;
 
 	/// Determine visibility for a rectangular grid
+	/// call ResetState for statically allocated drawer objects
 	struct IQuadDrawer
 	{
 		virtual ~IQuadDrawer() {}
-		virtual void DrawQuad (int x,int y) = 0;
+		virtual void ResetState() = 0;
+		virtual void DrawQuad(int x, int y) = 0;
 	};
 	virtual void GridVisibility(CCamera* cam, int quadSize, float maxdist, IQuadDrawer* cb, int extraSize = 0) = 0;
 

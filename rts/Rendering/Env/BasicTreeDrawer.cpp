@@ -131,7 +131,9 @@ static void inline SetArrayQ(CVertexArray* va, float t1, float t2, float3 v)
 	va->AddVertexQT(v, t1, t2);
 }
 
-struct CBasicTreeSquareDrawer : CReadMap::IQuadDrawer
+
+
+struct CBasicTreeSquareDrawer : public CReadMap::IQuadDrawer
 {
 	CBasicTreeSquareDrawer(CBasicTreeDrawer* td, int /*cx*/, int /*cy*/, float treeDistance)
 		: treeDistance(treeDistance)
@@ -139,219 +141,221 @@ struct CBasicTreeSquareDrawer : CReadMap::IQuadDrawer
 		, va(NULL)
 	{}
 
-	void DrawQuad(int x, int y);
+	void ResetState() {
+		treeDistance = 0.0f;
+
+		td = nullptr;
+		va = nullptr;
+	}
+
+	void DrawQuad(int x, int y) {
+		ITreeDrawer::TreeSquareStruct* tss = &td->trees[(y * td->treesX) + x];
+
+		float3 dif;
+			dif.x = camera->GetPos().x - ((x * SQUARE_SIZE * TREE_SQUARE_SIZE) + (SQUARE_SIZE * TREE_SQUARE_SIZE / 2));
+			dif.y = 0.0f;
+			dif.z = camera->GetPos().z - ((y * SQUARE_SIZE * TREE_SQUARE_SIZE) + (SQUARE_SIZE * TREE_SQUARE_SIZE / 2));
+		const float dist = dif.Length();
+		const float distFactor = dist / treeDistance;
+		dif.Normalize();
+		const float3 side = UpVector.cross(dif);
+
+		if (distFactor < MID_TREE_DIST_FACTOR) { // midle distance trees
+			tss->lastSeen = gs->frameNum;
+
+			if (tss->dispList == 0) {
+				tss->dispList = glGenLists(1);
+
+				va = GetVertexArray();
+				va->Initialize();
+				va->EnlargeArrays(12 * tss->trees.size(), 0, VA_SIZE_T); //!alloc room for all tree vertexes
+
+				for (std::map<int, ITreeDrawer::TreeStruct>::iterator ti = tss->trees.begin(); ti != tss->trees.end(); ++ti) {
+					const ITreeDrawer::TreeStruct* ts = &ti->second;
+					const CFeature* f = featureHandler->GetFeature(ts->id);
+
+					if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
+						continue;
+
+					if (ts->type < 8)
+						DrawTreeVertexMid1(ts->pos, false);
+					else
+						DrawTreeVertexMid2(ts->pos, false);
+				}
+
+				glNewList(tss->dispList, GL_COMPILE);
+				va->DrawArrayT(GL_QUADS);
+				glEndList();
+			}
+			glColor4f(1, 1, 1, 1);
+			glDisable(GL_BLEND);
+			glAlphaFunc(GL_GREATER, 0.5f);
+			glCallList(tss->dispList);
+			return;
+		}
+
+		if (distFactor < FAR_TREE_DIST_FACTOR) { // far trees
+			tss->lastSeenFar = gs->frameNum;
+
+			if ((tss->farDispList == 0) || (dif.dot(tss->viewVector) < 0.97f)) {
+				if (tss->farDispList == 0)
+					tss->farDispList = glGenLists(1);
+
+				va = GetVertexArray();
+				va->Initialize();
+				va->EnlargeArrays(4 * tss->trees.size(), 0, VA_SIZE_T); //!alloc room for all tree vertexes
+
+				tss->viewVector = dif;
+
+				for (std::map<int, ITreeDrawer::TreeStruct>::iterator ti = tss->trees.begin(); ti != tss->trees.end(); ++ti) {
+					const ITreeDrawer::TreeStruct* ts = &ti->second;
+					const CFeature* f = featureHandler->GetFeature(ts->id);
+
+					if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
+						continue;
+
+					if (ts->type < 8) {
+						DrawTreeVertexFar1(ts->pos, side * MAX_TREE_HEIGHT_3, false);
+					} else {
+						DrawTreeVertexFar2(ts->pos, side * MAX_TREE_HEIGHT_3, false);
+					}
+				}
+
+				glNewList(tss->farDispList, GL_COMPILE);
+				va->DrawArrayT(GL_QUADS);
+				glEndList();
+			}
+
+			if (distFactor > FADE_TREE_DIST_FACTOR){ // faded far trees
+				const float trans = 1.0f - (distFactor - FADE_TREE_DIST_FACTOR) / (FAR_TREE_DIST_FACTOR - FADE_TREE_DIST_FACTOR);
+				glEnable(GL_BLEND);
+				glColor4f(1, 1, 1, trans);
+				glAlphaFunc(GL_GREATER, trans / 2.0f);
+			} else {
+				glColor4f(1, 1, 1, 1);
+				glDisable(GL_BLEND);
+				glAlphaFunc(GL_GREATER, 0.5f);
+			}
+
+			glCallList(tss->farDispList);
+		}
+	}
 
 	float treeDistance;
 
 private:
-	void DrawTreeVertexFar1(const float3& pos, const float3& swd, bool enlarge = true);
-	void DrawTreeVertexFar2(const float3& pos, const float3& swd, bool enlarge = true);
-	void DrawTreeVertexMid1(const float3& pos, bool enlarge = true);
-	void DrawTreeVertexMid2(const float3& pos, bool enlarge = true);
+	void DrawTreeVertexFar1(const float3& pos, const float3& swd, bool enlarge = true) {
+		if (enlarge)
+			va->EnlargeArrays(4, 0, VA_SIZE_T);
+		float3 base = pos + swd;
+		SetArrayQ(va, 0, 0, base);
+		base.y += MAX_TREE_HEIGHT;
+		SetArrayQ(va, 0, 0.25f, base);
+		base -= swd;
+		base -= swd;
+		SetArrayQ(va, 0.5f, 0.5f, base);
+		base.y -= MAX_TREE_HEIGHT;
+		SetArrayQ(va, 0.5f, 0.0f, base);
+	}
+
+	void DrawTreeVertexFar2(const float3& pos, const float3& swd, bool enlarge = true) {
+		if (enlarge)
+			va->EnlargeArrays(4, 0, VA_SIZE_T);
+		float3 base = pos + swd;
+		SetArrayQ(va, 0, 0.5f, base);
+		base.y += MAX_TREE_HEIGHT;
+		SetArrayQ(va, 0, 1.0f, base);
+		base -= swd;
+		base -= swd;
+		SetArrayQ(va, 0.25f, 1.0f, base);
+		base.y -= MAX_TREE_HEIGHT;
+		SetArrayQ(va, 0.25f, 0.5f, base);
+	}
+
+
+	void DrawTreeVertexMid1(const float3& pos, bool enlarge = true) {
+		if (enlarge)
+			va->EnlargeArrays(12, 0, VA_SIZE_T);
+		float3 base = pos;
+		base.x += MAX_TREE_HEIGHT_3;
+
+		SetArrayQ(va, 0.0f, 0.0f, base);
+		base.y += MAX_TREE_HEIGHT;
+		SetArrayQ(va, 0.0f, 0.5f, base);
+		base.x -= MAX_TREE_HEIGHT_6;
+		SetArrayQ(va, 0.5f, 0.5f, base);
+		base.y -= MAX_TREE_HEIGHT;
+		SetArrayQ(va, 0.5f, 0.0f, base);
+
+		base.x += MAX_TREE_HEIGHT_3;
+		base.z += MAX_TREE_HEIGHT_3;
+		SetArrayQ(va, 0.0f, 0.0f, base);
+		base.y += MAX_TREE_HEIGHT;
+		SetArrayQ(va, 0.0f, 0.5f, base);
+		base.z -= MAX_TREE_HEIGHT_6;
+		SetArrayQ(va, 0.5f, 0.5f, base);
+		base.y -= MAX_TREE_HEIGHT;
+		SetArrayQ(va, 0.5f, 0.0f, base);
+
+		base.z += MAX_TREE_HEIGHT_3;
+		base.x += MAX_TREE_HEIGHT_36;
+		base.y += MAX_TREE_HEIGHT_25;
+		SetArrayQ(va, 0.5f, 0.0f, base);
+		base.x -= MAX_TREE_HEIGHT_36;
+		base.z -= MAX_TREE_HEIGHT_36;
+		SetArrayQ(va, 0.5f, 0.5f, base);
+		base.x -= MAX_TREE_HEIGHT_36;
+		base.z += MAX_TREE_HEIGHT_36;
+		SetArrayQ(va, 1.0f, 0.5f, base);
+		base.x += MAX_TREE_HEIGHT_36;
+		base.z += MAX_TREE_HEIGHT_36;
+		SetArrayQ(va, 1.0f, 0.0f, base);
+	}
+
+	void DrawTreeVertexMid2(const float3& pos, bool enlarge = true) {
+		if (enlarge)
+			va->EnlargeArrays(12, 0, VA_SIZE_T);
+		float3 base = pos;
+		base.x += MAX_TREE_HEIGHT_3;
+
+		SetArrayQ(va, 0.0f,  0.5f, base);
+		base.y += MAX_TREE_HEIGHT;
+		SetArrayQ(va, 0.0f,  1.0f, base);
+		base.x -= MAX_TREE_HEIGHT_6;
+		SetArrayQ(va, 0.25f, 1.0f, base);
+		base.y -= MAX_TREE_HEIGHT;
+		SetArrayQ(va, 0.25f, 0.5f, base);
+
+		base.x += MAX_TREE_HEIGHT_3;
+		base.z += MAX_TREE_HEIGHT_3;
+		SetArrayQ(va, 0.25f, 0.5f, base);
+		base.y += MAX_TREE_HEIGHT;
+		SetArrayQ(va, 0.25f, 1.0f, base);
+		base.z -= MAX_TREE_HEIGHT_6;
+		SetArrayQ(va, 0.5f,  1.0f, base);
+		base.y -= MAX_TREE_HEIGHT;
+		SetArrayQ(va, 0.5f,  0.5f, base);
+
+		base.z += MAX_TREE_HEIGHT_3;
+		base.x += MAX_TREE_HEIGHT_36;
+		base.y += MAX_TREE_HEIGHT_3;
+		SetArrayQ(va, 0.5f, 0.5f,base);
+		base.x -= MAX_TREE_HEIGHT_36;
+		base.z -= MAX_TREE_HEIGHT_36;
+		SetArrayQ(va, 0.5f, 1.0f,base);
+		base.x -= MAX_TREE_HEIGHT_36;
+		base.z += MAX_TREE_HEIGHT_36;
+		SetArrayQ(va, 1.0f, 1.0f,base);
+		base.x += MAX_TREE_HEIGHT_36;
+		base.z += MAX_TREE_HEIGHT_36;
+		SetArrayQ(va, 1.0f, 0.5f,base);
+	}
 
 	CBasicTreeDrawer* td;
 	CVertexArray* va;
 };
 
-void CBasicTreeSquareDrawer::DrawTreeVertexFar1(const float3& pos, const float3& swd, bool enlarge) {
-	if (enlarge)
-		va->EnlargeArrays(4, 0, VA_SIZE_T);
-	float3 base = pos + swd;
-	SetArrayQ(va, 0, 0, base);
-	base.y += MAX_TREE_HEIGHT;
-	SetArrayQ(va, 0, 0.25f, base);
-	base -= swd;
-	base -= swd;
-	SetArrayQ(va, 0.5f, 0.5f, base);
-	base.y -= MAX_TREE_HEIGHT;
-	SetArrayQ(va, 0.5f, 0.0f, base);
-}
 
-void CBasicTreeSquareDrawer::DrawTreeVertexFar2(const float3& pos, const float3& swd, bool enlarge) {
-	if(enlarge)
-		va->EnlargeArrays(4, 0, VA_SIZE_T);
-	float3 base = pos + swd;
-	SetArrayQ(va, 0, 0.5f, base);
-	base.y += MAX_TREE_HEIGHT;
-	SetArrayQ(va, 0, 1.0f, base);
-	base -= swd;
-	base -= swd;
-	SetArrayQ(va, 0.25f, 1.0f, base);
-	base.y -= MAX_TREE_HEIGHT;
-	SetArrayQ(va, 0.25f, 0.5f, base);
-}
-
-void CBasicTreeSquareDrawer::DrawTreeVertexMid1(const float3& pos, bool enlarge) {
-	if(enlarge)
-		va->EnlargeArrays(12, 0, VA_SIZE_T);
-	float3 base = pos;
-	base.x += MAX_TREE_HEIGHT_3;
-
-	SetArrayQ(va, 0.0f, 0.0f, base);
-	base.y += MAX_TREE_HEIGHT;
-	SetArrayQ(va, 0.0f, 0.5f, base);
-	base.x -= MAX_TREE_HEIGHT_6;
-	SetArrayQ(va, 0.5f, 0.5f, base);
-	base.y -= MAX_TREE_HEIGHT;
-	SetArrayQ(va, 0.5f, 0.0f, base);
-
-	base.x += MAX_TREE_HEIGHT_3;
-	base.z += MAX_TREE_HEIGHT_3;
-	SetArrayQ(va, 0.0f, 0.0f, base);
-	base.y += MAX_TREE_HEIGHT;
-	SetArrayQ(va, 0.0f, 0.5f, base);
-	base.z -= MAX_TREE_HEIGHT_6;
-	SetArrayQ(va, 0.5f, 0.5f, base);
-	base.y -= MAX_TREE_HEIGHT;
-	SetArrayQ(va, 0.5f, 0.0f, base);
-
-	base.z += MAX_TREE_HEIGHT_3;
-	base.x += MAX_TREE_HEIGHT_36;
-	base.y += MAX_TREE_HEIGHT_25;
-	SetArrayQ(va, 0.5f, 0.0f, base);
-	base.x -= MAX_TREE_HEIGHT_36;
-	base.z -= MAX_TREE_HEIGHT_36;
-	SetArrayQ(va, 0.5f, 0.5f, base);
-	base.x -= MAX_TREE_HEIGHT_36;
-	base.z += MAX_TREE_HEIGHT_36;
-	SetArrayQ(va, 1.0f, 0.5f, base);
-	base.x += MAX_TREE_HEIGHT_36;
-	base.z += MAX_TREE_HEIGHT_36;
-	SetArrayQ(va, 1.0f, 0.0f, base);
-}
-
-void CBasicTreeSquareDrawer::DrawTreeVertexMid2(const float3& pos, bool enlarge) {
-	if(enlarge)
-		va->EnlargeArrays(12, 0, VA_SIZE_T);
-	float3 base = pos;
-	base.x += MAX_TREE_HEIGHT_3;
-
-	SetArrayQ(va, 0.0f,  0.5f, base);
-	base.y += MAX_TREE_HEIGHT;
-	SetArrayQ(va, 0.0f,  1.0f, base);
-	base.x -= MAX_TREE_HEIGHT_6;
-	SetArrayQ(va, 0.25f, 1.0f, base);
-	base.y -= MAX_TREE_HEIGHT;
-	SetArrayQ(va, 0.25f, 0.5f, base);
-
-	base.x += MAX_TREE_HEIGHT_3;
-	base.z += MAX_TREE_HEIGHT_3;
-	SetArrayQ(va, 0.25f, 0.5f, base);
-	base.y += MAX_TREE_HEIGHT;
-	SetArrayQ(va, 0.25f, 1.0f, base);
-	base.z -= MAX_TREE_HEIGHT_6;
-	SetArrayQ(va, 0.5f,  1.0f, base);
-	base.y -= MAX_TREE_HEIGHT;
-	SetArrayQ(va, 0.5f,  0.5f, base);
-
-	base.z += MAX_TREE_HEIGHT_3;
-	base.x += MAX_TREE_HEIGHT_36;
-	base.y += MAX_TREE_HEIGHT_3;
-	SetArrayQ(va, 0.5f, 0.5f,base);
-	base.x -= MAX_TREE_HEIGHT_36;
-	base.z -= MAX_TREE_HEIGHT_36;
-	SetArrayQ(va, 0.5f, 1.0f,base);
-	base.x -= MAX_TREE_HEIGHT_36;
-	base.z += MAX_TREE_HEIGHT_36;
-	SetArrayQ(va, 1.0f, 1.0f,base);
-	base.x += MAX_TREE_HEIGHT_36;
-	base.z += MAX_TREE_HEIGHT_36;
-	SetArrayQ(va, 1.0f, 0.5f,base);
-}
-
-void CBasicTreeSquareDrawer::DrawQuad(int x, int y)
-{
-	ITreeDrawer::TreeSquareStruct* tss = &td->trees[(y * td->treesX) + x];
-
-	float3 dif;
-		dif.x = camera->GetPos().x - ((x * SQUARE_SIZE * TREE_SQUARE_SIZE) + (SQUARE_SIZE * TREE_SQUARE_SIZE / 2));
-		dif.y = 0.0f;
-		dif.z = camera->GetPos().z - ((y * SQUARE_SIZE * TREE_SQUARE_SIZE) + (SQUARE_SIZE * TREE_SQUARE_SIZE / 2));
-	const float dist = dif.Length();
-	const float distFactor = dist / treeDistance;
-	dif.Normalize();
-	const float3 side = UpVector.cross(dif);
-
-	if (distFactor < MID_TREE_DIST_FACTOR) { // midle distance trees
-		tss->lastSeen = gs->frameNum;
-
-		if (tss->dispList == 0) {
-			tss->dispList = glGenLists(1);
-
-			va = GetVertexArray();
-			va->Initialize();
-			va->EnlargeArrays(12 * tss->trees.size(), 0, VA_SIZE_T); //!alloc room for all tree vertexes
-
-			for (std::map<int, ITreeDrawer::TreeStruct>::iterator ti = tss->trees.begin(); ti != tss->trees.end(); ++ti) {
-				const ITreeDrawer::TreeStruct* ts = &ti->second;
-				const CFeature* f = featureHandler->GetFeature(ts->id);
-
-				if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
-					continue;
-
-				if (ts->type < 8)
-					DrawTreeVertexMid1(ts->pos, false);
-				else
-					DrawTreeVertexMid2(ts->pos, false);
-			}
-
-			glNewList(tss->dispList, GL_COMPILE);
-			va->DrawArrayT(GL_QUADS);
-			glEndList();
-		}
-		glColor4f(1, 1, 1, 1);
-		glDisable(GL_BLEND);
-		glAlphaFunc(GL_GREATER, 0.5f);
-		glCallList(tss->dispList);
-		return;
-	}
-
-	if (distFactor < FAR_TREE_DIST_FACTOR) { // far trees
-		tss->lastSeenFar = gs->frameNum;
-
-		if ((tss->farDispList == 0) || (dif.dot(tss->viewVector) < 0.97f)) {
-			if (tss->farDispList == 0)
-				tss->farDispList = glGenLists(1);
-
-			va = GetVertexArray();
-			va->Initialize();
-			va->EnlargeArrays(4 * tss->trees.size(), 0, VA_SIZE_T); //!alloc room for all tree vertexes
-
-			tss->viewVector = dif;
-
-			for (std::map<int, ITreeDrawer::TreeStruct>::iterator ti = tss->trees.begin(); ti != tss->trees.end(); ++ti) {
-				const ITreeDrawer::TreeStruct* ts = &ti->second;
-				const CFeature* f = featureHandler->GetFeature(ts->id);
-
-				if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
-					continue;
-
-				if (ts->type < 8) {
-					DrawTreeVertexFar1(ts->pos, side * MAX_TREE_HEIGHT_3, false);
-				} else {
-					DrawTreeVertexFar2(ts->pos, side * MAX_TREE_HEIGHT_3, false);
-				}
-			}
-
-			glNewList(tss->farDispList, GL_COMPILE);
-			va->DrawArrayT(GL_QUADS);
-			glEndList();
-		}
-
-		if (distFactor > FADE_TREE_DIST_FACTOR){ // faded far trees
-			const float trans = 1.0f - (distFactor - FADE_TREE_DIST_FACTOR) / (FAR_TREE_DIST_FACTOR - FADE_TREE_DIST_FACTOR);
-			glEnable(GL_BLEND);
-			glColor4f(1, 1, 1, trans);
-			glAlphaFunc(GL_GREATER, trans / 2.0f);
-		} else {
-			glColor4f(1, 1, 1, 1);
-			glDisable(GL_BLEND);
-			glAlphaFunc(GL_GREATER, 0.5f);
-		}
-
-		glCallList(tss->farDispList);
-	}
-}
 
 void CBasicTreeDrawer::Draw(float treeDistance, bool drawReflection)
 {

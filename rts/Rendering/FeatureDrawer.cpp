@@ -419,15 +419,28 @@ void CFeatureDrawer::DrawShadowPass()
 class CFeatureQuadDrawer : public CReadMap::IQuadDrawer {
 public:
 	int drawQuadsX;
+
 	bool drawReflection, drawRefraction;
+	bool farFeatures;
+
 	float sqFadeDistBegin;
 	float sqFadeDistEnd;
-	bool farFeatures;
 
 	std::vector<CFeatureDrawer::DrawQuad>* drawQuads;
 
-	void DrawQuad(int x, int y)
-	{
+	void ResetState() {
+		drawQuadsX = 0;
+
+		drawReflection = false;
+		drawRefraction = false;
+		farFeatures = false;
+
+		sqFadeDistBegin = 0.0f;
+		sqFadeDistEnd   = 0.0f;
+
+		drawQuads = nullptr;
+	}
+	void DrawQuad(int x, int y) {
 		std::vector<IWorldObjectModelRenderer*>& opaqueModelRenderers = featureDrawer->opaqueModelRenderers;
 		std::vector<IWorldObjectModelRenderer*>& cloakedModelRenderers = featureDrawer->cloakedModelRenderers;
 

@@ -733,6 +733,11 @@ public:
 	std::vector<Patch>* patches;
 	int numPatchesX;
 
+	void ResetState() {
+		patches = nullptr;
+		numPatchesX = 0;
+	}
+
 	void DrawQuad(int x, int y) {
 		(*patches)[x + y * numPatchesX].m_isVisible = true;
 	}
@@ -741,18 +746,23 @@ public:
 
 void Patch::UpdateVisibility(CCamera*& cam, std::vector<Patch>& patches, const int numPatchesX)
 {
+	#if 0
 	// very slow
-	//for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); ++it) {
-	//	it->UpdateVisibility(cam);
-	//}
-
+	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); ++it) {
+		it->UpdateVisibility(cam);
+	}
+	#else
 	// very fast
 	static CPatchInViewChecker checker;
+
+	checker.ResetState();
 	checker.patches     = &patches;
 	checker.numPatchesX = numPatchesX;
 
 	for (std::vector<Patch>::iterator it = patches.begin(); it != patches.end(); ++it) {
 		it->m_isVisible = false;
 	}
+
 	readMap->GridVisibility(cam, PATCH_SIZE, 1e9, &checker, INT_MAX);
+	#endif
 }

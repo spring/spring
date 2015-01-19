@@ -152,7 +152,6 @@ static bool MultisampleVerify()
  */
 SpringApp::SpringApp(int argc, char** argv): cmdline(new CmdLineParams(argc, argv))
 {
-	SetReloading(false);
 	// initializes configHandler which we need
 	ParseCmdLine(argv[0]);
 
@@ -849,10 +848,9 @@ void SpringApp::Startup()
 
 void SpringApp::Reload(const std::string& script)
 {
-	if (IsReloading())
-		return;
-
-	SetReloading(true);
+	// get rid of any running worker threads
+	ThreadPool::SetThreadCount(0);
+	ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads());
 
 	if (gameServer != NULL)
 		gameServer->SetReloading(true);
@@ -860,6 +858,7 @@ void SpringApp::Reload(const std::string& script)
 	SafeDelete(game);
 	SafeDelete(pregame);
 
+	// no-op if we are not the server
 	SafeDelete(gameServer);
 	// PreGame allocates clientNet, so we need to delete our old connection
 	SafeDelete(clientNet);
@@ -878,6 +877,9 @@ void SpringApp::Reload(const std::string& script)
 	ISound::Shutdown();
 	ISound::Initialize();
 
+	// make sure all old EventClients are really gone (safety)
+	eventHandler.ResetState();
+
 	gu->ResetState();
 	gs->ResetState();
 
@@ -890,8 +892,6 @@ void SpringApp::Reload(const std::string& script)
 	} else {
 		activeController = RunScript(script);
 	}
-
-	SetReloading(false);
 }
 
 /**

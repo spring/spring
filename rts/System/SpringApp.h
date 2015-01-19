@@ -60,12 +60,6 @@ private:
 	bool MainEventHandler(const SDL_Event& ev);
 
 	CGameController* RunScript(const std::string& buf);
-
-	void SetReloading(bool b) { isReloading = b; }
-	bool IsReloading() const { return isReloading; }
-
-private:
-	bool isReloading;
 };
 
 /**

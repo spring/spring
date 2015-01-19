@@ -338,6 +338,11 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	CCategoryHandler::CreateInstance();
 	CWordCompletion::CreateInstance();
 
+	// note: makes no sense to create this unless we have AI's
+	// (events will just go into the void otherwise) but it is
+	// unconditionally deref'ed in too many places
+	CEngineOutHandler::Create();
+
 	// FIXME: THIS HAS ALREADY BEEN CALLED! (SpringApp::Initialize)
 	// Threading::InitThreadPool();
 	Threading::SetThreadScheduler();
@@ -369,15 +374,16 @@ CGame::~CGame()
 	KillInterface();
 	KillSimulation();
 
-	LOG("[%s][4]", __FUNCTION__);
-	CWordCompletion::DestroyInstance();
-	CCategoryHandler::RemoveInstance();
-	CResourceHandler::FreeInstance();
-
 	LOG("[%s][5]", __FUNCTION__);
 	SafeDelete(saveFile); // ILoadSaveHandler, depends on vfsHandler via ~IArchive
 	LOG("[%s][6]", __FUNCTION__);
 	SafeDelete(jobDispatcher);
+
+	LOG("[%s][4]", __FUNCTION__);
+	CEngineOutHandler::Destroy();
+	CWordCompletion::DestroyInstance();
+	CCategoryHandler::RemoveInstance();
+	CResourceHandler::FreeInstance();
 
 	LEAVE_SYNCED_CODE();
 }
@@ -729,8 +735,6 @@ void CGame::LoadLua()
 
 void CGame::LoadSkirmishAIs()
 {
-	CEngineOutHandler::Create();
-
 	if (gameSetup->hostDemo)
 		return;
 
@@ -890,7 +894,6 @@ void CGame::KillSimulation()
 
 	LOG("[%s][5]", __FUNCTION__);
 	CClassicGroundMoveType::DeleteLineTable();
-	CEngineOutHandler::Destroy();
 }
 
 

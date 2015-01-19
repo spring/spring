@@ -306,7 +306,7 @@ void CAdvTreeDrawer::DrawTreeVertexFar(CVertexArray* va, const float3& pos, cons
 
 
 
-struct CAdvTreeSquareDrawer : CReadMap::IQuadDrawer
+struct CAdvTreeSquareDrawer : public CReadMap::IQuadDrawer
 {
 	CAdvTreeSquareDrawer(CAdvTreeDrawer* td, int cx, int cy, float treeDistance, bool drawDetailed)
 		: td(td)
@@ -315,6 +315,16 @@ struct CAdvTreeSquareDrawer : CReadMap::IQuadDrawer
 		, treeDistance(treeDistance)
 		, drawDetailed(drawDetailed)
 	{}
+
+	void ResetState() {
+		td = nullptr;
+
+		cx = 0;
+		cy = 0;
+
+		treeDistance = 0.0f;
+		drawDetailed = false;
+	}
 
 	void DrawQuad(int x, int y);
 
@@ -753,8 +763,18 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 
 
-struct CAdvTreeSquareShadowPassDrawer: CReadMap::IQuadDrawer
+struct CAdvTreeSquareShadowPassDrawer: public CReadMap::IQuadDrawer
 {
+	void ResetState() {
+		td = nullptr;
+
+		cx = 0;
+		cy = 0;
+
+		treeDistance = 0.0f;
+		drawDetailed = false;
+	}
+
 	void DrawQuad(int x, int y);
 
 	CAdvTreeDrawer* td;
