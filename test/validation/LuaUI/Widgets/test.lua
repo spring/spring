@@ -32,7 +32,7 @@ local function ShowStats()
 end
 
 function widget:GameOver()
-	Spring.SendCommands("quit")
+	Spring.SendCommands("quitforce")
 	ShowStats()
 end
 
