@@ -340,7 +340,7 @@ void CUnitScript::RemoveAnim(AnimType type, const std::list<AnimInfo*>::iterator
 void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float dest, float accel)
 {
 	if (!PieceExists(piece)) {
-		ShowScriptError("Invalid piecenumber");
+		ShowUnitScriptError("Invalid piecenumber");
 		return;
 	}
 
@@ -468,7 +468,7 @@ void CUnitScript::Move(int piece, int axis, float speed, float destination)
 void CUnitScript::MoveNow(int piece, int axis, float destination)
 {
 	if (!PieceExists(piece)) {
-		ShowScriptError("Invalid piecenumber");
+		ShowUnitScriptError("Invalid piecenumber");
 		return;
 	}
 
@@ -486,7 +486,7 @@ void CUnitScript::MoveNow(int piece, int axis, float destination)
 void CUnitScript::TurnNow(int piece, int axis, float destination)
 {
 	if (!PieceExists(piece)) {
-		ShowScriptError("Invalid piecenumber");
+		ShowUnitScriptError("Invalid piecenumber");
 		return;
 	}
 
@@ -504,19 +504,18 @@ void CUnitScript::TurnNow(int piece, int axis, float destination)
 void CUnitScript::SetVisibility(int piece, bool visible)
 {
 	if (!PieceExists(piece)) {
-		ShowScriptError("Invalid piecenumber");
+		ShowUnitScriptError("Invalid piecenumber");
 		return;
 	}
 
 	pieces[piece]->scriptSetVisible = visible;
 }
 
-
 void CUnitScript::EmitSfx(int sfxType, int piece)
 {
 #ifndef _CONSOLE
 	if (!PieceExists(piece)) {
-		ShowScriptError("Invalid piecenumber for emit-sfx");
+		ShowUnitScriptError("Invalid piecenumber for emit-sfx");
 		return;
 	}
 
@@ -536,7 +535,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 	float3 relDir = UpVector;
 
 	if (!GetEmitDirPos(piece, relPos, relDir)) {
-		ShowScriptError("emit-sfx: GetEmitDirPos failed");
+		ShowUnitScriptError("emit-sfx: GetEmitDirPos failed");
 		return;
 	}
 
@@ -634,7 +633,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 				// make a weapon fire from the piece
 				const unsigned index = sfxType - SFX_FIRE_WEAPON;
 				if (index >= unit->weapons.size() || unit->weapons[index] == NULL) {
-					ShowScriptError("Invalid weapon index for emit-sfx");
+					ShowUnitScriptError("Invalid weapon index for emit-sfx");
 					break;
 				}
 
@@ -652,7 +651,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 			else if (sfxType & SFX_DETONATE_WEAPON) {
 				const unsigned index = sfxType - SFX_DETONATE_WEAPON;
 				if (index >= unit->weapons.size() || unit->weapons[index] == NULL) {
-					ShowScriptError("Invalid weapon index for emit-sfx");
+					ShowUnitScriptError("Invalid weapon index for emit-sfx");
 					break;
 				}
 
@@ -692,7 +691,7 @@ void CUnitScript::AttachUnit(int piece, int u)
 {
 	// -1 is valid, indicates that the unit should be hidden
 	if ((piece >= 0) && (!PieceExists(piece))) {
-		ShowScriptError("Invalid piecenumber for attach");
+		ShowUnitScriptError("Invalid piecenumber for attach");
 		return;
 	}
 
@@ -751,7 +750,7 @@ bool CUnitScript::AddAnimListener(AnimType type, int piece, int axis, IAnimListe
 void CUnitScript::Explode(int piece, int flags)
 {
 	if (!PieceExists(piece)) {
-		ShowScriptError("Invalid piecenumber for explode");
+		ShowUnitScriptError("Invalid piecenumber for explode");
 		return;
 	}
 
@@ -830,7 +829,7 @@ void CUnitScript::Shatter(int piece, const float3& pos, const float3& speed)
 void CUnitScript::ShowFlare(int piece)
 {
 	if (!PieceExists(piece)) {
-		ShowScriptError("Invalid piecenumber for show(flare)");
+		ShowUnitScriptError("Invalid piecenumber for show(flare)");
 		return;
 	}
 #ifndef _CONSOLE
@@ -851,7 +850,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 {
 	// may happen in case one uses Spring.GetUnitCOBValue (Lua) on a unit with CNullUnitScript
 	if (!unit) {
-		ShowScriptError("Error: no unit (in GetUnitVal)");
+		ShowUnitScriptError("no unit (in GetUnitVal)");
 		return 0;
 	}
 
@@ -894,7 +893,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		break;
 	case PIECE_XZ: {
 		if (!PieceExists(p1)) {
-			ShowScriptError("Invalid piecenumber for get piece_xz");
+			ShowUnitScriptError("Invalid piecenumber for get piece_xz");
 			break;
 		}
 		const float3 relPos = GetPiecePos(p1);
@@ -903,7 +902,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	}
 	case PIECE_Y: {
 		if (!PieceExists(p1)) {
-			ShowScriptError("Invalid piecenumber for get piece_y");
+			ShowUnitScriptError("Invalid piecenumber for get piece_y");
 			break;
 		}
 		const float3 relPos = GetPiecePos(p1);
@@ -1395,7 +1394,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 {
 	// may happen in case one uses Spring.SetUnitCOBValue (Lua) on a unit with CNullUnitScript
 	if (!unit) {
-		ShowScriptError("Error: no unit (in SetUnitVal)");
+		ShowUnitScriptError("Error: no unit (in SetUnitVal)");
 		return;
 	}
 
@@ -1673,5 +1672,10 @@ int CUnitScript::ModelToScript(int lmodelPieceNum) const {
 	const LocalModelPiece* lmp = lm->GetPiece(lmodelPieceNum);
 
 	return (lmp->GetScriptPieceIndex());
+}
+
+void CUnitScript::ShowUnitScriptError(const std::string& error)
+{
+	ShowScriptError(error + std::string(" ") + IntToString(unit->id) + std::string(" of type ") + unit->unitDef->name);
 }
 
