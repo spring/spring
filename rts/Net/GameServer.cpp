@@ -3,8 +3,6 @@
 #include "System/Net/UDPListener.h"
 #include "System/Net/UDPConnection.h"
 
-#include <stdarg.h>
-#include <ctime>
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
 #include <boost/version.hpp>
@@ -16,7 +14,6 @@
 #if defined DEDICATED || defined DEBUG
 	#include <iostream>
 #endif
-#include <stdlib.h> // why is this here?
 
 #include "GameServer.h"
 
@@ -2502,20 +2499,26 @@ void CGameServer::UpdateLoop()
 		if (hostif)
 			hostif->SendQuit();
 
-		if (!reloadingServer)
-			Broadcast(CBaseNetProtocol::Get().SendQuit("Server shutdown"));
+		Broadcast(CBaseNetProtocol::Get().SendQuit("Server shutdown"));
 
-		// flush the quit messages to reduce ugly network error messages on the client side
-		// this is to make sure the Flush has any effect at all (we don't want a forced flush)
-		spring_sleep(spring_msecs(1000));
+		if (!reloadingServer) {
+			// flush the quit messages to reduce ugly network error messages on the client side
+			// this is to make sure the Flush has any effect at all (we don't want a forced flush)
+			//
+			// when reloading, we can assume there is only a local client and skip the sleep()'s
+			spring_sleep(spring_msecs(1000));
+		}
 
 		for (GameParticipant& p: players) {
 			if (p.link)
 				p.link->Flush();
 		}
 
-		// now let clients close their connections
-		spring_sleep(spring_msecs(3000));
+		if (!reloadingServer) {
+			// now let clients close their connections
+			spring_sleep(spring_msecs(3000));
+		}
+
 	} CATCH_SPRING_ERRORS
 }
 
