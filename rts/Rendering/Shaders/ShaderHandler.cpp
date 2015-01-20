@@ -30,8 +30,8 @@ void CShaderHandler::FreeInstance(CShaderHandler* sh) {
 
 
 CShaderHandler::~CShaderHandler() {
-	for (auto it = programObjects.begin(); it != programObjects.end(); ++it) {
-		ReleaseProgramObjects(it->first);
+	for (auto it = programObjects.begin(); it != programObjects.end();) {
+		ReleaseProgramObjects((it++)->first);
 	}
 
 	programObjects.clear();
