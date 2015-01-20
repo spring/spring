@@ -47,7 +47,7 @@ CR_REG_METADATA(CGameSetup, (
 	CR_IGNORED(modName),
 	CR_IGNORED(gameID),
 
-	// all members can be reconstructed from this
+	// all other members can be reconstructed from this
 	CR_MEMBER(setupText),
 
 	CR_IGNORED(demoName),

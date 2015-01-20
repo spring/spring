@@ -288,6 +288,8 @@ void CUnit::InitStatic()
 	expHealthScale = 0.7f;
 	expReloadScale = 0.4f;
 	expGrade       = 0.0f;
+
+	CBuilderCAI::InitStatic();
 }
 
 
