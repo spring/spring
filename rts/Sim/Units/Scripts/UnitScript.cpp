@@ -104,7 +104,7 @@ CUnitScript::~CUnitScript()
 
 /**
  * @brief Unblocks all threads waiting on an animation
- * @param anim AnimInfo the corresponding animation
+ * @param  anim AnimInfo the corresponding animation
  */
 void CUnitScript::UnblockAll(AnimInfo* anim)
 {
@@ -118,10 +118,10 @@ void CUnitScript::UnblockAll(AnimInfo* anim)
 
 /**
  * @brief Updates move animations
- * @param cur float value to update
- * @param dest float final value
- * @param speed float max increment per tick
- * @return returns true if destination was reached, false otherwise
+ * @param  cur float value to update
+ * @param  dest float final value
+ * @param  speed float max increment per tick
+ * @param return returns true if destination was reached, false otherwise
  */
 bool CUnitScript::MoveToward(float& cur, float dest, float speed)
 {
@@ -144,10 +144,10 @@ bool CUnitScript::MoveToward(float& cur, float dest, float speed)
 
 /**
  * @brief Updates turn animations
- * @param cur float value to update
- * @param dest float final value
- * @param speed float max increment per tick
- * @return returns true if destination was reached, false otherwise
+ * @param  cur float value to update
+ * @param  dest float final value
+ * @param  speed float max increment per tick
+ * @param return returns true if destination was reached, false otherwise
  */
 bool CUnitScript::TurnToward(float& cur, float dest, float speed)
 {
@@ -176,7 +176,6 @@ bool CUnitScript::TurnToward(float& cur, float dest, float speed)
 	return false;
 }
 
-
 /**
  * @brief Updates spin animations
  * @param cur float value to update
@@ -184,7 +183,7 @@ bool CUnitScript::TurnToward(float& cur, float dest, float speed)
  * @param speed float is updated if it is not equal to dest
  * @param divisor int is the deltatime, it is not added before the call because speed may have to be updated
  * @return true if the desired speed is 0 and it is reached, false otherwise
- */
+*/
 bool CUnitScript::DoSpin(float& cur, float dest, float &speed, float accel, int divisor)
 {
 	const float delta = dest - speed;
@@ -268,8 +267,8 @@ void CUnitScript::TickAnims(int deltaTime, AnimType type, std::list< std::list<A
 /**
  * @brief Called by the engine when we are registered as animating.
           If we return false there are no active animations left.
- * @param deltaTime int delta time to update
- * @return true if there are still active animations
+ * @param  deltaTime int delta time to update
+ * @param return true if there are still active animations
  */
 bool CUnitScript::Tick(int deltaTime)
 {
@@ -340,7 +339,9 @@ void CUnitScript::RemoveAnim(AnimType type, const std::list<AnimInfo*>::iterator
 void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float dest, float accel)
 {
 	if (!PieceExists(piece)) {
-		ShowScriptError("Invalid piecenumber");
+		string DbgString="Invalid piecenumber at Unit:"+unit->id +" of type "+unit->UnitDefID;
+		 ShowScriptError(DbgString);
+
 		return;
 	}
 
@@ -468,7 +469,9 @@ void CUnitScript::Move(int piece, int axis, float speed, float destination)
 void CUnitScript::MoveNow(int piece, int axis, float destination)
 {
 	if (!PieceExists(piece)) {
-		ShowScriptError("Invalid piecenumber");
+		string DbgString="Invalid piecenumber at Unit:"+unit->id +" of type "+unit->UnitDefID;
+		 ShowScriptError(DbgString);
+
 		return;
 	}
 
@@ -486,7 +489,9 @@ void CUnitScript::MoveNow(int piece, int axis, float destination)
 void CUnitScript::TurnNow(int piece, int axis, float destination)
 {
 	if (!PieceExists(piece)) {
-		ShowScriptError("Invalid piecenumber");
+		string DbgString="Invalid piecenumber at Unit:"+unit->id +" of type "+unit->UnitDefID;
+		 ShowScriptError(DbgString);
+
 		return;
 	}
 
@@ -504,7 +509,9 @@ void CUnitScript::TurnNow(int piece, int axis, float destination)
 void CUnitScript::SetVisibility(int piece, bool visible)
 {
 	if (!PieceExists(piece)) {
-		ShowScriptError("Invalid piecenumber");
+		string DbgString="Invalid piecenumber at Unit:"+unit->id +" of type "+unit->UnitDefID;
+		 ShowScriptError(DbgString);
+
 		return;
 	}
 
@@ -516,7 +523,9 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 {
 #ifndef _CONSOLE
 	if (!PieceExists(piece)) {
-		ShowScriptError("Invalid piecenumber for emit-sfx");
+		string DbgString="Invalid piecenumber for emit-sfx at Unit:"+unit->id +" of type "+unit->UnitDefID;
+		 ShowScriptError(DbgString);
+
 		return;
 	}
 
@@ -536,7 +545,9 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 	float3 relDir = UpVector;
 
 	if (!GetEmitDirPos(piece, relPos, relDir)) {
-		ShowScriptError("emit-sfx: GetEmitDirPos failed");
+		string DbgString="emit-sfx: GetEmitDirPos failed at Unit:"+unit->id +" of type "+unit->UnitDefID;
+		 ShowScriptError(DbgString);
+
 		return;
 	}
 
@@ -634,7 +645,9 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 				// make a weapon fire from the piece
 				const unsigned index = sfxType - SFX_FIRE_WEAPON;
 				if (index >= unit->weapons.size() || unit->weapons[index] == NULL) {
-					ShowScriptError("Invalid weapon index for emit-sfx");
+					string DbgString="Invalid weapon index for emit-sfx  at Unit:"+unit->id +" of type "+unit->UnitDefID;
+					ShowScriptError(DbgString);
+
 					break;
 				}
 
@@ -652,7 +665,9 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 			else if (sfxType & SFX_DETONATE_WEAPON) {
 				const unsigned index = sfxType - SFX_DETONATE_WEAPON;
 				if (index >= unit->weapons.size() || unit->weapons[index] == NULL) {
-					ShowScriptError("Invalid weapon index for emit-sfx");
+					string DbgString="Invalid weapon index for emit-sfx at Unit:"+unit->id +" of type "+unit->UnitDefID;
+					ShowScriptError(DbgString);
+
 					break;
 				}
 
@@ -692,7 +707,9 @@ void CUnitScript::AttachUnit(int piece, int u)
 {
 	// -1 is valid, indicates that the unit should be hidden
 	if ((piece >= 0) && (!PieceExists(piece))) {
-		ShowScriptError("Invalid piecenumber for attach");
+		string DbgString="Invalid piecenumber for attach at Unit:"+unit->id +" of type "+unit->UnitDefID;
+		 ShowScriptError(DbgString);
+
 		return;
 	}
 
@@ -751,7 +768,9 @@ bool CUnitScript::AddAnimListener(AnimType type, int piece, int axis, IAnimListe
 void CUnitScript::Explode(int piece, int flags)
 {
 	if (!PieceExists(piece)) {
-		ShowScriptError("Invalid piecenumber for explode");
+		string DbgString="Invalid piecenumber for explode at Unit:"+unit->id +" of type "+unit->UnitDefID;
+		 ShowScriptError(DbgString);
+
 		return;
 	}
 
@@ -830,7 +849,9 @@ void CUnitScript::Shatter(int piece, const float3& pos, const float3& speed)
 void CUnitScript::ShowFlare(int piece)
 {
 	if (!PieceExists(piece)) {
-		ShowScriptError("Invalid piecenumber for show(flare)");
+		string DbgString="Invalid piecenumber for show(flare) at Unit:"+unit->id +" of type "+unit->UnitDefID;
+		 ShowScriptError(DbgString);
+
 		return;
 	}
 #ifndef _CONSOLE
@@ -851,7 +872,9 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 {
 	// may happen in case one uses Spring.GetUnitCOBValue (Lua) on a unit with CNullUnitScript
 	if (!unit) {
-		ShowScriptError("Error: no unit (in GetUnitVal)");
+		string DbgString="Error: no unit (in GetUnitVal)"+unit->id +" of type "+unit->UnitDefID;;
+		 ShowScriptError(DbgString);
+
 		return 0;
 	}
 
@@ -894,7 +917,9 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		break;
 	case PIECE_XZ: {
 		if (!PieceExists(p1)) {
-			ShowScriptError("Invalid piecenumber for get piece_xz");
+			string DbgString="Invalid piecenumber for get piece_xz at Unit:"+unit->id +" of type "+unit->UnitDefID;
+		 ShowScriptError(DbgString);
+
 			break;
 		}
 		const float3 relPos = GetPiecePos(p1);
@@ -903,7 +928,9 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	}
 	case PIECE_Y: {
 		if (!PieceExists(p1)) {
-			ShowScriptError("Invalid piecenumber for get piece_y");
+			string DbgString="Invalid piecenumber for get piece_y at Unit:"+unit->id +" of type "+unit->UnitDefID;
+		 ShowScriptError(DbgString);
+
 			break;
 		}
 		const float3 relPos = GetPiecePos(p1);
@@ -1395,7 +1422,9 @@ void CUnitScript::SetUnitVal(int val, int param)
 {
 	// may happen in case one uses Spring.SetUnitCOBValue (Lua) on a unit with CNullUnitScript
 	if (!unit) {
-		ShowScriptError("Error: no unit (in SetUnitVal)");
+		string DbgString="Error: no unit (in SetUnitVal)of Unit: "+unit->id +" of type "+unit->UnitDefID; ;
+		ShowScriptError(DbgString);
+
 		return;
 	}
 
