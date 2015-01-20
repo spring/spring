@@ -49,9 +49,6 @@ public:
 	 */
 	void LoadStartPositions(bool withoutMap = false);
 
-	void ClearMapOptions() { mapOptions.clear(); }
-	void ClearModOptions() { modOptions.clear(); }
-
 	int GetRestrictedUnitLimit(const std::string& name, int defLimit) const {
 		const std::map<std::string, int>::const_iterator it = restrictedUnits.find(name);
 		if (it == restrictedUnits.end())
@@ -69,7 +66,50 @@ public:
 
 	const std::string MapFile() const;
 
+private:
+	/**
+	 * @brief Load startpositions from map
+	 * @pre mapName, numTeams, teamStartNum initialized and the map loaded (LoadMap())
+	 */
+	void LoadStartPositionsFromMap();
 
+	void LoadMutators(const TdfParser& file, std::vector<std::string>& mutatorsList);
+	/**
+	 * @brief Load unit restrictions
+	 * @post restrictedUnits initialized
+	 */
+	void LoadUnitRestrictions(const TdfParser& file);
+	/**
+	 * @brief Load players and remove gaps in the player numbering.
+	 * @pre numPlayers initialized
+	 * @post players loaded, numDemoPlayers initialized
+	 */
+	void LoadPlayers(const TdfParser& file, std::set<std::string>& nameList);
+	/**
+	 * @brief Load LUA and Skirmish AIs.
+	 */
+	void LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& nameList);
+	/**
+	 * @brief Load teams and remove gaps in the team numbering.
+	 * @pre numTeams, hostDemo initialized
+	 * @post teams loaded
+	 */
+	void LoadTeams(const TdfParser& file);
+	/**
+	 * @brief Load allyteams and remove gaps in the allyteam numbering.
+	 * @pre numAllyTeams initialized
+	 * @post allyteams loaded, alliances initialised (no remapping needed here)
+	 */
+	void LoadAllyTeams(const TdfParser& file);
+
+	/** @brief Update all player indices to refer to the right player. */
+	void RemapPlayers();
+	/** @brief Update all team indices to refer to the right team. */
+	void RemapTeams();
+	/** @brief Update all allyteam indices to refer to the right allyteams. (except allies) */
+	void RemapAllyteams();
+
+public:
 	enum StartPosType {
 		StartPos_Fixed            = 0,
 		StartPos_Random           = 1,
@@ -116,49 +156,6 @@ public:
 	std::string setupText;
 	std::string demoName;
 	std::string saveName;
-
-private:
-	/**
-	 * @brief Load startpositions from map
-	 * @pre mapName, numTeams, teamStartNum initialized and the map loaded (LoadMap())
-	 */
-	void LoadStartPositionsFromMap();
-
-	void LoadMutators(const TdfParser& file, std::vector<std::string>& mutatorsList);
-	/**
-	 * @brief Load unit restrictions
-	 * @post restrictedUnits initialized
-	 */
-	void LoadUnitRestrictions(const TdfParser& file);
-	/**
-	 * @brief Load players and remove gaps in the player numbering.
-	 * @pre numPlayers initialized
-	 * @post players loaded, numDemoPlayers initialized
-	 */
-	void LoadPlayers(const TdfParser& file, std::set<std::string>& nameList);
-	/**
-	 * @brief Load LUA and Skirmish AIs.
-	 */
-	void LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& nameList);
-	/**
-	 * @brief Load teams and remove gaps in the team numbering.
-	 * @pre numTeams, hostDemo initialized
-	 * @post teams loaded
-	 */
-	void LoadTeams(const TdfParser& file);
-	/**
-	 * @brief Load allyteams and remove gaps in the allyteam numbering.
-	 * @pre numAllyTeams initialized
-	 * @post allyteams loaded, alliances initialised (no remapping needed here)
-	 */
-	void LoadAllyTeams(const TdfParser& file);
-
-	/** @brief Update all player indices to refer to the right player. */
-	void RemapPlayers();
-	/** @brief Update all team indices to refer to the right team. */
-	void RemapTeams();
-	/** @brief Update all allyteam indices to refer to the right allyteams. (except allies) */
-	void RemapAllyteams();
 
 private:
 	std::map<int, int> playerRemap;

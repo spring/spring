@@ -1,14 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "GameSetup.h"
-#include "System/TdfParser.h"
-#include "System/FileSystem/ArchiveScanner.h"
 #include "Map/MapParser.h"
 #include "Sim/Misc/GlobalConstants.h"
+#include "System/TdfParser.h"
 #include "System/UnsyncedRNG.h"
 #include "System/Exceptions.h"
 #include "System/Util.h"
+#include "System/FileSystem/ArchiveScanner.h"
 #include "System/Log/ILog.h"
 
 #include <algorithm>
@@ -20,7 +19,55 @@
 
 CR_BIND(CGameSetup,)
 CR_REG_METADATA(CGameSetup, (
+	CR_IGNORED(fixedAllies),
+	CR_IGNORED(useLuaGaia),
+	CR_IGNORED(noHelperAIs),
+
+	CR_IGNORED(ghostedBuildings),
+	CR_IGNORED(disableMapDamage),
+
+	CR_IGNORED(onlyLocal),
+	CR_IGNORED(hostDemo),
+
+	CR_IGNORED(mapHash),
+	CR_IGNORED(modHash),
+	CR_IGNORED(mapSeed),
+
+	CR_IGNORED(gameStartDelay),
+
+	CR_IGNORED(numDemoPlayers),
+	CR_IGNORED(maxUnitsPerTeam),
+
+	CR_IGNORED(minSpeed),
+	CR_IGNORED(maxSpeed),
+
+	CR_IGNORED(startPosType),
+
+	CR_IGNORED(mapName),
+	CR_IGNORED(modName),
+	CR_IGNORED(gameID),
+
+	// all members can be reconstructed from this
 	CR_MEMBER(setupText),
+
+	CR_IGNORED(demoName),
+	CR_IGNORED(saveName),
+
+	CR_IGNORED(playerRemap),
+	CR_IGNORED(teamRemap),
+	CR_IGNORED(allyteamRemap),
+
+	CR_IGNORED(playerStartingData),
+	CR_IGNORED(teamStartingData),
+	CR_IGNORED(allyStartingData),
+	CR_IGNORED(skirmishAIStartingData),
+	CR_IGNORED(mutatorsList),
+
+	CR_IGNORED(restrictedUnits),
+
+	CR_IGNORED(mapOptions),
+	CR_IGNORED(modOptions),
+
 	CR_POSTLOAD(PostLoad)
 ))
 
@@ -175,8 +222,8 @@ void CGameSetup::ResetState()
 
 	restrictedUnits.clear();
 
-	ClearMapOptions();
-	ClearModOptions();
+	mapOptions.clear();
+	modOptions.clear();
 }
 
 void CGameSetup::PostLoad()
@@ -225,13 +272,14 @@ void CGameSetup::LoadStartPositionsFromMap()
 void CGameSetup::LoadStartPositions(bool withoutMap)
 {
 	if (withoutMap && (startPosType == StartPos_Random || startPosType == StartPos_Fixed))
-		throw content_error("You need the map to use the map's startpositions");
+		throw content_error("You need the map to use the map's start-positions");
 
 	if (startPosType == StartPos_Random) {
 		// Server syncs these later, so we can use unsynced rng
 		UnsyncedRNG rng;
 		rng.Seed(setupText.length());
 		rng.Seed((size_t) setupText.c_str());
+
 		std::vector<int> teamStartNum(teamStartingData.size());
 
 		for (size_t i = 0; i < teamStartingData.size(); ++i)

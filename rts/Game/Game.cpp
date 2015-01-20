@@ -232,6 +232,7 @@ CR_REG_METADATA(CGame, (
 
 	CR_IGNORED(infoConsole),
 	CR_IGNORED(consoleHistory),
+	CR_IGNORED(jobDispatcher),
 	CR_IGNORED(worldDrawer),
 	CR_IGNORED(defsParser),
 	CR_IGNORED(saveFile),
