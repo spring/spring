@@ -504,12 +504,11 @@ namespace Shader {
 		const GLuint oldProgID = objID;
 
 		curFlagsHash = GetHash();
-		// create shader source hash
-		curSrcHash = curFlagsHash;
-
 		log = "";
 		valid = false;
 
+		// create shader source hash
+		curSrcHash = curFlagsHash;
 		for (const IShaderObject* so: GetAttachedShaderObjs()) {
 			curSrcHash ^= so->GetHash();
 		}
@@ -537,9 +536,9 @@ namespace Shader {
 		}
 
 		// either read new program for cache or recompile if not found in it (id 0)
-		if ((objID = shadersCache.Find(curSrcHash)) == 0) {
+		objID = (!reloadFromDisk) ? shadersCache.Find(curSrcHash) : 0;
+		if (objID == 0) {
 			objID = glCreateProgram();
-
 			for (IShaderObject*& so: GetAttachedShaderObjs()) {
 				so->Compile(reloadFromDisk); //FIXME check if changed or not (when it did, we can't use shader cache!)
 
@@ -547,7 +546,6 @@ namespace Shader {
 					glAttachShader(objID, so->GetObjID());
 				}
 			}
-
 			Link();
 		}
 
