@@ -50,17 +50,24 @@
 
 std::vector< std::vector<int> > CUnitScript::teamVars;
 std::vector< std::vector<int> > CUnitScript::allyVars;
-int CUnitScript::globalVars[GLOBAL_VAR_COUNT] =  { 0 };
+int CUnitScript::globalVars[GLOBAL_VAR_COUNT] = { 0 };
 
 
 void CUnitScript::InitVars(int numTeams, int numAllyTeams)
 {
+	// clear all globals in case we reloaded
+	memset(&globalVars[0], 0, GLOBAL_VAR_COUNT * sizeof(globalVars[0]));
+
+	teamVars.clear();
 	teamVars.resize(numTeams, std::vector<int>());
+
+	allyVars.clear();
+	allyVars.resize(numAllyTeams, std::vector<int>());
+
 	for (int t = 0; t < numTeams; t++) {
 		teamVars[t].resize(TEAM_VAR_COUNT, 0);
 	}
-
-	allyVars.resize(numAllyTeams, std::vector<int>());
+	
 	for (int t = 0; t < numAllyTeams; t++) {
 		allyVars[t].resize(ALLY_VAR_COUNT, 0);
 	}

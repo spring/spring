@@ -88,10 +88,10 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth)
 {
 	extractionRange = std::max(range, 0.001f);
 	extractionDepth = std::max(depth, 0.0f);
+	maxExtractionRange = std::max(extractionRange, maxExtractionRange);
 
 	// find any neighbouring extractors
 	const std::vector<CUnit*> &cu = quadField->GetUnits(pos, extractionRange + maxExtractionRange);
-	maxExtractionRange = std::max(extractionRange, maxExtractionRange);
 
 	for (std::vector<CUnit*>::const_iterator ui = cu.begin(); ui != cu.end(); ++ui) {
 		if (typeid(**ui) == typeid(CExtractorBuilding) && *ui != this) {

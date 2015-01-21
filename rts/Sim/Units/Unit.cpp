@@ -289,6 +289,7 @@ void CUnit::InitStatic()
 	expReloadScale = 0.4f;
 	expGrade       = 0.0f;
 
+	CCobInstance::InitVars(teamHandler->ActiveTeams(), teamHandler->ActiveAllyTeams());
 	CBuilderCAI::InitStatic();
 }
 
