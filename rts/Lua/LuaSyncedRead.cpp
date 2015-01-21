@@ -1011,10 +1011,10 @@ int LuaSyncedRead::GetAllyTeamStartBox(lua_State* L)
 	if (allyTeam >= allyData.size())
 		return 0;
 
-	const float xmin = (gs->mapx * SQUARE_SIZE) * allyData[allyTeam].startRectLeft;
-	const float zmin = (gs->mapy * SQUARE_SIZE) * allyData[allyTeam].startRectTop;
-	const float xmax = (gs->mapx * SQUARE_SIZE) * allyData[allyTeam].startRectRight;
-	const float zmax = (gs->mapy * SQUARE_SIZE) * allyData[allyTeam].startRectBottom;
+	const float xmin = (mapDims.mapx * SQUARE_SIZE) * allyData[allyTeam].startRectLeft;
+	const float zmin = (mapDims.mapy * SQUARE_SIZE) * allyData[allyTeam].startRectTop;
+	const float xmax = (mapDims.mapx * SQUARE_SIZE) * allyData[allyTeam].startRectRight;
+	const float zmax = (mapDims.mapy * SQUARE_SIZE) * allyData[allyTeam].startRectBottom;
 
 	lua_pushnumber(L, xmin);
 	lua_pushnumber(L, zmin);
@@ -4750,8 +4750,8 @@ int LuaSyncedRead::GetGroundInfo(lua_State* L)
 	const int ix = Clamp(x, 0.0f, float3::maxxpos) / (SQUARE_SIZE * 2);
 	const int iz = Clamp(z, 0.0f, float3::maxzpos) / (SQUARE_SIZE * 2);
 
-	const int maxIndex = (gs->hmapx * gs->hmapy) - 1;
-	const int sqrIndex = std::min(maxIndex, (gs->hmapx * iz) + ix);
+	const int maxIndex = (mapDims.hmapx * mapDims.hmapy) - 1;
+	const int sqrIndex = std::min(maxIndex, (mapDims.hmapx * iz) + ix);
 	const int typeIndex = readMap->GetTypeMapSynced()[sqrIndex];
 
 	// arguments to LuaMetalMap::GetMetalAmount in half-heightmap coors
@@ -4785,10 +4785,10 @@ static void ParseMapCoords(lua_State* L, const char* caller,
 	}
 
 	// quantize and clamp
-	tx1 = Clamp((int)(fx1 / SQUARE_SIZE), 0, gs->mapxm1);
-	tx2 = Clamp((int)(fx2 / SQUARE_SIZE), 0, gs->mapxm1);
-	tz1 = Clamp((int)(fz1 / SQUARE_SIZE), 0, gs->mapym1);
-	tz2 = Clamp((int)(fz2 / SQUARE_SIZE), 0, gs->mapym1);
+	tx1 = Clamp((int)(fx1 / SQUARE_SIZE), 0, mapDims.mapxm1);
+	tx2 = Clamp((int)(fx2 / SQUARE_SIZE), 0, mapDims.mapxm1);
+	tz1 = Clamp((int)(fz1 / SQUARE_SIZE), 0, mapDims.mapym1);
+	tz2 = Clamp((int)(fz2 / SQUARE_SIZE), 0, mapDims.mapym1);
 
 	return;
 }
@@ -5132,8 +5132,8 @@ int LuaSyncedRead::GetClosestValidPosition(lua_State* L)
 	const float x     = luaL_checkfloat(L, 2);
 	const float z     = luaL_checkfloat(L, 3);
 	const float r     = luaL_checkfloat(L, 4);*/
-	//const int mx = (int)max(0 , min(gs->mapxm1, (int)(x / SQUARE_SIZE)));
-	//const int mz = (int)max(0 , min(gs->mapym1, (int)(z / SQUARE_SIZE)));
+	//const int mx = (int)max(0 , min(mapDims.mapxm1, (int)(x / SQUARE_SIZE)));
+	//const int mz = (int)max(0 , min(mapDims.mapym1, (int)(z / SQUARE_SIZE)));
 	return 0;
 }
 

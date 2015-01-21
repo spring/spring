@@ -20,16 +20,6 @@ const std::string SideParser::emptyStr = "";
 
 /******************************************************************************/
 
-SideParser::SideParser()
-{
-}
-
-
-SideParser::~SideParser()
-{
-}
-
-
 bool SideParser::Load()
 {
 	dataVec.clear();

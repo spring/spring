@@ -54,6 +54,8 @@ public:
 	virtual void Iconified(bool state) = 0;
 
 	virtual void PrintDebugInfo() = 0;
+
+	virtual bool CanLoadSoundDefs() const = 0;
 	bool LoadSoundDefs(const std::string& fileName);
 	
 	virtual const float3& GetListenerPos() const = 0;

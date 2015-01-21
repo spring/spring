@@ -237,21 +237,21 @@ void CInMapDraw::SetLuaMapDrawingAllowed(bool state)
 void CInMapDraw::SendErase(const float3& pos)
 {
 	if (!gu->spectating || allowSpecMapDrawing)
-		net->Send(CBaseNetProtocol::Get().SendMapErase(gu->myPlayerNum, (short)pos.x, (short)pos.z));
+		clientNet->Send(CBaseNetProtocol::Get().SendMapErase(gu->myPlayerNum, (short)pos.x, (short)pos.z));
 }
 
 
 void CInMapDraw::SendPoint(const float3& pos, const std::string& label, bool fromLua)
 {
 	if (!gu->spectating || allowSpecMapDrawing)
-		net->Send(CBaseNetProtocol::Get().SendMapDrawPoint(gu->myPlayerNum, (short)pos.x, (short)pos.z, label, fromLua));
+		clientNet->Send(CBaseNetProtocol::Get().SendMapDrawPoint(gu->myPlayerNum, (short)pos.x, (short)pos.z, label, fromLua));
 }
 
 
 void CInMapDraw::SendLine(const float3& pos, const float3& pos2, bool fromLua)
 {
 	if (!gu->spectating || allowSpecMapDrawing)
-		net->Send(CBaseNetProtocol::Get().SendMapDrawLine(gu->myPlayerNum, (short)pos.x, (short)pos.z, (short)pos2.x, (short)pos2.z, fromLua));
+		clientNet->Send(CBaseNetProtocol::Get().SendMapDrawLine(gu->myPlayerNum, (short)pos.x, (short)pos.z, (short)pos2.x, (short)pos2.z, fromLua));
 }
 
 void CInMapDraw::SendWaitingInput(const std::string& label)

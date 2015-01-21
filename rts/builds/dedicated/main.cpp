@@ -157,7 +157,12 @@ int main(int argc, char* argv[])
 		LOG("loading script from file: %s", scriptName.c_str());
 
 		CGameServer* server = NULL;
-		ClientSetup settings;
+
+		// server will take ownership of these
+		boost::shared_ptr<ClientSetup> dsClientSetup(new ClientSetup());
+		boost::shared_ptr<GameData> dsGameData(new GameData());
+		boost::shared_ptr<CGameSetup> dsGameSetup(new CGameSetup());
+
 		CFileHandler fh(scriptName);
 
 		if (!fh.FileExists())
@@ -166,49 +171,48 @@ int main(int argc, char* argv[])
 		if (!fh.LoadStringData(scriptText))
 			throw content_error("script cannot be read: " + scriptName);
 
-		settings.LoadFromStartScript(scriptText);
-		gameSetup = new CGameSetup(); // to store the gamedata inside
+		dsClientSetup->LoadFromStartScript(scriptText);
 
-		if (!gameSetup->Init(scriptText)) {
+		if (!dsGameSetup->Init(scriptText)) {
 			// read the script provided by cmdline
 			LOG_L(L_ERROR, "failed to load script %s", scriptName.c_str());
 			return 1;
 		}
 
 		// Create the server, it will run in a separate thread
-		GameData data;
 		UnsyncedRNG rng;
 
 		const unsigned seed = time(NULL) % ((spring_gettime().toNanoSecsi() + 1) * 9007);
 		rng.Seed(seed);
-		data.SetRandomSeed(rng.RandInt());
+
+		dsGameData->SetRandomSeed(rng.RandInt());
 
 		//  Use script provided hashes if they exist
-		if (gameSetup->mapHash != 0) {
-			data.SetMapChecksum(gameSetup->mapHash);
-			gameSetup->LoadStartPositions(false); // reduced mode
+		if (dsGameSetup->mapHash != 0) {
+			dsGameData->SetMapChecksum(dsGameSetup->mapHash);
+			dsGameSetup->LoadStartPositions(false); // reduced mode
 		} else {
-			data.SetMapChecksum(archiveScanner->GetArchiveCompleteChecksum(gameSetup->mapName));
+			dsGameData->SetMapChecksum(archiveScanner->GetArchiveCompleteChecksum(dsGameSetup->mapName));
 
-			CFileHandler f("maps/" + gameSetup->mapName);
+			CFileHandler f("maps/" + dsGameSetup->mapName);
 			if (!f.FileExists()) {
-				vfsHandler->AddArchiveWithDeps(gameSetup->mapName, false);
+				vfsHandler->AddArchiveWithDeps(dsGameSetup->mapName, false);
 			}
-			gameSetup->LoadStartPositions(); // full mode
+			dsGameSetup->LoadStartPositions(); // full mode
 		}
 
-		if (gameSetup->modHash != 0) {
-			data.SetModChecksum(gameSetup->modHash);
+		if (dsGameSetup->modHash != 0) {
+			dsGameData->SetModChecksum(dsGameSetup->modHash);
 		} else {
-			const std::string& modArchive = archiveScanner->ArchiveFromName(gameSetup->modName);
+			const std::string& modArchive = archiveScanner->ArchiveFromName(dsGameSetup->modName);
 			const unsigned int modCheckSum = archiveScanner->GetArchiveCompleteChecksum(modArchive);
-			data.SetModChecksum(modCheckSum);
+			dsGameData->SetModChecksum(modCheckSum);
 		}
 
 		LOG("starting server...");
 
-		data.SetSetup(gameSetup->gameSetupText);
-		server = new CGameServer(settings.hostIP, settings.hostPort, &data, gameSetup);
+		dsGameData->SetSetupText(dsGameSetup->setupText);
+		server = new CGameServer(dsClientSetup, dsGameData, dsGameSetup);
 
 		while (!server->HasGameID()) {
 			// wait until gameID has been generated or
@@ -230,8 +234,8 @@ int main(int argc, char* argv[])
 				const boost::uint8_t* gameID = (demoRec->GetFileHeader()).gameID;
 
 				LOG("recording demo: %s", (demoRec->GetName()).c_str());
-				LOG("using mod: %s", (gameSetup->modName).c_str());
-				LOG("using map: %s", (gameSetup->mapName).c_str());
+				LOG("using mod: %s", (dsGameSetup->modName).c_str());
+				LOG("using map: %s", (dsGameSetup->mapName).c_str());
 				LOG("GameID: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", gameID[0], gameID[1], gameID[2], gameID[3], gameID[4], gameID[5], gameID[6], gameID[7], gameID[8], gameID[9], gameID[10], gameID[11], gameID[12], gameID[13], gameID[14], gameID[15]);
 			}
 

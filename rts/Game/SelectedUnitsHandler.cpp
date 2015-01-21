@@ -927,11 +927,11 @@ void CSelectedUnitsHandler::SendCommand(const Command& c)
 		for(; ui != selectedUnits.end(); ++i, ++ui) {
 			*i = (*ui)->id;
 		}
-		net->Send(CBaseNetProtocol::Get().SendSelect(gu->myPlayerNum, selectedUnitIDs));
+		clientNet->Send(CBaseNetProtocol::Get().SendSelect(gu->myPlayerNum, selectedUnitIDs));
 		selectionChanged = false;
 	}
 
-	net->Send(CBaseNetProtocol::Get().SendCommand(gu->myPlayerNum, c.GetID(), c.options, c.params));
+	clientNet->Send(CBaseNetProtocol::Get().SendCommand(gu->myPlayerNum, c.GetID(), c.options, c.params));
 }
 
 
@@ -1008,6 +1008,6 @@ void CSelectedUnitsHandler::SendCommandsToUnits(const std::vector<int>& unitIDs,
 		*packet << cmd.params;
 	}
 
-	net->Send(boost::shared_ptr<netcode::RawPacket>(packet));
+	clientNet->Send(boost::shared_ptr<netcode::RawPacket>(packet));
 	return;
 }

@@ -106,7 +106,7 @@ protected:
 			const std::string& version2);
 
 private:
-	static IAILibraryManager* myAILibraryManager;
+	static IAILibraryManager* gAILibraryManager;
 };
 
 #define aiLibManager IAILibraryManager::GetInstance()

@@ -21,6 +21,7 @@ class CGroundBlockingObjectMap
 
 public:
 	CGroundBlockingObjectMap(int numSquares) {
+		groundBlockingMap.clear();
 		groundBlockingMap.resize(numSquares);
 	}
 

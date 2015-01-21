@@ -17,7 +17,7 @@ CMetalExtractionTexture::CMetalExtractionTexture()
 : CPboInfoTexture("metalextraction")
 , updateN(0)
 {
-	texSize = int2(gs->hmapx, gs->hmapy);
+	texSize = int2(mapDims.hmapx, mapDims.hmapy);
 	texChannels = 1;
 
 	glGenTextures(1, &texture);

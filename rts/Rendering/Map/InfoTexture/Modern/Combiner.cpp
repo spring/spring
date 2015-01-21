@@ -4,6 +4,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
+#include "Map/ReadMap.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
@@ -16,7 +17,7 @@ CInfoTextureCombiner::CInfoTextureCombiner()
 : CPboInfoTexture("info")
 , disabled(true)
 {
-	texSize = (configHandler->GetBool("HighResInfoTexture")) ? int2(gs->pwr2mapx, gs->pwr2mapy) : int2(gs->pwr2mapx >> 1, gs->pwr2mapy >> 1);
+	texSize = (configHandler->GetBool("HighResInfoTexture")) ? int2(mapDims.pwr2mapx, mapDims.pwr2mapy) : int2(mapDims.pwr2mapx >> 1, mapDims.pwr2mapy >> 1);
 	//texSize = (configHandler->GetBool("HighResInfoTexture")) ? int2(512, 512) : int2(256, 256);
 	texChannels = 4;
 
@@ -118,8 +119,8 @@ void CInfoTextureCombiner::Update()
 	shader->BindTextures();
 	shader->SetUniform("time", float(gs->frameNum + globalRendering->timeOffset));
 
-	const float isx = 2.0f * (gs->mapx / float(gs->pwr2mapx)) - 1.0f;
-	const float isy = 2.0f * (gs->mapy / float(gs->pwr2mapy)) - 1.0f;
+	const float isx = 2.0f * (mapDims.mapx / float(mapDims.pwr2mapx)) - 1.0f;
+	const float isy = 2.0f * (mapDims.mapy / float(mapDims.pwr2mapy)) - 1.0f;
 
 	glBegin(GL_QUADS);
 		glTexCoord2f(0.f, 0.f); glVertex2f(-1.f, -1.f);

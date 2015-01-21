@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "QuadField.h"
+#include "Map/ReadMap.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GlobalConstants.h"
@@ -92,8 +93,8 @@ CQuadField::CQuadField(unsigned int nqx, unsigned int nqz)
 {
 	numQuadsX = nqx;
 	numQuadsZ = nqz;
-	quadSizeX = (gs->mapx * SQUARE_SIZE) / numQuadsX;
-	quadSizeZ = (gs->mapy * SQUARE_SIZE) / numQuadsZ;
+	quadSizeX = (mapDims.mapx * SQUARE_SIZE) / numQuadsX;
+	quadSizeZ = (mapDims.mapy * SQUARE_SIZE) / numQuadsZ;
 
 	assert(numQuadsX >= 1);
 	assert(numQuadsZ >= 1);
@@ -298,11 +299,11 @@ unsigned int CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length, i
 		}
 		start = start + dir * ((1 - start.x) / dir.x);
 	}
-	if (start.x > gs->mapx * SQUARE_SIZE - 1) {
+	if (start.x > mapDims.mapx * SQUARE_SIZE - 1) {
 		if (dir.x == 0) {
 			dir.x = 0.00001f;
 		}
-		start = start + dir * ((gs->mapx * SQUARE_SIZE - 1 - start.x) / dir.x);
+		start = start + dir * ((mapDims.mapx * SQUARE_SIZE - 1 - start.x) / dir.x);
 	}
 	if (start.z < 1) {
 		if (dir.z == 0) {
@@ -310,24 +311,24 @@ unsigned int CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length, i
 		}
 		start = start + dir * ((1 - start.z) / dir.z);
 	}
-	if (start.z > gs->mapy * SQUARE_SIZE - 1) {
+	if (start.z > mapDims.mapy * SQUARE_SIZE - 1) {
 		if (dir.z == 0) {
 			dir.z = 0.00001f;
 		}
-		start = start + dir * ((gs->mapy * SQUARE_SIZE - 1 - start.z) / dir.z);
+		start = start + dir * ((mapDims.mapy * SQUARE_SIZE - 1 - start.z) / dir.z);
 	}
 
 	if (start.x < 1) {
 		start.x = 1;
 	}
-	if (start.x > gs->mapx * SQUARE_SIZE - 1) {
-		start.x = gs->mapx * SQUARE_SIZE - 1;
+	if (start.x > mapDims.mapx * SQUARE_SIZE - 1) {
+		start.x = mapDims.mapx * SQUARE_SIZE - 1;
 	}
 	if (start.z < 1) {
 		start.z = 1;
 	}
-	if (start.z > gs->mapy * SQUARE_SIZE - 1) {
-		start.z = gs->mapy * SQUARE_SIZE - 1;
+	if (start.z > mapDims.mapy * SQUARE_SIZE - 1) {
+		start.z = mapDims.mapy * SQUARE_SIZE - 1;
 	}
 
 	float3 to = start + (dir * length);
@@ -335,28 +336,28 @@ unsigned int CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length, i
 	if (to.x < 1) {
 		to = to - dir * ((to.x - 1)                          / dir.x);
 	}
-	if (to.x > gs->mapx * SQUARE_SIZE - 1) {
-		to = to - dir * ((to.x - gs->mapx * SQUARE_SIZE + 1) / dir.x);
+	if (to.x > mapDims.mapx * SQUARE_SIZE - 1) {
+		to = to - dir * ((to.x - mapDims.mapx * SQUARE_SIZE + 1) / dir.x);
 	}
 	if (to.z < 1){
 		to= to - dir * ((to.z - 1)                          / dir.z);
 	}
-	if (to.z > gs->mapy * SQUARE_SIZE - 1) {
-		to= to - dir * ((to.z - gs->mapy * SQUARE_SIZE + 1) / dir.z);
+	if (to.z > mapDims.mapy * SQUARE_SIZE - 1) {
+		to= to - dir * ((to.z - mapDims.mapy * SQUARE_SIZE + 1) / dir.z);
 	}
 	// these 4 shouldnt be needed, but sometimes we seem to get strange enough
 	// values that rounding errors throw us outside the map
 	if (to.x < 1) {
 		to.x = 1;
 	}
-	if (to.x > gs->mapx * SQUARE_SIZE - 1) {
-		to.x = gs->mapx * SQUARE_SIZE - 1;
+	if (to.x > mapDims.mapx * SQUARE_SIZE - 1) {
+		to.x = mapDims.mapx * SQUARE_SIZE - 1;
 	}
 	if (to.z < 1) {
 		to.z = 1;
 	}
-	if (to.z > gs->mapy * SQUARE_SIZE - 1) {
-		to.z = gs->mapy * SQUARE_SIZE - 1;
+	if (to.z > mapDims.mapy * SQUARE_SIZE - 1) {
+		to.z = mapDims.mapy * SQUARE_SIZE - 1;
 	}
 
 	const float dx = to.x - start.x;

@@ -33,10 +33,10 @@ static const unsigned int LOWRES_PE_BLOCKSIZE = 32;
 static const unsigned int SQUARES_TO_UPDATE = 1000;
 static const unsigned int MAX_SEARCHED_NODES_ON_REFINE = 2000;
 
-static const unsigned int PATH_HEATMAP_XSCALE =  1; // wrt. gs->hmapx
-static const unsigned int PATH_HEATMAP_ZSCALE =  1; // wrt. gs->hmapy
-static const unsigned int PATH_FLOWMAP_XSCALE = 32; // wrt. gs->mapx
-static const unsigned int PATH_FLOWMAP_ZSCALE = 32; // wrt. gs->mapy
+static const unsigned int PATH_HEATMAP_XSCALE =  1; // wrt. mapDims.hmapx
+static const unsigned int PATH_HEATMAP_ZSCALE =  1; // wrt. mapDims.hmapy
+static const unsigned int PATH_FLOWMAP_XSCALE = 32; // wrt. mapDims.mapx
+static const unsigned int PATH_FLOWMAP_ZSCALE = 32; // wrt. mapDims.mapy
 
 
 // PE-only flags (indices)

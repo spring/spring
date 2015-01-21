@@ -43,8 +43,6 @@ ISound::ISound()
 {
 }
 
-static std::list<std::string> sounddefs;
-
 void ISound::Initialize()
 {
 	if (singleton == NULL) {
@@ -56,9 +54,11 @@ void ISound::Initialize()
 			Channels::UnitReply = new AudioChannel();
 			Channels::UserInterface = new AudioChannel();
 			singleton = new CSound();
-			for(const std::string& filename: sounddefs) {
-				spring_sleep(spring_msecs(1000)); //FIXME BADHACK: the sound device is initialized asynchron in a thread this is why loading sounds instantly fails
-				singleton->LoadSoundDefsImpl(filename);
+
+			// sound device is initialized in a thread, must wait
+			// for it to finish (otherwise LoadSoundDefs can fail)
+			while (!singleton->CanLoadSoundDefs()) {
+				spring_sleep(spring_msecs(100));
 			}
 		} else
 #endif // NO_SOUND
@@ -90,7 +90,6 @@ void ISound::Shutdown()
 	SafeDelete(Channels::Battle);
 	SafeDelete(Channels::UnitReply);
 	SafeDelete(Channels::UserInterface);
-
 }
 
 
@@ -119,7 +118,6 @@ bool ISound::ChangeOutput()
 
 bool ISound::LoadSoundDefs(const std::string& filename)
 {
-	sounddefs.push_back(filename);
-	return singleton->LoadSoundDefsImpl(filename);
+	return (singleton->LoadSoundDefsImpl(filename));
 }
 

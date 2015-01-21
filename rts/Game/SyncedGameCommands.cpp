@@ -515,7 +515,6 @@ void SyncedGameCommands::AddDefaultActionExecutors() {
 SyncedGameCommands* SyncedGameCommands::singleton = NULL;
 
 void SyncedGameCommands::CreateInstance() {
-
 	if (singleton == NULL) {
 		singleton = new SyncedGameCommands();
 	} else {
@@ -524,12 +523,8 @@ void SyncedGameCommands::CreateInstance() {
 }
 
 void SyncedGameCommands::DestroyInstance() {
-
 	if (singleton != NULL) {
-		// SafeDelete
-		SyncedGameCommands* tmp = singleton;
-		singleton = NULL;
-		delete tmp;
+		SafeDelete(singleton);
 	} else {
 		// this might happen during shutdown after an unclean init
 		LOG_L(L_WARNING, "SyncedGameCommands singleton was not initialized or is already destroyed");

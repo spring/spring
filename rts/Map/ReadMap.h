@@ -3,8 +3,6 @@
 #ifndef READ_MAP_H
 #define READ_MAP_H
 
-#include <list>
-
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/float3.h"
@@ -40,6 +38,86 @@ struct MapBitmapInfo
 };
 
 
+struct MapDimensions {
+public:
+	CR_DECLARE_STRUCT(MapDimensions)
+
+	MapDimensions() {
+		mapx   = 0;
+		mapxm1 = mapx - 1;
+		mapxp1 = mapx + 1;
+
+		mapy   = 0;
+		mapym1 = mapy - 1;
+		mapyp1 = mapy + 1;
+
+		mapSquares = mapx * mapy;
+
+		hmapx = mapx >> 1;
+		hmapy = mapy >> 1;
+
+		pwr2mapx = mapx; //next_power_of_2(mapx);
+		pwr2mapy = mapy; //next_power_of_2(mapy);
+	}
+
+	/**
+	* @brief map x
+	*
+	* The map's number of squares in the x direction
+	* (note that the number of vertices is one more)
+	*/
+	int mapx;
+	int mapxm1; // mapx minus one
+	int mapxp1; // mapx plus one
+
+	/**
+	* @brief map y
+	*
+	* The map's number of squares in the y direction
+	*/
+	int mapy;
+	int mapym1; // mapy minus one
+	int mapyp1; // mapy plus one
+
+	/**
+	* @brief map squares
+	*
+	* Total number of squares on the map
+	*/
+	int mapSquares;
+
+	/**
+	* @brief half map x
+	*
+	* Contains half of the number of squares in the x direction
+	*/
+	int hmapx;
+
+	/**
+	* @brief half map y
+	*
+	* Contains half of the number of squares in the y direction
+	*/
+	int hmapy;
+
+	/**
+	* @brief map x power of 2
+	*
+	* Map's size in the x direction rounded
+	* up to the next power of 2
+	*/
+	int pwr2mapx;
+
+	/**
+	* @brief map y power of 2
+	*
+	* Map's size in the y direction rounded
+	* up to the next power of 2
+	*/
+	int pwr2mapy;
+};
+
+
 
 class CReadMap
 {
@@ -72,7 +150,7 @@ public:
 	void UpdateHeightMapSynced(SRectangle rect, bool initialize = false);
 	void UpdateLOS(const SRectangle& rect);
 	void BecomeSpectator();
-	void UpdateDraw();
+	void UpdateDraw(bool firstCall);
 
 	virtual ~CReadMap();
 
@@ -112,10 +190,12 @@ public:
 	virtual void FreeInfoMap(const std::string& name, unsigned char* data) = 0;
 
 	/// Determine visibility for a rectangular grid
+	/// call ResetState for statically allocated drawer objects
 	struct IQuadDrawer
 	{
 		virtual ~IQuadDrawer() {}
-		virtual void DrawQuad (int x,int y) = 0;
+		virtual void ResetState() = 0;
+		virtual void DrawQuad(int x, int y) = 0;
 	};
 	virtual void GridVisibility(CCamera* cam, int quadSize, float maxdist, IQuadDrawer* cb, int extraSize = 0) = 0;
 
@@ -157,6 +237,7 @@ public:
 	float GetCurrMinHeight() const { return currMinHeight; }
 	float GetInitMaxHeight() const { return initMaxHeight; }
 	float GetCurrMaxHeight() const { return currMaxHeight; }
+	float GetBoundingRadius() const { return boundingRadius; }
 
 	bool IsUnderWater() const { return (currMaxHeight <  0.0f); }
 	bool IsAboveWater() const { return (currMinHeight >= 0.0f); }
@@ -232,9 +313,12 @@ private:
 
 	float initMinHeight, initMaxHeight; //< initial minimum- and maximum-height (before any deformations)
 	float currMinHeight, currMaxHeight; //< current minimum- and maximum-height
+	float boundingRadius;
 };
 
+
 extern CReadMap* readMap;
+extern MapDimensions mapDims;
 
 
 
@@ -262,7 +346,7 @@ inline float CReadMap::AddHeight(const int idx, const float a) {
 /// Converts a map-square into a float3-position.
 inline float3 SquareToFloat3(int xSquare, int zSquare) {
 	const float* hm = readMap->GetCenterHeightMapSynced();
-	const float h = hm[(zSquare * gs->mapx) + xSquare];
+	const float h = hm[(zSquare * mapDims.mapx) + xSquare];
 	return float3(xSquare * SQUARE_SIZE, h, zSquare * SQUARE_SIZE);
 }
 

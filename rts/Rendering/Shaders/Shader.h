@@ -5,8 +5,8 @@
 
 #include <string>
 #include <vector>
-#include <map>
 #include <unordered_map>
+
 #include "ShaderStates.h"
 
 
@@ -18,10 +18,10 @@ constexpr size_t hashString(const char* str, size_t hash = 5381)
 
 struct fast_hash : public std::unary_function<int, size_t>
 {
-        size_t operator()(const int a) const
-        {
-                return a;
-        }
+	size_t operator()(const int a) const
+	{
+		return a;
+	}
 };
 
 namespace Shader {
@@ -189,12 +189,11 @@ namespace Shader {
 		//virtual void SetUniformMatrix4dv(int idx, bool transp, const double* v) {}
 		//virtual void SetUniformMatrixArray4dv(int idx, int count, bool transp, const double* v) {}
 
-		typedef std::vector<IShaderObject*> SOVec;
-		typedef SOVec::iterator SOVecIt;
-		typedef SOVec::const_iterator SOVecConstIt;
-
 		virtual void AttachShaderObject(IShaderObject* so) { shaderObjs.push_back(so); }
-		SOVec& GetAttachedShaderObjs() { return shaderObjs; }
+
+		const std::vector<IShaderObject*>& GetAttachedShaderObjs() const { return shaderObjs; }
+		      std::vector<IShaderObject*>& GetAttachedShaderObjs()       { return shaderObjs; }
+
 		bool LoadFromLua(const std::string& filename);
 
 		void RecompileIfNeeded();
@@ -220,7 +219,8 @@ namespace Shader {
 
 		bool valid;
 		bool bound;
-		SOVec shaderObjs;
+
+		std::vector<IShaderObject*> shaderObjs;
 	public:
 		std::unordered_map<std::size_t, UniformState, fast_hash> uniformStates;
 		std::unordered_map<int, std::string> textures;

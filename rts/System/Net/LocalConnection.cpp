@@ -25,6 +25,9 @@ CLocalConnection::CLocalConnection()
 	instance = instances;
 	instances++;
 
+	// clear data that might have been left over (if we reloaded)
+	pqueues[instance].clear();
+
 	// make sure protocoldef is initialized
 	CBaseNetProtocol::Get();
 }
@@ -32,6 +35,14 @@ CLocalConnection::CLocalConnection()
 CLocalConnection::~CLocalConnection()
 {
 	instances--;
+}
+
+void CLocalConnection::Close(bool flush)
+{
+	if (flush) {
+		boost::mutex::scoped_lock scoped_lock(mutexes[instance]);
+		pqueues[instance].clear();
+	}
 }
 
 void CLocalConnection::SendData(boost::shared_ptr<const RawPacket> packet)

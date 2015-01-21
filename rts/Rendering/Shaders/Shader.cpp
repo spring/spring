@@ -1,15 +1,18 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "Rendering/Shaders/Shader.h"
+#include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/LuaShaderContainer.h"
 #include "Rendering/Shaders/GLSLCopyState.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GlobalRendering.h"
 #include "Lua/LuaMaterial.h"
+
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Sync/HsiehHash.h"
 #include "System/Log/ILog.h"
+
 #include <algorithm>
 #ifdef DEBUG
 	#include <string.h> // strncmp
@@ -29,6 +32,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_SHADER)
 	#undef LOG_SECTION_CURRENT
 #endif
 #define LOG_SECTION_CURRENT LOG_SECTION_SHADER
+
 
 
 /*****************************************************************/
@@ -105,34 +109,6 @@ static bool ExtractGlslVersion(std::string* src, std::string* version)
 		return true;
 	}
 	return false;
-}
-
-/*****************************************************************/
-
-namespace GlslShaderCache {
-	static std::unordered_map<unsigned int, GLuint> cache;
-
-	static unsigned int Find(unsigned int hash)
-	{
-		auto it = cache.find(hash);
-		GLuint id = 0;
-		if (it != cache.end()) {
-			id = it->second;
-			cache.erase(it);
-		}
-		return id;
-	}
-
-
-	static bool Push(unsigned int hash, unsigned int objID)
-	{
-		auto it = cache.find(hash);
-		if (it == cache.end()) {
-			cache[hash] = objID;
-			return true;
-		}
-		return false;
-	}
 }
 
 /*****************************************************************/
@@ -327,7 +303,10 @@ namespace Shader {
 
 	UniformState* IProgramObject::GetNewUniformState(const std::string name)
 	{
-		UniformState* us = &uniformStates.emplace(hashString(name.c_str()), name).first->second;
+		const auto it = uniformStates.insert(std::make_pair(hashString(name.c_str()), UniformState(name)));
+		// const auto it = uniformStates.emplace(hashString(name.c_str()), name);
+
+		UniformState* us = &(it.first->second);
 		us->SetLocation(GetUniformLoc(name));
 	#if DEBUG
 		if (us->IsLocationValid())
@@ -518,16 +497,20 @@ namespace Shader {
 	}
 
 	void GLSLProgramObject::Reload(bool reloadFromDisk) {
+		CShaderHandler::ShaderCache& shadersCache = shaderHandler->GetShaderCache();
+
 		const auto   oldSrcHash = curSrcHash;
 		const bool   oldValid  = IsValid();
 		const GLuint oldProgID = objID;
+
 		curFlagsHash = GetHash();
+		// create shader source hash
+		curSrcHash = curFlagsHash;
+
 		log = "";
 		valid = false;
 
-		// create shader source hash
-		curSrcHash = curFlagsHash;
-		for (IShaderObject*& so: GetAttachedShaderObjs()) {
+		for (const IShaderObject* so: GetAttachedShaderObjs()) {
 			curSrcHash ^= so->GetHash();
 		}
 
@@ -537,36 +520,37 @@ namespace Shader {
 		}
 
 		// early-exit: empty program
-		if (GetAttachedShaderObjs().empty()) {
-			//TODO delete existing program if exists?
+		// TODO delete existing program if exists?
+		if (GetAttachedShaderObjs().empty())
 			return;
-		}
 
 		// put old program into cache
 		bool deleteOldShader = false;
+
 		if (oldValid) {
-			if (!GlslShaderCache::Push(oldSrcHash, oldProgID)) {
+			if ((deleteOldShader = !shadersCache.Push(oldSrcHash, oldProgID))) {
 				for (IShaderObject*& so: GetAttachedShaderObjs()) {
 					glDetachShader(oldProgID, so->GetObjID());
 					so->Release();
 				}
-				deleteOldShader = true;
 			}
 		}
 
-		// either read new program for cache or recompile if not found in it
-		objID = (!reloadFromDisk) ? GlslShaderCache::Find(curSrcHash) : 0;
-		objID = GlslShaderCache::Find(curSrcHash);
-		if (objID == 0) {
+		// either read new program for cache or recompile if not found in it (id 0)
+		if ((objID = shadersCache.Find(curSrcHash)) == 0) {
 			objID = glCreateProgram();
+
 			for (IShaderObject*& so: GetAttachedShaderObjs()) {
 				so->Compile(reloadFromDisk); //FIXME check if changed or not (when it did, we can't use shader cache!)
+
 				if (so->IsValid()) {
 					glAttachShader(objID, so->GetObjID());
 				}
 			}
+
 			Link();
 		}
+
 
 		// copy full program state from old to new program (uniforms etc.)
 		//FIXME if (IsValid())

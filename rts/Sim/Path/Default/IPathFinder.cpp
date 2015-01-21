@@ -56,8 +56,8 @@ IPathFinder::IPathFinder(unsigned int _BLOCK_SIZE)
 	, mGoalHeuristic(0.0f)
 	, maxBlocksToBeSearched(0)
 	, testedBlocks(0)
-	, nbrOfBlocks(gs->mapx / BLOCK_SIZE, gs->mapy / BLOCK_SIZE)
-	, blockStates(nbrOfBlocks, int2(gs->mapx, gs->mapy))
+	, nbrOfBlocks(mapDims.mapx / BLOCK_SIZE, mapDims.mapy / BLOCK_SIZE)
+	, blockStates(nbrOfBlocks, int2(mapDims.mapx, mapDims.mapy))
 {
 }
 

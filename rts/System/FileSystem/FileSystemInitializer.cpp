@@ -48,12 +48,15 @@ void FileSystemInitializer::Initialize()
 	}
 }
 
-void FileSystemInitializer::Cleanup()
+void FileSystemInitializer::Cleanup(bool deallocConfigHandler)
 {
 	if (initialized) {
 		SafeDelete(archiveScanner);
 		SafeDelete(vfsHandler);
 		initialized = false;
 	}
-	ConfigHandler::Deallocate();
+
+	if (deallocConfigHandler) {
+		ConfigHandler::Deallocate();
+	}
 }

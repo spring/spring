@@ -22,9 +22,8 @@
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
-#include "Map/MapDamage.h"
-#include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
+#include "Rendering/CommandDrawer.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/LineDrawer.h"
 #include "Rendering/ProjectileDrawer.h"
@@ -36,7 +35,6 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-#include "Game/UI/Groups/Group.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
@@ -218,15 +216,15 @@ void CMiniMap::ParseGeometry(const string& geostr)
 	}
 
 	if ((width <= 0) && (height <= 0)) {
-		const float hw = math::sqrt(float(gs->mapx) / float(gs->mapy));
+		const float hw = math::sqrt(float(mapDims.mapx) / float(mapDims.mapy));
 		width = (int)(-width * hw);
 		height = (int)(-height / hw);
 	}
 	else if (width <= 0) {
-		width = (int)(float(height) * float(gs->mapx) / float(gs->mapy));
+		width = (int)(float(height) * float(mapDims.mapx) / float(mapDims.mapy));
 	}
 	else if (height <= 0) {
-		height = (int)(float(width) * float(gs->mapy) / float(gs->mapx));
+		height = (int)(float(width) * float(mapDims.mapy) / float(mapDims.mapx));
 	}
 
 	// convert to GL coords with a top-left corner affinity
@@ -264,7 +262,7 @@ void CMiniMap::SetMaximizedGeometry()
 		ypos = 0;
 	}
 	else {
-		const float mapRatio = (float)gs->mapx / (float)gs->mapy;
+		const float mapRatio = (float)mapDims.mapx / (float)mapDims.mapy;
 		const float viewRatio = globalRendering->aspectRatio;
 		if (mapRatio > viewRatio) {
 			xpos = 0;
@@ -412,8 +410,8 @@ void CMiniMap::UpdateGeometry()
 	// setup the unit scaling
 	const float w = float(width);
 	const float h = float(height);
-	const float mapx = float(gs->mapx * SQUARE_SIZE);
-	const float mapy = float(gs->mapy * SQUARE_SIZE);
+	const float mapx = float(mapDims.mapx * SQUARE_SIZE);
+	const float mapy = float(mapDims.mapy * SQUARE_SIZE);
 	const float ref  = unitBaseSize / math::pow((200.f * 200.0f), unitExponent);
 	const float dpr  = ref * math::pow((w * h), unitExponent);
 
@@ -471,8 +469,8 @@ void CMiniMap::UpdateGeometry()
 void CMiniMap::MoveView(int x, int y)
 {
 	float3 clickPos;
-	clickPos.x = ((float(x -                               xpos          )) /  width) * (gs->mapx * SQUARE_SIZE);
-	clickPos.z = ((float(y - (globalRendering->viewSizeY - ypos - height))) / height) * (gs->mapy * SQUARE_SIZE);
+	clickPos.x = ((float(x -                               xpos          )) /  width) * (mapDims.mapx * SQUARE_SIZE);
+	clickPos.z = ((float(y - (globalRendering->viewSizeY - ypos - height))) / height) * (mapDims.mapy * SQUARE_SIZE);
 	camHandler->CameraTransition(0.0f);
 	camHandler->GetCurrentController().SetPos(clickPos);
 	unitTracker.Disable();
@@ -613,7 +611,7 @@ void CMiniMap::MouseMove(int x, int y, int dx, int dy, int button)
 			width = std::min(globalRendering->viewSizeX, width);
 		}
 		if (KeyInput::GetKeyModState(KMOD_SHIFT)) {
-			width = (height * gs->mapx) / gs->mapy;
+			width = (height * mapDims.mapx) / mapDims.mapy;
 		}
 		width = std::max(5, width);
 		height = std::max(5, height);
@@ -684,8 +682,8 @@ CUnit* CMiniMap::GetSelectUnit(const float3& pos) const
 float3 CMiniMap::GetMapPosition(int x, int y) const
 {
 	const float mapHeight = readMap->GetInitMaxHeight() + 1000.0f;
-	const float mapX = gs->mapx * SQUARE_SIZE;
-	const float mapY = gs->mapy * SQUARE_SIZE;
+	const float mapX = mapDims.mapx * SQUARE_SIZE;
+	const float mapY = mapDims.mapy * SQUARE_SIZE;
 	const float3 pos(mapX * float(x - xpos) / width, mapHeight,
 	                 mapY * float(y - (globalRendering->viewSizeY - ypos - height)) / height);
 	return pos;
@@ -794,8 +792,8 @@ std::string CMiniMap::GetTooltip(int x, int y)
 		return selTip;
 	}
 
-	const float worldx = float(x                               - xpos          ) / width  * gs->mapx * SQUARE_SIZE;
-	const float worldz = float(y - (globalRendering->viewSizeY - ypos - height)) / height * gs->mapx * SQUARE_SIZE;
+	const float worldx = float(x                               - xpos          ) / width  * mapDims.mapx * SQUARE_SIZE;
+	const float worldz = float(y - (globalRendering->viewSizeY - ypos - height)) / height * mapDims.mapx * SQUARE_SIZE;
 
 	return CTooltipConsole::MakeGroundString(float3(worldx, 500.0f, worldz));
 }
@@ -823,8 +821,8 @@ void CMiniMap::DrawCircle(const float3& pos, float radius) const
 	glTranslatef(pos.x, pos.y, pos.z);
 	glScalef(radius, 1.0f, radius);
 
-	const float xPixels = radius * float(width) / float(gs->mapx * SQUARE_SIZE);
-	const float yPixels = radius * float(height) / float(gs->mapy * SQUARE_SIZE);
+	const float xPixels = radius * float(width) / float(mapDims.mapx * SQUARE_SIZE);
+	const float yPixels = radius * float(height) / float(mapDims.mapy * SQUARE_SIZE);
 	const int lod = (int)(0.25 * math::log2(1.0f + (xPixels * yPixels)));
 	const int lodClamp = std::max(0, std::min(circleListsCount - 1, lod));
 	glCallList(circleLists + lodClamp);
@@ -1133,7 +1131,7 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 	// switch to top-down map/world coords (z is twisted with y compared to the real map/world coords)
 	glPushMatrix();
 	glTranslatef(0.0f, +1.0f, 0.0f);
-	glScalef(+1.0f / (gs->mapx * SQUARE_SIZE), -1.0f / (gs->mapy * SQUARE_SIZE), 1.0f);
+	glScalef(+1.0f / (mapDims.mapx * SQUARE_SIZE), -1.0f / (mapDims.mapy * SQUARE_SIZE), 1.0f);
 
 	if (!minimap->maximized) {
 		// draw the camera frustum lines
@@ -1370,7 +1368,7 @@ void CMiniMap::DrawNotes()
 		return;
 	}
 
-	const float baseSize = gs->mapx * SQUARE_SIZE;
+	const float baseSize = mapDims.mapx * SQUARE_SIZE;
 	CVertexArray* va = GetVertexArray();
 	va->Initialize();
 	std::list<Notification>::iterator ni = notes.begin();
@@ -1483,7 +1481,7 @@ void CMiniMap::DrawUnitIcons() const
 	// switch to top-down map/world coords (z is twisted with y compared to the real map/world coords)
 	glPushMatrix();
 	glTranslatef(0.0f, +1.0f, 0.0f);
-	glScalef(+1.0f / (gs->mapx * SQUARE_SIZE), -1.0f / (gs->mapy * SQUARE_SIZE), 1.0f);
+	glScalef(+1.0f / (mapDims.mapx * SQUARE_SIZE), -1.0f / (mapDims.mapy * SQUARE_SIZE), 1.0f);
 
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_ALPHA_TEST);
@@ -1538,7 +1536,7 @@ void CMiniMap::DrawWorldStuff() const
 {
 	glPushMatrix();
 	glTranslatef(0.0f, +1.0f, 0.0f);
-	glScalef(+1.0f / (gs->mapx * SQUARE_SIZE), -1.0f / (gs->mapy * SQUARE_SIZE), 1.0f);
+	glScalef(+1.0f / (mapDims.mapx * SQUARE_SIZE), -1.0f / (mapDims.mapy * SQUARE_SIZE), 1.0f);
 	glRotatef(-90.0f, +1.0f, 0.0f, 0.0f); // real 'world' coordinates
 	glScalef(1.0f, 0.0f, 1.0f); // skip the y-coord (Lua's DrawScreen is perspective and so any z-coord in it influence the x&y, too)
 
@@ -1549,15 +1547,18 @@ void CMiniMap::DrawWorldStuff() const
 		projectileDrawer->DrawProjectilesMiniMap();
 	}
 
-	// draw the queued commands
-	//
-	// NOTE: this needlessly adds to the CursorIcons list, but at least
-	//       they are not drawn  (because the input receivers are drawn
-	//       after the command queues)
-	LuaUnsyncedCtrl::DrawUnitCommandQueues();
-	if ((drawCommands > 0) && guihandler->GetQueueKeystate()) {
-		selectedUnitsHandler.DrawCommands();
+	{
+		// draw the queued commands
+		commandDrawer->DrawLuaQueuedUnitSetCommands();
+
+		// NOTE: this needlessly adds to the CursorIcons list, but at least
+		//       they are not drawn  (because the input receivers are drawn
+		//       after the command queues)
+		if ((drawCommands > 0) && guihandler->GetQueueKeystate()) {
+			selectedUnitsHandler.DrawCommands();
+		}
 	}
+
 
 	glLineWidth(2.5f);
 	lineDrawer.DrawAll();

@@ -6,6 +6,7 @@
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
+#include "Map/ReadMap.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
@@ -67,8 +68,8 @@ void CFPSController::Update()
 		const float margin = 0.01f;
 		const float xMin = margin;
 		const float zMin = margin;
-		const float xMax = (float)(gs->mapx * SQUARE_SIZE) - margin;
-		const float zMax = (float)(gs->mapy * SQUARE_SIZE) - margin;
+		const float xMax = (float)(mapDims.mapx * SQUARE_SIZE) - margin;
+		const float zMax = (float)(mapDims.mapy * SQUARE_SIZE) - margin;
 
 		pos.x = Clamp(pos.x, xMin, xMax);
 		pos.z = Clamp(pos.z, zMin, zMax);
