@@ -220,9 +220,9 @@ void CTeam::Died(bool normalDeath)
 	if (normalDeath) {
 		// this message is not relayed to clients, it's only for the server
 		clientNet->Send(CBaseNetProtocol::Get().SendTeamDied(gu->myPlayerNum, teamNum));
+		// if not a normal death, no need (or use) to send AI state changes
+		KillAIs();
 	}
-
-	KillAIs();
 
 	// demote all players in _this_ team to spectators
 	for (int a = 0; a < playerHandler->ActivePlayers(); ++a) {
