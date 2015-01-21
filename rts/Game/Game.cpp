@@ -335,18 +335,14 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	SyncedGameCommands::CreateInstance();
 	UnsyncedGameCommands::CreateInstance();
 
-	CResourceHandler::CreateInstance();
-	CCategoryHandler::CreateInstance();
-	CWordCompletion::CreateInstance();
-
 	// note: makes no sense to create this unless we have AI's
 	// (events will just go into the void otherwise) but it is
 	// unconditionally deref'ed in too many places
 	CEngineOutHandler::Create();
 
-	// FIXME: THIS HAS ALREADY BEEN CALLED! (SpringApp::Initialize)
-	// Threading::InitThreadPool();
-	Threading::SetThreadScheduler();
+	CResourceHandler::CreateInstance();
+	CCategoryHandler::CreateInstance();
+	CWordCompletion::CreateInstance();
 }
 
 CGame::~CGame()
@@ -365,6 +361,10 @@ CGame::~CGame()
 	IVideoCapturing::FreeInstance();
 
 	LOG("[%s][2]", __FUNCTION__);
+	// delete this first since AI's might call back into sim-components in their dtors
+	// this means the simulation *should not* assume the EOH still exists on game exit
+	CEngineOutHandler::Destroy();
+
 	// TODO move these to the end of this dtor, once all action-executors are registered by their respective engine sub-parts
 	UnsyncedGameCommands::DestroyInstance();
 	SyncedGameCommands::DestroyInstance();
@@ -375,13 +375,11 @@ CGame::~CGame()
 	KillInterface();
 	KillSimulation();
 
-	LOG("[%s][5]", __FUNCTION__);
+	LOG("[%s][4]", __FUNCTION__);
 	SafeDelete(saveFile); // ILoadSaveHandler, depends on vfsHandler via ~IArchive
-	LOG("[%s][6]", __FUNCTION__);
 	SafeDelete(jobDispatcher);
 
-	LOG("[%s][4]", __FUNCTION__);
-	CEngineOutHandler::Destroy();
+	LOG("[%s][5]", __FUNCTION__);
 	CWordCompletion::DestroyInstance();
 	CCategoryHandler::RemoveInstance();
 	CResourceHandler::FreeInstance();
@@ -1981,11 +1979,249 @@ void CGame::ReloadGame()
 }
 
 
-bool CGame::ProcessAction(const Action& action, unsigned int key, bool isRepeat)
-{
-	if (ActionPressed(key, action, isRepeat)) {
+
+
+bool CGame::ProcessCommandText(unsigned int key, const std::string& command) {
+	if (command.size() <= 2)
+		return false;
+
+	if ((command[0] == '/') && (command[1] != '/')) {
+		// strip the '/'
+		const Action fakeAction(command.substr(1));
+
+		ProcessAction(fakeAction, key, false);
 		return true;
 	}
+
+	return false;
+}
+
+bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
+	if (!userWriting)
+		return false;
+
+	if (action.command == "pastetext") {
+		//we cannot use extra commands because tokenization strips multiple spaces
+		//or even trailing spaces, the text should be copied verbatim
+		const std::string pastecommand = "pastetext ";
+
+		if (action.rawline.length() > pastecommand.length()) {
+			userInput.insert(writingPos, action.rawline.substr(pastecommand.length(), action.rawline.length() - pastecommand.length()));
+			writingPos += (action.rawline.length() - pastecommand.length());
+		} else {
+			PasteClipboard();
+		}
+
+		return true;
+	}
+
+	if (action.command.find("edit_") == 0) {
+		if (action.command == "edit_return") {
+			userWriting = false;
+			writingPos = 0;
+
+			if (chatting) {
+				string command;
+
+				if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
+					command = userInput.substr(2);
+				} else {
+					command = userInput;
+				}
+
+				if (ProcessCommandText(key, command)) {
+					// execute an action
+					consoleHistory->AddLine(command);
+					LOG_L(L_DEBUG, "%s", command.c_str());
+
+					chatting = false;
+					userInput = "";
+					writingPos = 0;
+				}
+			}
+
+			return true;
+		}
+
+		if (action.command == "edit_escape") {
+			if (chatting || inMapDrawer->IsWantLabel()) {
+				if (chatting) {
+					consoleHistory->AddLine(userInput);
+				}
+				userWriting = false;
+				chatting = false;
+				inMapDrawer->SetWantLabel(false);
+				userInput = "";
+				writingPos = 0;
+			}
+
+			return true;
+		}
+
+		if (action.command == "edit_complete") {
+			string head = userInput.substr(0, writingPos);
+			string tail = userInput.substr(writingPos);
+
+			userInput = head + tail;
+			writingPos = head.length();
+
+			const vector<string>& partials = wordCompletion->Complete(head);
+
+			if (!partials.empty()) {
+				string msg;
+				for (unsigned int i = 0; i < partials.size(); i++) {
+					msg += "  ";
+					msg += partials[i];
+				}
+				LOG("%s", msg.c_str());
+			}
+
+			return true;
+		}
+
+
+		if (action.command == "edit_backspace") {
+			if (!userInput.empty() && (writingPos > 0)) {
+				const int prev = Utf8PrevChar(userInput, writingPos);
+				userInput.erase(prev, writingPos - prev);
+				writingPos = prev;
+			}
+
+			return true;
+		}
+
+		if (action.command == "edit_delete") {
+			if (!userInput.empty() && (writingPos < (int)userInput.size())) {
+				userInput.erase(writingPos, Utf8CharLen(userInput, writingPos));
+			}
+
+			return true;
+		}
+
+
+		if (action.command == "edit_home") {
+			writingPos = 0;
+			return true;
+		}
+
+		if (action.command == "edit_end") {
+			writingPos = userInput.length();
+			return true;
+		}
+
+
+		if (action.command == "edit_prev_char") {
+			writingPos = Utf8PrevChar(userInput, writingPos);
+			return true;
+		}
+
+		if (action.command == "edit_next_char") {
+			writingPos = Utf8NextChar(userInput, writingPos);
+			return true;
+		}
+
+
+		if (action.command == "edit_prev_word") { //TODO don't seems to work correctly with utf-8
+			// prev word
+			const char* s = userInput.c_str();
+			int p = writingPos;
+			while ((p > 0) && !isalnum(s[p - 1])) { p--; }
+			while ((p > 0) &&  isalnum(s[p - 1])) { p--; }
+			writingPos = p;
+			return true;
+		}
+
+		if (action.command == "edit_next_word") { //TODO don't seems to work correctly with utf-8
+			const size_t len = userInput.length();
+			const char* s = userInput.c_str();
+			size_t p = writingPos;
+			while ((p < len) && !isalnum(s[p])) { p++; }
+			while ((p < len) &&  isalnum(s[p])) { p++; }
+			writingPos = p;
+			return true;
+		}
+
+
+		if ((action.command == "edit_prev_line") && chatting) {
+			userInput = consoleHistory->PrevLine(userInput);
+			writingPos = (int)userInput.length();
+			return true;
+		}
+
+		if ((action.command == "edit_next_line") && chatting) {
+			userInput = consoleHistory->NextLine(userInput);
+			writingPos = (int)userInput.length();
+			return true;
+		}
+
+		// unknown edit-command
+		return false;
+	}
+
+
+	if (action.command.find("chatswitch") == 0) {
+		if (action.command == "chatswitchall") {
+			if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
+				userInput = userInput.substr(2);
+				writingPos = std::max(0, writingPos - 2);
+			}
+
+			userInputPrefix = "";
+			return true;
+		}
+
+		if (action.command == "chatswitchally") {
+			if ((userInput.find_first_of("aA") == 0) && (userInput[1] == ':')) {
+				// already are in ally chat -> toggle it off
+				userInput = userInput.substr(2);
+				writingPos = std::max(0, writingPos - 2);
+				userInputPrefix = "";
+			}
+			else if ((userInput.find_first_of("sS") == 0) && (userInput[1] == ':')) {
+				// are in spec chat -> switch it to ally chat
+				userInput[0] = 'a';
+				userInputPrefix = "a:";
+			} else {
+				userInput = "a:" + userInput;
+				writingPos += 2;
+				userInputPrefix = "a:";
+			}
+
+			return true;
+		}
+
+		if (action.command == "chatswitchspec") {
+			if ((userInput.find_first_of("sS") == 0) && (userInput[1] == ':')) {
+				// already are in spec chat -> toggle it off
+				userInput = userInput.substr(2);
+				writingPos = std::max(0, writingPos - 2);
+				userInputPrefix = "";
+			}
+			else if ((userInput.find_first_of("aA") == 0) && (userInput[1] == ':')) {
+				// are in ally chat -> switch it to spec chat
+				userInput[0] = 's';
+				userInputPrefix = "s:";
+			} else {
+				userInput = "s:" + userInput;
+				writingPos += 2;
+				userInputPrefix = "s:";
+			}
+
+			return true;
+		}
+
+		// unknown chat-command
+		return false;
+	}
+
+	return false;
+}
+
+
+bool CGame::ProcessAction(const Action& action, unsigned int key, bool isRepeat)
+{
+	if (ActionPressed(key, action, isRepeat))
+		return true;
 
 	// maybe a widget is interested?
 	if (luaUI != NULL) {
@@ -1995,21 +2231,18 @@ bool CGame::ProcessAction(const Action& action, unsigned int key, bool isRepeat)
 	return false;
 }
 
-
 void CGame::ActionReceived(const Action& action, int playerID)
 {
 	const ISyncedActionExecutor* executor = syncedGameCommands->GetActionExecutor(action.command);
 
 	if (executor != NULL) {
 		// an executor for that action was found
-		SyncedAction syncedAction(action, playerID);
-		executor->ExecuteAction(syncedAction);
+		executor->ExecuteAction(SyncedAction(action, playerID));
 	} else if (gs->frameNum > 1) {
 		eventHandler.SyncedActionFallback(action.rawline, playerID);
 		//FIXME add unsynced one?
 	}
 }
-
 
 bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 {
@@ -2017,8 +2250,7 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 
 	if (executor != NULL) {
 		// an executor for that action was found
-		UnsyncedAction unsyncedAction(action, key, isRepeat);
-		if (executor->ExecuteAction(unsyncedAction)) {
+		if (executor->ExecuteAction(UnsyncedAction(action, key, isRepeat))) {
 			return true;
 		}
 	}
@@ -2031,8 +2263,6 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 		return true;
 	}
 
-	if (commandConsole.ExecuteAction(action))
-		return true;
-
-	return false;
+	return (commandConsole.ExecuteAction(action));
 }
+

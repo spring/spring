@@ -272,6 +272,7 @@ bool SpringApp::Initialize()
 	// Multithreading & Affinity
 	Threading::SetThreadName("unknown"); // set default threadname
 	Threading::InitThreadPool();
+	Threading::SetThreadScheduler();
 
 	// Create CGameSetup and CPreGame objects
 	Startup();
