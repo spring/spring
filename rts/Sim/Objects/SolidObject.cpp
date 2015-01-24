@@ -265,8 +265,8 @@ YardMapStatus CSolidObject::GetGroundBlockingMaskAtPos(float3 gpos) const
 		// use old fixed space (4 facing dirs & ints for unit positions)
 
 		// form the rotated axis vectors
-		static float3 fronts[] = {FwdVector,  RgtVector, -FwdVector, -RgtVector};
-		static float3 rights[] = {RgtVector, -FwdVector, -RgtVector,  FwdVector};
+		static const float3 fronts[] = {FwdVector,  RgtVector, -FwdVector, -RgtVector};
+		static const float3 rights[] = {RgtVector, -FwdVector, -RgtVector,  FwdVector};
 
 		// get used axis vectors
 		frontv = fronts[buildFacing];
@@ -306,8 +306,8 @@ int2 CSolidObject::GetMapPos(const float3& position) const
 
 	mp.x = (int(position.x + SQUARE_SIZE / 2) / SQUARE_SIZE) - (xsize / 2);
 	mp.y = (int(position.z + SQUARE_SIZE / 2) / SQUARE_SIZE) - (zsize / 2);
-	mp.x = Clamp(mp.x, 0, gs->mapx - xsize);
-	mp.y = Clamp(mp.y, 0, gs->mapy - zsize);
+	mp.x = Clamp(mp.x, 0, mapDims.mapx - xsize);
+	mp.y = Clamp(mp.y, 0, mapDims.mapy - zsize);
 
 	return mp;
 }

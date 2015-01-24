@@ -29,6 +29,8 @@ class CEngineOutHandler : public CObject {
 
 public:
 	static CEngineOutHandler* GetInstance();
+
+	static void Create();
 	static void Destroy();
 
 	void PostLoad();
@@ -138,9 +140,6 @@ public:
 			CEngineOutHandler::HandleAIException("Unknown");	\
 			throw;												\
 		}
-
-private:
-	static CEngineOutHandler* singleton;
 
 private:
 	typedef std::vector<unsigned char> ids_t;

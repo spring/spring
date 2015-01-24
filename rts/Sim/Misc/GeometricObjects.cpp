@@ -145,8 +145,8 @@ void CGeometricObjects::Update()
 void CGeometricObjects::MarkSquare(int mapSquare) {
 
 	float3 startPos;
-	startPos.x = (int) (mapSquare * SQUARE_SIZE) % gs->mapx;
-	startPos.z = (int) (mapSquare * SQUARE_SIZE) / gs->mapx;
+	startPos.x = (int) (mapSquare * SQUARE_SIZE) % mapDims.mapx;
+	startPos.z = (int) (mapSquare * SQUARE_SIZE) / mapDims.mapx;
 	startPos.y = readMap->GetCenterHeightMapSynced()[mapSquare];
 
 	float3 endPos = startPos;

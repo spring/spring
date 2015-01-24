@@ -15,6 +15,7 @@ class CSolidObject;
 class IPathManager {
 public:
 	static IPathManager* GetInstance(unsigned int type);
+	static void FreeInstance(IPathManager*);
 
 	virtual ~IPathManager() {}
 

@@ -7,6 +7,7 @@
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Map/Ground.h"
+#include "Map/ReadMap.h"
 #include "Game/UI/MouseHandler.h"
 #include "Rendering/GlobalRendering.h"
 #include "System/Config/ConfigHandler.h"
@@ -26,7 +27,7 @@ CONFIG(bool,  CamSpringWarpMouseToZoomIn).defaultValue(false).description("On zo
 CSpringController::CSpringController()
 : rot(2.677f, 0.f, 0.f)
 , dist(1500.f)
-, maxDist(std::max(gs->mapx, gs->mapy) * SQUARE_SIZE * 1.333f)
+, maxDist(std::max(mapDims.mapx, mapDims.mapy) * SQUARE_SIZE * 1.333f)
 , zoomBack(false)
 , oldDist(0.f)
 {
@@ -132,8 +133,8 @@ void CSpringController::MouseWheelMove(float move)
 					zoomBack = true;
 				}
 				rot = float3(2.677f, rot.y, 0.f);
-				pos.x = gs->mapx * SQUARE_SIZE * 0.5f;
-				pos.z = gs->mapy * SQUARE_SIZE * 0.55f; // somewhat longer toward bottom
+				pos.x = mapDims.mapx * SQUARE_SIZE * 0.5f;
+				pos.z = mapDims.mapy * SQUARE_SIZE * 0.55f; // somewhat longer toward bottom
 				dist = pos.Length2D() * 1.5f;
 				camHandler->CameraTransition(1.0f);
 			} else {

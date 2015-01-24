@@ -3,11 +3,11 @@
 
 #include "CollisionHandler.h"
 #include "CollisionVolume.h"
+#include "Map/ReadMap.h"
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
-#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/FastMath.h"
 #include "System/Matrix44f.h"
@@ -122,9 +122,9 @@ bool CCollisionHandler::CollisionFootPrint(const CSolidObject* o, const float3& 
 	// projectile might have tunneled across blocking squares to get to <p>)
 	// note: if we get here <v> is always a box
 	const float invSquareSize = 1.0f / SQUARE_SIZE;
-	const int squareIdx = int(p.x * invSquareSize) + int(p.z * invSquareSize) * gs->mapx;
+	const int squareIdx = int(p.x * invSquareSize) + int(p.z * invSquareSize) * mapDims.mapx;
 
-	if (squareIdx < 0 || squareIdx >= gs->mapSquares)
+	if (squareIdx < 0 || squareIdx >= mapDims.mapSquares)
 		return false;
 
 	const BlockingMapCell& cell = groundBlockingObjectMap->GetCell(squareIdx);

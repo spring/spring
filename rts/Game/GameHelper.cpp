@@ -938,14 +938,14 @@ float3 CGameHelper::ClosestBuildSite(int team, const UnitDef* unitDef, float3 po
 			bool good = true;
 
 			int z2Min = std::max(       0, zs - (zsize    ) / 2 - minDist);
-			int z2Max = std::min(gs->mapy, zs + (zsize + 1) / 2 + minDist);
+			int z2Max = std::min(mapDims.mapy, zs + (zsize + 1) / 2 + minDist);
 			int x2Min = std::max(       0, xs - (xsize    ) / 2 - minDist);
-			int x2Max = std::min(gs->mapx, xs + (xsize + 1) / 2 + minDist);
+			int x2Max = std::min(mapDims.mapx, xs + (xsize + 1) / 2 + minDist);
 
 			// check for nearby blocking features
 			for (int z2 = z2Min; z2 < z2Max; ++z2) {
 				for (int x2 = x2Min; x2 < x2Max; ++x2) {
-					CSolidObject* solObj = groundBlockingObjectMap->GroundBlockedUnsafe(z2 * gs->mapx + x2);
+					CSolidObject* solObj = groundBlockingObjectMap->GroundBlockedUnsafe(z2 * mapDims.mapx + x2);
 
 					if (solObj && solObj->immobile && !dynamic_cast<CFeature*>(solObj)) {
 						good = false;
@@ -956,14 +956,14 @@ float3 CGameHelper::ClosestBuildSite(int team, const UnitDef* unitDef, float3 po
 
 			if (good) {
 				z2Min = std::max(       0, zs - (zsize    ) / 2 - minDist - 2);
-				z2Max = std::min(gs->mapy, zs + (zsize + 1) / 2 + minDist + 2);
+				z2Max = std::min(mapDims.mapy, zs + (zsize + 1) / 2 + minDist + 2);
 				x2Min = std::max(       0, xs - (xsize    ) / 2 - minDist - 2);
-				x2Max = std::min(gs->mapx, xs + (xsize + 1) / 2 + minDist + 2);
+				x2Max = std::min(mapDims.mapx, xs + (xsize + 1) / 2 + minDist + 2);
 
 				// check for nearby factories with open yards
 				for (int z2 = z2Min; z2 < z2Max; ++z2) {
 					for (int x2 = x2Min; x2 < x2Max; ++x2) {
-						CSolidObject* solObj = groundBlockingObjectMap->GroundBlockedUnsafe(z2 * gs->mapx + x2);
+						CSolidObject* solObj = groundBlockingObjectMap->GroundBlockedUnsafe(z2 * mapDims.mapx + x2);
 
 						if (solObj == NULL)
 							continue;
@@ -1024,15 +1024,15 @@ float CGameHelper::GetBuildHeight(const float3& pos, const UnitDef* unitdef, boo
 	const int px = (pos.x - (xsize * (SQUARE_SIZE >> 1))) / SQUARE_SIZE;
 	const int pz = (pos.z - (zsize * (SQUARE_SIZE >> 1))) / SQUARE_SIZE;
 	// top-left and bottom-right footprint corner (clamped)
-	const int x1 = std::min(gs->mapx, std::max(0, px));
-	const int z1 = std::min(gs->mapy, std::max(0, pz));
-	const int x2 = std::max(0, std::min(gs->mapx, x1 + xsize));
-	const int z2 = std::max(0, std::min(gs->mapy, z1 + zsize));
+	const int x1 = std::min(mapDims.mapx, std::max(0, px));
+	const int z1 = std::min(mapDims.mapy, std::max(0, pz));
+	const int x2 = std::max(0, std::min(mapDims.mapx, x1 + xsize));
+	const int z2 = std::max(0, std::min(mapDims.mapy, z1 + zsize));
 
 	for (int x = x1; x <= x2; x++) {
 		for (int z = z1; z <= z2; z++) {
-			const float sqOrgHgt = orgHeightMap[z * gs->mapxp1 + x];
-			const float sqCurHgt = curHeightMap[z * gs->mapxp1 + x];
+			const float sqOrgHgt = orgHeightMap[z * mapDims.mapxp1 + x];
+			const float sqCurHgt = curHeightMap[z * mapDims.mapxp1 + x];
 			const float sqMinHgt = std::min(sqCurHgt, sqOrgHgt);
 			const float sqMaxHgt = std::max(sqCurHgt, sqOrgHgt);
 
@@ -1155,7 +1155,7 @@ CGameHelper::BuildSquareStatus CGameHelper::TestUnitBuildSquare(
 		}
 	} else {
 		// out of map?
-		if (unsigned(x1) > gs->mapx || unsigned(x2) > gs->mapx || unsigned(z1) > gs->mapy || unsigned(z2) > gs->mapy)
+		if (unsigned(x1) > mapDims.mapx || unsigned(x2) > mapDims.mapx || unsigned(z1) > mapDims.mapy || unsigned(z2) > mapDims.mapy)
 			return BUILDSQUARE_BLOCKED;
 
 		// this can be called in either context

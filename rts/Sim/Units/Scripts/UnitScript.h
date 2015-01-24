@@ -92,6 +92,8 @@ protected:
 
 	virtual void ShowScriptError(const std::string& msg) = 0;
 
+	void ShowUnitScriptError(const std::string& msg);
+
 public:
 	// subclass is responsible for populating this with script pieces
 	const std::vector<LocalModelPiece*>& pieces;

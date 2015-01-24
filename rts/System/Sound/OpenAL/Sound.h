@@ -53,10 +53,10 @@ public:
 	virtual void Iconified(bool state);
 
 	virtual void PrintDebugInfo();
-	virtual bool LoadSoundDefsImpl(const std::string& fileName);
-	const float3& GetListenerPos() const {
-		return myPos;
-	}
+
+	bool CanLoadSoundDefs() const { return canLoadDefs; }
+	bool LoadSoundDefsImpl(const std::string& fileName);
+	const float3& GetListenerPos() const { return myPos; }
 
 private:
 	typedef std::map<std::string, std::string> soundItemDef;
@@ -73,7 +73,9 @@ private:
 
 private:
 	float masterVolume;
+
 	bool mute;
+
 	/// we do not play if minimized / iconified
 	bool appIsIconified;
 	bool pitchAdjust;
@@ -96,6 +98,7 @@ private:
 	boost::thread* soundThread;
 
 	volatile bool soundThreadQuit;
+	volatile bool canLoadDefs;
 };
 
 #endif // _SOUND_H_

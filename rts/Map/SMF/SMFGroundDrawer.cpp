@@ -340,7 +340,7 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 	glBindTexture(GL_TEXTURE_2D, smfMap->GetDetailTexture());
 
 	//glMultiTexCoord4f(GL_TEXTURE2_ARB, 1.0f, 1.0f, 1.0f, 1.0f);
-	//SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), -0.5f / gs->pwr2mapx, -0.5f / gs->pwr2mapy);
+	//SetTexGen(1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), -0.5f / mapDims.pwr2mapx, -0.5f / mapDims.pwr2mapy);
 
 	static const GLfloat planeX[] = {0.005f, 0.0f, 0.005f, 0.5f};
 	static const GLfloat planeZ[] = {0.0f, 0.005f, 0.0f, 0.5f};
