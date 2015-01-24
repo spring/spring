@@ -6,8 +6,6 @@
 #include "Game/GameSetup.h"
 #include "Lua/LuaParser.h"
 #include "Lua/LuaSyncedRead.h"
-#include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitTypes/Builder.h"
 #include "System/Log/ILog.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
@@ -53,6 +51,11 @@ void CModInfo::ResetState()
 	repairEnergyCostFactor    = 0.0f;
 	resurrectEnergyCostFactor = 0.5f;
 	captureEnergyCostFactor   = 0.0f;
+
+	unitExpMultiplier  = 0.0f;
+	unitExpPowerScale  = 0.0f;
+	unitExpHealthScale = 0.0f;
+	unitExpReloadScale = 0.0f;
 
 	paralyzeOnMaxHealth = true;
 
@@ -202,10 +205,10 @@ void CModInfo::Init(const char* modArchive)
 		// experience
 		const LuaTable& experienceTbl = root.SubTable("experience");
 
-		CUnit::SetExpMultiplier (experienceTbl.GetFloat("experienceMult", 1.0f));
-		CUnit::SetExpPowerScale (experienceTbl.GetFloat("powerScale",  1.0f));
-		CUnit::SetExpHealthScale(experienceTbl.GetFloat("healthScale", 0.7f));
-		CUnit::SetExpReloadScale(experienceTbl.GetFloat("reloadScale", 0.4f));
+		unitExpMultiplier  = experienceTbl.GetFloat("experienceMult", 1.0f);
+		unitExpPowerScale  = experienceTbl.GetFloat(    "powerScale", 1.0f);
+		unitExpHealthScale = experienceTbl.GetFloat(   "healthScale", 0.7f);
+		unitExpReloadScale = experienceTbl.GetFloat(   "reloadScale", 0.4f);
 	}
 
 	{

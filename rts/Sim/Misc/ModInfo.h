@@ -89,6 +89,11 @@ public:
 	/// How much should energy should capture cost, default 0.0
 	float captureEnergyCostFactor;
 
+	float unitExpMultiplier;
+	float unitExpPowerScale;
+	float unitExpHealthScale;
+	float unitExpReloadScale;
+
 	// Paralyze behaviour
 	/// paralyze unit depending on maxHealth? if not depending on current health, default true
 	bool paralyzeOnMaxHealth;
