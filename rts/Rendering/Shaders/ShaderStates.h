@@ -228,6 +228,13 @@ namespace Shader {
 
 		unsigned int GetHash();
 
+		void ClearHash()
+		{
+			lastHash = 0;
+			updates = 1;
+			lastUpdates = 0;
+		}
+
 		std::string GetString() const
 		{
 			std::ostringstream strbuf;

@@ -492,6 +492,8 @@ namespace Shader {
 	void GLSLProgramObject::Release() {
 		IProgramObject::Release();
 		glDeleteProgram(objID);
+		ClearHash();
+		curFlagsHash = 0;
 		objID = 0;
 		objID = glCreateProgram();
 	}
