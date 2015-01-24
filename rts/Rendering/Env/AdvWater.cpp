@@ -353,4 +353,5 @@ void CAdvWater::UpdateWater(CGame* game)
 	camera->Update();
 	glPopAttrib();
 	glPopAttrib();
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
