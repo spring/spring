@@ -9,6 +9,7 @@
 #include "Game/Players/PlayerHandler.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
+#include "Map/ReadMap.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/EventHandler.h"
@@ -82,15 +83,15 @@ void CTeam::SetDefaultStartPos()
 
 	const AllyTeam& allyTeamData = allyStartData[allyTeam];
 	// pick a spot near the center of our startbox
-	const float xmin = (gs->mapx * SQUARE_SIZE) * allyTeamData.startRectLeft;
-	const float zmin = (gs->mapy * SQUARE_SIZE) * allyTeamData.startRectTop;
-	const float xmax = (gs->mapx * SQUARE_SIZE) * allyTeamData.startRectRight;
-	const float zmax = (gs->mapy * SQUARE_SIZE) * allyTeamData.startRectBottom;
+	const float xmin = (mapDims.mapx * SQUARE_SIZE) * allyTeamData.startRectLeft;
+	const float zmin = (mapDims.mapy * SQUARE_SIZE) * allyTeamData.startRectTop;
+	const float xmax = (mapDims.mapx * SQUARE_SIZE) * allyTeamData.startRectRight;
+	const float zmax = (mapDims.mapy * SQUARE_SIZE) * allyTeamData.startRectBottom;
 	const float xcenter = (xmin + xmax) * 0.5f;
 	const float zcenter = (zmin + zmax) * 0.5f;
 
-	assert(xcenter >= 0 && xcenter < gs->mapx * SQUARE_SIZE);
-	assert(zcenter >= 0 && zcenter < gs->mapy * SQUARE_SIZE);
+	assert(xcenter >= 0 && xcenter < mapDims.mapx * SQUARE_SIZE);
+	assert(zcenter >= 0 && zcenter < mapDims.mapy * SQUARE_SIZE);
 
 	startPos.x = (teamNum - teamHandler->ActiveTeams()) * 4 * SQUARE_SIZE + xcenter;
 	startPos.z = (teamNum - teamHandler->ActiveTeams()) * 4 * SQUARE_SIZE + zcenter;
@@ -102,10 +103,10 @@ void CTeam::ClampStartPosInStartBox(float3* pos) const
 	const std::vector<AllyTeam>& allyStartData = CGameSetup::GetAllyStartingData();
 	const AllyTeam& allyTeamData = allyStartData[allyTeam];
 	const SRectangle rect(
-		allyTeamData.startRectLeft   * gs->mapx * SQUARE_SIZE,
-		allyTeamData.startRectTop    * gs->mapy * SQUARE_SIZE,
-		allyTeamData.startRectRight  * gs->mapx * SQUARE_SIZE,
-		allyTeamData.startRectBottom * gs->mapy * SQUARE_SIZE
+		allyTeamData.startRectLeft   * mapDims.mapx * SQUARE_SIZE,
+		allyTeamData.startRectTop    * mapDims.mapy * SQUARE_SIZE,
+		allyTeamData.startRectRight  * mapDims.mapx * SQUARE_SIZE,
+		allyTeamData.startRectBottom * mapDims.mapy * SQUARE_SIZE
 	);
 
 	int2 ipos(pos->x, pos->z);
@@ -218,10 +219,10 @@ void CTeam::Died(bool normalDeath)
 
 	if (normalDeath) {
 		// this message is not relayed to clients, it's only for the server
-		net->Send(CBaseNetProtocol::Get().SendTeamDied(gu->myPlayerNum, teamNum));
+		clientNet->Send(CBaseNetProtocol::Get().SendTeamDied(gu->myPlayerNum, teamNum));
+		// if not a normal death, no need (or use) to send AI state changes
+		KillAIs();
 	}
-
-	KillAIs();
 
 	// demote all players in _this_ team to spectators
 	for (int a = 0; a < playerHandler->ActivePlayers(); ++a) {

@@ -113,6 +113,10 @@ struct InMapDraw_QuadDrawer: public CReadMap::IQuadDrawer
 	CVertexArray* linesVa;
 	std::vector<const CInMapDrawModel::MapPoint*>* visibleLabels;
 
+	void ResetState() {
+		pointsVa = nullptr;
+		linesVa = nullptr;
+	}
 	void DrawQuad(int x, int y);
 
 private:

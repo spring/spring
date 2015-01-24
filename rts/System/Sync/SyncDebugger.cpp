@@ -305,7 +305,7 @@ void CSyncDebugger::ClientSendChecksumResponse()
 		}
 		checksums.push_back(checksum);
 	}
-	net->Send(CBaseNetProtocol::Get().SendSdCheckresponse(gu->myPlayerNum, flop, checksums));
+	clientNet->Send(CBaseNetProtocol::Get().SendSdCheckresponse(gu->myPlayerNum, flop, checksums));
 }
 
 
@@ -340,7 +340,7 @@ void CSyncDebugger::ServerQueueBlockRequests()
 // 		serverNet->SendData<unsigned> (NETMSG_SD_BLKREQUEST, ii);
 	} else {
 		logger.AddLine("Server: huh, all blocks equal?!?");
-		net->Send(CBaseNetProtocol::Get().SendSdReset());
+		clientNet->Send(CBaseNetProtocol::Get().SendSdReset());
 	}
 	//cleanup
 	for (PlayerVec::iterator it = players.begin(); it != players.end(); ++it)
@@ -353,7 +353,7 @@ void CSyncDebugger::ServerHandlePendingBlockRequests()
 {
 	if (!pendingBlocksToRequest.empty() && !waitingForBlockResponse) {
 		// last two shorts are for progress indication
-		net->Send(CBaseNetProtocol::Get().SendSdBlockrequest(pendingBlocksToRequest.front(), requestedBlocks.size() - pendingBlocksToRequest.size() + 1, requestedBlocks.size()));
+		clientNet->Send(CBaseNetProtocol::Get().SendSdBlockrequest(pendingBlocksToRequest.front(), requestedBlocks.size() - pendingBlocksToRequest.size() + 1, requestedBlocks.size()));
 		waitingForBlockResponse = true;
 	}
 }
@@ -384,7 +384,7 @@ void CSyncDebugger::ClientSendBlockResponse(int block)
 #ifdef TRACE_SYNC
 	tracefile << "done\n";
 #endif
-	net->Send(CBaseNetProtocol::Get().SendSdBlockresponse(gu->myPlayerNum, checksums));
+	clientNet->Send(CBaseNetProtocol::Get().SendSdBlockresponse(gu->myPlayerNum, checksums));
 }
 
 
@@ -475,7 +475,7 @@ void CSyncDebugger::ServerDumpStack()
 	}
 
 	// and reset
-	net->Send(CBaseNetProtocol::Get().SendSdReset());
+	clientNet->Send(CBaseNetProtocol::Get().SendSdReset());
 	logger.AddLine("Server: Done!");
 	logger.CloseSession();
 	LOG("Server: Done!");

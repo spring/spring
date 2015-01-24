@@ -656,7 +656,7 @@ public:
 	typedef std::list<T*> ObjectList;
 	typedef std::vector< const ObjectList* > ObjectVector;
 
-	void Reset() {
+	void ResetState() {
 		objectLists.clear();
 		objectLists.reserve(64);
 
@@ -769,7 +769,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 	unsigned int count = 0;
 
 	{
-		unitQuadIter.Reset();
+		unitQuadIter.ResetState();
 		readMap->GridVisibility(camera, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 1e9, &unitQuadIter, INT_MAX);
 
 		lua_createtable(L, unitQuadIter.GetObjectCount(), 0);
@@ -895,7 +895,7 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 	unsigned int count = 0;
 
 	{
-		featureQuadIter.Reset();
+		featureQuadIter.ResetState();
 		readMap->GridVisibility(camera, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 3000.0f * 2.0f, &featureQuadIter, INT_MAX);
 
 		lua_createtable(L, featureQuadIter.GetObjectCount(), 0);
@@ -981,7 +981,7 @@ int LuaUnsyncedRead::GetVisibleProjectiles(lua_State* L)
 	unsigned int count = 0;
 
 	{
-		projQuadIter.Reset();
+		projQuadIter.ResetState();
 		readMap->GridVisibility(camera, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 1e9, &projQuadIter, INT_MAX);
 
 		lua_createtable(L, projQuadIter.GetObjectCount(), 0);

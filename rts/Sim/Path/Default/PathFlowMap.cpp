@@ -2,7 +2,7 @@
 
 #include "PathFlowMap.hpp"
 #include "PathConstants.h"
-#include "Sim/Misc/GlobalSynced.h"
+#include "Map/ReadMap.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Objects/SolidObject.h"
 #include "System/myMath.h"
@@ -13,18 +13,20 @@
 #define FLOW_COST_MULT      32.00f
 #define FLOW_NGB_PROJECTION  0
 
+// not extern'ed, so static
+static PathFlowMap* gPathFlowMap = NULL;
+
 PathFlowMap* PathFlowMap::GetInstance() {
-	static PathFlowMap* pfm = NULL;
+	if (gPathFlowMap == NULL)
+		gPathFlowMap = new PathFlowMap(PATH_FLOWMAP_XSCALE, PATH_FLOWMAP_ZSCALE);
 
-	if (pfm == NULL) {
-		pfm = new PathFlowMap(PATH_FLOWMAP_XSCALE, PATH_FLOWMAP_ZSCALE);
-	}
-
-	return pfm;
+	return gPathFlowMap;
 }
 
 void PathFlowMap::FreeInstance(PathFlowMap* pfm) {
+	assert(pfm == gPathFlowMap);
 	delete pfm;
+	gPathFlowMap = NULL;
 }
 
 
@@ -35,10 +37,10 @@ PathFlowMap::PathFlowMap(unsigned int scalex, unsigned int scalez) {
 	fBufferIdx = 0;
 	bBufferIdx = 1;
 
-	xscale = Clamp(int(scalex), 1, gs->mapx);
-	zscale = Clamp(int(scalez), 1, gs->mapy);
-	xsize  = gs->mapx / xscale;
-	zsize  = gs->mapy / zscale;
+	xscale = Clamp(int(scalex), 1, mapDims.mapx);
+	zscale = Clamp(int(scalez), 1, mapDims.mapy);
+	xsize  = mapDims.mapx / xscale;
+	zsize  = mapDims.mapy / zscale;
 	xfact  = SQUARE_SIZE * xscale;
 	zfact  = SQUARE_SIZE * zscale;
 

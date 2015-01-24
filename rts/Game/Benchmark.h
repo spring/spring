@@ -3,8 +3,9 @@
 #ifndef _ROAM_MESH_DRAWER_H_
 #define _ROAM_MESH_DRAWER_H_
 
+#include <map>
+
 #include "System/EventHandler.h"
-#include <vector>
 
 
 class CBenchmark : public CEventClient
@@ -15,6 +16,19 @@ public:
 	static int endFrame;
 
 public:
+	CBenchmark();
+	~CBenchmark();
+
+	void ResetState() {
+		realFPS.clear();
+		drawFPS.clear();
+		simFPS.clear();
+		units.clear();
+		features.clear();
+		gameSpeed.clear();
+		luaUsage.clear();
+	}
+
 	// CEventClient interface
 	bool WantsEvent(const std::string& eventName) {
 		return (eventName == "GameFrame") || (eventName == "DrawWorld");
@@ -25,9 +39,14 @@ public:
 	void GameFrame(int gameFrame);
 	void DrawWorld();
 
-public:
-	CBenchmark();
-	~CBenchmark();
+private:
+	std::map<float, float> realFPS;
+	std::map<float, float> drawFPS;
+	std::map<int, float>   simFPS;
+	std::map<int, size_t>  units;
+	std::map<int, size_t>  features;
+	std::map<int, float>   gameSpeed;
+	std::map<int, float>   luaUsage;
 };
 
 #endif // _ROAM_MESH_DRAWER_H_

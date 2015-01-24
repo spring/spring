@@ -3,15 +3,14 @@
 #include <assert.h>
 
 #include "GroundBlockingObjectMap.h"
-
-#include "GlobalSynced.h"
 #include "GlobalConstants.h"
+#include "Map/ReadMap.h"
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Objects/SolidObjectDef.h"
 #include "Sim/Path/IPathManager.h"
 #include "System/creg/STL_Map.h"
 
-CGroundBlockingObjectMap* groundBlockingObjectMap;
+CGroundBlockingObjectMap* groundBlockingObjectMap = NULL;
 
 CR_BIND(CGroundBlockingObjectMap, (1))
 CR_REG_METADATA(CGroundBlockingObjectMap, (
@@ -51,7 +50,7 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 
 	for (int zSqr = minZSqr; zSqr < maxZSqr; zSqr++) {
 		for (int xSqr = minXSqr; xSqr < maxXSqr; xSqr++) {
-			BlockingMapCell& cell = groundBlockingMap[xSqr + zSqr * gs->mapx];
+			BlockingMapCell& cell = groundBlockingMap[xSqr + zSqr * mapDims.mapx];
 			cell[objID] = object;
 		}
 	}
@@ -82,7 +81,7 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, con
 			const float3 testPos = float3(x, 0.0f, z) * SQUARE_SIZE;
 
 			if (object->GetGroundBlockingMaskAtPos(testPos) & mask) {
-				BlockingMapCell& cell = groundBlockingMap[x + (z) * gs->mapx];
+				BlockingMapCell& cell = groundBlockingMap[x + (z) * mapDims.mapx];
 				cell[objID] = object;
 			}
 		}
@@ -108,7 +107,7 @@ void CGroundBlockingObjectMap::RemoveGroundBlockingObject(CSolidObject* object)
 
 	for (int z = bz; z < bz + sz; ++z) {
 		for (int x = bx; x < bx + sx; ++x) {
-			const int idx = x + z * gs->mapx;
+			const int idx = x + z * mapDims.mapx;
 
 			BlockingMapCell& cell = groundBlockingMap[idx];
 			cell.erase(objID);
@@ -138,10 +137,10 @@ CSolidObject* CGroundBlockingObjectMap::GroundBlockedUnsafe(int mapSquare) const
 
 
 CSolidObject* CGroundBlockingObjectMap::GroundBlocked(int x, int z) const {
-	if (x < 0 || x >= gs->mapx || z < 0 || z >= gs->mapy)
+	if (x < 0 || x >= mapDims.mapx || z < 0 || z >= mapDims.mapy)
 		return NULL;
 
-	return GroundBlockedUnsafe(x + z * gs->mapx);
+	return GroundBlockedUnsafe(x + z * mapDims.mapx);
 }
 
 
@@ -154,10 +153,10 @@ CSolidObject* CGroundBlockingObjectMap::GroundBlocked(const float3& pos) const {
 
 bool CGroundBlockingObjectMap::GroundBlocked(int x, int z, CSolidObject* ignoreObj) const
 {
-	if ((unsigned)x >= gs->mapx || (unsigned)z >= gs->mapy)
+	if ((unsigned)x >= mapDims.mapx || (unsigned)z >= mapDims.mapy)
 		return false;
 
-	const int mapSquare = z * gs->mapx + x;
+	const int mapSquare = z * mapDims.mapx + x;
 	const BlockingMapCell& cell = groundBlockingMap[mapSquare];
 
 	if (cell.empty())

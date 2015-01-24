@@ -47,8 +47,6 @@ private:
 
 	std::vector<FontString> labels;
 	std::vector<FontString> values;
-
-	static CGameInfo* instance;
 };
 
 #endif /* GAMEINFO_H */

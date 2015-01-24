@@ -57,8 +57,7 @@ GameData::GameData(boost::shared_ptr<const RawPacket> pckt)
 
 const netcode::RawPacket* GameData::Pack() const
 {
-	if (compressed.empty())
-	{
+	if (compressed.empty()) {
 		long unsigned bufsize = compressBound(setupText.size());
 		compressed.resize(bufsize);
 		const int error = compress(&compressed[0], &bufsize, reinterpret_cast<const boost::uint8_t*>(setupText.c_str()), setupText.length());
@@ -77,7 +76,7 @@ const netcode::RawPacket* GameData::Pack() const
 	return buffer;
 }
 
-void GameData::SetSetup(const std::string& newSetup)
+void GameData::SetSetupText(const std::string& newSetup)
 {
 	setupText = newSetup;
 	compressed.clear();

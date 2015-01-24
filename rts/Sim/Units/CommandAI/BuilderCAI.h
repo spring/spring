@@ -27,6 +27,8 @@ public:
 	CBuilderCAI(CUnit* owner);
 	CBuilderCAI();
 	~CBuilderCAI();
+
+	static void InitStatic();
 	void PostLoad();
 
 	int GetDefaultCmd(const CUnit* unit, const CFeature* feature);

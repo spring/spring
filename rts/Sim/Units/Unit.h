@@ -77,6 +77,8 @@ public:
 	CUnit();
 	virtual ~CUnit();
 
+	static void InitStatic();
+
 	virtual void PreInit(const UnitLoadParams& params);
 	virtual void PostInit(const CUnit* builder);
 
@@ -541,13 +543,13 @@ private:
 	/// if we are stunned by a weapon or for other reason, access via IsStunned/SetStunned(bool)
 	bool stunned;
 
+	static float empDeclineRate;
 	static float expMultiplier;
 	static float expPowerScale;
 	static float expHealthScale;
 	static float expReloadScale;
 	static float expGrade;
 
-	static float empDecline;
 	static bool spawnFeature;
 };
 

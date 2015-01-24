@@ -207,7 +207,7 @@ void CPathEstimator::CalculateBlockOffsets(unsigned int blockIdx, unsigned int t
 
 	if (threadNum == 0 && blockIdx >= nextOffsetMessageIdx) {
 		nextOffsetMessageIdx = blockIdx + blockStates.GetSize() / 16;
-		net->Send(CBaseNetProtocol::Get().SendCPUUsage(BLOCK_SIZE | (blockIdx << 8)));
+		clientNet->Send(CBaseNetProtocol::Get().SendCPUUsage(BLOCK_SIZE | (blockIdx << 8)));
 	}
 
 	for (unsigned int i = 0; i < moveDefHandler->GetNumMoveDefs(); i++) {
@@ -230,7 +230,7 @@ void CPathEstimator::EstimatePathCosts(unsigned int blockIdx, unsigned int threa
 		char calcMsg[128];
 		sprintf(calcMsg, "PathCosts: precached %d of %d blocks", blockIdx, blockStates.GetSize());
 
-		net->Send(CBaseNetProtocol::Get().SendCPUUsage(0x1 | BLOCK_SIZE | (blockIdx << 8)));
+		clientNet->Send(CBaseNetProtocol::Get().SendCPUUsage(0x1 | BLOCK_SIZE | (blockIdx << 8)));
 		loadscreen->SetLoadMessage(calcMsg, (blockIdx != 0));
 	}
 

@@ -90,6 +90,7 @@ ENDIF	()
 
 SET(system_files
 	${sources_engine_System_FileSystem}
+	${sources_engine_System_Threading}
 	${sources_engine_System_Log}
 	${sources_engine_Platform_CrashHandler}
 	${ENGINE_SRC_ROOT_DIR}/Net/AutohostInterface.cpp

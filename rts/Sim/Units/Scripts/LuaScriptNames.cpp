@@ -1,26 +1,22 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "LuaScriptNames.h"
-
 #include "Sim/Misc/GlobalConstants.h"
-
-#include <cstdio>
-
-using std::sprintf;
 
 using std::map;
 using std::pair;
 using std::string;
 using std::vector;
 
+// script function-indices never change, so this is fine wrt. reloading
+static vector<string> scriptNames;
+static map<string, int> scriptMap;
+
 
 const vector<string>& CLuaUnitScriptNames::GetScriptNames()
 {
-	static vector<string> scriptNames;
-
-	if (!scriptNames.empty()) {
+	if (!scriptNames.empty())
 		return scriptNames;
-	}
 
 	scriptNames.resize(LUAFN_Last);
 
@@ -75,13 +71,11 @@ const vector<string>& CLuaUnitScriptNames::GetScriptNames()
 
 const std::map<std::string, int>& CLuaUnitScriptNames::GetScriptMap()
 {
-	static map<string, int> scriptMap;
-
-	if (!scriptMap.empty()) {
+	if (!scriptMap.empty())
 		return scriptMap;
-	}
 
 	const vector<string>& n = GetScriptNames();
+
 	for (size_t i = 0; i < n.size(); ++i) {
 		scriptMap.insert(pair<string, int>(n[i], i));
 	}
@@ -97,20 +91,21 @@ const std::map<std::string, int>& CLuaUnitScriptNames::GetScriptMap()
 int CLuaUnitScriptNames::GetScriptNumber(const std::string& fname)
 {
 	const map<string, int>& scriptMap = GetScriptMap();
-	map<string, int>::const_iterator it = scriptMap.find(fname);
+	const map<string, int>::const_iterator it = scriptMap.find(fname);
 
-	if (it != scriptMap.end()) {
+	if (it != scriptMap.end())
 		return it->second;
-	}
+
 	return -1;
 }
 
-
 const string& CLuaUnitScriptNames::GetScriptName(int num)
 {
-	static string empty;
+	const static string empty;
 	const std::vector<std::string>& n = GetScriptNames();
+
 	if (num >= 0 && num < int(n.size()))
 		return n[num];
+
 	return empty;
 }

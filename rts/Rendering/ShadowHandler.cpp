@@ -20,6 +20,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Models/ModelDrawer.h"
 #include "Rendering/Shaders/ShaderHandler.h"
+#include "Rendering/Shaders/Shader.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Matrix44f.h"
@@ -511,32 +512,29 @@ void CShadowHandler::CreateShadows()
 
 
 
-float CShadowHandler::GetShadowProjectionRadius(CCamera* cam, float3& proPos, const float3& proDir) const {
+float CShadowHandler::GetShadowProjectionRadius(CCamera* cam, float3& projPos, const float3& projDir) {
 	float radius = 1.0f;
 
 	switch (shadowProMode) {
 		case SHADOWPROMODE_CAM_CENTER: {
-			radius = GetOrthoProjectedFrustumRadius(cam, proPos);
+			radius = GetOrthoProjectedFrustumRadius(cam, projPos);
 		} break;
 		case SHADOWPROMODE_MAP_CENTER: {
-			radius = GetOrthoProjectedMapRadius(proDir, proPos);
+			radius = GetOrthoProjectedMapRadius(projDir, projPos);
 		} break;
 		case SHADOWPROMODE_MIX_CAMMAP: {
-			static float3 opfPos;
-			static float3 opmPos;
+			const float opfRad = GetOrthoProjectedFrustumRadius(cam, orthoProjMidPos);
+			const float opmRad = GetOrthoProjectedMapRadius(projDir, orthoProjMapPos);
 
-			const float opfRad = GetOrthoProjectedFrustumRadius(cam, opfPos);
-			const float opmRad = GetOrthoProjectedMapRadius(proDir, opmPos);
-
-			if (opfRad <= opmRad) { radius = opfRad; proPos = opfPos; }
-			if (opmRad <= opfRad) { radius = opmRad; proPos = opmPos; }
+			if (opfRad <= opmRad) { radius = opfRad; projPos = orthoProjMidPos; }
+			if (opmRad <= opfRad) { radius = opmRad; projPos = orthoProjMapPos; }
 		} break;
 	}
 
 	return radius;
 }
 
-float CShadowHandler::GetOrthoProjectedMapRadius(const float3& sunDir, float3& projectionMidPos) const {
+float CShadowHandler::GetOrthoProjectedMapRadius(const float3& sunDir, float3& projMidPos) {
 	// to fit the map inside the frustum, we need to know
 	// the distance from one corner to its opposing corner
 	//
@@ -546,57 +544,56 @@ float CShadowHandler::GetOrthoProjectedMapRadius(const float3& sunDir, float3& p
 	// onto a vector orthogonal to the sun direction and
 	// using the length of that projected vector instead
 	//
-	// note: "radius" is actually the diameter
-	static const float maxMapDiameter = math::sqrt(Square(gs->mapx * SQUARE_SIZE) + Square(gs->mapy * SQUARE_SIZE));
-	static       float curMapDiameter = 0.0f;
+	const float maxMapDiameter = readMap->GetBoundingRadius() * 2.0f;
+	static float curMapDiameter = 0.0f;
 
-	static float3 sunDir3D = ZeroVector;
-
-	if ((sunDir3D != sunDir)) {
-		float3 sunDir2D;
+	if (sunProjDir != sunDir) {
+		// recalculate only if the sun-direction has changed
+		float3 sunDirXZ;
 		float3 mapVerts[2];
 
-		sunDir3D   = sunDir;
-		sunDir2D.x = sunDir3D.x;
-		sunDir2D.z = sunDir3D.z;
-		sunDir2D.ANormalize();
+		sunProjDir = sunDir;
 
-		if (sunDir2D.x >= 0.0f) {
-			if (sunDir2D.z >= 0.0f) {
+		sunDirXZ.x = sunProjDir.x;
+		sunDirXZ.z = sunProjDir.z;
+		sunDirXZ.ANormalize();
+
+		if (sunDirXZ.x >= 0.0f) {
+			if (sunDirXZ.z >= 0.0f) {
 				// use diagonal vector from top-right to bottom-left
-				mapVerts[0] = float3(gs->mapx * SQUARE_SIZE, 0.0f,                   0.0f);
-				mapVerts[1] = float3(                  0.0f, 0.0f, gs->mapy * SQUARE_SIZE);
+				mapVerts[0] = float3(mapDims.mapx * SQUARE_SIZE, 0.0f,                   0.0f);
+				mapVerts[1] = float3(                  0.0f, 0.0f, mapDims.mapy * SQUARE_SIZE);
 			} else {
 				// use diagonal vector from top-left to bottom-right
 				mapVerts[0] = float3(                  0.0f, 0.0f,                   0.0f);
-				mapVerts[1] = float3(gs->mapx * SQUARE_SIZE, 0.0f, gs->mapy * SQUARE_SIZE);
+				mapVerts[1] = float3(mapDims.mapx * SQUARE_SIZE, 0.0f, mapDims.mapy * SQUARE_SIZE);
 			}
 		} else {
-			if (sunDir2D.z >= 0.0f) {
+			if (sunDirXZ.z >= 0.0f) {
 				// use diagonal vector from bottom-right to top-left
-				mapVerts[0] = float3(gs->mapx * SQUARE_SIZE, 0.0f, gs->mapy * SQUARE_SIZE);
+				mapVerts[0] = float3(mapDims.mapx * SQUARE_SIZE, 0.0f, mapDims.mapy * SQUARE_SIZE);
 				mapVerts[1] = float3(                  0.0f, 0.0f,                   0.0f);
 			} else {
 				// use diagonal vector from bottom-left to top-right
-				mapVerts[0] = float3(                  0.0f, 0.0f, gs->mapy * SQUARE_SIZE);
-				mapVerts[1] = float3(gs->mapx * SQUARE_SIZE, 0.0f,                   0.0f);
+				mapVerts[0] = float3(                  0.0f, 0.0f, mapDims.mapy * SQUARE_SIZE);
+				mapVerts[1] = float3(mapDims.mapx * SQUARE_SIZE, 0.0f,                   0.0f);
 			}
 		}
 
 		const float3 v1 = (mapVerts[1] - mapVerts[0]).ANormalize();
-		const float3 v2 = float3(-sunDir2D.z, 0.0f, sunDir2D.x);
+		const float3 v2 = float3(-sunDirXZ.z, 0.0f, sunDirXZ.x);
 
 		curMapDiameter = maxMapDiameter * v2.dot(v1);
 
-		projectionMidPos.x = (gs->mapx * SQUARE_SIZE) * 0.5f;
-		projectionMidPos.z = (gs->mapy * SQUARE_SIZE) * 0.5f;
-		projectionMidPos.y = CGround::GetHeightReal(projectionMidPos.x, projectionMidPos.z, false);
+		projMidPos.x = (mapDims.mapx * SQUARE_SIZE) * 0.5f;
+		projMidPos.z = (mapDims.mapy * SQUARE_SIZE) * 0.5f;
+		projMidPos.y = CGround::GetHeightReal(projMidPos.x, projMidPos.z, false);
 	}
 
 	return curMapDiameter;
 }
 
-float CShadowHandler::GetOrthoProjectedFrustumRadius(CCamera* cam, float3& projectionMidPos) const {
+float CShadowHandler::GetOrthoProjectedFrustumRadius(CCamera* cam, float3& projMidPos) {
 	cam->GetFrustumSides(0.0f, 0.0f, 1.0f, true);
 	cam->ClipFrustumLines(true, -10000.0f, 400096.0f);
 
@@ -638,20 +635,20 @@ float CShadowHandler::GetOrthoProjectedFrustumRadius(CCamera* cam, float3& proje
 		}
 	}
 
-	projectionMidPos.x = frustumCenter.x / (sides.size() * 2);
-	projectionMidPos.z = frustumCenter.z / (sides.size() * 2);
-	projectionMidPos.y = CGround::GetHeightReal(projectionMidPos.x, projectionMidPos.z, false);
+	projMidPos.x = frustumCenter.x / (sides.size() * 2);
+	projMidPos.z = frustumCenter.z / (sides.size() * 2);
+	projMidPos.y = CGround::GetHeightReal(projMidPos.x, projMidPos.z, false);
 
 	// calculate the radius of the minimally-bounding sphere around the projected frustum
 	for (unsigned int n = 0; n < (sides.size() * 2); n++) {
 		const float3& pos = frustumPoints[n];
-		const float   rad = (pos - projectionMidPos).SqLength();
+		const float   rad = (pos - projMidPos).SqLength();
 
 		frustumRadius = std::max(frustumRadius, rad);
 	}
 
-	static const float maxMapDiameter = math::sqrt(Square(gs->mapx * SQUARE_SIZE) + Square(gs->mapy * SQUARE_SIZE));
-	       const float frustumDiameter = math::sqrt(frustumRadius) * 2.0f;
+	const float maxMapDiameter = readMap->GetBoundingRadius() * 2.0f;
+	const float frustumDiameter = math::sqrt(frustumRadius) * 2.0f;
 
 	return std::min(maxMapDiameter, frustumDiameter);
 }
@@ -665,7 +662,7 @@ void CShadowHandler::CalcMinMaxView()
 	// intersection points of the camera frustum
 	// with the xz-plane
 	cam2->GetFrustumSides(0.0f, 0.0f, 1.0f, true);
-	cam2->ClipFrustumLines(true, -20000.0f, gs->mapy * SQUARE_SIZE + 20000.0f);
+	cam2->ClipFrustumLines(true, -20000.0f, mapDims.mapy * SQUARE_SIZE + 20000.0f);
 
 	shadowProjMinMax.x = -100.0f;
 	shadowProjMinMax.y =  100.0f;

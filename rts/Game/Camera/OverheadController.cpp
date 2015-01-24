@@ -5,14 +5,15 @@
 
 #include "OverheadController.h"
 
-#include "System/Config/ConfigHandler.h"
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/UI/MouseHandler.h"
 #include "Map/Ground.h"
+#include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
-#include "System/Log/ILog.h"
 #include "System/myMath.h"
+#include "System/Log/ILog.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/Input/KeyInput.h"
 
 CONFIG(float, MiddleClickScrollSpeed).defaultValue(0.01f);
@@ -45,7 +46,7 @@ COverheadController::COverheadController()
 		height = CGround::GetHeightAboveWater(pos.x, pos.z, false) + (2.5f * h);
 	}
 
-	maxHeight = 9.5f * std::max(gs->mapx, gs->mapy);
+	maxHeight = 9.5f * std::max(mapDims.mapx, mapDims.mapy);
 	Update();
 }
 
@@ -134,8 +135,8 @@ void COverheadController::MouseWheelMove(float move)
 					changeAltHeight = false;
 				}
 				height = maxHeight;
-				pos.x  = gs->mapx * SQUARE_SIZE * 0.5f;
-				pos.z  = gs->mapy * SQUARE_SIZE * 0.55f; // somewhat longer toward bottom
+				pos.x  = mapDims.mapx * SQUARE_SIZE * 0.5f;
+				pos.z  = mapDims.mapy * SQUARE_SIZE * 0.55f; // somewhat longer toward bottom
 			} else {
 				height *= (1.0f + (altZoomDist / height));
 			}
@@ -155,8 +156,8 @@ void COverheadController::MouseWheelMove(float move)
 
 void COverheadController::Update()
 {
-	pos.x = Clamp(pos.x, 0.01f, gs->mapx * SQUARE_SIZE - 0.01f);
-	pos.z = Clamp(pos.z, 0.01f, gs->mapy * SQUARE_SIZE - 0.01f);
+	pos.x = Clamp(pos.x, 0.01f, mapDims.mapx * SQUARE_SIZE - 0.01f);
+	pos.z = Clamp(pos.z, 0.01f, mapDims.mapy * SQUARE_SIZE - 0.01f);
 	pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false);
 	height = Clamp(height, 60.0f, maxHeight);
 
