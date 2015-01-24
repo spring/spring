@@ -1,3 +1,5 @@
+#version 120
+
 uniform vec2 mapSizePO2;     // (1.0 / pwr2map{x,z} * SQUARE_SIZE)
 uniform vec2 mapSize;        // (1.0 /     map{x,z} * SQUARE_SIZE)
 

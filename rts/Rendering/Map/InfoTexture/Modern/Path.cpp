@@ -20,9 +20,12 @@
 
 CPathTexture::CPathTexture()
 : CPboInfoTexture("path")
-, updateFrame(0)
+, isCleared(false)
+//, updateFrame(0)
 , updateProcess(0)
 , lastSelectedPathType(0)
+, forcedPathType(-1)
+, forcedUnitDef(-1)
 , lastUsage(spring_gettime())
 {
 	texSize = int2(gs->hmapx, gs->hmapy);
@@ -43,7 +46,7 @@ CPathTexture::CPathTexture()
 	if (FBO::IsSupported()) {
 		fbo.Bind();
 		fbo.AttachTexture(texture);
-		bool status = fbo.CheckStatus("CPathTexture");
+		/*bool status =*/ fbo.CheckStatus("CPathTexture");
 		FBO::Unbind();
 	}
 }
@@ -71,19 +74,21 @@ static inline const SColor& GetBuildColor(const BuildSquareStatus& status) {
 
 
 static SColor GetSpeedModColor(const float sm) {
-	SColor col(0, 0, 0);
+	SColor col(255, 0, 0);
 	if (sm > 0.0f) {
 		col.r = 255 - std::min(sm * 255.0f, 255.0f);
 		col.g = 255 - col.r;
-	} else {
-		col.r = 255;
 	}
 	return col;
 }
 
 
-static const MoveDef* GetSelectedMoveDef()
+const MoveDef* CPathTexture::GetSelectedMoveDef()
 {
+	if (forcedPathType >= 0) {
+		return moveDefHandler->GetMoveDefByPathType(forcedPathType);
+	}
+
 	const MoveDef* md = nullptr;
 	const CUnitSet& unitSet = selectedUnitsHandler.selectedUnits;
 	if (!unitSet.empty()) {
@@ -94,8 +99,12 @@ static const MoveDef* GetSelectedMoveDef()
 }
 
 
-static const UnitDef* GetCurrentBuildCmdUnitDef()
+const UnitDef* CPathTexture::GetCurrentBuildCmdUnitDef()
 {
+	if (forcedUnitDef >= 0) {
+		return unitDefHandler->GetUnitDefByID(forcedUnitDef);
+	}
+
 	if ((unsigned)guihandler->inCommand > guihandler->commands.size())
 		return nullptr;
 
@@ -113,15 +122,36 @@ GLuint CPathTexture::GetTexture()
 }
 
 
+bool CPathTexture::ShowMoveDef(const int pathType)
+{
+	forcedUnitDef  = -1;
+	forcedPathType = pathType;
+	updateProcess = 0;
+	return true; // TODO: unused
+}
+
+
+bool CPathTexture::ShowUnitDef(const int udefid)
+{
+	forcedUnitDef  = udefid;
+	forcedPathType = -1;
+	updateProcess = 0;
+	return true; // TODO: unused
+}
+
+
 bool CPathTexture::IsUpdateNeeded()
 {
-	if ((spring_gettime() - lastUsage).toSecsi() > 2)
+	// don't update when not rendered/used
+	if ((spring_gettime() - lastUsage).toSecsi() > 2) {
+		forcedUnitDef = forcedPathType = -1;
 		return false;
+	}
 
 	// newly build cmd active?
 	const UnitDef* ud = GetCurrentBuildCmdUnitDef();
 	if (ud) {
-		const unsigned int buildDefID = ud ? -(ud->id + 1) : -1;
+		const unsigned int buildDefID = ud ? -(ud->id + 1) : 0;
 		if (buildDefID != lastSelectedPathType) {
 			lastSelectedPathType = buildDefID;
 			updateProcess = 0;
@@ -131,7 +161,7 @@ bool CPathTexture::IsUpdateNeeded()
 		// newly unit/moveType active?
 		const MoveDef* md = GetSelectedMoveDef();
 		if (md) {
-			const unsigned int pathType = md ? md->pathType : -1;
+			const unsigned int pathType = md ? (md->pathType + 1) : 0;
 			if (pathType != lastSelectedPathType) {
 				lastSelectedPathType = pathType;
 				updateProcess = 0;
@@ -141,7 +171,7 @@ bool CPathTexture::IsUpdateNeeded()
 	}
 
 	// nothing selected nor any build cmd active -> don't update
-	if (lastSelectedPathType == -1)
+	if (lastSelectedPathType == 0 && isCleared)
 		return false;
 
 	return true;
@@ -155,6 +185,7 @@ void CPathTexture::Update()
 
 	// just clear
 	if (!(ud || md)) {
+		isCleared = true;
 		updateProcess = 0;
 		fbo.Bind();
 		glViewport(0,0, texSize.x, texSize.y);
@@ -228,4 +259,5 @@ void CPathTexture::Update()
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, start, texSize.x, updateProcess - start, GL_RGBA, GL_UNSIGNED_BYTE, infoTexPBO.GetPtr(offset * sizeof(SColor)));
 	infoTexPBO.Unbind();
+	isCleared = false;
 }

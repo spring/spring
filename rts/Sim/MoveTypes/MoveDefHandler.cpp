@@ -19,8 +19,8 @@ CR_BIND(MoveDefHandler, (NULL))
 CR_REG_METADATA(MoveDef, (
 	CR_MEMBER(name),
 
-	CR_ENUM_MEMBER(speedModClass),
-	CR_ENUM_MEMBER(terrainClass),
+	CR_MEMBER(speedModClass),
+	CR_MEMBER(terrainClass),
 
 	CR_MEMBER(xsize),
 	CR_MEMBER(xsizeh),

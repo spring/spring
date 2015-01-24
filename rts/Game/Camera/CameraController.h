@@ -7,7 +7,9 @@
 #include <vector>
 #include <map>
 
+#include "Game/Camera.h"
 #include "System/float3.h"
+
 
 class CCameraController
 {
@@ -21,18 +23,16 @@ public:
 	virtual const std::string GetName() const = 0;
 
 	virtual void KeyMove(float3 move) = 0;
-	virtual void MousePress(int x, int y, int button) = 0;
-	virtual void MouseRelease(int x, int y, int button) = 0;
 	virtual void MouseMove(float3 move) = 0;
 	virtual void ScreenEdgeMove(float3 move) = 0;
 	virtual void MouseWheelMove(float move) = 0;
 
 	virtual void Update() {}
 
-	/// In degree!
-	        float  GetFOV() const { return fov; }
+		float  GetFOV() const { return fov; } //< In degree!
 	virtual float3 GetPos() const { return pos; }
 	virtual float3 GetDir() const { return dir; }
+	virtual float3 GetRot() const { return CCamera::GetRotFromDir(GetDir()); }
 
 	virtual void SetPos(const float3& newPos) { pos = newPos; }
 	virtual void SetDir(const float3& newDir) { dir = newDir; }
@@ -40,7 +40,7 @@ public:
 
 	// return the position to send to new controllers SetPos
 	virtual float3 SwitchFrom() const = 0;
-	virtual void SwitchTo(bool showText = true) = 0;
+	virtual void SwitchTo(const int oldCam, const bool showText = true) = 0;
 
 	virtual void GetState(StateMap& sm) const;
 	virtual bool SetState(const StateMap& sm);

@@ -270,6 +270,7 @@ void CInMapDraw::PromptLabel(const float3& pos)
 	wantLabel = true;
 	game->userPrompt = "Label: ";
 	game->ignoreNextChar = true;
+	inMapDrawer->SetDrawMode(false);
 }
 
 

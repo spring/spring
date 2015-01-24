@@ -75,10 +75,10 @@ void CGfxProjectile::Draw()
 	inArray = true;
 
 	#define gfxt projectileDrawer->gfxtex
-	va->AddVertexTC(drawPos - camera->right * drawRadius - camera->up * drawRadius, gfxt->xstart, gfxt->ystart, color);
-	va->AddVertexTC(drawPos + camera->right * drawRadius - camera->up * drawRadius, gfxt->xend,   gfxt->ystart, color);
-	va->AddVertexTC(drawPos + camera->right * drawRadius + camera->up * drawRadius, gfxt->xend,   gfxt->yend,   color);
-	va->AddVertexTC(drawPos - camera->right * drawRadius + camera->up * drawRadius, gfxt->xstart, gfxt->yend,   color);
+	va->AddVertexTC(drawPos - camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, gfxt->xstart, gfxt->ystart, color);
+	va->AddVertexTC(drawPos + camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, gfxt->xend,   gfxt->ystart, color);
+	va->AddVertexTC(drawPos + camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, gfxt->xend,   gfxt->yend,   color);
+	va->AddVertexTC(drawPos - camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, gfxt->xstart, gfxt->yend,   color);
 	#undef gfxt
 }
 

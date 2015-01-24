@@ -25,7 +25,7 @@ static const float MIN_MAXRES_SEARCH_DISTANCE = 12.0f;
 // how many recursive refinement attempts NextWayPoint should make
 static const unsigned int MAX_PATH_REFINEMENT_DEPTH = 4;
 
-static const unsigned int PATHESTIMATOR_VERSION = 61;
+static const unsigned int PATHESTIMATOR_VERSION = 62;
 
 static const unsigned int MEDRES_PE_BLOCKSIZE =  8;
 static const unsigned int LOWRES_PE_BLOCKSIZE = 32;

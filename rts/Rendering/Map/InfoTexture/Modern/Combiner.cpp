@@ -26,7 +26,19 @@ CInfoTextureCombiner::CInfoTextureCombiner()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glSpringTexStorage2D(GL_TEXTURE_2D, -1, GL_RGBA8, texSize.x, texSize.y);
+
+	// precision hint:
+	// GL_RGBA8 hasn't enough precision for subtle blending operations,
+	// cause we update the texture slowly with alpha values of 0.05, so
+	// per update the change is too subtle. With just 8bits per channel
+	// the update is too less to change the texture value at all. The
+	// texture keeps unchanged then and never reaches the wanted final
+	// state, keeping `shadow` images of the old state.
+	// Testing showed that 10bits per channel are already good enough to
+	// counter this, GL_RGBA16 would be another solution, but needs twice
+	// as much texture memory + bandwidth.
+	// Also GL3.x enforces that GL_RGB10_A2 must be renderable.
+	glSpringTexStorage2D(GL_TEXTURE_2D, -1, GL_RGB10_A2, texSize.x, texSize.y);
 
 	if (FBO::IsSupported()) {
 		fbo.Bind();
@@ -104,6 +116,7 @@ void CInfoTextureCombiner::Update()
 	glEnable(GL_BLEND);
 
 	shader->BindTextures();
+	shader->SetUniform("time", float(gs->frameNum + globalRendering->timeOffset));
 
 	const float isx = 2.0f * (gs->mapx / float(gs->pwr2mapx)) - 1.0f;
 	const float isy = 2.0f * (gs->mapy / float(gs->pwr2mapy)) - 1.0f;

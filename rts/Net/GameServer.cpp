@@ -899,7 +899,7 @@ void CGameServer::LagProtection()
 			const int curPing = (serverFrameNum - player.lastFrameResponse);
 			Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, player.cpuUsage, curPing));
 
-			const float playerCpuUsage = player.isLocal ? player.cpuUsage : player.cpuUsage;
+			const float playerCpuUsage = player.cpuUsage;
 			const float correctedCpu   = Clamp(playerCpuUsage, 0.0f, 1.0f);
 
 			if (player.isReconn && curPing < 2 * GAME_SPEED)

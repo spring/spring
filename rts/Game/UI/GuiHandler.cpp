@@ -932,7 +932,7 @@ void CGuiHandler::SetShowingMetal(bool show)
 		}
 	} else {
 		if (autoShowMetal) {
-			if (infoTextureHandler->GetMode() == "metal") {
+			if (infoTextureHandler->GetMode() != "metal") {
 				infoTextureHandler->SetMode("metal");
 				showingMetal = true;
 			}
@@ -2119,11 +2119,9 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				}
 			}
 
-			int a = 0; // limit the number of max commands possible to send to avoid overflowing the network buffer
-			for (std::vector<BuildInfo>::iterator bpi = buildPos.begin(); bpi != --buildPos.end() && a < 200; ++bpi) {
-				++a;
-				Command c = bpi->CreateCommand(CreateOptions(button));
-				if (!preview) {
+			if (!preview) {
+				for (auto bpi = buildPos.cbegin(); bpi != --buildPos.cend(); ++bpi) {
+					Command c = bpi->CreateCommand(CreateOptions(button));
 					GiveCommand(c);
 				}
 			}

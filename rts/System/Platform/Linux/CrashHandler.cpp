@@ -22,7 +22,6 @@
 #include <libunwind.h>
 #include <dlfcn.h>
 
-#include "thread_backtrace.h"
 #include "System/FileSystem/FileSystem.h"
 #include "Game/GameVersion.h"
 #include "System/Log/ILog.h"
@@ -39,9 +38,7 @@
 #include "System/Platform/Watchdog.h"
 #endif
 
-#ifdef __APPLE__
-#define ADDR2LINE "gaddr2line"
-#else
+#if !defined(__APPLE__)
 #define ADDR2LINE "addr2line"
 #endif
 
@@ -63,7 +60,7 @@ struct StackFrame {
 	void*                 ip;       // instruction pointer from libunwind or backtrace()
 	std::string           mangled;  // mangled name retrieved from libunwind (not printed, memoized for debugging)
 	std::string           symbol;   // backtrace_symbols output
-	uintptr_t             addr;     // translated address
+	uintptr_t             addr;     // translated address / load address for OS X
 	std::string           path;     // translated library or module path
 	std::list<StackFunction> entries;  // function names and lines (possibly several inlined) retrieved from addr2line
 	StackFrame() :
@@ -75,6 +72,10 @@ struct StackFrame {
 typedef std::vector<StackFrame> StackTrace;
 
 static int reentrances = 0;
+
+static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int logLevel);
+static void LogStacktrace(const int logLevel, StackTrace& stacktrace);
+
 
 static std::string GetBinaryLocation()
 {
@@ -147,13 +148,10 @@ static std::string CreateAbsolutePath(const std::string& relativePath)
  *   -> "/usr/lib/debug/usr/games/spring-dedicated"
  * - "/usr/lib/spring/libunitsync.so"
  *   -> "/usr/lib/debug/usr/lib/spring/libunitsync.so"
- *   -> "/usr/lib/spring/libunitsync.so"
  * - "/usr/lib/AI/Interfaces/Java/0.1/libAIInterface.so"
  *   -> "/usr/lib/debug/usr/lib/AI/Interfaces/Java/0.1/libAIInterface.so"
- *   -> "/usr/lib/AI/Interfaces/Java/0.1/libAIInterface.so"
  * - "/usr/lib/AI/Skirmish/RAI/0.601/libSkirmishAI.so"
  *   -> "/usr/lib/debug/usr/lib/AI/Skirmish/RAI/0.601/libSkirmishAI.so"
- *   -> "/usr/lib/AI/Skirmish/RAI/0.601/libSkirmishAI.so"
  */
 static std::string LocateSymbolFile(const std::string& binaryFile)
 {
@@ -175,14 +173,7 @@ static std::string LocateSymbolFile(const std::string& binaryFile)
 		return symbolFile;
 	}
 
-	symbolFile = binaryFile;
-	if (FileSystem::IsReadableFile(symbolFile)) {
-		return symbolFile;
-	}
-
-	symbolFile = binaryFile;
-
-	return symbolFile;
+	return binaryFile;
 }
 
 
@@ -215,6 +206,38 @@ static uintptr_t HexToInt(const char* hexStr)
 	return (uintptr_t) value;
 }
 
+/**
+ * Consumes (and frees) the lines produced by backtrace_symbols and puts these into the StackTrace fields
+ */
+static void ExtractSymbols(char** lines, StackTrace& stacktrace)
+{
+	int l=0;
+	auto fit = stacktrace.begin();
+	while (fit != stacktrace.end()) {
+		LOG_L(L_DEBUG, "backtrace_symbols: %s", lines[l]);
+		if (strncmp(lines[l], "[(nil)]", 20) != 0) {
+			fit->symbol = lines[l];
+			fit++;
+		} else {
+			fit = stacktrace.erase(fit);
+		}
+		l++;
+	}
+	free(lines);
+}
+
+static int CommonStringLength(const std::string& str1, const std::string& str2, int* len)
+{
+	int n=0, m = std::min(str1.length(), str2.length());
+	while (n < m && str1[n] == str2[n]) { n++; }
+	if (len != nullptr) {
+		*len = n;
+	}
+	return n;
+}
+
+
+#if !defined(__APPLE__)
 
 /**
  * Finds the base memory address in the running process for all the libraries
@@ -274,13 +297,17 @@ static void FindBaseMemoryAddresses(std::map<std::string,uintptr_t>& binPath_bas
 	}
 }
 
-
 /**
  * extracts the library/binary paths from the output of backtrace_symbols()
  */
 static std::string ExtractPath(const std::string& line)
 {
-	// example paths: "./spring" "/usr/lib/AI/Skirmish/NTai/0.666/libSkirmishAI.so"
+	// line examples:
+	//
+	// ./spring() [0x84b7b5]
+	// /usr/lib/libc.so.6(+0x33b20) [0x7fc022c68b20]
+	// /usr/lib/libstdc++.so.6(_ZN9__gnu_cxx27__verbose_terminate_handlerEv+0x16d) [0x7fc023553fcd]
+
 	std::string path;
 	size_t end   = line.find_last_of('('); // if there is a function name
 	if (end == std::string::npos) {
@@ -298,13 +325,17 @@ static std::string ExtractPath(const std::string& line)
 	return path;
 }
 
-
 /**
  * extracts the debug addr's from the output of backtrace_symbols()
  */
 static uintptr_t ExtractAddr(const StackFrame& frame)
 {
-	// example address: "0x89a8206"
+	// frame.symbol examples:
+	//
+	// ./spring() [0x84b7b5]
+	// /usr/lib/libc.so.6(abort+0x16a) [0x7fc022c69e6a]
+	// /usr/lib/libstdc++.so.6(+0x5eea1) [0x7fc023551ea1]
+
 	uintptr_t addr = INVALID_ADDR_INDICATOR;
 	const std::string& line = frame.symbol;
 	size_t begin = line.find_last_of('[');
@@ -329,41 +360,12 @@ static uintptr_t ExtractAddr(const StackFrame& frame)
 }
 
 /**
- * Consumes (and frees) the lines produced by backtrace_symbols and puts these into the StackTrace fields
- */
-static void ExtractSymbols (char** lines, StackTrace& stacktrace) {
-    int l=0;
-    auto fit = stacktrace.begin();
-    while (fit != stacktrace.end()) {
-        LOG_L(L_DEBUG, "backtrace_symbols: %s", lines[l]);
-        if (strncmp(lines[l], "[(nil)]", 20) != 0) {
-            fit->symbol = lines[l];
-            fit++;
-        } else {
-            fit = stacktrace.erase(fit);
-        }
-        l++;
-    }
-    free(lines);
-}
-
-static int CommonStringLength(const std::string& str1, const std::string& str2, int* len)
-{
-    int n=0, m = std::min(str1.length(), str2.length());
-    while (n < m && str1[n] == str2[n]) { n++; }
-    if (len != nullptr) {
-        *len = n;
-    }
-    return n;
-}
-
-/**
  * @brief TranslateStackTrace
  * @param stacktrace These are the lines and addresses produced by backtrace_symbols()
  * Translates the module and address information from backtrace symbols into a vector of StackFrame objects,
  *   each with its own set of entries representing the function call and any inlined functions for that call.
  */
-static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int logLevel )
+static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int logLevel)
 {
 	// Extract important data from backtrace_symbols' output
 	bool containsDriverSo = false; // OpenGL lib -> graphic problem
@@ -519,24 +521,27 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 	LOG_L(L_DEBUG, "TranslateStackTrace[6]");
 
 	return;
-
 }
 
-static void LogStacktrace (const int logLevel, StackTrace& stacktrace) {
-
+static void LogStacktrace(const int logLevel, StackTrace& stacktrace)
+{
 	int colFileline = 0;
 	const std::string& exe_path = Platform::GetProcessExecutablePath();
 	const std::string& cwd_path = Platform::GetOrigCWD();
 	for (auto fit = stacktrace.begin(); fit != stacktrace.end(); fit++) {
         for (auto eit = fit->entries.begin(); eit != fit->entries.end(); eit++) {
 			eit->abbrev_funcname = eit->funcname;
-			eit->abbrev_fileline  = eit->fileline;
+			std::string fileline = eit->fileline;
+			if (fileline[1] == '?') {  // case "??:?", ":?"
+				fileline = fit->symbol;  // print raw backtrace_symbol
+			}
+			eit->abbrev_fileline = fileline;
 			int abbrev_start = 0;
-			if (eit->fileline[0] == '/') { // See if we can shorten the file/line bit by removing the common path
-				if (CommonStringLength(eit->fileline, exe_path, &abbrev_start) > 1) { // i.e. one char for first '/'
-					eit->abbrev_fileline = std::string(".../") + eit->fileline.substr(abbrev_start, std::string::npos);
-				} else if (CommonStringLength(eit->fileline, cwd_path, &abbrev_start) > 1) {
-					eit->abbrev_fileline = std::string("./") + eit->fileline.substr(abbrev_start, std::string::npos);
+			if (fileline[0] == '/') { // See if we can shorten the file/line bit by removing the common path
+				if (CommonStringLength(fileline, exe_path, &abbrev_start) > 1) { // i.e. one char for first '/'
+					eit->abbrev_fileline = std::string(".../") + fileline.substr(abbrev_start, std::string::npos);
+				} else if (CommonStringLength(fileline, cwd_path, &abbrev_start) > 1) {
+					eit->abbrev_fileline = std::string("./") + fileline.substr(abbrev_start, std::string::npos);
 				}
 			}
 
@@ -578,6 +583,9 @@ static void LogStacktrace (const int logLevel, StackTrace& stacktrace) {
         hideSignalHandler = false;
     }
 }
+
+#endif  // !(__APPLE__)
+
 
 __FORCE_ALIGN_STACK__
 static void ForcedExitAfterFiveSecs() {
@@ -628,11 +636,16 @@ namespace CrashHandler
 
 		unw_cursor_t cursor;
 		// Effective ucontext_t. If uc not supplied, use unw_getcontext locally. This is appropriate inside signal handlers.
+#if defined(__APPLE__)
+		unw_context_t thisctx;
+		unw_getcontext(&thisctx);
+#else
 		ucontext_t thisctx;
 		if (uc == nullptr) {
 			unw_getcontext(&thisctx);
 			uc = &thisctx;
 		}
+#endif
 		const int BUFR_SZ = 1000;
 		char procbuffer[BUFR_SZ];
 		stacktrace.clear();
@@ -649,7 +662,11 @@ namespace CrashHandler
 			LOG_L(L_DEBUG, "Dereferencing uc_link");
 		}
 		*/
+#if defined(__APPLE__)
+		int err = unw_init_local(&cursor, &thisctx);
+#else
 		int err = unw_init_local(&cursor, uc);
+#endif
 		if (err) {
 			LOG_L(L_ERROR, "unw_init_local returned %d", err);
 			return 0;
@@ -693,26 +710,14 @@ namespace CrashHandler
 		// Get untranslated stacktrace symbols
 		{
 			// process and analyse the raw stack trace
-			char** lines;
 			void* iparray[MAX_STACKTRACE_DEPTH];
-			int numLines = -1;
-			if (hThread && Threading::GetCurrentThread() != *hThread) {
-				//Threading::ThreadControls* ctls = GetThreadControls(*hThread);
-				// If we don't have a ThreadControls object for this thread, then we can still get an approximate trace from the foreign thread as it is running...
-				LOG_I(logLevel, "  (Note: This stacktrace is not 100%% accurate! It just gives an impression.)");
-				LOG_CLEANUP();
-				numLines = thread_backtrace(*hThread, iparray, MAX_STACKTRACE_DEPTH);    // stack pointers
-			} else {
-				numLines = backtrace(iparray, MAX_STACKTRACE_DEPTH);
+			int numLines = thread_unwind(nullptr, iparray, stacktrace);
+			if (numLines > MAX_STACKTRACE_DEPTH) {
+				LOG_L(L_ERROR, "thread_unwind returned more lines than we allotted space for!");
 			}
-			if(numLines > MAX_STACKTRACE_DEPTH) {
-				LOG_L(L_ERROR, "thread_backtrace or backtrace returned more lines than we allotted space for!");
-			}
-			lines = backtrace_symbols(iparray, numLines); // give them meaningfull names
+			char** lines = backtrace_symbols(iparray, numLines); // give them meaningfull names
 
 			ExtractSymbols(lines, stacktrace);
-
-			free(lines);
 		}
 
 		if (stacktrace.empty()) {
@@ -721,14 +726,14 @@ namespace CrashHandler
 		}
 
 		// Translate it
-		TranslateStackTrace(nullptr, stacktrace, logLevel);
+		TranslateStackTrace(aiCrash, stacktrace, logLevel);
 
 		LogStacktrace(logLevel, stacktrace);
 	}
 
 	/**
-	 * This is the "classic" stack trace call that has been used until at least 96.0.
-	 * This should be phased out -- the function call admits many combinations of optional parameters.
+	 * FIXME: Needs cleaning.
+	 * Doesn't use same parameters as "classic" stack trace call that has been used until at least 96.0.
 	 */
 	void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadName, const int logLevel)
 	{
@@ -739,7 +744,9 @@ namespace CrashHandler
 			LOG_I(logLevel, "  No Stacktraces for non-MainThread.");
 			return;
 		}
+		PrepareStacktrace();
 		Stacktrace(NULL, &thread, threadName.c_str(), logLevel);
+		CleanupStacktrace();
 	}
 
 	/**
@@ -766,7 +773,6 @@ namespace CrashHandler
         // Get untranslated stacktrace symbols
         {
             // process and analyse the raw stack trace
-            char** lines;
             void* iparray[MAX_STACKTRACE_DEPTH];
             int numLines = -1;
 
@@ -779,9 +785,9 @@ namespace CrashHandler
             LOG_L(L_DEBUG, "SuspendedStacktrace[2]");
 
             if(numLines > MAX_STACKTRACE_DEPTH) {
-                LOG_L(L_ERROR, "thread_backtrace or backtrace returned more lines than we allotted space for!");
+                LOG_L(L_ERROR, "thread_unwind returned more lines than we allotted space for!");
             }
-            lines = backtrace_symbols(iparray, numLines); // give them meaningfull names
+            char** lines = backtrace_symbols(iparray, numLines); // give them meaningfull names
 
             ExtractSymbols(lines, stacktrace);
         }
@@ -831,7 +837,7 @@ namespace CrashHandler
             LOG_L(L_DEBUG, "HaltedStacktrace[2]");
 
             if(numLines > MAX_STACKTRACE_DEPTH) {
-                LOG_L(L_ERROR, "thread_backtrace or backtrace returned more lines than we allotted space for!");
+                LOG_L(L_ERROR, "thread_unwind returned more lines than we allotted space for!");
             }
 
             char** lines = backtrace_symbols(iparray, numLines); // give them meaningfull names

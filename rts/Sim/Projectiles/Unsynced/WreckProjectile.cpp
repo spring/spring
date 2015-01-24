@@ -59,10 +59,10 @@ void CWreckProjectile::Draw()
 	col[3] = 200;
 
 	#define wt projectileDrawer->wrecktex
-	va->AddVertexTC(drawPos - camera->right * drawRadius - camera->up * drawRadius, wt->xstart, wt->ystart, col);
-	va->AddVertexTC(drawPos + camera->right * drawRadius - camera->up * drawRadius, wt->xend,   wt->ystart, col);
-	va->AddVertexTC(drawPos + camera->right * drawRadius + camera->up * drawRadius, wt->xend,   wt->yend,   col);
-	va->AddVertexTC(drawPos - camera->right * drawRadius + camera->up * drawRadius, wt->xstart, wt->yend,   col);
+	va->AddVertexTC(drawPos - camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, wt->xstart, wt->ystart, col);
+	va->AddVertexTC(drawPos + camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, wt->xend,   wt->ystart, col);
+	va->AddVertexTC(drawPos + camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, wt->xend,   wt->yend,   col);
+	va->AddVertexTC(drawPos - camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, wt->xstart, wt->yend,   col);
 	#undef wt
 }
 

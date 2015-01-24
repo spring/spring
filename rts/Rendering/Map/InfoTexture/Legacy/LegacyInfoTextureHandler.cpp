@@ -160,6 +160,8 @@ void CLegacyInfoTextureHandler::SetMode(const std::string& name)
 		case drawPathCost: {
 			highResInfoTexWanted = false;
 		} break;
+		case drawNormal: break; //TODO?
+		case NUM_INFOTEXTURES: break; //make compiler happy
 	}
 
 	updateTextureState = 0;
@@ -410,6 +412,7 @@ bool CLegacyInfoTextureHandler::UpdateExtraTexture(BaseGroundDrawMode texDrawMod
 			case drawNormal: {
 				assert(false);
 			} break;
+			case NUM_INFOTEXTURES: break; //make compiler happy
 		}
 
 		infoTexPBO.UnmapBuffer();

@@ -434,10 +434,10 @@ void CPieceProjectile::Draw()
 				const float3 pos1 = CalcBeizer(float(a) / (numParts), pos, dirpos1, dirpos2, oldSmokePos);
 
 				#define st projectileDrawer->smoketex[0]
-				va->AddVertexQTC(pos1 + ( camera->up+camera->right) * size, st->xstart, st->ystart, col);
-				va->AddVertexQTC(pos1 + ( camera->up-camera->right) * size, st->xend,   st->ystart, col);
-				va->AddVertexQTC(pos1 + (-camera->up-camera->right) * size, st->xend,   st->ystart, col);
-				va->AddVertexQTC(pos1 + (-camera->up+camera->right) * size, st->xstart, st->ystart, col);
+				va->AddVertexQTC(pos1 + ( camera->GetUp()+camera->GetRight()) * size, st->xstart, st->ystart, col);
+				va->AddVertexQTC(pos1 + ( camera->GetUp()-camera->GetRight()) * size, st->xend,   st->ystart, col);
+				va->AddVertexQTC(pos1 + (-camera->GetUp()-camera->GetRight()) * size, st->xend,   st->ystart, col);
+				va->AddVertexQTC(pos1 + (-camera->GetUp()+camera->GetRight()) * size, st->xstart, st->ystart, col);
 				#undef st
 			}
 		}
@@ -475,10 +475,10 @@ void CPieceProjectile::DrawCallback()
 			col[3] = (unsigned char) (alpha * 50);
 
 			#define eft projectileDrawer->explofadetex
-			va->AddVertexQTC(interPos - camera->right * drawsize-camera->up * drawsize, eft->xstart, eft->ystart, col);
-			va->AddVertexQTC(interPos + camera->right * drawsize-camera->up * drawsize, eft->xend,   eft->ystart, col);
-			va->AddVertexQTC(interPos + camera->right * drawsize+camera->up * drawsize, eft->xend,   eft->yend,   col);
-			va->AddVertexQTC(interPos - camera->right * drawsize+camera->up * drawsize, eft->xstart, eft->yend,   col);
+			va->AddVertexQTC(interPos - camera->GetRight() * drawsize-camera->GetUp() * drawsize, eft->xstart, eft->ystart, col);
+			va->AddVertexQTC(interPos + camera->GetRight() * drawsize-camera->GetUp() * drawsize, eft->xend,   eft->ystart, col);
+			va->AddVertexQTC(interPos + camera->GetRight() * drawsize+camera->GetUp() * drawsize, eft->xend,   eft->yend,   col);
+			va->AddVertexQTC(interPos - camera->GetRight() * drawsize+camera->GetUp() * drawsize, eft->xstart, eft->yend,   col);
 			#undef eft
 		}
 	}

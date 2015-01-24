@@ -11,6 +11,9 @@ return {
 		}
 	]],
 	fragment = [[#version 130
+	#ifdef HIGH_QUALITY
+	#extension GL_ARB_texture_query_lod : enable
+	#endif
 		uniform sampler2D tex0;
 		uniform sampler2D tex1;
 		varying vec2 texCoord;
@@ -18,7 +21,6 @@ return {
 		mat4 COLORMATRIX0 = mat4(0.80,0.00,0.00,1.0, 0.00,0.80,0.20,1.0, 1.0,0.6,0.0,1.0, 0.0,0.0,0.0,1.0);
 
 	#ifdef HIGH_QUALITY
-	#extension GL_ARB_texture_query_lod : enable
 
 		//! source: http://www.ozone3d.net/blogs/lab/20110427/glsl-random-generator/
 		float rand(vec2 n)
@@ -65,8 +67,8 @@ return {
 			vec4 pathData = texture2D(tex0, texCoord);
 			gl_FragColor = COLORMATRIX0 * pathData;
 
-			gl_FragColor.r -= step(1.0, pathData.r) * 0.3;
-			gl_FragColor.b += step(1.0, pathData.r) * 1.0;
+			gl_FragColor.r -= smoothstep(0.75, 1.0, pathData.r) * 0.3;
+			gl_FragColor.b += smoothstep(0.75, 1.0, pathData.r) * 1.0;
 
 			gl_FragColor = mix(vec4(1.0), gl_FragColor, getTexel(tex1, texCoord).r * 0.35 + 0.7);
 			gl_FragColor.a = 0.3;

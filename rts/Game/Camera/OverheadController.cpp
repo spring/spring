@@ -21,13 +21,17 @@ CONFIG(float, OverheadTiltSpeed).defaultValue(1.0f);
 CONFIG(bool, OverheadEnabled).defaultValue(true).headlessValue(false);
 CONFIG(float, OverheadFOV).defaultValue(45.0f);
 
+
+static const float angleStep = fastmath::HALFPI / 14.f;
+
+
 COverheadController::COverheadController()
 	: flipped(false)
-	, zscale(0.5f)
 	, height(1500)
 	, oldAltHeight(1500)
 	, changeAltHeight(true)
 	, maxHeight(10000)
+	, angle(DEFAULT_ANGLE)
 {
 	middleClickScrollSpeed = configHandler->GetFloat("MiddleClickScrollSpeed");
 	scrollSpeed = configHandler->GetInt("OverheadScrollSpeed") * 0.1f;
@@ -42,7 +46,7 @@ COverheadController::COverheadController()
 	}
 
 	maxHeight = 9.5f * std::max(gs->mapx, gs->mapy);
-	UpdateVectors();
+	Update();
 }
 
 void COverheadController::KeyMove(float3 move)
@@ -55,7 +59,7 @@ void COverheadController::KeyMove(float3 move)
 
 	pos.x += move.x * pixelSize * 2.0f * scrollSpeed;
 	pos.z -= move.y * pixelSize * 2.0f * scrollSpeed;
-	UpdateVectors();
+	Update();
 }
 
 void COverheadController::MouseMove(float3 move)
@@ -68,7 +72,7 @@ void COverheadController::MouseMove(float3 move)
 
 	pos.x += move.x * pixelSize * (1 + KeyInput::GetKeyModState(KMOD_SHIFT) * 3) * scrollSpeed;
 	pos.z += move.y * pixelSize * (1 + KeyInput::GetKeyModState(KMOD_SHIFT) * 3) * scrollSpeed;
-	UpdateVectors();
+	Update();
 }
 
 void COverheadController::ScreenEdgeMove(float3 move)
@@ -92,8 +96,8 @@ void COverheadController::MouseWheelMove(float move)
 	// otherwise holding down LALT uses 'instant-zoom'
 	// from here to the end of the function (smoothed)
 	if (KeyInput::GetKeyModState(KMOD_CTRL)) {
-		zscale *= (1.0f + (0.01f * move * tiltSpeed * shiftSpeed));
-		zscale = Clamp(zscale, 0.05f, 10.0f);
+		angle += (move * tiltSpeed * shiftSpeed * 0.025f) * angleStep;
+		angle = Clamp(angle, 0.01f, fastmath::HALFPI);
 	} else {
 		if (move < 0.0f) {
 			// ZOOM IN to mouse cursor instead of mid screen
@@ -130,8 +134,8 @@ void COverheadController::MouseWheelMove(float move)
 					changeAltHeight = false;
 				}
 				height = maxHeight;
-				pos.x  = gs->mapx * 4;
-				pos.z  = gs->mapy * 4.8f; // somewhat longer toward bottom
+				pos.x  = gs->mapx * SQUARE_SIZE * 0.5f;
+				pos.z  = gs->mapy * SQUARE_SIZE * 0.55f; // somewhat longer toward bottom
 			} else {
 				height *= (1.0f + (altZoomDist / height));
 			}
@@ -139,27 +143,26 @@ void COverheadController::MouseWheelMove(float move)
 
 		// instant-zoom: turn on the smooth transition and reset the camera tilt
 		if (KeyInput::GetKeyModState(KMOD_ALT)) {
-			zscale = 0.5f;
+			angle = DEFAULT_ANGLE;
 			camHandler->CameraTransition(1.0f);
 		} else {
 			changeAltHeight = true;
 		}
 	}
 
-	UpdateVectors();
+	Update();
 }
 
-void COverheadController::UpdateVectors()
+void COverheadController::Update()
 {
 	pos.x = Clamp(pos.x, 0.01f, gs->mapx * SQUARE_SIZE - 0.01f);
 	pos.z = Clamp(pos.z, 0.01f, gs->mapy * SQUARE_SIZE - 0.01f);
 	pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false);
 	height = Clamp(height, 60.0f, maxHeight);
-	dir = float3(0.0f, -1.0f, flipped ? zscale : -zscale).ANormalize();
-}
 
-void COverheadController::Update()
-{
+	float alpha = std::roundf(angle / angleStep) * angleStep;
+	alpha = Clamp(alpha, 0.01f, fastmath::HALFPI);
+	dir = float3(0.0f, -fastmath::cos(alpha), flipped ? fastmath::sin(alpha) : -fastmath::sin(alpha));
 	pixelSize = (camera->GetTanHalfFov() * 2.0f) / globalRendering->viewSizeY * height * 2.0f;
 }
 
@@ -172,7 +175,7 @@ float3 COverheadController::GetPos() const
 void COverheadController::SetPos(const float3& newPos)
 {
 	pos = newPos;
-	UpdateVectors();
+	Update();
 }
 
 float3 COverheadController::SwitchFrom() const
@@ -180,11 +183,13 @@ float3 COverheadController::SwitchFrom() const
 	return pos;
 }
 
-void COverheadController::SwitchTo(bool showText)
+void COverheadController::SwitchTo(const int oldCam, const bool showText)
 {
 	if (showText) {
 		LOG("Switching to Overhead (TA) style camera");
 	}
+	angle = DEFAULT_ANGLE;
+	Update();
 }
 
 void COverheadController::GetState(StateMap& sm) const
@@ -192,7 +197,7 @@ void COverheadController::GetState(StateMap& sm) const
 	CCameraController::GetState(sm);
 
 	sm["height"]  = height;
-	sm["zscale"]  = zscale;
+	sm["angle"]   = angle;
 	sm["flipped"] = flipped ? +1.0f : -1.0f;
 }
 
@@ -201,9 +206,8 @@ bool COverheadController::SetState(const StateMap& sm)
 	CCameraController::SetState(sm);
 
 	SetStateFloat(sm, "height", height);
-	SetStateFloat(sm, "zscale", zscale);
+	SetStateFloat(sm, "angle", angle);
 	SetStateBool (sm, "flipped", flipped);
-	UpdateVectors();
 
 	return true;
 }

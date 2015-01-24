@@ -37,8 +37,8 @@ CR_REG_METADATA(CSolidObject,
  	CR_MEMBER(footprint),
 	CR_MEMBER(heading),
 
-	CR_ENUM_MEMBER(physicalState),
-	CR_ENUM_MEMBER(collidableState),
+	CR_MEMBER(physicalState),
+	CR_MEMBER(collidableState),
 
 	CR_MEMBER(team),
 	CR_MEMBER(allyteam),

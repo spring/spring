@@ -11,6 +11,9 @@ return {
 		}
 	]],
 	fragment = [[#version 130
+	#ifdef HIGH_QUALITY
+	#extension GL_ARB_texture_query_lod : enable
+	#endif
 		uniform sampler2D tex0;
 		uniform sampler2D tex1;
 		varying vec2 texCoord;
@@ -19,7 +22,6 @@ return {
 		mat4 COLORMATRIX1 = mat4(0.90,0.00,0.00,1.0, 0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0, 0.0,0.0,0.0,1.0);
 
 	#ifdef HIGH_QUALITY
-	#extension GL_ARB_texture_query_lod : enable
 
 		//! source: http://www.ozone3d.net/blogs/lab/20110427/glsl-random-generator/
 		float rand(vec2 n)

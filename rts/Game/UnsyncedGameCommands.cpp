@@ -49,9 +49,12 @@
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/VerticalSync.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
+#include "Rendering/Map/InfoTexture/Modern/Path.h"
 #include "Lua/LuaOpenGL.h"
 #include "Lua/LuaUI.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Game/UI/Groups/GroupHandler.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -84,6 +87,7 @@
 #include "System/EventHandler.h"
 
 #include <SDL_events.h>
+#include <SDL_video.h>
 
 
 static std::vector<std::string> _local_strSpaceTokenize(const std::string& text) {
@@ -1266,6 +1270,8 @@ public:
 		game->chatting = true;
 		game->ignoreNextChar = true;
 		game->consoleHistory->ResetPosition();
+		inMapDrawer->SetDrawMode(false);
+
 		return true;
 	}
 
@@ -1579,8 +1585,11 @@ public:
 			globalRendering->fullScreen = !globalRendering->fullScreen;
 		}
 
+		const int2 res = globalRendering->GetWantedViewSize(globalRendering->fullScreen);
 		const bool borderless = configHandler->GetBool("WindowBorderless");
 		if (globalRendering->fullScreen) {
+			SDL_SetWindowSize(globalRendering->window, res.x, res.y);
+
 			if (borderless) {
 				SDL_SetWindowFullscreen(globalRendering->window, SDL_WINDOW_FULLSCREEN_DESKTOP);
 			} else {
@@ -1589,6 +1598,8 @@ public:
 		} else {
 			SDL_SetWindowFullscreen(globalRendering->window, 0);
 			SDL_SetWindowBordered(globalRendering->window, borderless ? SDL_FALSE : SDL_TRUE);
+			SDL_SetWindowSize(globalRendering->window, res.x, res.y);
+			SDL_SetWindowPosition(globalRendering->window, configHandler->GetInt("WindowPosX"), configHandler->GetInt("WindowPosY"));
 		}
 		return true;
 	}
@@ -1808,6 +1819,8 @@ public:
 			"Enable rendering of the path traversability-map overlay") {}
 
 	bool Execute(const UnsyncedAction& action) const {
+		CPathTexture* pathTexInfo = dynamic_cast<CPathTexture*>(infoTextureHandler->GetInfoTexture("path"));
+		if (pathTexInfo) pathTexInfo->ShowMoveDef(-1);
 		infoTextureHandler->ToggleMode("path");
 		return true;
 	}
@@ -1846,8 +1859,6 @@ public:
 	}
 };
 
-
-
 class ToggleLOSActionExecutor : public IUnsyncedActionExecutor {
 public:
 	ToggleLOSActionExecutor() : IUnsyncedActionExecutor("ToggleLOS",
@@ -1855,6 +1866,64 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		infoTextureHandler->ToggleMode("los");
+		return true;
+	}
+};
+
+class ToggleInfoActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ToggleInfoActionExecutor() : IUnsyncedActionExecutor("ToggleInfo",
+			"Toggles current info texture view") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		infoTextureHandler->ToggleMode(action.GetArgs());
+		return true;
+	}
+};
+
+
+class ShowPathTypeActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ShowPathTypeActionExecutor() : IUnsyncedActionExecutor("ShowPathType",
+			"Shows path traversability for a given MoveDefName, MoveDefID or UnitDefName") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		CPathTexture* pathTexInfo = dynamic_cast<CPathTexture*>(infoTextureHandler->GetInfoTexture("path"));
+		if (pathTexInfo) {
+			bool set = false;
+
+			if (!action.GetArgs().empty()) {
+				if (!set) {
+					bool failed = false;
+					unsigned int i = StringToInt(action.GetArgs(), &failed);
+					if (failed) i = -1;
+					const MoveDef* md = moveDefHandler->GetMoveDefByName(action.GetArgs());
+					if (!md && i<moveDefHandler->GetNumMoveDefs()) md = moveDefHandler->GetMoveDefByPathType(i);
+					if (md) {
+						set = true;
+						pathTexInfo->ShowMoveDef(md->pathType);
+						LOG("Showing PathView for MoveDef: %s", md->name.c_str());
+					}
+				}
+
+				if (!set) {
+					const UnitDef* ud = unitDefHandler->GetUnitDefByName(action.GetArgs());
+					if (ud) {
+						set = true;
+						pathTexInfo->ShowUnitDef(ud->id);
+						LOG("Showing BuildView for UnitDef: %s", ud->name.c_str());
+					}
+				}
+			}
+
+			if (!set) {
+				pathTexInfo->ShowMoveDef(-1);
+				LOG("Switching back to automatic PathView");
+			}
+
+			if (set && infoTextureHandler->GetMode() != "path")
+				infoTextureHandler->ToggleMode("path");
+		}
 		return true;
 	}
 };
@@ -3250,6 +3319,8 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new ShowPathFlowActionExecutor());
 	AddActionExecutor(new ShowPathCostActionExecutor());
 	AddActionExecutor(new ToggleLOSActionExecutor());
+	AddActionExecutor(new ToggleInfoActionExecutor());
+	AddActionExecutor(new ShowPathTypeActionExecutor());
 	AddActionExecutor(new ShareDialogActionExecutor());
 	AddActionExecutor(new QuitMessageActionExecutor());
 	AddActionExecutor(new QuitMenuActionExecutor());

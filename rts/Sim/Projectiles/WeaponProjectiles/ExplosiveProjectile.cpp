@@ -116,8 +116,8 @@ void CExplosiveProjectile::Draw()
 		const float stageDecay = (stages - (stage * alphaDecay)) * invStages;
 		const float stageSize  = drawRadius * (1.0f - (stage * sizeDecay));
 
-		const float3 ydirCam  = camera->up    * stageSize;
-		const float3 xdirCam  = camera->right * stageSize;
+		const float3 ydirCam  = camera->GetUp()    * stageSize;
+		const float3 xdirCam  = camera->GetRight() * stageSize;
 		const float3 stageGap = (noGap)? (ndir * stageSize * stage): (ndir * drawRadius * stage);
 		const float3 stagePos = drawPos - stageGap;
 

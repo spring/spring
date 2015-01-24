@@ -144,6 +144,13 @@ private:
 	std::list<int2> updatedBlocks;       /// Blocks that may need an update due to map changes.
 
 	int blockUpdatePenalty;
+
+	struct SOffsetBlock {
+		float cost;
+		int2 offset;
+		SOffsetBlock(const float _cost, const int x, const int y) : cost(_cost), offset(x,y) {}
+	};
+	std::vector<SOffsetBlock> offsetBlocksSortedByCost;
 };
 
 #endif

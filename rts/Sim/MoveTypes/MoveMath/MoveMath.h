@@ -54,8 +54,6 @@ public:
 	static inline BlockType IsBlocked(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider);
 	static BlockType IsBlockedNoSpeedModCheck(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider);
 	static inline BlockType IsBlockedStructure(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider);
-	static bool IsBlockedStructureXmax(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider);
-	static bool IsBlockedStructureZmax(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider);
 
 	// checks whether an object (collidee) is non-crushable by the given MoveDef
 	static bool CrushResistant(const MoveDef& colliderMD, const CSolidObject* collidee);

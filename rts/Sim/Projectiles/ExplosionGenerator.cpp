@@ -620,23 +620,25 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 				return;
 			}
 			case OP_STOREI: {
-				boost::uint16_t offset = *(boost::uint16_t*) code;
-				code += 2;
-				*(int*) (instance + offset) = (int) val;
+				boost::uint8_t  size   = *(boost::uint8_t*)  code; code++;
+				boost::uint16_t offset = *(boost::uint16_t*) code; code += 2;
+				switch (size) {
+					case 0: { /*no op*/ } break;
+					case 1: { *(boost::int8_t*)  (instance + offset) = (int) val; } break;
+					case 2: { *(boost::int16_t*) (instance + offset) = (int) val; } break;
+					case 4: { *(boost::int32_t*) (instance + offset) = (int) val; } break;
+					case 8: { *(boost::int64_t*) (instance + offset) = (int) val; } break;
+				}
 				val = 0.0f;
 				break;
 			}
 			case OP_STOREF: {
-				boost::uint16_t offset = *(boost::uint16_t*) code;
-				code += 2;
-				*(float*) (instance + offset) = val;
-				val = 0.0f;
-				break;
-			}
-			case OP_STOREC: {
-				boost::uint16_t offset = *(boost::uint16_t*) code;
-				code += 2;
-				*(unsigned char*) (instance + offset) = (int) val;
+				boost::uint8_t  size   = *(boost::uint8_t*)  code; code++;
+				boost::uint16_t offset = *(boost::uint16_t*) code; code += 2;
+				switch (size) {
+					case 4: { *(float*)  (instance + offset) = val; } break;
+					case 8: { *(double*) (instance + offset) = val; } break;
+				}
 				val = 0.0f;
 				break;
 			}
@@ -748,18 +750,21 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 	}
 	else if (dynamic_cast<creg::BasicType*>(type.get())) {
 		const creg::BasicType* basicType = (creg::BasicType*) type.get();
-		const bool legalType =
-			(basicType->id == creg::crInt  ) ||
-			(basicType->id == creg::crFloat) ||
-			(basicType->id == creg::crUChar) ||
-			(basicType->id == creg::crBool );
+		const boost::uint8_t basicTypeSize = basicType->GetSize();
 
-		if (!legalType) {
-			throw content_error("[CCEG::ParseExplosionCode] projectile type-properties other than int, float, uchar, or bool are not supported (" + script + ")");
+		// check sizeof(member)
+		const std::set<boost::uint8_t> allowedSizeInt = {1,2,4 /*,0,8*/};
+		const std::set<boost::uint8_t> allowedSizeFlt = {4 /*,8*/};
+		if (basicType->id == creg::crFloat) {
+			if (allowedSizeFlt.find(basicTypeSize) == allowedSizeFlt.end())
+				throw content_error("[CCEG::ParseExplosionCode] incompatible float size \"" + IntToString(basicTypeSize) + "\" (" + script + ")");
+		} else {
+			if (allowedSizeInt.find(basicTypeSize) == allowedSizeInt.end())
+				throw content_error("[CCEG::ParseExplosionCode] incompatible integer size \"" + IntToString(basicTypeSize) + "\" (" + script + ")");
 		}
 
+		// parse the code
 		int p = 0;
-
 		while (p < script.length()) {
 			char opcode = OP_END;
 			char c = script[p++];
@@ -813,14 +818,10 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			}
 		}
 
-		switch (basicType->id) {
-			case creg::crInt:   code.push_back(OP_STOREI); break;
-			case creg::crBool:  code.push_back(OP_STOREC); break;
-			case creg::crFloat: code.push_back(OP_STOREF); break;
-			case creg::crUChar: code.push_back(OP_STOREC); break;
-			default: break;
-		}
-
+		// store the final value
+		code.push_back((basicType->id == creg::crFloat) ? OP_STOREF : OP_STOREI);
+		code.push_back(basicTypeSize);
+		assert(basicTypeSize == code.back());
 		boost::uint16_t ofs = offset;
 		code.append((char*)&ofs, (char*)&ofs + 2);
 	}

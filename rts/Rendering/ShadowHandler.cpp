@@ -256,7 +256,7 @@ bool CShadowHandler::InitDepthTarget()
 
 	// test the FBO
 	glDrawBuffer(useColorTexture ? GL_COLOR_ATTACHMENT0_EXT : GL_NONE);
-	glDrawBuffer(useColorTexture ? GL_COLOR_ATTACHMENT0_EXT : GL_NONE);
+	glReadBuffer(useColorTexture ? GL_COLOR_ATTACHMENT0_EXT : GL_NONE);
 	bool status = fb.CheckStatus("SHADOW");
 	if (!status && !useColorTexture) {
 		status = WorkaroundUnsupportedFboRenderTargets();
@@ -294,7 +294,7 @@ bool CShadowHandler::WorkaroundUnsupportedFboRenderTargets()
 	// ATI sometimes fails without an attached color texture, so check a few formats (not all supported texture formats are renderable)
 	{
 		glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
-		glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+		glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
 
 		// 1st: try the smallest unsupported format (4bit per pixel)
 		glGenTextures(1, &dummyColorTexture);
@@ -487,10 +487,11 @@ void CShadowHandler::CreateShadows()
 	}
 
 	if (L->GetLightIntensity() > 0.0f) {
-		// move view into sun-space
+		// HACK
+		// needed for particle/billboard rendering
+		// NOT for frustum checking (which is semi broken for shadows)!
 		const float3 camUp = camera->up;
 		const float3 camRgt = camera->right;
-
 		camera->right = sunDirX;
 		camera->up = sunDirY;
 
@@ -546,7 +547,7 @@ float CShadowHandler::GetOrthoProjectedMapRadius(const float3& sunDir, float3& p
 	// using the length of that projected vector instead
 	//
 	// note: "radius" is actually the diameter
-	static const float maxMapDiameter = math::sqrtf(Square(gs->mapx * SQUARE_SIZE) + Square(gs->mapy * SQUARE_SIZE));
+	static const float maxMapDiameter = math::sqrt(Square(gs->mapx * SQUARE_SIZE) + Square(gs->mapy * SQUARE_SIZE));
 	static       float curMapDiameter = 0.0f;
 
 	static float3 sunDir3D = ZeroVector;
@@ -649,8 +650,8 @@ float CShadowHandler::GetOrthoProjectedFrustumRadius(CCamera* cam, float3& proje
 		frustumRadius = std::max(frustumRadius, rad);
 	}
 
-	static const float maxMapDiameter = math::sqrtf(Square(gs->mapx * SQUARE_SIZE) + Square(gs->mapy * SQUARE_SIZE));
-	       const float frustumDiameter = math::sqrtf(frustumRadius) * 2.0f;
+	static const float maxMapDiameter = math::sqrt(Square(gs->mapx * SQUARE_SIZE) + Square(gs->mapy * SQUARE_SIZE));
+	       const float frustumDiameter = math::sqrt(frustumRadius) * 2.0f;
 
 	return std::min(maxMapDiameter, frustumDiameter);
 }
