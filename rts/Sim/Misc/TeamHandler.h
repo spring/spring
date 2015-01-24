@@ -21,6 +21,7 @@ public:
 	CTeamHandler();
 	~CTeamHandler();
 
+	void ResetState();
 	void LoadFromSetup(const CGameSetup* setup);
 
 	/**

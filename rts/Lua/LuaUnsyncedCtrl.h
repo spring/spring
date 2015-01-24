@@ -16,9 +16,6 @@ class LuaUnsyncedCtrl {
 	public:
 		static bool PushEntries(lua_State* L);
 
-		static void DrawUnitCommandQueues();
-		static void ClearUnitCommandQueues();
-
 	public:
 		static int Echo(lua_State* L);
 		static int Log(lua_State* L);
@@ -93,7 +90,9 @@ class LuaUnsyncedCtrl {
 
 		static int CreateDir(lua_State* L);
 
+		static int Reload(lua_State* L);
 		static int Restart(lua_State* L);
+
 		static int SetWMIcon(lua_State* L);
 		static int SetWMCaption(lua_State* L);
 

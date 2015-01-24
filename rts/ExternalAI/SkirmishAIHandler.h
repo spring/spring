@@ -23,18 +23,22 @@ class CSkirmishAIHandler
 	CR_DECLARE_STRUCT(CSkirmishAIHandler)
 
 	CSkirmishAIHandler();
-	~CSkirmishAIHandler();
+	~CSkirmishAIHandler() { ResetState(); }
 
 public:
 	typedef std::vector<unsigned char> ids_t;
 	typedef std::map<unsigned char, SkirmishAIData> id_ai_t;
+	typedef std::map<unsigned int, SkirmishAIKey> id_libKey_t;
 
 	/**
 	 * Fetcher for the singleton.
 	 */
-	static CSkirmishAIHandler& GetInstance();
+	static CSkirmishAIHandler* GetInstance();
+	static void FreeInstance(CSkirmishAIHandler*);
 
+	void ResetState();
 	void LoadFromSetup(const CGameSetup& setup);
+
 	/**
 	 * Will be called when the Mods archives were loaded into the VFS,
 	 * and we received our player number (gu->myPlayerNum is set).
@@ -185,22 +189,24 @@ private:
 	/// Id -> AI instance
 	id_ai_t id_ai;
 
+	/// Id -> AI instance library key
+	id_libKey_t id_libKey;
+
 	/// Temporarly stores detailed info of local Skirmish AIs waiting for initialization
 	std::map<int, SkirmishAIData> team_localAIsInCreation;
 
 	/// Temporarly stores reason for killing a Skirmish AI
 	std::map<unsigned int, int> id_dieReason;
 
-	typedef std::map<unsigned int, SkirmishAIKey> id_libKey_t;
-	/// Id -> AI instance library key
-	id_libKey_t id_libKey;
-
-	bool gameInitialized;
 	std::set<std::string> luaAIShortNames;
+
 	// the current local AI ID that is executing, MAX_AIS if none (e.g. LuaUI)
 	unsigned char currentAIId;
+
+	bool gameInitialized;
 };
 
-#define skirmishAIHandler CSkirmishAIHandler::GetInstance()
+#define skirmishAIHandler (*CSkirmishAIHandler::GetInstance())
 
 #endif // SKIRMISH_AI_HANDLER_H
+

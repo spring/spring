@@ -3,11 +3,12 @@
 
 #include "RotOverheadController.h"
 
-#include "System/Config/ConfigHandler.h"
 #include "Game/Camera.h"
-#include "System/Log/ILog.h"
 #include "Map/Ground.h"
+#include "Map/ReadMap.h"
 #include "System/myMath.h"
+#include "System/Config/ConfigHandler.h"
+#include "System/Log/ILog.h"
 
 CONFIG(float, RotOverheadMouseScale).defaultValue(0.01f);
 CONFIG(int, RotOverheadScrollSpeed).defaultValue(10);
@@ -70,8 +71,8 @@ void CRotOverheadController::MouseWheelMove(float move)
 
 void CRotOverheadController::Update()
 {
-	pos.x = Clamp(pos.x, 0.01f, gs->mapx * SQUARE_SIZE - 0.01f);
-	pos.z = Clamp(pos.z, 0.01f, gs->mapy * SQUARE_SIZE - 0.01f);
+	pos.x = Clamp(pos.x, 0.01f, mapDims.mapx * SQUARE_SIZE - 0.01f);
+	pos.z = Clamp(pos.z, 0.01f, mapDims.mapy * SQUARE_SIZE - 0.01f);
 
 	float h = CGround::GetHeightAboveWater(pos.x, pos.z, false);
 	pos.y = Clamp(pos.y, h + 5, 9000.0f);

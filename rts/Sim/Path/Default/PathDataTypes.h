@@ -206,7 +206,7 @@ private:
 	std::vector<float> extraCostUnsynced;
 
 	// if non-NULL, these override PathNodeState::extraCost{Synced, Unsynced}
-	// (NOTE: they can have arbitrary resolutions between 1 and gs->map{x,y})
+	// (NOTE: they can have arbitrary resolutions between 1 and mapDims.map{x,y})
 	const float* extraCostsOverlaySynced;
 	const float* extraCostsOverlayUnsynced;
 
@@ -215,7 +215,7 @@ private:
 
 	int2 ps; ///< patch size (eg. 1 for PF, BLOCK_SIZE for PE); ignored when extraCosts != NULL
 	int2 br; ///< buffer resolution (equal to mr / ps); ignored when extraCosts != NULL
-	int2 mr; ///< heightmap resolution (equal to gs->map{x,y})
+	int2 mr; ///< heightmap resolution (equal to mapDims.map{x,y})
 	int2 sr; ///< extraCostsSynced resolution
 	int2 ur; ///< extraCostsUnsynced resolution
 };

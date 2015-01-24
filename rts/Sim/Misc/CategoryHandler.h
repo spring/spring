@@ -20,14 +20,9 @@ public:
 		return (sizeof(unsigned int) * 8);
 	}
 
-	static CCategoryHandler* Instance() {
+	static CCategoryHandler* Instance();
 
-		if (instance == NULL) {
-			instance = new CCategoryHandler();
-		}
-
-		return instance;
-	}
+	static void CreateInstance();
 	static void RemoveInstance();
 
 	/**
@@ -50,10 +45,11 @@ public:
 	std::vector<std::string> GetCategoryNames(unsigned int bits) const;
 
 private:
-	static CCategoryHandler* instance;
+	CCategoryHandler(): firstUnused(0) {}
+	~CCategoryHandler() {}
 
-	CCategoryHandler();
-	~CCategoryHandler();
+private:
+	static CCategoryHandler* instance;
 
 	std::map<std::string, unsigned int> categories;
 	unsigned int firstUnused;

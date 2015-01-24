@@ -17,6 +17,8 @@ class CResourceHandler : public boost::noncopyable
 
 public:
 	static CResourceHandler* GetInstance();
+
+	static void CreateInstance();
 	static void FreeInstance();
 
 	/**
@@ -93,10 +95,10 @@ public:
 	 */
 	const CResourceMapAnalyzer* GetResourceMapAnalyzer(int resourceId);
 
-	size_t GetNumResources() const;
+	size_t GetNumResources() const { return resources.size(); }
 
-	int GetMetalId() const;
-	int GetEnergyId() const;
+	int GetMetalId() const { return metalResourceId; }
+	int GetEnergyId() const { return energyResourceId; }
 
 	bool IsValidId(int resourceId) const;
 
@@ -104,7 +106,7 @@ private:
 	static CResourceHandler* instance;
 
 	CResourceHandler();
-	~CResourceHandler();
+	~CResourceHandler() {}
 
 	std::vector<CResourceDescription> resources;
 	std::map<int, CResourceMapAnalyzer*> resourceMapAnalyzers;

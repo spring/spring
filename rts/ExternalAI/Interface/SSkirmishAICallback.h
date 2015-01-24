@@ -1756,7 +1756,7 @@ struct SSkirmishAICallback {
 
 	/**
 	 * @brief the level of sight map
-	 * gs->mapx >> losMipLevel
+	 * mapDims.mapx >> losMipLevel
 	 * A square with value zero means you do not have LOS coverage on it.
 	 *Mod_getLosMipLevel
 	 * - do NOT modify or delete the height-map (native code relevant only)

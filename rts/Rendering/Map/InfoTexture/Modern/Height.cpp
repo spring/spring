@@ -24,7 +24,7 @@ CHeightTexture::CHeightTexture()
 {
 	eventHandler.AddClient(this);
 
-	texSize = int2(gs->mapxp1, gs->mapyp1);
+	texSize = int2(mapDims.mapxp1, mapDims.mapyp1);
 	texChannels = 4;
 
 	glGenTextures(1, &texture);

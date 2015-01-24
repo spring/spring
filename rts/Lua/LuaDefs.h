@@ -76,4 +76,37 @@ namespace {
 #define ADD_DEPRECATED_LUADEF_KEY(lua) \
 	paramMap[lua] = DataElement();
 
+
+
+
+#define DECL_LOAD_HANDLER(HandlerType, HandlerInstance)     \
+	void HandlerType::LoadHandler() {                       \
+		{                                                   \
+			std::lock_guard<boost::mutex> lk(m_singleton);  \
+                                                            \
+			if (HandlerInstance != NULL)                    \
+				return;                                     \
+                                                            \
+			HandlerInstance = new HandlerType();            \
+		}                                                   \
+                                                            \
+		if (!HandlerInstance->IsValid()) {                  \
+			FreeHandler();                                  \
+		}                                                   \
+	}
+
+#define DECL_FREE_HANDLER(HandlerType, HandlerInstance)  \
+	void HandlerType::FreeHandler() {                    \
+		std::lock_guard<boost::mutex> lk(m_singleton);   \
+                                                         \
+		if (HandlerInstance == NULL)                     \
+			return;                                      \
+                                                         \
+		auto* inst = HandlerInstance;                    \
+		HandlerInstance = NULL;                          \
+		inst->KillLua();                                 \
+		delete inst;                                     \
+	}
+
+
 #endif // LUA_DEFS_H

@@ -149,7 +149,7 @@ Patch::Patch()
 void Patch::Init(CSMFGroundDrawer* _drawer, int worldX, int worldZ)
 {
 	smfGroundDrawer = _drawer;
-	heightData = readMap->GetCornerHeightMapUnsynced();;
+	heightData = readMap->GetCornerHeightMapUnsynced();
 	m_WorldX = worldX;
 	m_WorldY = worldZ;
 
@@ -158,7 +158,7 @@ void Patch::Init(CSMFGroundDrawer* _drawer, int worldX, int worldZ)
 	m_BaseRight.BaseNeighbor = &m_BaseLeft;
 
 	// Store pointer to first byte of the height data for this patch.
-	m_HeightMap = &heightData[worldZ * gs->mapxp1 + worldX];
+	m_HeightMap = &heightData[worldZ * mapDims.mapxp1 + worldX];
 
 	// Create used OpenGL objects
 	triList = glGenLists(1);
@@ -210,10 +210,11 @@ void Patch::UpdateHeightMap(const SRectangle& rect)
 		}
 	}
 
-	static const float* hMap = readMap->GetCornerHeightMapUnsynced();
+	const float* hMap = readMap->GetCornerHeightMapUnsynced();
+
 	for (int z = rect.z1; z <= rect.z2; z++) {
 		for (int x = rect.x1; x <= rect.x2; x++) {
-			const float& h = hMap[(z + m_WorldY) * gs->mapxp1 + (x + m_WorldX)];
+			const float& h = hMap[(z + m_WorldY) * mapDims.mapxp1 + (x + m_WorldX)];
 			const int vindex = (z * (PATCH_SIZE + 1) + x) * 3;
 			vertices[vindex + 1] = h; // only update Y coord
 
@@ -420,7 +421,7 @@ float Patch::RecursComputeVariance(const int leftX, const int leftY, const float
 	int centerY = (leftY + rightY) >> 1; // Compute Y coord...
 
 	// Get the height value at the middle of the Hypotenuse
-	float centerZ = m_HeightMap[(centerY * gs->mapxp1) + centerX];
+	float centerZ = m_HeightMap[(centerY * mapDims.mapxp1) + centerX];
 
 	// Variance of this triangle is the actual height at it's hypotenuse midpoint minus the interpolated height.
 	// Use values passed on the stack instead of re-accessing the Height Field.
@@ -459,13 +460,13 @@ void Patch::ComputeVariance()
 {
 	// Compute variance on each of the base triangles...
 	m_CurrentVariance = &m_VarianceLeft[0];
-	RecursComputeVariance(0, PATCH_SIZE, m_HeightMap[PATCH_SIZE * gs->mapxp1],
+	RecursComputeVariance(0, PATCH_SIZE, m_HeightMap[PATCH_SIZE * mapDims.mapxp1],
 			PATCH_SIZE, 0, m_HeightMap[PATCH_SIZE], 0, 0, m_HeightMap[0], 1);
 
 	m_CurrentVariance = &m_VarianceRight[0];
 	RecursComputeVariance(PATCH_SIZE, 0, m_HeightMap[PATCH_SIZE], 0,
-			PATCH_SIZE, m_HeightMap[PATCH_SIZE * gs->mapxp1], PATCH_SIZE, PATCH_SIZE,
-			m_HeightMap[(PATCH_SIZE * gs->mapxp1) + PATCH_SIZE], 1);
+			PATCH_SIZE, m_HeightMap[PATCH_SIZE * mapDims.mapxp1], PATCH_SIZE, PATCH_SIZE,
+			m_HeightMap[(PATCH_SIZE * mapDims.mapxp1) + PATCH_SIZE], 1);
 
 	// Clear the dirty flag for this patch
 	m_isDirty = false;
@@ -732,6 +733,11 @@ public:
 	std::vector<Patch>* patches;
 	int numPatchesX;
 
+	void ResetState() {
+		patches = nullptr;
+		numPatchesX = 0;
+	}
+
 	void DrawQuad(int x, int y) {
 		(*patches)[x + y * numPatchesX].m_isVisible = true;
 	}
@@ -740,18 +746,23 @@ public:
 
 void Patch::UpdateVisibility(CCamera*& cam, std::vector<Patch>& patches, const int numPatchesX)
 {
+	#if 0
 	// very slow
-	//for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); ++it) {
-	//	it->UpdateVisibility(cam);
-	//}
-
+	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); ++it) {
+		it->UpdateVisibility(cam);
+	}
+	#else
 	// very fast
 	static CPatchInViewChecker checker;
+
+	checker.ResetState();
 	checker.patches     = &patches;
 	checker.numPatchesX = numPatchesX;
 
 	for (std::vector<Patch>::iterator it = patches.begin(); it != patches.end(); ++it) {
 		it->m_isVisible = false;
 	}
+
 	readMap->GridVisibility(cam, PATCH_SIZE, 1e9, &checker, INT_MAX);
+	#endif
 }

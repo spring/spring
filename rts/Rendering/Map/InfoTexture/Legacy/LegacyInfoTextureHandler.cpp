@@ -80,7 +80,7 @@ CLegacyInfoTextureHandler::CLegacyInfoTextureHandler()
 		infoTextureHandler = this;
 
 	infoTexPBO.Bind();
-	infoTexPBO.New(gs->pwr2mapx * gs->pwr2mapy * 4);
+	infoTexPBO.New(mapDims.pwr2mapx * mapDims.pwr2mapy * 4);
 	infoTexPBO.Unbind();
 
 	highResLosTex = configHandler->GetBool("HighResLos");
@@ -99,8 +99,8 @@ CLegacyInfoTextureHandler::CLegacyInfoTextureHandler()
 			hiresTex = true;
 		if (e == drawHeight)
 			hiresTex = true;
-		int2 texSize(gs->pwr2mapx>>1, gs->pwr2mapy>>1);
-		if (hiresTex) texSize = int2(gs->pwr2mapx, gs->pwr2mapy);
+		int2 texSize(mapDims.pwr2mapx>>1, mapDims.pwr2mapy>>1);
+		if (hiresTex) texSize = int2(mapDims.pwr2mapx, mapDims.pwr2mapy);
 
 		glBindTexture(GL_TEXTURE_2D, infoTextureIDs[i]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -194,9 +194,9 @@ GLuint CLegacyInfoTextureHandler::GetCurrentInfoTexture() const
 int2 CLegacyInfoTextureHandler::GetCurrentInfoTextureSize() const
 {
 	if (highResInfoTexWanted)
-		return (int2(gs->pwr2mapx, gs->pwr2mapy));
+		return (int2(mapDims.pwr2mapx, mapDims.pwr2mapy));
 
-	return (int2(gs->pwr2mapx >> 1, gs->pwr2mapy >> 1));
+	return (int2(mapDims.pwr2mapx >> 1, mapDims.pwr2mapy >> 1));
 }
 
 
@@ -256,7 +256,7 @@ bool CLegacyInfoTextureHandler::UpdateExtraTexture(BaseGroundDrawMode texDrawMod
 		return true;
 
 	if (updateTextureState < extraTextureUpdateRate) {
-		const int pwr2mapx_half = gs->pwr2mapx >> 1;
+		const int pwr2mapx_half = mapDims.pwr2mapx >> 1;
 
 		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 
@@ -270,14 +270,14 @@ bool CLegacyInfoTextureHandler::UpdateExtraTexture(BaseGroundDrawMode texDrawMod
 		infoTexPBO.Bind();
 
 		if (highResInfoTexWanted) {
-			starty = updateTextureState * gs->mapy / extraTextureUpdateRate;
-			endy = (updateTextureState + 1) * gs->mapy / extraTextureUpdateRate;
+			starty = updateTextureState * mapDims.mapy / extraTextureUpdateRate;
+			endy = (updateTextureState + 1) * mapDims.mapy / extraTextureUpdateRate;
 
-			offset = starty * gs->pwr2mapx * 4;
-			infoTexMem = reinterpret_cast<unsigned char*>(infoTexPBO.MapBuffer(offset, (endy - starty) * gs->pwr2mapx * 4));
+			offset = starty * mapDims.pwr2mapx * 4;
+			infoTexMem = reinterpret_cast<unsigned char*>(infoTexPBO.MapBuffer(offset, (endy - starty) * mapDims.pwr2mapx * 4));
 		} else {
-			starty = updateTextureState * gs->hmapy / extraTextureUpdateRate;
-			endy = (updateTextureState + 1) * gs->hmapy / extraTextureUpdateRate;
+			starty = updateTextureState * mapDims.hmapy / extraTextureUpdateRate;
+			endy = (updateTextureState + 1) * mapDims.hmapy / extraTextureUpdateRate;
 
 			offset = starty * pwr2mapx_half * 4;
 			infoTexMem = reinterpret_cast<unsigned char*>(infoTexPBO.MapBuffer(offset, (endy - starty) * pwr2mapx_half * 4));
@@ -301,9 +301,9 @@ bool CLegacyInfoTextureHandler::UpdateExtraTexture(BaseGroundDrawMode texDrawMod
 
 				for (int y = starty; y < endy; ++y) {
 					const int y_pwr2mapx_half = y*pwr2mapx_half;
-					const int y_hmapx = y * gs->hmapx;
+					const int y_hmapx = y * mapDims.hmapx;
 
-					for (int x = 0; x < gs->hmapx; ++x) {
+					for (int x = 0; x < mapDims.hmapx; ++x) {
 						const int a   = (y_pwr2mapx_half + x) * 4 - offset;
 						const int alx = ((x*2) >> losHandler->airMipLevel);
 						const int aly = ((y*2) >> losHandler->airMipLevel);
@@ -325,19 +325,19 @@ bool CLegacyInfoTextureHandler::UpdateExtraTexture(BaseGroundDrawMode texDrawMod
 				const SColor* extraTexPal = CHeightLinePalette::GetData();
 
 				// NOTE:
-				//   PBO/ExtraTexture resolution is always gs->pwr2mapx * gs->pwr2mapy
+				//   PBO/ExtraTexture resolution is always mapDims.pwr2mapx * mapDims.pwr2mapy
 				//   (we don't use it fully) while the CORNER heightmap has dimensions
-				//   (gs->mapx + 1) * (gs->mapy + 1). In case POT(gs->mapx) == gs->mapx
+				//   (mapDims.mapx + 1) * (mapDims.mapy + 1). In case POT(mapDims.mapx) == mapDims.mapx
 				//   we would therefore get a buffer overrun in our PBO when iterating
-				//   over column (gs->mapx + 1) or row (gs->mapy + 1) so we select the
+				//   over column (mapDims.mapx + 1) or row (mapDims.mapy + 1) so we select the
 				//   easiest solution and just skip those squares.
 				const float* heightMap = readMap->GetCornerHeightMapUnsynced();
 
 				for (int y = starty; y < endy; ++y) {
-					const int y_pwr2mapx = y * gs->pwr2mapx;
-					const int y_mapx     = y * gs->mapxp1;
+					const int y_pwr2mapx = y * mapDims.pwr2mapx;
+					const int y_mapx     = y * mapDims.mapxp1;
 
-					for (int x = 0; x < gs->mapx; ++x) {
+					for (int x = 0; x < mapDims.mapx; ++x) {
 						const float height = heightMap[y_mapx + x];
 						const unsigned int value = ((unsigned int)(height * 8.0f)) % 255;
 						const int i = (y_pwr2mapx + x) * 4 - offset;
@@ -361,8 +361,8 @@ bool CLegacyInfoTextureHandler::UpdateExtraTexture(BaseGroundDrawMode texDrawMod
 			#endif
 
 				const int lowRes = highResInfoTexWanted ? 0 : -1;
-				const int endx = highResInfoTexWanted ? gs->mapx : gs->hmapx;
-				const int pwr2mapx = gs->pwr2mapx >> (-lowRes);
+				const int endx = highResInfoTexWanted ? mapDims.mapx : mapDims.hmapx;
+				const int pwr2mapx = mapDims.pwr2mapx >> (-lowRes);
 				const int losSizeX = losHandler->losSizeX;
 				const int losSizeY = losHandler->losSizeY;
 				const int airSizeX = losHandler->airSizeX;
@@ -420,9 +420,9 @@ bool CLegacyInfoTextureHandler::UpdateExtraTexture(BaseGroundDrawMode texDrawMod
 		glBindTexture(GL_TEXTURE_2D, infoTextureIDs[texDrawMode]);
 
 		if (highResInfoTexWanted) {
-			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, starty, gs->pwr2mapx, (endy-starty), GL_BGRA, GL_UNSIGNED_BYTE, infoTexPBO.GetPtr(offset));
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, starty, mapDims.pwr2mapx, (endy-starty), GL_BGRA, GL_UNSIGNED_BYTE, infoTexPBO.GetPtr(offset));
 		} else {
-			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, starty, gs->pwr2mapx>>1, (endy-starty), GL_BGRA, GL_UNSIGNED_BYTE, infoTexPBO.GetPtr(offset));
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, starty, mapDims.pwr2mapx>>1, (endy-starty), GL_BGRA, GL_UNSIGNED_BYTE, infoTexPBO.GetPtr(offset));
 		}
 		*/
 
@@ -439,9 +439,9 @@ bool CLegacyInfoTextureHandler::UpdateExtraTexture(BaseGroundDrawMode texDrawMod
 			glBindTexture(GL_TEXTURE_2D, infoTextureIDs[texDrawMode]);
 
 			if (highResInfoTexWanted) {
-				glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, gs->pwr2mapx, gs->pwr2mapy, GL_BGRA, GL_UNSIGNED_BYTE, infoTexPBO.GetPtr());
+				glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, mapDims.pwr2mapx, mapDims.pwr2mapy, GL_BGRA, GL_UNSIGNED_BYTE, infoTexPBO.GetPtr());
 			} else {
-				glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, gs->pwr2mapx>>1, gs->pwr2mapy>>1, GL_BGRA, GL_UNSIGNED_BYTE, infoTexPBO.GetPtr());
+				glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, mapDims.pwr2mapx>>1, mapDims.pwr2mapy>>1, GL_BGRA, GL_UNSIGNED_BYTE, infoTexPBO.GetPtr());
 			}
 		infoTexPBO.Invalidate();
 		infoTexPBO.Unbind();

@@ -1,4 +1,9 @@
 !ifdef INSTALL
+	; 99.0
+	Delete "$INSTDIR\Zero-K.exe"
+	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Zero-K Lobby.lnk"
+	Delete "$DESKTOP\Spring lobby-client Zero-K.lnk"
+
 	; 95.0
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring MT.lnk"
 	Delete "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring MT (safemode).lnk"

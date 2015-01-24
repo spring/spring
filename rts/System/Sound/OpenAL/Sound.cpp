@@ -5,10 +5,13 @@
 #include <cstdlib>
 #include <cmath>
 #include <alc.h>
+
 #ifndef ALC_ALL_DEVICES_SPECIFIER
-//needed for ALC_ALL_DEVICES_SPECIFIER on some special *nix
-#include <alext.h>
+#define ALC_ALL_DEVICES_SPECIFIER 0x1013
+// needed for ALC_ALL_DEVICES_SPECIFIER on some special *nix
+// #include <alext.h>
 #endif
+
 #include <boost/cstdint.hpp>
 #include <boost/thread/thread.hpp>
 
@@ -44,6 +47,7 @@ CSound::CSound()
 	, prevVelocity(ZeroVector)
 	, soundThread(NULL)
 	, soundThreadQuit(false)
+	, canLoadDefs(false)
 {
 	boost::recursive_mutex::scoped_lock lck(soundMutex);
 	mute = false;
@@ -288,16 +292,14 @@ void CSound::StartThread(int maxSounds)
 
 		// we do not want to set a default for snd_device,
 		// so we do it like this ...
-		if (configHandler->IsSet("snd_device"))
-		{
+		if (configHandler->IsSet("snd_device")) {
 			configDeviceName = configHandler->GetString("snd_device");
 			deviceName = configDeviceName.c_str();
 		}
 
 		ALCdevice* device = alcOpenDevice(deviceName);
 
-		if ((device == NULL) && (deviceName != NULL))
-		{
+		if ((device == NULL) && (deviceName != NULL)) {
 			LOG_L(L_WARNING,
 					"Could not open the sound device \"%s\", trying the default device ...",
 					deviceName);
@@ -306,22 +308,17 @@ void CSound::StartThread(int maxSounds)
 			device = alcOpenDevice(deviceName);
 		}
 
-		if (device == NULL)
-		{
+		if (device == NULL) {
 			LOG_L(L_ERROR, "Could not open a sound device, disabling sounds");
 			CheckError("CSound::InitAL");
 			return;
-		}
-		else
-		{
-			ALCcontext *context = alcCreateContext(device, NULL);
-			if (context != NULL)
-			{
+		} else {
+			ALCcontext* context = alcCreateContext(device, NULL);
+
+			if (context != NULL) {
 				alcMakeContextCurrent(context);
 				CheckError("CSound::CreateContext");
-			}
-			else
-			{
+			} else {
 				alcCloseDevice(device);
 				LOG_L(L_ERROR, "Could not create OpenAL audio context");
 				return;
@@ -330,9 +327,8 @@ void CSound::StartThread(int maxSounds)
 		maxSounds = GetMaxMonoSources(device, maxSounds);
 
 		LOG("OpenAL info:");
-		bool hasAllEnum = alcIsExtensionPresent(NULL, "ALC_ENUMERATE_ALL_EXT");
-		if(hasAllEnum || alcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT"))
-		{
+		const bool hasAllEnum = alcIsExtensionPresent(NULL, "ALC_ENUMERATE_ALL_EXT");
+		if (hasAllEnum || alcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT")) {
 			LOG("  Available Devices:");
 			const char* deviceSpecifier = alcGetString(NULL, hasAllEnum ? ALC_ALL_DEVICES_SPECIFIER : ALC_DEVICE_SPECIFIER);
 			while (*deviceSpecifier != '\0') {
@@ -352,9 +348,9 @@ void CSound::StartThread(int maxSounds)
 		efx = new CEFX(device);
 
 		// Generate sound sources
-		for (int i = 0; i < maxSounds; i++)
-		{
+		for (int i = 0; i < maxSounds; i++) {
 			CSoundSource* thenewone = new CSoundSource();
+
 			if (thenewone->IsValid()) {
 				sources.push_back(thenewone);
 			} else {
@@ -374,6 +370,8 @@ void CSound::StartThread(int maxSounds)
 
 		alListenerf(AL_GAIN, masterVolume);
 	}
+
+	canLoadDefs = true;
 
 	Threading::SetThreadName("audio");
 	Watchdog::RegisterThread(WDT_AUDIO);

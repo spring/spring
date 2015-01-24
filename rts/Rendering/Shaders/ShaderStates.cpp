@@ -98,9 +98,9 @@ namespace Shader {
 	{
 		if (updates != lastUpdates) {
 			const std::string defs = GetString();
-
 			lastUpdates = updates;
-			lastHash = HsiehHash(&defs[0], defs.length(), 0);
+			lastHash = HsiehHash(&defs[0], defs.length(), 997);
+			assert(lastHash != 0);
 		}
 		return lastHash;
 	}

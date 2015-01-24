@@ -33,17 +33,19 @@ namespace CNamedTextures {
 
 	void Init()
 	{
+		texMap.clear();
+		texWaiting.clear();
 	}
-
 
 	void Kill()
 	{
-		TEXMAP::iterator it;
-		for (it = texMap.begin(); it != texMap.end(); ++it) {
+		for (auto it = texMap.cbegin(); it != texMap.cend(); ++it) {
 			const GLuint texID = it->second.id;
 			glDeleteTextures(1, &texID);
 		}
+
 		texMap.clear();
+		texWaiting.clear();
 	}
 
 
@@ -220,7 +222,7 @@ namespace CNamedTextures {
 		}
 
 		// cached
-		TEXMAP::iterator it = texMap.find(texName);
+		const auto it = texMap.find(texName);
 		if (it != texMap.end()) {
 			const GLuint texID = it->second.id;
 			glBindTexture(GL_TEXTURE_2D, texID);
@@ -258,9 +260,9 @@ namespace CNamedTextures {
 
 		glPushAttrib(GL_TEXTURE_BIT);
 		for (std::vector<std::string>::iterator it = texWaiting.begin(); it != texWaiting.end(); ++it) {
-			TEXMAP::iterator mit = texMap.find(*it);
+			const auto mit = texMap.find(*it);
 			if (mit != texMap.end()) {
-				Load(*it,mit->second.id);
+				Load(*it, mit->second.id);
 			}
 		}
 		glPopAttrib();
@@ -274,7 +276,7 @@ namespace CNamedTextures {
 			return false;
 		}
 
-		TEXMAP::iterator it = texMap.find(texName);
+		const auto it = texMap.find(texName);
 		if (it != texMap.end()) {
 			const GLuint texID = it->second.id;
 			glDeleteTextures(1, &texID);

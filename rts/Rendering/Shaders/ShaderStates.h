@@ -223,10 +223,17 @@ namespace Shader {
 
 	struct SShaderFlagState {
 	public:
-		SShaderFlagState() : updates(0), lastUpdates(0), lastHash(0) {}
+		SShaderFlagState() : updates(1), lastUpdates(0), lastHash(0) {}
 		virtual ~SShaderFlagState() {}
 
 		unsigned int GetHash();
+
+		void ClearHash()
+		{
+			lastHash = 0;
+			updates = 1;
+			lastUpdates = 0;
+		}
 
 		std::string GetString() const
 		{
