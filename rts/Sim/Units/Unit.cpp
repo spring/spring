@@ -283,11 +283,12 @@ void CUnit::InitStatic()
 
 	//! SlowUpdate runs every 16th simframe (a second has GAME_SPEED=30 gameframes!)
 	empDeclineRate = 2.0f * (float)UNIT_SLOWUPDATE_RATE / (float)GAME_SPEED / 40.0f;
-	expMultiplier  = 1.0f;
-	expPowerScale  = 1.0f;
-	expHealthScale = 0.7f;
-	expReloadScale = 0.4f;
 	expGrade       = 0.0f;
+
+	SetExpMultiplier(modInfo.unitExpMultiplier);
+	SetExpPowerScale(modInfo.unitExpPowerScale);
+	SetExpHealthScale(modInfo.unitExpHealthScale);
+	SetExpReloadScale(modInfo.unitExpReloadScale);
 
 	CCobInstance::InitVars(teamHandler->ActiveTeams(), teamHandler->ActiveAllyTeams());
 	CBuilderCAI::InitStatic();
