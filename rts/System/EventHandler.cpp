@@ -719,6 +719,30 @@ bool CEventHandler::GameSetup(const string& state, bool& ready,
 	return false;
 }
 
+void CEventHandler::DownloadQueued(int ID, const string& archiveName, const string& archiveType)
+{
+	ITERATE_EVENTCLIENTLIST(DownloadQueued, ID, archiveName, archiveType);
+}
+
+void CEventHandler::DownloadStarted(int ID)
+{
+	ITERATE_EVENTCLIENTLIST(DownloadStarted, ID);
+}
+
+void CEventHandler::DownloadFinished(int ID)
+{
+	ITERATE_EVENTCLIENTLIST(DownloadFinished, ID);
+}
+
+void CEventHandler::DownloadFailed(int ID, int errorID)
+{
+	ITERATE_EVENTCLIENTLIST(DownloadFailed, ID, errorID);
+}
+
+void CEventHandler::DownloadProgress(int ID, long downloaded, long total)
+{
+	ITERATE_EVENTCLIENTLIST(DownloadProgress, ID, downloaded, total);
+}
 
 string CEventHandler::WorldTooltip(const CUnit* unit,
                                    const CFeature* feature,

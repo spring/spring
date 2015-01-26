@@ -232,7 +232,12 @@ class CLuaHandle : public CEventClient
 		//FIXME void MetalMapChanged(const int x, const int z);
 
 		void CollectGarbage();
-
+		
+		void DownloadQueued(int ID, const string& archiveName, const string& archiveType);
+		void DownloadStarted(int ID);
+		void DownloadFinished(int ID);
+		void DownloadFailed(int ID, int errorID);
+		void DownloadProgress(int ID, long downloaded, long total);
 	public: // Non-eventhandler call-ins
 		void Shutdown();
 		bool GotChatMsg(const string& msg, int playerID);
