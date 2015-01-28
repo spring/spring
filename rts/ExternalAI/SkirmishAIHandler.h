@@ -22,7 +22,7 @@ class CSkirmishAIHandler
 {
 	CR_DECLARE_STRUCT(CSkirmishAIHandler)
 
-	CSkirmishAIHandler();
+	CSkirmishAIHandler() { ResetState(); }
 	~CSkirmishAIHandler() { ResetState(); }
 
 public:
