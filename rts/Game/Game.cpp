@@ -689,6 +689,8 @@ void CGame::LoadInterface()
 		grouphandlers.push_back(new CGroupHandler(t));
 	}
 
+	// note: disable is needed in case user reloads before StartPlaying
+	GameSetupDrawer::Disable();
 	GameSetupDrawer::Enable();
 }
 
@@ -1491,13 +1493,14 @@ void CGame::StartPlaying()
 {
 	assert(!playing);
 	playing = true;
-	GameSetupDrawer::Disable();
 	lastReadNetTime = spring_gettime();
 
 	gu->startTime = gu->gameTime;
 	gu->myTeam = playerHandler->Player(gu->myPlayerNum)->team;
 	gu->myAllyTeam = teamHandler->AllyTeam(gu->myTeam);
 //	grouphandler->team = gu->myTeam;
+
+	GameSetupDrawer::Disable();
 	CLuaUI::UpdateTeams();
 
 	// setup the teams
