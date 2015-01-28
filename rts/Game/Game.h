@@ -67,6 +67,7 @@ private:
 	void PostLoad();
 
 	void KillLua();
+	void KillMisc();
 	void KillRendering();
 	void KillInterface();
 	void KillSimulation();
