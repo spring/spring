@@ -8,6 +8,8 @@ Major:
  - new linux crashhandler by Major Bor3d0m
  - new rotatable default camera
  - bugfixes & improvements
+ - add unsynced Spring.Reload(script)
+ ! modified Spring.Restart(parameters, script): it only restarts spring when parameters isn't empty
 
 Cameras:
  ! removed TW, Orbital & Smooth camera
