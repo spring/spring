@@ -29,22 +29,35 @@ CTeamHandler::CTeamHandler():
 {
 }
 
-
 CTeamHandler::~CTeamHandler()
 {
-	for (std::vector<CTeam*>::iterator it = teams.begin(); it != teams.end(); ++it)
-		delete *it;
+	ResetState();
 }
 
 
+void CTeamHandler::ResetState()
+{
+	for (unsigned int n = 0; n < teams.size(); n++) {
+		delete teams[n]; teams[n] = NULL;
+	}
+
+	teams.clear();
+	allyTeams.clear();
+}
+
 void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 {
+	// must start from a blank slate
+	assert(teams.empty());
+	assert(allyTeams.empty());
+
 	assert(!setup->GetTeamStartingDataCont().empty());
 	assert(setup->GetTeamStartingDataCont().size() <= MAX_TEAMS);
 	assert(setup->GetAllyStartingDataCont().size() <= MAX_TEAMS);
 
 	teams.reserve(setup->GetTeamStartingDataCont().size() + 1); // +1 for Gaia
 	teams.resize(setup->GetTeamStartingDataCont().size());
+
 	allyTeams = setup->GetAllyStartingDataCont();
 
 	const int numTeams = teams.size() + ((gs->useLuaGaia) ? 1 : 0);
@@ -67,7 +80,7 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 		gaiaTeamID = static_cast<int>(teams.size());
 		gaiaAllyTeamID = static_cast<int>(allyTeams.size());
 
-		// Setup the gaia team
+		// setup the Gaia team
 		CTeam* gaia = new CTeam(gaiaTeamID);
 		gaia->color[0] = 255;
 		gaia->color[1] = 255;

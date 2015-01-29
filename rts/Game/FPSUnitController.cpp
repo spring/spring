@@ -124,6 +124,6 @@ void FPSUnitController::SendStateUpdate() {
 		oldPitch   = hp.y;
 		oldState   = state;
 
-		net->Send(CBaseNetProtocol::Get().SendDirectControlUpdate(gu->myPlayerNum, state, hp.x, hp.y));
+		clientNet->Send(CBaseNetProtocol::Get().SendDirectControlUpdate(gu->myPlayerNum, state, hp.x, hp.y));
 	}
 }

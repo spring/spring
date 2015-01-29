@@ -579,7 +579,8 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 
 void CProjectileDrawer::DrawFlyingPieces(int modelType, int numFlyingPieces, int* drawnPieces)
 {
-	static FlyingPieceContainer* containers[MODELTYPE_OTHER] = {
+	// TODO: faster to make this a member
+	FlyingPieceContainer* containers[MODELTYPE_OTHER] = {
 		&projectileHandler->flyingPieces3DO,
 		&projectileHandler->flyingPiecesS3O,
 		NULL

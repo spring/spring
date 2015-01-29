@@ -1663,15 +1663,15 @@ EXPORT(int) skirmishAiCallback_Map_getHeight(int skirmishAIId) {
 EXPORT(int) skirmishAiCallback_Map_getHeightMap(int skirmishAIId, float* heights,
 		int heights_sizeMax) {
 
-	static const int heights_sizeReal = gs->mapx * gs->mapy;
+	const int heights_sizeReal = mapDims.mapx * mapDims.mapy;
 
 	int heights_size = heights_sizeReal;
 
 	if (heights != NULL) {
 		const float* tmpMap = skirmishAIId_callback[skirmishAIId]->GetHeightMap();
 		heights_size = min(heights_sizeReal, heights_sizeMax);
-		int i;
-		for (i=0; i < heights_size; ++i) {
+
+		for (int i = 0; i < heights_size; ++i) {
 			heights[i] = tmpMap[i];
 		}
 	}
@@ -1682,15 +1682,15 @@ EXPORT(int) skirmishAiCallback_Map_getHeightMap(int skirmishAIId, float* heights
 EXPORT(int) skirmishAiCallback_Map_getCornersHeightMap(int skirmishAIId,
 		float* cornerHeights, int cornerHeights_sizeMax) {
 
-	static const int cornerHeights_sizeReal = gs->mapxp1 * gs->mapyp1;
+	const int cornerHeights_sizeReal = mapDims.mapxp1 * mapDims.mapyp1;
 
 	int cornerHeights_size = cornerHeights_sizeReal;
 
 	if (cornerHeights != NULL) {
 		const float* tmpMap =  skirmishAIId_callback[skirmishAIId]->GetCornersHeightMap();
 		cornerHeights_size = min(cornerHeights_sizeReal, cornerHeights_sizeMax);
-		int i;
-		for (i=0; i < cornerHeights_size; ++i) {
+
+		for (int i = 0; i < cornerHeights_size; ++i) {
 			cornerHeights[i] = tmpMap[i];
 		}
 	}
@@ -1709,15 +1709,15 @@ EXPORT(float) skirmishAiCallback_Map_getMaxHeight(int skirmishAIId) {
 EXPORT(int) skirmishAiCallback_Map_getSlopeMap(int skirmishAIId,
 		float* slopes, int slopes_sizeMax) {
 
-	static const int slopes_sizeReal = gs->hmapx * gs->hmapy;
+	const int slopes_sizeReal = mapDims.hmapx * mapDims.hmapy;
 
 	int slopes_size = slopes_sizeReal;
 
 	if (slopes != NULL) {
 		const float* tmpMap =  skirmishAIId_callback[skirmishAIId]->GetSlopeMap();
 		slopes_size = min(slopes_sizeReal, slopes_sizeMax);
-		int i;
-		for (i=0; i < slopes_size; ++i) {
+
+		for (int i = 0; i < slopes_size; ++i) {
 			slopes[i] = tmpMap[i];
 		}
 	}

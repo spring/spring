@@ -16,6 +16,7 @@ class CGameSetup;
  * Contains globally accessible data that does not remain synced
  */
 class CGlobalUnsynced {
+public:
 	CR_DECLARE_STRUCT(CGlobalUnsynced)
 
 	CGlobalUnsynced();
@@ -23,15 +24,17 @@ class CGlobalUnsynced {
 
 	static UnsyncedRNG rng;
 
-public:
 	int    RandInt()    { return rng.RandInt(); }    //!< random int [0, (INT_MAX & 0x7FFF))
 	float  RandFloat()  { return rng.RandFloat(); }  //!< random float [0, 1)
 	float3 RandVector() { return rng.RandVector(); } //!< random vector with length = [0, 1)
 
+	void ResetState();
 	void LoadFromSetup(const CGameSetup* setup);
+
 	void SetMyPlayer(const int myNumber);
 	CPlayer* GetMyPlayer();
 
+public:
 	/**
 	 * @brief minimum FramesPerSecond
 	 *
@@ -172,6 +175,7 @@ public:
 	* wants to quit
 	*/
 	volatile bool globalQuit;
+	volatile bool globalReload;
 };
 
 extern CGlobalUnsynced* gu;

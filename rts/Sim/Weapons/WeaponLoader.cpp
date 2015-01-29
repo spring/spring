@@ -132,6 +132,7 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 
 	weapon->onlyForward = weaponDef->onlyForward;
 	weapon->maxForwardAngleDif = math::cos(DEG2RAD(weaponDef->maxAngle));
+	weapon->maxAngleAtCanFireCheck = math::cos(DEG2RAD(weaponDef->maxFireAngle));
 	weapon->maxMainDirAngleDif = defWeapon->maxMainDirAngleDif;
 	weapon->mainDir = defWeapon->mainDir;
 

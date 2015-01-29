@@ -26,6 +26,7 @@ public:
 	BasicTimer(const char* myname);
 
 	const std::string& GetName() const;
+	spring_time GetDuration() const;
 
 protected:
 	const unsigned hash;

@@ -164,7 +164,7 @@ void CUnsyncedLuaHandle::RecvFromSynced(lua_State* srcState, int args)
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 2 + args, __FUNCTION__);
 
-	static const LuaHashString cmdStr("RecvFromSynced");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return; // the call is not defined
 

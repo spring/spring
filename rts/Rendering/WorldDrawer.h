@@ -11,6 +11,9 @@ public:
 
 	void Update();
 	void Draw();
+
+private:
+	unsigned int numUpdates;
 };
 
 #endif // _WORLD_DRAWER_H

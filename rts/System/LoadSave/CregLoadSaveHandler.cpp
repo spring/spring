@@ -119,7 +119,7 @@ void CCregLoadSaveHandler::SaveGame(const std::string& file)
 		}
 
 		// write our own header. SavePackage() will add its own
-		WriteString(ofs, gameSetup->gameSetupText);
+		WriteString(ofs, gameSetup->setupText);
 		WriteString(ofs, modName);
 		WriteString(ofs, mapName);
 

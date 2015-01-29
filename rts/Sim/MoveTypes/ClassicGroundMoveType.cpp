@@ -1100,8 +1100,8 @@ bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int s
 
 	for (int y = y1; y <= y2; ++y) {
 		bool blocked = false;
-		const int idx1 = y * gs->mapx + x;
-		const int idx2 = y * gs->mapx + squareTestX;
+		const int idx1 = y * mapDims.mapx + x;
+		const int idx2 = y * mapDims.mapx + squareTestX;
 		const BlockingMapCell& c = groundBlockingObjectMap->GetCell(idx1);
 		const BlockingMapCell& d = groundBlockingObjectMap->GetCell(idx2);
 		BlockingMapCellIt it;
@@ -1147,10 +1147,10 @@ bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int s
 		}
 
 		if (blocked) {
-			if (groundBlockingObjectMap->GetCell(y1 * gs->mapx + x).empty()) {
+			if (groundBlockingObjectMap->GetCell(y1 * mapDims.mapx + x).empty()) {
 				posDelta.z -= (math::fabs(owner->pos.x - xmove) * 0.5f);
 			}
-			if (groundBlockingObjectMap->GetCell(y2 * gs->mapx + x).empty()) {
+			if (groundBlockingObjectMap->GetCell(y2 * mapDims.mapx + x).empty()) {
 				posDelta.z += (math::fabs(owner->pos.x - xmove) * 0.5f);
 			}
 
@@ -1178,8 +1178,8 @@ bool CClassicGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int s
 
 	for (int x = x1; x <= x2; ++x) {
 		bool blocked = false;
-		const int idx1 = y * gs->mapx + x;
-		const int idx2 = squareTestY * gs->mapx + x;
+		const int idx1 = y * mapDims.mapx + x;
+		const int idx2 = squareTestY * mapDims.mapx + x;
 		const BlockingMapCell& c = groundBlockingObjectMap->GetCell(idx1);
 		const BlockingMapCell& d = groundBlockingObjectMap->GetCell(idx2);
 		BlockingMapCellIt it;
@@ -1225,10 +1225,10 @@ bool CClassicGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int s
 		}
 
 		if (blocked) {
-			if (groundBlockingObjectMap->GetCell(y * gs->mapx + x1).empty()) {
+			if (groundBlockingObjectMap->GetCell(y * mapDims.mapx + x1).empty()) {
 				posDelta.x -= (math::fabs(owner->pos.z - zmove) * 0.5f);
 			}
-			if (groundBlockingObjectMap->GetCell(y * gs->mapx + x2).empty()) {
+			if (groundBlockingObjectMap->GetCell(y * mapDims.mapx + x2).empty()) {
 				posDelta.x += (math::fabs(owner->pos.z - zmove) * 0.5f);
 			}
 
@@ -1451,8 +1451,8 @@ bool CClassicGroundMoveType::CheckGoalFeasability()
 
 	int minx = (int) std::max(0.0f, (goalPos.x - goalDist) / (SQUARE_SIZE * 2));
 	int minz = (int) std::max(0.0f, (goalPos.z - goalDist) / (SQUARE_SIZE * 2));
-	int maxx = (int) std::min(float(gs->hmapx - 1), (goalPos.x + goalDist) / (SQUARE_SIZE * 2));
-	int maxz = (int) std::min(float(gs->hmapy - 1), (goalPos.z + goalDist) / (SQUARE_SIZE * 2));
+	int maxx = (int) std::min(float(mapDims.hmapx - 1), (goalPos.x + goalDist) / (SQUARE_SIZE * 2));
+	int maxz = (int) std::min(float(mapDims.hmapy - 1), (goalPos.z + goalDist) / (SQUARE_SIZE * 2));
 
 	MoveDef* md = owner->moveDef;
 

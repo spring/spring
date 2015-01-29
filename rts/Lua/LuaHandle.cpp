@@ -2382,15 +2382,16 @@ void CLuaHandle::CollectGarbage()
 
 	// note: total footprint INCLUDING garbage
 	int luaMemFootPrintKB = lua_gc(L_GC, LUA_GCCOUNT, 0);
+	int numLuaGarbageCollectIters = 0;
 
+	static int gcsteps = 10;
 	// 30x per second !!!
 	static const float maxLuaGarbageCollectTime = configHandler->GetFloat("MaxLuaGarbageCollectionTime");
+
 	float maxRunTime = smoothstep(10, 100, luaMemFootPrintKB / 1024) * maxLuaGarbageCollectTime;
 
 	const spring_time startTime = spring_gettime();
 	const spring_time endTime = startTime + spring_msecs(maxRunTime);
-	static int gcsteps = 10;
-	int numLuaGarbageCollectIters = 0;
 
 	SetHandleRunning(L_GC, true);
 

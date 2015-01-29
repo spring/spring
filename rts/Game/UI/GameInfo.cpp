@@ -54,6 +54,8 @@ static void StringListStats(
 
 
 
+static CGameInfo* instance = NULL;
+
 void CGameInfo::Enable()
 {
 	if (instance == NULL) {
@@ -64,6 +66,7 @@ void CGameInfo::Enable()
 void CGameInfo::Disable()
 {
 	delete instance;
+	instance = NULL;
 }
 
 bool CGameInfo::IsActive()
@@ -72,8 +75,6 @@ bool CGameInfo::IsActive()
 }
 
 
-
-CGameInfo* CGameInfo::instance = NULL;
 
 CGameInfo::CGameInfo()
 {
@@ -114,7 +115,7 @@ CGameInfo::CGameInfo()
 	values.push_back(buf);
 
 	labels.push_back("Map Size:");
-	sprintf(buf, "%ix%i", gs->mapx / 64, gs->mapy / 64);
+	sprintf(buf, "%ix%i", mapDims.mapx / 64, mapDims.mapy / 64);
 	values.push_back(buf);
 
 	labels.push_back("Map Name:");

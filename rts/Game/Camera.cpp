@@ -43,7 +43,7 @@ CCamera::CCamera()
 {
 	if (gs) {
 		// center map
-		pos = float3(gs->mapx * 0.5f * SQUARE_SIZE, 1000.f, gs->mapy * 0.5f * SQUARE_SIZE);
+		pos = float3(mapDims.mapx * 0.5f * SQUARE_SIZE, 1000.f, mapDims.mapy * 0.5f * SQUARE_SIZE);
 	}
 
 	memset(viewport, 0, 4 * sizeof(int));
@@ -396,8 +396,8 @@ void CCamera::GetFrustumSide(
 	line.dir  = (xdir.x / xdir.z);
 	line.base = (pInt.x - (pInt.z * line.dir)) / scale;
 	line.sign = (xdir.z <= 0.0f)? 1: -1;
-	line.minz = (                  0.0f) - (gs->mapy);
-	line.maxz = (gs->mapy * SQUARE_SIZE) + (gs->mapy);
+	line.minz = (                  0.0f) - (mapDims.mapy);
+	line.maxz = (mapDims.mapy * SQUARE_SIZE) + (mapDims.mapy);
 
 	if (line.sign == 1 || negSide) {
 		negFrustumSides.push_back(line);

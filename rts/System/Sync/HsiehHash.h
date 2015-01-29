@@ -24,13 +24,11 @@
 static inline boost::uint32_t HsiehHash (const void* data_, int len, boost::uint32_t hash)
 {
 	const char* data = static_cast<const char*>(data_);
-	
+
+	if (len <= 0 || data == NULL) return hash;
+
 	boost::uint32_t tmp;
-	int rem;
-
-	if (len <= 0 || data == NULL) return 0;
-
-	rem = len & 3;
+	int rem = len & 3;
 	len >>= 2;
 
 	/* Main loop */

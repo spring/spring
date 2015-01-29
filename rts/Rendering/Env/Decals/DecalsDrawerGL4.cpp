@@ -221,8 +221,8 @@ void CDecalsDrawerGL4::LoadShaders()
 	}
 
 	decalShader->Enable();
-		decalShader->SetUniform("invMapSizePO2", 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE));
-		decalShader->SetUniform("invMapSize",    1.0f / (gs->mapx * SQUARE_SIZE),     1.0f / (gs->mapy * SQUARE_SIZE));
+		decalShader->SetUniform("invMapSizePO2", 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE));
+		decalShader->SetUniform("invMapSize",    1.0f / (mapDims.mapx * SQUARE_SIZE),     1.0f / (mapDims.mapy * SQUARE_SIZE));
 		decalShader->SetUniform("invScreenSize", 1.0f / globalRendering->viewSizeX,   1.0f / globalRendering->viewSizeY);
 
 	decalShader->Disable();
@@ -573,8 +573,8 @@ void CDecalsDrawerGL4::Draw()
 
 	decalShader->Enable();
 		decalShader->SetUniform3v("camPos", &camera->GetPos()[0]);
-		//decalShader->SetUniform("invMapSizePO2", 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE));
-		//decalShader->SetUniform("invMapSize",    1.0f / (gs->mapx * SQUARE_SIZE),     1.0f / (gs->mapy * SQUARE_SIZE));
+		//decalShader->SetUniform("invMapSizePO2", 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE));
+		//decalShader->SetUniform("invMapSize",    1.0f / (mapDims.mapx * SQUARE_SIZE),     1.0f / (mapDims.mapy * SQUARE_SIZE));
 		//decalShader->SetUniform("invScreenSize", 1.0f / globalRendering->viewSizeX,   1.0f / globalRendering->viewSizeY);
 
 	glActiveTexture(GL_TEXTURE1);

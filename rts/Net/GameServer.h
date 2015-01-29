@@ -3,6 +3,7 @@
 #ifndef _GAME_SERVER_H
 #define _GAME_SERVER_H
 
+#include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include <string>
@@ -40,6 +41,7 @@ class CDemoReader;
 class Action;
 class CDemoRecorder;
 class AutohostInterface;
+class ClientSetup;
 class CGameSetup;
 class ChatMessage;
 class GameParticipant;
@@ -68,15 +70,21 @@ class CGameServer
 {
 	friend class CCregLoadSaveHandler; // For initializing server state after load
 public:
-	CGameServer(const std::string& hostIP, int hostPort, const GameData* const gameData, const CGameSetup* const setup);
-	~CGameServer();
+	CGameServer(
+		const boost::shared_ptr<const ClientSetup> newClientSetup,
+		const boost::shared_ptr<const    GameData> newGameData,
+		const boost::shared_ptr<const  CGameSetup> newGameSetup
+	);
 
 	CGameServer(const CGameServer&) = delete; // no-copy
+	~CGameServer();
+
+	static void Reload(const boost::shared_ptr<const CGameSetup> newGameSetup);
 
 	void AddLocalClient(const std::string& myName, const std::string& myVersion);
-
 	void AddAutohostInterface(const std::string& autohostIP, const int autohostPort);
 
+	void Initialize();
 	/**
 	 * @brief Set frame after loading
 	 * WARNING! No checks are done, so be carefull
@@ -86,6 +94,7 @@ public:
 	void CreateNewFrame(bool fromServerThread, bool fixedFrameTime);
 
 	void SetGamePausable(const bool arg);
+	void SetReloading(const bool arg) { reloadingServer = arg; }
 
 	bool HasStarted() const { return gameHasStarted; }
 	bool HasGameID() const { return generatedGameID; }
@@ -97,6 +106,10 @@ public:
 	static const std::set<std::string>& GetCommandBlackList() { return commandBlacklist; }
 
 	std::string GetPlayerNames(const std::vector<int>& indices) const;
+
+	const boost::shared_ptr<const ClientSetup> GetClientSetup() const { return myClientSetup; }
+	const boost::shared_ptr<const    GameData> GetGameData() const { return myGameData; }
+	const boost::shared_ptr<const  CGameSetup> GetGameSetup() const { return myGameSetup; }
 
 	const boost::scoped_ptr<CDemoReader>& GetDemoReader() const { return demoReader; }
 	const boost::scoped_ptr<CDemoRecorder>& GetDemoRecorder() const { return demoRecorder; }
@@ -169,8 +182,9 @@ private:
 
 private:
 	/////////////////// game settings ///////////////////
-	boost::scoped_ptr<const CGameSetup> setup;
-	boost::scoped_ptr<const GameData> gameData;
+	boost::shared_ptr<const ClientSetup> myClientSetup;
+	boost::shared_ptr<const    GameData> myGameData;
+	boost::shared_ptr<const  CGameSetup> myGameSetup;
 
 	/////////////////// game status variables ///////////////////
 	unsigned char playerNumberMap[256];
@@ -262,6 +276,7 @@ private:
 
 	volatile bool gameHasStarted;
 	volatile bool generatedGameID;
+	volatile bool reloadingServer;
 
 	int linkMinPacketSize;
 

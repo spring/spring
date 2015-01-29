@@ -223,10 +223,17 @@ namespace Shader {
 
 	struct SShaderFlagState {
 	public:
-		SShaderFlagState() : updates(0), lastUpdates(0), lastHash(0) {}
+		SShaderFlagState() : updates(1), lastUpdates(0), lastHash(0) {}
 		virtual ~SShaderFlagState() {}
 
 		unsigned int GetHash();
+
+		void ClearHash()
+		{
+			lastHash = 0;
+			updates = 1;
+			lastUpdates = 0;
+		}
 
 		std::string GetString() const
 		{
@@ -244,6 +251,23 @@ namespace Shader {
 			flags.erase(flag);
 		}
 
+
+		template <typename T>
+		void SetFlag(const std::string& flag, const T newvalue)
+		{
+			++updates;
+			std::ostringstream buffer;
+			buffer << newvalue;
+			flags[flag] = buffer.str();
+		}
+
+		// specializations
+		void SetFlag(const std::string& flag, const std::string& newvalue)
+		{
+			++updates;
+			flags[flag] = newvalue;
+		}
+
 		void SetFlag(const std::string& flag, const bool enable)
 		{
 			if (enable) {
@@ -254,22 +278,20 @@ namespace Shader {
 			}
 		}
 
-		//FIXME gives compiletime error
-		/*bool GetFlag(const std::string& flag) const
+
+		template <typename T>
+		T GetFlag(const std::string& flag) const
 		{
 			std::map<std::string, std::string>::const_iterator it = flags.find(flag);
 			if (it != flags.end()) {
-				return true;
-			} else {
-				return false;
+				std::istringstream buf(it->second);
+				T temp;
+				buf >> temp;
+				return temp;
 			}
-		}*/
-
-		void SetFlag(const std::string& flag, const std::string& newvalue)
-		{
-			++updates;
-			flags[flag] = newvalue;
+			return T();
 		}
+
 
 		const std::string& GetFlag(const std::string& flag) const
 		{
@@ -282,28 +304,9 @@ namespace Shader {
 			}
 		}
 
-		template <typename T>
-		void SetFlag(const std::string& flag, const T newvalue)
+		bool HasFlag(const std::string& flag) const
 		{
-			++updates;
-			std::ostringstream buffer;
-			buffer << newvalue;
-			flags[flag] = buffer.str();
-		}
-
-		template <typename T>
-		T GetFlag(const std::string& flag) const
-		{
-			std::map<std::string, std::string>::const_iterator it = flags.find(flag);
-			if (it != flags.end()) {
-				std::istringstream buf(it->second);
-				T temp;
-				buf >> temp;
-				return temp;
-			} else {
-				return T();
-			}
-
+			return (flags.find(flag) != flags.end());
 		}
 
 	private:

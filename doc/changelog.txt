@@ -8,7 +8,8 @@ Major:
  - new linux crashhandler by Major Bor3d0m
  - new rotatable default camera
  - bugfixes & improvements
-
+ - add unsynced Spring.Reload(script)
+ ! modified Spring.Restart(parameters, script): it only restarts spring when parameters isn't empty
 
 Cameras:
  ! removed TW, Orbital & Smooth camera
@@ -65,7 +66,8 @@ Lua:
  ! fix Spring.GetKeyState & Spring.PressedKeys expecting SDL2 keycodes while whole lua gets SDL1 ones
  ! Spring.PressedKeys now also returns keynames
 
-
+Buildbot/Installer:
+ ! merged spring-headless / spring-dedicated into linux static builds / windows installer
 
 
 -- 98.0 ---------------------------------------------------------

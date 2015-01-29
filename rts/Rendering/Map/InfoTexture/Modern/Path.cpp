@@ -28,7 +28,7 @@ CPathTexture::CPathTexture()
 , forcedUnitDef(-1)
 , lastUsage(spring_gettime())
 {
-	texSize = int2(gs->hmapx, gs->hmapy);
+	texSize = int2(mapDims.hmapx, mapDims.hmapy);
 	texChannels = 4;
 
 	glGenTextures(1, &texture);

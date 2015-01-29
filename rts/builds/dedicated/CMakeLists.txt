@@ -75,7 +75,6 @@ IF	(UNIX)
 	SET(sources_engine_Platform_CrashHandler
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/CpuID.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading.cpp
-		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/thread_backtrace.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/CrashHandler.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/ThreadSupport.cpp)
 ELSEIF	(WIN32)
@@ -91,6 +90,7 @@ ENDIF	()
 
 SET(system_files
 	${sources_engine_System_FileSystem}
+	${sources_engine_System_Threading}
 	${sources_engine_System_Log}
 	${sources_engine_Platform_CrashHandler}
 	${ENGINE_SRC_ROOT_DIR}/Net/AutohostInterface.cpp

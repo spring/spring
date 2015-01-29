@@ -1556,8 +1556,14 @@ void CGroundMoveType::HandleObjectCollisions()
 		HandleUnitCollisions(collider, colliderSpeed, colliderRadius, colliderUD, colliderMD);
 		HandleFeatureCollisions(collider, colliderSpeed, colliderRadius, colliderUD, colliderMD);
 
-		// blocked square collision (very performance hungry process only every 2nd game frame)
-		if ((collider->id & 1) == (gs->frameNum & 1)) {
+		// blocked square collision (very performance hungry, process only every 2nd game frame)
+		// dangerous: reduces effective square-size from 8 to 4, but many ground units can move
+		// at speeds greater than half the effective square-size per frame so this risks getting
+		// stuck on impassable squares
+		const bool squareChange = (CGround::GetSquare(owner->pos + owner->speed) != CGround::GetSquare(owner->pos));
+		const bool checkAllowed = ((collider->id & 1) == (gs->frameNum & 1));
+
+		if (squareChange || checkAllowed) {
 			HandleStaticObjectCollision(owner, owner, owner->moveDef, colliderRadius, 0.0f, ZeroVector, true, false, true);
 		}
 	}

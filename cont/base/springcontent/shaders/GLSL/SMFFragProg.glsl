@@ -51,7 +51,7 @@ varying vec2 diffuseTexCoords;
 	uniform vec2 infoTexGen;     // 1.0/(pwr2map{x,z} * SQUARE_SIZE)
 #endif
 
-#ifndef SMF_ARB_LIGHTING
+#ifdef SMF_SPECULAR_LIGHTING
 	uniform sampler2D specularTex;
 #endif
 
@@ -203,7 +203,12 @@ vec4 GetShadeInt(float groundLightInt, float groundShadowCoeff, float groundDiff
 
 vec3 DynamicLighting(vec3 normal, vec3 diffuseCol, vec3 specularCol, float specularExp) {
 	vec3 light = vec3(0.0);
-#if !defined(DEFERRED_MODE) && (MAX_DYNAMIC_MAP_LIGHTS > 0)
+
+	#ifndef SMF_SPECULAR_LIGHTING
+		// non-zero default specularity on non-SSMF maps
+		specularCol = vec3(0.5, 0.5, 0.5);
+	#endif
+
 	for (int i = 0; i < MAX_DYNAMIC_MAP_LIGHTS; i++) {
 		vec3 lightVec = gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].position.xyz - vertexWorldPos.xyz;
 		vec3 halfVec = gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].halfVector.xyz;
@@ -228,7 +233,7 @@ vec3 DynamicLighting(vec3 normal, vec3 diffuseCol, vec3 specularCol, float specu
 		float cutoffDot = gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].spotCosCutoff;
 
 		float lightSpecularPow = 0.0;
-	#ifndef SMF_ARB_LIGHTING
+	#ifdef SMF_SPECULAR_LIGHTING
 		lightSpecularPow = max(0.0, pow(lightCosAngSpec, specularExp));
 	#endif
 
@@ -238,7 +243,7 @@ vec3 DynamicLighting(vec3 normal, vec3 diffuseCol, vec3 specularCol, float specu
 		light += (lightScale * lightAttenuation * (diffuseCol.rgb *  gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].diffuse.rgb * lightCosAngDiff));
 		light += (lightScale * lightAttenuation * (specularCol.rgb * gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].specular.rgb * lightSpecularPow));
 	}
-#endif
+
 	return light;
 }
 
@@ -298,8 +303,7 @@ void main() {
 
 	vec4 diffuseCol = texture2D(diffuseTex, diffTexCoords);
 	vec4 detailCol = GetDetailTextureColor(specTexCoords);
-	// non-zero default specularity on non-SSMF maps (for DL)
-	vec4 specularCol = vec4(0.5, 0.5, 0.5, 1.0);
+	vec4 specularCol = vec4(0.0, 0.0, 0.0, 1.0);
 	vec4 emissionCol = vec4(0.0, 0.0, 0.0, 0.0);
 
 	#if !defined(DEFERRED_MODE) && defined(SMF_SKY_REFLECTIONS)
@@ -362,8 +366,9 @@ void main() {
 	}
 	#endif
 
-#ifndef SMF_ARB_LIGHTING
+#ifdef SMF_SPECULAR_LIGHTING
 	specularCol = texture2D(specularTex, specTexCoords);
+#endif
 
 	#ifndef DEFERRED_MODE
 		// sun specular lighting contribution
@@ -380,7 +385,7 @@ void main() {
 			gl_FragColor.rgb += DynamicLighting(normal, diffuseCol.rgb, specularCol.rgb, specularExp);
 		#endif
 	#endif
-#endif
+
 
 #ifdef DEFERRED_MODE
 	gl_FragData[GBUFFER_NORMTEX_IDX] = vec4((normal + vec3(1.0, 1.0, 1.0)) * 0.5, 1.0);

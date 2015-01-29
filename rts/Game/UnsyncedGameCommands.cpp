@@ -114,201 +114,6 @@ static std::vector<std::string> _local_strSpaceTokenize(const std::string& text)
 
 
 
-// TODO CGame stuff in UnsyncedGameCommands: refactor (or move)
-bool CGame::ProcessCommandText(unsigned int key, const std::string& command) {
-	if (command.size() <= 2)
-		return false;
-
-	if ((command[0] == '/') && (command[1] != '/')) {
-		const string actionLine = command.substr(1); // strip the '/'
-
-		Action fakeAction(actionLine);
-		ProcessAction(fakeAction, key, false);
-		return true;
-	}
-
-	return false;
-}
-
-// TODO CGame stuff in UnsyncedGameCommands: refactor (or move)
-bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
-	if (!userWriting)
-		return false;
-
-	if (action.command == "edit_return") {
-		userWriting = false;
-		writingPos = 0;
-
-		if (chatting) {
-			string command;
-
-			if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
-				command = userInput.substr(2);
-			} else {
-				command = userInput;
-			}
-
-			if (ProcessCommandText(key, command)) {
-				// execute an action
-				consoleHistory->AddLine(command);
-				LOG_L(L_DEBUG, "%s", command.c_str());
-
-				chatting = false;
-				userInput = "";
-				writingPos = 0;
-			}
-		}
-		return true;
-	}
-	else if ((action.command == "edit_escape") && (chatting || inMapDrawer->IsWantLabel())) {
-		if (chatting) {
-			consoleHistory->AddLine(userInput);
-		}
-		userWriting = false;
-		chatting = false;
-		inMapDrawer->SetWantLabel(false);
-		userInput = "";
-		writingPos = 0;
-		return true;
-	}
-	else if (action.command == "edit_complete") {
-		string head = userInput.substr(0, writingPos);
-		string tail = userInput.substr(writingPos);
-		const vector<string>& partials = wordCompletion->Complete(head);
-		userInput = head + tail;
-		writingPos = (int)head.length();
-
-		if (!partials.empty()) {
-			string msg;
-			for (unsigned int i = 0; i < partials.size(); i++) {
-				msg += "  ";
-				msg += partials[i];
-			}
-			LOG("%s", msg.c_str());
-		}
-		return true;
-	}
-	else if (action.command == "chatswitchall") {
-		if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
-			userInput = userInput.substr(2);
-			writingPos = std::max(0, writingPos - 2);
-		}
-
-		userInputPrefix = "";
-		return true;
-	}
-	else if (action.command == "chatswitchally") {
-		if ((userInput.find_first_of("aA") == 0) && (userInput[1] == ':')) {
-			// already are in ally chat -> toggle it off
-			userInput = userInput.substr(2);
-			writingPos = std::max(0, writingPos - 2);
-			userInputPrefix = "";
-		}
-		else if ((userInput.find_first_of("sS") == 0) && (userInput[1] == ':')) {
-			// are in spec chat -> switch it to ally chat
-			userInput[0] = 'a';
-			userInputPrefix = "a:";
-		} else {
-			userInput = "a:" + userInput;
-			writingPos += 2;
-			userInputPrefix = "a:";
-		}
-		return true;
-	}
-	else if (action.command == "chatswitchspec") {
-		if ((userInput.find_first_of("sS") == 0) && (userInput[1] == ':')) {
-			// already are in spec chat -> toggle it off
-			userInput = userInput.substr(2);
-			writingPos = std::max(0, writingPos - 2);
-			userInputPrefix = "";
-		}
-		else if ((userInput.find_first_of("aA") == 0) && (userInput[1] == ':')) {
-			// are in ally chat -> switch it to spec chat
-			userInput[0] = 's';
-			userInputPrefix = "s:";
-		} else {
-			userInput = "s:" + userInput;
-			writingPos += 2;
-			userInputPrefix = "s:";
-		}
-		return true;
-	}
-	else if (action.command == "pastetext") {
-		//we cannot use extra commands because tokenization strips multiple spaces
-		//or even trailing spaces, the text should be copied verbatim
-		const std::string pastecommand = "pastetext ";
-		if (action.rawline.length() > pastecommand.length()) {
-			userInput.insert(writingPos, action.rawline.substr(pastecommand.length(), action.rawline.length()-pastecommand.length()));
-			writingPos += action.rawline.length()-pastecommand.length();
-		} else {
-			PasteClipboard();
-		}
-		return true;
-	}
-
-	else if (action.command == "edit_backspace") {
-		if (!userInput.empty() && (writingPos > 0)) {
-			int prev=Utf8PrevChar(userInput,writingPos);
-			userInput.erase(prev, writingPos-prev);
-			writingPos=prev;
-		}
-		return true;
-	}
-	else if (action.command == "edit_delete") {
-		if (!userInput.empty() && (writingPos < (int)userInput.size())) {
-			userInput.erase(writingPos, Utf8CharLen(userInput,writingPos));
-		}
-		return true;
-	}
-	else if (action.command == "edit_home") {
-		writingPos = 0;
-		return true;
-	}
-	else if (action.command == "edit_end") {
-		writingPos = (int)userInput.length();
-		return true;
-	}
-	else if (action.command == "edit_prev_char") {
-		writingPos = Utf8PrevChar(userInput,writingPos);
-		return true;
-	}
-	else if (action.command == "edit_next_char") {
-		writingPos = Utf8NextChar(userInput,writingPos);
-		return true;
-	}
-	else if (action.command == "edit_prev_word") { //TODO It don't seems to work correctly with utf-8
-		// prev word
-		const char* s = userInput.c_str();
-		int p = writingPos;
-		while ((p > 0) && !isalnum(s[p - 1])) { p--; }
-		while ((p > 0) &&  isalnum(s[p - 1])) { p--; }
-		writingPos = p;
-		return true;
-	}
-	else if (action.command == "edit_next_word") { //TODO It don't seems to work correctly with utf-8
-		const int len = (int)userInput.length();
-		const char* s = userInput.c_str();
-		int p = writingPos;
-		while ((p < len) && !isalnum(s[p])) { p++; }
-		while ((p < len) &&  isalnum(s[p])) { p++; }
-		writingPos = p;
-		return true;
-	}
-	else if ((action.command == "edit_prev_line") && chatting) {
-		userInput = consoleHistory->PrevLine(userInput);
-		writingPos = (int)userInput.length();
-		return true;
-	}
-	else if ((action.command == "edit_next_line") && chatting) {
-		userInput = consoleHistory->NextLine(userInput);
-		writingPos = (int)userInput.length();
-		return true;
-	}
-
-	return false;
-}
-
-
 namespace { // prevents linking problems in case of duplicate symbols
 
 /**
@@ -856,7 +661,7 @@ public:
 			if (!badArgs) {
 				if (kill) {
 					if (share) {
-						net->Send(CBaseNetProtocol::Get().SendGiveAwayEverything(gu->myPlayerNum, teamToReceiveUnitsId, teamToKillId));
+						clientNet->Send(CBaseNetProtocol::Get().SendGiveAwayEverything(gu->myPlayerNum, teamToReceiveUnitsId, teamToKillId));
 						// when the AIs team has no units left,
 						// the AI will be destroyed automatically
 					} else {
@@ -868,7 +673,7 @@ public:
 					}
 				} else {
 					// reload
-					net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_RELOADING));
+					clientNet->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_RELOADING));
 				}
 
 				LOG("Skirmish AI controlling team %i is beeing %sed ...", teamToKillId, actionName.c_str());
@@ -1076,7 +881,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		const int teamId = atoi(action.GetArgs().c_str());
 		if (teamHandler->IsValidTeam(teamId)) {
-			net->Send(CBaseNetProtocol::Get().SendJoinTeam(gu->myPlayerNum, teamId));
+			clientNet->Send(CBaseNetProtocol::Get().SendJoinTeam(gu->myPlayerNum, teamId));
 		} else {
 			LOG_L(L_WARNING, "/Team: wrong syntax (which is '/Team %%teamid')");
 		}
@@ -1095,7 +900,7 @@ public:
 		if (gu->spectating)
 			return false;
 
-		net->Send(CBaseNetProtocol::Get().SendResign(gu->myPlayerNum));
+		clientNet->Send(CBaseNetProtocol::Get().SendResign(gu->myPlayerNum));
 		return true;
 	}
 };
@@ -1168,7 +973,7 @@ public:
 				int state = -1;
 				is >> state;
 				if (state >= 0 && state < 2 && otherAllyTeam >= 0 && otherAllyTeam != gu->myAllyTeam)
-					net->Send(CBaseNetProtocol::Get().SendSetAllied(gu->myPlayerNum, otherAllyTeam, state));
+					clientNet->Send(CBaseNetProtocol::Get().SendSetAllied(gu->myPlayerNum, otherAllyTeam, state));
 				else
 					LOG_L(L_WARNING, "/%s: wrong parameters (usage: /%s <other team> [0|1])", GetCommand().c_str(), GetCommand().c_str());
 			}
@@ -1344,7 +1149,7 @@ public:
 		// done when NETMSG_PAUSE makes the round-trip
 		bool newPause = gs->paused;
 		InverseOrSetBool(newPause, action.GetArgs());
-		net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, newPause));
+		clientNet->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, newPause));
 		return true;
 	}
 
@@ -1721,7 +1526,7 @@ public:
 		} else {
 			speed += 1.0f;
 		}
-		net->Send(CBaseNetProtocol::Get().SendUserSpeed(gu->myPlayerNum, speed));
+		clientNet->Send(CBaseNetProtocol::Get().SendUserSpeed(gu->myPlayerNum, speed));
 		return true;
 	}
 };
@@ -1748,7 +1553,7 @@ public:
 		} else {
 			speed -= 1.0f;
 		}
-		net->Send(CBaseNetProtocol::Get().SendUserSpeed(gu->myPlayerNum, speed));
+		clientNet->Send(CBaseNetProtocol::Get().SendUserSpeed(gu->myPlayerNum, speed));
 		return true;
 	}
 };
@@ -1767,7 +1572,7 @@ public:
 		// we must cause the to-be-controllee to be put in
 		// netSelected[myPlayerNum] by giving it an order
 		selectedUnitsHandler.SendCommand(Command(CMD_STOP));
-		net->Send(CBaseNetProtocol::Get().SendDirectControl(gu->myPlayerNum));
+		clientNet->Send(CBaseNetProtocol::Get().SendDirectControl(gu->myPlayerNum));
 		return true;
 	}
 };
@@ -1992,16 +1797,28 @@ public:
 
 class QuitActionExecutor : public IUnsyncedActionExecutor {
 public:
-	QuitActionExecutor() : IUnsyncedActionExecutor("Quit",
-			"Exits the game immediately") {}
+	QuitActionExecutor() : IUnsyncedActionExecutor("QuitForce", "Exits game to system") {
+	}
 
 	bool Execute(const UnsyncedAction& action) const {
-		Exit();
+		LOG("[QuitAction] user exited to system");
+
+		gu->globalQuit = true;
 		return true;
 	}
-	static void Exit() {
-		LOG("User exited");
-		gu->globalQuit = true;
+};
+
+class ReloadActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ReloadActionExecutor() : IUnsyncedActionExecutor("ReloadForce", "Exits game to menu") {
+	}
+
+	bool Execute(const UnsyncedAction& action) const {
+		LOG("[ReloadAction] user exited to menu");
+
+		gameSetup->setupText = "";
+		gu->globalReload = true;
+		return true;
 	}
 };
 
@@ -2906,11 +2723,11 @@ public:
 					givePos.x, givePos.y, givePos.z);
 
 			CommandMessage pckt(message, gu->myPlayerNum);
-			net->Send(pckt.Pack());
+			clientNet->Send(pckt.Pack());
 		} else {
 			// forward (as synced command)
 			CommandMessage pckt(action.GetInnerAction(), gu->myPlayerNum);
-			net->Send(pckt.Pack());
+			clientNet->Send(pckt.Pack());
 		}
 		return true;
 	}
@@ -2936,7 +2753,7 @@ public:
 			ss << " " << (*it)->id;
 		}
 		CommandMessage pckt(ss.str(), gu->myPlayerNum);
-		net->Send(pckt.Pack());
+		clientNet->Send(pckt.Pack());
 		return true;
 	}
 };
@@ -2950,7 +2767,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		CommandMessage pckt(Action(action.GetArgs()), gu->myPlayerNum);
-		net->Send(pckt.Pack());
+		clientNet->Send(pckt.Pack());
 		return true;
 	}
 };
@@ -3065,7 +2882,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		// redirect as a synced command
 		CommandMessage pckt(action.GetInnerAction(), gu->myPlayerNum);
-		net->Send(pckt.Pack());
+		clientNet->Send(pckt.Pack());
 		return true;
 	}
 };
@@ -3325,7 +3142,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new QuitMessageActionExecutor());
 	AddActionExecutor(new QuitMenuActionExecutor());
 	AddActionExecutor(new QuitActionExecutor());
-	AddActionExecutor(new AliasActionExecutor(new QuitActionExecutor(), "QuitForce"));
+	AddActionExecutor(new ReloadActionExecutor());
 	AddActionExecutor(new IncreaseGUIOpacityActionExecutor());
 	AddActionExecutor(new DecreaseGUIOpacityActionExecutor());
 	AddActionExecutor(new ScreenShotActionExecutor());
@@ -3395,7 +3212,6 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 UnsyncedGameCommands* UnsyncedGameCommands::singleton = NULL;
 
 void UnsyncedGameCommands::CreateInstance() {
-
 	if (singleton == NULL) {
 		singleton = new UnsyncedGameCommands();
 	} else {
@@ -3404,12 +3220,8 @@ void UnsyncedGameCommands::CreateInstance() {
 }
 
 void UnsyncedGameCommands::DestroyInstance() {
-
 	if (singleton != NULL) {
-		// SafeDelete
-		UnsyncedGameCommands* tmp = singleton;
-		singleton = NULL;
-		delete tmp;
+		SafeDelete(singleton);
 	} else {
 		// this might happen during shutdown after an unclean init
 		LOG_L(L_WARNING, "UnsyncedGameCommands singleton was not initialized or is already destroyed");

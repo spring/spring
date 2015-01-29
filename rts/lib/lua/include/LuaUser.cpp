@@ -1,12 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <map>
-#include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread.hpp>
 
 #include "LuaInclude.h"
 #include "Lua/LuaHandle.h"
 #include "System/Platform/Threading.h"
+#include "System/Threading/SpringMutex.h"
 #include "System/Log/ILog.h"
 #if (!defined(DEDICATED) && !defined(UNITSYNC) && !defined(BUILDING_AI))
 	#include "System/Misc/SpringTime.h"
@@ -16,13 +16,13 @@
 ///////////////////////////////////////////////////////////////////////////
 // Custom Lua Mutexes
 
-static std::map<lua_State*, boost::recursive_mutex*> mutexes;
+static std::map<lua_State*, spring::recursive_mutex*> mutexes;
 static std::map<lua_State*, bool> coroutines;
 
-static boost::recursive_mutex* GetLuaMutex(lua_State* L)
+static spring::recursive_mutex* GetLuaMutex(lua_State* L)
 {
 	assert(!mutexes[L]);
-	return new boost::recursive_mutex();
+	return new spring::recursive_mutex();
 }
 
 
@@ -33,7 +33,7 @@ void LuaCreateMutex(lua_State* L)
 	if (!lcd) return; // CLuaParser
 	assert(lcd);
 
-	boost::recursive_mutex* mutex = GetLuaMutex(L);
+	spring::recursive_mutex* mutex = GetLuaMutex(L);
 	lcd->luamutex = mutex;
 	mutexes[L] = mutex;
 }
@@ -50,7 +50,7 @@ void LuaDestroyMutex(lua_State* L)
 	} else {
 		lua_unlock(L);
 		assert(mutexes.find(L) != mutexes.end());
-		boost::recursive_mutex* mutex = GetLuaContextData(L)->luamutex;
+		spring::recursive_mutex* mutex = GetLuaContextData(L)->luamutex;
 		assert(mutex);
 		delete mutex;
 		mutexes.erase(L);
@@ -78,7 +78,7 @@ void LuaMutexLock(lua_State* L)
 {
 	if (!GetLuaContextData(L)) return; // CLuaParser
 
-	boost::recursive_mutex* mutex = GetLuaContextData(L)->luamutex;
+	spring::recursive_mutex* mutex = GetLuaContextData(L)->luamutex;
 
 	if (mutex->try_lock())
 		return;
@@ -93,7 +93,7 @@ void LuaMutexUnlock(lua_State* L)
 {
 	if (!GetLuaContextData(L)) return; // CLuaParser
 
-	boost::recursive_mutex* mutex = GetLuaContextData(L)->luamutex;
+	spring::recursive_mutex* mutex = GetLuaContextData(L)->luamutex;
 	mutex->unlock();
 }
 

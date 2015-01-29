@@ -115,7 +115,6 @@ MakeGlobalVar(sources_engine_System_Log_sinkOutputDebugString
 MakeGlobalVar(sources_engine_System_Platform_Linux
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/CrashHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/SoLib.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/thread_backtrace.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/MessageBox.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/WindowManagerHelper.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/ThreadSupport.cpp"
@@ -124,7 +123,6 @@ MakeGlobalVar(sources_engine_System_Platform_Mac
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/SoLib.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Mac/MessageBox.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Mac/CrashHandler.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/thread_backtrace.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Mac/WindowManagerHelper.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/ThreadSupport.cpp"
 	)
@@ -135,6 +133,13 @@ MakeGlobalVar(sources_engine_System_Platform_Windows
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/seh.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/WinVersion.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/WindowManagerHelper.cpp"
+	)
+
+MakeGlobalVar(sources_engine_System_Threading_Linux
+		"${CMAKE_CURRENT_SOURCE_DIR}/Threading/Futex.cpp"
+	)
+MakeGlobalVar(sources_engine_System_Threading_Windows
+		"${CMAKE_CURRENT_SOURCE_DIR}/Threading/CriticalSection.cpp"
 	)
 
 ### only use the target platform related directory
@@ -157,7 +162,9 @@ ELSEIF (UNIX)
 			${sources_engine_System_Log_sinkConsole}
 			${sources_engine_System_Log_sinkFile}
 			${sources_engine_System_Platform_Linux}
+			${sources_engine_System_Threading_Linux}
 		)
+	MakeGlobalVar(sources_engine_System_Threading ${sources_engine_System_Threading_Linux})
 ELSEIF (WIN32)
 	MakeGlobalVar(sources_engine_System
 			${sources_engine_System_common}
@@ -168,7 +175,9 @@ ELSEIF (WIN32)
 			${sources_engine_System_Log_sinkFile}
 			${sources_engine_System_Log_sinkOutputDebugString}
 			${sources_engine_System_Platform_Windows}
+			${sources_engine_System_Threading_Windows}
 		)
+	MakeGlobalVar(sources_engine_System_Threading ${sources_engine_System_Threading_Windows})
 ELSE   ()
 	MakeGlobalVar(sources_engine_System
 			${sources_engine_System_common}

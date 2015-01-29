@@ -298,11 +298,7 @@ void CGlobalRendering::PostInit() {
 
 void CGlobalRendering::SetFullScreen(bool configFullScreen, bool cmdLineWindowed, bool cmdLineFullScreen)
 {
-#ifdef _DEBUG
-	fullScreen = false;
-#else
 	fullScreen = configFullScreen;
-#endif
 
 	// flags
 	if (cmdLineWindowed) {

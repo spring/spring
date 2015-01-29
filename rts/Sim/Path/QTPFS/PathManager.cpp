@@ -32,7 +32,7 @@
 #endif
 
 #define NUL_RECTANGLE SRectangle(0, 0,         0,        0)
-#define MAP_RECTANGLE SRectangle(0, 0,  gs->mapx, gs->mapy)
+#define MAP_RECTANGLE SRectangle(0, 0,  mapDims.mapx, mapDims.mapy)
 
 namespace QTPFS {
 	struct PMLoadScreen {
@@ -436,8 +436,8 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle
 
 	mr.x1 = std::max((r.x1 - md->xsizeh) - int(QTNode::MinSizeX() >> 1),        0);
 	mr.z1 = std::max((r.z1 - md->zsizeh) - int(QTNode::MinSizeZ() >> 1),        0);
-	mr.x2 = std::min((r.x2 + md->xsizeh) + int(QTNode::MinSizeX() >> 1), gs->mapx);
-	mr.z2 = std::min((r.z2 + md->zsizeh) + int(QTNode::MinSizeZ() >> 1), gs->mapy);
+	mr.x2 = std::min((r.x2 + md->xsizeh) + int(QTNode::MinSizeX() >> 1), mapDims.mapx);
+	mr.z2 = std::min((r.z2 + md->zsizeh) + int(QTNode::MinSizeZ() >> 1), mapDims.mapy);
 	ur.x1 = mr.x1;
 	ur.z1 = mr.z1;
 	ur.x2 = mr.x2;
@@ -471,8 +471,8 @@ void QTPFS::PathManager::QueueNodeLayerUpdates(const SRectangle& r) {
 
 		mr.x1 = std::max((r.x1 - md->xsizeh) - int(QTNode::MinSizeX() >> 1),        0);
 		mr.z1 = std::max((r.z1 - md->zsizeh) - int(QTNode::MinSizeZ() >> 1),        0);
-		mr.x2 = std::min((r.x2 + md->xsizeh) + int(QTNode::MinSizeX() >> 1), gs->mapx);
-		mr.z2 = std::min((r.z2 + md->zsizeh) + int(QTNode::MinSizeZ() >> 1), gs->mapy);
+		mr.x2 = std::min((r.x2 + md->xsizeh) + int(QTNode::MinSizeX() >> 1), mapDims.mapx);
+		mr.z2 = std::min((r.z2 + md->zsizeh) + int(QTNode::MinSizeZ() >> 1), mapDims.mapy);
 
 		nodeLayers[layerNum].QueueUpdate(mr, md);
 	}
@@ -792,7 +792,7 @@ bool QTPFS::PathManager::ExecuteSearch(
 	assert(path->GetID() == search->GetID());
 
 	search->Initialize(&nodeLayer, &pathCache, path->GetSourcePoint(), path->GetTargetPoint(), MAP_RECTANGLE);
-	path->SetHash(search->GetHash(gs->mapx * gs->mapy, pathType));
+	path->SetHash(search->GetHash(mapDims.mapx * mapDims.mapy, pathType));
 
 	{
 		#ifdef QTPFS_SEARCH_SHARED_PATHS

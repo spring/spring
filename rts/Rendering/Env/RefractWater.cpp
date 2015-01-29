@@ -88,12 +88,12 @@ void CRefractWater::SetupWaterDepthTex()
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, readMap->GetShadingTexture()); // the shading texture has water depth encoded in alpha
 	glEnable(GL_TEXTURE_GEN_S);
-	float splane[] = { 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 0.0f, 0.0f, 0.0f }; 
+	float splane[] = { 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 0.0f, 0.0f, 0.0f }; 
 	glTexGeni(GL_S,GL_TEXTURE_GEN_MODE,GL_OBJECT_LINEAR);
 	glTexGenfv(GL_S,GL_OBJECT_PLANE,splane);
 
 	glEnable(GL_TEXTURE_GEN_T);
-	float tplane[] = { 0.0f, 0.0f, 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0.0f};
+	float tplane[] = { 0.0f, 0.0f, 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), 0.0f};
 	glTexGeni(GL_T,GL_TEXTURE_GEN_MODE,GL_OBJECT_LINEAR);
 	glTexGenfv(GL_T,GL_OBJECT_PLANE,tplane);
 }

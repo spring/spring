@@ -129,7 +129,7 @@ vec3 GetInfoTex(float outside) {
 //////////////////////////////////////////////////
 // Helpers
 
-void GetWaterHeight(out float waterdepth, out float invwaterdepth, out float outside, in out vec2 coastdist)
+void GetWaterHeight(out float waterdepth, out float invwaterdepth, out float outside, inout vec2 coastdist)
 {
 	outside = 0.0;
 
@@ -222,7 +222,7 @@ vec3 GetShorewaves(vec2 coast, vec3 octave, float waterdepth , float invwaterdep
 }
 
 
-vec3 GetReflection(float angle, vec3 normal, in out float fresnel)
+vec3 GetReflection(float angle, vec3 normal, inout float fresnel)
 {
  	vec3 reflColor = vec3(0.0, 0.0, 0.0);
 #ifdef opt_reflection

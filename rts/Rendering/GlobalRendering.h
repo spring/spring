@@ -56,7 +56,6 @@ public:
 	float FPS;
 
 	/// the window state (0=normal,1=maximized,2=minimized)
-	/// note don't change values without updating MyX11SetWindowState()!!!
 	enum {
 		WINSTATE_DEFAULT   = 0,
 		WINSTATE_MAXIMIZED = 1,
