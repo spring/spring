@@ -646,6 +646,7 @@ void CAdvSky::UpdateSunFlare() {
 
 		if (globalRendering->drawFog)
 			glEnable(GL_FOG);
+		glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
 	glEndList();
 }
@@ -808,6 +809,7 @@ void CAdvSky::CreateDetailTex()
 	fbo.Unbind();
 
 	glEnable(GL_DEPTH_TEST);
+	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void CAdvSky::UpdateSunDir() {
