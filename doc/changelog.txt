@@ -9,7 +9,11 @@ Major:
  - new rotatable default camera
  - bugfixes & improvements
  - add unsynced Spring.Reload(script)
- ! modified Spring.Restart(parameters, script): it only restarts spring when parameters isn't empty
+ - add Spring.Reload(script) to change/map & game without exiting spring
+   ! modified Spring.Restart(parameters, script): it only restarts spring when parameters isn't empty
+   ! removed alias "/quit" (use /quitforce)
+   - add "quit to menu" to quit-box
+   - add "/reloadforce"
 
 Cameras:
  ! removed TW, Orbital & Smooth camera
