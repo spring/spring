@@ -4840,7 +4840,9 @@ int LuaSyncedRead::GetGroundExtremes(lua_State* L)
 {
 	lua_pushnumber(L, readMap->GetInitMinHeight());
 	lua_pushnumber(L, readMap->GetInitMaxHeight());
-	return 2;
+	lua_pushnumber(L, readMap->GetCurrMinHeight());
+	lua_pushnumber(L, readMap->GetCurrMaxHeight());
+	return 4;
 }
 
 

@@ -111,7 +111,7 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 
 		glslShaders[n]->SetFlag("SMF_VOID_WATER",               mapInfo->map.voidWater);
 		glslShaders[n]->SetFlag("SMF_VOID_GROUND",              mapInfo->map.voidGround);
-		glslShaders[n]->SetFlag("SMF_ARB_LIGHTING",             !smfMap->HaveSpecularTexture());
+		glslShaders[n]->SetFlag("SMF_SPECULAR_LIGHTING",        smfMap->HaveSpecularTexture());
 		glslShaders[n]->SetFlag("SMF_DETAIL_TEXTURE_SPLATTING", smfMap->HaveSplatTexture());
 		glslShaders[n]->SetFlag("SMF_WATER_ABSORPTION",         smfMap->HasVisibleWater());
 		glslShaders[n]->SetFlag("SMF_SKY_REFLECTIONS",          (smfMap->GetSkyReflectModTexture() != 0));

@@ -51,10 +51,6 @@ void CSkirmishAIHandler::FreeInstance(CSkirmishAIHandler* handler)
 
 
 
-CSkirmishAIHandler::CSkirmishAIHandler(): currentAIId(MAX_AIS), gameInitialized(false)
-{
-}
-
 void CSkirmishAIHandler::ResetState()
 {
 	id_ai.clear();
@@ -64,6 +60,9 @@ void CSkirmishAIHandler::ResetState()
 	id_dieReason.clear();
 
 	luaAIShortNames.clear();
+
+	currentAIId = MAX_AIS;
+	gameInitialized = false;
 }
 
 void CSkirmishAIHandler::LoadFromSetup(const CGameSetup& setup) {

@@ -352,34 +352,19 @@ CGame::~CGame()
 #endif
 
 	ENTER_SYNCED_CODE();
-	LOG("[%s][1]", __FUNCTION__);
+	LOG("[%s]1]", __FUNCTION__);
 
-	CEndGameBox::Destroy();
-	CLoadScreen::DeleteInstance(); // make sure to halt loading, otherwise crash :)
-	CColorMap::DeleteColormaps();
-
-	IVideoCapturing::FreeInstance();
-
-	LOG("[%s][2]", __FUNCTION__);
-	// delete this first since AI's might call back into sim-components in their dtors
-	// this means the simulation *should not* assume the EOH still exists on game exit
-	CEngineOutHandler::Destroy();
-
-	// TODO move these to the end of this dtor, once all action-executors are registered by their respective engine sub-parts
-	UnsyncedGameCommands::DestroyInstance();
-	SyncedGameCommands::DestroyInstance();
-
-	LOG("[%s][3]", __FUNCTION__);
 	KillLua();
+	KillMisc();
 	KillRendering();
 	KillInterface();
 	KillSimulation();
 
-	LOG("[%s][4]", __FUNCTION__);
+	LOG("[%s][2]", __FUNCTION__);
 	SafeDelete(saveFile); // ILoadSaveHandler, depends on vfsHandler via ~IArchive
 	SafeDelete(jobDispatcher);
 
-	LOG("[%s][5]", __FUNCTION__);
+	LOG("[%s][3]", __FUNCTION__);
 	CWordCompletion::DestroyInstance();
 	CCategoryHandler::RemoveInstance();
 	CResourceHandler::FreeInstance();
@@ -704,6 +689,8 @@ void CGame::LoadInterface()
 		grouphandlers.push_back(new CGroupHandler(t));
 	}
 
+	// note: disable is needed in case user reloads before StartPlaying
+	GameSetupDrawer::Disable();
 	GameSetupDrawer::Enable();
 }
 
@@ -807,6 +794,26 @@ void CGame::KillLua()
 
 	LOG("[%s][4]", __FUNCTION__);
 	LuaOpenGL::Free();
+}
+
+void CGame::KillMisc()
+{
+	LOG("[%s][1]", __FUNCTION__);
+	CEndGameBox::Destroy();
+	CLoadScreen::DeleteInstance(); // make sure to halt loading, otherwise crash :)
+	CColorMap::DeleteColormaps();
+
+	IVideoCapturing::FreeInstance();
+
+
+	LOG("[%s][2]", __FUNCTION__);
+	// delete this first since AI's might call back into sim-components in their dtors
+	// this means the simulation *should not* assume the EOH still exists on game exit
+	CEngineOutHandler::Destroy();
+
+	// TODO move these to the end of this dtor, once all action-executors are registered by their respective engine sub-parts
+	UnsyncedGameCommands::DestroyInstance();
+	SyncedGameCommands::DestroyInstance();
 }
 
 void CGame::KillRendering()
@@ -1486,13 +1493,14 @@ void CGame::StartPlaying()
 {
 	assert(!playing);
 	playing = true;
-	GameSetupDrawer::Disable();
 	lastReadNetTime = spring_gettime();
 
 	gu->startTime = gu->gameTime;
 	gu->myTeam = playerHandler->Player(gu->myPlayerNum)->team;
 	gu->myAllyTeam = teamHandler->AllyTeam(gu->myTeam);
 //	grouphandler->team = gu->myTeam;
+
+	GameSetupDrawer::Disable();
 	CLuaUI::UpdateTeams();
 
 	// setup the teams
@@ -2062,10 +2070,11 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 			string head = userInput.substr(0, writingPos);
 			string tail = userInput.substr(writingPos);
 
+			// fills head with the first partial match
+			const vector<string>& partials = wordCompletion->Complete(head);
+
 			userInput = head + tail;
 			writingPos = head.length();
-
-			const vector<string>& partials = wordCompletion->Complete(head);
 
 			if (!partials.empty()) {
 				string msg;

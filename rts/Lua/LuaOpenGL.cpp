@@ -87,8 +87,8 @@ LuaOpenGL::DrawMode LuaOpenGL::prevDrawMode = LuaOpenGL::DRAW_NONE;
 bool  LuaOpenGL::safeMode = true;
 bool  LuaOpenGL::canUseShaders = false;
 
-float LuaOpenGL::screenWidth = 0.0f;
-float LuaOpenGL::screenDistance = 0.0f;
+float LuaOpenGL::screenWidth = 0.36f;
+float LuaOpenGL::screenDistance = 0.60f;
 
 std::set<unsigned int> LuaOpenGL::occlusionQueries;
 
@@ -129,18 +129,6 @@ void LuaOpenGL::Free()
 
 bool LuaOpenGL::PushEntries(lua_State* L)
 {
-	{
-		// these need to be re-initialized here since we might have reloaded
-		resetMatrixFunc = NULL;
-
-		drawMode = LuaOpenGL::DRAW_NONE;
-		prevDrawMode = LuaOpenGL::DRAW_NONE;
-
-		screenWidth = 0.36f;
-		screenDistance = 0.60f;
-	}
-
-
 #define REGISTER_LUA_CFUNC(x) \
 	lua_pushstring(L, #x);      \
 	lua_pushcfunction(L, x);    \
