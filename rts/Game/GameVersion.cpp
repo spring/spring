@@ -178,6 +178,15 @@ bool IsHeadless()
 #endif
 }
 
+bool IsUnitsync()
+{
+#ifdef UNITSYNC
+	return true;
+#else
+	return false;
+#endif
+}
+
 const std::string& Get()
 {
 	static const std::string base = IsRelease()

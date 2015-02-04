@@ -4,6 +4,7 @@
 #include <boost/thread.hpp>
 
 #include "LuaInclude.h"
+#include "Game/GameVersion.h"
 #include "Lua/LuaHandle.h"
 #include "System/Platform/Threading.h"
 #include "System/Threading/SpringMutex.h"
@@ -29,6 +30,12 @@ static spring::recursive_mutex* GetLuaMutex(lua_State* L)
 
 void LuaCreateMutex(lua_State* L)
 {
+	#if (ENABLE_USERSTATE_LOCKS == 0)
+	// if LoadingMT=1, everything runs in the game-load thread (on startup)
+	assert(Threading::IsMainThread() || Threading::IsGameLoadThread() || SpringVersion::IsUnitsync());
+	return;
+	#endif
+
 	luaContextData* lcd = GetLuaContextData(L);
 	if (!lcd) return; // CLuaParser
 	assert(lcd);
@@ -41,6 +48,11 @@ void LuaCreateMutex(lua_State* L)
 
 void LuaDestroyMutex(lua_State* L)
 {
+	#if (ENABLE_USERSTATE_LOCKS == 0)
+	assert(Threading::IsMainThread() || Threading::IsGameLoadThread() || SpringVersion::IsUnitsync());
+	return;
+	#endif
+
 	if (!GetLuaContextData(L)) return; // CLuaParser
 	assert(GetLuaContextData(L));
 
@@ -61,6 +73,11 @@ void LuaDestroyMutex(lua_State* L)
 
 void LuaLinkMutex(lua_State* L_parent, lua_State* L_child)
 {
+	#if (ENABLE_USERSTATE_LOCKS == 0)
+	assert(Threading::IsMainThread() || Threading::IsGameLoadThread() || SpringVersion::IsUnitsync());
+	return;
+	#endif
+
 	luaContextData* plcd = GetLuaContextData(L_parent);
 	assert(plcd);
 
@@ -76,6 +93,11 @@ void LuaLinkMutex(lua_State* L_parent, lua_State* L_child)
 
 void LuaMutexLock(lua_State* L)
 {
+	#if (ENABLE_USERSTATE_LOCKS == 0)
+	assert(Threading::IsMainThread() || Threading::IsGameLoadThread() || SpringVersion::IsUnitsync());
+	return;
+	#endif
+
 	if (!GetLuaContextData(L)) return; // CLuaParser
 
 	spring::recursive_mutex* mutex = GetLuaContextData(L)->luamutex;
@@ -91,6 +113,11 @@ void LuaMutexLock(lua_State* L)
 
 void LuaMutexUnlock(lua_State* L)
 {
+	#if (ENABLE_USERSTATE_LOCKS == 0)
+	assert(Threading::IsMainThread() || Threading::IsGameLoadThread() || SpringVersion::IsUnitsync());
+	return;
+	#endif
+
 	if (!GetLuaContextData(L)) return; // CLuaParser
 
 	spring::recursive_mutex* mutex = GetLuaContextData(L)->luamutex;
@@ -100,6 +127,11 @@ void LuaMutexUnlock(lua_State* L)
 
 void LuaMutexYield(lua_State* L)
 {
+	#if (ENABLE_USERSTATE_LOCKS == 0)
+	assert(Threading::IsMainThread() || Threading::IsGameLoadThread() || SpringVersion::IsUnitsync());
+	return;
+	#endif
+
 	assert(GetLuaContextData(L));
 	/*mutexes[L]->unlock();
 	if (!mutexes[L]->try_lock()) {
