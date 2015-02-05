@@ -123,7 +123,7 @@ int CPreGame::KeyPressed(int k, bool isRepeat)
 {
 	if (k == SDLK_ESCAPE) {
 		if (KeyInput::GetKeyModState(KMOD_SHIFT)) {
-			LOG("[PreGame] user exited", __FUNCTION__);
+			LOG("[%s] user exited", __FUNCTION__);
 			gu->globalQuit = true;
 		} else {
 			LOG("Use shift-esc to quit");
