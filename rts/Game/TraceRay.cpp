@@ -52,7 +52,7 @@ inline static bool TestConeHelper(
 		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), NULL, expPos3D) - coneSize) <= 0.0f); }
 	}
 
-	if (globalRendering->drawdebugtraceray && Threading::IsSimThread()) {
+	if (globalRendering->drawdebugtraceray) {
 		#define go geometricObjects
 
 		if (ret) {
@@ -129,7 +129,8 @@ inline static bool TestTrajectoryConeHelper(
 		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), NULL, expPos3D) - coneSize) <= 0.0f); }
 	}
 
-	if (globalRendering->drawdebugtraceray && Threading::IsSimThread()) {
+
+	if (globalRendering->drawdebugtraceray) {
 		// FIXME? seems to under-estimate gravity near edge of range
 		// (place objects along trajectory of a cannon to visualize)
 		#define go geometricObjects

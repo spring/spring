@@ -2472,8 +2472,6 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 	const float3 mins(xmin, 0.0f, zmin);
 	const float3 maxs(xmax, 0.0f, zmax);
 
-	const bool renderAccess = !Threading::IsSimThread();
-
 	const vector<CProjectile*>& rectProjectiles = quadField->GetProjectilesExact(mins, maxs);
 	const unsigned int rectProjectileCount = rectProjectiles.size();
 	unsigned int arrayIndex = 1;
@@ -2485,7 +2483,7 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 			for (unsigned int i = 0; i < rectProjectileCount; i++) {
 				const CProjectile* pro = rectProjectiles[i];
 
-				if (renderAccess && !projectileHandler->RenderAccess(pro))
+				if (!projectileHandler->RenderAccess(pro))
 					continue;
 
 				// filter out unsynced projectiles, the SyncedRead
@@ -2507,7 +2505,7 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 		for (unsigned int i = 0; i < rectProjectileCount; i++) {
 			const CProjectile* pro = rectProjectiles[i];
 
-			if (renderAccess && !projectileHandler->RenderAccess(pro))
+			if (!projectileHandler->RenderAccess(pro))
 				continue;
 
 			const CUnit* unit = pro->owner();

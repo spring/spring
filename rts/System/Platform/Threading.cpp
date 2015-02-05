@@ -19,7 +19,6 @@
 #include <boost/version.hpp>
 #include <boost/thread.hpp>
 #include <boost/cstdint.hpp>
-#include <boost/optional.hpp>
 #if defined(__APPLE__) || defined(__FreeBSD__)
 #elif defined(WIN32)
 	#include <windows.h>
@@ -50,9 +49,6 @@ namespace Threading {
 	static NativeThreadId nativeMainThreadID;
 	static NativeThreadId nativeGameLoadThreadID;
 	static NativeThreadId nativeWatchDogThreadID;
-
-	static boost::optional<NativeThreadId> simThreadID;
-	static boost::optional<NativeThreadId> luaBatchThreadID;
 
 	boost::thread_specific_ptr<std::shared_ptr<Threading::ThreadControls>> threadCtls;
 
@@ -479,31 +475,6 @@ namespace Threading {
 	}
 	bool IsWatchDogThread(NativeThreadId threadID) {
 		return NativeThreadIdsEqual(threadID, Threading::nativeWatchDogThreadID);
-	}
-
-
-
-	void SetSimThread(bool set) {
-		if (set) {
-			simThreadID = Threading::GetCurrentThreadId();
-			luaBatchThreadID = simThreadID;
-		} else {
-			simThreadID.reset();
-		}
-	}
-
-	bool IsSimThread() {
-		return ((!simThreadID)? false : NativeThreadIdsEqual(Threading::GetCurrentThreadId(), *simThreadID));
-	}
-	void SetLuaBatchThread(bool set) {
-		if (set) {
-			luaBatchThreadID = Threading::GetCurrentThreadId();
-		} else {
-			luaBatchThreadID.reset();
-		}
-	}
-	bool IsLuaBatchThread() {
-		return ((!luaBatchThreadID)? false : NativeThreadIdsEqual(Threading::GetCurrentThreadId(), *luaBatchThreadID));
 	}
 
 	void SetThreadName(const std::string& newname)

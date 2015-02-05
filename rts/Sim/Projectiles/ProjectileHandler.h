@@ -12,7 +12,6 @@
 
 #include "Sim/Projectiles/ProjectileFunctors.h"
 #include "System/float3.h"
-#include "System/Platform/Threading.h"
 
 // bypass id and event handling for unsynced projectiles (faster)
 #define UNSYNCED_PROJ_NOEVENT 1

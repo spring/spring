@@ -140,16 +140,6 @@ namespace Threading {
 	bool IsWatchDogThread(NativeThreadId threadID);
 
 	/**
-	 * GML Functions
-	 */
-	void SetSimThread(bool set);
-	bool IsSimThread();
-
-	void SetLuaBatchThread(bool set);
-	bool IsLuaBatchThread();
-
-
-	/**
 	 * Give the current thread a name (posix-only)
 	 */
 	void SetThreadName(const std::string& newname);

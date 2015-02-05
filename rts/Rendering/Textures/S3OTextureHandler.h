@@ -8,7 +8,6 @@
 #include <vector>
 
 #include "Rendering/GL/myGL.h"
-#include "System/Platform/Threading.h"
 
 struct S3DModel;
 class CBitmap;
