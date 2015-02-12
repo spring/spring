@@ -66,13 +66,11 @@
 
 using std::max;
 using std::string;
-using std::vector;
-using std::set;
 
 #undef far // avoid collision with windef.h
 #undef near
 
-CONFIG(bool, LuaShaders).defaultValue(true).safemodeValue(false);
+CONFIG(bool, LuaShaders).defaultValue(true).headlessValue(false).safemodeValue(false);
 
 static const int MAX_TEXTURE_UNITS = 32;
 
@@ -82,15 +80,17 @@ static const int MAX_TEXTURE_UNITS = 32;
 void (*LuaOpenGL::resetMatrixFunc)(void) = NULL;
 
 unsigned int LuaOpenGL::resetStateList = 0;
-set<unsigned int> LuaOpenGL::occlusionQueries;
 
 LuaOpenGL::DrawMode LuaOpenGL::drawMode = LuaOpenGL::DRAW_NONE;
 LuaOpenGL::DrawMode LuaOpenGL::prevDrawMode = LuaOpenGL::DRAW_NONE;
 
 bool  LuaOpenGL::safeMode = true;
 bool  LuaOpenGL::canUseShaders = false;
+
 float LuaOpenGL::screenWidth = 0.36f;
 float LuaOpenGL::screenDistance = 0.60f;
+
+std::set<unsigned int> LuaOpenGL::occlusionQueries;
 
 /******************************************************************************/
 /******************************************************************************/
@@ -98,22 +98,20 @@ float LuaOpenGL::screenDistance = 0.60f;
 void LuaOpenGL::Init()
 {
 	resetStateList = glGenLists(1);
-	glNewList(resetStateList, GL_COMPILE); {
-		ResetGLState();
-	}
+
+	glNewList(resetStateList, GL_COMPILE);
+	ResetGLState();
 	glEndList();
 
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
-	if (globalRendering->haveGLSL && configHandler->GetBool("LuaShaders")) {
-		canUseShaders = true;
-	}
+	canUseShaders = (globalRendering->haveGLSL && configHandler->GetBool("LuaShaders"));
 }
-
 
 void LuaOpenGL::Free()
 {
 	glDeleteLists(resetStateList, 1);
+	glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
 	if (!globalRendering->haveGLSL)
 		return;
@@ -121,6 +119,8 @@ void LuaOpenGL::Free()
 	for (auto it = occlusionQueries.begin(); it != occlusionQueries.end(); ++it) {
 		glDeleteQueries(1, &(*it));
 	}
+
+	occlusionQueries.clear();
 }
 
 
@@ -721,6 +721,16 @@ void LuaOpenGL::ResetDrawScreen()
 
 void LuaOpenGL::EnableDrawInMiniMap()
 {
+	glMatrixMode(GL_TEXTURE); {
+		glPushMatrix();
+	}
+	glMatrixMode(GL_PROJECTION); {
+		glPushMatrix();
+	}
+	glMatrixMode(GL_MODELVIEW); {
+		glPushMatrix();
+	}
+
 	if (drawMode == DRAW_SCREEN) {
 		prevDrawMode = DRAW_SCREEN;
 		drawMode = DRAW_NONE;
@@ -735,16 +745,6 @@ void LuaOpenGL::DisableDrawInMiniMap()
 {
 	if (prevDrawMode != DRAW_SCREEN) {
 		DisableCommon(DRAW_MINIMAP);
-
-		glMatrixMode(GL_TEXTURE); {
-			glLoadIdentity();
-		}
-		glMatrixMode(GL_PROJECTION); {
-			glLoadIdentity();
-		}
-		glMatrixMode(GL_MODELVIEW); {
-			glLoadIdentity();
-		}
 	}
 	else {
 		if (safeMode) {
@@ -757,10 +757,85 @@ void LuaOpenGL::DisableDrawInMiniMap()
 		prevDrawMode = DRAW_NONE;
 		drawMode = DRAW_SCREEN;
 	}
+
+	glMatrixMode(GL_TEXTURE); {
+		glPopMatrix();
+	}
+	glMatrixMode(GL_PROJECTION); {
+		glPopMatrix();
+	}
+	glMatrixMode(GL_MODELVIEW); {
+		glPopMatrix();
+	}
 }
 
 
 void LuaOpenGL::ResetDrawInMiniMap()
+{
+	if (safeMode) {
+		ResetMiniMapMatrices();
+		glCallList(resetStateList);
+	}
+}
+
+
+/******************************************************************************/
+//
+//  MiniMap BG
+//
+
+void LuaOpenGL::EnableDrawInMiniMapBackground()
+{
+	glMatrixMode(GL_TEXTURE); {
+		glPushMatrix();
+	}
+	glMatrixMode(GL_PROJECTION); {
+		glPushMatrix();
+	}
+	glMatrixMode(GL_MODELVIEW); {
+		glPushMatrix();
+	}
+
+	if (drawMode == DRAW_SCREEN) {
+		prevDrawMode = DRAW_SCREEN;
+		drawMode = DRAW_NONE;
+	}
+	EnableCommon(DRAW_MINIMAP_BACKGROUND);
+	resetMatrixFunc = ResetMiniMapMatrices;
+	ResetMiniMapMatrices();
+}
+
+
+void LuaOpenGL::DisableDrawInMiniMapBackground()
+{
+	if (prevDrawMode != DRAW_SCREEN) {
+		DisableCommon(DRAW_MINIMAP_BACKGROUND);
+	}
+	else {
+		if (safeMode) {
+			glPopAttrib();
+		} else {
+			glCallList(resetStateList);
+		}
+		resetMatrixFunc = ResetScreenMatrices;
+		ResetScreenMatrices();
+		prevDrawMode = DRAW_NONE;
+		drawMode = DRAW_SCREEN;
+	}
+
+	glMatrixMode(GL_TEXTURE); {
+		glPopMatrix();
+	}
+	glMatrixMode(GL_PROJECTION); {
+		glPopMatrix();
+	}
+	glMatrixMode(GL_MODELVIEW); {
+		glPopMatrix();
+	}
+}
+
+
+void LuaOpenGL::ResetDrawInMiniMapBackground()
 {
 	if (safeMode) {
 		ResetMiniMapMatrices();
@@ -1723,8 +1798,8 @@ int LuaOpenGL::DrawGroundQuad(lua_State* L)
 			}
 		}
 	}
-	const int mapxi = gs->mapxp1;
-	const int mapzi = gs->mapyp1;
+	const int mapxi = mapDims.mapxp1;
+	const int mapzi = mapDims.mapyp1;
 	const float* heightmap = readMap->GetCornerHeightMapUnsynced();
 
 	const float xs = std::max(0.0f, std::min(float3::maxxpos, x0)); // x start
@@ -3832,7 +3907,7 @@ int LuaOpenGL::PushPopMatrix(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 
-	vector<GLenum> matModes;
+	std::vector<GLenum> matModes;
 	int arg;
 	for (arg = 1; lua_isnumber(L, arg); arg++) {
 		const GLenum mode = (GLenum)lua_tonumber(L, arg);

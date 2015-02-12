@@ -12,7 +12,7 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/Wind.h"
 
-CR_BIND_DERIVED(CSmokeProjectile, CProjectile, );
+CR_BIND_DERIVED(CSmokeProjectile, CProjectile, )
 
 CR_REG_METADATA(CSmokeProjectile,
 (
@@ -25,7 +25,7 @@ CR_REG_METADATA(CSmokeProjectile,
 	CR_MEMBER_ENDFLAG(CM_Config),
 	CR_MEMBER(age),
 	CR_MEMBER(textureNum)
-));
+))
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -123,8 +123,8 @@ void CSmokeProjectile::Draw()
 	//float ymod=(int(frame/6))/16.0f;
 
 	const float interSize = size + (sizeExpansion * globalRendering->timeOffset);
-	const float3 pos1 ((camera->right - camera->up) * interSize);
-	const float3 pos2 ((camera->right + camera->up) * interSize);
+	const float3 pos1 ((camera->GetRight() - camera->GetUp()) * interSize);
+	const float3 pos2 ((camera->GetRight() + camera->GetUp()) * interSize);
 
 	#define st projectileDrawer->smoketex[textureNum]
 	va->AddVertexTC(drawPos - pos2, st->xstart, st->ystart, col);

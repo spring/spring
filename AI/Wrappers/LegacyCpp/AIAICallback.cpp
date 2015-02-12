@@ -749,7 +749,10 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 			unitDef->movedata->depth = sAICallback->UnitDef_MoveData_getDepth(skirmishAIId, unitDefId);
 			unitDef->movedata->maxSlope = sAICallback->UnitDef_MoveData_getMaxSlope(skirmishAIId, unitDefId);
 			unitDef->movedata->slopeMod = sAICallback->UnitDef_MoveData_getSlopeMod(skirmishAIId, unitDefId);
-			unitDef->movedata->depthMod = sAICallback->UnitDef_MoveData_getDepthMod(skirmishAIId, unitDefId);
+			// NOTE: If there will be more lambdas then it may be better to pass _this_ pointer into MoveData constructor
+			unitDef->movedata->GetDepthMod = [this, unitDefId](float height) {
+				return sAICallback->UnitDef_MoveData_getDepthMod(skirmishAIId, unitDefId, height);
+			};
 			unitDef->movedata->pathType = sAICallback->UnitDef_MoveData_getPathType(skirmishAIId, unitDefId);
 			unitDef->movedata->crushStrength = sAICallback->UnitDef_MoveData_getCrushStrength(skirmishAIId, unitDefId);
 			unitDef->movedata->moveType = (enum MoveData::MoveType) sAICallback->UnitDef_MoveData_getMoveType(skirmishAIId, unitDefId);

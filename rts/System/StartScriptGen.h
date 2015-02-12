@@ -19,4 +19,4 @@ namespace StartScriptGen {
 	* @param playername name to use ingame
 	*/
 	std::string CreateDefaultSetup(const std::string& map, const std::string& game, const std::string& ai, const std::string& playername);
-};
+}

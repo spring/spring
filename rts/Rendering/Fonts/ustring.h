@@ -31,7 +31,7 @@ namespace std {
 	// We would need to overload all ctors & funcs with "char*" argument then.
 	// too complicated -> the above is less code
 	//using u8string = basic_string<char8_t>;
-};
+}
 
 static inline const std::u8string& toustring(const std::string& str)
 {

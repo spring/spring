@@ -7,7 +7,7 @@
 
 class CFlameThrower: public CWeapon
 {
-	CR_DECLARE(CFlameThrower);
+	CR_DECLARE(CFlameThrower)
 public:
 	CFlameThrower(CUnit* owner, const WeaponDef* def);
 

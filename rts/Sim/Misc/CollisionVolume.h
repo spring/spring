@@ -20,7 +20,7 @@ class CFeature;
 
 struct CollisionVolume
 {
-	CR_DECLARE_STRUCT(CollisionVolume);
+	CR_DECLARE_STRUCT(CollisionVolume)
 
 public:
 	enum {
@@ -106,6 +106,7 @@ public:
 	float GetPointSurfaceDistance(const CFeature* u, const LocalModelPiece* lmp, const float3& p) const;
 
 private:
+	float GetCylinderDistance(const float3 pv, size_t axisA = 0, size_t axisB = 1, size_t axisC = 2) const;
 	float GetPointSurfaceDistance(const CMatrix44f& m, const float3& p) const;
 
 	float3 fAxisScales;                 ///< full-length axis scales

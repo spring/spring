@@ -9,7 +9,7 @@ struct AtlasedTexture;
 
 class CDirtProjectile : public CProjectile
 {
-	CR_DECLARE(CDirtProjectile);
+	CR_DECLARE(CDirtProjectile)
 public:
 	CDirtProjectile();
 	CDirtProjectile(

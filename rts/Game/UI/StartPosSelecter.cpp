@@ -9,6 +9,7 @@
 #include "Game/InMapDraw.h"
 #include "Game/Players/Player.h"
 #include "Map/Ground.h"
+#include "Map/ReadMap.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Net/Protocol/NetProtocol.h"
@@ -49,9 +50,9 @@ bool CStartPosSelecter::Ready(bool luaForcedReady)
 		return false;
 
 	if (luaForcedReady) {
-		net->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, CPlayer::PLAYER_RDYSTATE_FORCED, setStartPos.x, setStartPos.y, setStartPos.z));
+		clientNet->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, CPlayer::PLAYER_RDYSTATE_FORCED, setStartPos.x, setStartPos.y, setStartPos.z));
 	} else {
-		net->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, CPlayer::PLAYER_RDYSTATE_READIED, setStartPos.x, setStartPos.y, setStartPos.z));
+		clientNet->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, CPlayer::PLAYER_RDYSTATE_READIED, setStartPos.x, setStartPos.y, setStartPos.z));
 	}
 
 	delete this;
@@ -75,42 +76,35 @@ bool CStartPosSelecter::MousePress(int x, int y, int button)
 	inMapDrawer->SendErase(setStartPos);
 	startPosSet = true;
 	setStartPos = camera->GetPos() + mouse->dir * dist;
-	net->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, CPlayer::PLAYER_RDYSTATE_UPDATED, setStartPos.x, setStartPos.y, setStartPos.z));
+	clientNet->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, CPlayer::PLAYER_RDYSTATE_UPDATED, setStartPos.x, setStartPos.y, setStartPos.z));
 
 	return true;
 }
 
-void CStartPosSelecter::Draw()
-{
-	if (gu->spectating) {
-		delete this;
-		return;
-	}
 
+void CStartPosSelecter::DrawStartBox() const
+{
 	glPushMatrix();
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glMatrixMode(GL_MODELVIEW);
+	camera->Update();
 
 	glColor4f(0.2f,0.8f,0.2f,0.5f);
 	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_DEPTH_TEST);
-	glBegin(GL_QUADS);
 
 	const std::vector<AllyTeam>& allyStartData = CGameSetup::GetAllyStartingData();
 	const AllyTeam& myStartData = allyStartData[gu->myAllyTeam];
 
-	const float by = myStartData.startRectTop * gs->mapy * SQUARE_SIZE;
-	const float bx = myStartData.startRectLeft * gs->mapx * SQUARE_SIZE;
+	const float by = myStartData.startRectTop * mapDims.mapy * SQUARE_SIZE;
+	const float bx = myStartData.startRectLeft * mapDims.mapx * SQUARE_SIZE;
 
-	const float dy = (myStartData.startRectBottom - myStartData.startRectTop) * gs->mapy * SQUARE_SIZE / 10;
-	const float dx = (myStartData.startRectRight - myStartData.startRectLeft) * gs->mapx * SQUARE_SIZE / 10;
-
-	const float mx = float(mouse->lastx) / globalRendering->viewSizeX;
-	const float my = (globalRendering->viewSizeY - float(mouse->lasty)) / globalRendering->viewSizeY;
-
+	const float dy = (myStartData.startRectBottom - myStartData.startRectTop) * mapDims.mapy * SQUARE_SIZE / 10;
+	const float dx = (myStartData.startRectRight - myStartData.startRectLeft) * mapDims.mapx * SQUARE_SIZE / 10;
 
 	// draw starting-rectangle restrictions
+	glBegin(GL_QUADS);
 	for (int a = 0; a < 10; ++a) {
 		float3 pos1(bx + (a    ) * dx, 0.0f, by);
 		float3 pos2(bx + (a + 1) * dx, 0.0f, by);
@@ -159,14 +153,30 @@ void CStartPosSelecter::Draw()
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
-	glDisable(GL_DEPTH_TEST);
 
-	glDisable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
+	glDisable(GL_DEPTH_TEST);
+	glColor4f(1.0f,1.0f,1.0f,1.0f);
+}
+
+
+void CStartPosSelecter::Draw()
+{
+	if (gu->spectating) {
+		delete this;
+		return;
+	}
+
+	// lua-fied!
+	//DrawStartBox();
 
 	if (!showReadyBox)
 		return;
+
+	const float mx = float(mouse->lastx) / globalRendering->viewSizeX;
+	const float my = (globalRendering->viewSizeY - float(mouse->lasty)) / globalRendering->viewSizeY;
+
+	glEnable(GL_BLEND);
+	glDisable(GL_ALPHA_TEST);
 
 	if (InBox(mx, my, readyBox)) {
 		glColor4f(0.7f, 0.2f, 0.2f, guiAlpha);

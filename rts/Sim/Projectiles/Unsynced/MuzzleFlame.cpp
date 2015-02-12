@@ -9,7 +9,7 @@
 #include "Rendering/Textures/TextureAtlas.h"
 
 
-CR_BIND_DERIVED(CMuzzleFlame, CProjectile, (ZeroVector, ZeroVector, ZeroVector, 0));
+CR_BIND_DERIVED(CMuzzleFlame, CProjectile, (ZeroVector, ZeroVector, ZeroVector, 0))
 
 CR_REG_METADATA(CMuzzleFlame,(
 	CR_SERIALIZER(creg_Serialize), // randSmokeDir
@@ -19,9 +19,9 @@ CR_REG_METADATA(CMuzzleFlame,(
 	CR_MEMBER(numSmoke),
 	CR_MEMBER(randSmokeDir),
 	CR_RESERVED(8)
-	));
+	))
 
-void CMuzzleFlame::creg_Serialize(creg::ISerializer& s)
+void CMuzzleFlame::creg_Serialize(creg::ISerializer* s)
 {
 //	s.Serialize(randSmokeDir, numSmoke*sizeof(float3));
 }
@@ -83,10 +83,10 @@ void CMuzzleFlame::Draw()
 		col[3] = (unsigned char) (255 * alpha * fade);
 
 		#define st projectileDrawer->smoketex[tex]
-		va->AddVertexQTC(interPos - camera->right * drawsize - camera->up * drawsize, st->xstart, st->ystart, col);
-		va->AddVertexQTC(interPos + camera->right * drawsize - camera->up * drawsize, st->xend,   st->ystart, col);
-		va->AddVertexQTC(interPos + camera->right * drawsize + camera->up * drawsize, st->xend,   st->yend,   col);
-		va->AddVertexQTC(interPos - camera->right * drawsize + camera->up * drawsize, st->xstart, st->yend,   col);
+		va->AddVertexQTC(interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, st->xstart, st->ystart, col);
+		va->AddVertexQTC(interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, st->xend,   st->ystart, col);
+		va->AddVertexQTC(interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, st->xend,   st->yend,   col);
+		va->AddVertexQTC(interPos - camera->GetRight() * drawsize + camera->GetUp() * drawsize, st->xstart, st->yend,   col);
 		#undef st
 
 		if (fade < 1.0f) {
@@ -97,10 +97,10 @@ void CMuzzleFlame::Draw()
 			col[3] = (unsigned char) (1);
 
 			#define mft projectileDrawer->muzzleflametex
-			va->AddVertexQTC(interPos - camera->right * drawsize - camera->up * drawsize, mft->xstart, mft->ystart, col);
-			va->AddVertexQTC(interPos + camera->right * drawsize - camera->up * drawsize, mft->xend,   mft->ystart, col);
-			va->AddVertexQTC(interPos + camera->right * drawsize + camera->up * drawsize, mft->xend,   mft->yend,   col);
-			va->AddVertexQTC(interPos - camera->right * drawsize + camera->up * drawsize, mft->xstart, mft->yend,   col);
+			va->AddVertexQTC(interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, mft->xstart, mft->ystart, col);
+			va->AddVertexQTC(interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, mft->xend,   mft->ystart, col);
+			va->AddVertexQTC(interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, mft->xend,   mft->yend,   col);
+			va->AddVertexQTC(interPos - camera->GetRight() * drawsize + camera->GetUp() * drawsize, mft->xstart, mft->yend,   col);
 			#undef mft
 		}
 	}

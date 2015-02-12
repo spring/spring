@@ -49,62 +49,30 @@ static int CustomParamsTable(lua_State* L, const void* data);
 
 bool LuaFeatureDefs::PushEntries(lua_State* L)
 {
-	if (paramMap.empty()) {
-		InitParamMap();
-	}
+	InitParamMap();
 
-	const map<string, const FeatureDef*>& featureDefs = featureHandler->GetFeatureDefs();
-	map<string, const FeatureDef*>::const_iterator fdIt;
-	for (fdIt = featureDefs.begin(); fdIt != featureDefs.end(); ++fdIt) {
-		const FeatureDef* fd = fdIt->second;
-		if (fd == NULL) {
+	typedef int (*IndxFuncType)(lua_State*);
+	typedef int (*IterFuncType)(lua_State*);
+	typedef std::map<std::string, const FeatureDef*> ObjectDefMapType;
+
+	const ObjectDefMapType& defsMap = featureHandler->GetFeatureDefs();
+
+	const char* indxOpers[] = {"__index", "__newindex", "__metatable"};
+	const char* iterOpers[] = {"pairs", "next"};
+
+	const IndxFuncType indxFuncs[] = {&FeatureDefIndex, &FeatureDefNewIndex, &FeatureDefMetatable};
+	const IterFuncType iterFuncs[] = {&Pairs, &Next};
+
+	for (auto it = defsMap.cbegin(); it != defsMap.cend(); ++it) {
+		const auto def = it->second; // ObjectDefMapType::mapped_type
+
+		if (def == NULL)
 			continue;
-		}
-		lua_pushnumber(L, fd->id);
-		lua_newtable(L); { // the proxy table
 
-			lua_newtable(L); { // the metatable
-
-				HSTR_PUSH(L, "__index");
-				lua_pushlightuserdata(L, (void*)fd);
-				lua_pushcclosure(L, FeatureDefIndex, 1);
-				lua_rawset(L, -3); // closure
-
-				HSTR_PUSH(L, "__newindex");
-				lua_pushlightuserdata(L, (void*)fd);
-				lua_pushcclosure(L, FeatureDefNewIndex, 1);
-				lua_rawset(L, -3);
-
-				HSTR_PUSH(L, "__metatable");
-				lua_pushlightuserdata(L, (void*)fd);
-				lua_pushcclosure(L, FeatureDefMetatable, 1);
-				lua_rawset(L, -3);
-			}
-
-			lua_setmetatable(L, -2);
-		}
-
-		HSTR_PUSH(L, "pairs");
-		lua_pushcfunction(L, Pairs);
-		lua_rawset(L, -3);
-
-		HSTR_PUSH(L, "next");
-		lua_pushcfunction(L, Next);
-		lua_rawset(L, -3);
-
-		lua_rawset(L, -3); // proxy table into FeatureDefs
+		PushObjectDefProxyTable(L, indxOpers, iterOpers, indxFuncs, iterFuncs, it->second);
 	}
 
 	return true;
-}
-
-
-bool LuaFeatureDefs::IsDefaultParam(const string& word)
-{
-	if (paramMap.empty()) {
-	  InitParamMap();
-	}
-	return (paramMap.find(word) != paramMap.end());
 }
 
 
@@ -445,15 +413,15 @@ static int ColVolTable(lua_State* L, const void* data) {
 
 //TYPE_MODEL_FUNC(Height, height); // ::ModelHeight()
 //TYPE_MODEL_FUNC(Radius, radius); // ::ModelRadius()
-TYPE_MODEL_FUNC(Minx, mins.x);
-TYPE_MODEL_FUNC(Midx, relMidPos.x);
-TYPE_MODEL_FUNC(Maxx, maxs.x);
-TYPE_MODEL_FUNC(Miny, mins.y);
-TYPE_MODEL_FUNC(Midy, relMidPos.y);
-TYPE_MODEL_FUNC(Maxy, maxs.y);
-TYPE_MODEL_FUNC(Minz, mins.z);
-TYPE_MODEL_FUNC(Midz, relMidPos.z);
-TYPE_MODEL_FUNC(Maxz, maxs.z);
+TYPE_MODEL_FUNC(Minx, mins.x)
+TYPE_MODEL_FUNC(Midx, relMidPos.x)
+TYPE_MODEL_FUNC(Maxx, maxs.x)
+TYPE_MODEL_FUNC(Miny, mins.y)
+TYPE_MODEL_FUNC(Midy, relMidPos.y)
+TYPE_MODEL_FUNC(Maxy, maxs.y)
+TYPE_MODEL_FUNC(Minz, mins.z)
+TYPE_MODEL_FUNC(Midz, relMidPos.z)
+TYPE_MODEL_FUNC(Maxz, maxs.z)
 
 
 /******************************************************************************/
@@ -461,6 +429,8 @@ TYPE_MODEL_FUNC(Maxz, maxs.z);
 
 static bool InitParamMap()
 {
+	paramMap.clear();
+
 	paramMap["next"]  = DataElement(READONLY_TYPE);
 	paramMap["pairs"] = DataElement(READONLY_TYPE);
 

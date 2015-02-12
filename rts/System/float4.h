@@ -11,7 +11,7 @@
     an array of 4 floats. */
 struct float4 : public float3
 {
-	CR_DECLARE_STRUCT(float4);
+	CR_DECLARE_STRUCT(float4)
 
 	union {
 		struct { float w; };

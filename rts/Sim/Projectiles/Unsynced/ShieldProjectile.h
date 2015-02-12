@@ -11,13 +11,12 @@ class CUnit;
 class CPlasmaRepulser;
 struct WeaponDef;
 
-class CVertexArray;
 struct AtlasedTexture;
 class ShieldSegmentProjectile;
 
 
 class ShieldProjectile: public CProjectile {
-	CR_DECLARE(ShieldProjectile);
+	CR_DECLARE(ShieldProjectile)
 public:
 	ShieldProjectile(CPlasmaRepulser*);
 	~ShieldProjectile();
@@ -47,7 +46,7 @@ private:
 
 
 class ShieldSegmentProjectile: public CProjectile {
-	CR_DECLARE(ShieldSegmentProjectile);
+	CR_DECLARE(ShieldSegmentProjectile)
 public:
 	ShieldSegmentProjectile(
 		ShieldProjectile* shieldProjectile,

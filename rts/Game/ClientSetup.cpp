@@ -13,13 +13,12 @@
 #endif
 
 
-static const unsigned int DEFAULT_HOST_PORT = 8452;
-static const std::string DEFAULT_HOST_IP = "localhost"; // -> any local address
-static const std::string DEFAULT_HOST_PORT_STR = IntToString(DEFAULT_HOST_PORT);
+CONFIG(std::string, HostIPDefault).defaultValue("localhost").dedicatedValue("").description("Default IP to use for hosting if not specified in script.txt");
+CONFIG(int, HostPortDefault).defaultValue(8452).minimumValue(0).maximumValue(65535).description("Default Port to use for hosting if not specified in script.txt");
 
 ClientSetup::ClientSetup()
-	: hostIP(DEFAULT_HOST_IP)
-	, hostPort(DEFAULT_HOST_PORT)
+	: hostIP(configHandler->GetString("HostIPDefault"))
+	, hostPort(configHandler->GetInt("HostPortDefault"))
 	, isHost(false)
 {
 }
@@ -45,8 +44,8 @@ void ClientSetup::LoadFromStartScript(const std::string& setup)
 	}
 
 	// Technical parameters
-	file.GetDef(hostIP,       DEFAULT_HOST_IP,       "GAME\\HostIP");
-	file.GetDef(hostPort,     DEFAULT_HOST_PORT_STR, "GAME\\HostPort");
+	file.GetDef(hostIP,       hostIP, "GAME\\HostIP");
+	file.GetDef(hostPort,     IntToString(hostPort), "GAME\\HostPort");
 
 	file.GetDef(myPlayerName, "", "GAME\\MyPlayerName");
 	file.GetDef(myPasswd,     "", "GAME\\MyPasswd");

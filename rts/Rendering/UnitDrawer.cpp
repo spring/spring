@@ -40,7 +40,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
-#include "Sim/Units/Groups/Group.h"
+#include "Game/UI/Groups/Group.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Unit.h"
@@ -61,15 +61,15 @@
 
 CUnitDrawer* unitDrawer;
 
-CONFIG(int, UnitLodDist).defaultValue(1000);
-CONFIG(int, UnitIconDist).defaultValue(200);
+CONFIG(int, UnitLodDist).defaultValue(1000).headlessValue(0);
+CONFIG(int, UnitIconDist).defaultValue(200).headlessValue(0);
 CONFIG(float, UnitTransparency).defaultValue(0.7f);
 
 CONFIG(int, MaxDynamicModelLights)
 	.defaultValue(1)
 	.minimumValue(0);
 
-CONFIG(bool, AdvUnitShading).defaultValue(true).safemodeValue(false).description("Determines whether specular highlights and other lighting effects are rendered for units.");
+CONFIG(bool, AdvUnitShading).defaultValue(true).headlessValue(false).safemodeValue(false).description("Determines whether specular highlights and other lighting effects are rendered for units.");
 CONFIG(bool, AllowDeferredModelRendering).defaultValue(false).safemodeValue(false);
 
 CONFIG(float, LODScale).defaultValue(1.0f);
@@ -233,8 +233,6 @@ void CUnitDrawer::Update()
 		}
 	}
 
-	eventHandler.UpdateDrawUnits();
-
 	{
 
 		drawIcon.clear();
@@ -372,7 +370,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 		SetUnitGlobalLODFactor(LODScale);
 	}
 
-	camNorm = camera->forward;
+	camNorm = camera->GetDir();
 	camNorm.y = -0.1f;
 	camNorm.ANormalize();
 
@@ -881,8 +879,8 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 	}
 
 	// calculate the vertices
-	const float3 dy = camera->up    * scale;
-	const float3 dx = camera->right * scale;
+	const float3 dy = camera->GetUp()    * scale;
+	const float3 dx = camera->GetRight() * scale;
 	const float3 vn = pos - dx;
 	const float3 vp = pos + dx;
 	const float3 vnn = vn - dy;
@@ -1723,7 +1721,6 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	CFeature* feature = NULL;
-	CVertexArray* va = GetVertexArray();
 
 	std::vector<float3> buildableSquares; // buildable squares
 	std::vector<float3> featureSquares; // occupied squares
@@ -1753,6 +1750,7 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 		glColor4f(0.9f, 0.8f, 0.0f, 0.7f);
 	}
 
+	CVertexArray* va = GetVertexArray();
 	va->Initialize();
 	va->EnlargeArrays(buildableSquares.size() * 4, 0, VA_SIZE_0);
 
@@ -1766,6 +1764,7 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 
 
 	glColor4f(0.9f, 0.8f, 0.0f, 0.7f);
+	va = GetVertexArray();
 	va->Initialize();
 	va->EnlargeArrays(featureSquares.size() * 4, 0, VA_SIZE_0);
 
@@ -1779,6 +1778,7 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 
 
 	glColor4f(0.9f, 0.0f, 0.0f, 0.7f);
+	va = GetVertexArray();
 	va->Initialize();
 	va->EnlargeArrays(illegalSquares.size() * 4, 0, VA_SIZE_0);
 
@@ -1795,6 +1795,7 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 		const unsigned char s[4] = { 0,   0, 255, 128 }; // start color
 		const unsigned char e[4] = { 0, 128, 255, 255 }; // end color
 
+		va = GetVertexArray();
 		va->Initialize();
 		va->EnlargeArrays(8, 0, VA_SIZE_C);
 		va->AddVertexQC(float3(x1, h, z1), s); va->AddVertexQC(float3(x1, 0.f, z1), e);
@@ -1803,6 +1804,7 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 		va->AddVertexQC(float3(x2, h, z1), s); va->AddVertexQC(float3(x2, 0.f, z1), e);
 		va->DrawArrayC(GL_LINES);
 
+		va = GetVertexArray();
 		va->Initialize();
 		va->AddVertexQC(float3(x1, 0.0f, z1), e);
 		va->AddVertexQC(float3(x1, 0.0f, z2), e);
@@ -2069,7 +2071,7 @@ unsigned int CUnitDrawer::CalcUnitLOD(const CUnit* unit, unsigned int lastLOD)
 	if (lastLOD == 0) { return 0; }
 
 	const float3 diff = (unit->pos - camera->GetPos());
-	const float dist = diff.dot(camera->forward);
+	const float dist = diff.dot(camera->GetDir());
 	const float lpp = std::max(0.0f, dist * UNIT_GLOBAL_LOD_FACTOR);
 
 	for (/* no-op */; lastLOD != 0; lastLOD--) {

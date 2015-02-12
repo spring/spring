@@ -29,7 +29,7 @@ enum ESkirmishAIStatus {
  * It is used on the Game-Server and on clients (as a base class).
  */
 class SkirmishAIBase : public TeamController {
-	CR_DECLARE(SkirmishAIBase);
+	CR_DECLARE(SkirmishAIBase)
 
 public:
 	typedef std::map<std::string, std::string> customOpts;
@@ -52,7 +52,7 @@ public:
  */
 class SkirmishAIStatistics : public TeamControllerStatistics
 {
-	CR_DECLARE_STRUCT(SkirmishAIStatistics);
+	CR_DECLARE_STRUCT(SkirmishAIStatistics)
 
 public:
 	/**

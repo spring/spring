@@ -11,10 +11,14 @@
 #include "System/Platform/CpuID.h"
 #include "System/Platform/CrashHandler.h"
 
+#ifndef DEDICATED
+	#include "System/Sync/FPUCheck.h"
+#endif
+
+#include <memory>
 #include <boost/version.hpp>
 #include <boost/thread.hpp>
 #include <boost/cstdint.hpp>
-#include <boost/optional.hpp>
 #if defined(__APPLE__) || defined(__FreeBSD__)
 #elif defined(WIN32)
 	#include <windows.h>
@@ -27,7 +31,7 @@
 
 #ifndef UNIT_TEST
 CONFIG(int, WorkerThreadCount).defaultValue(-1).safemodeValue(0).minimumValue(-1).description("Count of worker threads (including mainthread!) used in parallel sections.");
-CONFIG(int, WorkerThreadSpinTime).defaultValue(5).minimumValue(0).description("The number of milliseconds worker threads will spin after no tasks to perform.");
+CONFIG(int, WorkerThreadSpinTime).defaultValue(1).minimumValue(0).description("The number of milliseconds worker threads will spin after no tasks to perform.");
 #endif
 
 
@@ -46,12 +50,11 @@ namespace Threading {
 	static NativeThreadId nativeGameLoadThreadID;
 	static NativeThreadId nativeWatchDogThreadID;
 
-	static boost::optional<NativeThreadId> simThreadID;
-	static boost::optional<NativeThreadId> luaBatchThreadID;
+	boost::thread_specific_ptr<std::shared_ptr<Threading::ThreadControls>> threadCtls;
 
 #if defined(__APPLE__) || defined(__FreeBSD__)
 #elif defined(WIN32)
-	static DWORD cpusSystem = 0;
+	static DWORD_PTR cpusSystem = 0;
 #else
 	static cpu_set_t cpusSystem;
 #endif
@@ -78,6 +81,36 @@ namespace Threading {
 
 		GetPhysicalCpuCores(); // (uses a static, too)
 		inited = true;
+	}
+
+
+	boost::uint32_t GetAffinity()
+	{
+	#if defined(__APPLE__) || defined(__FreeBSD__)
+		// no-op
+		return 0;
+
+	#elif defined(WIN32)
+		DWORD_PTR curMask;
+		DWORD_PTR systemCpus;
+		GetProcessAffinityMask(GetCurrentProcess(), &curMask, &systemCpus);
+		return curMask;
+	#else
+		cpu_set_t curAffinity;
+		CPU_ZERO(&curAffinity);
+		sched_getaffinity(0, sizeof(cpu_set_t), &curAffinity);
+
+		boost::uint32_t mask = 0;
+
+		int numCpus = std::min(CPU_COUNT(&curAffinity), 32); // w/o the min(.., 32) `(1 << n)` could overflow!
+		for (int n = numCpus - 1; n >= 0; --n) {
+			if (CPU_ISSET(n, &curAffinity)) {
+				mask |= (1 << n);
+			}
+		}
+
+		return mask;
+	#endif
 	}
 
 
@@ -221,8 +254,8 @@ namespace Threading {
 	    (across all existing processors, if more than one)*/
 	int GetPhysicalCpuCores() {
 		// Get CPU features
-		springproc::CpuId cpuid;
-		return cpuid.getCoreTotalNumber();;
+		static springproc::CpuId cpuid;
+		return cpuid.getCoreTotalNumber();
 	}
 
 
@@ -240,10 +273,11 @@ namespace Threading {
 		boost::uint32_t ompAvailCores = systemCores & ~mainAffinity;
 
 		{
-			int workerCount = -1;
 #ifndef UNIT_TEST
-			workerCount = configHandler->GetUnsigned("WorkerThreadCount");
+			int workerCount = std::min(ThreadPool::GetMaxThreads() - 1, configHandler->GetUnsigned("WorkerThreadCount"));
 			ThreadPool::SetThreadSpinTime(configHandler->GetUnsigned("WorkerThreadSpinTime"));
+#else
+			int workerCount = -1;
 #endif
 			const int numCores = ThreadPool::GetMaxThreads();
 
@@ -338,7 +372,50 @@ namespace Threading {
 	#endif
 	}
 
+	ThreadControls::ThreadControls () :
+		handle(0),
+		running(false)
+	{
+#ifndef WIN32
+		memset(&ucontext, 0, sizeof(ucontext_t));
+#endif
+	}
 
+	ThreadControls::~ThreadControls()
+	{
+
+	}
+
+	std::shared_ptr<ThreadControls> GetCurrentThreadControls()
+	{
+		// If there is no object registered, need to return an "empty" shared_ptr
+		if (threadCtls.get() == nullptr) {
+			return std::shared_ptr<ThreadControls> ();
+		}
+		return *(threadCtls.get());
+	}
+
+
+	boost::thread CreateNewThread (boost::function<void()> taskFunc, std::shared_ptr<Threading::ThreadControls>* ppCtlsReturn)
+	{
+		auto pThreadCtls = new Threading::ThreadControls();
+		auto ppThreadCtls = new std::shared_ptr<Threading::ThreadControls> (pThreadCtls);
+		if (ppCtlsReturn != nullptr) {
+			*ppCtlsReturn = *ppThreadCtls;
+		}
+
+
+#ifndef WIN32
+		boost::unique_lock<boost::mutex> lock (pThreadCtls->mutSuspend);
+		boost::thread localthread(boost::bind(Threading::ThreadStart, taskFunc, ppThreadCtls));
+
+		// Wait so that we know the thread is running and fully initialized before returning.
+		pThreadCtls->condInitialized.wait(lock);
+#else
+		boost::thread localthread(taskFunc);
+#endif
+		return localthread;
+	}
 
 	void SetMainThread() {
 		if (!haveMainThreadID) {
@@ -346,6 +423,10 @@ namespace Threading {
 			// boostMainThreadID = boost::this_thread::get_id();
 			nativeMainThreadID = Threading::GetCurrentThreadId();
 		}
+#ifndef WIN32
+		auto ppThreadCtls = new std::shared_ptr<Threading::ThreadControls> (new Threading::ThreadControls());
+		SetCurrentThreadControls(ppThreadCtls);
+#endif
 	}
 
 	bool IsMainThread() {
@@ -363,6 +444,13 @@ namespace Threading {
 			// boostGameLoadThreadID = boost::this_thread::get_id();
 			nativeGameLoadThreadID = Threading::GetCurrentThreadId();
 		}
+#ifndef WIN32
+		auto pThreadCtls = GetCurrentThreadControls();
+		if (pThreadCtls.get() == nullptr) { // Loading is sometimes done from the main thread, but this function is still called in 96.0.
+			auto ppThreadCtls = new std::shared_ptr<Threading::ThreadControls> (new Threading::ThreadControls());
+			SetCurrentThreadControls(ppThreadCtls);
+		}
+#endif
 	}
 
 	bool IsGameLoadThread() {
@@ -389,31 +477,6 @@ namespace Threading {
 		return NativeThreadIdsEqual(threadID, Threading::nativeWatchDogThreadID);
 	}
 
-
-
-	void SetSimThread(bool set) {
-		if (set) {
-			simThreadID = Threading::GetCurrentThreadId();
-			luaBatchThreadID = simThreadID;
-		} else {
-			simThreadID.reset();
-		}
-	}
-
-	bool IsSimThread() {
-		return ((!simThreadID)? false : NativeThreadIdsEqual(Threading::GetCurrentThreadId(), *simThreadID));
-	}
-	void SetLuaBatchThread(bool set) {
-		if (set) {
-			luaBatchThreadID = Threading::GetCurrentThreadId();
-		} else {
-			luaBatchThreadID.reset();
-		}
-	}
-	bool IsLuaBatchThread() {
-		return ((!luaBatchThreadID)? false : NativeThreadIdsEqual(Threading::GetCurrentThreadId(), *luaBatchThreadID));
-	}
-
 	void SetThreadName(const std::string& newname)
 	{
 	#if defined(__USE_GNU) && !defined(WIN32)
@@ -432,4 +495,4 @@ namespace Threading {
 	{
 		return threadError;
 	}
-};
+}

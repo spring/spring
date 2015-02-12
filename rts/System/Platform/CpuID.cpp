@@ -8,6 +8,7 @@
 	#include <intrin.h>
 #endif
 
+#include <boost/thread/thread.hpp>
 #include <assert.h>
 #include <set>
 
@@ -75,6 +76,8 @@ namespace springproc {
 		affinityMaskOfPackages = new uint64_t[nbProcessors];
 		processorApicIds = new uint32_t[nbProcessors];
 
+		setDefault();
+
 		unsigned int eax = 0, ebx = 0, ecx = 0, edx = 0;
 		eax = 0;
 		ExecCPUID(&eax, &ebx, &ecx, &edx);
@@ -138,7 +141,7 @@ namespace springproc {
 		currentLevel++;
 		ExecCPUID(&eax, &ebx, &ecx, &edx);
 
-		if ((ebx && 0xFFFF) == 0)
+		if ((ebx & 0xFFFF) == 0)
 			return;
 
 		if (((ecx >> 8) & 0xFF) == 1) {
@@ -214,38 +217,41 @@ namespace springproc {
 
 	void CpuId::getIdsIntelEnumerate()
 	{
+		auto oldAffinity = Threading::GetAffinity();
+
 		int processorNumber = Threading::GetLogicalCpuCores();
-		assert(processorNumber <= 64);	// as the affinity mask is a uint64_t
+		assert(processorNumber <= 64); // as the affinity mask is a uint64_t
+		assert(processorNumber <= 32); // spring uses uint32_t
 		for (size_t processor = 0; processor < processorNumber; processor++) {
-			Threading::SetAffinity(((uint32_t) 1) << processor);
+			Threading::SetAffinity(((uint32_t) 1) << processor, true);
+			boost::this_thread::yield();
 			processorApicIds[processor] = getApicIdIntel();
 		}
 
-		std::pair < std::set < uint32_t >::iterator, bool > ret;
-		// We determine the total numbers of cores cores
-		std::set < uint32_t > cores;
+		// We determine the total numbers of cores
+		std::set< uint32_t> cores;
 		for (size_t processor = 0; processor < processorNumber; processor++) {
-			ret = cores.insert(processorApicIds[processor] >> shiftCore);
-			if (ret.second) {
-				affinityMaskOfCores[cores.size() - 1] =
-				    ((uint64_t) 1) << processor;
-			}
+			auto ret = cores.insert(processorApicIds[processor] >> shiftCore);
+			if (!ret.second)
+				continue;
+
+			affinityMaskOfCores[cores.size() - 1] = ((uint64_t) 1) << processor;
 		}
 		coreTotalNumber = cores.size();
 
 		// We determine the total numbers of packages cores
-		std::set < uint32_t > packages;
+		std::set<uint32_t> packages;
 		for (size_t processor = 0; processor < processorNumber; processor++) {
-			ret =
-			    packages.
-			    insert(processorApicIds[processor] >> shiftPackage);
-			if (ret.second) {
-				affinityMaskOfPackages[packages.size() - 1] =
-				    ((uint64_t) 1) << processor;
-			}
+			auto ret = packages.insert(processorApicIds[processor] >> shiftPackage);
+			if (!ret.second)
+				continue;
+
+			affinityMaskOfPackages[packages.size() - 1] |= ((uint64_t) 1) << processor;
 		}
 
 		packageTotalNumber = packages.size();
+
+		Threading::SetAffinity(oldAffinity);
 	}
 
 	uint32_t CpuId::getApicIdIntel()
@@ -266,7 +272,6 @@ namespace springproc {
 	void CpuId::getIdsAmd()
 	{
 		LOG_L(L_WARNING,"[CpuId] ht/smt/cmt detection for AMD is not implemented! Using processor number reported by OS.");
-		setDefault();
 	}
 
 	int CpuId::getCoreTotalNumber()
@@ -292,7 +297,7 @@ namespace springproc {
 	void CpuId::setDefault()
 	{
 		coreTotalNumber = Threading::GetLogicalCpuCores();
-		packageTotalNumber = Threading::GetLogicalCpuCores();
+		packageTotalNumber = 1;
 
 		// As we could not determine anything just set affinity mask to (-1)
 		for (int i = 0; i < Threading::GetLogicalCpuCores(); i++) {

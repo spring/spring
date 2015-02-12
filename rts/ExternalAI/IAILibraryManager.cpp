@@ -11,21 +11,19 @@
 #include <cstdio>
 #include <cstring>
 
-IAILibraryManager* IAILibraryManager::myAILibraryManager = NULL;
+IAILibraryManager* IAILibraryManager::gAILibraryManager = NULL;
 
 IAILibraryManager* IAILibraryManager::GetInstance() {
+	if (gAILibraryManager == NULL)
+		gAILibraryManager = new CAILibraryManager();
 
-	if (myAILibraryManager == NULL) {
-		myAILibraryManager = new CAILibraryManager();
-	}
-
-	return myAILibraryManager;
+	return gAILibraryManager;
 }
 
 void IAILibraryManager::Destroy() {
-
-	IAILibraryManager* tmp = myAILibraryManager;
-	myAILibraryManager = NULL;
+	// SafeDelete
+	IAILibraryManager* tmp = gAILibraryManager;
+	gAILibraryManager = NULL;
 	delete tmp;
 }
 

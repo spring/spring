@@ -4,9 +4,9 @@
 
 #include "System/creg/creg_cond.h"
 
-CR_BIND(float4, );
+CR_BIND(float4, )
 CR_REG_METADATA(float4,
-		(CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z), CR_MEMBER(w)));
+		(CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z), CR_MEMBER(w)))
 
 float4::float4(): float3(), w(0.0f)
 {

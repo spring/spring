@@ -47,6 +47,19 @@ SET(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/InMapDrawView.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LineDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SmoothHeightMeshDrawer.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Map/InfoTexture/InfoTexture.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Map/InfoTexture/IInfoTextureHandler.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Map/InfoTexture/Legacy/LegacyInfoTextureHandler.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Map/InfoTexture/Modern/AirLos.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Map/InfoTexture/Modern/Combiner.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Map/InfoTexture/Modern/Height.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Map/InfoTexture/Modern/InfoTextureHandler.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Map/InfoTexture/Modern/Los.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Map/InfoTexture/Modern/Metal.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Map/InfoTexture/Modern/MetalExtraction.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Map/InfoTexture/Modern/Path.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Map/InfoTexture/Modern/PboInfoTexture.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Map/InfoTexture/Modern/Radar.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Models/3DModel.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Models/3DOParser.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Models/AssIO.cpp"
@@ -59,6 +72,7 @@ SET(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/ProjectileDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Screenshot.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Shaders/GLSLCopyState.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Shaders/LuaShaderContainer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Shaders/Shader.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Shaders/ShaderHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Shaders/ShaderStates.cpp"
@@ -82,6 +96,6 @@ SET(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/Fonts/CFontTexture.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Fonts/glFont.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Fonts/TextWrap.cpp"
+		PARENT_SCOPE
 	)
 
-MakeGlobal(sources_engine_Rendering)

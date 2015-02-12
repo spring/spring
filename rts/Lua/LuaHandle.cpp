@@ -34,6 +34,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
+#include "System/Exceptions.h"
 #include "System/GlobalConfig.h"
 #include "System/Rectangle.h"
 #include "System/ScopedFPUSettings.h"
@@ -70,13 +71,23 @@ void CLuaHandle::PushTracebackFuncToRegistry(lua_State* L)
 }
 
 
-CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode)
-	: CEventClient(_name, _order, false)
+
+static int handlepanic(lua_State *L)
+{
+	std::string err = luaL_optsstring(L, 1, "lua paniced");
+	throw content_error(err);
+}
+
+
+
+CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode, bool _synced)
+	: CEventClient(_name, _order, _synced)
 	, userMode   (_userMode)
 	, killMe     (false)
 	, callinErrors(0)
 {
 	D.owner = this;
+	D.synced = _synced;
 	L = LUA_OPEN(&D);
 
 	L_GC = lua_newthread(L);
@@ -84,6 +95,9 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode)
 
 	// needed for engine traceback
 	PushTracebackFuncToRegistry(L);
+
+	// prevent lua from calling c's exit()
+	lua_atpanic(L, handlepanic);
 }
 
 
@@ -127,8 +141,12 @@ int CLuaHandle::KillActiveHandle(lua_State* L)
 		if ((args >= 1) && lua_isstring(L, 1)) {
 			ah->killMsg = lua_tostring(L, 1);
 		}
+
 		// get rid of us next GameFrame call
 		ah->killMe = true;
+
+		// don't process any further events
+		eventHandler.RemoveClient(ah);
 	}
 	return 0;
 }
@@ -358,6 +376,16 @@ bool CLuaHandle::RunCallInTraceback(lua_State* L, const LuaHashString& hs, int i
 	if (error != 0) {
 		LOG_L(L_ERROR, "%s::RunCallIn: error = %i, %s, %s", GetName().c_str(),
 				error, hs.GetString().c_str(), traceback.c_str());
+
+		if (error == LUA_ERRMEM) {
+			// try to free some memory so other lua states can alloc again
+			for (int i=0; i<20; ++i) {
+				CollectGarbage();
+			}
+
+			// Kill
+			KillActiveHandle(L);
+		}
 		return false;
 	}
 	return true;
@@ -1750,16 +1778,30 @@ void CLuaHandle::DrawInMiniMap()
 		return;
 	}
 
-	const int xSize = minimap->GetSizeX();
-	const int ySize = minimap->GetSizeY();
+	lua_pushnumber(L, minimap->GetSizeX());
+	lua_pushnumber(L, minimap->GetSizeY());
 
-	if ((xSize < 1) || (ySize < 1)) {
-		lua_pop(L, 1);
+	const bool origDrawingState = LuaOpenGL::IsDrawingEnabled(L);
+	LuaOpenGL::SetDrawingEnabled(L, true);
+
+	// call the routine
+	RunCallIn(L, cmdStr, 2, 0);
+
+	LuaOpenGL::SetDrawingEnabled(L, origDrawingState);
+}
+
+
+void CLuaHandle::DrawInMiniMapBackground()
+{
+	LUA_CALL_IN_CHECK(L);
+	luaL_checkstack(L, 4, __FUNCTION__);
+	static const LuaHashString cmdStr("DrawInMiniMapBackground");
+	if (!cmdStr.GetGlobalFunc(L)) {
 		return;
 	}
 
-	lua_pushnumber(L, xSize);
-	lua_pushnumber(L, ySize);
+	lua_pushnumber(L, minimap->GetSizeX());
+	lua_pushnumber(L, minimap->GetSizeY());
 
 	const bool origDrawingState = LuaOpenGL::IsDrawingEnabled(L);
 	LuaOpenGL::SetDrawingEnabled(L, true);
@@ -2338,34 +2380,35 @@ void CLuaHandle::CollectGarbage()
 	lua_lock(L_GC);
 	//SCOPED_MT_TIMER("CollectGarbage"); // this func doesn't run in parallel yet, cause of problems with IsHandleRunning()
 
-	// kilobytes --> megabytes (note: total footprint INCLUDING garbage)
-	int luaMemFootPrint = lua_gc(L_GC, LUA_GCCOUNT, 0) / 1024;
+	// note: total footprint INCLUDING garbage
+	int luaMemFootPrintKB = lua_gc(L_GC, LUA_GCCOUNT, 0);
+	int numLuaGarbageCollectIters = 0;
 
+	static int gcsteps = 10;
 	// 30x per second !!!
-	static const float maxLuaGarbageCollectTime = configHandler->GetFloat("MaxLuaGarbageCollectionTime" );
-	const float maxRunTime = smoothstep(10, 100, luaMemFootPrint) * maxLuaGarbageCollectTime;
+	static const float maxLuaGarbageCollectTime = configHandler->GetFloat("MaxLuaGarbageCollectionTime");
+
+	float maxRunTime = smoothstep(10, 100, luaMemFootPrintKB / 1024) * maxLuaGarbageCollectTime;
 
 	const spring_time startTime = spring_gettime();
 	const spring_time endTime = startTime + spring_msecs(maxRunTime);
-	static int gcsteps = 10;
-	int numLuaGarbageCollectIters = 0;
 
 	SetHandleRunning(L_GC, true);
 
 	// collect garbage until time runs out
 	while (spring_gettime() < endTime) {
 		numLuaGarbageCollectIters++;
-		if (lua_gc(L_GC, LUA_GCSTEP, gcsteps)) {
-			// garbage-collection cycle finished
-			break;
-		}
+		if (!lua_gc(L_GC, LUA_GCSTEP, gcsteps))
+			continue;
 
-		// check if garbage-collection finished (MB precision is enough)
-		int luaMemFootPrintNow = lua_gc(L_GC, LUA_GCCOUNT, 0) / 1024;
-		if (luaMemFootPrintNow >= luaMemFootPrint) {
+		// garbage-collection cycle finished
+		const int luaMemFootPrintNow = lua_gc(L_GC, LUA_GCCOUNT, 0);
+		const int luaMemFootPrintChange = luaMemFootPrintNow - luaMemFootPrintKB;
+		luaMemFootPrintKB = luaMemFootPrintNow;
+
+		// cycle didn't freed any memory early-exit
+		if (luaMemFootPrintChange == 0)
 			break;
-		}
-		luaMemFootPrint = luaMemFootPrintNow;
 	}
 
 	lua_gc(L_GC, LUA_GCSTOP, 0); // don't collect garbage outside of this function

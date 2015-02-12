@@ -112,17 +112,17 @@ namespace
 #define DECLARE_FILTER(name, condition) \
 	DECLARE_FILTER_EX(name, 0, condition, ,)
 
-	DECLARE_FILTER(Builder, unit->unitDef->buildSpeed > 0);
-	DECLARE_FILTER(Building, dynamic_cast<const CBuilding*>(unit) != NULL);
-	DECLARE_FILTER(Transport, unit->unitDef->transportCapacity > 0);
-	DECLARE_FILTER(Aircraft, unit->unitDef->canfly);
-	DECLARE_FILTER(Weapons, !unit->weapons.empty());
-	DECLARE_FILTER(Idle, unit->commandAI->commandQue.empty());
+	DECLARE_FILTER(Builder, unit->unitDef->buildSpeed > 0)
+	DECLARE_FILTER(Building, dynamic_cast<const CBuilding*>(unit) != NULL)
+	DECLARE_FILTER(Transport, unit->unitDef->transportCapacity > 0)
+	DECLARE_FILTER(Aircraft, unit->unitDef->canfly)
+	DECLARE_FILTER(Weapons, !unit->weapons.empty())
+	DECLARE_FILTER(Idle, unit->commandAI->commandQue.empty())
 	DECLARE_FILTER(Waiting, !unit->commandAI->commandQue.empty() &&
-	               (unit->commandAI->commandQue.front().GetID() == CMD_WAIT));
-	DECLARE_FILTER(InHotkeyGroup, unit->group != NULL);
-	DECLARE_FILTER(Radar, unit->radarRadius || unit->sonarRadius || unit->jammerRadius);
-	DECLARE_FILTER(ManualFireUnit, unit->unitDef->canManualFire);
+	               (unit->commandAI->commandQue.front().GetID() == CMD_WAIT))
+	DECLARE_FILTER(InHotkeyGroup, unit->group != NULL)
+	DECLARE_FILTER(Radar, unit->radarRadius || unit->sonarRadius || unit->jammerRadius)
+	DECLARE_FILTER(ManualFireUnit, unit->unitDef->canManualFire)
 
 	DECLARE_FILTER_EX(WeaponRange, 1, unit->maxRange > minRange,
 		float minRange;
@@ -130,7 +130,7 @@ namespace
 			minRange = atof(value.c_str());
 		},
 		minRange=0.0f;
-	);
+	)
 
 	DECLARE_FILTER_EX(AbsoluteHealth, 1, unit->health > minHealth,
 		float minHealth;
@@ -138,7 +138,7 @@ namespace
 			minHealth = atof(value.c_str());
 		},
 		minHealth=0.0f;
-	);
+	)
 
 	DECLARE_FILTER_EX(RelativeHealth, 1, unit->health / unit->maxHealth > minHealth,
 		float minHealth;
@@ -146,7 +146,7 @@ namespace
 			minHealth = atof(value.c_str()) * 0.01f; // convert from percent
 		},
 		minHealth=0.0f;
-	);
+	)
 
 	DECLARE_FILTER_EX(InPrevSel, 0, prevTypes.find(unit->unitDef->id) != prevTypes.end(),
 		std::set<int> prevTypes;
@@ -157,14 +157,14 @@ namespace
 				prevTypes.insert((*si)->unitDef->id);
 			}
 		},
-	);
+	)
 
 	DECLARE_FILTER_EX(NameContain, 1, unit->unitDef->humanName.find(name) != std::string::npos,
 		std::string name;
 		void SetParam(int index, const std::string& value) {
 			name = value;
 		},
-	);
+	)
 
 	DECLARE_FILTER_EX(Category, 1, unit->category == cat,
 		unsigned int cat;
@@ -172,7 +172,7 @@ namespace
 			cat = CCategoryHandler::Instance()->GetCategory(value);
 		},
 		cat=0;
-	);
+	)
 //FIXME: std::strtof is in C99 which M$ doesn't bother to support.
 #ifdef _MSC_VER
 	#define STRTOF strtod
@@ -200,12 +200,12 @@ namespace
 			}
 		},
 		wantedValue=0.0f;
-	);
+	)
 
 #undef DECLARE_FILTER_EX
 #undef DECLARE_FILTER
 #undef STRTOF
-};
+}
 
 
 
@@ -370,20 +370,14 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 
 		selectedUnitsHandler.AddUnit(sel);
 		camHandler->CameraTransition(0.8f);
-		if(camHandler->GetCurrentControllerNum() != 0){
+		if (camHandler->GetCurrentControllerNum() != CCameraHandler::CAMERA_MODE_FIRSTPERSON) {
 			camHandler->GetCurrentController().SetPos(sel->pos);
-		} else {	//fps camera
+		} else {
+			//fps camera
+			if (camera->GetRot().x > -1.f)
+				camera->SetRotX(-1.f);
 
-			if(camera->rot.x>-1)
-				camera->rot.x=-1;
-
-			float3 wantedCamDir;
-			wantedCamDir.x=(float)(math::sin(camera->rot.y)*math::cos(camera->rot.x));
-			wantedCamDir.y=(float)(math::sin(camera->rot.x));
-			wantedCamDir.z=(float)(math::cos(camera->rot.y)*math::cos(camera->rot.x));
-			wantedCamDir.ANormalize();
-
-			camHandler->GetCurrentController().SetPos(sel->pos - wantedCamDir*800);
+			camHandler->GetCurrentController().SetPos(sel->pos - camera->GetDir() * 800);
 		}
 	} else if(s=="SelectNum"){
 		ReadDelimiter(selectString);

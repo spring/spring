@@ -15,7 +15,7 @@
 #include "System/creg/STL_List.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CExtractorBuilding, CBuilding, );
+CR_BIND_DERIVED(CExtractorBuilding, CBuilding, )
 
 CR_REG_METADATA(CExtractorBuilding, (
 	CR_MEMBER(extractionRange),
@@ -24,15 +24,15 @@ CR_REG_METADATA(CExtractorBuilding, (
 	CR_MEMBER(neighbours),
 	CR_RESERVED(16),
 	CR_POSTLOAD(PostLoad)
-));
+))
 
-CR_BIND(CExtractorBuilding::MetalSquareOfControl, );
+CR_BIND(CExtractorBuilding::MetalSquareOfControl, )
 
 CR_REG_METADATA_SUB(CExtractorBuilding,MetalSquareOfControl, (
 	CR_MEMBER(x),
 	CR_MEMBER(z),
 	CR_MEMBER(extractionDepth)
-));
+))
 
 // TODO: How are class statics incorporated into creg?
 float CExtractorBuilding::maxExtractionRange = 0.0f;
@@ -88,10 +88,10 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth)
 {
 	extractionRange = std::max(range, 0.001f);
 	extractionDepth = std::max(depth, 0.0f);
+	maxExtractionRange = std::max(extractionRange, maxExtractionRange);
 
 	// find any neighbouring extractors
 	const std::vector<CUnit*> &cu = quadField->GetUnits(pos, extractionRange + maxExtractionRange);
-	maxExtractionRange = std::max(extractionRange, maxExtractionRange);
 
 	for (std::vector<CUnit*>::const_iterator ui = cu.begin(); ui != cu.end(); ++ui) {
 		if (typeid(**ui) == typeid(CExtractorBuilding) && *ui != this) {
@@ -107,9 +107,9 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth)
 	// calculate this extractor's area of control and metalExtract amount
 	metalExtract = 0;
 	int xBegin = std::max(0,                (int) ((pos.x - extractionRange) / METAL_MAP_SQUARE_SIZE));
-	int xEnd   = std::min(gs->mapx / 2 - 1, (int) ((pos.x + extractionRange) / METAL_MAP_SQUARE_SIZE));
+	int xEnd   = std::min(mapDims.mapx / 2 - 1, (int) ((pos.x + extractionRange) / METAL_MAP_SQUARE_SIZE));
 	int zBegin = std::max(0,                (int) ((pos.z - extractionRange) / METAL_MAP_SQUARE_SIZE));
-	int zEnd   = std::min(gs->mapy / 2 - 1, (int) ((pos.z + extractionRange) / METAL_MAP_SQUARE_SIZE));
+	int zEnd   = std::min(mapDims.mapy / 2 - 1, (int) ((pos.z + extractionRange) / METAL_MAP_SQUARE_SIZE));
 
 	metalAreaOfControl.reserve((xEnd - xBegin + 1) * (zEnd - zBegin + 1));
 

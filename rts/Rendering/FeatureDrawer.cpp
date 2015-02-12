@@ -6,7 +6,6 @@
 #include "Game/GlobalUnsynced.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Map/BaseGroundDrawer.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/FarTextureHandler.h"
@@ -16,6 +15,7 @@
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
@@ -32,7 +32,7 @@
 
 #define DRAW_QUAD_SIZE 32
 
-CONFIG(bool, ShowRezBars).defaultValue(true);
+CONFIG(bool, ShowRezBars).defaultValue(true).headlessValue(false);
 
 CONFIG(float, FeatureDrawDistance)
 .defaultValue(6000.0f)
@@ -48,12 +48,21 @@ CFeatureDrawer* featureDrawer = NULL;
 
 /******************************************************************************/
 
-CR_BIND(CFeatureDrawer, );
-CR_BIND(CFeatureDrawer::DrawQuad, );
+CR_BIND(CFeatureDrawer, )
 
 CR_REG_METADATA(CFeatureDrawer, (
+	CR_IGNORED(unsortedFeatures),
+	CR_IGNORED(drawQuads),
+	CR_IGNORED(drawQuadsX),
+	CR_IGNORED(drawQuadsY),
+	CR_IGNORED(farDist),
+	CR_IGNORED(featureDrawDistance),
+	CR_IGNORED(featureFadeDistance),
+	CR_IGNORED(opaqueModelRenderers),
+	CR_IGNORED(cloakedModelRenderers),
+
 	CR_POSTLOAD(PostLoad)
-));
+))
 
 /******************************************************************************/
 
@@ -63,8 +72,8 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 {
 	eventHandler.AddClient(this);
 
-	drawQuadsX = gs->mapx/DRAW_QUAD_SIZE;
-	drawQuadsY = gs->mapy/DRAW_QUAD_SIZE;
+	drawQuadsX = mapDims.mapx/DRAW_QUAD_SIZE;
+	drawQuadsY = mapDims.mapy/DRAW_QUAD_SIZE;
 	drawQuads.resize(drawQuadsX * drawQuadsY);
 	featureDrawDistance = configHandler->GetFloat("FeatureDrawDistance");
 	featureFadeDistance = std::min(configHandler->GetFloat("FeatureFadeDistance"), featureDrawDistance);
@@ -163,12 +172,8 @@ void CFeatureDrawer::UpdateDrawQuad(CFeature* feature)
 
 void CFeatureDrawer::Update()
 {
-	eventHandler.UpdateDrawFeatures();
-
-	{
-		for (std::set<CFeature*>::iterator fsi = unsortedFeatures.begin(); fsi != unsortedFeatures.end(); ++fsi) {
-			UpdateDrawPos(*fsi);
-		}
+	for (CFeature* f: unsortedFeatures) {
+		UpdateDrawPos(f);
 	}
 }
 
@@ -186,18 +191,16 @@ void CFeatureDrawer::Draw()
 {
 	ISky::SetupFog();
 
-	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-
-	if (gd->DrawExtraTex()) {
+	if (infoTextureHandler->IsEnabled()) {
 		glActiveTextureARB(GL_TEXTURE2_ARB);
 		glEnable(GL_TEXTURE_2D);
 		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
 
 		glMultiTexCoord4f(GL_TEXTURE2_ARB, 1.0f,1.0f,1.0f,1.0f); // workaround a nvidia bug with TexGen
-		SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0.0f, 0.0f);
+		SetTexGen(1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), 0.0f, 0.0f);
 
-		glBindTexture(GL_TEXTURE_2D, gd->GetActiveInfoTexture());
+		glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 
@@ -214,7 +217,7 @@ void CFeatureDrawer::Draw()
 
 	farTextureHandler->Draw();
 
-	if (gd->DrawExtraTex()) {
+	if (infoTextureHandler->IsEnabled()) {
 		glActiveTextureARB(GL_TEXTURE2_ARB);
 		glDisable(GL_TEXTURE_2D);
 		glDisable(GL_TEXTURE_GEN_S);
@@ -416,15 +419,28 @@ void CFeatureDrawer::DrawShadowPass()
 class CFeatureQuadDrawer : public CReadMap::IQuadDrawer {
 public:
 	int drawQuadsX;
+
 	bool drawReflection, drawRefraction;
+	bool farFeatures;
+
 	float sqFadeDistBegin;
 	float sqFadeDistEnd;
-	bool farFeatures;
 
 	std::vector<CFeatureDrawer::DrawQuad>* drawQuads;
 
-	void DrawQuad(int x, int y)
-	{
+	void ResetState() {
+		drawQuadsX = 0;
+
+		drawReflection = false;
+		drawRefraction = false;
+		farFeatures = false;
+
+		sqFadeDistBegin = 0.0f;
+		sqFadeDistEnd   = 0.0f;
+
+		drawQuads = nullptr;
+	}
+	void DrawQuad(int x, int y) {
 		std::vector<IWorldObjectModelRenderer*>& opaqueModelRenderers = featureDrawer->opaqueModelRenderers;
 		std::vector<IWorldObjectModelRenderer*>& cloakedModelRenderers = featureDrawer->cloakedModelRenderers;
 
@@ -519,8 +535,8 @@ void CFeatureDrawer::SwapFeatures() {
 
 void CFeatureDrawer::PostLoad()
 {
-	drawQuadsX = gs->mapx/DRAW_QUAD_SIZE;
-	drawQuadsY = gs->mapy/DRAW_QUAD_SIZE;
+	drawQuadsX = mapDims.mapx/DRAW_QUAD_SIZE;
+	drawQuadsY = mapDims.mapy/DRAW_QUAD_SIZE;
 	drawQuads.clear();
 	drawQuads.resize(drawQuadsX * drawQuadsY);
 

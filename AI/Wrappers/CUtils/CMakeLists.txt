@@ -13,10 +13,9 @@ set(mySources
 	"${mySourceDir}/SharedLibrary.c"
 	"${mySourceDir}/SimpleLog.c"
 	"${mySourceDir}/SimpleProfiler.cpp"
-	"${mySourceDir}/SSkirmishAISpecifier.cpp"
 	"${mySourceDir}/Util.c"
 	"${mySourceDir}/TimeUtil.cpp"
 	)
-SetGlobal(${myName}_SRC "${mySources}")
+add_library(CUtils STATIC ${mySources})
 
 AIMessage(STATUS "Found AI Wrapper: ${myName} (sources only wrapper)")

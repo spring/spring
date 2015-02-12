@@ -7,7 +7,7 @@
 
 class CFlameProjectile : public CWeaponProjectile
 {
-	CR_DECLARE(CFlameProjectile);
+	CR_DECLARE(CFlameProjectile)
 public:
 	CFlameProjectile(const ProjectileParams& params);
 

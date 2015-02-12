@@ -119,8 +119,7 @@ vec3 GetInfoTex(float outside) {
 	vec3 info = vec3(0.0);
 #ifdef opt_infotex
 	vec2 clampedPotCoords = ShadingPlane.xy * clampedWorldPos;
-	info = texture2D(infotex, clampedPotCoords).rgb * 0.5 + 0.5;
-	info = info * 1.0 - 0.5;
+	info = (texture2D(infotex, clampedPotCoords).rgb - 0.5) * 0.5;
 	info = mix(info, vec3(0.0), outside);
 #endif
 	return info;
@@ -130,7 +129,7 @@ vec3 GetInfoTex(float outside) {
 //////////////////////////////////////////////////
 // Helpers
 
-void GetWaterHeight(out float waterdepth, out float invwaterdepth, out float outside, in out vec2 coastdist)
+void GetWaterHeight(out float waterdepth, out float invwaterdepth, out float outside, inout vec2 coastdist)
 {
 	outside = 0.0;
 
@@ -177,7 +176,7 @@ float GetWaterDepthFromDepthBuffer(float waterdepth)
 {
 #ifdef opt_depth
 	float tz = texture2DRect(depthmap, screencoord).r;
-	float shallowScale = abs(convertDepthToZ(tz) - convertDepthToZ(gl_FragCoord.z)) / 3.0;
+	float shallowScale = abs(convertDepthToZ(tz) - convertDepthToZ(gl_FragCoord.z)) * 0.333;
 	shallowScale = clamp(shallowScale, 0.0, 1.0);
 	return shallowScale;
 #else
@@ -223,7 +222,7 @@ vec3 GetShorewaves(vec2 coast, vec3 octave, float waterdepth , float invwaterdep
 }
 
 
-vec3 GetReflection(float angle, vec3 normal, in out float fresnel)
+vec3 GetReflection(float angle, vec3 normal, inout float fresnel)
 {
  	vec3 reflColor = vec3(0.0, 0.0, 0.0);
 #ifdef opt_reflection
@@ -292,6 +291,8 @@ void main()
     float surfaceMix  = (SurfaceColor.a + diffuse) * shallowScale;
     float refractDistortion = 60.0 * (1.0 - pow(gl_FragCoord.z, 80.0)) * shallowScale;
 
+  // INFOTEX
+    waterSurface += GetInfoTex(outside);
 
   // REFRACTION
 #ifdef opt_refraction
@@ -331,9 +332,6 @@ void main()
 
   // SPECULAR
     gl_FragColor.rgb += shadowOcc * specular * SpecularColor;
-
-  // INFOTEX
-    gl_FragColor.rgb += mix(vec3(0.0), GetInfoTex(outside), waterdepth);
 
   // FOG
     float fog = clamp( (gl_Fog.end - abs(gl_FogFragCoord)) * gl_Fog.scale ,0.0,1.0);

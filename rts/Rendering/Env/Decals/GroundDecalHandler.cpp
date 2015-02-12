@@ -8,7 +8,6 @@
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Lua/LuaParser.h"
-#include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -17,6 +16,7 @@
 #include "Rendering/Env/ISky.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -75,8 +75,8 @@ CGroundDecalHandler::CGroundDecalHandler()
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
 	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,512, 512, GL_RGBA, GL_UNSIGNED_BYTE, buf);
 
-	scarFieldX=gs->mapx/32;
-	scarFieldY=gs->mapy/32;
+	scarFieldX=mapDims.mapx/32;
+	scarFieldY=mapDims.mapy/32;
 	scarField=new std::set<Scar*>[scarFieldX*scarFieldY];
 
 	lastTest=0;
@@ -176,7 +176,7 @@ void CGroundDecalHandler::LoadDecalShaders() {
 			decalShaders[DECAL_SHADER_GLSL]->SetUniform1i(0, 0); // decalTex  (idx 0, texunit 0)
 			decalShaders[DECAL_SHADER_GLSL]->SetUniform1i(1, 1); // shadeTex  (idx 1, texunit 1)
 			decalShaders[DECAL_SHADER_GLSL]->SetUniform1i(2, 2); // shadowTex (idx 2, texunit 2)
-			decalShaders[DECAL_SHADER_GLSL]->SetUniform2f(3, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE));
+			decalShaders[DECAL_SHADER_GLSL]->SetUniform2f(3, 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE));
 			decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(7, sky->GetLight()->GetGroundShadowDensity());
 			decalShaders[DECAL_SHADER_GLSL]->Disable();
 			decalShaders[DECAL_SHADER_GLSL]->Validate();
@@ -217,9 +217,9 @@ inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 
 
 	const float* hm = readMap->GetCornerHeightMapUnsynced();
-	const int gsmx = gs->mapx;
+	const int gsmx = mapDims.mapx;
 	const int gsmx1 = gsmx + 1;
-	const int gsmy = gs->mapy;
+	const int gsmy = mapDims.mapy;
 
 	SColor color(255, 255, 255, int(decal->alpha * 255));
 
@@ -336,9 +336,9 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar,
 		const float ty = scar->texOffsetY;
 
 		int sx = (int) max(0.0f,                 (pos.x - radius) * 0.0625f);
-		int ex = (int) min(float(gs->hmapx - 1), (pos.x + radius) * 0.0625f);
+		int ex = (int) min(float(mapDims.hmapx - 1), (pos.x + radius) * 0.0625f);
 		int sz = (int) max(0.0f,                 (pos.z - radius) * 0.0625f);
-		int ez = (int) min(float(gs->hmapy - 1), (pos.z + radius) * 0.0625f);
+		int ez = (int) min(float(mapDims.hmapy - 1), (pos.z + radius) * 0.0625f);
 
 		// create the scar texture-quads
 		float px1 = sx * 16;
@@ -374,7 +374,7 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar,
 				color[3] = (int) (scar->startAlpha - (gs->frameNum - scar->creationTime) * scar->alphaFalloff);
 			}
 
-			const int gsmx1 = gs->mapx + 1;
+			const int gsmx1 = mapDims.mapx + 1;
 			const float* hm = readMap->GetCornerHeightMapUnsynced();
 
 			const int num = scar->va->drawIndex() / VA_SIZE_TC;
@@ -702,7 +702,6 @@ void CGroundDecalHandler::Draw()
 	}
 
 	const float3 ambientColor = mapInfo->light.groundAmbientColor * CGlobalRendering::SMF_INTENSITY_MULT;
-	const CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
@@ -720,9 +719,9 @@ void CGroundDecalHandler::Draw()
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
 
 		glMultiTexCoord4f(GL_TEXTURE1_ARB, 1.0f,1.0f,1.0f,1.0f); // workaround a nvidia bug with TexGen
-		SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 0);
+		SetTexGen(1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), 0, 0);
 
-	if (gd->DrawExtraTex()) {
+	if (infoTextureHandler->IsEnabled()) {
 		glActiveTexture(GL_TEXTURE3);
 		glEnable(GL_TEXTURE_2D);
 		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
@@ -732,9 +731,9 @@ void CGroundDecalHandler::Draw()
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
 
 		glMultiTexCoord4f(GL_TEXTURE3_ARB, 1.0f,1.0f,1.0f,1.0f); // workaround a nvidia bug with TexGen
-		SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 0);
+		SetTexGen(1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), 0, 0);
 
-		glBindTexture(GL_TEXTURE_2D, gd->GetActiveInfoTexture());
+		glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
 	}
 
 	if (shadowHandler->shadowsLoaded) {
@@ -750,7 +749,7 @@ void CGroundDecalHandler::Draw()
 
 		if (decalShaders[DECAL_SHADER_CURR] == decalShaders[DECAL_SHADER_ARB]) {
 			decalShaders[DECAL_SHADER_CURR]->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
-			decalShaders[DECAL_SHADER_CURR]->SetUniform4f(10, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0.0f, 1.0f);
+			decalShaders[DECAL_SHADER_CURR]->SetUniform4f(10, 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), 0.0f, 1.0f);
 			decalShaders[DECAL_SHADER_CURR]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
 			decalShaders[DECAL_SHADER_CURR]->SetUniform4f(10, ambientColor.x, ambientColor.y, ambientColor.z, 1.0f);
 			decalShaders[DECAL_SHADER_CURR]->SetUniform4f(11, 0.0f, 0.0f, 0.0f, sky->GetLight()->GetGroundShadowDensity());
@@ -861,7 +860,7 @@ void CGroundDecalHandler::AddDecalAndTrack(CUnit* unit, const float3& newPos)
 	// calculate typemap-index
 	const int tmz = newPos.z / (SQUARE_SIZE * 2);
 	const int tmx = newPos.x / (SQUARE_SIZE * 2);
-	const int tmi = Clamp(tmz * gs->hmapx + tmx, 0, gs->hmapx * gs->hmapy - 1);
+	const int tmi = Clamp(tmz * mapDims.hmapx + tmx, 0, mapDims.hmapx * mapDims.hmapy - 1);
 
 	const unsigned char* typeMap = readMap->GetTypeMapSynced();
 	const CMapInfo::TerrainType& terType = mapInfo->terrainTypes[ typeMap[tmi] ];
@@ -1012,9 +1011,9 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius, b
 	s->texOffsetY = (gu->RandInt() & 128)? 0: 0.5f;
 
 	s->x1 = int(std::max(0.f,                  (s->pos.x - radius) / (SQUARE_SIZE * 2)    ));
-	s->x2 = int(std::min(float(gs->hmapx - 1), (s->pos.x + radius) / (SQUARE_SIZE * 2) + 1));
+	s->x2 = int(std::min(float(mapDims.hmapx - 1), (s->pos.x + radius) / (SQUARE_SIZE * 2) + 1));
 	s->y1 = int(std::max(0.f,                  (s->pos.z - radius) / (SQUARE_SIZE * 2)    ));
-	s->y2 = int(std::min(float(gs->hmapy - 1), (s->pos.z + radius) / (SQUARE_SIZE * 2) + 1));
+	s->y2 = int(std::min(float(mapDims.hmapy - 1), (s->pos.z + radius) / (SQUARE_SIZE * 2) + 1));
 
 	s->basesize = (s->x2 - s->x1) * (s->y2 - s->y1);
 	s->overdrawn = 0;
@@ -1173,7 +1172,7 @@ void CGroundDecalHandler::MoveSolidObject(CSolidObject* object, const float3& po
 	decal->alphaFalloff = decalDef.groundDecalDecaySpeed;
 	decal->alpha = 0.0f;
 	decal->pos = pos;
-	decal->radius = math::sqrtf(float(sizex * sizex + sizey * sizey)) * SQUARE_SIZE + 20.0f;
+	decal->radius = math::sqrt(float(sizex * sizex + sizey * sizey)) * SQUARE_SIZE + 20.0f;
 	decal->facing = object->buildFacing;
 	// convert to heightmap coors
 	decal->xsize = sizex << 1;

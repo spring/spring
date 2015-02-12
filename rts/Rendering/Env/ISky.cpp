@@ -13,7 +13,7 @@
 #include "System/Log/ILog.h"
 
 CONFIG(bool, DynamicSun).defaultValue(false).description("Sets whether the sun will move around the sky throughout the game.\nThe sun will always stay above DynamicSunMinElevation");
-CONFIG(bool, AdvSky).defaultValue(true).defaultValue(false).description("Enables High Resolution Clouds.");
+CONFIG(bool, AdvSky).defaultValue(true).headlessValue(false).defaultValue(false).description("Enables High Resolution Clouds.");
 
 ISky* sky = NULL;
 
@@ -90,7 +90,7 @@ bool ISky::SunVisible(const float3 pos) const {
 
 	// cast a ray *toward* the sun from <pos>
 	// sun is visible if no terrain blocks it
-	const float3 sunDir = skyLight->GetLightDir();
+	const float3& sunDir = skyLight->GetLightDir();
 	const float sunDist = TraceRay::GuiTraceRay(pos, sunDir, globalRendering->viewRange, NULL, hitUnit, hitFeature, false, true, false);
 
 	return (sunDist < 0.0f || sunDist >= globalRendering->viewRange);

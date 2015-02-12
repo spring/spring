@@ -10,7 +10,7 @@
 
 using std::min;
 
-CR_BIND_DERIVED(CSpherePartProjectile, CProjectile, (NULL, ZeroVector, 0, 0, 0.0f, 0.0f, 0, ZeroVector));
+CR_BIND_DERIVED(CSpherePartProjectile, CProjectile, (NULL, ZeroVector, 0, 0, 0.0f, 0.0f, 0, ZeroVector))
 
 CR_REG_METADATA(CSpherePartProjectile, (
 	CR_MEMBER(centerPos),
@@ -26,7 +26,7 @@ CR_REG_METADATA(CSpherePartProjectile, (
 	CR_MEMBER(texx),
 	CR_MEMBER(texy),
 	CR_RESERVED(16)
-));
+))
 
 CSpherePartProjectile::CSpherePartProjectile(
 	const CUnit* owner,
@@ -129,7 +129,7 @@ CSpherePartSpawner::CSpherePartSpawner()
 {
 }
 
-CR_BIND_DERIVED(CSpherePartSpawner, CProjectile, );
+CR_BIND_DERIVED(CSpherePartSpawner, CProjectile, )
 
 CR_REG_METADATA(CSpherePartSpawner,
 (
@@ -139,7 +139,7 @@ CR_REG_METADATA(CSpherePartSpawner,
 		CR_MEMBER(expansionSpeed),
 		CR_MEMBER(color),
 	CR_MEMBER_ENDFLAG(CM_Config)
-));
+))
 
 void CSpherePartSpawner::Init(const CUnit* owner, const float3& offset)
 {

@@ -21,7 +21,7 @@
 
 class CRadarHandler : public boost::noncopyable
 {
-	CR_DECLARE_STRUCT(CRadarHandler);
+	CR_DECLARE_STRUCT(CRadarHandler)
 
 
 public:

@@ -14,7 +14,7 @@
  */
 class PlayerBase : public TeamController
 {
-	CR_DECLARE(PlayerBase);
+	CR_DECLARE(PlayerBase)
 
 public:
 	typedef std::map<std::string, std::string> customOpts;

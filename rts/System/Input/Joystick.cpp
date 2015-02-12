@@ -9,7 +9,7 @@
 #include "System/Log/ILog.h"
 #include "System/EventHandler.h"
 
-CONFIG(bool, JoystickEnabled).defaultValue(true);
+CONFIG(bool, JoystickEnabled).defaultValue(true).headlessValue(false);
 CONFIG(int, JoystickUse).defaultValue(0);
 
 Joystick* stick = NULL;
@@ -41,9 +41,12 @@ void FreeJoystick() {
 }
 
 Joystick::Joystick()
+	: myStick(nullptr)
 {
 	const int numSticks = SDL_NumJoysticks();
 	LOG("Joysticks found: %i", numSticks);
+	if (numSticks <= 0)
+		return;
 
 	const int stickNum = configHandler->GetInt("JoystickUse");
 
@@ -56,7 +59,7 @@ Joystick::Joystick()
 	}
 	else
 	{
-		LOG_L(L_WARNING, "Joystick %i not found", stickNum);
+		LOG_L(L_ERROR, "Joystick %i not found", stickNum);
 	}
 }
 
@@ -89,6 +92,12 @@ bool Joystick::HandleEvent(const SDL_Event& event)
 			eventHandler.JoystickEvent("JoyButtonUp", event.jbutton.button, event.jbutton.state);
 			break;
 		}
+		case SDL_JOYDEVICEADDED: //TODO
+			LOG("Joystick has been added");
+			break;
+		case SDL_JOYDEVICEREMOVED:
+			LOG("Joystick has been removed");
+			break;
 		default:
 		{
 		}

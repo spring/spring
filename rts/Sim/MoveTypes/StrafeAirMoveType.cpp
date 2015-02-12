@@ -20,7 +20,7 @@
 #include "System/myMath.h"
 #include "System/Sync/HsiehHash.h"
 
-CR_BIND_DERIVED(CStrafeAirMoveType, AAirMoveType, (NULL));
+CR_BIND_DERIVED(CStrafeAirMoveType, AAirMoveType, (NULL))
 
 CR_REG_METADATA(CStrafeAirMoveType, (
 	CR_MEMBER(maneuverState),
@@ -54,7 +54,7 @@ CR_REG_METADATA(CStrafeAirMoveType, (
 	CR_MEMBER(lastAileronPos),
 
 	CR_RESERVED(63)
-));
+))
 
 
 
@@ -445,20 +445,19 @@ bool CStrafeAirMoveType::Update()
 
 			const FPSUnitController& con = owner->fpsControlPlayer->fpsController;
 
-			if (con.forward || con.back || con.left || con.right) {
-				float aileron = 0.0f;
-				float elevator = 0.0f;
+			float aileron = 0.0f;
+			float elevator = 0.0f;
 
-				if (con.forward) { elevator -= 1.0f; }
-				if (con.back   ) { elevator += 1.0f; }
-				if (con.right  ) { aileron  += 1.0f; }
-				if (con.left   ) { aileron  -= 1.0f; }
+			if (con.forward) elevator -= 1.0f;
+			if (con.back   ) elevator += 1.0f;
+			if (con.right  ) aileron  += 1.0f;
+			if (con.left   ) aileron  -= 1.0f;
 
-				UpdateAirPhysics(0.0f, aileron, elevator, 1.0f, owner->frontdir);
-				maneuverState = MANEUVER_FLY_STRAIGHT;
+			UpdateAirPhysics(0.0f, aileron, elevator, 1.0f, owner->frontdir);
+			maneuverState = MANEUVER_FLY_STRAIGHT;
 
-				return (HandleCollisions(collide && !owner->beingBuilt && (padStatus == PAD_STATUS_FLYING) && (aircraftState != AIRCRAFT_TAKEOFF)));
-			}
+			return (HandleCollisions(collide && !owner->beingBuilt && (padStatus == PAD_STATUS_FLYING) && (aircraftState != AIRCRAFT_TAKEOFF)));
+
 		}
 
 		if (reservedPad != NULL) {
@@ -854,24 +853,19 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	float goalDotRight = goalDir2D.dot(rightDir2D.Normalize2D());
 
 	const float aGoalDotFront = goalDir2D.dot(frontdir);
-	const float goalDotFront = aGoalDotFront * 0.5f + 0.501f;
 
-	if (goalDotFront != 0.0f) {
-		goalDotRight /= goalDotFront;
-	}
-
-	// if goal-position is behind us and goal-distance
-	// is less than our turning radius, turn the other
-	// way --> often insufficient for small turn radii,
-	// also need to fly straight for some distance
-	#if 1
-	if (goalDir2D.dot(frontdir) < -0.1f && goalDist2D < TurnRadius(turnRadius, spd.w)) {
+	// If goal-position is behind us and goal-distance is less 
+	// than our turning radius, turn the other way.
+	// If goal-distance is half turn radius then turn if
+	// goal-position is not in front within a 45 degree arc.
+	// This is to prevent becoming stuck in a small circle 
+	// around goal-position.
+	if ((goalDist2D < turnRadius * 0.5f && goalDir2D.dot(frontdir) < 0.7f) || (goalDist2D < turnRadius && goalDir2D.dot(frontdir) < -0.1f)) {
 		if (!owner->UnderFirstPersonControl() || owner->fpsControlPlayer->fpsController.mouse2) {
 			goalDotRight *= -1.0f;
 		}
 	}
-	#endif
-
+	
 	if (lastColWarning != NULL) {
 		const float3 otherDif = lastColWarning->pos - pos;
 		const float otherLength = otherDif.Length();

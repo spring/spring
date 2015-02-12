@@ -23,12 +23,14 @@ struct SSkirmishAICallback;
 void handleAIException(const char* description);
 
 class CEngineOutHandler : public CObject {
-	CR_DECLARE(CEngineOutHandler);
+	CR_DECLARE(CEngineOutHandler)
 
 	~CEngineOutHandler();
 
 public:
 	static CEngineOutHandler* GetInstance();
+
+	static void Create();
 	static void Destroy();
 
 	void PostLoad();
@@ -138,9 +140,6 @@ public:
 			CEngineOutHandler::HandleAIException("Unknown");	\
 			throw;												\
 		}
-
-private:
-	static CEngineOutHandler* singleton;
 
 private:
 	typedef std::vector<unsigned char> ids_t;

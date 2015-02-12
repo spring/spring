@@ -8,7 +8,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 
-CR_BIND_DERIVED(CHeatCloudProjectile, CProjectile, );
+CR_BIND_DERIVED(CHeatCloudProjectile, CProjectile, )
 
 CR_REG_METADATA(CHeatCloudProjectile,
 (
@@ -23,7 +23,7 @@ CR_REG_METADATA(CHeatCloudProjectile,
 		CR_MEMBER(texture),
 	CR_MEMBER_ENDFLAG(CM_Config),
 	CR_RESERVED(8)
-));
+))
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -101,8 +101,8 @@ void CHeatCloudProjectile::Draw()
 
 	const float drawsize = (size + sizeGrowth * globalRendering->timeOffset) * (1.0f - sizemod);
 
-	va->AddVertexTC(drawPos - camera->right * drawsize - camera->up * drawsize, texture->xstart, texture->ystart, col);
-	va->AddVertexTC(drawPos + camera->right * drawsize - camera->up * drawsize, texture->xend,   texture->ystart, col);
-	va->AddVertexTC(drawPos + camera->right * drawsize + camera->up * drawsize, texture->xend,   texture->yend,   col);
-	va->AddVertexTC(drawPos - camera->right * drawsize + camera->up * drawsize, texture->xstart, texture->yend,   col);
+	va->AddVertexTC(drawPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, texture->xstart, texture->ystart, col);
+	va->AddVertexTC(drawPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, texture->xend,   texture->ystart, col);
+	va->AddVertexTC(drawPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, texture->xend,   texture->yend,   col);
+	va->AddVertexTC(drawPos - camera->GetRight() * drawsize + camera->GetUp() * drawsize, texture->xstart, texture->yend,   col);
 }

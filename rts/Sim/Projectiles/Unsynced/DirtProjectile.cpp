@@ -10,7 +10,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 
-CR_BIND_DERIVED(CDirtProjectile, CProjectile, );
+CR_BIND_DERIVED(CDirtProjectile, CProjectile, )
 
 CR_REG_METADATA(CDirtProjectile,
 (
@@ -24,7 +24,7 @@ CR_REG_METADATA(CDirtProjectile,
 		CR_MEMBER(texture),
 	CR_MEMBER_ENDFLAG(CM_Config),
 	CR_RESERVED(8)
-));
+))
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -86,7 +86,7 @@ void CDirtProjectile::Update()
 
 void CDirtProjectile::Draw()
 {
-	float partAbove = (pos.y / (size * camera->up.y));
+	float partAbove = (pos.y / (size * camera->GetUp().y));
 	if (partAbove < -1) {
 		return;
 	} else if (partAbove > 1) {
@@ -102,8 +102,8 @@ void CDirtProjectile::Draw()
 	const float interSize = size + globalRendering->timeOffset * sizeExpansion;
 	const float texx = texture->xstart + (texture->xend - texture->xstart) * ((1.0f - partAbove) * 0.5f);
 
-	va->AddVertexTC(drawPos - camera->right * interSize - camera->up * interSize * partAbove, texx,          texture->ystart, col);
-	va->AddVertexTC(drawPos + camera->right * interSize - camera->up * interSize * partAbove, texx,          texture->yend,   col);
-	va->AddVertexTC(drawPos + camera->right * interSize + camera->up * interSize,             texture->xend, texture->yend,   col);
-	va->AddVertexTC(drawPos - camera->right * interSize + camera->up * interSize,             texture->xend, texture->ystart, col);
+	va->AddVertexTC(drawPos - camera->GetRight() * interSize - camera->GetUp() * interSize * partAbove, texx,          texture->ystart, col);
+	va->AddVertexTC(drawPos + camera->GetRight() * interSize - camera->GetUp() * interSize * partAbove, texx,          texture->yend,   col);
+	va->AddVertexTC(drawPos + camera->GetRight() * interSize + camera->GetUp() * interSize,             texture->xend, texture->yend,   col);
+	va->AddVertexTC(drawPos - camera->GetRight() * interSize + camera->GetUp() * interSize,             texture->xend, texture->ystart, col);
 }

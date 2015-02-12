@@ -6,13 +6,13 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Map/Ground.h"
+#include "Map/ReadMap.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/StrafeAirMoveType.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/Groups/Group.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/myMath.h"
@@ -35,7 +35,7 @@ static CStrafeAirMoveType* GetStrafeAirMoveType(const CUnit* owner) {
 
 
 
-CR_BIND_DERIVED(CAirCAI, CMobileCAI, );
+CR_BIND_DERIVED(CAirCAI, CMobileCAI, )
 CR_REG_METADATA(CAirCAI, (
 	CR_MEMBER(basePos),
 	CR_MEMBER(baseDir),
@@ -46,7 +46,7 @@ CR_REG_METADATA(CAirCAI, (
 	CR_MEMBER(lastPC1),
 	CR_MEMBER(lastPC2),
 	CR_RESERVED(16)
-));
+))
 
 CAirCAI::CAirCAI()
 	: CMobileCAI()
@@ -87,8 +87,8 @@ void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		return;
 	} else if (c.GetID() == CMD_MOVE && c.params.size() >= 3 &&
 			(c.params[0] < 0.0f || c.params[2] < 0.0f
-			 || c.params[0] > gs->mapx*SQUARE_SIZE
-			 || c.params[2] > gs->mapy*SQUARE_SIZE))
+			 || c.params[0] > mapDims.mapx*SQUARE_SIZE
+			 || c.params[2] > mapDims.mapy*SQUARE_SIZE))
 	{
 		return;
 	}

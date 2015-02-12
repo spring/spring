@@ -14,7 +14,7 @@ CR_REG_METADATA(CTracerProjectile,
 		CR_MEMBER(length),
 	CR_MEMBER_ENDFLAG(CM_Config),
 	CR_RESERVED(8)
-));
+))
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

@@ -10,7 +10,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "System/Matrix44f.h"
 
-CR_BIND_DERIVED(CProjectile, CExpGenSpawnable, );
+CR_BIND_DERIVED(CProjectile, CExpGenSpawnable, )
 
 CR_REG_METADATA(CProjectile,
 (
@@ -43,7 +43,7 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(collisionFlags),
 
 	CR_MEMBER(qfCellData)
-));
+))
 
 CR_BIND(CProjectile::QuadFieldCellData, )
 

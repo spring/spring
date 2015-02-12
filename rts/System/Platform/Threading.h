@@ -5,20 +5,31 @@
 
 #include <string>
 #ifndef WIN32
-	#include <pthread.h>
+#include <pthread.h>
+#include "System/Platform/Linux/ThreadSupport.h"
+#include <semaphore.h>
 #endif
 #ifdef __APPLE__
-	#include <libkern/OSAtomic.h> // OSAtomicIncrement64
+#include <libkern/OSAtomic.h> // OSAtomicIncrement64
 #endif
 
 #include "System/Platform/Win/win32.h"
+#include <functional>
+#include <atomic>
+#include <boost/thread.hpp>
 #include <boost/cstdint.hpp>
+
 
 
 class CGameController;
 
 
 namespace Threading {
+
+	class ThreadControls;
+
+	extern boost::thread_specific_ptr<std::shared_ptr<Threading::ThreadControls>> threadCtls;
+
 	/**
 	 * Generic types & functions to handle OS native threads
 	 */
@@ -32,6 +43,54 @@ namespace Threading {
 	NativeThreadHandle GetCurrentThread();
 	NativeThreadId GetCurrentThreadId();
 
+	/**
+	 * Used to indicate the result of a suspend or resume operation.
+	 */
+	enum SuspendResult {
+		THREADERR_NONE,
+		THREADERR_NOT_RUNNING,
+		THREADERR_MISC
+	};
+
+	/**
+	 * Creates a new boost::thread whose entry function is wrapped by some boilerplate code that allows for suspend/resume.
+	 * These suspend/resume controls are exposed via the ThreadControls object that is provided by the caller and initialized by the thread.
+	 * The thread is guaranteed to be in a running and initialized state when this function returns.
+	 *
+	 * The ppThreadCtls object is an optional return parameter that gives access to the Suspend/Resume controls under Linux.
+	 *
+	 */
+	boost::thread CreateNewThread (boost::function<void()> taskFunc, std::shared_ptr<Threading::ThreadControls>* ppThreadCtls = nullptr);
+
+	/**
+	 * Retrieves a shared pointer to the current ThreadControls for the calling thread.
+	 */
+	std::shared_ptr<ThreadControls> GetCurrentThreadControls ();
+	void SetCurrentThreadControls(std::shared_ptr<ThreadControls> * ppThreadCtls);
+
+	/**
+	 * @brief Provides suspend/resume functionality for worker threads.
+	 */
+	class ThreadControls {
+	public:
+		ThreadControls();
+		~ThreadControls();
+		/* These are implemented in System/Platform/<platform>/ThreadSupport.cpp */
+		SuspendResult Suspend();
+		SuspendResult Resume();
+
+		NativeThreadHandle      handle;
+		std::atomic<bool>       running;
+	#ifndef WIN32
+		boost::mutex            mutSuspend;
+		boost::condition_variable condInitialized;
+		ucontext_t              ucontext;
+		pid_t                   thread_id;
+	#endif
+
+		friend void ThreadStart (boost::function<void()> taskFunc, std::shared_ptr<ThreadControls>  * ppThreadCtls);
+	};
+
 	inline bool NativeThreadIdsEqual(const NativeThreadId thID1, const NativeThreadId thID2);
 
 
@@ -43,6 +102,7 @@ namespace Threading {
 	 * want to run. Note that this approach will fail when N > 32.
 	 */
 	void DetectCores();
+	boost::uint32_t GetAffinity();
 	boost::uint32_t SetAffinity(boost::uint32_t cores_bitmask, bool hard = true);
 	void SetAffinityHelper(const char* threadName, boost::uint32_t affinity);
 	boost::uint32_t GetAvailableCoresMask();
@@ -80,16 +140,6 @@ namespace Threading {
 	bool IsWatchDogThread(NativeThreadId threadID);
 
 	/**
-	 * GML Functions
-	 */
-	void SetSimThread(bool set);
-	bool IsSimThread();
-
-	void SetLuaBatchThread(bool set);
-	bool IsLuaBatchThread();
-
-
-	/**
 	 * Give the current thread a name (posix-only)
 	 */
 	void SetThreadName(const std::string& newname);
@@ -113,7 +163,7 @@ namespace Threading {
 	 * A 64bit atomic counter
 	 */
 	struct AtomicCounterInt64;
-};
+}
 
 
 //

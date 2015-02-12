@@ -7,12 +7,51 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
-#pragma once
+#ifndef AAI_BUILDTABLE_H
+#define AAI_BUILDTABLE_H
 
 class AAI;
 
+namespace springLegacyAI {
+	struct UnitDef;
+}
+using namespace springLegacyAI;
+
+
 #include "aidef.h"
 #include <assert.h>
+#include <list>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+struct UnitTypeDynamic
+{
+	int under_construction;	// how many units of that type are under construction
+	int requested;			// how many units of that type have been requested
+	int active;				// how many units of that type are currently alive
+	int constructorsAvailable;	// how many factories/builders available being able to build that unit
+	int constructorsRequested;	// how many factories/builders requested being able to build that unit
+};
+
+struct UnitTypeStatic
+{
+	int def_id;
+	int side;				// 0 if side has not been set
+	list<int> canBuildList;
+	list<int> builtByList;
+	vector<float> efficiency;		// 0 -> ground assault, 1 -> air assault, 2 -> hover assault
+									// 3 -> sea assault, 4 -> submarine , 5 -> stat. defences
+	float range;              // max weapon range (0 for unarmed units)
+	float cost;
+	float builder_cost;
+	UnitCategory category;
+
+	unsigned int unit_type;
+	unsigned int movement_type;
+};
+
 
 class AAIBuildTable
 {
@@ -25,30 +64,17 @@ public:
 	void Init();
 
 	void SaveBuildTable(int game_period, MapType map_type);
-
 	// cache for combat eff (needs side, thus initialized later)
 	void InitCombatEffCache(int side);
 
-	// precaches speed/cost/buildtime/range stats
-	void PrecacheStats();
-
-	// only precaches costs (called after possible cost multipliers have been assigned)
-	void PrecacheCosts();
-
 	// returns true, if a builder can build a certain unit (use UnitDef.id)
 	bool CanBuildUnit(int id_builder, int id_unit);
-
-	// returns side of a unit
-	int GetSide(int unit);
 
 	// returns side of a certian unittype (use UnitDef->id)
 	int GetSideByID(int unit_id);
 
 	// return unit type (for groups)
 	UnitType GetUnitType(int def_id);
-
-	// returns true, if unitid is in the list
-	bool MemberOf(int unit_id, list<int> unit_list);
 
 	// ******************************************************************************************************
 	// the following functions are used to determine units that suit a certain purpose
@@ -60,6 +86,7 @@ public:
 
 	// returns a extractor from the list based on certain factors
 	int GetMex(int side, float cost, float effiency, bool armed, bool water, bool canBuild);
+
 	// returns mex with the biggest yardmap
 	int GetBiggestMex();
 
@@ -198,20 +225,20 @@ public:
 	static char buildtable_filename[500];
 
 	// cached values of average costs and buildtime
-	static float *avg_cost[MOBILE_CONSTRUCTOR+1];
-	static float *avg_buildtime[MOBILE_CONSTRUCTOR+1];
-	static float *avg_value[MOBILE_CONSTRUCTOR+1];	// used for different things, range of weapons, radar range, mex efficiency
-	static float *max_cost[MOBILE_CONSTRUCTOR+1];
-	static float *max_buildtime[MOBILE_CONSTRUCTOR+1];
-	static float *max_value[MOBILE_CONSTRUCTOR+1];
-	static float *min_cost[MOBILE_CONSTRUCTOR+1];
-	static float *min_buildtime[MOBILE_CONSTRUCTOR+1];
-	static float *min_value[MOBILE_CONSTRUCTOR+1];
+	static vector<vector<float>> avg_cost;
+	static vector<vector<float>> avg_buildtime;
+	static vector<vector<float>> avg_value;	// used for different things, range of weapons, radar range, mex efficiency
+	static vector<vector<float>> max_cost;
+	static vector<vector<float>> max_buildtime;
+	static vector<vector<float>> max_value;
+	static vector<vector<float>> min_cost;
+	static vector<vector<float>> min_buildtime;
+	static vector<vector<float>> min_value;
 
-	static float **avg_speed;
-	static float **min_speed;
-	static float **max_speed;
-	static float **group_speed;
+	static vector<vector<float>> avg_speed;
+	static vector<vector<float>> min_speed;
+	static vector<vector<float>> max_speed;
+	static vector<vector<float>> group_speed;
 
 	// combat categories that attacked AI in certain game period attacked_by_category_learned[map_type][period][cat]
 	static vector< vector< vector<float> > > attacked_by_category_learned;
@@ -220,7 +247,7 @@ public:
 	static vector< vector<float> > attacked_by_category_current;
 
 	// units of the different categories
-	static list<int> *units_of_category[MOBILE_CONSTRUCTOR+1];
+	static vector<vector<list<int>>> units_of_category;
 
 	// AAI unit defs (static things like id, side, etc.)
 	static vector<UnitTypeStatic> units_static;
@@ -272,6 +299,18 @@ public:
 	const UnitDef& GetUnitDef(int i) { assert(IsValidUnitDefID(i));	return *unitList[i];}
 	bool IsValidUnitDefID(int i) { return (i>=0) && (i<=unitList.size()); }
 private:
+	std::string GetBuildCacheFileName();
+	// precaches speed/cost/buildtime/range stats
+	void PrecacheStats();
+
+	// only precaches costs (called after possible cost multipliers have been assigned)
+	void PrecacheCosts();
+
+	// returns side of a unit
+	int GetSide(int unit);
+
+	// returns true, if unitid is in the list
+	bool MemberOf(int unit_id, list<int> unit_list);
 	// for internal use
 	void CalcBuildTree(int unit);
 	bool LoadBuildTable();
@@ -280,8 +319,11 @@ private:
 
 	AAI * ai;
 
-	FILE *file;
+//	FILE *file;
 
 	// all the unit defs, FIXME: this can't be made static as spring seems to free the memory returned by GetUnitDefList()
 	std::vector<const UnitDef*> unitList;
 };
+
+#endif
+

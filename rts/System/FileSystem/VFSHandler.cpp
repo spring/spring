@@ -80,7 +80,7 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool override, cons
 
 bool CVFSHandler::AddArchiveWithDeps(const std::string& archiveName, bool override, const std::string& type)
 {
-	const std::vector<std::string> &ars = archiveScanner->GetArchives(archiveName);
+	const std::vector<std::string> &ars = archiveScanner->GetAllArchivesUsedBy(archiveName);
 
 	if (ars.empty())
 		throw content_error("Could not find any archives for '" + archiveName + "'.");
@@ -99,12 +99,18 @@ bool CVFSHandler::RemoveArchive(const std::string& archiveName)
 {
 	LOG_L(L_DEBUG, "RemoveArchive(archiveName = \"%s\")", archiveName.c_str());
 
-	IArchive* ar = archives[archiveName];
+	const auto it = archives.find(archiveName);
+
+	if (it == archives.end())
+		return true;
+
+	IArchive* ar = it->second;
+
 	if (ar == NULL) {
 		// archive is not loaded
 		return true;
 	}
-	
+
 	// remove the files loaded from the archive-to-remove
 	for (std::map<std::string, FileData>::iterator f = files.begin(); f != files.end();) {
 		if (f->second.ar == ar) {

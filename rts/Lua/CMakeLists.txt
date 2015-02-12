@@ -2,6 +2,7 @@
 # This list was created using this *nix shell command:
 # > find . -name "*.cpp"" | sort
 SET(sources_engine_Lua
+		"${CMAKE_CURRENT_SOURCE_DIR}/LuaArchive.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaBitOps.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaConstCMD.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaConstCMDTYPE.cpp"
@@ -44,6 +45,6 @@ SET(sources_engine_Lua
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaVFS.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaWeaponDefs.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaZip.cpp"
+		PARENT_SCOPE
 	)
 
-MakeGlobal(sources_engine_Lua)

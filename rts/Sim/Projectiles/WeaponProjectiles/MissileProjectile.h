@@ -9,7 +9,7 @@ class CUnit;
 
 class CMissileProjectile : public CWeaponProjectile
 {
-	CR_DECLARE(CMissileProjectile);
+	CR_DECLARE(CMissileProjectile)
 protected:
 	void UpdateGroundBounce();
 public:
@@ -56,7 +56,7 @@ private:
 
 	float3 oldSmoke;
 	float3 oldDir;
-	
+
 	/// the smokes life-time in frames
 	static const float SMOKE_TIME;
 };

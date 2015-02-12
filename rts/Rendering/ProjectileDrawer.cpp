@@ -463,7 +463,7 @@ void CProjectileDrawer::DrawProjectile(CProjectile* pro, bool drawReflection, bo
 	DrawProjectileModel(pro, false);
 
 	if (pro->drawSorted) {
-		pro->SetSortDist(pro->pos.dot(camera->forward));
+		pro->SetSortDist(pro->pos.dot(camera->GetDir()));
 		zSortedProjectiles.insert(pro);
 	} else {
 		unsortedProjectiles.push_back(pro);
@@ -579,7 +579,8 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 
 void CProjectileDrawer::DrawFlyingPieces(int modelType, int numFlyingPieces, int* drawnPieces)
 {
-	static FlyingPieceContainer* containers[MODELTYPE_OTHER] = {
+	// TODO: faster to make this a member
+	FlyingPieceContainer* containers[MODELTYPE_OTHER] = {
 		&projectileHandler->flyingPieces3DO,
 		&projectileHandler->flyingPiecesS3O,
 		NULL
@@ -604,11 +605,6 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType, int numFlyingPieces, int
 		(*drawnPieces) += (va->drawIndex() / 32);
 		va->DrawArrayTN(GL_QUADS);
 	}
-}
-
-
-void CProjectileDrawer::Update() {
-	eventHandler.UpdateDrawProjectiles();
 }
 
 

@@ -4,9 +4,9 @@
 #include <memory.h>
 #include <algorithm>
 
-CR_BIND(CMatrix44f, );
+CR_BIND(CMatrix44f, )
 
-CR_REG_METADATA(CMatrix44f, CR_MEMBER(m));
+CR_REG_METADATA(CMatrix44f, CR_MEMBER(m))
 
 
 CMatrix44f::CMatrix44f()

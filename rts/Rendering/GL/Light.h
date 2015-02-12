@@ -162,6 +162,6 @@ namespace GL {
 		const float3* trackPosition;
 		const float3* trackDirection;
 	};
-};
+}
 
 #endif // _GL_LIGHT_H

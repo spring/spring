@@ -6,6 +6,7 @@
 #include "LuaIntro.h"
 
 #include "LuaInclude.h"
+#include "LuaArchive.h"
 #include "LuaUnsyncedCtrl.h"
 #include "LuaCallInCheck.h"
 #include "LuaConstGL.h"
@@ -38,38 +39,14 @@ CLuaIntro* LuaIntro = NULL;
 
 static boost::mutex m_singleton;
 
-
-void CLuaIntro::LoadHandler()
-{
-	{
-		std::lock_guard<boost::mutex> lk(m_singleton);
-		if (LuaIntro) return;
-
-		LuaIntro = new CLuaIntro();
-	}
-
-	if (!LuaIntro->IsValid()) {
-		FreeHandler();
-	}
-}
-
-
-void CLuaIntro::FreeHandler()
-{
-	std::lock_guard<boost::mutex> lk(m_singleton);
-	if (!LuaIntro) return;
-
-	auto* inst = LuaIntro;
-	LuaIntro = NULL;
-	inst->KillLua();
-	delete inst;
-}
+DECL_LOAD_HANDLER(CLuaIntro, LuaIntro)
+DECL_FREE_HANDLER(CLuaIntro, LuaIntro)
 
 
 /******************************************************************************/
 
 CLuaIntro::CLuaIntro()
-: CLuaHandle("LuaIntro", LUA_HANDLE_ORDER_INTRO, true)
+: CLuaHandle("LuaIntro", LUA_HANDLE_ORDER_INTRO, true, false)
 {
 	LuaIntro = this;
 
@@ -129,6 +106,7 @@ CLuaIntro::CLuaIntro()
 	    !AddEntriesToTable(L, "VFS",       LuaVFS::PushUnsynced)         ||
 	    !AddEntriesToTable(L, "VFS",       LuaZipFileReader::PushUnsynced) ||
 	    !AddEntriesToTable(L, "VFS",       LuaZipFileWriter::PushUnsynced) ||
+	    !AddEntriesToTable(L, "VFS",         LuaArchive::PushEntries)      ||
 	    !AddEntriesToTable(L, "Script",      LuaScream::PushEntries)       ||
 	    //!AddEntriesToTable(L, "Script",      LuaInterCall::PushEntriesUnsynced) ||
 	    //!AddEntriesToTable(L, "Script",      LuaLobby::PushEntries)        ||

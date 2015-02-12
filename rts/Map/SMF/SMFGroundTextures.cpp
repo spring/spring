@@ -43,7 +43,7 @@ CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm): smfMap(rm)
 {
 	LoadTiles(smfMap->GetFile());
 	LoadSquareTextures(3);
-	ConvolveHeightMap(gs->mapx, 1);
+	ConvolveHeightMap(mapDims.mapx, 1);
 }
 
 CSMFGroundTextures::~CSMFGroundTextures()
@@ -62,14 +62,18 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 	CFileHandler* ifs = file.GetFileHandler();
 	const SMFHeader& header = file.GetHeader();
 
-	assert(gs->mapx == header.mapx);
-	assert(gs->mapy == header.mapy);
+	if ((mapDims.mapx != header.mapx) || (mapDims.mapy != header.mapy)) {
+		throw content_error("Error loading map: size from header doesn't match map size.");
+	}
 
 	ifs->Seek(header.tilesPtr);
 
 	MapTileHeader tileHeader;
 	READPTR_MAPTILEHEADER(tileHeader, ifs);
 
+	if (smfMap->tileCount <= 0) {
+		throw content_error("Error loading map: count of tiles is 0.");
+	}
 	tileMap.resize(smfMap->tileCount);
 	tiles.resize( (tileHeader.numTiles + 1) * SMALL_TILE_SIZE);
 	squares.resize(smfMap->numBigTexX * smfMap->numBigTexY);
@@ -272,7 +276,7 @@ bool CSMFGroundTextures::RecompressTiles(bool canRecompress)
 
 inline bool CSMFGroundTextures::TexSquareInView(int btx, int bty) const
 {
-	static const float* hm = readMap->GetCornerHeightMapUnsynced();
+	const float* hm = readMap->GetCornerHeightMapUnsynced();
 
 	static const float bigTexSquareRadius = fastmath::apxsqrt(
 		smfMap->bigTexSize * smfMap->bigTexSize +
@@ -439,7 +443,7 @@ void CSMFGroundTextures::ExtractSquareTiles(
 	const int mipLevel,
 	GLint* tileBuf
 ) const {
-	static const int TILE_MIP_OFFSET[] = {0, 512, 640, 672};
+	static const int TILE_MIP_OFFSET[] = {0, 512, 512+128, 512+128+32};
 	static const int BLOCK_SIZE = 32;
 
 	const int mipOffset = TILE_MIP_OFFSET[mipLevel];

@@ -16,7 +16,7 @@
  */
 class CRectangleOptimizer
 {
-	CR_DECLARE_STRUCT(CRectangleOptimizer);
+	CR_DECLARE_STRUCT(CRectangleOptimizer)
 
 public:
 	CRectangleOptimizer();

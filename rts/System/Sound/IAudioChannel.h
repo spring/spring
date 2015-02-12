@@ -19,9 +19,9 @@ class CWorldObject;
 class IAudioChannel {
 protected:
 	IAudioChannel();
+public:
 	virtual ~IAudioChannel();
 
-public:
 	virtual void Enable(bool newState) = 0;
 	bool IsEnabled() const
 	{

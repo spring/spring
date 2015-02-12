@@ -1,7 +1,7 @@
 
 # This list was created using this *nix shell command:
 # > find . -name "*.cpp"" | sort
-SET(sources_engine_Sim
+add_library(engineSim STATIC
 		"${CMAKE_CURRENT_SOURCE_DIR}/Features/Feature.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Features/FeatureDef.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Features/FeatureHandler.cpp"
@@ -52,7 +52,7 @@ SET(sources_engine_Sim
 		"${CMAKE_CURRENT_SOURCE_DIR}/Objects/SolidObject.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Objects/SolidObjectDef.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Objects/WorldObject.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Path/Default/PathAllocator.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Path/Default/IPathFinder.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Path/Default/PathCache.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Path/Default/PathEstimator.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Path/Default/PathFinder.cpp"
@@ -118,8 +118,6 @@ SET(sources_engine_Sim
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/CommandAI/FactoryCAI.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/CommandAI/MobileCAI.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/CommandAI/TransportCAI.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Units/Groups/Group.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Units/Groups/GroupHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/Scripts/CobEngine.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/Scripts/CobFile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/Scripts/CobInstance.cpp"
@@ -163,4 +161,17 @@ SET(sources_engine_Sim
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/WeaponLoader.cpp"
 	)
 
-MakeGlobal(sources_engine_Sim)
+include_directories(${GLEW_INCLUDE_DIR})
+
+get_property(SPRING_SIM_LIBRARIES TARGET engineSim PROPERTY LOCATION)
+if( CMAKE_COMPILER_IS_GNUCXX)
+	# FIXME: hack to avoid linkers to remove not referenced symbols. required because of
+	# http://springrts.com/mantis/view.php?id=4511
+	if(APPLE)
+		MakeGlobalVar(SPRING_SIM_LIBRARIES "-Wl,-force_load ${SPRING_SIM_LIBRARIES}")
+	else()
+		MakeGlobalVar(SPRING_SIM_LIBRARIES "-Wl,-whole-archive ${SPRING_SIM_LIBRARIES} -Wl,-no-whole-archive")
+	endif()
+else()
+	MakeGlobalVar(SPRING_SIM_LIBRARIES "${SPRING_SIM_LIBRARIES}")
+endif()

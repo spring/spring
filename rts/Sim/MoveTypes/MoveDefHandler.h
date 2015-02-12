@@ -14,9 +14,9 @@ class MoveDefHandler;
 class CSolidObject;
 class LuaTable;
 
-#pragma pack(push, 1)
+
 struct MoveDef {
-	CR_DECLARE_STRUCT(MoveDef);
+	CR_DECLARE_STRUCT(MoveDef)
 
 	MoveDef();
 	MoveDef(const LuaTable& moveDefTable, int moveDefID);
@@ -130,13 +130,13 @@ struct MoveDef {
 	bool heatMapping;
 	bool flowMapping;
 };
-#pragma pack(pop)
+
 
 
 class LuaParser;
 class MoveDefHandler
 {
-	CR_DECLARE_STRUCT(MoveDefHandler);
+	CR_DECLARE_STRUCT(MoveDefHandler)
 public:
 	MoveDefHandler(LuaParser* defsParser);
 

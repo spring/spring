@@ -10,7 +10,7 @@
 #include "System/myMath.h"
 #include <cstring> //memset
 
-CR_BIND_DERIVED(CLargeBeamLaserProjectile, CWeaponProjectile, (ProjectileParams()));
+CR_BIND_DERIVED(CLargeBeamLaserProjectile, CWeaponProjectile, (ProjectileParams()))
 
 CR_REG_METADATA(CLargeBeamLaserProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -22,10 +22,11 @@ CR_REG_METADATA(CLargeBeamLaserProjectile,(
 	CR_MEMBER(tilelength),
 	CR_MEMBER(scrollspeed),
 	CR_MEMBER(pulseSpeed),
+	CR_MEMBER(decay),
 	CR_MEMBER(beamtex),
 	CR_MEMBER(sidetex),
 	CR_RESERVED(16)
-));
+))
 
 CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, thickness(0.0f)
@@ -241,17 +242,17 @@ void CLargeBeamLaserProjectile::Draw()
 
 	{
 		// draw flare (moved slightly along the camera direction)
-		pos1 = startPos - (camera->forward * 3.0f);
+		pos1 = startPos - (camera->GetDir() * 3.0f);
 
-		va->AddVertexQTC(pos1 - (camera->right * flareEdgeSize) - (camera->up * flareEdgeSize), WT4->xstart, WT4->ystart, edgeColStart);
-		va->AddVertexQTC(pos1 + (camera->right * flareEdgeSize) - (camera->up * flareEdgeSize), WT4->xend,   WT4->ystart, edgeColStart);
-		va->AddVertexQTC(pos1 + (camera->right * flareEdgeSize) + (camera->up * flareEdgeSize), WT4->xend,   WT4->yend,   edgeColStart);
-		va->AddVertexQTC(pos1 - (camera->right * flareEdgeSize) + (camera->up * flareEdgeSize), WT4->xstart, WT4->yend,   edgeColStart);
+		va->AddVertexQTC(pos1 - (camera->GetRight() * flareEdgeSize) - (camera->GetUp() * flareEdgeSize), WT4->xstart, WT4->ystart, edgeColStart);
+		va->AddVertexQTC(pos1 + (camera->GetRight() * flareEdgeSize) - (camera->GetUp() * flareEdgeSize), WT4->xend,   WT4->ystart, edgeColStart);
+		va->AddVertexQTC(pos1 + (camera->GetRight() * flareEdgeSize) + (camera->GetUp() * flareEdgeSize), WT4->xend,   WT4->yend,   edgeColStart);
+		va->AddVertexQTC(pos1 - (camera->GetRight() * flareEdgeSize) + (camera->GetUp() * flareEdgeSize), WT4->xstart, WT4->yend,   edgeColStart);
 
-		va->AddVertexQTC(pos1 - (camera->right * flareCoreSize) - (camera->up * flareCoreSize), WT4->xstart, WT4->ystart, coreColStart);
-		va->AddVertexQTC(pos1 + (camera->right * flareCoreSize) - (camera->up * flareCoreSize), WT4->xend,   WT4->ystart, coreColStart);
-		va->AddVertexQTC(pos1 + (camera->right * flareCoreSize) + (camera->up * flareCoreSize), WT4->xend,   WT4->yend,   coreColStart);
-		va->AddVertexQTC(pos1 - (camera->right * flareCoreSize) + (camera->up * flareCoreSize), WT4->xstart, WT4->yend,   coreColStart);
+		va->AddVertexQTC(pos1 - (camera->GetRight() * flareCoreSize) - (camera->GetUp() * flareCoreSize), WT4->xstart, WT4->ystart, coreColStart);
+		va->AddVertexQTC(pos1 + (camera->GetRight() * flareCoreSize) - (camera->GetUp() * flareCoreSize), WT4->xend,   WT4->ystart, coreColStart);
+		va->AddVertexQTC(pos1 + (camera->GetRight() * flareCoreSize) + (camera->GetUp() * flareCoreSize), WT4->xend,   WT4->yend,   coreColStart);
+		va->AddVertexQTC(pos1 - (camera->GetRight() * flareCoreSize) + (camera->GetUp() * flareCoreSize), WT4->xstart, WT4->yend,   coreColStart);
 	}
 
 	#undef WT4

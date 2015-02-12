@@ -7,7 +7,6 @@
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/UnitHandler.h"
@@ -24,7 +23,7 @@
 #define AIRTRANSPORT_DOCKING_RADIUS 16
 #define AIRTRANSPORT_DOCKING_ANGLE 50
 
-CR_BIND_DERIVED(CTransportCAI,CMobileCAI , );
+CR_BIND_DERIVED(CTransportCAI,CMobileCAI , )
 
 CR_REG_METADATA(CTransportCAI, (
 	CR_MEMBER(toBeTransportedUnitId),
@@ -33,11 +32,12 @@ CR_REG_METADATA(CTransportCAI, (
 	CR_MEMBER(unloadType),
 	CR_MEMBER(dropSpots),
 	CR_MEMBER(isFirstIteration),
+	CR_MEMBER(startingDropPos),
 	CR_MEMBER(lastDropPos),
 	CR_MEMBER(approachVector),
 	CR_MEMBER(endDropPos),
 	CR_RESERVED(16)
-));
+))
 
 CTransportCAI::CTransportCAI()
 	: CMobileCAI()

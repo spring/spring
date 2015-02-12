@@ -156,7 +156,7 @@ void FileConfigSource::Read(FILE* file)
 			}
 			else {
 				// neither a comment nor an empty line nor a key=value line
-				LOG_L(L_ERROR, "ConfigSource: Error: Can not parse line: %s\n", line);
+				LOG_L(L_ERROR, "ConfigSource: Error: Can not parse line: %s", line);
 			}
 		}
 	}
@@ -232,6 +232,37 @@ SafemodeConfigSource::SafemodeConfigSource()
 		const ConfigVariableMetaData* metadata = it->second;
 		if (metadata->GetSafemodeValue().IsSet()) {
 			data[metadata->GetKey()] = metadata->GetSafemodeValue().ToString();
+		}
+	}
+}
+
+/**
+ * @brief Fill with dedicated values of declared configuration variables.
+ */
+DedicatedConfigSource::DedicatedConfigSource()
+{
+	const ConfigVariable::MetaDataMap& vars = ConfigVariable::GetMetaDataMap();
+
+	for (ConfigVariable::MetaDataMap::const_iterator it = vars.begin(); it != vars.end(); ++it) {
+		const ConfigVariableMetaData* metadata = it->second;
+		if (metadata->GetDedicatedValue().IsSet()) {
+			data[metadata->GetKey()] = metadata->GetDedicatedValue().ToString();
+		}
+	}
+}
+
+
+/**
+ * @brief Fill with headless values of declared configuration variables.
+ */
+HeadlessConfigSource::HeadlessConfigSource()
+{
+	const ConfigVariable::MetaDataMap& vars = ConfigVariable::GetMetaDataMap();
+
+	for (ConfigVariable::MetaDataMap::const_iterator it = vars.begin(); it != vars.end(); ++it) {
+		const ConfigVariableMetaData* metadata = it->second;
+		if (metadata->GetHeadlessValue().IsSet()) {
+			data[metadata->GetKey()] = metadata->GetHeadlessValue().ToString();
 		}
 	}
 }

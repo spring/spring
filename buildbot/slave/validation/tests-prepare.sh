@@ -31,9 +31,6 @@ done
 cp -suv ${SOURCEDIR}/test/validation/LuaUI/Widgets/test.lua ${CONTENT_DIR}/LuaUI/Widgets/test.lua
 cp -v ${SOURCEDIR}/test/validation/LuaUI/Config/ZK_data.lua ${CONTENT_DIR}/LuaUI/Config/ZK_data.lua
 
-#copy default config for spring-headless
-cp -v ${SOURCEDIR}/cont/springrc-template-headless.txt ${CONTENT_DIR}/springsettings.cfg
-
 # adjust springsettings.cfg
 (
         # set datadir
@@ -44,5 +41,5 @@ cp -v ${SOURCEDIR}/cont/springrc-template-headless.txt ${CONTENT_DIR}/springsett
         echo "LinkIncomingPeakBandwidth = 0"
         echo "LinkIncomingSustainedBandwidth = 0"
         echo "LinkOutgoingBandwidth = 0"
-) >> ${CONTENT_DIR}/springsettings.cfg
+) > ${CONTENT_DIR}/springsettings.cfg
 

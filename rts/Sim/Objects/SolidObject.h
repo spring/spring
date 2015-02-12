@@ -54,6 +54,8 @@ public:
 		//   {ONGROUND,*WATER} and INAIR are mutually exclusive
 		//   {UNDERGROUND,UNDERWATER} are not (and are the only
 		//   bits to take radius into account)
+		// TODO:
+		//   should isDead be on this list for spatial queries?
 		PSTATE_BIT_ONGROUND    = (1 << 0),
 		PSTATE_BIT_INWATER     = (1 << 1),
 		PSTATE_BIT_UNDERWATER  = (1 << 2),
@@ -292,6 +294,7 @@ public:
 	const YardMapStatus* blockMap;              ///< Current (unrotated!) blockmap/yardmap of this object. 0 means no active yardmap => all blocked.
 	short int buildFacing;                      ///< Orientation of footprint, 4 different states
 
+public:
 	static const float DEFAULT_MASS;
 	static const float MINIMUM_MASS;
 	static const float MAXIMUM_MASS;

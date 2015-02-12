@@ -44,7 +44,8 @@ static bool TestCregClasses1()
 	int brokenClasses = 0;
 
 	const std::vector<creg::Class*>& cregClasses = creg::System::GetClasses();
-	for (std::vector<creg::Class*>::const_iterator it = cregClasses.begin(); it != cregClasses.end(); ++it) {
+
+	for (auto it = cregClasses.cbegin(); it != cregClasses.cend(); ++it) {
 		const creg::Class* c = *it;
 
 		const std::string& className = c->name;
@@ -53,9 +54,11 @@ static bool TestCregClasses1()
 		std::set<std::string> memberNames;
 
 		const creg::Class* c_base = c;
-		while (c_base){
+
+		while (c_base) {
 			const std::vector<creg::Class::Member*>& classMembers = c_base->members;
-			for (std::vector<creg::Class::Member*>::const_iterator jt = classMembers.begin(); jt != classMembers.end(); ++jt) {
+
+			for (auto jt = classMembers.cbegin(); jt != classMembers.cend(); ++jt) {
 				if (std::string((*jt)->name) != "Reserved" && !memberNames.insert((*jt)->name).second) {
 					LOG_L(L_WARNING, "  Duplicated member registration %s::%s", className.c_str(), (*jt)->name);
 					membersBroken = true;
@@ -85,7 +88,8 @@ static bool TestCregClasses2()
 	int brokenClasses = 0;
 
 	const std::vector<creg::Class*>& cregClasses = creg::System::GetClasses();
-	for (std::vector<creg::Class*>::const_iterator it = cregClasses.begin(); it != cregClasses.end(); ++it) {
+
+	for (auto it = cregClasses.cbegin(); it != cregClasses.cend(); ++it) {
 		const creg::Class* c = *it;
 
 		const std::string& className = c->name;
@@ -94,9 +98,11 @@ static bool TestCregClasses2()
 		size_t cregSize = 1; // c++ class is min. 1byte large (part of sizeof definition)
 
 		const creg::Class* c_base = c;
-		while (c_base){
+
+		while (c_base) {
 			const std::vector<creg::Class::Member*>& classMembers = c_base->members;
-			for (std::vector<creg::Class::Member*>::const_iterator jt = classMembers.begin(); jt != classMembers.end(); ++jt) {
+
+			for (auto jt = classMembers.cbegin(); jt != classMembers.cend(); ++jt) {
 				const size_t memberOffset = (*jt)->offset;
 				const size_t typeSize = (*jt)->type->GetSize();
 				cregSize = std::max(cregSize, memberOffset + typeSize);
@@ -112,7 +118,7 @@ static bool TestCregClasses2()
 		if (cregSize != classSize) {
 			brokenClasses++;
 			LOG_L(L_WARNING, "  Missing member(s) in class %s, real size %i, creg size %i", className.c_str(), int(classSize), int(cregSize));
-			/*for (std::vector<creg::Class::Member*>::const_iterator jt = classMembers.begin(); jt != classMembers.end(); ++jt) {
+			/*for (auto jt = classMembers.cbegin(); jt != classMembers.cend(); ++jt) {
 				const std::string memberName   = (*jt)->name;
 				const size_t      memberOffset = (*jt)->offset;
 				const std::string typeName = (*jt)->type->GetName();
@@ -124,7 +130,7 @@ static bool TestCregClasses2()
 			fineClasses++;
 		}
 	}
-	return PostCregTest(fineClasses, brokenClasses, 15);
+	return PostCregTest(fineClasses, brokenClasses, 7);
 }
 
 static bool TestCregClasses3()
@@ -135,7 +141,8 @@ static bool TestCregClasses3()
 	int brokenClasses = 0;
 
 	const std::vector<creg::Class*>& cregClasses = creg::System::GetClasses();
-	for (std::vector<creg::Class*>::const_iterator it = cregClasses.begin(); it != cregClasses.end(); ++it) {
+
+	for (auto it = cregClasses.cbegin(); it != cregClasses.cend(); ++it) {
 		const creg::Class* c = *it;
 
 		const std::string& className = c->name;
@@ -146,9 +153,11 @@ static bool TestCregClasses3()
 
 		// create `map` of the class
 		const creg::Class* c_base = c;
-		while (c_base){
+
+		while (c_base) {
 			const std::vector<creg::Class::Member*>& classMembers = c_base->members;
-			for (std::vector<creg::Class::Member*>::const_iterator jt = classMembers.begin(); jt != classMembers.end(); ++jt) {
+
+			for (auto jt = classMembers.cbegin(); jt != classMembers.cend(); ++jt) {
 				const size_t memberOffset = (*jt)->offset;
 				const size_t typeSize = (*jt)->type->GetSize();
 
@@ -177,7 +186,7 @@ static bool TestCregClasses3()
 
 		// member alignments
 		for (int i = 0; i < classSize; ++i) {
-			creg::Class::Member* c = memberMap[i];
+			const creg::Class::Member* c = memberMap[i];
 			if (c && (c != &alignmentFixMember)) {
 				for (int j = 1; j <= c->alignment - 1; ++j) {
 					if ((i - j) >= 0 && !memberMap[i - j])
@@ -188,8 +197,8 @@ static bool TestCregClasses3()
 
 		// find unregistered members
 		bool unRegisteredMembers = false;
-		creg::Class::Member* prevMember = NULL;
-		creg::Class::Member* nextMember = NULL;
+		const creg::Class::Member* prevMember = NULL;
+		const creg::Class::Member* nextMember = NULL;
 		for (int i = 0; i < classSize; ++i) {
 			if (!memberMap[i]) {
 				unRegisteredMembers = true;
@@ -257,7 +266,7 @@ static bool TestCregClasses3()
 			fineClasses++;
 		}
 	}
-	return PostCregTest(fineClasses, brokenClasses, 35);
+	return PostCregTest(fineClasses, brokenClasses, 12);
 }
 
 
@@ -275,12 +284,13 @@ static bool TestCregClasses4()
 	int brokenClasses = 0;
 
 	const std::vector<creg::Class*>& cregClasses = creg::System::GetClasses();
-	for (std::vector<creg::Class*>::const_iterator it = cregClasses.begin(); it != cregClasses.end(); ++it) {
+
+	for (auto it = cregClasses.cbegin(); it != cregClasses.cend(); ++it) {
 		const creg::Class* c = *it;
 		const std::string& className = c->name;
 
 		bool incorrectUsage = false;
-		if (c->binder->hasVTable) {
+		if (!c->binder->isCregStruct) {
 			if (!c->base && c->derivedClasses.empty()) {
 				incorrectUsage = true;
 				LOG_L(L_WARNING, "  Class %s has a vTable but isn't derived (should use CR_DECLARE_STRUCT)", className.c_str());
@@ -317,4 +327,4 @@ namespace creg {
 		res &= TestCregClasses4();
 		return res;
 	}
-};
+}

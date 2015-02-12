@@ -5,6 +5,7 @@
 #include "LuaInclude.h"
 
 #include "LuaUnsyncedCtrl.h"
+#include "LuaArchive.h"
 #include "LuaCallInCheck.h"
 #include "LuaConstGL.h"
 #include "LuaConstCMD.h"
@@ -87,38 +88,14 @@ static const char* GetVFSMode()
 
 static boost::mutex m_singleton;
 
-
-void CLuaUI::LoadHandler()
-{
-	{
-		std::lock_guard<boost::mutex> lk(m_singleton);
-		if (luaUI) return;
-
-		luaUI = new CLuaUI();
-	}
-
-	if (!luaUI->IsValid()) {
-		FreeHandler();
-	}
-}
-
-
-void CLuaUI::FreeHandler()
-{
-	std::lock_guard<boost::mutex> lk(m_singleton);
-	if (!luaUI) return;
-
-	auto* inst = luaUI;
-	luaUI = NULL;
-	inst->KillLua();
-	delete inst;
-}
+DECL_LOAD_HANDLER(CLuaUI, luaUI)
+DECL_FREE_HANDLER(CLuaUI, luaUI)
 
 
 /******************************************************************************/
 
 CLuaUI::CLuaUI()
-: CLuaHandle("LuaUI", LUA_HANDLE_ORDER_UI, true)
+: CLuaHandle("LuaUI", LUA_HANDLE_ORDER_UI, true, false)
 {
 	luaUI = this;
 
@@ -190,6 +167,7 @@ CLuaUI::CLuaUI()
 	    !AddEntriesToTable(L, "VFS",         LuaVFS::PushUnsynced)         ||
 	    !AddEntriesToTable(L, "VFS",       LuaZipFileReader::PushUnsynced) ||
 	    !AddEntriesToTable(L, "VFS",       LuaZipFileWriter::PushUnsynced) ||
+	    !AddEntriesToTable(L, "VFS",         LuaArchive::PushEntries)      ||
 	    !AddEntriesToTable(L, "UnitDefs",    LuaUnitDefs::PushEntries)     ||
 	    !AddEntriesToTable(L, "WeaponDefs",  LuaWeaponDefs::PushEntries)   ||
 	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||

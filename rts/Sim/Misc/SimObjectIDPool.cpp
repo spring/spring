@@ -4,12 +4,12 @@
 #include "GlobalSynced.h"
 #include "Sim/Objects/SolidObject.h"
 
-CR_BIND(SimObjectIDPool, );
+CR_BIND(SimObjectIDPool, )
 CR_REG_METADATA(SimObjectIDPool, (
 	CR_MEMBER(liveIdentIndexMap),
 	CR_MEMBER(liveIndexIdentMap),
 	CR_MEMBER(tempIndexIdentMap)
-));
+))
 
 void SimObjectIDPool::Expand(unsigned int baseID, unsigned int numIDs) {
 	// allocate new batch of (randomly shuffled) id's

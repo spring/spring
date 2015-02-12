@@ -23,10 +23,12 @@ struct UnitDef;
 class CBuilderCAI : public CMobileCAI
 {
 public:
-	CR_DECLARE(CBuilderCAI);
+	CR_DECLARE(CBuilderCAI)
 	CBuilderCAI(CUnit* owner);
 	CBuilderCAI();
 	~CBuilderCAI();
+
+	static void InitStatic();
 	void PostLoad();
 
 	int GetDefaultCmd(const CUnit* unit, const CFeature* feature);

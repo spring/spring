@@ -15,7 +15,6 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GeometricObjects.h"
-#include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -35,7 +34,7 @@
 #include "System/myMath.h"
 #include "System/TimeProfiler.h"
 #include "System/type2.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/Sync/HsiehHash.h"
 #include "System/Sync/SyncTracer.h"
 
@@ -67,7 +66,6 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 #define MAX_IDLING_SLOWUPDATES           16
 #define IGNORE_OBSTACLES                  0
 #define WAIT_FOR_PATH                     1
-#define PLAY_SOUNDS                       1
 
 #define UNIT_CMD_QUE_SIZE(u) (u->commandAI->commandQue.size())
 #define UNIT_HAS_MOVE_CMD(u) (u->commandAI->commandQue.empty() || u->commandAI->commandQue[0].GetID() == CMD_MOVE)
@@ -75,7 +73,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 #define FOOTPRINT_RADIUS(xs, zs, s) ((math::sqrt((xs * xs + zs * zs)) * 0.5f * SQUARE_SIZE) * s)
 
 
-CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL));
+CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL))
 CR_REG_METADATA(CGroundMoveType, (
 	CR_IGNORED(pathController),
 
@@ -126,7 +124,7 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(skidRotAccel),
 
 	CR_POSTLOAD(PostLoad)
-));
+))
 
 
 
@@ -429,11 +427,9 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadius) {
 	// unless they come to a full stop first
 	ReRequestPath(false, true);
 
-	#if (PLAY_SOUNDS == 1)
 	if (owner->team == gu->myTeam) {
-		Channels::General.PlayRandomSample(owner->unitDef->sounds.activate, owner);
+		Channels::General->PlayRandomSample(owner->unitDef->sounds.activate, owner);
 	}
-	#endif
 }
 
 void CGroundMoveType::StopMoving(bool callScript, bool hardStop) {
@@ -527,7 +523,7 @@ bool CGroundMoveType::FollowPath()
 		// ASSERT_SYNCED(modWantedDir);
 
 		ChangeHeading(GetHeadingFromVector(modWantedDir.x, modWantedDir.z));
-		ChangeSpeed(maxWantedSpeed * (1 - atGoal), wantReverse);
+		ChangeSpeed(maxWantedSpeed, wantReverse);
 	}
 
 	pathManager->UpdatePath(owner, pathID);
@@ -772,7 +768,7 @@ void CGroundMoveType::UpdateSkid()
 			const float remTime = std::max(1.0f, speedScale / speedReduction);
 
 			if (onSlope) {
-				const float3 normalVector = CGround::GetNormal(pos.x, pos.z);
+				const float3& normalVector = CGround::GetNormal(pos.x, pos.z);
 				const float3 normalForce = normalVector * normalVector.dot(UpVector * mapInfo->map.gravity);
 				const float3 newForce = UpVector * mapInfo->map.gravity - normalForce;
 
@@ -1487,11 +1483,9 @@ void CGroundMoveType::Arrived(bool callScript)
 	if (progressState == Active) {
 		StopEngine(callScript);
 
-		#if (PLAY_SOUNDS == 1)
 		if (owner->team == gu->myTeam) {
-			Channels::General.PlayRandomSample(owner->unitDef->sounds.arrived, owner);
+			Channels::General->PlayRandomSample(owner->unitDef->sounds.arrived, owner);
 		}
-		#endif
 
 		// and the action is done
 		progressState = Done;
@@ -1561,7 +1555,17 @@ void CGroundMoveType::HandleObjectCollisions()
 
 		HandleUnitCollisions(collider, colliderSpeed, colliderRadius, colliderUD, colliderMD);
 		HandleFeatureCollisions(collider, colliderSpeed, colliderRadius, colliderUD, colliderMD);
-		HandleStaticObjectCollision(collider, collider, colliderMD, colliderRadius, 0.0f, ZeroVector, true, false, true);
+
+		// blocked square collision (very performance hungry, process only every 2nd game frame)
+		// dangerous: reduces effective square-size from 8 to 4, but many ground units can move
+		// at speeds greater than half the effective square-size per frame so this risks getting
+		// stuck on impassable squares
+		const bool squareChange = (CGround::GetSquare(owner->pos + owner->speed) != CGround::GetSquare(owner->pos));
+		const bool checkAllowed = ((collider->id & 1) == (gs->frameNum & 1));
+
+		if (squareChange || checkAllowed) {
+			HandleStaticObjectCollision(owner, owner, owner->moveDef, colliderRadius, 0.0f, ZeroVector, true, false, true);
+		}
 	}
 }
 
@@ -1753,7 +1757,7 @@ void CGroundMoveType::HandleUnitCollisions(
 	const UnitDef* colliderUD,
 	const MoveDef* colliderMD
 ) {
-	const float searchRadius = std::max(colliderSpeed, 1.0f) * (colliderRadius * 1.0f);
+	const float searchRadius = colliderSpeed + (colliderRadius * 2.0f);
 
 	const std::vector<CUnit*>& nearUnits = quadField->GetUnitsExact(collider->pos, searchRadius);
 	      std::vector<CUnit*>::const_iterator uit;
@@ -1944,7 +1948,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 	const UnitDef* colliderUD,
 	const MoveDef* colliderMD
 ) {
-	const float searchRadius = std::max(colliderSpeed, 1.0f) * (colliderRadius * 1.0f);
+	const float searchRadius = colliderSpeed + (colliderRadius * 2.0f);
 
 	const std::vector<CFeature*>& nearFeatures = quadField->GetFeaturesExact(collider->pos, searchRadius);
 	      std::vector<CFeature*>::const_iterator fit;
@@ -2216,7 +2220,7 @@ bool CGroundMoveType::UpdateDirectControl()
 
 	if (selfCon.GetControllee() == owner) {
 		// local client is controlling us
-		camera->rot.y += (turnRate * turnSign * TAANG2RAD);
+		camera->SetRotY(camera->GetRot().y + turnRate * turnSign * TAANG2RAD);
 	}
 
 	return wantReverse;

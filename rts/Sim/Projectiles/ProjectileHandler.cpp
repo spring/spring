@@ -33,8 +33,8 @@
 
 using namespace std;
 
-CONFIG(int, MaxParticles).defaultValue(3000);
-CONFIG(int, MaxNanoParticles).defaultValue(2000);
+CONFIG(int, MaxParticles).defaultValue(3000).headlessValue(0);
+CONFIG(int, MaxNanoParticles).defaultValue(2000).headlessValue(0);
 
 CProjectileHandler* projectileHandler = NULL;
 
@@ -42,21 +42,23 @@ CProjectileHandler* projectileHandler = NULL;
 CR_BIND_TEMPLATE(ProjectileContainer, )
 CR_REG_METADATA(ProjectileContainer, (
 	CR_MEMBER(cont),
+	CR_MEMBER(del),
 	CR_POSTLOAD(PostLoad)
-));
+))
 CR_BIND_TEMPLATE(GroundFlashContainer, )
 CR_REG_METADATA(GroundFlashContainer, (
 	CR_MEMBER(cont),
+	CR_MEMBER(delObj),
 	CR_POSTLOAD(PostLoad)
-));
+))
 
-CR_BIND(CProjectileHandler, );
+CR_BIND(CProjectileHandler, )
 CR_REG_METADATA(CProjectileHandler, (
 	CR_MEMBER(syncedProjectiles),
 	CR_MEMBER(unsyncedProjectiles),
-	//CR_MEMBER(flyingPieces3DO),
-	//CR_MEMBER(flyingPiecesS3O),
-	//CR_MEMBER(groundFlashes),
+	CR_MEMBER_UN(flyingPieces3DO),
+	CR_MEMBER_UN(flyingPiecesS3O),
+	CR_MEMBER_UN(groundFlashes),
 
 	CR_MEMBER(maxParticles),
 	CR_MEMBER(maxNanoParticles),
@@ -77,7 +79,7 @@ CR_REG_METADATA(CProjectileHandler, (
 
 	CR_SERIALIZER(Serialize),
 	CR_POSTLOAD(PostLoad)
-));
+))
 
 
 
@@ -241,22 +243,12 @@ void CProjectileHandler::Update()
 
 
 		{
-
-			syncedRenderProjectileIDs.delay_delete();
-			syncedRenderProjectileIDs.delay_add();
-#if !UNSYNCED_PROJ_NOEVENT
-			unsyncedRenderProjectileIDs.delay_delete();
-			unsyncedRenderProjectileIDs.delay_add();
-#endif
-
 			if (syncedProjectiles.can_delete_synced()) {
 				eventHandler.DeleteSyncedProjectiles();
 				//! delete all projectiles that were
 				//! queued (push_back'ed) for deletion
 				syncedProjectiles.detach_erased_synced();
 			}
-
-			eventHandler.UpdateProjectiles();
 		}
 
 

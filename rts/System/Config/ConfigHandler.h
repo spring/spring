@@ -132,6 +132,12 @@ public:
 	virtual const std::map<std::string, std::string> GetData() const = 0;
 
 	/**
+	 * @brief Get a map containing all key value pairs, which aren't default values
+	 * @note This excludes default values!
+	 */
+	virtual std::map<std::string, std::string> GetDataWithoutDefaults() const = 0;
+
+	/**
 	 * @brief Calls observers if config values changed
 	 */
 	virtual void Update() = 0;

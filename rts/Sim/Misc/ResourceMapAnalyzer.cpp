@@ -66,7 +66,7 @@ CResourceMapAnalyzer::CResourceMapAnalyzer(int resourceId)
 	// if more spots than that are found the map is considered a resource-map (eg. speed-metal), tweak this as needed
 	maxSpots = 10000;
 
-	const CResource* resource = resourceHandler->GetResource(resourceId);
+	const CResourceDescription* resource = resourceHandler->GetResource(resourceId);
 	extractorRadius = resource->extractorRadius;
 
 	// resource-map has 1/2 resolution of normal map
@@ -154,7 +154,7 @@ float3 CResourceMapAnalyzer::GetNearestSpot(float3 fromPos, int team, const Unit
 void CResourceMapAnalyzer::Init() {
 
 	// Leave this line if you want to use this class
-	const CResource* resource = resourceHandler->GetResource(resourceId);
+	const CResourceDescription* resource = resourceHandler->GetResource(resourceId);
 	LOG("ResourceMapAnalyzer by Krogothe, initialized for resource %i(%s)",
 			resourceId, resource->name.c_str());
 
@@ -427,7 +427,7 @@ void CResourceMapAnalyzer::GetResourcePoints() {
 			bufferSpot.x = coordX * 16 + 8;
 			bufferSpot.z = coordZ * 16 + 8;
 			// gets the actual amount of resource an extractor can make
-			const CResource* resource = resourceHandler->GetResource(resourceId);
+			const CResourceDescription* resource = resourceHandler->GetResource(resourceId);
 			bufferSpot.y = tempResources * (resource->maxWorth) * maxResource / 255;
 			vectoredSpots.push_back(bufferSpot);
 
@@ -615,7 +615,7 @@ bool CResourceMapAnalyzer::LoadResourceMap() {
 
 std::string CResourceMapAnalyzer::GetCacheFileName() const {
 
-	const CResource* resource = resourceHandler->GetResource(resourceId);
+	const CResourceDescription* resource = resourceHandler->GetResource(resourceId);
 	std::string absFile = CACHE_BASE + gameSetup->mapName + resource->name;
 
 	return absFile;

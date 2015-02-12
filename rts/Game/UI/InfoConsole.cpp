@@ -104,7 +104,7 @@ void CInfoConsole::Draw()
 void CInfoConsole::Update()
 {
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
-	if (!data.empty())
+	if (data.empty())
 		return;
 
 	// pop old messages after timeout
@@ -112,7 +112,8 @@ void CInfoConsole::Update()
 		data.pop_front();
 	}
 
-	if (!smallFont) return;
+	if (!smallFont)
+		return;
 
 	// if we have more lines then we can show, remove the oldest one,
 	// and make sure the others are shown long enough
@@ -168,8 +169,9 @@ void CInfoConsole::RecordLogMessage(const std::string& section, int level,
 
 	if (rawData.size() > maxRawLines) {
 		rawData.pop_front();
-	} else {
-		newLines++;
+	}
+	if (newLines < maxRawLines) {
+		++newLines;
 	}
 	rawData.emplace_back(text, section, level, rawId++);
 

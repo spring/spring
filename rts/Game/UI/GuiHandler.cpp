@@ -19,7 +19,6 @@
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
 #include "Lua/LuaUI.h"
-#include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/MetalMap.h"
@@ -28,6 +27,7 @@
 #include "Rendering/IconHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/glExtra.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Sim/Features/Feature.h"
@@ -48,7 +48,7 @@
 #include "System/Util.h"
 #include "System/Input/KeyInput.h"
 #include "System/Sound/ISound.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
 
@@ -59,7 +59,7 @@
 #include <SDL_keycode.h>
 #include <SDL_mouse.h>
 
-CONFIG(bool, MiniMapMarker).defaultValue(true);
+CONFIG(bool, MiniMapMarker).defaultValue(true).headlessValue(false);
 CONFIG(bool, InvertQueueKey).defaultValue(false);
 
 //////////////////////////////////////////////////////////////////////
@@ -925,17 +925,15 @@ void CGuiHandler::ConvertCommands(std::vector<CommandDescription>& cmds)
 
 void CGuiHandler::SetShowingMetal(bool show)
 {
-	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-
 	if (!show) {
 		if (showingMetal) {
-			gd->DisableExtraTexture();
+			infoTextureHandler->DisableCurrentMode();
 			showingMetal = false;
 		}
 	} else {
 		if (autoShowMetal) {
-			if (gd->GetDrawMode() != CBaseGroundDrawer::drawMetal) {
-				gd->SetMetalTexture();
+			if (infoTextureHandler->GetMode() != "metal") {
+				infoTextureHandler->SetMode("metal");
 				showingMetal = true;
 			}
 		}
@@ -1200,7 +1198,7 @@ void CGuiHandler::MouseRelease(int x, int y, int button, const float3& cameraPos
 	Command c = GetCommand(x, y, button, false, cameraPos, mouseDir);
 
 	if (c.GetID() == CMD_FAILED) { // indicates we should not finish the current command
-		Channels::UserInterface.PlaySample(failedSound, 5);
+		Channels::UserInterface->PlaySample(failedSound, 5);
 		return;
 	}
 
@@ -2121,11 +2119,9 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				}
 			}
 
-			int a = 0; // limit the number of max commands possible to send to avoid overflowing the network buffer
-			for (std::vector<BuildInfo>::iterator bpi = buildPos.begin(); bpi != --buildPos.end() && a < 200; ++bpi) {
-				++a;
-				Command c = bpi->CreateCommand(CreateOptions(button));
-				if (!preview) {
+			if (!preview) {
+				for (auto bpi = buildPos.cbegin(); bpi != --buildPos.cend(); ++bpi) {
+					Command c = bpi->CreateCommand(CreateOptions(button));
 					GiveCommand(c);
 				}
 			}

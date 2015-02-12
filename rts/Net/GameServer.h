@@ -3,6 +3,7 @@
 #ifndef _GAME_SERVER_H
 #define _GAME_SERVER_H
 
+#include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include <string>
@@ -40,6 +41,7 @@ class CDemoReader;
 class Action;
 class CDemoRecorder;
 class AutohostInterface;
+class ClientSetup;
 class CGameSetup;
 class ChatMessage;
 class GameParticipant;
@@ -68,15 +70,21 @@ class CGameServer
 {
 	friend class CCregLoadSaveHandler; // For initializing server state after load
 public:
-	CGameServer(const std::string& hostIP, int hostPort, const GameData* const gameData, const CGameSetup* const setup);
-	~CGameServer();
+	CGameServer(
+		const boost::shared_ptr<const ClientSetup> newClientSetup,
+		const boost::shared_ptr<const    GameData> newGameData,
+		const boost::shared_ptr<const  CGameSetup> newGameSetup
+	);
 
 	CGameServer(const CGameServer&) = delete; // no-copy
+	~CGameServer();
+
+	static void Reload(const boost::shared_ptr<const CGameSetup> newGameSetup);
 
 	void AddLocalClient(const std::string& myName, const std::string& myVersion);
-
 	void AddAutohostInterface(const std::string& autohostIP, const int autohostPort);
 
+	void Initialize();
 	/**
 	 * @brief Set frame after loading
 	 * WARNING! No checks are done, so be carefull
@@ -85,9 +93,8 @@ public:
 
 	void CreateNewFrame(bool fromServerThread, bool fixedFrameTime);
 
-	bool WaitsOnCon() const;
-
 	void SetGamePausable(const bool arg);
+	void SetReloading(const bool arg) { reloadingServer = arg; }
 
 	bool HasStarted() const { return gameHasStarted; }
 	bool HasGameID() const { return generatedGameID; }
@@ -99,6 +106,10 @@ public:
 	static const std::set<std::string>& GetCommandBlackList() { return commandBlacklist; }
 
 	std::string GetPlayerNames(const std::vector<int>& indices) const;
+
+	const boost::shared_ptr<const ClientSetup> GetClientSetup() const { return myClientSetup; }
+	const boost::shared_ptr<const    GameData> GetGameData() const { return myGameData; }
+	const boost::shared_ptr<const  CGameSetup> GetGameSetup() const { return myGameSetup; }
 
 	const boost::scoped_ptr<CDemoReader>& GetDemoReader() const { return demoReader; }
 	const boost::scoped_ptr<CDemoRecorder>& GetDemoRecorder() const { return demoRecorder; }
@@ -125,9 +136,10 @@ private:
 	/**
 	 * @brief drops chat or drawin messages for given playerNum
 	 */
-	void MutePlayer(const int playerNum, bool muteChat, bool muteDraw );
+	void MutePlayer(const int playerNum, bool muteChat, bool muteDraw);
 	void ResignPlayer(const int playerNum);
 
+	bool CheckPlayersPassword(const int playerNum, const std::string& pw) const;
 
 	unsigned BindConnection(std::string name, const std::string& passwd, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link, bool reconnect = false, int netloss = 0);
 
@@ -169,8 +181,12 @@ private:
 	float GetDemoTime() const;
 
 private:
-	/////////////////// game status variables ///////////////////
+	/////////////////// game settings ///////////////////
+	boost::shared_ptr<const ClientSetup> myClientSetup;
+	boost::shared_ptr<const    GameData> myGameData;
+	boost::shared_ptr<const  CGameSetup> myGameSetup;
 
+	/////////////////// game status variables ///////////////////
 	unsigned char playerNumberMap[256];
 	volatile bool quitServer;
 	int serverFrameNum;
@@ -196,11 +212,8 @@ private:
 	float userSpeedFactor;
 	float internalSpeed;
 
-	unsigned char ReserveNextAvailableSkirmishAIId();
-
 	std::map<unsigned char, GameSkirmishAI> ais;
 	std::list<unsigned char> usedSkirmishAIIds;
-	void FreeSkirmishAIId(const unsigned char skirmishAIId);
 
 	std::vector<GameParticipant> players;
 	std::vector<GameTeam> teams;
@@ -213,13 +226,8 @@ private:
 	int medianPing;
 	int curSpeedCtrl;
 
-	/////////////////// game settings ///////////////////
-	boost::scoped_ptr<const CGameSetup> setup;
-	boost::scoped_ptr<const GameData> gameData;
-
 	/// The maximum speed users are allowed to set
 	float maxUserSpeed;
-
 	/// The minimum speed users are allowed to set (actual speed can be lower due to high cpu usage)
 	float minUserSpeed;
 
@@ -227,13 +235,11 @@ private:
 	bool noHelperAIs;
 	bool canReconnect;
 	bool allowSpecDraw;
-	bool bypassScriptPasswordCheck;
+	bool allowSpecJoin;
 	bool whiteListAdditionalPlayers;
 
 	bool logInfoMessages;
-	bool logErrorMessages;
 	bool logDebugMessages;
-	bool logWarnMessages;
 
 	std::list< std::vector<boost::shared_ptr<const netcode::RawPacket> > > packetCache;
 
@@ -249,6 +255,8 @@ private:
 	void UserSpeedChange(float newSpeed, int player);
 
 	void AddAdditionalUser( const std::string& name, const std::string& passwd, bool fromDemo = false, bool spectator = true, int team = 0);
+	unsigned char ReserveNextAvailableSkirmishAIId();
+	void FreeSkirmishAIId(const unsigned char skirmishAIId);
 
 	bool hasLocalClient;
 	unsigned localClientNumber;
@@ -268,6 +276,7 @@ private:
 
 	volatile bool gameHasStarted;
 	volatile bool generatedGameID;
+	volatile bool reloadingServer;
 
 	int linkMinPacketSize;
 

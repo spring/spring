@@ -10,7 +10,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 
-CR_BIND_DERIVED(CGfxProjectile, CProjectile, );
+CR_BIND_DERIVED(CGfxProjectile, CProjectile, )
 
 CR_REG_METADATA(CGfxProjectile,
 (
@@ -20,7 +20,7 @@ CR_REG_METADATA(CGfxProjectile,
 		CR_MEMBER(color),
 	CR_MEMBER_ENDFLAG(CM_Config),
 	CR_RESERVED(8)
-));
+))
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -75,10 +75,10 @@ void CGfxProjectile::Draw()
 	inArray = true;
 
 	#define gfxt projectileDrawer->gfxtex
-	va->AddVertexTC(drawPos - camera->right * drawRadius - camera->up * drawRadius, gfxt->xstart, gfxt->ystart, color);
-	va->AddVertexTC(drawPos + camera->right * drawRadius - camera->up * drawRadius, gfxt->xend,   gfxt->ystart, color);
-	va->AddVertexTC(drawPos + camera->right * drawRadius + camera->up * drawRadius, gfxt->xend,   gfxt->yend,   color);
-	va->AddVertexTC(drawPos - camera->right * drawRadius + camera->up * drawRadius, gfxt->xstart, gfxt->yend,   color);
+	va->AddVertexTC(drawPos - camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, gfxt->xstart, gfxt->ystart, color);
+	va->AddVertexTC(drawPos + camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, gfxt->xend,   gfxt->ystart, color);
+	va->AddVertexTC(drawPos + camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, gfxt->xend,   gfxt->yend,   color);
+	va->AddVertexTC(drawPos - camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, gfxt->xstart, gfxt->yend,   color);
 	#undef gfxt
 }
 

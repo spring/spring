@@ -86,6 +86,9 @@ namespace SpringVersion
 
 	/// Returns true if this build is a "HEADLESS" build
 	extern bool IsHeadless();
+	
+	/// Returns true if this build is a "UNITSYNC" build
+	extern bool IsUnitsync();
 
 	/**
 	 * The basic part of a spring version.
@@ -115,6 +118,6 @@ namespace SpringVersion
 	 * @see GetAdditional
 	 */
 	extern const std::string& GetFull();
-};
+}
 
 #endif // GAME_VERSION_H

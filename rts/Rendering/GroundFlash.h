@@ -13,7 +13,7 @@ class CVertexArray;
 class CGroundFlash : public CExpGenSpawnable
 {
 public:
-	CR_DECLARE(CGroundFlash);
+	CR_DECLARE(CGroundFlash)
 
 	CGroundFlash(const float3& p);
 	CGroundFlash();
@@ -36,7 +36,7 @@ public:
 class CStandardGroundFlash : public CGroundFlash
 {
 public:
-	CR_DECLARE(CStandardGroundFlash);
+	CR_DECLARE(CStandardGroundFlash)
 
 	CStandardGroundFlash();
 	CStandardGroundFlash(const float3& pos, float circleAlpha, float flashAlpha, float flashSize, float circleSpeed, float ttl, const float3& color = float3(1.0f, 1.0f, 0.7f));
@@ -68,7 +68,7 @@ public:
 class CSimpleGroundFlash : public CGroundFlash
 {
 public:
-	CR_DECLARE(CSimpleGroundFlash);
+	CR_DECLARE(CSimpleGroundFlash)
 
 	CSimpleGroundFlash();
 
@@ -96,7 +96,7 @@ public:
 class CSeismicGroundFlash : public CGroundFlash
 {
 public:
-	CR_DECLARE(CSeismicGroundFlash);
+	CR_DECLARE(CSeismicGroundFlash)
 
 	CSeismicGroundFlash(const float3& pos, int ttl, int fade, float size, float sizeGrowth, float alpha, const float3& col);
 

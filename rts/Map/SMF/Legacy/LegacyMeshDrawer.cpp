@@ -550,7 +550,7 @@ void CLegacyMeshDrawer::UpdateLODParams(const DrawPass::e& drawPass)
 
 	// Compute count of LODs needed/visible
 	neededLod   = std::max(1, int((globalRendering->viewRange * 0.125f) / viewRadius) << 1);
-	neededLod   = std::min(neededLod, std::min(gs->mapx, gs->mapy));
+	neededLod   = std::min(neededLod, std::min(mapDims.mapx, mapDims.mapy));
 }
 
 
@@ -618,8 +618,8 @@ void CLegacyMeshDrawer::DoDrawGroundShadowLOD(int nlod) {
 	const float camxpart = (cx2 - (cx / dlod) * dlod) / dlod;
 	const float camypart = (cy2 - (cy / dlod) * dlod) / dlod;
 
-	const int minty = 0, maxty = gs->mapy;
-	const int mintx = 0, maxtx = gs->mapx;
+	const int minty = 0, maxty = mapDims.mapy;
+	const int mintx = 0, maxtx = mapDims.mapx;
 
 	const int minly = cy + (-viewRadius + 3 - ysquaremod) * lod, maxly = cy + ( viewRadius - 1 - ysquaremod) * lod;
 	const int minlx = cx + (-viewRadius + 3 - xsquaremod) * lod, maxlx = cx + ( viewRadius - 1 - xsquaremod) * lod;

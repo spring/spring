@@ -12,7 +12,7 @@ class CRepulseGfx;
 
 class CPlasmaRepulser: public CWeapon
 {
-	CR_DECLARE(CPlasmaRepulser);
+	CR_DECLARE(CPlasmaRepulser)
 public:
 	CPlasmaRepulser(CUnit* owner, const WeaponDef* def);
 	~CPlasmaRepulser();
@@ -26,7 +26,7 @@ public:
 
 	void NewProjectile(CWeaponProjectile* p);
 	float NewBeam(CWeapon* emitter, float3 start, float3 dir, float length, float3& newDir);
-	bool BeamIntercepted(CWeapon* emitter, float damageMultiplier = 1.0f); // returns true if we are a repulsing shield
+	bool BeamIntercepted(CWeapon* emitter, float3 start, float damageMultiplier = 1.0f); // returns true if we are a repulsing shield
 
 	void SetEnabled(bool b) { isEnabled = b; }
 	void SetCurPower(float p) { curPower = p; }

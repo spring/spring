@@ -4,13 +4,13 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 
-CR_BIND(NanoPieceCache, );
+CR_BIND(NanoPieceCache, )
 
 CR_REG_METADATA(NanoPieceCache, (
 	CR_MEMBER(nanoPieces),
 	CR_MEMBER(lastNanoPieceCnt),
 	CR_MEMBER(curBuildPowerMask)
-));
+))
 
 int NanoPieceCache::GetNanoPiece(CUnitScript* ownerScript) {
 	assert(UNIT_SLOWUPDATE_RATE == 16);

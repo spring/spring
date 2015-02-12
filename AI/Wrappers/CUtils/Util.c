@@ -33,11 +33,6 @@
 
 #include "System/maindefines.h"
 #include "System/SafeCStrings.h"
-#if defined USING_STREFLOP
-#include "lib/streflop/streflopC.h" // for streflop_init_Simple()
-#else
-#include <assert.h>
-#endif
 
 
 char* util_allocStr(unsigned int length) {
@@ -917,15 +912,6 @@ const char* util_map_getValueByKey(
 	}
 
 	return value;
-}
-
-void util_resetEngineEnv() {
-#if defined USING_STREFLOP
-	streflop_init_Simple();
-#else
-	// Error: streflop should be imported if this function has to be called
-	assert(0);
-#endif
 }
 
 void util_finalize() {}

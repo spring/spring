@@ -37,6 +37,12 @@ public:
 	/// @brief Get the safemode value of this config variable.
 	virtual const StringConvertibleOptionalValue& GetSafemodeValue() const = 0;
 
+	/// @brief Get the headless value of this config variable.
+	virtual const StringConvertibleOptionalValue& GetHeadlessValue() const = 0;
+
+	/// @brief Get the dedicated value of this config variable.
+	virtual const StringConvertibleOptionalValue& GetDedicatedValue() const = 0;
+
 	/// @brief Clamp a value using the declared minimum and maximum value.
 	virtual std::string Clamp(const std::string& value) const = 0;
 
@@ -75,6 +81,8 @@ public:
 	const StringConvertibleOptionalValue& GetMinimumValue() const { return minimumValue; }
 	const StringConvertibleOptionalValue& GetMaximumValue() const { return maximumValue; }
 	const StringConvertibleOptionalValue& GetSafemodeValue() const { return safemodeValue; }
+	const StringConvertibleOptionalValue& GetHeadlessValue() const { return headlessValue; }
+	const StringConvertibleOptionalValue& GetDedicatedValue() const { return dedicatedValue; }
 
 	/**
 	 * @brief Clamp a value using the declared minimum and maximum value.
@@ -107,6 +115,8 @@ protected:
 	TypedStringConvertibleOptionalValue<T> minimumValue;
 	TypedStringConvertibleOptionalValue<T> maximumValue;
 	TypedStringConvertibleOptionalValue<T> safemodeValue;
+	TypedStringConvertibleOptionalValue<T> headlessValue;
+	TypedStringConvertibleOptionalValue<T> dedicatedValue;
 
 	template<typename F> friend class ConfigVariableBuilder;
 };
@@ -144,6 +154,8 @@ public:
 	MAKE_CHAIN_METHOD(minimumValue, T);
 	MAKE_CHAIN_METHOD(maximumValue, T);
 	MAKE_CHAIN_METHOD(safemodeValue, T);
+	MAKE_CHAIN_METHOD(headlessValue, T);
+	MAKE_CHAIN_METHOD(dedicatedValue, T);
 
 #undef MAKE_CHAIN_METHOD
 

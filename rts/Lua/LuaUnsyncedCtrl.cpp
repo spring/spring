@@ -13,7 +13,7 @@
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/Camera/CameraController.h"
-#include "Game/Game.h"
+#include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/Players/Player.h"
@@ -39,6 +39,7 @@
 #include "Rendering/IconHandler.h"
 #include "Rendering/LineDrawer.h"
 #include "Rendering/UnitDrawer.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -48,8 +49,8 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-#include "Sim/Units/Groups/Group.h"
-#include "Sim/Units/Groups/GroupHandler.h"
+#include "Game/UI/Groups/Group.h"
+#include "Game/UI/Groups/GroupHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/GlobalConfig.h"
@@ -59,7 +60,7 @@
 #include "System/Net/PackPacket.h"
 #include "System/Util.h"
 #include "System/Sound/ISound.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/DataDirLocater.h"
 #include "System/FileSystem/FileSystem.h"
@@ -70,8 +71,8 @@
 #include "System/Platform/Misc.h"
 
 #if !defined(HEADLESS) && !defined(NO_SOUND)
-	#include "System/Sound/EFX.h"
-	#include "System/Sound/EFXPresets.h"
+#include "System/Sound/OpenAL/EFX.h"
+#include "System/Sound/OpenAL/EFXPresets.h"
 #endif
 
 #include <map>
@@ -93,11 +94,6 @@ using std::max;
 
 const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 
-
-/******************************************************************************/
-/******************************************************************************/
-
-std::set<int> drawCmdQueueUnits;
 
 /******************************************************************************/
 /******************************************************************************/
@@ -207,10 +203,11 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetCameraOffset);
 
-	REGISTER_LUA_CFUNC(UpdateInfoTexture);
 	REGISTER_LUA_CFUNC(SetLosViewColors);
 
+	REGISTER_LUA_CFUNC(Reload);
 	REGISTER_LUA_CFUNC(Restart);
+
 	REGISTER_LUA_CFUNC(SetWMIcon);
 	REGISTER_LUA_CFUNC(SetWMCaption);
 
@@ -333,52 +330,6 @@ static inline CUnit* ParseSelectUnit(lua_State* L,
 	return NULL;
 }
 
-
-/******************************************************************************/
-/******************************************************************************/
-
-void LuaUnsyncedCtrl::DrawUnitCommandQueues()
-{
-	if (drawCmdQueueUnits.empty()) {
-		return;
-	}
-
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_DEPTH_TEST);
-
-	lineDrawer.Configure(cmdColors.UseColorRestarts(),
-	                     cmdColors.UseRestartColor(),
-	                     cmdColors.restart,
-	                     cmdColors.RestartAlpha());
-	lineDrawer.SetupLineStipple();
-
-	glEnable(GL_BLEND);
-	glBlendFunc((GLenum)cmdColors.QueuedBlendSrc(),
-	            (GLenum)cmdColors.QueuedBlendDst());
-
-	glLineWidth(cmdColors.QueuedLineWidth());
-
-	std::set<int>::const_iterator ui;
-
-	for (ui = drawCmdQueueUnits.begin(); ui != drawCmdQueueUnits.end(); ++ui) {
-		const CUnit* unit = unitHandler->GetUnit(*ui);
-
-		if (unit == NULL || unit->commandAI == NULL) {
-			continue;
-		}
-
-		commandDrawer->Draw(unit->commandAI);
-	}
-
-	glLineWidth(1.0f);
-	glEnable(GL_DEPTH_TEST);
-}
-
-
-void LuaUnsyncedCtrl::ClearUnitCommandQueues()
-{
-	drawCmdQueueUnits.clear();
-}
 
 
 /******************************************************************************/
@@ -521,7 +472,7 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 		}
 
 		//! last argument (with and without pos/speed arguments) is the optional `sfx channel`
-		AudioChannelImpl* channel = &Channels::General;
+		IAudioChannel** channel = &Channels::General;
 		if (args >= index) {
 			if (lua_isstring(L, index)) {
 				string channelStr = lua_tostring(L, index);
@@ -553,12 +504,12 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 
 		if (pos_given) {
 			if (speed_given) {
-				channel->PlaySample(soundID, pos, speed, volume);
+				channel[0]->PlaySample(soundID, pos, speed, volume);
 			} else {
-				channel->PlaySample(soundID, pos, volume);
+				channel[0]->PlaySample(soundID, pos, volume);
 			}
 		} else
-			channel->PlaySample(soundID, volume);
+			channel[0]->PlaySample(soundID, volume);
 
 		success = true;
 	}
@@ -578,7 +529,7 @@ int LuaUnsyncedCtrl::PlaySoundStream(lua_State* L)
 	const float volume = luaL_optnumber(L, 2, 1.0f);
 	bool enqueue = luaL_optboolean(L, 3, false);
 
-	Channels::BGMusic.StreamPlay(soundFile, volume, enqueue);
+	Channels::BGMusic->StreamPlay(soundFile, volume, enqueue);
 
 	// .ogg files don't have sound ID's generated
 	// for them (yet), so we always succeed here
@@ -592,17 +543,17 @@ int LuaUnsyncedCtrl::PlaySoundStream(lua_State* L)
 
 int LuaUnsyncedCtrl::StopSoundStream(lua_State*)
 {
-	Channels::BGMusic.StreamStop();
+	Channels::BGMusic->StreamStop();
 	return 0;
 }
 int LuaUnsyncedCtrl::PauseSoundStream(lua_State*)
 {
-	Channels::BGMusic.StreamPause();
+	Channels::BGMusic->StreamPause();
 	return 0;
 }
 int LuaUnsyncedCtrl::SetSoundStreamVolume(lua_State* L)
 {
-	Channels::BGMusic.SetVolume(luaL_checkfloat(L, 1));
+	Channels::BGMusic->SetVolume(luaL_checkfloat(L, 1));
 	return 0;
 }
 
@@ -762,21 +713,26 @@ int LuaUnsyncedCtrl::DrawUnitCommands(lua_State* L)
 		const bool isMap = luaL_optboolean(L, 2, false);
 		const int unitArg = isMap ? -2 : -1;
 		const int table = 1;
+
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-			if (lua_israwnumber(L, -2)) {
-				CUnit* unit = ParseAllyUnit(L, __FUNCTION__, unitArg);
-				if (unit != NULL) {
-					drawCmdQueueUnits.insert(unit->id);
-				}
-			}
+			if (!lua_israwnumber(L, -2))
+				continue;
+
+			const CUnit* unit = ParseAllyUnit(L, __FUNCTION__, unitArg);
+
+			if (unit == NULL)
+				continue;
+
+			commandDrawer->AddLuaQueuedUnit(unit);
 		}
-		return 0;
+	} else {
+		const CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+
+		if (unit != NULL) {
+			commandDrawer->AddLuaQueuedUnit(unit);
+		}
 	}
 
-	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
-	if (unit != NULL) {
-		drawCmdQueueUnits.insert(unit->id);
-	}
 	return 0;
 }
 
@@ -1000,9 +956,6 @@ int LuaUnsyncedCtrl::SetCustomCommandDrawData(lua_State* L)
 
 int LuaUnsyncedCtrl::SetDrawSky(lua_State* L)
 {
-	if (game == NULL) {
-		return 0;
-	}
 	globalRendering->drawSky = !!luaL_checkboolean(L, 1);
 	return 0;
 }
@@ -1010,9 +963,6 @@ int LuaUnsyncedCtrl::SetDrawSky(lua_State* L)
 
 int LuaUnsyncedCtrl::SetDrawWater(lua_State* L)
 {
-	if (game == NULL) {
-		return 0;
-	}
 	globalRendering->drawWater = !!luaL_checkboolean(L, 1);
 	return 0;
 }
@@ -1020,9 +970,6 @@ int LuaUnsyncedCtrl::SetDrawWater(lua_State* L)
 
 int LuaUnsyncedCtrl::SetDrawGround(lua_State* L)
 {
-	if (game == NULL) {
-		return 0;
-	}
 	globalRendering->drawGround = !!luaL_checkboolean(L, 1);
 	return 0;
 }
@@ -1047,9 +994,6 @@ int LuaUnsyncedCtrl::SetDrawModelsDeferred(lua_State* L)
 
 int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 {
-	if (game == NULL) {
-		return 0;
-	}
 	if (!gs->cheatEnabled) {
 		LOG("SetWaterParams() needs cheating enabled");
 		return 0;
@@ -1869,23 +1813,6 @@ int LuaUnsyncedCtrl::SetCameraOffset(lua_State* L)
 
 /******************************************************************************/
 
-int LuaUnsyncedCtrl::UpdateInfoTexture(lua_State* L)
-{
-	const int rawMode = CBaseGroundDrawer::BaseGroundDrawMode(luaL_checkint(L, 1));
-	const int texMode = Clamp(rawMode, int(CBaseGroundDrawer::drawLos), int(CBaseGroundDrawer::drawPathCost));
-
-	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-
-	if (gd->GetDrawMode() == CBaseGroundDrawer::drawNormal) {
-		// allow background updates only when no infotex is active
-		lua_pushboolean(L, gd->UpdateExtraTexture(texMode));
-	} else {
-		lua_pushboolean(L, false);
-	}
-
-	return 1;
-}
-
 int LuaUnsyncedCtrl::SetLosViewColors(lua_State* L)
 {
 	float red[4];
@@ -1911,6 +1838,7 @@ int LuaUnsyncedCtrl::SetLosViewColors(lua_State* L)
 	gd->jamColor[0]    = (int)(scale *   red[3]);
 	gd->jamColor[1]    = (int)(scale * green[3]);
 	gd->jamColor[2]    = (int)(scale *  blue[3]);
+	infoTextureHandler->SetMode(infoTextureHandler->GetMode());
 	return 0;
 }
 
@@ -2020,52 +1948,71 @@ int LuaUnsyncedCtrl::CreateDir(lua_State* L)
 
 /******************************************************************************/
 
+static int ReloadOrRestart(const std::string& springArgs, const std::string& scriptText) {
+	if (springArgs.empty()) {
+		// signal SpringApp
+		gameSetup->setupText = scriptText;
+		gu->globalReload = true;
+
+		LOG("[%s] Spring \"%s\" should be reloading", __FUNCTION__, (Platform::GetProcessExecutableFile()).c_str());
+	} else {
+		const std::string springFullName = Platform::GetProcessExecutableFile();
+		const std::string scriptFullName = dataDirLocater.GetWriteDirPath() + "script.txt";
+
+		std::vector<std::string> processArgs;
+
+		// arguments to Spring binary given by Lua code, if any
+		processArgs.push_back(springArgs);
+
+		if (!scriptText.empty()) {
+			// create file 'script.txt' with contents given by Lua code
+			std::ofstream scriptFile(scriptFullName.c_str());
+
+			scriptFile.write(scriptText.c_str(), scriptText.size());
+			scriptFile.close();
+
+			processArgs.push_back(scriptFullName);
+		}
+
+	#ifdef _WIN32
+		// else OpenAL crashes when using execvp
+		ISound::Shutdown();
+	#endif
+
+		LOG("[%s] Spring \"%s\" should be restarting", __FUNCTION__, springFullName.c_str());
+		Platform::ExecuteProcess(springFullName, processArgs);
+
+		// only reached on failure
+		return 1;
+	}
+
+	return 0;
+}
+
+
+int LuaUnsyncedCtrl::Reload(lua_State* L)
+{
+	return (ReloadOrRestart("", luaL_checkstring(L, 1)));
+}
+
 int LuaUnsyncedCtrl::Restart(lua_State* L)
 {
-	const std::string springArguments = luaL_checkstring(L, 1);
-	const std::string scriptContents = luaL_checkstring(L, 2);
-
-	const std::string springFullName = Platform::GetProcessExecutableFile();
-	const std::string scriptFullName = dataDirLocater.GetWriteDirPath() + "script.txt";
-
-	std::vector<std::string> processArgs;
-
-	// arguments to Spring binary given by Lua code, if any
-	if (!springArguments.empty()) {
-		processArgs.push_back(springArguments);
+	if (ReloadOrRestart(luaL_checkstring(L, 1), luaL_checkstring(L, 2)) != 0) {
+		lua_pushboolean(L, false);
+		return 1;
 	}
 
-	if (!scriptContents.empty()) {
-		// create file 'script.txt' with contents given by Lua code
-		std::ofstream scriptFile(scriptFullName.c_str());
-
-		scriptFile.write(scriptContents.c_str(), scriptContents.size());
-		scriptFile.close();
-
-		processArgs.push_back(scriptFullName);
-	}
-
-	LOG("[Spring.%s] Spring \"%s\" should be restarting", __FUNCTION__, springFullName.c_str());
-
-#ifdef _WIN32
-	// else OpenAL crashes when using execvp
-	ISound::Shutdown();
-#endif
-
-	Platform::ExecuteProcess(springFullName, processArgs);
-
-	// not reached on success
-	lua_pushboolean(L, false);
-	return 1;
+	return 0;
 }
+
 
 int LuaUnsyncedCtrl::SetWMIcon(lua_State* L)
 {
 	const std::string iconFileName = luaL_checksstring(L, 1);
 
 	CBitmap iconTexture;
-	const bool loaded = iconTexture.Load(iconFileName);
-	if (loaded) {
+
+	if (iconTexture.Load(iconFileName)) {
 		WindowManagerHelper::SetIcon(&iconTexture);
 	} else {
 		luaL_error(L, "Failed to load image from file \"%s\"", iconFileName.c_str());
@@ -2076,8 +2023,7 @@ int LuaUnsyncedCtrl::SetWMIcon(lua_State* L)
 
 int LuaUnsyncedCtrl::SetWMCaption(lua_State* L)
 {
-	const std::string title = luaL_checksstring(L, 1);
-	WindowManagerHelper::SetCaption(title);
+	WindowManagerHelper::SetCaption(luaL_checksstring(L, 1));
 	return 0;
 }
 
@@ -2174,7 +2120,7 @@ int LuaUnsyncedCtrl::SetUnitGroup(lua_State* L)
 	const int groupID = luaL_checkint(L, 2);
 
 	if (groupID == -1) {
-		unit->SetGroup(NULL);
+		unit->SetGroup(nullptr);
 		return 0;
 	}
 
@@ -2290,7 +2236,7 @@ int LuaUnsyncedCtrl::GiveOrderToUnit(lua_State* L)
 
 	Command cmd = LuaUtils::ParseCommand(L, __FUNCTION__, 2);
 
-	net->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, skirmishAIHandler.GetCurrentAIID(), unit->id, cmd.GetID(), cmd.aiCommandId, cmd.options, cmd.params));
+	clientNet->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, skirmishAIHandler.GetCurrentAIID(), unit->id, cmd.GetID(), cmd.aiCommandId, cmd.options, cmd.params));
 
 	lua_pushboolean(L, true);
 	return 1;
@@ -2453,7 +2399,7 @@ int LuaUnsyncedCtrl::SendLuaUIMsg(lua_State* L)
 		luaL_error(L, "Unknown SendLuaUIMsg() mode");
 	}
 	try {
-		net->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_UI, modeNum, data));
+		clientNet->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_UI, modeNum, data));
 	} catch (const netcode::PackPacketException& ex) {
 		luaL_error(L, "SendLuaUIMsg() packet error: %s", ex.what());
 	}
@@ -2470,7 +2416,7 @@ int LuaUnsyncedCtrl::SendLuaGaiaMsg(lua_State* L)
 	std::vector<boost::uint8_t> data(msg.size());
 	std::copy(msg.begin(), msg.end(), data.begin());
 	try {
-		net->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_GAIA, 0, data));
+		clientNet->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_GAIA, 0, data));
 	} catch (const netcode::PackPacketException& ex) {
 		luaL_error(L, "SendLuaGaiaMsg() packet error: %s", ex.what());
 	}
@@ -2487,7 +2433,7 @@ int LuaUnsyncedCtrl::SendLuaRulesMsg(lua_State* L)
 	std::vector<boost::uint8_t> data(msg.size());
 	std::copy(msg.begin(), msg.end(), data.begin());
 	try {
-		net->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_RULES, 0, data));
+		clientNet->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_RULES, 0, data));
 	} catch (const netcode::PackPacketException& ex) {
 		luaL_error(L, "SendLuaRulesMsg() packet error: %s", ex.what());
 	}
@@ -2510,10 +2456,10 @@ int LuaUnsyncedCtrl::SetShareLevel(lua_State* L)
 	const float shareLevel = max(0.0f, min(1.0f, luaL_checkfloat(L, 2)));
 
 	if (shareType == "metal") {
-		net->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, shareLevel, teamHandler->Team(gu->myTeam)->energyShare));
+		clientNet->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, shareLevel, teamHandler->Team(gu->myTeam)->resShare.energy));
 	}
 	else if (shareType == "energy") {
-		net->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam,	teamHandler->Team(gu->myTeam)->metalShare, shareLevel));
+		clientNet->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, teamHandler->Team(gu->myTeam)->resShare.metal, shareLevel));
 	}
 	else {
 		LOG_L(L_WARNING, "SetShareLevel() unknown resource: %s", shareType.c_str());
@@ -2549,16 +2495,16 @@ int LuaUnsyncedCtrl::ShareResources(lua_State* L)
 		// update the selection, and clear the unit command queues
 		Command c(CMD_STOP);
 		selectedUnitsHandler.GiveCommand(c, false);
-		net->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, teamID, 1, 0.0f, 0.0f));
+		clientNet->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, teamID, 1, 0.0f, 0.0f));
 		selectedUnitsHandler.ClearSelected();
 	}
 	else if (args >= 3) {
 		const float amount = lua_tofloat(L, 3);
 		if (type == "metal") {
-			net->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, teamID, 0, amount, 0.0f));
+			clientNet->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, teamID, 0, amount, 0.0f));
 		}
 		else if (type == "energy") {
-			net->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, teamID, 0, 0.0f, amount));
+			clientNet->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, teamID, 0, 0.0f, amount));
 		}
 	}
 	return 0;
@@ -2754,9 +2700,9 @@ int LuaUnsyncedCtrl::SendSkirmishAIMessage(lua_State* L) {
 
 	luaL_checkstack(L, 2, __FUNCTION__);
 	lua_pushboolean(L, eoh->SendLuaMessages(aiTeam, inData, outData));
-	lua_createtable(L, outData.size(), 0);
 
 	// push the AI response(s)
+	lua_createtable(L, outData.size(), 0);
 	for (unsigned int n = 0; n < outData.size(); n++) {
 		lua_pushstring(L, outData[n]);
 		lua_rawseti(L, -2, n + 1);

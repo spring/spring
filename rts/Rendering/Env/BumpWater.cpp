@@ -13,15 +13,16 @@
 #include "Game/Game.h"
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
+#include "Map/BaseGroundDrawer.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Map/BaseGroundDrawer.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/ProjectileDrawer.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -43,14 +44,14 @@ using std::vector;
 using std::min;
 using std::max;
 
-CONFIG(int, BumpWaterTexSizeReflection).defaultValue(512).minimumValue(32).description("Sets the size of the framebuffer texture used to store the reflection in Bumpmapped water.");
-CONFIG(int, BumpWaterReflection).defaultValue(1).minimumValue(0).maximumValue(2).description("Determines the amount of objects reflected in Bumpmapped water.\n0:=off, 1:=fast (skip terrain), 2:=full");
-CONFIG(int, BumpWaterRefraction).defaultValue(1).minimumValue(0).maximumValue(2).description("Determines the method of refraction with Bumpmapped water.\n0:=off, 1:=screencopy, 2:=own rendering cycle");
+CONFIG(int, BumpWaterTexSizeReflection).defaultValue(512).headlessValue(32).minimumValue(32).description("Sets the size of the framebuffer texture used to store the reflection in Bumpmapped water.");
+CONFIG(int, BumpWaterReflection).defaultValue(1).headlessValue(0).minimumValue(0).maximumValue(2).description("Determines the amount of objects reflected in Bumpmapped water.\n0:=off, 1:=fast (skip terrain), 2:=full");
+CONFIG(int, BumpWaterRefraction).defaultValue(1).headlessValue(0).minimumValue(0).maximumValue(2).description("Determines the method of refraction with Bumpmapped water.\n0:=off, 1:=screencopy, 2:=own rendering cycle");
 CONFIG(float, BumpWaterAnisotropy).defaultValue(0.0f).minimumValue(0.0f);
-CONFIG(bool, BumpWaterUseDepthTexture).defaultValue(true);
+CONFIG(bool, BumpWaterUseDepthTexture).defaultValue(true).headlessValue(false);
 CONFIG(int, BumpWaterDepthBits).defaultValue(24).minimumValue(16).maximumValue(32);
 CONFIG(bool, BumpWaterBlurReflection).defaultValue(false);
-CONFIG(bool, BumpWaterShoreWaves).defaultValue(true).safemodeValue(false).description("Enables rendering of shorewaves.");
+CONFIG(bool, BumpWaterShoreWaves).defaultValue(true).headlessValue(false).safemodeValue(false).description("Enables rendering of shorewaves.");
 CONFIG(bool, BumpWaterEndlessOcean).defaultValue(true).description("Sets whether Bumpmapped water will be drawn beyond the map edge.");
 CONFIG(bool, BumpWaterDynamicWaves).defaultValue(true);
 CONFIG(bool, BumpWaterUseUniforms).defaultValue(false);
@@ -127,14 +128,11 @@ static GLuint LoadTexture(const string& filename, const float anisotropy = 0.0f,
 }
 
 
-static void DrawRadialDisc()
+static void DrawRadialDisc(CVertexArray* va)
 {
 	//! SAME ALGORITHM AS FOR WATER-PLANE IN BFGroundDrawer.cpp!
-	const float xsize = (gs->mapx * SQUARE_SIZE) >> 2;
-	const float ysize = (gs->mapy * SQUARE_SIZE) >> 2;
-
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
+	const float xsize = (mapDims.mapx * SQUARE_SIZE) >> 2;
+	const float ysize = (mapDims.mapy * SQUARE_SIZE) >> 2;
 
 	float3 p;
 
@@ -228,7 +226,7 @@ CBumpWater::CBumpWater()
 		glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_RGBA16F_ARB, 4096, 4096, 0, GL_RGBA, GL_FLOAT, NULL);
 		glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &maxw);
 		glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &maxh);
-		if (gs->mapx>maxw || gs->mapy>maxh) {
+		if (mapDims.mapx>maxw || mapDims.mapy>maxh) {
 			shoreWaves = false;
 			LOG_L(L_WARNING, "Can not display shorewaves (map too large)!");
 		}
@@ -247,8 +245,8 @@ CBumpWater::CBumpWater()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, gs->mapx, gs->mapy, 0, GL_RGBA, GL_FLOAT, NULL);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5, gs->mapx, gs->mapy, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+		//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, mapDims.mapx, mapDims.mapy, 0, GL_RGBA, GL_FLOAT, NULL);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5, mapDims.mapx, mapDims.mapy, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 		//glGenerateMipmapEXT(GL_TEXTURE_2D);
 
 
@@ -295,7 +293,7 @@ CBumpWater::CBumpWater()
 			glClear(GL_COLOR_BUFFER_BIT);
 
 			//! fill with current heightmap/coastmap
-			UnsyncedHeightMapUpdate(SRectangle(0, 0, gs->mapx, gs->mapy));
+			UnsyncedHeightMapUpdate(SRectangle(0, 0, mapDims.mapx, mapDims.mapy));
 			UploadCoastline(true);
 			UpdateCoastmap();
 		} else
@@ -435,7 +433,7 @@ CBumpWater::CBumpWater()
 	if (endlessOcean) definitions += "#define opt_endlessocean\n";
 	if (target == GL_TEXTURE_RECTANGLE_ARB) definitions += "#define opt_texrect\n";
 
-	GLSLDefineConstf3(definitions, "MapMid",                    float3(gs->mapx * SQUARE_SIZE * 0.5f, 0.0f, gs->mapy * SQUARE_SIZE * 0.5f));
+	GLSLDefineConstf3(definitions, "MapMid",                    float3(mapDims.mapx * SQUARE_SIZE * 0.5f, 0.0f, mapDims.mapy * SQUARE_SIZE * 0.5f));
 	GLSLDefineConstf2(definitions, "ScreenInverse",             1.0f / globalRendering->viewSizeX, 1.0f / globalRendering->viewSizeY);
 	GLSLDefineConstf2(definitions, "ScreenTextureSizeInverse",  1.0f / screenTextureX, 1.0f / screenTextureY);
 	GLSLDefineConstf2(definitions, "ViewPos",                   globalRendering->viewPosX, globalRendering->viewPosY);
@@ -466,12 +464,12 @@ CBumpWater::CBumpWater()
 	}
 
 	{
-		const int mapX = gs->mapx  * SQUARE_SIZE;
-		const int mapZ = gs->mapy * SQUARE_SIZE;
-		const float shadingX = (float)gs->mapx / gs->pwr2mapx;
-		const float shadingZ = (float)gs->mapy / gs->pwr2mapy;
-		const float scaleX = (mapX > mapZ) ? (gs->mapy/64)/16.0f * (float)mapX/mapZ : (gs->mapx/64)/16.0f;
-		const float scaleZ = (mapX > mapZ) ? (gs->mapy/64)/16.0f : (gs->mapx/64)/16.0f * (float)mapZ/mapX;
+		const int mapX = mapDims.mapx  * SQUARE_SIZE;
+		const int mapZ = mapDims.mapy * SQUARE_SIZE;
+		const float shadingX = (float)mapDims.mapx / mapDims.pwr2mapx;
+		const float shadingZ = (float)mapDims.mapy / mapDims.pwr2mapy;
+		const float scaleX = (mapX > mapZ) ? (mapDims.mapy/64)/16.0f * (float)mapX/mapZ : (mapDims.mapx/64)/16.0f;
+		const float scaleZ = (mapX > mapZ) ? (mapDims.mapy/64)/16.0f : (mapDims.mapx/64)/16.0f * (float)mapZ/mapX;
 		GLSLDefineConst4f(definitions, "TexGenPlane", 1.0f/mapX, 1.0f/mapZ, scaleX/mapX, scaleZ/mapZ);
 		GLSLDefineConst4f(definitions, "ShadingPlane", shadingX/mapX, shadingZ/mapZ, shadingX, shadingZ);
 	}
@@ -540,19 +538,19 @@ CBumpWater::CBumpWater()
 
 	// CREATE DISPLAYLIST
 	displayList = glGenLists(1);
+	CVertexArray* va = GetVertexArray();
+	va->Initialize();
+	va->CheckInitSize(4 * 33 * 2); // endless
 	glNewList(displayList, GL_COMPILE);
 	if (endlessOcean) {
-		DrawRadialDisc();
+		DrawRadialDisc(va);
 	} else {
-		const int mapX = gs->mapx * SQUARE_SIZE;
-		const int mapZ = gs->mapy * SQUARE_SIZE;
-		CVertexArray* va = GetVertexArray();
-		va->Initialize();
+		const int mapX = mapDims.mapx * SQUARE_SIZE;
+		const int mapZ = mapDims.mapy * SQUARE_SIZE;
 		for (int z = 0; z < 9; z++) {
 			for (int x = 0; x < 10; x++) {
-				for (int zs = 0; zs <= 1; zs++) {
-					va->AddVertex0(float3(x*(mapX/9.0f), 0.0f, (z + zs)*(mapZ/9.0f)));
-				}
+				va->AddVertex0(float3(x*(mapX/9.0f), 0.0f, (z + 0)*(mapZ/9.0f)));
+				va->AddVertex0(float3(x*(mapX/9.0f), 0.0f, (z + 1)*(mapZ/9.0f)));
 			}
 			va->EndStrip();
 		}
@@ -757,17 +755,17 @@ void CBumpWater::UpdateWater(CGame* game)
 CBumpWater::CoastAtlasRect::CoastAtlasRect(const SRectangle& rect)
 {
 	ix1 = std::max(rect.x1 - 15, 0);
-	ix2 = std::min(rect.x2 + 15, gs->mapx);
+	ix2 = std::min(rect.x2 + 15, mapDims.mapx);
 	iy1 = std::max(rect.y1 - 15, 0);
-	iy2 = std::min(rect.y2 + 15, gs->mapy);
+	iy2 = std::min(rect.y2 + 15, mapDims.mapy);
 
 	xsize = ix2 - ix1;
 	ysize = iy2 - iy1;
 
-	x1 = (ix1 + 0.5f) / (float)gs->mapx;
-	x2 = (ix2 + 0.5f) / (float)gs->mapx;
-	y1 = (iy1 + 0.5f) / (float)gs->mapy;
-	y2 = (iy2 + 0.5f) / (float)gs->mapy;
+	x1 = (ix1 + 0.5f) / (float)mapDims.mapx;
+	x2 = (ix2 + 0.5f) / (float)mapDims.mapx;
+	y1 = (iy1 + 0.5f) / (float)mapDims.mapy;
+	y2 = (iy2 + 0.5f) / (float)mapDims.mapy;
 	tx1 = tx2 = ty1 = ty2 = 0.f;
 	isCoastline = true;
 }
@@ -816,7 +814,7 @@ void CBumpWater::UploadCoastline(const bool forceFull)
 		unsigned char* texpixels = (unsigned char*) atlas.AddTex(IntToString(i), caRect.xsize, caRect.ysize);
 
 		for (int y = 0; y < caRect.ysize; ++y) {
-			const int yindex  = (y + caRect.iy1) * (gs->mapx+1) + caRect.ix1;
+			const int yindex  = (y + caRect.iy1) * (mapDims.mapx+1) + caRect.ix1;
 			const int yindex2 = y * caRect.xsize;
 
 			for (int x = 0; x < caRect.xsize; ++x) {
@@ -885,7 +883,7 @@ void CBumpWater::UpdateCoastmap()
 		glLoadIdentity();
 		glOrtho(0, 1, 0, 1, -1, 1);
 
-	glViewport(0, 0, gs->mapx, gs->mapy);
+	glViewport(0, 0, mapDims.mapx, mapDims.mapy);
 	glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
 	coastFBO.AttachTexture(coastTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0_EXT);
 	glMultiTexCoord2i(GL_TEXTURE2, 0, 0);
@@ -919,7 +917,7 @@ void CBumpWater::UpdateCoastmap()
 			glEnd();
 
 			coastFBO.AttachTexture(coastTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0_EXT);
-			glViewport(0, 0, gs->mapx, gs->mapy);
+			glViewport(0, 0, mapDims.mapx, mapDims.mapy);
 			glMultiTexCoord2i(GL_TEXTURE2, 0, ++n);
 
 			glBegin(GL_QUADS);
@@ -972,13 +970,13 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 		return;
 	}
 
-	static const unsigned char tiles  = mapInfo->water.numTiles; //! (numTiles <= 16)
-	static const unsigned char ntiles = mapInfo->water.numTiles * mapInfo->water.numTiles;
-	static const float tilesize = 1.0f/mapInfo->water.numTiles;
+	const unsigned char tiles  = mapInfo->water.numTiles; //! (numTiles <= 16)
+	const unsigned char ntiles = tiles * tiles;
 
-	const int f = (gs->frameNum+1) % 60;
+	const float tilesize = 1.0f / tiles;
+	const int modFrameNum = (gs->frameNum + 1) % 60;
 
-	if (f == 0) {
+	if (modFrameNum == 0) {
 		for (unsigned char i = 0; i < ntiles; ++i) {
 			do {
 				tileOffsets[i] = (unsigned char)(gu->RandFloat()*ntiles);
@@ -990,7 +988,7 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, normalTexture2);
 	glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
-	glBlendColor(1.0f, 1.0f, 1.0f, (initialize) ? 1.0f : (f + 1)/600.0f );
+	glBlendColor(1.0f, 1.0f, 1.0f, (initialize) ? 1.0f : (modFrameNum + 1)/600.0f );
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glEnable(GL_BLEND);
 	glDepthMask(GL_FALSE);
@@ -1100,10 +1098,8 @@ void CBumpWater::Draw()
 		glDisable(GL_BLEND);
 	}
 
-	const CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-
 	waterShader->SetFlag("opt_shadows", (shadowHandler && shadowHandler->shadowsLoaded));
-	waterShader->SetFlag("opt_infotex", gd->DrawExtraTex());
+	waterShader->SetFlag("opt_infotex", infoTextureHandler->IsEnabled());
 
 	waterShader->Enable();
 	waterShader->SetUniform3fv(0, &camera->GetPos()[0]);
@@ -1129,7 +1125,7 @@ void CBumpWater::Draw()
 	glActiveTexture(GL_TEXTURE7); glBindTexture(target,        depthTexture);
 	glActiveTexture(GL_TEXTURE8); glBindTexture(GL_TEXTURE_2D, waveRandTexture);
 	//glActiveTexture(GL_TEXTURE9); see above
-	glActiveTexture(GL_TEXTURE10); glBindTexture(GL_TEXTURE_2D, gd->GetActiveInfoTexture());
+	glActiveTexture(GL_TEXTURE10); glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
 	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, normalTexture);
 
 	if (useUniforms) {
@@ -1219,8 +1215,9 @@ void CBumpWater::DrawReflection(CGame* game)
 	char realCam[sizeof(CCamera)];
 	new (realCam) CCamera(*camera); // anti-crash workaround for multithreading
 
-	camera->forward.y *= -1.0f;
+	camera->SetDir(camera->GetDir() * float3(1.0f, -1.0f, 1.0f));
 	camera->SetPos(camera->GetPos() * float3(1.0f, -1.0f, 1.0f));
+	camera->SetRotZ(-camera->GetRot().z);
 	camera->Update();
 
 	game->SetDrawMode(CGame::gameReflectionDraw);

@@ -156,6 +156,10 @@ extern DECLSPEC SDL_bool SDLCALL SDL_GetWindowGrab(SDL_Window* window) {
 	return 0;
 }
 
+extern DECLSPEC Uint32 SDLCALL SDL_GetWindowFlags(SDL_Window* window) {
+	return 0;
+}
+
 extern DECLSPEC void SDLCALL SDL_DisableScreenSaver() {
 }
 
@@ -243,6 +247,28 @@ extern DECLSPEC int SDLCALL SDL_PeepEvents(SDL_Event* events, int numevents, SDL
 
 extern DECLSPEC Uint8 SDLCALL SDL_GetAppState() {
 	return 0;
+}
+
+extern DECLSPEC int SDL_GetNumVideoDisplays(void) {
+	return 0;
+}
+extern DECLSPEC int SDL_GetDisplayBounds(int displayIndex, SDL_Rect* rect) {
+	if (rect == 0) return -1;
+	rect->w = 640;
+	rect->h = 480;
+	rect->x = 0;
+	rect->y = 0;
+	return 0;
+}
+
+extern DECLSPEC int SDL_GL_GetSwapInterval() {
+	return 0;
+}
+
+extern DECLSPEC void SDL_SetWindowPosition(SDL_Window * window, int x, int y) {
+}
+
+extern DECLSPEC void SDL_SetWindowSize(SDL_Window * window, int w, int h) {
 }
 
 #ifdef __cplusplus

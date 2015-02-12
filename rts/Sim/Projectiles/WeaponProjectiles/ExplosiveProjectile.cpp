@@ -14,14 +14,14 @@
 	#include "System/Sync/SyncTracer.h"
 #endif
 
-CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, (ProjectileParams()));
+CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, (ProjectileParams()))
 
 CR_REG_METADATA(CExplosiveProjectile, (
 	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(areaOfEffect),
 	CR_MEMBER(invttl),
 	CR_MEMBER(curTime)
-));
+))
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -116,8 +116,8 @@ void CExplosiveProjectile::Draw()
 		const float stageDecay = (stages - (stage * alphaDecay)) * invStages;
 		const float stageSize  = drawRadius * (1.0f - (stage * sizeDecay));
 
-		const float3 ydirCam  = camera->up    * stageSize;
-		const float3 xdirCam  = camera->right * stageSize;
+		const float3 ydirCam  = camera->GetUp()    * stageSize;
+		const float3 xdirCam  = camera->GetRight() * stageSize;
 		const float3 stageGap = (noGap)? (ndir * stageSize * stage): (ndir * drawRadius * stage);
 		const float3 stagePos = drawPos - stageGap;
 

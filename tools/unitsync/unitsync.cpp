@@ -1045,7 +1045,7 @@ EXPORT(int) GetMapArchiveCount(const char* mapName)
 		CheckInit();
 		CheckNullOrEmpty(mapName);
 
-		mapArchives = archiveScanner->GetArchives(mapName);
+		mapArchives = archiveScanner->GetAllArchivesUsedBy(mapName);
 		count = mapArchives.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -1471,7 +1471,7 @@ EXPORT(int) GetPrimaryModArchiveCount(int index)
 		CheckInit();
 		CheckBounds(index, modData.size());
 
-		primaryArchives = archiveScanner->GetArchives(modData[index].GetDependencies()[0]);
+		primaryArchives = archiveScanner->GetAllArchivesUsedBy(modData[index].GetDependencies()[0]);
 		count = primaryArchives.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;

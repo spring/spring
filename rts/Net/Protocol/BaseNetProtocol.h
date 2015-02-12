@@ -216,9 +216,10 @@ public:
 	PacketType SendSdBlockrequest(unsigned short begin, unsigned short length, unsigned short requestSize);
 	PacketType SendSdBlockresponse(uchar myPlayerNum, std::vector<unsigned> checksums);
 #endif
+
 private:
 	CBaseNetProtocol();
-	~CBaseNetProtocol();
+
 };
 
 #endif // _BASE_NET_PROTOCOL_H

@@ -7,7 +7,7 @@
 
 class CSpherePartProjectile : public CProjectile
 {
-	CR_DECLARE(CSpherePartProjectile);
+	CR_DECLARE(CSpherePartProjectile)
 
 public:
 	CSpherePartProjectile(
@@ -54,7 +54,7 @@ private:
 /// This class makes a sphere-part-projectile via the explosion-generator
 class CSpherePartSpawner : CProjectile
 {
-	CR_DECLARE(CSpherePartSpawner);
+	CR_DECLARE(CSpherePartSpawner)
 
 public:
 	CSpherePartSpawner();

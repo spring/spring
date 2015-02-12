@@ -13,6 +13,7 @@
 #include "Map/MapDamage.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Units/BuildInfo.h"
@@ -41,14 +42,14 @@
 static const int TARGET_LOST_TIMER = 4;
 static const float COMMAND_CANCEL_DIST = 17.0f;
 
-CR_BIND(CCommandQueue, );
+CR_BIND(CCommandQueue, )
 CR_REG_METADATA(CCommandQueue, (
 	CR_MEMBER(queue),
-	CR_ENUM_MEMBER(queueType),
+	CR_MEMBER(queueType),
 	CR_MEMBER(tagCounter)
-));
+))
 
-CR_BIND_DERIVED(CCommandAI, CObject, );
+CR_BIND_DERIVED(CCommandAI, CObject, )
 CR_REG_METADATA(CCommandAI, (
 	CR_MEMBER(stockpileWeapon),
 
@@ -71,7 +72,7 @@ CR_REG_METADATA(CCommandAI, (
 	CR_MEMBER(targetLostTimer),
 
 	CR_POSTLOAD(PostLoad)
-));
+))
 
 CCommandAI::CCommandAI():
 	stockpileWeapon(0),

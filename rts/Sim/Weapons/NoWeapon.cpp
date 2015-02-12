@@ -2,7 +2,7 @@
 
 #include "NoWeapon.h"
 
-CR_BIND_DERIVED(CNoWeapon, CWeapon, (NULL, NULL));
+CR_BIND_DERIVED(CNoWeapon, CWeapon, (NULL, NULL))
 
 CNoWeapon::CNoWeapon(CUnit* owner, const WeaponDef* def) : CWeapon(owner, def)
 {

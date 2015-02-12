@@ -21,6 +21,6 @@ namespace icon {
 		private:
 			CIconData* data;
 	};
-};
+}
 
 #endif // ICON_H

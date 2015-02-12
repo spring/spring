@@ -33,7 +33,7 @@
 #include "Rendering/Models/IModelParser.h"
 #include "Rendering/GroundFlash.h"
 
-#include "Sim/Units/Groups/Group.h"
+#include "Game/UI/Groups/Group.h"
 #include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -60,190 +60,155 @@
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
 #include "System/creg/STL_List.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/Sync/SyncedPrimitive.h"
 #include "System/Sync/SyncTracer.h"
 
-#define PLAY_SOUNDS 1
 
 // See end of source for member bindings
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-//! info: SlowUpdate runs each 16th GameFrame (:= twice per 32GameFrames) (a second has GAME_SPEED=30 gameframes!)
-float CUnit::empDecline   = 2.0f * (float)UNIT_SLOWUPDATE_RATE / (float)GAME_SPEED / 40.0f;
 bool  CUnit::spawnFeature = true;
 
-float CUnit::expMultiplier  = 1.0f;
-float CUnit::expPowerScale  = 1.0f;
-float CUnit::expHealthScale = 0.7f;
-float CUnit::expReloadScale = 0.4f;
+float CUnit::empDeclineRate = 0.0f;
+float CUnit::expMultiplier  = 0.0f;
+float CUnit::expPowerScale  = 0.0f;
+float CUnit::expHealthScale = 0.0f;
+float CUnit::expReloadScale = 0.0f;
 float CUnit::expGrade       = 0.0f;
 
 
-CUnit::CUnit() : CSolidObject(),
-	unitDef(NULL),
-	soloBuilder(NULL),
-	lastAttacker(NULL),
-	attackTarget(NULL),
-	transporter(NULL),
+CUnit::CUnit()
+: CSolidObject()
+, unitDef(NULL)
+, shieldWeapon(NULL)
+, stockpileWeapon(NULL)
+, soloBuilder(NULL)
+, lastAttacker(NULL)
+, attackTarget(NULL)
+, lastAttackedPiece(NULL)
+, lastAttackedPieceFrame(-1)
+, lastAttackFrame(-200)
+, lastFireWeapon(0)
+, transporter(NULL)
+, moveType(NULL)
+, prevMoveType(NULL)
+, commandAI(NULL)
+, localModel(NULL)
+, script(NULL)
+, los(NULL)
+, losStatus(teamHandler->ActiveAllyTeams(), 0)
+, fpsControlPlayer(NULL)
+, attackPos(ZeroVector)
+, deathSpeed(ZeroVector)
+, lastMuzzleFlameDir(UpVector)
+, flankingBonusDir(RgtVector)
+, posErrorVector(ZeroVector)
+, posErrorDelta(ZeroVector)
+, unitDefID(-1)
+, featureDefID(-1)
+, power(100.0f)
+, buildProgress(0.0f)
+, maxHealth(100.0f)
+, paralyzeDamage(0.0f)
+, captureProgress(0.0f)
+, experience(0.0f)
+, limExperience(0.0f)
+, neutral(false)
+, beingBuilt(true)
+, upright(true)
+, groundLevelled(true)
+, terraformLeft(0.0f)
+, lastNanoAdd(gs->frameNum)
+, lastFlareDrop(0)
+, repairAmount(0.0f)
+, loadingTransportId(-1)
+, inBuildStance(false)
+, useHighTrajectory(false)
+, dontUseWeapons(false)
+, dontFire(false)
+, deathScriptFinished(false)
+, delayedWreckLevel(-1)
+, restTime(0)
+, outOfMapTime(0)
+, reloadSpeed(1.0f)
+, maxRange(0.0f)
+, haveTarget(false)
+, haveManualFireRequest(false)
+, lastMuzzleFlameSize(0.0f)
+, armorType(0)
+, category(0)
+, mapSquare(-1)
+, realLosRadius(0)
+, realAirLosRadius(0)
+, losRadius(0)
+, airLosRadius(0)
+, lastLosUpdate(0)
+, losHeight(0.0f)
+, radarHeight(0.0f)
+, radarRadius(0)
+, sonarRadius(0)
+, jammerRadius(0)
+, sonarJamRadius(0)
+, seismicRadius(0)
+, seismicSignature(0.0f)
+, oldRadarPos(0, 0)
+, hasRadarPos(false)
+, stealth(false)
+, sonarStealth(false)
+, hasRadarCapacity(false)
+, energyTickMake(0.0f)
+, metalExtract(0.0f)
+, cost(100.0f, 0.0f)
+, buildTime(100.0f)
+, recentDamage(0.0f)
+, fireState(FIRESTATE_FIREATWILL)
+, moveState(MOVESTATE_MANEUVER)
+, userAttackGround(false)
+, activated(false)
+, isDead(false)
+, fallSpeed(0.2f)
+, travel(0.0f)
+, travelPeriod(0.0f)
+, flankingBonusMode(0)
+, flankingBonusMobility(10.0f)
+, flankingBonusMobilityAdd(0.01f)
+, flankingBonusAvgDamage(1.4f)
+, flankingBonusDifDamage(0.5f)
+, armoredState(false)
+, armoredMultiple(1.0f)
+, curArmorMultiple(1.0f)
+, nextPosErrorUpdate(1)
+, isCloaked(false)
+, wantCloak(false)
+, scriptCloak(0)
+, cloakTimeout(128)
+, curCloakTimeout(gs->frameNum)
+, decloakDistance(0.0f)
+, lastTerrainType(-1)
+, curTerrainType(0)
+, selfDCountdown(0)
+, currentFuel(0.0f)
+, alphaThreshold(0.1f)
+, cegDamage(1)
 
-	moveType(NULL),
-	prevMoveType(NULL),
+, noDraw(false)
+, noMinimap(false)
+, leaveTracks(false)
+, isSelected(false)
+, isIcon(false)
+, iconRadius(0.0f)
+, lastDrawFrame(-30)
+, lastUnitUpdate(0)
+, group(nullptr)
+, myTrack(NULL)
+, myIcon(NULL)
+, lodCount(0)
+, currentLOD(0)
 
-	commandAI(NULL),
-	group(NULL),
-
-	shieldWeapon(NULL),
-	stockpileWeapon(NULL),
-
-	localModel(NULL),
-	script(NULL),
-	lastAttackedPiece(NULL),
-	los(NULL),
-
-	fpsControlPlayer(NULL),
-	myTrack(NULL),
-	myIcon(NULL),
-
-	losStatus(teamHandler->ActiveAllyTeams(), 0),
-
-	attackPos(ZeroVector),
-	deathSpeed(ZeroVector),
-	lastMuzzleFlameDir(UpVector),
-	flankingBonusDir(RgtVector),
-	posErrorVector(ZeroVector),
-	posErrorDelta(ZeroVector),
-
-	unitDefID(-1),
-	featureDefID(-1),
-
-	upright(true),
-	travel(0.0f),
-	travelPeriod(0.0f),
-	power(100.0f),
-	maxHealth(100.0f),
-	paralyzeDamage(0.0f),
-	captureProgress(0.0f),
-	experience(0.0f),
-	limExperience(0.0f),
-	neutral(false),
-	beingBuilt(true),
-	lastNanoAdd(gs->frameNum),
-	lastFlareDrop(0),
-	repairAmount(0.0f),
-	loadingTransportId(-1),
-	buildProgress(0.0f),
-	groundLevelled(true),
-	terraformLeft(0.0f),
-	realLosRadius(0),
-	realAirLosRadius(0),
-
-	inBuildStance(false),
-	useHighTrajectory(false),
-	dontUseWeapons(false),
-	dontFire(false),
-	deathScriptFinished(false),
-	delayedWreckLevel(-1),
-	restTime(0),
-	outOfMapTime(0),
-	reloadSpeed(1.0f),
-	maxRange(0.0f),
-	haveTarget(false),
-	haveManualFireRequest(false),
-	lastMuzzleFlameSize(0.0f),
-	armorType(0),
-	category(0),
-	mapSquare(-1),
-	losRadius(0),
-	airLosRadius(0),
-	lastLosUpdate(0),
-	losHeight(0.0f),
-	radarHeight(0.0f),
-	radarRadius(0),
-	sonarRadius(0),
-	jammerRadius(0),
-	sonarJamRadius(0),
-	seismicRadius(0),
-	seismicSignature(0.0f),
-	hasRadarCapacity(false),
-	oldRadarPos(0, 0),
-	hasRadarPos(false),
-	stealth(false),
-	sonarStealth(false),
-	condUseMetal(0.0f),
-	condUseEnergy(0.0f),
-	condMakeMetal(0.0f),
-	condMakeEnergy(0.0f),
-	uncondUseMetal(0.0f),
-	uncondUseEnergy(0.0f),
-	uncondMakeMetal(0.0f),
-	uncondMakeEnergy(0.0f),
-	metalUse(0.0f),
-	energyUse(0.0f),
-	metalMake(0.0f),
-	energyMake(0.0f),
-	metalUseI(0.0f),
-	energyUseI(0.0f),
-	metalMakeI(0.0f),
-	energyMakeI(0.0f),
-	metalUseold(0.0f),
-	energyUseold(0.0f),
-	metalMakeold(0.0f),
-	energyMakeold(0.0f),
-	energyTickMake(0.0f),
-	metalExtract(0.0f),
-	metalCost(100.0f),
-	energyCost(0.0f),
-	buildTime(100.0f),
-	metalStorage(0.0f),
-	energyStorage(0.0f),
-	harvestStorage(0.0f),
-	lastAttackedPieceFrame(-1),
-	lastAttackFrame(-200),
-	lastFireWeapon(0),
-	recentDamage(0.0f),
-	userAttackGround(false),
-	fireState(FIRESTATE_FIREATWILL),
-	moveState(MOVESTATE_MANEUVER),
-	activated(false),
-	isDead(false),
-	fallSpeed(0.2f),
-	flankingBonusMode(0),
-	flankingBonusMobility(10.0f),
-	flankingBonusMobilityAdd(0.01f),
-	flankingBonusAvgDamage(1.4f),
-	flankingBonusDifDamage(0.5f),
-	armoredState(false),
-	armoredMultiple(1.0f),
-	curArmorMultiple(1.0f),
-	nextPosErrorUpdate(1),
-	wantCloak(false),
-	scriptCloak(0),
-	cloakTimeout(128),
-	curCloakTimeout(gs->frameNum),
-	isCloaked(false),
-	decloakDistance(0.0f),
-	lastTerrainType(-1),
-	curTerrainType(0),
-	selfDCountdown(0),
-	currentFuel(0.0f),
-	alphaThreshold(0.1f),
-	cegDamage(1),
-	noDraw(false),
-	noMinimap(false),
-	leaveTracks(false),
-	isSelected(false),
-	isIcon(false),
-	iconRadius(0.0f),
-	lodCount(0),
-	currentLOD(0),
-
-	lastDrawFrame(-30),
-	lastUnitUpdate(0),
-
-	stunned(false)
+, stunned(false)
 {
 }
 
@@ -292,7 +257,7 @@ CUnit::~CUnit()
 	UnBlock();
 
 	// Remove us from our group, if we were in one
-	SetGroup(NULL);
+	SetGroup(nullptr);
 
 	if (script != &CNullUnitScript::value) {
 		delete script;
@@ -312,26 +277,27 @@ CUnit::~CUnit()
 }
 
 
-void CUnit::SetMetalStorage(float newStorage)
+void CUnit::InitStatic()
 {
-	teamHandler->Team(team)->metalStorage -= metalStorage;
-	metalStorage = newStorage;
-	teamHandler->Team(team)->metalStorage += metalStorage;
+	spawnFeature = true;
+
+	//! SlowUpdate runs every 16th simframe (a second has GAME_SPEED=30 gameframes!)
+	empDeclineRate = 2.0f * (float)UNIT_SLOWUPDATE_RATE / (float)GAME_SPEED / 40.0f;
+	expGrade       = 0.0f;
+
+	SetExpMultiplier(modInfo.unitExpMultiplier);
+	SetExpPowerScale(modInfo.unitExpPowerScale);
+	SetExpHealthScale(modInfo.unitExpHealthScale);
+	SetExpReloadScale(modInfo.unitExpReloadScale);
+
+	CCobInstance::InitVars(teamHandler->ActiveTeams(), teamHandler->ActiveAllyTeams());
+	CBuilderCAI::InitStatic();
 }
-
-
-void CUnit::SetEnergyStorage(float newStorage)
-{
-	teamHandler->Team(team)->energyStorage -= energyStorage;
-	energyStorage = newStorage;
-	teamHandler->Team(team)->energyStorage += energyStorage;
-}
-
 
 
 void CUnit::PreInit(const UnitLoadParams& params)
 {
-	// if this is < 0, we get a random ID from UnitHandler
+	// if this is < 0, UnitHandler will give us a random ID
 	id = params.unitID;
 	unitDefID = (params.unitDef)->id;
 	featureDefID = -1;
@@ -406,8 +372,8 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	health = beingBuilt? 0.1f: unitDef->health;
 	losHeight = unitDef->losHeight;
 	radarHeight = unitDef->radarHeight;
-	metalCost = unitDef->metal;
-	energyCost = unitDef->energy;
+	cost.metal = unitDef->metal;
+	cost.energy = unitDef->energy;
 	buildTime = unitDef->buildTime;
 	currentFuel = unitDef->maxFuel;
 	armoredMultiple = std::max(0.0001f, unitDef->armoredMultiple); // armored multiple of 0 will crash spring
@@ -440,7 +406,6 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	decloakDistance = unitDef->decloakDistance;
 	cloakTimeout = unitDef->cloakTimeout;
 
-
 	flankingBonusMode        = unitDef->flankingBonusMode;
 	flankingBonusDir         = unitDef->flankingBonusDir;
 	flankingBonusMobility    = unitDef->flankingBonusMobilityAdd * 1000;
@@ -453,6 +418,9 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	energyTickMake =
 		unitDef->energyMake +
 		unitDef->tidalGenerator * mapInfo->map.tidalStrength;
+
+	harvestStorage.metal  = unitDef->harvestMetalStorage;
+	harvestStorage.energy = unitDef->harvestEnergyStorage;
 
 	moveType = MoveTypeFactory::GetMoveType(this, unitDef);
 	script = CUnitScriptFactory::CreateScript("scripts/" + unitDef->scriptName, this);
@@ -534,6 +502,157 @@ void CUnit::PostInit(const CUnit* builder)
 }
 
 
+void CUnit::PostLoad()
+{
+	//HACK:Initializing after load
+	unitDef = unitDefHandler->GetUnitDefByID(unitDefID); // strange. creg should handle this by itself already, but it doesn't
+	objectDef = unitDef;
+	model = unitDef->LoadModel();
+	localModel = new LocalModel(model);
+	modelParser->CreateLocalModel(localModel);
+	blockMap = (unitDef->GetYardMap().empty())? NULL: &unitDef->GetYardMap()[0];
+
+	SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
+	SetRadiusAndHeight(model);
+	UpdateDirVectors(!upright);
+	UpdateMidAndAimPos();
+
+	// FIXME: how to handle other script types (e.g. Lua) here?
+	script = CUnitScriptFactory::CreateScript("scripts/" + unitDef->scriptName, this);
+
+	// Call initializing script functions
+	script->Create();
+	script->SetSFXOccupy(curTerrainType);
+
+	if (unitDef->windGenerator > 0.0f) {
+		wind.AddUnit(this);
+	}
+
+	if (activated) {
+		script->Activate();
+	}
+
+	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).enqueue(EventBatchHandler::UD(this, isCloaked));
+}
+
+
+//////////////////////////////////////////////////////////////////////
+//
+
+void CUnit::FinishedBuilding(bool postInit)
+{
+	if (!beingBuilt && !postInit) {
+		return;
+	}
+
+	beingBuilt = false;
+	buildProgress = 1.0f;
+	mass = unitDef->mass;
+
+	if (soloBuilder) {
+		DeleteDeathDependence(soloBuilder, DEPENDENCE_BUILDER);
+		soloBuilder = NULL;
+	}
+
+	ChangeLos(realLosRadius, realAirLosRadius);
+
+	if (unitDef->activateWhenBuilt) {
+		Activate();
+	}
+	SetMetalStorage(unitDef->metalStorage);
+	SetEnergyStorage(unitDef->energyStorage);
+
+
+	// Sets the frontdir in sync with heading.
+	frontdir = GetVectorFromHeading(heading) + float3(0, frontdir.y, 0);
+
+	if (unitDef->isAirBase) {
+		airBaseHandler->RegisterAirBase(this);
+	}
+
+	eventHandler.UnitFinished(this);
+	eoh->UnitFinished(*this);
+
+	if (unitDef->isFeature && CUnit::spawnFeature) {
+		FeatureLoadParams p = {featureHandler->GetFeatureDefByID(featureDefID), NULL, pos, ZeroVector, -1, team, allyteam, heading, buildFacing, 0};
+		CFeature* f = featureHandler->CreateWreckage(p, 0, false);
+
+		if (f != NULL) {
+			f->blockHeightChanges = true;
+		}
+
+		UnBlock();
+		KillUnit(NULL, false, true);
+	}
+}
+
+
+void CUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSequence)
+{
+	if (isDead) { return; }
+	if (IsCrashing() && !beingBuilt) { return; }
+
+	isDead = true;
+	deathSpeed = speed;
+
+	// TODO: add UnitPreDestroyed, call these later
+	eventHandler.UnitDestroyed(this, attacker);
+	eoh->UnitDestroyed(*this, attacker);
+
+	// Will be called in the destructor again, but this can not hurt
+	SetGroup(nullptr);
+
+	blockHeightChanges = false;
+
+	if (unitDef->windGenerator > 0.0f) {
+		wind.DelUnit(this);
+	}
+
+	if (showDeathSequence && (!reclaimed && !beingBuilt)) {
+		const WeaponDef* wd = (selfDestruct)? unitDef->selfdExpWeaponDef: unitDef->deathExpWeaponDef;
+
+		if (wd != NULL) {
+			CGameHelper::ExplosionParams params = {
+				pos,
+				ZeroVector,
+				wd->damages,
+				wd,
+				this,                              // owner
+				NULL,                              // hitUnit
+				NULL,                              // hitFeature
+				wd->craterAreaOfEffect,
+				wd->damageAreaOfEffect,
+				wd->edgeEffectiveness,
+				wd->explosionSpeed,
+				wd->damages[0] > 500? 1.0f: 2.0f,  // gfxMod
+				false,                             // impactOnly
+				false,                             // ignoreOwner
+				true,                              // damageGround
+				-1u                                // projectileID
+			};
+
+			helper->Explosion(params);
+		}
+
+		if (selfDestruct) {
+			recentDamage += (maxHealth * 2.0f);
+		}
+
+		// start running the unit's kill-script
+		script->Killed();
+	} else {
+		deathScriptFinished = true;
+	}
+
+	if (!deathScriptFinished) {
+		// put the unit in a pseudo-zombie state until Killed finishes
+		SetVelocity(ZeroVector);
+		SetStunned(true);
+
+		paralyzeDamage = 100.0f * maxHealth;
+		health = std::max(health, 0.0f);
+	}
+}
 
 
 void CUnit::ForcedMove(const float3& newPos)
@@ -679,17 +798,17 @@ void CUnit::Update()
 
 void CUnit::UpdateResources()
 {
-	metalMake  = metalMakeI  + metalMakeold;
-	metalUse   = metalUseI   + metalUseold;
-	energyMake = energyMakeI + energyMakeold;
-	energyUse  = energyUseI  + energyUseold;
+	resourcesMake.metal  = resourcesMakeI.metal  + resourcesMakeOld.metal;
+	resourcesUse.metal   = resourcesUseI.metal   + resourcesUseOld.metal;
+	resourcesMake.energy = resourcesMakeI.energy + resourcesMakeOld.energy;
+	resourcesUse.energy  = resourcesUseI.energy  + resourcesUseOld.energy;
 
-	metalMakeold  = metalMakeI;
-	metalUseold   = metalUseI;
-	energyMakeold = energyMakeI;
-	energyUseold  = energyUseI;
+	resourcesMakeOld.metal  = resourcesMakeI.metal;
+	resourcesUseOld.metal   = resourcesUseI.metal;
+	resourcesMakeOld.energy = resourcesMakeI.energy;
+	resourcesUseOld.energy  = resourcesUseI.energy;
 
-	metalMakeI = metalUseI = energyMakeI = energyUseI = 0.0f;
+	resourcesMakeI.metal = resourcesUseI.metal = resourcesMakeI.energy = resourcesUseI.energy = 0.0f;
 }
 
 void CUnit::SetLosStatus(int at, unsigned short newStatus)
@@ -814,7 +933,7 @@ void CUnit::SlowUpdate()
 		// DoDamage) we potentially start decaying from a lower damage
 		// level and would otherwise be de-paralyzed more quickly than
 		// specified by <paralyzeTime>
-		paralyzeDamage -= ((modInfo.paralyzeOnMaxHealth? maxHealth: health) * 0.5f * CUnit::empDecline);
+		paralyzeDamage -= ((modInfo.paralyzeOnMaxHealth? maxHealth: health) * 0.5f * CUnit::empDeclineRate);
 		paralyzeDamage = std::max(paralyzeDamage, 0.0f);
 	}
 
@@ -862,7 +981,7 @@ void CUnit::SlowUpdate()
 			health         = std::max(0.0f, health - maxHealth * buildDecay);
 			buildProgress -= buildDecay;
 
-			AddMetal(metalCost * buildDecay, false);
+			AddMetal(cost.metal * buildDecay, false);
 
 			if (health <= 0.0f || buildProgress <= 0.0f) {
 				KillUnit(NULL, false, true);
@@ -878,16 +997,16 @@ void CUnit::SlowUpdate()
 	moveType->SlowUpdate();
 
 	// FIXME: scriptMakeMetal ...?
-	AddMetal(uncondMakeMetal);
-	AddEnergy(uncondMakeEnergy);
-	UseMetal(uncondUseMetal);
-	UseEnergy(uncondUseEnergy);
+	AddMetal(resourcesUncondMake.metal);
+	AddEnergy(resourcesUncondMake.energy);
+	UseMetal(resourcesUncondUse.metal);
+	UseEnergy(resourcesUncondUse.energy);
 	if (activated) {
-		if (UseMetal(condUseMetal)) {
-			AddEnergy(condMakeEnergy);
+		if (UseMetal(resourcesCondUse.metal)) {
+			AddEnergy(resourcesCondMake.energy);
 		}
-		if (UseEnergy(condUseEnergy)) {
-			AddMetal(condMakeMetal);
+		if (UseEnergy(resourcesCondUse.energy)) {
+			AddMetal(resourcesCondMake.metal);
 		}
 	}
 
@@ -1142,7 +1261,7 @@ void CUnit::DoDamage(
 		// rate of paralysis-damage reduction is lower if the unit has less than
 		// maximum health to ensure stun-time is always equal to <paralyzeTime>
 		const float baseHealth = (modInfo.paralyzeOnMaxHealth? maxHealth: health);
-		const float paralysisDecayRate = baseHealth * CUnit::empDecline;
+		const float paralysisDecayRate = baseHealth * CUnit::empDeclineRate;
 		const float sumParalysisDamage = paralysisDecayRate * damages.paralyzeDamageTime;
 		const float maxParalysisDamage = std::max(baseHealth + sumParalysisDamage - paralyzeDamage, 0.0f);
 
@@ -1366,7 +1485,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	const int oldteam = team;
 
 	selectedUnitsHandler.RemoveUnit(this);
-	SetGroup(NULL);
+	SetGroup(nullptr);
 
 	eventHandler.UnitTaken(this, oldteam, newteam);
 	eoh->UnitCaptured(*this, oldteam, newteam);
@@ -1390,11 +1509,11 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	}
 
 	if (!beingBuilt) {
-		teamHandler->Team(oldteam)->metalStorage  -= metalStorage;
-		teamHandler->Team(oldteam)->energyStorage -= energyStorage;
+		teamHandler->Team(oldteam)->resStorage.metal  -= storage.metal;
+		teamHandler->Team(oldteam)->resStorage.energy -= storage.energy;
 
-		teamHandler->Team(newteam)->metalStorage  += metalStorage;
-		teamHandler->Team(newteam)->energyStorage += energyStorage;
+		teamHandler->Team(newteam)->resStorage.metal  += storage.metal;
+		teamHandler->Team(newteam)->resStorage.energy += storage.energy;
 	}
 
 
@@ -1700,29 +1819,33 @@ bool CUnit::SetGroup(CGroup* newGroup, bool fromFactory)
 	if (fromFactory && !selectedUnitsHandler.AutoAddBuiltUnitsToFactoryGroup())
 		return false;
 
-	if (group != NULL) {
+	if (group != nullptr) {
 		group->RemoveUnit(this);
 	}
 
 	group = newGroup;
 
-	if (group) {
-		if (!group->AddUnit(this)){
-			// group did not accept us
-			group = NULL;
-			return false;
-		} else {
-			// add unit to the set of selected units iff its new group is already selected
-			// and (user wants the unit to be auto-selected or the unit is not newly built)
-			if (selectedUnitsHandler.IsGroupSelected(group->id) && (selectedUnitsHandler.AutoAddBuiltUnitsToSelectedGroup() || !fromFactory)) {
-				selectedUnitsHandler.AddUnit(this);
-			}
+	if (newGroup == nullptr)
+		return true;
+
+	if (!newGroup->AddUnit(this)){
+		// group did not accept us
+		group = nullptr;
+		return false;
+	} else {
+		// add unit to the set of selected units iff its new group is already selected
+		// and (user wants the unit to be auto-selected or the unit is not newly built)
+		if (selectedUnitsHandler.IsGroupSelected(newGroup->id) && (selectedUnitsHandler.AutoAddBuiltUnitsToSelectedGroup() || !fromFactory)) {
+			selectedUnitsHandler.AddUnit(this);
 		}
 	}
 
 	return true;
 }
 
+
+/******************************************************************************/
+/******************************************************************************/
 
 bool CUnit::AddBuildPower(CUnit* builder, float amount)
 {
@@ -1739,13 +1862,13 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 		if (beingBuilt) {
 			// build
 			const float step = std::min(amount / buildTime, 1.0f - buildProgress);
-			const float metalCostStep  = metalCost  * step;
-			const float energyCostStep = energyCost * step;
+			const float metalCostStep  = cost.metal  * step;
+			const float energyCostStep = cost.energy * step;
 
-			if (builderTeam->metal < metalCostStep || builderTeam->energy < energyCostStep) {
+			if (builderTeam->res.metal < metalCostStep || builderTeam->res.energy < energyCostStep) {
 				// update the energy and metal required counts
-				builderTeam->metalPull  += metalCostStep;
-				builderTeam->energyPull += energyCostStep;
+				builderTeam->resPull.metal  += metalCostStep;
+				builderTeam->resPull.energy += energyCostStep;
 				return false;
 			}
 
@@ -1754,7 +1877,7 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 
 			if (builder->UseMetal(metalCostStep)) {
 				// FIXME eventHandler.AllowUnitBuildStep() may have changed the storages!!! so the checks can be invalid!
-				// TODO add a builder->UseResources(SResources(metalCostStep, energyCostStep))
+				// TODO add a builder->UseResources(SResources(cost.metalStep, cost.energyStep))
 				if (builder->UseEnergy(energyCostStep)) {
 					health += (maxHealth * step);
 					health = std::min(health, maxHealth);
@@ -1774,12 +1897,12 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 		else if (health < maxHealth) {
 			// repair
 			const float step = std::min(amount / buildTime, 1.0f - (health / maxHealth));
-			const float energyUse = (energyCost * step);
+			const float energyUse = (cost.energy * step);
 			const float energyUseScaled = energyUse * modInfo.repairEnergyCostFactor;
 
-			if ((builderTeam->energy < energyUseScaled)) {
+			if ((builderTeam->res.energy < energyUseScaled)) {
 				// update the energy and metal required counts
-				builderTeam->energyPull += energyUseScaled;
+				builderTeam->resPull.energy += energyUseScaled;
 				return false;
 			}
 
@@ -1787,8 +1910,6 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 				return false;
 
 	  		if (!builder->UseEnergy(energyUseScaled)) {
-				// UseEnergy already increases the team's pull when it returns false!
-				// builderTeam->energyPull += energyUseScaled;
 				return false;
 			}
 
@@ -1803,52 +1924,57 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 		if (isDead || IsCrashing())
 			return false;
 
-		const float step = std::max(amount / buildTime, -buildProgress);
-		const float energyRefundStep = energyCost * step;
-		const float metalRefundStep  =  metalCost * step;
-		const float metalRefundStepScaled  =  metalRefundStep * modInfo.reclaimUnitEfficiency;
-		const float energyRefundStepScaled = energyRefundStep * modInfo.reclaimUnitEnergyCostFactor;
-
-		if (builderTeam->energy < -energyRefundStepScaled) {
-			builderTeam->energyPull += -energyRefundStepScaled;
+		if (!AllowedReclaim(builder)) {
+			builder->DependentDied(this);
 			return false;
 		}
+
+		const float step = std::max(amount / buildTime, -buildProgress);
+		const float energyRefundStep = cost.energy * step;
+		const float metalRefundStep  =  cost.metal * step;
+		const float metalRefundStepScaled  =  metalRefundStep * modInfo.reclaimUnitEfficiency;
+		const float energyRefundStepScaled = energyRefundStep * modInfo.reclaimUnitEnergyCostFactor;
+		const float healthStep        = maxHealth * step;
+		const float buildProgressStep = int(modInfo.reclaimUnitMethod == 0) * step;
+		const float postHealth        = health + healthStep;
+		const float postBuildProgress = buildProgress + buildProgressStep;
 
 		if (!eventHandler.AllowUnitBuildStep(builder, this, step))
 			return false;
 
 		restTime = 0;
 
-		if (!AllowedReclaim(builder)) {
-			builder->DependentDied(this);
-			return false;
-		}
-
-		if (!builder->UseEnergy(-energyRefundStepScaled)) {
-			// UseEnergy already increases the team's pull when it returns false!
-			// builderTeam->energyPull += energyRefundStepScaled;
-			return false;
-		}
-
-		health += (maxHealth * step);
-		buildProgress += (step * int(beingBuilt) * int(modInfo.reclaimUnitMethod == 0));
-
+		bool killMe = false;
+		SResourceOrder order;
+		order.quantum    = false;
+		order.overflow   = true;
+		order.use.energy = -energyRefundStepScaled;
 		if (modInfo.reclaimUnitMethod == 0) {
 			// gradual reclamation of invested metal
-			if (!builder->AddHarvestedMetal(-metalRefundStepScaled)) {
-				eventHandler.UnitHarvestStorageFull(this);
-				return false;
-			}
-			// turn reclaimee into nanoframe (even living units)
-			beingBuilt = true;
+			order.add.metal = -metalRefundStepScaled;
 		} else {
 			// lump reclamation of invested metal
-			if (buildProgress <= 0.0f || health <= 0.0f) {
-				builder->AddHarvestedMetal((metalCost * buildProgress) * modInfo.reclaimUnitEfficiency);
+			if (postHealth <= 0.0f || postBuildProgress <= 0.0f) {
+				order.add.metal = (cost.metal * buildProgress) * modInfo.reclaimUnitEfficiency;
+				killMe = true; // to make 100% sure the unit gets killed, and so no resources are reclaimed twice!
 			}
 		}
 
-		if (buildProgress <= 0.0f || health <= 0.0f) {
+		if (!builder->IssueResourceOrder(&order)) {
+			return false;
+		}
+
+		// turn reclaimee into nanoframe (even living units)
+		if (modInfo.reclaimUnitMethod == 0) beingBuilt = true;
+
+		// reduce health & resources
+		health = postHealth;
+		buildProgress = postBuildProgress;
+
+		// reclaim finished?
+		if (killMe || buildProgress <= 0.0f || health <= 0.0f) {
+			health = 0.0f;
+			buildProgress = 0.0f;
 			KillUnit(NULL, false, true);
 			return false;
 		}
@@ -1860,120 +1986,24 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 }
 
 
-void CUnit::FinishedBuilding(bool postInit)
+//////////////////////////////////////////////////////////////////////
+//
+
+void CUnit::SetMetalStorage(float newStorage)
 {
-	if (!beingBuilt && !postInit) {
-		return;
-	}
-
-	beingBuilt = false;
-	buildProgress = 1.0f;
-	mass = unitDef->mass;
-
-	if (soloBuilder) {
-		DeleteDeathDependence(soloBuilder, DEPENDENCE_BUILDER);
-		soloBuilder = NULL;
-	}
-
-	ChangeLos(realLosRadius, realAirLosRadius);
-
-	if (unitDef->activateWhenBuilt) {
-		Activate();
-	}
-	SetMetalStorage(unitDef->metalStorage);
-	SetEnergyStorage(unitDef->energyStorage);
-
-
-	// Sets the frontdir in sync with heading.
-	frontdir = GetVectorFromHeading(heading) + float3(0, frontdir.y, 0);
-
-	if (unitDef->isAirBase) {
-		airBaseHandler->RegisterAirBase(this);
-	}
-
-	eventHandler.UnitFinished(this);
-	eoh->UnitFinished(*this);
-
-	if (unitDef->isFeature && CUnit::spawnFeature) {
-		FeatureLoadParams p = {featureHandler->GetFeatureDefByID(featureDefID), NULL, pos, ZeroVector, -1, team, allyteam, heading, buildFacing, 0};
-		CFeature* f = featureHandler->CreateWreckage(p, 0, false);
-
-		if (f != NULL) {
-			f->blockHeightChanges = true;
-		}
-
-		UnBlock();
-		KillUnit(NULL, false, true);
-	}
+	teamHandler->Team(team)->resStorage.metal -= storage.metal;
+	storage.metal = newStorage;
+	teamHandler->Team(team)->resStorage.metal += storage.metal;
 }
 
 
-void CUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSequence)
+void CUnit::SetEnergyStorage(float newStorage)
 {
-	if (isDead) { return; }
-	if (IsCrashing() && !beingBuilt) { return; }
-
-	isDead = true;
-	deathSpeed = speed;
-
-	// TODO: add UnitPreDestroyed, call these later
-	eventHandler.UnitDestroyed(this, attacker);
-	eoh->UnitDestroyed(*this, attacker);
-
-	// Will be called in the destructor again, but this can not hurt
-	SetGroup(NULL);
-
-	blockHeightChanges = false;
-
-	if (unitDef->windGenerator > 0.0f) {
-		wind.DelUnit(this);
-	}
-
-	if (showDeathSequence && (!reclaimed && !beingBuilt)) {
-		const WeaponDef* wd = (selfDestruct)? unitDef->selfdExpWeaponDef: unitDef->deathExpWeaponDef;
-
-		if (wd != NULL) {
-			CGameHelper::ExplosionParams params = {
-				pos,
-				ZeroVector,
-				wd->damages,
-				wd,
-				this,                              // owner
-				NULL,                              // hitUnit
-				NULL,                              // hitFeature
-				wd->craterAreaOfEffect,
-				wd->damageAreaOfEffect,
-				wd->edgeEffectiveness,
-				wd->explosionSpeed,
-				wd->damages[0] > 500? 1.0f: 2.0f,  // gfxMod
-				false,                             // impactOnly
-				false,                             // ignoreOwner
-				true,                              // damageGround
-				-1u                                // projectileID
-			};
-
-			helper->Explosion(params);
-		}
-
-		if (selfDestruct) {
-			recentDamage += (maxHealth * 2.0f);
-		}
-
-		// start running the unit's kill-script
-		script->Killed();
-	} else {
-		deathScriptFinished = true;
-	}
-
-	if (!deathScriptFinished) {
-		// put the unit in a pseudo-zombie state until Killed finishes
-		SetVelocity(ZeroVector);
-		SetStunned(true);
-
-		paralyzeDamage = 100.0f * maxHealth;
-		health = std::max(health, 0.0f);
-	}
+	teamHandler->Team(team)->resStorage.energy -= storage.energy;
+	storage.energy = newStorage;
+	teamHandler->Team(team)->resStorage.energy += storage.energy;
 }
+
 
 bool CUnit::AllowedReclaim(CUnit* builder) const
 {
@@ -1989,6 +2019,7 @@ bool CUnit::AllowedReclaim(CUnit* builder) const
 	return true;
 }
 
+
 bool CUnit::UseMetal(float metal)
 {
 	if (metal < 0.0f) {
@@ -1997,10 +2028,10 @@ bool CUnit::UseMetal(float metal)
 	}
 
 	CTeam* myTeam = teamHandler->Team(team);
-	myTeam->metalPull += metal;
+	myTeam->resPull.metal += metal;
 
 	if (myTeam->UseMetal(metal)) {
-		metalUseI += metal;
+		resourcesUseI.metal += metal;
 		return true;
 	}
 
@@ -2014,7 +2045,7 @@ void CUnit::AddMetal(float metal, bool useIncomeMultiplier)
 		return;
 	}
 
-	metalMakeI += metal;
+	resourcesMakeI.metal += metal;
 	teamHandler->Team(team)->AddMetal(metal, useIncomeMultiplier);
 }
 
@@ -2027,10 +2058,10 @@ bool CUnit::UseEnergy(float energy)
 	}
 
 	CTeam* myTeam = teamHandler->Team(team);
-	myTeam->energyPull += energy;
+	myTeam->resPull.energy += energy;
 
 	if (myTeam->UseEnergy(energy)) {
-		energyUseI += energy;
+		resourcesUseI.energy += energy;
 		return true;
 	}
 
@@ -2043,27 +2074,175 @@ void CUnit::AddEnergy(float energy, bool useIncomeMultiplier)
 		UseEnergy(-energy);
 		return;
 	}
-	energyMakeI += energy;
+	resourcesMakeI.energy += energy;
 	teamHandler->Team(team)->AddEnergy(energy, useIncomeMultiplier);
 }
 
 
 bool CUnit::AddHarvestedMetal(float metal)
 {
-	if (unitDef->harvestStorage <= 0.0f) {
+	if (harvestStorage.metal <= 0.0f) {
 		AddMetal(metal, false);
 		return true;
 	}
 
-	if (harvestStorage >= unitDef->harvestStorage)
+	if (harvested.metal >= harvestStorage.metal) {
+		eventHandler.UnitHarvestStorageFull(this);
 		return false;
+	}
 
 	//FIXME what do with exceeding metal?
-	harvestStorage = std::min(harvestStorage + metal, unitDef->harvestStorage);
+	harvested.metal = std::min(harvested.metal + metal, harvestStorage.metal);
+	if (harvested.metal >= harvestStorage.metal) {
+		eventHandler.UnitHarvestStorageFull(this);
+	}
 	return true;
 }
 
 
+void CUnit::SetStorage(const SResourcePack& newStorage)
+{
+	teamHandler->Team(team)->resStorage -= storage;
+	storage = newStorage;
+	teamHandler->Team(team)->resStorage += storage;
+}
+
+
+bool CUnit::UseResources(const SResourcePack& pack)
+{
+	//FIXME
+	/*if (energy < 0.0f) {
+		AddEnergy(-energy);
+		return true;
+	}*/
+	if (teamHandler->Team(team)->UseResources(pack)) {
+		resourcesUseI += pack;
+		return true;
+	}
+	return false;
+}
+
+
+void CUnit::AddResources(const SResourcePack& pack, bool useIncomeMultiplier)
+{
+	//FIXME
+	/*if (energy < 0.0f) {
+		UseEnergy(-energy);
+		return true;
+	}*/
+	resourcesMakeI += pack;
+	teamHandler->Team(team)->AddResources(pack, useIncomeMultiplier);
+}
+
+
+static bool CanDispatch(const CUnit* u, const CTeam* team, const SResourceOrder& order)
+{
+	const bool haveEnoughResources = (team->res >= order.use);
+	bool canDispatch = haveEnoughResources;
+
+	if (order.overflow)
+		return canDispatch;
+
+	if (u->harvestStorage.empty()) {
+		const bool haveEnoughStorageFree = ((order.add + team->res) <= team->resStorage);
+		canDispatch = canDispatch && haveEnoughStorageFree;
+	} else {
+		const bool haveEnoughHarvestStorageFree = ((order.add + u->harvested) <= u->harvestStorage);
+		canDispatch = canDispatch && haveEnoughHarvestStorageFree;
+	}
+
+	return canDispatch;
+}
+
+
+static void GetScale(const float x1, const float x2, float* scale)
+{
+	const float v = std::min(x1, x2);
+	*scale = (x1 == 0.0f) ? *scale : std::min(*scale, v / x1);
+}
+
+
+static bool LimitToFullStorage(const CUnit* u, const CTeam* team, SResourceOrder* order)
+{
+	float scales[SResourcePack::MAX_RESOURCES];
+
+	for (int i = 0; i < SResourcePack::MAX_RESOURCES; ++i) {
+		scales[i] = 1.0f;
+		float& scale = order->separate ? scales[i] : scales[0];
+
+		GetScale(order->use[i], team->res[i], &scale);
+
+		if (u->harvestStorage.empty()) {
+			GetScale(order->add[i], team->resStorage.res[i] - team->res[i], &scale);
+		} else {
+			GetScale(order->add[i], u->harvestStorage[i] - u->harvested[i], &scale);
+		}
+	}
+
+	if (order->separate) {
+		bool nonempty = false;
+		for (int i = 0; i < SResourcePack::MAX_RESOURCES; ++i) {
+			if ((order->use[i] != 0.0f || order->add[i] != 0.0f) && scales[i] != 0.0f) nonempty = true;
+			order->use[i] *= scales[i];
+			order->add[i] *= scales[i];
+		}
+		return nonempty;
+	}
+
+	order->use *= scales[0];
+	order->add *= scales[0];
+	return (scales[0] != 0.0f);
+}
+
+
+bool CUnit::IssueResourceOrder(SResourceOrder* order)
+{
+	//FIXME assert(order.use.energy >= 0.0f && order.use.metal >= 0.0f);
+	//FIXME assert(order.add.energy >= 0.0f && order.add.metal >= 0.0f);
+
+	CTeam* myTeam = teamHandler->Team(team);
+	myTeam->resPull += order->use;
+
+	// check
+	if (!CanDispatch(this, myTeam, *order)) {
+		if (order->quantum)
+			return false;
+
+		if (!LimitToFullStorage(this, myTeam, order))
+			return false;
+	}
+
+	// use
+	if (!order->use.empty()) {
+		UseResources(order->use);
+	}
+
+	// add
+	if (!order->add.empty()) {
+		if (harvestStorage.empty()) {
+			AddResources(order->add);
+		} else {
+			bool isFull = false;
+			for (int i = 0; i < SResourcePack::MAX_RESOURCES; ++i) {
+				if (order->add[i] > 0.0f) {
+					harvested[i] += order->add[i];
+					harvested[i]  = std::min(harvested[i], harvestStorage[i]);
+					isFull |= (harvested[i] >= harvestStorage[i]);
+				}
+			}
+
+			if (isFull) {
+				eventHandler.UnitHarvestStorageFull(this);
+			}
+		}
+	}
+
+	return true;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
 
 void CUnit::Activate()
 {
@@ -2079,12 +2258,11 @@ void CUnit::Activate()
 
 	radarHandler->MoveUnit(this);
 
-	#if (PLAY_SOUNDS == 1)
 	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
-		Channels::General.PlayRandomSample(unitDef->sounds.activate, this);
+		Channels::General->PlayRandomSample(unitDef->sounds.activate, this);
 	}
-	#endif
 }
+
 
 void CUnit::Deactivate()
 {
@@ -2100,11 +2278,9 @@ void CUnit::Deactivate()
 
 	radarHandler->RemoveUnit(this);
 
-	#if (PLAY_SOUNDS == 1)
 	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
-		Channels::General.PlayRandomSample(unitDef->sounds.deactivate, this);
+		Channels::General->PlayRandomSample(unitDef->sounds.deactivate, this);
 	}
-	#endif
 }
 
 
@@ -2147,42 +2323,6 @@ void CUnit::TempHoldFire(int cmdID)
 
 	// clear current target (if any)
 	AttackUnit(NULL, false, false);
-}
-
-
-
-void CUnit::PostLoad()
-{
-	//HACK:Initializing after load
-	unitDef = unitDefHandler->GetUnitDefByID(unitDefID); // strange. creg should handle this by itself already, but it doesn't
-	objectDef = unitDef;
-	model = unitDef->LoadModel();
-	localModel = new LocalModel(model);
-	modelParser->CreateLocalModel(localModel);
-	blockMap = (unitDef->GetYardMap().empty())? NULL: &unitDef->GetYardMap()[0];
-
-	SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
-	SetRadiusAndHeight(model);
-	UpdateDirVectors(!upright);
-	UpdateMidAndAimPos();
-
-	// FIXME: how to handle other script types (e.g. Lua) here?
-	script = CUnitScriptFactory::CreateScript("scripts/" + unitDef->scriptName, this);
-
-	// Call initializing script functions
-	script->Create();
-	script->SetSFXOccupy(curTerrainType);
-
-	if (unitDef->windGenerator > 0.0f) {
-		wind.AddUnit(this);
-	}
-
-	if (activated) {
-		script->Activate();
-	}
-
-	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).enqueue(EventBatchHandler::UD(this, isCloaked));
-
 }
 
 
@@ -2231,6 +2371,8 @@ bool CUnit::GetNewCloakState(bool stunCheck) {
 
 	return false;
 }
+
+
 void CUnit::SlowUpdateCloak(bool stunCheck)
 {
 	const bool oldCloak = isCloaked;
@@ -2247,6 +2389,7 @@ void CUnit::SlowUpdateCloak(bool stunCheck)
 	isCloaked = newCloak;
 }
 
+
 void CUnit::ScriptDecloak(bool updateCloakTimeOut)
 {
 	if (scriptCloak <= 2) {
@@ -2261,7 +2404,11 @@ void CUnit::ScriptDecloak(bool updateCloakTimeOut)
 	}
 }
 
-CR_BIND_DERIVED(CUnit, CSolidObject, );
+
+/******************************************************************************/
+/******************************************************************************/
+
+CR_BIND_DERIVED(CUnit, CSolidObject, )
 CR_REG_METADATA(CUnit, (
 	CR_MEMBER(unitDef),
 	CR_MEMBER(unitDefID),
@@ -2316,6 +2463,8 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(weapons),
 	CR_MEMBER(shieldWeapon),
 	CR_MEMBER(stockpileWeapon),
+	CR_MEMBER(localModel),
+
 	CR_MEMBER(reloadSpeed),
 	CR_MEMBER(maxRange),
 
@@ -2356,47 +2505,36 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(moveType),
 	CR_MEMBER(prevMoveType),
 
-	// CR_MEMBER(fpsControlPlayer),
+	CR_MEMBER(fpsControlPlayer),
 	CR_MEMBER(commandAI),
 	CR_MEMBER(group),
 
+	CR_MEMBER(localModel),
+	CR_MEMBER(script),
 
-	//CR_MEMBER(localModel), //
-	// CR_MEMBER(script),
+	CR_MEMBER(resourcesCondUse),
+	CR_MEMBER(resourcesCondMake),
+	CR_MEMBER(resourcesUncondUse),
+	CR_MEMBER(resourcesUncondMake),
 
-	CR_MEMBER(condUseMetal),
-	CR_MEMBER(condUseEnergy),
-	CR_MEMBER(condMakeMetal),
-	CR_MEMBER(condMakeEnergy),
-	CR_MEMBER(uncondUseMetal),
-	CR_MEMBER(uncondUseEnergy),
-	CR_MEMBER(uncondMakeMetal),
-	CR_MEMBER(uncondMakeEnergy),
+	CR_MEMBER(resourcesUse),
+	CR_MEMBER(resourcesMake),
 
-	CR_MEMBER(metalUse),
-	CR_MEMBER(energyUse),
-	CR_MEMBER(metalMake),
-	CR_MEMBER(energyMake),
+	CR_MEMBER(resourcesUseI),
+	CR_MEMBER(resourcesMakeI),
+	CR_MEMBER(resourcesUseOld),
+	CR_MEMBER(resourcesMakeOld),
 
-	CR_MEMBER(metalUseI),
-	CR_MEMBER(energyUseI),
-	CR_MEMBER(metalMakeI),
-	CR_MEMBER(energyMakeI),
-	CR_MEMBER(metalUseold),
-	CR_MEMBER(energyUseold),
-	CR_MEMBER(metalMakeold),
-	CR_MEMBER(energyMakeold),
+	CR_MEMBER(storage),
+
+	CR_MEMBER(harvestStorage),
+	CR_MEMBER(harvested),
+
 	CR_MEMBER(energyTickMake),
-
 	CR_MEMBER(metalExtract),
 
-	CR_MEMBER(metalCost),
-	CR_MEMBER(energyCost),
+	CR_MEMBER(cost),
 	CR_MEMBER(buildTime),
-
-	CR_MEMBER(metalStorage),
-	CR_MEMBER(energyStorage),
-	CR_MEMBER(harvestStorage),
 
 	CR_MEMBER(lastAttacker),
 	CR_MEMBER(lastAttackedPiece),
@@ -2445,8 +2583,8 @@ CR_REG_METADATA(CUnit, (
 
 	CR_MEMBER(selfDCountdown),
 
-	CR_IGNORED(myTrack),
-	CR_IGNORED(myIcon),
+	CR_MEMBER_UN(myTrack),
+	CR_MEMBER_UN(myIcon),
 
 	CR_MEMBER(incomingMissiles),
 	CR_MEMBER(lastFlareDrop),
@@ -2464,12 +2602,15 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER_UN(isIcon),
 	CR_MEMBER(iconRadius),
 
-	CR_MEMBER_UN(lodCount),
-	CR_MEMBER_UN(currentLOD),
 	CR_MEMBER_UN(lastDrawFrame),
 	CR_MEMBER(lastUnitUpdate),
 
 	CR_MEMBER_UN(tooltip),
+
+	CR_MEMBER_UN(lodCount),
+	CR_MEMBER_UN(currentLOD),
+	CR_MEMBER_UN(lodLengths),
+	CR_MEMBER_UN(luaMats),
 
 	CR_MEMBER(stunned),
 
@@ -2485,4 +2626,4 @@ CR_REG_METADATA(CUnit, (
 //	CR_MEMBER(model),
 
 	CR_POSTLOAD(PostLoad)
-));
+))

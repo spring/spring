@@ -32,10 +32,10 @@ CR_REG_METADATA_SUB(CStarburstProjectile, TracerPart, (
 	CR_MEMBER(speedf),
 	CR_MEMBER(ageMods),
 	CR_MEMBER(numAgeMods)
-));
+))
 
 
-CR_BIND_DERIVED(CStarburstProjectile, CWeaponProjectile, (ProjectileParams()));
+CR_BIND_DERIVED(CStarburstProjectile, CWeaponProjectile, (ProjectileParams()))
 CR_REG_METADATA(CStarburstProjectile, (
 	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(tracking),
@@ -56,21 +56,22 @@ CR_REG_METADATA(CStarburstProjectile, (
 	CR_MEMBER(aimError),
 	CR_MEMBER(curTracerPart),
 	CR_MEMBER(tracerParts)
-));
+))
 
 
 CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWeaponProjectile(params)
-	, tracking(0.0f)
+	, tracking(params.tracking)
 	, maxGoodDif(0.0f)
 	, maxSpeed(0.0f)
 	, acceleration(0.f)
 	, areaOfEffect(0.0f)
-	, distanceToTravel(0.0f)
+	, distanceToTravel(params.maxRange)
 
 	, uptime(0)
 	, age(0)
 
 	, oldSmoke(pos)
+	, aimError(params.error)
 
 	, drawTrail(true)
 	, doturn(true)
@@ -82,9 +83,6 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 {
 	projectileType = WEAPON_STARBURST_PROJECTILE;
 
-	tracking = params.tracking;
-	distanceToTravel = params.maxRange;
-	aimError = params.error;
 
 	if (weaponDef != NULL) {
 		maxSpeed = weaponDef->projectilespeed;
@@ -383,10 +381,10 @@ void CStarburstProjectile::Draw()
 				const float3 pos1 = CalcBeizer((float)a / curNumParts, pos, dirpos1, dirpos2, oldSmoke);
 
 				#define st projectileDrawer->smoketex[0]
-				va->AddVertexQTC(pos1 + ( camera->up + camera->right) * size, st->xstart, st->ystart, col);
-				va->AddVertexQTC(pos1 + ( camera->up - camera->right) * size, st->xend,   st->ystart, col);
-				va->AddVertexQTC(pos1 + (-camera->up - camera->right) * size, st->xend,   st->ystart, col);
-				va->AddVertexQTC(pos1 + (-camera->up + camera->right) * size, st->xstart, st->ystart, col);
+				va->AddVertexQTC(pos1 + ( camera->GetUp() + camera->GetRight()) * size, st->xstart, st->ystart, col);
+				va->AddVertexQTC(pos1 + ( camera->GetUp() - camera->GetRight()) * size, st->xend,   st->ystart, col);
+				va->AddVertexQTC(pos1 + (-camera->GetUp() - camera->GetRight()) * size, st->xend,   st->ystart, col);
+				va->AddVertexQTC(pos1 + (-camera->GetUp() + camera->GetRight()) * size, st->xstart, st->ystart, col);
 				#undef st
 			}
 		}
@@ -434,10 +432,10 @@ void CStarburstProjectile::DrawCallback()
 			const float drawsize = 1.0f + age2 * 0.8f * ageMod * 7;
 
 			#define wt3 weaponDef->visuals.texture3
-			va->AddVertexTC(interPos - camera->right * drawsize - camera->up * drawsize, wt3->xstart, wt3->ystart, col);
-			va->AddVertexTC(interPos + camera->right * drawsize - camera->up * drawsize, wt3->xend,   wt3->ystart, col);
-			va->AddVertexTC(interPos + camera->right * drawsize + camera->up * drawsize, wt3->xend,   wt3->yend,   col);
-			va->AddVertexTC(interPos - camera->right * drawsize + camera->up * drawsize, wt3->xstart, wt3->yend,   col);
+			va->AddVertexTC(interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, wt3->xstart, wt3->ystart, col);
+			va->AddVertexTC(interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, wt3->xend,   wt3->ystart, col);
+			va->AddVertexTC(interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, wt3->xend,   wt3->yend,   col);
+			va->AddVertexTC(interPos - camera->GetRight() * drawsize + camera->GetUp() * drawsize, wt3->xstart, wt3->yend,   col);
 			#undef wt3
 		}
 
@@ -454,10 +452,10 @@ void CStarburstProjectile::DrawCallback()
 	const float fsize = 25.0f;
 
 	#define wt1 weaponDef->visuals.texture1
-	va->AddVertexTC(drawPos - camera->right * fsize - camera->up * fsize, wt1->xstart, wt1->ystart, col);
-	va->AddVertexTC(drawPos + camera->right * fsize - camera->up * fsize, wt1->xend,   wt1->ystart, col);
-	va->AddVertexTC(drawPos + camera->right * fsize + camera->up * fsize, wt1->xend,   wt1->yend,   col);
-	va->AddVertexTC(drawPos - camera->right * fsize + camera->up * fsize, wt1->xstart, wt1->yend,   col);
+	va->AddVertexTC(drawPos - camera->GetRight() * fsize - camera->GetUp() * fsize, wt1->xstart, wt1->ystart, col);
+	va->AddVertexTC(drawPos + camera->GetRight() * fsize - camera->GetUp() * fsize, wt1->xend,   wt1->ystart, col);
+	va->AddVertexTC(drawPos + camera->GetRight() * fsize + camera->GetUp() * fsize, wt1->xend,   wt1->yend,   col);
+	va->AddVertexTC(drawPos - camera->GetRight() * fsize + camera->GetUp() * fsize, wt1->xstart, wt1->yend,   col);
 	#undef wt1
 }
 

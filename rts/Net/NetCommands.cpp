@@ -74,10 +74,10 @@ void CGame::SendClientProcUsage()
 			const float totalProcUsage = simProcUsage + drawProcUsage;
 
 			// take the minimum drawframes into account, too
-			net->Send(CBaseNetProtocol::Get().SendCPUUsage(totalProcUsage));
+			clientNet->Send(CBaseNetProtocol::Get().SendCPUUsage(totalProcUsage));
 		} else {
 			// the CPU-load percentage is undefined prior to SimFrame()
-			net->Send(CBaseNetProtocol::Get().SendCPUUsage(0.0f));
+			clientNet->Send(CBaseNetProtocol::Get().SendCPUUsage(0.0f));
 		}
 	}
 }
@@ -92,7 +92,7 @@ unsigned int CGame::GetNumQueuedSimFrameMessages(unsigned int maxFrames) const
 	unsigned int numQueuedFrames = 0;
 	unsigned int packetPeekIndex = 0;
 
-	while ((packet = net->Peek(packetPeekIndex))) {
+	while ((packet = clientNet->Peek(packetPeekIndex))) {
 		switch (packet->data[0]) {
 			case NETMSG_GAME_FRAME_PROGRESS: {
 				// this special packet skips queue entirely, so gets processed here
@@ -103,7 +103,7 @@ unsigned int CGame::GetNumQueuedSimFrameMessages(unsigned int maxFrames) const
 				// send the event to lua call-in
 				eventHandler.GameProgress(*(int*)(packet->data + 1));
 				// pop it out of the net buffer
-				net->DeleteBufferPacketAt(packetPeekIndex);
+				clientNet->DeleteBufferPacketAt(packetPeekIndex);
 			} break;
 
 			case NETMSG_NEWFRAME:
@@ -231,7 +231,7 @@ void CGame::ClientReadNet()
 		lastNetPacketProcessTime = spring_gettime();
 
 		// get netpacket from the queue
-		boost::shared_ptr<const netcode::RawPacket> packet = net->GetData(gs->frameNum);
+		boost::shared_ptr<const netcode::RawPacket> packet = clientNet->GetData(gs->frameNum);
 
 		if (!packet) {
 			// LOG_SL(LOG_SECTION_NET, L_DEBUG, "Run out of netpackets!");
@@ -255,7 +255,7 @@ void CGame::ClientReadNet()
 
 					GameEnd(std::vector<unsigned char>());
 					AddTraffic(-1, packetCode, dataLength);
-					net->Close(true);
+					clientNet->Close(true);
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "Got invalid QuitMessage: %s", ex.what());
 				}
@@ -297,7 +297,7 @@ void CGame::ClientReadNet()
 				player->currentStats = *reinterpret_cast<const PlayerStatistics*>(&inbuf[2]);
 
 				if (gameOver) {
-					CDemoRecorder* record = net->GetDemoRecorder();
+					CDemoRecorder* record = clientNet->GetDemoRecorder();
 					if (record != NULL) {
 						record->SetPlayerStats(playerNum, player->currentStats);
 					}
@@ -448,7 +448,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_GAMEID: {
 				const unsigned char* p = &inbuf[1];
-				CDemoRecorder* record = net->GetDemoRecorder();
+				CDemoRecorder* record = clientNet->GetDemoRecorder();
 				if (record != NULL) {
 					record->SetGameID(p);
 				}
@@ -497,7 +497,7 @@ void CGame::ClientReadNet()
 				}
 
 				// fall-through and run SimFrame() iff this message really came from the server
-				net->Send(CBaseNetProtocol::Get().SendKeyFrame(serverFrameNum));
+				clientNet->Send(CBaseNetProtocol::Get().SendKeyFrame(serverFrameNum));
 			}
 			case NETMSG_NEWFRAME: {
 				msgProcTimeLeft -= 1000.0f;
@@ -509,7 +509,7 @@ void CGame::ClientReadNet()
 				// both NETMSG_SYNCRESPONSE and NETMSG_NEWFRAME are used for ping calculation by server
 				ASSERT_SYNCED(gs->frameNum);
 				ASSERT_SYNCED(CSyncChecker::GetChecksum());
-				net->Send(CBaseNetProtocol::Get().SendSyncResponse(gu->myPlayerNum, gs->frameNum, CSyncChecker::GetChecksum()));
+				clientNet->Send(CBaseNetProtocol::Get().SendSyncResponse(gu->myPlayerNum, gs->frameNum, CSyncChecker::GetChecksum()));
 
 				if (gameServer != NULL && gameServer->GetDemoReader() != NULL) {
 					// buffer all checksums, so we can check sync later between demo & local
@@ -781,14 +781,14 @@ void CGame::ClientReadNet()
 
 					if (metalShare > 0.0f) {
 						if (eventHandler.AllowResourceTransfer(srcTeam, dstTeam, "m", metalShare)) {
-							teamHandler->Team(srcTeam)->metal -= metalShare;
-							teamHandler->Team(dstTeam)->metal += metalShare;
+							teamHandler->Team(srcTeam)->res.metal -= metalShare;
+							teamHandler->Team(dstTeam)->res.metal += metalShare;
 						}
 					}
 					if (energyShare > 0.0f) {
 						if (eventHandler.AllowResourceTransfer(srcTeam, dstTeam, "e", energyShare)) {
-							teamHandler->Team(srcTeam)->energy -= energyShare;
-							teamHandler->Team(dstTeam)->energy += energyShare;
+							teamHandler->Team(srcTeam)->res.energy -= energyShare;
+							teamHandler->Team(dstTeam)->res.energy += energyShare;
 						}
 					}
 
@@ -847,26 +847,26 @@ void CGame::ClientReadNet()
 				const bool shareUnits = !!inbuf[3];
 				CTeam* srcTeam = teamHandler->Team(srcTeamID);
 				CTeam* dstTeam = teamHandler->Team(dstTeamID);
-				const float metalShare  = Clamp(*(float*)&inbuf[4], 0.0f, (float)srcTeam->metal);
-				const float energyShare = Clamp(*(float*)&inbuf[8], 0.0f, (float)srcTeam->energy);
+				const float metalShare  = Clamp(*(float*)&inbuf[4], 0.0f, (float)srcTeam->res.metal);
+				const float energyShare = Clamp(*(float*)&inbuf[8], 0.0f, (float)srcTeam->res.energy);
 
 				if (metalShare > 0.0f) {
 					if (eventHandler.AllowResourceTransfer(srcTeamID, dstTeamID, "m", metalShare)) {
-						srcTeam->metal                       -= metalShare;
-						srcTeam->metalSent                   += metalShare;
+						srcTeam->res.metal                   -= metalShare;
+						srcTeam->resSent.metal               += metalShare;
 						srcTeam->currentStats->metalSent     += metalShare;
-						dstTeam->metal                       += metalShare;
-						dstTeam->metalReceived               += metalShare;
+						dstTeam->res.metal                   += metalShare;
+						dstTeam->resReceived.metal           += metalShare;
 						dstTeam->currentStats->metalReceived += metalShare;
 					}
 				}
 				if (energyShare > 0.0f) {
 					if (eventHandler.AllowResourceTransfer(srcTeamID, dstTeamID, "e", energyShare)) {
-						srcTeam->energy                       -= energyShare;
-						srcTeam->energySent                   += energyShare;
+						srcTeam->res.energy                   -= energyShare;
+						srcTeam->resSent.energy               += energyShare;
 						srcTeam->currentStats->energySent     += energyShare;
-						dstTeam->energy                       += energyShare;
-						dstTeam->energyReceived               += energyShare;
+						dstTeam->res.energy                   += energyShare;
+						dstTeam->resReceived.energy           += energyShare;
 						dstTeam->currentStats->energyReceived += energyShare;
 					}
 				}
@@ -917,10 +917,10 @@ void CGame::ClientReadNet()
 				float energyShare=*(float*)&inbuf[7];
 
 				if (eventHandler.AllowResourceLevel(team, "m", metalShare)) {
-					teamHandler->Team(team)->metalShare = metalShare;
+					teamHandler->Team(team)->resShare.metal = metalShare;
 				}
 				if (eventHandler.AllowResourceLevel(team, "e", energyShare)) {
-					teamHandler->Team(team)->energyShare = energyShare;
+					teamHandler->Team(team)->resShare.energy = energyShare;
 				}
 				AddTraffic(player, packetCode, dataLength);
 				break;

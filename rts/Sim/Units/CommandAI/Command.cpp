@@ -2,7 +2,7 @@
 
 #include "Command.h"
 
-CR_BIND(Command, );
+CR_BIND(Command, )
 CR_REG_METADATA(Command, (
 	CR_MEMBER(aiCommandId),
 	CR_MEMBER(options),
@@ -10,9 +10,9 @@ CR_REG_METADATA(Command, (
 	CR_MEMBER(tag),
 	CR_MEMBER(timeOut),
 	CR_MEMBER(id)
-));
+))
 
-CR_BIND(CommandDescription, );
+CR_BIND(CommandDescription, )
 CR_REG_METADATA(CommandDescription, (
 	CR_MEMBER(id),
 	CR_MEMBER(type),
@@ -27,4 +27,4 @@ CR_REG_METADATA(CommandDescription, (
 	CR_MEMBER(onlyTexture),
 	CR_MEMBER(params),
 	CR_RESERVED(32)
-));
+))

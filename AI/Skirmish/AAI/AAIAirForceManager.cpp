@@ -7,12 +7,21 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
+#include <list>
+
 #include "AAIAirForceManager.h"
 
+#include "AAIMap.h"
 #include "AAI.h"
 #include "AAIBuildTable.h"
+#include "AAIUnitTable.h"
+#include "AAIConfig.h"
 #include "AAIGroup.h"
-#include "AAIMap.h"
+#include "AAISector.h"
+
+#include "LegacyCpp/UnitDef.h"
+using namespace springLegacyAI;
+
 
 AAIAirForceManager::AAIAirForceManager(AAI *ai)
 {

@@ -12,7 +12,7 @@ public:
 	static ILoadSaveHandler* Create();
 
 protected:
-	std::string FindSaveFile(const std::string& file);
+	static std::string FindSaveFile(const std::string& file);
 
 public:
 	virtual ~ILoadSaveHandler();

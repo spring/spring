@@ -12,7 +12,7 @@
 #include "System/float3.h"
 #include "System/Log/ILog.h"
 
-CR_BIND_DERIVED(CSimpleParticleSystem, CProjectile, );
+CR_BIND_DERIVED(CSimpleParticleSystem, CProjectile, )
 
 CR_REG_METADATA(CSimpleParticleSystem,
 (
@@ -38,9 +38,9 @@ CR_REG_METADATA(CSimpleParticleSystem,
 	CR_MEMBER_ENDFLAG(CM_Config),
 	CR_MEMBER(particles),
 	CR_RESERVED(16)
-));
+))
 
-CR_BIND(CSimpleParticleSystem::Particle, );
+CR_BIND(CSimpleParticleSystem::Particle, )
 
 CR_REG_METADATA_SUB(CSimpleParticleSystem, Particle,
 (
@@ -52,7 +52,7 @@ CR_REG_METADATA_SUB(CSimpleParticleSystem, Particle,
 	CR_MEMBER(sizeGrowth),
 	CR_MEMBER(sizeMod),
 	CR_RESERVED(8)
-));
+))
 
 CSimpleParticleSystem::CSimpleParticleSystem()
 	: CProjectile()
@@ -107,10 +107,10 @@ void CSimpleParticleSystem::Draw()
 					va->AddVertexQTC(interPos + ydir * size - xdir * size, texture->xstart, texture->yend,   color);
 				} else {
 					// in this case the particle's coor-system is degenerate
-					va->AddVertexQTC(interPos - camera->up * size - camera->right * size, texture->xstart, texture->ystart, color);
-					va->AddVertexQTC(interPos - camera->up * size + camera->right * size, texture->xend,   texture->ystart, color);
-					va->AddVertexQTC(interPos + camera->up * size + camera->right * size, texture->xend,   texture->yend,   color);
-					va->AddVertexQTC(interPos + camera->up * size - camera->right * size, texture->xstart, texture->yend,   color);
+					va->AddVertexQTC(interPos - camera->GetUp() * size - camera->GetRight() * size, texture->xstart, texture->ystart, color);
+					va->AddVertexQTC(interPos - camera->GetUp() * size + camera->GetRight() * size, texture->xend,   texture->ystart, color);
+					va->AddVertexQTC(interPos + camera->GetUp() * size + camera->GetRight() * size, texture->xend,   texture->yend,   color);
+					va->AddVertexQTC(interPos + camera->GetUp() * size - camera->GetRight() * size, texture->xstart, texture->yend,   color);
 				}
 			}
 		}
@@ -123,8 +123,8 @@ void CSimpleParticleSystem::Draw()
 				colorMap->GetColor(color, p->life);
 
 				const float3 interPos = p->pos + p->speed * globalRendering->timeOffset;
-				const float3 cameraRight = camera->right * p->size;
-				const float3 cameraUp    = camera->up * p->size;
+				const float3 cameraRight = camera->GetRight() * p->size;
+				const float3 cameraUp    = camera->GetUp() * p->size;
 
 				va->AddVertexQTC(interPos - cameraRight - cameraUp, texture->xstart, texture->ystart, color);
 				va->AddVertexQTC(interPos + cameraRight - cameraUp, texture->xend,   texture->ystart, color);
@@ -191,20 +191,20 @@ void CSimpleParticleSystem::Init(const CUnit* owner, const float3& offset)
 
 
 
-CR_BIND_DERIVED(CSphereParticleSpawner, CSimpleParticleSystem, );
+CR_BIND_DERIVED(CSphereParticleSpawner, CSimpleParticleSystem, )
 
 CR_REG_METADATA(CSphereParticleSpawner,
 (
 	CR_MEMBER_BEGINFLAG(CM_Config),
 	CR_MEMBER_ENDFLAG(CM_Config)
-));
+))
 
 CSphereParticleSpawner::CSphereParticleSpawner(): CSimpleParticleSystem()
 {
 }
 
 
-void CSphereParticleSpawner::Init(CUnit* owner, const float3& offset)
+void CSphereParticleSpawner::Init(const CUnit* owner, const float3& offset)
 {
 	const float3 up = emitVector;
 	const float3 right = up.cross(float3(up.y, up.z, -up.x));

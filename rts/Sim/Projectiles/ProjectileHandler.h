@@ -12,7 +12,6 @@
 
 #include "Sim/Projectiles/ProjectileFunctors.h"
 #include "System/float3.h"
-#include "System/Platform/Threading.h"
 
 // bypass id and event handling for unsynced projectiles (faster)
 #define UNSYNCED_PROJ_NOEVENT 1
@@ -38,12 +37,12 @@ typedef ThreadListSimRender<std::list<CGroundFlash*>, std::set<CGroundFlash*>, C
 
 typedef ThreadListSimRender<std::set<FlyingPiece*, FlyingPieceComparator>, void, FlyingPiece*> FlyingPieceContainer;
 
-typedef ThreadMapRender<CProjectile*, int, ProjectileMapValPair, ProjectileIndexer> ProjectileRenderMap;
+typedef ThreadMapRender<CProjectile*, ProjectileMapValPair, ProjectileIndexer> ProjectileRenderMap;
 
 
 class CProjectileHandler
 {
-	CR_DECLARE_STRUCT(CProjectileHandler);
+	CR_DECLARE_STRUCT(CProjectileHandler)
 
 public:
 	CProjectileHandler();
@@ -100,17 +99,17 @@ public:
 	bool RenderAccess(const CProjectile *p) const;
 
 public:
-	ProjectileContainer syncedProjectiles;    // contains only projectiles that can change simulation state
-	ProjectileContainer unsyncedProjectiles;  // contains only projectiles that cannot change simulation state
-	FlyingPieceContainer flyingPieces3DO;     // unsynced
-	FlyingPieceContainer flyingPiecesS3O;     // unsynced
-	GroundFlashContainer groundFlashes;       // unsynced
-
 	int maxParticles;              // different effects should start to cut down on unnececary(unsynced) particles when this number is reached
 	int maxNanoParticles;
 	int currentParticles;          // number of particles weighted by how complex they are
 	int currentNanoParticles;
 	float particleSaturation;      // currentParticles / maxParticles ratio
+
+	ProjectileContainer syncedProjectiles;    // contains only projectiles that can change simulation state
+	ProjectileContainer unsyncedProjectiles;  // contains only projectiles that cannot change simulation state
+	FlyingPieceContainer flyingPieces3DO;     // unsynced
+	FlyingPieceContainer flyingPiecesS3O;     // unsynced
+	GroundFlashContainer groundFlashes;       // unsynced
 
 private:
 	void UpdateProjectileContainer(ProjectileContainer&, bool);

@@ -23,7 +23,7 @@ struct SyncedFloat3
 {
 public:
 	// value type -> _STRUCT (because no virtual dtor or vtable is required)
-	CR_DECLARE_STRUCT(SyncedFloat3);
+	CR_DECLARE_STRUCT(SyncedFloat3)
 
 	/**
 	 * @brief Constructor
@@ -583,7 +583,7 @@ public:
 	/**
 	 * @brief Check against FaceHeightmap bounds
 	 *
-	 * Check if this vector is in bounds [0 .. gs->mapxy-1]
+	 * Check if this vector is in bounds [0 .. mapDims.mapxy-1]
 	 * @note THIS IS THE WRONG SPACE! _ALL_ WORLD SPACE POSITIONS SHOULD BE IN VertexHeightmap RESOLUTION!
 	 */
 	bool IsInBounds() const;
@@ -591,7 +591,7 @@ public:
 	/**
 	 * @brief Clamps to FaceHeightmap
 	 *
-	 * Clamps to the `face heightmap` resolution [0 .. gs->mapxy-1]
+	 * Clamps to the `face heightmap` resolution [0 .. mapDims.mapxy-1]
 	 * @note THIS IS THE WRONG SPACE! _ALL_ WORLD SPACE POSITIONS SHOULD BE IN VertexHeightmap RESOLUTION!
 	 */
 	void ClampInBounds();
@@ -599,7 +599,7 @@ public:
 	/**
 	 * @brief Clamps to VertexHeightmap
 	 *
-	 * Clamps to the `vertex heightmap`/`opengl space` resolution [0 .. gs->mapxy]
+	 * Clamps to the `vertex heightmap`/`opengl space` resolution [0 .. mapDims.mapxy]
 	 * @note USE THIS!
 	 */
 	void ClampInMap();

@@ -22,7 +22,8 @@ class LuaOpenGL {
 			DRAW_WORLD_REFRACTION   = 5,
 			DRAW_SCREEN             = 6,
 			DRAW_MINIMAP            = 7,
-			DRAW_LAST_MODE          = DRAW_MINIMAP
+			DRAW_MINIMAP_BACKGROUND = 8,
+			DRAW_LAST_MODE          = DRAW_MINIMAP_BACKGROUND
 		};
 
 	public:
@@ -78,6 +79,10 @@ class LuaOpenGL {
 		static void EnableDrawInMiniMap();
 		static void ResetDrawInMiniMap();
 		static void DisableDrawInMiniMap();
+
+		static void EnableDrawInMiniMapBackground();
+		static void ResetDrawInMiniMapBackground();
+		static void DisableDrawInMiniMapBackground();
 
 		inline static void InitMatrixState(lua_State* L, const LuaHashString* hs);
 		inline static void CheckMatrixState(lua_State* L, const LuaHashString* hs, int error);

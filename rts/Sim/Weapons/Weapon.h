@@ -23,7 +23,7 @@ enum TargetType {
 
 class CWeapon : public CObject
 {
-	CR_DECLARE(CWeapon);
+	CR_DECLARE(CWeapon)
 public:
 	CWeapon(CUnit* owner, const WeaponDef* def);
 	virtual ~CWeapon();
@@ -172,6 +172,7 @@ public:
 	CWeapon* slavedTo;            // use this weapon to choose target
 
 	float maxForwardAngleDif;     // for onlyForward/!turret weapons, max. angle between owner->frontdir and (targetPos - owner->pos) (derived from UnitDefWeapon::maxAngleDif)
+	float maxAngleAtCanFireCheck; // angle which prevents a weapon from firing in CanFire. fixes issues with units firing backwards when their target changes before a script's AimWeapon (derived from UnitDefWeapon::fireTolerance)
 	float maxMainDirAngleDif;     // for !onlyForward/turret weapons, max. angle from <mainDir> the weapon can aim (derived from WeaponDef::tolerance)
 
 	float targetBorder;           // if nonzero, units will TryTarget wrt. edge of scaled collision volume instead of centre

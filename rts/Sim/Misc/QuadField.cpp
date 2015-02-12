@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "QuadField.h"
+#include "Map/ReadMap.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GlobalConstants.h"
@@ -15,7 +16,7 @@
 #define CELL_IDX_X(wpx) Clamp(int((wpx) / quadSizeX), 0, numQuadsX - 1)
 #define CELL_IDX_Z(wpz) Clamp(int((wpz) / quadSizeZ), 0, numQuadsZ - 1)
 
-CR_BIND(CQuadField, (1, 1));
+CR_BIND(CQuadField, (1, 1))
 CR_REG_METADATA(CQuadField, (
 	CR_MEMBER(baseQuads),
 	CR_MEMBER(tempQuads),
@@ -23,15 +24,15 @@ CR_REG_METADATA(CQuadField, (
 	CR_MEMBER(numQuadsZ),
 	CR_MEMBER(quadSizeX),
 	CR_MEMBER(quadSizeZ)
-));
+))
 
-CR_BIND(CQuadField::Quad, );
+CR_BIND(CQuadField::Quad, )
 CR_REG_METADATA_SUB(CQuadField, Quad, (
 	CR_MEMBER(units),
 	CR_MEMBER(teamUnits),
 	CR_MEMBER(features),
 	CR_MEMBER(projectiles)
-));
+))
 
 CQuadField* quadField = NULL;
 
@@ -92,8 +93,8 @@ CQuadField::CQuadField(unsigned int nqx, unsigned int nqz)
 {
 	numQuadsX = nqx;
 	numQuadsZ = nqz;
-	quadSizeX = (gs->mapx * SQUARE_SIZE) / numQuadsX;
-	quadSizeZ = (gs->mapy * SQUARE_SIZE) / numQuadsZ;
+	quadSizeX = (mapDims.mapx * SQUARE_SIZE) / numQuadsX;
+	quadSizeZ = (mapDims.mapy * SQUARE_SIZE) / numQuadsZ;
 
 	assert(numQuadsX >= 1);
 	assert(numQuadsZ >= 1);
@@ -298,11 +299,11 @@ unsigned int CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length, i
 		}
 		start = start + dir * ((1 - start.x) / dir.x);
 	}
-	if (start.x > gs->mapx * SQUARE_SIZE - 1) {
+	if (start.x > mapDims.mapx * SQUARE_SIZE - 1) {
 		if (dir.x == 0) {
 			dir.x = 0.00001f;
 		}
-		start = start + dir * ((gs->mapx * SQUARE_SIZE - 1 - start.x) / dir.x);
+		start = start + dir * ((mapDims.mapx * SQUARE_SIZE - 1 - start.x) / dir.x);
 	}
 	if (start.z < 1) {
 		if (dir.z == 0) {
@@ -310,24 +311,24 @@ unsigned int CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length, i
 		}
 		start = start + dir * ((1 - start.z) / dir.z);
 	}
-	if (start.z > gs->mapy * SQUARE_SIZE - 1) {
+	if (start.z > mapDims.mapy * SQUARE_SIZE - 1) {
 		if (dir.z == 0) {
 			dir.z = 0.00001f;
 		}
-		start = start + dir * ((gs->mapy * SQUARE_SIZE - 1 - start.z) / dir.z);
+		start = start + dir * ((mapDims.mapy * SQUARE_SIZE - 1 - start.z) / dir.z);
 	}
 
 	if (start.x < 1) {
 		start.x = 1;
 	}
-	if (start.x > gs->mapx * SQUARE_SIZE - 1) {
-		start.x = gs->mapx * SQUARE_SIZE - 1;
+	if (start.x > mapDims.mapx * SQUARE_SIZE - 1) {
+		start.x = mapDims.mapx * SQUARE_SIZE - 1;
 	}
 	if (start.z < 1) {
 		start.z = 1;
 	}
-	if (start.z > gs->mapy * SQUARE_SIZE - 1) {
-		start.z = gs->mapy * SQUARE_SIZE - 1;
+	if (start.z > mapDims.mapy * SQUARE_SIZE - 1) {
+		start.z = mapDims.mapy * SQUARE_SIZE - 1;
 	}
 
 	float3 to = start + (dir * length);
@@ -335,28 +336,28 @@ unsigned int CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length, i
 	if (to.x < 1) {
 		to = to - dir * ((to.x - 1)                          / dir.x);
 	}
-	if (to.x > gs->mapx * SQUARE_SIZE - 1) {
-		to = to - dir * ((to.x - gs->mapx * SQUARE_SIZE + 1) / dir.x);
+	if (to.x > mapDims.mapx * SQUARE_SIZE - 1) {
+		to = to - dir * ((to.x - mapDims.mapx * SQUARE_SIZE + 1) / dir.x);
 	}
 	if (to.z < 1){
 		to= to - dir * ((to.z - 1)                          / dir.z);
 	}
-	if (to.z > gs->mapy * SQUARE_SIZE - 1) {
-		to= to - dir * ((to.z - gs->mapy * SQUARE_SIZE + 1) / dir.z);
+	if (to.z > mapDims.mapy * SQUARE_SIZE - 1) {
+		to= to - dir * ((to.z - mapDims.mapy * SQUARE_SIZE + 1) / dir.z);
 	}
 	// these 4 shouldnt be needed, but sometimes we seem to get strange enough
 	// values that rounding errors throw us outside the map
 	if (to.x < 1) {
 		to.x = 1;
 	}
-	if (to.x > gs->mapx * SQUARE_SIZE - 1) {
-		to.x = gs->mapx * SQUARE_SIZE - 1;
+	if (to.x > mapDims.mapx * SQUARE_SIZE - 1) {
+		to.x = mapDims.mapx * SQUARE_SIZE - 1;
 	}
 	if (to.z < 1) {
 		to.z = 1;
 	}
-	if (to.z > gs->mapy * SQUARE_SIZE - 1) {
-		to.z = gs->mapy * SQUARE_SIZE - 1;
+	if (to.z > mapDims.mapy * SQUARE_SIZE - 1) {
+		to.z = mapDims.mapy * SQUARE_SIZE - 1;
 	}
 
 	const float dx = to.x - start.x;
@@ -537,10 +538,10 @@ void CQuadField::MovedProjectile(CProjectile* p)
 
 	const CProjectile::QuadFieldCellData& qfcd = p->GetQuadFieldCellData();
 
-	const int2 oldCellCoors = qfcd.GetCoor(0);
+	const int2& oldCellCoors = qfcd.GetCoor(0);
 	const int2 newCellCoors = {
-		std::max(0, std::min(int(p->pos.x / quadSizeX), numQuadsX - 1)),
-		std::max(0, std::min(int(p->pos.z / quadSizeZ), numQuadsZ - 1))
+		Clamp(int(p->pos.x / quadSizeX), 0, numQuadsX - 1),
+		Clamp(int(p->pos.z / quadSizeZ), 0, numQuadsZ - 1)
 	};
 
 	if (newCellCoors != oldCellCoors) {
@@ -863,13 +864,11 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 	int* endQuad = &tempQuads[0];
 
 	// bail early if caches are already full
-	if (numUnits >= units.size())
-		return;
-	if (numFeatures >= features.size())
+	if (numUnits >= units.size() && numFeatures >= features.size())
 		return;
 
-	assert(numUnits == 0 || units[numUnits] == NULL);
-	assert(numFeatures == 0 || features[numFeatures] == NULL);
+	assert(numUnits == 0 || numUnits == units.size() || units[numUnits] == NULL);
+	assert(numFeatures == 0 || numFeatures == features.size() || features[numFeatures] == NULL);
 
 	GetQuads(pos, radius, begQuad, endQuad);
 
@@ -879,8 +878,16 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 	for (int* a = begQuad; a != endQuad; ++a) {
 		const Quad& quad = baseQuads[*a];
 
+		// bail early if caches are already full
+		if (numUnits >= units.size() && numFeatures >= features.size())
+			break;
+
 		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
 			CUnit* u = *ui;
+
+			// bail early if cache is full
+			if (numUnits >= units.size())
+				break;
 
 			// prevent double adding
 			if (u->tempNum == tempNum)
@@ -903,6 +910,10 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 		for (fi = quad.features.begin(); fi != quad.features.end(); ++fi) {
 			CFeature* f = *fi;
 
+			// bail early if cache is full
+			if (numFeatures >= features.size())
+				break;
+
 			// prevent double adding
 			if (f->tempNum == tempNum)
 				continue;
@@ -922,8 +933,8 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 		}
 	}
 
-	assert(numUnits < units.size());
-	assert(numFeatures < features.size());
+	assert(numUnits <= units.size());
+	assert(numFeatures <= features.size());
 
 	// set end-of-list sentinels
 	if (numUnits < units.size())

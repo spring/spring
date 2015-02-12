@@ -5,6 +5,7 @@
 #include "LuaInclude.h"
 
 #include "LuaUtils.h"
+#include "LuaArchive.h"
 #include "LuaCallInCheck.h"
 #include "LuaConstGL.h"
 #include "LuaConstCMD.h"
@@ -57,10 +58,9 @@ LuaRulesParams::HashMap CLuaHandleSynced::gameParamsMap;
 //  #######  ##    ##  ######     ##    ##    ##  ######  ######## ########
 
 CUnsyncedLuaHandle::CUnsyncedLuaHandle(CLuaHandleSynced* _base, const string& _name, int _order)
-	: CLuaHandle(_name, _order, false)
+	: CLuaHandle(_name, _order, false, false)
 	, base(*_base)
 {
-	D.synced = false;
 	D.allowChanges = false;
 }
 
@@ -111,6 +111,7 @@ bool CUnsyncedLuaHandle::Init(const string& code, const string& file)
 	    !AddEntriesToTable(L, "VFS",         LuaVFS::PushUnsynced)         ||
 	    !AddEntriesToTable(L, "VFS",         LuaZipFileReader::PushUnsynced) ||
 	    !AddEntriesToTable(L, "VFS",         LuaZipFileWriter::PushUnsynced) ||
+	    !AddEntriesToTable(L, "VFS",         LuaArchive::PushEntries)      ||
 	    !AddEntriesToTable(L, "UnitDefs",    LuaUnitDefs::PushEntries)     ||
 	    !AddEntriesToTable(L, "WeaponDefs",  LuaWeaponDefs::PushEntries)   ||
 	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
@@ -163,7 +164,7 @@ void CUnsyncedLuaHandle::RecvFromSynced(lua_State* srcState, int args)
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 2 + args, __FUNCTION__);
 
-	static const LuaHashString cmdStr("RecvFromSynced");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return; // the call is not defined
 
@@ -303,11 +304,10 @@ bool CUnsyncedLuaHandle::DrawProjectile(const CProjectile* projectile)
 //  ######     ##    ##    ##  ######  ######## ########
 
 CSyncedLuaHandle::CSyncedLuaHandle(CLuaHandleSynced* _base, const string& _name, int _order)
-	: CLuaHandle(_name, _order, false)
+	: CLuaHandle(_name, _order, false, true)
 	, base(*_base)
 	, origNextRef(-1)
 {
-	D.synced = true;
 	D.allowChanges = true;
 }
 

@@ -291,7 +291,7 @@ namespace QTPFS {
 		size_t cur_idx; // index of first free (unused) slot
 		size_t max_idx; // index of last free (unused) slot
 	};
-};
+}
 
 #endif
 

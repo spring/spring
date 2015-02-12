@@ -1011,10 +1011,10 @@ int LuaSyncedRead::GetAllyTeamStartBox(lua_State* L)
 	if (allyTeam >= allyData.size())
 		return 0;
 
-	const float xmin = (gs->mapx * SQUARE_SIZE) * allyData[allyTeam].startRectLeft;
-	const float zmin = (gs->mapy * SQUARE_SIZE) * allyData[allyTeam].startRectTop;
-	const float xmax = (gs->mapx * SQUARE_SIZE) * allyData[allyTeam].startRectRight;
-	const float zmax = (gs->mapy * SQUARE_SIZE) * allyData[allyTeam].startRectBottom;
+	const float xmin = (mapDims.mapx * SQUARE_SIZE) * allyData[allyTeam].startRectLeft;
+	const float zmin = (mapDims.mapy * SQUARE_SIZE) * allyData[allyTeam].startRectTop;
+	const float xmax = (mapDims.mapx * SQUARE_SIZE) * allyData[allyTeam].startRectRight;
+	const float zmax = (mapDims.mapy * SQUARE_SIZE) * allyData[allyTeam].startRectBottom;
 
 	lua_pushnumber(L, xmin);
 	lua_pushnumber(L, zmin);
@@ -1177,27 +1177,27 @@ int LuaSyncedRead::GetTeamResources(lua_State* L)
 
 	const string type = luaL_checkstring(L, 2);
 	if (type == "metal") {
-		lua_pushnumber(L, team->metal);
-		lua_pushnumber(L, team->metalStorage);
-		lua_pushnumber(L, team->prevMetalPull);
-		lua_pushnumber(L, team->prevMetalIncome);
-		lua_pushnumber(L, team->prevMetalExpense);
-		lua_pushnumber(L, team->metalShare);
-		lua_pushnumber(L, team->prevMetalSent);
-		lua_pushnumber(L, team->prevMetalReceived);
-		lua_pushnumber(L, team->prevMetalExcess);
+		lua_pushnumber(L, team->res.metal);
+		lua_pushnumber(L, team->resStorage.metal);
+		lua_pushnumber(L, team->resPrevPull.metal);
+		lua_pushnumber(L, team->resPrevIncome.metal);
+		lua_pushnumber(L, team->resPrevExpense.metal);
+		lua_pushnumber(L, team->resShare.metal);
+		lua_pushnumber(L, team->resPrevSent.metal);
+		lua_pushnumber(L, team->resPrevReceived.metal);
+		lua_pushnumber(L, team->resPrevExcess.metal);
 		return 9;
 	}
 	else if (type == "energy") {
-		lua_pushnumber(L, team->energy);
-		lua_pushnumber(L, team->energyStorage);
-		lua_pushnumber(L, team->prevEnergyPull);
-		lua_pushnumber(L, team->prevEnergyIncome);
-		lua_pushnumber(L, team->prevEnergyExpense);
-		lua_pushnumber(L, team->energyShare);
-		lua_pushnumber(L, team->prevEnergySent);
-		lua_pushnumber(L, team->prevEnergyReceived);
-		lua_pushnumber(L, team->prevEnergyExcess);
+		lua_pushnumber(L, team->res.energy);
+		lua_pushnumber(L, team->resStorage.energy);
+		lua_pushnumber(L, team->resPrevPull.energy);
+		lua_pushnumber(L, team->resPrevIncome.energy);
+		lua_pushnumber(L, team->resPrevExpense.energy);
+		lua_pushnumber(L, team->resShare.energy);
+		lua_pushnumber(L, team->resPrevSent.energy);
+		lua_pushnumber(L, team->resPrevReceived.energy);
+		lua_pushnumber(L, team->resPrevExcess.energy);
 		return 9;
 	}
 
@@ -1945,19 +1945,17 @@ int LuaSyncedRead::GetTeamUnitDefCount(lua_State* L)
 
 int LuaSyncedRead::GetTeamUnitCount(lua_State* L)
 {
-	if (CLuaHandle::GetHandleReadAllyTeam(L) == CEventClient::NoAccessTeam) {
+	if (CLuaHandle::GetHandleReadAllyTeam(L) == CEventClient::NoAccessTeam)
 		return 0;
-	}
 
 	// parse the team
 	const CTeam* team = ParseTeam(L, __FUNCTION__, 1);
-	if (team == NULL) {
+
+	if (team == NULL)
 		return 0;
-	}
-	const int teamID = team->teamNum;
 
 	// use the raw team count for allies
-	if (IsAlliedTeam(L, teamID)) {
+	if (IsAlliedTeam(L, team->teamNum)) {
 		lua_pushnumber(L, team->units.size());
 		return 1;
 	}
@@ -1965,13 +1963,11 @@ int LuaSyncedRead::GetTeamUnitCount(lua_State* L)
 	// loop through the units for enemies
 	int count = 0;
 	const CUnitSet& units = team->units;
-	CUnitSet::const_iterator uit;
-	for (uit = units.begin(); uit != units.end(); ++uit) {
-		const CUnit* unit = *uit;
-		if (IsUnitVisible(L, unit)) {
-			count++;
-		}
+
+	for (auto uit = units.begin(); uit != units.end(); ++uit) {
+		count += int(IsUnitVisible(L, *uit));
 	}
+
 	lua_pushnumber(L, count);
 	return 1;
 }
@@ -1984,16 +1980,25 @@ int LuaSyncedRead::GetTeamUnitCount(lua_State* L)
 //
 
 // Macro Requirements:
-//   L, it, units, and count
+//   L, units
 
-#define LOOP_UNIT_CONTAINER(ALLEGIANCE_TEST, CUSTOM_TEST) \
-	for (it = units.begin(); it != units.end(); ++it) {     \
-		const CUnit* unit = *it;                              \
-		ALLEGIANCE_TEST;                                      \
-		CUSTOM_TEST;                                          \
-		count++;                                              \
-		lua_pushnumber(L, unit->id);                          \
-		lua_rawseti(L, -2, count);                            \
+#define LOOP_UNIT_CONTAINER(ALLEGIANCE_TEST, CUSTOM_TEST, NEWTABLE) \
+	{                                                               \
+		unsigned int count = 0;                                     \
+                                                                    \
+		if (NEWTABLE) {                                             \
+			lua_createtable(L, units.size(), 0);                    \
+		}                                                           \
+                                                                    \
+		for (auto it = units.begin(); it != units.end(); ++it) {    \
+			const CUnit* unit = *it;                                \
+                                                                    \
+			ALLEGIANCE_TEST;                                        \
+			CUSTOM_TEST;                                            \
+                                                                    \
+			lua_pushnumber(L, unit->id);                            \
+			lua_rawseti(L, -2, ++count);                            \
+		}                                                           \
 	}
 
 // Macro Requirements:
@@ -2004,24 +2009,24 @@ int LuaSyncedRead::GetTeamUnitCount(lua_State* L)
 #define NULL_TEST  ;  // always passes
 
 #define VISIBLE_TEST \
-	if (!IsUnitVisible(L, unit))     { continue; }
+	if (!IsUnitVisible(L, unit)) { continue; }
 
 #define SIMPLE_TEAM_TEST \
 	if (unit->team != allegiance) { continue; }
 
 #define VISIBLE_TEAM_TEST \
 	if (unit->team != allegiance) { continue; } \
-	if (!IsUnitVisible(L, unit))     { continue; }
+	if (!IsUnitVisible(L, unit)) { continue; }
 
 #define MY_UNIT_TEST \
-	if (unit->team != readTeam)   { continue; }
+	if (unit->team != readTeam) { continue; }
 
 #define ALLY_UNIT_TEST \
 	if (unit->allyteam != CLuaHandle::GetHandleReadAllyTeam(L)) { continue; }
 
 #define ENEMY_UNIT_TEST \
 	if (unit->allyteam == CLuaHandle::GetHandleReadAllyTeam(L)) { continue; } \
-	if (!IsUnitVisible(L, unit))           { continue; }
+	if (!IsUnitVisible(L, unit)) { continue; }
 
 
 static int ParseAllegiance(lua_State* L, const char* caller, int index)
@@ -2057,31 +2062,27 @@ int LuaSyncedRead::GetUnitsInRectangle(lua_State* L)
 
 #define RECTANGLE_TEST ; // no test, GetUnitsExact is sufficient
 
-	vector<CUnit*>::const_iterator it;
-	const vector<CUnit*> &units = quadField->GetUnitsExact(mins, maxs);
-
-	lua_newtable(L);
-	int count = 0;
+	const vector<CUnit*>& units = quadField->GetUnitsExact(mins, maxs);
 
 	if (allegiance >= 0) {
 		if (IsAlliedTeam(L, allegiance)) {
-			LOOP_UNIT_CONTAINER(SIMPLE_TEAM_TEST, RECTANGLE_TEST);
+			LOOP_UNIT_CONTAINER(SIMPLE_TEAM_TEST, RECTANGLE_TEST, true);
 		} else {
-			LOOP_UNIT_CONTAINER(VISIBLE_TEAM_TEST, RECTANGLE_TEST);
+			LOOP_UNIT_CONTAINER(VISIBLE_TEAM_TEST, RECTANGLE_TEST, true);
 		}
 	}
 	else if (allegiance == MyUnits) {
 		const int readTeam = CLuaHandle::GetHandleReadTeam(L);
-		LOOP_UNIT_CONTAINER(MY_UNIT_TEST, RECTANGLE_TEST);
+		LOOP_UNIT_CONTAINER(MY_UNIT_TEST, RECTANGLE_TEST, true);
 	}
 	else if (allegiance == AllyUnits) {
-		LOOP_UNIT_CONTAINER(ALLY_UNIT_TEST, RECTANGLE_TEST);
+		LOOP_UNIT_CONTAINER(ALLY_UNIT_TEST, RECTANGLE_TEST, true);
 	}
 	else if (allegiance == EnemyUnits) {
-		LOOP_UNIT_CONTAINER(ENEMY_UNIT_TEST, RECTANGLE_TEST);
+		LOOP_UNIT_CONTAINER(ENEMY_UNIT_TEST, RECTANGLE_TEST, true);
 	}
 	else { // AllUnits
-		LOOP_UNIT_CONTAINER(VISIBLE_TEST, RECTANGLE_TEST);
+		LOOP_UNIT_CONTAINER(VISIBLE_TEST, RECTANGLE_TEST, true);
 	}
 
 	return 1;
@@ -2108,31 +2109,27 @@ int LuaSyncedRead::GetUnitsInBox(lua_State* L)
 		continue;                     \
 	}
 
-	vector<CUnit*>::const_iterator it;
-	const vector<CUnit*> &units = quadField->GetUnitsExact(mins, maxs);
-
-	lua_newtable(L);
-	int count = 0;
+	const vector<CUnit*>& units = quadField->GetUnitsExact(mins, maxs);
 
 	if (allegiance >= 0) {
 		if (IsAlliedTeam(L, allegiance)) {
-			LOOP_UNIT_CONTAINER(SIMPLE_TEAM_TEST, BOX_TEST);
+			LOOP_UNIT_CONTAINER(SIMPLE_TEAM_TEST, BOX_TEST, true);
 		} else {
-			LOOP_UNIT_CONTAINER(VISIBLE_TEAM_TEST, BOX_TEST);
+			LOOP_UNIT_CONTAINER(VISIBLE_TEAM_TEST, BOX_TEST, true);
 		}
 	}
 	else if (allegiance == MyUnits) {
 		const int readTeam = CLuaHandle::GetHandleReadTeam(L);
-		LOOP_UNIT_CONTAINER(MY_UNIT_TEST, BOX_TEST);
+		LOOP_UNIT_CONTAINER(MY_UNIT_TEST, BOX_TEST, true);
 	}
 	else if (allegiance == AllyUnits) {
-		LOOP_UNIT_CONTAINER(ALLY_UNIT_TEST, BOX_TEST);
+		LOOP_UNIT_CONTAINER(ALLY_UNIT_TEST, BOX_TEST, true);
 	}
 	else if (allegiance == EnemyUnits) {
-		LOOP_UNIT_CONTAINER(ENEMY_UNIT_TEST, BOX_TEST);
+		LOOP_UNIT_CONTAINER(ENEMY_UNIT_TEST, BOX_TEST, true);
 	}
 	else { // AllUnits
-		LOOP_UNIT_CONTAINER(VISIBLE_TEST, BOX_TEST);
+		LOOP_UNIT_CONTAINER(VISIBLE_TEST, BOX_TEST, true);
 	}
 
 	return 1;
@@ -2160,31 +2157,27 @@ int LuaSyncedRead::GetUnitsInCylinder(lua_State* L)
 		continue;                                 \
 	}                                           \
 
-	vector<CUnit*>::const_iterator it;
-	const vector<CUnit*> &units = quadField->GetUnitsExact(mins, maxs);
-
-	lua_newtable(L);
-	int count = 0;
+	const vector<CUnit*>& units = quadField->GetUnitsExact(mins, maxs);
 
 	if (allegiance >= 0) {
 		if (IsAlliedTeam(L, allegiance)) {
-			LOOP_UNIT_CONTAINER(SIMPLE_TEAM_TEST, CYLINDER_TEST);
+			LOOP_UNIT_CONTAINER(SIMPLE_TEAM_TEST, CYLINDER_TEST, true);
 		} else {
-			LOOP_UNIT_CONTAINER(VISIBLE_TEAM_TEST, CYLINDER_TEST);
+			LOOP_UNIT_CONTAINER(VISIBLE_TEAM_TEST, CYLINDER_TEST, true);
 		}
 	}
 	else if (allegiance == MyUnits) {
 		const int readTeam = CLuaHandle::GetHandleReadTeam(L);
-		LOOP_UNIT_CONTAINER(MY_UNIT_TEST, CYLINDER_TEST);
+		LOOP_UNIT_CONTAINER(MY_UNIT_TEST, CYLINDER_TEST, true);
 	}
 	else if (allegiance == AllyUnits) {
-		LOOP_UNIT_CONTAINER(ALLY_UNIT_TEST, CYLINDER_TEST);
+		LOOP_UNIT_CONTAINER(ALLY_UNIT_TEST, CYLINDER_TEST, true);
 	}
 	else if (allegiance == EnemyUnits) {
-		LOOP_UNIT_CONTAINER(ENEMY_UNIT_TEST, CYLINDER_TEST);
+		LOOP_UNIT_CONTAINER(ENEMY_UNIT_TEST, CYLINDER_TEST, true);
 	}
 	else { // AllUnits
-		LOOP_UNIT_CONTAINER(VISIBLE_TEST, CYLINDER_TEST);
+		LOOP_UNIT_CONTAINER(VISIBLE_TEST, CYLINDER_TEST, true);
 	}
 
 	return 1;
@@ -2216,31 +2209,27 @@ int LuaSyncedRead::GetUnitsInSphere(lua_State* L)
 		continue;                                 \
 	}                                           \
 
-	vector<CUnit*>::const_iterator it;
-	const vector<CUnit*> &units = quadField->GetUnitsExact(mins, maxs);
-
-	lua_newtable(L);
-	int count = 0;
+	const vector<CUnit*>& units = quadField->GetUnitsExact(mins, maxs);
 
 	if (allegiance >= 0) {
 		if (IsAlliedTeam(L, allegiance)) {
-			LOOP_UNIT_CONTAINER(SIMPLE_TEAM_TEST, SPHERE_TEST);
+			LOOP_UNIT_CONTAINER(SIMPLE_TEAM_TEST, SPHERE_TEST, true);
 		} else {
-			LOOP_UNIT_CONTAINER(VISIBLE_TEAM_TEST, SPHERE_TEST);
+			LOOP_UNIT_CONTAINER(VISIBLE_TEAM_TEST, SPHERE_TEST, true);
 		}
 	}
 	else if (allegiance == MyUnits) {
 		const int readTeam = CLuaHandle::GetHandleReadTeam(L);
-		LOOP_UNIT_CONTAINER(MY_UNIT_TEST, SPHERE_TEST);
+		LOOP_UNIT_CONTAINER(MY_UNIT_TEST, SPHERE_TEST, true);
 	}
 	else if (allegiance == AllyUnits) {
-		LOOP_UNIT_CONTAINER(ALLY_UNIT_TEST, SPHERE_TEST);
+		LOOP_UNIT_CONTAINER(ALLY_UNIT_TEST, SPHERE_TEST, true);
 	}
 	else if (allegiance == EnemyUnits) {
-		LOOP_UNIT_CONTAINER(ENEMY_UNIT_TEST, SPHERE_TEST);
+		LOOP_UNIT_CONTAINER(ENEMY_UNIT_TEST, SPHERE_TEST, true);
 	}
 	else { // AllUnits
-		LOOP_UNIT_CONTAINER(VISIBLE_TEST, SPHERE_TEST);
+		LOOP_UNIT_CONTAINER(VISIBLE_TEST, SPHERE_TEST, true);
 	}
 
 	return 1;
@@ -2303,49 +2292,47 @@ int LuaSyncedRead::GetUnitsInPlanes(lua_State* L)
 		endTeam = teamHandler->ActiveTeams() - 1;
 	}
 
-#define PLANES_TEST                  \
+#define PLANES_TEST                    \
 	if (!UnitInPlanes(unit, planes)) { \
-		continue;                        \
+		continue;                      \
 	}
-
-	lua_newtable(L);
-	int count = 0;
 
 	const int readTeam = CLuaHandle::GetHandleReadTeam(L);
 
+	lua_newtable(L);
+
 	for (int team = startTeam; team <= endTeam; team++) {
 		const CUnitSet& units = teamHandler->Team(team)->units;
-		CUnitSet::const_iterator it;
 
 		if (allegiance >= 0) {
 			if (allegiance == team) {
 				if (IsAlliedTeam(L, allegiance)) {
-					LOOP_UNIT_CONTAINER(NULL_TEST, PLANES_TEST);
+					LOOP_UNIT_CONTAINER(NULL_TEST, PLANES_TEST, false);
 				} else {
-					LOOP_UNIT_CONTAINER(VISIBLE_TEST, PLANES_TEST);
+					LOOP_UNIT_CONTAINER(VISIBLE_TEST, PLANES_TEST, false);
 				}
 			}
 		}
 		else if (allegiance == MyUnits) {
 			if (readTeam == team) {
-				LOOP_UNIT_CONTAINER(NULL_TEST, PLANES_TEST);
+				LOOP_UNIT_CONTAINER(NULL_TEST, PLANES_TEST, false);
 			}
 		}
 		else if (allegiance == AllyUnits) {
 			if (CLuaHandle::GetHandleReadAllyTeam(L) == teamHandler->AllyTeam(team)) {
-				LOOP_UNIT_CONTAINER(NULL_TEST, PLANES_TEST);
+				LOOP_UNIT_CONTAINER(NULL_TEST, PLANES_TEST, false);
 			}
 		}
 		else if (allegiance == EnemyUnits) {
 			if (CLuaHandle::GetHandleReadAllyTeam(L) != teamHandler->AllyTeam(team)) {
-				LOOP_UNIT_CONTAINER(VISIBLE_TEST, PLANES_TEST);
+				LOOP_UNIT_CONTAINER(VISIBLE_TEST, PLANES_TEST, false);
 			}
 		}
 		else { // AllUnits
 			if (IsAlliedTeam(L, team)) {
-				LOOP_UNIT_CONTAINER(NULL_TEST, PLANES_TEST);
+				LOOP_UNIT_CONTAINER(NULL_TEST, PLANES_TEST, false);
 			} else {
-				LOOP_UNIT_CONTAINER(VISIBLE_TEST, PLANES_TEST);
+				LOOP_UNIT_CONTAINER(VISIBLE_TEST, PLANES_TEST, false);
 			}
 		}
 	}
@@ -2485,8 +2472,6 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 	const float3 mins(xmin, 0.0f, zmin);
 	const float3 maxs(xmax, 0.0f, zmax);
 
-	const bool renderAccess = !Threading::IsSimThread();
-
 	const vector<CProjectile*>& rectProjectiles = quadField->GetProjectilesExact(mins, maxs);
 	const unsigned int rectProjectileCount = rectProjectiles.size();
 	unsigned int arrayIndex = 1;
@@ -2498,7 +2483,7 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 			for (unsigned int i = 0; i < rectProjectileCount; i++) {
 				const CProjectile* pro = rectProjectiles[i];
 
-				if (renderAccess && !projectileHandler->RenderAccess(pro))
+				if (!projectileHandler->RenderAccess(pro))
 					continue;
 
 				// filter out unsynced projectiles, the SyncedRead
@@ -2520,7 +2505,7 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 		for (unsigned int i = 0; i < rectProjectileCount; i++) {
 			const CProjectile* pro = rectProjectiles[i];
 
-			if (renderAccess && !projectileHandler->RenderAccess(pro))
+			if (!projectileHandler->RenderAccess(pro))
 				continue;
 
 			const CUnit* unit = pro->owner();
@@ -2853,10 +2838,10 @@ int LuaSyncedRead::GetUnitResources(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	lua_pushnumber(L, unit->metalMake);
-	lua_pushnumber(L, unit->metalUse);
-	lua_pushnumber(L, unit->energyMake);
-	lua_pushnumber(L, unit->energyUse);
+	lua_pushnumber(L, unit->resourcesMake.metal);
+	lua_pushnumber(L, unit->resourcesUse.metal);
+	lua_pushnumber(L, unit->resourcesMake.energy);
+	lua_pushnumber(L, unit->resourcesUse.energy);
 	return 4;
 }
 
@@ -3066,8 +3051,11 @@ int LuaSyncedRead::GetUnitHarvestStorage(lua_State* L)
 		return 0;
 	}
 
-	lua_pushnumber(L, unit->harvestStorage);
-	return 1;
+	for (int i = 0; i < SResourcePack::MAX_RESOURCES; ++i) {
+		lua_pushnumber(L, unit->harvested[i]);
+		lua_pushnumber(L, unit->harvestStorage[i]);
+	}
+	return 2 * SResourcePack::MAX_RESOURCES;
 }
 
 
@@ -4488,9 +4476,9 @@ int LuaSyncedRead::GetFeatureResources(lua_State* L)
 	if (feature == NULL || !IsFeatureVisible(L, feature)) {
 		return 0;
 	}
-	lua_pushnumber(L,  feature->RemainingMetal());
+	lua_pushnumber(L,  feature->resources.metal);
 	lua_pushnumber(L,  feature->def->metal);
-	lua_pushnumber(L,  feature->RemainingEnergy());
+	lua_pushnumber(L,  feature->resources.energy);
 	lua_pushnumber(L,  feature->def->energy);
 	lua_pushnumber(L,  feature->reclaimLeft);
 	return 5;
@@ -4760,8 +4748,8 @@ int LuaSyncedRead::GetGroundInfo(lua_State* L)
 	const int ix = Clamp(x, 0.0f, float3::maxxpos) / (SQUARE_SIZE * 2);
 	const int iz = Clamp(z, 0.0f, float3::maxzpos) / (SQUARE_SIZE * 2);
 
-	const int maxIndex = (gs->hmapx * gs->hmapy) - 1;
-	const int sqrIndex = std::min(maxIndex, (gs->hmapx * iz) + ix);
+	const int maxIndex = (mapDims.hmapx * mapDims.hmapy) - 1;
+	const int sqrIndex = std::min(maxIndex, (mapDims.hmapx * iz) + ix);
 	const int typeIndex = readMap->GetTypeMapSynced()[sqrIndex];
 
 	// arguments to LuaMetalMap::GetMetalAmount in half-heightmap coors
@@ -4795,10 +4783,10 @@ static void ParseMapCoords(lua_State* L, const char* caller,
 	}
 
 	// quantize and clamp
-	tx1 = Clamp((int)(fx1 / SQUARE_SIZE), 0, gs->mapxm1);
-	tx2 = Clamp((int)(fx2 / SQUARE_SIZE), 0, gs->mapxm1);
-	tz1 = Clamp((int)(fz1 / SQUARE_SIZE), 0, gs->mapym1);
-	tz2 = Clamp((int)(fz2 / SQUARE_SIZE), 0, gs->mapym1);
+	tx1 = Clamp((int)(fx1 / SQUARE_SIZE), 0, mapDims.mapxm1);
+	tx2 = Clamp((int)(fx2 / SQUARE_SIZE), 0, mapDims.mapxm1);
+	tz1 = Clamp((int)(fz1 / SQUARE_SIZE), 0, mapDims.mapym1);
+	tz2 = Clamp((int)(fz2 / SQUARE_SIZE), 0, mapDims.mapym1);
 
 	return;
 }
@@ -4850,7 +4838,9 @@ int LuaSyncedRead::GetGroundExtremes(lua_State* L)
 {
 	lua_pushnumber(L, readMap->GetInitMinHeight());
 	lua_pushnumber(L, readMap->GetInitMaxHeight());
-	return 2;
+	lua_pushnumber(L, readMap->GetCurrMinHeight());
+	lua_pushnumber(L, readMap->GetCurrMaxHeight());
+	return 4;
 }
 
 
@@ -5142,8 +5132,8 @@ int LuaSyncedRead::GetClosestValidPosition(lua_State* L)
 	const float x     = luaL_checkfloat(L, 2);
 	const float z     = luaL_checkfloat(L, 3);
 	const float r     = luaL_checkfloat(L, 4);*/
-	//const int mx = (int)max(0 , min(gs->mapxm1, (int)(x / SQUARE_SIZE)));
-	//const int mz = (int)max(0 , min(gs->mapym1, (int)(z / SQUARE_SIZE)));
+	//const int mx = (int)max(0 , min(mapDims.mapxm1, (int)(x / SQUARE_SIZE)));
+	//const int mz = (int)max(0 , min(mapDims.mapym1, (int)(z / SQUARE_SIZE)));
 	return 0;
 }
 

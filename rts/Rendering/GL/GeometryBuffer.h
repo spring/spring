@@ -59,7 +59,7 @@ namespace GL {
 
 		const char* bufferName;
 	};
-};
+}
 
 #endif
 
