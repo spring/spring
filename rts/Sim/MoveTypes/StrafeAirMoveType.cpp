@@ -842,7 +842,7 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	}
 
 	// RHS is needed for moving targets (when called by UpdateAttack)
-	const bool allowUnlockYR = (goalDist2D >= TurnRadius(turnRadius, spd.w) || goalVec.dot(owner->frontdir) > 0.0f);
+	const bool allowUnlockYR = (goalDist2D >= owner->maxRange || goalVec.dot(owner->frontdir) > 0.0f);
 	const bool forceUnlockYR = ((gs->frameNum - owner->lastFireWeapon) >= GAME_SPEED * 3);
 
 	// yaw and roll have to be unblocked after a certain time or aircraft
