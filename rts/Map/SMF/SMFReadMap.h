@@ -96,8 +96,7 @@ private:
 
 public:
 	// constants
-	static const int tileScale     =   4;
-	static const int bigSquareSize = 128; // 32 * tileScale
+	static const int bigSquareSize = 128; //relative to SMFheader.{mapx,mapy}
 
 	// globals for SMFGround{Drawer, Textures}
 	int numBigTexX;
