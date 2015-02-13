@@ -960,6 +960,8 @@ EXPORT(float            ) skirmishAiCallback_Map_getTidalStrength(int skirmishAI
 
 EXPORT(float            ) skirmishAiCallback_Map_getGravity(int skirmishAIId);
 
+EXPORT(float            ) skirmishAiCallback_Map_getWaterDamage(int skirmishAIId);
+
 EXPORT(int              ) skirmishAiCallback_Map_getPoints(int skirmishAIId, bool includeAllies);
 
 EXPORT(void             ) skirmishAiCallback_Map_Point_getPosition(int skirmishAIId, int pointId, float* return_posF3_out);

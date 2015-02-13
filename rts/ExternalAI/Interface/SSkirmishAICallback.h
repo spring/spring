@@ -1876,6 +1876,8 @@ struct SSkirmishAICallback {
 
 	float             (CALLING_CONV *Map_getGravity)(int skirmishAIId);
 
+	float             (CALLING_CONV *Map_getWaterDamage)(int skirmishAIId);
+
 
 	/**
 	 * Returns all points drawn with this AIs team color,
