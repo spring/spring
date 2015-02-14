@@ -112,6 +112,7 @@ void CSMFReadMap::ParseHeader()
     tileMapSizeX    = (numBigTexX * bigTexSize / header.tilesize);
     tileMapSizeY    = (numBigTexY * bigTexSize / header.tilesize);
 	tileCount       = (tileMapSizeX * tileMapSizeY);
+    smallTileSize   = (header.tilesize);
 
     // total map size
 	mapSizeX        = (header.mapx * SQUARE_SIZE);

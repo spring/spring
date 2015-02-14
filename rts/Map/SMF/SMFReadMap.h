@@ -102,6 +102,7 @@ public:
 	int numBigTexX;
 	int numBigTexY;
 	int bigTexSize;
+    int smallTileSize;
 	int tileMapSizeX;
 	int tileMapSizeY;
 	int tileCount;

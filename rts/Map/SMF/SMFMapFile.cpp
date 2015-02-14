@@ -22,12 +22,10 @@ CSMFMapFile::CSMFMapFile(const string& mapFileName)
 
 	READPTR_MAPHEADER(header, (&ifs));
 
-	if (strcmp(header.magic, "spring map file") != 0 ||
-	    header.version != 1 || header.tilesize != 32 ||
-	    header.texelPerSquare != 8 || header.squareSize != 8)
+	if (strcmp(header.magic, "spring map file") != 0 || header.version != 1 ||
+        header.texelPerSquare != 8 || header.squareSize != 8)
 		throw content_error("Incorrect map file " + mapFileName);
 }
-
 
 void CSMFMapFile::ReadMinimap(void* data)
 {

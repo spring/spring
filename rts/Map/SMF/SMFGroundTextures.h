@@ -53,6 +53,10 @@ private:
 	// use Pixel Buffer Objects for async. uploading (DMA)
 	PBO pbo;
 
+	int smallTileMipOffset[5] = {0};
+	int &smallTileBytes = smallTileMipOffset[4];
+	void calcSmallTileBytes(int size, int type);
+
 	int tileTexFormat;
 };
 
