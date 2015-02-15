@@ -48,7 +48,7 @@ void CTeamHighlight::Disable() {
 }
 
 void CTeamHighlight::Update(int frameNum) {
-	if (frameNum & (TEAM_SLOWUPDATE_RATE - 1))
+	if ((frameNum % TEAM_SLOWUPDATE_RATE))
 		return;
 
 	bool hl = false;

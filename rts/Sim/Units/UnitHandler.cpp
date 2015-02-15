@@ -278,7 +278,7 @@ void CUnitHandler::Update()
 		SCOPED_TIMER("Unit::SlowUpdate");
 
 		// reset the iterator every <UNIT_SLOWUPDATE_RATE> frames
-		if ((gs->frameNum & (UNIT_SLOWUPDATE_RATE - 1)) == 0) {
+		if ((gs->frameNum % UNIT_SLOWUPDATE_RATE) == 0) {
 			activeSlowUpdateUnit = activeUnits.begin();
 		}
 
