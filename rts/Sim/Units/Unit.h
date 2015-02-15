@@ -416,10 +416,10 @@ public:
 	SResourcePack resourcesUncondUse;
 	SResourcePack resourcesUncondMake;
 
-	/// costs per 16 frames
+	/// costs per UNIT_SLOWUPDATE_RATE frames
 	SResourcePack resourcesUse;
 
-	/// incomes per 16 frames
+	/// incomes per UNIT_SLOWUPDATE_RATE frames
 	SResourcePack resourcesMake;
 
 	/// variables used for calculating unit resource usage

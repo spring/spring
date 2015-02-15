@@ -223,7 +223,7 @@ void CMapInfo::ReadWater()
 	water.fluidDensity = wt.GetFloat("fluidDensity", 960.0f * 0.25f);
 	water.repeatX = wt.GetFloat("repeatX", 0.0f);
 	water.repeatY = wt.GetFloat("repeatY", 0.0f);
-	water.damage  = wt.GetFloat("damage",  0.0f) * (16.0f / GAME_SPEED);
+	water.damage  = wt.GetFloat("damage",  0.0f) * ((float)UNIT_SLOWUPDATE_RATE / (float)GAME_SPEED);
 
 	water.absorb    = wt.GetFloat3("absorb",    float3(0.0f, 0.0f, 0.0f));
 	water.baseColor = wt.GetFloat3("baseColor", float3(0.0f, 0.0f, 0.0f));
