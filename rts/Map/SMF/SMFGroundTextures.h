@@ -27,7 +27,7 @@ protected:
 	bool RecompressTiles(bool canRecompress);
 	void ExtractSquareTiles(const int texSquareX, const int texSquareY, const int mipLevel, GLint* tileBuf) const;
 	void LoadSquareTexture(int x, int y, int level);
-
+	void CalcSmallTileBytes(int size, int type);
 	inline bool TexSquareInView(int, int) const;
 
 	CSMFReadMap* smfMap;
@@ -53,9 +53,9 @@ private:
 	// use Pixel Buffer Objects for async. uploading (DMA)
 	PBO pbo;
 
-	int smallTileMipOffset[5] = {0};
-	int &smallTileBytes = smallTileMipOffset[4];
-	void calcSmallTileBytes(int size, int type);
+	int smallTileMipOffset[5];
+	int &smallTileBytes;
+
 
 	int tileTexFormat;
 };
