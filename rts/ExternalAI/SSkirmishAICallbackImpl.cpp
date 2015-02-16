@@ -1913,7 +1913,7 @@ EXPORT(float) skirmishAiCallback_Map_getGravity(int skirmishAIId) {
 }
 
 EXPORT(float) skirmishAiCallback_Map_getWaterDamage(int skirmishAIId) {
-	return mapInfo->water.damage * ((float)GAME_SPEED / UNIT_SLOWUPDATE_RATE);
+	return mapInfo->water.damage;
 }
 
 
