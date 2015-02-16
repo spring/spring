@@ -63,7 +63,7 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 
 	CFileHandler* ifs = file.GetFileHandler();
 	const SMFHeader& header = file.GetHeader();
-	calcSmallTileBytes( header.tilesize, 1/*DXT1*/); // FIXME assuming DXT1 compression
+	CalcSmallTileBytes( header.tilesize, 1/*DXT1*/); // FIXME assuming DXT1 compression
 
 	if ((mapDims.mapx != header.mapx) || (mapDims.mapy != header.mapy)) {
 		throw content_error("Error loading map: size from header doesn't match map size.");
@@ -562,7 +562,7 @@ void CSMFGroundTextures::BindSquareTexture(int texSquareX, int texSquareY)
 }
 
 void
-CSMFGroundTextures::calcSmallTileBytes(int size, int type)
+CSMFGroundTextures::CalcSmallTileBytes(int size, int type)
 {
 	if (type == 1/*DXT1*/) {
 		int mip = size;
