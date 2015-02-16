@@ -1256,7 +1256,8 @@ unsigned int CGroundMoveType::GetNewPath()
 
 bool CGroundMoveType::ReRequestPath(bool callScript, bool forceRequest) {
 	// limit frequency of repath-requests from outside SlowUpdate
-	if (((gs->frameNum - lastPathRequestFrame) < (UNIT_SLOWUPDATE_RATE >> 1)) && (!forceRequest))
+	// Only allow at most 2 requests between SlowUpdate.
+	if (((gs->frameNum - lastPathRequestFrame) < ((UNIT_SLOWUPDATE_RATE >> 1) + 1)) && (!forceRequest))
 		return false;
 
 	StopEngine(callScript);
