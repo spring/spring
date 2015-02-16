@@ -100,25 +100,25 @@ void CSMFReadMap::ParseHeader()
 	mapDims.mapx = header.mapx;
 	mapDims.mapy = header.mapy;
 
-    // SQUARE_SIZE = 8 - tools/unitsync/unitsync.cpp:63
-    // bigSquareSize = 128 - rts/Map/SMF/SMFReadMap.h:100
+	// SQUARE_SIZE = 8 - tools/unitsync/unitsync.cpp:63
+	// bigSquareSize = 128 - rts/Map/SMF/SMFReadMap.h:100
 
-    // big tiles
+	// big tiles
 	numBigTexX      = (header.mapx / bigSquareSize); // big tiles
 	numBigTexY      = (header.mapy / bigSquareSize); // big tiles
 	bigTexSize      = (SQUARE_SIZE * bigSquareSize); // = 1024
 
-    // small tiles from smt files
-    tileMapSizeX    = (numBigTexX * bigTexSize / header.tilesize);
-    tileMapSizeY    = (numBigTexY * bigTexSize / header.tilesize);
+	// small tiles from smt files
+	tileMapSizeX    = (numBigTexX * bigTexSize / header.tilesize);
+	tileMapSizeY    = (numBigTexY * bigTexSize / header.tilesize);
 	tileCount       = (tileMapSizeX * tileMapSizeY);
-    smallTileSize   = (header.tilesize);
+	smallTileSize   = (header.tilesize);
 
-    // total map size
+	// total map size
 	mapSizeX        = (header.mapx * SQUARE_SIZE);
 	mapSizeZ        = (header.mapy * SQUARE_SIZE);
 
-    // height map
+	// height map
 	maxHeightMapIdx = ((header.mapx + 1) * (header.mapy + 1)) - 1;
 	heightMapSizeX  =  (header.mapx + 1);
 }
