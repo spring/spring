@@ -44,6 +44,8 @@ CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm): smfMap(rm)
 	LoadTiles(smfMap->GetFile());
 	LoadSquareTextures(3);
 	ConvolveHeightMap(mapDims.mapx, 1);
+	smallTileMipOffset[1] = 0;
+	smallTileBytes = smallTileMipOffset[4];
 }
 
 CSMFGroundTextures::~CSMFGroundTextures()
@@ -466,19 +468,10 @@ void CSMFGroundTextures::ExtractSquareTiles(
 	const int mipLevel,
 	GLint* tileBuf
 ) const {
-
-	//FIXME i feel that this can be simplified if the math for bytes/ints is
-	// done ahead of time and then the loops dont bother with much else.
-	//
-	// *tileBuf is a buffer for a dxt1 compressed image of size 1024x1024
-	// dxt is saved as compressed blocks of 4x4 pixels as 8 bytes.
-	// a compression ratio of 8x
-	// 1024x1024pixels * 4channels / 8compression ratio = 512 kBytes
-	// per block row 1024pixels / 4pixelblock * 8bytes = 2 kBytes
-
 	// small tiles per row and col of big square
 	const int smallTiles = smfMap->bigTexSize / smfMap->smallTileSize;
 
+	// dxt1 is saved as compressed blocks of 4x4 pixels.
 	// number of dxt1 blocks horizontally and vertically per small tile
 	const int numBlocks = (smfMap->smallTileSize >> mipLevel) / 4;
 
@@ -495,7 +488,6 @@ void CSMFGroundTextures::ExtractSquareTiles(
 			const unsigned int tileIdx = tileMap[tileY * smfMap->tileMapSizeX + tileX];
 			
 			// source tile location
-			// vector<char>tiles rts/Map/SMF/SMFGroundTextures.h:46
 			const GLint* tile = (GLint*) &tiles[tileIdx * smallTileBytes + mipOffset];
 
 			// initial destination offset in dxt1 blocks(8 bytes)
