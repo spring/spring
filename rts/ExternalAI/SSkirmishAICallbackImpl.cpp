@@ -1912,6 +1912,10 @@ EXPORT(float) skirmishAiCallback_Map_getGravity(int skirmishAIId) {
 	return skirmishAIId_callback[skirmishAIId]->GetGravity();
 }
 
+EXPORT(float) skirmishAiCallback_Map_getWaterDamage(int skirmishAIId) {
+	return mapInfo->water.damage;
+}
+
 
 
 EXPORT(bool) skirmishAiCallback_Map_isPossibleToBuildAt(int skirmishAIId, int unitDefId,
@@ -5276,6 +5280,7 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Map_getCurWind = &skirmishAiCallback_Map_getCurWind;
 	callback->Map_getTidalStrength = &skirmishAiCallback_Map_getTidalStrength;
 	callback->Map_getGravity = &skirmishAiCallback_Map_getGravity;
+	callback->Map_getWaterDamage = &skirmishAiCallback_Map_getWaterDamage;
 	callback->Map_getPoints = &skirmishAiCallback_Map_getPoints;
 	callback->Map_Point_getPosition = &skirmishAiCallback_Map_Point_getPosition;
 	callback->Map_Point_getColor = &skirmishAiCallback_Map_Point_getColor;
