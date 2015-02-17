@@ -41,10 +41,6 @@ private:
 	float maxDist;
 	bool zoomBack;
 	float oldDist;
-
-	spring_time warpMouseStart;
-	int2 warpMousePosOld;
-	int2 warpMousePosNew;
 };
 
 #endif // _SPRING_CONTROLLER_H
