@@ -4,8 +4,6 @@
 #define _SPRING_CONTROLLER_H
 
 #include "CameraController.h"
-#include "System/Misc/SpringTime.h"
-#include "System/type2.h"
 
 
 class CSpringController : public CCameraController

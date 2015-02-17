@@ -20,7 +20,7 @@ CONFIG(bool,  CamSpringEnabled).defaultValue(true).headlessValue(false);
 CONFIG(int,   CamSpringScrollSpeed).defaultValue(10);
 CONFIG(float, CamSpringFOV).defaultValue(45.0f);
 CONFIG(bool,  CamSpringLockCardinalDirections).defaultValue(true).description("If when rotating cardinal directions should be `locked` for a short time.");
-CONFIG(bool,  CamSpringCloseUpZoomIn).defaultValue(false).description("If camera should zoom in more the less  high the camera is. (Blizzard-/DOTA-like)");
+CONFIG(bool,  CamSpringZoomOutFromMousePos).defaultValue(true);
 
 
 CSpringController::CSpringController()
@@ -104,20 +104,20 @@ void CSpringController::MouseWheelMove(float move)
 				dist = oldDist;
 				zoomBack = false;
 				camHandler->CameraTransition(0.5f);
-			}
+			} else {
+				float zoomInDist = CGround::LineGroundCol(curCamPos, curCamPos + mouse->dir * 150000.f, false);
+				if (zoomInDist > 0.0f) {
+					// zoominpos -> campos
+					const float3 zoomInGroundPos = curCamPos + mouse->dir * zoomInDist;
+					zoomInDist *= (1.0f + (move * shiftSpeed * 0.007f));
+					const float3 wantedCamPos = zoomInGroundPos - mouse->dir * zoomInDist;
 
-			float zoomInDist = CGround::LineGroundCol(curCamPos, curCamPos + mouse->dir * 150000.f, false);
-			if (zoomInDist > 0.0f) {
-				// zoominpos -> campos
-				const float3 zoomInGroundPos = curCamPos + mouse->dir * zoomInDist;
-				zoomInDist *= (1.0f + (move * shiftSpeed * 0.007f));
-				const float3 wantedCamPos = zoomInGroundPos - mouse->dir * zoomInDist;
-
-				// campos -> groundpos
-				const float newDist = CGround::LineGroundCol(wantedCamPos, wantedCamPos + dir * 150000.f, false);
-				if (newDist > 0.0f) {
-					dist = newDist;
-					pos = wantedCamPos + dir * dist;
+					// campos -> groundpos
+					const float newDist = CGround::LineGroundCol(wantedCamPos, wantedCamPos + dir * 150000.f, false);
+					if (newDist > 0.0f) {
+						dist = newDist;
+						pos = wantedCamPos + dir * dist;
+					}
 				}
 			}
 
@@ -140,6 +140,27 @@ void CSpringController::MouseWheelMove(float move)
 				camHandler->CameraTransition(1.0f);
 			} else {
 				zoomBack = false;
+
+				if (configHandler->GetBool("CamSpringZoomOutFromMousePos")) {
+					float zoomInDist = CGround::LineGroundCol(curCamPos, curCamPos + mouse->dir * 150000.f, false);
+					if (zoomInDist > 0.0f) {
+						// zoominpos -> campos
+						const float3 zoomInGroundPos = curCamPos + mouse->dir * zoomInDist;
+						zoomInDist *= (1.0f + (move * shiftSpeed * 0.007f));
+						const float3 wantedCamPos = zoomInGroundPos - mouse->dir * zoomInDist;
+
+						// campos -> groundpos
+						const float newDist = CGround::LineGroundCol(wantedCamPos, wantedCamPos + dir * 150000.f, false);
+						if (newDist > 0.0f) {
+							dist = newDist;
+							pos = wantedCamPos + dir * dist;
+						}
+					}
+
+					camera->SetPos(GetPos());
+					camera->Update();
+					camHandler->CameraTransition(0.25f);
+				}
 			}
 		}
 	}
@@ -156,8 +177,7 @@ void CSpringController::Update()
 	rot.x = Clamp(rot.x, PI * 0.51f, PI * 0.99f);
 	dir = camera->GetDir();
 
-	const float dist_ = (configHandler->GetBool("CamSpringCloseUpZoomIn")) ? -dir.y * dist : dist;
-	pixelSize = (camera->GetTanHalfFov() * 2.0f) / globalRendering->viewSizeY * dist_ * 2.0f;
+	pixelSize = (camera->GetTanHalfFov() * 2.0f) / globalRendering->viewSizeY * dist * 2.0f;
 
 	scrollSpeed = configHandler->GetInt("CamSpringScrollSpeed") * 0.1f;
 	fov = configHandler->GetFloat("CamSpringFOV");
@@ -212,8 +232,7 @@ float3 CSpringController::GetRot() const
 
 float3 CSpringController::GetPos() const
 {
-	const float dist_ = (configHandler->GetBool("CamSpringCloseUpZoomIn")) ? -dir.y * dist : dist;
-	float3 cpos = pos - dir * dist_;
+	float3 cpos = pos - dir * dist;
 	cpos.y = std::max(cpos.y, CGround::GetHeightAboveWater(cpos.x, cpos.z, false) + 5);
 	return cpos;
 }
