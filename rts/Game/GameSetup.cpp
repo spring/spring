@@ -8,6 +8,7 @@
 #include "System/Exceptions.h"
 #include "System/Util.h"
 #include "System/FileSystem/ArchiveScanner.h"
+#include "System/FileSystem/RapidHandler.h"
 #include "System/Log/ILog.h"
 
 #include <algorithm>
@@ -618,6 +619,7 @@ bool CGameSetup::Init(const std::string& buf)
 	LoadUnitRestrictions(file);
 
 	// Postprocessing
+	modName = GetRapidName(modName);
 	modName = archiveScanner->NameFromArchive(modName);
 
 	return true;
