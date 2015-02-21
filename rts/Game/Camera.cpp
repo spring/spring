@@ -488,8 +488,8 @@ float3 CCamera::GetMoveVectorFromState(bool fromKeyState) const
 		float2 distToEdge; // must be float, ints don't save the sign in case of 0 and we need it for copysign()
 		distToEdge.x = Clamp(mouse->lastx, 0, screenW);
 		distToEdge.y = Clamp(mouse->lasty, 0, screenH);
-		if ((screenW - distToEdge.x) < distToEdge.x) distToEdge.x = -(screenW - distToEdge.x );
-		if ((screenH - distToEdge.y) < distToEdge.y) distToEdge.y = -(screenH - distToEdge.y);
+		if (((screenW-1) - distToEdge.x) < distToEdge.x) distToEdge.x = -((screenW-1) - distToEdge.x);
+		if (((screenH-1) - distToEdge.y) < distToEdge.y) distToEdge.y = -((screenH-1) - distToEdge.y);
 		distToEdge.x = -distToEdge.x;
 
 		float2 move;

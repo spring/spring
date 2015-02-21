@@ -81,7 +81,7 @@ void COverheadController::ScreenEdgeMove(float3 move)
 	KeyMove(move);
 }
 
-// FIXME: 100% identical to SmoothController::MouseWheelMove
+
 void COverheadController::MouseWheelMove(float move)
 {
 	if (move == 0.0f)

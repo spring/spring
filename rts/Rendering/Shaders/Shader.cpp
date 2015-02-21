@@ -492,6 +492,8 @@ namespace Shader {
 	void GLSLProgramObject::Release() {
 		IProgramObject::Release();
 		glDeleteProgram(objID);
+		ClearHash();
+		curFlagsHash = 0;
 		objID = 0;
 		objID = glCreateProgram();
 	}
@@ -503,10 +505,10 @@ namespace Shader {
 		const bool   oldValid  = IsValid();
 		const GLuint oldProgID = objID;
 
-		curFlagsHash = GetHash();
 		log = "";
 		valid = false;
 
+		curFlagsHash = GetHash();
 		// create shader source hash
 		curSrcHash = curFlagsHash;
 		for (const IShaderObject* so: GetAttachedShaderObjs()) {

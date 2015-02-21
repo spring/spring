@@ -94,7 +94,7 @@ static void ParseUniformSetupTables(Shader::IProgramObject* program, const LuaTa
 }
 
 
-static void CompileObject(
+static void CreateShaderObject(
 	Shader::IProgramObject* program,
 	const std::string& definitions,
 	const std::string& sources,
@@ -184,9 +184,9 @@ bool LoadFromLua(Shader::IProgramObject* program, const std::string& filename)
 	if (vertSrcs.str().empty() && fragSrcs.str().empty() && geomSrcs.str().empty())
 		return false;
 
-	CompileObject(program, shdrDefs.str(), vertSrcs.str(), GL_VERTEX_SHADER);
-	CompileObject(program, shdrDefs.str(), geomSrcs.str(), GL_GEOMETRY_SHADER_EXT);
-	CompileObject(program, shdrDefs.str(), fragSrcs.str(), GL_FRAGMENT_SHADER);
+	CreateShaderObject(program, shdrDefs.str(), vertSrcs.str(), GL_VERTEX_SHADER);
+	CreateShaderObject(program, shdrDefs.str(), geomSrcs.str(), GL_GEOMETRY_SHADER_EXT);
+	CreateShaderObject(program, shdrDefs.str(), fragSrcs.str(), GL_FRAGMENT_SHADER);
 
 	//FIXME ApplyGeometryParameters(L, 1, prog); // done before linking
 

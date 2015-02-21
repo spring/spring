@@ -137,7 +137,7 @@ public:
 		float  fluidDensity;      ///< in kg/m^3
 		float  repeatX;           ///< (calculated default is in IWater)
 		float  repeatY;           ///< (calculated default is in IWater)
-		float  damage;
+		float  damage;            ///< scaled by (UNIT_SLOWUPDATE_RATE / GAME_SPEED)
 		float3 absorb;
 		float3 baseColor;
 		float3 minColor;
