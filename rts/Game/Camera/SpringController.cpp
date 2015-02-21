@@ -25,7 +25,7 @@ CONFIG(bool,  CamSpringZoomOutFromMousePos).defaultValue(true);
 
 CSpringController::CSpringController()
 : rot(2.677f, 0.f, 0.f)
-, dist(1500.f)
+, dist(float3(mapDims.mapx * 0.5f, 0.0f, mapDims.mapy * 0.55f).Length2D() * 1.5f * SQUARE_SIZE)
 , maxDist(std::max(mapDims.mapx, mapDims.mapy) * SQUARE_SIZE * 1.333f)
 , zoomBack(false)
 , oldDist(0.f)
@@ -44,7 +44,7 @@ void CSpringController::KeyMove(float3 move)
 		return;
 	}
 
-	move *= math::sqrt(move.z) * 200;
+	move *= math::sqrt(move.z) * 200.f;
 	const float3 flatForward = (dir * XZVector).ANormalize();
 	pos += (camera->GetRight() * move.x + flatForward * move.y) * pixelSize * 2.0f * scrollSpeed;
 	Update();
