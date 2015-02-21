@@ -9,7 +9,6 @@ Major:
  - new rotatable default camera
  - bugfixes & improvements
 
-
 Cameras:
  ! removed TW, Orbital & Smooth camera
  ! add new default camera: Spring camera
@@ -65,7 +64,8 @@ Lua:
  ! fix Spring.GetKeyState & Spring.PressedKeys expecting SDL2 keycodes while whole lua gets SDL1 ones
  ! Spring.PressedKeys now also returns keynames
 
-
+Buildbot/Installer:
+ ! merged spring-headless / spring-dedicated into linux static builds / windows installer
 
 
 -- 98.0 ---------------------------------------------------------

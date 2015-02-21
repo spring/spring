@@ -6,6 +6,7 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Map/Ground.h"
+#include "Map/ReadMap.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/StrafeAirMoveType.h"
@@ -86,8 +87,8 @@ void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		return;
 	} else if (c.GetID() == CMD_MOVE && c.params.size() >= 3 &&
 			(c.params[0] < 0.0f || c.params[2] < 0.0f
-			 || c.params[0] > gs->mapx*SQUARE_SIZE
-			 || c.params[2] > gs->mapy*SQUARE_SIZE))
+			 || c.params[0] > mapDims.mapx*SQUARE_SIZE
+			 || c.params[2] > mapDims.mapy*SQUARE_SIZE))
 	{
 		return;
 	}

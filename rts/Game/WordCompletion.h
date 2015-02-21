@@ -10,7 +10,6 @@
 class CWordCompletion
 {
 	CWordCompletion();
-	~CWordCompletion();
 
 public:
 	/**

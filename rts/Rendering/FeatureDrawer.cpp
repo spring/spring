@@ -72,8 +72,8 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 {
 	eventHandler.AddClient(this);
 
-	drawQuadsX = gs->mapx/DRAW_QUAD_SIZE;
-	drawQuadsY = gs->mapy/DRAW_QUAD_SIZE;
+	drawQuadsX = mapDims.mapx/DRAW_QUAD_SIZE;
+	drawQuadsY = mapDims.mapy/DRAW_QUAD_SIZE;
 	drawQuads.resize(drawQuadsX * drawQuadsY);
 	featureDrawDistance = configHandler->GetFloat("FeatureDrawDistance");
 	featureFadeDistance = std::min(configHandler->GetFloat("FeatureFadeDistance"), featureDrawDistance);
@@ -198,7 +198,7 @@ void CFeatureDrawer::Draw()
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
 
 		glMultiTexCoord4f(GL_TEXTURE2_ARB, 1.0f,1.0f,1.0f,1.0f); // workaround a nvidia bug with TexGen
-		SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0.0f, 0.0f);
+		SetTexGen(1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), 0.0f, 0.0f);
 
 		glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
 		glActiveTextureARB(GL_TEXTURE0_ARB);
@@ -419,15 +419,28 @@ void CFeatureDrawer::DrawShadowPass()
 class CFeatureQuadDrawer : public CReadMap::IQuadDrawer {
 public:
 	int drawQuadsX;
+
 	bool drawReflection, drawRefraction;
+	bool farFeatures;
+
 	float sqFadeDistBegin;
 	float sqFadeDistEnd;
-	bool farFeatures;
 
 	std::vector<CFeatureDrawer::DrawQuad>* drawQuads;
 
-	void DrawQuad(int x, int y)
-	{
+	void ResetState() {
+		drawQuadsX = 0;
+
+		drawReflection = false;
+		drawRefraction = false;
+		farFeatures = false;
+
+		sqFadeDistBegin = 0.0f;
+		sqFadeDistEnd   = 0.0f;
+
+		drawQuads = nullptr;
+	}
+	void DrawQuad(int x, int y) {
 		std::vector<IWorldObjectModelRenderer*>& opaqueModelRenderers = featureDrawer->opaqueModelRenderers;
 		std::vector<IWorldObjectModelRenderer*>& cloakedModelRenderers = featureDrawer->cloakedModelRenderers;
 
@@ -522,8 +535,8 @@ void CFeatureDrawer::SwapFeatures() {
 
 void CFeatureDrawer::PostLoad()
 {
-	drawQuadsX = gs->mapx/DRAW_QUAD_SIZE;
-	drawQuadsY = gs->mapy/DRAW_QUAD_SIZE;
+	drawQuadsX = mapDims.mapx/DRAW_QUAD_SIZE;
+	drawQuadsY = mapDims.mapy/DRAW_QUAD_SIZE;
 	drawQuads.clear();
 	drawQuads.resize(drawQuadsX * drawQuadsY);
 

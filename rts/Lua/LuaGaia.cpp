@@ -38,32 +38,9 @@ static const char* LuaGaiaUnsyncedFilename = "LuaGaia/draw.lua";
 
 static boost::mutex m_singleton;
 
+DECL_LOAD_HANDLER(CLuaGaia, luaGaia)
+DECL_FREE_HANDLER(CLuaGaia, luaGaia)
 
-void CLuaGaia::LoadHandler()
-{
-	{
-		std::lock_guard<boost::mutex> lk(m_singleton);
-		if (luaGaia) return;
-
-		luaGaia = new CLuaGaia();
-	}
-
-	if (!luaGaia->IsValid()) {
-		FreeHandler();
-	}
-}
-
-
-void CLuaGaia::FreeHandler()
-{
-	std::lock_guard<boost::mutex> lk(m_singleton);
-	if (!luaGaia) return;
-
-	auto* inst = luaGaia;
-	luaGaia = NULL;
-	inst->KillLua();
-	delete inst;
-}
 
 /******************************************************************************/
 /******************************************************************************/

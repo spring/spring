@@ -9,6 +9,7 @@
 #include "Game/InMapDraw.h"
 #include "Game/Players/Player.h"
 #include "Map/Ground.h"
+#include "Map/ReadMap.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Net/Protocol/NetProtocol.h"
@@ -49,9 +50,9 @@ bool CStartPosSelecter::Ready(bool luaForcedReady)
 		return false;
 
 	if (luaForcedReady) {
-		net->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, CPlayer::PLAYER_RDYSTATE_FORCED, setStartPos.x, setStartPos.y, setStartPos.z));
+		clientNet->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, CPlayer::PLAYER_RDYSTATE_FORCED, setStartPos.x, setStartPos.y, setStartPos.z));
 	} else {
-		net->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, CPlayer::PLAYER_RDYSTATE_READIED, setStartPos.x, setStartPos.y, setStartPos.z));
+		clientNet->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, CPlayer::PLAYER_RDYSTATE_READIED, setStartPos.x, setStartPos.y, setStartPos.z));
 	}
 
 	delete this;
@@ -75,7 +76,7 @@ bool CStartPosSelecter::MousePress(int x, int y, int button)
 	inMapDrawer->SendErase(setStartPos);
 	startPosSet = true;
 	setStartPos = camera->GetPos() + mouse->dir * dist;
-	net->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, CPlayer::PLAYER_RDYSTATE_UPDATED, setStartPos.x, setStartPos.y, setStartPos.z));
+	clientNet->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, CPlayer::PLAYER_RDYSTATE_UPDATED, setStartPos.x, setStartPos.y, setStartPos.z));
 
 	return true;
 }
@@ -96,11 +97,11 @@ void CStartPosSelecter::DrawStartBox() const
 	const std::vector<AllyTeam>& allyStartData = CGameSetup::GetAllyStartingData();
 	const AllyTeam& myStartData = allyStartData[gu->myAllyTeam];
 
-	const float by = myStartData.startRectTop * gs->mapy * SQUARE_SIZE;
-	const float bx = myStartData.startRectLeft * gs->mapx * SQUARE_SIZE;
+	const float by = myStartData.startRectTop * mapDims.mapy * SQUARE_SIZE;
+	const float bx = myStartData.startRectLeft * mapDims.mapx * SQUARE_SIZE;
 
-	const float dy = (myStartData.startRectBottom - myStartData.startRectTop) * gs->mapy * SQUARE_SIZE / 10;
-	const float dx = (myStartData.startRectRight - myStartData.startRectLeft) * gs->mapx * SQUARE_SIZE / 10;
+	const float dy = (myStartData.startRectBottom - myStartData.startRectTop) * mapDims.mapy * SQUARE_SIZE / 10;
+	const float dx = (myStartData.startRectRight - myStartData.startRectLeft) * mapDims.mapx * SQUARE_SIZE / 10;
 
 	// draw starting-rectangle restrictions
 	glBegin(GL_QUADS);

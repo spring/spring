@@ -169,7 +169,7 @@ void QTPFS::PathSearch::IterateNodes(const std::vector<INode*>& allNodes) {
 	openNodes.check_heap_property(0);
 
 	#ifdef QTPFS_TRACE_PATH_SEARCHES
-	searchIter.SetPoppedNodeIdx(curNode->zmin() * gs->mapx + curNode->xmin());
+	searchIter.SetPoppedNodeIdx(curNode->zmin() * mapDims.mapx + curNode->xmin());
 	#endif
 
 	if (curNode == tgtNode)
@@ -274,7 +274,7 @@ void QTPFS::PathSearch::IterateNodeNeighbors(const std::vector<INode*>& nxtNodes
 			openNodes.check_heap_property(0);
 
 			#ifdef QTPFS_TRACE_PATH_SEARCHES
-			searchIter.AddPushedNodeIdx(nxtNode->zmin() * gs->mapx + nxtNode->xmin());
+			searchIter.AddPushedNodeIdx(nxtNode->zmin() * mapDims.mapx + nxtNode->xmin());
 			#endif
 
 			continue;

@@ -3,8 +3,6 @@
 #include "System/Net/UDPListener.h"
 #include "System/Net/UDPConnection.h"
 
-#include <stdarg.h>
-#include <ctime>
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
 #include <boost/version.hpp>
@@ -16,17 +14,16 @@
 #if defined DEDICATED || defined DEBUG
 	#include <iostream>
 #endif
-#include <stdlib.h> // why is this here?
-
-#include "System/Net/Connection.h"
 
 #include "GameServer.h"
-#include "Net/Protocol/BaseNetProtocol.h"
 
 #include "GameParticipant.h"
 #include "GameSkirmishAI.h"
 #include "AutohostInterface.h"
+
+#include "Game/ClientSetup.h"
 #include "Game/GameSetup.h"
+
 #include "Game/Action.h"
 #include "Game/ChatMessage.h"
 #include "Game/CommandMessage.h"
@@ -35,6 +32,7 @@
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
 
+#include "Net/Protocol/BaseNetProtocol.h"
 #include "Sim/Misc/GlobalConstants.h"
 
 // This undef is needed, as somewhere there is a type interface specified,
@@ -51,6 +49,7 @@
 #include "System/TdfParser.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/SimpleParser.h"
+#include "System/Net/Connection.h"
 #include "System/Net/LocalConnection.h"
 #include "System/Net/UnpackPacket.h"
 #include "System/LoadSave/DemoRecorder.h"
@@ -126,14 +125,18 @@ static const std::string SERVER_COMMANDS[] = {
 };
 
 
-
-CGameServer* gameServer = NULL;
 std::set<std::string> CGameServer::commandBlacklist;
 
 
-CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData* const newGameData, const CGameSetup* const mysetup)
-: setup(mysetup)
-, quitServer(false)
+
+CGameServer* gameServer = NULL;
+
+CGameServer::CGameServer(
+	const boost::shared_ptr<const ClientSetup> newClientSetup,
+	const boost::shared_ptr<const    GameData> newGameData,
+	const boost::shared_ptr<const  CGameSetup> newGameSetup
+)
+: quitServer(false)
 , serverFrameNum(0)
 
 , serverStartTime(spring_gettime())
@@ -169,8 +172,31 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 
 , gameHasStarted(false)
 , generatedGameID(false)
+, reloadingServer(false)
 {
-	assert(setup);
+	myClientSetup = newClientSetup;
+	myGameData = newGameData;
+	myGameSetup = newGameSetup;
+
+	Initialize();
+}
+
+CGameServer::~CGameServer()
+{
+	quitServer = true;
+
+	LOG_L(L_INFO, "[%s][1]", __FUNCTION__);
+	thread->join();
+	delete thread;
+	LOG_L(L_INFO, "[%s][2]", __FUNCTION__);
+
+	// after this, demoRecorder goes out of scope and its dtor is called
+	WriteDemoData();
+}
+
+
+void CGameServer::Initialize()
+{
 	curSpeedCtrl = configHandler->GetInt("SpeedControl");
 
 	allowSpecJoin = configHandler->GetBool("AllowSpectatorJoin");
@@ -179,32 +205,32 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 	logInfoMessages = configHandler->GetBool("ServerLogInfoMessages");
 	logDebugMessages = configHandler->GetBool("ServerLogDebugMessages");
 
-	if (!setup->onlyLocal) {
-		UDPNet.reset(new netcode::UDPListener(hostPort, hostIP));
+	if (!myGameSetup->onlyLocal) {
+		UDPNet.reset(new netcode::UDPListener(myClientSetup->hostPort, myClientSetup->hostIP));
 	}
 
 	AddAutohostInterface(StringToLower(configHandler->GetString("AutohostIP")), configHandler->GetInt("AutohostPort"));
 
-	rng.Seed(newGameData->GetSetup().length());
-	Message(str(format(ServerStart) %hostPort), false);
+	rng.Seed((myGameData->GetSetupText()).length());
+	Message(str(format(ServerStart) %myClientSetup->hostPort), false);
 
 	lastNewFrameTick = spring_gettime();
 
-	maxUserSpeed = setup->maxSpeed;
-	minUserSpeed = setup->minSpeed;
-	noHelperAIs = setup->noHelperAIs;
+	maxUserSpeed = myGameSetup->maxSpeed;
+	minUserSpeed = myGameSetup->minSpeed;
+	noHelperAIs = myGameSetup->noHelperAIs;
 
-	StripGameSetupText(newGameData);
+	StripGameSetupText(myGameData.get());
 
-	if (setup->hostDemo) {
-		Message(str(format(PlayingDemo) %setup->demoName));
-		demoReader.reset(new CDemoReader(setup->demoName, modGameTime + 0.1f));
+	if (myGameSetup->hostDemo) {
+		Message(str(format(PlayingDemo) %myGameSetup->demoName));
+		demoReader.reset(new CDemoReader(myGameSetup->demoName, modGameTime + 0.1f));
 	}
 
 	{
-		const std::vector<PlayerBase>& playerStartData = setup->GetPlayerStartingDataCont();
-		const std::vector<TeamBase>& teamStartData = setup->GetTeamStartingDataCont();
-		const std::vector<SkirmishAIData>& aiStartData = setup->GetAIStartingDataCont();
+		const std::vector<PlayerBase>& playerStartData = myGameSetup->GetPlayerStartingDataCont();
+		const std::vector<TeamBase>& teamStartData = myGameSetup->GetTeamStartingDataCont();
+		const std::vector<SkirmishAIData>& aiStartData = myGameSetup->GetAIStartingDataCont();
 
 		players.reserve(MAX_PLAYERS); // no reallocation please
 		teams.resize(teamStartData.size());
@@ -233,9 +259,9 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 	}
 
 	if (configHandler->GetBool("ServerRecordDemos")) {
-		demoRecorder.reset(new CDemoRecorder(setup->mapName, setup->modName, true));
-		demoRecorder->WriteSetupText(gameData->GetSetup());
-		const netcode::RawPacket* ret = gameData->Pack();
+		demoRecorder.reset(new CDemoRecorder(myGameSetup->mapName, myGameSetup->modName, true));
+		demoRecorder->WriteSetupText(myGameData->GetSetupText());
+		const netcode::RawPacket* ret = myGameData->Pack();
 		demoRecorder->SaveToDemo(ret->data, ret->length, GetDemoTime());
 		delete ret;
 	}
@@ -270,18 +296,31 @@ CGameServer::CGameServer(const std::string& hostIP, int hostPort, const GameData
 	}
 }
 
-CGameServer::~CGameServer()
+void CGameServer::PostLoad(int newServerFrameNum)
 {
-	quitServer = true;
+	Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
+	serverFrameNum = newServerFrameNum;
 
-	LOG_L(L_INFO, "[%s][1]", __FUNCTION__);
-	thread->join();
-	delete thread;
-	LOG_L(L_INFO, "[%s][2]", __FUNCTION__);
+	gameHasStarted = (serverFrameNum > 0);
 
-	// after this, demoRecorder goes out of scope and its dtor is called
-	WriteDemoData();
+	// for all GameParticipant's
+	for (auto it = players.begin(); it != players.end(); ++it) {
+		it->lastFrameResponse = newServerFrameNum;
+	}
 }
+
+
+void CGameServer::Reload(const boost::shared_ptr<const CGameSetup> newGameSetup)
+{
+	const boost::shared_ptr<const ClientSetup> clientSetup = gameServer->GetClientSetup();
+	const boost::shared_ptr<const    GameData>    gameData = gameServer->GetGameData();
+
+	delete gameServer;
+
+	// transfer ownership to new instance (assume only GameSetup changes)
+	gameServer = new CGameServer(clientSetup, gameData, newGameSetup);
+}
+
 
 void CGameServer::WriteDemoData()
 {
@@ -291,7 +330,7 @@ void CGameServer::WriteDemoData()
 	// there is always at least one non-Gaia team (numTeams > 0)
 	// the Gaia team itself does not count toward the statistics
 	demoRecorder->SetTime(serverFrameNum / GAME_SPEED, spring_tomsecs(spring_gettime() - serverStartTime) / 1000);
-	demoRecorder->InitializeStats(players.size(), int((setup->GetTeamStartingDataCont()).size()) - setup->useLuaGaia);
+	demoRecorder->InitializeStats(players.size(), int((myGameSetup->GetTeamStartingDataCont()).size()) - myGameSetup->useLuaGaia);
 
 	// Pass the winners to the CDemoRecorder.
 	demoRecorder->SetWinningAllyTeams(winningAllyTeams);
@@ -311,10 +350,10 @@ void CGameServer::WriteDemoData()
 	*/
 }
 
-void CGameServer::StripGameSetupText(const GameData* const newGameData)
+void CGameServer::StripGameSetupText(const GameData* newGameData)
 {
 	// modify and save GameSetup text (remove passwords)
-	TdfParser parser(newGameData->GetSetup().c_str(), newGameData->GetSetup().length());
+	TdfParser parser((newGameData->GetSetupText()).c_str(), (newGameData->GetSetupText()).length());
 	TdfParser::TdfSection* rootSec = parser.GetRootSection();
 
 	for (TdfParser::sectionsMap_t::iterator it = rootSec->sections.begin(); it != rootSec->sections.end(); ++it) {
@@ -330,9 +369,10 @@ void CGameServer::StripGameSetupText(const GameData* const newGameData)
 	std::ostringstream strbuf;
 	parser.print(strbuf);
 
-	GameData* newData = new GameData(*newGameData);
-	newData->SetSetup(strbuf.str());
-	gameData.reset(newData);
+	GameData* modGameData = new GameData(*newGameData);
+
+	modGameData->SetSetupText(strbuf.str());
+	myGameData.reset(modGameData);
 }
 
 
@@ -376,18 +416,6 @@ void CGameServer::AddAutohostInterface(const std::string& autohostIP, const int 
 	}
 }
 
-void CGameServer::PostLoad(int newServerFrameNum)
-{
-	Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
-	serverFrameNum = newServerFrameNum;
-
-	gameHasStarted = (serverFrameNum > 0);
-
-	std::vector<GameParticipant>::iterator it;
-	for (it = players.begin(); it != players.end(); ++it) {
-		it->lastFrameResponse = newServerFrameNum;
-	}
-}
 
 void CGameServer::SkipTo(int targetFrameNum)
 {
@@ -1059,7 +1087,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 		case NETMSG_QUIT: {
 			Message(str(format(PlayerLeft) %players[a].GetType() %players[a].name %" normal quit"));
 			Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(a, 1));
-			players[a].Kill("User exited");
+			players[a].Kill("[GameServer] user exited", true);
 			if (hostif)
 				hostif->SendPlayerLeft(a, 1);
 			break;
@@ -1140,7 +1168,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 				Message(str(format(WrongPlayer) %msgCode %a %(unsigned)inbuf[1]));
 				break;
 			}
-			if (setup->startPosType == CGameSetup::StartPos_ChooseInGame) {
+			if (myGameSetup->startPosType == CGameSetup::StartPos_ChooseInGame) {
 				if (team >= teams.size()) {
 					Message(str(format("Invalid teamID %d in NETMSG_STARTPOS from player %d") %team %player));
 				} else if (getSkirmishAIIds(ais, team, player).empty() && ((team != players[player].team) || (players[player].spectator))) {
@@ -1665,7 +1693,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 				Message(str(format("Player %s tried to send spoofed alliance message") %players[a].name));
 			}
 			else {
-				if (!setup->fixedAllies) {
+				if (!myGameSetup->fixedAllies) {
 					Broadcast(CBaseNetProtocol::Get().SendSetAllied(player, whichAllyTeam, allied));
 				}
 				else { // not allowed
@@ -1902,7 +1930,7 @@ void CGameServer::GenerateAndSendGameID()
 
 	// Third dword is CRC of setupText.
 	CRC crc;
-	crc.Update(setup->gameSetupText.c_str(), setup->gameSetupText.length());
+	crc.Update(myGameSetup->setupText.c_str(), myGameSetup->setupText.length());
 	gameID.intArray[2] = crc.GetDigest();
 
 	CRC entropy;
@@ -1910,17 +1938,17 @@ void CGameServer::GenerateAndSendGameID()
 	gameID.intArray[3] = entropy.GetDigest();
 
 	// fixed gameID?
-	if (!setup->gameID.empty()) {
+	if (!myGameSetup->gameID.empty()) {
 		unsigned char p[16];
 	#if defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
 		// workaround missing C99 support in a msvc lib with %2hhx
-		generatedGameID = (sscanf(setup->gameID.c_str(),
+		generatedGameID = (sscanf(myGameSetup->gameID.c_str(),
 		      "%02hc%02hc%02hc%02hc%02hc%02hc%02hc%02hc"
 		      "%02hc%02hc%02hc%02hc%02hc%02hc%02hc%02hc",
 		      &p[ 0], &p[ 1], &p[ 2], &p[ 3], &p[ 4], &p[ 5], &p[ 6], &p[ 7],
 		      &p[ 8], &p[ 9], &p[10], &p[11], &p[12], &p[13], &p[14], &p[15]) == 16);
 	#else
-		generatedGameID = (sscanf(setup->gameID.c_str(),
+		generatedGameID = (sscanf(myGameSetup->gameID.c_str(),
 		       "%hhx%hhx%hhx%hhx%hhx%hhx%hhx%hhx"
 		       "%hhx%hhx%hhx%hhx%hhx%hhx%hhx%hhx",
 		       &p[ 0], &p[ 1], &p[ 2], &p[ 3], &p[ 4], &p[ 5], &p[ 6], &p[ 7],
@@ -1945,7 +1973,7 @@ void CGameServer::CheckForGameStart(bool forced)
 	assert(!gameHasStarted);
 	bool allReady = true;
 
-	for (size_t a = static_cast<size_t>(setup->numDemoPlayers); a < players.size(); a++) {
+	for (size_t a = static_cast<size_t>(myGameSetup->numDemoPlayers); a < players.size(); a++) {
 		if (players[a].myState == GameParticipant::UNCONNECTED && serverStartTime + spring_secs(30) < spring_gettime()) {
 			// autostart the game when 45 seconds have passed and everyone who managed to connect is ready
 			continue;
@@ -1960,7 +1988,7 @@ void CGameServer::CheckForGameStart(bool forced)
 	}
 
 	// msecs to wait until the game starts after all players are ready
-	const spring_time gameStartDelay = spring_secs(setup->gameStartDelay);
+	const spring_time gameStartDelay = spring_secs(myGameSetup->gameStartDelay);
 
 	if (allReady || forced) {
 		if (!spring_istime(readyTime)) {
@@ -1970,7 +1998,7 @@ void CGameServer::CheckForGameStart(bool forced)
 			Broadcast(CBaseNetProtocol::Get().SendStartPlaying(std::max(boost::int64_t(1), spring_tomsecs(gameStartDelay))));
 
 			// make seed more random
-			if (setup->gameID.empty())
+			if (myGameSetup->gameID.empty())
 				rng.Seed(spring_tomsecs(readyTime - serverStartTime));
 		}
 	}
@@ -2470,19 +2498,27 @@ void CGameServer::UpdateLoop()
 
 		if (hostif)
 			hostif->SendQuit();
+
 		Broadcast(CBaseNetProtocol::Get().SendQuit("Server shutdown"));
 
-		// flush the quit messages to reduce ugly network error messages on the client side
-		// this is to make sure the Flush has any effect at all (we don't want a forced flush)
-		spring_sleep(spring_msecs(1000));
+		if (!reloadingServer) {
+			// flush the quit messages to reduce ugly network error messages on the client side
+			// this is to make sure the Flush has any effect at all (we don't want a forced flush)
+			//
+			// when reloading, we can assume there is only a local client and skip the sleep()'s
+			spring_sleep(spring_msecs(1000));
+		}
 
 		for (GameParticipant& p: players) {
 			if (p.link)
 				p.link->Flush();
 		}
 
-		// now let clients close their connections
-		spring_sleep(spring_msecs(3000));
+		if (!reloadingServer) {
+			// now let clients close their connections
+			spring_sleep(spring_msecs(3000));
+		}
+
 	} CATCH_SPRING_ERRORS
 }
 
@@ -2696,7 +2732,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 	}
 
 	newPlayer.Connected(link, isLocal);
-	newPlayer.SendData(boost::shared_ptr<const RawPacket>(gameData->Pack()));
+	newPlayer.SendData(boost::shared_ptr<const RawPacket>(myGameData->Pack()));
 	newPlayer.SendData(CBaseNetProtocol::Get().SendSetPlayerNum((unsigned char)newPlayerNumber));
 
 	// after gamedata and playerNum, the player can start loading
@@ -2704,11 +2740,11 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		for (std::vector<boost::shared_ptr<const netcode::RawPacket> >::const_iterator vit = lit->begin(); vit != lit->end(); ++vit)
 			newPlayer.SendData(*vit); // throw at him all stuff he missed until now
 
-	if (demoReader == NULL || setup->demoName.empty()) { // gamesetup from demo?
+	if (demoReader == NULL || myGameSetup->demoName.empty()) { // gamesetup from demo?
 		if (!newPlayer.spectator) {
 			unsigned newPlayerTeam = newPlayer.team;
 			if (!teams[newPlayerTeam].IsActive()) { // create new team
-				newPlayer.SetReadyToStart(setup->startPosType != CGameSetup::StartPos_ChooseInGame);
+				newPlayer.SetReadyToStart(myGameSetup->startPosType != CGameSetup::StartPos_ChooseInGame);
 				teams[newPlayerTeam].SetActive(true);
 			}
 			Broadcast(CBaseNetProtocol::Get().SendJoinTeam(newPlayerNumber, newPlayerTeam));

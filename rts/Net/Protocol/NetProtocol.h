@@ -56,7 +56,7 @@ public:
 	 * @brief Take a look at the messages in the recieve buffer (read-only)
 	 * @return A RawPacket holding the data, or 0 if no data
 	 * @param ahead How many packets to look ahead. A typical usage would be:
-	 * for (int ahead = 0; (packet = net->Peek(ahead)) != NULL; ++ahead) {}
+	 * for (int ahead = 0; (packet = clientNet->Peek(ahead)) != NULL; ++ahead) {}
 	 */
 	boost::shared_ptr<const netcode::RawPacket> Peek(unsigned ahead) const;
 
@@ -116,7 +116,7 @@ private:
 	std::string userPasswd;
 };
 
-extern CNetProtocol* net;
+extern CNetProtocol* clientNet;
 
 #endif // NET_PROTOCOL_H
 

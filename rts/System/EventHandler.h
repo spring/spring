@@ -23,6 +23,9 @@ class CEventHandler
 		CEventHandler();
 		~CEventHandler();
 
+		void ResetState();
+		void SetupEvents();
+
 		void AddClient(CEventClient* ec);
 		void RemoveClient(CEventClient* ec);
 

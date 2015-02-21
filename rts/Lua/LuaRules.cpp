@@ -32,32 +32,8 @@ const int* CLuaRules::currentCobArgs = NULL;
 
 static boost::mutex m_singleton;
 
-
-void CLuaRules::LoadHandler()
-{
-	{
-		std::lock_guard<boost::mutex> lk(m_singleton);
-		if (luaRules) return;
-
-		luaRules = new CLuaRules();
-	}
-
-	if (!luaRules->IsValid()) {
-		FreeHandler();
-	}
-}
-
-
-void CLuaRules::FreeHandler()
-{
-	std::lock_guard<boost::mutex> lk(m_singleton);
-	if (!luaRules) return;
-
-	auto* inst = luaRules;
-	luaRules = NULL;
-	inst->KillLua();
-	delete inst;
-}
+DECL_LOAD_HANDLER(CLuaRules, luaRules)
+DECL_FREE_HANDLER(CLuaRules, luaRules)
 
 
 /******************************************************************************/
@@ -66,9 +42,10 @@ void CLuaRules::FreeHandler()
 CLuaRules::CLuaRules()
 : CLuaHandleSynced("LuaRules", LUA_HANDLE_ORDER_RULES)
 {
-	if (!IsValid()) {
+	currentCobArgs = NULL;
+
+	if (!IsValid())
 		return;
-	}
 
 	SetFullCtrl(true);
 	SetFullRead(true);
@@ -78,15 +55,12 @@ CLuaRules::CLuaRules()
 	SetSelectTeam(CEventClient::AllAccessTeam);
 
 	Init(LuaRulesSyncedFilename, LuaRulesUnsyncedFilename, SPRING_VFS_MOD);
-
-	if (!IsValid()) {
-		return;
-	}
 }
 
 CLuaRules::~CLuaRules()
 {
 	luaRules = NULL;
+	currentCobArgs = NULL;
 }
 
 

@@ -342,7 +342,7 @@ void CDynWater::Draw()
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, -camPosX/256.0f + 0.5f, -camPosZ/256.0f + 0.5f, 0, 0);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 12, 1.0f/WF_SIZE, 1.0f/WF_SIZE, 0, 0);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 13, -(camPosBig.x - WH_SIZE)/WF_SIZE, -(camPosBig.z - WH_SIZE)/WF_SIZE, 0, 0);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 14, 1.0f/(gs->pwr2mapx * SQUARE_SIZE), 1.0f/(gs->pwr2mapy * SQUARE_SIZE), 0, 0);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 14, 1.0f/(mapDims.pwr2mapx * SQUARE_SIZE), 1.0f/(mapDims.pwr2mapy * SQUARE_SIZE), 0, 0);
 	//glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0, 1.0f/4096.0f, 1.0f/4096.0f, 0, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 1, camera->GetPos().x, camera->GetPos().y, camera->GetPos().z, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 2, reflectRight.x, reflectRight.y, reflectRight.z, 0);
@@ -421,8 +421,8 @@ void CDynWater::Update()
 
 	oldCamPosBig = camPosBig;
 
-	camPosBig.x = math::floor(std::max((float)WH_SIZE, std::min((float)gs->mapx*SQUARE_SIZE-WH_SIZE, (float)camera->GetPos().x))/(W_SIZE*16))*(W_SIZE*16);
-	camPosBig.z = math::floor(std::max((float)WH_SIZE, std::min((float)gs->mapy*SQUARE_SIZE-WH_SIZE, (float)camera->GetPos().z))/(W_SIZE*16))*(W_SIZE*16);
+	camPosBig.x = math::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapx*SQUARE_SIZE-WH_SIZE, (float)camera->GetPos().x))/(W_SIZE*16))*(W_SIZE*16);
+	camPosBig.z = math::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapy*SQUARE_SIZE-WH_SIZE, (float)camera->GetPos().z))/(W_SIZE*16))*(W_SIZE*16);
 
 	glDisable(GL_DEPTH_TEST);
 	glDepthMask(0);
@@ -609,8 +609,8 @@ void CDynWater::DrawWaves()
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 9,  0,          1.0f/1024, 0,0);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, 1.0f/1024,  1.0f/1024, 0,0);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, 1.0f/1024,  0, 0,0);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 12, float(WF_SIZE)/(gs->pwr2mapx*SQUARE_SIZE), float(WF_SIZE)/(gs->pwr2mapy*SQUARE_SIZE), 0, 0);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 13, (camPosBig.x-WH_SIZE)/(gs->pwr2mapx*SQUARE_SIZE), (camPosBig.z-WH_SIZE)/(gs->pwr2mapy*SQUARE_SIZE), 0, 0);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 12, float(WF_SIZE)/(mapDims.pwr2mapx*SQUARE_SIZE), float(WF_SIZE)/(mapDims.pwr2mapy*SQUARE_SIZE), 0, 0);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 13, (camPosBig.x-WH_SIZE)/(mapDims.pwr2mapx*SQUARE_SIZE), (camPosBig.z-WH_SIZE)/(mapDims.pwr2mapy*SQUARE_SIZE), 0, 0);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 14, dx/WF_SIZE, dy/WF_SIZE, 0, 0);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 15, (camPosBig.x-WH_SIZE)/WF_SIZE*4, (camPosBig.x-WH_SIZE)/WF_SIZE*4, 0, 0);
 
@@ -837,8 +837,8 @@ void CDynWater::DrawWaterSurface()
 	va = GetVertexArray();
 	va->Initialize();
 
-	camPosBig2.x = math::floor(std::max((float)WH_SIZE, std::min((float)gs->mapx*SQUARE_SIZE - WH_SIZE, (float)camera->GetPos().x))/(W_SIZE*16))*(W_SIZE*16);
-	camPosBig2.z = math::floor(std::max((float)WH_SIZE, std::min((float)gs->mapy*SQUARE_SIZE - WH_SIZE, (float)camera->GetPos().z))/(W_SIZE*16))*(W_SIZE*16);
+	camPosBig2.x = math::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapx*SQUARE_SIZE - WH_SIZE, (float)camera->GetPos().x))/(W_SIZE*16))*(W_SIZE*16);
+	camPosBig2.z = math::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapy*SQUARE_SIZE - WH_SIZE, (float)camera->GetPos().z))/(W_SIZE*16))*(W_SIZE*16);
 
 	// FIXME:
 	//     1. DynWater::UpdateCamRestraints was never called ==> <this->left> and <this->right> were always empty

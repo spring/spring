@@ -34,21 +34,38 @@ CEventHandler::CEventHandler()
 {
 	mouseOwner = NULL;
 
-	// Setup all events
+	SetupEvents();
+
+	// helper event client (always created)
+	EventBatchHandler::CreateInstance();
+}
+
+CEventHandler::~CEventHandler()
+{
+	EventBatchHandler::DeleteInstance();
+}
+
+
+void CEventHandler::ResetState()
+{
+	mouseOwner = NULL;
+
+	eventMap.clear();
+	handles.clear();
+
+	SetupEvents();
+
+	EventBatchHandler::DeleteInstance();
+	EventBatchHandler::CreateInstance();
+}
+
+void CEventHandler::SetupEvents()
+{
 	#define SETUP_EVENT(name, props) SetupEvent(#name, &list ## name, props);
 	#define SETUP_UNMANAGED_EVENT(name, props) SetupEvent(#name, NULL, props);
 		#include "Events.def"
 	#undef SETUP_EVENT
 	#undef SETUP_UNMANAGED_EVENT
-
-	// helper event client (alwayss create)
-	EventBatchHandler::CreateInstance();
-}
-
-
-CEventHandler::~CEventHandler()
-{
-	EventBatchHandler::DeleteInstance();
 }
 
 
@@ -59,8 +76,7 @@ void CEventHandler::AddClient(CEventClient* ec)
 {
 	ListInsert(handles, ec);
 
-	EventMap::const_iterator it;
-	for (it = eventMap.begin(); it != eventMap.end(); ++it) {
+	for (auto it = eventMap.cbegin(); it != eventMap.cend(); ++it) {
 		const EventInfo& ei = it->second;
 		if (ei.HasPropBit(MANAGED_BIT)) {
 			if (ec->WantsEvent(it->first)) {
@@ -70,7 +86,6 @@ void CEventHandler::AddClient(CEventClient* ec)
 	}
 }
 
-
 void CEventHandler::RemoveClient(CEventClient* ec)
 {
 	if (mouseOwner == ec) {
@@ -79,8 +94,7 @@ void CEventHandler::RemoveClient(CEventClient* ec)
 
 	ListRemove(handles, ec);
 
-	EventMap::const_iterator it;
-	for (it = eventMap.begin(); it != eventMap.end(); ++it) {
+	for (auto it = eventMap.cbegin(); it != eventMap.cend(); ++it) {
 		const EventInfo& ei = it->second;
 		if (ei.HasPropBit(MANAGED_BIT)) {
 			RemoveEvent(ec, it->first);
@@ -95,8 +109,8 @@ void CEventHandler::RemoveClient(CEventClient* ec)
 void CEventHandler::GetEventList(vector<string>& list) const
 {
 	list.clear();
-	EventMap::const_iterator it;
-	for (it = eventMap.begin(); it != eventMap.end(); ++it) {
+
+	for (auto it = eventMap.cbegin(); it != eventMap.cend(); ++it) {
 		list.push_back(it->first);
 	}
 }
@@ -110,21 +124,21 @@ bool CEventHandler::IsKnown(const string& eName) const
 
 bool CEventHandler::IsManaged(const string& eName) const
 {
-	EventMap::const_iterator it = eventMap.find(eName);
+	const EventMap::const_iterator it = eventMap.find(eName);
 	return ((it != eventMap.end()) && (it->second.HasPropBit(MANAGED_BIT)));
 }
 
 
 bool CEventHandler::IsUnsynced(const string& eName) const
 {
-	EventMap::const_iterator it = eventMap.find(eName);
+	const EventMap::const_iterator it = eventMap.find(eName);
 	return ((it != eventMap.end()) && (it->second.HasPropBit(UNSYNCED_BIT)));
 }
 
 
 bool CEventHandler::IsController(const string& eName) const
 {
-	EventMap::const_iterator it = eventMap.find(eName);
+	const EventMap::const_iterator it = eventMap.find(eName);
 	return ((it != eventMap.end()) && (it->second.HasPropBit(CONTROL_BIT)));
 }
 

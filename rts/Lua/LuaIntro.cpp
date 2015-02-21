@@ -39,32 +39,8 @@ CLuaIntro* LuaIntro = NULL;
 
 static boost::mutex m_singleton;
 
-
-void CLuaIntro::LoadHandler()
-{
-	{
-		std::lock_guard<boost::mutex> lk(m_singleton);
-		if (LuaIntro) return;
-
-		LuaIntro = new CLuaIntro();
-	}
-
-	if (!LuaIntro->IsValid()) {
-		FreeHandler();
-	}
-}
-
-
-void CLuaIntro::FreeHandler()
-{
-	std::lock_guard<boost::mutex> lk(m_singleton);
-	if (!LuaIntro) return;
-
-	auto* inst = LuaIntro;
-	LuaIntro = NULL;
-	inst->KillLua();
-	delete inst;
-}
+DECL_LOAD_HANDLER(CLuaIntro, LuaIntro)
+DECL_FREE_HANDLER(CLuaIntro, LuaIntro)
 
 
 /******************************************************************************/

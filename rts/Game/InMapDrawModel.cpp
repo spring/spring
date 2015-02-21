@@ -5,9 +5,9 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
-#include "Game/Players/TeamController.h"
 #include "Net/Protocol/BaseNetProtocol.h"
 #include "Map/Ground.h"
+#include "Map/ReadMap.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "System/EventHandler.h"
 #include "System/creg/STL_List.h"
@@ -61,8 +61,8 @@ const float CInMapDrawModel::QUAD_SCALE = 1.0f / (DRAW_QUAD_SIZE * SQUARE_SIZE);
 
 
 CInMapDrawModel::CInMapDrawModel()
-	: drawQuadsX(gs->mapx / DRAW_QUAD_SIZE)
-	, drawQuadsY(gs->mapy / DRAW_QUAD_SIZE)
+	: drawQuadsX(mapDims.mapx / DRAW_QUAD_SIZE)
+	, drawQuadsY(mapDims.mapy / DRAW_QUAD_SIZE)
 	, drawAllMarks(false)
 	, numPoints(0)
 	, numLines(0)

@@ -47,13 +47,13 @@ unsigned int CBasicWater::GenWaterQuadsList(unsigned int textureWidth, unsigned 
 	glBindTexture(GL_TEXTURE_2D, textureID);
 	glBegin(GL_QUADS);
 
-	const float mapSizeX = gs->mapx * SQUARE_SIZE;
-	const float mapSizeY = gs->mapy * SQUARE_SIZE;
+	const float mapSizeX = mapDims.mapx * SQUARE_SIZE;
+	const float mapSizeY = mapDims.mapy * SQUARE_SIZE;
 
 	// Calculate number of times texture should repeat over the map,
 	// taking aspect ratio into account.
-	float repeatX = 65536.0f / gs->mapx;
-	float repeatY = 65536.0f / gs->mapy * textureWidth / textureHeight;
+	float repeatX = 65536.0f / mapDims.mapx;
+	float repeatY = 65536.0f / mapDims.mapy * textureWidth / textureHeight;
 
 	// Use better repeat setting of 1 repeat per 4096 mapx/mapy for the new
 	// ocean.jpg while retaining backward compatibility with old maps relying

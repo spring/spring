@@ -42,7 +42,7 @@ public:
 	bool CanReconnect() const { return false; }
 	bool NeedsReconnect() { return false; }
 	void Unmute() {}
-	void Close(bool flush) {}
+	void Close(bool flush);
 	void SetLossFactor(int factor) {}
 
 	unsigned int GetPacketQueueSize() const;

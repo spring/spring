@@ -19,6 +19,7 @@ public:
 
 	~CPlayerHandler();
 
+	void ResetState();
 	void LoadFromSetup(const CGameSetup* setup);
 
 	/**

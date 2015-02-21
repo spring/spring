@@ -223,7 +223,7 @@ namespace Shader {
 
 	struct SShaderFlagState {
 	public:
-		SShaderFlagState() : updates(0), lastUpdates(0), lastHash(0) {}
+		SShaderFlagState() : updates(1), lastUpdates(0), lastHash(0) {}
 		virtual ~SShaderFlagState() {}
 
 		unsigned int GetHash();

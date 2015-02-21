@@ -128,12 +128,6 @@ SectionGroup "Multiplayer battlerooms"
 		!undef INSTALL
 	SectionEnd
 
-	Section "Zero-K lobby" SEC_ZERO_K_LOBBY
-		!define INSTALL
-			${!echonow} "Processing: zeroK"
-			!include "sections\zeroK.nsh"
-		!undef INSTALL
-	SectionEnd
 SectionGroupEnd
 
 Section "Desktop shortcuts" SEC_DESKTOP
@@ -229,7 +223,6 @@ Section Uninstall
 	!include "sections\shortcuts_startMenu.nsh"
 	!include "sections\shortcuts_desktop.nsh"
 	!include "sections\portable.nsh"
-	!include "sections\zeroK.nsh"
 	!ifdef NSI_UNINSTALL_FILES
 	!include "${NSI_UNINSTALL_FILES}"
 	!endif

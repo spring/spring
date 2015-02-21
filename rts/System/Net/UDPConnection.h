@@ -83,8 +83,9 @@ public:
 	virtual ~UDPConnection();
 
 	enum { MIN_LOSS_FACTOR = 0, MAX_LOSS_FACTOR = 2 };
-	// START overriding CConnection
 
+
+	// START overriding CConnection
 	void SendData(boost::shared_ptr<const RawPacket> data);
 	bool HasIncomingData() const { return !msgQueue.empty(); }
 	boost::shared_ptr<const RawPacket> Peek(unsigned ahead) const;

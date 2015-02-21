@@ -13,8 +13,27 @@
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "System/Platform/Threading.h"
 
+// managed by EventHandler
 EventBatchHandler* EventBatchHandler::ebh = nullptr;
+
+// global counter for certain batch-events
 boost::int64_t EventBatchHandler::eventSequenceNumber = 0;
+
+void EventBatchHandler::CreateInstance()
+{
+	if (ebh == nullptr) {
+		ebh = new EventBatchHandler();
+	}
+}
+
+void EventBatchHandler::DeleteInstance()
+{
+	if (ebh != nullptr)	{
+		delete ebh;
+		ebh = nullptr;
+	}
+}
+
 
 
 EventBatchHandler::EventBatchHandler()
@@ -23,19 +42,6 @@ EventBatchHandler::EventBatchHandler()
 	autoLinkEvents = true;
 	RegisterLinkedEvents(this);
 	eventHandler.AddClient(this);
-}
-
-
-void EventBatchHandler::CreateInstance()
-{
-	ebh = new EventBatchHandler();
-}
-
-
-void EventBatchHandler::DeleteInstance()
-{
-	delete ebh;
-	ebh = nullptr;
 }
 
 void EventBatchHandler::UnitMoved(const CUnit* unit) { EnqueueUnitMovedEvent(unit, unit->pos); }

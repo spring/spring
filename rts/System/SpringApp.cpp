@@ -64,6 +64,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileSystemInitializer.h"
+#include "System/FileSystem/VFSHandler.h"
 #include "System/Platform/CmdLineParams.h"
 #include "System/Platform/Misc.h"
 #include "System/Platform/errorhandler.h"
@@ -169,7 +170,6 @@ SpringApp::~SpringApp()
 {
 	spring_clock::PopTickRate();
 	creg::System::FreeClasses();
-	delete cmdline;
 }
 
 /**
@@ -272,6 +272,7 @@ bool SpringApp::Initialize()
 	// Multithreading & Affinity
 	Threading::SetThreadName("unknown"); // set default threadname
 	Threading::InitThreadPool();
+	Threading::SetThreadScheduler();
 
 	// Create CGameSetup and CPreGame objects
 	Startup();
@@ -745,16 +746,25 @@ void SpringApp::ParseCmdLine(const std::string& binaryName)
 }
 
 
-void SpringApp::RunScript(boost::shared_ptr<ClientSetup> clientSetup, const std::string& buf)
+CGameController* SpringApp::RunScript(const std::string& buf)
 {
 	clientSetup->LoadFromStartScript(buf);
+
 	// LoadFromStartScript overrides all values so reset cmdline defined ones
-	if (cmdline->IsSet("server")) { clientSetup->hostIP = cmdline->GetString("server"); clientSetup->isHost = true; }
+	if (cmdline->IsSet("server")) {
+		clientSetup->hostIP = cmdline->GetString("server");
+		clientSetup->isHost = true;
+	}
+
 	clientSetup->SanityCheck();
 
 	pregame = new CPreGame(clientSetup);
-	if (clientSetup->isHost)
+
+	if (clientSetup->isHost) {
 		pregame->LoadSetupscript(buf);
+	}
+
+	return pregame;
 }
 
 
@@ -767,19 +777,25 @@ void SpringApp::Startup()
 	const std::string inputFile = cmdline->GetInputFile();
 	const std::string extension = FileSystem::GetExtension(inputFile);
 
-	// create base clientsetup
-	boost::shared_ptr<ClientSetup> startsetup(new ClientSetup());
-	if (cmdline->IsSet("server")) { startsetup->hostIP = cmdline->GetString("server"); startsetup->isHost = true; }
-	startsetup->myPlayerName = configHandler->GetString("name");
-	startsetup->SanityCheck();
+	// note: avoid any .get() leaks between here and GameServer!
+	clientSetup.reset(new ClientSetup());
+
+	// create base client-setup
+	if (cmdline->IsSet("server")) {
+		clientSetup->hostIP = cmdline->GetString("server");
+		clientSetup->isHost = true;
+	}
+
+	clientSetup->myPlayerName = configHandler->GetString("name");
+	clientSetup->SanityCheck();
 
 	// no argument (either game is given or show selectmenu)
 	if (inputFile.empty()) {
-		startsetup->isHost = true;
+		clientSetup->isHost = true;
+
 		if (cmdline->IsSet("game") && cmdline->IsSet("map")) {
 			// --game and --map directly specified, try to run them
-			std::string buf = StartScriptGen::CreateMinimalSetup(cmdline->GetString("game"), cmdline->GetString("map"));
-			RunScript(startsetup, buf);
+			activeController = RunScript(StartScriptGen::CreateMinimalSetup(cmdline->GetString("game"), cmdline->GetString("map")));
 		} else {
 			// menu
 		#ifdef HEADLESS
@@ -787,7 +803,8 @@ void SpringApp::Startup()
 				"The headless version of the engine can not be run in interactive mode.\n"
 				"Please supply a start-script, save- or demo-file.", "ERROR", MBF_OK|MBF_EXCL);
 		#endif
-			activeController = new SelectMenu(startsetup);
+			// not a memory-leak: SelectMenu deletes itself on start
+			activeController = new SelectMenu(clientSetup);
 		}
 		return;
 	}
@@ -795,20 +812,23 @@ void SpringApp::Startup()
 	// process given argument
 	if (inputFile.find("spring://") == 0) {
 		// url (syntax: spring://username:password@host:port)
-		if (!ParseSpringUri(inputFile, startsetup->myPlayerName, startsetup->myPasswd, startsetup->hostIP, startsetup->hostPort))
+		if (!ParseSpringUri(inputFile, clientSetup->myPlayerName, clientSetup->myPasswd, clientSetup->hostIP, clientSetup->hostPort))
 			throw content_error("invalid url specified: " + inputFile);
-		startsetup->isHost = false;
-		pregame = new CPreGame(startsetup);
+
+		clientSetup->isHost = false;
+		pregame = new CPreGame(clientSetup);
 	} else if (extension == "sdf") {
 		// demo
-		startsetup->isHost        = true;
-		startsetup->myPlayerName += " (spec)";
-		pregame = new CPreGame(startsetup);
+		clientSetup->isHost        = true;
+		clientSetup->myPlayerName += " (spec)";
+
+		pregame = new CPreGame(clientSetup);
 		pregame->LoadDemo(inputFile);
 	} else if (extension == "ssf") {
 		// savegame
-		startsetup->isHost = true;
-		pregame = new CPreGame(startsetup);
+		clientSetup->isHost = true;
+
+		pregame = new CPreGame(clientSetup);
 		pregame->LoadSavefile(inputFile);
 	} else {
 		// startscript
@@ -821,10 +841,59 @@ void SpringApp::Startup()
 		if (!fh.LoadStringData(buf))
 			throw content_error("Setup-script cannot be read: " + inputFile);
 
-		RunScript(startsetup, buf);
+		activeController = RunScript(buf);
 	}
 }
 
+
+
+void SpringApp::Reload(const std::string& script)
+{
+	// get rid of any running worker threads
+	ThreadPool::SetThreadCount(0);
+	ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads());
+
+	if (gameServer != NULL)
+		gameServer->SetReloading(true);
+
+	SafeDelete(game);
+	SafeDelete(pregame);
+
+	// no-op if we are not the server
+	SafeDelete(gameServer);
+	// PreGame allocates clientNet, so we need to delete our old connection
+	SafeDelete(clientNet);
+
+	// note: technically we only need to use RemoveArchive
+	FileSystemInitializer::Cleanup(false);
+	FileSystemInitializer::Initialize();
+
+	CNamedTextures::Kill();
+	CNamedTextures::Init();
+
+	LuaOpenGL::Free();
+	LuaOpenGL::Init();
+
+	// reload sounds.lua in case we switch to a different game
+	ISound::Shutdown();
+	ISound::Initialize();
+
+	// make sure all old EventClients are really gone (safety)
+	eventHandler.ResetState();
+
+	gu->ResetState();
+	gs->ResetState();
+
+	// must hold or we would loop forever
+	assert(!gu->globalReload);
+
+	if (script.empty()) {
+		// if no script, drop back to menu
+		activeController = new SelectMenu(clientSetup);
+	} else {
+		activeController = RunScript(script);
+	}
+}
 
 /**
  * @return return code of activecontroller draw function
@@ -838,8 +907,10 @@ int SpringApp::Update()
 		glEnable(GL_MULTISAMPLE_ARB);
 
 	int ret = 1;
-	if (activeController) {
+
+	if (activeController != NULL) {
 		ret = activeController->Update();
+
 		if (ret) {
 			ScopedTimer cputimer("GameController::Draw");
 			ret = activeController->Draw();
@@ -870,9 +941,16 @@ int SpringApp::Run()
 	while (!gu->globalQuit) {
 		Watchdog::ClearTimer(WDT_MAIN);
 		input.PushEvents();
-		if (!Update())
-			break;
+
+		if (gu->globalReload) {
+			Reload(gameSetup->setupText);
+		} else {
+			if (!Update()) {
+				break;
+			}
+		}
 	}
+
 	SaveWindowPosition();
 	ShutDown();
 
@@ -901,15 +979,13 @@ void SpringApp::ShutDown()
 	ThreadPool::SetThreadCount(0);
 	LOG("[SpringApp::%s][2]", __FUNCTION__);
 
+	SafeDelete(game);
 	SafeDelete(pregame);
-	// don't use SafeDelete: many components in ~CGame
-	// expect game-pointer to remain valid during call
-	delete game; game = NULL;
 
 	agui::FreeGui();
 
 	LOG("[SpringApp::%s][3]", __FUNCTION__);
-	SafeDelete(net);
+	SafeDelete(clientNet);
 	SafeDelete(gameServer);
 	SafeDelete(gameSetup);
 
@@ -959,8 +1035,8 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 				case SDL_WINDOWEVENT_MOVED: {
 					SaveWindowPosition();
 				} break;
-				//case SDL_WINDOWEVENT_SIZE_CHANGED:
-				case SDL_WINDOWEVENT_RESIZED: {
+				//case SDL_WINDOWEVENT_RESIZED: //this is event is always preceded by:
+				case SDL_WINDOWEVENT_SIZE_CHANGED: {
 					Watchdog::ClearTimer(WDT_MAIN, true);
 					SaveWindowPosition();
 					InitOpenGL();

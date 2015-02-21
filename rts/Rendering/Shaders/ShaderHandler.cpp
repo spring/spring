@@ -3,6 +3,7 @@
 #include "Rendering/GL/myGL.h"
 
 #include "Rendering/Shaders/ShaderHandler.h"
+#include "Rendering/Shaders/Shader.h"
 #include "Rendering/GlobalRendering.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
@@ -10,45 +11,75 @@
 #include <cassert>
 
 
+// not extern'ed, so static
+static CShaderHandler* gShaderHandler = NULL;
+
 CShaderHandler* CShaderHandler::GetInstance() {
-	static CShaderHandler shaHandler;
-	return &shaHandler;
+	if (gShaderHandler == NULL)
+		gShaderHandler = new CShaderHandler();
+
+	return gShaderHandler;
+}
+
+void CShaderHandler::FreeInstance(CShaderHandler* sh) {
+	assert(sh == gShaderHandler);
+	delete sh;
+	gShaderHandler = NULL;
+}
+
+
+
+CShaderHandler::~CShaderHandler() {
+	for (auto it = programObjects.begin(); it != programObjects.end(); ++it) {
+		// release by poMap (not poClass) to avoid erase-while-iterating pattern
+		ReleaseProgramObjectsMap(it->second);
+	}
+
+	programObjects.clear();
+	shaderCache.Clear();
 }
 
 
 void CShaderHandler::ReloadAll() {
-	for (std::map<std::string, ProgramObjMap>::iterator it = programObjects.begin(); it != programObjects.end(); ++it) {
-		for (ProgramObjMapIt jt = it->second.begin(); jt != it->second.end(); ++jt) {
+	for (auto it = programObjects.cbegin(); it != programObjects.cend(); ++it) {
+		for (auto jt = it->second.cbegin(); jt != it->second.cend(); ++jt) {
 			(jt->second)->Reload(true);
 		}
 	}
 }
 
+bool CShaderHandler::ReleaseProgramObjects(const std::string& poClass) {
+	if (programObjects.find(poClass) == programObjects.end())
+		return false;
 
-void CShaderHandler::ReleaseProgramObjects(const std::string& poClass) {
-	if (programObjects.find(poClass) == programObjects.end()) {
-		return;
-	}
+	ReleaseProgramObjectsMap(programObjects[poClass]);
 
-	for (ProgramObjMapIt it = programObjects[poClass].begin(); it != programObjects[poClass].end(); ++it) {
+	programObjects.erase(poClass);
+	return true;
+}
+
+void CShaderHandler::ReleaseProgramObjectsMap(ProgramObjMap& poMap) {
+	for (auto it = poMap.cbegin(); it != poMap.cend(); ++it) {
+		Shader::IProgramObject* po = it->second;
+
 		// free the program object and its attachments
-		if (it->second != Shader::nullProgramObject) {
-			(it->second)->Release(); delete (it->second);
+		if (po != Shader::nullProgramObject) {
+			po->Release(); delete po;
 		}
 	}
 
-	programObjects[poClass].clear();
-	programObjects.erase(poClass);
+	poMap.clear();
 }
 
 
 Shader::IProgramObject* CShaderHandler::GetProgramObject(const std::string& poClass, const std::string& poName) {
-	if (programObjects.find(poClass) != programObjects.end()) {
-		if (programObjects[poClass].find(poName) != programObjects[poClass].end()) {
-			return (programObjects[poClass][poName]);
-		}
-	}
-	return NULL;
+	if (programObjects.find(poClass) == programObjects.end())
+		return nullptr;
+
+	if (programObjects[poClass].find(poName) == programObjects[poClass].end())
+		return nullptr;
+
+	return (programObjects[poClass][poName]);
 }
 
 
@@ -88,8 +119,9 @@ Shader::IProgramObject* CShaderHandler::CreateProgramObject(const std::string& p
 
 Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soName, const std::string& soDefs, int soType) {
 	assert(!soName.empty());
-	const std::string lowerSoName = StringToLower(soName);
-	const bool arbShader = (lowerSoName.find("arb") != std::string::npos);
+
+	const bool arbShader = (StringToLower(soName).find("arb") != std::string::npos);
+
 	Shader::IShaderObject* so = Shader::nullShaderObject;
 
 	switch (soType) {
@@ -118,6 +150,5 @@ Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soN
 		return so;
 	}
 
-	so->Compile(true);
 	return so;
 }

@@ -75,7 +75,6 @@ CBuilderCAI::CBuilderCAI():
 	range3D(true)
 {}
 
-
 CBuilderCAI::CBuilderCAI(CUnit* owner):
 	CMobileCAI(owner),
 	building(false),
@@ -199,17 +198,25 @@ CBuilderCAI::~CBuilderCAI()
 	}
 }
 
+void CBuilderCAI::InitStatic()
+{
+	reclaimers.clear();
+	featureReclaimers.clear();
+	resurrecters.clear();
+}
+
 void CBuilderCAI::PostLoad()
 {
-	if (!commandQue.empty()) {
-		ownerBuilder = static_cast<CBuilder*>(owner);
+	if (commandQue.empty())
+		return;
 
-		Command& c = commandQue.front();
+	ownerBuilder = static_cast<CBuilder*>(owner);
 
-		if (buildOptions.find(c.GetID()) != buildOptions.end()) {
-			build.Parse(c);
-			build.pos = CGameHelper::Pos2BuildPos(build, true);
-		}
+	const Command& c = commandQue.front();
+
+	if (buildOptions.find(c.GetID()) != buildOptions.end()) {
+		build.Parse(c);
+		build.pos = CGameHelper::Pos2BuildPos(build, true);
 	}
 }
 
