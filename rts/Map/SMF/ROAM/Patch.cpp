@@ -60,23 +60,15 @@ void CTriNodePool::FreePools()
 
 void CTriNodePool::ResetAll()
 {
-	bool runOutOfNodes = false;
-	for (std::vector<CTriNodePool*>::iterator it = pools.begin(); it != pools.end(); ++it) {
-		if ((*it)->RunOutOfNodes()) {
-			runOutOfNodes = true;
-			break;
-		}
-	}
-	if (runOutOfNodes) {
-		if (poolSize < MAX_POOL_SIZE) {
-			FreePools();
-			InitPools(std::min(poolSize * 2, size_t(MAX_POOL_SIZE)));
-			return;
-		}
+	bool ranOutOfNodes = false;
+	for (CTriNodePool* p: pools) {
+		ranOutOfNodes |= p->RunOutOfNodes();
+		p->Reset();
 	}
 
-	for (std::vector<CTriNodePool*>::iterator it = pools.begin(); it != pools.end(); ++it) {
-		(*it)->Reset();
+	if (ranOutOfNodes && (poolSize < MAX_POOL_SIZE)) {
+		FreePools();
+		InitPools(std::min(poolSize * 2, size_t(MAX_POOL_SIZE)));
 	}
 }
 
