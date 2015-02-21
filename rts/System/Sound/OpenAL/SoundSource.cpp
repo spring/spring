@@ -102,18 +102,24 @@ void CSoundSource::Update()
 
 int CSoundSource::GetCurrentPriority() const
 {
-	if (curStream) {
+	if (asyncPlay.buffer != nullptr) {
+		return asyncPlay.buffer->GetPriority();
+	}
+	else if (curStream) {
 		return INT_MAX;
 	}
 	else if (!curPlaying) {
 		return INT_MIN;
 	}
-	return curPlaying->priority;
+	return curPlaying->GetPriority();
 }
 
 bool CSoundSource::IsPlaying(const bool checkOpenAl) const
 {
 	if (curStream)
+		return true;
+
+	if (asyncPlay.buffer != nullptr)
 		return true;
 
 	if (!curPlaying)
