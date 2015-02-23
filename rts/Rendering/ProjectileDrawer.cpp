@@ -762,11 +762,6 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 			unitDrawer->SetTeamColour(pp->GetTeamID());
 		}
 
-		if (pp->alphaThreshold != 0.1f) {
-			glPushAttrib(GL_COLOR_BUFFER_BIT);
-			glAlphaFunc(GL_GEQUAL, pp->alphaThreshold);
-		}
-
 		glPushMatrix();
 			glTranslatef3(pp->pos);
 			glRotatef(pp->spinAngle, pp->spinVec.x, pp->spinVec.y, pp->spinVec.z);
@@ -775,10 +770,6 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 				glCallList(pp->dispList);
 			}
 		glPopMatrix();
-
-		if (pp->alphaThreshold != 0.1f) {
-			glPopAttrib();
-		}
 	}
 
 	return true;

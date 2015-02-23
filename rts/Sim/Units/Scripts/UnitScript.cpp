@@ -1108,9 +1108,6 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	}
 	case CRASHING:
 		return !!unit->IsCrashing();
-	case ALPHA_THRESHOLD: {
-		return int(unit->alphaThreshold * 255);
-	}
 
 	case COB_ID: {
 		if (p1 <= 0) {
@@ -1609,10 +1606,6 @@ void CUnitScript::SetUnitVal(int val, int param)
 			if (param >= unit->weapons.size()) { return; }
 
 			unit->weapons[param]->avoidTarget = true;
-			break;
-		}
-		case ALPHA_THRESHOLD: {
-			unit->alphaThreshold = param / 255.0f;
 			break;
 		}
 		case CEG_DAMAGE: {

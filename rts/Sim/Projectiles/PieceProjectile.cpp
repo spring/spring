@@ -44,7 +44,6 @@ CR_REG_METADATA(CPieceProjectile,(
 	CR_MEMBER(spinAngle),
 	CR_MEMBER(oldSmokePos),
 	CR_MEMBER(oldSmokeDir),
-	CR_MEMBER(alphaThreshold),
 	// CR_MEMBER(target),
 	CR_MEMBER(drawTrail),
 
@@ -70,7 +69,6 @@ CPieceProjectile::CPieceProjectile(
 
 	spinSpeed(0.0f),
 	spinAngle(0.0f),
-	alphaThreshold(0.1f),
 
 	oldSmokePos(pos),
 	oldSmokeDir(FwdVector),
@@ -85,7 +83,6 @@ CPieceProjectile::CPieceProjectile(
 		}
 
 		model = owner->model;
-		alphaThreshold = owner->alphaThreshold;
 		explFlags |= (PF_NoCEGTrail * (cegID == -1u));
 	}
 

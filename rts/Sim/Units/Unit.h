@@ -508,8 +508,6 @@ public:
 
 	float currentFuel;
 
-	/// minimum alpha value for a texel to be drawn
-	float alphaThreshold;
 	/// the damage value passed to CEGs spawned by this unit's script
 	int cegDamage;
 

@@ -68,8 +68,6 @@ public:
 	float spinSpeed;
 	float spinAngle;
 
-	float alphaThreshold;
-
 	float3 oldSmokePos;
 	float3 oldSmokeDir;
 

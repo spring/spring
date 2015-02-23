@@ -191,7 +191,6 @@ CUnit::CUnit()
 , curTerrainType(0)
 , selfDCountdown(0)
 , currentFuel(0.0f)
-, alphaThreshold(0.1f)
 , cegDamage(1)
 
 , noDraw(false)
@@ -2591,7 +2590,6 @@ CR_REG_METADATA(CUnit, (
 
 	CR_MEMBER(currentFuel),
 
-	CR_MEMBER(alphaThreshold),
 	CR_MEMBER(cegDamage),
 
 	CR_MEMBER_UN(noDraw),
