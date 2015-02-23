@@ -699,28 +699,6 @@ void CUnitDrawer::DrawShadowShaderUnits(unsigned int matType)
 
 
 inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
-	// do shadow alpha-masking for S3O units only
-	// (3DO's need more setup than it is worth)
-	#ifdef UNIT_SHADOW_ALPHA_MASKING
-		#define S3O_TEX(model) \
-			texturehandlerS3O->GetS3oTex(model->textureType)
-		#define PUSH_SHADOW_TEXTURE_STATE(model)                      \
-			if (model->type != MODELTYPE_3DO) {                       \
-				glActiveTexture(GL_TEXTURE0);                         \
-				glEnable(GL_TEXTURE_2D);                              \
-				glBindTexture(GL_TEXTURE_2D, S3O_TEX(model)->tex2);   \
-			}
-		#define POP_SHADOW_TEXTURE_STATE(model)   \
-			if (model->type != MODELTYPE_3DO) {   \
-				glBindTexture(GL_TEXTURE_2D, 0);  \
-				glDisable(GL_TEXTURE_2D);         \
-				glActiveTexture(GL_TEXTURE0);     \
-			}
-	#else
-		#define PUSH_SHADOW_TEXTURE_STATE(model)
-		#define POP_SHADOW_TEXTURE_STATE(model)
-	#endif
-
 	const bool unitInLOS = ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView);
 
 	if (unit->noDraw)
@@ -739,44 +717,43 @@ inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 	if (unit->isCloaked) { return; }
 	if (DrawAsIcon(unit, sqDist)) { return; }
 
-	if (unit->lodCount <= 0) {
-		PUSH_SHADOW_TEXTURE_STATE(unit->model);
-		DrawUnitNow(unit);
-		POP_SHADOW_TEXTURE_STATE(unit->model);
-	} else {
+	LuaUnitLODMaterial* lodMat = nullptr;
+	if (unit->lodCount > 0) {
 		LuaUnitMaterial& unitMat = unit->luaMats[LUAMAT_SHADOW];
-		const unsigned lod = CalcUnitLOD(unit, unitMat.GetLastLOD());
-		unit->currentLOD = lod;
-		LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(lod);
-
-		if ((lodMat != NULL) && lodMat->IsActive()) {
-			lodMat->AddUnit(unit);
-		} else {
-			PUSH_SHADOW_TEXTURE_STATE(unit->model);
-			DrawUnitNow(unit);
-			POP_SHADOW_TEXTURE_STATE(unit->model);
-		}
+		unit->currentLOD = CalcUnitLOD(unit, unitMat.GetLastLOD());
+		LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(unit->currentLOD);
 	}
 
-	#undef PUSH_SHADOW_TEXTURE_STATE
-	#undef POP_SHADOW_TEXTURE_STATE
+	if ((lodMat != nullptr) && lodMat->IsActive()) {
+		lodMat->AddUnit(unit);
+	} else {
+		DrawUnitNow(unit);
+	}
 }
+
+
 void CUnitDrawer::DrawOpaqueUnitsShadow(int modelType) {
-	typedef std::set<CUnit*> UnitSet;
-	typedef std::map<int, UnitSet> UnitBin;
+	const auto& unitBin = opaqueModelRenderers[modelType]->GetUnitBin();
 
-	const UnitBin& unitBin = opaqueModelRenderers[modelType]->GetUnitBin();
+	for (const auto& unitBinP: unitBin) {
+		const auto& unitSet = unitBinP.second;
+		const int textureType = unitBinP.first;
 
-	UnitBin::const_iterator unitBinIt;
-	UnitSet::const_iterator unitSetIt;
+		if (modelType != MODELTYPE_3DO) {
+			glActiveTexture(GL_TEXTURE0);
+			glEnable(GL_TEXTURE_2D);
+			const auto modelTex = texturehandlerS3O->GetS3oTex(textureType);
+			glBindTexture(GL_TEXTURE_2D, modelTex->tex2);
+		}
 
-	for (unitBinIt = unitBin.begin(); unitBinIt != unitBin.end(); ++unitBinIt) {
-		const UnitSet& unitSet = unitBinIt->second;
+		for (const auto& unitSetP: unitSet) {
+			DrawOpaqueUnitShadow(unitSetP);
+		}
 
-		{
-			for (unitSetIt = unitSet.begin(); unitSetIt != unitSet.end(); ++unitSetIt) {
-				DrawOpaqueUnitShadow(*unitSetIt);
-			}
+		if (modelType != MODELTYPE_3DO) {
+			glBindTexture(GL_TEXTURE_2D, 0);
+			glDisable(GL_TEXTURE_2D);
+			glActiveTexture(GL_TEXTURE0);
 		}
 	}
 }
@@ -1569,14 +1546,6 @@ inline void CUnitDrawer::DrawUnitModel(CUnit* unit) {
 
 void CUnitDrawer::DrawUnitNow(CUnit* unit)
 {
-	/*
-	// this interferes with Lua material management
-	if (unit->alphaThreshold != 0.1f) {
-		glPushAttrib(GL_COLOR_BUFFER_BIT);
-		glAlphaFunc(GL_GREATER, unit->alphaThreshold);
-	}
-	*/
-
 	glPushMatrix();
 	glMultMatrixf(unit->GetTransformMatrix());
 
@@ -1586,12 +1555,6 @@ void CUnitDrawer::DrawUnitNow(CUnit* unit)
 		DrawUnitBeingBuilt(unit);
 	}
 	glPopMatrix();
-
-	/*
-	if (unit->alphaThreshold != 0.1f) {
-		glPopAttrib();
-	}
-	*/
 }
 
 
