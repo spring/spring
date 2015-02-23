@@ -425,6 +425,9 @@ void CPathEstimator::Update()
 	pathCache[1]->Update();
 
 	const auto numMoveDefs = moveDefHandler->GetNumMoveDefs();
+	if (numMoveDefs == 0) {
+		return;
+	}
 
 	// determine how many blocks we should update
 	int blocksToUpdate = 0;

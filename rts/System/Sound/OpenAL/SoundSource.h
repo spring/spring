@@ -8,9 +8,9 @@
 #include <al.h>
 #include <boost/noncopyable.hpp>
 #include "System/Misc/SpringTime.h"
+#include "System/float3.h"
 
 class IAudioChannel;
-class float3;
 class SoundItem;
 class COggStream;
 
@@ -33,11 +33,12 @@ public:
 	bool IsValid() const { return (id != 0); };
 
 	int GetCurrentPriority() const;
-	bool IsPlaying() const;
+	bool IsPlaying(const bool checkOpenAl = false) const;
 	void Stop();
 
 	/// will stop a currently playing sound, if any
 	void Play(IAudioChannel* channel, SoundItem* buffer, float3 pos, float3 velocity, float volume, bool relative = false);
+	void PlayAsync(IAudioChannel* channel, SoundItem* buffer, float3 pos, float3 velocity, float volume, bool relative = false);
 	void PlayStream(IAudioChannel* channel, const std::string& stream, float volume);
 	void StreamStop();
 	void StreamPause();
@@ -54,6 +55,22 @@ public:
 	};
 
 private:
+	struct AsyncSoundItemData {
+		IAudioChannel* channel;
+		SoundItem* buffer;
+		float3 pos;
+		float3 velocity;
+		float volume;
+		bool relative;
+
+		AsyncSoundItemData()
+		: channel(nullptr)
+		, buffer(nullptr)
+		, volume(1.0f)
+		, relative(false)
+		{}
+	};
+
 	static float referenceDistance;
 
 	//! used to adjust the pitch to the GameSpeed (optional)
@@ -72,6 +89,7 @@ private:
 	bool efxEnabled;
 	int efxUpdates;
 	ALfloat curHeightRolloffModifier;
+	AsyncSoundItemData asyncPlay;
 };
 
 #endif

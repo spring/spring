@@ -59,6 +59,11 @@ CSoundSource::~CSoundSource()
 
 void CSoundSource::Update()
 {
+	if (asyncPlay.buffer != nullptr) {
+		Play(asyncPlay.channel, asyncPlay.buffer, asyncPlay.pos, asyncPlay.velocity, asyncPlay.volume, asyncPlay.relative);
+		asyncPlay = AsyncSoundItemData();
+	}
+
 	if (curPlaying) {
 		if (in3D && (efxEnabled != efx->enabled)) {
 			alSourcef(id, AL_AIR_ABSORPTION_FACTOR, (efx->enabled) ? efx->GetAirAbsorptionFactor() : 0);
@@ -73,7 +78,7 @@ void CSoundSource::Update()
 			alSourcef(id, AL_ROLLOFF_FACTOR, ROLLOFF_FACTOR * curPlaying->rolloff * heightRolloffModifier);
 		}
 
-		if (!IsPlaying() || ((curPlaying->loopTime > 0) && (spring_gettime() > loopStop)))
+		if (!IsPlaying(true) || ((curPlaying->loopTime > 0) && (spring_gettime() > loopStop)))
 			Stop();
 	}
 
@@ -97,22 +102,33 @@ void CSoundSource::Update()
 
 int CSoundSource::GetCurrentPriority() const
 {
-	if (curStream) {
+	if (asyncPlay.buffer != nullptr) {
+		return asyncPlay.buffer->GetPriority();
+	}
+	else if (curStream) {
 		return INT_MAX;
 	}
 	else if (!curPlaying) {
 		return INT_MIN;
 	}
-	return curPlaying->priority;
+	return curPlaying->GetPriority();
 }
 
-bool CSoundSource::IsPlaying() const
+bool CSoundSource::IsPlaying(const bool checkOpenAl) const
 {
 	if (curStream)
 		return true;
 
+	if (asyncPlay.buffer != nullptr)
+		return true;
+
 	if (!curPlaying)
 		return false;
+
+	// Calling OpenAL does a 100% chance for a L2 cache miss
+	// and so is very slow.
+	if (!checkOpenAl)
+		return true;
 
 	CheckError("CSoundSource::IsPlaying");
 	ALint state;
@@ -215,6 +231,18 @@ void CSoundSource::Play(IAudioChannel* channel, SoundItem* item, float3 pos, flo
 	}
 	CheckError("CSoundSource::Play");
 }
+
+
+void CSoundSource::PlayAsync(IAudioChannel* channel, SoundItem* buffer, float3 pos, float3 velocity, float volume, bool relative)
+{
+	asyncPlay.channel  = channel;
+	asyncPlay.buffer   = buffer;
+	asyncPlay.pos      = pos;
+	asyncPlay.velocity = velocity;
+	asyncPlay.volume   = volume;
+	asyncPlay.relative = relative;
+}
+
 
 void CSoundSource::PlayStream(IAudioChannel* channel, const std::string& file, float volume)
 {

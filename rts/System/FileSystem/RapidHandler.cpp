@@ -2,7 +2,6 @@
 
 #include <string>
 #include <vector>
-#include <stdio.h>
 
 #include "DataDirsAccess.h"
 #include "DataDirLocater.h"
@@ -74,12 +73,11 @@ std::string GetRapidName(const std::string& tag)
 		std::string path = dir.path + "rapid"; //TODO: does GetDataDirs() ensure paths to end with a delimn?
 		std::vector<std::string> files = dataDirsAccess.FindFiles(path, "versions.gz", FileQueryFlags::RECURSE);
 		for(const std::string file: files) {
-			printf("%s\n", file.c_str());
 			res = GetNameFromFile(tag, file);
 			if (!res.empty())
 				return res;
 		}
 	}
-	return res;
+	return tag;
 }
 

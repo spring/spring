@@ -151,7 +151,7 @@ size_t CSound::GetSoundId(const std::string& name)
 }
 
 SoundItem* CSound::GetSoundItem(size_t id) const {
-	//! id==0 is a special id and invalid
+	// id==0 is a special id and invalid
 	if (id == 0 || id >= sounds.size())
 		return NULL;
 	return sounds[id];
@@ -164,21 +164,28 @@ CSoundSource* CSound::GetNextBestSource(bool lock)
 		lck.lock();
 
 	if (sources.empty())
-		return NULL;
+		return nullptr;
 
-	CSoundSource* bestPos = NULL;
-	for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
-	{
-		if (!it->IsPlaying())
-		{
-			return &(*it);
-		}
-		else if (it->GetCurrentPriority() <= (bestPos ? bestPos->GetCurrentPriority() : INT_MAX))
-		{
-			bestPos = &(*it);
+	// find if we got a free source
+	for (CSoundSource& src: sources) {
+		if (!src.IsPlaying(false)){
+			return &src;
 		}
 	}
-	return bestPos;
+
+	// check the next best free source
+	CSoundSource* bestSrc = nullptr;
+	int bestPriority = INT_MAX;
+	for (CSoundSource& src: sources) {
+		/*if (!src.IsPlaying(true)) {
+			return &src;
+		}
+		else*/ if (src.GetCurrentPriority() <= bestPriority) {
+			bestSrc = &src;
+			bestPriority = src.GetCurrentPriority();
+		}
+	}
+	return bestSrc;
 }
 
 void CSound::PitchAdjust(const float newPitch)
@@ -377,7 +384,8 @@ void CSound::StartThread(int maxSounds)
 	Watchdog::RegisterThread(WDT_AUDIO);
 
 	while (!soundThreadQuit) {
-		boost::this_thread::sleep(boost::posix_time::millisec(50)); //! 20Hz
+		constexpr int FREQ_IN_HZ = 30;
+		boost::this_thread::sleep(boost::posix_time::millisec(1000 / FREQ_IN_HZ));
 		Watchdog::ClearTimer(WDT_AUDIO);
 		Update();
 	}

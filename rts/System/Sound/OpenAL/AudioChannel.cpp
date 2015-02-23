@@ -77,25 +77,28 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 	if (volume <= 0.0f)
 		return;
 
+	// generate the sound item
 	SoundItem* sndItem = sound->GetSoundItem(id);
 	if (!sndItem) {
 		sound->numEmptyPlayRequests++;
 		return;
 	}
 
+	// check distance to listener
 	if (pos.distance(sound->GetListenerPos()) > sndItem->MaxDistance()) {
 		if (!relative) {
 			return;
 		} else {
-			LOG("CSound::PlaySample: maxdist ignored for relative playback: %s",
-					sndItem->Name().c_str());
+			LOG("CSound::PlaySample: maxdist ignored for relative playback: %s", sndItem->Name().c_str());
 		}
 	}
 
+	// don't spam to many sounds per frame
 	if (emmitsThisFrame >= emmitsPerFrame)
 		return;
 	emmitsThisFrame++;
 
+	// check if the sound item is already played
 	if (cur_sources.size() >= maxConcurrentSources) {
 		CSoundSource* src = NULL;
 		int prio = INT_MAX;
@@ -114,21 +117,18 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 		}
 	}
 
+	// find a sound source to play the item in
 	CSoundSource* sndSource = sound->GetNextBestSource();
-	if (!sndSource) {
+	if (!sndSource || (sndSource->GetCurrentPriority() >= sndItem->GetPriority())) {
 		LOG_L(L_DEBUG, "CSound::PlaySample: Max sounds reached! Dropping playback!");
 		return;
 	}
+	if (sndSource->IsPlaying())
+		sound->numAbortedPlays++;
 
-	if (sndSource->GetCurrentPriority() < sndItem->GetPriority()) {
-		if (sndSource->IsPlaying())
-			sound->numAbortedPlays++;
-
-		sndSource->Play(this, sndItem, pos, velocity, volume, relative);
-		CheckError("CSound::FindSourceAndPlay");
-
-		cur_sources[sndSource] = true;
-	}
+	// play the sound item
+	sndSource->PlayAsync(this, sndItem, pos, velocity, volume, relative);
+	cur_sources[sndSource] = true;
 }
 
 void AudioChannel::PlaySample(size_t id, float volume)
