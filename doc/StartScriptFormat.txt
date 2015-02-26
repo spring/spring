@@ -26,7 +26,7 @@
 [GAME]
 {
 	MapName=;           // with .smf extension
-	GameType=Balanced Annihilation V6.81; // the primary mod NAME (archive works too, but name is prefered)
+	GameType=Balanced Annihilation V6.81; // either primary mod NAME, rapid tag name or archive name
 	GameStartDelay=4;   // optional, in seconds (unsigned int), default: 4
 	                    // The number of seconds till the game starts,
 	                    // counting from the moment when all players are connected and ready.
