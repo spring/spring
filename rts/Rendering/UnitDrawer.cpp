@@ -721,7 +721,7 @@ inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 	if (unit->lodCount > 0) {
 		LuaUnitMaterial& unitMat = unit->luaMats[LUAMAT_SHADOW];
 		unit->currentLOD = CalcUnitLOD(unit, unitMat.GetLastLOD());
-		LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(unit->currentLOD);
+		lodMat = unitMat.GetMaterial(unit->currentLOD);
 	}
 
 	if ((lodMat != nullptr) && lodMat->IsActive()) {
