@@ -67,7 +67,7 @@ IPath::SearchResult CPathFinder::DoSearch(
 	const CSolidObject* owner
 ) {
 	bool foundGoal = false;
-	unsigned int openBlockSize=openBlocks.Size();
+	unsigned int openBlockSize=openBlocks.size();
 	while (openBlockSize!=0 && (openBlockBuffer.GetSize() < maxBlocksToBeSearched)) {
 		// Get the open square with lowest expected path-cost.
 		PathNode* openSquare = const_cast<PathNode*>(openBlocks.top());
