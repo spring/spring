@@ -15,22 +15,22 @@
 struct PathNode {
 	int nodeNum;			//32	
 	float fCost; ///< f		//32
-	float gCost; ///< g		//32
+	
 	int2 nodePos;			//64
-
-
-
-
+	
+	float gCost; ///< g		//32
 	inline bool operator <  (const PathNode& pn) const { return (fCost < pn.fCost); } 		//32
+	
 	inline bool operator >  (const PathNode& pn) const { return (fCost > pn.fCost); } 		//32
 	inline bool operator == (const PathNode& pn) const { return (nodeNum == pn.nodeNum); } 	//32
+	
 	//default constructor
-	PathNode()
-	: fCost(0.0f)
-	, gCost(0.0f)
-	, nodeNum(0)
-	, nodePos(0, 0)
-	{}
+	PathNode()					//Callcosts
+	: fCost(0.0f)				//Load-Store
+	, gCost(0.0f)				//Load-Store
+	, nodeNum(0)				//Load-Store
+	, nodePos(0, 0)				//2*Load-Store
+	{}							//ret-costs
 
 };
 
