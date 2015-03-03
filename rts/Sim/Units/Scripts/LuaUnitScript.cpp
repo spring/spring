@@ -737,7 +737,6 @@ int CLuaUnitScript::QueryNanoPiece()
 	return RunQueryCallIn(LUAFN_QueryNanoPiece);
 }
 
-
 int CLuaUnitScript::QueryBuildInfo()
 {
 	return RunQueryCallIn(LUAFN_QueryBuildInfo);
@@ -939,6 +938,7 @@ bool CLuaUnitScript::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(Spin);
 	REGISTER_LUA_CFUNC(StopSpin);
 	REGISTER_LUA_CFUNC(Turn);
+	REGISTER_LUA_CFUNC(TurnVec);
 	REGISTER_LUA_CFUNC(Move);
 	REGISTER_LUA_CFUNC(IsInTurn);
 	REGISTER_LUA_CFUNC(IsInMove);
@@ -1353,6 +1353,56 @@ int CLuaUnitScript::Turn(lua_State* L)
 	}
 
 	return 0;
+}
+
+//Turns a Lua UnitPiece towards a Vector
+int CLuaUnitScript::TurnVec(lua_State* L)
+{
+	//if not unitscript is active we abort
+   if (activeScript == NULL) {
+   return 0;
+   }
+   
+	//Checking the luavals here,boss	
+	const int piece =    luaL_checkint(L, 1) - 1;
+	const float x_vec=   luaL_checkfloat(L, 2);
+	const float y_vec=   luaL_checkfloat(L, 3);
+	const float z_vec=   luaL_checkfloat(L, 4);
+	 float xspeed=   luaL_checkfloat(L, 5);
+	 float yspeed=   luaL_checkfloat(L, 6);
+	 float zspeed=   luaL_checkfloat(L, 7);
+	
+	//we convert the recived vector into the interally used heading format
+	 float destx =GetHeadingFromVector(1,x_vec);
+	 float desty =GetHeadingFromVector(1,y_vec);
+	 float destz =GetHeadingFromVector(1,z_vec);
+	
+	//if we recived a number 
+	if (lua_israwnumber(L,7)) {	
+			//and its a instant turn 
+			if (yspeed == 0.0f || xspeed==0.0f || zspeed== 0.0f)
+			{
+			activeScript->TurnNow(piece, 1, destx);
+			activeScript->TurnNow(piece, 2, desty);
+			activeScript->TurnNow(piece, 3, destz);
+			}
+			else	// we do a slowturn
+			{
+			activeScript->Turn(piece, x_axis, xspeed, destx);
+			activeScript->Turn(piece, y_axis, yspeed, desty);
+			activeScript->Turn(piece, z_axis, zspeed, destz);
+			}
+	}
+
+   if (lua_isboolean(L, 8) && lua_toboolean(L, 8)) {
+
+   LocalModelPiece* piece = ParseLocalModelPiece(L, activeScript, __FUNCTION__);
+   
+   piece->UpdateMatricesRec(true);
+   }
+
+return 0;
+
 }
 
 

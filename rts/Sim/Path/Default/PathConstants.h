@@ -1,4 +1,4 @@
-/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+ /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef PATH_CONSTANTS_HDR
 #define PATH_CONSTANTS_HDR
@@ -108,8 +108,8 @@ static inline std::array<unsigned int, 15> GetPathOpt2PathDir()
 
 
 // converts a PATHDIR* index to a PATHOPT* bitmask
-static inline unsigned int PathDir2PathOpt(unsigned int pathDir) {
-	static const std::array<unsigned int, PATH_DIRECTIONS> DIR2OPT = GetPathDir2PathOpt();
+static const std::array<unsigned int, PATH_DIRECTIONS> DIR2OPT = GetPathDir2PathOpt();
+static inline unsigned int PathDir2PathOpt(unsigned int pathDir) {	
 	return DIR2OPT[pathDir];
 }
 

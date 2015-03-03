@@ -142,6 +142,7 @@ private:
 	static int Spin(lua_State* L);
 	static int StopSpin(lua_State* L);
 	static int Turn(lua_State* L);
+	static int TurnVec(lua_State* L);
 	static int Move(lua_State* L);
 	static int IsInAnimation(lua_State* L, const char* caller, AnimType type);
 	static int IsInTurn(lua_State* L);

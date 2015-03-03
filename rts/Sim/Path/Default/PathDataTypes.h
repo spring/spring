@@ -13,24 +13,26 @@
 
 /// represents either a single square (PF) or a block of squares (PE)
 struct PathNode {
-	PathNode()
-		: fCost(0.0f)
-		, gCost(0.0f)
-		, nodeNum(0)
-		, nodePos(0, 0)
-	{}
+	int nodeNum;			
+	float fCost; ///< f		
+	
+	int2 nodePos;			
+	
+	float gCost; ///< g		
+	inline bool operator <  (const PathNode& pn) const { return (fCost < pn.fCost); } 		
+	
+	inline bool operator >  (const PathNode& pn) const { return (fCost > pn.fCost); } 		
+	inline bool operator == (const PathNode& pn) const { return (nodeNum == pn.nodeNum); } 	
+	
+	//default constructor
+	PathNode()					
+	: fCost(0.0f)				
+	, gCost(0.0f)				
+	, nodeNum(0)				
+	, nodePos(0, 0)				
+	{}							
 
-	float fCost; ///< f
-	float gCost; ///< g
-
-	int nodeNum;
-	int2 nodePos;
-
-	inline bool operator <  (const PathNode& pn) const { return (fCost < pn.fCost); }
-	inline bool operator >  (const PathNode& pn) const { return (fCost > pn.fCost); }
-	inline bool operator == (const PathNode& pn) const { return (nodeNum == pn.nodeNum); }
 };
-
 
 /// functor to define node priority
 struct lessCost: public std::binary_function<PathNode*, PathNode*, bool> {

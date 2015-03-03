@@ -67,11 +67,12 @@ IPath::SearchResult CPathFinder::DoSearch(
 	const CSolidObject* owner
 ) {
 	bool foundGoal = false;
-
-	while (!openBlocks.empty() && (openBlockBuffer.GetSize() < maxBlocksToBeSearched)) {
+	unsigned int openBlockSize=openBlocks.size();
+	while (openBlockSize!=0 && (openBlockBuffer.GetSize() < maxBlocksToBeSearched)) {
 		// Get the open square with lowest expected path-cost.
 		PathNode* openSquare = const_cast<PathNode*>(openBlocks.top());
 		openBlocks.pop();
+		openBlockSize--;
 
 		// check if this PathNode has become obsolete
 		if (blockStates.fCost[openSquare->nodeNum] != openSquare->fCost)
@@ -81,15 +82,13 @@ IPath::SearchResult CPathFinder::DoSearch(
 		if (pfDef.IsGoal(openSquare->nodePos.x, openSquare->nodePos.y)) {
 			mGoalBlockIdx = openSquare->nodeNum;
 			mGoalHeuristic = 0.0f;
-			foundGoal = true;
+			return IPath::Ok;
 			break;
 		}
 
 		TestNeighborSquares(moveDef, pfDef, openSquare, owner);
 	}
 
-	if (foundGoal)
-		return IPath::Ok;
 
 	// could not reach goal within <maxBlocksToBeSearched> exploration limit
 	if (openBlockBuffer.GetSize() >= maxBlocksToBeSearched)
@@ -139,7 +138,8 @@ void CPathFinder::TestNeighborSquares(
 			continue;
 		if (!ngbInSearchRadius[dir])
 			continue;
-
+		
+		testedBlocks++;
 		TestBlock(moveDef, pfDef, square, owner, opt, ngbBlockedState[dir], ngbSpeedMod[dir], ngbInSearchRadius[dir]);
 	}
 
@@ -168,7 +168,7 @@ void CPathFinder::TestNeighborSquares(
 				const unsigned int ngbOpt = PathDir2PathOpt(BASE_DIR_XY);                                                \
 				const unsigned int ngbBlk = ngbBlockedState[BASE_DIR_XY];                                                \
 				const unsigned int ngbVis = ngbInSearchRadius[BASE_DIR_XY];                                                \
-                                                                                                                         \
+                testedBlocks++;                                                                                                         \
 				TestBlock(moveDef, pfDef, square, owner, ngbOpt, ngbBlk, ngbSpeedMod[BASE_DIR_XY], ngbVis);   \
 			}                                                                                                            \
 		}
@@ -195,39 +195,40 @@ bool CPathFinder::TestBlock(
 	float speedMod,
 	bool withinConstraints
 ) {
-	testedBlocks++;
+	
 
 	// initial calculations of the new block
 	const int2 square = parentSquare->nodePos + PF_DIRECTION_VECTORS_2D[pathOptDir];
 	const unsigned int sqrIdx = BlockPosToIdx(square);
-
-	// bounds-check
-	if ((unsigned)square.x >= nbrOfBlocks.x) return false;
-	if ((unsigned)square.y >= nbrOfBlocks.y) return false;
-
+	unsigned int blockStatesNodeMask=blockStates.nodeMask[sqrIdx];
+	
 	// check if the square is inaccessable
-	if (blockStates.nodeMask[sqrIdx] & (PATHOPT_CLOSED | PATHOPT_BLOCKED))
+	if (blockStatesNodeMask & (PATHOPT_CLOSED | PATHOPT_BLOCKED))
 		return false;
-
-	// caller has already tested for this
-	assert((blockStatus & CMoveMath::BLOCK_STRUCTURE) == 0);
-
+	
 	// check if square is outside search-constraint
 	// (this has already been done for open squares)
-	if ((blockStates.nodeMask[sqrIdx] & PATHOPT_OPEN) == 0 && !withinConstraints) {
+	if (!withinConstraints && (blockStatesNodeMask & PATHOPT_OPEN) == 0  ) {
 		blockStates.nodeMask[sqrIdx] |= PATHOPT_BLOCKED;
 		dirtyBlocks.push_back(sqrIdx);
 		return false;
 	}
-
+	
 	// evaluate this square
 	//
-
 	if (speedMod == 0.0f) {
 		blockStates.nodeMask[sqrIdx] |= PATHOPT_BLOCKED;
 		dirtyBlocks.push_back(sqrIdx);
 		return false;
 	}
+	
+	//optimization, we keep the pointy operations back as long as possible
+	// bounds-check
+	if ((unsigned)square.x >= nbrOfBlocks.x) return false;
+	if ((unsigned)square.y >= nbrOfBlocks.y) return false;
+
+	// caller has already tested for this
+	assert((blockStatus & CMoveMath::BLOCK_STRUCTURE) == 0);
 
 	if (pfDef.testMobile && moveDef.avoidMobilesOnPath && (blockStatus & squareMobileBlockBits)) {
 		if (blockStatus & CMoveMath::BLOCK_MOBILE_BUSY) {
@@ -250,23 +251,23 @@ bool CPathFinder::TestBlock(
 	const float hCost = pfDef.Heuristic(square.x, square.y); // h
 	const float fCost = gCost + hCost;                       // f
 
-	if (blockStates.nodeMask[sqrIdx] & PATHOPT_OPEN) {
+	if (blockStatesNodeMask & PATHOPT_OPEN) {
 		// already in the open set, look for a cost-improvement
 		if (blockStates.fCost[sqrIdx] <= fCost)
 			return true;
 
-		blockStates.nodeMask[sqrIdx] &= ~PATHOPT_CARDINALS;
+		blockStatesNodeMask 	&= ~PATHOPT_CARDINALS;
 	}
 
 	// if heuristic says this node is closer to goal than previous h-estimate, keep it
-	if (!pfDef.exactPath && hCost < mGoalHeuristic) {
+	if ( hCost < mGoalHeuristic && !pfDef.exactPath) {
 		mGoalBlockIdx = sqrIdx;
 		mGoalHeuristic = hCost;
 	}
 
 	// store and mark this square as open (expanded, but not yet pulled from pqueue)
 	openBlockBuffer.SetSize(openBlockBuffer.GetSize() + 1);
-	assert(openBlockBuffer.GetSize() < MAX_SEARCHED_NODES_PF);
+	//assert(openBlockBuffer.GetSize() < MAX_SEARCHED_NODES_PF);
 
 	PathNode* os = openBlockBuffer.GetNode(openBlockBuffer.GetSize());
 		os->fCost   = fCost;
@@ -280,11 +281,13 @@ bool CPathFinder::TestBlock(
 
 	blockStates.fCost[sqrIdx] = os->fCost;
 	blockStates.gCost[sqrIdx] = os->gCost;
-	blockStates.nodeMask[sqrIdx] |= (PATHOPT_OPEN | pathOptDir);
+	
+	blockStates.nodeMask[sqrIdx]  = (blockStatesNodeMask|(PATHOPT_OPEN | pathOptDir));
 
 	dirtyBlocks.push_back(sqrIdx);
 	return true;
 }
+
 
 
 IPath::SearchResult CPathFinder::FinishSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, IPath::Path& foundPath) const
