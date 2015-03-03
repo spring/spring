@@ -1378,8 +1378,8 @@ int CLuaUnitScript::TurnVec(lua_State* L)
 	 float destz =GetHeadingFromVector(1,z_vec);
 	
 	//if we recived a number 
-	if (lua_israwnumber(L,7) 
-	{		//and its a instant turn 
+	if (lua_israwnumber(L,7)) {	
+			//and its a instant turn 
 			if (yspeed == 0.0f || xspeed==0.0f || zspeed== 0.0f)
 			{
 			activeScript->TurnNow(piece, 1, destx);
@@ -1395,11 +1395,9 @@ int CLuaUnitScript::TurnVec(lua_State* L)
 	}
 
    if (lua_isboolean(L, 8) && lua_toboolean(L, 8)) {
-   // CUnit* unit = activeScript->GetUnit();
-   // LocalModel* model = unit->localModel;
+
    LocalModelPiece* piece = ParseLocalModelPiece(L, activeScript, __FUNCTION__);
-
-
+   
    piece->UpdateMatricesRec(true);
    }
 
