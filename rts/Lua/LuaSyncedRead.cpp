@@ -4667,7 +4667,11 @@ int LuaSyncedRead::GetProjectileOwnerID(lua_State* L)
 	if (pro == NULL)
 		return 0;
 
-	lua_pushnumber(L, pro->GetOwnerID());
+	const int unitID = pro->GetOwnerID();
+	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits()))
+		return 0;
+	
+	lua_pushnumber(L, unitID);
 	return 1;
 }
 
@@ -4678,6 +4682,9 @@ int LuaSyncedRead::GetProjectileTeamID(lua_State* L)
 	if (pro == NULL)
 		return 0;
 
+	if (!teamHandler->IsValidTeam(pro->GetTeamID()))
+		return 0;
+	
 	lua_pushnumber(L, pro->GetTeamID());
 	return 1;
 }
