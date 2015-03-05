@@ -774,11 +774,10 @@ namespace CrashHandler
         {
             // process and analyse the raw stack trace
             void* iparray[MAX_STACKTRACE_DEPTH];
-            int numLines = -1;
 
 			ctls->Suspend();
 
-            numLines = thread_unwind(&ctls->ucontext, iparray, stacktrace);
+			const int numLines = thread_unwind(&ctls->ucontext, iparray, stacktrace);
 
 			ctls->Resume();
 
@@ -830,9 +829,8 @@ namespace CrashHandler
         {
             // process and analyse the raw stack trace
             void* iparray[MAX_STACKTRACE_DEPTH];
-            int numLines = -1;
 
-            numLines = thread_unwind(nullptr, iparray, stacktrace);
+            const int numLines = thread_unwind(nullptr, iparray, stacktrace);
 
             LOG_L(L_DEBUG, "HaltedStacktrace[2]");
 
