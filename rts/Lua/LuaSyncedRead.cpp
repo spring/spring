@@ -282,6 +282,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetProjectileSpinVec);
 	REGISTER_LUA_CFUNC(GetPieceProjectileParams);
 	REGISTER_LUA_CFUNC(GetProjectileTarget);
+	REGISTER_LUA_CFUNC(GetProjectileIsIntercepted);
 	REGISTER_LUA_CFUNC(GetProjectileTimeToLive);
 	REGISTER_LUA_CFUNC(GetProjectileOwnerID);
 	REGISTER_LUA_CFUNC(GetProjectileTeamID);
@@ -4645,6 +4646,19 @@ int LuaSyncedRead::GetProjectileTarget(lua_State* L)
 	// projectile target cannot be anything else
 	assert(false);
 	return 0;
+}
+
+int LuaSyncedRead::GetProjectileIsIntercepted(lua_State* L)
+{
+	const CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
+
+	if (pro == NULL || !pro->weapon)
+		return 0;
+
+	const CWeaponProjectile* wpro = static_cast<const CWeaponProjectile*>(pro);
+	
+	lua_pushboolean(L, wpro->IsBeingIntercepted());
+	return 1;
 }
 
 int LuaSyncedRead::GetProjectileTimeToLive(lua_State* L)
