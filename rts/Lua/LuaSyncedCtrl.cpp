@@ -418,6 +418,8 @@ static bool ParseProjectileParams(lua_State* L, ProjectileParams& params, const 
 					params.tracking = lua_tofloat(L, -1);
 				} else if (key == "maxRange") {
 					params.maxRange = lua_tofloat(L, -1);
+				} else if (key == "upTime") {
+					params.upTime = lua_tofloat(L, -1);
 				} else if (key == "startAlpha") {
 					params.startAlpha = lua_tofloat(L, -1);
 				} else if (key == "endAlpha") {
