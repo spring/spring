@@ -51,6 +51,8 @@ public:
 	      CWorldObject* GetTargetObject()       { return target; }
 
 	const WeaponDef* GetWeaponDef() const { return weaponDef; }
+	
+	int GetTimeToLive() const { return ttl; }
 
 	void SetStartPos(const float3& newStartPos) { startPos = newStartPos; }
 	void SetTargetPos(const float3& newTargetPos) { targetPos = newTargetPos; }
