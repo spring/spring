@@ -86,11 +86,11 @@ void CTorpedoProjectile::Update()
 						targetPos = so->aimPos;
 						targetVel = so->speed;
 
-						if (owner() != NULL && pos.SqDistance(so->aimPos) > Square(150.0f)) {
+						if (allyteamID != -1 && pos.SqDistance(so->aimPos) > Square(150.0f)) {
 							const CUnit* u = dynamic_cast<const CUnit*>(so);
 
 							if (u != NULL) {
-								targetPos = u->GetErrorPos(owner()->allyteam, true);
+								targetPos = u->GetErrorPos(allyteamID, true);
 							}
 						}
 					}

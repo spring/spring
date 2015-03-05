@@ -164,14 +164,14 @@ void CMissileProjectile::Update()
 					targetPos = so->aimPos;
 					targetVel = so->speed;
 
-					if (own != NULL && pos.SqDistance(so->aimPos) > Square(150.0f)) {
+					if (allyteamID != -1 && pos.SqDistance(so->aimPos) > Square(150.0f)) {
 						// if we have an owner and our target is a unit,
 						// set target-position to its error-position for
 						// our owner's allyteam
 						const CUnit* tgt = dynamic_cast<const CUnit*>(so);
 
 						if (tgt != NULL) {
-							targetPos = tgt->GetErrorPos(own->allyteam, true);
+							targetPos = tgt->GetErrorPos(allyteamID, true);
 						}
 					}
 				}

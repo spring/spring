@@ -54,10 +54,10 @@ void CInterceptHandler::Update(bool forced) {
 			if (w->incomingProjectiles.find(p->id) != w->incomingProjectiles.end())
 				continue;
 
-			const CUnit* pOwner = p->owner();
-			const int pAllyTeam = (pOwner != NULL)? pOwner->allyteam: -1;
 
-			if (pAllyTeam != -1 && teamHandler->Ally(wOwner->allyteam, pAllyTeam))
+			const int pAllyTeam = p->GetAllyteamID();
+
+			if (teamHandler->IsValidAllyTeam(pAllyTeam)  && teamHandler->Ally(wOwner->allyteam, pAllyTeam))
 				continue;
 
 			// note: will be called every Update so long as gadget does not return true
