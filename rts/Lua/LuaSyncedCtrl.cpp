@@ -2794,17 +2794,17 @@ int LuaSyncedCtrl::SetProjectileTarget(lua_State* L)
 	switch (lua_gettop(L)) {
 		case 3: {
 			const int id = luaL_checkint(L, 2);
-			const int type = luaL_checkint(L, 3);
+			const string type = luaL_checkstring(L, 3);
 
 			CWorldObject* oldTargetObject = wpro->GetTargetObject();
 			CWorldObject* newTargetObject = NULL;
 
-			switch (type) {
-				case 'u': { newTargetObject = ParseUnit(L, __FUNCTION__, 2); } break;
-				case 'f': { newTargetObject = ParseFeature(L, __FUNCTION__, 2); } break;
-				case 'p': { newTargetObject = ParseProjectile(L, __FUNCTION__, 2); } break;
-				case 'g': { /* fall-through, needs four arguments (todo: or a table?) */ }
-				default: { /* if invalid type-argument, current target will be cleared */ } break;
+			if (type == "u") { 
+				newTargetObject = ParseUnit(L, __FUNCTION__, 2);
+			} else if (type == "f") { 
+				newTargetObject = ParseFeature(L, __FUNCTION__, 2);
+			} else if (type == "p") { 
+				newTargetObject = ParseProjectile(L, __FUNCTION__, 2);
 			}
 
 			const DependenceType oldDepType = ProjectileTarget::GetObjectDepType(oldTargetObject);
@@ -2812,8 +2812,9 @@ int LuaSyncedCtrl::SetProjectileTarget(lua_State* L)
 
 			if (oldTargetObject != NULL) {
 				wpro->DeleteDeathDependence(oldTargetObject, oldDepType);
-				wpro->SetTargetObject(NULL);
 			}
+			wpro->SetTargetObject(NULL);
+				
 			if (newTargetObject != NULL) {
 				wpro->AddDeathDependence(newTargetObject, newDepType);
 				wpro->SetTargetObject(newTargetObject);
