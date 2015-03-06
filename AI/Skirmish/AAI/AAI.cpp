@@ -7,12 +7,33 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
-#include <set>
 #include <math.h>
-#include <stdio.h>
 #include <stdarg.h>
+#include <time.h>
 
 #include "AAI.h"
+#include "AAIBuildTable.h"
+#include "AAIAirForceManager.h"
+#include "AAIExecute.h"
+#include "AAIUnitTable.h"
+#include "AAIBuildTask.h"
+#include "AAIBrain.h"
+#include "AAIConstructor.h"
+#include "AAIAttackManager.h"
+#include "AIExport.h"
+#include "AAIConfig.h"
+#include "AAIMap.h"
+#include "AAIGroup.h"
+#include "AAISector.h"
+
+
+#include "System/Util.h"
+
+#include "LegacyCpp/IGlobalAICallback.h"
+#include "LegacyCpp/UnitDef.h"
+using namespace springLegacyAI;
+
+
 
 #include "CUtils/SimpleProfiler.h"
 #define AAI_SCOPED_TIMER(part) SCOPED_TIMER(part, profiler);
@@ -146,7 +167,7 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 
 	SNPRINTF(team_number, 3, "%d", team);
 
-	STRCPY(buffer, MAIN_PATH);
+	STRCPY(buffer, "");
 	STRCAT(buffer, AILOG_PATH);
 	STRCAT(buffer, "AAI_log_team_");
 	STRCAT(buffer, team_number);

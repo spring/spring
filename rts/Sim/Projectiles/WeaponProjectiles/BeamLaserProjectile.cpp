@@ -9,7 +9,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include <cstring> //memset
 
-CR_BIND_DERIVED(CBeamLaserProjectile, CWeaponProjectile, (ProjectileParams()));
+CR_BIND_DERIVED(CBeamLaserProjectile, CWeaponProjectile, (ProjectileParams()))
 
 CR_REG_METADATA(CBeamLaserProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -23,7 +23,7 @@ CR_REG_METADATA(CBeamLaserProjectile,(
 	CR_MEMBER(decay),
 	CR_MEMBER(midtexx),
 	CR_RESERVED(16)
-));
+))
 
 
 CBeamLaserProjectile::CBeamLaserProjectile(const ProjectileParams& params): CWeaponProjectile(params)
@@ -155,15 +155,15 @@ void CBeamLaserProjectile::Draw()
 	}
 
 	// draw flare
-	va->AddVertexQTC(pos1 - camera->right * flareEdgeSize - camera->up * flareEdgeSize, WT3->xstart, WT3->ystart, edgeColStart);
-	va->AddVertexQTC(pos1 + camera->right * flareEdgeSize - camera->up * flareEdgeSize, WT3->xend,   WT3->ystart, edgeColStart);
-	va->AddVertexQTC(pos1 + camera->right * flareEdgeSize + camera->up * flareEdgeSize, WT3->xend,   WT3->yend,   edgeColStart);
-	va->AddVertexQTC(pos1 - camera->right * flareEdgeSize + camera->up * flareEdgeSize, WT3->xstart, WT3->yend,   edgeColStart);
+	va->AddVertexQTC(pos1 - camera->GetRight() * flareEdgeSize - camera->GetUp() * flareEdgeSize, WT3->xstart, WT3->ystart, edgeColStart);
+	va->AddVertexQTC(pos1 + camera->GetRight() * flareEdgeSize - camera->GetUp() * flareEdgeSize, WT3->xend,   WT3->ystart, edgeColStart);
+	va->AddVertexQTC(pos1 + camera->GetRight() * flareEdgeSize + camera->GetUp() * flareEdgeSize, WT3->xend,   WT3->yend,   edgeColStart);
+	va->AddVertexQTC(pos1 - camera->GetRight() * flareEdgeSize + camera->GetUp() * flareEdgeSize, WT3->xstart, WT3->yend,   edgeColStart);
 
-	va->AddVertexQTC(pos1 - camera->right * flareCoreSize - camera->up * flareCoreSize, WT3->xstart, WT3->ystart, coreColStart);
-	va->AddVertexQTC(pos1 + camera->right * flareCoreSize - camera->up * flareCoreSize, WT3->xend,   WT3->ystart, coreColStart);
-	va->AddVertexQTC(pos1 + camera->right * flareCoreSize + camera->up * flareCoreSize, WT3->xend,   WT3->yend,   coreColStart);
-	va->AddVertexQTC(pos1 - camera->right * flareCoreSize + camera->up * flareCoreSize, WT3->xstart, WT3->yend,   coreColStart);
+	va->AddVertexQTC(pos1 - camera->GetRight() * flareCoreSize - camera->GetUp() * flareCoreSize, WT3->xstart, WT3->ystart, coreColStart);
+	va->AddVertexQTC(pos1 + camera->GetRight() * flareCoreSize - camera->GetUp() * flareCoreSize, WT3->xend,   WT3->ystart, coreColStart);
+	va->AddVertexQTC(pos1 + camera->GetRight() * flareCoreSize + camera->GetUp() * flareCoreSize, WT3->xend,   WT3->yend,   coreColStart);
+	va->AddVertexQTC(pos1 - camera->GetRight() * flareCoreSize + camera->GetUp() * flareCoreSize, WT3->xstart, WT3->yend,   coreColStart);
 
 	#undef WT3
 	#undef WT2

@@ -248,7 +248,7 @@ void CFarTextureHandler::DrawFarTexture(const CSolidObject* obj, CVertexArray* v
 	static const int USHRT_MAX_ = (1 << 16);
 	const int orient_step = USHRT_MAX_ / numOrientations;
 
-	int orient = GetHeadingFromVector(-camera->forward.x, -camera->forward.z) - obj->heading;
+	int orient = GetHeadingFromVector(-camera->GetDir().x, -camera->GetDir().z) - obj->heading;
 		orient += USHRT_MAX_;          // make it positive only
 		orient += (orient_step >> 1);  // we want that frontdir is from -orient_step/2 upto orient_step/2
 		orient %= USHRT_MAX_;          // we have an angle so it's periodical
@@ -258,8 +258,8 @@ void CFarTextureHandler::DrawFarTexture(const CSolidObject* obj, CVertexArray* v
 	const float iconSizeY = float(this->iconSizeY) / texSizeY;
 	const float2 texcoords = GetTextureCoords(farTextureNum - 1, orient);
 
-	const float3 curad = camera->up *    obj->model->radius;
-	const float3 crrad = camera->right * obj->model->radius;
+	const float3 curad = camera->GetUp() *    obj->model->radius;
+	const float3 crrad = camera->GetRight() * obj->model->radius;
 
 	va->AddVertexQT(interPos - curad + crrad, texcoords.x, texcoords.y );
 	va->AddVertexQT(interPos + curad + crrad, texcoords.x, texcoords.y + iconSizeY);

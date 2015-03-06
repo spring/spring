@@ -50,9 +50,9 @@ void FPSUnitController::Update() {
 	CFeature* hitFeature;
 
 	// SYNCED, do NOT use GuiTraceRay which also checks gu->spectatingFullView
-	float hitDist = TraceRay::TraceRay(pos, viewDir, controllee->maxRange, 0, controllee, hitUnit, hitFeature);
+	float hitDist = TraceRay::TraceRay(pos, viewDir, controllee->maxRange, Collision::NOCLOAKED, controllee, hitUnit, hitFeature);
 
-	if (hitUnit) {
+	if (hitUnit != NULL) {
 		targetUnit = hitUnit;
 		targetDist = hitDist;
 		targetPos  = hitUnit->pos;
@@ -72,7 +72,7 @@ void FPSUnitController::Update() {
 			// projectiles can gain extra flighttime and travel further
 			//
 			// NOTE: CWeapon::AttackGround checks range via TryTarget
-			if ((targetPos.y - ground->GetHeightReal(targetPos.x, targetPos.z)) <= SQUARE_SIZE) {
+			if ((targetPos.y - CGround::GetHeightReal(targetPos.x, targetPos.z)) <= SQUARE_SIZE) {
 				controllee->AttackGround(targetPos, true, true, true);
 			}
 		}
@@ -117,13 +117,13 @@ void FPSUnitController::SendStateUpdate() {
 	state |= ((mouseButtons[SDL_BUTTON_LEFT ].pressed) * (1 << 4));
 	state |= ((mouseButtons[SDL_BUTTON_RIGHT].pressed) * (1 << 5));
 
-	shortint2 hp = GetHAndPFromVector(camera->forward);
+	shortint2 hp = GetHAndPFromVector(camera->GetDir());
 
 	if (hp.x != oldHeading || hp.y != oldPitch || state != oldState) {
 		oldHeading = hp.x;
 		oldPitch   = hp.y;
 		oldState   = state;
 
-		net->Send(CBaseNetProtocol::Get().SendDirectControlUpdate(gu->myPlayerNum, state, hp.x, hp.y));
+		clientNet->Send(CBaseNetProtocol::Get().SendDirectControlUpdate(gu->myPlayerNum, state, hp.x, hp.y));
 	}
 }

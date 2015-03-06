@@ -6,7 +6,7 @@
 #include "MapInfo.h"
 #include "BaseGroundDrawer.h"
 #include "HeightMapTexture.h"
-#include "Rendering/Env/ITreeDrawer.h"
+#include "Rendering/Env/GrassDrawer.h"
 #include "Rendering/Env/IWater.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
@@ -56,27 +56,21 @@ CBasicMapDamage::~CBasicMapDamage()
 
 void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 {
-	if ((pos.x < 0.0f) || (pos.x > gs->mapx * SQUARE_SIZE)) {
+	if (!pos.IsInMap()) {
 		return;
 	}
-	if ((pos.z < 0.0f) || (pos.z > gs->mapy * SQUARE_SIZE)) {
-		return;
-	}
-
 	if (strength < 10.0f || radius < 8.0f) {
 		return;
 	}
-
-	radius *= 1.5f;
 
 	Explo* e = new Explo;
 	e->pos = pos;
 	e->strength = strength;
 	e->ttl = 10;
-	e->x1 = std::max((int) (pos.x - radius) / SQUARE_SIZE,            2);
-	e->x2 = std::min((int) (pos.x + radius) / SQUARE_SIZE, gs->mapx - 3);
-	e->y1 = std::max((int) (pos.z - radius) / SQUARE_SIZE,            2);
-	e->y2 = std::min((int) (pos.z + radius) / SQUARE_SIZE, gs->mapy - 3);
+	e->x1 = Clamp<int>((pos.x - radius) / SQUARE_SIZE, 1, mapDims.mapxm1);
+	e->x2 = Clamp<int>((pos.x + radius) / SQUARE_SIZE, 1, mapDims.mapxm1);
+	e->y1 = Clamp<int>((pos.z - radius) / SQUARE_SIZE, 1, mapDims.mapym1);
+	e->y2 = Clamp<int>((pos.z + radius) / SQUARE_SIZE, 1, mapDims.mapym1);
 	e->squares.reserve((e->y2 - e->y1 + 1) * (e->x2 - e->x1 + 1));
 
 	const float* curHeightMap = readMap->GetCornerHeightMapSynced();
@@ -87,7 +81,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 
 	for (int y = e->y1; y <= e->y2; ++y) {
 		for (int x = e->x1; x <= e->x2; ++x) {
-			const CSolidObject* so = groundBlockingObjectMap->GroundBlockedUnsafe(y * gs->mapx + x);
+			const CSolidObject* so = groundBlockingObjectMap->GroundBlockedUnsafe(y * mapDims.mapx + x);
 
 			// do not change squares with buildings on them here
 			if (so && so->blockHeightChanges) {
@@ -100,14 +94,14 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 			const float relDist = std::min(1.0f, expDist * invRadius);
 			const unsigned int tableIdx = relDist * CRATER_TABLE_SIZE;
 
-			float dif =
-					baseStrength * craterTable[tableIdx] *
-					invHardness[typeMap[(y / 2) * gs->hmapx + x / 2]];
+			float dif = baseStrength;
+			dif *= craterTable[tableIdx];
+			dif *= invHardness[typeMap[(y / 2) * mapDims.hmapx + x / 2]];
 
 			// FIXME: compensate for flattened ground under dead buildings
 			const float prevDif =
-				curHeightMap[y * gs->mapxp1 + x] -
-				orgHeightMap[y * gs->mapxp1 + x];
+				curHeightMap[y * mapDims.mapxp1 + x] -
+				orgHeightMap[y * mapDims.mapxp1 + x];
 
 			if (prevDif * dif > 0.0f) {
 				dif /= math::fabs(prevDif) * 0.1f + 1;
@@ -116,7 +110,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 			e->squares.push_back(dif);
 
 			if (dif < -0.3f && strength > 200.0f) {
-				treeDrawer->RemoveGrass(x, y);
+				grassDrawer->RemoveGrass(float3(x * SQUARE_SIZE, 0.0f, y * SQUARE_SIZE));
 			}
 		}
 	}
@@ -124,9 +118,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 	// calculate how much to offset the buildings in the explosion radius with
 	// (while still keeping the ground below them flat)
 	const std::vector<CUnit*>& units = quadField->GetUnitsExact(pos, radius);
-	for (std::vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
-		CUnit* unit = *ui;
-
+	for (const CUnit* unit: units) {
 		if (!unit->blockHeightChanges) { continue; }
 		if (!unit->IsBlocking()) { continue; }
 
@@ -141,10 +133,10 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 
 				float dif =
 						baseStrength * craterTable[tableIdx] *
-						invHardness[typeMap[(z / 2) * gs->hmapx + x / 2]];
+						invHardness[typeMap[(z / 2) * mapDims.hmapx + x / 2]];
 				const float prevDif =
-						curHeightMap[z * gs->mapxp1 + x] -
-						orgHeightMap[z * gs->mapxp1 + x];
+						curHeightMap[z * mapDims.mapxp1 + x] -
+						orgHeightMap[z * mapDims.mapxp1 + x];
 
 				if (prevDif * dif > 0.0f) {
 					dif /= math::fabs(prevDif) * 0.1f + 1;
@@ -158,7 +150,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 
 		if (totalDif != 0.0f) {
 			ExploBuilding eb;
-			eb.id = (*ui)->id;
+			eb.id = unit->id;
 			eb.dif = totalDif;
 			eb.tx1 = unit->mapPos.x;
 			eb.tx2 = unit->mapPos.x + unit->xsize;
@@ -214,49 +206,35 @@ void CBasicMapDamage::Update()
 {
 	SCOPED_TIMER("BasicMapDamage::Update");
 
-	std::deque<Explo*>::iterator ei;
-
-	for (ei = explosions.begin(); ei != explosions.end(); ++ei) {
-		Explo* e = *ei;
+	for (Explo* e: explosions) {
 		if (e->ttl <= 0) {
 			continue;
 		}
 		--e->ttl;
 
-		const int x1 = e->x1;
-		const int x2 = e->x2;
-		const int y1 = e->y1;
-		const int y2 = e->y2;
 		std::vector<float>::const_iterator si = e->squares.begin();
-
-		for (int y = y1; y <= y2; ++y) {
-			for (int x = x1; x<= x2; ++x) {
+		for (int y = e->y1; y <= e->y2; ++y) {
+			for (int x = e->x1; x <= e->x2; ++x) {
 				const float dif = *(si++);
-				readMap->AddHeight(y * gs->mapxp1 + x, dif);
+				readMap->AddHeight(y * mapDims.mapxp1 + x, dif);
 			}
 		}
-		std::vector<ExploBuilding>::const_iterator bi;
-		for (bi = e->buildings.begin(); bi != e->buildings.end(); ++bi) {
-			const float dif = bi->dif;
-			const int tx1 = bi->tx1;
-			const int tx2 = bi->tx2;
-			const int tz1 = bi->tz1;
-			const int tz2 = bi->tz2;
 
-			for (int z = tz1; z < tz2; z++) {
-				for (int x = tx1; x < tx2; x++) {
-					readMap->AddHeight(z * gs->mapxp1 + x, dif);
+		for (ExploBuilding& b: e->buildings) {
+			for (int z = b.tz1; z < b.tz2; z++) {
+				for (int x = b.tx1; x < b.tx2; x++) {
+					readMap->AddHeight(z * mapDims.mapxp1 + x, b.dif);
 				}
 			}
 
-			CUnit* unit = unitHandler->GetUnit(bi->id);
-
+			CUnit* unit = unitHandler->GetUnit(b.id);
 			if (unit != NULL) {
-				unit->Move(UpVector * dif, true);
+				unit->Move(UpVector * b.dif, true);
 			}
 		}
+
 		if (e->ttl == 0) {
-			RecalcArea(x1 - 2, x2 + 2, y1 - 2, y2 + 2);
+			RecalcArea(e->x1 - 1, e->x2 + 1, e->y1 - 1, e->y2 + 1);
 		}
 	}
 

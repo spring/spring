@@ -16,11 +16,15 @@ class CWeapon;
 struct Command;
 struct BuildInfo;
 
+
 class CEventHandler
 {
 	public:
 		CEventHandler();
 		~CEventHandler();
+
+		void ResetState();
+		void SetupEvents();
 
 		void AddClient(CEventClient* ec);
 		void RemoveClient(CEventClient* ec);
@@ -36,16 +40,9 @@ class CEventHandler
 		bool IsController(const std::string& ciName) const;
 
 	public: // EventBatchHandler
-		void UpdateUnits();
-		void UpdateDrawUnits();
 		void DeleteSyncedUnits();
-		void UpdateFeatures();
-		void UpdateDrawFeatures();
-		void DeleteSyncedFeatures();
-		void UpdateProjectiles();
-		void UpdateDrawProjectiles();
+
 		void DeleteSyncedProjectiles();
-		void UpdateObjects();
 		void DeleteSyncedObjects();
 	public:
 		/**
@@ -154,6 +151,7 @@ class CEventHandler
 		bool AllowResourceLevel(int teamID, const string& type, float level);
 		bool AllowResourceTransfer(int oldTeam, int newTeam, const string& type, float amount);
 		bool AllowDirectUnitControl(int playerID, const CUnit* unit);
+		bool AllowBuilderHoldFire(const CUnit* unit, int action);
 		bool AllowStartPosition(int playerID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos);
 
 		bool TerraformComplete(const CUnit* unit, const CUnit* build);
@@ -250,6 +248,7 @@ class CEventHandler
 		void DrawScreenEffects();
 		void DrawScreen();
 		void DrawInMiniMap();
+		void DrawInMiniMapBackground();
 
 		bool DrawUnit(const CUnit* unit);
 		bool DrawFeature(const CFeature* feature);
@@ -262,10 +261,9 @@ class CEventHandler
 		void GameProgress(int gameFrame);
 
 		void CollectGarbage();
+		void DbgTimingInfo(DbgTimingInfoType type, const spring_time start, const spring_time end);
+		void MetalMapChanged(const int x, const int z);
 		/// @}
-
-		//FIXME no real event
-		void LoadedModelRequested();
 
 	private:
 		typedef vector<CEventClient*> EventClientList;
@@ -561,7 +559,7 @@ inline void CEventHandler::FeatureMoved(const CFeature* feature, const float3& o
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listFeatureMoved[i];
 		if ((featureAllyTeam < 0) || ec->CanReadAllyTeam(featureAllyTeam)) {
-			ec->FeatureMoved(feature);
+			ec->FeatureMoved(feature, oldpos);
 		}
 	}
 }

@@ -92,6 +92,7 @@ static inline CMatrix44f aiMatrixToMatrix(const aiMatrix4x4t<float>& m)
 	// return (CMatrix44f(n.GetPos(), n.GetX(), n.GetZ(), -n.GetY()));
 }
 
+/*
 static float3 aiQuaternionToRadianAngles(const aiQuaternion q1)
 {
 	const float sqw = q1.w * q1.w;
@@ -120,7 +121,7 @@ static float3 aiQuaternionToRadianAngles(const aiQuaternion q1)
 
 	return (aiVectorToFloat3(angles));
 }
-
+*/
 
 
 
@@ -137,7 +138,7 @@ public:
 
 S3DModel* CAssParser::Load(const std::string& modelFilePath)
 {
-	LOG_S(LOG_SECTION_MODEL, "Loading model: %s", modelFilePath.c_str());
+	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Loading model: %s", modelFilePath.c_str());
 
 	const std::string& modelPath = FileSystem::GetDirectory(modelFilePath);
 	const std::string& modelName = FileSystem::GetBasename(modelFilePath);
@@ -150,7 +151,7 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 		metaFileName = modelPath + '/' + modelName + ".lua";
 	}
 	if (!CFileHandler::FileExists(metaFileName, SPRING_VFS_ZIP)) {
-		LOG_S(LOG_SECTION_MODEL, "No meta-file '%s'. Using defaults.", metaFileName.c_str());
+		LOG_SL(LOG_SECTION_MODEL, L_INFO, "No meta-file '%s'. Using defaults.", metaFileName.c_str());
 	}
 
 	LuaParser metaFileParser(metaFileName, SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
@@ -163,7 +164,7 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 	const LuaTable& modelTable = metaFileParser.GetRoot();
 
 	if (!modelTable.IsValid()) {
-		LOG_S(LOG_SECTION_MODEL, "No valid model metadata in '%s' or no meta-file", metaFileName.c_str());
+		LOG_SL(LOG_SECTION_MODEL, L_INFO, "No valid model metadata in '%s' or no meta-file", metaFileName.c_str());
 	}
 
 
@@ -193,7 +194,7 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 #endif
 
 	// Read the model file to build a scene object
-	LOG_S(LOG_SECTION_MODEL, "Importing model file: %s", modelFilePath.c_str());
+	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Importing model file: %s", modelFilePath.c_str());
 
 	const aiScene* scene;
 	{
@@ -203,7 +204,7 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 	}
 
 	if (scene != NULL) {
-		LOG_S(LOG_SECTION_MODEL,
+		LOG_SL(LOG_SECTION_MODEL, L_INFO,
 			"Processing scene for model: %s (%d meshes / %d materials / %d textures)",
 			modelFilePath.c_str(), scene->mNumMeshes, scene->mNumMaterials,
 			scene->mNumTextures);
@@ -217,11 +218,11 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 
 	// Load textures
 	FindTextures(model, scene, modelTable, modelPath, modelName);
-	LOG_S(LOG_SECTION_MODEL, "Loading textures. Tex1: '%s' Tex2: '%s'", model->tex1.c_str(), model->tex2.c_str());
+	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Loading textures. Tex1: '%s' Tex2: '%s'", model->tex1.c_str(), model->tex2.c_str());
 	texturehandlerS3O->LoadS3OTexture(model);
 
 	// Load all pieces in the model
-	LOG_S(LOG_SECTION_MODEL, "Loading pieces from root node '%s'", scene->mRootNode->mName.data);
+	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Loading pieces from root node '%s'", scene->mRootNode->mName.data);
 	LoadPiece(model, scene->mRootNode, scene, modelTable);
 
 	// Update piece hierarchy based on metadata
@@ -236,7 +237,7 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->drawRadius: %f", model->drawRadius);
 	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->mins: (%f,%f,%f)", model->mins[0], model->mins[1], model->mins[2]);
 	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->maxs: (%f,%f,%f)", model->maxs[0], model->maxs[1], model->maxs[2]);
-	LOG_S(LOG_SECTION_MODEL, "Model %s Imported.", model->name.c_str());
+	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Model %s Imported.", model->name.c_str());
 	return model;
 }
 
@@ -316,14 +317,14 @@ void CAssParser::LoadPieceTransformations(
 	pieceRotAngles.z = pieceTable.GetFloat("rotatez", pieceRotAngles.z);
 	pieceRotAngles  *= DEGTORAD;
 
-	LOG_S(LOG_SECTION_PIECE,
+	LOG_SL(LOG_SECTION_PIECE, L_INFO,
 		"(%d:%s) Assimp offset (%f,%f,%f), rotate (%f,%f,%f,%f), scale (%f,%f,%f)",
 		model->numPieces, piece->name.c_str(),
 		aiTransVec.x, aiTransVec.y, aiTransVec.z,
 		aiRotateQuat.w, aiRotateQuat.x, aiRotateQuat.y, aiRotateQuat.z,
 		aiScaleVec.x, aiScaleVec.y, aiScaleVec.z
 	);
-	LOG_S(LOG_SECTION_PIECE,
+	LOG_SL(LOG_SECTION_PIECE, L_INFO,
 		"(%d:%s) Relative offset (%f,%f,%f), rotate (%f,%f,%f), scale (%f,%f,%f)",
 		model->numPieces, piece->name.c_str(),
 		piece->offset.x, piece->offset.y, piece->offset.z,
@@ -387,7 +388,7 @@ bool CAssParser::SetModelRadiusAndHeight(
 		if (!pieceTable.KeyExists("height")) {
 			model->height = piece->offset.y;
 
-			LOG_S(LOG_SECTION_MODEL, "Model height of %f set by special node 'SpringHeight'", model->height);
+			LOG_SL(LOG_SECTION_MODEL, L_INFO, "Model height of %f set by special node 'SpringHeight'", model->height);
 		}
 
 		--model->numPieces;
@@ -405,7 +406,7 @@ bool CAssParser::SetModelRadiusAndHeight(
 			//   piece can be placed anywhere within the hierarchy
 			model->relMidPos = scaleRotMat.Mul(piece->offset);
 
-			LOG_S(LOG_SECTION_MODEL,
+			LOG_SL(LOG_SECTION_MODEL, L_INFO,
 				"Model midpos of (%f,%f,%f) set by special node 'SpringRadius'",
 				model->relMidPos.x, model->relMidPos.y, model->relMidPos.z);
 		}
@@ -428,7 +429,7 @@ bool CAssParser::SetModelRadiusAndHeight(
 				model->radius = piece->maxs.x;
 			}
 
-			LOG_S(LOG_SECTION_MODEL, "Model radius of %f set by special node 'SpringRadius'", model->radius);
+			LOG_SL(LOG_SECTION_MODEL, L_INFO, "Model radius of %f set by special node 'SpringRadius'", model->radius);
 		}
 
 		--model->numPieces;
@@ -604,13 +605,13 @@ SAssPiece* CAssParser::LoadPiece(
 
 	SetPieceName(piece, model, pieceNode);
 
-	LOG_S(LOG_SECTION_PIECE, "Converting node '%s' to piece '%s' (%d meshes).", pieceNode->mName.data, piece->name.c_str(), pieceNode->mNumMeshes);
+	LOG_SL(LOG_SECTION_PIECE, L_INFO, "Converting node '%s' to piece '%s' (%d meshes).", pieceNode->mName.data, piece->name.c_str(), pieceNode->mNumMeshes);
 
 	// Load additional piece properties from metadata
 	const LuaTable& pieceTable = modelTable.SubTable("pieces").SubTable(piece->name);
 
 	if (pieceTable.IsValid()) {
-		LOG_S(LOG_SECTION_PIECE, "Found metadata for piece '%s'", piece->name.c_str());
+		LOG_SL(LOG_SECTION_PIECE, L_INFO, "Found metadata for piece '%s'", piece->name.c_str());
 	}
 
 	// Load transforms
@@ -623,9 +624,9 @@ SAssPiece* CAssParser::LoadPiece(
 	SetPieceParentName(piece, model, pieceNode, pieceTable);
 
 	// Verbose logging of piece properties
-	LOG_S(LOG_SECTION_PIECE, "Loaded model piece: %s with %d meshes", piece->name.c_str(), pieceNode->mNumMeshes);
-	LOG_S(LOG_SECTION_PIECE, "piece->name: %s", piece->name.c_str());
-	LOG_S(LOG_SECTION_PIECE, "piece->parent: %s", piece->parentName.c_str());
+	LOG_SL(LOG_SECTION_PIECE, L_INFO, "Loaded model piece: %s with %d meshes", piece->name.c_str(), pieceNode->mNumMeshes);
+	LOG_SL(LOG_SECTION_PIECE, L_INFO, "piece->name: %s", piece->name.c_str());
+	LOG_SL(LOG_SECTION_PIECE, L_INFO, "piece->parent: %s", piece->parentName.c_str());
 
 	// Recursively process all child pieces
 	for (unsigned int i = 0; i < pieceNode->mNumChildren; ++i) {
@@ -813,11 +814,11 @@ void SAssPiece::UploadGeometryVBOs()
 
 	//FIXME share 1 VBO for ALL models
 	vboAttributes.Bind(GL_ARRAY_BUFFER);
-	vboAttributes.Resize(vertices.size() * sizeof(SAssVertex), GL_STATIC_DRAW, &vertices[0]);
+	vboAttributes.New(vertices.size() * sizeof(SAssVertex), GL_STATIC_DRAW, &vertices[0]);
 	vboAttributes.Unbind();
 
 	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
-	vboIndices.Resize(vertexDrawIndices.size() * sizeof(unsigned int), GL_STATIC_DRAW, &vertexDrawIndices[0]);
+	vboIndices.New(vertexDrawIndices.size() * sizeof(unsigned int), GL_STATIC_DRAW, &vertexDrawIndices[0]);
 	vboIndices.Unbind();
 
 	// NOTE: wasteful to keep these around, but still needed (eg. for Shatter())

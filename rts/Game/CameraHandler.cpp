@@ -10,12 +10,10 @@
 #include "Camera/CameraController.h"
 #include "Camera/FPSController.h"
 #include "Camera/OverheadController.h"
-#include "Camera/SmoothController.h"
 #include "Camera/RotOverheadController.h"
 #include "Camera/FreeController.h"
 #include "Camera/OverviewController.h"
-#include "Camera/TWController.h"
-#include "Camera/OrbitController.h"
+#include "Camera/SpringController.h"
 #include "Rendering/GlobalRendering.h"
 #include "System/myMath.h"
 #include "System/Config/ConfigHandler.h"
@@ -35,15 +33,13 @@ static std::string strformat(const char* fmt, ...)
 CONFIG(std::string, CamModeName).defaultValue("");
 
 CONFIG(int, CamMode)
-	.defaultValue(CCameraHandler::CAMERA_MODE_SMOOTH)
-	.description(strformat("Defines the used camera. Options are:\n%i = FPS\n%i = Overhead\n%i = TotalWar\n%i = RotOverhead\n%i = Free\n%i = SmoothOverhead\n%i = Orbit\n%i = Overview",
+	.defaultValue(CCameraHandler::CAMERA_MODE_SPRING)
+	.description(strformat("Defines the used camera. Options are:\n%i = FPS\n%i = Overhead\n%i = Spring\n%i = RotOverhead\n%i = Free\n%i = Overview",
 		(int)CCameraHandler::CAMERA_MODE_FIRSTPERSON,
 		(int)CCameraHandler::CAMERA_MODE_OVERHEAD,
-		(int)CCameraHandler::CAMERA_MODE_TOTALWAR,
+		(int)CCameraHandler::CAMERA_MODE_SPRING,
 		(int)CCameraHandler::CAMERA_MODE_ROTOVERHEAD,
 		(int)CCameraHandler::CAMERA_MODE_FREE,
-		(int)CCameraHandler::CAMERA_MODE_SMOOTH,
-		(int)CCameraHandler::CAMERA_MODE_ORBIT,
 		(int)CCameraHandler::CAMERA_MODE_OVERVIEW
 	).c_str())
 	.minimumValue(0)
@@ -51,11 +47,13 @@ CONFIG(int, CamMode)
 
 CONFIG(float, CamTimeFactor)
 	.defaultValue(1.0f)
-	.minimumValue(0.0f);
+	.minimumValue(0.0f)
+	.description("Scales the speed of camera transitions, e.g. zooming or position change.");
 
 CONFIG(float, CamTimeExponent)
 	.defaultValue(4.0f)
-	.minimumValue(0.0f);
+	.minimumValue(0.0f)
+	.description("Camera transitions happen at lerp(old, new, timeNorm ^ CamTimeExponent).");
 
 
 CCameraHandler* camHandler = NULL;
@@ -68,14 +66,12 @@ CCameraHandler::CCameraHandler()
 	startCam.fov    = 90.0f;
 
 	// FPS camera must always be the first one in the list
-	camControllers.resize(CAMERA_MODE_LAST);
+	camControllers.resize(CAMERA_MODE_LAST, nullptr);
 	camControllers[CAMERA_MODE_FIRSTPERSON] = new CFPSController();
 	camControllers[CAMERA_MODE_OVERHEAD   ] = new COverheadController();
-	camControllers[CAMERA_MODE_TOTALWAR   ] = new CTWController();
+	camControllers[CAMERA_MODE_SPRING     ] = new CSpringController();
 	camControllers[CAMERA_MODE_ROTOVERHEAD] = new CRotOverheadController();
 	camControllers[CAMERA_MODE_FREE       ] = new CFreeController();
-	camControllers[CAMERA_MODE_SMOOTH     ] = new SmoothController();
-	camControllers[CAMERA_MODE_ORBIT      ] = new COrbitController();
 	camControllers[CAMERA_MODE_OVERVIEW   ] = new COverviewController();
 
 	for (unsigned int i = 0; i < camControllers.size(); i++) {
@@ -98,12 +94,10 @@ CCameraHandler::CCameraHandler()
 
 	RegisterAction("viewfps");
 	RegisterAction("viewta");
-	RegisterAction("viewtw");
+	RegisterAction("viewspring");
 	RegisterAction("viewrot");
 	RegisterAction("viewfree");
 	RegisterAction("viewov");
-	RegisterAction("viewlua");
-	RegisterAction("vieworbit");
 
 	RegisterAction("viewtaflip");
 
@@ -128,30 +122,24 @@ CCameraHandler::~CCameraHandler()
 
 void CCameraHandler::UpdateCam()
 {
-
-	//??? a lot CameraControllers depend on the calling every frame the 1st part of the if-clause
-	//if (cameraTimeEnd < 0.0f)
-	//	return;
-
 	const float  wantedCamFOV = currCamCtrl->GetFOV();
 	const float3 wantedCamPos = currCamCtrl->GetPos();
-	const float3 wantedCamDir = currCamCtrl->GetDir();
+	const float3 wantedCamRot = currCamCtrl->GetRot();
 
 	const float curTime = spring_now().toMilliSecsf();
 
 	if (curTime >= cameraTimeEnd) {
 		camera->SetPos(wantedCamPos);
-		camera->forward = wantedCamDir;
+		camera->SetRot(wantedCamRot);
 		camera->SetFov(wantedCamFOV);
 	} else {
-		if ((cameraTimeEnd - cameraTimeStart) > 0.0f) {
+		if (cameraTimeEnd > cameraTimeStart) {
 			const float timeRatio = (cameraTimeEnd - curTime) / (cameraTimeEnd - cameraTimeStart);
-			const float tweenFact = 1.0f - (float)math::pow(timeRatio, cameraTimeExponent);
+			const float tweenFact = 1.0f - math::pow(timeRatio, cameraTimeExponent);
 
-			camera->SetPos(   mix(startCam.pos, wantedCamPos, tweenFact));
-			camera->forward = mix(startCam.dir, wantedCamDir, tweenFact);
-			camera->SetFov(   mix(startCam.fov, wantedCamFOV, tweenFact));
-			camera->forward.Normalize();
+			camera->SetPos(mix(startCam.pos, wantedCamPos, tweenFact));
+			camera->SetRot(mix(startCam.rot, wantedCamRot, tweenFact));
+			camera->SetFov(mix(startCam.fov, wantedCamFOV, tweenFact));
 		}
 	}
 }
@@ -159,7 +147,6 @@ void CCameraHandler::UpdateCam()
 
 void CCameraHandler::CameraTransition(float nsecs)
 {
-
 	UpdateCam(); // prevents camera stutter when multithreading
 
 	nsecs = std::max(nsecs, 0.0f) * cameraTimeFactor;
@@ -169,7 +156,7 @@ void CCameraHandler::CameraTransition(float nsecs)
 	cameraTimeEnd   = cameraTimeStart + nsecs * 1000.0f;
 
 	startCam.pos = camera->GetPos();
-	startCam.dir = camera->forward;
+	startCam.rot = camera->GetRot();
 	startCam.fov = camera->GetFov();
 }
 
@@ -185,10 +172,12 @@ void CCameraHandler::SetCameraMode(unsigned int mode)
 
 	CCameraController* oldCamCtrl = currCamCtrl;
 
+	const int oldMode = currCamCtrlNum;
 	currCamCtrlNum = mode;
 	currCamCtrl = camControllers[mode];
 	currCamCtrl->SetPos(oldCamCtrl->SwitchFrom());
-	currCamCtrl->SwitchTo();
+	currCamCtrl->SwitchTo(oldMode);
+	currCamCtrl->Update();
 }
 
 
@@ -233,28 +222,18 @@ void CCameraHandler::PopMode()
 
 void CCameraHandler::ToggleState()
 {
-
-	CameraTransition(1.0f);
-
-	CCameraController* oldCamCtrl = currCamCtrl;
-	currCamCtrlNum++;
-	if (currCamCtrlNum >= camControllers.size()) {
-		currCamCtrlNum = 0;
-	}
+	auto newMode = currCamCtrlNum + 1;
+	newMode %= camControllers.size();
 
 	int a = 0;
 	const int maxTries = camControllers.size() - 1;
-	while ((a < maxTries) && !camControllers[currCamCtrlNum]->enabled) {
-		currCamCtrlNum++;
-		if (currCamCtrlNum >= camControllers.size()) {
-			currCamCtrlNum = 0;
-		}
+	while ((a < maxTries) && !camControllers[newMode]->enabled) {
+		newMode++;
+		newMode %= camControllers.size();
 		a++;
 	}
 
-	currCamCtrl = camControllers[currCamCtrlNum];
-	currCamCtrl->SetPos(oldCamCtrl->SwitchFrom());
-	currCamCtrl->SwitchTo();
+	SetCameraMode(newMode);
 }
 
 
@@ -328,7 +307,6 @@ void CCameraHandler::GetState(CCameraController::StateMap& sm) const
 
 bool CCameraHandler::SetState(const CCameraController::StateMap& sm)
 {
-
 	CCameraController::StateMap::const_iterator it = sm.find("mode");
 	if (it != sm.end()) {
 		const unsigned int camMode = (unsigned int)it->second;
@@ -337,18 +315,20 @@ bool CCameraHandler::SetState(const CCameraController::StateMap& sm)
 		}
 		if (camMode != currCamCtrlNum) {
 			CameraTransition(1.0f);
+			const int oldMode = currCamCtrlNum;
 			currCamCtrlNum = camMode;
 			currCamCtrl = camControllers[camMode];
-			currCamCtrl->SwitchTo();
+			currCamCtrl->SwitchTo(oldMode);
 		}
 	}
-	return currCamCtrl->SetState(sm);
+	bool result = currCamCtrl->SetState(sm);
+	currCamCtrl->Update();
+	return result;
 }
 
 
 const std::string CCameraHandler::GetCurrentControllerName() const
 {
-
 	return currCamCtrl->GetName();
 }
 
@@ -364,8 +344,8 @@ void CCameraHandler::PushAction(const Action& action)
 	else if (cmd == "viewta") {
 		SetCameraMode(CAMERA_MODE_OVERHEAD);
 	}
-	else if (cmd == "viewtw") {
-		SetCameraMode(CAMERA_MODE_TOTALWAR);
+	else if (cmd == "viewspring") {
+		SetCameraMode(CAMERA_MODE_SPRING);
 	}
 	else if (cmd == "viewrot") {
 		SetCameraMode(CAMERA_MODE_ROTOVERHEAD);
@@ -376,16 +356,9 @@ void CCameraHandler::PushAction(const Action& action)
 	else if (cmd == "viewov") {
 		SetCameraMode(CAMERA_MODE_OVERVIEW);
 	}
-	else if (cmd == "viewlua") {
-		SetCameraMode(CAMERA_MODE_SMOOTH); // ?
-	}
-	else if (cmd == "vieworbit") {
-		SetCameraMode(CAMERA_MODE_ORBIT);
-	}
 
 	else if (cmd == "viewtaflip") {
 		COverheadController* taCam = dynamic_cast<COverheadController*>(camControllers[CAMERA_MODE_OVERHEAD]);
-		SmoothController* smCam = dynamic_cast<SmoothController*>(camControllers[CAMERA_MODE_SMOOTH]);
 
 		if (taCam) {
 			if (!action.extra.empty()) {
@@ -393,13 +366,7 @@ void CCameraHandler::PushAction(const Action& action)
 			} else {
 				taCam->flipped = !taCam->flipped;
 			}
-		}
-		if (smCam) {
-			if (!action.extra.empty()) {
-				smCam->flipped = !!atoi(action.extra.c_str());
-			} else {
-				smCam->flipped = !smCam->flipped;
-			}
+			taCam->Update();
 		}
 	}
 	else if (cmd == "viewsave") {
@@ -438,10 +405,11 @@ bool CCameraHandler::LoadViewData(const ViewData& vd)
 		const unsigned int currentMode = currCamCtrlNum;
 		if (camMode != currCamCtrlNum) {
 			CameraTransition(1.0f);
+			const int oldMode = currCamCtrlNum;
 			currCamCtrlNum = camMode;
 			currCamCtrl = camControllers[camMode];
 			const bool showMode = (camMode != currentMode);
-			currCamCtrl->SwitchTo(showMode);
+			currCamCtrl->SwitchTo(oldMode, showMode);
 		}
 	}
 	return currCamCtrl->SetState(vd);

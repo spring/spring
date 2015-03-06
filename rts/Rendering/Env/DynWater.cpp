@@ -342,7 +342,7 @@ void CDynWater::Draw()
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, -camPosX/256.0f + 0.5f, -camPosZ/256.0f + 0.5f, 0, 0);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 12, 1.0f/WF_SIZE, 1.0f/WF_SIZE, 0, 0);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 13, -(camPosBig.x - WH_SIZE)/WF_SIZE, -(camPosBig.z - WH_SIZE)/WF_SIZE, 0, 0);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 14, 1.0f/(gs->pwr2mapx * SQUARE_SIZE), 1.0f/(gs->pwr2mapy * SQUARE_SIZE), 0, 0);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 14, 1.0f/(mapDims.pwr2mapx * SQUARE_SIZE), 1.0f/(mapDims.pwr2mapy * SQUARE_SIZE), 0, 0);
 	//glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0, 1.0f/4096.0f, 1.0f/4096.0f, 0, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 1, camera->GetPos().x, camera->GetPos().y, camera->GetPos().z, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 2, reflectRight.x, reflectRight.y, reflectRight.z, 0);
@@ -421,8 +421,8 @@ void CDynWater::Update()
 
 	oldCamPosBig = camPosBig;
 
-	camPosBig.x = math::floor(std::max((float)WH_SIZE, std::min((float)gs->mapx*SQUARE_SIZE-WH_SIZE, (float)camera->GetPos().x))/(W_SIZE*16))*(W_SIZE*16);
-	camPosBig.z = math::floor(std::max((float)WH_SIZE, std::min((float)gs->mapy*SQUARE_SIZE-WH_SIZE, (float)camera->GetPos().z))/(W_SIZE*16))*(W_SIZE*16);
+	camPosBig.x = math::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapx*SQUARE_SIZE-WH_SIZE, (float)camera->GetPos().x))/(W_SIZE*16))*(W_SIZE*16);
+	camPosBig.z = math::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapy*SQUARE_SIZE-WH_SIZE, (float)camera->GetPos().z))/(W_SIZE*16))*(W_SIZE*16);
 
 	glDisable(GL_DEPTH_TEST);
 	glDepthMask(0);
@@ -451,13 +451,14 @@ void CDynWater::DrawReflection(CGame* game)
 	char realCam[sizeof(CCamera)];
 	new (realCam) CCamera(*camera); // anti-crash workaround for multithreading
 
-	camera->forward.y *= -1.0f;
+	camera->SetDir(camera->GetDir() * float3(1.0f, -1.0f, 1.0f));
 	camera->SetPos(camera->GetPos() * float3(1.0f, -1.0f, 1.0f));
+	camera->SetRotZ(-camera->GetRot().z);
 	camera->Update();
 
-	reflectRight = camera->right;
-	reflectUp = camera->up;
-	reflectForward = camera->forward;
+	reflectRight = camera->GetRight();
+	reflectUp = camera->GetUp();
+	reflectForward = camera->GetDir();
 
 	reflectFBO.Bind();
 	glViewport(0, 0, 512, 512);
@@ -522,9 +523,9 @@ void CDynWater::DrawRefraction(CGame* game)
 	drawRefraction = true;
 	camera->Update();
 
-	refractRight = camera->right;
-	refractUp = camera->up;
-	refractForward = camera->forward;
+	refractRight = camera->GetRight();
+	refractUp = camera->GetUp();
+	refractForward = camera->GetDir();
 
 	refractFBO.Bind();
 	glViewport(0, 0, refractSize, refractSize);
@@ -608,8 +609,8 @@ void CDynWater::DrawWaves()
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 9,  0,          1.0f/1024, 0,0);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, 1.0f/1024,  1.0f/1024, 0,0);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, 1.0f/1024,  0, 0,0);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 12, float(WF_SIZE)/(gs->pwr2mapx*SQUARE_SIZE), float(WF_SIZE)/(gs->pwr2mapy*SQUARE_SIZE), 0, 0);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 13, (camPosBig.x-WH_SIZE)/(gs->pwr2mapx*SQUARE_SIZE), (camPosBig.z-WH_SIZE)/(gs->pwr2mapy*SQUARE_SIZE), 0, 0);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 12, float(WF_SIZE)/(mapDims.pwr2mapx*SQUARE_SIZE), float(WF_SIZE)/(mapDims.pwr2mapy*SQUARE_SIZE), 0, 0);
+	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 13, (camPosBig.x-WH_SIZE)/(mapDims.pwr2mapx*SQUARE_SIZE), (camPosBig.z-WH_SIZE)/(mapDims.pwr2mapy*SQUARE_SIZE), 0, 0);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 14, dx/WF_SIZE, dy/WF_SIZE, 0, 0);
 	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 15, (camPosBig.x-WH_SIZE)/WF_SIZE*4, (camPosBig.x-WH_SIZE)/WF_SIZE*4, 0, 0);
 
@@ -836,8 +837,8 @@ void CDynWater::DrawWaterSurface()
 	va = GetVertexArray();
 	va->Initialize();
 
-	camPosBig2.x = math::floor(std::max((float)WH_SIZE, std::min((float)gs->mapx*SQUARE_SIZE - WH_SIZE, (float)camera->GetPos().x))/(W_SIZE*16))*(W_SIZE*16);
-	camPosBig2.z = math::floor(std::max((float)WH_SIZE, std::min((float)gs->mapy*SQUARE_SIZE - WH_SIZE, (float)camera->GetPos().z))/(W_SIZE*16))*(W_SIZE*16);
+	camPosBig2.x = math::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapx*SQUARE_SIZE - WH_SIZE, (float)camera->GetPos().x))/(W_SIZE*16))*(W_SIZE*16);
+	camPosBig2.z = math::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapy*SQUARE_SIZE - WH_SIZE, (float)camera->GetPos().z))/(W_SIZE*16))*(W_SIZE*16);
 
 	// FIXME:
 	//     1. DynWater::UpdateCamRestraints was never called ==> <this->left> and <this->right> were always empty
@@ -908,7 +909,7 @@ void CDynWater::DrawWaterSurface()
 			const int yhlod = y + hlod;
 
 			const int nloop = (xe - xs) / lod + 1;
-			va->EnlargeArrays(nloop*13, 4*nloop + 1);
+			va->EnlargeArrays(nloop*13);
 			for (int x = xs; x < xe; x += lod) {
 				const int xlod = x + lod;
 				const int xhlod = x + hlod;
@@ -924,49 +925,49 @@ void CDynWater::DrawWaterSurface()
 				} else { // inre begr?sning mot f?eg?nde lod FIXME
 					if (x >= (cx + vrhlod)) {
 						if (inStrip) {
-							va->EndStripQ();
+							va->EndStrip();
 							inStrip = false;
 						}
 						DrawVertexAQ(x,y);
 						DrawVertexAQ(x,yhlod);
 						DrawVertexAQ(xhlod,y);
 						DrawVertexAQ(xhlod,yhlod);
-						va->EndStripQ();
+						va->EndStrip();
 						DrawVertexAQ(x,yhlod);
 						DrawVertexAQ(x,ylod);
 						DrawVertexAQ(xhlod,yhlod);
 						DrawVertexAQ(xhlod,ylod);
-						va->EndStripQ();
+						va->EndStrip();
 						DrawVertexAQ(xhlod,ylod);
 						DrawVertexAQ(xlod,ylod);
 						DrawVertexAQ(xhlod,yhlod);
 						DrawVertexAQ(xlod,y);
 						DrawVertexAQ(xhlod,y);
-						va->EndStripQ();
+						va->EndStrip();
 					} else if (x <= (cx - vrhlod)) {
 						if (inStrip) {
-							va->EndStripQ();
+							va->EndStrip();
 							inStrip = false;
 						}
 						DrawVertexAQ(xlod,  yhlod);
 						DrawVertexAQ(xlod,  y);
 						DrawVertexAQ(xhlod, yhlod);
 						DrawVertexAQ(xhlod, y);
-						va->EndStripQ();
+						va->EndStrip();
 						DrawVertexAQ(xlod,  ylod);
 						DrawVertexAQ(xlod,  yhlod);
 						DrawVertexAQ(xhlod, ylod);
 						DrawVertexAQ(xhlod, yhlod);
-						va->EndStripQ();
+						va->EndStrip();
 						DrawVertexAQ(xhlod, y);
 						DrawVertexAQ(x,     y);
 						DrawVertexAQ(xhlod, yhlod);
 						DrawVertexAQ(x,     ylod);
 						DrawVertexAQ(xhlod, ylod);
-						va->EndStripQ();
+						va->EndStrip();
 					} else if (y >= (cy + vrhlod)) {
 						if (inStrip) {
-							va->EndStripQ();
+							va->EndStrip();
 							inStrip = false;
 						}
 						DrawVertexAQ(x,     y);
@@ -975,16 +976,16 @@ void CDynWater::DrawWaterSurface()
 						DrawVertexAQ(xhlod, yhlod);
 						DrawVertexAQ(xlod,  y);
 						DrawVertexAQ(xlod,  yhlod);
-						va->EndStripQ();
+						va->EndStrip();
 						DrawVertexAQ(x,     yhlod);
 						DrawVertexAQ(x,     ylod);
 						DrawVertexAQ(xhlod, yhlod);
 						DrawVertexAQ(xlod,  ylod);
 						DrawVertexAQ(xlod,  yhlod);
-						va->EndStripQ();
+						va->EndStrip();
 					} else if (y <= (cy - vrhlod)) {
 						if (inStrip) {
-							va->EndStripQ();
+							va->EndStrip();
 							inStrip = false;
 						}
 						DrawVertexAQ(x,     yhlod);
@@ -993,18 +994,18 @@ void CDynWater::DrawWaterSurface()
 						DrawVertexAQ(xhlod, ylod);
 						DrawVertexAQ(xlod,  yhlod);
 						DrawVertexAQ(xlod,  ylod);
-						va->EndStripQ();
+						va->EndStrip();
 						DrawVertexAQ(xlod,  yhlod);
 						DrawVertexAQ(xlod,  y);
 						DrawVertexAQ(xhlod, yhlod);
 						DrawVertexAQ(x,     y);
 						DrawVertexAQ(x,     yhlod);
-						va->EndStripQ();
+						va->EndStrip();
 					}
 				}
 			}
 			if (inStrip) {
-				va->EndStripQ();
+				va->EndStrip();
 				inStrip = false;
 			}
 		}
@@ -1192,6 +1193,7 @@ void CDynWater::AddShipWakes()
 
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 	glDisable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glDisable(GL_FRAGMENT_PROGRAM_ARB);
 	glDisable(GL_VERTEX_PROGRAM_ARB);
@@ -1277,6 +1279,7 @@ void CDynWater::AddExplosions()
 
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 	glDisable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glDisable(GL_FRAGMENT_PROGRAM_ARB);
 	glDisable(GL_VERTEX_PROGRAM_ARB);
@@ -1346,7 +1349,7 @@ void CDynWater::DrawOuterSurface()
 	CVertexArray* va = GetVertexArray();
 	va->Initialize();
 
-	va->EnlargeArrays(3*3*16*16*4, 0);
+	va->EnlargeArrays(3*3*16*16*4);
 	float posx = camPosBig2.x - WH_SIZE - WF_SIZE;
 	float posy = camPosBig2.z - WH_SIZE - WF_SIZE;
 

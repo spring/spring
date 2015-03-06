@@ -11,7 +11,7 @@ struct ISkyLight;
 
 namespace Shader {
 	struct IProgramObject;
-};
+}
 
 
 struct ISMFRenderState {

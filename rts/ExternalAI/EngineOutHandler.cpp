@@ -34,7 +34,7 @@ CR_REG_METADATA(CEngineOutHandler, (
 	CR_MEMBER(id_skirmishAI),
 	CR_MEMBER(team_skirmishAIs),
 	CR_RESERVED(128)
-));
+))
 
 
 static inline bool IsUnitInLosOrRadarOfAllyTeam(const CUnit& unit, const int allyTeamId) {
@@ -77,33 +77,35 @@ void CEngineOutHandler::HandleAIException(const char* description) {
 /////////////////////////////
 
 
-CEngineOutHandler* CEngineOutHandler::singleton = NULL;
+static CEngineOutHandler* singleton = NULL;
+static unsigned int numInstances = 0;
 
 CEngineOutHandler* CEngineOutHandler::GetInstance() {
-	static unsigned int numInstances = 0;
-
-	if (singleton == NULL) {
-		numInstances += 1;
-		singleton = new CEngineOutHandler();
-	}
-
 	// if more than one instance, some code called eoh->func()
 	// and created another after Destroy was already executed
 	// from ~CGame --> usually dtors
 	assert(numInstances == 1);
 	return singleton;
 }
+
+void CEngineOutHandler::Create() {
+	if (singleton == NULL) {
+		singleton = new CEngineOutHandler();
+		numInstances += 1;
+	}
+}
+
 void CEngineOutHandler::Destroy() {
 	if (singleton != NULL) {
 		singleton->PreDestroy();
 
-		CEngineOutHandler* tmp = singleton;
-		singleton = NULL;
-		delete tmp;
-
+		SafeDelete(singleton);
 		IAILibraryManager::Destroy();
+
+		numInstances -= 1;
 	}
 }
+
 
 CEngineOutHandler::~CEngineOutHandler() {
 	// id_skirmishAI should be empty already, but this can not hurt
@@ -417,7 +419,7 @@ void CEngineOutHandler::UnitDamaged(
 		}
 		const bool attackerInLosOrRadar = attacker && IsUnitInLosOrRadarOfAllyTeam(*attacker, damaged.allyteam);
 		for (ids_t::iterator ai = team_skirmishAIs[dt].begin(); ai != team_skirmishAIs[dt].end(); ++ai) {
-			CSkirmishAIWrapper* saw = id_skirmishAI[*ai];
+			const CSkirmishAIWrapper* saw = id_skirmishAI[*ai];
 			int visibleAttackerUnitId = -1;
 			if (attackerInLosOrRadar || saw->IsCheatEventsEnabled()) {
 				visibleAttackerUnitId = attackerUnitId;
@@ -526,9 +528,7 @@ bool CEngineOutHandler::SendLuaMessages(int aiTeam, const char* inData, std::vec
 
 		// send only to AI's in team <aiTeam>
 		for (aiIDsIter = aiIDs.begin(); aiIDsIter != aiIDs.end(); ++aiIDsIter) {
-			const size_t aiID = aiIDs[*aiIDsIter];
-
-			CSkirmishAIWrapper* wrapperAI = id_skirmishAI[aiID];
+			CSkirmishAIWrapper* wrapperAI = id_skirmishAI[*aiIDsIter];
 			wrapperAI->SendLuaMessage(inData, &outData[n++]);
 		}
 	} else {
@@ -567,18 +567,18 @@ void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 				(unpauseAfterAIInit ?
 				 " The game is auto-unpaused as soon as the AI is ready." :
 				 ""));
-		net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, true));
+		clientNet->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, true));
 	}*/
 
 	const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
 
 	if (aiData->status != SKIRMAISTATE_RELOADING) {
-		net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_INITIALIZING));
+		clientNet->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_INITIALIZING));
 	}
 
 	if (aiData->isLuaAI) {
 		// currently, we need doing nothing for Lua AIs
-		net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_ALIVE));
+		clientNet->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_ALIVE));
 	} else {
 		CSkirmishAIWrapper* aiWrapper = NULL;
 		try {
@@ -611,7 +611,7 @@ void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 				u = uNext;
 			}
 
-			net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_ALIVE));
+			clientNet->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_ALIVE));
 		}
 	}
 }
@@ -656,7 +656,7 @@ void CEngineOutHandler::DestroySkirmishAI(const size_t skirmishAIId) {
 		delete aiWrapper;
 		aiWrapper = NULL;
 
-		net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_DEAD));
+		clientNet->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_DEAD));
 	} CATCH_AI_EXCEPTION;
 }
 

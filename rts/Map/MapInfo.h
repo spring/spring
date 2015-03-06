@@ -110,8 +110,9 @@ public:
 		float bladeWidth;
 		float bladeHeight;    //! actual blades will be (bladeHeight + randf(0, bladeHeight)) tall
 		float bladeAngle;
-		float4 color;
-		std::string grassBladeTexName;    // defaults to internally-generated texture
+		int maxStrawsPerTurf;
+		float3 color;
+		std::string bladeTexName;    // defaults to internally-generated texture
 	} grass;
 
 	/** settings read from "MAP\LIGHT" section */
@@ -136,7 +137,7 @@ public:
 		float  fluidDensity;      ///< in kg/m^3
 		float  repeatX;           ///< (calculated default is in IWater)
 		float  repeatY;           ///< (calculated default is in IWater)
-		float  damage;
+		float  damage;            ///< scaled by (UNIT_SLOWUPDATE_RATE / GAME_SPEED)
 		float3 absorb;
 		float3 baseColor;
 		float3 minColor;

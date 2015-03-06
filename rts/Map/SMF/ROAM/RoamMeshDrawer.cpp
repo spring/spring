@@ -62,8 +62,8 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 	// Set ROAM upload mode (VA,DL,VBO)
 	Patch::SwitchRenderMode(configHandler->GetInt("ROAM"));
 
-	numPatchesX = gs->mapx / PATCH_SIZE;
-	numPatchesY = gs->mapy / PATCH_SIZE;
+	numPatchesX = mapDims.mapx / PATCH_SIZE;
+	numPatchesY = mapDims.mapy / PATCH_SIZE;
 	// assert((numPatchesX == smfReadMap->numBigTexX) && (numPatchesY == smfReadMap->numBigTexY));
 
 	roamPatches.resize(numPatchesX * numPatchesY);
@@ -260,13 +260,12 @@ void CRoamMeshDrawer::DrawInMiniMap()
 		glPushMatrix();
 		glLoadIdentity();
 		glOrtho(0.0f, 1.0f, 0.0f, 1.0f, 0.0, -1.0);
-		glTranslatef((float)minimap->GetPosX() * globalRendering->pixelX, (float)minimap->GetPosY() * globalRendering->pixelY, 0.0f);
-		glScalef((float)minimap->GetSizeX() * globalRendering->pixelX, (float)minimap->GetSizeY() * globalRendering->pixelY, 1.0f);
+		minimap->ApplyConstraintsMatrix();
 	glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glLoadIdentity();
 		glTranslatef3(UpVector);
-		glScalef(1.0f / gs->mapx, -1.0f / gs->mapy, 1.0f);
+		glScalef(1.0f / mapDims.mapx, -1.0f / mapDims.mapy, 1.0f);
 
 	glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
 	for (std::vector<Patch>::iterator it = roamPatches.begin(); it != roamPatches.end(); ++it) {

@@ -63,17 +63,11 @@ mkdir -p ${TMP_PATH}
 MIN_PORTABLE_ARCHIVE=${TMP_PATH}/spring_${VERSION}_minimal-portable.7z
 MIN_PORTABLE_PLUS_DEDICATED_ARCHIVE=${TMP_PATH}/spring_${VERSION}_minimal-portable+dedicated.zip
 
-#create portable spring excluding shard (ask AF why its excluded)
+#create portable spring
 touch ${INSTALLDIR}/springsettings.cfg
-${SEVENZIP} ${MIN_PORTABLE_ARCHIVE} ${INSTALLDIR}/* -x!spring-dedicated.exe -x!spring-headless.exe -xr!*.dbg &
-#for ZKL
+${SEVENZIP} ${MIN_PORTABLE_ARCHIVE} ${INSTALLDIR}/* -xr!*.dbg &
+#TODO: remove creation of the zip package, when Zero-K Lobby switched to 7z (will save a lot of resources)
 (cd ${INSTALLDIR} && ${ZIP} ${MIN_PORTABLE_PLUS_DEDICATED_ARCHIVE} * -x spring-headless.exe \*.dbg) &
-
-# compress files excluded from portable archive
-for file in spring-dedicated.exe spring-headless.exe; do
-	name=${file%.*}
-	${SEVENZIP} ${TMP_PATH}/${VERSION}_${name}.7z ${file} &
-done
 
 # compress UnitTests
 ${SEVENZIP} ${TMP_PATH}/${VERSION}_UnitTests.7z "${BUILDDIR}"/test/*.exe &

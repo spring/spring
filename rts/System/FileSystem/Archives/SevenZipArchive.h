@@ -6,7 +6,7 @@
 extern "C" {
 #include "lib/7z/7zFile.h"
 #include "lib/7z/7z.h"
-};
+}
 
 #include "ArchiveFactory.h"
 #include "BufferedArchive.h"
@@ -21,6 +21,7 @@ extern "C" {
 class CSevenZipArchiveFactory : public IArchiveFactory {
 public:
 	CSevenZipArchiveFactory();
+	bool CheckForSolid() const { return true; }
 private:
 	IArchive* DoCreateArchive(const std::string& filePath) const;
 };

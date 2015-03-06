@@ -253,7 +253,7 @@ std::string GetModuleFile(std::string moduleName)
 	// this will only be used if moduleFilePath stays empty
 	const char* error = NULL;
 
-#if defined(linux) || defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
 #ifdef __APPLE__
 	#define SHARED_LIBRARY_EXTENSION "dylib"
 #else
@@ -427,27 +427,30 @@ bool IsRunningInGDB() {
 	#endif
 }
 
+std::string GetShortFileName(const std::string& file) {
+#ifdef WIN32
+	std::vector<TCHAR> shortPathC(file.size() + 1, 0);
+
+	// FIXME: stackoverflow.com/questions/843843/getshortpathname-unpredictable-results
+	const int length = GetShortPathName(file.c_str(), &shortPathC[0], file.size() + 1);
+
+	if (length > 0 && length <= (file.size() + 1)) {
+		return (std::string(reinterpret_cast<const char*>(&shortPathC[0])));
+	}
+#endif
+
+	return file;
+}
+
 std::string ExecuteProcess(const std::string& file, std::vector<std::string> args)
 {
 	// "The first argument, by convention, should point to
 	// the filename associated with the file being executed."
-#ifdef WIN32
 	// NOTE:
-	//   Windows doesn't support spaces in the 1st argument,
-	//   neither does it support a quoted filepath.
-	//   So translate it to a short path, which naturally don't
-	//   have spaces in them.
-	std::vector<TCHAR> shortPathC(file.size() + 1, 0);
-	const int length = GetShortPathName(file.c_str(), &shortPathC[0], file.size() + 1);
-	if (length > 0 && length <= (file.size() + 1)) {
-		std::string path = reinterpret_cast<const char*>(&shortPathC[0]);
-		args.insert(args.begin(), path);
-	} else {
-		args.insert(args.begin(), file);
-	}
-#else
-	args.insert(args.begin(), file);
-#endif
+	//   spaces in the first argument or quoted file paths
+	//   are not supported on Windows, so translate <file>
+	//   to a short path there
+	args.insert(args.begin(), GetShortFileName(file));
 
 	// "The array of pointers must be terminated by a NULL pointer."
 	// --> include one extra argument string and leave it NULL
@@ -467,7 +470,7 @@ std::string ExecuteProcess(const std::string& file, std::vector<std::string> arg
 	#define EXECVP execvp
 #endif
 	if (EXECVP(args[0].c_str(), &processArgs[0]) == -1) {
-		LOG("[%s] error: %s (%d)", __FUNCTION__, (execError = strerror(errno)).c_str(), errno);
+		LOG("[%s] error: \"%s\" %s (%d)", __FUNCTION__, args[0].c_str(), (execError = strerror(errno)).c_str(), errno);
 	}
 	#undef EXECVP
 

@@ -21,7 +21,7 @@ class CMatrix44f;
 
 class CProjectile: public CExpGenSpawnable
 {
-	CR_DECLARE(CProjectile);
+	CR_DECLARE(CProjectile)
 
 	/// used only by creg
 	CProjectile();
@@ -30,7 +30,7 @@ public:
 	CProjectile(
 		const float3& pos,
 		const float3& spd,
-		CUnit* owner,
+		const CUnit* owner,
 		bool isSynced,
 		bool isWeapon,
 		bool isPiece,
@@ -43,7 +43,7 @@ public:
 	virtual void Collision(CUnit* unit);
 	virtual void Collision(CFeature* feature);
 	virtual void Update();
-	virtual void Init(CUnit* owner, const float3& offset);
+	virtual void Init(const CUnit* owner, const float3& offset);
 
 	virtual void Draw() {}
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
@@ -108,6 +108,9 @@ public:
 	// UNSYNCED ONLY
 	CMatrix44f GetTransformMatrix(bool offsetPos) const;
 
+	float GetSortDist() const { return sortDist; }
+	void SetSortDist(float d) { sortDist = d; }
+
 public:
 	static bool inArray;
 	static CVertexArray* va;
@@ -122,14 +125,16 @@ public:
 	bool checkCol;
 	bool ignoreWater;
 	bool deleteMe;
+
 	bool castShadow;
+	bool drawSorted;
 
 	float3 dir;
 	float3 drawPos;
 
 
 	float mygravity;
-	float tempdist; ///< temp distance used for sorting when rendering
+	float sortDist; ///< distance used for z-sorting when rendering
 
 protected:
 	unsigned int ownerID;

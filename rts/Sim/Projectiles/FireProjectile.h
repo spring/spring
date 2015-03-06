@@ -9,8 +9,8 @@
 
 class CFireProjectile : public CProjectile
 {
-	CR_DECLARE(CFireProjectile);
-	CR_DECLARE_SUB(SubParticle);
+	CR_DECLARE(CFireProjectile)
+	CR_DECLARE_SUB(SubParticle)
 public:
 	CFireProjectile(
 		const float3& pos,
@@ -35,7 +35,7 @@ public:
 	float ageSpeed;
 
 	struct SubParticle {
-		CR_DECLARE_STRUCT(SubParticle);
+		CR_DECLARE_STRUCT(SubParticle)
 
 		float3 pos;
 		float3 posDif;

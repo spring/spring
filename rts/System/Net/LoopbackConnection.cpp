@@ -56,7 +56,7 @@ std::string CLoopbackConnection::Statistics() const {
 }
 
 std::string CLoopbackConnection::GetFullAddress() const {
-	return "non-shared memory";
+	return "Loopback";
 }
 
 bool CLoopbackConnection::HasIncomingData() const {

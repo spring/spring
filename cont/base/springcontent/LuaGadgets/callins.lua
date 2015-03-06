@@ -99,6 +99,7 @@ CALLIN_LIST = {
 	"AllowResourceLevel",
 	"AllowResourceTransfer",
 	"AllowDirectUnitControl",
+	"AllowBuilderHoldFire",
 	"AllowWeaponTargetCheck",
 	"AllowWeaponTarget",
 	"AllowWeaponInterceptTarget",

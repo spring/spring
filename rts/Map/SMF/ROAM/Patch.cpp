@@ -60,23 +60,15 @@ void CTriNodePool::FreePools()
 
 void CTriNodePool::ResetAll()
 {
-	bool runOutOfNodes = false;
-	for (std::vector<CTriNodePool*>::iterator it = pools.begin(); it != pools.end(); ++it) {
-		if ((*it)->RunOutOfNodes()) {
-			runOutOfNodes = true;
-			break;
-		}
-	}
-	if (runOutOfNodes) {
-		if (poolSize < MAX_POOL_SIZE) {
-			FreePools();
-			InitPools(std::min(poolSize * 2, size_t(MAX_POOL_SIZE)));
-			return;
-		}
+	bool ranOutOfNodes = false;
+	for (CTriNodePool* p: pools) {
+		ranOutOfNodes |= p->RunOutOfNodes();
+		p->Reset();
 	}
 
-	for (std::vector<CTriNodePool*>::iterator it = pools.begin(); it != pools.end(); ++it) {
-		(*it)->Reset();
+	if (ranOutOfNodes && (poolSize < MAX_POOL_SIZE)) {
+		FreePools();
+		InitPools(std::min(poolSize * 2, size_t(MAX_POOL_SIZE)));
 	}
 }
 
@@ -85,7 +77,6 @@ CTriNodePool* CTriNodePool::GetPool()
 {
 	const size_t th_id = ThreadPool::GetThreadNum();
 	assert(th_id<pools.size());
-	assert(th_id>=0);
 	return pools[th_id];
 }
 
@@ -150,7 +141,7 @@ Patch::Patch()
 void Patch::Init(CSMFGroundDrawer* _drawer, int worldX, int worldZ)
 {
 	smfGroundDrawer = _drawer;
-	heightData = readMap->GetCornerHeightMapUnsynced();;
+	heightData = readMap->GetCornerHeightMapUnsynced();
 	m_WorldX = worldX;
 	m_WorldY = worldZ;
 
@@ -159,7 +150,7 @@ void Patch::Init(CSMFGroundDrawer* _drawer, int worldX, int worldZ)
 	m_BaseRight.BaseNeighbor = &m_BaseLeft;
 
 	// Store pointer to first byte of the height data for this patch.
-	m_HeightMap = &heightData[worldZ * gs->mapxp1 + worldX];
+	m_HeightMap = &heightData[worldZ * mapDims.mapxp1 + worldX];
 
 	// Create used OpenGL objects
 	triList = glGenLists(1);
@@ -211,10 +202,11 @@ void Patch::UpdateHeightMap(const SRectangle& rect)
 		}
 	}
 
-	static const float* hMap = readMap->GetCornerHeightMapUnsynced();
+	const float* hMap = readMap->GetCornerHeightMapUnsynced();
+
 	for (int z = rect.z1; z <= rect.z2; z++) {
 		for (int x = rect.x1; x <= rect.x2; x++) {
-			const float& h = hMap[(z + m_WorldY) * gs->mapxp1 + (x + m_WorldX)];
+			const float& h = hMap[(z + m_WorldY) * mapDims.mapxp1 + (x + m_WorldX)];
 			const int vindex = (z * (PATCH_SIZE + 1) + x) * 3;
 			vertices[vindex + 1] = h; // only update Y coord
 
@@ -421,7 +413,7 @@ float Patch::RecursComputeVariance(const int leftX, const int leftY, const float
 	int centerY = (leftY + rightY) >> 1; // Compute Y coord...
 
 	// Get the height value at the middle of the Hypotenuse
-	float centerZ = m_HeightMap[(centerY * gs->mapxp1) + centerX];
+	float centerZ = m_HeightMap[(centerY * mapDims.mapxp1) + centerX];
 
 	// Variance of this triangle is the actual height at it's hypotenuse midpoint minus the interpolated height.
 	// Use values passed on the stack instead of re-accessing the Height Field.
@@ -460,13 +452,13 @@ void Patch::ComputeVariance()
 {
 	// Compute variance on each of the base triangles...
 	m_CurrentVariance = &m_VarianceLeft[0];
-	RecursComputeVariance(0, PATCH_SIZE, m_HeightMap[PATCH_SIZE * gs->mapxp1],
+	RecursComputeVariance(0, PATCH_SIZE, m_HeightMap[PATCH_SIZE * mapDims.mapxp1],
 			PATCH_SIZE, 0, m_HeightMap[PATCH_SIZE], 0, 0, m_HeightMap[0], 1);
 
 	m_CurrentVariance = &m_VarianceRight[0];
 	RecursComputeVariance(PATCH_SIZE, 0, m_HeightMap[PATCH_SIZE], 0,
-			PATCH_SIZE, m_HeightMap[PATCH_SIZE * gs->mapxp1], PATCH_SIZE, PATCH_SIZE,
-			m_HeightMap[(PATCH_SIZE * gs->mapxp1) + PATCH_SIZE], 1);
+			PATCH_SIZE, m_HeightMap[PATCH_SIZE * mapDims.mapxp1], PATCH_SIZE, PATCH_SIZE,
+			m_HeightMap[(PATCH_SIZE * mapDims.mapxp1) + PATCH_SIZE], 1);
 
 	// Clear the dirty flag for this patch
 	m_isDirty = false;
@@ -568,34 +560,35 @@ void Patch::RecursBorderRender(CVertexArray* va, TriTreeNode* const& tri, const 
 		const float3& v2 = *(float3*)&vertices[(left.x  + left.y  * (PATCH_SIZE + 1))*3];
 		const float3& v3 = *(float3*)&vertices[(right.x + right.y * (PATCH_SIZE + 1))*3];
 
-		const unsigned char white[] = {255,255,255,255};
-		const unsigned char trans[] = {255,255,255,0};
+		static const unsigned char white[] = {255,255,255,255};
+		static const unsigned char trans[] = {255,255,255,0};
 
+		va->EnlargeArrays(6, 0, VA_SIZE_C);
 		if (i % 2 == 0) {
-			va->AddVertexC(float3(v2.x, v2.y, v2.z),    white);
-			va->AddVertexC(float3(v2.x, -400.0f, v2.z), trans);
-			va->AddVertexC(float3(v3.x, v3.y, v3.z),    white);
+			va->AddVertexQC(v2,                          white);
+			va->AddVertexQC(float3(v2.x, -400.0f, v2.z), trans);
+			va->AddVertexQC(float3(v3.x, v3.y, v3.z),    white);
 
-			va->AddVertexC(float3(v3.x, v3.y, v3.z),    white);
-			va->AddVertexC(float3(v2.x, -400.0f, v2.z), trans);
-			va->AddVertexC(float3(v3.x, -400.0f, v3.z), trans);
+			va->AddVertexQC(v3,                          white);
+			va->AddVertexQC(float3(v2.x, -400.0f, v2.z), trans);
+			va->AddVertexQC(float3(v3.x, -400.0f, v3.z), trans);
 		} else {
 			if (left_) {
-				va->AddVertexC(float3(v1.x, v1.y, v1.z),    white);
-				va->AddVertexC(float3(v1.x, -400.0f, v1.z), trans);
-				va->AddVertexC(float3(v2.x, v2.y, v2.z),    white);
+				va->AddVertexQC(v1,                          white);
+				va->AddVertexQC(float3(v1.x, -400.0f, v1.z), trans);
+				va->AddVertexQC(float3(v2.x, v2.y, v2.z),    white);
 
-				va->AddVertexC(float3(v2.x, v2.y, v2.z),    white);
-				va->AddVertexC(float3(v1.x, -400.0f, v1.z), trans);
-				va->AddVertexC(float3(v2.x, -400.0f, v2.z), trans);
+				va->AddVertexQC(v2,                          white);
+				va->AddVertexQC(float3(v1.x, -400.0f, v1.z), trans);
+				va->AddVertexQC(float3(v2.x, -400.0f, v2.z), trans);
 			} else {
-				va->AddVertexC(float3(v3.x, v3.y, v3.z),    white);
-				va->AddVertexC(float3(v3.x, -400.0f, v3.z), trans);
-				va->AddVertexC(float3(v1.x, v1.y, v1.z),    white);
+				va->AddVertexQC(v3,                          white);
+				va->AddVertexQC(float3(v3.x, -400.0f, v3.z), trans);
+				va->AddVertexQC(float3(v1.x, v1.y, v1.z),    white);
 
-				va->AddVertexC(float3(v1.x, v1.y, v1.z),    white);
-				va->AddVertexC(float3(v3.x, -400.0f, v3.z), trans);
-				va->AddVertexC(float3(v1.x, -400.0f, v1.z), trans);
+				va->AddVertexQC(v1,                          white);
+				va->AddVertexQC(float3(v3.x, -400.0f, v3.z), trans);
+				va->AddVertexQC(float3(v1.x, -400.0f, v1.z), trans);
 			}
 		}
 
@@ -607,12 +600,12 @@ void Patch::RecursBorderRender(CVertexArray* va, TriTreeNode* const& tri, const 
 
 		if (i % 2 == 0) {
 			RecursBorderRender(va, tri->LeftChild,  apex,  left, center, i + 1, !left_);
-			RecursBorderRender(va, tri->RightChild, right, apex, center, i + 1, left_);
+			return RecursBorderRender(va, tri->RightChild, right, apex, center, i + 1, left_); // return is needed for tail call optimization (it's still unlikely gcc does so...)
 		} else {
 			if (left_) {
-				RecursBorderRender(va, tri->LeftChild,  apex,  left, center, i + 1, left_);
+				return RecursBorderRender(va, tri->LeftChild,  apex,  left, center, i + 1, left_);
 			} else {
-				RecursBorderRender(va, tri->RightChild, right, apex, center, i + 1, !left_);
+				return RecursBorderRender(va, tri->RightChild, right, apex, center, i + 1, !left_);
 			}
 		}
 	}
@@ -732,6 +725,11 @@ public:
 	std::vector<Patch>* patches;
 	int numPatchesX;
 
+	void ResetState() {
+		patches = nullptr;
+		numPatchesX = 0;
+	}
+
 	void DrawQuad(int x, int y) {
 		(*patches)[x + y * numPatchesX].m_isVisible = true;
 	}
@@ -740,18 +738,23 @@ public:
 
 void Patch::UpdateVisibility(CCamera*& cam, std::vector<Patch>& patches, const int numPatchesX)
 {
+	#if 0
 	// very slow
-	//for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); ++it) {
-	//	it->UpdateVisibility(cam);
-	//}
-
+	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); ++it) {
+		it->UpdateVisibility(cam);
+	}
+	#else
 	// very fast
 	static CPatchInViewChecker checker;
+
+	checker.ResetState();
 	checker.patches     = &patches;
 	checker.numPatchesX = numPatchesX;
 
 	for (std::vector<Patch>::iterator it = patches.begin(); it != patches.end(); ++it) {
 		it->m_isVisible = false;
 	}
+
 	readMap->GridVisibility(cam, PATCH_SIZE, 1e9, &checker, INT_MAX);
+	#endif
 }

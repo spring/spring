@@ -40,13 +40,6 @@
 //    - the <keycode> can be a currently recognized keysym
 //      (ex:  "keysym menu 0x13F"  or  "keysym radar r")
 //
-//    keyset <name> <keyset>
-//    ----------------------
-//    - specifies a named keyset
-//    - name must start with a letter, and only contain letters, numbers, and '_'
-//    - named keysets may be accessed by prepending the '&' character to the name
-//      (ex:  "keyset myKeySet Ctrl+x"  then  "bind &myKeySet myAction" )
-//
 //    fakemeta <keysym>
 //    -----------------
 //    - assign an auxiliary key for the Meta modifier ("space" is a good choice)
@@ -88,15 +81,11 @@
 //      bind          C+a  fake_action
 //      bind Ctrl+Shift+a  fake_action
 //      bind          *+a  fake_action
-//      bind   &my_keyset  fake_action
 //
 //    The format then goes like this:
 //
 //      [<Modifier>+]...[<Modifier>+]<keysym>
 //
-//        or
-//
-//      &<keyset_name>    (for named keysets)
 //
 //    The modifiers (and their abbreviations), are:
 //
@@ -117,6 +106,22 @@
 //      bind Ctrl+space firestate 0  // hold fire
 //
 
+//
+//  Keychains (new in 98.0):
+//
+//    A keychain is a timed combination of keysets,
+//    i.e. "press A, then B".
+//
+//    Here are some examples:
+//
+//      bind            a,b  fake_action
+//      bind Ctrl+a, Ctrl+b  fake_action
+//
+//    The format then goes like this:
+//
+//      <keyset>, <keyset>, ...
+//
+
 
 //
 //  Extra Run-Time Commands
@@ -128,19 +133,6 @@
 //    /keycodes  : prints the known keycodes to standard out
 //    /keyprint  : prints the current bindings to standard out
 //    /keydebug  : prints debugging information to standard out (for each keystroke)
-//
-
-
-//
-//  Hotbinding:
-//
-//    The default bindings include the 'hotbind' (Ctrl+insert) and
-//    'hotunbind' (Ctrl+delete) capabilities. Place the mouse cursor over one
-//    of the control panel icons (normal command or build command), and press
-//    Ctrl+insert. Spring will then ask for a keyset, which will then have the
-//    icon's command immediately appended to its list of actions. Placing the
-//    mouse cursor over an icon and hitting Ctrl+delete will delete all bindings
-//    associated with that icon's command.
 //
 
 
@@ -195,9 +187,6 @@
 //  bind                  .  nextmenu
 //  bind            Shift+,  decguiopacity
 //  bind            Shift+.  incguiopacity
-//
-//  bind        Ctrl+insert  hotbind
-//  bind        Ctrl+delete  hotunbind
 //
 //  bind              Any++  speedup
 //  bind              Any+=  speedup

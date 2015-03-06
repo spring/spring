@@ -62,9 +62,9 @@ void HUDDrawer::DrawModel(const CUnit* unit)
 			glRotatef(180.0f, 0.0f, 0.0f, 1.0f);
 		} else {
 			CMatrix44f m(ZeroVector,
-				float3(camera->right.x, camera->up.x, camera->forward.x),
-				float3(camera->right.y, camera->up.y, camera->forward.y),
-				float3(camera->right.z, camera->up.z, camera->forward.z));
+				float3(camera->GetRight().x, camera->GetUp().x, camera->GetDir().x),
+				float3(camera->GetRight().y, camera->GetUp().y, camera->GetDir().y),
+				float3(camera->GetRight().z, camera->GetUp().z, camera->GetDir().z));
 			glMultMatrixf(m.m);
 		}
 
@@ -105,7 +105,7 @@ void HUDDrawer::DrawCameraDirectionArrow(const CUnit* unit)
 			glScalef(0.33f, 0.33f * globalRendering->aspectRatio, 0.33f);
 
 			glRotatef(
-				GetHeadingFromVector(camera->forward.x, camera->forward.z) * 180.0f / 32768 + 180,
+				GetHeadingFromVector(camera->GetDir().x, camera->GetDir().z) * 180.0f / 32768 + 180,
 				0.0f, 0.0f, 1.0f
 			);
 			glScalef(0.4f, 0.4f, 0.3f);
@@ -264,9 +264,9 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 					glVertexf3(pos + (v2 * fastmath::sin(PI * -0.25f) + v3 * fastmath::cos(PI * -0.25f)) * radius);
 					glVertexf3(pos + (v2 * fastmath::sin(PI * -1.25f) + v3 * fastmath::cos(PI * -1.25f)) * radius);
 				}
-				if ((w->targetPos - camera->GetPos()).ANormalize().dot(camera->forward) < 0.7f) {
+				if ((w->targetPos - camera->GetPos()).ANormalize().dot(camera->GetDir()) < 0.7f) {
 					glVertexf3(w->targetPos);
-					glVertexf3(camera->GetPos() + camera->forward * 100.0f);
+					glVertexf3(camera->GetPos() + camera->GetDir() * 100.0f);
 				}
 				glEnd();
 			}

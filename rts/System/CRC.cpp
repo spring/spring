@@ -4,7 +4,7 @@
 
 extern "C" {
 #include "lib/7z/7zCrc.h"
-};
+}
 
 
 static bool crcTableInitialized;
@@ -25,6 +25,12 @@ unsigned int CRC::GetDigest() const
 	// make a temporary copy to get away with the const
 	unsigned int temp = crc;
 	return CRC_GET_DIGEST(temp);
+}
+
+
+unsigned int CRC::GetCRC(const void* data, unsigned int size)
+{
+	return CrcUpdate(0, data, size);
 }
 
 

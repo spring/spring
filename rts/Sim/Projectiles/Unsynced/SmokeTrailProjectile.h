@@ -9,10 +9,10 @@ struct AtlasedTexture;
 
 class CSmokeTrailProjectile : public CProjectile
 {
-	CR_DECLARE(CSmokeTrailProjectile);
+	CR_DECLARE(CSmokeTrailProjectile)
 public:
 	CSmokeTrailProjectile(
-		CUnit* owner,
+		const CUnit* owner,
 		const float3& pos1,
 		const float3& pos2,
 		const float3& dir1,

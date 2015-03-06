@@ -52,7 +52,7 @@ inline static bool TestConeHelper(
 		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), NULL, expPos3D) - coneSize) <= 0.0f); }
 	}
 
-	if (globalRendering->drawdebugtraceray && Threading::IsSimThread()) {
+	if (globalRendering->drawdebugtraceray) {
 		#define go geometricObjects
 
 		if (ret) {
@@ -129,7 +129,8 @@ inline static bool TestTrajectoryConeHelper(
 		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), NULL, expPos3D) - coneSize) <= 0.0f); }
 	}
 
-	if (globalRendering->drawdebugtraceray && Threading::IsSimThread()) {
+
+	if (globalRendering->drawdebugtraceray) {
 		// FIXME? seems to under-estimate gravity near edge of range
 		// (place objects along trajectory of a cannon to visualize)
 		#define go geometricObjects
@@ -170,6 +171,7 @@ float TraceRay(
 	const bool ignoreFeatures = ((avoidFlags & Collision::NOFEATURES  ) != 0);
 	const bool ignoreNeutrals = ((avoidFlags & Collision::NONEUTRALS  ) != 0);
 	const bool ignoreGround   = ((avoidFlags & Collision::NOGROUND    ) != 0);
+	const bool ignoreCloaked  = ((avoidFlags & Collision::NOCLOAKED   ) != 0);
 
 	const bool ignoreUnits = ignoreEnemies && ignoreAllies && ignoreNeutrals;
 
@@ -234,9 +236,11 @@ float TraceRay(
 						continue;
 					if (ignoreAllies && u->allyteam == owner->allyteam)
 						continue;
+					if (ignoreEnemies && u->allyteam != owner->allyteam)
+						continue;
 					if (ignoreNeutrals && u->IsNeutral())
 						continue;
-					if (ignoreEnemies && u->allyteam != owner->allyteam)
+					if (ignoreCloaked && u->IsCloaked())
 						continue;
 
 					if (CCollisionHandler::DetectHit(u, start, start + dir * length, &cq, true)) {
@@ -251,14 +255,16 @@ float TraceRay(
 					}
 				}
 			}
-			if (hitUnit)
+
+			if (hitUnit != NULL) {
 				hitFeature = NULL;
+			}
 		}
 	}
 
 	if (!ignoreGround) {
 		// ground intersection
-		const float groundLength = ground->LineGroundCol(start, start + dir * length);
+		const float groundLength = CGround::LineGroundCol(start, start + dir * length);
 
 		if (length > groundLength && groundLength > 0.0f) {
 			length = groundLength;
@@ -290,7 +296,7 @@ float GuiTraceRay(
 
 	// ground and water-plane intersection
 	const float guiRayLength = length;
-	const float groundRayLength = ground->LineGroundCol(start, start + dir * guiRayLength, false);
+	const float groundRayLength = CGround::LineGroundCol(start, start + dir * guiRayLength, false);
 	const float waterRayLength = math::floorf(math::fabs(start.y / std::min(dir.y, -0.00001f)));
 
 	float minRayLength = groundRayLength;

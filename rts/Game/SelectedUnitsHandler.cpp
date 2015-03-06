@@ -25,25 +25,25 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-#include "Sim/Units/Groups/GroupHandler.h"
-#include "Sim/Units/Groups/Group.h"
+#include "Game/UI/Groups/GroupHandler.h"
+#include "Game/UI/Groups/Group.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/Color.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
 #include "Net/Protocol/NetProtocol.h"
 #include "System/Net/PackPacket.h"
+#include "System/FileSystem/SimpleParser.h"
 #include "System/Input/KeyInput.h"
 #include "System/Sound/ISound.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 
 #include <SDL_mouse.h>
 #include <SDL_keycode.h>
 #include <map>
 
-
-#define PLAY_SOUNDS 1
 
 CONFIG(bool, BuildIconsFirst).defaultValue(false);
 CONFIG(bool, AutoAddBuiltUnitsToFactoryGroup).defaultValue(false).description("Controls whether or not units built by factories will inherit that factory's unit group.");
@@ -101,86 +101,68 @@ CSelectedUnitsHandler::AvailableCommandsStruct CSelectedUnitsHandler::GetAvailab
 	int commandPage = 1000;
 	int foundGroup = -2;
 	int foundGroup2 = -2;
-	map<int, int> states;
+	std::map<int, int> states;
 
-	for (CUnitSet::const_iterator ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
-		const std::vector<CommandDescription>* c = &((*ui)->commandAI->GetPossibleCommands());
-		std::vector<CommandDescription>::const_iterator ci;
-		for (ci = c->begin(); ci != c->end(); ++ci) {
-			states[ci->id] = ci->disabled ? 2 : 1;
+	for (const CUnit* u: selectedUnits) {
+		const std::vector<CommandDescription>& c = u->commandAI->GetPossibleCommands();
+		for (const CommandDescription& cmdDesc: c) {
+			states[cmdDesc.id] = cmdDesc.disabled ? 2 : 1;
 		}
-		if ((*ui)->commandAI->lastSelectedCommandPage < commandPage) {
-			commandPage = (*ui)->commandAI->lastSelectedCommandPage;
+		if (u->commandAI->lastSelectedCommandPage < commandPage) {
+			commandPage = u->commandAI->lastSelectedCommandPage;
 		}
 
-		if (foundGroup == -2 && (*ui)->group) {
-			foundGroup = (*ui)->group->id;
+		if (foundGroup == -2 && u->group) {
+			foundGroup = u->group->id;
 		}
-		if (!(*ui)->group || foundGroup!=(*ui)->group->id) {
+		if (!u->group || foundGroup != u->group->id) {
 			foundGroup = -1;
 		}
 
-		if (foundGroup2 == -2 && (*ui)->group) {
-			foundGroup2 = (*ui)->group->id;
+		if (foundGroup2 == -2 && u->group) {
+			foundGroup2 = u->group->id;
 		}
-		if (foundGroup2 >= 0 && (*ui)->group && (*ui)->group->id != foundGroup2) {
+		if (foundGroup2 >= 0 && u->group && u->group->id != foundGroup2) {
 			foundGroup2 = -1;
 		}
 	}
 
-	std::vector<CommandDescription> groupCommands;
-
-	std::vector<CommandDescription> commands ;
+	std::vector<CommandDescription> commands;
 	// load the first set (separating build and non-build commands)
-	for (CUnitSet::const_iterator ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
-		const std::vector<CommandDescription>* c = &((*ui)->commandAI->GetPossibleCommands());
-		std::vector<CommandDescription>::const_iterator ci;
-		for (ci = c->begin(); ci != c->end(); ++ci) {
+	for (const CUnit* u: selectedUnits) {
+		const std::vector<CommandDescription>& c = u->commandAI->GetPossibleCommands();
+		for (const CommandDescription& cmdDesc: c) {
 			if (buildIconsFirst) {
-				if (ci->id >= 0) { continue; }
+				if (cmdDesc.id >= 0) { continue; }
 			} else {
-				if (ci->id < 0)  { continue; }
+				if (cmdDesc.id < 0)  { continue; }
 			}
-			if (ci->showUnique && selectedUnits.size() > 1) {
+			if (cmdDesc.showUnique && selectedUnits.size() > 1) {
 				continue;
 			}
-			if (states[ci->id] > 0) {
-				commands.push_back(*ci);
-				states[ci->id] = 0;
+			if (states[cmdDesc.id] > 0) {
+				commands.push_back(cmdDesc);
+				states[cmdDesc.id] = 0;
 			}
-		}
-	}
-
-	if (!buildIconsFirst && !gs->noHelperAIs) {
-		std::vector<CommandDescription>::const_iterator ci;
-		for(ci = groupCommands.begin(); ci != groupCommands.end(); ++ci) {
-			commands.push_back(*ci);
 		}
 	}
 
 	// load the second set (all those that have not already been included)
-	for (CUnitSet::const_iterator ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
-		std::vector<CommandDescription>* c = &(*ui)->commandAI->GetPossibleCommands();
-		std::vector<CommandDescription>::const_iterator ci;
-		for (ci = c->begin(); ci != c->end(); ++ci) {
+	for (const CUnit* u: selectedUnits) {
+		const std::vector<CommandDescription>& c = u->commandAI->GetPossibleCommands();
+		for (const CommandDescription& cmdDesc: c) {
 			if (buildIconsFirst) {
-				if (ci->id < 0)  { continue; }
+				if (cmdDesc.id < 0)  { continue; }
 			} else {
-				if (ci->id >= 0) { continue; }
+				if (cmdDesc.id >= 0) { continue; }
 			}
-			if (ci->showUnique && selectedUnits.size() > 1) {
+			if (cmdDesc.showUnique && selectedUnits.size() > 1) {
 				continue;
 			}
-			if (states[ci->id] > 0) {
-				commands.push_back(*ci);
-				states[ci->id] = 0;
+			if (states[cmdDesc.id] > 0) {
+				commands.push_back(cmdDesc);
+				states[cmdDesc.id] = 0;
 			}
-		}
-	}
-	if (buildIconsFirst && !gs->noHelperAIs) {
-		std::vector<CommandDescription>::const_iterator ci;
-		for (ci = groupCommands.begin(); ci != groupCommands.end(); ++ci) {
-			commands.push_back(*ci);
 		}
 	}
 
@@ -260,12 +242,10 @@ void CSelectedUnitsHandler::GiveCommand(Command c, bool fromUser)
 
 	SendCommand(c);
 
-	#if (PLAY_SOUNDS == 1)
 	if (!selectedUnits.empty()) {
 		CUnitSet::const_iterator ui = selectedUnits.begin();
-		Channels::UnitReply.PlayRandomSample((*ui)->unitDef->sounds.ok, *ui);
+		Channels::UnitReply->PlayRandomSample((*ui)->unitDef->sounds.ok, *ui);
 	}
-	#endif
 }
 
 
@@ -302,14 +282,12 @@ void CSelectedUnitsHandler::HandleUnitBoxSelection(const float4& planeRight, con
 		}
 	}
 
-	#if (PLAY_SOUNDS == 1)
 	if (addedunits >= 2) {
-		Channels::UserInterface.PlaySample(soundMultiselID);
+		Channels::UserInterface->PlaySample(soundMultiselID);
 	}
 	else if (addedunits == 1) {
-		Channels::UnitReply.PlayRandomSample(unit->unitDef->sounds.select, unit);
+		Channels::UnitReply->PlayRandomSample(unit->unitDef->sounds.select, unit);
 	}
-	#endif
 }
 
 
@@ -353,9 +331,7 @@ void CSelectedUnitsHandler::HandleSingleUnitClickSelection(CUnit* unit, bool doI
 		}
 	}
 
-	#if (PLAY_SOUNDS == 1)
-	Channels::UnitReply.PlayRandomSample(unit->unitDef->sounds.select, unit);
-	#endif
+	Channels::UnitReply->PlayRandomSample(unit->unitDef->sounds.select, unit);
 }
 
 
@@ -399,10 +375,9 @@ void CSelectedUnitsHandler::RemoveUnit(CUnit* unit)
 
 void CSelectedUnitsHandler::ClearSelected()
 {
-	CUnitSet::iterator ui;
-	for (ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
-		(*ui)->isSelected = false;
-		DeleteDeathDependence(*ui, DEPENDENCE_SELECTED);
+	for (CUnit* u: selectedUnits) {
+		u->isSelected = false;
+		DeleteDeathDependence(u, DEPENDENCE_SELECTED);
 	}
 
 	selectedUnits.clear();
@@ -418,17 +393,115 @@ void CSelectedUnitsHandler::SelectGroup(int num)
 	selectedGroup=num;
 	CGroup* group=grouphandlers[gu->myTeam]->groups[num];
 
-	CUnitSet::iterator ui;
-	for (ui = group->units.begin(); ui != group->units.end(); ++ui) {
-		if (!(*ui)->noSelect) {
-			(*ui)->isSelected = true;
-			selectedUnits.insert(*ui);
-			AddDeathDependence(*ui, DEPENDENCE_SELECTED);
+	for (CUnit* u: group->units) {
+		if (!u->noSelect) {
+			u->isSelected = true;
+			selectedUnits.insert(u);
+			AddDeathDependence(u, DEPENDENCE_SELECTED);
 		}
 	}
 
 	selectionChanged = true;
 	possibleCommandsChanged = true;
+}
+
+
+void CSelectedUnitsHandler::SelectUnits(const std::string& line)
+{
+	const std::vector<string>& args = CSimpleParser::Tokenize(line, 0);
+	for (int i = 0; i < (int)args.size(); i++) {
+		const std::string& arg = args[i];
+		if (arg == "clear") {
+			selectedUnitsHandler.ClearSelected();
+		}
+		else if ((arg[0] == '+') || (arg[0] == '-')) {
+			char* endPtr;
+			const char* startPtr = arg.c_str() + 1;
+			const int unitIndex = strtol(startPtr, &endPtr, 10);
+			if (endPtr == startPtr) {
+				continue; // bad number
+			}
+			if ((unitIndex < 0) || (static_cast<unsigned int>(unitIndex) >= unitHandler->MaxUnits())) {
+				continue; // bad index
+			}
+			CUnit* unit = unitHandler->units[unitIndex];
+			if (unit == NULL) {
+				continue; // bad pointer
+			}
+			if (!gu->spectatingFullSelect) {
+				const CUnitSet& teamUnits = teamHandler->Team(gu->myTeam)->units;
+				if (teamUnits.find(unit) == teamUnits.end()) {
+					continue; // not mine to select
+				}
+			}
+
+			// perform the selection
+			if (arg[0] == '+') {
+				AddUnit(unit);
+			} else {
+				RemoveUnit(unit);
+			}
+		}
+	}
+}
+
+
+void CSelectedUnitsHandler::SelectCycle(const std::string& command)
+{
+	static std::set<int> unitIDs;
+	static int lastID = -1;
+
+	if (command == "restore") {
+		ClearSelected();
+		for (const int& unitID: unitIDs) {
+			CUnit* unit = unitHandler->units[unitID];
+			if (unit != NULL) {
+				AddUnit(unit);
+			}
+		}
+		return;
+	}
+
+	if (selectedUnits.size() >= 2) {
+		// assign the cycle units
+		unitIDs.clear();
+		for (const CUnit* u: selectedUnits) {
+			unitIDs.insert(u->id);
+		}
+		ClearSelected();
+		lastID = *unitIDs.begin();
+		AddUnit(unitHandler->units[lastID]);
+		return;
+	}
+
+	// clean the list
+	std::set<int> tmpSet;
+	for (const int& unitID: unitIDs) {
+		if (unitHandler->units[unitID] != NULL) {
+			tmpSet.insert(unitID);
+		}
+	}
+	unitIDs = tmpSet;
+	if ((lastID >= 0) && (unitHandler->units[lastID] == NULL)) {
+		lastID = -1;
+	}
+
+	// selectedUnits size is 0 or 1
+	ClearSelected();
+	if (!unitIDs.empty()) {
+		std::set<int>::const_iterator fit = unitIDs.find(lastID);
+		if (fit == unitIDs.end()) {
+			lastID = *unitIDs.begin();
+		} else {
+			++fit;
+			if (fit != unitIDs.end()) {
+				lastID = *fit;
+			} else {
+				lastID = *unitIDs.begin();
+			}
+		}
+		AddUnit(unitHandler->units[lastID]);
+	}
 }
 
 
@@ -441,6 +514,12 @@ void CSelectedUnitsHandler::Draw()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glLineWidth(cmdColors.UnitBoxLineWidth());
+
+	SColor color1(cmdColors.unitBox);
+	SColor color2(cmdColors.unitBox);
+	color2.r = 255 - color2.r;
+	color2.g = 255 - color2.g;
+	color2.b = 255 - color2.b;
 
 	if (cmdColors.unitBox[3] > 0.05f) {
 		const CUnitSet* unitSet;
@@ -482,26 +561,12 @@ void CSelectedUnitsHandler::Draw()
 				float3(unit->drawPos.x + mhxsize, unit->drawPos.y, unit->drawPos.z - mhzsize),
 			};
 
-			const unsigned char color1[4] = {
-				(unsigned char)( cmdColors.unitBox[0] * 255 ),
-				(unsigned char)( cmdColors.unitBox[1] * 255 ),
-				(unsigned char)( cmdColors.unitBox[2] * 255 ),
-				(unsigned char)( cmdColors.unitBox[3] * 255 )
-			};
-
 			va->AddVertexQC(verts[0], color1);
 			va->AddVertexQC(verts[1], color1);
 			va->AddVertexQC(verts[2], color1);
 			va->AddVertexQC(verts[3], color1);
 
 			if (globalRendering->drawdebug && (mhxsize != uhxsize || mhzsize != uhzsize)) {
-				const unsigned char color2[4] = {
-					(unsigned char)( (1.0f - cmdColors.unitBox[0]) * 255 ),
-					(unsigned char)( (1.0f - cmdColors.unitBox[1]) * 255 ),
-					(unsigned char)( (1.0f - cmdColors.unitBox[2]) * 255 ),
-					(unsigned char)( cmdColors.unitBox[3] * 255 )
-				};
-
 				va->AddVertexQC(verts[4], color2);
 				va->AddVertexQC(verts[5], color2);
 				va->AddVertexQC(verts[6], color2);
@@ -747,15 +812,14 @@ void CSelectedUnitsHandler::DrawCommands()
 
 	glLineWidth(cmdColors.QueuedLineWidth());
 
-	CUnitSet::iterator ui;
 	if (selectedGroup != -1) {
 		CUnitSet& groupUnits = grouphandlers[gu->myTeam]->groups[selectedGroup]->units;
-		for(ui = groupUnits.begin(); ui != groupUnits.end(); ++ui) {
-			commandDrawer->Draw((*ui)->commandAI);
+		for(CUnit* u: groupUnits) {
+			commandDrawer->Draw(u->commandAI);
 		}
 	} else {
-		for(ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
-			commandDrawer->Draw((*ui)->commandAI);
+		for(CUnit* u: selectedUnits) {
+			commandDrawer->Draw(u->commandAI);
 		}
 	}
 
@@ -788,7 +852,6 @@ std::string CSelectedUnitsHandler::GetTooltip()
 			} else {
 				s = unit->tooltip;
 			}
-
 		}
 
 		if (selectedUnits.empty()) {
@@ -802,51 +865,25 @@ std::string CSelectedUnitsHandler::GetTooltip()
 	}
 
 	{
-		int numFuel = 0;
-		float maxHealth = 0.0f, curHealth = 0.0f;
-		float maxFuel = 0.0f, curFuel = 0.0f;
-		float exp = 0.0f, cost = 0.0f, range = 0.0f;
-		float metalMake = 0.0f, metalUse = 0.0f, energyMake = 0.0f, energyUse = 0.0f;
-
-#define NO_TEAM -32
-#define MULTI_TEAM -64
+		#define NO_TEAM -32
+		#define MULTI_TEAM -64
 		int ctrlTeam = NO_TEAM;
 
-		CUnitSet::const_iterator ui;
-		for (ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
-			const CUnit* unit = *ui;
-			maxHealth  += unit->maxHealth;
-			curHealth  += unit->health;
-			exp        += unit->experience;
-			cost       += unit->metalCost + (unit->energyCost / 60.0f);
-			range      += unit->maxRange;
-			metalMake  += unit->metalMake;
-			metalUse   += unit->metalUse;
-			energyMake += unit->energyMake;
-			energyUse  += unit->energyUse;
-			maxFuel    += unit->unitDef->maxFuel;
-			curFuel    += unit->currentFuel;
-			if (unit->unitDef->maxFuel > 0) {
-				numFuel++;
-			}
+		SUnitStats stats;
+
+		for (const CUnit* unit: selectedUnits) {
+			stats.AddUnit(unit, false);
+
 			if (ctrlTeam == NO_TEAM) {
 				ctrlTeam = unit->team;
 			} else if (ctrlTeam != unit->team) {
 				ctrlTeam = MULTI_TEAM;
 			}
 		}
-		if ((numFuel > 0) && (maxFuel > 0.0f)) {
-			curFuel = curFuel / numFuel;
-			maxFuel = maxFuel / numFuel;
-		}
-		const float num = selectedUnits.size();
 
-		s += CTooltipConsole::MakeUnitStatsString(
-			curHealth, maxHealth,
-			curFuel,   maxFuel,
-			(exp / num), cost, (range / num),
-			metalMake,  metalUse,
-			energyMake, energyUse);
+		s += CTooltipConsole::MakeUnitStatsString(stats);
+
+		const float num = selectedUnits.size();
 
 		if (gs->cheatEnabled && (num == 1)) {
 			const CUnit* unit = *selectedUnits.begin();
@@ -871,9 +908,8 @@ std::string CSelectedUnitsHandler::GetTooltip()
 
 void CSelectedUnitsHandler::SetCommandPage(int page)
 {
-	CUnitSet::iterator ui;
-	for (ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {
-		(*ui)->commandAI->lastSelectedCommandPage = page;
+	for (const CUnit* u: selectedUnits) {
+		u->commandAI->lastSelectedCommandPage = page;
 	}
 }
 
@@ -891,11 +927,11 @@ void CSelectedUnitsHandler::SendCommand(const Command& c)
 		for(; ui != selectedUnits.end(); ++i, ++ui) {
 			*i = (*ui)->id;
 		}
-		net->Send(CBaseNetProtocol::Get().SendSelect(gu->myPlayerNum, selectedUnitIDs));
+		clientNet->Send(CBaseNetProtocol::Get().SendSelect(gu->myPlayerNum, selectedUnitIDs));
 		selectionChanged = false;
 	}
 
-	net->Send(CBaseNetProtocol::Get().SendCommand(gu->myPlayerNum, c.GetID(), c.options, c.params));
+	clientNet->Send(CBaseNetProtocol::Get().SendCommand(gu->myPlayerNum, c.GetID(), c.options, c.params));
 }
 
 
@@ -972,6 +1008,6 @@ void CSelectedUnitsHandler::SendCommandsToUnits(const std::vector<int>& unitIDs,
 		*packet << cmd.params;
 	}
 
-	net->Send(boost::shared_ptr<netcode::RawPacket>(packet));
+	clientNet->Send(boost::shared_ptr<netcode::RawPacket>(packet));
 	return;
 }

@@ -82,15 +82,6 @@ public:
 	int2 GetNumQueuedUpdates() const;
 
 private:
-	unsigned int RequestPath(
-		const MoveDef* moveDef,
-		const float3& startPos,
-		const float3& goalPos,
-		CPathFinderDef* peDef,
-		CSolidObject* caller,
-		bool synced = true
-	);
-
 	struct MultiPath {
 		MultiPath(const float3& pos, const CPathFinderDef* def, const MoveDef* moveDef)
 			: searchResult(IPath::Error)
@@ -119,13 +110,34 @@ private:
 		CSolidObject* caller;
 	};
 
+private:
+	unsigned int RequestPath(
+		const MoveDef* moveDef,
+		const float3& startPos,
+		const float3& goalPos,
+		CPathFinderDef* peDef,
+		CSolidObject* caller,
+		bool synced = true
+	);
+
+	IPath::SearchResult ArrangePath(
+		MultiPath* newPath,
+		const MoveDef* moveDef,
+		const float3& startPos,
+		const float3& goalPos,
+		CPathFinderDef* peDef,
+		CSolidObject* caller
+	) const;
+
 	inline MultiPath* GetMultiPath(int pathID) const;
 	unsigned int Store(MultiPath* path);
+	static void FinalizePath(MultiPath* path, const float3 startPos, const float3 goalPos, const bool cantGetCloser);
 	void LowRes2MedRes(MultiPath& path, const float3& startPos, const CSolidObject* owner, bool synced) const;
 	void MedRes2MaxRes(MultiPath& path, const float3& startPos, const CSolidObject* owner, bool synced) const;
 
 	bool IsFinalized() const { return (maxResPF != NULL); }
 
+private:
 	CPathFinder* maxResPF;
 	CPathEstimator* medResPE;
 	CPathEstimator* lowResPE;

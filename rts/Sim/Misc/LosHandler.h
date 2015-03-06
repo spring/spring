@@ -37,7 +37,7 @@
 struct LosInstance : public boost::noncopyable
 {
 private:
-	CR_DECLARE_STRUCT(LosInstance);
+	CR_DECLARE_STRUCT(LosInstance)
 
 	/// default constructor for creg
 	LosInstance()
@@ -102,9 +102,8 @@ public:
  */
 class CLosHandler : public boost::noncopyable
 {
-	CR_DECLARE_STRUCT(CLosHandler);
-//	CR_DECLARE_SUB(CPoint);
-	CR_DECLARE_SUB(DelayedInstance);
+	CR_DECLARE_STRUCT(CLosHandler)
+	CR_DECLARE_SUB(DelayedInstance)
 
 public:
 	void MoveUnit(CUnit* unit, bool redoCurrent);
@@ -223,7 +222,7 @@ private:
 	std::deque<LosInstance*> toBeDeleted;
 
 	struct DelayedInstance {
-		CR_DECLARE_STRUCT(DelayedInstance);
+		CR_DECLARE_STRUCT(DelayedInstance)
 		LosInstance* instance;
 		int timeoutTime;
 	};

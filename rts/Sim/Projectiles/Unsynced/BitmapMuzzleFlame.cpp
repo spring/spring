@@ -9,7 +9,7 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 
-CR_BIND_DERIVED(CBitmapMuzzleFlame, CProjectile, );
+CR_BIND_DERIVED(CBitmapMuzzleFlame, CProjectile, )
 
 CR_REG_METADATA(CBitmapMuzzleFlame,
 (
@@ -26,7 +26,7 @@ CR_REG_METADATA(CBitmapMuzzleFlame,
 		CR_MEMBER(ttl),
 		CR_MEMBER(frontOffset),
 	CR_MEMBER_ENDFLAG(CM_Config)
-));
+))
 
 CBitmapMuzzleFlame::CBitmapMuzzleFlame()
 	: CProjectile()
@@ -88,7 +88,7 @@ void CBitmapMuzzleFlame::Update()
 	deleteMe |= ((ttl--) == 0);
 }
 
-void CBitmapMuzzleFlame::Init(CUnit* owner, const float3& offset)
+void CBitmapMuzzleFlame::Init(const CUnit* owner, const float3& offset)
 {
 	CProjectile::Init(owner, offset);
 

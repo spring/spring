@@ -15,13 +15,14 @@
 #include "Sim/Units/UnitTypes/Building.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
 #include "System/creg/STL_List.h"
 
-CR_BIND_DERIVED(CTransportUnit, CUnit, );
+CR_BIND_DERIVED(CTransportUnit, CUnit, )
 
 CR_REG_METADATA(CTransportUnit, (
 	CR_MEMBER(transportedUnits),
@@ -29,9 +30,9 @@ CR_REG_METADATA(CTransportUnit, (
 	CR_MEMBER(transportMassUsed),
 	CR_RESERVED(16),
 	CR_POSTLOAD(PostLoad)
-));
+))
 
-CR_BIND(CTransportUnit::TransportedUnit,);
+CR_BIND(CTransportUnit::TransportedUnit,)
 
 CR_REG_METADATA_SUB(CTransportUnit,TransportedUnit,(
 	CR_MEMBER(unit),
@@ -39,7 +40,7 @@ CR_REG_METADATA_SUB(CTransportUnit,TransportedUnit,(
 	CR_MEMBER(size),
 	CR_MEMBER(mass),
 	CR_RESERVED(8)
-));
+))
 
 
 
@@ -154,7 +155,7 @@ void CTransportUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed
 				// if this transporter uses the piece-underneath-ground
 				// method to "hide" transportees, place transportee near
 				// the transporter's place of death
-				if (transportee->pos.y < ground->GetHeightReal(transportee->pos.x, transportee->pos.z)) {
+				if (transportee->pos.y < CGround::GetHeightReal(transportee->pos.x, transportee->pos.z)) {
 					const float r1 = transportee->radius + radius;
 					const float r2 = r1 * std::max(unitDef->unloadSpread, 1.0f);
 
@@ -164,7 +165,7 @@ void CTransportUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed
 						float3 pos = transportee->pos;
 						pos.x += (gs->randFloat() * 2.0f * r2 - r2);
 						pos.z += (gs->randFloat() * 2.0f * r2 - r2);
-						pos.y = ground->GetHeightReal(pos.x, pos.z);
+						pos.y = CGround::GetHeightReal(pos.x, pos.z);
 
 						if (!pos.IsInBounds())
 							continue;
@@ -452,7 +453,7 @@ float CTransportUnit::GetTransporteeWantedHeight(const float3& wantedPos, const 
 	if (unit->GetTransporter() != NULL) {
 		// if unit is being transported, set <clampedHeight>
 		// to the altitude at which to UNload the transportee
-		wantedHeight = ground->GetHeightReal(wantedPos.x, wantedPos.z);
+		wantedHeight = CGround::GetHeightReal(wantedPos.x, wantedPos.z);
 		isAllowedHeight = transporteeUnitDef->CheckTerrainConstraints(transporteeMoveDef, wantedHeight, &clampedHeight);
 
 		if (isAllowedHeight) {

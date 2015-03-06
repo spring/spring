@@ -2,7 +2,6 @@
 
 #include "AdvTreeDrawer.h"
 #include "AdvTreeGenerator.h"
-#include "GrassDrawer.h"
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/BaseGroundDrawer.h"
@@ -51,12 +50,11 @@ CAdvTreeDrawer::CAdvTreeDrawer(): ITreeDrawer()
 
 	treeGen = new CAdvTreeGenerator();
 	treeGen->CreateFarTex(treeShaders[TREE_PROGRAM_NEAR_BASIC]);
-	grassDrawer = new CGrassDrawer();
 
 	oldTreeDistance = 4;
 	lastListClean = 0;
-	treesX = gs->mapx / TREE_SQUARE_SIZE;
-	treesY = gs->mapy / TREE_SQUARE_SIZE;
+	treesX = mapDims.mapx / TREE_SQUARE_SIZE;
+	treesY = mapDims.mapy / TREE_SQUARE_SIZE;
 	nTrees = treesX * treesY;
 	trees = new TreeSquareStruct[nTrees];
 
@@ -82,7 +80,6 @@ CAdvTreeDrawer::~CAdvTreeDrawer()
 
 	delete[] trees;
 	delete treeGen;
-	delete grassDrawer;
 
 	shaderHandler->ReleaseProgramObjects("[TreeDrawer]");
 	treeShaders.clear();
@@ -174,7 +171,7 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 		treeShaders[TREE_PROGRAM_NEAR_BASIC]->Enable();
 		treeShaders[TREE_PROGRAM_NEAR_BASIC]->SetUniform3fv(3, &mapInfo->light.groundAmbientColor[0]);
 		treeShaders[TREE_PROGRAM_NEAR_BASIC]->SetUniform3fv(4, &mapInfo->light.groundSunColor[0]);
-		treeShaders[TREE_PROGRAM_NEAR_BASIC]->SetUniform4f(6, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f);
+		treeShaders[TREE_PROGRAM_NEAR_BASIC]->SetUniform4f(6, 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f);
 		treeShaders[TREE_PROGRAM_NEAR_BASIC]->Disable();
 		treeShaders[TREE_PROGRAM_NEAR_BASIC]->Validate();
 
@@ -309,7 +306,7 @@ void CAdvTreeDrawer::DrawTreeVertexFar(CVertexArray* va, const float3& pos, cons
 
 
 
-struct CAdvTreeSquareDrawer : CReadMap::IQuadDrawer
+struct CAdvTreeSquareDrawer : public CReadMap::IQuadDrawer
 {
 	CAdvTreeSquareDrawer(CAdvTreeDrawer* td, int cx, int cy, float treeDistance, bool drawDetailed)
 		: td(td)
@@ -318,6 +315,16 @@ struct CAdvTreeSquareDrawer : CReadMap::IQuadDrawer
 		, treeDistance(treeDistance)
 		, drawDetailed(drawDetailed)
 	{}
+
+	void ResetState() {
+		td = nullptr;
+
+		cx = 0;
+		cy = 0;
+
+		treeDistance = 0.0f;
+		drawDetailed = false;
+	}
 
 	void DrawQuad(int x, int y);
 
@@ -442,7 +449,7 @@ void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 
 void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 {
-	const int activeFarTex = treeGen->farTex[camera->forward.z >= 0.0f];
+	const int activeFarTex = treeGen->farTex[camera->GetDir().z >= 0.0f];
 	const bool drawDetailed = ((treeDistance >= 4.0f) || drawReflection);
 
 	Shader::IProgramObject* treeShader = NULL;
@@ -497,10 +504,10 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 	if (drawDetailed) {
 		// draw near-trees
-		const int xstart = Clamp(cx - 2, 0, gs->mapx / TREE_SQUARE_SIZE - 1);
-		const int xend   = Clamp(cx + 2, 0, gs->mapx / TREE_SQUARE_SIZE - 1);
-		const int ystart = Clamp(cy - 2, 0, gs->mapy / TREE_SQUARE_SIZE - 1);
-		const int yend   = Clamp(cy + 2, 0, gs->mapy / TREE_SQUARE_SIZE - 1);
+		const int xstart = Clamp(cx - 2, 0, mapDims.mapx / TREE_SQUARE_SIZE - 1);
+		const int xend   = Clamp(cx + 2, 0, mapDims.mapx / TREE_SQUARE_SIZE - 1);
+		const int ystart = Clamp(cy - 2, 0, mapDims.mapy / TREE_SQUARE_SIZE - 1);
+		const int yend   = Clamp(cy + 2, 0, mapDims.mapy / TREE_SQUARE_SIZE - 1);
 
 		if (shadowHandler->shadowsLoaded) {
 			treeShader->Disable();
@@ -523,8 +530,8 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 			treeShader->Enable();
 
 			if (!globalRendering->haveGLSL) {
-				const int mx = gs->pwr2mapx * SQUARE_SIZE;
-				const int my = gs->pwr2mapy * SQUARE_SIZE;
+				const int mx = mapDims.pwr2mapx * SQUARE_SIZE;
+				const int my = mapDims.pwr2mapy * SQUARE_SIZE;
 				treeShader->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 				treeShader->SetUniform4f(15, 1.0f / mx, 1.0f / my, 1.0f / mx, 1.0f);
 			}
@@ -532,13 +539,13 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 
 		if (globalRendering->haveGLSL) {
-			treeShader->SetUniform3fv(0, &camera->right[0]);
-			treeShader->SetUniform3fv(1, &camera->up[0]);
+			treeShader->SetUniform3fv(0, &camera->GetRight()[0]);
+			treeShader->SetUniform3fv(1, &camera->GetUp()[0]);
 			treeShader->SetUniform2f(5, 0.20f * (1.0f / MAX_TREE_HEIGHT), 0.85f);
 		} else {
 			treeShader->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
-			treeShader->SetUniform3f(13, camera->right.x, camera->right.y, camera->right.z);
-			treeShader->SetUniform3f( 9, camera->up.x,    camera->up.y,    camera->up.z   );
+			treeShader->SetUniform3f(13, camera->GetRight().x, camera->GetRight().y, camera->GetRight().z);
+			treeShader->SetUniform3f( 9, camera->GetUp().x,    camera->GetUp().y,    camera->GetUp().z   );
 			treeShader->SetUniform4f(11, light.groundSunColor.x,     light.groundSunColor.y,     light.groundSunColor.z,     0.85f);
 			treeShader->SetUniform4f(14, light.groundAmbientColor.x, light.groundAmbientColor.y, light.groundAmbientColor.z, 0.85f);
 			treeShader->SetUniform4f(12, 0.0f, 0.0f, 0.0f, 0.20f * (1.0f / MAX_TREE_HEIGHT)); // w = alpha/height modifier
@@ -756,8 +763,18 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 
 
-struct CAdvTreeSquareShadowPassDrawer: CReadMap::IQuadDrawer
+struct CAdvTreeSquareShadowPassDrawer: public CReadMap::IQuadDrawer
 {
+	void ResetState() {
+		td = nullptr;
+
+		cx = 0;
+		cy = 0;
+
+		treeDistance = 0.0f;
+		drawDetailed = false;
+	}
+
 	void DrawQuad(int x, int y);
 
 	CAdvTreeDrawer* td;
@@ -877,7 +894,7 @@ void CAdvTreeSquareShadowPassDrawer::DrawQuad(int x, int y)
 void CAdvTreeDrawer::DrawShadowPass()
 {
 	const float treeDistance = oldTreeDistance;
-	const int activeFarTex = (camera->forward.z < 0.0f)? treeGen->farTex[0] : treeGen->farTex[1];
+	const int activeFarTex = (camera->GetDir().z < 0.0f)? treeGen->farTex[0] : treeGen->farTex[1];
 	const bool drawDetailed = (treeDistance >= 4.0f);
 
 	glActiveTexture(GL_TEXTURE0);
@@ -903,10 +920,10 @@ void CAdvTreeDrawer::DrawShadowPass()
 	readMap->GridVisibility(camera, TREE_SQUARE_SIZE, drawer.treeDistance * 2.0f, &drawer, 1);
 
 	if (drawDetailed) {
-		const int xstart = Clamp(cx - 2, 0, gs->mapx / TREE_SQUARE_SIZE - 1);
-		const int xend   = Clamp(cx + 2, 0, gs->mapx / TREE_SQUARE_SIZE - 1);
-		const int ystart = Clamp(cy - 2, 0, gs->mapy / TREE_SQUARE_SIZE - 1);
-		const int yend   = Clamp(cy + 2, 0, gs->mapy / TREE_SQUARE_SIZE - 1);
+		const int xstart = Clamp(cx - 2, 0, mapDims.mapx / TREE_SQUARE_SIZE - 1);
+		const int xend   = Clamp(cx + 2, 0, mapDims.mapx / TREE_SQUARE_SIZE - 1);
+		const int ystart = Clamp(cy - 2, 0, mapDims.mapy / TREE_SQUARE_SIZE - 1);
+		const int yend   = Clamp(cy + 2, 0, mapDims.mapy / TREE_SQUARE_SIZE - 1);
 
 		glBindTexture(GL_TEXTURE_2D, treeGen->barkTex);
 		glEnable(GL_TEXTURE_2D);
@@ -915,12 +932,12 @@ void CAdvTreeDrawer::DrawShadowPass()
 		po->Enable();
 
 		if (globalRendering->haveGLSL) {
-			po->SetUniform3fv(1, &camera->right[0]);
-			po->SetUniform3fv(2, &camera->up[0]);
+			po->SetUniform3fv(1, &camera->GetRight()[0]);
+			po->SetUniform3fv(2, &camera->GetUp()[0]);
 		} else {
 			po->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
-			po->SetUniform4f(13, camera->right.x, camera->right.y, camera->right.z, 0.0f);
-			po->SetUniform4f(9,  camera->up.x,    camera->up.y,    camera->up.z,    0.0f);
+			po->SetUniform4f(13, camera->GetRight().x, camera->GetRight().y, camera->GetRight().z, 0.0f);
+			po->SetUniform4f(9,  camera->GetUp().x,    camera->GetUp().y,    camera->GetUp().z,    0.0f);
 			po->SetUniform4f(11, 1.0f, 1.0f, 1.0f, 0.85f                           );
 			po->SetUniform4f(12, 0.0f, 0.0f, 0.0f, 0.20f * (1.0f / MAX_TREE_HEIGHT));   // w = alpha/height modifier
 		}
@@ -1033,6 +1050,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 		po = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_TREE_FAR);
 		po->Enable();
 
+		// draw far-distance trees
 		glBindTexture(GL_TEXTURE_2D, activeFarTex);
 		va->DrawArrayT(GL_QUADS);
 
@@ -1066,19 +1084,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 	glDisable(GL_ALPHA_TEST);
 }
 
-void CAdvTreeDrawer::DrawGrass()
-{
-	if (drawTrees) {
-		grassDrawer->Draw();
-	}
-}
 
-void CAdvTreeDrawer::DrawShadowGrass()
-{
-	if (drawTrees) {
-		grassDrawer->DrawShadow();
-	}
-}
 void CAdvTreeDrawer::ResetPos(const float3& pos)
 {
 	const int x = (int) pos.x / TREE_SQUARE_SIZE / SQUARE_SIZE;
@@ -1093,7 +1099,6 @@ void CAdvTreeDrawer::ResetPos(const float3& pos)
 		delDispLists.push_back(pTSS->farDispList);
 		pTSS->farDispList = 0;
 	}
-	grassDrawer->ResetPos(pos);
 }
 
 void CAdvTreeDrawer::AddTree(int treeID, int treeType, const float3& pos, float size)
@@ -1143,15 +1148,4 @@ void CAdvTreeDrawer::AddFallingTree(int treeID, int treeType, const float3& pos,
 
 	fallingTrees.push_back(ft);
 }
-
-void CAdvTreeDrawer::AddGrass(const float3& pos)
-{
-	grassDrawer->AddGrass(pos);
-}
-
-void CAdvTreeDrawer::RemoveGrass(int x, int z)
-{
-	grassDrawer->RemoveGrass(x, z);
-}
-
 

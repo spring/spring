@@ -62,6 +62,7 @@ namespace icon {
 		public:
 			CIconHandler();
 			~CIconHandler();
+			CIconHandler(const CIconHandler&) = delete; // no-copy
 
 			bool AddIcon(const std::string& iconName,
 									const std::string& textureName,
@@ -92,6 +93,6 @@ namespace icon {
 	};
 
 	extern CIconHandler* iconHandler;
-};
+}
 
 #endif // ICON_HANDLER_H

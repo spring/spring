@@ -623,8 +623,8 @@ void CAdvSky::UpdateSunFlare() {
 		glDeleteLists(sunFlareList, 1);
 
 	const float3 zdir = skyLight->GetLightDir();
-	const float3 xdir = zdir.cross(UpVector).Normalize();
-	const float3 ydir = zdir.cross(xdir).Normalize();
+	const float3 xdir = zdir.cross(UpVector).ANormalize();
+	const float3 ydir = zdir.cross(xdir);
 
 	sunFlareList = glGenLists(1);
 	glNewList(sunFlareList, GL_COMPILE);
@@ -639,13 +639,14 @@ void CAdvSky::UpdateSunFlare() {
 			const float dz = 5.0f;
 
 			glTexCoord2f(x / 256.0f, 0.125f); glVertexf3(zdir * dz + xdir * dx * 0.0014f + ydir * dy * 0.0014f);
-			glTexCoord2f(x / 256.0f, 0.875f); glVertexf3(zdir * dz + xdir * dx * 4.0000f + ydir * dy * 4.0000f);
+			glTexCoord2f(x / 256.0f, 0.875f); glVertexf3(zdir * dz + xdir * dx * 1.0000f + ydir * dy * 1.0000f);
 		}
 
 		glEnd();
 
 		if (globalRendering->drawFog)
 			glEnable(GL_FOG);
+		glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
 	glEndList();
 }
@@ -803,16 +804,12 @@ void CAdvSky::CreateDetailTex()
 		glColor4f(c,c,c,ifade);
 		va->DrawArrayT(GL_QUADS);
 	}
-/*	unsigned char buf[256*256*4];
-	glReadPixels(0,0,256,256,GL_RGBA,GL_UNSIGNED_BYTE,buf);
-	CBitmap bm(buf,256,256);
-	bm.Save("dc.bmp");
-*/
 
 	glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
 	fbo.Unbind();
 
 	glEnable(GL_DEPTH_TEST);
+	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void CAdvSky::UpdateSunDir() {

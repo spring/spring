@@ -13,6 +13,7 @@
 #include "Map/MapDamage.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Units/BuildInfo.h"
@@ -23,6 +24,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
+#include "System/Log/ILog.h"
 #include "System/Util.h"
 #include "System/creg/STL_Set.h"
 #include "System/creg/STL_Deque.h"
@@ -40,14 +42,14 @@
 static const int TARGET_LOST_TIMER = 4;
 static const float COMMAND_CANCEL_DIST = 17.0f;
 
-CR_BIND(CCommandQueue, );
+CR_BIND(CCommandQueue, )
 CR_REG_METADATA(CCommandQueue, (
 	CR_MEMBER(queue),
-	CR_ENUM_MEMBER(queueType),
+	CR_MEMBER(queueType),
 	CR_MEMBER(tagCounter)
-));
+))
 
-CR_BIND_DERIVED(CCommandAI, CObject, );
+CR_BIND_DERIVED(CCommandAI, CObject, )
 CR_REG_METADATA(CCommandAI, (
 	CR_MEMBER(stockpileWeapon),
 
@@ -70,7 +72,7 @@ CR_REG_METADATA(CCommandAI, (
 	CR_MEMBER(targetLostTimer),
 
 	CR_POSTLOAD(PostLoad)
-));
+))
 
 CCommandAI::CCommandAI():
 	stockpileWeapon(0),
@@ -367,11 +369,17 @@ static inline bool IsCommandInMap(const Command& c)
 	// TODO:
 	//   extend the check to commands for which
 	//   position is not stored in params[0..2]
-	if (c.params.size() >= 3) {
-		return ((c.GetPos(0)).IsInBounds());
+	if (c.params.size() < 3) {
+		return true;
 	}
+	if ((c.GetPos(0)).IsInBounds()) {
+		return true;
+	}
+	const float3 pos = c.GetPos(0);
+	LOG_L(L_DEBUG, "Dropped command %d: outside of map (x:%f y:%f z:%f)", c.GetID(), pos.x, pos.y, pos.z);
 
-	return true;
+	return false;
+
 }
 
 static inline bool AdjustGroundAttackCommand(const Command& c, bool fromSynced, bool aiOrder)
@@ -412,8 +420,8 @@ static inline bool AdjustGroundAttackCommand(const Command& c, bool fromSynced, 
 	//
 	Command& cc = const_cast<Command&>(c);
 
-	cc.params[1] = std::min(cPos.y, ground->GetHeightAboveWater(cPos.x, cPos.z, true || fromSynced));
-	// cc.params[1] = ground->GetHeightReal(cPos.x, cPos.z, true || fromSynced);
+	cc.params[1] = std::min(cPos.y, CGround::GetHeightAboveWater(cPos.x, cPos.z, true || fromSynced));
+	// cc.params[1] = CGround::GetHeightReal(cPos.x, cPos.z, true || fromSynced);
 
 	return true;
 	#endif
@@ -439,7 +447,9 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 		case CMD_MANUALFIRE:
 		case CMD_UNLOAD_UNIT:
 		case CMD_UNLOAD_UNITS: {
-			if (!IsCommandInMap(c)) { return false; }
+			if (!IsCommandInMap(c)) {
+				return false;
+			}
 		} break;
 
 		default: {
@@ -921,8 +931,6 @@ void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 			queue = &facCAI->newUnitCommands;
 		}
 	}
-
-	// FIXME: handle CMD_LOOPBACKATTACK, etc...
 
 	CCommandQueue::iterator insertIt = queue->begin();
 
@@ -1424,7 +1432,7 @@ void CCommandAI::FinishCommand()
 {
 	assert(!commandQue.empty());
 
-	const Command cmd = commandQue.front();
+	const Command cmd = commandQue.front(); //cppcheck false positive, copy is needed here
 	const bool dontRepeat = (cmd.options & INTERNAL_ORDER);
 
 	if (repeatOrders

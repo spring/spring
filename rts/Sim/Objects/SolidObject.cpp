@@ -17,7 +17,7 @@ const float CSolidObject::DEFAULT_MASS = 1e5f;
 const float CSolidObject::MINIMUM_MASS = 1e0f; // 1.0f
 const float CSolidObject::MAXIMUM_MASS = 1e6f;
 
-CR_BIND_DERIVED(CSolidObject, CWorldObject, );
+CR_BIND_DERIVED(CSolidObject, CWorldObject, )
 CR_REG_METADATA(CSolidObject,
 (
 	CR_MEMBER(health),
@@ -37,8 +37,8 @@ CR_REG_METADATA(CSolidObject,
  	CR_MEMBER(footprint),
 	CR_MEMBER(heading),
 
-	CR_ENUM_MEMBER(physicalState),
-	CR_ENUM_MEMBER(collidableState),
+	CR_MEMBER(physicalState),
+	CR_MEMBER(collidableState),
 
 	CR_MEMBER(team),
 	CR_MEMBER(allyteam),
@@ -65,10 +65,10 @@ CR_REG_METADATA(CSolidObject,
 
 	CR_MEMBER(drawPos),
 	CR_MEMBER(drawMidPos),
-	// CR_MEMBER(blockMap), //FIXME add bitwiseenum to creg
+	CR_IGNORED(blockMap), // reloaded in CUnit's PostLoad
 
 	CR_MEMBER(buildFacing)
-));
+))
 
 
 CSolidObject::CSolidObject():
@@ -127,7 +127,7 @@ CSolidObject::~CSolidObject() {
 }
 
 void CSolidObject::UpdatePhysicalState(float eps) {
-	const float gh = ground->GetHeightReal(pos.x, pos.z);
+	const float gh = CGround::GetHeightReal(pos.x, pos.z);
 	const float wh = std::max(gh, 0.0f);
 
 	unsigned int ps = physicalState;
@@ -233,8 +233,12 @@ void CSolidObject::Block() {
 		return;
 
 	UnBlock();
-	groundBlockingObjectMap->AddGroundBlockingObject(this);
-	assert(IsBlocking());
+
+	// only block when `touching` the ground
+	if ((pos.y - radius) <= CGround::GetHeightAboveWater(pos.x, pos.z)) {
+		groundBlockingObjectMap->AddGroundBlockingObject(this);
+		assert(IsBlocking());
+	}
 }
 
 
@@ -261,8 +265,8 @@ YardMapStatus CSolidObject::GetGroundBlockingMaskAtPos(float3 gpos) const
 		// use old fixed space (4 facing dirs & ints for unit positions)
 
 		// form the rotated axis vectors
-		static float3 fronts[] = {FwdVector,  RgtVector, -FwdVector, -RgtVector};
-		static float3 rights[] = {RgtVector, -FwdVector, -RgtVector,  FwdVector};
+		static const float3 fronts[] = {FwdVector,  RgtVector, -FwdVector, -RgtVector};
+		static const float3 rights[] = {RgtVector, -FwdVector, -RgtVector,  FwdVector};
 
 		// get used axis vectors
 		frontv = fronts[buildFacing];
@@ -271,7 +275,7 @@ YardMapStatus CSolidObject::GetGroundBlockingMaskAtPos(float3 gpos) const
 		gpos -= float3(mapPos.x * SQUARE_SIZE, 0.0f, mapPos.y * SQUARE_SIZE);
 
 		// need to revert some of the transformations of CSolidObject::GetMapPos()
-		gpos.x += SQUARE_SIZE / 2 - (this->xsize >> 1) * SQUARE_SIZE; 
+		gpos.x += SQUARE_SIZE / 2 - (this->xsize >> 1) * SQUARE_SIZE;
 		gpos.z += SQUARE_SIZE / 2 - (this->zsize >> 1) * SQUARE_SIZE;
 	#endif
 
@@ -302,8 +306,8 @@ int2 CSolidObject::GetMapPos(const float3& position) const
 
 	mp.x = (int(position.x + SQUARE_SIZE / 2) / SQUARE_SIZE) - (xsize / 2);
 	mp.y = (int(position.z + SQUARE_SIZE / 2) / SQUARE_SIZE) - (zsize / 2);
-	mp.x = Clamp(mp.x, 0, gs->mapx - xsize);
-	mp.y = Clamp(mp.y, 0, gs->mapy - zsize);
+	mp.x = Clamp(mp.x, 0, mapDims.mapx - xsize);
+	mp.y = Clamp(mp.y, 0, mapDims.mapy - zsize);
 
 	return mp;
 }
@@ -360,7 +364,7 @@ float3 CSolidObject::GetWantedUpDir(bool useGroundNormal) const {
 	//   the water surface) and neither are tanks / bots due to impulses,
 	//   gravity, ...
 	//
-	const float3 gn = ground->GetSmoothNormal(pos.x, pos.z) * (    useGroundNormal);
+	const float3 gn = CGround::GetSmoothNormal(pos.x, pos.z) * (    useGroundNormal);
 	const float3 wn =                             UpVector  * (1 - useGroundNormal);
 
 	if (moveDef == NULL) {
@@ -387,8 +391,39 @@ float3 CSolidObject::GetWantedUpDir(bool useGroundNormal) const {
 	return updir;
 }
 
+
+
 void CSolidObject::SetHeadingFromDirection() {
 	heading = GetHeadingFromVector(frontdir.x, frontdir.z);
+}
+
+void CSolidObject::UpdateDirVectors(bool useGroundNormal)
+{
+	updir    = GetWantedUpDir(useGroundNormal);
+	frontdir = GetVectorFromHeading(heading);
+	rightdir = (frontdir.cross(updir)).Normalize();
+	frontdir = updir.cross(rightdir);
+}
+
+
+
+void CSolidObject::ForcedSpin(const float3& newDir) {
+	// new front-direction should be normalized
+	assert(math::fabsf(newDir.SqLength() - 1.0f) <= float3::NORMALIZE_EPS);
+
+	// if zdir is parallel to world-y, use heading-vector
+	// (or its inverse) as auxiliary to avoid degeneracies
+	const float3 zdir = newDir;
+	const float3 udir = mix(UpVector, (frontdir * Sign(-zdir.y)), (math::fabs(zdir.dot(UpVector)) >= 0.99f));
+	const float3 xdir = (zdir.cross(udir)).Normalize();
+	const float3 ydir = (xdir.cross(zdir)).Normalize();
+
+	frontdir = zdir;
+	rightdir = xdir;
+	   updir = ydir;
+
+	SetHeadingFromDirection();
+	UpdateMidAndAimPos();
 }
 
 

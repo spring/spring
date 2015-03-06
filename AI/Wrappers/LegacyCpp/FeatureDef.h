@@ -18,7 +18,7 @@ namespace springLegacyAI {
 
 struct FeatureDef
 {
-	CR_DECLARE_STRUCT(FeatureDef);
+	CR_DECLARE_STRUCT(FeatureDef)
 
 	FeatureDef()
 		: id(-1)

@@ -5,7 +5,6 @@
 
 #include "System/creg/creg_cond.h"
 #include "System/float3.h"
-#include <vector>
 
 struct CollisionVolume;
 class CMatrix44f;
@@ -21,41 +20,39 @@ enum {
 
 struct CollisionQuery {
 public:
-	CollisionQuery(): lmp(NULL) { Reset(); }
-	CollisionQuery(const CollisionQuery& cq): lmp(NULL) { Reset(&cq); }
+	CollisionQuery()
+	: b0(CQ_POINT_NO_INT)
+	, b1(CQ_POINT_NO_INT)
+	, t0(0.0f)
+	, t1(0.0f)
+	, p0(ZeroVector)
+	, p1(ZeroVector)
+	, lmp(nullptr)
+	{ }
 
-	void Reset(const CollisionQuery* cq = NULL) {
-		// (0, 0, 0) is volume-space center, so impossible
-		// to obtain as actual points except in the special
-		// cases (which all calling code should check for!)
-		// when continuous hit-detection is enabled
-		if (cq == NULL) {
-			b0 = CQ_POINT_NO_INT; t0 = 0.0f; p0 = ZeroVector;
-			b1 = CQ_POINT_NO_INT; t1 = 0.0f; p1 = ZeroVector;
-		} else {
-			b0 = cq->b0; t0 = cq->t0; p0 = cq->p0;
-			b1 = cq->b1; t1 = cq->t1; p1 = cq->p1;
-
-			lmp = cq->lmp;
-		}
+	void Reset(const CollisionQuery* cq = nullptr) {
+		*this = (cq != nullptr) ? *cq : CollisionQuery();
 	}
 
 	bool InsideHit() const { return (b0 == CQ_POINT_IN_VOL); }
 	bool IngressHit() const { return (b0 == CQ_POINT_ON_RAY); }
 	bool EgressHit() const { return (b1 == CQ_POINT_ON_RAY); }
+	bool AnyHit() const { return (b0 != CQ_POINT_NO_INT) || (b1 != CQ_POINT_NO_INT); }
 
 	const float3& GetIngressPos() const { return p0; }
 	const float3& GetEgressPos() const { return p1; }
 	const float3& GetHitPos() const {
-		if (IngressHit()) return (GetIngressPos());
-		if (EgressHit()) return (GetEgressPos());
+		if (IngressHit()) return GetIngressPos();
+		if (EgressHit()) return GetEgressPos();
+		if (InsideHit()) return p0;
 		return ZeroVector;
 	}
 
 	// if the hit-position equals ZeroVector (i.e. if we have an
-	// inside-hit special case), the projected distance would be
-	// negative --> clamp it
-	float GetHitPosDist(const float3& pos, const float3& dir) const { return (std::max(0.0f, ((GetHitPos() - pos).dot(dir)))); }
+	// inside-hit special case), the projected distance could be
+	// positive or negative depending on <dir> but we want it to
+	// be 0 --> turn <pos> into a ZeroVector if InsideHit()
+	float GetHitPosDist(const float3& pos, const float3& dir) const { return (std::max(0.0f, ((GetHitPos() - pos * (1 - InsideHit())).dot(dir)))); }
 	float GetIngressPosDist(const float3& pos, const float3& dir) const { return (std::max(0.0f, ((GetIngressPos() - pos).dot(dir)))); }
 	float GetEgressPosDist(const float3& pos, const float3& dir) const { return (std::max(0.0f, ((GetEgressPos() - pos).dot(dir)))); }
 
@@ -111,8 +108,7 @@ class CCollisionHandler {
 		static bool Intersect(const CollisionVolume* v, const CMatrix44f& m, const float3& p0, const float3& p1, CollisionQuery* cq);
 		static bool IntersectPieceTree(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* cq);
 
-		static bool IntersectPieceTreeHelper(LocalModelPiece* lmp, const CMatrix44f& mat, const float3& p0, const float3& p1, std::vector<CollisionQuery>* cqs);
-		static bool IntersectPiecesHelper(const CUnit* u, const float3& p0, const float3& p1, std::vector<CollisionQuery>* cqs);
+		static bool IntersectPiecesHelper(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* cqp);
 
 	public:
 		static bool IntersectEllipsoid(const CollisionVolume* v, const float3& pi0, const float3& pi1, CollisionQuery* cq);

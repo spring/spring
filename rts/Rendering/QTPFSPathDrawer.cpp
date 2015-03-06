@@ -2,7 +2,6 @@
 
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
-#include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/LosHandler.h"
@@ -25,6 +24,7 @@
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Map/InfoTexture/Legacy/LegacyInfoTextureHandler.h"
 #include "System/Util.h"
 
 QTPFSPathDrawer::QTPFSPathDrawer(): IPathDrawer() {
@@ -160,8 +160,8 @@ void QTPFSPathDrawer::DrawPath(const QTPFS::IPath* path, CVertexArray* va) const
 			if (!camera->InView(p0) && !camera->InView(p1))
 				continue;
 
-			p0.y = ground->GetHeightReal(p0.x, p0.z, false);
-			p1.y = ground->GetHeightReal(p1.x, p1.z, false);
+			p0.y = CGround::GetHeightReal(p0.x, p0.z, false);
+			p1.y = CGround::GetHeightReal(p1.x, p1.z, false);
 
 			va->AddVertexQC(p0, color);
 			va->AddVertexQC(p1, color);
@@ -214,8 +214,8 @@ void QTPFSPathDrawer::DrawSearchExecution(unsigned int pathType, const QTPFS::Pa
 void QTPFSPathDrawer::DrawSearchIteration(unsigned int pathType, const std::list<unsigned int>& nodeIndices, CVertexArray* va) const {
 	std::list<unsigned int>::const_iterator it = nodeIndices.begin();
 
-	unsigned int hmx = (*it) % gs->mapx;
-	unsigned int hmz = (*it) / gs->mapx;
+	unsigned int hmx = (*it) % mapDims.mapx;
+	unsigned int hmz = (*it) / mapDims.mapx;
 
 	const QTPFS::NodeLayer& nodeLayer = pm->nodeLayers[pathType];
 	const QTPFS::QTNode* poppedNode = static_cast<const QTPFS::QTNode*>(nodeLayer.GetNode(hmx, hmz));
@@ -224,8 +224,8 @@ void QTPFSPathDrawer::DrawSearchIteration(unsigned int pathType, const std::list
 	DrawNode(poppedNode, NULL, va, true, false, false);
 
 	for (++it; it != nodeIndices.end(); ++it) {
-		hmx = (*it) % gs->mapx;
-		hmz = (*it) / gs->mapx;
+		hmx = (*it) % mapDims.mapx;
+		hmz = (*it) / mapDims.mapx;
 		pushedNode = static_cast<const QTPFS::QTNode*>(nodeLayer.GetNode(hmx, hmz));
 
 		DrawNode(pushedNode, NULL, va, true, false, false);
@@ -249,11 +249,11 @@ void QTPFSPathDrawer::DrawNode(
 	#define zmidw (node->zmid() * SQUARE_SIZE)
 
 	const float3 verts[5] = {
-		float3(xminw, ground->GetHeightReal(xminw, zminw, false) + 4.0f, zminw),
-		float3(xmaxw, ground->GetHeightReal(xmaxw, zminw, false) + 4.0f, zminw),
-		float3(xmaxw, ground->GetHeightReal(xmaxw, zmaxw, false) + 4.0f, zmaxw),
-		float3(xminw, ground->GetHeightReal(xminw, zmaxw, false) + 4.0f, zmaxw),
-		float3(xmidw, ground->GetHeightReal(xmidw, zmidw, false) + 4.0f, zmidw),
+		float3(xminw, CGround::GetHeightReal(xminw, zminw, false) + 4.0f, zminw),
+		float3(xmaxw, CGround::GetHeightReal(xmaxw, zminw, false) + 4.0f, zminw),
+		float3(xmaxw, CGround::GetHeightReal(xmaxw, zmaxw, false) + 4.0f, zmaxw),
+		float3(xminw, CGround::GetHeightReal(xminw, zmaxw, false) + 4.0f, zmaxw),
+		float3(xmidw, CGround::GetHeightReal(xmidw, zmidw, false) + 4.0f, zmidw),
 	};
 	static const unsigned char colors[3][4] = {
 		{1 * 255, 0 * 255, 0 * 255, 1 * 255}, // red --> blocked
@@ -312,8 +312,8 @@ void QTPFSPathDrawer::DrawNodeLink(const QTPFS::QTNode* pushedNode, const QTPFS:
 	#define zmidw(n) (n->zmid() * SQUARE_SIZE)
 
 	const float3 verts[2] = {
-		float3(xmidw(pushedNode), ground->GetHeightReal(xmidw(pushedNode), zmidw(pushedNode), false) + 4.0f, zmidw(pushedNode)),
-		float3(xmidw(poppedNode), ground->GetHeightReal(xmidw(poppedNode), zmidw(poppedNode), false) + 4.0f, zmidw(poppedNode)),
+		float3(xmidw(pushedNode), CGround::GetHeightReal(xmidw(pushedNode), zmidw(pushedNode), false) + 4.0f, zmidw(pushedNode)),
+		float3(xmidw(poppedNode), CGround::GetHeightReal(xmidw(poppedNode), zmidw(poppedNode), false) + 4.0f, zmidw(poppedNode)),
 	};
 	static const unsigned char color[4] = {
 		1 * 255, 0 * 255, 1 * 255, 1 * 128,
@@ -338,7 +338,7 @@ void QTPFSPathDrawer::DrawNodeLink(const QTPFS::QTNode* pushedNode, const QTPFS:
 
 void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int offset, unsigned char* texMem) const {
 	switch (extraTex) {
-		case CBaseGroundDrawer::drawPathTrav: {
+		case CLegacyInfoTextureHandler::drawPathTrav: {
 			const MoveDef* md = GetSelectedMoveDef();
 
 			if (md != NULL) {
@@ -348,10 +348,10 @@ void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int
 				const bool los = (gs->cheatEnabled || gu->spectating);
 
 				for (int ty = starty; ty < endy; ++ty) {
-					for (int tx = 0; tx < gs->hmapx; ++tx) {
+					for (int tx = 0; tx < mapDims.hmapx; ++tx) {
 						const int sqx = (tx << 1);
 						const int sqz = (ty << 1);
-						const int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
+						const int texIdx = ((ty * (mapDims.pwr2mapx >> 1)) + tx) * 4 - offset;
 						const bool losSqr = losHandler->InLos(sqx, sqz, gu->myAllyTeam);
 
 						#if 1
@@ -374,28 +374,28 @@ void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int
 						const SColor& smc = GetSpeedModColor(sm * scale);
 						#endif
 
-						texMem[texIdx + CBaseGroundDrawer::COLOR_R] = smc.r;
-						texMem[texIdx + CBaseGroundDrawer::COLOR_G] = smc.g;
-						texMem[texIdx + CBaseGroundDrawer::COLOR_B] = smc.b;
-						texMem[texIdx + CBaseGroundDrawer::COLOR_A] = smc.a;
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_R] = smc.r;
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_G] = smc.g;
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_B] = smc.b;
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_A] = smc.a;
 					}
 				}
 			} else {
 				// we have nothing to show -> draw a dark red overlay
 				for (int ty = starty; ty < endy; ++ty) {
-					for (int tx = 0; tx < gs->hmapx; ++tx) {
-						const int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
+					for (int tx = 0; tx < mapDims.hmapx; ++tx) {
+						const int texIdx = ((ty * (mapDims.pwr2mapx >> 1)) + tx) * 4 - offset;
 
-						texMem[texIdx + CBaseGroundDrawer::COLOR_R] = 100;
-						texMem[texIdx + CBaseGroundDrawer::COLOR_G] = 0;
-						texMem[texIdx + CBaseGroundDrawer::COLOR_B] = 0;
-						texMem[texIdx + CBaseGroundDrawer::COLOR_A] = 255;
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_R] = 100;
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_G] = 0;
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_B] = 0;
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_A] = 255;
 					}
 				}
 			}
 		} break;
 
-		case CBaseGroundDrawer::drawPathCost: {
+		case CLegacyInfoTextureHandler::drawPathCost: {
 		} break;
 	}
 }

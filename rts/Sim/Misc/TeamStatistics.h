@@ -12,7 +12,7 @@
 
 struct TeamStatistics
 {
-	CR_DECLARE_STRUCT(TeamStatistics);
+	CR_DECLARE_STRUCT(TeamStatistics)
 
 	TeamStatistics();
 
@@ -41,7 +41,7 @@ struct TeamStatistics
 	void swab();
 
 	/// In intervalls of this many seconds, statistics are updated
-	static const int statsPeriod = 16;
+	static const int statsPeriod = 15;
 };
 
 #pragma pack(pop)

@@ -36,6 +36,7 @@
 
 CUnitLoader* CUnitLoader::GetInstance()
 {
+	// NOTE: UnitLoader has no internal state, so this is fine wrt. reloading
 	static CUnitLoader instance;
 	return &instance;
 }
@@ -46,9 +47,8 @@ CUnit* CUnitLoader::LoadUnit(const std::string& name, const UnitLoadParams& para
 {
 	const_cast<UnitLoadParams&>(params).unitDef = unitDefHandler->GetUnitDefByName(name);
 
-	if (params.unitDef == NULL) {
+	if (params.unitDef == NULL)
 		throw content_error("Couldn't find unittype " +  name);
-	}
 
 	return (LoadUnit(params));
 }
@@ -208,19 +208,20 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 		const int sqSize = math::ceil(math::sqrt((float) numRequestedUnits));
 		const float sqHalfMapSize = sqSize / 2 * 10 * SQUARE_SIZE;
 
-		pos.x = std::max(sqHalfMapSize, std::min(pos.x, float3::maxxpos - sqHalfMapSize - 1));
-		pos.z = std::max(sqHalfMapSize, std::min(pos.z, float3::maxzpos - sqHalfMapSize - 1));
+		pos.x = Clamp(pos.x, sqHalfMapSize, float3::maxxpos - sqHalfMapSize - 1);
+		pos.z = Clamp(pos.z, sqHalfMapSize, float3::maxzpos - sqHalfMapSize - 1);
 
 		for (int a = 1; a <= numRequestedUnits; ++a) {
 			Watchdog::ClearPrimaryTimers(); // the other thread may be waiting for a mutex held by this one, triggering hang detection
 			const float px = pos.x + (a % sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
 			const float pz = pos.z + (a / sqSize - sqSize / 2) * 10 * SQUARE_SIZE;
+			const UnitDef* ud = unitDefHandler->GetUnitDefByID(a);
 
 			const UnitLoadParams unitParams = {
-				unitDefHandler->GetUnitDefByID(a),
+				ud,
 				NULL,
 
-				float3(px, ground->GetHeightReal(px, pz), pz),
+				float3(px, CGround::GetHeightReal(px, pz), pz),
 				ZeroVector,
 
 				-1,
@@ -281,7 +282,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 						unitDef,
 						NULL,
 
-						float3(px, ground->GetHeightReal(px, pz), pz),
+						float3(px, CGround::GetHeightReal(px, pz), pz),
 						ZeroVector,
 
 						-1,
@@ -320,7 +321,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 				for (int x = 0; x < squareSize && total > 0; ++x) {
 					const float px = squarePos.x + x * xsize * SQUARE_SIZE;
 					const float pz = squarePos.z + z * zsize * SQUARE_SIZE;
-					const float3 featurePos = float3(px, ground->GetHeightReal(px, pz), pz);
+					const float3 featurePos = float3(px, CGround::GetHeightReal(px, pz), pz);
 
 					Watchdog::ClearPrimaryTimers();
 					FeatureLoadParams params = {
@@ -357,10 +358,11 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 void CUnitLoader::FlattenGround(const CUnit* unit)
 {
 	const UnitDef* unitDef = unit->unitDef;
-	const float groundheight = ground->GetHeightReal(unit->pos.x, unit->pos.z);
+	const float groundheight = CGround::GetHeightReal(unit->pos.x, unit->pos.z);
 
 	if (mapDamage->disabled) return;
 	if (!unitDef->levelGround) return;
+	if (unitDef->IsAirUnit()) return;
 	if (!unitDef->IsImmobileUnit()) return;
 	if (unitDef->floatOnWater && groundheight <= 0.0f) return;
 
@@ -372,12 +374,12 @@ void CUnitLoader::FlattenGround(const CUnit* unit)
 	const float hss = 0.5f * SQUARE_SIZE;
 	const int tx1 = (int) std::max(0.0f ,(bi.pos.x - (bi.GetXSize() * hss)) / SQUARE_SIZE);
 	const int tz1 = (int) std::max(0.0f ,(bi.pos.z - (bi.GetZSize() * hss)) / SQUARE_SIZE);
-	const int tx2 = std::min(gs->mapx, tx1 + bi.GetXSize());
-	const int tz2 = std::min(gs->mapy, tz1 + bi.GetZSize());
+	const int tx2 = std::min(mapDims.mapx, tx1 + bi.GetXSize());
+	const int tz2 = std::min(mapDims.mapy, tz1 + bi.GetZSize());
 
 	for (int z = tz1; z <= tz2; z++) {
 		for (int x = tx1; x <= tx2; x++) {
-			readMap->SetHeight(z * gs->mapxp1 + x, bi.pos.y);
+			readMap->SetHeight(z * mapDims.mapxp1 + x, bi.pos.y);
 		}
 	}
 
@@ -387,10 +389,11 @@ void CUnitLoader::FlattenGround(const CUnit* unit)
 void CUnitLoader::RestoreGround(const CUnit* unit)
 {
 	const UnitDef* unitDef = unit->unitDef;
-	const float groundheight = ground->GetHeightReal(unit->pos.x, unit->pos.z);
+	const float groundheight = CGround::GetHeightReal(unit->pos.x, unit->pos.z);
 
 	if (mapDamage->disabled) return;
 	if (!unitDef->levelGround) return;
+	if (unitDef->IsAirUnit()) return;
 	if (!unitDef->IsImmobileUnit()) return;
 	if (unitDef->floatOnWater && groundheight <= 0.0f) return;
 
@@ -399,8 +402,8 @@ void CUnitLoader::RestoreGround(const CUnit* unit)
 	const float hss = 0.5f * SQUARE_SIZE;
 	const int tx1 = (int) std::max(0.0f ,(bi.pos.x - (bi.GetXSize() * hss)) / SQUARE_SIZE);
 	const int tz1 = (int) std::max(0.0f ,(bi.pos.z - (bi.GetZSize() * hss)) / SQUARE_SIZE);
-	const int tx2 = std::min(gs->mapx, tx1 + bi.GetXSize());
-	const int tz2 = std::min(gs->mapy, tz1 + bi.GetZSize());
+	const int tx2 = std::min(mapDims.mapx, tx1 + bi.GetXSize());
+	const int tz2 = std::min(mapDims.mapy, tz1 + bi.GetZSize());
 
 
 	const float* heightmap = readMap->GetCornerHeightMapSynced();
@@ -408,7 +411,7 @@ void CUnitLoader::RestoreGround(const CUnit* unit)
 	float heightdiff = 0.0f;
 	for (int z = tz1; z <= tz2; z++) {
 		for (int x = tx1; x <= tx2; x++) {
-			int index = z * gs->mapxp1 + x;
+			int index = z * mapDims.mapxp1 + x;
 			heightdiff += heightmap[index] - readMap->GetOriginalHeightMapSynced()[index];
 			++num;
 		}
@@ -418,7 +421,7 @@ void CUnitLoader::RestoreGround(const CUnit* unit)
 	heightdiff += unit->pos.y - bi.pos.y;
 	for (int z = tz1; z <= tz2; z++) {
 		for (int x = tx1; x <= tx2; x++) {
-			int index = z * gs->mapxp1 + x;
+			int index = z * mapDims.mapxp1 + x;
 			readMap->SetHeight(index, heightdiff + readMap->GetOriginalHeightMapSynced()[index]);
 		}
 	}
@@ -426,7 +429,7 @@ void CUnitLoader::RestoreGround(const CUnit* unit)
 	heightdiff = bi.pos.y - CGameHelper::Pos2BuildPos(bi, true).y;
 	for (int z = tz1; z <= tz2; z++) {
 		for (int x = tx1; x <= tx2; x++) {
-			int index = z * gs->mapxp1 + x;
+			int index = z * mapDims.mapxp1 + x;
 			readMap->SetHeight(index, heightdiff + heightmap[index]);
 		}
 	}

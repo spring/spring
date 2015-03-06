@@ -38,15 +38,15 @@
 #include "System/Util.h"
 
 
-CR_BIND_DERIVED_INTERFACE(CExpGenSpawnable, CWorldObject);
-CR_REG_METADATA(CExpGenSpawnable, );
+CR_BIND_DERIVED_INTERFACE(CExpGenSpawnable, CWorldObject)
+CR_REG_METADATA(CExpGenSpawnable, )
 
-CR_BIND_INTERFACE(IExplosionGenerator);
+CR_BIND_INTERFACE(IExplosionGenerator)
 CR_REG_METADATA(IExplosionGenerator, (
 	CR_MEMBER(generatorID)
-));
+))
 
-CR_BIND_DERIVED(CStdExplosionGenerator, IExplosionGenerator, );
+CR_BIND_DERIVED(CStdExplosionGenerator, IExplosionGenerator, )
 
 CR_BIND(CCustomExplosionGenerator::ProjectileSpawnInfo, )
 CR_REG_METADATA_SUB(CCustomExplosionGenerator, ProjectileSpawnInfo, (
@@ -54,7 +54,7 @@ CR_REG_METADATA_SUB(CCustomExplosionGenerator, ProjectileSpawnInfo, (
 	CR_MEMBER(code),
 	CR_MEMBER(count),
 	CR_MEMBER(flags)
-));
+))
 
 CR_BIND(CCustomExplosionGenerator::GroundFlashInfo, )
 CR_REG_METADATA_SUB(CCustomExplosionGenerator, GroundFlashInfo, (
@@ -65,19 +65,19 @@ CR_REG_METADATA_SUB(CCustomExplosionGenerator, GroundFlashInfo, (
 	CR_MEMBER(ttl),
 	CR_MEMBER(flags),
 	CR_MEMBER(color)
-));
+))
 
 CR_BIND(CCustomExplosionGenerator::ExpGenParams, )
 CR_REG_METADATA_SUB(CCustomExplosionGenerator, ExpGenParams, (
 	CR_MEMBER(projectiles),
 	CR_MEMBER(groundFlash),
 	CR_MEMBER(useDefaultExplosions)
-));
+))
 
-CR_BIND_DERIVED(CCustomExplosionGenerator, CStdExplosionGenerator, );
+CR_BIND_DERIVED(CCustomExplosionGenerator, CStdExplosionGenerator, )
 CR_REG_METADATA(CCustomExplosionGenerator, (
 	CR_MEMBER(expGenParams)
-));
+))
 
 
 CExplosionGeneratorHandler* explGenHandler = NULL;
@@ -101,16 +101,35 @@ unsigned int CCustomExplosionGenerator::GetFlagsFromTable(const LuaTable& table)
 	return flags;
 }
 
-unsigned int CCustomExplosionGenerator::GetFlagsFromHeight(float height, float altitude)
+unsigned int CCustomExplosionGenerator::GetFlagsFromHeight(float height, float groundHeight)
 {
 	unsigned int flags = 0;
 
+	const float waterDist = std::abs(height);
+	const float altitude  = height - groundHeight;
+
 	// note: ranges do not overlap, although code in
 	// *ExplosionGenerator::Explosion assumes they can
-	     if (height >    0.0f && altitude >= 20.0f) { flags |= CCustomExplosionGenerator::SPW_AIR;        }
-	else if (height >    0.0f && altitude >= -1.0f) { flags |= CCustomExplosionGenerator::SPW_GROUND;     }
-	else if (height >   -5.0f && altitude >= -1.0f) { flags |= CCustomExplosionGenerator::SPW_WATER;      }
-	else if (height <=  -5.0f && altitude >= -1.0f) { flags |= CCustomExplosionGenerator::SPW_UNDERWATER; }
+	if (altitude  < -1.0f) {
+		/* underground! don't spawn CEG! */
+	} else
+	if (height   >= 5.0f) { // above water
+		if (altitude >= 20.0f) {
+			flags |= CCustomExplosionGenerator::SPW_AIR;    // air
+		} else {
+			flags |= CCustomExplosionGenerator::SPW_GROUND; // ground
+		}
+	} else
+	if (waterDist < 5.0f) { // water surface
+		if (groundHeight > -2.0f) {
+			flags |= CCustomExplosionGenerator::SPW_GROUND; // shallow water (use ground fx)
+		} else {
+			flags |= CCustomExplosionGenerator::SPW_WATER;  // water (surface)
+		}
+	} else
+	/*if (height <= -5.0f) */ { // under water
+		flags |= CCustomExplosionGenerator::SPW_UNDERWATER;     // underwater
+	}
 
 	return flags;
 }
@@ -355,20 +374,12 @@ bool CExplosionGeneratorHandler::GenExplosion(
 	CUnit* owner,
 	CUnit* hit
 ) {
-	bool ret = false;
-
 	if (expGenID == EXPGEN_ID_INVALID)
-		return ret;
+		return false;
 
 	assert(expGenID < explosionGenerators.size());
 
-	if (expGenID == EXPGEN_ID_STANDARD) {
-		ret = explosionGenerators[EXPGEN_ID_STANDARD]->Explosion(pos, dir, damage, radius, gfxMod, owner, hit);
-	} else {
-		ret = explosionGenerators[expGenID]->Explosion(pos, dir, damage, radius, gfxMod, owner, hit);
-	}
-
-	return ret;
+	return explosionGenerators[expGenID]->Explosion(pos, dir, damage, radius, gfxMod, owner, hit);
 }
 
 
@@ -382,12 +393,12 @@ bool CStdExplosionGenerator::Explosion(
 	CUnit* owner,
 	CUnit* hit
 ) {
-	const float groundHeight = ground->GetHeightReal(pos.x, pos.z);
+	const float groundHeight = CGround::GetHeightReal(pos.x, pos.z);
 	const float altitude = pos.y - groundHeight;
 
 	float3 camVect = camera->GetPos() - pos;
 
-	const unsigned int flags = CCustomExplosionGenerator::GetFlagsFromHeight(pos.y, altitude);
+	const unsigned int flags = CCustomExplosionGenerator::GetFlagsFromHeight(pos.y, groundHeight);
 	const bool airExplosion    = ((flags & CCustomExplosionGenerator::SPW_AIR       ) != 0);
 	const bool groundExplosion = ((flags & CCustomExplosionGenerator::SPW_GROUND    ) != 0);
 	const bool waterExplosion  = ((flags & CCustomExplosionGenerator::SPW_WATER     ) != 0);
@@ -431,7 +442,7 @@ bool CStdExplosionGenerator::Explosion(
 				(-0.1f + gu->RandFloat() * 0.2f)
 			);
 
-			const float h = ground->GetApproximateHeight(npos.x, npos.z);
+			const float h = CGround::GetApproximateHeight(npos.x, npos.z);
 			const float time = (40.0f + smokeDamageSQRT * 15.0f) * (0.8f + gu->RandFloat() * 0.7f);
 
 			float3 npos = pos + gu->RandVector() * smokeDamage;
@@ -584,11 +595,11 @@ bool CStdExplosionGenerator::Explosion(
 
 	if (radius > 40.0f && damage > 12.0f) {
 		CSpherePartProjectile::CreateSphere(
-			pos,
-			std::min(0.7f, damage * 0.02f),
+			owner,
 			5.0f + int(sqrtDmg * 0.7f),
+			std::min(0.7f, damage * 0.02f),
 			(8.0f + damage * 2.5f) / (9.0f + sqrtDmg * 0.7f) * 0.5f,
-			owner
+			pos
 		);
 	}
 
@@ -609,23 +620,25 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 				return;
 			}
 			case OP_STOREI: {
-				boost::uint16_t offset = *(boost::uint16_t*) code;
-				code += 2;
-				*(int*) (instance + offset) = (int) val;
+				boost::uint8_t  size   = *(boost::uint8_t*)  code; code++;
+				boost::uint16_t offset = *(boost::uint16_t*) code; code += 2;
+				switch (size) {
+					case 0: { /*no op*/ } break;
+					case 1: { *(boost::int8_t*)  (instance + offset) = (int) val; } break;
+					case 2: { *(boost::int16_t*) (instance + offset) = (int) val; } break;
+					case 4: { *(boost::int32_t*) (instance + offset) = (int) val; } break;
+					case 8: { *(boost::int64_t*) (instance + offset) = (int) val; } break;
+				}
 				val = 0.0f;
 				break;
 			}
 			case OP_STOREF: {
-				boost::uint16_t offset = *(boost::uint16_t*) code;
-				code += 2;
-				*(float*) (instance + offset) = val;
-				val = 0.0f;
-				break;
-			}
-			case OP_STOREC: {
-				boost::uint16_t offset = *(boost::uint16_t*) code;
-				code += 2;
-				*(unsigned char*) (instance + offset) = (int) val;
+				boost::uint8_t  size   = *(boost::uint8_t*)  code; code++;
+				boost::uint16_t offset = *(boost::uint16_t*) code; code += 2;
+				switch (size) {
+					case 4: { *(float*)  (instance + offset) = val; } break;
+					case 8: { *(double*) (instance + offset) = val; } break;
+				}
 				val = 0.0f;
 				break;
 			}
@@ -737,18 +750,21 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 	}
 	else if (dynamic_cast<creg::BasicType*>(type.get())) {
 		const creg::BasicType* basicType = (creg::BasicType*) type.get();
-		const bool legalType =
-			(basicType->id == creg::crInt  ) ||
-			(basicType->id == creg::crFloat) ||
-			(basicType->id == creg::crUChar) ||
-			(basicType->id == creg::crBool );
+		const boost::uint8_t basicTypeSize = basicType->GetSize();
 
-		if (!legalType) {
-			throw content_error("[CCEG::ParseExplosionCode] projectile type-properties other than int, float, uchar, or bool are not supported (" + script + ")");
+		// check sizeof(member)
+		const std::set<boost::uint8_t> allowedSizeInt = {1,2,4 /*,0,8*/};
+		const std::set<boost::uint8_t> allowedSizeFlt = {4 /*,8*/};
+		if (basicType->id == creg::crFloat) {
+			if (allowedSizeFlt.find(basicTypeSize) == allowedSizeFlt.end())
+				throw content_error("[CCEG::ParseExplosionCode] incompatible float size \"" + IntToString(basicTypeSize) + "\" (" + script + ")");
+		} else {
+			if (allowedSizeInt.find(basicTypeSize) == allowedSizeInt.end())
+				throw content_error("[CCEG::ParseExplosionCode] incompatible integer size \"" + IntToString(basicTypeSize) + "\" (" + script + ")");
 		}
 
+		// parse the code
 		int p = 0;
-
 		while (p < script.length()) {
 			char opcode = OP_END;
 			char c = script[p++];
@@ -802,14 +818,10 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			}
 		}
 
-		switch (basicType->id) {
-			case creg::crInt:   code.push_back(OP_STOREI); break;
-			case creg::crBool:  code.push_back(OP_STOREI); break;
-			case creg::crFloat: code.push_back(OP_STOREF); break;
-			case creg::crUChar: code.push_back(OP_STOREC); break;
-			default: break;
-		}
-
+		// store the final value
+		code.push_back((basicType->id == creg::crFloat) ? OP_STOREF : OP_STOREI);
+		code.push_back(basicTypeSize);
+		assert(basicTypeSize == code.back());
 		boost::uint16_t ofs = offset;
 		code.append((char*)&ofs, (char*)&ofs + 2);
 	}
@@ -996,10 +1008,9 @@ bool CCustomExplosionGenerator::Explosion(
 	CUnit* owner,
 	CUnit* hit
 ) {
-	const float groundHeight = ground->GetHeightReal(pos.x, pos.z);
-	const float altitude = pos.y - groundHeight;
+	const float groundHeight = CGround::GetHeightReal(pos.x, pos.z);
 
-	unsigned int flags = GetFlagsFromHeight(pos.y, altitude);
+	unsigned int flags = GetFlagsFromHeight(pos.y, groundHeight);
 	const bool groundExplosion = ((flags & CCustomExplosionGenerator::SPW_GROUND) != 0);
 
 	if (hit) flags |= SPW_UNIT;

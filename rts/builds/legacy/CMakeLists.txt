@@ -12,14 +12,15 @@ SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 FIND_PACKAGE(SDL2 REQUIRED)
 SET(engineIncludes ${SDL2_INCLUDE_DIR})
 SET(engineLibraries ${SDL2_LIBRARY})
+if("${SDL2_VERSION_STRING}" VERSION_LESS "2")
+	message(FATAL_ERROR "Found SDL v${SDL2_VERSION_STRING} while 2 is required!")
+endif()
 
 
 FIND_PACKAGE_STATIC(OpenGL REQUIRED)
 FIND_PACKAGE_STATIC(GLEW 1.5.1 REQUIRED)
 LIST(APPEND engineLibraries ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${GLEW_LIBRARIES})
-if   (MSVC)
-	LIST(APPEND engineIncludes ${GLEW_INCLUDE_DIR})
-endif(MSVC)
+LIST(APPEND engineIncludes ${GLEW_INCLUDE_DIR})
 
 FIND_PACKAGE_STATIC(FontConfig)
 IF    (FONTCONFIG_FOUND)
@@ -72,6 +73,8 @@ LIST(APPEND engineLibraries engineSystemNet)
 LIST(APPEND engineLibraries ${engineCommonLibraries})
 LIST(APPEND engineLibraries engineaGui)
 LIST(APPEND engineLibraries ${Boost_THREAD_LIBRARY})
+LIST(APPEND engineLibraries ${SPRING_SIM_LIBRARIES})
+LIST(APPEND engineLibraries engineSim)
 
 ### Assemble external incude dirs
 LIST(APPEND engineIncludes ${OPENAL_INCLUDE_DIR})

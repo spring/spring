@@ -3,12 +3,10 @@
 #ifndef _ADV_TREE_DRAWER_H_
 #define _ADV_TREE_DRAWER_H_
 
-#include <map>
 #include <list>
 #include "ITreeDrawer.h"
 
 class CVertexArray;
-class CGrassDrawer;
 
 namespace Shader {
 	struct IProgramObject;
@@ -27,10 +25,6 @@ public:
 	void AddTree(int treeID, int treeType, const float3& pos, float size);
 	void DeleteTree(int treeID, const float3& pos);
 	void AddFallingTree(int treeID, int treeType, const float3& pos, const float3& dir);
-	void DrawGrass();
-	void DrawShadowGrass();
-	void AddGrass(const float3& pos);
-	void RemoveGrass(int x, int z);
 	void DrawShadowPass();
 
 	static void DrawTreeVertexA(CVertexArray* va, float3& ftpos, float dx, float dy);
@@ -73,8 +67,6 @@ private:
 
 	std::vector<Shader::IProgramObject*> treeShaders;
 	std::list<FallingTree> fallingTrees;
-
-	CGrassDrawer* grassDrawer;
 };
 
 #endif // _ADV_TREE_DRAWER_H_

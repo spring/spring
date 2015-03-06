@@ -11,11 +11,11 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 
-CR_BIND_DERIVED(CWreckProjectile, CProjectile, (NULL, ZeroVector, ZeroVector, 0.0f));
+CR_BIND_DERIVED(CWreckProjectile, CProjectile, (NULL, ZeroVector, ZeroVector, 0.0f))
 
 CR_REG_METADATA(CWreckProjectile,
 	CR_RESERVED(8)
-);
+)
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -44,7 +44,7 @@ void CWreckProjectile::Update()
 		CSmokeProjectile* hp = new CSmokeProjectile(owner(), pos, ZeroVector, 50, 4, 0.3f, 0.5f);
 		hp->size += 0.1f;
 	}
-	if (pos.y + 0.3f < ground->GetApproximateHeight(pos.x, pos.z)) {
+	if (pos.y + 0.3f < CGround::GetApproximateHeight(pos.x, pos.z)) {
 		deleteMe = true;
 	}
 }
@@ -59,10 +59,10 @@ void CWreckProjectile::Draw()
 	col[3] = 200;
 
 	#define wt projectileDrawer->wrecktex
-	va->AddVertexTC(drawPos - camera->right * drawRadius - camera->up * drawRadius, wt->xstart, wt->ystart, col);
-	va->AddVertexTC(drawPos + camera->right * drawRadius - camera->up * drawRadius, wt->xend,   wt->ystart, col);
-	va->AddVertexTC(drawPos + camera->right * drawRadius + camera->up * drawRadius, wt->xend,   wt->yend,   col);
-	va->AddVertexTC(drawPos - camera->right * drawRadius + camera->up * drawRadius, wt->xstart, wt->yend,   col);
+	va->AddVertexTC(drawPos - camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, wt->xstart, wt->ystart, col);
+	va->AddVertexTC(drawPos + camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, wt->xend,   wt->ystart, col);
+	va->AddVertexTC(drawPos + camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, wt->xend,   wt->yend,   col);
+	va->AddVertexTC(drawPos - camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, wt->xstart, wt->yend,   col);
 	#undef wt
 }
 

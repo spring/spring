@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef _AIR_MOVE_TYPE_H_
-#define _AIR_MOVE_TYPE_H_
+#ifndef STRAFE_AIR_MOVE_TYPE_H_
+#define STRAFE_AIR_MOVE_TYPE_H_
 
 #include "AAirMoveType.h"
 #include <vector>
@@ -11,23 +11,35 @@
  */
 class CStrafeAirMoveType: public AAirMoveType
 {
-	CR_DECLARE(CStrafeAirMoveType);
-	CR_DECLARE_SUB(DrawLine);
+	CR_DECLARE(CStrafeAirMoveType)
+	CR_DECLARE_SUB(DrawLine)
 
 public:
+	enum {
+		MANEUVER_FLY_STRAIGHT = 0,
+		MANEUVER_IMMELMAN     = 1,
+		MANEUVER_IMMELMAN_INV = 2,
+	};
+
 	CStrafeAirMoveType(CUnit* owner);
 
 	bool Update();
 	void SlowUpdate();
 
+	bool SetMemberValue(unsigned int memberHash, void* memberValue);
+
 	void UpdateManeuver();
-	void UpdateFighterAttack();
 	void UpdateAttack();
-	void UpdateFlying(float wantedHeight, float engine);
+	bool UpdateFlying(float wantedHeight, float engine);
 	void UpdateLanded();
 	void UpdateLanding();
-	void UpdateAirPhysics(float rudder, float aileron, float elevator,
-			float engine, const float3& engineVector);
+	void UpdateAirPhysics(
+		float rudder,
+		float aileron,
+		float elevator,
+		float engine,
+		const float3& engineVector
+	);
 	void SetState(AircraftState state);
 	void UpdateTakeOff(float wantedHeight);
 
@@ -42,7 +54,7 @@ public:
 
 	void Takeoff();
 
-	int maneuver;
+	int maneuverState;
 	int maneuverSubState;
 
 	bool loopbackAttack;
@@ -74,11 +86,6 @@ public:
 	float lastRudderPos;
 	float lastElevatorPos;
 	float lastAileronPos;
-
-	float inefficientAttackTime;
-
-	/// used by fighters to turn away when closing in on ground targets
-	float3 exitVector;
 
 private:
 	bool HandleCollisions(bool checkCollisions);

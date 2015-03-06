@@ -12,11 +12,11 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 
-CR_BIND_DERIVED_INTERFACE(AAirMoveType, AMoveType);
+CR_BIND_DERIVED_INTERFACE(AAirMoveType, AMoveType)
 
 CR_REG_METADATA(AAirMoveType, (
-	CR_ENUM_MEMBER(aircraftState),
-	CR_ENUM_MEMBER(padStatus),
+	CR_MEMBER(aircraftState),
+	CR_MEMBER(padStatus),
 
 	CR_MEMBER(oldGoalPos),
 	CR_MEMBER(reservedLandingPos),
@@ -37,7 +37,7 @@ CR_REG_METADATA(AAirMoveType, (
 
 	CR_MEMBER(lastColWarningType),
 	CR_MEMBER(lastFuelUpdateFrame)
-));
+))
 
 AAirMoveType::AAirMoveType(CUnit* unit):
 	AMoveType(unit),
@@ -182,8 +182,8 @@ void AAirMoveType::UpdateLanded()
 	// in mid-air or sink below it
 	// let gravity do the job instead of teleporting
 	const float minHeight = owner->unitDef->canSubmerge?
-		ground->GetHeightReal(owner->pos.x, owner->pos.z):
-		ground->GetHeightAboveWater(owner->pos.x, owner->pos.z);
+		CGround::GetHeightReal(owner->pos.x, owner->pos.z):
+		CGround::GetHeightAboveWater(owner->pos.x, owner->pos.z);
 	const float curHeight = owner->pos.y;
 
 	if (curHeight > minHeight) {
@@ -326,7 +326,7 @@ bool AAirMoveType::CanLandOnPad(const float3& padPos) const {
 
 bool AAirMoveType::HaveLandedOnPad(const float3& padPos) {
 	const AircraftState landingState = GetLandingState();
-	const float landingPadHeight = ground->GetHeightAboveWater(padPos.x, padPos.z);
+	const float landingPadHeight = CGround::GetHeightAboveWater(padPos.x, padPos.z);
 
 	reservedLandingPos = padPos;
 	wantedHeight = padPos.y - landingPadHeight;

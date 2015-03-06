@@ -78,13 +78,13 @@ void CAICheats::SetMyIncomeMultiplier(float incomeMultiplier)
 void CAICheats::GiveMeMetal(float amount)
 {
 	if (!OnlyPassiveCheats())
-		teamHandler->Team(ai->GetTeamId())->metal += amount;
+		teamHandler->Team(ai->GetTeamId())->res.metal += amount;
 }
 
 void CAICheats::GiveMeEnergy(float amount)
 {
 	if (!OnlyPassiveCheats())
-		teamHandler->Team(ai->GetTeamId())->energy += amount;
+		teamHandler->Team(ai->GetTeamId())->res.energy += amount;
 }
 
 int CAICheats::CreateUnit(const char* name, const float3& pos)
@@ -336,10 +336,10 @@ bool CAICheats::GetUnitResourceInfo(int unitId, UnitResourceInfo* unitResInf) co
 
 	const CUnit* unit = GetUnit(unitId);
 	if (unit) {
-		unitResInf->energyMake = unit->energyMake;
-		unitResInf->energyUse  = unit->energyUse;
-		unitResInf->metalMake  = unit->metalMake;
-		unitResInf->metalUse   = unit->metalUse;
+		unitResInf->energyMake = unit->resourcesMake.energy;
+		unitResInf->energyUse  = unit->resourcesUse.energy;
+		unitResInf->metalMake  = unit->resourcesMake.metal;
+		unitResInf->metalUse   = unit->resourcesUse.metal;
 		fetchOk = true;
 	}
 

@@ -74,6 +74,12 @@ const std::string& BasicTimer::GetName() const
 }
 
 
+spring_time BasicTimer::GetDuration() const
+{
+	return spring_difftime(spring_gettime(), starttime);
+}
+
+
 ScopedTimer::ScopedTimer(const std::string& name, bool autoShow)
 	: BasicTimer(name)
 	, autoShowGraph(autoShow)
@@ -104,12 +110,12 @@ ScopedTimer::~ScopedTimer()
 {
 	int& ref = it->second;
 	if (--ref == 0)
-		profiler.AddTime(GetName(), spring_difftime(spring_gettime(), starttime), autoShowGraph);
+		profiler.AddTime(GetName(), GetDuration(), autoShowGraph);
 }
 
 ScopedOnceTimer::~ScopedOnceTimer()
 {
-	LOG("%s: %lli ms", GetName().c_str(), spring_diffmsecs(spring_gettime(), starttime));
+	LOG("%s: %i ms", GetName().c_str(), int(GetDuration().toMilliSecsi()));
 }
 
 
@@ -130,7 +136,7 @@ ScopedMtTimer::ScopedMtTimer(const char* name, bool autoShow)
 
 ScopedMtTimer::~ScopedMtTimer()
 {
-	profiler.AddTime(GetName(), spring_difftime(spring_gettime(), starttime), autoShowGraph);
+	profiler.AddTime(GetName(), GetDuration(), autoShowGraph);
 #ifdef THREADPOOL
 	auto& list = profiler.profileCore[ThreadPool::GetThreadNum()];
 	list.emplace_back(starttime, spring_gettime());

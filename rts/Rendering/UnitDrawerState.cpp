@@ -231,7 +231,7 @@ bool UnitDrawerStateARB::Init(const CUnitDrawer* ud) {
 		return false;
 	}
 	if (!configHandler->GetBool("AdvUnitShading")) {
-		// not allowed to do (ARB) shader-based map rendering
+		// not allowed to do (ARB) shader-based model rendering
 		return false;
 	}
 
@@ -333,7 +333,7 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 		return false;
 	}
 	if (!configHandler->GetBool("AdvUnitShading")) {
-		// not allowed to do (GLSL) shader-based map rendering
+		// not allowed to do (GLSL) shader-based model rendering
 		return false;
 	}
 
@@ -439,12 +439,11 @@ void UnitDrawerStateGLSL::DisableShaders(const CUnitDrawer*) { modelShaders[MODE
 
 void UnitDrawerStateGLSL::UpdateCurrentShader(const CUnitDrawer* ud, const ISkyLight* skyLight) const {
 	const float3 modUnitSunColor = ud->unitSunColor * skyLight->GetLightIntensity();
-	const float3 sunDir = skyLight->GetLightDir();
 
 	// note: the NOSHADOW shaders do not care about shadow-density
 	for (unsigned int n = MODEL_SHADER_NOSHADOW_STANDARD; n <= MODEL_SHADER_SHADOWED_DEFERRED; n++) {
 		modelShaders[n]->Enable();
-		modelShaders[n]->SetUniform3fv(5, &sunDir.x);
+		modelShaders[n]->SetUniform3fv(5, &skyLight->GetLightDir().x);
 		modelShaders[n]->SetUniform1f(12, skyLight->GetUnitShadowDensity());
 		modelShaders[n]->SetUniform3fv(11, &modUnitSunColor.x);
 		modelShaders[n]->Disable();

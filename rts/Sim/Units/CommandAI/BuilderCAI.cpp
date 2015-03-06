@@ -22,7 +22,6 @@
 #include "Sim/Units/UnitSet.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/UnitTypes/Builder.h"
 #include "Sim/Units/UnitTypes/Building.h"
 #include "Sim/Units/UnitTypes/Factory.h"
@@ -35,7 +34,7 @@
 #include "System/creg/STL_Map.h"
 
 
-CR_BIND_DERIVED(CBuilderCAI ,CMobileCAI , );
+CR_BIND_DERIVED(CBuilderCAI ,CMobileCAI , )
 
 CR_REG_METADATA(CBuilderCAI , (
 	CR_MEMBER(buildOptions),
@@ -54,7 +53,7 @@ CR_REG_METADATA(CBuilderCAI , (
 	CR_MEMBER(lastPC2),
 	CR_MEMBER(lastPC3),
 	CR_POSTLOAD(PostLoad)
-));
+))
 
 // not adding to members, should repopulate itself
 CUnitSet CBuilderCAI::reclaimers;
@@ -75,7 +74,6 @@ CBuilderCAI::CBuilderCAI():
 	lastPC3(-1),
 	range3D(true)
 {}
-
 
 CBuilderCAI::CBuilderCAI(CUnit* owner):
 	CMobileCAI(owner),
@@ -200,17 +198,25 @@ CBuilderCAI::~CBuilderCAI()
 	}
 }
 
+void CBuilderCAI::InitStatic()
+{
+	reclaimers.clear();
+	featureReclaimers.clear();
+	resurrecters.clear();
+}
+
 void CBuilderCAI::PostLoad()
 {
-	if (!commandQue.empty()) {
-		ownerBuilder = static_cast<CBuilder*>(owner);
+	if (commandQue.empty())
+		return;
 
-		Command& c = commandQue.front();
+	ownerBuilder = static_cast<CBuilder*>(owner);
 
-		if (buildOptions.find(c.GetID()) != buildOptions.end()) {
-			build.Parse(c);
-			build.pos = CGameHelper::Pos2BuildPos(build, true);
-		}
+	const Command& c = commandQue.front();
+
+	if (buildOptions.find(c.GetID()) != buildOptions.end()) {
+		build.Parse(c);
+		build.pos = CGameHelper::Pos2BuildPos(build, true);
 	}
 }
 
@@ -529,9 +535,7 @@ void CBuilderCAI::ReclaimFeature(CFeature* f)
 
 void CBuilderCAI::FinishCommand()
 {
-	if (commandQue.front().timeOut == INT_MAX) {
-		buildRetries = 0;
-	}
+	buildRetries = 0;
 	CMobileCAI::FinishCommand();
 }
 
@@ -612,7 +616,7 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 
 		build.pos = CGameHelper::Pos2BuildPos(build, true);
 
-		// keep moving until until 3D distance to buildPos is LEQ our buildDistance
+		// keep moving until 3D distance to buildPos is LEQ our buildDistance
 		if (MoveInBuildRange(build.pos, 0.0f, true)) {
 			if (IsBuildPosBlocked(build)) {
 				StopMove();
@@ -1267,7 +1271,7 @@ void CBuilderCAI::ExecuteRestore(Command& c)
 			FinishCommand();
 		}
 	} else if (owner->unitDef->canRestore) {
-		const float3 pos(c.params[0], ground->GetHeightReal(c.params[0], c.params[2]), c.params[2]);
+		const float3 pos(c.params[0], CGround::GetHeightReal(c.params[0], c.params[2]), c.params[2]);
 		const float radius = std::min(c.params[3], 200.0f);
 
 		if (MoveInBuildRange(pos, radius * 0.7f)) {
@@ -1521,8 +1525,8 @@ int CBuilderCAI::FindReclaimTarget(const float3& pos, float radius, unsigned cha
 				const float dist = f3SqDist(f->pos, owner->pos);
 				if ((dist < bestDist || (recSpecial && !metal && f->def->metal > 0.0)) &&
 					(noResCheck ||
-					((f->def->metal  > 0.0f) && (team->metal  < team->metalStorage)) ||
-					((f->def->energy > 0.0f) && (team->energy < team->energyStorage)))
+					((f->def->metal  > 0.0f) && (team->res.metal  < team->resStorage.metal)) ||
+					((f->def->energy > 0.0f) && (team->res.energy < team->resStorage.energy)))
 				) {
 					if (!f->IsInLosForAllyTeam(owner->allyteam)) {
 						continue;

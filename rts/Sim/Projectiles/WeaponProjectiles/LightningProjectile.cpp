@@ -13,14 +13,14 @@
 	#include "System/Sync/SyncTracer.h"
 #endif
 
-CR_BIND_DERIVED(CLightningProjectile, CWeaponProjectile, (ProjectileParams()));
+CR_BIND_DERIVED(CLightningProjectile, CWeaponProjectile, (ProjectileParams()))
 
 CR_REG_METADATA(CLightningProjectile,(
 	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(color),
 	CR_MEMBER(displacements),
 	CR_MEMBER(displacements2)
-));
+))
 
 CLightningProjectile::CLightningProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 {

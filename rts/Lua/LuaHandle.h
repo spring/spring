@@ -67,7 +67,6 @@ class CLuaHandle : public CEventClient
 
 	#undef PERMISSIONS_FUNCS
 
-		bool GetSynced() const { return GetHandleSynced(L); }
 		static bool GetHandleSynced(const lua_State* L) { return GetLuaContextData(L)->synced; }
 
 		bool GetUserMode() const { return userMode; }
@@ -227,8 +226,10 @@ class CLuaHandle : public CEventClient
 		void DrawScreenEffects();
 		void DrawScreen();
 		void DrawInMiniMap();
+		void DrawInMiniMapBackground();
 
 		void GameProgress(int frameNum);
+		//FIXME void MetalMapChanged(const int x, const int z);
 
 		void CollectGarbage();
 
@@ -242,7 +243,7 @@ class CLuaHandle : public CEventClient
 		int XCall(lua_State* srcState, const string& funcName);
 
 	protected:
-		CLuaHandle(const string& name, int order, bool userMode);
+		CLuaHandle(const string& name, int order, bool userMode, bool synced);
 		virtual ~CLuaHandle();
 
 		void KillLua();
@@ -273,6 +274,8 @@ class CLuaHandle : public CEventClient
 		lua_State* L;
 		luaContextData D;
 
+		lua_State* L_GC;
+
 		bool killMe;
 		string killMsg;
 
@@ -296,6 +299,7 @@ class CLuaHandle : public CEventClient
 		static int CallOutGetRegistry(lua_State* L);
 		static int CallOutGetCallInList(lua_State* L);
 		static int CallOutUpdateCallIn(lua_State* L);
+		static int CallOutIsEngineMinVersion(lua_State* L);
 
 	public: // static
 		static inline LuaShaders& GetActiveShaders(lua_State* L)  { return GetLuaContextData(L)->shaders; }

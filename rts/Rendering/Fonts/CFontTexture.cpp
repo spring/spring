@@ -15,6 +15,7 @@
 	#include FT_FREETYPE_H
 	#ifdef USE_FONTCONFIG
 		#include <fontconfig/fontconfig.h>
+		#include <fontconfig/fcfreetype.h>
 	#endif
 #endif // HEADLESS
 
@@ -71,6 +72,7 @@ struct FontFace {
 	FT_Face face;
 	std::shared_ptr<FT_Byte*> memory;
 };
+
 static std::unordered_set<CFontTexture*> allFonts;
 static std::unordered_map<std::string, std::weak_ptr<FontFace>> fontCache;
 static std::unordered_map<std::string, std::weak_ptr<FT_Byte*>> fontMemCache;
@@ -106,7 +108,7 @@ public:
 	static FT_Library& GetLibrary() {
 		// singleton
 #ifndef WIN32
-		std::call_once(flag, [](){
+		std::call_once(flag, []() {
 			singleton.reset(new FtLibraryHandler());
 		});
 #else
@@ -158,9 +160,9 @@ static inline uint32_t GetKerningHash(char32_t lchar, char32_t rchar)
 }
 
 
+#ifndef HEADLESS
 static std::shared_ptr<FontFace> GetFontFace(const std::string& fontfile, const int size)
 {
-#ifndef HEADLESS
 	std::lock_guard<boost::recursive_mutex> lk(m);
 
 	//TODO add support to load fonts by name (needs fontconfig)
@@ -225,10 +227,9 @@ static std::shared_ptr<FontFace> GetFontFace(const std::string& fontfile, const 
 
 	fontCache[fontfile + IntToString(size)] = shFace;
 	return shFace;
-#else
-	return NULL;
-#endif
 }
+#endif
+
 
 
 static std::shared_ptr<FontFace> GetFontForCharacters(std::list<char32_t>& characters, const FT_Face origFace, const int origSize)
@@ -238,45 +239,67 @@ static std::shared_ptr<FontFace> GetFontForCharacters(std::list<char32_t>& chara
 		return nullptr;
 	}
 
+	// create list of wanted characters
 	FcCharSet* cset = FcCharSetCreate();
 	for (auto c: characters) {
 		FcCharSetAddChar(cset, c);
 	}
+
+	// create properties of the wanted font
 	FcPattern* pattern = FcPatternCreate();
+	{
+		FcValue v;
+		v.type = FcTypeBool;
+		v.u.b = FcTrue;
+		FcPatternAddWeak(pattern, FC_ANTIALIAS, v, FcFalse);
 
-	//const FcChar8* ftname = reinterpret_cast<const FcChar8*>("foo.otf");
-	//FcBlanks* blanks = FcBlanksCreate();
-	//FcPattern* pattern = FcFreeTypeQueryFace(origFace, ftname, 0, blanks);
+		FcPatternAddCharSet(pattern, FC_CHARSET, cset);
+		FcPatternAddBool(pattern, FC_SCALABLE, FcTrue);
 
-	FcValue v;
-	v.type = FcTypeBool;
-	v.u.b = FcTrue;
-	FcPatternAddWeak(pattern, FC_ANTIALIAS, v, FcFalse);
+		int weight = FC_WEIGHT_NORMAL;
+		int slant  = FC_SLANT_ROMAN;
+		{
+			const FcChar8* ftname = reinterpret_cast<const FcChar8*>("not used");
+			FcBlanks* blanks = FcBlanksCreate();
+			FcPattern* origPattern = FcFreeTypeQueryFace(origFace, ftname, 0, blanks);
+			FcBlanksDestroy(blanks);
+			if (origPattern) {
+				FcPatternGetInteger(origPattern, FC_WEIGHT, 0, &weight);
+				FcPatternGetInteger(origPattern, FC_SLANT,  0, &slant);
+				FcPatternDestroy(origPattern);
+			}
+		}
+		FcPatternAddInteger(pattern, FC_WEIGHT, weight);
+		FcPatternAddInteger(pattern, FC_SLANT, slant);
+	}
 
-	FcPatternAddCharSet(pattern, FC_CHARSET, cset);
-	FcPatternAddBool(pattern, FC_SCALABLE, FcTrue);
-	//FcPatternAddInteger(pattern, FC_WEIGHT, (false)? FC_WEIGHT_BOLD : FC_WEIGHT_NORMAL);
-	//FcPatternAddInteger(pattern, FC_SLANT, (false)? FC_SLANT_ITALIC : FC_SLANT_ROMAN);
+	// search fonts that fit our request
+	FcResult res;
+	FcFontSet* fs = FcFontSort(nullptr, pattern, FcFalse, nullptr, &res);
 
-	FcConfigSubstitute(0, pattern, FcMatchPattern);
-	FcDefaultSubstitute(pattern);
-
-	FcResult result;
-	FcPattern* current = FcFontMatch(nullptr, pattern, &result);
+	// dtors
+	auto del = [&](FcFontSet* fs){ FcFontSetDestroy(fs); };
+	std::unique_ptr<FcFontSet, decltype(del)> fs_(fs, del);
 	FcPatternDestroy(pattern);
 	FcCharSetDestroy(cset);
+	if (!fs) return nullptr;
+	if (res != FcResultMatch) return nullptr;
 
-	if (result != FcResultMatch)
-		return nullptr;
+	// iterate returned font list
+	for (int i = 0; i < fs->nfont; ++i) {
+		FcPattern* font = fs->fonts[i];
+		FcChar8* cFilename = nullptr;
+		FcResult r = FcPatternGetString(font, FC_FILE, 0, &cFilename);
+		if (r != FcResultMatch || cFilename == nullptr) continue;
 
-	FcChar8* cFilename = nullptr;
-	FcResult r = FcPatternGetString(current, FC_FILE, 0, &cFilename);
-	const std::string filename = (cFilename != nullptr) ? reinterpret_cast<char*>(cFilename) : "";
-	FcPatternDestroy(current);
-	if (r != FcResultMatch)
-		return nullptr;
-
-	return GetFontFace(filename, origSize);
+		const std::string filename = reinterpret_cast<char*>(cFilename);
+		try {
+			return GetFontFace(filename, origSize);
+		} catch(const content_error& ex) {
+			LOG_L(L_DEBUG, "%s: %s", filename.c_str(), ex.what());
+		}
+	}
+	return nullptr;
 #else
 	return nullptr;
 #endif
@@ -434,30 +457,27 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 
 	// load glyphs from different fonts (using fontconfig)
 	std::shared_ptr<FontFace> f = shFace;
-	do {
-		for (auto it = map.begin(); it != map.end(); ++it) {
+	std::set<std::shared_ptr<FontFace>> alreadyCheckedFonts;
 #ifndef HEADLESS
+	do {
+		alreadyCheckedFonts.insert(f);
+		for (auto it = map.begin(); it != map.end();) {
 			FT_UInt index = FT_Get_Char_Index(*f, *it);
-#else
-			unsigned index = 0;
-#endif
+
 			if (index != 0) {
 				LoadGlyph(f, *it, index);
 				it = map.erase(it);
+			} else {
+				++it;
 			}
 		}
 		f = GetFontForCharacters(map, *f, fontSize);
 		usedFallbackFonts.insert(f);
-	} while (!map.empty() && f);
-
+	} while (!map.empty() && f && (alreadyCheckedFonts.find(f) == alreadyCheckedFonts.end()));
+#endif
 	// load fail glyph for all remaining ones (they will all share the same fail glyph)
 	for (auto c: map) {
-#ifndef HEADLESS
-		FT_UInt index = FT_Get_Char_Index(*shFace, c);
-#else
-		unsigned index = 0;
-#endif
-		LoadGlyph(shFace, c, index);
+		LoadGlyph(shFace, c, 0);
 	}
 
 

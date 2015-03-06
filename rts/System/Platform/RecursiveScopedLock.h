@@ -35,6 +35,6 @@ public:
 	}
 };
 
-};
+}
 
 #endif // RECURSIVE_SCOPED_LOCK_H

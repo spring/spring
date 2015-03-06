@@ -19,7 +19,6 @@
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
 #include "Lua/LuaUI.h"
-#include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/MetalMap.h"
@@ -28,6 +27,7 @@
 #include "Rendering/IconHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/glExtra.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Sim/Features/Feature.h"
@@ -48,7 +48,7 @@
 #include "System/Util.h"
 #include "System/Input/KeyInput.h"
 #include "System/Sound/ISound.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
 
@@ -59,7 +59,7 @@
 #include <SDL_keycode.h>
 #include <SDL_mouse.h>
 
-CONFIG(bool, MiniMapMarker).defaultValue(true);
+CONFIG(bool, MiniMapMarker).defaultValue(true).headlessValue(false);
 CONFIG(bool, InvertQueueKey).defaultValue(false);
 
 //////////////////////////////////////////////////////////////////////
@@ -116,10 +116,8 @@ CGuiHandler::~CGuiHandler()
 
 	delete[] icons;
 
-	std::map<std::string, unsigned int>::iterator it;
-	for (it = textureMap.begin(); it != textureMap.end(); ++it) {
-		const GLuint texID = it->second;
-		glDeleteTextures (1, &texID);
+	for (auto& p: textureMap) {
+		glDeleteTextures(1, &p.second);
 	}
 }
 
@@ -927,17 +925,15 @@ void CGuiHandler::ConvertCommands(std::vector<CommandDescription>& cmds)
 
 void CGuiHandler::SetShowingMetal(bool show)
 {
-	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-
 	if (!show) {
 		if (showingMetal) {
-			gd->DisableExtraTexture();
+			infoTextureHandler->DisableCurrentMode();
 			showingMetal = false;
 		}
 	} else {
 		if (autoShowMetal) {
-			if (gd->GetDrawMode() != CBaseGroundDrawer::drawMetal) {
-				gd->SetMetalTexture();
+			if (infoTextureHandler->GetMode() != "metal") {
+				infoTextureHandler->SetMode("metal");
 				showingMetal = true;
 			}
 		}
@@ -1071,19 +1067,27 @@ bool CGuiHandler::TryTarget(const CommandDescription& cmdDesc) const
 	if (dist <= 0.0f)
 		return false;
 
-	for (CUnitSet::const_iterator it = selectedUnitsHandler.selectedUnits.begin(); it != selectedUnitsHandler.selectedUnits.end(); ++it) {
-		const CUnit* u = *it;
+	for (const CUnit* u: selectedUnitsHandler.selectedUnits) {
+		// mobile kamikaze can always move into range
+		//FIXME do a range check in case of immobile kamikaze (-> mines)
+		if (u->unitDef->canKamikaze && !u->immobile)
+			return true;
 
-		// assume mobile units can get within weapon range of groundPos
-		// (mobile *kamikaze* units can attack by blowing themselves up)
-		if (!u->immobile)
-			return (u->unitDef->canKamikaze || !u->weapons.empty());
+		for (const CWeapon* w: u->weapons) {
+			w->AdjustTargetPosToWater(modGroundPos = groundPos, targetUnit == NULL);
 
-		for (unsigned int n = 0; n < u->weapons.size(); n++) {
-			u->weapons[n]->AdjustTargetPosToWater(modGroundPos = groundPos, targetUnit == NULL);
-
-			if (u->weapons[n]->TryTarget(modGroundPos, false, targetUnit)) {
-				return true;
+			if (u->immobile) {
+				// immobile unit
+				// check range and weapon target properties
+				if (w->TryTarget(modGroundPos, false, targetUnit)) {
+					return true;
+				}
+			} else {
+				// mobile units can always move into range
+				// only check if we got a weapon that can shot the target (i.e. anti-air/anti-sub)
+				if (w->TestTarget(modGroundPos, false, targetUnit)) {
+					return true;
+				}
 			}
 		}
 	}
@@ -1194,7 +1198,7 @@ void CGuiHandler::MouseRelease(int x, int y, int button, const float3& cameraPos
 	Command c = GetCommand(x, y, button, false, cameraPos, mouseDir);
 
 	if (c.GetID() == CMD_FAILED) { // indicates we should not finish the current command
-		Channels::UserInterface.PlaySample(failedSound, 5);
+		Channels::UserInterface->PlaySample(failedSound, 5);
 		return;
 	}
 
@@ -1465,14 +1469,10 @@ void CGuiHandler::RunCustomCommands(const std::vector<std::string>& cmds, bool r
 				const bool tmpMeta  = !!KeyInput::GetKeyModState(KMOD_GUI);
 				const bool tmpShift = !!KeyInput::GetKeyModState(KMOD_SHIFT);
 
-				if (outMods.alt   == Required)  { KeyInput::SetKeyModState(KMOD_ALT,   1); }
-				if (outMods.alt   == Forbidden) { KeyInput::SetKeyModState(KMOD_ALT,   0); }
-				if (outMods.ctrl  == Required)  { KeyInput::SetKeyModState(KMOD_CTRL,  1); }
-				if (outMods.ctrl  == Forbidden) { KeyInput::SetKeyModState(KMOD_CTRL,  0); }
-				if (outMods.meta  == Required)  { KeyInput::SetKeyModState(KMOD_GUI,   1); }
-				if (outMods.meta  == Forbidden) { KeyInput::SetKeyModState(KMOD_GUI,   0); }
-				if (outMods.shift == Required)  { KeyInput::SetKeyModState(KMOD_SHIFT, 1); }
-				if (outMods.shift == Forbidden) { KeyInput::SetKeyModState(KMOD_SHIFT, 0); }
+				if (outMods.alt   != DontCare)  { KeyInput::SetKeyModState(KMOD_ALT,   int(outMods.alt   == Required)); }
+				if (outMods.ctrl  != DontCare)  { KeyInput::SetKeyModState(KMOD_CTRL,  int(outMods.ctrl  == Required)); }
+				if (outMods.meta  != DontCare)  { KeyInput::SetKeyModState(KMOD_GUI,   int(outMods.meta  == Required)); }
+				if (outMods.shift != DontCare)  { KeyInput::SetKeyModState(KMOD_SHIFT, int(outMods.shift == Required)); }
 
 				Action action(copy);
 				if (!ProcessLocalActions(action)) {
@@ -1624,24 +1624,6 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 		selectedUnitsHandler.SetCommandPage(activePage);
 		return true;
 	}
-	else if (action.command == "hotbind") {
-		const int iconPos = IconAtPos(mouse->lastx, mouse->lasty);
-		const int iconCmd = (iconPos >= 0) ? icons[iconPos].commandsID : -1;
-		if ((iconCmd >= 0) && ((size_t)iconCmd < commands.size())) {
-			game->SetHotBinding(commands[iconCmd].action);
-		}
-		return true;
-	}
-	else if (action.command == "hotunbind") {
-		const int iconPos = IconAtPos(mouse->lastx, mouse->lasty);
-		const int iconCmd = (iconPos >= 0) ? icons[iconPos].commandsID : -1;
-		if ((iconCmd >= 0) && ((size_t)iconCmd < commands.size())) {
-			std::string cmd = "unbindaction " + commands[iconCmd].action;
-			keyBindings->ExecuteCommand(cmd);
-			LOG("%s", cmd.c_str());
-		}
-		return true;
-	}
 	else if (action.command == "showcommands") {
 		// bonus command for debugging
 		LOG("Available Commands:");
@@ -1755,18 +1737,17 @@ bool CGuiHandler::KeyPressed(int key, bool isRepeat)
 		return true;
 	}
 
-	CKeySet ks(key, false);
-	const CKeyBindings::ActionList& al = keyBindings->GetActionList(ks);
+	const CKeySet ks(key, false);
 
 	// setup actionOffset
+	//WTF a bit more documentation???
 	int tmpActionOffset = actionOffset;
 	if ((inCommand < 0) || (lastKeySet.Key() < 0)){
 		actionOffset = 0;
 		tmpActionOffset = 0;
 		lastKeySet.Reset();
 	}
-	else if (!keyCodes->IsModifier(ks.Key()) &&
-	         (ks.Key() != keyBindings->GetFakeMetaKey())) {
+	else if (!ks.IsPureModifier()) {
 		// not a modifier
 		if ((ks == lastKeySet) && (ks.Key() >= 0)) {
 			actionOffset++;
@@ -1776,8 +1757,9 @@ bool CGuiHandler::KeyPressed(int key, bool isRepeat)
 		}
 	}
 
+	const CKeyBindings::ActionList& al = keyBindings->GetActionList(ks);
 	for (int ali = 0; ali < (int)al.size(); ++ali) {
-		const int actionIndex = (ali + tmpActionOffset) % (int)al.size();
+		const int actionIndex = (ali + tmpActionOffset) % (int)al.size(); //????
 		const Action& action = al[actionIndex];
 		if (SetActiveCommand(action, ks, actionIndex)) {
 			return true;
@@ -1988,13 +1970,11 @@ std::string CGuiHandler::GetTooltip(int x, int y)
 			s = commands[iconCmd].name;
 		}
 
-		const CKeyBindings::HotkeyList& hl =
-			keyBindings->GetHotkeys(commands[iconCmd].action);
+		const CKeyBindings::HotkeyList& hl = keyBindings->GetHotkeys(commands[iconCmd].action);
 		if(!hl.empty()){
-			s+="\nHotkeys:";
-			for (int i = 0; i < (int)hl.size(); ++i) {
-				s+=" ";
-				s+=hl[i];
+			s += "\nHotkeys:";
+			for (const std::string& hk: hl) {
+				s += " " + hk;
 			}
 		}
 	}
@@ -2092,7 +2072,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 		}
 
 		case CMDTYPE_ICON_MAP: {
-			const float dist = ground->LineGroundCol(cameraPos, cameraPos + (mouseDir * globalRendering->viewRange * 1.4f), false);
+			const float dist = CGround::LineGroundCol(cameraPos, cameraPos + (mouseDir * globalRendering->viewRange * 1.4f), false);
 			if (dist < 0) {
 				return defaultRet;
 			}
@@ -2102,7 +2082,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 		}
 
 		case CMDTYPE_ICON_BUILDING: {
-			const float dist = ground->LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
+			const float dist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
 			if (dist < 0) {
 				return defaultRet;
 			}
@@ -2116,7 +2096,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			std::vector<BuildInfo> buildPos;
 			BuildInfo bi(unitdef, pos, buildFacing);
 			if (GetQueueKeystate() && (button == SDL_BUTTON_LEFT)) {
-				const float dist = ground->LineGroundCol(
+				const float dist = CGround::LineGroundCol(
 					mouse->buttons[SDL_BUTTON_LEFT].camPos,
 					mouse->buttons[SDL_BUTTON_LEFT].camPos +
 					mouse->buttons[SDL_BUTTON_LEFT].dir * globalRendering->viewRange * 1.4f,
@@ -2139,11 +2119,9 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				}
 			}
 
-			int a = 0; // limit the number of max commands possible to send to avoid overflowing the network buffer
-			for (std::vector<BuildInfo>::iterator bpi = buildPos.begin(); bpi != --buildPos.end() && a < 200; ++bpi) {
-				++a;
-				Command c = bpi->CreateCommand(CreateOptions(button));
-				if (!preview) {
+			if (!preview) {
+				for (auto bpi = buildPos.cbegin(); bpi != --buildPos.cend(); ++bpi) {
+					Command c = bpi->CreateCommand(CreateOptions(button));
 					GiveCommand(c);
 				}
 			}
@@ -2185,7 +2163,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 		}
 
 		case CMDTYPE_ICON_FRONT: {
-			float dist = ground->LineGroundCol(
+			float dist = CGround::LineGroundCol(
 				mouse->buttons[button].camPos,
 				mouse->buttons[button].camPos +
 				mouse->buttons[button].dir * globalRendering->viewRange * 1.4f,
@@ -2200,7 +2178,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			Command c(commands[tempInCommand].id, CreateOptions(button), pos);
 
 			if (mouse->buttons[button].movement > 30) { // only create the front if the mouse has moved enough
-				dist = ground->LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
+				dist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
 				if (dist < 0) {
 					return defaultRet;
 				}
@@ -2257,7 +2235,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 					}
 				}
 			} else { // created area
-				float dist = ground->LineGroundCol(
+				float dist = CGround::LineGroundCol(
 					mouse->buttons[button].camPos,
 					mouse->buttons[button].camPos +
 					mouse->buttons[button].dir * globalRendering->viewRange * 1.4f,
@@ -2269,7 +2247,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				}
 				const float3 pos = mouse->buttons[button].camPos + mouse->buttons[button].dir * dist;
 				c.PushPos(pos);
-				dist = ground->LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
+				dist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
 				if (dist < 0) {
 					return defaultRet;
 				}
@@ -2306,7 +2284,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				}
 			} else {
 				// created rectangle
-				float dist = ground->LineGroundCol(
+				float dist = CGround::LineGroundCol(
 					mouse->buttons[button].camPos,
 					mouse->buttons[button].camPos +
 					mouse->buttons[button].dir * globalRendering->viewRange * 1.4f,
@@ -2316,7 +2294,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 					return defaultRet;
 				}
 				const float3 startPos = mouse->buttons[button].camPos + mouse->buttons[button].dir * dist;
-				dist = ground->LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
+				dist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
 				if (dist < 0) {
 					return defaultRet;
 				}
@@ -2475,7 +2453,7 @@ void CGuiHandler::ProcessFrontPositions(float3& pos0, const float3& pos1)
 		return; // leave it centered
 	}
 	pos0 = pos1 + ((pos0 - pos1) * 0.5f);
-	pos0.y = ground->GetHeightReal(pos0.x, pos0.z, false);
+	pos0.y = CGround::GetHeightReal(pos0.x, pos0.z, false);
 }
 
 
@@ -2732,6 +2710,9 @@ bool CGuiHandler::DrawTexture(const IconInfo& icon, const std::string& texName)
 	if (!BindTextureString(tex2)) {
 		return false;
 	}
+
+	assert(xscale<=0.5); //border >= 50% makes no sence
+	assert(yscale<=0.5);
 
 	// calculate the scaled quad
 	const float x1 = b.x1 + (xIconSize * xscale);
@@ -3377,7 +3358,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 						maxRadius = atof(cmdDesc.params[0].c_str());
 					}
 					if (mouse->buttons[button].movement > 4) {
-						float dist = ground->LineGroundCol(
+						float dist = CGround::LineGroundCol(
 							mouse->buttons[button].camPos,
 							mouse->buttons[button].camPos +
 							mouse->buttons[button].dir * globalRendering->viewRange * 1.4f,
@@ -3387,7 +3368,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 							break;
 						}
 						float3 pos=mouse->buttons[button].camPos+mouse->buttons[button].dir*dist;
-						dist = ground->LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
+						dist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
 						if (dist < 0) {
 							break;
 						}
@@ -3431,7 +3412,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 				}
 				case CMDTYPE_ICON_UNIT_OR_RECTANGLE:{
 					if (mouse->buttons[button].movement >= 16) {
-						float dist = ground->LineGroundCol(
+						float dist = CGround::LineGroundCol(
 							mouse->buttons[button].camPos,
 							mouse->buttons[button].camPos +
 							mouse->buttons[button].dir * globalRendering->viewRange * 1.4f,
@@ -3441,7 +3422,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 							break;
 						}
 						const float3 pos1 = mouse->buttons[button].camPos+mouse->buttons[button].dir*dist;
-						dist = ground->LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
+						dist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
 						if (dist < 0) {
 							break;
 						}
@@ -3600,7 +3581,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 			}
 		}
 
-		float dist = ground->LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
+		float dist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
 		if (dist > 0) {
 			const UnitDef* unitdef = unitDefHandler->GetUnitDefByID(-commands[inCommand].id);
 			if (unitdef) {
@@ -3609,7 +3590,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 				std::vector<BuildInfo> buildPos;
 				const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
 				if (GetQueueKeystate() && bp.pressed) {
-					const float dist = ground->LineGroundCol(bp.camPos, bp.camPos + bp.dir * globalRendering->viewRange * 1.4f, false);
+					const float dist = CGround::LineGroundCol(bp.camPos, bp.camPos + bp.dir * globalRendering->viewRange * 1.4f, false);
 					const float3 pos2 = bp.camPos + bp.dir * dist;
 					buildPos = GetBuildPos(BuildInfo(unitdef, pos2, buildFacing),
 					                       BuildInfo(unitdef, pos, buildFacing), cameraPos, mouseDir);
@@ -3745,7 +3726,7 @@ void CGuiHandler::DrawMiniMapMarker(const float3& cameraPos)
 		{ bc[0] * d[7],  bc[1] * d[7],  bc[2] * d[7],  bc[3] },
 	};
 
-	const float groundLevel = ground->GetHeightAboveWater(cameraPos.x, cameraPos.z, false);
+	const float groundLevel = CGround::GetHeightAboveWater(cameraPos.x, cameraPos.z, false);
 
 	static float spinTime = 0.0f;
 	spinTime = math::fmod(spinTime + globalRendering->lastFrameTime * 0.001f, 60.0f);
@@ -3851,7 +3832,7 @@ void CGuiHandler::DrawArea(float3 pos, float radius, const float* color)
 		for(int a=0;a<=40;++a){
 			float3 p(fastmath::cos(a*2*PI/40)*radius,0,fastmath::sin(a*2*PI/40)*radius);
 			p+=pos;
-			p.y=ground->GetHeightAboveWater(p.x, p.z, false);
+			p.y=CGround::GetHeightAboveWater(p.x, p.z, false);
 			glVertexf3(p);
 		}
 	glEnd();
@@ -3866,12 +3847,12 @@ void CGuiHandler::DrawFront(int button, float maxSize, float sizeDiv, bool onMin
 	if(bp.movement<5){
 		return;
 	}
-	float dist = ground->LineGroundCol(bp.camPos, bp.camPos + bp.dir * globalRendering->viewRange * 1.4f, false);
+	float dist = CGround::LineGroundCol(bp.camPos, bp.camPos + bp.dir * globalRendering->viewRange * 1.4f, false);
 	if(dist<0){
 		return;
 	}
 	float3 pos1=bp.camPos+bp.dir*dist;
-	dist = ground->LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
+	dist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
 	if(dist<0){
 		return;
 	}
@@ -3884,7 +3865,7 @@ void CGuiHandler::DrawFront(int button, float maxSize, float sizeDiv, bool onMin
 	float3 side=forward.cross(UpVector);
 	if(pos1.SqDistance2D(pos2)>maxSize*maxSize){
 		pos2=pos1+side*maxSize;
-		pos2.y=ground->GetHeightAboveWater(pos2.x, pos2.z, false);
+		pos2.y=CGround::GetHeightAboveWater(pos2.x, pos2.z, false);
 	}
 
 	glColor4f(0.5f, 1.0f, 0.5f, 0.5f);
@@ -3930,7 +3911,7 @@ void CGuiHandler::DrawFront(int button, float maxSize, float sizeDiv, bool onMin
 		const float d = (float)i;
 		p.x = pos1.x + (d * delta.x);
 		p.z = pos1.z + (d * delta.z);
-		p.y = ground->GetHeightAboveWater(p.x, p.z, false);
+		p.y = CGround::GetHeightAboveWater(p.x, p.z, false);
 		p.y -= 100.f; glVertexf3(p);
 		p.y += 200.f; glVertexf3(p);
 	}
@@ -3985,10 +3966,10 @@ static void DrawBoxShape(const void* data)
 static void DrawCornerPosts(const float3& pos0, const float3& pos1)
 {
 	const float3 lineVector(0.0f, 128.0f, 0.0f);
-	const float3 corner0(pos0.x, ground->GetHeightAboveWater(pos0.x, pos0.z, false), pos0.z);
-	const float3 corner1(pos1.x, ground->GetHeightAboveWater(pos1.x, pos1.z, false), pos1.z);
-	const float3 corner2(pos0.x, ground->GetHeightAboveWater(pos0.x, pos1.z, false), pos1.z);
-	const float3 corner3(pos1.x, ground->GetHeightAboveWater(pos1.x, pos0.z, false), pos0.z);
+	const float3 corner0(pos0.x, CGround::GetHeightAboveWater(pos0.x, pos0.z, false), pos0.z);
+	const float3 corner1(pos1.x, CGround::GetHeightAboveWater(pos1.x, pos1.z, false), pos1.z);
+	const float3 corner2(pos0.x, CGround::GetHeightAboveWater(pos0.x, pos1.z, false), pos1.z);
+	const float3 corner3(pos1.x, CGround::GetHeightAboveWater(pos1.x, pos0.z, false), pos0.z);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glLineWidth(2.0f);
@@ -4187,7 +4168,7 @@ void CGuiHandler::DrawSelectCircle(const float3& pos, float radius,
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glColor4f(color[0], color[1], color[2], 0.9f);
 	glLineWidth(2.0f);
-	const float3 base(pos.x, ground->GetHeightAboveWater(pos.x, pos.z, false), pos.z);
+	const float3 base(pos.x, CGround::GetHeightAboveWater(pos.x, pos.z, false), pos.z);
 	glBegin(GL_LINES);
 		glVertexf3(base);
 		glVertexf3(base + float3(0.0f, 128.0f, 0.0f));

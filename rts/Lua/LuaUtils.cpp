@@ -514,14 +514,17 @@ void LuaUtils::PrintStack(lua_State* L)
 	for (int i = 1; i <= top; i++) {
 		LOG_L(L_ERROR, "  %i: type = %s (%p)", i, luaL_typename(L, i), lua_topointer(L, i));
 		const int type = lua_type(L, i);
-		if (type == LUA_TSTRING) {
-			LOG_L(L_ERROR, "\t\t%s\n", lua_tostring(L, i));
-		} else if (type == LUA_TNUMBER) {
-			LOG_L(L_ERROR, "\t\t%f\n", lua_tonumber(L, i));
-		} else if (type == LUA_TBOOLEAN) {
-			LOG_L(L_ERROR, "\t\t%s\n", lua_toboolean(L, i) ? "true" : "false");
-		} else {
-			LOG_L(L_ERROR, "\n");
+		switch(type) {
+			case LUA_TSTRING:
+				LOG_L(L_ERROR, "\t\t%s", lua_tostring(L, i));
+				break;
+			case LUA_TNUMBER:
+				LOG_L(L_ERROR, "\t\t%f", lua_tonumber(L, i));
+				break;
+			case LUA_TBOOLEAN:
+				LOG_L(L_ERROR, "\t\t%s", lua_toboolean(L, i) ? "true" : "false");
+				break;
+			default: {}
 		}
 	}
 }
@@ -902,6 +905,7 @@ bool LuaUtils::PushLogEntries(lua_State* L)
 #define PUSH_LOG_LEVEL(cmd) LuaPushNamedNumber(L, #cmd, LOG_LEVEL_ ## cmd)
 	PUSH_LOG_LEVEL(DEBUG);
 	PUSH_LOG_LEVEL(INFO);
+	PUSH_LOG_LEVEL(NOTICE);
 	PUSH_LOG_LEVEL(WARNING);
 	PUSH_LOG_LEVEL(ERROR);
 	PUSH_LOG_LEVEL(FATAL);
@@ -935,6 +939,9 @@ int LuaUtils::Log(lua_State* L)
 			loglevel = LOG_LEVEL_DEBUG;
 		}
 		else if (loglvlstr == "info") {
+			loglevel = LOG_LEVEL_INFO;
+		}
+		else if (loglvlstr == "notice") {
 			loglevel = LOG_LEVEL_INFO;
 		}
 		else if (loglvlstr == "warning") {

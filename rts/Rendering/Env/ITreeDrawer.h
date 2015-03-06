@@ -22,19 +22,13 @@ public:
 
 	void Draw(bool drawReflection);
 	virtual void Draw(float treeDistance, bool drawReflection) = 0;
-	virtual void DrawGrass() {}
-	virtual void DrawShadowGrass() {}
+	virtual void DrawShadowPass();
 	virtual void Update() = 0;
 
 	virtual void ResetPos(const float3& pos) = 0;
-
 	virtual void AddTree(int treeID, int treeType, const float3& pos, float size) = 0;
 	virtual void DeleteTree(int treeID, const float3& pos) = 0;
-
 	virtual void AddFallingTree(int treeID, int treeType, const float3& pos, const float3& dir) {}
-	virtual void AddGrass(const float3& pos) {}
-	virtual void RemoveGrass(int x, int z) {}
-	virtual void DrawShadowPass();
 
 	bool WantsEvent(const std::string& eventName) {
 		return

@@ -19,13 +19,15 @@
 	#define SPRINGTIME_USING_STDCHRONO
 	#undef gt
 	#include <chrono>
-	namespace chrono { using namespace std::chrono; };
+	namespace chrono { using namespace std::chrono; }
 #else
 	#define SPRINGTIME_USING_BOOST
 	#undef gt
 	#include <boost/chrono/include.hpp>
 	namespace chrono { using namespace boost::chrono; };
 #endif
+
+
 
 
 
@@ -57,14 +59,16 @@ namespace spring_clock {
 	// number of ticks since clock epoch
 	boost::int64_t GetTicks();
 	const char* GetName();
-};
+}
 
 
 
 // class Timer
 struct spring_time {
 private:
-	CR_DECLARE_STRUCT(spring_time);
+	CR_DECLARE_STRUCT(spring_time)
+
+	typedef boost::int64_t int64;
 
 public:
 	spring_time(): x(0) {}
@@ -72,18 +76,20 @@ public:
 
 	spring_time& operator+=(const spring_time st)       { x += st.x; return *this; }
 	spring_time& operator-=(const spring_time st)       { x -= st.x; return *this; }
+	spring_time& operator%=(const spring_time mt)       { x %= mt.x; return *this;    }
 	spring_time   operator-(const spring_time st) const { return spring_time_native(x - st.x); }
 	spring_time   operator+(const spring_time st) const { return spring_time_native(x + st.x); }
+	spring_time   operator%(const spring_time mt) const { return spring_time_native(x % mt.x); }
 	bool          operator<(const spring_time st) const { return (x <  st.x); }
 	bool          operator>(const spring_time st) const { return (x >  st.x); }
 	bool         operator<=(const spring_time st) const { return (x <= st.x); }
 	bool         operator>=(const spring_time st) const { return (x >= st.x); }
 
 	// short-hands
-	boost::int64_t toSecsi()        const { return (toSecs     <boost::int64_t>()); }
-	boost::int64_t toMilliSecsi()   const { return (toMilliSecs<boost::int64_t>()); }
-	boost::int64_t toMicroSecsi()   const { return (toMicroSecs<boost::int64_t>()); }
-	boost::int64_t toNanoSecsi()    const { return (toNanoSecs <boost::int64_t>()); }
+	int64 toSecsi()        const { return (toSecs     <int64>()); }
+	int64 toMilliSecsi()   const { return (toMilliSecs<int64>()); }
+	int64 toMicroSecsi()   const { return (toMicroSecs<int64>()); }
+	int64 toNanoSecsi()    const { return (toNanoSecs <int64>()); }
 
 	float toSecsf()      const { return (toSecs     <float>()); }
 	float toMilliSecsf() const { return (toMilliSecs<float>()); }
@@ -110,24 +116,24 @@ public:
 
 	static void setstarttime(const spring_time t) { assert(xs == 0); xs = t.x; assert(xs != 0); }
 
-	static spring_time fromNanoSecs (const boost::int64_t ns) { return spring_time_native(spring_clock::FromNanoSecs( ns)); }
-	static spring_time fromMicroSecs(const boost::int64_t us) { return spring_time_native(spring_clock::FromMicroSecs(us)); }
-	static spring_time fromMilliSecs(const boost::int64_t ms) { return spring_time_native(spring_clock::FromMilliSecs(ms)); }
-	static spring_time fromSecs     (const boost::int64_t  s) { return spring_time_native(spring_clock::FromSecs     ( s)); }
+	static spring_time fromNanoSecs (const int64 ns) { return spring_time_native(spring_clock::FromNanoSecs( ns)); }
+	static spring_time fromMicroSecs(const int64 us) { return spring_time_native(spring_clock::FromMicroSecs(us)); }
+	static spring_time fromMilliSecs(const int64 ms) { return spring_time_native(spring_clock::FromMilliSecs(ms)); }
+	static spring_time fromSecs     (const int64  s) { return spring_time_native(spring_clock::FromSecs     ( s)); }
 
 private:
 	// convert integer to spring_time (n is interpreted as number of nanoseconds)
-	static spring_time spring_time_native(const boost::int64_t n) { spring_time s; s.x = n; return s; }
+	static spring_time spring_time_native(const int64 n) { spring_time s; s.x = n; return s; }
 
-	void Serialize(creg::ISerializer& s);
+	void Serialize(creg::ISerializer* s);
 
 private:
-	boost::int64_t x;
+	int64 x;
 
 	// initial time (the "Spring epoch", program start)
 	// all other time-points *must* be larger than this
 	// if the clock is monotonically increasing
-	static boost::int64_t xs;
+	static int64 xs;
 };
 
 
@@ -135,7 +141,8 @@ private:
 static const spring_time spring_notime(0);
 static const spring_time spring_nulltime(0);
 
-#define spring_gettime()      spring_time::gettime()
+//#define spring_gettime()      spring_time::gettime()
+#define spring_gettime()      spring_time::getelapsedtime()
 #define spring_getstarttime() spring_time::getstarttime()
 #define spring_now()          spring_time::getelapsedtime()
 

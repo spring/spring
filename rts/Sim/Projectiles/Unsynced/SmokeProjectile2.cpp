@@ -12,7 +12,7 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/Wind.h"
 
-CR_BIND_DERIVED(CSmokeProjectile2, CProjectile, );
+CR_BIND_DERIVED(CSmokeProjectile2, CProjectile, )
 
 CR_REG_METADATA(CSmokeProjectile2,
 (
@@ -28,7 +28,7 @@ CR_REG_METADATA(CSmokeProjectile2,
 	CR_MEMBER(age),
 	CR_MEMBER(textureNum),
 	CR_RESERVED(8)
-));
+))
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -69,7 +69,7 @@ CSmokeProjectile2::CSmokeProjectile2(
 	ageSpeed = 1 / ttl;
 	checkCol = false;
 	castShadow = true;
-	if ((pos.y - ground->GetApproximateHeight(pos.x, pos.z, false)) > 10) {
+	if ((pos.y - CGround::GetApproximateHeight(pos.x, pos.z, false)) > 10) {
 		useAirLos = true;
 	}
 	glowFalloff = 4.5f + gu->RandFloat() * 6;
@@ -78,11 +78,11 @@ CSmokeProjectile2::CSmokeProjectile2(
 
 
 
-void CSmokeProjectile2::Init(CUnit* owner, const float3& offset)
+void CSmokeProjectile2::Init(const CUnit* owner, const float3& offset)
 {
 	textureNum = (int) (gu->RandInt() % projectileDrawer->smoketex.size());
 
-	if (offset.y - ground->GetApproximateHeight(offset.x, offset.z, false) > 10) {
+	if (offset.y - CGround::GetApproximateHeight(offset.x, offset.z, false) > 10) {
 		useAirLos = true;
 	}
 
@@ -135,8 +135,8 @@ void CSmokeProjectile2::Draw()
 
 	const float3 interPos = pos + (wantedPos + speed * globalRendering->timeOffset - pos) * 0.1f * globalRendering->timeOffset;
 	const float interSize = size + sizeExpansion * globalRendering->timeOffset;
-	const float3 pos1 ((camera->right - camera->up) * interSize);
-	const float3 pos2 ((camera->right + camera->up) * interSize);
+	const float3 pos1 ((camera->GetRight() - camera->GetUp()) * interSize);
+	const float3 pos2 ((camera->GetRight() + camera->GetUp()) * interSize);
 
 	#define st projectileDrawer->smoketex[textureNum]
 	va->AddVertexTC(interPos - pos2, st->xstart, st->ystart, col);

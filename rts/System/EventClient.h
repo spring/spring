@@ -3,11 +3,13 @@
 #ifndef EVENT_CLIENT_H
 #define EVENT_CLIENT_H
 
-#include "System/float3.h"
 #include <string>
 #include <vector>
 #include <map>
 #include <typeinfo>
+
+#include "System/float3.h"
+#include "System/Misc/SpringTime.h"
 
 #ifdef __APPLE__
 // defined in X11/X.h
@@ -26,14 +28,23 @@ class CProjectile;
 struct Command;
 class IArchive;
 struct SRectangle;
-class UnitDef;
+struct UnitDef;
 struct BuildInfo;
-class FeatureDef;
+struct FeatureDef;
 
 #ifndef zipFile
 	// might be defined through zip.h already
 	typedef void* zipFile;
 #endif
+
+
+enum DbgTimingInfoType {
+	TIMING_VIDEO,
+	TIMING_SIM,
+	TIMING_GC,
+	TIMING_SWAP,
+	TIMING_UNSYNCED
+};
 
 
 class CEventClient
@@ -68,21 +79,20 @@ class CEventClient
 
 		typedef void (*eventFuncPtr)();
 
-		std::map<std::string, eventFuncPtr> linkedEvents;
-		std::map<std::string, std::string> linkedEventsTypeInfo;
+		std::map<std::string, bool> autoLinkedEvents;
 
-		#pragma GCC diagnostic push
-		#pragma GCC diagnostic ignored "-Wpmf-conversions"
 		template <class T>
 		void RegisterLinkedEvents(T* foo) {
+			// old way needed gcc's pmf extension to cast member functions
+			//autoLinkedEvents[#eventname]  = (reinterpret_cast<eventFuncPtr>(&T::eventname) != reinterpret_cast<eventFuncPtr>(&CEventClient::eventname));
+
+			// new way, works everywhere
 			#define SETUP_EVENT(eventname, props) \
-				linkedEvents[#eventname] = reinterpret_cast<eventFuncPtr>(&T::eventname); \
-				linkedEventsTypeInfo[#eventname] = typeid(&T::eventname).name();
+				autoLinkedEvents[#eventname] = (typeid(&T::eventname) != typeid(&CEventClient::eventname));
 
 				#include "Events.def"
 			#undef SETUP_EVENT
 		}
-		#pragma GCC diagnostic pop
 
 	private:
 		const std::string name;
@@ -174,7 +184,7 @@ class CEventClient
 			float damage,
 			int weaponDefID,
 			int projectileID) {}
-		virtual void FeatureMoved(const CFeature* feature) {}
+		virtual void FeatureMoved(const CFeature* feature, const float3& oldpos) {}
 
 		virtual void RenderFeatureCreated(const CFeature* feature) {}
 		virtual void RenderFeatureDestroyed(const CFeature* feature) {}
@@ -202,6 +212,7 @@ class CEventClient
 		virtual bool AllowResourceLevel(int teamID, const string& type, float level);
 		virtual bool AllowResourceTransfer(int oldTeam, int newTeam, const string& type, float amount);
 		virtual bool AllowDirectUnitControl(int playerID, const CUnit* unit);
+		virtual bool AllowBuilderHoldFire(const CUnit* unit, int action);
 		virtual bool AllowStartPosition(int playerID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos);
 
 		virtual bool TerraformComplete(const CUnit* unit, const CUnit* build);
@@ -296,6 +307,7 @@ class CEventClient
 		virtual void DrawScreenEffects();
 		virtual void DrawScreen();
 		virtual void DrawInMiniMap();
+		virtual void DrawInMiniMapBackground();
 
 		virtual bool DrawUnit(const CUnit* unit);
 		virtual bool DrawFeature(const CFeature* feature);
@@ -308,6 +320,8 @@ class CEventClient
 		virtual void LoadProgress(const std::string& msg, const bool replace_lastline);
 
 		virtual void CollectGarbage();
+		virtual void DbgTimingInfo(DbgTimingInfoType type, const spring_time start, const spring_time end);
+		virtual void MetalMapChanged(const int x, const int z);
 		/// @}
 };
 

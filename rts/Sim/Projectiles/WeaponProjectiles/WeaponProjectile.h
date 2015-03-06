@@ -4,61 +4,14 @@
 #define WEAPON_PROJECTILE_H
 
 #include "Sim/Projectiles/Projectile.h"
+#include "Sim/Projectiles/ProjectileParams.h" // easier to include this here
 #include "WeaponProjectileTypes.h"
 
 struct WeaponDef;
-struct S3DModel;
+struct ProjectileParams;
 class CVertexArray;
 class CPlasmaRepulser;
-class CWeaponProjectile;
 
-struct ProjectileParams {
-	ProjectileParams()
-		: target(NULL)
-		, owner(NULL)
-		, model(NULL)
-		, weaponDef(NULL)
-
-		, ownerID(-1u)
-		, teamID(-1u)
-		, cegID(-1u)
-
-		, ttl(0)
-		, gravity(0.0f)
-		, tracking(0.0f)
-		, maxRange(0.0f)
-
-		, startAlpha(0.0f)
-		, endAlpha(1.0f)
-	{
-	}
-
-	float3 pos;
-	float3 end;
-	float3 speed;
-	float3 spread;
-	float3 error;
-
-	// unit, feature or weapon projectile to intercept
-	CWorldObject* target;
-	CUnit* owner;
-	S3DModel* model;
-
-	const WeaponDef* weaponDef;
-
-	unsigned int ownerID;
-	unsigned int teamID;
-	unsigned int cegID;
-
-	int ttl;
-	float gravity;
-	float tracking;
-	float maxRange;
-
-	// BeamLaser-specific junk
-	float startAlpha;
-	float endAlpha;
-};
 
 
 /**
@@ -67,7 +20,7 @@ struct ProjectileParams {
  */
 class CWeaponProjectile : public CProjectile
 {
-	CR_DECLARE(CWeaponProjectile);
+	CR_DECLARE(CWeaponProjectile)
 public:
 	CWeaponProjectile();
 	CWeaponProjectile(const ProjectileParams& params);

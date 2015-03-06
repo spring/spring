@@ -36,16 +36,10 @@ private:
 
 	inline void DrawVertexAQ(CVertexArray* ma, int x, int y);
 	inline void DrawVertexAQ(CVertexArray* ma, int x, int y, float height);
-	inline void EndStripQ(CVertexArray* ma);
 	inline void DrawGroundVertexArrayQ(CVertexArray*& ma);
 
 	void DoDrawGroundRow(const CCamera* cam, int bty);
 	void DoDrawGroundShadowLOD(int nlod);
-
-#ifdef USE_GML
-	static void DoDrawGroundRowMT(void* c, int bty);
-	static void DoDrawGroundShadowLODMT(void* c, int nlod);
-#endif
 
 private:
 	CSMFReadMap* smfReadMap;
@@ -53,11 +47,6 @@ private:
 
 	int viewRadius;
 	int neededLod;
-
-#ifdef USE_GML
-	bool& multiThreadDrawGround;
-	bool& multiThreadDrawGroundShadow;
-#endif
 };
 
 #endif // _LEGACY_MESH_DRAWER_H_

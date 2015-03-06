@@ -49,10 +49,6 @@ void CLegacyMeshDrawer::DrawVertexAQ(CVertexArray* ma, int x, int y, float heigh
 	ma->AddVertexQ0(x * SQUARE_SIZE, height, y * SQUARE_SIZE);
 }
 
-void CLegacyMeshDrawer::EndStripQ(CVertexArray* ma)
-{
-	ma->EndStripQ();
-}
 
 void CLegacyMeshDrawer::DrawGroundVertexArrayQ(CVertexArray*& ma)
 {
@@ -238,7 +234,7 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 				int yhlod = y + hlod;
 				int nloop = (xe - xs) / lod + 1;
 
-				ma->EnlargeArrays((52 * nloop), 14 * nloop + 1);
+				ma->EnlargeArrays(52 * nloop);
 
 				int yhdx = y * smfReadMap->heightMapSizeX;
 				int ylhdx = yhdx + lod * smfReadMap->heightMapSizeX;
@@ -273,7 +269,7 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 							float h4 = (GetVisibleVertexHeight(idx2) + GetVisibleVertexHeight(idx2LOD)) * hmocxp + GetVisibleVertexHeight(idx2HLOD) * oldcamxpart;
 
 							if (inStrip) {
-								EndStripQ(ma);
+								ma->EndStrip();
 								inStrip = false;
 							}
 
@@ -281,18 +277,18 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 							DrawVertexAQ(ma, x, yhlod, h1);
 							DrawVertexAQ(ma, xhlod, y, h2);
 							DrawVertexAQ(ma, xhlod, yhlod, h3);
-							EndStripQ(ma);
+							ma->EndStrip();
 							DrawVertexAQ(ma, x, yhlod, h1);
 							DrawVertexAQ(ma, x, ylod);
 							DrawVertexAQ(ma, xhlod, yhlod, h3);
 							DrawVertexAQ(ma, xhlod, ylod, h4);
-							EndStripQ(ma);
+							ma->EndStrip();
 							DrawVertexAQ(ma, xhlod, ylod, h4);
 							DrawVertexAQ(ma, xlod, ylod);
 							DrawVertexAQ(ma, xhlod, yhlod, h3);
 							DrawVertexAQ(ma, xlod, y);
 							DrawVertexAQ(ma, xhlod, y, h2);
-							EndStripQ(ma);
+							ma->EndStrip();
 						}
 						else if ((x <= cx - vrhlod)) {
 							//! lower LOD to the left
@@ -305,7 +301,7 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 							float h4 = (GetVisibleVertexHeight(idx2   ) + GetVisibleVertexHeight(idx2LOD)) * hocxp + GetVisibleVertexHeight(idx2HLOD) * mocxp;
 
 							if (inStrip) {
-								EndStripQ(ma);
+								ma->EndStrip();
 								inStrip = false;
 							}
 
@@ -313,18 +309,18 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 							DrawVertexAQ(ma, xlod, y);
 							DrawVertexAQ(ma, xhlod, yhlod, h3);
 							DrawVertexAQ(ma, xhlod, y, h2);
-							EndStripQ(ma);
+							ma->EndStrip();
 							DrawVertexAQ(ma, xlod, ylod);
 							DrawVertexAQ(ma, xlod, yhlod, h1);
 							DrawVertexAQ(ma, xhlod, ylod, h4);
 							DrawVertexAQ(ma, xhlod, yhlod, h3);
-							EndStripQ(ma);
+							ma->EndStrip();
 							DrawVertexAQ(ma, xhlod, y, h2);
 							DrawVertexAQ(ma, x, y);
 							DrawVertexAQ(ma, xhlod, yhlod, h3);
 							DrawVertexAQ(ma, x, ylod);
 							DrawVertexAQ(ma, xhlod, ylod, h4);
-							EndStripQ(ma);
+							ma->EndStrip();
 						}
 
 						if ((y >= cy + vrhlod)) {
@@ -338,7 +334,7 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 							float h4 = (GetVisibleVertexHeight(idx2LOD) + GetVisibleVertexHeight(idx1LOD)) * hmocyp + GetVisibleVertexHeight(idx3LOD ) * oldcamypart;
 
 							if (inStrip) {
-								EndStripQ(ma);
+								ma->EndStrip();
 								inStrip = false;
 							}
 
@@ -348,13 +344,13 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 							DrawVertexAQ(ma, xhlod, yhlod, h3);
 							DrawVertexAQ(ma, xlod, y);
 							DrawVertexAQ(ma, xlod, yhlod, h4);
-							EndStripQ(ma);
+							ma->EndStrip();
 							DrawVertexAQ(ma, x, yhlod, h2);
 							DrawVertexAQ(ma, x, ylod);
 							DrawVertexAQ(ma, xhlod, yhlod, h3);
 							DrawVertexAQ(ma, xlod, ylod);
 							DrawVertexAQ(ma, xlod, yhlod, h4);
-							EndStripQ(ma);
+							ma->EndStrip();
 						}
 						else if ((y <= cy - vrhlod)) {
 							//! lower LOD beneath
@@ -367,7 +363,7 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 							float h4 = (GetVisibleVertexHeight(idx2LOD) + GetVisibleVertexHeight(idx1LOD)) * hocyp + GetVisibleVertexHeight(idx3LOD ) * mocyp;
 
 							if (inStrip) {
-								EndStripQ(ma);
+								ma->EndStrip();
 								inStrip = false;
 							}
 
@@ -377,19 +373,19 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 							DrawVertexAQ(ma, xhlod, ylod, h1);
 							DrawVertexAQ(ma, xlod, yhlod, h4);
 							DrawVertexAQ(ma, xlod, ylod);
-							EndStripQ(ma);
+							ma->EndStrip();
 							DrawVertexAQ(ma, xlod, yhlod, h4);
 							DrawVertexAQ(ma, xlod, y);
 							DrawVertexAQ(ma, xhlod, yhlod, h3);
 							DrawVertexAQ(ma, x, y);
 							DrawVertexAQ(ma, x, yhlod, h2);
-							EndStripQ(ma);
+							ma->EndStrip();
 						}
 					}
 				}
 
 				if (inStrip) {
-					EndStripQ(ma);
+					ma->EndStrip();
 					inStrip = false;
 				}
 			} //for (y = ystart; y < yend; y += lod)
@@ -399,7 +395,7 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 			int nloop = (yed - yst) / lod + 1;
 
 			if (nloop > 0)
-				ma->EnlargeArrays((8 * nloop), 2 * nloop);
+				ma->EnlargeArrays(8 * nloop);
 
 			//! rita yttre begr?snings yta mot n?ta lod
 			if (maxlx < maxtx && maxlx >= mintx) {
@@ -424,7 +420,7 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 						DrawVertexAQ(ma, xlod, y);
 						DrawVertexAQ(ma, xlod, y + lod, h);
 					}
-					EndStripQ(ma);
+					ma->EndStrip();
 				}
 			}
 
@@ -449,7 +445,7 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 					}
 					DrawVertexAQ(ma, xlod, y);
 					DrawVertexAQ(ma, xlod, y + lod);
-					EndStripQ(ma);
+					ma->EndStrip();
 				}
 			}
 
@@ -465,7 +461,7 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 					int nloop = (xe - xs) / lod + 2; //! one extra for if statment
 					int ylhdx = (y + lod) * smfReadMap->heightMapSizeX;
 
-					ma->EnlargeArrays((2 * nloop), 1);
+					ma->EnlargeArrays(2 * nloop);
 
 					if (x % dlod) {
 						int idx2 = CLAMP(ylhdx + x), idx2PLOD = CLAMP(idx2 + lod), idx2MLOD = CLAMP(idx2 - lod);
@@ -487,7 +483,7 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 							DrawVertexAQ(ma, x + lod, ylod, h);
 						}
 					}
-					EndStripQ(ma);
+					ma->EndStrip();
 				}
 			}
 
@@ -503,7 +499,7 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 					int yhdx = y * smfReadMap->heightMapSizeX;
 					int nloop = (xe - xs) / lod + 2; //! one extra for if statment
 
-					ma->EnlargeArrays((2 * nloop), 1);
+					ma->EnlargeArrays(2 * nloop);
 
 					if (x % dlod) {
 						int idx1 = CLAMP(yhdx + x), idx1PLOD = CLAMP(idx1 + lod), idx1MLOD = CLAMP(idx1 - lod);
@@ -526,7 +522,7 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 							DrawVertexAQ(ma, x + lod, ylod);
 						}
 					}
-					EndStripQ(ma);
+					ma->EndStrip();
 				}
 			}
 
@@ -554,7 +550,7 @@ void CLegacyMeshDrawer::UpdateLODParams(const DrawPass::e& drawPass)
 
 	// Compute count of LODs needed/visible
 	neededLod   = std::max(1, int((globalRendering->viewRange * 0.125f) / viewRadius) << 1);
-	neededLod   = std::min(neededLod, std::min(gs->mapx, gs->mapy));
+	neededLod   = std::min(neededLod, std::min(mapDims.mapx, mapDims.mapy));
 }
 
 
@@ -622,8 +618,8 @@ void CLegacyMeshDrawer::DoDrawGroundShadowLOD(int nlod) {
 	const float camxpart = (cx2 - (cx / dlod) * dlod) / dlod;
 	const float camypart = (cy2 - (cy / dlod) * dlod) / dlod;
 
-	const int minty = 0, maxty = gs->mapy;
-	const int mintx = 0, maxtx = gs->mapx;
+	const int minty = 0, maxty = mapDims.mapy;
+	const int mintx = 0, maxtx = mapDims.mapx;
 
 	const int minly = cy + (-viewRadius + 3 - ysquaremod) * lod, maxly = cy + ( viewRadius - 1 - ysquaremod) * lod;
 	const int minlx = cx + (-viewRadius + 3 - xsquaremod) * lod, maxlx = cx + ( viewRadius - 1 - xsquaremod) * lod;
@@ -656,9 +652,7 @@ void CLegacyMeshDrawer::DoDrawGroundShadowLOD(int nlod) {
 		int ydx = y * smfReadMap->heightMapSizeX;
 		int nloop = (xe - xs) / lod + 1;
 
-		//! EnlargeArrays(nVertices, nStrips [, stripSize])
-		//! includes one extra for final endstrip
-		ma->EnlargeArrays((52 * nloop), 14 * nloop + 1);
+		ma->EnlargeArrays(52 * nloop);
 
 		for (x = xs; x < xe; x += lod) {
 			int xlod = x + lod;
@@ -686,25 +680,25 @@ void CLegacyMeshDrawer::DoDrawGroundShadowLOD(int nlod) {
 					const float h4 = (GetVisibleVertexHeight(ylhdx) + GetVisibleVertexHeight(ylhdx+lod)) * hmocxp + GetVisibleVertexHeight(ylhdx+hlod) * oldcamxpart;
 
 					if(inStrip){
-						EndStripQ(ma);
+						ma->EndStrip();
 						inStrip=false;
 					}
 					DrawVertexAQ(ma, x,y);
 					DrawVertexAQ(ma, x,yhlod,h1);
 					DrawVertexAQ(ma, xhlod,y,h2);
 					DrawVertexAQ(ma, xhlod,yhlod,h3);
-					EndStripQ(ma);
+					ma->EndStrip();
 					DrawVertexAQ(ma, x,yhlod,h1);
 					DrawVertexAQ(ma, x,ylod);
 					DrawVertexAQ(ma, xhlod,yhlod,h3);
 					DrawVertexAQ(ma, xhlod,ylod,h4);
-					EndStripQ(ma);
+					ma->EndStrip();
 					DrawVertexAQ(ma, xhlod,ylod,h4);
 					DrawVertexAQ(ma, xlod,ylod);
 					DrawVertexAQ(ma, xhlod,yhlod,h3);
 					DrawVertexAQ(ma, xlod,y);
 					DrawVertexAQ(ma, xhlod,y,h2);
-					EndStripQ(ma);
+					ma->EndStrip();
 				}
 				if (x <= cx - vrhlod) {
 					const float h1 = (GetVisibleVertexHeight(yhdx+lod) + GetVisibleVertexHeight(ylhdx+lod)) * hocxp + GetVisibleVertexHeight(yhhdx+lod ) * mocxp;
@@ -713,25 +707,25 @@ void CLegacyMeshDrawer::DoDrawGroundShadowLOD(int nlod) {
 					const float h4 = (GetVisibleVertexHeight(ylhdx   ) + GetVisibleVertexHeight(ylhdx+lod)) * hocxp + GetVisibleVertexHeight(ylhdx+hlod) * mocxp;
 
 					if(inStrip){
-						EndStripQ(ma);
+						ma->EndStrip();
 						inStrip=false;
 					}
 					DrawVertexAQ(ma, xlod,yhlod,h1);
 					DrawVertexAQ(ma, xlod,y);
 					DrawVertexAQ(ma, xhlod,yhlod,h3);
 					DrawVertexAQ(ma, xhlod,y,h2);
-					EndStripQ(ma);
+					ma->EndStrip();
 					DrawVertexAQ(ma, xlod,ylod);
 					DrawVertexAQ(ma, xlod,yhlod,h1);
 					DrawVertexAQ(ma, xhlod,ylod,h4);
 					DrawVertexAQ(ma, xhlod,yhlod,h3);
-					EndStripQ(ma);
+					ma->EndStrip();
 					DrawVertexAQ(ma, xhlod,y,h2);
 					DrawVertexAQ(ma, x,y);
 					DrawVertexAQ(ma, xhlod,yhlod,h3);
 					DrawVertexAQ(ma, x,ylod);
 					DrawVertexAQ(ma, xhlod,ylod,h4);
-					EndStripQ(ma);
+					ma->EndStrip();
 				}
 				if (y >= cy + vrhlod) {
 					const float h1 = (GetVisibleVertexHeight(yhdx     ) + GetVisibleVertexHeight(yhdx+lod)) * hmocyp + GetVisibleVertexHeight(yhdx+hlod ) * oldcamypart;
@@ -740,7 +734,7 @@ void CLegacyMeshDrawer::DoDrawGroundShadowLOD(int nlod) {
 					const float h4 = (GetVisibleVertexHeight(ylhdx+lod) + GetVisibleVertexHeight(yhdx+lod)) * hmocyp + GetVisibleVertexHeight(yhhdx+lod ) * oldcamypart;
 
 					if(inStrip){
-						EndStripQ(ma);
+						ma->EndStrip();
 						inStrip=false;
 					}
 					DrawVertexAQ(ma, x,y);
@@ -749,13 +743,13 @@ void CLegacyMeshDrawer::DoDrawGroundShadowLOD(int nlod) {
 					DrawVertexAQ(ma, xhlod,yhlod,h3);
 					DrawVertexAQ(ma, xlod,y);
 					DrawVertexAQ(ma, xlod,yhlod,h4);
-					EndStripQ(ma);
+					ma->EndStrip();
 					DrawVertexAQ(ma, x,yhlod,h2);
 					DrawVertexAQ(ma, x,ylod);
 					DrawVertexAQ(ma, xhlod,yhlod,h3);
 					DrawVertexAQ(ma, xlod,ylod);
 					DrawVertexAQ(ma, xlod,yhlod,h4);
-					EndStripQ(ma);
+					ma->EndStrip();
 				}
 				if (y <= cy - vrhlod) {
 					const float h1 = (GetVisibleVertexHeight(ylhdx    ) + GetVisibleVertexHeight(ylhdx+lod)) * hocyp + GetVisibleVertexHeight(ylhdx+hlod) * mocyp;
@@ -764,7 +758,7 @@ void CLegacyMeshDrawer::DoDrawGroundShadowLOD(int nlod) {
 					const float h4 = (GetVisibleVertexHeight(ylhdx+lod) + GetVisibleVertexHeight(yhdx+lod )) * hocyp + GetVisibleVertexHeight(yhhdx+lod ) * mocyp;
 
 					if (inStrip) {
-						EndStripQ(ma);
+						ma->EndStrip();
 						inStrip = false;
 					}
 					DrawVertexAQ(ma, x,yhlod,h2);
@@ -773,18 +767,18 @@ void CLegacyMeshDrawer::DoDrawGroundShadowLOD(int nlod) {
 					DrawVertexAQ(ma, xhlod,ylod,h1);
 					DrawVertexAQ(ma, xlod,yhlod,h4);
 					DrawVertexAQ(ma, xlod,ylod);
-					EndStripQ(ma);
+					ma->EndStrip();
 					DrawVertexAQ(ma, xlod,yhlod,h4);
 					DrawVertexAQ(ma, xlod,y);
 					DrawVertexAQ(ma, xhlod,yhlod,h3);
 					DrawVertexAQ(ma, x,y);
 					DrawVertexAQ(ma, x,yhlod,h2);
-					EndStripQ(ma);
+					ma->EndStrip();
 				}
 			}
 		}
 		if (inStrip) {
-			EndStripQ(ma);
+			ma->EndStrip();
 			inStrip=false;
 		}
 	}
@@ -792,9 +786,7 @@ void CLegacyMeshDrawer::DoDrawGroundShadowLOD(int nlod) {
 	int yst = std::max(ystart - lod, minty);
 	int yed = std::min(yend + lod, maxty);
 	int nloop = (yed - yst) / lod + 1;
-
-	if (nloop > 0)
-		ma->EnlargeArrays((8 * nloop), 2 * nloop);
+	ma->EnlargeArrays(8 * nloop);
 
 	//!rita yttre begr?snings yta mot n?ta lod
 	if (maxlx < maxtx && maxlx >= mintx) {
@@ -815,7 +807,7 @@ void CLegacyMeshDrawer::DoDrawGroundShadowLOD(int nlod) {
 				DrawVertexAQ(ma, xlod,y);
 				DrawVertexAQ(ma, xlod,y+lod,h);
 			}
-			EndStripQ(ma);
+			ma->EndStrip();
 		}
 	}
 
@@ -836,7 +828,7 @@ void CLegacyMeshDrawer::DoDrawGroundShadowLOD(int nlod) {
 			}
 			DrawVertexAQ(ma, xlod,y);
 			DrawVertexAQ(ma, xlod,y+lod);
-			EndStripQ(ma);
+			ma->EndStrip();
 		}
 	}
 	if (maxly < maxty && maxly > minty) {
@@ -850,7 +842,7 @@ void CLegacyMeshDrawer::DoDrawGroundShadowLOD(int nlod) {
 			const int ydx = y * smfReadMap->heightMapSizeX;
 			const int nloop = (xe - xs) / lod + 2; //! two extra for if statment
 
-			ma->EnlargeArrays((2 * nloop), 1);
+			ma->EnlargeArrays(2 * nloop);
 
 			if (x % dlod) {
 				const int ylhdx = ydx + x + lhdx;
@@ -873,7 +865,7 @@ void CLegacyMeshDrawer::DoDrawGroundShadowLOD(int nlod) {
 					DrawVertexAQ(ma, x+lod,ylod,h);
 				}
 			}
-			EndStripQ(ma);
+			ma->EndStrip();
 		}
 	}
 	if (minly > minty && minly < maxty) {
@@ -887,7 +879,7 @@ void CLegacyMeshDrawer::DoDrawGroundShadowLOD(int nlod) {
 			const int ydx = y * smfReadMap->heightMapSizeX;
 			const int nloop = (xe - xs) / lod + 2; //! two extra for if statment
 
-			ma->EnlargeArrays((2 * nloop), 1);
+			ma->EnlargeArrays(2 * nloop);
 
 			if (x % dlod) {
 				const int yhdx = ydx + x;
@@ -910,7 +902,7 @@ void CLegacyMeshDrawer::DoDrawGroundShadowLOD(int nlod) {
 					DrawVertexAQ(ma, x + lod, ylod);
 				}
 			}
-			EndStripQ(ma);
+			ma->EndStrip();
 		}
 	}
 	DrawGroundVertexArrayQ(ma);

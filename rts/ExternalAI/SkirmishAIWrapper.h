@@ -24,7 +24,7 @@ class float3;
  */
 class CSkirmishAIWrapper : public CObject {
 private:
-	CR_DECLARE(CSkirmishAIWrapper);
+	CR_DECLARE(CSkirmishAIWrapper)
 	/// used only by creg
 	CSkirmishAIWrapper();
 

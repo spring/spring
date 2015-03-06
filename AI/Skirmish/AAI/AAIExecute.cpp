@@ -7,9 +7,23 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
+
+#include "AAI.h"
 #include "AAIExecute.h"
 #include "AAIBuildTable.h"
-#include "System/FastMath.h"
+#include "AAIBrain.h"
+#include "AAIUnitTable.h"
+#include "AAIConstructor.h"
+#include "AAIBuildTask.h"
+#include "AAIConfig.h"
+#include "AAIMap.h"
+#include "AAIGroup.h"
+#include "AAISector.h"
+
+#include "LegacyCpp/UnitDef.h"
+#include "LegacyCpp/CommandQueue.h"
+using namespace springLegacyAI;
+
 
 // all the static vars
 float AAIExecute::current = 0.5;
@@ -49,8 +63,6 @@ AAIExecute::AAIExecute(AAI *ai)
 	}
 
 	counter = 0;
-
-	srand( time(NULL) );
 }
 
 AAIExecute::~AAIExecute(void)
@@ -396,7 +408,7 @@ float AAIExecute::GetTotalGroundPower()
 	float power = 0;
 
 	// get ground power of all ground assault units
-	for(list<AAIGroup*>::iterator group = ai->Getgroup_list()[GROUND_ASSAULT].begin(); group != ai->Getgroup_list()[GROUND_ASSAULT].end(); group++)
+	for(list<AAIGroup*>::iterator group = ai->Getgroup_list()[GROUND_ASSAULT].begin(); group != ai->Getgroup_list()[GROUND_ASSAULT].end(); ++group)
 		power += (*group)->GetCombatPowerVsCategory(0);
 
 	return power;
@@ -406,7 +418,7 @@ float AAIExecute::GetTotalAirPower()
 {
 	float power = 0;
 
-	for(list<AAIGroup*>::iterator group = ai->Getgroup_list()[GROUND_ASSAULT].begin(); group != ai->Getgroup_list()[GROUND_ASSAULT].end(); group++)
+	for(list<AAIGroup*>::iterator group = ai->Getgroup_list()[GROUND_ASSAULT].begin(); group != ai->Getgroup_list()[GROUND_ASSAULT].end(); ++group)
 	{
 		power += (*group)->GetCombatPowerVsCategory(1);
 	}
@@ -1075,7 +1087,7 @@ bool AAIExecute::BuildMetalMaker()
 
 	ai->Getbrain()->sectors[0].sort(least_dangerous);
 
-	for(list<AAISector*>::iterator sector = ai->Getbrain()->sectors[0].begin(); sector != ai->Getbrain()->sectors[0].end(); sector++)
+	for(list<AAISector*>::iterator sector = ai->Getbrain()->sectors[0].begin(); sector != ai->Getbrain()->sectors[0].end(); ++sector)
 	{
 		if((*sector)->water_ratio < 0.15)
 		{
@@ -1200,7 +1212,7 @@ bool AAIExecute::BuildStorage()
 	// urgency < 4
 //	float urgency = 16.0 / (ai->Getut()->activeUnits[METAL_MAKER] + ai->Getut()->futureUnits[METAL_MAKER] + 4);
 
-	for(list<AAISector*>::iterator sector = ai->Getbrain()->sectors[0].begin(); sector != ai->Getbrain()->sectors[0].end(); sector++)
+	for(list<AAISector*>::iterator sector = ai->Getbrain()->sectors[0].begin(); sector != ai->Getbrain()->sectors[0].end(); ++sector)
 	{
 		if((*sector)->water_ratio < 0.15)
 		{
@@ -1312,7 +1324,7 @@ bool AAIExecute::BuildAirBase()
 	AAIConstructor *builder;
 	float3 pos;
 
-	for(list<AAISector*>::iterator sector = ai->Getbrain()->sectors[0].begin(); sector != ai->Getbrain()->sectors[0].end(); sector++)
+	for(list<AAISector*>::iterator sector = ai->Getbrain()->sectors[0].begin(); sector != ai->Getbrain()->sectors[0].end(); ++sector)
 	{
 		if((*sector)->water_ratio < 0.15)
 		{
@@ -1770,7 +1782,7 @@ bool AAIExecute::BuildFactory()
 
 	if(building)
 	{
-		bool water;
+		bool water = false;
 
 		// land
 		if(ai->Getbt()->CanPlacedLand(building))
@@ -2371,7 +2383,7 @@ void AAIExecute::CheckRessources()
 		// try to disbale some metal makers
 		if((ai->Getut()->activeUnits[METAL_MAKER] - disabledMMakers) > 0)
 		{
-			for(set<int>::iterator maker = ai->Getut()->metal_makers.begin(); maker != ai->Getut()->metal_makers.end(); maker++)
+			for(set<int>::iterator maker = ai->Getut()->metal_makers.begin(); maker != ai->Getut()->metal_makers.end(); ++maker)
 			{
 				if(ai->Getcb()->IsUnitActivated(*maker))
 				{
@@ -2391,7 +2403,7 @@ void AAIExecute::CheckRessources()
 	// try to enable some metal makers
 	else if(averageEnergySurplus > cfg->MIN_METAL_MAKER_ENERGY && disabledMMakers > 0)
 	{
-		for(set<int>::iterator maker = ai->Getut()->metal_makers.begin(); maker != ai->Getut()->metal_makers.end(); maker++)
+		for(set<int>::iterator maker = ai->Getut()->metal_makers.begin(); maker != ai->Getut()->metal_makers.end(); ++maker)
 		{
 			if(!ai->Getcb()->IsUnitActivated(*maker))
 			{
@@ -2746,15 +2758,16 @@ void AAIExecute::CheckConstruction()
 	// get category with highest urgency
 	if(ai->Getbrain()->enemy_pressure_estimation > 0.01f)
 	{
-		double current_urgency;
+//		double current_urgency;
 
 		for(int i = 1; i <= METAL_MAKER; ++i)
 		{
+/*
 			current_urgency = urgency[i];
 
 			if(i != STATIONARY_DEF && i != POWER_PLANT && i != EXTRACTOR && i != STATIONARY_CONSTRUCTOR)
 				current_urgency *= (1.1f - ai->Getbrain()->enemy_pressure_estimation);
-
+*/
 			if(urgency[i] > highest_urgency)
 			{
 				highest_urgency = urgency[i];

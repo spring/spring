@@ -18,7 +18,7 @@ namespace netcode
 struct PlayerStatistics;
 
 
-const unsigned short NETWORK_VERSION = atoi(SpringVersion::GetMajor().c_str());
+static const unsigned short NETWORK_VERSION = atoi(SpringVersion::GetMajor().c_str());
 
 
 /*
@@ -216,9 +216,10 @@ public:
 	PacketType SendSdBlockrequest(unsigned short begin, unsigned short length, unsigned short requestSize);
 	PacketType SendSdBlockresponse(uchar myPlayerNum, std::vector<unsigned> checksums);
 #endif
+
 private:
 	CBaseNetProtocol();
-	~CBaseNetProtocol();
+
 };
 
 #endif // _BASE_NET_PROTOCOL_H

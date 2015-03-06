@@ -19,7 +19,7 @@ CFeatureHandler* featureHandler = NULL;
 
 /******************************************************************************/
 
-CR_BIND(CFeatureHandler, (NULL));
+CR_BIND(CFeatureHandler, (NULL))
 CR_REG_METADATA(CFeatureHandler, (
 	CR_MEMBER(idPool),
 	CR_MEMBER(featureDefs),
@@ -29,7 +29,7 @@ CR_REG_METADATA(CFeatureHandler, (
 	CR_MEMBER(features),
 	CR_MEMBER(toBeRemoved),
 	CR_MEMBER(updateFeatures)
-));
+))
 
 /******************************************************************************/
 
@@ -297,7 +297,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 				def->second,
 				NULL,
 
-				float3(mfi[a].pos.x, ground->GetHeightReal(mfi[a].pos.x, mfi[a].pos.z), mfi[a].pos.z),
+				float3(mfi[a].pos.x, CGround::GetHeightReal(mfi[a].pos.x, mfi[a].pos.z), mfi[a].pos.z),
 				ZeroVector,
 
 				-1, // featureID
@@ -455,8 +455,6 @@ void CFeatureHandler::Update()
 
 			eventHandler.DeleteSyncedObjects();
 
-			eventHandler.DeleteSyncedFeatures();
-
 
 			while (!toBeRemoved.empty()) {
 				CFeature* feature = GetFeature(toBeRemoved.back());
@@ -474,8 +472,6 @@ void CFeatureHandler::Update()
 				}
 			}
 		}
-
-		eventHandler.UpdateFeatures();
 	}
 
 	CFeatureSet::iterator fi = updateFeatures.begin();

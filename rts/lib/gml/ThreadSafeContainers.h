@@ -21,14 +21,6 @@
 /////////////////////////////////////////////////////////
 //
 
-//FIXME class ThreadVector<class T>;
-//class ThreadListSimRender<class T>;
-//class ThreadVectorSimRender<class T>;
-
-/////////////////////////////////////////////////////////
-
-#if !defined(USE_GML) || !GML_ENABLE_SIM
-
 template <class C, class R, class T>
 class ThreadListSimRender {
 private:
@@ -37,7 +29,7 @@ private:
 	typedef typename std::vector<T>::const_iterator VecIT;
 
 public:
-	CR_DECLARE_STRUCT(ThreadListSimRender);
+	CR_DECLARE_STRUCT(ThreadListSimRender)
 
 	void PostLoad() {};
 
@@ -170,7 +162,8 @@ public:
 
 
 
-
+/////////////////////////////////////////////////////////
+//
 
 template <class C, class R, class T, class D>
 class ThreadListRender {
@@ -180,17 +173,7 @@ private:
 	typedef typename std::vector<T>::const_iterator VecIT;
 
 public:
-	CR_DECLARE_STRUCT(ThreadListRender);
-
-	~ThreadListRender() {
-		clear();
-	}
-
-	void clear() {
-	}
-
-	void PostLoad() {
-	}
+	CR_DECLARE_STRUCT(ThreadListRender)
 
 	//! SIMULATION/SYNCED METHODS
 	void push(const T& x) {
@@ -204,45 +187,14 @@ public:
 		D::Remove(x);
 	}
 
-	void remove_erased_synced() {
-	}
-
 public:
 	//! RENDER/UNSYNCED METHODS
-	void delay_add() {
-	}
-
-	void add_delayed() {
-	}
-
 	void erase_delete(const T& x) {
 		D::Remove(x);
 	}
 
-	void delay_delete() {
-	}
-
-	void delete_delayed() {
-	}
-
 	void enqueue(const T& x) {
 		D::Add(x);
-	}
-
-	void delay() {
-	}
-
-	void execute() {
-	}
-
-	void clean() {
-	}
-
-	void clean(std::vector<C> *delQueue) {
-	}
-
-	std::vector<C> *to_destroy() {
-		return NULL;
 	}
 
 	void dequeue(const C& x) {
@@ -251,9 +203,6 @@ public:
 
 	void dequeue_synced(const C& x) {
 		simDelQueue.push_back(x);
-	}
-
-	void destroy() {
 	}
 
 	void destroy_synced() {
@@ -268,144 +217,41 @@ private:
 };
 
 
-template <class C, class K, class V, class I>
+/////////////////////////////////////////////////////////
+//
+
+template <class Key, class Value, class Indexer>
 class ThreadMapRender {
 private:
-	typedef std::map<K,V> TMapC;
+	typedef std::map<int,Value> TMapC;
 
 public:
-	CR_DECLARE_STRUCT(ThreadMapRender);
-
-	~ThreadMapRender() {
-		clear();
-	}
+	CR_DECLARE_STRUCT(ThreadMapRender)
 
 	const TMapC& get_render_map() const { return contRender; }
-
-	void clear() {
-	}
 
 	void PostLoad() {
 	}
 
 	//! SIMULATION/SYNCED METHODS
-	void push(const C& x, const V& y) {
-		contRender[I::Index(x)] = y;
+	void push(const Key& x, const Value& y) {
+		contRender[Indexer::Index(x)] = y;
 	}
 
 public:
 	//! RENDER/UNSYNCED METHODS
-	void delay_add() {
+	void erase_delete(const Key& x) {
+		contRender.erase(Indexer::Index(x));
 	}
 
-	void add_delayed() {
-	}
-
-	void erase_delete(const C& x) {
-		contRender.erase(I::Index(x));
-	}
-
-	void delay_delete() {
-	}
-
-	void delete_delayed() {
-	}
 
 private:
 	TMapC contRender;
 };
 
 
-template <class T>
-class ThreadVectorSimRender {
-private:
-	typedef typename std::vector<T>::iterator VectorIT;
-	typedef typename std::vector<T>::const_iterator constIT;
-
-public:
-	CR_DECLARE_STRUCT(ThreadVectorSimRender);
-
-	void PostLoad() {};
-
-	//! SIMULATION/SYNCED METHODS
-	void push(const T& x) {
-		cont.push_back(x);
-	}
-
-	VectorIT insert(VectorIT& it, const T& x) {
-		if (it != cont.end()) {
-			//! fast insert
-			cont.push_back(*it);
-			*it = x;
-			return it;
-		}
-		return cont.insert(it, x);
-	}
-
-	VectorIT erase(VectorIT& it) {
-		VectorIT ito = it++;
-		if (it == cont.end()) {
-			cont.pop_back();
-			return cont.end();
-		}
-		*ito = cont.back();
-		cont.pop_back();
-		return ito;
-	}
-
-	void resize(const size_t& s) {
-		cont.resize(s);
-	}
-
-	size_t size() const {
-		return cont.size();
-	}
-
-	bool empty() const {
-		return cont.empty();
-	}
-
-	VectorIT begin() {
-		return cont.begin();
-	}
-
-	VectorIT end() {
-		return cont.end();
-	}
-
-public:
-	//! RENDER/UNSYNCED METHODS
-	inline void update() const {
-	}
-
-	size_t render_size() const {
-		return cont.size();
-	}
-
-	bool render_empty() const {
-		return cont.empty();
-	}
-
-	constIT render_begin() const {
-		return cont.begin();
-	}
-
-	constIT render_end() const {
-		return cont.end();
-	}
-
-public:
-	typedef VectorIT iterator;
-	typedef constIT render_iterator;
-
-//private:
-public:
-	std::vector<T> cont;
-};
-
-#endif
-
-
+/////////////////////////////////////////////////////////
+//
 
 template <class C, class R, class T, class D>
 class ThreadListSim {
@@ -416,7 +262,7 @@ private:
 	typedef typename std::vector<T>::const_iterator VecIT;
 
 public:
-	CR_DECLARE_STRUCT(ThreadListSim);
+	CR_DECLARE_STRUCT(ThreadListSim)
 
 	~ThreadListSim() {
 		clear();
@@ -472,9 +318,7 @@ public:
 	void detach_erased_synced() {
 		for (VecIT it = del.begin(); it != del.end(); ++it) {
 			D::Detach(*it);
-#if !defined(USE_GML) || !GML_ENABLE_SIM
 			delete *it;
-#endif
 		}
 		del.clear();
 	}
@@ -500,18 +344,12 @@ public:
 	}
 
 	SimIT erase_delete(SimIT& it) {
-#if !defined(USE_GML) || !GML_ENABLE_SIM
 		delete *it;
-#endif
 		return cont.erase(it);
 	}
 
 	SimIT erase_detach(SimIT& it) {
-#if !defined(USE_GML) || !GML_ENABLE_SIM
 		delete *it;
-#else
-		D::Detach(*it);
-#endif
 		return cont.erase(it);
 	}
 

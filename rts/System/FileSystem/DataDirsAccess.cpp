@@ -20,16 +20,8 @@ std::vector<std::string> DataDirsAccess::FindFiles(std::string dir, const std::s
 		return std::vector<std::string>();
 	}
 
-	if (dir.empty()) {
-		dir = "./";
-	} else {
-		const char lastChar = dir[dir.length() - 1];
-		if ((lastChar != '/') && (lastChar != '\\')) {
-			dir += '/';
-		}
-	}
-
 	FileSystem::FixSlashes(dir);
+	FileSystem::EnsurePathSepAtEnd(dir);
 
 	if (flags & FileQueryFlags::ONLY_DIRS) {
 		flags |= FileQueryFlags::INCLUDE_DIRS;
@@ -53,7 +45,7 @@ std::vector<std::string> DataDirsAccess::FindFilesInternal(const std::string& di
 	std::string dir2 = FileSystem::RemoveLocalPathPrefix(dir);
 
 	const std::vector<DataDir>& datadirs = dataDirLocater.GetDataDirs();
-	for (std::vector<DataDir>::const_reverse_iterator d = datadirs.rbegin(); d != datadirs.rend(); ++d) {
+	for (auto d = datadirs.crbegin(); d != datadirs.crend(); ++d) {
 		FindFilesSingleDir(matches, d->path, dir2, pattern, flags);
 	}
 	return matches;
@@ -67,8 +59,8 @@ std::string DataDirsAccess::LocateFileInternal(const std::string& file) const
 	}
 
 	const std::vector<DataDir>& datadirs = dataDirLocater.GetDataDirs();
-	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
-		std::string fn(d->path + file);
+	for (const DataDir& d: datadirs) {
+		std::string fn(d.path + file);
 		// does the file exist, and is it readable?
 		if (FileSystem::IsReadableFile(fn)) {
 			return fn;
@@ -115,18 +107,16 @@ std::string DataDirsAccess::LocateFile(std::string file, int flags) const
 	return LocateFileInternal(file);
 }
 
-std::string DataDirsAccess::LocateDir(std::string _dir, int flags) const
+std::string DataDirsAccess::LocateDir(std::string dir, int flags) const
 {
-	if (!FileSystem::CheckFile(_dir)) {
+	if (!FileSystem::CheckFile(dir)) {
 		return "";
 	}
 
-	// if it's an absolute path, don't look for it in the data directories
-	if (FileSystem::IsAbsolutePath(_dir)) {
-		return _dir;
+	if (FileSystem::IsAbsolutePath(dir)) {
+		return dir;
 	}
 
-	std::string dir = _dir;
 	FileSystem::FixSlashes(dir);
 
 	if (flags & FileQueryFlags::WRITE) {
@@ -138,9 +128,8 @@ std::string DataDirsAccess::LocateDir(std::string _dir, int flags) const
 		return writeableDir;
 	} else {
 		const std::vector<std::string>& datadirs = dataDirLocater.GetDataDirPaths();
-		std::vector<std::string>::const_iterator dd;
-		for (dd = datadirs.begin(); dd != datadirs.end(); ++dd) {
-			std::string dirPath((*dd) + dir);
+		for (const std::string& dd: datadirs) {
+			std::string dirPath(dd + dir);
 			if (FileSystem::DirExists(dirPath)) {
 				return dirPath;
 			}
@@ -148,21 +137,19 @@ std::string DataDirsAccess::LocateDir(std::string _dir, int flags) const
 		return dir;
 	}
 }
-std::vector<std::string> DataDirsAccess::LocateDirs(const std::string& _dir) const
+std::vector<std::string> DataDirsAccess::LocateDirs(std::string dir) const
 {
 	std::vector<std::string> found;
 
-	if (!FileSystem::CheckFile(_dir) || FileSystem::IsAbsolutePath(_dir)) {
+	if (!FileSystem::CheckFile(dir) || FileSystem::IsAbsolutePath(dir)) {
 		return found;
 	}
 
-	std::string dir = _dir;
 	FileSystem::FixSlashes(dir);
 
 	const std::vector<std::string>& datadirs = dataDirLocater.GetDataDirPaths();
-	std::vector<std::string>::const_iterator dd;
-	for (dd = datadirs.begin(); dd != datadirs.end(); ++dd) {
-		std::string dirPath((*dd) + dir);
+	for (const std::string& dd: datadirs) {
+		std::string dirPath(dd + dir);
 		if (FileSystem::DirExists(dirPath)) {
 			found.push_back(dirPath);
 		}
@@ -179,22 +166,21 @@ std::vector<std::string> DataDirsAccess::FindDirsInDirectSubDirs(
 	static const std::string pattern = "*";
 
 	// list of all occurences of the relative path in the data directories
-	const std::vector<std::string> &rootDirs = LocateDirs(relPath);
+	const std::vector<std::string>& rootDirs = LocateDirs(relPath);
 
 	// list of subdirs in all occurences of the relative path in the data directories
 	std::vector<std::string> mainDirs;
 
 	// find all subdirectories in the rootDirs
-	std::vector<std::string>::const_iterator dir;
-	for (dir = rootDirs.begin(); dir != rootDirs.end(); ++dir) {
-		const std::vector<std::string>& localMainDirs = CFileHandler::SubDirs(*dir, pattern, SPRING_VFS_RAW);
+	for (const std::string& dir: rootDirs) {
+		const std::vector<std::string>& localMainDirs = CFileHandler::SubDirs(dir, pattern, SPRING_VFS_RAW);
 		mainDirs.insert(mainDirs.end(), localMainDirs.begin(), localMainDirs.end());
 	}
 	//found.insert(found.end(), mainDirs.begin(), mainDirs.end());
 
 	// and add all subdriectories of these
-	for (dir = mainDirs.begin(); dir != mainDirs.end(); ++dir) {
-		const std::vector<std::string>& subDirs = CFileHandler::SubDirs(*dir, pattern, SPRING_VFS_RAW);
+	for (const std::string& dir: mainDirs) {
+		const std::vector<std::string>& subDirs = CFileHandler::SubDirs(dir, pattern, SPRING_VFS_RAW);
 		found.insert(found.end(), subDirs.begin(), subDirs.end());
 	}
 

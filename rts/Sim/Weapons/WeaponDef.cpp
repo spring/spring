@@ -15,7 +15,7 @@
 #include "System/myMath.h"
 #include "System/Log/ILog.h"
 
-CR_BIND(WeaponDef, );
+CR_BIND(WeaponDef, )
 
 
 
@@ -50,7 +50,7 @@ WEAPONTAG(bool, impactOnly).defaultValue(false);
 WEAPONTAG(bool, noSelfDamage).defaultValue(false);
 WEAPONTAG(bool, noExplode).defaultValue(false);
 WEAPONTAG(bool, selfExplode).externalName("burnblow").defaultValue(false);
-WEAPONTAG(float, damageAreaOfEffect).externalName("areaOfEffect").defaultValue(8.0f).scaleValue(0.5f);
+WEAPONTAG(float, damageAreaOfEffect).fallbackName("areaOfEffect").defaultValue(8.0f).scaleValue(0.5f);
 WEAPONTAG(float, edgeEffectiveness).defaultValue(0.0f).maximumValue(0.999f);
 WEAPONTAG(float, collisionSize).defaultValue(0.05f);
 
@@ -75,7 +75,7 @@ WEAPONTAG(float, impulseFactor, damages.impulseFactor).defaultValue(1.0f);
 WEAPONTAG(float, impulseBoost, damages.impulseBoost).defaultValue(0.0f);
 WEAPONTAG(float, craterMult, damages.craterMult).fallbackName("impulseFactor").defaultValue(1.0f);
 WEAPONTAG(float, craterBoost, damages.craterBoost).defaultValue(0.0f);
-WEAPONTAG(float, craterAreaOfEffect).externalName("areaOfEffect").defaultValue(8.0f).scaleValue(0.5f);
+WEAPONTAG(float, craterAreaOfEffect).fallbackName("areaOfEffect").defaultValue(8.0f).scaleValue(0.5f);
 
 // Water
 WEAPONTAG(bool, waterweapon).defaultValue(false);
@@ -91,6 +91,7 @@ WEAPONTAG(float, cylinderTargeting).fallbackName("cylinderTargetting").defaultVa
 WEAPONTAG(bool, turret).defaultValue(false).description("Does the unit aim within an arc (up-to and including full 360° turret traverse) or always aim along the owner's heading?");
 WEAPONTAG(bool, fixedLauncher).defaultValue(false);
 WEAPONTAG(float, maxAngle).externalName("tolerance").defaultValue(3000.0f).scaleValue(180.0f / COBSCALEHALF);
+WEAPONTAG(float, maxFireAngle).externalName("firetolerance").defaultValue(32768.0f).scaleValue(180.0f / COBSCALEHALF);
 WEAPONTAG(int, highTrajectory).defaultValue(2);
 WEAPONTAG(float, trajectoryHeight).defaultValue(0.0f);
 WEAPONTAG(bool, tracks).defaultValue(false);
@@ -106,10 +107,10 @@ WEAPONTAG(float, heightBoostFactor).defaultValue(-1.0f);
 WEAPONTAG(float, proximityPriority).defaultValue(1.0f);
 
 // Target Error
-TAGFUNCTION(AccuracyToSin, float, math::sin(x * PI / 0xafff)); // should really be tan but TA seem to cap it somehow, should also be 7fff or ffff theoretically but neither seems good
+TAGFUNCTION(AccuracyToSin, float, math::sin(x * PI / 0xafff)) // should really be tan but TA seem to cap it somehow, should also be 7fff or ffff theoretically but neither seems good
 WEAPONTAG(float, accuracy).defaultValue(0.0f).tagFunction(AccuracyToSin);
 WEAPONTAG(float, sprayAngle).defaultValue(0.0f).tagFunction(AccuracyToSin);
-WEAPONTAG(float, movingAccuracy).externalName("accuracy").defaultValue(0.0f).tagFunction(AccuracyToSin);
+WEAPONTAG(float, movingAccuracy).fallbackName("accuracy").defaultValue(0.0f).tagFunction(AccuracyToSin);
 WEAPONTAG(float, targetMoveError).defaultValue(0.0f);
 WEAPONTAG(float, leadLimit).defaultValue(-1.0f);
 WEAPONTAG(float, leadBonus).defaultValue(0.0f);
@@ -195,8 +196,8 @@ WEAPONTAG(float3, shieldGoodColor).externalName("shield.goodColor").fallbackName
 	.defaultValue(float3(0.5f, 0.5f, 1.0f)).description("The RGB colour the shield transitions to as its hit-points are regenerated towards its maximum power.");
 WEAPONTAG(float, shieldAlpha).externalName("shield.alpha").fallbackName("shieldAlpha")
 	.defaultValue(0.2f).description("The alpha transparency of the shield whilst it is visible.");
-
-
+WEAPONTAG(std::string, shieldArmorTypeName).externalName("shield.armorType").fallbackName("shieldArmorType")
+	.defaultValue("default").description("Specifies the armorclass of the shield; you can input either an armorclass name OR a unitdef name to share that unit's armorclass");
 
 // Unsynced (= Visuals)
 WEAPONTAG(std::string, model, visuals.modelName).defaultValue("");
@@ -293,6 +294,7 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 		LOG_L(L_WARNING, "WeaponDef (%s) The \"isShield\" tag has been removed. Use the weaponType=\"Shield\" tag instead!", name.c_str());
 
 	shieldRechargeDelay = int(wdTable.GetFloat("rechargeDelay", 0) * GAME_SPEED);
+	shieldArmorType = damageArrayHandler->GetTypeFromName(shieldArmorTypeName);
 	flighttime = int(wdTable.GetFloat("flighttime", 0.0f) * 32);
 
 	//FIXME may be smarter to merge the collideXYZ tags with avoidXYZ and removing the collisionFlags tag (and move the code into CWeapon)?
@@ -325,6 +327,15 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 			heightmod = wdTable.GetFloat("heightMod", 0.8f);
 		} else if (type == "BeamLaser" || type == "LightningCannon") {
 			heightmod = wdTable.GetFloat("heightMod", 1.0f);
+		}
+
+		if (type == "LaserCannon") {
+			// for lasers we want this to be true by default: it sets
+			// projectile ttl values to the minimum required to hit a
+			// target which prevents them overshooting (lasers travel
+			// many elmos per frame and ttl's are rounded) at maximum
+			// range
+			selfExplode = wdTable.GetBool("burnblow", true);
 		}
 	}
 
@@ -576,8 +587,6 @@ S3DModel* WeaponDef::LoadModel()
 			// not useful, too much spam
 			// LOG_L(L_WARNING, "[WeaponDef::%s] weapon \"%s\" has no model defined", __FUNCTION__, name.c_str());
 		}
-	} else {
-		eventHandler.LoadedModelRequested();
 	}
 
 	return visuals.model;

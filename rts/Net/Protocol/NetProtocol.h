@@ -43,7 +43,7 @@ public:
 	/// Are we still connected (or did the connection time-out)?
 	bool CheckTimeout(int nsecs = 0, bool initial = false) const;
 
-	void AttemptReconnect(const std::string& myName, const std::string& myPasswd, const std::string& myVersion);
+	void AttemptReconnect(const std::string& myVersion);
 
 	bool NeedsReconnect();
 
@@ -56,7 +56,7 @@ public:
 	 * @brief Take a look at the messages in the recieve buffer (read-only)
 	 * @return A RawPacket holding the data, or 0 if no data
 	 * @param ahead How many packets to look ahead. A typical usage would be:
-	 * for (int ahead = 0; (packet = net->Peek(ahead)) != NULL; ++ahead) {}
+	 * for (int ahead = 0; (packet = clientNet->Peek(ahead)) != NULL; ++ahead) {}
 	 */
 	boost::shared_ptr<const netcode::RawPacket> Peek(unsigned ahead) const;
 
@@ -111,9 +111,12 @@ private:
 
 	boost::scoped_ptr<netcode::CConnection> serverConn;
 	boost::scoped_ptr<CDemoRecorder> demoRecorder;
+
+	std::string userName;
+	std::string userPasswd;
 };
 
-extern CNetProtocol* net;
+extern CNetProtocol* clientNet;
 
 #endif // NET_PROTOCOL_H
 

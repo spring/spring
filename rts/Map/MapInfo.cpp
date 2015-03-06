@@ -13,8 +13,8 @@
 #include "System/myMath.h"
 
 #if !defined(HEADLESS) && !defined(NO_SOUND)
-	#include "System/Sound/EFX.h"
-	#include "System/Sound/EFXPresets.h"
+#include "System/Sound/OpenAL/EFX.h"
+#include "System/Sound/OpenAL/EFXPresets.h"
 #endif
 
 #include <cassert>
@@ -163,17 +163,17 @@ void CMapInfo::ReadGrass()
 {
 	const LuaTable& grassTable = parser->GetRoot().SubTable("grass");
 	const LuaTable& mapResTable = parser->GetRoot().SubTable("resources");
-	
-	grass.bladeWaveScale = grassTable.GetFloat("bladeWaveScale", 1.0f);
-	grass.bladeWidth     = grassTable.GetFloat("bladeWidth", 0.32f);
-	grass.bladeHeight    = grassTable.GetFloat("bladeHeight", 4.0f);
-	grass.bladeAngle     = grassTable.GetFloat("bladeAngle", 1.57f);
-	grass.color          = grassTable.GetFloat3("bladeColor", float3(0.59f, 0.81f, 0.57f));
 
-	grass.grassBladeTexName = mapResTable.GetString("grassBladeTex", "");
+	grass.bladeWaveScale   = grassTable.GetFloat("bladeWaveScale", 1.0f);
+	grass.bladeWidth       = grassTable.GetFloat("bladeWidth", 0.7f);
+	grass.bladeHeight      = grassTable.GetFloat("bladeHeight", 4.5f);
+	grass.bladeAngle       = grassTable.GetFloat("bladeAngle", 1.0f);
+	grass.maxStrawsPerTurf = grassTable.GetInt("maxStrawsPerTurf", 150);
+	grass.color            = grassTable.GetFloat3("bladeColor", float3(0.10f, 0.40f, 0.10f));
 
-	if (!grass.grassBladeTexName.empty()) {
-		grass.grassBladeTexName = "maps/" + grass.grassBladeTexName;
+	grass.bladeTexName     = mapResTable.GetString("grassBladeTex", "");
+	if (!grass.bladeTexName.empty()) { //FIXME only do when file doesn't exists under that path
+		grass.bladeTexName = "maps/" + grass.bladeTexName;
 	}
 }
 
@@ -223,7 +223,7 @@ void CMapInfo::ReadWater()
 	water.fluidDensity = wt.GetFloat("fluidDensity", 960.0f * 0.25f);
 	water.repeatX = wt.GetFloat("repeatX", 0.0f);
 	water.repeatY = wt.GetFloat("repeatY", 0.0f);
-	water.damage  = wt.GetFloat("damage",  0.0f) * (16.0f / GAME_SPEED);
+	water.damage  = wt.GetFloat("damage",  0.0f) * ((float)UNIT_SLOWUPDATE_RATE / (float)GAME_SPEED);
 
 	water.absorb    = wt.GetFloat3("absorb",    float3(0.0f, 0.0f, 0.0f));
 	water.baseColor = wt.GetFloat3("baseColor", float3(0.0f, 0.0f, 0.0f));

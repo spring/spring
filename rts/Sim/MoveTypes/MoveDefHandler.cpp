@@ -13,14 +13,14 @@
 #include "System/myMath.h"
 #include "System/Util.h"
 
-CR_BIND(MoveDef, ());
-CR_BIND(MoveDefHandler, (NULL));
+CR_BIND(MoveDef, ())
+CR_BIND(MoveDefHandler, (NULL))
 
 CR_REG_METADATA(MoveDef, (
 	CR_MEMBER(name),
 
-	CR_ENUM_MEMBER(speedModClass),
-	CR_ENUM_MEMBER(terrainClass),
+	CR_MEMBER(speedModClass),
+	CR_MEMBER(terrainClass),
 
 	CR_MEMBER(xsize),
 	CR_MEMBER(xsizeh),
@@ -47,13 +47,13 @@ CR_REG_METADATA(MoveDef, (
 	CR_MEMBER(heatMod),
 	CR_MEMBER(flowMod),
 	CR_MEMBER(heatProduced)
-));
+))
 
 CR_REG_METADATA(MoveDefHandler, (
 	CR_MEMBER(moveDefs),
 	CR_MEMBER(moveDefNames),
 	CR_MEMBER(checksum)
-));
+))
 
 
 MoveDefHandler* moveDefHandler;
@@ -76,10 +76,10 @@ static float DegreesToMaxSlope(float degrees)
 
 static MoveDef::SpeedModClass ParseSpeedModClass(const std::string& moveDefName, const LuaTable& moveDefTable)
 {
-	const MoveDef::SpeedModClass speedModClass = MoveDef::SpeedModClass(moveDefTable.GetInt("speedModClass", -1));
+	const int speedModClass = moveDefTable.GetInt("speedModClass", -1);
 
 	if (speedModClass != -1)
-		return Clamp(speedModClass, MoveDef::Tank, MoveDef::Ship);
+		return Clamp(MoveDef::SpeedModClass(speedModClass), MoveDef::Tank, MoveDef::Ship);
 
 	// name-based fallbacks
 	if (moveDefName.find( "boat") != string::npos)
@@ -120,11 +120,11 @@ MoveDefHandler::MoveDefHandler(LuaParser* defsParser)
 			break;
 		}
 
-		MoveDef* md = new MoveDef(moveDefTable, num);
-		moveDefs.push_back(md);
-		moveDefNames[md->name] = md->pathType;
+		moveDefs.emplace_back(moveDefTable, num);
+		const MoveDef& md = moveDefs.back();
+		moveDefNames[md.name] = md.pathType;
 
-		crc << md->GetCheckSum();
+		crc << md.GetCheckSum();
 	}
 
 	CMoveMath::noHoverWaterMove = (mapInfo->water.damage >= MAX_ALLOWED_WATER_DAMAGE_HMM);
@@ -138,22 +138,13 @@ MoveDefHandler::MoveDefHandler(LuaParser* defsParser)
 }
 
 
-MoveDefHandler::~MoveDefHandler()
-{
-	while (!moveDefs.empty()) {
-		delete moveDefs.back();
-		moveDefs.pop_back();
-	}
-}
-
-
-MoveDef* MoveDefHandler::GetMoveDefByName(const std::string& name) const
+MoveDef* MoveDefHandler::GetMoveDefByName(const std::string& name)
 {
 	map<string, int>::const_iterator it = moveDefNames.find(name);
 	if (it == moveDefNames.end()) {
 		return NULL;
 	}
-	return moveDefs[it->second];
+	return &moveDefs[it->second];
 }
 
 

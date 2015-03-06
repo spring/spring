@@ -22,7 +22,6 @@ public:
 	/// current writing position
 	int  writingPos;
 	bool ignoreNextChar;
-	char ignoreChar;
 	std::string userInput;
 	std::string userPrompt;
 

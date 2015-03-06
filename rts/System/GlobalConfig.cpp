@@ -4,7 +4,6 @@
 #include "Rendering/TeamHighlight.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/GlobalConfig.h"
-#include "Sim/Misc/ModInfo.h"
 #include "Lua/LuaConfig.h"
 
 CONFIG(int, NetworkLossFactor)

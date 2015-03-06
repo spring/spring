@@ -18,12 +18,13 @@ class TdfParser;
 
 class CGameSetup
 {
-	CR_DECLARE_STRUCT(CGameSetup);
+	CR_DECLARE_STRUCT(CGameSetup)
 
 public:
-	CGameSetup();
+	CGameSetup() { ResetState(); }
 
-	static void LoadSavedScript(const std::string& file, const std::string& script);
+	static bool LoadReceivedScript(const std::string& script, bool isHost);
+	static bool LoadSavedScript(const std::string& file, const std::string& script);
 
 	// these return dummy containers if the global gameSetup instance is NULL
 	static const std::map<std::string, std::string>& GetMapOptions();
@@ -32,8 +33,11 @@ public:
 	static const std::vector<TeamBase>& GetTeamStartingData();
 	static const std::vector<AllyTeam>& GetAllyStartingData();
 
+	void ResetState();
 	void PostLoad();
+
 	bool Init(const std::string& script);
+
 	/**
 	 * @brief Load startpositions from map/script
 	 * @pre numTeams and startPosType initialized
@@ -58,54 +62,9 @@ public:
 	const std::vector<TeamBase>& GetTeamStartingDataCont() const { return teamStartingData; }
 	const std::vector<AllyTeam>& GetAllyStartingDataCont() const { return allyStartingData; }
 	const std::vector<SkirmishAIData>& GetAIStartingDataCont() const { return skirmishAIStartingData; }
+	const std::vector<std::string>& GetMutatorsCont() const { return mutatorsList; }
 
 	const std::string MapFile() const;
-
-	enum StartPosType {
-		StartPos_Fixed            = 0,
-		StartPos_Random           = 1,
-		StartPos_ChooseInGame     = 2,
-		StartPos_ChooseBeforeGame = 3,
-		StartPos_Last             = 3  // last entry in enum (for user input check)
-	};
-
-	bool fixedAllies;
-	bool useLuaGaia;
-	bool noHelperAIs;
-
-	bool ghostedBuildings;
-	bool disableMapDamage;
-
-	/** if true, this is a non-network game (one local client, eg. when watching a demo) */
-	bool onlyLocal;
-	bool hostDemo;
-
-	unsigned int mapHash;
-	unsigned int modHash;
-	unsigned int mapSeed;
-
-	/**
-	 * The number of seconds till the game starts,
-	 * counting from the moment when all players are connected and ready.
-	 * Default: 4 (seconds)
-	 */
-	unsigned int gameStartDelay;
-
-	int numDemoPlayers;
-	int maxUnitsPerTeam;
-
-	float maxSpeed;
-	float minSpeed;
-
-	StartPosType startPosType;
-
-	std::string mapName;
-	std::string modName;
-	std::string gameID;
-
-	std::string gameSetupText;
-	std::string demoName;
-	std::string saveName;
 
 private:
 	/**
@@ -113,6 +72,8 @@ private:
 	 * @pre mapName, numTeams, teamStartNum initialized and the map loaded (LoadMap())
 	 */
 	void LoadStartPositionsFromMap();
+
+	void LoadMutators(const TdfParser& file, std::vector<std::string>& mutatorsList);
 	/**
 	 * @brief Load unit restrictions
 	 * @post restrictedUnits initialized
@@ -148,6 +109,54 @@ private:
 	/** @brief Update all allyteam indices to refer to the right allyteams. (except allies) */
 	void RemapAllyteams();
 
+public:
+	enum StartPosType {
+		StartPos_Fixed            = 0,
+		StartPos_Random           = 1,
+		StartPos_ChooseInGame     = 2,
+		StartPos_ChooseBeforeGame = 3,
+		StartPos_Last             = 3  // last entry in enum (for user input check)
+	};
+
+
+	bool fixedAllies;
+	bool useLuaGaia;
+	bool noHelperAIs;
+
+	bool ghostedBuildings;
+	bool disableMapDamage;
+
+	/** if true, this is a non-network game (one local client, eg. when watching a demo) */
+	bool onlyLocal;
+	bool hostDemo;
+
+	unsigned int mapHash;
+	unsigned int modHash;
+	unsigned int mapSeed;
+
+	/**
+	 * The number of seconds till the game starts,
+	 * counting from the moment when all players are connected and ready.
+	 * Default: 4 (seconds)
+	 */
+	unsigned int gameStartDelay;
+
+	int numDemoPlayers;
+	int maxUnitsPerTeam;
+
+	float maxSpeed;
+	float minSpeed;
+
+	StartPosType startPosType;
+
+	std::string mapName;
+	std::string modName;
+	std::string gameID;
+
+	std::string setupText;
+	std::string demoName;
+	std::string saveName;
+
 private:
 	std::map<int, int> playerRemap;
 	std::map<int, int> teamRemap;
@@ -157,8 +166,8 @@ private:
 	std::vector<TeamBase> teamStartingData;
 	std::vector<AllyTeam> allyStartingData;
 	std::vector<SkirmishAIData> skirmishAIStartingData;
+	std::vector<std::string> mutatorsList;
 
-	std::map<int, const SkirmishAIData*> team_skirmishAI;
 	std::map<std::string, int> restrictedUnits;
 
 	std::map<std::string, std::string> mapOptions;

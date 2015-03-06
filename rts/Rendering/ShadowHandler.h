@@ -11,7 +11,7 @@
 
 namespace Shader {
 	struct IProgramObject;
-};
+}
 
 class CCamera;
 class CShadowHandler
@@ -66,9 +66,9 @@ private:
 	void DrawShadowPasses();
 	void LoadShadowGenShaderProgs();
 	void SetShadowMapSizeFactors();
-	float GetShadowProjectionRadius(CCamera*, float3&, const float3&) const;
-	float GetOrthoProjectedMapRadius(const float3&, float3&) const;
-	float GetOrthoProjectedFrustumRadius(CCamera*, float3&) const;
+	float GetShadowProjectionRadius(CCamera*, float3&, const float3&);
+	float GetOrthoProjectedMapRadius(const float3&, float3&);
+	float GetOrthoProjectedFrustumRadius(CCamera*, float3&);
 
 public:
 	int shadowConfig;
@@ -85,9 +85,13 @@ public:
 	bool inShadowPass;
 
 	float3 centerPos;
+	float3 orthoProjMidPos;
+	float3 orthoProjMapPos;
+
 	float3 sunDirX;
 	float3 sunDirY;
 	float3 sunDirZ;
+	float3 sunProjDir;
 
 	CMatrix44f shadowMatrix;
 

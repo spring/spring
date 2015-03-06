@@ -44,7 +44,6 @@ REMOVE_DEFINITIONS(-DTHREADPOOL)
 
 set(ENGINE_SRC_ROOT "../../rts")
 
-INCLUDE_DIRECTORIES(${DEVIL_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(${SPRING_MINIZIP_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT}/lib/lua/include)
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT}/lib/7zip)
@@ -60,6 +59,7 @@ set(main_files
 	"${ENGINE_SRC_ROOT}/System/Config/ConfigLocater.cpp"
 	"${ENGINE_SRC_ROOT}/System/CRC.cpp"
 	"${ENGINE_SRC_ROOT}/System/Misc/SpringTime.cpp"
+	"${ENGINE_SRC_ROOT}/System/Platform/CpuID.cpp"
 	"${ENGINE_SRC_ROOT}/System/Platform/Misc.cpp"
 	"${ENGINE_SRC_ROOT}/System/Platform/ScopedFileLock.cpp"
 	"${ENGINE_SRC_ROOT}/System/Platform/Threading.cpp"
@@ -84,10 +84,13 @@ set(main_files
 	)
 if (WIN32)
 	LIST(APPEND main_files "${ENGINE_SRC_ROOT}/System/Platform/Win/WinVersion.cpp")
+else (WIN32)
+        LIST(APPEND main_files "${ENGINE_SRC_ROOT}/System/Platform/Linux/ThreadSupport.cpp")
 endif (WIN32)
 
 set(unitsync_files
 	${sources_engine_System_FileSystem}
+	${sources_engine_System_Threading}
 	${sources_engine_System_Log}
 	${sources_engine_System_Log_sinkFile}
 	${sources_engine_System_Log_sinkOutputDebugString}
@@ -110,7 +113,9 @@ FixLibName(unitsync)
 install (TARGETS unitsync DESTINATION ${LIBDIR})
 
 Add_Subdirectory(test)
-If     (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/python/CMakeLists.txt" )
+
+OPTION(UNITSYNC_PYTHON_BINDINGS "compile python bindings for unitsync (FIXME: broken with gcc 4.9 see #4377)" OFF)
+If     (UNITSYNC_PYTHON_BINDINGS)
 	# only add this if the submodule is present
 	Add_Subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/python")
-EndIf  (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/python/CMakeLists.txt")
+EndIf()

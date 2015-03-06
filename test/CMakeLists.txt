@@ -237,6 +237,7 @@ Else  (NOT Boost_FOUND)
 			${Boost_REGEX_LIBRARY}
 		)
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
+	add_dependencies(test_${test_name} generateVersionFiles)
 ################################################################################
 ### LuaSocketRestrictions
 	set(test_name LuaSocketRestrictions)
@@ -256,8 +257,6 @@ Else  (NOT Boost_FOUND)
 ################################################################################
 ### CREG
 	add_test(NAME testCreg COMMAND ${CMAKE_BINARY_DIR}/spring-headless${CMAKE_EXECUTABLE_SUFFIX} --test-creg)
-	add_dependencies(tests testCreg)
-	add_dependencies(tests engine-headless)
 
 ################################################################################
 ### CREG LoadSave
@@ -276,6 +275,7 @@ Else  (NOT Boost_FOUND)
 		)
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" -"DTEST")
+
 ################################################################################
 ### UnitSync
 	set(test_name UnitSync)
@@ -292,6 +292,7 @@ Else  (NOT Boost_FOUND)
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
 	add_dependencies(test_${test_name} springcontent.sdz)
+
 ################################################################################
 ### ThreadPool
 	set(test_name ThreadPool)
@@ -299,10 +300,16 @@ Else  (NOT Boost_FOUND)
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/testThreadPool.cpp"
 			"${ENGINE_SOURCE_DIR}/System/ThreadPool.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
-			"${ENGINE_SOURCE_DIR}/System/Platform/Threading.cpp"
 			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Platform/CpuID.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Platform/Threading.cpp"
+
 			${test_Log_sources}
 		)
+	if(NOT WIN32)
+		LIST(APPEND test_src
+			"${ENGINE_SOURCE_DIR}/System/Platform/Linux/ThreadSupport.cpp")
+	endif()
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_THREAD_LIBRARY}
@@ -310,7 +317,46 @@ Else  (NOT Boost_FOUND)
 			${Boost_SYSTEM_LIBRARY}
 			${WINMM_LIBRARY}
 		)
+if(NOT WIN32)
+# FIXME: sometimes fails on windows
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSYNC")
+endif()
+
+################################################################################
+### Mutex
+	set(test_name Mutex)
+	Set(test_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/other/testMutex.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
+			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
+			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
+			${test_Log_sources}
+			${sources_engine_System_Threading}
+		)
+
+	set(test_libs
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			${Boost_SYSTEM_LIBRARY}
+			${Boost_CHRONO_LIBRARY_WITH_RT}
+			${Boost_THREAD_LIBRARY}
+			${WINMM_LIBRARY}
+			${WS2_32_LIBRARY}
+		)
+
+	set(test_flags "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
+
+################################################################################
+### EventClient
+	set(test_name EventClient)
+	Set(test_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/EventClient.cpp"
+			${test_Log_sources}
+		)
+	set(test_libs
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+		)
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
 
 ################################################################################
 EndIf (NOT Boost_FOUND)

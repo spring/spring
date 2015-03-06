@@ -29,9 +29,6 @@ if (SYNCDEBUG)
 	EndIf  ()
 endif (SYNCDEBUG)
 
-# Only used by GML build, but used in builds/GML and lib/gml
-option(USE_GML_DEBUG "Use GML call debugging?" FALSE)
-
 ### give error when not found
 FIND_PACKAGE_STATIC(DevIL REQUIRED)
 
@@ -91,6 +88,17 @@ if    (USE_TCMALLOC AND TCMALLOC_LIBRARY)
 endif (USE_TCMALLOC AND TCMALLOC_LIBRARY)
 
 
+if(UNIX)
+	FIND_PACKAGE_STATIC(Libunwind REQUIRED)
+	LIST(APPEND engineCommonLibraries ${LIBUNWIND_LIBRARIES})
+	if(LIBUNWIND_FOUND)
+		message(STATUS "Found libunwind libraries at ${LIBUNWIND_LIBRARIES}")
+	else()
+		message(FATAL_ERROR "Couldn't find libunwind")
+	endif()
+endif()
+
+
 
 ### Assemble engine sources
 Add_Subdirectory(Game)
@@ -104,7 +112,7 @@ Add_Subdirectory(Net)
 Add_Subdirectory(Sim)
 #Add_Subdirectory(System) # this is already added in ../
 
-SET(engineSources
+MakeGlobalVar(engineSources
 		${sources_engine_Game}
 		${sources_engine_Net}
 		${sources_engine_Lua}

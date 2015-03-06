@@ -3,7 +3,6 @@
 
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
-#include "Game/TraceRay.h"
 #include "Map/Ground.h"
 #include "MissileProjectile.h"
 #include "Rendering/GlobalRendering.h"
@@ -22,7 +21,7 @@
 
 const float CMissileProjectile::SMOKE_TIME = 60.0f;
 
-CR_BIND_DERIVED(CMissileProjectile, CWeaponProjectile, (ProjectileParams()));
+CR_BIND_DERIVED(CMissileProjectile, CWeaponProjectile, (ProjectileParams()))
 
 CR_REG_METADATA(CMissileProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -45,7 +44,7 @@ CR_REG_METADATA(CMissileProjectile,(
 	CR_MEMBER(extraHeight),
 	CR_MEMBER(extraHeightDecay),
 	CR_MEMBER(extraHeightTime)
-));
+))
 
 CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, maxSpeed(0.0f)
@@ -65,10 +64,10 @@ CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponP
 	, wobbleTime(1)
 
 	, oldSmoke(pos)
+	, oldDir(dir)
 {
 	projectileType = WEAPON_MISSILE_PROJECTILE;
 
-	oldDir = dir;
 
 	if (model != NULL) {
 		SetRadiusAndHeight(model);
@@ -146,6 +145,8 @@ void CMissileProjectile::Collision(CFeature* feature)
 
 void CMissileProjectile::Update()
 {
+	const CUnit* own = owner();
+
 	if (--ttl > 0) {
 		if (!luaMoveCtrl) {
 			float3 targetVel;
@@ -163,14 +164,14 @@ void CMissileProjectile::Update()
 					targetPos = so->aimPos;
 					targetVel = so->speed;
 
-					if (owner() != NULL && pos.SqDistance(so->aimPos) > Square(150.0f)) {
+					if (own != NULL && pos.SqDistance(so->aimPos) > Square(150.0f)) {
 						// if we have an owner and our target is a unit,
 						// set target-position to its error-position for
 						// our owner's allyteam
-						const CUnit* u = dynamic_cast<const CUnit*>(so);
+						const CUnit* tgt = dynamic_cast<const CUnit*>(so);
 
-						if (u != NULL) {
-							targetPos = u->GetErrorPos(owner()->allyteam, true);
+						if (tgt != NULL) {
+							targetPos = tgt->GetErrorPos(own->allyteam, true);
 						}
 					}
 				}
@@ -180,26 +181,8 @@ void CMissileProjectile::Update()
 			}
 
 
-			if (isWobbling) {
-				if ((--wobbleTime) == 0) {
-					float3 newWob = gs->randVector();
-					wobbleDif = (newWob - wobbleDir) * (1.0f / 16);
-					wobbleTime = 16;
-				}
-
-				wobbleDir += wobbleDif;
-				dir = (dir + wobbleDir * weaponDef->wobble * (owner()? (1.0f - owner()->limExperience * 0.5f): 1)).Normalize();
-			}
-
-			if (isDancing) {
-				if ((--danceTime) <= 0) {
-					danceMove = gs->randVector() * weaponDef->dance - danceCenter;
-					danceCenter += danceMove;
-					danceTime = 8;
-				}
-
-				pos += danceMove;
-			}
+			UpdateWobble();
+			UpdateDance();
 
 			const float3 orgTargPos = targetPos;
 			const float3 targetDir = (targetPos - pos).SafeNormalize();
@@ -267,7 +250,7 @@ void CMissileProjectile::Update()
 
 	if (weaponDef->visuals.smokeTrail && !(age & 7)) {
 		CSmokeTrailProjectile* tp = new CSmokeTrailProjectile(
-			owner(),
+			own,
 			pos, oldSmoke,
 			dir, oldDir,
 			age == 8,
@@ -297,6 +280,38 @@ void CMissileProjectile::Update()
 	UpdateInterception();
 	UpdateGroundBounce();
 }
+
+void CMissileProjectile::UpdateWobble() {
+	if (!isWobbling)
+		return;
+
+	if ((--wobbleTime) <= 0) {
+		wobbleDif = (gs->randVector() - wobbleDir) * (1.0f / 16);
+		wobbleTime = 16;
+	}
+
+	float wobbleFact = weaponDef->wobble;
+
+	if (owner() != NULL)
+		wobbleFact *= CUnit::ExperienceScale(owner()->limExperience, weaponDef->ownerExpAccWeight);
+
+	wobbleDir += wobbleDif;
+	dir = (dir + wobbleDir * wobbleFact).Normalize();
+}
+
+void CMissileProjectile::UpdateDance() {
+	if (!isDancing)
+		return;
+
+	if ((--danceTime) <= 0) {
+		danceMove = gs->randVector() * weaponDef->dance - danceCenter;
+		danceCenter += danceMove;
+		danceTime = 8;
+	}
+
+	SetPosition(pos + danceMove);
+}
+
 
 void CMissileProjectile::UpdateGroundBounce() {
 	if (luaMoveCtrl)
@@ -375,10 +390,10 @@ void CMissileProjectile::Draw()
 				float3 pos1 = CalcBeizer(float(a) / (numParts), pos, dirpos1, dirpos2, oldSmoke);
 
 				#define st projectileDrawer->smoketex[0]
-				va->AddVertexQTC(pos1 + ( camera->up + camera->right) * size, st->xstart, st->ystart, col);
-				va->AddVertexQTC(pos1 + ( camera->up - camera->right) * size, st->xend,   st->ystart, col);
-				va->AddVertexQTC(pos1 + (-camera->up - camera->right) * size, st->xend,   st->ystart, col);
-				va->AddVertexQTC(pos1 + (-camera->up + camera->right) * size, st->xstart, st->ystart, col);
+				va->AddVertexQTC(pos1 + ( camera->GetUp() + camera->GetRight()) * size, st->xstart, st->ystart, col);
+				va->AddVertexQTC(pos1 + ( camera->GetUp() - camera->GetRight()) * size, st->xend,   st->ystart, col);
+				va->AddVertexQTC(pos1 + (-camera->GetUp() - camera->GetRight()) * size, st->xend,   st->ystart, col);
+				va->AddVertexQTC(pos1 + (-camera->GetUp() + camera->GetRight()) * size, st->xstart, st->ystart, col);
 				#undef st
 			}
 		}
@@ -390,14 +405,18 @@ void CMissileProjectile::Draw()
 	col[2] = 180;
 	col[3] = 1;
 	const float fsize = radius * 0.4f;
-	va->AddVertexQTC(drawPos - camera->right * fsize-camera->up * fsize, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->ystart, col);
-	va->AddVertexQTC(drawPos + camera->right * fsize-camera->up * fsize, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->ystart, col);
-	va->AddVertexQTC(drawPos + camera->right * fsize+camera->up * fsize, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->yend,   col);
-	va->AddVertexQTC(drawPos - camera->right * fsize+camera->up * fsize, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->yend,   col);
+	va->AddVertexQTC(drawPos - camera->GetRight() * fsize-camera->GetUp() * fsize, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->ystart, col);
+	va->AddVertexQTC(drawPos + camera->GetRight() * fsize-camera->GetUp() * fsize, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->ystart, col);
+	va->AddVertexQTC(drawPos + camera->GetRight() * fsize+camera->GetUp() * fsize, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->yend,   col);
+	va->AddVertexQTC(drawPos - camera->GetRight() * fsize+camera->GetUp() * fsize, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->yend,   col);
 }
 
-int CMissileProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed)
-{
+int CMissileProjectile::ShieldRepulse(
+	CPlasmaRepulser* shield,
+	float3 shieldPos,
+	float shieldForce,
+	float shieldMaxSpeed
+) {
 	if (luaMoveCtrl)
 		return 0;
 

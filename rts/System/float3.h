@@ -24,7 +24,7 @@
 class float3
 {
 public:
-	CR_DECLARE_STRUCT(float3);
+	CR_DECLARE_STRUCT(float3)
 /*	void* operator new(size_t size) { return mempool.Alloc(size); }
 	void* operator new(size_t n, void* p) { return p; } // cp visual
 	void operator delete(void* p, size_t size) { mempool.Free(p, size); }
@@ -647,7 +647,7 @@ public:
 	/**
 	 * @brief max x pos
 	 *
-	 * Static value containing the maximum x position (:= gs->mapx-1)
+	 * Static value containing the maximum x position (:= mapDims.mapx-1)
 	 * @note maxxpos is set after loading the map.
 	 */
 	static float maxxpos;
@@ -655,7 +655,7 @@ public:
 	/**
 	 * @brief max z pos
 	 *
-	 * Static value containing the maximum z position (:= gs->mapy-1)
+	 * Static value containing the maximum z position (:= mapDims.mapy-1)
 	 * @note maxzpos is set after loading the map.
 	 */
 	static float maxzpos;
@@ -663,7 +663,7 @@ public:
 	/**
 	 * @brief Check against FaceHeightmap bounds
 	 *
-	 * Check if this vector is in bounds [0 .. gs->mapxy-1]
+	 * Check if this vector is in bounds [0 .. mapDims.mapxy-1]
 	 * @note THIS IS THE WRONG SPACE! _ALL_ WORLD SPACE POSITIONS SHOULD BE IN VertexHeightmap RESOLUTION!
 	 * @see #IsInMap
 	 */
@@ -671,7 +671,7 @@ public:
 	/**
 	 * @brief Check against FaceHeightmap bounds
 	 *
-	 * Check if this vector is in map [0 .. gs->mapxy]
+	 * Check if this vector is in map [0 .. mapDims.mapxy]
 	 * @note USE THIS!
 	 */
 	bool IsInMap() const;
@@ -679,7 +679,7 @@ public:
 	/**
 	 * @brief Clamps to FaceHeightmap
 	 *
-	 * Clamps to the `face heightmap` resolution [0 .. gs->mapxy-1]
+	 * Clamps to the `face heightmap` resolution [0 .. mapDims.mapxy-1] * SQUARE_SIZE
 	 * @note THIS IS THE WRONG SPACE! _ALL_ WORLD SPACE POSITIONS SHOULD BE IN VertexHeightmap RESOLUTION!
 	 * @deprecated  use ClampInMap instead, but see the note!
 	 * @see #ClampInMap
@@ -689,7 +689,7 @@ public:
 	/**
 	 * @brief Clamps to VertexHeightmap
 	 *
-	 * Clamps to the `vertex heightmap`/`opengl space` resolution [0 .. gs->mapxy]
+	 * Clamps to the `vertex heightmap`/`opengl space` resolution [0 .. mapDims.mapxy] * SQUARE_SIZE
 	 * @note USE THIS!
 	 */
 	void ClampInMap();
@@ -717,9 +717,9 @@ public:
  * Defines constant upwards vector
  * (0, 1, 0)
  */
-const float3  UpVector(0.0f, 1.0f, 0.0f);
-const float3 FwdVector(0.0f, 0.0f, 1.0f);
-const float3 RgtVector(1.0f, 0.0f, 0.0f);
+static const float3  UpVector(0.0f, 1.0f, 0.0f);
+static const float3 FwdVector(0.0f, 0.0f, 1.0f);
+static const float3 RgtVector(1.0f, 0.0f, 0.0f);
 
 /**
  * @brief zero vector
@@ -727,12 +727,12 @@ const float3 RgtVector(1.0f, 0.0f, 0.0f);
  * Defines constant zero vector
  * (0, 0, 0)
  */
-const float3 ZeroVector(0.0f, 0.0f, 0.0f);
-const float3 OnesVector(1.0f, 1.0f, 1.0f);
+static const float3 ZeroVector(0.0f, 0.0f, 0.0f);
+static const float3 OnesVector(1.0f, 1.0f, 1.0f);
 
-const float3 XYVector(1.0f, 1.0f, 0.0f);
-const float3 XZVector(1.0f, 0.0f, 1.0f);
-const float3 YZVector(0.0f, 1.0f, 1.0f);
+static const float3 XYVector(1.0f, 1.0f, 0.0f);
+static const float3 XZVector(1.0f, 0.0f, 1.0f);
+static const float3 YZVector(0.0f, 1.0f, 1.0f);
 
 #endif /* FLOAT3_H */
 

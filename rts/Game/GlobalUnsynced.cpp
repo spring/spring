@@ -32,7 +32,7 @@ CGlobalUnsynced* gu;
 const float CGlobalUnsynced::reconnectSimDrawBalance = 0.15f;
 UnsyncedRNG CGlobalUnsynced::rng;
 
-CR_BIND(CGlobalUnsynced, );
+CR_BIND(CGlobalUnsynced, )
 
 CR_REG_METADATA(CGlobalUnsynced, (
 	CR_IGNORED(simFPS),
@@ -51,14 +51,27 @@ CR_REG_METADATA(CGlobalUnsynced, (
 	CR_MEMBER(spectatingFullView),
 	CR_MEMBER(spectatingFullSelect),
 	CR_IGNORED(fpsMode),
-	CR_IGNORED(globalQuit)
-));
+	CR_IGNORED(globalQuit),
+	CR_IGNORED(globalReload)
+))
 
 CGlobalUnsynced::CGlobalUnsynced()
 {
-	unsigned seed = time(NULL) % ((spring_gettime().toNanoSecsi() + 1) * 9007);
-	rng.Seed(seed);
+	rng.Seed(time(NULL) % ((spring_gettime().toNanoSecsi() + 1) * 9007));
 
+	assert(playerHandler == NULL);
+	ResetState();
+}
+
+CGlobalUnsynced::~CGlobalUnsynced()
+{
+	SafeDelete(playerHandler);
+	assert(playerHandler == NULL);
+}
+
+
+void CGlobalUnsynced::ResetState()
+{
 	simFPS = 0.0f;
 
 	avgSimFrameTime = 0.001f;
@@ -81,21 +94,20 @@ CGlobalUnsynced::CGlobalUnsynced()
 
 	fpsMode = false;
 	globalQuit = false;
+	globalReload = false;
 
-	playerHandler = new CPlayerHandler();
+	if (playerHandler == NULL) {
+		playerHandler = new CPlayerHandler();
+	} else {
+		playerHandler->ResetState();
+	}
 }
-
-CGlobalUnsynced::~CGlobalUnsynced()
-{
-	SafeDelete(playerHandler);
-}
-
-
 
 void CGlobalUnsynced::LoadFromSetup(const CGameSetup* setup)
 {
 	playerHandler->LoadFromSetup(setup);
 }
+
 
 void CGlobalUnsynced::SetMyPlayer(const int myNumber)
 {
@@ -130,3 +142,4 @@ void CGlobalUnsynced::SetMyPlayer(const int myNumber)
 CPlayer* CGlobalUnsynced::GetMyPlayer() {
 	return (playerHandler->Player(myPlayerNum));
 }
+

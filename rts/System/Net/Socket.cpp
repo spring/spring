@@ -6,6 +6,8 @@
 #include "lib/streflop/streflop_cond.h"
 
 #include "System/Log/ILog.h"
+#include "System/Util.h"
+
 
 namespace netcode
 {
@@ -31,23 +33,24 @@ bool CheckErrorCode(boost::system::error_code& err)
 	}
 }
 
-boost::asio::ip::udp::endpoint ResolveAddr(const std::string& host, int port)
+boost::asio::ip::udp::endpoint ResolveAddr(const std::string& host, int port, boost::system::error_code* err)
 {
+	assert(err);
 	using namespace boost::asio;
-	boost::system::error_code err;
-	ip::address tempAddr = WrapIP(host, &err);
-	if (err) {
-		// error, maybe a hostname?
-		ip::udp::resolver resolver(netcode::netservice);
-		std::ostringstream portbuf;
-		portbuf << port;
-		ip::udp::resolver::query query(host, portbuf.str());
-		// TODO: check if unsync problem exists here too (see WrapResolve below)
-		ip::udp::resolver::iterator iter = resolver.resolve(query);
-		tempAddr = iter->endpoint().address();
+	ip::address tempAddr = WrapIP(host, err);
+	if (!*err)
+		return ip::udp::endpoint(tempAddr, port);
+
+	boost::asio::io_service io_service;
+	ip::udp::resolver resolver(io_service);
+	ip::udp::resolver::query query(host, IntToString(port));
+	auto iter = WrapResolve(resolver, query, err);
+	ip::udp::resolver::iterator end;
+	if (!*err && iter != end) {
+		return *iter;
 	}
 
-	return ip::udp::endpoint(tempAddr, port);
+	return ip::udp::endpoint(tempAddr, 0);
 }
 
 bool IsLoopbackAddress(const boost::asio::ip::address& addr) {
@@ -79,12 +82,12 @@ boost::asio::ip::address WrapIP(const std::string& ip,
 	return addr;
 }
 
-boost::asio::ip::tcp::resolver::iterator WrapResolve(
-		boost::asio::ip::tcp::resolver& resolver,
-		boost::asio::ip::tcp::resolver::query& query,
+boost::asio::ip::udp::resolver::iterator WrapResolve(
+		boost::asio::ip::udp::resolver& resolver,
+		boost::asio::ip::udp::resolver::query& query,
 		boost::system::error_code* err)
 {
-	boost::asio::ip::tcp::resolver::iterator resolveIt;
+	boost::asio::ip::udp::resolver::iterator resolveIt;
 
 	if (err == NULL) {
 		resolveIt = resolver.resolve(query);
@@ -99,6 +102,16 @@ boost::asio::ip::tcp::resolver::iterator WrapResolve(
 
 	return resolveIt;
 }
+
+
+boost::asio::ip::address GetAnyAddress(const bool IPv6)
+{
+	if (IPv6) {
+		return boost::asio::ip::address_v6::any();
+	}
+	return boost::asio::ip::address_v4::any();
+}
+
 
 } // namespace netcode
 

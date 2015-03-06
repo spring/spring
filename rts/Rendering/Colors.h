@@ -11,6 +11,6 @@ const unsigned char yellow[4] = {255, 255,   0, 255};
 const unsigned char green[4]  = {0,   255,   0,  25};
 const unsigned char white[4]  = {255, 255, 255, 255};
 const unsigned char whiteA[4] = {255, 255, 255,  25};
-};
+}
 
 #endif // COLORS_H

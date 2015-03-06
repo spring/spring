@@ -19,7 +19,7 @@ static void defSurfaceCircle(const float3& center, float radius, unsigned int re
 		float3 pos;
 		pos.x = center.x + (fastmath::sin(radians) * radius);
 		pos.z = center.z + (fastmath::cos(radians) * radius);
-		pos.y = ground->GetHeightAboveWater(pos.x, pos.z, false) + 5.0f;
+		pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false) + 5.0f;
 		va->AddVertex0(pos);
 	}
 	va->DrawArray0(GL_LINE_LOOP);
@@ -35,10 +35,10 @@ static void defSurfaceSquare(const float3& center, float xsize, float zsize)
 
 	CVertexArray* va=GetVertexArray();
 	va->Initialize();
-		va->AddVertex0(p0.x, ground->GetHeightAboveWater(p0.x, p0.z, false), p0.z);
-		va->AddVertex0(p1.x, ground->GetHeightAboveWater(p1.x, p1.z, false), p1.z);
-		va->AddVertex0(p2.x, ground->GetHeightAboveWater(p2.x, p2.z, false), p2.z);
-		va->AddVertex0(p3.x, ground->GetHeightAboveWater(p3.x, p3.z, false), p3.z);
+		va->AddVertex0(p0.x, CGround::GetHeightAboveWater(p0.x, p0.z, false), p0.z);
+		va->AddVertex0(p1.x, CGround::GetHeightAboveWater(p1.x, p1.z, false), p1.z);
+		va->AddVertex0(p2.x, CGround::GetHeightAboveWater(p2.x, p2.z, false), p2.z);
+		va->AddVertex0(p3.x, CGround::GetHeightAboveWater(p3.x, p3.z, false), p3.z);
 	va->DrawArray0(GL_LINE_LOOP);
 }
 
@@ -72,8 +72,7 @@ void glBallisticCircle(const float3& center, const float radius,
 	va->Initialize();
 	va->EnlargeArrays(resolution, 0, VA_SIZE_0);
 
-	float3* vertices = reinterpret_cast<float3*>(va->drawArray);
-	va->drawArrayPos = va->drawArray + resolution * 3;
+	float3* vertices = va->GetTypedVertexArray<float3>(resolution);
 
 	for_mt(0, resolution, [&](const int i) {
 		const float radians = (2.0f * PI) * (float)i / (float)resolution;
@@ -83,7 +82,7 @@ void glBallisticCircle(const float3& center, const float radius,
 		float3 pos;
 		pos.x = center.x + (sinR * rad);
 		pos.z = center.z + (cosR * rad);
-		pos.y = ground->GetHeightAboveWater(pos.x, pos.z, false);
+		pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false);
 		float heightDiff = (pos.y - center.y) * 0.5f;
 		rad -= heightDiff * slope;
 		float adjRadius = weapon ? weapon->GetRange2D(heightDiff * weapon->heightMod) : rad;
@@ -98,7 +97,7 @@ void glBallisticCircle(const float3& center, const float radius,
 			}
 			pos.x = center.x + (sinR * rad);
 			pos.z = center.z + (cosR * rad);
-			float newY = ground->GetHeightAboveWater(pos.x, pos.z, false);
+			float newY = CGround::GetHeightAboveWater(pos.x, pos.z, false);
 			ydiff = math::fabs(pos.y - newY);
 			pos.y = newY;
 			heightDiff = (pos.y - center.y);
@@ -106,7 +105,7 @@ void glBallisticCircle(const float3& center, const float radius,
 		}
 		pos.x = center.x + (sinR * adjRadius);
 		pos.z = center.z + (cosR * adjRadius);
-		pos.y = ground->GetHeightAboveWater(pos.x, pos.z, false) + 5.0f;
+		pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false) + 5.0f;
 
 		vertices[i] = pos;
 	});

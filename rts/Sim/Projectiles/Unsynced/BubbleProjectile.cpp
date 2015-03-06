@@ -9,7 +9,7 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 
-CR_BIND_DERIVED(CBubbleProjectile, CProjectile, (NULL, ZeroVector, ZeroVector, 0.0f, 0.0f, 0.0f, 0.0f));
+CR_BIND_DERIVED(CBubbleProjectile, CProjectile, (NULL, ZeroVector, ZeroVector, 0.0f, 0.0f, 0.0f, 0.0f))
 
 CR_REG_METADATA(CBubbleProjectile, (
 	CR_MEMBER(ttl),
@@ -18,7 +18,7 @@ CR_REG_METADATA(CBubbleProjectile, (
 	CR_MEMBER(startSize),
 	CR_MEMBER(sizeExpansion),
 	CR_RESERVED(8)
-));
+))
 
 
 CBubbleProjectile::CBubbleProjectile(
@@ -81,9 +81,9 @@ void CBubbleProjectile::Draw()
 	const float interSize = size + sizeExpansion * globalRendering->timeOffset;
 
 	#define bt projectileDrawer->bubbletex
-	va->AddVertexTC(drawPos - camera->right * interSize - camera->up * interSize, bt->xstart, bt->ystart, col);
-	va->AddVertexTC(drawPos + camera->right * interSize - camera->up * interSize, bt->xend,   bt->ystart, col);
-	va->AddVertexTC(drawPos + camera->right * interSize + camera->up * interSize, bt->xend,   bt->yend,   col);
-	va->AddVertexTC(drawPos - camera->right * interSize + camera->up * interSize, bt->xstart, bt->yend,   col);
+	va->AddVertexTC(drawPos - camera->GetRight() * interSize - camera->GetUp() * interSize, bt->xstart, bt->ystart, col);
+	va->AddVertexTC(drawPos + camera->GetRight() * interSize - camera->GetUp() * interSize, bt->xend,   bt->ystart, col);
+	va->AddVertexTC(drawPos + camera->GetRight() * interSize + camera->GetUp() * interSize, bt->xend,   bt->yend,   col);
+	va->AddVertexTC(drawPos - camera->GetRight() * interSize + camera->GetUp() * interSize, bt->xstart, bt->yend,   col);
 	#undef bt
 }

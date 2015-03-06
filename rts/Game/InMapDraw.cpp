@@ -24,7 +24,7 @@
 #include "Net/Protocol/NetProtocol.h"
 #include "System/Log/ILog.h"
 #include "System/Sound/ISound.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 
 
 CInMapDraw* inMapDrawer = NULL;
@@ -56,7 +56,7 @@ public:
 			// even if this message is not intented for our ears
 			LOG("%s added point: %s", sender->name.c_str(), label->c_str());
 			eventHandler.LastMessagePosition(*pos0);
-			Channels::UserInterface.PlaySample(blippSound, *pos0);
+			Channels::UserInterface->PlaySample(blippSound, *pos0);
 			minimap->AddNotification(*pos0, OnesVector, 1.0f);
 		}
 
@@ -146,7 +146,7 @@ void CInMapDraw::MouseMove(int x, int y, int dx, int dy, int button)
 
 float3 CInMapDraw::GetMouseMapPos() // TODO move to some more global place?
 {
-	const float dist = ground->LineGroundCol(camera->GetPos(), camera->GetPos() + (mouse->dir * globalRendering->viewRange * 1.4f), false);
+	const float dist = CGround::LineGroundCol(camera->GetPos(), camera->GetPos() + (mouse->dir * globalRendering->viewRange * 1.4f), false);
 	if (dist < 0) {
 		return float3(-1.0f, 1.0f, -1.0f);
 	}
@@ -237,21 +237,21 @@ void CInMapDraw::SetLuaMapDrawingAllowed(bool state)
 void CInMapDraw::SendErase(const float3& pos)
 {
 	if (!gu->spectating || allowSpecMapDrawing)
-		net->Send(CBaseNetProtocol::Get().SendMapErase(gu->myPlayerNum, (short)pos.x, (short)pos.z));
+		clientNet->Send(CBaseNetProtocol::Get().SendMapErase(gu->myPlayerNum, (short)pos.x, (short)pos.z));
 }
 
 
 void CInMapDraw::SendPoint(const float3& pos, const std::string& label, bool fromLua)
 {
 	if (!gu->spectating || allowSpecMapDrawing)
-		net->Send(CBaseNetProtocol::Get().SendMapDrawPoint(gu->myPlayerNum, (short)pos.x, (short)pos.z, label, fromLua));
+		clientNet->Send(CBaseNetProtocol::Get().SendMapDrawPoint(gu->myPlayerNum, (short)pos.x, (short)pos.z, label, fromLua));
 }
 
 
 void CInMapDraw::SendLine(const float3& pos, const float3& pos2, bool fromLua)
 {
 	if (!gu->spectating || allowSpecMapDrawing)
-		net->Send(CBaseNetProtocol::Get().SendMapDrawLine(gu->myPlayerNum, (short)pos.x, (short)pos.z, (short)pos2.x, (short)pos2.z, fromLua));
+		clientNet->Send(CBaseNetProtocol::Get().SendMapDrawLine(gu->myPlayerNum, (short)pos.x, (short)pos.z, (short)pos2.x, (short)pos2.z, fromLua));
 }
 
 void CInMapDraw::SendWaitingInput(const std::string& label)
@@ -269,7 +269,8 @@ void CInMapDraw::PromptLabel(const float3& pos)
 	game->userWriting = true;
 	wantLabel = true;
 	game->userPrompt = "Label: ";
-	game->ignoreChar = '\xA7'; // should do something better here
+	game->ignoreNextChar = true;
+	inMapDrawer->SetDrawMode(false);
 }
 
 

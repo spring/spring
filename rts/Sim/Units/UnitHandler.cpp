@@ -27,7 +27,7 @@
 
 CUnitHandler* unitHandler = NULL;
 
-CR_BIND(CUnitHandler, );
+CR_BIND(CUnitHandler, )
 CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(units),
 	CR_MEMBER(unitsByDefs),
@@ -35,10 +35,11 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(builderCAIs),
 	CR_MEMBER(idPool),
 	CR_MEMBER(unitsToBeRemoved),
+	CR_IGNORED(activeSlowUpdateUnit),
 	CR_MEMBER(maxUnits),
 	CR_MEMBER(maxUnitRadius),
 	CR_POSTLOAD(PostLoad)
-));
+))
 
 
 
@@ -192,8 +193,6 @@ void CUnitHandler::Update()
 				DeleteUnitNow(delUnit);
 			}
 		}
-
-		eventHandler.UpdateUnits();
 	}
 
 	#define MAPPOS_SANITY_CHECK(unit)                          \
@@ -216,8 +215,8 @@ void CUnitHandler::Update()
 
 	{
 		SCOPED_TIMER("Unit::MoveType::Update");
-		std::list<CUnit*>::iterator usi;
-		for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
+
+		for (auto usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 			CUnit* unit = *usi;
 			AMoveType* moveType = unit->moveType;
 
@@ -238,9 +237,9 @@ void CUnitHandler::Update()
 
 	{
 		// Delete dead units
-		std::list<CUnit*>::iterator usi;
-		for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
+		for (auto usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 			CUnit* unit = *usi;
+
 			if (unit->deathScriptFinished) {
 				// there are many ways to fiddle with "deathScriptFinished", so a unit may
 				// arrive here without having been properly killed (and isDead still false),
@@ -254,8 +253,8 @@ void CUnitHandler::Update()
 
 	{
 		SCOPED_TIMER("Unit::UpdatePieceMatrices");
-		std::list<CUnit*>::iterator usi;
-		for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
+
+		for (auto usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 			// UnitScript only applies piece-space transforms so
 			// we apply the forward kinematics update separately
 			// (only if we have any dirty pieces)
@@ -266,8 +265,8 @@ void CUnitHandler::Update()
 
 	{
 		SCOPED_TIMER("Unit::Update");
-		std::list<CUnit*>::iterator usi;
-		for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
+
+		for (auto usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 			CUnit* unit = *usi;
 			UNIT_SANITY_CHECK(unit);
 			unit->Update();
@@ -279,12 +278,12 @@ void CUnitHandler::Update()
 		SCOPED_TIMER("Unit::SlowUpdate");
 
 		// reset the iterator every <UNIT_SLOWUPDATE_RATE> frames
-		if ((gs->frameNum & (UNIT_SLOWUPDATE_RATE - 1)) == 0) {
+		if ((gs->frameNum % UNIT_SLOWUPDATE_RATE) == 0) {
 			activeSlowUpdateUnit = activeUnits.begin();
 		}
 
 		// stagger the SlowUpdate's
-		int n = (activeUnits.size() / UNIT_SLOWUPDATE_RATE) + 1;
+		unsigned int n = (activeUnits.size() / UNIT_SLOWUPDATE_RATE) + 1;
 
 		for (; activeSlowUpdateUnit != activeUnits.end() && n != 0; ++activeSlowUpdateUnit) {
 			CUnit* unit = *activeSlowUpdateUnit;

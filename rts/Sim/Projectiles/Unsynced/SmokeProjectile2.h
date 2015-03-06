@@ -10,7 +10,7 @@ class CUnit;
 
 class CSmokeProjectile2 : public CProjectile
 {
-	CR_DECLARE(CSmokeProjectile2);
+	CR_DECLARE(CSmokeProjectile2)
 
 public:
 	CSmokeProjectile2();
@@ -27,7 +27,7 @@ public:
 
 	void Update();
 	void Draw();
-	void Init(CUnit* owner, const float3& offset);
+	void Init(const CUnit* owner, const float3& offset);
 
 private:
 	float color;

@@ -5,14 +5,17 @@
 
 */
 
+/*
+// disabled because its called by cron
 $allowed = array(
-	'94.23.255.23', # springfiles.com
+	'37.187.92.174', # springfiles.com
 );
 
 $ip = $_SERVER['REMOTE_ADDR'];
 if (array_search($ip, $allowed) === FALSE) {
 	die("Sorry, $ip isn't allowed to access this page");
 }
+*/
 
 $dirs = array(".");
 $db = new SQLite3("fileattributes.sqlite3");

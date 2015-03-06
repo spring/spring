@@ -7,7 +7,7 @@
 
 class CCannon: public CWeapon
 {
-	CR_DECLARE(CCannon);
+	CR_DECLARE(CCannon)
 protected:
 	/// this is used to keep range true to range tag
 	float rangeFactor;
@@ -32,8 +32,6 @@ public:
 
 	/// indicates high trajectory on/off state
 	bool highTrajectory;
-	/// burnblow tag. defines flakker-like behaviour
-	bool selfExplode;
 	/// projectile gravity
 	float gravity;
 

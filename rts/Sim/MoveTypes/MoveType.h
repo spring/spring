@@ -12,12 +12,13 @@ class CUnit;
 
 class AMoveType : public CObject
 {
-	CR_DECLARE(AMoveType);
+	CR_DECLARE(AMoveType)
 
 public:
 	AMoveType(CUnit* owner);
 	virtual ~AMoveType() {}
 
+	virtual void StartMovingRaw(const float3 moveGoalPos, float moveGoalRadius) {}
 	virtual void StartMoving(float3 pos, float goalRadius) = 0;
 	virtual void StartMoving(float3 pos, float goalRadius, float speed) = 0;
 	virtual void KeepPointingTo(float3 pos, float distance, bool aggressive) = 0;
@@ -25,6 +26,9 @@ public:
 	virtual void StopMoving(bool callScript = false, bool hardStop = false) = 0;
 	virtual bool CanApplyImpulse(const float3&) { return false; }
 	virtual void LeaveTransport() {}
+
+	// generic setter for Lua-writable values
+	virtual bool SetMemberValue(unsigned int memberHash, void* memberValue);
 
 	virtual void SetGoal(const float3& pos, float distance = 0.0f) { goalPos = pos; }
 
@@ -38,6 +42,7 @@ public:
 	//     MoveType classes expects maxSpeed to be != 0
 	virtual void SetMaxSpeed(float speed) { maxSpeed = std::max(0.001f, speed); }
 	virtual void SetWantedMaxSpeed(float speed) { maxWantedSpeed = speed; }
+	virtual void SetManeuverLeash(float leashLength) { maneuverLeash = leashLength; }
 
 	virtual bool Update() = 0;
 	virtual void SlowUpdate();
@@ -59,6 +64,9 @@ public:
 	float GetMaxSpeedDef() const { return maxSpeedDef; }
 	float GetMaxWantedSpeed() const { return maxWantedSpeed; }
 	float GetRepairBelowHealth() const { return repairBelowHealth; }
+	float GetManeuverLeash() const { return maneuverLeash; }
+
+	float CalcStaticTurnRadius() const;
 
 public:
 	CUnit* owner;
@@ -83,6 +91,7 @@ protected:
 	float maxWantedSpeed;      // maximum speed (temporarily) set by a CMD_SET_WANTED_MAX_SPEED modifier command
 
 	float repairBelowHealth;
+	float maneuverLeash;       // maximum distance away a target can be and still be chased
 };
 
 #endif // MOVETYPE_H

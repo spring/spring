@@ -15,15 +15,7 @@ extern void good_fpu_control_registers(const char* text);
 extern void good_fpu_init();
 extern void streflop_init_omp();
 
-#if defined(__GNUC__)
-	#define _noinline __attribute__((__noinline__))
-#else
-	#define _noinline
-#endif
-
 namespace springproc {
-	_noinline void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d);
-
 	unsigned int GetProcMaxStandardLevel();
 	unsigned int GetProcMaxExtendedLevel();
 	unsigned int GetProcSSEBits();

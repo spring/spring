@@ -6,13 +6,13 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Map/Ground.h"
+#include "Map/ReadMap.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/StrafeAirMoveType.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/Groups/Group.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/myMath.h"
@@ -35,7 +35,7 @@ static CStrafeAirMoveType* GetStrafeAirMoveType(const CUnit* owner) {
 
 
 
-CR_BIND_DERIVED(CAirCAI, CMobileCAI, );
+CR_BIND_DERIVED(CAirCAI, CMobileCAI, )
 CR_REG_METADATA(CAirCAI, (
 	CR_MEMBER(basePos),
 	CR_MEMBER(baseDir),
@@ -46,7 +46,7 @@ CR_REG_METADATA(CAirCAI, (
 	CR_MEMBER(lastPC1),
 	CR_MEMBER(lastPC2),
 	CR_RESERVED(16)
-));
+))
 
 CAirCAI::CAirCAI()
 	: CMobileCAI()
@@ -76,21 +76,6 @@ CAirCAI::CAirCAI(CUnit* owner)
 		possibleCommands.push_back(c);
 	}
 
-	if (owner->unitDef->canLoopbackAttack) {
-		c.params.clear();
-		c.id = CMD_LOOPBACKATTACK;
-		c.action = "loopbackattack";
-		c.type = CMDTYPE_ICON_MODE;
-		c.name = "Loopback";
-		c.mouseicon = c.name;
-		c.params.push_back("0");
-		c.params.push_back("Normal");
-		c.params.push_back("Loopback");
-		c.tooltip = "Loopback attack: Sets if the aircraft should loopback after an attack instead of overflying target";
-		possibleCommands.push_back(c);
-		nonQueingCommands.insert(CMD_LOOPBACKATTACK);
-	}
-
 	basePos = owner->pos;
 	goalPos = owner->pos;
 }
@@ -102,8 +87,8 @@ void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		return;
 	} else if (c.GetID() == CMD_MOVE && c.params.size() >= 3 &&
 			(c.params[0] < 0.0f || c.params[2] < 0.0f
-			 || c.params[0] > gs->mapx*SQUARE_SIZE
-			 || c.params[2] > gs->mapy*SQUARE_SIZE))
+			 || c.params[0] > mapDims.mapx*SQUARE_SIZE
+			 || c.params[2] > mapDims.mapy*SQUARE_SIZE))
 	{
 		return;
 	}
@@ -149,27 +134,6 @@ void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 
 			for (unsigned int n = 0; n < possibleCommands.size(); n++) {
 				if (possibleCommands[n].id != CMD_IDLEMODE)
-					continue;
-
-				possibleCommands[n].params[0] = IntToString(int(c.params[0]), "%d");
-				break;
-			}
-
-			selectedUnitsHandler.PossibleCommandChange(owner);
-			return;
-		}
-
-		if (c.GetID() == CMD_LOOPBACKATTACK) {
-			if (c.params.empty())
-				return;
-
-			switch ((int) c.params[0]) {
-				case 0: { airMT->loopbackAttack = false; break; }
-				case 1: { airMT->loopbackAttack = true;  break; }
-			}
-
-			for (unsigned int n = 0; n < possibleCommands.size(); n++) {
-				if (possibleCommands[n].id != CMD_LOOPBACKATTACK)
 					continue;
 
 				possibleCommands[n].params[0] = IntToString(int(c.params[0]), "%d");
@@ -617,7 +581,7 @@ bool CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac) {
 
 	if (enemyUnitIDs.empty()) {
 		float3 attackPos = pos + (gs->randVector() * radius);
-		attackPos.y = ground->GetHeightAboveWater(attackPos.x, attackPos.z);
+		attackPos.y = CGround::GetHeightAboveWater(attackPos.x, attackPos.z);
 
 		owner->AttackGround(attackPos, (ac.options & INTERNAL_ORDER) == 0, false);
 		SetGoal(attackPos, owner->pos);

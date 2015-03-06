@@ -183,7 +183,7 @@ namespace creg {
 		void LoadPackage(std::istream* s, void*& root, Class*& rootCls);
 	};
 
-};
+}
 
 
 #endif

@@ -25,7 +25,7 @@ bool CheckErrorCode(boost::system::error_code& err);
  * eventually resolving the host, if it is specified as name.
  * @param host name or IP
  */
-boost::asio::ip::udp::endpoint ResolveAddr(const std::string& host, int port);
+boost::asio::ip::udp::endpoint ResolveAddr(const std::string& host, int port, boost::system::error_code* error);
 
 /**
  * Evaluates if an address is a loopback one or not.
@@ -41,13 +41,16 @@ boost::asio::ip::address WrapIP(const std::string& ip,
 		boost::system::error_code* err = NULL);
 
 /**
- * Encapsulates the ip::tcp::resolver::resolve(query) function,
+ * Encapsulates the ip::udp::resolver::resolve(query) function,
  * for sync relevant reasons.
  */
-boost::asio::ip::tcp::resolver::iterator WrapResolve(
-		boost::asio::ip::tcp::resolver& resolver,
-		boost::asio::ip::tcp::resolver::query& query,
+boost::asio::ip::udp::resolver::iterator WrapResolve(
+		boost::asio::ip::udp::resolver& resolver,
+		boost::asio::ip::udp::resolver::query& query,
 		boost::system::error_code* err = NULL);
+
+
+boost::asio::ip::address GetAnyAddress(const bool IPv6);
 
 } // namespace netcode
 

@@ -120,20 +120,16 @@ private:
 	};
 };
 
-SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), settingsWindow(NULL), curSelect(NULL)
+SelectMenu::SelectMenu(boost::shared_ptr<ClientSetup> setup)
+: GuiElement(NULL)
+, clientSetup(setup)
+, conWindow(NULL)
+, settingsWindow(NULL)
+, curSelect(NULL)
 {
 	SetPos(0,0);
 	SetSize(1,1);
 	agui::gui->AddElement(this, true);
-	mySettings = new ClientSetup();
-
-	mySettings->isHost = server;
-	mySettings->myPlayerName = configHandler->GetString("name");
-	if (mySettings->myPlayerName.empty()) {
-		mySettings->myPlayerName = UnnamedPlayerName;
-	} else {
-		mySettings->myPlayerName = StringReplaceInPlace(mySettings->myPlayerName, ' ', '_');
-	}
 
 	{ // GUI stuff
 		agui::Picture* background = new agui::Picture(this);;
@@ -169,7 +165,7 @@ SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), setting
 		background->GeometryChange();
 	}
 
-	if (!mySettings->isHost) {
+	if (!clientSetup->isHost) {
 		ShowConnectWindow(true);
 	}
 }
@@ -179,8 +175,6 @@ SelectMenu::~SelectMenu()
 	ShowConnectWindow(false);
 	ShowSettingsWindow(false, "");
 	CleanWindow();
-
-	delete mySettings;
 }
 
 bool SelectMenu::Draw()
@@ -194,38 +188,29 @@ bool SelectMenu::Draw()
 
 void SelectMenu::Single()
 {
-	static bool once = false;
-	if (selw->userMod == SelectionWidget::NoModSelect)
-	{
+	if (selw->userMod == SelectionWidget::NoModSelect) {
 		selw->ShowModList();
-	}
-	else if (selw->userMap == SelectionWidget::NoMapSelect)
-	{
+	} else if (selw->userMap == SelectionWidget::NoMapSelect) {
 		selw->ShowMapList();
-	}
-	else if (selw->userScript == SelectionWidget::NoScriptSelect)
-	{
+	} else if (selw->userScript == SelectionWidget::NoScriptSelect) {
 		selw->ShowScriptList();
 	}
-	else if (!once) // in case of double-click
-	{
-
+	else if (pregame == NULL) {
+		// in case of double-click
 		if (selw->userScript == SelectionWidget::SandboxAI) {
 			selw->userScript.clear();
 		}
-		once = true;
-		mySettings->isHost = true;
-		pregame = new CPreGame(mySettings);
-		pregame->LoadSetupscript(StartScriptGen::CreateDefaultSetup(selw->userMap, selw->userMod, selw->userScript, mySettings->myPlayerName));
-		agui::gui->RmElement(this);
-		//delete this;
+
+		pregame = new CPreGame(clientSetup);
+		pregame->LoadSetupscript(StartScriptGen::CreateDefaultSetup(selw->userMap, selw->userMod, selw->userScript, clientSetup->myPlayerName));
+		return (agui::gui->RmElement(this));
 	}
 }
 
 void SelectMenu::Quit()
 {
 	gu->globalQuit = true;
-	//delete this;
+	return (agui::gui->RmElement(this));
 }
 
 void SelectMenu::ShowConnectWindow(bool show)
@@ -307,10 +292,12 @@ void SelectMenu::CleanWindow() {
 void SelectMenu::DirectConnect(const std::string& addr)
 {
 	configHandler->SetString("address", addr);
-	mySettings->hostIP = addr;
-	mySettings->isHost = false;
-	pregame = new CPreGame(mySettings);
-	agui::gui->RmElement(this);
+
+	clientSetup->hostIP = addr;
+	clientSetup->isHost = false;
+
+	pregame = new CPreGame(clientSetup);
+	return (agui::gui->RmElement(this));
 }
 
 bool SelectMenu::HandleEventSelf(const SDL_Event& ev)
@@ -318,7 +305,7 @@ bool SelectMenu::HandleEventSelf(const SDL_Event& ev)
 	switch (ev.type) {
 		case SDL_KEYDOWN: {
 			if (ev.key.keysym.sym == SDLK_ESCAPE) {
-				LOG("User exited");
+				LOG("[SelectMenu] user exited");
 				Quit();
 			} else if (ev.key.keysym.sym == SDLK_RETURN) {
 				Single();

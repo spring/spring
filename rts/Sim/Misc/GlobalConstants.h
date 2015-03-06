@@ -37,14 +37,14 @@ const int GAME_SPEED = 30;
  *
  * Defines the interval of SlowUpdate calls in sim-frames.
  */
-const int UNIT_SLOWUPDATE_RATE = 16;
+const int UNIT_SLOWUPDATE_RATE = 15;
 
 /**
  * @brief team SlowUpdate rate
  *
  * Defines the interval of CTeam::SlowUpdate calls in sim-frames.
  */
-const int TEAM_SLOWUPDATE_RATE = 32;
+const int TEAM_SLOWUPDATE_RATE = 30;
 
 /**
  * @brief max teams

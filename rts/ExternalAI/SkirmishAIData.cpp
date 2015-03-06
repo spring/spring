@@ -5,22 +5,22 @@
 #include "System/creg/STL_Map.h"
 #include "System/Platform/byteorder.h" // for swabDWord
 
-CR_BIND_DERIVED(SkirmishAIBase, TeamController, );
+CR_BIND_DERIVED(SkirmishAIBase, TeamController, )
 CR_REG_METADATA(SkirmishAIBase, (
 	CR_MEMBER(hostPlayer),
-	CR_ENUM_MEMBER(status)
-));
+	CR_MEMBER(status)
+))
 
 
-CR_BIND(SkirmishAIStatistics, );
+CR_BIND(SkirmishAIStatistics, )
 CR_REG_METADATA(SkirmishAIStatistics, (
 	CR_MEMBER(numCommands),
 	CR_MEMBER(unitCommands),
 	CR_MEMBER(cpuTime)
-));
+))
 
 
-CR_BIND_DERIVED(SkirmishAIData, SkirmishAIBase, );
+CR_BIND_DERIVED(SkirmishAIData, SkirmishAIBase, )
 CR_REG_METADATA(SkirmishAIData, (
 	CR_MEMBER(shortName),
 	CR_MEMBER(version),
@@ -28,7 +28,7 @@ CR_REG_METADATA(SkirmishAIData, (
 	CR_MEMBER(options),
 	CR_MEMBER(isLuaAI),
 	CR_MEMBER(currentStats)
-));
+))
 
 
 void SkirmishAIStatistics::swab() {

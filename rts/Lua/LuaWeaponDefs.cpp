@@ -58,50 +58,27 @@ static int GuiSoundSetTable(lua_State* L, const void* data);
 
 bool LuaWeaponDefs::PushEntries(lua_State* L)
 {
-	if (paramMap.empty()) {
-	  InitParamMap();
-	}
+	InitParamMap();
 
-	const map<string, int>& weaponMap = weaponDefHandler->weaponID;
-	map<string, int>::const_iterator wit;
-	for (wit = weaponMap.begin(); wit != weaponMap.end(); ++wit) {
-		const WeaponDef* wd = &weaponDefHandler->weaponDefs[wit->second];
-		if (wd == NULL) {
-	  	continue;
-		}
-		lua_pushnumber(L, wd->id);
-		lua_newtable(L); { // the proxy table
+	typedef int (*IndxFuncType)(lua_State*);
+	typedef int (*IterFuncType)(lua_State*);
+	typedef std::map<std::string, int> ObjectDefMapType;
 
-			lua_newtable(L); { // the metatable
+	const ObjectDefMapType& defsMap = weaponDefHandler->weaponID;
 
-				HSTR_PUSH(L, "__index");
-				lua_pushlightuserdata(L, (void*)wd);
-				lua_pushcclosure(L, WeaponDefIndex, 1);
-				lua_rawset(L, -3); // closure
+	const char* indxOpers[] = {"__index", "__newindex", "__metatable"};
+	const char* iterOpers[] = {"pairs", "next"};
 
-				HSTR_PUSH(L, "__newindex");
-				lua_pushlightuserdata(L, (void*)wd);
-				lua_pushcclosure(L, WeaponDefNewIndex, 1);
-				lua_rawset(L, -3);
+	const IndxFuncType indxFuncs[] = {&WeaponDefIndex, &WeaponDefNewIndex, &WeaponDefMetatable};
+	const IterFuncType iterFuncs[] = {&Pairs, &Next};
 
-				HSTR_PUSH(L, "__metatable");
-				lua_pushlightuserdata(L, (void*)wd);
-				lua_pushcclosure(L, WeaponDefMetatable, 1);
-				lua_rawset(L, -3);
-			}
+	for (auto it = defsMap.cbegin(); it != defsMap.cend(); ++it) {
+		const auto def = &weaponDefHandler->weaponDefs[it->second];
 
-			lua_setmetatable(L, -2);
-		}
+		if (def == NULL)
+			continue;
 
-		HSTR_PUSH(L, "pairs");
-		lua_pushcfunction(L, Pairs);
-		lua_rawset(L, -3);
-
-		HSTR_PUSH(L, "next");
-		lua_pushcfunction(L, Next);
-		lua_rawset(L, -3);
-
-		lua_rawset(L, -3); // proxy table into WeaponDefs
+		PushObjectDefProxyTable(L, indxOpers, iterOpers, indxFuncs, iterFuncs, def);
 	}
 
 	return true;
@@ -130,26 +107,26 @@ static int WeaponDefIndex(lua_State* L)
 	const void* userData = lua_touserdata(L, lua_upvalueindex(1));
 	const WeaponDef* wd = static_cast<const WeaponDef*>(userData);
 	const DataElement& elem = it->second;
-	const char* p = ((const char*)wd) + elem.offset;
+	const void* p = ((const char*)wd) + elem.offset;
 	switch (elem.type) {
 		case READONLY_TYPE: {
 			lua_rawget(L, 1);
 			return 1;
 		}
 		case INT_TYPE: {
-			lua_pushnumber(L, *((int*)p));
+			lua_pushnumber(L, *reinterpret_cast<const int*>(p));
 			return 1;
 		}
 		case BOOL_TYPE: {
-			lua_pushboolean(L, *((bool*)p));
+			lua_pushboolean(L, *reinterpret_cast<const bool*>(p));
 			return 1;
 		}
 		case FLOAT_TYPE: {
-			lua_pushnumber(L, *((float*)p));
+			lua_pushnumber(L, *reinterpret_cast<const float*>(p));
 			return 1;
 		}
 		case STRING_TYPE: {
-			lua_pushsstring(L, *((string*)p));
+			lua_pushsstring(L, *reinterpret_cast<const std::string*>(p));
 			return 1;
 		}
 		case FUNCTION_TYPE: {
@@ -194,7 +171,7 @@ static int WeaponDefNewIndex(lua_State* L)
 
 	// Definition editing
 	const DataElement& elem = it->second;
-	const char* p = ((const char*)wd) + elem.offset;
+	const void* p = ((const char*)wd) + elem.offset;
 
 	switch (elem.type) {
 		case FUNCTION_TYPE:
@@ -426,6 +403,8 @@ static int GuiSoundSetTable(lua_State* L, const void* data)
 
 static bool InitParamMap()
 {
+	paramMap.clear();
+
 	paramMap["next"]  = DataElement(READONLY_TYPE);
 	paramMap["pairs"] = DataElement(READONLY_TYPE);
 

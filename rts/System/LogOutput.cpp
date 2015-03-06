@@ -10,6 +10,7 @@
 #include "System/Log/FileSink.h"
 #include "System/Log/ILog.h"
 #include "System/Log/Level.h"
+#include "System/Log/LogUtil.h"
 #include "System/Platform/Misc.h"
 
 #include <string>
@@ -34,14 +35,8 @@ CONFIG(bool, RotateLogFiles).defaultValue(false)
 CONFIG(std::string, LogSections).defaultValue("")
 		.description("Comma seperated list of enabled logsections, see infolog.txt / console output for possible values");
 
-/*
-LogFlush defaults to true, because there should be pretty low performance gains as most
-fwrite implementations cache on their own. Also disabling this causes stack-traces to
-be cut off. BEFORE letting it default to false again, verify that it really increases
-performance as the drawbacks really suck.
-*/
-CONFIG(bool, LogFlush).defaultValue(true)
-		.description("Instantly write to the logfile, use only for debugging as it will cause a slowdown");
+CONFIG(int, LogFlushLevel).defaultValue(LOG_LEVEL_ERROR)
+		.description("Flush the logfile when level of message is above LogFlushLevel. i.e. ERROR is flushed as default, WARNING isn't.");
 
 /******************************************************************************/
 /******************************************************************************/
@@ -84,7 +79,11 @@ static std::map<std::string, int> GetEnabledSections() {
 	enabledSections = StringToLower(enabledSections);
 	enabledSections = StringStrip(enabledSections, " \t\n\r");
 
-	// <enabledSections> always starts with a ','
+	// make the last "section:level" substring findable
+	if (!enabledSections.empty() && enabledSections.back() != ',')
+		enabledSections += ",";
+
+	// n=1 because <enabledSections> always starts with a ',' (if non-empty)
 	for (size_t n = 1; n < enabledSections.size(); ) {
 		const size_t k = enabledSections.find(",", n);
 
@@ -103,7 +102,7 @@ static std::map<std::string, int> GetEnabledSections() {
 					#if defined(DEBUG)
 					sectionLevelMap[logSec] = LOG_LEVEL_DEBUG;
 					#else
-					sectionLevelMap[logSec] = LOG_LEVEL_INFO;
+					sectionLevelMap[logSec] = DEFAULT_LOG_LEVEL;
 					#endif
 
 				}
@@ -140,15 +139,6 @@ static void InitializeLogSections()
 	// environment and the ones specified in the configuration file.
 	const std::map<std::string, int>& enabledSections = GetEnabledSections();
 
-	// NOTE: negative keys so iteration order is FATAL(-60) ... DEBUG(-20)
-	const std::map<int, std::string> logLevelNames = {
-		{-LOG_LEVEL_FATAL,   "LOG_LEVEL_FATAL"  },
-		{-LOG_LEVEL_ERROR,   "LOG_LEVEL_ERROR"  },
-		{-LOG_LEVEL_WARNING, "LOG_LEVEL_WARNING"},
-		{-LOG_LEVEL_INFO,    "LOG_LEVEL_INFO"   },
-		{-LOG_LEVEL_DEBUG,   "LOG_LEVEL_DEBUG"  },
-	};
-
 	std::stringstream availableLogSectionsStr;
 	std::stringstream enabledLogSectionsStr;
 
@@ -178,17 +168,16 @@ static void InitializeLogSections()
 			continue;
 
 		// find the nearest lower known log-level (in descending order)
-		for (auto logLevelIt = logLevelNames.begin(); logLevelIt != logLevelNames.end(); ++logLevelIt) {
-			const int logLevel = -(logLevelIt->first);
+		const int logLevel = log_util_getNearestLevel(sectionLevel);
 
-			if (sectionLevel >= logLevel) {
-				log_filter_section_setMinLevel(*si, logLevel);
+		// levels can't go lower than this
+		if (logLevel < 0)
+			continue;
 
-				enabledLogSectionsStr << ((numEnabledSections > 0)? ", ": "");
-				enabledLogSectionsStr << *si << "(" << logLevelIt->second << ")";
-				break;
-			}
-		}
+		log_filter_section_setMinLevel(*si, logLevel);
+
+		enabledLogSectionsStr << ((numEnabledSections > 0)? ", ": "");
+		enabledLogSectionsStr << *si << "(" << log_util_levelToString(logLevel) << ")";
 
 		numEnabledSections++;
 	}
@@ -266,7 +255,7 @@ void CLogOutput::Initialize()
 	if (configHandler->GetBool("RotateLogFiles"))
 		RotateLogFile();
 
-	log_file_addLogFile(filePath.c_str(), NULL, LOG_LEVEL_ALL, configHandler->GetBool("LogFlush"));
+	log_file_addLogFile(filePath.c_str(), NULL, LOG_LEVEL_ALL, configHandler->GetInt("LogFlushLevel"));
 	InitializeLogSections();
 
 	LOG("LogOutput initialized.");
@@ -277,16 +266,17 @@ void CLogOutput::Initialize()
 void CLogOutput::LogSystemInfo()
 {
 	LOG("Spring %s", SpringVersion::GetFull().c_str());
-	LOG("Build date/time: %s", SpringVersion::GetBuildTime().c_str());
-	LOG("Build environment: %s", SpringVersion::GetBuildEnvironment().c_str());
-	LOG("Compiler: %s", SpringVersion::GetCompiler().c_str());
-	LOG("OS: %s", Platform::GetOS().c_str());
+	LOG("Build Date & Time: %s", SpringVersion::GetBuildTime().c_str());
+	LOG("Build Environment: %s", SpringVersion::GetBuildEnvironment().c_str());
+	LOG("Compiler Version:  %s", SpringVersion::GetCompiler().c_str());
+	LOG("Operating System:  %s", Platform::GetOS().c_str());
 
-	if (Platform::Is64Bit())
-		LOG("OS: 64bit native mode");
-	else if (Platform::Is32BitEmulation())
-		LOG("OS: emulated 32bit mode");
-	else
-		LOG("OS: 32bit native mode");
+	if (Platform::Is64Bit()) {
+		LOG("Word Size:         64-bit (native mode)");
+	} else if (Platform::Is32BitEmulation()) {
+		LOG("Word Size:         32-bit (emulated)");
+	} else {
+		LOG("Word Size:         32-bit (native mode)");
+	}
 }
 

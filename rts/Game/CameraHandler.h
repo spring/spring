@@ -59,13 +59,11 @@ public:
 	enum {
 		CAMERA_MODE_FIRSTPERSON = 0,
 		CAMERA_MODE_OVERHEAD    = 1,
-		CAMERA_MODE_TOTALWAR    = 2,
+		CAMERA_MODE_SPRING      = 2,
 		CAMERA_MODE_ROTOVERHEAD = 3,
 		CAMERA_MODE_FREE        = 4,
-		CAMERA_MODE_SMOOTH      = 5,
-		CAMERA_MODE_ORBIT       = 6,
-		CAMERA_MODE_OVERVIEW    = 7,
-		CAMERA_MODE_LAST        = 8,
+		CAMERA_MODE_OVERVIEW    = 5,
+		CAMERA_MODE_LAST        = 6,
 	};
 
 private:
@@ -76,7 +74,7 @@ private:
 
 	struct {
 		float3 pos;
-		float3 dir;
+		float3 rot;
 		float  fov;
 	} startCam;
 

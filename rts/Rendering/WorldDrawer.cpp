@@ -5,10 +5,12 @@
 
 #include "WorldDrawer.h"
 #include "Rendering/Env/CubeMapHandler.h"
+#include "Rendering/Env/GrassDrawer.h"
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/IWater.h"
+#include "Rendering/CommandDrawer.h"
 #include "Rendering/DebugColVolDrawer.h"
 #include "Rendering/FarTextureHandler.h"
 #include "Rendering/LineDrawer.h"
@@ -20,6 +22,7 @@
 #include "Rendering/InMapDrawView.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Models/ModelDrawer.h"
+#include "Rendering/Shaders/ShaderHandler.h"
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/HeightMapTexture.h"
@@ -37,7 +40,7 @@
 #include "System/Util.h"
 
 
-CWorldDrawer::CWorldDrawer()
+CWorldDrawer::CWorldDrawer(): numUpdates(0)
 {
 	// rendering components
 	loadscreen->SetLoadMessage("Creating ShadowHandler & DecalHandler");
@@ -49,6 +52,7 @@ CWorldDrawer::CWorldDrawer()
 
 	loadscreen->SetLoadMessage("Creating TreeDrawer");
 	treeDrawer = ITreeDrawer::GetTreeDrawer();
+	grassDrawer = new CGrassDrawer();
 
 	inMapDrawerView = new CInMapDrawView();
 	pathDrawer = IPathDrawer::GetInstance();
@@ -74,6 +78,7 @@ CWorldDrawer::~CWorldDrawer()
 	SafeDelete(water);
 	SafeDelete(sky);
 	SafeDelete(treeDrawer);
+	SafeDelete(grassDrawer);
 	SafeDelete(pathDrawer);
 	SafeDelete(modelDrawer);
 	SafeDelete(shadowHandler);
@@ -88,12 +93,14 @@ CWorldDrawer::~CWorldDrawer()
 
 	SafeDelete(cubeMapHandler);
 	IGroundDecalDrawer::FreeInstance();
+	CShaderHandler::FreeInstance(CShaderHandler::GetInstance());
 }
 
 
 void CWorldDrawer::Update()
 {
-	readMap->UpdateDraw();
+	readMap->UpdateDraw((numUpdates++) == 0);
+
 	if (globalRendering->drawGround) {
 		SCOPED_TIMER("GroundDrawer::Update");
 		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
@@ -130,7 +137,7 @@ void CWorldDrawer::Draw()
 		}
 		{
 			SCOPED_TIMER("WorldDrawer::Foliage");
-			treeDrawer->DrawGrass();
+			grassDrawer->Draw();
 			gd->DrawTrees();
 		}
 		smoothHeightMeshDrawer->Draw(1.0f);
@@ -212,9 +219,13 @@ void CWorldDrawer::Draw()
 
 	eventHandler.DrawWorld();
 
-	LuaUnsyncedCtrl::DrawUnitCommandQueues();
-	if (cmdColors.AlwaysDrawQueue() || guihandler->GetQueueKeystate()) {
-		selectedUnitsHandler.DrawCommands();
+	{
+		// note: duplicated in CMiniMap::DrawWorldStuff()
+		commandDrawer->DrawLuaQueuedUnitSetCommands();
+
+		if (cmdColors.AlwaysDrawQueue() || guihandler->GetQueueKeystate()) {
+			selectedUnitsHandler.DrawCommands();
+		}
 	}
 
 	lineDrawer.DrawAll();

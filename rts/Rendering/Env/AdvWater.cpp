@@ -163,7 +163,7 @@ void CAdvWater::Draw(bool useBlending)
 	glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, waterFP);
 	glEnable(GL_FRAGMENT_PROGRAM_ARB);
 
-	float3 forward = camera->forward;
+	float3 forward = camera->GetDir();
 	forward.y = 0;
 	forward.ANormalize();
 
@@ -203,7 +203,7 @@ void CAdvWater::Draw(bool useBlending)
 
 				xbase += dh;
 			}
-			va->EndStripQ();
+			va->EndStrip();
 			base += dv;
 			screenY -= yInc;
 		}
@@ -276,6 +276,7 @@ void CAdvWater::UpdateWater(CGame* game)
 
 	va->DrawArrayT(GL_QUADS);
 
+	va = GetVertexArray();
 	va->Initialize();
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[1]);
 
@@ -286,6 +287,7 @@ void CAdvWater::UpdateWater(CGame* game)
 
 	va->DrawArrayT(GL_QUADS);
 
+	va = GetVertexArray();
 	va->Initialize();
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[2]);
 
@@ -306,8 +308,9 @@ void CAdvWater::UpdateWater(CGame* game)
 	char realCam[sizeof(CCamera)];
 	new (realCam) CCamera(*camera); // anti-crash workaround for multithreading
 
-	camera->forward.y *= -1.0f;
+	camera->SetDir(camera->GetDir() * float3(1.0f, -1.0f, 1.0f));
 	camera->SetPos(camera->GetPos() * float3(1.0f, -1.0f, 1.0f));
+	camera->SetRotZ(-camera->GetRot().z);
 	camera->Update();
 
 	reflectFBO.Bind();
@@ -350,4 +353,5 @@ void CAdvWater::UpdateWater(CGame* game)
 	camera->Update();
 	glPopAttrib();
 	glPopAttrib();
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }

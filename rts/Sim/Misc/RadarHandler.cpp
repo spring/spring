@@ -13,7 +13,7 @@
 	#define SONAR_MAPS
 #endif
 
-CR_BIND(CRadarHandler, (false));
+CR_BIND(CRadarHandler, (false))
 
 CR_REG_METADATA(CRadarHandler, (
 	CR_MEMBER(radarErrorSizes),
@@ -36,7 +36,7 @@ CR_REG_METADATA(CRadarHandler, (
 	CR_MEMBER(seismicMaps),
 	CR_MEMBER(commonJammerMap),
 	CR_MEMBER(commonSonarJammerMap)
-));
+))
 
 
 CRadarHandler* radarHandler = NULL;
@@ -47,8 +47,8 @@ CRadarHandler::CRadarHandler(bool circularRadar)
   radarDiv(SQUARE_SIZE * (1 << radarMipLevel)),
   invRadarDiv(1.0f / radarDiv),
   circularRadar(circularRadar),
-  xsize(std::max(1, gs->mapx >> radarMipLevel)),
-  zsize(std::max(1, gs->mapy >> radarMipLevel)),
+  xsize(std::max(1, mapDims.mapx >> radarMipLevel)),
+  zsize(std::max(1, mapDims.mapy >> radarMipLevel)),
   radarAlgo(int2(xsize, zsize), -1000, 20, readMap->GetMIPHeightMapSynced(radarMipLevel)),
   baseRadarErrorSize(96.0f),
   baseRadarErrorMult(2.0f)

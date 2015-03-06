@@ -12,7 +12,7 @@
 #include "Sim/Misc/Wind.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CSmokeTrailProjectile, CProjectile, (NULL, ZeroVector, ZeroVector, ZeroVector, ZeroVector, false, false, 0.0f, 0, 0.0f, false, NULL, NULL));
+CR_BIND_DERIVED(CSmokeTrailProjectile, CProjectile, (NULL, ZeroVector, ZeroVector, ZeroVector, ZeroVector, false, false, 0.0f, 0, 0.0f, false, NULL, NULL))
 
 CR_REG_METADATA(CSmokeTrailProjectile,(
 	CR_MEMBER(pos1),
@@ -34,14 +34,14 @@ CR_REG_METADATA(CSmokeTrailProjectile,(
 	CR_MEMBER(drawCallbacker),
 	CR_MEMBER(texture),
 	CR_RESERVED(4)
-));
+))
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
 CSmokeTrailProjectile::CSmokeTrailProjectile(
-	CUnit* owner,
+	const CUnit* owner,
 	const float3& pos1,
 	const float3& pos2,
 	const float3& dir1,
@@ -90,7 +90,7 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(
 	}
 	SetRadiusAndHeight(pos1.distance(pos2), 0.0f);
 
-	if ((pos.y - ground->GetApproximateHeight(pos.x, pos.z)) > 10) {
+	if ((pos.y - CGround::GetApproximateHeight(pos.x, pos.z)) > 10) {
 		useAirLos = true;
 	}
 }
@@ -185,10 +185,10 @@ void CSmokeTrailProjectile::Draw()
 			col[3] = (unsigned char) alpha;
 
 			#define st projectileDrawer->smoketex[0]
-			va->AddVertexQTC(pos1 + ( camera->up + camera->right) * size, st->xstart, st->ystart, col);
-			va->AddVertexQTC(pos1 + ( camera->up - camera->right) * size, st->xend,   st->ystart, col);
-			va->AddVertexQTC(pos1 + (-camera->up - camera->right) * size, st->xend,   st->ystart, col);
-			va->AddVertexQTC(pos1 + (-camera->up + camera->right) * size, st->xstart, st->ystart, col);
+			va->AddVertexQTC(pos1 + ( camera->GetUp() + camera->GetRight()) * size, st->xstart, st->ystart, col);
+			va->AddVertexQTC(pos1 + ( camera->GetUp() - camera->GetRight()) * size, st->xend,   st->ystart, col);
+			va->AddVertexQTC(pos1 + (-camera->GetUp() - camera->GetRight()) * size, st->xend,   st->ystart, col);
+			va->AddVertexQTC(pos1 + (-camera->GetUp() + camera->GetRight()) * size, st->xstart, st->ystart, col);
 			#undef st
 		}
 	}

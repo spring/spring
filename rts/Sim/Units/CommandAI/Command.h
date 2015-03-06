@@ -51,7 +51,6 @@
 #define CMD_RESURRECT            125
 #define CMD_CAPTURE              130
 #define CMD_AUTOREPAIRLEVEL      135
-#define CMD_LOOPBACKATTACK       140
 #define CMD_IDLEMODE             145
 #define CMD_FAILED               150
 
@@ -113,7 +112,7 @@ enum {
 struct Command
 {
 private:
-	CR_DECLARE_STRUCT(Command);
+	CR_DECLARE_STRUCT(Command)
 /*
 	TODO check if usage of System/MemPool.h for this struct improves performance
 */
@@ -348,7 +347,7 @@ private:
 
 struct CommandDescription {
 private:
-	CR_DECLARE_STRUCT(CommandDescription);
+	CR_DECLARE_STRUCT(CommandDescription)
 
 public:
 	CommandDescription():

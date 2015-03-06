@@ -43,7 +43,7 @@ CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm): smfMap(rm)
 {
 	LoadTiles(smfMap->GetFile());
 	LoadSquareTextures(3);
-	ConvolveHeightMap(gs->mapx, 1);
+	ConvolveHeightMap(mapDims.mapx, 1);
 }
 
 CSMFGroundTextures::~CSMFGroundTextures()
@@ -62,14 +62,18 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 	CFileHandler* ifs = file.GetFileHandler();
 	const SMFHeader& header = file.GetHeader();
 
-	assert(gs->mapx == header.mapx);
-	assert(gs->mapy == header.mapy);
+	if ((mapDims.mapx != header.mapx) || (mapDims.mapy != header.mapy)) {
+		throw content_error("Error loading map: size from header doesn't match map size.");
+	}
 
 	ifs->Seek(header.tilesPtr);
 
 	MapTileHeader tileHeader;
 	READPTR_MAPTILEHEADER(tileHeader, ifs);
 
+	if (smfMap->tileCount <= 0) {
+		throw content_error("Error loading map: count of tiles is 0.");
+	}
 	tileMap.resize(smfMap->tileCount);
 	tiles.resize(tileHeader.numTiles * SMALL_TILE_SIZE);
 	squares.resize(smfMap->numBigTexX * smfMap->numBigTexY);
@@ -97,16 +101,8 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 		char fileNameBuffer[256] = {0};
 
 		ifs->Read(&numSmallTiles, sizeof(int));
-		// works but would need to seek back
-		// ifs->Read(&fileNameBuffer[0], sizeof(char) * sizeof(fileNameBuffer));
-
+		ifs->ReadString(&fileNameBuffer[0], sizeof(char) * (sizeof(fileNameBuffer) - 1));
 		swabDWordInPlace(numSmallTiles);
-
-		for (unsigned int n = 0; n < sizeof(fileNameBuffer); n++) {
-			if (ifs->Read(&fileNameBuffer[n], sizeof(char)) != 1 || fileNameBuffer[n] == 0) {
-				break;
-			}
-		}
 
 		std::string smtFileName = fileNameBuffer;
 		std::string smtFilePath = (!smtHeaderOverride)?
@@ -117,11 +113,7 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 
 		if (!tileFile.FileExists()) {
 			// try absolute path
-			if (!smtHeaderOverride) {
-				smtFilePath = smtFileName;
-			} else {
-				smtFilePath = smf.smtFileNames[a];
-			}
+			smtFilePath = (!smtHeaderOverride) ? smtFileName : smf.smtFileNames[a];
 			tileFile.Open(smtFilePath);
 		}
 
@@ -280,7 +272,7 @@ bool CSMFGroundTextures::RecompressTiles(bool canRecompress)
 
 inline bool CSMFGroundTextures::TexSquareInView(int btx, int bty) const
 {
-	static const float* hm = readMap->GetCornerHeightMapUnsynced();
+	const float* hm = readMap->GetCornerHeightMapUnsynced();
 
 	static const float bigTexSquareRadius = fastmath::apxsqrt(
 		smfMap->bigTexSize * smfMap->bigTexSize +
@@ -426,7 +418,7 @@ bool CSMFGroundTextures::GetSquareLuaTexture(int texSquareX, int texSquareY, int
 	const int numSqBytes = (mipSqSize * mipSqSize) / 2;
 
 	pbo.Bind();
-	pbo.Resize(numSqBytes);
+	pbo.New(numSqBytes);
 	ExtractSquareTiles(texSquareX, texSquareY, texMipLevel, (GLint*) pbo.MapBuffer());
 	pbo.UnmapBuffer();
 
@@ -434,6 +426,7 @@ bool CSMFGroundTextures::GetSquareLuaTexture(int texSquareX, int texSquareY, int
 	glCompressedTexImage2D(ttarget, 0, tileTexFormat, texSizeX, texSizeY, 0, numSqBytes, pbo.GetPtr());
 	glBindTexture(ttarget, 0);
 
+	pbo.Invalidate();
 	pbo.Unbind();
 	return true;
 }
@@ -446,7 +439,7 @@ void CSMFGroundTextures::ExtractSquareTiles(
 	const int mipLevel,
 	GLint* tileBuf
 ) const {
-	static const int TILE_MIP_OFFSET[] = {0, 512, 640, 672};
+	static const int TILE_MIP_OFFSET[] = {0, 512, 512+128, 512+128+32};
 	static const int BLOCK_SIZE = 32;
 
 	const int mipOffset = TILE_MIP_OFFSET[mipLevel];
@@ -488,7 +481,7 @@ void CSMFGroundTextures::LoadSquareTexture(int x, int y, int level)
 	square->texLevel = level;
 
 	pbo.Bind();
-	pbo.Resize(numSqBytes);
+	pbo.New(numSqBytes);
 	ExtractSquareTiles(x, y, level, (GLint*) pbo.MapBuffer());
 	pbo.UnmapBuffer();
 
@@ -512,6 +505,8 @@ void CSMFGroundTextures::LoadSquareTexture(int x, int y, int level)
 	}
 
 	glCompressedTexImage2D(ttarget, 0, tileTexFormat, mipSqSize, mipSqSize, 0, numSqBytes, pbo.GetPtr());
+
+	pbo.Invalidate();
 	pbo.Unbind();
 }
 

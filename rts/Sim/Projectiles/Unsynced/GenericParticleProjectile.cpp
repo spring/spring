@@ -7,7 +7,7 @@
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 
-CR_BIND_DERIVED(CGenericParticleProjectile, CProjectile, (NULL, ZeroVector, ZeroVector));
+CR_BIND_DERIVED(CGenericParticleProjectile, CProjectile, (NULL, ZeroVector, ZeroVector))
 
 CR_REG_METADATA(CGenericParticleProjectile,(
 	CR_MEMBER(gravity),
@@ -21,9 +21,9 @@ CR_REG_METADATA(CGenericParticleProjectile,(
 	CR_MEMBER(sizeGrowth),
 	CR_MEMBER(sizeMod),
 	CR_RESERVED(8)
-));
+))
 
-CGenericParticleProjectile::CGenericParticleProjectile(CUnit* owner, const float3& pos, const float3& speed)
+CGenericParticleProjectile::CGenericParticleProjectile(const CUnit* owner, const float3& pos, const float3& speed)
 	: CProjectile(pos, speed, owner, false, false, false)
 
 	, gravity(ZeroVector)
@@ -84,9 +84,9 @@ void CGenericParticleProjectile::Draw()
 
 		colorMap->GetColor(color, life);
 
-		va->AddVertexTC(drawPos - camera->right * size - camera->up * size, texture->xstart, texture->ystart, color);
-		va->AddVertexTC(drawPos + camera->right * size - camera->up * size, texture->xend,   texture->ystart, color);
-		va->AddVertexTC(drawPos + camera->right * size + camera->up * size, texture->xend,   texture->yend,   color);
-		va->AddVertexTC(drawPos - camera->right * size + camera->up * size, texture->xstart, texture->yend,   color);
+		va->AddVertexTC(drawPos - camera->GetRight() * size - camera->GetUp() * size, texture->xstart, texture->ystart, color);
+		va->AddVertexTC(drawPos + camera->GetRight() * size - camera->GetUp() * size, texture->xend,   texture->ystart, color);
+		va->AddVertexTC(drawPos + camera->GetRight() * size + camera->GetUp() * size, texture->xend,   texture->yend,   color);
+		va->AddVertexTC(drawPos - camera->GetRight() * size + camera->GetUp() * size, texture->xstart, texture->yend,   color);
 	}
 }

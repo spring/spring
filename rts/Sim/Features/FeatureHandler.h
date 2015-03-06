@@ -37,7 +37,7 @@ struct FeatureLoadParams {
 class LuaParser;
 class CFeatureHandler : public boost::noncopyable
 {
-	CR_DECLARE_STRUCT(CFeatureHandler);
+	CR_DECLARE_STRUCT(CFeatureHandler)
 
 public:
 	CFeatureHandler(LuaParser* defsParser);

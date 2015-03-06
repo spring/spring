@@ -78,8 +78,8 @@ CSM3ReadMap::CSM3ReadMap(const std::string& mapName)
 		heightMapSyncedPtr   = &renderer->GetCornerHeightMapSynced();
 		heightMapUnsyncedPtr = &renderer->GetCornerHeightMapUnsynced();
 
-		gs->mapx = renderer->GetHeightmapWidth() - 1;
-		gs->mapy = renderer->GetHeightmapWidth() - 1; // note: not height (SM3 only supports square maps!)
+		mapDims.mapx = renderer->GetHeightmapWidth() - 1;
+		mapDims.mapy = renderer->GetHeightmapWidth() - 1; // note: not height (SM3 only supports square maps!)
 	}
 
 	CReadMap::Initialize();
@@ -98,6 +98,7 @@ CSM3ReadMap::CSM3ReadMap(const std::string& mapName)
 
 CSM3ReadMap::~CSM3ReadMap()
 {
+	configHandler->RemoveObserver(this);
 	delete groundDrawer;
 	delete renderer;
 
@@ -176,13 +177,13 @@ void CSM3ReadMap::UpdateHeightMapUnsynced(const SRectangle& update)
 
 	if (x1 <        0) x1 =        0;
 	if (x2 <        0) x2 =        0;
-	if (x1 > gs->mapx) x1 = gs->mapx;
-	if (x2 > gs->mapx) x2 = gs->mapx;
+	if (x1 > mapDims.mapx) x1 = mapDims.mapx;
+	if (x2 > mapDims.mapx) x2 = mapDims.mapx;
 
 	if (y1 <        0) y1 =        0;
 	if (y2 <        0) y2 =        0;
-	if (y1 > gs->mapy) y1 = gs->mapy;
-	if (y2 > gs->mapy) y2 = gs->mapy;
+	if (y1 > mapDims.mapy) y1 = mapDims.mapy;
+	if (y2 > mapDims.mapy) y2 = mapDims.mapy;
 
 	renderer->HeightMapUpdatedUnsynced(x1, y1, x2 - x1, y2 - y1);
 }
@@ -210,8 +211,8 @@ void CSM3ReadMap::DrawMinimap() const
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 
-	const float isx = gs->mapx / float(gs->pwr2mapx);
-	const float isy = gs->mapy / float(gs->pwr2mapy);
+	const float isx = mapDims.mapx / float(mapDims.pwr2mapx);
+	const float isy = mapDims.mapy / float(mapDims.pwr2mapy);
 
 	glBegin(GL_QUADS);
 		glTexCoord2f(0,isy);
@@ -304,8 +305,8 @@ void CSM3ReadMap::LoadFeatureData()
 		for (int a=0;a<numFeatures;a++) {
 			MapFeatureInfo& fi = featureInfo[a];
 			fi.featureType = featureTypes.size()-1;
-			fi.pos.x = gs->randFloat() * gs->mapx * SQUARE_SIZE;
-			fi.pos.z = gs->randFloat() * gs->mapy * SQUARE_SIZE;
+			fi.pos.x = gs->randFloat() * mapDims.mapx * SQUARE_SIZE;
+			fi.pos.z = gs->randFloat() * mapDims.mapy * SQUARE_SIZE;
 			fi.rotation = 0.0f;
 		}
 	}*/

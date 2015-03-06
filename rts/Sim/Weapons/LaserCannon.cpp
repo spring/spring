@@ -2,22 +2,23 @@
 
 #include "LaserCannon.h"
 #include "WeaponDef.h"
-#include "Game/TraceRay.h"
 #include "Map/Ground.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
+#include "System/myMath.h"
 
-CR_BIND_DERIVED(CLaserCannon, CWeapon, (NULL, NULL));
+CR_BIND_DERIVED(CLaserCannon, CWeapon, (NULL, NULL))
 
 CR_REG_METADATA(CLaserCannon,(
 	CR_MEMBER(color),
 	CR_RESERVED(8)
-));
+))
 
-CLaserCannon::CLaserCannon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
+CLaserCannon::CLaserCannon(CUnit* owner, const WeaponDef* def)
+	: CWeapon(owner, def)
+	, color(def->visuals.color)
 {
-	color = def->visuals.color;
 }
 
 
@@ -71,7 +72,7 @@ void CLaserCannon::FireImpl(bool scriptCall)
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos;
 	params.speed = dir * projectileSpeed;
-	params.ttl = std::min(ttlreq, ttlmax);
+	params.ttl = mix(std::max(ttlreq, ttlmax), std::min(ttlreq, ttlmax), weaponDef->selfExplode);
 
 	WeaponProjectileFactory::LoadProjectile(params);
 }

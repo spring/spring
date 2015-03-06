@@ -13,7 +13,27 @@
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "System/Platform/Threading.h"
 
+// managed by EventHandler
+EventBatchHandler* EventBatchHandler::ebh = nullptr;
+
+// global counter for certain batch-events
 boost::int64_t EventBatchHandler::eventSequenceNumber = 0;
+
+void EventBatchHandler::CreateInstance()
+{
+	if (ebh == nullptr) {
+		ebh = new EventBatchHandler();
+	}
+}
+
+void EventBatchHandler::DeleteInstance()
+{
+	if (ebh != nullptr)	{
+		delete ebh;
+		ebh = nullptr;
+	}
+}
+
 
 
 EventBatchHandler::EventBatchHandler()
@@ -23,16 +43,6 @@ EventBatchHandler::EventBatchHandler()
 	RegisterLinkedEvents(this);
 	eventHandler.AddClient(this);
 }
-
-
-EventBatchHandler* EventBatchHandler::GetInstance()
-{
-	static EventBatchHandler ebh;
-	return &ebh;
-}
-
-void EventBatchHandler::UnitCreated(const CUnit* unit) { /*GetUnitCreatedDestroyedBatch().enqueue(UD(unit, unit->isCloaked));*/ }
-void EventBatchHandler::UnitDestroyed(const CUnit* unit, const CUnit* attacker) { /*GetUnitCreatedDestroyedBatch().dequeue_synced(unit);*/ }
 
 void EventBatchHandler::UnitMoved(const CUnit* unit) { EnqueueUnitMovedEvent(unit, unit->pos); }
 void EventBatchHandler::UnitEnteredRadar(const CUnit* unit, int at) { EnqueueUnitLOSStateChangeEvent(unit, at, unit->losStatus[at]); }
@@ -88,75 +98,6 @@ void EventBatchHandler::FeatureCreatedDestroyedEvent::Remove(const CFeature* f) 
 void EventBatchHandler::FeatureMovedEvent::Add(const FAP& f) { eventHandler.RenderFeatureMoved(f.feat, f.oldpos, f.newpos); }
 
 
-
-void EventBatchHandler::UpdateUnits() {
-	unitCreatedDestroyedEventBatch.delay();
-	unitCloakStateChangedEventBatch.delay();
-	unitLOSStateChangedEventBatch.delay();
-	unitMovedEventBatch.delay();
-}
-void EventBatchHandler::UpdateDrawUnits() {
-	unitCreatedDestroyedEventBatch.execute();
-	unitCloakStateChangedEventBatch.execute();
-	unitLOSStateChangedEventBatch.execute();
-	unitMovedEventBatch.execute();
-}
 void EventBatchHandler::DeleteSyncedUnits() {
-	unitCloakStateChangedEventBatch.clean(unitCreatedDestroyedEventBatch.to_destroy());
-
-	unitLOSStateChangedEventBatch.clean(unitCreatedDestroyedEventBatch.to_destroy());
-
-	unitMovedEventBatch.clean(unitCreatedDestroyedEventBatch.to_destroy());
-
-	unitCreatedDestroyedEventBatch.clean();
 	unitCreatedDestroyedEventBatch.destroy_synced();
-}
-
-void EventBatchHandler::UpdateFeatures() {
-	featureCreatedDestroyedEventBatch.delay();
-	featureMovedEventBatch.delay();
-}
-void EventBatchHandler::UpdateDrawFeatures() {
-	featureCreatedDestroyedEventBatch.execute();
-	featureMovedEventBatch.execute();
-}
-void EventBatchHandler::DeleteSyncedFeatures() {
-	featureMovedEventBatch.clean(featureCreatedDestroyedEventBatch.to_destroy());
-
-	featureCreatedDestroyedEventBatch.clean();
-	featureCreatedDestroyedEventBatch.destroy();
-}
-
-void EventBatchHandler::UpdateProjectiles() {
-	syncedProjectileCreatedDestroyedEventBatch.delay_delete();
-	syncedProjectileCreatedDestroyedEventBatch.delay_add();
-	unsyncedProjectileCreatedDestroyedEventBatch.delay_delete();
-	unsyncedProjectileCreatedDestroyedEventBatch.delay_add();
-}
-void EventBatchHandler::UpdateDrawProjectiles() {
-	projectileHandler->GetSyncedRenderProjectileIDs().delete_delayed();
-	syncedProjectileCreatedDestroyedEventBatch.delete_delayed();
-
-	syncedProjectileCreatedDestroyedEventBatch.add_delayed();
-	projectileHandler->GetSyncedRenderProjectileIDs().add_delayed();
-
-#if !UNSYNCED_PROJ_NOEVENT
-	projectileHandler->GetUnsyncedRenderProjectileIDs().delete_delayed();
-#endif
-	unsyncedProjectileCreatedDestroyedEventBatch.delete_delayed();
-	unsyncedProjectileCreatedDestroyedEventBatch.add_delayed();
-#if !UNSYNCED_PROJ_NOEVENT
-	projectileHandler->GetUnsyncedRenderProjectileIDs().add_delayed();
-#endif
-}
-void EventBatchHandler::DeleteSyncedProjectiles() {
-}
-
-void EventBatchHandler::UpdateObjects() {
-	UpdateUnits();
-	UpdateFeatures();
-	UpdateProjectiles();
-}
-
-void EventBatchHandler::LoadedModelRequested() {
 }

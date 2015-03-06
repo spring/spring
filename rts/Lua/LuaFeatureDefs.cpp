@@ -20,6 +20,7 @@
 #include "Rendering/Models/IModelParser.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "System/Log/ILog.h"
 
 
@@ -48,62 +49,30 @@ static int CustomParamsTable(lua_State* L, const void* data);
 
 bool LuaFeatureDefs::PushEntries(lua_State* L)
 {
-	if (paramMap.empty()) {
-		InitParamMap();
-	}
+	InitParamMap();
 
-	const map<string, const FeatureDef*>& featureDefs = featureHandler->GetFeatureDefs();
-	map<string, const FeatureDef*>::const_iterator fdIt;
-	for (fdIt = featureDefs.begin(); fdIt != featureDefs.end(); ++fdIt) {
-		const FeatureDef* fd = fdIt->second;
-		if (fd == NULL) {
+	typedef int (*IndxFuncType)(lua_State*);
+	typedef int (*IterFuncType)(lua_State*);
+	typedef std::map<std::string, const FeatureDef*> ObjectDefMapType;
+
+	const ObjectDefMapType& defsMap = featureHandler->GetFeatureDefs();
+
+	const char* indxOpers[] = {"__index", "__newindex", "__metatable"};
+	const char* iterOpers[] = {"pairs", "next"};
+
+	const IndxFuncType indxFuncs[] = {&FeatureDefIndex, &FeatureDefNewIndex, &FeatureDefMetatable};
+	const IterFuncType iterFuncs[] = {&Pairs, &Next};
+
+	for (auto it = defsMap.cbegin(); it != defsMap.cend(); ++it) {
+		const auto def = it->second; // ObjectDefMapType::mapped_type
+
+		if (def == NULL)
 			continue;
-		}
-		lua_pushnumber(L, fd->id);
-		lua_newtable(L); { // the proxy table
 
-			lua_newtable(L); { // the metatable
-
-				HSTR_PUSH(L, "__index");
-				lua_pushlightuserdata(L, (void*)fd);
-				lua_pushcclosure(L, FeatureDefIndex, 1);
-				lua_rawset(L, -3); // closure
-
-				HSTR_PUSH(L, "__newindex");
-				lua_pushlightuserdata(L, (void*)fd);
-				lua_pushcclosure(L, FeatureDefNewIndex, 1);
-				lua_rawset(L, -3);
-
-				HSTR_PUSH(L, "__metatable");
-				lua_pushlightuserdata(L, (void*)fd);
-				lua_pushcclosure(L, FeatureDefMetatable, 1);
-				lua_rawset(L, -3);
-			}
-
-			lua_setmetatable(L, -2);
-		}
-
-		HSTR_PUSH(L, "pairs");
-		lua_pushcfunction(L, Pairs);
-		lua_rawset(L, -3);
-
-		HSTR_PUSH(L, "next");
-		lua_pushcfunction(L, Next);
-		lua_rawset(L, -3);
-
-		lua_rawset(L, -3); // proxy table into FeatureDefs
+		PushObjectDefProxyTable(L, indxOpers, iterOpers, indxFuncs, iterFuncs, it->second);
 	}
 
 	return true;
-}
-
-
-bool LuaFeatureDefs::IsDefaultParam(const string& word)
-{
-	if (paramMap.empty()) {
-	  InitParamMap();
-	}
-	return (paramMap.find(word) != paramMap.end());
 }
 
 
@@ -169,26 +138,26 @@ static int FeatureDefIndex(lua_State* L)
 	const void* userData = lua_touserdata(L, lua_upvalueindex(1));
 	const FeatureDef* fd = static_cast<const FeatureDef*>(userData);
 	const DataElement& elem = it->second;
-	const char* p = ((const char*)fd) + elem.offset;
+	const void* p = ((const char*)fd) + elem.offset;
 	switch (elem.type) {
 		case READONLY_TYPE: {
 			lua_rawget(L, 1);
 			return 1;
 		}
 		case INT_TYPE: {
-			lua_pushnumber(L, *((int*)p));
+			lua_pushnumber(L, *reinterpret_cast<const int*>(p));
 			return 1;
 		}
 		case BOOL_TYPE: {
-			lua_pushboolean(L, *((bool*)p));
+			lua_pushboolean(L, *reinterpret_cast<const bool*>(p));
 			return 1;
 		}
 		case FLOAT_TYPE: {
-			lua_pushnumber(L, *((float*)p));
+			lua_pushnumber(L, *reinterpret_cast<const float*>(p));
 			return 1;
 		}
 		case STRING_TYPE: {
-			lua_pushsstring(L, *((string*)p));
+			lua_pushsstring(L, *reinterpret_cast<const std::string*>(p));
 			return 1;
 		}
 		case FUNCTION_TYPE: {
@@ -233,7 +202,7 @@ static int FeatureDefNewIndex(lua_State* L)
 
 	// Definition editing
 	const DataElement& elem = it->second;
-	const char* p = ((const char*)fd) + elem.offset;
+	const void* p = ((const char*)fd) + elem.offset;
 
 	switch (elem.type) {
 		case FUNCTION_TYPE:
@@ -399,6 +368,37 @@ static int ModelName(lua_State* L, const void* data)
 }
 
 
+static int ColVolTable(lua_State* L, const void* data) {
+	auto cv = static_cast<const CollisionVolume*>(data);
+	assert(cv != NULL);
+
+	lua_newtable(L);
+	switch (cv->GetVolumeType()) {
+		case CollisionVolume::COLVOL_TYPE_ELLIPSOID:
+			HSTR_PUSH_STRING(L, "type", "ellipsoid");
+			break;
+		case CollisionVolume::COLVOL_TYPE_CYLINDER:
+			HSTR_PUSH_STRING(L, "type", "cylinder");
+			break;
+		case CollisionVolume::COLVOL_TYPE_BOX:
+			HSTR_PUSH_STRING(L, "type", "box");
+			break;
+	}
+
+	LuaPushNamedNumber(L, "scaleX", cv->GetScales().x);
+	LuaPushNamedNumber(L, "scaleY", cv->GetScales().y);
+	LuaPushNamedNumber(L, "scaleZ", cv->GetScales().z);
+	LuaPushNamedNumber(L, "offsetX", cv->GetOffsets().x);
+	LuaPushNamedNumber(L, "offsetY", cv->GetOffsets().y);
+	LuaPushNamedNumber(L, "offsetZ", cv->GetOffsets().z);
+	LuaPushNamedNumber(L, "boundingRadius", cv->GetBoundingRadius());
+	LuaPushNamedBool(L, "defaultToSphere",    cv->DefaultToSphere());
+	LuaPushNamedBool(L, "defaultToFootPrint", cv->DefaultToFootPrint());
+	LuaPushNamedBool(L, "defaultToPieceTree", cv->DefaultToPieceTree());
+	return 1;
+}
+
+
 #define TYPE_MODEL_FUNC(name, param)                            \
 	static int Model ## name(lua_State* L, const void* data)    \
 	{                                                           \
@@ -413,15 +413,15 @@ static int ModelName(lua_State* L, const void* data)
 
 //TYPE_MODEL_FUNC(Height, height); // ::ModelHeight()
 //TYPE_MODEL_FUNC(Radius, radius); // ::ModelRadius()
-TYPE_MODEL_FUNC(Minx, mins.x);
-TYPE_MODEL_FUNC(Midx, relMidPos.x);
-TYPE_MODEL_FUNC(Maxx, maxs.x);
-TYPE_MODEL_FUNC(Miny, mins.y);
-TYPE_MODEL_FUNC(Midy, relMidPos.y);
-TYPE_MODEL_FUNC(Maxy, maxs.y);
-TYPE_MODEL_FUNC(Minz, mins.z);
-TYPE_MODEL_FUNC(Midz, relMidPos.z);
-TYPE_MODEL_FUNC(Maxz, maxs.z);
+TYPE_MODEL_FUNC(Minx, mins.x)
+TYPE_MODEL_FUNC(Midx, relMidPos.x)
+TYPE_MODEL_FUNC(Maxx, maxs.x)
+TYPE_MODEL_FUNC(Miny, mins.y)
+TYPE_MODEL_FUNC(Midy, relMidPos.y)
+TYPE_MODEL_FUNC(Maxy, maxs.y)
+TYPE_MODEL_FUNC(Minz, mins.z)
+TYPE_MODEL_FUNC(Midz, relMidPos.z)
+TYPE_MODEL_FUNC(Maxz, maxs.z)
 
 
 /******************************************************************************/
@@ -429,12 +429,16 @@ TYPE_MODEL_FUNC(Maxz, maxs.z);
 
 static bool InitParamMap()
 {
+	paramMap.clear();
+
 	paramMap["next"]  = DataElement(READONLY_TYPE);
 	paramMap["pairs"] = DataElement(READONLY_TYPE);
 
 	// dummy FeatureDef for address lookups
 	const FeatureDef fd;
 	const char* start = ADDRESS(fd);
+
+	ADD_FUNCTION("collisionVolume", fd.collisionVolume, ColVolTable);
 
 	ADD_FUNCTION("drawTypeString", fd.drawType,     DrawTypeString);
 

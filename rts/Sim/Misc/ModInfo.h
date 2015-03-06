@@ -9,49 +9,9 @@
 class CModInfo
 {
 public:
-	CModInfo()
-		: allowAircraftToLeaveMap(true)
-		, allowAircraftToHitGround(true)
-		, allowPushingEnemyUnits(false)
-		, allowCrushingAlliedUnits(false)
-		, allowUnitCollisionDamage(false)
-		, allowUnitCollisionOverlap(true)
-		, allowGroundUnitGravity(true)
-		, allowHoverUnitStrafing(true)
-		, useClassicGroundMoveType(false)
-		, constructionDecay(true)
-		, constructionDecayTime(1000)
-		, constructionDecaySpeed(1.0f)
-		, multiReclaim(1)
-		, reclaimMethod(1)
-		, reclaimUnitMethod(1)
-		, reclaimUnitEnergyCostFactor(0.0f)
-		, reclaimUnitEfficiency(1.0f)
-		, reclaimFeatureEnergyCostFactor(0.0f)
-		, reclaimAllowEnemies(true)
-		, reclaimAllowAllies(true)
-		, repairEnergyCostFactor(0.0f)
-		, resurrectEnergyCostFactor(0.5f)
-		, captureEnergyCostFactor(0.0f)
-		, paralyzeOnMaxHealth(true)
-		, transportGround(1)
-		, transportHover(0)
-		, transportShip(0)
-		, transportAir(0)
-		, targetableTransportedUnits(0)
-		, fireAtKilled(1)
-		, fireAtCrashing(1)
-		, flankingBonusModeDefault(0)
-		, losMipLevel(0)
-		, airMipLevel(0)
-		, losMul(1.0f)
-		, airLosMul(1.0f)
-		, requireSonarUnderWater(true)
-		, featureVisibility(FEATURELOS_NONE)
-		, pathFinderSystem(PFS_TYPE_DEFAULT)
-	{}
+	CModInfo() { ResetState(); }
 
-
+	void ResetState();
 	void Init(const char* modArchive);
 
 	/**
@@ -129,6 +89,11 @@ public:
 	/// How much should energy should capture cost, default 0.0
 	float captureEnergyCostFactor;
 
+	float unitExpMultiplier;
+	float unitExpPowerScale;
+	float unitExpHealthScale;
+	float unitExpReloadScale;
+
 	// Paralyze behaviour
 	/// paralyze unit depending on maxHealth? if not depending on current health, default true
 	bool paralyzeOnMaxHealth;
@@ -173,8 +138,10 @@ public:
 	/// 2 - gaia/allied features visible, 3 - all features visible
 	int featureVisibility;
 
-	// which pathfinder system (DEFAULT/legacy or QTPFS) the mod will use
+	// Path Finder
+	/// which pathfinder system (DEFAULT/legacy or QTPFS) the mod will use
 	int pathFinderSystem;
+	float pfUpdateRate;
 };
 
 extern CModInfo modInfo;

@@ -20,15 +20,12 @@
 #include "System/EventHandler.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/Sync/SyncTracer.h"
 
-#define PLAY_SOUNDS 1
-#if (PLAY_SOUNDS == 1)
 #include "Game/GlobalUnsynced.h"
-#endif
 
-CR_BIND_DERIVED(CFactory, CBuilding, );
+CR_BIND_DERIVED(CFactory, CBuilding, )
 
 CR_REG_METADATA(CFactory, (
 	CR_MEMBER(buildSpeed),
@@ -42,7 +39,7 @@ CR_REG_METADATA(CFactory, (
 	CR_MEMBER(finishedBuildCommand),
 	CR_MEMBER(nanoPieceCache),
 	CR_POSTLOAD(PostLoad)
-));
+))
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -206,11 +203,9 @@ void CFactory::StartBuild(const UnitDef* buildeeDef) {
 	curBuild = buildee;
 	curBuildDef = NULL;
 
-	#if (PLAY_SOUNDS == 1)
 	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
-		Channels::General.PlayRandomSample(unitDef->sounds.build, buildPos);
+		Channels::General->PlayRandomSample(unitDef->sounds.build, buildPos);
 	}
-	#endif
 }
 
 void CFactory::UpdateBuild(CUnit* buildee) {
@@ -255,7 +250,7 @@ void CFactory::FinishBuild(CUnit* buildee) {
 	if (unitDef->fullHealthFactory && buildee->health < buildee->maxHealth) { return; }
 
 	{
-		if (group && buildee->group == 0) {
+		if (group && !buildee->group) {
 			buildee->SetGroup(group, true);
 		}
 	}
@@ -312,7 +307,7 @@ void CFactory::StopBuild()
 
 	if (curBuild) {
 		if (curBuild->beingBuilt) {
-			AddMetal(curBuild->metalCost * curBuild->buildProgress, false);
+			AddMetal(curBuild->cost.metal * curBuild->buildProgress, false);
 			curBuild->KillUnit(NULL, false, true);
 		}
 		DeleteDeathDependence(curBuild, DEPENDENCE_BUILD);
@@ -340,8 +335,9 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 	const float searchRadius = radius * 4.0f + unit->radius * 4.0f;
 	const int numSteps = 36;
 
+	const float3 exitPos = pos + frontdir*(radius + unit->radius);
 	float3 foundPos = pos + frontdir * searchRadius;
-	float3 tempPos = foundPos;
+	const float3 tempPos = foundPos;
 
 	for (int x = 0; x < numSteps; ++x) {
 		const float a = searchRadius * math::cos(x * PI / (numSteps * 0.5f));
@@ -349,7 +345,7 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 
 		float3 testPos = pos + frontdir * a + rightdir * b;
 
-		if (!testPos.IsInMap())
+		if (!testPos.IsInBounds())
 			continue;
 		// don't pick spots behind the factory (because
 		// units will want to path through it when open
@@ -357,7 +353,7 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 		if ((testPos - pos).dot(frontdir) < 0.0f)
 			continue;
 
-		testPos.y = ground->GetHeightAboveWater(testPos.x, testPos.z);
+		testPos.y = CGround::GetHeightAboveWater(testPos.x, testPos.z);
 
 		if (quadField->GetSolidsExact(testPos, unit->radius * 1.5f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS).empty()) {
 			foundPos = testPos; break;
@@ -377,16 +373,15 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 			foundPos.x = pos.x + frontdir.x * a + rightdir.x * b;
 			foundPos.z = pos.z + frontdir.z * a + rightdir.z * b;
 			foundPos.y += 1.0f;
-		} while ((!foundPos.IsInMap() || (foundPos - pos).dot(frontdir) < 0.0f) && (foundPos.y < 100.0f));
+		} while ((!foundPos.IsInBounds() || (foundPos - pos).dot(frontdir) < 0.0f) && (foundPos.y < 100.0f));
 
-		foundPos.y = ground->GetHeightAboveWater(foundPos.x, foundPos.z);
+		foundPos.y = CGround::GetHeightAboveWater(foundPos.x, foundPos.z);
 	}
 
 	// first queue a temporary waypoint outside the factory
 	// (otherwise units will try to turn before exiting when
 	// foundPos lies behind exit and cause jams / get stuck)
 	// we assume this temporary point is not itself blocked
-	// (redundant now foundPos always lies in front of us)
 	//
 	// NOTE:
 	//   MobileCAI::AutoGenerateTarget inserts a _third_
@@ -397,12 +392,12 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 	//   (and should also be more than CMD_CANCEL_DIST
 	//   elmos distant from foundPos)
 	//
-	//   Command c0(CMD_MOVE, tempPos);
-	Command c1(CMD_MOVE, SHIFT_KEY | INTERNAL_ORDER, foundPos);
-	Command c2(CMD_MOVE, SHIFT_KEY,                  foundPos + frontdir * 20.0f);
-	// unit->commandAI->GiveCommand(c0);
+	if (!unit->unitDef->canfly && exitPos.IsInBounds()) {
+		Command c0(CMD_MOVE, SHIFT_KEY, exitPos);
+		unit->commandAI->GiveCommand(c0);
+	}
+	Command c1(CMD_MOVE, SHIFT_KEY, foundPos);
 	unit->commandAI->GiveCommand(c1);
-	unit->commandAI->GiveCommand(c2);
 }
 
 void CFactory::AssignBuildeeOrders(CUnit* unit) {
@@ -444,7 +439,7 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 			}
 		}
 
-		c.PushPos(tmpPos);
+		c.PushPos(tmpPos.cClampInBounds());
 	} else {
 		// dummy rallypoint for aircraft
 		c.PushPos(unit->pos);

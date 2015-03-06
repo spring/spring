@@ -20,9 +20,9 @@ CEventClient::CEventClient(const std::string& _name, int _order, bool _synced)
 
 CEventClient::~CEventClient()
 {
-	//! No, we can't autobind all clients in the ctor.
-	//! eventHandler.AddClient() calls CEventClient::WantsEvent() that is
-	//! virtual and so not available during the initialization.
+	// No, we can't autobind all clients in the ctor.
+	// eventHandler.AddClient() calls CEventClient::WantsEvent() that is
+	// virtual and so not available during the initialization.
 	eventHandler.RemoveClient(this);
 }
 
@@ -32,23 +32,10 @@ bool CEventClient::WantsEvent(const std::string& eventName)
 	if (!autoLinkEvents)
 		return false;
 
-	if (this->linkedEvents.empty())
-		return false;
+	assert(!autoLinkedEvents.empty());
 
-	std::map<std::string, eventFuncPtr> virtEventPtrs;
-	std::map<std::string, std::string> virtEventPtrsTypeInfo;
-
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Wpmf-conversions"
-	#define SETUP_EVENT(eventname, props) \
-		virtEventPtrs[#eventname] = reinterpret_cast<eventFuncPtr>(&CEventClient::eventname); \
-		virtEventPtrsTypeInfo[#eventname] = typeid(&CEventClient::eventname).name();
-
-		#include "Events.def"
-	#undef SETUP_EVENT
-	#pragma GCC diagnostic pop
-
-	if (virtEventPtrs[eventName] != this->linkedEvents[eventName]) {
+	if (autoLinkedEvents[eventName]) {
+		//LOG("\"%s\" autolinks \"%s\"", GetName().c_str(), eventName.c_str());
 		return true;
 	}
 
@@ -73,6 +60,7 @@ bool CEventClient::AllowFeatureBuildStep(const CUnit* builder, const CFeature* f
 bool CEventClient::AllowResourceLevel(int teamID, const string& type, float level) { return true; }
 bool CEventClient::AllowResourceTransfer(int oldTeam, int newTeam, const string& type, float amount) { return true; }
 bool CEventClient::AllowDirectUnitControl(int playerID, const CUnit* unit) { return true; }
+bool CEventClient::AllowBuilderHoldFire(const CUnit* unit, int action) { return true; }
 bool CEventClient::AllowStartPosition(int playerID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos) { return true; }
 
 bool CEventClient::TerraformComplete(const CUnit* unit, const CUnit* build) { return false; }
@@ -133,6 +121,7 @@ void CEventClient::DrawWorldRefraction() {}
 void CEventClient::DrawScreenEffects() {}
 void CEventClient::DrawScreen() {}
 void CEventClient::DrawInMiniMap() {}
+void CEventClient::DrawInMiniMapBackground() {}
 
 bool CEventClient::DrawUnit(const CUnit* unit) { return false; }
 bool CEventClient::DrawFeature(const CFeature* feature) { return false; }
@@ -145,6 +134,8 @@ void CEventClient::DrawLoadScreen() {}
 void CEventClient::LoadProgress(const std::string& msg, const bool replace_lastline) {}
 
 void CEventClient::CollectGarbage() {}
+void CEventClient::DbgTimingInfo(DbgTimingInfoType type, const spring_time start, const spring_time end) {}
+void CEventClient::MetalMapChanged(const int x, const int z) {}
 
 // from LuaUI
 bool CEventClient::KeyPress(int key, bool isRepeat) { return false; }

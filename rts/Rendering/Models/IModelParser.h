@@ -25,7 +25,6 @@ public:
 	C3DModelLoader();
 	~C3DModelLoader();
 
-	void Update();
 	void CreateLocalModel(LocalModel* model);
 	void DeleteLocalModel(LocalModel* model);
 

@@ -8,6 +8,8 @@
 #include "System/Util.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
+#include "System/UriParser.h"
+#include "System/FileSystem/RapidHandler.h"
 #include "System/Log/ILog.h"
 #include <boost/cstdint.hpp>
 
@@ -188,6 +190,14 @@ namespace StartScriptGen {
 		return false;
 	}
 
+	static bool GetGameByRapidTag(const std::string& lazyName, std::string& tag)
+	{
+		if (!ParseRapidUri(lazyName, tag))
+			return false;
+		tag = GetRapidName(tag);
+		return !tag.empty();
+	}
+
 
 	static std::string GetGame(const std::string& lazyName)
 	{
@@ -195,7 +205,7 @@ namespace StartScriptGen {
 		if (GetGameByExactName(lazyName, &applicableName)) return applicableName;
 		if (GetGameByShortName(lazyName, &applicableName)) return applicableName;
 		if (GetRandomGame(lazyName, &applicableName))      return applicableName;
-		//TODO add rapid tags support, e.g. `s44:test`
+		if (GetGameByRapidTag(lazyName, applicableName))   return applicableName;
 
 		return lazyName;
 	}
@@ -232,7 +242,6 @@ std::string CreateMinimalSetup(const std::string& game, const std::string& map)
 	modopts->AddPair("MinimalSetup", 1); //use for ingame detecting this type of start
 
 	g->AddPair("IsHost", 1);
-	g->AddPair("OnlyLocal", 1);
 	g->add_name_value("MyPlayerName", playername);
 
 	TdfParser::TdfSection* player0 = g->construct_subsection("PLAYER0");
@@ -267,7 +276,6 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& game, 
 	modopts->AddPair("MaxSpeed", 20);
 
 	g->AddPair("IsHost", 1);
-	g->AddPair("OnlyLocal", 1);
 	g->add_name_value("MyPlayerName", playername);
 
 	g->AddPair("NoHelperAIs", configHandler->GetBool("NoHelperAIs"));
@@ -321,4 +329,4 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& game, 
 	return str.str();
 }
 
-}; //namespace StartScriptGen
+} //namespace StartScriptGen

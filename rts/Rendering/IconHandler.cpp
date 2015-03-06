@@ -358,4 +358,4 @@ void CIconData::Draw(const float3& botLeft, const float3& botRight,
 
 /******************************************************************************/
 
-};
+}

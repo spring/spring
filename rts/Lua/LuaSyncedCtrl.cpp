@@ -21,11 +21,13 @@
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/Players/PlayerHandler.h"
+#include "Game/Players/Player.h"
 #include "Net/GameServer.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Rendering/Env/GrassDrawer.h"
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Models/IModelParser.h"
@@ -34,6 +36,7 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/SmoothHeightMesh.h"
 #include "Sim/Misc/Team.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -85,13 +88,13 @@ bool LuaSyncedCtrl::inGiveOrder = false;
 bool LuaSyncedCtrl::inHeightMap = false;
 bool LuaSyncedCtrl::inSmoothMesh = false;
 
-static int heightMapx1;
-static int heightMapx2;
-static int heightMapz1;
-static int heightMapz2;
-static float heightMapAmountChanged;
+static int heightMapx1 = 0;
+static int heightMapx2 = 0;
+static int heightMapz1 = 0;
+static int heightMapz2 = 0;
 
-static float smoothMeshAmountChanged;
+static float heightMapAmountChanged = 0.0f;
+static float smoothMeshAmountChanged = 0.0f;
 
 
 /******************************************************************************/
@@ -109,12 +112,35 @@ inline void LuaSyncedCtrl::CheckAllowGameChanges(lua_State* L)
 
 bool LuaSyncedCtrl::PushEntries(lua_State* L)
 {
+	{
+		// these need to be re-initialized here since we might have reloaded
+		inCreateUnit = false;
+		inDestroyUnit = false;
+		inTransferUnit = false;
+		inCreateFeature = false;
+		inDestroyFeature = false;
+		inGiveOrder = false;
+		inHeightMap = false;
+		inSmoothMesh = false;
+
+		heightMapx1 = 0;
+		heightMapx2 = 0;
+		heightMapz1 = 0;
+		heightMapz2 = 0;
+
+		heightMapAmountChanged = 0.0f;
+		smoothMeshAmountChanged = 0.0f;
+	}
+
+
 #define REGISTER_LUA_CFUNC(x) \
 	lua_pushstring(L, #x);      \
 	lua_pushcfunction(L, x);    \
 	lua_rawset(L, -3)
 
+	REGISTER_LUA_CFUNC(SetAlly);
 	REGISTER_LUA_CFUNC(KillTeam);
+	REGISTER_LUA_CFUNC(AssignPlayerToTeam);
 	REGISTER_LUA_CFUNC(GameOver);
 
 	REGISTER_LUA_CFUNC(AddTeamResource);
@@ -495,11 +521,7 @@ static int SetSolidObjectDirection(lua_State* L, CSolidObject* o)
 	if (o == NULL)
 		return 0;
 
-	float3 dir(luaL_checkfloat(L, 2),
-	           luaL_checkfloat(L, 3),
-	           luaL_checkfloat(L, 4));
-
-	o->ForcedSpin(dir.Normalize());
+	o->ForcedSpin((float3(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4))).SafeNormalize());
 	return 0;
 }
 
@@ -552,6 +574,7 @@ static int SetSolidObjectPhysicalState(lua_State* L, CSolidObject* o)
 	o->SetDirVectors(matrix);
 	o->UpdateMidAndAimPos();
 	o->SetHeadingFromDirection();
+	// do not need ForcedSpin, above three calls cover it
 	o->ForcedMove(pos);
 	o->SetVelocityAndSpeed(speed);
 	return 0;
@@ -571,23 +594,52 @@ static int SetWorldObjectAlwaysVisible(lua_State* L, CWorldObject* o, const char
 // The call-outs
 //
 
+int LuaSyncedCtrl::SetAlly(lua_State* L)
+{
+	const int firstAllyTeamID = luaL_checkint(L, 1);
+	const int secondAllyTeamID = luaL_checkint(L, 2);
+
+	if (!teamHandler->IsValidAllyTeam(firstAllyTeamID))
+		return 0;
+	if (!teamHandler->IsValidAllyTeam(secondAllyTeamID))
+		return 0;
+
+	teamHandler->SetAlly(firstAllyTeamID, secondAllyTeamID, luaL_checkboolean(L, 3));
+	return 0;
+}
 
 int LuaSyncedCtrl::KillTeam(lua_State* L)
 {
 	const int teamID = luaL_checkint(L, 1);
-	if (!teamHandler->IsValidTeam(teamID)) {
+
+	if (!teamHandler->IsValidTeam(teamID))
 		return 0;
-	}
-	if (teamID == teamHandler->GaiaTeamID()) {
-		//FIXME either we disallow it here or it needs modifications in GameServer.cpp (it creates a `teams` vector w/o gaia)
-		//  possible fix would be to always create the Gaia team (currently it's conditional on gs->useLuaGaia)
+
+	//FIXME either we disallow it here or it needs modifications in GameServer.cpp (it creates a `teams` vector w/o gaia)
+	//  possible fix would be to always create the Gaia team (currently it's conditional on gs->useLuaGaia)
+	if (teamID == teamHandler->GaiaTeamID())
 		return 0;
-	}
+
 	CTeam* team = teamHandler->Team(teamID);
-	if (team == NULL) {
+
+	if (team == NULL)
 		return 0;
-	}
+
 	team->Died();
+	return 0;
+}
+
+int LuaSyncedCtrl::AssignPlayerToTeam(lua_State* L)
+{
+	const int playerID = luaL_checkint(L, 1);
+	const int teamID = luaL_checkint(L, 2);
+
+	if (!playerHandler->IsValidPlayer(playerID))
+		return 0;
+	if (!teamHandler->IsValidTeam(teamID))
+		return 0;
+
+	teamHandler->Team(teamID)->AddPlayer(playerID);
 	return 0;
 }
 
@@ -672,12 +724,12 @@ int LuaSyncedCtrl::UseTeamResource(lua_State* L)
 		const float value = max(0.0f, luaL_checkfloat(L, 3));
 
 		if ((type == "m") || (type == "metal")) {
-			team->metalPull += value;
+			team->resPull.metal += value;
 			lua_pushboolean(L, team->UseMetal(value));
 			return 1;
 		}
 		else if ((type == "e") || (type == "energy")) {
-			team->energyPull += value;
+			team->resPull.energy += value;
 			lua_pushboolean(L, team->UseEnergy(value));
 			return 1;
 		}
@@ -697,9 +749,9 @@ int LuaSyncedCtrl::UseTeamResource(lua_State* L)
 				}
 			}
 		}
-		team->metalPull  += metal;
-		team->energyPull += energy;
-		if ((team->metal >= metal) && (team->energy >= energy)) {
+		team->resPull.metal  += metal;
+		team->resPull.energy += energy;
+		if ((team->res.metal >= metal) && (team->res.energy >= energy)) {
 			team->UseMetal(metal);
 			team->UseEnergy(energy);
 			lua_pushboolean(L, true);
@@ -734,18 +786,18 @@ int LuaSyncedCtrl::SetTeamResource(lua_State* L)
 	const float value = max(0.0f, luaL_checkfloat(L, 3));
 
 	if ((type == "m") || (type == "metal")) {
-		team->metal = min<float>(team->metalStorage, value);
+		team->res.metal = min<float>(team->resStorage.metal, value);
 	}
 	else if ((type == "e") || (type == "energy")) {
-		team->energy = min<float>(team->energyStorage, value);
+		team->res.energy = min<float>(team->resStorage.energy, value);
 	}
 	else if ((type == "ms") || (type == "metalStorage")) {
-		team->metalStorage = value;
-		team->metal = min<float>(team->metal, team->metalStorage);
+		team->resStorage.metal = value;
+		team->res.metal = min<float>(team->res.metal, team->resStorage.metal);
 	}
 	else if ((type == "es") || (type == "energyStorage")) {
-		team->energyStorage = value;
-		team->energy = min<float>(team->energy, team->energyStorage);
+		team->resStorage.energy = value;
+		team->res.energy = min<float>(team->res.energy, team->resStorage.energy);
 	}
 	return 0;
 }
@@ -770,10 +822,10 @@ int LuaSyncedCtrl::SetTeamShareLevel(lua_State* L)
 	const float value = luaL_checkfloat(L, 3);
 
 	if ((type == "m") || (type == "metal")) {
-		team->metalShare = max(0.0f, min(1.0f, value));
+		team->resShare.metal = Clamp(value, 0.0f, 1.0f);
 	}
 	else if ((type == "e") || (type == "energy")) {
-		team->energyShare = max(0.0f, min(1.0f, value));
+		team->resShare.energy = Clamp(value, 0.0f, 1.0f);
 	}
 	return 0;
 }
@@ -806,23 +858,23 @@ int LuaSyncedCtrl::ShareTeamResource(lua_State* L)
 	float amount = luaL_checkfloat(L, 4);
 
 	if (type == "metal") {
-		amount = std::min(amount, (float)team1->metal);
+		amount = std::min(amount, (float)team1->res.metal);
 		if (eventHandler.AllowResourceTransfer(teamID1, teamID2, "m", amount)) { //FIXME can cause an endless loop
-			team1->metal                       -= amount;
-			team1->metalSent                   += amount;
+			team1->res.metal                   -= amount;
+			team1->resSent.metal               += amount;
 			team1->currentStats->metalSent     += amount;
-			team2->metal                       += amount;
-			team2->metalReceived               += amount;
+			team2->res.metal                   += amount;
+			team2->resReceived.metal           += amount;
 			team2->currentStats->metalReceived += amount;
 		}
 	} else if (type == "energy") {
-		amount = std::min(amount, (float)team1->energy);
+		amount = std::min(amount, (float)team1->res.energy);
 		if (eventHandler.AllowResourceTransfer(teamID1, teamID2, "e", amount)) { //FIXME can cause an endless loop
-			team1->energy                       -= amount;
-			team1->energySent                   += amount;
+			team1->res.energy                   -= amount;
+			team1->resSent.energy               += amount;
 			team1->currentStats->energySent     += amount;
-			team2->energy                       += amount;
-			team2->energyReceived               += amount;
+			team2->res.energy                   += amount;
+			team2->resReceived.energy           += amount;
 			team2->currentStats->energyReceived += amount;
 		}
 	}
@@ -1231,9 +1283,9 @@ int LuaSyncedCtrl::SetUnitCosts(lua_State* L)
 		if (key == "buildTime") {
 			unit->buildTime  = max(1.0f, value);
 		} else if (key == "metalCost") {
-			unit->metalCost  = max(1.0f, value);
+			unit->cost.metal  = max(1.0f, value);
 		} else if (key == "energyCost") {
-			unit->energyCost = max(1.0f, value);
+			unit->cost.energy = max(1.0f, value);
 		}
 	}
 	return 0;
@@ -1255,22 +1307,22 @@ static bool SetUnitResourceParam(CUnit* unit, const string& name, float value)
 
 	if (name[0] == 'u') {
 		if (name[1] == 'u') {
-					 if (name[2] == 'm') { unit->uncondUseMetal = value;  return true; }
-			else if (name[2] == 'e') { unit->uncondUseEnergy = value; return true; }
+					 if (name[2] == 'm') { unit->resourcesUncondUse.metal = value;  return true; }
+			else if (name[2] == 'e') { unit->resourcesUncondUse.energy = value; return true; }
 		}
 		else if (name[1] == 'm') {
-					 if (name[2] == 'm') { unit->uncondMakeMetal = value;  return true; }
-			else if (name[2] == 'e') { unit->uncondMakeEnergy = value; return true; }
+					 if (name[2] == 'm') { unit->resourcesUncondMake.metal = value;  return true; }
+			else if (name[2] == 'e') { unit->resourcesUncondMake.energy = value; return true; }
 		}
 	}
 	else if (name[0] == 'c') {
 		if (name[1] == 'u') {
-					 if (name[2] == 'm') { unit->condUseMetal = value;  return true; }
-			else if (name[2] == 'e') { unit->condUseEnergy = value; return true; }
+					 if (name[2] == 'm') { unit->resourcesCondUse.metal = value;  return true; }
+			else if (name[2] == 'e') { unit->resourcesCondUse.energy = value; return true; }
 		}
 		else if (name[1] == 'm') {
-					 if (name[2] == 'm') { unit->condMakeMetal = value;  return true; }
-			else if (name[2] == 'e') { unit->condMakeEnergy = value; return true; }
+					 if (name[2] == 'm') { unit->resourcesCondMake.metal = value;  return true; }
+			else if (name[2] == 'e') { unit->resourcesCondMake.energy = value; return true; }
 		}
 	}
 	return false;
@@ -1428,7 +1480,7 @@ static int SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
 		weapon->reloadTime = (int)(value * GAME_SPEED);
 	}
 	else if (key == "accuracy") {
-		weapon->accuracy = value;
+		weapon->accuracyError = value;
 	}
 	else if (key == "sprayAngle") {
 		weapon->sprayAngle = value;
@@ -1684,7 +1736,11 @@ int LuaSyncedCtrl::SetUnitHarvestStorage(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	unit->harvestStorage = luaL_checkfloat(L, 2);
+
+	for (int i = 0; i < SResourcePack::MAX_RESOURCES; ++i) {
+		unit->harvested[i]       = luaL_optfloat(L, 2 + i * 2,     unit->harvested[i]);
+		unit->harvestStorage[i]  = luaL_optfloat(L, 2 + i * 2 + 1, unit->harvestStorage[i]);
+	}
 	return 0;
 }
 
@@ -2116,19 +2172,22 @@ int LuaSyncedCtrl::SetUnitMoveGoal(lua_State* L)
 {
 	CheckAllowGameChanges(L);
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
-	if (unit->moveType == NULL) {
+	if (unit->moveType == NULL)
 		return 0;
-	}
-	const float3 pos(luaL_checkfloat(L, 2),
-									 luaL_checkfloat(L, 3),
-									 luaL_checkfloat(L, 4));
+
+	const float3 pos(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
+
 	const float radius = luaL_optfloat(L, 5, 0.0f);
 	const float speed  = luaL_optfloat(L, 6, unit->moveType->GetMaxSpeed());
 
-	unit->moveType->StartMoving(pos, radius, speed);
+	if (luaL_optboolean(L, 7, false)) {
+		unit->moveType->StartMovingRaw(pos, radius);
+	} else {
+		unit->moveType->StartMoving(pos, radius, speed);
+	}
 
 	return 0;
 }
@@ -2142,9 +2201,9 @@ int LuaSyncedCtrl::SetUnitPhysics(lua_State* L)
 int LuaSyncedCtrl::SetUnitPosition(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
 
 	float3 pos;
 
@@ -2159,9 +2218,9 @@ int LuaSyncedCtrl::SetUnitPosition(lua_State* L)
 		pos.z = luaL_checkfloat(L, 3);
 
 		if (luaL_optboolean(L, 4, false)) {
-			pos.y = ground->GetHeightAboveWater(pos.x, pos.z);
+			pos.y = CGround::GetHeightAboveWater(pos.x, pos.z);
 		} else {
-			pos.y = ground->GetHeightReal(pos.x, pos.z);
+			pos.y = CGround::GetHeightReal(pos.x, pos.z);
 		}
 	}
 
@@ -2184,10 +2243,10 @@ int LuaSyncedCtrl::SetUnitRotation(lua_State* L)
 
 	assert(matrix.IsOrthoNormal() == 0);
 
+	// do not need ForcedSpin, below three calls cover it
 	unit->SetDirVectors(matrix);
 	unit->UpdateMidAndAimPos();
 	unit->SetHeadingFromDirection();
-	unit->ForcedMove(unit->pos);
 	return 0;
 }
 
@@ -2326,13 +2385,13 @@ int LuaSyncedCtrl::UseUnitResource(lua_State* L)
 			}
 		}
 		CTeam* team = teamHandler->Team(unit->team);
-		if ((team->metal >= metal) && (team->energy >= energy)) {
+		if ((team->res.metal >= metal) && (team->res.energy >= energy)) {
 			unit->UseMetal(metal);
 			unit->UseEnergy(energy);
 			lua_pushboolean(L, true);
 		} else {
-			team->metalPull  += metal;
-			team->energyPull += energy;
+			team->resPull.metal  += metal;
+			team->resPull.energy += energy;
 			lua_pushboolean(L, false);
 		}
 		return 1;
@@ -2364,7 +2423,7 @@ int LuaSyncedCtrl::AddGrass(lua_State* L)
 	float3 pos(luaL_checkfloat(L, 1), 0.0f, luaL_checkfloat(L, 2));
 	pos.ClampInBounds();
 
-	treeDrawer->AddGrass(pos);
+	grassDrawer->AddGrass(pos);
 	return 0;
 }
 
@@ -2374,7 +2433,7 @@ int LuaSyncedCtrl::RemoveGrass(lua_State* L)
 	float3 pos(luaL_checkfloat(L, 1), 0.0f, luaL_checkfloat(L, 2));
 	pos.ClampInBounds();
 
-	treeDrawer->RemoveGrass((int)pos.x,(int)pos.z);
+	grassDrawer->RemoveGrass(pos);
 	return 0;
 }
 
@@ -2813,26 +2872,33 @@ int LuaSyncedCtrl::SetPieceProjectileParams(lua_State* L)
 	return 0;
 }
 
-
+//
+// TODO: move this and SpawnCEG to LuaUnsyncedCtrl
+//
 int LuaSyncedCtrl::SetProjectileCEG(lua_State* L)
 {
 	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
 
 	if (proj == NULL)
 		return 0;
+	if (!proj->weapon && !proj->piece)
+		return 0;
 
-	assert(proj->weapon || proj->piece);
+	unsigned int cegID = CExplosionGeneratorHandler::EXPGEN_ID_INVALID;
 
-	if (proj->weapon) {
-		CWeaponProjectile* wproj = static_cast<CWeaponProjectile*>(proj);
-		wproj->SetCustomExplosionGeneratorID(explGenHandler->LoadGeneratorID(luaL_checkstring(L, 2)));
+	if (lua_isstring(L, 2)) {
+		cegID = explGenHandler->LoadGeneratorID(std::string(CEG_PREFIX_STRING) + lua_tostring(L, 2));
+	} else {
+		cegID = luaL_checknumber(L, 2);
 	}
-	if (proj->piece) {
-		CPieceProjectile* pproj = static_cast<CPieceProjectile*>(proj);
-		pproj->SetCustomExplosionGeneratorID(explGenHandler->LoadGeneratorID(luaL_checkstring(L, 2)));
+
+	// if cegID is EXPGEN_ID_INVALID, this also returns NULL
+	if (explGenHandler->GetGenerator(cegID) != NULL) {
+		proj->SetCustomExplosionGeneratorID(cegID);
 	}
 
-	return 0;
+	lua_pushnumber(L, cegID);
+	return 1;
 }
 
 
@@ -3119,7 +3185,7 @@ static void ParseParams(lua_State* L, const char* caller, float& factor,
 static inline void ParseMapParams(lua_State* L, const char* caller,
 		float& factor, int& x1, int& z1, int& x2, int& z2)
 {
-	ParseParams(L, caller, factor, x1, z1, x2, z2, SQUARE_SIZE, gs->mapx, gs->mapy);
+	ParseParams(L, caller, factor, x1, z1, x2, z2, SQUARE_SIZE, mapDims.mapx, mapDims.mapy);
 }
 
 
@@ -3134,7 +3200,7 @@ int LuaSyncedCtrl::LevelHeightMap(lua_State* L)
 
 	for (int z = z1; z <= z2; z++) {
 		for (int x = x1; x <= x2; x++) {
-			readMap->SetHeight((z * gs->mapxp1) + x, height);
+			readMap->SetHeight((z * mapDims.mapxp1) + x, height);
 		}
 	}
 
@@ -3156,7 +3222,7 @@ int LuaSyncedCtrl::AdjustHeightMap(lua_State* L)
 
 	for (int z = z1; z <= z2; z++) {
 		for (int x = x1; x <= x2; x++) {
-			readMap->AddHeight((z * gs->mapxp1) + x, height);
+			readMap->AddHeight((z * mapDims.mapxp1) + x, height);
 		}
 	}
 
@@ -3180,7 +3246,7 @@ int LuaSyncedCtrl::RevertHeightMap(lua_State* L)
 	if (origFactor == 1.0f) {
 		for (int z = z1; z <= z2; z++) {
 			for (int x = x1; x <= x2; x++) {
-				const int idx = (z * gs->mapxp1) + x;
+				const int idx = (z * mapDims.mapxp1) + x;
 
 				readMap->SetHeight(idx, origMap[idx]);
 			}
@@ -3190,7 +3256,7 @@ int LuaSyncedCtrl::RevertHeightMap(lua_State* L)
 		const float currFactor = (1.0f - origFactor);
 		for (int z = z1; z <= z2; z++) {
 			for (int x = x1; x <= x2; x++) {
-				const int index = (z * gs->mapxp1) + x;
+				const int index = (z * mapDims.mapxp1) + x;
 				const float ofh = origFactor * origMap[index];
 				const float cfh = currFactor * currMap[index];
 				readMap->SetHeight(index, ofh + cfh);
@@ -3220,12 +3286,12 @@ int LuaSyncedCtrl::AddHeightMap(lua_State* L)
 	const int z = (int)(zl / SQUARE_SIZE);
 
 	// discard invalid coordinates
-	if ((x < 0) || (x > gs->mapx) ||
-	    (z < 0) || (z > gs->mapy)) {
+	if ((x < 0) || (x > mapDims.mapx) ||
+	    (z < 0) || (z > mapDims.mapy)) {
 		return 0;
 	}
 
-	const int index = (z * gs->mapxp1) + x;
+	const int index = (z * mapDims.mapxp1) + x;
 	const float oldHeight = readMap->GetCornerHeightMapSynced()[index];
 	heightMapAmountChanged += math::fabsf(h);
 
@@ -3257,12 +3323,12 @@ int LuaSyncedCtrl::SetHeightMap(lua_State* L)
 	const int z = (int)(zl / SQUARE_SIZE);
 
 	// discard invalid coordinates
-	if ((x < 0) || (x > gs->mapx) ||
-	    (z < 0) || (z > gs->mapy)) {
+	if ((x < 0) || (x > mapDims.mapx) ||
+	    (z < 0) || (z > mapDims.mapy)) {
 		return 0;
 	}
 
-	const int index = (z * gs->mapxp1) + x;
+	const int index = (z * mapDims.mapxp1) + x;
 	const float oldHeight = readMap->GetCornerHeightMapSynced()[index];
 	float height = oldHeight;
 
@@ -3303,9 +3369,9 @@ int LuaSyncedCtrl::SetHeightMapFunc(lua_State* L)
 		luaL_error(L, "SetHeightMapFunc() recursion is not permitted");
 	}
 
-	heightMapx1 = gs->mapx;
+	heightMapx1 = mapDims.mapx;
 	heightMapx2 = -1;
-	heightMapz1 = gs->mapy;
+	heightMapz1 = mapDims.mapy;
 	heightMapz2 = 0;
 	heightMapAmountChanged = 0.0f;
 
@@ -3508,17 +3574,17 @@ int LuaSyncedCtrl::SetMapSquareTerrainType(lua_State* L)
 	const int hx = int(luaL_checkfloat(L, 1) / SQUARE_SIZE);
 	const int hz = int(luaL_checkfloat(L, 2) / SQUARE_SIZE);
 
-	if ((hx < 0) || (hx > gs->mapx) || (hz < 0) || (hz > gs->mapy)) {
+	if ((hx < 0) || (hx > mapDims.mapx) || (hz < 0) || (hz > mapDims.mapy)) {
 		return 0;
 	}
 
 	const int tx = hx >> 1;
 	const int tz = hz >> 1;
 
-	const int ott = readMap->GetTypeMapSynced()[tz * gs->hmapx + tx];
+	const int ott = readMap->GetTypeMapSynced()[tz * mapDims.hmapx + tx];
 	const int ntt = luaL_checkint(L, 3);
 
-	readMap->GetTypeMapSynced()[tz * gs->hmapx + tx] = std::max(0, std::min(ntt, (CMapInfo::NUM_TERRAIN_TYPES - 1)));
+	readMap->GetTypeMapSynced()[tz * mapDims.hmapx + tx] = std::max(0, std::min(ntt, (CMapInfo::NUM_TERRAIN_TYPES - 1)));
 	pathManager->TerrainChange(hx, hz,  hx + 1, hz + 1,  TERRAINCHANGE_SQUARE_TYPEMAP_INDEX);
 
 	lua_pushnumber(L, ott);
@@ -3565,9 +3631,9 @@ int LuaSyncedCtrl::SetTerrainTypeData(lua_State* L)
 	const unsigned char* typeMap = readMap->GetTypeMapSynced();
 
 	// update all map-squares set to this terrain-type (slow)
-	for (int tx = 0; tx < gs->hmapx; tx++) {
-		for (int tz = 0; tz < gs->hmapy; tz++) {
-			if (typeMap[tz * gs->hmapx + tx] == tti) {
+	for (int tx = 0; tx < mapDims.hmapx; tx++) {
+		for (int tz = 0; tz < mapDims.hmapy; tz++) {
+			if (typeMap[tz * mapDims.hmapx + tx] == tti) {
 				pathManager->TerrainChange((tx << 1), (tz << 1),  (tx << 1) + 1, (tz << 1) + 1,  TERRAINCHANGE_TYPEMAP_SPEED_VALUES);
 			}
 		}

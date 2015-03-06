@@ -22,9 +22,9 @@
 CR_BIND_DERIVED(CInterceptHandler, CObject, )
 CR_REG_METADATA(CInterceptHandler, (
 	CR_MEMBER(interceptors),
-	CR_MEMBER(repulsors)//,
-	//CR_MEMBER(interceptables) FIXME
-));
+	CR_MEMBER(repulsors),
+	CR_MEMBER(interceptables)
+))
 
 CInterceptHandler interceptHandler;
 
@@ -73,7 +73,7 @@ void CInterceptHandler::Update(bool forced) {
 			// these checks all need to be evaluated periodically, not just
 			// when a projectile is created and handed to AddInterceptTarget
 			const float weaponDist = w->weaponPos.distance(p->pos);
-			const float impactDist = ground->LineGroundCol(p->pos, p->pos + p->dir * weaponDist);
+			const float impactDist = CGround::LineGroundCol(p->pos, p->pos + p->dir * weaponDist);
 
 			const float3& pImpactPos = p->pos + p->dir * impactDist;
 			const float3& pTargetPos = p->GetTargetPos();

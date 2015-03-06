@@ -5,6 +5,7 @@
 
 #include "System/creg/creg_cond.h"
 #include "System/Misc/SpringTime.h"
+#include "System/type2.h"
 
 struct SDL_Window;
 
@@ -15,18 +16,17 @@ struct SDL_Window;
  * that does not remain synced.
  */
 class CGlobalRendering {
-	CR_DECLARE_STRUCT(CGlobalRendering);
+	CR_DECLARE_STRUCT(CGlobalRendering)
 
 	CGlobalRendering();
 
 public:
 	void PostInit();
 	void SetFullScreen(bool configFullScreen, bool cmdLineWindowed, bool cmdLineFullScreen);
-	void SetViewSize(int vsx, int vsy);
 	void SetDualScreenParams();
 	void UpdateViewPortGeometry();
 	void UpdatePixelGeometry();
-
+	int2 GetWantedViewSize(const bool fullscreen);
 
 	/**
 	 * @brief time offset
@@ -56,7 +56,6 @@ public:
 	float FPS;
 
 	/// the window state (0=normal,1=maximized,2=minimized)
-	/// note don't change values without updating MyX11SetWindowState()!!!
 	enum {
 		WINSTATE_DEFAULT   = 0,
 		WINSTATE_MAXIMIZED = 1,
@@ -257,6 +256,10 @@ public:
 	/// magic constant to reduce overblending on SMF maps
 	/// (scales the MapInfo::light_t::ground*Color values)
 	static const float SMF_INTENSITY_MULT;
+
+
+	static const int minWinSizeX;
+	static const int minWinSizeY;
 };
 
 extern CGlobalRendering* globalRendering;

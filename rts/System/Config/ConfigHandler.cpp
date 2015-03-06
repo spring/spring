@@ -28,6 +28,7 @@ typedef map<string, string> StringMap;
 
 ConfigHandler* configHandler = NULL;
 
+
 /******************************************************************************/
 
 class ConfigHandlerImpl : public ConfigHandler
@@ -43,22 +44,33 @@ public:
 	void Delete(const string& key);
 	string GetConfigFile() const;
 	const StringMap GetData() const;
+	StringMap GetDataWithoutDefaults() const;
 	void Update();
 	void EnableWriting(bool write) { writingEnabled = write; }
 
 protected:
-	void AddObserver(ConfigNotifyCallback observer);
+	struct NamedConfigNotifyCallback {
+		NamedConfigNotifyCallback(ConfigNotifyCallback c, void* h)
+		: callback(c)
+		, holder(h)
+		{}
+		ConfigNotifyCallback callback;
+		void* holder;
+	};
+
+protected:
+	void AddObserver(ConfigNotifyCallback observer, void* holder);
+	void RemoveObserver(void* holder);
 
 private:
 	void RemoveDefaults();
 
 	OverlayConfigSource* overlay;
 	FileConfigSource* writableSource;
-	DefaultConfigSource* defaultSource;
 	vector<ReadOnlyConfigSource*> sources;
 
 	// observer related
-	list<ConfigNotifyCallback> observers;
+	list<NamedConfigNotifyCallback> observers;
 	boost::mutex observerMutex;
 	StringMap changedValues;
 	bool writingEnabled;
@@ -88,6 +100,12 @@ ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations, const bool
 	size_t sources_num = 3;
 	sources_num += (safemode) ? 1 : 0;
 	sources_num += locations.size() - 1;
+#ifdef DEDICATED
+	sources_num++;
+#endif
+#ifdef HEADLESS
+	sources_num++;
+#endif
 	sources.reserve(sources_num);
 
 	sources.push_back(overlay);
@@ -103,7 +121,12 @@ ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations, const bool
 	for (; loc != locations.end(); ++loc) {
 		sources.push_back(new FileConfigSource(*loc));
 	}
-
+#ifdef DEDICATED
+	sources.push_back(new DedicatedConfigSource());
+#endif
+#ifdef HEADLESS
+	sources.push_back(new HeadlessConfigSource());
+#endif
 	sources.push_back(new DefaultConfigSource());
 
 	assert(sources.size() <= sources_num);
@@ -114,6 +137,7 @@ ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations, const bool
 
 ConfigHandlerImpl::~ConfigHandlerImpl()
 {
+	assert(observers.empty()); //all observers have to be deregistered by RemoveObserver()
 	for_each_source(it) {
 		delete (*it);
 	}
@@ -133,6 +157,7 @@ ConfigHandlerImpl::~ConfigHandlerImpl()
 void ConfigHandlerImpl::RemoveDefaults()
 {
 	StringMap defaults = sources.back()->GetData();
+
 	vector<ReadOnlyConfigSource*>::const_reverse_iterator rsource = sources.rbegin();
 	for (; rsource != sources.rend(); ++rsource) {
 		FileConfigSource* source = dynamic_cast<FileConfigSource*> (*rsource);
@@ -155,6 +180,31 @@ void ConfigHandlerImpl::RemoveDefaults()
 		}
 	}
 }
+
+
+StringMap ConfigHandlerImpl::GetDataWithoutDefaults() const
+{
+	StringMap cleanConfig;
+	StringMap defaults = sources.back()->GetData();
+
+	for (auto rsource = sources.crbegin(); rsource != sources.crend(); ++rsource) {
+		const FileConfigSource* source = dynamic_cast<const FileConfigSource*> (*rsource);
+		if (source == nullptr) continue;
+
+		// Copy the map; we modify the original while iterating over the copy.
+		StringMap file = source->GetData();
+		for (auto it = file.cbegin(); it != file.cend(); ++it) {
+			const auto pos = defaults.find(it->first);
+			if (pos != defaults.end() && pos->second == it->second)
+				continue;
+
+			cleanConfig[it->first] = it->second;
+		}
+	}
+
+	return cleanConfig;
+}
+
 
 void ConfigHandlerImpl::Delete(const string& key)
 {
@@ -271,8 +321,8 @@ void ConfigHandlerImpl::Update()
 	for (StringMap::const_iterator ut = changedValues.begin(); ut != changedValues.end(); ++ut) {
 		const string& key = ut->first;
 		const string& value = ut->second;
-		for (list<ConfigNotifyCallback>::const_iterator it = observers.begin(); it != observers.end(); ++it) {
-			(*it)(key, value);
+		for (list<NamedConfigNotifyCallback>::const_iterator it = observers.begin(); it != observers.end(); ++it) {
+			(it->callback)(key, value);
 		}
 	}
 	changedValues.clear();
@@ -292,10 +342,21 @@ const StringMap ConfigHandlerImpl::GetData() const {
 	return data;
 }
 
-void ConfigHandlerImpl::AddObserver(ConfigNotifyCallback observer) {
+void ConfigHandlerImpl::AddObserver(ConfigNotifyCallback observer, void* holder) {
 	boost::mutex::scoped_lock lck(observerMutex);
-	observers.push_back(observer);
+	observers.emplace_back(observer, holder);
 }
+
+void ConfigHandlerImpl::RemoveObserver(void* holder) {
+	boost::mutex::scoped_lock lck(observerMutex);
+	for (list<NamedConfigNotifyCallback>::iterator it = observers.begin(); it != observers.end(); ++it) {
+		if (it->holder == holder) {
+			observers.erase(it);
+			return;
+		}
+	}
+}
+
 
 /******************************************************************************/
 

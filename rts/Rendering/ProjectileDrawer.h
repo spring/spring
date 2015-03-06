@@ -29,6 +29,9 @@ public:
 	CProjectileDrawer();
 	~CProjectileDrawer();
 
+	typedef std::set<CProjectile*, ProjectileDistanceComparator> SortedProjectileSet;
+	typedef std::list<CProjectile*> UnsortedProjectileList;
+
 	void Draw(bool drawReflection, bool drawRefraction = false);
 	void DrawProjectilesMiniMap();
 	bool DrawProjectileModel(const CProjectile* projectile, bool shadowPass);
@@ -37,8 +40,6 @@ public:
 
 	void LoadWeaponTextures();
 	void UpdateTextures();
-
-	void Update();
 
 
 	bool WantsEvent(const std::string& eventName) {
@@ -122,10 +123,11 @@ private:
 	std::vector<IWorldObjectModelRenderer*> modelRenderers;
 
 	/**
-	 * z-sorted set of all projectiles; used to
-	 * render particle effects in back-to-front order
+	 * z-sorted set of projectiles without models; used
+	 * to render particle effects in back-to-front order
 	 */
-	std::set<CProjectile*, ProjectileDistanceComparator> zSortedProjectiles;
+	SortedProjectileSet zSortedProjectiles;
+	UnsortedProjectileList unsortedProjectiles;
 };
 
 extern CProjectileDrawer* projectileDrawer;

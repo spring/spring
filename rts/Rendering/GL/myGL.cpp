@@ -1,5 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <vector>
 #include <string>
 #include <SDL.h>
 
@@ -10,41 +11,35 @@
 
 #include "myGL.h"
 #include "VertexArray.h"
-#include "VertexArrayRange.h"
 #include "Rendering/GlobalRendering.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
 #include "System/TimeProfiler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/Platform/MessageBox.h"
-
-#ifdef DEBUG //used for StacktraceOnGLErrors
 #include "System/Platform/CrashHandler.h"
+#include "System/Platform/MessageBox.h"
 #include "System/Platform/Threading.h"
-#endif
+#include "System/type2.h"
 
 
 CONFIG(bool, DisableCrappyGPUWarning).defaultValue(false).description("Disables the warning an user will receive if (s)he attempts to run Spring on an outdated and underpowered video card.");
-CONFIG(bool, ReportGLErrors).defaultValue(false);
-CONFIG(bool, StacktraceOnGLErrors).defaultValue(false).description("Create a stacktrace when an OpenGL error occurs (only available in DEBUG builds)");
+CONFIG(bool, DebugGL).defaultValue(false).description("Enables _driver_ debug feedback. (see GL_ARB_debug_output)");
+CONFIG(bool, DebugGLStacktraces).defaultValue(false).description("Create a stacktrace when an OpenGL error occurs");
 
 
-static CVertexArray* vertexArray1 = NULL;
-static CVertexArray* vertexArray2 = NULL;
-static CVertexArray* currentVertexArray = NULL;
-//BOOL gmlVertexArrayEnable = 0;
+static std::vector<CVertexArray*> vertexArrays;
+static int currentVertexArray = 0;
+
+
 /******************************************************************************/
 /******************************************************************************/
 
 CVertexArray* GetVertexArray()
 {
-	if (currentVertexArray == vertexArray1){
-		currentVertexArray = vertexArray2;
-	} else {
-		currentVertexArray = vertexArray1;
-	}
-	return currentVertexArray;
+	currentVertexArray = (currentVertexArray + 1) % vertexArrays.size();
+	return vertexArrays[currentVertexArray];
 }
 
 
@@ -52,25 +47,31 @@ CVertexArray* GetVertexArray()
 
 void PrintAvailableResolutions()
 {
-	char buffer[1024];
-	int n = 0;
-
 	// Get available fullscreen/hardware modes
-	//FIXME this checks only the main screen
-	for (int i=SDL_GetNumDisplayModes(0) - 1; i>=0; --i) {
-		SDL_DisplayMode mode;
-		SDL_GetDisplayMode(0, i, &mode);
-		n += SNPRINTF(&buffer[n], 1024-n, "%dx%d, ", mode.w, mode.h);
-	}
+	const int numdisplays = SDL_GetNumVideoDisplays();
+	for(int k=0; k < numdisplays; ++k) {
+		std::string modes;
+		SDL_Rect rect;
+		const int nummodes = SDL_GetNumDisplayModes(k);
+		SDL_GetDisplayBounds(k, &rect);
 
-	// remove last comma
-	if (n >= 2) {
-		buffer[n - 2] = '\0';
+		std::set<int2> resolutions;
+		for (int i = 0; i < nummodes; ++i) {
+			SDL_DisplayMode mode;
+			SDL_GetDisplayMode(k, i, &mode);
+			resolutions.insert(int2(mode.w, mode.h));
+		}
+		for (const int2& res: resolutions) {
+			if (!modes.empty()) {
+				modes += ", ";
+			}
+			modes += IntToString(res.x) + "x" + IntToString(res.y);
+		}
+		if (nummodes < 1) {
+			modes = "NONE";
+		}
+		LOG("Supported Video modes on Display %d x:%d y:%d %dx%d:\n\t%s", k+1,rect.x, rect.y, rect.w, rect.h, modes.c_str());
 	}
-	if (n == 0) {
-		SNPRINTF(&buffer[n], 1024-n, "NONE");
-	}
-	LOG("Supported Video modes: %s", buffer);
 }
 
 #ifdef GL_ARB_debug_output
@@ -83,7 +84,8 @@ void PrintAvailableResolutions()
 #else
 	#define _APIENTRY
 #endif
-void _APIENTRY OpenGLDebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, GLvoid* userParam)
+
+void _APIENTRY OpenGLDebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const GLvoid* userParam)
 {
 	std::string sourceStr;
 	std::string typeStr;
@@ -153,12 +155,10 @@ void _APIENTRY OpenGLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
 	LOG_L(L_ERROR, "OpenGL: source<%s> type<%s> id<%u> severity<%s>:\n%s",
 			sourceStr.c_str(), typeStr.c_str(), id, severityStr.c_str(),
 			messageStr.c_str());
-#ifdef DEBUG
-	if (configHandler->GetBool("StacktraceOnGLErrors")) {
-		const std::string threadName = "rendering";
-		CrashHandler::Stacktrace(Threading::GetCurrentThread(), threadName);
+
+	if (configHandler->GetBool("DebugGLStacktraces")) {
+		CrashHandler::Stacktrace(Threading::GetCurrentThread(), "rendering", LOG_LEVEL_WARNING);
 	}
-#endif
 }
 #endif // GL_ARB_debug_output
 
@@ -316,18 +316,9 @@ void LoadExtensions()
 	LOG("GLSL version: %s", glslVersion);
 	LOG("GLEW version: %s", glewVersion);
 	LOG("Video RAM:    %s", glVidMemStr);
+	LOG("SwapInterval: %d", SDL_GL_GetSwapInterval());
 
 	ShowCrappyGpuWarning(glVendor, glRenderer);
-
-	/*{
-		std::string s = (char*)glGetString(GL_EXTENSIONS);
-		for (unsigned int i=0; i<s.length(); i++)
-			if (s[i]==' ') s[i]='\n';
-
-		std::ofstream ofs("ext.txt");
-		if (!ofs.bad() && ofs.is_open())
-			ofs.write(s.c_str(), s.length());
-	}*/
 
 	std::string missingExts = "";
 	if (!GLEW_ARB_multitexture) {
@@ -345,43 +336,40 @@ void LoadExtensions()
 		char errorMsg[errorMsg_maxSize];
 		SNPRINTF(errorMsg, errorMsg_maxSize,
 				"Needed OpenGL extension(s) not found:\n"
-				"%s\n"
+				"  %s\n\n"
 				"Update your graphic-card driver!\n"
-				"graphic card:   %s\n"
-				"OpenGL version: %s\n",
+				"  Graphic card:   %s\n"
+				"  OpenGL version: %s\n",
 				missingExts.c_str(),
 				glRenderer,
 				glVersion);
-		handleerror(0, errorMsg, "Update graphic drivers", 0);
+		throw unsupported_error(errorMsg);
 	}
 
 	// install OpenGL DebugMessageCallback
 #if defined(GL_ARB_debug_output) && !defined(HEADLESS)
-	if (GLEW_ARB_debug_output && configHandler->GetBool("ReportGLErrors")) {
+	if (GLEW_ARB_debug_output && configHandler->GetBool("DebugGL")) {
 		LOG("Installing OpenGL-DebugMessageHandler");
-		glDebugMessageCallbackARB(&OpenGLDebugMessageCallback, NULL);
+		//typecast is a workarround for #4510, signature of the callback message changed :-|
+		glDebugMessageCallbackARB((GLDEBUGPROCARB)&OpenGLDebugMessageCallback, NULL);
 
-	#ifdef DEBUG
-		if (configHandler->GetBool("StacktraceOnGLErrors")) {
+		if (configHandler->GetBool("DebugGLStacktraces")) {
 			// The callback should happen in the thread that made the gl call
 			// so we get proper stacktraces.
 			glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
 		}
-	#endif
 	}
 #endif
 
-	vertexArray1 = new CVertexArray;
-	vertexArray2 = new CVertexArray;
+	for (int i = 0; i<2; ++i)
+		vertexArrays.push_back(new CVertexArray);
 }
 
 
 void UnloadExtensions()
 {
-	delete vertexArray1;
-	delete vertexArray2;
-	vertexArray1 = NULL;
-	vertexArray2 = NULL;
+	for (CVertexArray* va: vertexArrays)
+		delete va;
 }
 
 /******************************************************************************/
@@ -401,6 +389,61 @@ void WorkaroundATIPointSizeBug()
 }
 
 /******************************************************************************/
+
+void glSaveTexture(const GLuint textureID, const std::string& filename)
+{
+	const GLenum target = GL_TEXTURE_2D;
+	GLenum format = GL_RGBA8;
+	int sizeX, sizeY;
+
+	int bits = 0;
+	{
+		glBindTexture(GL_TEXTURE_2D, textureID);
+
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &sizeX);
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &sizeY);
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, (GLint*)&format);
+
+		GLint _cbits;
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_RED_SIZE, &_cbits); bits += _cbits;
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_GREEN_SIZE, &_cbits); bits += _cbits;
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_BLUE_SIZE, &_cbits); bits += _cbits;
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_ALPHA_SIZE, &_cbits); bits += _cbits;
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_DEPTH_SIZE, &_cbits); bits += _cbits;
+	}
+	assert(bits == 32);
+	assert(format == GL_RGBA8);
+
+	CBitmap bmp;
+	bmp.channels = 4;
+	bmp.Alloc(sizeX,sizeY);
+	glGetTexImage(target,0,GL_RGBA,GL_UNSIGNED_BYTE, &bmp.mem[0]);
+	bmp.Save(filename, false);
+}
+
+
+void glSpringTexStorage2D(const GLenum target, GLint levels, const GLint internalFormat, const GLsizei width, const GLsizei height)
+{
+#ifdef GLEW_ARB_texture_storage
+	if (levels < 0)
+		levels = std::ceil(std::log((float)(std::max(width, height) + 1)));
+
+	if (GLEW_ARB_texture_storage) {
+		glTexStorage2D(target, levels, internalFormat, width, height);
+	} else
+#endif
+	{
+		GLenum format = GL_RGBA, type = GL_UNSIGNED_BYTE;
+		switch (internalFormat) {
+			case GL_RGBA8: format = GL_RGBA; type = GL_UNSIGNED_BYTE; break;
+			case GL_RGB8:  format = GL_RGB;  type = GL_UNSIGNED_BYTE; break;
+			default: /*LOG_L(L_ERROR, "[%s] Couldn't detect format type for %i", __FUNCTION__, internalFormat);*/
+			break;
+		}
+		glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, nullptr);
+	}
+}
+
 
 void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei width, const GLsizei height, const GLenum format, const GLenum type, const void* data)
 {

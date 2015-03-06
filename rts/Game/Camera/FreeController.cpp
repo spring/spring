@@ -10,6 +10,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Input/KeyInput.h"
+#include "System/myMath.h"
 
 using std::max;
 using std::min;
@@ -37,23 +38,16 @@ CONFIG(float, CamFreeAngVelTime).defaultValue(1.0f);
 //
 
 CFreeController::CFreeController()
-: vel(ZeroVector),
-  avel(ZeroVector),
-  prevVel(ZeroVector),
-  prevAvel(ZeroVector),
+: trackRadius(0.0f),
   tracking(false),
-  trackPos(ZeroVector),
-  trackRadius(0.0f),
   gndLock(false)
 {
 	dir = float3(0.0f, -2.0f, -1.0f).ANormalize();
-
-	if (camera) {
-		const float hDist = math::sqrt((dir.x * dir.x) + (dir.z * dir.z));
-		camera->rot.y = math::atan2(dir.x, dir.z); // yaw
-		camera->rot.x = math::atan2(dir.y, hDist); // pitch
-	}
 	pos -= (dir * 1000.0f);
+	if (camera) {
+		camera->SetDir(dir);
+		rot = camera->GetRot();
+	}
 
 	enabled     = configHandler->GetBool("CamFreeEnabled");
 	invertAlt   = configHandler->GetBool("CamFreeInvertAlt");
@@ -85,15 +79,13 @@ void CFreeController::SetTrackingInfo(const float3& target, float radius)
 	const float rads = math::atan2(diff.x, diff.z);
 	const float len2D = diff.Length2D();
 
-	camera->rot.y = rads;
+	camera->SetRotY(rads);
 
 	if (math::fabs(len2D) <= 0.001f) {
-		camera->rot.x = 0.0f;
+		camera->SetRotX(0.0f);
 	} else {
-		camera->rot.x = math::atan2((trackPos.y - pos.y), len2D);
+		camera->SetRotX(math::atan2((trackPos.y - pos.y), len2D));
 	}
-
-	camera->UpdateForward(GetDir());
 }
 
 
@@ -125,16 +117,13 @@ void CFreeController::Update()
 	// adjustment to match the ground slope
 	float autoTiltVel = 0.0f;
 	if (gndLock && (autoTilt > 0.0f)) {
-		const float gndHeight = ground->GetHeightReal(pos.x, pos.z, false);
+		const float gndHeight = CGround::GetHeightReal(pos.x, pos.z, false);
 		if (pos.y < (gndHeight + gndOffset + 1.0f)) {
-			float3 hDir;
-			hDir.y = 0.0f;
-			hDir.x = (float)math::sin(camera->rot.y);
-			hDir.z = (float)math::cos(camera->rot.y);
-			const float3 gndNormal = ground->GetSmoothNormal(pos.x, pos.z, false);
+			const float3 hDir(math::sin(rot.y), 0.f, math::cos(rot.y));
+			const float3 gndNormal = CGround::GetSmoothNormal(pos.x, pos.z, false);
 			const float dot = gndNormal.dot(hDir);
 			const float gndRotX = (float)math::acos(dot) - (PI * 0.5f);
-			const float rotXdiff = (gndRotX - camera->rot.x);
+			const float rotXdiff = (gndRotX - rot.x);
 			autoTiltVel = (autoTilt * rotXdiff);
 		}
 	}
@@ -142,16 +131,16 @@ void CFreeController::Update()
 	// convert control velocity into position velocity
 	if (!tracking) {
 		if (goForward) {
-			const float3 tmpVel((camera->forward * vel.x) +
-			                    (UpVector        * vel.y) +
-			                    (camera->right   * vel.z));
+			const float3 tmpVel((camera->GetDir()   * vel.x) +
+					    (UpVector           * vel.y) +
+					    (camera->GetRight() * vel.z));
 			vel = tmpVel;
 		} else {
-			float3 forwardNoY(camera->forward.x, 0.0f, camera->forward.z);
+			float3 forwardNoY(camera->GetDir().x, 0.0f, camera->GetDir().z);
 			forwardNoY.ANormalize();
 			const float3 tmpVel((forwardNoY    * vel.x) +
 			                    (UpVector      * vel.y) +
-			                    (camera->right * vel.z));
+					    (camera->GetRight() * vel.z));
 			vel = tmpVel;
 		}
 	}
@@ -165,9 +154,9 @@ void CFreeController::Update()
 		const float dGrav = (gravity * ft);
 		vel.y += dGrav;
 		if (slide > 0.0f) {
-			const float gndHeight = ground->GetHeightReal(pos.x, pos.z, false);
+			const float gndHeight = CGround::GetHeightReal(pos.x, pos.z, false);
 			if (pos.y < (gndHeight + gndOffset + 1.0f)) {
-				const float3 gndNormal = ground->GetSmoothNormal(pos.x, pos.z, false);
+				const float3 gndNormal = CGround::GetSmoothNormal(pos.x, pos.z, false);
 				const float dotVal = gndNormal.y;
 				const float scale = (dotVal * slide * -dGrav);
 				vel.x += (gndNormal.x * scale);
@@ -178,9 +167,10 @@ void CFreeController::Update()
 
 	// set the new position/rotation
 	if (!tracking) {
-		pos           += (vel         * ft);
-		camera->rot   += (avel        * ft);
-		camera->rot.x += (autoTiltVel * ft); // note that this is not smoothed
+		pos += (vel * ft);
+		rot   -= (avel        * ft);
+		rot.x -= (autoTiltVel * ft); // note that this is not smoothed
+		camera->SetRot(rot);
 	} else {
 		// speed along the tracking direction varies with distance
 		const float3 diff = (pos - trackPos);
@@ -217,7 +207,7 @@ void CFreeController::Update()
 	}
 
 	// setup ground lock
-	const float gndHeight = ground->GetHeightReal(pos.x, pos.z, false);
+	const float gndHeight = CGround::GetHeightReal(pos.x, pos.z, false);
 
 	if (KeyInput::GetKeyModState(KMOD_SHIFT)) {
 		if (ctrlVelY > 0.0f) {
@@ -249,16 +239,11 @@ void CFreeController::Update()
 	}
 
 	// angular clamps
-	const float xRotLimit = PI * 0.499f;
-
-	if (camera->rot.x >= xRotLimit) {
-		// maximum upward pitch
-		camera->rot.x = xRotLimit; avel.x = 0.0f;
-	} else if (camera->rot.x <= -xRotLimit) {
-		// maximum downward pitch
-		camera->rot.x = -xRotLimit; avel.x = 0.0f;
+	if (rot.x >= fastmath::PI || rot.x<=0) {
+		rot.x = Clamp(rot.x, 0.001f, fastmath::PI - 0.001f);
+		camera->SetRotX(rot.x);
+		avel.x = 0.0f;
 	}
-	camera->rot.y = math::fmod(camera->rot.y, PI * 2.0f);
 
 	// setup for the next loop
 	prevVel  = vel;
@@ -271,12 +256,7 @@ void CFreeController::Update()
 
 float3 CFreeController::GetDir() const
 {
-	float3 dir;
-	dir.x = (float)(math::sin(camera->rot.y) * math::cos(camera->rot.x));
-	dir.z = (float)(math::cos(camera->rot.y) * math::cos(camera->rot.x));
-	dir.y = (float)(math::sin(camera->rot.x));
-	dir.ANormalize();
-	return dir;
+	return camera->GetDir();
 }
 
 
@@ -361,7 +341,7 @@ void CFreeController::MouseWheelMove(float move)
 
 void CFreeController::SetPos(const float3& newPos)
 {
-	const float h = ground->GetHeightReal(newPos.x, newPos.z, false);
+	const float h = CGround::GetHeightReal(newPos.x, newPos.z, false);
 	const float3 target = float3(newPos.x, h, newPos.z);
 //	const float3 target = newPos;
 	const float yDiff = pos.y - target.y;
@@ -375,7 +355,7 @@ void CFreeController::SetPos(const float3& newPos)
 	CCameraController::SetPos(newPos);
 	pos.y = oldPosY;
 	if (gndOffset != 0.0f) {
-		const float h = ground->GetHeightReal(pos.x, pos.z, false);
+		const float h = CGround::GetHeightReal(pos.x, pos.z, false);
 		const float absH = h + math::fabsf(gndOffset);
 		if (pos.y < absH) {
 			pos.y = absH;
@@ -391,11 +371,11 @@ float3 CFreeController::SwitchFrom() const
 {
 	const float x = max(0.1f, min(float3::maxxpos - 0.1f, pos.x));
 	const float z = max(0.1f, min(float3::maxzpos - 0.1f, pos.z));
-	return float3(x, ground->GetHeightAboveWater(x, z, false) + 5.0f, z);
+	return float3(x, CGround::GetHeightAboveWater(x, z, false) + 5.0f, z);
 }
 
 
-void CFreeController::SwitchTo(bool showText)
+void CFreeController::SwitchTo(const int oldCam, const bool showText)
 {
 	if (showText) {
 		LOG("Switching to Free style camera");
@@ -422,9 +402,9 @@ void CFreeController::GetState(StateMap& sm) const
 	sm["invertAlt"]   = invertAlt ? +1.0f : -1.0f;
 	sm["gndLock"]     = gndLock   ? +1.0f : -1.0f;
 
-	sm["rx"] = camera->rot.x;
-	sm["ry"] = camera->rot.y;
-	sm["rz"] = camera->rot.z;
+	sm["rx"] = fastmath::HALFPI - rot.x;
+	sm["ry"] = fastmath::PI - rot.y;
+	sm["rz"] = rot.z;
 
 	sm["vx"] = prevVel.x;
 	sm["vy"] = prevVel.y;
@@ -454,9 +434,12 @@ bool CFreeController::SetState(const StateMap& sm)
 	SetStateBool (sm, "invertAlt",   invertAlt);
 	SetStateBool (sm, "gndLock",     gndLock);
 
-	SetStateFloat(sm, "rx", camera->rot.x);
-	SetStateFloat(sm, "ry", camera->rot.y);
-	SetStateFloat(sm, "rz", camera->rot.z);
+	SetStateFloat(sm, "rx", rot.x);
+	SetStateFloat(sm, "ry", rot.y);
+	SetStateFloat(sm, "rz", rot.z);
+	rot.x = fastmath::HALFPI - rot.x;
+	rot.y = fastmath::PI - rot.y;
+	camera->SetRot(rot);
 
 	SetStateFloat(sm, "vx", prevVel.x);
 	SetStateFloat(sm, "vy", prevVel.y);

@@ -373,13 +373,42 @@ static void CopyShaderState_TransformFeedback(GLuint newProgID, GLuint oldProgID
 }
 
 
+
+static bool CopyShaderState_ContainsGeometryShader(GLuint oldProgID)
+{
+	bool ret = false;
+
+	GLsizei numAttachedShaders = 0;
+	GLuint attachedShaderIDs[3] = {0};
+	GLint attachedShaderType = 0;
+
+	// glGetProgramiv(oldProgID, GL_ATTACHED_SHADERS, &numAttachedShaders);
+	glGetAttachedShaders(oldProgID, 3, &numAttachedShaders, &attachedShaderIDs[0]);
+
+	for (GLsizei n = 0; n < numAttachedShaders; n++) {
+		glGetShaderiv(attachedShaderIDs[n], GL_SHADER_TYPE, &attachedShaderType);
+
+		if ((ret |= (attachedShaderType == GL_GEOMETRY_SHADER))) {
+			break;
+		}
+	}
+
+	return ret;
+}
+
 static void CopyShaderState_Geometry(GLuint newProgID, GLuint oldProgID)
 {
 #if defined(GL_ARB_geometry_shader4) && defined(GL_ARB_get_program_binary)
 	if (!GLEW_ARB_geometry_shader4)
 		return;
+	// "GL_INVALID_OPERATION is generated if pname is GL_GEOMETRY_VERTICES_OUT,
+	// GL_GEOMETRY_INPUT_TYPE, or GL_GEOMETRY_OUTPUT_TYPE, and program does not
+	// contain a geometry shader."
+	if (!CopyShaderState_ContainsGeometryShader(oldProgID))
+		return;
 
 	GLint verticesOut = 0, inputType = 0, outputType = 0;
+
 	glGetProgramiv(oldProgID, GL_GEOMETRY_INPUT_TYPE, &inputType);
 	glGetProgramiv(oldProgID, GL_GEOMETRY_OUTPUT_TYPE, &outputType);
 	glGetProgramiv(oldProgID, GL_GEOMETRY_VERTICES_OUT, &verticesOut);

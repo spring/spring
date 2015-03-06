@@ -4,7 +4,7 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/EventHandler.h"
 
-CR_BIND(FeatureDef, );
+CR_BIND(FeatureDef, )
 
 CR_REG_METADATA(FeatureDef, (
 	CR_MEMBER(description),
@@ -18,7 +18,7 @@ CR_REG_METADATA(FeatureDef, (
 	CR_MEMBER(geoThermal),
 	CR_MEMBER(deathFeatureDefID),
 	CR_MEMBER(smokeTime)
-));
+))
 
 FeatureDef::FeatureDef()
 	: deathFeatureDefID(-1)

@@ -16,9 +16,6 @@ public: // EventClient
 	bool GetFullRead() const { return true; }
 	int  GetReadAllyTeam() const { return CEventClient::AllAccessTeam; }
 
-	void UnitCreated(const CUnit* unit);
-	void UnitDestroyed(const CUnit* unit, const CUnit* attacker);
-
 	void UnitMoved(const CUnit* unit);
 	void UnitEnteredRadar(const CUnit* unit, int at);
 	void UnitEnteredLos(const CUnit* unit, int at);
@@ -39,13 +36,18 @@ public: // EventClient
 	//void LoadedModelRequested()
 
 public:
-	static EventBatchHandler* GetInstance();
+	static EventBatchHandler* GetInstance() { assert(ebh); return ebh; }
+	static void CreateInstance();
+	static void DeleteInstance();
+
 	EventBatchHandler();
 	virtual ~EventBatchHandler() {}
 
 private:
+	static EventBatchHandler* ebh;
 	static boost::int64_t eventSequenceNumber;
 
+private:
 	struct ProjectileCreatedDestroyedEvent {
 		static void Add(const CProjectile*);
 		static void Remove(const CProjectile*);
@@ -199,21 +201,7 @@ private:
 	FeatureMovedEventBatch featureMovedEventBatch;
 
 public:
-	void UpdateUnits();
-	void UpdateDrawUnits();
 	void DeleteSyncedUnits();
-
-	void UpdateFeatures();
-	void UpdateDrawFeatures();
-	void DeleteSyncedFeatures();
-
-	void UpdateProjectiles();
-	void UpdateDrawProjectiles();
-	void DeleteSyncedProjectiles();
-
-	void UpdateObjects();
-
-	void LoadedModelRequested();
 
 	void EnqueueUnitLOSStateChangeEvent(const CUnit* unit, int allyteam, int newstatus) { unitLOSStateChangedEventBatch.enqueue(UAD(unit, allyteam, newstatus)); }
 	void EnqueueUnitCloakStateChangeEvent(const CUnit* unit, int cloaked) { unitCloakStateChangedEventBatch.enqueue(UAD(unit, cloaked)); }

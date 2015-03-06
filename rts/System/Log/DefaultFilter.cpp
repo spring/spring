@@ -78,7 +78,7 @@ static inline int log_filter_section_getDefaultMinLevel(const char* section) {
 #else
 		return LOG_LEVEL_INFO;
 	} else {
-		return LOG_LEVEL_WARNING;
+		return LOG_LEVEL_NOTICE;
 #endif
 	}
 }
@@ -274,7 +274,7 @@ std::set<const char*> log_filter_section_getRegisteredSet()
 
 const char* log_filter_section_getSectionCString(const char* section_cstr_tmp)
 {
-	static std::unordered_map<std::string, std::unique_ptr<const char>> cache;
+	static std::unordered_map<std::string, std::unique_ptr<const char[]>> cache;
 
 	const auto str = std::string(section_cstr_tmp);
 	const auto it = cache.find(str);
@@ -287,6 +287,6 @@ const char* log_filter_section_getSectionCString(const char* section_cstr_tmp)
 	strcpy(&section_cstr[0], section_cstr_tmp);
 	section_cstr[str.size()] = '\0';
 
-	cache[str].reset(section_cstr);
+	cache[str].reset(const_cast<const char*>(section_cstr));
 	return section_cstr;
 }

@@ -40,7 +40,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
-#include "Sim/Units/Groups/Group.h"
+#include "Game/UI/Groups/Group.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Unit.h"
@@ -61,18 +61,15 @@
 
 CUnitDrawer* unitDrawer;
 
-CONFIG(int, UnitLodDist).defaultValue(1000);
-CONFIG(int, UnitIconDist).defaultValue(200);
+CONFIG(int, UnitLodDist).defaultValue(1000).headlessValue(0);
+CONFIG(int, UnitIconDist).defaultValue(200).headlessValue(0);
 CONFIG(float, UnitTransparency).defaultValue(0.7f);
-CONFIG(bool, ShowHealthBars).defaultValue(true);
-CONFIG(bool, MultiThreadDrawUnit).defaultValue(true);
-CONFIG(bool, MultiThreadDrawUnitShadow).defaultValue(true);
 
 CONFIG(int, MaxDynamicModelLights)
 	.defaultValue(1)
 	.minimumValue(0);
 
-CONFIG(bool, AdvUnitShading).defaultValue(true).safemodeValue(false).description("Determines whether specular highlights and other lighting effects are rendered for units.");
+CONFIG(bool, AdvUnitShading).defaultValue(true).headlessValue(false).safemodeValue(false).description("Determines whether specular highlights and other lighting effects are rendered for units.");
 CONFIG(bool, AllowDeferredModelRendering).defaultValue(false).safemodeValue(false);
 
 CONFIG(float, LODScale).defaultValue(1.0f);
@@ -236,8 +233,6 @@ void CUnitDrawer::Update()
 		}
 	}
 
-	eventHandler.UpdateDrawUnits();
-
 	{
 
 		drawIcon.clear();
@@ -254,7 +249,7 @@ void CUnitDrawer::Update()
 	if (useDistToGroundForIcons) {
 		const float3& camPos = camera->GetPos();
 		// use the height at the current camera position
-		//const float groundHeight = ground->GetHeightAboveWater(camPos.x, camPos.z, false);
+		//const float groundHeight = CGround::GetHeightAboveWater(camPos.x, camPos.z, false);
 		// use the middle between the highest and lowest position on the map as average
 		const float groundHeight = (readMap->GetCurrMinHeight() + readMap->GetCurrMaxHeight()) * 0.5f;
 		const float overGround = camPos.y - groundHeight;
@@ -337,7 +332,7 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 					camera->GetPos()  * (unit->drawMidPos.y / dif) +
 					unit->drawMidPos * (-camera->GetPos().y / dif);
 			}
-			if (ground->GetApproximateHeight(zeroPos.x, zeroPos.z, false) > unit->drawRadius) {
+			if (CGround::GetApproximateHeight(zeroPos.x, zeroPos.z, false) > unit->drawRadius) {
 				return;
 			}
 		}
@@ -375,7 +370,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 		SetUnitGlobalLODFactor(LODScale);
 	}
 
-	camNorm = camera->forward;
+	camNorm = camera->GetDir();
 	camNorm.y = -0.1f;
 	camNorm.ANormalize();
 
@@ -704,28 +699,6 @@ void CUnitDrawer::DrawShadowShaderUnits(unsigned int matType)
 
 
 inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
-	// do shadow alpha-masking for S3O units only
-	// (3DO's need more setup than it is worth)
-	#ifdef UNIT_SHADOW_ALPHA_MASKING
-		#define S3O_TEX(model) \
-			texturehandlerS3O->GetS3oTex(model->textureType)
-		#define PUSH_SHADOW_TEXTURE_STATE(model)                      \
-			if (model->type != MODELTYPE_3DO) {                       \
-				glActiveTexture(GL_TEXTURE0);                         \
-				glEnable(GL_TEXTURE_2D);                              \
-				glBindTexture(GL_TEXTURE_2D, S3O_TEX(model)->tex2);   \
-			}
-		#define POP_SHADOW_TEXTURE_STATE(model)   \
-			if (model->type != MODELTYPE_3DO) {   \
-				glBindTexture(GL_TEXTURE_2D, 0);  \
-				glDisable(GL_TEXTURE_2D);         \
-				glActiveTexture(GL_TEXTURE0);     \
-			}
-	#else
-		#define PUSH_SHADOW_TEXTURE_STATE(model)
-		#define POP_SHADOW_TEXTURE_STATE(model)
-	#endif
-
 	const bool unitInLOS = ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView);
 
 	if (unit->noDraw)
@@ -744,44 +717,43 @@ inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 	if (unit->isCloaked) { return; }
 	if (DrawAsIcon(unit, sqDist)) { return; }
 
-	if (unit->lodCount <= 0) {
-		PUSH_SHADOW_TEXTURE_STATE(unit->model);
-		DrawUnitNow(unit);
-		POP_SHADOW_TEXTURE_STATE(unit->model);
-	} else {
+	LuaUnitLODMaterial* lodMat = nullptr;
+	if (unit->lodCount > 0) {
 		LuaUnitMaterial& unitMat = unit->luaMats[LUAMAT_SHADOW];
-		const unsigned lod = CalcUnitLOD(unit, unitMat.GetLastLOD());
-		unit->currentLOD = lod;
-		LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(lod);
-
-		if ((lodMat != NULL) && lodMat->IsActive()) {
-			lodMat->AddUnit(unit);
-		} else {
-			PUSH_SHADOW_TEXTURE_STATE(unit->model);
-			DrawUnitNow(unit);
-			POP_SHADOW_TEXTURE_STATE(unit->model);
-		}
+		unit->currentLOD = CalcUnitLOD(unit, unitMat.GetLastLOD());
+		lodMat = unitMat.GetMaterial(unit->currentLOD);
 	}
 
-	#undef PUSH_SHADOW_TEXTURE_STATE
-	#undef POP_SHADOW_TEXTURE_STATE
+	if ((lodMat != nullptr) && lodMat->IsActive()) {
+		lodMat->AddUnit(unit);
+	} else {
+		DrawUnitNow(unit);
+	}
 }
+
+
 void CUnitDrawer::DrawOpaqueUnitsShadow(int modelType) {
-	typedef std::set<CUnit*> UnitSet;
-	typedef std::map<int, UnitSet> UnitBin;
+	const auto& unitBin = opaqueModelRenderers[modelType]->GetUnitBin();
 
-	const UnitBin& unitBin = opaqueModelRenderers[modelType]->GetUnitBin();
+	for (const auto& unitBinP: unitBin) {
+		const auto& unitSet = unitBinP.second;
+		const int textureType = unitBinP.first;
 
-	UnitBin::const_iterator unitBinIt;
-	UnitSet::const_iterator unitSetIt;
+		if (modelType != MODELTYPE_3DO) {
+			glActiveTexture(GL_TEXTURE0);
+			glEnable(GL_TEXTURE_2D);
+			const auto modelTex = texturehandlerS3O->GetS3oTex(textureType);
+			glBindTexture(GL_TEXTURE_2D, modelTex->tex2);
+		}
 
-	for (unitBinIt = unitBin.begin(); unitBinIt != unitBin.end(); ++unitBinIt) {
-		const UnitSet& unitSet = unitBinIt->second;
+		for (const auto& unitSetP: unitSet) {
+			DrawOpaqueUnitShadow(unitSetP);
+		}
 
-		{
-			for (unitSetIt = unitSet.begin(); unitSetIt != unitSet.end(); ++unitSetIt) {
-				DrawOpaqueUnitShadow(*unitSetIt);
-			}
+		if (modelType != MODELTYPE_3DO) {
+			glBindTexture(GL_TEXTURE_2D, 0);
+			glDisable(GL_TEXTURE_2D);
+			glActiveTexture(GL_TEXTURE0);
 		}
 	}
 }
@@ -855,7 +827,7 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 	}
 
 	// make sure icon is above ground (needed before we calculate scale below)
-	const float h = ground->GetHeightReal(pos.x, pos.z, false);
+	const float h = CGround::GetHeightReal(pos.x, pos.z, false);
 
 	if (pos.y < h) {
 		pos.y = h;
@@ -884,8 +856,8 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 	}
 
 	// calculate the vertices
-	const float3 dy = camera->up    * scale;
-	const float3 dx = camera->right * scale;
+	const float3 dy = camera->GetUp()    * scale;
+	const float3 dx = camera->GetRight() * scale;
 	const float3 vn = pos - dx;
 	const float3 vp = pos + dx;
 	const float3 vnn = vn - dy;
@@ -1574,14 +1546,6 @@ inline void CUnitDrawer::DrawUnitModel(CUnit* unit) {
 
 void CUnitDrawer::DrawUnitNow(CUnit* unit)
 {
-	/*
-	// this interferes with Lua material management
-	if (unit->alphaThreshold != 0.1f) {
-		glPushAttrib(GL_COLOR_BUFFER_BIT);
-		glAlphaFunc(GL_GREATER, unit->alphaThreshold);
-	}
-	*/
-
 	glPushMatrix();
 	glMultMatrixf(unit->GetTransformMatrix());
 
@@ -1591,12 +1555,6 @@ void CUnitDrawer::DrawUnitNow(CUnit* unit)
 		DrawUnitBeingBuilt(unit);
 	}
 	glPopMatrix();
-
-	/*
-	if (unit->alphaThreshold != 0.1f) {
-		glPopAttrib();
-	}
-	*/
 }
 
 
@@ -1726,7 +1684,6 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	CFeature* feature = NULL;
-	CVertexArray* va = GetVertexArray();
 
 	std::vector<float3> buildableSquares; // buildable squares
 	std::vector<float3> featureSquares; // occupied squares
@@ -1756,6 +1713,7 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 		glColor4f(0.9f, 0.8f, 0.0f, 0.7f);
 	}
 
+	CVertexArray* va = GetVertexArray();
 	va->Initialize();
 	va->EnlargeArrays(buildableSquares.size() * 4, 0, VA_SIZE_0);
 
@@ -1769,6 +1727,7 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 
 
 	glColor4f(0.9f, 0.8f, 0.0f, 0.7f);
+	va = GetVertexArray();
 	va->Initialize();
 	va->EnlargeArrays(featureSquares.size() * 4, 0, VA_SIZE_0);
 
@@ -1782,6 +1741,7 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 
 
 	glColor4f(0.9f, 0.0f, 0.0f, 0.7f);
+	va = GetVertexArray();
 	va->Initialize();
 	va->EnlargeArrays(illegalSquares.size() * 4, 0, VA_SIZE_0);
 
@@ -1798,6 +1758,7 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 		const unsigned char s[4] = { 0,   0, 255, 128 }; // start color
 		const unsigned char e[4] = { 0, 128, 255, 255 }; // end color
 
+		va = GetVertexArray();
 		va->Initialize();
 		va->EnlargeArrays(8, 0, VA_SIZE_C);
 		va->AddVertexQC(float3(x1, h, z1), s); va->AddVertexQC(float3(x1, 0.f, z1), e);
@@ -1806,6 +1767,7 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 		va->AddVertexQC(float3(x2, h, z1), s); va->AddVertexQC(float3(x2, 0.f, z1), e);
 		va->DrawArrayC(GL_LINES);
 
+		va = GetVertexArray();
 		va->Initialize();
 		va->AddVertexQC(float3(x1, 0.0f, z1), e);
 		va->AddVertexQC(float3(x1, 0.0f, z2), e);
@@ -2072,7 +2034,7 @@ unsigned int CUnitDrawer::CalcUnitLOD(const CUnit* unit, unsigned int lastLOD)
 	if (lastLOD == 0) { return 0; }
 
 	const float3 diff = (unit->pos - camera->GetPos());
-	const float dist = diff.dot(camera->forward);
+	const float dist = diff.dot(camera->GetDir());
 	const float lpp = std::max(0.0f, dist * UNIT_GLOBAL_LOD_FACTOR);
 
 	for (/* no-op */; lastLOD != 0; lastLOD--) {

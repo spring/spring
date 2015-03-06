@@ -12,7 +12,7 @@
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CScriptMoveType, AMoveType, (NULL));
+CR_BIND_DERIVED(CScriptMoveType, AMoveType, (NULL))
 CR_REG_METADATA(CScriptMoveType, (
 	CR_MEMBER(tag),
 	CR_MEMBER(extrapolate),
@@ -38,7 +38,7 @@ CR_REG_METADATA(CScriptMoveType, (
 	CR_MEMBER(collideStop),
 	CR_MEMBER(scriptNotify),
 	CR_RESERVED(64)
-));
+))
 
 
 CScriptMoveType::CScriptMoveType(CUnit* owner):
@@ -138,7 +138,7 @@ bool CScriptMoveType::Update()
 	}
 
 	if (trackGround) {
-		const float gndMin = ground->GetHeightReal(owner->pos.x, owner->pos.z) + groundOffset;
+		const float gndMin = CGround::GetHeightReal(owner->pos.x, owner->pos.z) + groundOffset;
 
 		if (owner->pos.y <= gndMin) {
 			owner->Move(UpVector * (gndMin - owner->pos.y), true);

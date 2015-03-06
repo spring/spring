@@ -2,41 +2,239 @@ Spring changelog
 (since 85.0: "!" prefix indicate backward compability broke)
 (numbers in brackets normally mean the mantis ticket ID)
 
+-- 99.0 ---------------------------------------------------------
+Major:
+ - new shader based InfoTexture
+ - new linux crashhandler by Major Bor3d0m
+ - new rotatable default camera
+ - bugfixes & improvements
+ - add unsynced Spring.Reload(script)
+ - add Spring.Reload(script) to change/map & game without exiting spring
+   ! modified Spring.Restart(parameters, script): it only restarts spring when parameters isn't empty
+   ! removed alias "/quit" (use /quitforce)
+   - add "quit to menu" to quit-box
+   - add "/reloadforce"
+
+Cameras:
+ ! removed TW, Orbital & Smooth camera
+ ! add new default camera: Spring camera
+  - it's a merge of TW & Overhead camera
+  - it's using [alt] as modifier for rotating the camera (in key & middle click scrolling)
+  - also can be rotated with the screen edges of the upper 30% of the screen
+ - add new EdgeMoveWidth & EdgeMoveDynamic config tags
+  - EdgeMoveWidth: defines the screen edge width used for scrolling
+  - EdgeMoveDynamic: if scroll speed depends on the distance to the screen edge (default on)
+
+SpringSettings.cfg:
+ ! don't read old config file locations any more:
+    AppData\Local\springsettings.cfg
+    ~/.springrc
+ ! add dedicatedValue & headlesValue to confighandler:
+  ! make spring-dedicated listen at 0.0.0.0 as default again
+  ! add headless values from springrc-tempate-headless.txt
+ - print user's config to infolog
+
+System:
+ ! new linux crashhandler by Major Bor3d0m
+  - libunwind is required to compile spring on linux
+ - fix headless compile on systems w/o x11 & SDL
+
+(G)UI:
+ - fix #4576 F6 does not sound mute
+ - fix #4578: backspace key events aren't captured by chat entry mode
+ - disable in-map draw when user starts writing (should fix #4455)
+ - document keychains in uikeys.txt
+ - improve default cmdcolors.txt
+ - improve default los colors
+ - OverheadCamera: make angle 100% stable when doing `mousewheel down then up`
+ ! remove los view w/o radar a.k.a. [;] (can be emulated with Spring.SetLosViewColors)
+
+Sim:
+ - fix harvesting
+ - fix #4591: builders `randomly` remove build orders from queue
+ - fix units disobey move cmds
+ - fix #4587 (stuck units in labs): remove a failing optimization CPathEstimator::FindOffset()
+
+Collisions:
+ - fix #4592: broken per-piece coldet
+ - fix and improve CQuadField::GetUnitsAndFeaturesColVol (fixes #4602)
+
+New InfoTexture Renderer:
+ - new shader based InfoTexture (faster, shinier & modular)
+  - add new `/ToggleInfo %name_or_shader_path%`
+  - fix #4608: add new /showpathtype [movdefname | movedefid | unitdefname | -1]
+
+Lua:
+ - add Spring.GetLosViewColors
+ ! remove Spring.UpdateInfoTexture
+ ! fix Spring.GetKeyState & Spring.PressedKeys expecting SDL2 keycodes while whole lua gets SDL1 ones
+ ! Spring.PressedKeys now also returns keynames
+
+Buildbot/Installer:
+ ! merged spring-headless / spring-dedicated into linux static builds / windows installer
+
+
+-- 98.0 ---------------------------------------------------------
+Major:
+ - vaporized PathFinder's runtime precache cpu usage
+
+
+Cmdline Arguments:
+ - allow ./spring --game rapid://ba:stable --map DeltaSiegeDry
+ - give correct error message when cmdline given filepath wasn't quoted and contained spaces
+
+GameServer:
+ - rename BypassScriptPasswordCheck to AllowSpectatorJoin and default to true
+
+Lua:
+ - added AssignPlayerToTeam(playerID, teamID)
+ - added SetAlly(firstAllyTeamId, secondAllyTeamId, ally)
+ - added VFS.UnmapArchive(string fileName)
+ - added VFS.GetMaps(), VFS.GetGames(), VFS.GetAllArchives(), VFS.HasArchive(archiveName)
+ - added VFS.GetArchiveInfo(archiveName)
+ - added VFS.GetArchiveChecksum(archiveName)
+ - added VFS.GetArchiveDependencies(archiveName), VFS.GetArchiveReplaces(archiveName)
+ - allow tcp connections by luasocket as default (udp is still restricted)
+ - add callin DrawInMiniMapBackground(sizex, sizey) -> nil
+ - add callin AllowBuilderHoldFire(unitID, unitDefID, action) --> boolean
+     action is one of:
+       Build      -1
+       Repair     40 (CMD_REPAIR)
+       Reclaim    90 (CMD_RECLAIM)
+       Restore   110 (CMD_RESTORE)
+       Resurrect 125 (CMD_RESURRECT)
+       Capture   130 (CMD_CAPTURE)
+
+Rendering:
+ - glFont: make inlined colorcodes reuse current set alpha value
+
+Pather:
+ - make lowRes PathEstimator using medRes PE instead of maxRes PathFinder (massively reducing cputime)
+ - massive cleanup & modularization
+ - reduced memory usage
+ - modrules: add system.pathFinderUpdateRate tag
+ - fixed/reduced PathEstimator update rate
+ - crashing aircraft doesn't spam PE updates anymore (#4500)
+
+CEG:
+ ! fixed booleans in CEGs (sometimes they were randomly overriden with random data)
+
+Weapons:
+ - shields have a new weapondef tag armorType - specifies the armor category to which the shield belongs (you can input either an armorclass name, or a unitdef name to share that unit's armor category)
+ ! move magic number to weapondef_post.lua: crater were 1.5x of craterAreaOfEffect while decals are 1.0x -> make them _both same size_
+ ! fixed #4523: typo in craterAoE loading
+ ! LightningCannon visual now obeys the beamTTL weapondef tag (behaviour same as BeamLaser) - previous value was hardcoded 10
+ ! wobble and sprayAngle now improve with experience (same as [moving]accuracy)
+ ! Shields obey dynamic damage
+
+Sim:
+ - GroundBlocking: don't align immobile objects to even squares
+ - reduce load in Collisions handling (by doing blocked ground squares scans only every 2nd frame)
+
+Misc:
+ - AI is initializated earlier: no more hang on game start
+ - add /set GrassDetail to console
+ - slightly speed up scanning for archives
+ - add HostIPDefault, HostPortDefault to set default host ip/port
+ - reduce default spintime of ThreadPool workers to 1ms (from 5ms)
+ ! remove LogFlush, introduce LogFlushLevel:
+   when a log-message with level >= LogFlushLevel is logged,
+   logfile is flushed, else not,
+   see rts/System/Log/Level.h for int values
+ ! rename /nosound to /mutesound
+
+Bugfixes:
+ - fix #4417 (spring spring://username:passwd@hostname:port doesn't work)
+ - fix #4413 (widget:GameProgress() was no longer called for rejoining player)
+ - fix #4407 (SetUnitRotation broken for buildings)
+ - fix #4406 (crash at start)
+ - fix #4377 (compile with cmake 3.0)
+ - fix #3677 (bounceExplosionGenerator tag does not work for bouncing aircraftbomb weapon types)
+ - fix #4483 (Spring.SetProjectileAlwaysVisible doesn't always make a projectile always visible)
+ - KingRaptor found the cause of a _very_ old bug: fix green screen tint in startselector stage
+ - PE: fix bug where buildings weren't registered as blocking, cause they were not snapped to ground when the PE update was called (c03022cc)
+
+AI:
+ - fixed return-type and value of Pathing::GetApproximateLength (pullrequest by rlcevg)
+
+Buildprocess:
+ - heavily reduced files which are compiled multiple times
+ ! add check for gcc >=4.7 at configure
+
 
 -- 97.0 ---------------------------------------------------------
 Major:
+ - utf8 support (kudos go to N0U)
  - switch from sdl to sdl2:
-  - add /fullscreen command ingame
+  - added /fullscreen (alt+enter) command ingame
   - fixes some window manager bugs/problems
- - utf8 support (kudos got to N0U)
+ - KeyChains (kudos go to MajBoredom)
  - split LuaRules & LuaGaia into their synced/unsynced luaStates
+
+
+Cmdline Arguments:
+ - added new `spring spring://username:passwd@hostname:port` syntax  (all except hostname are optional, i.e. spring://localhost does work fine)
+  - Should in longterm replace script.txt for clients, so script.txt is only needed for hosts.
+    -> No need to create a file on the filesystem to start spring as a client.
+  - Spring links spring:// URL scheme in the OS, so you can start such URLs from browser (as UT99 did).
+    E.g. you can place a spectator link on your website to join your autohosts and/or you can use it for weblobbies.
+ ! changed -s/--server argument to take a param (the ip/hostname listen to)
+ ! removed -c/--client argument (was only needed in times when clients didn't retrieved their script.txt from the server)
+
+Hosting & Connecting:
+ - fixed direct connect in SelectMenu
+ - by default listen to localhost:8452 now, so you can always connect to localhost started matches
+
+Misc:
+ - improve debug draw (alt+[b])
+ ! demofile string in infolog changed "recording demo: %s" -> "Recording demo to: %s"
+ - demo filehandle is now opened on start, so you can use lsof to readback the used filename
 
 Buildprocess:
  - fix freetype not found on windows / mingw
- - add check for gcc >=4.6 at configure
- ! optional fontconfig support
+ ! add check for gcc >=4.6 at configure
+ - optional fontconfig support
  ! SDL2 dependency
 
 Rendering:
- - ReportGLErrors configtag works now (cause of SDL2 switch)
+ - `DebugGL` configtag works now (cause of SDL2 switch)
+
+KeyBindings/uikeys.txt:
+ ! removed /keyset
+ ! removed /hotbind (Ctrl+insert)
+ - new KeyChains support:
+  - example: /bind Ctrl+a,Ctrl+b say Hello World!
+  - you can double bind a button this way, e.g.:
+   - "/bind e,e say Bar", "/bind e say Foo" -> 1st press prints Foo, 2nd press prints Bar
+ - use KeyChains for defaults:
+  ! double hitting drawbutton sets label
+  ! switching between ally,spec & all chat is now done by double hitting alt,shift or ctrl
+  ! alt+return now toggles fullscreen (default shortcut e.g. in mediaplayers)
 
 LuaDefs:
  - the parser now checks the returned tables for NaNs & Infs and prints a warning if it finds some (they are sources of desyncs!)
 
 UnitDefs:
- - add new "harvestStorage" unitdef tag, UnitHarvestStorageFull lua callin and Spring.GetUnitHarvestStorage(unitid)
+ - add new "harvestStorage" unitdef tag, UnitHarvestStorageFull lua callin and Spring.GetUnitHarvestStorage(unitid) callout
    it's for engine assisted starcraft/c&c like feature harvesting (atm only metal is supported)
    NOTE: the unload command still needs to be implemented in lua (much less work than the reclaiming one)
 
 Lua:
  - LuaRules & LuaGaia are now splitted into their synced & unsynced parts, and each one got its own luaState
-  - this way unsynced parts of gadgets now get `synced` callins like 'UnitCreated' etc. w/o  SendToUnsynced from their synced part
+  ! this way unsynced parts of gadgets now get `synced` callins like 'UnitCreated' etc. w/o  SendToUnsynced from their synced part
   - LuaRules & LuaGaia are now ~equal (except a very minor subset of differences) and get the same callins esp. all AllowXYZ callins
   - LuaUI now has a GotChatMsg too (same as LuaRules always had), it's similar to the now deprecated LuaUI-only ConfigCommand callin, but is called more often
   - fixed a lot bugs in Spring's c-lua code
   - use lua's original math.random() code and only use streflop for it in synced luaStates
   - always make math.randomseed() available (synced & unsynced)
   - in future this will also allow multithreading of the different luaStates
+  ! SYNCED. does a copy on access now and so is slow:
+   - bad:    for i=1,100 do ... SYNCED.foo[i] ... end
+   - good:   local foo = SYNCED.foo; for i=1,100 do ... foo[i] ... end
+  ! SYNCED. can't be localized in global scope anymore:
+   - bad:    local foo = SYNCED.foo;    function gadget:DrawWorld() ... foo ... end
+   - good:   function gadget:DrawWorld() local foo = SYNCED.foo; ... foo ... end
+ ! moved Spring.GetGameSpeed() from SyncedRead to UnsyncedRead cause it was causing desyncs in demos
  - fix Spring.Restart on windows
  ! new TextInput(utf8char) callin, needed cause of changed unicode handling in SDL2
  - added Spring.SetUnitHarvestStorage(unitid, metal) & Spring.GetUnitHarvestStorage(unitid)
@@ -44,10 +242,39 @@ Lua:
   ! gl.LineWidth & gl.PointSize throw an error when called with incorrect argument (<=0)
   ! gl.Scissor & gl.CreateTexture throw an error on incorrect sizes, too
  ! fix gl.Viewport
+ - add missing colvol tags to Unit-/FeatureDefs:
+  - .collisionVolume.type = {"ellipsoid" | "cylinder" | "box"}
+  - .collisionVolume.scale{X|Y|Z}
+  - .collisionVolume.offset{X|Y|Z}
+  - .collisionVolume.boundingRadius
+  - .collisionVolume.defaultToSphere
+  - .collisionVolume.defaultToFootPrint
+  - .collisionVolume.defaultToPieceTree
+ - add optional 4th argument to Spring.GetUnitSeperation to calc the distance between the unitsphere surfaces instead of their midpos
+ ! fix wrong coords & crash in Spring.RemoveGrass
+ - added new LOG.NOTICE (should be used instead of LOG.INFO)
+ - improve Spring.GetKeyBindings output (backward compatible)
+ - added Script.IsEngineMinVersion(major [,minor [,commits]])
+ - added Spring.GetClipboard() & Spring.SetClipboard(string text)
+ - allow to connect to lobby.springrts.com:8200 by luasocket as default
+
+LUS:
+ - SetUnitValue now accepts booleans, too
+
+Demos:
+ - fixed desync checker
+
+StartScript:
+ - added GAME/MUTATOR{0..9} so you can load arbitrary mutator archives before the game
+ - make GameID the only seed of the synced random generator
+   so you can define the gameid in a luaAI battle startscript and you will always get a syncing match
 
 Installer:
- - disallow to install spring over existing installations / ask for uninstall first
+ ! disallow to install spring over existing installations / ask for uninstall first
  - don't associate .sdf with spring.exe any more
+
+Linux:
+ ! new BlockCompositing configtag (default true). Disables kwin compositing to fix tearing.
 
 
 -- 96.0 ---------------------------------------------------------

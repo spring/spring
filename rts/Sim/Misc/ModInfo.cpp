@@ -6,8 +6,6 @@
 #include "Game/GameSetup.h"
 #include "Lua/LuaParser.h"
 #include "Lua/LuaSyncedRead.h"
-#include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitTypes/Builder.h"
 #include "System/Log/ILog.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
@@ -17,6 +15,73 @@
 
 CModInfo modInfo;
 
+void CModInfo::ResetState()
+{
+	filename.clear();
+	humanName.clear();
+	humanNameVersioned.clear();
+	shortName.clear();
+	version.clear();
+	mutator.clear();
+	description.clear();
+
+	allowAircraftToLeaveMap   = true;
+	allowAircraftToHitGround  = true;
+	allowPushingEnemyUnits    = false;
+	allowCrushingAlliedUnits  = false;
+	allowUnitCollisionDamage  = false;
+	allowUnitCollisionOverlap = true;
+	allowGroundUnitGravity    = true;
+	allowHoverUnitStrafing    = true;
+	useClassicGroundMoveType  = false;
+
+	constructionDecay      = true;
+	constructionDecayTime  = 1000;
+	constructionDecaySpeed = 1.0f;
+
+	multiReclaim                   = 1;
+	reclaimMethod                  = 1;
+	reclaimUnitMethod              = 1;
+	reclaimUnitEnergyCostFactor    = 0.0f;
+	reclaimUnitEfficiency          = 1.0f;
+	reclaimFeatureEnergyCostFactor = 0.0f;
+	reclaimAllowEnemies            = true;
+	reclaimAllowAllies             = true;
+
+	repairEnergyCostFactor    = 0.0f;
+	resurrectEnergyCostFactor = 0.5f;
+	captureEnergyCostFactor   = 0.0f;
+
+	unitExpMultiplier  = 0.0f;
+	unitExpPowerScale  = 0.0f;
+	unitExpHealthScale = 0.0f;
+	unitExpReloadScale = 0.0f;
+
+	paralyzeOnMaxHealth = true;
+
+	transportGround            = 1;
+	transportHover             = 0;
+	transportShip              = 0;
+	transportAir               = 0;
+	targetableTransportedUnits = 0;
+
+	fireAtKilled   = 1;
+	fireAtCrashing = 1;
+
+	flankingBonusModeDefault = 0;
+
+	losMipLevel = 0;
+	airMipLevel = 0;
+	losMul      = 1.0f;
+	airLosMul   = 1.0f;
+
+	requireSonarUnderWater = true;
+
+	featureVisibility = FEATURELOS_NONE;
+
+	pathFinderSystem = PFS_TYPE_DEFAULT;
+	pfUpdateRate     = 0.0f;
+}
 
 void CModInfo::Init(const char* modArchive)
 {
@@ -49,8 +114,9 @@ void CModInfo::Init(const char* modArchive)
 	{
 		// system
 		const LuaTable& system = root.SubTable("system");
-		pathFinderSystem = system.GetInt("pathFinderSystem", PFS_TYPE_DEFAULT) % PFS_NUM_TYPES;
 
+		pathFinderSystem = system.GetInt("pathFinderSystem", PFS_TYPE_DEFAULT) % PFS_NUM_TYPES;
+		pfUpdateRate = system.GetFloat("pathFinderUpdateRate", 0.007f);
 	}
 
 	{
@@ -139,10 +205,10 @@ void CModInfo::Init(const char* modArchive)
 		// experience
 		const LuaTable& experienceTbl = root.SubTable("experience");
 
-		CUnit::SetExpMultiplier (experienceTbl.GetFloat("experienceMult", 1.0f));
-		CUnit::SetExpPowerScale (experienceTbl.GetFloat("powerScale",  1.0f));
-		CUnit::SetExpHealthScale(experienceTbl.GetFloat("healthScale", 0.7f));
-		CUnit::SetExpReloadScale(experienceTbl.GetFloat("reloadScale", 0.4f));
+		unitExpMultiplier  = experienceTbl.GetFloat("experienceMult", 1.0f);
+		unitExpPowerScale  = experienceTbl.GetFloat(    "powerScale", 1.0f);
+		unitExpHealthScale = experienceTbl.GetFloat(   "healthScale", 0.7f);
+		unitExpReloadScale = experienceTbl.GetFloat(   "reloadScale", 0.4f);
 	}
 
 	{

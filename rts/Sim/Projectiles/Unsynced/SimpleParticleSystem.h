@@ -12,8 +12,8 @@ class CColorMap;
 
 class CSimpleParticleSystem : public CProjectile
 {
-	CR_DECLARE(CSimpleParticleSystem);
-	CR_DECLARE_SUB(Particle);
+	CR_DECLARE(CSimpleParticleSystem)
+	CR_DECLARE_SUB(Particle)
 
 public:
 	CSimpleParticleSystem();
@@ -21,7 +21,7 @@ public:
 
 	virtual void Draw();
 	virtual void Update();
-	virtual void Init(CUnit* owner, const float3& offset);
+	virtual void Init(const CUnit* owner, const float3& offset);
 
 protected:
 	float3 emitVector;
@@ -49,7 +49,7 @@ protected:
 
 	struct Particle
 	{
-		CR_DECLARE_STRUCT(Particle);
+		CR_DECLARE_STRUCT(Particle)
 
 		float3 pos;
 		float3 speed;
@@ -71,14 +71,14 @@ protected:
  */
 class CSphereParticleSpawner : public CSimpleParticleSystem
 {
-	CR_DECLARE(CSphereParticleSpawner);
+	CR_DECLARE(CSphereParticleSpawner)
 
 public:
 	CSphereParticleSpawner();
 
 	void Draw() {}
 	void Update() {}
-	virtual void Init(CUnit* owner, const float3& offset);
+	void Init(const CUnit* owner, const float3& offset);
 };
 
 #endif // SIMPLE_PARTICLE_SYSTEM_H

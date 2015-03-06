@@ -7,17 +7,17 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/GeoSquareProjectile.h"
 
-CR_BIND(CGeometricObjects, );
-CR_BIND(CGeometricObjects::GeoGroup, );
+CR_BIND(CGeometricObjects, )
+CR_BIND(CGeometricObjects::GeoGroup, )
 
 CR_REG_METADATA(CGeometricObjects, (
 		CR_MEMBER(geoGroups),
 		CR_MEMBER(toBeDeleted),
 		CR_MEMBER(firstFreeGroup),
 		CR_RESERVED(16)
-		));
+		))
 
-CR_REG_METADATA_SUB(CGeometricObjects, GeoGroup, (CR_MEMBER(squares)));
+CR_REG_METADATA_SUB(CGeometricObjects, GeoGroup, (CR_MEMBER(squares)))
 
 
 CGeometricObjects* geometricObjects;
@@ -145,8 +145,8 @@ void CGeometricObjects::Update()
 void CGeometricObjects::MarkSquare(int mapSquare) {
 
 	float3 startPos;
-	startPos.x = (int) (mapSquare * SQUARE_SIZE) % gs->mapx;
-	startPos.z = (int) (mapSquare * SQUARE_SIZE) / gs->mapx;
+	startPos.x = (int) (mapSquare * SQUARE_SIZE) % mapDims.mapx;
+	startPos.z = (int) (mapSquare * SQUARE_SIZE) / mapDims.mapx;
 	startPos.y = readMap->GetCenterHeightMapSynced()[mapSquare];
 
 	float3 endPos = startPos;

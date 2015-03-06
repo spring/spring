@@ -6,7 +6,6 @@
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
 #include "Lua/LuaParser.h"
-#include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -20,6 +19,7 @@
 //#include "Rendering/GL/TimerQuery.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/GL/VBO.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -221,8 +221,8 @@ void CDecalsDrawerGL4::LoadShaders()
 	}
 
 	decalShader->Enable();
-		decalShader->SetUniform("invMapSizePO2", 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE));
-		decalShader->SetUniform("invMapSize",    1.0f / (gs->mapx * SQUARE_SIZE),     1.0f / (gs->mapy * SQUARE_SIZE));
+		decalShader->SetUniform("invMapSizePO2", 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE));
+		decalShader->SetUniform("invMapSize",    1.0f / (mapDims.mapx * SQUARE_SIZE),     1.0f / (mapDims.mapy * SQUARE_SIZE));
 		decalShader->SetUniform("invScreenSize", 1.0f / globalRendering->viewSizeX,   1.0f / globalRendering->viewSizeY);
 
 	decalShader->Disable();
@@ -432,8 +432,8 @@ void CDecalsDrawerGL4::CreateBoundingBoxVBOs()
 	vboVertices.Bind(GL_ARRAY_BUFFER);
 	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
 
-	vboVertices.Resize(sizeof(boxverts) * sizeof(float3), GL_STATIC_DRAW, &boxverts[0]);
-	vboIndices.Resize(sizeof(indices) * sizeof(GLubyte), GL_STATIC_DRAW, &indices[0]);
+	vboVertices.New(sizeof(boxverts) * sizeof(float3), GL_STATIC_DRAW, &boxverts[0]);
+	vboIndices.New(sizeof(indices) * sizeof(GLubyte), GL_STATIC_DRAW, &indices[0]);
 
 	vboVertices.Unbind();
 	vboIndices.Unbind();
@@ -444,6 +444,7 @@ void CDecalsDrawerGL4::CreateStructureVBOs()
 {
 	{
 	GLuint uniformBlockIndex = glGetUniformBlockIndex(decalShader->GetObjID(), "SGroundLighting");
+	assert(uniformBlockIndex != GL_INVALID_INDEX);
 
 	GLsizei uniformBlockSize = 0;
 	glGetActiveUniformBlockiv(decalShader->GetObjID(), uniformBlockIndex, GL_UNIFORM_BLOCK_DATA_SIZE, &uniformBlockSize);
@@ -458,7 +459,7 @@ void CDecalsDrawerGL4::CreateStructureVBOs()
 
 
 	uboGroundLighting.Bind(GL_UNIFORM_BUFFER);
-	uboGroundLighting.Resize(uniformBlockSize, GL_STATIC_DRAW);
+	uboGroundLighting.New(uniformBlockSize, GL_STATIC_DRAW);
 		SGLSLGroundLighting* uboGroundLightingData = (SGLSLGroundLighting*)uboGroundLighting.MapBuffer(0, sizeof(SGLSLGroundLighting));
 		uboGroundLightingData->ambientColor  = mapInfo->light.groundAmbientColor  * CGlobalRendering::SMF_INTENSITY_MULT;
 		uboGroundLightingData->diffuseColor  = mapInfo->light.groundSunColor      * CGlobalRendering::SMF_INTENSITY_MULT;
@@ -476,7 +477,8 @@ void CDecalsDrawerGL4::CreateStructureVBOs()
 	{
 	uboDecalsStructures.Bind(GL_UNIFORM_BUFFER);
 
-	GLuint uniformBlockIndex = glGetUniformBlockIndex(decalShader->GetObjID(), "decals");
+	// Uniform Array Solution
+	/*GLuint uniformBlockIndex = glGetUniformBlockIndex(decalShader->GetObjID(), "decals");
 
 	GLsizei uniformBlockSize = 0;
 	glGetActiveUniformBlockiv(decalShader->GetObjID(), uniformBlockIndex, GL_UNIFORM_BLOCK_DATA_SIZE, &uniformBlockSize);
@@ -487,16 +489,20 @@ void CDecalsDrawerGL4::CreateStructureVBOs()
 
 	maxDecals = uniformBlockSize / sizeof(SGLSLDecal);
 
+	uniformBlockSize = maxDecals * sizeof(SGLSLDecal);
+	uboDecalsStructures.New(uniformBlockSize, GL_DYNAMIC_DRAW);
+
+	glUniformBlockBinding(decalShader->GetObjID(), uniformBlockIndex, 3);
+	glBindBufferBase(GL_UNIFORM_BUFFER, 3, uboDecalsStructures.GetId());*/
+
+	// TBO solution
 	GLint maxTexBufSize;
 	glGetIntegerv(GL_MAX_TEXTURE_BUFFER_SIZE, &maxTexBufSize);
 
 	maxDecals = (maxTexBufSize / sizeof(SGLSLDecal)) / 2;
 
-	uniformBlockSize = maxDecals * sizeof(SGLSLDecal);
-	uboDecalsStructures.Resize(uniformBlockSize, GL_DYNAMIC_DRAW);
-
-	glUniformBlockBinding(decalShader->GetObjID(), uniformBlockIndex, 3);
-	glBindBufferBase(GL_UNIFORM_BUFFER, 3, uboDecalsStructures.GetId());
+	GLsizei uniformBlockSize = maxDecals * sizeof(SGLSLDecal);
+	uboDecalsStructures.New(uniformBlockSize, GL_DYNAMIC_DRAW);
 
 	uboDecalsStructures.Unbind();
 	}
@@ -506,7 +512,7 @@ void CDecalsDrawerGL4::CreateStructureVBOs()
 
 	/*{
 	vboVisibilityFeeback.Bind(GL_UNIFORM_BUFFER);
-	vboVisibilityFeeback.Resize(maxDecals, GL_STATIC_DRAW);
+	vboVisibilityFeeback.New(maxDecals, GL_STATIC_DRAW);
 	vboVisibilityFeeback.Unbind();
 	}*/
 }
@@ -551,7 +557,6 @@ void CDecalsDrawerGL4::Draw()
 	}
 	glTimer.Start();*/
 
-	const CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 	const CSMFReadMap* smfrm = dynamic_cast<CSMFReadMap*>(readMap);
 
 	glEnable(GL_BLEND);
@@ -564,12 +569,12 @@ void CDecalsDrawerGL4::Draw()
 	//glEnable(GL_DEPTH_TEST);
 
 	decalShader->SetFlag("HAVE_SHADOWS", shadowHandler && shadowHandler->shadowsLoaded);
-	decalShader->SetFlag("HAVE_INFOTEX", gd->DrawExtraTex());
+	decalShader->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
 
 	decalShader->Enable();
 		decalShader->SetUniform3v("camPos", &camera->GetPos()[0]);
-		//decalShader->SetUniform("invMapSizePO2", 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE));
-		//decalShader->SetUniform("invMapSize",    1.0f / (gs->mapx * SQUARE_SIZE),     1.0f / (gs->mapy * SQUARE_SIZE));
+		//decalShader->SetUniform("invMapSizePO2", 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE));
+		//decalShader->SetUniform("invMapSize",    1.0f / (mapDims.mapx * SQUARE_SIZE),     1.0f / (mapDims.mapy * SQUARE_SIZE));
 		//decalShader->SetUniform("invScreenSize", 1.0f / globalRendering->viewSizeX,   1.0f / globalRendering->viewSizeY);
 
 	glActiveTexture(GL_TEXTURE1);
@@ -587,7 +592,7 @@ void CDecalsDrawerGL4::Draw()
 	}
 
 	glActiveTexture(GL_TEXTURE3);
-		glBindTexture(GL_TEXTURE_2D, gd->GetActiveInfoTexture());
+		glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
 
 	glActiveTexture(GL_TEXTURE4);
 		glBindTexture(GL_TEXTURE_2D, depthTex);
@@ -708,10 +713,10 @@ void CDecalsDrawerGL4::AddExplosion(float3 pos, float damage, float radius, bool
 	//	return;
 
 	//FIXME decalLevel is private! const float lifeTime = decalLevel * damage * 3.0f;
-	const float altitude = pos.y - ground->GetHeightReal(pos.x, pos.z, false);
+	const float altitude = pos.y - CGround::GetHeightReal(pos.x, pos.z, false);
 
 	// no decals for below-ground & in-air explosions
-	if (abs(altitude) > radius) { return; }
+	if (std::abs(altitude) > radius) { return; }
 
 	pos.y -= altitude;
 	radius -= altitude;

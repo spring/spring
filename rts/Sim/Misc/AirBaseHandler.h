@@ -14,9 +14,9 @@ class CUnit;
 
 class CAirBaseHandler : public boost::noncopyable
 {
-	CR_DECLARE_STRUCT(CAirBaseHandler);
-	CR_DECLARE_SUB(LandingPad);
-	CR_DECLARE_SUB(AirBase);
+	CR_DECLARE_STRUCT(CAirBaseHandler)
+	CR_DECLARE_SUB(LandingPad)
+	CR_DECLARE_SUB(AirBase)
 
 private:
 	struct AirBase;
@@ -24,7 +24,7 @@ private:
 public:
 
 	class LandingPad: public CObject, public boost::noncopyable {
-		CR_DECLARE(LandingPad);
+		CR_DECLARE(LandingPad)
 
 	public:
 		LandingPad(int p, CUnit* u, AirBase* b):
@@ -43,7 +43,7 @@ public:
 private:
 
 	struct AirBase: public boost::noncopyable {
-		CR_DECLARE_STRUCT(AirBase);
+		CR_DECLARE_STRUCT(AirBase)
 		AirBase(CUnit* u) : unit(u) {}
 
 		CUnit* unit;

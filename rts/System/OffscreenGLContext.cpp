@@ -143,15 +143,21 @@ COffscreenGLContext::~COffscreenGLContext() {
 
 void COffscreenGLContext::WorkerThreadPost()
 {
-	if (!CGLSetCurrentContext(cglWorkerCtx))
+	CGLError err = CGLSetCurrentContext(cglWorkerCtx);
+	if (kCGLNoError != err) {
+		LOG_L(L_ERROR, CGLErrorString(err));
 		throw opengl_error("Could not activate worker rendering context");
+	}
 }
 
 
 void COffscreenGLContext::WorkerThreadFree()
 {
-	if (!CGLSetCurrentContext(NULL))
+	CGLError err = CGLSetCurrentContext(NULL);
+	if (kCGLNoError != err) {
+		LOG_L(L_ERROR, CGLErrorString(err));
 		throw opengl_error("Could not deactivate worker rendering context");
+	}
 }
 
 #else

@@ -3,11 +3,11 @@
 
 #include "CollisionHandler.h"
 #include "CollisionVolume.h"
+#include "Map/ReadMap.h"
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
-#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/FastMath.h"
 #include "System/Matrix44f.h"
@@ -73,9 +73,8 @@ bool CCollisionHandler::Collision(const CollisionVolume* v, const CSolidObject* 
 
 	// if <v> is a sphere, then the bounding radius is just its own radius -->
 	// we do not need to test the COLVOL_TYPE_SPHERE case again when this fails
-	if ((v->GetWorldSpacePos(o) - p).SqLength() > v->GetBoundingRadiusSq()) {
+	if ((v->GetWorldSpacePos(o) - p).SqLength() > v->GetBoundingRadiusSq())
 		return hit;
-	}
 
 	if (v->DefaultToFootPrint()) {
 		hit = CCollisionHandler::CollisionFootPrint(o, p);
@@ -123,9 +122,9 @@ bool CCollisionHandler::CollisionFootPrint(const CSolidObject* o, const float3& 
 	// projectile might have tunneled across blocking squares to get to <p>)
 	// note: if we get here <v> is always a box
 	const float invSquareSize = 1.0f / SQUARE_SIZE;
-	const int squareIdx = int(p.x * invSquareSize) + int(p.z * invSquareSize) * gs->mapx;
+	const int squareIdx = int(p.x * invSquareSize) + int(p.z * invSquareSize) * mapDims.mapx;
 
-	if (squareIdx < 0 || squareIdx >= gs->mapSquares)
+	if (squareIdx < 0 || squareIdx >= mapDims.mapSquares)
 		return false;
 
 	const BlockingMapCell& cell = groundBlockingObjectMap->GetCell(squareIdx);
@@ -252,16 +251,15 @@ bool CCollisionHandler::IntersectPiecesHelper(
 	const CUnit* u,
 	const float3& p0,
 	const float3& p1,
-	std::vector<CollisionQuery>* cqs
+	CollisionQuery* cq
 ) {
 	CMatrix44f unitMat = u->GetTransformMatrix(true);
 	CMatrix44f volMat;
-	CollisionQuery cq;
 
-	cqs->reserve(u->localModel->pieces.size());
+	float minDistSq = std::numeric_limits<float>::max();
 
 	for (unsigned int n = 0; n < u->localModel->pieces.size(); n++) {
-		const LocalModelPiece* lmp = u->localModel->GetPiece(n);
+		      LocalModelPiece* lmp = u->localModel->GetPiece(n);
 		const CollisionVolume* lmpVol = lmp->GetCollisionVolume();
 
 		if (!lmp->scriptSetVisible || lmpVol->IgnoreHits())
@@ -270,53 +268,40 @@ bool CCollisionHandler::IntersectPiecesHelper(
 		volMat = unitMat * lmp->GetModelSpaceMatrix();
 		volMat.Translate(lmpVol->GetOffsets());
 
-		if (!CCollisionHandler::Intersect(lmpVol, volMat, p0, p1, &cq))
-			continue;
-		// skip if neither an ingress nor an egress hit
-		if (cq.GetHitPos() == ZeroVector)
+		CollisionQuery cqn;
+		if (!CCollisionHandler::Intersect(lmpVol, volMat, p0, p1, &cqn))
 			continue;
 
-		cq.SetHitPiece(const_cast<LocalModelPiece*>(lmp));
-		cqs->push_back(cq);
+		// skip if neither an ingress nor an egress hit
+		if (!cqn.AnyHit())
+			continue;
+
+		// save the closest intersection (others are not needed)
+		if (cqn.GetHitPos().SqDistance(p0) >= minDistSq)
+			continue;
+
+		minDistSq = cqn.GetHitPos().SqDistance(p0);
+
+		if (cq != nullptr) {
+			*cq = cqn;
+			cq->SetHitPiece(lmp);
+		} else {
+			return true;
+		}
 	}
 
 	// true iff at least one piece was intersected
-	return (cq.GetHitPiece() != NULL);
+	// (query must have been reset by calling code)
+	return (cq != nullptr) ? (cq->GetHitPiece() != nullptr) : false;
 }
 
 
 bool CCollisionHandler::IntersectPieceTree(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* cq)
 {
-	std::vector<CollisionQuery> cqs;
-	std::vector<CollisionQuery>::const_iterator cqsIt;
-
 	// TODO:
 	//   needs an early-out test, but gets complicated because
 	//   pieces can move --> no clearly defined bounding volume
-	if (!IntersectPiecesHelper(u, p0, p1, &cqs))
-		return false;
-
-	assert(!cqs.empty());
-
-	// not interested in the details
-	if (cq == NULL)
-		return true;
-
-	float minDstSq = std::numeric_limits<float>::max();
-
-	// save the closest intersection
-	// TODO: merge this with helper?
-	for (cqsIt = cqs.begin(); cqsIt != cqs.end(); ++cqsIt) {
-		const float curDstSq = (cqsIt->GetHitPos() - p0).SqLength();
-
-		if (curDstSq >= minDstSq)
-			continue;
-
-		minDstSq = curDstSq;
-		*cq = *cqsIt;
-	}
-
-	return true;
+	return (IntersectPiecesHelper(u, p0, p1, cq));
 }
 
 inline bool CCollisionHandler::Intersect(const CollisionVolume* v, const CSolidObject* o, const float3 p0, const float3 p1, CollisionQuery* cq)
@@ -438,7 +423,7 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float
 			// get the intersection point in sphere-space
 			const float3 pTmp = pii0 + (dir * t0);
 			// get the intersection point in volume-space
-			const float3 p0(pTmp.x * v->GetHScales().x, pTmp.y * v->GetHScales().y, pTmp.z * v->GetHScales().z);
+			const float3 p0 = pTmp * v->GetHScales();
 			// get the distance from the start of the segment
 			// to the intersection point in volume-space
 			const float dSq0 = (p0 - pi0).SqLength();
@@ -464,8 +449,8 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float
 			const float3 pTmp0 = pii0 + (dir * t0);
 			const float3 pTmp1 = pii0 + (dir * t1);
 			// get the intersection points in volume-space
-			const float3 p0(pTmp0.x * v->GetHScales().x, pTmp0.y * v->GetHScales().y, pTmp0.z * v->GetHScales().z);
-			const float3 p1(pTmp1.x * v->GetHScales().x, pTmp1.y * v->GetHScales().y, pTmp1.z * v->GetHScales().z);
+			const float3 p0 = pTmp0 * v->GetHScales();
+			const float3 p1 = pTmp1 * v->GetHScales();
 			// get the distances from the start of the ray
 			// to the intersection points in volume-space
 			const float dSq0 = (p0 - pi0).SqLength();

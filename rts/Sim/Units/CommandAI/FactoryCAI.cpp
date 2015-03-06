@@ -3,7 +3,6 @@
 
 #include "FactoryCAI.h"
 #include "ExternalAI/EngineOutHandler.h"
-#include "Sim/Units/Groups/Group.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
@@ -21,22 +20,22 @@
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 
-CR_BIND_DERIVED(CFactoryCAI ,CCommandAI , );
+CR_BIND_DERIVED(CFactoryCAI ,CCommandAI , )
 
 CR_REG_METADATA(CFactoryCAI , (
 	CR_MEMBER(newUnitCommands),
 	CR_MEMBER(buildOptions),
 	CR_RESERVED(16),
 	CR_POSTLOAD(PostLoad)
-));
+))
 
-CR_BIND(CFactoryCAI::BuildOption, );
+CR_BIND(CFactoryCAI::BuildOption, )
 
 CR_REG_METADATA_SUB(CFactoryCAI,BuildOption , (
 	CR_MEMBER(name),
 	CR_MEMBER(fullName),
 	CR_MEMBER(numQued)
-));
+))
 
 static std::string GetUnitDefBuildOptionToolTip(const UnitDef* ud, bool disabled) {
 	std::string tooltip;

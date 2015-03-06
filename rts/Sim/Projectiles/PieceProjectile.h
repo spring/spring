@@ -22,7 +22,7 @@ struct LocalModelPiece;
 
 class CPieceProjectile: public CProjectile
 {
-	CR_DECLARE(CPieceProjectile);
+	CR_DECLARE(CPieceProjectile)
 
 public:
 	CPieceProjectile(
@@ -67,8 +67,6 @@ public:
 	float3 spinVec;
 	float spinSpeed;
 	float spinAngle;
-
-	float alphaThreshold;
 
 	float3 oldSmokePos;
 	float3 oldSmokeDir;

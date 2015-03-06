@@ -3,47 +3,23 @@
 #ifndef _BASE_GROUND_DRAWER_H
 #define _BASE_GROUND_DRAWER_H
 
-#include <map>
 #include "MapDrawPassTypes.h"
-#include "Rendering/GL/myGL.h"
-#include "Rendering/GL/PBO.h"
-#include "System/float3.h"
-#include "System/type2.h"
 
-#define NUM_INFOTEXTURES (1 + 4 + 3)
 
-class CMetalMap;
-class CHeightLinePalette;
 class CBaseGroundTextures;
 class CCamera;
 
 namespace GL {
 	struct GeometryBuffer;
 	struct LightHandler;
-};
+}
 
 class CBaseGroundDrawer
 {
 public:
-	enum {
-		COLOR_R = 2,
-		COLOR_G = 1,
-		COLOR_B = 0,
-		COLOR_A = 3,
-	};
-	enum BaseGroundDrawMode {
-		drawNormal   = 0,
-		drawLos      = 1, // L (';' does not toggle it)
-		drawMetal    = 2, // F4
-		drawHeight   = 3, // F1
-		drawPathTrav = 4, // F2
-		drawPathHeat = 5, // not hotkeyed, command-only
-		drawPathFlow = 6, // not hotkeyed, command-only
-		drawPathCost = 7, // not hotkeyed, command-only
-	};
-
 	CBaseGroundDrawer();
 	virtual ~CBaseGroundDrawer();
+	CBaseGroundDrawer(const CBaseGroundDrawer&) = delete; // no-copy
 
 	virtual void Draw(const DrawPass::e& drawPass) = 0;
 	virtual void DrawShadowPass() {}
@@ -59,27 +35,16 @@ public:
 	virtual void DecreaseDetail() = 0;
 	virtual int GetGroundDetail(const DrawPass::e& drawPass = DrawPass::Normal) const = 0;
 
-	virtual void SetDrawMode(BaseGroundDrawMode dm) { drawMode = dm; }
 	virtual void SetDrawDeferredPass(bool) {}
 	virtual bool ToggleMapBorder() { drawMapEdges = !drawMapEdges; return drawMapEdges; }
 
-	virtual const GL::LightHandler* GetLightHandler() const { return NULL; }
-	virtual       GL::LightHandler* GetLightHandler()       { return NULL; }
-	virtual const GL::GeometryBuffer* GetGeometryBuffer() const { return NULL; }
-	virtual       GL::GeometryBuffer* GetGeometryBuffer()       { return NULL; }
+	virtual const GL::LightHandler* GetLightHandler() const { return nullptr; }
+	virtual       GL::LightHandler* GetLightHandler()       { return nullptr; }
+	virtual const GL::GeometryBuffer* GetGeometryBuffer() const { return nullptr; }
+	virtual       GL::GeometryBuffer* GetGeometryBuffer()       { return nullptr; }
 
 	void DrawTrees(bool drawReflection = false) const;
 
-	// Everything that deals with drawing extra textures on top
-	void DisableExtraTexture();
-	void SetHeightTexture();
-	void SetMetalTexture();
-	void TogglePathTexture(BaseGroundDrawMode);
-	void ToggleLosTexture();
-	void ToggleRadarAndJammer();
-	bool UpdateExtraTexture(unsigned int texDrawMode);
-
-	bool DrawExtraTex() const { return drawMode != drawNormal; }
 	bool DrawDeferred() const { return drawDeferred; }
 
 	bool UseAdvShading() const { return advShading; }
@@ -88,25 +53,11 @@ public:
 	bool& UseAdvShadingRef() { return advShading; }
 	bool& WireFrameModeRef() { return wireframe; }
 
-
-	BaseGroundDrawMode GetDrawMode() const { return drawMode; }
 	CBaseGroundTextures* GetGroundTextures() { return groundTextures; }
-
-	GLuint GetInfoTexture(unsigned int idx) const { return infoTextureIDs[idx]; }
-	GLuint GetActiveInfoTexture() const { return infoTextureIDs[drawMode]; }
-
-	int2 GetInfoTexSize() const;
 
 	void UpdateCamRestraints(CCamera* camera);
 
 public:
-	bool drawRadarAndJammer;
-	bool drawLineOfSight;
-
-	bool highResLosTex;
-	bool highResInfoTex;
-	bool highResInfoTexWanted;
-
 	float LODScaleReflection;
 	float LODScaleRefraction;
 	float LODScaleTerrainReflection;
@@ -118,18 +69,7 @@ public:
 
 	static const int losColorScale = 10000;
 
-	int updateTextureState;
-	int extraTextureUpdateRate;
-
 protected:
-	BaseGroundDrawMode drawMode;
-
-	// note: first texture ID is always 0!
-	GLuint infoTextureIDs[NUM_INFOTEXTURES];
-
-	PBO infoTexPBO;
-
-	CHeightLinePalette* heightLinePal;
 	CBaseGroundTextures* groundTextures;
 
 	bool drawMapEdges;

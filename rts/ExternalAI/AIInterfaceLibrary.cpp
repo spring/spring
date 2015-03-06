@@ -17,6 +17,7 @@
 CAIInterfaceLibrary::CAIInterfaceLibrary(const CAIInterfaceLibraryInfo& _info)
 		: interfaceId(-1)
 		, initialized(false)
+		, sAIInterfaceLibrary({ NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL})
 		, info(_info)
 {
 

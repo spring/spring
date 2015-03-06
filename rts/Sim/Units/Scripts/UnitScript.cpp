@@ -42,7 +42,7 @@
 #include "System/myMath.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/Sync/SyncTracer.h"
 
 #endif
@@ -50,17 +50,24 @@
 
 std::vector< std::vector<int> > CUnitScript::teamVars;
 std::vector< std::vector<int> > CUnitScript::allyVars;
-int CUnitScript::globalVars[GLOBAL_VAR_COUNT] =  { 0 };
+int CUnitScript::globalVars[GLOBAL_VAR_COUNT] = { 0 };
 
 
 void CUnitScript::InitVars(int numTeams, int numAllyTeams)
 {
+	// clear all globals in case we reloaded
+	memset(&globalVars[0], 0, GLOBAL_VAR_COUNT * sizeof(globalVars[0]));
+
+	teamVars.clear();
 	teamVars.resize(numTeams, std::vector<int>());
+
+	allyVars.clear();
+	allyVars.resize(numAllyTeams, std::vector<int>());
+
 	for (int t = 0; t < numTeams; t++) {
 		teamVars[t].resize(TEAM_VAR_COUNT, 0);
 	}
-
-	allyVars.resize(numAllyTeams, std::vector<int>());
+	
 	for (int t = 0; t < numAllyTeams; t++) {
 		allyVars[t].resize(ALLY_VAR_COUNT, 0);
 	}
@@ -340,7 +347,7 @@ void CUnitScript::RemoveAnim(AnimType type, const std::list<AnimInfo*>::iterator
 void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float dest, float accel)
 {
 	if (!PieceExists(piece)) {
-		ShowScriptError("Invalid piecenumber");
+		ShowUnitScriptError("Invalid piecenumber");
 		return;
 	}
 
@@ -468,7 +475,7 @@ void CUnitScript::Move(int piece, int axis, float speed, float destination)
 void CUnitScript::MoveNow(int piece, int axis, float destination)
 {
 	if (!PieceExists(piece)) {
-		ShowScriptError("Invalid piecenumber");
+		ShowUnitScriptError("Invalid piecenumber");
 		return;
 	}
 
@@ -486,7 +493,7 @@ void CUnitScript::MoveNow(int piece, int axis, float destination)
 void CUnitScript::TurnNow(int piece, int axis, float destination)
 {
 	if (!PieceExists(piece)) {
-		ShowScriptError("Invalid piecenumber");
+		ShowUnitScriptError("Invalid piecenumber");
 		return;
 	}
 
@@ -504,19 +511,18 @@ void CUnitScript::TurnNow(int piece, int axis, float destination)
 void CUnitScript::SetVisibility(int piece, bool visible)
 {
 	if (!PieceExists(piece)) {
-		ShowScriptError("Invalid piecenumber");
+		ShowUnitScriptError("Invalid piecenumber");
 		return;
 	}
 
 	pieces[piece]->scriptSetVisible = visible;
 }
 
-
 void CUnitScript::EmitSfx(int sfxType, int piece)
 {
 #ifndef _CONSOLE
 	if (!PieceExists(piece)) {
-		ShowScriptError("Invalid piecenumber for emit-sfx");
+		ShowUnitScriptError("Invalid piecenumber for emit-sfx");
 		return;
 	}
 
@@ -527,7 +533,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 
 	// Make sure wakes are only emitted on water
 	if ((sfxType >= SFX_WAKE) && (sfxType <= SFX_REVERSE_WAKE_2)) {
-		if (ground->GetApproximateHeight(unit->pos.x, unit->pos.z) > 0.0f) {
+		if (CGround::GetApproximateHeight(unit->pos.x, unit->pos.z) > 0.0f) {
 			return;
 		}
 	}
@@ -536,7 +542,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 	float3 relDir = UpVector;
 
 	if (!GetEmitDirPos(piece, relPos, relDir)) {
-		ShowScriptError("emit-sfx: GetEmitDirPos failed");
+		ShowUnitScriptError("emit-sfx: GetEmitDirPos failed");
 		return;
 	}
 
@@ -634,7 +640,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 				// make a weapon fire from the piece
 				const unsigned index = sfxType - SFX_FIRE_WEAPON;
 				if (index >= unit->weapons.size() || unit->weapons[index] == NULL) {
-					ShowScriptError("Invalid weapon index for emit-sfx");
+					ShowUnitScriptError("Invalid weapon index for emit-sfx");
 					break;
 				}
 
@@ -652,7 +658,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 			else if (sfxType & SFX_DETONATE_WEAPON) {
 				const unsigned index = sfxType - SFX_DETONATE_WEAPON;
 				if (index >= unit->weapons.size() || unit->weapons[index] == NULL) {
-					ShowScriptError("Invalid weapon index for emit-sfx");
+					ShowUnitScriptError("Invalid weapon index for emit-sfx");
 					break;
 				}
 
@@ -692,7 +698,7 @@ void CUnitScript::AttachUnit(int piece, int u)
 {
 	// -1 is valid, indicates that the unit should be hidden
 	if ((piece >= 0) && (!PieceExists(piece))) {
-		ShowScriptError("Invalid piecenumber for attach");
+		ShowUnitScriptError("Invalid piecenumber for attach");
 		return;
 	}
 
@@ -751,7 +757,7 @@ bool CUnitScript::AddAnimListener(AnimType type, int piece, int axis, IAnimListe
 void CUnitScript::Explode(int piece, int flags)
 {
 	if (!PieceExists(piece)) {
-		ShowScriptError("Invalid piecenumber for explode");
+		ShowUnitScriptError("Invalid piecenumber for explode");
 		return;
 	}
 
@@ -782,7 +788,7 @@ void CUnitScript::Explode(int piece, int flags)
 		const float l2 = 3 + math::sqrt(l - 3);
 		baseSpeed *= (l2 / l);
 	}
-	if (unit->pos.y - ground->GetApproximateHeight(unit->pos.x, unit->pos.z) > 15) {
+	if (unit->pos.y - CGround::GetApproximateHeight(unit->pos.x, unit->pos.z) > 15) {
 		explSpeed.y = (0.5f - gs->randFloat()) * 6.0f;
 	}
 
@@ -830,7 +836,7 @@ void CUnitScript::Shatter(int piece, const float3& pos, const float3& speed)
 void CUnitScript::ShowFlare(int piece)
 {
 	if (!PieceExists(piece)) {
-		ShowScriptError("Invalid piecenumber for show(flare)");
+		ShowUnitScriptError("Invalid piecenumber for show(flare)");
 		return;
 	}
 #ifndef _CONSOLE
@@ -851,7 +857,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 {
 	// may happen in case one uses Spring.GetUnitCOBValue (Lua) on a unit with CNullUnitScript
 	if (!unit) {
-		ShowScriptError("Error: no unit (in GetUnitVal)");
+		ShowUnitScriptError("no unit (in GetUnitVal)");
 		return 0;
 	}
 
@@ -894,7 +900,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		break;
 	case PIECE_XZ: {
 		if (!PieceExists(p1)) {
-			ShowScriptError("Invalid piecenumber for get piece_xz");
+			ShowUnitScriptError("Invalid piecenumber for get piece_xz");
 			break;
 		}
 		const float3 relPos = GetPiecePos(p1);
@@ -903,7 +909,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	}
 	case PIECE_Y: {
 		if (!PieceExists(p1)) {
-			ShowScriptError("Invalid piecenumber for get piece_y");
+			ShowUnitScriptError("Invalid piecenumber for get piece_y");
 			break;
 		}
 		const float3 relPos = GetPiecePos(p1);
@@ -952,9 +958,9 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case HYPOT:
 		return int(math::hypot((float)p1, (float)p2));
 	case GROUND_HEIGHT:
-		return int(ground->GetHeightAboveWater(UNPACKX(p1), UNPACKZ(p1)) * COBSCALE);
+		return int(CGround::GetHeightAboveWater(UNPACKX(p1), UNPACKZ(p1)) * COBSCALE);
 	case GROUND_WATER_HEIGHT:
-		return int(ground->GetHeightReal(UNPACKX(p1), UNPACKZ(p1)) * COBSCALE);
+		return int(CGround::GetHeightReal(UNPACKX(p1), UNPACKZ(p1)) * COBSCALE);
 	case BUILD_PERCENT_LEFT:
 		return int((1.0f - unit->buildProgress) * 100);
 
@@ -1102,9 +1108,6 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	}
 	case CRASHING:
 		return !!unit->IsCrashing();
-	case ALPHA_THRESHOLD: {
-		return int(unit->alphaThreshold * 255);
-	}
 
 	case COB_ID: {
 		if (p1 <= 0) {
@@ -1155,9 +1158,9 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 				break;
 		}
 		if (p4 == 0) {
-			Channels::General.PlaySample(script->sounds[p1], unit->pos, unit->speed, float(p2) / COBSCALE);
+			Channels::General->PlaySample(script->sounds[p1], unit->pos, unit->speed, float(p2) / COBSCALE);
 		} else {
-			Channels::General.PlaySample(script->sounds[p1], float(p2) / COBSCALE);
+			Channels::General->PlaySample(script->sounds[p1], float(p2) / COBSCALE);
 		}
 		return 0;
 	}
@@ -1245,90 +1248,100 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 
 		return 1;
 	}
+
+
 	case WEAPON_RELOADSTATE: {
 		const int np1 = -p1;
-		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size()) {
-			return unit->weapons[p1-1]->reloadStatus;
-		}
-		else if (np1 > 0 && static_cast<size_t>(np1) <= unit->weapons.size()) {
-			const int old = unit->weapons[np1 - 1]->reloadStatus;
-			unit->weapons[np1 - 1]->reloadStatus = p2;
+
+		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size())
+			return unit->weapons[p1 - 1]->reloadStatus;
+
+		if (np1 > 0 && static_cast<size_t>(np1) <= unit->weapons.size()) {
+			CWeapon* w = unit->weapons[np1 - 1];
+			const int old = w->reloadStatus;
+			w->reloadStatus = p2;
 			return old;
 		}
-		else {
-			return -1;
-		}
+
+		return -1;
 	}
 	case WEAPON_RELOADTIME: {
 		const int np1 = -p1;
-		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size()) {
-			return unit->weapons[p1-1]->reloadTime;
-		}
-		else if (np1 > 0 && static_cast<size_t>(np1) <= unit->weapons.size()) {
-			const int old = unit->weapons[np1 - 1]->reloadTime;
-			unit->weapons[np1 - 1]->reloadTime = p2;
+
+		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size())
+			return unit->weapons[p1 - 1]->reloadTime;
+
+		if (np1 > 0 && static_cast<size_t>(np1) <= unit->weapons.size()) {
+			CWeapon* w = unit->weapons[np1 - 1];
+			const int old = w->reloadTime;
+			w->reloadTime = p2;
 			return old;
 		}
-		else {
-			return -1;
-		}
+
+		return -1;
 	}
 	case WEAPON_ACCURACY: {
 		const int np1 = -p1;
-		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size()) {
-			return int(unit->weapons[p1-1]->accuracy * COBSCALE);
-		}
-		else if (np1 > 0 && static_cast<size_t>(np1) <= unit->weapons.size()) {
-			const int old = unit->weapons[np1 - 1]->accuracy * COBSCALE;
-			unit->weapons[np1 - 1]->accuracy = float(p2) / COBSCALE;
+
+		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size())
+			return int(unit->weapons[p1 - 1]->accuracyError * COBSCALE);
+
+		if (np1 > 0 && static_cast<size_t>(np1) <= unit->weapons.size()) {
+			CWeapon* w = unit->weapons[np1 - 1];
+			const int old = w->accuracyError * COBSCALE;
+			w->accuracyError = float(p2) / COBSCALE;
 			return old;
 		}
-		else {
-			return -1;
-		}
+
+		return -1;
 	}
 	case WEAPON_SPRAY: {
 		const int np1 = -p1;
-		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size()) {
-			return int(unit->weapons[p1-1]->sprayAngle * COBSCALE);
-		}
-		else if (np1 > 0 && static_cast<size_t>(np1) <= unit->weapons.size()) {
-			const int old = unit->weapons[np1 - 1]->sprayAngle * COBSCALE;
-			unit->weapons[np1 - 1]->sprayAngle = float(p2) / COBSCALE;
+
+		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size())
+			return int(unit->weapons[p1 - 1]->sprayAngle * COBSCALE);
+
+		if (np1 > 0 && static_cast<size_t>(np1) <= unit->weapons.size()) {
+			CWeapon* w = unit->weapons[np1 - 1];
+			const int old = w->sprayAngle * COBSCALE;
+			w->sprayAngle = float(p2) / COBSCALE;
 			return old;
 		}
-		else {
-			return -1;
-		}
+
+		return -1;
 	}
 	case WEAPON_RANGE: {
 		const int np1 = -p1;
-		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size()) {
+
+		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size())
 			return int(unit->weapons[p1 - 1]->range * COBSCALE);
-		}
-		else if (np1 > 0 && static_cast<size_t>(np1) <= unit->weapons.size()) {
-			const int old = unit->weapons[np1 - 1]->range * COBSCALE;
-			unit->weapons[np1 - 1]->range = float(p2) / COBSCALE;
+
+		if (np1 > 0 && static_cast<size_t>(np1) <= unit->weapons.size()) {
+			CWeapon* w = unit->weapons[np1 - 1];
+			const int old = w->range * COBSCALE;
+			w->range = float(p2) / COBSCALE;
 			return old;
 		}
-		else {
-			return -1;
-		}
+
+		return -1;
 	}
 	case WEAPON_PROJECTILE_SPEED: {
 		const int np1 = -p1;
-		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size()) {
-			return int(unit->weapons[p1-1]->projectileSpeed * COBSCALE);
-		}
-		else if (np1 > 0 && static_cast<size_t>(np1) <= unit->weapons.size()) {
-			const int old = unit->weapons[np1 - 1]->projectileSpeed * COBSCALE;
-			unit->weapons[np1 - 1]->projectileSpeed = float(p2) / COBSCALE;
+
+		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size())
+			return int(unit->weapons[p1 - 1]->projectileSpeed * COBSCALE);
+
+		if (np1 > 0 && static_cast<size_t>(np1) <= unit->weapons.size()) {
+			CWeapon* w = unit->weapons[np1 - 1];
+			const int old = w->projectileSpeed * COBSCALE;
+			w->projectileSpeed = float(p2) / COBSCALE;
 			return old;
 		}
-		else {
-			return -1;
-		}
+
+		return -1;
 	}
+
+
 	case GAME_FRAME: {
 		return gs->frameNum;
 	}
@@ -1385,7 +1398,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 {
 	// may happen in case one uses Spring.SetUnitCOBValue (Lua) on a unit with CNullUnitScript
 	if (!unit) {
-		ShowScriptError("Error: no unit (in SetUnitVal)");
+		ShowUnitScriptError("Error: no unit (in SetUnitVal)");
 		return;
 	}
 
@@ -1595,10 +1608,6 @@ void CUnitScript::SetUnitVal(int val, int param)
 			unit->weapons[param]->avoidTarget = true;
 			break;
 		}
-		case ALPHA_THRESHOLD: {
-			unit->alphaThreshold = param / 255.0f;
-			break;
-		}
 		case CEG_DAMAGE: {
 			unit->cegDamage = param;
 			break;
@@ -1652,7 +1661,7 @@ int CUnitScript::ScriptToModel(int scriptPieceNum) const {
 	const LocalModelPiece* smp = GetScriptLocalModelPiece(scriptPieceNum);
 
 	return (smp->GetLModelPieceIndex());
-};
+}
 
 int CUnitScript::ModelToScript(int lmodelPieceNum) const {
 	const LocalModel* lm = unit->localModel;
@@ -1663,5 +1672,10 @@ int CUnitScript::ModelToScript(int lmodelPieceNum) const {
 	const LocalModelPiece* lmp = lm->GetPiece(lmodelPieceNum);
 
 	return (lmp->GetScriptPieceIndex());
-};
+}
+
+void CUnitScript::ShowUnitScriptError(const std::string& error)
+{
+	ShowScriptError(error + std::string(" ") + IntToString(unit->id) + std::string(" of type ") + unit->unitDef->name);
+}
 

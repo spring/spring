@@ -9,7 +9,7 @@ class CUnit;
 
 class CMissileProjectile : public CWeaponProjectile
 {
-	CR_DECLARE(CMissileProjectile);
+	CR_DECLARE(CMissileProjectile)
 protected:
 	void UpdateGroundBounce();
 public:
@@ -22,10 +22,17 @@ public:
 	void Update();
 	void Draw();
 
-	int ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos,
-			float shieldForce, float shieldMaxSpeed);
+	int ShieldRepulse(
+		CPlasmaRepulser* shield,
+		float3 shieldPos,
+		float shieldForce,
+		float shieldMaxSpeed
+	);
 
 private:
+	void UpdateWobble();
+	void UpdateDance();
+
 	float maxSpeed;
 	float areaOfEffect;
 	float extraHeight;
@@ -49,7 +56,7 @@ private:
 
 	float3 oldSmoke;
 	float3 oldDir;
-	
+
 	/// the smokes life-time in frames
 	static const float SMOKE_TIME;
 };

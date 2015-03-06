@@ -104,6 +104,9 @@ bool ClampRayInMap(const float3 start, float3& end);
 float smoothstep(const float edge0, const float edge1, const float value) _pure _warn_unused_result;
 float3 smoothstep(const float edge0, const float edge1, float3 vec) _pure _warn_unused_result;
 
+float linearstep(const float edge0, const float edge1, const float value) _pure _warn_unused_result;
+
+
 // inlined to avoid multiple definitions due to the specializing templates
 template<class T> inline T argmin(const T v1, const T v2) { return std::min(v1, v2); }
 template<class T> inline T argmax(const T v1, const T v2) { return std::max(v1, v2); }
@@ -111,15 +114,15 @@ template<> inline float3 argmin(const float3 v1, const float3 v2) { return float
 template<> inline float3 argmax(const float3 v1, const float3 v2) { return float3::max(v1, v2); }
 
 // template<class T> T mix(const T v1, const T v2, const float a) { return (v1 * (1.0f - a) + v2 * a); }
-template<class T> T mix(const T v1, const T v2, const float a) { return (v1 + (v2 - v1) * a); }
-template<class T> T Blend(const T v1, const T v2, const float a) { return mix(v1, v2, a); }
+template<class T> constexpr T mix(const T v1, const T v2, const float a) { return (v1 + (v2 - v1) * a); }
+template<class T> constexpr T Blend(const T v1, const T v2, const float a) { return mix(v1, v2, a); }
 
 int Round(const float f) _const _warn_unused_result;
 
-template<class T> T Square(const T x) { return x*x; }
-template<class T> T Clamp(const T v, const T vmin, const T vmax) { return std::min(vmax, std::max(vmin, v)); }
+template<class T> constexpr T Square(const T x) { return x*x; }
+template<class T> constexpr T Clamp(const T v, const T vmin, const T vmax) { return std::min(vmax, std::max(vmin, v)); }
 // NOTE: '>' instead of '>=' s.t. Sign(int(true)) != Sign(int(false)) --> zero is negative!
-template<class T> T Sign(const T v) { return ((v > T(0)) * T(2) - T(1)); }
+template<class T> constexpr T Sign(const T v) { return ((v > T(0)) * T(2) - T(1)); }
 
 /**
  * @brief Clamps an radian angle between 0 .. 2*pi

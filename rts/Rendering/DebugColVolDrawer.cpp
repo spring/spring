@@ -231,6 +231,7 @@ static inline void DrawUnitColVol(const CUnit* u)
 
 class CDebugColVolQuadDrawer : public CReadMap::IQuadDrawer {
 public:
+	void ResetState() {}
 	void DrawQuad(int x, int y)
 	{
 		const CQuadField::Quad& q = quadField->GetQuadAt(x, y);
@@ -274,6 +275,8 @@ namespace DebugColVolDrawer
 			glDepthMask(GL_TRUE);
 
 			static CDebugColVolQuadDrawer drawer;
+
+			drawer.ResetState();
 			readMap->GridVisibility(camera, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 1e9, &drawer);
 
 			glLineWidth(1.0f);

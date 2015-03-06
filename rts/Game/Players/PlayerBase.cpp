@@ -6,7 +6,7 @@
 #include "System/creg/STL_Map.h"
 
 
-CR_BIND_DERIVED(PlayerBase,TeamController, );
+CR_BIND_DERIVED(PlayerBase,TeamController, )
 CR_REG_METADATA(PlayerBase, (
 	CR_MEMBER(rank),
 	CR_MEMBER(countryCode),
@@ -16,7 +16,7 @@ CR_REG_METADATA(PlayerBase, (
 	CR_MEMBER(desynced),
 	CR_MEMBER(cpuUsage),
 	CR_MEMBER(customValues)
-));
+))
 
 
 

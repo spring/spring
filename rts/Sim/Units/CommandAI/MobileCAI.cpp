@@ -16,7 +16,6 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDef.h"
@@ -43,7 +42,7 @@ static AAirMoveType* GetAirMoveType(const CUnit* owner) {
 
 
 
-CR_BIND_DERIVED(CMobileCAI ,CCommandAI , );
+CR_BIND_DERIVED(CMobileCAI ,CCommandAI , )
 CR_REG_METADATA(CMobileCAI, (
 	CR_MEMBER(goalPos),
 	CR_MEMBER(goalRadius),
@@ -68,7 +67,7 @@ CR_REG_METADATA(CMobileCAI, (
 	CR_MEMBER(slowGuard),
 	CR_MEMBER(moveDir),
 	CR_RESERVED(16)
-));
+))
 
 CMobileCAI::CMobileCAI():
 	CCommandAI(),
@@ -687,7 +686,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 	if (tempOrder && orderTarget) {
 		const float3& closestPos = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
 		const float curTargetDist = LinePointDist(closestPos, commandPos2, orderTarget->pos);
-		const float maxTargetDist = (500 * owner->moveState + owner->maxRange);
+		const float maxTargetDist = (owner->moveType->GetManeuverLeash() * owner->moveState + owner->maxRange);
 
 		if (owner->moveState < MOVESTATE_ROAM && curTargetDist > maxTargetDist) {
 			StopMove();
@@ -953,17 +952,21 @@ int CMobileCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 
 void CMobileCAI::SetGoal(const float3& pos, const float3& /*curPos*/, float goalRadius)
 {
-	if (pos.SqDistance(goalPos) < Square(goalRadius))
+	// already have equal move order?
+	if (owner->moveType->progressState == AMoveType::Active && goalPos == pos && this->goalRadius == goalRadius)
 		return;
 
+	// give new move order
 	owner->moveType->StartMoving(goalPos = pos, this->goalRadius = goalRadius);
 }
 
 void CMobileCAI::SetGoal(const float3& pos, const float3& /*curPos*/, float goalRadius, float speed)
 {
-	if (pos.SqDistance(goalPos) < Square(goalRadius))
+	// already have equal move order?
+	if (owner->moveType->progressState == AMoveType::Active && goalPos == pos && this->goalRadius == goalRadius)
 		return;
 
+	// give new move order
 	owner->moveType->StartMoving(goalPos = pos, this->goalRadius = goalRadius, speed);
 }
 
@@ -1169,11 +1172,9 @@ void CMobileCAI::StartSlowGuard(float speed) {
 
 void CMobileCAI::CalculateCancelDistance()
 {
-	// calculate a rough turn radius
-	const float turnFrames = SPRING_CIRCLE_DIVS / std::max(owner->unitDef->turnRate, 1.0f);
-	const float turnRadius = ((owner->unitDef->speed / GAME_SPEED) * turnFrames) / (PI + PI);
-	const float tmp = turnRadius + (SQUARE_SIZE << 1);
+	const float tmp = owner->moveType->CalcStaticTurnRadius() + (SQUARE_SIZE << 1);
 
 	// clamp it a bit because the units don't have to turn at max speed
-	cancelDistance = std::min(std::max(tmp * tmp, 1024.f), 2048.f);
+	cancelDistance = Clamp(tmp * tmp, 1024.0f, 2048.0f);
 }
+

@@ -15,13 +15,15 @@
 #include <cassert>
 #include <cerrno>
 #include <cstring>
-#include <fstream>
+
 
 CDemoRecorder::CDemoRecorder(const std::string& mapName, const std::string& modName, bool serverDemo):
 demoStream(std::ios::binary | std::ios::out)
 {
 	SetName(mapName, modName, serverDemo);
 	SetFileHeader();
+
+	file.open(demoName.c_str(), std::ios::binary | std::ios::out);
 }
 
 CDemoRecorder::~CDemoRecorder()
@@ -31,7 +33,7 @@ CDemoRecorder::~CDemoRecorder()
 	WritePlayerStats();
 	WriteTeamStats();
 	WriteFileHeader(true);
-	WriteDemoFile(dataDirsAccess.LocateFile(demoName, FileQueryFlags::WRITE), demoStream.str());
+	WriteDemoFile();
 }
 
 void CDemoRecorder::SetFileHeader()
@@ -50,16 +52,14 @@ void CDemoRecorder::SetFileHeader()
 	demoStream.seekp(WriteFileHeader(false) + sizeof(DemoFileHeader));
 }
 
-void CDemoRecorder::WriteDemoFile(const std::string& name, const std::string& data)
+void CDemoRecorder::WriteDemoFile()
 {
-	std::ofstream file;
-
 	// using operator<<(basic_stringbuf*) requires the stream to be opened with std::ios::in
 	// stringbuf::{eback(), egptr(), gptr()} are protected so we cannot access them directly
 	// (plus data is not guaranteed to be stored contiguously) ==> the only clean OO solution
 	// that avoids str()'s copy would be to supply our own stringbuffer backend to demoStream
 	// which is slightly overdoing it
-	file.open(name.c_str(), std::ios::binary | std::ios::out);
+	const std::string data = demoStream.str();
 	file.write(data.c_str(), data.size());
 	file.flush();
 	file.close();
@@ -68,7 +68,7 @@ void CDemoRecorder::WriteDemoFile(const std::string& name, const std::string& da
 void CDemoRecorder::WriteSetupText(const std::string& text)
 {
 	int length = text.length();
-	while (text.c_str()[length - 1] == '\0') {
+	while (text[length - 1] == '\0') {
 		--length;
 	}
 
@@ -110,14 +110,13 @@ void CDemoRecorder::SetName(const std::string& mapName, const std::string& modNa
 	oss << SpringVersion::GetSync();
 	buf << oss.str() << ".sdf";
 
-	unsigned int n = 0;
-
+	int n = 0;
 	while (FileSystem::FileExists(buf.str()) && (n < 99)) {
 		buf.str(""); // clears content
 		buf << oss.str() << "_" << n++ << ".sdf";
 	}
 
-	demoName = buf.str();
+	demoName = dataDirsAccess.LocateFile(buf.str(), FileQueryFlags::WRITE);
 }
 
 void CDemoRecorder::SetGameID(const unsigned char* buf)
@@ -144,7 +143,11 @@ void CDemoRecorder::InitializeStats(int numPlayers, int numTeams )
 /** @brief Set (overwrite) the CPlayer::Statistics for player playerNum */
 void CDemoRecorder::SetPlayerStats(int playerNum, const PlayerStatistics& stats)
 {
-	assert((unsigned)playerNum < playerStats.size());
+	// player who sent the NETMSG_PLAYERSTAT might be a spectator
+	// that joined later (only statistics for the original players
+	// are saved)
+	if (playerNum >= playerStats.size())
+		return;
 
 	playerStats[playerNum] = stats;
 }
