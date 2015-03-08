@@ -106,7 +106,7 @@ struct PathNodeStateBuffer {
 			memFootPrint += (peNodeOffsets.size() * (sizeof(std::vector<int2>) + peNodeOffsets[0].size() * sizeof(int2)));
 		}
 
-		memFootPrint += (nodeMask.size() * sizeof(unsigned int));
+		memFootPrint += (nodeMask.size() * sizeof(boost::uint8_t));
 		memFootPrint += ((fCost.size() + gCost.size()) * sizeof(float));
 		memFootPrint += ((extraCostSynced.size() + extraCostUnsynced.size()) * sizeof(float));
 
@@ -249,8 +249,8 @@ public:
 		reverse_iterator rend() { return 0; }
 		const_reverse_iterator rbegin() const { return 0; }
 		const_reverse_iterator rend() const { return 0; }
-		PathVector(int, const value_type&): bufPos(-1) { std::fill(std::begin(buf), std::end(buf), nullptr); abort(); }
-		PathVector(iterator, iterator): bufPos(-1) { std::fill(std::begin(buf), std::end(buf), nullptr); abort(); }
+		PathVector(int, const value_type&): bufPos(-1) { abort(); }
+		PathVector(iterator, iterator): bufPos(-1) { abort(); }
 		void insert(iterator, const value_type&) { abort(); }
 		void insert(iterator, const size_type&, const value_type&) { abort(); }
 		void insert(iterator, iterator, iterator) { abort(); }
