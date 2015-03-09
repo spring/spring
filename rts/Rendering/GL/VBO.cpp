@@ -79,7 +79,9 @@ VBO::~VBO()
 		UnmapBuffer();
 		Unbind();
 	}
-	glDeleteBuffers(1, &vboId);
+	if (GLEW_ARB_vertex_buffer_object) {
+		glDeleteBuffers(1, &vboId);
+	}
 	delete[] data;
 	data = nullptr;
 }
