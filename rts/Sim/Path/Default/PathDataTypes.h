@@ -20,11 +20,11 @@ struct PathNode {
 		, nodePos(0, 0)
 	{}
 
-	float fCost; ///< f
-	float gCost; ///< g
+	float fCost;
+	float gCost;
 
 	int nodeNum;
-	int2 nodePos;
+	ushort2 nodePos;
 
 	inline bool operator <  (const PathNode& pn) const { return (fCost < pn.fCost); }
 	inline bool operator >  (const PathNode& pn) const { return (fCost > pn.fCost); }
@@ -103,7 +103,7 @@ struct PathNodeStateBuffer {
 		unsigned int memFootPrint = 0;
 
 		if (!peNodeOffsets.empty()) {
-			memFootPrint += (peNodeOffsets.size() * (sizeof(std::vector<int2>) + peNodeOffsets[0].size() * sizeof(int2)));
+			memFootPrint += (peNodeOffsets.size() * (sizeof(std::vector<short2>) + peNodeOffsets[0].size() * sizeof(short2)));
 		}
 
 		memFootPrint += (nodeMask.size() * sizeof(boost::uint8_t));
@@ -188,7 +188,7 @@ public:
 	/// best accessible offset (from its own center
 	/// position)
 	/// peNodeOffsets[pathType][blockIdx]
-	std::vector< std::vector<int2> > peNodeOffsets;
+	std::vector< std::vector<short2> > peNodeOffsets;
 
 private:
 	// overlay-cost modifiers for nodes (when non-zero, these

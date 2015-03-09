@@ -779,7 +779,7 @@ bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::strin
 			return false;
 
 		// Read block-center-offset data.
-		const unsigned blockSize = blockStates.GetSize() * sizeof(int2);
+		const unsigned blockSize = blockStates.GetSize() * sizeof(short2);
 		if (buffer.size() < pos + blockSize * moveDefHandler->GetNumMoveDefs())
 			return false;
 
@@ -831,7 +831,7 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
 
 	// Write block-center-offsets.
 	for (int pathType = 0; pathType < moveDefHandler->GetNumMoveDefs(); ++pathType)
-		zipWriteInFileInZip(file, (void*) &blockStates.peNodeOffsets[pathType][0], blockStates.GetSize() * sizeof(int2));
+		zipWriteInFileInZip(file, (void*) &blockStates.peNodeOffsets[pathType][0], blockStates.GetSize() * sizeof(short2));
 
 	// Write vertices.
 	zipWriteInFileInZip(file, &vertexCosts[0], vertexCosts.size() * sizeof(float));

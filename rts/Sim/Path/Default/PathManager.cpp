@@ -30,6 +30,10 @@ CPathManager::CPathManager(): nextPathID(0)
 
 	pathFlowMap = PathFlowMap::GetInstance();
 	pathHeatMap = PathHeatMap::GetInstance();
+
+	// PathNode::nodePos is ushort2, also PathNode::nodeNum is int
+	// so max map size is limited by 64k*64k
+	assert(mapDims.mapx <= 0xFFU && mapDims.mapy <= 0xFFU);
 }
 
 CPathManager::~CPathManager()
