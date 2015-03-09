@@ -65,6 +65,7 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileSystemInitializer.h"
 #include "System/FileSystem/VFSHandler.h"
+#include "System/Platform/Battery.h"
 #include "System/Platform/CmdLineParams.h"
 #include "System/Platform/Misc.h"
 #include "System/Platform/errorhandler.h"
@@ -273,6 +274,7 @@ bool SpringApp::Initialize()
 	Threading::SetThreadName("unknown"); // set default threadname
 	Threading::InitThreadPool();
 	Threading::SetThreadScheduler();
+	battery = new CBattery();
 
 	// Create CGameSetup and CPreGame objects
 	Startup();
@@ -864,6 +866,8 @@ void SpringApp::Reload(const std::string& script)
 	// PreGame allocates clientNet, so we need to delete our old connection
 	SafeDelete(clientNet);
 
+	SafeDelete(battery);
+
 	// note: technically we only need to use RemoveArchive
 	FileSystemInitializer::Cleanup(false);
 	FileSystemInitializer::Initialize();
@@ -880,6 +884,8 @@ void SpringApp::Reload(const std::string& script)
 
 	// make sure all old EventClients are really gone (safety)
 	eventHandler.ResetState();
+
+	battery = new CBattery();
 
 	gu->ResetState();
 	gs->ResetState();
