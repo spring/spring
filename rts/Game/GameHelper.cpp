@@ -128,7 +128,7 @@ void CGameHelper::DoExplosionDamage(
 
 	// expMod will also be in [0, 1], no negatives
 	// TODO: damage attenuation for underwater units from surface explosions?
-	const float expDistanceMod = (expRadius - expDist) / (expRadius + 0.01f - expRim);
+	const float expDistanceMod = (expRadius + 0.001f - expDist) / (expRadius + 0.001f - expRim);
 	const float modImpulseScale = CalcImpulseScale(damages, expDistanceMod);
 
 	// NOTE: if an explosion occurs right underneath a
@@ -176,7 +176,7 @@ void CGameHelper::DoExplosionDamage(
 
 	assert(expRadius >= expRim);
 
-	const float expDistanceMod = (expRadius - expDist) / (expRadius + 0.01f - expRim);
+	const float expDistanceMod = (expRadius + 0.001f - expDist) / (expRadius + 0.001f - expRim);
 	const float modImpulseScale = CalcImpulseScale(damages, expDistanceMod);
 
 	const float3 impulseDir = (volPos - expPos).SafeNormalize();
