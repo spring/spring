@@ -116,11 +116,11 @@ void CGameHelper::DoExplosionDamage(
 	const float3& volPos = vol->GetWorldSpacePos(unit, lapPos);
 
 	// linear damage falloff with distance
-	const float expDist = expRadius ? vol->GetPointSurfaceDistance(unit, lap, expPos) : 0.0f;
+	const float expDist = (expRadius != 0.0f) ? vol->GetPointSurfaceDistance(unit, lap, expPos) : 0.0f;
 	const float expRim = expDist * expEdgeEffect;
 
 	// return early if (distance > radius)
-	if (expDist >= expRadius)
+	if (expDist > expRadius)
 		return;
 
 	// expEdgeEffect should be in [0, 1], so expRadius >= expDist >= expDist*expEdgeEffect
@@ -168,10 +168,10 @@ void CGameHelper::DoExplosionDamage(
 	const CollisionVolume* vol = feature->GetCollisionVolume(NULL);
 	const float3& volPos = vol->GetWorldSpacePos(feature, ZeroVector);
 
-	const float expDist = expRadius ? vol->GetPointSurfaceDistance(feature, NULL, expPos) : 0.0f;
+	const float expDist = (expRadius != 0.0f) ? vol->GetPointSurfaceDistance(feature, NULL, expPos) : 0.0f;
 	const float expRim = expDist * expEdgeEffect;
 
-	if (expDist >= expRadius)
+	if (expDist > expRadius)
 		return;
 
 	assert(expRadius >= expRim);
