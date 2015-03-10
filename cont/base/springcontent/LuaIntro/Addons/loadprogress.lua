@@ -17,6 +17,9 @@ require "savetable.lua"
 
 local startTime = -1
 local cachedLoadTimes = VFS.FileExists("loadprogress_cached.lua") and VFS.Include("loadprogress_cached.lua") or { [Game.modShortName]={} }
+if (cachedLoadTimes[Game.modShortName] == nil) then
+	cachedLoadTimes[Game.modShortName] = {}
+end
 local cachedTotalTime = (cachedLoadTimes[Game.modShortName][Game.mapName] or -1) * 0.97 --*0.97 cause else last rendered frame would show 99%
 
 
