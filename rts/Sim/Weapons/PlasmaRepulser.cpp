@@ -180,7 +180,7 @@ void CPlasmaRepulser::Update()
 					curPower -= shieldDamage;
 				}
 
-				pro->Collision(owner);
+				pro->Collision();
 
 				if (defHitFrames > 0) {
 					hitFrames = defHitFrames;
