@@ -924,7 +924,7 @@ void CGameServer::LagProtection()
 		GameParticipant& player = players[a];
 		if (player.myState == GameParticipant::INGAME) {
 			// send info about the players
-			const int curPing = (serverFrameNum - player.lastFrameResponse);
+			const int curPing = ((serverFrameNum - player.lastFrameResponse) * 1000) / (GAME_SPEED * internalSpeed);
 			Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, player.cpuUsage, curPing));
 
 			const float playerCpuUsage = player.cpuUsage;

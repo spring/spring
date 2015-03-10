@@ -351,15 +351,16 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_PLAYERINFO: {
-				const unsigned char player = inbuf[1];
-				if (!playerHandler->IsValidPlayer(player)) {
-					LOG_L(L_ERROR, "Got invalid player num %i in playerinfo msg", player);
+				const unsigned char playerId = inbuf[1];
+				if (!playerHandler->IsValidPlayer(playerId)) {
+					LOG_L(L_ERROR, "Got invalid player num %i in playerinfo msg", playerId);
 					break;
 				}
-				playerHandler->Player(player)->cpuUsage = *(float*) &inbuf[2];
-				playerHandler->Player(player)->ping = *(boost::uint32_t*) &inbuf[6];
+				CPlayer* p  = playerHandler->Player(playerId);
+				p->cpuUsage =           *(float*) &inbuf[2];
+				p->ping     = *(boost::uint32_t*) &inbuf[6];
 
-				AddTraffic(player, packetCode, dataLength);
+				AddTraffic(playerId, packetCode, dataLength);
 				break;
 			}
 
