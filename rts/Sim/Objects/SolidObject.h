@@ -31,7 +31,7 @@ enum TerrainChangeTypes {
 
 enum YardmapStates {
 	YARDMAP_OPEN        = 0,    // always free      (    walkable      buildable)
-//  YARDMAP_WALKABLE    = 4,    // open for walk    (    walkable, not buildable)
+//	YARDMAP_WALKABLE    = 4,    // open for walk    (    walkable, not buildable)
 	YARDMAP_YARD        = 1,    // walkable when yard is open
 	YARDMAP_YARDINV     = 2,    // walkable when yard is closed
 	YARDMAP_BLOCKED     = 0xFF & ~YARDMAP_YARDINV, // always block     (not walkable, not buildable)
@@ -292,6 +292,7 @@ public:
 	float3 drawMidPos;                          ///< = drawPos + relMidPos (unsynced)
 
 	const YardMapStatus* blockMap;              ///< Current (unrotated!) blockmap/yardmap of this object. 0 means no active yardmap => all blocked.
+	bool yardOpen;
 	short int buildFacing;                      ///< Orientation of footprint, 4 different states
 
 public:

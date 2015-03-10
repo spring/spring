@@ -969,9 +969,7 @@ float3 CGameHelper::ClosestBuildSite(int team, const UnitDef* unitDef, float3 po
 							continue;
 						if (!solObj->immobile)
 							continue;
-						if (dynamic_cast<CFactory*>(solObj) == NULL)
-							continue;
-						if (!static_cast<CFactory*>(solObj)->opening)
+						if (!solObj->yardOpen)
 							continue;
 
 						good = false;

@@ -66,6 +66,7 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(drawPos),
 	CR_MEMBER(drawMidPos),
 	CR_IGNORED(blockMap), // reloaded in CUnit's PostLoad
+	CR_MEMBER(yardOpen),
 
 	CR_MEMBER(buildFacing)
 ))
@@ -115,6 +116,7 @@ CSolidObject::CSolidObject():
 	dragScales(OnesVector),
 
 	blockMap(NULL),
+	yardOpen(false),
 	buildFacing(0)
 {
 }

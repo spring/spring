@@ -76,7 +76,6 @@ void CUnitScript::InitVars(int numTeams, int numAllyTeams)
 
 CUnitScript::CUnitScript(CUnit* unit, const std::vector<LocalModelPiece*>& pieces)
 	: unit(unit)
-	, yardOpen(false)
 	, busy(false)
 	, hasSetSFXOccupy(false)
 	, hasRockUnit(false)
@@ -965,17 +964,11 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		return int((1.0f - unit->buildProgress) * 100);
 
 	case YARD_OPEN:
-		if (yardOpen)
-			return 1;
-		else
-			return 0;
+		return (unit->yardOpen) ? 1 : 0;
 	case BUGGER_OFF:
 		break;
 	case ARMORED:
-		if (unit->armoredState)
-			return 1;
-		else
-			return 0;
+		return (unit->armoredState) ? 1 : 0;
 	case VETERAN_LEVEL:
 		return int(100 * unit->experience);
 	case CURRENT_SPEED:
@@ -1489,12 +1482,10 @@ void CUnitScript::SetUnitVal(int val, int param)
 				if (param == 0) {
 					if (groundBlockingObjectMap->CanCloseYard(unit)) {
 						groundBlockingObjectMap->CloseBlockingYard(unit);
-						yardOpen = false;
 					}
 				} else {
 					if (groundBlockingObjectMap->CanOpenYard(unit)) {
 						groundBlockingObjectMap->OpenBlockingYard(unit);
-						yardOpen = true;
 					}
 				}
 			}
