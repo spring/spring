@@ -1098,7 +1098,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	}
 
 	if ((currentTime - frameStartTime).toMilliSecsf() >= 1000.0f) {
-		globalRendering->FPS = (numDrawFrames * 1000.0f) / (currentTime - frameStartTime).toMilliSecsf();
+		globalRendering->FPS = (numDrawFrames * 1000.0f) / std::max(0.01f, (currentTime - frameStartTime).toMilliSecsf());
 
 		// update FPS counter once every second
 		frameStartTime = currentTime;
@@ -1145,7 +1145,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 		}
 
 		// TODO call only when camera changed
-		sound->UpdateListener(camera->GetPos(), camera->GetDir(), camera->GetUp(), unsyncedUpdateDeltaTime);
+		sound->UpdateListener(camera->GetPos(), camera->GetDir(), camera->GetUp());
 	}
 
 	SetDrawMode(gameNormalDraw); //TODO move to ::Draw()?
