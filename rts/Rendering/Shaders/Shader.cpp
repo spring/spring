@@ -189,6 +189,7 @@ namespace Shader {
 		if (reloadFromDisk || curShaderSrc.empty())
 			curShaderSrc = GetShaderSource(srcFile);
 
+		assert(!curShaderSrc.empty());
 		std::string sourceStr = curShaderSrc;
 		std::string defFlags  = rawDefStrs + "\n" + modDefStrs;
 		std::string versionStr;
@@ -496,6 +497,7 @@ namespace Shader {
 		curFlagsHash = 0;
 		objID = 0;
 		objID = glCreateProgram();
+		curSrcHash = 0;
 	}
 
 	void GLSLProgramObject::Reload(bool reloadFromDisk) {
@@ -508,8 +510,8 @@ namespace Shader {
 		log = "";
 		valid = false;
 
-		curFlagsHash = GetHash();
 		// create shader source hash
+		curFlagsHash = GetHash();
 		curSrcHash = curFlagsHash;
 		for (const IShaderObject* so: GetAttachedShaderObjs()) {
 			curSrcHash ^= so->GetHash();
@@ -549,12 +551,14 @@ namespace Shader {
 				}
 			}
 			Link();
+		} else {
+			valid = true;
 		}
 
-
 		// copy full program state from old to new program (uniforms etc.)
-		//FIXME if (IsValid())
-		GLSLCopyState(objID, oldProgID, &((IProgramObject*)(this))->uniformStates);
+		if (oldValid && IsValid()) {
+			GLSLCopyState(objID, oldProgID, &((IProgramObject*)(this))->uniformStates);
+		}
 
 		// delete old program when not further used
 		if (deleteOldShader)
