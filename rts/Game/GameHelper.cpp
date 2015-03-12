@@ -317,7 +317,7 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 	if (weaponDef != NULL) {
 		const GuiSoundSet& soundSet = weaponDef->hitSound;
 
-		const unsigned int soundFlags = CCustomExplosionGenerator::GetFlagsFromHeight(params.pos.y, altitude);
+		const unsigned int soundFlags = CCustomExplosionGenerator::GetFlagsFromHeight(params.pos.y, realHeight);
 		const unsigned int soundMask = CCustomExplosionGenerator::SPW_WATER | CCustomExplosionGenerator::SPW_UNDERWATER;
 
 		const int soundNum = ((soundFlags & soundMask) != 0);
