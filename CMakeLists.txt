@@ -355,6 +355,7 @@ if (THREADPOOL)
 endif(THREADPOOL)
 
 
+### warnings
 if(NOT MSVC)
 	### SigNan
 	option(SIGNAL_NANS "Enable NaN-Signalling" ${DEBUG_BUILD})
@@ -380,7 +381,12 @@ if(NOT MSVC)
 	endif (MAX_WARNINGS)
 endif(NOT MSVC)
 
-### CXX_FLAGS
+
+### streflop
+add_definitions(-DSTREFLOP_SSE) # would break AI compiling, but is undefined in ./AI/CMakeLists.txt
+
+
+### compiler specific flags
 set(CXX_FLAGS_DEBUG_ADDITIONAL "")
 if    ($ENV{CXX} MATCHES "icpc")
 	# intel C/C++ compiler fix; it does not support these flags:
@@ -388,13 +394,18 @@ if    ($ENV{CXX} MATCHES "icpc")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -axK") # SSE1
 	set(CXX_FLAGS_DEBUG_ADDITIONAL "-g -debug full")
 elseif (CMAKE_COMPILER_IS_GNUCXX)
+	if    (UNIX)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=always")
+	endif (UNIX)
+
 	if    (MARCH_FLAG)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${MARCH_FLAG}")
 		Message(STATUS "using march=${MARCH_FLAG}")
 	else  (MARCH_FLAG)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=generic")
-		Message(STATUS "using mtune=generic (unsure if it will sync in online gaming)")
+		Message(STATUS "using mtune=generic")
 	endif (MARCH_FLAG)
+
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SSE_FLAGS}") # SSE1
 elseif (MSVC)
 	# nothing to be done here
@@ -402,8 +413,8 @@ else   (MSVC)
 	Message(WARNING "unknown compiler")
 endif ($ENV{CXX} MATCHES "icpc")
 
-add_definitions(-DSTREFLOP_SSE) # would break AI compiling, but is undefined in ./AI/CMakeLists.txt
 
+#### build types
 if    (MSVC)
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LARGEADDRESSAWARE")
 else  (MSVC)
