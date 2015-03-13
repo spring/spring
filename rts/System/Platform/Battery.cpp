@@ -30,6 +30,11 @@ void CBattery::Update()
 {
 	// switch ThreadPool's busy-wait to sleep-wait to save more power
 
+	const spring_time now = spring_gettime();
+	if (next_check > now)
+		return;
+	next_check = now + spring_secs(5);
+
 	int secs, pct;
 	bool newOnBattery = (SDL_GetPowerInfo(&secs, &pct) == SDL_POWERSTATE_ON_BATTERY);
 	if (newOnBattery == onBattery)

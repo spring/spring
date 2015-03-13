@@ -4,6 +4,7 @@
 #define BATTERY_H
 
 #include "System/EventClient.h"
+#include "System/Misc/SpringTime.h"
 
 
 class CBattery: public CEventClient
@@ -25,6 +26,7 @@ private:
 	static bool HasBattery();
 
 private:
+	spring_time next_check;
 	bool onBattery;
 };
 
