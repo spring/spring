@@ -35,16 +35,24 @@ void CBattery::Update()
 		return;
 	next_check = now + spring_secs(5);
 
-	int secs, pct;
-	bool newOnBattery = (SDL_GetPowerInfo(&secs, &pct) == SDL_POWERSTATE_ON_BATTERY);
-	if (newOnBattery == onBattery)
+	if (!ThreadPool::HasThreads())
 		return;
 
-	if (onBattery = newOnBattery) {
-		ThreadPool::SetThreadSpinTime(0);
-	} else {
-		ThreadPool::SetThreadSpinTime(configHandler->GetUnsigned("WorkerThreadSpinTime"));
-	}
+	// SDL_GetPowerInfo() seems to cause a lag of (milli-)secs
+	// run it threaded, so that it doesn't block the mainthread
+	ThreadPool::enqueue([&]{
+		int secs, pct;
+		bool newOnBattery = (SDL_GetPowerInfo(&secs, &pct) == SDL_POWERSTATE_ON_BATTERY);
+		if (newOnBattery == onBattery)
+			return;
+		onBattery = newOnBattery;
+
+		if (onBattery) {
+			ThreadPool::SetThreadSpinTime(0);
+		} else {
+			ThreadPool::SetThreadSpinTime(configHandler->GetUnsigned("WorkerThreadSpinTime"));
+		}
+	});
 }
 
 
