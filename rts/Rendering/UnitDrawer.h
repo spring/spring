@@ -59,7 +59,7 @@ public:
 	void Update();
 
 	void SetDrawDeferredPass(bool b) {
-		if ((drawDeferred = b)) {
+		if ((drawDeferred == b)) {
 			drawDeferred &= UpdateGeometryBuffer(false);
 		}
 	}
@@ -181,7 +181,9 @@ public:
 	float unitIconDist;
 	float iconLength;
 
+	//arent those RGBs ?
 	float3 unitAmbientColor;
+	//arent those RGBs ?
 	float3 unitSunColor;
 
 	struct TempDrawUnit {
