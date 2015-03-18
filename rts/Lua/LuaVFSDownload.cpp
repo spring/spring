@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/EventHandler.h"
+#include "System/EventBatchHandler.h"
 
 #include "LuaVFSDownload.h"
 
@@ -8,6 +9,8 @@
 
 #include "LuaInclude.h"
 #include "../tools/pr-downloader/src/pr-downloader.h"
+#include "../tools/pr-downloader/src/lib/md5/md5.h"
+#include "base64.h"
 
 /******************************************************************************/
 /******************************************************************************/
@@ -19,6 +22,7 @@
 bool LuaVFSDownload::PushEntries(lua_State* L)
 {
 	REGISTER_LUA_CFUNC(DownloadArchive);
+	REGISTER_LUA_CFUNC(CalcMd5);
 	return true;
 }
 
@@ -37,7 +41,7 @@ static std::list<DownloadItem> queue;
 void StartDownload();
 
 void UpdateProgress(int done, int size) {
-	eventHandler.DownloadProgress(downloadID, done, size);
+	eventBatchHandler->DownloadProgress(downloadID, done, size);
 }
 
 int Download(const std::string& filename)
@@ -53,7 +57,7 @@ int Download(const std::string& filename)
 			LOG_L(L_DEBUG, "Download info: %s %d %d", dl.filename, dl.type, dl.cat);
 		}
 	}
-	eventHandler.DownloadStarted(downloadID);
+	eventBatchHandler->DownloadStarted(downloadID);
 	int result = DownloadStart();
 	DownloadShutdown();
 	LOG_L(L_DEBUG, "download finished %s", filename.c_str());
@@ -72,9 +76,9 @@ void StartDownload() {
 	result = std::async(std::launch::async, [filename, category, ID]() {
 			int result = Download(filename);
 			if (result == 0) {
-				eventHandler.DownloadFinished(ID);
+				eventBatchHandler->DownloadFinished(ID);
 			} else {
-				eventHandler.DownloadFailed(ID, result);
+				eventBatchHandler->DownloadFailed(ID, result);
 			}
 			return result;
 		}
@@ -100,4 +104,17 @@ int LuaVFSDownload::DownloadArchive(lua_State* L)
 	return 0;
 }
 
-
+int LuaVFSDownload::CalcMd5(lua_State* L)
+{
+	const std::string sstr = luaL_checkstring(L, 1);
+	MD5_CTX ctx;
+	MD5Init(&ctx);
+	MD5Update(&ctx, (unsigned char*) sstr.c_str(), sstr.size());
+	MD5Final(&ctx);
+	const unsigned char* md5sum = ctx.digest;
+	std::string encoded = base64_encode(md5sum, 16); 
+	//const char* md5sum = CalculateMd5((unsigned char*) str.c_str());
+	printf("input: %s digest: %s", sstr.c_str(), encoded.c_str());
+	lua_pushsstring(L, encoded);
+	return 1;
+}

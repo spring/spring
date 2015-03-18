@@ -35,6 +35,30 @@ public: // EventClient
 	//void UnsyncedProjectileDestroyed(const CProjectile* proj)
 	//void LoadedModelRequested()
 
+	struct dlStarted {
+		int ID;
+	};
+	dlStarted* dls = NULL;
+	struct dlFinished {
+		int ID;
+	};
+	dlFinished* dlfi = NULL;
+	struct dlFailed {
+		int ID;
+		int errorID;
+	};
+	dlFailed* dlfa = NULL;
+	struct dlProgress {
+		int ID;
+		long downloaded;
+		long total;
+	};
+	dlProgress* dlp = NULL;
+	void DownloadStarted(int ID);
+	void DownloadFinished(int ID);
+	void DownloadFailed(int ID, int errorID);
+	void DownloadProgress(int ID, long downloaded, long total);
+	void ProcessDownloads();
 public:
 	static EventBatchHandler* GetInstance() { assert(ebh); return ebh; }
 	static void CreateInstance();

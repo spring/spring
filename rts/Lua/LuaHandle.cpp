@@ -34,6 +34,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
+#include "System/EventBatchHandler.h"
 #include "System/Exceptions.h"
 #include "System/GlobalConfig.h"
 #include "System/Rectangle.h"
@@ -1585,6 +1586,8 @@ void CLuaHandle::Update()
 
 	// call the routine
 	RunCallIn(L, cmdStr, 0, 0);
+
+	eventBatchHandler->ProcessDownloads();
 }
 
 

@@ -35,6 +35,33 @@ void EventBatchHandler::DeleteInstance()
 }
 
 
+void EventBatchHandler::DownloadStarted(int ID) { dls = new dlStarted(); dls->ID = ID; }
+void EventBatchHandler::DownloadFinished(int ID) { dlfi = new dlFinished(); dlfi->ID = ID; }
+void EventBatchHandler::DownloadFailed(int ID, int errorID) { dlfa = new dlFailed(); dlfa->ID = ID; dlfa->errorID = errorID; }
+void EventBatchHandler::DownloadProgress(int ID, long downloaded, long total) { dlp = new dlProgress(); dlp->ID = ID; dlp->downloaded = downloaded; dlp->total = total; }
+
+void EventBatchHandler::ProcessDownloads() {
+	if (dls != NULL) {
+		eventHandler.DownloadStarted(dls->ID);
+		delete dls;
+		dls = NULL;
+	}
+	if (dlfi != NULL) {
+		eventHandler.DownloadFinished(dlfi->ID);
+		delete dlfi;
+		dlfi = NULL;
+	}
+	if (dlfa != NULL) {
+		eventHandler.DownloadFailed(dlfa->ID, dlfa->errorID);
+		delete dlfa;
+		dlfa = NULL;
+	}
+	if (dlp != NULL) {
+		eventHandler.DownloadProgress(dlp->ID, dlp->downloaded, dlp->total);
+		delete dlp;
+		dlp = NULL;
+	}
+}	
 
 EventBatchHandler::EventBatchHandler()
 	: CEventClient("[EventBatchHandler]", 0, true)
