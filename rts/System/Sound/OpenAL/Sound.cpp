@@ -43,8 +43,7 @@ boost::recursive_mutex soundMutex;
 
 
 CSound::CSound()
-	: myPos(ZeroVector)
-	, prevVelocity(ZeroVector)
+	: listenerNeedsUpdate(false)
 	, soundThread(NULL)
 	, soundThreadQuit(false)
 	, canLoadDefs(false)
@@ -408,6 +407,7 @@ void CSound::Update()
 	for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
 		it->Update();
 	CheckError("CSound::Update");
+	UpdateListenerReal();
 }
 
 size_t CSound::MakeItemFromDef(const soundItemDef& itemDef)
@@ -430,31 +430,42 @@ size_t CSound::MakeItemFromDef(const soundItemDef& itemDef)
 	return newid;
 }
 
-void CSound::UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime)
+void CSound::UpdateListener(const float3& campos, const float3& camdir, const float3& camup)
 {
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
-	if (sources.empty())
+	myPos  = campos;
+	camDir = camdir;
+	camUp  = camup;
+	listenerNeedsUpdate = true;
+}
+
+
+void CSound::UpdateListenerReal()
+{
+	// call from sound thread, cause OpenAL calls tend to cause L2 misses and so are slow (no reason to call them from mainthread)
+	if (!listenerNeedsUpdate)
 		return;
 
-	myPos = campos;
+	// not 100% threadsafe, but worst case we would skip a single listener update (and it runs at multiple Hz!)
+	listenerNeedsUpdate = false;
+
 	const float3 myPosInMeters = myPos * ELMOS_TO_METERS;
 	alListener3f(AL_POSITION, myPosInMeters.x, myPosInMeters.y, myPosInMeters.z);
 
-	//! reduce the rolloff when the camera is high above the ground (so we still hear something in tab mode or far zoom)
-	//! for altitudes up to and including 600 elmos, the rolloff is always clamped to 1
-	const float camHeight = std::max(1.0f, campos.y - CGround::GetHeightAboveWater(campos.x, campos.z));
+	// reduce the rolloff when the camera is high above the ground (so we still hear something in tab mode or far zoom)
+	// for altitudes up to and including 600 elmos, the rolloff is always clamped to 1
+	const float camHeight = std::max(1.0f, myPos.y - CGround::GetHeightAboveWater(myPos.x, myPos.z));
 	const float newMod = std::min(600.0f / camHeight, 1.0f);
 
 	CSoundSource::SetHeightRolloffModifer(newMod);
 	efx->SetHeightRolloffModifer(newMod);
 
-	//! Result were bad with listener related doppler effects.
-	//! The user experiences the camera/listener not as a world-interacting object.
-	//! So changing sounds on camera movements were irritating, esp. because zooming with the mouse wheel
-	//! often is faster than the speed of sound, causing very high frequencies.
-	//! Note: soundsource related doppler effects are not deactivated by this! Flying cannon shoots still change their frequencies.
-	//! Note2: by not updating the listener velocity soundsource related velocities are calculated wrong,
-	//! so even if the camera is moving with a cannon shoot the frequency gets changed.
+	// Result were bad with listener related doppler effects.
+	// The user experiences the camera/listener not as a world-interacting object.
+	// So changing sounds on camera movements were irritating, esp. because zooming with the mouse wheel
+	// often is faster than the speed of sound, causing very high frequencies.
+	// Note: soundsource related doppler effects are not deactivated by this! Flying cannon shoots still change their frequencies.
+	// Note2: by not updating the listener velocity soundsource related velocities are calculated wrong,
+	// so even if the camera is moving with a cannon shoot the frequency gets changed.
 	/*
 	const float3 velocity = (myPos - prevPos) / (lastFrameTime);
 	float3 velocityAvg = velocity * 0.6f + prevVelocity * 0.4f;
@@ -465,10 +476,11 @@ void CSound::UpdateListener(const float3& campos, const float3& camdir, const fl
 	alListener3f(AL_VELOCITY, velocityAvg.x, velocityAvg.y, velocityAvg.z);
 	*/
 
-	ALfloat ListenerOri[] = {camdir.x, camdir.y, camdir.z, camup.x, camup.y, camup.z};
+	ALfloat ListenerOri[] = {camDir.x, camDir.y, camDir.z, camUp.x, camUp.y, camUp.z};
 	alListenerfv(AL_ORIENTATION, ListenerOri);
 	CheckError("CSound::UpdateListener");
 }
+
 
 void CSound::PrintDebugInfo()
 {

@@ -116,11 +116,11 @@ void CGameHelper::DoExplosionDamage(
 	const float3& volPos = vol->GetWorldSpacePos(unit, lapPos);
 
 	// linear damage falloff with distance
-	const float expDist = vol->GetPointSurfaceDistance(unit, lap, expPos);
+	const float expDist = (expRadius != 0.0f) ? vol->GetPointSurfaceDistance(unit, lap, expPos) : 0.0f;
 	const float expRim = expDist * expEdgeEffect;
 
 	// return early if (distance > radius)
-	if (expDist >= expRadius)
+	if (expDist > expRadius)
 		return;
 
 	// expEdgeEffect should be in [0, 1], so expRadius >= expDist >= expDist*expEdgeEffect
@@ -128,7 +128,7 @@ void CGameHelper::DoExplosionDamage(
 
 	// expMod will also be in [0, 1], no negatives
 	// TODO: damage attenuation for underwater units from surface explosions?
-	const float expDistanceMod = (expRadius - expDist) / (expRadius + 0.01f - expRim);
+	const float expDistanceMod = (expRadius + 0.001f - expDist) / (expRadius + 0.001f - expRim);
 	const float modImpulseScale = CalcImpulseScale(damages, expDistanceMod);
 
 	// NOTE: if an explosion occurs right underneath a
@@ -168,15 +168,15 @@ void CGameHelper::DoExplosionDamage(
 	const CollisionVolume* vol = feature->GetCollisionVolume(NULL);
 	const float3& volPos = vol->GetWorldSpacePos(feature, ZeroVector);
 
-	const float expDist = vol->GetPointSurfaceDistance(feature, NULL, expPos);
+	const float expDist = (expRadius != 0.0f) ? vol->GetPointSurfaceDistance(feature, NULL, expPos) : 0.0f;
 	const float expRim = expDist * expEdgeEffect;
 
-	if (expDist >= expRadius)
+	if (expDist > expRadius)
 		return;
 
 	assert(expRadius >= expRim);
 
-	const float expDistanceMod = (expRadius - expDist) / (expRadius + 0.01f - expRim);
+	const float expDistanceMod = (expRadius + 0.001f - expDist) / (expRadius + 0.001f - expRim);
 	const float modImpulseScale = CalcImpulseScale(damages, expDistanceMod);
 
 	const float3 impulseDir = (volPos - expPos).SafeNormalize();
@@ -258,7 +258,7 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 				params.hitUnit,
 				params.owner,
 				params.pos,
-				damageAOE,
+				0.0f,
 				params.explosionSpeed,
 				params.edgeEffectiveness,
 				params.ignoreOwner,
@@ -273,7 +273,7 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 				params.hitFeature,
 				params.owner,
 				params.pos,
-				damageAOE,
+				0.0f,
 				params.edgeEffectiveness,
 				params.damages,
 				weaponDefID,
@@ -317,7 +317,7 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 	if (weaponDef != NULL) {
 		const GuiSoundSet& soundSet = weaponDef->hitSound;
 
-		const unsigned int soundFlags = CCustomExplosionGenerator::GetFlagsFromHeight(params.pos.y, altitude);
+		const unsigned int soundFlags = CCustomExplosionGenerator::GetFlagsFromHeight(params.pos.y, realHeight);
 		const unsigned int soundMask = CCustomExplosionGenerator::SPW_WATER | CCustomExplosionGenerator::SPW_UNDERWATER;
 
 		const int soundNum = ((soundFlags & soundMask) != 0);
@@ -969,9 +969,7 @@ float3 CGameHelper::ClosestBuildSite(int team, const UnitDef* unitDef, float3 po
 							continue;
 						if (!solObj->immobile)
 							continue;
-						if (dynamic_cast<CFactory*>(solObj) == NULL)
-							continue;
-						if (!static_cast<CFactory*>(solObj)->opening)
+						if (!solObj->yardOpen)
 							continue;
 
 						good = false;

@@ -24,7 +24,7 @@ public:
 
 	CSoundSource* GetNextBestSource(bool lock = true) { return NULL; }
 
-	void UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime) {}
+	void UpdateListener(const float3& campos, const float3& camdir, const float3& camup) {}
 	void NewFrame() {}
 
 	void ConfigNotify(const std::string& key, const std::string& value) {}

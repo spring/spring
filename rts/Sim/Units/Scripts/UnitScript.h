@@ -60,7 +60,6 @@ protected:
 
 protected:
 	CUnit* unit;
-	bool yardOpen;
 	bool busy;
 
 	struct AnimInfo {

@@ -1073,7 +1073,7 @@ public:
 		game->userInput = game->userInputPrefix;
 		game->writingPos = (int)game->userInput.length();
 		game->chatting = true;
-		game->ignoreNextChar = true;
+		game->ignoreNextChar = false;
 		game->consoleHistory->ResetPosition();
 		inMapDrawer->SetDrawMode(false);
 

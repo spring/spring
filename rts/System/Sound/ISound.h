@@ -38,7 +38,7 @@ public:
 	 */
 	virtual CSoundSource* GetNextBestSource(bool lock = true) = 0;
 
-	virtual void UpdateListener(const float3& camPos, const float3& camDir, const float3& camUp, float lastFrameTime) = 0;
+	virtual void UpdateListener(const float3& camPos, const float3& camDir, const float3& camUp) = 0;
 	virtual void NewFrame() = 0;
 
 	virtual void ConfigNotify(const std::string& key, const std::string& value) = 0;

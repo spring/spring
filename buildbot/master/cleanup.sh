@@ -4,7 +4,7 @@
 # ${DBG_AGE} must be smaller than or equal to ${AGE}.
 
 AGE=180
-DBG_AGE=14
+DBG_AGE=30
 
 renice 19 -p $$ >/dev/null
 ionice -c3 -p $$

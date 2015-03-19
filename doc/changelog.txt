@@ -38,6 +38,9 @@ System:
  ! new linux crashhandler by Major Bor3d0m
   - libunwind is required to compile spring on linux
  - fix headless compile on systems w/o x11 & SDL
+ ! save windowed size in separate tags (#4388)
+ - fix crash with intel gpus
+ - fix bug that caused to recompress groundtextures always to ect1 on intel/mesa even when there was no need for it
 
 (G)UI:
  - fix #4576 F6 does not sound mute
@@ -69,6 +72,9 @@ Lua:
  ! remove Spring.UpdateInfoTexture
  ! fix Spring.GetKeyState & Spring.PressedKeys expecting SDL2 keycodes while whole lua gets SDL1 ones
  ! Spring.PressedKeys now also returns keynames
+
+StartScript:
+ - support rapid tags
 
 Buildbot/Installer:
  ! merged spring-headless / spring-dedicated into linux static builds / windows installer

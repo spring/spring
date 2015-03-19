@@ -1513,10 +1513,9 @@ static void AddPlayerToRoster(lua_State* L, int playerID, bool includePathingFla
 	PUSH_ROSTER_ENTRY(number, teamHandler->AllyTeam(p->team));
 	PUSH_ROSTER_ENTRY(boolean, p->spectator);
 	PUSH_ROSTER_ENTRY(number, p->cpuUsage);
-	const float pingScale = (GAME_SPEED * gs->speedFactor);
 
 	if (!includePathingFlag || p->ping != PATHING_FLAG) {
-		const float pingSecs = float(p->ping - 1) / pingScale;
+		const float pingSecs = p->ping * 0.001f;
 		PUSH_ROSTER_ENTRY(number, pingSecs);
 	} else {
 		const float pingSecs = float(p->ping);
