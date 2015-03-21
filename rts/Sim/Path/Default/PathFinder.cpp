@@ -158,7 +158,7 @@ void CPathFinder::TestNeighborSquares(
 		return sqState.inSearchRadius && !(sqState.blockedState & CMoveMath::BLOCK_STRUCTURE) && (sqState.speedMod != 0.0f);
 	};
 	const auto TEST_DIAG_SQUARE = [&](const int BASE_DIR_X, const int BASE_DIR_Y, const int BASE_DIR_XY) {
-		if ((CAN_TEST_SQUARE(BASE_DIR_X) || CAN_TEST_SQUARE(BASE_DIR_Y)) && CAN_TEST_SQUARE(BASE_DIR_XY)) {
+		if (CAN_TEST_SQUARE(BASE_DIR_X) && CAN_TEST_SQUARE(BASE_DIR_Y) && CAN_TEST_SQUARE(BASE_DIR_XY)) {
 			const auto ngbOpt = PathDir2PathOpt(BASE_DIR_XY);
 			const SqState& sqState = ngbStates[BASE_DIR_XY];
 			TestBlock(moveDef, pfDef, square, owner, ngbOpt, sqState.blockedState, sqState.speedMod);
