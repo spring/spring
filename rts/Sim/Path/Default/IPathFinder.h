@@ -86,7 +86,8 @@ protected: // pure virtuals
 		const CSolidObject* owner,
 		const unsigned int pathOptDir,
 		const unsigned int blockStatus,
-		float speedMod
+		float speedMod,
+		bool withinConstraints
 	) = 0;
 
 	/**

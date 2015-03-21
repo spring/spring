@@ -560,14 +560,14 @@ IPath::SearchResult CPathEstimator::DoSearch(const MoveDef& moveDef, const CPath
 		// no, test the 8 surrounding blocks
 		// NOTE: each of these calls increments openBlockBuffer.idx by 1, so
 		// maxBlocksToBeSearched is always less than <MAX_SEARCHED_NODES_PE - 8>
-		TestBlock(moveDef, peDef, ob, owner, PATHDIR_LEFT,       PATHOPT_OPEN, 1.f);
-		TestBlock(moveDef, peDef, ob, owner, PATHDIR_LEFT_UP,    PATHOPT_OPEN, 1.f);
-		TestBlock(moveDef, peDef, ob, owner, PATHDIR_UP,         PATHOPT_OPEN, 1.f);
-		TestBlock(moveDef, peDef, ob, owner, PATHDIR_RIGHT_UP,   PATHOPT_OPEN, 1.f);
-		TestBlock(moveDef, peDef, ob, owner, PATHDIR_RIGHT,      PATHOPT_OPEN, 1.f);
-		TestBlock(moveDef, peDef, ob, owner, PATHDIR_RIGHT_DOWN, PATHOPT_OPEN, 1.f);
-		TestBlock(moveDef, peDef, ob, owner, PATHDIR_DOWN,       PATHOPT_OPEN, 1.f);
-		TestBlock(moveDef, peDef, ob, owner, PATHDIR_LEFT_DOWN,  PATHOPT_OPEN, 1.f);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_LEFT,       PATHOPT_OPEN, 1.f, true);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_LEFT_UP,    PATHOPT_OPEN, 1.f, true);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_UP,         PATHOPT_OPEN, 1.f, true);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_RIGHT_UP,   PATHOPT_OPEN, 1.f, true);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_RIGHT,      PATHOPT_OPEN, 1.f, true);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_RIGHT_DOWN, PATHOPT_OPEN, 1.f, true);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_DOWN,       PATHOPT_OPEN, 1.f, true);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_LEFT_DOWN,  PATHOPT_OPEN, 1.f, true);
 
 		// mark this block as closed
 		blockStates.nodeMask[ob->nodeNum] |= PATHOPT_CLOSED;
@@ -602,7 +602,8 @@ bool CPathEstimator::TestBlock(
 	const CSolidObject* /*owner*/,
 	const unsigned int pathDir,
 	const unsigned int /*blockStatus*/,
-	float /*speedMod*/
+	float /*speedMod*/,
+	bool /*withinConstraints*/
 ) {
 	testedBlocks++;
 
