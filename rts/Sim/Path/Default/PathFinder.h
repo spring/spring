@@ -42,7 +42,8 @@ protected: // IPathFinder impl
 		const CSolidObject* owner,
 		const unsigned int pathOptDir,
 		const unsigned int blockStatus,
-		float speedMod
+		float speedMod,
+		bool withinConstraints
 	);
 	/**
 	 * Recreates the path found by pathfinder.
