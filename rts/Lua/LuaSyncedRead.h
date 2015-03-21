@@ -192,6 +192,10 @@ class LuaSyncedRead {
 		static int GetProjectileSpinVec(lua_State* L); // DEPRECATED
 		static int GetPieceProjectileParams(lua_State* L);
 		static int GetProjectileTarget(lua_State* L);
+		static int GetProjectileIsIntercepted(lua_State* L);
+		static int GetProjectileTimeToLive(lua_State* L);
+		static int GetProjectileOwnerID(lua_State* L);
+		static int GetProjectileTeamID(lua_State* L);
 		static int GetProjectileType(lua_State* L);
 		static int GetProjectileDefID(lua_State* L);
 		static int GetProjectileName(lua_State* L); // DEPRECATE ME?

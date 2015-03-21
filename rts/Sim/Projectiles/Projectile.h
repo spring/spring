@@ -95,6 +95,7 @@ public:
 
 	unsigned int GetOwnerID() const { return ownerID; }
 	unsigned int GetTeamID() const { return teamID; }
+	int GetAllyteamID() const { return allyteamID; }
 
 	void SetQuadFieldCellData(const QuadFieldCellData& qfcd) { qfCellData = qfcd; }
 	const QuadFieldCellData& GetQuadFieldCellData() const { return qfCellData; }
@@ -139,6 +140,7 @@ public:
 protected:
 	unsigned int ownerID;
 	unsigned int teamID;
+	int allyteamID;
 	unsigned int cegID;
 
 	unsigned int projectileType;

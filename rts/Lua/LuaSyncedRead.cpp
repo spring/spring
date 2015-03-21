@@ -282,6 +282,10 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetProjectileSpinVec);
 	REGISTER_LUA_CFUNC(GetPieceProjectileParams);
 	REGISTER_LUA_CFUNC(GetProjectileTarget);
+	REGISTER_LUA_CFUNC(GetProjectileIsIntercepted);
+	REGISTER_LUA_CFUNC(GetProjectileTimeToLive);
+	REGISTER_LUA_CFUNC(GetProjectileOwnerID);
+	REGISTER_LUA_CFUNC(GetProjectileTeamID);
 	REGISTER_LUA_CFUNC(GetProjectileType);
 	REGISTER_LUA_CFUNC(GetProjectileDefID);
 	REGISTER_LUA_CFUNC(GetProjectileName);
@@ -4602,7 +4606,6 @@ int LuaSyncedRead::GetPieceProjectileParams(lua_State* L)
 	return (1 + 1 + 1 + 3);
 }
 
-
 int LuaSyncedRead::GetProjectileTarget(lua_State* L)
 {
 	const CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
@@ -4641,6 +4644,61 @@ int LuaSyncedRead::GetProjectileTarget(lua_State* L)
 	// projectile target cannot be anything else
 	assert(false);
 	return 0;
+}
+
+int LuaSyncedRead::GetProjectileIsIntercepted(lua_State* L)
+{
+	const CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
+
+	if (pro == NULL || !pro->weapon)
+		return 0;
+
+	const CWeaponProjectile* wpro = static_cast<const CWeaponProjectile*>(pro);
+	
+	lua_pushboolean(L, wpro->IsBeingIntercepted());
+	return 1;
+}
+
+int LuaSyncedRead::GetProjectileTimeToLive(lua_State* L)
+{
+	const CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
+
+	if (pro == NULL || !pro->weapon)
+		return 0;
+
+	const CWeaponProjectile* wpro = static_cast<const CWeaponProjectile*>(pro);
+	
+	lua_pushnumber(L, wpro->GetTimeToLive());
+	return 1;
+}
+
+int LuaSyncedRead::GetProjectileOwnerID(lua_State* L)
+{
+	const CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
+
+	if (pro == NULL)
+		return 0;
+
+	const int unitID = pro->GetOwnerID();
+	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits()))
+		return 0;
+	
+	lua_pushnumber(L, unitID);
+	return 1;
+}
+
+int LuaSyncedRead::GetProjectileTeamID(lua_State* L)
+{
+	const CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
+
+	if (pro == NULL)
+		return 0;
+
+	if (!teamHandler->IsValidTeam(pro->GetTeamID()))
+		return 0;
+	
+	lua_pushnumber(L, pro->GetTeamID());
+	return 1;
 }
 
 int LuaSyncedRead::GetProjectileType(lua_State* L)

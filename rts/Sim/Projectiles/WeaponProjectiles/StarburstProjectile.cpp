@@ -67,7 +67,7 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 	, areaOfEffect(0.0f)
 	, distanceToTravel(params.maxRange)
 
-	, uptime(0)
+	, uptime(params.upTime)
 	, age(0)
 
 	, oldSmoke(pos)
@@ -87,7 +87,11 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 	if (weaponDef != NULL) {
 		maxSpeed = weaponDef->projectilespeed;
 		areaOfEffect = weaponDef->damageAreaOfEffect;
-		uptime = weaponDef->uptime * GAME_SPEED;
+		
+		// Default uptime is -1. Positive values override the weapondef.
+		if (uptime < 0) {
+			uptime = weaponDef->uptime * GAME_SPEED;
+		}
 
 		if (weaponDef->flighttime == 0) {
 			ttl = std::min(3000.0f, uptime + weaponDef->range / maxSpeed + 100);
@@ -181,12 +185,12 @@ void CStarburstProjectile::Update()
 	uptime--;
 	missileAge++;
 
-	if (target != NULL && owner() != NULL && weaponDef->tracks) {
+	if (target != NULL && allyteamID != -1 && weaponDef->tracks) {
 		targetPos = target->pos;
 		CUnit* u = dynamic_cast<CUnit*>(target);
 
 		if (u != NULL) {
-			targetPos = u->GetErrorPos(owner()->allyteam, true);
+			targetPos = u->GetErrorPos(allyteamID, true);
 		}
 	}
 

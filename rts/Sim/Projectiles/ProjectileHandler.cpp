@@ -348,7 +348,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 
 	p->id = newUsedID;
 
-	const ProjectileMapValPair vp(p, p->owner() ? p->owner()->allyteam : -1);
+	const ProjectileMapValPair vp(p, p->GetAllyteamID());
 	const ProjectileMapKeyPair kp(p->id, vp);
 
 	proIDs->insert(kp);

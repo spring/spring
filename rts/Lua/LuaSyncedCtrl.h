@@ -127,6 +127,7 @@ class LuaSyncedCtrl
 		static int SetProjectileVelocity(lua_State* L);
 		static int SetProjectileCollision(lua_State* L);
 		static int SetProjectileTarget(lua_State* L);
+		static int SetProjectileIsIntercepted(lua_State* L);
 
 		static int SetProjectileGravity(lua_State* L);
 		static int SetProjectileSpinAngle(lua_State* L); // DEPRECATED

@@ -27,6 +27,7 @@ struct ProjectileParams {
 		, gravity(0.0f)
 		, tracking(0.0f)
 		, maxRange(0.0f)
+		, upTime(-1.0f)
 
 		, startAlpha(0.0f)
 		, endAlpha(1.0f)
@@ -55,6 +56,7 @@ struct ProjectileParams {
 	float gravity;
 	float tracking;
 	float maxRange;
+	float upTime;
 
 	// BeamLaser-specific junk
 	float startAlpha;

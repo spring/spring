@@ -8,6 +8,7 @@
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Features/Feature.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Misc/QuadField.h"
@@ -114,6 +115,7 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 		// the else-case (default) is handled in CProjectile::Init
 		ownerID = params.ownerID;
 		teamID = params.teamID;
+		allyteamID = teamHandler->IsValidTeam(teamID)? teamHandler->AllyTeam(teamID): -1;
 	}
 
 	if (params.cegID != -1u) {

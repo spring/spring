@@ -234,6 +234,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetProjectileVelocity);
 	REGISTER_LUA_CFUNC(SetProjectileCollision);
 	REGISTER_LUA_CFUNC(SetProjectileTarget);
+	REGISTER_LUA_CFUNC(SetProjectileIsIntercepted);
 
 	REGISTER_LUA_CFUNC(SetProjectileGravity);
 	REGISTER_LUA_CFUNC(SetProjectileSpinAngle);
@@ -418,6 +419,8 @@ static bool ParseProjectileParams(lua_State* L, ProjectileParams& params, const 
 					params.tracking = lua_tofloat(L, -1);
 				} else if (key == "maxRange") {
 					params.maxRange = lua_tofloat(L, -1);
+				} else if (key == "upTime") {
+					params.upTime = lua_tofloat(L, -1);
 				} else if (key == "startAlpha") {
 					params.startAlpha = lua_tofloat(L, -1);
 				} else if (key == "endAlpha") {
@@ -2835,6 +2838,19 @@ int LuaSyncedCtrl::SetProjectileTarget(lua_State* L)
 		} break;
 	}
 
+	return 0;
+}
+
+int LuaSyncedCtrl::SetProjectileIsIntercepted(lua_State* L)
+{
+	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
+
+	if (proj == NULL || !proj->weapon)
+		return 0;
+		
+	CWeaponProjectile* wpro = static_cast<CWeaponProjectile*>(proj);
+
+	wpro->SetBeingIntercepted(luaL_checkboolean(L, 2));
 	return 0;
 }
 
