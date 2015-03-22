@@ -8,15 +8,15 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Features/Feature.h"
-#include "Sim/Units/Unit.h"
-#include "Sim/Projectiles/Projectile.h"
 #include "System/creg/STL_List.h"
 
-#define CELL_IDX_X(wpx) Clamp(int((wpx) / quadSizeX), 0, numQuadsX - 1)
-#define CELL_IDX_Z(wpz) Clamp(int((wpz) / quadSizeZ), 0, numQuadsZ - 1)
+#ifndef UNIT_TEST
+	#include "Sim/Features/Feature.h"
+	#include "Sim/Units/Unit.h"
+	#include "Sim/Projectiles/Projectile.h"
+#endif
 
-CR_BIND(CQuadField, (1, 1))
+CR_BIND(CQuadField, (int2(1,1), 1))
 CR_REG_METADATA(CQuadField, (
 	CR_MEMBER(baseQuads),
 	CR_MEMBER(tempQuads),
@@ -37,11 +37,11 @@ CR_REG_METADATA_SUB(CQuadField, Quad, (
 CQuadField* quadField = NULL;
 
 
-
-void CQuadField::Resize(unsigned int nqx, unsigned int nqz)
+#ifndef UNIT_TEST
+void CQuadField::Resize(int quad_size)
 {
 	CQuadField* oldQuadField = quadField;
-	CQuadField* newQuadField = new CQuadField(nqx, nqz);
+	CQuadField* newQuadField = new CQuadField(int2(mapDims.mapx, mapDims.mapy), quad_size);
 
 	quadField = NULL;
 
@@ -82,24 +82,29 @@ void CQuadField::Resize(unsigned int nqx, unsigned int nqz)
 	// do this last so pointer is never dangling
 	delete oldQuadField;
 }
+#endif
 
 
-
-CQuadField::Quad::Quad() : teamUnits(teamHandler->ActiveAllyTeams())
+CQuadField::Quad::Quad()
 {
+#ifndef UNIT_TEST
+	teamUnits.resize(teamHandler->ActiveAllyTeams());
+	assert(teamUnits.capacity() == teamHandler->ActiveAllyTeams());
+#endif
 }
 
-CQuadField::CQuadField(unsigned int nqx, unsigned int nqz)
+CQuadField::CQuadField(int2 mapDims, int quad_size)
 {
-	numQuadsX = nqx;
-	numQuadsZ = nqz;
-	quadSizeX = (mapDims.mapx * SQUARE_SIZE) / numQuadsX;
-	quadSizeZ = (mapDims.mapy * SQUARE_SIZE) / numQuadsZ;
+	quadSizeX = quad_size;
+	quadSizeZ = quad_size;
+	numQuadsX = (mapDims.x * SQUARE_SIZE) / quad_size;
+	numQuadsZ = (mapDims.y * SQUARE_SIZE) / quad_size;
 
 	assert(numQuadsX >= 1);
 	assert(numQuadsZ >= 1);
-	// square cells only
-	assert(quadSizeX == quadSizeZ);
+	assert((mapDims.x * SQUARE_SIZE) % quad_size == 0);
+	assert((mapDims.y * SQUARE_SIZE) % quad_size == 0);
+	assert(numQuadsX * numQuadsZ <= NUM_TEMP_QUADS);
 
 	// Without the temporary, std::max takes address of NUM_TEMP_QUADS
 	// if it isn't inlined, forcing NUM_TEMP_QUADS to be defined.
@@ -109,17 +114,32 @@ CQuadField::CQuadField(unsigned int nqx, unsigned int nqz)
 	tempQuads.resize(std::max(numTempQuads, numQuadsX * numQuadsZ));
 }
 
+
 CQuadField::~CQuadField()
 {
-	baseQuads.clear();
-	tempQuads.clear();
 }
 
 
+int2 CQuadField::WorldPosToQuadField(const float3 p) const
+{
+	return int2(
+		Clamp(int(p.x / quadSizeX), 0, numQuadsX - 1),
+		Clamp(int(p.z / quadSizeZ), 0, numQuadsZ - 1)
+	);
+}
+
+
+int CQuadField::WorldPosToQuadFieldIdx(const float3 p) const
+{
+	return Clamp(int(p.z / quadSizeZ), 0, numQuadsZ - 1) * numQuadsX + Clamp(int(p.x / quadSizeX), 0, numQuadsX - 1);
+}
+
+
+#ifndef UNIT_TEST
 std::vector<int> CQuadField::GetQuads(float3 pos, float radius) const
 {
-	pos.ClampInBounds();
 	pos.AssertNaNs();
+	pos.ClampInBounds();
 
 	std::vector<int> ret;
 
@@ -276,167 +296,94 @@ std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& mins, const float3& 
 
 	return units;
 }
+#endif // UNIT_TEST
 
 
-
+/// note: this function got an UnitTest, check the tests/ folder!
 unsigned int CQuadField::GetQuadsOnRay(float3 start, float3 dir, float length, int*& begQuad, int*& endQuad)
 {
-	assert(!math::isnan(start.x));
-	assert(!math::isnan(start.y));
-	assert(!math::isnan(start.z));
-	assert(!math::isnan(dir.x));
-	assert(!math::isnan(dir.y));
-	assert(!math::isnan(dir.z));
+	dir.AssertNaNs();
+	start.AssertNaNs();
 	assert(begQuad == NULL);
 	assert(endQuad == NULL);
-
 	begQuad = &tempQuads[0];
 	endQuad = &tempQuads[0];
 
-	if (start.x < 1) {
-		if (dir.x == 0) {
-			dir.x = 0.00001f;
-		}
-		start = start + dir * ((1 - start.x) / dir.x);
-	}
-	if (start.x > mapDims.mapx * SQUARE_SIZE - 1) {
-		if (dir.x == 0) {
-			dir.x = 0.00001f;
-		}
-		start = start + dir * ((mapDims.mapx * SQUARE_SIZE - 1 - start.x) / dir.x);
-	}
-	if (start.z < 1) {
-		if (dir.z == 0) {
-			dir.z = 0.00001f;
-		}
-		start = start + dir * ((1 - start.z) / dir.z);
-	}
-	if (start.z > mapDims.mapy * SQUARE_SIZE - 1) {
-		if (dir.z == 0) {
-			dir.z = 0.00001f;
-		}
-		start = start + dir * ((mapDims.mapy * SQUARE_SIZE - 1 - start.z) / dir.z);
-	}
-
-	if (start.x < 1) {
-		start.x = 1;
-	}
-	if (start.x > mapDims.mapx * SQUARE_SIZE - 1) {
-		start.x = mapDims.mapx * SQUARE_SIZE - 1;
-	}
-	if (start.z < 1) {
-		start.z = 1;
-	}
-	if (start.z > mapDims.mapy * SQUARE_SIZE - 1) {
-		start.z = mapDims.mapy * SQUARE_SIZE - 1;
-	}
-
 	float3 to = start + (dir * length);
+	const float3 invQuadSize = float3(1.0f / quadSizeX, 1.0f, 1.0f / quadSizeZ);
 
-	if (to.x < 1) {
-		to = to - dir * ((to.x - 1)                          / dir.x);
-	}
-	if (to.x > mapDims.mapx * SQUARE_SIZE - 1) {
-		to = to - dir * ((to.x - mapDims.mapx * SQUARE_SIZE + 1) / dir.x);
-	}
-	if (to.z < 1){
-		to= to - dir * ((to.z - 1)                          / dir.z);
-	}
-	if (to.z > mapDims.mapy * SQUARE_SIZE - 1) {
-		to= to - dir * ((to.z - mapDims.mapy * SQUARE_SIZE + 1) / dir.z);
-	}
-	// these 4 shouldnt be needed, but sometimes we seem to get strange enough
-	// values that rounding errors throw us outside the map
-	if (to.x < 1) {
-		to.x = 1;
-	}
-	if (to.x > mapDims.mapx * SQUARE_SIZE - 1) {
-		to.x = mapDims.mapx * SQUARE_SIZE - 1;
-	}
-	if (to.z < 1) {
-		to.z = 1;
-	}
-	if (to.z > mapDims.mapy * SQUARE_SIZE - 1) {
-		to.z = mapDims.mapy * SQUARE_SIZE - 1;
-	}
+	const bool noXdir = (math::floor(start.x * invQuadSize.x) == math::floor(to.x * invQuadSize.x));
+	const bool noZdir = (math::floor(start.z * invQuadSize.z) == math::floor(to.z * invQuadSize.z));
 
-	const float dx = to.x - start.x;
-	const float dz = to.z - start.z;
-	float xp = start.x;
-	float zp = start.z;
-
-	const float invQuadSizeX = 1.0f / quadSizeX;
-	const float invQuadSizeZ = 1.0f / quadSizeZ;
-
-	if ((math::floor(start.x * invQuadSizeX) == math::floor(to.x * invQuadSizeX)) &&
-		(math::floor(start.z * invQuadSizeZ) == math::floor(to.z * invQuadSizeZ)))
-	{
-		*endQuad = ((int(start.x * invQuadSizeX)) + (int(start.z * invQuadSizeZ)) * numQuadsX);
+	// often happened special case
+	if (noXdir && noZdir) {
+		*endQuad = WorldPosToQuadFieldIdx(start);
+		assert(unsigned(*endQuad) < baseQuads.size());
 		++endQuad;
-	} else if (math::floor(start.x * invQuadSizeX) == math::floor(to.x * invQuadSizeX)) {
-		const int first = (int)(start.x * invQuadSizeX) + ((int)(start.z * invQuadSizeZ) * numQuadsX);
-		const int last  = (int)(to.x    * invQuadSizeX) + ((int)(to.z    * invQuadSizeZ) * numQuadsX);
+		return 1;
+	}
 
-		if (dz > 0) {
-			for (int a = first; a <= last; a += numQuadsX) {
-				*endQuad = a; ++endQuad;
-			}
-		} else {
-			for(int a = first; a >= last; a -= numQuadsX) {
-				*endQuad = a; ++endQuad;
-			}
-		}
-	} else if (math::floor(start.z * invQuadSizeZ) == math::floor(to.z * invQuadSizeZ)) {
-		const int first = (int)(start.x * invQuadSizeX) + ((int)(start.z * invQuadSizeZ) * numQuadsX);
-		const int last  = (int)(to.x    * invQuadSizeX) + ((int)(to.z    * invQuadSizeZ) * numQuadsX);
+	// to prevent Div0
+	if (dir.z == 0.f) {
+		int startX = Clamp<int>(start.x * invQuadSize.x, 0, numQuadsX - 1);
+		int finalX = Clamp<int>(   to.x * invQuadSize.x, 0, numQuadsX - 1);
+		if (finalX < startX) std::swap(startX, finalX);
+		assert(finalX < numQuadsX);
 
-		if (dx > 0) {
-			for (int a = first; a <= last; a++) {
-				*endQuad = a; ++endQuad;
-			}
-		} else {
-			for (int a = first; a >= last; a--) {
-				*endQuad = a; ++endQuad;
-			}
-		}
-	} else {
-		float xn, zn;
-		bool keepgoing = true;
+		const int row = Clamp<int>(start.z * invQuadSize.z, 0, numQuadsZ - 1) * numQuadsX;
 
-		for (unsigned int i = 0; i < tempQuads.size() && keepgoing; i++) {
-			*endQuad = ((int)(zp * invQuadSizeZ) * numQuadsX) + (int)(xp * invQuadSizeX);
+		for (unsigned x = startX; x <= finalX; x++) {
+			*endQuad = row + x;
+			assert(unsigned(*endQuad) < baseQuads.size());
 			++endQuad;
+		}
 
-			if (dx > 0) {
-				xn = (math::floor(xp * invQuadSizeX) * quadSizeX + quadSizeX - xp) / dx;
-			} else {
-				xn = (math::floor(xp * invQuadSizeX) * quadSizeX - xp) / dx;
-			}
-			if (dz > 0) {
-				zn = (math::floor(zp * invQuadSizeZ) * quadSizeZ + quadSizeZ - zp) / dz;
-			} else {
-				zn = (math::floor(zp * invQuadSizeZ) * quadSizeZ - zp) / dz;
-			}
+		assert( std::adjacent_find(begQuad, endQuad) == endQuad ); // check for duplicates
+		return numQuadsX;
+	}
 
-			if (xn < zn) {
-				xp += (xn + 0.0001f) * dx;
-				zp += (xn + 0.0001f) * dz;
-			} else {
-				xp += (zn + 0.0001f) * dx;
-				zp += (zn + 0.0001f) * dz;
-			}
+	// all other
+	// hint at code: we iterate the affected z-range and then for each z we compute what xs are touched
+	float startZuc = start.z * invQuadSize.z;
+	float finalZuc =    to.z * invQuadSize.z;
+	if (finalZuc < startZuc) std::swap(startZuc, finalZuc);
+	int startZ = Clamp<int>(startZuc, 0, numQuadsZ - 1);
+	int finalZ = Clamp<int>(finalZuc, 0, numQuadsZ - 1);
+	assert(finalZ < quadSizeZ);
+	const float invDirZ = 1.0f / dir.z;
 
-			keepgoing =
-				(math::fabs(xp - start.x) < math::fabs(to.x - start.x)) &&
-				(math::fabs(zp - start.z) < math::fabs(to.z - start.z));
+	for (int z = startZ; z <= finalZ; z++) {
+		float t0 = ((z    ) * quadSizeZ - start.z) * invDirZ;
+		float t1 = ((z + 1) * quadSizeZ - start.z) * invDirZ;
+		if ((startZuc < 0 && z == 0) || (startZuc >= numQuadsZ && z == finalZ)) {
+			t0 = ((startZuc    ) * quadSizeZ - start.z) * invDirZ;
+		}
+		if ((finalZuc < 0 && z == 0) || (finalZuc >= numQuadsZ && z == finalZ)) {
+			t1 = ((finalZuc + 1) * quadSizeZ - start.z) * invDirZ;
+		}
+		t0 = Clamp(t0, 0.f, length);
+		t1 = Clamp(t1, 0.f, length);
+
+		unsigned startX = Clamp<int>((dir.x * t0 + start.x) * invQuadSize.x, 0, numQuadsX - 1);
+		unsigned finalX = Clamp<int>((dir.x * t1 + start.x) * invQuadSize.x, 0, numQuadsX - 1);
+		if (finalX < startX) std::swap(startX, finalX);
+		assert(finalX < numQuadsX);
+
+		const int row = Clamp(z, 0, numQuadsZ - 1) * numQuadsX;
+
+		for (unsigned x = startX; x <= finalX; x++) {
+			*endQuad = row + x;
+			assert(unsigned(*endQuad) < baseQuads.size());
+			++endQuad;
 		}
 	}
 
+	assert( std::adjacent_find(begQuad, endQuad) == endQuad ); // check for duplicates
 	return (endQuad - begQuad);
 }
 
 
-
+#ifndef UNIT_TEST
 void CQuadField::MovedUnit(CUnit* unit)
 {
 	const std::vector<int>& newQuads = GetQuads(unit->pos, unit->radius);
@@ -561,9 +508,9 @@ void CQuadField::AddProjectile(CProjectile* p)
 
 	if (p->hitscan) {
 		// all coordinates always map to a valid quad
-		qfcd.SetCoor(0, int2(CELL_IDX_X(p->pos.x                    ), CELL_IDX_Z(p->pos.z                    )));
-		qfcd.SetCoor(1, int2(CELL_IDX_X(p->pos.x + p->speed.x * 0.5f), CELL_IDX_Z(p->pos.z + p->speed.z * 0.5f)));
-		qfcd.SetCoor(2, int2(CELL_IDX_X(p->pos.x + p->speed.x       ), CELL_IDX_Z(p->pos.z + p->speed.z       )));
+		qfcd.SetCoor(0, WorldPosToQuadField(p->pos));
+		qfcd.SetCoor(1, WorldPosToQuadField(p->pos + p->speed * 0.5f));
+		qfcd.SetCoor(2, WorldPosToQuadField(p->pos + p->speed       ));
 
 		Cell& cell = baseQuads[numQuadsX * qfcd.GetCoor(0).y + qfcd.GetCoor(0).x];
 		List& list = cell.projectiles;
@@ -585,7 +532,7 @@ void CQuadField::AddProjectile(CProjectile* p)
 			}
 		}
 	} else {
-		qfcd.SetCoor(0, int2(CELL_IDX_X(p->pos.x), CELL_IDX_Z(p->pos.z)));
+		qfcd.SetCoor(0,  WorldPosToQuadField(p->pos));
 
 		Cell& cell = baseQuads[numQuadsX * qfcd.GetCoor(0).y + qfcd.GetCoor(0).x];
 		List& list = cell.projectiles;
@@ -945,4 +892,4 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 	if (numUnitsPtr != NULL) { *numUnitsPtr = numUnits; }
 	if (numFeaturesPtr != NULL) { *numFeaturesPtr = numFeatures; }
 }
-
+#endif // UNIT_TEST

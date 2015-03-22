@@ -10,11 +10,13 @@
 
 #include "System/creg/creg_cond.h"
 #include "System/float3.h"
+#include "System/type2.h"
 
 class CUnit;
 class CFeature;
 class CProjectile;
 class CSolidObject;
+
 
 class CQuadField : boost::noncopyable
 {
@@ -22,9 +24,9 @@ class CQuadField : boost::noncopyable
 	CR_DECLARE_SUB(Quad)
 
 public:
-	static void Resize(unsigned int nqx, unsigned int nqz);
+	static void Resize(int quad_size);
 
-	CQuadField(unsigned int nqx, unsigned int nqz);
+	CQuadField(int2 mapDims, int quad_size);
 	~CQuadField();
 
 	std::vector<int> GetQuads(float3 pos, float radius) const;
@@ -111,12 +113,12 @@ public:
 		std::list<CProjectile*> projectiles;
 	};
 
-	const Quad& GetQuad(int i) const {
-		assert(i >= 0);
+	const Quad& GetQuad(unsigned i) const {
 		assert(i < baseQuads.size());
 		return baseQuads[i];
 	}
-	const Quad& GetQuadAt(int x, int z) const {
+	const Quad& GetQuadAt(unsigned x, unsigned z) const {
+		assert(unsigned(numQuadsX * z + x) < baseQuads.size());
 		return baseQuads[numQuadsX * z + x];
 	}
 
@@ -128,6 +130,10 @@ public:
 
 	const static unsigned int BASE_QUAD_SIZE =  128;
 	const static unsigned int NUM_TEMP_QUADS = 1024;
+
+private:
+	int2 WorldPosToQuadField(const float3 p) const;
+	int WorldPosToQuadFieldIdx(const float3 p) const;
 
 private:
 	std::vector<Quad> baseQuads;
