@@ -4,6 +4,7 @@
 #include "System/float3.h"
 #include "System/myMath.h"
 #include <stdlib.h>
+#include <time.h>
 
 #define BOOST_TEST_MODULE QuadField
 #include <boost/test/unit_test.hpp>
