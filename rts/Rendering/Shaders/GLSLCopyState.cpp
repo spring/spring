@@ -214,7 +214,8 @@ static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, std::un
 			// No old data found, so we cannot initialize the uniform
 			if (oldLoc < 0)
 				continue;
-			//FIXME read data from old shader save data _in new uniformState_?
+
+			//FIXME read data from old shader & save data in _new_ uniformState?
 		}
 
 		// Initialize the uniform with previous data
@@ -257,11 +258,12 @@ static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, std::un
 			HANDLE_MATTYPE(FLOAT_MAT, 3, fv, GLfloat)
 			HANDLE_MATTYPE(FLOAT_MAT, 4, fv, GLfloat)
 
-			/*case ATOMIC: {
-				GLint binding;
+			case ATOMIC: {
+				assert(false);
+				/*GLint binding;
 				glGetActiveAtomicCounterBufferiv(oldProgID, i, GL_ATOMIC_COUNTER_BUFFER_BINDING, &binding);
-				glUniform1f(newLoc, 1, binding);
-			} break;*/
+				glUniform1f(newLoc, 1, binding);*/
+			} break;
 
 			default:
 				LOG_L(L_WARNING, "Unknown GLSL uniform \"%s\" has unknown vartype \"%X\"", name.c_str(), type);

@@ -274,7 +274,7 @@ namespace Shader {
 
 	void IProgramObject::RecompileIfNeeded()
 	{
-		if (GetHash() == curFlagsHash)
+		if (curFlagsHash != 0 && GetHash() == curFlagsHash)
 			return;
 
 		// NOTE: this does not preserve the #version pragma
@@ -283,11 +283,11 @@ namespace Shader {
 			so->SetDefinitions(definitionFlags);
 		}
 
-		Reload(false);
-		PrintInfo();
+		Reload(curFlagsHash == 0);
+		PrintDebugInfo();
 	}
 
-	void IProgramObject::PrintInfo()
+	void IProgramObject::PrintDebugInfo()
 	{
 		LOG_L(L_DEBUG, "Uniform States for program-object \"%s\":", name.c_str());
 		LOG_L(L_DEBUG, "Defs:\n %s", GetString().c_str());
@@ -387,25 +387,22 @@ namespace Shader {
 		return -1; //FIXME
 	}
 
-	#define glPEP4f  glProgramEnvParameter4fARB
-	#define glPEP4fv glProgramEnvParameter4fvARB
-	void ARBProgramObject::SetUniform1i(int idx, int   v0                              ) { glPEP4f(uniformTarget, idx, float(v0), float( 0), float( 0), float( 0)); }
-	void ARBProgramObject::SetUniform2i(int idx, int   v0, int   v1                    ) { glPEP4f(uniformTarget, idx, float(v0), float(v1), float( 0), float( 0)); }
-	void ARBProgramObject::SetUniform3i(int idx, int   v0, int   v1, int   v2          ) { glPEP4f(uniformTarget, idx, float(v0), float(v1), float(v2), float( 0)); }
-	void ARBProgramObject::SetUniform4i(int idx, int   v0, int   v1, int   v2, int   v3) { glPEP4f(uniformTarget, idx, float(v0), float(v1), float(v2), float(v3)); }
-	void ARBProgramObject::SetUniform1f(int idx, float v0                              ) { glPEP4f(uniformTarget, idx, v0, 0.0f, 0.0f, 0.0f); }
-	void ARBProgramObject::SetUniform2f(int idx, float v0, float v1                    ) { glPEP4f(uniformTarget, idx, v0,   v1, 0.0f, 0.0f); }
-	void ARBProgramObject::SetUniform3f(int idx, float v0, float v1, float v2          ) { glPEP4f(uniformTarget, idx, v0,   v1,   v2, 0.0f); }
-	void ARBProgramObject::SetUniform4f(int idx, float v0, float v1, float v2, float v3) { glPEP4f(uniformTarget, idx, v0,   v1,   v2,   v3); }
+	void ARBProgramObject::SetUniform1i(int idx, int   v0                              ) { glProgramEnvParameter4fARB(uniformTarget, idx, float(v0), float( 0), float( 0), float( 0)); }
+	void ARBProgramObject::SetUniform2i(int idx, int   v0, int   v1                    ) { glProgramEnvParameter4fARB(uniformTarget, idx, float(v0), float(v1), float( 0), float( 0)); }
+	void ARBProgramObject::SetUniform3i(int idx, int   v0, int   v1, int   v2          ) { glProgramEnvParameter4fARB(uniformTarget, idx, float(v0), float(v1), float(v2), float( 0)); }
+	void ARBProgramObject::SetUniform4i(int idx, int   v0, int   v1, int   v2, int   v3) { glProgramEnvParameter4fARB(uniformTarget, idx, float(v0), float(v1), float(v2), float(v3)); }
+	void ARBProgramObject::SetUniform1f(int idx, float v0                              ) { glProgramEnvParameter4fARB(uniformTarget, idx, v0, 0.0f, 0.0f, 0.0f); }
+	void ARBProgramObject::SetUniform2f(int idx, float v0, float v1                    ) { glProgramEnvParameter4fARB(uniformTarget, idx, v0,   v1, 0.0f, 0.0f); }
+	void ARBProgramObject::SetUniform3f(int idx, float v0, float v1, float v2          ) { glProgramEnvParameter4fARB(uniformTarget, idx, v0,   v1,   v2, 0.0f); }
+	void ARBProgramObject::SetUniform4f(int idx, float v0, float v1, float v2, float v3) { glProgramEnvParameter4fARB(uniformTarget, idx, v0,   v1,   v2,   v3); }
 
-	void ARBProgramObject::SetUniform2iv(int idx, const int*   v) { int   vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] =    0; vv[3] =    0; glPEP4fv(uniformTarget, idx, (float*) vv); }
-	void ARBProgramObject::SetUniform3iv(int idx, const int*   v) { int   vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] = v[2]; vv[3] =    0; glPEP4fv(uniformTarget, idx, (float*) vv); }
-	void ARBProgramObject::SetUniform4iv(int idx, const int*   v) { int   vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] = v[2]; vv[3] = v[3]; glPEP4fv(uniformTarget, idx, (float*) vv); }
-	void ARBProgramObject::SetUniform2fv(int idx, const float* v) { float vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] = 0.0f; vv[3] = 0.0f; glPEP4fv(uniformTarget, idx,          vv); }
-	void ARBProgramObject::SetUniform3fv(int idx, const float* v) { float vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] = v[2]; vv[3] = 0.0f; glPEP4fv(uniformTarget, idx,          vv); }
-	void ARBProgramObject::SetUniform4fv(int idx, const float* v) { float vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] = v[2]; vv[3] = v[3]; glPEP4fv(uniformTarget, idx,          vv); }
-	#undef glPEP4f
-	#undef glPEP4fv
+	void ARBProgramObject::SetUniform2iv(int idx, const int*   v) { int   vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] =    0; vv[3] =    0; glProgramEnvParameter4fvARB(uniformTarget, idx, (float*) vv); }
+	void ARBProgramObject::SetUniform3iv(int idx, const int*   v) { int   vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] = v[2]; vv[3] =    0; glProgramEnvParameter4fvARB(uniformTarget, idx, (float*) vv); }
+	void ARBProgramObject::SetUniform4iv(int idx, const int*   v) { int   vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] = v[2]; vv[3] = v[3]; glProgramEnvParameter4fvARB(uniformTarget, idx, (float*) vv); }
+	void ARBProgramObject::SetUniform2fv(int idx, const float* v) { float vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] = 0.0f; vv[3] = 0.0f; glProgramEnvParameter4fvARB(uniformTarget, idx,          vv); }
+	void ARBProgramObject::SetUniform3fv(int idx, const float* v) { float vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] = v[2]; vv[3] = 0.0f; glProgramEnvParameter4fvARB(uniformTarget, idx,          vv); }
+	void ARBProgramObject::SetUniform4fv(int idx, const float* v) { float vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] = v[2]; vv[3] = v[3]; glProgramEnvParameter4fvARB(uniformTarget, idx,          vv); }
+
 
 	void ARBProgramObject::AttachShaderObject(IShaderObject* so) {
 		if (so != NULL) {
@@ -455,9 +452,10 @@ namespace Shader {
 		// append the validation-log
 		log += glslGetLog(objID);
 
-		valid = valid && bool(validated);
+		valid = bool(validated);
 
 	#ifdef DEBUG
+		// check if there are unset uniforms left
 		GLsizei numUniforms, maxUniformNameLength;
 		glGetProgramiv(objID, GL_ACTIVE_UNIFORMS, &numUniforms);
 		glGetProgramiv(objID, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxUniformNameLength);
@@ -504,9 +502,13 @@ namespace Shader {
 		CShaderHandler::ShaderCache& shadersCache = shaderHandler->GetShaderCache();
 
 		const auto   oldSrcHash = curSrcHash;
-		const bool   oldValid  = IsValid();
+		      bool   oldValid  = IsValid();
 		const GLuint oldProgID = objID;
 
+		//
+		reloadFromDisk = reloadFromDisk || !oldValid;
+
+		//
 		log = "";
 		valid = false;
 
@@ -528,10 +530,10 @@ namespace Shader {
 			return;
 
 		// put old program into cache
-		bool deleteOldShader = false;
-
+		bool deleteOldShader = true;
 		if (oldValid) {
-			if ((deleteOldShader = !shadersCache.Push(oldSrcHash, oldProgID))) {
+			deleteOldShader = !shadersCache.Push(oldSrcHash, oldProgID);
+			if (deleteOldShader) {
 				for (IShaderObject*& so: GetAttachedShaderObjs()) {
 					glDetachShader(oldProgID, so->GetObjID());
 					so->Release();
@@ -539,10 +541,11 @@ namespace Shader {
 			}
 		}
 
-		// either read new program for cache or recompile if not found in it (id 0)
+		// either read program from cache or recompile if not found (id 0)
 		objID = (!reloadFromDisk) ? shadersCache.Find(curSrcHash) : 0;
 		if (objID == 0) {
 			objID = glCreateProgram();
+
 			for (IShaderObject*& so: GetAttachedShaderObjs()) {
 				so->Compile(reloadFromDisk); //FIXME check if changed or not (when it did, we can't use shader cache!)
 
@@ -550,14 +553,19 @@ namespace Shader {
 					glAttachShader(objID, so->GetObjID());
 				}
 			}
+
+			curSrcHash = curFlagsHash;
+			for (const IShaderObject* so: GetAttachedShaderObjs()) {
+				curSrcHash ^= so->GetHash();
+			}
+
 			Link();
-		} else {
-			valid = true;
 		}
+		Validate();
 
 		// copy full program state from old to new program (uniforms etc.)
 		if (oldValid && IsValid()) {
-			GLSLCopyState(objID, oldProgID, &((IProgramObject*)(this))->uniformStates);
+			GLSLCopyState(objID, oldProgID, &uniformStates);
 		}
 
 		// delete old program when not further used
@@ -633,27 +641,4 @@ namespace Shader {
 	void GLSLProgramObject::SetUniformMatrix2fv(int idx, bool transp, const float* v) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set2x2(v, transp)) glUniformMatrix2fv(it->second.GetLocation(), 1, transp, v); }
 	void GLSLProgramObject::SetUniformMatrix3fv(int idx, bool transp, const float* v) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set3x3(v, transp)) glUniformMatrix3fv(it->second.GetLocation(), 1, transp, v); }
 	void GLSLProgramObject::SetUniformMatrix4fv(int idx, bool transp, const float* v) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set4x4(v, transp)) glUniformMatrix4fv(it->second.GetLocation(), 1, transp, v); }
-	void GLSLProgramObject::SetUniformMatrixArray4fv(int idx, int count, bool transp, const float* v) { assert(IsBound()); /*glUniformMatrix4fv(it->second.GetLocation(), count, transp, v);*/ }
-
-	#ifdef glUniformMatrix2dv
-	void GLSLProgramObject::SetUniformMatrix2dv(int idx, bool transp, const double* v) { /*glUniformMatrix2dv(it->second.GetLocation(), 1, transp, v);*/ }
-	#else
-	void GLSLProgramObject::SetUniformMatrix2dv(int idx, bool transp, const double* v) {}
-	#endif
-	#ifdef glUniformMatrix3dv
-	void GLSLProgramObject::SetUniformMatrix3dv(int idx, bool transp, const double* v) { /*glUniformMatrix3dv(it->second.GetLocation(), 1, transp, v);*/ }
-	#else
-	void GLSLProgramObject::SetUniformMatrix3dv(int idx, bool transp, const double* v) {}
-	#endif
-	#ifdef glUniformMatrix4dv
-	void GLSLProgramObject::SetUniformMatrix4dv(int idx, bool transp, const double* v) { /*glUniformMatrix4dv(it->second.GetLocation(), 1, transp, v);*/ }
-	#else
-	void GLSLProgramObject::SetUniformMatrix4dv(int idx, bool transp, const double* v) {}
-	#endif
-
-	#ifdef glUniformMatrix4dv
-	void GLSLProgramObject::SetUniformMatrixArray4dv(int idx, int count, bool transp, const double* v) { /*glUniformMatrix4dv(it->second.GetLocation(), count, transp, v);*/ }
-	#else
-	void GLSLProgramObject::SetUniformMatrixArray4dv(int idx, int count, bool transp, const double* v) {}
-	#endif
 }
