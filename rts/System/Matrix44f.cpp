@@ -427,10 +427,9 @@ CMatrix44f& CMatrix44f::Transpose()
 CMatrix44f& CMatrix44f::InvertAffineInPlace()
 {
 	//! transpose the rotation
-	float tmp;
-	tmp = m[1]; m[1] = m[4]; m[4] = tmp;
-	tmp = m[2]; m[2] = m[8]; m[8] = tmp;
-	tmp = m[6]; m[6] = m[9]; m[9] = tmp;
+	std::swap(m[1], m[4]);
+	std::swap(m[2], m[8]);
+	std::swap(m[6], m[9]);
 
 	//! get the inverse translation
 	const float3 t(-m[12], -m[13], -m[14]);
@@ -507,8 +506,8 @@ bool CMatrix44f::InvertInPlace()
 	}
 
 	const float scale = 1.0f / det;
-	for (int i = 0; i < 4; i++) {
-		for (int j = 0; j < 4; j++) {
+	for (int j = 0; j < 4; j++) {
+		for (int i = 0; i < 4; i++) {
 			//! (adjoint / determinant)
 			//! (note the transposition in 'cofac')
 			md[i][j] = cofac[j][i] * scale;

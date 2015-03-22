@@ -19,14 +19,16 @@
 
 
 
-CPathManager::CPathManager(): nextPathID(0)
+CPathManager::CPathManager()
+: maxResPF(nullptr)
+, medResPE(nullptr)
+, lowResPE(nullptr)
+, pathFlowMap(nullptr)
+, pathHeatMap(nullptr)
+, nextPathID(0)
 {
 	CPathFinder::InitDirectionVectorsTable();
 	CPathFinder::InitDirectionCostsTable();
-
-	maxResPF = NULL;
-	medResPE = NULL;
-	lowResPE = NULL;
 
 	pathFlowMap = PathFlowMap::GetInstance();
 	pathHeatMap = PathHeatMap::GetInstance();
@@ -64,9 +66,7 @@ boost::int64_t CPathManager::Finalize() {
 		#endif
 	}
 
-	const spring_time t1 = spring_gettime();
-	const spring_time dt = t1 - t0;
-
+	const spring_time dt = spring_gettime() - t0;
 	return (dt.toMilliSecsi());
 }
 
