@@ -1472,7 +1472,7 @@ int CBuilderCAI::FindReclaimTarget(const float3& pos, float radius, unsigned cha
 	int rid = -1;
 
 	if (recUnits || recEnemy || recEnemyOnly) {
-		const std::vector<CUnit*>& units = quadField->GetUnitsExact(pos, radius);
+		const std::vector<CUnit*>& units = quadField->GetUnitsExact(pos, radius, false);
 		for (std::vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
 			const CUnit* u = *ui;
 
@@ -1675,7 +1675,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
                                             bool attackEnemy,
 											bool builtOnly)
 {
-	const std::vector<CUnit*>& cu = quadField->GetUnitsExact(pos, radius);
+	const std::vector<CUnit*>& cu = quadField->GetUnitsExact(pos, radius, false);
 	const CUnit* bestUnit = NULL;
 
 	const float maxSpeed = owner->moveType->GetMaxSpeed();
