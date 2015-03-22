@@ -985,6 +985,7 @@ void SpringApp::ShutDown()
 	ThreadPool::SetThreadCount(0);
 	LOG("[SpringApp::%s][2]", __FUNCTION__);
 
+	game->KillLua(); // must be called before `game` var gets nulled, else stuff in LuaSyncedRead.cpp will fail
 	SafeDelete(game);
 	SafeDelete(pregame);
 
