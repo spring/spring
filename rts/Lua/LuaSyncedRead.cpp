@@ -836,6 +836,9 @@ int LuaSyncedRead::FixedAllies(lua_State* L)
 
 int LuaSyncedRead::IsGameOver(lua_State* L)
 {
+	if (!game) {
+		return 0;
+	}
 	lua_pushboolean(L, game->IsGameOver());
 	return 1;
 }
@@ -1212,7 +1215,7 @@ int LuaSyncedRead::GetTeamResources(lua_State* L)
 int LuaSyncedRead::GetTeamUnitStats(lua_State* L)
 {
 	const CTeam* team = ParseTeam(L, __FUNCTION__, 1);
-	if (team == NULL) {
+	if (team == NULL || game == NULL) {
 		return 0;
 	}
 	const int teamID = team->teamNum;
@@ -1236,7 +1239,7 @@ int LuaSyncedRead::GetTeamUnitStats(lua_State* L)
 int LuaSyncedRead::GetTeamResourceStats(lua_State* L)
 {
 	const CTeam* team = ParseTeam(L, __FUNCTION__, 1);
-	if (team == NULL) {
+	if (team == NULL || game == NULL) {
 		return 0;
 	}
 	const int teamID = team->teamNum;
@@ -1272,7 +1275,7 @@ int LuaSyncedRead::GetTeamResourceStats(lua_State* L)
 int LuaSyncedRead::GetTeamRulesParams(lua_State* L)
 {
 	CTeam* team = ParseTeam(L, __FUNCTION__, 1);
-	if (team == NULL) {
+	if (team == NULL || game == NULL) {
 		return 0;
 	}
 
@@ -1295,7 +1298,7 @@ int LuaSyncedRead::GetTeamRulesParams(lua_State* L)
 int LuaSyncedRead::GetTeamRulesParam(lua_State* L)
 {
 	CTeam* team = ParseTeam(L, __FUNCTION__, 1);
-	if (team == NULL) {
+	if (team == NULL || game == NULL) {
 		return 0;
 	}
 
@@ -1318,7 +1321,7 @@ int LuaSyncedRead::GetTeamRulesParam(lua_State* L)
 int LuaSyncedRead::GetTeamStatsHistory(lua_State* L)
 {
 	CTeam* team = ParseTeam(L, __FUNCTION__, 1);
-	if (team == NULL) {
+	if (team == NULL || game == NULL) {
 		return 0;
 	}
 	const int teamID = team->teamNum;
@@ -4211,7 +4214,7 @@ int LuaSyncedRead::GetRealBuildQueue(lua_State* L)
 int LuaSyncedRead::GetUnitRulesParams(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	if (unit == NULL || game == NULL) {
 		return 0;
 	}
 
@@ -4243,7 +4246,7 @@ int LuaSyncedRead::GetUnitRulesParams(lua_State* L)
 int LuaSyncedRead::GetUnitRulesParam(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	if (unit == NULL || game == NULL) {
 		return 0;
 	}
 
