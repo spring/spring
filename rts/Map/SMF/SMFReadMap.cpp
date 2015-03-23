@@ -76,7 +76,7 @@ CSMFReadMap::CSMFReadMap(std::string mapname)
 
 CSMFReadMap::~CSMFReadMap()
 {
-	delete groundDrawer;
+	SafeDelete(groundDrawer);
 
 	glDeleteTextures(1, &detailTex        );
 	glDeleteTextures(1, &specularTex      );
