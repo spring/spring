@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE( QuadField )
 			dir.z = randf() - 0.5f;
 			dir.x *= (randf() < 0.2f) ? 0 : 1; // special case #1: dir.x/z == 0 are a special cases
 			dir.z *= (randf() < 0.2f) ? 0 : 1; // in GetQuadsOnRay(). We want to check those codes, too
-			dir.Normalize();
+			dir.SafeNormalize();
 		float length = randf() * (WIDTH + HEIGHT) * 0.5f;
 			length = (randf() < 0.2f) ? randf() : length; // special case #1: when start & end are in the same quad
 
