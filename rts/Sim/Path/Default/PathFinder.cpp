@@ -148,7 +148,7 @@ void CPathFinder::TestNeighborSquares(
 			continue;
 
 		const unsigned int opt = PathDir2PathOpt(dir);
-		TestBlock(moveDef, pfDef, square, owner, opt, sqState.blockedState, sqState.speedMod, sqState.inSearchRadius);
+		TestBlock(moveDef, pfDef, square, owner, opt, sqState.blockedState, sqState.speedMod);
 	}
 
 
@@ -180,8 +180,7 @@ bool CPathFinder::TestBlock(
 	const CSolidObject* owner,
 	const unsigned int pathOptDir,
 	const unsigned int blockStatus,
-	float speedMod,
-	bool withinConstraints
+	float speedMod
 ) {
 	testedBlocks++;
 
@@ -199,14 +198,6 @@ bool CPathFinder::TestBlock(
 
 	// caller has already tested for this
 	assert((blockStatus & CMoveMath::BLOCK_STRUCTURE) == 0);
-
-	// check if square is outside search-constraint
-	// (this has already been done for open squares)
-	if ((blockStates.nodeMask[sqrIdx] & PATHOPT_OPEN) == 0 && !withinConstraints) {
-		blockStates.nodeMask[sqrIdx] |= PATHOPT_BLOCKED;
-		dirtyBlocks.push_back(sqrIdx);
-		return false;
-	}
 
 	// evaluate this square
 	//
