@@ -27,7 +27,7 @@ protected:
 	bool RecompressTilesIfNeeded();
 	void ExtractSquareTiles(const int texSquareX, const int texSquareY, const int mipLevel, GLint* tileBuf) const;
 	void LoadSquareTexture(int x, int y, int level);
-
+	void CalcSmallTileBytes(int size, int type);
 	inline bool TexSquareInView(int, int) const;
 
 	CSMFReadMap* smfMap;
@@ -42,7 +42,7 @@ private:
 
 	std::vector<GroundSquare> squares;
 
-	std::vector<int> tileMap;
+	std::vector<unsigned int> tileMap;
 	std::vector<char> tiles;
 
 	// FIXME? these are not updated at runtime
@@ -52,6 +52,10 @@ private:
 
 	// use Pixel Buffer Objects for async. uploading (DMA)
 	PBO pbo;
+
+	int smallTileMipOffset[5];
+	int &smallTileBytes;
+
 
 	int tileTexFormat;
 };

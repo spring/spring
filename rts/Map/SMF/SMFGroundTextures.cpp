@@ -44,6 +44,8 @@ CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm): smfMap(rm)
 	LoadTiles(smfMap->GetFile());
 	LoadSquareTextures(3);
 	ConvolveHeightMap(mapDims.mapx, 1);
+	smallTileMipOffset[1] = 0;
+	smallTileBytes = smallTileMipOffset[4];
 }
 
 CSMFGroundTextures::~CSMFGroundTextures()
@@ -61,6 +63,7 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 
 	CFileHandler* ifs = file.GetFileHandler();
 	const SMFHeader& header = file.GetHeader();
+	CalcSmallTileBytes( header.tilesize, 1/*DXT1*/); // FIXME assuming DXT1 compression
 
 	if ((mapDims.mapx != header.mapx) || (mapDims.mapy != header.mapy)) {
 		throw content_error("Error loading map: size from header doesn't match map size.");
@@ -75,7 +78,7 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 		throw content_error("Error loading map: count of tiles is 0.");
 	}
 	tileMap.resize(smfMap->tileCount);
-	tiles.resize(tileHeader.numTiles * SMALL_TILE_SIZE);
+	tiles.resize( (tileHeader.numTiles + 1) * smallTileBytes);
 	squares.resize(smfMap->numBigTexX * smfMap->numBigTexY);
 
 	bool smtHeaderOverride = false;
@@ -123,7 +126,7 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 				"(ALL %d MISSING TILES WILL BE MADE RED)",
 				smtFilePath.c_str(), numSmallTiles);
 
-			memset(&tiles[curTile * SMALL_TILE_SIZE], 0xaa, numSmallTiles * SMALL_TILE_SIZE);
+			memset(&tiles[curTile * smallTileBytes], 0xaa, numSmallTiles * smallTileBytes);
 			curTile += numSmallTiles;
 			continue;
 		}
@@ -131,22 +134,48 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 		TileFileHeader tfh;
 		READ_TILEFILEHEADER(tfh, tileFile);
 
-		if (strcmp(tfh.magic, "spring tilefile") != 0 || tfh.version != 1 || tfh.tileSize != 32 || tfh.compressionType != 1) {
+		// check smt format is correct
+		if (strcmp(tfh.magic, "spring tilefile") != 0 ||
+				tfh.version != 1 ||
+				tfh.compressionType != 1) {
 			char t[500];
-			sprintf(t, "[CSMFGroundTextures] file \"%s\" does not match .smt format", smtFilePath.c_str());
+			sprintf(t, "[CSMFGroundTextures] file \"%s\" does not match .smt "
+					"format", smtFilePath.c_str());
 			throw content_error(t);
 		}
 
+		// check tilesize matches smf tilesize
+		if ( tfh.tileSize != header.tilesize ) {
+			char t[500];
+			sprintf(t, "[CSMFGroundTextures] file \"%s\".tileSize does not "
+					"match smf.header.tilesize", smtFilePath.c_str());
+			throw content_error(t);
+		}
+
+		// check smt.tilecount = smf.tilefile.count
+		if ( tfh.numTiles != numSmallTiles ) {
+			char t[500];
+			sprintf(t, "[CSMFGroundTextures] file \"%s\".numTiles is "
+					"unexpected from smf reference", smtFilePath.c_str());
+			throw content_error(t);
+		}
+
+		// load the tile data
 		for (int b = 0; b < numSmallTiles; ++b) {
-			tileFile.Read(&tiles[curTile * SMALL_TILE_SIZE], SMALL_TILE_SIZE);
+			tileFile.Read(&tiles[curTile * smallTileBytes], smallTileBytes);
 			curTile++;
 		}
 	}
+
+	// set the last tile to be red, so missed index's will draw this.
+	memset( &tiles[ tiles.size() - smallTileBytes ], 0xaa, smallTileBytes );
 
 	ifs->Read(&tileMap[0], smfMap->tileCount * sizeof(int));
 
 	for (int i = 0; i < smfMap->tileCount; i++) {
 		swabDWordInPlace(tileMap[i]);
+		// if the tilereference is out of range, set it to the last tile(red)
+		tileMap[i] = std::min( tileMap[i], (unsigned int)tileHeader.numTiles );
 	}
 
 #if defined(USE_LIBSQUISH) && !defined(HEADLESS) && defined(GLEW_ARB_ES3_compatibility)
@@ -444,32 +473,39 @@ void CSMFGroundTextures::ExtractSquareTiles(
 	const int mipLevel,
 	GLint* tileBuf
 ) const {
-	static const int TILE_MIP_OFFSET[] = {0, 512, 512+128, 512+128+32};
-	static const int BLOCK_SIZE = 32;
+	// small tiles per row and col of big square
+	const int smallTiles = smfMap->bigTexSize / smfMap->smallTileSize;
 
-	const int mipOffset = TILE_MIP_OFFSET[mipLevel];
-	const int numBlocks = SQUARE_SIZE >> mipLevel;
-	const int tileOffsetX = texSquareX * BLOCK_SIZE;
-	const int tileOffsetY = texSquareY * BLOCK_SIZE;
+	// dxt1 is saved as compressed blocks of 4x4 pixels.
+	// number of dxt1 blocks horizontally and vertically per small tile
+	const int numBlocks = (smfMap->smallTileSize >> mipLevel) / 4;
 
-	// extract all 32x32 sub-blocks (tiles) in the 128x128 square
-	// (each 32x32 tile covers a (bigSquareSize = 32 * tileScale) x
-	// (bigSquareSize = 32 * tileScale) heightmap chunk)
-	for (int y1 = 0; y1 < BLOCK_SIZE; y1++) {
-		for (int x1 = 0; x1 < BLOCK_SIZE; x1++) {
+	const int mipOffset = smallTileMipOffset[mipLevel];
+	const int tileOffsetX = texSquareX * smallTiles;
+	const int tileOffsetY = texSquareY * smallTiles;
+
+	// extract all small tiles
+	// each square covers a 128 x 128 heightmap chunk
+	for (int y1 = 0; y1 < smallTiles; ++y1) {
+		for (int x1 = 0; x1 < smallTiles; ++x1) {
 			const int tileX = tileOffsetX + x1;
 			const int tileY = tileOffsetY + y1;
-			const int tileIdx = tileMap[tileY * smfMap->tileMapSizeX + tileX];
-			const GLint* tile = (GLint*) &tiles[tileIdx * SMALL_TILE_SIZE + mipOffset];
+			const unsigned int tileIdx = tileMap[tileY * smfMap->tileMapSizeX + tileX];
+			
+			// source tile location
+			const GLint* tile = (GLint*) &tiles[tileIdx * smallTileBytes + mipOffset];
 
-			const int doff = (x1 * numBlocks) + (y1 * numBlocks * numBlocks) * BLOCK_SIZE;
+			// initial destination offset in dxt1 blocks(8 bytes)
+			const int doff =
+				// row + column
+				(y1 * (numBlocks*numBlocks * smallTiles)) + (x1 * numBlocks);
 
-			for (int b = 0; b < numBlocks; b++) {
+			// each row of DXT1 blocks
+			for (int b = 0; b < numBlocks; ++b) {
 				const GLint* sbuf = &tile[b * numBlocks * 2];
-				      GLint* dbuf = &tileBuf[(doff + b * numBlocks * BLOCK_SIZE) * 2];
+					  GLint* dbuf = &tileBuf[ (doff*2 + b * numBlocks * smallTiles * 2) ];
 
-				// at MIP level n: ((8 >> n) * 2 * 4) = (64 >> n) bytes for each <b>
-				memcpy(dbuf, sbuf, numBlocks * 2 * sizeof(GLint));
+				memcpy(dbuf, sbuf, numBlocks * 2*sizeof(GLint));
 			}
 		}
 	}
@@ -527,5 +563,17 @@ void CSMFGroundTextures::BindSquareTexture(int texSquareX, int texSquareY)
 
 	if (game->GetDrawMode() == CGame::gameNormalDraw) {
 		square->lastBoundFrame = globalRendering->drawFrame;
+	}
+}
+
+void
+CSMFGroundTextures::CalcSmallTileBytes(int size, int type)
+{
+	if (type == 1/*DXT1*/) {
+		int mip = size;
+		for( int i=1; i < 5; ++i) {
+			smallTileMipOffset[i] = smallTileMipOffset[i-1] + (mip * mip)/2;
+			mip /= 2;
+		}
 	}
 }
