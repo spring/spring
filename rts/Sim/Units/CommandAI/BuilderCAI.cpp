@@ -1512,7 +1512,7 @@ int CBuilderCAI::FindReclaimTarget(const float3& pos, float radius, unsigned cha
 	if ((!best || !stationary) && !recEnemyOnly) {
 		best = NULL;
 		const CTeam* team = teamHandler->Team(owner->team);
-		const std::vector<CFeature*>& features = quadField->GetFeaturesExact(pos, radius);
+		const std::vector<CFeature*>& features = quadField->GetFeaturesExact(pos, radius, false);
 		bool metal = false;
 		for (std::vector<CFeature*>::const_iterator fi = features.begin(); fi != features.end(); ++fi) {
 			const CFeature* f = *fi;
@@ -1583,7 +1583,7 @@ bool CBuilderCAI::FindResurrectableFeatureAndResurrect(const float3& pos,
                                                        unsigned char options,
 													   bool freshOnly)
 {
-	const std::vector<CFeature*> &features = quadField->GetFeaturesExact(pos, radius);
+	const std::vector<CFeature*> &features = quadField->GetFeaturesExact(pos, radius, false);
 
 	const CFeature* best = NULL;
 	float bestDist = 1.0e30f;
@@ -1626,7 +1626,7 @@ bool CBuilderCAI::FindCaptureTargetAndCapture(const float3& pos, float radius,
                                               unsigned char options,
 											  bool healthyOnly)
 {
-	const std::vector<CUnit*> &cu = quadField->GetUnits(pos, radius);
+	const std::vector<CUnit*> &cu = quadField->GetUnitsExact(pos, radius, false);
 	std::vector<CUnit*>::const_iterator ui;
 
 	const CUnit* best = NULL;

@@ -67,17 +67,12 @@ public:
 	 * mins and maxs, which extends infinitely along the y-axis
 	 */
 	std::vector<CUnit*> GetUnitsExact(const float3& mins, const float3& maxs);
-
 	/**
 	 * Returns all features within @c radius of @c pos,
-	 * and takes the 3D model radius of each feature into account
-	 */
-	std::vector<CFeature*> GetFeaturesExact(const float3& pos, float radius);
-	/**
-	 * Returns all features within @c radius of @c pos,
+	 * takes the 3D model radius of each feature into account,
 	 * and performs the search within a sphere or cylinder depending on @c spherical
 	 */
-	std::vector<CFeature*> GetFeaturesExact(const float3& pos, float radius, bool spherical);
+	std::vector<CFeature*> GetFeaturesExact(const float3& pos, float radius, bool spherical = true);
 	/**
 	 * Returns all features within the rectangle defined by
 	 * mins and maxs, which extends infinitely along the y-axis

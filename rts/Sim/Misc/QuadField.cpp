@@ -575,47 +575,33 @@ void CQuadField::RemoveProjectile(CProjectile* p)
 	}
 }
 
-
-
-std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos, float radius)
-{
-	const std::vector<int>& quads = GetQuads(pos, radius);
-	const int tempNum = gs->tempNum++;
-
-	std::vector<CFeature*> features;
-	std::vector<int>::const_iterator qi;
-	std::list<CFeature*>::iterator fi;
-
-	for (qi = quads.begin(); qi != quads.end(); ++qi) {
-		for (fi = baseQuads[*qi].features.begin(); fi != baseQuads[*qi].features.end(); ++fi) {
-			if ((*fi)->tempNum == tempNum) { continue; }
-			if (pos.SqDistance((*fi)->midPos) >= Square(radius + (*fi)->radius)) { continue; }
-
-			(*fi)->tempNum = tempNum;
-			features.push_back(*fi);
-		}
-	}
-
-	return features;
-}
-
 std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos, float radius, bool spherical)
 {
-	const std::vector<int>& quads = GetQuads(pos, radius);
 	const int tempNum = gs->tempNum++;
 
+	int* begQuad = &tempQuads[0];
+	int* endQuad = &tempQuads[0];
+
+	GetQuads(pos, radius, begQuad, endQuad);
+
 	std::vector<CFeature*> features;
-	std::vector<int>::const_iterator qi;
 	std::list<CFeature*>::iterator fi;
-	const float totRadSq = radius * radius;
 
-	for (qi = quads.begin(); qi != quads.end(); ++qi) {
-		for (fi = baseQuads[*qi].features.begin(); fi != baseQuads[*qi].features.end(); ++fi) {
+	for (int* a = begQuad; a != endQuad; ++a) {
+		Quad& quad = baseQuads[*a];
 
-			if ((*fi)->tempNum == tempNum) { continue; }
-			if ((spherical ?
-				(pos - (*fi)->midPos).SqLength() :
-				(pos - (*fi)->midPos).SqLength2D()) >= totRadSq) { continue; }
+		for (fi = quad.features.begin(); fi != quad.features.end(); ++fi) {
+			if ((*fi)->tempNum == tempNum)
+				continue;
+
+			const float totRad       = radius + (*fi)->radius;
+			const float totRadSq     = totRad * totRad;
+			const float posUnitDstSq = spherical?
+				pos.SqDistance((*fi)->midPos):
+				pos.SqDistance2D((*fi)->midPos);
+
+			if (posUnitDstSq >= totRadSq)
+				continue;
 
 			(*fi)->tempNum = tempNum;
 			features.push_back(*fi);
