@@ -42,7 +42,7 @@ public:
 	CFileHandler* GetFileHandler() { return &ifs; }
 
 private:
-	void ReadGrassMap(void* data);
+	bool ReadGrassMap(void* data);
 
 	SMFHeader header;
 	CFileHandler ifs;

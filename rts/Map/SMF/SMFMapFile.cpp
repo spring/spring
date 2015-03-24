@@ -158,8 +158,7 @@ bool CSMFMapFile::ReadInfoMap(const string& name, void* data)
 		return true;
 	}
 	else if (name == "grass") {
-		ReadGrassMap(data);
-		return true;
+		return ReadGrassMap(data);
 	}
 	else if(name == "metal") {
 		ifs.Seek(header.metalmapPtr);
@@ -175,7 +174,7 @@ bool CSMFMapFile::ReadInfoMap(const string& name, void* data)
 }
 
 
-void CSMFMapFile::ReadGrassMap(void *data)
+bool CSMFMapFile::ReadGrassMap(void *data)
 {
 	ifs.Seek(sizeof(SMFHeader));
 
@@ -193,7 +192,7 @@ void CSMFMapFile::ReadGrassMap(void *data)
 			ifs.Seek(pos);
 			ifs.Read(data, header.mapx / 4 * header.mapy / 4);
 			/* char; no swabbing. */
-			break; //we arent interested in other extensions anyway
+			return true; //we arent interested in other extensions anyway
 		}
 		else {
 			// assumes we can use data as scratch memory
@@ -201,4 +200,5 @@ void CSMFMapFile::ReadGrassMap(void *data)
 			ifs.Read(data, size - 8);
 		}
 	}
+	return false;
 }
