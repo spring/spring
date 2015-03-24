@@ -200,5 +200,5 @@ bool CSMFMapFile::ReadGrassMap(void *data)
 			ifs.Read(data, size - 8);
 		}
 	}
-    return false;
+	return false;
 }
