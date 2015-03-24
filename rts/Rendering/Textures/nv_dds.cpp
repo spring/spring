@@ -325,23 +325,23 @@ bool CDDSImage::load(string filename, bool flipImage)
     file.Read(&ddsh.dwCaps2, tmp);
     file.Read(&ddsh.dwReserved2, tmp*3);
 
-    ddsh.dwSize = swabdword(ddsh.dwSize);
-    ddsh.dwFlags = swabdword(ddsh.dwFlags);
-    ddsh.dwHeight = swabdword(ddsh.dwHeight);
-    ddsh.dwWidth = swabdword(ddsh.dwWidth);
-    ddsh.dwPitchOrLinearSize = swabdword(ddsh.dwPitchOrLinearSize);
-    ddsh.dwDepth = swabdword(ddsh.dwDepth);
-    ddsh.dwMipMapCount = swabdword(ddsh.dwMipMapCount);
-    ddsh.ddspf.dwSize = swabdword(ddsh.ddspf.dwSize);
-    ddsh.ddspf.dwFlags = swabdword(ddsh.ddspf.dwFlags);
-    ddsh.ddspf.dwFourCC = swabdword(ddsh.ddspf.dwFourCC);
-    ddsh.ddspf.dwRGBBitCount = swabdword(ddsh.ddspf.dwRGBBitCount);
-    ddsh.ddspf.dwRBitMask = swabdword(ddsh.ddspf.dwRBitMask);
-    ddsh.ddspf.dwGBitMask = swabdword(ddsh.ddspf.dwGBitMask);
-    ddsh.ddspf.dwBBitMask = swabdword(ddsh.ddspf.dwBBitMask);
-    ddsh.ddspf.dwABitMask = swabdword(ddsh.ddspf.dwABitMask);
-    ddsh.dwCaps1 = swabdword(ddsh.dwCaps1);
-    ddsh.dwCaps2 = swabdword(ddsh.dwCaps2);
+    ddsh.dwSize = swabDWord(ddsh.dwSize);
+    ddsh.dwFlags = swabDWord(ddsh.dwFlags);
+    ddsh.dwHeight = swabDWord(ddsh.dwHeight);
+    ddsh.dwWidth = swabDWord(ddsh.dwWidth);
+    ddsh.dwPitchOrLinearSize = swabDWord(ddsh.dwPitchOrLinearSize);
+    ddsh.dwDepth = swabDWord(ddsh.dwDepth);
+    ddsh.dwMipMapCount = swabDWord(ddsh.dwMipMapCount);
+    ddsh.ddspf.dwSize = swabDWord(ddsh.ddspf.dwSize);
+    ddsh.ddspf.dwFlags = swabDWord(ddsh.ddspf.dwFlags);
+    ddsh.ddspf.dwFourCC = swabDWord(ddsh.ddspf.dwFourCC);
+    ddsh.ddspf.dwRGBBitCount = swabDWord(ddsh.ddspf.dwRGBBitCount);
+    ddsh.ddspf.dwRBitMask = swabDWord(ddsh.ddspf.dwRBitMask);
+    ddsh.ddspf.dwGBitMask = swabDWord(ddsh.ddspf.dwGBitMask);
+    ddsh.ddspf.dwBBitMask = swabDWord(ddsh.ddspf.dwBBitMask);
+    ddsh.ddspf.dwABitMask = swabDWord(ddsh.ddspf.dwABitMask);
+    ddsh.dwCaps1 = swabDWord(ddsh.dwCaps1);
+    ddsh.dwCaps2 = swabDWord(ddsh.dwCaps2);
 
     // default to flat texture type (1D, 2D, or rectangle)
     m_type = TextureFlat;

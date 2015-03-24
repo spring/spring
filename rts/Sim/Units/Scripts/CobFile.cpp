@@ -42,43 +42,43 @@ do {									\
 	unsigned short __isize = sizeof(unsigned int);			\
 	unsigned int __c = 0;						\
 	memcpy(&__tmp,&((src)[__c]),__isize);				\
-	(ch).VersionSignature = (int)swabdword(__tmp);			\
+	(ch).VersionSignature = (int)swabDWord(__tmp);			\
 	__c+=__isize;							\
 	memcpy(&__tmp,&((src)[__c]),__isize);				\
-	(ch).NumberOfScripts = (int)swabdword(__tmp);			\
+	(ch).NumberOfScripts = (int)swabDWord(__tmp);			\
 	__c+=__isize;							\
 	memcpy(&__tmp,&((src)[__c]),__isize);				\
-	(ch).NumberOfPieces = (int)swabdword(__tmp);			\
+	(ch).NumberOfPieces = (int)swabDWord(__tmp);			\
 	__c+=__isize;							\
 	memcpy(&__tmp,&((src)[__c]),__isize);				\
-	(ch).TotalScriptLen = (int)swabdword(__tmp);			\
+	(ch).TotalScriptLen = (int)swabDWord(__tmp);			\
 	__c+=__isize;							\
 	memcpy(&__tmp,&((src)[__c]),__isize);				\
-	(ch).NumberOfStaticVars = (int)swabdword(__tmp);		\
+	(ch).NumberOfStaticVars = (int)swabDWord(__tmp);		\
 	__c+=__isize;							\
 	memcpy(&__tmp,&((src)[__c]),__isize);				\
-	(ch).Unknown_2 = (int)swabdword(__tmp);				\
+	(ch).Unknown_2 = (int)swabDWord(__tmp);				\
 	__c+=__isize;							\
 	memcpy(&__tmp,&((src)[__c]),__isize);				\
-	(ch).OffsetToScriptCodeIndexArray = (int)swabdword(__tmp);	\
+	(ch).OffsetToScriptCodeIndexArray = (int)swabDWord(__tmp);	\
 	__c+=__isize;							\
 	memcpy(&__tmp,&((src)[__c]),__isize);				\
-	(ch).OffsetToScriptNameOffsetArray = (int)swabdword(__tmp);	\
+	(ch).OffsetToScriptNameOffsetArray = (int)swabDWord(__tmp);	\
 	__c+=__isize;							\
 	memcpy(&__tmp,&((src)[__c]),__isize);				\
-	(ch).OffsetToPieceNameOffsetArray = (int)swabdword(__tmp);	\
+	(ch).OffsetToPieceNameOffsetArray = (int)swabDWord(__tmp);	\
 	__c+=__isize;							\
 	memcpy(&__tmp,&((src)[__c]),__isize);				\
-	(ch).OffsetToScriptCode = (int)swabdword(__tmp);		\
+	(ch).OffsetToScriptCode = (int)swabDWord(__tmp);		\
 	__c+=__isize;							\
 	memcpy(&__tmp,&((src)[__c]),__isize);				\
-	(ch).Unknown_3 = (int)swabdword(__tmp);				\
+	(ch).Unknown_3 = (int)swabDWord(__tmp);				\
 	__c+=__isize;							\
 	memcpy(&__tmp,&((src)[__c]),__isize);				\
-	(ch).OffsetToSoundNameArray = (int)swabdword(__tmp);		\
+	(ch).OffsetToSoundNameArray = (int)swabDWord(__tmp);		\
 	__c+=__isize;							\
 	memcpy(&__tmp,&((src)[__c]),__isize);				\
-	(ch).NumberOfSounds = (int)swabdword(__tmp);			\
+	(ch).NumberOfSounds = (int)swabDWord(__tmp);			\
 } while (0)
 
 

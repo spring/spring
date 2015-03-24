@@ -208,7 +208,7 @@ static float ReadFloat(CFileHandler& file)
 {
 	float __tmpfloat = 0.0f;
 	file.Read(&__tmpfloat,sizeof(float));
-	return swabfloat(__tmpfloat);
+	return swabFloat(__tmpfloat);
 }
 
 /// read an int from file (endian aware)
@@ -216,7 +216,7 @@ static int ReadInt(CFileHandler& file)
 {
 	unsigned int __tmpdw = 0;
 	file.Read(&__tmpdw,sizeof(unsigned int));
-	return (int)swabdword(__tmpdw);
+	return (int)swabDWord(__tmpdw);
 }
 
 /// Read SMFHeader head from file
