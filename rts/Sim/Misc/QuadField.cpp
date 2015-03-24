@@ -104,7 +104,6 @@ CQuadField::CQuadField(int2 mapDims, int quad_size)
 	assert(numQuadsZ >= 1);
 	assert((mapDims.x * SQUARE_SIZE) % quad_size == 0);
 	assert((mapDims.y * SQUARE_SIZE) % quad_size == 0);
-	assert(numQuadsX * numQuadsZ <= NUM_TEMP_QUADS);
 
 	// Without the temporary, std::max takes address of NUM_TEMP_QUADS
 	// if it isn't inlined, forcing NUM_TEMP_QUADS to be defined.
