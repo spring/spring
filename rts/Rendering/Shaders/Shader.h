@@ -44,7 +44,7 @@ namespace Shader {
 		void SetDefinitions(const std::string& defs) { modDefStrs = defs; }
 
 	protected:
-		friend class GLSLProgramObject;
+		friend struct GLSLProgramObject;
 		unsigned int objID;
 		unsigned int type;
 
