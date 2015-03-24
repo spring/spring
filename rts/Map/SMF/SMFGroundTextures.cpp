@@ -69,7 +69,7 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 	ifs->Seek(header.tilesPtr);
 
 	MapTileHeader tileHeader;
-	READPTR_MAPTILEHEADER(tileHeader, ifs);
+	CSMFMapFile::ReadMapTileHeader(tileHeader, *ifs);
 
 	if (smfMap->tileCount <= 0) {
 		throw content_error("Error loading map: count of tiles is 0.");
@@ -129,7 +129,7 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 		}
 
 		TileFileHeader tfh;
-		READ_TILEFILEHEADER(tfh, tileFile);
+		CSMFMapFile::ReadMapTileFileHeader(tfh, tileFile);
 
 		if (strcmp(tfh.magic, "spring tilefile") != 0 || tfh.version != 1 || tfh.tileSize != 32 || tfh.compressionType != 1) {
 			char t[500];
