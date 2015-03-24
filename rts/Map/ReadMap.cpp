@@ -202,6 +202,7 @@ CReadMap::CReadMap()
 CReadMap::~CReadMap()
 {
 	delete metalMap;
+	metalMap = NULL;
 }
 
 

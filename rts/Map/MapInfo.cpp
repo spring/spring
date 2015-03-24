@@ -72,8 +72,10 @@ CMapInfo::~CMapInfo()
 {
 #if !defined(HEADLESS) && !defined(NO_SOUND)
 	delete efxprops;
+	efxprops = NULL;
 #endif
 	delete parser;
+	parser = NULL;
 }
 
 std::string CMapInfo::GetStringValue(const std::string& key) const
