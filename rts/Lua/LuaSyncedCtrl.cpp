@@ -3590,7 +3590,8 @@ int LuaSyncedCtrl::SetMapSquareTerrainType(lua_State* L)
 	const int hx = int(luaL_checkfloat(L, 1) / SQUARE_SIZE);
 	const int hz = int(luaL_checkfloat(L, 2) / SQUARE_SIZE);
 
-	if ((hx < 0) || (hx > mapDims.mapx) || (hz < 0) || (hz > mapDims.mapy)) {
+	if ((hx < 0) || (hx >= mapDims.mapx) || (hz < 0) || (hz >= mapDims.mapy)) {
+		luaL_error(L, "Out of range: x = %d z = %d!", hx, hz);
 		return 0;
 	}
 
