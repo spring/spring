@@ -37,6 +37,7 @@ CR_REG_METADATA_SUB(CQuadField, Quad, (
 CQuadField* quadField = NULL;
 
 
+/*
 #ifndef UNIT_TEST
 void CQuadField::Resize(int quad_size)
 {
@@ -83,7 +84,7 @@ void CQuadField::Resize(int quad_size)
 	delete oldQuadField;
 }
 #endif
-
+*/
 
 CQuadField::Quad::Quad()
 {

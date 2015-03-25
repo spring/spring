@@ -24,7 +24,7 @@ class CQuadField : boost::noncopyable
 	CR_DECLARE_SUB(Quad)
 
 public:
-	static void Resize(int quad_size);
+//	static void Resize(int quad_size);
 
 	CQuadField(int2 mapDims, int quad_size);
 	~CQuadField();
