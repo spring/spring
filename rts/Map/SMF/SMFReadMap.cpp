@@ -144,8 +144,8 @@ void CSMFReadMap::LoadMinimap()
 {
 	CBitmap minimapTexBM;
 	if (minimapTexBM.Load(mapInfo->smf.minimapTexName)) {
-	minimapTex = minimapTexBM.CreateTexture(false);
-		returnet
+		minimapTex = minimapTexBM.CreateTexture(false);
+		return;
 	}
 
 	// the minimap is a static texture
