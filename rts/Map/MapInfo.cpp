@@ -355,7 +355,7 @@ void CMapInfo::ReadSMF()
 	if (!smf.lightEmissionTexName.empty()) { smf.lightEmissionTexName = "maps/" + smf.lightEmissionTexName; }
 	if (!smf.parallaxHeightTexName.empty()) { smf.parallaxHeightTexName = "maps/" + smf.parallaxHeightTexName; }
 
-	// height overrides
+	// smf overrides
 	const LuaTable& smfTable = parser->GetRoot().SubTable("smf");
 
 	smf.minHeightOverride = smfTable.KeyExists("minHeight");
@@ -363,6 +363,8 @@ void CMapInfo::ReadSMF()
 	smf.minHeight = smfTable.GetFloat("minHeight", 0.0f);
 	smf.maxHeight = smfTable.GetFloat("maxHeight", 0.0f);
 
+	smf.minimapTexName = smfTable.GetString("minimapTex", "");
+	if (!smf.minimapTexName.empty()) { smf.minimapTexName = "maps/" + smf.minimapTexName; }
 
 	std::stringstream ss;
 

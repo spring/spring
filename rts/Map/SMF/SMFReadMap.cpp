@@ -53,6 +53,7 @@ CSMFReadMap::CSMFReadMap(std::string mapname)
 
 	haveSpecularTexture = !(mapInfo->smf.specularTexName.empty());
 	haveSplatTexture = (!mapInfo->smf.splatDetailTexName.empty() && !mapInfo->smf.splatDistrTexName.empty());
+	minimapOverride = !(mapInfo->smf.minimapTexName.empty());
 
 	ParseHeader();
 	LoadHeightMap();
@@ -141,6 +142,12 @@ void CSMFReadMap::LoadHeightMap()
 
 void CSMFReadMap::LoadMinimap()
 {
+	CBitmap minimapTexBM;
+	if (minimapTexBM.Load(mapInfo->smf.minimapTexName)) {
+	minimapTex = minimapTexBM.CreateTexture(false);
+		returnet
+	}
+
 	// the minimap is a static texture
 	std::vector<unsigned char> minimapTexBuf(MINIMAP_SIZE, 0);
 	file.ReadMinimap(&minimapTexBuf[0]);
