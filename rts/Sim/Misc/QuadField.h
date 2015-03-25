@@ -24,6 +24,13 @@ class CQuadField : boost::noncopyable
 	CR_DECLARE_SUB(Quad)
 
 public:
+
+/*
+needed to support dynamic resizing (not used yet)
+      in large games the average loading factor (number of objects per quad)
+      can grow too large to maintain amortized constant performance so more
+      quads are needed
+*/
 //	static void Resize(int quad_size);
 
 	CQuadField(int2 mapDims, int quad_size);
