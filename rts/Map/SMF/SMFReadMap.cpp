@@ -835,7 +835,7 @@ unsigned char* CSMFReadMap::GetInfoMap(const std::string& name, MapBitmapInfo* b
 	// get data
 	unsigned char* data = new unsigned char[bmInfo->width * bmInfo->height];
 	if ( !file.ReadInfoMap(name, data) ) {
-		delete data;
+		delete[] data;
 		data = NULL;
 	}
 	return data;
