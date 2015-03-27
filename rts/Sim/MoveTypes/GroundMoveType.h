@@ -81,7 +81,7 @@ private:
 
 	void GetNextWayPoint();
 	bool CanGetNextWayPoint();
-	bool ReRequestPath(bool callScript, bool forceRequest);
+	void ReRequestPath(bool forceRequest);
 
 	float BrakingDistance(float speed, float rate) const;
 	float3 Here();
@@ -163,6 +163,7 @@ private:
 
 	bool atGoal;
 	bool atEndOfPath;
+	bool wantRepath;
 
 	float currWayPointDist;
 	float prevWayPointDist;
@@ -177,11 +178,8 @@ private:
 	float skidRotSpeed;    /// rotational speed when skidding (radians / (GAME_SPEED frames))
 	float skidRotAccel;    /// rotational acceleration when skidding (radians / (GAME_SPEED frames^2))
 
-
 	unsigned int pathID;
-
 	unsigned int nextObstacleAvoidanceFrame;
-	unsigned int lastPathRequestFrame;
 
 	/// {in, de}creased every Update if idling is true/false and pathId != 0
 	unsigned int numIdlingUpdates;

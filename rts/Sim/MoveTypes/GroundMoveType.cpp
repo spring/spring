@@ -100,6 +100,7 @@ CR_REG_METADATA(CGroundMoveType, (
 
 	CR_MEMBER(atGoal),
 	CR_MEMBER(atEndOfPath),
+	CR_MEMBER(wantRepath),
 
 	CR_MEMBER(currWayPointDist),
 	CR_MEMBER(prevWayPointDist),
@@ -112,7 +113,6 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(pathID),
 
 	CR_MEMBER(nextObstacleAvoidanceFrame),
-	CR_MEMBER(lastPathRequestFrame),
 
 	CR_MEMBER(reversing),
 	CR_MEMBER(idling),
@@ -155,6 +155,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 
 	atGoal(false),
 	atEndOfPath(false),
+	wantRepath(false),
 
 	currWayPointDist(0.0f),
 	prevWayPointDist(0.0f),
@@ -172,7 +173,6 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	pathID(0),
 
 	nextObstacleAvoidanceFrame(0),
-	lastPathRequestFrame(0),
 
 	numIdlingUpdates(0),
 	numIdlingSlowUpdates(0),
@@ -344,7 +344,7 @@ void CGroundMoveType::SlowUpdate()
 							owner->id, pathID, numIdlingUpdates);
 
 					if (numIdlingSlowUpdates < MAX_IDLING_SLOWUPDATES) {
-						ReRequestPath(false, true);
+						ReRequestPath(true);
 					} else {
 						// unit probably ended up on a non-traversable
 						// square, or got stuck in a non-moving crowd
@@ -354,7 +354,10 @@ void CGroundMoveType::SlowUpdate()
 			} else {
 				// case B: we want to be moving but don't have a path
 				LOG_L(L_DEBUG, "SlowUpdate: unit %i has no path", owner->id);
-				ReRequestPath(false, true);
+				ReRequestPath(true);
+			}
+			if (wantRepath) {
+				ReRequestPath(true);
 			}
 		}
 
@@ -425,7 +428,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadius) {
 	// units passing intermediate waypoints will TYPICALLY not cause any
 	// script->{Start,Stop}Moving calls now (even when turnInPlace=true)
 	// unless they come to a full stop first
-	ReRequestPath(false, true);
+	ReRequestPath(true); //FIXME WTF?
 
 	if (owner->team == gu->myTeam) {
 		Channels::General->PlayRandomSample(owner->unitDef->sounds.activate, owner);
@@ -1254,17 +1257,16 @@ unsigned int CGroundMoveType::GetNewPath()
 	return newPathID;
 }
 
-bool CGroundMoveType::ReRequestPath(bool callScript, bool forceRequest) {
-	// limit frequency of repath-requests from outside SlowUpdate
-	// Only allow at most 2 requests between SlowUpdate.
-	if (((gs->frameNum - lastPathRequestFrame) < ((UNIT_SLOWUPDATE_RATE >> 1) + 1)) && (!forceRequest))
-		return false;
+void CGroundMoveType::ReRequestPath(bool forceRequest) {
+	if (forceRequest) {
+		StopEngine(false);
+		StartEngine(false);
+		wantRepath = false;
+		return;
+	}
 
-	StopEngine(callScript);
-	StartEngine(callScript);
-
-	lastPathRequestFrame = gs->frameNum;
-	return true;
+	wantRepath = true;
+	return;
 }
 
 
@@ -1393,18 +1395,15 @@ void CGroundMoveType::GetNextWayPoint()
 	if (nextWayPoint.x == -1.0f && nextWayPoint.z == -1.0f) {
 		Fail(false);
 	} else {
-		#define CWP_BLOCK_MASK CMoveMath::SquareIsBlocked(*owner->moveDef, currWayPoint, owner)
-		#define NWP_BLOCK_MASK CMoveMath::SquareIsBlocked(*owner->moveDef, nextWayPoint, owner)
+		const auto CWP_BLOCK_MASK = CMoveMath::SquareIsBlocked(*owner->moveDef, currWayPoint, owner);
+		const auto NWP_BLOCK_MASK = CMoveMath::SquareIsBlocked(*owner->moveDef, nextWayPoint, owner);
 
 		if ((CWP_BLOCK_MASK & CMoveMath::BLOCK_STRUCTURE) != 0 || (NWP_BLOCK_MASK & CMoveMath::BLOCK_STRUCTURE) != 0) {
 			// this can happen if we crushed a non-blocking feature
 			// and it spawned another feature which we cannot crush
 			// (eg.) --> repath
-			ReRequestPath(false, false);
+			ReRequestPath(false);
 		}
-
-		#undef NWP_BLOCK_MASK
-		#undef CWP_BLOCK_MASK
 	}
 }
 
@@ -1745,7 +1744,7 @@ void CGroundMoveType::HandleStaticObjectCollision(
 	}
 
 	if (canRequestPath && wantRequestPath) {
-		ReRequestPath(false, false);
+		ReRequestPath(false);
 	}
 }
 
