@@ -41,15 +41,16 @@ public:
 	std::string description;
 
 	// Movement behaviour
-	bool allowAircraftToLeaveMap;    // determines if gunships are allowed to leave map boundaries
-	bool allowAircraftToHitGround;   // determines if aircraft (both types) can collide with terrain
-	bool allowPushingEnemyUnits;     // determines if enemy (ground-)units can be pushed during collisions
-	bool allowCrushingAlliedUnits;   // determines if allied (ground-)units can be crushed during collisions
-	bool allowUnitCollisionDamage;   // determines if units take damage from (skidding) collisions
-	bool allowUnitCollisionOverlap;  // determines if unit footprints are allowed to semi-overlap during collisions
-	bool allowGroundUnitGravity;     // determines if (ground-)units experience gravity during regular movement
-	bool allowHoverUnitStrafing;     // determines if (hover-)units carry their momentum sideways when turning
-	bool useClassicGroundMoveType;   // determines if (ground-)units use the CClassicGroundMoveType path-follower
+	bool allowDirectionalPathing;    //< broken! see ::GroundSpeedMod(), allows different speedMod depending on moveDir
+	bool allowAircraftToLeaveMap;    //< determines if gunships are allowed to leave map boundaries
+	bool allowAircraftToHitGround;   //< determines if aircraft (both types) can collide with terrain
+	bool allowPushingEnemyUnits;     //< determines if enemy (ground-)units can be pushed during collisions
+	bool allowCrushingAlliedUnits;   //< determines if allied (ground-)units can be crushed during collisions
+	bool allowUnitCollisionDamage;   //< determines if units take damage from (skidding) collisions
+	bool allowUnitCollisionOverlap;  //< determines if unit footprints are allowed to semi-overlap during collisions
+	bool allowGroundUnitGravity;     //< determines if (ground-)units experience gravity during regular movement
+	bool allowHoverUnitStrafing;     //< determines if (hover-)units carry their momentum sideways when turning
+	bool useClassicGroundMoveType;   //< determines if (ground-)units use the CClassicGroundMoveType path-follower
 
 	// Build behaviour
 	/// Should constructions without builders decay?
