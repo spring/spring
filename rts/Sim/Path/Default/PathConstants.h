@@ -25,7 +25,7 @@ static const float MIN_MAXRES_SEARCH_DISTANCE = 12.0f;
 // how many recursive refinement attempts NextWayPoint should make
 static const unsigned int MAX_PATH_REFINEMENT_DEPTH = 4;
 
-static const unsigned int PATHESTIMATOR_VERSION = 65;
+static const unsigned int PATHESTIMATOR_VERSION = 71;
 
 static const unsigned int MEDRES_PE_BLOCKSIZE =  8;
 static const unsigned int LOWRES_PE_BLOCKSIZE = 32;
@@ -105,19 +105,12 @@ static inline std::array<unsigned int, 15> GetPathOpt2PathDir()
 	a[(PATHOPT_LEFT  | PATHOPT_DOWN)] = PATHDIR_LEFT_DOWN;
 	return a;
 }
+static const std::array<unsigned int, PATH_DIRECTIONS> DIR2OPT = GetPathDir2PathOpt();
+static const std::array<unsigned int, 15>              OPT2DIR = GetPathOpt2PathDir();
 
-
-// converts a PATHDIR* index to a PATHOPT* bitmask
-static inline unsigned int PathDir2PathOpt(unsigned int pathDir) {
-	static const std::array<unsigned int, PATH_DIRECTIONS> DIR2OPT = GetPathDir2PathOpt();
-	return DIR2OPT[pathDir];
-}
-
-// converts a PATHOPT* bitmask to a PATHDIR* index
-static inline unsigned int PathOpt2PathDir(unsigned int pathOptDir) {
-	static const std::array<unsigned int, 15> OPT2DIR = GetPathOpt2PathDir();
-	return OPT2DIR[pathOptDir];
-}
+// converts a PATHDIR* index to a PATHOPT* bitmask and vice versa
+static inline unsigned int PathDir2PathOpt(unsigned int pathDir)    { return DIR2OPT[pathDir]; }
+static inline unsigned int PathOpt2PathDir(unsigned int pathOptDir) { return OPT2DIR[pathOptDir]; }
 
 
 // transition costs between vertices are bi-directional
