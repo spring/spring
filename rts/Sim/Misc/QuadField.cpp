@@ -142,11 +142,11 @@ const std::vector<int>& CQuadField::GetQuads(float3 pos, float radius)
 	// qsx and qsz are always equal
 	const float maxSqLength = (radius + quadSizeX * 0.72f) * (radius + quadSizeZ * 0.72f);
 
-	const int maxx = std::min((int(pos.x + radius)) / quadSizeX + 1, numQuadsX - 1);
-	const int maxz = std::min((int(pos.z + radius)) / quadSizeZ + 1, numQuadsZ - 1);
+	const int maxx = std::min(int(pos.x + radius) / quadSizeX + 1, numQuadsX - 1);
+	const int maxz = std::min(int(pos.z + radius) / quadSizeZ + 1, numQuadsZ - 1);
 
-	const int minx = std::max((int(pos.x - radius)) / quadSizeX, 0);
-	const int minz = std::max((int(pos.z - radius)) / quadSizeZ, 0);
+	const int minx = std::max(int(pos.x - radius) / quadSizeX, 0);
+	const int minz = std::max(int(pos.z - radius) / quadSizeZ, 0);
 
 	if (maxz < minz || maxx < minx) {
 		return tempQuads;
@@ -154,7 +154,10 @@ const std::vector<int>& CQuadField::GetQuads(float3 pos, float radius)
 
 	for (int z = minz; z <= maxz; ++z) {
 		for (int x = minx; x <= maxx; ++x) {
-			if ((pos - float3(x * quadSizeX + quadSizeX * 0.5f, 0, z * quadSizeZ + quadSizeZ * 0.5f)).SqLength2D() < maxSqLength) {
+			assert(x < numQuadsX);
+			assert(z < numQuadsZ);
+			const float3 quadPos = float3(x * quadSizeX + quadSizeX * 0.5f, 0, z * quadSizeZ + quadSizeZ * 0.5f);
+			if (pos.SqDistance2D(quadPos) < maxSqLength) {
 				tempQuads.push_back(z * numQuadsX + x);
 			}
 		}
