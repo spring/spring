@@ -1345,7 +1345,7 @@ bool CGroundMoveType::CanGetNextWayPoint() {
 
 			for (int x = xmin; x < xmax; x++) {
 				for (int z = zmin; z < zmax; z++) {
-					if (ownerMD->TestMoveSquare(owner, x, z, ZeroVector, true, true, true)) {
+					if (ownerMD->TestMoveSquare(owner, x, z, owner->speed, true, true, true)) {
 						continue;
 					}
 					// if still further than SS elmos from waypoint, disallow skipping
@@ -1652,7 +1652,7 @@ void CGroundMoveType::HandleStaticObjectCollision(
 				const int zabs = zmid + z;
 
 				if (checkTerrain) {
-					if (CMoveMath::GetPosSpeedMod(*colliderMD, xabs, zabs) > 0.01f)
+					if (CMoveMath::GetPosSpeedMod(*colliderMD, xabs, zabs, collider->speed) > 0.01f)
 						continue;
 				} else {
 					if ((CMoveMath::SquareIsBlocked(*colliderMD, xabs, zabs, collider) & CMoveMath::BLOCK_STRUCTURE) == 0)
@@ -1701,7 +1701,7 @@ void CGroundMoveType::HandleStaticObjectCollision(
 			bounceVec = bounceVec.SafeNormalize2D() * mix(bounceScale, fpsBounceScale, owner->UnderFirstPersonControl());
 
 			// if checkTerrain is true, test only the center square
-			if (colliderMD->TestMoveSquare(collider, collider->pos + strafeVec + bounceVec, ZeroVector, checkTerrain, checkYardMap, checkTerrain)) {
+			if (colliderMD->TestMoveSquare(collider, collider->pos + strafeVec + bounceVec, collider->speed, checkTerrain, checkYardMap, checkTerrain)) {
 				collider->Move(strafeVec + bounceVec, true);
 			} else {
 				collider->Move(oldPos - collider->pos, wantRequestPath = true);
@@ -1725,7 +1725,7 @@ void CGroundMoveType::HandleStaticObjectCollision(
 		const float3 strafeVec = (collider->rightdir * colSlideSign) * strafeScale;
 		const float3 bounceVec = (   separationVector / sepDistance) * bounceScale;
 
-		if (colliderMD->TestMoveSquare(collider, collider->pos + strafeVec + bounceVec, ZeroVector, true, true, true)) {
+		if (colliderMD->TestMoveSquare(collider, collider->pos + strafeVec + bounceVec, collider->speed, true, true, true)) {
 			collider->Move(strafeVec + bounceVec, true);
 		} else {
 			// move back to previous-frame position
@@ -1926,16 +1926,18 @@ void CGroundMoveType::HandleUnitCollisions(
 		const float3 collideePushVec  = -colResponseVec * collideeMassScale;
 		const float3 colliderSlideVec = collider->rightdir * colliderSlideSign * (1.0f / penDistance) * r2;
 		const float3 collideeSlideVec = collidee->rightdir * collideeSlideSign * (1.0f / penDistance) * r1;
+		const float3 colliderMoveVec = colliderPushVec + colliderSlideVec;
+		const float3 collideeMoveVec = collideePushVec + collideeSlideVec;
 
 		if ((pushCollider || !pushCollidee) && colliderMobile) {
-			if (colliderMD->TestMoveSquare(collider, collider->pos + colliderPushVec + colliderSlideVec)) {
-				collider->Move(colliderPushVec + colliderSlideVec, true);
+			if (colliderMD->TestMoveSquare(collider, collider->pos + colliderMoveVec, colliderMoveVec)) {
+				collider->Move(colliderMoveVec, true);
 			}
 		}
 
 		if ((pushCollidee || !pushCollider) && collideeMobile) {
-			if (collideeMD->TestMoveSquare(collidee, collidee->pos + collideePushVec + collideeSlideVec)) {
-				collidee->Move(collideePushVec + collideeSlideVec, true);
+			if (collideeMD->TestMoveSquare(collidee, collidee->pos + collideeMoveVec, collideeMoveVec)) {
+				collidee->Move(collideeMoveVec, true);
 			}
 		}
 	}
@@ -2315,14 +2317,14 @@ void CGroundMoveType::UpdateOwnerPos(const float3& oldSpeedVector, const float3&
  		//   relies on assumption that PFS will not search if start-sqr
  		//   is blocked, so too fragile
 		//
-		if (!pathController->IgnoreTerrain(*owner->moveDef, owner->pos) && !owner->moveDef->TestMoveSquare(owner, owner->pos, ZeroVector, true, false, true)) {
+		if (!pathController->IgnoreTerrain(*owner->moveDef, owner->pos) && !owner->moveDef->TestMoveSquare(owner, owner->pos, owner->speed, true, false, true)) {
 			bool updatePos = false;
 
 			for (unsigned int n = 1; n <= SQUARE_SIZE; n++) {
-				if (!updatePos && (updatePos = owner->moveDef->TestMoveSquare(owner, owner->pos + owner->rightdir * n, ZeroVector, true, false, true))) {
+				if (!updatePos && (updatePos = owner->moveDef->TestMoveSquare(owner, owner->pos + owner->rightdir * n, owner->speed, true, false, true))) {
 					owner->Move(owner->pos + owner->rightdir * n, false); break;
 				}
-				if (!updatePos && (updatePos = owner->moveDef->TestMoveSquare(owner, owner->pos - owner->rightdir * n, ZeroVector, true, false, true))) {
+				if (!updatePos && (updatePos = owner->moveDef->TestMoveSquare(owner, owner->pos - owner->rightdir * n, owner->speed, true, false, true))) {
 					owner->Move(owner->pos - owner->rightdir * n, false); break;
 				}
 			}
@@ -2336,7 +2338,7 @@ void CGroundMoveType::UpdateOwnerPos(const float3& oldSpeedVector, const float3&
 		//   this can fail when gravity is allowed (a unit catching air
 		//   can easily end up on an impassable square, especially when
 		//   terrain contains micro-bumps) --> more likely at lower g's
-		// assert(owner->moveDef->TestMoveSquare(owner, owner->pos, ZeroVector, true, false, true));
+		// assert(owner->moveDef->TestMoveSquare(owner, owner->pos, owner->speed, true, false, true));
 	}
 
 	reversing    = (newSpeedVector.dot(flatFrontDir) < 0.0f);

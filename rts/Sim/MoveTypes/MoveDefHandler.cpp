@@ -318,7 +318,7 @@ bool MoveDef::TestMoveSquare(
 	const CSolidObject* collider,
 	const int xTestMoveSqr,
 	const int zTestMoveSqr,
-	const float3& testMoveDir,
+	const float3 testMoveDir,
 	bool testTerrain,
 	bool testObjects,
 	bool centerOnly,
@@ -354,8 +354,8 @@ bool MoveDef::TestMoveSquare(
 
 bool MoveDef::TestMoveSquare(
 	const CSolidObject* collider,
-	const float3& testMovePos,
-	const float3& testMoveDir,
+	const float3 testMovePos,
+	const float3 testMoveDir,
 	bool testTerrain,
 	bool testObjects,
 	bool centerOnly,

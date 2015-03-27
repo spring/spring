@@ -25,7 +25,7 @@ struct MoveDef {
 		const CSolidObject* collider,
 		const int xTestMoveSqr,
 		const int zTestMoveSqr,
-		const float3& testMoveDir = ZeroVector,
+		const float3 testMoveDir,
 		bool testTerrain = true,
 		bool testObjects = true,
 		bool centerOnly = false,
@@ -34,8 +34,8 @@ struct MoveDef {
 	) const;
 	bool TestMoveSquare(
 		const CSolidObject* collider,
-		const float3& testMovePos,
-		const float3& testMoveDir = ZeroVector,
+		const float3 testMovePos,
+		const float3 testMoveDir,
 		bool testTerrain = true,
 		bool testObjects = true,
 		bool centerOnly = false,
