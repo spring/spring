@@ -109,6 +109,7 @@ void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 				case 1: { airMT->SetRepairBelowHealth(0.3f); break; }
 				case 2: { airMT->SetRepairBelowHealth(0.5f); break; }
 				case 3: { airMT->SetRepairBelowHealth(0.8f); break; }
+				default: { /*no op*/ } break;
 			}
 
 			for (unsigned int n = 0; n < possibleCommands.size(); n++) {
@@ -130,6 +131,7 @@ void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 			switch ((int) c.params[0]) {
 				case 0: { airMT->autoLand = false; break; }
 				case 1: { airMT->autoLand = true;  break; }
+				default: { /*no op*/ } break;
 			}
 
 			for (unsigned int n = 0; n < possibleCommands.size(); n++) {

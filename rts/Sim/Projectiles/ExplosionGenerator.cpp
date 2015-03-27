@@ -623,11 +623,11 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 				boost::uint8_t  size   = *(boost::uint8_t*)  code; code++;
 				boost::uint16_t offset = *(boost::uint16_t*) code; code += 2;
 				switch (size) {
-					case 0: { /*no op*/ } break;
 					case 1: { *(boost::int8_t*)  (instance + offset) = (int) val; } break;
 					case 2: { *(boost::int16_t*) (instance + offset) = (int) val; } break;
 					case 4: { *(boost::int32_t*) (instance + offset) = (int) val; } break;
 					case 8: { *(boost::int64_t*) (instance + offset) = (int) val; } break;
+					default: { /*no op*/ } break;
 				}
 				val = 0.0f;
 				break;
@@ -638,6 +638,7 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 				switch (size) {
 					case 4: { *(float*)  (instance + offset) = val; } break;
 					case 8: { *(double*) (instance + offset) = val; } break;
+					default: { /*no op*/ } break;
 				}
 				val = 0.0f;
 				break;

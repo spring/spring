@@ -306,9 +306,7 @@ bool CBuilderCAI::IsBuildPosBlocked(const BuildInfo& build, const CUnit** nanoFr
 	}
 
 	// status is blocked, check if there is a foreign object in the way
-	const int yardxpos = int(build.pos.x + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;
-	const int yardypos = int(build.pos.z + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;
-	const CSolidObject* s = groundBlockingObjectMap->GroundBlocked(yardxpos, yardypos);
+	const CSolidObject* s = groundBlockingObjectMap->GroundBlocked(build.pos);
 
 	// just ourselves, does not count
 	if (s == owner)
