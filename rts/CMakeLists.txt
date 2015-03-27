@@ -119,7 +119,6 @@ MakeGlobalVar(engineSources
 		${sources_engine_Map}
 		${sources_engine_Rendering}
 		${sources_engine_Menu}
-		${sources_engine_Sim}
 		${sources_engine_System}
 		${sources_engine_ExternalAI}
 	)
