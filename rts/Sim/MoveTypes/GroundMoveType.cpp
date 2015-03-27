@@ -1760,20 +1760,27 @@ void CGroundMoveType::HandleUnitCollisions(
 	const float searchRadius = colliderSpeed + (colliderRadius * 2.0f);
 
 	const std::vector<CUnit*>& nearUnits = quadField->GetUnitsExact(collider->pos, searchRadius);
-	      std::vector<CUnit*>::const_iterator uit;
 
 	// NOTE: probably too large for most units (eg. causes tree falling animations to be skipped)
 	const int dirSign = Sign(int(!reversing));
 	const float3 crushImpulse = collider->speed * collider->mass * dirSign;
 
-	for (uit = nearUnits.begin(); uit != nearUnits.end(); ++uit) {
-		CUnit* collidee = const_cast<CUnit*>(*uit);
+	for (CUnit* collidee: nearUnits) {
+		if (collidee == collider) continue;
+		if (collidee->IsSkidding()) continue;
+		if (collidee->IsFlying()) continue;
 
 		const UnitDef* collideeUD = collidee->unitDef;
 		const MoveDef* collideeMD = collidee->moveDef;
 
 		const bool colliderMobile = (colliderMD != NULL); // always true
 		const bool collideeMobile = (collideeMD != NULL); // maybe true
+
+		// don't push/crush either party if the collidee does not block the collider (or vv.)
+		if (colliderMobile && CMoveMath::IsNonBlocking(*colliderMD, collidee, collider))
+			continue;
+		if (collideeMobile && CMoveMath::IsNonBlocking(*collideeMD, collider, collidee))
+			continue;
 
 		// use the collidee's MoveDef footprint as radius if it is mobile
 		// use the collidee's Unit (not UnitDef) footprint as radius otherwise
@@ -1787,10 +1794,6 @@ void CGroundMoveType::HandleUnitCollisions(
 
 		if ((separationVector.SqLength() - separationMinDistSq) > 0.01f)
 			continue;
-
-		if (collidee == collider) continue;
-		if (collidee->IsSkidding()) continue;
-		if (collidee->IsFlying()) continue;
 
 		// disable collisions between collider and collidee
 		// if collidee is currently inside any transporter,
@@ -1816,26 +1819,8 @@ void CGroundMoveType::HandleUnitCollisions(
 		const bool collideeYields = (collider->IsMoving() && !collidee->IsMoving());
 		const bool ignoreCollidee = (collideeYields && alliedCollision);
 
-		// FIXME:
-		//   allowPushingEnemyUnits is (now) useless because alliances are bi-directional
-		//   ie. if !alliedCollision, pushCollider and pushCollidee BOTH become false and
-		//   the collision is treated normally --> not what we want here, but the desired
-		//   behavior (making each party stop and block the other) has many corner-cases
-		//   this also happens when both parties are pushResistant --> make each respond
-		//   to the other as a static obstacle so the tags still have some effect
-		pushCollider &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collider->blockEnemyPushing);
-		pushCollidee &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collidee->blockEnemyPushing);
-		pushCollider &= (!collider->beingBuilt && !collider->UsingScriptMoveType() && !colliderUD->pushResistant);
-		pushCollidee &= (!collidee->beingBuilt && !collidee->UsingScriptMoveType() && !collideeUD->pushResistant);
-
 		crushCollidee |= (!alliedCollision || modInfo.allowCrushingAlliedUnits);
 		crushCollidee &= ((colliderSpeed * collider->mass) > (collideeSpeed * collidee->mass));
-
-		// don't push/crush either party if the collidee does not block the collider (or vv.)
-		if (colliderMobile && CMoveMath::IsNonBlocking(*colliderMD, collidee, collider))
-			continue;
-		if (collideeMobile && CMoveMath::IsNonBlocking(*collideeMD, collider, collidee))
-			continue;
 
 		if (crushCollidee && !CMoveMath::CrushResistant(*colliderMD, collidee))
 			collidee->Kill(collider, crushImpulse, true);
@@ -1855,7 +1840,7 @@ void CGroundMoveType::HandleUnitCollisions(
 		//
 		// CFactory applies random jitter to otherwise equal goal
 		// positions of at most TWOPI elmos, use half as threshold
-		if ((collider->moveType->goalPos - collidee->moveType->goalPos).SqLength2D() < (PI * PI)) {
+		if (collider->moveType->goalPos.SqDistance2D(collidee->moveType->goalPos) < (PI * PI)) {
 			if (collider->IsMoving() && collider->moveType->progressState == AMoveType::Active) {
 				if (!collidee->IsMoving() && collidee->moveType->progressState == AMoveType::Done) {
 					if (UNIT_CMD_QUE_SIZE(collidee) == 0) {
@@ -1864,6 +1849,18 @@ void CGroundMoveType::HandleUnitCollisions(
 				}
 			}
 		}
+
+		// FIXME:
+		//   allowPushingEnemyUnits is (now) useless because alliances are bi-directional
+		//   ie. if !alliedCollision, pushCollider and pushCollidee BOTH become false and
+		//   the collision is treated normally --> not what we want here, but the desired
+		//   behavior (making each party stop and block the other) has many corner-cases
+		//   this also happens when both parties are pushResistant --> make each respond
+		//   to the other as a static obstacle so the tags still have some effect
+		pushCollider = pushCollider && (alliedCollision || modInfo.allowPushingEnemyUnits || !collider->blockEnemyPushing);
+		pushCollidee = pushCollidee && (alliedCollision || modInfo.allowPushingEnemyUnits || !collidee->blockEnemyPushing);
+		pushCollider = pushCollider && (!collider->beingBuilt && !collider->UsingScriptMoveType() && !colliderUD->pushResistant);
+		pushCollidee = pushCollidee && (!collidee->beingBuilt && !collidee->UsingScriptMoveType() && !collideeUD->pushResistant);
 
 		if ((!collideeMobile && !collideeUD->IsAirUnit()) || (!pushCollider && !pushCollidee)) {
 			// building (always axis-aligned, possibly has a yardmap)
