@@ -37,8 +37,8 @@ CR_REG_METADATA_SUB(CQuadField, Quad, (
 CQuadField* quadField = NULL;
 
 
-/*
 #ifndef UNIT_TEST
+/*
 void CQuadField::Resize(int quad_size)
 {
 	CQuadField* oldQuadField = quadField;
@@ -83,8 +83,9 @@ void CQuadField::Resize(int quad_size)
 	// do this last so pointer is never dangling
 	delete oldQuadField;
 }
-#endif
 */
+#endif
+
 
 CQuadField::Quad::Quad()
 {
@@ -105,6 +106,7 @@ CQuadField::CQuadField(int2 mapDims, int quad_size)
 	assert(numQuadsZ >= 1);
 	assert((mapDims.x * SQUARE_SIZE) % quad_size == 0);
 	assert((mapDims.y * SQUARE_SIZE) % quad_size == 0);
+	assert(numQuadsX * numQuadsZ <= NUM_TEMP_QUADS);
 
 	// Without the temporary, std::max takes address of NUM_TEMP_QUADS
 	// if it isn't inlined, forcing NUM_TEMP_QUADS to be defined.
@@ -576,33 +578,24 @@ void CQuadField::RemoveProjectile(CProjectile* p)
 	}
 }
 
+
 std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos, float radius, bool spherical)
 {
+	const std::vector<int>& quads = GetQuads(pos, radius);
 	const int tempNum = gs->tempNum++;
 
-	int* begQuad = &tempQuads[0];
-	int* endQuad = &tempQuads[0];
-
-	GetQuads(pos, radius, begQuad, endQuad);
-
 	std::vector<CFeature*> features;
+	std::vector<int>::const_iterator qi;
 	std::list<CFeature*>::iterator fi;
+	const float totRadSq = radius * radius;
 
-	for (int* a = begQuad; a != endQuad; ++a) {
-		Quad& quad = baseQuads[*a];
+	for (qi = quads.begin(); qi != quads.end(); ++qi) {
+		for (fi = baseQuads[*qi].features.begin(); fi != baseQuads[*qi].features.end(); ++fi) {
 
-		for (fi = quad.features.begin(); fi != quad.features.end(); ++fi) {
-			if ((*fi)->tempNum == tempNum)
-				continue;
-
-			const float totRad       = radius + (*fi)->radius;
-			const float totRadSq     = totRad * totRad;
-			const float posUnitDstSq = spherical?
-				pos.SqDistance((*fi)->midPos):
-				pos.SqDistance2D((*fi)->midPos);
-
-			if (posUnitDstSq >= totRadSq)
-				continue;
+			if ((*fi)->tempNum == tempNum) { continue; }
+			if ((spherical ?
+				(pos - (*fi)->midPos).SqLength() :
+				(pos - (*fi)->midPos).SqLength2D()) >= totRadSq) { continue; }
 
 			(*fi)->tempNum = tempNum;
 			features.push_back(*fi);
