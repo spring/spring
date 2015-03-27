@@ -354,23 +354,21 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 template<typename TFilter, typename TQuery>
 static inline void QueryUnits(TFilter filter, TQuery& query)
 {
-	const vector<int> &quads = quadField->GetQuads(query.pos, query.radius);
-
+	const vector<int>& quads = quadField->GetQuads(query.pos, query.radius);
 	const int tempNum = gs->tempNum++;
 
-	for (vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
-		const CQuadField::Quad& quad = quadField->GetQuad(*qi);
+	for (int qi: quads) {
+		const CQuadField::Quad& quad = quadField->GetQuad(qi);
 		for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
 			if (!filter.Team(t)) {
 				continue;
 			}
-			std::list<CUnit*>::const_iterator ui;
 			const std::list<CUnit*>& allyTeamUnits = quad.teamUnits[t];
-			for (ui = allyTeamUnits.begin(); ui != allyTeamUnits.end(); ++ui) {
-				if ((*ui)->tempNum != tempNum) {
-					(*ui)->tempNum = tempNum;
-					if (filter.Unit(*ui)) {
-						query.AddUnit(*ui);
+			for (CUnit* u: allyTeamUnits) {
+				if (u->tempNum != tempNum) {
+					u->tempNum = tempNum;
+					if (filter.Unit(u)) {
+						query.AddUnit(u);
 					}
 				}
 			}

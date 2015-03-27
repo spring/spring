@@ -318,7 +318,7 @@ bool MoveDef::TestMoveSquare(
 	const CSolidObject* collider,
 	const int xTestMoveSqr,
 	const int zTestMoveSqr,
-	const float3& testMoveDir,
+	const float3 testMoveDir,
 	bool testTerrain,
 	bool testObjects,
 	bool centerOnly,
@@ -326,36 +326,37 @@ bool MoveDef::TestMoveSquare(
 	int* maxBlockBit
 ) const {
 	bool ret = true;
+	assert(testTerrain || testObjects);
+	float                minSpeedMod_ = std::numeric_limits<float>::max();;
+	CMoveMath::BlockType maxBlockBit_ = CMoveMath::BLOCK_NONE;
 
-	if (testTerrain || testObjects) {
-		const int jMin = -zsizeh * (1 - centerOnly), jMax = zsizeh * (1 - centerOnly);
-		const int iMin = -xsizeh * (1 - centerOnly), iMax = xsizeh * (1 - centerOnly);
+	const int jMin = -zsizeh * (1 - centerOnly), jMax = zsizeh * (1 - centerOnly);
+	const int iMin = -xsizeh * (1 - centerOnly), iMax = xsizeh * (1 - centerOnly);
 
-		for (int j = jMin; (j <= jMax) && ret; j++) {
-			for (int i = iMin; (i <= iMax) && ret; i++) {
-				// GetPosSpeedMod only checks *one* square of terrain
-				// (heightmap/slopemap/typemap), not the blocking-map
-				const float speedMod = (testMoveDir != ZeroVector)?
-					CMoveMath::GetPosSpeedMod(*this, xTestMoveSqr + i, zTestMoveSqr + j, testMoveDir):
-					CMoveMath::GetPosSpeedMod(*this, xTestMoveSqr + i, zTestMoveSqr + j);
-				const CMoveMath::BlockType blockBits = CMoveMath::SquareIsBlocked(*this, xTestMoveSqr + i, zTestMoveSqr + j, collider);
+	for (int j = jMin; (j <= jMax) && ret; j++) {
+		for (int i = iMin; (i <= iMax) && ret; i++) {
+			// GetPosSpeedMod only checks *one* square of terrain
+			// (heightmap/slopemap/typemap), not the blocking-map
+			const float speedMod = CMoveMath::GetPosSpeedMod(*this, xTestMoveSqr + i, zTestMoveSqr + j, testMoveDir);
+			const CMoveMath::BlockType blockBits = CMoveMath::SquareIsBlocked(*this, xTestMoveSqr + i, zTestMoveSqr + j, collider);
 
-				if (testTerrain) { ret &= (speedMod > 0.0f); }
-				if (testObjects) { ret &= ((blockBits & CMoveMath::BLOCK_STRUCTURE) == 0); }
+			minSpeedMod_  = std::min(minSpeedMod_, speedMod);
+			maxBlockBit_ |= blockBits;
 
-				if (minSpeedMod != NULL) { *minSpeedMod = std::min(*minSpeedMod,    (speedMod )); }
-				if (maxBlockBit != NULL) { *maxBlockBit = std::max(*maxBlockBit, int(blockBits)); }
-			}
+			if (testTerrain) { ret &=  (speedMod > 0.0f); }
+			if (testObjects) { ret &= !(blockBits & CMoveMath::BLOCK_STRUCTURE); }
 		}
 	}
 
+	if (minSpeedMod != nullptr) *minSpeedMod  = std::min(*minSpeedMod, minSpeedMod_);
+	if (maxBlockBit != nullptr) *maxBlockBit |= int(maxBlockBit_);
 	return ret;
 }
 
 bool MoveDef::TestMoveSquare(
 	const CSolidObject* collider,
-	const float3& testMovePos,
-	const float3& testMoveDir,
+	const float3 testMovePos,
+	const float3 testMoveDir,
 	bool testTerrain,
 	bool testObjects,
 	bool centerOnly,

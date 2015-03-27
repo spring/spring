@@ -19,3 +19,5 @@ cmake ${CMAKEPARAM} $@ ${SOURCEDIR}
 
 echo "erasing old base content..."
 rm -rf base
+
+${MAKE} generateSources

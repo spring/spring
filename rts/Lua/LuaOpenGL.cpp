@@ -1246,6 +1246,7 @@ int LuaOpenGL::Text(lua_State* L)
 				case 'O': { options |= FONT_OUTLINE; outline = true; lightOut = true;     break; }
 
 				case 'n': { options ^= FONT_NEAREST;       break; }
+				default: break;
 			}
 	  		c++;
 		}

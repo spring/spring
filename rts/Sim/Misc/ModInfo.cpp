@@ -25,6 +25,7 @@ void CModInfo::ResetState()
 	mutator.clear();
 	description.clear();
 
+	allowDirectionalPathing   = false;
 	allowAircraftToLeaveMap   = true;
 	allowAircraftToHitGround  = true;
 	allowPushingEnemyUnits    = false;
@@ -117,12 +118,14 @@ void CModInfo::Init(const char* modArchive)
 
 		pathFinderSystem = system.GetInt("pathFinderSystem", PFS_TYPE_DEFAULT) % PFS_NUM_TYPES;
 		pfUpdateRate = system.GetFloat("pathFinderUpdateRate", 0.007f);
+
 	}
 
 	{
 		// movement
 		const LuaTable& movementTbl = root.SubTable("movement");
 
+		allowDirectionalPathing = movementTbl.GetBool("allowDirectionalPathing", false);
 		allowAircraftToLeaveMap = movementTbl.GetBool("allowAirPlanesToLeaveMap", true);
 		allowAircraftToHitGround = movementTbl.GetBool("allowAircraftToHitGround", true);
 		allowPushingEnemyUnits = movementTbl.GetBool("allowPushingEnemyUnits", false);

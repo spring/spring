@@ -184,10 +184,7 @@ float TraceRay(
 	if (!ignoreFeatures || !ignoreUnits) {
 		CollisionQuery cq;
 
-		int* begQuad = NULL;
-		int* endQuad = NULL;
-
-		quadField->GetQuadsOnRay(start, dir, length, begQuad, endQuad);
+		const auto& quads = quadField->GetQuadsOnRay(start, dir, length);
 
 		// locally point somewhere non-NULL; we cannot pass hitColQuery
 		// to DetectHit directly because each call resets it internally
@@ -196,8 +193,8 @@ float TraceRay(
 
 		// feature intersection
 		if (!ignoreFeatures) {
-			for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
-				const CQuadField::Quad& quad = quadField->GetQuad(*quadPtr);
+			for (int quadIdx: quads) {
+				const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
 				for (std::list<CFeature*>::const_iterator ui = quad.features.begin(); ui != quad.features.end(); ++ui) {
 					CFeature* f = *ui;
@@ -224,8 +221,8 @@ float TraceRay(
 
 		// unit intersection
 		if (!ignoreUnits) {
-			for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
-				const CQuadField::Quad& quad = quadField->GetQuad(*quadPtr);
+			for (int quadIdx: quads) {
+				const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
 				for (std::list<CUnit*>::const_iterator ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
 					CUnit* u = *ui;
@@ -312,18 +309,14 @@ float GuiTraceRay(
 	if (groundOnly)
 		return minRayLength;
 
-	int* begQuad = NULL;
-	int* endQuad = NULL;
-
-	quadField->GetQuadsOnRay(start, dir, length, begQuad, endQuad);
-
 	std::list<CUnit*>::const_iterator ui;
 	std::list<CFeature*>::const_iterator fi;
 
 	CollisionQuery cq;
 
-	for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
-		const CQuadField::Quad& quad = quadField->GetQuad(*quadPtr);
+	const auto& quads = quadField->GetQuadsOnRay(start, dir, length);
+	for (int quadIdx: quads) {
+		const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
 		// Unit Intersection
 		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
@@ -426,18 +419,16 @@ bool TestCone(
 	int avoidFlags,
 	CUnit* owner)
 {
-	int* begQuad = NULL;
-	int* endQuad = NULL;
-
-	if (quadField->GetQuadsOnRay(from, dir, length, begQuad, endQuad) == 0)
+	const auto& quads = quadField->GetQuadsOnRay(from, dir, length);
+	if (quads.empty())
 		return true;
 
 	const bool ignoreAllies   = ((avoidFlags & Collision::NOFRIENDLIES) != 0);
 	const bool ignoreNeutrals = ((avoidFlags & Collision::NONEUTRALS  ) != 0);
 	const bool ignoreFeatures = ((avoidFlags & Collision::NOFEATURES  ) != 0);
 
-	for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
-		const CQuadField::Quad& quad = quadField->GetQuad(*quadPtr);
+	for (int quadIdx: quads) {
+		const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
 		if (!ignoreAllies) {
 			const std::list<CUnit*>& units = quad.teamUnits[allyteam];
@@ -507,18 +498,16 @@ bool TestTrajectoryCone(
 	int avoidFlags,
 	CUnit* owner)
 {
-	int* begQuad = NULL;
-	int* endQuad = NULL;
-
-	if (quadField->GetQuadsOnRay(from, dir, length, begQuad, endQuad) == 0)
+	const auto& quads = quadField->GetQuadsOnRay(from, dir, length);
+	if (quads.empty())
 		return true;
 
 	const bool ignoreAllies   = ((avoidFlags & Collision::NOFRIENDLIES) != 0);
 	const bool ignoreNeutrals = ((avoidFlags & Collision::NONEUTRALS  ) != 0);
 	const bool ignoreFeatures = ((avoidFlags & Collision::NOFEATURES  ) != 0);
 
-	for (int* quadPtr = begQuad; quadPtr != endQuad; ++quadPtr) {
-		const CQuadField::Quad& quad = quadField->GetQuad(*quadPtr);
+	for (int quadIdx: quads) {
+		const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
 		// friendly units in this quad
 		if (!ignoreAllies) {

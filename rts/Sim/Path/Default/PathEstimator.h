@@ -79,8 +79,7 @@ protected: // IPathFinder impl
 		const CSolidObject* owner,
 		const unsigned int pathOptDir,
 		const unsigned int blockStatus,
-		float speedMod,
-		bool withinConstraints);
+		float speedMod);
 	IPath::SearchResult FinishSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, IPath::Path& path) const;
 
 	const CPathCache::CacheItem* GetCache(

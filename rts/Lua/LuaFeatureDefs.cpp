@@ -383,6 +383,9 @@ static int ColVolTable(lua_State* L, const void* data) {
 		case CollisionVolume::COLVOL_TYPE_BOX:
 			HSTR_PUSH_STRING(L, "type", "box");
 			break;
+		case CollisionVolume::COLVOL_TYPE_SPHERE:
+			HSTR_PUSH_STRING(L, "type", "sphere");
+			break;
 	}
 
 	LuaPushNamedNumber(L, "scaleX", cv->GetScales().x);

@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "MoveMath.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 
 /*
@@ -20,6 +21,16 @@ float CMoveMath::HoverSpeedMod(const MoveDef& moveDef, float height, float slope
 
 float CMoveMath::HoverSpeedMod(const MoveDef& moveDef, float height, float slope, float dirSlopeMod)
 {
+	if (!modInfo.allowDirectionalPathing) {
+		return HoverSpeedMod(moveDef, height, slope);
+	}
+
+	//FIXME broken cause of:
+	// 1. it doubles maxSlope -> the value NOT the angle, and so _massively_ increasing maxSlope angle
+	// 2. by doing so it makes squares pathable that are blocked in classic SpeedMod w/o movedir.
+	//    Not bad itself, problem is that GroundMoveType.cpp code is broken and sometimes uses it with movedir
+	//    sometimes without. And so codes working against each other making units shake when going hills up etc.
+
 	// no speed-penalty if on water
 	if (height < 0.0f)
 		return 1.0f;

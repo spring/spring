@@ -42,9 +42,9 @@ float CMoveMath::yLevel(const MoveDef& moveDef, const float3& pos)
 
 
 /* calculate the local speed-modifier for this MoveDef */
-float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare)
+float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, unsigned xSquare, unsigned zSquare)
 {
-	if (xSquare < 0 || zSquare < 0 || xSquare >= mapDims.mapx || zSquare >= mapDims.mapy)
+	if (xSquare >= mapDims.mapx || zSquare >= mapDims.mapy)
 		return 0.0f;
 
 	const int square = (xSquare >> 1) + ((zSquare >> 1) * mapDims.hmapx);
@@ -66,9 +66,9 @@ float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare
 	return 0.0f;
 }
 
-float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare, const float3& moveDir)
+float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, unsigned xSquare, unsigned zSquare, float3 moveDir)
 {
-	if (xSquare < 0 || zSquare < 0 || xSquare >= mapDims.mapx || zSquare >= mapDims.mapy)
+	if (xSquare >= mapDims.mapx || zSquare >= mapDims.mapy)
 		return 0.0f;
 
 	const int square = (xSquare >> 1) + ((zSquare >> 1) * mapDims.hmapx);
@@ -85,16 +85,12 @@ float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare
 	// with a flat normal, only consider the normalized xz-direction
 	// (the actual steepness is represented by the "slope" variable)
 	sqrNormal.SafeNormalize2D();
+	moveDir.SafeNormalize2D();
 	#endif
 
 	// note: moveDir is (or should be) a unit vector in the xz-plane, y=0
 	// scale is negative for "downhill" slopes, positive for "uphill" ones
 	const float dirSlopeMod = -moveDir.dot(sqrNormal);
-	//
-	// treat every move-direction as either fully uphill or fully downhill
-	// (otherwise units are still able to move orthogonally across vertical
-	// faces --> fixed)
-	//   const float dirSlopeMod = -Sign(moveDir.dot(sqrNormal));
 
 	switch (moveDef.speedModClass) {
 		case MoveDef::Tank:  { return (GroundSpeedMod(moveDef, height, slope, dirSlopeMod) * tt.tankSpeed ); } break;
