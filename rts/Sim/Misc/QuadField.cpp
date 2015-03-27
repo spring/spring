@@ -106,14 +106,9 @@ CQuadField::CQuadField(int2 mapDims, int quad_size)
 	assert(numQuadsZ >= 1);
 	assert((mapDims.x * SQUARE_SIZE) % quad_size == 0);
 	assert((mapDims.y * SQUARE_SIZE) % quad_size == 0);
-	assert(numQuadsX * numQuadsZ <= NUM_TEMP_QUADS);
-
-	// Without the temporary, std::max takes address of NUM_TEMP_QUADS
-	// if it isn't inlined, forcing NUM_TEMP_QUADS to be defined.
-	const int numTempQuads = NUM_TEMP_QUADS;
 
 	baseQuads.resize(numQuadsX * numQuadsZ);
-	tempQuads.resize(std::max(numTempQuads, numQuadsX * numQuadsZ));
+	tempQuads.resize(numQuadsX * numQuadsZ);
 }
 
 
@@ -170,42 +165,6 @@ std::vector<int> CQuadField::GetQuads(float3 pos, float radius) const
 
 	return ret;
 }
-
-
-unsigned int CQuadField::GetQuads(float3 pos, float radius, int*& begQuad, int*& endQuad) const
-{
-	pos.ClampInBounds();
-	pos.AssertNaNs();
-
-	assert(begQuad == &tempQuads[0]);
-	assert(endQuad == &tempQuads[0]);
-
-	const int maxx = std::min((int(pos.x + radius)) / quadSizeX + 1, numQuadsX - 1);
-	const int maxz = std::min((int(pos.z + radius)) / quadSizeZ + 1, numQuadsZ - 1);
-
-	const int minx = std::max((int(pos.x - radius)) / quadSizeX, 0);
-	const int minz = std::max((int(pos.z - radius)) / quadSizeZ, 0);
-
-	if (maxz < minz || maxx < minx) {
-		return 0;
-	}
-
-	// qsx and qsz are always equal
-	const float maxSqLength = (radius + quadSizeX * 0.72f) * (radius + quadSizeZ * 0.72f);
-
-	for (int z = minz; z <= maxz; ++z) {
-		for (int x = minx; x <= maxx; ++x) {
-			const float3 quadCenterPos = float3(x * quadSizeX + quadSizeX * 0.5f, 0, z * quadSizeZ + quadSizeZ * 0.5f);
-
-			if ((pos - quadCenterPos).SqLength2D() < maxSqLength) {
-				*endQuad = z * numQuadsX + x; ++endQuad;
-			}
-		}
-	}
-
-	return (endQuad - begQuad);
-}
-
 
 
 std::vector<CUnit*> CQuadField::GetUnits(const float3& pos, float radius)
