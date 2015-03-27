@@ -124,7 +124,7 @@ MakeGlobalVar(engineSources
 	)
 
 ### Add headers for generated project files (e.g. Code::Blocks)
-file(GLOB_RECURSE engineHeaders "*.h" "*.hpp")
+file(GLOB_RECURSE engineHeaders "*.h" "*.hpp" "*.inl")
 
 
 Add_Subdirectory(builds)
