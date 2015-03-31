@@ -330,6 +330,8 @@ void CBeamLaser::FireInternal(float3 curDir)
 			// terminate beam at water surface if necessary
 			if ((curDir.y < 0.0f) && ((curPos.y + curDir.y * beamLength) <= 0.0f)) {
 				beamLength = curPos.y / -curDir.y;
+				hitUnit = NULL;
+				hitFeature = NULL;
 			}
 		}
 
@@ -342,6 +344,8 @@ void CBeamLaser::FireInternal(float3 curDir)
 		if (shieldLength < beamLength) {
 			beamLength = shieldLength;
 			tryAgain = hitShield->BeamIntercepted(this, curPos, salvoDamageMult);
+			hitUnit = NULL;
+			hitFeature = NULL;
 		} else {
 			tryAgain = false;
 		}
