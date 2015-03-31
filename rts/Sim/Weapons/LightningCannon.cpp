@@ -63,6 +63,8 @@ void CLightningCannon::FireImpl(bool scriptCall)
 		// terminate bolt at water surface if necessary
 		if ((curDir.y < 0.0f) && ((curPos.y + curDir.y * boltLength) <= 0.0f)) {
 			boltLength = curPos.y / -curDir.y;
+			hitUnit = NULL;
+			hitFeature = NULL;
 		}
 	}
 
@@ -71,6 +73,8 @@ void CLightningCannon::FireImpl(bool scriptCall)
 	if (shieldLength < boltLength) {
 		boltLength = shieldLength;
 		hitShield->BeamIntercepted(this, curPos);
+		hitUnit = NULL;
+		hitFeature = NULL;
 	}
 
 	if (hitUnit != NULL) {
