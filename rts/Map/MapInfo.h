@@ -182,6 +182,8 @@ public:
 		std::string lightEmissionTexName;
 		std::string parallaxHeightTexName;
 
+		std::string minimapTexName;
+
 		float minHeight;
 		bool  minHeightOverride;
 		float maxHeight;
