@@ -908,14 +908,16 @@ bool CSyncedLuaHandle::UnitPreDamaged(
 	if (!RunCallInTraceback(L, cmdStr, inArgCount, outArgCount, traceBack.GetErrFuncIdx(), false))
 		return false;
 
-	if (newDamage && lua_isnumber(L, -2)) {
+	assert(newDamage);
+	if (lua_isnumber(L, -2)) {
 		*newDamage = lua_tonumber(L, -2);
 	} else if (!lua_isnumber(L, -2) || lua_isnil(L, -2)) {
 		// first value is obligatory, so may not be nil
 		LOG_L(L_WARNING, "%s(): 1st return-value should be a number (newDamage)", (cmdStr.GetString()).c_str());
 	}
 
-	if (impulseMult && lua_isnumber(L, -1)) {
+	assert(impulseMult);
+	if (lua_isnumber(L, -1)) {
 		*impulseMult = lua_tonumber(L, -1);
 	} else if (!lua_isnumber(L, -1) && !lua_isnil(L, -1)) {
 		// second value is optional, so nils are OK

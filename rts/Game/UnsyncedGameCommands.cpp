@@ -587,11 +587,11 @@ public:
 	 * @param kill whether this executor should function as the kill-
 	 * or the reload-AI command
 	 */
-	AIKillReloadActionExecutor(bool kill)
-		: IUnsyncedActionExecutor((kill ? "AIKill" : "AIReload"),
-			std::string(kill ? "Kills" : "Reloads")
+	AIKillReloadActionExecutor(bool kill_)
+		: IUnsyncedActionExecutor((kill_ ? "AIKill" : "AIReload"),
+			std::string(kill_ ? "Kills" : "Reloads")
 				+ " the Skirmish AI controlling a specified team")
-		, kill(kill)
+		, kill(kill_)
 	{}
 
 	bool Execute(const UnsyncedAction& action) const {
