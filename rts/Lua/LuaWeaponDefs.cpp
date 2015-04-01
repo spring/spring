@@ -452,6 +452,11 @@ static bool InitParamMap()
 	ADD_FLOAT("leadBonus", wd.leadBonus);
 	ADD_FLOAT("predictBoost", wd.predictBoost);
 	ADD_INT("highTrajectory", wd.highTrajectory);
+ 
+	ADD_FLOAT("dynDamageExp", wd.dynDamageExp);
+	ADD_FLOAT("dynDamageMin", wd.dynDamageMin);
+	ADD_FLOAT("dynDamageRange", wd.dynDamageRange);
+	ADD_BOOL("dynDamageInverted", wd.dynDamageInverted);
 
 	ADD_BOOL("noSelfDamage",  wd.noSelfDamage);
 	ADD_BOOL("impactOnly",    wd.impactOnly);
@@ -521,6 +526,7 @@ static bool InitParamMap()
 	ADD_FLOAT("dance",  wd.dance);
 
 	ADD_FLOAT("trajectoryHeight", wd.trajectoryHeight);
+	ADD_INT("flightTime", wd.flighttime);
 
 	ADD_BOOL("largeBeamLaser", wd.largeBeamLaser);
 	ADD_BOOL("laserHardStop", wd.laserHardStop);
