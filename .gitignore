@@ -116,3 +116,5 @@ progress.make
 *.vcxproj.filters
 *.vcxproj.user
 
+CMakeLists.txt
+.gitignore
