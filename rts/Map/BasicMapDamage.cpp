@@ -256,11 +256,10 @@ void CBasicMapDamage::UpdateLos()
 		}
 
 		RelosSquare* rs = &relosQue.front();
-		const std::list<CUnit*>& units = quadField->GetQuadAt(rs->x, rs->y).units;
+		const std::vector<CUnit*>& units = quadField->GetQuadAt(rs->x, rs->y).units;
 
-		std::list<CUnit*>::const_iterator ui;
-		for (ui = units.begin(); ui != units.end(); ++ui) {
-			relosUnits.push_back((*ui)->id);
+		for (CUnit* u: units) {
+			relosUnits.push_back(u->id);
 		}
 		relosSize -= rs->numUnits;
 		neededLosUpdate = rs->neededUpdate;

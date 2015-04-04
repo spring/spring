@@ -3,7 +3,7 @@
 #ifndef PROJECTILE_H
 #define PROJECTILE_H
 
-#include <list>
+#include <vector>
 
 #ifdef _MSC_VER
 #pragma warning(disable:4291)
@@ -49,25 +49,6 @@ public:
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 	virtual void DrawCallback() {}
 
-	struct QuadFieldCellData {
-		CR_DECLARE_STRUCT(QuadFieldCellData)
-
-		// must match typeof(QuadField::Quad::projectiles)
-		typedef std::list<CProjectile*>::iterator iter;
-
-		const int2& GetCoor(unsigned int idx) const { return coors[idx]; }
-		const iter& GetIter(unsigned int idx) const { return iters[idx]; }
-
-		void SetCoor(unsigned int idx, const int2& co) { coors[idx] = co; }
-		void SetIter(unsigned int idx, const iter& it) { iters[idx] = it; }
-
-	private:
-		// coordinates and iterators for pos, (pos+spd)*0.5, pos+spd
-		// non-hitscan projectiles *only* use coors[0] and iters[0]!
-		int2 coors[3];
-		iter iters[3];
-	};
-
 	// override WorldObject::SetVelocityAndSpeed so
 	// we can keep <dir> in sync with speed-vector
 	// (unlike other world objects, projectiles must
@@ -96,10 +77,6 @@ public:
 	unsigned int GetOwnerID() const { return ownerID; }
 	unsigned int GetTeamID() const { return teamID; }
 	int GetAllyteamID() const { return allyteamID; }
-
-	void SetQuadFieldCellData(const QuadFieldCellData& qfcd) { qfCellData = qfcd; }
-	const QuadFieldCellData& GetQuadFieldCellData() const { return qfCellData; }
-	      QuadFieldCellData& GetQuadFieldCellData()       { return qfCellData; }
 
 	unsigned int GetProjectileType() const { return projectileType; }
 	unsigned int GetCollisionFlags() const { return collisionFlags; }
@@ -146,7 +123,8 @@ protected:
 	unsigned int projectileType;
 	unsigned int collisionFlags;
 
-	QuadFieldCellData qfCellData;
+public:
+	std::vector<int> quads;
 };
 
 #endif /* PROJECTILE_H */

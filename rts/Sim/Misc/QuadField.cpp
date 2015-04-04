@@ -8,7 +8,6 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "System/creg/STL_List.h"
 
 #ifndef UNIT_TEST
 	#include "Sim/Features/Feature.h"
@@ -275,7 +274,7 @@ std::vector<int> CQuadField::GetQuadsOnRay(const float3 start, const float3 dir,
 #ifndef UNIT_TEST
 void CQuadField::MovedUnit(CUnit* unit)
 {
-	const auto& newQuads = GetQuads(unit->pos, unit->radius);
+	auto newQuads = std::move(GetQuads(unit->pos, unit->radius));
 
 	// compare if the quads have changed, if not stop here
 	if (newQuads.size() == unit->quads.size()) {
@@ -285,9 +284,9 @@ void CQuadField::MovedUnit(CUnit* unit)
 	}
 
 	for (const int qi: unit->quads) {
-		std::list<CUnit*>& quadUnits     = baseQuads[qi].units;
-		std::list<CUnit*>& quadAllyUnits = baseQuads[qi].teamUnits[unit->allyteam];
-		std::list<CUnit*>::iterator ui;
+		std::vector<CUnit*>& quadUnits     = baseQuads[qi].units;
+		std::vector<CUnit*>& quadAllyUnits = baseQuads[qi].teamUnits[unit->allyteam];
+		std::vector<CUnit*>::iterator ui;
 
 		ui = std::find(quadUnits.begin(), quadUnits.end(), unit);
 		if (ui != quadUnits.end())
@@ -299,18 +298,18 @@ void CQuadField::MovedUnit(CUnit* unit)
 	}
 
 	for (const int qi: newQuads) {
-		baseQuads[qi].units.push_front(unit);
-		baseQuads[qi].teamUnits[unit->allyteam].push_front(unit);
+		baseQuads[qi].units.push_back(unit);
+		baseQuads[qi].teamUnits[unit->allyteam].push_back(unit);
 	}
-	unit->quads = newQuads;
+	unit->quads = std::move(newQuads);
 }
 
 void CQuadField::RemoveUnit(CUnit* unit)
 {
 	for (const int qi: unit->quads) {
-		std::list<CUnit*>& quadUnits     = baseQuads[qi].units;
-		std::list<CUnit*>& quadAllyUnits = baseQuads[qi].teamUnits[unit->allyteam];
-		std::list<CUnit*>::iterator ui;
+		std::vector<CUnit*>& quadUnits     = baseQuads[qi].units;
+		std::vector<CUnit*>& quadAllyUnits = baseQuads[qi].teamUnits[unit->allyteam];
+		std::vector<CUnit*>::iterator ui;
 
 		ui = std::find(quadUnits.begin(), quadUnits.end(), unit);
 		if (ui != quadUnits.end())
@@ -330,7 +329,7 @@ void CQuadField::AddFeature(CFeature* feature)
 	const auto& newQuads = GetQuads(feature->pos, feature->radius);
 
 	for (const int qi: newQuads) {
-		baseQuads[qi].features.push_front(feature);
+		baseQuads[qi].features.push_back(feature);
 	}
 }
 
@@ -339,18 +338,16 @@ void CQuadField::RemoveFeature(CFeature* feature)
 	const auto& quads = GetQuads(feature->pos, feature->radius);
 
 	for (const int qi: quads) {
-		baseQuads[qi].features.remove(feature);
+		auto& quadFeatures = baseQuads[qi].features;
+		auto fi = std::find(quadFeatures.begin(), quadFeatures.end(), feature);
+		if (fi != quadFeatures.end())
+			quadFeatures.erase(fi);
 	}
 
 	#ifdef DEBUG_QUADFIELD
-	for (int x = 0; x < numQuadsX; x++) {
-		for (int z = 0; z < numQuadsZ; z++) {
-			const Quad& q = baseQuads[z * numQuadsX + x];
-			const std::list<CFeature*>& fs = q.features;
-
-			for (CFeature* f: fs) {
-				assert(f != feature);
-			}
+	for (const Quad& q: baseQuads) {
+		for (CFeature* f: q.features) {
+			assert(f != feature);
 		}
 	}
 	#endif
@@ -366,15 +363,8 @@ void CQuadField::MovedProjectile(CProjectile* p)
 	if (p->hitscan)
 		return;
 
-	const CProjectile::QuadFieldCellData& qfcd = p->GetQuadFieldCellData();
-
-	const int2& oldCellCoors = qfcd.GetCoor(0);
-	const int2 newCellCoors = {
-		Clamp(int(p->pos.x / quadSizeX), 0, numQuadsX - 1),
-		Clamp(int(p->pos.z / quadSizeZ), 0, numQuadsZ - 1)
-	};
-
-	if (newCellCoors != oldCellCoors) {
+	const int newQuad = WorldPosToQuadFieldIdx(p->pos);
+	if (newQuad != p->quads.back()) {
 		RemoveProjectile(p);
 		AddProjectile(p);
 	}
@@ -384,77 +374,33 @@ void CQuadField::AddProjectile(CProjectile* p)
 {
 	assert(p->synced);
 
-	CProjectile::QuadFieldCellData qfcd;
-
-	typedef std::list<CProjectile*> List;
-
 	if (p->hitscan) {
-		// all coordinates always map to a valid quad
-		qfcd.SetCoor(0, WorldPosToQuadField(p->pos));
-		qfcd.SetCoor(1, WorldPosToQuadField(p->pos + p->speed * 0.5f));
-		qfcd.SetCoor(2, WorldPosToQuadField(p->pos + p->speed       ));
+		auto newQuads = std::move(GetQuadsOnRay(p->pos, float3(p->speed).Normalize(), p->speed.w));
 
-		Quad& cell = baseQuads[numQuadsX * qfcd.GetCoor(0).y + qfcd.GetCoor(0).x];
-		List& list = cell.projectiles;
-
-		// projectiles are point-objects so they exist
-		// only in a single cell EXCEPT hit-scan types
-		qfcd.SetIter(0, list.insert(list.end(), p));
-
-		for (unsigned int n = 1; n < 3; n++) {
-			Quad& ncell = baseQuads[numQuadsX * qfcd.GetCoor(n).y + qfcd.GetCoor(n).x];
-			List& nlist = ncell.projectiles;
-
-			// prevent possible double insertions (into the same quad-list)
-			// if case p->speed is not large enough to reach adjacent quads
-			if (qfcd.GetCoor(n) != qfcd.GetCoor(n - 1)) {
-				qfcd.SetIter(n, nlist.insert(nlist.end(), p));
-			} else {
-				qfcd.SetIter(n, nlist.end());
-			}
+		for (const int qi: newQuads) {
+			baseQuads[qi].projectiles.push_back(p);
 		}
+
+		p->quads = std::move(newQuads);
 	} else {
-		qfcd.SetCoor(0,  WorldPosToQuadField(p->pos));
-
-		Quad& cell = baseQuads[numQuadsX * qfcd.GetCoor(0).y + qfcd.GetCoor(0).x];
-		List& list = cell.projectiles;
-
-		qfcd.SetIter(0, list.insert(list.end(), p));
+		int newQuad = WorldPosToQuadFieldIdx(p->pos);
+		baseQuads[newQuad].projectiles.push_back(p);
+		p->quads.clear();
+		p->quads.push_back(newQuad);
 	}
-
-	p->SetQuadFieldCellData(qfcd);
 }
 
 void CQuadField::RemoveProjectile(CProjectile* p)
 {
 	assert(p->synced);
 
-	CProjectile::QuadFieldCellData& qfcd = p->GetQuadFieldCellData();
-
-	typedef std::list<CProjectile*> List;
-
-	if (p->hitscan) {
-		for (unsigned int n = 0; n < 3; n++) {
-			Quad& cell = baseQuads[numQuadsX * qfcd.GetCoor(n).y + qfcd.GetCoor(n).x];
-			List& list = cell.projectiles;
-
-			if (qfcd.GetIter(n) != list.end()) {
-				// this is O(1) instead of O(n) and crucially
-				// important for projectiles, but less clean
-				list.erase(qfcd.GetIter(n));
-			}
-
-			qfcd.SetIter(n, list.end());
-		}
-	} else {
-		Quad& cell = baseQuads[numQuadsX * qfcd.GetCoor(0).y + qfcd.GetCoor(0).x];
-		List& list = cell.projectiles;
-
-		assert(qfcd.GetIter(0) != list.end());
-
-		list.erase(qfcd.GetIter(0));
-		qfcd.SetIter(0, list.end());
+	for (const int qi: p->quads) {
+		auto& quadProjectiles = baseQuads[qi].projectiles;
+		auto pi = std::find(quadProjectiles.begin(), quadProjectiles.end(), p);
+		if (pi != quadProjectiles.end())
+			quadProjectiles.erase(pi);
 	}
+	p->quads.clear();
 }
 
 

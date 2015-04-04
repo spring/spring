@@ -362,7 +362,7 @@ static inline void QueryUnits(TFilter filter, TQuery& query)
 			continue;
 		}
 		for (const int qi: quads) {
-			const std::list<CUnit*>& allyTeamUnits = quadField->GetQuad(qi).teamUnits[t];
+			const std::vector<CUnit*>& allyTeamUnits = quadField->GetQuad(qi).teamUnits[t];
 			for (CUnit* u: allyTeamUnits) {
 				if (u->tempNum != tempNum) {
 					u->tempNum = tempNum;
@@ -652,7 +652,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 			continue;
 		}
 		for (const int qi: quads) {
-			const std::list<CUnit*>& allyTeamUnits = quadField->GetQuad(qi).teamUnits[t];
+			const std::vector<CUnit*>& allyTeamUnits = quadField->GetQuad(qi).teamUnits[t];
 
 			for (CUnit* targetUnit: allyTeamUnits) {
 				float targetPriority = 1.0f;

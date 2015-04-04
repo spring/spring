@@ -420,9 +420,7 @@ bool TestCone(
 		const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
 		if (!ignoreAllies) {
-			const std::list<CUnit*>& units = quad.teamUnits[allyteam];
-
-			for (const CUnit* u: units) {
+			for (const CUnit* u: quad.teamUnits[allyteam]) {
 				if (u == owner)
 					continue;
 				if (!u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
@@ -434,16 +432,12 @@ bool TestCone(
 		}
 
 		if (!ignoreNeutrals) {
-			const std::list<CUnit*>& units = quad.units;
-
-			for (const CUnit* u: units) {
-				//if (!u->IsNeutral())
-				//	continue;
+			for (const CUnit* u: quad.units) {
+				if (!u->IsNeutral())
+					continue;
 				if (u == owner)
 					continue;
 				if (!u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
-					continue;
-				if (!u->IsNeutral())
 					continue;
 
 				if (TestConeHelper(from, dir, length, spread, u))
@@ -452,9 +446,7 @@ bool TestCone(
 		}
 
 		if (!ignoreFeatures) {
-			const std::list<CFeature*>& features = quad.features;
-
-			for (const CFeature* f: features) {
+			for (const CFeature* f: quad.features) {
 				if (!f->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 					continue;
 
@@ -493,9 +485,7 @@ bool TestTrajectoryCone(
 
 		// friendly units in this quad
 		if (!ignoreAllies) {
-			const std::list<CUnit*>& units = quad.teamUnits[allyteam];
-
-			for (const CUnit* u: units) {
+			for (const CUnit* u: quad.teamUnits[allyteam]) {
 				if (u == owner)
 					continue;
 				if (!u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
@@ -509,15 +499,11 @@ bool TestTrajectoryCone(
 
 		// neutral units in this quad
 		if (!ignoreNeutrals) {
-			const std::list<CUnit*>& units = quad.units;
-
-			for (const CUnit* u: units) {
-				if (u == owner)
-					continue;
+			for (const CUnit* u: quad.units) {
 				if (!u->IsNeutral())
 					continue;
-				//if (u == owner)
-				//	continue;
+				if (u == owner)
+					continue;
 				if (!u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 					continue;
 
@@ -528,9 +514,7 @@ bool TestTrajectoryCone(
 
 		// features in this quad
 		if (!ignoreFeatures) {
-			const std::list<CFeature*>& features = quad.features;
-
-			for (const CFeature* f: features) {
+			for (const CFeature* f: quad.features) {
 				if (!f->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 					continue;
 

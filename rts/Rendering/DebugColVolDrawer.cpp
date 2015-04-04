@@ -236,12 +236,12 @@ public:
 	{
 		const CQuadField::Quad& q = quadField->GetQuadAt(x, y);
 
-		for (std::list<CFeature*>::const_iterator fi = q.features.begin(); fi != q.features.end(); ++fi) {
-			DrawFeatureColVol(*fi);
+		for (const CFeature* f: q.features) {
+			DrawFeatureColVol(f);
 		}
 
-		for (std::list<CUnit*>::const_iterator ui = q.units.begin(); ui != q.units.end(); ++ui) {
-			DrawUnitColVol(*ui);
+		for (const CUnit* u: q.units) {
+			DrawUnitColVol(u);
 		}
 
 		// TODO show colvols of synced projectiles

@@ -653,7 +653,7 @@ enum UnitAllegiance {
 // never instantiated directly
 template<class T> class CWorldObjectQuadDrawer: public CReadMap::IQuadDrawer {
 public:
-	typedef std::list<T*> ObjectList;
+	typedef std::vector<T*> ObjectList;
 	typedef std::vector< const ObjectList* > ObjectVector;
 
 	void ResetState() {

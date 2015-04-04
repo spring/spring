@@ -3,7 +3,6 @@
 #ifndef QUAD_FIELD_H
 #define QUAD_FIELD_H
 
-#include <list>
 #include <vector>
 #include <boost/noncopyable.hpp>
 
@@ -99,10 +98,10 @@ needed to support dynamic resizing (not used yet)
 	struct Quad {
 		CR_DECLARE_STRUCT(Quad)
 		Quad();
-		std::list<CUnit*> units;
-		std::vector< std::list<CUnit*> > teamUnits;
-		std::list<CFeature*> features;
-		std::list<CProjectile*> projectiles;
+		std::vector<CUnit*> units;
+		std::vector< std::vector<CUnit*> > teamUnits;
+		std::vector<CFeature*> features;
+		std::vector<CProjectile*> projectiles;
 	};
 
 	const Quad& GetQuad(unsigned i) const {

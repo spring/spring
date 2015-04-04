@@ -44,10 +44,8 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(projectileType),
 	CR_MEMBER(collisionFlags),
 
-	CR_MEMBER(qfCellData)
+	CR_MEMBER(quads)
 ))
-
-CR_BIND(CProjectile::QuadFieldCellData, )
 
 
 

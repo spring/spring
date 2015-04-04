@@ -520,12 +520,7 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 	);
 
 	for (const int qi: quads) {
-		std::list<CFeature*>::const_iterator fi;
-		const std::list<CFeature*>& features = quadField->GetQuad(qi).features;
-
-		for (fi = features.begin(); fi != features.end(); ++fi) {
-			CFeature* feature = *fi;
-		//for (CFeature* feature: quadField->GetQuad(qi).features) {
+		for (CFeature* feature: quadField->GetQuad(qi).features) {
 			feature->UpdateFinalHeight(true);
 
 			// put this feature back in the update-queue
