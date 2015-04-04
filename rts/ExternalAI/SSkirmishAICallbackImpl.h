@@ -107,6 +107,24 @@ EXPORT(void             ) skirmishAiCallback_Game_getTeamColor(int skirmishAIId,
 
 EXPORT(int              ) skirmishAiCallback_Game_getTeamAllyTeam(int skirmishAIId, int otherTeamId);
 
+EXPORT(float            ) skirmishAiCallback_Game_getTeamResourceCurrent(int skirmishAIId, int otherTeamId, int resourceId);
+
+EXPORT(float            ) skirmishAiCallback_Game_getTeamResourceIncome(int skirmishAIId, int otherTeamId, int resourceId);
+
+EXPORT(float            ) skirmishAiCallback_Game_getTeamResourceUsage(int skirmishAIId, int otherTeamId, int resourceId);
+
+EXPORT(float            ) skirmishAiCallback_Game_getTeamResourceStorage(int skirmishAIId, int otherTeamId, int resourceId);
+
+EXPORT(float            ) skirmishAiCallback_Game_getTeamResourcePull(int skirmishAIId, int otherTeamId, int resourceId);
+
+EXPORT(float            ) skirmishAiCallback_Game_getTeamResourceShare(int skirmishAIId, int otherTeamId, int resourceId);
+
+EXPORT(float            ) skirmishAiCallback_Game_getTeamResourceSent(int skirmishAIId, int otherTeamId, int resourceId);
+
+EXPORT(float            ) skirmishAiCallback_Game_getTeamResourceReceived(int skirmishAIId, int otherTeamId, int resourceId);
+
+EXPORT(float            ) skirmishAiCallback_Game_getTeamResourceExcess(int skirmishAIId, int otherTeamId, int resourceId);
+
 EXPORT(bool             ) skirmishAiCallback_Game_isAllied(int skirmishAIId, int firstAllyTeamId, int secondAllyTeamId);
 
 EXPORT(bool             ) skirmishAiCallback_Game_isExceptionHandlingEnabled(int skirmishAIId);
@@ -182,6 +200,16 @@ EXPORT(float            ) skirmishAiCallback_Economy_getIncome(int skirmishAIId,
 EXPORT(float            ) skirmishAiCallback_Economy_getUsage(int skirmishAIId, int resourceId);
 
 EXPORT(float            ) skirmishAiCallback_Economy_getStorage(int skirmishAIId, int resourceId);
+
+EXPORT(float            ) skirmishAiCallback_Economy_getPull(int skirmishAIId, int resourceId);
+
+EXPORT(float            ) skirmishAiCallback_Economy_getShare(int skirmishAIId, int resourceId);
+
+EXPORT(float            ) skirmishAiCallback_Economy_getSent(int skirmishAIId, int resourceId);
+
+EXPORT(float            ) skirmishAiCallback_Economy_getReceived(int skirmishAIId, int resourceId);
+
+EXPORT(float            ) skirmishAiCallback_Economy_getExcess(int skirmishAIId, int resourceId);
 
 // END OBJECT Resource
 

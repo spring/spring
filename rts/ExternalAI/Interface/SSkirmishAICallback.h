@@ -362,6 +362,16 @@ struct SSkirmishAICallback {
 	 */
 	float             (CALLING_CONV *Game_getTeamResourceStorage)(int skirmishAIId, int otherTeamId, int resourceId);
 
+	float             (CALLING_CONV *Game_getTeamResourcePull)(int skirmishAIId, int otherTeamId, int resourceId);
+
+	float             (CALLING_CONV *Game_getTeamResourceShare)(int skirmishAIId, int otherTeamId, int resourceId);
+
+	float             (CALLING_CONV *Game_getTeamResourceSent)(int skirmishAIId, int otherTeamId, int resourceId);
+
+	float             (CALLING_CONV *Game_getTeamResourceReceived)(int skirmishAIId, int otherTeamId, int resourceId);
+
+	float             (CALLING_CONV *Game_getTeamResourceExcess)(int skirmishAIId, int otherTeamId, int resourceId);
+
 	/// Returns true, if the two supplied ally-teams are currently allied
 	bool              (CALLING_CONV *Game_isAllied)(int skirmishAIId, int firstAllyTeamId, int secondAllyTeamId);
 
@@ -502,6 +512,16 @@ struct SSkirmishAICallback {
 	float             (CALLING_CONV *Economy_getUsage)(int skirmishAIId, int resourceId); //$ REF:resourceId->Resource
 
 	float             (CALLING_CONV *Economy_getStorage)(int skirmishAIId, int resourceId); //$ REF:resourceId->Resource
+
+	float             (CALLING_CONV *Economy_getPull)(int skirmishAIId, int resourceId); //$ REF:resourceId->Resource
+
+	float             (CALLING_CONV *Economy_getShare)(int skirmishAIId, int resourceId); //$ REF:resourceId->Resource
+
+	float             (CALLING_CONV *Economy_getSent)(int skirmishAIId, int resourceId); //$ REF:resourceId->Resource
+
+	float             (CALLING_CONV *Economy_getReceived)(int skirmishAIId, int resourceId); //$ REF:resourceId->Resource
+
+	float             (CALLING_CONV *Economy_getExcess)(int skirmishAIId, int resourceId); //$ REF:resourceId->Resource
 
 // END OBJECT Resource
 
