@@ -35,7 +35,7 @@ needed to support dynamic resizing (not used yet)
 	~CQuadField();
 
 	std::vector<int> GetQuads(float3 pos, const float radius);
-	std::vector<int> GetQuadsRectangle(const float3 pos1, const float3 pos2);
+	std::vector<int> GetQuadsRectangle(const float3 mins, const float3 maxs);
 	std::vector<int> GetQuadsOnRay(const float3 start, const float3 dir, const float length);
 
 	void GetUnitsAndFeaturesColVol(

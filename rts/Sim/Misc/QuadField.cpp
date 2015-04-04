@@ -136,22 +136,18 @@ std::vector<int> CQuadField::GetQuads(float3 pos, const float radius)
 	pos.ClampInBounds();
 	std::vector<int> ret;
 
+	const int2 min = WorldPosToQuadField(pos - radius);
+	const int2 max = WorldPosToQuadField(pos + radius) + int2(1,1);
+
+	if (max.y < min.y || max.x < min.x)
+		return ret;
+
 	// qsx and qsz are always equal
 	const float maxSqLength = (radius + quadSizeX * 0.72f) * (radius + quadSizeZ * 0.72f);
 
-	const int maxx = std::min(int(pos.x + radius) / quadSizeX + 1, numQuadsX - 1);
-	const int maxz = std::min(int(pos.z + radius) / quadSizeZ + 1, numQuadsZ - 1);
-
-	const int minx = std::max(int(pos.x - radius) / quadSizeX, 0);
-	const int minz = std::max(int(pos.z - radius) / quadSizeZ, 0);
-
-	if (maxz < minz || maxx < minx) {
-		return ret;
-	}
-
-	ret.reserve((maxz - minz) * (maxx - minx));
-	for (int z = minz; z <= maxz; ++z) {
-		for (int x = minx; x <= maxx; ++x) {
+	ret.reserve((max.y - min.y) * (max.x - min.x));
+	for (int z = min.y; z <= max.y; ++z) {
+		for (int x = min.x; x <= max.x; ++x) {
 			assert(x < numQuadsX);
 			assert(z < numQuadsZ);
 			const float3 quadPos = float3(x * quadSizeX + quadSizeX * 0.5f, 0, z * quadSizeZ + quadSizeZ * 0.5f);
@@ -165,24 +161,21 @@ std::vector<int> CQuadField::GetQuads(float3 pos, const float radius)
 }
 
 
-std::vector<int> CQuadField::GetQuadsRectangle(const float3 pos1, const float3 pos2)
+std::vector<int> CQuadField::GetQuadsRectangle(const float3 mins, const float3 maxs)
 {
-	pos1.AssertNaNs();
-	pos2.AssertNaNs();
+	mins.AssertNaNs();
+	maxs.AssertNaNs();
 	std::vector<int> ret;
 
-	const int maxx = Clamp(int(pos2.x) / quadSizeX + 1, 0, numQuadsX - 1);
-	const int maxz = Clamp(int(pos2.z) / quadSizeZ + 1, 0, numQuadsZ - 1);
+	const int2 min = WorldPosToQuadField(mins);
+	const int2 max = WorldPosToQuadField(maxs) + int2(1,1);
 
-	const int minx = Clamp(int(pos1.x) / quadSizeX, 0, numQuadsX - 1);
-	const int minz = Clamp(int(pos1.z) / quadSizeZ, 0, numQuadsZ - 1);
-
-	if (maxz < minz || maxx < minx)
+	if (max.y < min.y || max.x < min.x)
 		return ret;
 
-	ret.reserve((maxz - minz) * (maxx - minx));
-	for (int z = minz; z <= maxz; ++z) {
-		for (int x = minx; x <= maxx; ++x) {
+	ret.reserve((max.y - min.y) * (max.x - min.x));
+	for (int z = min.y; z <= max.y; ++z) {
+		for (int x = min.x; x <= max.x; ++x) {
 			ret.push_back(z * numQuadsX + x);
 		}
 	}
