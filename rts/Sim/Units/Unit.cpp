@@ -1665,7 +1665,6 @@ bool CUnit::AttackUnit(CUnit* targetUnit, bool isUserTarget, bool wantManualFire
 		//
 		// NOTE: "&&" because we have a separate userAttackGround (!)
 		w->targetType = Target_None;
-		w->haveUserTarget = (targetUnit != NULL && isUserTarget);
 
 		if (targetUnit == NULL)
 			continue;
