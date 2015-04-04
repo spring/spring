@@ -193,12 +193,10 @@ float TraceRay(
 
 		// feature intersection
 		if (!ignoreFeatures) {
-			for (int quadIdx: quads) {
+			for (const int quadIdx: quads) {
 				const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
-				for (std::list<CFeature*>::const_iterator ui = quad.features.begin(); ui != quad.features.end(); ++ui) {
-					CFeature* f = *ui;
-
+				for (CFeature* f: quad.features) {
 					// NOTE:
 					//     if f is non-blocking, ProjectileHandler will not test
 					//     for collisions with projectiles so we can skip it here
@@ -221,12 +219,10 @@ float TraceRay(
 
 		// unit intersection
 		if (!ignoreUnits) {
-			for (int quadIdx: quads) {
+			for (const int quadIdx: quads) {
 				const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
-				for (std::list<CUnit*>::const_iterator ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
-					CUnit* u = *ui;
-
+				for (CUnit* u: quad.units) {
 					if (u == owner)
 						continue;
 					if (!u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
@@ -309,19 +305,14 @@ float GuiTraceRay(
 	if (groundOnly)
 		return minRayLength;
 
-	std::list<CUnit*>::const_iterator ui;
-	std::list<CFeature*>::const_iterator fi;
-
 	CollisionQuery cq;
 
 	const auto& quads = quadField->GetQuadsOnRay(start, dir, length);
-	for (int quadIdx: quads) {
+	for (const int quadIdx: quads) {
 		const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
 		// Unit Intersection
-		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
-			CUnit* unit = *ui;
-
+		for (CUnit* unit: quad.units) {
 			const bool unitIsEnemy = !teamHandler->Ally(unit->allyteam, gu->myAllyTeam);
 			const bool unitOnRadar = (useRadar && radarHandler->InRadar(unit, gu->myAllyTeam));
 			const bool unitInSight = (unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR));
@@ -369,9 +360,7 @@ float GuiTraceRay(
 		}
 
 		// Feature Intersection
-		for (fi = quad.features.begin(); fi != quad.features.end(); ++fi) {
-			CFeature* f = *fi;
-
+		for (CFeature* f: quad.features) {
 			if (!gu->spectatingFullView && !f->IsInLosForAllyTeam(gu->myAllyTeam))
 				continue;
 			// test this bit only in synced traces, rely on noSelect here
@@ -427,16 +416,13 @@ bool TestCone(
 	const bool ignoreNeutrals = ((avoidFlags & Collision::NONEUTRALS  ) != 0);
 	const bool ignoreFeatures = ((avoidFlags & Collision::NOFEATURES  ) != 0);
 
-	for (int quadIdx: quads) {
+	for (const int quadIdx: quads) {
 		const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
 		if (!ignoreAllies) {
 			const std::list<CUnit*>& units = quad.teamUnits[allyteam];
-			      std::list<CUnit*>::const_iterator unitsIt;
 
-			for (unitsIt = units.begin(); unitsIt != units.end(); ++unitsIt) {
-				const CUnit* u = *unitsIt;
-
+			for (const CUnit* u: units) {
 				if (u == owner)
 					continue;
 				if (!u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
@@ -449,11 +435,10 @@ bool TestCone(
 
 		if (!ignoreNeutrals) {
 			const std::list<CUnit*>& units = quad.units;
-			      std::list<CUnit*>::const_iterator unitsIt;
 
-			for (unitsIt = units.begin(); unitsIt != units.end(); ++unitsIt) {
-				const CUnit* u = *unitsIt;
-
+			for (const CUnit* u: units) {
+				//if (!u->IsNeutral())
+				//	continue;
 				if (u == owner)
 					continue;
 				if (!u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
@@ -468,11 +453,8 @@ bool TestCone(
 
 		if (!ignoreFeatures) {
 			const std::list<CFeature*>& features = quad.features;
-			      std::list<CFeature*>::const_iterator featuresIt;
 
-			for (featuresIt = features.begin(); featuresIt != features.end(); ++featuresIt) {
-				const CFeature* f = *featuresIt;
-
+			for (const CFeature* f: features) {
 				if (!f->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 					continue;
 
@@ -506,17 +488,14 @@ bool TestTrajectoryCone(
 	const bool ignoreNeutrals = ((avoidFlags & Collision::NONEUTRALS  ) != 0);
 	const bool ignoreFeatures = ((avoidFlags & Collision::NOFEATURES  ) != 0);
 
-	for (int quadIdx: quads) {
+	for (const int quadIdx: quads) {
 		const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
 		// friendly units in this quad
 		if (!ignoreAllies) {
 			const std::list<CUnit*>& units = quad.teamUnits[allyteam];
-			      std::list<CUnit*>::const_iterator unitsIt;
 
-			for (unitsIt = units.begin(); unitsIt != units.end(); ++unitsIt) {
-				const CUnit* u = *unitsIt;
-
+			for (const CUnit* u: units) {
 				if (u == owner)
 					continue;
 				if (!u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
@@ -531,15 +510,14 @@ bool TestTrajectoryCone(
 		// neutral units in this quad
 		if (!ignoreNeutrals) {
 			const std::list<CUnit*>& units = quad.units;
-			      std::list<CUnit*>::const_iterator unitsIt;
 
-			for (unitsIt = units.begin(); unitsIt != units.end(); ++unitsIt) {
-				const CUnit* u = *unitsIt;
-
+			for (const CUnit* u: units) {
 				if (u == owner)
 					continue;
 				if (!u->IsNeutral())
 					continue;
+				//if (u == owner)
+				//	continue;
 				if (!u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 					continue;
 
@@ -551,11 +529,8 @@ bool TestTrajectoryCone(
 		// features in this quad
 		if (!ignoreFeatures) {
 			const std::list<CFeature*>& features = quad.features;
-			      std::list<CFeature*>::const_iterator featuresIt;
 
-			for (featuresIt = features.begin(); featuresIt != features.end(); ++featuresIt) {
-				const CFeature* f = *featuresIt;
-
+			for (const CFeature* f: features) {
 				if (!f->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 					continue;
 

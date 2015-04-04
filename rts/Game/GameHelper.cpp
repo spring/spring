@@ -354,16 +354,15 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 template<typename TFilter, typename TQuery>
 static inline void QueryUnits(TFilter filter, TQuery& query)
 {
-	const vector<int>& quads = quadField->GetQuads(query.pos, query.radius);
+	const auto& quads = quadField->GetQuads(query.pos, query.radius);
 	const int tempNum = gs->tempNum++;
 
-	for (int qi: quads) {
-		const CQuadField::Quad& quad = quadField->GetQuad(qi);
-		for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
-			if (!filter.Team(t)) {
-				continue;
-			}
-			const std::list<CUnit*>& allyTeamUnits = quad.teamUnits[t];
+	for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) { //FIXME
+		if (!filter.Team(t)) {
+			continue;
+		}
+		for (const int qi: quads) {
+			const std::list<CUnit*>& allyTeamUnits = quadField->GetQuad(qi).teamUnits[t];
 			for (CUnit* u: allyTeamUnits) {
 				if (u->tempNum != tempNum) {
 					u->tempNum = tempNum;
@@ -645,23 +644,17 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 	const float secDamage = weaponDef->damages.GetDefaultDamage() * weapon->salvoSize / weapon->reloadTime * GAME_SPEED;
 	const bool paralyzer  = (weaponDef->damages.paralyzeDamageTime != 0);
 
-	const std::vector<int>& quads = quadField->GetQuads(pos, radius + (aHeight - std::max(0.0f, readMap->GetInitMinHeight())) * heightMod);
-
+	const auto& quads = quadField->GetQuads(pos, radius + (aHeight - std::max(0.0f, readMap->GetInitMinHeight())) * heightMod);
 	const int tempNum = targetTempNum++;
 
-	typedef std::vector<int>::const_iterator VectorIt;
-	typedef std::list<CUnit*>::const_iterator ListIt;
+	for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
+		if (teamHandler->Ally(attacker->allyteam, t)) {
+			continue;
+		}
+		for (const int qi: quads) {
+			const std::list<CUnit*>& allyTeamUnits = quadField->GetQuad(qi).teamUnits[t];
 
-	for (VectorIt qi = quads.begin(); qi != quads.end(); ++qi) {
-		for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
-			if (teamHandler->Ally(attacker->allyteam, t)) {
-				continue;
-			}
-
-			const std::list<CUnit*>& allyTeamUnits = quadField->GetQuad(*qi).teamUnits[t];
-
-			for (ListIt ui = allyTeamUnits.begin(); ui != allyTeamUnits.end(); ++ui) {
-				CUnit* targetUnit = *ui;
+			for (CUnit* targetUnit: allyTeamUnits) {
 				float targetPriority = 1.0f;
 
 				if (!(targetUnit->category & weapon->onlyTargetCategory)) {

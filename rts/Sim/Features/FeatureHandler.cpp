@@ -514,17 +514,18 @@ void CFeatureHandler::SetFeatureUpdateable(CFeature* feature, bool updateable)
 
 void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 {
-	const std::vector<int>& quads = quadField->GetQuadsRectangle(
+	const auto& quads = quadField->GetQuadsRectangle(
 		float3(x1 * SQUARE_SIZE, 0, y1 * SQUARE_SIZE),
 		float3(x2 * SQUARE_SIZE, 0, y2 * SQUARE_SIZE)
 	);
 
-	for (std::vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
+	for (const int qi: quads) {
 		std::list<CFeature*>::const_iterator fi;
-		const std::list<CFeature*>& features = quadField->GetQuad(*qi).features;
+		const std::list<CFeature*>& features = quadField->GetQuad(qi).features;
 
 		for (fi = features.begin(); fi != features.end(); ++fi) {
 			CFeature* feature = *fi;
+		//for (CFeature* feature: quadField->GetQuad(qi).features) {
 			feature->UpdateFinalHeight(true);
 
 			// put this feature back in the update-queue

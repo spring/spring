@@ -3,9 +3,8 @@
 #ifndef QUAD_FIELD_H
 #define QUAD_FIELD_H
 
-#include <set>
-#include <vector>
 #include <list>
+#include <vector>
 #include <boost/noncopyable.hpp>
 
 #include "System/creg/creg_cond.h"
@@ -36,9 +35,9 @@ needed to support dynamic resizing (not used yet)
 	CQuadField(int2 mapDims, int quad_size);
 	~CQuadField();
 
-	const std::vector<int>& GetQuads(float3 pos, float radius);
-	const std::vector<int>& GetQuadsRectangle(const float3& pos1, const float3& pos2);
-	const std::vector<int>& GetQuadsOnRay(float3 start, float3 dir, float length);
+	std::vector<int> GetQuads(float3 pos, const float radius);
+	std::vector<int> GetQuadsRectangle(const float3 pos1, const float3 pos2);
+	std::vector<int> GetQuadsOnRay(const float3 start, const float3 dir, const float length);
 
 	void GetUnitsAndFeaturesColVol(
 		const float3& pos,
@@ -139,7 +138,6 @@ private:
 
 private:
 	std::vector<Quad> baseQuads;
-	std::vector<int> tempQuads;
 
 	int numQuadsX;
 	int numQuadsZ;
