@@ -44,11 +44,9 @@ void CWeaponLoader::LoadWeapons(CUnit* unit)
 
 	weapons.reserve(defWeapons.size());
 
-	for (unsigned int i = 0; i < defWeapons.size(); i++) {
-		const UnitDefWeapon* defWeapon = &defWeapons[i];
-		CWeapon* weapon = LoadWeapon(unit, defWeapon);
-
-		weapons.push_back(InitWeapon(unit, weapon, defWeapon));
+	for (const UnitDefWeapon& defWeapon: defWeapons) {
+		CWeapon* weapon = LoadWeapon(unit, &defWeapon);
+		weapons.push_back(InitWeapon(unit, weapon, &defWeapon));
 		unit->maxRange = std::max(weapon->range, unit->maxRange);
 	}
 }

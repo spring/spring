@@ -314,6 +314,7 @@ MoveDef::MoveDef(const LuaTable& moveDefTable, int moveDefID) {
 	assert((zsize & 1) == 1);
 }
 
+
 bool MoveDef::TestMoveSquare(
 	const CSolidObject* collider,
 	const int xTestMoveSqr,
@@ -330,20 +331,23 @@ bool MoveDef::TestMoveSquare(
 	float                minSpeedMod_ = std::numeric_limits<float>::max();;
 	CMoveMath::BlockType maxBlockBit_ = CMoveMath::BLOCK_NONE;
 
-	const int jMin = -zsizeh * (1 - centerOnly), jMax = zsizeh * (1 - centerOnly);
-	const int iMin = -xsizeh * (1 - centerOnly), iMax = xsizeh * (1 - centerOnly);
+	const int zMin = -zsizeh * (1 - centerOnly), zMax = zsizeh * (1 - centerOnly);
+	const int xMin = -xsizeh * (1 - centerOnly), xMax = xsizeh * (1 - centerOnly);
 
-	for (int j = jMin; (j <= jMax) && ret; j++) {
-		for (int i = iMin; (i <= iMax) && ret; i++) {
-			// GetPosSpeedMod only checks *one* square of terrain
-			// (heightmap/slopemap/typemap), not the blocking-map
-			const float speedMod = CMoveMath::GetPosSpeedMod(*this, xTestMoveSqr + i, zTestMoveSqr + j, testMoveDir);
-			const CMoveMath::BlockType blockBits = CMoveMath::SquareIsBlocked(*this, xTestMoveSqr + i, zTestMoveSqr + j, collider);
+	for (int z = zMin; (z <= zMax) && ret; z++) {
+		for (int x = xMin; (x <= xMax) && ret; x++) {
+			const float speedMod = CMoveMath::GetPosSpeedMod(*this, xTestMoveSqr + x, zTestMoveSqr + z, testMoveDir);
+			minSpeedMod_ = std::min(minSpeedMod_, speedMod);
+			if (testTerrain) { ret &= (speedMod > 0.0f); }
+		}
+	}
 
-			minSpeedMod_  = std::min(minSpeedMod_, speedMod);
+	// GetPosSpeedMod only checks *one* square of terrain
+	// (heightmap/slopemap/typemap), not the blocking-map
+	for (int z = zMin; (z <= zMax) && ret; z++) {
+		for (int x = xMin; (x <= xMax) && ret; x++) {
+			const CMoveMath::BlockType blockBits = CMoveMath::SquareIsBlocked(*this, xTestMoveSqr + x, zTestMoveSqr + z, collider);
 			maxBlockBit_ |= blockBits;
-
-			if (testTerrain) { ret &=  (speedMod > 0.0f); }
 			if (testObjects) { ret &= !(blockBits & CMoveMath::BLOCK_STRUCTURE); }
 		}
 	}
@@ -352,6 +356,7 @@ bool MoveDef::TestMoveSquare(
 	if (maxBlockBit != nullptr) *maxBlockBit |= int(maxBlockBit_);
 	return ret;
 }
+
 
 bool MoveDef::TestMoveSquare(
 	const CSolidObject* collider,
