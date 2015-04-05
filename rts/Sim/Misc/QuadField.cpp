@@ -137,7 +137,7 @@ std::vector<int> CQuadField::GetQuads(float3 pos, const float radius)
 	std::vector<int> ret;
 
 	const int2 min = WorldPosToQuadField(pos - radius);
-	const int2 max = WorldPosToQuadField(pos + radius) + int2(1,1);
+	const int2 max = WorldPosToQuadField(pos + radius);
 
 	if (max.y < min.y || max.x < min.x)
 		return ret;
@@ -168,7 +168,7 @@ std::vector<int> CQuadField::GetQuadsRectangle(const float3 mins, const float3 m
 	std::vector<int> ret;
 
 	const int2 min = WorldPosToQuadField(mins);
-	const int2 max = WorldPosToQuadField(maxs) + int2(1,1);
+	const int2 max = WorldPosToQuadField(maxs);
 
 	if (max.y < min.y || max.x < min.x)
 		return ret;
@@ -176,6 +176,8 @@ std::vector<int> CQuadField::GetQuadsRectangle(const float3 mins, const float3 m
 	ret.reserve((max.y - min.y) * (max.x - min.x));
 	for (int z = min.y; z <= max.y; ++z) {
 		for (int x = min.x; x <= max.x; ++x) {
+			assert(x < numQuadsX);
+			assert(z < numQuadsZ);
 			ret.push_back(z * numQuadsX + x);
 		}
 	}
