@@ -3725,16 +3725,13 @@ int LuaSyncedRead::GetUnitFeatureSeparation(lua_State* L)
 	}
 
 	float3 pos1;
-	if (IsAllyUnit(L, unit)) {
-		pos1 = unit->midPos;
-	} else {
-		pos1 = helper->GetUnitErrorPos(unit, CLuaHandle::GetHandleReadAllyTeam(L));
+	if (!IsAllyUnit(L, unit)) {
+		pos1 = unit->GetErrorPos(CLuaHandle::GetHandleReadAllyTeam(L));
 	}
 	float3 pos2 = feature->pos;
 
 
 	float dist;
-	//const int args = lua_gettop(L); // number of arguments
 	if (lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
 		dist = pos1.distance2D(pos2);
 	} else {
@@ -4492,7 +4489,6 @@ int LuaSyncedRead::GetFeatureSeparation(lua_State* L)
 	float3 pos2 = feature2->pos;
 
 	float dist;
-	//const int args = lua_gettop(L); // number of arguments
 	if (lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
 		dist = pos1.distance2D(pos2);
 	} else {
