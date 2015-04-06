@@ -182,11 +182,11 @@ public:
 		std::string lightEmissionTexName;
 		std::string parallaxHeightTexName;
 
-        // SMF overrides
+		// SMF overrides
 		std::string minimapTexName;
-        std::string typemapTexName;
-        std::string metalmapTexName;
-        std::string grassmapTexName;
+		std::string typemapTexName;
+		std::string metalmapTexName;
+		std::string grassmapTexName;
 
 
 		float minHeight;
