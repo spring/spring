@@ -236,6 +236,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitLastAttackedPiece);
 	REGISTER_LUA_CFUNC(GetUnitLosState);
 	REGISTER_LUA_CFUNC(GetUnitSeparation);
+	REGISTER_LUA_CFUNC(GetUnitFeatureSeparation);
 	REGISTER_LUA_CFUNC(GetUnitDefDimensions);
 	REGISTER_LUA_CFUNC(GetUnitCollisionVolumeData);
 	REGISTER_LUA_CFUNC(GetUnitPieceCollisionVolumeData);
@@ -272,6 +273,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetFeatureNoSelect);
 	REGISTER_LUA_CFUNC(GetFeatureResurrect);
 	REGISTER_LUA_CFUNC(GetFeatureCollisionVolumeData);
+	REGISTER_LUA_CFUNC(GetFeatureSeparation);
 
 	REGISTER_LUA_CFUNC(GetProjectilePosition);
 	REGISTER_LUA_CFUNC(GetProjectileDirection);
@@ -3711,6 +3713,39 @@ int LuaSyncedRead::GetUnitSeparation(lua_State* L)
 }
 
 
+int LuaSyncedRead::GetUnitFeatureSeparation(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 2);
+	if (feature == NULL  || !IsFeatureVisible(L, feature)) {
+		return 0;
+	}
+
+	float3 pos1;
+	if (IsAllyUnit(L, unit)) {
+		pos1 = unit->midPos;
+	} else {
+		pos1 = helper->GetUnitErrorPos(unit, CLuaHandle::GetHandleReadAllyTeam(L));
+	}
+	float3 pos2 = feature->pos;
+
+
+	float dist;
+	//const int args = lua_gettop(L); // number of arguments
+	if (lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
+		dist = pos1.distance2D(pos2);
+	} else {
+		dist = pos1.distance(pos2);
+	}
+	lua_pushnumber(L, dist);
+
+	return 1;
+}
+
+
 int LuaSyncedRead::GetUnitDefDimensions(lua_State* L)
 {
 	const int unitDefID = luaL_checkint(L, 1);
@@ -4441,6 +4476,33 @@ int LuaSyncedRead::GetFeaturePosition(lua_State* L)
 {
 	return (GetSolidObjectPosition(L, ParseFeature(L, __FUNCTION__, 1), true));
 }
+
+int LuaSyncedRead::GetFeatureSeparation(lua_State* L)
+{
+	CFeature* feature1 = ParseFeature(L, __FUNCTION__, 1);
+	if (feature1 == NULL  || !IsFeatureVisible(L, feature1)) {
+		return 0;
+	}
+	CFeature* feature2 = ParseFeature(L, __FUNCTION__, 2);
+	if (feature2 == NULL  || !IsFeatureVisible(L, feature2)) {
+		return 0;
+	}
+
+	float3 pos1 = feature1->pos;
+	float3 pos2 = feature2->pos;
+
+	float dist;
+	//const int args = lua_gettop(L); // number of arguments
+	if (lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
+		dist = pos1.distance2D(pos2);
+	} else {
+		dist = pos1.distance(pos2);
+	}
+	lua_pushnumber(L, dist);
+
+	return 1;
+}
+
 
 int LuaSyncedRead::GetFeatureDirection(lua_State* L)
 {
