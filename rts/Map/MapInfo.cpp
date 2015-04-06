@@ -364,7 +364,14 @@ void CMapInfo::ReadSMF()
 	smf.maxHeight = smfTable.GetFloat("maxHeight", 0.0f);
 
 	smf.minimapTexName = smfTable.GetString("minimapTex", "");
+	smf.metalmapTexName = smfTable.GetString("metalmapTex", "");
+	smf.typemapTexName = smfTable.GetString("typemapTex", "");
+	smf.grassmapTexName = smfTable.GetString("grassmapTex", "");
+
 	if (!smf.minimapTexName.empty()) { smf.minimapTexName = "maps/" + smf.minimapTexName; }
+	if (!smf.metalmapTexName.empty()) { smf.metalmapTexName = "maps/" + smf.metalmapTexName; }
+	if (!smf.typemapTexName.empty()) { smf.typemapTexName = "maps/" + smf.typemapTexName; }
+	if (!smf.grassmapTexName.empty()) { smf.grassmapTexName = "maps/" + smf.grassmapTexName; }
 
 	std::stringstream ss;
 
