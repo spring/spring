@@ -1312,6 +1312,86 @@ EXPORT(float) skirmishAiCallback_Game_getTeamResourceStorage(int skirmishAIId, i
 	return res;
 }
 
+EXPORT(float) skirmishAiCallback_Game_getTeamResourcePull(int skirmishAIId, int otherTeamId, int resourceId) {
+
+	float res = -1.0f;
+
+	const bool fetchOk = teamHandler->AlliedTeams(skirmishAIId_teamId[skirmishAIId], otherTeamId) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId);
+	if (fetchOk) {
+		if (resourceId == resourceHandler->GetMetalId()) {
+			res = teamHandler->Team(otherTeamId)->resStorage.metal;
+		} else if (resourceId == resourceHandler->GetEnergyId()) {
+			res = teamHandler->Team(otherTeamId)->resStorage.energy;
+		}
+	}
+
+	return res;
+}
+
+EXPORT(float) skirmishAiCallback_Game_getTeamResourceShare(int skirmishAIId, int otherTeamId, int resourceId) {
+
+	float res = -1.0f;
+
+	const bool fetchOk = teamHandler->AlliedTeams(skirmishAIId_teamId[skirmishAIId], otherTeamId) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId);
+	if (fetchOk) {
+		if (resourceId == resourceHandler->GetMetalId()) {
+			res = teamHandler->Team(otherTeamId)->resShare.metal;
+		} else if (resourceId == resourceHandler->GetEnergyId()) {
+			res = teamHandler->Team(otherTeamId)->resShare.energy;
+		}
+	}
+
+	return res;
+}
+
+EXPORT(float) skirmishAiCallback_Game_getTeamResourceSent(int skirmishAIId, int otherTeamId, int resourceId) {
+
+	float res = -1.0f;
+
+	const bool fetchOk = teamHandler->AlliedTeams(skirmishAIId_teamId[skirmishAIId], otherTeamId) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId);
+	if (fetchOk) {
+		if (resourceId == resourceHandler->GetMetalId()) {
+			res = teamHandler->Team(otherTeamId)->resPrevSent.metal;
+		} else if (resourceId == resourceHandler->GetEnergyId()) {
+			res = teamHandler->Team(otherTeamId)->resPrevSent.energy;
+		}
+	}
+
+	return res;
+}
+
+EXPORT(float) skirmishAiCallback_Game_getTeamResourceReceived(int skirmishAIId, int otherTeamId, int resourceId) {
+
+	float res = -1.0f;
+
+	const bool fetchOk = teamHandler->AlliedTeams(skirmishAIId_teamId[skirmishAIId], otherTeamId) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId);
+	if (fetchOk) {
+		if (resourceId == resourceHandler->GetMetalId()) {
+			res = teamHandler->Team(otherTeamId)->resPrevReceived.metal;
+		} else if (resourceId == resourceHandler->GetEnergyId()) {
+			res = teamHandler->Team(otherTeamId)->resPrevReceived.energy;
+		}
+	}
+
+	return res;
+}
+
+EXPORT(float) skirmishAiCallback_Game_getTeamResourceExcess(int skirmishAIId, int otherTeamId, int resourceId) {
+
+	float res = -1.0f;
+
+	const bool fetchOk = teamHandler->AlliedTeams(skirmishAIId_teamId[skirmishAIId], otherTeamId) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId);
+	if (fetchOk) {
+		if (resourceId == resourceHandler->GetMetalId()) {
+			res = teamHandler->Team(otherTeamId)->resPrevExcess.metal;
+		} else if (resourceId == resourceHandler->GetEnergyId()) {
+			res = teamHandler->Team(otherTeamId)->resPrevExcess.energy;
+		}
+	}
+
+	return res;
+}
+
 EXPORT(bool) skirmishAiCallback_Game_isAllied(int skirmishAIId, int firstAllyTeamId, int secondAllyTeamId) {
 	return teamHandler->Ally(firstAllyTeamId, secondAllyTeamId);
 }
@@ -2092,6 +2172,71 @@ EXPORT(float) skirmishAiCallback_Economy_getStorage(int skirmishAIId,
 	} else {
 		return -1.0f;
 	}
+}
+
+EXPORT(float) skirmishAiCallback_Economy_getPull(int skirmishAIId, int resourceId) {
+
+    int teamId = skirmishAIId_teamId[skirmishAIId];
+
+	if (resourceId == resourceHandler->GetMetalId()) {
+		return teamHandler->Team(teamId)->resPrevPull.metal;
+	} else if (resourceId == resourceHandler->GetEnergyId()) {
+		return teamHandler->Team(teamId)->resPrevPull.energy;
+	}
+
+	return -1.0f;
+}
+
+EXPORT(float) skirmishAiCallback_Economy_getShare(int skirmishAIId, int resourceId) {
+
+    int teamId = skirmishAIId_teamId[skirmishAIId];
+
+	if (resourceId == resourceHandler->GetMetalId()) {
+		return teamHandler->Team(teamId)->resShare.metal;
+	} else if (resourceId == resourceHandler->GetEnergyId()) {
+		return teamHandler->Team(teamId)->resShare.energy;
+	}
+
+	return -1.0f;
+}
+
+EXPORT(float) skirmishAiCallback_Economy_getSent(int skirmishAIId, int resourceId) {
+
+    int teamId = skirmishAIId_teamId[skirmishAIId];
+
+	if (resourceId == resourceHandler->GetMetalId()) {
+		return teamHandler->Team(teamId)->resPrevSent.metal;
+	} else if (resourceId == resourceHandler->GetEnergyId()) {
+		return teamHandler->Team(teamId)->resPrevSent.energy;
+	}
+
+	return -1.0f;
+}
+
+EXPORT(float) skirmishAiCallback_Economy_getReceived(int skirmishAIId, int resourceId) {
+
+    int teamId = skirmishAIId_teamId[skirmishAIId];
+
+	if (resourceId == resourceHandler->GetMetalId()) {
+		return teamHandler->Team(teamId)->resPrevReceived.metal;
+	} else if (resourceId == resourceHandler->GetEnergyId()) {
+		return teamHandler->Team(teamId)->resPrevReceived.energy;
+	}
+
+    return -1.0f;
+}
+
+EXPORT(float) skirmishAiCallback_Economy_getExcess(int skirmishAIId, int resourceId) {
+
+    int teamId = skirmishAIId_teamId[skirmishAIId];
+
+	if (resourceId == resourceHandler->GetMetalId()) {
+		return teamHandler->Team(teamId)->resPrevExcess.metal;
+	} else if (resourceId == resourceHandler->GetEnergyId()) {
+		return teamHandler->Team(teamId)->resPrevExcess.energy;
+	}
+
+	return -1.0f;
 }
 
 EXPORT(const char*) skirmishAiCallback_Game_getSetupScript(int skirmishAIId) {
@@ -4877,6 +5022,11 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Game_getTeamResourceIncome = &skirmishAiCallback_Game_getTeamResourceIncome;
 	callback->Game_getTeamResourceUsage = &skirmishAiCallback_Game_getTeamResourceUsage;
 	callback->Game_getTeamResourceStorage = &skirmishAiCallback_Game_getTeamResourceStorage;
+	callback->Game_getTeamResourcePull = &skirmishAiCallback_Game_getTeamResourcePull;
+	callback->Game_getTeamResourceShare = &skirmishAiCallback_Game_getTeamResourceShare;
+	callback->Game_getTeamResourceSent = &skirmishAiCallback_Game_getTeamResourceSent;
+	callback->Game_getTeamResourceReceived = &skirmishAiCallback_Game_getTeamResourceReceived;
+	callback->Game_getTeamResourceExcess = &skirmishAiCallback_Game_getTeamResourceExcess;
 	callback->Game_isAllied = &skirmishAiCallback_Game_isAllied;
 	callback->Game_isExceptionHandlingEnabled = &skirmishAiCallback_Game_isExceptionHandlingEnabled;
 	callback->Game_isDebugModeEnabled = &skirmishAiCallback_Game_isDebugModeEnabled;
@@ -4909,6 +5059,11 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Economy_getIncome = &skirmishAiCallback_Economy_getIncome;
 	callback->Economy_getUsage = &skirmishAiCallback_Economy_getUsage;
 	callback->Economy_getStorage = &skirmishAiCallback_Economy_getStorage;
+	callback->Economy_getPull = &skirmishAiCallback_Economy_getPull;
+	callback->Economy_getShare = &skirmishAiCallback_Economy_getShare;
+	callback->Economy_getSent = &skirmishAiCallback_Economy_getSent;
+	callback->Economy_getReceived = &skirmishAiCallback_Economy_getReceived;
+	callback->Economy_getExcess = &skirmishAiCallback_Economy_getExcess;
 	callback->File_getSize = &skirmishAiCallback_File_getSize;
 	callback->File_getContent = &skirmishAiCallback_File_getContent;
 	callback->getUnitDefs = &skirmishAiCallback_getUnitDefs;
