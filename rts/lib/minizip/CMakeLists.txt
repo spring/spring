@@ -17,6 +17,7 @@ Else   (MINIZIP_FOUND)
 			"ioapi"
 		)
 
+	add_definitions(-DNOCRYPT -DNOUNCRYPT)
 	FIND_PACKAGE(ZLIB REQUIRED)
 
 	ADD_LIBRARY(minizip STATIC EXCLUDE_FROM_ALL ${miniZipSources})
