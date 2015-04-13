@@ -370,7 +370,7 @@ void CQuadField::AddProjectile(CProjectile* p)
 	assert(p->synced);
 
 	if (p->hitscan) {
-		auto newQuads = std::move(GetQuadsOnRay(p->pos, float3(p->speed).Normalize(), p->speed.w));
+		auto newQuads = std::move(GetQuadsOnRay(p->pos, p->dir, p->speed.w));
 
 		for (const int qi: newQuads) {
 			baseQuads[qi].projectiles.push_back(p);

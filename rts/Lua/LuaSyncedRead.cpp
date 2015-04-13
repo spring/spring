@@ -4291,14 +4291,15 @@ int LuaSyncedRead::GetUnitCmdDescs(lua_State* L)
 	int endIndex = lastDesc;
 	if ((args >= 2) && lua_isnumber(L, 2)) {
 		startIndex = lua_toint(L, 2) - 1;
-		startIndex = max(0, min(lastDesc, startIndex));
 		if ((args >= 3) && lua_isnumber(L, 3)) {
 			endIndex = lua_toint(L, 3) - 1;
-			endIndex = max(0, min(lastDesc, endIndex));
 		} else {
 			endIndex = startIndex;
 		}
 	}
+	startIndex = Clamp(startIndex, 0, lastDesc);
+	endIndex   = Clamp(endIndex  , 0, lastDesc);
+
 	lua_createtable(L, endIndex - startIndex, 0);
 	int count = 1;
 	for (int i = startIndex; i <= endIndex; i++) {

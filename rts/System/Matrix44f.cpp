@@ -20,7 +20,7 @@ CMatrix44f::CMatrix44f(const CMatrix44f& mat)
 }
 
 
-CMatrix44f::CMatrix44f(const float3& pos, const float3& x, const float3& y, const float3& z)
+CMatrix44f::CMatrix44f(const float3 pos, const float3 x, const float3 y, const float3 z)
 {
 	// column-major!
 	m[0] = x.x;   m[4] = y.x;   m[ 8] = z.x;   m[12] = pos.x;
@@ -37,7 +37,7 @@ CMatrix44f::CMatrix44f(const float rotX, const float rotY, const float rotZ)
 	RotateZ(rotZ);
 }
 
-CMatrix44f::CMatrix44f(const float3& p)
+CMatrix44f::CMatrix44f(const float3 p)
 {
 	LoadIdentity();
 	SetPos(p);
@@ -196,7 +196,7 @@ CMatrix44f& CMatrix44f::RotateZ(float rad)
 }
 
 
-CMatrix44f& CMatrix44f::Rotate(float rad, const float3& axis)
+CMatrix44f& CMatrix44f::Rotate(float rad, const float3 axis)
 {
 	const float sr = math::sin(rad);
 	const float cr = math::cos(rad);
@@ -258,7 +258,7 @@ CMatrix44f& CMatrix44f::Translate(const float x, const float y, const float z)
 }
 
 
-void CMatrix44f::SetPos(const float3& pos)
+void CMatrix44f::SetPos(const float3 pos)
 {
 	const float x = pos.x;
 	const float y = pos.y;
@@ -353,7 +353,7 @@ CMatrix44f& CMatrix44f::operator<<= (const CMatrix44f& m2)
 }
 
 __FORCE_ALIGN_STACK__
-float3 CMatrix44f::operator* (const float3& v) const
+float3 CMatrix44f::operator* (const float3 v) const
 {
 	//SCOPED_TIMER("CMatrix44f::Mul");
 
@@ -373,7 +373,7 @@ float3 CMatrix44f::operator* (const float3& v) const
 }
 
 __FORCE_ALIGN_STACK__
-float4 CMatrix44f::operator* (const float4& v) const
+float4 CMatrix44f::operator* (const float4 v) const
 {
 	__m128 out;
 	out =                 _mm_mul_ps(_mm_loadu_ps(&md[0][0]), _mm_load1_ps(&v.x));
@@ -386,7 +386,7 @@ float4 CMatrix44f::operator* (const float4& v) const
 }
 
 
-void CMatrix44f::SetUpVector(const float3& up)
+void CMatrix44f::SetUpVector(const float3 up)
 {
 	float3 zdir(m[8], m[9], m[10]);
 	float3 xdir(zdir.cross(up));
