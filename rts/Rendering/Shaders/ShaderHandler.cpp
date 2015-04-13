@@ -43,7 +43,7 @@ CShaderHandler::~CShaderHandler() {
 void CShaderHandler::ReloadAll() {
 	for (auto it = programObjects.cbegin(); it != programObjects.cend(); ++it) {
 		for (auto jt = it->second.cbegin(); jt != it->second.cend(); ++jt) {
-			(jt->second)->Reload(true);
+			(jt->second)->Reload(true, true);
 		}
 	}
 }

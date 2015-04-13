@@ -202,8 +202,7 @@ static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, std::un
 			oldUniformState = &it->second;
 		} else {
 			// Uniform not found in state tracker, try to read it from old shader object
-			//oldUniformState = &(uniformStates->emplace(hash, name).first->second);
-			oldUniformState = &(uniformStates->insert(std::pair<size_t, Shader::UniformState>(hash, Shader::UniformState(name))).first->second);
+			oldUniformState = &(uniformStates->emplace(hash, name).first->second);
 		}
 		oldUniformState->SetLocation(newLoc);
 
@@ -427,10 +426,13 @@ namespace Shader {
 	{
 	#if !defined(HEADLESS)
 		CopyShaderState_Uniforms(newProgID, oldProgID, uniformStates);
-		CopyShaderState_UniformBlocks(newProgID, oldProgID);
-		CopyShaderState_Attributes(newProgID, oldProgID);
-		CopyShaderState_TransformFeedback(newProgID, oldProgID);
-		CopyShaderState_Geometry(newProgID, oldProgID);
+
+		if (oldProgID != 0) {
+			CopyShaderState_UniformBlocks(newProgID, oldProgID);
+			CopyShaderState_Attributes(newProgID, oldProgID);
+			CopyShaderState_TransformFeedback(newProgID, oldProgID);
+			CopyShaderState_Geometry(newProgID, oldProgID);
+		}
 	#endif
 	}
 }

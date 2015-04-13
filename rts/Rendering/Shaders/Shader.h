@@ -4,6 +4,7 @@
 #define SPRING_SHADER_HDR
 
 #include <string>
+#include <memory>
 #include <vector>
 #include <unordered_map>
 
@@ -33,8 +34,10 @@ namespace Shader {
 
 		virtual ~IShaderObject() {}
 
-		virtual void Compile(bool reloadFromDisk) {}
+		bool ReloadFromDisk();
+		virtual void Compile() {}
 		virtual void Release() {}
+
 		unsigned int GetObjID() const { return objID; }
 		unsigned int GetType() const { return type; }
 		unsigned int GetHash() const;
@@ -65,15 +68,28 @@ namespace Shader {
 	struct ARBShaderObject: public Shader::IShaderObject {
 	public:
 		ARBShaderObject(unsigned int, const std::string&, const std::string& shSrcDefs = "");
-		void Compile(bool reloadFromDisk);
+		void Compile();
 		void Release();
 	};
 
 	struct GLSLShaderObject: public Shader::IShaderObject {
 	public:
 		GLSLShaderObject(unsigned int, const std::string&, const std::string& shSrcDefs = "");
-		void Compile(bool reloadFromDisk);
-		void Release();
+
+		struct CompiledShaderObject {
+			CompiledShaderObject() : id(0), valid(false) {}
+
+			unsigned int id;
+			bool      valid;
+			std::string log;
+		};
+
+		/// @brief Returns a GLSL shader object in an unqiue pointer that auto deletes that instance.
+		///        Quote of GL docs: If a shader object is deleted while it is attached to a program object,
+		///        it will be flagged for deletion, and deletion will not occur until glDetachShader is called
+		///        to detach it from all program objects to which it is attached.
+		typedef std::unique_ptr<CompiledShaderObject, std::function<void(CompiledShaderObject* so)>> CompiledShaderObjectUniquePtr;
+		CompiledShaderObjectUniquePtr CompileShaderObject();
 	};
 
 
@@ -98,8 +114,8 @@ namespace Shader {
 		virtual void Link() = 0;
 		virtual void Validate() = 0;
 		virtual void Release() = 0;
-		virtual void Reload(bool reloadFromDisk) = 0;
-		void RecompileIfNeeded();
+		virtual void Reload(bool reloadFromDisk, bool validate) = 0;
+		void RecompileIfNeeded(bool validate);
 
 		bool IsBound() const;
 		bool IsValid() const { return valid; }
@@ -225,7 +241,7 @@ namespace Shader {
 		void Enable() {}
 		void Disable() {}
 		void Release() {}
-		void Reload(bool reloadFromDisk) {}
+		void Reload(bool reloadFromDisk, bool validate) {}
 		void Validate() {}
 		void Link() {}
 
@@ -256,10 +272,8 @@ namespace Shader {
 		void Disable();
 		void Link();
 		void Release();
-		void Reload(bool reloadFromDisk);
+		void Reload(bool reloadFromDisk, bool validate);
 		void Validate() {}
-
-		void AttachShaderObject(IShaderObject*);
 
 		int GetUniformLoc(const std::string& name);
 		int GetUniformType(const int loc) { return -1; }
@@ -295,9 +309,7 @@ namespace Shader {
 		void Link();
 		void Validate();
 		void Release();
-		void Reload(bool reloadFromDisk);
-
-		void AttachShaderObject(IShaderObject*);
+		void Reload(bool reloadFromDisk, bool validate);
 
 	public:
 		void SetUniformLocation(const std::string&);
