@@ -547,11 +547,11 @@ namespace Shader {
 		if (GetAttachedShaderObjs().empty())
 			return;
 
-		// put old program into cache
+		// push old program to cache
 		CShaderHandler::ShaderCache& shadersCache = shaderHandler->GetShaderCache();
 		bool deleteOldShader = (oldValid) ? !shadersCache.Push(oldSrcHash, oldProgID) : true;
 
-		// either read program from cache or recompile if not found (id 0)
+		// either pop program from cache or recompile if not found (id 0)
 		objID = shadersCache.Find(curSrcHash);
 		if (objID == 0) {
 			objID = glCreateProgram();
@@ -572,6 +572,8 @@ namespace Shader {
 				return;
 
 			Link();
+		} else {
+			valid = true;
 		}
 
 		//
