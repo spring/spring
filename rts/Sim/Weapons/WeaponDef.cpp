@@ -91,7 +91,7 @@ WEAPONTAG(float, cylinderTargeting).fallbackName("cylinderTargetting").defaultVa
 WEAPONTAG(bool, turret).defaultValue(false).description("Does the unit aim within an arc (up-to and including full 360° turret traverse) or always aim along the owner's heading?");
 WEAPONTAG(bool, fixedLauncher).defaultValue(false);
 WEAPONTAG(float, maxAngle).externalName("tolerance").defaultValue(3000.0f).scaleValue(180.0f / COBSCALEHALF);
-WEAPONTAG(float, maxFireAngle).externalName("firetolerance").defaultValue(32768.0f).scaleValue(180.0f / COBSCALEHALF);
+WEAPONTAG(float, maxFireAngle).externalName("firetolerance").defaultValue(32768.0f).scaleValue(20.0f / COBSCALEHALF);
 WEAPONTAG(int, highTrajectory).defaultValue(2);
 WEAPONTAG(float, trajectoryHeight).defaultValue(0.0f);
 WEAPONTAG(bool, tracks).defaultValue(false);
