@@ -19,6 +19,7 @@
 #include "LuaContextData.h"
 #include "LuaHandle.h"
 #include "LuaHashString.h"
+#include "LuaIO.h"
 #include "LuaShaders.h"
 #include "LuaTextures.h"
 //FIXME#include "LuaVBOs.h"
@@ -4287,41 +4288,46 @@ int LuaOpenGL::SaveImage(lua_State* L)
 	const GLsizei height = (GLsizei)luaL_checknumber(L, 4);
 	const string filename = luaL_checkstring(L, 5);
 
+	if (!LuaIO::SafeWritePath(filename) || !LuaIO::IsSimplePath(filename)) {
+		LOG_L(L_WARNING, "gl.SaveImage: tried to write to illegal path localtion");
+		return 0;
+	}
+	if ((width <= 0) || (height <= 0)) {
+		LOG_L(L_WARNING, "gl.SaveImage: tried to write empty image");
+		return 0;
+	}
+
 	bool alpha = false;
 	bool yflip = false;
+	bool flt32 = false;
 	const int table = 6;
 	if (lua_istable(L, table)) {
 		lua_getfield(L, table, "alpha");
-		if (lua_isboolean(L, -1)) {
-			alpha = lua_toboolean(L, -1);
-		}
+		alpha = luaL_optboolean(L, -1, false);
 		lua_pop(L, 1);
+
 		lua_getfield(L, table, "yflip");
-		if (lua_isboolean(L, -1)) {
-			yflip = lua_toboolean(L, -1);
-		}
+		yflip = luaL_optboolean(L, -1, false);
+		lua_pop(L, 1);
+
+		lua_getfield(L, table, "float");
+		flt32 = luaL_optboolean(L, -1, false);
 		lua_pop(L, 1);
 	}
 
-	if ((width <= 0) || (height <= 0)) {
-		return 0;
+	CBitmap bitmap;
+	bitmap.Alloc(width, height);
+
+	if (!flt32) {
+		glReadPixels(x, y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
+		if (!yflip) bitmap.ReverseYAxis();
+		lua_pushboolean(L, bitmap.Save(filename, !alpha));
+	} else {
+		// single channel only!
+		glReadPixels(x, y, width, height, GL_LUMINANCE, GL_FLOAT, bitmap.mem);
+		if (!yflip) bitmap.ReverseYAxis();
+		lua_pushboolean(L, bitmap.SaveFloat(filename));
 	}
-	const int memsize = width * height * 4;
-
-	unsigned char* img = new unsigned char[memsize];
-	memset(img, 0, memsize);
-	glReadPixels(x, y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, img);
-
-	CBitmap bitmap(img, width, height);
-	if (!yflip) {
-		bitmap.ReverseYAxis();
-	}
-
-	// FIXME Check file path permission here
-
-	lua_pushboolean(L, bitmap.Save(filename, !alpha));
-
-	delete[] img;
 
 	return 1;
 }

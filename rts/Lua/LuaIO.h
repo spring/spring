@@ -24,7 +24,7 @@ class LuaIO {
 
 		static bool SafeExecPath(const std::string& path);
 		static bool SafeReadPath(const std::string& path);
-		static bool SafeWritePath(lua_State* L, const std::string& path);
+		static bool SafeWritePath(const std::string& path);
 };
 
 #endif /* LUA_IO_H */
