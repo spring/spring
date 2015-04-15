@@ -4,6 +4,7 @@
 #define SKIRMISH_AI_HANDLER_H
 
 #include "ExternalAI/SkirmishAIData.h"
+#include "ExternalAI/SkirmishAIKey.h"
 
 #include "System/creg/creg_cond.h"
 
@@ -12,7 +13,6 @@
 
 
 class CGameSetup;
-class SkirmishAIKey;
 
 /**
  * Handles all Skirmish AI instance relevant data, which includes,

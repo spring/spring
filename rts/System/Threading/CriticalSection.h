@@ -3,6 +3,8 @@
 #ifndef CRITICALSECTION_H
 #define CRITICALSECTION_H
 
+#if   defined(_WIN32)
+
 #include <windows.h>
 
 
@@ -29,5 +31,6 @@ public:
 protected:
 	native_type mtx;
 };
+#endif
 
 #endif // CRITICALSECTION_H
