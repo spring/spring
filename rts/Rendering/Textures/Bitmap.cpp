@@ -386,7 +386,11 @@ bool CBitmap::Save(std::string const& filename, bool opaque) const
 #endif // !BITMAP_NO_OPENGL
 	}
 
-	std::unique_ptr<unsigned char[]> buf(new unsigned char[xsize * ysize]);
+	if (!mem || channels != 4) {
+		return false;
+	}
+
+	std::unique_ptr<unsigned char[]> buf(new unsigned char[xsize * ysize * 4]);
 	const int ymax = (ysize - 1);
 	/* HACK Flip the image so it saves the right way up.
 		(Fiddling with ilOriginFunc didn't do anything?)
