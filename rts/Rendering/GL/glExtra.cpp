@@ -74,6 +74,7 @@ void glBallisticCircle(const float3& center, const float radius,
 	va->EnlargeArrays(resolution, 0, VA_SIZE_0);
 
 	float3* vertices = va->GetTypedVertexArray<float3>(resolution);
+	const float heightMod = weapon ? weapon->weaponDef->heightmod : 1.0f;
 
 	for_mt(0, resolution, [&](const int i) {
 		const float radians = (2.0f * PI) * (float)i / (float)resolution;
@@ -86,7 +87,6 @@ void glBallisticCircle(const float3& center, const float radius,
 		pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false);
 		float heightDiff = (pos.y - center.y) * 0.5f;
 		rad -= heightDiff * slope;
-		const float heightMod = weapon->weaponDef->heightmod;
 		float adjRadius = weapon ? weapon->GetRange2D(heightDiff * heightMod) : rad;
 		float adjustment = rad * 0.5f;
 		float ydiff = 0;
