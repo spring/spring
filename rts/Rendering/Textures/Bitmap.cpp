@@ -438,13 +438,14 @@ bool CBitmap::SaveFloat(std::string const& filename) const
 	// seems IL_ORIGIN_SET only works in ilLoad and not in ilTexImage nor in ilSaveImage
 	// so we need to flip the image ourself
 	const float* memf = reinterpret_cast<const float*>(mem);
-	std::unique_ptr<ushort[]> buf(new ushort[xsize * ysize]);
+	typedef unsigned short uint16;
+	std::unique_ptr<uint16[]> buf(new uint16[xsize * ysize]);
 	const int ymax = (ysize - 1);
 	for (int y = 0; y < ysize; ++y) {
 		for (int x = 0; x < xsize; ++x) {
 			const int bi = x + (xsize * (ymax - y));
 			const int mi = x + (xsize * (y));
-			ushort us = memf[mi] * 0xFFFF; // convert float 0..1 to ushort
+			uint16 us = memf[mi] * 0xFFFF; // convert float 0..1 to ushort
 			buf[bi] = us;
 		}
 	}
