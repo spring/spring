@@ -4299,7 +4299,7 @@ int LuaOpenGL::SaveImage(lua_State* L)
 
 	bool alpha = false;
 	bool yflip = false;
-	bool flt32 = false;
+	bool gray16b = false;
 	const int table = 6;
 	if (lua_istable(L, table)) {
 		lua_getfield(L, table, "alpha");
@@ -4310,15 +4310,15 @@ int LuaOpenGL::SaveImage(lua_State* L)
 		yflip = luaL_optboolean(L, -1, false);
 		lua_pop(L, 1);
 
-		lua_getfield(L, table, "float");
-		flt32 = luaL_optboolean(L, -1, false);
+		lua_getfield(L, table, "grayscale16bit");
+		gray16b = luaL_optboolean(L, -1, false);
 		lua_pop(L, 1);
 	}
 
 	CBitmap bitmap;
 	bitmap.Alloc(width, height);
 
-	if (!flt32) {
+	if (!gray16b) {
 		glReadPixels(x, y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
 		if (!yflip) bitmap.ReverseYAxis();
 		lua_pushboolean(L, bitmap.Save(filename, !alpha));

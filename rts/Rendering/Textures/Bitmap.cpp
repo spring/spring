@@ -438,13 +438,14 @@ bool CBitmap::SaveFloat(std::string const& filename) const
 	// seems IL_ORIGIN_SET only works in ilLoad and not in ilTexImage nor in ilSaveImage
 	// so we need to flip the image ourself
 	const float* memf = reinterpret_cast<const float*>(mem);
-	std::unique_ptr<float[]> buf(new float[xsize * ysize]);
+	std::unique_ptr<ushort[]> buf(new ushort[xsize * ysize]);
 	const int ymax = (ysize - 1);
 	for (int y = 0; y < ysize; ++y) {
 		for (int x = 0; x < xsize; ++x) {
 			const int bi = x + (xsize * (ymax - y));
 			const int mi = x + (xsize * (y));
-			buf[bi] = memf[mi];
+			ushort us = memf[mi] * 0xFFFF; // convert float 0..1 to ushort
+			buf[bi] = us;
 		}
 	}
 
@@ -456,7 +457,9 @@ bool CBitmap::SaveFloat(std::string const& filename) const
 	ilGenImages(1, &ImageName);
 	ilBindImage(ImageName);
 
-	ilTexImage(xsize, ysize, 1, 1, IL_LUMINANCE, IL_FLOAT, buf.get());
+	// note: DevIL only generates a 16bit grayscale PNG when format is IL_UNSIGNED_SHORT!
+	//       IL_FLOAT is converted to RGB with 8bit colordepth!
+	ilTexImage(xsize, ysize, 1, 1, IL_LUMINANCE, IL_UNSIGNED_SHORT, buf.get());
 
 	const std::string fullpath = dataDirsAccess.LocateFile(filename, FileQueryFlags::WRITE);
 	const bool success = ilSaveImage(fullpath.c_str());
