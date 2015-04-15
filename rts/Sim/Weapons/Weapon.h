@@ -166,9 +166,6 @@ public:
 	float maxForwardAngleDif;     // for onlyForward/!turret weapons, max. angle between owner->frontdir and (targetPos - owner->pos) (derived from UnitDefWeapon::maxAngleDif)
 	float maxMainDirAngleDif;     // for !onlyForward/turret weapons, max. angle from <mainDir> the weapon can aim (derived from WeaponDef::tolerance)
 
-	float targetBorder;           // if nonzero, units will TryTarget wrt. edge of scaled collision volume instead of centre
-	float cylinderTargeting;      // if greater than 0, range will be checked in a cylinder (height=range*cylinderTargeting) instead of a sphere
-	float minIntensity;           // for beamlasers - always hit with some minimum intensity (a damage coeffcient normally dependent on distance). do not confuse with intensity tag, it's completely unrelated.
 	float heightBoostFactor;      // controls cannon range height boost. default: -1 -- automatically calculate a more or less sane value
 
 	unsigned int avoidFlags;

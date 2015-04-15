@@ -775,7 +775,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			if (tryTargetRotate || tryTargetHeading)
 				break;
 
-			edgeFactor = math::fabs(w->targetBorder);
+			edgeFactor = math::fabs(w->weaponDef->targetBorder);
 		}
 
 		// if w->AttackUnit() returned true then we are already

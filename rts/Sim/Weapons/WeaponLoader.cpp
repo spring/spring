@@ -132,9 +132,6 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 	}
 
 	weapon->fuelUsage = defWeapon->fuelUsage;
-	weapon->targetBorder = weaponDef->targetBorder;
-	weapon->cylinderTargeting = weaponDef->cylinderTargeting;
-	weapon->minIntensity = weaponDef->minIntensity;
 	weapon->heightBoostFactor = weaponDef->heightBoostFactor;
 	weapon->collisionFlags = weaponDef->collisionFlags;
 

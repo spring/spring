@@ -73,9 +73,6 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(maxForwardAngleDif),
 	CR_MEMBER(maxMainDirAngleDif),
 	CR_MEMBER(hasCloseTarget),
-	CR_MEMBER(targetBorder),
-	CR_MEMBER(cylinderTargeting),
-	CR_MEMBER(minIntensity),
 	CR_MEMBER(heightBoostFactor),
 	CR_MEMBER(avoidFlags),
 	CR_MEMBER(collisionFlags),
@@ -146,9 +143,6 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	slavedTo(NULL),
 	maxForwardAngleDif(0.0f),
 	maxMainDirAngleDif(-1.0f),
-	targetBorder(0.f),
-	cylinderTargeting(0.f),
-	minIntensity(0.f),
 	heightBoostFactor(-1.f),
 	avoidFlags(0),
 	collisionFlags(0),
@@ -298,7 +292,7 @@ void CWeapon::UpdateTargeting()
 
 		// never target below terrain
 		// never target below water if not a water-weapon
-		targetPos = (targetBorder == 0.0f)? tmpTargetPos: targetBorderPos;
+		targetPos = (weaponDef->targetBorder == 0.0f)? tmpTargetPos: targetBorderPos;
 		targetPos.y = std::max(targetPos.y, CGround::GetApproximateHeight(targetPos.x, targetPos.z) + 2.0f);
 		targetPos.y = std::max(targetPos.y, targetPos.y * weaponDef->waterweapon);
 	}
@@ -640,7 +634,7 @@ bool CWeapon::AttackUnit(CUnit* newTargetUnit, bool isUserTarget)
 	haveUserTarget = isUserTarget;
 	targetType = Target_Unit;
 	targetUnit = newTargetUnit;
-	targetPos = (targetBorder == 0.0f)? newTargetPos: targetBorderPos;
+	targetPos = (weaponDef->targetBorder == 0.0f)? newTargetPos: targetBorderPos;
 	targetPos.y = std::max(targetPos.y, CGround::GetApproximateHeight(targetPos.x, targetPos.z) + 2.0f);
 
 	AddDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
@@ -953,12 +947,12 @@ bool CWeapon::SetTargetBorderPos(
 	float3& rawTargetVec,
 	float3& rawTargetDir)
 {
-	if (targetBorder == 0.0f)
+	if (weaponDef->targetBorder == 0.0f)
 		return false;
 	if (targetUnit == NULL)
 		return false;
 
-	const float tbScale = math::fabsf(targetBorder);
+	const float tbScale = math::fabsf(weaponDef->targetBorder);
 
 	CollisionVolume  tmpColVol = CollisionVolume(targetUnit->collisionVolume);
 	CollisionQuery   tmpColQry;
@@ -998,8 +992,8 @@ bool CWeapon::SetTargetBorderPos(
 
 		// adjust the length of <targetVec> based on the targetBorder factor
 		if (CCollisionHandler::DetectHit(&tmpColVol, targetUnit, weaponMuzzlePos, targetRayPos, &tmpColQry)) {
-			if (targetBorder > 0.0f) { rawTargetVec -= (rawTargetDir * rawTargetPos.distance(tmpColQry.GetIngressPos())); }
-			if (targetBorder < 0.0f) { rawTargetVec += (rawTargetDir * rawTargetPos.distance(tmpColQry.GetEgressPos())); }
+			if (weaponDef->targetBorder > 0.0f) { rawTargetVec -= (rawTargetDir * rawTargetPos.distance(tmpColQry.GetIngressPos())); }
+			if (weaponDef->targetBorder < 0.0f) { rawTargetVec += (rawTargetDir * rawTargetPos.distance(tmpColQry.GetEgressPos())); }
 
 			targetBorderPos = weaponMuzzlePos + rawTargetVec;
 		}
@@ -1012,12 +1006,12 @@ bool CWeapon::SetTargetBorderPos(
 
 bool CWeapon::GetTargetBorderPos(const CUnit* targetUnit, const float3& rawTargetPos, float3& rawTargetVec, float3& rawTargetDir) const
 {
-	if (targetBorder == 0.0f)
+	if (weaponDef->targetBorder == 0.0f)
 		return false;
 	if (targetUnit == NULL)
 		return false;
 
-	const float tbScale = math::fabsf(targetBorder);
+	const float tbScale = math::fabsf(weaponDef->targetBorder);
 
 	CollisionVolume  tmpColVol(targetUnit->collisionVolume);
 	CollisionQuery   tmpColQry;
@@ -1054,8 +1048,8 @@ bool CWeapon::GetTargetBorderPos(const CUnit* targetUnit, const float3& rawTarge
 
 		// adjust the length of <targetVec> based on the targetBorder factor
 		if (CCollisionHandler::DetectHit(&tmpColVol, targetUnit, weaponMuzzlePos, targetRayPos, &tmpColQry)) {
-			if (targetBorder > 0.0f) { rawTargetVec -= (rawTargetDir * rawTargetPos.distance(tmpColQry.GetIngressPos())); }
-			if (targetBorder < 0.0f) { rawTargetVec += (rawTargetDir * rawTargetPos.distance(tmpColQry.GetEgressPos())); }
+			if (weaponDef->targetBorder > 0.0f) { rawTargetVec -= (rawTargetDir * rawTargetPos.distance(tmpColQry.GetIngressPos())); }
+			if (weaponDef->targetBorder < 0.0f) { rawTargetVec += (rawTargetDir * rawTargetPos.distance(tmpColQry.GetEgressPos())); }
 		}
 	}
 
@@ -1115,12 +1109,12 @@ bool CWeapon::TestRange(const float3& tgtPos, bool /*userTarget*/, const CUnit* 
 	const float heightDiff = (weaponMuzzlePos.y + tmpTargetVec.y) - owner->pos.y;
 	float weaponRange = 0.0f; // range modified by heightDiff and cylinderTargeting
 
-	if (targetUnit == NULL || cylinderTargeting < 0.01f) {
+	if (targetUnit == NULL || weaponDef->cylinderTargeting < 0.01f) {
 		// check range in a sphere (with extra radius <heightDiff * heightMod>)
 		weaponRange = GetRange2D(heightDiff * weaponDef->heightmod);
 	} else {
 		// check range in a cylinder (with height <cylinderTargeting * range>)
-		if ((cylinderTargeting * range) > (math::fabsf(heightDiff) * weaponDef->heightmod)) {
+		if ((weaponDef->cylinderTargeting * range) > (math::fabsf(heightDiff) * weaponDef->heightmod)) {
 			weaponRange = GetRange2D(0.0f);
 		}
 	}
