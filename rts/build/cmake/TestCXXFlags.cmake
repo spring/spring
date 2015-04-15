@@ -96,9 +96,11 @@ If    (NOT DEFINED CXX11_FLAGS)
 	ElseIf ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 		CHECK_AND_ADD_FLAGS(CXX11_FLAGS "-std=c++11")
 	Else (MSVC)
-		CHECK_AND_ADD_FLAGS(CXX11_FLAGS "-std=c++11")
+		# note, we need gnu++11 instead of c++11, cause else we get compile errors
+		# under mingw (pthread.h missing, sys/utsname.h missing, M_PI not defined and more)
+		CHECK_AND_ADD_FLAGS(CXX11_FLAGS "-std=gnu++11")
 		If    (NOT CXX11_FLAGS)
-			CHECK_AND_ADD_FLAGS(CXX11_FLAGS "-std=gnu++11")
+			CHECK_AND_ADD_FLAGS(CXX11_FLAGS "-std=c++11")
 		EndIf (NOT CXX11_FLAGS)
 		If    (NOT CXX11_FLAGS)
 			# xcode
