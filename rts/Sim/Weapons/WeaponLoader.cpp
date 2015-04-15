@@ -113,8 +113,6 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 	weapon->accuracyError = weaponDef->accuracy;
 	weapon->sprayAngle = weaponDef->sprayAngle;
 
-	weapon->stockpileTime = int(weaponDef->stockpileTime * GAME_SPEED);
-
 	weapon->salvoSize = weaponDef->salvosize;
 	weapon->salvoDelay = int(weaponDef->salvodelay * GAME_SPEED);
 	weapon->projectilesPerShot = weaponDef->projectilespershot;

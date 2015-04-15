@@ -59,7 +59,6 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(onlyTargetCategory),
 	CR_MEMBER(incomingProjectiles),
 	CR_MEMBER(weaponDef),
-	CR_MEMBER(stockpileTime),
 	CR_MEMBER(buildPercent),
 	CR_MEMBER(numStockpiled),
 	CR_MEMBER(numStockpileQued),
@@ -141,7 +140,6 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	onlyTargetCategory(0xffffffff),
 
 	interceptTarget(NULL),
-	stockpileTime(1),
 	buildPercent(0),
 	numStockpiled(0),
 	numStockpileQued(0),
@@ -473,7 +471,7 @@ bool CWeapon::UpdateStockpile()
 {
 	if (weaponDef->stockpile) {
 		if (numStockpileQued > 0) {
-			const float p = 1.0f / stockpileTime;
+			const float p = 1.0f / weaponDef->stockpileTime;
 
 			if (teamHandler->Team(owner->team)->res.metal >= metalFireCost*p && teamHandler->Team(owner->team)->res.energy >= energyFireCost*p) {
 				owner->UseEnergy(energyFireCost * p);
