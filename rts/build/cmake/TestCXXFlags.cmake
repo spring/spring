@@ -96,13 +96,13 @@ If    (NOT DEFINED CXX11_FLAGS)
 	ElseIf ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 		CHECK_AND_ADD_FLAGS(CXX11_FLAGS "-std=c++11")
 	Else (MSVC)
-		CHECK_AND_ADD_FLAGS(CXX11_FLAGS "-std=gnu++11")
+		CHECK_AND_ADD_FLAGS(CXX11_FLAGS "-std=c++11")
 		If    (NOT CXX11_FLAGS)
-			CHECK_AND_ADD_FLAGS(CXX11_FLAGS "-std=gnu++0x")
+			CHECK_AND_ADD_FLAGS(CXX11_FLAGS "-std=gnu++11")
 		EndIf (NOT CXX11_FLAGS)
 		If    (NOT CXX11_FLAGS)
 			# xcode
-			CHECK_AND_ADD_FLAGS(CXX11_FLAGS "-std=c++11")
+			CHECK_AND_ADD_FLAGS(CXX11_FLAGS "-std=gnu++0x")
 		EndIf (NOT CXX11_FLAGS)
 		If    (NOT CXX11_FLAGS)
 			# xcode 2
@@ -177,7 +177,9 @@ if   (CMAKE_COMPILER_IS_GNUCXX)
 
 	if    (hasGold EQUAL 0)
 		set(LDGOLD_FOUND TRUE)
-		set(LDGOLD_LINKER_FLAGS " -Wl,--compress-debug-sections=zlib")
+		set(LDGOLD_LINKER_FLAGS " -Wl,--compress-debug-sections=zlib")   # compress debug symbols
+		set(LDGOLD_LINKER_FLAGS " -Wl,-O3 ${LDGOLD_LINKER_FLAGS}")       # e.g. tries to optimize duplicated strings across the binary
+		set(LDGOLD_LINKER_FLAGS " -Wl,--icf=all ${LDGOLD_LINKER_FLAGS}") # Identical Code Folding
 	endif (hasGold EQUAL 0)
 
 	mark_as_advanced(LDGOLD_FOUND LDGOLD_LINKER_FLAGS LDGOLD_CXX_FLAGS)
