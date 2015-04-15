@@ -117,9 +117,6 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 	weapon->salvoDelay = int(weaponDef->salvodelay * GAME_SPEED);
 	weapon->projectilesPerShot = weaponDef->projectilespershot;
 
-	weapon->metalFireCost = weaponDef->metalcost;
-	weapon->energyFireCost = weaponDef->energycost;
-
 	weapon->fireSoundId = weaponDef->fireSound.getID(0);
 	weapon->fireSoundVolume = weaponDef->fireSound.getVolume(0);
 

@@ -135,9 +135,6 @@ public:
 	float predict;							// how long time we predict it take for a projectile to reach target
 	float predictSpeedMod;					// how the weapon predicts the speed of the units goes -> 1 when experience increases
 
-	float metalFireCost;
-	float energyFireCost;
-
 	int fireSoundId;
 	float fireSoundVolume;
 

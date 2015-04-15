@@ -43,8 +43,6 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(accuracyError),
 	CR_MEMBER(projectileSpeed),
 	CR_MEMBER(predictSpeedMod),
-	CR_MEMBER(metalFireCost),
-	CR_MEMBER(energyFireCost),
 	CR_MEMBER(fireSoundId),
 	CR_MEMBER(fireSoundVolume),
 	CR_MEMBER(hasBlockShot),
@@ -127,8 +125,6 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	targetUnit(0),
 	predict(0),
 	predictSpeedMod(1),
-	metalFireCost(0),
-	energyFireCost(0),
 	fireSoundId(0),
 	fireSoundVolume(0),
 	hasBlockShot(false),
@@ -419,7 +415,7 @@ void CWeapon::UpdateFire()
 
 	CTeam* ownerTeam = teamHandler->Team(owner->team);
 
-	if ((weaponDef->stockpile || (ownerTeam->res.metal >= metalFireCost && ownerTeam->res.energy >= energyFireCost))) {
+	if ((weaponDef->stockpile || (ownerTeam->res.metal >= weaponDef->metalcost && ownerTeam->res.energy >= weaponDef->energycost))) {
 		owner->script->GetEmitDirPos(owner->script->QueryWeapon(weaponNum), relWeaponMuzzlePos, weaponDir);
 
 		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
@@ -434,8 +430,8 @@ void CWeapon::UpdateFire()
 				owner->commandAI->StockpileChanged(this);
 				eventHandler.StockpileChanged(owner, this, oldCount);
 			} else {
-				owner->UseEnergy(energyFireCost);
-				owner->UseMetal(metalFireCost);
+				owner->UseEnergy(weaponDef->energycost);
+				owner->UseMetal(weaponDef->metalcost);
 				owner->currentFuel = std::max(0.0f, owner->currentFuel - fuelUsage);
 			}
 
@@ -460,8 +456,8 @@ void CWeapon::UpdateFire()
 			const int minPeriod = std::max(1, (int)(reloadTime / owner->reloadSpeed));
 			const float averageFactor = 1.0f / minPeriod;
 
-			ownerTeam->resPull.energy += (averageFactor * energyFireCost);
-			ownerTeam->resPull.metal  += (averageFactor * metalFireCost);
+			ownerTeam->resPull.energy += (averageFactor * weaponDef->energycost);
+			ownerTeam->resPull.metal  += (averageFactor * weaponDef->metalcost);
 		}
 	}
 }
@@ -473,14 +469,14 @@ bool CWeapon::UpdateStockpile()
 		if (numStockpileQued > 0) {
 			const float p = 1.0f / weaponDef->stockpileTime;
 
-			if (teamHandler->Team(owner->team)->res.metal >= metalFireCost*p && teamHandler->Team(owner->team)->res.energy >= energyFireCost*p) {
-				owner->UseEnergy(energyFireCost * p);
-				owner->UseMetal(metalFireCost * p);
+			if (teamHandler->Team(owner->team)->res.metal >= weaponDef->metalcost*p && teamHandler->Team(owner->team)->res.energy >= weaponDef->energycost*p) {
+				owner->UseEnergy(weaponDef->energycost * p);
+				owner->UseMetal(weaponDef->metalcost * p);
 				buildPercent += p;
 			} else {
 				// update the energy and metal required counts
-				teamHandler->Team(owner->team)->resPull.energy += (energyFireCost * p);
-				teamHandler->Team(owner->team)->resPull.metal  += (metalFireCost * p);
+				teamHandler->Team(owner->team)->resPull.energy += (weaponDef->energycost * p);
+				teamHandler->Team(owner->team)->resPull.metal  += (weaponDef->metalcost * p);
 			}
 			if (buildPercent >= 1) {
 				const int oldCount = numStockpiled;
