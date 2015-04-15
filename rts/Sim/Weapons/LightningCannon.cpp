@@ -90,8 +90,8 @@ void CLightningCannon::FireImpl(bool scriptCall)
 		owner,
 		hitUnit,
 		hitFeature,
-		craterAreaOfEffect,
-		damageAreaOfEffect,
+		weaponDef->craterAreaOfEffect,
+		weaponDef->damageAreaOfEffect,
 		weaponDef->edgeEffectiveness,
 		weaponDef->explosionSpeed,
 		0.5f,                                             // gfxMod

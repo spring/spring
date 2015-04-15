@@ -54,8 +54,6 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(haveUserTarget),
 	CR_MEMBER(onlyForward),
 	CR_MEMBER(muzzleFlareSize),
-	CR_MEMBER(craterAreaOfEffect),
-	CR_MEMBER(damageAreaOfEffect),
 
 	CR_MEMBER(badTargetCategory),
 	CR_MEMBER(onlyTargetCategory),
@@ -112,8 +110,6 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	weaponDef(def),
 	weaponNum(-1),
 	haveUserTarget(false),
-	craterAreaOfEffect(1.0f),
-	damageAreaOfEffect(1.0f),
 	muzzleFlareSize(1),
 	useWeaponPosForAim(0),
 	hasCloseTarget(false),
@@ -1172,7 +1168,7 @@ bool CWeapon::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit
 		const float3 gpos = weaponMuzzlePos + dir * gdst;
 
 		// true iff ground does not block the ray of length <length> from <pos> along <dir>
-		if ((gdst > 0.0f) && (gpos.SqDistance(pos) > Square(damageAreaOfEffect)))
+		if ((gdst > 0.0f) && (gpos.SqDistance(pos) > Square(weaponDef->damageAreaOfEffect)))
 			return false;
 	}
 
@@ -1261,7 +1257,7 @@ void CWeapon::Init()
 	relWeaponMuzzlePos = owner->script->GetPiecePos(owner->script->QueryWeapon(weaponNum));
 	weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
-	muzzleFlareSize = std::min(damageAreaOfEffect * 0.2f, std::min(1500.f, weaponDef->damages[0]) * 0.003f);
+	muzzleFlareSize = std::min(weaponDef->damageAreaOfEffect * 0.2f, std::min(1500.f, weaponDef->damages[0]) * 0.003f);
 
 	if (weaponDef->interceptor)
 		interceptHandler.AddInterceptorWeapon(this);

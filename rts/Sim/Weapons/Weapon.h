@@ -110,9 +110,6 @@ public:
 	int weaponNum;							// the weapons order among the owner weapons
 	bool haveUserTarget;
 
-	float craterAreaOfEffect;
-	float damageAreaOfEffect;
-
 	float muzzleFlareSize;					// size of muzzle flare if drawn
 	int useWeaponPosForAim;					// sometimes weapon pos is better to use than aimpos
 	bool hasCloseTarget;					// might need to update weapon pos more often when enemy is near

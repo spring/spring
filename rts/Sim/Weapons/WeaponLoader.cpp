@@ -110,8 +110,6 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 	weapon->reloadTime = std::max(1, int(weaponDef->reload * GAME_SPEED));
 	weapon->projectileSpeed = weaponDef->projectilespeed;
 
-	weapon->damageAreaOfEffect = weaponDef->damageAreaOfEffect;
-	weapon->craterAreaOfEffect = weaponDef->craterAreaOfEffect;
 	weapon->accuracyError = weaponDef->accuracy;
 	weapon->sprayAngle = weaponDef->sprayAngle;
 
