@@ -65,5 +65,5 @@ bool CStarburstLauncher::HaveFreeLineOfFire(const float3& pos, bool userTarget, 
 
 float CStarburstLauncher::GetRange2D(float yDiff) const
 {
-	return range + (yDiff * heightMod);
+	return range + (yDiff * weaponDef->heightmod);
 }

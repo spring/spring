@@ -121,7 +121,6 @@ public:
 	int reloadStatus;						// next tick the weapon can fire again
 
 	float range;
-	float heightMod;						// how much extra range the weapon gain per height difference
 
 	float projectileSpeed;
 	float accuracyError;					// inaccuracy of whole salvo

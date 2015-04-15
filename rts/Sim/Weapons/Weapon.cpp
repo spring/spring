@@ -31,7 +31,6 @@ CR_BIND_DERIVED(CWeapon, CObject, (NULL, NULL))
 CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(owner),
 	CR_MEMBER(range),
-	CR_MEMBER(heightMod),
 	CR_MEMBER(reloadTime),
 	CR_MEMBER(reloadStatus),
 	CR_MEMBER(salvoLeft),
@@ -121,7 +120,6 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	reloadTime(1),
 	reloadStatus(0),
 	range(1),
-	heightMod(0),
 	projectileSpeed(1),
 	accuracyError(0),
 	sprayAngle(0),
@@ -1131,10 +1129,10 @@ bool CWeapon::TestRange(const float3& tgtPos, bool /*userTarget*/, const CUnit* 
 
 	if (targetUnit == NULL || cylinderTargeting < 0.01f) {
 		// check range in a sphere (with extra radius <heightDiff * heightMod>)
-		weaponRange = GetRange2D(heightDiff * heightMod);
+		weaponRange = GetRange2D(heightDiff * weaponDef->heightmod);
 	} else {
 		// check range in a cylinder (with height <cylinderTargeting * range>)
-		if ((cylinderTargeting * range) > (math::fabsf(heightDiff) * heightMod)) {
+		if ((cylinderTargeting * range) > (math::fabsf(heightDiff) * weaponDef->heightmod)) {
 			weaponRange = GetRange2D(0.0f);
 		}
 	}

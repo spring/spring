@@ -108,7 +108,6 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 	const WeaponDef* weaponDef = defWeapon->def;
 
 	weapon->reloadTime = std::max(1, int(weaponDef->reload * GAME_SPEED));
-	weapon->heightMod = weaponDef->heightmod;
 	weapon->projectileSpeed = weaponDef->projectilespeed;
 
 	weapon->damageAreaOfEffect = weaponDef->damageAreaOfEffect;
