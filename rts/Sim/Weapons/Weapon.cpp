@@ -71,7 +71,6 @@ CR_REG_METADATA(CWeapon, (
 
 	CR_MEMBER(slavedTo),
 	CR_MEMBER(maxForwardAngleDif),
-	CR_MEMBER(maxAngleAtCanFireCheck),
 	CR_MEMBER(maxMainDirAngleDif),
 	CR_MEMBER(hasCloseTarget),
 	CR_MEMBER(targetBorder),
@@ -146,7 +145,6 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 
 	slavedTo(NULL),
 	maxForwardAngleDif(0.0f),
-	maxAngleAtCanFireCheck(0.0f),
 	maxMainDirAngleDif(-1.0f),
 	targetBorder(0.f),
 	cylinderTargeting(0.f),
@@ -387,8 +385,8 @@ bool CWeapon::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRe
 		return false;
 
 	// sanity check to force new aim
-	if (maxAngleAtCanFireCheck > -1.0f) {
-		if (!ignoreRequestedDir && wantedDir.dot(lastRequestedDir) <= maxAngleAtCanFireCheck)
+	if (weaponDef->maxFireAngle > -1.0f) {
+		if (!ignoreRequestedDir && wantedDir.dot(lastRequestedDir) <= weaponDef->maxFireAngle)
 			return false;
 	}
 

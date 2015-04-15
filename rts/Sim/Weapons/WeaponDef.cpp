@@ -90,8 +90,8 @@ WEAPONTAG(float, targetBorder).defaultValue(0.0f).minimumValue(-1.0f).maximumVal
 WEAPONTAG(float, cylinderTargeting).fallbackName("cylinderTargetting").defaultValue(0.0f).minimumValue(0.0f).maximumValue(128.0f);
 WEAPONTAG(bool, turret).defaultValue(false).description("Does the unit aim within an arc (up-to and including full 360° turret traverse) or always aim along the owner's heading?");
 WEAPONTAG(bool, fixedLauncher).defaultValue(false);
-WEAPONTAG(float, maxAngle).externalName("tolerance").defaultValue(3000.0f).scaleValue(180.0f / COBSCALEHALF);
-WEAPONTAG(float, maxFireAngle).externalName("firetolerance").defaultValue(3640.0f).scaleValue(180.0f / COBSCALEHALF); // default value is 20degree
+WEAPONTAG(float, maxAngle).externalName("tolerance").defaultValue(3000.0f).scaleValue(TAANG2RAD);
+WEAPONDUMMYTAG(float, maxFireAngle).externalName("firetolerance").defaultValue(3640.0f).scaleValue(TAANG2RAD); // default value is 20degree
 WEAPONTAG(int, highTrajectory).defaultValue(2);
 WEAPONTAG(float, trajectoryHeight).defaultValue(0.0f);
 WEAPONTAG(bool, tracks).defaultValue(false);
@@ -296,7 +296,8 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	shieldRechargeDelay = int(wdTable.GetFloat("rechargeDelay", 0) * GAME_SPEED);
 	shieldArmorType = damageArrayHandler->GetTypeFromName(shieldArmorTypeName);
 	flighttime = int(wdTable.GetFloat("flighttime", 0.0f) * 32);
-
+	maxFireAngle = math::cos(wdTable.GetFloat("firetolerance", 3640.0f) * TAANG2RAD);
+	
 	//FIXME may be smarter to merge the collideXYZ tags with avoidXYZ and removing the collisionFlags tag (and move the code into CWeapon)?
 	collisionFlags = 0;
 	if (!wdTable.GetBool("collideEnemy",    true)) { collisionFlags |= Collision::NOENEMIES;    }

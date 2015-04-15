@@ -25,8 +25,6 @@
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 
-#define DEG2RAD(a) ((a) * (3.141592653f / 180.0f))
-
 CWeaponLoader* CWeaponLoader::GetInstance()
 {
 	static CWeaponLoader instance;
@@ -121,8 +119,7 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 	weapon->fireSoundVolume = weaponDef->fireSound.getVolume(0);
 
 	weapon->onlyForward = weaponDef->onlyForward;
-	weapon->maxForwardAngleDif = math::cos(DEG2RAD(weaponDef->maxAngle));
-	weapon->maxAngleAtCanFireCheck = math::cos(DEG2RAD(weaponDef->maxFireAngle));
+	weapon->maxForwardAngleDif = math::cos(weaponDef->maxAngle);
 	weapon->maxMainDirAngleDif = defWeapon->maxMainDirAngleDif;
 	weapon->mainDir = defWeapon->mainDir;
 
