@@ -835,12 +835,38 @@ const char* CSMFReadMap::GetFeatureTypeName (int typeID)
 
 unsigned char* CSMFReadMap::GetInfoMap(const std::string& name, MapBitmapInfo* bmInfo)
 {
+	char failMsg[512];
 	// get size
 	file.GetInfoMapSize(name, bmInfo);
 	if (bmInfo->width <= 0) return NULL;
+	unsigned char* data = new unsigned char[bmInfo->width * bmInfo->height];
+
+	CBitmap infomapBM;
+	std::string texName;
+	if (name == "metal" && !mapInfo->smf.metalmapTexName.empty()) {
+		texName = mapInfo->smf.metalmapTexName;
+	} else if (name == "type" && !mapInfo->smf.typemapTexName.empty()) {
+		texName = mapInfo->smf.typemapTexName;
+	} else if (name == "grass" && !mapInfo->smf.grassmapTexName.empty()) {
+		texName = mapInfo->smf.grassmapTexName;
+	}
+
+	if (!texName.empty() && !infomapBM.LoadGrayscale(texName)) {
+		throw content_error("[CSMFReadMap::GetInfoMap] cannot load: " + texName);
+	}
+
+	if (infomapBM.mem) {
+		if (infomapBM.xsize == bmInfo->width && infomapBM.ysize == bmInfo->height) {
+			memcpy( data, infomapBM.mem, bmInfo->width * bmInfo->height);
+			return data;
+		}
+		sprintf(failMsg, "[CSMFReadMap::GetInfoMap] Invalid image dimensions: %s %ix%i != %ix%i",
+			texName.c_str(), infomapBM.xsize, infomapBM.ysize,
+			bmInfo->width, bmInfo->height);
+		throw content_error( failMsg );
+	}
 
 	// get data
-	unsigned char* data = new unsigned char[bmInfo->width * bmInfo->height];
 	if ( !file.ReadInfoMap(name, data) ) {
 		delete[] data;
 		data = NULL;
