@@ -52,6 +52,9 @@ System:
  - OverheadCamera: make angle 100% stable when doing `mousewheel down then up`
  ! remove los view w/o radar a.k.a. [;] (can be emulated with Spring.SetLosViewColors)
 
+Weapons:
+ - add burstTargetLock (salvoTargetLock in lua, default false) tag to prevent weapons from changing targets during a burst (fixes #4678)
+
 Sim:
  - fix harvesting
  - fix #4591: builders `randomly` remove build orders from queue

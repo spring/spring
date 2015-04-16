@@ -72,6 +72,7 @@ public:
 
 	int salvosize;
 	float salvodelay;
+	bool salvoTargetLock;
 	float reload;
 	float beamtime;
 	bool beamburst;
