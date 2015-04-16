@@ -180,11 +180,11 @@ void CBeamLaser::UpdateSweep()
 	if (reloadStatus > gs->frameNum)
 		return;
 
-	if (teamHandler->Team(owner->team)->res.metal < metalFireCost) { return; }
-	if (teamHandler->Team(owner->team)->res.energy < energyFireCost) { return; }
+	if (teamHandler->Team(owner->team)->res.metal < weaponDef->metalcost) { return; }
+	if (teamHandler->Team(owner->team)->res.energy < weaponDef->energycost) { return; }
 
-	owner->UseEnergy(energyFireCost / salvoSize);
-	owner->UseMetal(metalFireCost / salvoSize);
+	owner->UseEnergy(weaponDef->energycost / salvoSize);
+	owner->UseMetal(weaponDef->metalcost / salvoSize);
 
 	FireInternal(sweepFireState.GetSweepCurrDir());
 
@@ -301,16 +301,16 @@ void CBeamLaser::FireInternal(float3 curDir)
 		curDir.SafeNormalize();
 
 		// increase range if targets are searched for in a cylinder
-		if (cylinderTargeting > 0.01f) {
-			const float verticalDist = owner->radius * cylinderTargeting * curDir.y;
+		if (weaponDef->cylinderTargeting > 0.01f) {
+			const float verticalDist = owner->radius * weaponDef->cylinderTargeting * curDir.y;
 			const float maxLengthModSq = maxLength * maxLength + verticalDist * verticalDist;
 
 			maxLength = math::sqrt(maxLengthModSq);
 		}
 
 		// adjust range if targetting edge of hitsphere
-		if (targetType == Target_Unit && targetUnit != NULL && targetBorder != 0.0f) {
-			maxLength += (targetUnit->radius * targetBorder);
+		if (targetType == Target_Unit && targetUnit != NULL && weaponDef->targetBorder != 0.0f) {
+			maxLength += (targetUnit->radius * weaponDef->targetBorder);
 		}
 	} else {
 		// restrict the range when sweeping
@@ -379,14 +379,14 @@ void CBeamLaser::FireInternal(float3 curDir)
 	if (hitUnit != NULL) {
 		hitUnit->SetLastAttackedPiece(hitColQuery.GetHitPiece(), gs->frameNum);
 
-		if (targetBorder > 0.0f) {
-			actualRange += (hitUnit->radius * targetBorder);
+		if (weaponDef->targetBorder > 0.0f) {
+			actualRange += (hitUnit->radius * weaponDef->targetBorder);
 		}
 	}
 
 	if (curLength < maxLength) {
 		// make it possible to always hit with some minimal intensity (melee weapons have use for that)
-		const float hitIntensity = std::max(minIntensity, 1.0f - curLength / (actualRange * 2.0f));
+		const float hitIntensity = std::max(weaponDef->minIntensity, 1.0f - curLength / (actualRange * 2.0f));
 
 		const DamageArray& baseDamages = CWeaponDefHandler::DynamicDamages(weaponDef, weaponMuzzlePos, curPos);
 		const DamageArray damages = baseDamages * (hitIntensity * salvoDamageMult);
@@ -398,8 +398,8 @@ void CBeamLaser::FireInternal(float3 curDir)
 			owner,
 			hitUnit,
 			hitFeature,
-			craterAreaOfEffect,
-			damageAreaOfEffect,
+			weaponDef->craterAreaOfEffect,
+			weaponDef->damageAreaOfEffect,
 			weaponDef->edgeEffectiveness,
 			weaponDef->explosionSpeed,
 			1.0f,                                             // gfxMod

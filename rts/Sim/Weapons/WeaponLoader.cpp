@@ -25,8 +25,6 @@
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 
-#define DEG2RAD(a) ((a) * (3.141592653f / 180.0f))
-
 CWeaponLoader* CWeaponLoader::GetInstance()
 {
 	static CWeaponLoader instance;
@@ -108,29 +106,20 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 	const WeaponDef* weaponDef = defWeapon->def;
 
 	weapon->reloadTime = std::max(1, int(weaponDef->reload * GAME_SPEED));
-	weapon->heightMod = weaponDef->heightmod;
 	weapon->projectileSpeed = weaponDef->projectilespeed;
 
-	weapon->damageAreaOfEffect = weaponDef->damageAreaOfEffect;
-	weapon->craterAreaOfEffect = weaponDef->craterAreaOfEffect;
 	weapon->accuracyError = weaponDef->accuracy;
 	weapon->sprayAngle = weaponDef->sprayAngle;
-
-	weapon->stockpileTime = int(weaponDef->stockpileTime * GAME_SPEED);
 
 	weapon->salvoSize = weaponDef->salvosize;
 	weapon->salvoDelay = int(weaponDef->salvodelay * GAME_SPEED);
 	weapon->projectilesPerShot = weaponDef->projectilespershot;
 
-	weapon->metalFireCost = weaponDef->metalcost;
-	weapon->energyFireCost = weaponDef->energycost;
-
 	weapon->fireSoundId = weaponDef->fireSound.getID(0);
 	weapon->fireSoundVolume = weaponDef->fireSound.getVolume(0);
 
 	weapon->onlyForward = weaponDef->onlyForward;
-	weapon->maxForwardAngleDif = math::cos(DEG2RAD(weaponDef->maxAngle));
-	weapon->maxAngleAtCanFireCheck = math::cos(DEG2RAD(weaponDef->maxFireAngle));
+	weapon->maxForwardAngleDif = math::cos(weaponDef->maxAngle);
 	weapon->maxMainDirAngleDif = defWeapon->maxMainDirAngleDif;
 	weapon->mainDir = defWeapon->mainDir;
 
@@ -143,9 +132,6 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 	}
 
 	weapon->fuelUsage = defWeapon->fuelUsage;
-	weapon->targetBorder = weaponDef->targetBorder;
-	weapon->cylinderTargeting = weaponDef->cylinderTargeting;
-	weapon->minIntensity = weaponDef->minIntensity;
 	weapon->heightBoostFactor = weaponDef->heightBoostFactor;
 	weapon->collisionFlags = weaponDef->collisionFlags;
 

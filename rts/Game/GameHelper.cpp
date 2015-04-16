@@ -635,10 +635,10 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 	const CUnit* attacker = weapon->owner;
 	const float radius    = weapon->range;
 	const float3& pos     = attacker->pos;
-	const float heightMod = weapon->heightMod;
 	const float aHeight   = weapon->weaponPos.y;
 
 	const WeaponDef* weaponDef = weapon->weaponDef;
+	const float heightMod = weaponDef->heightmod;
 
 	// how much damage the weapon deals over 1 second
 	const float secDamage = weaponDef->damages.GetDefaultDamage() * weapon->salvoSize / weapon->reloadTime * GAME_SPEED;

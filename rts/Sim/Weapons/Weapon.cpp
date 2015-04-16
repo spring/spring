@@ -31,7 +31,6 @@ CR_BIND_DERIVED(CWeapon, CObject, (NULL, NULL))
 CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(owner),
 	CR_MEMBER(range),
-	CR_MEMBER(heightMod),
 	CR_MEMBER(reloadTime),
 	CR_MEMBER(reloadStatus),
 	CR_MEMBER(salvoLeft),
@@ -44,8 +43,6 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(accuracyError),
 	CR_MEMBER(projectileSpeed),
 	CR_MEMBER(predictSpeedMod),
-	CR_MEMBER(metalFireCost),
-	CR_MEMBER(energyFireCost),
 	CR_MEMBER(fireSoundId),
 	CR_MEMBER(fireSoundVolume),
 	CR_MEMBER(hasBlockShot),
@@ -55,14 +52,11 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(haveUserTarget),
 	CR_MEMBER(onlyForward),
 	CR_MEMBER(muzzleFlareSize),
-	CR_MEMBER(craterAreaOfEffect),
-	CR_MEMBER(damageAreaOfEffect),
 
 	CR_MEMBER(badTargetCategory),
 	CR_MEMBER(onlyTargetCategory),
 	CR_MEMBER(incomingProjectiles),
 	CR_MEMBER(weaponDef),
-	CR_MEMBER(stockpileTime),
 	CR_MEMBER(buildPercent),
 	CR_MEMBER(numStockpiled),
 	CR_MEMBER(numStockpileQued),
@@ -77,12 +71,8 @@ CR_REG_METADATA(CWeapon, (
 
 	CR_MEMBER(slavedTo),
 	CR_MEMBER(maxForwardAngleDif),
-	CR_MEMBER(maxAngleAtCanFireCheck),
 	CR_MEMBER(maxMainDirAngleDif),
 	CR_MEMBER(hasCloseTarget),
-	CR_MEMBER(targetBorder),
-	CR_MEMBER(cylinderTargeting),
-	CR_MEMBER(minIntensity),
 	CR_MEMBER(heightBoostFactor),
 	CR_MEMBER(avoidFlags),
 	CR_MEMBER(collisionFlags),
@@ -113,15 +103,12 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	weaponDef(def),
 	weaponNum(-1),
 	haveUserTarget(false),
-	craterAreaOfEffect(1.0f),
-	damageAreaOfEffect(1.0f),
 	muzzleFlareSize(1),
 	useWeaponPosForAim(0),
 	hasCloseTarget(false),
 	reloadTime(1),
 	reloadStatus(0),
 	range(1),
-	heightMod(0),
 	projectileSpeed(1),
 	accuracyError(0),
 	sprayAngle(0),
@@ -134,8 +121,6 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	targetUnit(0),
 	predict(0),
 	predictSpeedMod(1),
-	metalFireCost(0),
-	energyFireCost(0),
 	fireSoundId(0),
 	fireSoundVolume(0),
 	hasBlockShot(false),
@@ -147,7 +132,6 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	onlyTargetCategory(0xffffffff),
 
 	interceptTarget(NULL),
-	stockpileTime(1),
 	buildPercent(0),
 	numStockpiled(0),
 	numStockpileQued(0),
@@ -158,11 +142,7 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 
 	slavedTo(NULL),
 	maxForwardAngleDif(0.0f),
-	maxAngleAtCanFireCheck(0.0f),
 	maxMainDirAngleDif(-1.0f),
-	targetBorder(0.f),
-	cylinderTargeting(0.f),
-	minIntensity(0.f),
 	heightBoostFactor(-1.f),
 	avoidFlags(0),
 	collisionFlags(0),
@@ -312,7 +292,7 @@ void CWeapon::UpdateTargeting()
 
 		// never target below terrain
 		// never target below water if not a water-weapon
-		targetPos = (targetBorder == 0.0f)? tmpTargetPos: targetBorderPos;
+		targetPos = (weaponDef->targetBorder == 0.0f)? tmpTargetPos: targetBorderPos;
 		targetPos.y = std::max(targetPos.y, CGround::GetApproximateHeight(targetPos.x, targetPos.z) + 2.0f);
 		targetPos.y = std::max(targetPos.y, targetPos.y * weaponDef->waterweapon);
 	}
@@ -399,8 +379,8 @@ bool CWeapon::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRe
 		return false;
 
 	// sanity check to force new aim
-	if (maxAngleAtCanFireCheck > -1.0f) {
-		if (!ignoreRequestedDir && wantedDir.dot(lastRequestedDir) <= maxAngleAtCanFireCheck)
+	if (weaponDef->maxFireAngle > -1.0f) {
+		if (!ignoreRequestedDir && wantedDir.dot(lastRequestedDir) <= weaponDef->maxFireAngle)
 			return false;
 	}
 
@@ -427,7 +407,7 @@ void CWeapon::UpdateFire()
 
 	CTeam* ownerTeam = teamHandler->Team(owner->team);
 
-	if ((weaponDef->stockpile || (ownerTeam->res.metal >= metalFireCost && ownerTeam->res.energy >= energyFireCost))) {
+	if ((weaponDef->stockpile || (ownerTeam->res.metal >= weaponDef->metalcost && ownerTeam->res.energy >= weaponDef->energycost))) {
 		owner->script->GetEmitDirPos(owner->script->QueryWeapon(weaponNum), relWeaponMuzzlePos, weaponDir);
 
 		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
@@ -442,8 +422,8 @@ void CWeapon::UpdateFire()
 				owner->commandAI->StockpileChanged(this);
 				eventHandler.StockpileChanged(owner, this, oldCount);
 			} else {
-				owner->UseEnergy(energyFireCost);
-				owner->UseMetal(metalFireCost);
+				owner->UseEnergy(weaponDef->energycost);
+				owner->UseMetal(weaponDef->metalcost);
 				owner->currentFuel = std::max(0.0f, owner->currentFuel - fuelUsage);
 			}
 
@@ -468,8 +448,8 @@ void CWeapon::UpdateFire()
 			const int minPeriod = std::max(1, (int)(reloadTime / owner->reloadSpeed));
 			const float averageFactor = 1.0f / minPeriod;
 
-			ownerTeam->resPull.energy += (averageFactor * energyFireCost);
-			ownerTeam->resPull.metal  += (averageFactor * metalFireCost);
+			ownerTeam->resPull.energy += (averageFactor * weaponDef->energycost);
+			ownerTeam->resPull.metal  += (averageFactor * weaponDef->metalcost);
 		}
 	}
 }
@@ -479,16 +459,16 @@ bool CWeapon::UpdateStockpile()
 {
 	if (weaponDef->stockpile) {
 		if (numStockpileQued > 0) {
-			const float p = 1.0f / stockpileTime;
+			const float p = 1.0f / weaponDef->stockpileTime;
 
-			if (teamHandler->Team(owner->team)->res.metal >= metalFireCost*p && teamHandler->Team(owner->team)->res.energy >= energyFireCost*p) {
-				owner->UseEnergy(energyFireCost * p);
-				owner->UseMetal(metalFireCost * p);
+			if (teamHandler->Team(owner->team)->res.metal >= weaponDef->metalcost*p && teamHandler->Team(owner->team)->res.energy >= weaponDef->energycost*p) {
+				owner->UseEnergy(weaponDef->energycost * p);
+				owner->UseMetal(weaponDef->metalcost * p);
 				buildPercent += p;
 			} else {
 				// update the energy and metal required counts
-				teamHandler->Team(owner->team)->resPull.energy += (energyFireCost * p);
-				teamHandler->Team(owner->team)->resPull.metal  += (metalFireCost * p);
+				teamHandler->Team(owner->team)->resPull.energy += (weaponDef->energycost * p);
+				teamHandler->Team(owner->team)->resPull.metal  += (weaponDef->metalcost * p);
 			}
 			if (buildPercent >= 1) {
 				const int oldCount = numStockpiled;
@@ -654,7 +634,7 @@ bool CWeapon::AttackUnit(CUnit* newTargetUnit, bool isUserTarget)
 	haveUserTarget = isUserTarget;
 	targetType = Target_Unit;
 	targetUnit = newTargetUnit;
-	targetPos = (targetBorder == 0.0f)? newTargetPos: targetBorderPos;
+	targetPos = (weaponDef->targetBorder == 0.0f)? newTargetPos: targetBorderPos;
 	targetPos.y = std::max(targetPos.y, CGround::GetApproximateHeight(targetPos.x, targetPos.z) + 2.0f);
 
 	AddDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
@@ -967,12 +947,12 @@ bool CWeapon::SetTargetBorderPos(
 	float3& rawTargetVec,
 	float3& rawTargetDir)
 {
-	if (targetBorder == 0.0f)
+	if (weaponDef->targetBorder == 0.0f)
 		return false;
 	if (targetUnit == NULL)
 		return false;
 
-	const float tbScale = math::fabsf(targetBorder);
+	const float tbScale = math::fabsf(weaponDef->targetBorder);
 
 	CollisionVolume  tmpColVol = CollisionVolume(targetUnit->collisionVolume);
 	CollisionQuery   tmpColQry;
@@ -1012,8 +992,8 @@ bool CWeapon::SetTargetBorderPos(
 
 		// adjust the length of <targetVec> based on the targetBorder factor
 		if (CCollisionHandler::DetectHit(&tmpColVol, targetUnit, weaponMuzzlePos, targetRayPos, &tmpColQry)) {
-			if (targetBorder > 0.0f) { rawTargetVec -= (rawTargetDir * rawTargetPos.distance(tmpColQry.GetIngressPos())); }
-			if (targetBorder < 0.0f) { rawTargetVec += (rawTargetDir * rawTargetPos.distance(tmpColQry.GetEgressPos())); }
+			if (weaponDef->targetBorder > 0.0f) { rawTargetVec -= (rawTargetDir * rawTargetPos.distance(tmpColQry.GetIngressPos())); }
+			if (weaponDef->targetBorder < 0.0f) { rawTargetVec += (rawTargetDir * rawTargetPos.distance(tmpColQry.GetEgressPos())); }
 
 			targetBorderPos = weaponMuzzlePos + rawTargetVec;
 		}
@@ -1026,12 +1006,12 @@ bool CWeapon::SetTargetBorderPos(
 
 bool CWeapon::GetTargetBorderPos(const CUnit* targetUnit, const float3& rawTargetPos, float3& rawTargetVec, float3& rawTargetDir) const
 {
-	if (targetBorder == 0.0f)
+	if (weaponDef->targetBorder == 0.0f)
 		return false;
 	if (targetUnit == NULL)
 		return false;
 
-	const float tbScale = math::fabsf(targetBorder);
+	const float tbScale = math::fabsf(weaponDef->targetBorder);
 
 	CollisionVolume  tmpColVol(targetUnit->collisionVolume);
 	CollisionQuery   tmpColQry;
@@ -1068,8 +1048,8 @@ bool CWeapon::GetTargetBorderPos(const CUnit* targetUnit, const float3& rawTarge
 
 		// adjust the length of <targetVec> based on the targetBorder factor
 		if (CCollisionHandler::DetectHit(&tmpColVol, targetUnit, weaponMuzzlePos, targetRayPos, &tmpColQry)) {
-			if (targetBorder > 0.0f) { rawTargetVec -= (rawTargetDir * rawTargetPos.distance(tmpColQry.GetIngressPos())); }
-			if (targetBorder < 0.0f) { rawTargetVec += (rawTargetDir * rawTargetPos.distance(tmpColQry.GetEgressPos())); }
+			if (weaponDef->targetBorder > 0.0f) { rawTargetVec -= (rawTargetDir * rawTargetPos.distance(tmpColQry.GetIngressPos())); }
+			if (weaponDef->targetBorder < 0.0f) { rawTargetVec += (rawTargetDir * rawTargetPos.distance(tmpColQry.GetEgressPos())); }
 		}
 	}
 
@@ -1129,12 +1109,12 @@ bool CWeapon::TestRange(const float3& tgtPos, bool /*userTarget*/, const CUnit* 
 	const float heightDiff = (weaponMuzzlePos.y + tmpTargetVec.y) - owner->pos.y;
 	float weaponRange = 0.0f; // range modified by heightDiff and cylinderTargeting
 
-	if (targetUnit == NULL || cylinderTargeting < 0.01f) {
+	if (targetUnit == NULL || weaponDef->cylinderTargeting < 0.01f) {
 		// check range in a sphere (with extra radius <heightDiff * heightMod>)
-		weaponRange = GetRange2D(heightDiff * heightMod);
+		weaponRange = GetRange2D(heightDiff * weaponDef->heightmod);
 	} else {
 		// check range in a cylinder (with height <cylinderTargeting * range>)
-		if ((cylinderTargeting * range) > (math::fabsf(heightDiff) * heightMod)) {
+		if ((weaponDef->cylinderTargeting * range) > (math::fabsf(heightDiff) * weaponDef->heightmod)) {
 			weaponRange = GetRange2D(0.0f);
 		}
 	}
@@ -1174,7 +1154,7 @@ bool CWeapon::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit
 		const float3 gpos = weaponMuzzlePos + dir * gdst;
 
 		// true iff ground does not block the ray of length <length> from <pos> along <dir>
-		if ((gdst > 0.0f) && (gpos.SqDistance(pos) > Square(damageAreaOfEffect)))
+		if ((gdst > 0.0f) && (gpos.SqDistance(pos) > Square(weaponDef->damageAreaOfEffect)))
 			return false;
 	}
 
@@ -1263,7 +1243,7 @@ void CWeapon::Init()
 	relWeaponMuzzlePos = owner->script->GetPiecePos(owner->script->QueryWeapon(weaponNum));
 	weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
-	muzzleFlareSize = std::min(damageAreaOfEffect * 0.2f, std::min(1500.f, weaponDef->damages[0]) * 0.003f);
+	muzzleFlareSize = std::min(weaponDef->damageAreaOfEffect * 0.2f, std::min(1500.f, weaponDef->damages[0]) * 0.003f);
 
 	if (weaponDef->interceptor)
 		interceptHandler.AddInterceptorWeapon(this);

@@ -110,9 +110,6 @@ public:
 	int weaponNum;							// the weapons order among the owner weapons
 	bool haveUserTarget;
 
-	float craterAreaOfEffect;
-	float damageAreaOfEffect;
-
 	float muzzleFlareSize;					// size of muzzle flare if drawn
 	int useWeaponPosForAim;					// sometimes weapon pos is better to use than aimpos
 	bool hasCloseTarget;					// might need to update weapon pos more often when enemy is near
@@ -121,7 +118,6 @@ public:
 	int reloadStatus;						// next tick the weapon can fire again
 
 	float range;
-	float heightMod;						// how much extra range the weapon gain per height difference
 
 	float projectileSpeed;
 	float accuracyError;					// inaccuracy of whole salvo
@@ -138,9 +134,6 @@ public:
 
 	float predict;							// how long time we predict it take for a projectile to reach target
 	float predictSpeedMod;					// how the weapon predicts the speed of the units goes -> 1 when experience increases
-
-	float metalFireCost;
-	float energyFireCost;
 
 	int fireSoundId;
 	float fireSoundVolume;
@@ -160,7 +153,6 @@ public:
 	// projectile that we currently target for interception
 	CWeaponProjectile* interceptTarget;
 
-	int stockpileTime;            // how long it takes to stockpile 1 missile
 	float buildPercent;           // how far we have come on building current missile if stockpiling
 	int numStockpiled;            // how many missiles we have stockpiled
 	int numStockpileQued;         // how many weapons the user have added to our que
@@ -172,12 +164,8 @@ public:
 	CWeapon* slavedTo;            // use this weapon to choose target
 
 	float maxForwardAngleDif;     // for onlyForward/!turret weapons, max. angle between owner->frontdir and (targetPos - owner->pos) (derived from UnitDefWeapon::maxAngleDif)
-	float maxAngleAtCanFireCheck; // angle which prevents a weapon from firing in CanFire. fixes issues with units firing backwards when their target changes before a script's AimWeapon (derived from UnitDefWeapon::fireTolerance)
 	float maxMainDirAngleDif;     // for !onlyForward/turret weapons, max. angle from <mainDir> the weapon can aim (derived from WeaponDef::tolerance)
 
-	float targetBorder;           // if nonzero, units will TryTarget wrt. edge of scaled collision volume instead of centre
-	float cylinderTargeting;      // if greater than 0, range will be checked in a cylinder (height=range*cylinderTargeting) instead of a sphere
-	float minIntensity;           // for beamlasers - always hit with some minimum intensity (a damage coeffcient normally dependent on distance). do not confuse with intensity tag, it's completely unrelated.
 	float heightBoostFactor;      // controls cannon range height boost. default: -1 -- automatically calculate a more or less sane value
 
 	unsigned int avoidFlags;
