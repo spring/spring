@@ -208,6 +208,10 @@ static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, std::un
 
 		// Check if we got data we can use to initialize the uniform
 		if (oldUniformState->IsUninit()) {
+			if (oldProgID == 0) {
+				oldLoc = -1;
+				continue;
+			}
 			oldLoc = glGetUniformLocation(oldProgID, &name[0]);
 
 			// No old data found, so we cannot initialize the uniform
