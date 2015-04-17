@@ -27,7 +27,7 @@
 using std::max;
 
 CONFIG(bool, GroundNormalTextureHighPrecision).defaultValue(false);
-CONFIG(float, SMFTexAniso).defaultValue(0.0f);
+CONFIG(float, SMFTexAniso).defaultValue(4.0f).minimumValue(0.0f);
 
 CR_BIND_DERIVED(CSMFReadMap, CReadMap, (""))
 
