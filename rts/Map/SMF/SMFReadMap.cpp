@@ -263,14 +263,10 @@ void CSMFReadMap::CreateDetailTex()
 		throw content_error("Could not load detail texture from file " + mapInfo->smf.detailTexName);
 	}
 
-	glGenTextures(1, &detailTex);
-	glBindTexture(GL_TEXTURE_2D, detailTex);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	detailTex = detailTexBM.CreateTexture(true);
 	if (anisotropy != 0.0f) {
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
 	}
-	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, detailTexBM.xsize, detailTexBM.ysize, GL_RGBA, GL_UNSIGNED_BYTE, detailTexBM.mem);
 }
 
 
