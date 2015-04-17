@@ -491,56 +491,56 @@ bool CWeapon::UpdateStockpile()
 
 void CWeapon::UpdateSalvo()
 {
-	if (salvoLeft && nextSalvo <= gs->frameNum) {
-		salvoLeft--;
-		nextSalvo = gs->frameNum + salvoDelay;
-		owner->lastFireWeapon = gs->frameNum;
+	if (!salvoLeft || nextSalvo > gs->frameNum)
+		return;
 
-		int projectiles = projectilesPerShot;
+	salvoLeft--;
+	nextSalvo = gs->frameNum + salvoDelay;
+	owner->lastFireWeapon = gs->frameNum;
 
-		const bool attackingPos = ((targetType == Target_Pos) && (targetPos == owner->attackPos));
-		const bool attackingUnit = ((targetType == Target_Unit) && (targetUnit == owner->attackTarget));
-
-		while (projectiles > 0) {
-			--projectiles;
-
-			owner->script->Shot(weaponNum);
-
-			int piece = owner->script->AimFromWeapon(weaponNum);
-			relWeaponPos = owner->script->GetPiecePos(piece);
-
-			piece = owner->script->QueryWeapon(weaponNum);
-			owner->script->GetEmitDirPos(piece, relWeaponMuzzlePos, weaponDir);
-
-			weaponPos = owner->GetObjectSpacePos(relWeaponPos);
-			weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
-			weaponDir = owner->GetObjectSpaceVec(weaponDir);
-			weaponDir.SafeNormalize();
-
-			if (owner->unitDef->decloakOnFire && (owner->scriptCloak <= 2)) {
-				if (owner->isCloaked) {
-					owner->isCloaked = false;
-					eventHandler.UnitDecloaked(owner);
-				}
-				owner->curCloakTimeout = gs->frameNum + owner->cloakTimeout;
-			}
-
-			Fire(false);
+	// Decloak
+	if ((owner->scriptCloak <= 2) && owner->unitDef->decloakOnFire) {
+		if (owner->isCloaked) {
+			owner->isCloaked = false;
+			eventHandler.UnitDecloaked(owner);
 		}
+		owner->curCloakTimeout = gs->frameNum + owner->cloakTimeout;
+	}
 
-		//Rock the unit in the direction of fire
-		if (owner->script->HasRockUnit()) {
-			float3 rockDir = wantedDir;
-			rockDir.y = 0.0f;
-			rockDir = -rockDir.SafeNormalize();
-			owner->script->RockUnit(rockDir);
-		}
+	for (int i = 0; i < projectilesPerShot; ++i) {
+		owner->script->Shot(weaponNum);
 
-		owner->commandAI->WeaponFired(this, weaponNum == 0, (salvoLeft == 0 && (attackingPos || attackingUnit)));
+		// Get Aim Piece
+		int piece = owner->script->AimFromWeapon(weaponNum);
+		relWeaponPos = owner->script->GetPiecePos(piece);
 
-		if (salvoLeft == 0) {
-			owner->script->EndBurst(weaponNum);
-		}
+		// Get Muzzle Piece
+		piece = owner->script->QueryWeapon(weaponNum);
+		owner->script->GetEmitDirPos(piece, relWeaponMuzzlePos, weaponDir);
+
+		// convert spaces
+		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
+		weaponDir = owner->GetObjectSpaceVec(weaponDir);
+		weaponDir.SafeNormalize();
+
+		Fire(false);
+	}
+
+	// Rock the unit in the direction of fire
+	if (owner->script->HasRockUnit()) {
+		float3 rockDir = wantedDir;
+		rockDir = -rockDir.SafeNormalize2D();
+		owner->script->RockUnit(rockDir);
+	}
+
+	//FIXME why does the lastSalvo arg depend on attackingPos & attackingUnit ??
+	const bool attackingPos  = ((targetType == Target_Pos ) && (targetPos  == owner->attackPos));
+	const bool attackingUnit = ((targetType == Target_Unit) && (targetUnit == owner->attackTarget));
+	owner->commandAI->WeaponFired(this, weaponNum == 0, (salvoLeft == 0 && (attackingPos || attackingUnit)));
+
+	if (salvoLeft == 0) {
+		owner->script->EndBurst(weaponNum);
 	}
 }
 
