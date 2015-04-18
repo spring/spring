@@ -534,10 +534,10 @@ void CWeapon::UpdateSalvo()
 		owner->script->RockUnit(rockDir);
 	}
 
-	//FIXME why does the lastSalvo arg depend on attackingPos & attackingUnit ??
 	const bool attackingPos  = ((targetType == Target_Pos ) && (targetPos  == owner->attackPos));
 	const bool attackingUnit = ((targetType == Target_Unit) && (targetUnit == owner->attackTarget));
-	owner->commandAI->WeaponFired(this, weaponNum == 0, (salvoLeft == 0 && (attackingPos || attackingUnit)));
+	const bool searchForNewTarget = (weaponNum == 0) && (salvoLeft == 0) && (attackingPos || attackingUnit);
+	owner->commandAI->WeaponFired(this, searchForNewTarget);
 
 	if (salvoLeft == 0) {
 		owner->script->EndBurst(weaponNum);

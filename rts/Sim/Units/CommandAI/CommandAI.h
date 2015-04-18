@@ -43,20 +43,20 @@ public:
 	virtual void GiveCommandReal(const Command& c, bool fromSynced = true);
 	virtual std::vector<CommandDescription>& GetPossibleCommands();
 	virtual void FinishCommand();
-	virtual void WeaponFired(CWeapon* weapon, bool mainWeapon, bool lastSalvo);
+		void WeaponFired(CWeapon* weapon, const bool searchForNewTarget);
 	virtual void BuggerOff(const float3& pos, float radius) {}
 	/**
 	 * @brief Determines if c will cancel a queued command
 	 * @return true if c will cancel a queued command
 	 */
-	virtual bool WillCancelQueued(const Command& c);
+		bool WillCancelQueued(const Command& c);
 	virtual bool CanSetMaxSpeed() const { return false; }
 	virtual void StopMove() { return; }
 
 	/**
 	 * Removes attack commands targeted at our new ally.
 	 */
-	virtual void StopAttackingAllyTeam(int ally);
+	void StopAttackingAllyTeam(int ally);
 
 	bool HasCommand(int cmdID) const;
 	bool HasMoreMoveCommands() const;

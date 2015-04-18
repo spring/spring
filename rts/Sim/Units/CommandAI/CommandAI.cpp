@@ -1501,7 +1501,7 @@ void CCommandAI::UpdateStockpileIcon()
 	}
 }
 
-void CCommandAI::WeaponFired(CWeapon* weapon, bool mainWeapon, bool lastSalvo)
+void CCommandAI::WeaponFired(CWeapon* weapon, const bool searchForNewTarget)
 {
 	// copy: SelectNewAreaAttackTargetOrPos can call
 	// FinishCommand which would invalidate a pointer
@@ -1512,7 +1512,7 @@ void CCommandAI::WeaponFired(CWeapon* weapon, bool mainWeapon, bool lastSalvo)
 
 	bool nextOrder = false;
 
-	if (mainWeapon && lastSalvo && (haveAreaAttackCmd || (haveGroundAttackCmd && HasMoreMoveCommands()))) {
+	if (searchForNewTarget && (haveAreaAttackCmd || (haveGroundAttackCmd && HasMoreMoveCommands()))) {
 		// if we have an area-attack command (or a regular attack command
 		// followed by anything that requires movement) and this was the
 		// last salvo of our main weapon, assume we completed an attack
