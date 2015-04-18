@@ -829,12 +829,9 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 
 	// do not check if the plane can be submerged here,
 	// since it'll cause ground collisions later on (?)
-	float gHeight = 0.0f;
-
+	float gHeight = CGround::GetHeightAboveWater(pos.x, pos.z);
 	if (UseSmoothMesh()) {
-		gHeight = std::max(smoothGround->GetHeight(pos.x, pos.z), CGround::GetApproximateHeight(pos.x, pos.z));
-	} else {
-		gHeight = CGround::GetHeightAboveWater(pos.x, pos.z);
+		gHeight = std::max(smoothGround->GetHeight(pos.x, pos.z), gHeight);
 	}
 
 	if (((gs->frameNum + owner->id) & 3) == 0) {
@@ -842,13 +839,13 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	}
 
 	// RHS is needed for moving targets (when called by UpdateAttack)
-	const bool allowUnlockYR = (goalDist2D >= TurnRadius(turnRadius, spd.w) || goalVec.dot(owner->frontdir) > 0.0f);
-	const bool forceUnlockYR = ((gs->frameNum - owner->lastFireWeapon) >= GAME_SPEED * 3);
+	const bool allowUnlockYawRoll = (goalDist2D >= TurnRadius(turnRadius, spd.w) || goalVec.dot(owner->frontdir) > 0.0f);
+	const bool forceUnlockYawRoll = ((gs->frameNum - owner->lastFireWeapon) >= GAME_SPEED * 3);
 
 	// yaw and roll have to be unblocked after a certain time or aircraft
 	// can fly straight forever if their target is another chasing aircraft
 	float3 rightDir2D = rightdir;
-	float3 yprMults = (XZVector * float(allowUnlockYR || forceUnlockYR)) + UpVector;
+	float3 yprMults = (XZVector * float(allowUnlockYawRoll || forceUnlockYawRoll)) + UpVector;
 
 	float goalDotRight = goalDir2D.dot(rightDir2D.Normalize2D());
 
@@ -885,16 +882,8 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	const float elevator = GetElevatorDeflection(owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir2D, gHeight, wantedHeight, maxElevator, maxPitch, goalDotRight, aGoalDotFront, lastColWarningType == 2, false); // pitch
 
 	UpdateAirPhysics(rudder * yprMults.x, aileron * yprMults.z, elevator * yprMults.y, engine, owner->frontdir);
-	return (allowUnlockYR || forceUnlockYR);
+	return (allowUnlockYawRoll || forceUnlockYawRoll);
 }
-
-
-
-void CStrafeAirMoveType::UpdateLanded()
-{
-	AAirMoveType::UpdateLanded();
-}
-
 
 
 static float GetVTOLAccelerationSign(float h, float wh, float speedy, bool ascending) {
