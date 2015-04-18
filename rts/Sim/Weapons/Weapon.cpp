@@ -496,7 +496,6 @@ void CWeapon::UpdateSalvo()
 
 	salvoLeft--;
 	nextSalvo = gs->frameNum + salvoDelay;
-	owner->lastFireWeapon = gs->frameNum;
 
 	// Decloak
 	if ((owner->scriptCloak <= 2) && owner->unitDef->decloakOnFire) {
@@ -529,8 +528,8 @@ void CWeapon::UpdateSalvo()
 
 	// Rock the unit in the direction of fire
 	if (owner->script->HasRockUnit()) {
-		float3 rockDir = wantedDir;
-		rockDir = -rockDir.SafeNormalize2D();
+		float3 rockDir = -wantedDir;
+		rockDir.SafeNormalize2D();
 		owner->script->RockUnit(rockDir);
 	}
 
@@ -1268,6 +1267,8 @@ void CWeapon::Fire(bool scriptCall)
 	tracefile << owner->pos.x << " " << owner->frontdir.x << " " << targetPos.x << " " << targetPos.y << " " << targetPos.z;
 	tracefile << sprayAngle << " " <<  " " << salvoError.x << " " << salvoError.z << " " << owner->limExperience << " " << projectileSpeed << "\n";
 #endif
+	owner->lastFireWeapon = gs->frameNum;
+
 	FireImpl(scriptCall);
 
 	if (fireSoundId > 0 && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1)) {
