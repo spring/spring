@@ -363,7 +363,8 @@ public:
 	unsigned int outOfMapTime;
 
 	float reloadSpeed;
-	float maxRange;
+	float maxRange;    // highest weapon range
+	float lowestRange; // lowest weapon range
 
 	/// true if at least one weapon has targetType != Target_None
 	bool haveTarget;

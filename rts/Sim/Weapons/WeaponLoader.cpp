@@ -49,7 +49,14 @@ void CWeaponLoader::LoadWeapons(CUnit* unit)
 		CWeapon* weapon = LoadWeapon(unit, defWeapon);
 
 		weapons.push_back(InitWeapon(unit, weapon, defWeapon));
-		unit->maxRange = std::max(weapon->range, unit->maxRange);
+		if( defWeapon->def->type != "Shield" ) {
+			unit->maxRange = std::max(weapon->range, unit->maxRange);
+			if(unit->lowestRange < 0.1f) {
+				unit->lowestRange = weapon->range;
+			} else {
+				unit->lowestRange = std::min(weapon->range, unit->lowestRange);
+			}
+		}
 	}
 }
 
