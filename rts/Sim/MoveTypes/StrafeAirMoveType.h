@@ -30,7 +30,7 @@ public:
 
 	void UpdateManeuver();
 	void UpdateAttack();
-	bool UpdateFlying(float wantedHeight, float engine);
+	bool UpdateFlying(float wantedHeight, float engine, bool isAttacking);
 	void UpdateLanded();
 	void UpdateLanding();
 	void UpdateAirPhysics(
