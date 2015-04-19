@@ -58,10 +58,10 @@ CR_REG_METADATA(CStrafeAirMoveType, (
 ))
 
 
+
 //FIXME is this really necessary?
 static float TurnRadius(const float rawRadius, const float rawSpeed) {
 	return (std::min(1000.0f, rawRadius * rawSpeed));
-
 }
 
 static float GetAileronDeflection(
@@ -189,9 +189,10 @@ static float GetElevatorDeflection(
 		} else {
 			const float gHeightR = CGround::GetHeightAboveWater(pos.x + spd.x * 40.0f, pos.z + spd.z * 40.0f);
 			const float hdif = std::max(gHeightR, groundHeight) + 60 - pos.y - frontdir.y * spd.w * 20.0f;
-			
+
 			const float maxElevatorSpeedf = maxElevator * spd.w;
 			const float maxElevatorSpeedf2 = maxElevatorSpeedf * spd.w * 20.0f;
+
 			float minPitch = 1.0f; // min(1.0f, hdif / (maxElevator * spd.w * spd.w * 20));
 
 			if (hdif < -maxElevatorSpeedf2) {
@@ -341,7 +342,7 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	}
 	maxPitch = owner->unitDef->maxPitch;
 	turnRadius = owner->unitDef->turnRadius;
-	
+
 	wantedHeight =
 		(owner->unitDef->wantedHeight * 1.5f) +
 		((gs->randFloat() - 0.3f) * 15.0f * (isFighter? 2.0f: 1.0f));
@@ -378,7 +379,6 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	lastRudderPos = 0.0f;
 	lastElevatorPos = 0.0f;
 	lastAileronPos = 0.0f;
-
 }
 
 
@@ -631,7 +631,7 @@ bool CStrafeAirMoveType::HandleCollisions(bool checkCollisions) {
 void CStrafeAirMoveType::SlowUpdate()
 {
 	UpdateFuel();
-	
+
 	// note: NOT AAirMoveType::SlowUpdate
 	AMoveType::SlowUpdate();
 }
@@ -820,7 +820,7 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine, bool isA
 	// RHS is needed for moving targets (when called by UpdateAttack)
 	const bool allowUnlockYR = (goalDist2D >= TurnRadius(turnRadius, spd.w) || goalVec.dot(owner->frontdir) > 0.0f);
 	const bool forceUnlockYR = ((gs->frameNum - owner->lastFireWeapon) >= GAME_SPEED * 3);
-	
+
 	// yaw and roll have to be unblocked after a certain time or aircraft
 	// can fly straight forever if their target is another chasing aircraft
 	float3 rightDir2D = rightdir;
@@ -844,7 +844,6 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine, bool isA
 		goalDotRight -= (otherDir.dot(rightdir) * otherThreat);
 	}
 	const CUnit* attackee = owner->attackTarget;
-
 
 	// fly forward for a bit after flying past the goal before turning if goal is considerably slower than self
 	// helps making sure the aircraft is in a position to reach or fire at the goal after it finally turns back
@@ -1136,7 +1135,6 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 	rightdir = frontdir.cross(updir);
 	rightdir.Normalize();
 	updir = rightdir.cross(frontdir);
-
 
 	owner->SetSpeed(spd);
 	owner->UpdateMidAndAimPos();
