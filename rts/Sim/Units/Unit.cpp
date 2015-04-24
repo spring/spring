@@ -779,20 +779,14 @@ void CUnit::Update()
 		moveType->UnreservePad(moveType->GetReservedPad());
 
 		// paralyzed weapons shouldn't reload
-		for (std::vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
-			++(*wi)->reloadStatus;
+		for (CWeapon* w: weapons) {
+			++(w->reloadStatus);
 		}
 		return;
 	}
 
 	restTime++;
 	outOfMapTime = (pos.IsInBounds())? 0: outOfMapTime + 1;
-
-	if (!dontUseWeapons) {
-		for (std::vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
-			(*wi)->Update();
-		}
-	}
 }
 
 void CUnit::UpdateResources()
@@ -1072,8 +1066,6 @@ void CUnit::SlowUpdate()
 		}
 	}
 
-	SlowUpdateWeapons();
-
 	if (moveType->progressState == AMoveType::Active) {
 		if (seismicSignature && !GetTransporter()) {
 			DoSeismicPing((int)seismicSignature);
@@ -1090,7 +1082,7 @@ void CUnit::SlowUpdateWeapons() {
 
 	haveTarget = false;
 
-	if (dontFire)
+	if (dontFire || beingBuilt || IsStunned() || isDead)
 		return;
 
 	for (vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {

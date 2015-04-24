@@ -10,6 +10,7 @@
 #include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
+#include "Sim/Weapons/Weapon.h"
 #include "System/EventHandler.h"
 #include "System/EventBatchHandler.h"
 #include "System/Log/ILog.h"
@@ -36,6 +37,7 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(idPool),
 	CR_MEMBER(unitsToBeRemoved),
 	CR_IGNORED(activeSlowUpdateUnit),
+	CR_IGNORED(activeSlowUpdateWeapon),
 	CR_MEMBER(maxUnits),
 	CR_MEMBER(maxUnitRadius),
 	CR_POSTLOAD(PostLoad)
@@ -47,6 +49,7 @@ void CUnitHandler::PostLoad()
 {
 	// reset any synced stuff that is not saved
 	activeSlowUpdateUnit = activeUnits.end();
+	activeSlowUpdateWeapon = activeUnits.end();
 }
 
 
@@ -74,6 +77,7 @@ CUnitHandler::CUnitHandler()
 	idPool.Expand(0, units.size());
 
 	activeSlowUpdateUnit = activeUnits.end();
+	activeSlowUpdateWeapon = activeUnits.end();
 	airBaseHandler = new CAirBaseHandler();
 }
 
@@ -136,37 +140,35 @@ void CUnitHandler::DeleteUnit(CUnit* unit)
 
 void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 {
-	int delTeam = 0;
-	int delType = 0;
+	if (activeSlowUpdateUnit != activeUnits.end() && delUnit == *activeSlowUpdateUnit) {
+		++activeSlowUpdateUnit;
+		++activeSlowUpdateWeapon;
+	}
 
-	std::list<CUnit*>::iterator usi;
+	for (auto usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
+		if (*usi != delUnit)
+			continue;
 
-	for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
-		if (*usi == delUnit) {
-			if (activeSlowUpdateUnit != activeUnits.end() && *usi == *activeSlowUpdateUnit) {
-				++activeSlowUpdateUnit;
-			}
-			delTeam = delUnit->team;
-			delType = delUnit->unitDef->id;
+		int delTeam = delUnit->team;
+		int delType = delUnit->unitDef->id;
 
-			teamHandler->Team(delTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
+		teamHandler->Team(delTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
 
-			activeUnits.erase(usi);
-			unitsByDefs[delTeam][delType].erase(delUnit);
-			idPool.FreeID(delUnit->id, true);
+		activeUnits.erase(usi);
+		unitsByDefs[delTeam][delType].erase(delUnit);
+		idPool.FreeID(delUnit->id, true);
 
-			units[delUnit->id] = NULL;
+		units[delUnit->id] = NULL;
 
-			CSolidObject::SetDeletingRefID(delUnit->id);
-			delete delUnit;
-			CSolidObject::SetDeletingRefID(-1);
+		CSolidObject::SetDeletingRefID(delUnit->id);
+		delete delUnit;
+		CSolidObject::SetDeletingRefID(-1);
 
-			break;
-		}
+		break;
 	}
 
 #ifdef _DEBUG
-	for (usi = activeUnits.begin(); usi != activeUnits.end(); /* no post-op */) {
+	for (auto usi = activeUnits.begin(); usi != activeUnits.end(); /* no post-op */) {
 		if (*usi == delUnit) {
 			LOG_L(L_ERROR, "Duplicated unit found in active units on erase");
 			usi = activeUnits.erase(usi);
@@ -180,11 +182,27 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 
 void CUnitHandler::Update()
 {
+	auto UNIT_SANITY_CHECK = [](const CUnit* unit) {
+		unit->pos.AssertNaNs();
+		unit->midPos.AssertNaNs();
+		unit->relMidPos.AssertNaNs();
+		unit->speed.AssertNaNs();
+		unit->deathSpeed.AssertNaNs();
+		unit->rightdir.AssertNaNs();
+		unit->updir.AssertNaNs();
+		unit->frontdir.AssertNaNs();
+		if (unit->unitDef->IsGroundUnit()) {
+			assert(unit->pos.x >= -(float3::maxxpos * 16.0f));
+			assert(unit->pos.x <=  (float3::maxxpos * 16.0f));
+			assert(unit->pos.z >= -(float3::maxzpos * 16.0f));
+			assert(unit->pos.z <=  (float3::maxzpos * 16.0f));
+		}
+	};
+
 	{
 		if (!unitsToBeRemoved.empty()) {
 			while (!unitsToBeRemoved.empty()) {
 				eventHandler.DeleteSyncedObjects(); // the unit destructor may invoke eventHandler, so we need to call these for every unit to clear invaild references from the batching systems
-
 				eventHandler.DeleteSyncedUnits();
 
 				CUnit* delUnit = unitsToBeRemoved.back();
@@ -195,29 +213,10 @@ void CUnitHandler::Update()
 		}
 	}
 
-	#define MAPPOS_SANITY_CHECK(unit)                          \
-		if (unit->unitDef->IsGroundUnit()) {                   \
-			assert(unit->pos.x >= -(float3::maxxpos * 16.0f)); \
-			assert(unit->pos.x <=  (float3::maxxpos * 16.0f)); \
-			assert(unit->pos.z >= -(float3::maxzpos * 16.0f)); \
-			assert(unit->pos.z <=  (float3::maxzpos * 16.0f)); \
-		}
-	#define UNIT_SANITY_CHECK(unit)         \
-		unit->pos.AssertNaNs();             \
-		unit->midPos.AssertNaNs();          \
-		unit->relMidPos.AssertNaNs();       \
-		unit->speed.AssertNaNs();           \
-		unit->deathSpeed.AssertNaNs();      \
-		unit->rightdir.AssertNaNs();        \
-		unit->updir.AssertNaNs();           \
-		unit->frontdir.AssertNaNs();        \
-		MAPPOS_SANITY_CHECK(unit);
-
 	{
 		SCOPED_TIMER("Unit::MoveType::Update");
 
-		for (auto usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
-			CUnit* unit = *usi;
+		for (CUnit* unit: activeUnits) {
 			AMoveType* moveType = unit->moveType;
 
 			UNIT_SANITY_CHECK(unit);
@@ -237,40 +236,27 @@ void CUnitHandler::Update()
 
 	{
 		// Delete dead units
-		for (auto usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
-			CUnit* unit = *usi;
+		for (CUnit* unit: activeUnits) {
+			if (!unit->deathScriptFinished)
+				continue;
 
-			if (unit->deathScriptFinished) {
-				// there are many ways to fiddle with "deathScriptFinished", so a unit may
-				// arrive here without having been properly killed (and isDead still false),
-				// which can result in MT deadlocking -- FIXME verify this
-				// (KU returns early if isDead)
-				unit->KillUnit(NULL, false, true);
-				DeleteUnit(unit);
-			}
+			// there are many ways to fiddle with "deathScriptFinished", so a unit may
+			// arrive here without having been properly killed (and isDead still false),
+			// which can result in MT deadlocking -- FIXME verify this
+			// (KU returns early if isDead)
+			unit->KillUnit(NULL, false, true);
+			DeleteUnit(unit);
 		}
 	}
 
 	{
 		SCOPED_TIMER("Unit::UpdatePieceMatrices");
 
-		for (auto usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
+		for (CUnit* unit: activeUnits) {
 			// UnitScript only applies piece-space transforms so
 			// we apply the forward kinematics update separately
 			// (only if we have any dirty pieces)
-			CUnit* unit = *usi;
 			unit->localModel->UpdatePieceMatrices();
-		}
-	}
-
-	{
-		SCOPED_TIMER("Unit::Update");
-
-		for (auto usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
-			CUnit* unit = *usi;
-			UNIT_SANITY_CHECK(unit);
-			unit->Update();
-			UNIT_SANITY_CHECK(unit);
 		}
 	}
 
@@ -293,6 +279,46 @@ void CUnitHandler::Update()
 			UNIT_SANITY_CHECK(unit);
 
 			n--;
+		}
+	}
+
+	{
+		SCOPED_TIMER("Unit::Weapon::SlowUpdate");
+
+		// reset the iterator every <UNIT_SLOWUPDATE_RATE> frames
+		if ((gs->frameNum % UNIT_SLOWUPDATE_RATE) == 0) {
+			activeSlowUpdateWeapon = activeUnits.begin();
+		}
+
+		// stagger the SlowUpdate's
+		unsigned int n = (activeUnits.size() / UNIT_SLOWUPDATE_RATE) + 1;
+
+		for (; activeSlowUpdateWeapon != activeUnits.end() && n != 0; ++activeSlowUpdateWeapon) {
+			CUnit* unit = *activeSlowUpdateWeapon;
+			unit->SlowUpdateWeapons();
+			n--;
+		}
+	}
+
+	{
+		SCOPED_TIMER("Unit::Update");
+
+		for (CUnit* unit: activeUnits) {
+			UNIT_SANITY_CHECK(unit);
+			unit->Update();
+			UNIT_SANITY_CHECK(unit);
+		}
+	}
+
+	{
+		SCOPED_TIMER("Unit::Weapon::Update");
+
+		for (CUnit* unit: activeUnits) {
+			if (!unit->beingBuilt && !unit->IsStunned() && !unit->dontUseWeapons && !unit->isDead) {
+				for (CWeapon* w: unit->weapons) {
+					w->Update();
+				}
+			}
 		}
 	}
 }
