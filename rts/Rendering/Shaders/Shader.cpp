@@ -13,6 +13,8 @@
 #include "System/Sync/HsiehHash.h"
 #include "System/Log/ILog.h"
 
+#include "System/Config/ConfigHandler.h"
+
 #include <algorithm>
 #ifdef DEBUG
 	#include <string.h> // strncmp
@@ -33,6 +35,9 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_SHADER)
 #endif
 #define LOG_SECTION_CURRENT LOG_SECTION_SHADER
 
+/*****************************************************************/
+
+CONFIG(bool, UseShaderCache).defaultValue(true).description("If already compiled shaders should be shared via a cache, reducing compiles of already compiled shaders.");
 
 
 /*****************************************************************/
@@ -547,12 +552,17 @@ namespace Shader {
 		if (GetAttachedShaderObjs().empty())
 			return;
 
-		// push old program to cache
-		CShaderHandler::ShaderCache& shadersCache = shaderHandler->GetShaderCache();
-		bool deleteOldShader = (oldValid) ? !shadersCache.Push(oldSrcHash, oldProgID) : true;
+		// push old program to cache and pop new if available
+		const bool useShaderCache = oldValid && configHandler->GetBool("UseShaderCache");
+		bool deleteOldShader = true;
+		objID = 0;
+		if (useShaderCache) {
+			CShaderHandler::ShaderCache& shadersCache = shaderHandler->GetShaderCache();
+			deleteOldShader = !shadersCache.Push(oldSrcHash, oldProgID);
+			objID = shadersCache.Find(curSrcHash);
+		}
 
-		// either pop program from cache or recompile if not found (id 0)
-		objID = shadersCache.Find(curSrcHash);
+		// recompile if not found in cache (id 0)
 		if (objID == 0) {
 			objID = glCreateProgram();
 
