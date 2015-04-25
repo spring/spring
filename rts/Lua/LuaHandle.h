@@ -135,6 +135,7 @@ class CLuaHandle : public CEventClient
 			int weaponDefID,
 			int projectileID,
 			bool paralyzer);
+		void UnitStunned(const CUnit* unit, bool stunned);
 		void UnitExperience(const CUnit* unit, float oldExperience);
 		void UnitHarvestStorageFull(const CUnit* unit);
 

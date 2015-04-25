@@ -900,6 +900,8 @@ void CUnit::SetStunned(bool stun) {
 			script->StartMoving(moveType->IsReversing());
 		}
 	}
+
+	eventHandler.UnitStunned(this, stun);
 }
 
 
