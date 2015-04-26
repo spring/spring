@@ -19,7 +19,6 @@
 #include "Sim/Weapons/Weapon.h"
 #include "System/myMath.h"
 #include "System/Sync/HsiehHash.h"
-#include "System/Log/ILog.h"
 
 CR_BIND_DERIVED(CStrafeAirMoveType, AAirMoveType, (NULL))
 
