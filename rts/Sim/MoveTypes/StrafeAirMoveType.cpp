@@ -399,8 +399,6 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	maxElevator = owner->unitDef->maxElevator;
 	maxRudder = owner->unitDef->maxRudder;
 	attackSafetyDistance = owner->unitDef->attackSafetyDistance;
-LOG_L(L_WARNING, "distance=%f ", attackSafetyDistance); //FIXME remove?
-
 
 	useSmoothMesh = owner->unitDef->useSmoothMesh;
 
