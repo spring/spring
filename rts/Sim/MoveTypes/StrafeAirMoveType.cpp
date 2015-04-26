@@ -19,6 +19,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "System/myMath.h"
 #include "System/Sync/HsiehHash.h"
+#include "System/Log/ILog.h"
 
 CR_BIND_DERIVED(CStrafeAirMoveType, AAirMoveType, (NULL))
 
@@ -397,6 +398,9 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	maxAileron = owner->unitDef->maxAileron;
 	maxElevator = owner->unitDef->maxElevator;
 	maxRudder = owner->unitDef->maxRudder;
+	attackSafetyDistance = owner->unitDef->attackSafetyDistance;
+LOG_L(L_WARNING, "distance=%f ", attackSafetyDistance); //FIXME remove?
+
 
 	useSmoothMesh = owner->unitDef->useSmoothMesh;
 
@@ -771,6 +775,14 @@ void CStrafeAirMoveType::UpdateAttack()
 	const float3 goalDir = (goalDist > 0.0f)?
 		(goalPos - pos) / goalDist:
 		ZeroVector;
+
+	// if goal too close, stop dive and resume flying at normal desired height
+	// to avoid colliding with target, evade blast, friendly and enemy fire, etc.
+	if (goalDist < attackSafetyDistance) 
+	{
+		UpdateFlying(wantedHeight, 1.0f);
+		return;
+	}
 
 	float goalDotRight = goalDir.dot(rightDir2D.Normalize2D());
 
