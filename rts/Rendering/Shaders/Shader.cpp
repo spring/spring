@@ -587,9 +587,11 @@ namespace Shader {
 		}
 
 		//
+		/*
 		if (validate) {
-			Validate();
+			Validate(); //FIXME: fails on ATI, see https://springrts.com/mantis/view.php?id=4715
 		}
+		*/
 
 		// copy full program state from old to new program (uniforms etc.)
 		if (IsValid()) {
