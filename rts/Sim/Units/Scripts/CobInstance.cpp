@@ -357,7 +357,7 @@ void CCobInstance::StartBuilding(float heading, float pitch)
 
 int CCobInstance::QueryNanoPiece()
 {
-	vector<int> args(1, 0);
+	vector<int> args(1, -1);
 	Call(COBFN_QueryNanoPiece, args);
 	return args[0];
 }
@@ -365,7 +365,7 @@ int CCobInstance::QueryNanoPiece()
 
 int CCobInstance::QueryBuildInfo()
 {
-	vector<int> args(1, 0);
+	vector<int> args(1, -1);
 	Call(COBFN_QueryBuildInfo, args);
 	return args[0];
 }
@@ -373,7 +373,7 @@ int CCobInstance::QueryBuildInfo()
 
 int CCobInstance::QueryWeapon(int weaponNum)
 {
-	vector<int> args(1, 0);
+	vector<int> args(1, -1);
 	Call(COBFN_QueryPrimary + COBFN_Weapon_Funcs * weaponNum, args);
 	return args[0];
 }
@@ -413,7 +413,7 @@ void CCobInstance::AimShieldWeapon(CPlasmaRepulser* weapon)
 
 int CCobInstance::AimFromWeapon(int weaponNum)
 {
-	vector<int> args(1, 0);
+	vector<int> args(1, -1);
 	Call(COBFN_AimFromPrimary + COBFN_Weapon_Funcs * weaponNum, args);
 	return args[0];
 }
