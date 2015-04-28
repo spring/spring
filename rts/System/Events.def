@@ -47,6 +47,7 @@
 	SETUP_EVENT(UnitCommand,    MANAGED_BIT)
 	SETUP_EVENT(UnitCmdDone,    MANAGED_BIT)
 	SETUP_EVENT(UnitDamaged,    MANAGED_BIT)
+	SETUP_EVENT(UnitStunned,    MANAGED_BIT)
 	SETUP_EVENT(UnitExperience, MANAGED_BIT)
 	SETUP_EVENT(UnitHarvestStorageFull, MANAGED_BIT)
 

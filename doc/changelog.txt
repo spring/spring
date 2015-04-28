@@ -69,6 +69,7 @@ New InfoTexture Renderer:
 
 Lua:
  - add Spring.GetLosViewColors
+ - add new call-in: UnitStunned(unitID, unitDefID, unitTeam, stunned) -- called whenever a unit changes its stun status
  ! remove Spring.UpdateInfoTexture
  ! fix Spring.GetKeyState & Spring.PressedKeys expecting SDL2 keycodes while whole lua gets SDL1 ones
  ! Spring.PressedKeys now also returns keynames

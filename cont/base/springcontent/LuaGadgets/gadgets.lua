@@ -1345,6 +1345,17 @@ function gadgetHandler:UnitDamaged(
   end
 end
 
+function gadgetHandler:UnitStunned(
+  unitID,
+  unitDefID,
+  unitTeam,
+  stunned
+)
+  for _,g in ipairs(self.UnitStunnedList) do
+    g:UnitStunned(unitID, unitDefID, unitTeam, stunned)
+  end
+end
+
 
 function gadgetHandler:UnitTaken(unitID, unitDefID, unitTeam, newTeam)
   for _,g in ipairs(self.UnitTakenList) do

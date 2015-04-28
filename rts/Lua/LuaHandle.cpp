@@ -988,6 +988,29 @@ void CLuaHandle::UnitDamaged(
 	RunCallInTraceback(L, cmdStr, argCount, 0, traceBack.GetErrFuncIdx(), false);
 }
 
+void CLuaHandle::UnitStunned(
+	const CUnit* unit,
+	bool stunned)
+{
+	LUA_CALL_IN_CHECK(L);
+	luaL_checkstack(L, 5, __FUNCTION__);
+
+	static const LuaHashString cmdStr(__FUNCTION__);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
+
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
+
+	int argCount = 4;
+
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, unit->team);
+	lua_pushboolean(L, stunned);
+
+	// call the routine
+	RunCallInTraceback(L, cmdStr, 4, 0, traceBack.GetErrFuncIdx(), false);
+}
 
 void CLuaHandle::UnitExperience(const CUnit* unit, float oldExperience)
 {

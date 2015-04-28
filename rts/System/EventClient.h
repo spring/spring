@@ -144,6 +144,7 @@ class CEventClient
 			int weaponDefID,
 			int projectileID,
 			bool paralyzer) {}
+		virtual void UnitStunned(const CUnit* unit, bool stunned) {}
 		virtual void UnitExperience(const CUnit* unit, float oldExperience) {}
 		virtual void UnitHarvestStorageFull(const CUnit* unit) {}
 
