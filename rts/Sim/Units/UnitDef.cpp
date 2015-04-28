@@ -197,6 +197,7 @@ UnitDef::UnitDef()
 	, maxAileron(0.0f)
 	, maxElevator(0.0f)
 	, maxRudder(0.0f)
+	, attackSafetyDistance(0.0f)
 	, crashDrag(0.0f)
 	, loadingRadius(0.0f)
 	, unloadSpread(0.0f)
@@ -491,6 +492,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	maxAileron  = udTable.GetFloat("maxAileron",  0.015f); // turn speed around roll axis
 	maxElevator = udTable.GetFloat("maxElevator", 0.01f);  // turn speed around pitch axis
 	maxRudder   = udTable.GetFloat("maxRudder",   0.004f); // turn speed around yaw axis
+
+	attackSafetyDistance = udTable.GetFloat("attackSafetyDistance", 0.0f); // fighters abort dive toward target if within this distance and climb back to normal altitude
 
 	maxFuel = udTable.GetFloat("maxFuel", 0.0f); //max flight time in seconds before aircraft must return to base
 	refuelTime = udTable.GetFloat("refuelTime", 5.0f);

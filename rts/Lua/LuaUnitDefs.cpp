@@ -874,6 +874,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("maxAileron",  ud.maxAileron);
 	ADD_FLOAT("maxElevator", ud.maxElevator);
 	ADD_FLOAT("maxRudder",   ud.maxRudder);
+	ADD_FLOAT("attackSafetyDistance", ud.attackSafetyDistance);
 
 	ADD_FLOAT("maxFuel",    ud.maxFuel);
 	ADD_FLOAT("refuelTime", ud.refuelTime);

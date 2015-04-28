@@ -76,6 +76,7 @@ public:
 	float maxAileron;
 	float maxElevator;
 	float maxRudder;
+	float attackSafetyDistance;
 
 	/// used while landing
 	float crashAileron;
