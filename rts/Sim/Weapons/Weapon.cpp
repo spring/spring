@@ -1056,7 +1056,7 @@ bool CWeapon::GetTargetBorderPos(const CUnit* targetUnit, const float3& rawTarge
 	return (rawTargetDir.SqLength() == 1.0f);
 }
 
-bool CWeapon::TryTarget(const float3& tgtPos, bool userTarget, const CUnit* targetUnit) const
+bool CWeapon::TryTarget(const float3 tgtPos, bool userTarget, const CUnit* targetUnit) const
 {
 	if (!TestTarget(tgtPos, userTarget, targetUnit))
 		return false;
