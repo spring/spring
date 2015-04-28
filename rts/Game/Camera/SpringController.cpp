@@ -176,6 +176,7 @@ void CSpringController::Update()
 	pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false);
 
 	rot.x = Clamp(rot.x, PI * 0.51f, PI * 0.99f);
+	dist = std::min(dist, maxDist);
 	dir = camera->GetDir();
 
 	pixelSize = (camera->GetTanHalfFov() * 2.0f) / globalRendering->viewSizeY * dist * 2.0f;
