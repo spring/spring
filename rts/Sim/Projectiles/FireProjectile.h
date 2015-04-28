@@ -49,9 +49,6 @@ public:
 
 	part_list_type subParticles;
 	part_list_type subParticles2;
-
-private:
-	virtual void FireImpl() {};
 };
 
 #endif // FIRE_PROJECTILE_H

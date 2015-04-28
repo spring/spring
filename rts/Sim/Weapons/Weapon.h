@@ -49,11 +49,11 @@ public:
 
 	virtual bool CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRequestedDir) const;
 
-	bool TryTarget(const float3& pos, bool userTarget, const CUnit* unit) const;
+	bool TryTarget(const float3 pos, bool userTarget, const CUnit* unit) const;
 	bool TryTarget(const CUnit* unit, bool userTarget) const;
-	bool TryTargetRotate(CUnit* unit, bool userTarget);
+	bool TryTargetRotate(const CUnit* unit, bool userTarget);
 	bool TryTargetRotate(float3 pos, bool userTarget);
-	bool TryTargetHeading(short heading, float3 pos, bool userTarget, CUnit* unit = 0);
+	bool TryTargetHeading(short heading, float3 pos, bool userTarget, const CUnit* unit = nullptr);
 
 	float3 GetUnitPositionWithError( const CUnit* unit ) const;
 

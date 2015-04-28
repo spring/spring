@@ -23,7 +23,6 @@
 #define CR_DECLARE_STRUCT(TStr)
 #define CR_DECLARE_SUB(cl)
 #define CR_BIND_DERIVED(TCls, TBase, ctor_args)
-#define CR_BIND_DERIVED(TCls, TBase, ctor_args)
 #define CR_BIND(TCls, ctor_args)
 #define CR_BIND_DERIVED_INTERFACE(TCls, TBase)
 #define CR_BIND_INTERFACE(TCls)

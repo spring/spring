@@ -607,12 +607,12 @@ bool CMobileCAI::IsValidTarget(const CUnit* enemy) const {
 
 	// on "Hold pos", a target can not be valid if there exists no line of fire to it.
 	// FIXME: even if not on HOLDPOS there are situations where having LOF is not enough
-	if (owner->moveState == MOVESTATE_HOLDPOS && !owner->weapons.front()->TryTargetRotate(const_cast<CUnit*>(enemy), false))
+	if (owner->moveState == MOVESTATE_HOLDPOS && !owner->weapons.front()->TryTargetRotate(enemy, false))
 		return false;
 
 	// test if any weapon can target the enemy unit
-	for (std::vector<CWeapon*>::iterator it = owner->weapons.begin(); it != owner->weapons.end(); ++it) {
-		if ((*it)->TestTarget(enemy->pos, false, const_cast<CUnit*>(enemy))) {
+	for (const CWeapon* w: owner->weapons) {
+		if (w->TestTarget(enemy->pos, false, enemy)) {
 			return true;
 		}
 	}
@@ -758,9 +758,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			}
 		}
 
-		for (unsigned int wNum = 0; wNum < owner->weapons.size(); wNum++) {
-			CWeapon* w = owner->weapons[wNum];
-
+		for (CWeapon* w: owner->weapons) {
 			if (c.GetID() == CMD_MANUALFIRE) {
 				assert(owner->unitDef->canManualFire);
 
@@ -864,9 +862,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 		bool foundWeapon = false;
 
-		for (unsigned int wNum = 0; wNum < owner->weapons.size(); wNum++) {
-			CWeapon* w = owner->weapons[wNum];
-
+		for (CWeapon* w: owner->weapons) {
 			if (foundWeapon)
 				break;
 

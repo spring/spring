@@ -638,7 +638,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 			else if (sfxType & SFX_FIRE_WEAPON) {
 				// make a weapon fire from the piece
 				const unsigned index = sfxType - SFX_FIRE_WEAPON;
-				if (index >= unit->weapons.size() || unit->weapons[index] == NULL) {
+				if (index >= unit->weapons.size()) {
 					ShowUnitScriptError("Invalid weapon index for emit-sfx");
 					break;
 				}
@@ -656,7 +656,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 			}
 			else if (sfxType & SFX_DETONATE_WEAPON) {
 				const unsigned index = sfxType - SFX_DETONATE_WEAPON;
-				if (index >= unit->weapons.size() || unit->weapons[index] == NULL) {
+				if (index >= unit->weapons.size()) {
 					ShowUnitScriptError("Invalid weapon index for emit-sfx");
 					break;
 				}
@@ -997,11 +997,9 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	}
 	case UNIT_BUILD_PERCENT_LEFT: {
 		const CUnit* u = unitHandler->GetUnit(p1);
-
 		if (u != NULL) {
 			return int((1.0f - u->buildProgress) * 100);
 		}
-
 		return 0;
 	}
 	case MAX_SPEED: {

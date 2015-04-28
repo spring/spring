@@ -1179,7 +1179,9 @@ float3 CWeapon::GetUnitPositionWithError(const CUnit* unit) const {
 	return tempTargetPos;
 }
 
-bool CWeapon::TryTargetRotate(CUnit* unit, bool userTarget) {
+
+bool CWeapon::TryTargetRotate(const CUnit* unit, bool userTarget)
+{
 	const float3 errorPos = unit->GetErrorPos(owner->allyteam, true);
 	const float errorScale = (MoveErrorExperience() * GAME_SPEED * unit->speed.w);
 
@@ -1192,7 +1194,9 @@ bool CWeapon::TryTargetRotate(CUnit* unit, bool userTarget) {
 	return TryTargetHeading(enemyHeading - weaponHeading, tempTargetPos, userTarget, unit);
 }
 
-bool CWeapon::TryTargetRotate(float3 pos, bool userTarget) {
+
+bool CWeapon::TryTargetRotate(float3 pos, bool userTarget)
+{
 	if (!userTarget && weaponDef->noAutoTarget)
 		return false;
 	if (weaponDef->interceptor || !weaponDef->canAttackGround)
@@ -1207,7 +1211,9 @@ bool CWeapon::TryTargetRotate(float3 pos, bool userTarget) {
 	return TryTargetHeading(enemyHeading - weaponHeading, pos, userTarget, 0);
 }
 
-bool CWeapon::TryTargetHeading(short heading, float3 pos, bool userTarget, CUnit* unit) {
+
+bool CWeapon::TryTargetHeading(short heading, float3 pos, bool userTarget, const CUnit* unit)
+{
 	const float3 tempfrontdir(owner->frontdir);
 	const float3 temprightdir(owner->rightdir);
 	const short tempHeading = owner->heading;

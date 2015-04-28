@@ -3270,9 +3270,7 @@ static void DrawWeaponCone(const float3& pos,
 
 static inline void DrawWeaponArc(const CUnit* unit)
 {
-	for (unsigned int n = 0; n < unit->weapons.size(); n++) {
-		const CWeapon* w = unit->weapons[n];
-
+	for (const CWeapon* w: unit->weapons) {
 		// attack order needs to have been issued or wantedDir is undefined
 		if (w->targetType == Target_None)
 			continue;

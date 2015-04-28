@@ -1087,9 +1087,7 @@ void CUnit::SlowUpdateWeapons() {
 	if (dontFire || beingBuilt || IsStunned() || isDead)
 		return;
 
-	for (vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
-		CWeapon* w = *wi;
-
+	for (CWeapon* w: weapons) {
 		w->SlowUpdate();
 
 		// NOTE:
@@ -1651,9 +1649,7 @@ bool CUnit::AttackUnit(CUnit* targetUnit, bool isUserTarget, bool wantManualFire
 		AddDeathDependence(targetUnit, DEPENDENCE_TARGET);
 	}
 
-	for (std::vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
-		CWeapon* w = *wi;
-
+	for (CWeapon* w: weapons) {
 		// isUserTarget is true if this target was selected by the
 		// user as opposed to automatically by the unit's commandAI
 		//
@@ -1687,8 +1683,7 @@ bool CUnit::AttackGround(const float3& pos, bool isUserTarget, bool wantManualFi
 	attackPos = pos;
 	attackTarget = NULL;
 
-	for (std::vector<CWeapon*>::iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
-		CWeapon* w = *wi;
+	for (CWeapon* w: weapons) {
 
 		w->targetType = Target_None;
 		w->haveUserTarget = false; // this should be false for ground-attack commands

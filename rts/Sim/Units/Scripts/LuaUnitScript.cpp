@@ -1043,8 +1043,7 @@ int CLuaUnitScript::CreateScript(lua_State* L)
 	unit->script = newScript;
 
 	// flush some caches (which store availability of certain script functions)
-	for (std::vector<CWeapon*>::iterator wi = unit->weapons.begin(); wi != unit->weapons.end(); ++wi) {
-		CWeapon* w = *wi;
+	for (CWeapon* w: unit->weapons) {
 		w->SetWeaponNum(w->weaponNum);
 	}
 
