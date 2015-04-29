@@ -196,28 +196,6 @@ float CWeapon::TargetWeight(const CUnit* targetUnit) const
 }
 
 
-
-// NOTE:
-//   GUIHandler places (some) user ground-attack orders on the
-//   water surface, others on the ocean floor and in both cases
-//   without examining weapon abilities (its logic is "obtuse")
-//
-//   this inconsistency would be hard(er) to fix on the UI side
-//   so we must adjust all such target positions in synced code
-//
-//   see also CommandAI::AdjustGroundAttackCommand
-void CWeapon::AdjustTargetPosToWater(float3& tgtPos, bool attackGround) const
-{
-	if (!attackGround)
-		return;
-
-	if (weaponDef->waterweapon) {
-		tgtPos.y = std::max(tgtPos.y, CGround::GetHeightReal(tgtPos.x, tgtPos.z));
-	} else {
-		tgtPos.y = std::max(tgtPos.y, CGround::GetHeightAboveWater(tgtPos.x, tgtPos.z));
-	}
-}
-
 void CWeapon::UpdateRelWeaponPos()
 {
 	// If we can't get a line of fire from the muzzle, try
@@ -602,25 +580,8 @@ bool CWeapon::AttackUnit(CUnit* newTargetUnit, bool isUserTarget)
 		return false;
 	}
 
-	// check if it is theoretically impossible for us to attack this unit
-	// must be done before we assign <unit> to <targetUnit>, which itself
-	// must precede the TryTarget call (since we do want to assign if it
-	// is eg. just out of range currently --> however, this in turn causes
-	// "lock-on" targeting behavior which is less desirable, eg. we want a
-	// lock on a user-selected target that moved out of range to be broken
-	// after some time so automatic targeting can select new in-range units)
-	//
-	// note that TryTarget is also called from other places and so has to
-	// repeat this check, but the redundancy added is minimal
-	#if 0
-	if (!(onlyTargetCategory & newTargetUnit->category)) {
-		return false;
-	}
-	#endif
 
-	const float3 errorPos = newTargetUnit->GetErrorPos(owner->allyteam, true);
-	const float errorScale = (MoveErrorExperience() * GAME_SPEED * newTargetUnit->speed.w);
-	const float3 newTargetPos = errorPos + errorVector * errorScale;
+	const float3 newTargetPos = GetUnitLeadTargetPos(newTargetUnit);
 
 	if (!TryTarget(newTargetPos, isUserTarget, newTargetUnit))
 		return false;
@@ -708,56 +669,46 @@ bool CWeapon::AllowWeaponTargetCheck()
 	return false;
 }
 
-void CWeapon::AutoTarget() {
+void CWeapon::AutoTarget()
+{
 	lastTargetRetry = gs->frameNum;
 
 	std::multimap<float, CUnit*> targets;
 	std::multimap<float, CUnit*>::const_iterator targetsIt;
+
+	//FIXME ignore and not avoid!
+	const CUnit* avoidUnit = (targetType == Target_Unit) ? targetUnit : nullptr;
 
 	// NOTE:
 	//   sorts by INCREASING order of priority, so lower equals better
 	//   <targets> can contain duplicates if a unit covers multiple quads
 	//   <targets> is normally sorted such that all bad TC units are at the
 	//   end, but Lua can mess with the ordering arbitrarily
-	CGameHelper::GenerateWeaponTargets(this, targetUnit, targets);
+	CGameHelper::GenerateWeaponTargets(this, avoidUnit, targets);
 
-	CUnit* prevTargetUnit = NULL;
-	CUnit* goodTargetUnit = NULL;
-	CUnit* badTargetUnit = NULL;
-
-	float3 nextTargetPos = ZeroVector;
+	CUnit* goodTargetUnit = nullptr;
+	CUnit* badTargetUnit = nullptr;
 
 	for (targetsIt = targets.begin(); targetsIt != targets.end(); ++targetsIt) {
-		CUnit* nextTargetUnit = targetsIt->second;
+		CUnit* unit = targetsIt->second;
 
-		if (nextTargetUnit == prevTargetUnit)
-			continue; // filter consecutive duplicates
-		if (nextTargetUnit->IsNeutral() && (owner->fireState <= FIRESTATE_FIREATWILL))
+		// save the "best" bad target in case we have no other
+		// good targets (of higher priority) left in <targets>
+		const bool isBadTarget = (unit->category & badTargetCategory);
+		if (isBadTarget && !badTargetUnit)
 			continue;
 
-		const float weaponError = MoveErrorExperience() * GAME_SPEED * nextTargetUnit->speed.w;
-
-		prevTargetUnit = nextTargetUnit;
-		nextTargetPos = nextTargetUnit->aimPos + (errorVector * weaponError);
-
-		const float appHeight = CGround::GetApproximateHeight(nextTargetPos.x, nextTargetPos.z) + 2.0f;
-
-		if (nextTargetPos.y < appHeight) {
-			nextTargetPos.y = appHeight;
-		}
-
-		if (!TryTarget(nextTargetPos, false, nextTargetUnit))
+		const float3 nextTargetPos = GetUnitLeadTargetPos(unit);
+		if (!TryTarget(nextTargetPos, false, unit))
 			continue;
 
-		if ((nextTargetUnit->category & badTargetCategory) != 0) {
-			// save the "best" bad target in case we have no other
-			// good targets (of higher priority) left in <targets>
-			if (badTargetUnit != NULL)
-				continue;
+		if (unit->IsNeutral() && (owner->fireState <= FIRESTATE_FIREATWILL))
+			continue;
 
-			badTargetUnit = nextTargetUnit;
+		if (isBadTarget) {
+			badTargetUnit = unit;
 		} else {
-			goodTargetUnit = nextTargetUnit;
+			goodTargetUnit = unit;
 			break;
 		}
 	}
@@ -1170,24 +1121,10 @@ bool CWeapon::TryTarget(const CUnit* unit, bool userTarget) const {
 	return TryTarget(GetUnitPositionWithError(unit), userTarget, unit);
 }
 
-float3 CWeapon::GetUnitPositionWithError(const CUnit* unit) const {
-	const float3 errorPos = unit->GetErrorPos(owner->allyteam, true);
-	const float errorScale = (MoveErrorExperience() * GAME_SPEED * unit->speed.w);
-
-	float3 tempTargetPos = errorPos + errorVector * errorScale;
-	tempTargetPos.y = std::max(tempTargetPos.y, CGround::GetApproximateHeight(tempTargetPos.x, tempTargetPos.z) + 2.0f);
-	return tempTargetPos;
-}
-
 
 bool CWeapon::TryTargetRotate(const CUnit* unit, bool userTarget)
 {
-	const float3 errorPos = unit->GetErrorPos(owner->allyteam, true);
-	const float errorScale = (MoveErrorExperience() * GAME_SPEED * unit->speed.w);
-
-	float3 tempTargetPos = errorPos + errorVector * errorScale;
-	tempTargetPos.y = std::max(tempTargetPos.y, CGround::GetApproximateHeight(tempTargetPos.x, tempTargetPos.z) + 2.0f);
-
+	const float3 tempTargetPos = GetUnitLeadTargetPos(unit);
 	const short weaponHeading = GetHeadingFromVector(mainDir.x, mainDir.z);
 	const short enemyHeading = GetHeadingFromVector(tempTargetPos.x - weaponPos.x, tempTargetPos.z - weaponPos.z);
 
@@ -1358,6 +1295,64 @@ void CWeapon::StopAttackingAllyTeam(int ally)
 	if (targetUnit && targetUnit->allyteam == ally) {
 		HoldFire();
 	}
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+// NOTE:
+//   GUIHandler places (some) user ground-attack orders on the
+//   water surface, others on the ocean floor and in both cases
+//   without examining weapon abilities (its logic is "obtuse")
+//
+//   this inconsistency would be hard(er) to fix on the UI side
+//   so we must adjust all such target positions in synced code
+//
+//   see also CommandAI::AdjustGroundAttackCommand
+void CWeapon::AdjustTargetPosToWater(float3& tgtPos, bool attackGround) const
+{
+	if (!attackGround)
+		return;
+
+	tgtPos.y = std::max(tgtPos.y, CGround::GetHeightReal(tgtPos.x, tgtPos.z));
+	tgtPos.y = std::max(tgtPos.y, tgtPos.y * weaponDef->waterweapon);
+}
+
+
+float3 CWeapon::GetUnitPositionWithError(const CUnit* unit) const
+{
+	float3 errorPos = unit->GetErrorPos(owner->allyteam, true);
+	const float errorScale = (MoveErrorExperience() * GAME_SPEED * unit->speed.w);
+	return errorPos + errorVector * errorScale;
+}
+
+
+float3 CWeapon::GetUnitLeadTargetPos(const CUnit* unit) const
+{
+	const float3 tmpTargetPos = GetUnitPositionWithError(unit) + GetLeadVec(unit);
+	const float3 tmpTargetDir = (tmpTargetPos - weaponPos).SafeNormalize();
+
+	float3 aimPos = GetTargetBorderPos(unit, tmpTargetPos, tmpTargetDir);
+
+	// never target below terrain
+	// never target below water if not a water-weapon
+	aimPos.y = std::max(aimPos.y, CGround::GetApproximateHeight(aimPos.x, aimPos.z) + 2.0f);
+	aimPos.y = std::max(aimPos.y, aimPos.y * weaponDef->waterweapon);
+
+	return aimPos;
+}
+
+
+float3 CWeapon::GetLeadVec(const CUnit* unit) const
+{
+	float3 lead = unit->speed * predict * mix(predictSpeedMod, 1.0f, weaponDef->predictBoost);
+	if (weaponDef->leadLimit >= 0.0f) {
+		const float leadBonus = weaponDef->leadLimit + weaponDef->leadBonus * owner->experience;
+		if (lead.SqLength() > Square(leadBonus))
+			lead *= (leadBonus) / (lead.Length() + 0.01f);
+	}
+	return lead;
 }
 
 
