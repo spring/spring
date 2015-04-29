@@ -14,6 +14,7 @@ Major:
    ! removed alias "/quit" (use /quitforce)
    - add "quit to menu" to quit-box
    - add "/reloadforce"
+ - added lua override for infomaps
 
 Cameras:
  ! removed TW, Orbital & Smooth camera
@@ -43,9 +44,10 @@ System:
  - fix bug that caused to recompress groundtextures always to ect1 on intel/mesa even when there was no need for it
 
 (G)UI:
- - fix #4576 F6 does not sound mute
+ - fix #4576: F6 does not sound mute
  - fix #4578: backspace key events aren't captured by chat entry mode
- - disable in-map draw when user starts writing (should fix #4455)
+ - fix #4455: disable in-map draw when user starts writing
+ - fix #4706: do not ignore next char in ChatActionExecutor
  - document keychains in uikeys.txt
  - improve default cmdcolors.txt
  - improve default los colors
@@ -55,12 +57,14 @@ System:
 Sim:
  - fix harvesting
  - fix #4591: builders `randomly` remove build orders from queue
+ - fix #4587: (stuck units in labs): remove a failing optimization CPathEstimator::FindOffset()
  - fix units disobey move cmds
- - fix #4587 (stuck units in labs): remove a failing optimization CPathEstimator::FindOffset()
+ - fix user target being set for all weapons
+ ! change TEAM_SLOWUPDATE_RATE to 30 / UNIT_SLOWUPDATE_RATE to 15
 
 Collisions:
  - fix #4592: broken per-piece coldet
- - fix and improve CQuadField::GetUnitsAndFeaturesColVol (fixes #4602)
+ - fix #4602 and improve CQuadField::GetUnitsAndFeaturesColVol
 
 New InfoTexture Renderer:
  - new shader based InfoTexture (faster, shinier & modular)
@@ -68,8 +72,12 @@ New InfoTexture Renderer:
   - fix #4608: add new /showpathtype [movdefname | movedefid | unitdefname | -1]
 
 Lua:
+ - add UnitStunned call-in
+ - add attackSafetyDistance unitDef
  - add Spring.GetLosViewColors
  - add new call-in: UnitStunned(unitID, unitDefID, unitTeam, stunned) -- called whenever a unit changes its stun status
+ - add Set/GetProjectileIsIntercepted
+ - add GetProjectileTimeToLive, GetProjectileOwnerID and GetProjectileTeamID.
  ! remove Spring.UpdateInfoTexture
  ! fix Spring.GetKeyState & Spring.PressedKeys expecting SDL2 keycodes while whole lua gets SDL1 ones
  ! Spring.PressedKeys now also returns keynames
