@@ -342,7 +342,11 @@ bool SpringApp::CreateSDLWindow(const char* title)
 
 	// FullScreen AntiAliasing
 	globalRendering->FSAA = configHandler->GetInt("FSAALevel");
+
 	if (globalRendering->FSAA > 0) {
+		if (getenv("LIBGL_ALWAYS_SOFTWARE") != NULL) {
+			LOG_L(L_WARNING, "FSAALevel > 0 and LIBGL_ALWAYS_SOFTWARE set, this will very likely crash!");
+		}
 		make_even_number(globalRendering->FSAA);
 		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
 		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, globalRendering->FSAA);
