@@ -34,8 +34,6 @@ public:
 	void DependentDied(CObject* o);
 
 
-	bool SetTargetBorderPos(CUnit*, float3&, float3&, float3&);
-	bool GetTargetBorderPos(const CUnit*, const float3&, float3&, float3&) const;
 
 
 	/// test if the weapon is able to attack an enemy/mapspot just by its properties (no range check, no FreeLineOfFire check, ...)
@@ -55,6 +53,7 @@ public:
 
 public:
 	bool CheckTargetAngleConstraint(const float3 worldTargetDir, const float3 worldWeaponDir) const;
+	float3 GetTargetBorderPos(const CUnit* targetUnit, const float3 rawTargetPos, const float3 rawTargetDir) const;
 	void AdjustTargetPosToWater(float3& tgtPos, bool attackGround) const;
 	float3 GetUnitPositionWithError(const CUnit* unit) const;
 	float3 GetUnitLeadTargetPos(const CUnit* unit) const;
@@ -189,7 +188,6 @@ public:
 	float3 errorVectorAdd;
 
 	float3 targetPos;             // the position of the target (even if targettype=unit)
-	float3 targetBorderPos;       // <targetPos> adjusted for target-border factor
 };
 
 #endif /* WEAPON_H */
