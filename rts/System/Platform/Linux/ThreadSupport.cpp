@@ -174,7 +174,7 @@ void ThreadStart (boost::function<void()> taskFunc, std::shared_ptr<ThreadContro
 		pThreadCtls->mutSuspend.lock();
 		pThreadCtls->running.store(true);
 
-		LOG_L(L_DEBUG, "ThreadStart(): New thread's handle is %.4x", pThreadCtls->handle);
+		LOG_L(L_DEBUG, "ThreadStart(): New thread's handle is %.4lx", pThreadCtls->handle);
 
 		// We are fully initialized, so notify the condition variable. The thread's parent will unblock in whatever function created this thread.
 		pThreadCtls->condInitialized.notify_all();
@@ -209,7 +209,7 @@ SuspendResult ThreadControls::Suspend ()
 
 	mutSuspend.lock();
 
-	LOG_L(L_DEBUG, "Sending SIGUSR1 to 0x%x", handle);
+	LOG_L(L_DEBUG, "Sending SIGUSR1 to 0x%lx", handle);
 
 	// Send signal to thread to trigger its handler
 	err = pthread_kill(handle, SIGUSR1);
