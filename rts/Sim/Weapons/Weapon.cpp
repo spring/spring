@@ -727,7 +727,7 @@ void CWeapon::AutoTarget()
 		// pick our new target
 		targetType = Target_Unit;
 		targetUnit = (goodTargetUnit != NULL)? goodTargetUnit: badTargetUnit;
-		targetPos = nextTargetPos;
+		targetPos = GetUnitLeadTargetPos(targetUnit);
 
 		if (!haveOldTarget || haveNewTarget) {
 			// add new target dependence if we had no target or switched
