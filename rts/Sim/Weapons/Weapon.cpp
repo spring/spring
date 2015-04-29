@@ -851,7 +851,7 @@ void CWeapon::DependentDied(CObject* o)
 	}
 }
 
-bool CWeapon::TargetUnitOrPositionUnderWater(const float3& targetPos, const CUnit* targetUnit, float offset)
+bool CWeapon::TargetUnitOrPositionUnderWater(const float3 targetPos, const CUnit* targetUnit, float offset)
 {
 	// test if a target position or unit is strictly underwater
 	if (targetUnit != NULL) {
@@ -862,7 +862,7 @@ bool CWeapon::TargetUnitOrPositionUnderWater(const float3& targetPos, const CUni
 	}
 }
 
-bool CWeapon::TargetUnitOrPositionInWater(const float3& targetPos, const CUnit* targetUnit, float offset)
+bool CWeapon::TargetUnitOrPositionInWater(const float3 targetPos, const CUnit* targetUnit, float offset)
 {
 	// test if a target position or unit is in water (including underwater)
 	if (targetUnit != NULL) {
@@ -873,7 +873,7 @@ bool CWeapon::TargetUnitOrPositionInWater(const float3& targetPos, const CUnit* 
 	}
 }
 
-bool CWeapon::CheckTargetAngleConstraint(const float3& worldTargetDir, const float3& worldWeaponDir) const {
+bool CWeapon::CheckTargetAngleConstraint(const float3 worldTargetDir, const float3 worldWeaponDir) const {
 	if (onlyForward) {
 		if (maxForwardAngleDif > -1.0f) {
 			// if we are not a turret, we care about our owner's direction
@@ -1023,7 +1023,7 @@ bool CWeapon::TryTarget(const float3 tgtPos, bool userTarget, const CUnit* targe
 // if targetUnit != NULL, this checks our onlyTargetCategory against unit->category
 // etc. as well as range, otherwise the only concern is range and angular difference
 // (terrain is NOT checked here, HaveFreeLineOfFire does that)
-bool CWeapon::TestTarget(const float3& tgtPos, bool /*userTarget*/, const CUnit* targetUnit) const
+bool CWeapon::TestTarget(const float3 tgtPos, bool /*userTarget*/, const CUnit* targetUnit) const
 {
 	if (targetUnit != NULL) {
 		if (targetUnit == owner)
@@ -1048,7 +1048,7 @@ bool CWeapon::TestTarget(const float3& tgtPos, bool /*userTarget*/, const CUnit*
 	return true;
 }
 
-bool CWeapon::TestRange(const float3& tgtPos, bool /*userTarget*/, const CUnit* targetUnit) const
+bool CWeapon::TestRange(const float3 tgtPos, bool /*userTarget*/, const CUnit* targetUnit) const
 {
 	float3 tmpTargetPos = tgtPos;
 	float3 tmpTargetVec = tmpTargetPos - weaponMuzzlePos;
@@ -1080,7 +1080,7 @@ bool CWeapon::TestRange(const float3& tgtPos, bool /*userTarget*/, const CUnit* 
 }
 
 
-bool CWeapon::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const
+bool CWeapon::HaveFreeLineOfFire(const float3 pos, bool userTarget, const CUnit* unit) const
 {
 	float3 dir = pos - weaponMuzzlePos;
 
@@ -1155,7 +1155,7 @@ bool CWeapon::TryTargetHeading(short heading, float3 pos, bool userTarget, const
 	const float3 temprightdir(owner->rightdir);
 	const short tempHeading = owner->heading;
 
-	AdjustTargetPosToWater(pos, unit == NULL);
+	AdjustTargetPosToWater(pos, unit == nullptr);
 
 	owner->heading = heading;
 	owner->frontdir = GetVectorFromHeading(owner->heading);
@@ -1282,11 +1282,7 @@ ProjectileParams CWeapon::GetProjectileParams()
 float CWeapon::GetRange2D(float yDiff) const
 {
 	const float root1 = range * range - yDiff * yDiff;
-
-	if (root1 <= 0.0f)
-		return 0.0f;
-
-	return (math::sqrt(root1));
+	return (root1 > 0.0f) ? math::sqrt(root1) : 0.0f;
 }
 
 

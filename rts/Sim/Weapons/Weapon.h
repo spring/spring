@@ -34,17 +34,16 @@ public:
 	void DependentDied(CObject* o);
 
 
-	bool CheckTargetAngleConstraint(const float3& worldTargetDir, const float3& worldWeaponDir) const;
 	bool SetTargetBorderPos(CUnit*, float3&, float3&, float3&);
 	bool GetTargetBorderPos(const CUnit*, const float3&, float3&, float3&) const;
 
 
 	/// test if the weapon is able to attack an enemy/mapspot just by its properties (no range check, no FreeLineOfFire check, ...)
-	virtual bool TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const;
+	virtual bool TestTarget(const float3 pos, bool userTarget, const CUnit* unit) const;
 	/// test if the enemy/mapspot is in range/angle
-	virtual bool TestRange(const float3& pos, bool userTarget, const CUnit* unit) const;
+	virtual bool TestRange(const float3 pos, bool userTarget, const CUnit* unit) const;
 	/// test if something is blocking our LineOfFire
-	virtual bool HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const;
+	virtual bool HaveFreeLineOfFire(const float3 pos, bool userTarget, const CUnit* unit) const;
 
 	virtual bool CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRequestedDir) const;
 
@@ -55,6 +54,7 @@ public:
 	bool TryTargetHeading(short heading, float3 pos, bool userTarget, const CUnit* unit = nullptr);
 
 public:
+	bool CheckTargetAngleConstraint(const float3 worldTargetDir, const float3 worldWeaponDir) const;
 	void AdjustTargetPosToWater(float3& tgtPos, bool attackGround) const;
 	float3 GetUnitPositionWithError(const CUnit* unit) const;
 	float3 GetUnitLeadTargetPos(const CUnit* unit) const;
@@ -87,6 +87,8 @@ public:
 
 protected:
 	virtual void FireImpl(bool scriptCall) {}
+	static bool TargetUnitOrPositionUnderWater(const float3 targetPos, const CUnit* targetUnit, float offset = 0.0f);
+	static bool TargetUnitOrPositionInWater(const float3 targetPos, const CUnit* targetUnit, float offset = 0.0f);
 	float3 GetLeadVec(const CUnit* unit) const;
 
 	void UpdateTargeting();
@@ -94,8 +96,6 @@ protected:
 	bool UpdateStockpile();
 	void UpdateSalvo();
 
-	static bool TargetUnitOrPositionUnderWater(const float3& targetPos, const CUnit* targetUnit, float offset = 0.0f);
-	static bool TargetUnitOrPositionInWater(const float3& targetPos, const CUnit* targetUnit, float offset = 0.0f);
 
 protected:
 	ProjectileParams GetProjectileParams();
