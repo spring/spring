@@ -87,6 +87,8 @@ protected:
 	virtual void FireImpl(bool scriptCall) {}
 	static bool TargetUnitOrPositionUnderWater(const float3 targetPos, const CUnit* targetUnit, float offset = 0.0f);
 	static bool TargetUnitOrPositionInWater(const float3 targetPos, const CUnit* targetUnit, float offset = 0.0f);
+	void UpdateWeaponPieces(const bool updateAimFrom = true);
+	void UpdateWeaponVectors();
 	float3 GetLeadVec(const CUnit* unit) const;
 
 	void UpdateTargeting();
@@ -101,7 +103,6 @@ protected:
 private:
 	inline bool AllowWeaponTargetCheck();
 
-	void UpdateRelWeaponPos();
 	bool CobBlockShot() const;
 
 public:
@@ -112,9 +113,10 @@ public:
 	int weaponNum;							// the weapons order among the owner weapons
 	bool haveUserTarget;
 
+	int aimFromPiece;
+	int muzzlePiece;
 	float muzzleFlareSize;					// size of muzzle flare if drawn
 	int useWeaponPosForAim;					// sometimes weapon pos is better to use than aimpos
-	bool hasCloseTarget;					// might need to update weapon pos more often when enemy is near
 
 	int reloadTime;							// time between succesive fires in ticks
 	int reloadStatus;						// next tick the weapon can fire again
@@ -146,6 +148,7 @@ public:
 	bool avoidTarget;						// set when the script wants the weapon to pick a new target, reset once one has been chosen
 	bool onlyForward;						// can only fire in the forward direction of the unit (for aircrafts mostly?)
 	bool doTargetGroundPos;    // (used for bombers) target the ground pos under the unit instead of the center aimPos
+	bool alreadyWarnedAboutMissingPieces;
 
 	unsigned int badTargetCategory;			// targets in this category get a lot lower targetting priority
 	unsigned int onlyTargetCategory;		// only targets in this category can be targeted (default 0xffffffff)

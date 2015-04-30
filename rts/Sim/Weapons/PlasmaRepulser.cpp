@@ -89,7 +89,7 @@ void CPlasmaRepulser::Update()
 	if (hitFrames > 0)
 		hitFrames--;
 
-	weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+	UpdateWeaponVectors();
 
 	if (!isEnabled) {
 		return;
@@ -194,8 +194,8 @@ void CPlasmaRepulser::Update()
 
 void CPlasmaRepulser::SlowUpdate()
 {
-	relWeaponPos = owner->script->GetPiecePos(owner->script->QueryWeapon(weaponNum));
-	weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+	UpdateWeaponPieces();
+	UpdateWeaponVectors();
 	owner->script->AimShieldWeapon(this);
 }
 

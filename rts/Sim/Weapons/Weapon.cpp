@@ -17,6 +17,7 @@
 #include "Sim/MoveTypes/AAirMoveType.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/Scripts/CobInstance.h"
+#include "Sim/Units/Scripts/NullUnitScript.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Unit.h"
 #include "System/EventHandler.h"
@@ -30,6 +31,8 @@ CR_BIND_DERIVED(CWeapon, CObject, (NULL, NULL))
 
 CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(owner),
+	CR_MEMBER(aimFromPiece),
+	CR_MEMBER(muzzlePiece),
 	CR_MEMBER(range),
 	CR_MEMBER(reloadTime),
 	CR_MEMBER(reloadStatus),
@@ -53,6 +56,7 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(onlyForward),
 	CR_MEMBER(muzzleFlareSize),
 	CR_MEMBER(doTargetGroundPos),
+	CR_MEMBER(alreadyWarnedAboutMissingPieces),
 
 	CR_MEMBER(badTargetCategory),
 	CR_MEMBER(onlyTargetCategory),
@@ -73,7 +77,6 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(slavedTo),
 	CR_MEMBER(maxForwardAngleDif),
 	CR_MEMBER(maxMainDirAngleDif),
-	CR_MEMBER(hasCloseTarget),
 	CR_MEMBER(heightBoostFactor),
 	CR_MEMBER(avoidFlags),
 	CR_MEMBER(collisionFlags),
@@ -102,10 +105,11 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	owner(owner),
 	weaponDef(def),
 	weaponNum(-1),
+	aimFromPiece(-1),
+	muzzlePiece(-1),
 	haveUserTarget(false),
 	muzzleFlareSize(1),
 	useWeaponPosForAim(0),
-	hasCloseTarget(false),
 	reloadTime(1),
 	reloadStatus(0),
 	range(1),
@@ -129,6 +133,7 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	avoidTarget(false),
 	onlyForward(false),
 	doTargetGroundPos(false),
+	alreadyWarnedAboutMissingPieces(false),
 	badTargetCategory(0),
 	onlyTargetCategory(0xffffffff),
 
@@ -176,6 +181,8 @@ void CWeapon::SetWeaponNum(int num)
 {
 	weaponNum = num;
 
+	UpdateWeaponPieces();
+	UpdateWeaponVectors();
 	hasBlockShot = owner->script->HasBlockShot(weaponNum);
 	hasTargetWeight = owner->script->HasTargetWeight(weaponNum);
 }
@@ -197,31 +204,63 @@ float CWeapon::TargetWeight(const CUnit* targetUnit) const
 }
 
 
-void CWeapon::UpdateRelWeaponPos()
+void CWeapon::UpdateWeaponPieces(const bool updateAimFrom)
 {
+	// Call UnitScript
+	muzzlePiece = owner->script->QueryWeapon(weaponNum);
+	if (updateAimFrom) aimFromPiece = owner->script->AimFromWeapon(weaponNum);
+
+	// Some UnitScripts only implement on of them
+	const bool aimExists = owner->script->PieceExists(aimFromPiece);
+	const bool muzExists = owner->script->PieceExists(muzzlePiece);
+	if (aimExists && muzExists) {
+		// everything fine
+	} else
+	if (!aimExists && muzExists) {
+		aimFromPiece = muzzlePiece;
+	} else
+	if (aimExists && !muzExists) {
+		muzzlePiece = aimFromPiece;
+	} else
+	if (!aimExists && !muzExists) {
+		if (!alreadyWarnedAboutMissingPieces && (owner->script != &CNullUnitScript::value) && !weaponDef->isShield) {
+			LOG_L(L_WARNING, "%s: weapon%i: Neither AimFromWeapon nor QueryWeapon defined or returned invalid pieceids", owner->unitDef->name.c_str(), weaponNum);
+			alreadyWarnedAboutMissingPieces = true;
+		}
+		aimFromPiece = -1;
+		muzzlePiece = -1;
+	}
+
 	// If we can't get a line of fire from the muzzle, try
 	// the aim piece instead (since the weapon may just be
 	// turned in a wrong way)
-	int weaponPiece = -1;
-	bool weaponAimed = (useWeaponPosForAim == 0);
-
-	if (!weaponAimed) {
-		weaponPiece = owner->script->QueryWeapon(weaponNum);
-	} else {
-		weaponPiece = owner->script->AimFromWeapon(weaponNum);
+	//FIXME remove
+	if (useWeaponPosForAim <= 0) {
+		aimFromPiece = muzzlePiece;
 	}
-
-	relWeaponMuzzlePos = owner->script->GetPiecePos(weaponPiece);
-
-	if (!weaponAimed) {
-		weaponPiece = owner->script->AimFromWeapon(weaponNum);
-	}
-
-	relWeaponPos = owner->script->GetPiecePos(weaponPiece);
 }
+
+
+void CWeapon::UpdateWeaponVectors()
+{
+	relWeaponPos = owner->script->GetPiecePos(aimFromPiece);
+	owner->script->GetEmitDirPos(muzzlePiece, relWeaponMuzzlePos, weaponDir);
+
+	weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+	weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
+	weaponDir = owner->GetObjectSpaceVec(weaponDir).SafeNormalize();
+
+	// hope that we are underground because we are a popup weapon and will come above ground later
+	if (weaponPos.y < CGround::GetHeightReal(weaponPos.x, weaponPos.z)) {
+		weaponPos = owner->pos + UpVector * 10;
+	}
+}
+
 
 void CWeapon::Update()
 {
+	UpdateWeaponVectors();
+
 	if (!UpdateStockpile())
 		return;
 
@@ -238,9 +277,6 @@ void CWeapon::Update()
 
 void CWeapon::UpdateTargeting()
 {
-	if (hasCloseTarget) {
-		UpdateRelWeaponPos();
-	}
 
 	if (targetType == Target_Unit) {
 		if (lastErrorVectorUpdate < gs->frameNum - UNIT_SLOWUPDATE_RATE) {
@@ -471,19 +507,9 @@ void CWeapon::UpdateSalvo()
 	for (int i = 0; i < projectilesPerShot; ++i) {
 		owner->script->Shot(weaponNum);
 
-		// Get Aim Piece
-		int piece = owner->script->AimFromWeapon(weaponNum);
-		relWeaponPos = owner->script->GetPiecePos(piece);
-
-		// Get Muzzle Piece
-		piece = owner->script->QueryWeapon(weaponNum);
-		owner->script->GetEmitDirPos(piece, relWeaponMuzzlePos, weaponDir);
-
-		// convert spaces
-		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
-		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
-		weaponDir = owner->GetObjectSpaceVec(weaponDir);
-		weaponDir.SafeNormalize();
+		// Update Muzzle Piece/Pos
+		UpdateWeaponPieces(false);
+		UpdateWeaponVectors();
 
 		Fire(false);
 	}
@@ -515,12 +541,7 @@ bool CWeapon::AttackGround(float3 newTargetPos, bool isUserTarget)
 	// keep target positions on the surface if this weapon hates water
 	AdjustTargetPosToWater(newTargetPos, true);
 
-	weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
-
-	if (weaponMuzzlePos.y < CGround::GetHeightReal(weaponMuzzlePos.x, weaponMuzzlePos.z)) {
-		// hope that we are underground because we are a popup weapon and will come above ground later
-		weaponMuzzlePos = owner->pos + UpVector * 10;
-	}
+	UpdateWeaponVectors();
 
 	if (!TryTarget(newTargetPos, isUserTarget, NULL))
 		return false;
@@ -545,13 +566,7 @@ bool CWeapon::AttackUnit(CUnit* newTargetUnit, bool isUserTarget)
 	if (weaponDef->interceptor)
 		return false;
 
-	weaponPos = owner->GetObjectSpacePos(relWeaponPos);
-	weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
-
-	if (weaponMuzzlePos.y < CGround::GetHeightReal(weaponMuzzlePos.x, weaponMuzzlePos.z)) {
-		// hope that we are underground because we are a popup weapon and will come above ground later
-		weaponMuzzlePos = owner->pos + UpVector * 10;
-	}
+	UpdateWeaponVectors();
 
 	if (newTargetUnit == NULL) {
 		if (targetType != Target_Unit) {
@@ -733,19 +748,11 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	tracefile << owner->id << " " << weaponNum <<  "\n";
 #endif
 
-	UpdateRelWeaponPos();
+	UpdateWeaponPieces();
+	UpdateWeaponVectors();
 	useWeaponPosForAim = std::max(0, useWeaponPosForAim - 1);
 
-	weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
-	weaponPos = owner->GetObjectSpacePos(relWeaponPos);
-
-	if (weaponMuzzlePos.y < CGround::GetHeightReal(weaponMuzzlePos.x, weaponMuzzlePos.z)) {
-		// hope that we are underground because we are a popup weapon and will come above ground later
-		weaponMuzzlePos = owner->pos + UpVector * 10;
-	}
-
 	predictSpeedMod = 1.0f + (gs->randFloat() - 0.5f) * 2 * (1.0f - owner->limExperience);
-	hasCloseTarget = ((targetPos - weaponPos).SqLength() < relWeaponPos.SqLength() * 16);
 
 
 	if (targetType != Target_None && !TryTarget(targetPos, haveUserTarget, targetUnit)) {
@@ -1078,18 +1085,14 @@ bool CWeapon::TryTargetHeading(short heading, float3 pos, bool userTarget, const
 	owner->heading = heading;
 	owner->frontdir = GetVectorFromHeading(owner->heading);
 	owner->rightdir = owner->frontdir.cross(owner->updir);
-
-	weaponPos = owner->GetObjectSpacePos(relWeaponPos);
-	weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
+	UpdateWeaponVectors();
 
 	const bool val = TryTarget(pos, userTarget, unit);
 
 	owner->frontdir = tempfrontdir;
 	owner->rightdir = temprightdir;
 	owner->heading = tempHeading;
-
-	weaponPos = owner->GetObjectSpacePos(relWeaponPos);
-	weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
+	UpdateWeaponVectors();
 
 	return val;
 
@@ -1097,11 +1100,8 @@ bool CWeapon::TryTargetHeading(short heading, float3 pos, bool userTarget, const
 
 void CWeapon::Init()
 {
-	relWeaponPos = owner->script->GetPiecePos(owner->script->AimFromWeapon(weaponNum));
-	weaponPos = owner->GetObjectSpacePos(relWeaponPos);
-
-	relWeaponMuzzlePos = owner->script->GetPiecePos(owner->script->QueryWeapon(weaponNum));
-	weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
+	UpdateWeaponPieces();
+	UpdateWeaponVectors();
 
 	muzzleFlareSize = std::min(weaponDef->damageAreaOfEffect * 0.2f, std::min(1500.f, weaponDef->damages[0]) * 0.003f);
 

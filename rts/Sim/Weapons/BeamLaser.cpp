@@ -121,8 +121,7 @@ void CBeamLaser::UpdatePosAndMuzzlePos()
 
 		sweepFireState.SetSweepTempDir(newWeaponDir);
 	} else {
-		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
-		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
+		UpdateWeaponVectors();
 
 		if (weaponDef->sweepFire) {
 			// needed for first call to GetFireDir() when new sweep starts after inactivity
