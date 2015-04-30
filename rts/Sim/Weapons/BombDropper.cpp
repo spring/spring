@@ -31,6 +31,7 @@ CBombDropper::CBombDropper(CUnit* owner, const WeaponDef* def, bool useTorps)
 	, tracking((def->tracks)? def->turnrate: 0)
 {
 	onlyForward = true;
+	doTargetGroundPos = true;
 }
 
 void CBombDropper::Init()

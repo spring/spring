@@ -145,6 +145,7 @@ public:
 	bool angleGood;							// set when script indicated ready to fire
 	bool avoidTarget;						// set when the script wants the weapon to pick a new target, reset once one has been chosen
 	bool onlyForward;						// can only fire in the forward direction of the unit (for aircrafts mostly?)
+	bool doTargetGroundPos;    // (used for bombers) target the ground pos under the unit instead of the center aimPos
 
 	unsigned int badTargetCategory;			// targets in this category get a lot lower targetting priority
 	unsigned int onlyTargetCategory;		// only targets in this category can be targeted (default 0xffffffff)

@@ -52,6 +52,7 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(haveUserTarget),
 	CR_MEMBER(onlyForward),
 	CR_MEMBER(muzzleFlareSize),
+	CR_MEMBER(doTargetGroundPos),
 
 	CR_MEMBER(badTargetCategory),
 	CR_MEMBER(onlyTargetCategory),
@@ -127,6 +128,7 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	angleGood(false),
 	avoidTarget(false),
 	onlyForward(false),
+	doTargetGroundPos(false),
 	badTargetCategory(0),
 	onlyTargetCategory(0xffffffff),
 
@@ -1235,6 +1237,7 @@ void CWeapon::AdjustTargetPosToWater(float3& tgtPos, bool attackGround) const
 float3 CWeapon::GetUnitPositionWithError(const CUnit* unit) const
 {
 	float3 errorPos = unit->GetErrorPos(owner->allyteam, true);
+	if (doTargetGroundPos) errorPos -= unit->aimPos - unit->pos;
 	const float errorScale = (MoveErrorExperience() * GAME_SPEED * unit->speed.w);
 	return errorPos + errorVector * errorScale;
 }
