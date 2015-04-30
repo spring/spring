@@ -58,7 +58,6 @@ public:
 	float3 GetUnitPositionWithError(const CUnit* unit) const;
 	float3 GetUnitLeadTargetPos(const CUnit* unit) const;
 
-	bool CobBlockShot(const CUnit* unit);
 	float TargetWeight(const CUnit* unit) const;
 	void SlowUpdate(bool noAutoTargetOverride);
 
@@ -103,6 +102,7 @@ private:
 	inline bool AllowWeaponTargetCheck();
 
 	void UpdateRelWeaponPos();
+	bool CobBlockShot() const;
 
 public:
 	CUnit* owner;

@@ -181,7 +181,7 @@ void CWeapon::SetWeaponNum(int num)
 }
 
 
-inline bool CWeapon::CobBlockShot(const CUnit* targetUnit)
+inline bool CWeapon::CobBlockShot() const
 {
 	if (!hasBlockShot) {
 		return false;
@@ -377,7 +377,7 @@ void CWeapon::UpdateFire()
 		weaponDir.SafeNormalize();
 		useWeaponPosForAim = (reloadTime / UNIT_SLOWUPDATE_RATE) + 8;
 
-		if (TryTarget(targetPos, haveUserTarget, targetUnit) && !CobBlockShot(targetUnit)) {
+		if (TryTarget(targetPos, haveUserTarget, targetUnit) && !CobBlockShot()) {
 			if (weaponDef->stockpile) {
 				const int oldCount = numStockpiled;
 				numStockpiled--;
