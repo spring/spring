@@ -132,7 +132,7 @@ void CPlasmaRepulser::Update()
 
 		if (weaponDef->shieldRepulser) {
 			// bounce the projectile
-			const int type = pro->ShieldRepulse(this, aimFromPos,
+			const int type = pro->ShieldRepulse(this, weaponMuzzlePos,
 				weaponDef->shieldForce,
 				weaponDef->shieldMaxSpeed);
 
@@ -257,7 +257,7 @@ float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float
 		return -1.0f;
 	}
 
-	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(emitter->weaponDef, start, aimFromPos);
+	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(emitter->weaponDef, start, weaponMuzzlePos);
 
 	if (damageArray[weaponDef->shieldArmorType] > curPower) {
 		return -1.0f;
@@ -266,7 +266,7 @@ float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float
 		return -1.0f;
 	}
 
-	const float3 dif = aimFromPos - start;
+	const float3 dif = weaponMuzzlePos - start;
 
 	if (weaponDef->exteriorShield && dif.SqLength() < sqRadius) {
 		return -1.0f;
@@ -284,7 +284,7 @@ float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float
 	if ((tmp > 0.0f) && (length > (closeLength - math::sqrt(tmp)))) {
 		const float colLength = closeLength - math::sqrt(tmp);
 		const float3 colPoint = start + dir * colLength;
-		const float3 normal = (colPoint - aimFromPos).Normalize();
+		const float3 normal = (colPoint - weaponMuzzlePos).Normalize();
 		newDir = dir - normal * normal.dot(dir) * 2;
 		return colLength;
 	}
@@ -301,7 +301,7 @@ void CPlasmaRepulser::DependentDied(CObject* o)
 
 bool CPlasmaRepulser::BeamIntercepted(CWeapon* emitter, float3 start, float damageMultiplier)
 {
-	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(emitter->weaponDef, start, aimFromPos);
+	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(emitter->weaponDef, start, weaponMuzzlePos);
 
 	if (weaponDef->shieldPower > 0) {
 		curPower -= damageArray[weaponDef->shieldArmorType] * damageMultiplier;
