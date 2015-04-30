@@ -44,7 +44,7 @@ void CBombDropper::Init()
 void CBombDropper::Update()
 {
 	if (targetType != Target_None) {
-		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+		aimFromPos = owner->GetObjectSpacePos(relAimFromPos);
 
 		if (targetType == Target_Unit) {
 			// aim at base of unit instead of middle and ignore uncertainty
@@ -71,7 +71,7 @@ bool CBombDropper::TestTarget(const float3& pos, bool userTarget, const CUnit* u
 
 bool CBombDropper::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const
 {
-	// TODO: requires sampling parabola from weaponPos down to dropPos
+	// TODO: requires sampling parabola from aimFromPos down to dropPos
 	return true;
 }
 
@@ -94,7 +94,7 @@ bool CBombDropper::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ign
 #endif
 
 	// bombs always fall down
-	if (weaponPos.y <= targetPos.y)
+	if (aimFromPos.y <= targetPos.y)
 		return false;
 
 	// "normal" range restrictions are not meaningful
@@ -133,11 +133,11 @@ void CBombDropper::FireImpl(bool scriptCall)
 
 		// if owner is a hovering aircraft, use a fixed launching speed [?? WTF]
 		if (owner->unitDef->IsHoveringAirUnit()) {
-			launchSpeed = (targetPos - weaponPos).Normalize() * 5.0f;
+			launchSpeed = (targetPos - aimFromPos).Normalize() * 5.0f;
 		}
 
 		ProjectileParams params = GetProjectileParams();
-		params.pos = weaponPos;
+		params.pos = aimFromPos;
 		params.end = targetPos;
 		params.speed = launchSpeed;
 		params.ttl = (weaponDef->flighttime == 0)? ((range / projectileSpeed) + 15 + predict): weaponDef->flighttime;
@@ -147,7 +147,7 @@ void CBombDropper::FireImpl(bool scriptCall)
 		WeaponProjectileFactory::LoadProjectile(params);
 	} else {
 		// fudge a bit better lateral aim to compensate for imprecise aircraft steering
-		float3 dif = (targetPos - weaponPos) * XZVector;
+		float3 dif = (targetPos - aimFromPos) * XZVector;
 		float3 dir = owner->speed;
 
 		dir = dir.SafeNormalize();
@@ -164,7 +164,7 @@ void CBombDropper::FireImpl(bool scriptCall)
 		}
 
 		ProjectileParams params = GetProjectileParams();
-		params.pos = weaponPos;
+		params.pos = aimFromPos;
 		params.speed = owner->speed + dif;
 		params.ttl = 1000;
 		params.gravity = (weaponDef->myGravity == 0)? mapInfo->map.gravity: -weaponDef->myGravity;
@@ -186,17 +186,17 @@ void CBombDropper::SlowUpdate()
 
 float CBombDropper::GetPredictedImpactTime(const float3& impactPos) const
 {
-	if (weaponPos.y <= impactPos.y)
+	if (aimFromPos.y <= impactPos.y)
 		return 0.0f;
 
 	// weapon needs <t> frames to drop a distance
 	// <d> (if it has zero vertical speed), where:
-	//   <d> = 0.5 * g * t*t = weaponPos.y - impactPos.y
+	//   <d> = 0.5 * g * t*t = aimFromPos.y - impactPos.y
 	//   <t> = sqrt(d / (0.5 * g))
 	// bombs will travel <v * t> elmos horizontally
 	// which must be less than weapon's range to be
 	// able to hit, otherwise will always overshoot
-	const float d = impactPos.y - weaponPos.y;
+	const float d = impactPos.y - aimFromPos.y;
 	const float s = -owner->speed.y;
 
 	const float g = mix(mapInfo->map.gravity, -weaponDef->myGravity, (weaponDef->myGravity != 0.0f));

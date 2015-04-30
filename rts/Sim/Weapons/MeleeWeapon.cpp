@@ -22,11 +22,11 @@ CMeleeWeapon::CMeleeWeapon(CUnit* owner, const WeaponDef* def): CWeapon(owner, d
 void CMeleeWeapon::Update()
 {
 	if (targetType != Target_None) {
-		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+		aimFromPos = owner->GetObjectSpacePos(relAimFromPos);
 		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
 		if (!onlyForward) {
-			wantedDir = (targetPos - weaponPos).Normalize();
+			wantedDir = (targetPos - aimFromPos).Normalize();
 		}
 	}
 

@@ -22,11 +22,11 @@ CMissileLauncher::CMissileLauncher(CUnit* owner, const WeaponDef* def): CWeapon(
 void CMissileLauncher::Update()
 {
 	if (targetType != Target_None) {
-		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+		aimFromPos = owner->GetObjectSpacePos(relAimFromPos);
 		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
 		if (!onlyForward) {
-			wantedDir = targetPos - weaponPos;
+			wantedDir = targetPos - aimFromPos;
 			predict = wantedDir.LengthNormalize() / projectileSpeed;
 
 			if (weaponDef->trajectoryHeight > 0.0f) {

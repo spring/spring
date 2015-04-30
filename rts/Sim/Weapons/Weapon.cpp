@@ -83,8 +83,8 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(fuelUsage),
 	CR_MEMBER(weaponNum),
 
-	CR_MEMBER(relWeaponPos),
-	CR_MEMBER(weaponPos),
+	CR_MEMBER(relAimFromPos),
+	CR_MEMBER(aimFromPos),
 	CR_MEMBER(relWeaponMuzzlePos),
 	CR_MEMBER(weaponMuzzlePos),
 	CR_MEMBER(weaponDir),
@@ -153,8 +153,8 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	collisionFlags(0),
 	fuelUsage(0),
 
-	relWeaponPos(UpVector),
-	weaponPos(ZeroVector),
+	relAimFromPos(UpVector),
+	aimFromPos(ZeroVector),
 	relWeaponMuzzlePos(UpVector),
 	weaponMuzzlePos(ZeroVector),
 	weaponDir(ZeroVector),
@@ -242,16 +242,16 @@ void CWeapon::UpdateWeaponPieces(const bool updateAimFrom)
 
 void CWeapon::UpdateWeaponVectors()
 {
-	relWeaponPos = owner->script->GetPiecePos(aimFromPiece);
+	relAimFromPos = owner->script->GetPiecePos(aimFromPiece);
 	owner->script->GetEmitDirPos(muzzlePiece, relWeaponMuzzlePos, weaponDir);
 
-	weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+	aimFromPos = owner->GetObjectSpacePos(relAimFromPos);
 	weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 	weaponDir = owner->GetObjectSpaceVec(weaponDir).SafeNormalize();
 
 	// hope that we are underground because we are a popup weapon and will come above ground later
-	if (weaponPos.y < CGround::GetHeightReal(weaponPos.x, weaponPos.z)) {
-		weaponPos = owner->pos + UpVector * 10;
+	if (aimFromPos.y < CGround::GetHeightReal(aimFromPos.x, aimFromPos.z)) {
+		aimFromPos = owner->pos + UpVector * 10;
 	}
 }
 
@@ -269,7 +269,7 @@ void CWeapon::Update()
 
 #ifdef TRACE_SYNC
 	tracefile << __FUNCTION__;
-	tracefile << weaponPos.x << " " << weaponPos.y << " " << weaponPos.z << " " << targetPos.x << " " << targetPos.y << " " << targetPos.z << "\n";
+	tracefile << aimFromPos.x << " " << aimFromPos.y << " " << aimFromPos.z << " " << targetPos.x << " " << targetPos.y << " " << targetPos.z << "\n";
 #endif
 }
 
@@ -976,7 +976,7 @@ bool CWeapon::TestTarget(const float3 tgtPos, bool /*userTarget*/, const CUnit* 
 
 bool CWeapon::TestRange(const float3 tgtPos, bool /*userTarget*/, const CUnit* targetUnit) const
 {
-	const float3 tmpTargetDir = (tgtPos - weaponPos).SafeNormalize();
+	const float3 tmpTargetDir = (tgtPos - aimFromPos).SafeNormalize();
 
 	const float heightDiff = tgtPos.y - owner->pos.y;
 	float weaponRange = 0.0f; // range modified by heightDiff and cylinderTargeting
@@ -991,7 +991,7 @@ bool CWeapon::TestRange(const float3 tgtPos, bool /*userTarget*/, const CUnit* t
 		}
 	}
 
-	if (weaponPos.SqDistance2D(tgtPos) >= (weaponRange * weaponRange))
+	if (aimFromPos.SqDistance2D(tgtPos) >= (weaponRange * weaponRange))
 		return false;
 
 	// NOTE: mainDir is in unit-space
@@ -1047,7 +1047,7 @@ bool CWeapon::TryTargetRotate(const CUnit* unit, bool userTarget)
 {
 	const float3 tempTargetPos = GetUnitLeadTargetPos(unit);
 	const short weaponHeading = GetHeadingFromVector(mainDir.x, mainDir.z);
-	const short enemyHeading = GetHeadingFromVector(tempTargetPos.x - weaponPos.x, tempTargetPos.z - weaponPos.z);
+	const short enemyHeading = GetHeadingFromVector(tempTargetPos.x - aimFromPos.x, tempTargetPos.z - aimFromPos.z);
 
 	return TryTargetHeading(enemyHeading - weaponHeading, tempTargetPos, userTarget, unit);
 }
@@ -1064,7 +1064,7 @@ bool CWeapon::TryTargetRotate(float3 pos, bool userTarget)
 
 	const short weaponHeading = GetHeadingFromVector(mainDir.x, mainDir.z);
 	const short enemyHeading = GetHeadingFromVector(
-		pos.x - weaponPos.x, pos.z - weaponPos.z);
+		pos.x - aimFromPos.x, pos.z - aimFromPos.z);
 
 	return TryTargetHeading(enemyHeading - weaponHeading, pos, userTarget, 0);
 }
@@ -1146,7 +1146,7 @@ void CWeapon::UpdateInterceptTarget()
 		// set by CWeaponProjectile's ctor when the interceptor fires
 		if (p->IsBeingIntercepted())
 			continue;
-		if ((curInterceptTargetDistSq = (p->pos - weaponPos).SqLength()) >= minInterceptTargetDistSq)
+		if ((curInterceptTargetDistSq = (p->pos - aimFromPos).SqLength()) >= minInterceptTargetDistSq)
 			continue;
 
 		minInterceptTargetDistSq = curInterceptTargetDistSq;
@@ -1229,7 +1229,7 @@ float3 CWeapon::GetUnitPositionWithError(const CUnit* unit) const
 float3 CWeapon::GetUnitLeadTargetPos(const CUnit* unit) const
 {
 	const float3 tmpTargetPos = GetUnitPositionWithError(unit) + GetLeadVec(unit);
-	const float3 tmpTargetDir = (tmpTargetPos - weaponPos).SafeNormalize();
+	const float3 tmpTargetDir = (tmpTargetPos - aimFromPos).SafeNormalize();
 
 	float3 aimPos = GetTargetBorderPos(unit, tmpTargetPos, tmpTargetDir);
 

@@ -176,8 +176,8 @@ public:
 
 	float fuelUsage;
 
-	float3 relWeaponPos;          // weaponpos relative to the unit
-	float3 weaponPos;             // absolute weapon pos
+	float3 relAimFromPos;         // aimFromPos relative to the unit
+	float3 aimFromPos;            // absolute weapon pos
 	float3 relWeaponMuzzlePos;    // position of the firepoint
 	float3 weaponMuzzlePos;
 	float3 weaponDir;

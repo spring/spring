@@ -72,14 +72,14 @@ void CInterceptHandler::Update(bool forced) {
 			//
 			// these checks all need to be evaluated periodically, not just
 			// when a projectile is created and handed to AddInterceptTarget
-			const float weaponDist = w->weaponPos.distance(p->pos);
+			const float weaponDist = w->aimFromPos.distance(p->pos);
 			const float impactDist = CGround::LineGroundCol(p->pos, p->pos + p->dir * weaponDist);
 
 			const float3& pImpactPos = p->pos + p->dir * impactDist;
 			const float3& pTargetPos = p->GetTargetPos();
-			const float3  pWeaponVec = p->pos - w->weaponPos;
+			const float3  pWeaponVec = p->pos - w->aimFromPos;
 
-			if ((pTargetPos - w->weaponPos).SqLength2D() < Square(wDef->coverageRange)) {
+			if ((pTargetPos - w->aimFromPos).SqLength2D() < Square(wDef->coverageRange)) {
 				w->AddDeathDependence(p, DEPENDENCE_INTERCEPT);
 				w->incomingProjectiles[p->id] = p;
 				continue; // 1
@@ -99,7 +99,7 @@ void CInterceptHandler::Update(bool forced) {
 				continue; // 2
 			}
 
-			if ((pImpactPos - w->weaponPos).SqLength2D() < Square(wDef->coverageRange)) {
+			if ((pImpactPos - w->aimFromPos).SqLength2D() < Square(wDef->coverageRange)) {
 				const float3 pTargetDir = (pTargetPos - p->pos).SafeNormalize();
 				const float3 pImpactDir = (pImpactPos - p->pos).SafeNormalize();
 
@@ -114,7 +114,7 @@ void CInterceptHandler::Update(bool forced) {
 			}
 
 			const float3 pMinSepPos = p->pos + p->dir * std::min(impactDist, std::max(-(pWeaponVec.dot(p->dir)), 0.0f));
-			const float3 pMinSepVec = w->weaponPos - pMinSepPos;
+			const float3 pMinSepVec = w->aimFromPos - pMinSepPos;
 
 			if (pMinSepVec.SqLength() < Square(wDef->coverageRange)) {
 				w->AddDeathDependence(p, DEPENDENCE_INTERCEPT);

@@ -240,7 +240,7 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 					const FPSUnitController& c = p->fpsController;
 					const float dist = std::min(c.targetDist, w->range * 0.9f);
 
-					pos = w->weaponPos + w->wantedDir * dist;
+					pos = w->aimFromPos + w->wantedDir * dist;
 					v1 = (pos - camera->GetPos()).ANormalize();
 					v2 = (v1.cross(UpVector)).ANormalize();
 					v3 = (v2.cross(v1)).ANormalize();

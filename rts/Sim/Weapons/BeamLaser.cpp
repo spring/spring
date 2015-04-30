@@ -116,7 +116,7 @@ void CBeamLaser::UpdatePosAndMuzzlePos()
 
 		relWeaponMuzzlePos = owner->script->GetPiecePos(weaponPiece);
 
-		weaponPos = owner->GetObjectSpacePos(relWeaponPos * float3(-1.0f, 1.0f, -1.0f)); // ??
+		aimFromPos = owner->GetObjectSpacePos(relWeaponPos * float3(-1.0f, 1.0f, -1.0f)); // ??
 		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
 		sweepFireState.SetSweepTempDir(newWeaponDir);
@@ -125,7 +125,7 @@ void CBeamLaser::UpdatePosAndMuzzlePos()
 
 		if (weaponDef->sweepFire) {
 			// needed for first call to GetFireDir() when new sweep starts after inactivity
-			sweepFireState.SetSweepTempDir((weaponMuzzlePos - weaponPos).SafeNormalize());
+			sweepFireState.SetSweepTempDir((weaponMuzzlePos - aimFromPos).SafeNormalize());
 		}
 	}
 }
@@ -136,7 +136,7 @@ void CBeamLaser::UpdateWantedDir()
 		return;
 
 	if (!onlyForward) {
-		wantedDir = (targetPos - weaponPos).SafeNormalize();
+		wantedDir = (targetPos - aimFromPos).SafeNormalize();
 	}
 
 	if (!weaponDef->beamburst) {

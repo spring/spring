@@ -31,10 +31,10 @@ CRifle::CRifle(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 void CRifle::Update()
 {
 	if (targetType != Target_None) {
-		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+		aimFromPos = owner->GetObjectSpacePos(relAimFromPos);
 		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
-		wantedDir = (targetPos - weaponPos).Normalize();
+		wantedDir = (targetPos - aimFromPos).Normalize();
 	}
 
 	CWeapon::Update();

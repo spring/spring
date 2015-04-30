@@ -20,11 +20,11 @@ CDGunWeapon::CDGunWeapon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def
 void CDGunWeapon::Update()
 {
 	if (targetType != Target_None) {
-		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+		aimFromPos = owner->GetObjectSpacePos(relAimFromPos);
 		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
 		if (!onlyForward) {
-			wantedDir = (targetPos - weaponPos).Normalize();
+			wantedDir = (targetPos - aimFromPos).Normalize();
 		}
 
 		// user has to manually predict

@@ -149,15 +149,15 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 		#ifdef DUMP_UNIT_WEAPON_DATA
 		for (weaponsIt = weapons.begin(); weaponsIt != weapons.end(); ++weaponsIt) {
 			const CWeapon* w = *weaponsIt;
-			const float3& awp = w->weaponPos;
-			const float3& rwp = w->relWeaponPos;
+			const float3& awp = w->aimFromPos;
+			const float3& rwp = w->relAimFromPos;
 			const float3& amp = w->weaponMuzzlePos;
 			const float3& rmp = w->relWeaponMuzzlePos;
 
 			file << "\t\t\t\tweaponID: " << w->weaponNum << " (name: " << w->weaponDef->name << ")\n";
 			file << "\t\t\t\tweaponDir: <" << w->weaponDir.x << ", " << w->weaponDir.y << ", " << w->weaponDir.z << ">\n";
 			file << "\t\t\t\tabsWeaponPos: <" << awp.x << ", " << awp.y << ", " << awp.z << ">\n";
-			file << "\t\t\t\trelWeaponPos: <" << rwp.x << ", " << rwp.y << ", " << rwp.z << ">\n";
+			file << "\t\t\t\trelAimFromPos: <" << rwp.x << ", " << rwp.y << ", " << rwp.z << ">\n";
 			file << "\t\t\t\tabsWeaponMuzzlePos: <" << amp.x << ", " << amp.y << ", " << amp.z << ">\n";
 			file << "\t\t\t\trelWeaponMuzzlePos: <" << rmp.x << ", " << rmp.y << ", " << rmp.z << ">\n";
 			file << "\n";

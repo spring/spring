@@ -31,11 +31,11 @@ CLightningCannon::CLightningCannon(CUnit* owner, const WeaponDef* def)
 void CLightningCannon::Update()
 {
 	if (targetType != Target_None) {
-		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+		aimFromPos = owner->GetObjectSpacePos(relAimFromPos);
 		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
 
 		if (!onlyForward) {
-			wantedDir = (targetPos - weaponPos).Normalize();
+			wantedDir = (targetPos - aimFromPos).Normalize();
 		}
 	}
 

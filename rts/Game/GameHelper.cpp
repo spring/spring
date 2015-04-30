@@ -635,7 +635,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 	const CUnit* attacker = weapon->owner;
 	const float radius    = weapon->range;
 	const float3& pos     = attacker->pos;
-	const float aHeight   = weapon->weaponPos.y;
+	const float aHeight   = weapon->aimFromPos.y;
 
 	const WeaponDef* weaponDef = weapon->weaponDef;
 	const float heightMod = weaponDef->heightmod;
