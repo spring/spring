@@ -351,7 +351,7 @@ bool CWeapon::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRe
 	if (!ignoreAngleGood && !angleGood)
 		return false;
 
-	if (salvoLeft != 0)
+	if ((salvoLeft > 0) || (nextSalvo > gs->frameNum))
 		return false;
 
 	if (!ignoreTargetType && targetType == Target_None)
@@ -373,16 +373,16 @@ bool CWeapon::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRe
 			return false;
 	}
 
-	if ((owner->unitDef->maxFuel != 0) && (owner->currentFuel <= 0.0f) && (fuelUsage != 0.0f))
+	if ((fuelUsage > 0.0f) && (owner->currentFuel <= 0.0f))
 		return false;
-
-	const CPlayer* fpsPlayer = owner->fpsControlPlayer;
-	const AAirMoveType* airMoveType = dynamic_cast<AAirMoveType*>(owner->moveType);
 
 	// if in FPS mode, player must be pressing at least one button to fire
+	const CPlayer* fpsPlayer = owner->fpsControlPlayer;
 	if (fpsPlayer != NULL && !fpsPlayer->fpsController.mouse1 && !fpsPlayer->fpsController.mouse2)
 		return false;
+
 	// FIXME: there is already CUnit::dontUseWeapons but only used by HoverAirMoveType when landed
+	const AAirMoveType* airMoveType = dynamic_cast<AAirMoveType*>(owner->moveType);
 	if (airMoveType != NULL && airMoveType->GetPadStatus() != AAirMoveType::PAD_STATUS_FLYING)
 		return false;
 
@@ -507,8 +507,7 @@ void CWeapon::UpdateSalvo()
 
 	// Rock the unit in the direction of fire
 	if (owner->script->HasRockUnit()) {
-		float3 rockDir = -wantedDir;
-		rockDir.SafeNormalize2D();
+		const float3 rockDir = (-wantedDir).SafeNormalize2D();
 		owner->script->RockUnit(rockDir);
 	}
 
@@ -534,7 +533,7 @@ bool CWeapon::AttackGround(float3 newTargetPos, bool isUserTarget)
 
 	UpdateWeaponVectors();
 
-	if (!TryTarget(newTargetPos, isUserTarget, NULL))
+	if (!TryTarget(newTargetPos, isUserTarget, nullptr))
 		return false;
 
 	if (targetUnit != NULL) {
@@ -1146,19 +1145,6 @@ void CWeapon::UpdateInterceptTarget()
 			continue;
 
 		minInterceptTargetDistSq = curInterceptTargetDistSq;
-
-		// NOTE:
-		//     <incomingProjectiles> is sorted by increasing projectile ID
-		//     however projectiles launched later in time (which are still
-		//     likely out of range) can be assigned *lower* ID's than older
-		//     projectiles (which might be almost in range already), so if
-		//     we already have an interception target we should not replace
-		//     it unless another incoming projectile <p> is closer
-		//
-		//     this is still not optimal (closer projectiles should receive
-		//     higher priority), so just always look for the overall closest
-		// if ((interceptTarget != NULL) && ((p->pos - weaponPos).SqLength() >= (interceptTarget->pos - weaponPos).SqLength()))
-		//     continue;
 
 		// trigger us to auto-fire at this incoming projectile
 		// we do not really need to set targetPos here since it
