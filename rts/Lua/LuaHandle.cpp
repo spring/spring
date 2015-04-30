@@ -1001,8 +1001,6 @@ void CLuaHandle::UnitStunned(
 	if (!cmdStr.GetGlobalFunc(L))
 		return;
 
-	int argCount = 4;
-
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->unitDef->id);
 	lua_pushnumber(L, unit->team);
