@@ -446,34 +446,34 @@ void CWeapon::UpdateFire()
 
 bool CWeapon::UpdateStockpile()
 {
-	if (weaponDef->stockpile) {
-		if (numStockpileQued > 0) {
-			const float p = 1.0f / weaponDef->stockpileTime;
+	if (!weaponDef->stockpile)
+		return true;
 
-			if (teamHandler->Team(owner->team)->res.metal >= weaponDef->metalcost*p && teamHandler->Team(owner->team)->res.energy >= weaponDef->energycost*p) {
-				owner->UseEnergy(weaponDef->energycost * p);
-				owner->UseMetal(weaponDef->metalcost * p);
-				buildPercent += p;
-			} else {
-				// update the energy and metal required counts
-				teamHandler->Team(owner->team)->resPull.energy += (weaponDef->energycost * p);
-				teamHandler->Team(owner->team)->resPull.metal  += (weaponDef->metalcost * p);
-			}
-			if (buildPercent >= 1) {
-				const int oldCount = numStockpiled;
-				buildPercent = 0;
-				numStockpileQued--;
-				numStockpiled++;
-				owner->commandAI->StockpileChanged(this);
-				eventHandler.StockpileChanged(owner, this, oldCount);
-			}
+	if (numStockpileQued > 0) {
+		const float p = 1.0f / weaponDef->stockpileTime;
+
+		if (teamHandler->Team(owner->team)->res.metal >= weaponDef->metalcost*p && teamHandler->Team(owner->team)->res.energy >= weaponDef->energycost*p) {
+			owner->UseEnergy(weaponDef->energycost * p);
+			owner->UseMetal(weaponDef->metalcost * p);
+			buildPercent += p;
+		} else {
+			// update the energy and metal required counts
+			teamHandler->Team(owner->team)->resPull.energy += (weaponDef->energycost * p);
+			teamHandler->Team(owner->team)->resPull.metal  += (weaponDef->metalcost * p);
 		}
-
-		if (numStockpiled <= 0 && salvoLeft <= 0) {
-			return false;
+		if (buildPercent >= 1) {
+			const int oldCount = numStockpiled;
+			buildPercent = 0;
+			numStockpileQued--;
+			numStockpiled++;
+			owner->commandAI->StockpileChanged(this);
+			eventHandler.StockpileChanged(owner, this, oldCount);
 		}
 	}
 
+	if (numStockpiled <= 0 && salvoLeft <= 0) {
+		return false;
+	}
 	return true;
 }
 
