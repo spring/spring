@@ -72,7 +72,6 @@ CR_REG_METADATA(CWeapon, (
 
 	CR_MEMBER(lastRequest),
 	CR_MEMBER(lastTargetRetry),
-	CR_MEMBER(lastErrorVectorUpdate),
 
 	CR_MEMBER(slavedTo),
 	CR_MEMBER(maxForwardAngleDif),
@@ -144,7 +143,6 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 
 	lastRequest(0),
 	lastTargetRetry(-100),
-	lastErrorVectorUpdate(0),
 
 	slavedTo(NULL),
 	maxForwardAngleDif(0.0f),
@@ -277,18 +275,11 @@ void CWeapon::Update()
 
 void CWeapon::UpdateTargeting()
 {
+	predict = std::min(predict, 50000.0f);
+	errorVector += errorVectorAdd;
 
 	if (targetType == Target_Unit) {
-		if (lastErrorVectorUpdate < gs->frameNum - UNIT_SLOWUPDATE_RATE) {
-			errorVectorAdd = (gs->randVector() - errorVector) * (1.0f / UNIT_SLOWUPDATE_RATE);
-			lastErrorVectorUpdate = gs->frameNum;
-		}
 
-		// to prevent runaway prediction (happens sometimes when a missile
-		// is moving *away* from its target), we may need to disable missiles
-		// in case they fly around too long
-		predict = std::min(predict, 50000.0f);
-		errorVector += errorVectorAdd;
 
 		const float3 tmpTargetPos = GetUnitLeadTargetPos(targetUnit);
 		const float3 tmpTargetDir = (tmpTargetPos - weaponMuzzlePos).Normalize();
@@ -735,7 +726,6 @@ void CWeapon::AutoTarget()
 }
 
 
-
 void CWeapon::SlowUpdate()
 {
 	SlowUpdate(false);
@@ -743,6 +733,8 @@ void CWeapon::SlowUpdate()
 
 void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 {
+	errorVectorAdd = (gs->randVector() - errorVector) * (1.0f / UNIT_SLOWUPDATE_RATE);
+
 #ifdef TRACE_SYNC
 	tracefile << "Weapon slow update: ";
 	tracefile << owner->id << " " << weaponNum <<  "\n";

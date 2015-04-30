@@ -165,7 +165,6 @@ public:
 
 	int lastRequest;              // when the last script call was done
 	int lastTargetRetry;          // when we last recalculated target selection
-	int lastErrorVectorUpdate;
 
 	CWeapon* slavedTo;            // use this weapon to choose target
 
