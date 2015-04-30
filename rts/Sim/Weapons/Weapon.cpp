@@ -20,6 +20,7 @@
 #include "Sim/Units/Scripts/NullUnitScript.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Weapons/Cannon.h"
 #include "System/EventHandler.h"
 #include "System/float3.h"
 #include "System/myMath.h"
@@ -531,6 +532,11 @@ bool CWeapon::AttackGround(float3 newTargetPos, bool isUserTarget)
 	// keep target positions on the surface if this weapon hates water
 	AdjustTargetPosToWater(newTargetPos, true);
 
+	// prevent range hax in FPS mode
+	if (owner->UnderFirstPersonControl() && dynamic_cast<CCannon*>(this)) {
+		newTargetPos.y = CGround::GetHeightAboveWater(newTargetPos.x, newTargetPos.z);
+	}
+
 	UpdateWeaponVectors();
 
 	if (!TryTarget(newTargetPos, isUserTarget, nullptr))
@@ -568,7 +574,6 @@ bool CWeapon::AttackUnit(CUnit* newTargetUnit, bool isUserTarget)
 		haveUserTarget = false;
 		return false;
 	}
-
 
 	const float3 newTargetPos = GetUnitLeadTargetPos(newTargetUnit);
 

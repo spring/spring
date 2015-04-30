@@ -34,7 +34,8 @@ public:
 	void DependentDied(CObject* o);
 
 
-
+	bool AttackUnit(CUnit* newTargetUnit, bool isUserTarget);
+	bool AttackGround(float3 newTargetPos, bool isUserTarget);
 
 	/// test if the weapon is able to attack an enemy/mapspot just by its properties (no range check, no FreeLineOfFire check, ...)
 	virtual bool TestTarget(const float3 pos, bool userTarget, const CUnit* unit) const;
@@ -65,9 +66,6 @@ public:
 	virtual void Update();
 	virtual float GetRange2D(float yDiff) const;
 	virtual void UpdateRange(float val) { range = val; }
-
-	virtual bool AttackUnit(CUnit* newTargetUnit, bool isUserTarget);
-	virtual bool AttackGround(float3 newTargetPos, bool isUserTarget);
 
 	void AutoTarget();
 	void AimReady(int value);

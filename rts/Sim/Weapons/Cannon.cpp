@@ -167,16 +167,6 @@ void CCannon::SlowUpdate()
 	CWeapon::SlowUpdate();
 }
 
-bool CCannon::AttackGround(float3 pos, bool userTarget)
-{
-	if (owner->UnderFirstPersonControl()) {
-		// mostly prevents firing longer than max range using fps mode
-		pos.y = CGround::GetHeightAboveWater(pos.x, pos.z);
-	}
-
-	// NOTE: this calls back into our derived TryTarget
-	return (CWeapon::AttackGround(pos, userTarget));
-}
 
 float3 CCannon::GetWantedDir(const float3& diff)
 {
