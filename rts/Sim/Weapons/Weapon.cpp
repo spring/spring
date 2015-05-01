@@ -279,70 +279,76 @@ void CWeapon::UpdateTargeting()
 	predict = std::min(predict, 50000.0f);
 	errorVector += errorVectorAdd;
 
-	if (targetType == Target_Unit) {
-
-
-		const float3 tmpTargetPos = GetUnitLeadTargetPos(targetUnit);
-		const float3 tmpTargetDir = (tmpTargetPos - weaponMuzzlePos).Normalize();
-		targetPos = GetTargetBorderPos(targetUnit, tmpTargetPos, tmpTargetDir);
-	}
-
-	if (weaponDef->interceptor) {
+	if (weaponDef->interceptor) { //FIXME move to SlowUpdate()?
 		// keep track of the closest projectile heading our way (if any)
 		UpdateInterceptTarget();
 	}
 
-	if (targetType != Target_None) {
-		AdjustTargetPosToWater(targetPos, targetType == Target_Pos);
+	if (!HaveTarget())
+		return;
 
-		const float3 worldTargetDir = (targetPos - owner->pos).SafeNormalize();
-		const float3 worldMainDir = owner->GetObjectSpaceVec(mainDir);
-		const bool targetAngleConstraint = CheckTargetAngleConstraint(worldTargetDir, worldMainDir);
+	AdjustTargetPosToWater(currentTargetPos, currentTarget.type == Target_Pos);
 
-		if (angleGood && !targetAngleConstraint) {
- 			// weapon finished a previously started AimWeapon thread and wants to
- 			// fire, but target is no longer within contraints --> wait for re-aim
- 			angleGood = false;
- 		}
-		if (onlyForward && targetAngleConstraint) {
-			// NOTE:
-			//   this should not need to be here, but many legacy scripts do not
-			//   seem to define Aim*Ary in COB for units with onlyForward weapons
-			//   (so angleGood is never set to true) -- REMOVE AFTER 90.0
-			angleGood = true;
-		}
-
-		if (gs->frameNum >= (lastRequest + (GAME_SPEED >> 1))) {
-			// periodically re-aim the weapon (by calling the script's AimWeapon
-			// every N=15 frames regardless of current angleGood state)
-			//
-			// NOTE:
-			//   let scripts do active aiming even if we are an onlyForward weapon
-			//   (reduces how far the entire unit must turn to face worldTargetDir)
-			//
-			//   if AimWeapon sets angleGood immediately (ie. before it returns),
-			//   the weapon can continuously fire at its maximum rate once every
-			//   int(reloadTime / owner->reloadSpeed) frames
-			//
-			//   if it does not (eg. because AimWeapon always spawns a thread to
-			//   aim the weapon and defers setting angleGood to it) then this can
-			//   lead to irregular/stuttering firing behavior, even in scenarios
-			//   when the weapon does not have to re-aim --> detecting this case
-			//   is the responsibility of the script
-			angleGood = false;
-
-			lastRequestedDir = wantedDir;
-			lastRequest = gs->frameNum;
-
-			const float heading = GetHeadingFromVectorF(wantedDir.x, wantedDir.z);
-			const float pitch = math::asin(Clamp(wantedDir.dot(owner->updir), -1.0f, 1.0f));
-
-			// for COB, this sets <angleGood> to return value of AimWeapon when finished,
-			// for LUS, there exists a callout to set the <angleGood> member directly.
-			// FIXME: convert CSolidObject::heading to radians too.
-			owner->script->AimWeapon(weaponNum, ClampRad(heading - owner->heading * TAANG2RAD), pitch);
-		}
+	// Check fire angle constraints
+	const float3 worldTargetDir = (currentTargetPos - owner->pos).SafeNormalize();
+	const float3 worldMainDir = owner->GetObjectSpaceVec(mainDir);
+	const bool targetAngleConstraint = CheckTargetAngleConstraint(worldTargetDir, worldMainDir);
+	if (angleGood && !targetAngleConstraint) {
+		// weapon finished a previously started AimWeapon thread and wants to
+		// fire, but target is no longer within contraints --> wait for re-aim
+		angleGood = false;
 	}
+	if (onlyForward && targetAngleConstraint) {
+		// NOTE:
+		//   this should not need to be here, but many legacy scripts do not
+		//   seem to define Aim*Ary in COB for units with onlyForward weapons
+		//   (so angleGood is never set to true) -- REMOVE AFTER 90.0
+		angleGood = true;
+	}
+
+	// reaim weapon when needed
+	ReAimWeapon();
+}
+
+
+void CWeapon::ReAimWeapon()
+{
+	// NOTE:
+	//   let scripts do active aiming even if we are an onlyForward weapon
+	//   (reduces how far the entire unit must turn to face worldTargetDir)
+
+	bool reAim = false;
+
+	// periodically re-aim the weapon (by calling the script's AimWeapon
+	// every N=15 frames regardless of current angleGood state)
+	// if it does not (eg. because AimWeapon always spawns a thread to
+	// aim the weapon and defers setting angleGood to it) then this can
+	// lead to irregular/stuttering firing behavior, even in scenarios
+	// when the weapon does not have to re-aim
+	reAim |= (gs->frameNum >= (lastRequest + (GAME_SPEED >> 1)));
+
+	// check max FireAngle
+	reAim |= (wantedDir.dot(lastRequestedDir) <= weaponDef->maxFireAngle);
+	reAim |= (wantedDir.dot(lastRequestedDir) <= math::cos(20.f));
+
+	//note: angleGood checks unit/maindir, not the weapon's current aim dir!!!
+	//reAim |= (!angleGood);
+
+	if (!reAim)
+		return;
+
+		angleGood = false;
+
+	lastRequestedDir = wantedDir;
+	lastRequest = gs->frameNum;
+
+	const float heading = GetHeadingFromVectorF(wantedDir.x, wantedDir.z);
+	const float pitch = math::asin(Clamp(wantedDir.dot(owner->updir), -1.0f, 1.0f));
+
+	// for COB, this sets <angleGood> to return value of AimWeapon when finished,
+	// for LUS, there exists a callout to set the <angleGood> member directly.
+	// FIXME: convert CSolidObject::heading to radians too.
+	owner->script->AimWeapon(weaponNum, ClampRad(heading - owner->heading * TAANG2RAD), pitch);
 }
 
 

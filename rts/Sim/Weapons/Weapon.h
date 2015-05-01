@@ -30,9 +30,9 @@ public:
 	virtual void Init();
 
 	void SetWeaponNum(int);
-
 	void DependentDied(CObject* o);
 
+	bool HaveTarget() const { return (targetType != Target_None); }
 
 	bool AttackUnit(CUnit* newTargetUnit, bool isUserTarget);
 	bool AttackGround(float3 newTargetPos, bool isUserTarget);
