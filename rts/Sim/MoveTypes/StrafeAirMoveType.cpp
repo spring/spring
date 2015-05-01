@@ -402,10 +402,12 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	useSmoothMesh = owner->unitDef->useSmoothMesh;
 
 	// FIXME: WHY ARE THESE RANDOMIZED?
-	maxRudder   *= (0.99f + gs->randFloat() * 0.02f);
-	maxElevator *= (0.99f + gs->randFloat() * 0.02f);
-	maxAileron  *= (0.99f + gs->randFloat() * 0.02f);
-	accRate     *= (0.99f + gs->randFloat() * 0.02f);
+	// to make grouped aircraft spread out a bit when turning
+	// maybe also as a tie-breaker on air-vs-air fight maneuvers
+	maxRudder   *= (0.97f + gs->randFloat() * 0.06f);
+	maxElevator *= (0.97f + gs->randFloat() * 0.06f);
+	maxAileron  *= (0.97f + gs->randFloat() * 0.06f);
+	accRate     *= (0.97f + gs->randFloat() * 0.06f);
 
 	crashAileron = 1.0f - (gs->randFloat() * gs->randFloat());
 	crashAileron *= ((gs->randInt() & 1)? -1.0f: 1.0f);

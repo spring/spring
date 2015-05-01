@@ -61,6 +61,7 @@ Sim:
  - fix units disobey move cmds
  - fix user target being set for all weapons
  ! change TEAM_SLOWUPDATE_RATE to 30 / UNIT_SLOWUPDATE_RATE to 15
+ - increase fighter/bomber aircraft maneuverability parameter randomness to 6% from 2%
 
 Collisions:
  - fix #4592: broken per-piece coldet
