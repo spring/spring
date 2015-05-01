@@ -12,7 +12,7 @@ public:
 	CDGunWeapon(CUnit* owner, const WeaponDef* def);
 
 	void Fire();
-	void Update();
+	void UpdateWantedDir();
 	void Init();
 
 private:

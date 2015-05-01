@@ -11,7 +11,7 @@ class CTorpedoLauncher: public CWeapon
 public:
 	CTorpedoLauncher(CUnit* owner, const WeaponDef* def);
 
-	void Update();
+	void UpdateWantedDir();
 
 private:
 	bool TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const;

@@ -28,24 +28,10 @@ CLightningCannon::CLightningCannon(CUnit* owner, const WeaponDef* def)
 }
 
 
-void CLightningCannon::Update()
-{
-	if (targetType != Target_None) {
-		aimFromPos = owner->GetObjectSpacePos(relAimFromPos);
-		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
-
-		if (!onlyForward) {
-			wantedDir = (targetPos - aimFromPos).Normalize();
-		}
-	}
-
-	CWeapon::Update();
-}
-
 void CLightningCannon::FireImpl(bool scriptCall)
 {
 	float3 curPos = weaponMuzzlePos;
-	float3 curDir = (targetPos - curPos).Normalize();
+	float3 curDir = wantedDir;
 	float3 newDir = curDir;
 
 	curDir +=
@@ -111,9 +97,3 @@ void CLightningCannon::FireImpl(bool scriptCall)
 	WeaponProjectileFactory::LoadProjectile(pparams);
 }
 
-
-
-void CLightningCannon::SlowUpdate()
-{
-	CWeapon::SlowUpdate();
-}

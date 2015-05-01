@@ -28,22 +28,9 @@ CRifle::CRifle(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 }
 
 
-void CRifle::Update()
-{
-	if (targetType != Target_None) {
-		aimFromPos = owner->GetObjectSpacePos(relAimFromPos);
-		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
-
-		wantedDir = (targetPos - aimFromPos).Normalize();
-	}
-
-	CWeapon::Update();
-}
-
-
 void CRifle::FireImpl(bool scriptCall)
 {
-	float3 dir = (targetPos - weaponMuzzlePos).Normalize();
+	float3 dir = wantedDir;
 	dir +=
 		(gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
 	dir.Normalize();

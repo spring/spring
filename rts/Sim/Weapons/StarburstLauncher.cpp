@@ -22,19 +22,6 @@ CStarburstLauncher::CStarburstLauncher(CUnit* owner, const WeaponDef* def): CWea
 }
 
 
-void CStarburstLauncher::Update(void)
-{
-	if (targetType != Target_None) {
-		aimFromPos = owner->GetObjectSpacePos(relAimFromPos);
-		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
-
-		// the aiming upward is apperently implicid so aim toward target
-		wantedDir = (targetPos - aimFromPos).Normalize();
-	}
-
-	CWeapon::Update();
-}
-
 void CStarburstLauncher::FireImpl(bool scriptCall)
 {
 	const float3 speed = ((weaponDef->fixedLauncher)? weaponDir: UpVector) * weaponDef->startvelocity;

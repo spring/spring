@@ -256,6 +256,16 @@ void CWeapon::UpdateWeaponVectors()
 }
 
 
+void CWeapon::UpdateWantedDir()
+{
+	if (!onlyForward) {
+		wantedDir = (targetPos - aimFromPos).SafeNormalize();
+	} else {
+		wantedDir = owner->frontdir;
+	}
+}
+
+
 void CWeapon::Update()
 {
 	UpdateWeaponVectors();
@@ -287,10 +297,11 @@ void CWeapon::UpdateTargeting()
 	if (!HaveTarget())
 		return;
 
-	AdjustTargetPosToWater(currentTargetPos, currentTarget.type == Target_Pos);
+	AdjustTargetPosToWater(targetPos, targetType == Target_Pos);
+	UpdateWantedDir();
 
 	// Check fire angle constraints
-	const float3 worldTargetDir = (currentTargetPos - owner->pos).SafeNormalize();
+	const float3 worldTargetDir = (targetPos - owner->pos).SafeNormalize();
 	const float3 worldMainDir = owner->GetObjectSpaceVec(mainDir);
 	const bool targetAngleConstraint = CheckTargetAngleConstraint(worldTargetDir, worldMainDir);
 	if (angleGood && !targetAngleConstraint) {

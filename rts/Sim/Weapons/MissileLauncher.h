@@ -11,7 +11,7 @@ class CMissileLauncher: public CWeapon
 public:
 	CMissileLauncher(CUnit* owner, const WeaponDef* def);
 
-	void Update();
+	void UpdateWantedDir();
 
 private:
 	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const;

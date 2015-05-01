@@ -19,23 +19,17 @@ CMissileLauncher::CMissileLauncher(CUnit* owner, const WeaponDef* def): CWeapon(
 }
 
 
-void CMissileLauncher::Update()
+void CMissileLauncher::UpdateWantedDir()
 {
-	if (targetType != Target_None) {
-		aimFromPos = owner->GetObjectSpacePos(relAimFromPos);
-		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
+	if (!onlyForward) {
+		wantedDir = targetPos - aimFromPos;
+		predict = wantedDir.LengthNormalize() / projectileSpeed;
 
-		if (!onlyForward) {
-			wantedDir = targetPos - aimFromPos;
-			predict = wantedDir.LengthNormalize() / projectileSpeed;
-
-			if (weaponDef->trajectoryHeight > 0.0f) {
-				wantedDir.y += weaponDef->trajectoryHeight;
-				wantedDir.Normalize();
-			}
+		if (weaponDef->trajectoryHeight > 0.0f) {
+			wantedDir.y += weaponDef->trajectoryHeight;
+			wantedDir.Normalize();
 		}
 	}
-	CWeapon::Update();
 }
 
 void CMissileLauncher::FireImpl(bool scriptCall)

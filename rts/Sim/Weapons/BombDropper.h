@@ -12,7 +12,7 @@ public:
 	CBombDropper(CUnit* owner, const WeaponDef* def, bool useTorps);
 
 	void Init();
-	void Update();
+	void UpdateWantedDir();
 	void SlowUpdate();
 
 private:

@@ -11,7 +11,6 @@ class CStarburstLauncher: public CWeapon
 public:
 	CStarburstLauncher(CUnit* owner, const WeaponDef* def);
 
-	void Update();
 	float GetRange2D(float yDiff) const;
 
 private:

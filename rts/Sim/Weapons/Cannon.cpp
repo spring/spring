@@ -63,21 +63,13 @@ void CCannon::UpdateRange(float val)
 }
 
 
-void CCannon::Update()
+void CCannon::UpdateWantedDir()
 {
-	if (targetType != Target_None) {
-		aimFromPos = owner->GetObjectSpacePos(relAimFromPos);
-		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
+	const float3 targetVec = targetPos - aimFromPos;
+	wantedDir = GetWantedDir(targetVec);
+	const float speed2D = wantedDir.Length2D() * projectileSpeed;
 
-		const float3 targetVec = targetPos - aimFromPos;
-		const float speed2D = (wantedDir = GetWantedDir(targetVec)).Length2D() * projectileSpeed;
-
-		predict = ((speed2D == 0.0f) ? 1.0f : (targetVec.Length2D() / speed2D));
-	} else {
-		predict = 0.0f;
-	}
-
-	CWeapon::Update();
+	predict = ((speed2D == 0.0f) ? 1.0f : (targetVec.Length2D() / speed2D));
 }
 
 

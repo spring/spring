@@ -20,17 +20,10 @@ CTorpedoLauncher::CTorpedoLauncher(CUnit* owner, const WeaponDef* def): CWeapon(
 }
 
 
-void CTorpedoLauncher::Update()
+void CTorpedoLauncher::UpdateWantedDir()
 {
-	if (targetType != Target_None) {
-		aimFromPos = owner->GetObjectSpacePos(relAimFromPos);
-		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
-
-		wantedDir = targetPos - aimFromPos;
-		predict = wantedDir.LengthNormalize() / projectileSpeed;
-	}
-
-	CWeapon::Update();
+	wantedDir = targetPos - aimFromPos;
+	predict = wantedDir.LengthNormalize() / projectileSpeed;
 }
 
 bool CTorpedoLauncher::TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const

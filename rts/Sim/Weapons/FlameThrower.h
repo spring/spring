@@ -11,8 +11,6 @@ class CFlameThrower: public CWeapon
 public:
 	CFlameThrower(CUnit* owner, const WeaponDef* def);
 
-	void Update();
-
 	float3 color;
 	float3 color2;
 

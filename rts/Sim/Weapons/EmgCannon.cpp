@@ -20,22 +20,16 @@ CEmgCannon::CEmgCannon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 }
 
 
-void CEmgCannon::Update()
+void CEmgCannon::UpdateWantedDir()
 {
-	if (targetType != Target_None) {
-		aimFromPos = owner->GetObjectSpacePos(relAimFromPos);
-		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
+	float3 wantedDirTemp = targetPos - aimFromPos;
+	const float targetDist = wantedDirTemp.LengthNormalize();
 
-		float3 wantedDirTemp = targetPos - aimFromPos;
-		const float targetDist = wantedDirTemp.LengthNormalize();
-
-		if (!onlyForward && targetDist != 0.0f) {
-			wantedDir = wantedDirTemp;
-		}
-
-		predict = targetDist / projectileSpeed;
+	if (!onlyForward && targetDist != 0.0f) {
+		wantedDir = wantedDirTemp;
 	}
-	CWeapon::Update();
+
+	predict = targetDist / projectileSpeed;
 }
 
 

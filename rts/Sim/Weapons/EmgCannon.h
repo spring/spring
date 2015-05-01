@@ -11,7 +11,7 @@ class CEmgCannon: public CWeapon
 public:
 	CEmgCannon(CUnit* owner, const WeaponDef* def);
 
-	void Update();
+	void UpdateWantedDir();
 
 private:
 	void FireImpl(bool scriptCall);

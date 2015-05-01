@@ -21,7 +21,7 @@ public:
 
 	void Init();
 	void UpdateRange(float val);
-	void Update();
+	void UpdateWantedDir();
 	void SlowUpdate();
 
 	float GetRange2D(float yDiff, float rFact) const;

@@ -23,23 +23,16 @@ CLaserCannon::CLaserCannon(CUnit* owner, const WeaponDef* def)
 
 
 
-void CLaserCannon::Update()
+void CLaserCannon::UpdateWantedDir()
 {
-	if (targetType != Target_None) {
-		aimFromPos = owner->GetObjectSpacePos(relAimFromPos);
-		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
+	float3 wantedDirTemp = targetPos - aimFromPos;
+	const float targetDist = wantedDirTemp.LengthNormalize();
 
-		float3 wantedDirTemp = targetPos - aimFromPos;
-		const float targetDist = wantedDirTemp.LengthNormalize();
-
-		if (!onlyForward && targetDist != 0.0f) {
-			wantedDir = wantedDirTemp;
-		}
-
-		predict = targetDist / projectileSpeed;
+	if (!onlyForward && targetDist != 0.0f) {
+		wantedDir = wantedDirTemp;
 	}
 
-	CWeapon::Update();
+	predict = targetDist / projectileSpeed;
 }
 
 void CLaserCannon::UpdateRange(float val)

@@ -132,12 +132,7 @@ void CBeamLaser::UpdatePosAndMuzzlePos()
 
 void CBeamLaser::UpdateWantedDir()
 {
-	if (targetType == Target_None)
-		return;
-
-	if (!onlyForward) {
-		wantedDir = (targetPos - aimFromPos).SafeNormalize();
-	}
+	CWeapon::UpdateWantedDir();
 
 	if (!weaponDef->beamburst) {
 		predict = salvoSize / 2;
@@ -196,8 +191,6 @@ void CBeamLaser::UpdateSweep()
 void CBeamLaser::Update()
 {
 	UpdatePosAndMuzzlePos();
-	UpdateWantedDir();
-
 	CWeapon::Update();
 	UpdateSweep();
 }

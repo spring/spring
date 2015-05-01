@@ -31,6 +31,9 @@ public:
 
 	void SetWeaponNum(int);
 	void DependentDied(CObject* o);
+	void SlowUpdate(bool noAutoTargetOverride);
+	virtual void SlowUpdate();
+	virtual void Update();
 
 	bool HaveTarget() const { return (targetType != Target_None); }
 
@@ -55,15 +58,13 @@ public:
 public:
 	bool CheckTargetAngleConstraint(const float3 worldTargetDir, const float3 worldWeaponDir) const;
 	float3 GetTargetBorderPos(const CUnit* targetUnit, const float3 rawTargetPos, const float3 rawTargetDir) const;
+
 	void AdjustTargetPosToWater(float3& tgtPos, bool attackGround) const;
 	float3 GetUnitPositionWithError(const CUnit* unit) const;
 	float3 GetUnitLeadTargetPos(const CUnit* unit) const;
 
 	float TargetWeight(const CUnit* unit) const;
-	void SlowUpdate(bool noAutoTargetOverride);
 
-	virtual void SlowUpdate();
-	virtual void Update();
 	virtual float GetRange2D(float yDiff) const;
 	virtual void UpdateRange(float val) { range = val; }
 
@@ -83,6 +84,8 @@ public:
 
 protected:
 	virtual void FireImpl(bool scriptCall) {}
+	virtual void UpdateWantedDir();
+
 	static bool TargetUnitOrPositionUnderWater(const float3 targetPos, const CUnit* targetUnit, float offset = 0.0f);
 	static bool TargetUnitOrPositionInWater(const float3 targetPos, const CUnit* targetUnit, float offset = 0.0f);
 	void UpdateWeaponPieces(const bool updateAimFrom = true);
@@ -102,6 +105,7 @@ private:
 	inline bool AllowWeaponTargetCheck();
 
 	bool CobBlockShot() const;
+	void ReAimWeapon();
 
 public:
 	CUnit* owner;

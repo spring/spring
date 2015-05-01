@@ -41,20 +41,10 @@ void CBombDropper::Init()
 }
 
 
-void CBombDropper::Update()
+void CBombDropper::UpdateWantedDir()
 {
-	if (targetType != Target_None) {
-		aimFromPos = owner->GetObjectSpacePos(relAimFromPos);
-
-		if (targetType == Target_Unit) {
-			// aim at base of unit instead of middle and ignore uncertainty
-			targetPos = targetUnit->pos;
-		}
-
-		predict = GetPredictedImpactTime(targetPos);
-	}
-
-	CWeapon::Update();
+	CWeapon::UpdateWantedDir();
+	predict = GetPredictedImpactTime(targetPos);
 }
 
 bool CBombDropper::TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const

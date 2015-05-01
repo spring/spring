@@ -17,30 +17,17 @@ CDGunWeapon::CDGunWeapon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def
 }
 
 
-void CDGunWeapon::Update()
+void CDGunWeapon::UpdateWantedDir()
 {
-	if (targetType != Target_None) {
-		aimFromPos = owner->GetObjectSpacePos(relAimFromPos);
-		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
+	CWeapon::UpdateWantedDir();
 
-		if (!onlyForward) {
-			wantedDir = (targetPos - aimFromPos).Normalize();
-		}
-
-		// user has to manually predict
-		predict = 0;
-	}
-
-	CWeapon::Update();
+	// user has to manually predict
+	predict = 0;
 }
 
 void CDGunWeapon::FireImpl(bool scriptCall)
 {
-	float3 dir = owner->frontdir;
-
-	if (!onlyForward) {
-		dir = (targetPos - weaponMuzzlePos).Normalize(); 
-	}
+	float3 dir = wantedDir;
 
 	dir += (gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
 	dir.Normalize();

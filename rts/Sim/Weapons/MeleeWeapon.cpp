@@ -19,20 +19,6 @@ CMeleeWeapon::CMeleeWeapon(CUnit* owner, const WeaponDef* def): CWeapon(owner, d
 }
 
 
-void CMeleeWeapon::Update()
-{
-	if (targetType != Target_None) {
-		aimFromPos = owner->GetObjectSpacePos(relAimFromPos);
-		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
-
-		if (!onlyForward) {
-			wantedDir = (targetPos - aimFromPos).Normalize();
-		}
-	}
-
-	CWeapon::Update();
-}
-
 bool CMeleeWeapon::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const
 {
 	return true;

@@ -37,14 +37,3 @@ void CFlameThrower::FireImpl(bool scriptCall)
 	WeaponProjectileFactory::LoadProjectile(params);
 }
 
-
-void CFlameThrower::Update()
-{
-	if (targetType != Target_None) {
-		aimFromPos = owner->GetObjectSpacePos(relAimFromPos);
-		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
-		wantedDir = (targetPos - aimFromPos).Normalize();
-	}
-
-	CWeapon::Update();
-}
