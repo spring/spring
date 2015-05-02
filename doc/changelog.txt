@@ -14,7 +14,7 @@ Major:
    ! removed alias "/quit" (use /quitforce)
    - add "quit to menu" to quit-box
    - add "/reloadforce"
-   -  add MenuGameArchive & MenuMapArchive config setting:
+   -  add DefaultStartScript config setting:
      - if set, automaticly start it!
      - add --oldmenu command line parameter to always get to the old menu
  - added lua override for infomaps
