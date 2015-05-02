@@ -60,6 +60,7 @@
 #include "System/Input/KeyInput.h"
 #include "System/Input/MouseInput.h"
 #include "System/Input/Joystick.h"
+#include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/DataDirLocater.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
@@ -116,6 +117,8 @@ CONFIG(bool, WindowBorderless).defaultValue(false).description("When set and Ful
 CONFIG(bool, BlockCompositing).defaultValue(false).safemodeValue(true).description("Disables kwin compositing to fix tearing, possible fixes low FPS in windowed mode, too.");
 
 CONFIG(std::string, name).defaultValue(UnnamedPlayerName).description("Sets your name in the game. Since this is overridden by lobbies with your lobby username when playing, it usually only comes up when viewing replays or starting the engine directly for testing purposes.");
+CONFIG(std::string, MenuGameArchive).defaultValue("").description("Game archive for the menu to use.");
+CONFIG(std::string, MenuMapArchive).defaultValue("").description("Map archive for the menu to use.");
 
 static SDL_GLContext sdlGlCtx;
 static SDL_Window* window;
@@ -646,6 +649,7 @@ void SpringApp::ParseCmdLine(const std::string& binaryName)
 	cmdline->AddString('g', "game",               "Specify the game that will be instantly loaded");
 	cmdline->AddString('m', "map",                "Specify the map that will be instantly loaded");
 	cmdline->AddString('n', "name",               "Set your player name");
+	cmdline->AddSwitch(0,   "oldmenu",            "Start the old menu");
 
 	try {
 		cmdline->Parse();
@@ -798,12 +802,18 @@ void SpringApp::Startup()
 	// no argument (either game is given or show selectmenu)
 	if (inputFile.empty()) {
 		clientSetup->isHost = true;
-
 		if (cmdline->IsSet("game") && cmdline->IsSet("map")) {
 			// --game and --map directly specified, try to run them
 			activeController = RunScript(StartScriptGen::CreateMinimalSetup(cmdline->GetString("game"), cmdline->GetString("map")));
-		} else {
-			// menu
+			return;
+		}
+
+		const std::string game = configHandler->GetString("MenuGameArchive");
+		const std::string map = configHandler->GetString("MenuMapArchive");
+		const bool gameexists = !game.empty() && archiveScanner->ArchiveFromName(game) != game;
+		const bool mapexists = !map.empty() && archiveScanner->ArchiveFromName(map) != map;
+		if (cmdline->IsSet("oldmenu") || !gameexists || !mapexists) {
+			// old menu
 		#ifdef HEADLESS
 			handleerror(NULL,
 				"The headless version of the engine can not be run in interactive mode.\n"
@@ -811,6 +821,10 @@ void SpringApp::Startup()
 		#endif
 			// not a memory-leak: SelectMenu deletes itself on start
 			activeController = new SelectMenu(clientSetup);
+		} else { // run custom menu from game and map
+			clientSetup->isHost = true;
+			pregame = new CPreGame(clientSetup);
+			pregame->LoadSetupscript(StartScriptGen::CreateMinimalSetup(game, map));
 		}
 		return;
 	}
