@@ -18,6 +18,7 @@ Major:
      - if set, automaticly start it!
      - add --oldmenu command line parameter to always get to the old menu
  - added lua override for infomaps
+ - allow to enable isolated mode by creating a file isolated.txt next to spring executable
 
 Cameras:
  ! removed TW, Orbital & Smooth camera
