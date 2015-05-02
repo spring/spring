@@ -777,7 +777,7 @@ CGameController* SpringApp::RunScript(const std::string& buf)
 	return pregame;
 }
 
-void SpringApp::LoadMenu()
+void SpringApp::LoadSpringMenu()
 {
 	const std::string game = configHandler->GetString("MenuGameArchive");
 	const std::string map = configHandler->GetString("MenuMapArchive");
@@ -829,7 +829,7 @@ void SpringApp::Startup()
 			activeController = RunScript(StartScriptGen::CreateMinimalSetup(cmdline->GetString("game"), cmdline->GetString("map")));
 			return;
 		}
-		LoadMenu();
+		LoadSpringMenu();
 		return;
 	}
 
@@ -917,7 +917,7 @@ void SpringApp::Reload(const std::string& script)
 
 	if (script.empty()) {
 		// if no script, drop back to menu
-		LoadMenu();
+		LoadSpringMenu();
 	} else {
 		activeController = RunScript(script);
 	}
