@@ -777,6 +777,28 @@ CGameController* SpringApp::RunScript(const std::string& buf)
 	return pregame;
 }
 
+void SpringApp::LoadMenu()
+{
+	const std::string game = configHandler->GetString("MenuGameArchive");
+	const std::string map = configHandler->GetString("MenuMapArchive");
+	const bool gameexists = !game.empty() && archiveScanner->ArchiveFromName(game) != game;
+	const bool mapexists = !map.empty() && archiveScanner->ArchiveFromName(map) != map;
+
+	if (cmdline->IsSet("oldmenu") || !gameexists || !mapexists) {
+		// old menu
+	#ifdef HEADLESS
+		handleerror(NULL,
+			"The headless version of the engine can not be run in interactive mode.\n"
+			"Please supply a start-script, save- or demo-file.", "ERROR", MBF_OK|MBF_EXCL);
+	#endif
+		// not a memory-leak: SelectMenu deletes itself on start
+		activeController = new SelectMenu(clientSetup);
+	} else { // run custom menu from game and map
+		clientSetup->isHost = true;
+		pregame = new CPreGame(clientSetup);
+		pregame->LoadSetupscript(StartScriptGen::CreateMinimalSetup(game, map));
+	}
+}
 
 /**
  * Initializes instance of GameSetup
@@ -807,25 +829,7 @@ void SpringApp::Startup()
 			activeController = RunScript(StartScriptGen::CreateMinimalSetup(cmdline->GetString("game"), cmdline->GetString("map")));
 			return;
 		}
-
-		const std::string game = configHandler->GetString("MenuGameArchive");
-		const std::string map = configHandler->GetString("MenuMapArchive");
-		const bool gameexists = !game.empty() && archiveScanner->ArchiveFromName(game) != game;
-		const bool mapexists = !map.empty() && archiveScanner->ArchiveFromName(map) != map;
-		if (cmdline->IsSet("oldmenu") || !gameexists || !mapexists) {
-			// old menu
-		#ifdef HEADLESS
-			handleerror(NULL,
-				"The headless version of the engine can not be run in interactive mode.\n"
-				"Please supply a start-script, save- or demo-file.", "ERROR", MBF_OK|MBF_EXCL);
-		#endif
-			// not a memory-leak: SelectMenu deletes itself on start
-			activeController = new SelectMenu(clientSetup);
-		} else { // run custom menu from game and map
-			clientSetup->isHost = true;
-			pregame = new CPreGame(clientSetup);
-			pregame->LoadSetupscript(StartScriptGen::CreateMinimalSetup(game, map));
-		}
+		LoadMenu();
 		return;
 	}
 
@@ -913,7 +917,7 @@ void SpringApp::Reload(const std::string& script)
 
 	if (script.empty()) {
 		// if no script, drop back to menu
-		activeController = new SelectMenu(clientSetup);
+		LoadMenu();
 	} else {
 		activeController = RunScript(script);
 	}

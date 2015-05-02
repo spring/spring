@@ -33,6 +33,7 @@ private:
 	bool Initialize();                              //!< Initialize app
 	void ParseCmdLine(const std::string&);          //!< Parse command line
 	void Startup();                                 //!< Parses startup data (script etc.) and starts SelectMenu or PreGame
+	void LoadMenu();                                //!< Load menu (old or luaified depending on start parameters)
 	bool InitWindow(const char* title);             //!< Initializes window
 
 	int Update();                                   //!< Run simulation and draw
