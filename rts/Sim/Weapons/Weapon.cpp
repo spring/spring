@@ -21,6 +21,7 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/Cannon.h"
+#include "Sim/Weapons/NoWeapon.h"
 #include "System/EventHandler.h"
 #include "System/float3.h"
 #include "System/myMath.h"
@@ -180,10 +181,12 @@ void CWeapon::SetWeaponNum(int num)
 {
 	weaponNum = num;
 
-	UpdateWeaponPieces();
-	UpdateWeaponVectors();
-	hasBlockShot = owner->script->HasBlockShot(weaponNum);
-	hasTargetWeight = owner->script->HasTargetWeight(weaponNum);
+	if (dynamic_cast<CNoWeapon*>(this) != nullptr) {
+		UpdateWeaponPieces();
+		UpdateWeaponVectors();
+		hasBlockShot = owner->script->HasBlockShot(weaponNum);
+		hasTargetWeight = owner->script->HasTargetWeight(weaponNum);
+	}
 }
 
 
