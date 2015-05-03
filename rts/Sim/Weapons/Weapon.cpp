@@ -375,7 +375,7 @@ bool CWeapon::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRe
 	if ((salvoLeft > 0) || (nextSalvo > gs->frameNum))
 		return false;
 
-	if (!ignoreTargetType && targetType == Target_None)
+	if (!ignoreTargetType && !HaveTarget())
 		return false;
 
 	if (reloadStatus > gs->frameNum)
@@ -771,7 +771,8 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	predictSpeedMod = 1.0f + (gs->randFloat() - 0.5f) * 2 * (1.0f - owner->limExperience);
 
 
-	if (targetType != Target_None && !TryTarget(targetPos, haveUserTarget, targetUnit)) {
+	// HoldFire: if Weapon Target isn't valid
+	if (HaveTarget() && !TryTarget(currentTargetPos, haveUserTarget, targetUnit)) {
 		HoldFire();
 	}
 
@@ -831,7 +832,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 		AutoTarget();
 	}
 
-	if (targetType == Target_None) {
+	if (!HaveTarget()) {
 		// if we can't target anything, try switching aim point
 		useWeaponPosForAim = std::max(0, useWeaponPosForAim - 1);
 	}

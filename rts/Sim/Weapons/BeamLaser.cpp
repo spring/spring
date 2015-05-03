@@ -145,7 +145,7 @@ void CBeamLaser::UpdateWantedDir()
 void CBeamLaser::UpdateSweep()
 {
 	// sweeping always happens between targets
-	if (targetType == Target_None) {
+	if (!HaveTarget()) {
 		sweepFireState.SetSweepFiring(false);
 		return;
 	}
