@@ -123,11 +123,11 @@ void CBombDropper::FireImpl(bool scriptCall)
 
 		// if owner is a hovering aircraft, use a fixed launching speed [?? WTF]
 		if (owner->unitDef->IsHoveringAirUnit()) {
-			launchSpeed = (targetPos - aimFromPos).Normalize() * 5.0f;
+			launchSpeed = wantedDir * 5.0f;
 		}
 
 		ProjectileParams params = GetProjectileParams();
-		params.pos = aimFromPos;
+		params.pos = weaponMuzzlePos;
 		params.end = targetPos;
 		params.speed = launchSpeed;
 		params.ttl = (weaponDef->flighttime == 0)? ((range / projectileSpeed) + 15 + predict): weaponDef->flighttime;
@@ -137,7 +137,7 @@ void CBombDropper::FireImpl(bool scriptCall)
 		WeaponProjectileFactory::LoadProjectile(params);
 	} else {
 		// fudge a bit better lateral aim to compensate for imprecise aircraft steering
-		float3 dif = (targetPos - aimFromPos) * XZVector;
+		float3 dif = (targetPos - weaponMuzzlePos) * XZVector;
 		float3 dir = owner->speed;
 
 		dir = dir.SafeNormalize();
@@ -154,7 +154,7 @@ void CBombDropper::FireImpl(bool scriptCall)
 		}
 
 		ProjectileParams params = GetProjectileParams();
-		params.pos = aimFromPos;
+		params.pos = weaponMuzzlePos;
 		params.speed = owner->speed + dif;
 		params.ttl = 1000;
 		params.gravity = (weaponDef->myGravity == 0)? mapInfo->map.gravity: -weaponDef->myGravity;
@@ -176,17 +176,17 @@ void CBombDropper::SlowUpdate()
 
 float CBombDropper::GetPredictedImpactTime(const float3& impactPos) const
 {
-	if (aimFromPos.y <= impactPos.y)
+	if (weaponMuzzlePos.y <= impactPos.y)
 		return 0.0f;
 
 	// weapon needs <t> frames to drop a distance
 	// <d> (if it has zero vertical speed), where:
-	//   <d> = 0.5 * g * t*t = aimFromPos.y - impactPos.y
+	//   <d> = 0.5 * g * t*t = weaponMuzzlePos.y - impactPos.y
 	//   <t> = sqrt(d / (0.5 * g))
 	// bombs will travel <v * t> elmos horizontally
 	// which must be less than weapon's range to be
 	// able to hit, otherwise will always overshoot
-	const float d = impactPos.y - aimFromPos.y;
+	const float d = impactPos.y - weaponMuzzlePos.y;
 	const float s = -owner->speed.y;
 
 	const float g = mix(mapInfo->map.gravity, -weaponDef->myGravity, (weaponDef->myGravity != 0.0f));
