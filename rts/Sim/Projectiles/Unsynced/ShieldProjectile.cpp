@@ -43,7 +43,7 @@ static std::map<const AtlasedTexture*, std::vector<float2> > spheretexcoords;
 
 ShieldProjectile::ShieldProjectile(CPlasmaRepulser* shield_)
 	: CProjectile(
-			shield_->aimFromPos, // pos
+			shield_->weaponMuzzlePos, // pos
 			ZeroVector, // speed
 			shield_->owner, // owner
 			false, // isSynced
@@ -92,7 +92,7 @@ void ShieldProjectile::Update() {
 		return;
 
 	// interpolate shield position for drawing
-	pos = (shield->owner)->GetObjectSpacePosUnsynced(shield->relAimFromPos);
+	pos = shield->owner->GetObjectSpacePosUnsynced(shield->relWeaponMuzzlePos);
 }
 
 bool ShieldProjectile::AllowDrawing() {
