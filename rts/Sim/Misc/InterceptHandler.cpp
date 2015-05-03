@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <limits>
-
+#include <algorithm>
 
 #include "InterceptHandler.h"
 
@@ -15,9 +15,8 @@
 #include "System/EventHandler.h"
 #include "System/float3.h"
 #include "System/myMath.h"
-#include "System/creg/STL_List.h"
+#include "System/creg/STL_Deque.h"
 
-#include <limits>
 
 CR_BIND_DERIVED(CInterceptHandler, CObject, )
 CR_REG_METADATA(CInterceptHandler, (
@@ -34,19 +33,13 @@ void CInterceptHandler::Update(bool forced) {
 	if (((gs->frameNum % UNIT_SLOWUPDATE_RATE) != 0) && !forced)
 		return;
 
-	std::list<CWeapon*>::iterator wit;
-	std::map<int, CWeaponProjectile*>::const_iterator pit;
-
-	for (wit = interceptors.begin(); wit != interceptors.end(); ++wit) {
-		CWeapon* w = *wit;
-
+	for (CWeapon* w: interceptors) {
 		const WeaponDef* wDef = w->weaponDef;
 		const CUnit* wOwner = w->owner;
 
 		assert(wDef->interceptor || wDef->isShield);
 
-		for (pit = interceptables.begin(); pit != interceptables.end(); ++pit) {
-			CWeaponProjectile* p = pit->second;
+		for (CWeaponProjectile* p: interceptables) {
 			const WeaponDef* pDef = p->GetWeaponDef();
 
 			if ((pDef->targetable & wDef->interceptor) == 0)
@@ -79,7 +72,7 @@ void CInterceptHandler::Update(bool forced) {
 			const float3& pTargetPos = p->GetTargetPos();
 			const float3  pWeaponVec = p->pos - w->aimFromPos;
 
-			if ((pTargetPos - w->aimFromPos).SqLength2D() < Square(wDef->coverageRange)) {
+			if (w->aimFromPos.SqDistance2D(pTargetPos) < Square(wDef->coverageRange)) {
 				w->AddDeathDependence(p, DEPENDENCE_INTERCEPT);
 				w->incomingProjectiles[p->id] = p;
 				continue; // 1
@@ -99,7 +92,7 @@ void CInterceptHandler::Update(bool forced) {
 				continue; // 2
 			}
 
-			if ((pImpactPos - w->aimFromPos).SqLength2D() < Square(wDef->coverageRange)) {
+			if (w->aimFromPos.SqDistance2D(pImpactPos) < Square(wDef->coverageRange)) {
 				const float3 pTargetDir = (pTargetPos - p->pos).SafeNormalize();
 				const float3 pImpactDir = (pImpactPos - p->pos).SafeNormalize();
 
@@ -127,10 +120,39 @@ void CInterceptHandler::Update(bool forced) {
 
 
 
+void CInterceptHandler::AddInterceptorWeapon(CWeapon* weapon)
+{
+	interceptors.push_back(weapon);
+}
+
+
+void CInterceptHandler::RemoveInterceptorWeapon(CWeapon* weapon)
+{
+	auto it = std::find(interceptors.begin(), interceptors.end(), weapon);
+	if (it != interceptors.end()) {
+		interceptors.erase(it);
+	}
+}
+
+
+void CInterceptHandler::AddPlasmaRepulser(CPlasmaRepulser* shield)
+{
+	repulsors.push_back(shield);
+}
+
+
+void CInterceptHandler::RemovePlasmaRepulser(CPlasmaRepulser* shield) {
+	auto it = std::find(repulsors.begin(), repulsors.end(), shield);
+	if (it != repulsors.end()) {
+		repulsors.erase(it);
+	}
+}
+
+
 void CInterceptHandler::AddInterceptTarget(CWeaponProjectile* target, const float3& destination)
 {
 	// keep track of all interceptable projectiles
-	interceptables[target->id] = target;
+	interceptables.push_back(target);
 
 	// if the target projectile dies in any way, we need to remove it
 	// (we cannot rely on any interceptor telling us, because they may
@@ -140,11 +162,19 @@ void CInterceptHandler::AddInterceptTarget(CWeaponProjectile* target, const floa
 	Update(true);
 }
 
+
+void CInterceptHandler::DependentDied(CObject* o)
+{
+	auto it = std::find(interceptables.begin(), interceptables.end(), static_cast<CWeaponProjectile*>(o));
+	if (it != interceptables.end()) {
+		interceptables.erase(it);
+	}
+}
+
+
 void CInterceptHandler::AddShieldInterceptableProjectile(CWeaponProjectile* p)
 {
-	for (std::list<CPlasmaRepulser*>::iterator wi = repulsors.begin(); wi != repulsors.end(); ++wi) {
-		CPlasmaRepulser* shield = *wi;
-
+	for (CPlasmaRepulser* shield: repulsors) {
 		if (shield->weaponDef->shieldInterceptType & p->GetWeaponDef()->interceptedByShieldType) {
 			shield->NewProjectile(p);
 		}
@@ -158,9 +188,7 @@ float CInterceptHandler::AddShieldInterceptableBeam(CWeapon* emitter, const floa
 	float minRange = std::numeric_limits<float>::max();
 	float3 tempDir;
 
-	for (std::list<CPlasmaRepulser*>::iterator wi = repulsors.begin(); wi != repulsors.end(); ++wi) {
-		CPlasmaRepulser* shield = *wi;
-
+	for (CPlasmaRepulser* shield: repulsors) {
 		if ((shield->weaponDef->shieldInterceptType & emitter->weaponDef->interceptedByShieldType) == 0)
 			continue;
 
@@ -175,15 +203,5 @@ float CInterceptHandler::AddShieldInterceptableBeam(CWeapon* emitter, const floa
 	}
 
 	return minRange;
-}
-
-
-
-void CInterceptHandler::DependentDied(CObject* o) {
-	std::map<int, CWeaponProjectile*>::iterator it = interceptables.find(static_cast<CWeaponProjectile*>(o)->id);
-
-	if (it != interceptables.end()) {
-		interceptables.erase(it->first);
-	}
 }
 
