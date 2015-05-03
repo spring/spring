@@ -81,6 +81,7 @@ public:
 
 	void StopAttackingAllyTeam(int ally);
 	void UpdateInterceptTarget();
+	const float3&     GetCurrentTargetPos() const { return currentTargetPos; }
 
 protected:
 	virtual void FireImpl(bool scriptCall) {}
@@ -137,6 +138,7 @@ public:
 
 	TargetType targetType;					// indicated if we have a target and what type
 	CUnit* targetUnit;						// the targeted unit if targettype=unit
+	float3 currentTargetPos;
 
 	float predict;							// how long time we predict it take for a projectile to reach target
 	float predictSpeedMod;					// how the weapon predicts the speed of the units goes -> 1 when experience increases
@@ -192,7 +194,6 @@ public:
 	float3 errorVector;
 	float3 errorVectorAdd;
 
-	float3 targetPos;             // the position of the target (even if targettype=unit)
 };
 
 #endif /* WEAPON_H */

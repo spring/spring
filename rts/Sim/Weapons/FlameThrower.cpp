@@ -21,7 +21,7 @@ CFlameThrower::CFlameThrower(CUnit* owner, const WeaponDef* def): CWeapon(owner,
 
 void CFlameThrower::FireImpl(bool scriptCall)
 {
-	float3 dir = targetPos - weaponMuzzlePos;
+	float3 dir = currentTargetPos - weaponMuzzlePos;
 
 	const float dist = dir.LengthNormalize();
 	const float3 spread =

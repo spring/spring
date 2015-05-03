@@ -157,8 +157,8 @@ void CBeamLaser::UpdateSweep()
 	#endif
 
 	// if current target position changed, start sweeping through a new arc
-	if (sweepFireState.StartSweep(targetPos))
-		sweepFireState.Init(targetPos, weaponMuzzlePos);
+	if (sweepFireState.StartSweep(currentTargetPos))
+		sweepFireState.Init(currentTargetPos, weaponMuzzlePos);
 
 	if (sweepFireState.IsSweepFiring())
 		sweepFireState.Update(GetFireDir(true, false));
@@ -197,7 +197,7 @@ void CBeamLaser::Update()
 
 float3 CBeamLaser::GetFireDir(bool sweepFire, bool scriptCall)
 {
-	float3 dir = targetPos - weaponMuzzlePos;
+	float3 dir = currentTargetPos - weaponMuzzlePos;
 
 	if (!sweepFire) {
 		if (scriptCall) {
@@ -223,7 +223,7 @@ float3 CBeamLaser::GetFireDir(bool sweepFire, bool scriptCall)
 			//  on units with (extremely) long weapon barrels the muzzle
 			//  can be on the far side of the target unit such that <dir>
 			//  would point away from it
-			if ((targetPos - weaponMuzzlePos).dot(targetPos - owner->aimPos) < 0.0f) {
+			if ((currentTargetPos - weaponMuzzlePos).dot(currentTargetPos - owner->aimPos) < 0.0f) {
 				dir = -dir;
 			}
 		}

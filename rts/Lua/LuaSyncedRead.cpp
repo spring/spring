@@ -3512,9 +3512,9 @@ int LuaSyncedRead::GetUnitWeaponTarget(lua_State* L)
 		case Target_Pos: {
 			lua_pushboolean(L, weapon->haveUserTarget);
 			lua_createtable(L, 3, 0);
-			lua_pushnumber(L, weapon->targetPos.x); lua_rawseti(L, -2, 1);
-			lua_pushnumber(L, weapon->targetPos.y); lua_rawseti(L, -2, 2);
-			lua_pushnumber(L, weapon->targetPos.z); lua_rawseti(L, -2, 3);
+			lua_pushnumber(L, weapon->currentTargetPos.x); lua_rawseti(L, -2, 1);
+			lua_pushnumber(L, weapon->currentTargetPos.y); lua_rawseti(L, -2, 2);
+			lua_pushnumber(L, weapon->currentTargetPos.z); lua_rawseti(L, -2, 3);
 			break;
 		}
 		case Target_Intercept: {

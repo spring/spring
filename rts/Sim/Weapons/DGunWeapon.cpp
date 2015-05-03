@@ -34,7 +34,7 @@ void CDGunWeapon::FireImpl(bool scriptCall)
 
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos;
-	params.end = targetPos;
+	params.end = currentTargetPos;
 	params.speed = dir * projectileSpeed;
 	params.ttl = 1;
 

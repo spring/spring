@@ -22,7 +22,7 @@ CEmgCannon::CEmgCannon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 
 void CEmgCannon::UpdateWantedDir()
 {
-	float3 wantedDirTemp = targetPos - aimFromPos;
+	float3 wantedDirTemp = currentTargetPos - aimFromPos;
 	const float targetDist = wantedDirTemp.LengthNormalize();
 
 	if (!onlyForward && targetDist != 0.0f) {
@@ -36,7 +36,7 @@ void CEmgCannon::UpdateWantedDir()
 
 void CEmgCannon::FireImpl(bool scriptCall)
 {
-	float3 dir = targetPos - weaponMuzzlePos;
+	float3 dir = currentTargetPos - weaponMuzzlePos;
 	const float dist = dir.LengthNormalize();
 
 	if (onlyForward && owner->unitDef->IsStrafingAirUnit()) {

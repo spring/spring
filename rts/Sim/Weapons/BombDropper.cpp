@@ -44,7 +44,7 @@ void CBombDropper::Init()
 void CBombDropper::UpdateWantedDir()
 {
 	CWeapon::UpdateWantedDir();
-	predict = GetPredictedImpactTime(targetPos);
+	predict = GetPredictedImpactTime(currentTargetPos);
 }
 
 bool CBombDropper::TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const
@@ -84,7 +84,7 @@ bool CBombDropper::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ign
 #endif
 
 	// bombs always fall down
-	if (aimFromPos.y <= targetPos.y)
+	if (aimFromPos.y < currentTargetPos.y)
 		return false;
 
 	// "normal" range restrictions are not meaningful
@@ -106,16 +106,16 @@ bool CBombDropper::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ign
 	// bomb to dropPos of last (assuming no spread), we use
 	// half this distance as tolerance radius
 	const float dropDist = std::max(1, salvoSize) * (salvoDelay * owner->speed.w * 0.5f);
-	const float torpDist = torpMoveRange * (owner->frontdir.dot(targetPos - owner->pos) > 0.0f);
+	const float torpDist = torpMoveRange * (owner->frontdir.dot(currentTargetPos - owner->pos) > 0.0f);
 
-	return (dropPos.SqDistance2D(targetPos) < Square(dropDist + torpDist));
+	return (dropPos.SqDistance2D(currentTargetPos) < Square(dropDist + torpDist));
 }
 
 void CBombDropper::FireImpl(bool scriptCall)
 {
 	if (targetType == Target_Unit) {
 		// aim at base of unit instead of middle and ignore uncertainity
-		targetPos = targetUnit->pos;
+		currentTargetPos = targetUnit->pos;
 	}
 
 	if (dropTorpedoes) {
@@ -128,7 +128,7 @@ void CBombDropper::FireImpl(bool scriptCall)
 
 		ProjectileParams params = GetProjectileParams();
 		params.pos = weaponMuzzlePos;
-		params.end = targetPos;
+		params.end = currentTargetPos;
 		params.speed = launchSpeed;
 		params.ttl = (weaponDef->flighttime == 0)? ((range / projectileSpeed) + 15 + predict): weaponDef->flighttime;
 		params.tracking = tracking;
@@ -137,7 +137,7 @@ void CBombDropper::FireImpl(bool scriptCall)
 		WeaponProjectileFactory::LoadProjectile(params);
 	} else {
 		// fudge a bit better lateral aim to compensate for imprecise aircraft steering
-		float3 dif = (targetPos - weaponMuzzlePos) * XZVector;
+		float3 dif = (currentTargetPos - weaponMuzzlePos) * XZVector;
 		float3 dir = owner->speed;
 
 		dir = dir.SafeNormalize();

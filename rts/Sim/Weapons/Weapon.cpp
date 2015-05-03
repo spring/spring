@@ -95,7 +95,8 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(salvoError),
 	CR_MEMBER(errorVector),
 	CR_MEMBER(errorVectorAdd),
-	CR_MEMBER(targetPos)
+
+	CR_MEMBER(currentTargetPos)
 ))
 
 //////////////////////////////////////////////////////////////////////
@@ -164,8 +165,7 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	lastRequestedDir(-UpVector),
 	salvoError(ZeroVector),
 	errorVector(ZeroVector),
-	errorVectorAdd(ZeroVector),
-	targetPos(OnesVector)
+	errorVectorAdd(ZeroVector)
 {
 }
 
@@ -262,7 +262,7 @@ void CWeapon::UpdateWeaponVectors()
 void CWeapon::UpdateWantedDir()
 {
 	if (!onlyForward) {
-		wantedDir = (targetPos - aimFromPos).SafeNormalize();
+		wantedDir = (currentTargetPos - aimFromPos).SafeNormalize();
 	} else {
 		wantedDir = owner->frontdir;
 	}
@@ -282,7 +282,7 @@ void CWeapon::Update()
 
 #ifdef TRACE_SYNC
 	tracefile << __FUNCTION__;
-	tracefile << aimFromPos.x << " " << aimFromPos.y << " " << aimFromPos.z << " " << targetPos.x << " " << targetPos.y << " " << targetPos.z << "\n";
+	tracefile << aimFromPos.x << " " << aimFromPos.y << " " << aimFromPos.z << " " << currentTargetPos.x << " " << currentTargetPos.y << " " << currentTargetPos.z << "\n";
 #endif
 }
 
@@ -300,11 +300,11 @@ void CWeapon::UpdateTargeting()
 	if (!HaveTarget())
 		return;
 
-	AdjustTargetPosToWater(targetPos, targetType == Target_Pos);
+	AdjustTargetPosToWater(currentTargetPos, targetType == Target_Pos);
 	UpdateWantedDir();
 
 	// Check fire angle constraints
-	const float3 worldTargetDir = (targetPos - owner->pos).SafeNormalize();
+	const float3 worldTargetDir = (currentTargetPos - owner->pos).SafeNormalize();
 	const float3 worldMainDir = owner->GetObjectSpaceVec(mainDir);
 	const bool targetAngleConstraint = CheckTargetAngleConstraint(worldTargetDir, worldMainDir);
 	if (angleGood && !targetAngleConstraint) {
@@ -425,7 +425,7 @@ void CWeapon::UpdateFire()
 		weaponDir.SafeNormalize();
 		useWeaponPosForAim = (reloadTime / UNIT_SLOWUPDATE_RATE) + 8;
 
-		if (TryTarget(targetPos, haveUserTarget, targetUnit) && !CobBlockShot()) {
+		if (TryTarget(currentTargetPos, haveUserTarget, targetUnit) && !CobBlockShot()) {
 			if (weaponDef->stockpile) {
 				const int oldCount = numStockpiled;
 				numStockpiled--;
@@ -453,7 +453,7 @@ void CWeapon::UpdateFire()
 			owner->script->FireWeapon(weaponNum);
 		}
 	} else {
-		if (!weaponDef->stockpile && TryTarget(targetPos, haveUserTarget, targetUnit)) {
+		if (!weaponDef->stockpile && TryTarget(currentTargetPos, haveUserTarget, targetUnit)) {
 			// update the energy and metal required counts
 			const int minPeriod = std::max(1, (int)(reloadTime / owner->reloadSpeed));
 			const float averageFactor = 1.0f / minPeriod;
@@ -532,7 +532,7 @@ void CWeapon::UpdateSalvo()
 		owner->script->RockUnit(rockDir);
 	}
 
-	const bool attackingPos  = ((targetType == Target_Pos ) && (targetPos  == owner->attackPos));
+	const bool attackingPos  = ((targetType == Target_Pos ) && (currentTargetPos  == owner->attackPos));
 	const bool attackingUnit = ((targetType == Target_Unit) && (targetUnit == owner->attackTarget));
 	const bool searchForNewTarget = (weaponNum == 0) && (salvoLeft == 0) && (attackingPos || attackingUnit);
 	owner->commandAI->WeaponFired(this, searchForNewTarget);
@@ -569,7 +569,7 @@ bool CWeapon::AttackGround(float3 newTargetPos, bool isUserTarget)
 
 	haveUserTarget = isUserTarget;
 	targetType = Target_Pos;
-	targetPos = newTargetPos;
+	currentTargetPos = newTargetPos;
 
 	return true;
 }
@@ -608,7 +608,7 @@ bool CWeapon::AttackUnit(CUnit* newTargetUnit, bool isUserTarget)
 	haveUserTarget = isUserTarget;
 	targetType = Target_Unit;
 	targetUnit = newTargetUnit;
-	targetPos = newTargetPos;
+	currentTargetPos = newTargetPos;
 
 	AddDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 	avoidTarget = false;
@@ -740,7 +740,7 @@ void CWeapon::AutoTarget()
 		// pick our new target
 		targetType = Target_Unit;
 		targetUnit = (goodTargetUnit != NULL)? goodTargetUnit: badTargetUnit;
-		targetPos = GetUnitLeadTargetPos(targetUnit);
+		currentTargetPos = GetUnitLeadTargetPos(targetUnit);
 
 		if (!haveOldTarget || haveNewTarget) {
 			// add new target dependence if we had no target or switched
@@ -813,14 +813,14 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 			if (TryTarget(targetErrPos, false, slavedTo->targetUnit)) {
 				targetType = Target_Unit;
 				targetUnit = slavedTo->targetUnit;
-				targetPos = targetErrPos;
+				currentTargetPos = targetErrPos;
 
 				AddDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
 			}
 		} else if (slavedTo->targetType == Target_Pos) {
-			if (TryTarget(slavedTo->targetPos, false, 0)) {
+			if (TryTarget(slavedTo->currentTargetPos, false, 0)) {
 				targetType = Target_Pos;
-				targetPos = slavedTo->targetPos;
+				currentTargetPos = slavedTo->currentTargetPos;
 			}
 		}
 		return;
@@ -1141,7 +1141,7 @@ void CWeapon::Fire(bool scriptCall)
 {
 #ifdef TRACE_SYNC
 	tracefile << weaponDef->name.c_str() << " fire: ";
-	tracefile << owner->pos.x << " " << owner->frontdir.x << " " << targetPos.x << " " << targetPos.y << " " << targetPos.z;
+	tracefile << owner->pos.x << " " << owner->frontdir.x << " " << currentTargetPos.x << " " << currentTargetPos.y << " " << currentTargetPos.z;
 	tracefile << sprayAngle << " " <<  " " << salvoError.x << " " << salvoError.z << " " << owner->limExperience << " " << projectileSpeed << "\n";
 #endif
 	owner->lastFireWeapon = gs->frameNum;
@@ -1177,7 +1177,7 @@ void CWeapon::UpdateInterceptTarget()
 		// when our subclass Fire()'s
 		interceptTarget = p;
 		targetType = Target_Intercept;
-		targetPos = p->pos + p->speed;
+		currentTargetPos = p->pos + p->speed;
 	}
 }
 

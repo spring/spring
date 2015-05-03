@@ -645,14 +645,14 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 
 				CWeapon* weapon = unit->weapons[index];
 
-				const float3 targetPos = weapon->targetPos;
+				const float3 origTargetPos = weapon->currentTargetPos;
 				const float3 weaponMuzzlePos = weapon->weaponMuzzlePos;
 
-				weapon->targetPos = pos + dir;
+				weapon->currentTargetPos = pos + dir;
 				weapon->weaponMuzzlePos = pos;
 				weapon->Fire(true);
 				weapon->weaponMuzzlePos = weaponMuzzlePos;
-				weapon->targetPos = targetPos;
+				weapon->currentTargetPos = origTargetPos;
 			}
 			else if (sfxType & SFX_DETONATE_WEAPON) {
 				const unsigned index = sfxType - SFX_DETONATE_WEAPON;

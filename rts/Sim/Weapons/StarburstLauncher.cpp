@@ -29,7 +29,7 @@ void CStarburstLauncher::FireImpl(bool scriptCall)
 
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos + UpVector * 2.0f;
-	params.end = targetPos;
+	params.end = currentTargetPos;
 	params.speed = speed;
 	params.error = aimError;
 	params.ttl = 200; //???

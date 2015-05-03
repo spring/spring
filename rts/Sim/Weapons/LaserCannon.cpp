@@ -25,7 +25,7 @@ CLaserCannon::CLaserCannon(CUnit* owner, const WeaponDef* def)
 
 void CLaserCannon::UpdateWantedDir()
 {
-	float3 wantedDirTemp = targetPos - aimFromPos;
+	float3 wantedDirTemp = currentTargetPos - aimFromPos;
 	const float targetDist = wantedDirTemp.LengthNormalize();
 
 	if (!onlyForward && targetDist != 0.0f) {
@@ -48,7 +48,7 @@ void CLaserCannon::UpdateRange(float val)
 
 void CLaserCannon::FireImpl(bool scriptCall)
 {
-	float3 dir = targetPos - weaponMuzzlePos;
+	float3 dir = currentTargetPos - weaponMuzzlePos;
 
 	const float dist = dir.LengthNormalize();
 	const int ttlreq = std::ceil(dist / weaponDef->projectilespeed);

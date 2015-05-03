@@ -22,7 +22,7 @@ CTorpedoLauncher::CTorpedoLauncher(CUnit* owner, const WeaponDef* def): CWeapon(
 
 void CTorpedoLauncher::UpdateWantedDir()
 {
-	wantedDir = targetPos - aimFromPos;
+	wantedDir = currentTargetPos - aimFromPos;
 	predict = wantedDir.LengthNormalize() / projectileSpeed;
 }
 
@@ -54,7 +54,7 @@ bool CTorpedoLauncher::TestTarget(const float3& pos, bool userTarget, const CUni
 
 void CTorpedoLauncher::FireImpl(bool scriptCall)
 {
-	float3 dir = targetPos - weaponMuzzlePos;
+	float3 dir = currentTargetPos - weaponMuzzlePos;
 	float3 vel;
 
 	const float dist = dir.LengthNormalize();
@@ -69,7 +69,7 @@ void CTorpedoLauncher::FireImpl(bool scriptCall)
 	ProjectileParams params = GetProjectileParams();
 	params.speed = vel;
 	params.pos = weaponMuzzlePos;
-	params.end = targetPos;
+	params.end = currentTargetPos;
 	params.ttl = (weaponDef->flighttime == 0)? std::ceil(std::max(dist, range) / projectileSpeed + 25): weaponDef->flighttime;
 	params.tracking = tracking;
 

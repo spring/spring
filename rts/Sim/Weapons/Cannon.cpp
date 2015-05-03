@@ -65,7 +65,7 @@ void CCannon::UpdateRange(float val)
 
 void CCannon::UpdateWantedDir()
 {
-	const float3 targetVec = targetPos - aimFromPos;
+	const float3 targetVec = currentTargetPos - aimFromPos;
 	wantedDir = GetWantedDir(targetVec);
 	const float speed2D = wantedDir.Length2D() * projectileSpeed;
 
@@ -119,7 +119,7 @@ bool CCannon::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit
 
 void CCannon::FireImpl(bool scriptCall)
 {
-	float3 diff = targetPos - weaponMuzzlePos;
+	float3 diff = currentTargetPos - weaponMuzzlePos;
 	float3 dir = (diff.SqLength() > 4.0f) ? GetWantedDir(diff) : diff; // prevent vertical aim when emit-sfx firing the weapon
 
 	dir += (gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());

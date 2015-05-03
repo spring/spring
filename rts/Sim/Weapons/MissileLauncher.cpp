@@ -22,7 +22,7 @@ CMissileLauncher::CMissileLauncher(CUnit* owner, const WeaponDef* def): CWeapon(
 void CMissileLauncher::UpdateWantedDir()
 {
 	if (!onlyForward) {
-		wantedDir = targetPos - aimFromPos;
+		wantedDir = currentTargetPos - aimFromPos;
 		predict = wantedDir.LengthNormalize() / projectileSpeed;
 
 		if (weaponDef->trajectoryHeight > 0.0f) {
@@ -34,7 +34,7 @@ void CMissileLauncher::UpdateWantedDir()
 
 void CMissileLauncher::FireImpl(bool scriptCall)
 {
-	float3 dir = targetPos - weaponMuzzlePos;
+	float3 dir = currentTargetPos - weaponMuzzlePos;
 	const float dist = dir.LengthNormalize();
 
 	if (onlyForward) {
@@ -57,7 +57,7 @@ void CMissileLauncher::FireImpl(bool scriptCall)
 
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos;
-	params.end = targetPos;
+	params.end = currentTargetPos;
 	params.speed = startSpeed;
 	params.ttl = weaponDef->flighttime == 0? std::ceil(std::max(dist, range) / projectileSpeed + 25 * weaponDef->selfExplode): weaponDef->flighttime;
 
