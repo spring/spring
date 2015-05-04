@@ -301,8 +301,8 @@ void CBeamLaser::FireInternal(float3 curDir)
 		}
 
 		// adjust range if targetting edge of hitsphere
-		if (targetType == Target_Unit && targetUnit != NULL && weaponDef->targetBorder != 0.0f) {
-			maxLength += (targetUnit->radius * weaponDef->targetBorder);
+		if (currentTarget.type == Target_Unit && weaponDef->targetBorder != 0.0f) {
+			maxLength += (currentTarget.unit->radius * weaponDef->targetBorder);
 		}
 	} else {
 		// restrict the range when sweeping

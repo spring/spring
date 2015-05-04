@@ -8,22 +8,18 @@
 #include "System/Object.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Projectiles/ProjectileParams.h"
+#include "Sim/Weapons/WeaponTarget.h"
 #include "System/float3.h"
 
 class CUnit;
 class CWeaponProjectile;
 struct WeaponDef;
 
-enum TargetType {
-	Target_None,
-	Target_Unit,
-	Target_Pos,
-	Target_Intercept
-};
 
 class CWeapon : public CObject
 {
 	CR_DECLARE(CWeapon)
+
 public:
 	CWeapon(CUnit* owner, const WeaponDef* def);
 	virtual ~CWeapon();
@@ -35,10 +31,12 @@ public:
 	virtual void SlowUpdate();
 	virtual void Update();
 
-	bool HaveTarget() const { return (targetType != Target_None); }
+	bool HaveTarget() const { return (currentTarget.type != Target_None); }
 
 	bool AttackUnit(CUnit* newTargetUnit, bool isUserTarget);
 	bool AttackGround(float3 newTargetPos, bool isUserTarget);
+	void SetAttackTarget(const SWeaponTarget& newTarget);
+	void DropCurrentTarget();
 
 	/// test if the weapon is able to attack an enemy/mapspot just by its properties (no range check, no FreeLineOfFire check, ...)
 	virtual bool TestTarget(const float3 pos, bool userTarget, const CUnit* unit) const;
@@ -81,6 +79,7 @@ public:
 
 	void StopAttackingAllyTeam(int ally);
 	void UpdateInterceptTarget();
+	const SWeaponTarget& GetCurrentTarget() const { return currentTarget; }
 	const float3&     GetCurrentTargetPos() const { return currentTargetPos; }
 
 protected:
@@ -89,6 +88,8 @@ protected:
 
 	static bool TargetUnitOrPositionUnderWater(const float3 targetPos, const CUnit* targetUnit, float offset = 0.0f);
 	static bool TargetUnitOrPositionInWater(const float3 targetPos, const CUnit* targetUnit, float offset = 0.0f);
+
+	void UpdateTargetPos();
 	void UpdateWeaponPieces(const bool updateAimFrom = true);
 	void UpdateWeaponVectors();
 	float3 GetLeadVec(const CUnit* unit) const;
@@ -107,6 +108,7 @@ private:
 
 	bool CobBlockShot() const;
 	void ReAimWeapon();
+	void HoldIfTargetInvalid();
 
 public:
 	CUnit* owner;
@@ -114,7 +116,6 @@ public:
 	const WeaponDef* weaponDef;
 
 	int weaponNum;							// the weapons order among the owner weapons
-	bool haveUserTarget;
 
 	int aimFromPiece;
 	int muzzlePiece;
@@ -136,8 +137,7 @@ public:
 	int nextSalvo;							// when the next shot in the current salvo will fire
 	int salvoLeft;							// number of shots left in current salvo
 
-	TargetType targetType;					// indicated if we have a target and what type
-	CUnit* targetUnit;						// the targeted unit if targettype=unit
+	SWeaponTarget currentTarget;
 	float3 currentTargetPos;
 
 	float predict;							// how long time we predict it take for a projectile to reach target
@@ -160,8 +160,6 @@ public:
 	// projectiles that are on the way to our interception zone
 	// (eg. nuke toward a repulsor, or missile toward a shield)
 	std::map<int, CWeaponProjectile*> incomingProjectiles;
-	// projectile that we currently target for interception
-	CWeaponProjectile* interceptTarget;
 
 	float buildPercent;           // how far we have come on building current missile if stockpiling
 	int numStockpiled;            // how many missiles we have stockpiled

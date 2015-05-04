@@ -113,11 +113,6 @@ bool CBombDropper::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ign
 
 void CBombDropper::FireImpl(bool scriptCall)
 {
-	if (targetType == Target_Unit) {
-		// aim at base of unit instead of middle and ignore uncertainity
-		currentTargetPos = targetUnit->pos;
-	}
-
 	if (dropTorpedoes) {
 		float3 launchSpeed = owner->speed;
 

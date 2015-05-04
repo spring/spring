@@ -225,8 +225,8 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 				float3 v3 = (v2.cross(v1)).Normalize();
 				float radius = 10.0f;
 
-				if (w->targetType == Target_Unit)
-					radius = w->targetUnit->radius;
+				if (w->GetCurrentTarget().type == Target_Unit)
+					radius = w->GetCurrentTarget().unit->radius;
 
 				// draw the reticle
 				glBegin(GL_LINE_STRIP);

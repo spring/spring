@@ -44,7 +44,6 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(projectilesPerShot),
 	CR_MEMBER(nextSalvo),
 	CR_MEMBER(predict),
-	CR_MEMBER(targetUnit),
 	CR_MEMBER(accuracyError),
 	CR_MEMBER(projectileSpeed),
 	CR_MEMBER(predictSpeedMod),
@@ -54,7 +53,6 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(hasTargetWeight),
 	CR_MEMBER(angleGood),
 	CR_MEMBER(avoidTarget),
-	CR_MEMBER(haveUserTarget),
 	CR_MEMBER(onlyForward),
 	CR_MEMBER(muzzleFlareSize),
 	CR_MEMBER(doTargetGroundPos),
@@ -67,8 +65,6 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(buildPercent),
 	CR_MEMBER(numStockpiled),
 	CR_MEMBER(numStockpileQued),
-	CR_MEMBER(interceptTarget),
-	CR_MEMBER(targetType),
 	CR_MEMBER(sprayAngle),
 	CR_MEMBER(useWeaponPosForAim),
 
@@ -96,8 +92,11 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(errorVector),
 	CR_MEMBER(errorVectorAdd),
 
+	CR_MEMBER(currentTarget),
 	CR_MEMBER(currentTargetPos)
 ))
+
+
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -107,7 +106,6 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	owner(owner),
 	weaponDef(def),
 	weaponNum(-1),
-	haveUserTarget(false),
 	aimFromPiece(-1),
 	muzzlePiece(-1),
 	muzzleFlareSize(1),
@@ -123,8 +121,6 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	projectilesPerShot(1),
 	nextSalvo(0),
 	salvoLeft(0),
-	targetType(Target_None),
-	targetUnit(0),
 	predict(0),
 	predictSpeedMod(1),
 	fireSoundId(0),
@@ -139,7 +135,6 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	badTargetCategory(0),
 	onlyTargetCategory(0xffffffff),
 
-	interceptTarget(NULL),
 	buildPercent(0),
 	numStockpiled(0),
 	numStockpileQued(0),
@@ -195,8 +190,7 @@ inline bool CWeapon::CobBlockShot() const
 	if (!hasBlockShot) {
 		return false;
 	}
-
-	return owner->script->BlockShot(weaponNum, targetUnit, haveUserTarget);
+	return owner->script->BlockShot(weaponNum, currentTarget.unit, currentTarget.isUserTarget);
 }
 
 
@@ -272,6 +266,7 @@ void CWeapon::UpdateWantedDir()
 void CWeapon::Update()
 {
 	UpdateWeaponVectors();
+	UpdateTargetPos();
 
 	if (!UpdateStockpile())
 		return;
@@ -300,7 +295,7 @@ void CWeapon::UpdateTargeting()
 	if (!HaveTarget())
 		return;
 
-	AdjustTargetPosToWater(currentTargetPos, targetType == Target_Pos);
+	AdjustTargetPosToWater(currentTargetPos, currentTarget.type == Target_Pos);
 	UpdateWantedDir();
 
 	// Check fire angle constraints
@@ -425,7 +420,7 @@ void CWeapon::UpdateFire()
 		weaponDir.SafeNormalize();
 		useWeaponPosForAim = (reloadTime / UNIT_SLOWUPDATE_RATE) + 8;
 
-		if (TryTarget(currentTargetPos, haveUserTarget, targetUnit) && !CobBlockShot()) {
+		if (TryTarget(currentTargetPos, currentTarget.isUserTarget, currentTarget.unit) && !CobBlockShot()) {
 			if (weaponDef->stockpile) {
 				const int oldCount = numStockpiled;
 				numStockpiled--;
@@ -443,7 +438,7 @@ void CWeapon::UpdateFire()
 			nextSalvo = gs->frameNum;
 			salvoError = gs->randVector() * (owner->IsMoving()? weaponDef->movingAccuracy: accuracyError);
 
-			if (targetType == Target_Pos || (targetType == Target_Unit && !(targetUnit->losStatus[owner->allyteam] & LOS_INLOS))) {
+			if (currentTarget.type == Target_Pos || (currentTarget.type == Target_Unit && !(currentTarget.unit->losStatus[owner->allyteam] & LOS_INLOS))) {
 				// area firing stuff is too effective at radar firing...
 				salvoError *= 1.3f;
 			}
@@ -453,7 +448,7 @@ void CWeapon::UpdateFire()
 			owner->script->FireWeapon(weaponNum);
 		}
 	} else {
-		if (!weaponDef->stockpile && TryTarget(currentTargetPos, haveUserTarget, targetUnit)) {
+		if (!weaponDef->stockpile && TryTarget(currentTargetPos, currentTarget.isUserTarget, currentTarget.unit)) {
 			// update the energy and metal required counts
 			const int minPeriod = std::max(1, (int)(reloadTime / owner->reloadSpeed));
 			const float averageFactor = 1.0f / minPeriod;
@@ -532,8 +527,8 @@ void CWeapon::UpdateSalvo()
 		owner->script->RockUnit(rockDir);
 	}
 
-	const bool attackingPos  = ((targetType == Target_Pos ) && (currentTargetPos  == owner->attackPos));
-	const bool attackingUnit = ((targetType == Target_Unit) && (targetUnit == owner->attackTarget));
+	const bool attackingPos  = ((currentTarget.type == Target_Pos ) && (currentTarget.groundPos  == owner->attackPos));
+	const bool attackingUnit = ((currentTarget.type == Target_Unit) && (currentTarget.unit == owner->attackTarget));
 	const bool searchForNewTarget = (weaponNum == 0) && (salvoLeft == 0) && (attackingPos || attackingUnit);
 	owner->commandAI->WeaponFired(this, searchForNewTarget);
 
@@ -562,15 +557,10 @@ bool CWeapon::AttackGround(float3 newTargetPos, bool isUserTarget)
 	if (!TryTarget(newTargetPos, isUserTarget, nullptr))
 		return false;
 
-	if (targetUnit != NULL) {
-		DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
-		targetUnit = NULL;
-	}
-
-	haveUserTarget = isUserTarget;
-	targetType = Target_Pos;
-	currentTargetPos = newTargetPos;
-
+	DropCurrentTarget();
+	currentTarget.isUserTarget = isUserTarget;
+	currentTarget.type = Target_Pos;
+	currentTarget.groundPos = newTargetPos;
 	return true;
 }
 
@@ -582,58 +572,90 @@ bool CWeapon::AttackUnit(CUnit* newTargetUnit, bool isUserTarget)
 	if (weaponDef->interceptor)
 		return false;
 
-	UpdateWeaponVectors();
-
-	if (newTargetUnit == NULL) {
-		if (targetType != Target_Unit) {
+	if (newTargetUnit == nullptr) {
+		if (currentTarget.type != Target_Unit) {
 			// make the unit be more likely to keep the current target if user starts to move it
-			targetType = Target_None;
+			DropCurrentTarget();
 		}
 
 		// cannot have a user-target without a unit
-		haveUserTarget = false;
+		currentTarget.isUserTarget = false;
 		return false;
 	}
 
+	UpdateWeaponVectors();
 	const float3 newTargetPos = GetUnitLeadTargetPos(newTargetUnit);
 
 	if (!TryTarget(newTargetPos, isUserTarget, newTargetUnit))
 		return false;
 
-	if (targetUnit != NULL) {
-		DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
-		targetUnit = NULL;
-	}
+	DropCurrentTarget();
+	currentTarget.isUserTarget = isUserTarget;
+	currentTarget.type = Target_Unit;
+	currentTarget.unit = newTargetUnit;
 
-	haveUserTarget = isUserTarget;
-	targetType = Target_Unit;
-	targetUnit = newTargetUnit;
-	currentTargetPos = newTargetPos;
-
-	AddDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
+	AddDeathDependence(newTargetUnit, DEPENDENCE_TARGETUNIT);
 	avoidTarget = false;
-
 	return true;
 }
 
 
+void CWeapon::SetAttackTarget(const SWeaponTarget& newTarget)
+{
+	DropCurrentTarget();
+	currentTarget = newTarget;
+
+	UpdateTargetPos();
+	UpdateWantedDir();
+}
+
+
+void CWeapon::DropCurrentTarget()
+{
+	if (currentTarget.type == Target_Unit) {
+		DeleteDeathDependence(currentTarget.unit, DEPENDENCE_TARGETUNIT);
+		currentTarget.unit = nullptr;
+	}
+	if (currentTarget.type == Target_Intercept) {
+		currentTarget.intercept = nullptr;
+	}
+	currentTarget.type = Target_None;
+	//currentTarget.isUserTarget = false;
+}
+
+
+
+
 void CWeapon::HoldFire()
 {
-	if (targetUnit) {
-		DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
-		targetUnit = NULL;
-	}
-
-	targetType = Target_None;
+	DropCurrentTarget();
 
 	if (!weaponDef->noAutoTarget) {
-		// if haveUserTarget is set to false unconditionally, a subsequent
+		// if isUserTarget is set to false unconditionally, a subsequent
 		// call to AttackUnit from Unit::SlowUpdateWeapons would abort the
 		// attack for noAutoTarget weapons
-		haveUserTarget = false;
+		//FIXME there must be a better solution
+		currentTarget.isUserTarget = false;
 	}
 }
 
+void CWeapon::UpdateTargetPos()
+{
+	switch (currentTarget.type) {
+		case Target_None: {
+			//currentTargetPos = weaponMuzzlePos;
+		} break;
+		case Target_Unit: {
+			currentTargetPos = GetUnitLeadTargetPos(currentTarget.unit);
+		} break;
+		case Target_Pos: {
+			currentTargetPos = currentTarget.groundPos;
+		} break;
+		case Target_Intercept: {
+			currentTargetPos = currentTarget.intercept->pos + currentTarget.intercept->speed;
+		} break;
+	}
+}
 
 
 bool CWeapon::AllowWeaponTargetCheck()
@@ -651,14 +673,14 @@ bool CWeapon::AllowWeaponTargetCheck()
 	if (!owner->commandAI->CanWeaponAutoTarget())
 		return false;
 
-	if (avoidTarget)               { return true; }
-	if (targetType == Target_None) { return true; }
+	if (avoidTarget)   { return true; }
+	if (!HaveTarget()) { return true; }
 
-	if (targetType == Target_Unit) {
-		if (targetUnit->category & badTargetCategory) {
+	if (currentTarget.type == Target_Unit) {
+		if (currentTarget.unit->category & badTargetCategory) {
 			return true;
 		}
-		if (!TryTarget(targetUnit, haveUserTarget)) {
+		if (!TryTarget(currentTarget.unit, currentTarget.isUserTarget)) {
 			// if we have a user-target (ie. a user attack order)
 			// then only allow generating opportunity targets iff
 			// it is not possible to hit the user's chosen unit
@@ -690,7 +712,7 @@ void CWeapon::AutoTarget()
 	std::multimap<float, CUnit*>::const_iterator targetsIt;
 
 	//FIXME ignore and not avoid!
-	const CUnit* avoidUnit = (targetType == Target_Unit) ? targetUnit : nullptr;
+	const CUnit* avoidUnit = (currentTarget.type == Target_Unit) ? currentTarget.unit : nullptr;
 
 	// NOTE:
 	//   sorts by INCREASING order of priority, so lower equals better
@@ -726,26 +748,18 @@ void CWeapon::AutoTarget()
 		}
 	}
 
-	if (goodTargetUnit != NULL || badTargetUnit != NULL) {
-		const bool haveOldTarget = (targetUnit != NULL);
-		const bool haveNewTarget =
-			(goodTargetUnit != NULL && goodTargetUnit != targetUnit) ||
-			( badTargetUnit != NULL &&  badTargetUnit != targetUnit);
+	if (!goodTargetUnit)
+		goodTargetUnit = badTargetUnit;
 
-		if (haveOldTarget && haveNewTarget) {
-			// delete our old target dependence if we are switching targets
-			DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
-		}
-
+	if (goodTargetUnit) {
 		// pick our new target
-		targetType = Target_Unit;
-		targetUnit = (goodTargetUnit != NULL)? goodTargetUnit: badTargetUnit;
-		currentTargetPos = GetUnitLeadTargetPos(targetUnit);
+		DropCurrentTarget();
+		currentTarget.type = Target_Unit;
+		currentTarget.isUserTarget = false;
+		currentTarget.unit = goodTargetUnit;
 
-		if (!haveOldTarget || haveNewTarget) {
-			// add new target dependence if we had no target or switched
-			AddDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
-		}
+		// add new target dependence if we had no target or switched
+		AddDeathDependence(goodTargetUnit, DEPENDENCE_TARGETUNIT);
 	}
 }
 
@@ -770,64 +784,21 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 
 	predictSpeedMod = 1.0f + (gs->randFloat() - 0.5f) * 2 * (1.0f - owner->limExperience);
 
-
-	// HoldFire: if Weapon Target isn't valid
-	if (HaveTarget() && !TryTarget(currentTargetPos, haveUserTarget, targetUnit)) {
-		HoldFire();
-	}
-
-	if (targetType == Target_Unit) {
-		// stop firing at cloaked targets
-		if (targetUnit != NULL && targetUnit->isCloaked && !(targetUnit->losStatus[owner->allyteam] & (LOS_INLOS | LOS_INRADAR)))
-			HoldFire();
-
-		if (!haveUserTarget) {
-			// stop firing at neutral targets (unless in FAW mode)
-			// note: HoldFire sets targetUnit to NULL, so recheck
-			if (targetUnit != NULL && targetUnit->IsNeutral() && owner->fireState <= FIRESTATE_FIREATWILL)
-				HoldFire();
-
-			// stop firing at allied targets
-			//
-			// this situation (unit keeps attacking its target if the
-			// target or the unit switches to an allied team) should
-			// be handled by /ally processing now
-			if (targetUnit != NULL && teamHandler->Ally(owner->allyteam, targetUnit->allyteam))
-				HoldFire();
-		}
-	}
-
+	// SlavedWeapon: Update Weapon Target
 	if (slavedTo != NULL) {
 		// use targets from the thing we are slaved to
-		if (targetUnit) {
-			DeleteDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
-			targetUnit = NULL;
+		if (currentTarget != slavedTo->currentTarget) {
+			DropCurrentTarget();
+			currentTarget = slavedTo->currentTarget;
+			UpdateTargetPos();
 		}
-		targetType = Target_None;
-
-		if (slavedTo->targetType == Target_Unit) {
-			const float errorScale = (MoveErrorExperience() * GAME_SPEED * slavedTo->targetUnit->speed.w);
-
-			const float3 errorPos = slavedTo->targetUnit->GetErrorPos(owner->allyteam, true);
-			const float3 targetErrPos = errorPos + errorVector * errorScale;
-
-			if (TryTarget(targetErrPos, false, slavedTo->targetUnit)) {
-				targetType = Target_Unit;
-				targetUnit = slavedTo->targetUnit;
-				currentTargetPos = targetErrPos;
-
-				AddDeathDependence(targetUnit, DEPENDENCE_TARGETUNIT);
-			}
-		} else if (slavedTo->targetType == Target_Pos) {
-			if (TryTarget(slavedTo->currentTargetPos, false, 0)) {
-				targetType = Target_Pos;
-				currentTargetPos = slavedTo->currentTargetPos;
-			}
-		}
-		return;
 	}
 
 
+	// HoldFire: if Weapon Target isn't valid
+	HoldIfTargetInvalid();
+
+	// AutoTarget: Find new/better Target
 	if (!noAutoTargetOverride && AllowWeaponTargetCheck()) {
 		AutoTarget();
 	}
@@ -838,23 +809,57 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	}
 }
 
+
+void CWeapon::HoldIfTargetInvalid()
+{
+	if (!HaveTarget())
+		return;
+
+	if (!TryTarget(currentTargetPos, currentTarget.isUserTarget, currentTarget.unit)) {
+		HoldFire();
+		return;
+	}
+
+	if (currentTarget.type == Target_Unit) {
+		// stop firing at cloaked targets
+		if (currentTarget.unit->isCloaked && !(currentTarget.unit->losStatus[owner->allyteam] & (LOS_INLOS | LOS_INRADAR))) {
+			HoldFire();
+			return;
+		}
+
+		// stop firing at neutral targets (unless in FAW mode)
+		// note: HoldFire sets targetUnit to NULL, so recheck
+		if (!currentTarget.isUserTarget && currentTarget.unit->IsNeutral() && owner->fireState < FIRESTATE_FIREATNEUTRAL) {
+			HoldFire();
+			return;
+		}
+
+		// stop firing at allied targets
+		//
+		// this situation (unit keeps attacking its target if the
+		// target or the unit switches to an allied team) should
+		// be handled by /ally processing now
+		if (!currentTarget.isUserTarget && teamHandler->Ally(owner->allyteam, currentTarget.unit->allyteam)) {
+			HoldFire();
+			return;
+		}
+	}
+}
+
+
 void CWeapon::DependentDied(CObject* o)
 {
-	if (o == targetUnit) {
-		targetUnit = NULL;
-		if (targetType == Target_Unit) {
-			targetType = Target_None;
-			haveUserTarget = false;
-		}
+	if (o == currentTarget.unit) {
+		DropCurrentTarget();
+	}
+
+	if (o == currentTarget.intercept) {
+		DropCurrentTarget();
 	}
 
 	// NOTE: DependentDied is called from ~CObject-->Detach, object is just barely valid
 	if (weaponDef->interceptor || weaponDef->isShield) {
 		incomingProjectiles.erase(static_cast<CWeaponProjectile*>(o)->id);
-	}
-
-	if (o == interceptTarget) {
-		interceptTarget = NULL;
 	}
 }
 
@@ -1156,18 +1161,21 @@ void CWeapon::Fire(bool scriptCall)
 
 void CWeapon::UpdateInterceptTarget()
 {
-	targetType = Target_None;
-
 	float minInterceptTargetDistSq = std::numeric_limits<float>::max();
 	float curInterceptTargetDistSq = std::numeric_limits<float>::min();
 
+	if (currentTarget.intercept) {
+		minInterceptTargetDistSq = aimFromPos.SqDistance(currentTarget.intercept->pos);
+	}
+
+	CWeaponProjectile* newTarget = nullptr;
 	for (std::map<int, CWeaponProjectile*>::iterator pi = incomingProjectiles.begin(); pi != incomingProjectiles.end(); ++pi) {
 		CWeaponProjectile* p = pi->second;
 
 		// set by CWeaponProjectile's ctor when the interceptor fires
 		if (p->IsBeingIntercepted())
 			continue;
-		if ((curInterceptTargetDistSq = (p->pos - aimFromPos).SqLength()) >= minInterceptTargetDistSq)
+		if ((curInterceptTargetDistSq = aimFromPos.SqDistance(p->pos)) >= minInterceptTargetDistSq)
 			continue;
 
 		minInterceptTargetDistSq = curInterceptTargetDistSq;
@@ -1176,9 +1184,13 @@ void CWeapon::UpdateInterceptTarget()
 		// we do not really need to set targetPos here since it
 		// will be read from params.target (GetProjectileParams)
 		// when our subclass Fire()'s
-		interceptTarget = p;
-		targetType = Target_Intercept;
-		currentTargetPos = p->pos + p->speed;
+		newTarget = p;
+	}
+
+	if (newTarget) {
+		DropCurrentTarget();
+		currentTarget.intercept = newTarget;
+		currentTarget.type = Target_Intercept;
 	}
 }
 
@@ -1186,16 +1198,16 @@ void CWeapon::UpdateInterceptTarget()
 ProjectileParams CWeapon::GetProjectileParams()
 {
 	ProjectileParams params;
-
-	if (interceptTarget != NULL) {
-		params.target = interceptTarget;
-	} else {
-		params.target = targetUnit;
-	}
-
 	params.weaponID = weaponNum;
 	params.owner = owner;
 	params.weaponDef = weaponDef;
+
+	switch (currentTarget.type) {
+		case Target_None: { } break;
+		case Target_Unit: { params.target = currentTarget.unit; } break;
+		case Target_Pos:  { } break;
+		case Target_Intercept: { params.target = currentTarget.intercept; } break;
+	}
 
 	return params;
 }
@@ -1210,7 +1222,7 @@ float CWeapon::GetRange2D(float yDiff) const
 
 void CWeapon::StopAttackingAllyTeam(int ally)
 {
-	if (targetUnit && targetUnit->allyteam == ally) {
+	if ((currentTarget.type == Target_Unit) && currentTarget.unit->allyteam == ally) {
 		HoldFire();
 	}
 }

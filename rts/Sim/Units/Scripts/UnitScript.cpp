@@ -642,17 +642,21 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 					ShowUnitScriptError("Invalid weapon index for emit-sfx");
 					break;
 				}
+				CWeapon* w = unit->weapons[index];
+				const SWeaponTarget origTarget = w->GetCurrentTarget();
+				const float3 origWeaponMuzzlePos = w->weaponMuzzlePos;
 
-				CWeapon* weapon = unit->weapons[index];
+				SWeaponTarget newTarget;
+				newTarget.type = Target_Pos;
+				newTarget.groundPos = pos + dir;
 
-				const float3 origTargetPos = weapon->currentTargetPos;
-				const float3 weaponMuzzlePos = weapon->weaponMuzzlePos;
+				w->weaponMuzzlePos = pos;
+				w->SetAttackTarget(newTarget);
 
-				weapon->currentTargetPos = pos + dir;
-				weapon->weaponMuzzlePos = pos;
-				weapon->Fire(true);
-				weapon->weaponMuzzlePos = weaponMuzzlePos;
-				weapon->currentTargetPos = origTargetPos;
+				w->Fire(true);
+
+				w->weaponMuzzlePos = origWeaponMuzzlePos;
+				w->SetAttackTarget(origTarget);
 			}
 			else if (sfxType & SFX_DETONATE_WEAPON) {
 				const unsigned index = sfxType - SFX_DETONATE_WEAPON;
@@ -1030,22 +1034,18 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		if (u != NULL) {
 			return u->heading;
 		}
-
 		return -1;
 	}
 	case TARGET_ID: {
-		if (unit->weapons[p1 - 1]) {
-			const CWeapon* weapon = unit->weapons[p1 - 1];
-			const TargetType tType = weapon->targetType;
-
-			if (tType == Target_Unit)
-				return unit->weapons[p1 - 1]->targetUnit->id;
-			else if (tType == Target_None)
-				return -1;
-			else if (tType == Target_Pos)
-				return -2;
-			else // Target_Intercept
-				return -3;
+		if (size_t(p1 - 1) < unit->weapons.size()) {
+			const CWeapon* w = unit->weapons[p1 - 1];
+			auto curTarget = w->GetCurrentTarget();
+			switch (curTarget.type) {
+				case Target_Unit:      return curTarget.unit->id;
+				case Target_None:      return -1;
+				case Target_Pos:       return -2;
+				case Target_Intercept: return -3;
+			}
 		}
 		return -4; // weapon does not exist
 	}

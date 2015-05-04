@@ -3494,34 +3494,30 @@ int LuaSyncedRead::GetUnitWeaponTarget(lua_State* L)
 		return 0;
 
 	const CWeapon* weapon = unit->weapons[weaponNum];
-	const CWorldObject* target = NULL;
+	auto curTarget = weapon->GetCurrentTarget();
 
-	lua_pushnumber(L, weapon->targetType);
+	lua_pushnumber(L, curTarget.type);
 
-	switch (weapon->targetType) {
+	switch (curTarget.type) {
 		case Target_None:
 			return 1;
 			break;
 		case Target_Unit: {
-			lua_pushboolean(L, weapon->haveUserTarget);
-			target = weapon->targetUnit;
-			assert(target != NULL);
-			lua_pushnumber(L, (target != NULL)? target->id: -1);
+			lua_pushboolean(L, curTarget.isUserTarget);
+			lua_pushnumber(L, curTarget.unit->id);
 			break;
 		}
 		case Target_Pos: {
-			lua_pushboolean(L, weapon->haveUserTarget);
+			lua_pushboolean(L, curTarget.isUserTarget);
 			lua_createtable(L, 3, 0);
-			lua_pushnumber(L, weapon->currentTargetPos.x); lua_rawseti(L, -2, 1);
-			lua_pushnumber(L, weapon->currentTargetPos.y); lua_rawseti(L, -2, 2);
-			lua_pushnumber(L, weapon->currentTargetPos.z); lua_rawseti(L, -2, 3);
+			lua_pushnumber(L, curTarget.groundPos.x); lua_rawseti(L, -2, 1);
+			lua_pushnumber(L, curTarget.groundPos.y); lua_rawseti(L, -2, 2);
+			lua_pushnumber(L, curTarget.groundPos.z); lua_rawseti(L, -2, 3);
 			break;
 		}
 		case Target_Intercept: {
-			lua_pushboolean(L, weapon->haveUserTarget);
-			target = weapon->interceptTarget;
-			assert(target != NULL);
-			lua_pushnumber(L, (target != NULL)? target->id: -1);
+			lua_pushboolean(L, curTarget.isUserTarget);
+			lua_pushnumber(L, curTarget.intercept->id);
 			break;
 		}
 	}

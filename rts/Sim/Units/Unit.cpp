@@ -1099,18 +1099,18 @@ void CUnit::SlowUpdateWeapons() {
 		//     position and all checks succeeded
 		if (haveManualFireRequest == (unitDef->canManualFire && w->weaponDef->manualfire)) {
 			if (attackTarget != NULL) {
-				w->AttackUnit(attackTarget, w->haveUserTarget);
+				w->AttackUnit(attackTarget, w->GetCurrentTarget().isUserTarget);
 			} else if (userAttackGround) {
 				// this implies a user-order
 				w->AttackGround(attackPos, true);
 			}
 		}
 
+		if (w->HaveTarget())
+			continue;
 		if (lastAttacker == NULL)
 			continue;
 		if ((lastAttackFrame + 200) <= gs->frameNum)
-			continue;
-		if (w->targetType != Target_None)
 			continue;
 		if (fireState == FIRESTATE_HOLDFIRE)
 			continue;
@@ -1654,7 +1654,7 @@ bool CUnit::AttackUnit(CUnit* targetUnit, bool isUserTarget, bool wantManualFire
 		// user as opposed to automatically by the unit's commandAI
 		//
 		// NOTE: "&&" because we have a separate userAttackGround (!)
-		w->targetType = Target_None;
+		w->DropCurrentTarget();
 
 		if (targetUnit == NULL)
 			continue;
@@ -1684,9 +1684,7 @@ bool CUnit::AttackGround(const float3& pos, bool isUserTarget, bool wantManualFi
 	attackTarget = NULL;
 
 	for (CWeapon* w: weapons) {
-
-		w->targetType = Target_None;
-		w->haveUserTarget = false; // this should be false for ground-attack commands
+		w->DropCurrentTarget();
 
 		if ((wantManualFire == (unitDef->canManualFire && w->weaponDef->manualfire)) || fpsMode) {
 			ret |= (w->AttackGround(pos, isUserTarget));

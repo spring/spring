@@ -3272,16 +3272,14 @@ static inline void DrawWeaponArc(const CUnit* unit)
 {
 	for (const CWeapon* w: unit->weapons) {
 		// attack order needs to have been issued or wantedDir is undefined
-		if (w->targetType == Target_None)
+		if (!w->HaveTarget())
 			continue;
 		if (w->weaponDef->projectileType == WEAPON_BASE_PROJECTILE)
 			continue;
 
-		const float3 weaponDir = (unit->frontdir * w->onlyForward) + (w->wantedDir * (1 - w->onlyForward));
-
 		const float hrads   = math::acos(w->maxForwardAngleDif);
-		const float heading = math::atan2(-weaponDir.z, weaponDir.x);
-		const float pitch   = math::asin(weaponDir.y);
+		const float heading = math::atan2(-w->wantedDir.z, w->wantedDir.x);
+		const float pitch   = math::asin(w->wantedDir.y);
 
 		// note: cone visualization is invalid for ballistic weapons
 		DrawWeaponCone(w->weaponMuzzlePos, w->range, hrads, heading, pitch);
