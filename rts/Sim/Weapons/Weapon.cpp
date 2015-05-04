@@ -1203,6 +1203,20 @@ float CWeapon::GetRange2D(float yDiff) const
 	return (root1 > 0.0f) ? math::sqrt(root1) : 0.0f;
 }
 
+void CWeapon::UpdateRange(float val)
+{
+	float previousVal = range;
+	range = val;
+	if (val >= owner->maxRange) {
+		//we can directly assign new range
+		owner->maxRange = val;
+	} else if (previousVal == owner->maxRange) {
+		//we're changing a weapon which has same range of unit's longest weapon range
+		//new unit's range can be different, recalculate
+		owner->RecalculateMaxRange();
+	}
+}
+
 
 void CWeapon::StopAttackingAllyTeam(int ally)
 {

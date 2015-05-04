@@ -66,7 +66,7 @@ public:
 	float TargetWeight(const CUnit* unit) const;
 
 	virtual float GetRange2D(float yDiff) const;
-	virtual void UpdateRange(float val) { range = val; }
+	virtual void UpdateRange(float val);
 
 	void AutoTarget();
 	void AimReady(int value);
