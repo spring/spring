@@ -344,11 +344,13 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	// FIXME: WHY ARE THESE RANDOMIZED?
 	// to make grouped aircraft spread out a bit when turning
 	// maybe also as a tie-breaker on air-vs-air fight maneuvers
-	maxRudder   *= (0.97f + gs->randFloat() * 0.06f);
-	maxElevator *= (0.97f + gs->randFloat() * 0.06f);
-	maxAileron  *= (0.97f + gs->randFloat() * 0.06f);
-	accRate     *= (0.97f + gs->randFloat() * 0.06f);
-
+	airManeuverabilitySpread = owner->unitDef->airManeuverabilitySpread;
+	if (airManeuverabilitySpread > 0.0f && airManeuverabilitySpread < 1.0f) {
+		maxRudder   *= (1.0f - airManeuverabilitySpread + gs->randFloat() * 2.0f * airManeuverabilitySpread);
+		maxElevator *= (1.0f - airManeuverabilitySpread + gs->randFloat() * 2.0f * airManeuverabilitySpread);
+		maxAileron  *= (1.0f - airManeuverabilitySpread + gs->randFloat() * 2.0f * airManeuverabilitySpread);
+		accRate     *= (1.0f - airManeuverabilitySpread + gs->randFloat() * 2.0f * airManeuverabilitySpread);
+	}
 	crashAileron = 1.0f - (gs->randFloat() * gs->randFloat());
 	crashAileron *= ((gs->randInt() & 1)? -1.0f: 1.0f);
 	crashElevator = gs->randFloat();
