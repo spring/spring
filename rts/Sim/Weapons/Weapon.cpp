@@ -341,6 +341,8 @@ void CWeapon::ReAimWeapon()
 	if (!reAim)
 		return;
 
+	// if we should block further fireing till AimWeapon() has finished
+	if (!weaponDef->allowNonBlockingAim)
 		angleGood = false;
 
 	lastRequestedDir = wantedDir;
