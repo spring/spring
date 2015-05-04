@@ -287,11 +287,6 @@ void CWeapon::UpdateTargeting()
 	predict = std::min(predict, 50000.0f);
 	errorVector += errorVectorAdd;
 
-	if (weaponDef->interceptor) { //FIXME move to SlowUpdate()?
-		// keep track of the closest projectile heading our way (if any)
-		UpdateInterceptTarget();
-	}
-
 	if (!HaveTarget())
 		return;
 
@@ -796,6 +791,10 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 			currentTarget = slavedTo->currentTarget;
 			UpdateTargetPos();
 		}
+	} else
+	if (weaponDef->interceptor) {
+		// keep track of the closest projectile heading our way (if any)
+		UpdateInterceptTarget();
 	}
 
 
