@@ -677,9 +677,6 @@ bool CWeapon::AllowWeaponTargetCheck()
 	if (!HaveTarget()) { return true; }
 
 	if (currentTarget.type == Target_Unit) {
-		if (currentTarget.unit->category & badTargetCategory) {
-			return true;
-		}
 		if (!TryTarget(currentTarget.unit, currentTarget.isUserTarget)) {
 			// if we have a user-target (ie. a user attack order)
 			// then only allow generating opportunity targets iff
@@ -695,7 +692,14 @@ bool CWeapon::AllowWeaponTargetCheck()
 			// it can not interfere
 			return true;
 		}
+		if (!currentTarget.isUserTarget) {
+			if (currentTarget.unit->category & badTargetCategory) {
+				return true;
+			}
+		}
 	}
+
+	if (currentTarget.isUserTarget) { return false; }
 
 	if (gs->frameNum > (lastTargetRetry + 65)) {
 		return true;
