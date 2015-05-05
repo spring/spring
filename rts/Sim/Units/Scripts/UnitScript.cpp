@@ -386,6 +386,7 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float
 		default: {
 		} break;
 	}
+	assert(overrideType >= 0);
 
 	if (animInfoIt != anims[overrideType].end())
 		RemoveAnim(overrideType, animInfoIt);

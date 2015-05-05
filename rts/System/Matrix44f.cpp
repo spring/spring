@@ -459,7 +459,7 @@ static inline T CalculateCofactor(const T m[4][4], const int ei, const int ej)
 		case 0: { ai = 1; bi = 2; ci = 3; break; }
 		case 1: { ai = 0; bi = 2; ci = 3; break; }
 		case 2: { ai = 0; bi = 1; ci = 3; break; }
-		default: { assert(ej < 4); ai = 0; bi = 1; ci = 2; break; }
+		default: { assert(ei < 4); ai = 0; bi = 1; ci = 2; break; }
 	}
 	size_t aj, bj, cj;
 	switch (ej) {
