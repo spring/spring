@@ -62,6 +62,7 @@
 #include "System/Input/Joystick.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/DataDirLocater.h"
+#include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileSystemInitializer.h"
@@ -578,8 +579,8 @@ void SpringApp::InitOpenGL()
 void SpringApp::LoadFonts()
 {
 	// Initialize font
-	const std::string fontFile = configHandler->GetString("FontFile");
-	const std::string smallFontFile = configHandler->GetString("SmallFontFile");
+	const std::string fontFile = dataDirsAccess.LocateFile(configHandler->GetString("FontFile"));
+	const std::string smallFontFile = dataDirsAccess.LocateFile(configHandler->GetString("SmallFontFile"));
 	const int fontSize = configHandler->GetInt("FontSize");
 	const int smallFontSize = configHandler->GetInt("SmallFontSize");
 	const int outlineWidth = configHandler->GetInt("FontOutlineWidth");
