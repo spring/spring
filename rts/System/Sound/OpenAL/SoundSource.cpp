@@ -148,8 +148,9 @@ void CSoundSource::Stop()
 		SafeDelete(curStream);
 	}
 	if (curChannel) {
-		curChannel->SoundSourceFinished(this);
+		IAudioChannel* oldChannel = curChannel;
 		curChannel = NULL;
+		oldChannel->SoundSourceFinished(this);
 	}
 	CheckError("CSoundSource::Stop");
 }
