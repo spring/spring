@@ -48,6 +48,6 @@ addons:
       name: spring/spring
     notification_email: spam@abma.de
     build_command_prepend: cmake .
-    build_command: make
+    build_command: make engine-legacy
     branch_pattern: coverity_scan
 
