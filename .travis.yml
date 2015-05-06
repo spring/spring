@@ -1,56 +1,53 @@
+
+os:
+  - linux
+#  - osx
+
 language: cpp
 compiler:
-#  - clang
   - gcc
-before_script:
-# sdl2
-  - sudo add-apt-repository ppa:bartbes/love-stable --yes
-# gcc 4.7
-  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test --yes
-  - sudo apt-get update -qq
-  - sudo apt-get install gcc-4.7 g++-4.7
-  - sudo apt-get install libglew-dev libsdl2-dev libdevil-dev libopenal-dev libogg-dev libvorbis-dev libfreetype6-dev p7zip-full libxcursor-dev libunwind7-dev
-  - sudo apt-get install libboost-thread1.48-dev libboost-regex1.48-dev libboost-system1.48-dev libboost-program-options1.48-dev libboost-signals1.48-dev libboost-chrono1.48-dev libboost-filesystem1.48-dev libboost-test1.48-dev binutils-gold
+#  - clang
 env:
-  - TARGET="AAI CppTestAI E323AI HughAI KAIK NullAI NullJavaAI NullOOJavaAI RAI Shard"
-  - TARGET=engine-headless
-  - TARGET=tests
+  matrix:
+    - TARGET="AAI CppTestAI E323AI HughAI KAIK NullAI NullJavaAI NullOOJavaAI RAI Shard"
+    - TARGET=engine-headless
+    - TARGET=tests
+  global:
+    - secure: AiGd1XGR5DiRiVLMUmGs8/ZNjsgxNRIhQ5fxJz+7GeaRNOStkuXW7J6eWlX2GG7zAzfXSa7H3pQozhfzTlviCZDpRjIyMXwFWaa2SUZWQv3q87W9jPptds/jVa8MMcF4X9Rglqh76gHoKaQEDGqmRnBbNdtwn0pojmAnAMcdlFc=
+
+matrix:
+  fast_finish: true
+  exclude:
+    - compiler: gcc
+      env: COVERITY_SCAN_BRANCH=1 TARGET="AAI CppTestAI E323AI HughAI KAIK NullAI NullJavaAI NullOOJavaAI RAI Shard"
+    - compiler: gcc
+      env: COVERITY_SCAN_BRANCH=1 TARGET=tests
+
+before_install:
+  - sudo tools/scripts/travis_before_install.sh
+
+install:
+  - sudo tools/scripts/travis_install.sh
+
+before_script:
+  - cmake .
+
 script:
-  - cmake -DCMAKE_CXX_COMPILER=g++-4.7 -DCMAKE_C_COMPILER=gcc-4.7 .
-  - make $TARGET -k
-# disabled because "make check" needs installed spring and gcc 4.6 fails
-# with creg it seems: https://travis-ci.org/spring/spring/builds/17682923#L2664
-#  - make check
+  - make -k $TARGET
+
 notifications:
   irc:
     channels:
-      - "chat.freenode.net#taspring"
+      - chat.freenode.net#taspring
     on_success: change
     on_failure: change
 
 addons:
   coverity_scan:
-
-    # GitHub project metadata
-    # ** specific to your project **
     project:
       name: spring/spring
-      version: 98.0
-      description: spring rts engine
-
-    # Where email notification of build analysis results will be sent
     notification_email: spam@abma.de
-
-    # Commands to prepare for build_command
-    # ** likely specific to your build **
     build_command_prepend: cmake .
-
-    # The command that will be added as an argument to "cov-build" to compile your project for analysis,
-    # ** likely specific to your build **
     build_command: make
-
-    # Pattern to match selecting branches that will run analysis. We recommend leaving this set to 'coverity_scan'.
-    # Take care in resource usage, and consider the build frequency allowances per
-    #   https://scan.coverity.com/faq#frequency
     branch_pattern: coverity_scan
 
