@@ -12,16 +12,9 @@ env:
     - TARGET="AAI CppTestAI E323AI HughAI KAIK NullAI NullJavaAI NullOOJavaAI RAI Shard"
     - TARGET=engine-headless
     - TARGET=tests
-  global:
-    - secure: AiGd1XGR5DiRiVLMUmGs8/ZNjsgxNRIhQ5fxJz+7GeaRNOStkuXW7J6eWlX2GG7zAzfXSa7H3pQozhfzTlviCZDpRjIyMXwFWaa2SUZWQv3q87W9jPptds/jVa8MMcF4X9Rglqh76gHoKaQEDGqmRnBbNdtwn0pojmAnAMcdlFc=
 
 matrix:
   fast_finish: true
-  exclude:
-    - compiler: gcc
-      env: COVERITY_SCAN_BRANCH=1 TARGET="AAI CppTestAI E323AI HughAI KAIK NullAI NullJavaAI NullOOJavaAI RAI Shard"
-    - compiler: gcc
-      env: COVERITY_SCAN_BRANCH=1 TARGET=tests
 
 before_install:
   - sudo tools/scripts/travis_before_install.sh
@@ -41,13 +34,4 @@ notifications:
       - chat.freenode.net#taspring
     on_success: change
     on_failure: change
-
-addons:
-  coverity_scan:
-    project:
-      name: spring/spring
-    notification_email: spam@abma.de
-    build_command_prepend: cmake .
-    build_command: make engine-legacy
-    branch_pattern: coverity_scan
 
