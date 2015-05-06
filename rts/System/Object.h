@@ -3,10 +3,9 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
-#include <map>
-#include <set>
+#include <deque>
+#include <array>
 #include "ObjectDependenceTypes.h"
-#include "System/Platform/Threading.h"
 #include "System/creg/creg_cond.h"
 
 
@@ -64,26 +63,9 @@ public:
 #define INSTANCE_OF(type,obj) (obj->objType == type) // exact class only, saves one instruction yay :)
 */
 
-private:
-	// Note, this has nothing to do with the UnitID, FeatureID, ...
-	// It's only purpose is to make the sorting in TSyncSafeSet syncsafe
-	boost::int64_t sync_id;
-	static Threading::AtomicCounterInt64 cur_sync_id;
-
-	// makes std::set<T*> syncsafe (else iteration order depends on the pointer's address, which is not syncsafe)
-	struct syncsafe_compare
-	{
-		bool operator() (const CObject* const& a1, const CObject* const& a2) const
-		{
-			// I don't think the default less-op is sync-safe
-			//return a1 < a2;
-			return a1->sync_id < a2->sync_id;
-		}
-	};
-
 public:
-	typedef std::set<CObject*, syncsafe_compare> TSyncSafeSet;
-	typedef std::map<DependenceType, TSyncSafeSet> TDependenceMap;
+	typedef std::deque<CObject*> TSyncSafeSet;
+	typedef std::array<TSyncSafeSet, DEPENDENCE_LAST> TDependenceMap;
 
 protected:
 	const TSyncSafeSet& GetListeners(const DependenceType dep) { return listeners[dep]; }

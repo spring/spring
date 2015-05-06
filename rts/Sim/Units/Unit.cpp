@@ -1549,15 +1549,15 @@ void CUnit::ChangeTeamReset()
 	// stop friendly units shooting at us
 	const CObject::TDependenceMap& listeners = GetAllListeners();
 	std::vector<CUnit *> alliedunits;
-	for (CObject::TDependenceMap::const_iterator li = listeners.begin(); li != listeners.end(); ++li) {
-		for (CObject::TSyncSafeSet::const_iterator di = li->second.begin(); di != li->second.end(); ++di) {
-			CUnit* u = dynamic_cast<CUnit*>(*di);
+	for (const auto& objs: listeners) {
+		for (CObject* obj: objs) {
+			CUnit* u = dynamic_cast<CUnit*>(obj);
 			if (u != NULL && teamHandler->AlliedTeams(team, u->team))
 				alliedunits.push_back(u);
 		}
 	}
-	for (std::vector<CUnit*>::const_iterator ui = alliedunits.begin(); ui != alliedunits.end(); ++ui) {
-		(*ui)->StopAttackingAllyTeam(allyteam);
+	for (CUnit* u: alliedunits) {
+		u->StopAttackingAllyTeam(allyteam);
 	}
 	// and stop shooting at friendly ally teams
 	for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
@@ -2321,8 +2321,8 @@ void CUnit::StopAttackingAllyTeam(int ally)
 		AttackUnit(NULL, false, false);
 
 	commandAI->StopAttackingAllyTeam(ally);
-	for (std::vector<CWeapon*>::iterator it = weapons.begin(); it != weapons.end(); ++it) {
-		(*it)->StopAttackingAllyTeam(ally);
+	for (CWeapon* w: weapons) {
+		w->StopAttackingAllyTeam(ally);
 	}
 }
 
