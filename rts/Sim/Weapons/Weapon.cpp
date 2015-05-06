@@ -600,6 +600,9 @@ void CWeapon::SetAttackTarget(const SWeaponTarget& newTarget)
 {
 	DropCurrentTarget();
 	currentTarget = newTarget;
+	if (currentTarget.type == Target_Unit) {
+		AddDeathDependence(currentTarget.unit, DEPENDENCE_TARGETUNIT);
+	}
 
 	UpdateTargetPos();
 	UpdateWantedDir();
