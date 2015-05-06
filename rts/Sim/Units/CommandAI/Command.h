@@ -114,9 +114,6 @@ struct Command
 {
 private:
 	CR_DECLARE_STRUCT(Command)
-/*
-	TODO check if usage of System/MemPool.h for this struct improves performance
-*/
 
 public:
 	Command()

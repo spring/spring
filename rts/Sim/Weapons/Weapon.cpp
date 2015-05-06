@@ -108,7 +108,6 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	weaponNum(-1),
 	aimFromPiece(-1),
 	muzzlePiece(-1),
-	muzzleFlareSize(1),
 	useWeaponPosForAim(0),
 	reloadTime(1),
 	reloadStatus(0),
@@ -123,8 +122,7 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	salvoLeft(0),
 	predict(0),
 	predictSpeedMod(1),
-	fireSoundId(0),
-	fireSoundVolume(0),
+
 	hasBlockShot(false),
 	hasTargetWeight(false),
 	angleGood(false),
@@ -160,7 +158,10 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	lastRequestedDir(-UpVector),
 	salvoError(ZeroVector),
 	errorVector(ZeroVector),
-	errorVectorAdd(ZeroVector)
+	errorVectorAdd(ZeroVector),
+	muzzleFlareSize(1),
+	fireSoundId(0),
+	fireSoundVolume(0)
 {
 }
 

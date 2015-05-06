@@ -119,7 +119,7 @@ public:
 
 	int aimFromPiece;
 	int muzzlePiece;
-	float muzzleFlareSize;					// size of muzzle flare if drawn
+
 	int useWeaponPosForAim;					// sometimes weapon pos is better to use than aimpos
 
 	int reloadTime;							// time between succesive fires in ticks
@@ -142,9 +142,6 @@ public:
 
 	float predict;							// how long time we predict it take for a projectile to reach target
 	float predictSpeedMod;					// how the weapon predicts the speed of the units goes -> 1 when experience increases
-
-	int fireSoundId;
-	float fireSoundVolume;
 
 	bool hasBlockShot;						// set when the script has a BlockShot() function for this weapon
 	bool hasTargetWeight;					// set when there's a TargetWeight() function for this weapon
@@ -186,12 +183,16 @@ public:
 	float3 weaponMuzzlePos;
 	float3 weaponDir;
 	float3 mainDir;               // main aiming-direction of weapon
-	float3 wantedDir;             // the angle we want to aim in, set by the weapon subclass
+	float3 wantedDir;             // norm(currentTargetPos - weaponMuzzlePos)
 	float3 lastRequestedDir;      // last angle we called the script with
+
 	float3 salvoError;            // error vector for the whole salvo
 	float3 errorVector;
 	float3 errorVectorAdd;
 
+	float muzzleFlareSize;        // size of muzzle flare if drawn
+	int fireSoundId;
+	float fireSoundVolume;
 };
 
 #endif /* WEAPON_H */

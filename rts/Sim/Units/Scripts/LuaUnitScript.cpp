@@ -2,6 +2,7 @@
 
 #define LUA_SYNCED_ONLY
 
+#include <sstream>
 #include "LuaUnitScript.h"
 
 #include "CobInstance.h"
