@@ -108,6 +108,7 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	weaponNum(-1),
 	aimFromPiece(-1),
 	muzzlePiece(-1),
+	muzzleFlareSize(1),
 	useWeaponPosForAim(0),
 	reloadTime(1),
 	reloadStatus(0),
@@ -122,7 +123,8 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	salvoLeft(0),
 	predict(0),
 	predictSpeedMod(1),
-
+	fireSoundId(0),
+	fireSoundVolume(0),
 	hasBlockShot(false),
 	hasTargetWeight(false),
 	angleGood(false),
@@ -158,10 +160,7 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	lastRequestedDir(-UpVector),
 	salvoError(ZeroVector),
 	errorVector(ZeroVector),
-	errorVectorAdd(ZeroVector),
-	muzzleFlareSize(1),
-	fireSoundId(0),
-	fireSoundVolume(0)
+	errorVectorAdd(ZeroVector)
 {
 }
 
@@ -582,9 +581,8 @@ bool CWeapon::AttackUnit(CUnit* newTargetUnit, bool isUserTarget)
 	}
 
 	UpdateWeaponVectors();
-	const float3 newTargetPos = GetUnitLeadTargetPos(newTargetUnit);
 
-	if (!TryTarget(newTargetPos, isUserTarget, newTargetUnit))
+	if (!TryTarget(newTargetUnit, isUserTarget))
 		return false;
 
 	DropCurrentTarget();
@@ -612,30 +610,10 @@ void CWeapon::DropCurrentTarget()
 {
 	if (currentTarget.type == Target_Unit) {
 		DeleteDeathDependence(currentTarget.unit, DEPENDENCE_TARGETUNIT);
-		currentTarget.unit = nullptr;
 	}
-	if (currentTarget.type == Target_Intercept) {
-		currentTarget.intercept = nullptr;
-	}
-	currentTarget.type = Target_None;
-	//currentTarget.isUserTarget = false;
+	currentTarget = SWeaponTarget();
 }
 
-
-
-
-void CWeapon::HoldFire()
-{
-	DropCurrentTarget();
-
-	if (!weaponDef->noAutoTarget) {
-		// if isUserTarget is set to false unconditionally, a subsequent
-		// call to AttackUnit from Unit::SlowUpdateWeapons would abort the
-		// attack for noAutoTarget weapons
-		//FIXME there must be a better solution
-		currentTarget.isUserTarget = false;
-	}
-}
 
 void CWeapon::UpdateTargetPos()
 {
@@ -1095,8 +1073,7 @@ bool CWeapon::TryTargetRotate(float3 pos, bool userTarget)
 	AdjustTargetPosToWater(pos, true);
 
 	const short weaponHeading = GetHeadingFromVector(mainDir.x, mainDir.z);
-	const short enemyHeading = GetHeadingFromVector(
-		pos.x - aimFromPos.x, pos.z - aimFromPos.z);
+	const short enemyHeading = GetHeadingFromVector(pos.x - aimFromPos.x, pos.z - aimFromPos.z);
 
 	return TryTargetHeading(enemyHeading - weaponHeading, pos, userTarget, 0);
 }

@@ -37,6 +37,7 @@ public:
 	bool AttackGround(float3 newTargetPos, bool isUserTarget);
 	void SetAttackTarget(const SWeaponTarget& newTarget);
 	void DropCurrentTarget();
+	void HoldFire() { DropCurrentTarget(); }
 
 	/// test if the weapon is able to attack an enemy/mapspot just by its properties (no range check, no FreeLineOfFire check, ...)
 	virtual bool TestTarget(const float3 pos, bool userTarget, const CUnit* unit) const;
@@ -69,7 +70,6 @@ public:
 	void AutoTarget();
 	void AimReady(int value);
 	void Fire(bool scriptCall);
-	void HoldFire();
 
 	float ExperienceErrorScale() const;
 	float MoveErrorExperience() const;
