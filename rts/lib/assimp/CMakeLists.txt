@@ -12,5 +12,9 @@ SET ( PROJECT_VERSION "${ASSIMP_SOVERSION}" )
 
 set(PACKAGE_VERSION "0" CACHE STRING "the package-specific version used for uploading the sources")
 set(BUILD_STATIC_LIB 1)
+
+# disable a few modelformat (not used and/or broken)
+add_definitions(-DASSIMP_BUILD_NO_IFC_IMPORTER)
+
 # Assimp code
 ADD_SUBDIRECTORY(code)
