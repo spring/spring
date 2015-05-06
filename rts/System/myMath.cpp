@@ -10,6 +10,9 @@
 #include "System/Log/ILog.h"
 #include "Sim/Units/Scripts/CobInstance.h" // for TAANG2RAD (ugh)
 
+#undef far
+#undef near
+
 float2 CMyMath::headingToVectorTable[NUM_HEADINGS];
 
 void CMyMath::Init()
