@@ -17,10 +17,10 @@ matrix:
   fast_finish: true
 
 before_install:
-  - sudo tools/scripts/travis_before_install.sh
+  - tools/scripts/travis_before_install.sh
 
 install:
-  - sudo tools/scripts/travis_install.sh
+  - tools/scripts/travis_install.sh
 
 before_script:
   - cmake .
