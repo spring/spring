@@ -638,10 +638,9 @@ void CWeapon::UpdateTargetPos()
 }
 
 
-bool CWeapon::AllowWeaponTargetCheck()
+bool CWeapon::AllowWeaponAutoTarget() const
 {
 	const int checkAllowed = eventHandler.AllowWeaponTargetCheck(owner->id, weaponNum, weaponDef->id);
-
 	if (checkAllowed >= 0) {
 		return checkAllowed;
 	}
@@ -787,7 +786,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	HoldIfTargetInvalid();
 
 	// AutoTarget: Find new/better Target
-	if (!noAutoTargetOverride && AllowWeaponTargetCheck()) {
+	if (!noAutoTargetOverride && AllowWeaponAutoTarget()) {
 		AutoTarget();
 	}
 

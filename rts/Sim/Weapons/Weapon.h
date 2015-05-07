@@ -78,7 +78,7 @@ public:
 	float3 SalvoErrorExperience() const { return (salvoError * ExperienceErrorScale()); }
 
 	void StopAttackingAllyTeam(int ally);
-	void UpdateInterceptTarget();
+
 	const SWeaponTarget& GetCurrentTarget() const { return currentTarget; }
 	const float3&     GetCurrentTargetPos() const { return currentTargetPos; }
 
@@ -86,6 +86,7 @@ protected:
 	virtual void FireImpl(bool scriptCall) {}
 	virtual void UpdateWantedDir();
 
+	ProjectileParams GetProjectileParams();
 	static bool TargetUnitOrPositionUnderWater(const float3 targetPos, const CUnit* targetUnit, float offset = 0.0f);
 	static bool TargetUnitOrPositionInWater(const float3 targetPos, const CUnit* targetUnit, float offset = 0.0f);
 
@@ -94,18 +95,14 @@ protected:
 	void UpdateWeaponVectors();
 	float3 GetLeadVec(const CUnit* unit) const;
 
+private:
 	void UpdateTargeting();
 	void UpdateFire();
 	bool UpdateStockpile();
 	void UpdateSalvo();
 
-
-protected:
-	ProjectileParams GetProjectileParams();
-
-private:
-	inline bool AllowWeaponTargetCheck();
-
+	void UpdateInterceptTarget();
+	bool AllowWeaponAutoTarget() const;
 	bool CobBlockShot() const;
 	void ReAimWeapon();
 	void HoldIfTargetInvalid();
@@ -137,9 +134,11 @@ public:
 	int nextSalvo;							// when the next shot in the current salvo will fire
 	int salvoLeft;							// number of shots left in current salvo
 
+protected:
 	SWeaponTarget currentTarget;
 	float3 currentTargetPos;
 
+public:
 	float predict;							// how long time we predict it take for a projectile to reach target
 	float predictSpeedMod;					// how the weapon predicts the speed of the units goes -> 1 when experience increases
 
