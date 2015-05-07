@@ -26,7 +26,7 @@ void CTorpedoLauncher::UpdateWantedDir()
 	predict = wantedDir.LengthNormalize() / projectileSpeed;
 }
 
-bool CTorpedoLauncher::TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const
+bool CTorpedoLauncher::TestTarget(const float3 pos, bool userTarget, const CUnit* unit) const
 {
 	// by default we are a waterweapon, therefore:
 	//   if muzzle is above water, target position is only allowed to be IN water

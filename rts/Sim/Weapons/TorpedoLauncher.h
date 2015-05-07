@@ -14,7 +14,7 @@ public:
 	void UpdateWantedDir();
 
 private:
-	bool TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const;
+	bool TestTarget(const float3 pos, bool userTarget, const CUnit* unit) const;
 	void FireImpl(bool scriptCall);
 
 private:

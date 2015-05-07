@@ -64,7 +64,7 @@ void CMissileLauncher::FireImpl(bool scriptCall)
 	WeaponProjectileFactory::LoadProjectile(params);
 }
 
-bool CMissileLauncher::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const
+bool CMissileLauncher::HaveFreeLineOfFire(const float3 pos, bool userTarget, const CUnit* unit) const
 {
 	// do a different test depending on if the missile has high
 	// trajectory (parabolic vs. linear ground intersection)

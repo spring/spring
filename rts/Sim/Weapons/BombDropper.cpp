@@ -47,7 +47,7 @@ void CBombDropper::UpdateWantedDir()
 	predict = GetPredictedImpactTime(currentTargetPos);
 }
 
-bool CBombDropper::TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const
+bool CBombDropper::TestTarget(const float3 pos, bool userTarget, const CUnit* unit) const
 {
 	// assume we can still drop bombs on *partially* submerged targets
 	if (!dropTorpedoes && TargetUnitOrPositionUnderWater(pos, unit))
@@ -59,7 +59,7 @@ bool CBombDropper::TestTarget(const float3& pos, bool userTarget, const CUnit* u
 	return CWeapon::TestTarget(pos, userTarget, unit);
 }
 
-bool CBombDropper::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const
+bool CBombDropper::HaveFreeLineOfFire(const float3 pos, bool userTarget, const CUnit* unit) const
 {
 	// TODO: requires sampling parabola from aimFromPos down to dropPos
 	return true;
@@ -71,11 +71,11 @@ bool CBombDropper::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ign
 	return (CWeapon::CanFire(true, ignoreTargetType, true));
 }
 
-bool CBombDropper::TestRange(const float3& pos, bool userTarget, const CUnit* unit) const
+bool CBombDropper::TestRange(const float3 pos, bool userTarget, const CUnit* unit) const
 {
 #else
 
-bool CBombDropper::TestRange(const float3& pos, bool userTarget, const CUnit* unit) const { return true; }
+bool CBombDropper::TestRange(const float3 pos, bool userTarget, const CUnit* unit) const { return true; }
 bool CBombDropper::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRequestedDir) const
 {
 	// we mostly ignore what AimWeapon has to say

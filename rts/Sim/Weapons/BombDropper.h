@@ -18,9 +18,9 @@ public:
 private:
 	bool CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRequestedDir) const;
 
-	bool TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const;
-	bool TestRange(const float3& pos, bool userTarget, const CUnit* unit) const;
-	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const;
+	bool TestTarget(const float3 pos, bool userTarget, const CUnit* unit) const;
+	bool TestRange(const float3 pos, bool userTarget, const CUnit* unit) const;
+	bool HaveFreeLineOfFire(const float3 pos, bool userTarget, const CUnit* unit) const;
 	void FireImpl(bool scriptCall);
 
 	float GetPredictedImpactTime(const float3& impactPos) const;

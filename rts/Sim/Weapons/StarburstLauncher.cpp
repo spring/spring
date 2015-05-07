@@ -39,7 +39,7 @@ void CStarburstLauncher::FireImpl(bool scriptCall)
 	WeaponProjectileFactory::LoadProjectile(params);
 }
 
-bool CStarburstLauncher::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const
+bool CStarburstLauncher::HaveFreeLineOfFire(const float3 pos, bool userTarget, const CUnit* unit) const
 {
 	const float3& wdir = weaponDef->fixedLauncher? weaponDir: UpVector;
 
