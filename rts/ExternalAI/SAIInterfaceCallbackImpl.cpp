@@ -74,7 +74,7 @@ EXPORT(const char*) aiInterfaceCallback_Engine_Version_getAdditional(int UNUSED_
 	return SpringVersion::GetAdditional().c_str();
 }
 EXPORT(const char*) aiInterfaceCallback_Engine_Version_getBuildTime(int UNUSED_interfaceId) {
-	return SpringVersion::GetBuildTime().c_str();
+	return "";
 }
 EXPORT(bool) aiInterfaceCallback_Engine_Version_isRelease(int UNUSED_interfaceId) {
 	return SpringVersion::IsRelease();
