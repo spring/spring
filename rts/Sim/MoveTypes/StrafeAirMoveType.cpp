@@ -141,7 +141,14 @@ static float GetRudderDeflection(
 			// if target is behind, choose a direction and use max rudder
 			if (aGoalDotFront < 0.0f) {
 				// try to keep the previous direction
-				rudder = ((math::fabs(lastRudderPos) > 0.8f ? lastRudderPos : goalDotRight) < 0.0f) ? -1.0f : 1.0f;
+				if (math::fabs(lastRudderPos) > 0.8f) {
+					rudder = lastRudderPos;
+				// if flying straight and target is behind in the current direction, choose a random direction
+				} else if (math::fabs(goalDotRight) < 0.2) {
+					rudder = gs->randFloat() > 0.5f ? 1.0f : -1.0f;
+				} else {
+					rudder = goalDotRight < 0.0f ? -1.0f : 1.0f;
+				}
 			} else {
 				if (goalDotRight < -0.1f) {
 					rudder = -1.0f;
