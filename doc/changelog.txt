@@ -63,6 +63,8 @@ Sim:
  ! change TEAM_SLOWUPDATE_RATE to 30 / UNIT_SLOWUPDATE_RATE to 15
  - added airManeuverabilitySpread unitDef for fighter/bomber aircraft maneuverability randomness (previously hardcoded to 0.02)
  - fix fighter/bomber shaking when taking off and moving
+ - add attackOverflyDistance to control how far fighter/bomber aircraft fly straight overflying nearby slow targets to ensure they have room to turn back and shoot
+
 
 Collisions:
  - fix #4592: broken per-piece coldet

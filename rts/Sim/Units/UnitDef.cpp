@@ -198,6 +198,7 @@ UnitDef::UnitDef()
 	, maxElevator(0.0f)
 	, maxRudder(0.0f)
 	, attackSafetyDistance(0.0f)
+	, attackOverflyDistance(0.0f)
 	, airManeuverabilitySpread(0.02f)
 	, crashDrag(0.0f)
 	, loadingRadius(0.0f)
@@ -495,6 +496,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	maxRudder   = udTable.GetFloat("maxRudder",   0.004f); // turn speed around yaw axis
 
 	attackSafetyDistance = udTable.GetFloat("attackSafetyDistance", 0.0f); // fighters abort dive toward target if within this distance and climb back to normal altitude
+	attackOverflyDistance = udTable.GetFloat("attackOverflyDistance", 0.0f); // fighters/bombers fly this distance away from target after overflying it before turning back
 	airManeuverabilitySpread = udTable.GetFloat("airManeuverabilitySpread", 0.02f); // fighters/bombers have this fraction of their aileron, elevator, rudder and acceleration randomized
 	maxFuel = udTable.GetFloat("maxFuel", 0.0f); //max flight time in seconds before aircraft must return to base
 	refuelTime = udTable.GetFloat("refuelTime", 5.0f);
