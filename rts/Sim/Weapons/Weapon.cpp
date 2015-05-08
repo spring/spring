@@ -706,14 +706,13 @@ void CWeapon::AutoTarget()
 		// save the "best" bad target in case we have no other
 		// good targets (of higher priority) left in <targets>
 		const bool isBadTarget = (unit->category & badTargetCategory);
-		if (isBadTarget && !badTargetUnit)
+		if (isBadTarget && (badTargetUnit != nullptr))
 			continue;
 
-		const float3 nextTargetPos = GetUnitLeadTargetPos(unit);
-		if (!TryTarget(nextTargetPos, false, unit))
+		if (!TryTarget(unit, false))
 			continue;
 
-		if (unit->IsNeutral() && (owner->fireState <= FIRESTATE_FIREATWILL))
+		if (unit->IsNeutral() && (owner->fireState < FIRESTATE_FIREATNEUTRAL))
 			continue;
 
 		if (isBadTarget) {
@@ -724,7 +723,7 @@ void CWeapon::AutoTarget()
 		}
 	}
 
-	if (!goodTargetUnit)
+	if (goodTargetUnit == nullptr)
 		goodTargetUnit = badTargetUnit;
 
 	if (goodTargetUnit) {
