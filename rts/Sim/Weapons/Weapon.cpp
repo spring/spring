@@ -1045,7 +1045,7 @@ bool CWeapon::HaveFreeLineOfFire(const float3 pos, bool userTarget, const CUnit*
 
 
 bool CWeapon::TryTarget(const CUnit* unit, bool userTarget) const {
-	return TryTarget(GetUnitPositionWithError(unit), userTarget, unit);
+	return TryTarget(GetUnitLeadTargetPos(unit), userTarget, unit);
 }
 
 
