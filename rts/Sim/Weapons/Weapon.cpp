@@ -525,9 +525,7 @@ void CWeapon::UpdateSalvo()
 		owner->script->RockUnit(rockDir);
 	}
 
-	const bool attackingPos  = ((currentTarget.type == Target_Pos ) && (currentTarget.groundPos  == owner->attackPos));
-	const bool attackingUnit = ((currentTarget.type == Target_Unit) && (currentTarget.unit == owner->attackTarget));
-	const bool searchForNewTarget = (weaponNum == 0) && (salvoLeft == 0) && (attackingPos || attackingUnit);
+	const bool searchForNewTarget = (weaponNum == 0) && (salvoLeft == 0) && (currentTarget == owner->curTarget);
 	owner->commandAI->WeaponFired(this, searchForNewTarget);
 
 	if (salvoLeft == 0) {

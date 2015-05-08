@@ -486,7 +486,7 @@ bool CStrafeAirMoveType::Update()
 			const CCommandQueue& cmdQue = owner->commandAI->commandQue;
 
 			const bool isAttacking = (!cmdQue.empty() && (cmdQue.front()).GetID() == CMD_ATTACK);
-			const bool keepAttacking = ((owner->attackTarget != NULL && !owner->attackTarget->isDead) || owner->userAttackGround);
+			const bool keepAttacking = ((owner->curTarget.type == Target_Unit && !owner->curTarget.unit->isDead) || owner->curTarget.type == Target_Pos);
 
 			/*
 			const float brakeDistSq = Square(0.5f * lastSpd.SqLength2D() / decRate);
@@ -498,10 +498,11 @@ bool CStrafeAirMoveType::Update()
 			*/
 			{
 				if (isAttacking && allowAttack && keepAttacking) {
-					if (owner->attackTarget != NULL) {
-						SetGoal(owner->attackTarget->pos);
-					} else {
-						SetGoal(owner->attackPos);
+					switch (owner->curTarget.type) {
+						case Target_None: { } break;
+						case Target_Unit: { SetGoal(owner->curTarget.unit->pos); } break;
+						case Target_Pos:  { SetGoal(owner->curTarget.groundPos); } break;
+						case Target_Intercept: { } break;
 					}
 
 					const bool goalInFront = ((goalPos - lastPos).dot(owner->frontdir) > 0.0f);
@@ -790,7 +791,7 @@ void CStrafeAirMoveType::UpdateAttack()
 	}
 
 	{
-		const CUnit* attackee = owner->attackTarget;
+		const CUnit* attackee = owner->curTarget.unit;
 
 		const float aileron  = GetAileronDeflection (owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir, gHeightAW, wantedHeight,  maxAileron,  maxBank, goalDotRight, aGoalDotFront, lastColWarningType == 2, true); // roll
 		const float rudder   = GetRudderDeflection  (owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir, gHeightAW, wantedHeight,   maxRudder,     0.0f, goalDotRight, aGoalDotFront, lastColWarningType == 2, true); // yaw

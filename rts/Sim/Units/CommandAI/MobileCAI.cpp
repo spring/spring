@@ -1050,65 +1050,9 @@ bool CMobileCAI::MobileAutoGenerateTarget()
 	//FIXME merge with CWeapon::AutoTarget()
 	assert(commandQue.empty());
 
-	const bool canAttack = (owner->unitDef->canAttack && !owner->weapons.empty());
-	const float extraRange = 200.0f * owner->moveState * owner->moveState;
-	const float maxRangeSq = Square(owner->maxRange + extraRange);
-
 	#if (AUTO_GENERATE_ATTACK_ORDERS == 1)
-	if (canAttack) {
-		if (owner->attackTarget != NULL) {
-			if (owner->fireState > FIRESTATE_HOLDFIRE) {
-				if (owner->pos.SqDistance2D(owner->attackTarget->pos) < maxRangeSq) {
-					Command c(CMD_ATTACK, INTERNAL_ORDER, owner->attackTarget->id);
-					c.timeOut = gs->frameNum + GAME_SPEED * 5;
-					commandQue.push_front(c);
-
-					commandPos1 = owner->pos;
-					commandPos2 = owner->pos;
-
-					return (tempOrder = true);
-				}
-			}
-		} else {
-			if (owner->fireState > FIRESTATE_HOLDFIRE) {
-				const bool haveLastAttacker = (owner->lastAttacker != NULL);
-				const bool canAttackAttacker = (haveLastAttacker && (owner->lastAttackFrame + GAME_SPEED * 7) > gs->frameNum);
-				const bool canChaseAttacker = (haveLastAttacker && !(owner->unitDef->noChaseCategory & owner->lastAttacker->category));
-
-				if (canAttackAttacker && canChaseAttacker) {
-					const float3& P = owner->lastAttacker->pos;
-					const float R = owner->pos.SqDistance2D(P);
-
-					if (R < maxRangeSq) {
-						Command c(CMD_ATTACK, INTERNAL_ORDER, owner->lastAttacker->id);
-						c.timeOut = gs->frameNum + GAME_SPEED * 5;
-						commandQue.push_front(c);
-
-						commandPos1 = owner->pos;
-						commandPos2 = owner->pos;
-
-						return (tempOrder = true);
-					}
-				}
-			}
-
-			if (owner->fireState >= FIRESTATE_FIREATWILL && (gs->frameNum >= lastIdleCheck + 10)) {
-				const float searchRadius = owner->maxRange + 150.0f * owner->moveState * owner->moveState;
-				const CUnit* enemy = CGameHelper::GetClosestValidTarget(owner->pos, searchRadius, owner->allyteam, this);
-
-				if (enemy != NULL) {
-					Command c(CMD_ATTACK, INTERNAL_ORDER, enemy->id);
-					c.timeOut = gs->frameNum + GAME_SPEED * 5;
-					commandQue.push_front(c);
-
-					commandPos1 = owner->pos;
-					commandPos2 = owner->pos;
-
-					return (tempOrder = true);
-				}
-			}
-		}
-	}
+	if (GenerateAttackCmd())
+		return (tempOrder = true);
 	#endif
 
 	if (owner->UsingScriptMoveType())
@@ -1116,7 +1060,7 @@ bool CMobileCAI::MobileAutoGenerateTarget()
 
 	lastIdleCheck = gs->frameNum;
 
-	if (owner->haveTarget) {
+	if (owner->HaveTarget()) {
 		NonMoving(); return false;
 	}
 	if ((owner->pos - lastUserGoal).SqLength2D() <= (MAX_USERGOAL_TOLERANCE_DIST * MAX_USERGOAL_TOLERANCE_DIST)) {
@@ -1130,6 +1074,64 @@ bool CMobileCAI::MobileAutoGenerateTarget()
 	return false;
 }
 
+
+bool CMobileCAI::GenerateAttackCmd()
+{
+	if (!owner->unitDef->canAttack)
+		return false;
+
+	if (owner->weapons.empty())
+		return false;
+
+	if (owner->fireState == FIRESTATE_HOLDFIRE)
+		return false;
+
+	const float extraRange = 200.0f * owner->moveState * owner->moveState;
+	const float maxRangeSq = Square(owner->maxRange + extraRange);
+	int newAttackTargetId = -1;
+
+	if (owner->curTarget.type == Target_Unit) {
+		//FIXME when is this the case (unit has target, but CAI doesn't !?)
+		if (owner->pos.SqDistance2D(owner->curTarget.unit->pos) < maxRangeSq) {
+			newAttackTargetId = owner->curTarget.unit->id;
+		}
+	} else {
+		if (owner->lastAttacker != nullptr) {
+			const bool freshAttack = (gs->frameNum < (owner->lastAttackFrame + GAME_SPEED * 7));
+			const bool canChaseAttacker = !(owner->unitDef->noChaseCategory & owner->lastAttacker->category);
+			if (freshAttack && canChaseAttacker) {
+				const float r = owner->pos.SqDistance2D(owner->lastAttacker->pos);
+
+				if (r < maxRangeSq) {
+					newAttackTargetId = owner->lastAttacker->id;
+				}
+			}
+		}
+
+		if (newAttackTargetId < 0 &&
+		    owner->fireState >= FIRESTATE_FIREATWILL && (gs->frameNum >= lastIdleCheck + 10)
+		) {
+			const float searchRadius = owner->maxRange + 150.0f * owner->moveState * owner->moveState;
+			const CUnit* enemy = CGameHelper::GetClosestValidTarget(owner->pos, searchRadius, owner->allyteam, this);
+
+			if (enemy != NULL) {
+				newAttackTargetId = enemy->id;
+			}
+		}
+	}
+
+	if (newAttackTargetId >= 0) {
+		Command c(CMD_ATTACK, INTERNAL_ORDER, newAttackTargetId);
+		c.timeOut = gs->frameNum + GAME_SPEED * 5;
+		commandQue.push_front(c);
+
+		commandPos1 = owner->pos;
+		commandPos2 = owner->pos;
+		return true;
+	}
+
+	return false;
+}
 
 
 void CMobileCAI::StopSlowGuard() {

@@ -88,6 +88,7 @@ protected:
 
 private:
 	bool MobileAutoGenerateTarget();
+	bool GenerateAttackCmd();
 };
 
 #endif /* MOBILE_CAI_H */

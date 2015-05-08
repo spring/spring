@@ -23,6 +23,7 @@ struct SWeaponTarget {
 	CR_DECLARE_STRUCT(SWeaponTarget)
 	SWeaponTarget();
 	bool operator!=(const SWeaponTarget& other) const;
+	bool operator==(const SWeaponTarget& other) const;
 
 	TargetType type;              // indicates if we have a target and what type
 	CUnit* unit;                  // if targettype=unit: the targeted unit
