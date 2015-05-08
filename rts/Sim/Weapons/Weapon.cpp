@@ -378,7 +378,7 @@ bool CWeapon::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRe
 		return false;
 
 	// muzzle is underwater but we cannot fire underwater
-	if (!weaponDef->fireSubmersed && weaponMuzzlePos.y <= 0.0f)
+	if (!weaponDef->fireSubmersed && aimFromPos.y <= 0.0f)
 		return false;
 
 	// sanity check to force new aim
@@ -1009,7 +1009,7 @@ bool CWeapon::TestRange(const float3 tgtPos, bool /*userTarget*/, const CUnit* t
 
 bool CWeapon::HaveFreeLineOfFire(const float3 pos, bool userTarget, const CUnit* unit) const
 {
-	float3 dir = pos - weaponMuzzlePos;
+	float3 dir = pos - aimFromPos;
 
 	const float length = dir.Length();
 	const float spread = AccuracyExperience() + SprayAngleExperience();
@@ -1027,8 +1027,8 @@ bool CWeapon::HaveFreeLineOfFire(const float3 pos, bool userTarget, const CUnit*
 		CUnit* unit = NULL;
 		CFeature* feature = NULL;
 
-		const float gdst = TraceRay::TraceRay(weaponMuzzlePos, dir, length, ~Collision::NOGROUND, owner, unit, feature);
-		const float3 gpos = weaponMuzzlePos + dir * gdst;
+		const float gdst = TraceRay::TraceRay(aimFromPos, dir, length, ~Collision::NOGROUND, owner, unit, feature);
+		const float3 gpos = aimFromPos + dir * gdst;
 
 		// true iff ground does not block the ray of length <length> from <pos> along <dir>
 		if ((gdst > 0.0f) && (gpos.SqDistance(pos) > Square(weaponDef->damageAreaOfEffect)))
@@ -1036,7 +1036,7 @@ bool CWeapon::HaveFreeLineOfFire(const float3 pos, bool userTarget, const CUnit*
 	}
 
 	// friendly, neutral & feature check
-	if (TraceRay::TestCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, avoidFlags, owner)) {
+	if (TraceRay::TestCone(aimFromPos, dir, length, spread, owner->allyteam, avoidFlags, owner)) {
 		return false;
 	}
 
