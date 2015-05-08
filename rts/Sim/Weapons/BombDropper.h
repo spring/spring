@@ -11,17 +11,17 @@ class CBombDropper: public CWeapon
 public:
 	CBombDropper(CUnit* owner, const WeaponDef* def, bool useTorps);
 
-	void Init();
-	void UpdateWantedDir();
-	void SlowUpdate();
+	void Init() override final;
+	void UpdateWantedDir() override final;
+	void SlowUpdate() override final;
 
 private:
-	bool CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRequestedDir) const;
+	bool CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRequestedDir) const override final;
 
-	bool TestTarget(const float3 pos, bool userTarget, const CUnit* unit) const;
-	bool TestRange(const float3 pos, bool userTarget, const CUnit* unit) const;
-	bool HaveFreeLineOfFire(const float3 pos, bool userTarget, const CUnit* unit) const;
-	void FireImpl(bool scriptCall);
+	bool TestTarget(const float3 pos, bool userTarget, const CUnit* unit) const override final;
+	bool TestRange(const float3 pos, bool userTarget, const CUnit* unit) const override final;
+	bool HaveFreeLineOfFire(const float3 pos, bool userTarget, const CUnit* unit) const override final;
+	void FireImpl(bool scriptCall) override final;
 
 	float GetPredictedImpactTime(const float3& impactPos) const;
 
