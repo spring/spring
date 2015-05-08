@@ -571,13 +571,6 @@ bool CWeapon::AttackUnit(CUnit* newTargetUnit, bool isUserTarget)
 		return false;
 
 	if (newTargetUnit == nullptr) {
-		if (currentTarget.type != Target_Unit) {
-			// make the unit be more likely to keep the current target if user starts to move it
-			DropCurrentTarget();
-		}
-
-		// cannot have a user-target without a unit
-		currentTarget.isUserTarget = false;
 		return false;
 	}
 
