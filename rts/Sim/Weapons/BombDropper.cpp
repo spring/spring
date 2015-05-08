@@ -65,31 +65,16 @@ bool CBombDropper::HaveFreeLineOfFire(const float3 pos, bool userTarget, const C
 	return true;
 }
 
-#if 0
-bool CBombDropper::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRequestedDir) const
-{
-	return (CWeapon::CanFire(true, ignoreTargetType, true));
-}
 
 bool CBombDropper::TestRange(const float3 pos, bool userTarget, const CUnit* unit) const
 {
-#else
-
-bool CBombDropper::TestRange(const float3 pos, bool userTarget, const CUnit* unit) const { return true; }
-bool CBombDropper::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRequestedDir) const
-{
-	// we mostly ignore what AimWeapon has to say
-	if (!CWeapon::CanFire(true, ignoreTargetType, true))
-		return false;
-#endif
-
-	// bombs always fall down
-	if (aimFromPos.y < currentTargetPos.y)
-		return false;
-
 	// "normal" range restrictions are not meaningful
 	// to check given dropped (ballistic) projectiles
 	if (false && (owner->speed.w * predict) > weaponDef->range)
+		return false;
+
+	// bombs always fall down
+	if (aimFromPos.y < currentTargetPos.y)
 		return false;
 
 	// dropPos is guaranteed to be in range from owner's
@@ -110,6 +95,13 @@ bool CBombDropper::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ign
 
 	return (dropPos.SqDistance2D(currentTargetPos) < Square(dropDist + torpDist));
 }
+
+
+bool CBombDropper::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRequestedDir) const
+{
+	return CWeapon::CanFire(true, ignoreTargetType, true);
+}
+
 
 void CBombDropper::FireImpl(bool scriptCall)
 {
