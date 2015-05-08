@@ -1994,15 +1994,21 @@ int LuaSyncedCtrl::SetUnitTarget(lua_State* L)
 		const float3 pos(luaL_checkfloat(L, 2),
 		                 luaL_checkfloat(L, 3),
 		                 luaL_checkfloat(L, 4));
-		const bool manualFire = lua_isboolean(L, 5) && lua_toboolean(L, 5);
-		const bool userTarget = lua_isboolean(L, 6) && lua_toboolean(L, 6);
+		const bool manualFire = luaL_optboolean(L, 5, false);
+		const bool userTarget = luaL_optboolean(L, 6, false);
 		lua_pushboolean(L,unit->AttackGround(pos, userTarget, manualFire));
 		return 1;
 	}
 	else if (args >= 2) {
 		CUnit* target = ParseRawUnit(L, __FUNCTION__, 2);
-		const bool manualFire = lua_isboolean(L, 3) && lua_toboolean(L, 3);
-		const bool userTarget = lua_isboolean(L, 4) && lua_toboolean(L, 4);
+
+		if (target == unit) {
+			luaL_error(L, "[%s()]: unit tried to attack itself", __FUNCTION__);
+			return 0;
+		}
+
+		const bool manualFire = luaL_optboolean(L, 3, false);
+		const bool userTarget = luaL_optboolean(L, 4, false);
 		lua_pushboolean(L,unit->AttackUnit(target, userTarget, manualFire));
 		return 1;
 	}

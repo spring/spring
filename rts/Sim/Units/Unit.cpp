@@ -1633,6 +1633,11 @@ bool CUnit::IsIdle() const
 
 bool CUnit::AttackUnit(CUnit* targetUnit, bool isUserTarget, bool wantManualFire, bool fpsMode)
 {
+	if (targetUnit == this) {
+		// don't target ourself
+		return false;
+	}
+
 	bool ret = false;
 
 	haveManualFireRequest = wantManualFire;
