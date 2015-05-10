@@ -964,6 +964,9 @@ void SetRulesParam(lua_State* L, const char* caller, int offset,
 				/*else if (losType == "private") {
 					losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE; //! default
 				}*/
+				else if (losType == "hidden") {
+					losMask |= LuaRulesParams::RULESPARAMLOS_HIDDEN;
+				}
 			}
 		}
 
