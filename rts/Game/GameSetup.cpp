@@ -51,6 +51,7 @@ CR_REG_METADATA(CGameSetup, (
 	// all other members can be reconstructed from this
 	CR_MEMBER(setupText),
 
+	CR_IGNORED(recordDemo),
 	CR_IGNORED(demoName),
 	CR_IGNORED(saveName),
 
@@ -187,6 +188,7 @@ void CGameSetup::ResetState()
 
 	onlyLocal = false;
 	hostDemo = false;
+	recordDemo = true;
 
 	mapHash = 0;
 	modHash = 0;
@@ -580,6 +582,7 @@ bool CGameSetup::Init(const std::string& buf)
 
 	file.GetTDef(gameStartDelay, (unsigned int) 4, "GAME\\GameStartDelay");
 
+	file.GetDef(recordDemo,          "1", "GAME\\RecordDemo");
 	file.GetDef(onlyLocal,           "0", "GAME\\OnlyLocal");
 	file.GetDef(useLuaGaia,          "1", "GAME\\ModOptions\\LuaGaia");
 	file.GetDef(noHelperAIs,         "0", "GAME\\ModOptions\\NoHelperAIs");

@@ -88,6 +88,7 @@ Lua:
 
 StartScript:
  - support rapid tags
+ - allow to disable demo file recording in scrip.txt via RecordDemo = 0
 
 Buildbot/Installer:
  ! merged spring-headless / spring-dedicated into linux static builds / windows installer
