@@ -408,6 +408,11 @@ void CWeapon::UpdateFire()
 	if (!CanFire(false, false, false))
 		return;
 
+	if (currentTarget.type == Target_Intercept && currentTarget.intercept->IsBeingIntercepted()) {
+		//FIXME move this check into TryTarget (needs TryTarget to take SWeaponTarget&)
+		HoldFire();
+		return;
+	}
 	if (!TryTarget(currentTargetPos, currentTarget.isUserTarget, currentTarget.unit))
 		return;
 
@@ -1160,7 +1165,6 @@ void CWeapon::Fire(bool scriptCall)
 void CWeapon::UpdateInterceptTarget()
 {
 	float minInterceptTargetDistSq = std::numeric_limits<float>::max();
-	float curInterceptTargetDistSq = std::numeric_limits<float>::min();
 
 	if (currentTarget.intercept) {
 		minInterceptTargetDistSq = aimFromPos.SqDistance(currentTarget.intercept->pos);
@@ -1169,11 +1173,12 @@ void CWeapon::UpdateInterceptTarget()
 	CWeaponProjectile* newTarget = nullptr;
 	for (std::map<int, CWeaponProjectile*>::iterator pi = incomingProjectiles.begin(); pi != incomingProjectiles.end(); ++pi) {
 		CWeaponProjectile* p = pi->second;
+		float curInterceptTargetDistSq = aimFromPos.SqDistance(p->pos);
 
 		// set by CWeaponProjectile's ctor when the interceptor fires
 		if (p->IsBeingIntercepted())
 			continue;
-		if ((curInterceptTargetDistSq = aimFromPos.SqDistance(p->pos)) >= minInterceptTargetDistSq)
+		if (curInterceptTargetDistSq >= minInterceptTargetDistSq)
 			continue;
 
 		minInterceptTargetDistSq = curInterceptTargetDistSq;
@@ -1186,7 +1191,7 @@ void CWeapon::UpdateInterceptTarget()
 	}
 
 	if (newTarget) {
-		DropCurrentTarget();
+		DropCurrentTarget(); //FIXME p->IsBeingIntercepted()
 		currentTarget.intercept = newTarget;
 		currentTarget.type = Target_Intercept;
 	}
