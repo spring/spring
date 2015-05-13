@@ -463,15 +463,13 @@ bool CWeapon::UpdateStockpile()
 
 	if (numStockpileQued > 0) {
 		const float p = 1.0f / weaponDef->stockpileTime;
+		auto res = SResourcePack(weaponDef->metalcost * p, weaponDef->energycost * p);
 
-		if (teamHandler->Team(owner->team)->res.metal >= weaponDef->metalcost*p && teamHandler->Team(owner->team)->res.energy >= weaponDef->energycost*p) {
-			owner->UseEnergy(weaponDef->energycost * p);
-			owner->UseMetal(weaponDef->metalcost * p);
+		if (owner->UseResources(res)) {
 			buildPercent += p;
 		} else {
 			// update the energy and metal required counts
-			teamHandler->Team(owner->team)->resPull.energy += (weaponDef->energycost * p);
-			teamHandler->Team(owner->team)->resPull.metal  += (weaponDef->metalcost * p);
+			teamHandler->Team(owner->team)->resPull += res;
 		}
 		if (buildPercent >= 1) {
 			const int oldCount = numStockpiled;
@@ -483,10 +481,7 @@ bool CWeapon::UpdateStockpile()
 		}
 	}
 
-	if (numStockpiled <= 0 && salvoLeft <= 0) {
-		return false;
-	}
-	return true;
+	return (numStockpiled > 0) || (salvoLeft > 0);
 }
 
 
