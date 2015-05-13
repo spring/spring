@@ -591,7 +591,7 @@ bool CWeapon::Attack(const SWeaponTarget& newTarget)
 	if (newTarget == currentTarget)
 		return true;
 
-	if (newTarget.isManualFire != weaponDef->manualfire)
+	if ((newTarget.isManualFire != weaponDef->manualfire) && owner->unitDef->canManualFire)
 		return false;
 
 	switch (currentTarget.type) {
