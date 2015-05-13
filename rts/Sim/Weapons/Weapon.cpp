@@ -793,6 +793,11 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	if (weaponDef->interceptor) {
 		// keep track of the closest projectile heading our way (if any)
 		UpdateInterceptTarget();
+	} else
+	if (owner->curTarget.type != Target_None) {
+		// If unit got an attack target, clone the job (independent of AutoTarget!)
+		// Also do this unconditionally (owner's target always has priority over weapon one!)
+		Attack(owner->curTarget);
 	}
 
 	// AutoTarget: Find new/better Target
