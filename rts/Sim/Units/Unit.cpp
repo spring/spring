@@ -1093,17 +1093,6 @@ void CUnit::SlowUpdateWeapons() {
 
 		w->SlowUpdate();
 
-		if (w->HaveTarget())
-			continue;
-		if (lastAttacker == NULL)
-			continue;
-		if ((lastAttackFrame + 200) <= gs->frameNum)
-			continue;
-		if (fireState == FIRESTATE_HOLDFIRE)
-			continue;
-
-		// return fire at our last attacker if allowed
-		w->AttackUnit(lastAttacker, false);
 	}
 }
 

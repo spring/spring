@@ -683,6 +683,13 @@ bool CWeapon::AllowWeaponAutoTarget() const
 
 void CWeapon::AutoTarget()
 {
+	// 1. return fire at our last attacker if allowed
+	if ((owner->lastAttacker != nullptr) && ((owner->lastAttackFrame + 200) <= gs->frameNum)) {
+		if (AttackUnit(owner->lastAttacker, false))
+			return;
+	}
+
+	// 2. search for other in range targets
 	lastTargetRetry = gs->frameNum;
 
 	std::multimap<float, CUnit*> targets;
