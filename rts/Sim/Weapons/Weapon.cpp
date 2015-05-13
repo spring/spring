@@ -759,6 +759,8 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	UpdateWeaponVectors();
 	useWeaponPosForAim = std::max(0, useWeaponPosForAim - 1);
 
+	// HoldFire: if Weapon Target isn't valid
+	HoldIfTargetInvalid();
 
 	// SlavedWeapon: Update Weapon Target
 	if (slavedTo != NULL) {
@@ -769,10 +771,6 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 		// keep track of the closest projectile heading our way (if any)
 		UpdateInterceptTarget();
 	}
-
-
-	// HoldFire: if Weapon Target isn't valid
-	HoldIfTargetInvalid();
 
 	// AutoTarget: Find new/better Target
 	if (!noAutoTargetOverride && AllowWeaponAutoTarget()) {
