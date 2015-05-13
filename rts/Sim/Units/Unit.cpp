@@ -1082,17 +1082,7 @@ void CUnit::SlowUpdateWeapons() {
 		return;
 
 	for (CWeapon* w: weapons) {
-		if (haveManualFireRequest == (unitDef->canManualFire && w->weaponDef->manualfire)) { //FIXME manualfire
-			switch (curTarget.type) {
-				case Target_None: { } break;
-				case Target_Unit: { w->AttackUnit(curTarget.unit, curTarget.isUserTarget); } break;
-				case Target_Pos:  { w->AttackGround(curTarget.groundPos, curTarget.isUserTarget); } break;
-				case Target_Intercept: { } break;
-			};
-		}
-
 		w->SlowUpdate();
-
 	}
 }
 
