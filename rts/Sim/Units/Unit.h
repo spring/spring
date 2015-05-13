@@ -94,6 +94,7 @@ public:
 
 	bool AttackUnit(CUnit* unit, bool isUserTarget, bool wantManualFire, bool fpsMode = false);
 	bool AttackGround(const float3& pos, bool isUserTarget, bool wantManualFire, bool fpsMode = false);
+	void DropCurrentAttackTarget();
 
 	int GetBlockingMapID() const { return id; }
 
@@ -258,7 +259,6 @@ public:
 	int lastFireWeapon;
 
 	/// current attackee
-	bool haveManualFireRequest;
 	SWeaponTarget curTarget;
 
 	/// transport that the unit is currently in

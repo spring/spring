@@ -7,6 +7,7 @@
 CR_BIND(SWeaponTarget, )
 CR_REG_METADATA(SWeaponTarget, (
 	CR_MEMBER(isUserTarget),
+	CR_MEMBER(isManualFire),
 	CR_MEMBER(type),
 	CR_MEMBER(unit),
 	CR_MEMBER(intercept),
@@ -20,6 +21,7 @@ SWeaponTarget::SWeaponTarget()
 , unit(nullptr)
 , intercept(nullptr)
 , isUserTarget(false)
+, isManualFire(false)
 {}
 
 
@@ -27,6 +29,7 @@ bool SWeaponTarget::operator!=(const SWeaponTarget& other) const
 {
 	if (type != other.type) return true;
 	if (isUserTarget != other.isUserTarget) return true;
+	if (isManualFire != other.isManualFire) return true;
 
 	switch (type) {
 		case Target_None: return false;

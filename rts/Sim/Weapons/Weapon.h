@@ -35,7 +35,8 @@ public:
 
 	bool AttackUnit(CUnit* newTargetUnit, bool isUserTarget);
 	bool AttackGround(float3 newTargetPos, bool isUserTarget);
-	void SetAttackTarget(const SWeaponTarget& newTarget);
+	bool Attack(const SWeaponTarget& newTarget);          //< does TryTarget() checks etc.
+	void SetAttackTarget(const SWeaponTarget& newTarget); //< does not any checks etc. !
 	void DropCurrentTarget();
 	void HoldFire() { DropCurrentTarget(); }
 

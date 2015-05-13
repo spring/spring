@@ -586,6 +586,24 @@ bool CWeapon::AttackUnit(CUnit* newTargetUnit, bool isUserTarget)
 }
 
 
+bool CWeapon::Attack(const SWeaponTarget& newTarget)
+{
+	if (newTarget == currentTarget)
+		return true;
+
+	if (newTarget.isManualFire != weaponDef->manualfire)
+		return false;
+
+	switch (currentTarget.type) {
+		case Target_None: { SetAttackTarget(newTarget); return true; } break;
+		case Target_Unit: { return AttackUnit(newTarget.unit, newTarget.isUserTarget); } break;
+		case Target_Pos:  { return AttackGround(newTarget.groundPos, newTarget.isUserTarget); } break;
+		case Target_Intercept: { SetAttackTarget(newTarget); return true; } break; //FIXME isinterceptor check etc.?
+		default: return false;
+	};
+}
+
+
 void CWeapon::SetAttackTarget(const SWeaponTarget& newTarget)
 {
 	if (newTarget == currentTarget)

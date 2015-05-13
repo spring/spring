@@ -30,6 +30,7 @@ struct SWeaponTarget {
 	CWeaponProjectile* intercept; // if targettype=intercept: projectile that we currently target for interception
 	float3 groundPos;             // if targettype=ground: the ground position
 	bool isUserTarget;
+	bool isManualFire;
 };
 
 #endif // WEAPONTARGET_H

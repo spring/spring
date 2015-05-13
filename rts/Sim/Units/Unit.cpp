@@ -91,7 +91,6 @@ CUnit::CUnit()
 , lastAttackedPieceFrame(-1)
 , lastAttackFrame(-200)
 , lastFireWeapon(0)
-, haveManualFireRequest(false)
 , transporter(NULL)
 , moveType(NULL)
 , prevMoveType(NULL)
@@ -1614,70 +1613,54 @@ bool CUnit::AttackUnit(CUnit* targetUnit, bool isUserTarget, bool wantManualFire
 		return false;
 	}
 
+	DropCurrentAttackTarget();
+
+	if (targetUnit == nullptr)
+		return false;
+
+	curTarget.type = Target_Unit;
+	curTarget.unit = targetUnit;
+	curTarget.isUserTarget = isUserTarget;
+	curTarget.isManualFire = wantManualFire || fpsMode;
+	AddDeathDependence(targetUnit, DEPENDENCE_TARGET);
+
 	bool ret = false;
-
-	haveManualFireRequest = wantManualFire;
-
-	if (curTarget.unit != NULL) {
-		DeleteDeathDependence(curTarget.unit, DEPENDENCE_TARGET);
-	}
-
-	if (targetUnit == nullptr) {
-		curTarget = SWeaponTarget();
-	} else {
-		curTarget.type = Target_Unit;
-		curTarget.unit = targetUnit;
-		curTarget.isUserTarget = isUserTarget;
-	}
-
-	if (targetUnit != NULL) {
-		AddDeathDependence(targetUnit, DEPENDENCE_TARGET);
-	}
-
 	for (CWeapon* w: weapons) {
-		// isUserTarget is true if this target was selected by the
-		// user as opposed to automatically by the unit's commandAI
-		w->DropCurrentTarget();
-
-		if (targetUnit == NULL)
-			continue;
-
-		if ((wantManualFire == (unitDef->canManualFire && w->weaponDef->manualfire)) || fpsMode) { //FIXME manualfire
-			ret |= (w->AttackUnit(curTarget.unit, curTarget.isUserTarget));
-		}
+		ret |= w->Attack(curTarget);
 	}
-
 	return ret;
 }
 
 bool CUnit::AttackGround(const float3& pos, bool isUserTarget, bool wantManualFire, bool fpsMode)
 {
-	bool ret = false;
-
-	// remember whether this was a user-order for SlowUpdateWeapons
-	// (because CCommandAI does not keep calling us, but ::SUW does)
-	haveManualFireRequest = wantManualFire;
-
-	if (curTarget.unit != nullptr) {
-		DeleteDeathDependence(curTarget.unit, DEPENDENCE_TARGET);
-		curTarget.unit = nullptr;
-	}
+	DropCurrentAttackTarget();
 
 	curTarget.type = Target_Pos;
 	curTarget.groundPos = pos;
 	curTarget.isUserTarget = isUserTarget;
+	curTarget.isManualFire = wantManualFire || fpsMode;
 
+	bool ret = false;
 	for (CWeapon* w: weapons) {
-		w->DropCurrentTarget();
-
-		if ((wantManualFire == (unitDef->canManualFire && w->weaponDef->manualfire)) || fpsMode) {
-			ret |= (w->AttackGround(curTarget.groundPos, curTarget.isUserTarget));
-		}
+		ret |= w->Attack(curTarget);
 	}
-
 	return ret;
 }
 
+
+void CUnit::DropCurrentAttackTarget()
+{
+	if (curTarget.unit != NULL) {
+		DeleteDeathDependence(curTarget.unit, DEPENDENCE_TARGET);
+	}
+
+	for (CWeapon* w: weapons) {
+		if (w->GetCurrentTarget() == curTarget)
+			w->DropCurrentTarget();
+	}
+
+	curTarget = SWeaponTarget();
+}
 
 
 void CUnit::SetLastAttacker(CUnit* attacker)
@@ -2442,8 +2425,6 @@ CR_REG_METADATA(CUnit, (
 
 	CR_MEMBER(reloadSpeed),
 	CR_MEMBER(maxRange),
-
-	CR_MEMBER(haveManualFireRequest),
 
 	CR_MEMBER(lastMuzzleFlameSize),
 	CR_MEMBER(lastMuzzleFlameDir),
