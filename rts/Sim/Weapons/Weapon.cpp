@@ -590,6 +590,9 @@ bool CWeapon::AttackUnit(CUnit* newTargetUnit, bool isUserTarget)
 
 void CWeapon::SetAttackTarget(const SWeaponTarget& newTarget)
 {
+	if (newTarget == currentTarget)
+		return;
+
 	DropCurrentTarget();
 	currentTarget = newTarget;
 	if (currentTarget.type == Target_Unit) {
@@ -745,6 +748,7 @@ void CWeapon::SlowUpdate()
 void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 {
 	errorVectorAdd = (gs->randVector() - errorVector) * (1.0f / UNIT_SLOWUPDATE_RATE);
+	predictSpeedMod = 1.0f + (gs->randFloat() - 0.5f) * 2 * (1.0f - owner->limExperience);
 
 #ifdef TRACE_SYNC
 	tracefile << "Weapon slow update: ";
@@ -755,16 +759,11 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	UpdateWeaponVectors();
 	useWeaponPosForAim = std::max(0, useWeaponPosForAim - 1);
 
-	predictSpeedMod = 1.0f + (gs->randFloat() - 0.5f) * 2 * (1.0f - owner->limExperience);
 
 	// SlavedWeapon: Update Weapon Target
 	if (slavedTo != NULL) {
-		// use targets from the thing we are slaved to
-		if (currentTarget != slavedTo->currentTarget) {
-			DropCurrentTarget();
-			currentTarget = slavedTo->currentTarget;
-			UpdateTargetPos();
-		}
+		// clone targets from the weapon we are slaved to
+		SetAttackTarget(slavedTo->currentTarget);
 	} else
 	if (weaponDef->interceptor) {
 		// keep track of the closest projectile heading our way (if any)
@@ -1093,8 +1092,8 @@ bool CWeapon::TryTargetHeading(short heading, float3 pos, bool userTarget, const
 	UpdateWeaponVectors();
 
 	return val;
-
 }
+
 
 void CWeapon::Init()
 {
@@ -1119,6 +1118,7 @@ void CWeapon::Init()
 	}
 }
 
+
 void CWeapon::Fire(bool scriptCall)
 {
 #ifdef TRACE_SYNC
@@ -1134,6 +1134,7 @@ void CWeapon::Fire(bool scriptCall)
 		Channels::Battle->PlaySample(fireSoundId, owner, fireSoundVolume);
 	}
 }
+
 
 void CWeapon::UpdateInterceptTarget()
 {

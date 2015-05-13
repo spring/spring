@@ -37,17 +37,3 @@ bool SWeaponTarget::operator!=(const SWeaponTarget& other) const
 	return false;
 }
 
-
-bool SWeaponTarget::operator==(const SWeaponTarget& other) const
-{
-	if (type != other.type) return false;
-	if (isUserTarget != other.isUserTarget) return false;
-
-	switch (type) {
-		case Target_None: return false;
-		case Target_Unit: return (unit == other.unit);
-		case Target_Pos:  return (groundPos == other.groundPos);
-		case Target_Intercept: return (intercept == other.intercept);
-	}
-	return false;
-}
