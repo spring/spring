@@ -1976,9 +1976,7 @@ int LuaSyncedCtrl::SetUnitNeutral(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	if (lua_isboolean(L, 2)) {
-		unit->neutral = lua_toboolean(L, 2);
-	}
+	unit->neutral = luaL_checkboolean(L, 2);
 	return 0;
 }
 
@@ -1990,13 +1988,17 @@ int LuaSyncedCtrl::SetUnitTarget(lua_State* L)
 		return 0;
 	}
 	const int args = lua_gettop(L);
-	if (args >= 4 && !lua_isboolean(L, 3)) {
+	if (lua_isnil(L, 2)) {
+		unit->DropCurrentAttackTarget();
+		lua_pushboolean(L, true);
+		return 1;
+	} if (args >= 4 && !lua_isboolean(L, 3)) {
 		const float3 pos(luaL_checkfloat(L, 2),
 		                 luaL_checkfloat(L, 3),
 		                 luaL_checkfloat(L, 4));
 		const bool manualFire = luaL_optboolean(L, 5, false);
 		const bool userTarget = luaL_optboolean(L, 6, false);
-		lua_pushboolean(L,unit->AttackGround(pos, userTarget, manualFire));
+		lua_pushboolean(L, unit->AttackGround(pos, userTarget, manualFire));
 		return 1;
 	}
 	else if (args >= 2) {
@@ -2009,12 +2011,10 @@ int LuaSyncedCtrl::SetUnitTarget(lua_State* L)
 
 		const bool manualFire = luaL_optboolean(L, 3, false);
 		const bool userTarget = luaL_optboolean(L, 4, false);
-		lua_pushboolean(L,unit->AttackUnit(target, userTarget, manualFire));
+		lua_pushboolean(L, unit->AttackUnit(target, userTarget, manualFire));
 		return 1;
 	}
-	else {
-		return 0;
-	}
+	return 0;
 }
 
 
