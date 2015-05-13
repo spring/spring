@@ -141,6 +141,7 @@ public:
 	bool AddHarvestedMetal(float metal);
 
 	void SetStorage(const SResourcePack& newstorage);
+	bool HaveResources(const SResourcePack& res) const;
 	bool UseResources(const SResourcePack& res);
 	void AddResources(const SResourcePack& res, bool useIncomeMultiplier = true);
 	bool IssueResourceOrder(SResourceOrder* order);

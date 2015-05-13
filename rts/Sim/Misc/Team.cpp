@@ -161,6 +161,12 @@ void CTeam::AddEnergy(float amount, bool useIncomeMultiplier)
 }
 
 
+bool CTeam::HaveResources(const SResourcePack& amount) const
+{
+	return (res >= amount);
+}
+
+
 void CTeam::AddResources(SResourcePack amount, bool useIncomeMultiplier)
 {
 	if (useIncomeMultiplier) { amount *= GetIncomeMultiplier(); }
@@ -173,6 +179,7 @@ void CTeam::AddResources(SResourcePack amount, bool useIncomeMultiplier)
 		}
 	}
 }
+
 
 bool CTeam::UseResources(const SResourcePack& amount)
 {

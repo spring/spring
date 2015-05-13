@@ -408,53 +408,51 @@ void CWeapon::UpdateFire()
 	if (!CanFire(false, false, false))
 		return;
 
-	CTeam* ownerTeam = teamHandler->Team(owner->team);
+	if (!TryTarget(currentTargetPos, currentTarget.isUserTarget, currentTarget.unit))
+		return;
 
-	if ((weaponDef->stockpile || (ownerTeam->res.metal >= weaponDef->metalcost && ownerTeam->res.energy >= weaponDef->energycost))) {
-		owner->script->GetEmitDirPos(owner->script->QueryWeapon(weaponNum), relWeaponMuzzlePos, weaponDir);
+	// pre-check if we got enough resources (so CobBlockShot gets only called when really possible to shoot)
+	auto shotRes = SResourcePack(weaponDef->metalcost, weaponDef->energycost);
+	if (!weaponDef->stockpile && !owner->HaveResources(shotRes))
+		return;
 
-		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
-		weaponDir = owner->GetObjectSpaceVec(weaponDir);
-		weaponDir.SafeNormalize();
-		useWeaponPosForAim = (reloadTime / UNIT_SLOWUPDATE_RATE) + 8;
+	if (CobBlockShot())
+		return;
 
-		if (TryTarget(currentTargetPos, currentTarget.isUserTarget, currentTarget.unit) && !CobBlockShot()) {
-			if (weaponDef->stockpile) {
-				const int oldCount = numStockpiled;
-				numStockpiled--;
-				owner->commandAI->StockpileChanged(this);
-				eventHandler.StockpileChanged(owner, this, oldCount);
-			} else {
-				owner->UseEnergy(weaponDef->energycost);
-				owner->UseMetal(weaponDef->metalcost);
-				owner->currentFuel = std::max(0.0f, owner->currentFuel - fuelUsage);
-			}
-
-			reloadStatus = gs->frameNum + int(reloadTime / owner->reloadSpeed);
-
-			salvoLeft = salvoSize;
-			nextSalvo = gs->frameNum;
-			salvoError = gs->randVector() * (owner->IsMoving()? weaponDef->movingAccuracy: accuracyError);
-
-			if (currentTarget.type == Target_Pos || (currentTarget.type == Target_Unit && !(currentTarget.unit->losStatus[owner->allyteam] & LOS_INLOS))) {
-				// area firing stuff is too effective at radar firing...
-				salvoError *= 1.3f;
-			}
-
-			owner->lastMuzzleFlameSize = muzzleFlareSize;
-			owner->lastMuzzleFlameDir = wantedDir;
-			owner->script->FireWeapon(weaponNum);
-		}
-	} else {
-		if (!weaponDef->stockpile && TryTarget(currentTargetPos, currentTarget.isUserTarget, currentTarget.unit)) {
-			// update the energy and metal required counts
+	if (!weaponDef->stockpile) {
+		// use resource for shoot
+		CTeam* ownerTeam = teamHandler->Team(owner->team);
+		if (!owner->UseResources(shotRes)) {
+			// not enough resource, update pull (needs factor cause called each ::Update() and not at reloadtime!)
 			const int minPeriod = std::max(1, (int)(reloadTime / owner->reloadSpeed));
 			const float averageFactor = 1.0f / minPeriod;
-
 			ownerTeam->resPull.energy += (averageFactor * weaponDef->energycost);
 			ownerTeam->resPull.metal  += (averageFactor * weaponDef->metalcost);
+			return;
 		}
+		ownerTeam->resPull += shotRes;
+		owner->currentFuel = std::max(0.0f, owner->currentFuel - fuelUsage);
+	} else {
+		const int oldCount = numStockpiled;
+		numStockpiled--;
+		owner->commandAI->StockpileChanged(this);
+		eventHandler.StockpileChanged(owner, this, oldCount);
 	}
+
+	reloadStatus = gs->frameNum + int(reloadTime / owner->reloadSpeed);
+
+	salvoLeft = salvoSize;
+	nextSalvo = gs->frameNum;
+	salvoError = gs->randVector() * (owner->IsMoving()? weaponDef->movingAccuracy: accuracyError);
+
+	if (currentTarget.type == Target_Pos || (currentTarget.type == Target_Unit && !(currentTarget.unit->losStatus[owner->allyteam] & LOS_INLOS))) {
+		// area firing stuff is too effective at radar firing...
+		salvoError *= 1.3f;
+	}
+
+	owner->lastMuzzleFlameSize = muzzleFlareSize;
+	owner->lastMuzzleFlameDir = wantedDir;
+	owner->script->FireWeapon(weaponNum);
 }
 
 

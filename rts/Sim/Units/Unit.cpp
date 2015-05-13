@@ -2087,6 +2087,12 @@ void CUnit::SetStorage(const SResourcePack& newStorage)
 }
 
 
+bool CUnit::HaveResources(const SResourcePack& pack) const
+{
+	return teamHandler->Team(team)->HaveResources(pack);
+}
+
+
 bool CUnit::UseResources(const SResourcePack& pack)
 {
 	//FIXME
