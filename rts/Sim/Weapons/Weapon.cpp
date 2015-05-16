@@ -66,7 +66,6 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(numStockpiled),
 	CR_MEMBER(numStockpileQued),
 	CR_MEMBER(sprayAngle),
-	CR_MEMBER(useWeaponPosForAim),
 
 	CR_MEMBER(lastRequest),
 	CR_MEMBER(lastTargetRetry),
@@ -108,7 +107,6 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	weaponNum(-1),
 	aimFromPiece(-1),
 	muzzlePiece(-1),
-	useWeaponPosForAim(0),
 	reloadTime(1),
 	reloadStatus(0),
 	range(1),
@@ -226,14 +224,6 @@ void CWeapon::UpdateWeaponPieces(const bool updateAimFrom)
 		}
 		aimFromPiece = -1;
 		muzzlePiece = -1;
-	}
-
-	// If we can't get a line of fire from the muzzle, try
-	// the aim piece instead (since the weapon may just be
-	// turned in a wrong way)
-	//FIXME remove
-	if (useWeaponPosForAim <= 0) {
-		aimFromPiece = muzzlePiece;
 	}
 }
 
@@ -780,7 +770,6 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 
 	UpdateWeaponPieces();
 	UpdateWeaponVectors();
-	useWeaponPosForAim = std::max(0, useWeaponPosForAim - 1);
 
 	// HoldFire: if Weapon Target isn't valid
 	HoldIfTargetInvalid();
@@ -803,11 +792,6 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	// AutoTarget: Find new/better Target
 	if (!noAutoTargetOverride && AllowWeaponAutoTarget()) {
 		AutoTarget();
-	}
-
-	if (!HaveTarget()) {
-		// if we can't target anything, try switching aim point
-		useWeaponPosForAim = std::max(0, useWeaponPosForAim - 1);
 	}
 }
 

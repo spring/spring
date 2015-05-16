@@ -118,8 +118,6 @@ public:
 	int aimFromPiece;
 	int muzzlePiece;
 
-	int useWeaponPosForAim;					// sometimes weapon pos is better to use than aimpos
-
 	int reloadTime;							// time between succesive fires in ticks
 	int reloadStatus;						// next tick the weapon can fire again
 
