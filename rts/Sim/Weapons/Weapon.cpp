@@ -588,7 +588,13 @@ bool CWeapon::Attack(const SWeaponTarget& newTarget)
 		case Target_None: { SetAttackTarget(newTarget); return true; } break;
 		case Target_Unit: { return AttackUnit(newTarget.unit, newTarget.isUserTarget); } break;
 		case Target_Pos:  { return AttackGround(newTarget.groundPos, newTarget.isUserTarget); } break;
-		case Target_Intercept: { SetAttackTarget(newTarget); return true; } break; //FIXME isinterceptor check etc.?
+		case Target_Intercept: {
+			if (newTarget.intercept->CanBeInterceptedBy(weaponDef)) {
+				SetAttackTarget(newTarget);
+				return true;
+			}
+			return false;
+		} break;
 		default: return false;
 	};
 }

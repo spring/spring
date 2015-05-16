@@ -40,13 +40,10 @@ void CInterceptHandler::Update(bool forced) {
 		assert(wDef->interceptor || wDef->isShield);
 
 		for (CWeaponProjectile* p: interceptables) {
-			const WeaponDef* pDef = p->GetWeaponDef();
-
-			if ((pDef->targetable & wDef->interceptor) == 0)
+			if (!p->CanBeInterceptedBy(wDef))
 				continue;
 			if (w->incomingProjectiles.find(p->id) != w->incomingProjectiles.end())
 				continue;
-
 
 			const int pAllyTeam = p->GetAllyteamID();
 
