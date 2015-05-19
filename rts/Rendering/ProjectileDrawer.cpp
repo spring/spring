@@ -767,7 +767,11 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 			glRotatef(pp->spinAngle, pp->spinVec.x, pp->spinVec.y, pp->spinVec.z);
 
 			if (!(/*p->luaDraw &&*/ eventHandler.DrawProjectile(p))) {
-				glCallList(pp->dispList);
+				if (pp->explFlags & PF_Recursive) {
+					pp->omp->DrawStatic();
+				} else {
+					glCallList(pp->dispList);
+				}
 			}
 		glPopMatrix();
 	}

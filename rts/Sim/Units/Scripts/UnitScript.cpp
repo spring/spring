@@ -819,6 +819,7 @@ void CUnitScript::Explode(int piece, int flags)
 	if ((flags & PF_Smoke) && projectileHandler->particleSaturation < 1.0f) { newflags |= PF_Smoke; }
 	if ((flags & PF_Fire) && projectileHandler->particleSaturation < 0.95f) { newflags |= PF_Fire; }
 	if (flags & PF_NoCEGTrail) { newflags |= PF_NoCEGTrail; }
+	if (flags & PF_Recursive) { newflags |= PF_Recursive; }
 
 	new CPieceProjectile(unit, pieces[piece], absPos, explSpeed, newflags, 0.5f);
 #endif

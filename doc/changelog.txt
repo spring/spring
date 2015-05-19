@@ -82,6 +82,7 @@ Lua:
  - add new call-in: UnitStunned(unitID, unitDefID, unitTeam, stunned) -- called whenever a unit changes its stun status
  - add Set/GetProjectileIsIntercepted
  - add GetProjectileTimeToLive, GetProjectileOwnerID and GetProjectileTeamID.
+ - add SFX.RECURSIVE flag to Explode(), allowing to draw the piece and all its children.
  ! remove Spring.UpdateInfoTexture
  ! fix Spring.GetKeyState & Spring.PressedKeys expecting SDL2 keycodes while whole lua gets SDL1 ones
  ! Spring.PressedKeys now also returns keynames
