@@ -61,6 +61,7 @@ WEAPONTAG(float, weaponacceleration).defaultValue(0.0f).scaleValue(1.0f / (GAME_
 WEAPONTAG(float, reload).externalName("reloadTime").defaultValue(1.0f);
 WEAPONTAG(float, salvodelay).externalName("burstRate").defaultValue(0.1f);
 WEAPONTAG(int, salvosize).externalName("burst").defaultValue(1);
+WEAPONTAG(bool, salvoTargetLock).externalName("burstTargetLock").defaultValue(false).description("Can the unit change targets during a burst?");
 WEAPONTAG(int, projectilespershot).externalName("projectiles").defaultValue(1);
 
 // Bounce

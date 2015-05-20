@@ -963,6 +963,9 @@ float3 CWeapon::GetTargetBorderPos(
 
 bool CWeapon::TryTarget(const float3 tgtPos, bool userTarget, const CUnit* targetUnit) const
 {
+	if (weaponDef->salvoTargetLock && salvoLeft && tgtPos != targetPos)
+		return false;
+	
 	if (!TestTarget(tgtPos, userTarget, targetUnit))
 		return false;
 
