@@ -127,6 +127,7 @@ bool LuaConstSFX::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "NONE",  PF_NONE); // BITMAP_ONLY
 	LuaPushNamedNumber(L, "NO_CEG_TRAIL", PF_NoCEGTrail);
 	LuaPushNamedNumber(L, "NO_HEATCLOUD", PF_NoHeatCloud);
+	LuaPushNamedNumber(L, "RECURSIVE", PF_Recursive);
 
 	// For Spring.UnitScript.EmitSfx
 	LuaPushNamedNumber(L, "VTOL",            SFX_VTOL);

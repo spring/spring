@@ -15,6 +15,7 @@ const int PF_Fire       = (1 << 4); // 16
 const int PF_NONE       = (1 << 5); // 32
 const int PF_NoCEGTrail = (1 << 6); // 64
 const int PF_NoHeatCloud= (1 << 7); // 128
+const int PF_Recursive  = (1 << 8); // 256
 
 class CSmokeTrailProjectile;
 struct S3DModelPiece;
