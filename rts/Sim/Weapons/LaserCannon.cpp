@@ -42,7 +42,9 @@ void CLaserCannon::UpdateRange(float val)
 	// (val / speed) is the total number of frames the projectile
 	// is allowed to do damage to objects, ttl decreases from N-1
 	// to 0 and collisions are checked at 0 inclusive
-	range = std::max(1.0f, std::floor(val / weaponDef->projectilespeed)) * weaponDef->projectilespeed;
+
+	//call the parent class' function to assign since it updates the parent unit's maxRange
+	CWeapon::UpdateRange(std::max(1.0f, std::floor(val / weaponDef->projectilespeed)) * weaponDef->projectilespeed);
 }
 
 

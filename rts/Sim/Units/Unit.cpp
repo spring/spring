@@ -530,6 +530,14 @@ void CUnit::PostLoad()
 }
 
 
+void CUnit::RecalculateMaxRange()
+{
+	maxRange = 0.0f;
+	for (std::vector<CWeapon*>::iterator weaponIter = weapons.begin();weaponIter != weapons.end();weaponIter++){
+		maxRange = std::max(maxRange,(*weaponIter)->range);
+	}
+}
+
 //////////////////////////////////////////////////////////////////////
 //
 

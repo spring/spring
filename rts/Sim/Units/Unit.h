@@ -204,6 +204,8 @@ public:
 	void Drop(const float3& parentPos, const float3& parentDir, CUnit* parent);
 	void PostLoad();
 
+	void RecalculateMaxRange();
+
 protected:
 	void ChangeTeamReset();
 	void UpdateResources();
