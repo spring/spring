@@ -3355,7 +3355,7 @@ int LuaSyncedRead::GetUnitWeaponTryTarget(lua_State* L)
 		if ((enemy = ParseUnit(L, __FUNCTION__, 3)) == NULL)
 			return 0;
 
-		pos = weapon->GetUnitPositionWithError(enemy);
+		pos = weapon->GetUnitLeadTargetPos(enemy);
 	}
 
 	lua_pushboolean(L, weapon->TryTarget(pos, SWeaponTarget(enemy, pos, true)));
@@ -3388,7 +3388,7 @@ int LuaSyncedRead::GetUnitWeaponTestTarget(lua_State* L)
 		if ((enemy = ParseUnit(L, __FUNCTION__, 3)) == NULL)
 			return 0;
 
-		pos = weapon->GetUnitPositionWithError(enemy);
+		pos = weapon->GetUnitLeadTargetPos(enemy);
 	}
 
 	lua_pushboolean(L, weapon->TestTarget(pos, SWeaponTarget(enemy, pos, true)));
@@ -3421,7 +3421,7 @@ int LuaSyncedRead::GetUnitWeaponTestRange(lua_State* L)
 		if ((enemy = ParseUnit(L, __FUNCTION__, 3)) == NULL)
 			return 0;
 
-		pos = weapon->GetUnitPositionWithError(enemy);
+		pos = weapon->GetUnitLeadTargetPos(enemy);
 	}
 
 	lua_pushboolean(L, weapon->TestRange(pos, SWeaponTarget(enemy, pos, true)));
@@ -3454,7 +3454,7 @@ int LuaSyncedRead::GetUnitWeaponHaveFreeLineOfFire(lua_State* L)
 		if ((enemy = ParseUnit(L, __FUNCTION__, 3)) == NULL)
 			return 0;
 
-		pos = weapon->GetUnitPositionWithError(enemy);
+		pos = weapon->GetUnitLeadTargetPos(enemy);
 	}
 
 	lua_pushboolean(L, weapon->HaveFreeLineOfFire(pos, SWeaponTarget(enemy, pos, true)));
