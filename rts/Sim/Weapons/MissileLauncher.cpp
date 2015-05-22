@@ -32,7 +32,7 @@ void CMissileLauncher::UpdateWantedDir()
 	}
 }
 
-void CMissileLauncher::FireImpl(bool scriptCall)
+void CMissileLauncher::FireImpl(const bool scriptCall)
 {
 	float3 dir = currentTargetPos - weaponMuzzlePos;
 	const float dist = dir.LengthNormalize();

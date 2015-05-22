@@ -19,7 +19,7 @@ CFlameThrower::CFlameThrower(CUnit* owner, const WeaponDef* def): CWeapon(owner,
 }
 
 
-void CFlameThrower::FireImpl(bool scriptCall)
+void CFlameThrower::FireImpl(const bool scriptCall)
 {
 	float3 dir = currentTargetPos - weaponMuzzlePos;
 

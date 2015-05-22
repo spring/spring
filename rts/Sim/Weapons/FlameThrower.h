@@ -15,7 +15,7 @@ public:
 	float3 color2;
 
 private:
-	void FireImpl(bool scriptCall);
+	void FireImpl(const bool scriptCall) override final;
 };
 
 #endif // _FLAME_THROWER_H

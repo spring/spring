@@ -65,12 +65,12 @@ public:
 
 	float TargetWeight(const CUnit* unit) const;
 
-	virtual float GetRange2D(float yDiff) const;
-	virtual void UpdateRange(float val) { range = val; }
+	virtual float GetRange2D(const float yDiff) const;
+	virtual void UpdateRange(const float val) { range = val; }
 
 	void AutoTarget();
-	void AimReady(int value);
-	void Fire(bool scriptCall);
+	void AimReady(const int value);
+	void Fire(const bool scriptCall);
 
 	float ExperienceErrorScale() const;
 	float MoveErrorExperience() const;
@@ -78,13 +78,13 @@ public:
 	float SprayAngleExperience() const { return (sprayAngle * ExperienceErrorScale()); }
 	float3 SalvoErrorExperience() const { return (salvoError * ExperienceErrorScale()); }
 
-	void StopAttackingAllyTeam(int ally);
+	void StopAttackingAllyTeam(const int ally);
 
 	const SWeaponTarget& GetCurrentTarget() const { return currentTarget; }
 	const float3&     GetCurrentTargetPos() const { return currentTargetPos; }
 
 protected:
-	virtual void FireImpl(bool scriptCall) {}
+	virtual void FireImpl(const bool scriptCall) {}
 	virtual void UpdateWantedDir();
 
 	ProjectileParams GetProjectileParams();

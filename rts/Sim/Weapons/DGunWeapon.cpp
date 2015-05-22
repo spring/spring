@@ -25,7 +25,7 @@ void CDGunWeapon::UpdateWantedDir()
 	predict = 0;
 }
 
-void CDGunWeapon::FireImpl(bool scriptCall)
+void CDGunWeapon::FireImpl(const bool scriptCall)
 {
 	float3 dir = wantedDir;
 

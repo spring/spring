@@ -24,7 +24,7 @@ bool CMeleeWeapon::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg
 	return true;
 }
 
-void CMeleeWeapon::FireImpl(bool scriptCall)
+void CMeleeWeapon::FireImpl(const bool scriptCall)
 {
 	if (currentTarget.type == Target_Unit) {
 		const float3 impulseVec = wantedDir * owner->mass * weaponDef->damages.impulseFactor;

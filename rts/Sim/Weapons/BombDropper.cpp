@@ -103,7 +103,7 @@ bool CBombDropper::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ign
 }
 
 
-void CBombDropper::FireImpl(bool scriptCall)
+void CBombDropper::FireImpl(const bool scriptCall)
 {
 	if (dropTorpedoes) {
 		float3 launchSpeed = owner->speed;

@@ -22,7 +22,7 @@ CStarburstLauncher::CStarburstLauncher(CUnit* owner, const WeaponDef* def): CWea
 }
 
 
-void CStarburstLauncher::FireImpl(bool scriptCall)
+void CStarburstLauncher::FireImpl(const bool scriptCall)
 {
 	const float3 speed = ((weaponDef->fixedLauncher)? weaponDir: UpVector) * weaponDef->startvelocity;
 	const float3 aimError = (gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
@@ -50,7 +50,7 @@ bool CStarburstLauncher::HaveFreeLineOfFire(const float3 pos, const SWeaponTarge
 	return true;
 }
 
-float CStarburstLauncher::GetRange2D(float yDiff) const
+float CStarburstLauncher::GetRange2D(const float yDiff) const
 {
 	return range + (yDiff * weaponDef->heightmod);
 }

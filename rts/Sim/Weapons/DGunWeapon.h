@@ -12,11 +12,11 @@ public:
 	CDGunWeapon(CUnit* owner, const WeaponDef* def);
 
 	void Fire();
-	void UpdateWantedDir();
-	void Init();
+	void UpdateWantedDir() override final;
+	void Init() override final;
 
 private:
-	void FireImpl(bool scriptCall);
+	void FireImpl(const bool scriptCall) override final;
 };
 
 #endif // _DGUN_WEAPON_H

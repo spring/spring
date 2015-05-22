@@ -13,7 +13,7 @@ public:
 
 private:
 	bool HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const override final;
-	void FireImpl(bool scriptCall);
+	void FireImpl(const bool scriptCall) override final;
 };
 
 #endif /* MELEEWEAPON_H */

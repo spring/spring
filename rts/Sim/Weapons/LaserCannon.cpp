@@ -35,7 +35,7 @@ void CLaserCannon::UpdateWantedDir()
 	predict = targetDist / projectileSpeed;
 }
 
-void CLaserCannon::UpdateRange(float val)
+void CLaserCannon::UpdateRange(const float val)
 {
 	// round range *DOWN* to integer multiple of projectile speed
 	//
@@ -46,7 +46,7 @@ void CLaserCannon::UpdateRange(float val)
 }
 
 
-void CLaserCannon::FireImpl(bool scriptCall)
+void CLaserCannon::FireImpl(const bool scriptCall)
 {
 	float3 dir = currentTargetPos - weaponMuzzlePos;
 

@@ -19,13 +19,13 @@ protected:
 public:
 	CCannon(CUnit* owner, const WeaponDef* def);
 
-	void Init();
-	void UpdateRange(float val);
-	void UpdateWantedDir();
-	void SlowUpdate();
+	void Init() override final;
+	void UpdateRange(const float val) override final;
+	void UpdateWantedDir() override final;
+	void SlowUpdate() override final;
 
 	float GetRange2D(float yDiff, float rFact) const;
-	float GetRange2D(float yDiff) const;
+	float GetRange2D(const float yDiff) const override final;
 
 
 	/// indicates high trajectory on/off state
@@ -39,7 +39,7 @@ private:
 	float3 GetWantedDir2(const float3& diff) const;
 
 	bool HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const override final;
-	void FireImpl(bool scriptCall);
+	void FireImpl(const bool scriptCall) override final;
 };
 
 #endif // _CANNON_H

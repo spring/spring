@@ -28,7 +28,7 @@ CLightningCannon::CLightningCannon(CUnit* owner, const WeaponDef* def)
 }
 
 
-void CLightningCannon::FireImpl(bool scriptCall)
+void CLightningCannon::FireImpl(const bool scriptCall)
 {
 	float3 curPos = weaponMuzzlePos;
 	float3 curDir = wantedDir;

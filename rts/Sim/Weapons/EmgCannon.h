@@ -11,10 +11,10 @@ class CEmgCannon: public CWeapon
 public:
 	CEmgCannon(CUnit* owner, const WeaponDef* def);
 
-	void UpdateWantedDir();
+	void UpdateWantedDir() override final;
 
 private:
-	void FireImpl(bool scriptCall);
+	void FireImpl(const bool scriptCall) override final;
 };
 
 #endif // _EMG_CANNON_H

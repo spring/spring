@@ -34,7 +34,7 @@ void CEmgCannon::UpdateWantedDir()
 
 
 
-void CEmgCannon::FireImpl(bool scriptCall)
+void CEmgCannon::FireImpl(const bool scriptCall)
 {
 	float3 dir = currentTargetPos - weaponMuzzlePos;
 	const float dist = dir.LengthNormalize();

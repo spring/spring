@@ -45,7 +45,7 @@ void CCannon::Init()
 	CWeapon::Init();
 }
 
-void CCannon::UpdateRange(float val)
+void CCannon::UpdateRange(const float val)
 {
 	// clamp so as to not extend range if projectile
 	// speed is too low to reach the *updated* range
@@ -117,7 +117,7 @@ bool CCannon::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) con
 	return true;
 }
 
-void CCannon::FireImpl(bool scriptCall)
+void CCannon::FireImpl(const bool scriptCall)
 {
 	float3 diff = currentTargetPos - weaponMuzzlePos;
 	float3 dir = (diff.SqLength() > 4.0f) ? GetWantedDir(diff) : diff; // prevent vertical aim when emit-sfx firing the weapon
@@ -246,7 +246,7 @@ float CCannon::GetRange2D(float yDiff, float rFact) const
 	return (rFact * (speed2dSq + speed2d * math::sqrt(root1)) / (-gravity));
 }
 
-float CCannon::GetRange2D(float yDiff) const
+float CCannon::GetRange2D(const float yDiff) const
 {
 	return (GetRange2D(yDiff, rangeFactor));
 }

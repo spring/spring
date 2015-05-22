@@ -1208,14 +1208,14 @@ ProjectileParams CWeapon::GetProjectileParams()
 }
 
 
-float CWeapon::GetRange2D(float yDiff) const
+float CWeapon::GetRange2D(const float yDiff) const
 {
 	const float root1 = range * range - yDiff * yDiff;
 	return (root1 > 0.0f) ? math::sqrt(root1) : 0.0f;
 }
 
 
-void CWeapon::StopAttackingAllyTeam(int ally)
+void CWeapon::StopAttackingAllyTeam(const int ally)
 {
 	if ((currentTarget.type == Target_Unit) && currentTarget.unit->allyteam == ally) {
 		HoldFire();

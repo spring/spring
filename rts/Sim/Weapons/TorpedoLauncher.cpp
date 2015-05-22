@@ -52,7 +52,7 @@ bool CTorpedoLauncher::TestTarget(const float3 pos, const SWeaponTarget& trg) co
 	return (CWeapon::TestTarget(pos, trg));
 }
 
-void CTorpedoLauncher::FireImpl(bool scriptCall)
+void CTorpedoLauncher::FireImpl(const bool scriptCall)
 {
 	float3 dir = currentTargetPos - weaponMuzzlePos;
 	float3 vel;
