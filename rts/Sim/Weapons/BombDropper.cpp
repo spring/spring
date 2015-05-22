@@ -47,26 +47,26 @@ void CBombDropper::UpdateWantedDir()
 	predict = GetPredictedImpactTime(currentTargetPos);
 }
 
-bool CBombDropper::TestTarget(const float3 pos, bool userTarget, const CUnit* unit) const
+bool CBombDropper::TestTarget(const float3 pos, const SWeaponTarget& trg) const
 {
 	// assume we can still drop bombs on *partially* submerged targets
-	if (!dropTorpedoes && TargetUnitOrPositionUnderWater(pos, unit))
+	if (!dropTorpedoes && TargetUnderWater(trg))
 		return false;
 	// assume we can drop torpedoes on any partially or fully submerged target
-	if (dropTorpedoes && !TargetUnitOrPositionInWater(pos, unit))
+	if (dropTorpedoes && !TargetInWater(trg))
 		return false;
 
-	return CWeapon::TestTarget(pos, userTarget, unit);
+	return CWeapon::TestTarget(pos, trg);
 }
 
-bool CBombDropper::HaveFreeLineOfFire(const float3 pos, bool userTarget, const CUnit* unit) const
+bool CBombDropper::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const
 {
 	// TODO: requires sampling parabola from aimFromPos down to dropPos
 	return true;
 }
 
 
-bool CBombDropper::TestRange(const float3 pos, bool userTarget, const CUnit* unit) const
+bool CBombDropper::TestRange(const float3 pos, const SWeaponTarget& trg) const
 {
 	// "normal" range restrictions are not meaningful
 	// to check given dropped (ballistic) projectiles

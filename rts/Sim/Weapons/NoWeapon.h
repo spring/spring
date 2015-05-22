@@ -16,7 +16,7 @@ public:
 	void Init() {}
 
 private:
-	bool TestTarget(const float3 pos, bool userTarget, const CUnit* unit) const { return false; }
+	bool TestTarget(const float3 pos, const SWeaponTarget& trg) const override final { return false; }
 	void FireImpl(bool scriptCall) {}
 };
 

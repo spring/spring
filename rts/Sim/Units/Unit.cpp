@@ -1618,9 +1618,7 @@ bool CUnit::AttackUnit(CUnit* targetUnit, bool isUserTarget, bool wantManualFire
 	if (targetUnit == nullptr)
 		return false;
 
-	curTarget.type = Target_Unit;
-	curTarget.unit = targetUnit;
-	curTarget.isUserTarget = isUserTarget;
+	curTarget = SWeaponTarget(targetUnit, isUserTarget);
 	curTarget.isManualFire = wantManualFire || fpsMode;
 	AddDeathDependence(targetUnit, DEPENDENCE_TARGET);
 
@@ -1635,9 +1633,7 @@ bool CUnit::AttackGround(const float3& pos, bool isUserTarget, bool wantManualFi
 {
 	DropCurrentAttackTarget();
 
-	curTarget.type = Target_Pos;
-	curTarget.groundPos = pos;
-	curTarget.isUserTarget = isUserTarget;
+	curTarget = SWeaponTarget(pos, isUserTarget);
 	curTarget.isManualFire = wantManualFire || fpsMode;
 
 	bool ret = false;
@@ -1650,7 +1646,7 @@ bool CUnit::AttackGround(const float3& pos, bool isUserTarget, bool wantManualFi
 
 void CUnit::DropCurrentAttackTarget()
 {
-	if (curTarget.unit != NULL) {
+	if (curTarget.type == Target_Unit) {
 		DeleteDeathDependence(curTarget.unit, DEPENDENCE_TARGET);
 	}
 
@@ -1682,7 +1678,7 @@ void CUnit::SetLastAttacker(CUnit* attacker)
 
 void CUnit::DependentDied(CObject* o)
 {
-	if (o == curTarget.unit) { curTarget.unit = NULL; curTarget.type = Target_None; }
+	if (o == curTarget.unit) { DropCurrentAttackTarget(); }
 	if (o == soloBuilder)    { soloBuilder  = NULL; }
 	if (o == transporter)    { transporter  = NULL; }
 	if (o == lastAttacker)   { lastAttacker = NULL; }
@@ -2291,7 +2287,7 @@ void CUnit::StopAttackingAllyTeam(int ally)
 		lastAttacker = NULL;
 	}
 	if (curTarget.type == Target_Unit && curTarget.unit->allyteam == ally)
-		AttackUnit(nullptr, false, false);
+		DropCurrentAttackTarget();
 
 	commandAI->StopAttackingAllyTeam(ally);
 	for (CWeapon* w: weapons) {

@@ -18,10 +18,48 @@ CR_REG_METADATA(SWeaponTarget, (
 
 SWeaponTarget::SWeaponTarget()
 : type(Target_None)
-, unit(nullptr)
-, intercept(nullptr)
 , isUserTarget(false)
 , isManualFire(false)
+, unit(nullptr)
+, intercept(nullptr)
+{}
+
+
+SWeaponTarget::SWeaponTarget(const CUnit* u, bool userTarget)
+: type(Target_Unit)
+, isUserTarget(userTarget)
+, isManualFire(false)
+, unit(const_cast<CUnit*>(u)) //XXX evil but better than having two structs for const & non-const version
+, intercept(nullptr)
+{}
+
+
+SWeaponTarget::SWeaponTarget(float3 p, bool userTarget)
+: type(Target_Pos)
+, isUserTarget(userTarget)
+, isManualFire(false)
+, unit(nullptr)
+, intercept(nullptr)
+, groundPos(p)
+{}
+
+
+SWeaponTarget::SWeaponTarget(CWeaponProjectile* i, bool userTarget)
+: type(Target_Pos)
+, isUserTarget(userTarget)
+, isManualFire(false)
+, unit(nullptr)
+, intercept(i)
+{}
+
+
+SWeaponTarget::SWeaponTarget(const CUnit* u, float3 p, bool userTarget)
+: type(u ? Target_Unit: Target_Pos)
+, isUserTarget(userTarget)
+, isManualFire(false)
+, unit(const_cast<CUnit*>(u))
+, intercept(nullptr)
+, groundPos(u ? p : ZeroVector)
 {}
 
 

@@ -41,15 +41,15 @@ public:
 	void HoldFire() { DropCurrentTarget(); }
 
 	/// test if the weapon is able to attack an enemy/mapspot just by its properties (no range check, no FreeLineOfFire check, ...)
-	virtual bool TestTarget(const float3 pos, bool userTarget, const CUnit* unit) const;
+	virtual bool TestTarget(const float3 pos, const SWeaponTarget& trg) const;
 	/// test if the enemy/mapspot is in range/angle
-	virtual bool TestRange(const float3 pos, bool userTarget, const CUnit* unit) const;
+	virtual bool TestRange(const float3 pos, const SWeaponTarget& trg) const;
 	/// test if something is blocking our LineOfFire
-	virtual bool HaveFreeLineOfFire(const float3 pos, bool userTarget, const CUnit* unit) const;
+	virtual bool HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const;
 
 	virtual bool CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRequestedDir) const;
 
-	bool TryTarget(const float3 pos, bool userTarget, const CUnit* unit) const;
+	bool TryTarget(const float3 pos, const SWeaponTarget& trg) const;
 	bool TryTarget(const CUnit* unit, bool userTarget) const;
 	bool TryTargetRotate(const CUnit* unit, bool userTarget);
 	bool TryTargetRotate(float3 pos, bool userTarget);
@@ -88,8 +88,8 @@ protected:
 	virtual void UpdateWantedDir();
 
 	ProjectileParams GetProjectileParams();
-	static bool TargetUnitOrPositionUnderWater(const float3 targetPos, const CUnit* targetUnit, float offset = 0.0f);
-	static bool TargetUnitOrPositionInWater(const float3 targetPos, const CUnit* targetUnit, float offset = 0.0f);
+	static bool TargetUnderWater(const SWeaponTarget&);
+	static bool TargetInWater(const SWeaponTarget&);
 
 	void UpdateTargetPos();
 	void UpdateWeaponPieces(const bool updateAimFrom = true);

@@ -62,7 +62,7 @@ public:
 
 	void SetBeingIntercepted(bool b) { targeted = b; }
 	bool IsBeingIntercepted() const { return targeted; }
-	bool CanBeInterceptedBy(const WeaponDef*);
+	bool CanBeInterceptedBy(const WeaponDef*) const;
 
 	bool TraveledRange() const;
 

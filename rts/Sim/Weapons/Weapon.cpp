@@ -398,12 +398,7 @@ void CWeapon::UpdateFire()
 	if (!CanFire(false, false, false))
 		return;
 
-	if (currentTarget.type == Target_Intercept && currentTarget.intercept->IsBeingIntercepted()) {
-		//FIXME move this check into TryTarget (needs TryTarget to take SWeaponTarget&)
-		HoldFire();
-		return;
-	}
-	if (!TryTarget(currentTargetPos, currentTarget.isUserTarget, currentTarget.unit))
+	if (!TryTarget(currentTargetPos, currentTarget))
 		return;
 
 	// pre-check if we got enough resources (so CobBlockShot gets only called when really possible to shoot)
@@ -538,13 +533,11 @@ bool CWeapon::AttackGround(float3 newTargetPos, bool isUserTarget)
 
 	UpdateWeaponVectors();
 
-	if (!TryTarget(newTargetPos, isUserTarget, nullptr))
+	if (!TryTarget(newTargetPos, SWeaponTarget(newTargetPos, isUserTarget)))
 		return false;
 
 	DropCurrentTarget();
-	currentTarget.isUserTarget = isUserTarget;
-	currentTarget.type = Target_Pos;
-	currentTarget.groundPos = newTargetPos;
+	currentTarget = SWeaponTarget(newTargetPos, isUserTarget);
 	return true;
 }
 
@@ -566,9 +559,7 @@ bool CWeapon::AttackUnit(CUnit* newTargetUnit, bool isUserTarget)
 		return false;
 
 	DropCurrentTarget();
-	currentTarget.isUserTarget = isUserTarget;
-	currentTarget.type = Target_Unit;
-	currentTarget.unit = newTargetUnit;
+	currentTarget = SWeaponTarget(newTargetUnit, isUserTarget);
 
 	AddDeathDependence(newTargetUnit, DEPENDENCE_TARGETUNIT);
 	avoidTarget = false;
@@ -583,6 +574,8 @@ bool CWeapon::Attack(const SWeaponTarget& newTarget)
 
 	if ((newTarget.isManualFire != weaponDef->manualfire) && owner->unitDef->canManualFire)
 		return false;
+
+
 
 	switch (currentTarget.type) {
 		case Target_None: { SetAttackTarget(newTarget); return true; } break;
@@ -658,8 +651,8 @@ bool CWeapon::AllowWeaponAutoTarget() const
 	// if CAI has an auto-generated attack order, do not interfere
 	if (!owner->commandAI->CanWeaponAutoTarget()) { return false; }
 
-	if (avoidTarget)   { return true; }
 	if (!HaveTarget()) { return true; }
+	if (avoidTarget)   { return true; }
 
 	if (currentTarget.type == Target_Unit) {
 		if (!TryTarget(currentTarget.unit, currentTarget.isUserTarget)) {
@@ -749,9 +742,7 @@ void CWeapon::AutoTarget()
 	if (goodTargetUnit) {
 		// pick our new target
 		DropCurrentTarget();
-		currentTarget.type = Target_Unit;
-		currentTarget.isUserTarget = false;
-		currentTarget.unit = goodTargetUnit;
+		currentTarget = SWeaponTarget(goodTargetUnit, false);
 
 		// add new target dependence if we had no target or switched
 		AddDeathDependence(goodTargetUnit, DEPENDENCE_TARGETUNIT);
@@ -807,7 +798,7 @@ void CWeapon::HoldIfTargetInvalid()
 	if (!HaveTarget())
 		return;
 
-	if (!TryTarget(currentTargetPos, currentTarget.isUserTarget, currentTarget.unit)) {
+	if (!TryTarget(currentTargetPos, currentTarget)) {
 		HoldFire();
 		return;
 	}
@@ -855,29 +846,33 @@ void CWeapon::DependentDied(CObject* o)
 	}
 }
 
-bool CWeapon::TargetUnitOrPositionUnderWater(const float3 targetPos, const CUnit* targetUnit, float offset)
+
+bool CWeapon::TargetUnderWater(const SWeaponTarget& target)
 {
-	// test if a target position or unit is strictly underwater
-	if (targetUnit != NULL) {
-		return (targetUnit->IsUnderWater());
-	} else {
-		// consistent with CSolidObject::IsUnderWater (LT)
-		return ((targetPos.y + offset) < 0.0f);
+	switch (target.type) {
+		case Target_None: return false;
+		case Target_Unit: return target.unit->IsUnderWater();
+		case Target_Pos:  return (target.groundPos.y < 0.0f); // consistent with CSolidObject::IsUnderWater (LT)
+		case Target_Intercept: return (target.intercept->pos.y < 0.0f);
+		default: return false;
 	}
 }
 
-bool CWeapon::TargetUnitOrPositionInWater(const float3 targetPos, const CUnit* targetUnit, float offset)
+
+bool CWeapon::TargetInWater(const SWeaponTarget& target)
 {
-	// test if a target position or unit is in water (including underwater)
-	if (targetUnit != NULL) {
-		return (targetUnit->IsInWater());
-	} else {
-		// consistent with CSolidObject::IsInWater (LE)
-		return ((targetPos.y + offset) <= 0.0f);
+	switch (target.type) {
+		case Target_None: return false;
+		case Target_Unit: return target.unit->IsInWater();
+		case Target_Pos:  return (target.groundPos.y <= 0.0f); // consistent with CSolidObject::IsInWater (LE)
+		case Target_Intercept: return (target.intercept->pos.y <= 0.0f);
+		default: return false;
 	}
 }
 
-bool CWeapon::CheckTargetAngleConstraint(const float3 worldTargetDir, const float3 worldWeaponDir) const {
+
+bool CWeapon::CheckTargetAngleConstraint(const float3 worldTargetDir, const float3 worldWeaponDir) const
+{
 	if (onlyForward) {
 		if (maxForwardAngleDif > -1.0f) {
 			// if we are not a turret, we care about our owner's direction
@@ -951,55 +946,64 @@ float3 CWeapon::GetTargetBorderPos(
 }
 
 
-bool CWeapon::TryTarget(const float3 tgtPos, bool userTarget, const CUnit* targetUnit) const
+bool CWeapon::TryTarget(const float3 tgtPos, const SWeaponTarget& trg) const
 {
-	if (!TestTarget(tgtPos, userTarget, targetUnit))
+	//FIXME
+	//if (targetUnit)
+	//	tgtPos =
+
+	if (!TestTarget(tgtPos, trg))
 		return false;
 
-	if (!TestRange(tgtPos, userTarget, targetUnit))
+	if (!TestRange(tgtPos, trg))
 		return false;
 
 	//FIXME add a forcedUserTarget (a forced fire mode enabled with ctrl key or something) and skip the tests below then
-	return (HaveFreeLineOfFire(tgtPos, userTarget, targetUnit));
+	return (HaveFreeLineOfFire(tgtPos, trg));
 }
 
 
-// if targetUnit != NULL, this checks our onlyTargetCategory against unit->category
-// etc. as well as range, otherwise the only concern is range and angular difference
-// (terrain is NOT checked here, HaveFreeLineOfFire does that)
-bool CWeapon::TestTarget(const float3 tgtPos, bool /*userTarget*/, const CUnit* targetUnit) const
+bool CWeapon::TestTarget(const float3 tgtPos, const SWeaponTarget& trg) const
 {
-	if (targetUnit != NULL) {
-		if (targetUnit == owner)
+	// test unit target properties
+	if (trg.type == Target_Unit) {
+		if (trg.unit == owner)
 			return false;
-		if ((targetUnit->category & onlyTargetCategory) == 0)
+		if ((trg.unit->category & onlyTargetCategory) == 0)
 			return false;
-		if (targetUnit->isDead && modInfo.fireAtKilled == 0)
+		if (trg.unit->isDead && modInfo.fireAtKilled == 0)
 			return false;
-		if (targetUnit->IsCrashing() && modInfo.fireAtCrashing == 0)
+		if (trg.unit->IsCrashing() && modInfo.fireAtCrashing == 0)
 			return false;
 	}
 
+	// interceptor
+	if (currentTarget.type == Target_Intercept && weaponDef->interceptSolo) {
+		if (currentTarget.intercept->IsBeingIntercepted())
+			return false;
+	}
+
+	// water weapon checks
 	if (!weaponDef->waterweapon) {
 		// we cannot pick targets underwater, check where target is in relation to us
-		if (!owner->IsUnderWater() && TargetUnitOrPositionUnderWater(tgtPos, targetUnit))
+		if (!owner->IsUnderWater() && TargetUnderWater(trg))
 			return false;
 		// if we are underwater but target is *not* in water, fireSubmersed gets checked
-		if (owner->IsUnderWater() && TargetUnitOrPositionInWater(tgtPos, targetUnit))
+		if (owner->IsUnderWater() && TargetInWater(trg))
 			return false;
 	}
 
 	return true;
 }
 
-bool CWeapon::TestRange(const float3 tgtPos, bool /*userTarget*/, const CUnit* targetUnit) const
+bool CWeapon::TestRange(const float3 tgtPos, const SWeaponTarget& trg) const
 {
 	const float3 tmpTargetDir = (tgtPos - aimFromPos).SafeNormalize();
 
 	const float heightDiff = tgtPos.y - owner->pos.y;
 	float weaponRange = 0.0f; // range modified by heightDiff and cylinderTargeting
 
-	if (targetUnit == NULL || weaponDef->cylinderTargeting < 0.01f) {
+	if (trg.type == Target_Pos || weaponDef->cylinderTargeting < 0.01f) {
 		// check range in a sphere (with extra radius <heightDiff * heightMod>)
 		weaponRange = GetRange2D(heightDiff * weaponDef->heightmod);
 	} else {
@@ -1019,7 +1023,7 @@ bool CWeapon::TestRange(const float3 tgtPos, bool /*userTarget*/, const CUnit* t
 }
 
 
-bool CWeapon::HaveFreeLineOfFire(const float3 pos, bool userTarget, const CUnit* unit) const
+bool CWeapon::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const
 {
 	float3 dir = pos - aimFromPos;
 
@@ -1057,7 +1061,7 @@ bool CWeapon::HaveFreeLineOfFire(const float3 pos, bool userTarget, const CUnit*
 
 
 bool CWeapon::TryTarget(const CUnit* unit, bool userTarget) const {
-	return TryTarget(GetUnitLeadTargetPos(unit), userTarget, unit);
+	return TryTarget(GetUnitLeadTargetPos(unit), SWeaponTarget(unit, userTarget));
 }
 
 
@@ -1100,7 +1104,7 @@ bool CWeapon::TryTargetHeading(short heading, float3 pos, bool userTarget, const
 	owner->rightdir = owner->frontdir.cross(owner->updir);
 	UpdateWeaponVectors();
 
-	const bool val = TryTarget(pos, userTarget, unit);
+	const bool val = TryTarget(pos, SWeaponTarget(unit, userTarget));
 
 	owner->frontdir = tempfrontdir;
 	owner->rightdir = temprightdir;
@@ -1154,19 +1158,18 @@ void CWeapon::Fire(bool scriptCall)
 
 void CWeapon::UpdateInterceptTarget()
 {
+	CWeaponProjectile* newTarget = nullptr;
 	float minInterceptTargetDistSq = std::numeric_limits<float>::max();
-
-	if (currentTarget.intercept) {
+	if (currentTarget.type == Target_Intercept) {
 		minInterceptTargetDistSq = aimFromPos.SqDistance(currentTarget.intercept->pos);
 	}
 
-	CWeaponProjectile* newTarget = nullptr;
 	for (std::map<int, CWeaponProjectile*>::iterator pi = incomingProjectiles.begin(); pi != incomingProjectiles.end(); ++pi) {
 		CWeaponProjectile* p = pi->second;
-		float curInterceptTargetDistSq = aimFromPos.SqDistance(p->pos);
+		const float curInterceptTargetDistSq = aimFromPos.SqDistance(p->pos);
 
 		// set by CWeaponProjectile's ctor when the interceptor fires
-		if (p->IsBeingIntercepted())
+		if (weaponDef->interceptSolo && p->IsBeingIntercepted()) //FIXME add bad target?
 			continue;
 		if (curInterceptTargetDistSq >= minInterceptTargetDistSq)
 			continue;
@@ -1181,9 +1184,8 @@ void CWeapon::UpdateInterceptTarget()
 	}
 
 	if (newTarget) {
-		DropCurrentTarget(); //FIXME p->IsBeingIntercepted()
-		currentTarget.intercept = newTarget;
-		currentTarget.type = Target_Intercept;
+		DropCurrentTarget();
+		currentTarget = SWeaponTarget(newTarget);
 	}
 }
 

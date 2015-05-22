@@ -12,7 +12,7 @@ public:
 	CMeleeWeapon(CUnit* owner, const WeaponDef* def);
 
 private:
-	bool HaveFreeLineOfFire(const float3 pos, bool userTarget, const CUnit* unit) const;
+	bool HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const override final;
 	void FireImpl(bool scriptCall);
 };
 

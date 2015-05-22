@@ -647,12 +647,8 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 				const SWeaponTarget origTarget = w->GetCurrentTarget();
 				const float3 origWeaponMuzzlePos = w->weaponMuzzlePos;
 
-				SWeaponTarget newTarget;
-				newTarget.type = Target_Pos;
-				newTarget.groundPos = pos + dir;
-
 				w->weaponMuzzlePos = pos;
-				w->SetAttackTarget(newTarget);
+				w->SetAttackTarget(SWeaponTarget(pos + dir));
 
 				w->Fire(true);
 

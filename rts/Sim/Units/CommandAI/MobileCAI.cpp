@@ -612,7 +612,7 @@ bool CMobileCAI::IsValidTarget(const CUnit* enemy) const {
 
 	// test if any weapon can target the enemy unit
 	for (const CWeapon* w: owner->weapons) {
-		if (w->TestTarget(enemy->pos, false, enemy)) {
+		if (w->TestTarget(enemy->pos, SWeaponTarget(enemy))) {
 			return true;
 		}
 	}

@@ -327,7 +327,7 @@ void CWeaponProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 }
 
 
-bool CWeaponProjectile::CanBeInterceptedBy(const WeaponDef* wd)
+bool CWeaponProjectile::CanBeInterceptedBy(const WeaponDef* wd) const
 {
 	return ((weaponDef->targetable & wd->interceptor) != 0);
 }

@@ -14,7 +14,7 @@ public:
 	void UpdateWantedDir();
 
 private:
-	bool TestTarget(const float3 pos, bool userTarget, const CUnit* unit) const;
+	bool TestTarget(const float3 pos, const SWeaponTarget& trg) const override final;
 	void FireImpl(bool scriptCall);
 
 private:

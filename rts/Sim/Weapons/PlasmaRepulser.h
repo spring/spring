@@ -19,7 +19,7 @@ public:
 
 	void Init();
 	void DependentDied(CObject* o);
-	bool HaveFreeLineOfFire(const float3 pos, bool userTarget, const CUnit* unit) const;
+	bool HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const override final;
 
 	void Update();
 	void SlowUpdate();

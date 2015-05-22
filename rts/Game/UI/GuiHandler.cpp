@@ -1062,8 +1062,6 @@ bool CGuiHandler::TryTarget(const CommandDescription& cmdDesc) const
 	const float dist = TraceRay::GuiTraceRay(camera->GetPos(), mouse->dir, viewRange, NULL, targetUnit, targetFeature, true);
 	const float3 groundPos = camera->GetPos() + mouse->dir * dist;
 
-	float3 modGroundPos;
-
 	if (dist <= 0.0f)
 		return false;
 
@@ -1074,18 +1072,20 @@ bool CGuiHandler::TryTarget(const CommandDescription& cmdDesc) const
 			return true;
 
 		for (const CWeapon* w: u->weapons) {
-			w->AdjustTargetPosToWater(modGroundPos = groundPos, targetUnit == NULL);
+			float3 modGroundPos = groundPos;
+			w->AdjustTargetPosToWater(modGroundPos, targetUnit == NULL);
+			const SWeaponTarget wtrg = SWeaponTarget(targetUnit, modGroundPos);
 
 			if (u->immobile) {
 				// immobile unit
 				// check range and weapon target properties
-				if (w->TryTarget(modGroundPos, false, targetUnit)) {
+				if (w->TryTarget(modGroundPos, wtrg)) {
 					return true;
 				}
 			} else {
 				// mobile units can always move into range
 				// only check if we got a weapon that can shot the target (i.e. anti-air/anti-sub)
-				if (w->TestTarget(modGroundPos, false, targetUnit)) {
+				if (w->TestTarget(modGroundPos, wtrg)) {
 					return true;
 				}
 			}
