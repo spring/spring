@@ -1104,7 +1104,7 @@ bool CWeapon::TryTargetHeading(short heading, float3 pos, bool userTarget, const
 	owner->rightdir = owner->frontdir.cross(owner->updir);
 	UpdateWeaponVectors();
 
-	const bool val = TryTarget(pos, SWeaponTarget(unit, userTarget));
+	const bool val = TryTarget(pos, SWeaponTarget(unit, pos, userTarget));
 
 	owner->frontdir = tempfrontdir;
 	owner->rightdir = temprightdir;
