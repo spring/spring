@@ -952,6 +952,9 @@ bool CWeapon::TryTarget(const float3 tgtPos, const SWeaponTarget& trg) const
 	//if (targetUnit)
 	//	tgtPos =
 
+	if (trg.unit == nullptr)
+		return (HaveFreeLineOfFire(tgtPos, trg));
+
 	if (!TestTarget(tgtPos, trg))
 		return false;
 
