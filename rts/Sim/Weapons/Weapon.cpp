@@ -9,9 +9,7 @@
 #include "Map/Ground.h"
 #include "Sim/Misc/CollisionHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
-#include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/InterceptHandler.h"
-#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/AAirMoveType.h"
@@ -23,7 +21,6 @@
 #include "Sim/Weapons/Cannon.h"
 #include "Sim/Weapons/NoWeapon.h"
 #include "System/EventHandler.h"
-#include "System/float3.h"
 #include "System/myMath.h"
 #include "System/Sync/SyncTracer.h"
 #include "System/Sound/ISoundChannels.h"
@@ -175,12 +172,10 @@ void CWeapon::SetWeaponNum(int num)
 {
 	weaponNum = num;
 
-	if (dynamic_cast<CNoWeapon*>(this) != nullptr) {
-		UpdateWeaponPieces();
-		UpdateWeaponVectors();
-		hasBlockShot = owner->script->HasBlockShot(weaponNum);
-		hasTargetWeight = owner->script->HasTargetWeight(weaponNum);
-	}
+	UpdateWeaponPieces();
+	UpdateWeaponVectors();
+	hasBlockShot = owner->script->HasBlockShot(weaponNum);
+	hasTargetWeight = owner->script->HasTargetWeight(weaponNum);
 }
 
 
@@ -218,7 +213,7 @@ void CWeapon::UpdateWeaponPieces(const bool updateAimFrom)
 		muzzlePiece = aimFromPiece;
 	} else
 	if (!aimExists && !muzExists) {
-		if (!alreadyWarnedAboutMissingPieces && (owner->script != &CNullUnitScript::value) && !weaponDef->isShield) {
+		if (!alreadyWarnedAboutMissingPieces && (owner->script != &CNullUnitScript::value) && !weaponDef->isShield && (dynamic_cast<CNoWeapon*>(this) == nullptr)) {
 			LOG_L(L_WARNING, "%s: weapon%i: Neither AimFromWeapon nor QueryWeapon defined or returned invalid pieceids", owner->unitDef->name.c_str(), weaponNum);
 			alreadyWarnedAboutMissingPieces = true;
 		}
@@ -606,8 +601,8 @@ void CWeapon::SetAttackTarget(const SWeaponTarget& newTarget)
 
 	DropCurrentTarget();
 	currentTarget = newTarget;
-	if (currentTarget.type == Target_Unit) {
-		AddDeathDependence(currentTarget.unit, DEPENDENCE_TARGETUNIT);
+	if (newTarget.type == Target_Unit) {
+		AddDeathDependence(newTarget.unit, DEPENDENCE_TARGETUNIT);
 	}
 
 	currentTargetPos = GetLeadTargetPos(newTarget);
@@ -677,7 +672,7 @@ void CWeapon::AutoTarget()
 {
 	// 1. return fire at our last attacker if allowed
 	if ((owner->lastAttacker != nullptr) && ((owner->lastAttackFrame + 200) <= gs->frameNum)) {
-		if (AttackUnit(owner->lastAttacker, false))
+		if (Attack(SWeaponTarget(owner->lastAttacker)))
 			return;
 	}
 
@@ -728,11 +723,7 @@ void CWeapon::AutoTarget()
 
 	if (goodTargetUnit) {
 		// pick our new target
-		DropCurrentTarget();
-		currentTarget = SWeaponTarget(goodTargetUnit, false);
-
-		// add new target dependence if we had no target or switched
-		AddDeathDependence(goodTargetUnit, DEPENDENCE_TARGETUNIT);
+		SetAttackTarget(SWeaponTarget(goodTargetUnit));
 	}
 }
 
@@ -786,21 +777,21 @@ void CWeapon::HoldIfTargetInvalid()
 		return;
 
 	if (!TryTarget(currentTargetPos, currentTarget)) {
-		HoldFire();
+		DropCurrentTarget();
 		return;
 	}
 
 	if (currentTarget.type == Target_Unit) {
 		// stop firing at cloaked targets
 		if (currentTarget.unit->isCloaked && !(currentTarget.unit->losStatus[owner->allyteam] & (LOS_INLOS | LOS_INRADAR))) {
-			HoldFire();
+			DropCurrentTarget();
 			return;
 		}
 
 		// stop firing at neutral targets (unless in FAW mode)
 		// note: HoldFire sets targetUnit to NULL, so recheck
 		if (!currentTarget.isUserTarget && currentTarget.unit->IsNeutral() && owner->fireState < FIRESTATE_FIREATNEUTRAL) {
-			HoldFire();
+			DropCurrentTarget();
 			return;
 		}
 
@@ -810,7 +801,7 @@ void CWeapon::HoldIfTargetInvalid()
 		// target or the unit switches to an allied team) should
 		// be handled by /ally processing now
 		if (!currentTarget.isUserTarget && teamHandler->Ally(owner->allyteam, currentTarget.unit->allyteam)) {
-			HoldFire();
+			DropCurrentTarget();
 			return;
 		}
 	}
@@ -946,7 +937,7 @@ bool CWeapon::TryTarget(const float3 tgtPos, const SWeaponTarget& trg) const
 		return false;
 
 	//FIXME add a forcedUserTarget (a forced fire mode enabled with ctrl key or something) and skip the tests below then
-	return (HaveFreeLineOfFire(tgtPos, trg));
+	return HaveFreeLineOfFire(tgtPos, trg);
 }
 
 
@@ -1158,6 +1149,7 @@ void CWeapon::UpdateInterceptTarget()
 		// set by CWeaponProjectile's ctor when the interceptor fires
 		if (weaponDef->interceptSolo && p->IsBeingIntercepted()) //FIXME add bad target?
 			continue;
+
 		if (curInterceptTargetDistSq >= minInterceptTargetDistSq)
 			continue;
 
@@ -1205,7 +1197,7 @@ float CWeapon::GetRange2D(const float yDiff) const
 void CWeapon::StopAttackingAllyTeam(const int ally)
 {
 	if ((currentTarget.type == Target_Unit) && currentTarget.unit->allyteam == ally) {
-		HoldFire();
+		DropCurrentTarget();
 	}
 }
 

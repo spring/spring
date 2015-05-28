@@ -38,7 +38,6 @@ public:
 	bool Attack(const SWeaponTarget& newTarget);          //< does TryTarget() checks etc.
 	void SetAttackTarget(const SWeaponTarget& newTarget); //< does not any checks etc. !
 	void DropCurrentTarget();
-	void HoldFire() { DropCurrentTarget(); }
 
 	/// test if the weapon is able to attack an enemy/mapspot just by its properties (no range check, no FreeLineOfFire check, ...)
 	virtual bool TestTarget(const float3 pos, const SWeaponTarget& trg) const;

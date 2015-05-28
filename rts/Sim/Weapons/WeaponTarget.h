@@ -29,7 +29,7 @@ struct SWeaponTarget {
 	SWeaponTarget(CWeaponProjectile* intercept, bool isUserTarget = false);
 
 	// conditional ctors
-	SWeaponTarget(const CUnit* unit, float3 intercept, bool isUserTarget = false);
+	SWeaponTarget(const CUnit* unit, float3 groundPos, bool isUserTarget = false);
 
 	// operators
 	bool operator!=(const SWeaponTarget& other) const;
