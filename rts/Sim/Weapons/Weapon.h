@@ -88,6 +88,7 @@ public:
 protected:
 	virtual void FireImpl(const bool scriptCall) {}
 	virtual void UpdateWantedDir();
+	virtual float GetPredictFactor(float3 p) const;
 
 	ProjectileParams GetProjectileParams();
 	static bool TargetUnderWater(const SWeaponTarget&);
@@ -98,7 +99,7 @@ protected:
 	float3 GetLeadVec(const CUnit* unit) const;
 
 private:
-	void UpdateTargeting();
+	void UpdateAim();
 	void UpdateFire();
 	bool UpdateStockpile();
 	void UpdateSalvo();

@@ -11,8 +11,6 @@ class CTorpedoLauncher: public CWeapon
 public:
 	CTorpedoLauncher(CUnit* owner, const WeaponDef* def);
 
-	void UpdateWantedDir() override final;
-
 private:
 	bool TestTarget(const float3 pos, const SWeaponTarget& trg) const override final;
 	void FireImpl(const bool scriptCall) override final;

@@ -67,9 +67,6 @@ void CCannon::UpdateWantedDir()
 {
 	const float3 targetVec = currentTargetPos - aimFromPos;
 	wantedDir = GetWantedDir(targetVec);
-	const float speed2D = wantedDir.Length2D() * projectileSpeed;
-
-	predict = ((speed2D == 0.0f) ? 1.0f : (targetVec.Length2D() / speed2D));
 }
 
 

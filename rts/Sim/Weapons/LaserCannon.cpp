@@ -22,19 +22,6 @@ CLaserCannon::CLaserCannon(CUnit* owner, const WeaponDef* def)
 }
 
 
-
-void CLaserCannon::UpdateWantedDir()
-{
-	float3 wantedDirTemp = currentTargetPos - aimFromPos;
-	const float targetDist = wantedDirTemp.LengthNormalize();
-
-	if (!onlyForward && targetDist != 0.0f) {
-		wantedDir = wantedDirTemp;
-	}
-
-	predict = targetDist / projectileSpeed;
-}
-
 void CLaserCannon::UpdateRange(const float val)
 {
 	// round range *DOWN* to integer multiple of projectile speed

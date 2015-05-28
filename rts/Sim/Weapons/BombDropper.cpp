@@ -10,6 +10,8 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/myMath.h"
+#include "System/Log/ILog.h"
+
 
 CR_BIND_DERIVED(CBombDropper, CWeapon, (NULL, NULL, false))
 
@@ -40,11 +42,9 @@ void CBombDropper::Init()
 	maxForwardAngleDif = -1.0f;
 }
 
-
-void CBombDropper::UpdateWantedDir()
+float CBombDropper::GetPredictFactor(float3 p) const
 {
-	CWeapon::UpdateWantedDir();
-	predict = GetPredictedImpactTime(currentTargetPos);
+	return GetPredictedImpactTime(p - aimFromPos);
 }
 
 bool CBombDropper::TestTarget(const float3 pos, const SWeaponTarget& trg) const
@@ -158,7 +158,7 @@ void CBombDropper::FireImpl(const bool scriptCall)
  */
 void CBombDropper::SlowUpdate()
 {
-	CWeapon::SlowUpdate(true);
+	CWeapon::SlowUpdate(true); //FIXME
 }
 
 float CBombDropper::GetPredictedImpactTime(const float3& impactPos) const

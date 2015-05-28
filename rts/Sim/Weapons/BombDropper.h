@@ -12,7 +12,7 @@ public:
 	CBombDropper(CUnit* owner, const WeaponDef* def, bool useTorps);
 
 	void Init() override final;
-	void UpdateWantedDir() override final;
+	float GetPredictFactor(float3 p) const override final;
 	void SlowUpdate() override final;
 
 private:

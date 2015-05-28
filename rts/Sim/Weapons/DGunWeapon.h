@@ -12,7 +12,7 @@ public:
 	CDGunWeapon(CUnit* owner, const WeaponDef* def);
 
 	void Fire();
-	void UpdateWantedDir() override final;
+	float GetPredictFactor(float3 p) const override final;
 	void Init() override final;
 
 private:

@@ -20,12 +20,6 @@ CTorpedoLauncher::CTorpedoLauncher(CUnit* owner, const WeaponDef* def): CWeapon(
 }
 
 
-void CTorpedoLauncher::UpdateWantedDir()
-{
-	wantedDir = currentTargetPos - aimFromPos;
-	predict = wantedDir.LengthNormalize() / projectileSpeed;
-}
-
 bool CTorpedoLauncher::TestTarget(const float3 pos, const SWeaponTarget& trg) const
 {
 	// by default we are a waterweapon, therefore:

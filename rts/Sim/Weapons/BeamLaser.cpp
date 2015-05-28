@@ -130,15 +130,13 @@ void CBeamLaser::UpdatePosAndMuzzlePos()
 	}
 }
 
-void CBeamLaser::UpdateWantedDir()
+float CBeamLaser::GetPredictFactor(float3 p) const
 {
-	CWeapon::UpdateWantedDir();
-
 	if (!weaponDef->beamburst) {
-		predict = salvoSize / 2;
+		return salvoSize / 2;
 	} else {
 		// beamburst tracks the target during the burst so there's no need to lead
-		predict = 0;
+		return 0;
 	}
 }
 
@@ -250,7 +248,7 @@ float3 CBeamLaser::GetFireDir(bool sweepFire, bool scriptCall)
 	return dir;
 }
 
-void CBeamLaser::FireImpl(bool scriptCall)
+void CBeamLaser::FireImpl(const bool scriptCall)
 {
 	// sweepfire must exclude regular fire (!)
 	if (sweepFireState.IsSweepFiring())

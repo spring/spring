@@ -254,18 +254,27 @@ void CWeapon::UpdateWantedDir()
 }
 
 
+float CWeapon::GetPredictFactor(float3 p) const
+{
+	return (p - aimFromPos).Length() / projectileSpeed;
+}
+
+
 void CWeapon::Update()
 {
+	predict = GetPredictFactor(GetTargetPos(currentTarget));
+	predict = Clamp(predict, 0.f, 50000.0f);
+	errorVector += errorVectorAdd;
+
 	UpdateWeaponVectors();
 	currentTargetPos = GetLeadTargetPos(currentTarget);
 
 	if (!UpdateStockpile())
 		return;
 
-	UpdateTargeting();
+	UpdateAim();
 	UpdateFire();
 	UpdateSalvo();
-
 #ifdef TRACE_SYNC
 	tracefile << __FUNCTION__;
 	tracefile << aimFromPos.x << " " << aimFromPos.y << " " << aimFromPos.z << " " << currentTargetPos.x << " " << currentTargetPos.y << " " << currentTargetPos.z << "\n";
@@ -273,11 +282,8 @@ void CWeapon::Update()
 }
 
 
-void CWeapon::UpdateTargeting()
+void CWeapon::UpdateAim()
 {
-	predict = std::min(predict, 50000.0f);
-	errorVector += errorVectorAdd;
-
 	if (!HaveTarget())
 		return;
 

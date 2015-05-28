@@ -11,7 +11,6 @@ class CLaserCannon: public CWeapon
 public:
 	CLaserCannon(CUnit* owner, const WeaponDef* def);
 
-	void UpdateWantedDir() override final;
 	void UpdateRange(const float val) override final;
 
 private:

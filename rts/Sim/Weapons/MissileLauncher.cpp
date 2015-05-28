@@ -21,14 +21,11 @@ CMissileLauncher::CMissileLauncher(CUnit* owner, const WeaponDef* def): CWeapon(
 
 void CMissileLauncher::UpdateWantedDir()
 {
-	if (!onlyForward) {
-		wantedDir = currentTargetPos - aimFromPos;
-		predict = wantedDir.LengthNormalize() / projectileSpeed;
+	CWeapon::UpdateWantedDir();
 
-		if (weaponDef->trajectoryHeight > 0.0f) {
-			wantedDir.y += weaponDef->trajectoryHeight;
-			wantedDir.Normalize();
-		}
+	if (weaponDef->trajectoryHeight > 0.0f) {
+		wantedDir.y += weaponDef->trajectoryHeight;
+		wantedDir.Normalize();
 	}
 }
 
