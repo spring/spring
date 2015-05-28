@@ -648,12 +648,12 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 				const float3 origWeaponMuzzlePos = w->weaponMuzzlePos;
 
 				w->weaponMuzzlePos = pos;
-				w->SetAttackTarget(SWeaponTarget(pos + dir));
-
-				w->Fire(true);
-
+				if (w->Attack(SWeaponTarget(pos + dir))) {
+					w->Fire(true);
+				}
 				w->weaponMuzzlePos = origWeaponMuzzlePos;
-				w->SetAttackTarget(origTarget);
+				bool origRestored = w->Attack(origTarget);
+				assert(origRestored);
 			}
 			else if (sfxType & SFX_DETONATE_WEAPON) {
 				const unsigned index = sfxType - SFX_DETONATE_WEAPON;
@@ -1171,7 +1171,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		//! if targetID is 0, just sets weapon->haveUserTarget
 		//! to false (and targetType to None) without attacking
 		CUnit* target = (targetID > 0)? unitHandler->GetUnit(targetID): NULL;
-		return (weapon->AttackUnit(target, userTarget) ? 1 : 0);
+		return (weapon->Attack(SWeaponTarget(target, userTarget)) ? 1 : 0);
 	}
 	case SET_WEAPON_GROUND_TARGET: {
 		const int weaponID = p1 - 1;
@@ -1185,7 +1185,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		CWeapon* weapon = unit->weapons[weaponID];
 		if (weapon == NULL) { return 0; }
 
-		return weapon->AttackGround(pos, userTarget) ? 1 : 0;
+		return weapon->Attack(SWeaponTarget(pos, userTarget)) ? 1 : 0;
 	}
 	case MIN:
 		return std::min(p1, p2);

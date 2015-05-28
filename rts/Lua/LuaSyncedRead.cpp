@@ -3352,13 +3352,13 @@ int LuaSyncedRead::GetUnitWeaponTryTarget(lua_State* L)
 		pos.z = luaL_optnumber(L, 5, 0.0f);
 
 	} else {
-		if ((enemy = ParseUnit(L, __FUNCTION__, 3)) == NULL)
-			return 0;
+		enemy = ParseUnit(L, __FUNCTION__, 3);
 
-		pos = weapon->GetUnitLeadTargetPos(enemy);
+		if (enemy == NULL)
+			return 0;
 	}
 
-	lua_pushboolean(L, weapon->TryTarget(pos, SWeaponTarget(enemy, pos, true)));
+	lua_pushboolean(L, weapon->TryTarget(SWeaponTarget(enemy, pos, true)));
 	return 1;
 }
 

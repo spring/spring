@@ -282,7 +282,6 @@ void CWeapon::UpdateAim()
 	if (!HaveTarget())
 		return;
 
-	AdjustTargetPosToWater(currentTargetPos, currentTarget.type == Target_Pos);
 	UpdateWantedDir();
 
 	// Check fire angle constraints
@@ -517,80 +516,31 @@ void CWeapon::UpdateSalvo()
 	}
 }
 
-bool CWeapon::AttackGround(float3 newTargetPos, bool isUserTarget)
-{
-	if (!isUserTarget && weaponDef->noAutoTarget)
-		return false;
-	if (weaponDef->interceptor || !weaponDef->canAttackGround)
-		return false;
-
-	// keep target positions on the surface if this weapon hates water
-	AdjustTargetPosToWater(newTargetPos, true);
-
-	// prevent range hax in FPS mode
-	if (owner->UnderFirstPersonControl() && dynamic_cast<CCannon*>(this)) {
-		newTargetPos.y = CGround::GetHeightAboveWater(newTargetPos.x, newTargetPos.z);
-	}
-
-	UpdateWeaponVectors();
-
-	if (!TryTarget(newTargetPos, SWeaponTarget(newTargetPos, isUserTarget)))
-		return false;
-
-	DropCurrentTarget();
-	currentTarget = SWeaponTarget(newTargetPos, isUserTarget);
-	return true;
-}
-
-bool CWeapon::AttackUnit(CUnit* newTargetUnit, bool isUserTarget)
-{
-	if (!isUserTarget && weaponDef->noAutoTarget) {
-		return false;
-	}
-	if (weaponDef->interceptor)
-		return false;
-
-	if (newTargetUnit == nullptr) {
-		return false;
-	}
-
-	UpdateWeaponVectors();
-
-	if (!TryTarget(newTargetUnit, isUserTarget))
-		return false;
-
-	DropCurrentTarget();
-	currentTarget = SWeaponTarget(newTargetUnit, isUserTarget);
-
-	AddDeathDependence(newTargetUnit, DEPENDENCE_TARGETUNIT);
-	avoidTarget = false;
-	return true;
-}
-
 
 bool CWeapon::Attack(const SWeaponTarget& newTarget)
 {
 	if (newTarget == currentTarget)
 		return true;
 
-	if ((newTarget.isManualFire != weaponDef->manualfire) && owner->unitDef->canManualFire)
-		return false;
-
-
+	UpdateWeaponVectors();
 
 	switch (newTarget.type) {
-		case Target_None: { SetAttackTarget(newTarget); return true; } break;
-		case Target_Unit: { return AttackUnit(newTarget.unit, newTarget.isUserTarget); } break;
-		case Target_Pos:  { return AttackGround(newTarget.groundPos, newTarget.isUserTarget); } break;
-		case Target_Intercept: {
-			if (newTarget.intercept->CanBeInterceptedBy(weaponDef)) {
-				SetAttackTarget(newTarget);
-				return true;
-			}
-			return false;
+		case Target_None: {
+			SetAttackTarget(newTarget);
+			return true;
 		} break;
-		default: return false;
+		case Target_Unit:
+		case Target_Pos:
+		case Target_Intercept: {
+			if (!TryTarget(newTarget))
+				return false;
+
+			SetAttackTarget(newTarget);
+			avoidTarget = false;
+			return true;
+		} break;
 	};
+	return false;
 }
 
 
@@ -637,7 +587,7 @@ bool CWeapon::AllowWeaponAutoTarget() const
 	if (avoidTarget)   { return true; }
 
 	if (currentTarget.type == Target_Unit) {
-		if (!TryTarget(currentTarget.unit, currentTarget.isUserTarget)) {
+		if (!TryTarget(SWeaponTarget(currentTarget.unit, currentTarget.isUserTarget))) {
 			// if we have a user-target (ie. a user attack order)
 			// then only allow generating opportunity targets iff
 			// it is not possible to hit the user's chosen unit
@@ -704,7 +654,7 @@ void CWeapon::AutoTarget()
 		if (isBadTarget && (badTargetUnit != nullptr))
 			continue;
 
-		if (!TryTarget(unit, false))
+		if (!TryTarget(SWeaponTarget(unit)))
 			continue;
 
 		if (unit->IsNeutral() && (owner->fireState < FIRESTATE_FIREATNEUTRAL))
@@ -776,7 +726,7 @@ void CWeapon::HoldIfTargetInvalid()
 	if (!HaveTarget())
 		return;
 
-	if (!TryTarget(currentTargetPos, currentTarget)) {
+	if (!TryTarget(currentTarget)) {
 		DropCurrentTarget();
 		return;
 	}
@@ -1068,8 +1018,8 @@ bool CWeapon::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) con
 }
 
 
-bool CWeapon::TryTarget(const CUnit* unit, bool userTarget) const {
-	return TryTarget(GetUnitLeadTargetPos(unit), SWeaponTarget(unit, userTarget));
+bool CWeapon::TryTarget(const SWeaponTarget& trg) const {
+	return TryTarget(GetLeadTargetPos(trg), trg);
 }
 
 
@@ -1079,7 +1029,7 @@ bool CWeapon::TryTargetRotate(const CUnit* unit, bool userTarget)
 	const short weaponHeading = GetHeadingFromVector(mainDir.x, mainDir.z);
 	const short enemyHeading = GetHeadingFromVector(tempTargetPos.x - aimFromPos.x, tempTargetPos.z - aimFromPos.z);
 
-	return TryTargetHeading(enemyHeading - weaponHeading, tempTargetPos, userTarget, unit);
+	return TryTargetHeading(enemyHeading - weaponHeading, SWeaponTarget(unit, userTarget));
 }
 
 
@@ -1089,24 +1039,22 @@ bool CWeapon::TryTargetRotate(float3 pos, bool userTarget)
 	const short weaponHeading = GetHeadingFromVector(mainDir.x, mainDir.z);
 	const short enemyHeading = GetHeadingFromVector(pos.x - aimFromPos.x, pos.z - aimFromPos.z);
 
-	return TryTargetHeading(enemyHeading - weaponHeading, pos, userTarget, 0);
+	return TryTargetHeading(enemyHeading - weaponHeading, SWeaponTarget(pos, userTarget));
 }
 
 
-bool CWeapon::TryTargetHeading(short heading, float3 pos, bool userTarget, const CUnit* unit)
+bool CWeapon::TryTargetHeading(short heading, const SWeaponTarget& trg)
 {
 	const float3 tempfrontdir(owner->frontdir);
 	const float3 temprightdir(owner->rightdir);
 	const short tempHeading = owner->heading;
-
-	AdjustTargetPosToWater(pos, unit == nullptr);
 
 	owner->heading = heading;
 	owner->frontdir = GetVectorFromHeading(owner->heading);
 	owner->rightdir = owner->frontdir.cross(owner->updir);
 	UpdateWeaponVectors();
 
-	const bool val = TryTarget(pos, SWeaponTarget(unit, pos, userTarget));
+	const bool val = TryTarget(trg);
 
 	owner->frontdir = tempfrontdir;
 	owner->rightdir = temprightdir;
@@ -1245,6 +1193,11 @@ void CWeapon::AdjustTargetPosToWater(float3& tgtPos, bool attackGround) const
 
 	tgtPos.y = std::max(tgtPos.y, CGround::GetHeightReal(tgtPos.x, tgtPos.z));
 	tgtPos.y = std::max(tgtPos.y, tgtPos.y * weaponDef->waterweapon);
+
+	// prevent range hax in FPS mode
+	if (owner->UnderFirstPersonControl() && dynamic_cast<const CCannon*>(this)) {
+		tgtPos.y = CGround::GetHeightAboveWater(tgtPos.x, tgtPos.z);
+	}
 }
 
 
@@ -1298,6 +1251,7 @@ float CWeapon::ExperienceErrorScale() const
 	//   for accWeight=1.00 and {0.25, 0.50, 0.75, 1.0} exp, scale=(1.0 - {0.25*1.00, 0.5*1.00, 0.75*1.00, 1.0*0.75}) = {0.7500, 0.500, 0.2500, 0.25}
 	return (CUnit::ExperienceScale(owner->limExperience, weaponDef->ownerExpAccWeight));
 }
+
 
 float CWeapon::MoveErrorExperience() const
 {

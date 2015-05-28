@@ -1079,13 +1079,13 @@ bool CGuiHandler::TryTarget(const CommandDescription& cmdDesc) const
 			if (u->immobile) {
 				// immobile unit
 				// check range and weapon target properties
-				if (w->TryTarget(modGroundPos, wtrg)) {
+				if (w->TryTarget(wtrg)) {
 					return true;
 				}
 			} else {
 				// mobile units can always move into range
 				// only check if we got a weapon that can shot the target (i.e. anti-air/anti-sub)
-				if (w->TestTarget(modGroundPos, wtrg)) {
+				if (w->TestTarget(w->GetLeadTargetPos(wtrg), wtrg)) {
 					return true;
 				}
 			}

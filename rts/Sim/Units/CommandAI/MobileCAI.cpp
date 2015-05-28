@@ -503,15 +503,13 @@ void CMobileCAI::ExecuteFight(Command& c)
 	if (c.params.size() == 1 && !owner->weapons.empty()) {
 		CWeapon* w = owner->weapons.front();
 
-		if ((orderTarget != NULL) && !w->AttackUnit(orderTarget, false)) {
+		if ((orderTarget != NULL) && !w->Attack(SWeaponTarget(orderTarget, false))) {
 			CUnit* newTarget = CGameHelper::GetClosestValidTarget(owner->pos, owner->maxRange, owner->allyteam, this);
 
-			if ((newTarget != NULL) && w->AttackUnit(newTarget, false)) {
+			if ((newTarget != NULL) && w->Attack(SWeaponTarget(newTarget, false))) {
 				c.params[0] = newTarget->id;
 
 				inCommand = false;
-			} else {
-				w->AttackUnit(orderTarget, false);
 			}
 		}
 
@@ -758,6 +756,8 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			}
 		}
 
+		const SWeaponTarget trg(orderTarget, (c.options & INTERNAL_ORDER) == 0);
+
 		for (CWeapon* w: owner->weapons) {
 			if (c.GetID() == CMD_MANUALFIRE) {
 				assert(owner->unitDef->canManualFire);
@@ -768,7 +768,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			}
 
 			tryTargetRotate  = w->TryTargetRotate(orderTarget, (c.options & INTERNAL_ORDER) == 0);
-			tryTargetHeading = w->TryTargetHeading(GetHeadingFromVector(-targetMidPosVec.x, -targetMidPosVec.z), orderTarget->pos, orderTarget != NULL, orderTarget);
+			tryTargetHeading = w->TryTargetHeading(GetHeadingFromVector(-targetMidPosVec.x, -targetMidPosVec.z), trg);
 
 			if (tryTargetRotate || tryTargetHeading)
 				break;
@@ -862,6 +862,8 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 		bool foundWeapon = false;
 
+		const SWeaponTarget trg(attackPos, (c.options & INTERNAL_ORDER) == 0);
+
 		for (CWeapon* w: owner->weapons) {
 			if (foundWeapon)
 				break;
@@ -870,28 +872,26 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			if (c.GetID() == CMD_MANUALFIRE) {
 				assert(owner->unitDef->canManualFire);
 
-				if (!w->weaponDef->manualfire)
-					continue;
-				if (attackVec.SqLength() >= (w->range * w->range))
-					continue;
-
 				// StopMoveAndKeepPointing calls StopMove before KeepPointingTo
 				// but we want to call it *after* KeepPointingTo to prevent 4131
-				owner->AttackGround(attackPos, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
+				if (!(owner->AttackGround(attackPos, (c.options & INTERNAL_ORDER) == 0, true))) {
+					continue;
+				}
+
 				owner->moveType->KeepPointingTo(attackPos, owner->maxRange * 0.9f, true);
 				StopMove();
-
 				foundWeapon = true;
 			} else {
 				// NOTE:
 				//   we call TryTargetHeading which is less restrictive than TryTarget
 				//   (eg. the former succeeds even if the unit has not already aligned
 				//   itself with <attackVec>)
-				if (w->TryTargetHeading(GetHeadingFromVector(attackVec.x, attackVec.z), attackPos, (c.options & INTERNAL_ORDER) == 0, NULL)) {
+				if (w->TryTargetHeading(GetHeadingFromVector(attackVec.x, attackVec.z), trg)) {
 					if (w->TryTargetRotate(attackPos, (c.options & INTERNAL_ORDER) == 0)) {
-						StopMove();
-						owner->AttackGround(attackPos, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
+						if (!owner->AttackGround(attackPos, (c.options & INTERNAL_ORDER) == 0, false))
+							continue;
 
+						StopMove();
 						foundWeapon = true;
 					}
 

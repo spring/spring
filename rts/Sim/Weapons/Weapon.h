@@ -31,14 +31,15 @@ public:
 	virtual void SlowUpdate();
 	virtual void Update();
 
-	bool HaveTarget() const { return (currentTarget.type != Target_None); }
-
-	bool AttackUnit(CUnit* newTargetUnit, bool isUserTarget);
-	bool AttackGround(float3 newTargetPos, bool isUserTarget);
-	bool Attack(const SWeaponTarget& newTarget);          //< does TryTarget() checks etc.
-	void SetAttackTarget(const SWeaponTarget& newTarget); //< does not any checks etc. !
+public:
+	bool Attack(const SWeaponTarget& newTarget);
 	void DropCurrentTarget();
 
+	bool HaveTarget() const { return (currentTarget.type != Target_None); }
+	const SWeaponTarget& GetCurrentTarget() const { return currentTarget; }
+	const float3&     GetCurrentTargetPos() const { return currentTargetPos; }
+
+public:
 	/// test if the weapon is able to attack an enemy/mapspot just by its properties (no range check, no FreeLineOfFire check, ...)
 	virtual bool TestTarget(const float3 pos, const SWeaponTarget& trg) const;
 	/// test if the enemy/mapspot is in range/angle
@@ -48,11 +49,10 @@ public:
 
 	virtual bool CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRequestedDir) const;
 
-	bool TryTarget(const float3 pos, const SWeaponTarget& trg) const;
-	bool TryTarget(const CUnit* unit, bool userTarget) const;
+	bool TryTarget(const SWeaponTarget& trg) const;
 	bool TryTargetRotate(const CUnit* unit, bool userTarget);
 	bool TryTargetRotate(float3 pos, bool userTarget);
-	bool TryTargetHeading(short heading, float3 pos, bool userTarget, const CUnit* unit = nullptr);
+	bool TryTargetHeading(short heading, const SWeaponTarget& trg);
 
 public:
 	bool CheckTargetAngleConstraint(const float3 worldTargetDir, const float3 worldWeaponDir) const;
@@ -81,9 +81,6 @@ public:
 
 	void StopAttackingAllyTeam(const int ally);
 
-	const SWeaponTarget& GetCurrentTarget() const { return currentTarget; }
-	const float3&     GetCurrentTargetPos() const { return currentTargetPos; }
-
 protected:
 	virtual void FireImpl(const bool scriptCall) {}
 	virtual void UpdateWantedDir();
@@ -108,6 +105,9 @@ private:
 	bool CobBlockShot() const;
 	void ReAimWeapon();
 	void HoldIfTargetInvalid();
+
+	void SetAttackTarget(const SWeaponTarget& newTarget); //< does not any checks etc. !
+	bool TryTarget(const float3 pos, const SWeaponTarget& trg) const;
 
 public:
 	CUnit* owner;
