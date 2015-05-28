@@ -577,7 +577,7 @@ bool CWeapon::Attack(const SWeaponTarget& newTarget)
 
 
 
-	switch (currentTarget.type) {
+	switch (newTarget.type) {
 		case Target_None: { SetAttackTarget(newTarget); return true; } break;
 		case Target_Unit: { return AttackUnit(newTarget.unit, newTarget.isUserTarget); } break;
 		case Target_Pos:  { return AttackGround(newTarget.groundPos, newTarget.isUserTarget); } break;
