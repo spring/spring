@@ -62,6 +62,8 @@ public:
 	void AdjustTargetPosToWater(float3& tgtPos, bool attackGround) const;
 	float3 GetUnitPositionWithError(const CUnit* unit) const;
 	float3 GetUnitLeadTargetPos(const CUnit* unit) const;
+	float3 GetLeadTargetPos(const SWeaponTarget& target) const;
+	float3 GetTargetPos(const SWeaponTarget& target) const;
 
 	float TargetWeight(const CUnit* unit) const;
 
@@ -91,7 +93,6 @@ protected:
 	static bool TargetUnderWater(const SWeaponTarget&);
 	static bool TargetInWater(const SWeaponTarget&);
 
-	void UpdateTargetPos();
 	void UpdateWeaponPieces(const bool updateAimFrom = true);
 	void UpdateWeaponVectors();
 	float3 GetLeadVec(const CUnit* unit) const;

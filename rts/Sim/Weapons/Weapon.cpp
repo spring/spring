@@ -257,7 +257,7 @@ void CWeapon::UpdateWantedDir()
 void CWeapon::Update()
 {
 	UpdateWeaponVectors();
-	UpdateTargetPos();
+	currentTargetPos = GetLeadTargetPos(currentTarget);
 
 	if (!UpdateStockpile())
 		return;
@@ -604,7 +604,7 @@ void CWeapon::SetAttackTarget(const SWeaponTarget& newTarget)
 		AddDeathDependence(currentTarget.unit, DEPENDENCE_TARGETUNIT);
 	}
 
-	UpdateTargetPos();
+	currentTargetPos = GetLeadTargetPos(newTarget);
 	UpdateWantedDir();
 }
 
@@ -615,25 +615,6 @@ void CWeapon::DropCurrentTarget()
 		DeleteDeathDependence(currentTarget.unit, DEPENDENCE_TARGETUNIT);
 	}
 	currentTarget = SWeaponTarget();
-}
-
-
-void CWeapon::UpdateTargetPos()
-{
-	switch (currentTarget.type) {
-		case Target_None: {
-			//currentTargetPos = weaponMuzzlePos;
-		} break;
-		case Target_Unit: {
-			currentTargetPos = GetUnitLeadTargetPos(currentTarget.unit);
-		} break;
-		case Target_Pos: {
-			currentTargetPos = currentTarget.groundPos;
-		} break;
-		case Target_Intercept: {
-			currentTargetPos = currentTarget.intercept->pos + currentTarget.intercept->speed;
-		} break;
-	}
 }
 
 
@@ -1299,5 +1280,35 @@ float CWeapon::ExperienceErrorScale() const
 float CWeapon::MoveErrorExperience() const
 {
 	return (ExperienceErrorScale() * weaponDef->targetMoveError);
+}
+
+
+float3 CWeapon::GetLeadTargetPos(const SWeaponTarget& target) const
+{
+	switch (target.type) {
+		case Target_None:      return float3(-666.f,-666.f,-666.f);
+		case Target_Unit:      return GetUnitLeadTargetPos(target.unit);
+		case Target_Pos: {
+			float3 p = target.groundPos;
+			AdjustTargetPosToWater(p, true);
+			return p;
+		} break;
+		case Target_Intercept: return target.intercept->pos + target.intercept->speed;
+	}
+
+	return float3(-666.f,-666.f,-666.f);
+}
+
+
+float3 CWeapon::GetTargetPos(const SWeaponTarget& target) const
+{
+	switch (target.type) {
+		case Target_None:      return float3(-666.f,-666.f,-666.f);
+		case Target_Unit:      return target.unit->pos;
+		case Target_Pos:       return target.groundPos;
+		case Target_Intercept: return target.intercept->pos;
+	}
+
+	return float3(-666.f,-666.f,-666.f);
 }
 
