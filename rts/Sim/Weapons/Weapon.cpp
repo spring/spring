@@ -876,9 +876,7 @@ float3 CWeapon::GetTargetBorderPos(
 
 bool CWeapon::TryTarget(const float3 tgtPos, const SWeaponTarget& trg) const
 {
-	//FIXME
-	//if (targetUnit)
-	//	tgtPos =
+	assert(GetLeadTargetPos(trg).SqDistance(tgtPos) < Square(250.f));
 
 	if (!TestTarget(tgtPos, trg))
 		return false;
