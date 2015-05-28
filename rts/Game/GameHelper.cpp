@@ -657,28 +657,15 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 			for (CUnit* targetUnit: allyTeamUnits) {
 				float targetPriority = 1.0f;
 
-				if (!(targetUnit->category & weapon->onlyTargetCategory)) {
-					continue;
-				}
-				if (targetUnit->GetTransporter() != NULL) {
-					if (!modInfo.targetableTransportedUnits)
-						continue;
-					// the transportee might be "hidden" below terrain, in which case we can't target it
-					if (targetUnit->pos.y < CGround::GetHeightReal(targetUnit->pos.x, targetUnit->pos.z))
-						continue;
-				}
 				if (tempTargetUnits[targetUnit->id] == tempNum) {
 					continue;
 				}
-
 				tempTargetUnits[targetUnit->id] = tempNum;
 
-				if (targetUnit->IsUnderWater() && !weaponDef->waterweapon) {
+				if (!weapon->TestTarget(float3(), SWeaponTarget(targetUnit))) {
 					continue;
 				}
-				if (targetUnit->isDead) {
-					continue;
-				}
+
 
 				float3 targPos;
 				const unsigned short targetLOSState = targetUnit->losStatus[attacker->allyteam];
@@ -686,7 +673,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 				if (targetLOSState & LOS_INLOS) {
 					targPos = targetUnit->aimPos;
 				} else if (targetLOSState & LOS_INRADAR) {
-					targPos = targetUnit->aimPos + (targetUnit->posErrorVector * radarHandler->GetAllyTeamRadarErrorSize(attacker->allyteam));
+					targPos = weapon->GetUnitPositionWithError(targetUnit);
 					targetPriority *= 10.0f;
 				} else {
 					continue;
@@ -694,7 +681,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 
 				const float modRange = radius + (aHeight - targPos.y) * heightMod;
 
-				if ((pos - targPos).SqLength2D() > modRange * modRange) {
+				if (pos.SqDistance2D(targPos) > modRange * modRange) {
 					continue;
 				}
 

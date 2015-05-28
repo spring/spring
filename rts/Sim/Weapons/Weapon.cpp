@@ -943,23 +943,53 @@ bool CWeapon::TryTarget(const float3 tgtPos, const SWeaponTarget& trg) const
 
 bool CWeapon::TestTarget(const float3 tgtPos, const SWeaponTarget& trg) const
 {
-	// test unit target properties
-	if (trg.type == Target_Unit) {
-		if (trg.unit == owner)
-			return false;
-		if ((trg.unit->category & onlyTargetCategory) == 0)
-			return false;
-		if (trg.unit->isDead && modInfo.fireAtKilled == 0)
-			return false;
-		if (trg.unit->IsCrashing() && modInfo.fireAtCrashing == 0)
-			return false;
+	if ((trg.isManualFire != weaponDef->manualfire) && owner->unitDef->canManualFire)
+		return false;
+
+	if (!trg.isUserTarget && weaponDef->noAutoTarget)
+		return false;
+
+	switch (trg.type) {
+		case Target_None: {
+			return true;
+		} break;
+		case Target_Unit: {
+			if (trg.unit == owner || trg.unit == nullptr)
+				return false;
+			if ((trg.unit->category & onlyTargetCategory) == 0)
+				return false;
+			if (trg.unit->isDead && modInfo.fireAtKilled == 0)
+				return false;
+			if (trg.unit->IsCrashing() && modInfo.fireAtCrashing == 0)
+				return false;
+
+			if (trg.unit->GetTransporter() != NULL) {
+				if (!modInfo.targetableTransportedUnits)
+					return false;
+				// the transportee might be "hidden" below terrain, in which case we can't target it
+				if (trg.unit->pos.y < CGround::GetHeightReal(trg.unit->pos.x, trg.unit->pos.z))
+					return false;
+			}
+		} break;
+		case Target_Pos: {
+			if (!weaponDef->canAttackGround)
+				return false;
+		} break;
+		case Target_Intercept: {
+			//FIXME
+			//if (weaponDef->interceptSolo && currentTarget.intercept->IsBeingIntercepted())
+			//	return false;
+			if (!weaponDef->interceptor)
+				return false;
+			if (!currentTarget.intercept->CanBeInterceptedBy(weaponDef))
+				return false;
+		} break;
+		default: break;
 	}
 
-	// interceptor
-	if (currentTarget.type == Target_Intercept && weaponDef->interceptSolo) {
-		if (currentTarget.intercept->IsBeingIntercepted())
-			return false;
-	}
+	// interceptor can only target projectiles!
+	if (trg.type != Target_Intercept && weaponDef->interceptor)
+		return false;
 
 	// water weapon checks
 	if (!weaponDef->waterweapon) {
@@ -1055,13 +1085,7 @@ bool CWeapon::TryTargetRotate(const CUnit* unit, bool userTarget)
 
 bool CWeapon::TryTargetRotate(float3 pos, bool userTarget)
 {
-	if (!userTarget && weaponDef->noAutoTarget)
-		return false;
-	if (weaponDef->interceptor || !weaponDef->canAttackGround)
-		return false;
-
 	AdjustTargetPosToWater(pos, true);
-
 	const short weaponHeading = GetHeadingFromVector(mainDir.x, mainDir.z);
 	const short enemyHeading = GetHeadingFromVector(pos.x - aimFromPos.x, pos.z - aimFromPos.z);
 
