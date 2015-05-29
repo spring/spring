@@ -168,6 +168,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitMaxHealth);
 	REGISTER_LUA_CFUNC(SetUnitStockpile);
 	REGISTER_LUA_CFUNC(SetUnitWeaponState);
+	REGISTER_LUA_CFUNC(SetUnitMaxRange);
 	REGISTER_LUA_CFUNC(SetUnitExperience);
 	REGISTER_LUA_CFUNC(SetUnitArmored);
 	REGISTER_LUA_CFUNC(SetUnitLosMask);
@@ -1540,6 +1541,18 @@ int LuaSyncedCtrl::SetUnitWeaponState(lua_State* L)
 		}
 	}
 
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetUnitMaxRange(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	const float maxRange = max(0.0f, luaL_checkfloat(L, 2));
+	unit->maxRange = maxRange;
 	return 0;
 }
 
