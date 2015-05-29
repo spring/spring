@@ -127,6 +127,7 @@ class LuaSyncedRead {
 		static int GetUnitIsTransporting(lua_State* L);
 		static int GetUnitShieldState(lua_State* L);
 		static int GetUnitFlanking(lua_State* L);
+		static int GetUnitMaxRange(lua_State* L);
 		static int GetUnitWeaponState(lua_State* L);
 		static int GetUnitWeaponVectors(lua_State* L);
 		static int GetUnitWeaponTryTarget(lua_State* L);

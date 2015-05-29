@@ -3219,6 +3219,17 @@ int LuaSyncedRead::GetUnitFlanking(lua_State* L)
 }
 
 
+int LuaSyncedRead::GetUnitMaxRange(lua_State* L)
+{
+	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	lua_pushnumber(L, unit->maxRange);
+	return 1;
+}
+
+
 int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
 {
 	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
