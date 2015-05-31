@@ -131,17 +131,19 @@ IPath::SearchResult IPathFinder::GetPath(
 		}
 
 		if (LOG_IS_ENABLED(L_DEBUG)) {
-			LOG_L(L_DEBUG, "%s: Search completed.", (isEstimator) ? "PE" : "PF");
+			LOG_L(L_DEBUG, "==== %s: Search completed ====", (isEstimator) ? "PE" : "PF");
 			LOG_L(L_DEBUG, "Tested blocks: %u", testedBlocks);
 			LOG_L(L_DEBUG, "Open blocks: %u", openBlockBuffer.GetSize());
 			LOG_L(L_DEBUG, "Path length: " _STPF_, path.path.size());
 			LOG_L(L_DEBUG, "Path cost: %f", path.pathCost);
+			LOG_L(L_DEBUG, "==============================");
 		}
 	} else {
 		if (LOG_IS_ENABLED(L_DEBUG)) {
-			LOG_L(L_DEBUG, "%s: Search failed!", (isEstimator) ? "PE" : "PF");
+			LOG_L(L_DEBUG, "==== %s: Search failed! ====", (isEstimator) ? "PE" : "PF");
 			LOG_L(L_DEBUG, "Tested blocks: %u", testedBlocks);
 			LOG_L(L_DEBUG, "Open blocks: %u", openBlockBuffer.GetSize());
+			LOG_L(L_DEBUG, "============================");
 		}
 	}
 

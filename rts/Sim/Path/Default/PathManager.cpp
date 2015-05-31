@@ -360,7 +360,7 @@ void CPathManager::MedRes2MaxRes(MultiPath& multiPath, const float3& startPos, c
 
 	// Perform the search.
 	// If this is the final improvement of the path, then use the original goal.
-	auto pfd = (medResPath.path.empty() && lowResPath.path.empty()) ? *multiPath.peDef : rangedGoalDef;
+	auto& pfd = (medResPath.path.empty() && lowResPath.path.empty()) ? *multiPath.peDef : rangedGoalDef;
 	const IPath::SearchResult result = maxResPF->GetPath(*multiPath.moveDef, pfd, owner, startPos, maxResPath, MAX_SEARCHED_NODES_ON_REFINE);
 
 	// If no refined path could be found, set goal as desired goal.
@@ -399,7 +399,7 @@ void CPathManager::LowRes2MedRes(MultiPath& multiPath, const float3& startPos, c
 
 	// Perform the search.
 	// If there is no low-res path left, use original goal.
-	auto pfd = (lowResPath.path.empty()) ? *multiPath.peDef : rangedGoalDef;
+	auto& pfd = (lowResPath.path.empty()) ? *multiPath.peDef : rangedGoalDef;
 	const IPath::SearchResult result = medResPE->GetPath(*multiPath.moveDef, pfd, owner, startPos, medResPath, MAX_SEARCHED_NODES_ON_REFINE);
 
 	// If no refined path could be found, set goal as desired goal.

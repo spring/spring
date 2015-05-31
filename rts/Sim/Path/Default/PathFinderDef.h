@@ -8,14 +8,17 @@
 #include "System/type2.h"
 #include "System/Rectangle.h"
 
+
 struct MoveDef;
+
+
 class CPathFinderDef {
 public:
 	CPathFinderDef(const float3& goalCenter, float goalRadius, float sqGoalDistance);
 	virtual ~CPathFinderDef() {}
 
-	virtual bool WithinConstraints(unsigned int xSquare, unsigned int zSquare) const { return true; }
-	virtual void DisableConstraint(bool b) { constraintDisabled = b; }
+	virtual bool WithinConstraints(unsigned int xSquare, unsigned int zSquare) const = 0;
+	void DisableConstraint(bool b) { constraintDisabled = b; }
 
 	bool IsGoal(unsigned int xSquare, unsigned int zSquare) const;
 	float Heuristic(unsigned int xSquare, unsigned int zSquare) const;
