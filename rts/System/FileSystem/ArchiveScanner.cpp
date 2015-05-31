@@ -566,7 +566,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 			} else {
 				if (aii->second.updated) {
 					const std::string filename = aii->first;
-					LOG_L(L_ERROR, "Found a \"%s\" already in \"%s\", ignoring one in \"%s\"", filename.c_str(), aii->second.path.c_str(), fpath.c_str());
+					LOG_L(L_ERROR, "Found a \"%s\" already in \"%s\", ignoring.", fullName.c_str(), (aii->second.path + aii->second.origName).c_str());
 					if (IsBaseContent(filename)) {
 						throw user_error(std::string("duplicate base content detected:\n\t") + aii->second.path + std::string("\n\t") + fpath
 							+ std::string("\nPlease fix your configuration/installation as this can cause desyncs!"));
