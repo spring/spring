@@ -80,7 +80,8 @@ static float GetAileronDeflection(
 	float aGoalDotFront,
 	bool avoidCollision,
 	bool attacking,
-	bool overflewNearbyGoal
+	bool overflewNearbyGoal,
+	bool aileronModerationThreshold
 ) {
 	float aileron = 0.0f;
 	if  (spd.w > 1.5f && !overflewNearbyGoal && ((pos.y + spd.y * 10.0f) > (groundHeight + wantedHeight * 0.4f))){
@@ -98,12 +99,12 @@ static float GetAileronDeflection(
 		}
 	} else {
 		// level the aircraft (roll)
-		if (rightdir.y < -0.3f) {
+		if (rightdir.y < -aileronModerationThreshold) {
 			aileron = -1.0f;
-		} else if (rightdir.y > 0.3f) {
+		} else if (rightdir.y > aileronModerationThreshold) {
 			aileron = 1.0f;
 		} else {
-			aileron = rightdir.y * 3.0f;
+			aileron = rightdir.y / aileronModerationThreshold;
 		}
 	}
 
@@ -129,7 +130,8 @@ static float GetRudderDeflection(
 	bool avoidCollision,
 	bool attacking,
 	float lastRudderPos,
-	bool overflewNearbyGoal
+	bool overflewNearbyGoal,
+	float rudderModerationThreshold
 ) {
 	float rudder = 0.0f;
 	
@@ -150,12 +152,12 @@ static float GetRudderDeflection(
 					rudder = goalDotRight < 0.0f ? -1.0f : 1.0f;
 				}
 			} else {
-				if (goalDotRight < -0.1f) {
+				if (goalDotRight < -rudderModerationThreshold) {
 					rudder = -1.0f;
-				} else if (goalDotRight > 0.1f) {
+				} else if (goalDotRight > rudderModerationThreshold) {
 					rudder = 1.0f;
 				} else {
-					rudder = goalDotRight * 8.0f;
+					rudder = goalDotRight / rudderModerationThreshold;
 				}
 			}
 		}
@@ -180,7 +182,8 @@ static float GetElevatorDeflection(
 	float goalDotRight,
 	float aGoalDotFront,
 	bool avoidCollision,
-	bool attacking
+	bool attacking,
+	float elevatorModerationThreshold
 ) {
 	float elevator = 0.0f;
 	float upside = updir.y >= -0.3f ? 1.0f : -1.0f;
@@ -214,12 +217,12 @@ static float GetElevatorDeflection(
 			} else {
 				const float dif = goalDir.dot(updir);
 
-				if (dif < -0.3) {
+				if (dif < -elevatorModerationThreshold) {
 					elevator = -1.0f;
-				} else if (dif > 0.3) {
+				} else if (dif > elevatorModerationThreshold) {
 					elevator = 1.0f;
 				} else {
-					elevator = 3.0f * dif;
+					elevator = dif / elevatorModerationThreshold;
 				}
 			}
 
@@ -258,12 +261,12 @@ static float GetElevatorDeflection(
 			}
 		} else {
 			// level the aircraft (pitch)
-			if (frontdir.y < -0.1f) {
+			if (frontdir.y < -elevatorModerationThreshold) {
 				elevator = 1.0f;
-			} else if (frontdir.y > 0.15f) {
+			} else if (frontdir.y > elevatorModerationThreshold) {
 				elevator = -1.0f;
 			} else {
-				elevator = -6.0f * frontdir.y;
+				elevator = -frontdir.y / elevatorModerationThreshold;
 			}
 		}
 	}
@@ -365,6 +368,11 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 		maxAileron  *= (1.0f - airManeuverabilitySpread + gs->randFloat() * 2.0f * airManeuverabilitySpread);
 		accRate     *= (1.0f - airManeuverabilitySpread + gs->randFloat() * 2.0f * airManeuverabilitySpread);
 	}
+
+	aileronModerationThreshold = maxAileron * 15.0f;
+	elevatorModerationThreshold = maxElevator * 15.0f;
+	rudderModerationThreshold = maxRudder * 10.0f;
+
 	crashAileron = 1.0f - (gs->randFloat() * gs->randFloat());
 	crashAileron *= ((gs->randInt() & 1)? -1.0f: 1.0f);
 	crashElevator = gs->randFloat();
@@ -647,12 +655,12 @@ void CStrafeAirMoveType::UpdateManeuver()
 
 			if (owner->updir.y > 0.0f) {
 				// level the aircraft (roll)
-				if (owner->rightdir.y < -0.3f) {
+				if (owner->rightdir.y < -aileronModerationThreshold) {
 					aileron = -1.0f;
-				} else if (owner->rightdir.y > 0.3f) {
+				} else if (owner->rightdir.y > aileronModerationThreshold) {
 					aileron = 1.0f;
 				} else {
-					aileron = owner->rightdir.y * 3.0f;
+					aileron = owner->rightdir.y * aileronModerationThreshold;
 				}
 			}
 
@@ -758,9 +766,9 @@ void CStrafeAirMoveType::UpdateAttack()
 	{
 		const CUnit* attackee = owner->attackTarget;
 
-		const float aileron  = GetAileronDeflection (owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir, gHeightAW, wantedHeight,  maxAileron,  maxBank, goalDotRight, aGoalDotFront, lastColWarningType == 2, true, false); // roll
-		const float rudder   = GetRudderDeflection  (owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir, gHeightAW, wantedHeight,   maxRudder,     0.0f, goalDotRight, aGoalDotFront, lastColWarningType == 2, true, lastRudderPos, false); // yaw
-		const float elevator = GetElevatorDeflection(owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir, gHeightAW, wantedHeight, maxElevator, maxPitch, goalDotRight, aGoalDotFront, lastColWarningType == 2, true); // pitch
+		const float aileron  = GetAileronDeflection (owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir, gHeightAW, wantedHeight,  maxAileron,  maxBank, goalDotRight, aGoalDotFront, lastColWarningType == 2, true, false, aileronModerationThreshold); // roll
+		const float rudder   = GetRudderDeflection  (owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir, gHeightAW, wantedHeight,   maxRudder,     0.0f, goalDotRight, aGoalDotFront, lastColWarningType == 2, true, lastRudderPos, false, rudderModerationThreshold); // yaw
+		const float elevator = GetElevatorDeflection(owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir, gHeightAW, wantedHeight, maxElevator, maxPitch, goalDotRight, aGoalDotFront, lastColWarningType == 2, true, elevatorModerationThreshold); // pitch
 		const float engine   = ((attackee == NULL) || attackee->unitDef->IsGroundUnit())? 1.0f: std::min(1.0f, (goalDist / owner->maxRange + 1.0f - goalDir.dot(frontdir) * 0.7f));
 
 		UpdateAirPhysics(rudder, aileron, elevator, engine, owner->frontdir);
@@ -862,9 +870,9 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine, bool isA
 	const bool overflewNearbyGoal = isAttacking && aGoalDotFront < 0.2f && ((attackee == NULL) || attackee->speed.w < spd.w*0.25f) && goalDist2D < attackOverflyDistance;
 
 
-	const float aileron  = GetAileronDeflection (owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir2D, gHeight, wantedHeight,  maxAileron,  maxBank, goalDotRight, aGoalDotFront, lastColWarningType == 2, false, overflewNearbyGoal); // roll
-	const float rudder   = GetRudderDeflection  (owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir2D, gHeight, wantedHeight,   maxRudder,     0.0f, goalDotRight, aGoalDotFront, lastColWarningType == 2, false, lastRudderPos, overflewNearbyGoal); // yaw
-	const float elevator = GetElevatorDeflection(owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir2D, gHeight, wantedHeight, maxElevator, maxPitch, goalDotRight, aGoalDotFront, lastColWarningType == 2, false); // pitch
+	const float aileron  = GetAileronDeflection (owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir2D, gHeight, wantedHeight,  maxAileron,  maxBank, goalDotRight, aGoalDotFront, lastColWarningType == 2, false, overflewNearbyGoal, aileronModerationThreshold); // roll
+	const float rudder   = GetRudderDeflection  (owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir2D, gHeight, wantedHeight,   maxRudder,     0.0f, goalDotRight, aGoalDotFront, lastColWarningType == 2, false, lastRudderPos, overflewNearbyGoal, rudderModerationThreshold); // yaw
+	const float elevator = GetElevatorDeflection(owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir2D, gHeight, wantedHeight, maxElevator, maxPitch, goalDotRight, aGoalDotFront, lastColWarningType == 2, false, elevatorModerationThreshold); // pitch
 
 	//UpdateAirPhysics(rudder * yprMults.x, aileron * yprMults.z, elevator * yprMults.y, engine, owner->frontdir);
 	//return (allowUnlockYawRoll || forceUnlockYawRoll);

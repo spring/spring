@@ -80,6 +80,10 @@ public:
 	float attackOverflyDistance;
 	float airManeuverabilitySpread;
 
+	float aileronModerationThreshold;
+	float elevatorModerationThreshold;
+	float rudderModerationThreshold;
+
 	/// used while landing
 	float crashAileron;
 	float crashElevator;
