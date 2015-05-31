@@ -76,6 +76,7 @@ New InfoTexture Renderer:
   - fix #4608: add new /showpathtype [movdefname | movedefid | unitdefname | -1]
 
 Lua:
+ - add Spring.GetUnitMaxRange(unitID) -> number maxRange and Spring.SetUnitMaxRange(unitID, maxRange) -> nil callouts to read and set engagement range of a unit
  - add UnitStunned call-in
  - add attackSafetyDistance unitDef
  - add Spring.GetLosViewColors
