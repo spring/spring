@@ -212,7 +212,7 @@ IPath::SearchResult CPathManager::ArrangePath(
 		int advPathRes = origPathRes;
 		int maxRes = PATH_MED_RES;
 
-		while (advPathRes-- >= maxRes) {
+		while (--advPathRes >= maxRes) {
 			switch (advPathRes) {
 				case PATH_MAX_RES: result = maxResPF->GetPath(*moveDef, *pfDef, caller, startPos, newPath->maxResPath, MAX_SEARCHED_NODES_PF >> 3); break;
 				case PATH_MED_RES: result = medResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->medResPath, MAX_SEARCHED_NODES_PE >> 3); break;
