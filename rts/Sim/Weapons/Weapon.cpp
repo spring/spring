@@ -632,8 +632,8 @@ void CWeapon::AutoTarget()
 	std::multimap<float, CUnit*> targets;
 	std::multimap<float, CUnit*>::const_iterator targetsIt;
 
-	//FIXME ignore and not avoid!
-	const CUnit* avoidUnit = (currentTarget.type == Target_Unit) ? currentTarget.unit : nullptr;
+	const CUnit* avoidUnit = (avoidTarget && currentTarget.type == Target_Unit) ? currentTarget.unit : nullptr;
+	const CUnit* ignorUnit = (!avoidTarget && currentTarget.type == Target_Unit) ? currentTarget.unit : nullptr;
 
 	// NOTE:
 	//   sorts by INCREASING order of priority, so lower equals better
@@ -658,6 +658,9 @@ void CWeapon::AutoTarget()
 			continue;
 
 		if (unit->IsNeutral() && (owner->fireState < FIRESTATE_FIREATNEUTRAL))
+			continue;
+
+		if (unit == ignorUnit)
 			continue;
 
 		if (isBadTarget) {

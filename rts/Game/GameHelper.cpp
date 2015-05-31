@@ -630,7 +630,7 @@ namespace {
 static int tempTargetUnits[MAX_UNITS] = {0};
 static int targetTempNum = 2;
 
-void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* lastTargetUnit, std::multimap<float, CUnit*>& targets)
+void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoidUnit, std::multimap<float, CUnit*>& targets)
 {
 	const CUnit* attacker = weapon->owner;
 	const float radius    = weapon->range;
@@ -666,6 +666,9 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 					continue;
 				}
 
+				if (targetUnit == avoidUnit) {
+					targetPriority *= 10.0f;
+				}
 
 				float3 targPos;
 				const unsigned short targetLOSState = targetUnit->losStatus[attacker->allyteam];
@@ -693,10 +696,6 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 
 				if (targetLOSState & LOS_INLOS) {
 					targetPriority *= (secDamage + targetUnit->health);
-
-					if (targetUnit == lastTargetUnit) {
-						targetPriority *= weapon->avoidTarget ? 10.0f : 0.4f;
-					}
 
 					if (paralyzer && targetUnit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? targetUnit->maxHealth: targetUnit->health)) {
 						targetPriority *= 4.0f;
