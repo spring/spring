@@ -125,10 +125,7 @@ IPath::SearchResult IPathFinder::GetPath(
 		FinishSearch(moveDef, pfDef, path);
 
 		// Save to cache
-		if (result == IPath::Ok) {
-			// add succesful paths to the cache
-			AddCache(&path, result, mStartBlock, goalBlock, pfDef.sqGoalRadius, moveDef.pathType, pfDef.synced);
-		}
+		AddCache(&path, result, mStartBlock, goalBlock, pfDef.sqGoalRadius, moveDef.pathType, pfDef.synced);
 
 		if (LOG_IS_ENABLED(L_DEBUG)) {
 			LOG_L(L_DEBUG, "==== %s: Search completed ====", (isEstimator) ? "PE" : "PF");
