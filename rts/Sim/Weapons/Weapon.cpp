@@ -351,7 +351,6 @@ void CWeapon::ReAimWeapon()
 
 bool CWeapon::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRequestedDir) const
 {
-	// FIXME merge some of the checks with TryTarget/TestRange/TestTarget (!)
 	if (!ignoreAngleGood && !angleGood)
 		return false;
 
