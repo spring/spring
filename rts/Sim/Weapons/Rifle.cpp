@@ -28,7 +28,7 @@ CRifle::CRifle(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 }
 
 
-void CRifle::FireImpl(bool scriptCall)
+void CRifle::FireImpl(const bool scriptCall)
 {
 	float3 dir = wantedDir;
 	dir +=

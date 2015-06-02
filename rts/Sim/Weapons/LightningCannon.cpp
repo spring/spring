@@ -28,7 +28,7 @@ CLightningCannon::CLightningCannon(CUnit* owner, const WeaponDef* def)
 }
 
 
-void CLightningCannon::FireImpl(bool scriptCall)
+void CLightningCannon::FireImpl(const bool scriptCall)
 {
 	float3 curPos = weaponMuzzlePos;
 	float3 curDir = wantedDir;
@@ -67,7 +67,7 @@ void CLightningCannon::FireImpl(bool scriptCall)
 		hitUnit->SetLastAttackedPiece(hitColQuery.GetHitPiece(), gs->frameNum);
 	}
 
-	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(weaponDef, weaponMuzzlePos, targetPos);
+	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(weaponDef, weaponMuzzlePos, currentTargetPos);
 	const CGameHelper::ExplosionParams params = {
 		curPos + curDir * boltLength,                     // hitPos (same as hitColQuery.GetHitPos() if no water or shield in way)
 		curDir,

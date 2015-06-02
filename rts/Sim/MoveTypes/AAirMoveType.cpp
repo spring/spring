@@ -44,7 +44,6 @@ AAirMoveType::AAirMoveType(CUnit* unit):
 	aircraftState(AIRCRAFT_LANDED),
 	padStatus(PAD_STATUS_FLYING),
 
-	oldGoalPos((unit != NULL)? unit->pos : ZeroVector),
 	reservedLandingPos(-1.0f, -1.0f, -1.0f),
 
 	wantedHeight(80.0f),
@@ -64,6 +63,9 @@ AAirMoveType::AAirMoveType(CUnit* unit):
 	lastColWarningType(0),
 	lastFuelUpdateFrame(gs->frameNum)
 {
+	assert(unit != NULL);
+
+	oldGoalPos = unit->pos;
 	// same as {Ground, HoverAir}MoveType::accRate
 	accRate = std::max(0.01f, unit->unitDef->maxAcc);
 	decRate = std::max(0.01f, unit->unitDef->maxDec);

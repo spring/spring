@@ -512,6 +512,10 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 		LOG_L(L_WARNING, "Incompatible game-checksum: %s", ex.what());
 	}
 
+	if (clientSetup->isHost && !gameSetup->recordDemo) { //script.txt allows to disable demo file recording (host only, used for menu)
+		wantDemo = false;
+	}
+
 	if (clientNet != NULL && wantDemo) {
 		assert(clientNet->GetDemoRecorder() == NULL);
 

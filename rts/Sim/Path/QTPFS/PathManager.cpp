@@ -22,6 +22,7 @@
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
+#include "System/Platform/Threading.h"
 #include "System/Rectangle.h"
 #include "System/TimeProfiler.h"
 #include "System/Util.h"

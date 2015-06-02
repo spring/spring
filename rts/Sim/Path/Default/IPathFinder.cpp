@@ -125,23 +125,22 @@ IPath::SearchResult IPathFinder::GetPath(
 		FinishSearch(moveDef, pfDef, path);
 
 		// Save to cache
-		if (result == IPath::Ok) {
-			// add succesful paths to the cache
-			AddCache(&path, result, mStartBlock, goalBlock, pfDef.sqGoalRadius, moveDef.pathType, pfDef.synced);
-		}
+		AddCache(&path, result, mStartBlock, goalBlock, pfDef.sqGoalRadius, moveDef.pathType, pfDef.synced);
 
 		if (LOG_IS_ENABLED(L_DEBUG)) {
-			LOG_L(L_DEBUG, "%s: Search completed.", (isEstimator) ? "PE" : "PF");
+			LOG_L(L_DEBUG, "==== %s: Search completed ====", (isEstimator) ? "PE" : "PF");
 			LOG_L(L_DEBUG, "Tested blocks: %u", testedBlocks);
 			LOG_L(L_DEBUG, "Open blocks: %u", openBlockBuffer.GetSize());
 			LOG_L(L_DEBUG, "Path length: " _STPF_, path.path.size());
 			LOG_L(L_DEBUG, "Path cost: %f", path.pathCost);
+			LOG_L(L_DEBUG, "==============================");
 		}
 	} else {
 		if (LOG_IS_ENABLED(L_DEBUG)) {
-			LOG_L(L_DEBUG, "%s: Search failed!", (isEstimator) ? "PE" : "PF");
+			LOG_L(L_DEBUG, "==== %s: Search failed! ====", (isEstimator) ? "PE" : "PF");
 			LOG_L(L_DEBUG, "Tested blocks: %u", testedBlocks);
 			LOG_L(L_DEBUG, "Open blocks: %u", openBlockBuffer.GetSize());
+			LOG_L(L_DEBUG, "============================");
 		}
 	}
 

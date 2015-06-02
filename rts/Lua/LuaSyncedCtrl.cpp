@@ -168,6 +168,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitMaxHealth);
 	REGISTER_LUA_CFUNC(SetUnitStockpile);
 	REGISTER_LUA_CFUNC(SetUnitWeaponState);
+	REGISTER_LUA_CFUNC(SetUnitMaxRange);
 	REGISTER_LUA_CFUNC(SetUnitExperience);
 	REGISTER_LUA_CFUNC(SetUnitArmored);
 	REGISTER_LUA_CFUNC(SetUnitLosMask);
@@ -1544,6 +1545,18 @@ int LuaSyncedCtrl::SetUnitWeaponState(lua_State* L)
 }
 
 
+int LuaSyncedCtrl::SetUnitMaxRange(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	const float maxRange = max(0.0f, luaL_checkfloat(L, 2));
+	unit->maxRange = maxRange;
+	return 0;
+}
+
+
 int LuaSyncedCtrl::SetUnitExperience(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -1976,9 +1989,7 @@ int LuaSyncedCtrl::SetUnitNeutral(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	if (lua_isboolean(L, 2)) {
-		unit->neutral = lua_toboolean(L, 2);
-	}
+	unit->neutral = luaL_checkboolean(L, 2);
 	return 0;
 }
 
@@ -1990,25 +2001,33 @@ int LuaSyncedCtrl::SetUnitTarget(lua_State* L)
 		return 0;
 	}
 	const int args = lua_gettop(L);
-	if (args >= 4 && !lua_isboolean(L, 3)) {
+	if (lua_isnil(L, 2)) {
+		unit->DropCurrentAttackTarget();
+		lua_pushboolean(L, true);
+		return 1;
+	} if (args >= 4 && !lua_isboolean(L, 3)) {
 		const float3 pos(luaL_checkfloat(L, 2),
 		                 luaL_checkfloat(L, 3),
 		                 luaL_checkfloat(L, 4));
-		const bool manualFire = lua_isboolean(L, 5) && lua_toboolean(L, 5);
-		const bool userTarget = lua_isboolean(L, 6) && lua_toboolean(L, 6);
-		lua_pushboolean(L,unit->AttackGround(pos, userTarget, manualFire));
+		const bool manualFire = luaL_optboolean(L, 5, false);
+		const bool userTarget = luaL_optboolean(L, 6, false);
+		lua_pushboolean(L, unit->AttackGround(pos, userTarget, manualFire));
 		return 1;
 	}
 	else if (args >= 2) {
 		CUnit* target = ParseRawUnit(L, __FUNCTION__, 2);
-		const bool manualFire = lua_isboolean(L, 3) && lua_toboolean(L, 3);
-		const bool userTarget = lua_isboolean(L, 4) && lua_toboolean(L, 4);
-		lua_pushboolean(L,unit->AttackUnit(target, userTarget, manualFire));
+
+		if (target == unit) {
+			luaL_error(L, "[%s()]: unit tried to attack itself", __FUNCTION__);
+			return 0;
+		}
+
+		const bool manualFire = luaL_optboolean(L, 3, false);
+		const bool userTarget = luaL_optboolean(L, 4, false);
+		lua_pushboolean(L, unit->AttackUnit(target, userTarget, manualFire));
 		return 1;
 	}
-	else {
-		return 0;
-	}
+	return 0;
 }
 
 
@@ -3669,10 +3688,12 @@ int LuaSyncedCtrl::UnitWeaponFire(lua_State* L)
 
 	if (unit == NULL)
 		return 0;
-	if (static_cast<uint32_t>(luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX) >= unit->weapons.size())
+
+	const size_t idx = static_cast<size_t>(luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX);
+	if (idx >= unit->weapons.size())
 		return 0;
 
-	unit->weapons[luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX]->Fire(false);
+	unit->weapons[idx]->Fire(false);
 	return 0;
 }
 int LuaSyncedCtrl::UnitWeaponHoldFire(lua_State* L)
@@ -3681,10 +3702,12 @@ int LuaSyncedCtrl::UnitWeaponHoldFire(lua_State* L)
 
 	if (unit == NULL)
 		return 0;
-	if (static_cast<uint32_t>(luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX) >= unit->weapons.size())
+
+	const size_t idx = static_cast<size_t>(luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX);
+	if (idx >= unit->weapons.size())
 		return 0;
 
-	unit->weapons[luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX]->HoldFire();
+	unit->weapons[idx]->DropCurrentTarget();
 	return 0;
 }
 

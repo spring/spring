@@ -72,9 +72,6 @@ namespace SpringVersion
 	/// additional information (compiler flags, VCS revision etc.)
 	extern std::string GetAdditional();
 
-	/// time of build
-	extern const std::string& GetBuildTime();
-
 	/// build options
 	extern const std::string& GetBuildEnvironment();
 

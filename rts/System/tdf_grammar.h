@@ -10,15 +10,9 @@
 
 #include <boost/version.hpp>
 
-#if BOOST_VERSION > 103500
 #include <boost/spirit/include/classic.hpp>
 #include <boost/spirit/include/phoenix1_binders.hpp>
 using namespace boost::spirit::classic;
-#else
-#include <boost/spirit.hpp>
-#include <boost/spirit/phoenix/binders.hpp>
-using namespace boost::spirit;
-#endif
 
 #include "System/TdfParser.h"
 

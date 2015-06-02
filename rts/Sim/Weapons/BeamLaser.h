@@ -13,18 +13,18 @@ class CBeamLaser: public CWeapon
 public:
 	CBeamLaser(CUnit* owner, const WeaponDef* def);
 
-	void Update();
-	void Init();
+	void Update() override final;
+	void Init() override final;
 
 private:
 	float3 GetFireDir(bool sweepFire, bool scriptCall);
 
 	void UpdatePosAndMuzzlePos();
-	void UpdateWantedDir();
+	float GetPredictFactor(float3 p) const override final;
 	void UpdateSweep();
 
 	void FireInternal(float3 curDir);
-	void FireImpl(bool scriptCall);
+	void FireImpl(const bool scriptCall) override final;
 
 private:
 	float3 color;

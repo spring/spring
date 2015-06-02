@@ -60,6 +60,7 @@
 #include "System/Input/KeyInput.h"
 #include "System/Input/MouseInput.h"
 #include "System/Input/Joystick.h"
+#include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/DataDirLocater.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
@@ -116,6 +117,7 @@ CONFIG(bool, WindowBorderless).defaultValue(false).description("When set and Ful
 CONFIG(bool, BlockCompositing).defaultValue(false).safemodeValue(true).description("Disables kwin compositing to fix tearing, possible fixes low FPS in windowed mode, too.");
 
 CONFIG(std::string, name).defaultValue(UnnamedPlayerName).description("Sets your name in the game. Since this is overridden by lobbies with your lobby username when playing, it usually only comes up when viewing replays or starting the engine directly for testing purposes.");
+CONFIG(std::string, DefaultStartScript).defaultValue("").description("filename of script.txt to use when no command line parameters are specified.");
 
 static SDL_GLContext sdlGlCtx;
 static SDL_Window* window;
@@ -646,6 +648,7 @@ void SpringApp::ParseCmdLine(const std::string& binaryName)
 	cmdline->AddString('g', "game",               "Specify the game that will be instantly loaded");
 	cmdline->AddString('m', "map",                "Specify the map that will be instantly loaded");
 	cmdline->AddString('n', "name",               "Set your player name");
+	cmdline->AddSwitch(0,   "oldmenu",            "Start the old menu");
 
 	try {
 		cmdline->Parse();
@@ -773,6 +776,38 @@ CGameController* SpringApp::RunScript(const std::string& buf)
 	return pregame;
 }
 
+void SpringApp::StartScript(const std::string& inputFile)
+{
+	// startscript
+	LOG("[%s] Loading StartScript from: %s", __FUNCTION__, inputFile.c_str());
+	CFileHandler fh(inputFile, SPRING_VFS_PWD_ALL);
+	if (!fh.FileExists())
+		throw content_error("Setup-script does not exist in given location: " + inputFile);
+
+	std::string buf;
+	if (!fh.LoadStringData(buf))
+		throw content_error("Setup-script cannot be read: " + inputFile);
+
+	activeController = RunScript(buf);
+}
+
+void SpringApp::LoadSpringMenu()
+{
+	const std::string defaultscript = configHandler->GetString("DefaultStartScript");
+
+	if (cmdline->IsSet("oldmenu") || defaultscript.empty()) {
+		// old menu
+	#ifdef HEADLESS
+		handleerror(NULL,
+			"The headless version of the engine can not be run in interactive mode.\n"
+			"Please supply a start-script, save- or demo-file.", "ERROR", MBF_OK|MBF_EXCL);
+	#endif
+		// not a memory-leak: SelectMenu deletes itself on start
+		activeController = new SelectMenu(clientSetup);
+	} else { // run custom menu from game and map
+		StartScript(defaultscript);
+	}
+}
 
 /**
  * Initializes instance of GameSetup
@@ -798,20 +833,12 @@ void SpringApp::Startup()
 	// no argument (either game is given or show selectmenu)
 	if (inputFile.empty()) {
 		clientSetup->isHost = true;
-
 		if (cmdline->IsSet("game") && cmdline->IsSet("map")) {
 			// --game and --map directly specified, try to run them
 			activeController = RunScript(StartScriptGen::CreateMinimalSetup(cmdline->GetString("game"), cmdline->GetString("map")));
-		} else {
-			// menu
-		#ifdef HEADLESS
-			handleerror(NULL,
-				"The headless version of the engine can not be run in interactive mode.\n"
-				"Please supply a start-script, save- or demo-file.", "ERROR", MBF_OK|MBF_EXCL);
-		#endif
-			// not a memory-leak: SelectMenu deletes itself on start
-			activeController = new SelectMenu(clientSetup);
+			return;
 		}
+		LoadSpringMenu();
 		return;
 	}
 
@@ -837,17 +864,7 @@ void SpringApp::Startup()
 		pregame = new CPreGame(clientSetup);
 		pregame->LoadSavefile(inputFile);
 	} else {
-		// startscript
-		LOG("[%s] Loading StartScript from: %s", __FUNCTION__, inputFile.c_str());
-		CFileHandler fh(inputFile, SPRING_VFS_PWD_ALL);
-		if (!fh.FileExists())
-			throw content_error("Setup-script does not exist in given location: " + inputFile);
-
-		std::string buf;
-		if (!fh.LoadStringData(buf))
-			throw content_error("Setup-script cannot be read: " + inputFile);
-
-		activeController = RunScript(buf);
+		StartScript(inputFile);
 	}
 }
 
@@ -899,7 +916,7 @@ void SpringApp::Reload(const std::string& script)
 
 	if (script.empty()) {
 		// if no script, drop back to menu
-		activeController = new SelectMenu(clientSetup);
+		LoadSpringMenu();
 	} else {
 		activeController = RunScript(script);
 	}

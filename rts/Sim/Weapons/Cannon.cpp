@@ -45,7 +45,7 @@ void CCannon::Init()
 	CWeapon::Init();
 }
 
-void CCannon::UpdateRange(float val)
+void CCannon::UpdateRange(const float val)
 {
 	// clamp so as to not extend range if projectile
 	// speed is too low to reach the *updated* range
@@ -65,18 +65,15 @@ void CCannon::UpdateRange(float val)
 
 void CCannon::UpdateWantedDir()
 {
-	const float3 targetVec = targetPos - aimFromPos;
+	const float3 targetVec = currentTargetPos - aimFromPos;
 	wantedDir = GetWantedDir(targetVec);
-	const float speed2D = wantedDir.Length2D() * projectileSpeed;
-
-	predict = ((speed2D == 0.0f) ? 1.0f : (targetVec.Length2D() / speed2D));
 }
 
 
-bool CCannon::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const
+bool CCannon::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const
 {
 	// assume we can still fire at partially submerged targets
-	if (!weaponDef->waterweapon && TargetUnitOrPositionUnderWater(pos, unit))
+	if (!weaponDef->waterweapon && TargetUnderWater(trg))
 		return false;
 
 	if (projectileSpeed == 0) {
@@ -117,9 +114,9 @@ bool CCannon::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit
 	return true;
 }
 
-void CCannon::FireImpl(bool scriptCall)
+void CCannon::FireImpl(const bool scriptCall)
 {
-	float3 diff = targetPos - weaponMuzzlePos;
+	float3 diff = currentTargetPos - weaponMuzzlePos;
 	float3 dir = (diff.SqLength() > 4.0f) ? GetWantedDir(diff) : diff; // prevent vertical aim when emit-sfx firing the weapon
 
 	dir += (gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
@@ -246,7 +243,7 @@ float CCannon::GetRange2D(float yDiff, float rFact) const
 	return (rFact * (speed2dSq + speed2d * math::sqrt(root1)) / (-gravity));
 }
 
-float CCannon::GetRange2D(float yDiff) const
+float CCannon::GetRange2D(const float yDiff) const
 {
 	return (GetRange2D(yDiff, rangeFactor));
 }

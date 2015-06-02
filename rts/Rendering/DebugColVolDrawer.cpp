@@ -14,6 +14,7 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/QuadField.h"
+#include "Sim/Weapons/Weapon.h"
 
 static const float4 DEFAULT_VOLUME_COLOR = float4(0.45f, 0.0f, 0.45f, 0.35f);
 static unsigned int volumeDisplayListIDs[3] = {0, 0, 0};
@@ -192,6 +193,39 @@ static inline void DrawUnitColVol(const CUnit* u)
 	const CollisionVolume* v = u->collisionVolume;
 	const bool vCustomType = (v->GetVolumeType() < CollisionVolume::COLVOL_TYPE_SPHERE);
 	const bool vCustomDims = ((v->GetOffsets()).SqLength() >= 1.0f || math::fabs(v->GetBoundingRadius() - u->radius) >= 1.0f);
+
+	GLUquadricObj* q = gluNewQuadric();
+	gluQuadricDrawStyle(q, GLU_FILL);
+	glDisable(GL_DEPTH_TEST);
+	for (const CWeapon* w: u->weapons) {
+		glPushMatrix();
+		glTranslatef3(w->aimFromPos);
+		glColor4f(1.0f, 1.0f, 0.0f, 0.4f);
+		gluSphere(q, 1.0f, 5, 5);
+		glPopMatrix();
+
+		glPushMatrix();
+		glTranslatef3(w->weaponMuzzlePos);
+		if (w->HaveTarget()) {
+			glColor4f(1.0f, 0.8f, 0.0f, 0.4f);
+		} else {
+			glColor4f(1.0f, 0.0f, 0.0f, 0.4f);
+		}
+		gluSphere(q, 1.0f, 5, 5);
+		glPopMatrix();
+
+		if (w->HaveTarget()) {
+			glPushMatrix();
+			glTranslatef3(w->GetCurrentTargetPos());
+			glColor4f(1.0f, 0.8f, 0.0f, 0.4f);
+			gluSphere(q, 1.0f, 5, 5);
+			glPopMatrix();
+		}
+	}
+	glColorf4(DEFAULT_VOLUME_COLOR);
+	glEnable(GL_DEPTH_TEST);
+	gluDeleteQuadric(q);
+
 
 	glPushMatrix();
 		glMultMatrixf(u->GetTransformMatrix());

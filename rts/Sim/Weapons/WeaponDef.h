@@ -98,6 +98,7 @@ public:
 
 	bool turret;
 	bool onlyForward;
+	bool allowNonBlockingAim;
 	bool fixedLauncher;
 	bool waterweapon;           ///< can target underwater objects/positions if true
 	bool fireSubmersed;         ///< can fire even when underwater if true

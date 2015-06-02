@@ -61,6 +61,7 @@ class LuaSyncedCtrl
 		static int SetUnitMaxHealth(lua_State* L);
 		static int SetUnitStockpile(lua_State* L);
 		static int SetUnitWeaponState(lua_State* L);
+		static int SetUnitMaxRange(lua_State* L);
 		static int SetUnitExperience(lua_State* L);
 		static int SetUnitArmored(lua_State* L);
 		static int SetUnitLosMask(lua_State* L);

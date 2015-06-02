@@ -17,15 +17,14 @@ CDGunWeapon::CDGunWeapon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def
 }
 
 
-void CDGunWeapon::UpdateWantedDir()
+float CDGunWeapon::GetPredictFactor(float3 p) const
 {
-	CWeapon::UpdateWantedDir();
-
 	// user has to manually predict
-	predict = 0;
+	return 0;
 }
 
-void CDGunWeapon::FireImpl(bool scriptCall)
+
+void CDGunWeapon::FireImpl(const bool scriptCall)
 {
 	float3 dir = wantedDir;
 
@@ -34,7 +33,7 @@ void CDGunWeapon::FireImpl(bool scriptCall)
 
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos;
-	params.end = targetPos;
+	params.end = currentTargetPos;
 	params.speed = dir * projectileSpeed;
 	params.ttl = 1;
 

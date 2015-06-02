@@ -3,7 +3,6 @@
 #ifndef UNIT_H
 #define UNIT_H
 
-#include <map>
 #include <list>
 #include <vector>
 #include <string>
@@ -12,6 +11,7 @@
 #include "Lua/LuaUnitMaterial.h"
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Misc/Resource.h"
+#include "Sim/Weapons/WeaponTarget.h"
 #include "System/Matrix44f.h"
 #include "System/type2.h"
 
@@ -94,6 +94,7 @@ public:
 
 	bool AttackUnit(CUnit* unit, bool isUserTarget, bool wantManualFire, bool fpsMode = false);
 	bool AttackGround(const float3& pos, bool isUserTarget, bool wantManualFire, bool fpsMode = false);
+	void DropCurrentAttackTarget();
 
 	int GetBlockingMapID() const { return id; }
 
@@ -141,6 +142,7 @@ public:
 	bool AddHarvestedMetal(float metal);
 
 	void SetStorage(const SResourcePack& newstorage);
+	bool HaveResources(const SResourcePack& res) const;
 	bool UseResources(const SResourcePack& res);
 	void AddResources(const SResourcePack& res, bool useIncomeMultiplier = true);
 	bool IssueResourceOrder(SResourceOrder* order);
@@ -196,6 +198,7 @@ public:
 
 	void TempHoldFire(int cmdID);
 	void ReleaseTempHoldFire() { dontFire = false; }
+	bool HaveTarget() const;
 
 	/// start this unit in free fall from parent unit
 	void Drop(const float3& parentPos, const float3& parentDir, CUnit* parent);
@@ -244,8 +247,6 @@ public:
 	CUnit* soloBuilder;
 	/// last attacker
 	CUnit* lastAttacker;
-	/// current attackee
-	CUnit* attackTarget;
 
 	/// piece that was last hit by a projectile
 	LocalModelPiece* lastAttackedPiece;
@@ -256,6 +257,9 @@ public:
 	int lastAttackFrame;
 	/// last time this unit fired a weapon
 	int lastFireWeapon;
+
+	/// current attackee
+	SWeaponTarget curTarget;
 
 	/// transport that the unit is currently in
 	CTransportUnit* transporter;
@@ -283,8 +287,6 @@ public:
 
 	std::list<CMissileProjectile*> incomingMissiles; //FIXME make std::set?
 
-
-	float3 attackPos;
 	float3 deathSpeed;
 	float3 lastMuzzleFlameDir;
 
@@ -372,10 +374,6 @@ public:
 	float reloadSpeed;
 	float maxRange;
 
-	/// true if at least one weapon has targetType != Target_None
-	bool haveTarget;
-	bool haveManualFireRequest;
-
 	/// used to determine muzzle flare size
 	float lastMuzzleFlameSize;
 
@@ -449,8 +447,6 @@ public:
 
 	int fireState;
 	int moveState;
-
-	bool userAttackGround;
 
 	/// if the unit is in it's 'on'-state
 	bool activated;

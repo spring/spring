@@ -87,7 +87,6 @@ CUnit::CUnit()
 , stockpileWeapon(NULL)
 , soloBuilder(NULL)
 , lastAttacker(NULL)
-, attackTarget(NULL)
 , lastAttackedPiece(NULL)
 , lastAttackedPieceFrame(-1)
 , lastAttackFrame(-200)
@@ -101,7 +100,6 @@ CUnit::CUnit()
 , los(NULL)
 , losStatus(teamHandler->ActiveAllyTeams(), 0)
 , fpsControlPlayer(NULL)
-, attackPos(ZeroVector)
 , deathSpeed(ZeroVector)
 , lastMuzzleFlameDir(UpVector)
 , flankingBonusDir(RgtVector)
@@ -135,8 +133,6 @@ CUnit::CUnit()
 , outOfMapTime(0)
 , reloadSpeed(1.0f)
 , maxRange(0.0f)
-, haveTarget(false)
-, haveManualFireRequest(false)
 , lastMuzzleFlameSize(0.0f)
 , armorType(0)
 , category(0)
@@ -166,7 +162,6 @@ CUnit::CUnit()
 , recentDamage(0.0f)
 , fireState(FIRESTATE_FIREATWILL)
 , moveState(MOVESTATE_MANEUVER)
-, userAttackGround(false)
 , activated(false)
 , isDead(false)
 , fallSpeed(0.2f)
@@ -1060,8 +1055,8 @@ void CUnit::SlowUpdate()
 		}
 
 		if (
-			   (attackTarget     && (attackTarget->pos.SqDistance(pos) < Square(unitDef->kamikazeDist)))
-			|| (userAttackGround && (attackPos.SqDistance(pos))  < Square(unitDef->kamikazeDist))
+			   (curTarget.type == Target_Unit && (curTarget.unit->pos.SqDistance(pos) < Square(unitDef->kamikazeDist)))
+			|| (curTarget.type == Target_Pos  && (curTarget.groundPos.SqDistance(pos) < Square(unitDef->kamikazeDist)))
 		) {
 			KillUnit(NULL, true, false);
 			return;
@@ -1082,44 +1077,24 @@ void CUnit::SlowUpdateWeapons() {
 	if (weapons.empty())
 		return;
 
-	haveTarget = false;
-
 	if (dontFire || beingBuilt || IsStunned() || isDead)
 		return;
 
 	for (CWeapon* w: weapons) {
 		w->SlowUpdate();
-
-		// NOTE:
-		//     pass w->haveUserTarget so we do not interfere with
-		//     user targets; w->haveUserTarget can only be true if
-		//     either 1) ::AttackUnit was called with a (non-NULL)
-		//     target-unit which the CAI did *not* auto-select, or
-		//     2) ::AttackGround was called with any user-selected
-		//     position and all checks succeeded
-		if (haveManualFireRequest == (unitDef->canManualFire && w->weaponDef->manualfire)) {
-			if (attackTarget != NULL) {
-				w->AttackUnit(attackTarget, w->haveUserTarget);
-			} else if (userAttackGround) {
-				// this implies a user-order
-				w->AttackGround(attackPos, true);
-			}
-		}
-
-		if (lastAttacker == NULL)
-			continue;
-		if ((lastAttackFrame + 200) <= gs->frameNum)
-			continue;
-		if (w->targetType != Target_None)
-			continue;
-		if (fireState == FIRESTATE_HOLDFIRE)
-			continue;
-
-		// return fire at our last attacker if allowed
-		w->AttackUnit(lastAttacker, false);
 	}
 }
 
+
+bool CUnit::HaveTarget() const
+{
+	return (curTarget.type != Target_None);
+//	for (const CWeapon* w: weapons) {
+//		if (w->HaveTarget())
+//			return true;
+//	}
+//	return false;
+}
 
 
 float CUnit::GetFlankingDamageBonus(const float3& attackDir)
@@ -1549,15 +1524,15 @@ void CUnit::ChangeTeamReset()
 	// stop friendly units shooting at us
 	const CObject::TDependenceMap& listeners = GetAllListeners();
 	std::vector<CUnit *> alliedunits;
-	for (CObject::TDependenceMap::const_iterator li = listeners.begin(); li != listeners.end(); ++li) {
-		for (CObject::TSyncSafeSet::const_iterator di = li->second.begin(); di != li->second.end(); ++di) {
-			CUnit* u = dynamic_cast<CUnit*>(*di);
+	for (const auto& objs: listeners) {
+		for (CObject* obj: objs) {
+			CUnit* u = dynamic_cast<CUnit*>(obj);
 			if (u != NULL && teamHandler->AlliedTeams(team, u->team))
 				alliedunits.push_back(u);
 		}
 	}
-	for (std::vector<CUnit*>::const_iterator ui = alliedunits.begin(); ui != alliedunits.end(); ++ui) {
-		(*ui)->StopAttackingAllyTeam(allyteam);
+	for (CUnit* u: alliedunits) {
+		u->StopAttackingAllyTeam(allyteam);
 	}
 	// and stop shooting at friendly ally teams
 	for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
@@ -1633,69 +1608,55 @@ bool CUnit::IsIdle() const
 
 bool CUnit::AttackUnit(CUnit* targetUnit, bool isUserTarget, bool wantManualFire, bool fpsMode)
 {
+	if (targetUnit == this) {
+		// don't target ourself
+		return false;
+	}
+
+	DropCurrentAttackTarget();
+
+	if (targetUnit == nullptr)
+		return false;
+
+	curTarget = SWeaponTarget(targetUnit, isUserTarget);
+	curTarget.isManualFire = wantManualFire || fpsMode;
+	AddDeathDependence(targetUnit, DEPENDENCE_TARGET);
+
 	bool ret = false;
-
-	haveManualFireRequest = wantManualFire;
-	userAttackGround = false;
-
-	if (attackTarget != NULL) {
-		DeleteDeathDependence(attackTarget, DEPENDENCE_TARGET);
-	}
-
-	attackPos = ZeroVector;
-	attackTarget = targetUnit;
-
-	if (targetUnit != NULL) {
-		AddDeathDependence(targetUnit, DEPENDENCE_TARGET);
-	}
-
 	for (CWeapon* w: weapons) {
-		// isUserTarget is true if this target was selected by the
-		// user as opposed to automatically by the unit's commandAI
-		//
-		// NOTE: "&&" because we have a separate userAttackGround (!)
-		w->targetType = Target_None;
-
-		if (targetUnit == NULL)
-			continue;
-
-		if ((wantManualFire == (unitDef->canManualFire && w->weaponDef->manualfire)) || fpsMode) {
-			ret |= (w->AttackUnit(targetUnit, isUserTarget));
-		}
+		ret |= w->Attack(curTarget);
 	}
-
 	return ret;
 }
 
 bool CUnit::AttackGround(const float3& pos, bool isUserTarget, bool wantManualFire, bool fpsMode)
 {
+	DropCurrentAttackTarget();
+
+	curTarget = SWeaponTarget(pos, isUserTarget);
+	curTarget.isManualFire = wantManualFire || fpsMode;
+
 	bool ret = false;
-
-	// remember whether this was a user-order for SlowUpdateWeapons
-	// (because CCommandAI does not keep calling us, but ::SUW does)
-	haveManualFireRequest = wantManualFire;
-	userAttackGround = isUserTarget;
-
-	if (attackTarget != NULL) {
-		DeleteDeathDependence(attackTarget, DEPENDENCE_TARGET);
-	}
-
-	attackPos = pos;
-	attackTarget = NULL;
-
 	for (CWeapon* w: weapons) {
-
-		w->targetType = Target_None;
-		w->haveUserTarget = false; // this should be false for ground-attack commands
-
-		if ((wantManualFire == (unitDef->canManualFire && w->weaponDef->manualfire)) || fpsMode) {
-			ret |= (w->AttackGround(pos, isUserTarget));
-		}
+		ret |= w->Attack(curTarget);
 	}
-
 	return ret;
 }
 
+
+void CUnit::DropCurrentAttackTarget()
+{
+	if (curTarget.type == Target_Unit) {
+		DeleteDeathDependence(curTarget.unit, DEPENDENCE_TARGET);
+	}
+
+	for (CWeapon* w: weapons) {
+		if (w->GetCurrentTarget() == curTarget)
+			w->DropCurrentTarget();
+	}
+
+	curTarget = SWeaponTarget();
+}
 
 
 void CUnit::SetLastAttacker(CUnit* attacker)
@@ -1717,10 +1678,10 @@ void CUnit::SetLastAttacker(CUnit* attacker)
 
 void CUnit::DependentDied(CObject* o)
 {
-	if (o == attackTarget) { attackTarget = NULL; }
-	if (o == soloBuilder)  { soloBuilder  = NULL; }
-	if (o == transporter)  { transporter  = NULL; }
-	if (o == lastAttacker) { lastAttacker = NULL; }
+	if (o == curTarget.unit) { DropCurrentAttackTarget(); }
+	if (o == soloBuilder)    { soloBuilder  = NULL; }
+	if (o == transporter)    { transporter  = NULL; }
+	if (o == lastAttacker)   { lastAttacker = NULL; }
 
 	incomingMissiles.remove(static_cast<CMissileProjectile*>(o));
 
@@ -2095,6 +2056,12 @@ void CUnit::SetStorage(const SResourcePack& newStorage)
 }
 
 
+bool CUnit::HaveResources(const SResourcePack& pack) const
+{
+	return teamHandler->Team(team)->HaveResources(pack);
+}
+
+
 bool CUnit::UseResources(const SResourcePack& pack)
 {
 	//FIXME
@@ -2319,12 +2286,12 @@ void CUnit::StopAttackingAllyTeam(int ally)
 		DeleteDeathDependence(lastAttacker, DEPENDENCE_ATTACKER);
 		lastAttacker = NULL;
 	}
-	if (attackTarget != NULL && attackTarget->allyteam == ally)
-		AttackUnit(NULL, false, false);
+	if (curTarget.type == Target_Unit && curTarget.unit->allyteam == ally)
+		DropCurrentAttackTarget();
 
 	commandAI->StopAttackingAllyTeam(ally);
-	for (std::vector<CWeapon*>::iterator it = weapons.begin(); it != weapons.end(); ++it) {
-		(*it)->StopAttackingAllyTeam(ally);
+	for (CWeapon* w: weapons) {
+		w->StopAttackingAllyTeam(ally);
 	}
 }
 
@@ -2455,9 +2422,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(reloadSpeed),
 	CR_MEMBER(maxRange),
 
-	CR_MEMBER(haveTarget),
-	CR_MEMBER(haveManualFireRequest),
-
 	CR_MEMBER(lastMuzzleFlameSize),
 	CR_MEMBER(lastMuzzleFlameDir),
 
@@ -2530,15 +2494,12 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(lastFireWeapon),
 	CR_MEMBER(recentDamage),
 
-	CR_MEMBER(attackTarget),
-	CR_MEMBER(attackPos),
-
-	CR_MEMBER(userAttackGround),
-
 	CR_MEMBER(fireState),
 	CR_MEMBER(moveState),
 
 	CR_MEMBER(activated),
+
+	CR_MEMBER(curTarget),
 
 	CR_MEMBER(isDead),
 	CR_MEMBER(fallSpeed),

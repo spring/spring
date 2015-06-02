@@ -386,6 +386,7 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float
 		default: {
 		} break;
 	}
+	assert(overrideType >= 0);
 
 	if (animInfoIt != anims[overrideType].end())
 		RemoveAnim(overrideType, animInfoIt);
@@ -642,17 +643,17 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 					ShowUnitScriptError("Invalid weapon index for emit-sfx");
 					break;
 				}
+				CWeapon* w = unit->weapons[index];
+				const SWeaponTarget origTarget = w->GetCurrentTarget();
+				const float3 origWeaponMuzzlePos = w->weaponMuzzlePos;
 
-				CWeapon* weapon = unit->weapons[index];
-
-				const float3 targetPos = weapon->targetPos;
-				const float3 weaponMuzzlePos = weapon->weaponMuzzlePos;
-
-				weapon->targetPos = pos + dir;
-				weapon->weaponMuzzlePos = pos;
-				weapon->Fire(true);
-				weapon->weaponMuzzlePos = weaponMuzzlePos;
-				weapon->targetPos = targetPos;
+				w->weaponMuzzlePos = pos;
+				if (w->Attack(SWeaponTarget(pos + dir))) {
+					w->Fire(true);
+				}
+				w->weaponMuzzlePos = origWeaponMuzzlePos;
+				bool origRestored = w->Attack(origTarget);
+				assert(origRestored);
 			}
 			else if (sfxType & SFX_DETONATE_WEAPON) {
 				const unsigned index = sfxType - SFX_DETONATE_WEAPON;
@@ -814,6 +815,7 @@ void CUnitScript::Explode(int piece, int flags)
 	if ((flags & PF_Smoke) && projectileHandler->particleSaturation < 1.0f) { newflags |= PF_Smoke; }
 	if ((flags & PF_Fire) && projectileHandler->particleSaturation < 0.95f) { newflags |= PF_Fire; }
 	if (flags & PF_NoCEGTrail) { newflags |= PF_NoCEGTrail; }
+	if (flags & PF_Recursive) { newflags |= PF_Recursive; }
 
 	new CPieceProjectile(unit, pieces[piece], absPos, explSpeed, newflags, 0.5f);
 #endif
@@ -1030,22 +1032,18 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		if (u != NULL) {
 			return u->heading;
 		}
-
 		return -1;
 	}
 	case TARGET_ID: {
-		if (unit->weapons[p1 - 1]) {
-			const CWeapon* weapon = unit->weapons[p1 - 1];
-			const TargetType tType = weapon->targetType;
-
-			if (tType == Target_Unit)
-				return unit->weapons[p1 - 1]->targetUnit->id;
-			else if (tType == Target_None)
-				return -1;
-			else if (tType == Target_Pos)
-				return -2;
-			else // Target_Intercept
-				return -3;
+		if (size_t(p1 - 1) < unit->weapons.size()) {
+			const CWeapon* w = unit->weapons[p1 - 1];
+			auto curTarget = w->GetCurrentTarget();
+			switch (curTarget.type) {
+				case Target_Unit:      return curTarget.unit->id;
+				case Target_None:      return -1;
+				case Target_Pos:       return -2;
+				case Target_Intercept: return -3;
+			}
 		}
 		return -4; // weapon does not exist
 	}
@@ -1173,7 +1171,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		//! if targetID is 0, just sets weapon->haveUserTarget
 		//! to false (and targetType to None) without attacking
 		CUnit* target = (targetID > 0)? unitHandler->GetUnit(targetID): NULL;
-		return (weapon->AttackUnit(target, userTarget) ? 1 : 0);
+		return (weapon->Attack(SWeaponTarget(target, userTarget)) ? 1 : 0);
 	}
 	case SET_WEAPON_GROUND_TARGET: {
 		const int weaponID = p1 - 1;
@@ -1187,7 +1185,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		CWeapon* weapon = unit->weapons[weaponID];
 		if (weapon == NULL) { return 0; }
 
-		return weapon->AttackGround(pos, userTarget) ? 1 : 0;
+		return weapon->Attack(SWeaponTarget(pos, userTarget)) ? 1 : 0;
 	}
 	case MIN:
 		return std::min(p1, p2);

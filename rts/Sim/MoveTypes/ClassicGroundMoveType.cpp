@@ -1508,9 +1508,10 @@ void CClassicGroundMoveType::KeepPointingTo(float3 pos, float distance, bool agg
 			short heading =
 				GetHeadingFromVector(dir2.x, dir2.z) -
 				GetHeadingFromVector(dir1.x, dir1.z);
-			if (owner->heading != heading
-					&& !(owner->weapons.front()->TryTarget(
-					mainHeadingPos, true, 0))) {
+			if (
+				(owner->heading != heading)
+				&& !(owner->weapons.front()->TryTarget(SWeaponTarget(mainHeadingPos, true)))
+			) {
 				progressState = Active;
 			}
 		}
@@ -1548,7 +1549,7 @@ void CClassicGroundMoveType::SetMainHeading() {
 				ChangeHeading(heading);
 			} else if (progressState != Active
 			  && owner->heading != heading
-			  && !owner->weapons.front()->TryTarget(mainHeadingPos, true, 0)) {
+			  && !owner->weapons.front()->TryTarget(SWeaponTarget(mainHeadingPos, true))) {
 				progressState = Active;
 				owner->script->StartMoving(false);
 				ChangeHeading(heading);

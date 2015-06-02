@@ -99,6 +99,8 @@ void LuaFBOs::FBO::Init(lua_State* L)
 	id     = 0;
 	target = GL_FRAMEBUFFER_EXT;
 	luaRef = LUA_NOREF;
+	xsize = 0;
+	ysize = 0;
 }
 
 

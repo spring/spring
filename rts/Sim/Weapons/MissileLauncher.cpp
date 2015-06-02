@@ -21,20 +21,17 @@ CMissileLauncher::CMissileLauncher(CUnit* owner, const WeaponDef* def): CWeapon(
 
 void CMissileLauncher::UpdateWantedDir()
 {
-	if (!onlyForward) {
-		wantedDir = targetPos - aimFromPos;
-		predict = wantedDir.LengthNormalize() / projectileSpeed;
+	CWeapon::UpdateWantedDir();
 
-		if (weaponDef->trajectoryHeight > 0.0f) {
-			wantedDir.y += weaponDef->trajectoryHeight;
-			wantedDir.Normalize();
-		}
+	if (weaponDef->trajectoryHeight > 0.0f) {
+		wantedDir.y += weaponDef->trajectoryHeight;
+		wantedDir.Normalize();
 	}
 }
 
-void CMissileLauncher::FireImpl(bool scriptCall)
+void CMissileLauncher::FireImpl(const bool scriptCall)
 {
-	float3 dir = targetPos - weaponMuzzlePos;
+	float3 dir = currentTargetPos - weaponMuzzlePos;
 	const float dist = dir.LengthNormalize();
 
 	if (onlyForward) {
@@ -57,19 +54,19 @@ void CMissileLauncher::FireImpl(bool scriptCall)
 
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos;
-	params.end = targetPos;
+	params.end = currentTargetPos;
 	params.speed = startSpeed;
 	params.ttl = weaponDef->flighttime == 0? std::ceil(std::max(dist, range) / projectileSpeed + 25 * weaponDef->selfExplode): weaponDef->flighttime;
 
 	WeaponProjectileFactory::LoadProjectile(params);
 }
 
-bool CMissileLauncher::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const
+bool CMissileLauncher::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const
 {
 	// do a different test depending on if the missile has high
 	// trajectory (parabolic vs. linear ground intersection)
 	if (weaponDef->trajectoryHeight <= 0.0f)
-		return CWeapon::HaveFreeLineOfFire(pos, userTarget, unit);
+		return CWeapon::HaveFreeLineOfFire(pos, trg);
 
 	float3 dir(pos - weaponMuzzlePos);
 

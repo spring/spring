@@ -326,6 +326,13 @@ void CWeaponProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 	points.AddVertexQC(pos, color4::yellow);
 }
 
+
+bool CWeaponProjectile::CanBeInterceptedBy(const WeaponDef* wd) const
+{
+	return ((weaponDef->targetable & wd->interceptor) != 0);
+}
+
+
 void CWeaponProjectile::DependentDied(CObject* o)
 {
 	if (o == target) {

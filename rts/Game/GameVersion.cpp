@@ -117,12 +117,6 @@ std::string GetAdditional()
 	return additional;
 }
 
-const std::string& GetBuildTime()
-{
-	static const std::string buildTime = __DATE__ " " __TIME__;
-	return buildTime;
-}
-
 #define QUOTEME_(x) #x
 #define QUOTEME(x) QUOTEME_(x)
 

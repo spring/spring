@@ -71,6 +71,7 @@ CProjectile::CProjectile()
 	, drawSorted(true)
 
 	, mygravity(mapInfo? mapInfo->map.gravity: 0.0f)
+	, sortDist(0.0f)
 
 	, ownerID(-1u)
 	, teamID(-1u)

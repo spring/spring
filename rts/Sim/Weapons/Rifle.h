@@ -12,7 +12,7 @@ public:
 	CRifle(CUnit* owner, const WeaponDef* def);
 
 private:
-	void FireImpl(bool scriptCall);
+	void FireImpl(const bool scriptCall) override final;
 };
 
 #endif /* RIFLE_H */

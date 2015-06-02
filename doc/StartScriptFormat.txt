@@ -35,6 +35,7 @@
 
 	DemoFile=demo.sdf;  // if set this game is a multiplayer demo replay
 	SaveFile=save.ssf;  // if set this game is a continuation of a saved game
+	RecordDemo=1;       // set to 0 to disable demo file recording
 
 	HostIP=xxx.xxx.xxx.xxx; // (optional) which IP to host on. omit or use an empty value to host on any local IP. see "IP Support" at the start of this document.
 	HostPort=xxx;       // (optional) default is 8452. where clients are going to connect to.

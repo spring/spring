@@ -1305,10 +1305,9 @@ void CCommandAI::ExecuteAttack(Command& c)
 void CCommandAI::ExecuteStop(Command &c)
 {
 	owner->AttackUnit(NULL, false, true);
-	std::vector<CWeapon*>::iterator wi;
 
-	for (wi = owner->weapons.begin(); wi != owner->weapons.end(); ++wi) {
-		(*wi)->HoldFire();
+	for (CWeapon* w: owner->weapons) {
+		w->DropCurrentTarget();
 	}
 
 	FinishCommand();

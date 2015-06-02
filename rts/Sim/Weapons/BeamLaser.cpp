@@ -130,22 +130,20 @@ void CBeamLaser::UpdatePosAndMuzzlePos()
 	}
 }
 
-void CBeamLaser::UpdateWantedDir()
+float CBeamLaser::GetPredictFactor(float3 p) const
 {
-	CWeapon::UpdateWantedDir();
-
 	if (!weaponDef->beamburst) {
-		predict = salvoSize / 2;
+		return salvoSize / 2;
 	} else {
 		// beamburst tracks the target during the burst so there's no need to lead
-		predict = 0;
+		return 0;
 	}
 }
 
 void CBeamLaser::UpdateSweep()
 {
 	// sweeping always happens between targets
-	if (targetType == Target_None) {
+	if (!HaveTarget()) {
 		sweepFireState.SetSweepFiring(false);
 		return;
 	}
@@ -157,8 +155,8 @@ void CBeamLaser::UpdateSweep()
 	#endif
 
 	// if current target position changed, start sweeping through a new arc
-	if (sweepFireState.StartSweep(targetPos))
-		sweepFireState.Init(targetPos, weaponMuzzlePos);
+	if (sweepFireState.StartSweep(currentTargetPos))
+		sweepFireState.Init(currentTargetPos, weaponMuzzlePos);
 
 	if (sweepFireState.IsSweepFiring())
 		sweepFireState.Update(GetFireDir(true, false));
@@ -197,7 +195,7 @@ void CBeamLaser::Update()
 
 float3 CBeamLaser::GetFireDir(bool sweepFire, bool scriptCall)
 {
-	float3 dir = targetPos - weaponMuzzlePos;
+	float3 dir = currentTargetPos - weaponMuzzlePos;
 
 	if (!sweepFire) {
 		if (scriptCall) {
@@ -223,7 +221,7 @@ float3 CBeamLaser::GetFireDir(bool sweepFire, bool scriptCall)
 			//  on units with (extremely) long weapon barrels the muzzle
 			//  can be on the far side of the target unit such that <dir>
 			//  would point away from it
-			if ((targetPos - weaponMuzzlePos).dot(targetPos - owner->aimPos) < 0.0f) {
+			if ((currentTargetPos - weaponMuzzlePos).dot(currentTargetPos - owner->aimPos) < 0.0f) {
 				dir = -dir;
 			}
 		}
@@ -250,7 +248,7 @@ float3 CBeamLaser::GetFireDir(bool sweepFire, bool scriptCall)
 	return dir;
 }
 
-void CBeamLaser::FireImpl(bool scriptCall)
+void CBeamLaser::FireImpl(const bool scriptCall)
 {
 	// sweepfire must exclude regular fire (!)
 	if (sweepFireState.IsSweepFiring())
@@ -301,8 +299,8 @@ void CBeamLaser::FireInternal(float3 curDir)
 		}
 
 		// adjust range if targetting edge of hitsphere
-		if (targetType == Target_Unit && targetUnit != NULL && weaponDef->targetBorder != 0.0f) {
-			maxLength += (targetUnit->radius * weaponDef->targetBorder);
+		if (currentTarget.type == Target_Unit && weaponDef->targetBorder != 0.0f) {
+			maxLength += (currentTarget.unit->radius * weaponDef->targetBorder);
 		}
 	} else {
 		// restrict the range when sweeping

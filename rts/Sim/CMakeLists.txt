@@ -159,6 +159,7 @@ add_library(engineSim STATIC
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/WeaponDef.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/WeaponDefHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/WeaponLoader.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/WeaponTarget.cpp"
 	)
 
 include_directories(${GLEW_INCLUDE_DIR})

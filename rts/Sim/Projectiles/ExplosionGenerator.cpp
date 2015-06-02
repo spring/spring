@@ -613,6 +613,7 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 	float val = 0.0f;
 	void* ptr = NULL;
 	float buffer[16];
+	for(int i=0; i<16; i++) buffer[i] = 0.0f; //initialize buffer
 
 	for (;;) {
 		switch (*(code++)) {

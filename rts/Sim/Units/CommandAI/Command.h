@@ -107,15 +107,13 @@ enum {
 	FIRESTATE_HOLDFIRE   =  0,
 	FIRESTATE_RETURNFIRE =  1,
 	FIRESTATE_FIREATWILL =  2,
+	FIRESTATE_FIREATNEUTRAL =  3,
 };
 
 struct Command
 {
 private:
 	CR_DECLARE_STRUCT(Command)
-/*
-	TODO check if usage of System/MemPool.h for this struct improves performance
-*/
 
 public:
 	Command()

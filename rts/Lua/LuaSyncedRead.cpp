@@ -3219,6 +3219,17 @@ int LuaSyncedRead::GetUnitFlanking(lua_State* L)
 }
 
 
+int LuaSyncedRead::GetUnitMaxRange(lua_State* L)
+{
+	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	lua_pushnumber(L, unit->maxRange);
+	return 1;
+}
+
+
 int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
 {
 	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
@@ -3352,13 +3363,13 @@ int LuaSyncedRead::GetUnitWeaponTryTarget(lua_State* L)
 		pos.z = luaL_optnumber(L, 5, 0.0f);
 
 	} else {
-		if ((enemy = ParseUnit(L, __FUNCTION__, 3)) == NULL)
-			return 0;
+		enemy = ParseUnit(L, __FUNCTION__, 3);
 
-		pos = weapon->GetUnitPositionWithError(enemy);
+		if (enemy == NULL)
+			return 0;
 	}
 
-	lua_pushboolean(L, weapon->TryTarget(pos, true, enemy));
+	lua_pushboolean(L, weapon->TryTarget(SWeaponTarget(enemy, pos, true)));
 	return 1;
 }
 
@@ -3388,10 +3399,10 @@ int LuaSyncedRead::GetUnitWeaponTestTarget(lua_State* L)
 		if ((enemy = ParseUnit(L, __FUNCTION__, 3)) == NULL)
 			return 0;
 
-		pos = weapon->GetUnitPositionWithError(enemy);
+		pos = weapon->GetUnitLeadTargetPos(enemy);
 	}
 
-	lua_pushboolean(L, weapon->TestTarget(pos, true, enemy));
+	lua_pushboolean(L, weapon->TestTarget(pos, SWeaponTarget(enemy, pos, true)));
 	return 1;
 }
 
@@ -3421,10 +3432,10 @@ int LuaSyncedRead::GetUnitWeaponTestRange(lua_State* L)
 		if ((enemy = ParseUnit(L, __FUNCTION__, 3)) == NULL)
 			return 0;
 
-		pos = weapon->GetUnitPositionWithError(enemy);
+		pos = weapon->GetUnitLeadTargetPos(enemy);
 	}
 
-	lua_pushboolean(L, weapon->TestRange(pos, true, enemy));
+	lua_pushboolean(L, weapon->TestRange(pos, SWeaponTarget(enemy, pos, true)));
 	return 1;
 }
 
@@ -3454,10 +3465,10 @@ int LuaSyncedRead::GetUnitWeaponHaveFreeLineOfFire(lua_State* L)
 		if ((enemy = ParseUnit(L, __FUNCTION__, 3)) == NULL)
 			return 0;
 
-		pos = weapon->GetUnitPositionWithError(enemy);
+		pos = weapon->GetUnitLeadTargetPos(enemy);
 	}
 
-	lua_pushboolean(L, weapon->HaveFreeLineOfFire(pos, true, enemy));
+	lua_pushboolean(L, weapon->HaveFreeLineOfFire(pos, SWeaponTarget(enemy, pos, true)));
 	return 1;
 }
 
@@ -3494,34 +3505,30 @@ int LuaSyncedRead::GetUnitWeaponTarget(lua_State* L)
 		return 0;
 
 	const CWeapon* weapon = unit->weapons[weaponNum];
-	const CWorldObject* target = NULL;
+	auto curTarget = weapon->GetCurrentTarget();
 
-	lua_pushnumber(L, weapon->targetType);
+	lua_pushnumber(L, curTarget.type);
 
-	switch (weapon->targetType) {
+	switch (curTarget.type) {
 		case Target_None:
 			return 1;
 			break;
 		case Target_Unit: {
-			lua_pushboolean(L, weapon->haveUserTarget);
-			target = weapon->targetUnit;
-			assert(target != NULL);
-			lua_pushnumber(L, (target != NULL)? target->id: -1);
+			lua_pushboolean(L, curTarget.isUserTarget);
+			lua_pushnumber(L, curTarget.unit->id);
 			break;
 		}
 		case Target_Pos: {
-			lua_pushboolean(L, weapon->haveUserTarget);
+			lua_pushboolean(L, curTarget.isUserTarget);
 			lua_createtable(L, 3, 0);
-			lua_pushnumber(L, weapon->targetPos.x); lua_rawseti(L, -2, 1);
-			lua_pushnumber(L, weapon->targetPos.y); lua_rawseti(L, -2, 2);
-			lua_pushnumber(L, weapon->targetPos.z); lua_rawseti(L, -2, 3);
+			lua_pushnumber(L, curTarget.groundPos.x); lua_rawseti(L, -2, 1);
+			lua_pushnumber(L, curTarget.groundPos.y); lua_rawseti(L, -2, 2);
+			lua_pushnumber(L, curTarget.groundPos.z); lua_rawseti(L, -2, 3);
 			break;
 		}
 		case Target_Intercept: {
-			lua_pushboolean(L, weapon->haveUserTarget);
-			target = weapon->interceptTarget;
-			assert(target != NULL);
-			lua_pushnumber(L, (target != NULL)? target->id: -1);
+			lua_pushboolean(L, curTarget.isUserTarget);
+			lua_pushnumber(L, curTarget.intercept->id);
 			break;
 		}
 	}

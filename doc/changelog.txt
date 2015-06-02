@@ -14,7 +14,11 @@ Major:
    ! removed alias "/quit" (use /quitforce)
    - add "quit to menu" to quit-box
    - add "/reloadforce"
+   -  add DefaultStartScript config setting:
+     - if set, automaticly start it!
+     - add --oldmenu command line parameter to always get to the old menu
  - added lua override for infomaps
+ - allow to enable isolated mode by creating a file isolated.txt next to spring executable
 
 Cameras:
  ! removed TW, Orbital & Smooth camera
@@ -76,18 +80,21 @@ New InfoTexture Renderer:
   - fix #4608: add new /showpathtype [movdefname | movedefid | unitdefname | -1]
 
 Lua:
+ - add Spring.GetUnitMaxRange(unitID) -> number maxRange and Spring.SetUnitMaxRange(unitID, maxRange) -> nil callouts to read and set engagement range of a unit
  - add UnitStunned call-in
  - add attackSafetyDistance unitDef
  - add Spring.GetLosViewColors
  - add new call-in: UnitStunned(unitID, unitDefID, unitTeam, stunned) -- called whenever a unit changes its stun status
  - add Set/GetProjectileIsIntercepted
  - add GetProjectileTimeToLive, GetProjectileOwnerID and GetProjectileTeamID.
+ - add SFX.RECURSIVE flag to Explode(), allowing to draw the piece and all its children.
  ! remove Spring.UpdateInfoTexture
  ! fix Spring.GetKeyState & Spring.PressedKeys expecting SDL2 keycodes while whole lua gets SDL1 ones
  ! Spring.PressedKeys now also returns keynames
 
 StartScript:
  - support rapid tags
+ - allow to disable demo file recording in script.txt via RecordDemo = 0
 
 Buildbot/Installer:
  ! merged spring-headless / spring-dedicated into linux static builds / windows installer

@@ -27,6 +27,7 @@ public:
 	void ResetResourceState();
 	void SlowUpdate();
 
+	bool HaveResources(const SResourcePack& amount) const;
 	void AddResources(SResourcePack res, bool useIncomeMultiplier = true);
 	bool UseResources(const SResourcePack& res);
 
