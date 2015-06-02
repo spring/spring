@@ -1528,6 +1528,11 @@ void CCommandAI::WeaponFired(CWeapon* weapon, const bool searchForNewTarget)
 	if (!inCommand)
 		return;
 
+	// only finish manualfire'd attack commands after first salvo
+	// when you attack ground you want it to continue doing so
+	if (!weapon->weaponDef->manualfire || (c.options & META_KEY))
+		return;
+
 	if (c.GetID() == CMD_ATTACK || c.GetID() == CMD_MANUALFIRE) {
 		eoh->WeaponFired(*owner, *(weapon->weaponDef));
 
