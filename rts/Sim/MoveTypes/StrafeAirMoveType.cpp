@@ -864,7 +864,7 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine, bool isA
 
 		goalDotRight -= (otherDir.dot(rightdir) * otherThreat);
 	}
-	const CUnit* attackee = owner->attackTarget;
+	const CUnit* attackee = owner->curTarget.unit;
 
 	// overflewNearbyGoal marks that is still too soon to turn after overflying a nearby target
 	// helps making sure the aircraft is in a position to reach or fire at the goal after it finally turns back
