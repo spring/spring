@@ -1527,18 +1527,8 @@ void CCommandAI::WeaponFired(CWeapon* weapon, const bool searchForNewTarget)
 
 	if (!inCommand)
 		return;
-	if (!weapon->weaponDef->manualfire || (c.options & META_KEY))
-		return;
 
 	if (c.GetID() == CMD_ATTACK || c.GetID() == CMD_MANUALFIRE) {
-		if (c.GetParamsCount() < 3) {
-			// clear previous target
-			owner->AttackUnit(NULL, (c.options & INTERNAL_ORDER) == 0, true);
-		} else {
-			// not needed in this case
-			// owner->AttackGround(ZeroVector, (c.options & INTERNAL_ORDER) == 0, true);
-		}
-
 		eoh->WeaponFired(*owner, *(weapon->weaponDef));
 
 		if (!nextOrder) {
