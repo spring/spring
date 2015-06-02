@@ -508,7 +508,7 @@ void CWeapon::UpdateSalvo()
 		owner->script->RockUnit(rockDir);
 	}
 
-	const bool searchForNewTarget = (weaponNum == 0) && (salvoLeft == 0) && (currentTarget == owner->curTarget);
+	const bool searchForNewTarget = (salvoLeft == 0) && (currentTarget == owner->curTarget);
 	owner->commandAI->WeaponFired(this, searchForNewTarget);
 
 	if (salvoLeft == 0) {
@@ -1263,7 +1263,7 @@ float CWeapon::MoveErrorExperience() const
 float3 CWeapon::GetLeadTargetPos(const SWeaponTarget& target) const
 {
 	switch (target.type) {
-		case Target_None:      return float3(-666.f,-666.f,-666.f);
+		case Target_None:      return currentTargetPos;
 		case Target_Unit:      return GetUnitLeadTargetPos(target.unit);
 		case Target_Pos: {
 			float3 p = target.groundPos;
@@ -1273,19 +1273,19 @@ float3 CWeapon::GetLeadTargetPos(const SWeaponTarget& target) const
 		case Target_Intercept: return target.intercept->pos + target.intercept->speed;
 	}
 
-	return float3(-666.f,-666.f,-666.f);
+	return currentTargetPos;
 }
 
 
 float3 CWeapon::GetTargetPos(const SWeaponTarget& target) const
 {
 	switch (target.type) {
-		case Target_None:      return float3(-666.f,-666.f,-666.f);
+		case Target_None:      return currentTargetPos;
 		case Target_Unit:      return target.unit->pos;
 		case Target_Pos:       return target.groundPos;
 		case Target_Intercept: return target.intercept->pos;
 	}
 
-	return float3(-666.f,-666.f,-666.f);
+	return currentTargetPos;
 }
 

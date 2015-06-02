@@ -719,7 +719,7 @@ bool CCommandAI::ExecuteStateCommand(const Command& c)
 void CCommandAI::ClearTargetLock(const Command &c) {
 	if (((c.GetID() == CMD_ATTACK) || (c.GetID() == CMD_MANUALFIRE)) && (c.options & META_KEY) == 0) {
 		// no meta-bit attack lock, clear the order
-		owner->AttackUnit(NULL, false, false);
+		owner->DropCurrentAttackTarget();
 	}
 }
 
@@ -1531,7 +1531,7 @@ void CCommandAI::WeaponFired(CWeapon* weapon, const bool searchForNewTarget)
 	if (c.GetID() == CMD_ATTACK || c.GetID() == CMD_MANUALFIRE) {
 		eoh->WeaponFired(*owner, *(weapon->weaponDef));
 
-		if (!nextOrder) {
+		if (searchForNewTarget && !nextOrder) {
 			FinishCommand();
 		}
 	}
