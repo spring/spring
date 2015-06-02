@@ -36,8 +36,6 @@ void CPlayerHandler::ResetState()
 
 void CPlayerHandler::LoadFromSetup(const CGameSetup* setup)
 {
-	assert(players.empty());
-
 	const std::vector<PlayerBase>& playerData = setup->GetPlayerStartingDataCont();
 
 	const int oldSize = players.size();
