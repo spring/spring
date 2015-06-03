@@ -68,31 +68,18 @@ bool CBombDropper::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg
 
 bool CBombDropper::TestRange(const float3 pos, const SWeaponTarget& trg) const
 {
-	// "normal" range restrictions are not meaningful
-	// to check given dropped (ballistic) projectiles
-	if (false && (owner->speed.w * predict) > weaponDef->range)
-		return false;
-
 	// bombs always fall down
 	if (aimFromPos.y < pos.y)
 		return false;
 
-	// dropPos is guaranteed to be in range from owner's
-	// current position, now must make sure no bombs will
-	// under- (eg. if range is much larger than <v*t>) or
-	// overshoot (eg. if salvoDelay is long) their actual
-	// targetPos too much
+	const float fallTime = GetPredictedImpactTime(pos - aimFromPos);
+	const float dropDist = std::max(1, salvoSize) * salvoDelay * owner->speed.w * 0.5f;
+
 	// torpedoes especially should not be dropped if the
 	// target position is already behind owner's position
-	const float3 dropPos = aimFromPos + owner->speed * predict;
+	const float torpDist = torpMoveRange * (owner->frontdir.dot(pos - aimFromPos) > 0.0f);
 
-	// salvoSize * salvoDelay is time to drop entire salvo
-	// size*delay * speed is distance from dropPos of first
-	// bomb to dropPos of last (assuming no spread), we use
-	// half this distance as tolerance radius
-	const float dropDist = std::max(1, salvoSize) * (salvoDelay * owner->speed.w * 0.5f);
-	const float torpDist = torpMoveRange * (owner->frontdir.dot(pos - dropPos) > 0.0f);
-	return (dropPos.SqDistance2D(pos) < Square(dropDist + torpDist));
+	return (pos.SqDistance2D(aimFromPos + owner->speed * fallTime) < Square(dropDist + torpDist));
 }
 
 
@@ -175,7 +162,7 @@ float CBombDropper::GetPredictedImpactTime(const float3& impactPos) const
 	const float d = impactPos.y - weaponMuzzlePos.y;
 	const float s = -owner->speed.y;
 
-	const float g = mix(mapInfo->map.gravity, -weaponDef->myGravity, (weaponDef->myGravity != 0.0f));
+	const float g = (weaponDef->myGravity == 0) ? mapInfo->map.gravity: -weaponDef->myGravity;
 	const float tt = (s - 2.0f * d) / -g;
 
 	return ((tt >= 0.0f)? ((s / g) + math::sqrt(tt)): 0.0f);
