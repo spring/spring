@@ -719,7 +719,7 @@ bool CCommandAI::ExecuteStateCommand(const Command& c)
 void CCommandAI::ClearTargetLock(const Command &c) {
 	if (((c.GetID() == CMD_ATTACK) || (c.GetID() == CMD_MANUALFIRE)) && (c.options & META_KEY) == 0) {
 		// no meta-bit attack lock, clear the order
-		owner->AttackUnit(NULL, false, false);
+		owner->DropCurrentAttackTarget();
 	}
 }
 
@@ -1527,21 +1527,16 @@ void CCommandAI::WeaponFired(CWeapon* weapon, const bool searchForNewTarget)
 
 	if (!inCommand)
 		return;
+
+	// only finish manualfire'd attack commands after first salvo
+	// when you attack ground you want it to continue doing so
 	if (!weapon->weaponDef->manualfire || (c.options & META_KEY))
 		return;
 
 	if (c.GetID() == CMD_ATTACK || c.GetID() == CMD_MANUALFIRE) {
-		if (c.GetParamsCount() < 3) {
-			// clear previous target
-			owner->AttackUnit(NULL, (c.options & INTERNAL_ORDER) == 0, true);
-		} else {
-			// not needed in this case
-			// owner->AttackGround(ZeroVector, (c.options & INTERNAL_ORDER) == 0, true);
-		}
-
 		eoh->WeaponFired(*owner, *(weapon->weaponDef));
 
-		if (!nextOrder) {
+		if (searchForNewTarget && !nextOrder) {
 			FinishCommand();
 		}
 	}

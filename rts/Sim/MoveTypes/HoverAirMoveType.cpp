@@ -57,7 +57,8 @@ CR_REG_METADATA(CHoverAirMoveType, (
 
 static bool IsUnitBusy(const CUnit* u) {
 	// queued move-commands or an active build-command mean unit has to stay airborne
-	return (u->commandAI->HasMoreMoveCommands() || u->commandAI->HasCommand(CMD_LOAD_UNITS) || u->commandAI->HasCommand(-1));
+	const auto& cai = u->commandAI;
+	return (cai->inCommand || cai->HasMoreMoveCommands() || cai->HasCommand(CMD_LOAD_UNITS) || cai->HasCommand(-1));
 }
 
 CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
@@ -438,12 +439,12 @@ void CHoverAirMoveType::UpdateFlying()
 	if (closeToGoal) {
 		switch (flyState) {
 			case FLY_CRUISING: {
+				const auto& cmdQue = owner->commandAI->commandQue;
+				const int topCmdID = cmdQue.empty() ? 0 : cmdQue.front().GetID();
+
 				// NOTE: should CMD_LOAD_ONTO be here?
 				const bool isTransporter = (dynamic_cast<CTransportUnit*>(owner) != NULL);
-				const bool hasLoadCmds = isTransporter &&
-					!owner->commandAI->commandQue.empty() &&
-					(owner->commandAI->commandQue.front().GetID() == CMD_LOAD_ONTO ||
-					 owner->commandAI->commandQue.front().GetID() == CMD_LOAD_UNITS);
+				const bool hasLoadCmds = isTransporter && (topCmdID == CMD_LOAD_ONTO || topCmdID == CMD_LOAD_UNITS);
 				// [?] transport aircraft need some time to detect that they can pickup
 				const bool canLoad = isTransporter && (++waitCounter < ((GAME_SPEED << 1) - 5));
 				const bool isBusy = IsUnitBusy(owner);
@@ -457,7 +458,6 @@ void CHoverAirMoveType::UpdateFlying()
 						}
 
 						SetState(AIRCRAFT_HOVERING);
-						return;
 					} else {
 						if (!isBusy) {
 							wantToStop = true;
@@ -467,15 +467,14 @@ void CHoverAirMoveType::UpdateFlying()
 							//   will change it to _LANDING because wantToStop
 							//   is now true
 							SetState(AIRCRAFT_HOVERING);
-							return;
 						}
 					}
 				} else {
 					wantedHeight = orgWantedHeight;
-
 					SetState(AIRCRAFT_LANDING);
-					return;
 				}
+
+				return;
 			} break;
 
 			case FLY_CIRCLING: {
@@ -487,7 +486,7 @@ void CHoverAirMoveType::UpdateFlying()
 							relPos.x = 0.0001f;
 						}
 
-						static CMatrix44f rot(0.0f, fastmath::PI / 4.0f, 0.0f);
+						static const CMatrix44f rot(0.0f, fastmath::PI / 4.0f, 0.0f);
 
 						// make sure the point is on the circle, go there in a straight line
 						goalPos = circlingPos + (rot.Mul(relPos.Normalize2D()) * goalDistance);
@@ -504,13 +503,9 @@ void CHoverAirMoveType::UpdateFlying()
 						relPos.x = 0.0001f;
 					}
 
-					CMatrix44f rot;
-
-					if (gs->randFloat() > 0.5f) {
-						rot.RotateY(0.6f + gs->randFloat() * 0.6f);
-					} else {
-						rot.RotateY(-(0.6f + gs->randFloat() * 0.6f));
-					}
+					float rotY = 0.6f + gs->randFloat() * 0.6f;
+					rotY *= (gs->randFloat() > 0.5f) ? 1.0f : -1.0f;
+					const CMatrix44f rot(0.0f, rotY, 0.0f);
 
 					// Go there in a straight line
 					goalPos = circlingPos + (rot.Mul(relPos.Normalize2D()) * goalDistance);

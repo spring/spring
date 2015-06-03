@@ -351,7 +351,6 @@ void CWeapon::ReAimWeapon()
 
 bool CWeapon::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRequestedDir) const
 {
-	// FIXME merge some of the checks with TryTarget/TestRange/TestTarget (!)
 	if (!ignoreAngleGood && !angleGood)
 		return false;
 
@@ -508,7 +507,7 @@ void CWeapon::UpdateSalvo()
 		owner->script->RockUnit(rockDir);
 	}
 
-	const bool searchForNewTarget = (weaponNum == 0) && (salvoLeft == 0) && (currentTarget == owner->curTarget);
+	const bool searchForNewTarget = (salvoLeft == 0) && (currentTarget == owner->curTarget);
 	owner->commandAI->WeaponFired(this, searchForNewTarget);
 
 	if (salvoLeft == 0) {
@@ -733,31 +732,6 @@ void CWeapon::HoldIfTargetInvalid()
 		DropCurrentTarget();
 		return;
 	}
-
-	if (currentTarget.type == Target_Unit) {
-		// stop firing at cloaked targets
-		if (currentTarget.unit->isCloaked && !(currentTarget.unit->losStatus[owner->allyteam] & (LOS_INLOS | LOS_INRADAR))) {
-			DropCurrentTarget();
-			return;
-		}
-
-		// stop firing at neutral targets (unless in FAW mode)
-		// note: HoldFire sets targetUnit to NULL, so recheck
-		if (!currentTarget.isUserTarget && currentTarget.unit->IsNeutral() && owner->fireState < FIRESTATE_FIREATNEUTRAL) {
-			DropCurrentTarget();
-			return;
-		}
-
-		// stop firing at allied targets
-		//
-		// this situation (unit keeps attacking its target if the
-		// target or the unit switches to an allied team) should
-		// be handled by /ally processing now
-		if (!currentTarget.isUserTarget && teamHandler->Ally(owner->allyteam, currentTarget.unit->allyteam)) {
-			DropCurrentTarget();
-			return;
-		}
-	}
 }
 
 
@@ -912,6 +886,14 @@ bool CWeapon::TestTarget(const float3 tgtPos, const SWeaponTarget& trg) const
 			if (trg.unit->isDead && modInfo.fireAtKilled == 0)
 				return false;
 			if (trg.unit->IsCrashing() && modInfo.fireAtCrashing == 0)
+				return false;
+			if ((trg.unit->losStatus[owner->allyteam] & (LOS_INLOS | LOS_INRADAR)) == 0)
+				return false;
+			if (!trg.isUserTarget && trg.unit->IsNeutral() && owner->fireState < FIRESTATE_FIREATNEUTRAL)
+				return false;
+
+			// don't fire at allied targets
+			if (!trg.isUserTarget && teamHandler->Ally(owner->allyteam, trg.unit->allyteam))
 				return false;
 
 			if (trg.unit->GetTransporter() != NULL) {
@@ -1263,7 +1245,7 @@ float CWeapon::MoveErrorExperience() const
 float3 CWeapon::GetLeadTargetPos(const SWeaponTarget& target) const
 {
 	switch (target.type) {
-		case Target_None:      return float3(-666.f,-666.f,-666.f);
+		case Target_None:      return currentTargetPos;
 		case Target_Unit:      return GetUnitLeadTargetPos(target.unit);
 		case Target_Pos: {
 			float3 p = target.groundPos;
@@ -1273,19 +1255,19 @@ float3 CWeapon::GetLeadTargetPos(const SWeaponTarget& target) const
 		case Target_Intercept: return target.intercept->pos + target.intercept->speed;
 	}
 
-	return float3(-666.f,-666.f,-666.f);
+	return currentTargetPos;
 }
 
 
 float3 CWeapon::GetTargetPos(const SWeaponTarget& target) const
 {
 	switch (target.type) {
-		case Target_None:      return float3(-666.f,-666.f,-666.f);
+		case Target_None:      return currentTargetPos;
 		case Target_Unit:      return target.unit->pos;
 		case Target_Pos:       return target.groundPos;
 		case Target_Intercept: return target.intercept->pos;
 	}
 
-	return float3(-666.f,-666.f,-666.f);
+	return currentTargetPos;
 }
 

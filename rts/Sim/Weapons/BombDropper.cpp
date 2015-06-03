@@ -74,7 +74,7 @@ bool CBombDropper::TestRange(const float3 pos, const SWeaponTarget& trg) const
 		return false;
 
 	// bombs always fall down
-	if (aimFromPos.y < currentTargetPos.y)
+	if (aimFromPos.y < pos.y)
 		return false;
 
 	// dropPos is guaranteed to be in range from owner's
@@ -84,16 +84,15 @@ bool CBombDropper::TestRange(const float3 pos, const SWeaponTarget& trg) const
 	// targetPos too much
 	// torpedoes especially should not be dropped if the
 	// target position is already behind owner's position
-	const float3 dropPos = owner->pos + owner->speed * predict;
+	const float3 dropPos = aimFromPos + owner->speed * predict;
 
 	// salvoSize * salvoDelay is time to drop entire salvo
 	// size*delay * speed is distance from dropPos of first
 	// bomb to dropPos of last (assuming no spread), we use
 	// half this distance as tolerance radius
 	const float dropDist = std::max(1, salvoSize) * (salvoDelay * owner->speed.w * 0.5f);
-	const float torpDist = torpMoveRange * (owner->frontdir.dot(currentTargetPos - owner->pos) > 0.0f);
-
-	return (dropPos.SqDistance2D(currentTargetPos) < Square(dropDist + torpDist));
+	const float torpDist = torpMoveRange * (owner->frontdir.dot(pos - dropPos) > 0.0f);
+	return (dropPos.SqDistance2D(pos) < Square(dropDist + torpDist));
 }
 
 
