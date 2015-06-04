@@ -708,7 +708,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			const float3 tgtPosDir = (tgtErrPos - owner->pos).Normalize();
 
 			// FIXME: don't call SetGoal() if target is already in range of some weapon?
-			SetGoal(tgtErrPos - tgtPosDir * targetUnit->radius, owner->pos);
+			SetGoal(tgtErrPos - tgtPosDir * targetUnit->radius, owner->pos, owner->maxRange * 0.9f);
 			SetOrderTarget(targetUnit);
 			owner->AttackUnit(targetUnit, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
 
@@ -716,7 +716,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		}
 		else if (c.params.size() >= 3) {
 			// user gave force-fire attack command
-			SetGoal(c.GetPos(0), owner->pos);
+			SetGoal(c.GetPos(0), owner->pos, owner->maxRange * 0.9f);
 
 			inCommand = true;
 		}
@@ -785,7 +785,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			const bool targetBehind = (targetMidPosVec.dot(orderTarget->speed) < 0.0f);
 
 			if (canChaseTarget && tryTargetHeading && targetBehind) {
-				SetGoal(owner->pos + (orderTarget->speed * 80), owner->pos, SQUARE_SIZE, orderTarget->speed.w * 1.1f);
+				SetGoal(owner->pos + (orderTarget->speed * 80), owner->pos, owner->maxRange * 0.9f, orderTarget->speed.w * 1.1f);
 			} else {
 				StopMove();
 
@@ -829,7 +829,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 				goalDiff.z = targetMidPosVec.dot(float3(sin, 0,  cos));
 				goalDiff *= (targetMidPosDist2D < (owner->maxRange * 0.3f)) ? 1/cos : cos;
 				goalDiff += orderTarget->pos;
-				SetGoal(goalDiff, owner->pos);
+				SetGoal(goalDiff, owner->pos, owner->maxRange * 0.9f);
 			}
 		}
 
@@ -847,78 +847,58 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			const float3 norm = (tgtPos - owner->pos).Normalize();
 			const float3 goal = tgtPos - norm * (orderTarget->radius * edgeFactor * 0.8f);
 
-			SetGoal(goal, owner->pos);
+			SetGoal(goal, owner->pos, owner->maxRange * 0.9f);
 
 			if (lastCloseInTry < gs->frameNum + MAX_CLOSE_IN_RETRY_TICKS)
 				lastCloseInTry = gs->frameNum;
 		}
 	}
 
-	// user wants to attack the ground; cycle through our
-	// weapons until we find one that can accomodate him
+	// user wants to attack the ground
 	else if (c.params.size() >= 3) {
 		const float3 attackPos = c.GetPos(0);
 		const float3 attackVec = attackPos - owner->pos;
-
-		bool foundWeapon = false;
-
+		const short  attackHead = GetHeadingFromVector(attackVec.x, attackVec.z);
 		const SWeaponTarget trg(attackPos, (c.options & INTERNAL_ORDER) == 0);
 
-		for (CWeapon* w: owner->weapons) {
-			if (foundWeapon)
-				break;
+		if (c.GetID() == CMD_MANUALFIRE) {
+			assert(owner->unitDef->canManualFire);
 
-			// XXX HACK - special weapon overrides any checks
-			if (c.GetID() == CMD_MANUALFIRE) {
-				assert(owner->unitDef->canManualFire);
-
+			if (owner->AttackGround(trg.groundPos, trg.isUserTarget, true)) {
 				// StopMoveAndKeepPointing calls StopMove before KeepPointingTo
 				// but we want to call it *after* KeepPointingTo to prevent 4131
-				if (!(owner->AttackGround(attackPos, (c.options & INTERNAL_ORDER) == 0, true))) {
-					continue;
-				}
-
 				owner->moveType->KeepPointingTo(attackPos, owner->maxRange * 0.9f, true);
 				StopMove();
-				foundWeapon = true;
-			} else {
+				return;
+			}
+		} else {
+			for (CWeapon* w: owner->weapons) {
 				// NOTE:
 				//   we call TryTargetHeading which is less restrictive than TryTarget
 				//   (eg. the former succeeds even if the unit has not already aligned
 				//   itself with <attackVec>)
-				if (w->TryTargetHeading(GetHeadingFromVector(attackVec.x, attackVec.z), trg)) {
-					if (w->TryTargetRotate(attackPos, (c.options & INTERNAL_ORDER) == 0)) {
-						if (!owner->AttackGround(attackPos, (c.options & INTERNAL_ORDER) == 0, false))
-							continue;
+				if (!w->TryTargetHeading(attackHead, trg))
+					continue;
 
-						StopMove();
-						foundWeapon = true;
-					}
-
-					// for gunships, this pitches the nose down such that
-					// TryTargetRotate (which also checks range for itself)
-					// has a bigger chance of succeeding
-					//
-					// hence it must be called as soon as we get in range
-					// and may not depend on what TryTargetRotate returns
-					// (otherwise we might never get a firing solution)
-					owner->moveType->KeepPointingTo(attackPos, owner->maxRange * 0.9f, true);
+				if (owner->AttackGround(trg.groundPos, trg.isUserTarget, false)) {
+					StopMoveAndKeepPointing(trg.groundPos, owner->maxRange * 0.9f, true);
+					return;
 				}
+
+				// for gunships, this pitches the nose down such that
+				// TryTargetRotate (which also checks range for itself)
+				// has a bigger chance of succeeding
+				//
+				// hence it must be called as soon as we get in range
+				// and may not depend on what TryTargetRotate returns
+				// (otherwise we might never get a firing solution)
+				owner->moveType->KeepPointingTo(trg.groundPos, owner->maxRange * 0.9f, true);
 			}
-		}
 
-		#if 0
-		// no weapons --> no need to stop at an arbitrary distance?
-		else if (diff.SqLength2D() < 1024) {
-			StopMove();
-			owner->moveType->KeepPointingTo(attackPos, owner->maxRange * 0.9f, true);
-		}
-		#endif
-
-		// if we are unarmed and more than 10 elmos distant
-		// from target position, then keeping moving closer
-		if (owner->weapons.empty() && attackPos.SqDistance2D(goalPos) > 100) {
-			SetGoal(attackPos, owner->pos);
+			if (attackVec.SqLength2D() < Square(goalRadius)) {
+				owner->AttackGround(trg.groundPos, trg.isUserTarget, false);
+				StopMoveAndKeepPointing(attackPos, owner->maxRange * 0.9f, true);
+			}
 		}
 	}
 }
@@ -987,7 +967,7 @@ void CMobileCAI::StopMove()
 void CMobileCAI::StopMoveAndKeepPointing(const float3& p, const float r, bool b)
 {
 	StopMove();
-	owner->moveType->KeepPointingTo(p, r, b);
+	owner->moveType->KeepPointingTo(p, std::max(r, 10.f), b);
 }
 
 void CMobileCAI::BuggerOff(const float3& pos, float radius)
