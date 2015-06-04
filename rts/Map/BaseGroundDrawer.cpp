@@ -25,21 +25,21 @@ CBaseGroundDrawer::CBaseGroundDrawer()
 	wireframe = false;
 	advShading = false;
 
-	jamColor[0] = (int)(losColorScale * 0.30f);
+	jamColor[0] = (int)(losColorScale * 0.10f);
 	jamColor[1] = (int)(losColorScale * 0.00f);
 	jamColor[2] = (int)(losColorScale * 0.00f);
 
-	losColor[0] = (int)(losColorScale * 0.15f);
-	losColor[1] = (int)(losColorScale * 0.15f);
-	losColor[2] = (int)(losColorScale * 0.15f);
+	losColor[0] = (int)(losColorScale * 0.30f);
+	losColor[1] = (int)(losColorScale * 0.30f);
+	losColor[2] = (int)(losColorScale * 0.30f);
 
 	radarColor[0] = (int)(losColorScale * 0.0f);
 	radarColor[1] = (int)(losColorScale * 0.0f);
 	radarColor[2] = (int)(losColorScale * 1.0f);
 
-	alwaysColor[0] = (int)(losColorScale * 0.4f);
-	alwaysColor[1] = (int)(losColorScale * 0.4f);
-	alwaysColor[2] = (int)(losColorScale * 0.4f);
+	alwaysColor[0] = (int)(losColorScale * 0.20f);
+	alwaysColor[1] = (int)(losColorScale * 0.20f);
+	alwaysColor[2] = (int)(losColorScale * 0.20f);
 
 	groundTextures = NULL;
 }
