@@ -21,6 +21,7 @@ CONFIG(int,   CamSpringScrollSpeed).defaultValue(10);
 CONFIG(float, CamSpringFOV).defaultValue(45.0f);
 CONFIG(bool,  CamSpringLockCardinalDirections).defaultValue(true).description("If when rotating cardinal directions should be `locked` for a short time.");
 CONFIG(bool,  CamSpringZoomOutFromMousePos).defaultValue(true);
+CONFIG(bool,  CamSpringEdgeRotate).defaultValue(false).description("Rotate camera when cursor touches screen borders.");
 
 
 CSpringController::CSpringController()
@@ -71,7 +72,7 @@ void CSpringController::MouseMove(float3 move)
 
 void CSpringController::ScreenEdgeMove(float3 move)
 {
-	if (mouse->lasty < globalRendering->viewSizeY / 3 && mouse->lasty > globalRendering->viewSizeY / 10) {
+	if (configHandler->GetBool("CamSpringEdgeRotate") && (mouse->lasty < globalRendering->viewSizeY / 3) && (mouse->lasty > globalRendering->viewSizeY / 10)) {
 		// rotate camera when mouse touches top screen borders
 		move *= (1 + KeyInput::GetKeyModState(KMOD_SHIFT) * 3);
 		camera->SetRotY(MoveAzimuth(move.x * 0.75f));
