@@ -3724,7 +3724,7 @@ int LuaSyncedRead::GetUnitFeatureSeparation(lua_State* L)
 		return 0;
 	}
 
-	float3 pos1;
+	float3 pos1 = unit->midPos;
 	if (!IsAllyUnit(L, unit)) {
 		pos1 = unit->GetErrorPos(CLuaHandle::GetHandleReadAllyTeam(L));
 	}
