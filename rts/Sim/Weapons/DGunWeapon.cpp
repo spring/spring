@@ -17,7 +17,7 @@ CDGunWeapon::CDGunWeapon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def
 }
 
 
-float CDGunWeapon::GetPredictFactor(float3 p) const
+float CDGunWeapon::GetPredictedImpactTime(float3 p) const
 {
 	// user has to manually predict
 	return 0;

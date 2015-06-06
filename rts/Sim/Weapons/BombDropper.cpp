@@ -43,7 +43,7 @@ void CBombDropper::Init()
 }
 
 
-float CBombDropper::GetPredictFactor(float3 impactPos) const
+float CBombDropper::GetPredictedImpactTime(float3 impactPos) const
 {
 	if (weaponMuzzlePos.y <= impactPos.y)
 		return 0.0f;
@@ -100,7 +100,7 @@ bool CBombDropper::TestRange(const float3 pos, const SWeaponTarget& trg) const
 	if (aimFromPos.y < pos.y)
 		return false;
 
-	const float fallTime = GetPredictFactor(pos);
+	const float fallTime = GetPredictedImpactTime(pos);
 	const float dropDist = std::max(1, salvoSize) * salvoDelay * owner->speed.Length2D() * 0.5f;
 
 	// torpedoes especially should not be dropped if the
@@ -119,7 +119,7 @@ bool CBombDropper::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ign
 
 void CBombDropper::FireImpl(const bool scriptCall)
 {
-	const float predict = GetPredictFactor(currentTargetPos);
+	const float predict = GetPredictedImpactTime(currentTargetPos);
 
 	if (dropTorpedoes) {
 		float3 launchSpeed = owner->speed;

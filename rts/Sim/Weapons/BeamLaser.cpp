@@ -130,7 +130,7 @@ void CBeamLaser::UpdatePosAndMuzzlePos()
 	}
 }
 
-float CBeamLaser::GetPredictFactor(float3 p) const
+float CBeamLaser::GetPredictedImpactTime(float3 p) const
 {
 	if (!weaponDef->beamburst) {
 		return salvoSize / 2;

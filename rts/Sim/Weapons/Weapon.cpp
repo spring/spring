@@ -247,7 +247,7 @@ void CWeapon::UpdateWantedDir()
 }
 
 
-float CWeapon::GetPredictFactor(float3 p) const
+float CWeapon::GetPredictedImpactTime(float3 p) const
 {
 	//TODO take target's speed into account? (not just its position)
 	return aimFromPos.distance(p) / projectileSpeed;
@@ -1208,7 +1208,8 @@ float3 CWeapon::GetUnitLeadTargetPos(const CUnit* unit) const
 
 float3 CWeapon::GetLeadVec(const CUnit* unit) const
 {
-	const float predict = GetPredictFactor(unit->pos);
+	assert(unit);
+	const float predict = GetPredictedImpactTime(unit->pos);
 	float3 lead = unit->speed * predict * mix(predictSpeedMod, 1.0f, weaponDef->predictBoost);
 	if (weaponDef->leadLimit >= 0.0f) {
 		const float leadBonus = weaponDef->leadLimit + weaponDef->leadBonus * owner->experience;

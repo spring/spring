@@ -83,7 +83,7 @@ public:
 protected:
 	virtual void FireImpl(const bool scriptCall) {}
 	virtual void UpdateWantedDir();
-	virtual float GetPredictFactor(float3 p) const; //< how long time we predict it take for a projectile to reach target
+	virtual float GetPredictedImpactTime(float3 p) const; //< how long time we predict it take for a projectile to reach target
 
 	ProjectileParams GetProjectileParams();
 	static bool TargetUnderWater(const SWeaponTarget&);

@@ -20,7 +20,7 @@ private:
 	float3 GetFireDir(bool sweepFire, bool scriptCall);
 
 	void UpdatePosAndMuzzlePos();
-	float GetPredictFactor(float3 p) const override final;
+	float GetPredictedImpactTime(float3 p) const override final;
 	void UpdateSweep();
 
 	void FireInternal(float3 curDir);
