@@ -40,7 +40,6 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(salvoSize),
 	CR_MEMBER(projectilesPerShot),
 	CR_MEMBER(nextSalvo),
-	CR_MEMBER(predict),
 	CR_MEMBER(accuracyError),
 	CR_MEMBER(projectileSpeed),
 	CR_MEMBER(predictSpeedMod),
@@ -115,7 +114,6 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	projectilesPerShot(1),
 	nextSalvo(0),
 	salvoLeft(0),
-	predict(0),
 	predictSpeedMod(1),
 
 	hasBlockShot(false),
@@ -251,14 +249,13 @@ void CWeapon::UpdateWantedDir()
 
 float CWeapon::GetPredictFactor(float3 p) const
 {
-	return (p - aimFromPos).Length() / projectileSpeed;
+	//TODO take target's speed into account? (not just its position)
+	return aimFromPos.distance(p) / projectileSpeed;
 }
 
 
 void CWeapon::Update()
 {
-	predict = GetPredictFactor(GetTargetPos(currentTarget));
-	predict = Clamp(predict, 0.f, 50000.0f);
 	errorVector += errorVectorAdd;
 
 	UpdateWeaponVectors();
@@ -1211,6 +1208,7 @@ float3 CWeapon::GetUnitLeadTargetPos(const CUnit* unit) const
 
 float3 CWeapon::GetLeadVec(const CUnit* unit) const
 {
+	const float predict = GetPredictFactor(unit->pos);
 	float3 lead = unit->speed * predict * mix(predictSpeedMod, 1.0f, weaponDef->predictBoost);
 	if (weaponDef->leadLimit >= 0.0f) {
 		const float leadBonus = weaponDef->leadLimit + weaponDef->leadBonus * owner->experience;
@@ -1253,19 +1251,6 @@ float3 CWeapon::GetLeadTargetPos(const SWeaponTarget& target) const
 			return p;
 		} break;
 		case Target_Intercept: return target.intercept->pos + target.intercept->speed;
-	}
-
-	return currentTargetPos;
-}
-
-
-float3 CWeapon::GetTargetPos(const SWeaponTarget& target) const
-{
-	switch (target.type) {
-		case Target_None:      return currentTargetPos;
-		case Target_Unit:      return target.unit->pos;
-		case Target_Pos:       return target.groundPos;
-		case Target_Intercept: return target.intercept->pos;
 	}
 
 	return currentTargetPos;

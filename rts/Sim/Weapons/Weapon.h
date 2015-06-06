@@ -62,7 +62,6 @@ public:
 	float3 GetUnitPositionWithError(const CUnit* unit) const;
 	float3 GetUnitLeadTargetPos(const CUnit* unit) const;
 	float3 GetLeadTargetPos(const SWeaponTarget& target) const;
-	float3 GetTargetPos(const SWeaponTarget& target) const;
 
 	float TargetWeight(const CUnit* unit) const;
 
@@ -84,7 +83,7 @@ public:
 protected:
 	virtual void FireImpl(const bool scriptCall) {}
 	virtual void UpdateWantedDir();
-	virtual float GetPredictFactor(float3 p) const;
+	virtual float GetPredictFactor(float3 p) const; //< how long time we predict it take for a projectile to reach target
 
 	ProjectileParams GetProjectileParams();
 	static bool TargetUnderWater(const SWeaponTarget&);
@@ -139,7 +138,6 @@ protected:
 	float3 currentTargetPos;
 
 public:
-	float predict;							// how long time we predict it take for a projectile to reach target
 	float predictSpeedMod;					// how the weapon predicts the speed of the units goes -> 1 when experience increases
 
 	bool hasBlockShot;						// set when the script has a BlockShot() function for this weapon
