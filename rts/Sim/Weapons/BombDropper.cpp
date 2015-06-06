@@ -42,9 +42,10 @@ void CBombDropper::Init()
 	maxForwardAngleDif = -1.0f;
 }
 
-float CBombDropper::GetPredictFactor(float3 p) const
+
+float CBombDropper::GetPredictFactor(float3 impactPos) const
 {
-	return GetPredictedImpactTime(p - aimFromPos);
+	return GetPredictedImpactTime(impactPos);
 }
 
 bool CBombDropper::TestTarget(const float3 pos, const SWeaponTarget& trg) const
@@ -72,8 +73,8 @@ bool CBombDropper::TestRange(const float3 pos, const SWeaponTarget& trg) const
 	if (aimFromPos.y < pos.y)
 		return false;
 
-	const float fallTime = GetPredictedImpactTime(pos - aimFromPos);
-	const float dropDist = std::max(1, salvoSize) * salvoDelay * owner->speed.w * 0.5f;
+	const float fallTime = GetPredictFactor(pos);
+	const float dropDist = std::max(1, salvoSize) * salvoDelay * owner->speed.Length2D() * 0.5f;
 
 	// torpedoes especially should not be dropped if the
 	// target position is already behind owner's position
