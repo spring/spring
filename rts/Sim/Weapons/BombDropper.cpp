@@ -45,8 +45,35 @@ void CBombDropper::Init()
 
 float CBombDropper::GetPredictFactor(float3 impactPos) const
 {
-	return GetPredictedImpactTime(impactPos);
+	if (weaponMuzzlePos.y <= impactPos.y)
+		return 0.0f;
+
+	// Definitions:
+	// d := (mostly negative) distance from plane to explosion position
+	// v := vertical plane speed (bomb starts with it)
+	// g := myGravity (negative)
+	//
+	// We want to solve:    d = v * t + 0.5 * g * t^2
+	//                  <=> 0 = t^2 + (2v/g) * t - (2d/g)
+	//                             -> a=2v/g    b=-(2d/g)
+	// Using pq-formula there are 2 solutions (we want the t>0 +solution):
+	//                 x(+,-) = -p +- sqrt((p^2 - q)  with p=a/2   q=b
+	//             =>         = -v/g + sqrt(v^2/g^2 + 2d/g)
+	//            <=>         = -v/g + sqrt( (v^2 + 2dg)/g^2 )
+	//            <=>         = -v/g + sqrt(v^2 + 2dg) / |g|
+	// Now we use (g is negative!):  +1/|g| = +1/(-g) = -1/g
+	//             =>         = (-v - sqrt(v^2 + 2dg)) / g
+	//            <=>         = -(v + sqrt(v^2 + 2dg)) / g
+
+	const float d = impactPos.y - weaponMuzzlePos.y;
+	const float v = owner->speed.y;
+	const float g = (weaponDef->myGravity == 0) ? mapInfo->map.gravity: -weaponDef->myGravity;
+
+	const float tt = v*v + 2.f * d * g;
+
+	return ((tt >= 0.0f)? ((-v - math::sqrt(tt)) / g) : 0.0f);
 }
+
 
 bool CBombDropper::TestTarget(const float3 pos, const SWeaponTarget& trg) const
 {
@@ -148,26 +175,5 @@ void CBombDropper::FireImpl(const bool scriptCall)
 void CBombDropper::SlowUpdate()
 {
 	CWeapon::SlowUpdate(true); //FIXME
-}
-
-float CBombDropper::GetPredictedImpactTime(const float3& impactPos) const
-{
-	if (weaponMuzzlePos.y <= impactPos.y)
-		return 0.0f;
-
-	// weapon needs <t> frames to drop a distance
-	// <d> (if it has zero vertical speed), where:
-	//   <d> = 0.5 * g * t*t = weaponMuzzlePos.y - impactPos.y
-	//   <t> = sqrt(d / (0.5 * g))
-	// bombs will travel <v * t> elmos horizontally
-	// which must be less than weapon's range to be
-	// able to hit, otherwise will always overshoot
-	const float d = impactPos.y - weaponMuzzlePos.y;
-	const float s = -owner->speed.y;
-
-	const float g = (weaponDef->myGravity == 0) ? mapInfo->map.gravity: -weaponDef->myGravity;
-	const float tt = (s - 2.0f * d) / -g;
-
-	return ((tt >= 0.0f)? ((s / g) + math::sqrt(tt)): 0.0f);
 }
 

@@ -23,8 +23,6 @@ private:
 	bool HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const override final;
 	void FireImpl(const bool scriptCall) override final;
 
-	float GetPredictedImpactTime(const float3& impactPos) const;
-
 private:
 	/// if we should drop torpedoes
 	bool dropTorpedoes;
