@@ -258,6 +258,13 @@ void CWeapon::Update()
 {
 	errorVector += errorVectorAdd;
 
+	// SlowUpdate() only generates targets when we are in range
+	// esp. for bombs this is often too late (SlowUpdate gets called twice per second)
+	// so check unit's target this check every frame (unit target has highest priority even in SlowUpdate!)
+	if (!HaveTarget() && owner->curTarget.type != Target_None) {
+		Attack(owner->curTarget);
+	}
+
 	UpdateWeaponVectors();
 	currentTargetPos = GetLeadTargetPos(currentTarget);
 
