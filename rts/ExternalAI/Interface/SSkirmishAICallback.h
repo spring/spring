@@ -2430,27 +2430,13 @@ struct SSkirmishAICallback {
 // BEGINN OBJECT Weapon
 	int               (CALLING_CONV *Unit_Weapon_getWeaponDef)(int skirmishAIId, int unitId, int weaponId); //$ REF:RETURN->WeaponDef
 
+	/** Next tick the weapon can fire again. */
 	int               (CALLING_CONV *Unit_Weapon_getReloadFrame)(int skirmishAIId, int unitId, int weaponId);
 
-	float             (CALLING_CONV *Unit_Weapon_getReloadTime)(int skirmishAIId, int unitId, int weaponId);
-
-	float             (CALLING_CONV *Unit_Weapon_getAccuracy)(int skirmishAIId, int unitId, int weaponId);
-
-	float             (CALLING_CONV *Unit_Weapon_getSprayAngle)(int skirmishAIId, int unitId, int weaponId);
+	/** Time between succesive fires in ticks. */
+	int               (CALLING_CONV *Unit_Weapon_getReloadTime)(int skirmishAIId, int unitId, int weaponId);
 
 	float             (CALLING_CONV *Unit_Weapon_getRange)(int skirmishAIId, int unitId, int weaponId);
-
-	float             (CALLING_CONV *Unit_Weapon_getProjectileSpeed)(int skirmishAIId, int unitId, int weaponId);
-
-	int               (CALLING_CONV *Unit_Weapon_getBurst)(int skirmishAIId, int unitId, int weaponId);
-
-	int               (CALLING_CONV *Unit_Weapon_getBurstRate)(int skirmishAIId, int unitId, int weaponId);
-
-	int               (CALLING_CONV *Unit_Weapon_getProjectiles)(int skirmishAIId, int unitId, int weaponId);
-
-	void              (CALLING_CONV *Unit_Weapon_getSalvoError)(int skirmishAIId, int unitId, int weaponId, float* return_posF3_out);
-
-	float             (CALLING_CONV *Unit_Weapon_getTargetMoveError)(int skirmishAIId, int unitId, int weaponId);
 
 // END OBJECT Weapon
 

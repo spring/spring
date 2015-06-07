@@ -1351,25 +1351,9 @@ EXPORT(int              ) skirmishAiCallback_Unit_Weapon_getWeaponDef(int skirmi
 
 EXPORT(int              ) skirmishAiCallback_Unit_Weapon_getReloadFrame(int skirmishAIId, int unitId, int weaponId);
 
-EXPORT(float            ) skirmishAiCallback_Unit_Weapon_getReloadTime(int skirmishAIId, int unitId, int weaponId);
-
-EXPORT(float            ) skirmishAiCallback_Unit_Weapon_getAccuracy(int skirmishAIId, int unitId, int weaponId);
-
-EXPORT(float            ) skirmishAiCallback_Unit_Weapon_getSprayAngle(int skirmishAIId, int unitId, int weaponId);
+EXPORT(int              ) skirmishAiCallback_Unit_Weapon_getReloadTime(int skirmishAIId, int unitId, int weaponId);
 
 EXPORT(float            ) skirmishAiCallback_Unit_Weapon_getRange(int skirmishAIId, int unitId, int weaponId);
-
-EXPORT(float            ) skirmishAiCallback_Unit_Weapon_getProjectileSpeed(int skirmishAIId, int unitId, int weaponId);
-
-EXPORT(int              ) skirmishAiCallback_Unit_Weapon_getBurst(int skirmishAIId, int unitId, int weaponId);
-
-EXPORT(int              ) skirmishAiCallback_Unit_Weapon_getBurstRate(int skirmishAIId, int unitId, int weaponId);
-
-EXPORT(int              ) skirmishAiCallback_Unit_Weapon_getProjectiles(int skirmishAIId, int unitId, int weaponId);
-
-EXPORT(void             ) skirmishAiCallback_Unit_Weapon_getSalvoError(int skirmishAIId, int unitId, int weaponId, float* return_posF3_out);
-
-EXPORT(float            ) skirmishAiCallback_Unit_Weapon_getTargetMoveError(int skirmishAIId, int unitId, int weaponId);
 
 // END OBJECT Weapon
 

@@ -4863,32 +4863,14 @@ EXPORT(int) skirmishAiCallback_Unit_Weapon_getReloadFrame(int skirmishAIId, int 
 	return unit->weapons[weaponId]->reloadStatus;
 }
 
-EXPORT(float) skirmishAiCallback_Unit_Weapon_getReloadTime(int skirmishAIId, int unitId, int weaponId) {
+EXPORT(int) skirmishAiCallback_Unit_Weapon_getReloadTime(int skirmishAIId, int unitId, int weaponId) {
 	const CUnit* unit = getUnit(unitId);
 	if (!unit || ((size_t)weaponId >= unit->weapons.size())) {
-		return -1.0f;
+		return -1;
 	}
 
 	const CWeapon* weapon = unit->weapons[weaponId];
-	return (weapon->reloadTime / unit->reloadSpeed) / GAME_SPEED;
-}
-
-EXPORT(float) skirmishAiCallback_Unit_Weapon_getAccuracy(int skirmishAIId, int unitId, int weaponId) {
-	const CUnit* unit = getUnit(unitId);
-	if (!unit || ((size_t)weaponId >= unit->weapons.size())) {
-		return -1.0f;
-	}
-
-	return unit->weapons[weaponId]->AccuracyExperience();
-}
-
-EXPORT(float) skirmishAiCallback_Unit_Weapon_getSprayAngle(int skirmishAIId, int unitId, int weaponId) {
-	const CUnit* unit = getUnit(unitId);
-	if (!unit || ((size_t)weaponId >= unit->weapons.size())) {
-		return -1.0f;
-	}
-
-	return unit->weapons[weaponId]->SprayAngleExperience();
+	return weapon->reloadTime / unit->reloadSpeed;
 }
 
 EXPORT(float) skirmishAiCallback_Unit_Weapon_getRange(int skirmishAIId, int unitId, int weaponId) {
@@ -4898,60 +4880,6 @@ EXPORT(float) skirmishAiCallback_Unit_Weapon_getRange(int skirmishAIId, int unit
 	}
 
 	return unit->weapons[weaponId]->range;
-}
-
-EXPORT(float) skirmishAiCallback_Unit_Weapon_getProjectileSpeed(int skirmishAIId, int unitId, int weaponId) {
-	const CUnit* unit = getUnit(unitId);
-	if (!unit || ((size_t)weaponId >= unit->weapons.size())) {
-		return -1.0f;
-	}
-
-	return unit->weapons[weaponId]->projectileSpeed;
-}
-
-EXPORT(int) skirmishAiCallback_Unit_Weapon_getBurst(int skirmishAIId, int unitId, int weaponId) {
-	const CUnit* unit = getUnit(unitId);
-	if (!unit || ((size_t)weaponId >= unit->weapons.size())) {
-		return -1;
-	}
-
-	return unit->weapons[weaponId]->salvoSize;
-}
-
-EXPORT(int) skirmishAiCallback_Unit_Weapon_getBurstRate(int skirmishAIId, int unitId, int weaponId) {
-	const CUnit* unit = getUnit(unitId);
-	if (!unit || ((size_t)weaponId >= unit->weapons.size())) {
-		return -1;
-	}
-
-	return unit->weapons[weaponId]->salvoDelay / GAME_SPEED;
-}
-
-EXPORT(int) skirmishAiCallback_Unit_Weapon_getProjectiles(int skirmishAIId, int unitId, int weaponId) {
-	const CUnit* unit = getUnit(unitId);
-	if (!unit || ((size_t)weaponId >= unit->weapons.size())) {
-		return -1;
-	}
-
-	return unit->weapons[weaponId]->projectilesPerShot;
-}
-
-EXPORT(void) skirmishAiCallback_Unit_Weapon_getSalvoError(int skirmishAIId, int unitId, int weaponId, float* return_posF3_out) {
-	const CUnit* unit = getUnit(unitId);
-	if (!unit || ((size_t)weaponId >= unit->weapons.size())) {
-		(-RgtVector).copyInto(return_posF3_out);
-	}
-
-	unit->weapons[weaponId]->SalvoErrorExperience().copyInto(return_posF3_out);
-}
-
-EXPORT(float) skirmishAiCallback_Unit_Weapon_getTargetMoveError(int skirmishAIId, int unitId, int weaponId) {
-	const CUnit* unit = getUnit(unitId);
-	if (!unit || ((size_t)weaponId >= unit->weapons.size())) {
-		return -1.0f;
-	}
-
-	return unit->weapons[weaponId]->MoveErrorExperience();
 }
 
 //########### END Weapon
@@ -5728,15 +5656,7 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Unit_Weapon_getWeaponDef = &skirmishAiCallback_Unit_Weapon_getWeaponDef;
 	callback->Unit_Weapon_getReloadFrame = &skirmishAiCallback_Unit_Weapon_getReloadFrame;
 	callback->Unit_Weapon_getReloadTime = &skirmishAiCallback_Unit_Weapon_getReloadTime;
-	callback->Unit_Weapon_getAccuracy = &skirmishAiCallback_Unit_Weapon_getAccuracy;
-	callback->Unit_Weapon_getSprayAngle = &skirmishAiCallback_Unit_Weapon_getSprayAngle;
 	callback->Unit_Weapon_getRange = &skirmishAiCallback_Unit_Weapon_getRange;
-	callback->Unit_Weapon_getProjectileSpeed = &skirmishAiCallback_Unit_Weapon_getProjectileSpeed;
-	callback->Unit_Weapon_getBurst = &skirmishAiCallback_Unit_Weapon_getBurst;
-	callback->Unit_Weapon_getBurstRate = &skirmishAiCallback_Unit_Weapon_getBurstRate;
-	callback->Unit_Weapon_getProjectiles = &skirmishAiCallback_Unit_Weapon_getProjectiles;
-	callback->Unit_Weapon_getSalvoError = &skirmishAiCallback_Unit_Weapon_getSalvoError;
-	callback->Unit_Weapon_getTargetMoveError = &skirmishAiCallback_Unit_Weapon_getTargetMoveError;
 	callback->Debug_GraphDrawer_isEnabled = &skirmishAiCallback_Debug_GraphDrawer_isEnabled;
 }
 

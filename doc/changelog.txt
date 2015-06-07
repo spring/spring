@@ -97,6 +97,9 @@ Buildbot/Installer:
  ! merged spring-headless / spring-dedicated into linux static builds / windows installer
  ! remove broken maven support
 
+AI:
+ ! add Weapon state object
+
 -- 98.0 ---------------------------------------------------------
 Major:
  - vaporized PathFinder's runtime precache cpu usage
