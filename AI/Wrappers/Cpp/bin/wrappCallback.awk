@@ -1022,7 +1022,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 
 			_retVar_out_new = retVar_out_m "_out";
 			_wrappGetInst_params = "";
-			if (clsName_m == myRootClass || (clsName_m == "WeaponMount" && _fullClsName == "WeaponDef")) {
+			if (clsName_m == myRootClass || (((clsName_m == "WeaponMount") || (clsName_m == "Weapon")) && _fullClsName == "WeaponDef")) {
 				_wrappGetInst_params = "skirmishAIId"; # FIXME: HACK; do not know why needed :/ (should use parents list of params instead of self,or vice-versa?)
 			}
 			_hasRetInd = 0;
@@ -1034,7 +1034,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 				# Very hacky! too unmotivated for propper fix, sorry.
 				# propper fix would involve getting the parent of the wrapped
 				# class and using its additional indices
-				if (functionName_m != "UnitDef_WeaponMount_getWeaponDef") {
+				if ((functionName_m != "UnitDef_WeaponMount_getWeaponDef") && (functionName_m != "Unit_Weapon_getWeaponDef")) {
 					_wrappGetInst_params = _wrappGetInst_params ", " addInds_m[ai];
 				}
 			}

@@ -152,6 +152,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		"Version"
 		"WeaponDef"
 		"WeaponMount"
+		"Weapon"
 		)
 	set(myGeneratedCallbackSources )
 	foreach    (className ${myGenClbClasses})
