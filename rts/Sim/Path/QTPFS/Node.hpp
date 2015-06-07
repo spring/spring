@@ -3,6 +3,7 @@
 #ifndef QTPFS_NODE_HDR
 #define QTPFS_NODE_HDR
 
+#include <array>
 #include <vector>
 #include <fstream>
 #include <boost/cstdint.hpp>
@@ -16,6 +17,8 @@
 #ifndef QTPFS_VIRTUAL_NODE_FUNCTIONS
 #define QTNode INode
 #endif
+
+#define QTNODE_CHILD_COUNT 4
 
 namespace QTPFS {
 	struct NodeLayer;
@@ -111,7 +114,6 @@ namespace QTPFS {
 			unsigned int x1, unsigned int z1,
 			unsigned int x2, unsigned int z2
 		);
-		~QTNode();
 
 		static void InitStatic();
 
@@ -197,7 +199,7 @@ namespace QTPFS {
 		unsigned int currMagicNum;
 		unsigned int prevMagicNum;
 
-		std::vector<QTNode*> children;
+		std::array<QTNode*, QTNODE_CHILD_COUNT> children;
 		std::vector<INode*> neighbors;
 
 		// NOTE:

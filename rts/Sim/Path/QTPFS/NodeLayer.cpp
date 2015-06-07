@@ -252,7 +252,7 @@ void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdate(unsigned int currFrameNum, un
 		// in row-major order; every GetNeighbors() call invokes
 		// UpdateNeighborCache if the magic numbers do not match
 		// (nodes can be visited multiple times per block update)
-		const int xmin =         (xoff +           0               ), zmin =         (zoff +           0               );
+		const int xmin =         (xoff +           0                   ), zmin =         (zoff +           0                   );
 		const int xmax = std::min(xmin + SQUARE_SIZE, mapDims.mapx >> 1), zmax = std::min(zmin + SQUARE_SIZE, mapDims.mapy >> 1);
 
 		for (int z = zmin; z < zmax; z++) {
@@ -267,7 +267,7 @@ void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdate(unsigned int currFrameNum, un
 	}
 	{
 		// top-right quadrant: [mapDims.mapx >> 1, mapDims.mapx) x [0, mapDims.mapy >> 1)
-		const int xmin =         (xoff +              (mapDims.mapx >> 1)), zmin =         (zoff +           0               );
+		const int xmin =         (xoff +              (mapDims.mapx >> 1)), zmin =         (zoff +           0                   );
 		const int xmax = std::min(xmin + SQUARE_SIZE,  mapDims.mapx      ), zmax = std::min(zmin + SQUARE_SIZE, mapDims.mapy >> 1);
 
 		for (int z = zmin; z < zmax; z++) {
@@ -297,7 +297,7 @@ void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdate(unsigned int currFrameNum, un
 	}
 	{
 		// bottom-left quadrant: [0, mapDims.mapx >> 1) x [mapDims.mapy >> 1, mapDims.mapy)
-		const int xmin =         (xoff +           0               ), zmin =         (zoff +              (mapDims.mapy >> 1));
+		const int xmin =         (xoff +           0                   ), zmin =         (zoff +              (mapDims.mapy >> 1));
 		const int xmax = std::min(xmin + SQUARE_SIZE, mapDims.mapx >> 1), zmax = std::min(zmin + SQUARE_SIZE,  mapDims.mapy      );
 
 		for (int z = zmin; z < zmax; z++) {
