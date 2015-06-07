@@ -1408,6 +1408,8 @@ struct SSkirmishAICallback {
 	/** Number of the last frame this unit received an order from a player. */
 	int               (CALLING_CONV *Unit_getLastUserOrderFrame)(int skirmishAIId, int unitId);
 
+	int               (CALLING_CONV *Unit_getWeapons)(int skirmishAIId, int unitId); //$ FETCHER:MULTI:NUM:Weapon
+
 // END OBJECT Unit
 
 
@@ -2423,6 +2425,34 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *WeaponDef_getCustomParams)(int skirmishAIId, int weaponDefId, const char** keys, const char** values); //$ MAP
 
 // END OBJECT WeaponDef
+
+
+// BEGINN OBJECT Weapon
+	int               (CALLING_CONV *Unit_Weapon_getWeaponDef)(int skirmishAIId, int unitId, int weaponId); //$ REF:RETURN->WeaponDef
+
+	int               (CALLING_CONV *Unit_Weapon_getReloadFrame)(int skirmishAIId, int unitId, int weaponId);
+
+	float             (CALLING_CONV *Unit_Weapon_getReloadTime)(int skirmishAIId, int unitId, int weaponId);
+
+	float             (CALLING_CONV *Unit_Weapon_getAccuracy)(int skirmishAIId, int unitId, int weaponId);
+
+	float             (CALLING_CONV *Unit_Weapon_getSprayAngle)(int skirmishAIId, int unitId, int weaponId);
+
+	float             (CALLING_CONV *Unit_Weapon_getRange)(int skirmishAIId, int unitId, int weaponId);
+
+	float             (CALLING_CONV *Unit_Weapon_getProjectileSpeed)(int skirmishAIId, int unitId, int weaponId);
+
+	int               (CALLING_CONV *Unit_Weapon_getBurst)(int skirmishAIId, int unitId, int weaponId);
+
+	int               (CALLING_CONV *Unit_Weapon_getBurstRate)(int skirmishAIId, int unitId, int weaponId);
+
+	int               (CALLING_CONV *Unit_Weapon_getProjectiles)(int skirmishAIId, int unitId, int weaponId);
+
+	void              (CALLING_CONV *Unit_Weapon_getSalvoError)(int skirmishAIId, int unitId, int weaponId, float* return_posF3_out);
+
+	float             (CALLING_CONV *Unit_Weapon_getTargetMoveError)(int skirmishAIId, int unitId, int weaponId);
+
+// END OBJECT Weapon
 
 	bool              (CALLING_CONV *Debug_GraphDrawer_isEnabled)(int skirmishAIId);
 

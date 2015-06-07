@@ -802,6 +802,8 @@ EXPORT(int              ) skirmishAiCallback_Unit_getBuildingFacing(int skirmish
 
 EXPORT(int              ) skirmishAiCallback_Unit_getLastUserOrderFrame(int skirmishAIId, int unitId);
 
+EXPORT(int              ) skirmishAiCallback_Unit_getWeapons(int skirmishAIId, int unitId);
+
 // END OBJECT Unit
 
 
@@ -1342,6 +1344,34 @@ EXPORT(bool             ) skirmishAiCallback_WeaponDef_isDynDamageInverted(int s
 EXPORT(int              ) skirmishAiCallback_WeaponDef_getCustomParams(int skirmishAIId, int weaponDefId, const char** keys, const char** values);
 
 // END OBJECT WeaponDef
+
+
+// BEGINN OBJECT Weapon
+EXPORT(int              ) skirmishAiCallback_Unit_Weapon_getWeaponDef(int skirmishAIId, int unitId, int weaponId);
+
+EXPORT(int              ) skirmishAiCallback_Unit_Weapon_getReloadFrame(int skirmishAIId, int unitId, int weaponId);
+
+EXPORT(float            ) skirmishAiCallback_Unit_Weapon_getReloadTime(int skirmishAIId, int unitId, int weaponId);
+
+EXPORT(float            ) skirmishAiCallback_Unit_Weapon_getAccuracy(int skirmishAIId, int unitId, int weaponId);
+
+EXPORT(float            ) skirmishAiCallback_Unit_Weapon_getSprayAngle(int skirmishAIId, int unitId, int weaponId);
+
+EXPORT(float            ) skirmishAiCallback_Unit_Weapon_getRange(int skirmishAIId, int unitId, int weaponId);
+
+EXPORT(float            ) skirmishAiCallback_Unit_Weapon_getProjectileSpeed(int skirmishAIId, int unitId, int weaponId);
+
+EXPORT(int              ) skirmishAiCallback_Unit_Weapon_getBurst(int skirmishAIId, int unitId, int weaponId);
+
+EXPORT(int              ) skirmishAiCallback_Unit_Weapon_getBurstRate(int skirmishAIId, int unitId, int weaponId);
+
+EXPORT(int              ) skirmishAiCallback_Unit_Weapon_getProjectiles(int skirmishAIId, int unitId, int weaponId);
+
+EXPORT(void             ) skirmishAiCallback_Unit_Weapon_getSalvoError(int skirmishAIId, int unitId, int weaponId, float* return_posF3_out);
+
+EXPORT(float            ) skirmishAiCallback_Unit_Weapon_getTargetMoveError(int skirmishAIId, int unitId, int weaponId);
+
+// END OBJECT Weapon
 
 EXPORT(bool             ) skirmishAiCallback_Debug_GraphDrawer_isEnabled(int skirmishAIId);
 

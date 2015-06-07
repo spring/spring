@@ -29,6 +29,7 @@
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sim/Weapons/Weapon.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/Resource.h"
 #include "Sim/Misc/ResourceHandler.h"
@@ -2177,7 +2178,7 @@ EXPORT(float) skirmishAiCallback_Economy_getStorage(int skirmishAIId,
 
 EXPORT(float) skirmishAiCallback_Economy_getPull(int skirmishAIId, int resourceId) {
 
-    int teamId = skirmishAIId_teamId[skirmishAIId];
+	int teamId = skirmishAIId_teamId[skirmishAIId];
 
 	if (resourceId == resourceHandler->GetMetalId()) {
 		return teamHandler->Team(teamId)->resPrevPull.metal;
@@ -2190,7 +2191,7 @@ EXPORT(float) skirmishAiCallback_Economy_getPull(int skirmishAIId, int resourceI
 
 EXPORT(float) skirmishAiCallback_Economy_getShare(int skirmishAIId, int resourceId) {
 
-    int teamId = skirmishAIId_teamId[skirmishAIId];
+	int teamId = skirmishAIId_teamId[skirmishAIId];
 
 	if (resourceId == resourceHandler->GetMetalId()) {
 		return teamHandler->Team(teamId)->resShare.metal;
@@ -2203,7 +2204,7 @@ EXPORT(float) skirmishAiCallback_Economy_getShare(int skirmishAIId, int resource
 
 EXPORT(float) skirmishAiCallback_Economy_getSent(int skirmishAIId, int resourceId) {
 
-    int teamId = skirmishAIId_teamId[skirmishAIId];
+	int teamId = skirmishAIId_teamId[skirmishAIId];
 
 	if (resourceId == resourceHandler->GetMetalId()) {
 		return teamHandler->Team(teamId)->resPrevSent.metal;
@@ -2216,7 +2217,7 @@ EXPORT(float) skirmishAiCallback_Economy_getSent(int skirmishAIId, int resourceI
 
 EXPORT(float) skirmishAiCallback_Economy_getReceived(int skirmishAIId, int resourceId) {
 
-    int teamId = skirmishAIId_teamId[skirmishAIId];
+	int teamId = skirmishAIId_teamId[skirmishAIId];
 
 	if (resourceId == resourceHandler->GetMetalId()) {
 		return teamHandler->Team(teamId)->resPrevReceived.metal;
@@ -2224,12 +2225,12 @@ EXPORT(float) skirmishAiCallback_Economy_getReceived(int skirmishAIId, int resou
 		return teamHandler->Team(teamId)->resPrevReceived.energy;
 	}
 
-    return -1.0f;
+	return -1.0f;
 }
 
 EXPORT(float) skirmishAiCallback_Economy_getExcess(int skirmishAIId, int resourceId) {
 
-    int teamId = skirmishAIId_teamId[skirmishAIId];
+	int teamId = skirmishAIId_teamId[skirmishAIId];
 
 	if (resourceId == resourceHandler->GetMetalId()) {
 		return teamHandler->Team(teamId)->resPrevExcess.metal;
@@ -3843,6 +3844,14 @@ EXPORT(int) skirmishAiCallback_Unit_getLastUserOrderFrame(int skirmishAIId, int 
 	return unitHandler->units[unitId]->commandAI->lastUserCommand;
 }
 
+EXPORT(int) skirmishAiCallback_Unit_getWeapons(int skirmishAIId, int unitId) {
+	const CUnit* unit = getUnit(unitId);
+	if (unit && (isAlliedUnit(skirmishAIId, unit) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId))) {
+		return unit->weapons.size();
+	}
+	return 0;
+}
+
 //########### END Unit
 
 EXPORT(int) skirmishAiCallback_getEnemyUnits(int skirmishAIId, int* unitIds, int unitIds_sizeMax) {
@@ -4835,6 +4844,119 @@ EXPORT(int) skirmishAiCallback_WeaponDef_getCustomParams(int skirmishAIId, int w
 //########### END WeaponDef
 
 
+//########### BEGINN Weapon
+EXPORT(int) skirmishAiCallback_Unit_Weapon_getWeaponDef(int skirmishAIId, int unitId, int weaponId) {
+	const CUnit* unit = getUnit(unitId);
+	if (!unit || ((size_t)weaponId >= unit->weapons.size())) {
+		return -1;
+	}
+
+	return unit->weapons[weaponId]->weaponDef->id;
+}
+
+EXPORT(int) skirmishAiCallback_Unit_Weapon_getReloadFrame(int skirmishAIId, int unitId, int weaponId) {
+	const CUnit* unit = getUnit(unitId);
+	if (!unit || ((size_t)weaponId >= unit->weapons.size())) {
+		return -1;
+	}
+
+	return unit->weapons[weaponId]->reloadStatus;
+}
+
+EXPORT(float) skirmishAiCallback_Unit_Weapon_getReloadTime(int skirmishAIId, int unitId, int weaponId) {
+	const CUnit* unit = getUnit(unitId);
+	if (!unit || ((size_t)weaponId >= unit->weapons.size())) {
+		return -1.0f;
+	}
+
+	const CWeapon* weapon = unit->weapons[weaponId];
+	return (weapon->reloadTime / unit->reloadSpeed) / GAME_SPEED;
+}
+
+EXPORT(float) skirmishAiCallback_Unit_Weapon_getAccuracy(int skirmishAIId, int unitId, int weaponId) {
+	const CUnit* unit = getUnit(unitId);
+	if (!unit || ((size_t)weaponId >= unit->weapons.size())) {
+		return -1.0f;
+	}
+
+	return unit->weapons[weaponId]->AccuracyExperience();
+}
+
+EXPORT(float) skirmishAiCallback_Unit_Weapon_getSprayAngle(int skirmishAIId, int unitId, int weaponId) {
+	const CUnit* unit = getUnit(unitId);
+	if (!unit || ((size_t)weaponId >= unit->weapons.size())) {
+		return -1.0f;
+	}
+
+	return unit->weapons[weaponId]->SprayAngleExperience();
+}
+
+EXPORT(float) skirmishAiCallback_Unit_Weapon_getRange(int skirmishAIId, int unitId, int weaponId) {
+	const CUnit* unit = getUnit(unitId);
+	if (!unit || ((size_t)weaponId >= unit->weapons.size())) {
+		return -1.0f;
+	}
+
+	return unit->weapons[weaponId]->range;
+}
+
+EXPORT(float) skirmishAiCallback_Unit_Weapon_getProjectileSpeed(int skirmishAIId, int unitId, int weaponId) {
+	const CUnit* unit = getUnit(unitId);
+	if (!unit || ((size_t)weaponId >= unit->weapons.size())) {
+		return -1.0f;
+	}
+
+	return unit->weapons[weaponId]->projectileSpeed;
+}
+
+EXPORT(int) skirmishAiCallback_Unit_Weapon_getBurst(int skirmishAIId, int unitId, int weaponId) {
+	const CUnit* unit = getUnit(unitId);
+	if (!unit || ((size_t)weaponId >= unit->weapons.size())) {
+		return -1;
+	}
+
+	return unit->weapons[weaponId]->salvoSize;
+}
+
+EXPORT(int) skirmishAiCallback_Unit_Weapon_getBurstRate(int skirmishAIId, int unitId, int weaponId) {
+	const CUnit* unit = getUnit(unitId);
+	if (!unit || ((size_t)weaponId >= unit->weapons.size())) {
+		return -1;
+	}
+
+	return unit->weapons[weaponId]->salvoDelay / GAME_SPEED;
+}
+
+EXPORT(int) skirmishAiCallback_Unit_Weapon_getProjectiles(int skirmishAIId, int unitId, int weaponId) {
+	const CUnit* unit = getUnit(unitId);
+	if (!unit || ((size_t)weaponId >= unit->weapons.size())) {
+		return -1;
+	}
+
+	return unit->weapons[weaponId]->projectilesPerShot;
+}
+
+EXPORT(void) skirmishAiCallback_Unit_Weapon_getSalvoError(int skirmishAIId, int unitId, int weaponId, float* return_posF3_out) {
+	const CUnit* unit = getUnit(unitId);
+	if (!unit || ((size_t)weaponId >= unit->weapons.size())) {
+		(-RgtVector).copyInto(return_posF3_out);
+	}
+
+	unit->weapons[weaponId]->SalvoErrorExperience().copyInto(return_posF3_out);
+}
+
+EXPORT(float) skirmishAiCallback_Unit_Weapon_getTargetMoveError(int skirmishAIId, int unitId, int weaponId) {
+	const CUnit* unit = getUnit(unitId);
+	if (!unit || ((size_t)weaponId >= unit->weapons.size())) {
+		return -1.0f;
+	}
+
+	return unit->weapons[weaponId]->MoveErrorExperience();
+}
+
+//########### END Weapon
+
+
 EXPORT(bool) skirmishAiCallback_Debug_GraphDrawer_isEnabled(int skirmishAIId) {
 	return skirmishAIId_callback[skirmishAIId]->IsDebugDrawerEnabled();
 }
@@ -5350,6 +5472,7 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Unit_isNeutral = &skirmishAiCallback_Unit_isNeutral;
 	callback->Unit_getBuildingFacing = &skirmishAiCallback_Unit_getBuildingFacing;
 	callback->Unit_getLastUserOrderFrame = &skirmishAiCallback_Unit_getLastUserOrderFrame;
+	callback->Unit_getWeapons = &skirmishAiCallback_Unit_getWeapons;
 	callback->Team_hasAIController = &skirmishAiCallback_Team_hasAIController;
 	callback->getEnemyTeams = &skirmishAiCallback_getEnemyTeams;
 	callback->getAllyTeams = &skirmishAiCallback_getAllyTeams;
@@ -5602,6 +5725,18 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->WeaponDef_getDynDamageRange = &skirmishAiCallback_WeaponDef_getDynDamageRange;
 	callback->WeaponDef_isDynDamageInverted = &skirmishAiCallback_WeaponDef_isDynDamageInverted;
 	callback->WeaponDef_getCustomParams = &skirmishAiCallback_WeaponDef_getCustomParams;
+	callback->Unit_Weapon_getWeaponDef = &skirmishAiCallback_Unit_Weapon_getWeaponDef;
+	callback->Unit_Weapon_getReloadFrame = &skirmishAiCallback_Unit_Weapon_getReloadFrame;
+	callback->Unit_Weapon_getReloadTime = &skirmishAiCallback_Unit_Weapon_getReloadTime;
+	callback->Unit_Weapon_getAccuracy = &skirmishAiCallback_Unit_Weapon_getAccuracy;
+	callback->Unit_Weapon_getSprayAngle = &skirmishAiCallback_Unit_Weapon_getSprayAngle;
+	callback->Unit_Weapon_getRange = &skirmishAiCallback_Unit_Weapon_getRange;
+	callback->Unit_Weapon_getProjectileSpeed = &skirmishAiCallback_Unit_Weapon_getProjectileSpeed;
+	callback->Unit_Weapon_getBurst = &skirmishAiCallback_Unit_Weapon_getBurst;
+	callback->Unit_Weapon_getBurstRate = &skirmishAiCallback_Unit_Weapon_getBurstRate;
+	callback->Unit_Weapon_getProjectiles = &skirmishAiCallback_Unit_Weapon_getProjectiles;
+	callback->Unit_Weapon_getSalvoError = &skirmishAiCallback_Unit_Weapon_getSalvoError;
+	callback->Unit_Weapon_getTargetMoveError = &skirmishAiCallback_Unit_Weapon_getTargetMoveError;
 	callback->Debug_GraphDrawer_isEnabled = &skirmishAiCallback_Debug_GraphDrawer_isEnabled;
 }
 
