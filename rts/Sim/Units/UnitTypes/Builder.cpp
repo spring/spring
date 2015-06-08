@@ -365,7 +365,7 @@ void CBuilder::Update()
 					if ((modInfo.reclaimMethod != 1) && (curResurrect->reclaimLeft < 1)) {
 						// This corpse has been reclaimed a little, need to restore
 						// the resources before we can let the player resurrect it.
-						curResurrect->AddBuildPower(this, repairSpeed);
+						curResurrect->AddBuildPower(this, resurrectSpeed);
 					} else {
 						// Corpse has been restored, begin resurrection
 						const float step = resurrectSpeed / ud->buildTime;
