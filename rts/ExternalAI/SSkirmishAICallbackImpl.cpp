@@ -3852,6 +3852,18 @@ EXPORT(int) skirmishAiCallback_Unit_getWeapons(int skirmishAIId, int unitId) {
 	return 0;
 }
 
+EXPORT(int) skirmishAiCallback_Unit_getWeapon(int skirmishAIId, int unitId, int weaponMountId) {
+	const CUnit* unit = getUnit(unitId);
+	if (!unit || ((size_t)weaponMountId >= unit->weapons.size())) {
+		return -1;
+	}
+
+	if (isAlliedUnit(skirmishAIId, unit) || skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
+		return weaponMountId;
+	}
+	return -1;
+}
+
 //########### END Unit
 
 EXPORT(int) skirmishAiCallback_getEnemyUnits(int skirmishAIId, int* unitIds, int unitIds_sizeMax) {
@@ -4845,7 +4857,7 @@ EXPORT(int) skirmishAiCallback_WeaponDef_getCustomParams(int skirmishAIId, int w
 
 
 //########### BEGINN Weapon
-EXPORT(int) skirmishAiCallback_Unit_Weapon_getWeaponDef(int skirmishAIId, int unitId, int weaponId) {
+EXPORT(int) skirmishAiCallback_Unit_Weapon_getDef(int skirmishAIId, int unitId, int weaponId) {
 	const CUnit* unit = getUnit(unitId);
 	if (!unit || ((size_t)weaponId >= unit->weapons.size())) {
 		return -1;
@@ -5401,6 +5413,7 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Unit_getBuildingFacing = &skirmishAiCallback_Unit_getBuildingFacing;
 	callback->Unit_getLastUserOrderFrame = &skirmishAiCallback_Unit_getLastUserOrderFrame;
 	callback->Unit_getWeapons = &skirmishAiCallback_Unit_getWeapons;
+	callback->Unit_getWeapon = &skirmishAiCallback_Unit_getWeapon;
 	callback->Team_hasAIController = &skirmishAiCallback_Team_hasAIController;
 	callback->getEnemyTeams = &skirmishAiCallback_getEnemyTeams;
 	callback->getAllyTeams = &skirmishAiCallback_getAllyTeams;
@@ -5653,7 +5666,7 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->WeaponDef_getDynDamageRange = &skirmishAiCallback_WeaponDef_getDynDamageRange;
 	callback->WeaponDef_isDynDamageInverted = &skirmishAiCallback_WeaponDef_isDynDamageInverted;
 	callback->WeaponDef_getCustomParams = &skirmishAiCallback_WeaponDef_getCustomParams;
-	callback->Unit_Weapon_getWeaponDef = &skirmishAiCallback_Unit_Weapon_getWeaponDef;
+	callback->Unit_Weapon_getDef = &skirmishAiCallback_Unit_Weapon_getDef;
 	callback->Unit_Weapon_getReloadFrame = &skirmishAiCallback_Unit_Weapon_getReloadFrame;
 	callback->Unit_Weapon_getReloadTime = &skirmishAiCallback_Unit_Weapon_getReloadTime;
 	callback->Unit_Weapon_getRange = &skirmishAiCallback_Unit_Weapon_getRange;

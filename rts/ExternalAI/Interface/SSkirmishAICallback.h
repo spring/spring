@@ -1410,6 +1410,7 @@ struct SSkirmishAICallback {
 
 	int               (CALLING_CONV *Unit_getWeapons)(int skirmishAIId, int unitId); //$ FETCHER:MULTI:NUM:Weapon
 
+	int               (CALLING_CONV *Unit_getWeapon)(int skirmishAIId, int unitId, int weaponMountId); //$ REF:weaponMountId->WeaponMount REF:RETURN->Weapon
 // END OBJECT Unit
 
 
@@ -2428,7 +2429,7 @@ struct SSkirmishAICallback {
 
 
 // BEGINN OBJECT Weapon
-	int               (CALLING_CONV *Unit_Weapon_getWeaponDef)(int skirmishAIId, int unitId, int weaponId); //$ REF:RETURN->WeaponDef
+	int               (CALLING_CONV *Unit_Weapon_getDef)(int skirmishAIId, int unitId, int weaponId); //$ REF:RETURN->WeaponDef
 
 	/** Next tick the weapon can fire again. */
 	int               (CALLING_CONV *Unit_Weapon_getReloadFrame)(int skirmishAIId, int unitId, int weaponId);

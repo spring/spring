@@ -804,6 +804,8 @@ EXPORT(int              ) skirmishAiCallback_Unit_getLastUserOrderFrame(int skir
 
 EXPORT(int              ) skirmishAiCallback_Unit_getWeapons(int skirmishAIId, int unitId);
 
+EXPORT(int              ) skirmishAiCallback_Unit_getWeapon(int skirmishAIId, int unitId, int weaponMountId);
+
 // END OBJECT Unit
 
 
@@ -1347,7 +1349,7 @@ EXPORT(int              ) skirmishAiCallback_WeaponDef_getCustomParams(int skirm
 
 
 // BEGINN OBJECT Weapon
-EXPORT(int              ) skirmishAiCallback_Unit_Weapon_getWeaponDef(int skirmishAIId, int unitId, int weaponId);
+EXPORT(int              ) skirmishAiCallback_Unit_Weapon_getDef(int skirmishAIId, int unitId, int weaponId);
 
 EXPORT(int              ) skirmishAiCallback_Unit_Weapon_getReloadFrame(int skirmishAIId, int unitId, int weaponId);
 

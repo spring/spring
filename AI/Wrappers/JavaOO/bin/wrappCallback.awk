@@ -825,7 +825,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 				# Very hacky! too unmotivated for propper fix, sorry.
 				# propper fix would involve getting the parent of the wrapped
 				# class and using its additional indices
-				if ((functionName_m != "UnitDef_WeaponMount_getWeaponDef") && (functionName_m != "Unit_Weapon_getWeaponDef")) {
+				if ((functionName_m != "UnitDef_WeaponMount_getWeaponDef") && (functionName_m != "Unit_Weapon_getDef")) {
 					_wrappGetInst_params = _wrappGetInst_params ", " addInds_m[ai];
 				}
 			}
