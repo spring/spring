@@ -28,16 +28,11 @@ struct SS3OVertex;
 
 
 
-typedef std::pair<CProjectile*, int> ProjectileMapValPair;
-typedef std::pair<int, ProjectileMapValPair> ProjectileMapKeyPair;
-typedef std::map<int, ProjectileMapValPair> ProjectileMap;
+typedef std::map<int, CProjectile*> ProjectileMap; // <id, proj*>
 
-typedef ThreadListSim<std::list<CProjectile*>, std::set<CProjectile*>, CProjectile*, ProjectileDetacher> ProjectileContainer;
+typedef ThreadListSim<std::list<CProjectile*>, CProjectile*, ProjectileDetacher> ProjectileContainer;
 typedef ThreadListSimRender<std::list<CGroundFlash*>, std::set<CGroundFlash*>, CGroundFlash*> GroundFlashContainer;
-
 typedef ThreadListSimRender<std::set<FlyingPiece*, FlyingPieceComparator>, void, FlyingPiece*> FlyingPieceContainer;
-
-typedef ThreadMapRender<CProjectile*, ProjectileMapValPair, ProjectileIndexer> ProjectileRenderMap;
 
 
 class CProjectileHandler
@@ -50,31 +45,8 @@ public:
 	void Serialize(creg::ISerializer* s);
 	void PostLoad();
 
-	inline const ProjectileMapValPair* GetMapPairBySyncedID(int id) const {
-		const ProjectileMap& projectileIDs = syncedProjectileIDs;
-		const ProjectileMap::const_iterator it = projectileIDs.find(id);
-
-		if (it == projectileIDs.end())
-			return NULL;
-
-		return &(it->second);
-	}
-
-	inline const ProjectileMapValPair* GetMapPairByUnsyncedID(int id) const {
-		if (UNSYNCED_PROJ_NOEVENT)
-			return NULL; // unsynced projectiles have no IDs if UNSYNCED_PROJ_NOEVENT
-
-		const ProjectileMap& projectileIDs = unsyncedProjectileIDs;
-		const ProjectileMap::const_iterator it = projectileIDs.find(id);
-
-		if (it == projectileIDs.end())
-			return NULL;
-
-		return &(it->second);
-	}
-
-	ProjectileRenderMap& GetSyncedRenderProjectileIDs() { return syncedRenderProjectileIDs; }
-	ProjectileRenderMap& GetUnsyncedRenderProjectileIDs() { return unsyncedRenderProjectileIDs; }
+	CProjectile* GetProjectileBySyncedID(int id);
+	CProjectile* GetProjectileByUnsyncedID(int id);
 
 	void CheckUnitCollisions(CProjectile*, std::vector<CUnit*>&, const float3&, const float3&);
 	void CheckFeatureCollisions(CProjectile*, std::vector<CFeature*>&, const float3&, const float3&);
@@ -114,15 +86,15 @@ public:
 private:
 	void UpdateProjectileContainer(ProjectileContainer&, bool);
 
-	ProjectileRenderMap syncedRenderProjectileIDs;        // same as syncedProjectileIDs, used by render thread
-	ProjectileRenderMap unsyncedRenderProjectileIDs;      // same as unsyncedProjectileIDs, used by render thread
+	ProjectileMap syncedRenderProjectileIDs;        // same as syncedProjectileIDs, used by render thread
+	ProjectileMap unsyncedRenderProjectileIDs;      // same as unsyncedProjectileIDs, used by render thread
 
 	int maxUsedSyncedID;
 	int maxUsedUnsyncedID;
 	std::list<int> freeSyncedIDs;             // available synced (weapon, piece) projectile ID's
 	std::list<int> freeUnsyncedIDs;           // available unsynced projectile ID's
-	ProjectileMap syncedProjectileIDs;        // ID ==> <projectile, allyteam> map for living synced projectiles
-	ProjectileMap unsyncedProjectileIDs;      // ID ==> <projectile, allyteam> map for living unsynced projectiles
+	ProjectileMap syncedProjectileIDs;        // ID ==> <projectile*, allyteam> map for living synced projectiles
+	ProjectileMap unsyncedProjectileIDs;      // ID ==> <projectile*, allyteam> map for living unsynced projectiles
 };
 
 

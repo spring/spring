@@ -261,14 +261,14 @@ static inline CProjectile* ParseRawProjectile(lua_State* L, const char* caller, 
 
 	const int projID = lua_toint(L, index);
 
-	const ProjectileMapValPair* pp = NULL;
+	CProjectile* p = NULL;
 	if (synced) {
-		pp = projectileHandler->GetMapPairBySyncedID(projID);
+		p = projectileHandler->GetProjectileBySyncedID(projID);
 	} else {
-		pp = projectileHandler->GetMapPairByUnsyncedID(projID);
+		p = projectileHandler->GetProjectileByUnsyncedID(projID);
 	}
 
-	return (pp) ? pp->first : NULL;
+	return p;
 }
 
 static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)

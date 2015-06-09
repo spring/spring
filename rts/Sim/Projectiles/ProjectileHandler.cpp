@@ -193,9 +193,10 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 			if (synced) {
 				//! iterator is always valid
 				pIt = syncedProjectileIDs.find(p->id);
+				CProjectile* p = pIt->second;
 
-				eventHandler.ProjectileDestroyed((pIt->second).first, (pIt->second).second);
-				syncedRenderProjectileIDs.erase_delete(p);
+				eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
+				syncedRenderProjectileIDs.erase(syncedRenderProjectileIDs.find(p->id));
 				syncedProjectileIDs.erase(pIt);
 
 				freeSyncedIDs.push_back(p->id);
@@ -207,9 +208,10 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 				eventHandler.UnsyncedProjectileDestroyed(p);
 #else
 				pIt = unsyncedProjectileIDs.find(p->id);
+				CProjectile* p = pIt->second;
 
-				eventHandler.ProjectileDestroyed((pIt->second).first, (pIt->second).second);
-				unsyncedRenderProjectileIDs.erase_delete(p);
+				eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
+				unsyncedRenderProjectileIDs.erase(unsyncedRenderProjectileIDs.find(p->id));
 				unsyncedProjectileIDs.erase(pIt);
 
 				freeUnsyncedIDs.push_back(p->id);
@@ -304,7 +306,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 
 	std::list<int>* freeIDs = NULL;
 	ProjectileMap* proIDs = NULL;
-	ProjectileRenderMap* newProIDs = NULL;
+	ProjectileMap* newProIDs = NULL;
 
 	int* maxUsedID = NULL;
 	int newUsedID = 0;
@@ -348,13 +350,10 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 
 	p->id = newUsedID;
 
-	const ProjectileMapValPair vp(p, p->GetAllyteamID());
-	const ProjectileMapKeyPair kp(p->id, vp);
+	(*proIDs)[p->id] = p;
+	(*newProIDs)[p->id] = p;
 
-	proIDs->insert(kp);
-	newProIDs->push(p, vp);
-
-	eventHandler.ProjectileCreated(vp.first, vp.second);
+	eventHandler.ProjectileCreated(p, p->GetAllyteamID());
 }
 
 
@@ -615,13 +614,36 @@ bool CProjectileHandler::RenderAccess(const CProjectile* p) const {
 	const ProjectileMap* pmap = NULL;
 
 	if (p->synced) {
-		pmap = &(syncedRenderProjectileIDs.get_render_map());
+		pmap = &syncedRenderProjectileIDs;
 	} else {
 		#ifndef UNSYNCED_PROJ_NOEVENT
-		pmap = &(unsyncedRenderProjectileIDs.get_render_map());
+		pmap = &unsyncedRenderProjectileIDs;
 		#endif
 	}
 
 	return (pmap != NULL && pmap->find(p->id) != pmap->end());
 }
+
+
+CProjectile* CProjectileHandler::GetProjectileBySyncedID(int id)
+{
+	auto it = syncedProjectileIDs.find(id);
+	if (it != syncedProjectileIDs.end())
+		return it->second;
+	return nullptr;
+}
+
+
+CProjectile* CProjectileHandler::GetProjectileByUnsyncedID(int id)
+{
+	if (UNSYNCED_PROJ_NOEVENT)
+		return nullptr; // unsynced projectiles have no IDs if UNSYNCED_PROJ_NOEVENT
+
+	auto it = unsyncedProjectileIDs.find(id);
+	if (it != unsyncedProjectileIDs.end())
+		return it->second;
+	return nullptr;
+}
+
+
 

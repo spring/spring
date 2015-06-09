@@ -253,7 +253,7 @@ private:
 /////////////////////////////////////////////////////////
 //
 
-template <class C, class R, class T, class D>
+template <class C, class T, class D>
 class ThreadListSim {
 private:
 	typedef typename C::iterator SimIT;

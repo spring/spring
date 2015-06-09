@@ -313,10 +313,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 
 static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 {
-	if (!lua_isnumber(L, index)) {
-		luaL_error(L, "%s(): Bad unitID", caller);
-	}
-	const int unitID = lua_toint(L, index);
+	const int unitID = luaL_checkint(L, index);
 	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits())) {
 		luaL_error(L, "%s(): Bad unitID: %d\n", caller, unitID);
 	}
@@ -344,10 +341,7 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 static inline CFeature* ParseFeature(lua_State* L,
                                      const char* caller, int index)
 {
-	if (!lua_isnumber(L, index)) {
-		luaL_error(L, "Incorrect arguments to %s(featureID)", caller);
-	}
-	const int featureID = lua_toint(L, index);
+	const int featureID = luaL_checkint(L, index);
 	CFeature* f = featureHandler->GetFeature(featureID);
 
 	if (!f)
@@ -363,17 +357,14 @@ static inline CFeature* ParseFeature(lua_State* L,
 static inline CProjectile* ParseProjectile(lua_State* L,
                                            const char* caller, int index)
 {
-	if (!lua_isnumber(L, index)) {
-		luaL_error(L, "%s(): Bad projectile ID", caller);
-	}
-	const ProjectileMapValPair* pmp = projectileHandler->GetMapPairBySyncedID(lua_toint(L, index));
-	if (pmp == NULL) {
+	CProjectile* p = projectileHandler->GetProjectileBySyncedID(luaL_checkint(L, index));
+	if (p == NULL) {
 		return NULL;
 	}
-	if (!CanControlProjectileAllyTeam(L, pmp->second)) {
+	if (!CanControlProjectileAllyTeam(L, p->GetAllyteamID())) {
 		return NULL;
 	}
-	return pmp->first;
+	return p;
 }
 
 static bool ParseProjectileParams(lua_State* L, ProjectileParams& params, const int tblIdx, const char* caller)

@@ -8,9 +8,7 @@ struct FlyingPiece;
 struct ProjectileDetacher {
 	static void Detach(CProjectile* p);
 };
-struct ProjectileIndexer {
-	static int Index(const CProjectile* p);
-};
+
 
 
 

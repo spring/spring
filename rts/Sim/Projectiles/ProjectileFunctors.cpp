@@ -7,9 +7,6 @@ void ProjectileDetacher::Detach(CProjectile* p) {
 	p->Detach();
 }
 
-int ProjectileIndexer::Index(const CProjectile* p) {
-	return p->id;
-}
 
 
 

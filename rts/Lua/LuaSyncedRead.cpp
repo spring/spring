@@ -434,15 +434,12 @@ static inline bool IsFeatureVisible(lua_State* L, const CFeature* feature)
 	return feature->IsInLosForAllyTeam(CLuaHandle::GetHandleReadAllyTeam(L));
 }
 
-static inline bool IsProjectileVisible(lua_State* L, const ProjectileMapValPair& pp)
+static inline bool IsProjectileVisible(lua_State* L, const CProjectile* pro)
 {
-	const CProjectile* pro = pp.first;
-	const int proAllyteam = pp.second;
-
 	if (CLuaHandle::GetHandleReadAllyTeam(L) < 0) {
 		return CLuaHandle::GetHandleFullRead(L);
 	}
-	if ((CLuaHandle::GetHandleReadAllyTeam(L) != proAllyteam) &&
+	if ((CLuaHandle::GetHandleReadAllyTeam(L) != pro->GetAllyteamID()) &&
 	    (!losHandler->InLos(pro->pos, CLuaHandle::GetHandleReadAllyTeam(L)))) {
 		return false;
 	}
@@ -657,11 +654,11 @@ static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 static CProjectile* ParseProjectile(lua_State* L, const char* caller, int index)
 {
 	const int proID = luaL_checkint(L, index);
-	const ProjectileMapValPair* pp = projectileHandler->GetMapPairBySyncedID(proID);
-	if (!pp) {
+	CProjectile* p = projectileHandler->GetProjectileBySyncedID(proID);
+	if (!p) {
 		return NULL;
 	}
-	return IsProjectileVisible(L, *pp)? pp->first: NULL;
+	return IsProjectileVisible(L, p)? p : NULL;
 }
 
 
@@ -2513,9 +2510,6 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 			if (!projectileHandler->RenderAccess(pro))
 				continue;
 
-			const CUnit* unit = pro->owner();
-			const ProjectileMapValPair proPair(const_cast<CProjectile*>(pro), ((unit != NULL)? unit->allyteam: CLuaHandle::GetHandleReadAllyTeam(L)));
-
 			// see above
 			if (!pro->synced)
 				continue;
@@ -2525,7 +2519,7 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 			if (pro->piece && excludePieceProjectiles)
 				continue;
 
-			if (!IsProjectileVisible(L, proPair))
+			if (!IsProjectileVisible(L, pro))
 				continue;
 
 			lua_pushnumber(L, pro->id);
