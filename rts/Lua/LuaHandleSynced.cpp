@@ -937,6 +937,9 @@ bool CSyncedLuaHandle::FeaturePreDamaged(
 	float* newDamage,
 	float* impulseMult)
 {
+	assert(newDamage != nullptr);
+	assert(impulseMult != nullptr);
+
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 2 + 9 + 2, __FUNCTION__);
 
@@ -970,14 +973,14 @@ bool CSyncedLuaHandle::FeaturePreDamaged(
 	if (!RunCallInTraceback(L, cmdStr, inArgCount, outArgCount, traceBack.GetErrFuncIdx(), false))
 		return false;
 
-	if (newDamage && lua_isnumber(L, -2)) {
+	if (lua_isnumber(L, -2)) {
 		*newDamage = lua_tonumber(L, -2);
 	} else if (!lua_isnumber(L, -2) || lua_isnil(L, -2)) {
 		// first value is obligatory, so may not be nil
 		LOG_L(L_WARNING, "%s(): 1st value returned should be a number (newDamage)", (cmdStr.GetString()).c_str());
 	}
 
-	if (impulseMult && lua_isnumber(L, -1)) {
+	if (lua_isnumber(L, -1)) {
 		*impulseMult = lua_tonumber(L, -1);
 	} else if (!lua_isnumber(L, -1) && !lua_isnil(L, -1)) {
 		// second value is optional, so nils are OK
