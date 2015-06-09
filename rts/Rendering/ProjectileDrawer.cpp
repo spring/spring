@@ -722,7 +722,7 @@ void CProjectileDrawer::DrawShadowPass()
 		glEnable(GL_ALPHA_TEST);
 		glShadeModel(GL_SMOOTH);
 
-		projectileHandler->currentParticles += CProjectile::DrawArray();
+		CProjectile::DrawArray();
 	}
 
 	po->Disable();
