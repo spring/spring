@@ -1045,7 +1045,7 @@ int CSyncedLuaHandle::AllowWeaponTargetCheck(unsigned int attackerID, unsigned i
 	if (!RunCallInTraceback(L, cmdStr, 3, 1, traceBack.GetErrFuncIdx(), false))
 		return ret;
 
-	ret = int(luaL_optboolean(L, -1, false)); //FIXME int????
+	ret = lua_toint(L, -1);
 	lua_pop(L, 1);
 	return ret;
 }

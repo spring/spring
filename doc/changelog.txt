@@ -84,6 +84,7 @@ Lua:
  - add Set/GetProjectileIsIntercepted
  - add GetProjectileTimeToLive, GetProjectileOwnerID and GetProjectileTeamID.
  - add SFX.RECURSIVE flag to Explode(), allowing to draw the piece and all its children.
+ - add a second return value to AllowWeaponTargetCheck callin to allow ignoring the callin.
  ! remove Spring.UpdateInfoTexture
  ! fix Spring.GetKeyState & Spring.PressedKeys expecting SDL2 keycodes while whole lua gets SDL1 ones
  ! Spring.PressedKeys now also returns keynames
