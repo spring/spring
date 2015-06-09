@@ -52,6 +52,7 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(onlyForward),
 	CR_MEMBER(muzzleFlareSize),
 	CR_MEMBER(doTargetGroundPos),
+	CR_MEMBER(noAutoTarget),
 	CR_MEMBER(alreadyWarnedAboutMissingPieces),
 
 	CR_MEMBER(badTargetCategory),
@@ -122,6 +123,7 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	avoidTarget(false),
 	onlyForward(false),
 	doTargetGroundPos(false),
+	noAutoTarget(false),
 	alreadyWarnedAboutMissingPieces(false),
 	badTargetCategory(0),
 	onlyTargetCategory(0xffffffff),
@@ -687,11 +689,6 @@ void CWeapon::AutoTarget()
 
 void CWeapon::SlowUpdate()
 {
-	SlowUpdate(false);
-}
-
-void CWeapon::SlowUpdate(bool noAutoTargetOverride)
-{
 	errorVectorAdd = (gs->randVector() - errorVector) * (1.0f / UNIT_SLOWUPDATE_RATE);
 	predictSpeedMod = 1.0f + (gs->randFloat() - 0.5f) * 2 * (1.0f - owner->limExperience);
 
@@ -722,7 +719,7 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	}
 
 	// AutoTarget: Find new/better Target
-	if (!noAutoTargetOverride && AllowWeaponAutoTarget()) {
+	if (!noAutoTarget && AllowWeaponAutoTarget()) {
 		AutoTarget();
 	}
 }

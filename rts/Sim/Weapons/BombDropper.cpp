@@ -34,11 +34,7 @@ CBombDropper::CBombDropper(CUnit* owner, const WeaponDef* def, bool useTorps)
 {
 	onlyForward = true;
 	doTargetGroundPos = true;
-}
-
-void CBombDropper::Init()
-{
-	CWeapon::Init();
+	noAutoTarget = true;
 	maxForwardAngleDif = -1.0f;
 }
 
@@ -165,15 +161,5 @@ void CBombDropper::FireImpl(const bool scriptCall)
 		assert(weaponDef->projectileType == WEAPON_EXPLOSIVE_PROJECTILE);
 		WeaponProjectileFactory::LoadProjectile(params);
 	}
-}
-
-/**
- * pass true for noAutoTargetOverride to make sure this weapon
- * does not generate its own targets (to save CPU mostly), only
- * allow user- or CAI-picked units (the latter for fight orders)
- */
-void CBombDropper::SlowUpdate()
-{
-	CWeapon::SlowUpdate(true); //FIXME
 }
 

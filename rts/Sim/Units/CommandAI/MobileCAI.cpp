@@ -756,7 +756,9 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			}
 		}
 
-		const SWeaponTarget trg(orderTarget, (c.options & INTERNAL_ORDER) == 0);
+		SWeaponTarget trg(orderTarget, (c.options & INTERNAL_ORDER) == 0);
+		trg.isManualFire = (c.GetID() == CMD_MANUALFIRE);
+		const short targetHead = GetHeadingFromVector(-targetMidPosVec.x, -targetMidPosVec.z);
 
 		for (CWeapon* w: owner->weapons) {
 			if (c.GetID() == CMD_MANUALFIRE) {
@@ -767,8 +769,8 @@ void CMobileCAI::ExecuteAttack(Command &c)
 				}
 			}
 
-			tryTargetRotate  = w->TryTargetRotate(orderTarget, (c.options & INTERNAL_ORDER) == 0);
-			tryTargetHeading = w->TryTargetHeading(GetHeadingFromVector(-targetMidPosVec.x, -targetMidPosVec.z), trg);
+			tryTargetRotate  = w->TryTargetRotate(trg.unit, trg.isUserTarget);
+			tryTargetHeading = w->TryTargetHeading(targetHead, trg);
 
 			if (tryTargetRotate || tryTargetHeading)
 				break;
@@ -794,7 +796,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 				}
 			}
 
-			owner->AttackUnit(orderTarget, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
+			owner->AttackUnit(trg.unit, trg.isUserTarget, trg.isManualFire);
 		}
 
 		// if we're on hold pos in a temporary order, then none of the close-in
