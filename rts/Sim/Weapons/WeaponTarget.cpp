@@ -45,7 +45,7 @@ SWeaponTarget::SWeaponTarget(float3 p, bool userTarget)
 
 
 SWeaponTarget::SWeaponTarget(CWeaponProjectile* i, bool userTarget)
-: type(Target_Pos)
+: type(Target_Intercept)
 , isUserTarget(userTarget)
 , isManualFire(false)
 , unit(nullptr)

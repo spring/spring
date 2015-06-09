@@ -259,7 +259,7 @@ void CWeapon::Update()
 	errorVector += errorVectorAdd;
 
 	// SlowUpdate() only generates targets when we are in range
-	// esp. for bombs this is often too late (SlowUpdate gets called twice per second)
+	// esp. for bombs this is often too late (SlowUpdate gets only called twice per second)
 	// so check unit's target this check every frame (unit target has highest priority even in SlowUpdate!)
 	if (!HaveTarget() && owner->curTarget.type != Target_None) {
 		Attack(owner->curTarget);
@@ -274,6 +274,7 @@ void CWeapon::Update()
 	UpdateAim();
 	UpdateFire();
 	UpdateSalvo();
+
 #ifdef TRACE_SYNC
 	tracefile << __FUNCTION__;
 	tracefile << aimFromPos.x << " " << aimFromPos.y << " " << aimFromPos.z << " " << currentTargetPos.x << " " << currentTargetPos.y << " " << currentTargetPos.z << "\n";
@@ -873,9 +874,6 @@ bool CWeapon::TryTarget(const float3 tgtPos, const SWeaponTarget& trg) const
 bool CWeapon::TestTarget(const float3 tgtPos, const SWeaponTarget& trg) const
 {
 	if ((trg.isManualFire != weaponDef->manualfire) && owner->unitDef->canManualFire)
-		return false;
-
-	if (!trg.isUserTarget && weaponDef->noAutoTarget)
 		return false;
 
 	switch (trg.type) {
