@@ -199,7 +199,7 @@ int CProjectile::DrawArray()
 	// draw-index gets divided by 24 because each element is
 	// 12 + 4 + 4 + 4 = 24 bytes in size (pos + u + v + color)
 	// for each type of "projectile"
-	const int idx = (va->drawIndex() / 24);
+	const int idx = (va->drawIndex() / VA_SIZE_TC);
 
 	va = GetVertexArray();
 	va->Initialize();

@@ -562,9 +562,7 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 		points->Initialize();
 		points->EnlargeArrays(renderProjectiles.size(), 0, VA_SIZE_C);
 
-		for (std::set<CProjectile*>::iterator it = renderProjectiles.begin(); it != renderProjectiles.end(); ++it) {
-			CProjectile* p = *it;
-
+		for (CProjectile* p: renderProjectiles) {
 			const CUnit* owner = p->owner();
 			if ((owner && (owner->allyteam == gu->myAllyTeam)) ||
 				gu->spectatingFullView || losHandler->InLos(p, gu->myAllyTeam)) {
@@ -602,7 +600,7 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType, int numFlyingPieces, int
 			(*fpi)->Draw(&lastTeam, &lastTex, va);
 		}
 
-		(*drawnPieces) += (va->drawIndex() / 32);
+		(*drawnPieces) += (va->drawIndex() / VA_SIZE_TN);
 		va->DrawArrayTN(GL_QUADS);
 	}
 }
@@ -651,11 +649,11 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		CProjectile::va->Initialize();
 
 		// draw the particle effects
-		for (auto it = zSortedProjectiles.begin(); it != zSortedProjectiles.end(); ++it) {
-			(*it)->Draw();
+		for (CProjectile* p: zSortedProjectiles) {
+			p->Draw();
 		}
-		for (auto it = unsortedProjectiles.begin(); it != unsortedProjectiles.end(); it = unsortedProjectiles.erase(it)) {
-			(*it)->Draw();
+		for (CProjectile* p: unsortedProjectiles) {
+			p->Draw();
 		}
 	}
 
@@ -688,8 +686,8 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	projectileHandler->currentParticles += (renderProjectiles.size() * 0.8f);
 
 	// NOTE: should projectiles that have a model be counted here?
-	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		projectileHandler->currentParticles += (modelRenderers[modelType]->GetNumProjectiles() * 0.8f);
+	for (auto* mr: modelRenderers) {
+		projectileHandler->currentParticles += (mr->GetNumProjectiles() * 0.8f);
 	}
 
 	projectileHandler->UpdateParticleSaturation();
