@@ -670,7 +670,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		glEnable(GL_ALPHA_TEST);
 		glDepthMask(GL_FALSE);
 
-		// note: nano-particles (CGfxProjectile instances) also
+		// note: nano-particles (CNanoProjectile instances) also
 		// contribute to the count, but have their own creation
 		// cutoff
 		projectileHandler->currentParticles += CProjectile::DrawArray();

@@ -1,18 +1,18 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef GFX_PROJECTILE_H
-#define GFX_PROJECTILE_H
+#ifndef NANO_PROJECTILE_H
+#define NANO_PROJECTILE_H
 
 #include "Sim/Projectiles/Projectile.h"
 
-class CGfxProjectile : public CProjectile
+class CNanoProjectile : public CProjectile
 {
-	CR_DECLARE(CGfxProjectile)
+	CR_DECLARE(CNanoProjectile)
 
 public:
-	CGfxProjectile();
-	CGfxProjectile(const float3& pos, const float3& speed, int lifeTime, const float3& color);
-	virtual ~CGfxProjectile();
+	CNanoProjectile();
+	CNanoProjectile(const float3& pos, const float3& speed, int lifeTime, const float3& color);
+	virtual ~CNanoProjectile();
 
 	void Update();
 	void Draw();
@@ -24,5 +24,5 @@ private:
 	unsigned char color[4];
 };
 
-#endif /* GFX_PROJECTILE_H */
+#endif /* NANO_PROJECTILE_H */
 

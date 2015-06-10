@@ -16,7 +16,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/Unsynced/FlyingPiece.h"
-#include "Sim/Projectiles/Unsynced/GfxProjectile.h"
+#include "Sim/Projectiles/Unsynced/NanoProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/Config/ConfigHandler.h"
@@ -571,7 +571,7 @@ void CProjectileHandler::AddNanoParticle(
 		color = float3(tcol[0] / 255.0f, tcol[1] / 255.0f, tcol[2] / 255.0f);
 	}
 
-	new CGfxProjectile(startPos, dif, int(l), color);
+	new CNanoProjectile(startPos, dif, int(l), color);
 }
 
 void CProjectileHandler::AddNanoParticle(
@@ -604,9 +604,9 @@ void CProjectileHandler::AddNanoParticle(
 	}
 
 	if (inverse) {
-		new CGfxProjectile(startPos + (dif + error) * l, -(dif + error) * 3, int(l / 3), color);
+		new CNanoProjectile(startPos + (dif + error) * l, -(dif + error) * 3, int(l / 3), color);
 	} else {
-		new CGfxProjectile(startPos, (dif + error) * 3, int(l / 3), color);
+		new CNanoProjectile(startPos, (dif + error) * 3, int(l / 3), color);
 	}
 }
 

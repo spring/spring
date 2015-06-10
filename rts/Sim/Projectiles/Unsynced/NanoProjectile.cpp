@@ -2,7 +2,7 @@
 
 
 #include "Game/Camera.h"
-#include "GfxProjectile.h"
+#include "NanoProjectile.h"
 #include "Rendering/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
@@ -10,9 +10,9 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 
-CR_BIND_DERIVED(CGfxProjectile, CProjectile, )
+CR_BIND_DERIVED(CNanoProjectile, CProjectile, )
 
-CR_REG_METADATA(CGfxProjectile,
+CR_REG_METADATA(CNanoProjectile,
 (
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(creationTime),
@@ -22,11 +22,13 @@ CR_REG_METADATA(CGfxProjectile,
 	CR_RESERVED(8)
 ))
 
+
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CGfxProjectile::CGfxProjectile(): CProjectile()
+CNanoProjectile::CNanoProjectile(): CProjectile()
 {
 	creationTime = lifeTime = 0;
 	color[0] = color[1] = color[2] = color[3] = 255;
@@ -35,7 +37,7 @@ CGfxProjectile::CGfxProjectile(): CProjectile()
 	drawSorted = false;
 }
 
-CGfxProjectile::CGfxProjectile(const float3& pos, const float3& speed, int lifeTime, const float3& color):
+CNanoProjectile::CNanoProjectile(const float3& pos, const float3& speed, int lifeTime, const float3& color):
 	CProjectile(pos, speed, NULL, false, false, false),
 	creationTime(gs->frameNum),
 	lifeTime(lifeTime)
@@ -54,7 +56,7 @@ CGfxProjectile::CGfxProjectile(const float3& pos, const float3& speed, int lifeT
 	}
 }
 
-CGfxProjectile::~CGfxProjectile()
+CNanoProjectile::~CNanoProjectile()
 {
 	if (projectileHandler != NULL) {
 		projectileHandler->currentNanoParticles -= 1;
@@ -62,7 +64,7 @@ CGfxProjectile::~CGfxProjectile()
 }
 
 
-void CGfxProjectile::Update()
+void CNanoProjectile::Update()
 {
 	pos += speed;
 	if (gs->frameNum >= creationTime + lifeTime) {
@@ -70,7 +72,7 @@ void CGfxProjectile::Update()
 	}
 }
 
-void CGfxProjectile::Draw()
+void CNanoProjectile::Draw()
 {
 	inArray = true;
 
@@ -82,8 +84,7 @@ void CGfxProjectile::Draw()
 	#undef gfxt
 }
 
-void CGfxProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+void CNanoProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 {
 	points.AddVertexQC(pos, color4::green);
 }
-

@@ -84,7 +84,7 @@ add_library(engineSim STATIC
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/GenericParticleProjectile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/GeoSquareProjectile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/GeoThermSmokeProjectile.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/GfxProjectile.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/NanoProjectile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/HeatCloudProjectile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/MuzzleFlame.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/RepulseGfx.cpp"
