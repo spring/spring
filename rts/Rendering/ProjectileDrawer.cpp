@@ -654,6 +654,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		for (CProjectile* p: unsortedProjectiles) {
 			p->Draw();
 		}
+		unsortedProjectiles.clear(); //FIXME rename to explosionSpawners ? and why to call Draw() for them??
 	}
 
 	glEnable(GL_BLEND);
