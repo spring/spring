@@ -34,8 +34,8 @@
 
 using namespace std;
 
-CONFIG(int, MaxParticles).defaultValue(3000).headlessValue(0);
-CONFIG(int, MaxNanoParticles).defaultValue(2000).headlessValue(0);
+CONFIG(int, MaxParticles).defaultValue(3000).headlessValue(1).minimumValue(1);
+CONFIG(int, MaxNanoParticles).defaultValue(2000).headlessValue(1).minimumValue(1);
 
 CProjectileHandler* projectileHandler = NULL;
 
