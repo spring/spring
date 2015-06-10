@@ -165,6 +165,13 @@ void CProjectileHandler::PostLoad()
 	//TODO
 }
 
+template<class T, typename K>
+static void erase_first(T& cont, const K key)
+{
+	auto it = cont.find(key);
+	if (it != cont.end())
+		cont.erase(it);
+}
 
 
 
@@ -188,30 +195,28 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 		assert(p->synced == !!(p->GetClass()->binder->flags & creg::CF_Synced));
 
 		if (p->deleteMe) {
-			ProjectileMap::iterator pIt;
-
 			if (synced) {
-				//! iterator is always valid
-				pIt = syncedProjectileIDs.find(p->id);
+				auto pIt = syncedProjectileIDs.find(p->id);
 				CProjectile* p = pIt->second;
 
 				eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
-				syncedRenderProjectileIDs.erase(syncedRenderProjectileIDs.find(p->id));
+
+				erase_first(syncedRenderProjectileIDs, p->id);
 				syncedProjectileIDs.erase(pIt);
 
 				freeSyncedIDs.push_back(p->id);
 
-				//! push_back this projectile for deletion
+				// push_back this projectile for deletion
 				pci = pc.erase_delete_synced(pci);
 			} else {
 #if UNSYNCED_PROJ_NOEVENT
 				eventHandler.UnsyncedProjectileDestroyed(p);
 #else
-				pIt = unsyncedProjectileIDs.find(p->id);
+				auto pIt = unsyncedProjectileIDs.find(p->id);
 				CProjectile* p = pIt->second;
 
 				eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
-				unsyncedRenderProjectileIDs.erase(unsyncedRenderProjectileIDs.find(p->id));
+				erase_first(unsyncedRenderProjectileIDs, p->id);
 				unsyncedProjectileIDs.erase(pIt);
 
 				freeUnsyncedIDs.push_back(p->id);
