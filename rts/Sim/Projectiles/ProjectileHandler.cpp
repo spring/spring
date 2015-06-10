@@ -373,25 +373,21 @@ void CProjectileHandler::CheckUnitCollisions(
 {
 	CollisionQuery cq;
 
-	for (unsigned int n = 0; n < tempUnits.size(); n++) {
-		CUnit* unit = tempUnits[n];
-
+	for (CUnit* unit: tempUnits) {
 		if (unit == NULL)
 			break;
 
-		const CUnit* attacker = p->owner();
-
 		// if this unit fired this projectile, always ignore
-		if (attacker == unit)
+		if (unit == p->owner())
 			continue;
 		if (!unit->HasCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES))
 			continue;
 
 		if (p->GetCollisionFlags() & Collision::NOFRIENDLIES) {
-			if (attacker != NULL && (unit->allyteam == attacker->allyteam)) { continue; }
+			if ( teamHandler->AlliedAllyTeams(p->GetAllyteamID(), unit->allyteam)) { continue; }
 		}
 		if (p->GetCollisionFlags() & Collision::NOENEMIES) {
-			if (attacker != NULL && (unit->allyteam != attacker->allyteam)) { continue; }
+			if (!teamHandler->AlliedAllyTeams(p->GetAllyteamID(), unit->allyteam)) { continue; }
 		}
 		if (p->GetCollisionFlags() & Collision::NONEUTRALS) {
 			if (unit->IsNeutral()) { continue; }
@@ -430,9 +426,7 @@ void CProjectileHandler::CheckFeatureCollisions(
 
 	CollisionQuery cq;
 
-	for (unsigned int n = 0; n < tempFeatures.size(); n++) {
-		CFeature* feature = tempFeatures[n];
-
+	for (CFeature* feature: tempFeatures) {
 		if (feature == NULL)
 			break;
 
@@ -453,13 +447,12 @@ void CProjectileHandler::CheckFeatureCollisions(
 	}
 }
 
-void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc) {
+void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc)
+{
 	static std::vector<CUnit*> tempUnits(unitHandler->MaxUnits(), NULL);
 	static std::vector<CFeature*> tempFeatures(unitHandler->MaxUnits(), NULL);
 
-	for (ProjectileContainer::iterator pci = pc.begin(); pci != pc.end(); ++pci) {
-		CProjectile* p = *pci;
-
+	for (CProjectile* p: pc) {
 		if (!p->checkCol) continue;
 		if ( p->deleteMe) continue;
 
@@ -473,12 +466,9 @@ void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc) {
 	}
 }
 
-void CProjectileHandler::CheckGroundCollisions(ProjectileContainer& pc) {
-	ProjectileContainer::iterator pci;
-
-	for (pci = pc.begin(); pci != pc.end(); ++pci) {
-		CProjectile* p = *pci;
-
+void CProjectileHandler::CheckGroundCollisions(ProjectileContainer& pc)
+{
+	for (CProjectile* p: pc) {
 		if (!p->checkCol)
 			continue;
 
