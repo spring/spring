@@ -25,6 +25,7 @@
 #include "System/TimeProfiler.h"
 #include "System/creg/STL_Map.h"
 #include "System/creg/STL_List.h"
+#include "System/creg/STL_Deque.h"
 
 // reserve 5% of maxNanoParticles for important stuff such as capture and reclaim other teams' units
 #define NORMAL_NANO_PRIO 0.95f
@@ -102,8 +103,8 @@ CProjectileHandler::CProjectileHandler()
 		freeUnsyncedIDs.push_back(i);
 	}
 
-	maxUsedSyncedID = freeSyncedIDs.size();
-	maxUsedUnsyncedID = freeUnsyncedIDs.size();
+	maxUsedSyncedID = freeSyncedIDs.back();
+	maxUsedUnsyncedID = freeUnsyncedIDs.back();
 }
 
 CProjectileHandler::~CProjectileHandler()
@@ -165,6 +166,7 @@ void CProjectileHandler::PostLoad()
 	//TODO
 }
 
+
 template<class T, typename K>
 static void erase_first(T& cont, const K key)
 {
@@ -172,7 +174,6 @@ static void erase_first(T& cont, const K key)
 	if (it != cont.end())
 		cont.erase(it);
 }
-
 
 
 void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool synced) {
@@ -309,7 +310,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 	// already initialized?
 	assert(p->id < 0);
 
-	std::list<int>* freeIDs = NULL;
+	std::deque<int>* freeIDs = NULL;
 	ProjectileMap* proIDs = NULL;
 	ProjectileMap* newProIDs = NULL;
 

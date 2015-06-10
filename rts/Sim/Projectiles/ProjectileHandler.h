@@ -5,8 +5,8 @@
 
 #include <list>
 #include <set>
+#include <deque>
 #include <vector>
-#include <stack>
 
 #include "lib/gml/ThreadSafeContainers.h"
 
@@ -86,15 +86,16 @@ public:
 private:
 	void UpdateProjectileContainer(ProjectileContainer&, bool);
 
-	ProjectileMap syncedRenderProjectileIDs;        // same as syncedProjectileIDs, used by render thread
-	ProjectileMap unsyncedRenderProjectileIDs;      // same as unsyncedProjectileIDs, used by render thread
 
 	int maxUsedSyncedID;
 	int maxUsedUnsyncedID;
-	std::list<int> freeSyncedIDs;             // available synced (weapon, piece) projectile ID's
-	std::list<int> freeUnsyncedIDs;           // available unsynced projectile ID's
-	ProjectileMap syncedProjectileIDs;        // ID ==> <projectile*, allyteam> map for living synced projectiles
-	ProjectileMap unsyncedProjectileIDs;      // ID ==> <projectile*, allyteam> map for living unsynced projectiles
+	std::deque<int> freeSyncedIDs;             // available synced (weapon, piece) projectile ID's
+	std::deque<int> freeUnsyncedIDs;           // available unsynced projectile ID's
+	ProjectileMap syncedProjectileIDs;        // ID ==> projectile* map for living synced projectiles
+	ProjectileMap unsyncedProjectileIDs;      // ID ==> projectile* map for living unsynced projectiles
+
+	ProjectileMap syncedRenderProjectileIDs;        // same as syncedProjectileIDs, used by render thread
+	ProjectileMap unsyncedRenderProjectileIDs;      // same as unsyncedProjectileIDs, used by render thread
 };
 
 
