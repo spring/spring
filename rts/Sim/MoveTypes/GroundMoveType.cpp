@@ -2078,7 +2078,7 @@ void CGroundMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive
 	//   before unit is at goalPos!)
 	//   for this reason StopMoving always updates goalPos so internal
 	//   GetNewPath's are no-ops (while CAI does not call StartMoving)
-	if (!frontWeapon->TryTarget(SWeaponTarget(mainHeadingPos, true))) {
+	if (!frontWeapon->TestRange(mainHeadingPos, SWeaponTarget(mainHeadingPos, true))) {
 		progressState = Active;
 	}
 }
@@ -2124,7 +2124,7 @@ void CGroundMoveType::SetMainHeading() {
 		}
 	} else {
 		if (owner->heading != newHeading) {
-			if (!frontWeapon->TryTarget(SWeaponTarget(mainHeadingPos, true))) {
+			if (!frontWeapon->TestRange(mainHeadingPos, SWeaponTarget(mainHeadingPos, true))) {
 				progressState = Active;
 			}
 		}
