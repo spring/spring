@@ -133,3 +133,8 @@ void CSmokeProjectile::Draw()
 	va->AddVertexTC(drawPos - pos1, st->xstart, st->yend,   col);
 	#undef st
 }
+
+int CSmokeProjectile::GetProjectilesCount() const
+{
+	return 1;
+}

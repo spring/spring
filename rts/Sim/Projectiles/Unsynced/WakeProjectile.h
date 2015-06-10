@@ -23,6 +23,8 @@ public:
 	void Update();
 	void Draw();
 
+	virtual int GetProjectilesCount() const override;
+
 private:
 	float alpha;
 	float alphaFalloff;

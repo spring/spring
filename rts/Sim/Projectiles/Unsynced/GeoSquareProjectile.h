@@ -19,6 +19,8 @@ public:
 	void Draw();
 	void Update();
 
+	virtual int GetProjectilesCount() const override;
+
 	void SetColor(float r, float g, float b, float a) {
 		this->r = r;
 		this->g = g;

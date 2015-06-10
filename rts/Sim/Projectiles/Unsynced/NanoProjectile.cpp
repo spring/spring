@@ -88,3 +88,8 @@ void CNanoProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 {
 	points.AddVertexQC(pos, color4::green);
 }
+
+int CNanoProjectile::GetProjectilesCount() const
+{
+	return 0; // nano particles use their own counter
+}

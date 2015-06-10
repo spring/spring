@@ -526,7 +526,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 		return;
 	}
 
-	if (projectileHandler->particleSaturation > 1.0f && sfxType < SFX_CEG) {
+	if (projectileHandler->GetParticleSaturation() > 1.0f && sfxType < SFX_CEG) {
 		// skip adding (unsynced!) particles when we have too many
 		return;
 	}
@@ -810,10 +810,12 @@ void CUnitScript::Explode(int piece, int flags)
 	// projectiles that don't fall could live forever
 	int newflags = PF_Fall;
 
+	const float partSat = projectileHandler->GetParticleSaturation();
+
 	if (flags & PF_Explode) { newflags |= PF_Explode; }
 	// if (flags & PF_Fall) { newflags |=  PF_Fall; }
-	if ((flags & PF_Smoke) && projectileHandler->particleSaturation < 1.0f) { newflags |= PF_Smoke; }
-	if ((flags & PF_Fire) && projectileHandler->particleSaturation < 0.95f) { newflags |= PF_Fire; }
+	if ((flags & PF_Smoke) && partSat < 1.0f) { newflags |= PF_Smoke; }
+	if ((flags & PF_Fire) && partSat < 0.95f) { newflags |= PF_Fire; }
 	if (flags & PF_NoCEGTrail) { newflags |= PF_NoCEGTrail; }
 	if (flags & PF_Recursive) { newflags |= PF_Recursive; }
 
@@ -826,7 +828,7 @@ void CUnitScript::Shatter(int piece, const float3& pos, const float3& speed)
 {
 	const LocalModelPiece* lmp = pieces[piece];
 	const S3DModelPiece* omp = lmp->original;
-	const float pieceChance = 1.0f - (projectileHandler->currentParticles - (projectileHandler->maxParticles - 2000)) / 2000.0f;
+	const float pieceChance = 1.0f - (projectileHandler->GetCurrentParticles() - (projectileHandler->maxParticles - 2000)) / 2000.0f;
 
 	if (pieceChance > 0.0f) {
 		omp->Shatter(pieceChance, unit->model->textureType, unit->team, pos, speed);

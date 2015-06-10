@@ -24,6 +24,8 @@ public:
 	void Draw();
 	void Update();
 
+	virtual int GetProjectilesCount() const override;
+
 	static void CreateSphere(
 		const CUnit* owner,
 		int ttl,
@@ -60,6 +62,8 @@ public:
 	CSpherePartSpawner();
 
 	void Init(const CUnit* owner, const float3& offset);
+
+	virtual int GetProjectilesCount() const override;
 
 private:
 	float alpha;

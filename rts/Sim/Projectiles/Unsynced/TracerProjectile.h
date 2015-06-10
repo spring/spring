@@ -22,6 +22,8 @@ public:
 	void Update();
 	void Init(const CUnit* owner, const float3& offset);
 
+	virtual int GetProjectilesCount() const override;
+
 private:
 	float speedf;
 	float length;

@@ -31,6 +31,8 @@ public:
 	void Update();
 	void Draw();
 
+	virtual int GetProjectilesCount() const override;
+
 private:
 	float3 pos1;
 	float3 pos2;

@@ -15,7 +15,9 @@ public:
 	CExpGenSpawner();
 	~CExpGenSpawner() {}
 
-	void Update();
+	virtual void Update();
+
+	virtual int GetProjectilesCount() const override;
 
 private:
 	int delay;

@@ -49,6 +49,12 @@ public:
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 	virtual void DrawCallback() {}
 
+	virtual int GetProjectilesCount() const
+	{
+		assert(false); // this method should be pure virtual, but cause of CREG we can't do so
+		return 0;
+	}
+
 	// override WorldObject::SetVelocityAndSpeed so
 	// we can keep <dir> in sync with speed-vector
 	// (unlike other world objects, projectiles must
@@ -92,7 +98,7 @@ public:
 public:
 	static bool inArray;
 	static CVertexArray* va;
-	static int DrawArray();
+	static void DrawArray();
 
 	bool synced;  ///< is this projectile part of the simulation?
 	bool weapon;  ///< is this a weapon projectile? (true implies synced true)

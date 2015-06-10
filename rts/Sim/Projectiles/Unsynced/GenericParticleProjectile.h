@@ -23,6 +23,9 @@ public:
 	virtual void Draw();
 	virtual void Update();
 
+	virtual int GetProjectilesCount() const override;
+
+public:
 	float3 gravity;
 
 	AtlasedTexture* texture;

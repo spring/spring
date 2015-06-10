@@ -370,8 +370,8 @@ static void DrawInfoText()
 	//print some infos (fps,gameframe,particles)
 	font->SetTextColor(1,1,0.5f,0.8f);
 
-	font->glFormat(0.01f, 0.02f, 1.0f, DBG_FONT_FLAGS, "FPS: %0.1f SimFPS: %0.1f SimFrame: %d Speed: %2.2f (%2.2f) Particles: %d (%d)",
-	    globalRendering->FPS, gu->simFPS, gs->frameNum, gs->speedFactor, gs->wantedSpeedFactor, projectileHandler->syncedProjectiles.size() + projectileHandler->unsyncedProjectiles.size(), projectileHandler->currentParticles);
+	font->glFormat(0.01f, 0.02f, 1.0f, DBG_FONT_FLAGS, "FPS: %0.1f SimFPS: %0.1f SimFrame: %d Speed: %2.2f (%2.2f) Particles: %d (%d : %0.1f)",
+	    globalRendering->FPS, gu->simFPS, gs->frameNum, gs->speedFactor, gs->wantedSpeedFactor, projectileHandler->syncedProjectiles.size() + projectileHandler->unsyncedProjectiles.size(), projectileHandler->GetCurrentParticles(), projectileHandler->GetParticleSaturation());
 
 	// 16ms := 60fps := 30simFPS + 30drawFPS
 	font->glFormat(0.01f, 0.07f, 0.7f, DBG_FONT_FLAGS, "avgFrame: %s%2.1fms\b avgDrawFrame: %s%2.1fms\b avgSimFrame: %s%2.1fms\b",

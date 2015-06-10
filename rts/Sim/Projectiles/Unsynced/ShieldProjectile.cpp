@@ -130,6 +130,10 @@ bool ShieldProjectile::AllowDrawing() {
 	return (allowDrawing = true);
 }
 
+int ShieldProjectile::GetProjectilesCount() const
+{
+	return 0;
+}
 
 
 
@@ -296,7 +300,7 @@ void ShieldSegmentProjectile::Draw() {
 	};
 
 	inArray = true;
-	va->EnlargeArrays(4 * 4 * 4, 0, VA_SIZE_TC);
+	va->EnlargeArrays(NUM_VERTICES_Y * NUM_VERTICES_X * 4, 0, VA_SIZE_TC);
 
 	// draw all quads
 	for (int y = 0; y < (NUM_VERTICES_Y - 1); ++y) {
@@ -312,3 +316,7 @@ void ShieldSegmentProjectile::Draw() {
 	}
 }
 
+int ShieldSegmentProjectile::GetProjectilesCount() const
+{
+	return NUM_VERTICES_Y * NUM_VERTICES_X;
+}

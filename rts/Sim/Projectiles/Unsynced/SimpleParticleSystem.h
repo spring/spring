@@ -23,6 +23,8 @@ public:
 	virtual void Update();
 	virtual void Init(const CUnit* owner, const float3& offset);
 
+	virtual int GetProjectilesCount() const override;
+
 protected:
 	float3 emitVector;
 	float3 emitMul;

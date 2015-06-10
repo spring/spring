@@ -17,6 +17,9 @@ public:
 	void Update();
 	void Draw();
 
+	virtual int GetProjectilesCount() const override;
+
+public:
 	int activateFrame;
 	int deathFrame;
 

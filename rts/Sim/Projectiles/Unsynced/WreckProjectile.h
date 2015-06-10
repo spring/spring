@@ -14,6 +14,8 @@ public:
 	void Update();
 	void Draw();
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
+
+	virtual int GetProjectilesCount() const override;
 };
 
 #endif /* WRECK_PROJECTILE_H */

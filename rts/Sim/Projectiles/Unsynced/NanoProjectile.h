@@ -18,6 +18,8 @@ public:
 	void Draw();
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 
+	virtual int GetProjectilesCount() const override;
+
 private:
 	int creationTime;
 	int lifeTime;

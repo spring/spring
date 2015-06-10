@@ -22,6 +22,8 @@ public:
 	void Update();
 	void Draw();
 
+	virtual int GetProjectilesCount() const override;
+
 	int ShieldRepulse(
 		CPlasmaRepulser* shield,
 		float3 shieldPos,

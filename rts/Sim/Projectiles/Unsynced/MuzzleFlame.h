@@ -17,6 +17,8 @@ public:
 	void Draw();
 	void Update();
 
+	virtual int GetProjectilesCount() const override;
+
 private:
 	float size;
 	int age;

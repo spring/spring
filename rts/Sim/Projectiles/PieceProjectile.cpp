@@ -480,3 +480,9 @@ void CPieceProjectile::DrawCallback()
 		}
 	}
 }
+
+
+int CPieceProjectile::GetProjectilesCount() const
+{
+	return NUM_TRAIL_PARTS;
+}

@@ -15,6 +15,8 @@ public:
 	void Draw();
 	void Collision();
 
+	virtual int GetProjectilesCount() const override;
+
 	int ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos,
 			float shieldForce, float shieldMaxSpeed);
 

@@ -421,7 +421,7 @@ bool CStdExplosionGenerator::Explosion(
 
 	new CHeatCloudProjectile(owner, npos, float3(0.0f, 0.3f, 0.0f), 8.0f + sqrtDmg * 0.5f, 7 + damage * 2.8f);
 
-	if (projectileHandler->particleSaturation < 1.0f) {
+	if (projectileHandler->GetParticleSaturation() < 1.0f) {
 		// turn off lots of graphic only particles when we have more particles than we want
 		float smokeDamage      = damage;
 		float smokeDamageSQRT  = 0.0f;
@@ -1028,8 +1028,8 @@ bool CCustomExplosionGenerator::Explosion(
 			continue;
 
 		// no new projectiles if we're saturated
-		if (projectileHandler->particleSaturation > 1.0f)
-			continue;
+		if (projectileHandler->GetParticleSaturation() > 1.0f)
+			break;
 
 		for (unsigned int c = 0; c < psi.count; c++) {
 			CExpGenSpawnable* projectile = static_cast<CExpGenSpawnable*>((psi.projectileClass)->CreateInstance());

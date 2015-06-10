@@ -103,3 +103,7 @@ int CFlameProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, f
 	return 0;
 }
 
+int CFlameProjectile::GetProjectilesCount() const
+{
+	return 1;
+}

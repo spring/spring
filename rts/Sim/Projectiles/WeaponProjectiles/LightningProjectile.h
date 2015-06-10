@@ -17,6 +17,8 @@ public:
 	void Draw();
 	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 
+	virtual int GetProjectilesCount() const override;
+
 private:
 	float3 color;
 

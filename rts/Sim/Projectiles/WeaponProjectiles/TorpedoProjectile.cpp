@@ -220,3 +220,8 @@ void CTorpedoProjectile::Draw()
 	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
 	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
 }
+
+int CTorpedoProjectile::GetProjectilesCount() const
+{
+	return 8;
+}

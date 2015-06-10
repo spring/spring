@@ -110,6 +110,10 @@ void CSpherePartProjectile::Draw()
 	}
 }
 
+int CSpherePartProjectile::GetProjectilesCount() const
+{
+	return 4 * 4;
+}
 
 void CSpherePartProjectile::CreateSphere(const CUnit* owner, int ttl, float alpha, float expansionSpeed, float3 pos, float3 color)
 {
@@ -120,6 +124,10 @@ void CSpherePartProjectile::CreateSphere(const CUnit* owner, int ttl, float alph
 	}
 }
 
+
+
+
+
 CSpherePartSpawner::CSpherePartSpawner()
 	: CProjectile()
 	, alpha(0.0f)
@@ -128,6 +136,7 @@ CSpherePartSpawner::CSpherePartSpawner()
 	, color(ZeroVector)
 {
 }
+
 
 CR_BIND_DERIVED(CSpherePartSpawner, CProjectile, )
 
@@ -146,5 +155,10 @@ void CSpherePartSpawner::Init(const CUnit* owner, const float3& offset)
 	CProjectile::Init(owner, offset);
 	deleteMe = true;
 	CSpherePartProjectile::CreateSphere(owner, ttl, alpha, expansionSpeed, pos, color);
+}
+
+int CSpherePartSpawner::GetProjectilesCount() const
+{
+	return 0;
 }
 

@@ -285,3 +285,8 @@ int CLaserProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, f
 
 	return 0;
 }
+
+int CLaserProjectile::GetProjectilesCount() const
+{
+	return 6;
+}

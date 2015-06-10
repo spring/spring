@@ -400,10 +400,10 @@ void CStarburstProjectile::Draw()
 void CStarburstProjectile::DrawCallback()
 {
 	inArray = true;
-
 	unsigned char col[4];
-
 	unsigned int part = curTracerPart;
+	const auto wt3 = weaponDef->visuals.texture3;
+	const auto wt1 = weaponDef->visuals.texture1;
 
 	for (unsigned int a = 0; a < NUM_TRACER_PARTS; ++a) {
 		const TracerPart* tracerPart = &tracerParts[part];
@@ -435,12 +435,10 @@ void CStarburstProjectile::DrawCallback()
 
 			const float drawsize = 1.0f + age2 * 0.8f * ageMod * 7;
 
-			#define wt3 weaponDef->visuals.texture3
 			va->AddVertexTC(interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, wt3->xstart, wt3->ystart, col);
 			va->AddVertexTC(interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, wt3->xend,   wt3->ystart, col);
 			va->AddVertexTC(interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, wt3->xend,   wt3->yend,   col);
 			va->AddVertexTC(interPos - camera->GetRight() * drawsize + camera->GetUp() * drawsize, wt3->xstart, wt3->yend,   col);
-			#undef wt3
 		}
 
 		// unsigned, so LHS will wrap around to UINT_MAX
@@ -454,13 +452,10 @@ void CStarburstProjectile::DrawCallback()
 	col[3] =   1;
 
 	const float fsize = 25.0f;
-
-	#define wt1 weaponDef->visuals.texture1
 	va->AddVertexTC(drawPos - camera->GetRight() * fsize - camera->GetUp() * fsize, wt1->xstart, wt1->ystart, col);
 	va->AddVertexTC(drawPos + camera->GetRight() * fsize - camera->GetUp() * fsize, wt1->xend,   wt1->ystart, col);
 	va->AddVertexTC(drawPos + camera->GetRight() * fsize + camera->GetUp() * fsize, wt1->xend,   wt1->yend,   col);
 	va->AddVertexTC(drawPos - camera->GetRight() * fsize + camera->GetUp() * fsize, wt1->xstart, wt1->yend,   col);
-	#undef wt1
 }
 
 int CStarburstProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed)
@@ -484,4 +479,9 @@ int CStarburstProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPo
 	}
 
 	return 0;
+}
+
+int CStarburstProjectile::GetProjectilesCount() const
+{
+	return numParts + 1;
 }

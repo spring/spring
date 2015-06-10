@@ -204,3 +204,8 @@ void CSmokeTrailProjectile::Update()
 {
 	deleteMe |= (gs->frameNum >= (creationTime + lifeTime));
 }
+
+int CSmokeTrailProjectile::GetProjectilesCount() const
+{
+	return (drawTrail) ? 2 : 8;
+}

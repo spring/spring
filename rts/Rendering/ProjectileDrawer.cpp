@@ -643,7 +643,6 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		// only z-sorted (if the projectiles indicate they want to be)
 		DrawProjectilesSet(renderProjectiles, drawReflection, drawRefraction);
 
-		projectileHandler->currentParticles = 0;
 		CProjectile::inArray = false;
 		CProjectile::va = GetVertexArray();
 		CProjectile::va->Initialize();
@@ -670,27 +669,13 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		glEnable(GL_ALPHA_TEST);
 		glDepthMask(GL_FALSE);
 
-		// note: nano-particles (CNanoProjectile instances) also
-		// contribute to the count, but have their own creation
-		// cutoff
-		projectileHandler->currentParticles += CProjectile::DrawArray();
+		CProjectile::DrawArray();
 	}
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDisable(GL_ALPHA_TEST);
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glDepthMask(GL_TRUE);
-
-	projectileHandler->currentParticles  = int(projectileHandler->currentParticles * 0.2f);
-	projectileHandler->currentParticles += int(0.2f * drawnPieces + 0.3f * numFlyingPieces);
-	projectileHandler->currentParticles += (renderProjectiles.size() * 0.8f);
-
-	// NOTE: should projectiles that have a model be counted here?
-	for (auto* mr: modelRenderers) {
-		projectileHandler->currentParticles += (mr->GetNumProjectiles() * 0.8f);
-	}
-
-	projectileHandler->UpdateParticleSaturation();
 }
 
 void CProjectileDrawer::DrawShadowPass()

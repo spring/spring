@@ -58,9 +58,9 @@ public:
 	void SetMaxNanoParticles(int value) { maxNanoParticles = value; }
 
 	void Update();
-	void UpdateParticleSaturation() {
-		particleSaturation = (maxParticles > 0)? (currentParticles / float(maxParticles)): 1.0f;
-	}
+
+	float GetParticleSaturation() const;
+	int   GetCurrentParticles() const;
 
 	void AddProjectile(CProjectile* p);
 	void AddGroundFlash(CGroundFlash* flash);
@@ -73,9 +73,7 @@ public:
 public:
 	int maxParticles;              // different effects should start to cut down on unnececary(unsynced) particles when this number is reached
 	int maxNanoParticles;
-	int currentParticles;          // number of particles weighted by how complex they are
 	int currentNanoParticles;
-	float particleSaturation;      // currentParticles / maxParticles ratio
 
 	ProjectileContainer syncedProjectiles;    // contains only projectiles that can change simulation state
 	ProjectileContainer unsyncedProjectiles;  // contains only projectiles that cannot change simulation state

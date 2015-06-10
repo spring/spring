@@ -439,3 +439,8 @@ int CMissileProjectile::ShieldRepulse(
 
 	return 0;
 }
+
+int CMissileProjectile::GetProjectilesCount() const
+{
+	return 2 + numParts;
+}

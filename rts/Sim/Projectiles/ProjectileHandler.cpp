@@ -63,9 +63,7 @@ CR_REG_METADATA(CProjectileHandler, (
 
 	CR_MEMBER(maxParticles),
 	CR_MEMBER(maxNanoParticles),
-	CR_MEMBER(currentParticles),
 	CR_MEMBER(currentNanoParticles),
-	CR_MEMBER(particleSaturation),
 
 	CR_MEMBER(maxUsedSyncedID),
 	CR_MEMBER(maxUsedUnsyncedID),
@@ -93,9 +91,7 @@ CProjectileHandler::CProjectileHandler()
 	maxParticles     = configHandler->GetInt("MaxParticles");
 	maxNanoParticles = configHandler->GetInt("MaxNanoParticles");
 
-	currentParticles       = 0;
 	currentNanoParticles   = 0;
-	particleSaturation     = 0.0f;
 
 	// preload some IDs
 	for (int i = 0; i < 16384; i++) {
@@ -642,4 +638,22 @@ CProjectile* CProjectileHandler::GetProjectileByUnsyncedID(int id)
 }
 
 
+float CProjectileHandler::GetParticleSaturation() const
+{
+	return GetCurrentParticles() / float(maxParticles);
+}
 
+int CProjectileHandler::GetCurrentParticles() const
+{
+	int partCount = 0;
+	for (const CProjectile* p: syncedProjectiles.cont) {
+		partCount += p->GetProjectilesCount();
+	}
+	for (const CProjectile* p: unsyncedProjectiles.cont) {
+		partCount += p->GetProjectilesCount();
+	}
+	partCount += flyingPieces3DO.size();
+	partCount += flyingPiecesS3O.size();
+	partCount += groundFlashes.size();
+	return partCount;
+}

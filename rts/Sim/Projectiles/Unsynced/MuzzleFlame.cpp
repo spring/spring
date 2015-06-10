@@ -106,4 +106,7 @@ void CMuzzleFlame::Draw()
 	}
 }
 
-
+int CMuzzleFlame::GetProjectilesCount() const
+{
+	return numSmoke * 2;
+}

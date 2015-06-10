@@ -80,7 +80,8 @@ void CFireProjectile::Update()
 {
 	ttl--;
 	if (ttl > 0) {
-		if (projectileHandler->particleSaturation < 0.8f || (projectileHandler->particleSaturation < 1 && (gs->frameNum & 1))) {
+		const float partSat = (gs->frameNum & 1) ? 1.0f : 0.8f;
+		if (projectileHandler->GetParticleSaturation() < partSat) {
 			// unsynced code
 			SubParticle sub;
 			sub.age = 0;
@@ -213,5 +214,11 @@ void CFireProjectile::Draw()
 		va->AddVertexQTC(interPos + dir1 + dir2, at->xend,   at->yend,   col2);
 		va->AddVertexQTC(interPos - dir1 + dir2, at->xstart, at->yend,   col2);
 	}
+}
+
+
+int CFireProjectile::GetProjectilesCount() const
+{
+	return subParticles2.size() + subParticles.size() * 2;
 }
 

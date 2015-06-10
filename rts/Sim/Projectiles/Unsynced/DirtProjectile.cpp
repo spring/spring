@@ -107,3 +107,8 @@ void CDirtProjectile::Draw()
 	va->AddVertexTC(drawPos + camera->GetRight() * interSize + camera->GetUp() * interSize,             texture->xend, texture->yend,   col);
 	va->AddVertexTC(drawPos - camera->GetRight() * interSize + camera->GetUp() * interSize,             texture->xend, texture->ystart, col);
 }
+
+int CDirtProjectile::GetProjectilesCount() const
+{
+	return 1;
+}

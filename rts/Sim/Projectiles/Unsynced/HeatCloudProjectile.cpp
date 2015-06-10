@@ -106,3 +106,8 @@ void CHeatCloudProjectile::Draw()
 	va->AddVertexTC(drawPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, texture->xend,   texture->yend,   col);
 	va->AddVertexTC(drawPos - camera->GetRight() * drawsize + camera->GetUp() * drawsize, texture->xstart, texture->yend,   col);
 }
+
+int CHeatCloudProjectile::GetProjectilesCount() const
+{
+	return 1;
+}

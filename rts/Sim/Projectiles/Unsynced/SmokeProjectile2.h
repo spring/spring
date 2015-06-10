@@ -29,6 +29,8 @@ public:
 	void Draw();
 	void Init(const CUnit* owner, const float3& offset);
 
+	virtual int GetProjectilesCount() const override;
+
 private:
 	float color;
 	float age;

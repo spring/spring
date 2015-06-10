@@ -16,6 +16,8 @@ public:
 	void Draw();
 	void Update();
 
+	virtual int GetProjectilesCount() const override;
+
 	void Collision();
 
 	struct Spark {

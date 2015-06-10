@@ -25,6 +25,8 @@ public:
 	void Update();
 	bool AllowDrawing();
 
+	virtual int GetProjectilesCount() const override;
+
 	void PreDelete() {
 		deleteMe = true;
 		shield = NULL;
@@ -64,6 +66,8 @@ public:
 		deleteMe = true;
 		shieldProjectile = NULL;
 	}
+
+	virtual int GetProjectilesCount() const override;
 
 private:
 	static const float3* GetSegmentVertices(const int xpart, const int ypart);

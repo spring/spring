@@ -20,6 +20,8 @@ public:
 
 	void Init(const CUnit* owner, const float3& offset);
 
+	virtual int GetProjectilesCount() const override;
+
 private:
 	AtlasedTexture* sideTexture;
 	AtlasedTexture* frontTexture;

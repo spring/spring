@@ -45,6 +45,8 @@ public:
 
 	void DrawCallback();
 
+	virtual int GetProjectilesCount() const override;
+
 private:
 	bool HasVertices() const;
 	float3 RandomVertexPos();

@@ -25,6 +25,8 @@ public:
 	virtual void Draw();
 	virtual void Update();
 
+	virtual int GetProjectilesCount() const override;
+
 private:
 	float heat;
 	float maxheat;

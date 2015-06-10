@@ -22,6 +22,8 @@ public:
 	void Draw();
 	void Update();
 
+	virtual int GetProjectilesCount() const override;
+
 	void DependentDied(CObject* o);
 
 private:
