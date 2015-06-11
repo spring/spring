@@ -7,6 +7,7 @@
 #include "Sim/Projectiles/Projectile.h"
 #include "System/float3.h"
 #include "System/type2.h"
+#include "System/Color.h"
 
 class CUnit;
 class CPlasmaRepulser;
@@ -16,24 +17,25 @@ struct AtlasedTexture;
 class ShieldSegmentProjectile;
 
 
-class ShieldProjectile: public CProjectile {
+class ShieldProjectile: public CProjectile
+{
 	CR_DECLARE(ShieldProjectile)
 public:
 	ShieldProjectile(CPlasmaRepulser*);
 	~ShieldProjectile();
 
 	void Update();
-	bool AllowDrawing();
-
 	virtual int GetProjectilesCount() const override;
 
+public:
 	void PreDelete() {
 		deleteMe = true;
 		shield = NULL;
 	}
-
-	inline CPlasmaRepulser* GetShield() const { return shield; }
+	bool AllowDrawing();
+	CPlasmaRepulser* GetShield() const { return shield; }
 	const AtlasedTexture* GetShieldTexture() const { return shieldTexture; }
+	float3 GetShieldDrawPos() const;
 
 private:
 	CPlasmaRepulser* shield;
@@ -43,12 +45,13 @@ private:
 	bool allowDrawing;
 
 	// NOTE: these are also registered in ProjectileHandler
-	std::list<ShieldSegmentProjectile*> shieldSegments;
+	std::list<ShieldSegmentProjectile*> shieldSegments; //FIXME deque
 };
 
 
 
-class ShieldSegmentProjectile: public CProjectile {
+class ShieldSegmentProjectile: public CProjectile
+{
 	CR_DECLARE(ShieldSegmentProjectile)
 public:
 	ShieldSegmentProjectile(
@@ -62,29 +65,23 @@ public:
 
 	void Draw();
 	void Update();
-	void PreDelete() {
-		deleteMe = true;
-		shieldProjectile = NULL;
-	}
+	void PreDelete();
 
 	virtual int GetProjectilesCount() const override;
 
 private:
+	bool UsingPerlinNoise() const;
 	static const float3* GetSegmentVertices(const int xpart, const int ypart);
 	static const float2* GetSegmentTexCoords(const AtlasedTexture* texture, const int xpart, const int ypart);
 
 private:
 	ShieldProjectile* shieldProjectile;
-
-	float3 segmentPos;
-	float3 segmentColor;
-
 	const float3* vertices;
 	const float2* texCoors;
 
+	SColor segmentColor;
+	float3 segmentPos;
 	float segmentSize;
-	float segmentAlpha;
-	bool usePerlinTex;
 };
 
 #endif
