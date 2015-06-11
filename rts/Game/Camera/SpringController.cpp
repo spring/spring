@@ -109,7 +109,7 @@ void CSpringController::MouseWheelMove(float move)
 			} else {
 				float zoomInDist = CGround::LineGroundCol(curCamPos, curCamPos + mouse->dir * 150000.f, false);
 				if (zoomInDist > 0.0f) {
-					// zoominpos -> campos
+					// current campos -> zoominpos groundpos -> wanted campos
 					const float3 zoomInGroundPos = curCamPos + mouse->dir * zoomInDist;
 					zoomInDist *= (1.0f + (move * shiftSpeed * 0.007f));
 					const float3 wantedCamPos = zoomInGroundPos - mouse->dir * zoomInDist;
@@ -174,10 +174,9 @@ void CSpringController::MouseWheelMove(float move)
 void CSpringController::Update()
 {
 	pos.ClampInMap();
-	pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false);
 
 	rot.x = Clamp(rot.x, PI * 0.51f, PI * 0.99f);
-	dist = std::min(dist, maxDist);
+	dist = Clamp(dist, 20.f, maxDist);
 	dir = camera->GetDir();
 
 	pixelSize = (camera->GetTanHalfFov() * 2.0f) / globalRendering->viewSizeY * dist * 2.0f;
