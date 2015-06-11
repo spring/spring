@@ -37,13 +37,13 @@ public:
 	/// feeds into GiveCommandReal()
 	void GiveCommand(const Command& c, bool fromSynced = true);
 	void ClearTargetLock(const Command& fc);
-	virtual bool CanWeaponAutoTarget() const { return true; }
+	virtual bool CanWeaponAutoTarget(const CWeapon* weapon) const { return true; }
 	virtual int GetDefaultCmd(const CUnit* pointed, const CFeature* feature);
 	virtual void SlowUpdate();
 	virtual void GiveCommandReal(const Command& c, bool fromSynced = true);
 	virtual std::vector<CommandDescription>& GetPossibleCommands();
 	virtual void FinishCommand();
-		void WeaponFired(CWeapon* weapon, const bool searchForNewTarget);
+	void WeaponFired(CWeapon* weapon, const bool searchForNewTarget);
 	virtual void BuggerOff(const float3& pos, float radius) {}
 	/**
 	 * @brief Determines if c will cancel a queued command

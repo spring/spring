@@ -587,7 +587,7 @@ bool CWeapon::AllowWeaponAutoTarget() const
 	if (slavedTo != NULL) { return false; }
 
 	// if CAI has an auto-generated attack order, do not interfere
-	if (!owner->commandAI->CanWeaponAutoTarget()) { return false; }
+	if (!owner->commandAI->CanWeaponAutoTarget(this)) { return false; }
 
 	if (!HaveTarget()) { return true; }
 	if (avoidTarget)   { return true; }
