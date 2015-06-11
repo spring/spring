@@ -876,7 +876,7 @@ void CCommandAI::GiveWaitCommand(const Command& c)
 	}
 	else {
 		// shutdown the current order
-		owner->AttackUnit(NULL, false, true);
+		owner->DropCurrentAttackTarget();
 		StopMove();
 		inCommand = false;
 		targetDied = false;
@@ -1304,7 +1304,7 @@ void CCommandAI::ExecuteAttack(Command& c)
 
 void CCommandAI::ExecuteStop(Command &c)
 {
-	owner->AttackUnit(NULL, false, true);
+	owner->DropCurrentAttackTarget();
 
 	for (CWeapon* w: owner->weapons) {
 		w->DropCurrentTarget();

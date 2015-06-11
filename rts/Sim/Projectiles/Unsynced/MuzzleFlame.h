@@ -9,7 +9,6 @@ class CMuzzleFlame : public CProjectile
 {
 	CR_DECLARE(CMuzzleFlame)
 
-	void creg_Serialize(creg::ISerializer* s);
 public:
 	CMuzzleFlame(const float3& pos, const float3& speed, const float3& dir, float size);
 	~CMuzzleFlame();
@@ -25,7 +24,6 @@ private:
 	int numFlame;
 	int numSmoke;
 
-//	float3* randSmokeDir;
 	std::vector<float3> randSmokeDir;
 };
 

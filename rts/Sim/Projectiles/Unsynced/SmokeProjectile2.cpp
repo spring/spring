@@ -80,8 +80,6 @@ CSmokeProjectile2::CSmokeProjectile2(
 
 void CSmokeProjectile2::Init(const CUnit* owner, const float3& offset)
 {
-	textureNum = (int) (gu->RandInt() % projectileDrawer->smoketex.size());
-
 	if (offset.y - CGround::GetApproximateHeight(offset.x, offset.z, false) > 10) {
 		useAirLos = true;
 	}
@@ -131,7 +129,7 @@ void CSmokeProjectile2::Draw()
 	col[0] = (unsigned char) (color * alpha + rglow);
 	col[1] = (unsigned char) (color * alpha + gglow);
 	col[2] = (unsigned char) std::max(0.f, color * alpha - gglow * 0.5f);
-	col[3] = alpha/*-alphaFalloff*globalRendering->timeOffset*/;
+	col[3] = alpha;
 
 	const float3 interPos = pos + (wantedPos + speed * globalRendering->timeOffset - pos) * 0.1f * globalRendering->timeOffset;
 	const float interSize = size + sizeExpansion * globalRendering->timeOffset;

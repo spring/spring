@@ -124,13 +124,13 @@ void CProjectileHandler::Serialize(creg::ISerializer* s)
 		int ssize = int(syncedProjectiles.size());
 		int usize = int(unsyncedProjectiles.size());
 
-		s->Serialize(&ssize, sizeof(int));
+		s->SerializeInt(&ssize);
 		for (ProjectileContainer::iterator it = syncedProjectiles.begin(); it != syncedProjectiles.end(); ++it) {
 			void** ptr = (void**) &*it;
 			s->SerializeObjectPtr(ptr, (*it)->GetClass());
 		}
 
-		s->Serialize(&usize, sizeof(int));
+		s->SerializeInt(&usize);
 		for (ProjectileContainer::iterator it = unsyncedProjectiles.begin(); it != unsyncedProjectiles.end(); ++it) {
 			void** ptr = (void**) &*it;
 			s->SerializeObjectPtr(ptr, (*it)->GetClass());
@@ -138,7 +138,7 @@ void CProjectileHandler::Serialize(creg::ISerializer* s)
 	} else {
 		int ssize, usize;
 
-		s->Serialize(&ssize, sizeof(int));
+		s->SerializeInt(&ssize);
 		syncedProjectiles.resize(ssize);
 
 		for (ProjectileContainer::iterator it = syncedProjectiles.begin(); it != syncedProjectiles.end(); ++it) {
@@ -147,7 +147,7 @@ void CProjectileHandler::Serialize(creg::ISerializer* s)
 		}
 
 
-		s->Serialize(&usize, sizeof(int));
+		s->SerializeInt(&usize);
 		unsyncedProjectiles.resize(usize);
 
 		for (ProjectileContainer::iterator it = unsyncedProjectiles.begin(); it != unsyncedProjectiles.end(); ++it) {

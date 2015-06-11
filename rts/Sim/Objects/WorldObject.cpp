@@ -17,8 +17,7 @@ CR_REG_METADATA(CWorldObject, (
 		CR_MEMBER(useAirLos),
 		CR_MEMBER(alwaysVisible),
 	CR_MEMBER_ENDFLAG(CM_Config),
-	CR_IGNORED(model), //FIXME
-	CR_POSTLOAD(PostLoad)
+	CR_IGNORED(model) //FIXME
 ))
 
 
