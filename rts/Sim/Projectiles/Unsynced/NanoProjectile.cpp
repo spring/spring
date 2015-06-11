@@ -15,8 +15,7 @@ CR_BIND_DERIVED(CNanoProjectile, CProjectile, )
 CR_REG_METADATA(CNanoProjectile,
 (
 	CR_MEMBER_BEGINFLAG(CM_Config),
-		CR_MEMBER(creationTime),
-		CR_MEMBER(lifeTime),
+		CR_MEMBER(deathFrame),
 		CR_MEMBER(color),
 	CR_MEMBER_ENDFLAG(CM_Config),
 	CR_RESERVED(8)
@@ -30,25 +29,20 @@ CR_REG_METADATA(CNanoProjectile,
 
 CNanoProjectile::CNanoProjectile(): CProjectile()
 {
-	creationTime = lifeTime = 0;
+	deathFrame = 0;
 	color[0] = color[1] = color[2] = color[3] = 255;
 
 	checkCol = false;
 	drawSorted = false;
 }
 
-CNanoProjectile::CNanoProjectile(const float3& pos, const float3& speed, int lifeTime, const float3& color):
-	CProjectile(pos, speed, NULL, false, false, false),
-	creationTime(gs->frameNum),
-	lifeTime(lifeTime)
+CNanoProjectile::CNanoProjectile(float3 pos, float3 speed, int lifeTime, SColor c)
+	: CProjectile(pos, speed, NULL, false, false, false)
+	, deathFrame(gs->frameNum + lifeTime)
+	, color(c)
 {
 	checkCol = false;
 	drawSorted = false;
-
-	this->color[0] = (unsigned char) (color[0] * 255);
-	this->color[1] = (unsigned char) (color[1] * 255);
-	this->color[2] = (unsigned char) (color[2] * 255);
-	this->color[3] = 20;
 	drawRadius = 3;
 
 	if (projectileHandler != NULL) {
@@ -67,7 +61,7 @@ CNanoProjectile::~CNanoProjectile()
 void CNanoProjectile::Update()
 {
 	pos += speed;
-	if (gs->frameNum >= creationTime + lifeTime) {
+	if (gs->frameNum >= deathFrame) {
 		deleteMe = true;
 	}
 }
@@ -76,12 +70,11 @@ void CNanoProjectile::Draw()
 {
 	inArray = true;
 
-	#define gfxt projectileDrawer->gfxtex
+	const auto* gfxt = projectileDrawer->gfxtex;
 	va->AddVertexTC(drawPos - camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, gfxt->xstart, gfxt->ystart, color);
 	va->AddVertexTC(drawPos + camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, gfxt->xend,   gfxt->ystart, color);
 	va->AddVertexTC(drawPos + camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, gfxt->xend,   gfxt->yend,   color);
 	va->AddVertexTC(drawPos - camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, gfxt->xstart, gfxt->yend,   color);
-	#undef gfxt
 }
 
 void CNanoProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)

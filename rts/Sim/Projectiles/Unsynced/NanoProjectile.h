@@ -4,6 +4,7 @@
 #define NANO_PROJECTILE_H
 
 #include "Sim/Projectiles/Projectile.h"
+#include "System/Color.h"
 
 class CNanoProjectile : public CProjectile
 {
@@ -11,7 +12,7 @@ class CNanoProjectile : public CProjectile
 
 public:
 	CNanoProjectile();
-	CNanoProjectile(const float3& pos, const float3& speed, int lifeTime, const float3& color);
+	CNanoProjectile(float3 pos, float3 speed, int lifeTime, SColor color);
 	virtual ~CNanoProjectile();
 
 	void Update();
@@ -21,9 +22,8 @@ public:
 	virtual int GetProjectilesCount() const override;
 
 private:
-	int creationTime;
-	int lifeTime;
-	unsigned char color[4];
+	int deathFrame;
+	SColor color;
 };
 
 #endif /* NANO_PROJECTILE_H */

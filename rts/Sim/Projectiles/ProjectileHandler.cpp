@@ -555,14 +555,13 @@ void CProjectileHandler::AddNanoParticle(
 	dif /= l;
 	dif += gu->RandVector() * 0.15f;
 
-	float3 color = unitDef->nanoColor;
-
+	SColor color(unitDef->nanoColor.r, unitDef->nanoColor.g, unitDef->nanoColor.b);
 	if (globalRendering->teamNanospray) {
 		const CTeam* team = teamHandler->Team(teamNum);
 		const unsigned char* tcol = team->color;
-		color = float3(tcol[0] / 255.0f, tcol[1] / 255.0f, tcol[2] / 255.0f);
+		color = SColor(tcol);
 	}
-
+	color.a = 20;
 	new CNanoProjectile(startPos, dif, int(l), color);
 }
 
@@ -587,18 +586,19 @@ void CProjectileHandler::AddNanoParticle(
 	dif /= l;
 
 	float3 error = gu->RandVector() * (radius / l);
-	float3 color = unitDef->nanoColor;
 
+	SColor color(unitDef->nanoColor.r, unitDef->nanoColor.g, unitDef->nanoColor.b);
 	if (globalRendering->teamNanospray) {
 		const CTeam* team = teamHandler->Team(teamNum);
 		const unsigned char* tcol = team->color;
-		color = float3(tcol[0] / 255.0f, tcol[1] / 255.0f, tcol[2] / 255.0f);
+		color = SColor(tcol);
 	}
+	color.a = 20;
 
-	if (inverse) {
-		new CNanoProjectile(startPos + (dif + error) * l, -(dif + error) * 3, int(l / 3), color);
-	} else {
+	if (!inverse) {
 		new CNanoProjectile(startPos, (dif + error) * 3, int(l / 3), color);
+	} else {
+		new CNanoProjectile(startPos + (dif + error) * l, -(dif + error) * 3, int(l / 3), color);
 	}
 }
 
