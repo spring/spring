@@ -423,10 +423,10 @@ void CProjectileDrawer::DrawProjectiles(int modelType, int numFlyingPieces, int*
 	DrawFlyingPieces(modelType, numFlyingPieces, drawnPieces);
 }
 
-void CProjectileDrawer::DrawProjectilesSet(std::set<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction)
+void CProjectileDrawer::DrawProjectilesSet(const std::set<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction)
 {
-	for (std::set<CProjectile*>::iterator setIt = projectiles.begin(); setIt != projectiles.end(); ++setIt) {
-		DrawProjectile(*setIt, drawReflection, drawRefraction);
+	for (CProjectile* p: projectiles) {
+		DrawProjectile(p, drawReflection, drawRefraction);
 	}
 }
 
@@ -484,10 +484,10 @@ void CProjectileDrawer::DrawProjectilesShadow(int modelType)
 	}
 }
 
-void CProjectileDrawer::DrawProjectilesSetShadow(std::set<CProjectile*>& projectiles)
+void CProjectileDrawer::DrawProjectilesSetShadow(const std::set<CProjectile*>& projectiles)
 {
-	for (std::set<CProjectile*>::iterator setIt = projectiles.begin(); setIt != projectiles.end(); ++setIt) {
-		DrawProjectileShadow(*setIt);
+	for (CProjectile* p: projectiles) {
+		DrawProjectileShadow(p);
 	}
 }
 
@@ -719,7 +719,8 @@ void CProjectileDrawer::DrawShadowPass()
 
 
 
-bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPass) {
+bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPass)
+{
 	if (!(p->weapon || p->piece) || (p->model == NULL))
 		return false;
 

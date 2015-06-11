@@ -34,7 +34,6 @@ public:
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
 	void DrawProjectilesMiniMap();
-	bool DrawProjectileModel(const CProjectile* projectile, bool shadowPass);
 	void DrawGroundFlashes();
 	void DrawShadowPass();
 
@@ -98,15 +97,18 @@ public:
 	std::vector<const AtlasedTexture*> smoketex;
 
 private:
-	void ParseAtlasTextures(const bool, const LuaTable&, std::set<std::string>&, CTextureAtlas*);
+	static void ParseAtlasTextures(const bool, const LuaTable&, std::set<std::string>&, CTextureAtlas*);
 
 	void DrawProjectiles(int modelType, int numFlyingPieces, int* drawnPieces, bool drawReflection, bool drawRefraction);
-	void DrawProjectilesSet(std::set<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction);
-	void DrawProjectile(CProjectile* projectile, bool drawReflection, bool drawRefraction);
 	void DrawProjectilesShadow(int modelType);
-	void DrawProjectileShadow(CProjectile* projectile);
-	void DrawProjectilesSetShadow(std::set<CProjectile*>& projectiles);
 	void DrawFlyingPieces(int modelType, int numFlyingPieces, int* drawnPieces);
+
+	void DrawProjectilesSet(const std::set<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction);
+	static void DrawProjectilesSetShadow(const std::set<CProjectile*>& projectiles);
+
+	void DrawProjectile(CProjectile* projectile, bool drawReflection, bool drawRefraction);
+	static void DrawProjectileShadow(CProjectile* projectile);
+	static bool DrawProjectileModel(const CProjectile* projectile, bool shadowPass);
 
 	void UpdatePerlin();
 	void GenerateNoiseTex(unsigned int tex, int size);
