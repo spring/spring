@@ -1525,7 +1525,7 @@ void CUnit::ChangeTeamReset()
 	const CObject::TDependenceMap& listeners = GetAllListeners();
 	std::vector<CUnit *> alliedunits;
 	for (const auto& objs: listeners) {
-		for (CObject* obj: objs) {
+		for (CObject* obj: objs.second) {
 			CUnit* u = dynamic_cast<CUnit*>(obj);
 			if (u != NULL && teamHandler->AlliedTeams(team, u->team))
 				alliedunits.push_back(u);

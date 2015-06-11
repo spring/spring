@@ -14,8 +14,7 @@ CR_REG_METADATA(CObject, (
 	CR_IGNORED(listening), //handled in Serialize //FIXME why not use creg serializer?
 	CR_IGNORED(listeners), //handled in Serialize
 
-	CR_SERIALIZER(Serialize),
-	CR_POSTLOAD(PostLoad)
+	CR_SERIALIZER(Serialize)
 	))
 
 
@@ -40,7 +39,7 @@ void CObject::Detach()
 	assert(!detached);
 	detached = true;
 
-	for (int depType = 0; depType < listening.size(); ++depType) {
+	for (int depType = DEPENDENCE_FIRST; depType < DEPENDENCE_LAST; ++depType) {
 		for (CObject* obj: listeners[depType]) {
 			obj->DependentDied(this);
 			erase_first(obj->listening[depType], this);
@@ -67,10 +66,10 @@ void CObject::Serialize(creg::ISerializer* ser)
 {
 	if (ser->IsWriting()) {
 		int num = listening.size();
-		ser->Serialize(&num, sizeof(int));
-		for (int depType = 0; depType < listening.size(); ++depType) {
+		ser->SerializeInt(&num);
+		for (int depType = DEPENDENCE_FIRST; depType < DEPENDENCE_LAST; ++depType) {
 			int dt = depType;
-			ser->Serialize(&dt, sizeof(int));
+			ser->SerializeInt(&dt);
 
 			TSyncSafeSet& objs = listening[depType];
 			int size = 0;
@@ -79,7 +78,7 @@ void CObject::Serialize(creg::ISerializer* ser)
 					size++;
 				}
 			}
-			ser->Serialize(&size, sizeof(int));
+			ser->SerializeInt(&size);
 			for (CObject* obj: objs) {
 				if (obj->GetClass() != CObject::StaticClass()) {
 					ser->SerializeObjectPtr((void**)&obj, obj->GetClass());
@@ -90,27 +89,18 @@ void CObject::Serialize(creg::ISerializer* ser)
 		}
 	} else {
 		int num;
-		ser->Serialize(&num, sizeof(int));
+		ser->SerializeInt(&num);
 		for (int i = 0; i < num; i++) {
 			int dt;
-			ser->Serialize(&dt, sizeof(int));
+			ser->SerializeInt(&dt);
 			int size;
-			ser->Serialize(&size, sizeof(int));
+			ser->SerializeInt(&size);
 			TSyncSafeSet& objs = listening[(DependenceType)dt];
 			for (int o = 0; o < size; o++) {
 				CObject* obj = NULL;
 				ser->SerializeObjectPtr((void**)&*obj, NULL);
 				objs.push_back(obj);
 			}
-		}
-	}
-}
-
-void CObject::PostLoad()
-{
-	for (int depType = 0; depType < listening.size(); ++depType) {
-		for (CObject* o: listening[depType]) {
-			o->listeners[depType].push_back(this);
 		}
 	}
 }
