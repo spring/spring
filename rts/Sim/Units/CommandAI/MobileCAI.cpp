@@ -1117,7 +1117,7 @@ bool CMobileCAI::GenerateAttackCmd()
 
 bool CMobileCAI::CanWeaponAutoTarget(const CWeapon* weapon) const {
 	return (!tempOrder) || //Check if the weapon actually targets the unit's order target
-		weapon->GetCurrentTarget() != owner->weapons.front()->GetCurrentTarget();
+		weapon->GetCurrentTarget() != owner->curTarget;
 }
 
 void CMobileCAI::StopSlowGuard() {
