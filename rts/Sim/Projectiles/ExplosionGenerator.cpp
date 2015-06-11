@@ -442,11 +442,11 @@ bool CStdExplosionGenerator::Explosion(
 				(-0.1f + gu->RandFloat() * 0.2f)
 			);
 
-			const float h = CGround::GetApproximateHeight(npos.x, npos.z);
 			const float time = (40.0f + smokeDamageSQRT * 15.0f) * (0.8f + gu->RandFloat() * 0.7f);
 
-			float3 npos = pos + gu->RandVector() * smokeDamage;
-			npos.y = std::max(npos.y, h);
+			float3 dir = gu->RandVector() * smokeDamage;
+			dir.y = std::abs(dir.y);
+			const float3 npos = pos + dir;
 
 			new CSmokeProjectile2(owner, pos, npos, speed, time, smokeDamageSQRT * 4.0f, 0.4f, 0.6f);
 		}

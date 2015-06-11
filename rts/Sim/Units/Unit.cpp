@@ -1549,14 +1549,13 @@ void CUnit::ChangeTeamReset()
 	if (facAI) {
 		const unsigned char options = RIGHT_MOUSE_KEY; // clear option
 		CCommandQueue& buildCommands = facAI->commandQue;
-		CCommandQueue::iterator it;
 		std::vector<Command> clearCommands;
 		clearCommands.reserve(buildCommands.size());
-		for (it = buildCommands.begin(); it != buildCommands.end(); ++it) {
-			clearCommands.push_back(Command(it->GetID(), options));
+		for (auto& cmd: buildCommands) {
+			clearCommands.emplace_back(cmd.GetID(), options);
 		}
-		for (int i = 0; i < (int)clearCommands.size(); i++) {
-			facAI->GiveCommand(clearCommands[i]);
+		for (auto& cmd: clearCommands) {
+			facAI->GiveCommand(cmd);
 		}
 	}
 
