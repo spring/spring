@@ -17,8 +17,7 @@ CR_REG_METADATA(CObject, (
 	CR_IGNORED(listening), //handled in Serialize
 	CR_IGNORED(listeners), //handled in Serialize
 
-	CR_SERIALIZER(Serialize),
-	CR_POSTLOAD(PostLoad)
+	CR_SERIALIZER(Serialize)
 	))
 
 Threading::AtomicCounterInt64 CObject::cur_sync_id(0);
@@ -27,7 +26,7 @@ Threading::AtomicCounterInt64 CObject::cur_sync_id(0);
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CObject::CObject() : detached(false)
+CObject::CObject() : detached(false), listeners(), listening()
 {
 	// Note1: this static var is shared between all different types of classes synced & unsynced (CUnit, CFeature, CProjectile, ...)
 	//  Still it doesn't break syncness even when synced objects have different sync_ids between clients as long as the sync_id is
@@ -44,29 +43,28 @@ void CObject::Detach()
 	// SYNCED
 	assert(!detached);
 	detached = true;
-	for (TDependenceMap::iterator i = listeners.begin(); i != listeners.end(); ++i) {
-		const DependenceType& depType = i->first;
-		TSyncSafeSet& objs = i->second;
-
-		for (TSyncSafeSet::iterator di = objs.begin(); di != objs.end(); ++di) {
-			CObject* const& obj = (*di);
-
+	for (int depType = 0; depType < DEPENDENCE_COUNT; ++depType) {
+		if (!listeners[depType])
+			continue;
+		
+		for (CObject* obj: *listeners[depType]) {
 			obj->DependentDied(this);
 
-			assert(obj->listening.find(depType) != obj->listening.end());
-			obj->listening[depType].erase(this);
+			assert(obj->listening[depType]);
+			obj->listening[depType]->erase(this);
 		}
+		delete listeners[depType];
 	}
-	for (TDependenceMap::iterator i = listening.begin(); i != listening.end(); ++i) {
-		const DependenceType& depType = i->first;
-		TSyncSafeSet& objs = i->second;
+	for (int depType = 0; depType < DEPENDENCE_COUNT; ++depType) {
+		if (!listening[depType])
+			continue;
+		
+		for (CObject* obj: *listening[depType]) {
 
-		for (TSyncSafeSet::iterator di = objs.begin(); di != objs.end(); ++di) {
-			CObject* const& obj = (*di);
-
-			assert(obj->listeners.find(depType) != obj->listeners.end());
-			obj->listeners[depType].erase(this);
+			assert(obj->listeners[depType]);
+			obj->listeners[depType]->erase(this);
 		}
+		delete listening[depType];
 	}
 }
 
@@ -81,25 +79,31 @@ CObject::~CObject()
 void CObject::Serialize(creg::ISerializer* ser)
 {
 	if (ser->IsWriting()) {
-		int num = listening.size();
-		ser->Serialize(&num, sizeof(int));
-		for (std::map<DependenceType, TSyncSafeSet >::iterator i = listening.begin(); i != listening.end(); ++i) {
-			int dt = i->first;
-			ser->Serialize(&dt, sizeof(int));
-			TSyncSafeSet& dl = i->second;
-			int size = 0;
-			TSyncSafeSet::const_iterator oi;
-			for (oi = dl.begin(); oi != dl.end(); ++oi) {
-				if ((*oi)->GetClass() != CObject::StaticClass()) {
-					size++;
-				}
+		int num = 0;
+		for (int dt = 0; dt < DEPENDENCE_COUNT; ++dt) {
+			if (listening[dt]) {
+				++num;
 			}
-			ser->Serialize(&size, sizeof(int));
-			for (oi = dl.begin(); oi != dl.end(); ++oi) {
-				if ((*oi)->GetClass() != CObject::StaticClass()) {
-					ser->SerializeObjectPtr((void**)&*oi, (*oi)->GetClass());
-				} else {
-					LOG("Death dependance not serialized in %s", GetClass()->name.c_str());
+		}
+		ser->Serialize(&num, sizeof(int));
+		for (int dt = 0; dt < DEPENDENCE_COUNT; ++dt) {
+			if (listening[dt]) {
+				ser->Serialize(&dt, sizeof(int));
+				TSyncSafeSet& dl = *listening[dt];
+				int size = 0;
+				TSyncSafeSet::const_iterator oi;
+				for (oi = dl.begin(); oi != dl.end(); ++oi) {
+					if ((*oi)->GetClass() != CObject::StaticClass()) {
+						size++;
+					}
+				}
+				ser->Serialize(&size, sizeof(int));
+				for (oi = dl.begin(); oi != dl.end(); ++oi) {
+					if ((*oi)->GetClass() != CObject::StaticClass()) {
+						ser->SerializeObjectPtr((void**)&*oi, (*oi)->GetClass());
+					} else {
+						LOG("Death dependance not serialized in %s", GetClass()->name.c_str());
+					}
 				}
 			}
 		}
@@ -111,22 +115,14 @@ void CObject::Serialize(creg::ISerializer* ser)
 			ser->Serialize(&dt, sizeof(int));
 			int size;
 			ser->Serialize(&size, sizeof(int));
-			TSyncSafeSet& dl = listening[(DependenceType)dt];
+			if (!listening[dt])
+				listening[dt] = new TSyncSafeSet();
+			TSyncSafeSet& dl = *listening[dt];
 			for (int o = 0; o < size; o++) {
 				CObject* obj = NULL;
 				ser->SerializeObjectPtr((void**)&*obj, NULL);
 				dl.insert(obj);
 			}
-		}
-	}
-}
-
-void CObject::PostLoad()
-{
-	for (std::map<DependenceType, TSyncSafeSet >::iterator i = listening.begin(); i != listening.end(); ++i) {
-		for (TSyncSafeSet::iterator oi = i->second.begin(); oi != i->second.end(); ++oi) {
-			TSyncSafeSet& dl = (*oi)->listeners[i->first];
-			dl.insert(this);
 		}
 	}
 }
@@ -141,16 +137,22 @@ void CObject::DependentDied(CObject* obj)
 void CObject::AddDeathDependence(CObject* obj, DependenceType dep)
 {
 	assert(!detached && !obj->detached);
-	listening[dep].insert(obj);
-
-	obj->listeners[dep].insert(this);
+	if (!listening[dep])
+		listening[dep] = new TSyncSafeSet();
+	
+	listening[dep]->insert(obj);
+	
+	if (!obj->listeners[dep])
+		obj->listeners[dep] = new TSyncSafeSet();
+	
+	obj->listeners[dep]->insert(this);
 }
 
 
 void CObject::DeleteDeathDependence(CObject* obj, DependenceType dep)
 {
 	assert(!detached && !obj->detached);
-	obj->listeners[dep].erase(this);
+	obj->listeners[dep]->erase(this);
 
-	listening[dep].erase(obj);
+	listening[dep]->erase(obj);
 }

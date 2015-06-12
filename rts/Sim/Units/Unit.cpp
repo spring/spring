@@ -1524,9 +1524,11 @@ void CUnit::ChangeTeamReset()
 	// stop friendly units shooting at us
 	const CObject::TDependenceMap& listeners = GetAllListeners();
 	std::vector<CUnit *> alliedunits;
-	for (CObject::TDependenceMap::const_iterator li = listeners.begin(); li != listeners.end(); ++li) {
-		for (CObject::TSyncSafeSet::const_iterator di = li->second.begin(); di != li->second.end(); ++di) {
-			CUnit* u = dynamic_cast<CUnit*>(*di);
+	for (TSyncSafeSet *objs: listeners) {
+		if (!objs)
+			continue;
+		for (CObject* obj: *objs) {
+			CUnit* u = dynamic_cast<CUnit*>(obj);
 			if (u != NULL && teamHandler->AlliedTeams(team, u->team))
 				alliedunits.push_back(u);
 		}
