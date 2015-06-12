@@ -84,6 +84,7 @@ private:
 public:
 	typedef std::set<CObject*, syncsafe_compare> TSyncSafeSet;
 	typedef std::map<DependenceType, TSyncSafeSet> TDependenceMap;
+	bool detached;
 
 protected:
 	const TSyncSafeSet& GetListeners(const DependenceType dep) { return listeners[dep]; }
@@ -92,7 +93,6 @@ protected:
 	const TDependenceMap& GetAllListening() const { return listening; }
 
 protected:
-	bool detached;
 	TDependenceMap listeners;
 	TDependenceMap listening;
 };

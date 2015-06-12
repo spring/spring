@@ -140,7 +140,7 @@ void CObject::DependentDied(CObject* obj)
 // and preferably try to delete the dependence asap in order not to waste memory
 void CObject::AddDeathDependence(CObject* obj, DependenceType dep)
 {
-	assert(!detached);
+	assert(!detached && !obj->detached);
 	listening[dep].insert(obj);
 
 	obj->listeners[dep].insert(this);
@@ -149,7 +149,7 @@ void CObject::AddDeathDependence(CObject* obj, DependenceType dep)
 
 void CObject::DeleteDeathDependence(CObject* obj, DependenceType dep)
 {
-	assert(!detached);
+	assert(!detached && !obj->detached);
 	obj->listeners[dep].erase(this);
 
 	listening[dep].erase(obj);
