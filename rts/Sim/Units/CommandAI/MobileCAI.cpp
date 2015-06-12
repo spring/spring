@@ -602,14 +602,10 @@ bool CMobileCAI::IsValidTarget(const CUnit* enemy) const {
 	if (owner->weapons.empty())
 		return false;
 
-	// on "Hold pos", a target can not be valid if there exists no line of fire to it.
-	// FIXME: even if not on HOLDPOS there are situations where having LOF is not enough
-	if (owner->moveState == MOVESTATE_HOLDPOS && !owner->weapons.front()->TryTargetRotate(enemy, false))
-		return false;
-
 	// test if any weapon can target the enemy unit
-	for (const CWeapon* w: owner->weapons) {
-		if (w->TestTarget(enemy->pos, SWeaponTarget(enemy))) {
+	for (CWeapon* w: owner->weapons) {
+		if (w->TestTarget(enemy->pos, SWeaponTarget(enemy)) &&
+			(owner->moveState != MOVESTATE_HOLDPOS || w->TryTargetRotate(enemy, false))) {
 			return true;
 		}
 	}
