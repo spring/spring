@@ -95,7 +95,7 @@ StartScript:
 
 Buildbot/Installer:
  ! merged spring-headless / spring-dedicated into linux static builds / windows installer
-
+ ! remove broken maven support
 
 -- 98.0 ---------------------------------------------------------
 Major:

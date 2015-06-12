@@ -70,17 +70,6 @@ macro    (ConfigureCMakeOrMavenJavaSkirmishAI requireMaven wrapperNames)
 	if    (BUILD_THIS_SKIRMISHAI)
 		file(MAKE_DIRECTORY "${myBuildDir}/jlib")
 
-		Find_Package(Maven)
-		IsMavenProject(${myDir} isMavenProject)
-		set(configureMavenProject FALSE)
-		if    (isMavenProject)
-			if    (MAVEN_FOUND)
-				set(configureMavenProject TRUE)
-			else  (MAVEN_FOUND)
-				Message("warning: ${myName} Skirmish AI has a Maven Project file, but Maven 2 (or later) was not found; Using default configuration.")
-			endif (MAVEN_FOUND)
-		endif (isMavenProject)
-
 		set(configString "default")
 		if    (configureMavenProject)
 			set(configString "Maven")
@@ -116,124 +105,90 @@ macro    (ConfigureCMakeOrMavenJavaSkirmishAI requireMaven wrapperNames)
 		set_source_files_properties("${myBuildDir}/${mySrcJarFile}" PROPERTIES GENERATED TRUE)
 
 
-		if    (configureMavenProject)
-			# The Maven Project has to make sure these files get created:
-			# ${my.build.dir}/SkirmishAI.jar
-			# ${my.build.dir}/SkirmishAI-src.jar (optional)
-			file(RELATIVE_PATH myBuildDirRel "${myDir}" "${myBuildDir}")
-			set(MVN_ATTRIBUTES
-				${MVN_ATTRIBUTES_DEFAULT}
-				"-P" "as-spring-subproject" # enable special profile
-				"-Dmy.build.dir=${myBuildDirRel}"
-				"-Dmy.version=${myVersion}"
-				)
-			set(MVN_PHASE "package")
-			#set(MVN_PHASE "help:effective-pom") # use this for debug purposes
-			add_custom_command(
-				OUTPUT
-					"${myBuildDir}/${myBinJarFile}"
-				COMMAND "${MVN_BIN}"
-					"${MVN_PHASE}" ${MVN_ATTRIBUTES}
-				DEPENDS
-					${myDependLibFiles}
-					${mySourcesDep}
-				WORKING_DIRECTORY
-					"${myDir}"
-				COMMENT
-					"  ${myTarget}: Running Maven ${MVN_PHASE} phase" VERBATIM
-				)
-			Set(myDependTargets  ${myDependTargets} "${Java_AIINTERFACE_TARGET_MVN_INSTALL}")
-			ForEach    (wrapperName ${wrapperNames})
-				Set(myDependTargets  ${myDependTargets} "${${wrapperName}_AIWRAPPER_TARGET_MVN_INSTALL}")
-			EndForEach (wrapperName)
-			add_custom_target(${myTarget} ALL DEPENDS "${myBuildDir}/${myBinJarFile}" ${myVersionDepFile})
-			add_dependencies(${myTarget} ${myDependTargets})
-		else  (configureMavenProject)
-			# If main Java package is "my.ai.pkg", this has to be set to "my".
-			GetFirstSubDirName(firstSrcSubDir ${mySourceDir})
-			set(myJavaPkgFirstPart "${firstSrcSubDir}")
+		# If main Java package is "my.ai.pkg", this has to be set to "my".
+		GetFirstSubDirName(firstSrcSubDir ${mySourceDir})
+		set(myJavaPkgFirstPart "${firstSrcSubDir}")
 
-			# Assemble additional meta data
-			set(myBinaryTarget "${myTarget}-BIN")
-			set(mySourceTarget "${myTarget}-SRC")
-			set(myJavaBuildDir "${myBuildDir}/classes")
+		# Assemble additional meta data
+		set(myBinaryTarget "${myTarget}-BIN")
+		set(mySourceTarget "${myTarget}-SRC")
+		set(myJavaBuildDir "${myBuildDir}/classes")
 
-			add_custom_target(${myBinaryTarget}
-				DEPENDS "${myBuildDir}/${myBinJarFile}")
-			add_dependencies(${myBinaryTarget} ${myDependTargets})
+		add_custom_target(${myBinaryTarget}
+			DEPENDS "${myBuildDir}/${myBinJarFile}")
+		add_dependencies(${myBinaryTarget} ${myDependTargets})
 
-			add_custom_target(${mySourceTarget}
-				DEPENDS "${myBuildDir}/${mySrcJarFile}")
+		add_custom_target(${mySourceTarget}
+			DEPENDS "${myBuildDir}/${mySrcJarFile}")
 
-			add_custom_target(${myTarget} ALL DEPENDS ${myVersionDepFile})
-			add_dependencies(${myTarget} ${myBinaryTarget} ${mySourceTarget})
+		add_custom_target(${myTarget} ALL DEPENDS ${myVersionDepFile})
+		add_dependencies(${myTarget} ${myBinaryTarget} ${mySourceTarget})
 
-			# Create our full Java class-path
-			CreateClasspath(myJavaLibs ${myJLibDir})
-			ConcatClasspaths(myClassPath "${CLASSPATH_Java_AIINTERFACE}" "${myJavaLibs}")
-			foreach    (wrapperName ${wrapperNames})
-				ConcatClasspaths(myClassPath "${myClassPath}" "${${wrapperName}_AIWRAPPER_JAR_CLASSPATH}")
-			endforeach (wrapperName)
+		# Create our full Java class-path
+		CreateClasspath(myJavaLibs ${myJLibDir})
+		ConcatClasspaths(myClassPath "${CLASSPATH_Java_AIINTERFACE}" "${myJavaLibs}")
+		foreach    (wrapperName ${wrapperNames})
+			ConcatClasspaths(myClassPath "${myClassPath}" "${${wrapperName}_AIWRAPPER_JAR_CLASSPATH}")
+		endforeach (wrapperName)
 
-			# Locate the manifest file
-			FindManifestFile("${myDir}" myManifestFile)
-			if    (myManifestFile)
-				set(myBinJarArgs "cmf" "${myManifestFile}")
-			else  (myManifestFile)
-				set(myBinJarArgs "cf")
-			endif (myManifestFile)
+		# Locate the manifest file
+		FindManifestFile("${myDir}" myManifestFile)
+		if    (myManifestFile)
+			set(myBinJarArgs "cmf" "${myManifestFile}")
+		else  (myManifestFile)
+			set(myBinJarArgs "cf")
+		endif (myManifestFile)
 
-			# Write list of source files to an arg-file
-			set(mySrcArgFile "${myBuildDir}/sourceFiles.txt")
-			if    (EXISTS "${mySrcArgFile}")
-				file(REMOVE "${mySrcArgFile}")
-			endif (EXISTS "${mySrcArgFile}")
-			set(mySrcArgFile "${myBuildDir}/sourceFiles.txt")
-			foreach    (srcFile ${mySources})
-				file(APPEND "${mySrcArgFile}" "\"${srcFile}\"\n")
-			endforeach (srcFile)
+		# Write list of source files to an arg-file
+		set(mySrcArgFile "${myBuildDir}/sourceFiles.txt")
+		if    (EXISTS "${mySrcArgFile}")
+			file(REMOVE "${mySrcArgFile}")
+		endif (EXISTS "${mySrcArgFile}")
+		set(mySrcArgFile "${myBuildDir}/sourceFiles.txt")
+		foreach    (srcFile ${mySources})
+			file(APPEND "${mySrcArgFile}" "\"${srcFile}\"\n")
+		endforeach (srcFile)
 
-			# Compile and pack the library
-			add_custom_command(
-				OUTPUT
-					"${myBuildDir}/${myBinJarFile}"
-				DEPENDS
-					${myDependLibFiles}
-					${mySourcesDep}
-				COMMAND "${CMAKE_COMMAND}"
-					"-E" "remove_directory" "${myJavaBuildDir}"
-				COMMAND "${CMAKE_COMMAND}"
-					"-E" "make_directory" "${myJavaBuildDir}"
-				COMMAND "${JAVA_COMPILE}"
-					"${JAVA_COMPILE_FLAG_CONDITIONAL}"
-					"-Xlint:deprecation"
-					"-cp" "${myClassPath}"
-					"-d" "${myJavaBuildDir}"
-					"@${mySrcArgFile}"
-				COMMAND "${JAVA_ARCHIVE}"
-					${myBinJarArgs} "${myBuildDir}/${myBinJarFile}"
-					"-C" "${myJavaBuildDir}" "${myJavaPkgFirstPart}"
-				WORKING_DIRECTORY
-					"${mySourceDir}"
-				COMMENT
-					"  ${myTarget}: Compiling sources and packing library ${myBinJarFile}" VERBATIM
-				)
+		# Compile and pack the library
+		add_custom_command(
+			OUTPUT
+				"${myBuildDir}/${myBinJarFile}"
+			DEPENDS
+				${myDependLibFiles}
+				${mySourcesDep}
+			COMMAND "${CMAKE_COMMAND}"
+				"-E" "remove_directory" "${myJavaBuildDir}"
+			COMMAND "${CMAKE_COMMAND}"
+				"-E" "make_directory" "${myJavaBuildDir}"
+			COMMAND "${JAVA_COMPILE}"
+				"${JAVA_COMPILE_FLAG_CONDITIONAL}"
+				"-Xlint:deprecation"
+				"-cp" "${myClassPath}"
+				"-d" "${myJavaBuildDir}"
+				"@${mySrcArgFile}"
+			COMMAND "${JAVA_ARCHIVE}"
+				${myBinJarArgs} "${myBuildDir}/${myBinJarFile}"
+				"-C" "${myJavaBuildDir}" "${myJavaPkgFirstPart}"
+			WORKING_DIRECTORY
+				"${mySourceDir}"
+			COMMENT
+				"  ${myTarget}: Compiling sources and packing library ${myBinJarFile}" VERBATIM
+			)
 
-			# Pack the sources
-			add_custom_command(
-				OUTPUT
-					"${myBuildDir}/${mySrcJarFile}"
-				COMMAND "${JAVA_ARCHIVE}"
-					"cf" "${myBuildDir}/${mySrcJarFile}"
-					"-C" "${mySourceDir}" "${myJavaPkgFirstPart}"
-				DEPENDS
-					${mySourcesDeps}
-				WORKING_DIRECTORY
-					"${mySourceDir}"
-				COMMENT
-					"  ${myTarget}: Creating sources archive ${mySrcJarFile}" VERBATIM
-				)
-		endif (configureMavenProject)
+		# Pack the sources
+		add_custom_command(
+			OUTPUT
+				"${myBuildDir}/${mySrcJarFile}"
+			COMMAND "${JAVA_ARCHIVE}"
+				"cf" "${myBuildDir}/${mySrcJarFile}"
+				"-C" "${mySourceDir}" "${myJavaPkgFirstPart}"
+			DEPENDS
+				${mySourcesDeps}
+			WORKING_DIRECTORY
+				"${mySourceDir}"
+			COMMENT
+				"  ${myTarget}: Creating sources archive ${mySrcJarFile}" VERBATIM
+			)
 
 		# Install the data files
 		install(DIRECTORY "${myDir}/data/"                 DESTINATION ${myInstDataDir})
@@ -399,7 +354,6 @@ if    (BUILD_${myName}_AIINTERFACE)
 	SetGlobal(CLASSPATH_${myName}_AIINTERFACE        "${myJavaLibs}${PATH_DELIM_H}${myBuildDir}/${myBinJarFile}")
 	SetGlobal(JAVA_SRC_DIR_${myName}_AIINTERFACE     "${myJavaSourceDir}")
 	SetGlobal(JAVA_GEN_SRC_DIR_${myName}_AIINTERFACE "${myJavaGeneratedSourceDir}")
-	SetGlobal(${myName}_AIINTERFACE_TARGET_MVN_INSTALL "${myMavenInstallTarget}")
 
 
 	# Generate sources
@@ -725,80 +679,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		)
 	set_source_files_properties("${myBuildDir}/pom-generated.xml" PROPERTIES GENERATED TRUE)
 
-	Find_Package(Maven)
-	if    (MAVEN_FOUND)
-		# This is required because the local Maven install does not create a
-		# file (whichs path we could know), and thus we would not be able to
-		# create a nice dependency chain without this.
-		set(myMavenDir_global                   "${CMAKE_SOURCE_DIR}/rts/build/maven")
-		set(myMavenDir_globalCommon             "${myMavenDir_global}/support/common")
-		set(myMavenInstallStubFile_common       "${myBuildDir}/mavenInstallStub_common.txt")
-		set(myMavenInstallStubFile_commonSpring "${myBuildDir}/mavenInstallStub_commonSpring.txt")
-		set(myMavenInstallStubFile_interface    "${myBuildDir}/mavenInstallStub_interface.txt")
-		set(myMavenInstallStubFiles
-				"${myMavenInstallStubFile_common}"
-				"${myMavenInstallStubFile_commonSpring}"
-				"${myMavenInstallStubFile_interface}")
-		set_source_files_properties(${myMavenInstallStubFiles} PROPERTIES GENERATED TRUE)
-		add_custom_command(
-			OUTPUT
-				"${myMavenInstallStubFile_common}"
-			COMMAND "${MVN_BIN}" ${MVN_ATTRIBUTES_DEFAULT} "install"
-			COMMAND "${CMAKE_COMMAND}"
-				"-E" "touch" "${myMavenInstallStubFile_common}"
-			DEPENDS
-				"${myMavenDir_globalCommon}/pom.xml"
-			WORKING_DIRECTORY
-				"${myMavenDir_globalCommon}"
-			COMMENT
-				"  ${myTarget}: Installing to local maven repository (common)" VERBATIM
-			)
-		add_custom_command(
-			OUTPUT
-				"${myMavenInstallStubFile_commonSpring}"
-			COMMAND "${MVN_BIN}" ${MVN_ATTRIBUTES_DEFAULT} "install"
-			COMMAND "${CMAKE_COMMAND}"
-				"-E" "touch" "${myMavenInstallStubFile_commonSpring}"
-			DEPENDS
-				"${myMavenInstallStubFile_common}"
-				"${myMavenDir_globalCommon}/spring/pom.xml"
-			WORKING_DIRECTORY
-				"${myMavenDir_globalCommon}/spring"
-			COMMENT
-				"  ${myTarget}: Installing to local maven repository (common-spring)" VERBATIM
-			)
-		add_custom_command(
-			OUTPUT
-				"${myMavenInstallStubFile_interface}"
-			COMMAND "${MVN_BIN}"
-				${MVN_ATTRIBUTES_DEFAULT}
-				"-DpomFile=${myBuildDir}/pom-generated.xml"
-				"-Dfile=${myBuildDir}/${myBinJarFile}"
-				"-Dsources=${myBuildDir}/${mySrcJarFile}"
-				"install:install-file"
-			COMMAND "${CMAKE_COMMAND}"
-				"-E" "touch" "${myMavenInstallStubFile_interface}"
-			DEPENDS
-				"${myMavenInstallStubFile_commonSpring}"
-				"${myBuildDir}/pom-generated.xml"
-				"${myBuildDir}/${myBinJarFile}"
-				"${myBuildDir}/${mySrcJarFile}"
-			WORKING_DIRECTORY
-				"${myDir}"
-			COMMENT
-				"  ${myTarget}: Installing to local maven repository" VERBATIM
-			)
-		add_custom_target(${myMavenInstallTarget}
-			DEPENDS
-				"${myMavenInstallStubFile_common}"
-				"${myMavenInstallStubFile_commonSpring}"
-				"${myMavenInstallStubFile_interface}"
-			)
-		add_dependencies(${myMavenInstallTarget} ${myJavaTarget})
-		add_dependencies(${myTarget} ${myMavenInstallTarget})
-	else  (MAVEN_FOUND)
-		add_dependencies(${myTarget} ${myJavaTarget})
-	endif (MAVEN_FOUND)
+	add_dependencies(${myTarget} ${myJavaTarget})
 
 	# Install the native library
 	install(TARGETS   ${myNativeTarget} DESTINATION ${myInstLibsDir})
