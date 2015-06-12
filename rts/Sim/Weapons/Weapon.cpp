@@ -582,7 +582,6 @@ bool CWeapon::AllowWeaponAutoTarget() const
 		return checkAllowed;
 	}
 
-	if (weaponDef->noAutoTarget)                 { return false; }
 	if (owner->fireState < FIRESTATE_FIREATWILL) { return false; }
 	if (slavedTo != NULL) { return false; }
 
@@ -624,12 +623,16 @@ bool CWeapon::AllowWeaponAutoTarget() const
 	return false;
 }
 
-void CWeapon::AutoTarget()
+bool CWeapon::AutoTarget()
 {
+	if (noAutoTarget || !AllowWeaponAutoTarget()) {
+		return false;
+	}
+	
 	// 1. return fire at our last attacker if allowed
 	if ((owner->lastAttacker != nullptr) && ((owner->lastAttackFrame + 200) <= gs->frameNum)) {
 		if (Attack(SWeaponTarget(owner->lastAttacker)))
-			return;
+			return false;
 	}
 
 	// 2. search for other in range targets
@@ -683,7 +686,9 @@ void CWeapon::AutoTarget()
 	if (goodTargetUnit) {
 		// pick our new target
 		SetAttackTarget(SWeaponTarget(goodTargetUnit));
+		return true;
 	}
+	return false;
 }
 
 
@@ -719,9 +724,7 @@ void CWeapon::SlowUpdate()
 	}
 
 	// AutoTarget: Find new/better Target
-	if (!noAutoTarget && AllowWeaponAutoTarget()) {
-		AutoTarget();
-	}
+	AutoTarget();
 }
 
 

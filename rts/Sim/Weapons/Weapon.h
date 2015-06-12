@@ -67,7 +67,7 @@ public:
 	virtual float GetRange2D(const float yDiff) const;
 	virtual void UpdateRange(const float val) { range = val; }
 
-	void AutoTarget();
+	bool AutoTarget();
 	void AimReady(const int value);
 	void Fire(const bool scriptCall);
 
