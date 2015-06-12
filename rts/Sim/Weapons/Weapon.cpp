@@ -581,7 +581,10 @@ bool CWeapon::AllowWeaponAutoTarget() const
 	if (checkAllowed >= 0) {
 		return checkAllowed;
 	}
-
+	
+	//FIXME these need to be merged
+	if (weaponDef->noAutoTarget || noAutoTarget) { return false; }
+	
 	if (owner->fireState < FIRESTATE_FIREATWILL) { return false; }
 	if (slavedTo != NULL) { return false; }
 
@@ -625,7 +628,7 @@ bool CWeapon::AllowWeaponAutoTarget() const
 
 bool CWeapon::AutoTarget()
 {
-	if (noAutoTarget || !AllowWeaponAutoTarget()) {
+	if (!AllowWeaponAutoTarget()) {
 		return false;
 	}
 	
