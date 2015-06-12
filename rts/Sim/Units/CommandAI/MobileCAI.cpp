@@ -1093,11 +1093,28 @@ bool CMobileCAI::GenerateAttackCmd()
 		if (newAttackTargetId < 0 &&
 		    owner->fireState >= FIRESTATE_FIREATWILL && (gs->frameNum >= lastIdleCheck + 10)
 		) {
-			const float searchRadius = owner->maxRange + 150.0f * owner->moveState * owner->moveState;
-			const CUnit* enemy = CGameHelper::GetClosestValidTarget(owner->pos, searchRadius, owner->allyteam, this);
-
-			if (enemy != NULL) {
-				newAttackTargetId = enemy->id;
+			//Try getting target from weapons
+			for (CWeapon* w: owner->weapons) {
+				if (!w->HaveTarget()) {
+					w->AutoTarget();
+				}
+				if (w->HaveTarget()) {
+					const auto t = w->GetCurrentTarget();
+					if (t.type == Target_Unit && IsValidTarget(t.unit)) {
+						newAttackTargetId = t.unit->id;
+						break;
+					}
+				}
+			}
+			
+			//Get target from wherever
+			if (newAttackTargetId < 0) {
+				const float searchRadius = owner->maxRange + 150.0f * owner->moveState * owner->moveState;
+				const CUnit* enemy = CGameHelper::GetClosestValidTarget(owner->pos, searchRadius, owner->allyteam, this);
+	
+				if (enemy != NULL) {
+					newAttackTargetId = enemy->id;
+				}
 			}
 		}
 	}
