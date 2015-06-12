@@ -1022,6 +1022,7 @@ void CMobileCAI::FinishCommand()
 	if (!((commandQue.front()).options & INTERNAL_ORDER)) {
 		lastUserGoal = owner->pos;
 	}
+	tempOrder = false;
 	StopSlowGuard();
 	CCommandAI::FinishCommand();
 }
