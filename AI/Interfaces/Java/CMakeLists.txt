@@ -19,22 +19,9 @@
 # includes rts/build/cmake/UtilJava.cmake
 INCLUDE(UtilJava)
 
-macro    (ConfigureJavaSkirmishAI wrapperNames)
-	ConfigureCMakeOrMavenJavaSkirmishAI(FALSE "${wrapperNames}")
-endmacro (ConfigureJavaSkirmishAI requireMaven wrapperNames)
-
-macro    (ConfigureMavenJavaSkirmishAI wrapperNames)
-	ConfigureCMakeOrMavenJavaSkirmishAI(TRUE  "${wrapperNames}")
-endmacro (ConfigureMavenJavaSkirmishAI wrapperNames)
-
 # Java Skirmish AI configuration macro.
 # This will be called from Java AIs at AI/Skirmish/*/CMakeLists.txt.
-# If Maven is installed and AI/Skirmish/*/pom.xml exists,
-# this macro will try to build the AI through Maven.
-# If requireMaven is TRUE, we will only attemp to build the
-# AI through Maven, and disable building of the AI if Maven
-# is not available.
-macro    (ConfigureCMakeOrMavenJavaSkirmishAI requireMaven wrapperNames)
+macro    (ConfigureJavaSkirmishAI wrapperNames)
 	# Assemble meta data
 	set(myDir            "${CMAKE_CURRENT_SOURCE_DIR}")
 	GetLastPathPart(dirName ${myDir})
@@ -54,13 +41,6 @@ macro    (ConfigureCMakeOrMavenJavaSkirmishAI requireMaven wrapperNames)
 	Set(BUILD_THIS_SKIRMISHAI FALSE)
 	if    (BUILD_Java_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 		set(BUILD_THIS_SKIRMISHAI TRUE)
-		If    (requireMaven)
-			Find_Package(Maven)
-			If    (NOT MAVEN_FOUND)
-				Set(BUILD_THIS_SKIRMISHAI FALSE)
-				Message(WARNING "${myName} Skirmish AI requires Maven to build, but Maven 2 (or later) was not found.")
-			EndIf (NOT MAVEN_FOUND)
-		EndIf (requireMaven)
 	endif (BUILD_Java_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 	If    (NOT BUILD_THIS_SKIRMISHAI)
 		Message("warning: ${myName} Skirmish AI will not be built!")
@@ -71,9 +51,6 @@ macro    (ConfigureCMakeOrMavenJavaSkirmishAI requireMaven wrapperNames)
 		file(MAKE_DIRECTORY "${myBuildDir}/jlib")
 
 		set(configString "default")
-		if    (configureMavenProject)
-			set(configString "Maven")
-		endif (configureMavenProject)
 		SkirmishAIMessage(STATUS "Found Skirmish AI: ${myName} ${myVersion} (config: ${configString})")
 
 		# Assemble project generated targets (and their libraries) we depend on
@@ -223,20 +200,18 @@ macro    (ConfigureCMakeOrMavenJavaSkirmishAI requireMaven wrapperNames)
 			install(DIRECTORY "${myDir}/src/main/config/"  DESTINATION ${myInstDataDir}/config)
 		endif (EXISTS "${myDir}/src/main/config")
 
-		if    (NOT configureMavenProject)
-			# Install jars of wrappers
-			foreach    (wrapperName ${wrapperNames})
-				# Install the wrappers main jar
-				install(FILES "${${wrapperName}_AIWRAPPER_JAR_BIN}" DESTINATION ${myInstDataDir}/jlib)
-				set(wrapperJLibDir "${CMAKE_SOURCE_DIR}/AI/Wrappers/${wrapperName}/jlib")
-				# Install the wrappers java libs, if there are any
-				if    (EXISTS ${wrapperJLibDir})
-					install(DIRECTORY "${wrapperJLibDir}/" DESTINATION ${myInstDataDir}/jlib)
-				endif (EXISTS ${wrapperJLibDir})
-			endforeach (wrapperName)
-		endif (NOT configureMavenProject)
+		# Install jars of wrappers
+		foreach    (wrapperName ${wrapperNames})
+			# Install the wrappers main jar
+			install(FILES "${${wrapperName}_AIWRAPPER_JAR_BIN}" DESTINATION ${myInstDataDir}/jlib)
+			set(wrapperJLibDir "${CMAKE_SOURCE_DIR}/AI/Wrappers/${wrapperName}/jlib")
+			# Install the wrappers java libs, if there are any
+			if    (EXISTS ${wrapperJLibDir})
+				install(DIRECTORY "${wrapperJLibDir}/" DESTINATION ${myInstDataDir}/jlib)
+			endif (EXISTS ${wrapperJLibDir})
+		endforeach (wrapperName)
 	endif (BUILD_THIS_SKIRMISHAI)
-endmacro (ConfigureCMakeOrMavenJavaSkirmishAI requireMaven wrapperNames)
+endmacro (ConfigureJavaSkirmishAI wrapperNames)
 
 
 ### END: MACROS_AND_FUNCTIONS
@@ -311,7 +286,6 @@ if    (BUILD_${myName}_AIINTERFACE)
 	set(myGenTarget    "${myTarget}-generateSources")
 	set(myNativeTarget "${myTarget}-native")
 	set(myJavaTarget   "${myTarget}-java")
-	set(myMavenInstallTarget "${myTarget}-mavenInstall")
 	set(myInstLibsDir ${AI_INTERFACES_LIBS}/${myName}/${myVersion})
 	set(myInstDataDir ${AI_INTERFACES_DATA}/${myName}/${myVersion})
 	set(myJavaSourceDirRel   "${mySourceDirRel}/java")

@@ -39,7 +39,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 	set(myGenTarget  "${myTarget}-generateSources")
 	set(myJavaTarget "${myTarget}-java")
 	set(myPomTarget  "${myTarget}-pom")
-	set(myMavenInstallTarget "${myTarget}-mavenInstall")
 	set(mySourceDirRel     "src/main/java")
 	MakeAbsolute(mySourceDir "${myDir}" "${mySourceDirRel}")
 
