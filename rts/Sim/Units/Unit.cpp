@@ -1612,8 +1612,10 @@ bool CUnit::AttackUnit(CUnit* targetUnit, bool isUserTarget, bool wantManualFire
 		return false;
 	}
 
-	if (targetUnit == nullptr)
+	if (targetUnit == nullptr) {
+		DropCurrentAttackTarget();
 		return false;
+	}
 	
 	SWeaponTarget newTarget = SWeaponTarget(targetUnit, isUserTarget);
 	newTarget.isManualFire = wantManualFire || fpsMode;
