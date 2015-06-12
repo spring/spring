@@ -1091,10 +1091,7 @@ bool CMobileCAI::GenerateAttackCmd()
 		) {
 			//Try getting target from weapons
 			for (CWeapon* w: owner->weapons) {
-				if (!w->HaveTarget()) {
-					w->AutoTarget();
-				}
-				if (w->HaveTarget()) {
+				if (w->HaveTarget() || w->AutoTarget()) {
 					const auto t = w->GetCurrentTarget();
 					if (t.type == Target_Unit && IsValidTarget(t.unit)) {
 						newAttackTargetId = t.unit->id;
