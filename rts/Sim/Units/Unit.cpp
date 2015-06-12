@@ -1612,14 +1612,17 @@ bool CUnit::AttackUnit(CUnit* targetUnit, bool isUserTarget, bool wantManualFire
 		return false;
 	}
 
-	DropCurrentAttackTarget();
-
 	if (targetUnit == nullptr)
 		return false;
-
-	curTarget = SWeaponTarget(targetUnit, isUserTarget);
-	curTarget.isManualFire = wantManualFire || fpsMode;
-	AddDeathDependence(targetUnit, DEPENDENCE_TARGET);
+	
+	SWeaponTarget newTarget = SWeaponTarget(targetUnit, isUserTarget);
+	newTarget.isManualFire = wantManualFire || fpsMode;
+	
+	if (curTarget != newTarget) {
+		DropCurrentAttackTarget();
+		curTarget = newTarget;
+		AddDeathDependence(targetUnit, DEPENDENCE_TARGET);
+	}
 
 	bool ret = false;
 	for (CWeapon* w: weapons) {
@@ -1630,10 +1633,13 @@ bool CUnit::AttackUnit(CUnit* targetUnit, bool isUserTarget, bool wantManualFire
 
 bool CUnit::AttackGround(const float3& pos, bool isUserTarget, bool wantManualFire, bool fpsMode)
 {
-	DropCurrentAttackTarget();
-
-	curTarget = SWeaponTarget(pos, isUserTarget);
-	curTarget.isManualFire = wantManualFire || fpsMode;
+	SWeaponTarget newTarget = SWeaponTarget(pos, isUserTarget);
+	newTarget.isManualFire = wantManualFire || fpsMode;
+	
+	if (curTarget != newTarget) {
+		DropCurrentAttackTarget();
+		curTarget = newTarget;
+	}
 
 	bool ret = false;
 	for (CWeapon* w: weapons) {
