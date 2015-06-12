@@ -935,7 +935,6 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 	hasRetParam = 0;
 	for (prm = 1; prm <= paramTypeNames_size; prm++) {
 		paNa = extractParamName(paramTypeNames[prm]);
-		paTy = extractParamType(paramTypeNames[prm]);
 		if (isRetParamName(paNa)) {
 			if (retType == "void") {
 				paTy = extractParamType(paramTypeNames[prm]);
