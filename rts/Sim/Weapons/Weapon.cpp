@@ -292,6 +292,7 @@ void CWeapon::UpdateAim()
 	UpdateWantedDir();
 
 	// Check fire angle constraints
+	//TODO write a per weapontype CheckAim()?
 	const float3 worldTargetDir = (currentTargetPos - owner->pos).SafeNormalize();
 	const float3 worldMainDir = owner->GetObjectSpaceVec(mainDir);
 	const bool targetAngleConstraint = CheckTargetAngleConstraint(worldTargetDir, worldMainDir);
@@ -584,9 +585,9 @@ bool CWeapon::AllowWeaponAutoTarget() const
 	
 	//FIXME these need to be merged
 	if (weaponDef->noAutoTarget || noAutoTarget) { return false; }
-	
 	if (owner->fireState < FIRESTATE_FIREATWILL) { return false; }
-	if (slavedTo != NULL) { return false; }
+	if (slavedTo != NULL)                        { return false; }
+	if (weaponDef->interceptor)                  { return false; }
 
 	// if CAI has an auto-generated attack order, do not interfere
 	if (!owner->commandAI->CanWeaponAutoTarget(this)) { return false; }
@@ -631,20 +632,14 @@ bool CWeapon::AutoTarget()
 	if (!AllowWeaponAutoTarget()) {
 		return false;
 	}
-	
-	// 1. return fire at our last attacker if allowed
-	if ((owner->lastAttacker != nullptr) && ((owner->lastAttackFrame + 200) <= gs->frameNum)) {
-		if (Attack(SWeaponTarget(owner->lastAttacker)))
-			return false;
-	}
 
-	// 2. search for other in range targets
+	// search for other in range targets
 	lastTargetRetry = gs->frameNum;
 
 	std::multimap<float, CUnit*> targets;
 	std::multimap<float, CUnit*>::const_iterator targetsIt;
 
-	const CUnit* avoidUnit = (avoidTarget && currentTarget.type == Target_Unit) ? currentTarget.unit : nullptr;
+	const CUnit* avoidUnit = ( avoidTarget && currentTarget.type == Target_Unit) ? currentTarget.unit : nullptr;
 	const CUnit* ignorUnit = (!avoidTarget && currentTarget.type == Target_Unit) ? currentTarget.unit : nullptr;
 
 	// NOTE:
@@ -745,13 +740,8 @@ void CWeapon::HoldIfTargetInvalid()
 
 void CWeapon::DependentDied(CObject* o)
 {
-	if (o == currentTarget.unit) {
-		DropCurrentTarget();
-	}
-
-	if (o == currentTarget.intercept) {
-		DropCurrentTarget();
-	}
+	if (o == currentTarget.unit)      { DropCurrentTarget(); }
+	if (o == currentTarget.intercept) { DropCurrentTarget(); }
 
 	// NOTE: DependentDied is called from ~CObject-->Detach, object is just barely valid
 	if (weaponDef->interceptor || weaponDef->isShield) {

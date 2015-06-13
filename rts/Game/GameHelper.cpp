@@ -632,10 +632,11 @@ static int targetTempNum = 2;
 
 void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoidUnit, std::multimap<float, CUnit*>& targets)
 {
-	const CUnit* attacker = weapon->owner;
+	const CUnit* owner    = weapon->owner;
 	const float radius    = weapon->range;
-	const float3& pos     = attacker->pos;
+	const float3& pos     = owner->pos;
 	const float aHeight   = weapon->aimFromPos.y;
+	const CUnit* lastAttacker = ((owner->lastAttackFrame + 200) <= gs->frameNum) ? owner->lastAttacker : nullptr;
 
 	const WeaponDef* weaponDef = weapon->weaponDef;
 	const float heightMod = weaponDef->heightmod;
@@ -648,7 +649,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 	const int tempNum = targetTempNum++;
 
 	for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
-		if (teamHandler->Ally(attacker->allyteam, t)) {
+		if (teamHandler->Ally(owner->allyteam, t)) {
 			continue;
 		}
 		for (const int qi: quads) {
@@ -671,7 +672,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 				}
 
 				float3 targPos;
-				const unsigned short targetLOSState = targetUnit->losStatus[attacker->allyteam];
+				const unsigned short targetLOSState = targetUnit->losStatus[owner->allyteam];
 
 				if (targetLOSState & LOS_INLOS) {
 					targPos = targetUnit->aimPos;
@@ -717,9 +718,12 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 					if (targetUnit->IsCrashing()) {
 						targetPriority *= 1000.0f;
 					}
+					if (targetUnit == lastAttacker) {
+						targetPriority *= 0.5f;
+					}
 				}
 
-				if (!eventHandler.AllowWeaponTarget(attacker->id, targetUnit->id, weapon->weaponNum, weaponDef->id, &targetPriority)) {
+				if (!eventHandler.AllowWeaponTarget(owner->id, targetUnit->id, weapon->weaponNum, weaponDef->id, &targetPriority)) {
 					continue;
 				}
 
