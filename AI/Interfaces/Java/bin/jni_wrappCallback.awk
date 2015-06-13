@@ -215,7 +215,7 @@ function printNativeJNI() {
 					cPaNa = c_paramNames[p];
 					c_paramNames[p] = cPaNa "_native";
 					sub(" " jni_paramNames[p], " " c_paramNames[p], paramListNoTypes);
-					print("\t" "char " c_paramNames[p] "[10240];") >> outFile_nc;
+					print("\t" "char " c_paramNames[p] "[MAX_RESPONSE_SIZE];") >> outFile_nc;
 					retParamConversion = "\t" "jclass clazz = (*__env)->GetObjectClass(__env, " cPaNa ");" "\n";
 					retParamConversion = retParamConversion "\t" "jmethodID mid = (*__env)->GetMethodID(__env, clazz, \"append\", \"(Ljava/lang/String;)Ljava/lang/StringBuffer;\");" "\n"
 					retParamConversion = retParamConversion "\t" "jstring " cPaNa "_jStr = (*__env)->NewStringUTF(__env, " c_paramNames[p] ");" "\n";

@@ -335,7 +335,7 @@ function convertCToJNIType(cType__common, cName) {
 	jniType__common = trim(jniType__common);
 
 	isComplex__common = 0;
-	if (match(cName, /_outData$/)) {
+	if (match(cName, /^ret_/)) {
 		isComplex__common += sub(/^char\*/, "jobject",  jniType__common);
 	} else {
 		isComplex__common += sub(/^char\*/, "jstring",  jniType__common);
