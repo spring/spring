@@ -164,63 +164,54 @@ static void erase_first(T& cont, const K key)
 }
 
 
-void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool synced) {
+static void MAPPOS_SANITY_CHECK(const float3 v)
+{
+	v.AssertNaNs();
+	assert(v.x >= -(float3::maxxpos * 16.0f));
+	assert(v.x <=  (float3::maxxpos * 16.0f));
+	assert(v.z >= -(float3::maxzpos * 16.0f));
+	assert(v.z <=  (float3::maxzpos * 16.0f));
+	assert(v.y >= -MAX_PROJECTILE_HEIGHT);
+	assert(v.y <=  MAX_PROJECTILE_HEIGHT);
+}
+
+
+void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool synced)
+{
 	ProjectileContainer::iterator pci = pc.begin();
-
-	#define MAPPOS_SANITY_CHECK(v)                 \
-		assert(v.x >= -(float3::maxxpos * 16.0f)); \
-		assert(v.x <=  (float3::maxxpos * 16.0f)); \
-		assert(v.z >= -(float3::maxzpos * 16.0f)); \
-		assert(v.z <=  (float3::maxzpos * 16.0f)); \
-		assert(v.y >= -MAX_PROJECTILE_HEIGHT);     \
-		assert(v.y <=  MAX_PROJECTILE_HEIGHT);
-	#define PROJECTILE_SANITY_CHECK(p) \
-		p->pos.AssertNaNs();   \
-		MAPPOS_SANITY_CHECK(p->pos);
-
 	while (pci != pc.end()) {
 		CProjectile* p = *pci;
 		assert(p->synced == synced);
 		assert(p->synced == !!(p->GetClass()->binder->flags & creg::CF_Synced));
 
 		if (p->deleteMe) {
-			if (synced) {
-				auto pIt = syncedProjectileIDs.find(p->id);
-				CProjectile* p = pIt->second;
-
+			if (synced) { //FIXME move outside of loop!
 				eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
-
 				erase_first(syncedRenderProjectileIDs, p->id);
-				syncedProjectileIDs.erase(pIt);
-
+				erase_first(syncedProjectileIDs, p->id);
 				freeSyncedIDs.push_back(p->id);
 
-				// push_back this projectile for deletion
 				pci = pc.erase(pci);
 				delete p;
 			} else {
 #if UNSYNCED_PROJ_NOEVENT
 				eventHandler.UnsyncedProjectileDestroyed(p);
 #else
-				auto pIt = unsyncedProjectileIDs.find(p->id);
-				CProjectile* p = pIt->second;
-
 				eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
 				erase_first(unsyncedRenderProjectileIDs, p->id);
-				unsyncedProjectileIDs.erase(pIt);
-
+				erase_first(unsyncedProjectileIDs, p->id);
 				freeUnsyncedIDs.push_back(p->id);
 #endif
 				pci = pc.erase(pci);
 				delete p;
 			}
 		} else {
-			PROJECTILE_SANITY_CHECK(p);
+			MAPPOS_SANITY_CHECK(p->pos);
 
 			p->Update();
 			quadField->MovedProjectile(p);
 
-			PROJECTILE_SANITY_CHECK(p);
+			MAPPOS_SANITY_CHECK(p->pos);
 
 			++pci;
 		}

@@ -144,12 +144,13 @@ void CSmokeTrailProjectile::Draw()
 			const float t = (age + 4) * invLifeTime;
 			const float3 dif3 = (midpos - camera->GetPos()).ANormalize();
 			const float3 odir3 = (dif3.cross(middir)).ANormalize();
-			float size3 = 0.2f + t * orgSize;
+			float size3 = (0.2f + t) * orgSize;
 
-			unsigned char col3[4];
 			float a2 = (1.f - t) * 255.f;
 			a2 *= 0.7f + math::fabs(dif3.dot(middir));
 			alpha = Clamp(a2, 0.f, 255.f);
+
+			unsigned char col3[4];
 			col3[0] = (unsigned char) (color * alpha);
 			col3[1] = (unsigned char) (color * alpha);
 			col3[2] = (unsigned char) (color * alpha);
@@ -179,8 +180,8 @@ void CSmokeTrailProjectile::Draw()
 		for (int a = 0; a < 8; ++a) {
 			const float t = (age + a) * invLifeTime;
 
-			const float a1 = 1.f - t;
-			const float alpha = Clamp(a1 * 255, 0.f, 255.f);
+			const float a1 = (1.f - t) * 255.f;
+			const float alpha = Clamp(a1, 0.f, 255.f);
 			const float size = (0.2f + t) * orgSize * 1.2f;
 
 			col[0] = (unsigned char) (color * alpha);
