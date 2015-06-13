@@ -520,16 +520,6 @@ void CEventHandler::Update()
 
 void CEventHandler::DeleteSyncedUnits() { eventBatchHandler->DeleteSyncedUnits(); }
 
-inline void ExecuteAllCallsFromSynced() { } //FIXME delete
-
-void CEventHandler::DeleteSyncedProjectiles() {
-	ExecuteAllCallsFromSynced();
-}
-
-void CEventHandler::DeleteSyncedObjects() {
-	ExecuteAllCallsFromSynced();
-}
-
 
 
 void CEventHandler::SunChanged(const float3& sunDir)

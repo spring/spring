@@ -42,8 +42,6 @@ class CEventHandler
 	public: // EventBatchHandler
 		void DeleteSyncedUnits();
 
-		void DeleteSyncedProjectiles();
-		void DeleteSyncedObjects();
 	public:
 		/**
 		 * @name Synced_events

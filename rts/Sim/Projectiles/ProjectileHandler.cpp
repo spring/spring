@@ -40,17 +40,10 @@ CONFIG(int, MaxNanoParticles).defaultValue(2000).headlessValue(1).minimumValue(1
 CProjectileHandler* projectileHandler = NULL;
 
 
-CR_BIND_TEMPLATE(ProjectileContainer, )
-CR_REG_METADATA(ProjectileContainer, (
-	CR_MEMBER(cont),
-	CR_MEMBER(del),
-	CR_POSTLOAD(PostLoad)
-))
 CR_BIND_TEMPLATE(GroundFlashContainer, )
 CR_REG_METADATA(GroundFlashContainer, (
 	CR_MEMBER(cont),
-	CR_MEMBER(delObj),
-	CR_POSTLOAD(PostLoad)
+	CR_MEMBER(delObj)
 ))
 
 CR_BIND(CProjectileHandler, )
@@ -76,8 +69,7 @@ CR_REG_METADATA(CProjectileHandler, (
 	CR_MEMBER(syncedProjectileIDs),
 	CR_MEMBER(unsyncedProjectileIDs),
 
-	CR_SERIALIZER(Serialize),
-	CR_POSTLOAD(PostLoad)
+	CR_SERIALIZER(Serialize)
 ))
 
 
@@ -105,8 +97,13 @@ CProjectileHandler::CProjectileHandler()
 
 CProjectileHandler::~CProjectileHandler()
 {
-	syncedProjectiles.detach_all();
+	for (CProjectile* p: syncedProjectiles) {
+		delete p;
+	}
 	syncedProjectiles.clear(); // synced first, to avoid callback crashes
+	for (CProjectile* p: unsyncedProjectiles) {
+		delete p;
+	}
 	unsyncedProjectiles.clear();
 
 	freeSyncedIDs.clear();
@@ -125,15 +122,15 @@ void CProjectileHandler::Serialize(creg::ISerializer* s)
 		int usize = int(unsyncedProjectiles.size());
 
 		s->SerializeInt(&ssize);
-		for (ProjectileContainer::iterator it = syncedProjectiles.begin(); it != syncedProjectiles.end(); ++it) {
-			void** ptr = (void**) &*it;
-			s->SerializeObjectPtr(ptr, (*it)->GetClass());
+		for (CProjectile* p: syncedProjectiles) {
+			void** ptr = (void**) &p;
+			s->SerializeObjectPtr(ptr, p->GetClass());
 		}
 
 		s->SerializeInt(&usize);
-		for (ProjectileContainer::iterator it = unsyncedProjectiles.begin(); it != unsyncedProjectiles.end(); ++it) {
-			void** ptr = (void**) &*it;
-			s->SerializeObjectPtr(ptr, (*it)->GetClass());
+		for (CProjectile* p: unsyncedProjectiles) {
+			void** ptr = (void**) &p;
+			s->SerializeObjectPtr(ptr, p->GetClass());
 		}
 	} else {
 		int ssize, usize;
@@ -141,8 +138,8 @@ void CProjectileHandler::Serialize(creg::ISerializer* s)
 		s->SerializeInt(&ssize);
 		syncedProjectiles.resize(ssize);
 
-		for (ProjectileContainer::iterator it = syncedProjectiles.begin(); it != syncedProjectiles.end(); ++it) {
-			void** ptr = (void**) &*it;
+		for (CProjectile* p: syncedProjectiles) {
+			void** ptr = (void**) &p;
 			s->SerializeObjectPtr(ptr, 0/*FIXME*/);
 		}
 
@@ -150,16 +147,11 @@ void CProjectileHandler::Serialize(creg::ISerializer* s)
 		s->SerializeInt(&usize);
 		unsyncedProjectiles.resize(usize);
 
-		for (ProjectileContainer::iterator it = unsyncedProjectiles.begin(); it != unsyncedProjectiles.end(); ++it) {
-			void** ptr = (void**) &*it;
+		for (CProjectile* p: unsyncedProjectiles) {
+			void** ptr = (void**) &p;
 			s->SerializeObjectPtr(ptr, 0/*FIXME*/);
 		}
 	}
-}
-
-void CProjectileHandler::PostLoad()
-{
-	//TODO
 }
 
 
@@ -204,7 +196,8 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 				freeSyncedIDs.push_back(p->id);
 
 				// push_back this projectile for deletion
-				pci = pc.erase_delete_synced(pci);
+				pci = pc.erase(pci);
+				delete p;
 			} else {
 #if UNSYNCED_PROJ_NOEVENT
 				eventHandler.UnsyncedProjectileDestroyed(p);
@@ -218,7 +211,8 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 
 				freeUnsyncedIDs.push_back(p->id);
 #endif
-				pci = pc.erase_detach(pci);
+				pci = pc.erase(pci);
+				delete p;
 			}
 		} else {
 			PROJECTILE_SANITY_CHECK(p);
@@ -244,17 +238,6 @@ void CProjectileHandler::Update()
 
 		UpdateProjectileContainer(syncedProjectiles, true);
 		UpdateProjectileContainer(unsyncedProjectiles, false);
-
-
-		{
-			if (syncedProjectiles.can_delete_synced()) {
-				eventHandler.DeleteSyncedProjectiles();
-				//! delete all projectiles that were
-				//! queued (push_back'ed) for deletion
-				syncedProjectiles.detach_erased_synced();
-			}
-		}
-
 
 		GroundFlashContainer::iterator gfi = groundFlashes.begin();
 		while (gfi != groundFlashes.end()) {
@@ -314,7 +297,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 	int newUsedID = 0;
 
 	if (p->synced) {
-		syncedProjectiles.push(p);
+		syncedProjectiles.push_back(p);
 		freeIDs = &freeSyncedIDs;
 		proIDs = &syncedProjectileIDs;
 		newProIDs = &syncedRenderProjectileIDs;
@@ -323,7 +306,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 		ASSERT_SYNCED(*maxUsedID);
 		ASSERT_SYNCED(freeIDs->size());
 	} else {
-		unsyncedProjectiles.push(p);
+		unsyncedProjectiles.push_back(p);
 #if UNSYNCED_PROJ_NOEVENT
 		eventHandler.UnsyncedProjectileCreated(p);
 		return;
@@ -646,10 +629,10 @@ float CProjectileHandler::GetParticleSaturation() const
 int CProjectileHandler::GetCurrentParticles() const
 {
 	int partCount = 0;
-	for (const CProjectile* p: syncedProjectiles.cont) {
+	for (const CProjectile* p: syncedProjectiles) {
 		partCount += p->GetProjectilesCount();
 	}
-	for (const CProjectile* p: unsyncedProjectiles.cont) {
+	for (const CProjectile* p: unsyncedProjectiles) {
 		partCount += p->GetProjectilesCount();
 	}
 	partCount += flyingPieces3DO.size();

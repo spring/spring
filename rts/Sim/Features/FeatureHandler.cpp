@@ -452,10 +452,6 @@ void CFeatureHandler::Update()
 
 	{
 		if (!toBeRemoved.empty()) {
-
-			eventHandler.DeleteSyncedObjects();
-
-
 			while (!toBeRemoved.empty()) {
 				CFeature* feature = GetFeature(toBeRemoved.back());
 				toBeRemoved.pop_back();

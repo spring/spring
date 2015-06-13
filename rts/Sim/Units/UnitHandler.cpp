@@ -201,13 +201,10 @@ void CUnitHandler::Update()
 
 	{
 		if (!unitsToBeRemoved.empty()) {
+			eventHandler.DeleteSyncedUnits();
 			while (!unitsToBeRemoved.empty()) {
-				eventHandler.DeleteSyncedObjects(); // the unit destructor may invoke eventHandler, so we need to call these for every unit to clear invaild references from the batching systems
-				eventHandler.DeleteSyncedUnits();
-
 				CUnit* delUnit = unitsToBeRemoved.back();
 				unitsToBeRemoved.pop_back();
-
 				DeleteUnitNow(delUnit);
 			}
 		}

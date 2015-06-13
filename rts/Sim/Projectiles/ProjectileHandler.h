@@ -30,7 +30,7 @@ struct SS3OVertex;
 
 typedef std::map<int, CProjectile*> ProjectileMap; // <id, proj*>
 
-typedef ThreadListSim<std::list<CProjectile*>, CProjectile*, ProjectileDetacher> ProjectileContainer;
+typedef std::list<CProjectile*> ProjectileContainer;
 typedef ThreadListSimRender<std::list<CGroundFlash*>, std::set<CGroundFlash*>, CGroundFlash*> GroundFlashContainer;
 typedef ThreadListSimRender<std::set<FlyingPiece*, FlyingPieceComparator>, void, FlyingPiece*> FlyingPieceContainer;
 
@@ -43,7 +43,6 @@ public:
 	CProjectileHandler();
 	~CProjectileHandler();
 	void Serialize(creg::ISerializer* s);
-	void PostLoad();
 
 	CProjectile* GetProjectileBySyncedID(int id);
 	CProjectile* GetProjectileByUnsyncedID(int id);
