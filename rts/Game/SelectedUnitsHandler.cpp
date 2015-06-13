@@ -521,7 +521,7 @@ void CSelectedUnitsHandler::Draw()
 	color2.g = 255 - color2.g;
 	color2.b = 255 - color2.b;
 
-	if (cmdColors.unitBox[3] > 0.05f) {
+	if (color1.a > 0)) {
 		const CUnitSet* unitSet;
 		if (selectedGroup != -1) {
 			// note: units in this set are not necessarily all selected themselves, eg.

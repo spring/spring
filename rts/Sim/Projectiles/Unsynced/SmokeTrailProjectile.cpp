@@ -103,7 +103,8 @@ CSmokeTrailProjectile::~CSmokeTrailProjectile()
 void CSmokeTrailProjectile::Draw()
 {
 	inArray = true;
-	float age = gs->frameNum + globalRendering->timeOffset - creationTime;
+	const float age = gs->frameNum + globalRendering->timeOffset - creationTime;
+	const float invLifeTime = (1.0f / lifeTime);
 	va->EnlargeArrays(8 * 4, 0, VA_SIZE_TC);
 
 	if (drawTrail) {
@@ -113,41 +114,42 @@ void CSmokeTrailProjectile::Draw()
 		const float3 odir2 = (dif2.cross(dir2)).ANormalize();
 
 		unsigned char col[4];
-		float a1 = (1 - (float) age / lifeTime) * 255;
+		float a1 = (1.f - age * invLifeTime) * 255.f;
 		if (lastSegment) {
 			a1 = 0;
 		}
 		a1 *= 0.7f + math::fabs(dif1.dot(dir1));
-		float alpha = std::min(255.f, std::max(0.f, a1));
+		float alpha = Clamp(a1, 0.f, 255.f);
 		col[0] = (unsigned char) (color * alpha);
 		col[1] = (unsigned char) (color * alpha);
 		col[2] = (unsigned char) (color * alpha);
 		col[3] = (unsigned char) alpha;
 
 		unsigned char col2[4];
-		float a2 = (1 - (float)(age + 8) / lifeTime) * 255;
+		float a2 = (1.f - (age + 8) * invLifeTime) * 255.f;
 		if (firstSegment) {
 			a2 = 0;
 		}
 		a2 *= 0.7f + math::fabs(dif2.dot(dir2));
-		alpha = std::min(255.f, std::max(0.0f, a2));
+		alpha = Clamp(a2, 0.f, 255.f);
 		col2[0] = (unsigned char) (color * alpha);
 		col2[1] = (unsigned char) (color * alpha);
 		col2[2] = (unsigned char) (color * alpha);
 		col2[3] = (unsigned char) alpha;
 
-		float size =  1 + ( age      * (1.0f / lifeTime)) * orgSize;
-		float size2 = 1 + ((age + 8) * (1.0f / lifeTime)) * orgSize;
+		float size =  1 + ( age      * invLifeTime) * orgSize;
+		float size2 = 1 + ((age + 8) * invLifeTime) * orgSize;
 
 		if (drawSegmented) {
+			const float t = (age + 4) * invLifeTime;
 			const float3 dif3 = (midpos - camera->GetPos()).ANormalize();
 			const float3 odir3 = (dif3.cross(middir)).ANormalize();
-			float size3 = 0.2f + ((age + 4) * (1.0f / lifeTime)) * orgSize;
+			float size3 = 0.2f + t * orgSize;
 
 			unsigned char col3[4];
-			float a2 = (1 - (float)(age + 4) / lifeTime) * 255;
+			float a2 = (1.f - t) * 255.f;
 			a2 *= 0.7f + math::fabs(dif3.dot(middir));
-			alpha = std::min(255.0f, std::max(0.0f, a2));
+			alpha = Clamp(a2, 0.f, 255.f);
 			col3[0] = (unsigned char) (color * alpha);
 			col3[1] = (unsigned char) (color * alpha);
 			col3[2] = (unsigned char) (color * alpha);
@@ -175,9 +177,11 @@ void CSmokeTrailProjectile::Draw()
 		unsigned char col[4];
 
 		for (int a = 0; a < 8; ++a) {
-			const float a1 = 1 - (float)(age + a) / lifeTime;
-			const float alpha = std::min(255.0f, std::max(0.0f, a1 * 255));
-			const float size = ((0.2f + (age + a) * (1.0f / lifeTime)) * orgSize) * 1.2f;
+			const float t = (age + a) * invLifeTime;
+
+			const float a1 = 1.f - t;
+			const float alpha = Clamp(a1 * 255, 0.f, 255.f);
+			const float size = (0.2f + t) * orgSize * 1.2f;
 
 			col[0] = (unsigned char) (color * alpha);
 			col[1] = (unsigned char) (color * alpha);
