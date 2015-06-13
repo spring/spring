@@ -27,8 +27,6 @@ static bool IsUnitTrackable(const CUnit* unit, const CUnit* owner)
 {
 	if ((unit->losStatus[owner->allyteam] & (LOS_INLOS | LOS_INRADAR)) != 0)
 		return true;
-	if (unit->unitDef->speed <= 0.0f)
-		return true;
 
 	return false;
 }
