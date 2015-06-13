@@ -35,7 +35,6 @@ public:
 		float radius
 	);
 	virtual ~CPieceProjectile();
-	virtual void Detach();
 
 	void Update();
 	void Draw();

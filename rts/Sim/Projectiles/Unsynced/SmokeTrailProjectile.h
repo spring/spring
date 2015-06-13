@@ -19,12 +19,12 @@ public:
 		const float3& dir2,
 		bool firstSegment,
 		bool lastSegment,
-		float size = 1,
-		int time = 80,
-		float color = 0.7f,
-		bool drawTrail = true,
-		CProjectile* drawCallback = 0,
-		AtlasedTexture* texture = 0
+		float size,
+		int time,
+		float color,
+		bool drawTrail,
+		CProjectile* drawCallback,
+		AtlasedTexture* texture
 	);
 	virtual ~CSmokeTrailProjectile();
 

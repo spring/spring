@@ -121,17 +121,12 @@ CProjectile::CProjectile(
 	Init(owner, ZeroVector);
 }
 
-void CProjectile::Detach() {
-	// SYNCED
+
+CProjectile::~CProjectile()
+{
 	if (synced) {
 		quadField->RemoveProjectile(this);
 	}
-	CExpGenSpawnable::Detach();
-}
-
-CProjectile::~CProjectile() {
-	// UNSYNCED
-	assert(!synced || detached);
 }
 
 void CProjectile::Init(const CUnit* owner, const float3& offset)

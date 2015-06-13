@@ -37,7 +37,6 @@ public:
 		bool isHitScan = false
 	);
 	virtual ~CProjectile();
-	virtual void Detach();
 
 	virtual void Collision();
 	virtual void Collision(CUnit* unit);

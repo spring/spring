@@ -38,15 +38,15 @@ CObject::CObject() : detached(false), listeners(), listening()
 	assert(sync_id + 1 > sync_id); // check for overflow
 }
 
-void CObject::Detach()
+
+CObject::~CObject()
 {
-	// SYNCED
 	assert(!detached);
 	detached = true;
 	for (int depType = 0; depType < DEPENDENCE_COUNT; ++depType) {
 		if (!listeners[depType])
 			continue;
-		
+
 		for (CObject* obj: *listeners[depType]) {
 			obj->DependentDied(this);
 
@@ -58,7 +58,7 @@ void CObject::Detach()
 	for (int depType = 0; depType < DEPENDENCE_COUNT; ++depType) {
 		if (!listening[depType])
 			continue;
-		
+
 		for (CObject* obj: *listening[depType]) {
 
 			assert(obj->listeners[depType]);
@@ -66,14 +66,6 @@ void CObject::Detach()
 		}
 		delete listening[depType];
 	}
-}
-
-
-CObject::~CObject()
-{
-	// UNSYNCED (if detached)
-	if (!detached)
-		Detach();
 }
 
 void CObject::Serialize(creg::ISerializer* ser)

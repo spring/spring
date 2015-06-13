@@ -132,22 +132,17 @@ CPieceProjectile::CPieceProjectile(
 #endif
 
 	projectileHandler->AddProjectile(this);
+	assert(!detached);
 }
 
-void CPieceProjectile::Detach()
+
+CPieceProjectile::~CPieceProjectile()
 {
-	// SYNCED
 	if (curCallback) {
 		// this is unsynced, but it prevents some callback crash on exit
 		curCallback->drawCallbacker = NULL;
 	}
 
-	CProjectile::Detach();
-}
-
-CPieceProjectile::~CPieceProjectile()
-{
-	// UNSYNCED
 	for (unsigned int a = 0; a < NUM_TRAIL_PARTS; ++a) {
 		delete fireTrailPoints[a];
 	}

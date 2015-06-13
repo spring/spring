@@ -3,9 +3,7 @@
 #include "Projectile.h"
 #include "Unsynced/FlyingPiece.h"
 
-void ProjectileDetacher::Detach(CProjectile* p) {
-	p->Detach();
-}
+void ProjectileDetacher::Detach(CProjectile* p) { }
 
 
 

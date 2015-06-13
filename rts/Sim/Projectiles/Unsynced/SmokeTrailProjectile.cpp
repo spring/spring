@@ -197,10 +197,8 @@ void CSmokeTrailProjectile::Draw()
 		}
 	}
 
-	CProjectile* callbacker = drawCallbacker;
-
-	if (callbacker != NULL) {
-		callbacker->DrawCallback();
+	if (drawCallbacker != NULL) {
+		drawCallbacker->DrawCallback();
 	}
 }
 

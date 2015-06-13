@@ -125,20 +125,14 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 #endif
 }
 
-void CStarburstProjectile::Detach()
+
+CStarburstProjectile::~CStarburstProjectile()
 {
-	// SYNCED
 	if (curCallback) {
 		// this is unsynced, but it prevents some callback crash on exit
 		curCallback->drawCallbacker = NULL;
 	}
 
-	CProjectile::Detach();
-}
-
-CStarburstProjectile::~CStarburstProjectile()
-{
-	// UNSYNCED
 	for (unsigned int a = 0; a < NUM_TRACER_PARTS; ++a) {
 		tracerParts[a].ageMods.clear();
 	}
@@ -148,7 +142,7 @@ CStarburstProjectile::~CStarburstProjectile()
 void CStarburstProjectile::Collision()
 {
 	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, drawTrail, 0, weaponDef->visuals.texture2);
+		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, drawTrail, nullptr, weaponDef->visuals.texture2);
 	}
 
 	oldSmokeDir = dir;
@@ -159,7 +153,7 @@ void CStarburstProjectile::Collision()
 void CStarburstProjectile::Collision(CUnit* unit)
 {
 	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, drawTrail, 0, weaponDef->visuals.texture2);
+		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, drawTrail, nullptr, weaponDef->visuals.texture2);
 	}
 
 	oldSmokeDir = dir;

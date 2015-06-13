@@ -18,7 +18,6 @@ public:
 	CStarburstProjectile(const ProjectileParams& params);
 	~CStarburstProjectile();
 
-	virtual void Detach();
 	void Collision(CUnit* unit);
 	void Collision(CFeature* feature);
 	void Collision();
