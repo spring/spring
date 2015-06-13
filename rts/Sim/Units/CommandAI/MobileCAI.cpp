@@ -782,7 +782,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			const bool targetBehind = (targetMidPosVec.dot(orderTarget->speed) < 0.0f);
 
 			if (canChaseTarget && tryTargetHeading && targetBehind) {
-				SetGoal(owner->pos + (orderTarget->speed * 80), owner->pos, owner->maxRange * 0.9f, orderTarget->speed.w * 1.1f);
+				SetGoal(owner->pos + (orderTarget->speed * 80), owner->pos, SQUARE_SIZE, orderTarget->speed.w * 1.1f);
 			} else {
 				StopMove();
 
