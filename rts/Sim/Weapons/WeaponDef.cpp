@@ -55,9 +55,9 @@ WEAPONTAG(float, edgeEffectiveness).defaultValue(0.0f).maximumValue(0.999f);
 WEAPONTAG(float, collisionSize).defaultValue(0.05f);
 
 // Projectile Properties
-WEAPONTAG(float, projectilespeed).externalName("weaponVelocity").defaultValue(0.0f).minimumValue(0.01f).scaleValue(1.0f / GAME_SPEED);
+WEAPONTAG(float, projectilespeed).externalName("weaponVelocity").fallbackName("maxVelocity").defaultValue(0.0f).minimumValue(0.01f).scaleValue(1.0f / GAME_SPEED);
 WEAPONTAG(float, startvelocity).defaultValue(0.0f).minimumValue(0.01f).scaleValue(1.0f / GAME_SPEED);
-WEAPONTAG(float, weaponacceleration).defaultValue(0.0f).scaleValue(1.0f / (GAME_SPEED * GAME_SPEED));
+WEAPONTAG(float, weaponacceleration).fallbackName("acceleration").defaultValue(0.0f).scaleValue(1.0f / (GAME_SPEED * GAME_SPEED));
 WEAPONTAG(float, reload).externalName("reloadTime").defaultValue(1.0f);
 WEAPONTAG(float, salvodelay).externalName("burstRate").defaultValue(0.1f);
 WEAPONTAG(int, salvosize).externalName("burst").defaultValue(1);
