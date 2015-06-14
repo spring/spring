@@ -512,19 +512,20 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 			break;
 		}
 
-
-		// TODO: FIXME: should strcpy() this
-		// const char* outData = clb->CallLua ## HandleName ## (cmd->inData, cmd->inSize);
-		//
-		// if (outData != NULL)
-		//     strcpy((cmd->ret_outData = new char[strlen(outData) + 1]), outData);
-		// else
-		//     cmd->ret_outData = NULL;
-		//
-		#define SSAICALLBACK_CALL_LUA(HandleName, HANDLENAME) \
-			case COMMAND_CALL_LUA_ ## HANDLENAME: {       \
+		// @see AI/Wrappers/Cpp/bin/wrappCallback.awk, printMember
+		#define SSAICALLBACK_CALL_LUA(HandleName, HANDLENAME)  \
+			case COMMAND_CALL_LUA_ ## HANDLENAME: {  \
 				SCallLua ## HandleName ## Command* cmd = static_cast<SCallLua ## HandleName ## Command*>(commandData);  \
-				cmd->ret_outData = clb->CallLua ## HandleName(cmd->inData, cmd->inSize); \
+				const char* outData = clb->CallLua ## HandleName(cmd->inData, cmd->inSize);  \
+				if (cmd->ret_outData != NULL) {  \
+					if (outData != NULL) {  \
+						size_t len = min(strlen(outData), MAX_RESPONSE_SIZE - 1);  \
+						strncpy(cmd->ret_outData, outData, len);  \
+						cmd->ret_outData[len] = '\0';  \
+					} else {  \
+						cmd->ret_outData[0] = '\0';  \
+					}  \
+				}  \
 			} break;
 
 		SSAICALLBACK_CALL_LUA(Rules, RULES)

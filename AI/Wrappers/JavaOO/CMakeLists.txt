@@ -127,7 +127,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		"Info"
 		"Line"
 		"Log"
-#		"Lua"
+		"Lua"
 		"Map"
 		"Mod"
 		"MoveData"
