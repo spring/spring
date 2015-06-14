@@ -30,7 +30,7 @@ struct SS3OVertex;
 
 typedef std::map<int, CProjectile*> ProjectileMap; // <id, proj*>
 
-typedef std::list<CProjectile*> ProjectileContainer;
+typedef std::deque<CProjectile*> ProjectileContainer;
 typedef ThreadListSimRender<std::list<CGroundFlash*>, std::set<CGroundFlash*>, CGroundFlash*> GroundFlashContainer;
 typedef ThreadListSimRender<std::set<FlyingPiece*, FlyingPieceComparator>, void, FlyingPiece*> FlyingPieceContainer;
 

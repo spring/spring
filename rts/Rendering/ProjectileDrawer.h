@@ -30,7 +30,6 @@ public:
 	~CProjectileDrawer();
 
 	typedef std::set<CProjectile*, ProjectileDistanceComparator> SortedProjectileSet;
-	typedef std::list<CProjectile*> UnsortedProjectileList;
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
 	void DrawProjectilesMiniMap();
@@ -129,7 +128,7 @@ private:
 	 * to render particle effects in back-to-front order
 	 */
 	SortedProjectileSet zSortedProjectiles;
-	UnsortedProjectileList unsortedProjectiles;
+	std::vector<CProjectile*> unsortedProjectiles;
 };
 
 extern CProjectileDrawer* projectileDrawer;
