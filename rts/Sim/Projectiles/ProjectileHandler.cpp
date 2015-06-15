@@ -83,7 +83,7 @@ CProjectileHandler::CProjectileHandler()
 	currentNanoParticles   = 0;
 
 	// preload some IDs
-	for (int i = 0; i < 16384; i++) {
+	for (int i = 0; i < 2048; i++) {
 		freeSyncedIDs.push_back(i);
 		freeUnsyncedIDs.push_back(i);
 	}
@@ -109,6 +109,8 @@ CProjectileHandler::~CProjectileHandler()
 	syncedProjectileIDs.clear();
 	unsyncedProjectileIDs.clear();
 
+	LOG("CProjectileHandler: max   synced projectile id: %i", maxUsedSyncedID);
+	LOG("CProjectileHandler: max unsynced projectile id: %i", maxUsedUnsyncedID);
 	CCollisionHandler::PrintStats();
 }
 
