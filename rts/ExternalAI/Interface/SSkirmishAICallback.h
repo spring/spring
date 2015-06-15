@@ -1408,6 +1408,9 @@ struct SSkirmishAICallback {
 	/** Number of the last frame this unit received an order from a player. */
 	int               (CALLING_CONV *Unit_getLastUserOrderFrame)(int skirmishAIId, int unitId);
 
+	int               (CALLING_CONV *Unit_getWeapons)(int skirmishAIId, int unitId); //$ FETCHER:MULTI:NUM:Weapon
+
+	int               (CALLING_CONV *Unit_getWeapon)(int skirmishAIId, int unitId, int weaponMountId); //$ REF:weaponMountId->WeaponMount REF:RETURN->Weapon
 // END OBJECT Unit
 
 
@@ -2423,6 +2426,20 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *WeaponDef_getCustomParams)(int skirmishAIId, int weaponDefId, const char** keys, const char** values); //$ MAP
 
 // END OBJECT WeaponDef
+
+
+// BEGINN OBJECT Weapon
+	int               (CALLING_CONV *Unit_Weapon_getDef)(int skirmishAIId, int unitId, int weaponId); //$ REF:RETURN->WeaponDef
+
+	/** Next tick the weapon can fire again. */
+	int               (CALLING_CONV *Unit_Weapon_getReloadFrame)(int skirmishAIId, int unitId, int weaponId);
+
+	/** Time between succesive fires in ticks. */
+	int               (CALLING_CONV *Unit_Weapon_getReloadTime)(int skirmishAIId, int unitId, int weaponId);
+
+	float             (CALLING_CONV *Unit_Weapon_getRange)(int skirmishAIId, int unitId, int weaponId);
+
+// END OBJECT Weapon
 
 	bool              (CALLING_CONV *Debug_GraphDrawer_isEnabled)(int skirmishAIId);
 

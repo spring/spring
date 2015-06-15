@@ -802,6 +802,10 @@ EXPORT(int              ) skirmishAiCallback_Unit_getBuildingFacing(int skirmish
 
 EXPORT(int              ) skirmishAiCallback_Unit_getLastUserOrderFrame(int skirmishAIId, int unitId);
 
+EXPORT(int              ) skirmishAiCallback_Unit_getWeapons(int skirmishAIId, int unitId);
+
+EXPORT(int              ) skirmishAiCallback_Unit_getWeapon(int skirmishAIId, int unitId, int weaponMountId);
+
 // END OBJECT Unit
 
 
@@ -1342,6 +1346,18 @@ EXPORT(bool             ) skirmishAiCallback_WeaponDef_isDynDamageInverted(int s
 EXPORT(int              ) skirmishAiCallback_WeaponDef_getCustomParams(int skirmishAIId, int weaponDefId, const char** keys, const char** values);
 
 // END OBJECT WeaponDef
+
+
+// BEGINN OBJECT Weapon
+EXPORT(int              ) skirmishAiCallback_Unit_Weapon_getDef(int skirmishAIId, int unitId, int weaponId);
+
+EXPORT(int              ) skirmishAiCallback_Unit_Weapon_getReloadFrame(int skirmishAIId, int unitId, int weaponId);
+
+EXPORT(int              ) skirmishAiCallback_Unit_Weapon_getReloadTime(int skirmishAIId, int unitId, int weaponId);
+
+EXPORT(float            ) skirmishAiCallback_Unit_Weapon_getRange(int skirmishAIId, int unitId, int weaponId);
+
+// END OBJECT Weapon
 
 EXPORT(bool             ) skirmishAiCallback_Debug_GraphDrawer_isEnabled(int skirmishAIId);
 
