@@ -57,14 +57,14 @@ CBenchmark::~CBenchmark()
 
 void CBenchmark::GameFrame(int gameFrame)
 {
-	if (gameFrame == 0 && (startFrame - 45 * GAME_SPEED > 0)) {
+	if (gameFrame == 0 && (startFrame - 15 * GAME_SPEED > 0)) {
 		std::vector<string> cmds;
 		cmds.push_back("@@setmaxspeed 100");
 		cmds.push_back("@@setminspeed 100");
 		guihandler->RunCustomCommands(cmds, false);
 	}
 
-	if (gameFrame == (startFrame - 45 * GAME_SPEED)) {
+	if (gameFrame == (startFrame - 15 * GAME_SPEED)) {
 		std::vector<string> cmds;
 		cmds.push_back("@@setminspeed 1");
 		cmds.push_back("@@setmaxspeed 1");
