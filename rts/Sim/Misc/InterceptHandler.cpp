@@ -75,12 +75,12 @@ void CInterceptHandler::Update(bool forced) {
 				continue; // 1
 			}
 
-			if (wDef->interceptor == 1) {
+			if (false /*wDef->noFlyThroughIntercept*/) {
 				// <w> is just a static interceptor and fires only at projectiles
 				// TARGETED within its current interception area; any projectiles
-				// CROSSING its interception area are fired at only if interceptor
-				// is >= 2
-				//// continue;
+				// CROSSING its interception area aren't targeted
+				//XXX implement in lua?
+				continue;
 			}
 
 			if (pWeaponVec.SqLength2D() < Square(wDef->coverageRange)) {
@@ -103,7 +103,7 @@ void CInterceptHandler::Update(bool forced) {
 				}
 			}
 
-			const float3 pMinSepPos = p->pos + p->dir * std::min(impactDist, std::max(-(pWeaponVec.dot(p->dir)), 0.0f));
+			const float3 pMinSepPos = p->pos + p->dir * Clamp(-(pWeaponVec.dot(p->dir)), 0.0f, impactDist);
 			const float3 pMinSepVec = w->aimFromPos - pMinSepPos;
 
 			if (pMinSepVec.SqLength() < Square(wDef->coverageRange)) {
