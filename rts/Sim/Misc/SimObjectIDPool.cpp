@@ -3,6 +3,8 @@
 #include "SimObjectIDPool.h"
 #include "GlobalSynced.h"
 #include "Sim/Objects/SolidObject.h"
+#include "System/creg/STL_Map.h"
+
 
 CR_BIND(SimObjectIDPool, )
 CR_REG_METADATA(SimObjectIDPool, (
