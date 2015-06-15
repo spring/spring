@@ -509,6 +509,8 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 
 	CVertexArray* lines = GetVertexArray();
 	CVertexArray* points = GetVertexArray();
+	lines->Initialize();
+	points->Initialize();
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		const ProjectileBin& projectileBin = modelRenderers[modelType]->GetProjectileBin();
@@ -519,9 +521,7 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 		for (ProjectileBinIt binIt = projectileBin.begin(); binIt != projectileBin.end(); ++binIt) {
 			const ProjectileSet& pset = binIt->second;
 
-			lines->Initialize();
 			lines->EnlargeArrays(pset.size() * 2, 0, VA_SIZE_C);
-			points->Initialize();
 			points->EnlargeArrays(pset.size(), 0, VA_SIZE_C);
 
 			for (CProjectile* p: pset) {
@@ -531,11 +531,11 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 						p->DrawOnMinimap(*lines, *points);
 				}
 			}
-
-			lines->DrawArrayC(GL_LINES);
-			points->DrawArrayC(GL_POINTS);
 		}
 	}
+
+	lines->DrawArrayC(GL_LINES);
+	points->DrawArrayC(GL_POINTS);
 
 	if (!renderProjectiles.empty()) {
 		lines->Initialize();
