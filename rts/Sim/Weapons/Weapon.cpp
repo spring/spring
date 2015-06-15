@@ -904,9 +904,8 @@ bool CWeapon::TestTarget(const float3 tgtPos, const SWeaponTarget& trg) const
 				return false;
 		} break;
 		case Target_Intercept: {
-			//FIXME
-			//if (weaponDef->interceptSolo && trg.intercept->IsBeingIntercepted())
-			//	return false;
+			if (weaponDef->interceptSolo && trg.intercept->IsBeingIntercepted())
+				return false;
 			if (!weaponDef->interceptor)
 				return false;
 			if (!trg.intercept->CanBeInterceptedBy(weaponDef))
