@@ -85,7 +85,6 @@ ShieldProjectile::~ShieldProjectile()
 
 void ShieldProjectile::Update()
 {
-	// interpolate shield position for drawing
 	pos = GetShieldDrawPos();
 }
 
@@ -164,6 +163,7 @@ ShieldSegmentProjectile::ShieldSegmentProjectile(
 			false
 		)
 	, shieldProjectile(shieldProjectile_)
+	, segmentColor(255,255,255,0)
 	, segmentPos(shieldSegmentPos)
 	, segmentSize(shieldWeaponDef->shieldRadius)
 {
@@ -274,7 +274,7 @@ void ShieldSegmentProjectile::Update()
 		return;
 
 	// use the "middle" vertex for z-ordering
-	pos = shieldProjectile->pos + vertices[(NUM_VERTICES_X * NUM_VERTICES_Y) >> 1] * segmentSize;
+	pos = shieldProjectile->GetShieldDrawPos() + vertices[(NUM_VERTICES_X * NUM_VERTICES_Y) >> 1] * segmentSize;
 
 
 	// update segmentColor
@@ -317,7 +317,7 @@ void ShieldSegmentProjectile::Draw()
 	if (!shieldProjectile->AllowDrawing())
 		return;
 
-	const float3 shieldPos = shieldProjectile->pos;
+	const float3 shieldPos = shieldProjectile->GetShieldDrawPos();
 
 	inArray = true;
 	va->EnlargeArrays(NUM_VERTICES_Y * NUM_VERTICES_X * 4, 0, VA_SIZE_TC);
