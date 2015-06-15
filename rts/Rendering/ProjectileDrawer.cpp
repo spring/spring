@@ -35,6 +35,7 @@
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
+#include <array>
 
 
 
@@ -104,20 +105,12 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 
 	{
 		// shield-texture memory
-		char perlinTexMem[128][128][4];
-		for (int y = 0; y < 128; y++) {
-			for (int x = 0; x < 128; x++) {
-				perlinTexMem[y][x][0] = 70;
-				perlinTexMem[y][x][1] = 70;
-				perlinTexMem[y][x][2] = 70;
-				perlinTexMem[y][x][3] = 70;
-			}
-		}
-
-		textureAtlas->AddTexFromMem("perlintex", 128, 128, CTextureAtlas::RGBA32, perlinTexMem);
+		std::array<char, 4 * perlinTexSize * perlinTexSize> perlinTexMem;
+		perlinTexMem.fill(70);
+		textureAtlas->AddTexFromMem("perlintex", perlinTexSize, perlinTexSize, CTextureAtlas::RGBA32, &perlinTexMem[0]);
+		blockedTexNames.insert("perlintex");
 	}
 
-	blockedTexNames.insert("perlintex");
 	blockedTexNames.insert("flare");
 	blockedTexNames.insert("explo");
 	blockedTexNames.insert("explofade");
@@ -127,7 +120,6 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 	blockedTexNames.insert("randdots");
 	blockedTexNames.insert("smoketrail");
 	blockedTexNames.insert("wake");
-	blockedTexNames.insert("perlintex");
 	blockedTexNames.insert("flame");
 
 	blockedTexNames.insert("sbtrailtexture");
@@ -217,14 +209,12 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 	}
 
 	{
-		unsigned char tempmem[4 * 16 * 16] = {0};
-
+		glGenTextures(8, perlinBlendTex);
 		for (int a = 0; a < 8; ++a) {
-			glGenTextures(1, &perlinTex[a]);
-			glBindTexture(GL_TEXTURE_2D, perlinTex[a]);
+			glBindTexture(GL_TEXTURE_2D, perlinBlendTex[a]);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 16,16, 0, GL_RGBA, GL_UNSIGNED_BYTE, tempmem);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, perlinBlendTexSize,perlinBlendTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 		}
 	}
 
@@ -252,13 +242,9 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 CProjectileDrawer::~CProjectileDrawer() {
 	eventHandler.RemoveClient(this);
 
-	for (int a = 0; a < 8; ++a) {
-		glDeleteTextures(1, &perlinTex[a]);
-	}
-
+	glDeleteTextures(8, perlinBlendTex);
 	delete textureAtlas;
 	delete groundFXAtlas;
-
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		delete modelRenderers[modelType];
@@ -847,7 +833,7 @@ void CProjectileDrawer::UpdateTextures() {
 
 void CProjectileDrawer::UpdatePerlin() {
 	perlinFB.Bind();
-	glViewport(perlintex->xstart * (textureAtlas->GetSize()).x, perlintex->ystart * (textureAtlas->GetSize()).y, 128, 128);
+	glViewport(perlintex->xstart * (textureAtlas->GetSize()).x, perlintex->ystart * (textureAtlas->GetSize()).y, perlinTexSize, perlinTexSize);
 
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
@@ -870,14 +856,17 @@ void CProjectileDrawer::UpdatePerlin() {
 	float speed = 1.0f;
 	float size = 1.0f;
 
+	CVertexArray* va = GetVertexArray();
+	va->CheckInitSize(4 * VA_SIZE_TC);
+
 	for (int a = 0; a < 4; ++a) {
 		perlinBlend[a] += time * speed;
 		if (perlinBlend[a] > 1) {
-			unsigned int temp = perlinTex[a * 2];
-			perlinTex[a * 2    ] = perlinTex[a * 2 + 1];
-			perlinTex[a * 2 + 1] = temp;
+			unsigned int temp = perlinBlendTex[a * 2];
+			perlinBlendTex[a * 2    ] = perlinBlendTex[a * 2 + 1];
+			perlinBlendTex[a * 2 + 1] = temp;
 
-			GenerateNoiseTex(perlinTex[a * 2 + 1], 16);
+			GenerateNoiseTex(perlinBlendTex[a * 2 + 1]);
 			perlinBlend[a] -= 1;
 		}
 
@@ -886,14 +875,11 @@ void CProjectileDrawer::UpdatePerlin() {
 		if (a == 0)
 			glDisable(GL_BLEND);
 
-		CVertexArray* va = GetVertexArray();
-		va->Initialize();
-		va->CheckInitSize(4 * VA_SIZE_TC);
-
 		for (int b = 0; b < 4; ++b)
 			col[b] = int((1.0f - perlinBlend[a]) * 16 * size);
 
-		glBindTexture(GL_TEXTURE_2D, perlinTex[a * 2]);
+		glBindTexture(GL_TEXTURE_2D, perlinBlendTex[a * 2]);
+		va->Initialize();
 		va->AddVertexQTC(ZeroVector, 0,         0, col);
 		va->AddVertexQTC(  UpVector, 0,     tsize, col);
 		va->AddVertexQTC(  XYVector, tsize, tsize, col);
@@ -903,14 +889,11 @@ void CProjectileDrawer::UpdatePerlin() {
 		if (a == 0)
 			glEnable(GL_BLEND);
 
-		va = GetVertexArray();
-		va->Initialize();
-		va->CheckInitSize(4 * VA_SIZE_TC);
-
 		for (int b = 0; b < 4; ++b)
 			col[b] = int(perlinBlend[a] * 16 * size);
 
-		glBindTexture(GL_TEXTURE_2D, perlinTex[a * 2 + 1]);
+		glBindTexture(GL_TEXTURE_2D, perlinBlendTex[a * 2 + 1]);
+		va->Initialize();
 		va->AddVertexQTC(ZeroVector,     0,     0, col);
 		va->AddVertexQTC(  UpVector,     0, tsize, col);
 		va->AddVertexQTC(  XYVector, tsize, tsize, col);
@@ -934,11 +917,11 @@ void CProjectileDrawer::UpdatePerlin() {
 	glMatrixMode(GL_MODELVIEW);
 }
 
-void CProjectileDrawer::GenerateNoiseTex(unsigned int tex, int size)
+void CProjectileDrawer::GenerateNoiseTex(unsigned int tex)
 {
-	unsigned char* mem = new unsigned char[4 * size * size];
+	std::array<unsigned char, 4 * perlinBlendTexSize * perlinBlendTexSize> mem;
 
-	for (int a = 0; a < size * size; ++a) {
+	for (int a = 0; a < perlinBlendTexSize * perlinBlendTexSize; ++a) {
 		const unsigned char rnd = int(std::max(0.0f, gu->RandFloat() * 555.0f - 300.0f));
 
 		mem[a * 4 + 0] = rnd;
@@ -948,8 +931,7 @@ void CProjectileDrawer::GenerateNoiseTex(unsigned int tex, int size)
 	}
 
 	glBindTexture(GL_TEXTURE_2D, tex);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size, size, GL_RGBA, GL_UNSIGNED_BYTE, mem);
-	delete[] mem;
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, perlinBlendTexSize, perlinBlendTexSize, GL_RGBA, GL_UNSIGNED_BYTE, &mem[0]);
 }
 
 

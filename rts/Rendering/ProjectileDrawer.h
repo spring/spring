@@ -110,9 +110,12 @@ private:
 	static bool DrawProjectileModel(const CProjectile* projectile, bool shadowPass);
 
 	void UpdatePerlin();
-	void GenerateNoiseTex(unsigned int tex, int size);
+	static void GenerateNoiseTex(unsigned int tex);
 
-	GLuint perlinTex[8];
+private:
+	static constexpr int perlinBlendTexSize = 16;
+	static constexpr int perlinTexSize = 128;
+	GLuint perlinBlendTex[8];
 	float perlinBlend[4];
 	FBO perlinFB;
 	int perlinTexObjects;
