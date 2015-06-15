@@ -507,53 +507,51 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 	typedef std::map<int, ProjectileSet> ProjectileBin;
 	typedef std::map<int, ProjectileSet>::const_iterator ProjectileBinIt;
 
+	CVertexArray* lines = GetVertexArray();
+	CVertexArray* points = GetVertexArray();
+
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		const ProjectileBin& projectileBin = modelRenderers[modelType]->GetProjectileBin();
 
-		if (!projectileBin.empty()) {
+		if (projectileBin.empty())
+			continue;
 
-			for (ProjectileBinIt binIt = projectileBin.begin(); binIt != projectileBin.end(); ++binIt) {
-				CVertexArray* lines = GetVertexArray();
-				CVertexArray* points = GetVertexArray();
+		for (ProjectileBinIt binIt = projectileBin.begin(); binIt != projectileBin.end(); ++binIt) {
+			const ProjectileSet& pset = binIt->second;
 
-				lines->Initialize();
-				lines->EnlargeArrays((binIt->second).size() * 2, 0, VA_SIZE_C);
-				points->Initialize();
-				points->EnlargeArrays((binIt->second).size(), 0, VA_SIZE_C);
+			lines->Initialize();
+			lines->EnlargeArrays(pset.size() * 2, 0, VA_SIZE_C);
+			points->Initialize();
+			points->EnlargeArrays(pset.size(), 0, VA_SIZE_C);
 
-				for (ProjectileSetIt setIt = (binIt->second).begin(); setIt != (binIt->second).end(); ++setIt) {
-					CProjectile* p = *setIt;
-
-					CUnit *owner = p->owner();
-					if ((owner && (owner->allyteam == gu->myAllyTeam)) ||
-						gu->spectatingFullView || losHandler->InLos(p, gu->myAllyTeam)) {
-							p->DrawOnMinimap(*lines, *points);
-					}
+			for (CProjectile* p: pset) {
+				CUnit *owner = p->owner();
+				if ((owner && (owner->allyteam == gu->myAllyTeam)) ||
+					gu->spectatingFullView || losHandler->InLos(p, gu->myAllyTeam)) {
+						p->DrawOnMinimap(*lines, *points);
 				}
-
-				lines->DrawArrayC(GL_LINES);
-				points->DrawArrayC(GL_POINTS);
 			}
 
+			lines->DrawArrayC(GL_LINES);
+			points->DrawArrayC(GL_POINTS);
 		}
 	}
 
 	if (!renderProjectiles.empty()) {
-		CVertexArray* lines = GetVertexArray();
-		CVertexArray* points = GetVertexArray();
-
 		lines->Initialize();
 		lines->EnlargeArrays(renderProjectiles.size() * 2, 0, VA_SIZE_C);
-
 		points->Initialize();
 		points->EnlargeArrays(renderProjectiles.size(), 0, VA_SIZE_C);
 
 		for (CProjectile* p: renderProjectiles) {
 			const CUnit* owner = p->owner();
-			if ((owner && (owner->allyteam == gu->myAllyTeam)) ||
-				gu->spectatingFullView || losHandler->InLos(p, gu->myAllyTeam)) {
-				p->DrawOnMinimap(*lines, *points);
-			}
+			const bool inLos = (owner && (owner->allyteam == gu->myAllyTeam)) ||
+				gu->spectatingFullView || losHandler->InLos(p, gu->myAllyTeam);
+
+			if (!inLos)
+				continue;
+
+			p->DrawOnMinimap(*lines, *points);
 		}
 
 		lines->DrawArrayC(GL_LINES);
@@ -575,9 +573,8 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType, int numFlyingPieces, int
 
 	if (container != NULL) {
 		CVertexArray* va = GetVertexArray();
-
 		va->Initialize();
-		va->EnlargeArrays(numFlyingPieces * 4, 0, VA_SIZE_TN);
+		va->EnlargeArrays(container->size() * 4, 0, VA_SIZE_TN);
 
 		size_t lastTex = -1;
 		size_t lastTeam = -1;
