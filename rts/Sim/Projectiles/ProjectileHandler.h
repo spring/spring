@@ -67,7 +67,6 @@ public:
 	void AddFlyingPiece(const float3& pos, const float3& speed, int team, int textureType, const SS3OVertex* chunk);
 	void AddNanoParticle(const float3&, const float3&, const UnitDef*, int team, bool highPriority);
 	void AddNanoParticle(const float3&, const float3&, const UnitDef*, int team, float radius, bool inverse, bool highPriority);
-	bool RenderAccess(const CProjectile *p) const;
 
 public:
 	int maxParticles;              // different effects should start to cut down on unnececary(unsynced) particles when this number is reached

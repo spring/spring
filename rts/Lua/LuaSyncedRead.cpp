@@ -2485,9 +2485,6 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 			for (unsigned int i = 0; i < rectProjectileCount; i++) {
 				const CProjectile* pro = rectProjectiles[i];
 
-				if (!projectileHandler->RenderAccess(pro))
-					continue;
-
 				// filter out unsynced projectiles, the SyncedRead
 				// projecile Get* functions accept only synced ID's
 				// (specifically they interpret all ID's as synced)
@@ -2506,9 +2503,6 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 	} else {
 		for (unsigned int i = 0; i < rectProjectileCount; i++) {
 			const CProjectile* pro = rectProjectiles[i];
-
-			if (!projectileHandler->RenderAccess(pro))
-				continue;
 
 			// see above
 			if (!pro->synced)

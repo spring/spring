@@ -61,9 +61,6 @@ CR_REG_METADATA(CProjectileHandler, (
 	CR_MEMBER(maxUsedSyncedID),
 	CR_MEMBER(maxUsedUnsyncedID),
 
-	//CR_MEMBER(syncedRenderProjectileIDs),
-	//CR_MEMBER(unsyncedRenderProjectileIDs),
-
 	CR_MEMBER(freeSyncedIDs),
 	CR_MEMBER(freeUnsyncedIDs),
 	CR_MEMBER(syncedProjectileIDs),
@@ -187,7 +184,6 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 		if (p->deleteMe) {
 			if (synced) { //FIXME move outside of loop!
 				eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
-				erase_first(syncedRenderProjectileIDs, p->id);
 				erase_first(syncedProjectileIDs, p->id);
 				freeSyncedIDs.push_back(p->id);
 
@@ -198,7 +194,6 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 				eventHandler.UnsyncedProjectileDestroyed(p);
 #else
 				eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
-				erase_first(unsyncedRenderProjectileIDs, p->id);
 				erase_first(unsyncedProjectileIDs, p->id);
 				freeUnsyncedIDs.push_back(p->id);
 #endif
@@ -282,7 +277,6 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 
 	std::deque<int>* freeIDs = NULL;
 	ProjectileMap* proIDs = NULL;
-	ProjectileMap* newProIDs = NULL;
 
 	int* maxUsedID = NULL;
 	int newUsedID = 0;
@@ -291,7 +285,6 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 		syncedProjectiles.push_back(p);
 		freeIDs = &freeSyncedIDs;
 		proIDs = &syncedProjectileIDs;
-		newProIDs = &syncedRenderProjectileIDs;
 		maxUsedID = &maxUsedSyncedID;
 
 		ASSERT_SYNCED(*maxUsedID);
@@ -304,7 +297,6 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 #endif
 		freeIDs = &freeUnsyncedIDs;
 		proIDs = &unsyncedProjectileIDs;
-		newProIDs = &unsyncedRenderProjectileIDs;
 		maxUsedID = &maxUsedUnsyncedID;
 	}
 
@@ -325,9 +317,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 	}
 
 	p->id = newUsedID;
-
 	(*proIDs)[p->id] = p;
-	(*newProIDs)[p->id] = p;
 
 	eventHandler.ProjectileCreated(p, p->GetAllyteamID());
 }
@@ -574,20 +564,6 @@ void CProjectileHandler::AddNanoParticle(
 	} else {
 		new CNanoProjectile(startPos + (dif + error) * l, -(dif + error) * 3, int(l / 3), color);
 	}
-}
-
-bool CProjectileHandler::RenderAccess(const CProjectile* p) const {
-	const ProjectileMap* pmap = NULL;
-
-	if (p->synced) {
-		pmap = &syncedRenderProjectileIDs;
-	} else {
-		#ifndef UNSYNCED_PROJ_NOEVENT
-		pmap = &unsyncedRenderProjectileIDs;
-		#endif
-	}
-
-	return (pmap != NULL && pmap->find(p->id) != pmap->end());
 }
 
 
