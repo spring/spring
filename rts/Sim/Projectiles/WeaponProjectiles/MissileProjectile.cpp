@@ -442,5 +442,5 @@ int CMissileProjectile::ShieldRepulse(
 
 int CMissileProjectile::GetProjectilesCount() const
 {
-	return 2 + numParts;
+	return 2 + ((weaponDef->visuals.smokeTrail) ? numParts : 0);
 }
