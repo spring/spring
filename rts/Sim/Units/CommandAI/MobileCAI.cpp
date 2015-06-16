@@ -687,7 +687,6 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			return;
 		}
 	}
-
 	if (!inCommand) {
 		if (c.params.size() == 1) {
 			CUnit* targetUnit = unitHandler->GetUnit(c.params[0]);
@@ -699,11 +698,10 @@ void CMobileCAI::ExecuteAttack(Command &c)
 				StopMove(); FinishCommand(); return;
 			}
 
-			const float3 tgtErrPos = targetUnit->pos + owner->posErrorVector * 128;
-			const float3 tgtPosDir = (tgtErrPos - owner->pos).Normalize();
+			const float3 tgtErrPos = targetUnit->pos + targetUnit->GetErrorVector(owner->allyteam);
 
 			// FIXME: don't call SetGoal() if target is already in range of some weapon?
-			SetGoal(tgtErrPos - tgtPosDir * targetUnit->radius, owner->pos, owner->maxRange * 0.9f);
+			SetGoal(tgtErrPos, owner->pos, owner->maxRange * 0.9f);
 			SetOrderTarget(targetUnit);
 			owner->AttackUnit(targetUnit, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
 
@@ -734,8 +732,10 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 		float edgeFactor = 0.0f; // percent offset to target center
 		const float3 targetMidPosVec = owner->midPos - orderTarget->midPos;
-
-		const float targetGoalDist = (orderTarget->pos + owner->posErrorVector * 128.0f).SqDistance2D(goalPos);
+		
+		const float3 errPos = orderTarget->GetErrorVector(owner->allyteam);
+		
+		const float targetGoalDist = (orderTarget->pos + errPos).SqDistance2D(goalPos);
 		const float targetPosDist = Square(10.0f + orderTarget->pos.distance2D(owner->pos) * 0.2f);
 		const float minPointingDist = std::min(1.0f * owner->losRadius * losHandler->losDiv, owner->maxRange * 0.9f);
 
@@ -767,10 +767,9 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			tryTargetRotate  = w->TryTargetRotate(trg.unit, trg.isUserTarget);
 			tryTargetHeading = w->TryTargetHeading(targetHead, trg);
 
+			edgeFactor = math::fabs(w->weaponDef->targetBorder);
 			if (tryTargetRotate || tryTargetHeading)
 				break;
-
-			edgeFactor = math::fabs(w->weaponDef->targetBorder);
 		}
 
 		// if w->AttackUnit() returned true then we are already
@@ -806,16 +805,11 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		// less than 90% of our maximum range) OR squared length of 2D vector from us to target
 		// less than 1024) then we are close enough
 		else if (targetMidPosDist2D < (owner->maxRange * 0.9f)) {
-			if (owner->unitDef->IsHoveringAirUnit() || (targetMidPosVec.SqLength2D() < 1024)) {
-				StopMove();
-				owner->moveType->KeepPointingTo(orderTarget->midPos, minPointingDist, true);
-			}
-
 			// if (((first weapon range minus first weapon length greater than distance to target)
 			// and length of 2D vector from us to target less than 90% of our maximum range)
 			// then we are close enough, but need to move sideways to get a shot.
 			//assumption is flawed: The unit may be aiming or otherwise unable to shoot
-			else if (owner->unitDef->strafeToAttack && targetMidPosDist2D < (owner->maxRange * 0.9f)) {
+			if (owner->unitDef->strafeToAttack) {
 				moveDir ^= (owner->moveType->progressState == AMoveType::Failed);
 
 				const float sin = moveDir ? 3.0/5 : -3.0/5;
@@ -828,6 +822,13 @@ void CMobileCAI::ExecuteAttack(Command &c)
 				goalDiff += orderTarget->pos;
 				SetGoal(goalDiff, owner->pos, owner->maxRange * 0.9f);
 			}
+			
+			else if (owner->unitDef->IsHoveringAirUnit() || (targetMidPosVec.SqLength2D() < 1024)) {
+				StopMove();
+				owner->moveType->KeepPointingTo(orderTarget->midPos, minPointingDist, true);
+			}
+
+			
 		}
 
 		// if 2D distance of (target position plus attacker error vector times 128)
@@ -838,12 +839,11 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			// if the target isn't in LOS, go to its approximate position
 			// otherwise try to go precisely to the target
 			// this should fix issues with low range weapons (mainly melee)
-			const float3 errPos = ((orderTarget->losStatus[owner->allyteam] & LOS_INLOS)? ZeroVector: owner->posErrorVector * 128.0f);
+			const float3 errPos = orderTarget->GetErrorVector(owner->allyteam);
 			const float3 tgtPos = orderTarget->pos + errPos;
 
 			const float3 norm = (tgtPos - owner->pos).Normalize();
 			const float3 goal = tgtPos - norm * (orderTarget->radius * edgeFactor * 0.8f);
-
 			SetGoal(goal, owner->pos, owner->maxRange * 0.9f);
 
 			if (lastCloseInTry < gs->frameNum + MAX_CLOSE_IN_RETRY_TICKS)
