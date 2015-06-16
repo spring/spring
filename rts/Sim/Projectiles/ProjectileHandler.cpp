@@ -76,20 +76,30 @@ CR_REG_METADATA(CProjectileHandler, (
 //////////////////////////////////////////////////////////////////////
 
 CProjectileHandler::CProjectileHandler()
+: currentNanoParticles(0)
 {
 	maxParticles     = configHandler->GetInt("MaxParticles");
 	maxNanoParticles = configHandler->GetInt("MaxNanoParticles");
 
-	currentNanoParticles   = 0;
+	maxUsedSyncedID = 1024;
+#if UNSYNCED_PROJ_NOEVENT
+	maxUsedUnsyncedID = 0;
+#else
+	maxUsedUnsyncedID = 8192;
+#endif
 
 	// preload some IDs
-	for (int i = 0; i < 2048; i++) {
+	for (int i = 0; i < maxUsedSyncedID; i++) {
 		freeSyncedIDs.push_back(i);
-		freeUnsyncedIDs.push_back(i);
 	}
+	SyncedRNG rng;
+	std::random_shuffle(freeSyncedIDs.begin(), freeSyncedIDs.end(), rng);
 
-	maxUsedSyncedID = freeSyncedIDs.back();
-	maxUsedUnsyncedID = freeUnsyncedIDs.back();
+	for (int i = 0; i < maxUsedUnsyncedID; i++) {
+		freeUnsyncedIDs.push_back(i); //FIXME
+	}
+	UnsyncedRNG urng;
+	std::random_shuffle(freeUnsyncedIDs.begin(), freeUnsyncedIDs.end(), urng);
 }
 
 CProjectileHandler::~CProjectileHandler()
