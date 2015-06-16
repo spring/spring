@@ -330,8 +330,8 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 void CProjectileHandler::CheckUnitCollisions(
 	CProjectile* p,
 	std::vector<CUnit*>& tempUnits,
-	const float3& ppos0,
-	const float3& ppos1)
+	const float3 ppos0,
+	const float3 ppos1)
 {
 	CollisionQuery cq;
 
@@ -376,8 +376,8 @@ void CProjectileHandler::CheckUnitCollisions(
 void CProjectileHandler::CheckFeatureCollisions(
 	CProjectile* p,
 	std::vector<CFeature*>& tempFeatures,
-	const float3& ppos0,
-	const float3& ppos1)
+	const float3 ppos0,
+	const float3 ppos1)
 {
 	// already collided with unit?
 	if (!p->checkCol)
@@ -477,8 +477,8 @@ void CProjectileHandler::AddGroundFlash(CGroundFlash* flash)
 
 
 void CProjectileHandler::AddFlyingPiece(
-	const float3& pos,
-	const float3& speed,
+	const float3 pos,
+	const float3 speed,
 	int team,
 	const S3DOPiece* piece,
 	const S3DOPrimitive* chunk)
@@ -488,8 +488,8 @@ void CProjectileHandler::AddFlyingPiece(
 }
 
 void CProjectileHandler::AddFlyingPiece(
-	const float3& pos,
-	const float3& speed,
+	const float3 pos,
+	const float3 speed,
 	int team,
 	int textureType,
 	const SS3OVertex* chunk)
@@ -502,8 +502,8 @@ void CProjectileHandler::AddFlyingPiece(
 
 
 void CProjectileHandler::AddNanoParticle(
-	const float3& startPos,
-	const float3& endPos,
+	const float3 startPos,
+	const float3 endPos,
 	const UnitDef* unitDef,
 	int teamNum,
 	bool highPriority)
@@ -524,16 +524,15 @@ void CProjectileHandler::AddNanoParticle(
 	SColor color(unitDef->nanoColor.r, unitDef->nanoColor.g, unitDef->nanoColor.b);
 	if (globalRendering->teamNanospray) {
 		const CTeam* team = teamHandler->Team(teamNum);
-		const unsigned char* tcol = team->color;
-		color = SColor(tcol);
+		color = SColor(team->color);
 	}
 	color.a = 20;
 	new CNanoProjectile(startPos, dif, int(l), color);
 }
 
 void CProjectileHandler::AddNanoParticle(
-	const float3& startPos,
-	const float3& endPos,
+	const float3 startPos,
+	const float3 endPos,
 	const UnitDef* unitDef,
 	int teamNum,
 	float radius,
@@ -556,8 +555,7 @@ void CProjectileHandler::AddNanoParticle(
 	SColor color(unitDef->nanoColor.r, unitDef->nanoColor.g, unitDef->nanoColor.b);
 	if (globalRendering->teamNanospray) {
 		const CTeam* team = teamHandler->Team(teamNum);
-		const unsigned char* tcol = team->color;
-		color = SColor(tcol);
+		color = SColor(team->color);
 	}
 	color.a = 20;
 

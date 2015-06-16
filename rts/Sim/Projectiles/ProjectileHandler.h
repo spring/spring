@@ -47,8 +47,8 @@ public:
 	CProjectile* GetProjectileBySyncedID(int id);
 	CProjectile* GetProjectileByUnsyncedID(int id);
 
-	void CheckUnitCollisions(CProjectile*, std::vector<CUnit*>&, const float3&, const float3&);
-	void CheckFeatureCollisions(CProjectile*, std::vector<CFeature*>&, const float3&, const float3&);
+	void CheckUnitCollisions(CProjectile*, std::vector<CUnit*>&, const float3, const float3);
+	void CheckFeatureCollisions(CProjectile*, std::vector<CFeature*>&, const float3, const float3);
 	void CheckUnitFeatureCollisions(ProjectileContainer&);
 	void CheckGroundCollisions(ProjectileContainer&);
 	void CheckCollisions();
@@ -63,10 +63,10 @@ public:
 
 	void AddProjectile(CProjectile* p);
 	void AddGroundFlash(CGroundFlash* flash);
-	void AddFlyingPiece(const float3& pos, const float3& speed, int team, const S3DOPiece* piece, const S3DOPrimitive* chunk);
-	void AddFlyingPiece(const float3& pos, const float3& speed, int team, int textureType, const SS3OVertex* chunk);
-	void AddNanoParticle(const float3&, const float3&, const UnitDef*, int team, bool highPriority);
-	void AddNanoParticle(const float3&, const float3&, const UnitDef*, int team, float radius, bool inverse, bool highPriority);
+	void AddFlyingPiece(const float3 pos, const float3 speed, int team, const S3DOPiece* piece, const S3DOPrimitive* chunk);
+	void AddFlyingPiece(const float3 pos, const float3 speed, int team, int textureType, const SS3OVertex* chunk);
+	void AddNanoParticle(const float3, const float3, const UnitDef*, int team, bool highPriority);
+	void AddNanoParticle(const float3, const float3, const UnitDef*, int team, float radius, bool inverse, bool highPriority);
 
 public:
 	int maxParticles;              // different effects should start to cut down on unnececary(unsynced) particles when this number is reached
