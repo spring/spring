@@ -82,16 +82,12 @@ public:
 private:
 	void UpdateProjectileContainer(ProjectileContainer&, bool);
 
-
 	int maxUsedSyncedID;
 	int maxUsedUnsyncedID;
 	std::deque<int> freeSyncedIDs;             // available synced (weapon, piece) projectile ID's
 	std::deque<int> freeUnsyncedIDs;           // available unsynced projectile ID's
 	ProjectileMap syncedProjectileIDs;        // ID ==> projectile* map for living synced projectiles
 	ProjectileMap unsyncedProjectileIDs;      // ID ==> projectile* map for living unsynced projectiles
-
-	ProjectileMap syncedRenderProjectileIDs;        // same as syncedProjectileIDs, used by render thread
-	ProjectileMap unsyncedRenderProjectileIDs;      // same as unsyncedProjectileIDs, used by render thread
 };
 
 
