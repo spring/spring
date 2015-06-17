@@ -780,9 +780,12 @@ void CProjectileDrawer::DrawGroundFlashes()
 
 	for (gfi = gfc.render_begin(); gfi != gfc.render_end(); ++gfi) {
 		CGroundFlash* gf = *gfi;
+		const bool inLos = gf->alwaysVisible || gu->spectatingFullView || losHandler->InAirLos(gf->pos, gu->myAllyTeam);
+		if (!inLos)
+			continue;
 
-		const bool los = gu->spectatingFullView || losHandler->InAirLos(gf->pos, gu->myAllyTeam);
-		const bool vis = camera->InView(gf->pos, gf->size);
+		if (!camera->InView(gf->pos, gf->size))
+			continue;
 
 		if (depthTest != gf->depthTest) {
 			depthTest = gf->depthTest;
@@ -792,6 +795,8 @@ void CProjectileDrawer::DrawGroundFlashes()
 			} else {
 				glDisable(GL_DEPTH_TEST);
 			}
+			CGroundFlash::va->DrawArrayTC(GL_QUADS);
+			CGroundFlash::va->Initialize();
 		}
 		if (depthMask != gf->depthMask) {
 			depthMask = gf->depthMask;
@@ -801,16 +806,14 @@ void CProjectileDrawer::DrawGroundFlashes()
 			} else {
 				glDepthMask(GL_FALSE);
 			}
+			CGroundFlash::va->DrawArrayTC(GL_QUADS);
+			CGroundFlash::va->Initialize();
 		}
 
-		if ((gf->alwaysVisible || los) && vis) {
-			gf->Draw();
-		}
-
-		CGroundFlash::va->DrawArrayTC(GL_QUADS);
-		CGroundFlash::va->Initialize();
+		gf->Draw();
 	}
 
+	CGroundFlash::va->DrawArrayTC(GL_QUADS);
 
 	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 	glDisable(GL_POLYGON_OFFSET_FILL);
