@@ -236,9 +236,10 @@ void CProjectileHandler::Update()
 	{
 		SCOPED_TIMER("ProjectileHandler::Update");
 
+		// particles
+		CheckCollisions(); // before :Update() to check if the particles move into stuff
 		UpdateProjectileContainer(syncedProjectiles, true);
 		UpdateProjectileContainer(unsyncedProjectiles, false);
-		CheckCollisions();
 
 		GroundFlashContainer::iterator gfi = groundFlashes.begin();
 		while (gfi != groundFlashes.end()) {
