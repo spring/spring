@@ -31,8 +31,8 @@ struct SS3OVertex;
 typedef std::map<int, CProjectile*> ProjectileMap; // <id, proj*>
 
 typedef std::list<CProjectile*> ProjectileContainer;
-typedef ThreadListSimRender<std::list<CGroundFlash*>, std::set<CGroundFlash*>, CGroundFlash*> GroundFlashContainer;
-typedef ThreadListSimRender<std::set<FlyingPiece*, FlyingPieceComparator>, void, FlyingPiece*> FlyingPieceContainer;
+typedef std::vector<CGroundFlash*> GroundFlashContainer;
+typedef std::vector<FlyingPiece*> FlyingPieceContainer;
 
 
 class CProjectileHandler
@@ -77,6 +77,10 @@ public:
 	int lastCurrentParticles;
 	int lastSyncedProjectilesCount;
 	int lastUnsyncedProjectilesCount;
+
+	// flying pieces are sorted from time to time to reduce gl state changes
+	bool resortFlyingPieces3DO;
+	bool resortFlyingPiecesS3O;
 
 	ProjectileContainer syncedProjectiles;    // contains only projectiles that can change simulation state
 	ProjectileContainer unsyncedProjectiles;  // contains only projectiles that cannot change simulation state

@@ -503,7 +503,6 @@ void CProjectileDrawer::DrawProjectileShadow(CProjectile* p)
 void CProjectileDrawer::DrawProjectilesMiniMap()
 {
 	typedef std::set<CProjectile*> ProjectileSet;
-	typedef std::set<CProjectile*>::const_iterator ProjectileSetIt;
 	typedef std::map<int, ProjectileSet> ProjectileBin;
 	typedef std::map<int, ProjectileSet>::const_iterator ProjectileBinIt;
 
@@ -572,7 +571,6 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType)
 	};
 
 	FlyingPieceContainer* container = containers[modelType];
-	FlyingPieceContainer::render_iterator fpi;
 
 	if (container != NULL) {
 		CVertexArray* va = GetVertexArray();
@@ -582,9 +580,7 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType)
 		size_t lastTex = -1;
 		size_t lastTeam = -1;
 
-		for (fpi = container->render_begin(); fpi != container->render_end(); ++fpi) {
-			FlyingPiece* fp = *fpi;
-
+		for (FlyingPiece* fp: *container) {
 			const bool inLos = teamHandler->AlliedTeams(gu->myAllyTeam, fp->GetTeam()) ||
 				gu->spectatingFullView || losHandler->InAirLos(fp->GetPos(), gu->myAllyTeam);
 
@@ -770,13 +766,11 @@ void CProjectileDrawer::DrawGroundFlashes()
 	CGroundFlash::va->EnlargeArrays(8, 0, VA_SIZE_TC);
 
 	GroundFlashContainer& gfc = projectileHandler->groundFlashes;
-	GroundFlashContainer::render_iterator gfi;
 
 	bool depthTest = true;
 	bool depthMask = false;
 
-	for (gfi = gfc.render_begin(); gfi != gfc.render_end(); ++gfi) {
-		CGroundFlash* gf = *gfi;
+	for (CGroundFlash* gf: gfc) {
 		const bool inLos = gf->alwaysVisible || gu->spectatingFullView || losHandler->InAirLos(gf->pos, gu->myAllyTeam);
 		if (!inLos)
 			continue;

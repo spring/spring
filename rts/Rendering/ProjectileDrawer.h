@@ -20,9 +20,6 @@ class IWorldObjectModelRenderer;
 class LuaTable;
 
 
-typedef ThreadListSimRender<std::list<CGroundFlash*>, std::set<CGroundFlash*>, CGroundFlash*> GroundFlashContainer;
-typedef ThreadListSimRender<std::set<FlyingPiece*, FlyingPieceComparator>, void, FlyingPiece*> FlyingPieceContainer;
-
 
 class CProjectileDrawer: public CEventClient {
 public:
@@ -30,7 +27,6 @@ public:
 	~CProjectileDrawer();
 
 	typedef std::set<CProjectile*, ProjectileDistanceComparator> SortedProjectileSet;
-	typedef std::list<CProjectile*> UnsortedProjectileList;
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
 	void DrawProjectilesMiniMap();
@@ -132,7 +128,7 @@ private:
 	 * to render particle effects in back-to-front order
 	 */
 	SortedProjectileSet zSortedProjectiles;
-	UnsortedProjectileList unsortedProjectiles;
+	std::vector<CProjectile*> unsortedProjectiles;
 };
 
 extern CProjectileDrawer* projectileDrawer;

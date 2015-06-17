@@ -40,12 +40,6 @@ CONFIG(int, MaxNanoParticles).defaultValue(2000).headlessValue(1).minimumValue(1
 CProjectileHandler* projectileHandler = NULL;
 
 
-CR_BIND_TEMPLATE(GroundFlashContainer, )
-CR_REG_METADATA(GroundFlashContainer, (
-	CR_MEMBER(cont),
-	CR_MEMBER(delObj)
-))
-
 CR_BIND(CProjectileHandler, )
 CR_REG_METADATA(CProjectileHandler, (
 	CR_MEMBER(syncedProjectiles),
@@ -53,6 +47,8 @@ CR_REG_METADATA(CProjectileHandler, (
 	CR_MEMBER_UN(flyingPieces3DO),
 	CR_MEMBER_UN(flyingPiecesS3O),
 	CR_MEMBER_UN(groundFlashes),
+	CR_MEMBER_UN(resortFlyingPieces3DO),
+	CR_MEMBER_UN(resortFlyingPiecesS3O),
 
 	CR_MEMBER(maxParticles),
 	CR_MEMBER(maxNanoParticles),
@@ -229,6 +225,28 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 	}
 }
 
+template<class T>
+static void UPDATE_CONTAINER(T& cont) {
+#ifdef DEBUG
+	const auto* origStart = cont.empty() ? nullptr : &(*cont.begin());
+#endif
+
+	auto pti = cont.begin();
+	while (pti != cont.end()) {
+		auto* p = *pti;
+		if (!p->Update()) {
+			pti = cont.erase(pti);
+			delete p;
+		} else {
+			++pti;
+		}
+	}
+
+	//WARNING: check if the vector got enlarged while iterating, in that case
+	// all iterators got invalidated in the loop, causing crashes
+	assert(cont.empty() || &(*cont.begin()) == origStart);
+}
+
 
 
 void CProjectileHandler::Update()
@@ -241,47 +259,19 @@ void CProjectileHandler::Update()
 		UpdateProjectileContainer(syncedProjectiles, true);
 		UpdateProjectileContainer(unsyncedProjectiles, false);
 
-		GroundFlashContainer::iterator gfi = groundFlashes.begin();
-		while (gfi != groundFlashes.end()) {
-			CGroundFlash* gf = *gfi;
+		// groundflashes
+		UPDATE_CONTAINER(groundFlashes);
 
-			if (!gf->Update()) {
-				gfi = groundFlashes.erase_delete(gfi);
-			} else {
-				++gfi;
-			}
-		}
+		// flying pieces
+		UPDATE_CONTAINER(flyingPiecesS3O);
+		UPDATE_CONTAINER(flyingPieces3DO);
 
-		{
-
-			groundFlashes.delay_delete();
-			groundFlashes.delay_add();
-		}
-
-		#define UPDATE_FLYING_PIECES(fpContainer)                      \
-			FlyingPieceContainer::iterator pti = fpContainer.begin();  \
-                                                                       \
-			while (pti != fpContainer.end()) {                         \
-				FlyingPiece* p = *pti;                                 \
-				if (!p->Update()) {                                    \
-					pti = fpContainer.erase_delete_set(pti);           \
-				} else {                                               \
-					++pti;                                             \
-				}                                                      \
-			}
-
-		{ UPDATE_FLYING_PIECES(flyingPieces3DO); }
-		{ UPDATE_FLYING_PIECES(flyingPiecesS3O); }
-		#undef UPDATE_FLYING_PIECES
-
-		{
-
-			flyingPieces3DO.delay_delete();
-			flyingPieces3DO.delay_add();
-			flyingPiecesS3O.delay_delete();
-			flyingPiecesS3O.delay_add();
-		}
+		// sort those every now and then
+		FlyingPieceComparator fsort;
+		if (resortFlyingPiecesS3O) std::sort(flyingPiecesS3O.begin(), flyingPiecesS3O.end(), fsort);
+		if (resortFlyingPieces3DO) std::sort(flyingPieces3DO.begin(), flyingPieces3DO.end(), fsort);
 	}
+
 	// precache part of particles count calculation that else becomes very heavy
 	lastCurrentParticles = 0;
 	for (const CProjectile* p: syncedProjectiles) {
@@ -483,7 +473,7 @@ void CProjectileHandler::CheckGroundCollisions(ProjectileContainer& pc)
 
 void CProjectileHandler::CheckCollisions()
 {
-	SCOPED_TIMER("ProjectileHandler::CheckCollisions");
+	SCOPED_TIMER("ProjectileHandler::Update::CheckCollisions");
 
 	CheckUnitFeatureCollisions(syncedProjectiles); //! changes simulation state
 	CheckUnitFeatureCollisions(unsyncedProjectiles); //! does not change simulation state
@@ -496,7 +486,7 @@ void CProjectileHandler::CheckCollisions()
 
 void CProjectileHandler::AddGroundFlash(CGroundFlash* flash)
 {
-	groundFlashes.push(flash);
+	groundFlashes.push_back(flash);
 }
 
 
@@ -508,7 +498,8 @@ void CProjectileHandler::AddFlyingPiece(
 	const S3DOPrimitive* chunk)
 {
 	FlyingPiece* fp = new S3DOFlyingPiece(pos, speed, team, piece, chunk);
-	flyingPieces3DO.insert(fp);
+	flyingPieces3DO.push_back(fp);
+	resortFlyingPieces3DO = true;
 }
 
 void CProjectileHandler::AddFlyingPiece(
@@ -521,7 +512,8 @@ void CProjectileHandler::AddFlyingPiece(
 	assert(textureType > 0);
 
 	FlyingPiece* fp = new SS3OFlyingPiece(pos, speed, team, textureType, chunk);
-	flyingPiecesS3O.insert(fp);
+	flyingPiecesS3O.push_back(fp);
+	resortFlyingPiecesS3O = true;
 }
 
 
