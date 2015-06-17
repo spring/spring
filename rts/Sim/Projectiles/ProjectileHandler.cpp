@@ -57,6 +57,9 @@ CR_REG_METADATA(CProjectileHandler, (
 	CR_MEMBER(maxParticles),
 	CR_MEMBER(maxNanoParticles),
 	CR_MEMBER(currentNanoParticles),
+	CR_MEMBER_UN(lastCurrentParticles),
+	CR_MEMBER_UN(lastSyncedProjectilesCount),
+	CR_MEMBER_UN(lastUnsyncedProjectilesCount),
 
 	CR_MEMBER(maxUsedSyncedID),
 	CR_MEMBER(maxUsedUnsyncedID),
@@ -77,6 +80,9 @@ CR_REG_METADATA(CProjectileHandler, (
 
 CProjectileHandler::CProjectileHandler()
 : currentNanoParticles(0)
+, lastCurrentParticles(0)
+, lastSyncedProjectilesCount(0)
+, lastUnsyncedProjectilesCount(0)
 {
 	maxParticles     = configHandler->GetInt("MaxParticles");
 	maxNanoParticles = configHandler->GetInt("MaxNanoParticles");
@@ -278,6 +284,16 @@ void CProjectileHandler::Update()
 			flyingPiecesS3O.delay_add();
 		}
 	}
+	// precache part of particles count calculation that else becomes very heavy
+	lastCurrentParticles = 0;
+	for (const CProjectile* p: syncedProjectiles) {
+		lastCurrentParticles += p->GetProjectilesCount();
+	}
+	lastSyncedProjectilesCount = syncedProjectiles.size();
+	for (const CProjectile* p: unsyncedProjectiles) {
+		lastCurrentParticles += p->GetProjectilesCount();
+	}
+	lastUnsyncedProjectilesCount = unsyncedProjectiles.size();
 }
 
 
@@ -598,19 +614,24 @@ CProjectile* CProjectileHandler::GetProjectileByUnsyncedID(int id)
 }
 
 
-float CProjectileHandler::GetParticleSaturation() const
+float CProjectileHandler::GetParticleSaturation(const bool withRandomization) const
 {
-	return GetCurrentParticles() / float(maxParticles);
+	// use the random mult to weaken the max limit a little
+	// so the chance is better spread when being close to the limit
+	// i.e. when there are rockets that spam CEGs this gives smaller CEGs still a chance
+	return (GetCurrentParticles() / float(maxParticles)) * (1.f + int(withRandomization) * 0.3f * gu->RandFloat());
 }
 
 int CProjectileHandler::GetCurrentParticles() const
 {
-	int partCount = 0;
-	for (const CProjectile* p: syncedProjectiles) {
-		partCount += p->GetProjectilesCount();
+	// use precached part of particles count calculation that else becomes very heavy
+	// example where it matters: (in ZK) /cheat /give 20 armraven -> shoot ground
+	int partCount = lastCurrentParticles;
+	for (size_t i = lastSyncedProjectilesCount, e = syncedProjectiles.size(); i < e; ++i) {
+		partCount += syncedProjectiles[i]->GetProjectilesCount();
 	}
-	for (const CProjectile* p: unsyncedProjectiles) {
-		partCount += p->GetProjectilesCount();
+	for (size_t i = lastUnsyncedProjectilesCount, e = unsyncedProjectiles.size(); i < e; ++i) {
+		partCount += unsyncedProjectiles[i]->GetProjectilesCount();
 	}
 	partCount += flyingPieces3DO.size();
 	partCount += flyingPiecesS3O.size();

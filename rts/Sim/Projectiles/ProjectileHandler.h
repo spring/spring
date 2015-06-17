@@ -58,7 +58,7 @@ public:
 
 	void Update();
 
-	float GetParticleSaturation() const;
+	float GetParticleSaturation(const bool withRandomization = true) const;
 	int   GetCurrentParticles() const;
 
 	void AddProjectile(CProjectile* p);
@@ -72,6 +72,11 @@ public:
 	int maxParticles;              // different effects should start to cut down on unnececary(unsynced) particles when this number is reached
 	int maxNanoParticles;
 	int currentNanoParticles;
+
+	// these vars are used to precache parts of GetCurrentParticles() calculations
+	int lastCurrentParticles;
+	int lastSyncedProjectilesCount;
+	int lastUnsyncedProjectilesCount;
 
 	ProjectileContainer syncedProjectiles;    // contains only projectiles that can change simulation state
 	ProjectileContainer unsyncedProjectiles;  // contains only projectiles that cannot change simulation state
