@@ -25,24 +25,13 @@ float CMoveMath::HoverSpeedMod(const MoveDef& moveDef, float height, float slope
 		return HoverSpeedMod(moveDef, height, slope);
 	}
 
-	//FIXME broken cause of:
-	// 1. it doubles maxSlope -> the value NOT the angle, and so _massively_ increasing maxSlope angle
-	// 2. by doing so it makes squares pathable that are blocked in classic SpeedMod w/o movedir.
-	//    Not bad itself, problem is that GroundMoveType.cpp code is broken and sometimes uses it with movedir
-	//    sometimes without. And so codes working against each other making units shake when going hills up etc.
+	// Only difference direction can have is making hills climbing slower.
 
 	// no speed-penalty if on water
 	if (height < 0.0f)
-		return 1.0f;
+		return (1.0f * !noHoverWaterMove);
 
-	if (slope > (moveDef.maxSlope * 2.0f))
-		return 0.0f;
-
-	// too steep downhill slope?
-	if (dirSlopeMod <= 0.0f && (slope * dirSlopeMod) < (-moveDef.maxSlope * 2.0f))
-		return 0.0f;
-	// too steep uphill slope?
-	if (dirSlopeMod  > 0.0f && (slope * dirSlopeMod) > ( moveDef.maxSlope       ))
+	if (slope > moveDef.maxSlope)
 		return 0.0f;
 
 	return (1.0f / (1.0f + std::max(0.0f, slope * dirSlopeMod) * moveDef.slopeMod));

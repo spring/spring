@@ -30,30 +30,13 @@ float CMoveMath::GroundSpeedMod(const MoveDef& moveDef, float height, float slop
 	if (!modInfo.allowDirectionalPathing) {
 		return GroundSpeedMod(moveDef, height, slope);
 	}
-
-	//FIXME broken cause of:
-	// 1. it doubles maxSlope -> the value NOT the angle, and so _massively_ increasing maxSlope angle
-	// 2. by doing so it makes squares pathable that are blocked in classic SpeedMod w/o movedir.
-	//    Not bad itself, problem is that GroundMoveType.cpp code is broken and sometimes uses it with movedir
-	//    sometimes without. And so codes working against each other making units shake when going hills up etc.
-
+	// Directional speed is now equal to regular except when:
+	// 1) Climbing out of places which are below max depth.
+	// 2) Climbing hills is slower.
+	
 	float speedMod = 0.0f;
 
-	// NOTE:
-	//    dirSlopeMod is always a value in [-1, 1], so <slope * mod>
-	//    is never greater than <slope> and never less than <-slope>
-	//
-	//    any slope > (tolerance * 2) is always non-navigable (up or down)
-	//    any slope < (tolerance    ) is always     navigable (up or down)
-	//    for any in-between slope it depends on the directional modifier
-	if (slope > (moveDef.maxSlope * 2.0f))
-		return speedMod;
-
-	// too steep downhill slope?
-	if (dirSlopeMod <= 0.0f && (slope * dirSlopeMod) < (-moveDef.maxSlope * 2.0f))
-		return speedMod;
-	// too steep uphill slope?
-	if (dirSlopeMod  > 0.0f && (slope * dirSlopeMod) > ( moveDef.maxSlope       ))
+	if (slope > moveDef.maxSlope)
 		return speedMod;
 
 	// is this square below our maxWaterDepth and are we going further downhill?
