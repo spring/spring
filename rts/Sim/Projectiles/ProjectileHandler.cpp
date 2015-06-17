@@ -184,8 +184,8 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 			++pci;
 			continue;
 		}
-
-		pci = pc.erase(pci); //FIXME replace with fast erase? (exchange with back() & remove there)
+		*pci = pc.back();
+		pc.pop_back();
 		if (synced) { //FIXME move outside of loop!
 			eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
 			syncedProjectileIDs[p->id] = nullptr;
@@ -231,7 +231,8 @@ static void UPDATE_CONTAINER(T& cont) {
 	while (pti != cont.end()) {
 		auto* p = *pti;
 		if (!p->Update()) {
-			pti = cont.erase(pti);
+			*pti = cont.back();
+			cont.pop_back();
 			delete p;
 		} else {
 			++pti;
