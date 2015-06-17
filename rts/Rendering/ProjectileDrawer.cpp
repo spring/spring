@@ -583,7 +583,18 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType, int numFlyingPieces, int
 		size_t lastTeam = -1;
 
 		for (fpi = container->render_begin(); fpi != container->render_end(); ++fpi) {
-			(*fpi)->Draw(&lastTeam, &lastTex, va);
+			FlyingPiece* fp = *fpi;
+
+			const bool inLos = teamHandler->AlliedTeams(gu->myAllyTeam, fp->GetTeam()) ||
+				gu->spectatingFullView || losHandler->InAirLos(fp->GetPos(), gu->myAllyTeam);
+
+			if (!inLos)
+				continue;
+
+			if (!camera->InView(fp->GetPos(), fp->GetRadius()))
+				continue;
+
+			fp->Draw(&lastTeam, &lastTex, va);
 		}
 
 		(*drawnPieces) += (va->drawIndex() / VA_SIZE_TN);
