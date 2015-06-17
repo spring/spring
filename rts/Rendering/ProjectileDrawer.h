@@ -99,9 +99,9 @@ public:
 private:
 	static void ParseAtlasTextures(const bool, const LuaTable&, std::set<std::string>&, CTextureAtlas*);
 
-	void DrawProjectiles(int modelType, int numFlyingPieces, int* drawnPieces, bool drawReflection, bool drawRefraction);
+	void DrawProjectiles(int modelType, bool drawReflection, bool drawRefraction);
 	void DrawProjectilesShadow(int modelType);
-	void DrawFlyingPieces(int modelType, int numFlyingPieces, int* drawnPieces);
+	void DrawFlyingPieces(int modelType);
 
 	void DrawProjectilesSet(const std::set<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction);
 	static void DrawProjectilesSetShadow(const std::set<CProjectile*>& projectiles);

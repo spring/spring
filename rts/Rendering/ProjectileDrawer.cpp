@@ -389,7 +389,7 @@ void CProjectileDrawer::LoadWeaponTextures() {
 
 
 
-void CProjectileDrawer::DrawProjectiles(int modelType, int numFlyingPieces, int* drawnPieces, bool drawReflection, bool drawRefraction)
+void CProjectileDrawer::DrawProjectiles(int modelType, bool drawReflection, bool drawRefraction)
 {
 	typedef std::set<CProjectile*> ProjectileSet;
 	typedef std::map<int, ProjectileSet> ProjectileBin;
@@ -406,7 +406,7 @@ void CProjectileDrawer::DrawProjectiles(int modelType, int numFlyingPieces, int*
 		DrawProjectilesSet(binIt->second, drawReflection, drawRefraction);
 	}
 
-	DrawFlyingPieces(modelType, numFlyingPieces, drawnPieces);
+	DrawFlyingPieces(modelType);
 }
 
 void CProjectileDrawer::DrawProjectilesSet(const std::set<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction)
@@ -562,7 +562,7 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 	}
 }
 
-void CProjectileDrawer::DrawFlyingPieces(int modelType, int numFlyingPieces, int* drawnPieces)
+void CProjectileDrawer::DrawFlyingPieces(int modelType)
 {
 	// TODO: faster to make this a member
 	FlyingPieceContainer* containers[MODELTYPE_OTHER] = {
@@ -597,7 +597,6 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType, int numFlyingPieces, int
 			fp->Draw(&lastTeam, &lastTex, va);
 		}
 
-		(*drawnPieces) += (va->drawIndex() / VA_SIZE_TN);
 		va->DrawArrayTN(GL_QUADS);
 	}
 }
@@ -613,9 +612,6 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	zSortedProjectiles.clear();
 	unsortedProjectiles.clear();
 
-	int numFlyingPieces = projectileHandler->flyingPieces3DO.render_size() + projectileHandler->flyingPiecesS3O.render_size();
-	int drawnPieces = 0;
-
 	Update();
 
 	{
@@ -623,7 +619,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			modelRenderers[modelType]->PushRenderState();
-			DrawProjectiles(modelType, numFlyingPieces, &drawnPieces, drawReflection, drawRefraction);
+			DrawProjectiles(modelType, drawReflection, drawRefraction);
 			modelRenderers[modelType]->PopRenderState();
 		}
 
