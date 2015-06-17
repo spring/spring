@@ -233,13 +233,12 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 
 void CProjectileHandler::Update()
 {
-	CheckCollisions();
-
 	{
 		SCOPED_TIMER("ProjectileHandler::Update");
 
 		UpdateProjectileContainer(syncedProjectiles, true);
 		UpdateProjectileContainer(unsyncedProjectiles, false);
+		CheckCollisions();
 
 		GroundFlashContainer::iterator gfi = groundFlashes.begin();
 		while (gfi != groundFlashes.end()) {
