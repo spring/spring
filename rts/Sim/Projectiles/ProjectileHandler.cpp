@@ -632,7 +632,7 @@ int CProjectileHandler::GetCurrentParticles() const
 	}
 	auto jt = unsyncedProjectiles.begin();
 	std::advance(jt, lastUnsyncedProjectilesCount);
-	for (; jt != unsyncedProjectiles.end(); ++it) {
+	for (; jt != unsyncedProjectiles.end(); ++jt) {
 		partCount += (*jt)->GetProjectilesCount();
 	}
 	partCount += flyingPieces3DO.size();
