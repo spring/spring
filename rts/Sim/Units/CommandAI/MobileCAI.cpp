@@ -280,7 +280,7 @@ bool CMobileCAI::RefuelIfNeeded()
 
 	if (owner->moveType->GetReservedPad() != NULL) {
 		// we already have a pad
-		return false;
+		return true;
 	}
 
 	if (owner->currentFuel <= 0.0f) {
@@ -300,7 +300,10 @@ bool CMobileCAI::RefuelIfNeeded()
 			const float3& landingPos = airBaseHandler->FindClosestAirBasePos(owner, owner->unitDef->minAirBasePower);
 
 			if (landingPos != ZeroVector) {
-				SetGoal(landingPos, owner->pos);
+				StopMove();
+				owner->DropCurrentAttackTarget();
+				owner->moveType->ReservePad(lp);
+				inCommand = false;
 			} else {
 				StopMove();
 			}
@@ -331,7 +334,7 @@ bool CMobileCAI::RefuelIfNeeded()
 bool CMobileCAI::LandRepairIfNeeded()
 {
 	if (owner->moveType->GetReservedPad() != NULL)
-		return false;
+		return true;
 
 	if (!owner->moveType->WantsRepair())
 		return false;
@@ -341,7 +344,10 @@ bool CMobileCAI::LandRepairIfNeeded()
 		airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower, true);
 
 	if (lp != NULL) {
+		StopMove();
+		owner->DropCurrentAttackTarget();
 		owner->moveType->ReservePad(lp);
+		inCommand = false;
 		return true;
 	}
 
@@ -362,6 +368,8 @@ void CMobileCAI::SlowUpdate()
 
 	if (!owner->UsingScriptMoveType() && owner->unitDef->IsAirUnit()) {
 		LandRepairIfNeeded() || RefuelIfNeeded();
+		if (owner->moveType->GetReservedPad())
+			return;
 	}
 
 
