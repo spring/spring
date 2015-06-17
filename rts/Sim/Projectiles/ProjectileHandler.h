@@ -3,13 +3,8 @@
 #ifndef PROJECTILE_HANDLER_H
 #define PROJECTILE_HANDLER_H
 
-#include <list>
-#include <set>
 #include <deque>
 #include <vector>
-
-#include "lib/gml/ThreadSafeContainers.h"
-
 #include "Sim/Projectiles/ProjectileFunctors.h"
 #include "System/float3.h"
 
@@ -27,10 +22,8 @@ struct S3DOPiece;
 struct SS3OVertex;
 
 
-
-typedef std::map<int, CProjectile*> ProjectileMap; // <id, proj*>
-
-typedef std::list<CProjectile*> ProjectileContainer;
+typedef std::vector<CProjectile*> ProjectileMap; // <id, proj*>
+typedef std::vector<CProjectile*> ProjectileContainer; // <unsorted>
 typedef std::vector<CGroundFlash*> GroundFlashContainer;
 typedef std::vector<FlyingPiece*> FlyingPieceContainer;
 
@@ -91,10 +84,8 @@ public:
 private:
 	void UpdateProjectileContainer(ProjectileContainer&, bool);
 
-	int maxUsedSyncedID;
-	int maxUsedUnsyncedID;
-	std::deque<int> freeSyncedIDs;             // available synced (weapon, piece) projectile ID's
-	std::deque<int> freeUnsyncedIDs;           // available unsynced projectile ID's
+	std::deque<int> freeSyncedIDs;            // available synced (weapon, piece) projectile ID's
+	std::deque<int> freeUnsyncedIDs;          // available unsynced projectile ID's
 	ProjectileMap syncedProjectileIDs;        // ID ==> projectile* map for living synced projectiles
 	ProjectileMap unsyncedProjectileIDs;      // ID ==> projectile* map for living unsynced projectiles
 };

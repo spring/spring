@@ -1,11 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #include "ProjectileFunctors.h"
 #include "Projectile.h"
 #include "Unsynced/FlyingPiece.h"
-
-void ProjectileDetacher::Detach(CProjectile* p) { }
-
-
 
 
 bool ProjectileDistanceComparator::operator() (const CProjectile* arg1, const CProjectile* arg2) const {
