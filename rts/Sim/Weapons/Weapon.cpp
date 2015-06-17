@@ -750,24 +750,24 @@ void CWeapon::DependentDied(CObject* o)
 }
 
 
-bool CWeapon::TargetUnderWater(const SWeaponTarget& target)
+bool CWeapon::TargetUnderWater(const float3 tgtPos, const SWeaponTarget& target)
 {
 	switch (target.type) {
 		case Target_None: return false;
 		case Target_Unit: return target.unit->IsUnderWater();
-		case Target_Pos:  return (target.groundPos.y < 0.0f); // consistent with CSolidObject::IsUnderWater (LT)
+		case Target_Pos:  return (tgtPos.y < 0.0f); // consistent with CSolidObject::IsUnderWater (LT)
 		case Target_Intercept: return (target.intercept->pos.y < 0.0f);
 		default: return false;
 	}
 }
 
 
-bool CWeapon::TargetInWater(const SWeaponTarget& target)
+bool CWeapon::TargetInWater(const float3 tgtPos, const SWeaponTarget& target)
 {
 	switch (target.type) {
 		case Target_None: return false;
 		case Target_Unit: return target.unit->IsInWater();
-		case Target_Pos:  return (target.groundPos.y <= 0.0f); // consistent with CSolidObject::IsInWater (LE)
+		case Target_Pos:  return (tgtPos.y <= 0.0f); // consistent with CSolidObject::IsInWater (LE)
 		case Target_Intercept: return (target.intercept->pos.y <= 0.0f);
 		default: return false;
 	}
@@ -852,13 +852,10 @@ float3 CWeapon::GetTargetBorderPos(
 bool CWeapon::TryTarget(const float3 tgtPos, const SWeaponTarget& trg) const
 {
 	assert(GetLeadTargetPos(trg).SqDistance(tgtPos) < Square(250.f));
-
 	if (!TestTarget(tgtPos, trg))
 		return false;
-
 	if (!TestRange(tgtPos, trg))
 		return false;
-
 	//FIXME add a forcedUserTarget (a forced fire mode enabled with ctrl key or something) and skip the tests below then
 	return HaveFreeLineOfFire(tgtPos, trg);
 }
@@ -921,10 +918,10 @@ bool CWeapon::TestTarget(const float3 tgtPos, const SWeaponTarget& trg) const
 	// water weapon checks
 	if (!weaponDef->waterweapon) {
 		// we cannot pick targets underwater, check where target is in relation to us
-		if (!owner->IsUnderWater() && TargetUnderWater(trg))
+		if (!owner->IsUnderWater() && TargetUnderWater(tgtPos, trg))
 			return false;
 		// if we are underwater but target is *not* in water, fireSubmersed gets checked
-		if (owner->IsUnderWater() && TargetInWater(trg))
+		if (owner->IsUnderWater() && TargetInWater(tgtPos, trg))
 			return false;
 	}
 

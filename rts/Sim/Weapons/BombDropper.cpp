@@ -74,10 +74,10 @@ float CBombDropper::GetPredictedImpactTime(float3 impactPos) const
 bool CBombDropper::TestTarget(const float3 pos, const SWeaponTarget& trg) const
 {
 	// assume we can still drop bombs on *partially* submerged targets
-	if (!dropTorpedoes && TargetUnderWater(trg))
+	if (!dropTorpedoes && TargetUnderWater(pos, trg))
 		return false;
 	// assume we can drop torpedoes on any partially or fully submerged target
-	if (dropTorpedoes && !TargetInWater(trg))
+	if (dropTorpedoes && !TargetInWater(pos, trg))
 		return false;
 
 	return CWeapon::TestTarget(pos, trg);

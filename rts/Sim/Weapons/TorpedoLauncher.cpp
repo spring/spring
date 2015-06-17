@@ -37,10 +37,10 @@ bool CTorpedoLauncher::TestTarget(const float3 pos, const SWeaponTarget& trg) co
 	//   able to, see #3951
 	//
 	// land- or air-based launchers cannot target anything not in water
-	if (weaponMuzzlePos.y >  0.0f &&                           !TargetInWater(trg))
+	if (weaponMuzzlePos.y >  0.0f &&                           !TargetInWater(pos, trg))
 		return false;
 	// water-based launchers cannot target anything not in water unless submissile
-	if (weaponMuzzlePos.y <= 0.0f && !weaponDef->submissile && !TargetInWater(trg))
+	if (weaponMuzzlePos.y <= 0.0f && !weaponDef->submissile && !TargetInWater(pos, trg))
 		return false;
 
 	return (CWeapon::TestTarget(pos, trg));

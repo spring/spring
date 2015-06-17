@@ -40,17 +40,17 @@ public:
 
 public:
 	/// test if the weapon is able to attack an enemy/mapspot just by its properties (no range check, no FreeLineOfFire check, ...)
-	virtual bool TestTarget(const float3 pos, const SWeaponTarget& trg) const;
+	virtual bool TestTarget(const float3 tgtPos, const SWeaponTarget& trg) const;
 	/// test if the enemy/mapspot is in range/angle
-	virtual bool TestRange(const float3 pos, const SWeaponTarget& trg) const;
+	virtual bool TestRange(const float3 tgtPos, const SWeaponTarget& trg) const;
 	/// test if something is blocking our LineOfFire
-	virtual bool HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const;
+	virtual bool HaveFreeLineOfFire(const float3 tgtPos, const SWeaponTarget& trg) const;
 
 	virtual bool CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRequestedDir) const;
 
 	bool TryTarget(const SWeaponTarget& trg) const;
 	bool TryTargetRotate(const CUnit* unit, bool userTarget);
-	bool TryTargetRotate(float3 pos, bool userTarget);
+	bool TryTargetRotate(float3 tgtPos, bool userTarget);
 	bool TryTargetHeading(short heading, const SWeaponTarget& trg);
 
 public:
@@ -85,8 +85,8 @@ protected:
 	virtual float GetPredictedImpactTime(float3 p) const; //< how long time we predict it take for a projectile to reach target
 
 	ProjectileParams GetProjectileParams();
-	static bool TargetUnderWater(const SWeaponTarget&);
-	static bool TargetInWater(const SWeaponTarget&);
+	static bool TargetUnderWater(const float3 tgtPos, const SWeaponTarget&);
+	static bool TargetInWater(const float3 tgtPos, const SWeaponTarget&);
 
 	void UpdateWeaponPieces(const bool updateAimFrom = true);
 	void UpdateWeaponVectors();
@@ -105,7 +105,7 @@ private:
 	void HoldIfTargetInvalid();
 
 	void SetAttackTarget(const SWeaponTarget& newTarget); //< does not any checks etc. !
-	bool TryTarget(const float3 pos, const SWeaponTarget& trg) const;
+	bool TryTarget(const float3 tgtPos, const SWeaponTarget& trg) const;
 
 public:
 	CUnit* owner;

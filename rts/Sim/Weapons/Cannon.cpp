@@ -73,7 +73,7 @@ void CCannon::UpdateWantedDir()
 bool CCannon::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const
 {
 	// assume we can still fire at partially submerged targets
-	if (!weaponDef->waterweapon && TargetUnderWater(trg))
+	if (!weaponDef->waterweapon && TargetUnderWater(pos, trg))
 		return false;
 
 	if (projectileSpeed == 0) {
