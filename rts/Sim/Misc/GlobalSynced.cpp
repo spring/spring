@@ -19,7 +19,7 @@
  * Global instance of CGlobalSynced
  */
 CGlobalSynced* gs = NULL;
-
+CGlobalSynced::SyncedRNG CGlobalSynced::rng;
 
 
 CR_BIND(CGlobalSynced, )
