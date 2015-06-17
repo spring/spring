@@ -98,14 +98,12 @@ CProjectileHandler::CProjectileHandler()
 	for (int i = 0; i < maxUsedSyncedID; i++) {
 		freeSyncedIDs.push_back(i);
 	}
-	SyncedRNG rng;
-	std::random_shuffle(freeSyncedIDs.begin(), freeSyncedIDs.end(), rng);
+	std::random_shuffle(freeSyncedIDs.begin(), freeSyncedIDs.end(), gs->rng);
 
 	for (int i = 0; i < maxUsedUnsyncedID; i++) {
 		freeUnsyncedIDs.push_back(i); //FIXME
 	}
-	UnsyncedRNG urng;
-	std::random_shuffle(freeUnsyncedIDs.begin(), freeUnsyncedIDs.end(), urng);
+	std::random_shuffle(freeUnsyncedIDs.begin(), freeUnsyncedIDs.end(), gu->rng);
 }
 
 CProjectileHandler::~CProjectileHandler()
