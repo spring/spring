@@ -1502,16 +1502,28 @@ void CCommandAI::UpdateStockpileIcon()
 
 void CCommandAI::WeaponFired(CWeapon* weapon, const bool searchForNewTarget)
 {
-	// copy: SelectNewAreaAttackTargetOrPos can call
-	// FinishCommand which would invalidate a pointer
-	const Command c = commandQue.empty()? Command(CMD_STOP): commandQue.front();
+	if (!inCommand)
+		return;
+
+	const Command& c = commandQue.front();
 
 	const bool haveGroundAttackCmd = (c.GetID() == CMD_ATTACK && c.GetParamsCount() >= 3);
 	const bool haveAreaAttackCmd = (c.GetID() == CMD_AREA_ATTACK);
 
-	bool nextOrder = false;
+	bool orderFinished = false;
 
-	if (searchForNewTarget && (haveAreaAttackCmd || (haveGroundAttackCmd && HasMoreMoveCommands()))) {
+	if (searchForNewTarget && (haveGroundAttackCmd && HasMoreMoveCommands())) {
+		// only manualfire & noAutoTarget weapons can finish an
+		// attack commands after a salvo, all others will continue
+		// attacking the ground spot
+		if (weapon->weaponDef->manualfire && !(c.options & META_KEY))
+			orderFinished = true;
+
+		if (weapon->noAutoTarget && !(c.options & META_KEY))
+			orderFinished = true;
+	}
+
+	if (searchForNewTarget && haveAreaAttackCmd) {
 		// if we have an area-attack command (or a regular attack command
 		// followed by anything that requires movement) and this was the
 		// last salvo of our main weapon, assume we completed an attack
@@ -1522,23 +1534,17 @@ void CCommandAI::WeaponFired(CWeapon* weapon, const bool searchForNewTarget)
 		//   SlowUpdate --> ExecuteAttack (inCommand=true) -->
 		//   queue has advanced
 		//
-		nextOrder = !SelectNewAreaAttackTargetOrPos(c);
+		// @SelectNewAreaAttackTargetOrPos
+		// return argument says if a new area attack target was choosen, else finish current command
+		orderFinished = !SelectNewAreaAttackTargetOrPos(c);
 	}
 
-	if (!inCommand)
-		return;
+	// when this fails, we need to take a copy at top instead of a reference
+	assert(&c == &commandQue.front());
 
-	// only finish manualfire'd attack commands after first salvo
-	// when you attack ground you want it to continue doing so
-	if (!weapon->weaponDef->manualfire || (c.options & META_KEY))
-		return;
-
-	if (c.GetID() == CMD_ATTACK || c.GetID() == CMD_MANUALFIRE) {
-		eoh->WeaponFired(*owner, *(weapon->weaponDef));
-
-		if (searchForNewTarget && !nextOrder) {
-			FinishCommand();
-		}
+	eoh->WeaponFired(*owner, *(weapon->weaponDef));
+	if (orderFinished) {
+		FinishCommand();
 	}
 }
 

@@ -469,8 +469,6 @@ void CAirCAI::ExecuteAreaAttack(Command& c)
 			inCommand = false;
 
 		if (orderTarget && orderTarget->pos.SqDistance2D(pos) > Square(radius)) {
-			inCommand = false;
-
 			// target wandered out of the attack-area
 			SetOrderTarget(NULL);
 			SelectNewAreaAttackTargetOrPos(c);
@@ -567,11 +565,10 @@ void CAirCAI::SetGoal(const float3& pos, const float3& curPos, float goalRadius)
 	CMobileCAI::SetGoal(pos, curPos, goalRadius);
 }
 
-bool CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac) {
-	assert(ac.GetID() == CMD_AREA_ATTACK || (ac.GetID() == CMD_ATTACK && ac.GetParamsCount() >= 3));
-
-	if (ac.GetID() == CMD_ATTACK) {
-		FinishCommand();
+bool CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac)
+{
+	assert(ac.GetID() == CMD_AREA_ATTACK);
+	if (ac.GetID() != CMD_AREA_ATTACK) {
 		return false;
 	}
 
