@@ -526,10 +526,13 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 
 			for (CProjectile* p: pset) {
 				CUnit *owner = p->owner();
-				if ((owner && (owner->allyteam == gu->myAllyTeam)) ||
-					gu->spectatingFullView || losHandler->InLos(p, gu->myAllyTeam)) {
-						p->DrawOnMinimap(*lines, *points);
-				}
+				const bool inLos = (owner && (owner->allyteam == gu->myAllyTeam)) ||
+					gu->spectatingFullView || losHandler->InLos(p, gu->myAllyTeam);
+
+				if (!inLos)
+					continue;
+
+				p->DrawOnMinimap(*lines, *points);
 			}
 		}
 	}
@@ -596,15 +599,8 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 
 	ISky::SetupFog();
 
-	{
-		projectileHandler->flyingPieces3DO.delete_delayed();
-		projectileHandler->flyingPieces3DO.add_delayed();
-		projectileHandler->flyingPiecesS3O.delete_delayed();
-		projectileHandler->flyingPiecesS3O.add_delayed();
-	}
-
 	zSortedProjectiles.clear();
-	// unsortedProjectiles.clear();
+	unsortedProjectiles.clear();
 
 	int numFlyingPieces = projectileHandler->flyingPieces3DO.render_size() + projectileHandler->flyingPiecesS3O.render_size();
 	int drawnPieces = 0;
@@ -635,9 +631,8 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 			p->Draw();
 		}
 		for (CProjectile* p: unsortedProjectiles) {
-			p->Draw();
+			p->Draw(); //FIXME rename to explosionSpawners ? and why to call Draw() for them??
 		}
-		unsortedProjectiles.clear(); //FIXME rename to explosionSpawners ? and why to call Draw() for them??
 	}
 
 	glEnable(GL_BLEND);
@@ -762,11 +757,6 @@ void CProjectileDrawer::DrawGroundFlashes()
 	glPolygonOffset(-20, -1000);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	glFogfv(GL_FOG_COLOR, black);
-
-	{
-		projectileHandler->groundFlashes.delete_delayed();
-		projectileHandler->groundFlashes.add_delayed();
-	}
 
 	CGroundFlash::va = GetVertexArray();
 	CGroundFlash::va->Initialize();
