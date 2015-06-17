@@ -625,11 +625,15 @@ int CProjectileHandler::GetCurrentParticles() const
 	// use precached part of particles count calculation that else becomes very heavy
 	// example where it matters: (in ZK) /cheat /give 20 armraven -> shoot ground
 	int partCount = lastCurrentParticles;
-	for (size_t i = lastSyncedProjectilesCount, e = syncedProjectiles.size(); i < e; ++i) {
-		partCount += syncedProjectiles[i]->GetProjectilesCount();
+	auto it = syncedProjectiles.begin();
+	std::advance(it, lastSyncedProjectilesCount);
+	for (; it != syncedProjectiles.end(); ++it) {
+		partCount += (*it)->GetProjectilesCount();
 	}
-	for (size_t i = lastUnsyncedProjectilesCount, e = unsyncedProjectiles.size(); i < e; ++i) {
-		partCount += unsyncedProjectiles[i]->GetProjectilesCount();
+	auto jt = unsyncedProjectiles.begin();
+	std::advance(jt, lastUnsyncedProjectilesCount);
+	for (; jt != unsyncedProjectiles.end(); ++it) {
+		partCount += (*jt)->GetProjectilesCount();
 	}
 	partCount += flyingPieces3DO.size();
 	partCount += flyingPiecesS3O.size();
