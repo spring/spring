@@ -177,18 +177,11 @@ void IWorldObjectModelRenderer::AddProjectile(const CProjectile* p)
 	
 	// updating a unit's draw-position requires mutability
 	ps.push_back(const_cast<CProjectile*>(p));
-	numProjectiles += 1;
 }
 
 void IWorldObjectModelRenderer::DelProjectile(const CProjectile* p)
 {
-	ProjectileSet &ps = projectiles[TEX_TYPE(p)];
-	assert(std::find(ps.begin(), ps.end(), const_cast<CProjectile*>(p)) != ps.end());
-	
-	auto it = std::find(ps.begin(), ps.end(), const_cast<CProjectile*>(p));
-	*it = ps.back();
-	ps.pop_back();
-	numProjectiles -= 1;
+	assert(false);
 }
 
 

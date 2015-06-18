@@ -938,11 +938,28 @@ void CProjectileDrawer::RenderProjectileCreated(const CProjectile* p)
 	}
 }
 
-void CProjectileDrawer::RenderProjectileDestroyed(const CProjectile* const p)
-{
-	if (p->model) {
-		modelRenderers[MDL_TYPE(p)]->DelProjectile(p);
-	} else {
-		renderProjectiles.erase(std::find(renderProjectiles.begin(), renderProjectiles.end(), const_cast<CProjectile*>(p)));
+void CProjectileDrawer::DeleteSetDeadProjectiles(std::vector<CProjectile*> &ps) {
+	std::vector<CProjectile*>::iterator psi = ps.begin();
+	while (psi != ps.end()) {
+		CProjectile* p = *psi;
+		assert(p);
+
+		if (!p->deleteMe) {
+			++psi;
+			continue;
+		}
+		*psi = ps.back();
+		ps.pop_back();
 	}
+}
+
+void CProjectileDrawer::RenderDeleteProjectiles()
+{
+	for (auto &renderer: modelRenderers) {
+		auto& projectileBin = renderer->GetProjectileBinMutable();
+		for (auto &ps: projectileBin) {
+			DeleteSetDeadProjectiles(ps.second);
+		}
+	}
+	DeleteSetDeadProjectiles(renderProjectiles);
 }

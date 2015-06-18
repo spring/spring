@@ -196,6 +196,7 @@ class CEventClient
 
 		virtual void RenderProjectileCreated(const CProjectile* proj) {}
 		virtual void RenderProjectileDestroyed(const CProjectile* proj) {}
+		virtual void RenderDeleteProjectiles() {}
 
 		virtual void StockpileChanged(const CUnit* unit,
 		                              const CWeapon* weapon, int oldCount) {}

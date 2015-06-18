@@ -38,13 +38,13 @@ public:
 
 
 	bool WantsEvent(const std::string& eventName) {
-		return (eventName == "RenderProjectileCreated" || eventName == "RenderProjectileDestroyed");
+		return (eventName == "RenderProjectileCreated" || eventName == "RenderDeleteProjectiles");
 	}
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
 
 	void RenderProjectileCreated(const CProjectile* projectile);
-	void RenderProjectileDestroyed(const CProjectile* projectile);
+	void RenderDeleteProjectiles();
 
 	void IncPerlinTexObjectCount() { perlinTexObjects++; }
 	void DecPerlinTexObjectCount() { perlinTexObjects--; }
@@ -108,6 +108,8 @@ private:
 
 	void UpdatePerlin();
 	static void GenerateNoiseTex(unsigned int tex);
+	
+	void DeleteSetDeadProjectiles(std::vector<CProjectile*> &ps);
 
 private:
 	static constexpr int perlinBlendTexSize = 16;
