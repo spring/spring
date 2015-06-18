@@ -252,7 +252,6 @@ void CProjectileHandler::Update()
 
 		// particles
 		CheckCollisions(); // before :Update() to check if the particles move into stuff
-		eventHandler.RenderDeleteProjectiles(); //remove projectiles that should be deleted from renderer
 		UpdateProjectileContainer(syncedProjectiles, true);
 		UpdateProjectileContainer(unsyncedProjectiles, false);
 

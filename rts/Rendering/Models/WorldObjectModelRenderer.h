@@ -23,6 +23,7 @@ public:
 		numUnits = 0;
 		numFeatures = 0;
 		numFeaturesSave = 0;
+		numProjectiles = 0;
 	}
 	virtual ~IWorldObjectModelRenderer();
 
@@ -40,6 +41,7 @@ public:
 
 	int GetNumUnits() const { return numUnits; }
 	int GetNumFeatures() const { return numFeatures; }
+	int GetNumProjectiles() const { return numProjectiles; }
 
 protected:
 	typedef std::vector<CUnit*>                       UnitSet;
@@ -72,6 +74,7 @@ protected:
 	int numUnits;
 	int numFeatures;
 	int numFeaturesSave;
+	int numProjectiles;
 
 public:
 	const UnitSet& GetUnitSet(int texType) { return units[texType]; }

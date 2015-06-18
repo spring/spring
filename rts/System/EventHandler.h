@@ -81,7 +81,6 @@ class CEventHandler
 		void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
 		void RenderProjectileCreated(const CProjectile* proj);
 		void RenderProjectileDestroyed(const CProjectile* proj);
-		void RenderDeleteProjectiles();
 		void UnsyncedProjectileCreated(const CProjectile* proj);
 		void UnsyncedProjectileDestroyed(const CProjectile* proj);
 
@@ -695,10 +694,6 @@ inline void CEventHandler::RenderProjectileDestroyed(const CProjectile* proj)
 	ITERATE_EVENTCLIENTLIST(RenderProjectileDestroyed, proj)
 }
 
-inline void CEventHandler::RenderDeleteProjectiles()
-{
-	ITERATE_EVENTCLIENTLIST(RenderDeleteProjectiles)
-}
 
 #undef ITERATE_EVENTCLIENTLIST
 #undef ITERATE_ALLYTEAM_EVENTCLIENTLIST
