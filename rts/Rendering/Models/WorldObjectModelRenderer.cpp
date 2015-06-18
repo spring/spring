@@ -33,14 +33,14 @@ IWorldObjectModelRenderer* IWorldObjectModelRenderer::GetInstance(int modelType)
 
 IWorldObjectModelRenderer::~IWorldObjectModelRenderer()
 {
-	for (UnitRenderBinIt uIt = units.begin(); uIt != units.end(); ++uIt) {
-		units[uIt->first].clear();
+	for (auto& uIt: units) {
+		uIt.second.clear();
 	}
-	for (FeatureRenderBinIt fIt = features.begin(); fIt != features.end(); ++fIt) {
-		features[fIt->first].clear();
+	for (auto& fIt: features) {
+		fIt.second.clear();
 	}
-	for (ProjectileRenderBinIt pIt = projectiles.begin(); pIt != projectiles.end(); ++pIt) {
-		projectiles[pIt->first].clear();
+	for (auto& pIt: projectiles) {
+		pIt.second.clear();
 	}
 
 	units.clear();
@@ -52,15 +52,16 @@ void IWorldObjectModelRenderer::Draw()
 {
 	PushRenderState();
 
-	for (UnitRenderBinIt uIt = units.begin(); uIt != units.end(); ++uIt) {
-		DrawModels(units[uIt->first]);
+	for (auto& uIt: units) {
+		DrawModels(uIt.second);
 	}
-	for (FeatureRenderBinIt fIt = features.begin(); fIt != features.end(); ++fIt) {
-		DrawModels(features[fIt->first]);
+	for (auto& fIt: features) {
+		DrawModels(fIt.second);
 	}
-	for (ProjectileRenderBinIt pIt = projectiles.begin(); pIt != projectiles.end(); ++pIt) {
-		DrawModels(projectiles[pIt->first]);
+	for (auto& pIt: projectiles) {
+		DrawModels(pIt.second);
 	}
+
 	PopRenderState();
 }
 
