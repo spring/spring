@@ -44,12 +44,10 @@ public:
 	int GetNumProjectiles() const { return numProjectiles; }
 
 protected:
-	typedef std::set<CUnit*>                       UnitSet;
-	typedef std::set<CUnit*>::const_iterator       UnitSetIt;
+	typedef std::vector<CUnit*>                       UnitSet;
 	typedef std::map<CFeature*, float>                 FeatureSet;
 	typedef std::map<CFeature*, float>::const_iterator FeatureSetIt;
-	typedef std::set<CProjectile*>                 ProjectileSet;
-	typedef std::set<CProjectile*>::const_iterator ProjectileSetIt;
+	typedef std::vector<CProjectile*>                 ProjectileSet;
 
 	// textureType ==> modelSet
 	typedef std::map<int, UnitSet>                       UnitRenderBin;

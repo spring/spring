@@ -99,8 +99,8 @@ private:
 	void DrawProjectilesShadow(int modelType);
 	void DrawFlyingPieces(int modelType);
 
-	void DrawProjectilesSet(const std::set<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction);
-	static void DrawProjectilesSetShadow(const std::set<CProjectile*>& projectiles);
+	void DrawProjectilesSet(const std::vector<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction);
+	static void DrawProjectilesSetShadow(const std::vector<CProjectile*>& projectiles);
 
 	void DrawProjectile(CProjectile* projectile, bool drawReflection, bool drawRefraction);
 	static void DrawProjectileShadow(CProjectile* projectile);
@@ -119,7 +119,7 @@ private:
 	bool drawPerlinTex;
 
 	/// projectiles without a model
-	std::set<CProjectile*> renderProjectiles;
+	std::vector<CProjectile*> renderProjectiles;
 	/// projectiles with a model
 	std::vector<IWorldObjectModelRenderer*> modelRenderers;
 

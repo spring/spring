@@ -456,13 +456,12 @@ void CUnitDrawer::DrawDeferredPass(const CUnit* excludeUnit, bool drawReflection
 
 void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction)
 {
-	typedef std::set<CUnit*> UnitSet;
+	typedef std::vector<CUnit*> UnitSet;
 	typedef std::map<int, UnitSet> UnitBin;
 
 	const UnitBin& unitBin = opaqueModelRenderers[modelType]->GetUnitBin();
 
 	UnitBin::const_iterator unitBinIt;
-	UnitSet::const_iterator unitSetIt;
 
 	for (unitBinIt = unitBin.begin(); unitBinIt != unitBin.end(); ++unitBinIt) {
 		if (modelType != MODELTYPE_3DO) {
@@ -472,8 +471,8 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool 
 		const UnitSet& unitSet = unitBinIt->second;
 
 		{
-			for (unitSetIt = unitSet.begin(); unitSetIt != unitSet.end(); ++unitSetIt) {
-				DrawOpaqueUnit(*unitSetIt, excludeUnit, drawReflection, drawRefraction);
+			for (auto &unit: unitSet) {
+				DrawOpaqueUnit(unit, excludeUnit, drawReflection, drawRefraction);
 			}
 		}
 	}
@@ -962,7 +961,7 @@ void CUnitDrawer::DrawCloakedUnitsHelper(int modelType)
 	}
 
 	{
-		typedef std::set<CUnit*> UnitSet;
+		typedef std::vector<CUnit*> UnitSet;
 		typedef std::map<int, UnitSet> UnitRenderBin;
 		typedef std::map<int, UnitSet>::const_iterator UnitRenderBinIt;
 
@@ -976,8 +975,8 @@ void CUnitDrawer::DrawCloakedUnitsHelper(int modelType)
 
 			const UnitSet& unitSet = it->second;
 
-			for (UnitSet::const_iterator ui = unitSet.begin(); ui != unitSet.end(); ++ui) {
-				DrawCloakedUnit(*ui, modelType, false);
+			for (auto &unit: unitSet) {
+				DrawCloakedUnit(unit, modelType, false);
 			}
 		}
 	}
@@ -1953,9 +1952,11 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 	}
 
 	if (u->model) {
-		// renderer unit cloak state may not match sim (because of MT) - erase from both renderers to be sure
-		cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
-		opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
+		if (u->isCloaked) {
+			cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
+		} else {
+			opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
+		}
 	}
 
 	unsortedUnits.erase(u);

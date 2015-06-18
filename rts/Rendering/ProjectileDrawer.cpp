@@ -391,7 +391,7 @@ void CProjectileDrawer::LoadWeaponTextures() {
 
 void CProjectileDrawer::DrawProjectiles(int modelType, bool drawReflection, bool drawRefraction)
 {
-	typedef std::set<CProjectile*> ProjectileSet;
+	typedef std::vector<CProjectile*> ProjectileSet;
 	typedef std::map<int, ProjectileSet> ProjectileBin;
 	//typedef ProjectileSet::iterator ProjectileSetIt;
 	typedef ProjectileBin::iterator ProjectileBinIt;
@@ -409,7 +409,7 @@ void CProjectileDrawer::DrawProjectiles(int modelType, bool drawReflection, bool
 	DrawFlyingPieces(modelType);
 }
 
-void CProjectileDrawer::DrawProjectilesSet(const std::set<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction)
+void CProjectileDrawer::DrawProjectilesSet(const std::vector<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction)
 {
 	for (CProjectile* p: projectiles) {
 		DrawProjectile(p, drawReflection, drawRefraction);
@@ -460,7 +460,7 @@ void CProjectileDrawer::DrawProjectile(CProjectile* pro, bool drawReflection, bo
 
 void CProjectileDrawer::DrawProjectilesShadow(int modelType)
 {
-	typedef std::map<int, std::set<CProjectile*> > ProjectileBin;
+	typedef std::map<int, std::vector<CProjectile*> > ProjectileBin;
 	typedef ProjectileBin::iterator ProjectileBinIt;
 
 	ProjectileBin& projectileBin = modelRenderers[modelType]->GetProjectileBinMutable();
@@ -470,7 +470,7 @@ void CProjectileDrawer::DrawProjectilesShadow(int modelType)
 	}
 }
 
-void CProjectileDrawer::DrawProjectilesSetShadow(const std::set<CProjectile*>& projectiles)
+void CProjectileDrawer::DrawProjectilesSetShadow(const std::vector<CProjectile*>& projectiles)
 {
 	for (CProjectile* p: projectiles) {
 		DrawProjectileShadow(p);
@@ -502,7 +502,7 @@ void CProjectileDrawer::DrawProjectileShadow(CProjectile* p)
 
 void CProjectileDrawer::DrawProjectilesMiniMap()
 {
-	typedef std::set<CProjectile*> ProjectileSet;
+	typedef std::vector<CProjectile*> ProjectileSet;
 	typedef std::map<int, ProjectileSet> ProjectileBin;
 	typedef std::map<int, ProjectileSet>::const_iterator ProjectileBinIt;
 
@@ -934,7 +934,7 @@ void CProjectileDrawer::RenderProjectileCreated(const CProjectile* p)
 	if (p->model) {
 		modelRenderers[MDL_TYPE(p)]->AddProjectile(p);
 	} else {
-		renderProjectiles.insert(const_cast<CProjectile*>(p));
+		renderProjectiles.push_back(const_cast<CProjectile*>(p));
 	}
 }
 
@@ -943,6 +943,6 @@ void CProjectileDrawer::RenderProjectileDestroyed(const CProjectile* const p)
 	if (p->model) {
 		modelRenderers[MDL_TYPE(p)]->DelProjectile(p);
 	} else {
-		renderProjectiles.erase(const_cast<CProjectile*>(p));
+		renderProjectiles.erase(std::find(renderProjectiles.begin(), renderProjectiles.end(), const_cast<CProjectile*>(p)));
 	}
 }
