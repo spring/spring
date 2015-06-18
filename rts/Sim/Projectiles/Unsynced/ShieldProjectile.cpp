@@ -76,8 +76,9 @@ ShieldProjectile::ShieldProjectile(CPlasmaRepulser* shield_)
 	}
 }
 
-ShieldProjectile::~ShieldProjectile()
+void ShieldProjectile::PreDelete()
 {
+	deleteMe = true;
 	for (auto* segs: shieldSegments) {
 		segs->PreDelete();
 	}

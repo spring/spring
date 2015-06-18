@@ -22,16 +22,12 @@ class ShieldProjectile: public CProjectile
 	CR_DECLARE(ShieldProjectile)
 public:
 	ShieldProjectile(CPlasmaRepulser*);
-	~ShieldProjectile();
 
 	void Update();
 	virtual int GetProjectilesCount() const override;
 
 public:
-	void PreDelete() {
-		deleteMe = true;
-		shield = NULL;
-	}
+	void PreDelete();
 	bool AllowDrawing();
 	CPlasmaRepulser* GetShield() const { return shield; }
 	const AtlasedTexture* GetShieldTexture() const { return shieldTexture; }
