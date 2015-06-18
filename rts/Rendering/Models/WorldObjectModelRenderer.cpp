@@ -92,12 +92,7 @@ void IWorldObjectModelRenderer::DrawModels(const ProjectileSet& models)
 
 void IWorldObjectModelRenderer::AddUnit(const CUnit* u)
 {
-	UnitSet &us = units[TEX_TYPE(u)];
-	
-	if (units.find(TEX_TYPE(u)) == units.end()) {
-		us = UnitSet();
-	}
-	
+	UnitSet& us = units[TEX_TYPE(u)];
 	assert(std::find(us.begin(), us.end(), const_cast<CUnit*>(u)) == us.end());
 	
 	// updating a unit's draw-position requires mutability
@@ -107,30 +102,28 @@ void IWorldObjectModelRenderer::AddUnit(const CUnit* u)
 
 void IWorldObjectModelRenderer::DelUnit(const CUnit* u)
 {
-	UnitSet &us = units[TEX_TYPE(u)];
+	UnitSet& us = units[TEX_TYPE(u)];
 	assert(std::find(us.begin(), us.end(), const_cast<CUnit*>(u)) != us.end());
 	
 	auto it = std::find(us.begin(), us.end(), const_cast<CUnit*>(u));
 	*it = us.back();
 	us.pop_back();
 	numUnits -= 1;
+
+	if (us.empty())
+		units.erase(TEX_TYPE(u));
 }
 
 
 void IWorldObjectModelRenderer::AddFeature(const CFeature* f, float alpha)
 {
-	if (features.find(TEX_TYPE(f)) == features.end()) {
-		features[TEX_TYPE(f)] = FeatureSet();
-	}
-
-	FeatureSet &fs = features.find(TEX_TYPE(f))->second;
-	FeatureSet::iterator i = fs.find(const_cast<CFeature*>(f));
-	if(i != fs.end()) {
-		if(i->second != alpha) {
+	FeatureSet& fs = features[TEX_TYPE(f)];
+	FeatureSet::iterator it = fs.find(const_cast<CFeature*>(f));
+	if (it != fs.end()) {
+		if(it->second != alpha) {
 			fs[const_cast<CFeature*>(f)] = alpha;
 		}
-	}
-	else {
+	} else {
 		fs[const_cast<CFeature*>(f)] = alpha;
 		numFeatures += 1;
 	}
@@ -141,7 +134,7 @@ void IWorldObjectModelRenderer::DelFeature(const CFeature* f)
 	{
 		FeatureRenderBin::iterator i = features.find(TEX_TYPE(f));
 		if (i != features.end()) {
-			if((*i).second.erase(const_cast<CFeature*>(f)))
+			if ((*i).second.erase(const_cast<CFeature*>(f)))
 				numFeatures -= 1;
 
 			if ((*i).second.empty())
@@ -152,7 +145,7 @@ void IWorldObjectModelRenderer::DelFeature(const CFeature* f)
 	{
 		FeatureRenderBin::iterator i = featuresSave.find(TEX_TYPE(f));
 		if (i != featuresSave.end()) {
-			if((*i).second.erase(const_cast<CFeature*>(f)))
+			if ((*i).second.erase(const_cast<CFeature*>(f)))
 				numFeaturesSave -= 1;
 
 			if ((*i).second.empty())
@@ -169,11 +162,7 @@ void IWorldObjectModelRenderer::SwapFeatures()
 
 void IWorldObjectModelRenderer::AddProjectile(const CProjectile* p)
 {
-	ProjectileSet &ps = projectiles[TEX_TYPE(p)];
-	if (projectiles.find(TEX_TYPE(p)) == projectiles.end()) {
-		ps = ProjectileSet();
-	}
-
+	ProjectileSet& ps = projectiles[TEX_TYPE(p)];
 	assert(std::find(ps.begin(), ps.end(), const_cast<CProjectile*>(p)) == ps.end());
 	
 	// updating a unit's draw-position requires mutability
