@@ -93,24 +93,23 @@ void IWorldObjectModelRenderer::DrawModels(const ProjectileSet& models)
 void IWorldObjectModelRenderer::AddUnit(const CUnit* u)
 {
 	UnitSet& us = units[TEX_TYPE(u)];
+	assert(std::find(us.begin(), us.end(), const_cast<CUnit*>(u)) == us.end());
 	
-	if (std::find(us.begin(), us.end(), const_cast<CUnit*>(u)) == us.end()) {
-		// updating a unit's draw-position requires mutability
-		us.push_back(const_cast<CUnit*>(u));
-		numUnits += 1;
-	}
+	// updating a unit's draw-position requires mutability
+	us.push_back(const_cast<CUnit*>(u));
+	numUnits += 1;
 }
 
 void IWorldObjectModelRenderer::DelUnit(const CUnit* u)
 {
 	UnitSet& us = units[TEX_TYPE(u)];
+	assert(std::find(us.begin(), us.end(), const_cast<CUnit*>(u)) != us.end());
 	
 	auto it = std::find(us.begin(), us.end(), const_cast<CUnit*>(u));
-	if (it != us.end()) {
-		*it = us.back();
-		us.pop_back();
-		numUnits -= 1;
-	}
+	*it = us.back();
+	us.pop_back();
+	numUnits -= 1;
+
 	if (us.empty())
 		units.erase(TEX_TYPE(u));
 }
@@ -164,24 +163,22 @@ void IWorldObjectModelRenderer::SwapFeatures()
 void IWorldObjectModelRenderer::AddProjectile(const CProjectile* p)
 {
 	ProjectileSet& ps = projectiles[TEX_TYPE(p)];
+	assert(std::find(ps.begin(), ps.end(), const_cast<CProjectile*>(p)) == ps.end());
 	
-	if (std::find(ps.begin(), ps.end(), const_cast<CProjectile*>(p)) == ps.end()) {
-		// updating a unit's draw-position requires mutability
-		ps.push_back(const_cast<CProjectile*>(p));
-		numProjectiles += 1;
-	}
+	// updating a unit's draw-position requires mutability
+	ps.push_back(const_cast<CProjectile*>(p));
+	numProjectiles += 1;
 }
 
 void IWorldObjectModelRenderer::DelProjectile(const CProjectile* p)
 {
 	ProjectileSet &ps = projectiles[TEX_TYPE(p)];
+	assert(std::find(ps.begin(), ps.end(), const_cast<CProjectile*>(p)) != ps.end());
 	
 	auto it = std::find(ps.begin(), ps.end(), const_cast<CProjectile*>(p));
-	if (it != ps.end()) {
-		*it = ps.back();
-		ps.pop_back();
-		numProjectiles -= 1;
-	}
+	*it = ps.back();
+	ps.pop_back();
+	numProjectiles -= 1;
 }
 
 
