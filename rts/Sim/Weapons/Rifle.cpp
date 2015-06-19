@@ -30,7 +30,7 @@ CRifle::CRifle(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 
 void CRifle::FireImpl(const bool scriptCall)
 {
-	float3 dir = wantedDir;
+	float3 dir = currentTargetPos - weaponMuzzlePos;
 	dir +=
 		(gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
 	dir.Normalize();
