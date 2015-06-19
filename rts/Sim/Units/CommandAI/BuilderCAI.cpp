@@ -1251,7 +1251,7 @@ void CBuilderCAI::ExecuteFight(Command& c)
 		return;
 	}
 
-	if (owner->curTarget.type == Target_None && owner->moveType->progressState != AMoveType::Done) {
+	if (owner->HaveTarget() && owner->moveType->progressState != AMoveType::Done) {
 		StopMove();
 	} else if (owner->moveType->progressState != AMoveType::Active) {
 		owner->moveType->StartMoving(goalPos, 8);
