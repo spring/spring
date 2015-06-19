@@ -1952,11 +1952,9 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 	}
 
 	if (u->model) {
-		if (u->isCloaked) {
-			cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
-		} else {
-			opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
-		}
+		//Don't dare checking u->isCloaked, it may not exist.
+		cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
+		opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 	}
 
 	unsortedUnits.erase(u);

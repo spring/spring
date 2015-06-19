@@ -104,11 +104,9 @@ void IModelDrawer::RenderUnitDestroyed(const CUnit* u)
 
 	#if (MODEL_DRAWER_DEBUG_RENDERING)
 	if (u->model) {
-		if (u->isCloaked) {
-			cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
-		} else {
-			opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
-		}
+		//Don't dare checking u->isCloaked, it may not exist.
+		cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
+		opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 	}
 	#endif
 }

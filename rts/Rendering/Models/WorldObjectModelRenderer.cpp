@@ -103,12 +103,16 @@ void IWorldObjectModelRenderer::AddUnit(const CUnit* u)
 void IWorldObjectModelRenderer::DelUnit(const CUnit* u)
 {
 	UnitSet& us = units[TEX_TYPE(u)];
-	assert(std::find(us.begin(), us.end(), const_cast<CUnit*>(u)) != us.end());
+	
+	// Unit can still be in the container, since we can't know in UnitDrawer.cpp
+	// whether it's cloaked or not.
 	
 	auto it = std::find(us.begin(), us.end(), const_cast<CUnit*>(u));
-	*it = us.back();
-	us.pop_back();
-	numUnits -= 1;
+	if (it != us.end()) {
+		*it = us.back();
+		us.pop_back();
+		numUnits -= 1;
+	}
 
 	if (us.empty())
 		units.erase(TEX_TYPE(u));
