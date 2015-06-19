@@ -1511,21 +1511,16 @@ void CCommandAI::WeaponFired(CWeapon* weapon, const bool searchForNewTarget)
 	const bool haveAreaAttackCmd = (c.GetID() == CMD_AREA_ATTACK);
 
 	bool orderFinished = false;
-
-	if (searchForNewTarget && (haveGroundAttackCmd && HasMoreMoveCommands())) {
-		// only manualfire & noAutoTarget weapons can finish an
-		// attack commands after a salvo, all others will continue
-		// attacking the ground spot
-		if (weapon->weaponDef->manualfire && !(c.options & META_KEY))
+	
+	if (searchForNewTarget) {
+		// manual fire or attack commands with meta will only fire a single salvo
+		// noAutoTarget weapons finish an attack commands after a 
+		// salvo if they have more orders queued
+		if (weapon->weaponDef->manualfire || c.options & META_KEY ||
+			weapon->noAutoTarget && haveGroundAttackCmd && HasMoreMoveCommands())
 			orderFinished = true;
-
-		if (weapon->noAutoTarget && !(c.options & META_KEY))
-			orderFinished = true;
-	}
-
-	if (searchForNewTarget && haveAreaAttackCmd) {
-		// if we have an area-attack command (or a regular attack command
-		// followed by anything that requires movement) and this was the
+		
+		// if we have an area-attack command and this was the
 		// last salvo of our main weapon, assume we completed an attack
 		// (run) on one position and move to the next
 		//
@@ -1535,8 +1530,10 @@ void CCommandAI::WeaponFired(CWeapon* weapon, const bool searchForNewTarget)
 		//   queue has advanced
 		//
 		// @SelectNewAreaAttackTargetOrPos
-		// return argument says if a new area attack target was choosen, else finish current command
-		orderFinished = !SelectNewAreaAttackTargetOrPos(c);
+		// return argument says if a new area attack target was chosen, else finish current command
+		if (haveAreaAttackCmd) {
+			orderFinished = !SelectNewAreaAttackTargetOrPos(c);
+		}
 	}
 
 	// when this fails, we need to take a copy at top instead of a reference
