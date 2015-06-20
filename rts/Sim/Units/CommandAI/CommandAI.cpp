@@ -1547,10 +1547,11 @@ void CCommandAI::WeaponFired(CWeapon* weapon, const bool searchForNewTarget)
 
 void CCommandAI::PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cmdPos2)
 {
-	const float3 pos = ClosestPointOnLine(cmdPos1, cmdPos2, owner->pos);
-	Command& c(commandQue.front());
+	assert(!commandQue.empty());
+	Command& c = commandQue.front();
 	assert(c.GetID() == CMD_FIGHT && c.params.size() >= 3);
 
+	const float3 pos = ClosestPointOnLine(cmdPos1, cmdPos2, owner->pos);
 	if (c.params.size() >= 6) {
 		c.SetPos(0, pos);
 	} else {
