@@ -1516,8 +1516,10 @@ void CCommandAI::WeaponFired(CWeapon* weapon, const bool searchForNewTarget)
 		// manual fire or attack commands with meta will only fire a single salvo
 		// noAutoTarget weapons finish an attack commands after a 
 		// salvo if they have more orders queued
-		if (weapon->weaponDef->manualfire || c.options & META_KEY ||
-			weapon->noAutoTarget && haveGroundAttackCmd && HasMoreMoveCommands())
+		if (weapon->weaponDef->manualfire && !(c.options & META_KEY))
+			orderFinished = true;
+
+		if (weapon->noAutoTarget && !(c.options & META_KEY) && haveGroundAttackCmd && HasMoreMoveCommands())
 			orderFinished = true;
 		
 		// if we have an area-attack command and this was the
