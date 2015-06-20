@@ -31,7 +31,7 @@ CLightningCannon::CLightningCannon(CUnit* owner, const WeaponDef* def)
 void CLightningCannon::FireImpl(const bool scriptCall)
 {
 	float3 curPos = weaponMuzzlePos;
-	float3 curDir = wantedDir;
+	float3 curDir = currentTargetPos - weaponMuzzlePos;
 	float3 newDir = curDir;
 
 	curDir +=
