@@ -57,10 +57,10 @@ private:
 	void PostLoad();
 
 private:
-	std::set<CFeature*> unsortedFeatures;
+	std::vector<CFeature*> unsortedFeatures;
 
 	struct DrawQuad {
-		std::set<CFeature*> features;
+		std::vector<CFeature*> features;
 	};
 
 	std::vector<DrawQuad> drawQuads;

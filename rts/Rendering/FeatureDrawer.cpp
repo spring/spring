@@ -111,21 +111,32 @@ void CFeatureDrawer::RenderFeatureCreated(const CFeature* feature)
 		f->drawQuad = -1;
 		UpdateDrawQuad(f);
 
-		unsortedFeatures.insert(f);
+		unsortedFeatures.push_back(f);
 	}
 }
+
+
+static void erase(std::vector<CFeature*>& v, CFeature* f)
+{
+	auto it = std::find(v.begin(), v.end(), f);
+	if (it != v.end()) {
+		*it = v.back();
+		v.pop_back();
+	}
+}
+
 
 void CFeatureDrawer::RenderFeatureDestroyed(const CFeature* feature)
 {
 	CFeature* f = const_cast<CFeature*>(feature);
 
 	if (f->def->drawType == DRAWTYPE_MODEL) {
-		unsortedFeatures.erase(f);
+		erase(unsortedFeatures, f);
 	}
 
 	if (f->drawQuad >= 0) {
 		DrawQuad* dq = &drawQuads[f->drawQuad];
-		dq->features.erase(f);
+		erase(dq->features, f);
 	}
 
 	if (f->model) {
@@ -148,25 +159,27 @@ void CFeatureDrawer::RenderFeatureMoved(const CFeature* feature, const float3& o
 void CFeatureDrawer::UpdateDrawQuad(CFeature* feature)
 {
 	const int oldDrawQuad = feature->drawQuad;
-	if (oldDrawQuad >= -1) {
-		int newDrawQuadX = feature->pos.x / DRAW_QUAD_SIZE / SQUARE_SIZE;
-		int newDrawQuadY = feature->pos.z / DRAW_QUAD_SIZE / SQUARE_SIZE;
-		newDrawQuadX = Clamp(newDrawQuadX, 0, drawQuadsX - 1);
-		newDrawQuadY = Clamp(newDrawQuadY, 0, drawQuadsY - 1);
-		const int newDrawQuad = newDrawQuadY * drawQuadsX + newDrawQuadX;
+	if (oldDrawQuad < -1)
+		return;
 
-		if (oldDrawQuad != newDrawQuad) {
-			//TODO check if out of map features get drawn, when the camera is outside of the map
-			//     (q: does DrawGround render the border quads in such cases?)
-			assert(oldDrawQuad < drawQuadsX * drawQuadsY);
-			assert(newDrawQuad < drawQuadsX * drawQuadsY);
+	int newDrawQuadX = feature->pos.x / DRAW_QUAD_SIZE / SQUARE_SIZE;
+	int newDrawQuadY = feature->pos.z / DRAW_QUAD_SIZE / SQUARE_SIZE;
+	newDrawQuadX = Clamp(newDrawQuadX, 0, drawQuadsX - 1);
+	newDrawQuadY = Clamp(newDrawQuadY, 0, drawQuadsY - 1);
+	const int newDrawQuad = newDrawQuadY * drawQuadsX + newDrawQuadX;
 
-			if (oldDrawQuad >= 0)
-				drawQuads[oldDrawQuad].features.erase(feature);
-			drawQuads[newDrawQuad].features.insert(feature);
-			feature->drawQuad = newDrawQuad;
-		}
-	}
+	if (oldDrawQuad == newDrawQuad)
+		return;
+
+	//TODO check if out of map features get drawn, when the camera is outside of the map
+	//     (q: does DrawGround render the border quads in such cases?)
+	assert(oldDrawQuad < drawQuadsX * drawQuadsY);
+	assert(newDrawQuad < drawQuadsX * drawQuadsY);
+
+	if (oldDrawQuad >= 0)
+		erase(drawQuads[oldDrawQuad].features, feature);
+	drawQuads[newDrawQuad].features.push_back(feature);
+	feature->drawQuad = newDrawQuad;
 }
 
 
@@ -446,9 +459,7 @@ public:
 
 		const CFeatureDrawer::DrawQuad* dq = &(*drawQuads)[y * drawQuadsX + x];
 
-		for (std::set<CFeature*>::const_iterator fi = dq->features.begin(); fi != dq->features.end(); ++fi) {
-			CFeature* f = (*fi);
-
+		for (CFeature* f: dq->features) {
 			if (f->IsInVoid())
 				continue;
 
@@ -541,7 +552,7 @@ void CFeatureDrawer::PostLoad()
 	drawQuads.resize(drawQuadsX * drawQuadsY);
 
 	const CFeatureSet& fs = featureHandler->GetActiveFeatures();
-	for (CFeatureSet::const_iterator it = fs.begin(); it != fs.end(); ++it)
-		if ((*it)->drawQuad >= 0)
-			drawQuads[(*it)->drawQuad].features.insert(*it);
+	for (CFeature* f: fs)
+		if (f->drawQuad >= 0)
+			drawQuads[f->drawQuad].features.push_back(f);
 }
