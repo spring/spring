@@ -12,9 +12,7 @@
 #define TSC_H
 
 #include <vector>
-
 #include "System/creg/creg_cond.h"
-#include <set>
 
 /////////////////////////////////////////////////////////
 //
@@ -22,8 +20,6 @@
 template <class C, class T, class D>
 class ThreadListRender {
 private:
-	typedef typename std::set<T>::const_iterator constSetIT;
-	typedef typename std::set<T>::iterator SetIT;
 	typedef typename std::vector<T>::const_iterator VecIT;
 
 public:
