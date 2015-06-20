@@ -5,20 +5,15 @@ Spring changelog
 -- 99.0 ---------------------------------------------------------
 Major:
  - new shader based InfoTexture
- - new linux crashhandler by Major Bor3d0m
+ - new linux crashhandler (by Major Bor3d0m)
  - new rotatable default camera
- - bugfixes & improvements
- - add unsynced Spring.Reload(script)
+ - MASSIVE speedup in lategame rendering (cutting rendertime upto 1.5-3 times!)
  - add Spring.Reload(script) to change/map & game without exiting spring
-   ! modified Spring.Restart(parameters, script): it only restarts spring when parameters isn't empty
-   ! removed alias "/quit" (use /quitforce)
-   - add "quit to menu" to quit-box
-   - add "/reloadforce"
-   -  add DefaultStartScript config setting:
-     - if set, automaticly start it!
-     - add --oldmenu command line parameter to always get to the old menu
- - added lua override for infomaps
+ - added lua override for InfoMaps (by enetheru)
  - allow to enable isolated mode by creating a file isolated.txt next to spring executable
+ - internal weapon refactor
+ - fix particle limit
+
 
 Cameras:
  ! removed TW, Orbital & Smooth camera
@@ -57,6 +52,7 @@ System:
  - improve default los colors
  - OverheadCamera: make angle 100% stable when doing `mousewheel down then up`
  ! remove los view w/o radar a.k.a. [;] (can be emulated with Spring.SetLosViewColors)
+ - draw weapon debug spheres in /debugcolvol (aimfrom pos, muzzle pos, target pos)
 
 Sim:
  - fix harvesting
@@ -65,40 +61,120 @@ Sim:
  - fix units disobey move cmds
  - fix user target being set for all weapons
  ! change TEAM_SLOWUPDATE_RATE to 30 / UNIT_SLOWUPDATE_RATE to 15
+ - fix aircraft in groups (e.g. brawlers) not being able to attack the target and landing instead at target pos
+
+Pathing:
+ ! fix pathing: disable directional speedmod (it is the cause of shaking units when getting close to blocked squares!!!)
+ - repath GroundMoveType only every SlowUpdate() (to save cpu cycles)
+ - runtime cache failed paths, too (and use a lower lifeTime for them)
 
 Collisions:
  - fix #4592: broken per-piece coldet
  - fix #4602 and improve CQuadField::GetUnitsAndFeaturesColVol
+ - speed up UnitCollisions
+
+Weapon:
+ - refactor weapon code:
+  - use LeadTargetPos more often
+  - give current unit's target higher priority than weapon ones
+  - plasmarepulsor: spawn projectiles from QueryWeapon (when defined)
+  - drop bombs from QueryWeapon() (when defined) and not AimFromWeapon()
+  - call AimWeapon() more often (depending on fireTolerance tag)
+   - see fireTolerance & allowNonBlockingAim tags
+ - fix impactOnly BeamLasers or LightninghtCannons dealing damage to units in the path of a beam blocked by water or a shield.  (by GoogleFrog)
+
+WeaponDefs:
+ - add fallback name:
+  - weaponVelocity := maxVelocity
+  - weaponAcceleration := acceleration
+ - add fireTolerance tag: Angle which prevents a weapon from firing in CanFire. (GoogleFrog)
+ - add allowNonBlockingAim tag (default false = old behaviour). When enabled it makes AimWeapon() calls non-blocking (still the fireTolerance tag might prevent the weapon firing).
+   This is very useful for fast units that need to retarget often (e.g. armflash driving next to a llt).
+
+UnitDefs:
+ - add new tag attackSafetyDistance used by airplanes (by springraaar)
+
+Projectiles:
+ - randomize IDs
+ - add flag to draw exploded pieces recursively
+ - add SFX.RECURSIVE flag to Explode(), allowing to draw the piece and all its children.
 
 New InfoTexture Renderer:
  - new shader based InfoTexture (faster, shinier & modular)
   - add new `/ToggleInfo %name_or_shader_path%`
   - fix #4608: add new /showpathtype [movdefname | movedefid | unitdefname | -1]
 
+Rendering:
+ - removed multiple linked lists from rendering (massive speed up, cutting rendertime upto 2-3 times!)
+ ! fix particle limit not being always respected, when too many particles were created in a single GameFrame
+ - ShieldParticles: reduce count of particles by more than half
+ - always draw WaterPlane (that's not the water surface) below current minimum terrain height
+ - FlyingPieces: add camera frustum check
+ ! SMFTexAniso: changed default to 4 (was 0)
+ - add UseShaderCache config tag (default true)
+
+Map:
+ - allow to override the following InfoMaps via mapinfo.lua:  (by enetheru)
+  - metalmapTex
+  - typemapTex
+  - grassmapTex
+  - minimapTex
+ - allow to load dds as detailtex
+
 Lua:
- - add Spring.GetUnitMaxRange(unitID) -> number maxRange and Spring.SetUnitMaxRange(unitID, maxRange) -> nil callouts to read and set engagement range of a unit
- - add UnitStunned call-in
+ - add Spring.Reload(script) to change/map & game without exiting spring
+  ! modified Spring.Restart(parameters, script): it only restarts spring when parameters isn't empty
+  ! removed alias "/quit" (use /quitforce)
+  - add "quit to menu" to quit-box
+  - add "/reloadforce"
+  -  add DefaultStartScript config setting:
+    - if set, automaticly start it!
+    - add --oldmenu command line parameter to always get to the old menu
+ - add callouts to read and set engagement range of a unit (by FLOZi)
+   - Spring.GetUnitMaxRange(unitID) -> number maxRange
+   - Spring.SetUnitMaxRange(unitID, maxRange) -> nil
  - add attackSafetyDistance unitDef
  - add Spring.GetLosViewColors
  - add new call-in: UnitStunned(unitID, unitDefID, unitTeam, stunned) -- called whenever a unit changes its stun status
  - add Set/GetProjectileIsIntercepted
  - add GetProjectileTimeToLive, GetProjectileOwnerID and GetProjectileTeamID.
- - add SFX.RECURSIVE flag to Explode(), allowing to draw the piece and all its children.
  - add a second return value to AllowWeaponTargetCheck callin to allow ignoring the callin.
  ! remove Spring.UpdateInfoTexture
  ! fix Spring.GetKeyState & Spring.PressedKeys expecting SDL2 keycodes while whole lua gets SDL1 ones
  ! Spring.PressedKeys now also returns keynames
+ - fix missing COLVOL_TYPE_SPHERE in luadefs
+ - add new tag `grayscale16bit` to gl.SaveImage() to save single color 16bit PNG
+ - add Spring.SetUnitTarget(unitid, nil) syntax
+ - expose some tags to LuaDefs: (by sprunk)
+  - expose maxReverseSpeed to LuaUnitDefs
+  - expose dynDamage tags to LuaWeaponDefs
+  - expose flightTime tag to LuaWeaponDefs
 
 StartScript:
  - support rapid tags
  - allow to disable demo file recording in script.txt via RecordDemo = 0
 
+AI: (all by rlcevg)
+ - add Lua.callRules, Lua.callUI to JavaOO
+ - added weapon related callouts: Unit_getWeapons, Unit_getWeapon, Unit_Weapon_getDef, Unit_Weapon_getReloadTime
+ - expose resources via Game_getTeamResource* & Economy_get*
+
+OS:
+ - new linux crashhandler (by Major Bor3d0m)
+ - HWCursor: support for 48x48 & 96x96 sizes
+ - allow to enable isolated mode by creating a file isolated.txt next to spring executable
+
 Buildbot/Installer:
  ! merged spring-headless / spring-dedicated into linux static builds / windows installer
  ! remove broken maven support
 
-AI:
- ! add Weapon state object
+CMake:
+ - colorize gcc output
+ ! remove DEBUG2 & DEBUG3 replace with just DEBUG
+ - enable "Identical Code Folding" with ld.gold
+ - disable unused ASSIMP formats at compiletime
+
+
 
 -- 98.0 ---------------------------------------------------------
 Major:
