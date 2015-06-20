@@ -64,7 +64,8 @@ Sim:
  - fix aircraft in groups (e.g. brawlers) not being able to attack the target and landing instead at target pos
 
 Pathing:
- ! fix pathing: disable directional speedmod (it is the cause of shaking units when getting close to blocked squares!!!)
+ ! fix pathing: disable directional speedmod (it is the cause of shaking units when getting close to blocked squares!!!) 
+  - can be re-enabled on your own responsibility using allowDirectionalPathing under movement table in modrules.lua
  - repath GroundMoveType only every SlowUpdate() (to save cpu cycles)
  - runtime cache failed paths, too (and use a lower lifeTime for them)
 
@@ -96,8 +97,7 @@ UnitDefs:
 
 Projectiles:
  - randomize IDs
- - add flag to draw exploded pieces recursively
- - add SFX.RECURSIVE flag to Explode(), allowing to draw the piece and all its children.
+ - add SFX.RECURSIVE flag to Explode(), allowing to draw the piece and all its children recursively.
 
 New InfoTexture Renderer:
  - new shader based InfoTexture (faster, shinier & modular)
