@@ -56,7 +56,6 @@ private:
 
 	typedef ThreadListRender<
 		const CProjectile*,
-		std::set<const CProjectile*>,
 		const CProjectile*,
 		ProjectileCreatedDestroyedEvent
 	> ProjectileCreatedDestroyedEventBatch;
@@ -70,7 +69,6 @@ private:
 
 	typedef ThreadListRender<
 		const CProjectile*,
-		std::set<const CProjectile*>,
 		const CProjectile*,
 		UnsyncedProjectileCreatedDestroyedEvent
 	> UnsyncedProjectileCreatedDestroyedEventBatch;
@@ -135,12 +133,11 @@ private:
 		static void Delete(const UAP&) { }
 	};
 
-	typedef ThreadListRender<const CUnit *, std::set<UD>, UD, UnitCreatedDestroyedEvent> UnitCreatedDestroyedEventBatch;
-	typedef ThreadListRender<const CUnit *, std::set<UAD>, UAD, UnitCloakStateChangedEvent> UnitCloakStateChangedEventBatch;
-	typedef ThreadListRender<const CUnit *, std::set<UAD>, UAD, UnitLOSStateChangedEvent> UnitLOSStateChangedEventBatch;
+	typedef ThreadListRender<const CUnit *, UD, UnitCreatedDestroyedEvent> UnitCreatedDestroyedEventBatch;
+	typedef ThreadListRender<const CUnit *, UAD, UnitCloakStateChangedEvent> UnitCloakStateChangedEventBatch;
+	typedef ThreadListRender<const CUnit *, UAD, UnitLOSStateChangedEvent> UnitLOSStateChangedEventBatch;
 	typedef ThreadListRender<
 		const CUnit*,
-		std::set<UAP>,
 		UAP,
 		UnitMovedEvent
 	> UnitMovedEventBatch;
@@ -170,13 +167,11 @@ private:
 
 	typedef ThreadListRender<
 		const CFeature*,
-		std::set<const CFeature*>,
 		const CFeature*,
 		FeatureCreatedDestroyedEvent
 	> FeatureCreatedDestroyedEventBatch;
 	typedef ThreadListRender<
 		const CFeature*,
-		std::set<FAP>,
 		FAP,
 		FeatureMovedEvent
 	> FeatureMovedEventBatch;
