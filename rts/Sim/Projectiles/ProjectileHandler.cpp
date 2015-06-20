@@ -354,15 +354,17 @@ void CProjectileHandler::CheckUnitCollisions(
 			continue;
 		if (!unit->HasCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES))
 			continue;
-
-		if (p->GetCollisionFlags() & Collision::NOFRIENDLIES) {
-			if ( teamHandler->AlliedAllyTeams(p->GetAllyteamID(), unit->allyteam)) { continue; }
-		}
-		if (p->GetCollisionFlags() & Collision::NOENEMIES) {
-			if (!teamHandler->AlliedAllyTeams(p->GetAllyteamID(), unit->allyteam)) { continue; }
-		}
-		if (p->GetCollisionFlags() & Collision::NONEUTRALS) {
-			if (unit->IsNeutral()) { continue; }
+		
+		if (p->GetAllyteamID() >= 0) {
+			if (p->GetCollisionFlags() & Collision::NOFRIENDLIES) {
+				if ( teamHandler->AlliedAllyTeams(p->GetAllyteamID(), unit->allyteam)) { continue; }
+			}
+			if (p->GetCollisionFlags() & Collision::NOENEMIES) {
+				if (!teamHandler->AlliedAllyTeams(p->GetAllyteamID(), unit->allyteam)) { continue; }
+			}
+			if (p->GetCollisionFlags() & Collision::NONEUTRALS) {
+				if (unit->IsNeutral()) { continue; }
+			}
 		}
 
 		if (CCollisionHandler::DetectHit(unit, ppos0, ppos1, &cq)) {
