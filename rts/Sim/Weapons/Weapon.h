@@ -32,6 +32,7 @@ public:
 
 public:
 	bool Attack(const SWeaponTarget& newTarget);
+	void SetAttackTarget(const SWeaponTarget& newTarget); //< does not any checks etc. !
 	void DropCurrentTarget();
 
 	bool HaveTarget() const { return (currentTarget.type != Target_None); }
@@ -104,7 +105,6 @@ private:
 	void ReAimWeapon();
 	void HoldIfTargetInvalid();
 
-	void SetAttackTarget(const SWeaponTarget& newTarget); //< does not any checks etc. !
 	bool TryTarget(const float3 tgtPos, const SWeaponTarget& trg) const;
 
 public:

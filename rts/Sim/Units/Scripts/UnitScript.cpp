@@ -646,11 +646,9 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 				CWeapon* w = unit->weapons[index];
 				const SWeaponTarget origTarget = w->GetCurrentTarget();
 				const float3 origWeaponMuzzlePos = w->weaponMuzzlePos;
-
+				w->SetAttackTarget(SWeaponTarget(pos + dir));
 				w->weaponMuzzlePos = pos;
-				if (w->Attack(SWeaponTarget(pos + dir))) {
-					w->Fire(true);
-				}
+				w->Fire(true);
 				w->weaponMuzzlePos = origWeaponMuzzlePos;
 				bool origRestored = w->Attack(origTarget);
 				assert(origRestored);
