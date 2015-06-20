@@ -502,12 +502,11 @@ void CWeapon::UpdateSalvo()
 
 	for (int i = 0; i < projectilesPerShot; ++i) {
 		owner->script->Shot(weaponNum);
-
-		Fire(false);
-
 		// Update Muzzle Piece/Pos
 		UpdateWeaponPieces(false); // calls script->QueryWeapon()
 		UpdateWeaponVectors();
+
+		Fire(false);
 	}
 
 	// Rock the unit in the direction of fire
