@@ -104,7 +104,7 @@ void IWorldObjectModelRenderer::DelUnit(const CUnit* u)
 {
 	UnitSet& us = units[TEX_TYPE(u)];
 	
-	// Unit can still be in the container, since we can't know in UnitDrawer.cpp
+	// Unit can be absent from the container, since we can't know in UnitDrawer.cpp
 	// whether it's cloaked or not.
 	
 	auto it = std::find(us.begin(), us.end(), const_cast<CUnit*>(u));
@@ -177,9 +177,10 @@ void IWorldObjectModelRenderer::AddProjectile(const CProjectile* p)
 void IWorldObjectModelRenderer::DelProjectile(const CProjectile* p)
 {
 	ProjectileSet &ps = projectiles[TEX_TYPE(p)];
-	assert(std::find(ps.begin(), ps.end(), const_cast<CProjectile*>(p)) != ps.end());
 	
 	auto it = std::find(ps.begin(), ps.end(), const_cast<CProjectile*>(p));
+	assert(it != ps.end());
+	
 	*it = ps.back();
 	ps.pop_back();
 	numProjectiles -= 1;
