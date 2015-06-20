@@ -446,7 +446,7 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 
 		// copy factory orders for new unit
 		for (CCommandQueue::const_iterator ci = factoryCmdQue.begin(); ci != factoryCmdQue.end(); ++ci) {
-			c = *ci;
+			Command c = *ci;
 			c.options |= SHIFT_KEY;
 
 			if (c.GetID() == CMD_MOVE) {
