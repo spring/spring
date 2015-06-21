@@ -92,7 +92,7 @@ WeaponDefs:
   - weaponVelocity := maxVelocity
   - weaponAcceleration := acceleration
  - add fireTolerance tag: Angle which prevents a weapon from firing in CanFire. (GoogleFrog)
- - add allowNonBlockingAim tag (default false = old behaviour). When enabled it makes AimWeapon() calls non-blocking (still the fireTolerance tag might prevent the weapon firing).
+ - add allowNonBlockingAim tag (default false = old behaviour). When enabled it makes AimWeapon() LUS/COB calls non-blocking (still the fireTolerance tag might prevent the weapon firing).
    This is very useful for fast units that need to retarget often (e.g. armflash driving next to a llt).
 
 UnitDefs:
@@ -109,7 +109,7 @@ New InfoTexture Renderer:
 
 Rendering:
  - removed multiple linked lists from rendering (massive speed up, cutting rendertime upto 2-3 times!)
- ! fix particle limit not being always respected, when too many particles were created in a single GameFrame
+ ! fix particle limit being ignored for particles created in the same GameFrame
  - ShieldParticles: reduce count of particles by more than half
  - always draw WaterPlane (that's not the water surface) below current minimum terrain height
  - FlyingPieces: add camera frustum check

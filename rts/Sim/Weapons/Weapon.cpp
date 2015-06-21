@@ -636,24 +636,21 @@ bool CWeapon::AutoTarget()
 	// search for other in range targets
 	lastTargetRetry = gs->frameNum;
 
-	std::multimap<float, CUnit*> targets;
-	std::multimap<float, CUnit*>::const_iterator targetsIt;
-
-	const CUnit* avoidUnit = ( avoidTarget && currentTarget.type == Target_Unit) ? currentTarget.unit : nullptr;
-	const CUnit* ignorUnit = (!avoidTarget && currentTarget.type == Target_Unit) ? currentTarget.unit : nullptr;
+	const CUnit* avoidUnit = (avoidTarget && currentTarget.type == Target_Unit) ? currentTarget.unit : nullptr;
 
 	// NOTE:
 	//   sorts by INCREASING order of priority, so lower equals better
 	//   <targets> can contain duplicates if a unit covers multiple quads
 	//   <targets> is normally sorted such that all bad TC units are at the
 	//   end, but Lua can mess with the ordering arbitrarily
+	std::multimap<float, CUnit*> targets;
 	CGameHelper::GenerateWeaponTargets(this, avoidUnit, targets);
 
 	CUnit* goodTargetUnit = nullptr;
 	CUnit* badTargetUnit = nullptr;
 
-	for (targetsIt = targets.begin(); targetsIt != targets.end(); ++targetsIt) {
-		CUnit* unit = targetsIt->second;
+	for (auto targetsPair: targets) {
+		CUnit* unit = targetsPair.second;
 
 		// save the "best" bad target in case we have no other
 		// good targets (of higher priority) left in <targets>
@@ -665,9 +662,6 @@ bool CWeapon::AutoTarget()
 			continue;
 
 		if (unit->IsNeutral() && (owner->fireState < FIRESTATE_FIREATNEUTRAL))
-			continue;
-
-		if (unit == ignorUnit)
 			continue;
 
 		if (isBadTarget) {
