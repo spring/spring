@@ -105,6 +105,16 @@ static void erase(T& v, CUnit* u)
 	}
 }
 
+template<typename T>
+static void insert_unique(T& v, CUnit* u)
+{
+	auto it = std::find(v.begin(), v.end(), u);
+	if (it == v.end()) {
+		v.push_back(u);
+	}
+}
+
+
 
 
 CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
@@ -1930,7 +1940,7 @@ void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 
 void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 	CUnit* u = const_cast<CUnit*>(unit);
-
+	//LOG_L(L_WARNING, "render unit destroyed %p", unit);
 	if ((dynamic_cast<CBuilding*>(u) != NULL) && gameSetup->ghostedBuildings &&
 		!(u->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) &&
 		(u->losStatus[gu->myAllyTeam] & (LOS_PREVLOS)) && !gu->spectatingFullView
@@ -1987,7 +1997,7 @@ void CUnitDrawer::RenderUnitCloakChanged(const CUnit* unit, int cloaked) {
 
 void CUnitDrawer::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus) {
 	CUnit* u = const_cast<CUnit*>(unit);
-
+	//LOG_L(L_WARNING, "unit LOS change %p %d %d", unit, allyTeam, newStatus);
 	if (newStatus & LOS_INLOS) {
 		if (allyTeam == gu->myAllyTeam) {
 			if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
@@ -2005,7 +2015,7 @@ void CUnitDrawer::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newS
 		}
 
 		if (newStatus & LOS_INRADAR) {
-			unitRadarIcons[allyTeam].push_back(u);
+			insert_unique(unitRadarIcons[allyTeam], u);
 		} else {
 			erase(unitRadarIcons[allyTeam], u);
 		}
