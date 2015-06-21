@@ -23,6 +23,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/Exceptions.h"
+#include "System/Util.h"
 #include "System/Log/ILog.h"
 
 CWeaponLoader* CWeaponLoader::GetInstance()
@@ -57,8 +58,10 @@ CWeapon* CWeaponLoader::LoadWeapon(CUnit* owner, const UnitDefWeapon* defWeapon)
 
 	const WeaponDef* weaponDef = defWeapon->def;
 	const std::string& weaponType = weaponDef->type;
-
-	if (weaponType == "Cannon") {
+	
+	if (StringToLower(weaponDef->name) == "noweapon") {
+		weapon = new CNoWeapon(owner, weaponDef);
+	} else if (weaponType == "Cannon") {
 		weapon = new CCannon(owner, weaponDef);
 	} else if (weaponType == "Rifle") {
 		weapon = new CRifle(owner, weaponDef);
@@ -95,7 +98,7 @@ CWeapon* CWeaponLoader::LoadWeapon(CUnit* owner, const UnitDefWeapon* defWeapon)
 		weapon = new CStarburstLauncher(owner, weaponDef);
 	} else {
 		weapon = new CNoWeapon(owner, weaponDef);
-		LOG_L(L_ERROR, "weapon-type %s unknown or NOWEAPON", weaponType.c_str());
+		LOG_L(L_ERROR, "weapon-type %s unknown, using noweapon", weaponType.c_str());
 	}
 
 	return weapon;
