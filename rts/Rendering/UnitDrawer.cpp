@@ -1940,12 +1940,10 @@ void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 
 void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 	CUnit* u = const_cast<CUnit*>(unit);
-	//LOG_L(L_WARNING, "render unit destroyed %p", unit);
 	if ((dynamic_cast<CBuilding*>(u) != NULL) && gameSetup->ghostedBuildings &&
 		!(u->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) &&
 		(u->losStatus[gu->myAllyTeam] & (LOS_PREVLOS)) && !gu->spectatingFullView
 	) {
-		// FIXME -- adjust decals for decoys? gets weird?
 		const UnitDef* decoyDef = u->unitDef->decoyDef;
 		S3DModel* gbModel = (decoyDef == NULL) ? u->model : decoyDef->LoadModel();
 
