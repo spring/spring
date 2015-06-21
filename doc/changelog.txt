@@ -74,7 +74,10 @@ Collisions:
  - fix #4602 and improve CQuadField::GetUnitsAndFeaturesColVol
  - speed up UnitCollisions
 
-Weapon:
+Units:
+ - base automatic attack commands for idle units on weapon priorities
+ 
+Weapons:
  - refactor weapon code:
   - use LeadTargetPos more often
   - give current unit's target higher priority than weapon ones
