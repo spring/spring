@@ -25,7 +25,7 @@ void CModInfo::ResetState()
 	mutator.clear();
 	description.clear();
 
-	allowDirectionalPathing   = false;
+	allowDirectionalPathing   = true;
 	allowAircraftToLeaveMap   = true;
 	allowAircraftToHitGround  = true;
 	allowPushingEnemyUnits    = false;
@@ -125,7 +125,7 @@ void CModInfo::Init(const char* modArchive)
 		// movement
 		const LuaTable& movementTbl = root.SubTable("movement");
 
-		allowDirectionalPathing = movementTbl.GetBool("allowDirectionalPathing", false);
+		allowDirectionalPathing = movementTbl.GetBool("allowDirectionalPathing", true);
 		allowAircraftToLeaveMap = movementTbl.GetBool("allowAirPlanesToLeaveMap", true);
 		allowAircraftToHitGround = movementTbl.GetBool("allowAircraftToHitGround", true);
 		allowPushingEnemyUnits = movementTbl.GetBool("allowPushingEnemyUnits", false);

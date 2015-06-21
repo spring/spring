@@ -64,8 +64,7 @@ Sim:
  - fix aircraft in groups (e.g. brawlers) not being able to attack the target and landing instead at target pos
 
 Pathing:
- ! fix pathing: disable directional speedmod (it is the cause of shaking units when getting close to blocked squares!!!) 
-  - can be re-enabled on your own responsibility using allowDirectionalPathing under movement table in modrules.lua
+ ! fixed shaking units when getting close to blocked squares
  - repath GroundMoveType only every SlowUpdate() (to save cpu cycles)
  - runtime cache failed paths, too (and use a lower lifeTime for them)
 
