@@ -129,13 +129,9 @@ Lua:
   ! removed alias "/quit" (use /quitforce)
   - add "quit to menu" to quit-box
   - add "/reloadforce"
-  -  add DefaultStartScript config setting:
-    - if set, automaticly start it!
-    - add --oldmenu command line parameter to always get to the old menu
  - add callouts to read and set engagement range of a unit (by FLOZi)
    - Spring.GetUnitMaxRange(unitID) -> number maxRange
    - Spring.SetUnitMaxRange(unitID, maxRange) -> nil
- - add attackSafetyDistance unitDef
  - add Spring.GetLosViewColors
  - add new call-in: UnitStunned(unitID, unitDefID, unitTeam, stunned) -- called whenever a unit changes its stun status
  - add Set/GetProjectileIsIntercepted
@@ -155,6 +151,9 @@ Lua:
 StartScript:
  - support rapid tags
  - allow to disable demo file recording in script.txt via RecordDemo = 0
+ - add DefaultStartScript config setting:
+   - if set, automaticly start it!
+   - add --oldmenu command line parameter to always get to the old menu
 
 AI: (all by rlcevg)
  - add Lua.callRules, Lua.callUI to JavaOO
@@ -172,7 +171,7 @@ Buildbot/Installer:
 
 CMake:
  - colorize gcc output
- ! remove DEBUG2 & DEBUG3 replace with just DEBUG
+ ! remove DEBUG2 & DEBUG3, replaced with just DEBUG
  - enable "Identical Code Folding" with ld.gold
  - disable unused ASSIMP formats at compiletime
 
