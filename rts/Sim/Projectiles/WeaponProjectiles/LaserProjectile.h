@@ -12,12 +12,12 @@ class CLaserProjectile : public CWeaponProjectile
 public:
 	CLaserProjectile(const ProjectileParams& params);
 
-	void Draw();
-	void Update();
-	void Collision(CUnit* unit);
-	void Collision(CFeature* feature);
-	void Collision();
-	int ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed);
+	void Draw() override;
+	void Update() override;
+	void Collision(CUnit* unit) override;
+	void Collision(CFeature* feature) override;
+	void Collision() override;
+	int ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed) override;
 
 	virtual int GetProjectilesCount() const override;
 

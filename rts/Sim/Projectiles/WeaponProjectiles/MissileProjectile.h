@@ -11,16 +11,16 @@ class CMissileProjectile : public CWeaponProjectile
 {
 	CR_DECLARE(CMissileProjectile)
 protected:
-	void UpdateGroundBounce();
+	void UpdateGroundBounce() override;
 public:
 	CMissileProjectile(const ProjectileParams& params);
 
-	void Collision(CUnit* unit);
-	void Collision(CFeature* feature);
-	void Collision();
+	void Collision(CUnit* unit) override;
+	void Collision(CFeature* feature) override;
+	void Collision() override;
 
-	void Update();
-	void Draw();
+	void Update() override;
+	void Draw() override;
 
 	virtual int GetProjectilesCount() const override;
 
@@ -29,7 +29,7 @@ public:
 		float3 shieldPos,
 		float shieldForce,
 		float shieldMaxSpeed
-	);
+	) override;
 
 private:
 	void UpdateWobble();

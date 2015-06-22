@@ -139,7 +139,7 @@ class CStdExplosionGenerator: public IExplosionGenerator
 public:
 	CStdExplosionGenerator(): IExplosionGenerator() {}
 
-	bool Load(CExplosionGeneratorHandler* handler, const std::string& tag) { return false; }
+	bool Load(CExplosionGeneratorHandler* handler, const std::string& tag) override { return false; }
 	bool Explosion(
 		const float3& pos,
 		const float3& dir,
@@ -148,7 +148,7 @@ public:
 		float gfxMod,
 		CUnit* owner,
 		CUnit* hit
-	);
+	) override;
 };
 
 
@@ -228,9 +228,9 @@ public:
 	static unsigned int GetFlagsFromHeight(float height, float groundHeight);
 
 	/// @throws content_error/runtime_error on errors
-	bool Load(CExplosionGeneratorHandler* handler, const std::string& tag);
-	bool Reload(CExplosionGeneratorHandler* handler, const std::string& tag);
-	bool Explosion(const float3& pos, const float3& dir, float damage, float radius, float gfxMod, CUnit* owner, CUnit* hit);
+	bool Load(CExplosionGeneratorHandler* handler, const std::string& tag) override;
+	bool Reload(CExplosionGeneratorHandler* handler, const std::string& tag) override;
+	bool Explosion(const float3& pos, const float3& dir, float damage, float radius, float gfxMod, CUnit* owner, CUnit* hit) override;
 
 
 	enum {

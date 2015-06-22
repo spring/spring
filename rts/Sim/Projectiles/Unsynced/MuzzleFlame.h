@@ -13,8 +13,8 @@ public:
 	CMuzzleFlame(const float3& pos, const float3& speed, const float3& dir, float size);
 	~CMuzzleFlame();
 
-	void Draw();
-	void Update();
+	void Draw() override;
+	void Update() override;
 
 	virtual int GetProjectilesCount() const override;
 

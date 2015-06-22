@@ -20,8 +20,8 @@ public:
 	);
 	~CGenericParticleProjectile();
 
-	virtual void Draw();
-	virtual void Update();
+	virtual void Draw() override;
+	virtual void Update() override;
 
 	virtual int GetProjectilesCount() const override;
 

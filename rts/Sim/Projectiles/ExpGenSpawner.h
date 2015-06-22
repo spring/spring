@@ -15,7 +15,7 @@ public:
 	CExpGenSpawner();
 	~CExpGenSpawner() {}
 
-	virtual void Update();
+	virtual void Update() override;
 
 	virtual int GetProjectilesCount() const override;
 

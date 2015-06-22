@@ -11,13 +11,13 @@ class CExplosiveProjectile : public CWeaponProjectile
 public:
 	CExplosiveProjectile(const ProjectileParams& params);
 
-	void Update();
-	void Draw();
+	void Update() override;
+	void Draw() override;
 
 	virtual int GetProjectilesCount() const override;
 
 	int ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos,
-			float shieldForce, float shieldMaxSpeed);
+			float shieldForce, float shieldMaxSpeed) override;
 
 private:
 	float areaOfEffect;

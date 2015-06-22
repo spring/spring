@@ -36,13 +36,13 @@ public:
 	);
 	virtual ~CPieceProjectile();
 
-	void Update();
-	void Draw();
-	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
-	void Collision();
-	void Collision(CUnit* unit);
+	void Update() override;
+	void Draw() override;
+	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
+	void Collision() override;
+	void Collision(CUnit* unit) override;
 
-	void DrawCallback();
+	void DrawCallback() override;
 
 	virtual int GetProjectilesCount() const override;
 

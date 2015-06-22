@@ -11,9 +11,9 @@ class CBeamLaserProjectile: public CWeaponProjectile
 public:
 	CBeamLaserProjectile(const ProjectileParams& params);
 
-	void Update();
-	void Draw();
-	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
+	void Update() override;
+	void Draw() override;
+	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
 
 	virtual int GetProjectilesCount() const override;
 

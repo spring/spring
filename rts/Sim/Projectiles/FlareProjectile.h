@@ -14,8 +14,8 @@ public:
 	CFlareProjectile(const float3& pos, const float3& speed, CUnit* owner, int activateFrame);
 	~CFlareProjectile();
 
-	void Update();
-	void Draw();
+	void Update() override;
+	void Draw() override;
 
 	virtual int GetProjectilesCount() const override;
 

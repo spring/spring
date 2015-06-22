@@ -11,14 +11,14 @@ class CFlameProjectile : public CWeaponProjectile
 public:
 	CFlameProjectile(const ProjectileParams& params);
 
-	void Update();
-	void Draw();
-	void Collision();
+	void Update() override;
+	void Draw() override;
+	void Collision() override;
 
 	virtual int GetProjectilesCount() const override;
 
 	int ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos,
-			float shieldForce, float shieldMaxSpeed);
+			float shieldForce, float shieldMaxSpeed) override;
 
 private:
 	float curTime;

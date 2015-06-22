@@ -25,9 +25,9 @@ public:
 		float color = 0.7f
 	);
 
-	void Update();
-	void Draw();
-	void Init(const CUnit* owner, const float3& offset);
+	void Update() override;
+	void Draw() override;
+	void Init(const CUnit* owner, const float3& offset) override;
 
 	virtual int GetProjectilesCount() const override;
 

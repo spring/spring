@@ -42,7 +42,7 @@ public:
 	virtual void Collision(CUnit* unit);
 	virtual void Collision(CFeature* feature);
 	virtual void Update();
-	virtual void Init(const CUnit* owner, const float3& offset);
+	virtual void Init(const CUnit* owner, const float3& offset) override;
 
 	virtual void Draw() {}
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
@@ -61,7 +61,7 @@ public:
 	//
 	// should be called when speed-vector is changed
 	// s.t. both speed.w and dir need to be updated
-	void SetVelocityAndSpeed(const float3& vel) {
+	void SetVelocityAndSpeed(const float3& vel) override {
 		CWorldObject::SetVelocityAndSpeed(vel);
 
 		if (speed.w > 0.0f) {

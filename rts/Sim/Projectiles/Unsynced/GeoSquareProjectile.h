@@ -16,8 +16,8 @@ public:
 	);
 	virtual ~CGeoSquareProjectile();
 
-	void Draw();
-	void Update();
+	void Draw() override;
+	void Update() override;
 
 	virtual int GetProjectilesCount() const override;
 

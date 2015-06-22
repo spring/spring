@@ -22,8 +22,8 @@ public:
 		float particleSize
 	);
 
-	void Draw();
-	void Update();
+	void Draw() override;
+	void Update() override;
 	void StopFire();
 
 	virtual int GetProjectilesCount() const override;

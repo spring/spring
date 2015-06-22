@@ -23,7 +23,7 @@ class ShieldProjectile: public CProjectile
 public:
 	ShieldProjectile(CPlasmaRepulser*);
 
-	void Update();
+	void Update() override;
 	virtual int GetProjectilesCount() const override;
 
 public:
@@ -59,8 +59,8 @@ public:
 	);
 	~ShieldSegmentProjectile();
 
-	void Draw();
-	void Update();
+	void Draw() override;
+	void Update() override;
 	void PreDelete();
 
 	virtual int GetProjectilesCount() const override;

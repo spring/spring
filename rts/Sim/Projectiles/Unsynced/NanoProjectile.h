@@ -15,9 +15,9 @@ public:
 	CNanoProjectile(float3 pos, float3 speed, int lifeTime, SColor color);
 	virtual ~CNanoProjectile();
 
-	void Update();
-	void Draw();
-	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
+	void Update() override;
+	void Draw() override;
+	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
 
 	virtual int GetProjectilesCount() const override;
 
