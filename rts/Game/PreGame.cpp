@@ -367,7 +367,12 @@ void CPreGame::StartServerForDemo(const std::string& demoName)
 		tgame->AddPair("MapName", gameSetup->mapName);
 		tgame->AddPair("Gametype", gameSetup->modName);
 		tgame->AddPair("Demofile", demoName);
-		tgame->AddPair("OnlyLocal", 1);
+		tgame->remove("OnlyLocal", false);
+		tgame->remove("HostIP", false);
+		tgame->remove("HostPort", false);
+		tgame->remove("AutohostPort", false);
+		tgame->remove("SourcePort", false);
+		//tgame->remove("IsHost", false);
 
 		for (std::map<std::string, TdfParser::TdfSection*>::iterator it = tgame->sections.begin(); it != tgame->sections.end(); ++it) {
 			if (it->first.size() > 6 && it->first.substr(0, 6) == "player") {
@@ -377,13 +382,9 @@ void CPreGame::StartServerForDemo(const std::string& demoName)
 
 		// add local spectator (and assert we didn't already have MAX_PLAYERS players)
 		for (int myPlayerNum = MAX_PLAYERS - 1; myPlayerNum >= 0; --myPlayerNum) {
-			char section[16];
-			sprintf(section, "game\\player%i", myPlayerNum);
-			string s(section);
-
+			string s = IntToString(myPlayerNum, "game\\player%i");
 			if (script.SectionExist(s)) {
-				sprintf(section, "player%i", myPlayerNum + 1);
-				playerStr = std::string(section);
+				playerStr = IntToString(myPlayerNum + 1, "player%i");
 				break;
 			}
 		}
@@ -397,7 +398,7 @@ void CPreGame::StartServerForDemo(const std::string& demoName)
 
 		// is this needed?
 		TdfParser::TdfSection* modopts = tgame->construct_subsection("MODOPTIONS");
-		modopts->AddPair("MaxSpeed", 20);
+		modopts->remove("MaxSpeed", false);
 	}
 
 
