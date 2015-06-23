@@ -27,10 +27,14 @@ CRifle::CRifle(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
 }
 
+float CRifle::GetPredictedImpactTime(float3 p) const
+{
+	return 0;
+}
 
 void CRifle::FireImpl(const bool scriptCall)
 {
-	float3 dir = currentTargetPos - weaponMuzzlePos;
+	float3 dir = (currentTargetPos - weaponMuzzlePos).SafeNormalize();
 	dir +=
 		(gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
 	dir.Normalize();

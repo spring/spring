@@ -35,7 +35,7 @@ float CLightningCannon::GetPredictedImpactTime(float3 p) const
 void CLightningCannon::FireImpl(const bool scriptCall)
 {
 	float3 curPos = weaponMuzzlePos;
-	float3 curDir = currentTargetPos - weaponMuzzlePos;
+	float3 curDir = (currentTargetPos - weaponMuzzlePos).SafeNormalize();
 	float3 newDir = curDir;
 
 	curDir +=
