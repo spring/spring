@@ -13,6 +13,7 @@ public:
 
 private:
 	void FireImpl(const bool scriptCall) override final;
+	float GetPredictedImpactTime(float3 p) const override final;
 
 private:
 	float3 color;

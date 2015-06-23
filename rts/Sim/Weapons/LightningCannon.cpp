@@ -27,6 +27,10 @@ CLightningCannon::CLightningCannon(CUnit* owner, const WeaponDef* def)
 {
 }
 
+float CLightningCannon::GetPredictedImpactTime(float3 p) const
+{
+	return 0;
+}
 
 void CLightningCannon::FireImpl(const bool scriptCall)
 {
