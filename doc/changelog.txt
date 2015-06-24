@@ -174,7 +174,7 @@ CMake:
  ! remove DEBUG2 & DEBUG3, replaced with just DEBUG
  - enable "Identical Code Folding" with ld.gold
  - disable unused ASSIMP formats at compiletime
-
+ - add cmake option DEBUG_LUANAN to enable lua check for nans in a release build
 
 
 -- 98.0 ---------------------------------------------------------
