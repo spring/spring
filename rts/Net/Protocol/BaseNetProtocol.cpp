@@ -423,13 +423,7 @@ PacketType CBaseNetProtocol::SendSdBlockresponse(uchar myPlayerNum, std::vector<
 	return PacketType(packet);
 }
 #endif // SYNCDEBUG
-/* FIXME: add these:
- NETMSG_SD_CHKREQUEST    = 41,
- NETMSG_SD_CHKRESPONSE   = 42,
- NETMSG_SD_BLKREQUEST    = 43,
- NETMSG_SD_BLKRESPONSE   = 44,
- NETMSG_SD_RESET         = 45,
-*/
+
 
 CBaseNetProtocol::CBaseNetProtocol()
 {
