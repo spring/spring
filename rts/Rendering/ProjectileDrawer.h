@@ -4,7 +4,6 @@
 #define PROJECTILE_DRAWER_HDR
 
 #include "Rendering/GL/myGL.h"
-#include <list>
 #include <set>
 
 #include "lib/gml/ThreadSafeContainers.h"

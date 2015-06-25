@@ -3,9 +3,7 @@
 #ifndef UNIT_DRAWER_H
 #define UNIT_DRAWER_H
 
-#include <set>
 #include <vector>
-#include <list>
 #include <string>
 #include <map>
 
