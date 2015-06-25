@@ -106,6 +106,22 @@
 //      bind Ctrl+space firestate 0  // hold fire
 //
 
+//
+//  Keychains (new in 98.0):
+//
+//    A keychain is a timed combination of keysets,
+//    i.e. "press A, then B".
+//
+//    Here are some examples:
+//
+//      bind            a,b  fake_action
+//      bind Ctrl+a, Ctrl+b  fake_action
+//
+//    The format then goes like this:
+//
+//      <keyset>, <keyset>, ...
+//
+
 
 //
 //  Extra Run-Time Commands
@@ -117,19 +133,6 @@
 //    /keycodes  : prints the known keycodes to standard out
 //    /keyprint  : prints the current bindings to standard out
 //    /keydebug  : prints debugging information to standard out (for each keystroke)
-//
-
-
-//
-//  Hotbinding:
-//
-//    The default bindings include the 'hotbind' (Ctrl+insert) and
-//    'hotunbind' (Ctrl+delete) capabilities. Place the mouse cursor over one
-//    of the control panel icons (normal command or build command), and press
-//    Ctrl+insert. Spring will then ask for a keyset, which will then have the
-//    icon's command immediately appended to its list of actions. Placing the
-//    mouse cursor over an icon and hitting Ctrl+delete will delete all bindings
-//    associated with that icon's command.
 //
 
 
@@ -184,9 +187,6 @@
 //  bind                  .  nextmenu
 //  bind            Shift+,  decguiopacity
 //  bind            Shift+.  incguiopacity
-//
-//  bind        Ctrl+insert  hotbind
-//  bind        Ctrl+delete  hotunbind
 //
 //  bind              Any++  speedup
 //  bind              Any+=  speedup

@@ -213,15 +213,15 @@ void CShareBox::Draw()
 	font->glPrint(box.x1 + 0.01f, box.y1 + 0.16f, 0.7f, FONT_SCALE | FONT_NORM, "Share Energy");
 
 	font->SetTextColor(1, 1, 1, 0.8f);
-	font->glFormat(box.x1 + 0.25f, box.y1 + 0.12f, 0.7f, FONT_SCALE | FONT_NORM, "%.0f", float(teamHandler->Team(gu->myTeam)->energy));
-	font->glFormat(box.x1 + 0.14f, box.y1 + 0.12f, 0.7f, FONT_SCALE | FONT_NORM, "%.0f", teamHandler->Team(gu->myTeam)->energy * energyShare);
+	font->glFormat(box.x1 + 0.25f, box.y1 + 0.12f, 0.7f, FONT_SCALE | FONT_NORM, "%.0f", float(teamHandler->Team(gu->myTeam)->res.energy));
+	font->glFormat(box.x1 + 0.14f, box.y1 + 0.12f, 0.7f, FONT_SCALE | FONT_NORM, "%.0f", teamHandler->Team(gu->myTeam)->res.energy * energyShare);
 
 	font->SetTextColor(0.8f, 0.8f, 0.9f, 0.8f);
 	font->glPrint(box.x1 + 0.01f, box.y1 + 0.22f, 0.7f, FONT_SCALE | FONT_NORM, "Share Metal");
 
 	font->SetTextColor(1, 1, 1, 0.8f);
-	font->glFormat(box.x1 + 0.25f, box.y1 + 0.18f, 0.7f, FONT_SCALE | FONT_NORM, "%.0f", float(teamHandler->Team(gu->myTeam)->metal));
-	font->glFormat(box.x1 + 0.14f, box.y1 + 0.18f, 0.7f, FONT_SCALE | FONT_NORM, "%.0f", teamHandler->Team(gu->myTeam)->metal * metalShare);
+	font->glFormat(box.x1 + 0.25f, box.y1 + 0.18f, 0.7f, FONT_SCALE | FONT_NORM, "%.0f", float(teamHandler->Team(gu->myTeam)->res.metal));
+	font->glFormat(box.x1 + 0.14f, box.y1 + 0.18f, 0.7f, FONT_SCALE | FONT_NORM, "%.0f", teamHandler->Team(gu->myTeam)->res.metal * metalShare);
 
 	int teamPos = 0;
 	for(int team = startTeam; team < MAX_SHARE_TEAMS && teamPos < numTeamsDisp; ++team, ++teamPos) {
@@ -366,7 +366,7 @@ void CShareBox::MouseRelease(int x, int y, int button)
 			// make sure the units are stopped and that the selection is transmitted
 			selectedUnitsHandler.GiveCommand(c, false);
 		}
-		net->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, shareTeam, shareUnits, metalShare * teamHandler->Team(gu->myTeam)->metal, energyShare * teamHandler->Team(gu->myTeam)->energy));
+		clientNet->Send(CBaseNetProtocol::Get().SendShare(gu->myPlayerNum, shareTeam, shareUnits, metalShare * teamHandler->Team(gu->myTeam)->res.metal, energyShare * teamHandler->Team(gu->myTeam)->res.energy));
 		if (shareUnits) {
 			selectedUnitsHandler.ClearSelected();
 		}

@@ -3,15 +3,14 @@
 #include <assert.h>
 
 #include "GroundBlockingObjectMap.h"
-
-#include "GlobalSynced.h"
 #include "GlobalConstants.h"
+#include "Map/ReadMap.h"
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Objects/SolidObjectDef.h"
 #include "Sim/Path/IPathManager.h"
 #include "System/creg/STL_Map.h"
 
-CGroundBlockingObjectMap* groundBlockingObjectMap;
+CGroundBlockingObjectMap* groundBlockingObjectMap = NULL;
 
 CR_BIND(CGroundBlockingObjectMap, (1))
 CR_REG_METADATA(CGroundBlockingObjectMap, (
@@ -51,7 +50,7 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 
 	for (int zSqr = minZSqr; zSqr < maxZSqr; zSqr++) {
 		for (int xSqr = minXSqr; xSqr < maxXSqr; xSqr++) {
-			BlockingMapCell& cell = groundBlockingMap[xSqr + zSqr * gs->mapx];
+			BlockingMapCell& cell = groundBlockingMap[xSqr + zSqr * mapDims.mapx];
 			cell[objID] = object;
 		}
 	}
@@ -82,7 +81,7 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, con
 			const float3 testPos = float3(x, 0.0f, z) * SQUARE_SIZE;
 
 			if (object->GetGroundBlockingMaskAtPos(testPos) & mask) {
-				BlockingMapCell& cell = groundBlockingMap[x + (z) * gs->mapx];
+				BlockingMapCell& cell = groundBlockingMap[x + (z) * mapDims.mapx];
 				cell[objID] = object;
 			}
 		}
@@ -108,7 +107,7 @@ void CGroundBlockingObjectMap::RemoveGroundBlockingObject(CSolidObject* object)
 
 	for (int z = bz; z < bz + sz; ++z) {
 		for (int x = bx; x < bx + sx; ++x) {
-			const int idx = x + z * gs->mapx;
+			const int idx = x + z * mapDims.mapx;
 
 			BlockingMapCell& cell = groundBlockingMap[idx];
 			cell.erase(objID);
@@ -138,10 +137,10 @@ CSolidObject* CGroundBlockingObjectMap::GroundBlockedUnsafe(int mapSquare) const
 
 
 CSolidObject* CGroundBlockingObjectMap::GroundBlocked(int x, int z) const {
-	if (x < 0 || x >= gs->mapx || z < 0 || z >= gs->mapy)
+	if (x < 0 || x >= mapDims.mapx || z < 0 || z >= mapDims.mapy)
 		return NULL;
 
-	return GroundBlockedUnsafe(x + z * gs->mapx);
+	return GroundBlockedUnsafe(x + z * mapDims.mapx);
 }
 
 
@@ -154,37 +153,32 @@ CSolidObject* CGroundBlockingObjectMap::GroundBlocked(const float3& pos) const {
 
 bool CGroundBlockingObjectMap::GroundBlocked(int x, int z, CSolidObject* ignoreObj) const
 {
-	if (x < 0 || x >= gs->mapx || z < 0 || z >= gs->mapy)
+	if ((unsigned)x >= mapDims.mapx || (unsigned)z >= mapDims.mapy)
 		return false;
 
-	const int mapSquare = x + z * gs->mapx;
+	const int mapSquare = z * mapDims.mapx + x;
+	const BlockingMapCell& cell = groundBlockingMap[mapSquare];
 
-	if (groundBlockingMap[mapSquare].empty())
+	if (cell.empty())
 		return false;
 
 	const int objID = GetObjectID(ignoreObj);
-	const BlockingMapCell& cell = groundBlockingMap[mapSquare];
-
 	BlockingMapCellIt it = cell.begin();
 
-	if (it != cell.end()) {
-		if (it->first != objID) {
-			// there are other objects blocking the square
-			return true;
-		} else {
-			// ignoreObj is in the square. Check if there are other objects, too
-			return (cell.size() >= 2);
-		}
+	if (it->first != objID) {
+		// there are other objects blocking the square
+		return true;
 	}
 
-	return false;
+	// ignoreObj is in the square. Check if there are other objects, too
+	return (cell.size() >= 2);
 }
 
 
 bool CGroundBlockingObjectMap::GroundBlocked(const float3& pos, CSolidObject* ignoreObj) const
 {
-	const int xSqr = int(pos.x / SQUARE_SIZE);
-	const int zSqr = int(pos.z / SQUARE_SIZE);
+	const int xSqr = unsigned(pos.x) / SQUARE_SIZE;
+	const int zSqr = unsigned(pos.z) / SQUARE_SIZE;
 	return GroundBlocked(xSqr, zSqr, ignoreObj);
 }
 
@@ -194,18 +188,26 @@ bool CGroundBlockingObjectMap::GroundBlocked(const float3& pos, CSolidObject* ig
   * Opens up a yard in a blocked area.
   * When a factory opens up, for example.
   */
-void CGroundBlockingObjectMap::OpenBlockingYard(CSolidObject* object) {
+void CGroundBlockingObjectMap::OpenBlockingYard(CSolidObject* object)
+{
 	RemoveGroundBlockingObject(object);
 	AddGroundBlockingObject(object, YARDMAP_YARDFREE);
+	object->yardOpen = true;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+///
+///
 
 /**
   * Closes a yard, blocking the area.
   * When a factory closes, for example.
   */
-void CGroundBlockingObjectMap::CloseBlockingYard(CSolidObject* object) {
+void CGroundBlockingObjectMap::CloseBlockingYard(CSolidObject* object)
+{
 	RemoveGroundBlockingObject(object);
 	AddGroundBlockingObject(object, YARDMAP_YARDBLOCKED);
+	object->yardOpen = false;
 }
 
 

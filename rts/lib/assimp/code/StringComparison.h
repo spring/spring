@@ -154,7 +154,7 @@ inline int ASSIMP_stricmp(const char *s1, const char *s2)
  */
 inline int ASSIMP_stricmp(const std::string& a, const std::string& b)
 {
-	register int i = (int)b.length()-(int)a.length();
+	int i = (int)b.length()-(int)a.length();
 	return (i ? i : ASSIMP_stricmp(a.c_str(),b.c_str()));
 }
 

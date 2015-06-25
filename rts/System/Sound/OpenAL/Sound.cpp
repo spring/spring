@@ -5,10 +5,13 @@
 #include <cstdlib>
 #include <cmath>
 #include <alc.h>
+
 #ifndef ALC_ALL_DEVICES_SPECIFIER
-//needed for ALC_ALL_DEVICES_SPECIFIER on some special *nix
-#include <alext.h>
+#define ALC_ALL_DEVICES_SPECIFIER 0x1013
+// needed for ALC_ALL_DEVICES_SPECIFIER on some special *nix
+// #include <alext.h>
 #endif
+
 #include <boost/cstdint.hpp>
 #include <boost/thread/thread.hpp>
 
@@ -30,28 +33,20 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/myMath.h"
 #include "System/Util.h"
+#include "System/Platform/Threading.h"
 #include "System/Platform/Watchdog.h"
 
 #include "System/float3.h"
 
-CONFIG(int, MaxSounds).defaultValue(128).minimumValue(0).description("Maximum parallel played sounds.");
-CONFIG(bool, PitchAdjust).defaultValue(false).description("When enabled adjust sound speed/pitch to game speed.");
-CONFIG(int, snd_volmaster).defaultValue(60).minimumValue(0).maximumValue(200).description("Master sound volume.");
-CONFIG(int, snd_volgeneral).defaultValue(100).minimumValue(0).maximumValue(200).description("Volume for \"general\" sound channel.");
-CONFIG(int, snd_volunitreply).defaultValue(100).minimumValue(0).maximumValue(200).description("Volume for \"unit reply\" sound channel.");
-CONFIG(int, snd_volbattle).defaultValue(100).minimumValue(0).maximumValue(200).description("Volume for \"battle\" sound channel.");
-CONFIG(int, snd_volui).defaultValue(100).minimumValue(0).maximumValue(200).description("Volume for \"ui\" sound channel.");
-CONFIG(int, snd_volmusic).defaultValue(100).minimumValue(0).maximumValue(200).description("Volume for \"music\" sound channel.");
-CONFIG(std::string, snd_device).defaultValue("").description("Sets the used output device. See \"Available Devices\" section in infolog.txt.");
 
 boost::recursive_mutex soundMutex;
 
 
 CSound::CSound()
-	: myPos(ZeroVector)
-	, prevVelocity(ZeroVector)
+	: listenerNeedsUpdate(false)
 	, soundThread(NULL)
 	, soundThreadQuit(false)
+	, canLoadDefs(false)
 {
 	boost::recursive_mutex::scoped_lock lck(soundMutex);
 	mute = false;
@@ -76,7 +71,9 @@ CSound::CSound()
 	if (maxSounds <= 0) {
 		LOG_L(L_WARNING, "MaxSounds set to 0, sound is disabled");
 	} else {
-		soundThread = new boost::thread(boost::bind(&CSound::StartThread, this, maxSounds));
+		//soundThread = new boost::thread(boost::bind(&CSound::StartThread, this, maxSounds));
+		soundThread = new boost::thread();
+		*soundThread = Threading::CreateNewThread(boost::bind(&CSound::StartThread, this, maxSounds));
 	}
 
 	configHandler->NotifyOnChange(this);
@@ -153,7 +150,7 @@ size_t CSound::GetSoundId(const std::string& name)
 }
 
 SoundItem* CSound::GetSoundItem(size_t id) const {
-	//! id==0 is a special id and invalid
+	// id==0 is a special id and invalid
 	if (id == 0 || id >= sounds.size())
 		return NULL;
 	return sounds[id];
@@ -166,21 +163,28 @@ CSoundSource* CSound::GetNextBestSource(bool lock)
 		lck.lock();
 
 	if (sources.empty())
-		return NULL;
+		return nullptr;
 
-	CSoundSource* bestPos = NULL;
-	for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
-	{
-		if (!it->IsPlaying())
-		{
-			return &(*it);
-		}
-		else if (it->GetCurrentPriority() <= (bestPos ? bestPos->GetCurrentPriority() : INT_MAX))
-		{
-			bestPos = &(*it);
+	// find if we got a free source
+	for (CSoundSource& src: sources) {
+		if (!src.IsPlaying(false)){
+			return &src;
 		}
 	}
-	return bestPos;
+
+	// check the next best free source
+	CSoundSource* bestSrc = nullptr;
+	int bestPriority = INT_MAX;
+	for (CSoundSource& src: sources) {
+		/*if (!src.IsPlaying(true)) {
+			return &src;
+		}
+		else*/ if (src.GetCurrentPriority() <= bestPriority) {
+			bestSrc = &src;
+			bestPriority = src.GetCurrentPriority();
+		}
+	}
+	return bestSrc;
 }
 
 void CSound::PitchAdjust(const float newPitch)
@@ -294,16 +298,14 @@ void CSound::StartThread(int maxSounds)
 
 		// we do not want to set a default for snd_device,
 		// so we do it like this ...
-		if (configHandler->IsSet("snd_device"))
-		{
+		if (configHandler->IsSet("snd_device")) {
 			configDeviceName = configHandler->GetString("snd_device");
 			deviceName = configDeviceName.c_str();
 		}
 
 		ALCdevice* device = alcOpenDevice(deviceName);
 
-		if ((device == NULL) && (deviceName != NULL))
-		{
+		if ((device == NULL) && (deviceName != NULL)) {
 			LOG_L(L_WARNING,
 					"Could not open the sound device \"%s\", trying the default device ...",
 					deviceName);
@@ -312,22 +314,17 @@ void CSound::StartThread(int maxSounds)
 			device = alcOpenDevice(deviceName);
 		}
 
-		if (device == NULL)
-		{
+		if (device == NULL) {
 			LOG_L(L_ERROR, "Could not open a sound device, disabling sounds");
 			CheckError("CSound::InitAL");
 			return;
-		}
-		else
-		{
-			ALCcontext *context = alcCreateContext(device, NULL);
-			if (context != NULL)
-			{
+		} else {
+			ALCcontext* context = alcCreateContext(device, NULL);
+
+			if (context != NULL) {
 				alcMakeContextCurrent(context);
 				CheckError("CSound::CreateContext");
-			}
-			else
-			{
+			} else {
 				alcCloseDevice(device);
 				LOG_L(L_ERROR, "Could not create OpenAL audio context");
 				return;
@@ -336,10 +333,10 @@ void CSound::StartThread(int maxSounds)
 		maxSounds = GetMaxMonoSources(device, maxSounds);
 
 		LOG("OpenAL info:");
-		if(alcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT"))
-		{
+		const bool hasAllEnum = alcIsExtensionPresent(NULL, "ALC_ENUMERATE_ALL_EXT");
+		if (hasAllEnum || alcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT")) {
 			LOG("  Available Devices:");
-			const char* deviceSpecifier = alcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER);
+			const char* deviceSpecifier = alcGetString(NULL, hasAllEnum ? ALC_ALL_DEVICES_SPECIFIER : ALC_DEVICE_SPECIFIER);
 			while (*deviceSpecifier != '\0') {
 				LOG("              %s", deviceSpecifier);
 				while (*deviceSpecifier++ != '\0')
@@ -357,9 +354,9 @@ void CSound::StartThread(int maxSounds)
 		efx = new CEFX(device);
 
 		// Generate sound sources
-		for (int i = 0; i < maxSounds; i++)
-		{
+		for (int i = 0; i < maxSounds; i++) {
 			CSoundSource* thenewone = new CSoundSource();
+
 			if (thenewone->IsValid()) {
 				sources.push_back(thenewone);
 			} else {
@@ -380,11 +377,14 @@ void CSound::StartThread(int maxSounds)
 		alListenerf(AL_GAIN, masterVolume);
 	}
 
+	canLoadDefs = true;
+
 	Threading::SetThreadName("audio");
 	Watchdog::RegisterThread(WDT_AUDIO);
 
 	while (!soundThreadQuit) {
-		boost::this_thread::sleep(boost::posix_time::millisec(50)); //! 20Hz
+		constexpr int FREQ_IN_HZ = 30;
+		boost::this_thread::sleep(boost::posix_time::millisec(1000 / FREQ_IN_HZ));
 		Watchdog::ClearTimer(WDT_AUDIO);
 		Update();
 	}
@@ -407,6 +407,7 @@ void CSound::Update()
 	for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
 		it->Update();
 	CheckError("CSound::Update");
+	UpdateListenerReal();
 }
 
 size_t CSound::MakeItemFromDef(const soundItemDef& itemDef)
@@ -429,31 +430,42 @@ size_t CSound::MakeItemFromDef(const soundItemDef& itemDef)
 	return newid;
 }
 
-void CSound::UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime)
+void CSound::UpdateListener(const float3& campos, const float3& camdir, const float3& camup)
 {
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
-	if (sources.empty())
+	myPos  = campos;
+	camDir = camdir;
+	camUp  = camup;
+	listenerNeedsUpdate = true;
+}
+
+
+void CSound::UpdateListenerReal()
+{
+	// call from sound thread, cause OpenAL calls tend to cause L2 misses and so are slow (no reason to call them from mainthread)
+	if (!listenerNeedsUpdate)
 		return;
 
-	myPos = campos;
+	// not 100% threadsafe, but worst case we would skip a single listener update (and it runs at multiple Hz!)
+	listenerNeedsUpdate = false;
+
 	const float3 myPosInMeters = myPos * ELMOS_TO_METERS;
 	alListener3f(AL_POSITION, myPosInMeters.x, myPosInMeters.y, myPosInMeters.z);
 
-	//! reduce the rolloff when the camera is high above the ground (so we still hear something in tab mode or far zoom)
-	//! for altitudes up to and including 600 elmos, the rolloff is always clamped to 1
-	const float camHeight = std::max(1.0f, campos.y - CGround::GetHeightAboveWater(campos.x, campos.z));
+	// reduce the rolloff when the camera is high above the ground (so we still hear something in tab mode or far zoom)
+	// for altitudes up to and including 600 elmos, the rolloff is always clamped to 1
+	const float camHeight = std::max(1.0f, myPos.y - CGround::GetHeightAboveWater(myPos.x, myPos.z));
 	const float newMod = std::min(600.0f / camHeight, 1.0f);
 
 	CSoundSource::SetHeightRolloffModifer(newMod);
 	efx->SetHeightRolloffModifer(newMod);
 
-	//! Result were bad with listener related doppler effects.
-	//! The user experiences the camera/listener not as a world-interacting object.
-	//! So changing sounds on camera movements were irritating, esp. because zooming with the mouse wheel
-	//! often is faster than the speed of sound, causing very high frequencies.
-	//! Note: soundsource related doppler effects are not deactivated by this! Flying cannon shoots still change their frequencies.
-	//! Note2: by not updating the listener velocity soundsource related velocities are calculated wrong,
-	//! so even if the camera is moving with a cannon shoot the frequency gets changed.
+	// Result were bad with listener related doppler effects.
+	// The user experiences the camera/listener not as a world-interacting object.
+	// So changing sounds on camera movements were irritating, esp. because zooming with the mouse wheel
+	// often is faster than the speed of sound, causing very high frequencies.
+	// Note: soundsource related doppler effects are not deactivated by this! Flying cannon shoots still change their frequencies.
+	// Note2: by not updating the listener velocity soundsource related velocities are calculated wrong,
+	// so even if the camera is moving with a cannon shoot the frequency gets changed.
 	/*
 	const float3 velocity = (myPos - prevPos) / (lastFrameTime);
 	float3 velocityAvg = velocity * 0.6f + prevVelocity * 0.4f;
@@ -464,10 +476,11 @@ void CSound::UpdateListener(const float3& campos, const float3& camdir, const fl
 	alListener3f(AL_VELOCITY, velocityAvg.x, velocityAvg.y, velocityAvg.z);
 	*/
 
-	ALfloat ListenerOri[] = {camdir.x, camdir.y, camdir.z, camup.x, camup.y, camup.z};
+	ALfloat ListenerOri[] = {camDir.x, camDir.y, camDir.z, camUp.x, camUp.y, camUp.z};
 	alListenerfv(AL_ORIENTATION, ListenerOri);
 	CheckError("CSound::UpdateListener");
 }
+
 
 void CSound::PrintDebugInfo()
 {

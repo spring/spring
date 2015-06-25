@@ -17,12 +17,12 @@ public:
 	CPlasmaRepulser(CUnit* owner, const WeaponDef* def);
 	~CPlasmaRepulser();
 
-	void Init();
-	void DependentDied(CObject* o);
-	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const;
+	void Init() override final;
+	void DependentDied(CObject* o) override final;
+	bool HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const override final;
 
-	void Update();
-	void SlowUpdate();
+	void Update() override final;
+	void SlowUpdate() override final;
 
 	void NewProjectile(CWeaponProjectile* p);
 	float NewBeam(CWeapon* emitter, float3 start, float3 dir, float length, float3& newDir);
@@ -36,7 +36,7 @@ public:
 	int GetHitFrames() const { return hitFrames; }
 
 private:
-	void FireImpl(bool scriptCall) {}
+	void FireImpl(const bool scriptCall) override final {}
 
 private:
 	// these are strictly unsynced

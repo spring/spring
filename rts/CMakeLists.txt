@@ -18,8 +18,8 @@ endif (TRACE_SYNC)
 option(SYNCDEBUG "Enable sync debugger (needs SYNCCHECK=true)" FALSE)
 if (SYNCDEBUG)
 	ADD_DEFINITIONS(-DSYNCDEBUG)
-	If     (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG2" AND NOT "${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG3")
-		Message(FATAL_ERROR "You need CMAKE_BUILD_TYPE set to either DEBUG2 or DEBUG3 for a SYNCDEBUG build")
+	If     (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG")
+		Message(FATAL_ERROR "You need CMAKE_BUILD_TYPE set to DEBUG for a SYNCDEBUG build")
 	EndIf  ()
 	If     (NOT SYNCCHECK)
 		Message(FATAL_ERROR "You need SYNCCHECK=TRUE for a SYNCDEBUG build")
@@ -80,12 +80,30 @@ IF (WIN32)
 	LIST(APPEND engineCommonLibraries ${WIN32_LIBRARIES})
 ENDIF (WIN32)
 
+if(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+	#tcmalloc on freebsd is broken, default disable it (#4754)
+	set(USE_TCMALLOC_DEFAULT FALSE)
+else()
+	set(USE_TCMALLOC_DEFAULT TRUE)
+endif()
+
 FIND_PACKAGE_STATIC(TCMalloc)
-option(USE_TCMALLOC "use tcmalloc (part of google's perftools)" TRUE)
+option(USE_TCMALLOC "use tcmalloc (part of google's perftools)" ${USE_TCMALLOC_DEFAULT})
 if    (USE_TCMALLOC AND TCMALLOC_LIBRARY)
 	MESSAGE(STATUS "Using tcmalloc")
 	LIST(APPEND engineCommonLibraries ${TCMALLOC_LIBRARY})
 endif (USE_TCMALLOC AND TCMALLOC_LIBRARY)
+
+
+if(UNIX)
+	FIND_PACKAGE_STATIC(Libunwind REQUIRED)
+	LIST(APPEND engineCommonLibraries ${LIBUNWIND_LIBRARIES})
+	if(LIBUNWIND_FOUND)
+		message(STATUS "Found libunwind libraries at ${LIBUNWIND_LIBRARIES}")
+	else()
+		message(FATAL_ERROR "Couldn't find libunwind")
+	endif()
+endif()
 
 
 
@@ -108,13 +126,12 @@ MakeGlobalVar(engineSources
 		${sources_engine_Map}
 		${sources_engine_Rendering}
 		${sources_engine_Menu}
-		${sources_engine_Sim}
 		${sources_engine_System}
 		${sources_engine_ExternalAI}
 	)
 
 ### Add headers for generated project files (e.g. Code::Blocks)
-file(GLOB_RECURSE engineHeaders "*.h" "*.hpp")
+file(GLOB_RECURSE engineHeaders "*.h" "*.hpp" "*.inl")
 
 
 Add_Subdirectory(builds)

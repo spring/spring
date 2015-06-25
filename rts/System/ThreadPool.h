@@ -9,8 +9,11 @@
 #include  <functional>
 
 namespace ThreadPool {
-	//template<class F, class... Args>
-	//static inline auto enqueue(F&& f, Args&&... args)
+	template<class F, class... Args>
+	static inline void enqueue(F&& f, Args&&... args)
+	{
+		f(args ...);
+	}
 	//-> std::shared_ptr<boost::unique_future<typename std::result_of<F(Args...)>::type>> {}
 
 	static inline void SetThreadCount(int num) {}
@@ -19,6 +22,7 @@ namespace ThreadPool {
 	static inline int GetMaxThreads() { return 1; }
 	static inline int GetNumThreads() { return 1; }
 	static inline void NotifyWorkerThreads() {}
+	static inline bool HasThreads() { return false; }
 }
 
 

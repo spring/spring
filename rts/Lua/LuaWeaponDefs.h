@@ -6,8 +6,8 @@
 struct lua_State;
 
 class LuaWeaponDefs {
-	public:
-		static bool PushEntries(lua_State* L);
+public:
+	static bool PushEntries(lua_State* L);
 };
 
 #endif /* LUA_WEAPONDEFS_H */

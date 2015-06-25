@@ -105,3 +105,8 @@ void CExploSpikeProjectile::Init(const CUnit* owner, const float3& offset)
 
 	SetRadiusAndHeight(length + lengthGrowth * alpha / alphaDecay, 0.0f);
 }
+
+int CExploSpikeProjectile::GetProjectilesCount() const
+{
+	return 1;
+}

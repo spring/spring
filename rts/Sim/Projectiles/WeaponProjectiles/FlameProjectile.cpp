@@ -82,10 +82,10 @@ void CFlameProjectile::Draw()
 	unsigned char col[4];
 	weaponDef->visuals.colorMap->GetColor(col, curTime);
 
-	va->AddVertexTC(drawPos - camera->right * radius - camera->up * radius, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->ystart, col);
-	va->AddVertexTC(drawPos + camera->right * radius - camera->up * radius, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->ystart, col);
-	va->AddVertexTC(drawPos + camera->right * radius + camera->up * radius, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->yend,   col);
-	va->AddVertexTC(drawPos - camera->right * radius + camera->up * radius, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->yend,   col);
+	va->AddVertexTC(drawPos - camera->GetRight() * radius - camera->GetUp() * radius, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->ystart, col);
+	va->AddVertexTC(drawPos + camera->GetRight() * radius - camera->GetUp() * radius, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->ystart, col);
+	va->AddVertexTC(drawPos + camera->GetRight() * radius + camera->GetUp() * radius, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->yend,   col);
+	va->AddVertexTC(drawPos - camera->GetRight() * radius + camera->GetUp() * radius, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->yend,   col);
 }
 
 int CFlameProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed)
@@ -103,3 +103,7 @@ int CFlameProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, f
 	return 0;
 }
 
+int CFlameProjectile::GetProjectilesCount() const
+{
+	return 1;
+}

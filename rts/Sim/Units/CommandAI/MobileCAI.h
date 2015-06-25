@@ -9,6 +9,7 @@
 
 class CUnit;
 class CFeature;
+class CWeapon;
 struct Command;
 
 class CMobileCAI : public CCommandAI
@@ -51,7 +52,7 @@ public:
 	int GetCancelDistance() { return cancelDistance; }
 
 	virtual bool IsValidTarget(const CUnit* enemy) const;
-	virtual bool CanWeaponAutoTarget() const { return (!tempOrder); }
+	virtual bool CanWeaponAutoTarget(const CWeapon* weapon) const;
 
 	float3 goalPos;
 	float  goalRadius;
@@ -88,6 +89,7 @@ protected:
 
 private:
 	bool MobileAutoGenerateTarget();
+	bool GenerateAttackCmd();
 };
 
 #endif /* MOBILE_CAI_H */

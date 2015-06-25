@@ -19,10 +19,12 @@ public:
 	);
 	~CRepulseGfx();
 
-	void Draw();
-	void Update();
+	void Draw() override;
+	void Update() override;
 
-	void DependentDied(CObject* o);
+	virtual int GetProjectilesCount() const override;
+
+	void DependentDied(CObject* o) override;
 
 private:
 	CProjectile* repulsed;

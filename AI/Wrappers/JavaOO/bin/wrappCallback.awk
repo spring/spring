@@ -746,6 +746,13 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 					declaredVarsCode = "\t\t" retParamType " " retVar_out_m ";" "\n" declaredVarsCode;
 					sub("(, )?short\\[\\] " paNa, "", params);
 					retType = retParamType;
+				} else if (match(paTy, /StringBuffer/)) {
+					retParamType = "String";
+					retVar_out_m = "_ret";
+					conversionCode_pre  = conversionCode_pre  "\t\t" "StringBuffer " paNa " = new StringBuffer();" "\n";
+					conversionCode_post = conversionCode_post "\t\t" retParamType " " retVar_out_m " = " paNa ".toString();" "\n";
+					sub("(, )?StringBuffer " paNa, "", params);
+					retType = retParamType;
 				} else {
 					print("FAILED converting return param: " paramTypeNames[prm] " / " fullName_m);
 					exit(1);
@@ -818,7 +825,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 				# Very hacky! too unmotivated for propper fix, sorry.
 				# propper fix would involve getting the parent of the wrapped
 				# class and using its additional indices
-				if (functionName_m != "UnitDef_WeaponMount_getWeaponDef") {
+				if ((functionName_m != "UnitDef_WeaponMount_getWeaponDef") && (functionName_m != "Unit_Weapon_getDef")) {
 					_wrappGetInst_params = _wrappGetInst_params ", " addInds_m[ai];
 				}
 			}
@@ -1147,7 +1154,7 @@ function doWrappOO(funcFullName_dw, params_dw, metaComment_dw) {
 
 	doWrapp_dw = 1;
 
-	doWrapp_dw = doWrapp_dw && !match(funcFullName_dw, /Lua_callRules/) && !match(funcFullName_dw, /Lua_callUI/);
+	#doWrapp_dw = doWrapp_dw && !match(funcFullName_dw, /Lua_callRules/) && !match(funcFullName_dw, /Lua_callUI/);
 
 	return doWrapp_dw;
 }

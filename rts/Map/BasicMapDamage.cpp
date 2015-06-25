@@ -67,10 +67,10 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 	e->pos = pos;
 	e->strength = strength;
 	e->ttl = 10;
-	e->x1 = Clamp<int>((pos.x - radius) / SQUARE_SIZE, 1, gs->mapxm1);
-	e->x2 = Clamp<int>((pos.x + radius) / SQUARE_SIZE, 1, gs->mapxm1);
-	e->y1 = Clamp<int>((pos.z - radius) / SQUARE_SIZE, 1, gs->mapym1);
-	e->y2 = Clamp<int>((pos.z + radius) / SQUARE_SIZE, 1, gs->mapym1);
+	e->x1 = Clamp<int>((pos.x - radius) / SQUARE_SIZE, 1, mapDims.mapxm1);
+	e->x2 = Clamp<int>((pos.x + radius) / SQUARE_SIZE, 1, mapDims.mapxm1);
+	e->y1 = Clamp<int>((pos.z - radius) / SQUARE_SIZE, 1, mapDims.mapym1);
+	e->y2 = Clamp<int>((pos.z + radius) / SQUARE_SIZE, 1, mapDims.mapym1);
 	e->squares.reserve((e->y2 - e->y1 + 1) * (e->x2 - e->x1 + 1));
 
 	const float* curHeightMap = readMap->GetCornerHeightMapSynced();
@@ -81,7 +81,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 
 	for (int y = e->y1; y <= e->y2; ++y) {
 		for (int x = e->x1; x <= e->x2; ++x) {
-			const CSolidObject* so = groundBlockingObjectMap->GroundBlockedUnsafe(y * gs->mapx + x);
+			const CSolidObject* so = groundBlockingObjectMap->GroundBlockedUnsafe(y * mapDims.mapx + x);
 
 			// do not change squares with buildings on them here
 			if (so && so->blockHeightChanges) {
@@ -96,12 +96,12 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 
 			float dif = baseStrength;
 			dif *= craterTable[tableIdx];
-			dif *= invHardness[typeMap[(y / 2) * gs->hmapx + x / 2]];
+			dif *= invHardness[typeMap[(y / 2) * mapDims.hmapx + x / 2]];
 
 			// FIXME: compensate for flattened ground under dead buildings
 			const float prevDif =
-				curHeightMap[y * gs->mapxp1 + x] -
-				orgHeightMap[y * gs->mapxp1 + x];
+				curHeightMap[y * mapDims.mapxp1 + x] -
+				orgHeightMap[y * mapDims.mapxp1 + x];
 
 			if (prevDif * dif > 0.0f) {
 				dif /= math::fabs(prevDif) * 0.1f + 1;
@@ -133,10 +133,10 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 
 				float dif =
 						baseStrength * craterTable[tableIdx] *
-						invHardness[typeMap[(z / 2) * gs->hmapx + x / 2]];
+						invHardness[typeMap[(z / 2) * mapDims.hmapx + x / 2]];
 				const float prevDif =
-						curHeightMap[z * gs->mapxp1 + x] -
-						orgHeightMap[z * gs->mapxp1 + x];
+						curHeightMap[z * mapDims.mapxp1 + x] -
+						orgHeightMap[z * mapDims.mapxp1 + x];
 
 				if (prevDif * dif > 0.0f) {
 					dif /= math::fabs(prevDif) * 0.1f + 1;
@@ -216,14 +216,14 @@ void CBasicMapDamage::Update()
 		for (int y = e->y1; y <= e->y2; ++y) {
 			for (int x = e->x1; x <= e->x2; ++x) {
 				const float dif = *(si++);
-				readMap->AddHeight(y * gs->mapxp1 + x, dif);
+				readMap->AddHeight(y * mapDims.mapxp1 + x, dif);
 			}
 		}
 
 		for (ExploBuilding& b: e->buildings) {
 			for (int z = b.tz1; z < b.tz2; z++) {
 				for (int x = b.tx1; x < b.tx2; x++) {
-					readMap->AddHeight(z * gs->mapxp1 + x, b.dif);
+					readMap->AddHeight(z * mapDims.mapxp1 + x, b.dif);
 				}
 			}
 
@@ -256,11 +256,10 @@ void CBasicMapDamage::UpdateLos()
 		}
 
 		RelosSquare* rs = &relosQue.front();
-		const std::list<CUnit*>& units = quadField->GetQuadAt(rs->x, rs->y).units;
+		const std::vector<CUnit*>& units = quadField->GetQuadAt(rs->x, rs->y).units;
 
-		std::list<CUnit*>::const_iterator ui;
-		for (ui = units.begin(); ui != units.end(); ++ui) {
-			relosUnits.push_back((*ui)->id);
+		for (CUnit* u: units) {
+			relosUnits.push_back(u->id);
 		}
 		relosSize -= rs->numUnits;
 		neededLosUpdate = rs->neededUpdate;

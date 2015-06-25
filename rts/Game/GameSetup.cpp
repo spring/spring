@@ -1,48 +1,121 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "GameSetup.h"
-#include "System/TdfParser.h"
-#include "System/FileSystem/ArchiveScanner.h"
 #include "Map/MapParser.h"
 #include "Sim/Misc/GlobalConstants.h"
+#include "System/TdfParser.h"
 #include "System/UnsyncedRNG.h"
 #include "System/Exceptions.h"
 #include "System/Util.h"
+#include "System/FileSystem/ArchiveScanner.h"
+#include "System/FileSystem/RapidHandler.h"
 #include "System/Log/ILog.h"
 
 #include <algorithm>
 #include <map>
 #include <cctype>
 #include <cstring>
+#include <fstream>
 #include <boost/format.hpp>
 
 CR_BIND(CGameSetup,)
 CR_REG_METADATA(CGameSetup, (
-	CR_MEMBER(gameSetupText),
+	CR_IGNORED(fixedAllies),
+	CR_IGNORED(useLuaGaia),
+	CR_IGNORED(noHelperAIs),
+
+	CR_IGNORED(ghostedBuildings),
+	CR_IGNORED(disableMapDamage),
+
+	CR_IGNORED(onlyLocal),
+	CR_IGNORED(hostDemo),
+
+	CR_IGNORED(mapHash),
+	CR_IGNORED(modHash),
+	CR_IGNORED(mapSeed),
+
+	CR_IGNORED(gameStartDelay),
+
+	CR_IGNORED(numDemoPlayers),
+	CR_IGNORED(maxUnitsPerTeam),
+
+	CR_IGNORED(minSpeed),
+	CR_IGNORED(maxSpeed),
+
+	CR_IGNORED(startPosType),
+
+	CR_IGNORED(mapName),
+	CR_IGNORED(modName),
+	CR_IGNORED(gameID),
+
+	// all other members can be reconstructed from this
+	CR_MEMBER(setupText),
+
+	CR_IGNORED(recordDemo),
+	CR_IGNORED(demoName),
+	CR_IGNORED(saveName),
+
+	CR_IGNORED(playerRemap),
+	CR_IGNORED(teamRemap),
+	CR_IGNORED(allyteamRemap),
+
+	CR_IGNORED(playerStartingData),
+	CR_IGNORED(teamStartingData),
+	CR_IGNORED(allyStartingData),
+	CR_IGNORED(skirmishAIStartingData),
+	CR_IGNORED(mutatorsList),
+
+	CR_IGNORED(restrictedUnits),
+
+	CR_IGNORED(mapOptions),
+	CR_IGNORED(modOptions),
+
 	CR_POSTLOAD(PostLoad)
 ))
 
 CGameSetup* gameSetup = NULL;
 
 
+bool CGameSetup::LoadReceivedScript(const std::string& script, bool isHost)
+{
+	CGameSetup* tempGameSetup = new CGameSetup();
 
-void CGameSetup::LoadSavedScript(const std::string& file, const std::string& script)
+	if (!tempGameSetup->Init(script)) {
+		delete tempGameSetup;
+		return false;
+	}
+
+	if (isHost) {
+		std::fstream setupTextFile("_script.txt", std::ios::out);
+
+		// copy the script to a local file for inspection
+		setupTextFile.write(script.c_str(), script.size());
+		setupTextFile.close();
+	}
+
+	// set the global instance
+	gameSetup = tempGameSetup;
+	return true;
+}
+
+bool CGameSetup::LoadSavedScript(const std::string& file, const std::string& script)
 {
 	if (script.empty())
-		return;
+		return false;
 	if (gameSetup != NULL)
-		return;
+		return false;
 
-	CGameSetup* temp = new CGameSetup();
+	CGameSetup* tempGameSetup = new CGameSetup();
 
-	if (!temp->Init(script)) {
-		delete temp; temp = NULL;
-	} else {
-		temp->saveName = file;
-		// set the global instance
-		gameSetup = temp;
+	if (!tempGameSetup->Init(script)) {
+		delete tempGameSetup;
+		return false;
 	}
+
+	tempGameSetup->saveName = file;
+	// set the global instance
+	gameSetup = tempGameSetup;
+	return true;
 }
 
 
@@ -104,34 +177,61 @@ const std::vector<AllyTeam>& CGameSetup::GetAllyStartingData()
 
 
 
-CGameSetup::CGameSetup()
-	: fixedAllies(true)
-	, useLuaGaia(true)
-	, noHelperAIs(false)
+void CGameSetup::ResetState()
+{
+	fixedAllies = true;
+	useLuaGaia = true;
+	noHelperAIs = false;
 
-	, ghostedBuildings(true)
-	, disableMapDamage(false)
+	ghostedBuildings = true;
+	disableMapDamage = false;
 
-	, onlyLocal(false)
-	, hostDemo(false)
+	onlyLocal = false;
+	hostDemo = false;
+	recordDemo = true;
 
-	, mapHash(0)
-	, modHash(0)
-	, mapSeed(0)
+	mapHash = 0;
+	modHash = 0;
+	mapSeed = 0;
 
-	, gameStartDelay(0)
-	, numDemoPlayers(0)
-	, maxUnitsPerTeam(1500)
+	gameStartDelay = 0;
+	numDemoPlayers = 0;
+	maxUnitsPerTeam = 1500;
 
-	, maxSpeed(0.0f)
-	, minSpeed(0.0f)
+	maxSpeed = 0.0f;
+	minSpeed = 0.0f;
 
-	, startPosType(StartPos_Fixed)
-{}
+	startPosType = StartPos_Fixed;
+
+
+	mapName.clear();
+	modName.clear();
+	gameID.clear();
+
+	setupText.clear();
+	demoName.clear();
+	saveName.clear();
+
+
+	playerRemap.clear();
+	teamRemap.clear();
+	allyteamRemap.clear();
+
+	playerStartingData.clear();
+	teamStartingData.clear();
+	allyStartingData.clear();
+	skirmishAIStartingData.clear();
+	mutatorsList.clear();
+
+	restrictedUnits.clear();
+
+	mapOptions.clear();
+	modOptions.clear();
+}
 
 void CGameSetup::PostLoad()
 {
-	Init(gameSetupText);
+	Init(setupText);
 }
 
 void CGameSetup::LoadUnitRestrictions(const TdfParser& file)
@@ -175,13 +275,14 @@ void CGameSetup::LoadStartPositionsFromMap()
 void CGameSetup::LoadStartPositions(bool withoutMap)
 {
 	if (withoutMap && (startPosType == StartPos_Random || startPosType == StartPos_Fixed))
-		throw content_error("You need the map to use the map's startpositions");
+		throw content_error("You need the map to use the map's start-positions");
 
 	if (startPosType == StartPos_Random) {
 		// Server syncs these later, so we can use unsynced rng
 		UnsyncedRNG rng;
-		rng.Seed(gameSetupText.length());
-		rng.Seed((size_t)gameSetupText.c_str());
+		rng.Seed(setupText.length());
+		rng.Seed((size_t) setupText.c_str());
+
 		std::vector<int> teamStartNum(teamStartingData.size());
 
 		for (size_t i = 0; i < teamStartingData.size(); ++i)
@@ -437,7 +538,8 @@ void CGameSetup::RemapTeams()
 			throw content_error("invalid AI.Team in GameSetup script");
 
 		skirmishAIStartingData[a].team = teamRemap[skirmishAIStartingData[a].team];
-		team_skirmishAI[skirmishAIStartingData[a].team] = &(skirmishAIStartingData[a]);
+		// unused (also seems redundant)
+		// team_skirmishAI[skirmishAIStartingData[a].team] = &(skirmishAIStartingData[a]);
 	}
 }
 
@@ -455,8 +557,10 @@ void CGameSetup::RemapAllyteams()
 // TODO: RemapSkirmishAIs()
 bool CGameSetup::Init(const std::string& buf)
 {
+	ResetState();
+
 	// Copy buffer contents
-	gameSetupText = buf;
+	setupText = buf;
 
 	// Parse game parameters
 	TdfParser file(buf.c_str(),buf.size());
@@ -478,6 +582,7 @@ bool CGameSetup::Init(const std::string& buf)
 
 	file.GetTDef(gameStartDelay, (unsigned int) 4, "GAME\\GameStartDelay");
 
+	file.GetDef(recordDemo,          "1", "GAME\\RecordDemo");
 	file.GetDef(onlyLocal,           "0", "GAME\\OnlyLocal");
 	file.GetDef(useLuaGaia,          "1", "GAME\\ModOptions\\LuaGaia");
 	file.GetDef(noHelperAIs,         "0", "GAME\\ModOptions\\NoHelperAIs");
@@ -485,7 +590,7 @@ bool CGameSetup::Init(const std::string& buf)
 	file.GetDef(disableMapDamage,    "0", "GAME\\ModOptions\\DisableMapDamage");
 	file.GetDef(ghostedBuildings,    "1", "GAME\\ModOptions\\GhostedBuildings");
 
-	file.GetDef(maxSpeed, "3.0", "GAME\\ModOptions\\MaxSpeed");
+	file.GetDef(maxSpeed, "20.", "GAME\\ModOptions\\MaxSpeed");
 	file.GetDef(minSpeed, "0.3", "GAME\\ModOptions\\MinSpeed");
 
 	file.GetDef(fixedAllies, "1", "GAME\\ModOptions\\FixedAllies");
@@ -517,6 +622,7 @@ bool CGameSetup::Init(const std::string& buf)
 	LoadUnitRestrictions(file);
 
 	// Postprocessing
+	modName = GetRapidName(modName);
 	modName = archiveScanner->NameFromArchive(modName);
 
 	return true;

@@ -35,6 +35,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/IWater.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -44,8 +45,8 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
-#include "Sim/Units/Groups/Group.h"
-#include "Sim/Units/Groups/GroupHandler.h"
+#include "Game/UI/Groups/Group.h"
+#include "Game/UI/Groups/GroupHandler.h"
 #include "Net/Protocol/NetProtocol.h"
 #include "System/Config/ConfigVariable.h"
 #include "System/Input/KeyInput.h"
@@ -151,6 +152,8 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetWaterMode);
 	REGISTER_LUA_CFUNC(GetMapDrawMode);
 	REGISTER_LUA_CFUNC(GetMapSquareTexture);
+
+	REGISTER_LUA_CFUNC(GetLosViewColors);
 
 	REGISTER_LUA_CFUNC(GetCameraNames);
 	REGISTER_LUA_CFUNC(GetCameraState);
@@ -650,10 +653,10 @@ enum UnitAllegiance {
 // never instantiated directly
 template<class T> class CWorldObjectQuadDrawer: public CReadMap::IQuadDrawer {
 public:
-	typedef std::list<T*> ObjectList;
+	typedef std::vector<T*> ObjectList;
 	typedef std::vector< const ObjectList* > ObjectVector;
 
-	void Reset() {
+	void ResetState() {
 		objectLists.clear();
 		objectLists.reserve(64);
 
@@ -766,7 +769,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 	unsigned int count = 0;
 
 	{
-		unitQuadIter.Reset();
+		unitQuadIter.ResetState();
 		readMap->GridVisibility(camera, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 1e9, &unitQuadIter, INT_MAX);
 
 		lua_createtable(L, unitQuadIter.GetObjectCount(), 0);
@@ -892,7 +895,7 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 	unsigned int count = 0;
 
 	{
-		featureQuadIter.Reset();
+		featureQuadIter.ResetState();
 		readMap->GridVisibility(camera, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 3000.0f * 2.0f, &featureQuadIter, INT_MAX);
 
 		lua_createtable(L, featureQuadIter.GetObjectCount(), 0);
@@ -978,7 +981,7 @@ int LuaUnsyncedRead::GetVisibleProjectiles(lua_State* L)
 	unsigned int count = 0;
 
 	{
-		projQuadIter.Reset();
+		projQuadIter.ResetState();
 		readMap->GridVisibility(camera, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 1e9, &projQuadIter, INT_MAX);
 
 		lua_createtable(L, projQuadIter.GetObjectCount(), 0);
@@ -1209,16 +1212,14 @@ int LuaUnsyncedRead::GetWaterMode(lua_State* L)
 
 int LuaUnsyncedRead::GetMapDrawMode(lua_State* L)
 {
-	switch (readMap->GetGroundDrawer()->GetDrawMode()) {
-		case CBaseGroundDrawer::drawNormal:   { HSTR_PUSH(L, "normal"            ); break; }
-		case CBaseGroundDrawer::drawHeight:   { HSTR_PUSH(L, "height"            ); break; }
-		case CBaseGroundDrawer::drawMetal:    { HSTR_PUSH(L, "metal"             ); break; }
-		case CBaseGroundDrawer::drawLos:      { HSTR_PUSH(L, "los"               ); break; }
-		case CBaseGroundDrawer::drawPathTrav: { HSTR_PUSH(L, "pathTraversability"); break; }
-		case CBaseGroundDrawer::drawPathHeat: { HSTR_PUSH(L, "pathHeat"          ); break; }
-		case CBaseGroundDrawer::drawPathFlow: { HSTR_PUSH(L, "pathFlow"          ); break; }
-		case CBaseGroundDrawer::drawPathCost: { HSTR_PUSH(L, "pathCost"          ); break; }
-	}
+	std::string mode = infoTextureHandler->GetMode();
+	     if (mode.empty())       { mode = "normal"; }
+	else if (mode == "path")     { mode = "pathTraversability"; }
+	else if (mode == "heat")     { mode = "pathHeat"; }
+	else if (mode == "flow")     { mode = "pathFlow"; }
+	else if (mode == "pathcost") { mode = "pathCost"; }
+
+	lua_pushsstring(L, mode);
 	return 1;
 }
 
@@ -1269,6 +1270,28 @@ int LuaUnsyncedRead::GetMapSquareTexture(lua_State* L)
 	return 1;
 }
 
+
+/******************************************************************************/
+
+int LuaUnsyncedRead::GetLosViewColors(lua_State* L)
+{
+#define PACK_COLOR_VECTOR(color) \
+	lua_createtable(L, 3, 0); \
+	lua_pushnumber(L, color[0] / scale); lua_rawseti(L, -2, 1); \
+	lua_pushnumber(L, color[1] / scale); lua_rawseti(L, -2, 2); \
+	lua_pushnumber(L, color[2] / scale); lua_rawseti(L, -2, 3);
+
+	const float scale = (float)CBaseGroundDrawer::losColorScale;
+	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
+
+	PACK_COLOR_VECTOR(gd->alwaysColor);
+	PACK_COLOR_VECTOR(gd->losColor);
+	PACK_COLOR_VECTOR(gd->radarColor);
+	PACK_COLOR_VECTOR(gd->jamColor);
+	return 4;
+}
+
+
 /******************************************************************************/
 
 int LuaUnsyncedRead::GetCameraNames(lua_State* L)
@@ -1317,9 +1340,9 @@ int LuaUnsyncedRead::GetCameraPosition(lua_State* L)
 
 int LuaUnsyncedRead::GetCameraDirection(lua_State* L)
 {
-	lua_pushnumber(L, camera->forward.x);
-	lua_pushnumber(L, camera->forward.y);
-	lua_pushnumber(L, camera->forward.z);
+	lua_pushnumber(L, camera->GetDir().x);
+	lua_pushnumber(L, camera->GetDir().y);
+	lua_pushnumber(L, camera->GetDir().z);
 	return 3;
 }
 
@@ -1333,8 +1356,8 @@ int LuaUnsyncedRead::GetCameraFOV(lua_State* L)
 
 int LuaUnsyncedRead::GetCameraVectors(lua_State* L)
 {
-#define PACK_CAMERA_VECTOR(n) \
-	HSTR_PUSH(L, #n);           \
+#define PACK_CAMERA_VECTOR(s,n) \
+	HSTR_PUSH(L, #s);           \
 	lua_createtable(L, 3, 0);            \
 	lua_pushnumber(L, camera-> n .x); lua_rawseti(L, -2, 1); \
 	lua_pushnumber(L, camera-> n .y); lua_rawseti(L, -2, 2); \
@@ -1342,13 +1365,13 @@ int LuaUnsyncedRead::GetCameraVectors(lua_State* L)
 	lua_rawset(L, -3)
 
 	lua_newtable(L);
-	PACK_CAMERA_VECTOR(forward);
-	PACK_CAMERA_VECTOR(up);
-	PACK_CAMERA_VECTOR(right);
-	PACK_CAMERA_VECTOR(topFrustumSideDir);
-	PACK_CAMERA_VECTOR(botFrustumSideDir);
-	PACK_CAMERA_VECTOR(lftFrustumSideDir);
-	PACK_CAMERA_VECTOR(rgtFrustumSideDir);
+	PACK_CAMERA_VECTOR(forward, GetDir());
+	PACK_CAMERA_VECTOR(up, GetUp());
+	PACK_CAMERA_VECTOR(right, GetRight());
+	PACK_CAMERA_VECTOR(topFrustumSideDir, topFrustumSideDir);
+	PACK_CAMERA_VECTOR(botFrustumSideDir, botFrustumSideDir);
+	PACK_CAMERA_VECTOR(lftFrustumSideDir, lftFrustumSideDir);
+	PACK_CAMERA_VECTOR(rgtFrustumSideDir, rgtFrustumSideDir);
 
 	return 1;
 }
@@ -1490,10 +1513,9 @@ static void AddPlayerToRoster(lua_State* L, int playerID, bool includePathingFla
 	PUSH_ROSTER_ENTRY(number, teamHandler->AllyTeam(p->team));
 	PUSH_ROSTER_ENTRY(boolean, p->spectator);
 	PUSH_ROSTER_ENTRY(number, p->cpuUsage);
-	const float pingScale = (GAME_SPEED * gs->speedFactor);
 
 	if (!includePathingFlag || p->ping != PATHING_FLAG) {
-		const float pingSecs = float(p->ping - 1) / pingScale;
+		const float pingSecs = p->ping * 0.001f;
 		PUSH_ROSTER_ENTRY(number, pingSecs);
 	} else {
 		const float pingSecs = float(p->ping);
@@ -1907,50 +1929,6 @@ int LuaUnsyncedRead::GetMouseStartPosition(lua_State* L)
 	return 8;
 }
 
-
-/******************************************************************************/
-/******************************************************************************/
-
-int LuaUnsyncedRead::GetKeyState(lua_State* L)
-{
-	const int key = luaL_checkint(L, 1);
-	lua_pushboolean(L, KeyInput::IsKeyPressed(key));
-	return 1;
-}
-
-
-int LuaUnsyncedRead::GetModKeyState(lua_State* L)
-{
-	lua_pushboolean(L, KeyInput::GetKeyModState(KMOD_ALT));
-	lua_pushboolean(L, KeyInput::GetKeyModState(KMOD_CTRL));
-	lua_pushboolean(L, KeyInput::GetKeyModState(KMOD_GUI));
-	lua_pushboolean(L, KeyInput::GetKeyModState(KMOD_SHIFT));
-	return 4;
-}
-
-
-int LuaUnsyncedRead::GetPressedKeys(lua_State* L)
-{
-	lua_newtable(L);
-	for (auto key: KeyInput::GetPressedKeys()) {
-		if (key.second) {
-			lua_pushboolean(L, true);
-			lua_rawseti(L, -2, key.first);
-		}
-	}
-	return 1;
-}
-
-
-int LuaUnsyncedRead::GetInvertQueueKey(lua_State* L)
-{
-	if (guihandler == NULL) {
-		return 0;
-	}
-	lua_pushboolean(L, guihandler->GetInvertQueueKey());
-	return 1;
-}
-
 /******************************************************************************/
 
 int LuaUnsyncedRead::GetClipboard(lua_State* L)
@@ -2035,6 +2013,58 @@ int LuaUnsyncedRead::GetConsoleBuffer(lua_State* L)
 int LuaUnsyncedRead::GetCurrentTooltip(lua_State* L)
 {
 	lua_pushsstring(L, mouse->GetCurrentTooltip());
+	return 1;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaUnsyncedRead::GetKeyState(lua_State* L)
+{
+	const int key = SDL12_keysyms(luaL_checkint(L, 1));
+	lua_pushboolean(L, KeyInput::IsKeyPressed(key));
+	return 1;
+}
+
+
+int LuaUnsyncedRead::GetModKeyState(lua_State* L)
+{
+	lua_pushboolean(L, KeyInput::GetKeyModState(KMOD_ALT));
+	lua_pushboolean(L, KeyInput::GetKeyModState(KMOD_CTRL));
+	lua_pushboolean(L, KeyInput::GetKeyModState(KMOD_GUI));
+	lua_pushboolean(L, KeyInput::GetKeyModState(KMOD_SHIFT));
+	return 4;
+}
+
+
+int LuaUnsyncedRead::GetPressedKeys(lua_State* L)
+{
+	lua_newtable(L);
+	for (auto key: KeyInput::GetPressedKeys()) {
+		if (key.second) {
+			const int keyCode = SDL21_keysyms(key.first);
+
+			// [keyCode] = true
+			lua_pushboolean(L, true);
+			lua_rawseti(L, -2, keyCode);
+
+			// ["keyName"] = true
+			lua_pushsstring(L, keyCodes->GetName(keyCode));
+			lua_pushboolean(L, true);
+			lua_rawset(L, -3);
+		}
+	}
+	return 1;
+}
+
+
+int LuaUnsyncedRead::GetInvertQueueKey(lua_State* L)
+{
+	if (guihandler == NULL) {
+		return 0;
+	}
+	lua_pushboolean(L, guihandler->GetInvertQueueKey());
 	return 1;
 }
 

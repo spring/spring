@@ -62,9 +62,9 @@ void HUDDrawer::DrawModel(const CUnit* unit)
 			glRotatef(180.0f, 0.0f, 0.0f, 1.0f);
 		} else {
 			CMatrix44f m(ZeroVector,
-				float3(camera->right.x, camera->up.x, camera->forward.x),
-				float3(camera->right.y, camera->up.y, camera->forward.y),
-				float3(camera->right.z, camera->up.z, camera->forward.z));
+				float3(camera->GetRight().x, camera->GetUp().x, camera->GetDir().x),
+				float3(camera->GetRight().y, camera->GetUp().y, camera->GetDir().y),
+				float3(camera->GetRight().z, camera->GetUp().z, camera->GetDir().z));
 			glMultMatrixf(m.m);
 		}
 
@@ -105,7 +105,7 @@ void HUDDrawer::DrawCameraDirectionArrow(const CUnit* unit)
 			glScalef(0.33f, 0.33f * globalRendering->aspectRatio, 0.33f);
 
 			glRotatef(
-				GetHeadingFromVector(camera->forward.x, camera->forward.z) * 180.0f / 32768 + 180,
+				GetHeadingFromVector(camera->GetDir().x, camera->GetDir().z) * 180.0f / 32768 + 180,
 				0.0f, 0.0f, 1.0f
 			);
 			glScalef(0.4f, 0.4f, 0.3f);
@@ -218,15 +218,15 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 					glColor4f(0.0f, 0.0f, 1.0f, 0.7f);
 			}
 
-			if (w->targetType != Target_None) {
-				float3 pos = w->targetPos;
-				float3 v1 = (pos-camera->GetPos()).ANormalize();
+			if (w->HaveTarget()) {
+				float3 pos = w->GetCurrentTargetPos();
+				float3 v1 = (pos - camera->GetPos()).ANormalize();
 				float3 v2 = (v1.cross(UpVector)).ANormalize();
 				float3 v3 = (v2.cross(v1)).Normalize();
 				float radius = 10.0f;
 
-				if (w->targetType == Target_Unit)
-					radius = w->targetUnit->radius;
+				if (w->GetCurrentTarget().type == Target_Unit)
+					radius = w->GetCurrentTarget().unit->radius;
 
 				// draw the reticle
 				glBegin(GL_LINE_STRIP);
@@ -240,7 +240,7 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 					const FPSUnitController& c = p->fpsController;
 					const float dist = std::min(c.targetDist, w->range * 0.9f);
 
-					pos = w->weaponPos + w->wantedDir * dist;
+					pos = w->aimFromPos + w->wantedDir * dist;
 					v1 = (pos - camera->GetPos()).ANormalize();
 					v2 = (v1.cross(UpVector)).ANormalize();
 					v3 = (v2.cross(v1)).ANormalize();
@@ -256,7 +256,7 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 				glBegin(GL_LINES);
 				if (!w->onlyForward) {
 					glVertexf3(pos);
-					glVertexf3(w->targetPos);
+					glVertexf3(w->GetCurrentTargetPos());
 
 					glVertexf3(pos + (v2 * fastmath::sin(PI * 0.25f) + v3 * fastmath::cos(PI * 0.25f)) * radius);
 					glVertexf3(pos + (v2 * fastmath::sin(PI * 1.25f) + v3 * fastmath::cos(PI * 1.25f)) * radius);
@@ -264,9 +264,9 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 					glVertexf3(pos + (v2 * fastmath::sin(PI * -0.25f) + v3 * fastmath::cos(PI * -0.25f)) * radius);
 					glVertexf3(pos + (v2 * fastmath::sin(PI * -1.25f) + v3 * fastmath::cos(PI * -1.25f)) * radius);
 				}
-				if ((w->targetPos - camera->GetPos()).ANormalize().dot(camera->forward) < 0.7f) {
-					glVertexf3(w->targetPos);
-					glVertexf3(camera->GetPos() + camera->forward * 100.0f);
+				if ((w->GetCurrentTargetPos() - camera->GetPos()).ANormalize().dot(camera->GetDir()) < 0.7f) {
+					glVertexf3(w->GetCurrentTargetPos());
+					glVertexf3(camera->GetPos() + camera->GetDir() * 100.0f);
 				}
 				glEnd();
 			}

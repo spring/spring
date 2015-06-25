@@ -109,6 +109,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/AbstractVersion.cpp
 		${myGeneratedSourceDir}/AbstractWeaponDef.cpp
 		${myGeneratedSourceDir}/AbstractWeaponMount.cpp
+		${myGeneratedSourceDir}/AbstractWeapon.cpp
 		${myGeneratedSourceDir}/StubCamera.cpp
 		${myGeneratedSourceDir}/StubCheats.cpp
 		${myGeneratedSourceDir}/StubCommand.cpp
@@ -155,6 +156,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/StubVersion.cpp
 		${myGeneratedSourceDir}/StubWeaponDef.cpp
 		${myGeneratedSourceDir}/StubWeaponMount.cpp
+		${myGeneratedSourceDir}/StubWeapon.cpp
 		${myGeneratedSourceDir}/WrappCamera.cpp
 		${myGeneratedSourceDir}/WrappCheats.cpp
 		${myGeneratedSourceDir}/WrappCurrentCommand.cpp
@@ -204,7 +206,8 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/WrappUnitSupportedCommand.cpp
 		${myGeneratedSourceDir}/WrappVersion.cpp
 		${myGeneratedSourceDir}/WrappWeaponDef.cpp
-		${myGeneratedSourceDir}/WrappWeaponMount.cpp)
+		${myGeneratedSourceDir}/WrappWeaponMount.cpp
+		${myGeneratedSourceDir}/WrappWeapon.cpp)
 	set(myGeneratedSources
 		${myGeneratedCombineSources}
 		${myGeneratedWrapperSources})

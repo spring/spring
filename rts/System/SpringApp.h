@@ -7,10 +7,10 @@
 #include <boost/cstdint.hpp>
 #include <boost/shared_ptr.hpp>
 
-
-class ClientSetup;
 class CmdLineParams;
+class ClientSetup;
 class CGameController;
+
 union SDL_Event;
 
 /**
@@ -25,18 +25,23 @@ public:
 	~SpringApp();
 
 	int Run();                                      //!< Run game loop
+	void Reload(const std::string& script);
+
 	static void ShutDown();                         //!< Shuts down application
 
-protected:
+private:
 	bool Initialize();                              //!< Initialize app
 	void ParseCmdLine(const std::string&);          //!< Parse command line
 	void Startup();                                 //!< Parses startup data (script etc.) and starts SelectMenu or PreGame
+	void StartScript(const std::string& inputFile); //!< Starts game from specified script.txt
+	void LoadSpringMenu();                          //!< Load menu (old or luaified depending on start parameters)
 	bool InitWindow(const char* title);             //!< Initializes window
+
+	int Update();                                   //!< Run simulation and draw
+
 	static void InitOpenGL();                       //!< Initializes OpenGL
 	static void LoadFonts();                        //!< Initialize glFonts (font & smallFont)
-	static bool CreateSDLWindow(const char* title);    //!< Creates a SDL window
-	int Update();                                   //!< Run simulation and draw
-	bool UpdateSim(CGameController *ac);
+	static bool CreateSDLWindow(const char* title); //!< Creates a SDL window
 
 	static void GetDisplayGeometry();
 	static void SetupViewportGeometry();
@@ -47,11 +52,16 @@ protected:
 	 *
 	 * Pointer to instance of commandline parser
 	 */
-	CmdLineParams* cmdline;
+	boost::shared_ptr<CmdLineParams> cmdline;
+
+	// this gets passed along to PreGame (or SelectMenu then PreGame),
+	// and from thereon to GameServer if this client is also the host
+	boost::shared_ptr<ClientSetup> clientSetup;
 
 private:
 	bool MainEventHandler(const SDL_Event& ev);
-	void RunScript(boost::shared_ptr<ClientSetup> clientSetup, const std::string& buf);
+
+	CGameController* RunScript(const std::string& buf);
 };
 
 /**

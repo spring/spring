@@ -12,7 +12,6 @@
 CR_BIND_DERIVED(CMuzzleFlame, CProjectile, (ZeroVector, ZeroVector, ZeroVector, 0))
 
 CR_REG_METADATA(CMuzzleFlame,(
-	CR_SERIALIZER(creg_Serialize), // randSmokeDir
 	CR_MEMBER(size),
 	CR_MEMBER(age),
 	CR_MEMBER(numFlame),
@@ -20,11 +19,6 @@ CR_REG_METADATA(CMuzzleFlame,(
 	CR_MEMBER(randSmokeDir),
 	CR_RESERVED(8)
 	))
-
-void CMuzzleFlame::creg_Serialize(creg::ISerializer& s)
-{
-//	s.Serialize(randSmokeDir, numSmoke*sizeof(float3));
-}
 
 CMuzzleFlame::CMuzzleFlame(const float3& pos, const float3& speed, const float3& dir, float size):
 	CProjectile(pos, speed, NULL, false, false, false),
@@ -83,10 +77,10 @@ void CMuzzleFlame::Draw()
 		col[3] = (unsigned char) (255 * alpha * fade);
 
 		#define st projectileDrawer->smoketex[tex]
-		va->AddVertexQTC(interPos - camera->right * drawsize - camera->up * drawsize, st->xstart, st->ystart, col);
-		va->AddVertexQTC(interPos + camera->right * drawsize - camera->up * drawsize, st->xend,   st->ystart, col);
-		va->AddVertexQTC(interPos + camera->right * drawsize + camera->up * drawsize, st->xend,   st->yend,   col);
-		va->AddVertexQTC(interPos - camera->right * drawsize + camera->up * drawsize, st->xstart, st->yend,   col);
+		va->AddVertexQTC(interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, st->xstart, st->ystart, col);
+		va->AddVertexQTC(interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, st->xend,   st->ystart, col);
+		va->AddVertexQTC(interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, st->xend,   st->yend,   col);
+		va->AddVertexQTC(interPos - camera->GetRight() * drawsize + camera->GetUp() * drawsize, st->xstart, st->yend,   col);
 		#undef st
 
 		if (fade < 1.0f) {
@@ -97,13 +91,16 @@ void CMuzzleFlame::Draw()
 			col[3] = (unsigned char) (1);
 
 			#define mft projectileDrawer->muzzleflametex
-			va->AddVertexQTC(interPos - camera->right * drawsize - camera->up * drawsize, mft->xstart, mft->ystart, col);
-			va->AddVertexQTC(interPos + camera->right * drawsize - camera->up * drawsize, mft->xend,   mft->ystart, col);
-			va->AddVertexQTC(interPos + camera->right * drawsize + camera->up * drawsize, mft->xend,   mft->yend,   col);
-			va->AddVertexQTC(interPos - camera->right * drawsize + camera->up * drawsize, mft->xstart, mft->yend,   col);
+			va->AddVertexQTC(interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, mft->xstart, mft->ystart, col);
+			va->AddVertexQTC(interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, mft->xend,   mft->ystart, col);
+			va->AddVertexQTC(interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, mft->xend,   mft->yend,   col);
+			va->AddVertexQTC(interPos - camera->GetRight() * drawsize + camera->GetUp() * drawsize, mft->xstart, mft->yend,   col);
 			#undef mft
 		}
 	}
 }
 
-
+int CMuzzleFlame::GetProjectilesCount() const
+{
+	return numSmoke * 2;
+}

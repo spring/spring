@@ -1,6 +1,8 @@
 # Directories
 /tools
 /contrib/cppunit-*
+/contrib/zlib
+/contrib/unzip
 /doc
 /code/res
 /port

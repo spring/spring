@@ -82,7 +82,6 @@ bool LuaConstCOB::PushEntries(lua_State* L)
 	PUSH_COB(COB_ID);
 	PUSH_COB(PLAY_SOUND);
 	PUSH_COB(KILL_UNIT);
-	PUSH_COB(ALPHA_THRESHOLD);
 	PUSH_COB(SET_WEAPON_UNIT_TARGET);
 	PUSH_COB(SET_WEAPON_GROUND_TARGET);
 	PUSH_COB(SONAR_STEALTH);
@@ -128,6 +127,7 @@ bool LuaConstSFX::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "NONE",  PF_NONE); // BITMAP_ONLY
 	LuaPushNamedNumber(L, "NO_CEG_TRAIL", PF_NoCEGTrail);
 	LuaPushNamedNumber(L, "NO_HEATCLOUD", PF_NoHeatCloud);
+	LuaPushNamedNumber(L, "RECURSIVE", PF_Recursive);
 
 	// For Spring.UnitScript.EmitSfx
 	LuaPushNamedNumber(L, "VTOL",            SFX_VTOL);

@@ -1,5 +1,12 @@
+IF    (MINGW OR APPLE)
+	FIND_PACKAGE(SDL2 REQUIRED)
+	INCLUDE_DIRECTORIES(${SDL2_INCLUDE_DIR})
+ELSE  (MINGW OR APPLE)
+	# Use a direct copy of the GL and SDL headers,
+	# as these may not be available on headless systems.
+	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/SDL2)
+ENDIF (MINGW OR APPLE)
 
-include_directories(${SDL2_INCLUDE_DIR})
 include_directories(${GLEW_INCLUDE_DIR})
 # This list was created using this *nix shell command:
 # > find . -name "*.cpp"" | sort

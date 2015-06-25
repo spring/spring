@@ -370,20 +370,14 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 
 		selectedUnitsHandler.AddUnit(sel);
 		camHandler->CameraTransition(0.8f);
-		if(camHandler->GetCurrentControllerNum() != 0){
+		if (camHandler->GetCurrentControllerNum() != CCameraHandler::CAMERA_MODE_FIRSTPERSON) {
 			camHandler->GetCurrentController().SetPos(sel->pos);
-		} else {	//fps camera
+		} else {
+			//fps camera
+			if (camera->GetRot().x > -1.f)
+				camera->SetRotX(-1.f);
 
-			if(camera->rot.x>-1)
-				camera->rot.x=-1;
-
-			float3 wantedCamDir;
-			wantedCamDir.x=(float)(math::sin(camera->rot.y)*math::cos(camera->rot.x));
-			wantedCamDir.y=(float)(math::sin(camera->rot.x));
-			wantedCamDir.z=(float)(math::cos(camera->rot.y)*math::cos(camera->rot.x));
-			wantedCamDir.ANormalize();
-
-			camHandler->GetCurrentController().SetPos(sel->pos - wantedCamDir*800);
+			camHandler->GetCurrentController().SetPos(sel->pos - camera->GetDir() * 800);
 		}
 	} else if(s=="SelectNum"){
 		ReadDelimiter(selectString);

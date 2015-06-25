@@ -8,6 +8,7 @@
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Features/Feature.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Misc/QuadField.h"
@@ -114,6 +115,7 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 		// the else-case (default) is handled in CProjectile::Init
 		ownerID = params.ownerID;
 		teamID = params.teamID;
+		allyteamID = teamHandler->IsValidTeam(teamID)? teamHandler->AllyTeam(teamID): -1;
 	}
 
 	if (params.cegID != -1u) {
@@ -323,6 +325,13 @@ void CWeaponProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 {
 	points.AddVertexQC(pos, color4::yellow);
 }
+
+
+bool CWeaponProjectile::CanBeInterceptedBy(const WeaponDef* wd) const
+{
+	return ((weaponDef->targetable & wd->interceptor) != 0);
+}
+
 
 void CWeaponProjectile::DependentDied(CObject* o)
 {

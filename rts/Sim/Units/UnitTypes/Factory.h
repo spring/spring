@@ -52,9 +52,6 @@ private:
 public:
 	float buildSpeed;
 
-	/// whether we are currently opening in preparation to start building
-	bool opening;
-
 	const UnitDef* curBuildDef;
 	CUnit* curBuild;
 

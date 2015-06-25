@@ -252,8 +252,9 @@ bool COggStream::UpdateBuffers()
 
 		// false if we've reached end of stream
 		active = DecodeStream(buffer);
-		if (active)
+		if (active) {
 			alSourceQueueBuffers(source, 1, &buffer); CheckError("COggStream::UpdateBuffers");
+		}
 	}
 	CheckError("COggStream::UpdateBuffers");
 

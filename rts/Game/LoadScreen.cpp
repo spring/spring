@@ -29,11 +29,14 @@
 #include "Net/Protocol/NetProtocol.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/Watchdog.h"
+#include "System/Platform/Threading.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/ISoundChannels.h"
 
+#if !defined(HEADLESS) && !defined(NO_SOUND)
 #include "System/Sound/OpenAL/EFX.h"
 #include "System/Sound/OpenAL/EFXPresets.h"
+#endif
 
 #include <vector>
 
@@ -82,8 +85,9 @@ void CLoadScreen::Init()
 #endif
 
 	//! Create a thread during the loading that pings the host/server, so it knows that this client is still alive/loading
-	net->KeepUpdating(true);
-	netHeartbeatThread = new boost::thread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
+	clientNet->KeepUpdating(true);
+	netHeartbeatThread = new boost::thread();
+	*netHeartbeatThread = Threading::CreateNewThread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, clientNet));
 
 	game = new CGame(mapName, modName, saveFile);
 
@@ -135,8 +139,8 @@ CLoadScreen::~CLoadScreen()
 		gameLoadThread->Join();
 	delete gameLoadThread; gameLoadThread = NULL;
 
-	if (net)
-		net->KeepUpdating(false);
+	if (clientNet)
+		clientNet->KeepUpdating(false);
 	if (netHeartbeatThread)
 		netHeartbeatThread->join();
 	delete netHeartbeatThread; netHeartbeatThread = NULL;
@@ -156,9 +160,9 @@ CLoadScreen::~CLoadScreen()
 	if (!gu->globalQuit) {
 		//! sending your playername to the server indicates that you are finished loading
 		const CPlayer* p = playerHandler->Player(gu->myPlayerNum);
-		net->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->name));
+		clientNet->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->name));
 #ifdef SYNCCHECK
-		net->Send(CBaseNetProtocol::Get().SendPathCheckSum(gu->myPlayerNum, pathManager->GetPathCheckSum()));
+		clientNet->Send(CBaseNetProtocol::Get().SendPathCheckSum(gu->myPlayerNum, pathManager->GetPathCheckSum()));
 #endif
 		mouse->ShowMouse();
 
@@ -184,10 +188,11 @@ CLoadScreen::~CLoadScreen()
 void CLoadScreen::CreateInstance(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile)
 {
 	assert(singleton == NULL);
-
 	singleton = new CLoadScreen(mapName, modName, saveFile);
+
 	// Init() already requires GetInstance() to work.
 	singleton->Init();
+
 	if (!singleton->mtLoading) {
 		game->SetupRenderingParams();
 		CLoadScreen::DeleteInstance();

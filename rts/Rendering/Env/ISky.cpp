@@ -13,7 +13,7 @@
 #include "System/Log/ILog.h"
 
 CONFIG(bool, DynamicSun).defaultValue(false).description("Sets whether the sun will move around the sky throughout the game.\nThe sun will always stay above DynamicSunMinElevation");
-CONFIG(bool, AdvSky).defaultValue(true).defaultValue(false).description("Enables High Resolution Clouds.");
+CONFIG(bool, AdvSky).defaultValue(true).headlessValue(false).defaultValue(false).description("Enables High Resolution Clouds.");
 
 ISky* sky = NULL;
 

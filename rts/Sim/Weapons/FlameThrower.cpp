@@ -19,9 +19,9 @@ CFlameThrower::CFlameThrower(CUnit* owner, const WeaponDef* def): CWeapon(owner,
 }
 
 
-void CFlameThrower::FireImpl(bool scriptCall)
+void CFlameThrower::FireImpl(const bool scriptCall)
 {
-	float3 dir = targetPos - weaponMuzzlePos;
+	float3 dir = currentTargetPos - weaponMuzzlePos;
 
 	const float dist = dir.LengthNormalize();
 	const float3 spread =
@@ -37,14 +37,3 @@ void CFlameThrower::FireImpl(bool scriptCall)
 	WeaponProjectileFactory::LoadProjectile(params);
 }
 
-
-void CFlameThrower::Update()
-{
-	if (targetType != Target_None) {
-		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
-		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
-		wantedDir = (targetPos - weaponPos).Normalize();
-	}
-
-	CWeapon::Update();
-}

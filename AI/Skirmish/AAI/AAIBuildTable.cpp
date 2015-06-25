@@ -304,7 +304,7 @@ void AAIBuildTable::Init()
 				units_static[i].efficiency.resize(combat_categories);
 
 				eff = 5 + 25 * (units_static[i].cost - min_cost)/(max_cost - min_cost);
-
+				assert(eff > 0);
 				for(int k = 0; k < combat_categories; ++k)
 				{
 					units_static[i].efficiency[k] = eff;
@@ -316,7 +316,7 @@ void AAIBuildTable::Init()
 				units_static[i].range = 0;
 
 				// get memory for eff
-				units_static[i].efficiency.resize(combat_categories, -1.0f);
+				units_static[i].efficiency.resize(combat_categories, 0.0f);
 			}
 		}
 

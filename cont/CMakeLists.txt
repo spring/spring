@@ -13,6 +13,7 @@ install (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/ DESTINATION ${DATADIR}
 		PATTERN "CMakeFiles" EXCLUDE
 		PATTERN "Makefile" EXCLUDE
 		PATTERN "cmake_install.cmake" EXCLUDE
+		PATTERN "springrc-template-insource.txt" EXCLUDE
 	)
 
 ### Install freedesktop-files, mime-types etc.

@@ -22,7 +22,6 @@
 #include "Sim/Units/UnitSet.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/UnitTypes/Builder.h"
 #include "Sim/Units/UnitTypes/Building.h"
 #include "Sim/Units/UnitTypes/Factory.h"
@@ -75,7 +74,6 @@ CBuilderCAI::CBuilderCAI():
 	lastPC3(-1),
 	range3D(true)
 {}
-
 
 CBuilderCAI::CBuilderCAI(CUnit* owner):
 	CMobileCAI(owner),
@@ -200,17 +198,25 @@ CBuilderCAI::~CBuilderCAI()
 	}
 }
 
+void CBuilderCAI::InitStatic()
+{
+	reclaimers.clear();
+	featureReclaimers.clear();
+	resurrecters.clear();
+}
+
 void CBuilderCAI::PostLoad()
 {
-	if (!commandQue.empty()) {
-		ownerBuilder = static_cast<CBuilder*>(owner);
+	if (commandQue.empty())
+		return;
 
-		Command& c = commandQue.front();
+	ownerBuilder = static_cast<CBuilder*>(owner);
 
-		if (buildOptions.find(c.GetID()) != buildOptions.end()) {
-			build.Parse(c);
-			build.pos = CGameHelper::Pos2BuildPos(build, true);
-		}
+	const Command& c = commandQue.front();
+
+	if (buildOptions.find(c.GetID()) != buildOptions.end()) {
+		build.Parse(c);
+		build.pos = CGameHelper::Pos2BuildPos(build, true);
 	}
 }
 
@@ -300,9 +306,7 @@ bool CBuilderCAI::IsBuildPosBlocked(const BuildInfo& build, const CUnit** nanoFr
 	}
 
 	// status is blocked, check if there is a foreign object in the way
-	const int yardxpos = int(build.pos.x + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;
-	const int yardypos = int(build.pos.z + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;
-	const CSolidObject* s = groundBlockingObjectMap->GroundBlocked(yardxpos, yardypos);
+	const CSolidObject* s = groundBlockingObjectMap->GroundBlocked(build.pos);
 
 	// just ourselves, does not count
 	if (s == owner)
@@ -529,9 +533,7 @@ void CBuilderCAI::ReclaimFeature(CFeature* f)
 
 void CBuilderCAI::FinishCommand()
 {
-	if (commandQue.front().timeOut == INT_MAX) {
-		buildRetries = 0;
-	}
+	buildRetries = 0;
 	CMobileCAI::FinishCommand();
 }
 
@@ -612,7 +614,7 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 
 		build.pos = CGameHelper::Pos2BuildPos(build, true);
 
-		// keep moving until until 3D distance to buildPos is LEQ our buildDistance
+		// keep moving until 3D distance to buildPos is LEQ our buildDistance
 		if (MoveInBuildRange(build.pos, 0.0f, true)) {
 			if (IsBuildPosBlocked(build)) {
 				StopMove();
@@ -1249,7 +1251,7 @@ void CBuilderCAI::ExecuteFight(Command& c)
 		return;
 	}
 
-	if (owner->haveTarget && owner->moveType->progressState != AMoveType::Done) {
+	if (owner->HaveTarget() && owner->moveType->progressState != AMoveType::Done) {
 		StopMove();
 	} else if (owner->moveType->progressState != AMoveType::Active) {
 		owner->moveType->StartMoving(goalPos, 8);
@@ -1468,7 +1470,7 @@ int CBuilderCAI::FindReclaimTarget(const float3& pos, float radius, unsigned cha
 	int rid = -1;
 
 	if (recUnits || recEnemy || recEnemyOnly) {
-		const std::vector<CUnit*>& units = quadField->GetUnitsExact(pos, radius);
+		const std::vector<CUnit*>& units = quadField->GetUnitsExact(pos, radius, false);
 		for (std::vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
 			const CUnit* u = *ui;
 
@@ -1508,7 +1510,7 @@ int CBuilderCAI::FindReclaimTarget(const float3& pos, float radius, unsigned cha
 	if ((!best || !stationary) && !recEnemyOnly) {
 		best = NULL;
 		const CTeam* team = teamHandler->Team(owner->team);
-		const std::vector<CFeature*>& features = quadField->GetFeaturesExact(pos, radius);
+		const std::vector<CFeature*>& features = quadField->GetFeaturesExact(pos, radius, false);
 		bool metal = false;
 		for (std::vector<CFeature*>::const_iterator fi = features.begin(); fi != features.end(); ++fi) {
 			const CFeature* f = *fi;
@@ -1521,8 +1523,8 @@ int CBuilderCAI::FindReclaimTarget(const float3& pos, float radius, unsigned cha
 				const float dist = f3SqDist(f->pos, owner->pos);
 				if ((dist < bestDist || (recSpecial && !metal && f->def->metal > 0.0)) &&
 					(noResCheck ||
-					((f->def->metal  > 0.0f) && (team->metal  < team->metalStorage)) ||
-					((f->def->energy > 0.0f) && (team->energy < team->energyStorage)))
+					((f->def->metal  > 0.0f) && (team->res.metal  < team->resStorage.metal)) ||
+					((f->def->energy > 0.0f) && (team->res.energy < team->resStorage.energy)))
 				) {
 					if (!f->IsInLosForAllyTeam(owner->allyteam)) {
 						continue;
@@ -1579,7 +1581,7 @@ bool CBuilderCAI::FindResurrectableFeatureAndResurrect(const float3& pos,
                                                        unsigned char options,
 													   bool freshOnly)
 {
-	const std::vector<CFeature*> &features = quadField->GetFeaturesExact(pos, radius);
+	const std::vector<CFeature*> &features = quadField->GetFeaturesExact(pos, radius, false);
 
 	const CFeature* best = NULL;
 	float bestDist = 1.0e30f;
@@ -1622,7 +1624,7 @@ bool CBuilderCAI::FindCaptureTargetAndCapture(const float3& pos, float radius,
                                               unsigned char options,
 											  bool healthyOnly)
 {
-	const std::vector<CUnit*> &cu = quadField->GetUnits(pos, radius);
+	const std::vector<CUnit*> &cu = quadField->GetUnitsExact(pos, radius, false);
 	std::vector<CUnit*>::const_iterator ui;
 
 	const CUnit* best = NULL;
@@ -1671,7 +1673,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
                                             bool attackEnemy,
 											bool builtOnly)
 {
-	const std::vector<CUnit*>& cu = quadField->GetUnitsExact(pos, radius);
+	const std::vector<CUnit*>& cu = quadField->GetUnitsExact(pos, radius, false);
 	const CUnit* bestUnit = NULL;
 
 	const float maxSpeed = owner->moveType->GetMaxSpeed();

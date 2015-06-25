@@ -49,10 +49,24 @@ void CLosHandler::PostLoad()
 }
 
 CR_REG_METADATA(CLosHandler,(
+	CR_IGNORED(losMipLevel),
+	CR_IGNORED(airMipLevel),
+	CR_IGNORED(losDiv),
+	CR_IGNORED(airDiv),
+	CR_IGNORED(invLosDiv),
+	CR_IGNORED(invAirDiv),
+	CR_IGNORED(airSizeX),
+	CR_IGNORED(airSizeY),
+	CR_IGNORED(losSizeX),
+	CR_IGNORED(losSizeY),
+	CR_IGNORED(requireSonarUnderWater),
+
+	CR_MEMBER(losAlgo),
+	CR_MEMBER(losMaps),
+	CR_MEMBER(airLosMaps),
 	CR_MEMBER(instanceHash),
 	CR_MEMBER(toBeDeleted),
 	CR_MEMBER(delayQue),
-	CR_RESERVED(8),
 	CR_POSTLOAD(PostLoad)
 ))
 
@@ -79,10 +93,10 @@ CLosHandler::CLosHandler() :
 	airDiv(SQUARE_SIZE * (1 << airMipLevel)),
 	invLosDiv(1.0f / losDiv),
 	invAirDiv(1.0f / airDiv),
-	airSizeX(std::max(1, gs->mapx >> airMipLevel)),
-	airSizeY(std::max(1, gs->mapy >> airMipLevel)),
-	losSizeX(std::max(1, gs->mapx >> losMipLevel)),
-	losSizeY(std::max(1, gs->mapy >> losMipLevel)),
+	airSizeX(std::max(1, mapDims.mapx >> airMipLevel)),
+	airSizeY(std::max(1, mapDims.mapy >> airMipLevel)),
+	losSizeX(std::max(1, mapDims.mapx >> losMipLevel)),
+	losSizeY(std::max(1, mapDims.mapy >> losMipLevel)),
 	requireSonarUnderWater(modInfo.requireSonarUnderWater),
 	losAlgo(int2(losSizeX, losSizeY), -1e6f, 15, readMap->GetMIPHeightMapSynced(losMipLevel))
 {

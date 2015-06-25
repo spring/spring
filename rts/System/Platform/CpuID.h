@@ -79,6 +79,7 @@ namespace springproc {
 		////////////////////////
 	 public:
 		CpuId();
+		~CpuId();
 
 		/** Total number of cores in the system. This excludes SMT/HT 
 		    cores. */

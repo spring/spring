@@ -11,11 +11,9 @@ class CTorpedoLauncher: public CWeapon
 public:
 	CTorpedoLauncher(CUnit* owner, const WeaponDef* def);
 
-	void Update();
-
 private:
-	bool TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const;
-	void FireImpl(bool scriptCall);
+	bool TestTarget(const float3 pos, const SWeaponTarget& trg) const override final;
+	void FireImpl(const bool scriptCall) override final;
 
 private:
 	float tracking;

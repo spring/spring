@@ -82,15 +82,6 @@ public:
 	int2 GetNumQueuedUpdates() const;
 
 private:
-	unsigned int RequestPath(
-		const MoveDef* moveDef,
-		const float3& startPos,
-		const float3& goalPos,
-		CPathFinderDef* peDef,
-		CSolidObject* caller,
-		bool synced = true
-	);
-
 	struct MultiPath {
 		MultiPath(const float3& pos, const CPathFinderDef* def, const MoveDef* moveDef)
 			: searchResult(IPath::Error)
@@ -118,6 +109,25 @@ private:
 		float3 finalGoal;
 		CSolidObject* caller;
 	};
+
+private:
+	unsigned int RequestPath(
+		const MoveDef* moveDef,
+		const float3& startPos,
+		const float3& goalPos,
+		CPathFinderDef* peDef,
+		CSolidObject* caller,
+		bool synced = true
+	);
+
+	IPath::SearchResult ArrangePath(
+		MultiPath* newPath,
+		const MoveDef* moveDef,
+		const float3& startPos,
+		const float3& goalPos,
+		CPathFinderDef* peDef,
+		CSolidObject* caller
+	) const;
 
 	inline MultiPath* GetMultiPath(int pathID) const;
 	unsigned int Store(MultiPath* path);

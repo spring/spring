@@ -5,7 +5,7 @@ set -e
 REMOTE_HOST=springrts.com
 REMOTE_USER=buildbot
 REMOTE_BASE=/home/buildbot/www
-RSYNC="rsync -avz --chmod=D+rx,F+r --bwlimit 4000 --exclude=download/ --exclude=tests/"
+RSYNC="rsync -avz --chmod=D+rx,F+r --bwlimit 4000 --exclude=download/ --exclude=tests/ --remove-source-files"
 REMOTE_RSYNC="nice -19 ionice -c3 rsync" #prevent QQ about rsync killing server
 
 umask 022
@@ -25,5 +25,3 @@ else
 	${RSYNC} --rsync-path="${REMOTE_RSYNC}" ${TMP_BASE}/ ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_BASE}/
 fi
 
-# Clean up.
-rm -rf ${TMP_BASE}/*

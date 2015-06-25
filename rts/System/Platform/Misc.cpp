@@ -225,7 +225,8 @@ std::string GetProcessExecutableFile()
 	mib[1] = KERN_PROC;
 	mib[2] = KERN_PROC_PATHNAME;
 	mib[3] = -1;
-	char buf[PATH_MAX];
+	const long maxpath = pathconf("/", _PC_PATH_MAX);
+	char buf[maxpath];
 	size_t cb = sizeof(buf);
 	int err = sysctl(mib, 4, buf, &cb, NULL, 0);
 	if (err == 0) {

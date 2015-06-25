@@ -60,7 +60,6 @@ protected:
 
 protected:
 	CUnit* unit;
-	bool yardOpen;
 	bool busy;
 
 	struct AnimInfo {
@@ -91,6 +90,8 @@ protected:
 	void AddAnim(AnimType type, int piece, int axis, float speed, float dest, float accel);
 
 	virtual void ShowScriptError(const std::string& msg) = 0;
+
+	void ShowUnitScriptError(const std::string& msg);
 
 public:
 	// subclass is responsible for populating this with script pieces

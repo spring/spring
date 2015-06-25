@@ -303,8 +303,13 @@ Else  (NOT Boost_FOUND)
 			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Platform/CpuID.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Platform/Threading.cpp"
+
 			${test_Log_sources}
 		)
+	if(NOT WIN32)
+		LIST(APPEND test_src
+			"${ENGINE_SOURCE_DIR}/System/Platform/Linux/ThreadSupport.cpp")
+	endif()
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_THREAD_LIBRARY}
@@ -316,6 +321,44 @@ if(NOT WIN32)
 # FIXME: sometimes fails on windows
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSYNC")
 endif()
+
+################################################################################
+### Mutex
+	set(test_name Mutex)
+	Set(test_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/other/testMutex.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
+			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
+			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
+			${test_Log_sources}
+			${sources_engine_System_Threading}
+		)
+
+	set(test_libs
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			${Boost_SYSTEM_LIBRARY}
+			${Boost_CHRONO_LIBRARY_WITH_RT}
+			${Boost_THREAD_LIBRARY}
+			${WINMM_LIBRARY}
+			${WS2_32_LIBRARY}
+		)
+
+	set(test_flags "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
+
+################################################################################
+### QuadField
+	set(test_name QuadField)
+	Set(test_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/engine/Sim/Misc/testQuadField.cpp"
+			"${ENGINE_SOURCE_DIR}/Sim/Misc/QuadField.cpp"
+			${test_Log_sources}
+		)
+	set(test_libs
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+		)
+	set(test_flags "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
 
 ################################################################################
 ### EventClient

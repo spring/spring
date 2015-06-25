@@ -82,14 +82,12 @@ EndMacro (AddEngineBuild)
 add_custom_target(spring WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
 add_custom_target(install-spring WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
 
-if    (NOT HEADLESS_SYSTEM)
-	### Add icon and manifest to exe using windres
-	IF    (WIN32 AND MINGW)
-		SET(ENGINE_ICON "${ENGINE_SRC_ROOT_DIR}/icon.rc")
-	ENDIF (WIN32 AND MINGW)
-	AddEngineBuild(legacy)
-endif (NOT HEADLESS_SYSTEM)
+### Add icon and manifest to exe using windres
+IF    (WIN32 AND MINGW)
+	SET(ENGINE_ICON "${ENGINE_SRC_ROOT_DIR}/icon.rc")
+ENDIF (WIN32 AND MINGW)
 
+# the build targets
+AddEngineBuild(legacy)
 AddEngineBuild(dedicated)
 AddEngineBuild(headless)
-

@@ -80,7 +80,8 @@ void CFireProjectile::Update()
 {
 	ttl--;
 	if (ttl > 0) {
-		if (projectileHandler->particleSaturation < 0.8f || (projectileHandler->particleSaturation < 1 && (gs->frameNum & 1))) {
+		const float partSat = (gs->frameNum & 1) ? 1.0f : 0.8f;
+		if (projectileHandler->GetParticleSaturation() < partSat) {
 			// unsynced code
 			SubParticle sub;
 			sub.age = 0;
@@ -137,9 +138,7 @@ void CFireProjectile::Update()
 		pi->posDif*=0.9f;
 	}
 
-	if (subParticles.empty() && (ttl <= 0)) {
-		deleteMe = true;
-	}
+	deleteMe |= ttl <= -particleTime;
 }
 
 void CFireProjectile::Draw()
@@ -158,8 +157,8 @@ void CFireProjectile::Draw()
 
 		float sinRot = fastmath::sin(rot);
 		float cosRot = fastmath::cos(rot);
-		float3 dir1 = (camera->right*cosRot + camera->up*sinRot) * size;
-		float3 dir2 = (camera->right*sinRot - camera->up*cosRot) * size;
+		float3 dir1 = (camera->GetRight()*cosRot + camera->GetUp()*sinRot) * size;
+		float3 dir2 = (camera->GetRight()*sinRot - camera->GetUp()*cosRot) * size;
 
 		float3 interPos=pi->pos;
 
@@ -180,8 +179,8 @@ void CFireProjectile::Draw()
 
 		float sinRot = fastmath::sin(rot);
 		float cosRot = fastmath::cos(rot);
-		float3 dir1 = (camera->right*cosRot + camera->up*sinRot) * size;
-		float3 dir2 = (camera->right*sinRot - camera->up*cosRot) * size;
+		float3 dir1 = (camera->GetRight()*cosRot + camera->GetUp()*sinRot) * size;
+		float3 dir2 = (camera->GetRight()*sinRot - camera->GetUp()*cosRot) * size;
 
 		float3 interPos = pi->pos;
 
@@ -213,5 +212,11 @@ void CFireProjectile::Draw()
 		va->AddVertexQTC(interPos + dir1 + dir2, at->xend,   at->yend,   col2);
 		va->AddVertexQTC(interPos - dir1 + dir2, at->xstart, at->yend,   col2);
 	}
+}
+
+
+int CFireProjectile::GetProjectilesCount() const
+{
+	return subParticles2.size() + subParticles.size() * 2;
 }
 

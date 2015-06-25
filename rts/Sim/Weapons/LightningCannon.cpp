@@ -27,25 +27,15 @@ CLightningCannon::CLightningCannon(CUnit* owner, const WeaponDef* def)
 {
 }
 
-
-void CLightningCannon::Update()
+float CLightningCannon::GetPredictedImpactTime(float3 p) const
 {
-	if (targetType != Target_None) {
-		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
-		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
-
-		if (!onlyForward) {
-			wantedDir = (targetPos - weaponPos).Normalize();
-		}
-	}
-
-	CWeapon::Update();
+	return 0;
 }
 
-void CLightningCannon::FireImpl(bool scriptCall)
+void CLightningCannon::FireImpl(const bool scriptCall)
 {
 	float3 curPos = weaponMuzzlePos;
-	float3 curDir = (targetPos - curPos).Normalize();
+	float3 curDir = (currentTargetPos - weaponMuzzlePos).SafeNormalize();
 	float3 newDir = curDir;
 
 	curDir +=
@@ -63,6 +53,8 @@ void CLightningCannon::FireImpl(bool scriptCall)
 		// terminate bolt at water surface if necessary
 		if ((curDir.y < 0.0f) && ((curPos.y + curDir.y * boltLength) <= 0.0f)) {
 			boltLength = curPos.y / -curDir.y;
+			hitUnit = NULL;
+			hitFeature = NULL;
 		}
 	}
 
@@ -71,13 +63,15 @@ void CLightningCannon::FireImpl(bool scriptCall)
 	if (shieldLength < boltLength) {
 		boltLength = shieldLength;
 		hitShield->BeamIntercepted(this, curPos);
+		hitUnit = NULL;
+		hitFeature = NULL;
 	}
 
 	if (hitUnit != NULL) {
 		hitUnit->SetLastAttackedPiece(hitColQuery.GetHitPiece(), gs->frameNum);
 	}
 
-	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(weaponDef, weaponMuzzlePos, targetPos);
+	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(weaponDef, weaponMuzzlePos, currentTargetPos);
 	const CGameHelper::ExplosionParams params = {
 		curPos + curDir * boltLength,                     // hitPos (same as hitColQuery.GetHitPos() if no water or shield in way)
 		curDir,
@@ -86,8 +80,8 @@ void CLightningCannon::FireImpl(bool scriptCall)
 		owner,
 		hitUnit,
 		hitFeature,
-		craterAreaOfEffect,
-		damageAreaOfEffect,
+		weaponDef->craterAreaOfEffect,
+		weaponDef->damageAreaOfEffect,
 		weaponDef->edgeEffectiveness,
 		weaponDef->explosionSpeed,
 		0.5f,                                             // gfxMod
@@ -107,9 +101,3 @@ void CLightningCannon::FireImpl(bool scriptCall)
 	WeaponProjectileFactory::LoadProjectile(pparams);
 }
 
-
-
-void CLightningCannon::SlowUpdate()
-{
-	CWeapon::SlowUpdate();
-}

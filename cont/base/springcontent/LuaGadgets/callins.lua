@@ -50,6 +50,7 @@ CALLIN_LIST = {
 	"UnitCmdDone",
 	"UnitPreDamaged",
 	"UnitDamaged",
+	"UnitStunned",
 	"UnitTaken",
 	"UnitGiven",
 	"UnitEnteredRadar",

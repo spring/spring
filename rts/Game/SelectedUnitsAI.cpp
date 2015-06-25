@@ -589,7 +589,7 @@ void CSelectedUnitsHandlerAI::SelectCircleUnits(
 	if (p == NULL)
 		return;
 
-	const vector<CUnit*>& tmpUnits = quadField->GetUnits(pos, radius);
+	const vector<CUnit*>& tmpUnits = quadField->GetUnitsExact(pos, radius, false);
 
 	const float radiusSqr = radius * radius;
 	const unsigned int count = tmpUnits.size();

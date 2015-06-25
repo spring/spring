@@ -5,6 +5,7 @@
 #include "ReadMap.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/myMath.h"
+#include "System/EventHandler.h"
 
 CONFIG(bool, MetalMapPalette).defaultValue(false);
 
@@ -98,6 +99,8 @@ void CMetalMap::SetMetalAmount(int x, int z, float m)
 	ClampInt(z, 0, sizeZ);
 
 	distributionMap[(z * sizeX) + x] = (metalScale == 0.0f) ? 0 : Clamp((int)(m / metalScale), 0, 255);
+
+	eventHandler.MetalMapChanged(x, z);
 }
 
 

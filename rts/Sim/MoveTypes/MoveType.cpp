@@ -27,7 +27,7 @@ CR_REG_METADATA(AMoveType, (
 	CR_MEMBER(maneuverLeash),
 
 	CR_MEMBER(useHeading),
-	CR_ENUM_MEMBER(progressState)
+	CR_MEMBER(progressState)
 ))
 
 AMoveType::AMoveType(CUnit* owner):

@@ -408,8 +408,8 @@ struct SCallLuaRulesCommand {
 	const char* inData;
 	/// If this is less than 0, the data size is calculated using strlen()
 	int inSize;
-	/// this is subject to Lua garbage collection, copy it if you wish to continue using it
-	const char* ret_outData;
+	/// Buffer for response, must be const size of MAX_RESPONSE_SIZE bytes
+	char* ret_outData;
 }; //$ COMMAND_CALL_LUA_RULES Lua_callRules
 
 struct SCallLuaUICommand {
@@ -417,8 +417,8 @@ struct SCallLuaUICommand {
 	const char* inData;
 	/// If this is less than 0, the data size is calculated using strlen()
 	int inSize;
-	/// this is subject to Lua garbage collection, copy it if you wish to continue using it
-	const char* ret_outData;
+	/// Buffer for response, must be const size of MAX_RESPONSE_SIZE bytes
+	char* ret_outData;
 }; //$ COMMAND_CALL_LUA_UI Lua_callUI
 
 struct SSendStartPosCommand {

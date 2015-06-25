@@ -25,8 +25,8 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-#include "Sim/Units/Groups/GroupHandler.h"
-#include "Sim/Units/Groups/Group.h"
+#include "Game/UI/Groups/GroupHandler.h"
+#include "Game/UI/Groups/Group.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Color.h"
@@ -521,7 +521,7 @@ void CSelectedUnitsHandler::Draw()
 	color2.g = 255 - color2.g;
 	color2.b = 255 - color2.b;
 
-	if (cmdColors.unitBox[3] > 0.05f) {
+	if (color1.a > 0) {
 		const CUnitSet* unitSet;
 		if (selectedGroup != -1) {
 			// note: units in this set are not necessarily all selected themselves, eg.
@@ -865,49 +865,25 @@ std::string CSelectedUnitsHandler::GetTooltip()
 	}
 
 	{
-		int numFuel = 0;
-		float maxHealth = 0.0f, curHealth = 0.0f;
-		float maxFuel = 0.0f, curFuel = 0.0f;
-		float exp = 0.0f, cost = 0.0f, range = 0.0f;
-		float metalMake = 0.0f, metalUse = 0.0f, energyMake = 0.0f, energyUse = 0.0f;
-
-#define NO_TEAM -32
-#define MULTI_TEAM -64
+		#define NO_TEAM -32
+		#define MULTI_TEAM -64
 		int ctrlTeam = NO_TEAM;
 
+		SUnitStats stats;
+
 		for (const CUnit* unit: selectedUnits) {
-			maxHealth  += unit->maxHealth;
-			curHealth  += unit->health;
-			exp        += unit->experience;
-			cost       += unit->metalCost + (unit->energyCost / 60.0f);
-			range      += unit->maxRange;
-			metalMake  += unit->metalMake;
-			metalUse   += unit->metalUse;
-			energyMake += unit->energyMake;
-			energyUse  += unit->energyUse;
-			maxFuel    += unit->unitDef->maxFuel;
-			curFuel    += unit->currentFuel;
-			if (unit->unitDef->maxFuel > 0) {
-				numFuel++;
-			}
+			stats.AddUnit(unit, false);
+
 			if (ctrlTeam == NO_TEAM) {
 				ctrlTeam = unit->team;
 			} else if (ctrlTeam != unit->team) {
 				ctrlTeam = MULTI_TEAM;
 			}
 		}
-		if ((numFuel > 0) && (maxFuel > 0.0f)) {
-			curFuel = curFuel / numFuel;
-			maxFuel = maxFuel / numFuel;
-		}
-		const float num = selectedUnits.size();
 
-		s += CTooltipConsole::MakeUnitStatsString(
-			curHealth, maxHealth,
-			curFuel,   maxFuel,
-			(exp / num), cost, (range / num),
-			metalMake,  metalUse,
-			energyMake, energyUse);
+		s += CTooltipConsole::MakeUnitStatsString(stats);
+
+		const float num = selectedUnits.size();
 
 		if (gs->cheatEnabled && (num == 1)) {
 			const CUnit* unit = *selectedUnits.begin();
@@ -951,11 +927,11 @@ void CSelectedUnitsHandler::SendCommand(const Command& c)
 		for(; ui != selectedUnits.end(); ++i, ++ui) {
 			*i = (*ui)->id;
 		}
-		net->Send(CBaseNetProtocol::Get().SendSelect(gu->myPlayerNum, selectedUnitIDs));
+		clientNet->Send(CBaseNetProtocol::Get().SendSelect(gu->myPlayerNum, selectedUnitIDs));
 		selectionChanged = false;
 	}
 
-	net->Send(CBaseNetProtocol::Get().SendCommand(gu->myPlayerNum, c.GetID(), c.options, c.params));
+	clientNet->Send(CBaseNetProtocol::Get().SendCommand(gu->myPlayerNum, c.GetID(), c.options, c.params));
 }
 
 
@@ -1032,6 +1008,6 @@ void CSelectedUnitsHandler::SendCommandsToUnits(const std::vector<int>& unitIDs,
 		*packet << cmd.params;
 	}
 
-	net->Send(boost::shared_ptr<netcode::RawPacket>(packet));
+	clientNet->Send(boost::shared_ptr<netcode::RawPacket>(packet));
 	return;
 }

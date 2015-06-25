@@ -94,6 +94,10 @@ void CBitmapMuzzleFlame::Init(const CUnit* owner, const float3& offset)
 
 	life = 0.0f;
 	invttl = 1.0f / ttl;
-
 	createTime = gs->frameNum;
+}
+
+int CBitmapMuzzleFlame::GetProjectilesCount() const
+{
+	return 3;
 }

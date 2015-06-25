@@ -91,6 +91,12 @@ namespace springproc {
 			getIdsAmd();
 		}
 	}
+	CpuId::~CpuId()
+	{
+		delete affinityMaskOfCores;
+		delete affinityMaskOfPackages;
+		delete processorApicIds;
+	}
 
 	// Function based on Figure 1 from Kuo_CpuTopology_rc1.rh1.final.pdf
 	void CpuId::getIdsIntel()
@@ -141,7 +147,7 @@ namespace springproc {
 		currentLevel++;
 		ExecCPUID(&eax, &ebx, &ecx, &edx);
 
-		if ((ebx && 0xFFFF) == 0)
+		if ((ebx & 0xFFFF) == 0)
 			return;
 
 		if (((ecx >> 8) & 0xFF) == 1) {

@@ -8,9 +8,6 @@
 	${If} ${SectionIsSelected} ${SEC_SPRINGLOBBY}
 		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\SpringLobby.lnk" "$INSTDIR\springlobby.exe"
 	${EndIf}
-	${If} ${SectionIsSelected} ${SEC_ZERO_K_LOBBY}
-		CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Zero-K Lobby.lnk" "$INSTDIR\Zero-K.exe"
-	${EndIf}
 
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring.lnk" "$INSTDIR\spring.exe"
 	CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring (safemode).lnk" "$INSTDIR\spring.exe" "--safemode"

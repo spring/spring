@@ -20,11 +20,11 @@ struct PathNode {
 		, nodePos(0, 0)
 	{}
 
-	float fCost; ///< f
-	float gCost; ///< g
+	float fCost;
+	float gCost;
 
 	int nodeNum;
-	int2 nodePos;
+	ushort2 nodePos;
 
 	inline bool operator <  (const PathNode& pn) const { return (fCost < pn.fCost); }
 	inline bool operator >  (const PathNode& pn) const { return (fCost > pn.fCost); }
@@ -103,10 +103,10 @@ struct PathNodeStateBuffer {
 		unsigned int memFootPrint = 0;
 
 		if (!peNodeOffsets.empty()) {
-			memFootPrint += (peNodeOffsets.size() * (sizeof(std::vector<int2>) + peNodeOffsets[0].size() * sizeof(int2)));
+			memFootPrint += (peNodeOffsets.size() * (sizeof(std::vector<short2>) + peNodeOffsets[0].size() * sizeof(short2)));
 		}
 
-		memFootPrint += (nodeMask.size() * sizeof(unsigned int));
+		memFootPrint += (nodeMask.size() * sizeof(boost::uint8_t));
 		memFootPrint += ((fCost.size() + gCost.size()) * sizeof(float));
 		memFootPrint += ((extraCostSynced.size() + extraCostUnsynced.size()) * sizeof(float));
 
@@ -181,13 +181,14 @@ public:
 
 	/// bitmask of PATHOPT_{OPEN, ..., OBSOLETE} flags
 	std::vector<boost::uint8_t> nodeMask;
+#if !defined(_MSC_FULL_VER) || _MSC_FULL_VER > 180040000 // ensure that ::max() is constexpr
 	static_assert(PATHOPT_SIZE <= std::numeric_limits<boost::uint8_t>::max(), "nodeMask basic type to small to hold bitmask of PATHOPT");
-
+#endif
 	/// for the PE, maintains an array of the
 	/// best accessible offset (from its own center
 	/// position)
 	/// peNodeOffsets[pathType][blockIdx]
-	std::vector< std::vector<int2> > peNodeOffsets;
+	std::vector< std::vector<short2> > peNodeOffsets;
 
 private:
 	// overlay-cost modifiers for nodes (when non-zero, these
@@ -205,7 +206,7 @@ private:
 	std::vector<float> extraCostUnsynced;
 
 	// if non-NULL, these override PathNodeState::extraCost{Synced, Unsynced}
-	// (NOTE: they can have arbitrary resolutions between 1 and gs->map{x,y})
+	// (NOTE: they can have arbitrary resolutions between 1 and mapDims.map{x,y})
 	const float* extraCostsOverlaySynced;
 	const float* extraCostsOverlayUnsynced;
 
@@ -214,7 +215,7 @@ private:
 
 	int2 ps; ///< patch size (eg. 1 for PF, BLOCK_SIZE for PE); ignored when extraCosts != NULL
 	int2 br; ///< buffer resolution (equal to mr / ps); ignored when extraCosts != NULL
-	int2 mr; ///< heightmap resolution (equal to gs->map{x,y})
+	int2 mr; ///< heightmap resolution (equal to mapDims.map{x,y})
 	int2 sr; ///< extraCostsSynced resolution
 	int2 ur; ///< extraCostsUnsynced resolution
 };
@@ -248,8 +249,8 @@ public:
 		reverse_iterator rend() { return 0; }
 		const_reverse_iterator rbegin() const { return 0; }
 		const_reverse_iterator rend() const { return 0; }
-		PathVector(int, const value_type&): bufPos(-1) { std::fill(std::begin(buf), std::end(buf), nullptr); abort(); }
-		PathVector(iterator, iterator): bufPos(-1) { std::fill(std::begin(buf), std::end(buf), nullptr); abort(); }
+		PathVector(int, const value_type&): bufPos(-1) { abort(); }
+		PathVector(iterator, iterator): bufPos(-1) { abort(); }
 		void insert(iterator, const value_type&) { abort(); }
 		void insert(iterator, const size_type&, const value_type&) { abort(); }
 		void insert(iterator, iterator, iterator) { abort(); }

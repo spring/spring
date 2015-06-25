@@ -20,6 +20,20 @@
 
 CONFIG(bool, Sound).defaultValue(true).description("Select the Sound driver, true = OpenAL, false = NullAudio");
 
+// defined here so spring-headless contains them, too (default & headless should contain the same set of configtags!)
+CONFIG(int, MaxSounds).defaultValue(128).headlessValue(0).minimumValue(0).description("Maximum parallel played sounds.");
+CONFIG(bool, PitchAdjust).defaultValue(false).description("When enabled adjust sound speed/pitch to game speed.");
+CONFIG(int, snd_volmaster).defaultValue(60).minimumValue(0).maximumValue(200).description("Master sound volume.");
+CONFIG(int, snd_volgeneral).defaultValue(100).minimumValue(0).maximumValue(200).description("Volume for \"general\" sound channel.");
+CONFIG(int, snd_volunitreply).defaultValue(100).minimumValue(0).maximumValue(200).description("Volume for \"unit reply\" sound channel.");
+CONFIG(int, snd_volbattle).defaultValue(100).minimumValue(0).maximumValue(200).description("Volume for \"battle\" sound channel.");
+CONFIG(int, snd_volui).defaultValue(100).minimumValue(0).maximumValue(200).description("Volume for \"ui\" sound channel.");
+CONFIG(int, snd_volmusic).defaultValue(100).minimumValue(0).maximumValue(200).description("Volume for \"music\" sound channel.");
+CONFIG(std::string, snd_device).defaultValue("").description("Sets the used output device. See \"Available Devices\" section in infolog.txt.");
+
+CONFIG(float, snd_airAbsorption).defaultValue(0.1f);
+CONFIG(bool, UseEFX).defaultValue(true).safemodeValue(false);
+
 
 ISound* ISound::singleton = NULL;
 
@@ -28,8 +42,6 @@ ISound::ISound()
 	, numAbortedPlays(0)
 {
 }
-
-static std::list<std::string> sounddefs;
 
 void ISound::Initialize()
 {
@@ -42,9 +54,11 @@ void ISound::Initialize()
 			Channels::UnitReply = new AudioChannel();
 			Channels::UserInterface = new AudioChannel();
 			singleton = new CSound();
-			for(const std::string& filename: sounddefs) {
-				spring_sleep(spring_msecs(1000)); //FIXME BADHACK: the sound device is initialized asynchron in a thread this is why loading sounds instantly fails
-				singleton->LoadSoundDefsImpl(filename);
+
+			// sound device is initialized in a thread, must wait
+			// for it to finish (otherwise LoadSoundDefs can fail)
+			while (!singleton->CanLoadSoundDefs()) {
+				spring_sleep(spring_msecs(100));
 			}
 		} else
 #endif // NO_SOUND
@@ -76,7 +90,6 @@ void ISound::Shutdown()
 	SafeDelete(Channels::Battle);
 	SafeDelete(Channels::UnitReply);
 	SafeDelete(Channels::UserInterface);
-
 }
 
 
@@ -105,7 +118,6 @@ bool ISound::ChangeOutput()
 
 bool ISound::LoadSoundDefs(const std::string& filename)
 {
-	sounddefs.push_back(filename);
-	return singleton->LoadSoundDefsImpl(filename);
+	return (singleton->LoadSoundDefsImpl(filename));
 }
 

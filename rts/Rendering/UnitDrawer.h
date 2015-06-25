@@ -104,7 +104,7 @@ public:
 	static unsigned int CalcUnitShadowLOD(const CUnit* unit, unsigned int lastLOD);
 	static void SetUnitLODCount(CUnit* unit, unsigned int count);
 
-	const std::set<CUnit*>& GetUnsortedUnits() const { return unsortedUnits; }
+	const std::vector<CUnit*>& GetUnsortedUnits() const { return unsortedUnits; }
 	IWorldObjectModelRenderer* GetOpaqueModelRenderer(int modelType) { return opaqueModelRenderers[modelType]; }
 	IWorldObjectModelRenderer* GetCloakedModelRenderer(int modelType) { return cloakedModelRenderers[modelType]; }
 
@@ -217,17 +217,17 @@ private:
 	 * units being rendered (note that this is a completely
 	 * unsorted set of 3DO, S3O, opaque, and cloaked models!)
 	 */
-	std::set<CUnit*> unsortedUnits;
+	std::vector<CUnit*> unsortedUnits;
 
 	/// buildings that were in LOS_PREVLOS when they died and not in LOS since
-	std::vector<std::set<GhostSolidObject*> > deadGhostBuildings;
+	std::vector<std::vector<GhostSolidObject*> > deadGhostBuildings;
 	/// buildings that left LOS but are still alive
-	std::vector<std::set<CUnit*> > liveGhostBuildings;
+	std::vector<std::vector<CUnit*> > liveGhostBuildings;
 
-	std::set<CUnit*> drawIcon;
+	std::vector<CUnit*> drawIcon;
 
-	std::vector<std::set<CUnit*> > unitRadarIcons;
-	std::map<icon::CIconData*, std::set<const CUnit*> > unitsByIcon;
+	std::vector<std::vector<CUnit*> > unitRadarIcons;
+	std::map<icon::CIconData*, std::vector<const CUnit*> > unitsByIcon;
 
 	IUnitDrawerState* unitDrawerStateSSP; // default shader-driven rendering path
 	IUnitDrawerState* unitDrawerStateFFP; // fallback shader-less rendering path

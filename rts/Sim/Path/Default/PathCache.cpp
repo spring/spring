@@ -7,7 +7,7 @@
 #include "System/Log/ILog.h"
 
 #define MAX_CACHE_QUEUE_SIZE   200
-#define MAX_PATH_LIFETIME_SECS   7
+#define MAX_PATH_LIFETIME_SECS   6
 #define USE_NONCOLLIDABLE_HASH   1
 
 CPathCache::CPathCache(int blocksX, int blocksZ)
@@ -60,9 +60,11 @@ bool CPathCache::AddPath(
 
 	cachedPaths[hash] = ci;
 
+	const int lifeTime = (result == IPath::Ok) ? GAME_SPEED * MAX_PATH_LIFETIME_SECS : GAME_SPEED * (MAX_PATH_LIFETIME_SECS / 2);
+
 	CacheQue cq;
 	cq.hash = hash;
-	cq.timeout = gs->frameNum + GAME_SPEED * MAX_PATH_LIFETIME_SECS;
+	cq.timeout = gs->frameNum + lifeTime;
 
 	cacheQue.push_back(cq);
 	maxCacheSize = std::max<boost::uint64_t>(maxCacheSize, cacheQue.size());

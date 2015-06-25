@@ -1492,11 +1492,13 @@ BuildOrderStatus AAIExecute::BuildStationaryDefenceVS(UnitCategory category, AAI
 		checkGround = false;
 	}
 
-	double urgency = 0.25f + 10.0f / ((double)dest->my_buildings[STATIONARY_DEF] + dest->GetMyDefencePowerAgainstAssaultCategory(ai->Getbt()->GetIDOfAssaultCategory(category)) + 1.0);
-	double power = 0.5 + (double)dest->my_buildings[STATIONARY_DEF];
-	double eff = 0.2 + 2.5 / (urgency + 1.0);
-	double range = 0.2 + 0.6 / (urgency + 1.0);
-	double cost = 0.5 + ai->Getbrain()->Affordable()/5.0;
+	float dynDef  = dest->GetMyDefencePowerAgainstAssaultCategory(ai->Getbt()->GetIDOfAssaultCategory(category));
+	float baseDef = dest->my_buildings[STATIONARY_DEF];
+	float urgency = 0.25f + 10.0f / (std::max(0.0f, dynDef + baseDef) + 1.0);
+	float power = 0.5 + baseDef;
+	float eff = 0.2 + 2.5 / (urgency + 1.0);
+	float range = 0.2 + 0.6 / (urgency + 1.0);
+	float cost = 0.5 + ai->Getbrain()->Affordable()/5.0;
 
 	if(dest->my_buildings[STATIONARY_DEF] > 3)
 	{
@@ -1782,7 +1784,7 @@ bool AAIExecute::BuildFactory()
 
 	if(building)
 	{
-		bool water;
+		bool water = false;
 
 		// land
 		if(ai->Getbt()->CanPlacedLand(building))
@@ -2758,15 +2760,16 @@ void AAIExecute::CheckConstruction()
 	// get category with highest urgency
 	if(ai->Getbrain()->enemy_pressure_estimation > 0.01f)
 	{
-		double current_urgency;
+//		double current_urgency;
 
 		for(int i = 1; i <= METAL_MAKER; ++i)
 		{
+/*
 			current_urgency = urgency[i];
 
 			if(i != STATIONARY_DEF && i != POWER_PLANT && i != EXTRACTOR && i != STATIONARY_CONSTRUCTOR)
 				current_urgency *= (1.1f - ai->Getbrain()->enemy_pressure_estimation);
-
+*/
 			if(urgency[i] > highest_urgency)
 			{
 				highest_urgency = urgency[i];

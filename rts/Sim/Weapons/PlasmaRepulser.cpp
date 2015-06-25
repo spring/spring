@@ -67,7 +67,7 @@ void CPlasmaRepulser::Init()
 }
 
 
-bool CPlasmaRepulser::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const
+bool CPlasmaRepulser::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const
 {
 	return true;
 }
@@ -89,14 +89,14 @@ void CPlasmaRepulser::Update()
 	if (hitFrames > 0)
 		hitFrames--;
 
-	weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+	UpdateWeaponVectors();
 
 	if (!isEnabled) {
 		return;
 	}
 
 	for (std::map<int, CWeaponProjectile*>::iterator pi = incomingProjectiles.begin(); pi != incomingProjectiles.end(); ++pi) {
-		assert(projectileHandler->GetMapPairBySyncedID(pi->first)); // valid projectile id?
+		assert(projectileHandler->GetProjectileBySyncedID(pi->first)); // valid projectile id?
 
 		CWeaponProjectile* pro = pi->second;
 		const WeaponDef* proWD = pro->GetWeaponDef();
@@ -123,7 +123,7 @@ void CPlasmaRepulser::Update()
 			continue;
 		}
 
-		if (teamHandler->Team(owner->team)->energy < weaponDef->shieldEnergyUse) {
+		if (teamHandler->Team(owner->team)->res.energy < weaponDef->shieldEnergyUse) {
 			// team does not have enough energy, don't touch the projectile
 			continue;
 		}
@@ -132,7 +132,7 @@ void CPlasmaRepulser::Update()
 
 		if (weaponDef->shieldRepulser) {
 			// bounce the projectile
-			const int type = pro->ShieldRepulse(this, weaponPos,
+			const int type = pro->ShieldRepulse(this, weaponMuzzlePos,
 				weaponDef->shieldForce,
 				weaponDef->shieldMaxSpeed);
 
@@ -180,7 +180,7 @@ void CPlasmaRepulser::Update()
 					curPower -= shieldDamage;
 				}
 
-				pro->Collision(owner);
+				pro->Collision();
 
 				if (defHitFrames > 0) {
 					hitFrames = defHitFrames;
@@ -194,8 +194,8 @@ void CPlasmaRepulser::Update()
 
 void CPlasmaRepulser::SlowUpdate()
 {
-	relWeaponPos = owner->script->GetPiecePos(owner->script->QueryWeapon(weaponNum));
-	weaponPos = owner->GetObjectSpacePos(relWeaponPos);
+	UpdateWeaponPieces();
+	UpdateWeaponVectors();
 	owner->script->AimShieldWeapon(this);
 }
 
@@ -208,7 +208,7 @@ void CPlasmaRepulser::NewProjectile(CWeaponProjectile* p)
 	// due to isShield being a separate tag (in 91.0)
 	assert(weaponDef->isShield);
 
-	if (weaponDef->smartShield && p->owner() && teamHandler->AlliedTeams(p->owner()->team, owner->team)) {
+	if (weaponDef->smartShield && teamHandler->IsValidAllyTeam(p->GetAllyteamID()) && teamHandler->Ally(p->GetAllyteamID(), owner->allyteam)) {
 		return;
 	}
 
@@ -257,7 +257,7 @@ float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float
 		return -1.0f;
 	}
 
-	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(emitter->weaponDef, start, weaponPos);
+	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(emitter->weaponDef, start, weaponMuzzlePos);
 
 	if (damageArray[weaponDef->shieldArmorType] > curPower) {
 		return -1.0f;
@@ -266,7 +266,7 @@ float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float
 		return -1.0f;
 	}
 
-	const float3 dif = weaponPos - start;
+	const float3 dif = weaponMuzzlePos - start;
 
 	if (weaponDef->exteriorShield && dif.SqLength() < sqRadius) {
 		return -1.0f;
@@ -284,7 +284,7 @@ float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float
 	if ((tmp > 0.0f) && (length > (closeLength - math::sqrt(tmp)))) {
 		const float colLength = closeLength - math::sqrt(tmp);
 		const float3 colPoint = start + dir * colLength;
-		const float3 normal = (colPoint - weaponPos).Normalize();
+		const float3 normal = (colPoint - weaponMuzzlePos).Normalize();
 		newDir = dir - normal * normal.dot(dir) * 2;
 		return colLength;
 	}
@@ -301,7 +301,7 @@ void CPlasmaRepulser::DependentDied(CObject* o)
 
 bool CPlasmaRepulser::BeamIntercepted(CWeapon* emitter, float3 start, float damageMultiplier)
 {
-	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(emitter->weaponDef, start, weaponPos);
+	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(emitter->weaponDef, start, weaponMuzzlePos);
 
 	if (weaponDef->shieldPower > 0) {
 		curPower -= damageArray[weaponDef->shieldArmorType] * damageMultiplier;

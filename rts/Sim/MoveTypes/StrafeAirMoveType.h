@@ -31,7 +31,6 @@ public:
 	void UpdateManeuver();
 	void UpdateAttack();
 	bool UpdateFlying(float wantedHeight, float engine);
-	void UpdateLanded();
 	void UpdateLanding();
 	void UpdateAirPhysics(
 		float rudder,
@@ -77,6 +76,7 @@ public:
 	float maxAileron;
 	float maxElevator;
 	float maxRudder;
+	float attackSafetyDistance;
 
 	/// used while landing
 	float crashAileron;

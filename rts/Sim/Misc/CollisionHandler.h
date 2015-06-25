@@ -20,34 +20,31 @@ enum {
 
 struct CollisionQuery {
 public:
-	CollisionQuery(                        ): lmp(NULL) { Reset(NULL); }
-	CollisionQuery(const CollisionQuery& cq): lmp(NULL) { Reset( &cq); }
+	CollisionQuery()
+	: b0(CQ_POINT_NO_INT)
+	, b1(CQ_POINT_NO_INT)
+	, t0(0.0f)
+	, t1(0.0f)
+	, p0(ZeroVector)
+	, p1(ZeroVector)
+	, lmp(nullptr)
+	{ }
 
-	void Reset(const CollisionQuery* cq = NULL) {
-		// (0, 0, 0) is volume-space center, so impossible
-		// to obtain as actual points except in the special
-		// cases (which all calling code should check for!)
-		// when continuous hit-detection is enabled
-		if (cq == NULL) {
-			b0 = CQ_POINT_NO_INT; t0 = 0.0f; p0 = ZeroVector;
-			b1 = CQ_POINT_NO_INT; t1 = 0.0f; p1 = ZeroVector;
-		} else {
-			b0 = cq->b0; t0 = cq->t0; p0 = cq->p0;
-			b1 = cq->b1; t1 = cq->t1; p1 = cq->p1;
-
-			lmp = cq->lmp;
-		}
+	void Reset(const CollisionQuery* cq = nullptr) {
+		*this = (cq != nullptr) ? *cq : CollisionQuery();
 	}
 
 	bool InsideHit() const { return (b0 == CQ_POINT_IN_VOL); }
 	bool IngressHit() const { return (b0 == CQ_POINT_ON_RAY); }
 	bool EgressHit() const { return (b1 == CQ_POINT_ON_RAY); }
+	bool AnyHit() const { return (b0 != CQ_POINT_NO_INT) || (b1 != CQ_POINT_NO_INT); }
 
 	const float3& GetIngressPos() const { return p0; }
 	const float3& GetEgressPos() const { return p1; }
 	const float3& GetHitPos() const {
-		if (IngressHit()) return (GetIngressPos());
-		if (EgressHit()) return (GetEgressPos());
+		if (IngressHit()) return GetIngressPos();
+		if (EgressHit()) return GetEgressPos();
+		if (InsideHit()) return p0;
 		return ZeroVector;
 	}
 

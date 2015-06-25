@@ -13,10 +13,12 @@ class CFireBallProjectile : public CWeaponProjectile
 public:
 	CFireBallProjectile(const ProjectileParams& params);
 
-	void Draw();
-	void Update();
+	void Draw() override;
+	void Update() override;
 
-	void Collision();
+	virtual int GetProjectilesCount() const override;
+
+	void Collision() override;
 
 	struct Spark {
 		CR_DECLARE_STRUCT(Spark)

@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "DebugColVolDrawer.h"
+#include <unordered_set>
 
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
@@ -13,8 +14,9 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/QuadField.h"
+#include "Sim/Weapons/Weapon.h"
 
-static const float3 DEFAULT_VOLUME_COLOR = float3(0.45f, 0.0f, 0.45f);
+static const float4 DEFAULT_VOLUME_COLOR = float4(0.45f, 0.0f, 0.45f, 0.35f);
 static unsigned int volumeDisplayListIDs[3] = {0, 0, 0};
 
 static inline void DrawCollisionVolume(const CollisionVolume* vol)
@@ -78,7 +80,7 @@ static inline void DrawObjectMidAndAimPos(const CSolidObject* o)
 		// draw the aim-point
 		glPushMatrix();
 		glTranslatef3(o->relAimPos * WORLD_TO_OBJECT_SPACE);
-		glColor3f(1.0f, 0.0f, 0.0f);
+		glColor4f(1.0f, 0.0f, 0.0f, 0.35f);
 		gluQuadricDrawStyle(q, GLU_FILL);
 		gluSphere(q, 2.0f, 5, 5);
 		glPopMatrix();
@@ -87,10 +89,10 @@ static inline void DrawObjectMidAndAimPos(const CSolidObject* o)
 	{
 		// draw the mid-point, keep this transform on the stack
 		glTranslatef3(o->relMidPos * WORLD_TO_OBJECT_SPACE);
-		glColor3f(1.0f, 0.0f, 1.0f);
+		glColor4f(1.0f, 0.0f, 1.0f, 0.35f);
 		gluQuadricDrawStyle(q, GLU_FILL);
 		gluSphere(q, 2.0f, 5, 5);
-		glColorf3(DEFAULT_VOLUME_COLOR);
+		glColorf4(DEFAULT_VOLUME_COLOR);
 	}
 
 	glEnable(GL_DEPTH_TEST);
@@ -119,7 +121,7 @@ static inline void DrawFeatureColVol(const CFeature* f)
 
 		if (vCustomType || vCustomDims) {
 			// assume this is a custom volume
-			glColor3f(0.5f, 0.5f, 0.5f);
+			glColor4f(0.5f, 0.5f, 0.5f, 0.35f);
 			glScalef(f->radius, f->radius, f->radius);
 			glWireSphere(&volumeDisplayListIDs[0], 20, 20);
 		}
@@ -176,7 +178,7 @@ static void DrawUnitDebugPieces(const CUnit* u)
 		glPopMatrix();
 
 		if ((lmp == lap) && lmpHit) {
-			glColorf3(DEFAULT_VOLUME_COLOR);
+			glColorf4(DEFAULT_VOLUME_COLOR);
 		}
 	}
 }
@@ -192,6 +194,39 @@ static inline void DrawUnitColVol(const CUnit* u)
 	const bool vCustomType = (v->GetVolumeType() < CollisionVolume::COLVOL_TYPE_SPHERE);
 	const bool vCustomDims = ((v->GetOffsets()).SqLength() >= 1.0f || math::fabs(v->GetBoundingRadius() - u->radius) >= 1.0f);
 
+	GLUquadricObj* q = gluNewQuadric();
+	gluQuadricDrawStyle(q, GLU_FILL);
+	glDisable(GL_DEPTH_TEST);
+	for (const CWeapon* w: u->weapons) {
+		glPushMatrix();
+		glTranslatef3(w->aimFromPos);
+		glColor4f(1.0f, 1.0f, 0.0f, 0.4f);
+		gluSphere(q, 1.0f, 5, 5);
+		glPopMatrix();
+
+		glPushMatrix();
+		glTranslatef3(w->weaponMuzzlePos);
+		if (w->HaveTarget()) {
+			glColor4f(1.0f, 0.8f, 0.0f, 0.4f);
+		} else {
+			glColor4f(1.0f, 0.0f, 0.0f, 0.4f);
+		}
+		gluSphere(q, 1.0f, 5, 5);
+		glPopMatrix();
+
+		if (w->HaveTarget()) {
+			glPushMatrix();
+			glTranslatef3(w->GetCurrentTargetPos());
+			glColor4f(1.0f, 0.8f, 0.0f, 0.4f);
+			gluSphere(q, 1.0f, 5, 5);
+			glPopMatrix();
+		}
+	}
+	glColorf4(DEFAULT_VOLUME_COLOR);
+	glEnable(GL_DEPTH_TEST);
+	gluDeleteQuadric(q);
+
+
 	glPushMatrix();
 		glMultMatrixf(u->GetTransformMatrix());
 		DrawObjectMidAndAimPos(u);
@@ -203,6 +238,7 @@ static inline void DrawUnitColVol(const CUnit* u)
 			// --> undo it
 			glTranslatef3(-u->relMidPos * WORLD_TO_OBJECT_SPACE);
 			DrawUnitDebugPieces(u);
+			glTranslatef3(u->relMidPos * WORLD_TO_OBJECT_SPACE);
 		} else {
 			if (!v->IgnoreHits()) {
 				// make it fade red under attack
@@ -213,14 +249,14 @@ static inline void DrawUnitColVol(const CUnit* u)
 				DrawCollisionVolume(v);
 
 				if (u->lastAttackFrame > 0 && ((gs->frameNum - u->lastAttackFrame) < 150)) {
-					glColorf3(DEFAULT_VOLUME_COLOR);
+					glColorf4(DEFAULT_VOLUME_COLOR);
 				}
 			}
 		}
 
 		if (vCustomType || vCustomDims) {
 			// assume this is a custom volume
-			glColor3f(0.5f, 0.5f, 0.5f);
+			glColor4f(0.5f, 0.5f, 0.5f, 0.35f);
 			glScalef(u->radius, u->radius, u->radius);
 			glWireSphere(&volumeDisplayListIDs[0], 20, 20);
 		}
@@ -231,20 +267,29 @@ static inline void DrawUnitColVol(const CUnit* u)
 
 class CDebugColVolQuadDrawer : public CReadMap::IQuadDrawer {
 public:
+	void ResetState() { alreadyDrawnIds.clear(); }
 	void DrawQuad(int x, int y)
 	{
 		const CQuadField::Quad& q = quadField->GetQuadAt(x, y);
 
-		for (std::list<CFeature*>::const_iterator fi = q.features.begin(); fi != q.features.end(); ++fi) {
-			DrawFeatureColVol(*fi);
+		for (const CFeature* f: q.features) {
+			if (alreadyDrawnIds.find(MAX_UNITS + f->id) == alreadyDrawnIds.end()) {
+				alreadyDrawnIds.insert(MAX_UNITS + f->id);
+				DrawFeatureColVol(f);
+			}
 		}
 
-		for (std::list<CUnit*>::const_iterator ui = q.units.begin(); ui != q.units.end(); ++ui) {
-			DrawUnitColVol(*ui);
+		for (const CUnit* u: q.units) {
+			if (alreadyDrawnIds.find(u->id) == alreadyDrawnIds.end()) {
+				alreadyDrawnIds.insert(u->id);
+				DrawUnitColVol(u);
+			}
 		}
 
 		// TODO show colvols of synced projectiles
 	}
+
+	std::unordered_set<int> alreadyDrawnIds;
 };
 
 
@@ -270,10 +315,15 @@ namespace DebugColVolDrawer
 			glDisable(GL_CLIP_PLANE0);
 			glDisable(GL_CLIP_PLANE1);
 
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 			glLineWidth(2.0f);
 			glDepthMask(GL_TRUE);
 
 			static CDebugColVolQuadDrawer drawer;
+
+			drawer.ResetState();
 			readMap->GridVisibility(camera, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 1e9, &drawer);
 
 			glLineWidth(1.0f);

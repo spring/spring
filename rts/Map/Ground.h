@@ -12,6 +12,7 @@ class CGround
 public:
 	/// similar to GetHeightReal, but uses nearest filtering instead of interpolating the heightmap
 	static float GetApproximateHeight(float x, float z, bool synced = true);
+	static float GetApproximateHeightUnsafe(int x, int z, bool synced = true);
 	/// Returns the height at the specified position, cropped to a non-negative value
 	static float GetHeightAboveWater(float x, float z, bool synced = true);
 	/// Returns the real height at the specified position, can be below 0
@@ -37,11 +38,7 @@ public:
 	static float LineGroundCol(float3 from, float3 to, bool synced = true);
 	static float TrajectoryGroundCol(float3 from, const float3& flatdir, float length, float linear, float quadratic);
 
-	static inline int GetSquare(const float3& pos) {
-		return
-			std::max(0, std::min(gs->mapxm1, (int(pos.x) / SQUARE_SIZE))) +
-			std::max(0, std::min(gs->mapym1, (int(pos.z) / SQUARE_SIZE))) * gs->mapx;
-	};
+	static int GetSquare(const float3& pos);
 };
 
 #endif // GROUND_H

@@ -4,6 +4,7 @@
 # Then Sound/ stuff was removed, because it is now a separate static lib.
 MakeGlobalVar(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/AIScriptHandler.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Color.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigLocater.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigSource.cpp"
@@ -33,6 +34,7 @@ MakeGlobalVar(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/Object.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/OffscreenGLContext.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Option.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Battery.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Clipboard.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/CmdLineParams.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/CpuID.cpp"
@@ -70,8 +72,6 @@ MakeGlobalVar(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/float4.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/myMath.cpp"
 	)
-
-
 MakeGlobalVar(sources_engine_System_creg
 		"${CMAKE_CURRENT_SOURCE_DIR}/creg/Serializer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/creg/VarTypes.cpp"
@@ -116,16 +116,16 @@ MakeGlobalVar(sources_engine_System_Log_sinkOutputDebugString
 MakeGlobalVar(sources_engine_System_Platform_Linux
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/CrashHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/SoLib.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/thread_backtrace.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/MessageBox.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/WindowManagerHelper.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/ThreadSupport.cpp"
 	)
 MakeGlobalVar(sources_engine_System_Platform_Mac
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/SoLib.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Mac/MessageBox.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Mac/CrashHandler.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/thread_backtrace.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Mac/WindowManagerHelper.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/ThreadSupport.cpp"
 	)
 MakeGlobalVar(sources_engine_System_Platform_Windows
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/CrashHandler.cpp"
@@ -134,6 +134,13 @@ MakeGlobalVar(sources_engine_System_Platform_Windows
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/seh.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/WinVersion.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/WindowManagerHelper.cpp"
+	)
+
+MakeGlobalVar(sources_engine_System_Threading_Linux
+		"${CMAKE_CURRENT_SOURCE_DIR}/Threading/Futex.cpp"
+	)
+MakeGlobalVar(sources_engine_System_Threading_Windows
+		"${CMAKE_CURRENT_SOURCE_DIR}/Threading/CriticalSection.cpp"
 	)
 
 ### only use the target platform related directory
@@ -156,7 +163,9 @@ ELSEIF (UNIX)
 			${sources_engine_System_Log_sinkConsole}
 			${sources_engine_System_Log_sinkFile}
 			${sources_engine_System_Platform_Linux}
+			${sources_engine_System_Threading_Linux}
 		)
+	MakeGlobalVar(sources_engine_System_Threading ${sources_engine_System_Threading_Linux})
 ELSEIF (WIN32)
 	MakeGlobalVar(sources_engine_System
 			${sources_engine_System_common}
@@ -167,7 +176,9 @@ ELSEIF (WIN32)
 			${sources_engine_System_Log_sinkFile}
 			${sources_engine_System_Log_sinkOutputDebugString}
 			${sources_engine_System_Platform_Windows}
+			${sources_engine_System_Threading_Windows}
 		)
+	MakeGlobalVar(sources_engine_System_Threading ${sources_engine_System_Threading_Windows})
 ELSE   ()
 	MakeGlobalVar(sources_engine_System
 			${sources_engine_System_common}

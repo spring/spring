@@ -11,11 +11,11 @@ class CMissileLauncher: public CWeapon
 public:
 	CMissileLauncher(CUnit* owner, const WeaponDef* def);
 
-	void Update();
+	void UpdateWantedDir() override final;
 
 private:
-	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const;
-	void FireImpl(bool scriptCall);
+	bool HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const override final;
+	void FireImpl(const bool scriptCall) override final;
 };
 
 

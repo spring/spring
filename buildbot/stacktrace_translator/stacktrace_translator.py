@@ -313,7 +313,7 @@ def translate_module_addresses(module, debugarchive, addresses, debugfile):
 			if psu in file:
 				file = file[file.index(psu)+len(psu):]
 				break
-		return module, addr, file, int(line)
+		return module, addr, file, line
 
 	return [fixup(addr, *line.split(':')) for addr, line in zip(addresses, stdout.splitlines())]
 

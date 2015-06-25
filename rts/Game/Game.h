@@ -11,17 +11,13 @@
 #include "System/creg/creg_cond.h"
 #include "System/Misc/SpringTime.h"
 
-class IWater;
+class JobDispatcher;
 class CConsoleHistory;
 class CInfoConsole;
 class LuaParser;
-class LuaInputReceiver;
 class ILoadSaveHandler;
 class Action;
-class ISyncedActionExecutor;
-class IUnsyncedActionExecutor;
 class ChatMessage;
-class SkirmishAIData;
 class CWorldDrawer;
 
 
@@ -33,6 +29,7 @@ private:
 public:
 	CGame(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
 	virtual ~CGame();
+	void KillLua();
 
 public:
 	enum GameDrawMode {
@@ -56,6 +53,8 @@ public:
 	void GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool timeout = false);
 
 private:
+	void AddTimedJobs();
+
 	void LoadMap(const std::string& mapName);
 	void LoadDefs();
 	void PreLoadSimulation();
@@ -64,9 +63,14 @@ private:
 	void PostLoadRendering();
 	void LoadInterface();
 	void LoadLua();
-	void InitSkirmishAIs();
+	void LoadSkirmishAIs();
 	void LoadFinalize();
 	void PostLoad();
+
+	void KillMisc();
+	void KillRendering();
+	void KillInterface();
+	void KillSimulation();
 
 public:
 	volatile bool IsFinishedLoading() const { return finishedLoading; }
@@ -104,9 +108,6 @@ public:
 
 private:
 	bool Draw();
-	bool DrawMT();
-
-	static void DrawMTcb(void* c) { static_cast<CGame*>(c)->DrawMT(); }
 	bool UpdateUnsynced(const spring_time currentTime);
 
 	void DrawSkip(bool blackscreen = true);
@@ -172,7 +173,6 @@ public:
 	bool showFPS;
 	bool showClock;
 	bool showSpeed;
-	int showMTInfo;
 
 	float inputTextPosX;
 	float inputTextPosY;
@@ -214,6 +214,8 @@ public:
 	CConsoleHistory* consoleHistory;
 
 private:
+	JobDispatcher* jobDispatcher;
+
 	CWorldDrawer* worldDrawer;
 
 	LuaParser* defsParser;

@@ -16,11 +16,10 @@ class IWorldObjectModelRenderer;
 class CFeatureDrawer: public CEventClient
 {
 	CR_DECLARE_STRUCT(CFeatureDrawer)
-	CR_DECLARE_SUB(DrawQuad)
 
-typedef std::map<CFeature*, float> FeatureSet;
-typedef std::map<int, FeatureSet> FeatureRenderBin;
-typedef std::map<int, FeatureSet>::iterator FeatureRenderBinIt;
+	typedef std::map<CFeature*, float> FeatureSet;
+	typedef std::map<int, FeatureSet> FeatureRenderBin;
+	typedef std::map<int, FeatureSet>::iterator FeatureRenderBinIt;
 
 public:
 	CFeatureDrawer();
@@ -57,11 +56,11 @@ private:
 
 	void PostLoad();
 
-	std::set<CFeature*> unsortedFeatures;
+private:
+	std::vector<CFeature*> unsortedFeatures;
 
 	struct DrawQuad {
-		CR_DECLARE_STRUCT(DrawQuad)
-		std::set<CFeature*> features;
+		std::vector<CFeature*> features;
 	};
 
 	std::vector<DrawQuad> drawQuads;

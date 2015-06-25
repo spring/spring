@@ -38,8 +38,8 @@ public:
 
 
 	// returns a speed-multiplier for given position or data
-	static float GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare);
-	static float GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare, const float3& moveDir);
+	static float GetPosSpeedMod(const MoveDef& moveDef, unsigned xSquare, unsigned zSquare);
+	static float GetPosSpeedMod(const MoveDef& moveDef, unsigned xSquare, unsigned zSquare, float3 moveDir);
 	static float GetPosSpeedMod(const MoveDef& moveDef, const float3& pos)
 	{
 		return (GetPosSpeedMod(moveDef, pos.x / SQUARE_SIZE, pos.z / SQUARE_SIZE));
@@ -54,8 +54,6 @@ public:
 	static inline BlockType IsBlocked(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider);
 	static BlockType IsBlockedNoSpeedModCheck(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider);
 	static inline BlockType IsBlockedStructure(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider);
-	static bool IsBlockedStructureXmax(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider);
-	static bool IsBlockedStructureZmax(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider);
 
 	// checks whether an object (collidee) is non-crushable by the given MoveDef
 	static bool CrushResistant(const MoveDef& colliderMD, const CSolidObject* collidee);

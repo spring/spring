@@ -40,7 +40,7 @@ public:
 
 	virtual CSoundSource* GetNextBestSource(bool lock = true);
 
-	virtual void UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime);
+	virtual void UpdateListener(const float3& campos, const float3& camdir, const float3& camup);
 	virtual void NewFrame();
 
 	/// @see ConfigHandler::ConfigNotifyCallback
@@ -53,10 +53,10 @@ public:
 	virtual void Iconified(bool state);
 
 	virtual void PrintDebugInfo();
-	virtual bool LoadSoundDefsImpl(const std::string& fileName);
-	const float3& GetListenerPos() const {
-		return myPos;
-	}
+
+	bool CanLoadSoundDefs() const { return canLoadDefs; }
+	bool LoadSoundDefsImpl(const std::string& fileName);
+	const float3& GetListenerPos() const { return myPos; }
 
 private:
 	typedef std::map<std::string, std::string> soundItemDef;
@@ -66,6 +66,7 @@ private:
 	void StartThread(int maxSounds);
 	void Update();
 	int GetMaxMonoSources(ALCdevice* device, int maxSounds);
+	void UpdateListenerReal();
 
 	size_t MakeItemFromDef(const soundItemDef& itemDef);
 
@@ -73,7 +74,9 @@ private:
 
 private:
 	float masterVolume;
+
 	bool mute;
+
 	/// we do not play if minimized / iconified
 	bool appIsIconified;
 	bool pitchAdjust;
@@ -85,7 +88,10 @@ private:
 
 	/// unscaled
 	float3 myPos;
+	float3 camDir;
+	float3 camUp;
 	float3 prevVelocity;
+	bool listenerNeedsUpdate;
 
 	typedef boost::ptr_vector<CSoundSource> sourceVecT;
 	sourceVecT sources;
@@ -96,6 +102,7 @@ private:
 	boost::thread* soundThread;
 
 	volatile bool soundThreadQuit;
+	volatile bool canLoadDefs;
 };
 
 #endif // _SOUND_H_

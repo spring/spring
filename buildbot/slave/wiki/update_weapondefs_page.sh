@@ -2,7 +2,7 @@
 
 #########################
 # Config
-SPRING="spring"
+SPRING="spring-headless"
 PAGE="User:jk/WeaponDefs"
 SECTIONNAME="List"
 

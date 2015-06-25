@@ -40,7 +40,7 @@ void CWreckProjectile::Update()
 
 	pos += speed;
 
-	if (!(gs->frameNum & (projectileHandler->particleSaturation < 0.5f? 1: 3))) {
+	if (!(gs->frameNum & (projectileHandler->GetParticleSaturation() < 0.5f? 1: 3))) {
 		CSmokeProjectile* hp = new CSmokeProjectile(owner(), pos, ZeroVector, 50, 4, 0.3f, 0.5f);
 		hp->size += 0.1f;
 	}
@@ -59,14 +59,19 @@ void CWreckProjectile::Draw()
 	col[3] = 200;
 
 	#define wt projectileDrawer->wrecktex
-	va->AddVertexTC(drawPos - camera->right * drawRadius - camera->up * drawRadius, wt->xstart, wt->ystart, col);
-	va->AddVertexTC(drawPos + camera->right * drawRadius - camera->up * drawRadius, wt->xend,   wt->ystart, col);
-	va->AddVertexTC(drawPos + camera->right * drawRadius + camera->up * drawRadius, wt->xend,   wt->yend,   col);
-	va->AddVertexTC(drawPos - camera->right * drawRadius + camera->up * drawRadius, wt->xstart, wt->yend,   col);
+	va->AddVertexTC(drawPos - camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, wt->xstart, wt->ystart, col);
+	va->AddVertexTC(drawPos + camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, wt->xend,   wt->ystart, col);
+	va->AddVertexTC(drawPos + camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, wt->xend,   wt->yend,   col);
+	va->AddVertexTC(drawPos - camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, wt->xstart, wt->yend,   col);
 	#undef wt
 }
 
 void CWreckProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 {
 	points.AddVertexQC(pos, color4::redA);
+}
+
+int CWreckProjectile::GetProjectilesCount() const
+{
+	return 1;
 }

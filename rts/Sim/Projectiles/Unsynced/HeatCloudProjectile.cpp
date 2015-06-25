@@ -101,8 +101,13 @@ void CHeatCloudProjectile::Draw()
 
 	const float drawsize = (size + sizeGrowth * globalRendering->timeOffset) * (1.0f - sizemod);
 
-	va->AddVertexTC(drawPos - camera->right * drawsize - camera->up * drawsize, texture->xstart, texture->ystart, col);
-	va->AddVertexTC(drawPos + camera->right * drawsize - camera->up * drawsize, texture->xend,   texture->ystart, col);
-	va->AddVertexTC(drawPos + camera->right * drawsize + camera->up * drawsize, texture->xend,   texture->yend,   col);
-	va->AddVertexTC(drawPos - camera->right * drawsize + camera->up * drawsize, texture->xstart, texture->yend,   col);
+	va->AddVertexTC(drawPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, texture->xstart, texture->ystart, col);
+	va->AddVertexTC(drawPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, texture->xend,   texture->ystart, col);
+	va->AddVertexTC(drawPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, texture->xend,   texture->yend,   col);
+	va->AddVertexTC(drawPos - camera->GetRight() * drawsize + camera->GetUp() * drawsize, texture->xstart, texture->yend,   col);
+}
+
+int CHeatCloudProjectile::GetProjectilesCount() const
+{
+	return 1;
 }

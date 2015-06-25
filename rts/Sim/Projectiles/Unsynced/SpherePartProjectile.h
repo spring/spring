@@ -21,8 +21,10 @@ public:
 		const float3& color
 	);
 
-	void Draw();
-	void Update();
+	void Draw() override;
+	void Update() override;
+
+	virtual int GetProjectilesCount() const override;
 
 	static void CreateSphere(
 		const CUnit* owner,
@@ -59,7 +61,9 @@ class CSpherePartSpawner : CProjectile
 public:
 	CSpherePartSpawner();
 
-	void Init(const CUnit* owner, const float3& offset);
+	void Init(const CUnit* owner, const float3& offset) override;
+
+	virtual int GetProjectilesCount() const override;
 
 private:
 	float alpha;

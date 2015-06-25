@@ -266,7 +266,6 @@ void CLogOutput::Initialize()
 void CLogOutput::LogSystemInfo()
 {
 	LOG("Spring %s", SpringVersion::GetFull().c_str());
-	LOG("Build Date & Time: %s", SpringVersion::GetBuildTime().c_str());
 	LOG("Build Environment: %s", SpringVersion::GetBuildEnvironment().c_str());
 	LOG("Compiler Version:  %s", SpringVersion::GetCompiler().c_str());
 	LOG("Operating System:  %s", Platform::GetOS().c_str());

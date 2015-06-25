@@ -23,6 +23,7 @@ SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 LIST(APPEND engineDedicatedLibraries ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY})
 LIST(APPEND engineDedicatedLibraries lua archives 7zip ${SPRING_MINIZIP_LIBRARY} ${ZLIB_LIBRARY})
 LIST(APPEND engineDedicatedLibraries headlessStubs engineSystemNet)
+LIST(APPEND engineDedicatedLibraries ${LIBUNWIND_LIBRARIES})
 
 IF (WIN32)
 	LIST(APPEND engineDedicatedLibraries ${WINMM_LIBRARY})
@@ -52,6 +53,9 @@ IF    (MINGW OR APPLE)
 	# due to some #define magic, which is practically impossible to workaround.
 	FIND_PACKAGE(SDL2 REQUIRED)
 	INCLUDE_DIRECTORIES(${SDL2_INCLUDE_DIR})
+	if("${SDL2_VERSION_STRING}" VERSION_LESS "2")
+		message(FATAL_ERROR "Found SDL v${SDL2_VERSION_STRING} while 2 is required!")
+	endif()
 ELSE  (MINGW OR APPLE)
 	# Use a direct copy of the GL and SDL headers,
 	# as these may not be available on headless systems.
@@ -71,8 +75,8 @@ IF	(UNIX)
 	SET(sources_engine_Platform_CrashHandler
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/CpuID.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading.cpp
-		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/thread_backtrace.cpp
-		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/CrashHandler.cpp)
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/CrashHandler.cpp
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/ThreadSupport.cpp)
 ELSEIF	(WIN32)
 	SET(sources_engine_Platform_CrashHandler
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Win/seh.cpp
@@ -86,6 +90,7 @@ ENDIF	()
 
 SET(system_files
 	${sources_engine_System_FileSystem}
+	${sources_engine_System_Threading}
 	${sources_engine_System_Log}
 	${sources_engine_Platform_CrashHandler}
 	${ENGINE_SRC_ROOT_DIR}/Net/AutohostInterface.cpp

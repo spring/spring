@@ -164,7 +164,7 @@ void CUnsyncedLuaHandle::RecvFromSynced(lua_State* srcState, int args)
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 2 + args, __FUNCTION__);
 
-	static const LuaHashString cmdStr("RecvFromSynced");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return; // the call is not defined
 
@@ -908,14 +908,16 @@ bool CSyncedLuaHandle::UnitPreDamaged(
 	if (!RunCallInTraceback(L, cmdStr, inArgCount, outArgCount, traceBack.GetErrFuncIdx(), false))
 		return false;
 
-	if (newDamage && lua_isnumber(L, -2)) {
+	assert(newDamage);
+	if (lua_isnumber(L, -2)) {
 		*newDamage = lua_tonumber(L, -2);
 	} else if (!lua_isnumber(L, -2) || lua_isnil(L, -2)) {
 		// first value is obligatory, so may not be nil
 		LOG_L(L_WARNING, "%s(): 1st return-value should be a number (newDamage)", (cmdStr.GetString()).c_str());
 	}
 
-	if (impulseMult && lua_isnumber(L, -1)) {
+	assert(impulseMult);
+	if (lua_isnumber(L, -1)) {
 		*impulseMult = lua_tonumber(L, -1);
 	} else if (!lua_isnumber(L, -1) && !lua_isnil(L, -1)) {
 		// second value is optional, so nils are OK
@@ -935,6 +937,9 @@ bool CSyncedLuaHandle::FeaturePreDamaged(
 	float* newDamage,
 	float* impulseMult)
 {
+	assert(newDamage != nullptr);
+	assert(impulseMult != nullptr);
+
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 2 + 9 + 2, __FUNCTION__);
 
@@ -968,14 +973,14 @@ bool CSyncedLuaHandle::FeaturePreDamaged(
 	if (!RunCallInTraceback(L, cmdStr, inArgCount, outArgCount, traceBack.GetErrFuncIdx(), false))
 		return false;
 
-	if (newDamage && lua_isnumber(L, -2)) {
+	if (lua_isnumber(L, -2)) {
 		*newDamage = lua_tonumber(L, -2);
 	} else if (!lua_isnumber(L, -2) || lua_isnil(L, -2)) {
 		// first value is obligatory, so may not be nil
 		LOG_L(L_WARNING, "%s(): 1st value returned should be a number (newDamage)", (cmdStr.GetString()).c_str());
 	}
 
-	if (impulseMult && lua_isnumber(L, -1)) {
+	if (lua_isnumber(L, -1)) {
 		*impulseMult = lua_tonumber(L, -1);
 	} else if (!lua_isnumber(L, -1) && !lua_isnil(L, -1)) {
 		// second value is optional, so nils are OK
@@ -1040,7 +1045,7 @@ int CSyncedLuaHandle::AllowWeaponTargetCheck(unsigned int attackerID, unsigned i
 	if (!RunCallInTraceback(L, cmdStr, 3, 1, traceBack.GetErrFuncIdx(), false))
 		return ret;
 
-	ret = int(luaL_optboolean(L, -1, false)); //FIXME int????
+	ret = lua_toint(L, -1);
 	lua_pop(L, 1);
 	return ret;
 }

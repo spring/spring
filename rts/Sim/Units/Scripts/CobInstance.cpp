@@ -246,10 +246,16 @@ void CCobInstance::RockUnit(const float3& rockDir)
 	Call(COBFN_RockUnit, args);
 }
 
-
+#if 0
 // ugly hack to get return value of HitByWeaponId script
+//
 static float weaponHitMod; ///< fraction of weapondamage to use when hit by weapon
 static void hitByWeaponIdCallback(int retCode, void* p1, void* p2) { weaponHitMod = retCode * 0.01f; }
+#else
+static void hitByWeaponIdCallback(int retCode, void* p1, void* p2) {
+	*(reinterpret_cast<float*>(p1)) = (retCode * 0.01f);
+}
+#endif
 
 
 void CCobInstance::HitByWeapon(const float3& hitDir, int weaponDefId, float& inout_damage)
@@ -262,12 +268,16 @@ void CCobInstance::HitByWeapon(const float3& hitDir, int weaponDefId, float& ino
 
 	if (HasFunction(COBFN_HitByWeaponId)) {
 		const WeaponDef* wd = weaponDefHandler->GetWeaponDefByID(weaponDefId);
-		args.push_back(wd ? wd->tdfId : -1);
+
+		args.push_back((wd != NULL)? wd->tdfId : -1);
 		args.push_back((int)(100 * inout_damage));
 
-		weaponHitMod = 1.0f;
-		Call(COBFN_HitByWeaponId, args, hitByWeaponIdCallback, NULL, NULL);
-		inout_damage *= weaponHitMod; // weaponHitMod gets set in callback function
+		float weaponHitMod = 1.0f;
+
+		// pass weaponHitMod as argument <p1> for callback
+		Call(COBFN_HitByWeaponId, args, hitByWeaponIdCallback, &weaponHitMod, NULL);
+
+		inout_damage *= weaponHitMod;
 	}
 	else {
 		Call(COBFN_HitByWeapon, args);
@@ -347,7 +357,7 @@ void CCobInstance::StartBuilding(float heading, float pitch)
 
 int CCobInstance::QueryNanoPiece()
 {
-	vector<int> args(1, 0);
+	vector<int> args(1, -1);
 	Call(COBFN_QueryNanoPiece, args);
 	return args[0];
 }
@@ -355,7 +365,7 @@ int CCobInstance::QueryNanoPiece()
 
 int CCobInstance::QueryBuildInfo()
 {
-	vector<int> args(1, 0);
+	vector<int> args(1, -1);
 	Call(COBFN_QueryBuildInfo, args);
 	return args[0];
 }
@@ -363,7 +373,7 @@ int CCobInstance::QueryBuildInfo()
 
 int CCobInstance::QueryWeapon(int weaponNum)
 {
-	vector<int> args(1, 0);
+	vector<int> args(1, -1);
 	Call(COBFN_QueryPrimary + COBFN_Weapon_Funcs * weaponNum, args);
 	return args[0];
 }
@@ -403,7 +413,7 @@ void CCobInstance::AimShieldWeapon(CPlasmaRepulser* weapon)
 
 int CCobInstance::AimFromWeapon(int weaponNum)
 {
-	vector<int> args(1, 0);
+	vector<int> args(1, -1);
 	Call(COBFN_AimFromPrimary + COBFN_Weapon_Funcs * weaponNum, args);
 	return args[0];
 }

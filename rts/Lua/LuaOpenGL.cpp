@@ -19,6 +19,7 @@
 #include "LuaContextData.h"
 #include "LuaHandle.h"
 #include "LuaHashString.h"
+#include "LuaIO.h"
 #include "LuaShaders.h"
 #include "LuaTextures.h"
 //FIXME#include "LuaVBOs.h"
@@ -66,13 +67,11 @@
 
 using std::max;
 using std::string;
-using std::vector;
-using std::set;
 
 #undef far // avoid collision with windef.h
 #undef near
 
-CONFIG(bool, LuaShaders).defaultValue(true).safemodeValue(false);
+CONFIG(bool, LuaShaders).defaultValue(true).headlessValue(false).safemodeValue(false);
 
 static const int MAX_TEXTURE_UNITS = 32;
 
@@ -82,15 +81,17 @@ static const int MAX_TEXTURE_UNITS = 32;
 void (*LuaOpenGL::resetMatrixFunc)(void) = NULL;
 
 unsigned int LuaOpenGL::resetStateList = 0;
-set<unsigned int> LuaOpenGL::occlusionQueries;
 
 LuaOpenGL::DrawMode LuaOpenGL::drawMode = LuaOpenGL::DRAW_NONE;
 LuaOpenGL::DrawMode LuaOpenGL::prevDrawMode = LuaOpenGL::DRAW_NONE;
 
 bool  LuaOpenGL::safeMode = true;
 bool  LuaOpenGL::canUseShaders = false;
+
 float LuaOpenGL::screenWidth = 0.36f;
 float LuaOpenGL::screenDistance = 0.60f;
+
+std::set<unsigned int> LuaOpenGL::occlusionQueries;
 
 /******************************************************************************/
 /******************************************************************************/
@@ -98,22 +99,20 @@ float LuaOpenGL::screenDistance = 0.60f;
 void LuaOpenGL::Init()
 {
 	resetStateList = glGenLists(1);
-	glNewList(resetStateList, GL_COMPILE); {
-		ResetGLState();
-	}
+
+	glNewList(resetStateList, GL_COMPILE);
+	ResetGLState();
 	glEndList();
 
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
-	if (globalRendering->haveGLSL && configHandler->GetBool("LuaShaders")) {
-		canUseShaders = true;
-	}
+	canUseShaders = (globalRendering->haveGLSL && configHandler->GetBool("LuaShaders"));
 }
-
 
 void LuaOpenGL::Free()
 {
 	glDeleteLists(resetStateList, 1);
+	glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
 	if (!globalRendering->haveGLSL)
 		return;
@@ -121,6 +120,8 @@ void LuaOpenGL::Free()
 	for (auto it = occlusionQueries.begin(); it != occlusionQueries.end(); ++it) {
 		glDeleteQueries(1, &(*it));
 	}
+
+	occlusionQueries.clear();
 }
 
 
@@ -1246,6 +1247,7 @@ int LuaOpenGL::Text(lua_State* L)
 				case 'O': { options |= FONT_OUTLINE; outline = true; lightOut = true;     break; }
 
 				case 'n': { options ^= FONT_NEAREST;       break; }
+				default: break;
 			}
 	  		c++;
 		}
@@ -1798,8 +1800,8 @@ int LuaOpenGL::DrawGroundQuad(lua_State* L)
 			}
 		}
 	}
-	const int mapxi = gs->mapxp1;
-	const int mapzi = gs->mapyp1;
+	const int mapxi = mapDims.mapxp1;
+	const int mapzi = mapDims.mapyp1;
 	const float* heightmap = readMap->GetCornerHeightMapUnsynced();
 
 	const float xs = std::max(0.0f, std::min(float3::maxxpos, x0)); // x start
@@ -3907,7 +3909,7 @@ int LuaOpenGL::PushPopMatrix(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 
-	vector<GLenum> matModes;
+	std::vector<GLenum> matModes;
 	int arg;
 	for (arg = 1; lua_isnumber(L, arg); arg++) {
 		const GLenum mode = (GLenum)lua_tonumber(L, arg);
@@ -4286,41 +4288,46 @@ int LuaOpenGL::SaveImage(lua_State* L)
 	const GLsizei height = (GLsizei)luaL_checknumber(L, 4);
 	const string filename = luaL_checkstring(L, 5);
 
+	if (!LuaIO::SafeWritePath(filename) || !LuaIO::IsSimplePath(filename)) {
+		LOG_L(L_WARNING, "gl.SaveImage: tried to write to illegal path localtion");
+		return 0;
+	}
+	if ((width <= 0) || (height <= 0)) {
+		LOG_L(L_WARNING, "gl.SaveImage: tried to write empty image");
+		return 0;
+	}
+
 	bool alpha = false;
 	bool yflip = false;
+	bool gray16b = false;
 	const int table = 6;
 	if (lua_istable(L, table)) {
 		lua_getfield(L, table, "alpha");
-		if (lua_isboolean(L, -1)) {
-			alpha = lua_toboolean(L, -1);
-		}
+		alpha = luaL_optboolean(L, -1, false);
 		lua_pop(L, 1);
+
 		lua_getfield(L, table, "yflip");
-		if (lua_isboolean(L, -1)) {
-			yflip = lua_toboolean(L, -1);
-		}
+		yflip = luaL_optboolean(L, -1, false);
+		lua_pop(L, 1);
+
+		lua_getfield(L, table, "grayscale16bit");
+		gray16b = luaL_optboolean(L, -1, false);
 		lua_pop(L, 1);
 	}
 
-	if ((width <= 0) || (height <= 0)) {
-		return 0;
+	CBitmap bitmap;
+	bitmap.Alloc(width, height);
+
+	if (!gray16b) {
+		glReadPixels(x, y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
+		if (!yflip) bitmap.ReverseYAxis();
+		lua_pushboolean(L, bitmap.Save(filename, !alpha));
+	} else {
+		// single channel only!
+		glReadPixels(x, y, width, height, GL_LUMINANCE, GL_FLOAT, bitmap.mem);
+		if (!yflip) bitmap.ReverseYAxis();
+		lua_pushboolean(L, bitmap.SaveFloat(filename));
 	}
-	const int memsize = width * height * 4;
-
-	unsigned char* img = new unsigned char[memsize];
-	memset(img, 0, memsize);
-	glReadPixels(x, y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, img);
-
-	CBitmap bitmap(img, width, height);
-	if (!yflip) {
-		bitmap.ReverseYAxis();
-	}
-
-	// FIXME Check file path permission here
-
-	lua_pushboolean(L, bitmap.Save(filename, !alpha));
-
-	delete[] img;
 
 	return 1;
 }

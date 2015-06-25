@@ -397,6 +397,7 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	maxAileron = owner->unitDef->maxAileron;
 	maxElevator = owner->unitDef->maxElevator;
 	maxRudder = owner->unitDef->maxRudder;
+	attackSafetyDistance = owner->unitDef->attackSafetyDistance;
 
 	useSmoothMesh = owner->unitDef->useSmoothMesh;
 
@@ -485,7 +486,7 @@ bool CStrafeAirMoveType::Update()
 			const CCommandQueue& cmdQue = owner->commandAI->commandQue;
 
 			const bool isAttacking = (!cmdQue.empty() && (cmdQue.front()).GetID() == CMD_ATTACK);
-			const bool keepAttacking = ((owner->attackTarget != NULL && !owner->attackTarget->isDead) || owner->userAttackGround);
+			const bool keepAttacking = ((owner->curTarget.type == Target_Unit && !owner->curTarget.unit->isDead) || owner->curTarget.type == Target_Pos);
 
 			/*
 			const float brakeDistSq = Square(0.5f * lastSpd.SqLength2D() / decRate);
@@ -497,10 +498,11 @@ bool CStrafeAirMoveType::Update()
 			*/
 			{
 				if (isAttacking && allowAttack && keepAttacking) {
-					if (owner->attackTarget != NULL) {
-						SetGoal(owner->attackTarget->pos);
-					} else {
-						SetGoal(owner->attackPos);
+					switch (owner->curTarget.type) {
+						case Target_None: { } break;
+						case Target_Unit: { SetGoal(owner->curTarget.unit->pos); } break;
+						case Target_Pos:  { SetGoal(owner->curTarget.groundPos); } break;
+						case Target_Intercept: { } break;
 					}
 
 					const bool goalInFront = ((goalPos - lastPos).dot(owner->frontdir) > 0.0f);
@@ -772,6 +774,13 @@ void CStrafeAirMoveType::UpdateAttack()
 		(goalPos - pos) / goalDist:
 		ZeroVector;
 
+	// if goal too close, stop dive and resume flying at normal desired height
+	// to avoid colliding with target, evade blast, friendly and enemy fire, etc.
+	if (goalDist < attackSafetyDistance) {
+		UpdateFlying(wantedHeight, 1.0f);
+		return;
+	}
+
 	float goalDotRight = goalDir.dot(rightDir2D.Normalize2D());
 
 	const float aGoalDotFront = goalDir.dot(frontdir);
@@ -782,7 +791,7 @@ void CStrafeAirMoveType::UpdateAttack()
 	}
 
 	{
-		const CUnit* attackee = owner->attackTarget;
+		const CUnit* attackee = owner->curTarget.unit;
 
 		const float aileron  = GetAileronDeflection (owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir, gHeightAW, wantedHeight,  maxAileron,  maxBank, goalDotRight, aGoalDotFront, lastColWarningType == 2, true); // roll
 		const float rudder   = GetRudderDeflection  (owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir, gHeightAW, wantedHeight,   maxRudder,     0.0f, goalDotRight, aGoalDotFront, lastColWarningType == 2, true); // yaw
@@ -829,12 +838,9 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 
 	// do not check if the plane can be submerged here,
 	// since it'll cause ground collisions later on (?)
-	float gHeight = 0.0f;
-
+	float gHeight = CGround::GetHeightAboveWater(pos.x, pos.z);
 	if (UseSmoothMesh()) {
-		gHeight = std::max(smoothGround->GetHeight(pos.x, pos.z), CGround::GetApproximateHeight(pos.x, pos.z));
-	} else {
-		gHeight = CGround::GetHeightAboveWater(pos.x, pos.z);
+		gHeight = std::max(smoothGround->GetHeight(pos.x, pos.z), gHeight);
 	}
 
 	if (((gs->frameNum + owner->id) & 3) == 0) {
@@ -842,13 +848,13 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	}
 
 	// RHS is needed for moving targets (when called by UpdateAttack)
-	const bool allowUnlockYR = (goalDist2D >= TurnRadius(turnRadius, spd.w) || goalVec.dot(owner->frontdir) > 0.0f);
-	const bool forceUnlockYR = ((gs->frameNum - owner->lastFireWeapon) >= GAME_SPEED * 3);
+	const bool allowUnlockYawRoll = (goalDist2D >= TurnRadius(turnRadius, spd.w) || goalVec.dot(owner->frontdir) > 0.0f);
+	const bool forceUnlockYawRoll = ((gs->frameNum - owner->lastFireWeapon) >= GAME_SPEED * 3);
 
 	// yaw and roll have to be unblocked after a certain time or aircraft
 	// can fly straight forever if their target is another chasing aircraft
 	float3 rightDir2D = rightdir;
-	float3 yprMults = (XZVector * float(allowUnlockYR || forceUnlockYR)) + UpVector;
+	float3 yprMults = (XZVector * float(allowUnlockYawRoll || forceUnlockYawRoll)) + UpVector;
 
 	float goalDotRight = goalDir2D.dot(rightDir2D.Normalize2D());
 
@@ -885,16 +891,8 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	const float elevator = GetElevatorDeflection(owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir2D, gHeight, wantedHeight, maxElevator, maxPitch, goalDotRight, aGoalDotFront, lastColWarningType == 2, false); // pitch
 
 	UpdateAirPhysics(rudder * yprMults.x, aileron * yprMults.z, elevator * yprMults.y, engine, owner->frontdir);
-	return (allowUnlockYR || forceUnlockYR);
+	return (allowUnlockYawRoll || forceUnlockYawRoll);
 }
-
-
-
-void CStrafeAirMoveType::UpdateLanded()
-{
-	AAirMoveType::UpdateLanded();
-}
-
 
 
 static float GetVTOLAccelerationSign(float h, float wh, float speedy, bool ascending) {

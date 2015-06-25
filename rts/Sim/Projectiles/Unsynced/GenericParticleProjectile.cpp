@@ -84,9 +84,14 @@ void CGenericParticleProjectile::Draw()
 
 		colorMap->GetColor(color, life);
 
-		va->AddVertexTC(drawPos - camera->right * size - camera->up * size, texture->xstart, texture->ystart, color);
-		va->AddVertexTC(drawPos + camera->right * size - camera->up * size, texture->xend,   texture->ystart, color);
-		va->AddVertexTC(drawPos + camera->right * size + camera->up * size, texture->xend,   texture->yend,   color);
-		va->AddVertexTC(drawPos - camera->right * size + camera->up * size, texture->xstart, texture->yend,   color);
+		va->AddVertexTC(drawPos - camera->GetRight() * size - camera->GetUp() * size, texture->xstart, texture->ystart, color);
+		va->AddVertexTC(drawPos + camera->GetRight() * size - camera->GetUp() * size, texture->xend,   texture->ystart, color);
+		va->AddVertexTC(drawPos + camera->GetRight() * size + camera->GetUp() * size, texture->xend,   texture->yend,   color);
+		va->AddVertexTC(drawPos - camera->GetRight() * size + camera->GetUp() * size, texture->xstart, texture->yend,   color);
 	}
+}
+
+int CGenericParticleProjectile::GetProjectilesCount() const
+{
+	return 1;
 }

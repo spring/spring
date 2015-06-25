@@ -4,6 +4,7 @@
 #define _NULL_SOUND_H_
 
 #include "System/Sound/ISound.h"
+#include "System/float3.h"
 
 #include <string>
 
@@ -14,30 +15,31 @@ class CSoundSource;
 class NullSound : public ISound
 {
 public:
-	NullSound();
-	virtual ~NullSound();
+	NullSound() {}
+	virtual ~NullSound() {}
 
-	bool HasSoundItem(const std::string& name) const;
-	size_t GetSoundId(const std::string& name);
+	bool HasSoundItem(const std::string& name) const { return false; }
+	size_t GetSoundId(const std::string& name) { return 0; }
 	SoundItem* GetSoundItem(size_t id) const { return NULL; }
 
-	CSoundSource* GetNextBestSource(bool lock = true);
+	CSoundSource* GetNextBestSource(bool lock = true) { return NULL; }
 
-	void UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime);
-	void NewFrame();
+	void UpdateListener(const float3& campos, const float3& camdir, const float3& camup) {}
+	void NewFrame() {}
 
-	void ConfigNotify(const std::string& key, const std::string& value);
-	void PitchAdjust(const float newPitch);
+	void ConfigNotify(const std::string& key, const std::string& value) {}
+	void PitchAdjust(const float newPitch) {}
 
-	bool Mute();
-	bool IsMuted() const;
+	bool Mute() { return true; }
+	bool IsMuted() const { return true; }
 
-	void Iconified(bool state);
+	void Iconified(bool state) {}
 
 	void PrintDebugInfo();
-	bool LoadSoundDefsImpl(const std::string& fileName);
+	bool CanLoadSoundDefs() const { return true; }
+	bool LoadSoundDefsImpl(const std::string& fileName) { return false; }
 	
-	const float3& GetListenerPos() const;
+	const float3& GetListenerPos() const { return ZeroVector; }
 };
 
 #endif // _NULL_SOUND_H_

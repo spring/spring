@@ -144,6 +144,7 @@ class CEventClient
 			int weaponDefID,
 			int projectileID,
 			bool paralyzer) {}
+		virtual void UnitStunned(const CUnit* unit, bool stunned) {}
 		virtual void UnitExperience(const CUnit* unit, float oldExperience) {}
 		virtual void UnitHarvestStorageFull(const CUnit* unit) {}
 
@@ -321,6 +322,7 @@ class CEventClient
 
 		virtual void CollectGarbage();
 		virtual void DbgTimingInfo(DbgTimingInfoType type, const spring_time start, const spring_time end);
+		virtual void MetalMapChanged(const int x, const int z);
 		/// @}
 };
 

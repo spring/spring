@@ -123,8 +123,8 @@ void CSmokeProjectile::Draw()
 	//float ymod=(int(frame/6))/16.0f;
 
 	const float interSize = size + (sizeExpansion * globalRendering->timeOffset);
-	const float3 pos1 ((camera->right - camera->up) * interSize);
-	const float3 pos2 ((camera->right + camera->up) * interSize);
+	const float3 pos1 ((camera->GetRight() - camera->GetUp()) * interSize);
+	const float3 pos2 ((camera->GetRight() + camera->GetUp()) * interSize);
 
 	#define st projectileDrawer->smoketex[textureNum]
 	va->AddVertexTC(drawPos - pos2, st->xstart, st->ystart, col);
@@ -132,4 +132,9 @@ void CSmokeProjectile::Draw()
 	va->AddVertexTC(drawPos + pos2, st->xend,   st->yend,   col);
 	va->AddVertexTC(drawPos - pos1, st->xstart, st->yend,   col);
 	#undef st
+}
+
+int CSmokeProjectile::GetProjectilesCount() const
+{
+	return 1;
 }

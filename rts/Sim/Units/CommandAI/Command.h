@@ -96,6 +96,13 @@
 #define CONTROL_KEY     (1 << 6) //  64
 #define ALT_KEY         (1 << 7) // 128
 
+
+#ifdef __GNUC__
+	#define _deprecated __attribute__ ((deprecated))
+#else
+	#define _deprecated
+#endif
+
 enum {
 	MOVESTATE_NONE     = -1,
 	MOVESTATE_HOLDPOS  =  0,
@@ -107,15 +114,13 @@ enum {
 	FIRESTATE_HOLDFIRE   =  0,
 	FIRESTATE_RETURNFIRE =  1,
 	FIRESTATE_FIREATWILL =  2,
+	FIRESTATE_FIREATNEUTRAL =  3,
 };
 
 struct Command
 {
 private:
 	CR_DECLARE_STRUCT(Command)
-/*
-	TODO check if usage of System/MemPool.h for this struct improves performance
-*/
 
 public:
 	Command()
@@ -207,7 +212,7 @@ public:
 		PushPos(pos);
 	}
 
-	~Command() { params.clear(); }
+	~Command() { }
 
 	// returns true if the command references another object and
 	// in this case also returns the param index of the object in cpos
@@ -277,11 +282,7 @@ public:
 	/// const safe_vector<float>& GetParams() const { return params; }
 	const size_t GetParamsCount() const { return params.size(); }
 
-	void SetID(int id) 
-#ifndef _MSC_VER
-		__attribute__ ((deprecated)) 
-#endif
-		{ this->id = id; params.clear(); }
+	void SetID(int id) _deprecated { this->id = id; params.clear(); }
 	const int& GetID() const { return id; }
 
 	void PushPos(const float3& pos)
@@ -307,6 +308,8 @@ public:
 	}
 
 	void SetPos(const int idx, const float3& p) {
+		if (params.size() < 3)
+			params.resize(3);
 		params[idx    ] = p.x;
 		params[idx + 1] = p.y;
 		params[idx + 2] = p.z;

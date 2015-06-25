@@ -22,9 +22,9 @@ CR_REG_METADATA(DamageArray, (
 
 } // namespace springLegacyAI
 
-void springLegacyAI::DamageArray::creg_Serialize(creg::ISerializer& s)
+void springLegacyAI::DamageArray::creg_Serialize(creg::ISerializer* s)
 {
-	s.Serialize(damages, numTypes * sizeof(damages[0]));
+	s->Serialize(damages, numTypes * sizeof(damages[0]));
 }
 #endif // USING_CREG
 

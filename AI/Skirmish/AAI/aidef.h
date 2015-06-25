@@ -36,8 +36,20 @@ void ReplaceExtension(const char *n, char *dst, int s, const char *ext);
 class AAIMetalSpot
 {
 public:
-	AAIMetalSpot(float3 pos, float amount) {this->pos = pos; this->amount = amount; occupied = false; extractor = -1; extractor_def = -1;}
-	AAIMetalSpot() {pos = ZeroVector; amount = 0; occupied = false; extractor = -1; extractor_def = -1;}
+	AAIMetalSpot(float3 _pos, float _amount):
+		pos(_pos),
+		occupied(false),
+		extractor(-1),
+		extractor_def(-1),
+		amount(_amount)
+	{}
+	AAIMetalSpot():
+		pos(ZeroVector),
+		occupied(false),
+		extractor(-1),
+		extractor_def(-1),
+		amount(0)
+	{}
 
 	float3 pos;
 	bool occupied;

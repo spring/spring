@@ -12,8 +12,10 @@
 #include "System/Exceptions.h"
 #include "System/myMath.h"
 
+#if !defined(HEADLESS) && !defined(NO_SOUND)
 #include "System/Sound/OpenAL/EFX.h"
 #include "System/Sound/OpenAL/EFXPresets.h"
+#endif
 
 #include <cassert>
 #include <cfloat>
@@ -70,8 +72,10 @@ CMapInfo::~CMapInfo()
 {
 #if !defined(HEADLESS) && !defined(NO_SOUND)
 	delete efxprops;
+	efxprops = NULL;
 #endif
 	delete parser;
+	parser = NULL;
 }
 
 std::string CMapInfo::GetStringValue(const std::string& key) const
@@ -221,7 +225,7 @@ void CMapInfo::ReadWater()
 	water.fluidDensity = wt.GetFloat("fluidDensity", 960.0f * 0.25f);
 	water.repeatX = wt.GetFloat("repeatX", 0.0f);
 	water.repeatY = wt.GetFloat("repeatY", 0.0f);
-	water.damage  = wt.GetFloat("damage",  0.0f) * (16.0f / GAME_SPEED);
+	water.damage  = wt.GetFloat("damage",  0.0f) * ((float)UNIT_SLOWUPDATE_RATE / (float)GAME_SPEED);
 
 	water.absorb    = wt.GetFloat3("absorb",    float3(0.0f, 0.0f, 0.0f));
 	water.baseColor = wt.GetFloat3("baseColor", float3(0.0f, 0.0f, 0.0f));
@@ -329,9 +333,9 @@ void CMapInfo::ReadSMF()
 
 	smf.grassShadingTexName = mapResTable.GetString("grassShadingTex", "");
 
-	smf.skyReflectModTexName = mapResTable.GetString("skyReflectModTex", "");
-	smf.detailNormalTexName = mapResTable.GetString("detailNormalTex", "");
-	smf.lightEmissionTexName = mapResTable.GetString("lightEmissionTex", "");
+	smf.skyReflectModTexName  = mapResTable.GetString("skyReflectModTex", "");
+	smf.detailNormalTexName   = mapResTable.GetString("detailNormalTex", "");
+	smf.lightEmissionTexName  = mapResTable.GetString("lightEmissionTex", "");
 	smf.parallaxHeightTexName = mapResTable.GetString("parallaxHeightTex", "");
 
 	if (!smf.detailTexName.empty()) {
@@ -342,23 +346,32 @@ void CMapInfo::ReadSMF()
 		smf.detailTexName = "bitmaps/" + smf.detailTexName;
 	}
 
-	if (!smf.specularTexName.empty()) { smf.specularTexName = "maps/" + smf.specularTexName; }
-	if (!smf.splatDetailTexName.empty()) { smf.splatDetailTexName = "maps/" + smf.splatDetailTexName; }
-	if (!smf.splatDistrTexName.empty()) { smf.splatDistrTexName = "maps/" + smf.splatDistrTexName; }
-	if (!smf.grassShadingTexName.empty()) { smf.grassShadingTexName = "maps/" + smf.grassShadingTexName; }
-	if (!smf.skyReflectModTexName.empty()) { smf.skyReflectModTexName = "maps/" + smf.skyReflectModTexName; }
-	if (!smf.detailNormalTexName.empty()) { smf.detailNormalTexName = "maps/" + smf.detailNormalTexName; }
-	if (!smf.lightEmissionTexName.empty()) { smf.lightEmissionTexName = "maps/" + smf.lightEmissionTexName; }
+	if (!smf.specularTexName.empty()      ) { smf.specularTexName       = "maps/" + smf.specularTexName; }
+	if (!smf.splatDetailTexName.empty()   ) { smf.splatDetailTexName    = "maps/" + smf.splatDetailTexName; }
+	if (!smf.splatDistrTexName.empty()    ) { smf.splatDistrTexName     = "maps/" + smf.splatDistrTexName; }
+	if (!smf.grassShadingTexName.empty()  ) { smf.grassShadingTexName   = "maps/" + smf.grassShadingTexName; }
+	if (!smf.skyReflectModTexName.empty() ) { smf.skyReflectModTexName  = "maps/" + smf.skyReflectModTexName; }
+	if (!smf.detailNormalTexName.empty()  ) { smf.detailNormalTexName   = "maps/" + smf.detailNormalTexName; }
+	if (!smf.lightEmissionTexName.empty() ) { smf.lightEmissionTexName  = "maps/" + smf.lightEmissionTexName; }
 	if (!smf.parallaxHeightTexName.empty()) { smf.parallaxHeightTexName = "maps/" + smf.parallaxHeightTexName; }
 
-	// height overrides
+	// smf overrides
 	const LuaTable& smfTable = parser->GetRoot().SubTable("smf");
 
 	smf.minHeightOverride = smfTable.KeyExists("minHeight");
 	smf.maxHeightOverride = smfTable.KeyExists("maxHeight");
-	smf.minHeight = smfTable.GetFloat("minHeight", 0.0f);
-	smf.maxHeight = smfTable.GetFloat("maxHeight", 0.0f);
+	smf.minHeight         = smfTable.GetFloat("minHeight", 0.0f);
+	smf.maxHeight         = smfTable.GetFloat("maxHeight", 0.0f);
 
+	smf.minimapTexName  = smfTable.GetString("minimapTex", "");
+	smf.metalmapTexName = smfTable.GetString("metalmapTex", "");
+	smf.typemapTexName  = smfTable.GetString("typemapTex", "");
+	smf.grassmapTexName = smfTable.GetString("grassmapTex", "");
+
+	if (!smf.minimapTexName.empty() ) { smf.minimapTexName  = "maps/" + smf.minimapTexName; }
+	if (!smf.metalmapTexName.empty()) { smf.metalmapTexName = "maps/" + smf.metalmapTexName; }
+	if (!smf.typemapTexName.empty() ) { smf.typemapTexName  = "maps/" + smf.typemapTexName; }
+	if (!smf.grassmapTexName.empty()) { smf.grassmapTexName = "maps/" + smf.grassmapTexName; }
 
 	std::stringstream ss;
 

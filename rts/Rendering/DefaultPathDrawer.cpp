@@ -31,6 +31,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Map/InfoTexture/Legacy/LegacyInfoTextureHandler.h"
 #include "System/myMath.h"
 #include "System/Util.h"
 
@@ -86,7 +87,7 @@ void DefaultPathDrawer::DrawInMiniMap()
 		glPushMatrix();
 		glLoadIdentity();
 		glTranslatef3(UpVector);
-		glScalef(1.0f / gs->mapx, -1.0f / gs->mapy, 1.0f);
+		glScalef(1.0f / mapDims.mapx, -1.0f / mapDims.mapy, 1.0f);
 
 	glDisable(GL_TEXTURE_2D);
 	glColor4f(1.0f, 1.0f, 0.0f, 0.7f);
@@ -109,7 +110,7 @@ void DefaultPathDrawer::DrawInMiniMap()
 
 void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int offset, unsigned char* texMem) const {
 	switch (extraTex) {
-		case CBaseGroundDrawer::drawPathTrav: {
+		case CLegacyInfoTextureHandler::drawPathTrav: {
 			bool useCurrentBuildOrder = true;
 
 			if (guihandler->inCommand <= 0) {
@@ -124,9 +125,9 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 
 			if (useCurrentBuildOrder) {
 				for (int ty = starty; ty < endy; ++ty) {
-					for (int tx = 0; tx < gs->hmapx; ++tx) {
+					for (int tx = 0; tx < mapDims.hmapx; ++tx) {
 						const float3 pos(tx * (SQUARE_SIZE << 1) + SQUARE_SIZE, 0.0f, ty * (SQUARE_SIZE << 1) + SQUARE_SIZE);
-						const int idx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
+						const int idx = ((ty * (mapDims.pwr2mapx >> 1)) + tx) * 4 - offset;
 
 						BuildSquareStatus status = FREE;
 
@@ -148,10 +149,10 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 						}
 
 						const SColor& col = GetBuildColor(status);
-						texMem[idx + CBaseGroundDrawer::COLOR_R] = col.r;
-						texMem[idx + CBaseGroundDrawer::COLOR_G] = col.g;
-						texMem[idx + CBaseGroundDrawer::COLOR_B] = col.b;
-						texMem[idx + CBaseGroundDrawer::COLOR_A] = col.a;
+						texMem[idx + CLegacyInfoTextureHandler::COLOR_R] = col.r;
+						texMem[idx + CLegacyInfoTextureHandler::COLOR_G] = col.g;
+						texMem[idx + CLegacyInfoTextureHandler::COLOR_B] = col.b;
+						texMem[idx + CLegacyInfoTextureHandler::COLOR_A] = col.a;
 					}
 				}
 			} else {
@@ -161,10 +162,10 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 					const bool los = (gs->cheatEnabled || gu->spectating);
 
 					for (int ty = starty; ty < endy; ++ty) {
-						for (int tx = 0; tx < gs->hmapx; ++tx) {
+						for (int tx = 0; tx < mapDims.hmapx; ++tx) {
 							const int sqx = (tx << 1);
 							const int sqy = (ty << 1);
-							const int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
+							const int texIdx = ((ty * (mapDims.pwr2mapx >> 1)) + tx) * 4 - offset;
 							const bool losSqr = losHandler->InLos(sqx, sqy, gu->myAllyTeam);
 
 							float scale = 1.0f;
@@ -180,63 +181,63 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 							const float sm = CMoveMath::GetPosSpeedMod(*md, sqx, sqy);
 							const SColor& smc = GetSpeedModColor(sm * scale);
 
-							texMem[texIdx + CBaseGroundDrawer::COLOR_R] = smc.r;
-							texMem[texIdx + CBaseGroundDrawer::COLOR_G] = smc.g;
-							texMem[texIdx + CBaseGroundDrawer::COLOR_B] = smc.b;
-							texMem[texIdx + CBaseGroundDrawer::COLOR_A] = smc.a;
+							texMem[texIdx + CLegacyInfoTextureHandler::COLOR_R] = smc.r;
+							texMem[texIdx + CLegacyInfoTextureHandler::COLOR_G] = smc.g;
+							texMem[texIdx + CLegacyInfoTextureHandler::COLOR_B] = smc.b;
+							texMem[texIdx + CLegacyInfoTextureHandler::COLOR_A] = smc.a;
 						}
 					}
 				} else {
 					// we have nothing to show -> draw a dark red overlay
 					for (int ty = starty; ty < endy; ++ty) {
-						for (int tx = 0; tx < gs->hmapx; ++tx) {
-							const int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
+						for (int tx = 0; tx < mapDims.hmapx; ++tx) {
+							const int texIdx = ((ty * (mapDims.pwr2mapx >> 1)) + tx) * 4 - offset;
 
-							texMem[texIdx + CBaseGroundDrawer::COLOR_R] = 100;
-							texMem[texIdx + CBaseGroundDrawer::COLOR_G] = 0;
-							texMem[texIdx + CBaseGroundDrawer::COLOR_B] = 0;
-							texMem[texIdx + CBaseGroundDrawer::COLOR_A] = 255;
+							texMem[texIdx + CLegacyInfoTextureHandler::COLOR_R] = 100;
+							texMem[texIdx + CLegacyInfoTextureHandler::COLOR_G] = 0;
+							texMem[texIdx + CLegacyInfoTextureHandler::COLOR_B] = 0;
+							texMem[texIdx + CLegacyInfoTextureHandler::COLOR_A] = 255;
 						}
 					}
 				}
 			}
 		} break;
 
-		case CBaseGroundDrawer::drawPathHeat: {
+		case CLegacyInfoTextureHandler::drawPathHeat: {
 			const PathHeatMap* phm = pm->pathHeatMap;
 
 			for (int ty = starty; ty < endy; ++ty) {
-				for (int tx = 0; tx < gs->hmapx; ++tx) {
-					const unsigned int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
+				for (int tx = 0; tx < mapDims.hmapx; ++tx) {
+					const unsigned int texIdx = ((ty * (mapDims.pwr2mapx >> 1)) + tx) * 4 - offset;
 
-					texMem[texIdx + CBaseGroundDrawer::COLOR_R] = Clamp(8 * phm->GetHeatValue(tx << 1, ty << 1), 32, 255);
-					texMem[texIdx + CBaseGroundDrawer::COLOR_G] = 32;
-					texMem[texIdx + CBaseGroundDrawer::COLOR_B] = 32;
-					texMem[texIdx + CBaseGroundDrawer::COLOR_A] = 255;
+					texMem[texIdx + CLegacyInfoTextureHandler::COLOR_R] = Clamp(8 * phm->GetHeatValue(tx << 1, ty << 1), 32, 255);
+					texMem[texIdx + CLegacyInfoTextureHandler::COLOR_G] = 32;
+					texMem[texIdx + CLegacyInfoTextureHandler::COLOR_B] = 32;
+					texMem[texIdx + CLegacyInfoTextureHandler::COLOR_A] = 255;
 				}
 			}
 		} break;
 
-		case CBaseGroundDrawer::drawPathFlow: {
+		case CLegacyInfoTextureHandler::drawPathFlow: {
 			const PathFlowMap* pfm = pm->pathFlowMap;
 			const float maxFlow = pfm->GetMaxFlow();
 
 			if (maxFlow > 0.0f) {
 				for (int ty = starty; ty < endy; ++ty) {
-					for (int tx = 0; tx < gs->hmapx; ++tx) {
-						const unsigned int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
+					for (int tx = 0; tx < mapDims.hmapx; ++tx) {
+						const unsigned int texIdx = ((ty * (mapDims.pwr2mapx >> 1)) + tx) * 4 - offset;
 						const float3& flow = pfm->GetFlowVec(tx << 1, ty << 1);
 
-						texMem[texIdx + CBaseGroundDrawer::COLOR_R] = (((flow.x + 1.0f) * 0.5f) * 255);
-						texMem[texIdx + CBaseGroundDrawer::COLOR_B] = (((flow.z + 1.0f) * 0.5f) * 255);
-						texMem[texIdx + CBaseGroundDrawer::COLOR_G] = (( flow.y               ) * 255);
-						texMem[texIdx + CBaseGroundDrawer::COLOR_A] = 255;
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_R] = (((flow.x + 1.0f) * 0.5f) * 255);
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_B] = (((flow.z + 1.0f) * 0.5f) * 255);
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_G] = (( flow.y               ) * 255);
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_A] = 255;
 					}
 				}
 			}
 		} break;
 
-		case CBaseGroundDrawer::drawPathCost: {
+		case CLegacyInfoTextureHandler::drawPathCost: {
 			const PathNodeStateBuffer& maxResStates = pm->maxResPF->blockStates;
 			const PathNodeStateBuffer& medResStates = pm->medResPE->blockStates;
 			const PathNodeStateBuffer& lowResStates = pm->lowResPE->blockStates;
@@ -251,16 +252,16 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 			};
 
 			for (int ty = starty; ty < endy; ++ty) {
-				for (int tx = 0; tx < gs->hmapx; ++tx) {
-					const unsigned int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
+				for (int tx = 0; tx < mapDims.hmapx; ++tx) {
+					const unsigned int texIdx = ((ty * (mapDims.pwr2mapx >> 1)) + tx) * 4 - offset;
 					// NOTE:
-					//    tx is in [0, gs->hmapx>
-					//    ty is in [0, gs->hmapy> (highResInfoTexWanted == false)
+					//    tx is in [0, mapDims.hmapx>
+					//    ty is in [0, mapDims.hmapy> (highResInfoTexWanted == false)
 					const unsigned int hx = tx << 1;
 					const unsigned int hy = ty << 1;
 
 					float gCost[3] = {
-						maxResStates.gCost[hy * gs->mapx + hx],
+						maxResStates.gCost[hy * mapDims.mapx + hx],
 						medResStates.gCost[(hy / medResBlockSize) * medResBlocksX + (hx / medResBlockSize)],
 						lowResStates.gCost[(hy / lowResBlockSize) * lowResBlocksX + (hx / lowResBlockSize)],
 					};
@@ -273,10 +274,10 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 					//     the normalisation means each extraTextureUpdate block
 					//     of rows gets assigned different colors when units are
 					//     moving (so view it while paused)
-					texMem[texIdx + CBaseGroundDrawer::COLOR_R] = (gCost[0] / gCostMax[0]) * 255;
-					texMem[texIdx + CBaseGroundDrawer::COLOR_G] = (gCost[1] / gCostMax[1]) * 255;
-					texMem[texIdx + CBaseGroundDrawer::COLOR_B] = (gCost[2] / gCostMax[2]) * 255;
-					texMem[texIdx + CBaseGroundDrawer::COLOR_A] = 255;
+					texMem[texIdx + CLegacyInfoTextureHandler::COLOR_R] = (gCost[0] / gCostMax[0]) * 255;
+					texMem[texIdx + CLegacyInfoTextureHandler::COLOR_G] = (gCost[1] / gCostMax[1]) * 255;
+					texMem[texIdx + CLegacyInfoTextureHandler::COLOR_B] = (gCost[2] / gCostMax[2]) * 255;
+					texMem[texIdx + CLegacyInfoTextureHandler::COLOR_A] = 255;
 				}
 			}
 		} break;
@@ -437,7 +438,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 						p2.z = (blockStates.peNodeOffsets[md->pathType][obBlockNr].y) * SQUARE_SIZE;
 						p2.y = CGround::GetHeightAboveWater(p2.x, p2.z, false) + 10.0f;
 
-					glColor3f(1.0f / math::sqrtf(cost), 1.0f / cost, peBlueValue);
+					glColor3f(1.0f / math::sqrt(cost), 1.0f / cost, peBlueValue);
 					glVertexf3(p1);
 					glVertexf3(p2);
 				}

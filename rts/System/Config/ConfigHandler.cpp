@@ -44,6 +44,7 @@ public:
 	void Delete(const string& key);
 	string GetConfigFile() const;
 	const StringMap GetData() const;
+	StringMap GetDataWithoutDefaults() const;
 	void Update();
 	void EnableWriting(bool write) { writingEnabled = write; }
 
@@ -99,6 +100,12 @@ ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations, const bool
 	size_t sources_num = 3;
 	sources_num += (safemode) ? 1 : 0;
 	sources_num += locations.size() - 1;
+#ifdef DEDICATED
+	sources_num++;
+#endif
+#ifdef HEADLESS
+	sources_num++;
+#endif
 	sources.reserve(sources_num);
 
 	sources.push_back(overlay);
@@ -114,7 +121,12 @@ ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations, const bool
 	for (; loc != locations.end(); ++loc) {
 		sources.push_back(new FileConfigSource(*loc));
 	}
-
+#ifdef DEDICATED
+	sources.push_back(new DedicatedConfigSource());
+#endif
+#ifdef HEADLESS
+	sources.push_back(new HeadlessConfigSource());
+#endif
 	sources.push_back(new DefaultConfigSource());
 
 	assert(sources.size() <= sources_num);
@@ -168,6 +180,31 @@ void ConfigHandlerImpl::RemoveDefaults()
 		}
 	}
 }
+
+
+StringMap ConfigHandlerImpl::GetDataWithoutDefaults() const
+{
+	StringMap cleanConfig;
+	StringMap defaults = sources.back()->GetData();
+
+	for (auto rsource = sources.crbegin(); rsource != sources.crend(); ++rsource) {
+		const FileConfigSource* source = dynamic_cast<const FileConfigSource*> (*rsource);
+		if (source == nullptr) continue;
+
+		// Copy the map; we modify the original while iterating over the copy.
+		StringMap file = source->GetData();
+		for (auto it = file.cbegin(); it != file.cend(); ++it) {
+			const auto pos = defaults.find(it->first);
+			if (pos != defaults.end() && pos->second == it->second)
+				continue;
+
+			cleanConfig[it->first] = it->second;
+		}
+	}
+
+	return cleanConfig;
+}
+
 
 void ConfigHandlerImpl::Delete(const string& key)
 {

@@ -49,8 +49,8 @@ void CLosMap::SetSize(int2 newSize, bool newSendReadmapEvents)
 void CLosMap::AddMapArea(int2 pos, int allyteam, int radius, int amount)
 {
 	#ifdef USE_UNSYNCED_HEIGHTMAP
-	static const int LOS2HEIGHT_X = gs->mapx / size.x;
-	static const int LOS2HEIGHT_Z = gs->mapy / size.y;
+	const int LOS2HEIGHT_X = mapDims.mapx / size.x;
+	const int LOS2HEIGHT_Z = mapDims.mapy / size.y;
 
 	const bool updateUnsyncedHeightMap = (sendReadmapEvents && allyteam >= 0 && (allyteam == gu->myAllyTeam || gu->spectatingFullView));
 	#endif
@@ -93,8 +93,8 @@ void CLosMap::AddMapArea(int2 pos, int allyteam, int radius, int amount)
 				x1 = lmx * LOS2HEIGHT_X,
 				z1 = lmz * LOS2HEIGHT_Z;
 			const int
-				x2 = std::min((lmx + 1) * LOS2HEIGHT_X, gs->mapxm1),
-				z2 = std::min((lmz + 1) * LOS2HEIGHT_Z, gs->mapym1);
+				x2 = std::min((lmx + 1) * LOS2HEIGHT_X, mapDims.mapxm1),
+				z2 = std::min((lmz + 1) * LOS2HEIGHT_Z, mapDims.mapym1);
 
 			readMap->UpdateLOS(SRectangle(x1, z1, x2, z2));
 			#endif
@@ -105,8 +105,8 @@ void CLosMap::AddMapArea(int2 pos, int allyteam, int radius, int amount)
 void CLosMap::AddMapSquares(const std::vector<int>& squares, int allyteam, int amount)
 {
 	#ifdef USE_UNSYNCED_HEIGHTMAP
-	static const int LOS2HEIGHT_X = gs->mapx / size.x;
-	static const int LOS2HEIGHT_Z = gs->mapy / size.y;
+	const int LOS2HEIGHT_X = mapDims.mapx / size.x;
+	const int LOS2HEIGHT_Z = mapDims.mapy / size.y;
 
 	const bool updateUnsyncedHeightMap = (sendReadmapEvents && allyteam >= 0 && (allyteam == gu->myAllyTeam || gu->spectatingFullView));
 	#endif
@@ -131,8 +131,8 @@ void CLosMap::AddMapSquares(const std::vector<int>& squares, int allyteam, int a
 		const int
 			x1 = lmx * LOS2HEIGHT_X,
 			z1 = lmz * LOS2HEIGHT_Z,
-			x2 = std::min((lmx + 1) * LOS2HEIGHT_X, gs->mapxm1),
-			z2 = std::min((lmz + 1) * LOS2HEIGHT_Z, gs->mapym1);
+			x2 = std::min((lmx + 1) * LOS2HEIGHT_X, mapDims.mapxm1),
+			z2 = std::min((lmz + 1) * LOS2HEIGHT_Z, mapDims.mapym1);
 
 		readMap->UpdateLOS(SRectangle(x1, z1, x2, z2));
 		#endif

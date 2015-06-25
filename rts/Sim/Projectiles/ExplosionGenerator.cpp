@@ -421,7 +421,7 @@ bool CStdExplosionGenerator::Explosion(
 
 	new CHeatCloudProjectile(owner, npos, float3(0.0f, 0.3f, 0.0f), 8.0f + sqrtDmg * 0.5f, 7 + damage * 2.8f);
 
-	if (projectileHandler->particleSaturation < 1.0f) {
+	if (projectileHandler->GetParticleSaturation() < 1.0f) {
 		// turn off lots of graphic only particles when we have more particles than we want
 		float smokeDamage      = damage;
 		float smokeDamageSQRT  = 0.0f;
@@ -442,11 +442,11 @@ bool CStdExplosionGenerator::Explosion(
 				(-0.1f + gu->RandFloat() * 0.2f)
 			);
 
-			const float h = CGround::GetApproximateHeight(npos.x, npos.z);
 			const float time = (40.0f + smokeDamageSQRT * 15.0f) * (0.8f + gu->RandFloat() * 0.7f);
 
-			float3 npos = pos + gu->RandVector() * smokeDamage;
-			npos.y = std::max(npos.y, h);
+			float3 dir = gu->RandVector() * smokeDamage;
+			dir.y = std::abs(dir.y);
+			const float3 npos = pos + dir;
 
 			new CSmokeProjectile2(owner, pos, npos, speed, time, smokeDamageSQRT * 4.0f, 0.4f, 0.6f);
 		}
@@ -613,6 +613,7 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 	float val = 0.0f;
 	void* ptr = NULL;
 	float buffer[16];
+	for(int i=0; i<16; i++) buffer[i] = 0.0f; //initialize buffer
 
 	for (;;) {
 		switch (*(code++)) {
@@ -620,23 +621,26 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 				return;
 			}
 			case OP_STOREI: {
-				boost::uint16_t offset = *(boost::uint16_t*) code;
-				code += 2;
-				*(int*) (instance + offset) = (int) val;
+				boost::uint8_t  size   = *(boost::uint8_t*)  code; code++;
+				boost::uint16_t offset = *(boost::uint16_t*) code; code += 2;
+				switch (size) {
+					case 1: { *(boost::int8_t*)  (instance + offset) = (int) val; } break;
+					case 2: { *(boost::int16_t*) (instance + offset) = (int) val; } break;
+					case 4: { *(boost::int32_t*) (instance + offset) = (int) val; } break;
+					case 8: { *(boost::int64_t*) (instance + offset) = (int) val; } break;
+					default: { /*no op*/ } break;
+				}
 				val = 0.0f;
 				break;
 			}
 			case OP_STOREF: {
-				boost::uint16_t offset = *(boost::uint16_t*) code;
-				code += 2;
-				*(float*) (instance + offset) = val;
-				val = 0.0f;
-				break;
-			}
-			case OP_STOREC: {
-				boost::uint16_t offset = *(boost::uint16_t*) code;
-				code += 2;
-				*(unsigned char*) (instance + offset) = (int) val;
+				boost::uint8_t  size   = *(boost::uint8_t*)  code; code++;
+				boost::uint16_t offset = *(boost::uint16_t*) code; code += 2;
+				switch (size) {
+					case 4: { *(float*)  (instance + offset) = val; } break;
+					case 8: { *(double*) (instance + offset) = val; } break;
+					default: { /*no op*/ } break;
+				}
 				val = 0.0f;
 				break;
 			}
@@ -748,18 +752,21 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 	}
 	else if (dynamic_cast<creg::BasicType*>(type.get())) {
 		const creg::BasicType* basicType = (creg::BasicType*) type.get();
-		const bool legalType =
-			(basicType->id == creg::crInt  ) ||
-			(basicType->id == creg::crFloat) ||
-			(basicType->id == creg::crUChar) ||
-			(basicType->id == creg::crBool );
+		const boost::uint8_t basicTypeSize = basicType->GetSize();
 
-		if (!legalType) {
-			throw content_error("[CCEG::ParseExplosionCode] projectile type-properties other than int, float, uchar, or bool are not supported (" + script + ")");
+		// check sizeof(member)
+		const std::set<boost::uint8_t> allowedSizeInt = {1,2,4 /*,0,8*/};
+		const std::set<boost::uint8_t> allowedSizeFlt = {4 /*,8*/};
+		if (basicType->id == creg::crFloat) {
+			if (allowedSizeFlt.find(basicTypeSize) == allowedSizeFlt.end())
+				throw content_error("[CCEG::ParseExplosionCode] incompatible float size \"" + IntToString(basicTypeSize) + "\" (" + script + ")");
+		} else {
+			if (allowedSizeInt.find(basicTypeSize) == allowedSizeInt.end())
+				throw content_error("[CCEG::ParseExplosionCode] incompatible integer size \"" + IntToString(basicTypeSize) + "\" (" + script + ")");
 		}
 
+		// parse the code
 		int p = 0;
-
 		while (p < script.length()) {
 			char opcode = OP_END;
 			char c = script[p++];
@@ -813,14 +820,10 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			}
 		}
 
-		switch (basicType->id) {
-			case creg::crInt:   code.push_back(OP_STOREI); break;
-			case creg::crBool:  code.push_back(OP_STOREC); break;
-			case creg::crFloat: code.push_back(OP_STOREF); break;
-			case creg::crUChar: code.push_back(OP_STOREC); break;
-			default: break;
-		}
-
+		// store the final value
+		code.push_back((basicType->id == creg::crFloat) ? OP_STOREF : OP_STOREI);
+		code.push_back(basicTypeSize);
+		assert(basicTypeSize == code.back());
 		boost::uint16_t ofs = offset;
 		code.append((char*)&ofs, (char*)&ofs + 2);
 	}
@@ -1025,8 +1028,8 @@ bool CCustomExplosionGenerator::Explosion(
 			continue;
 
 		// no new projectiles if we're saturated
-		if (projectileHandler->particleSaturation > 1.0f)
-			continue;
+		if (projectileHandler->GetParticleSaturation() > 1.0f)
+			break;
 
 		for (unsigned int c = 0; c < psi.count; c++) {
 			CExpGenSpawnable* projectile = static_cast<CExpGenSpawnable*>((psi.projectileClass)->CreateInstance());

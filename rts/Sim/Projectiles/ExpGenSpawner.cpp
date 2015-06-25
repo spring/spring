@@ -31,3 +31,8 @@ void CExpGenSpawner::Update()
 		explosionGenerator->Explosion(pos, dir, damage, 0.0f, 0.0f, owner(), NULL);
 	}
 }
+
+int CExpGenSpawner::GetProjectilesCount() const
+{
+	return 0;
+}

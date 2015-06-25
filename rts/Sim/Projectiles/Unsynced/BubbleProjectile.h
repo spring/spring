@@ -20,8 +20,10 @@ public:
 	);
 	virtual ~CBubbleProjectile();
 
-	void Update();
-	void Draw();
+	void Update() override;
+	void Draw() override;
+
+	virtual int GetProjectilesCount() const override;
 
 private:
 	int ttl;

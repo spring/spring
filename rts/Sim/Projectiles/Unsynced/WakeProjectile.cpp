@@ -97,3 +97,8 @@ void CWakeProjectile::Draw()
 	va->AddVertexTC(drawPos - dir1 + dir2, wt->xend,   wt->ystart, col);
 	#undef wt
 }
+
+int CWakeProjectile::GetProjectilesCount() const
+{
+	return 1;
+}

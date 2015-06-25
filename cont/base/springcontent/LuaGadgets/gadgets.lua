@@ -1193,13 +1193,22 @@ end
 
 
 function gadgetHandler:AllowWeaponTargetCheck(attackerID, attackerWeaponNum, attackerWeaponDefID)
+	local ignore = true
 	for _, g in ipairs(self.AllowWeaponTargetCheckList) do
-		if (not g:AllowWeaponTargetCheck(attackerID, attackerWeaponNum, attackerWeaponDefID)) then
-			return false
+		local allowCheck, ignoreCheck = g:AllowWeaponTargetCheck(attackerID, attackerWeaponNum, attackerWeaponDefID)
+		if not ignoreCheck then
+			ignore = false
+			if not allowCheck then
+				return 0
+			end
 		end
 	end
-
-	return true
+	
+	if ignore then
+		return -1
+	else
+		return 1
+	end
 end
 
 function gadgetHandler:AllowWeaponTarget(attackerID, targetID, attackerWeaponNum, attackerWeaponDefID, defPriority)
@@ -1342,6 +1351,17 @@ function gadgetHandler:UnitDamaged(
     g:UnitDamaged(unitID, unitDefID, unitTeam,
                   damage, paralyzer, weaponDefID, projectileID,
                   attackerID, attackerDefID, attackerTeam)
+  end
+end
+
+function gadgetHandler:UnitStunned(
+  unitID,
+  unitDefID,
+  unitTeam,
+  stunned
+)
+  for _,g in ipairs(self.UnitStunnedList) do
+    g:UnitStunned(unitID, unitDefID, unitTeam, stunned)
   end
 end
 

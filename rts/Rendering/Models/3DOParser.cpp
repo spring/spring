@@ -40,31 +40,31 @@ do {								\
 	unsigned int __tmp;					\
 	unsigned short __isize = sizeof(unsigned int);		\
 	SimStreamRead(&__tmp,__isize);				\
-	(o).VersionSignature = (int)swabdword(__tmp);		\
+	(o).VersionSignature = (int)swabDWord(__tmp);		\
 	SimStreamRead(&__tmp,__isize);				\
-	(o).NumberOfVertices = (int)swabdword(__tmp);		\
+	(o).NumberOfVertices = (int)swabDWord(__tmp);		\
 	SimStreamRead(&__tmp,__isize);				\
-	(o).NumberOfPrimitives = (int)swabdword(__tmp);		\
+	(o).NumberOfPrimitives = (int)swabDWord(__tmp);		\
 	SimStreamRead(&__tmp,__isize);				\
-	(o).SelectionPrimitive = (int)swabdword(__tmp);		\
+	(o).SelectionPrimitive = (int)swabDWord(__tmp);		\
 	SimStreamRead(&__tmp,__isize);				\
-	(o).XFromParent = (int)swabdword(__tmp);		\
+	(o).XFromParent = (int)swabDWord(__tmp);		\
 	SimStreamRead(&__tmp,__isize);				\
-	(o).YFromParent = (int)swabdword(__tmp);		\
+	(o).YFromParent = (int)swabDWord(__tmp);		\
 	SimStreamRead(&__tmp,__isize);				\
-	(o).ZFromParent = (int)swabdword(__tmp);		\
+	(o).ZFromParent = (int)swabDWord(__tmp);		\
 	SimStreamRead(&__tmp,__isize);				\
-	(o).OffsetToObjectName = (int)swabdword(__tmp);		\
+	(o).OffsetToObjectName = (int)swabDWord(__tmp);		\
 	SimStreamRead(&__tmp,__isize);				\
-	(o).Always_0 = (int)swabdword(__tmp);			\
+	(o).Always_0 = (int)swabDWord(__tmp);			\
 	SimStreamRead(&__tmp,__isize);				\
-	(o).OffsetToVertexArray = (int)swabdword(__tmp);	\
+	(o).OffsetToVertexArray = (int)swabDWord(__tmp);	\
 	SimStreamRead(&__tmp,__isize);				\
-	(o).OffsetToPrimitiveArray = (int)swabdword(__tmp);	\
+	(o).OffsetToPrimitiveArray = (int)swabDWord(__tmp);	\
 	SimStreamRead(&__tmp,__isize);				\
-	(o).OffsetToSiblingObject = (int)swabdword(__tmp);	\
+	(o).OffsetToSiblingObject = (int)swabDWord(__tmp);	\
 	SimStreamRead(&__tmp,__isize);				\
-	(o).OffsetToChildObject = (int)swabdword(__tmp);	\
+	(o).OffsetToChildObject = (int)swabDWord(__tmp);	\
 } while (0)
 
 
@@ -73,11 +73,11 @@ do {							\
 	unsigned int __tmp;				\
 	unsigned short __isize = sizeof(unsigned int);	\
 	SimStreamRead(&__tmp,__isize);			\
-	(v).x = (int)swabdword(__tmp);			\
+	(v).x = (int)swabDWord(__tmp);			\
 	SimStreamRead(&__tmp,__isize);			\
-	(v).y = (int)swabdword(__tmp);			\
+	(v).y = (int)swabDWord(__tmp);			\
 	SimStreamRead(&__tmp,__isize);			\
-	(v).z = (int)swabdword(__tmp);			\
+	(v).z = (int)swabDWord(__tmp);			\
 } while (0)
 
 
@@ -86,21 +86,21 @@ do {								\
 	unsigned int __tmp;					\
 	unsigned short __isize = sizeof(unsigned int);		\
 	SimStreamRead(&__tmp,__isize);				\
-	(p).PaletteEntry = (int)swabdword(__tmp);		\
+	(p).PaletteEntry = (int)swabDWord(__tmp);		\
 	SimStreamRead(&__tmp,__isize);				\
-	(p).NumberOfVertexIndexes = (int)swabdword(__tmp);	\
+	(p).NumberOfVertexIndexes = (int)swabDWord(__tmp);	\
 	SimStreamRead(&__tmp,__isize);				\
-	(p).Always_0 = (int)swabdword(__tmp);			\
+	(p).Always_0 = (int)swabDWord(__tmp);			\
 	SimStreamRead(&__tmp,__isize);				\
-	(p).OffsetToVertexIndexArray = (int)swabdword(__tmp);	\
+	(p).OffsetToVertexIndexArray = (int)swabDWord(__tmp);	\
 	SimStreamRead(&__tmp,__isize);				\
-	(p).OffsetToTextureName = (int)swabdword(__tmp);	\
+	(p).OffsetToTextureName = (int)swabDWord(__tmp);	\
 	SimStreamRead(&__tmp,__isize);				\
-	(p).Unknown_1 = (int)swabdword(__tmp);			\
+	(p).Unknown_1 = (int)swabDWord(__tmp);			\
 	SimStreamRead(&__tmp,__isize);				\
-	(p).Unknown_2 = (int)swabdword(__tmp);			\
+	(p).Unknown_2 = (int)swabDWord(__tmp);			\
 	SimStreamRead(&__tmp,__isize);				\
-	(p).Unknown_3 = (int)swabdword(__tmp);			\
+	(p).Unknown_3 = (int)swabDWord(__tmp);			\
 } while (0)
 
 

@@ -362,6 +362,16 @@ struct SSkirmishAICallback {
 	 */
 	float             (CALLING_CONV *Game_getTeamResourceStorage)(int skirmishAIId, int otherTeamId, int resourceId);
 
+	float             (CALLING_CONV *Game_getTeamResourcePull)(int skirmishAIId, int otherTeamId, int resourceId);
+
+	float             (CALLING_CONV *Game_getTeamResourceShare)(int skirmishAIId, int otherTeamId, int resourceId);
+
+	float             (CALLING_CONV *Game_getTeamResourceSent)(int skirmishAIId, int otherTeamId, int resourceId);
+
+	float             (CALLING_CONV *Game_getTeamResourceReceived)(int skirmishAIId, int otherTeamId, int resourceId);
+
+	float             (CALLING_CONV *Game_getTeamResourceExcess)(int skirmishAIId, int otherTeamId, int resourceId);
+
 	/// Returns true, if the two supplied ally-teams are currently allied
 	bool              (CALLING_CONV *Game_isAllied)(int skirmishAIId, int firstAllyTeamId, int secondAllyTeamId);
 
@@ -502,6 +512,16 @@ struct SSkirmishAICallback {
 	float             (CALLING_CONV *Economy_getUsage)(int skirmishAIId, int resourceId); //$ REF:resourceId->Resource
 
 	float             (CALLING_CONV *Economy_getStorage)(int skirmishAIId, int resourceId); //$ REF:resourceId->Resource
+
+	float             (CALLING_CONV *Economy_getPull)(int skirmishAIId, int resourceId); //$ REF:resourceId->Resource
+
+	float             (CALLING_CONV *Economy_getShare)(int skirmishAIId, int resourceId); //$ REF:resourceId->Resource
+
+	float             (CALLING_CONV *Economy_getSent)(int skirmishAIId, int resourceId); //$ REF:resourceId->Resource
+
+	float             (CALLING_CONV *Economy_getReceived)(int skirmishAIId, int resourceId); //$ REF:resourceId->Resource
+
+	float             (CALLING_CONV *Economy_getExcess)(int skirmishAIId, int resourceId); //$ REF:resourceId->Resource
 
 // END OBJECT Resource
 
@@ -738,9 +758,9 @@ struct SSkirmishAICallback {
 
 	const char*       (CALLING_CONV *UnitDef_getWreckName)(int skirmishAIId, int unitDefId);
 
-	const char*       (CALLING_CONV *UnitDef_getDeathExplosion)(int skirmishAIId, int unitDefId);
+	int               (CALLING_CONV *UnitDef_getDeathExplosion)(int skirmishAIId, int unitDefId); //$ REF:RETURN->WeaponDef
 
-	const char*       (CALLING_CONV *UnitDef_getSelfDExplosion)(int skirmishAIId, int unitDefId);
+	int               (CALLING_CONV *UnitDef_getSelfDExplosion)(int skirmishAIId, int unitDefId); //$ REF:RETURN->WeaponDef
 
 	/**
 	 * Returns the name of the category this unit is in.
@@ -1084,7 +1104,7 @@ struct SSkirmishAICallback {
 
 	float             (CALLING_CONV *UnitDef_MoveData_getSlopeMod)(int skirmishAIId, int unitDefId);
 
-	float             (CALLING_CONV *UnitDef_MoveData_getDepthMod)(int skirmishAIId, int unitDefId);
+	float             (CALLING_CONV *UnitDef_MoveData_getDepthMod)(int skirmishAIId, int unitDefId, float height);
 
 	int               (CALLING_CONV *UnitDef_MoveData_getPathType)(int skirmishAIId, int unitDefId);
 
@@ -1388,6 +1408,9 @@ struct SSkirmishAICallback {
 	/** Number of the last frame this unit received an order from a player. */
 	int               (CALLING_CONV *Unit_getLastUserOrderFrame)(int skirmishAIId, int unitId);
 
+	int               (CALLING_CONV *Unit_getWeapons)(int skirmishAIId, int unitId); //$ FETCHER:MULTI:NUM:Weapon
+
+	int               (CALLING_CONV *Unit_getWeapon)(int skirmishAIId, int unitId, int weaponMountId); //$ REF:weaponMountId->WeaponMount REF:RETURN->Weapon
 // END OBJECT Unit
 
 
@@ -1756,7 +1779,7 @@ struct SSkirmishAICallback {
 
 	/**
 	 * @brief the level of sight map
-	 * gs->mapx >> losMipLevel
+	 * mapDims.mapx >> losMipLevel
 	 * A square with value zero means you do not have LOS coverage on it.
 	 *Mod_getLosMipLevel
 	 * - do NOT modify or delete the height-map (native code relevant only)
@@ -1875,6 +1898,8 @@ struct SSkirmishAICallback {
 	float             (CALLING_CONV *Map_getTidalStrength)(int skirmishAIId);
 
 	float             (CALLING_CONV *Map_getGravity)(int skirmishAIId);
+
+	float             (CALLING_CONV *Map_getWaterDamage)(int skirmishAIId);
 
 
 	/**
@@ -2401,6 +2426,20 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *WeaponDef_getCustomParams)(int skirmishAIId, int weaponDefId, const char** keys, const char** values); //$ MAP
 
 // END OBJECT WeaponDef
+
+
+// BEGINN OBJECT Weapon
+	int               (CALLING_CONV *Unit_Weapon_getDef)(int skirmishAIId, int unitId, int weaponId); //$ REF:RETURN->WeaponDef
+
+	/** Next tick the weapon can fire again. */
+	int               (CALLING_CONV *Unit_Weapon_getReloadFrame)(int skirmishAIId, int unitId, int weaponId);
+
+	/** Time between succesive fires in ticks. */
+	int               (CALLING_CONV *Unit_Weapon_getReloadTime)(int skirmishAIId, int unitId, int weaponId);
+
+	float             (CALLING_CONV *Unit_Weapon_getRange)(int skirmishAIId, int unitId, int weaponId);
+
+// END OBJECT Weapon
 
 	bool              (CALLING_CONV *Debug_GraphDrawer_isEnabled)(int skirmishAIId);
 

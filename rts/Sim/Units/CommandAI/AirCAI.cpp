@@ -6,13 +6,13 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Map/Ground.h"
+#include "Map/ReadMap.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/StrafeAirMoveType.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/Groups/Group.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/myMath.h"
@@ -87,8 +87,8 @@ void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		return;
 	} else if (c.GetID() == CMD_MOVE && c.params.size() >= 3 &&
 			(c.params[0] < 0.0f || c.params[2] < 0.0f
-			 || c.params[0] > gs->mapx*SQUARE_SIZE
-			 || c.params[2] > gs->mapy*SQUARE_SIZE))
+			 || c.params[0] > mapDims.mapx*SQUARE_SIZE
+			 || c.params[2] > mapDims.mapy*SQUARE_SIZE))
 	{
 		return;
 	}
@@ -109,6 +109,7 @@ void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 				case 1: { airMT->SetRepairBelowHealth(0.3f); break; }
 				case 2: { airMT->SetRepairBelowHealth(0.5f); break; }
 				case 3: { airMT->SetRepairBelowHealth(0.8f); break; }
+				default: { /*no op*/ } break;
 			}
 
 			for (unsigned int n = 0; n < possibleCommands.size(); n++) {
@@ -130,6 +131,7 @@ void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 			switch ((int) c.params[0]) {
 				case 0: { airMT->autoLand = false; break; }
 				case 1: { airMT->autoLand = true;  break; }
+				default: { /*no op*/ } break;
 			}
 
 			for (unsigned int n = 0; n < possibleCommands.size(); n++) {
@@ -398,7 +400,7 @@ void CAirCAI::ExecuteAttack(Command& c)
 	if (tempOrder && owner->moveState == MOVESTATE_MANEUVER) {
 		// limit how far away we fly
 		if (orderTarget && LinePointDist(commandPos1, commandPos2, orderTarget->pos) > 1500) {
-			owner->AttackUnit(NULL, false, false);
+			owner->DropCurrentAttackTarget();
 			FinishCommand();
 			return;
 		}
@@ -411,12 +413,12 @@ void CAirCAI::ExecuteAttack(Command& c)
 		}
 		if (orderTarget != NULL) {
 			if (orderTarget->unitDef->canfly && orderTarget->IsCrashing()) {
-				owner->AttackUnit(NULL, false, false);
+				owner->DropCurrentAttackTarget();
 				FinishCommand();
 				return;
 			}
 			if (!(c.options & ALT_KEY) && SkipParalyzeTarget(orderTarget)) {
-				owner->AttackUnit(NULL, false, false);
+				owner->DropCurrentAttackTarget();
 				FinishCommand();
 				return;
 			}
@@ -467,8 +469,6 @@ void CAirCAI::ExecuteAreaAttack(Command& c)
 			inCommand = false;
 
 		if (orderTarget && orderTarget->pos.SqDistance2D(pos) > Square(radius)) {
-			inCommand = false;
-
 			// target wandered out of the attack-area
 			SetOrderTarget(NULL);
 			SelectNewAreaAttackTargetOrPos(c);
@@ -565,11 +565,10 @@ void CAirCAI::SetGoal(const float3& pos, const float3& curPos, float goalRadius)
 	CMobileCAI::SetGoal(pos, curPos, goalRadius);
 }
 
-bool CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac) {
-	assert(ac.GetID() == CMD_AREA_ATTACK || (ac.GetID() == CMD_ATTACK && ac.GetParamsCount() >= 3));
-
-	if (ac.GetID() == CMD_ATTACK) {
-		FinishCommand();
+bool CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac)
+{
+	assert(ac.GetID() == CMD_AREA_ATTACK);
+	if (ac.GetID() != CMD_AREA_ATTACK) {
 		return false;
 	}
 

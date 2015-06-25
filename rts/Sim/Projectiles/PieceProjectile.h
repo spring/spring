@@ -15,6 +15,7 @@ const int PF_Fire       = (1 << 4); // 16
 const int PF_NONE       = (1 << 5); // 32
 const int PF_NoCEGTrail = (1 << 6); // 64
 const int PF_NoHeatCloud= (1 << 7); // 128
+const int PF_Recursive  = (1 << 8); // 256
 
 class CSmokeTrailProjectile;
 struct S3DModelPiece;
@@ -34,15 +35,16 @@ public:
 		float radius
 	);
 	virtual ~CPieceProjectile();
-	virtual void Detach();
 
-	void Update();
-	void Draw();
-	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
-	void Collision();
-	void Collision(CUnit* unit);
+	void Update() override;
+	void Draw() override;
+	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
+	void Collision() override;
+	void Collision(CUnit* unit) override;
 
-	void DrawCallback();
+	void DrawCallback() override;
+
+	virtual int GetProjectilesCount() const override;
 
 private:
 	bool HasVertices() const;
@@ -67,8 +69,6 @@ public:
 	float3 spinVec;
 	float spinSpeed;
 	float spinAngle;
-
-	float alphaThreshold;
 
 	float3 oldSmokePos;
 	float3 oldSmokeDir;

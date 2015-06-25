@@ -10,6 +10,7 @@
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/IWater.h"
+#include "Rendering/CommandDrawer.h"
 #include "Rendering/DebugColVolDrawer.h"
 #include "Rendering/FarTextureHandler.h"
 #include "Rendering/LineDrawer.h"
@@ -21,6 +22,7 @@
 #include "Rendering/InMapDrawView.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Models/ModelDrawer.h"
+#include "Rendering/Shaders/ShaderHandler.h"
 #include "Lua/LuaUnsyncedCtrl.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/HeightMapTexture.h"
@@ -38,7 +40,7 @@
 #include "System/Util.h"
 
 
-CWorldDrawer::CWorldDrawer()
+CWorldDrawer::CWorldDrawer(): numUpdates(0)
 {
 	// rendering components
 	loadscreen->SetLoadMessage("Creating ShadowHandler & DecalHandler");
@@ -91,12 +93,14 @@ CWorldDrawer::~CWorldDrawer()
 
 	SafeDelete(cubeMapHandler);
 	IGroundDecalDrawer::FreeInstance();
+	CShaderHandler::FreeInstance(CShaderHandler::GetInstance());
 }
 
 
 void CWorldDrawer::Update()
 {
-	readMap->UpdateDraw();
+	readMap->UpdateDraw((numUpdates++) == 0);
+
 	if (globalRendering->drawGround) {
 		SCOPED_TIMER("GroundDrawer::Update");
 		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
@@ -215,9 +219,13 @@ void CWorldDrawer::Draw()
 
 	eventHandler.DrawWorld();
 
-	LuaUnsyncedCtrl::DrawUnitCommandQueues();
-	if (cmdColors.AlwaysDrawQueue() || guihandler->GetQueueKeystate()) {
-		selectedUnitsHandler.DrawCommands();
+	{
+		// note: duplicated in CMiniMap::DrawWorldStuff()
+		commandDrawer->DrawLuaQueuedUnitSetCommands();
+
+		if (cmdColors.AlwaysDrawQueue() || guihandler->GetQueueKeystate()) {
+			selectedUnitsHandler.DrawCommands();
+		}
 	}
 
 	lineDrawer.DrawAll();

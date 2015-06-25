@@ -988,6 +988,27 @@ void CLuaHandle::UnitDamaged(
 	RunCallInTraceback(L, cmdStr, argCount, 0, traceBack.GetErrFuncIdx(), false);
 }
 
+void CLuaHandle::UnitStunned(
+	const CUnit* unit,
+	bool stunned)
+{
+	LUA_CALL_IN_CHECK(L);
+	luaL_checkstack(L, 5, __FUNCTION__);
+
+	static const LuaHashString cmdStr(__FUNCTION__);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
+
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
+
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, unit->team);
+	lua_pushboolean(L, stunned);
+
+	// call the routine
+	RunCallInTraceback(L, cmdStr, 4, 0, traceBack.GetErrFuncIdx(), false);
+}
 
 void CLuaHandle::UnitExperience(const CUnit* unit, float oldExperience)
 {
@@ -2382,15 +2403,16 @@ void CLuaHandle::CollectGarbage()
 
 	// note: total footprint INCLUDING garbage
 	int luaMemFootPrintKB = lua_gc(L_GC, LUA_GCCOUNT, 0);
+	int numLuaGarbageCollectIters = 0;
 
+	static int gcsteps = 10;
 	// 30x per second !!!
 	static const float maxLuaGarbageCollectTime = configHandler->GetFloat("MaxLuaGarbageCollectionTime");
+
 	float maxRunTime = smoothstep(10, 100, luaMemFootPrintKB / 1024) * maxLuaGarbageCollectTime;
 
 	const spring_time startTime = spring_gettime();
 	const spring_time endTime = startTime + spring_msecs(maxRunTime);
-	static int gcsteps = 10;
-	int numLuaGarbageCollectIters = 0;
 
 	SetHandleRunning(L_GC, true);
 

@@ -391,6 +391,8 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 			case NETMSG_SETSHARE:
 				std::cout << "NETMSG_SETSHARE: " << std::endl;
 				break;
+			case NETMSG_GAME_FRAME_PROGRESS: //ignore as its unsynced
+				break;
 			default:
 				std::cout << "MSG: " << cmd << std::endl;
 		}

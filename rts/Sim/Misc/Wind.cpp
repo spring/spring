@@ -31,18 +31,9 @@ static const int WIND_UPDATE_RATE = 15 * GAME_SPEED;
 
 CWind wind;
 
-CWind::CWind():
-	maxWind(100.0f),
-	minWind(0.0f),
-	curStrength(0.0f),
-
-	curDir(RgtVector),
-	curWind(ZeroVector),
-	newWind(ZeroVector),
-	oldWind(ZeroVector),
-
-	status(0)
+CWind::CWind()
 {
+	ResetState();
 }
 
 CWind::~CWind()
@@ -58,6 +49,18 @@ void CWind::LoadWind(float minw, float maxw)
 	oldWind = curWind;
 }
 
+void CWind::ResetState()
+{
+	maxWind = 100.0f;
+	minWind = 0.0f;
+	curStrength = 0.0f;
+	curDir = RgtVector;
+	curWind = ZeroVector;
+	newWind = ZeroVector;
+	oldWind = ZeroVector;
+	status = 0;
+	windGens.clear();
+}
 
 
 bool CWind::AddUnit(CUnit* u) {

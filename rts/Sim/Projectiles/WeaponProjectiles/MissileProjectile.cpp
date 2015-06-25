@@ -116,7 +116,7 @@ CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponP
 void CMissileProjectile::Collision()
 {
 	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
+		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, drawTrail, nullptr, weaponDef->visuals.texture2);
 	}
 
 	CWeaponProjectile::Collision();
@@ -126,7 +126,7 @@ void CMissileProjectile::Collision()
 void CMissileProjectile::Collision(CUnit* unit)
 {
 	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
+		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, drawTrail, nullptr, weaponDef->visuals.texture2);
 	}
 
 	CWeaponProjectile::Collision(unit);
@@ -136,7 +136,7 @@ void CMissileProjectile::Collision(CUnit* unit)
 void CMissileProjectile::Collision(CFeature* feature)
 {
 	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
+		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, drawTrail, nullptr, weaponDef->visuals.texture2);
 	}
 
 	CWeaponProjectile::Collision(feature);
@@ -164,14 +164,14 @@ void CMissileProjectile::Update()
 					targetPos = so->aimPos;
 					targetVel = so->speed;
 
-					if (own != NULL && pos.SqDistance(so->aimPos) > Square(150.0f)) {
+					if (allyteamID != -1 && pos.SqDistance(so->aimPos) > Square(150.0f)) {
 						// if we have an owner and our target is a unit,
 						// set target-position to its error-position for
 						// our owner's allyteam
 						const CUnit* tgt = dynamic_cast<const CUnit*>(so);
 
 						if (tgt != NULL) {
-							targetPos = tgt->GetErrorPos(own->allyteam, true);
+							targetPos = tgt->GetErrorPos(allyteamID, true);
 						}
 					}
 				}
@@ -390,10 +390,10 @@ void CMissileProjectile::Draw()
 				float3 pos1 = CalcBeizer(float(a) / (numParts), pos, dirpos1, dirpos2, oldSmoke);
 
 				#define st projectileDrawer->smoketex[0]
-				va->AddVertexQTC(pos1 + ( camera->up + camera->right) * size, st->xstart, st->ystart, col);
-				va->AddVertexQTC(pos1 + ( camera->up - camera->right) * size, st->xend,   st->ystart, col);
-				va->AddVertexQTC(pos1 + (-camera->up - camera->right) * size, st->xend,   st->ystart, col);
-				va->AddVertexQTC(pos1 + (-camera->up + camera->right) * size, st->xstart, st->ystart, col);
+				va->AddVertexQTC(pos1 + ( camera->GetUp() + camera->GetRight()) * size, st->xstart, st->ystart, col);
+				va->AddVertexQTC(pos1 + ( camera->GetUp() - camera->GetRight()) * size, st->xend,   st->ystart, col);
+				va->AddVertexQTC(pos1 + (-camera->GetUp() - camera->GetRight()) * size, st->xend,   st->ystart, col);
+				va->AddVertexQTC(pos1 + (-camera->GetUp() + camera->GetRight()) * size, st->xstart, st->ystart, col);
 				#undef st
 			}
 		}
@@ -405,10 +405,10 @@ void CMissileProjectile::Draw()
 	col[2] = 180;
 	col[3] = 1;
 	const float fsize = radius * 0.4f;
-	va->AddVertexQTC(drawPos - camera->right * fsize-camera->up * fsize, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->ystart, col);
-	va->AddVertexQTC(drawPos + camera->right * fsize-camera->up * fsize, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->ystart, col);
-	va->AddVertexQTC(drawPos + camera->right * fsize+camera->up * fsize, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->yend,   col);
-	va->AddVertexQTC(drawPos - camera->right * fsize+camera->up * fsize, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->yend,   col);
+	va->AddVertexQTC(drawPos - camera->GetRight() * fsize-camera->GetUp() * fsize, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->ystart, col);
+	va->AddVertexQTC(drawPos + camera->GetRight() * fsize-camera->GetUp() * fsize, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->ystart, col);
+	va->AddVertexQTC(drawPos + camera->GetRight() * fsize+camera->GetUp() * fsize, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->yend,   col);
+	va->AddVertexQTC(drawPos - camera->GetRight() * fsize+camera->GetUp() * fsize, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->yend,   col);
 }
 
 int CMissileProjectile::ShieldRepulse(
@@ -438,4 +438,9 @@ int CMissileProjectile::ShieldRepulse(
 	}
 
 	return 0;
+}
+
+int CMissileProjectile::GetProjectilesCount() const
+{
+	return 2 + ((weaponDef->visuals.smokeTrail) ? numParts : 0);
 }

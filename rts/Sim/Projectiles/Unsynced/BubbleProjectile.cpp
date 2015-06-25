@@ -81,9 +81,14 @@ void CBubbleProjectile::Draw()
 	const float interSize = size + sizeExpansion * globalRendering->timeOffset;
 
 	#define bt projectileDrawer->bubbletex
-	va->AddVertexTC(drawPos - camera->right * interSize - camera->up * interSize, bt->xstart, bt->ystart, col);
-	va->AddVertexTC(drawPos + camera->right * interSize - camera->up * interSize, bt->xend,   bt->ystart, col);
-	va->AddVertexTC(drawPos + camera->right * interSize + camera->up * interSize, bt->xend,   bt->yend,   col);
-	va->AddVertexTC(drawPos - camera->right * interSize + camera->up * interSize, bt->xstart, bt->yend,   col);
+	va->AddVertexTC(drawPos - camera->GetRight() * interSize - camera->GetUp() * interSize, bt->xstart, bt->ystart, col);
+	va->AddVertexTC(drawPos + camera->GetRight() * interSize - camera->GetUp() * interSize, bt->xend,   bt->ystart, col);
+	va->AddVertexTC(drawPos + camera->GetRight() * interSize + camera->GetUp() * interSize, bt->xend,   bt->yend,   col);
+	va->AddVertexTC(drawPos - camera->GetRight() * interSize + camera->GetUp() * interSize, bt->xstart, bt->yend,   col);
 	#undef bt
+}
+
+int CBubbleProjectile::GetProjectilesCount() const
+{
+	return 1;
 }

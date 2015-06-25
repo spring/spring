@@ -5,7 +5,7 @@
 
 #include <string>
 #include <vector>
-#include <list>
+#include <deque>
 
 #include "IPath.h"
 #include "IPathFinder.h"
@@ -79,8 +79,7 @@ protected: // IPathFinder impl
 		const CSolidObject* owner,
 		const unsigned int pathOptDir,
 		const unsigned int blockStatus,
-		float speedMod,
-		bool withinConstraints);
+		float speedMod);
 	IPath::SearchResult FinishSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, IPath::Path& path) const;
 
 	const CPathCache::CacheItem* GetCache(
@@ -141,9 +140,16 @@ private:
 	CPathEstimator* nextPathEstimator;
 
 	std::vector<float> vertexCosts;	
-	std::list<int2> updatedBlocks;       /// Blocks that may need an update due to map changes.
+	std::deque<int2> updatedBlocks;       /// Blocks that may need an update due to map changes.
 
 	int blockUpdatePenalty;
+
+	struct SOffsetBlock {
+		float cost;
+		int2 offset;
+		SOffsetBlock(const float _cost, const int x, const int y) : cost(_cost), offset(x,y) {}
+	};
+	std::vector<SOffsetBlock> offsetBlocksSortedByCost;
 };
 
 #endif

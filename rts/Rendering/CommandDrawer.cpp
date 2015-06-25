@@ -25,13 +25,14 @@
 
 static bool IsUnitTrackable(const CUnit* unit, const CUnit* owner)
 {
-	if ((unit->losStatus[owner->allyteam] & (LOS_INLOS | LOS_INRADAR)) != 0) return true;
-	if (unit->unitDef->speed <= 0.0f) return true;
+	if ((unit->losStatus[owner->allyteam] & (LOS_INLOS | LOS_INRADAR)) != 0)
+		return true;
 
 	return false;
 }
 
 CommandDrawer* CommandDrawer::GetInstance() {
+	// luaQueuedUnitSet gets cleared each frame, so this is fine wrt. reloading
 	static CommandDrawer drawer;
 	return &drawer;
 }
@@ -51,6 +52,44 @@ void CommandDrawer::Draw(const CCommandAI* cai) const {
 
 
 
+void CommandDrawer::AddLuaQueuedUnit(const CUnit* unit) {
+	// needs to insert by id, pointers can become dangling
+	luaQueuedUnitSet.insert(unit->id);
+}
+
+void CommandDrawer::DrawLuaQueuedUnitSetCommands() const
+{
+	if (luaQueuedUnitSet.empty())
+		return;
+
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_DEPTH_TEST);
+
+	lineDrawer.Configure(cmdColors.UseColorRestarts(),
+	                     cmdColors.UseRestartColor(),
+	                     cmdColors.restart,
+	                     cmdColors.RestartAlpha());
+	lineDrawer.SetupLineStipple();
+
+	glEnable(GL_BLEND);
+	glBlendFunc((GLenum)cmdColors.QueuedBlendSrc(),
+	            (GLenum)cmdColors.QueuedBlendDst());
+
+	glLineWidth(cmdColors.QueuedLineWidth());
+
+	for (auto ui = luaQueuedUnitSet.cbegin(); ui != luaQueuedUnitSet.cend(); ++ui) {
+		const CUnit* unit = unitHandler->GetUnit(*ui);
+
+		if (unit == NULL || unit->commandAI == NULL)
+			continue;
+
+		Draw(unit->commandAI);
+	}
+
+	glLineWidth(1.0f);
+	glEnable(GL_DEPTH_TEST);
+}
+
 void CommandDrawer::DrawCommands(const CCommandAI* cai) const
 {
 	const CUnit* owner = cai->owner;
@@ -62,8 +101,7 @@ void CommandDrawer::DrawCommands(const CCommandAI* cai) const
 		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
 	}
 
-	CCommandQueue::const_iterator ci;
-	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
+	for (auto ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
 		const int cmdID = ci->GetID();
 
 		switch (cmdID) {
@@ -116,8 +154,7 @@ void CommandDrawer::DrawAirCAICommands(const CAirCAI* cai) const
 		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
 	}
 
-	CCommandQueue::const_iterator ci;
-	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
+	for (auto ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
 		const int cmdID = ci->GetID();
 
 		switch (cmdID) {
@@ -201,8 +238,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
 	}
 
-	CCommandQueue::const_iterator ci;
-	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
+	for (auto ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
 		const int cmdID = ci->GetID();
 
 		if (cmdID < 0) {
@@ -389,8 +425,7 @@ void CommandDrawer::DrawFactoryCAICommands(const CFactoryCAI* cai) const
 		DrawWaitIcon(commandQue.front());
 	}
 
-	CCommandQueue::const_iterator ci;
-	for (ci = newUnitCommands.begin(); ci != newUnitCommands.end(); ++ci) {
+	for (auto ci = newUnitCommands.begin(); ci != newUnitCommands.end(); ++ci) {
 		const int cmdID = ci->GetID();
 
 		switch (cmdID) {
@@ -485,8 +520,7 @@ void CommandDrawer::DrawMobileCAICommands(const CMobileCAI* cai) const
 		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
 	}
 
-	CCommandQueue::const_iterator ci;
-	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
+	for (auto ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
 		const int cmdID = ci->GetID();
 
 		switch (cmdID) {
@@ -570,8 +604,7 @@ void CommandDrawer::DrawTransportCAICommands(const CTransportCAI* cai) const
 		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
 	}
 
-	CCommandQueue::const_iterator ci;
-	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
+	for (auto ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
 		const int cmdID = ci->GetID();
 
 		switch (cmdID) {
@@ -721,11 +754,10 @@ void CommandDrawer::DrawQuedBuildingSquares(const CBuilderCAI* cai) const
 	const CCommandQueue& commandQue = cai->commandQue;
 	const std::map<int, string>& buildOptions = cai->buildOptions;
 
-	CCommandQueue::const_iterator ci;
-
 	int buildCommands = 0;
 	int underwaterCommands = 0;
-	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
+
+	for (auto ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
 		if (buildOptions.find(ci->GetID()) != buildOptions.end()) {
 			++buildCommands;
 			BuildInfo bi(*ci);
@@ -747,7 +779,7 @@ void CommandDrawer::DrawQuedBuildingSquares(const CBuilderCAI* cai) const
 	int uwqcounter = 0;
 	int linecounter = 0;
 
-	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
+	for (auto ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
 		if (buildOptions.find(ci->GetID()) != buildOptions.end()) {
 			BuildInfo bi(*ci);
 			bi.pos = CGameHelper::Pos2BuildPos(bi, false);

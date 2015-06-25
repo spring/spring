@@ -3,7 +3,7 @@
 // must be included before streflop! else we get streflop/cmath resolve conflicts in its hash implementation files
 #include <boost/unordered_map.hpp>
 #include <vector>
-
+#include <mutex>
 
 #include "NamedTextures.h"
 
@@ -14,6 +14,8 @@
 #include "System/TimeProfiler.h"
 #include "System/type2.h"
 #include "System/Log/ILog.h"
+#include "System/Threading/SpringMutex.h"
+
 
 #ifdef _MSC_VER
 	#include <map>
@@ -28,22 +30,26 @@ namespace CNamedTextures {
 
 	static TEXMAP texMap;
 	static std::vector<std::string> texWaiting;
+	static spring::recursive_mutex mutex;
 
 	/******************************************************************************/
 
 	void Init()
 	{
+		texMap.clear();
+		texWaiting.clear();
 	}
-
 
 	void Kill()
 	{
-		TEXMAP::iterator it;
-		for (it = texMap.begin(); it != texMap.end(); ++it) {
+		const std::lock_guard<spring::recursive_mutex> lck(mutex);
+		for (auto it = texMap.cbegin(); it != texMap.cend(); ++it) {
 			const GLuint texID = it->second.id;
 			glDeleteTextures(1, &texID);
 		}
+
 		texMap.clear();
+		texWaiting.clear();
 	}
 
 
@@ -123,6 +129,7 @@ namespace CNamedTextures {
 
 		if (!bitmap.Load(filename)) {
 			LOG_L(L_WARNING, "Couldn't find texture \"%s\"!", filename.c_str());
+			const std::lock_guard<spring::recursive_mutex> lck(mutex);
 			texMap[texName] = texInfo;
 			glBindTexture(GL_TEXTURE_2D, 0);
 			return false;
@@ -131,19 +138,10 @@ namespace CNamedTextures {
 		if (bitmap.compressed) {
 			texID = bitmap.CreateDDSTexture(texID);
 		} else {
-			if (resize) {
-				bitmap = bitmap.CreateRescaled(resizeDimensions.x,resizeDimensions.y);
-			}
-			if (invert) {
-				bitmap.InvertColors();
-			}
-			if (greyed) {
-				bitmap.GrayScale();
-			}
-			if (tint) {
-				bitmap.Tint(tintColor);
-			}
-
+			if (resize) bitmap = bitmap.CreateRescaled(resizeDimensions.x,resizeDimensions.y);
+			if (invert) bitmap.InvertColors();
+			if (greyed) bitmap.GrayScale();
+			if (tint)   bitmap.Tint(tintColor);
 
 			//! make the texture
 			glBindTexture(GL_TEXTURE_2D, texID);
@@ -207,8 +205,8 @@ namespace CNamedTextures {
 		texInfo.xsize = bitmap.xsize;
 		texInfo.ysize = bitmap.ysize;
 
+		const std::lock_guard<spring::recursive_mutex> lck(mutex);
 		texMap[texName] = texInfo;
-
 		return true;
 	}
 
@@ -220,7 +218,7 @@ namespace CNamedTextures {
 		}
 
 		// cached
-		TEXMAP::iterator it = texMap.find(texName);
+		const auto it = texMap.find(texName);
 		if (it != texMap.end()) {
 			const GLuint texID = it->second.id;
 			glBindTexture(GL_TEXTURE_2D, texID);
@@ -231,6 +229,7 @@ namespace CNamedTextures {
 		GLboolean inListCompile;
 		glGetBooleanv(GL_LIST_INDEX, &inListCompile);
 		if (inListCompile) {
+			const std::lock_guard<spring::recursive_mutex> lck(mutex);
 			GLuint texID = 0;
 			glGenTextures(1, &texID);
 
@@ -256,11 +255,13 @@ namespace CNamedTextures {
 			return;
 		}
 
+		const std::lock_guard<spring::recursive_mutex> lck(mutex);
+
 		glPushAttrib(GL_TEXTURE_BIT);
-		for (std::vector<std::string>::iterator it = texWaiting.begin(); it != texWaiting.end(); ++it) {
-			TEXMAP::iterator mit = texMap.find(*it);
+		for (const std::string& texString: texWaiting) {
+			const auto mit = texMap.find(texString);
 			if (mit != texMap.end()) {
-				Load(*it,mit->second.id);
+				Load(texString, mit->second.id);
 			}
 		}
 		glPopAttrib();
@@ -274,7 +275,8 @@ namespace CNamedTextures {
 			return false;
 		}
 
-		TEXMAP::iterator it = texMap.find(texName);
+		const std::lock_guard<spring::recursive_mutex> lck(mutex);
+		const auto it = texMap.find(texName);
 		if (it != texMap.end()) {
 			const GLuint texID = it->second.id;
 			glDeleteTextures(1, &texID);
@@ -301,6 +303,7 @@ namespace CNamedTextures {
 			GLboolean inListCompile;
 			glGetBooleanv(GL_LIST_INDEX, &inListCompile);
 			if (inListCompile) {
+				const std::lock_guard<spring::recursive_mutex> lck(mutex);
 				GLuint texID = 0;
 				glGenTextures(1, &texID);
 

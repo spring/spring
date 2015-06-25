@@ -292,6 +292,10 @@ namespace math {
 	inline float sqrt(float x) {
 		return fastmath::sqrt_sse(x);
 	}
+	float sqrtf(float x) _const;
+	inline float sqrtf(float x) {
+		return fastmath::sqrt_sse(x);
+	}
 
 	using fastmath::isqrt;
 	using fastmath::isqrt2;

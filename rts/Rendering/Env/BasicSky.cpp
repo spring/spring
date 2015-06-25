@@ -37,7 +37,6 @@ CBasicSky::CBasicSky()
 	, skyTex(0)
 	, skyDot3Tex(0)
 	, cloudDot3Tex(0)
-	, sunTex(0)
 	, sunFlareTex(0)
 	, skyTexUpdateIter(0)
 	, skyDomeList(0)
@@ -210,7 +209,6 @@ CBasicSky::~CBasicSky()
 	glDeleteTextures(1, &cloudDot3Tex);
 	glDeleteLists(skyDomeList, 1);
 
-	glDeleteTextures(1, &sunTex);
 	glDeleteTextures(1, &sunFlareTex);
 	glDeleteLists(sunFlareList,1);
 
@@ -591,7 +589,7 @@ void CBasicSky::UpdateSunFlare() {
 		glDeleteLists(sunFlareList, 1);
 
 	const float3 zdir = skyLight->GetLightDir();
-	const float3 xdir = zdir.cross(UpVector);
+	const float3 xdir = zdir.cross(UpVector).ANormalize();
 	const float3 ydir = zdir.cross(xdir);
 
 	sunFlareList = glGenLists(1);
@@ -607,7 +605,7 @@ void CBasicSky::UpdateSunFlare() {
 			const float dz = 5.0f;
 
 			glTexCoord2f(x / 256.0f, 0.25f); glVertexf3(zdir * dz + xdir * dx * 0.0014f + ydir * dy * 0.0014f);
-			glTexCoord2f(x / 256.0f, 0.75f); glVertexf3(zdir * dz + xdir * dx * 4.0000f + ydir * dy * 4.0000f);
+			glTexCoord2f(x / 256.0f, 0.75f); glVertexf3(zdir * dz + xdir * dx * 1.0000f + ydir * dy * 1.0000f);
 		}
 		glEnd();
 
@@ -621,29 +619,7 @@ void CBasicSky::UpdateSunFlare() {
 
 void CBasicSky::InitSun()
 {
-	unsigned char* mem = new unsigned char[128*128*4];
-
-	for(int y=0;y<128;++y){
-		for(int x=0;x<128;++x){
-			mem[(y*128+x)*4+0]=255;
-			mem[(y*128+x)*4+1]=255;
-			mem[(y*128+x)*4+2]=255;
-			float dist=math::sqrt((float)(y-64)*(y-64)+(x-64)*(x-64));
-			if(dist>60)
-				mem[(y*128+x)*4+3]=0;
-			else
-				mem[(y*128+x)*4+3]=255;
-		}
-	}
-
-	glGenTextures(1, &sunTex);
-	glBindTexture(GL_TEXTURE_2D, sunTex);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP);
-	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,128, 128, GL_RGBA, GL_UNSIGNED_BYTE, mem);
-
+	unsigned char mem[32*2];
 	for(int y=0;y<2;++y){
 		for(int x=0;x<32;++x){
 			if(y==0 && x%2)
@@ -658,9 +634,7 @@ void CBasicSky::InitSun()
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE ,32, 2, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, mem);
-
-	delete[] mem;
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, 32, 2, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, mem);
 }
 
 inline unsigned char CBasicSky::GetCloudThickness(int x,int y)

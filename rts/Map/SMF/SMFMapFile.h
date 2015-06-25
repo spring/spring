@@ -40,9 +40,14 @@ public:
 	 *   with SMFGroundTextures.cpp
 	 */
 	CFileHandler* GetFileHandler() { return &ifs; }
+	static void ReadMapTileHeader(MapTileHeader& head, CFileHandler& file);
+	static void ReadMapTileFileHeader(TileFileHeader& head, CFileHandler& file);
 
 private:
-	void ReadGrassMap(void* data);
+	bool ReadGrassMap(void* data);
+	void ReadMapHeader(SMFHeader& head, CFileHandler& file);
+	void ReadMapFeatureHeader(MapFeatureHeader& head, CFileHandler& file);
+	void ReadMapFeatureStruct(MapFeatureStruct& head, CFileHandler& file);
 
 	SMFHeader header;
 	CFileHandler ifs;

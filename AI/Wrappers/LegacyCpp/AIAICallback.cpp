@@ -749,7 +749,10 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 			unitDef->movedata->depth = sAICallback->UnitDef_MoveData_getDepth(skirmishAIId, unitDefId);
 			unitDef->movedata->maxSlope = sAICallback->UnitDef_MoveData_getMaxSlope(skirmishAIId, unitDefId);
 			unitDef->movedata->slopeMod = sAICallback->UnitDef_MoveData_getSlopeMod(skirmishAIId, unitDefId);
-			unitDef->movedata->depthMod = sAICallback->UnitDef_MoveData_getDepthMod(skirmishAIId, unitDefId);
+			// NOTE: If there will be more lambdas then it may be better to pass _this_ pointer into MoveData constructor
+			unitDef->movedata->GetDepthMod = [this, unitDefId](float height) {
+				return sAICallback->UnitDef_MoveData_getDepthMod(skirmishAIId, unitDefId, height);
+			};
 			unitDef->movedata->pathType = sAICallback->UnitDef_MoveData_getPathType(skirmishAIId, unitDefId);
 			unitDef->movedata->crushStrength = sAICallback->UnitDef_MoveData_getCrushStrength(skirmishAIId, unitDefId);
 			unitDef->movedata->moveType = (enum MoveData::MoveType) sAICallback->UnitDef_MoveData_getMoveType(skirmishAIId, unitDefId);
@@ -2079,20 +2082,12 @@ bool springLegacyAI::CAIAICallback::ReadFile(const char* filename, void* buffer,
 }
 
 
-#define AIAICALLBACK_CALL_LUA(HandleName, HANDLENAME)                                                                     \
-	const char* springLegacyAI::CAIAICallback::CallLua ## HandleName(const char* inData, int inSize, int* outSize) {      \
-		SCallLua ## HandleName ## Command cmd = {inData, inSize};                                                         \
-		sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_CALL_LUA_ ## HANDLENAME, &cmd); \
-                                                                                                                          \
-		if (outSize != NULL) {                                                                                            \
-			if (cmd.ret_outData != NULL) {                                                                                \
-				*outSize = strlen(cmd.ret_outData);                                                                       \
-			} else {                                                                                                      \
-				*outSize = -1;                                                                                            \
-			}                                                                                                             \
-		}                                                                                                                 \
-                                                                                                                          \
-		return cmd.ret_outData;                                                                                           \
+#define AIAICALLBACK_CALL_LUA(HandleName, HANDLENAME)  \
+	std::string springLegacyAI::CAIAICallback::CallLua ## HandleName(const char* inData, int inSize) {  \
+		char outData[MAX_RESPONSE_SIZE];  \
+		SCallLua ## HandleName ## Command cmd = {inData, inSize, outData};  \
+		sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_CALL_LUA_ ## HANDLENAME, &cmd);  \
+		return std::string(outData);  \
 	}
 
 AIAICALLBACK_CALL_LUA(Rules, RULES)

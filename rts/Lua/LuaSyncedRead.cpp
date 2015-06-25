@@ -282,6 +282,10 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetProjectileSpinVec);
 	REGISTER_LUA_CFUNC(GetPieceProjectileParams);
 	REGISTER_LUA_CFUNC(GetProjectileTarget);
+	REGISTER_LUA_CFUNC(GetProjectileIsIntercepted);
+	REGISTER_LUA_CFUNC(GetProjectileTimeToLive);
+	REGISTER_LUA_CFUNC(GetProjectileOwnerID);
+	REGISTER_LUA_CFUNC(GetProjectileTeamID);
 	REGISTER_LUA_CFUNC(GetProjectileType);
 	REGISTER_LUA_CFUNC(GetProjectileDefID);
 	REGISTER_LUA_CFUNC(GetProjectileName);
@@ -430,15 +434,12 @@ static inline bool IsFeatureVisible(lua_State* L, const CFeature* feature)
 	return feature->IsInLosForAllyTeam(CLuaHandle::GetHandleReadAllyTeam(L));
 }
 
-static inline bool IsProjectileVisible(lua_State* L, const ProjectileMapValPair& pp)
+static inline bool IsProjectileVisible(lua_State* L, const CProjectile* pro)
 {
-	const CProjectile* pro = pp.first;
-	const int proAllyteam = pp.second;
-
 	if (CLuaHandle::GetHandleReadAllyTeam(L) < 0) {
 		return CLuaHandle::GetHandleFullRead(L);
 	}
-	if ((CLuaHandle::GetHandleReadAllyTeam(L) != proAllyteam) &&
+	if ((CLuaHandle::GetHandleReadAllyTeam(L) != pro->GetAllyteamID()) &&
 	    (!losHandler->InLos(pro->pos, CLuaHandle::GetHandleReadAllyTeam(L)))) {
 		return false;
 	}
@@ -653,11 +654,11 @@ static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 static CProjectile* ParseProjectile(lua_State* L, const char* caller, int index)
 {
 	const int proID = luaL_checkint(L, index);
-	const ProjectileMapValPair* pp = projectileHandler->GetMapPairBySyncedID(proID);
-	if (!pp) {
+	CProjectile* p = projectileHandler->GetProjectileBySyncedID(proID);
+	if (!p) {
 		return NULL;
 	}
-	return IsProjectileVisible(L, *pp)? pp->first: NULL;
+	return IsProjectileVisible(L, p)? p : NULL;
 }
 
 
@@ -832,6 +833,9 @@ int LuaSyncedRead::FixedAllies(lua_State* L)
 
 int LuaSyncedRead::IsGameOver(lua_State* L)
 {
+	if (!game) {
+		return 0;
+	}
 	lua_pushboolean(L, game->IsGameOver());
 	return 1;
 }
@@ -1011,10 +1015,10 @@ int LuaSyncedRead::GetAllyTeamStartBox(lua_State* L)
 	if (allyTeam >= allyData.size())
 		return 0;
 
-	const float xmin = (gs->mapx * SQUARE_SIZE) * allyData[allyTeam].startRectLeft;
-	const float zmin = (gs->mapy * SQUARE_SIZE) * allyData[allyTeam].startRectTop;
-	const float xmax = (gs->mapx * SQUARE_SIZE) * allyData[allyTeam].startRectRight;
-	const float zmax = (gs->mapy * SQUARE_SIZE) * allyData[allyTeam].startRectBottom;
+	const float xmin = (mapDims.mapx * SQUARE_SIZE) * allyData[allyTeam].startRectLeft;
+	const float zmin = (mapDims.mapy * SQUARE_SIZE) * allyData[allyTeam].startRectTop;
+	const float xmax = (mapDims.mapx * SQUARE_SIZE) * allyData[allyTeam].startRectRight;
+	const float zmax = (mapDims.mapy * SQUARE_SIZE) * allyData[allyTeam].startRectBottom;
 
 	lua_pushnumber(L, xmin);
 	lua_pushnumber(L, zmin);
@@ -1177,27 +1181,27 @@ int LuaSyncedRead::GetTeamResources(lua_State* L)
 
 	const string type = luaL_checkstring(L, 2);
 	if (type == "metal") {
-		lua_pushnumber(L, team->metal);
-		lua_pushnumber(L, team->metalStorage);
-		lua_pushnumber(L, team->prevMetalPull);
-		lua_pushnumber(L, team->prevMetalIncome);
-		lua_pushnumber(L, team->prevMetalExpense);
-		lua_pushnumber(L, team->metalShare);
-		lua_pushnumber(L, team->prevMetalSent);
-		lua_pushnumber(L, team->prevMetalReceived);
-		lua_pushnumber(L, team->prevMetalExcess);
+		lua_pushnumber(L, team->res.metal);
+		lua_pushnumber(L, team->resStorage.metal);
+		lua_pushnumber(L, team->resPrevPull.metal);
+		lua_pushnumber(L, team->resPrevIncome.metal);
+		lua_pushnumber(L, team->resPrevExpense.metal);
+		lua_pushnumber(L, team->resShare.metal);
+		lua_pushnumber(L, team->resPrevSent.metal);
+		lua_pushnumber(L, team->resPrevReceived.metal);
+		lua_pushnumber(L, team->resPrevExcess.metal);
 		return 9;
 	}
 	else if (type == "energy") {
-		lua_pushnumber(L, team->energy);
-		lua_pushnumber(L, team->energyStorage);
-		lua_pushnumber(L, team->prevEnergyPull);
-		lua_pushnumber(L, team->prevEnergyIncome);
-		lua_pushnumber(L, team->prevEnergyExpense);
-		lua_pushnumber(L, team->energyShare);
-		lua_pushnumber(L, team->prevEnergySent);
-		lua_pushnumber(L, team->prevEnergyReceived);
-		lua_pushnumber(L, team->prevEnergyExcess);
+		lua_pushnumber(L, team->res.energy);
+		lua_pushnumber(L, team->resStorage.energy);
+		lua_pushnumber(L, team->resPrevPull.energy);
+		lua_pushnumber(L, team->resPrevIncome.energy);
+		lua_pushnumber(L, team->resPrevExpense.energy);
+		lua_pushnumber(L, team->resShare.energy);
+		lua_pushnumber(L, team->resPrevSent.energy);
+		lua_pushnumber(L, team->resPrevReceived.energy);
+		lua_pushnumber(L, team->resPrevExcess.energy);
 		return 9;
 	}
 
@@ -1208,7 +1212,7 @@ int LuaSyncedRead::GetTeamResources(lua_State* L)
 int LuaSyncedRead::GetTeamUnitStats(lua_State* L)
 {
 	const CTeam* team = ParseTeam(L, __FUNCTION__, 1);
-	if (team == NULL) {
+	if (team == NULL || game == NULL) {
 		return 0;
 	}
 	const int teamID = team->teamNum;
@@ -1232,7 +1236,7 @@ int LuaSyncedRead::GetTeamUnitStats(lua_State* L)
 int LuaSyncedRead::GetTeamResourceStats(lua_State* L)
 {
 	const CTeam* team = ParseTeam(L, __FUNCTION__, 1);
-	if (team == NULL) {
+	if (team == NULL || game == NULL) {
 		return 0;
 	}
 	const int teamID = team->teamNum;
@@ -1268,7 +1272,7 @@ int LuaSyncedRead::GetTeamResourceStats(lua_State* L)
 int LuaSyncedRead::GetTeamRulesParams(lua_State* L)
 {
 	CTeam* team = ParseTeam(L, __FUNCTION__, 1);
-	if (team == NULL) {
+	if (team == NULL || game == NULL) {
 		return 0;
 	}
 
@@ -1291,7 +1295,7 @@ int LuaSyncedRead::GetTeamRulesParams(lua_State* L)
 int LuaSyncedRead::GetTeamRulesParam(lua_State* L)
 {
 	CTeam* team = ParseTeam(L, __FUNCTION__, 1);
-	if (team == NULL) {
+	if (team == NULL || game == NULL) {
 		return 0;
 	}
 
@@ -1314,7 +1318,7 @@ int LuaSyncedRead::GetTeamRulesParam(lua_State* L)
 int LuaSyncedRead::GetTeamStatsHistory(lua_State* L)
 {
 	CTeam* team = ParseTeam(L, __FUNCTION__, 1);
-	if (team == NULL) {
+	if (team == NULL || game == NULL) {
 		return 0;
 	}
 	const int teamID = team->teamNum;
@@ -1433,9 +1437,7 @@ int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 	lua_pushboolean(L, player->spectator);
 	lua_pushnumber(L, player->team);
 	lua_pushnumber(L, teamHandler->AllyTeam(player->team));
-	const float pingScale = (GAME_SPEED * gs->speedFactor);
-	const float pingSecs = float(player->ping) / pingScale;
-	lua_pushnumber(L, pingSecs);
+	lua_pushnumber(L, player->ping * 0.001f); // in seconds
 	lua_pushnumber(L, player->cpuUsage);
 	lua_pushsstring(L, player->countryCode);
 	lua_pushnumber(L, player->rank);
@@ -2472,8 +2474,6 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 	const float3 mins(xmin, 0.0f, zmin);
 	const float3 maxs(xmax, 0.0f, zmax);
 
-	const bool renderAccess = !Threading::IsSimThread();
-
 	const vector<CProjectile*>& rectProjectiles = quadField->GetProjectilesExact(mins, maxs);
 	const unsigned int rectProjectileCount = rectProjectiles.size();
 	unsigned int arrayIndex = 1;
@@ -2484,9 +2484,6 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 		if (CLuaHandle::GetHandleFullRead(L)) {
 			for (unsigned int i = 0; i < rectProjectileCount; i++) {
 				const CProjectile* pro = rectProjectiles[i];
-
-				if (renderAccess && !projectileHandler->RenderAccess(pro))
-					continue;
 
 				// filter out unsynced projectiles, the SyncedRead
 				// projecile Get* functions accept only synced ID's
@@ -2507,12 +2504,6 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 		for (unsigned int i = 0; i < rectProjectileCount; i++) {
 			const CProjectile* pro = rectProjectiles[i];
 
-			if (renderAccess && !projectileHandler->RenderAccess(pro))
-				continue;
-
-			const CUnit* unit = pro->owner();
-			const ProjectileMapValPair proPair(const_cast<CProjectile*>(pro), ((unit != NULL)? unit->allyteam: CLuaHandle::GetHandleReadAllyTeam(L)));
-
 			// see above
 			if (!pro->synced)
 				continue;
@@ -2522,7 +2513,7 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 			if (pro->piece && excludePieceProjectiles)
 				continue;
 
-			if (!IsProjectileVisible(L, proPair))
+			if (!IsProjectileVisible(L, pro))
 				continue;
 
 			lua_pushnumber(L, pro->id);
@@ -2840,10 +2831,10 @@ int LuaSyncedRead::GetUnitResources(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	lua_pushnumber(L, unit->metalMake);
-	lua_pushnumber(L, unit->metalUse);
-	lua_pushnumber(L, unit->energyMake);
-	lua_pushnumber(L, unit->energyUse);
+	lua_pushnumber(L, unit->resourcesMake.metal);
+	lua_pushnumber(L, unit->resourcesUse.metal);
+	lua_pushnumber(L, unit->resourcesMake.energy);
+	lua_pushnumber(L, unit->resourcesUse.energy);
 	return 4;
 }
 
@@ -3053,8 +3044,11 @@ int LuaSyncedRead::GetUnitHarvestStorage(lua_State* L)
 		return 0;
 	}
 
-	lua_pushnumber(L, unit->harvestStorage);
-	return 1;
+	for (int i = 0; i < SResourcePack::MAX_RESOURCES; ++i) {
+		lua_pushnumber(L, unit->harvested[i]);
+		lua_pushnumber(L, unit->harvestStorage[i]);
+	}
+	return 2 * SResourcePack::MAX_RESOURCES;
 }
 
 
@@ -3213,6 +3207,17 @@ int LuaSyncedRead::GetUnitFlanking(lua_State* L)
 }
 
 
+int LuaSyncedRead::GetUnitMaxRange(lua_State* L)
+{
+	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	lua_pushnumber(L, unit->maxRange);
+	return 1;
+}
+
+
 int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
 {
 	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
@@ -3346,13 +3351,13 @@ int LuaSyncedRead::GetUnitWeaponTryTarget(lua_State* L)
 		pos.z = luaL_optnumber(L, 5, 0.0f);
 
 	} else {
-		if ((enemy = ParseUnit(L, __FUNCTION__, 3)) == NULL)
-			return 0;
+		enemy = ParseUnit(L, __FUNCTION__, 3);
 
-		pos = weapon->GetUnitPositionWithError(enemy);
+		if (enemy == NULL)
+			return 0;
 	}
 
-	lua_pushboolean(L, weapon->TryTarget(pos, true, enemy));
+	lua_pushboolean(L, weapon->TryTarget(SWeaponTarget(enemy, pos, true)));
 	return 1;
 }
 
@@ -3382,10 +3387,10 @@ int LuaSyncedRead::GetUnitWeaponTestTarget(lua_State* L)
 		if ((enemy = ParseUnit(L, __FUNCTION__, 3)) == NULL)
 			return 0;
 
-		pos = weapon->GetUnitPositionWithError(enemy);
+		pos = weapon->GetUnitLeadTargetPos(enemy);
 	}
 
-	lua_pushboolean(L, weapon->TestTarget(pos, true, enemy));
+	lua_pushboolean(L, weapon->TestTarget(pos, SWeaponTarget(enemy, pos, true)));
 	return 1;
 }
 
@@ -3415,10 +3420,10 @@ int LuaSyncedRead::GetUnitWeaponTestRange(lua_State* L)
 		if ((enemy = ParseUnit(L, __FUNCTION__, 3)) == NULL)
 			return 0;
 
-		pos = weapon->GetUnitPositionWithError(enemy);
+		pos = weapon->GetUnitLeadTargetPos(enemy);
 	}
 
-	lua_pushboolean(L, weapon->TestRange(pos, true, enemy));
+	lua_pushboolean(L, weapon->TestRange(pos, SWeaponTarget(enemy, pos, true)));
 	return 1;
 }
 
@@ -3448,10 +3453,10 @@ int LuaSyncedRead::GetUnitWeaponHaveFreeLineOfFire(lua_State* L)
 		if ((enemy = ParseUnit(L, __FUNCTION__, 3)) == NULL)
 			return 0;
 
-		pos = weapon->GetUnitPositionWithError(enemy);
+		pos = weapon->GetUnitLeadTargetPos(enemy);
 	}
 
-	lua_pushboolean(L, weapon->HaveFreeLineOfFire(pos, true, enemy));
+	lua_pushboolean(L, weapon->HaveFreeLineOfFire(pos, SWeaponTarget(enemy, pos, true)));
 	return 1;
 }
 
@@ -3488,34 +3493,30 @@ int LuaSyncedRead::GetUnitWeaponTarget(lua_State* L)
 		return 0;
 
 	const CWeapon* weapon = unit->weapons[weaponNum];
-	const CWorldObject* target = NULL;
+	auto curTarget = weapon->GetCurrentTarget();
 
-	lua_pushnumber(L, weapon->targetType);
+	lua_pushnumber(L, curTarget.type);
 
-	switch (weapon->targetType) {
+	switch (curTarget.type) {
 		case Target_None:
 			return 1;
 			break;
 		case Target_Unit: {
-			lua_pushboolean(L, weapon->haveUserTarget);
-			target = weapon->targetUnit;
-			assert(target != NULL);
-			lua_pushnumber(L, (target != NULL)? target->id: -1);
+			lua_pushboolean(L, curTarget.isUserTarget);
+			lua_pushnumber(L, curTarget.unit->id);
 			break;
 		}
 		case Target_Pos: {
-			lua_pushboolean(L, weapon->haveUserTarget);
+			lua_pushboolean(L, curTarget.isUserTarget);
 			lua_createtable(L, 3, 0);
-			lua_pushnumber(L, weapon->targetPos.x); lua_rawseti(L, -2, 1);
-			lua_pushnumber(L, weapon->targetPos.y); lua_rawseti(L, -2, 2);
-			lua_pushnumber(L, weapon->targetPos.z); lua_rawseti(L, -2, 3);
+			lua_pushnumber(L, curTarget.groundPos.x); lua_rawseti(L, -2, 1);
+			lua_pushnumber(L, curTarget.groundPos.y); lua_rawseti(L, -2, 2);
+			lua_pushnumber(L, curTarget.groundPos.z); lua_rawseti(L, -2, 3);
 			break;
 		}
 		case Target_Intercept: {
-			lua_pushboolean(L, weapon->haveUserTarget);
-			target = weapon->interceptTarget;
-			assert(target != NULL);
-			lua_pushnumber(L, (target != NULL)? target->id: -1);
+			lua_pushboolean(L, curTarget.isUserTarget);
+			lua_pushnumber(L, curTarget.intercept->id);
 			break;
 		}
 	}
@@ -4208,7 +4209,7 @@ int LuaSyncedRead::GetRealBuildQueue(lua_State* L)
 int LuaSyncedRead::GetUnitRulesParams(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	if (unit == NULL || game == NULL) {
 		return 0;
 	}
 
@@ -4240,7 +4241,7 @@ int LuaSyncedRead::GetUnitRulesParams(lua_State* L)
 int LuaSyncedRead::GetUnitRulesParam(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	if (unit == NULL || game == NULL) {
 		return 0;
 	}
 
@@ -4285,14 +4286,15 @@ int LuaSyncedRead::GetUnitCmdDescs(lua_State* L)
 	int endIndex = lastDesc;
 	if ((args >= 2) && lua_isnumber(L, 2)) {
 		startIndex = lua_toint(L, 2) - 1;
-		startIndex = max(0, min(lastDesc, startIndex));
 		if ((args >= 3) && lua_isnumber(L, 3)) {
 			endIndex = lua_toint(L, 3) - 1;
-			endIndex = max(0, min(lastDesc, endIndex));
 		} else {
 			endIndex = startIndex;
 		}
 	}
+	startIndex = Clamp(startIndex, 0, lastDesc);
+	endIndex   = Clamp(endIndex  , 0, lastDesc);
+
 	lua_createtable(L, endIndex - startIndex, 0);
 	int count = 1;
 	for (int i = startIndex; i <= endIndex; i++) {
@@ -4475,9 +4477,9 @@ int LuaSyncedRead::GetFeatureResources(lua_State* L)
 	if (feature == NULL || !IsFeatureVisible(L, feature)) {
 		return 0;
 	}
-	lua_pushnumber(L,  feature->RemainingMetal());
+	lua_pushnumber(L,  feature->resources.metal);
 	lua_pushnumber(L,  feature->def->metal);
-	lua_pushnumber(L,  feature->RemainingEnergy());
+	lua_pushnumber(L,  feature->resources.energy);
 	lua_pushnumber(L,  feature->def->energy);
 	lua_pushnumber(L,  feature->reclaimLeft);
 	return 5;
@@ -4603,7 +4605,6 @@ int LuaSyncedRead::GetPieceProjectileParams(lua_State* L)
 	return (1 + 1 + 1 + 3);
 }
 
-
 int LuaSyncedRead::GetProjectileTarget(lua_State* L)
 {
 	const CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
@@ -4642,6 +4643,61 @@ int LuaSyncedRead::GetProjectileTarget(lua_State* L)
 	// projectile target cannot be anything else
 	assert(false);
 	return 0;
+}
+
+int LuaSyncedRead::GetProjectileIsIntercepted(lua_State* L)
+{
+	const CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
+
+	if (pro == NULL || !pro->weapon)
+		return 0;
+
+	const CWeaponProjectile* wpro = static_cast<const CWeaponProjectile*>(pro);
+	
+	lua_pushboolean(L, wpro->IsBeingIntercepted());
+	return 1;
+}
+
+int LuaSyncedRead::GetProjectileTimeToLive(lua_State* L)
+{
+	const CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
+
+	if (pro == NULL || !pro->weapon)
+		return 0;
+
+	const CWeaponProjectile* wpro = static_cast<const CWeaponProjectile*>(pro);
+	
+	lua_pushnumber(L, wpro->GetTimeToLive());
+	return 1;
+}
+
+int LuaSyncedRead::GetProjectileOwnerID(lua_State* L)
+{
+	const CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
+
+	if (pro == NULL)
+		return 0;
+
+	const int unitID = pro->GetOwnerID();
+	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits()))
+		return 0;
+	
+	lua_pushnumber(L, unitID);
+	return 1;
+}
+
+int LuaSyncedRead::GetProjectileTeamID(lua_State* L)
+{
+	const CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
+
+	if (pro == NULL)
+		return 0;
+
+	if (!teamHandler->IsValidTeam(pro->GetTeamID()))
+		return 0;
+	
+	lua_pushnumber(L, pro->GetTeamID());
+	return 1;
 }
 
 int LuaSyncedRead::GetProjectileType(lua_State* L)
@@ -4747,8 +4803,8 @@ int LuaSyncedRead::GetGroundInfo(lua_State* L)
 	const int ix = Clamp(x, 0.0f, float3::maxxpos) / (SQUARE_SIZE * 2);
 	const int iz = Clamp(z, 0.0f, float3::maxzpos) / (SQUARE_SIZE * 2);
 
-	const int maxIndex = (gs->hmapx * gs->hmapy) - 1;
-	const int sqrIndex = std::min(maxIndex, (gs->hmapx * iz) + ix);
+	const int maxIndex = (mapDims.hmapx * mapDims.hmapy) - 1;
+	const int sqrIndex = std::min(maxIndex, (mapDims.hmapx * iz) + ix);
 	const int typeIndex = readMap->GetTypeMapSynced()[sqrIndex];
 
 	// arguments to LuaMetalMap::GetMetalAmount in half-heightmap coors
@@ -4782,10 +4838,10 @@ static void ParseMapCoords(lua_State* L, const char* caller,
 	}
 
 	// quantize and clamp
-	tx1 = Clamp((int)(fx1 / SQUARE_SIZE), 0, gs->mapxm1);
-	tx2 = Clamp((int)(fx2 / SQUARE_SIZE), 0, gs->mapxm1);
-	tz1 = Clamp((int)(fz1 / SQUARE_SIZE), 0, gs->mapym1);
-	tz2 = Clamp((int)(fz2 / SQUARE_SIZE), 0, gs->mapym1);
+	tx1 = Clamp((int)(fx1 / SQUARE_SIZE), 0, mapDims.mapxm1);
+	tx2 = Clamp((int)(fx2 / SQUARE_SIZE), 0, mapDims.mapxm1);
+	tz1 = Clamp((int)(fz1 / SQUARE_SIZE), 0, mapDims.mapym1);
+	tz2 = Clamp((int)(fz2 / SQUARE_SIZE), 0, mapDims.mapym1);
 
 	return;
 }
@@ -4837,7 +4893,9 @@ int LuaSyncedRead::GetGroundExtremes(lua_State* L)
 {
 	lua_pushnumber(L, readMap->GetInitMinHeight());
 	lua_pushnumber(L, readMap->GetInitMaxHeight());
-	return 2;
+	lua_pushnumber(L, readMap->GetCurrMinHeight());
+	lua_pushnumber(L, readMap->GetCurrMaxHeight());
+	return 4;
 }
 
 
@@ -5129,8 +5187,8 @@ int LuaSyncedRead::GetClosestValidPosition(lua_State* L)
 	const float x     = luaL_checkfloat(L, 2);
 	const float z     = luaL_checkfloat(L, 3);
 	const float r     = luaL_checkfloat(L, 4);*/
-	//const int mx = (int)max(0 , min(gs->mapxm1, (int)(x / SQUARE_SIZE)));
-	//const int mz = (int)max(0 , min(gs->mapym1, (int)(z / SQUARE_SIZE)));
+	//const int mx = (int)max(0 , min(mapDims.mapxm1, (int)(x / SQUARE_SIZE)));
+	//const int mz = (int)max(0 , min(mapDims.mapym1, (int)(z / SQUARE_SIZE)));
 	return 0;
 }
 

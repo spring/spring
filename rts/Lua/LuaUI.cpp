@@ -88,32 +88,8 @@ static const char* GetVFSMode()
 
 static boost::mutex m_singleton;
 
-
-void CLuaUI::LoadHandler()
-{
-	{
-		std::lock_guard<boost::mutex> lk(m_singleton);
-		if (luaUI) return;
-
-		luaUI = new CLuaUI();
-	}
-
-	if (!luaUI->IsValid()) {
-		FreeHandler();
-	}
-}
-
-
-void CLuaUI::FreeHandler()
-{
-	std::lock_guard<boost::mutex> lk(m_singleton);
-	if (!luaUI) return;
-
-	auto* inst = luaUI;
-	luaUI = NULL;
-	inst->KillLua();
-	delete inst;
-}
+DECL_LOAD_HANDLER(CLuaUI, luaUI)
+DECL_FREE_HANDLER(CLuaUI, luaUI)
 
 
 /******************************************************************************/

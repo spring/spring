@@ -37,8 +37,8 @@
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Path/IPathManager.h"
-#include "Sim/Units/Groups/Group.h"
-#include "Sim/Units/Groups/GroupHandler.h"
+#include "Game/UI/Groups/Group.h"
+#include "Game/UI/Groups/GroupHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/CommandQueue.h"
 #include "Sim/Units/UnitTypes/Factory.h"
@@ -135,9 +135,9 @@ CAICallback::CAICallback(int teamId)
 void CAICallback::SendStartPos(bool ready, float3 startPos)
 {
 	if (ready) {
-		net->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, team, CPlayer::PLAYER_RDYSTATE_READIED, startPos.x, startPos.y, startPos.z));
+		clientNet->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, team, CPlayer::PLAYER_RDYSTATE_READIED, startPos.x, startPos.y, startPos.z));
 	} else {
-		net->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, team, CPlayer::PLAYER_RDYSTATE_UPDATED, startPos.x, startPos.y, startPos.z));
+		clientNet->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, team, CPlayer::PLAYER_RDYSTATE_UPDATED, startPos.x, startPos.y, startPos.z));
 	}
 }
 
@@ -187,7 +187,7 @@ bool CAICallback::SendResources(float mAmount, float eAmount, int receivingTeamI
 		eAmount = std::max(0.0f, std::min(eAmount, GetEnergy()));
 		std::vector<short> empty;
 
-		net->Send(CBaseNetProtocol::Get().SendAIShare(ubyte(gu->myPlayerNum), skirmishAIHandler.GetCurrentAIID(), ubyte(team), ubyte(receivingTeamId), mAmount, eAmount, empty));
+		clientNet->Send(CBaseNetProtocol::Get().SendAIShare(ubyte(gu->myPlayerNum), skirmishAIHandler.GetCurrentAIID(), ubyte(team), ubyte(receivingTeamId), mAmount, eAmount, empty));
 	}
 
 	return ret;
@@ -226,7 +226,7 @@ int CAICallback::SendUnits(const std::vector<int>& unitIds, int receivingTeamId)
 		if (!sentUnitIDs.empty()) {
 			// we ca not use SendShare() here either, since
 			// AIs do not have a notion of "selected units"
-			net->Send(CBaseNetProtocol::Get().SendAIShare(ubyte(gu->myPlayerNum), skirmishAIHandler.GetCurrentAIID(), ubyte(team), ubyte(receivingTeamId), 0.0f, 0.0f, sentUnitIDs));
+			clientNet->Send(CBaseNetProtocol::Get().SendAIShare(ubyte(gu->myPlayerNum), skirmishAIHandler.GetCurrentAIID(), ubyte(team), ubyte(receivingTeamId), 0.0f, 0.0f, sentUnitIDs));
 		}
 	}
 
@@ -389,7 +389,7 @@ int CAICallback::GiveOrder(int unitId, Command* c)
 		return -5;
 	}
 
-	net->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, skirmishAIHandler.GetCurrentAIID(), unitId, c->GetID(), c->aiCommandId, c->options, c->params));
+	clientNet->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, skirmishAIHandler.GetCurrentAIID(), unitId, c->GetID(), c->aiCommandId, c->options, c->params));
 
 	return 0;
 }
@@ -970,12 +970,12 @@ int CAICallback::GetNeutralUnits(int* unitIds, const float3& pos, float radius, 
 
 int CAICallback::GetMapWidth()
 {
-	return gs->mapx;
+	return mapDims.mapx;
 }
 
 int CAICallback::GetMapHeight()
 {
-	return gs->mapy;
+	return mapDims.mapy;
 }
 
 
@@ -1164,42 +1164,42 @@ float3 CAICallback::ClosestBuildSite(const UnitDef* unitDef, const float3& pos, 
 
 float CAICallback::GetMetal()
 {
-	return teamHandler->Team(team)->metal;
+	return teamHandler->Team(team)->res.metal;
 }
 
 float CAICallback::GetMetalIncome()
 {
-	return teamHandler->Team(team)->prevMetalIncome;
+	return teamHandler->Team(team)->resPrevIncome.metal;
 }
 
 float CAICallback::GetMetalUsage()
 {
-	return teamHandler->Team(team)->prevMetalExpense;
+	return teamHandler->Team(team)->resPrevExpense.metal;
 }
 
 float CAICallback::GetMetalStorage()
 {
-	return teamHandler->Team(team)->metalStorage;
+	return teamHandler->Team(team)->resStorage.metal;
 }
 
 float CAICallback::GetEnergy()
 {
-	return teamHandler->Team(team)->energy;
+	return teamHandler->Team(team)->res.energy;
 }
 
 float CAICallback::GetEnergyIncome()
 {
-	return teamHandler->Team(team)->prevEnergyIncome;
+	return teamHandler->Team(team)->resPrevIncome.energy;
 }
 
 float CAICallback::GetEnergyUsage()
 {
-	return teamHandler->Team(team)->prevEnergyExpense;
+	return teamHandler->Team(team)->resPrevExpense.energy;
 }
 
 float CAICallback::GetEnergyStorage()
 {
-	return teamHandler->Team(team)->energyStorage;
+	return teamHandler->Team(team)->resStorage.energy;
 }
 
 bool CAICallback::GetUnitResourceInfo(int unitId, UnitResourceInfo* unitResInf)
@@ -1209,10 +1209,10 @@ bool CAICallback::GetUnitResourceInfo(int unitId, UnitResourceInfo* unitResInf)
 	verify();
 	const CUnit* unit = GetInLosUnit(unitId);
 	if (unit) {
-		unitResInf->energyMake = unit->energyMake;
-		unitResInf->energyUse  = unit->energyUse;
-		unitResInf->metalMake  = unit->metalMake;
-		unitResInf->metalUse   = unit->metalUse;
+		unitResInf->energyMake = unit->resourcesMake.energy;
+		unitResInf->energyUse  = unit->resourcesUse.energy;
+		unitResInf->metalMake  = unit->resourcesMake.metal;
+		unitResInf->metalUse   = unit->resourcesUse.metal;
 		fetchOk = true;
 	}
 
@@ -1430,7 +1430,7 @@ bool CAICallback::GetValue(int id, void *data)
 			return true;
 		}
 		case AIVAL_SCRIPT: {
-			*(const char**) data = gameSetup ? gameSetup->gameSetupText.c_str() : "";
+			*(const char**) data = gameSetup ? gameSetup->setupText.c_str() : "";
 			return true;
 		}
 		default:
@@ -1450,19 +1450,19 @@ int CAICallback::HandleCommand(int commandId, void* data)
 			   TODO: gu->myPlayerNum makes the command to look like as it comes from the local player,
 			   "team" should be used (but needs some major changes in other engine parts)
 			*/
-			net->Send(CBaseNetProtocol::Get().SendMapDrawPoint(gu->myPlayerNum, (short)cmdData->pos.x, (short)cmdData->pos.z, std::string(cmdData->label), false));
+			clientNet->Send(CBaseNetProtocol::Get().SendMapDrawPoint(gu->myPlayerNum, (short)cmdData->pos.x, (short)cmdData->pos.z, std::string(cmdData->label), false));
 			return 1;
 		} break;
 		case AIHCAddMapLineId: {
 			const AIHCAddMapLine* cmdData = static_cast<AIHCAddMapLine*>(data);
 			// see TODO above
-			net->Send(CBaseNetProtocol::Get().SendMapDrawLine(gu->myPlayerNum, (short)cmdData->posfrom.x, (short)cmdData->posfrom.z, (short)cmdData->posto.x, (short)cmdData->posto.z, false));
+			clientNet->Send(CBaseNetProtocol::Get().SendMapDrawLine(gu->myPlayerNum, (short)cmdData->posfrom.x, (short)cmdData->posfrom.z, (short)cmdData->posto.x, (short)cmdData->posto.z, false));
 			return 1;
 		} break;
 		case AIHCRemoveMapPointId: {
 			const AIHCRemoveMapPoint* cmdData = static_cast<AIHCRemoveMapPoint*>(data);
 			// see TODO above
-			net->Send(CBaseNetProtocol::Get().SendMapErase(gu->myPlayerNum, (short)cmdData->pos.x, (short)cmdData->pos.z));
+			clientNet->Send(CBaseNetProtocol::Get().SendMapErase(gu->myPlayerNum, (short)cmdData->pos.x, (short)cmdData->pos.z));
 			return 1;
 		} break;
 		case AIHCSendStartPosId:
@@ -1530,7 +1530,7 @@ int CAICallback::HandleCommand(int commandId, void* data)
 		case AIHCPauseId: {
 			AIHCPause* cmdData = static_cast<AIHCPause*>(data);
 
-			net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, cmdData->enable));
+			clientNet->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, cmdData->enable));
 			LOG("Skirmish AI controlling team %i paused the game, reason: %s",
 					team,
 					cmdData->reason != NULL ? cmdData->reason : "UNSPECIFIED");

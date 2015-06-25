@@ -1,6 +1,14 @@
 How to make a spring release
 ============================
 
+Prerequisite
+-----------
+
+1) Create at least two release candidates for testing and wait at least a week for feedback.
+http://springrts.com/wiki/Download_Testing
+
+2) Check if the bug tracker contains no cricitical bugs, especially
+http://springrts.com/mantis/roadmap_page.php
 
 Preparation
 -----------
@@ -10,44 +18,29 @@ Preparation
 2) check if all git submodules are up to date:
 	git submodule foreach git pull
    commit if needed.
-3) Create the release branch:
-		git checkout -b release
-		git push origin release
-   From now on, EVERYTHING that should to be in the release,
-   has to be commited on this branch.
-4) Write & update the change-log (doc/changelog.txt)
-5) Possibly add fixes
-~) You may want to merge the release branch into develop from time to time:
-		git checkout develop
-		git merge release --no-ff
+3) Write & update the change-log (doc/changelog.txt)
+4) Possibly add fixes
 
-For every month of development the release (and feature-freeze) branch should kept about one week.
-So if last release was 5 months ago, the release branch should stay for 5 weeks of feature-freeze / fixing bugs.
 
 Release Time
 ------------
 
-1) Merge the release branch into master:
+1) Merge the develop branch into master:
 		git checkout master
 		git reset --hard origin/master
-		git merge release --no-ff
+		git merge develop --no-ff
 2) Tag the release:
-		export REL_VERS=96.0
+		export REL_VERS=98.0
 		git tag -a -m "${REL_VERS} release [changed APIs: Lua, unitsync, AI]" ${REL_VERS}
    Make sure it looks correct:
-		gitk master develop release &
-3) Merge the release branch into develop:
-		git checkout develop
-		git fetch
-		git stash
-		# Do not forget this, somewhen later:
-		#git stash pop
-		git rebase origin/develop
-		git merge release --no-ff
-4) Tag the develop branch:
+		gitk master develop &
+3) Tag the develop branch:
 		git tag -a -m "dev version after the ${REL_VERS} release" ${REL_VERS}.1
-5) POINT OF NO RETURN: Push to the main repo (and delete the release branch):
+4) POINT OF NO RETURN: Push to the main repo (and delete the release branch):
 		git push --tags origin develop :release master
+
+5) switch back your local branch to develop so you don't commit into the master branch by accident:
+		git checkout develop
 6) The Buildbot should automaticly start build the release on the buildslaves, wait for it until all builds are done,
    the OS-X buildslave will take about one hour or more!
 7) Write the news post for the springrts.com frontpage, while waiting for the

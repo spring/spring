@@ -18,9 +18,11 @@ public:
 		const float range
 	);
 
-	void Draw();
-	void Update();
-	void Init(const CUnit* owner, const float3& offset);
+	void Draw() override;
+	void Update() override;
+	void Init(const CUnit* owner, const float3& offset) override;
+
+	virtual int GetProjectilesCount() const override;
 
 private:
 	float speedf;

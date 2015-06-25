@@ -24,7 +24,7 @@
 CUnitDefHandler* unitDefHandler = NULL;
 
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && (_MSC_VER < 1800)
 bool isblank(int c) {
 	return (c == ' ') || (c == '\t') || (c == '\r') || (c == '\n');
 }

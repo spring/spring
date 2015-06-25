@@ -65,7 +65,7 @@ endif (CUSTOM_COMPILER_DEFINITIONS)
 ### set the default build type
 if    (NOT CMAKE_BUILD_TYPE)
 	SET(CMAKE_BUILD_TYPE RELWITHDEBINFO CACHE STRING
-		"Choose the type of build, options are: RELWITHDEBINFO DEBUG DEBUG2 DEBUG3 RELEASE PROFILE"
+		"Choose the type of build, options are: RELWITHDEBINFO DEBUG RELEASE PROFILE"
 		FORCE)
 endif (NOT CMAKE_BUILD_TYPE)
 
@@ -141,12 +141,14 @@ else  (UNIX AND NOT MINGW)
 			${MINGWLIBS}/freetype
 			${CMAKE_FIND_ROOT_PATH})
 		set(ENV{OPENALDIR} ${MINGWLIBS}/OpenAL)
-		include_directories(${MINGWLIBS}/zlib/include)
+		include_directories(${ZLIB_INCLUDE_DIR})
 
 		set(BOOST_LIBRARYDIR ${MINGWLIBS}/boost/lib)
 		add_definitions("-DBOOST_ALL_NO_LIB")
 		set(Boost_USE_STATIC_LIBS ON)
 		set(GLEW_STATIC ON)
+		
+		add_definitions("-DNOMINMAX")
 
 		set(EXE_FLAGS WIN32)
 	else(MSVC)
@@ -265,9 +267,6 @@ ENDIF (UNIX AND NOT MINGW)
 # Note the missing REQUIRED, as headless & dedi may not depend on those.
 #  So req. checks are done in the build target's CMakeLists.txt.
 FIND_PACKAGE(SDL2)
-if("${SDL2_VERSION_STRING}" VERSION_LESS "2")
-	message(FATAL_ERROR "Found SDL v${SDL2_VERSION_STRING} while 2 is required!")
-endif()
 
 FIND_PACKAGE_STATIC(DevIL)
 IF    (PREFER_STATIC_LIBS)
@@ -310,13 +309,18 @@ if    (CMAKE_SIZEOF_VOID_P EQUAL 8)
 	Message(STATUS "Building Spring for 64bit environment")
 	set(MARCH_BITS 64 INTERNAL)
 	if     (MINGW)
-		Message(FATAL_ERROR "Spring's MinGWLibs don't include 64bit libraries (yet). Please, compile as 32bit.")
+		Message(FATAL_ERROR "Spring's MinGWLibs don't include 64bit libraries (yet). Please, compile as 32bit. See https://springrts.com/wiki/Building_Spring_on_Windows for instructions.")
 	endif  (MINGW)
 else  (CMAKE_SIZEOF_VOID_P EQUAL 8)
 	Message(STATUS "Building Spring for 32bit environment")
 	set(MARCH_BITS 32 INTERNAL)
 endif (CMAKE_SIZEOF_VOID_P EQUAL 8)
 
+INCLUDE (CheckFunctionExists)
+CHECK_FUNCTION_EXISTS(strnlen HAVE_STRNLEN)
+if (NOT HAVE_STRNLEN)
+	Message(FATAL_ERROR "this compiler/environment isn't supported, the function strnlen is missing!")
+endif()
 
 ### Add Link-Time-Optimization flags, if supported (GCC >= 4.5) and enabled
 Set(CMAKE_CXX_FLAGS           "${CMAKE_CXX_FLAGS}           ${LTO_FLAGS}")
@@ -356,6 +360,7 @@ if (THREADPOOL)
 endif(THREADPOOL)
 
 
+### warnings
 if(NOT MSVC)
 	### SigNan
 	option(SIGNAL_NANS "Enable NaN-Signalling" ${DEBUG_BUILD})
@@ -381,7 +386,12 @@ if(NOT MSVC)
 	endif (MAX_WARNINGS)
 endif(NOT MSVC)
 
-### CXX_FLAGS
+
+### streflop
+add_definitions(-DSTREFLOP_SSE) # would break AI compiling, but is undefined in ./AI/CMakeLists.txt
+
+
+### compiler specific flags
 set(CXX_FLAGS_DEBUG_ADDITIONAL "")
 if    ($ENV{CXX} MATCHES "icpc")
 	# intel C/C++ compiler fix; it does not support these flags:
@@ -389,13 +399,18 @@ if    ($ENV{CXX} MATCHES "icpc")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -axK") # SSE1
 	set(CXX_FLAGS_DEBUG_ADDITIONAL "-g -debug full")
 elseif (CMAKE_COMPILER_IS_GNUCXX)
+	if    (UNIX)
+		CHECK_AND_ADD_FLAGS(CMAKE_CXX_FLAGS "-fdiagnostics-color=always")
+	endif (UNIX)
+
 	if    (MARCH_FLAG)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${MARCH_FLAG}")
 		Message(STATUS "using march=${MARCH_FLAG}")
 	else  (MARCH_FLAG)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=generic")
-		Message(STATUS "using mtune=generic (unsure if it will sync in online gaming)")
+		Message(STATUS "using mtune=generic")
 	endif (MARCH_FLAG)
+
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SSE_FLAGS}") # SSE1
 elseif (MSVC)
 	# nothing to be done here
@@ -403,8 +418,8 @@ else   (MSVC)
 	Message(WARNING "unknown compiler")
 endif ($ENV{CXX} MATCHES "icpc")
 
-add_definitions(-DSTREFLOP_SSE) # would break AI compiling, but is undefined in ./AI/CMakeLists.txt
 
+#### build types
 if    (MSVC)
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LARGEADDRESSAWARE")
 else  (MSVC)
@@ -421,18 +436,14 @@ else  (MSVC)
 
 	add_definitions(-DBOOST_NO_FENV_H) # streflop overrides fenv.h
 
-	set(CMAKE_CXX_FLAGS_DEBUG           "${CXX_FLAGS_DEBUG_ADDITIONAL} -O1     ${DEBUG_WARNINGS}  -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
-	set(CMAKE_CXX_FLAGS_DEBUG2          "${CXX_FLAGS_DEBUG_ADDITIONAL} -O0     ${DEBUG_WARNINGS}  -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
-	set(CMAKE_CXX_FLAGS_DEBUG3          "${CXX_FLAGS_DEBUG_ADDITIONAL} -O0     ${DEBUG_WARNINGS}  -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
+	set(CMAKE_CXX_FLAGS_DEBUG           "${CXX_FLAGS_DEBUG_ADDITIONAL} -O0     ${DEBUG_WARNINGS}  -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO  "${CXX_FLAGS_DEBUG_ADDITIONAL} -O2     ${COMMON_WARNINGS} -DNDEBUG")
 	set(CMAKE_CXX_FLAGS_RELEASE         "                              -O2     ${COMMON_WARNINGS} -DNDEBUG")
 	set(CMAKE_CXX_FLAGS_PROFILE         "                              -O2 -pg ${DEBUG_WARNINGS}  -DNDEBUG -DPROFILE")
 	set(CMAKE_MODULE_LINKER_FLAGS_PROFILE "-pg")
 	set(CMAKE_SHARED_LINKER_FLAGS_PROFILE "-pg")
 
-	set(CMAKE_CXX_FLAGS_DEBUG           "${CMAKE_CXX_FLAGS_DEBUG}  -ggdb1")
-	set(CMAKE_CXX_FLAGS_DEBUG2          "${CMAKE_CXX_FLAGS_DEBUG2} -ggdb2")
-	set(CMAKE_CXX_FLAGS_DEBUG3          "${CMAKE_CXX_FLAGS_DEBUG3} -ggdb3")
+	set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG} -ggdb")
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g")
 
 	if     (MINGW)

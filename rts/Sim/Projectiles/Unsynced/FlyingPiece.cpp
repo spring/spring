@@ -17,6 +17,31 @@ SS3OFlyingPiece::~SS3OFlyingPiece() {
 }
 
 
+S3DOFlyingPiece::S3DOFlyingPiece(const float3& pos, const float3& speed, int team, const S3DOPiece* _piece, const S3DOPrimitive* _chunk)
+: piece(_piece)
+, chunk(_chunk)
+{
+	const std::vector<S3DOVertex>& vertices = piece->vertices;
+	const std::vector<int>&         indices = chunk->vertices;
+	float3 maxDist;
+	for (int i = 0; i < 4; i++) {
+		maxDist = float3::max(float3::fabs(vertices[indices[i]].pos), maxDist);
+	}
+	InitCommon(pos, speed, maxDist.Length(), team);
+}
+
+
+SS3OFlyingPiece::SS3OFlyingPiece(const float3& pos, const float3& speed, int team, int textureType, const SS3OVertex* _chunk)
+: chunk(_chunk)
+{
+	float3 maxDist;
+	for (int i = 0; i < 4; i++) {
+		maxDist = float3::max(float3::fabs(chunk[i].pos), maxDist);
+	}
+	InitCommon(pos, speed, maxDist.Length(), team);
+	texture = textureType;
+}
+
 
 bool FlyingPiece::Update() {
 	pos      += speed;
@@ -30,10 +55,11 @@ bool FlyingPiece::Update() {
 	return (pos.y >= CGround::GetApproximateHeight(pos.x, pos.z - 10.0f, false));
 }
 
-void FlyingPiece::InitCommon(const float3& _pos, const float3& _speed, int _team)
+void FlyingPiece::InitCommon(const float3 _pos, const float3 _speed, const float _radius, int _team)
 {
 	pos   = _pos;
 	speed = _speed;
+	radius = _radius * 1.5f + 10.f;
 
 	texture = 0;
 	team    = _team;
@@ -47,9 +73,7 @@ void FlyingPiece::DrawCommon(size_t* lastTeam, CVertexArray* va) {
 
 	if (team != *lastTeam) {
 		*lastTeam = team;
-
 		va->DrawArrayTN(GL_QUADS); //switch to GL_TRIANGLES?
-		va = GetVertexArray();
 		va->Initialize();
 		unitDrawer->SetTeamColour(team);
 	}

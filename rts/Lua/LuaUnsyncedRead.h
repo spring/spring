@@ -12,7 +12,7 @@ class LuaUnsyncedRead {
 	public:
 		static bool PushEntries(lua_State* L);
 
-	private:
+	public:
 		static int IsReplay(lua_State* L);
 		static int GetReplayLength(lua_State* L);
 		static int GetModUICtrl(lua_State* L);
@@ -70,6 +70,8 @@ class LuaUnsyncedRead {
 		static int GetWaterMode(lua_State* L);
 		static int GetMapDrawMode(lua_State* L);
 		static int GetMapSquareTexture(lua_State* L);
+
+		static int GetLosViewColors(lua_State* L);
 
 		static int GetCameraNames(lua_State* L);
 		static int GetCameraState(lua_State* L);

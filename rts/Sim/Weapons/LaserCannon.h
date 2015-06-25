@@ -11,11 +11,10 @@ class CLaserCannon: public CWeapon
 public:
 	CLaserCannon(CUnit* owner, const WeaponDef* def);
 
-	void Update();
-	void UpdateRange(float val);
+	void UpdateRange(const float val) override final;
 
 private:
-	void FireImpl(bool scriptCall);
+	void FireImpl(const bool scriptCall) override final;
 
 private:
 	float3 color;

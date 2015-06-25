@@ -117,12 +117,6 @@ std::string GetAdditional()
 	return additional;
 }
 
-const std::string& GetBuildTime()
-{
-	static const std::string buildTime = __DATE__ " " __TIME__;
-	return buildTime;
-}
-
 #define QUOTEME_(x) #x
 #define QUOTEME(x) QUOTEME_(x)
 
@@ -172,6 +166,15 @@ bool IsRelease()
 bool IsHeadless()
 {
 #ifdef HEADLESS
+	return true;
+#else
+	return false;
+#endif
+}
+
+bool IsUnitsync()
+{
+#ifdef UNITSYNC
 	return true;
 #else
 	return false;

@@ -71,6 +71,8 @@ private:
 	 * units it carries.
 	 */
 	bool SpotIsClearIgnoreSelf(float3 pos, CUnit* unitToUnload);
+
+private:
 	std::list<float3> dropSpots;
 	bool isFirstIteration;
 	float3 startingDropPos;

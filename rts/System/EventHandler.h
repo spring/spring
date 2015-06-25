@@ -23,6 +23,9 @@ class CEventHandler
 		CEventHandler();
 		~CEventHandler();
 
+		void ResetState();
+		void SetupEvents();
+
 		void AddClient(CEventClient* ec);
 		void RemoveClient(CEventClient* ec);
 
@@ -37,17 +40,8 @@ class CEventHandler
 		bool IsController(const std::string& ciName) const;
 
 	public: // EventBatchHandler
-		void UpdateUnits();
-		void UpdateDrawUnits();
 		void DeleteSyncedUnits();
-		void UpdateFeatures();
-		void UpdateDrawFeatures();
-		void DeleteSyncedFeatures();
-		void UpdateProjectiles();
-		void UpdateDrawProjectiles();
-		void DeleteSyncedProjectiles();
-		void UpdateObjects();
-		void DeleteSyncedObjects();
+
 	public:
 		/**
 		 * @name Synced_events
@@ -100,6 +94,7 @@ class CEventHandler
 			int weaponDefID,
 			int projectileID,
 			bool paralyzer);
+		void UnitStunned(const CUnit* unit, bool stunned);
 		void UnitExperience(const CUnit* unit, float oldExperience);
 		void UnitHarvestStorageFull(const CUnit* unit);
 
@@ -266,10 +261,8 @@ class CEventHandler
 
 		void CollectGarbage();
 		void DbgTimingInfo(DbgTimingInfoType type, const spring_time start, const spring_time end);
+		void MetalMapChanged(const int x, const int z);
 		/// @}
-
-		//FIXME no real event
-		void LoadedModelRequested();
 
 	private:
 		typedef vector<CEventClient*> EventClientList;
@@ -466,6 +459,13 @@ inline void CEventHandler::UnitDamaged(
 	bool paralyzer)
 {
 	ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(UnitDamaged, unit, attacker, damage, weaponDefID, projectileID, paralyzer)
+}
+
+inline void CEventHandler::UnitStunned(
+	const CUnit* unit,
+	bool stunned)
+{
+	ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(UnitStunned, unit, stunned)
 }
 
 

@@ -237,8 +237,8 @@ public:
 	void GetCategoryName(int categoryFlag, char* name, int name_sizeMax);
 
 
-	const char* CallLuaRules(const char* inData, int inSize, int* outSize);
-	const char* CallLuaUI(const char* inData, int inSize, int* outSize);
+	std::string CallLuaRules(const char* inData, int inSize);
+	std::string CallLuaUI(const char* inData, int inSize);
 
 	std::map<std::string, std::string> GetMyInfo();
 	std::map<std::string, std::string> GetMyOptionValues();

@@ -5,14 +5,6 @@
 class CProjectile;
 struct FlyingPiece;
 
-struct ProjectileDetacher {
-	static void Detach(CProjectile* p);
-};
-struct ProjectileIndexer {
-	static int Index(const CProjectile* p);
-};
-
-
 
 struct ProjectileDistanceComparator {
 	bool operator() (const CProjectile* arg1, const CProjectile* arg2) const;

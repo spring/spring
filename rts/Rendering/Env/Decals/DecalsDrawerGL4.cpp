@@ -6,7 +6,6 @@
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
 #include "Lua/LuaParser.h"
-#include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -20,6 +19,7 @@
 //#include "Rendering/GL/TimerQuery.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/GL/VBO.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -221,8 +221,8 @@ void CDecalsDrawerGL4::LoadShaders()
 	}
 
 	decalShader->Enable();
-		decalShader->SetUniform("invMapSizePO2", 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE));
-		decalShader->SetUniform("invMapSize",    1.0f / (gs->mapx * SQUARE_SIZE),     1.0f / (gs->mapy * SQUARE_SIZE));
+		decalShader->SetUniform("invMapSizePO2", 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE));
+		decalShader->SetUniform("invMapSize",    1.0f / (mapDims.mapx * SQUARE_SIZE),     1.0f / (mapDims.mapy * SQUARE_SIZE));
 		decalShader->SetUniform("invScreenSize", 1.0f / globalRendering->viewSizeX,   1.0f / globalRendering->viewSizeY);
 
 	decalShader->Disable();
@@ -557,7 +557,6 @@ void CDecalsDrawerGL4::Draw()
 	}
 	glTimer.Start();*/
 
-	const CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 	const CSMFReadMap* smfrm = dynamic_cast<CSMFReadMap*>(readMap);
 
 	glEnable(GL_BLEND);
@@ -570,12 +569,12 @@ void CDecalsDrawerGL4::Draw()
 	//glEnable(GL_DEPTH_TEST);
 
 	decalShader->SetFlag("HAVE_SHADOWS", shadowHandler && shadowHandler->shadowsLoaded);
-	decalShader->SetFlag("HAVE_INFOTEX", gd->DrawExtraTex());
+	decalShader->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
 
 	decalShader->Enable();
 		decalShader->SetUniform3v("camPos", &camera->GetPos()[0]);
-		//decalShader->SetUniform("invMapSizePO2", 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE));
-		//decalShader->SetUniform("invMapSize",    1.0f / (gs->mapx * SQUARE_SIZE),     1.0f / (gs->mapy * SQUARE_SIZE));
+		//decalShader->SetUniform("invMapSizePO2", 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE));
+		//decalShader->SetUniform("invMapSize",    1.0f / (mapDims.mapx * SQUARE_SIZE),     1.0f / (mapDims.mapy * SQUARE_SIZE));
 		//decalShader->SetUniform("invScreenSize", 1.0f / globalRendering->viewSizeX,   1.0f / globalRendering->viewSizeY);
 
 	glActiveTexture(GL_TEXTURE1);
@@ -593,7 +592,7 @@ void CDecalsDrawerGL4::Draw()
 	}
 
 	glActiveTexture(GL_TEXTURE3);
-		glBindTexture(GL_TEXTURE_2D, gd->GetActiveInfoTexture());
+		glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
 
 	glActiveTexture(GL_TEXTURE4);
 		glBindTexture(GL_TEXTURE_2D, depthTex);
@@ -717,7 +716,7 @@ void CDecalsDrawerGL4::AddExplosion(float3 pos, float damage, float radius, bool
 	const float altitude = pos.y - CGround::GetHeightReal(pos.x, pos.z, false);
 
 	// no decals for below-ground & in-air explosions
-	if (abs(altitude) > radius) { return; }
+	if (std::abs(altitude) > radius) { return; }
 
 	pos.y -= altitude;
 	radius -= altitude;
