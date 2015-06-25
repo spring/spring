@@ -189,11 +189,8 @@ void CWorldDrawer::Draw()
 		SCOPED_TIMER("WorldDrawer::Water");
 
 		if (!water->DrawSolid()) {
-			//! Water rendering will overwrite features, so save them
-			featureDrawer->SwapFeatures();
 			water->UpdateWater(game);
 			water->Draw();
-			featureDrawer->SwapFeatures();
 		}
 	}
 
