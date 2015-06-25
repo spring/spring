@@ -329,6 +329,10 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 
 	if (p->synced) {
 		ASSERT_SYNCED(p->id);
+#ifdef TRACE_SYNC
+		tracefile << "New projectile id: " << p->id << ", ownerID: " << p->GetOwnerID();
+		tracefile << ", type: " << p->GetProjectileType() << " pos: <" << p->pos.x << ", " << p->pos.y << ", " << p->pos.z << ">\n";
+#endif
 	}
 
 	eventHandler.ProjectileCreated(p, p->GetAllyteamID());
