@@ -138,9 +138,7 @@ void CFireProjectile::Update()
 		pi->posDif*=0.9f;
 	}
 
-	if (subParticles.empty() && (ttl <= 0)) {
-		deleteMe = true;
-	}
+	deleteMe |= ttl <= -particleTime;
 }
 
 void CFireProjectile::Draw()
