@@ -8,6 +8,7 @@
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "System/Color.h"
+#include "System/Exceptions.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 
@@ -95,6 +96,10 @@ CHeightTexture::CHeightTexture()
 			const char* fmt = "%s-shader validation error: %s";
 			LOG_L(L_ERROR, fmt, shader->GetName().c_str(), shader->GetLog().c_str());
 		}
+	}
+
+	if (!fbo.IsValid() || !shader->IsValid()) {
+		throw opengl_error("");
 	}
 }
 

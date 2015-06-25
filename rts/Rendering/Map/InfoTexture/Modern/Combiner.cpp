@@ -6,6 +6,7 @@
 #include "Rendering/Shaders/Shader.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "System/Exceptions.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 
@@ -55,6 +56,10 @@ CInfoTextureCombiner::CInfoTextureCombiner()
 	}
 
 	shader = shaderHandler->CreateProgramObject("[CInfoTextureCombiner]", "CInfoTextureCombiner", false);
+
+	if (!fbo.IsValid() || !shader->IsValid()) {
+		throw opengl_error("");
+	}
 }
 
 

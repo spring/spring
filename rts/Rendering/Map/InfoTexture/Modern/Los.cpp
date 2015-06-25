@@ -6,6 +6,7 @@
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Sim/Misc/LosHandler.h"
+#include "System/Exceptions.h"
 #include "System/TimeProfiler.h"
 #include "System/Log/ILog.h"
 
@@ -83,6 +84,10 @@ CLosTexture::CLosTexture()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glSpringTexStorage2D(GL_TEXTURE_2D, 1, GL_RG8, texSize.x, texSize.y);
+	}
+
+	if (!fbo.IsValid() || !shader->IsValid()) {
+		throw opengl_error("");
 	}
 }
 
