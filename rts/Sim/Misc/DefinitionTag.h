@@ -284,12 +284,15 @@ private:
 #define GETSECONDARG( x, y, ... ) y
 
 #define DEFTAG_CNTER(Defs, DefClass, T, name, varname) \
-	struct MACRO_CONCAT(do_once_,name) { MACRO_CONCAT(do_once_,name)() { \
-		Defs.AddInitializer([](void* instance) { \
+	struct MACRO_CONCAT(do_once_,name) { \
+		MACRO_CONCAT(do_once_,name)() { \
+			Defs.AddInitializer(&MACRO_CONCAT(do_once_,name)::Initializer); \
+		} \
+		static void Initializer(void* instance) { \
 			T& staticCheckType = static_cast<DefClass*>(instance)->varname; \
 			staticCheckType = Defs.GetTag<T>(#name); \
-		}); \
-	}} static MACRO_CONCAT(do_once_,name); \
+		} \
+	} static MACRO_CONCAT(do_once_,name); \
 	static DefTagBuilder<T> deftag_##name = Defs.AddTag<T>(#name)
 
 #define tagFunction(fname) \
