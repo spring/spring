@@ -250,6 +250,7 @@ public:
 	}
 
 	void Load(void* instance, const LuaTable& luaTable);
+	void ReportUnknownTags(const std::string& instanceName, const LuaTable& luaTable, const std::string pre = "");
 
 public:
 	void OutputMetaDataMap() const;

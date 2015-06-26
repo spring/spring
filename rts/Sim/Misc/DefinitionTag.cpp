@@ -216,6 +216,25 @@ void DefType::CheckType(const DefTagMetaData* meta, const std::type_info& want)
 }
 
 
+void DefType::ReportUnknownTags(const std::string& instanceName, const LuaTable& luaTable, const std::string pre)
+{
+	std::vector<std::string> keys;
+	luaTable.GetKeys(keys);
+	for (const std::string& tag: keys) {
+		const DefTagMetaData* meta = GetMetaDataByExternalKey(pre + tag);
+		if (meta != nullptr)
+			continue;
+
+		if (luaTable.GetType(tag) == LuaTable::TABLE) {
+			ReportUnknownTags(instanceName, luaTable.SubTable(tag), pre + tag + ".");
+			continue;
+		}
+
+		LOG_L(L_WARNING, "%s: Unknown tag \"%s%s\" in \"%s\"", name.c_str(), pre.c_str(), tag.c_str(), instanceName.c_str());
+	}
+}
+
+
 void DefType::Load(void* instance, const LuaTable& luaTable)
 {
 	this->luaTable = &luaTable;

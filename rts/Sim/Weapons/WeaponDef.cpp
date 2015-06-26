@@ -284,6 +284,7 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	, collisionFlags(0)
 {
 	WeaponDefs.Load(this, wdTable);
+	WeaponDefs.ReportUnknownTags(name, wdTable);
 
 	if (wdTable.KeyExists("cylinderTargetting"))
 		LOG_L(L_WARNING, "WeaponDef (%s) cylinderTargetting is deprecated and will be removed in the next release (use cylinderTargeting).", name.c_str());
