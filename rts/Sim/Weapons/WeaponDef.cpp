@@ -189,7 +189,7 @@ WEAPONTAG(bool, visibleShield).externalName("shield.visible").fallbackName("visi
 	.defaultValue(false).description("Is the shield visible or not?");
 WEAPONTAG(bool, visibleShieldRepulse).externalName("shield.visibleRepulse").fallbackName("visibleShieldRepulse")
 	.defaultValue(false).description("Is the (hard-coded) repulse effect rendered or not?");
-WEAPONTAG(int, visibleShieldHitFrames).externalName("visibleHitFrames").fallbackName("visibleShieldHitFrames")
+WEAPONTAG(int, visibleShieldHitFrames).externalName("shield.visibleHitFrames").fallbackName("visibleShieldHitFrames")
 	.defaultValue(0).description("The number of frames a shield becomes visible for when hit.");
 WEAPONTAG(float3, shieldBadColor).externalName("shield.badColor").fallbackName("shieldBadColor")
 	.defaultValue(float3(1.0f, 0.5f, 0.5f)).description("The RGB colour the shield transitions to as its hit-points are reduced towards 0.");
@@ -481,10 +481,9 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 
 	const std::string& colormap = wdTable.GetString("colormap", "");
 
+	visuals.colorMap = nullptr;
 	if (!colormap.empty()) {
 		visuals.colorMap = CColorMap::LoadFromDefString(colormap);
-	} else {
-		visuals.colorMap = NULL;
 	}
 
 	ParseWeaponSounds(wdTable);
