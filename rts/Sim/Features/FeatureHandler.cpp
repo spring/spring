@@ -374,14 +374,14 @@ bool CFeatureHandler::AddFeature(CFeature* feature)
 	}
 
 	InsertActiveFeature(feature);
-	SetFeatureUpdateable(feature, true);
+	SetFeatureUpdateable(feature);
 	return true;
 }
 
 
 void CFeatureHandler::DeleteFeature(CFeature* feature)
 {
-	SetFeatureUpdateable(feature, true);
+	SetFeatureUpdateable(feature);
 	feature->deleteMe = true;
 }
 
@@ -483,28 +483,15 @@ void CFeatureHandler::Update()
 }
 
 
-void CFeatureHandler::SetFeatureUpdateable(CFeature* feature, bool updateable)
+void CFeatureHandler::SetFeatureUpdateable(CFeature* feature)
 {
-	if (updateable) {
-		if (feature->inUpdateQue) {
+	if (feature->inUpdateQue) {
 			assert(std::find(updateFeatures.begin(), updateFeatures.end(), feature) != updateFeatures.end());
 			return;
-		}
-
-		updateFeatures.push_back(feature);
-	} else {
-		if (!feature->inUpdateQue) {
-			assert(std::find(updateFeatures.begin(), updateFeatures.end(), feature) == updateFeatures.end());
-			return;
-		}
-		
-		auto it = std::find(updateFeatures.begin(), updateFeatures.end(), feature);
-		assert(it != updateFeatures.end());
-		*it = updateFeatures.back();
-		updateFeatures.pop_back();
 	}
-
-	feature->inUpdateQue = updateable;
+	assert(std::find(updateFeatures.begin(), updateFeatures.end(), feature) == updateFeatures.end());
+	updateFeatures.push_back(feature);
+	feature->inUpdateQue = true;
 }
 
 
@@ -520,7 +507,7 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 			feature->UpdateFinalHeight(true);
 
 			// put this feature back in the update-queue
-			SetFeatureUpdateable(feature, true);
+			SetFeatureUpdateable(feature);
 		}
 	}
 }

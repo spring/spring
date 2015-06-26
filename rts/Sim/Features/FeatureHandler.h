@@ -56,7 +56,7 @@ public:
 	const FeatureDef* GetFeatureDef(std::string name, const bool showError = true);
 	const FeatureDef* GetFeatureDefByID(int id);
 
-	void SetFeatureUpdateable(CFeature* feature, bool updateable);
+	void SetFeatureUpdateable(CFeature* feature);
 	void TerrainChanged(int x1, int y1, int x2, int y2);
 
 	const std::map<std::string, const FeatureDef*>& GetFeatureDefs() const { return featureDefs; }

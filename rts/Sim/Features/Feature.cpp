@@ -448,7 +448,7 @@ void CFeature::SetVelocity(const float3& v)
 	UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, v != ZeroVector);
 
 	if (IsMoving()) {
-		featureHandler->SetFeatureUpdateable(this, true);
+		featureHandler->SetFeatureUpdateable(this);
 	}
 }
 
@@ -644,7 +644,7 @@ void CFeature::StartFire()
 		return;
 
 	fireTime = 200 + (int)(gs->randFloat() * GAME_SPEED);
-	featureHandler->SetFeatureUpdateable(this, true);
+	featureHandler->SetFeatureUpdateable(this);
 
 	myFire = new CFireProjectile(midPos, UpVector, 0, 300, 70, radius * 0.8f, 20.0f);
 }
