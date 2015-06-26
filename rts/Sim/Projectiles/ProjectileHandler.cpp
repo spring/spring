@@ -190,6 +190,8 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 			eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
 			syncedProjectileIDs[p->id] = nullptr;
 			freeSyncedIDs.push_back(p->id);
+			ASSERT_SYNCED(p->pos);
+			ASSERT_SYNCED(p->id);
 		} else {
 		#if UNSYNCED_PROJ_NOEVENT
 			eventHandler.UnsyncedProjectileDestroyed(p);
