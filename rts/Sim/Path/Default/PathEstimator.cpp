@@ -29,6 +29,7 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileQueryFlags.h"
 #include "System/Platform/Threading.h"
+#include "System/Sync/HsiehHash.h"
 
 
 CONFIG(int, MaxPathCostsMemoryFootPrint).defaultValue(512).minimumValue(64).description("Maximum memusage (in MByte) of mutlithreaded pathcache generator at loading time.");
@@ -155,6 +156,9 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 		WriteFile(cacheFileName, map);
 		loadscreen->SetLoadMessage("PathCosts: written", true);
 	}
+
+	// Calculate PreCached PathData Checksum
+	pathChecksum = CalcChecksum();
 
 	// switch to runtime wanted IPathFinder (maybe PF or PE)
 	delete pathFinders[0];
@@ -734,7 +738,6 @@ IPath::SearchResult CPathEstimator::FinishSearch(const MoveDef& moveDef, const C
 
 /**
  * Try to read offset and vertices data from file, return false on failure
- * TODO: Read-error-check.
  */
 bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::string& map)
 {
@@ -853,6 +856,20 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
 	}
 
 	delete pfile;
+}
+
+
+boost::uint32_t CPathEstimator::CalcChecksum() const
+{
+	boost::uint32_t pathChecksum = 0;
+
+	for (auto& pathTypeOffsets: blockStates.peNodeOffsets) {
+		pathChecksum = HsiehHash(&pathTypeOffsets[0], pathTypeOffsets.size() * sizeof(short2), pathChecksum);
+	}
+
+	pathChecksum = HsiehHash(&vertexCosts[0], vertexCosts.size() * sizeof(float), pathChecksum);
+
+	return pathChecksum;
 }
 
 

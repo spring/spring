@@ -229,9 +229,7 @@ void QTPFS::PathManager::Load() {
 			maxNumLeafNodes = std::max(nodeLayers[layerNum].GetNumLeafNodes(), maxNumLeafNodes);
 		}
 
-		#ifdef SYNCDEBUG
 		{ SyncedUint tmp(pfsCheckSum); }
-		#endif
 
 		PathSearch::InitGlobalQueue(maxNumLeafNodes);
 	}

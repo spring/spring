@@ -114,6 +114,7 @@ private:
 
 	bool ReadFile(const std::string& cacheFileName, const std::string& map);
 	void WriteFile(const std::string& cacheFileName, const std::string& map);
+	boost::uint32_t CalcChecksum() const;
 	unsigned int Hash() const;
 
 private:

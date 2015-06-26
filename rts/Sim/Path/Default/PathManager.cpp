@@ -56,14 +56,10 @@ boost::int64_t CPathManager::Finalize() {
 		medResPE = new CPathEstimator(maxResPF, MEDRES_PE_BLOCKSIZE, "pe",  mapInfo->map.name);
 		lowResPE = new CPathEstimator(medResPE, LOWRES_PE_BLOCKSIZE, "pe2", mapInfo->map.name);
 
-		#ifdef SYNCDEBUG
-		// clients may have a non-writable cache directory (which causes
-		// the estimator path-file checksum to remain zero), so we can't
-		// update the sync-checker with this in normal builds
-		// NOTE: better to just checksum the in-memory data and broadcast
-		// that instead of relying on the zip-file CRC?
+		// make cached path data checksum part of synced state
+		// so when one client got a corrupted/incorrect cache
+		// it desyncs from the starts and not minutes later
 		{ SyncedUint tmp(GetPathCheckSum()); }
-		#endif
 	}
 
 	const spring_time dt = spring_gettime() - t0;
