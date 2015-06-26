@@ -27,7 +27,6 @@ CR_REG_METADATA(CFeatureHandler, (
 	CR_MEMBER(toBeFreedFeatureIDs),
 	CR_MEMBER(activeFeatures),
 	CR_MEMBER(features),
-	CR_MEMBER(toBeRemoved),
 	CR_MEMBER(updateFeatures)
 ))
 
@@ -382,9 +381,8 @@ bool CFeatureHandler::AddFeature(CFeature* feature)
 
 void CFeatureHandler::DeleteFeature(CFeature* feature)
 {
-	eventHandler.FeatureDestroyed(feature);
-
-	toBeRemoved.push_back(feature->id);
+	SetFeatureUpdateable(feature, true);
+	feature->deleteMe = true;
 }
 
 CFeature* CFeatureHandler::GetFeature(int id)
@@ -450,37 +448,36 @@ void CFeatureHandler::Update()
 		}
 	}
 
-	{
-		if (!toBeRemoved.empty()) {
-			while (!toBeRemoved.empty()) {
-				CFeature* feature = GetFeature(toBeRemoved.back());
-				toBeRemoved.pop_back();
-
-				if (feature) {
-					toBeFreedFeatureIDs.push_back(feature->id);
-					activeFeatures.erase(feature);
-					features[feature->id] = NULL;
-
-					CSolidObject::SetDeletingRefID(feature->id + unitHandler->MaxUnits());
-					// destructor removes feature from update-queue
-					delete feature;
-					CSolidObject::SetDeletingRefID(-1);
-				}
-			}
-		}
-	}
-
-	CFeatureSet::iterator fi = updateFeatures.begin();
+	auto fi = updateFeatures.begin();
 
 	while (fi != updateFeatures.end()) {
 		CFeature* feature = *fi;
-		++fi;
-
 		assert(feature->inUpdateQue);
+		
+		if (feature->deleteMe) {
+			eventHandler.FeatureDestroyed(feature);
+			toBeFreedFeatureIDs.push_back(feature->id);
+			activeFeatures.erase(feature);
+			features[feature->id] = NULL;
 
-		if (!feature->Update()) {
-			// feature is done updating itself, remove from queue
-			SetFeatureUpdateable(feature, false);
+			CSolidObject::SetDeletingRefID(feature->id + unitHandler->MaxUnits());
+			// destructor removes feature from update-queue
+			delete feature;
+			CSolidObject::SetDeletingRefID(-1);
+			
+			*fi = updateFeatures.back();
+			updateFeatures.pop_back();
+		} else {
+
+			if (!feature->Update()) {
+				// feature is done updating itself, remove from queue
+				feature->inUpdateQue = false;
+				*fi = updateFeatures.back();
+				updateFeatures.pop_back();
+				
+			} else {
+				++fi;
+			}
 		}
 	}
 }
@@ -490,18 +487,21 @@ void CFeatureHandler::SetFeatureUpdateable(CFeature* feature, bool updateable)
 {
 	if (updateable) {
 		if (feature->inUpdateQue) {
-			assert(updateFeatures.find(feature) != updateFeatures.end());
+			assert(std::find(updateFeatures.begin(), updateFeatures.end(), feature) != updateFeatures.end());
 			return;
 		}
 
-		updateFeatures.insert(feature);
+		updateFeatures.push_back(feature);
 	} else {
 		if (!feature->inUpdateQue) {
-			assert(updateFeatures.find(feature) == updateFeatures.end());
+			assert(std::find(updateFeatures.begin(), updateFeatures.end(), feature) == updateFeatures.end());
 			return;
 		}
-
-		updateFeatures.erase(feature);
+		
+		auto it = std::find(updateFeatures.begin(), updateFeatures.end(), feature);
+		assert(it != updateFeatures.end());
+		*it = updateFeatures.back();
+		updateFeatures.pop_back();
 	}
 
 	feature->inUpdateQue = updateable;

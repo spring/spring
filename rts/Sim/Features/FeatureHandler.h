@@ -95,8 +95,7 @@ private:
 	CFeatureSet activeFeatures;
 	std::vector<CFeature*> features;
 
-	std::list<int> toBeRemoved;
-	CFeatureSet updateFeatures;
+	std::vector<CFeature*> updateFeatures;
 };
 
 extern CFeatureHandler* featureHandler;

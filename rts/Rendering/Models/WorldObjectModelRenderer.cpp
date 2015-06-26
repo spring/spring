@@ -131,10 +131,9 @@ void IWorldObjectModelRenderer::AddFeature(const CFeature* f, float alpha)
 void IWorldObjectModelRenderer::DelFeature(const CFeature* f)
 {
 	FeatureSet& fs = features[TEX_TYPE(f)];
-	
 	auto it = std::find_if(fs.begin(), fs.end(), [f](const PDrawFeature& p){ return p.first == f;});
+
 	assert(it != fs.end());
-	
 	*it = fs.back();
 	fs.pop_back();
 	numFeatures -= 1;
