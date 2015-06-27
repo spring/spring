@@ -2007,7 +2007,7 @@ void CUnitDrawer::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newS
 		if (newStatus & LOS_PREVLOS) {
 			if (allyTeam == gu->myAllyTeam) {
 				if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
-					erase(liveGhostBuildings[MDL_TYPE(unit)], u);
+					insert_unique(liveGhostBuildings[MDL_TYPE(unit)], u);
 				}
 			}
 		}
