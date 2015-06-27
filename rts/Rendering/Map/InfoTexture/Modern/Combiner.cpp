@@ -57,7 +57,7 @@ CInfoTextureCombiner::CInfoTextureCombiner()
 
 	shader = shaderHandler->CreateProgramObject("[CInfoTextureCombiner]", "CInfoTextureCombiner", false);
 
-	if (!fbo.IsValid() || !shader->IsValid()) {
+	if (!fbo.IsValid() /*|| !shader->IsValid()*/) { // don't check shader (it gets created/switched at runtime)
 		throw opengl_error("");
 	}
 }
