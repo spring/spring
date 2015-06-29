@@ -4789,7 +4789,7 @@ int LuaSyncedRead::GetGroundNormal(lua_State* L)
 	const float z = luaL_checkfloat(L, 2);
 
 	// raw or smoothed center normal
-	const float3& normal = luaL_checkboolean(L, 3)?
+	const float3& normal = luaL_optboolean(L, 3, false)?
 		CGround::GetNormal(x, z, CLuaHandle::GetHandleSynced(L)):
 		CGround::GetSmoothNormal(x, z, CLuaHandle::GetHandleSynced(L));
 
