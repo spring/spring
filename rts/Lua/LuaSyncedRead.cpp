@@ -4797,7 +4797,7 @@ int LuaSyncedRead::GetGroundNormal(lua_State* L)
 	lua_pushnumber(L, normal.y);
 	lua_pushnumber(L, normal.z);
 	// slope derives from face normals, include it here
-	lua_pushnumber(L, CGround::GetSlope(x, z, CLuaHandle::GetHandleSynced(L));
+	lua_pushnumber(L, CGround::GetSlope(x, z, CLuaHandle::GetHandleSynced(L)));
 	return 4;
 }
 

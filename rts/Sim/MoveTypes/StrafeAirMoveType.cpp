@@ -44,6 +44,7 @@ CR_REG_METADATA(CStrafeAirMoveType, (
 	CR_MEMBER(maxAileron),
 	CR_MEMBER(maxElevator),
 	CR_MEMBER(maxRudder),
+	CR_MEMBER(attackSafetyDistance),
 
 	CR_MEMBER(crashAileron),
 	CR_MEMBER(crashElevator),
@@ -397,7 +398,7 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	maxAileron = owner->unitDef->maxAileron;
 	maxElevator = owner->unitDef->maxElevator;
 	maxRudder = owner->unitDef->maxRudder;
-	attackSafetyDistance = owner->unitDef->attackSafetyDistance;
+	attackSafetyDistance = 0.0f;
 
 	useSmoothMesh = owner->unitDef->useSmoothMesh;
 
@@ -1336,18 +1337,19 @@ bool CStrafeAirMoveType::SetMemberValue(unsigned int memberHash, void* memberVal
 		MEMBER_LITERAL_HASH("loopbackAttack"),
 	};
 	static const unsigned int floatMemberHashes[] = {
-		MEMBER_LITERAL_HASH( "wantedHeight"),
-		MEMBER_LITERAL_HASH(   "turnRadius"),
-		MEMBER_LITERAL_HASH(      "accRate"),
-		MEMBER_LITERAL_HASH(      "decRate"),
-		MEMBER_LITERAL_HASH(       "maxAcc"), // synonym for accRate
-		MEMBER_LITERAL_HASH(       "maxDec"), // synonym for decRate
-		MEMBER_LITERAL_HASH(      "maxBank"),
-		MEMBER_LITERAL_HASH(     "maxPitch"),
-		MEMBER_LITERAL_HASH(   "maxAileron"),
-		MEMBER_LITERAL_HASH(  "maxElevator"),
-		MEMBER_LITERAL_HASH(    "maxRudder"),
-		MEMBER_LITERAL_HASH(    "myGravity"),
+		MEMBER_LITERAL_HASH(        "wantedHeight"),
+		MEMBER_LITERAL_HASH(          "turnRadius"),
+		MEMBER_LITERAL_HASH(             "accRate"),
+		MEMBER_LITERAL_HASH(             "decRate"),
+		MEMBER_LITERAL_HASH(              "maxAcc"), // synonym for accRate
+		MEMBER_LITERAL_HASH(              "maxDec"), // synonym for decRate
+		MEMBER_LITERAL_HASH(             "maxBank"),
+		MEMBER_LITERAL_HASH(            "maxPitch"),
+		MEMBER_LITERAL_HASH(          "maxAileron"),
+		MEMBER_LITERAL_HASH(         "maxElevator"),
+		MEMBER_LITERAL_HASH(           "maxRudder"),
+		MEMBER_LITERAL_HASH("attackSafetyDistance"),
+		MEMBER_LITERAL_HASH(           "myGravity"),
 	};
 
 	#undef MEMBER_CHARPTR_HASH
@@ -1375,6 +1377,7 @@ bool CStrafeAirMoveType::SetMemberValue(unsigned int memberHash, void* memberVal
 		&maxAileron,
 		&maxElevator,
 		&maxRudder,
+		&attackSafetyDistance,
 
 		&myGravity,
 	};
