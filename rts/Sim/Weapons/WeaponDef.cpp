@@ -101,7 +101,7 @@ WEAPONTAG(bool, gravityAffected).defaultValue(false);
 WEAPONTAG(float, myGravity).defaultValue(0.0f);
 WEAPONTAG(bool, canAttackGround).defaultValue(true);
 WEAPONTAG(float, uptime).externalName("weaponTimer").defaultValue(0.0f);
-WEAPONDUMMYTAG(float, flighttime).defaultValue(0).scaleValue(32); // needs to be written as int and read as float
+WEAPONDUMMYTAG(float, flighttime).defaultValue(0).scaleValue(GAME_SPEED).description("Flighttime of missiles in seconds."); // needs to be written as int and read as float
 WEAPONTAG(float, turnrate).defaultValue(0.0f).scaleValue(float(TAANG2RAD) / GAME_SPEED);
 WEAPONTAG(float, heightBoostFactor).defaultValue(-1.0f);
 WEAPONTAG(float, proximityPriority).defaultValue(1.0f);
@@ -297,7 +297,7 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 
 	shieldRechargeDelay = int(wdTable.GetFloat("rechargeDelay", 0) * GAME_SPEED);
 	shieldArmorType = damageArrayHandler->GetTypeFromName(shieldArmorTypeName);
-	flighttime = int(wdTable.GetFloat("flighttime", 0.0f) * 32);
+	flighttime = int(wdTable.GetFloat("flighttime", 0.0f) * GAME_SPEED);
 	maxFireAngle = math::cos(wdTable.GetFloat("firetolerance", 3640.0f) * TAANG2RAD);
 	
 	//FIXME may be smarter to merge the collideXYZ tags with avoidXYZ and removing the collisionFlags tag (and move the code into CWeapon)?
