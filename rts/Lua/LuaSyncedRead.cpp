@@ -4787,11 +4787,18 @@ int LuaSyncedRead::GetGroundNormal(lua_State* L)
 {
 	const float x = luaL_checkfloat(L, 1);
 	const float z = luaL_checkfloat(L, 2);
-	const float3 normal = CGround::GetSmoothNormal(x, z, CLuaHandle::GetHandleSynced(L));
+
+	// raw or smoothed center normal
+	const float3& normal = luaL_checkboolean(L, 3)?
+		CGround::GetNormal(x, z, CLuaHandle::GetHandleSynced(L)):
+		CGround::GetSmoothNormal(x, z, CLuaHandle::GetHandleSynced(L));
+
 	lua_pushnumber(L, normal.x);
 	lua_pushnumber(L, normal.y);
 	lua_pushnumber(L, normal.z);
-	return 3;
+	// slope derives from face normals, include it here
+	lua_pushnumber(L, CGround::GetSlope(x, z, CLuaHandle::GetHandleSynced(L));
+	return 4;
 }
 
 
