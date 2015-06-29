@@ -221,7 +221,7 @@ void CUnitHandler::Update()
 			if (moveType->Update()) {
 				eventHandler.UnitMoved(unit);
 			}
-			if (!unit->pos.IsInBounds() && (Square(unit->speed.w) > (MAX_UNIT_SPEED * MAX_UNIT_SPEED))) {
+			if (!unit->pos.IsInBounds() && (unit->speed.w > MAX_UNIT_SPEED)) {
 				// this unit is not coming back, kill it now without any death
 				// sequence (so deathScriptFinished becomes true immediately)
 				unit->KillUnit(NULL, false, true, false);
@@ -311,7 +311,7 @@ void CUnitHandler::Update()
 		SCOPED_TIMER("Unit::Weapon::Update");
 
 		for (CUnit* unit: activeUnits) {
-			if (!unit->beingBuilt && !unit->IsStunned() && !unit->dontUseWeapons && !unit->isDead) {
+			if (unit->CanUpdateWeapons()) {
 				for (CWeapon* w: unit->weapons) {
 					w->Update();
 				}

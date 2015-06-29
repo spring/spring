@@ -1073,11 +1073,16 @@ void CUnit::SlowUpdate()
 	UpdateTerrainType();
 }
 
-void CUnit::SlowUpdateWeapons() {
-	if (weapons.empty())
-		return;
 
-	if (dontFire || beingBuilt || IsStunned() || isDead)
+bool CUnit::CanUpdateWeapons() const
+{
+	return (!beingBuilt && !IsStunned() && !dontUseWeapons && !dontFire && !isDead);
+}
+
+
+void CUnit::SlowUpdateWeapons()
+{
+	if (!CanUpdateWeapons())
 		return;
 
 	for (CWeapon* w: weapons) {

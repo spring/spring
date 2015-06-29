@@ -259,7 +259,11 @@ float CWeapon::GetPredictedImpactTime(float3 p) const
 
 void CWeapon::Update()
 {
-	errorVector += errorVectorAdd;
+	// update conditional cause last SlowUpdate maybe longer away than UNIT_SLOWUPDATE_RATE
+	// i.e. when the unit got stunned (neither is SlowUpdate exactly called at UNIT_SLOWUPDATE_RATE, it's only called `close` to that)
+	float3 newErrorVector = (errorVector + errorVectorAdd);
+	if (newErrorVector.SqLength() <= 1.0f)
+		errorVector = newErrorVector;
 
 	// SlowUpdate() only generates targets when we are in range
 	// esp. for bombs this is often too late (SlowUpdate gets only called twice per second)
