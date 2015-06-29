@@ -1994,21 +1994,22 @@ void CUnitDrawer::RenderUnitCloakChanged(const CUnit* unit, int cloaked) {
 }
 
 
-void CUnitDrawer::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus) {
-	CUnit* u = const_cast<CUnit*>(unit);
+void CUnitDrawer::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus)
+{
+	if (allyTeam != gu->myAllyTeam) {
+		return;
+	}
+
+	CUnit* u = const_cast<CUnit*>(unit); //cleanup
 	if (newStatus & LOS_INLOS) {
-		if (allyTeam == gu->myAllyTeam) {
-			if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
-				erase(liveGhostBuildings[MDL_TYPE(unit)], u);
-			}
+		if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
+			erase(liveGhostBuildings[MDL_TYPE(unit)], u);
 		}
 		erase(unitRadarIcons[allyTeam], u);
 	} else {
 		if (newStatus & LOS_PREVLOS) {
-			if (allyTeam == gu->myAllyTeam) {
-				if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
-					insert_unique(liveGhostBuildings[MDL_TYPE(unit)], u);
-				}
+			if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
+				insert_unique(liveGhostBuildings[MDL_TYPE(unit)], u);
 			}
 		}
 
