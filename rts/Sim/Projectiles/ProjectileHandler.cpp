@@ -97,10 +97,15 @@ CProjectileHandler::CProjectileHandler()
 		freeUnsyncedIDs.push_back(i);
 	}
 	std::random_shuffle(freeUnsyncedIDs.begin(), freeUnsyncedIDs.end(), gu->rng);
+
+	// register ConfigNotify()
+	configHandler->NotifyOnChange(this);
 }
 
 CProjectileHandler::~CProjectileHandler()
 {
+	configHandler->RemoveObserver(this);
+
 	for (CProjectile* p: syncedProjectiles) {
 		delete p;
 	}
@@ -156,6 +161,16 @@ void CProjectileHandler::Serialize(creg::ISerializer* s)
 			s->SerializeObjectPtr(ptr, 0/*FIXME*/);
 		}
 	}
+}
+
+
+void CProjectileHandler::ConfigNotify(const std::string& key, const std::string& value)
+{
+	if (key != "MaxParticles" && key != "MaxNanoParticles")
+		return;
+
+	maxParticles     = configHandler->GetInt("MaxParticles");
+	maxNanoParticles = configHandler->GetInt("MaxNanoParticles");
 }
 
 
@@ -275,10 +290,10 @@ void CProjectileHandler::Update()
 	for (const CProjectile* p: syncedProjectiles) {
 		lastCurrentParticles += p->GetProjectilesCount();
 	}
-	lastSyncedProjectilesCount = syncedProjectiles.size();
 	for (const CProjectile* p: unsyncedProjectiles) {
 		lastCurrentParticles += p->GetProjectilesCount();
 	}
+	lastSyncedProjectilesCount = syncedProjectiles.size();
 	lastUnsyncedProjectilesCount = unsyncedProjectiles.size();
 }
 
