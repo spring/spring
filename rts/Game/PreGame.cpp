@@ -398,7 +398,8 @@ void CPreGame::StartServerForDemo(const std::string& demoName)
 
 		// is this needed?
 		TdfParser::TdfSection* modopts = tgame->construct_subsection("MODOPTIONS");
-		modopts->remove("MaxSpeed", false);
+		modopts->remove("maxspeed", false);
+		modopts->remove("minspeed", false);
 	}
 
 
