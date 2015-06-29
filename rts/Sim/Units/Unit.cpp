@@ -1655,7 +1655,7 @@ bool CUnit::AttackGround(const float3& pos, bool isUserTarget, bool wantManualFi
 
 void CUnit::DropCurrentAttackTarget()
 {
-	if (curTarget.type == Target_Unit && !curTarget.unit->detached) {
+	if (curTarget.type == Target_Unit) {
 		DeleteDeathDependence(curTarget.unit, DEPENDENCE_TARGET);
 	}
 

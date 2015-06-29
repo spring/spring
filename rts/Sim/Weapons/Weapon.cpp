@@ -569,7 +569,7 @@ void CWeapon::SetAttackTarget(const SWeaponTarget& newTarget)
 
 void CWeapon::DropCurrentTarget()
 {
-	if (currentTarget.type == Target_Unit && !currentTarget.unit->detached) {
+	if (currentTarget.type == Target_Unit) {
 		DeleteDeathDependence(currentTarget.unit, DEPENDENCE_TARGETUNIT);
 	}
 	currentTarget = SWeaponTarget();
