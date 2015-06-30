@@ -66,14 +66,17 @@ bool LuaWeaponDefs::PushEntries(lua_State* L)
 
 	const ObjectDefMapType& defsMap = weaponDefHandler->weaponID;
 
-	const char* indxOpers[] = {"__index", "__newindex", "__metatable"};
-	const char* iterOpers[] = {"pairs", "next"};
+	static const std::array<const LuaHashString, 3> indxOpers = {LuaHashString("__index"),
+																 LuaHashString("__newindex"),
+																 LuaHashString("__metatable")};
+	static const std::array<const LuaHashString, 2> iterOpers = {LuaHashString("pairs"),
+																 LuaHashString("next")};
 
-	const IndxFuncType indxFuncs[] = {&WeaponDefIndex, &WeaponDefNewIndex, &WeaponDefMetatable};
-	const IterFuncType iterFuncs[] = {&Pairs, &Next};
+	static const std::array<const IndxFuncType, 3> indxFuncs = {WeaponDefIndex, WeaponDefNewIndex, WeaponDefMetatable};
+	static const std::array<const IterFuncType, 2> iterFuncs = {Pairs, Next};
 
 	for (auto it = defsMap.cbegin(); it != defsMap.cend(); ++it) {
-		const auto def = &weaponDefHandler->weaponDefs[it->second];
+		const auto def = weaponDefHandler->GetWeaponDefByID(it->second);
 
 		if (def == NULL)
 			continue;
