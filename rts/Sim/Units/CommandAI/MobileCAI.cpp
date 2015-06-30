@@ -376,6 +376,7 @@ void CMobileCAI::SlowUpdate()
 	if (!commandQue.empty() && commandQue.front().timeOut < gs->frameNum) {
 		StopMove();
 		FinishCommand();
+		return;
 	}
 
 	if (commandQue.empty()) {
