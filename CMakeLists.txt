@@ -41,13 +41,6 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 endif()
 
 # set some internal vars
-string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_UPPER)
-if("${CMAKE_BUILD_TYPE_UPPER}" MATCHES "^DEBUG")
-	set(DEBUG_BUILD TRUE)
-else()
-	set(DEBUG_BUILD FALSE)
-endif()
-
 
 if(NOT "${CMAKE_C_FLAGS}" STREQUAL "")
 	Message(WARNING "Using custom C_FLAGS: ${CMAKE_C_FLAGS} this build will very likely not sync in online mode!")
@@ -69,6 +62,13 @@ if    (NOT CMAKE_BUILD_TYPE)
 		"Choose the type of build, options are: RELWITHDEBINFO DEBUG RELEASE PROFILE"
 		FORCE)
 endif (NOT CMAKE_BUILD_TYPE)
+
+string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_UPPER)
+if(${CMAKE_BUILD_TYPE_UPPER} MATCHES "^DEBUG")
+	set(DEBUG_BUILD TRUE)
+else()
+	set(DEBUG_BUILD FALSE)
+endif()
 
 
 # Tell windows to pass arguments around in @response files
