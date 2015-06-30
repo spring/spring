@@ -130,7 +130,7 @@ class LuaUtils {
 
 
 
-template<typename ObjectDefType, unsigned int indxFuncsSize, unsigned int iterFuncsSize>
+template<typename ObjectDefType, size_t indxFuncsSize, size_t iterFuncsSize>
 static void PushObjectDefProxyTable(
 	lua_State* L,
 	const std::array<const LuaHashString, indxFuncsSize> &indxOpers,

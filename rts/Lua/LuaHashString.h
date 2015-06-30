@@ -102,7 +102,7 @@ struct LuaHashString {
 
 
 // NOTE: scoped to avoid name conflicts
-// NOTE: since all the following are static, if name is changed in different calls
+// NOTE: since all the following are static, if name can change (e.g. within a loop)
 //       peculiar things will happen. => Only use raw strings (and not variables) in name.
    
 #define HSTR_PUSH(L, name) \
