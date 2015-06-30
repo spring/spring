@@ -133,10 +133,10 @@ class LuaUtils {
 template<typename ObjectDefType, size_t indxFuncsSize, size_t iterFuncsSize>
 static void PushObjectDefProxyTable(
 	lua_State* L,
-	const std::array<const LuaHashString, indxFuncsSize> &indxOpers,
-	const std::array<const LuaHashString, iterFuncsSize> &iterOpers,
-	const std::array<const lua_CFunction, indxFuncsSize> &indxFuncs, // (&ident) preserves type for sizeof
-	const std::array<const lua_CFunction, iterFuncsSize> &iterFuncs, // (&ident) preserves type for sizeof
+	const std::array<const LuaHashString, indxFuncsSize>& indxOpers,
+	const std::array<const LuaHashString, iterFuncsSize>& iterOpers,
+	const std::array<const lua_CFunction, indxFuncsSize>& indxFuncs,
+	const std::array<const lua_CFunction, iterFuncsSize>& iterFuncs,
 	const ObjectDefType* def
 ) {
 	lua_pushnumber(L, def->id);

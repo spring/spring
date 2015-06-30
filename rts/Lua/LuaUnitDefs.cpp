@@ -89,14 +89,18 @@ bool LuaUnitDefs::PushEntries(lua_State* L)
 
 	const ObjectDefMapType& defsMap = unitDefHandler->unitDefIDsByName;
 
-	static const std::array<const LuaHashString, 3> indxOpers = {LuaHashString("__index"),
-																 LuaHashString("__newindex"),
-																 LuaHashString("__metatable")};
-	static const std::array<const LuaHashString, 2> iterOpers = {LuaHashString("pairs"),
-																 LuaHashString("next")};
+	const std::array<const LuaHashString, 3> indxOpers = {
+		LuaHashString("__index"),
+		LuaHashString("__newindex"),
+		LuaHashString("__metatable")
+	};
+	const std::array<const LuaHashString, 2> iterOpers = {
+		LuaHashString("pairs"),
+		LuaHashString("next")
+	};
 
-	static const std::array<const IndxFuncType, 3> indxFuncs = {UnitDefIndex, UnitDefNewIndex, UnitDefMetatable};
-	static const std::array<const IterFuncType, 2> iterFuncs = {Pairs, Next};
+	const std::array<const IndxFuncType, 3> indxFuncs = {UnitDefIndex, UnitDefNewIndex, UnitDefMetatable};
+	const std::array<const IterFuncType, 2> iterFuncs = {Pairs, Next};
 
 	for (auto it = defsMap.cbegin(); it != defsMap.cend(); ++it) {
 		const auto def = unitDefHandler->GetUnitDefByID(it->second);
