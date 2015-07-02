@@ -19,6 +19,7 @@ return {
 		uniform vec4 alwaysColor;
 		uniform vec4 losColor;
 		uniform vec4 radarColor;
+		uniform vec4 radarColor2;
 		uniform vec4 jamColor;
 
 		uniform sampler2D tex0;
@@ -61,9 +62,9 @@ return {
 			gl_FragColor += losColor * ((los + airlos) * 0.5);
 
 			vec2 radarJammer = getTexel(tex2, texCoord).rg;
-			gl_FragColor += radarColor * radarJammer.r;
-			gl_FragColor +=   jamColor * radarJammer.g;
-			gl_FragColor.rgb = fract(gl_FragColor.rgb); // fract() needed for zk's radar edge detection
+			gl_FragColor += radarColor * step(0.1, fract(1 - radarJammer.r));
+			gl_FragColor += radarColor2 * step(0.9, fract(radarJammer.r));
+			gl_FragColor += jamColor * fract(radarJammer.g);
 
 			gl_FragColor += alwaysColor;
 			gl_FragColor.a = 0.05;
@@ -74,6 +75,7 @@ return {
 		losColor    = select(2, Spring.GetLosViewColors()),
 		radarColor  = select(3, Spring.GetLosViewColors()),
 		jamColor    = select(4, Spring.GetLosViewColors()),
+		radarColor2 = select(5, Spring.GetLosViewColors()),
 	},
 	uniformInt = {
 		tex0 = 0,

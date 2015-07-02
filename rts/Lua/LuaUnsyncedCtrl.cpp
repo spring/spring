@@ -1815,29 +1815,37 @@ int LuaUnsyncedCtrl::SetCameraOffset(lua_State* L)
 
 int LuaUnsyncedCtrl::SetLosViewColors(lua_State* L)
 {
-	float red[4];
-	float green[4];
-	float blue[4];
-	if ((LuaUtils::ParseFloatArray(L, 1, red,   4) != 4) ||
-	    (LuaUtils::ParseFloatArray(L, 2, green, 4) != 4) ||
-	    (LuaUtils::ParseFloatArray(L, 3, blue,  4) != 4)) {
+	float alwaysColor[3];
+	float losColor[3];
+	float radarColor[3];
+	float jamColor[3];
+	float radarColor2[3];
+	
+	if ((LuaUtils::ParseFloatArray(L, 1, alwaysColor, 3) != 3) ||
+	    (LuaUtils::ParseFloatArray(L, 2, losColor, 3) != 3) ||
+	    (LuaUtils::ParseFloatArray(L, 3, radarColor, 3) != 3) ||
+		(LuaUtils::ParseFloatArray(L, 4, jamColor, 3) != 3) ||
+		(LuaUtils::ParseFloatArray(L, 5, radarColor2, 3) != 3)) {
 		luaL_error(L, "Incorrect arguments to SetLosViewColors()");
 	}
 	const int scale = CBaseGroundDrawer::losColorScale;
 
 	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-	gd->alwaysColor[0] = (int)(scale *   red[0]);
-	gd->alwaysColor[1] = (int)(scale * green[0]);
-	gd->alwaysColor[2] = (int)(scale *  blue[0]);
-	gd->losColor[0]    = (int)(scale *   red[1]);
-	gd->losColor[1]    = (int)(scale * green[1]);
-	gd->losColor[2]    = (int)(scale *  blue[1]);
-	gd->radarColor[0]  = (int)(scale *   red[2]);
-	gd->radarColor[1]  = (int)(scale * green[2]);
-	gd->radarColor[2]  = (int)(scale *  blue[2]);
-	gd->jamColor[0]    = (int)(scale *   red[3]);
-	gd->jamColor[1]    = (int)(scale * green[3]);
-	gd->jamColor[2]    = (int)(scale *  blue[3]);
+	gd->alwaysColor[0]  = (int)(scale * alwaysColor[0]);
+	gd->alwaysColor[1]  = (int)(scale * alwaysColor[1]);
+	gd->alwaysColor[2]  = (int)(scale * alwaysColor[2]);
+	gd->losColor[0]     = (int)(scale * losColor[0]);
+	gd->losColor[1]     = (int)(scale * losColor[1]);
+	gd->losColor[2]     = (int)(scale * losColor[2]);
+	gd->radarColor[0]   = (int)(scale * radarColor[0]);
+	gd->radarColor[1]   = (int)(scale * radarColor[1]);
+	gd->radarColor[2]   = (int)(scale * radarColor[2]);
+	gd->jamColor[0]     = (int)(scale * jamColor[0]);
+	gd->jamColor[1]     = (int)(scale * jamColor[1]);
+	gd->jamColor[2]     = (int)(scale * jamColor[2]);
+	gd->radarColor2[0]  = (int)(scale * radarColor2[0]);
+	gd->radarColor2[1]  = (int)(scale * radarColor2[1]);
+	gd->radarColor2[2]  = (int)(scale * radarColor2[2]);
 	infoTextureHandler->SetMode(infoTextureHandler->GetMode());
 	return 0;
 }

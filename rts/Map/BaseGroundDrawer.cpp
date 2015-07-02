@@ -41,6 +41,10 @@ CBaseGroundDrawer::CBaseGroundDrawer()
 	alwaysColor[1] = (int)(losColorScale * 0.2f);
 	alwaysColor[2] = (int)(losColorScale * 0.2f);
 
+	radarColor2[0] = (int)(losColorScale * 0.0f);
+	radarColor2[1] = (int)(losColorScale * 0.5f);
+	radarColor2[2] = (int)(losColorScale * 0.0f);
+	
 	groundTextures = NULL;
 }
 

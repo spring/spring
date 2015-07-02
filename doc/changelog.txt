@@ -1,6 +1,17 @@
 Spring changelog
 (since 85.0: "!" prefix indicate backward compability broke)
 (numbers in brackets normally mean the mantis ticket ID)
+-- 100.0 --------------------------------------------------------
+Map:
+! Added radar2 los colour for colouring the inside of the radar edge.
+ - it is changeable through SetLosViewColors (see Lua changes)
+
+Lua:
+! SetLosViewColors changed:
+ - radar2 colour (see Map changes) is required.
+ - parameters are now in the form of GetLosViewColors output:
+   (always = {r,g,b}, LOS = {r,g,b}, radar = {r,g,b}, jammer = {r,g,b}, radar2 = {r,g,b})
+
 
 -- 99.0 ---------------------------------------------------------
 Major:
