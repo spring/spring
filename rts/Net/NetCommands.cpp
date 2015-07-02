@@ -296,11 +296,9 @@ void CGame::ClientReadNet()
 				CPlayer* player = playerHandler->Player(playerNum);
 				player->currentStats = *reinterpret_cast<const PlayerStatistics*>(&inbuf[2]);
 
-				if (gameOver) {
-					CDemoRecorder* record = clientNet->GetDemoRecorder();
-					if (record != NULL) {
-						record->SetPlayerStats(playerNum, player->currentStats);
-					}
+				CDemoRecorder* record = clientNet->GetDemoRecorder();
+				if (record != NULL) {
+					record->SetPlayerStats(playerNum, player->currentStats);
 				}
 				AddTraffic(playerNum, packetCode, dataLength);
 				break;
