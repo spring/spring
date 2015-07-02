@@ -62,7 +62,7 @@ struct DemoFileHeader
 	int demoStreamSize;           ///< Size of the demo stream.
 	int gameTime;                 ///< Total number of seconds game time.
 	int wallclockTime;            ///< Total number of seconds wallclock time.
-	int numPlayers;               ///< Number of players for which stats are saved.
+	int numPlayers;               ///< Number of players for which stats are saved. (this contains also later joined spectators!)
 	int playerStatSize;           ///< Size of the entire player statistics chunk.
 	int playerStatElemSize;       ///< sizeof(CPlayer::Statistics)
 	int numTeams;                 ///< Number of teams for which stats are saved.
