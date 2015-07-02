@@ -137,6 +137,15 @@ void CDemoRecorder::InitializeStats(int numPlayers, int numTeams)
 	teamStats.resize(numTeams);
 }
 
+
+void CDemoRecorder::AddNewPlayer(const std::string& name, int playerNum)
+{
+	if (playerNum >= playerStats.size()) {
+		playerStats.resize(playerNum + 1);
+	}
+}
+
+
 /** @brief Set (overwrite) the CPlayer::Statistics for player playerNum */
 void CDemoRecorder::SetPlayerStats(int playerNum, const PlayerStatistics& stats)
 {

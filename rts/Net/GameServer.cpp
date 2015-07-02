@@ -233,8 +233,11 @@ void CGameServer::Initialize()
 		players.reserve(MAX_PLAYERS); // no reallocation please
 		teams.resize(teamStartData.size());
 
-		for (int i = 0; i < playerStartData.size(); ++i)
-			players.push_back(GameParticipant());
+		players.resize(playerStartData.size());
+		if (demoReader != NULL) {
+			const size_t demoPlayers = demoReader->GetFileHeader().numPlayers;
+			players.resize(std::max(demoPlayers, playerStartData.size()));
+		}
 
 		for (size_t a = 0; a < aiStartData.size(); ++a) {
 			const unsigned char skirmishAIId = ReserveNextAvailableSkirmishAIId();
@@ -248,8 +251,6 @@ void CGameServer::Initialize()
 
 		std::copy(playerStartData.begin(), playerStartData.end(), players.begin());
 		std::copy(teamStartData.begin(), teamStartData.end(), teams.begin());
-
-		UpdatePlayerNumberMap();
 	}
 
 	for (unsigned int n = 0; n < (sizeof(SERVER_COMMANDS) / sizeof(std::string)); n++) {
@@ -465,37 +466,6 @@ std::string CGameServer::GetPlayerNames(const std::vector<int>& indices) const
 }
 
 
-void CGameServer::UpdatePlayerNumberMap() {
-	unsigned char player = 0;
-	for (int i = 0; i < 256; ++i, ++player) {
-		if (i < players.size() && !players[i].isFromDemo)
-			++player;
-		playerNumberMap[i] = (i < MAX_PLAYERS) ? player : i; // ignore SERVER_PLAYER, ChatMessage::TO_XXX etc
-	}
-}
-
-
-bool CGameServer::AdjustPlayerNumber(netcode::RawPacket* buf, int pos, int val) {
-	if (buf->length <= pos) {
-		Message(str(format("Warning: Discarding short packet in demo: ID %d, LEN %d") %buf->data[0] %buf->length));
-		return false;
-	}
-	// spectators watching the demo will offset the demo spectators, compensate for this
-	if (val < 0) {
-		unsigned char player = playerNumberMap[buf->data[pos]];
-		if (player >= players.size() && player < MAX_PLAYERS) { // ignore SERVER_PLAYER, ChatMessage::TO_XXX etc
-			Message(str(format("Warning: Discarding packet with invalid player number in demo: ID %d, LEN %d") %buf->data[0] %buf->length));
-			return false;
-		}
-		buf->data[pos] = player;
-	}
-	else {
-		buf->data[pos] = val;
-	}
-	return true;
-}
-
-
 bool CGameServer::SendDemoData(int targetFrameNum)
 {
 	bool ret = false;
@@ -533,57 +503,7 @@ bool CGameServer::SendDemoData(int targetFrameNum)
 				break;
 			}
 
-			case NETMSG_AI_STATE_CHANGED: /* many of these messages are not likely to be sent by a spec, but there are cheats */
-			case NETMSG_ALLIANCE:
-			case NETMSG_DC_UPDATE:
-			case NETMSG_DIRECT_CONTROL:
-			case NETMSG_PATH_CHECKSUM:
-			case NETMSG_PAUSE: /* this is a synced message and must not be excluded */
-			case NETMSG_PLAYERINFO:
-			case NETMSG_PLAYERLEFT:
-			case NETMSG_PLAYERSTAT:
-			case NETMSG_SETSHARE:
-			case NETMSG_SHARE:
-			case NETMSG_STARTPOS:
-			case NETMSG_TEAM: {
-				// TODO: more messages may need adjusted player numbers, or maybe there is a better solution
-				if (!AdjustPlayerNumber(buf, 1))
-					continue;
-				Broadcast(rpkt);
-				break;
-			}
-
-			case NETMSG_AI_CREATED:
-			case NETMSG_MAPDRAW:
-			case NETMSG_PLAYERNAME: {
-				if (!AdjustPlayerNumber(buf, 2))
-					continue;
-				Broadcast(rpkt);
-				break;
-			}
-
-			case NETMSG_CHAT: {
-				if (!AdjustPlayerNumber(buf, 2) || !AdjustPlayerNumber(buf, 3))
-					continue;
-				Broadcast(rpkt);
-				break;
-			}
-
-			case NETMSG_AICOMMAND:
-			case NETMSG_AISHARE:
-			case NETMSG_COMMAND:
-			case NETMSG_LUAMSG:
-			case NETMSG_SELECT:
-			case NETMSG_SYSTEMMSG: {
-				if (!AdjustPlayerNumber(buf ,3))
-					continue;
-				Broadcast(rpkt);
-				break;
-			}
-
 			case NETMSG_CREATE_NEWPLAYER: {
-				if (!AdjustPlayerNumber(buf, 3, players.size()))
-					continue;
 				try {
 					netcode::UnpackPacket pckt(rpkt, 3);
 					unsigned char spectator, team, playerNum;
@@ -592,7 +512,7 @@ bool CGameServer::SendDemoData(int targetFrameNum)
 					pckt >> spectator;
 					pckt >> team;
 					pckt >> name;
-					AddAdditionalUser(name, "", true,(bool)spectator,(int)team); // even though this is a demo, keep the players vector properly updated
+					AddAdditionalUser(name, "", true, (bool)spectator, (int)team, playerNum); // even though this is a demo, keep the players vector properly updated
 				} catch (const netcode::UnpackPacketException& ex) {
 					Message(str(format("Warning: Discarding invalid new player packet in demo: %s") %ex.what()));
 					continue;
@@ -610,8 +530,6 @@ bool CGameServer::SendDemoData(int targetFrameNum)
 				break;
 			}
 			case NETMSG_CCOMMAND: {
-				if (!AdjustPlayerNumber(buf ,3))
-					continue;
 				try {
 					CommandMessage msg(rpkt);
 					const Action& action = msg.GetAction();
@@ -856,14 +774,21 @@ void CGameServer::Update()
 		}
 		else {
 			for (size_t a = 0; a < players.size(); ++a) {
-				if (!players[a].isFromDemo) {
-					if (players[a].myState == GameParticipant::CONNECTED) { // send pathing status
+				if (players[a].isFromDemo)
+					continue;
+
+				switch (players[a].myState) {
+					case GameParticipant::CONNECTED: {
+						// send pathing status
 						if (players[a].cpuUsage > 0)
 							Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, players[a].cpuUsage, PATHING_FLAG));
-					}
-					else {
+					} break;
+					case GameParticipant::INGAME:
+					case GameParticipant::DISCONNECTED: {
 						Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, 0, 0)); // reset status
-					}
+					} break;
+					case GameParticipant::UNCONNECTED:
+					default: break;
 				}
 			}
 		}
@@ -2615,20 +2540,26 @@ bool CGameServer::CheckPlayersPassword(const int playerNum, const std::string& p
 }
 
 
-void CGameServer::AddAdditionalUser(const std::string& name, const std::string& passwd, bool fromDemo, bool spectator, int team)
+void CGameServer::AddAdditionalUser(const std::string& name, const std::string& passwd, bool fromDemo, bool spectator, int team, int playerNum)
 {
-	GameParticipant buf;
-	buf.isFromDemo = fromDemo;
-	buf.name = name;
-	buf.spectator = spectator;
-	buf.team = team;
-	buf.isMidgameJoin = true;
+	if (playerNum < 0)
+		playerNum = players.size();
+	if (playerNum >= players.size())
+		players.resize(playerNum + 1);
+
+	GameParticipant& p = players[playerNum];
+	assert(p.myState == GameParticipant::UNCONNECTED); // we only add _new_ players here, we don't handle reconnects here!
+	p.name = name;
+	p.spectator = spectator;
+	p.team = team;
+	p.isMidgameJoin = true;
+	p.isFromDemo = fromDemo;
 	if (!passwd.empty())
-		buf.SetValue("password", passwd);
-	players.push_back(buf);
-	UpdatePlayerNumberMap();
+		p.SetValue("password", passwd);
+
+	// inform all the players of the newcomer
 	if (!fromDemo)
-		Broadcast(CBaseNetProtocol::Get().SendCreateNewPlayer(players.size() -1, buf.spectator, buf.team, buf.name)); // inform all the players of the newcomer
+		Broadcast(CBaseNetProtocol::Get().SendCreateNewPlayer(playerNum, p.spectator, p.team, p.name));
 }
 
 
@@ -2637,13 +2568,14 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 	Message(str(format("%s attempt from %s") %(reconnect ? "Reconnection" : "Connection") %name));
 	Message(str(format(" -> Version: %s") %version));
 	Message(str(format(" -> Address: %s") %link->GetFullAddress()), false);
-	size_t newPlayerNumber = players.size();
 
 	if (link->CanReconnect())
 		canReconnect = true;
 
 	std::string errmsg = "";
 	bool terminate = false;
+
+	size_t newPlayerNumber = players.size();
 
 	// find the player in the current list
 	for (size_t i = 0; i < players.size(); ++i) {
@@ -2734,11 +2666,13 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 	newPlayer.SendData(CBaseNetProtocol::Get().SendSetPlayerNum((unsigned char)newPlayerNumber));
 
 	// after gamedata and playerNum, the player can start loading
-	for (std::list< std::vector<boost::shared_ptr<const netcode::RawPacket> > >::const_iterator lit = packetCache.begin(); lit != packetCache.end(); ++lit)
-		for (std::vector<boost::shared_ptr<const netcode::RawPacket> >::const_iterator vit = lit->begin(); vit != lit->end(); ++vit)
-			newPlayer.SendData(*vit); // throw at him all stuff he missed until now
+	// throw at him all stuff he missed until now
+	for (auto& pv: packetCache)
+		for (boost::shared_ptr<const netcode::RawPacket>& p: pv)
+			newPlayer.SendData(p);
 
-	if (demoReader == NULL || myGameSetup->demoName.empty()) { // gamesetup from demo?
+	if (demoReader == NULL || myGameSetup->demoName.empty()) {
+		// player wants to play -> join team
 		if (!newPlayer.spectator) {
 			unsigned newPlayerTeam = newPlayer.team;
 			if (!teams[newPlayerTeam].IsActive()) { // create new team

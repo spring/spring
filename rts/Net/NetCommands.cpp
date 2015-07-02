@@ -1282,6 +1282,10 @@ void CGame::ClientReadNet()
 						eventHandler.TeamChanged(player.team);
 					}
 
+					CDemoRecorder* record = clientNet->GetDemoRecorder();
+					if (record != NULL) {
+						record->AddNewPlayer(player.name, playerNum);
+					}
 					AddTraffic(-1, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "[Game::%s] invalid NETMSG_CREATE_NEWPLAYER: %s", __FUNCTION__, ex.what());
