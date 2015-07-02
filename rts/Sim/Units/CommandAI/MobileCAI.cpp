@@ -614,7 +614,7 @@ bool CMobileCAI::IsValidTarget(const CUnit* enemy) const {
 	// test if any weapon can target the enemy unit
 	for (CWeapon* w: owner->weapons) {
 		if (w->TestTarget(enemy->pos, SWeaponTarget(enemy)) &&
-			(owner->moveState != MOVESTATE_HOLDPOS || w->TryTargetRotate(enemy, false))) {
+			(owner->moveState != MOVESTATE_HOLDPOS || w->TryTargetRotate(enemy, false, false))) {
 			return true;
 		}
 	}
@@ -774,7 +774,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 				}
 			}
 
-			tryTargetRotate  = w->TryTargetRotate(trg.unit, trg.isUserTarget);
+			tryTargetRotate  = w->TryTargetRotate(trg.unit, trg.isUserTarget, trg.isManualFire);
 			tryTargetHeading = w->TryTargetHeading(targetHead, trg);
 
 			edgeFactor = math::fabs(w->weaponDef->targetBorder);
@@ -789,7 +789,6 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		if (tryTargetRotate) {
 			const bool canChaseTarget = (!tempOrder || owner->moveState != MOVESTATE_HOLDPOS);
 			const bool targetBehind = (targetMidPosVec.dot(orderTarget->speed) < 0.0f);
-
 			if (canChaseTarget && tryTargetHeading && targetBehind && !owner->unitDef->IsHoveringAirUnit()) {
 				SetGoal(owner->pos + (orderTarget->speed * 80), owner->pos, SQUARE_SIZE, orderTarget->speed.w * 1.1f);
 			} else {
