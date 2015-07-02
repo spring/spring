@@ -262,13 +262,12 @@ void CStarburstProjectile::Update()
 
 void CStarburstProjectile::UpdateTrajectory()
 {
-	if (speed.w < maxSpeed)
-		speed.w += weaponDef->weaponacceleration;
-
 	if (uptime > 0) {
 		// stage 1: going upwards
-		// do not need to update dir or speed.w here
-		CWorldObject::SetVelocity(dir * speed.w);
+		speed.w += weaponDef->weaponacceleration;
+		speed.w = std::min(speed.w, maxSpeed);
+		CWorldObject::SetVelocity(dir * speed.w); // do not need to update dir or speed.w here
+
 	} else if (doturn && ttl > 0 && distanceToTravel > 0.0f) {
 		// stage 2: turn to target
 		float3 targetErrorVec = (targetPos - pos).Normalize();
@@ -293,6 +292,7 @@ void CStarburstProjectile::UpdateTrajectory()
 		if (distanceToTravel != MAX_PROJECTILE_RANGE) {
 			distanceToTravel -= speed.Length2D();
 		}
+
 	} else if (ttl > 0 && distanceToTravel > 0.0f) {
 		// stage 3: hit target
 		float3 targetErrorVec = (targetPos - pos).Normalize();
@@ -312,6 +312,7 @@ void CStarburstProjectile::UpdateTrajectory()
 		if (distanceToTravel != MAX_PROJECTILE_RANGE) {
 			distanceToTravel -= speed.Length2D();
 		}
+
 	} else {
 		// stage "out of fuel"
 		// changes dir and speed.w, must keep speed-vector in sync
