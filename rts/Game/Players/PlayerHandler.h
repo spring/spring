@@ -62,8 +62,8 @@ public:
 	 *
 	 * Will change during at runtime when a new spectator joins
 	 */
-	bool IsValidPlayer(int id) const {
-		return ((id >= 0) && (id < ActivePlayers()));
+	bool IsValidPlayer(unsigned id) const {
+		return (id < ActivePlayers());
 	}
 
 	void GameFrame(int frameNum);

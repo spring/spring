@@ -26,6 +26,7 @@ public:
 
 	GameParticipant& operator=(const PlayerBase& base) { PlayerBase::operator=(base); return *this; };
 
+public:
 	enum State
 	{
 		UNCONNECTED,

@@ -98,7 +98,7 @@ void CPlayerHandler::GameFrame(int frameNum)
 void CPlayerHandler::AddPlayer(const CPlayer& player)
 {
 	const int oldSize = players.size();
-	const int newSize = std::max((int)players.size(), player.playerNum + 1);
+	const int newSize = std::max(oldSize, player.playerNum + 1);
 
 	{
 		for (unsigned int i = oldSize; i < newSize; ++i) {

@@ -543,10 +543,6 @@ void CGame::ClientReadNet()
 					unsigned  int  checkSum; pckt >> checkSum;
 
 					const unsigned int ourCheckSum = mySyncChecksums[frameNum];
-
-					const char* fmtStr =
-						"[DESYNC_WARNING] checksum %x from player %d (%s)"
-						" does not match our checksum %x for frame-number %d";
 					const CPlayer* player = playerHandler->Player(playerNum);
 
 					// check if our checksum for this frame matches what
@@ -555,6 +551,9 @@ void CGame::ClientReadNet()
 					if (playerNum == gu->myPlayerNum) { break; }
 					if (checkSum == ourCheckSum) { break; }
 
+					const char* fmtStr =
+						"[DESYNC_WARNING] checksum %x from player %d (%s)"
+						" does not match our checksum %x for frame-number %d";
 					LOG_L(L_ERROR, fmtStr, checkSum, playerNum, player->name.c_str(), ourCheckSum, frameNum);
 				}
 #endif
@@ -1274,8 +1273,8 @@ void CGame::ClientReadNet()
 					player.spectator = spectator;
 					player.team = team;
 					player.playerNum = playerNum;
+
 					// add the new player
-					// TODO NETMSG_CREATE_NEWPLAYER perhaps add a lua hook; hook should be able to reassign the player to a team and/or create a new team/allyteam
 					playerHandler->AddPlayer(player);
 					eventHandler.PlayerAdded(player.playerNum);
 
