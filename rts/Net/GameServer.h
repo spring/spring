@@ -184,7 +184,6 @@ private:
 	boost::shared_ptr<const  CGameSetup> myGameSetup;
 
 	/////////////////// game status variables ///////////////////
-	unsigned char playerNumberMap[256];
 	volatile bool quitServer;
 	int serverFrameNum;
 
