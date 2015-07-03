@@ -18,13 +18,6 @@ CInterface::CInterface(int interfaceId,
 		const struct SAIInterfaceCallback* callback)
 		: interfaceId(interfaceId), callback(callback) {
 
-	bool timeStamps = true;
-#ifdef DEBUG
-	int logLevel = LOG_LEVEL_NOTICE;
-#else
-	int logLevel = LOG_LEVEL_ERROR;
-#endif
-
 	simpleLog_initcallback(interfaceId, "C Interface", callback->Log_logsl, LOG_LEVEL_INFO);
 
 	const char* const myShortName = callback->AIInterface_Info_getValueByKey(interfaceId,

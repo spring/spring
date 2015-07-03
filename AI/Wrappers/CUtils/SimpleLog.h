@@ -23,9 +23,10 @@ extern "C" {
 #endif
 
 #include "System/Log/Level.h"
+#include "System/exportdefines.h"
 #include <stdbool.h> /* bool, true, false */
 
-typedef void (*logfunction)(int id, const char* section, int level, const char* msg);
+typedef void (CALLING_CONV *logfunction)(int id, const char* section, int level, const char* msg);
 
 void simpleLog_initcallback(int, const char* section, logfunction func, int loglevel);
 
