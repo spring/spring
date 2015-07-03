@@ -306,7 +306,8 @@ void CStarburstProjectile::UpdateTrajectory()
 			dir = (dir + (targetErrorVec * tracking)).SafeNormalize();
 		}
 
-		// do not need to update dir or speed.w here
+		speed.w += weaponDef->weaponacceleration;
+		speed.w = std::min(speed.w, maxSpeed);
 		CWorldObject::SetVelocity(dir * speed.w);
 
 		if (distanceToTravel != MAX_PROJECTILE_RANGE) {
