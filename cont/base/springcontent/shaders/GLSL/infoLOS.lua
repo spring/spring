@@ -62,10 +62,12 @@ return {
 			gl_FragColor += losColor * ((los + airlos) * 0.5);
 
 			vec2 radarJammer = getTexel(tex2, texCoord).rg;
-			gl_FragColor += radarColor * step(0.1, fract(1 - radarJammer.r));
-			gl_FragColor += radarColor2 * step(0.9, fract(radarJammer.r));
-			gl_FragColor += jamColor * fract(radarJammer.g);
-
+			gl_FragColor += jamColor * radarJammer.g;
+			gl_FragColor += radarColor2 * step(0.8, radarJammer.r) * radarJammer.r;
+			gl_FragColor.rgb = fract(gl_FragColor.rgb);
+			
+			gl_FragColor += radarColor * step(0.2, fract(1 - radarJammer.r));
+			
 			gl_FragColor += alwaysColor;
 			gl_FragColor.a = 0.05;
 		}
