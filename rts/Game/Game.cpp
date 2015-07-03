@@ -790,8 +790,9 @@ void CGame::KillLua()
 	CLuaRules::FreeHandler();
 
 	LOG("[%s][3]", __FUNCTION__);
-	// done by ~GUIHandler
-	// CLuaUI::FreeHandler();
+	//even though it's done by ~GUIHandler, you have to kill it before all handler pointers
+	//become invalid
+	CLuaUI::FreeHandler();
 
 	LOG("[%s][4]", __FUNCTION__);
 	LuaOpenGL::Free();
