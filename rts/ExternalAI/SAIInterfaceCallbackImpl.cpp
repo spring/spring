@@ -164,6 +164,16 @@ EXPORT(void) aiInterfaceCallback_Log_log(int interfaceId, const char* const msg)
 	LOG("AI Interface <%s-%s>: %s",
 			info->GetName().c_str(), info->GetVersion().c_str(), msg);
 }
+
+EXPORT(void) aiInterfaceCallback_Log_logsl(int interfaceId, const char* section, int loglevel, const char* const msg) {
+
+	CHECK_INTERFACE_ID(interfaceId);
+
+	const CAIInterfaceLibraryInfo* info = infos[interfaceId];
+	log_frontend_record(section, loglevel, "%s", msg);
+}
+
+
 EXPORT(void) aiInterfaceCallback_Log_exception(int interfaceId, const char* const msg, int severety, bool die) {
 
 	CHECK_INTERFACE_ID(interfaceId);
@@ -341,6 +351,7 @@ static void aiInterfaceCallback_init(struct SAIInterfaceCallback* callback) {
 	callback->SkirmishAIs_getMax = &aiInterfaceCallback_SkirmishAIs_getMax;
 	callback->SkirmishAIs_Info_getValueByKey = &aiInterfaceCallback_SkirmishAIs_Info_getValueByKey;
 	callback->Log_log = &aiInterfaceCallback_Log_log;
+	callback->Log_logsl = &aiInterfaceCallback_Log_logsl;
 	callback->Log_exception = &aiInterfaceCallback_Log_exception;
 	callback->DataDirs_getPathSeparator = &aiInterfaceCallback_DataDirs_getPathSeparator;
 	callback->DataDirs_getConfigDir = &aiInterfaceCallback_DataDirs_getConfigDir;

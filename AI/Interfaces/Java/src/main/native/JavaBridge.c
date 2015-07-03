@@ -149,7 +149,7 @@ static size_t java_createClassPath(char* classPathStr, const size_t classPathStr
 
 	bool ok = util_getParentDir(mainJarPath);
 	if (!ok) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+		simpleLog_logL(LOG_LEVEL_ERROR,
 				"Retrieving the parent dir of the path to AIInterface.jar (%s) failed.",
 				mainJarPath);
 	}
@@ -256,7 +256,7 @@ static size_t java_createAIClassPath(const char* shortName, const char* version,
 			shortName, version,
 			SKIRMISH_AI_PROPERTY_DATA_DIR);
 	if (skirmDD == NULL) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+		simpleLog_logL(LOG_LEVEL_ERROR,
 				"Retrieving the data-dir of Skirmish AI %s-%s failed.",
 				shortName, version);
 	}
@@ -376,13 +376,13 @@ static jobject java_createAIClassLoader(JNIEnv* env,
 			char* str_fileUrl = util_allocStrCat(2, FILE_URL_PREFIX, classPathParts[cpp]);
 			// TODO: check/test if this is allowed/ok
 			FREE(classPathParts[cpp]);
-			simpleLog_logL(SIMPLELOG_LEVEL_FINE,
+			simpleLog_logL(LOG_LEVEL_INFO,
 					"Skirmish AI %s %s class-path part %i: \"%s\"",
 					shortName, version, cpp, str_fileUrl);
 			jobject jurl_fileUrl = jniUtil_createURLObject(env, str_fileUrl);
 			FREE(str_fileUrl);
 			if (jurl_fileUrl == NULL) {
-				simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+				simpleLog_logL(LOG_LEVEL_ERROR,
 						"Skirmish AI %s %s class-path part %i (\"%s\"): failed to create a URL",
 						shortName, version, cpp, str_fileUrl);
 				o_cppURLs = NULL;
@@ -390,7 +390,7 @@ static jobject java_createAIClassLoader(JNIEnv* env,
 			}
 			const bool inserted = jniUtil_insertURLIntoArray(env, o_cppURLs, cpp, jurl_fileUrl);
 			if (!inserted) {
-				simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+				simpleLog_logL(LOG_LEVEL_ERROR,
 						"Skirmish AI %s %s class-path part %i (\"%s\"): failed to insert",
 						shortName, version, cpp, str_fileUrl);
 				o_cppURLs = NULL;
@@ -437,12 +437,12 @@ static bool java_readJvmCfgFile(struct Properties* props) {
 		props->size = util_parsePropertiesFile(jvmPropFile,
 				props->keys, props->values, props_sizeMax);
 		read = true;
-		simpleLog_logL(SIMPLELOG_LEVEL_FINE,
+		simpleLog_logL(LOG_LEVEL_INFO,
 				"JVM: arguments loaded from: %s", jvmPropFile);
 	} else {
 		props->size = 0;
 		read = false;
-		simpleLog_logL(SIMPLELOG_LEVEL_FINE,
+		simpleLog_logL(LOG_LEVEL_INFO,
 				"JVM: arguments NOT loaded from: %s", jvmPropFile);
 	}
 
@@ -468,7 +468,7 @@ static bool java_createNativeLibsPath(char* libraryPath, const size_t libraryPat
 			callback->AIInterface_Info_getValueByKey(interfaceId,
 			AI_INTERFACE_PROPERTY_DATA_DIR);
 	if (dd_r == NULL) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+		simpleLog_logL(LOG_LEVEL_ERROR,
 				"Unable to find read-only data-dir.");
 		return false;
 	} else {
@@ -479,7 +479,7 @@ static bool java_createNativeLibsPath(char* libraryPath, const size_t libraryPat
 	char* dd_lib_r = callback->DataDirs_allocatePath(interfaceId,
 			NATIVE_LIBS_DIR, false, false, true, false);
 	if (dd_lib_r == NULL) {
-		simpleLog_logL(SIMPLELOG_LEVEL_NORMAL,
+		simpleLog_logL(LOG_LEVEL_NOTICE,
 				"Unable to find read-only native libs data-dir (optional): %s",
 				NATIVE_LIBS_DIR);
 	} else {
@@ -493,7 +493,7 @@ static bool java_createNativeLibsPath(char* libraryPath, const size_t libraryPat
 			callback->AIInterface_Info_getValueByKey(interfaceId,
 			AI_INTERFACE_PROPERTY_DATA_DIR_COMMON);
 	if (dd_r_common == NULL || !util_fileExists(dd_r_common)) {
-		simpleLog_logL(SIMPLELOG_LEVEL_NORMAL,
+		simpleLog_logL(LOG_LEVEL_NOTICE,
 				"Unable to find common read-only data-dir (optional).");
 	} else {
 		STRCAT_T(libraryPath, libraryPath_sizeMax, ENTRY_DELIM);
@@ -505,7 +505,7 @@ static bool java_createNativeLibsPath(char* libraryPath, const size_t libraryPat
 		char* dd_lib_r_common = callback->DataDirs_allocatePath(interfaceId,
 			NATIVE_LIBS_DIR, false, false, true, true);
 		if (dd_lib_r_common == NULL || !util_fileExists(dd_lib_r_common)) {
-			simpleLog_logL(SIMPLELOG_LEVEL_NORMAL,
+			simpleLog_logL(LOG_LEVEL_NOTICE,
 					"Unable to find common read-only native libs data-dir (optional).");
 		} else {
 			STRCAT_T(libraryPath, libraryPath_sizeMax, ENTRY_DELIM);
@@ -534,7 +534,7 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args, const stru
 			}
 		}
 	}
-	simpleLog_logL(SIMPLELOG_LEVEL_FINE, "JVM: JNI version: %#x", jniVersion);
+	simpleLog_logL(LOG_LEVEL_INFO, "JVM: JNI version: %#x", jniVersion);
 	vm_args->version = jniVersion;
 
 	// ### check if debug related JVM options should be used ###
@@ -583,11 +583,11 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args, const stru
 		}
 	}
 	if (ignoreUnrecognized) {
-		simpleLog_logL(SIMPLELOG_LEVEL_FINE,
+		simpleLog_logL(LOG_LEVEL_INFO,
 				"JVM: ignoring unrecognized options");
 		vm_args->ignoreUnrecognized = JNI_TRUE;
 	} else {
-		simpleLog_logL(SIMPLELOG_LEVEL_FINE,
+		simpleLog_logL(LOG_LEVEL_INFO,
 				"JVM: NOT ignoring unrecognized options");
 		vm_args->ignoreUnrecognized = JNI_FALSE;
 	}
@@ -598,7 +598,7 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args, const stru
 	char* classPath = util_allocStr(classPath_sizeMax);
 	// ..., autogenerate it ...
 	if (!java_createClassPath(classPath, classPath_sizeMax)) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+		simpleLog_logL(LOG_LEVEL_ERROR,
 				"Failed creating Java class-path.");
 		FREE(classPath);
 		return false;
@@ -626,7 +626,7 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args, const stru
 	char* libraryPath = util_allocStr(libraryPath_sizeMax);
 	// ..., autogenerate it ...
 	if (!java_createNativeLibsPath(libraryPath, libraryPath_sizeMax)) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+		simpleLog_logL(LOG_LEVEL_ERROR,
 				"Failed creating Java library-path.");
 		FREE(libraryPath);
 		return false;
@@ -680,7 +680,7 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args, const stru
 		}
 	} else {
 		// ### ... or set default ones, if the JVM config file was not found ###
-		simpleLog_logL(SIMPLELOG_LEVEL_WARNING, "JVM: properties file ("JVM_PROPERTIES_FILE") not found; using default options.");
+		simpleLog_logL(LOG_LEVEL_WARNING, "JVM: properties file ("JVM_PROPERTIES_FILE") not found; using default options.");
 
 		strOptions[op++] = "-Xms4M";
 		strOptions[op++] = "-Xmx64M";
@@ -707,7 +707,7 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args, const stru
 	vm_args->options = (struct JavaVMOption*) calloc(options_size, sizeof(struct JavaVMOption));
 
 	// fill strOptions into the JVM options
-	simpleLog_logL(SIMPLELOG_LEVEL_FINE, "JVM: options:", options_size);
+	simpleLog_logL(LOG_LEVEL_INFO, "JVM: options:", options_size);
 	char* dd_rw = callback->DataDirs_allocatePath(interfaceId,
 			"", true, true, true, false);
 	size_t i;
@@ -720,7 +720,7 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args, const stru
 			if (strlen(tmpOptionString) > 0) {
 				vm_args->options[nOptions].optionString = tmpOptionString;
 				vm_args->options[nOptions].extraInfo = NULL;
-				simpleLog_logL(SIMPLELOG_LEVEL_FINE, "JVM option %ul: %s", nOptions, tmpOptionString);
+				simpleLog_logL(LOG_LEVEL_INFO, "JVM option %ul: %s", nOptions, tmpOptionString);
 				nOptions++;
 			} else {
 				free(tmpOptionString);
@@ -733,7 +733,7 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args, const stru
 	FREE(dd_rw);
 	FREE(classPathOpt);
 	FREE(libraryPathOpt);
-	simpleLog_logL(SIMPLELOG_LEVEL_FINE, "");
+	simpleLog_logL(LOG_LEVEL_INFO, "");
 
 	return true;
 }
@@ -744,12 +744,12 @@ static JNIEnv* java_reattachCurrentThread() {
 
 	JNIEnv* env = NULL;
 
-	simpleLog_logL(SIMPLELOG_LEVEL_FINEST, "Reattaching current thread...");
+	simpleLog_logL(LOG_LEVEL_DEBUG, "Reattaching current thread...");
 	//const jint res = (*g_jvm)->AttachCurrentThreadAsDaemon(g_jvm, (void**) &env, NULL);
 	const jint res = (*g_jvm)->AttachCurrentThread(g_jvm, (void**) &env, NULL);
 	if (res != 0) {
 		env = NULL;
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+		simpleLog_logL(LOG_LEVEL_ERROR,
 				"Failed attaching JVM to current thread(2): %i - %s",
 				res, jniUtil_getJniRetValDescription(res));
 	}
@@ -762,7 +762,7 @@ static JNIEnv* java_getJNIEnv() {
 	JNIEnv* ret = NULL;
 
 	if (g_jvm == NULL) {
-		simpleLog_logL(SIMPLELOG_LEVEL_FINE, "Creating the JVM.");
+		simpleLog_logL(LOG_LEVEL_INFO, "Creating the JVM.");
 
 		JNIEnv* env = NULL;
 		JavaVM* jvm = NULL;
@@ -770,7 +770,7 @@ static JNIEnv* java_getJNIEnv() {
 		jint res = 0;
 
 		if (!java_createJavaVMInitArgs(&vm_args, jvmCfgProps)) {
-			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+			simpleLog_logL(LOG_LEVEL_ERROR,
 					"Failed initializing JVM init-arguments.");
 			goto end;
 		}
@@ -782,7 +782,7 @@ static JNIEnv* java_getJNIEnv() {
 		// creating a new one for hte same process impossible
 		// (a (SUN?) JVM limitation), we have to do it this way,
 		// to support /aireload and /aicontrol for Java Skirmish AIs.
-		simpleLog_logL(SIMPLELOG_LEVEL_FINE, "looking for existing JVMs ...");
+		simpleLog_logL(LOG_LEVEL_INFO, "looking for existing JVMs ...");
 		jsize numJVMsFound = 0;
 
 		// jint JNI_GetCreatedJavaVMs(JavaVM **vmBuf, jsize bufLen, jsize *nVMs);
@@ -793,20 +793,20 @@ static JNIEnv* java_getJNIEnv() {
 		res = JNI_GetCreatedJavaVMs_f(&jvm, maxVmsToFind, &numJVMsFound);
 		if (res != 0) {
 			jvm = NULL;
-			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+			simpleLog_logL(LOG_LEVEL_ERROR,
 					"Failed fetching list of running JVMs: %i - %s",
 					res, jniUtil_getJniRetValDescription(res));
 			goto end;
 		}
-		simpleLog_logL(SIMPLELOG_LEVEL_FINE, "number of existing JVMs: %i", numJVMsFound);
+		simpleLog_logL(LOG_LEVEL_INFO, "number of existing JVMs: %i", numJVMsFound);
 
 		if (numJVMsFound > 0) {
-			simpleLog_logL(SIMPLELOG_LEVEL_FINE, "using an already running JVM.");
+			simpleLog_logL(LOG_LEVEL_INFO, "using an already running JVM.");
 		} else {
-			simpleLog_logL(SIMPLELOG_LEVEL_FINE, "creating JVM...");
+			simpleLog_logL(LOG_LEVEL_INFO, "creating JVM...");
 			res = JNI_CreateJavaVM_f(&jvm, (void**) &env, &vm_args);
 			if (res != 0 || (*env)->ExceptionCheck(env)) {
-				simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+				simpleLog_logL(LOG_LEVEL_ERROR,
 						"Failed to create Java VM: %i - %s",
 						res, jniUtil_getJniRetValDescription(res));
 				goto end;
@@ -826,7 +826,7 @@ static JNIEnv* java_getJNIEnv() {
 			if ((*env)->ExceptionCheck(env)) {
 				(*env)->ExceptionDescribe(env);
 			}
-			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+			simpleLog_logL(LOG_LEVEL_ERROR,
 					"Failed to attach JVM to current thread: %i - %s",
 					res, jniUtil_getJniRetValDescription(res));
 			goto end;
@@ -835,7 +835,7 @@ static JNIEnv* java_getJNIEnv() {
 end:
 		if (env == NULL || jvm == NULL || (*env)->ExceptionCheck(env)
 				|| res != 0) {
-			simpleLog_logL(SIMPLELOG_LEVEL_ERROR, "JVM: Failed creating.");
+			simpleLog_logL(LOG_LEVEL_ERROR, "JVM: Failed creating.");
 			if (env != NULL && (*env)->ExceptionCheck(env)) {
 				(*env)->ExceptionDescribe(env);
 			}
@@ -861,7 +861,7 @@ end:
 bool java_unloadJNIEnv() {
 
 	if (g_jvm != NULL) {
-		simpleLog_logL(SIMPLELOG_LEVEL_FINE, "JVM: Unloading ...");
+		simpleLog_logL(LOG_LEVEL_INFO, "JVM: Unloading ...");
 
 		//JNIEnv* env = java_getJNIEnv();
 
@@ -874,7 +874,7 @@ bool java_unloadJNIEnv() {
 			if ((*g_jniEnv)->ExceptionCheck(g_jniEnv)) {
 				(*g_jniEnv)->ExceptionDescribe(g_jniEnv);
 			}
-			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+			simpleLog_logL(LOG_LEVEL_ERROR,
 					"JVM: Can not Attach to the current thread: %i - %s",
 					res, jniUtil_getJniRetValDescription(res));
 			return false;
@@ -882,7 +882,7 @@ bool java_unloadJNIEnv() {
 
 		const jint res = (*g_jvm)->DetachCurrentThread(g_jvm);
 		if (res != 0) {
-			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+			simpleLog_logL(LOG_LEVEL_ERROR,
 					"JVM: Failed detaching current thread: %i - %s",
 					res, jniUtil_getJniRetValDescription(res));
 			return false;
@@ -894,12 +894,12 @@ bool java_unloadJNIEnv() {
 		// commands on java AIs
 		/*res = (*g_jvm)->DestroyJavaVM(g_jvm);
 		if (res != 0) {
-			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+			simpleLog_logL(LOG_LEVEL_ERROR,
 					"JVM: Failed destroying: %i - %s",
 					res, jniUtil_getJniRetValDescription(res));
 			return false;
 		} else {
-			simpleLog_logL(SIMPLELOG_LEVEL_NORMAL,
+			simpleLog_logL(LOG_LEVEL_NOTICE,
 					"JVM: Successfully destroyed");
 			g_jvm = NULL;
 		}*/
@@ -958,12 +958,12 @@ bool java_initStatic(int _interfaceId,
 	char jrePath[jrePath_sizeMax];
 	bool jreFound = GetJREPath(jrePath, jrePath_sizeMax, jreLocationFile, NULL);
 	if (!jreFound) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+		simpleLog_logL(LOG_LEVEL_ERROR,
 				"Failed locating a JRE installation"
 				", you may specify the JAVA_HOME env var.");
 		return false;
 	} else {
-		simpleLog_logL(SIMPLELOG_LEVEL_NORMAL,
+		simpleLog_logL(LOG_LEVEL_NOTICE,
 				"Using JRE (can be changed with JAVA_HOME): %s", jrePath);
 	}
 	FREE(jreLocationFile);
@@ -983,24 +983,24 @@ bool java_initStatic(int _interfaceId,
 	bool jvmLibFound = GetJVMPath(jrePath, jvmType, jvmLibPath,
 			jvmLibPath_sizeMax, NULL);
 	if (!jvmLibFound) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+		simpleLog_logL(LOG_LEVEL_ERROR,
 				"Failed locating the %s version of the JVM, please contact spring devs.", jvmType);
 		return false;
 	}
 
 	jvmSharedLib = sharedLib_load(jvmLibPath);
 	if (!sharedLib_isLoaded(jvmSharedLib)) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+		simpleLog_logL(LOG_LEVEL_ERROR,
 				"Failed to load the JVM at \"%s\".", jvmLibPath);
 		return false;
 	} else {
-		simpleLog_logL(SIMPLELOG_LEVEL_NORMAL,
+		simpleLog_logL(LOG_LEVEL_NOTICE,
 				"Successfully loaded the JVM shared library at \"%s\".", jvmLibPath);
 
 		JNI_GetDefaultJavaVMInitArgs_f = (JNI_GetDefaultJavaVMInitArgs_t*)
 				sharedLib_findAddress(jvmSharedLib, "JNI_GetDefaultJavaVMInitArgs");
 		if (JNI_GetDefaultJavaVMInitArgs_f == NULL) {
-			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+			simpleLog_logL(LOG_LEVEL_ERROR,
 					"Failed to load the JVM, function \"%s\" not exported.", "JNI_GetDefaultJavaVMInitArgs");
 			return false;
 		}
@@ -1008,7 +1008,7 @@ bool java_initStatic(int _interfaceId,
 		JNI_CreateJavaVM_f = (JNI_CreateJavaVM_t*)
 				sharedLib_findAddress(jvmSharedLib, "JNI_CreateJavaVM");
 		if (JNI_CreateJavaVM_f == NULL) {
-			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+			simpleLog_logL(LOG_LEVEL_ERROR,
 					"Failed to load the JVM, function \"%s\" not exported.", "JNI_CreateJavaVM");
 			return false;
 		}
@@ -1016,7 +1016,7 @@ bool java_initStatic(int _interfaceId,
 		JNI_GetCreatedJavaVMs_f = (JNI_GetCreatedJavaVMs_t*)
 				sharedLib_findAddress(jvmSharedLib, "JNI_GetCreatedJavaVMs");
 		if (JNI_GetCreatedJavaVMs_f == NULL) {
-			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+			simpleLog_logL(LOG_LEVEL_ERROR,
 					"Failed to load the JVM, function \"%s\" not exported.", "JNI_GetCreatedJavaVMs");
 			return false;
 		}
@@ -1114,11 +1114,11 @@ static bool java_loadSkirmishAI(JNIEnv* env,
 	const bool implementsAIInt = (bool) (*env)->IsAssignableFrom(env, cls_ai, g_cls_ai_int);
 	bool hasException = (*env)->ExceptionCheck(env);
 	if (!implementsAIInt || hasException) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+		simpleLog_logL(LOG_LEVEL_ERROR,
 				"AI class not assignable from interface "INT_AI": %s", className);
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR, "possible reasons (this list could be incomplete):");
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR, "* "INT_AI" interface not implemented");
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR, "* The AI is not compiled for the Java AI Interface version in use");
+		simpleLog_logL(LOG_LEVEL_ERROR, "possible reasons (this list could be incomplete):");
+		simpleLog_logL(LOG_LEVEL_ERROR, "* "INT_AI" interface not implemented");
+		simpleLog_logL(LOG_LEVEL_ERROR, "* The AI is not compiled for the Java AI Interface version in use");
 		if (hasException) {
 			(*env)->ExceptionDescribe(env);
 		}
@@ -1133,7 +1133,7 @@ static bool java_loadSkirmishAI(JNIEnv* env,
 	jobject o_local_ai = (*env)->NewObject(env, cls_ai, m_ai_ctor);
 	hasException = (*env)->ExceptionCheck(env);
 	if (!o_local_ai || hasException) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+		simpleLog_logL(LOG_LEVEL_ERROR,
 				"Failed fetching AI instance for class: %s", className);
 		if (hasException) {
 			(*env)->ExceptionDescribe(env);
@@ -1190,7 +1190,7 @@ bool java_initSkirmishAIClass(
 				skirmishAiImpl_size++;
 			}
 		} else {
-			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+			simpleLog_logL(LOG_LEVEL_ERROR,
 					"Class loading failed for class: %s", className);
 		}
 	} else {

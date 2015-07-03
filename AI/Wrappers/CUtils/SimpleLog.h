@@ -22,28 +22,12 @@
 extern "C" {
 #endif
 
-enum SimpleLog_Level {
-	SIMPLELOG_LEVEL_ERROR       = 1,
-	SIMPLELOG_LEVEL_WARNING     = 3,
-	SIMPLELOG_LEVEL_NORMAL      = 5,
-	SIMPLELOG_LEVEL_FINE        = 8,
-	SIMPLELOG_LEVEL_FINER       = 9,
-	SIMPLELOG_LEVEL_FINEST      = 10
-};
-
+#include "System/Log/Level.h"
 #include <stdbool.h> /* bool, true, false */
 
-#define EXTERNAL_LOGGER(msg)   log(msg);
+typedef void (*logfunction)(int id, const char* section, int level, const char* msg);
 
-/**
- * Initializes the log.
- * @param logFileName   file to log to
- * @param useTimeStamps prefix each log entry with a timestamp
- * @param logLevel      see enum SimpleLog_Level
- * @param append        if true, previous content of the file is preserved
- */
-void simpleLog_init(const char* logFileName, bool useTimeStamps,
-		int logLevel, bool append);
+void simpleLog_initcallback(int, const char* section, logfunction func, int loglevel);
 
 /**
  * Logs a text message,
@@ -59,12 +43,6 @@ void simpleLog_logL(int level, const char* fmt, ...);
  * Works like printf(fmt, ...).
  */
 void simpleLog_log(const char* fmt, ...);
-
-/**
- * Returns a string representation of a log level.
- * @param  logLevel   see enum SimpleLog_Level
- */
-const char* simpleLog_levelToStr(int logLevel);
 
 #ifdef __cplusplus
 } // extern "C"
