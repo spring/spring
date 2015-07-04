@@ -149,6 +149,7 @@ private:
 	void Update();
 	void ProcessPacket(const unsigned playerNum, boost::shared_ptr<const netcode::RawPacket> packet);
 	void CheckSync();
+	void HandleConnectionAttempts();
 	void ServerReadNet();
 
 	void LagProtection();

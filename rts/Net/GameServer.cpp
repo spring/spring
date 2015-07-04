@@ -1701,6 +1701,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 		//case NETMSG_GAMEID:
 		//case NETMSG_INTERNAL_SPEED:
 		//case NETMSG_ATTEMPTCONNECT:
+		//case NETMSG_REJECT_CONNECT:
 		//case NETMSG_GAMEDATA:
 		//case NETMSG_RANDSEED:
 		default: {
@@ -1710,49 +1711,61 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 	}
 }
 
-void CGameServer::ServerReadNet()
+
+void CGameServer::HandleConnectionAttempts()
 {
-	// handle new connections
 	while (UDPNet && UDPNet->HasIncomingConnections()) {
 		boost::shared_ptr<netcode::UDPConnection> prev = UDPNet->PreviewConnection().lock();
 		boost::shared_ptr<const RawPacket> packet = prev->GetData();
 
-		if (packet && packet->length >= 3 && packet->data[0] == NETMSG_ATTEMPTCONNECT) {
-			try {
-				netcode::UnpackPacket msg(packet, 3);
-				std::string name, passwd, version;
-				unsigned char reconnect, netloss;
-				unsigned short netversion;
-				msg >> netversion;
-				if (netversion != NETWORK_VERSION)
-					throw netcode::UnpackPacketException(str(format("Wrong network version: %d, required version: %d") %(int)netversion %(int)NETWORK_VERSION));
-				msg >> name;
-				msg >> passwd;
-				msg >> version;
-				msg >> reconnect;
-				msg >> netloss;
-				BindConnection(name, passwd, version, false, UDPNet->AcceptConnection(), reconnect, netloss);
-			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(format(ConnectionReject) %ex.what() %packet->data[0] %packet->data[2] %packet->length));
-				UDPNet->RejectConnection();
-			}
-		} else {
-			if (packet) {
-				if (packet->length >= 3) {
-					Message(str(format(ConnectionReject) %"Invalid message ID" %packet->data[0] %packet->data[2] %packet->length));
-				} else {
-					std::string pkts;
+		if (!packet) {
+			UDPNet->RejectConnection();
+			continue;
+		}
 
-					for (int i = 0; i < packet->length; ++i) {
-						pkts += str(format(" 0x%x") %(int)packet->data[i]);
-					}
-
-					Message("Connection attempt rejected: Packet too short (data: " + pkts + ")");
+		try {
+			if (packet->length < 3) {
+				std::string pkts;
+				for (int i = 0; i < packet->length; ++i) {
+					pkts += str(format(" 0x%x") %(int)packet->data[i]);
 				}
+				throw netcode::UnpackPacketException("Packet too short (data: " + pkts + ")");
 			}
+
+			if (packet->data[0] != NETMSG_ATTEMPTCONNECT)
+				throw netcode::UnpackPacketException("Invalid message ID");
+
+			netcode::UnpackPacket msg(packet, 3);
+			std::string name, passwd, version;
+			unsigned char reconnect, netloss;
+			unsigned short netversion;
+			msg >> netversion;
+			msg >> name;
+			msg >> passwd;
+			msg >> version;
+			msg >> reconnect;
+			msg >> netloss;
+
+			if (netversion != NETWORK_VERSION)
+				throw netcode::UnpackPacketException(str(format("Wrong network version: %d, required version: %d") %(int)netversion %(int)NETWORK_VERSION));
+
+			BindConnection(name, passwd, version, false, UDPNet->AcceptConnection(), reconnect, netloss);
+		} catch (const netcode::UnpackPacketException& ex) {
+			const std::string msg = str(format(ConnectionReject) %ex.what());
+			prev->Unmute();
+			prev->SendData(CBaseNetProtocol::Get().SendRejectConnect(msg));
+			prev->Flush(true);
+			Message(msg);
 			UDPNet->RejectConnection();
 		}
 	}
+}
+
+
+void CGameServer::ServerReadNet()
+{
+	// handle new connections
+	HandleConnectionAttempts();
 
 	const float updateBandwidth = spring_tomsecs(spring_gettime() - lastBandwidthUpdate) / (float)playerBandwidthInterval;
 	if (updateBandwidth >= 1.0f)

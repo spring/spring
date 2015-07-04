@@ -169,7 +169,6 @@ bool CPreGame::Update()
 {
 	ENTER_SYNCED_CODE();
 	good_fpu_control_registers("CPreGame::Update");
-	clientNet->Update();
 	UpdateClientNet();
 	LEAVE_SYNCED_CODE();
 
@@ -245,6 +244,8 @@ void CPreGame::UpdateClientNet()
 {
 	//FIXME move this code to a external file and move that to rts/Net/
 
+	clientNet->Update();
+
 	if (clientNet->CheckTimeout(0, true)) {
 		LOG_L(L_WARNING, "Server not reachable");
 		SetExitCode(1);
@@ -263,6 +264,7 @@ void CPreGame::UpdateClientNet()
 		}
 
 		switch (inbuf[0]) {
+			case NETMSG_REJECT_CONNECT:
 			case NETMSG_QUIT: {
 				try {
 					netcode::UnpackPacket pckt(packet, 3);
