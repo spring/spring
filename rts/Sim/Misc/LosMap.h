@@ -29,8 +29,8 @@ public:
 	int operator[] (int square) const { return map[square]; }
 
 	int At(int x, int y) const {
-		x = Clamp(size.x - 1, 0, x);
-		y = Clamp(size.y - 1, 0, y);
+		x = Clamp(x, 0, size.x - 1);
+		y = Clamp(y, 0, size.y - 1);
 		return map[y * size.x + x];
 	}
 
