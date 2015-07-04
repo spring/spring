@@ -21,7 +21,7 @@
 CONFIG(bool, Sound).defaultValue(true).description("Select the Sound driver, true = OpenAL, false = NullAudio");
 
 // defined here so spring-headless contains them, too (default & headless should contain the same set of configtags!)
-CONFIG(int, MaxSounds).defaultValue(128).headlessValue(0).minimumValue(0).description("Maximum parallel played sounds.");
+CONFIG(int, MaxSounds).defaultValue(128).headlessValue(1).minimumValue(1).description("Maximum parallel played sounds.");
 CONFIG(bool, PitchAdjust).defaultValue(false).description("When enabled adjust sound speed/pitch to game speed.");
 CONFIG(int, snd_volmaster).defaultValue(60).minimumValue(0).maximumValue(200).description("Master sound volume.");
 CONFIG(int, snd_volgeneral).defaultValue(100).minimumValue(0).maximumValue(200).description("Volume for \"general\" sound channel.");

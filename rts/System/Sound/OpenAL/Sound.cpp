@@ -68,13 +68,9 @@ CSound::CSound()
 	temp["name"] = "EmptySource";
 	sounds.push_back(NULL);
 
-	if (maxSounds <= 0) {
-		LOG_L(L_WARNING, "MaxSounds set to 0, sound is disabled");
-	} else {
-		//soundThread = new boost::thread(boost::bind(&CSound::StartThread, this, maxSounds));
-		soundThread = new boost::thread();
-		*soundThread = Threading::CreateNewThread(boost::bind(&CSound::StartThread, this, maxSounds));
-	}
+	assert(maxSounds>0);
+	soundThread = new boost::thread();
+	*soundThread = Threading::CreateNewThread(boost::bind(&CSound::StartThread, this, maxSounds));
 
 	configHandler->NotifyOnChange(this);
 }
