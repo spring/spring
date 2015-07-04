@@ -233,7 +233,7 @@ void CFeatureDrawer::Draw()
 
 void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 {
-	auto &featureBin = modelRenderers[modelType]->GetFeatureBinMutable();
+	auto &featureBin = modelRenderers[modelType]->GetFeatureBin();
 
 	for (auto &fs: featureBin) {
 		if (modelType != MODELTYPE_3DO) {
@@ -322,21 +322,20 @@ void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 	}
 }
 
-void CFeatureDrawer::DrawFadeFeaturesHelper(int modelType) {
-	{
-		auto &featureBin = modelRenderers[modelType]->GetFeatureBinMutable();
+void CFeatureDrawer::DrawFadeFeaturesHelper(int modelType)
+{
+	auto &featureBin = modelRenderers[modelType]->GetFeatureBin();
 
-		for (auto &fs: featureBin) {
-			if (modelType != MODELTYPE_3DO) {
-				texturehandlerS3O->SetS3oTexture(fs.first);
-			}
-
-			DrawFadeFeaturesSet(fs.second, modelType);
+	for (auto &fs: featureBin) {
+		if (modelType != MODELTYPE_3DO) {
+			texturehandlerS3O->SetS3oTexture(fs.first);
 		}
+
+		DrawFadeFeaturesSet(fs.second, modelType);
 	}
 }
 
-void CFeatureDrawer::DrawFadeFeaturesSet(FeatureSet& fadeFeatures, int modelType)
+void CFeatureDrawer::DrawFadeFeaturesSet(const FeatureSet& fadeFeatures, int modelType)
 {
 	for (auto &df: fadeFeatures) {
 		if (df.second == ALPHA_OPAQUE || df.second == ALPHA_DONT_DRAW)

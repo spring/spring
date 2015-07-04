@@ -479,12 +479,8 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool 
 			texturehandlerS3O->SetS3oTexture(unitBinIt->first);
 		}
 
-		const UnitSet& unitSet = unitBinIt->second;
-
-		{
-			for (auto &unit: unitSet) {
-				DrawOpaqueUnit(unit, excludeUnit, drawReflection, drawRefraction);
-			}
+		for (CUnit* unit: unitBinIt->second) {
+			DrawOpaqueUnit(unit, excludeUnit, drawReflection, drawRefraction);
 		}
 	}
 

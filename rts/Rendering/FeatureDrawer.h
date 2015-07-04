@@ -47,7 +47,7 @@ private:
 	void DrawFarFeatures();
 	bool DrawFeatureNow(const CFeature*, float alpha = 0.99f);
 	void DrawFadeFeaturesHelper(int);
-	void DrawFadeFeaturesSet(FeatureSet&, int);
+	void DrawFadeFeaturesSet(const FeatureSet&, int);
 	void GetVisibleFeatures(int, bool drawFar);
 
 	void PostLoad();
