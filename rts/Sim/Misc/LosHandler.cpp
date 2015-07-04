@@ -40,9 +40,9 @@ CR_REG_METADATA(LosInstance,(
 void CLosHandler::PostLoad()
 {
 	for (int a = 0; a < LOSHANDLER_MAGIC_PRIME; ++a) {
-		for (std::list<LosInstance*>::iterator li = instanceHash[a].begin(); li != instanceHash[a].end(); ++li) {
-			if ((*li)->refCount) {
-				LosAdd(*li);
+		for (LosInstance* li: instanceHash[a]) {
+			if (li->refCount) {
+				LosAdd(li);
 			}
 		}
 	}
@@ -110,10 +110,8 @@ CLosHandler::CLosHandler() :
 CLosHandler::~CLosHandler()
 {
 	for (int a = 0; a < LOSHANDLER_MAGIC_PRIME; ++a) {
-		for (std::list<LosInstance*>::iterator li = instanceHash[a].begin(); li != instanceHash[a].end(); ++li) {
-			LosInstance* i = *li;
-			i->_DestructInstance(i);
-			mempool.Free(i, sizeof(LosInstance));
+		for (LosInstance* li: instanceHash[a]) {
+			delete li;
 		}
 	}
 
@@ -179,7 +177,7 @@ void CLosHandler::MoveUnit(CUnit* unit, bool redoCurrent)
 			}
 		}
 
-		instance = new(mempool.Alloc(sizeof(LosInstance))) LosInstance(
+		instance = new LosInstance(
 			unit->losRadius,
 			unit->airLosRadius,
 			allyteam,
@@ -211,50 +209,47 @@ void CLosHandler::LosAdd(LosInstance* instance)
 
 void CLosHandler::FreeInstance(LosInstance* instance)
 {
-	if (instance == 0)
+	if (instance == nullptr)
 		return;
 
 	instance->refCount--;
 
-	if (instance->refCount == 0) {
-		CleanupInstance(instance);
+	if (instance->refCount > 0) {
+		return;
+	}
 
-		if (!instance->toBeDeleted) {
-			instance->toBeDeleted = true;
-			toBeDeleted.push_back(instance);
-		}
+	CleanupInstance(instance);
 
-		if (instance->hashNum >= LOSHANDLER_MAGIC_PRIME || instance->hashNum < 0) {
+	if (!instance->toBeDeleted) {
+		instance->toBeDeleted = true;
+		toBeDeleted.push_back(instance);
+	}
+
+	if (instance->hashNum >= LOSHANDLER_MAGIC_PRIME || instance->hashNum < 0) {
+		LOG_L(L_WARNING,
+				"[LosHandler::FreeInstance][1] bad LOS-instance hash (%d)",
+				instance->hashNum);
+	}
+
+	if (toBeDeleted.size() > 500) {
+		LosInstance* i = toBeDeleted.front();
+		toBeDeleted.pop_front();
+
+		if (i->hashNum >= LOSHANDLER_MAGIC_PRIME || i->hashNum < 0) {
 			LOG_L(L_WARNING,
-					"[LosHandler::FreeInstance][1] bad LOS-instance hash (%d)",
-					instance->hashNum);
+					"[LosHandler::FreeInstance][2] bad LOS-instance hash (%d)",
+					i->hashNum);
+			return;
 		}
 
-		if (toBeDeleted.size() > 500) {
-			LosInstance* i = toBeDeleted.front();
-			toBeDeleted.pop_front();
+		i->toBeDeleted = false;
 
-			if (i->hashNum >= LOSHANDLER_MAGIC_PRIME || i->hashNum < 0) {
-				LOG_L(L_WARNING,
-						"[LosHandler::FreeInstance][2] bad LOS-instance hash (%d)",
-						i->hashNum);
-				return;
-			}
-
-			i->toBeDeleted = false;
-
-			if (i->refCount == 0) {
-				std::list<LosInstance*>::iterator lii;
-
-				for (lii = instanceHash[i->hashNum].begin(); lii != instanceHash[i->hashNum].end(); ++lii) {
-					if ((*lii) == i) {
-						instanceHash[i->hashNum].erase(lii);
-						i->_DestructInstance(i);
-						mempool.Free(i, sizeof(LosInstance));
-						break;
-					}
-				}
-			}
+		if (i->refCount == 0) {
+			auto& cont = instanceHash[i->hashNum];
+			auto it = std::find(cont.begin(), cont.end(), i);
+			assert(it != cont.end());
+			cont.erase(it);
+			delete i;
 		}
 	}
 }

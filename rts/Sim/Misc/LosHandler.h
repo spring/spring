@@ -11,7 +11,6 @@
 #include "Sim/Objects/WorldObject.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/RadarHandler.h"
-#include "System/MemPool.h"
 #include "System/type2.h"
 
 #define LOSHANDLER_ALWAYSVISIBLE_OVERRIDES_CLOAKED
