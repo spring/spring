@@ -217,10 +217,11 @@ void CDemoRecorder::WritePlayerStats()
 		stats.swab();
 		demoStream.write(reinterpret_cast<char*>(&stats), sizeof(PlayerStatistics));
 	}
-	playerStats.clear();
 
 	fileHeader.numPlayers = playerStats.size();
 	fileHeader.playerStatSize = (int)demoStream.tellp() - pos;
+
+	playerStats.clear();
 }
 
 
@@ -261,8 +262,9 @@ void CDemoRecorder::WriteTeamStats()
 			demoStream.write(reinterpret_cast<char*>(&stats), sizeof(TeamStatistics));
 		}
 	}
-	teamStats.clear();
 
 	fileHeader.numTeams = teamStats.size();
 	fileHeader.teamStatSize = (int)demoStream.tellp() - pos;
+
+	teamStats.clear();
 }
