@@ -137,11 +137,11 @@ void CLosHandler::MoveUnit(CUnit* unit, bool redoCurrent)
 	const float3& losPos = unit->pos;
 	const int allyteam = unit->allyteam;
 
-	const int baseX = max(0, min(losSizeX - 1, int(losPos.x * invLosDiv)));
-	const int baseY = max(0, min(losSizeY - 1, int(losPos.z * invLosDiv)));
+	const int baseX = Clamp(int(losPos.x * invLosDiv), 0, losSizeX - 1);
+	const int baseY = Clamp(int(losPos.z * invLosDiv), 0, losSizeY - 1);
+	const int baseAirX = Clamp(int(losPos.x * invAirDiv), 0, airSizeX - 1);
+	const int baseAirY = Clamp(int(losPos.z * invAirDiv), 0, airSizeY - 1);
 	const int baseSquare = baseY * losSizeX + baseX;
-	const int baseAirX = max(0, min(airSizeX - 1, int(losPos.x * invAirDiv)));
-	const int baseAirY = max(0, min(airSizeY - 1, int(losPos.z * invAirDiv)));
 
 	LosInstance* instance = NULL;
 	if (redoCurrent) {
@@ -164,15 +164,14 @@ void CLosHandler::MoveUnit(CUnit* unit, bool redoCurrent)
 		FreeInstance(unit->los);
 		const int hash = GetHashNum(unit);
 
-		std::list<LosInstance*>::iterator lii;
-		for (lii = instanceHash[hash].begin(); lii != instanceHash[hash].end(); ++lii) {
-			if ((*lii)->baseSquare == baseSquare         &&
-			    (*lii)->losSize    == unit->losRadius    &&
-			    (*lii)->airLosSize == unit->airLosRadius &&
-			    (*lii)->baseHeight == unit->losHeight    &&
-			    (*lii)->allyteam   == allyteam) {
-				AllocInstance(*lii);
-				unit->los = *lii;
+		for (LosInstance* li: instanceHash[hash]) {
+			if (li->baseSquare == baseSquare         &&
+			    li->losSize    == unit->losRadius    &&
+			    li->airLosSize == unit->airLosRadius &&
+			    li->baseHeight == unit->losHeight    &&
+			    li->allyteam   == allyteam) {
+				AllocInstance(li);
+				unit->los = li;
 				return;
 			}
 		}
@@ -181,7 +180,7 @@ void CLosHandler::MoveUnit(CUnit* unit, bool redoCurrent)
 			unit->losRadius,
 			unit->airLosRadius,
 			allyteam,
-			int2(baseX,baseY),
+			int2(baseX, baseY),
 			baseSquare,
 			int2(baseAirX, baseAirY),
 			hash, unit->losHeight
@@ -297,4 +296,40 @@ void CLosHandler::DelayedFreeInstance(LosInstance* instance)
 	di.timeoutTime = (gs->frameNum + (GAME_SPEED + (GAME_SPEED >> 1)));
 
 	delayQue.push_back(di);
+}
+
+
+bool CLosHandler::InLos(const CUnit* unit, int allyTeam) const
+{
+	// NOTE: units are treated differently than world objects in two ways:
+	//   1. they can be cloaked (has to be checked BEFORE all other cases)
+	//   2. when underwater, they are only considered to be in LOS if they
+	//      are also in radar ("sonar") coverage if requireSonarUnderWater
+	//      is enabled --> underwater units can NOT BE SEEN AT ALL without
+	//      active radar!
+	#ifdef LOSHANDLER_ALWAYSVISIBLE_OVERRIDES_CLOAKED
+	if (unit->alwaysVisible)
+		return true;
+	if (unit->isCloaked)
+		return false;
+	#else
+	if (unit->isCloaked)
+		return false;
+	if (unit->alwaysVisible)
+		return true;
+	#endif
+
+	// isCloaked always overrides globalLOS
+	if (gs->globalLOS[allyTeam])
+		return true;
+	if (unit->useAirLos)
+		return (InAirLos(unit->pos, allyTeam) || InAirLos(unit->pos + unit->speed, allyTeam));
+
+	if (requireSonarUnderWater) {
+		if (unit->IsUnderWater() && !radarHandler->InRadar(unit, allyTeam)) {
+			return false;
+		}
+	}
+
+	return (InLos(unit->pos, allyTeam) || InLos(unit->pos + unit->speed, allyTeam));
 }

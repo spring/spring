@@ -95,9 +95,7 @@ void CRadarHandler::MoveUnit(CUnit* unit)
 	newPos.x = (int) (unit->pos.x * invRadarDiv);
 	newPos.y = (int) (unit->pos.z * invRadarDiv);
 
-	if (!unit->hasRadarPos ||
-		(newPos.x != unit->oldRadarPos.x) ||
-	    (newPos.y != unit->oldRadarPos.y)) {
+	if (!unit->hasRadarPos || (newPos != unit->oldRadarPos)) {
 		RemoveUnit(unit);
 
 		if (unit->jammerRadius) {
@@ -161,4 +159,84 @@ void CRadarHandler::RemoveUnit(CUnit* unit)
 		}
 		unit->hasRadarPos = false;
 	}
+}
+
+
+bool CRadarHandler::InRadar(const float3 pos, int allyTeam) const
+{
+	const int square = GetSquare(pos);
+
+	if (pos.y < 0.0f) {
+		// position is underwater, only sonar can see it
+		return (sonarMaps[allyTeam][square] != 0 && commonSonarJammerMap[square] == 0);
+	}
+	if (circularRadar) {
+		// position is not in water, but height is irrelevant for this mode
+		return (airRadarMaps[allyTeam][square] != 0 && commonJammerMap[square] == 0);
+	}
+
+	return (radarMaps[allyTeam][square] != 0 && commonJammerMap[square] == 0);
+}
+
+
+bool CRadarHandler::InRadar(const CUnit* unit, int allyTeam) const
+{
+	const int square = GetSquare(unit->pos);
+
+	if (unit->IsUnderWater()) {
+		// unit is completely submerged, only sonar can see it
+		if (unit->sonarStealth && !unit->beingBuilt) {
+			return false;
+		}
+
+		return (sonarMaps[allyTeam][square] != 0 && commonSonarJammerMap[square] == 0);
+	}
+	if (circularRadar && unit->useAirLos) {
+		// circular mode and unit is an aircraft (and currently not landed)
+		if (unit->stealth && !unit->beingBuilt) {
+			return false;
+		}
+
+		return (airRadarMaps[allyTeam][square] != 0 && commonJammerMap[square] == 0);
+	}
+
+	// (surface) units that are not completely submerged can potentially
+	// be seen by both radar and sonar (by sonar iff the lowest point on
+	// the model is still inside water)
+	const bool radarVisible =
+		(!unit->stealth || unit->beingBuilt) &&
+		(radarMaps[allyTeam][square] != 0) &&
+		(commonJammerMap[square] == 0);
+	const bool sonarVisible =
+		(unit->pos.y < 0.0f) &&
+		(!unit->sonarStealth || unit->beingBuilt) &&
+		(sonarMaps[allyTeam][square] != 0) &&
+		(commonSonarJammerMap[square] == 0);
+
+	return (radarVisible || sonarVisible);
+}
+
+
+bool CRadarHandler::InJammer(const float3 pos, int allyTeam) const
+{
+	const int square = GetSquare(pos);
+	bool ret = false;
+
+	#if 1
+	if (pos.y < 0.0f) {
+		ret = (commonSonarJammerMap[square] != 0);
+	} else {
+		ret = (commonJammerMap[square] != 0);
+	}
+	#else
+	if (pos.y < 0.0f) {
+		#ifdef RADARHANDLER_SONAR_JAMMER_MAPS
+		ret = (sonarJammerMaps[allyTeam][square] != 0);
+		#endif
+	} else {
+		ret = (jammerMaps[allyTeam][square] != 0);
+	}
+	#endif
+
+	return ret;
 }

@@ -65,7 +65,7 @@ public:
 		, toBeDeleted(false)
 	{}
 
- 	std::vector<int> losSquares;
+	std::vector<int> losSquares;
 	int losSize;
 	int airLosSize;
 	int refCount;
@@ -108,6 +108,8 @@ public:
 	void MoveUnit(CUnit* unit, bool redoCurrent);
 	void FreeInstance(LosInstance* instance);
 
+	bool InLos(const CUnit* unit, int allyTeam) const;
+
 	inline bool InLos(const CWorldObject* obj, int allyTeam) const {
 		if (obj->alwaysVisible || gs->globalLOS[allyTeam])
 			return true;
@@ -118,40 +120,6 @@ public:
 		//   slow-moving objects will be visible no earlier or later than before on average
 		//   fast-moving objects will be visible at most one SU before they otherwise would
 		return (InLos(obj->pos, allyTeam) || InLos(obj->pos + obj->speed, allyTeam));
-	}
-
-	inline bool InLos(const CUnit* unit, int allyTeam) const {
-		// NOTE: units are treated differently than world objects in two ways:
-		//   1. they can be cloaked (has to be checked BEFORE all other cases)
-		//   2. when underwater, they are only considered to be in LOS if they
-		//      are also in radar ("sonar") coverage if requireSonarUnderWater
-		//      is enabled --> underwater units can NOT BE SEEN AT ALL without
-		//      active radar!
-		#ifdef LOSHANDLER_ALWAYSVISIBLE_OVERRIDES_CLOAKED
-		if (unit->alwaysVisible)
-			return true;
-		if (unit->isCloaked)
-			return false;
-		#else
-		if (unit->isCloaked)
-			return false;
-		if (unit->alwaysVisible)
-			return true;
-		#endif
-
-		// isCloaked always overrides globalLOS
-		if (gs->globalLOS[allyTeam])
-			return true;
-		if (unit->useAirLos)
-			return (InAirLos(unit->pos, allyTeam) || InAirLos(unit->pos + unit->speed, allyTeam));
-
-		if (requireSonarUnderWater) {
-			if (unit->IsUnderWater() && !radarHandler->InRadar(unit, allyTeam)) {
-				return false;
-			}
-		}
-
-		return (InLos(unit->pos, allyTeam) || InLos(unit->pos + unit->speed, allyTeam));
 	}
 
 	inline bool InLos(const float3& pos, int allyTeam) const {

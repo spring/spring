@@ -7,6 +7,7 @@
 
 #include <vector>
 #include "System/type2.h"
+#include "System/myMath.h"
 
 /// map containing counts of how many units have Line Of Sight (LOS) to each square
 class CLosMap
@@ -28,8 +29,8 @@ public:
 	int operator[] (int square) const { return map[square]; }
 
 	int At(int x, int y) const {
-		x = std::max(0, std::min(size.x - 1, x));
-		y = std::max(0, std::min(size.y - 1, y));
+		x = Clamp(size.x - 1, 0, x);
+		y = Clamp(size.y - 1, 0, y);
 		return map[y * size.x + x];
 	}
 
