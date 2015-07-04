@@ -1754,6 +1754,7 @@ void CGameServer::HandleConnectionAttempts()
 			const std::string msg = str(format(ConnectionReject) %ex.what());
 			prev->Unmute();
 			prev->SendData(CBaseNetProtocol::Get().SendRejectConnect(msg));
+			prev->SendData(CBaseNetProtocol::Get().SendQuit(msg)); //FIXME backward compatibility (remove ~2017)
 			prev->Flush(true);
 			Message(msg);
 			UDPNet->RejectConnection();
@@ -1892,7 +1893,7 @@ void CGameServer::GenerateAndSendGameID()
 	#endif
 		if (generatedGameID)
 			for (int i = 0; i<16; ++i)
-				gameID.charArray[i] =  p[i];
+				gameID.charArray[i] = p[i];
 	}
 
 	Broadcast(CBaseNetProtocol::Get().SendGameID(gameID.charArray));
@@ -2420,7 +2421,6 @@ void CGameServer::UpdateLoop()
 		Threading::SetThreadName("netcode");
 		Threading::SetAffinity(~0);
 
-		//FIXME use async callback funcs in boost udp sockets and so get rid of any latency & remove netcode thread
 		while (!quitServer) {
 			spring_sleep(spring_msecs(5));
 
