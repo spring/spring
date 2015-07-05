@@ -307,14 +307,22 @@ void CLosAlgorithm::LosAdd(int2 pos, int radius, float baseHeight, std::vector<i
 {
 	if (radius <= 0) { return; }
 
-	pos.x = Clamp(pos.x, 0, size.x - 1);
-	pos.y = Clamp(pos.y, 0, size.y - 1);
+	SRectangle safeRect(radius, radius, size.x - radius, size.y - radius);
 
-	if ((pos.x - radius < radius) || (pos.x + radius >= size.x - radius) || // FIXME: This additional margin is due to a suspect bug in losalgorithm
-	    (pos.y - radius < radius) || (pos.y + radius >= size.y - radius)) { // causing rare crash with big units such as arm Colossus
-		SafeLosAdd(pos, radius, baseHeight, squares);
-	} else {
+	// add all squares that are in the los radius
+	if (safeRect.Inside(pos)) {
+		// we aren't touching the map borders -> we don't need to check for the map boundaries
 		UnsafeLosAdd(pos, radius, baseHeight, squares);
+	} else {
+		// we need to check each square if it's outsid of the map boundaries
+		SafeLosAdd(pos, radius, baseHeight, squares);
+	}
+
+	// delete duplicates
+	std::sort(squares.begin(), squares.end());
+	auto it = std::unique(squares.begin(), squares.end());
+	if (it != squares.end()) {
+		squares.erase(it, squares.end());
 	}
 }
 
@@ -338,8 +346,7 @@ void CLosAlgorithm::UnsafeLosAdd(int2 pos, int radius, float baseHeight, std::ve
 	const int mapSquare = MAP_SQUARE(pos);
 	const LosTable& table = CLosTables::GetForLosSize(radius);
 
-	// NOTE: floating and flying units have their baseHeight adjusted in MoveType::SlowUpdate
-	baseHeight += heightmap[mapSquare];
+	baseHeight += heightmap[mapSquare]; //FIXME comment
 
 	size_t neededSpace = squares.size() + 1;
 	for (const LosLine& line: table) {
@@ -360,8 +367,8 @@ void CLosAlgorithm::UnsafeLosAdd(int2 pos, int radius, float baseHeight, std::ve
 
 			LOS_ADD(mapSquare + square.x + square.y * size.x, maxAng1);
 			LOS_ADD(mapSquare - square.x - square.y * size.x, maxAng2);
-			LOS_ADD(mapSquare - square.x * size.x + square.y, maxAng3);
-			LOS_ADD(mapSquare + square.x * size.x - square.y, maxAng4);
+			LOS_ADD(mapSquare + square.y - square.x * size.x, maxAng3);
+			LOS_ADD(mapSquare - square.y + square.x * size.x, maxAng4);
 
 			r++;
 		}
@@ -374,11 +381,15 @@ void CLosAlgorithm::SafeLosAdd(int2 pos, int radius, float baseHeight, std::vect
 	const int mapSquare = MAP_SQUARE(pos);
 	const LosTable& table = CLosTables::GetForLosSize(radius);
 
-	// NOTE: floating and flying units have their baseHeight adjusted in MoveType::SlowUpdate
 	baseHeight += heightmap[mapSquare];
 
-	squares.push_back(mapSquare);
+	size_t neededSpace = squares.size() + 1;
+	for (const LosLine& line: table) {
+		neededSpace += line.size() * 4;
+	}
+	squares.reserve(neededSpace);
 
+	squares.push_back(mapSquare);
 	for (const LosLine& line: table) {
 		float maxAng1 = minMaxAng;
 		float maxAng2 = minMaxAng;
