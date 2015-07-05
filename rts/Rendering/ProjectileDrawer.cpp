@@ -761,11 +761,12 @@ void CProjectileDrawer::DrawGroundFlashes()
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	glFogfv(GL_FOG_COLOR, black);
 
+	GroundFlashContainer& gfc = projectileHandler->groundFlashes;
+	
 	CGroundFlash::va = GetVertexArray();
 	CGroundFlash::va->Initialize();
-	CGroundFlash::va->EnlargeArrays(8, 0, VA_SIZE_TC);
+	CGroundFlash::va->EnlargeArrays(8 * gfc.size(), 0, VA_SIZE_TC);
 
-	GroundFlashContainer& gfc = projectileHandler->groundFlashes;
 
 	bool depthTest = true;
 	bool depthMask = false;
