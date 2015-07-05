@@ -955,7 +955,7 @@ bool CWeapon::TestRange(const float3 tgtPos, const SWeaponTarget& trg) const
 
 bool CWeapon::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const
 {
-	float3 dir = pos - aimFromPos;
+	float3 dir = pos - weaponMuzzlePos;
 
 	const float length = dir.Length();
 	const float spread = AccuracyExperience() + SprayAngleExperience();
@@ -973,16 +973,16 @@ bool CWeapon::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) con
 		CUnit* unit = NULL;
 		CFeature* feature = NULL;
 
-		const float gdst = TraceRay::TraceRay(aimFromPos, dir, length, ~Collision::NOGROUND, owner, unit, feature);
-		const float3 gpos = aimFromPos + dir * gdst;
+		const float gdst = TraceRay::TraceRay(weaponMuzzlePos, dir, length, ~Collision::NOGROUND, owner, unit, feature);
+		const float3 gpos = weaponMuzzlePos + dir * gdst;
 
-		// true iff ground does not block the ray of length <length> from <pos> along <dir>
+		// true if ground does not block the ray of length <length> from <pos> along <dir>
 		if ((gdst > 0.0f) && (gpos.SqDistance(pos) > Square(weaponDef->damageAreaOfEffect)))
 			return false;
 	}
 
 	// friendly, neutral & feature check
-	if (TraceRay::TestCone(aimFromPos, dir, length, spread, owner->allyteam, avoidFlags, owner)) {
+	if (TraceRay::TestCone(weaponMuzzlePos, dir, length, spread, owner->allyteam, avoidFlags, owner)) {
 		return false;
 	}
 
