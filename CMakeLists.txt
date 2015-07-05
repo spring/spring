@@ -330,8 +330,14 @@ Set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LTO_FLAGS}")
 
 
 ### ld.gold
+option(COMPRESS_DEBUG_SYMBOLS "Compresses the DebugSymbols (needs ld.gold, beware: slow)" FALSE)
 if    (LDGOLD_FOUND)
-	Message(STATUS "Found ld.gold, compressing debugsymbols")
+	Message(STATUS "Found ld.gold")
+	if    (COMPRESS_DEBUG_SYMBOLS)
+		Message(STATUS "Compressing debug symbols")
+		set(LDGOLD_LINKER_FLAGS " -Wl,--compress-debug-sections=zlib ${LDGOLD_LINKER_FLAGS}")
+	endif (COMPRESS_DEBUG_SYMBOLS)
+
 	set(CMAKE_LINKER LD_GOLD)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LDGOLD_CXX_FLAGS}")
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LDGOLD_LINKER_FLAGS}")
@@ -341,13 +347,10 @@ endif (LDGOLD_FOUND)
 
 
 ### C++11
-option(USE_CXX11 "Enable c++11" TRUE)
-if    (USE_CXX11)
-	Message(STATUS "Compiling with C++11")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_FLAGS}")
-	add_definitions(-D_GLIBCXX_USE_NANOSLEEP) # issue in std::chrono with gentoo and few other distros
-	add_definitions(-D_RANDOM_TCC) # don't include <bits/random.tcc>, it fails to compile with single precision constants
-endif (USE_CXX11)
+Message(STATUS "Compiling with C++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_FLAGS}")
+add_definitions(-D_GLIBCXX_USE_NANOSLEEP) # issue in std::chrono with gentoo and few other distros
+add_definitions(-D_RANDOM_TCC) # don't include <bits/random.tcc>, it fails to compile with single precision constants
 
 
 ### our custom OpenMP replacement
