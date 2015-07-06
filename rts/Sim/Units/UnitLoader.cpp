@@ -29,7 +29,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/UnitHandler.h"
 
-#include "System/EventBatchHandler.h"
+#include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/Watchdog.h"
@@ -119,7 +119,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitLoadParams& cparams)
 	}
 
 	unit->PostInit(params.builder);
-	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).enqueue(EventBatchHandler::UD(unit, unit->isCloaked));
+	eventHandler.RenderUnitCreated(unit, unit->isCloaked);
 
 	if (params.flattenGround) {
 		FlattenGround(unit);

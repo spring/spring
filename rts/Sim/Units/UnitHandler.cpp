@@ -12,7 +12,6 @@
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/EventHandler.h"
-#include "System/EventBatchHandler.h"
 #include "System/Log/ILog.h"
 #include "System/TimeProfiler.h"
 #include "System/myMath.h"

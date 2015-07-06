@@ -54,7 +54,6 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/WeaponLoader.h"
-#include "System/EventBatchHandler.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Matrix44f.h"
@@ -526,7 +525,7 @@ void CUnit::PostLoad()
 		script->Activate();
 	}
 
-	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).enqueue(EventBatchHandler::UD(this, isCloaked));
+	eventHandler.RenderUnitCreated(this, isCloaked);
 }
 
 
