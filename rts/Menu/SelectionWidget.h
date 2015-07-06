@@ -73,9 +73,9 @@ public:
 	void ShowMapList();
 	void ShowScriptList();
 
-	void SelectMod(std::string);
-	void SelectScript(std::string);
-	void SelectMap(std::string);
+	void SelectMod(const std::string&);
+	void SelectScript(const std::string&);
+	void SelectMap(const std::string&);
 
 	std::string userScript;
 	std::string userMap;

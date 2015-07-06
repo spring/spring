@@ -163,27 +163,32 @@ void SelectionWidget::ShowScriptList()
 	curSelect->list->SetCurrentItem(userScript);
 }
 
-void SelectionWidget::SelectMod(std::string mod)
+void SelectionWidget::SelectMod(const std::string& mod)
 {
+	if (mod == userMod) {
+		CleanWindow();
+		return;
+	}
 	userMod = mod;
 	configHandler->SetString("LastSelectedMod", userMod);
 	modT->SetText(userMod);
 
+	SelectScript(SelectionWidget::NoScriptSelect); //reset AI as LuaAI maybe doesn't exist in this game
 	CleanWindow();
 }
 
-void SelectionWidget::SelectScript(std::string map)
+void SelectionWidget::SelectScript(const std::string& script)
 {
-	userScript = map;
+	userScript = script;
 	configHandler->SetString("LastSelectedScript", userScript);
 	scriptT->SetText(userScript);
 
 	CleanWindow();
 }
 
-void SelectionWidget::SelectMap(std::string script)
+void SelectionWidget::SelectMap(const std::string& map)
 {
-	userMap = script;
+	userMap = map;
 	configHandler->SetString("LastSelectedMap", userMap);
 	mapT->SetText(userMap);
 
