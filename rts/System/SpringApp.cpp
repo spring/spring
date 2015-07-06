@@ -879,6 +879,9 @@ void SpringApp::Reload(const std::string& script)
 	if (gameServer != NULL)
 		gameServer->SetReloading(true);
 
+	//Lua shutdown functions need to access 'game' but SafeDelete sets it to NULL.
+	game->KillLua();
+
 	SafeDelete(game);
 	SafeDelete(pregame);
 
