@@ -131,12 +131,14 @@ bool CUnitHandler::AddUnit(CUnit* unit)
 void CUnitHandler::DeleteUnit(CUnit* unit)
 {
 	unitsToBeRemoved.push_back(unit);
-	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).dequeue_synced(unit);
 }
 
 
 void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 {
+	//we want to call RenderUnitDestroyed while the unit is still valid
+	eventHandler.RenderUnitDestroyed(delUnit);
+
 	if (activeSlowUpdateUnit != activeUnits.end() && delUnit == *activeSlowUpdateUnit) {
 		++activeSlowUpdateUnit;
 	}
@@ -197,7 +199,6 @@ void CUnitHandler::Update()
 
 	{
 		if (!unitsToBeRemoved.empty()) {
-			eventHandler.DeleteSyncedUnits();
 			while (!unitsToBeRemoved.empty()) {
 				CUnit* delUnit = unitsToBeRemoved.back();
 				unitsToBeRemoved.pop_back();

@@ -96,8 +96,3 @@ void EventBatchHandler::UnitMovedEvent::Add(const UAP& u) { eventHandler.RenderU
 void EventBatchHandler::FeatureCreatedDestroyedEvent::Add(const CFeature* f) { eventHandler.RenderFeatureCreated(f); }
 void EventBatchHandler::FeatureCreatedDestroyedEvent::Remove(const CFeature* f) { eventHandler.RenderFeatureDestroyed(f); }
 void EventBatchHandler::FeatureMovedEvent::Add(const FAP& f) { eventHandler.RenderFeatureMoved(f.feat, f.oldpos, f.newpos); }
-
-
-void EventBatchHandler::DeleteSyncedUnits() {
-	unitCreatedDestroyedEventBatch.destroy_synced();
-}

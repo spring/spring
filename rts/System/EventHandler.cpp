@@ -518,10 +518,6 @@ void CEventHandler::Update()
 
 
 
-void CEventHandler::DeleteSyncedUnits() { eventBatchHandler->DeleteSyncedUnits(); }
-
-
-
 void CEventHandler::SunChanged(const float3& sunDir)
 {
 	ITERATE_EVENTCLIENTLIST(SunChanged, sunDir);

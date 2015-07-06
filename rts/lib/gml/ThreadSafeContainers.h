@@ -51,19 +51,6 @@ public:
 		D::Remove(x);
 	}
 
-	void dequeue_synced(const C& x) {
-		simDelQueue.push_back(x);
-	}
-
-	void destroy_synced() {
-		for (VecIT it = simDelQueue.begin(); it != simDelQueue.end(); ++it) {
-			D::Remove(*it);
-		}
-		simDelQueue.clear();
-	}
-
-private:
-	std::vector<T> simDelQueue;
 };
 
 #endif // #ifndef TSC_H
