@@ -56,7 +56,7 @@ public:
 
 	float GetParticleSaturation(const bool withRandomization = true) const;
 	int   GetCurrentParticles() const;
-
+	
 	void AddProjectile(CProjectile* p);
 	void AddGroundFlash(CGroundFlash* flash);
 	void AddFlyingPiece(const float3 pos, const float3 speed, int team, const S3DOPiece* piece, const S3DOPrimitive* chunk);
@@ -83,8 +83,14 @@ public:
 	FlyingPieceContainer flyingPieces3DO;     // unsynced
 	FlyingPieceContainer flyingPiecesS3O;     // unsynced
 	GroundFlashContainer groundFlashes;       // unsynced
+	
+	ProjectileContainer newProjectiles;         // projectiles that need projectileCreated to be called
+#if UNSYNCED_PROJ_NOEVENT
+	ProjectileContainer newUnsyncedProjectiles; // projectiles that need UnsyncedProjectileCreated to be called
+#endif
 
 private:
+	void InitNewProjectiles();
 	void UpdateProjectileContainer(ProjectileContainer&, bool);
 
 	std::deque<int> freeSyncedIDs;            // available synced (weapon, piece) projectile ID's
