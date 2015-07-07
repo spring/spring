@@ -3,8 +3,6 @@
 #include <SDL_keycode.h>
 #include <SDL_mouse.h>
 
-#include "lib/gml/ThreadSafeContainers.h"
-
 #include "CommandColors.h"
 #include "CursorIcons.h"
 #include "GuiHandler.h"

@@ -11,7 +11,6 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/LightHandler.h"
 #include "System/EventClient.h"
-#include "lib/gml/ThreadSafeContainers.h"
 
 struct UnitDef;
 class CWorldObject;

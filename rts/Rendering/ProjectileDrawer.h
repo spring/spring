@@ -6,7 +6,6 @@
 #include "Rendering/GL/myGL.h"
 #include <set>
 
-#include "lib/gml/ThreadSafeContainers.h"
 #include "Rendering/GL/FBO.h"
 #include "Sim/Projectiles/ProjectileFunctors.h"
 #include "System/EventClient.h"

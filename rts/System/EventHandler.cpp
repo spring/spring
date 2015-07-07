@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/EventHandler.h"
-#include "System/EventBatchHandler.h"
 
 #include "Lua/LuaCallInCheck.h"
 #include "Lua/LuaOpenGL.h"  // FIXME -- should be moved
@@ -35,15 +34,10 @@ CEventHandler::CEventHandler()
 	mouseOwner = NULL;
 
 	SetupEvents();
-
-	// helper event client (always created)
-	EventBatchHandler::CreateInstance();
 }
 
 CEventHandler::~CEventHandler()
-{
-	EventBatchHandler::DeleteInstance();
-}
+{ }
 
 
 void CEventHandler::ResetState()
@@ -54,9 +48,6 @@ void CEventHandler::ResetState()
 	handles.clear();
 
 	SetupEvents();
-
-	EventBatchHandler::DeleteInstance();
-	EventBatchHandler::CreateInstance();
 }
 
 void CEventHandler::SetupEvents()
