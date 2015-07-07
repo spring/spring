@@ -4,7 +4,6 @@
 #define LOS_HANDLER_H
 
 #include <vector>
-#include <list>
 #include <deque>
 #include <boost/noncopyable.hpp>
 #include "Map/Ground.h"
@@ -184,7 +183,7 @@ private:
 
 	CLosAlgorithm losAlgo;
 
-	std::list<LosInstance*> instanceHash[LOSHANDLER_MAGIC_PRIME];
+	std::deque<LosInstance*> instanceHash[LOSHANDLER_MAGIC_PRIME];
 
 	std::deque<LosInstance*> toBeDeleted;
 

@@ -1,7 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
-#include <list>
 #include <cstdlib>
 #include <cstring>
 
@@ -14,7 +12,6 @@
 #include "System/Log/ILog.h"
 #include "System/TimeProfiler.h"
 #include "System/creg/STL_Deque.h"
-#include "System/creg/STL_List.h"
 
 using std::min;
 using std::max;
@@ -245,7 +242,6 @@ void CLosHandler::FreeInstance(LosInstance* instance)
 		if (i->refCount == 0) {
 			auto& cont = instanceHash[i->hashNum];
 			auto it = std::find(cont.begin(), cont.end(), i);
-			assert(it != cont.end());
 			cont.erase(it);
 			delete i;
 		}
