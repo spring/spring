@@ -196,15 +196,10 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 		assert(p->synced == synced);
 		assert(p->synced == !!(p->GetClass()->binder->flags & creg::CF_Synced));
 		if (p->callEvent) {
-		#if UNSYNCED_PROJ_NOEVENT
-			if (synced) {
+			if (synced || !UNSYNCED_PROJ_NOEVENT) {
 				eventHandler.ProjectileCreated(p, p->GetAllyteamID());
-			} else {
-				eventHandler.UnsyncedProjectileCreated(p);
 			}
-		#else
-			eventHandler.ProjectileCreated(p, p->GetAllyteamID());
-		#endif
+			eventHandler.RenderProjectileCreated(p);
 			p->callEvent = false;
 		}
 		if (!p->deleteMe) {
@@ -213,6 +208,7 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 		}
 		pc[i] = pc.back();
 		pc.pop_back();
+		eventHandler.RenderProjectileDestroyed(p);
 		if (synced) { //FIXME move outside of loop!
 			eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
 			syncedProjectileIDs[p->id] = nullptr;
@@ -220,9 +216,7 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 			ASSERT_SYNCED(p->pos);
 			ASSERT_SYNCED(p->id);
 		} else {
-		#if UNSYNCED_PROJ_NOEVENT
-			eventHandler.UnsyncedProjectileDestroyed(p);
-		#else
+		#if !UNSYNCED_PROJ_NOEVENT
 			eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
 			unsyncedProjectileIDs[p->id] = nullptr;
 			freeUnsyncedIDs.push_back(p->id);

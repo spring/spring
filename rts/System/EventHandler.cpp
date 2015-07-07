@@ -745,22 +745,3 @@ void CEventHandler::MetalMapChanged(const int x, const int z)
 {
 	ITERATE_EVENTCLIENTLIST(MetalMapChanged, x, z);
 }
-
-
-/******************************************************************************/
-/******************************************************************************/
-
-void CEventHandler::UnsyncedProjectileCreated(const CProjectile* proj) {
-	//FIXME no real event
-	(eventBatchHandler->GetUnsyncedProjectileCreatedDestroyedBatch()).insert(proj);
-}
-
-void CEventHandler::UnsyncedProjectileDestroyed(const CProjectile* proj) {
-	//FIXME no real event
-	(eventBatchHandler->GetUnsyncedProjectileCreatedDestroyedBatch()).erase_delete(proj);
-}
-
-
-/******************************************************************************/
-/******************************************************************************/
-

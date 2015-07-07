@@ -5,11 +5,9 @@
 
 #include "EventClient.h"
 #include "lib/gml/ThreadSafeContainers.h"
-#include "Sim/Projectiles/ProjectileHandler.h" // for UNSYNCED_PROJ_NOEVENT
 
 class CUnit;
 class CFeature;
-class CProjectile;
 
 class EventBatchHandler : public CEventClient {
 public: // EventClient
@@ -27,12 +25,7 @@ public: // EventClient
 	void FeatureCreated(const CFeature* feature);
 	void FeatureDestroyed(const CFeature* feature);
 	void FeatureMoved(const CFeature* feature, const float3& oldpos);
-	void ProjectileCreated(const CProjectile* proj);
-	void ProjectileDestroyed(const CProjectile* proj);
 
-	//FIXME check them in EventHandler to see what needs to be fixed
-	//void UnsyncedProjectileCreated(const CProjectile* proj)
-	//void UnsyncedProjectileDestroyed(const CProjectile* proj)
 	//void LoadedModelRequested()
 
 public:
@@ -48,32 +41,6 @@ private:
 	static boost::int64_t eventSequenceNumber;
 
 private:
-	struct ProjectileCreatedDestroyedEvent {
-		static void Add(const CProjectile*);
-		static void Remove(const CProjectile*);
-		static void Delete(const CProjectile*);
-	};
-
-	typedef ThreadListRender<
-		const CProjectile*,
-		const CProjectile*,
-		ProjectileCreatedDestroyedEvent
-	> ProjectileCreatedDestroyedEventBatch;
-
-#if UNSYNCED_PROJ_NOEVENT
-	struct UnsyncedProjectileCreatedDestroyedEvent {
-		static void Add(const CProjectile*);
-		static void Remove(const CProjectile*);
-		static void Delete(const CProjectile*);
-	};
-
-	typedef ThreadListRender<
-		const CProjectile*,
-		const CProjectile*,
-		UnsyncedProjectileCreatedDestroyedEvent
-	> UnsyncedProjectileCreatedDestroyedEventBatch;
-#endif
-
 	struct UAD {
 		const CUnit* unit;
 		int data;
@@ -176,16 +143,6 @@ private:
 		FeatureMovedEvent
 	> FeatureMovedEventBatch;
 
-	//! contains only projectiles that can change simulation state
-	ProjectileCreatedDestroyedEventBatch syncedProjectileCreatedDestroyedEventBatch;
-
-#if UNSYNCED_PROJ_NOEVENT
-	static UnsyncedProjectileCreatedDestroyedEventBatch
-#else
-	ProjectileCreatedDestroyedEventBatch
-#endif
-	//! contains only projectiles that cannot change simulation state
-	unsyncedProjectileCreatedDestroyedEventBatch;
 
 	UnitCreatedDestroyedEventBatch unitCreatedDestroyedEventBatch;
 	UnitCloakStateChangedEventBatch unitCloakStateChangedEventBatch;
@@ -207,14 +164,6 @@ public:
 		featureMovedEventBatch.enqueue(FAP(feature, oldpos, newpos));
 	}
 
-	ProjectileCreatedDestroyedEventBatch& GetSyncedProjectileCreatedDestroyedBatch() { return syncedProjectileCreatedDestroyedEventBatch; }
-
-#if UNSYNCED_PROJ_NOEVENT
-	static inline UnsyncedProjectileCreatedDestroyedEventBatch&
-#else
-	ProjectileCreatedDestroyedEventBatch&
-#endif
-	GetUnsyncedProjectileCreatedDestroyedBatch() { return unsyncedProjectileCreatedDestroyedEventBatch; }
 
 
 	UnitCreatedDestroyedEventBatch& GetUnitCreatedDestroyedBatch() { return unitCreatedDestroyedEventBatch; }

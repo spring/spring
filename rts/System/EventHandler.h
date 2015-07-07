@@ -79,8 +79,6 @@ class CEventHandler
 		void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
 		void RenderProjectileCreated(const CProjectile* proj);
 		void RenderProjectileDestroyed(const CProjectile* proj);
-		void UnsyncedProjectileCreated(const CProjectile* proj);
-		void UnsyncedProjectileDestroyed(const CProjectile* proj);
 
 		void UnitIdle(const CUnit* unit);
 		void UnitCommand(const CUnit* unit, const Command& command);

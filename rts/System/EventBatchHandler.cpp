@@ -1,14 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/Util.h"
-#include "Sim/Projectiles/Projectile.h" // for operator delete
 
 #include "System/EventBatchHandler.h"
 #include "System/EventHandler.h"
 
-#if UNSYNCED_PROJ_NOEVENT
-#include "Rendering/ProjectileDrawer.h"
-#endif
 
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "System/Platform/Threading.h"
@@ -55,37 +51,11 @@ void EventBatchHandler::UnitDecloaked(const CUnit* unit) { EnqueueUnitCloakState
 void EventBatchHandler::FeatureCreated(const CFeature* feature) { GetFeatureCreatedDestroyedEventBatch().enqueue(feature); }
 void EventBatchHandler::FeatureDestroyed(const CFeature* feature) { GetFeatureCreatedDestroyedEventBatch().dequeue(feature); }
 void EventBatchHandler::FeatureMoved(const CFeature* feature, const float3& oldpos) { EnqueueFeatureMovedEvent(feature, oldpos, feature->pos); }
-void EventBatchHandler::ProjectileCreated(const CProjectile* proj)
-{
-	if (proj->synced) {
-		GetSyncedProjectileCreatedDestroyedBatch().insert(proj);
-	} else {
-		GetUnsyncedProjectileCreatedDestroyedBatch().insert(proj);
-	}
-}
-void EventBatchHandler::ProjectileDestroyed(const CProjectile* proj)
-{
-	if (proj->synced) {
-		GetSyncedProjectileCreatedDestroyedBatch().erase_delete(proj);
-	} else {
-		GetUnsyncedProjectileCreatedDestroyedBatch().erase_delete(proj);
-	}
-}
 
 
 
 
 
-void EventBatchHandler::ProjectileCreatedDestroyedEvent::Add(const CProjectile* p) { eventHandler.RenderProjectileCreated(p); }
-void EventBatchHandler::ProjectileCreatedDestroyedEvent::Remove(const CProjectile* p) { eventHandler.RenderProjectileDestroyed(p); }
-void EventBatchHandler::ProjectileCreatedDestroyedEvent::Delete(const CProjectile* p) { delete p; }
-
-#if UNSYNCED_PROJ_NOEVENT
-EventBatchHandler::UnsyncedProjectileCreatedDestroyedEventBatch EventBatchHandler::unsyncedProjectileCreatedDestroyedEventBatch;
-void EventBatchHandler::UnsyncedProjectileCreatedDestroyedEvent::Add(const CProjectile* p) { projectileDrawer->RenderProjectileCreated(p); }
-void EventBatchHandler::UnsyncedProjectileCreatedDestroyedEvent::Remove(const CProjectile* p) { projectileDrawer->RenderProjectileDestroyed(p); }
-void EventBatchHandler::UnsyncedProjectileCreatedDestroyedEvent::Delete(const CProjectile* p) { delete p; }
-#endif
 
 void EventBatchHandler::UnitCreatedDestroyedEvent::Add(const UD& u) { eventHandler.RenderUnitCreated(u.unit, u.data); }
 void EventBatchHandler::UnitCreatedDestroyedEvent::Remove(const UD& u) { eventHandler.RenderUnitDestroyed(u.unit); }
