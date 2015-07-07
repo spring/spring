@@ -321,38 +321,37 @@ void CLosAlgorithm::LosAdd(int2 pos, int radius, float baseHeight, std::vector<i
 	// delete duplicates
 	std::sort(squares.begin(), squares.end());
 	auto it = std::unique(squares.begin(), squares.end());
-	if (it != squares.end()) {
-		squares.erase(it, squares.end());
+	squares.erase(it, squares.end());
+}
+
+
+inline static void CastLos(std::vector<int>* squares, float* maxAng, const int square, const float invR, const float* heightmap, float losHeight)
+{
+	const float dh = heightmap[square] - losHeight;
+	float ang = dh * invR;
+	if (ang >= *maxAng) {
+		squares->push_back(square);
+		*maxAng = ang;
 	}
 }
 
 
 #define MAP_SQUARE(pos) ((pos).y * size.x + (pos).x)
-#define LOS_ADD(_square, _maxAng) {                  \
-	const int square_ = _square;                      \
-	const float dh = heightmap[square_] - baseHeight; \
-	float ang = (dh + extraHeight) * invR;           \
-                                                     \
-	if (ang > _maxAng) {                             \
-		squares.push_back(square_);                   \
-		ang = dh * invR;                             \
-		if (ang > _maxAng) _maxAng = ang;            \
-	}                                                \
-}
 
 
-void CLosAlgorithm::UnsafeLosAdd(int2 pos, int radius, float baseHeight, std::vector<int>& squares)
+void CLosAlgorithm::UnsafeLosAdd(int2 pos, int radius, float losHeight, std::vector<int>& squares)
 {
 	const int mapSquare = MAP_SQUARE(pos);
 	const LosTable& table = CLosTables::GetForLosSize(radius);
 
-	baseHeight += heightmap[mapSquare]; //FIXME comment
 
 	size_t neededSpace = squares.size() + 1;
 	for (const LosLine& line: table) {
 		neededSpace += line.size() * 4;
 	}
 	squares.reserve(neededSpace);
+
+	losHeight += heightmap[mapSquare]; //FIXME comment
 
 	squares.push_back(mapSquare);
 	for (const LosLine& line: table) {
@@ -365,24 +364,21 @@ void CLosAlgorithm::UnsafeLosAdd(int2 pos, int radius, float baseHeight, std::ve
 		for (const int2& square: line) {
 			const float invR = math::isqrt2(square.x*square.x + square.y*square.y);
 
-			LOS_ADD(mapSquare + square.x + square.y * size.x, maxAng1);
-			LOS_ADD(mapSquare - square.x - square.y * size.x, maxAng2);
-			LOS_ADD(mapSquare + square.y - square.x * size.x, maxAng3);
-			LOS_ADD(mapSquare - square.y + square.x * size.x, maxAng4);
 
+			CastLos(&squares, &maxAng1, MAP_SQUARE(pos + square),                    invR, heightmap, losHeight);
+			CastLos(&squares, &maxAng2, MAP_SQUARE(pos - square),                    invR, heightmap, losHeight);
+			CastLos(&squares, &maxAng3, MAP_SQUARE(pos + int2(square.y, -square.x)), invR, heightmap, losHeight);
+			CastLos(&squares, &maxAng4, MAP_SQUARE(pos + int2(-square.y, square.x)), invR, heightmap, losHeight);
 			r++;
 		}
 	}
 }
 
 
-void CLosAlgorithm::SafeLosAdd(int2 pos, int radius, float baseHeight, std::vector<int>& squares)
+void CLosAlgorithm::SafeLosAdd(int2 pos, int radius, float losHeight, std::vector<int>& squares)
 {
 	const int mapSquare = MAP_SQUARE(pos);
 	const LosTable& table = CLosTables::GetForLosSize(radius);
-
-	baseHeight += heightmap[mapSquare];
-
 	size_t neededSpace = squares.size() + 1;
 	for (const LosLine& line: table) {
 		neededSpace += line.size() * 4;
@@ -390,6 +386,8 @@ void CLosAlgorithm::SafeLosAdd(int2 pos, int radius, float baseHeight, std::vect
 	squares.reserve(neededSpace);
 
 	SRectangle safeRect(0, 0, size.x, size.y);
+	losHeight += heightmap[mapSquare]; //FIXME comment
+
 	squares.push_back(mapSquare);
 	for (const LosLine& line: table) {
 		float maxAng1 = minMaxAng;
@@ -402,16 +400,16 @@ void CLosAlgorithm::SafeLosAdd(int2 pos, int radius, float baseHeight, std::vect
 			const float invR = math::isqrt2(square.x*square.x + square.y*square.y);
 
 			if (safeRect.Inside(pos + square)) {
-				LOS_ADD(mapSquare + square.x + square.y * size.x, maxAng1);
+				CastLos(&squares, &maxAng1, MAP_SQUARE(pos + square),                    invR, heightmap, losHeight);
 			}
 			if (safeRect.Inside(pos - square)) {
-				LOS_ADD(mapSquare - square.x - square.y * size.x, maxAng2);
+				CastLos(&squares, &maxAng2, MAP_SQUARE(pos - square),                    invR, heightmap, losHeight);
 			}
 			if (safeRect.Inside(pos + int2(square.y, -square.x))) {
-				LOS_ADD(mapSquare - square.x * size.x + square.y, maxAng3);
+				CastLos(&squares, &maxAng3, MAP_SQUARE(pos + int2(square.y, -square.x)), invR, heightmap, losHeight);
 			}
 			if (safeRect.Inside(pos + int2(-square.y, square.x))) {
-				LOS_ADD(mapSquare + square.x * size.x - square.y, maxAng4);
+				CastLos(&squares, &maxAng4, MAP_SQUARE(pos + int2(-square.y, square.x)), invR, heightmap, losHeight);
 			}
 
 			r++;
