@@ -389,6 +389,7 @@ void CLosAlgorithm::SafeLosAdd(int2 pos, int radius, float baseHeight, std::vect
 	}
 	squares.reserve(neededSpace);
 
+	SRectangle safeRect(0, 0, size.x, size.y);
 	squares.push_back(mapSquare);
 	for (const LosLine& line: table) {
 		float maxAng1 = minMaxAng;
@@ -400,16 +401,16 @@ void CLosAlgorithm::SafeLosAdd(int2 pos, int radius, float baseHeight, std::vect
 		for (const int2 square: line) {
 			const float invR = 1.0f / r;
 
-			if ((pos.x + square.x < size.x) && (pos.y + square.y < size.y)) {
+			if (safeRect.Inside(pos + square)) {
 				LOS_ADD(mapSquare + square.x + square.y * size.x, maxAng1);
 			}
-			if ((pos.x - square.x >= 0) && (pos.y - square.y >= 0)) {
+			if (safeRect.Inside(pos - square)) {
 				LOS_ADD(mapSquare - square.x - square.y * size.x, maxAng2);
 			}
-			if ((pos.x + square.y < size.x) && (pos.y - square.x >= 0)) {
+			if (safeRect.Inside(pos + int2(square.y, -square.x))) {
 				LOS_ADD(mapSquare - square.x * size.x + square.y, maxAng3);
 			}
-			if ((pos.x - square.y >= 0) && (pos.y + square.x < size.y)) {
+			if (safeRect.Inside(pos + int2(-square.y, square.x))) {
 				LOS_ADD(mapSquare + square.x * size.x - square.y, maxAng4);
 			}
 
