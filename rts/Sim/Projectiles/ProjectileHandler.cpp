@@ -188,9 +188,10 @@ static void MAPPOS_SANITY_CHECK(const float3 v)
 
 void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool synced)
 {
-	ProjectileContainer::iterator pci = pc.begin();
-	while (pci != pc.end()) {
-		CProjectile* p = *pci;
+	// WARNING: we can't use iters here cause ProjectileCreated and ProjectileDestroyed events
+	// may add new projectiles to the container!
+	for (size_t i=0; i<pc.size();) {
+		CProjectile* p = pc[i];
 		assert(p);
 		assert(p->synced == synced);
 		assert(p->synced == !!(p->GetClass()->binder->flags & creg::CF_Synced));
@@ -207,10 +208,10 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 			p->callEvent = false;
 		}
 		if (!p->deleteMe) {
-			++pci;
+			++i;
 			continue;
 		}
-		*pci = pc.back();
+		pc[i] = pc.back();
 		pc.pop_back();
 		if (synced) { //FIXME move outside of loop!
 			eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
@@ -233,8 +234,6 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 	SCOPED_TIMER("ProjectileHandler::Update::PP");
 
 	//WARNING: we can't use iters here cause p->Update() may add new projectiles to the container!
-	// Also we only update the already existing projectiles, any new added ones don't get updated.
-	//for (size_t i=0,s=pc.size(); i<s; ++i) {
 	for (size_t i=0; i<pc.size(); ++i) {
 		CProjectile* p = pc[i];
 		assert(p);
