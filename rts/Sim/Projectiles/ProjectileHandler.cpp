@@ -261,26 +261,12 @@ static void UPDATE_CONTAINER(T& cont) {
 	assert(cont.empty() || &(*cont.begin()) == origStart);
 }
 
-void CProjectileHandler::InitNewProjectiles()
-{
-	for (auto &p: newProjectiles) {
-		eventHandler.ProjectileCreated(p, p->GetAllyteamID());
-	}
-	newProjectiles.clear();
-#if UNSYNCED_PROJ_NOEVENT
-	for (auto &p: newUnsyncedProjectiles) {
-		eventHandler.UnsyncedProjectileCreated(p);
-	}
-	newUnsyncedProjectiles.clear();
-#endif
-}
 
 void CProjectileHandler::Update()
 {
 	{
 		SCOPED_TIMER("ProjectileHandler::Update");
-		
-		InitNewProjectiles();
+
 		// particles
 		CheckCollisions(); // before :Update() to check if the particles move into stuff
 		UpdateProjectileContainer(syncedProjectiles, true);
@@ -329,7 +315,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 	} else {
 		unsyncedProjectiles.push_back(p);
 #if UNSYNCED_PROJ_NOEVENT
-		newUnsyncedProjectiles.push_back(p);
+		eventHandler.UnsyncedProjectileCreated(p);
 		return;
 #endif
 		freeIDs = &freeUnsyncedIDs;
@@ -366,7 +352,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 #endif
 	}
 
-	newProjectiles.push_back(p);
+	eventHandler.ProjectileCreated(p, p->GetAllyteamID());
 }
 
 
