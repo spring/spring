@@ -813,7 +813,6 @@ void CUnit::SetLosStatus(int at, unsigned short newStatus)
 	losStatus[at] |= newStatus;
 
 	if (diffBits) {
-		eventHandler.RenderUnitLOSChanged(this, at, newStatus);
 		if (diffBits & LOS_INLOS) {
 			if (newStatus & LOS_INLOS) {
 				eventHandler.UnitEnteredLos(this, at);

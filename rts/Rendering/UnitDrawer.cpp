@@ -1993,39 +1993,58 @@ void CUnitDrawer::UnitDecloaked(const CUnit* unit) {
 	}
 }
 
-void CUnitDrawer::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus)
-{
+void CUnitDrawer::UnitEnteredLos(const CUnit* unit, int allyTeam) {
 	if (allyTeam != gu->myAllyTeam) {
 		return;
 	}
 
 	CUnit* u = const_cast<CUnit*>(unit); //cleanup
-	if (newStatus & LOS_INLOS) {
-		if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
-			erase(liveGhostBuildings[MDL_TYPE(unit)], u);
-		}
-		erase(unitRadarIcons[allyTeam], u);
-	} else {
-		if (newStatus & LOS_PREVLOS) {
-			if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
-				insert_unique(liveGhostBuildings[MDL_TYPE(unit)], u);
-			}
-		}
+	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
+		erase(liveGhostBuildings[MDL_TYPE(unit)], u);
+	}
+	erase(unitRadarIcons[allyTeam], u);
 
-		if (newStatus & LOS_INRADAR) {
-			insert_unique(unitRadarIcons[allyTeam], u);
-		} else {
-			erase(unitRadarIcons[allyTeam], u);
-		}
+	UpdateUnitMiniMapIcon(unit, false, false);
+}
+
+void CUnitDrawer::UnitLeftLos(const CUnit* unit, int allyTeam) {
+	if (allyTeam != gu->myAllyTeam) {
+		return;
+	}
+
+	CUnit* u = const_cast<CUnit*>(unit); //cleanup
+	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
+		insert_unique(liveGhostBuildings[MDL_TYPE(unit)], u);
+	}
+
+	if (unit->losStatus[allyTeam] & LOS_INRADAR) {
+		insert_unique(unitRadarIcons[allyTeam], u);
 	}
 
 	UpdateUnitMiniMapIcon(unit, false, false);
 }
 
+void CUnitDrawer::UnitEnteredRadar(const CUnit* unit, int allyTeam) {
+	if (allyTeam != gu->myAllyTeam) {
+		return;
+	}
 
+	CUnit* u = const_cast<CUnit*>(unit);
+	insert_unique(unitRadarIcons[allyTeam], u);
 
+	UpdateUnitMiniMapIcon(unit, false, false);
+}
 
+void CUnitDrawer::UnitLeftRadar(const CUnit* unit, int allyTeam) {
+	if (allyTeam != gu->myAllyTeam) {
+		return;
+	}
 
+	CUnit* u = const_cast<CUnit*>(unit);
+	erase(unitRadarIcons[allyTeam], u);
+
+	UpdateUnitMiniMapIcon(unit, false, false);
+}
 
 unsigned int CUnitDrawer::CalcUnitLOD(const CUnit* unit, unsigned int lastLOD)
 {

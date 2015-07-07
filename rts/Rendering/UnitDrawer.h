@@ -34,9 +34,10 @@ public:
 	bool WantsEvent(const std::string& eventName) {
 		return
 			eventName == "RenderUnitCreated"      || eventName == "RenderUnitDestroyed"  ||
-			eventName == "UnitCloaked"            || eventName == "RenderUnitLOSChanged" ||
-			eventName == "UnitDecloaked"          || eventName == "PlayerChanged"        ||
-			eventName == "SunChanged";
+			eventName == "UnitCloaked"            || eventName == "UnitDecloaked"        ||
+			eventName == "UnitEnteredRadar"       || eventName == "UnitEnteredLos"       ||
+			eventName == "UnitLeftRadar"          || eventName == "UnitLeftLos"          ||
+			eventName == "PlayerChanged"          || eventName == "SunChanged";
 	}
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
@@ -44,7 +45,10 @@ public:
 	void RenderUnitCreated(const CUnit*, int cloaked);
 	void RenderUnitDestroyed(const CUnit*);
 
-	void RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus);
+	void UnitEnteredRadar(const CUnit* unit, int allyTeam);
+	void UnitEnteredLos(const CUnit* unit, int allyTeam);
+	void UnitLeftRadar(const CUnit* unit, int allyTeam);
+	void UnitLeftLos(const CUnit* unit, int allyTeam);
 
 	void UnitCloaked(const CUnit* unit);
 	void UnitDecloaked(const CUnit* unit);

@@ -168,7 +168,6 @@ class CEventClient
 
 		virtual void RenderUnitCreated(const CUnit* unit, int cloaked) {}
 		virtual void RenderUnitDestroyed(const CUnit* unit) {}
-		virtual void RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus) {}
 		virtual void RenderUnitMoved(const CUnit* unit, const float3& newpos) {}
 
 		virtual void UnitUnitCollision(const CUnit* collider, const CUnit* collidee) {}
