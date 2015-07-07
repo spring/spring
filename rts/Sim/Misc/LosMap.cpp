@@ -363,7 +363,7 @@ void CLosAlgorithm::UnsafeLosAdd(int2 pos, int radius, float baseHeight, std::ve
 		float r = 1;
 
 		for (const int2& square: line) {
-			const float invR = 1.0f / r;
+			const float invR = math::isqrt2(square.x*square.x + square.y*square.y);
 
 			LOS_ADD(mapSquare + square.x + square.y * size.x, maxAng1);
 			LOS_ADD(mapSquare - square.x - square.y * size.x, maxAng2);
@@ -399,7 +399,7 @@ void CLosAlgorithm::SafeLosAdd(int2 pos, int radius, float baseHeight, std::vect
 		float r = 1;
 
 		for (const int2 square: line) {
-			const float invR = 1.0f / r;
+			const float invR = math::isqrt2(square.x*square.x + square.y*square.y);
 
 			if (safeRect.Inside(pos + square)) {
 				LOS_ADD(mapSquare + square.x + square.y * size.x, maxAng1);
