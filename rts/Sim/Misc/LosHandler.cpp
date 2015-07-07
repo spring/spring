@@ -138,6 +138,7 @@ void CLosHandler::MoveUnit(CUnit* unit, bool redoCurrent)
 	const int baseY = Round(losPos.z * invLosDiv);
 	const int baseAirX = Round(losPos.x * invAirDiv);
 	const int baseAirY = Round(losPos.z * invAirDiv);
+	const int baseSquare = baseY * losSizeX + baseX;
 
 	LosInstance* instance = NULL;
 	if (redoCurrent) {
