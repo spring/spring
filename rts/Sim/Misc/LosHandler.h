@@ -125,16 +125,16 @@ public:
 	inline bool InLos(const float3& pos, int allyTeam) const {
 		if (gs->globalLOS[allyTeam])
 			return true;
-		const int gx = pos.x * invLosDiv;
-		const int gz = pos.z * invLosDiv;
+		const int gx = Round(pos.x * invLosDiv);
+		const int gz = Round(pos.z * invLosDiv);
 		return (losMaps[allyTeam].At(gx, gz) != 0);
 	}
 
 	inline bool InAirLos(const float3& pos, int allyTeam) const {
 		if (gs->globalLOS[allyTeam])
 			return true;
-		const int gx = pos.x * invAirDiv;
-		const int gz = pos.z * invAirDiv;
+		const int gx = Round(pos.x * invAirDiv);
+		const int gz = Round(pos.z * invAirDiv);
 		return (airLosMaps[allyTeam].At(gx, gz) != 0);
 	}
 
@@ -142,15 +142,15 @@ public:
 	inline bool InLos(int hmx, int hmz, int allyTeam) const {
 		if (gs->globalLOS[allyTeam])
 			return true;
-		const int gx = hmx * SQUARE_SIZE * invLosDiv;
-		const int gz = hmz * SQUARE_SIZE * invLosDiv;
+		const int gx = Round(hmx * SQUARE_SIZE * invLosDiv);
+		const int gz = Round(hmz * SQUARE_SIZE * invLosDiv);
 		return (losMaps[allyTeam].At(gx, gz) != 0);
 	}
 	inline bool InAirLos(int hmx, int hmz, int allyTeam) const {
 		if (gs->globalLOS[allyTeam])
 			return true;
-		const int gx = hmx * SQUARE_SIZE * invAirDiv;
-		const int gz = hmz * SQUARE_SIZE * invAirDiv;
+		const int gx = Round(hmx * SQUARE_SIZE * invAirDiv);
+		const int gz = Round(hmz * SQUARE_SIZE * invAirDiv);
 		return (airLosMaps[allyTeam].At(gx, gz) != 0);
 	}
 

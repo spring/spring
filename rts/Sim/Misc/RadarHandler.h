@@ -33,8 +33,8 @@ public:
 
 	inline int GetSquare(const float3& pos) const
 	{
-		const int gx = pos.x * invRadarDiv;
-		const int gz = pos.z * invRadarDiv;
+		const int gx = Round(pos.x * invRadarDiv);
+		const int gz = Round(pos.z * invRadarDiv);
 		const int colIdx = Clamp(gx, 0, xsize - 1);
 		const int rowIdx = Clamp(gz, 0, zsize - 1);
 		return (rowIdx * xsize) + colIdx;

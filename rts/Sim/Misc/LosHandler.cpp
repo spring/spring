@@ -134,14 +134,13 @@ void CLosHandler::MoveUnit(CUnit* unit, bool redoCurrent)
 
 	unit->lastLosUpdate = gs->frameNum;
 
-	const float3& losPos = unit->pos;
+	const float3& losPos = unit->midPos;
 	const int allyteam = unit->allyteam;
 
-	const int baseX = Clamp(int(losPos.x * invLosDiv), 0, losSizeX - 1);
-	const int baseY = Clamp(int(losPos.z * invLosDiv), 0, losSizeY - 1);
-	const int baseAirX = Clamp(int(losPos.x * invAirDiv), 0, airSizeX - 1);
-	const int baseAirY = Clamp(int(losPos.z * invAirDiv), 0, airSizeY - 1);
-	const int baseSquare = baseY * losSizeX + baseX;
+	const int baseX = Round(losPos.x * invLosDiv);
+	const int baseY = Round(losPos.z * invLosDiv);
+	const int baseAirX = Round(losPos.x * invAirDiv);
+	const int baseAirY = Round(losPos.z * invAirDiv);
 
 	LosInstance* instance = NULL;
 	if (redoCurrent) {

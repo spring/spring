@@ -92,8 +92,8 @@ void CRadarHandler::MoveUnit(CUnit* unit)
 		return;
 
 	int2 newPos;
-	newPos.x = (int) (unit->pos.x * invRadarDiv);
-	newPos.y = (int) (unit->pos.z * invRadarDiv);
+	newPos.x = Round(unit->midPos.x * invRadarDiv);
+	newPos.y = Round(unit->midPos.z * invRadarDiv);
 
 	if (!unit->hasRadarPos || (newPos != unit->oldRadarPos)) {
 		RemoveUnit(unit);
