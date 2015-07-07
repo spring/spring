@@ -1,16 +1,42 @@
 Spring changelog
 (since 85.0: "!" prefix indicate backward compability broke)
 (numbers in brackets normally mean the mantis ticket ID)
+
 -- 100.0 --------------------------------------------------------
-Map:
-! Added radar2 los colour for colouring the inside of the radar edge.
- - it is changeable through SetLosViewColors (see Lua changes)
+Major:
+ - bugfixes
+
+InfoTexture:
+ ! Added radar2 los colour for colouring the inside of the radar edge.
+  - it is changeable through SetLosViewColors (see Lua changes)
+
+WeaponDefs:
+ - fix visibleShieldHitFrames not read from shield subtable
+ ! scale flighttime with GAME_SPEED and not 32
+ - warn on unknown tags
+  - weapondefs_post.lua: set legacy weapontype tags to nil, so they don't cause engine warnings
+
+LOS:
+ - make little bit more accurate
 
 Lua:
-! SetLosViewColors changed:
- - radar2 colour (see Map changes) is required.
- - parameters are now in the form of GetLosViewColors output:
-   (always = {r,g,b}, LOS = {r,g,b}, radar = {r,g,b}, jammer = {r,g,b}, radar2 = {r,g,b})
+ ! SetLosViewColors changed:
+  - radar2 colour (see Map changes) is required.
+  - parameters are now in the form of GetLosViewColors output:
+    (always = {r,g,b}, LOS = {r,g,b}, radar = {r,g,b}, jammer = {r,g,b}, radar2 = {r,g,b})
+ - changed args of Spring.GetGroundNormal
+  - new 3rd arg: bool smoothedNormal (default false)
+  - 4th return arg: float slope
+ ! convert UnitDef::attackSafetyDistance to a key recognized by Spring.SetMoveTypeData
+
+NetProtocol:
+ - handle rejected connection attempts (when version differs)
+
+Pathing:
+ - make path cache part of synced state -> player desyncs right from the start when got an invalid one
+
+ConfigTags:
+ - make "MaxParticles" & "MaxNanoParticles" runtime changeable
 
 
 -- 99.0 ---------------------------------------------------------
