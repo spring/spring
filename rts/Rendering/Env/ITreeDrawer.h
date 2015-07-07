@@ -33,12 +33,12 @@ public:
 	bool WantsEvent(const std::string& eventName) {
 		return
 			(eventName == "RenderFeatureCreated") ||
-			(eventName == "RenderFeatureMoved") ||
+			(eventName == "FeatureMoved") ||
 			(eventName == "RenderFeatureDestroyed");
 	}
 
 	void RenderFeatureCreated(const CFeature* feature);
-	void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
+	void FeatureMoved(const CFeature* feature, const float3& oldpos);
 	void RenderFeatureDestroyed(const CFeature* feature);
 
 	std::vector<GLuint> delDispLists;

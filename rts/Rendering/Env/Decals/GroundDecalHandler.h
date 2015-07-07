@@ -147,9 +147,9 @@ public:
 			(eventName == "SunChanged") ||
 			(eventName == "RenderUnitCreated") ||
 			(eventName == "RenderUnitDestroyed") ||
-			(eventName == "RenderUnitMoved") ||
+			(eventName == "UnitMoved") ||
 			(eventName == "RenderFeatureCreated") ||
-			(eventName == "RenderFeatureMoved") ||
+			(eventName == "FeatureMoved") ||
 			(eventName == "UnitLoaded") ||
 			(eventName == "UnitUnloaded");
 	}
@@ -160,8 +160,8 @@ public:
 	void RenderUnitCreated(const CUnit*, int cloaked);
 	void RenderUnitDestroyed(const CUnit*);
 	void RenderFeatureCreated(const CFeature* feature);
-	void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
-	void RenderUnitMoved(const CUnit* unit, const float3& newpos);
+	void FeatureMoved(const CFeature* feature, const float3& oldpos);
+	void UnitMoved(const CUnit* unit);
 	void UnitLoaded(const CUnit* unit, const CUnit* transport);
 	void UnitUnloaded(const CUnit* unit, const CUnit* transport);
 

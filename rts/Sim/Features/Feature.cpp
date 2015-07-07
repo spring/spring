@@ -465,7 +465,6 @@ void CFeature::ForcedMove(const float3& newPos)
 	Move(newPos - pos, true);
 	Block();
 
-	eventHandler.RenderFeatureMoved(this, oldPos, pos);
 	eventHandler.FeatureMoved(this, oldPos);
 
 	// setup the visual transformation matrix
@@ -553,7 +552,6 @@ bool CFeature::UpdatePosition()
 				CWorldObject::SetVelocity(ZeroVector);
 			}
 
-			eventHandler.RenderFeatureMoved(this, oldPos, pos);
 			eventHandler.FeatureMoved(this, oldPos);
 			CalculateTransform();
 		}
@@ -571,14 +569,12 @@ bool CFeature::UpdatePosition()
 			// stop falling when we reach our finalHeight
 			// (which can be arbitrary, even below ground)
 			Move(UpVector * std::min(pos.y - finalHeight, speed.y), true);
-			eventHandler.RenderFeatureMoved(this, oldPos, pos);
 			eventHandler.FeatureMoved(this, oldPos);
 		} else if (pos.y < finalHeight) {
 			// stop vertical movement and teleport up
 			CWorldObject::SetVelocity(speed * XZVector);
 
 			Move(UpVector * (finalHeight - pos.y), true);
-			eventHandler.RenderFeatureMoved(this, oldPos, pos);
 			eventHandler.FeatureMoved(this, oldPos);
 		}
 

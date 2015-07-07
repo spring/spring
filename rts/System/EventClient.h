@@ -168,7 +168,6 @@ class CEventClient
 
 		virtual void RenderUnitCreated(const CUnit* unit, int cloaked) {}
 		virtual void RenderUnitDestroyed(const CUnit* unit) {}
-		virtual void RenderUnitMoved(const CUnit* unit, const float3& newpos) {}
 
 		virtual void UnitUnitCollision(const CUnit* collider, const CUnit* collidee) {}
 		virtual void UnitFeatureCollision(const CUnit* collider, const CFeature* collidee) {}
@@ -187,7 +186,6 @@ class CEventClient
 
 		virtual void RenderFeatureCreated(const CFeature* feature) {}
 		virtual void RenderFeatureDestroyed(const CFeature* feature) {}
-		virtual void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos) {}
 
 		virtual void ProjectileCreated(const CProjectile* proj) {}
 		virtual void ProjectileDestroyed(const CProjectile* proj) {}

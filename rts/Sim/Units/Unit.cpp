@@ -654,7 +654,6 @@ void CUnit::ForcedMove(const float3& newPos)
 	Move(newPos - pos, true);
 	Block();
 
-	eventHandler.RenderUnitMoved(this, pos);
 	eventHandler.UnitMoved(this);
 
 	quadField->MovedUnit(this);

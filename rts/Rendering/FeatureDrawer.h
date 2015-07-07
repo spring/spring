@@ -31,14 +31,14 @@ public:
 	void DrawFadeFeatures(bool noAdvShading = false);
 
 	bool WantsEvent(const std::string& eventName) {
-		return (eventName == "RenderFeatureCreated" || eventName == "RenderFeatureDestroyed" || eventName == "RenderFeatureMoved");
+		return (eventName == "RenderFeatureCreated" || eventName == "RenderFeatureDestroyed" || eventName == "FeatureMoved");
 	}
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
 
 	virtual void RenderFeatureCreated(const CFeature* feature);
 	virtual void RenderFeatureDestroyed(const CFeature* feature);
-	virtual void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
+	virtual void FeatureMoved(const CFeature* feature, const float3& oldpos);
 
 private:
 	static void UpdateDrawPos(CFeature* f);

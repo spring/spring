@@ -140,7 +140,7 @@ void CFeatureDrawer::RenderFeatureDestroyed(const CFeature* feature)
 }
 
 
-void CFeatureDrawer::RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos)
+void CFeatureDrawer::FeatureMoved(const CFeature* feature, const float3& oldpos)
 {
 	CFeature* f = const_cast<CFeature*>(feature);
 

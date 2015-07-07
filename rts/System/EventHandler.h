@@ -71,10 +71,8 @@ class CEventHandler
 		//FIXME no events
 		void RenderUnitCreated(const CUnit* unit, int cloaked);
 		void RenderUnitDestroyed(const CUnit* unit);
-		void RenderUnitMoved(const CUnit* unit, const float3& newpos);
 		void RenderFeatureCreated(const CFeature* feature);
 		void RenderFeatureDestroyed(const CFeature* feature);
-		void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
 		void RenderProjectileCreated(const CProjectile* proj);
 		void RenderProjectileDestroyed(const CProjectile* proj);
 
@@ -648,10 +646,6 @@ inline void CEventHandler::RenderUnitDestroyed(const CUnit* unit)
 	ITERATE_EVENTCLIENTLIST(RenderUnitDestroyed, unit)
 }
 
-inline void CEventHandler::RenderUnitMoved(const CUnit* unit, const float3& newpos)
-{
-	ITERATE_EVENTCLIENTLIST(RenderUnitMoved, unit, newpos)
-}
 
 inline void CEventHandler::RenderFeatureCreated(const CFeature* feature)
 {
@@ -663,10 +657,6 @@ inline void CEventHandler::RenderFeatureDestroyed(const CFeature* feature)
 	ITERATE_EVENTCLIENTLIST(RenderFeatureDestroyed, feature)
 }
 
-inline void CEventHandler::RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos)
-{
-	ITERATE_EVENTCLIENTLIST(RenderFeatureMoved, feature, oldpos, newpos)
-}
 
 inline void CEventHandler::RenderProjectileCreated(const CProjectile* proj)
 {

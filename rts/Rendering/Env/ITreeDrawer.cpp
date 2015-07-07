@@ -110,10 +110,10 @@ void ITreeDrawer::RenderFeatureCreated(const CFeature* feature) {
 	}
 }
 
-void ITreeDrawer::RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos) {
+void ITreeDrawer::FeatureMoved(const CFeature* feature, const float3& oldpos) {
 	if (feature->def->drawType >= DRAWTYPE_TREE) {
 		DeleteTree(feature->id, oldpos);
-		AddTree(feature->id, feature->def->drawType - 1, newpos, 1.0f);
+		AddTree(feature->id, feature->def->drawType - 1, feature->pos, 1.0f);
 	}
 }
 

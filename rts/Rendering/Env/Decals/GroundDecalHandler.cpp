@@ -819,12 +819,12 @@ void CGroundDecalHandler::Draw()
 }
 
 
-void CGroundDecalHandler::RenderUnitMoved(const CUnit* unit, const float3& newpos)
+void CGroundDecalHandler::UnitMoved(const CUnit* unit)
 {
 	if (decalLevel == 0)
 		return;
 
-	AddDecalAndTrack(const_cast<CUnit*>(unit), newpos);
+	AddDecalAndTrack(const_cast<CUnit*>(unit), unit->pos);
 }
 
 
@@ -1309,9 +1309,9 @@ void CGroundDecalHandler::RenderFeatureCreated(const CFeature* feature)
 		MoveSolidObject(const_cast<CFeature*>(feature), feature->pos);
 }
 
-void CGroundDecalHandler::RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos) {
+void CGroundDecalHandler::FeatureMoved(const CFeature* feature, const float3& oldpos) {
 	if (feature->objectDef->decalDef.useGroundDecal && (feature->def->drawType == DRAWTYPE_MODEL))
-		MoveSolidObject(const_cast<CFeature *>(feature), newpos);
+		MoveSolidObject(const_cast<CFeature *>(feature), feature->pos);
 }
 
 void CGroundDecalHandler::UnitLoaded(const CUnit* unit, const CUnit* transport) {
