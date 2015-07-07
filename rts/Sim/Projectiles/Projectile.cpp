@@ -24,6 +24,7 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(checkCol),
 	CR_MEMBER(ignoreWater),
 	CR_MEMBER(deleteMe),
+	CR_MEMBER(callEvent),
 
 	CR_MEMBER(castShadow),
 	CR_MEMBER(drawSorted),
@@ -66,7 +67,7 @@ CProjectile::CProjectile()
 	, checkCol(true)
 	, ignoreWater(false)
 	, deleteMe(false)
-
+	, callEvent(true)
 	, castShadow(false)
 	, drawSorted(true)
 
@@ -102,7 +103,7 @@ CProjectile::CProjectile(
 	, checkCol(true)
 	, ignoreWater(false)
 	, deleteMe(false)
-
+	, callEvent(true)
 	, castShadow(false)
 	, drawSorted(true)
 

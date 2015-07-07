@@ -194,7 +194,18 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 		assert(p);
 		assert(p->synced == synced);
 		assert(p->synced == !!(p->GetClass()->binder->flags & creg::CF_Synced));
-
+		if (p->callEvent) {
+		#if UNSYNCED_PROJ_NOEVENT
+			if (synced) {
+				eventHandler.ProjectileCreated(p, p->GetAllyteamID());
+			} else {
+				eventHandler.UnsyncedProjectileCreated(p);
+			}
+		#else
+			eventHandler.ProjectileCreated(p, p->GetAllyteamID());
+		#endif
+			p->callEvent = false;
+		}
 		if (!p->deleteMe) {
 			++pci;
 			continue;
@@ -303,7 +314,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 {
 	// already initialized?
 	assert(p->id < 0);
-
+	assert(p->callEvent);
 	std::deque<int>* freeIDs = NULL;
 	ProjectileMap* proIDs = NULL;
 
@@ -315,7 +326,6 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 	} else {
 		unsyncedProjectiles.push_back(p);
 #if UNSYNCED_PROJ_NOEVENT
-		eventHandler.UnsyncedProjectileCreated(p);
 		return;
 #endif
 		freeIDs = &freeUnsyncedIDs;
@@ -351,8 +361,6 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 		tracefile << ", type: " << p->GetProjectileType() << " pos: <" << p->pos.x << ", " << p->pos.y << ", " << p->pos.z << ">\n";
 #endif
 	}
-
-	eventHandler.ProjectileCreated(p, p->GetAllyteamID());
 }
 
 
