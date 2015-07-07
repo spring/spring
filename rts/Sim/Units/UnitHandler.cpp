@@ -215,6 +215,7 @@ void CUnitHandler::Update()
 			UNIT_SANITY_CHECK(unit);
 
 			if (moveType->Update()) {
+				eventHandler.RenderUnitMoved(unit, unit->pos);
 				eventHandler.UnitMoved(unit);
 			}
 			if (!unit->pos.IsInBounds() && (unit->speed.w > MAX_UNIT_SPEED)) {

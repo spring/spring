@@ -455,6 +455,7 @@ void CFeatureHandler::Update()
 		assert(feature->inUpdateQue);
 		
 		if (feature->deleteMe) {
+			eventHandler.RenderFeatureDestroyed(feature);
 			eventHandler.FeatureDestroyed(feature);
 			toBeFreedFeatureIDs.push_back(feature->id);
 			activeFeatures.erase(feature);

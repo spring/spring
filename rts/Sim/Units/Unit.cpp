@@ -654,6 +654,7 @@ void CUnit::ForcedMove(const float3& newPos)
 	Move(newPos - pos, true);
 	Block();
 
+	eventHandler.RenderUnitMoved(this, pos);
 	eventHandler.UnitMoved(this);
 
 	quadField->MovedUnit(this);
@@ -812,6 +813,7 @@ void CUnit::SetLosStatus(int at, unsigned short newStatus)
 	losStatus[at] |= newStatus;
 
 	if (diffBits) {
+		eventHandler.RenderUnitLOSChanged(this, at, newStatus);
 		if (diffBits & LOS_INLOS) {
 			if (newStatus & LOS_INLOS) {
 				eventHandler.UnitEnteredLos(this, at);
@@ -2346,6 +2348,7 @@ void CUnit::SlowUpdateCloak(bool stunCheck)
 	const bool newCloak = GetNewCloakState(stunCheck);
 
 	if (oldCloak != newCloak) {
+		eventHandler.RenderUnitCloakChanged(this, newCloak);
 		if (newCloak) {
 			eventHandler.UnitCloaked(this);
 		} else {
@@ -2362,6 +2365,7 @@ void CUnit::ScriptDecloak(bool updateCloakTimeOut)
 	if (scriptCloak <= 2) {
 		if (isCloaked) {
 			isCloaked = false;
+			eventHandler.RenderUnitCloakChanged(this, isCloaked);
 			eventHandler.UnitDecloaked(this);
 		}
 
