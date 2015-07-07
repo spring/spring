@@ -944,6 +944,8 @@ void CProjectileDrawer::RenderProjectileDestroyed(const CProjectile* const p)
 	if (p->model) {
 		modelRenderers[MDL_TYPE(p)]->DelProjectile(p);
 	} else {
-		renderProjectiles.erase(std::find(renderProjectiles.begin(), renderProjectiles.end(), const_cast<CProjectile*>(p)));
+		auto it = std::find(renderProjectiles.begin(), renderProjectiles.end(), const_cast<CProjectile*>(p));
+		assert(it != renderProjectiles.end());
+		renderProjectiles.erase(it);
 	}
 }
