@@ -71,7 +71,6 @@ class CEventHandler
 		//FIXME no events
 		void RenderUnitCreated(const CUnit* unit, int cloaked);
 		void RenderUnitDestroyed(const CUnit* unit);
-		void RenderUnitCloakChanged(const CUnit* unit, int cloaked);
 		void RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus);
 		void RenderUnitMoved(const CUnit* unit, const float3& newpos);
 		void RenderFeatureCreated(const CFeature* feature);
@@ -648,11 +647,6 @@ inline void CEventHandler::RenderUnitCreated(const CUnit* unit, int cloaked)
 inline void CEventHandler::RenderUnitDestroyed(const CUnit* unit)
 {
 	ITERATE_EVENTCLIENTLIST(RenderUnitDestroyed, unit)
-}
-
-inline void CEventHandler::RenderUnitCloakChanged(const CUnit* unit, int cloaked)
-{
-	ITERATE_EVENTCLIENTLIST(RenderUnitCloakChanged, unit, cloaked)
 }
 
 inline void CEventHandler::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus)

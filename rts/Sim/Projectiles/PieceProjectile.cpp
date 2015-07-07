@@ -10,7 +10,6 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/Colors.h"
 #include "Rendering/ProjectileDrawer.h"
-#include "Rendering/UnitDrawer.h"
 #include "Rendering/Models/IModelParser.h"
 #include "Rendering/Models/3DOParser.h"
 #include "Rendering/Models/S3OParser.h"

@@ -1975,20 +1975,23 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 }
 
 
-void CUnitDrawer::RenderUnitCloakChanged(const CUnit* unit, int cloaked) {
+void CUnitDrawer::UnitCloaked(const CUnit* unit) {
 	CUnit* u = const_cast<CUnit*>(unit);
 
 	if (u->model) {
-		if (cloaked) {
-			cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
-			opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
-		} else {
-			opaqueModelRenderers[MDL_TYPE(u)]->AddUnit(u);
-			cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
-		}
+		cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
+		opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 	}
 }
 
+void CUnitDrawer::UnitDecloaked(const CUnit* unit) {
+	CUnit* u = const_cast<CUnit*>(unit);
+
+	if (u->model) {
+		opaqueModelRenderers[MDL_TYPE(u)]->AddUnit(u);
+		cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
+	}
+}
 
 void CUnitDrawer::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus)
 {

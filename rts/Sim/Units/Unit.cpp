@@ -2348,7 +2348,6 @@ void CUnit::SlowUpdateCloak(bool stunCheck)
 	const bool newCloak = GetNewCloakState(stunCheck);
 
 	if (oldCloak != newCloak) {
-		eventHandler.RenderUnitCloakChanged(this, newCloak);
 		if (newCloak) {
 			eventHandler.UnitCloaked(this);
 		} else {
@@ -2365,7 +2364,6 @@ void CUnit::ScriptDecloak(bool updateCloakTimeOut)
 	if (scriptCloak <= 2) {
 		if (isCloaked) {
 			isCloaked = false;
-			eventHandler.RenderUnitCloakChanged(this, isCloaked);
 			eventHandler.UnitDecloaked(this);
 		}
 
