@@ -388,7 +388,9 @@ void CLosAlgorithm::SafeLosAdd(int2 pos, int radius, float losHeight, std::vecto
 	SRectangle safeRect(0, 0, size.x, size.y);
 	losHeight += heightmap[mapSquare]; //FIXME comment
 
-	squares.push_back(mapSquare);
+	if (safeRect.Inside(pos)) {
+		squares.push_back(mapSquare);
+	}
 	for (const LosLine& line: table) {
 		float maxAng1 = minMaxAng;
 		float maxAng2 = minMaxAng;
