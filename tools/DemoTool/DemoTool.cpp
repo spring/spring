@@ -361,9 +361,9 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 				break;
 			case NETMSG_CREATE_NEWPLAYER:
 				// uchar myPlayerNum, uchar spectator, uchar teamNum, std::string playerName
-				std::cout << "NETMSG_CREATE_NEWPLAYER: Playernum: " << (unsigned)buffer[1];
-				std::cout << " Spectator: " << (unsigned)buffer[2];
-				std::cout << " Team: " << (unsigned) buffer[3];
+				std::cout << "NETMSG_CREATE_NEWPLAYER: Playernum: " << (unsigned)buffer[3];
+				std::cout << " Spectator: " << (unsigned)buffer[4];
+				std::cout << " Team: " << (unsigned) buffer[5];
 				std::cout << " PlayerName: " << (char*) (buffer + 6);
 				std::cout << std::endl;
 				break;
