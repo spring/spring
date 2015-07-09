@@ -195,39 +195,38 @@ CGameServer::~CGameServer()
 
 void CGameServer::Initialize()
 {
+	// configs
 	curSpeedCtrl = configHandler->GetInt("SpeedControl");
-
 	allowSpecJoin = configHandler->GetBool("AllowSpectatorJoin");
 	whiteListAdditionalPlayers = configHandler->GetBool("WhiteListAdditionalPlayers");
-
 	logInfoMessages = configHandler->GetBool("ServerLogInfoMessages");
 	logDebugMessages = configHandler->GetBool("ServerLogDebugMessages");
 
+	rng.Seed((myGameData->GetSetupText()).length());
+
+	// start network
 	if (!myGameSetup->onlyLocal) {
 		UDPNet.reset(new netcode::UDPListener(myClientSetup->hostPort, myClientSetup->hostIP));
 	}
-
 	AddAutohostInterface(StringToLower(configHandler->GetString("AutohostIP")), configHandler->GetInt("AutohostPort"));
-
-	rng.Seed((myGameData->GetSetupText()).length());
 	Message(str(format(ServerStart) %myClientSetup->hostPort), false);
 
-	lastNewFrameTick = spring_gettime();
-
+	// start script
 	maxUserSpeed = myGameSetup->maxSpeed;
 	minUserSpeed = myGameSetup->minSpeed;
-	noHelperAIs = myGameSetup->noHelperAIs;
-
+	noHelperAIs  = myGameSetup->noHelperAIs;
 	StripGameSetupText(myGameData.get());
 
+	// load demo (if there is one)
 	if (myGameSetup->hostDemo) {
 		Message(str(format(PlayingDemo) %myGameSetup->demoName));
 		demoReader.reset(new CDemoReader(myGameSetup->demoName, modGameTime + 0.1f));
 	}
 
+	// initialize players, teams & ais
 	{
 		const std::vector<PlayerBase>& playerStartData = myGameSetup->GetPlayerStartingDataCont();
-		const std::vector<TeamBase>& teamStartData = myGameSetup->GetTeamStartingDataCont();
+		const std::vector<TeamBase>&     teamStartData = myGameSetup->GetTeamStartingDataCont();
 		const std::vector<SkirmishAIData>& aiStartData = myGameSetup->GetAIStartingDataCont();
 
 		players.reserve(MAX_PLAYERS); // no reallocation please
@@ -237,16 +236,9 @@ void CGameServer::Initialize()
 		if (demoReader != NULL) {
 			const size_t demoPlayers = demoReader->GetFileHeader().numPlayers;
 			players.resize(std::max(demoPlayers, playerStartData.size()));
-		}
-
-		for (size_t a = 0; a < aiStartData.size(); ++a) {
-			const unsigned char skirmishAIId = ReserveNextAvailableSkirmishAIId();
-			if (skirmishAIId == MAX_AIS) {
-				Message(str(format("Too many AIs (%d) in game setup") %aiStartData.size()));
-				break;
+			if (players.size() >= MAX_PLAYERS) {
+				Message(str(format("Too many Players (%d) in the demo") %players.size()));
 			}
-			players[aiStartData[a].hostPlayer].linkData[skirmishAIId] = GameParticipant::PlayerLinkData();
-			ais[skirmishAIId] = aiStartData[a];
 		}
 
 		std::copy(playerStartData.begin(), playerStartData.end(), players.begin());
@@ -256,6 +248,21 @@ void CGameServer::Initialize()
 		int playerID = 0;
 		for (GameParticipant& p: players) {
 			p.id = playerID++;
+		}
+
+		for (const SkirmishAIData& skd: aiStartData) {
+			const unsigned char skirmishAIId = ReserveNextAvailableSkirmishAIId();
+			if (skirmishAIId == MAX_AIS) {
+				Message(str(format("Too many AIs (%d) in game setup") %aiStartData.size()));
+				break;
+			}
+			players[skd.hostPlayer].linkData[skirmishAIId] = GameParticipant::PlayerLinkData();
+			ais[skirmishAIId] = skd;
+
+			teams[skd.team].SetActive(true);
+			if (!teams[skd.team].HasLeader()) {
+				teams[skd.team].SetLeader(skd.hostPlayer);
+			}
 		}
 	}
 
@@ -271,17 +278,7 @@ void CGameServer::Initialize()
 		delete ret;
 	}
 
-	// AIs do not join in here, so just set their teams as active
-	for (std::map<unsigned char, GameSkirmishAI>::const_iterator ai = ais.begin(); ai != ais.end(); ++ai) {
-		const int t = ai->second.team;
-
-		teams[t].SetActive(true);
-
-		if (!teams[t].HasLeader()) {
-			teams[t].SetLeader(ai->second.hostPlayer);
-		}
-	}
-
+	lastNewFrameTick = spring_gettime();
 	linkMinPacketSize = globalConfig->linkIncomingMaxPacketRate > 0 ? (globalConfig->linkIncomingSustainedBandwidth / globalConfig->linkIncomingMaxPacketRate) : 1;
 	lastBandwidthUpdate = spring_gettime();
 
