@@ -1371,7 +1371,7 @@ void CMiniMap::DrawNotes()
 	const float baseSize = mapDims.mapx * SQUARE_SIZE;
 	CVertexArray* va = GetVertexArray();
 	va->Initialize();
-	std::list<Notification>::iterator ni = notes.begin();
+	std::deque<Notification>::iterator ni = notes.begin();
 	while (ni != notes.end()) {
 		const float age = gu->gameTime - ni->creationTime;
 		if (age > 2) {
@@ -1379,7 +1379,7 @@ void CMiniMap::DrawNotes()
 			continue;
 		}
 
-		const SColor color(ni->color[0], ni->color[1], ni->color[2], ni->color[3]);
+		SColor color(ni->color[0], ni->color[1], ni->color[2], ni->color[3]);
 		for (int a = 0; a < 3; ++a) {
 			const float modage = age + a * 0.1f;
 			const float rot = modage * 3;
@@ -1393,6 +1393,7 @@ void CMiniMap::DrawNotes()
 					size = baseSize * 1.4f - modage * baseSize * 0.9f;
 				}
 			}
+			color.a = (255 * ni->color[3]) / (3 - a);
 			const float sinSize = fastmath::sin(rot) * size;
 			const float cosSize = fastmath::cos(rot) * size;
 			va->AddVertexC(float3(ni->pos.x + sinSize, ni->pos.z + cosSize, 0.0f),color);
