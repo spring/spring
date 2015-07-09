@@ -359,7 +359,6 @@ void CPreGame::StartServerForDemo(const std::string& demoName)
 	TdfParser::TdfSection* tgame = script.GetRootSection()->sections["game"];
 
 	std::ostringstream moddedDemoScript;
-	std::string playerStr;
 
 	{
 		// server will always use a modified copy of this
@@ -382,28 +381,11 @@ void CPreGame::StartServerForDemo(const std::string& demoName)
 			}
 		}
 
-		// add local spectator (and assert we didn't already have MAX_PLAYERS players)
-		for (int myPlayerNum = MAX_PLAYERS - 1; myPlayerNum >= 0; --myPlayerNum) {
-			string s = IntToString(myPlayerNum, "game\\player%i");
-			if (script.SectionExist(s)) {
-				playerStr = IntToString(myPlayerNum + 1, "player%i");
-				break;
-			}
-		}
-
-		assert(!playerStr.empty());
-
-		TdfParser::TdfSection* me = tgame->construct_subsection(playerStr);
-		me->AddPair("name", clientSetup->myPlayerName);
-		me->AddPair("spectator", 1);
-		tgame->AddPair("myplayername", clientSetup->myPlayerName);
-
 		// is this needed?
 		TdfParser::TdfSection* modopts = tgame->construct_subsection("MODOPTIONS");
 		modopts->remove("maxspeed", false);
 		modopts->remove("minspeed", false);
 	}
-
 
 	script.print(moddedDemoScript);
 	gameData->SetSetupText(moddedDemoScript.str());
@@ -431,30 +413,13 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 	LOG("[%s] pre-scanning demo file for game data...", __FUNCTION__);
 	CDemoReader scanner(demoName, 0);
 
-	boost::shared_ptr<const RawPacket> buf(scanner.GetData(static_cast<float>(FLT_MAX)));
-
-	while (buf) {
-		if (buf->data[0] == NETMSG_GAMEDATA) {
-			try {
-				gameData.reset(new GameData(boost::shared_ptr<const RawPacket>(buf)));
-			} catch (const netcode::UnpackPacketException& ex) {
-				throw content_error(std::string("Demo contains invalid GameData: ") + ex.what());
-			}
-
-			if (CGameSetup::LoadReceivedScript(gameData->GetSetupText(), true)) {
-				StartServerForDemo(demoName);
-			} else {
-				throw content_error("Demo contains incorrect script");
-			}
-
-			break;
+	{
+		gameData.reset(new GameData(scanner.GetSetupScript()));
+		if (CGameSetup::LoadReceivedScript(gameData->GetSetupText(), true)) {
+			StartServerForDemo(demoName);
+		} else {
+			throw content_error("Demo contains incorrect script");
 		}
-
-		if (scanner.ReachedEnd()) {
-			throw content_error("End of demo reached and no game data found");
-		}
-
-		buf.reset(scanner.GetData(FLT_MAX));
 	}
 
 	assert(gameServer != NULL);
