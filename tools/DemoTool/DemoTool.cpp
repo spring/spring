@@ -195,10 +195,10 @@ const std::string& GetCommandName(int commandId)
 	return CMD_NAME_UNKNOWN;
 }
 
-void PrintBinary(void* buf, int len)
+void PrintBinary(const unsigned char* const buf, int len)
 {
 	for(int i=0; i<len; i++) {
-		std::cout << std::hex << (int)((char*)buf)[i];
+		std::cout << std::setw(2) << std::setfill('0') << std::hex << (int)buf[i];
 	}
 	std::cout << std::dec; //reset to decimal
 }
@@ -360,13 +360,22 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 				std::cout << "NETMSG_GAMEDATA" << std::endl;
 				break;
 			case NETMSG_CREATE_NEWPLAYER:
-				std::cout << "NETMSG_CREATE_NEWPLAYER" << std::endl;
+				// uchar myPlayerNum, uchar spectator, uchar teamNum, std::string playerName
+				std::cout << "NETMSG_CREATE_NEWPLAYER: Playernum: " << (unsigned)buffer[1];
+				std::cout << " Spectator: " << (unsigned)buffer[2];
+				std::cout << " Team: " << (unsigned) buffer[3];
+				std::cout << " PlayerName: " << (char*) (buffer + 6);
+				std::cout << std::endl;
 				break;
 			case NETMSG_GAMEID:
-				std::cout << "NETMSG_GAMEID" << std::endl;
+				std::cout << "NETMSG_GAMEID: ";
+				PrintBinary(&packet->data[1], packet->length - 1);
+				std::cout << std::endl;
 				break;
 			case NETMSG_RANDSEED:
-				std::cout << "NETMSG_RANDSEED" << std::endl;
+				std::cout << "NETMSG_RANDSEED: ";
+				PrintBinary(&packet->data[1], packet->length - 1);
+				std::cout << std::endl;
 				break;
 			case NETMSG_SHARE:
 				std::cout << "NETMSG_SHARE: Playernum: " << (unsigned)buffer[1];
