@@ -376,6 +376,8 @@ void CPreGame::StartServerForDemo(const std::string& demoName)
 		tgame->remove("SourcePort", false);
 		//tgame->remove("IsHost", false);
 
+		ScanForPlayers(demoName, script);
+		
 		for (std::map<std::string, TdfParser::TdfSection*>::iterator it = tgame->sections.begin(); it != tgame->sections.end(); ++it) {
 			if (it->first.size() > 6 && it->first.substr(0, 6) == "player") {
 				it->second->AddPair("isfromdemo", 1);
@@ -458,6 +460,54 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 	}
 
 	assert(gameServer != NULL);
+}
+
+void CPreGame::ScanForPlayers(const std::string& demoName, TdfParser &script)
+{
+	ScopedOnceTimer startserver("PreGame::ScanForPlayers");
+	LOG("[%s] pre-scanning demo file for players...", __FUNCTION__);
+	CDemoReader scanner(demoName, 0);
+	
+	TdfParser::TdfSection* tgame = script.GetRootSection()->sections["game"];
+	
+	boost::shared_ptr<const RawPacket> buf(scanner.GetData(static_cast<float>(FLT_MAX)));
+
+	while (buf) {
+		if (buf->data[0] == NETMSG_CREATE_NEWPLAYER) {
+			try {				
+				unsigned playerNum = (unsigned) buf->data[3];
+				
+				{
+					std::string s = IntToString(playerNum, "game\\player%i");
+					if (script.SectionExist(s)) {
+						continue;
+					}
+				}
+				
+				unsigned spectator = (unsigned) buf->data[4];
+				unsigned team = (unsigned) buf->data[5];
+				std::string playerName((char*) (buf->data + 6));
+				
+				std::string playerStr = IntToString(playerNum, "player%i");
+				
+				TdfParser::TdfSection* pSection = tgame->construct_subsection(playerStr);
+				
+				pSection->AddPair("name", playerName);
+				pSection->AddPair("spectator", spectator);
+				pSection->AddPair("team", team);
+				
+				LOG("[%s] found player %s with number %d to team %d", __FUNCTION__, playerName.c_str(), playerNum, team);
+			} catch (const netcode::UnpackPacketException& ex) {
+				LOG_L(L_ERROR, "[PreGame::%s] got invalid NETMSG_CREATE_NEWPLAYER: %s", __FUNCTION__, ex.what());
+			}
+		}
+
+		if (scanner.ReachedEnd()) {
+			break;
+		}
+
+		buf.reset(scanner.GetData(FLT_MAX));
+	}
 }
 
 void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> packet)

@@ -8,6 +8,7 @@
 
 #include "GameController.h"
 #include "System/Misc/SpringTime.h"
+#include "System/TdfParser.h"
 
 class ILoadSaveHandler;
 class GameData;
@@ -55,7 +56,8 @@ private:
 
 	/// reads out map, mod and script from demos (with or without a gameSetupScript)
 	void ReadDataFromDemo(const std::string& demoName);
-
+	// reads all players in the demo to populate the start script correctly
+	void ScanForPlayers(const std::string& demoName, TdfParser &script);
 	/// receive network traffic
 	void UpdateClientNet();
 
