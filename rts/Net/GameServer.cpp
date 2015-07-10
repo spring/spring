@@ -672,9 +672,6 @@ void CGameServer::CheckSync()
 						desyncGroups[it->second].push_back(p.id);
 					else
 						desyncSpecs[p.id] = it->second;
-
-					// broadcast sync response of desynced players, so it can be saved in the demo file
-					Broadcast((CBaseNetProtocol::Get()).SendSyncResponse(p.id, *f, it->second));
 				}
 				else
 					p.desynced = false;
