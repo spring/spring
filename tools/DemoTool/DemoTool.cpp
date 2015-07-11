@@ -220,8 +220,10 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 		const unsigned char* buffer = packet->data;
 		char buf[16]; // FIXME: cba to look up how to format numbers with iostreams
 		sprintf(buf, "%06d ", frame);
-		std::cout << buf;
 		const int cmd = (unsigned char)buffer[0];
+		if (cmd == NETMSG_GAME_FRAME_PROGRESS) //ignore as its unsynced (TODO: why is this recorded in demo?)
+			continue;
+		std::cout << buf;
 		switch (cmd)
 		{
 			case NETMSG_AICOMMAND:
@@ -403,8 +405,6 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 				break;
 			case NETMSG_SETSHARE:
 				std::cout << "NETMSG_SETSHARE: " << std::endl;
-				break;
-			case NETMSG_GAME_FRAME_PROGRESS: //ignore as its unsynced
 				break;
 			default:
 				std::cout << "MSG: " << cmd << std::endl;
