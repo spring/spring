@@ -317,7 +317,7 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 				break;
 				}
 			case NETMSG_TEAM:
-				std::cout << "TEAM Playernum:" << (int)buffer[1] << " Action:";
+				std::cout << "TEAM Playernum: " << (int)buffer[1] << " Action:";
 				switch (buffer[2]) {
 					case TEAMMSG_GIVEAWAY: std::cout << "GIVEAWAY"; break;
 					case TEAMMSG_RESIGN: std::cout << "RESIGN"; break;
@@ -328,7 +328,7 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 				std::cout << " Parameter:" << (int)buffer[3] << std::endl;
 				break;
 			case NETMSG_COMMAND:
-				std::cout << "COMMAND Playernum:" << (int)buffer[3] << " Size: " << *(unsigned short*)(buffer+1) << std::endl;
+				std::cout << "COMMAND Playernum: " << (int)buffer[3] << " Size: " << *(unsigned short*)(buffer+1) << std::endl;
 				if (*(unsigned short*)(buffer+1) != packet->length)
 					std::cout << "      packet length error: expected: " <<  *(unsigned short*)(buffer+1) << " got: " << packet->length << std::endl;
 				break;
@@ -392,7 +392,11 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 				std::cout << "NETMSG_PAUSE: Player " << (unsigned)buffer[1] << " paused: " << (unsigned)buffer[2] << std::endl;
 				break;
 			case NETMSG_SYNCRESPONSE:
-				std::cout << "NETMSG_SYNCRESPONSE: " << std::endl;
+				//uchar myPlayerNum; int frameNum; uint checksum;
+				std::cout << "NETMSG_SYNCRESPONSE: Playernum: "<< (unsigned)buffer[1];
+				std::cout << " Framenum: " << *(int*)(buffer+2);
+				std::cout << " Checksum: " << (uint)buffer[6];
+				std::cout << std::endl;
 				break;
 			case NETMSG_DIRECT_CONTROL:
 				std::cout << "NETMSG_DIRECT_CONTROL: " << std::endl;
