@@ -280,6 +280,4 @@ private:
 	void LoadScar(const std::string& file, unsigned char* buf, int xoffset, int yoffset);
 };
 
-extern CGroundDecalHandler* groundDecals_;
-
 #endif // GROUND_DECAL_HANDLER_H
