@@ -118,6 +118,7 @@ void CInfoTextureCombiner::Update()
 {
 	shader->Enable();
 	fbo.Bind();
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
 	glViewport(0,0, texSize.x, texSize.y);
 	glEnable(GL_BLEND);
 
@@ -135,6 +136,7 @@ void CInfoTextureCombiner::Update()
 	glEnd();
 
 	glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	FBO::Unbind();
 	shader->Disable();
 
