@@ -709,9 +709,16 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 			const float3 tgtErrPos = targetUnit->GetErrorPos(owner->allyteam, false);
 			const float3 tgtPosDir = (tgtErrPos - owner->pos).Normalize();
-			
+			float radius = targetUnit->radius;
+			if (targetUnit->unitDef->IsImmobileUnit()){
+				//FIXME change into a function
+				const float fpSqRadius = (targetUnit->unitDef->xsize * targetUnit->unitDef->xsize + targetUnit->unitDef->zsize * targetUnit->unitDef->zsize);
+				const float fpRadius = (math::sqrt(fpSqRadius) * 0.5f) * SQUARE_SIZE;
+				// 2 * SQUARE_SIZE is a buffer that work to make sure it's pathable ground
+				radius = std::max(radius, fpRadius + 2 * SQUARE_SIZE);
+			}
 			// FIXME: don't call SetGoal() if target is already in range of some weapon?
-			SetGoal(tgtErrPos - tgtPosDir * targetUnit->radius, owner->pos);
+			SetGoal(tgtErrPos - tgtPosDir * radius, owner->pos);
 			SetOrderTarget(targetUnit);
 			owner->AttackUnit(targetUnit, (c.options & INTERNAL_ORDER) == 0, c.GetID() == CMD_MANUALFIRE);
 
@@ -847,7 +854,15 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			// this should fix issues with low range weapons (mainly melee)
 
 			const float3 norm = (errPos - owner->pos).Normalize();
-			const float3 goal = errPos - norm * (orderTarget->radius * edgeFactor * 0.8f);
+			float radius = (orderTarget->radius * edgeFactor * 0.8f);
+			if (orderTarget->unitDef->IsImmobileUnit()){
+				//FIXME change into a function
+				const float fpSqRadius = (orderTarget->unitDef->xsize * orderTarget->unitDef->xsize + orderTarget->unitDef->zsize * orderTarget->unitDef->zsize);
+				const float fpRadius = (math::sqrt(fpSqRadius) * 0.5f) * SQUARE_SIZE;
+				// 2 * SQUARE_SIZE is a buffer that work to make sure it's pathable ground
+				radius = std::max(radius, fpRadius + 2 * SQUARE_SIZE);
+			}
+			const float3 goal = errPos - norm * radius;
 			SetGoal(goal, owner->pos);
 
 			if (lastCloseInTry < gs->frameNum + MAX_CLOSE_IN_RETRY_TICKS)
