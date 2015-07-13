@@ -227,48 +227,29 @@ IPath::SearchResult CPathManager::ArrangePath(
 
 
 /*
-Help-function.
-Turns a start->goal-request into a well-defined request.
-*/
-unsigned int CPathManager::RequestPath(
-	CSolidObject* caller,
-	const MoveDef* moveDef,
-	const float3& startPos,
-	const float3& goalPos,
-	float goalRadius,
-	bool synced
-) {
-	float3 sp(startPos); sp.ClampInBounds();
-	float3 gp(goalPos); gp.ClampInBounds();
-
-	// Create an estimator definition.
-	CCircularSearchConstraint* pfDef = new CCircularSearchConstraint(sp, gp, goalRadius, 3.0f, 2000);
-
-	// Make request.
-	return (RequestPath(moveDef, sp, gp, pfDef, caller, synced));
-}
-
-
-/*
 Request a new multipath, store the result and return a handle-id to it.
 */
 unsigned int CPathManager::RequestPath(
-	const MoveDef* moveDef,
-	const float3& startPos,
-	const float3& goalPos,
-	CPathFinderDef* pfDef,
 	CSolidObject* caller,
+	const MoveDef* moveDef,
+	float3 startPos,
+	float3 goalPos,
+	float goalRadius,
 	bool synced
 ) {
-	SCOPED_TIMER("PathManager::RequestPath");
-
 	if (!IsFinalized())
 		return 0;
 
+	SCOPED_TIMER("PathManager::RequestPath");
+	startPos.ClampInBounds();
+	goalPos.ClampInBounds();
+
+	// Create an estimator definition.
+	CCircularSearchConstraint* pfDef = new CCircularSearchConstraint(startPos, goalPos, goalRadius, 3.0f, 2000);
 	assert(moveDef == moveDefHandler->GetMoveDefByPathType(moveDef->pathType));
 
 	// Creates a new multipath.
-	MultiPath* newPath = new MultiPath(startPos, pfDef, moveDef);
+	MultiPath* newPath = new MultiPath(startPos, pfDef, moveDef); // deletes pfDef in dtor
 	newPath->finalGoal = goalPos;
 	newPath->caller = caller;
 	pfDef->synced = synced;

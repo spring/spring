@@ -48,8 +48,8 @@ namespace QTPFS {
 		unsigned int RequestPath(
 			CSolidObject* object,
 			const MoveDef* moveDef,
-			const float3& sourcePos,
-			const float3& targetPos,
+			float3 sourcePos,
+			float3 targetPos,
 			float radius,
 			bool synced
 		);

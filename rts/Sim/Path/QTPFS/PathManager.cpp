@@ -969,8 +969,8 @@ void QTPFS::PathManager::DeletePath(unsigned int pathID) {
 unsigned int QTPFS::PathManager::RequestPath(
 	CSolidObject* object,
 	const MoveDef* moveDef,
-	const float3& sourcePoint,
-	const float3& targetPoint,
+	float3 sourcePoint,
+	float3 targetPoint,
 	float radius,
 	bool synced)
 {
