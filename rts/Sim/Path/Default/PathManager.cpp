@@ -245,6 +245,7 @@ unsigned int CPathManager::RequestPath(
 	goalPos.ClampInBounds();
 
 	// Create an estimator definition.
+	goalRadius = std::max<float>(goalRadius, PATH_NODE_SPACING * SQUARE_SIZE); //FIXME do on a per PE & PF level?
 	CCircularSearchConstraint* pfDef = new CCircularSearchConstraint(startPos, goalPos, goalRadius, 3.0f, 2000);
 	assert(moveDef == moveDefHandler->GetMoveDefByPathType(moveDef->pathType));
 
