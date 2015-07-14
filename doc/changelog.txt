@@ -38,6 +38,12 @@ Pathing:
 ConfigTags:
  - make "MaxParticles" & "MaxNanoParticles" runtime changeable
 
+Misc:
+ - fix #4837: hang in linux crashhandler
+ - fix #4819: ai interface log messages are now logged into infolog.txt
+ - fix #4882: endlessloop at start when MaxSounds = 0
+ - unselect AI when game is selected in old menu
+ - demotool: add more info to dump output
 
 -- 99.0 ---------------------------------------------------------
 Major:
