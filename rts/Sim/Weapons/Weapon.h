@@ -50,8 +50,8 @@ public:
 	virtual bool CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRequestedDir) const;
 
 	bool TryTarget(const SWeaponTarget& trg) const;
-	bool TryTargetRotate(const CUnit* unit, bool userTarget);
-	bool TryTargetRotate(float3 tgtPos, bool userTarget);
+	bool TryTargetRotate(const CUnit* unit, bool userTarget, bool manualFire);
+	bool TryTargetRotate(float3 tgtPos, bool userTarget, bool manualFire);
 	bool TryTargetHeading(short heading, const SWeaponTarget& trg);
 
 public:

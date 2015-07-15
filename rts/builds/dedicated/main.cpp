@@ -24,6 +24,7 @@
 #include "System/Platform/CmdLineParams.h"
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/errorhandler.h"
+#include "System/Platform/Threading.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Misc/SpringTime.h"
 #include "System/GlobalConfig.h"
@@ -133,6 +134,7 @@ void ParseCmdLine(int argc, char* argv[], std::string* script_txt)
 
 int main(int argc, char* argv[])
 {
+	Threading::SetMainThread();
 	try {
 		spring_clock::PushTickRate();
 		// initialize start time (can safely be done before SDL_Init

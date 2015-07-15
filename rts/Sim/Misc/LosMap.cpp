@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <array>
 
 
 CR_BIND(CLosMap, )
@@ -111,10 +112,7 @@ void CLosMap::AddMapSquares(const std::vector<int>& squares, int allyteam, int a
 	const bool updateUnsyncedHeightMap = (sendReadmapEvents && allyteam >= 0 && (allyteam == gu->myAllyTeam || gu->spectatingFullView));
 	#endif
 
-	std::vector<int>::const_iterator lsi;
-
-	for (lsi = squares.begin(); lsi != squares.end(); ++lsi) {
-		const int losMapSquareIdx = *lsi;
+	for (const int losMapSquareIdx: squares) {
 		#ifdef USE_UNSYNCED_HEIGHTMAP
 		const bool squareEnteredLOS = (map[losMapSquareIdx] == 0 && amount > 0);
 		#endif
@@ -156,18 +154,18 @@ typedef std::vector<LosLine> LosTable;
 class CLosTables
 {
 public:
-	static const LosTable& GetForLosSize(int losSize) {
+	static const LosTable& GetForLosSize(size_t losSize) {
 		static CLosTables instance;
-		const int tablenum = std::min(MAX_LOS_TABLE, losSize);
+		const size_t tablenum = std::min<size_t>(MAX_LOS_TABLE, losSize);
 		return instance.lostables[tablenum - 1];
 	}
 
 private:
-	std::vector<LosTable> lostables;
+	std::array<LosTable, MAX_LOS_TABLE> lostables;
 
 	CLosTables();
 	void DrawLine(char* PaintTable, int x,int y,int Size);
-	LosLine OutputLine(int x,int y,int line);
+	LosLine OutputLine(int x,int y);
 	void OutputTable(int table);
 };
 
@@ -200,10 +198,8 @@ void CLosTables::OutputTable(int Table)
 	int Radius = Table;
 	char* PaintTable = new char[(Radius+1)*Radius];
 	memset(PaintTable, 0 , (Radius+1)*Radius);
-	int2 P(0, Radius);
-	Points.push_back(P);
+	Points.emplace_back(0, Radius);
 
-//  DrawLine(0, Radius, Radius);
 	for (float i=Radius; i>=1; i-=0.5f) {
 		const int r2 = (int)(i * i);
 
@@ -212,15 +208,11 @@ void CLosTables::OutputTable(int Table)
 		while (x < y) {
 			if (!PaintTable[x+y*Radius]) {
 				DrawLine(PaintTable, x, y, Radius);
-				P.x = x;
-				P.y = y;
-				Points.push_back(P);
+				Points.emplace_back(x,y);
 			}
 			if (!PaintTable[y+x*Radius]) {
 				DrawLine(PaintTable, y, x, Radius);
-				P.x = y;
-				P.y = x;
-				Points.push_back(P);
+				Points.emplace_back(y,x);
 			}
 
 			x += 1;
@@ -229,30 +221,27 @@ void CLosTables::OutputTable(int Table)
 		if (x == y) {
 			if (!PaintTable[x+y*Radius]) {
 				DrawLine(PaintTable, x, y, Radius);
-				P.x = x;
-				P.y = y;
-				Points.push_back(P);
+				Points.emplace_back(x,y);
 			}
 		}
 	}
 
 	std::sort(Points.begin(), Points.end(), int2_comparer());
 
-	int Line = 1;
-	int Size = Points.size();
-	for (int j = 0; j < Size; j++) {
-		lostable.push_back(OutputLine(Points.back().x, Points.back().y, Line));
+	int size = Points.size();
+	lostable.reserve(size);
+	for (int j = 0; j < size; j++) {
+		lostable.push_back(OutputLine(Points.back().x, Points.back().y));
 		Points.pop_back();
-		Line++;
 	}
 
-	lostables.push_back(lostable);
+	lostables[Table - 1] = lostable;
 
 	delete[] PaintTable;
 }
 
 
-LosLine CLosTables::OutputLine(int x, int y, int Line)
+LosLine CLosTables::OutputLine(int x, int y)
 {
 	LosLine losline;
 
@@ -318,102 +307,111 @@ void CLosAlgorithm::LosAdd(int2 pos, int radius, float baseHeight, std::vector<i
 {
 	if (radius <= 0) { return; }
 
-	pos.x = Clamp(pos.x, 0, size.x - 1);
-	pos.y = Clamp(pos.y, 0, size.y - 1);
+	SRectangle safeRect(radius, radius, size.x - radius, size.y - radius);
 
-	if ((pos.x - radius < radius) || (pos.x + radius >= size.x - radius) || // FIXME: This additional margin is due to a suspect bug in losalgorithm
-	    (pos.y - radius < radius) || (pos.y + radius >= size.y - radius)) { // causing rare crash with big units such as arm Colossus
-		SafeLosAdd(pos, radius, baseHeight, squares);
-	} else {
+	// add all squares that are in the los radius
+	if (safeRect.Inside(pos)) {
+		// we aren't touching the map borders -> we don't need to check for the map boundaries
 		UnsafeLosAdd(pos, radius, baseHeight, squares);
+	} else {
+		// we need to check each square if it's outsid of the map boundaries
+		SafeLosAdd(pos, radius, baseHeight, squares);
+	}
+
+	// delete duplicates
+	std::sort(squares.begin(), squares.end());
+	auto it = std::unique(squares.begin(), squares.end());
+	squares.erase(it, squares.end());
+}
+
+
+inline static void CastLos(std::vector<int>* squares, float* maxAng, const int square, const float invR, const float* heightmap, float losHeight)
+{
+	const float dh = heightmap[square] - losHeight;
+	float ang = dh * invR;
+	if (ang >= *maxAng) {
+		squares->push_back(square);
+		*maxAng = ang;
 	}
 }
 
 
 #define MAP_SQUARE(pos) ((pos).y * size.x + (pos).x)
-#define LOS_ADD(_square, _maxAng) {                  \
-	const int square = _square;                      \
-	const float dh = heightmap[square] - baseHeight; \
-	float ang = (dh + extraHeight) * invR;           \
-                                                     \
-	if (ang > _maxAng) {                             \
-		squares.push_back(square);                   \
-		ang = dh * invR;                             \
-		if (ang > _maxAng) _maxAng = ang;            \
-	}                                                \
-}
 
 
-void CLosAlgorithm::UnsafeLosAdd(int2 pos, int radius, float baseHeight, std::vector<int>& squares)
+void CLosAlgorithm::UnsafeLosAdd(int2 pos, int radius, float losHeight, std::vector<int>& squares)
 {
 	const int mapSquare = MAP_SQUARE(pos);
 	const LosTable& table = CLosTables::GetForLosSize(radius);
 
-	// NOTE: floating and flying units have their baseHeight adjusted in MoveType::SlowUpdate
-	baseHeight += heightmap[mapSquare];
 
 	size_t neededSpace = squares.size() + 1;
-	for(LosTable::const_iterator li = table.begin(); li != table.end(); ++li) {
-		neededSpace += li->size() * 4;
+	for (const LosLine& line: table) {
+		neededSpace += line.size() * 4;
 	}
-
 	squares.reserve(neededSpace);
-	squares.push_back(mapSquare);
 
-	for(LosTable::const_iterator li = table.begin(); li != table.end(); ++li) {
-		const LosLine& line = *li;
+	losHeight += heightmap[mapSquare]; //FIXME comment
+
+	squares.push_back(mapSquare);
+	for (const LosLine& line: table) {
 		float maxAng1 = minMaxAng;
 		float maxAng2 = minMaxAng;
 		float maxAng3 = minMaxAng;
 		float maxAng4 = minMaxAng;
 		float r = 1;
 
-		for(LosLine::const_iterator linei = line.begin(); linei != line.end(); ++linei) {
-			const float invR = 1.0f / r;
+		for (const int2& square: line) {
+			const float invR = math::isqrt2(square.x*square.x + square.y*square.y);
 
-			LOS_ADD(mapSquare + linei->x + linei->y * size.x, maxAng1);
-			LOS_ADD(mapSquare - linei->x - linei->y * size.x, maxAng2);
-			LOS_ADD(mapSquare - linei->x * size.x + linei->y, maxAng3);
-			LOS_ADD(mapSquare + linei->x * size.x - linei->y, maxAng4);
 
+			CastLos(&squares, &maxAng1, MAP_SQUARE(pos + square),                    invR, heightmap, losHeight);
+			CastLos(&squares, &maxAng2, MAP_SQUARE(pos - square),                    invR, heightmap, losHeight);
+			CastLos(&squares, &maxAng3, MAP_SQUARE(pos + int2(square.y, -square.x)), invR, heightmap, losHeight);
+			CastLos(&squares, &maxAng4, MAP_SQUARE(pos + int2(-square.y, square.x)), invR, heightmap, losHeight);
 			r++;
 		}
 	}
 }
 
 
-void CLosAlgorithm::SafeLosAdd(int2 pos, int radius, float baseHeight, std::vector<int>& squares)
+void CLosAlgorithm::SafeLosAdd(int2 pos, int radius, float losHeight, std::vector<int>& squares)
 {
 	const int mapSquare = MAP_SQUARE(pos);
 	const LosTable& table = CLosTables::GetForLosSize(radius);
+	size_t neededSpace = squares.size() + 1;
+	for (const LosLine& line: table) {
+		neededSpace += line.size() * 4;
+	}
+	squares.reserve(neededSpace);
 
-	// NOTE: floating and flying units have their baseHeight adjusted in MoveType::SlowUpdate
-	baseHeight += heightmap[mapSquare];
+	SRectangle safeRect(0, 0, size.x, size.y);
 
-	squares.push_back(mapSquare);
-
-	for (LosTable::const_iterator li = table.begin(); li != table.end(); ++li) {
-		const LosLine& line = *li;
+	if (safeRect.Inside(pos)) {
+		losHeight += heightmap[mapSquare]; //FIXME comment
+		squares.push_back(mapSquare);
+	}
+	for (const LosLine& line: table) {
 		float maxAng1 = minMaxAng;
 		float maxAng2 = minMaxAng;
 		float maxAng3 = minMaxAng;
 		float maxAng4 = minMaxAng;
 		float r = 1;
 
-		for(LosLine::const_iterator linei = line.begin(); linei != line.end(); ++linei) {
-			const float invR = 1.0f / r;
+		for (const int2 square: line) {
+			const float invR = math::isqrt2(square.x*square.x + square.y*square.y);
 
-			if ((pos.x + linei->x < size.x) && (pos.y + linei->y < size.y)) {
-				LOS_ADD(mapSquare + linei->x + linei->y * size.x, maxAng1);
+			if (safeRect.Inside(pos + square)) {
+				CastLos(&squares, &maxAng1, MAP_SQUARE(pos + square),                    invR, heightmap, losHeight);
 			}
-			if ((pos.x - linei->x >= 0) && (pos.y - linei->y >= 0)) {
-				LOS_ADD(mapSquare - linei->x - linei->y * size.x, maxAng2);
+			if (safeRect.Inside(pos - square)) {
+				CastLos(&squares, &maxAng2, MAP_SQUARE(pos - square),                    invR, heightmap, losHeight);
 			}
-			if ((pos.x + linei->y < size.x) && (pos.y - linei->x >= 0)) {
-				LOS_ADD(mapSquare - linei->x * size.x + linei->y, maxAng3);
+			if (safeRect.Inside(pos + int2(square.y, -square.x))) {
+				CastLos(&squares, &maxAng3, MAP_SQUARE(pos + int2(square.y, -square.x)), invR, heightmap, losHeight);
 			}
-			if ((pos.x - linei->y >= 0) && (pos.y + linei->x < size.y)) {
-				LOS_ADD(mapSquare + linei->x * size.x - linei->y, maxAng4);
+			if (safeRect.Inside(pos + int2(-square.y, square.x))) {
+				CastLos(&squares, &maxAng4, MAP_SQUARE(pos + int2(-square.y, square.x)), invR, heightmap, losHeight);
 			}
 
 			r++;

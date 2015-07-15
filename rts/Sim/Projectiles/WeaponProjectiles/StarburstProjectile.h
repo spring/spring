@@ -32,6 +32,9 @@ public:
 private:
 	void DrawCallback() override;
 
+	void UpdateTrajectory();
+
+private:
 	float tracking;
 	float maxGoodDif;
 	float maxSpeed;

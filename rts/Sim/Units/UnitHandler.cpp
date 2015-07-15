@@ -37,7 +37,6 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(idPool),
 	CR_MEMBER(unitsToBeRemoved),
 	CR_IGNORED(activeSlowUpdateUnit),
-	CR_IGNORED(activeSlowUpdateWeapon),
 	CR_MEMBER(maxUnits),
 	CR_MEMBER(maxUnitRadius),
 	CR_POSTLOAD(PostLoad)
@@ -49,7 +48,6 @@ void CUnitHandler::PostLoad()
 {
 	// reset any synced stuff that is not saved
 	activeSlowUpdateUnit = activeUnits.end();
-	activeSlowUpdateWeapon = activeUnits.end();
 }
 
 
@@ -77,7 +75,6 @@ CUnitHandler::CUnitHandler()
 	idPool.Expand(0, units.size());
 
 	activeSlowUpdateUnit = activeUnits.end();
-	activeSlowUpdateWeapon = activeUnits.end();
 	airBaseHandler = new CAirBaseHandler();
 }
 
@@ -142,7 +139,6 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 {
 	if (activeSlowUpdateUnit != activeUnits.end() && delUnit == *activeSlowUpdateUnit) {
 		++activeSlowUpdateUnit;
-		++activeSlowUpdateWeapon;
 	}
 
 	for (auto usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
@@ -221,7 +217,7 @@ void CUnitHandler::Update()
 			if (moveType->Update()) {
 				eventHandler.UnitMoved(unit);
 			}
-			if (!unit->pos.IsInBounds() && (Square(unit->speed.w) > (MAX_UNIT_SPEED * MAX_UNIT_SPEED))) {
+			if (!unit->pos.IsInBounds() && (unit->speed.w > MAX_UNIT_SPEED)) {
 				// this unit is not coming back, kill it now without any death
 				// sequence (so deathScriptFinished becomes true immediately)
 				unit->KillUnit(NULL, false, true, false);
@@ -273,26 +269,9 @@ void CUnitHandler::Update()
 
 			UNIT_SANITY_CHECK(unit);
 			unit->SlowUpdate();
+			unit->SlowUpdateWeapons();
 			UNIT_SANITY_CHECK(unit);
 
-			n--;
-		}
-	}
-
-	{
-		SCOPED_TIMER("Unit::Weapon::SlowUpdate");
-
-		// reset the iterator every <UNIT_SLOWUPDATE_RATE> frames
-		if ((gs->frameNum % UNIT_SLOWUPDATE_RATE) == 0) {
-			activeSlowUpdateWeapon = activeUnits.begin();
-		}
-
-		// stagger the SlowUpdate's
-		unsigned int n = (activeUnits.size() / UNIT_SLOWUPDATE_RATE) + 1;
-
-		for (; activeSlowUpdateWeapon != activeUnits.end() && n != 0; ++activeSlowUpdateWeapon) {
-			CUnit* unit = *activeSlowUpdateWeapon;
-			unit->SlowUpdateWeapons();
 			n--;
 		}
 	}
@@ -311,7 +290,7 @@ void CUnitHandler::Update()
 		SCOPED_TIMER("Unit::Weapon::Update");
 
 		for (CUnit* unit: activeUnits) {
-			if (!unit->beingBuilt && !unit->IsStunned() && !unit->dontUseWeapons && !unit->isDead) {
+			if (unit->CanUpdateWeapons()) {
 				for (CWeapon* w: unit->weapons) {
 					w->Update();
 				}

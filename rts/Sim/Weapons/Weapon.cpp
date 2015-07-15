@@ -259,7 +259,11 @@ float CWeapon::GetPredictedImpactTime(float3 p) const
 
 void CWeapon::Update()
 {
-	errorVector += errorVectorAdd;
+	// update conditional cause last SlowUpdate maybe longer away than UNIT_SLOWUPDATE_RATE
+	// i.e. when the unit got stunned (neither is SlowUpdate exactly called at UNIT_SLOWUPDATE_RATE, it's only called `close` to that)
+	float3 newErrorVector = (errorVector + errorVectorAdd);
+	if (newErrorVector.SqLength() <= 1.0f)
+		errorVector = newErrorVector;
 
 	// SlowUpdate() only generates targets when we are in range
 	// esp. for bombs this is often too late (SlowUpdate gets only called twice per second)
@@ -569,7 +573,7 @@ void CWeapon::SetAttackTarget(const SWeaponTarget& newTarget)
 
 void CWeapon::DropCurrentTarget()
 {
-	if (currentTarget.type == Target_Unit && !currentTarget.unit->detached) {
+	if (currentTarget.type == Target_Unit) {
 		DeleteDeathDependence(currentTarget.unit, DEPENDENCE_TARGETUNIT);
 	}
 	currentTarget = SWeaponTarget();
@@ -991,23 +995,27 @@ bool CWeapon::TryTarget(const SWeaponTarget& trg) const {
 }
 
 
-bool CWeapon::TryTargetRotate(const CUnit* unit, bool userTarget)
+bool CWeapon::TryTargetRotate(const CUnit* unit, bool userTarget, bool manualFire)
 {
 	const float3 tempTargetPos = GetUnitLeadTargetPos(unit);
 	const short weaponHeading = GetHeadingFromVector(mainDir.x, mainDir.z);
 	const short enemyHeading = GetHeadingFromVector(tempTargetPos.x - aimFromPos.x, tempTargetPos.z - aimFromPos.z);
-
-	return TryTargetHeading(enemyHeading - weaponHeading, SWeaponTarget(unit, userTarget));
+	SWeaponTarget trg(unit, userTarget);
+	trg.isManualFire = manualFire;
+	
+	return TryTargetHeading(enemyHeading - weaponHeading, trg);
 }
 
 
-bool CWeapon::TryTargetRotate(float3 pos, bool userTarget)
+bool CWeapon::TryTargetRotate(float3 pos, bool userTarget, bool manualFire)
 {
 	AdjustTargetPosToWater(pos, true);
 	const short weaponHeading = GetHeadingFromVector(mainDir.x, mainDir.z);
 	const short enemyHeading = GetHeadingFromVector(pos.x - aimFromPos.x, pos.z - aimFromPos.z);
-
-	return TryTargetHeading(enemyHeading - weaponHeading, SWeaponTarget(pos, userTarget));
+	SWeaponTarget trg(pos, userTarget);
+	trg.isManualFire = manualFire;
+	
+	return TryTargetHeading(enemyHeading - weaponHeading, trg);
 }
 
 

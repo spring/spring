@@ -69,7 +69,7 @@ EXPORT(int) initStatic(int _interfaceId,
 				ddw, ddw_sizeMax,
 				"", true, true, true, false);
 		if (!ddwFetched) {
-			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+			simpleLog_logL(LOG_LEVEL_ERROR,
 					"Failed locating writable data-dir \"%s\"", ddw);
 		}
 		int p;
@@ -83,61 +83,19 @@ EXPORT(int) initStatic(int _interfaceId,
 		}
 	}
 
-	// ### try to fetch the log-level from the properties ###
-	int logLevel = SIMPLELOG_LEVEL_NORMAL;
-	const char* logLevel_str =
-			util_map_getValueByKey(numProps, propKeys, (const char**)propValues,
-			"log.level");
-	if (logLevel_str != NULL) {
-		int logLevel_tmp = atoi(logLevel_str);
-		if (logLevel_tmp >= SIMPLELOG_LEVEL_ERROR
-				&& logLevel_tmp <= SIMPLELOG_LEVEL_FINEST) {
-			logLevel = logLevel_tmp;
-		}
-	}
-
-	// ### try to fetch whether to use time-stamps from the properties ###
-	bool useTimeStamps = true;
-	const char* useTimeStamps_str =
-			util_map_getValueByKey(numProps, propKeys, (const char**)propValues,
-			"log.useTimeStamps");
-	if (useTimeStamps_str != NULL) {
-		useTimeStamps = util_strToBool(useTimeStamps_str);
-	}
-
-	// ### init the log file ###
-	char* logFile = util_allocStrCpy(
-			util_map_getValueByKey(numProps, propKeys, (const char**)propValues,
-			"log.file"));
-	if (logFile == NULL) {
-		logFile = util_allocStrCatFSPath(2, "log", MY_LOG_FILE);
-	}
-
-	static const unsigned int logFilePath_sizeMax = 1024;
-	char logFilePath[logFilePath_sizeMax];
-	// eg: "~/.spring/AI/Interfaces/Java/${INTERFACE_PROPERTIES_FILE}"
-	bool logFileFetched = callback->DataDirs_locatePath(interfaceId,
-			logFilePath, logFilePath_sizeMax,
-			logFile, true, true, false, false);
-
-	if (logFileFetched) {
-		simpleLog_init(logFilePath, useTimeStamps, logLevel, false);
-	} else {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-				"Failed initializing log-file \"%s\"", logFileFetched);
-	}
+	simpleLog_initcallback(_interfaceId, "Java Interface", callback->Log_logsl, LOG_LEVEL_INFO);
 
 	// log settings loaded from interface config file
 	if (propFileFetched) {
-		simpleLog_logL(SIMPLELOG_LEVEL_FINE, "settings loaded from: %s",
+		simpleLog_logL(LOG_LEVEL_NOTICE, "settings loaded from: %s",
 				propFilePath);
 		int p;
 		for (p=0; p < numProps; ++p) {
-			simpleLog_logL(SIMPLELOG_LEVEL_FINE, "\t%i: %s = %s",
+			simpleLog_logL(LOG_LEVEL_NOTICE, "\t%i: %s = %s",
 					p, propKeys[p], propValues[p]);
 		}
 	} else {
-		simpleLog_logL(SIMPLELOG_LEVEL_FINE, "settings NOT loaded from: %s",
+		simpleLog_logL(LOG_LEVEL_NOTICE, "settings NOT loaded from: %s",
 				propFilePath);
 	}
 
@@ -147,16 +105,14 @@ EXPORT(int) initStatic(int _interfaceId,
 			callback->DataDirs_getWriteableDir(interfaceId));
 	simpleLog_log("Using config-file: %s", propFilePath);
 
-	FREE(logFile);
-
 	// initialize Java part of the interface
 	success = java_initStatic(interfaceId, callback);
 	// load the JVM
 	success = success && java_preloadJNIEnv();
 	if (success) {
-		simpleLog_logL(SIMPLELOG_LEVEL_FINE, "Initialization successfull.");
+		simpleLog_logL(LOG_LEVEL_NOTICE, "Initialization successfull.");
 	} else {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR, "Initialization failed.");
+		simpleLog_logL(LOG_LEVEL_ERROR, "Initialization failed.");
 	}
 
 	return success ? 0 : -1;

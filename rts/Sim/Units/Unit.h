@@ -170,6 +170,8 @@ public:
 	bool IsCloaked() const { return isCloaked; }
 	bool IsIdle() const;
 
+	bool CanUpdateWeapons() const;
+
 	void SetStunned(bool stun);
 	bool IsStunned() const { return stunned; }
 

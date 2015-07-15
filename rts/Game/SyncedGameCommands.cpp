@@ -471,9 +471,11 @@ public:
 			int targetFrame;
 			buf >> targetFrame;
 			game->StartSkip(targetFrame);
+			LOG("Skipping to frame %i", targetFrame);
 		}
 		else if (action.GetArgs() == "end") {
 			game->EndSkip();
+			LOG("Skip finished");
 		} else {
 			LOG_L(L_WARNING, "/%s: wrong syntax", GetCommand().c_str());
 		}

@@ -1073,11 +1073,16 @@ void CUnit::SlowUpdate()
 	UpdateTerrainType();
 }
 
-void CUnit::SlowUpdateWeapons() {
-	if (weapons.empty())
-		return;
 
-	if (dontFire || beingBuilt || IsStunned() || isDead)
+bool CUnit::CanUpdateWeapons() const
+{
+	return (!beingBuilt && !IsStunned() && !dontUseWeapons && !dontFire && !isDead);
+}
+
+
+void CUnit::SlowUpdateWeapons()
+{
+	if (!CanUpdateWeapons())
 		return;
 
 	for (CWeapon* w: weapons) {
@@ -1364,7 +1369,7 @@ void CUnit::AddExperience(float exp)
 	if (exp == 0.0f)
 		return;
 
-	assert(exp > 0.0f);
+	assert(experience + exp >= 0.0f);
 	const float oldExp = experience;
 	experience += exp;
 
@@ -1655,7 +1660,7 @@ bool CUnit::AttackGround(const float3& pos, bool isUserTarget, bool wantManualFi
 
 void CUnit::DropCurrentAttackTarget()
 {
-	if (curTarget.type == Target_Unit && !curTarget.unit->detached) {
+	if (curTarget.type == Target_Unit) {
 		DeleteDeathDependence(curTarget.unit, DEPENDENCE_TARGET);
 	}
 

@@ -144,7 +144,7 @@ static size_t ExecFileSystemGlob(char** pathHits, size_t pathHits_sizeMax,
 			line_size--;
 		}
 
-		simpleLog_logL(SIMPLELOG_LEVEL_FINEST,
+		simpleLog_logL(LOG_LEVEL_DEBUG,
 				"glob-hit \"%s\"!", line);
 
 		if (line_size > 0 && *line == '/') {
@@ -181,7 +181,7 @@ static bool GetJREPathInCommonLocations(char* path, size_t pathSize, const char*
 		for (g=0; g < globHits_size; ++g) {
 			found = GetJREPathFromBase(path, pathSize, globHits[g], arch);
 			if (found) {
-				simpleLog_logL(SIMPLELOG_LEVEL_FINER,
+				simpleLog_logL(LOG_LEVEL_NOTICE,
 						"JRE found common location env var \"%s\"!",
 						possLoc[l]);
 				goto locSearchEnd;
@@ -224,13 +224,13 @@ static bool GetJREPathWhichJava(char* path, size_t pathSize, const char* arch)
 				line_size--;
 			}
 
-			simpleLog_logL(SIMPLELOG_LEVEL_FINEST,
+			simpleLog_logL(LOG_LEVEL_DEBUG,
 					"which line \"%s\"!", line);
 
 			if (line_size > suf_size
 					&& strcmp(line+(line_size-suf_size), suf) == 0) {
 				// line ends with suf
-				simpleLog_logL(SIMPLELOG_LEVEL_FINER,
+				simpleLog_logL(LOG_LEVEL_NOTICE,
 						"JRE found with `which java`!");
 				// remove suf
 				*(line+(line_size-suf_size)) = '\0';

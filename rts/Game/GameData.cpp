@@ -18,6 +18,16 @@ GameData::GameData()
 {
 }
 
+
+GameData::GameData(const std::string& setup)
+	: setupText(setup)
+	, mapChecksum(0)
+	, modChecksum(0)
+	, randomSeed(0)
+{
+}
+
+
 GameData::GameData(boost::shared_ptr<const RawPacket> pckt)
 {
 	assert(pckt->data[0] == NETMSG_GAMEDATA);

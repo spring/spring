@@ -108,7 +108,8 @@ public:
 	bool checkCol;
 	bool ignoreWater;
 	bool deleteMe;
-
+	bool callEvent; //do we need to call the ProjectileCreated event
+	
 	bool castShadow;
 	bool drawSorted;
 

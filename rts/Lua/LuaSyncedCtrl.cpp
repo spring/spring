@@ -1472,7 +1472,7 @@ static int SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
 		weapon->reloadStatus = (int)value;
 	}
 	else if (key == "reloadTime") {
-		weapon->reloadTime = (int)(value * GAME_SPEED);
+		weapon->reloadTime = std::max(1, (int)(value * GAME_SPEED));
 	}
 	else if (key == "accuracy") {
 		weapon->accuracyError = value;

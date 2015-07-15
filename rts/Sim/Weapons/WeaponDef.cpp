@@ -101,7 +101,7 @@ WEAPONTAG(bool, gravityAffected).defaultValue(false);
 WEAPONTAG(float, myGravity).defaultValue(0.0f);
 WEAPONTAG(bool, canAttackGround).defaultValue(true);
 WEAPONTAG(float, uptime).externalName("weaponTimer").defaultValue(0.0f);
-WEAPONDUMMYTAG(float, flighttime).defaultValue(0).scaleValue(32); // needs to be written as int and read as float
+WEAPONDUMMYTAG(float, flighttime).defaultValue(0).scaleValue(GAME_SPEED).description("Flighttime of missiles in seconds."); // needs to be written as int and read as float
 WEAPONTAG(float, turnrate).defaultValue(0.0f).scaleValue(float(TAANG2RAD) / GAME_SPEED);
 WEAPONTAG(float, heightBoostFactor).defaultValue(-1.0f);
 WEAPONTAG(float, proximityPriority).defaultValue(1.0f);
@@ -189,7 +189,7 @@ WEAPONTAG(bool, visibleShield).externalName("shield.visible").fallbackName("visi
 	.defaultValue(false).description("Is the shield visible or not?");
 WEAPONTAG(bool, visibleShieldRepulse).externalName("shield.visibleRepulse").fallbackName("visibleShieldRepulse")
 	.defaultValue(false).description("Is the (hard-coded) repulse effect rendered or not?");
-WEAPONTAG(int, visibleShieldHitFrames).externalName("visibleHitFrames").fallbackName("visibleShieldHitFrames")
+WEAPONTAG(int, visibleShieldHitFrames).externalName("shield.visibleHitFrames").fallbackName("visibleShieldHitFrames")
 	.defaultValue(0).description("The number of frames a shield becomes visible for when hit.");
 WEAPONTAG(float3, shieldBadColor).externalName("shield.badColor").fallbackName("shieldBadColor")
 	.defaultValue(float3(1.0f, 0.5f, 0.5f)).description("The RGB colour the shield transitions to as its hit-points are reduced towards 0.");
@@ -284,6 +284,7 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	, collisionFlags(0)
 {
 	WeaponDefs.Load(this, wdTable);
+	WeaponDefs.ReportUnknownTags(name, wdTable);
 
 	if (wdTable.KeyExists("cylinderTargetting"))
 		LOG_L(L_WARNING, "WeaponDef (%s) cylinderTargetting is deprecated and will be removed in the next release (use cylinderTargeting).", name.c_str());
@@ -296,7 +297,7 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 
 	shieldRechargeDelay = int(wdTable.GetFloat("rechargeDelay", 0) * GAME_SPEED);
 	shieldArmorType = damageArrayHandler->GetTypeFromName(shieldArmorTypeName);
-	flighttime = int(wdTable.GetFloat("flighttime", 0.0f) * 32);
+	flighttime = int(wdTable.GetFloat("flighttime", 0.0f) * GAME_SPEED);
 	maxFireAngle = math::cos(wdTable.GetFloat("firetolerance", 3640.0f) * TAANG2RAD);
 	
 	//FIXME may be smarter to merge the collideXYZ tags with avoidXYZ and removing the collisionFlags tag (and move the code into CWeapon)?
@@ -481,10 +482,9 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 
 	const std::string& colormap = wdTable.GetString("colormap", "");
 
+	visuals.colorMap = nullptr;
 	if (!colormap.empty()) {
 		visuals.colorMap = CColorMap::LoadFromDefString(colormap);
-	} else {
-		visuals.colorMap = NULL;
 	}
 
 	ParseWeaponSounds(wdTable);

@@ -3,7 +3,6 @@
 #ifndef FLYING_PIECE_H
 #define FLYING_PIECE_H
 
-#include "System/MemPool.h"
 
 #include "System/float3.h"
 #include "System/Matrix44f.h"
@@ -26,8 +25,6 @@ public:
 	float3 GetPos() const { return pos; }
 	float GetRadius() const { return radius + speed.Length() * 2.0f; }
 
-	inline void* operator new(size_t size) { return mempool.Alloc(size); }
-	inline void operator delete(void* p, size_t size) { mempool.Free(p, size); }
 
 protected:
 	void InitCommon(const float3 _pos, const float3 _speed, const float _radius, int _team);

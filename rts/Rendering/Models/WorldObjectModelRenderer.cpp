@@ -76,8 +76,8 @@ void IWorldObjectModelRenderer::DrawModels(const UnitSet& models)
 
 void IWorldObjectModelRenderer::DrawModels(const FeatureSet& models)
 {
-	for (FeatureSetIt fIt = models.begin(); fIt != models.end(); ++fIt) {
-		DrawModel(fIt->first);
+	for (auto drawFeature: models) {
+		DrawModel(drawFeature.first);
 	}
 }
 
@@ -122,46 +122,21 @@ void IWorldObjectModelRenderer::DelUnit(const CUnit* u)
 void IWorldObjectModelRenderer::AddFeature(const CFeature* f, float alpha)
 {
 	FeatureSet& fs = features[TEX_TYPE(f)];
-	FeatureSet::iterator it = fs.find(const_cast<CFeature*>(f));
-	if (it != fs.end()) {
-		if(it->second != alpha) {
-			fs[const_cast<CFeature*>(f)] = alpha;
-		}
-	} else {
-		fs[const_cast<CFeature*>(f)] = alpha;
-		numFeatures += 1;
-	}
+	assert(std::find_if(fs.begin(), fs.end(), [f](const PDrawFeature& p){ return p.first == f;}) == fs.end());
+	
+	fs.push_back(std::make_pair(const_cast<CFeature*>(f), alpha));
+	numFeatures += 1;
 }
 
 void IWorldObjectModelRenderer::DelFeature(const CFeature* f)
 {
-	{
-		FeatureRenderBin::iterator i = features.find(TEX_TYPE(f));
-		if (i != features.end()) {
-			if ((*i).second.erase(const_cast<CFeature*>(f)))
-				numFeatures -= 1;
+	FeatureSet& fs = features[TEX_TYPE(f)];
+	auto it = std::find_if(fs.begin(), fs.end(), [f](const PDrawFeature& p){ return p.first == f;});
 
-			if ((*i).second.empty())
-				features.erase(TEX_TYPE(f));
-		}
-	}
-
-	{
-		FeatureRenderBin::iterator i = featuresSave.find(TEX_TYPE(f));
-		if (i != featuresSave.end()) {
-			if ((*i).second.erase(const_cast<CFeature*>(f)))
-				numFeaturesSave -= 1;
-
-			if ((*i).second.empty())
-				featuresSave.erase(TEX_TYPE(f));
-		}
-	}
-}
-
-void IWorldObjectModelRenderer::SwapFeatures()
-{
-	features.swap(featuresSave);
-	std::swap(numFeatures, numFeaturesSave);
+	assert(it != fs.end());
+	*it = fs.back();
+	fs.pop_back();
+	numFeatures -= 1;
 }
 
 void IWorldObjectModelRenderer::AddProjectile(const CProjectile* p)

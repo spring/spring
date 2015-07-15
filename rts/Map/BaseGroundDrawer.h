@@ -66,6 +66,7 @@ public:
 	int losColor[3];
 	int radarColor[3];
 	int alwaysColor[3];
+	int radarColor2[3]; // Color of inner radar edge.
 
 	static const int losColorScale = 10000;
 

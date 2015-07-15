@@ -177,6 +177,7 @@ void CStartPosSelecter::Draw()
 
 	glEnable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
+	glDisable(GL_TEXTURE_2D);
 
 	if (InBox(mx, my, readyBox)) {
 		glColor4f(0.7f, 0.2f, 0.2f, guiAlpha);

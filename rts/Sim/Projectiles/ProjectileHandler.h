@@ -37,6 +37,9 @@ public:
 	~CProjectileHandler();
 	void Serialize(creg::ISerializer* s);
 
+	/// @see ConfigHandler::ConfigNotifyCallback
+	void ConfigNotify(const std::string& key, const std::string& value);
+
 	CProjectile* GetProjectileBySyncedID(int id);
 	CProjectile* GetProjectileByUnsyncedID(int id);
 

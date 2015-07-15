@@ -294,7 +294,7 @@ bool CLegacyInfoTextureHandler::UpdateExtraTexture(BaseGroundDrawMode texDrawMod
 			case drawMetal: {
 				const CMetalMap* metalMap = readMap->metalMap;
 
-				const unsigned short* myAirLos        = &losHandler->airLosMaps[gu->myAllyTeam].front();
+				const unsigned short* myLos           = &losHandler->losMaps[gu->myAllyTeam].front();
 				const unsigned  char* extraTex        = metalMap->GetDistributionMap();
 				const unsigned  char* extraTexPal     = metalMap->GetTexturePalette();
 				const          float* extractDepthMap = metalMap->GetExtractionMap();
@@ -305,10 +305,10 @@ bool CLegacyInfoTextureHandler::UpdateExtraTexture(BaseGroundDrawMode texDrawMod
 
 					for (int x = 0; x < mapDims.hmapx; ++x) {
 						const int a   = (y_pwr2mapx_half + x) * 4 - offset;
-						const int alx = ((x*2) >> losHandler->airMipLevel);
-						const int aly = ((y*2) >> losHandler->airMipLevel);
+						const int alx = ((x*2) >> losHandler->losMipLevel);
+						const int aly = ((y*2) >> losHandler->losMipLevel);
 
-						if (myAirLos[alx + (aly * losHandler->airSizeX)]) {
+						if (myLos[alx + (aly * losHandler->losSizeX)]) {
 							infoTexMem[a + COLOR_R] = (unsigned char)std::min(255.0f, 900.0f * fastmath::apxsqrt(fastmath::apxsqrt(extractDepthMap[y_hmapx + x])));
 						} else {
 							infoTexMem[a + COLOR_R] = 0;

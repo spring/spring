@@ -84,7 +84,8 @@ public:
 	bool isRepairingBeforeResurrect;
 	bool isAtFinalHeight;
 	bool inUpdateQue;
-
+	bool deleteMe;
+	
 	float finalHeight;
 
 	float resurrectProgress;

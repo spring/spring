@@ -7,7 +7,6 @@
 #define TEX_TYPE(o) (o->model->textureType)
 
 #include <map>
-#include <set>
 
 #include "Rendering/Models/3DModel.h"
 
@@ -22,7 +21,6 @@ public:
 	IWorldObjectModelRenderer(int mdlType): modelType(mdlType) {
 		numUnits = 0;
 		numFeatures = 0;
-		numFeaturesSave = 0;
 		numProjectiles = 0;
 	}
 	virtual ~IWorldObjectModelRenderer();
@@ -33,9 +31,12 @@ public:
 
 	virtual void AddUnit(const CUnit*);
 	virtual void DelUnit(const CUnit*);
-	virtual void AddFeature(const CFeature*, float alpha = 0.99f);
+private:
+	typedef std::pair<CFeature*, float> PDrawFeature;
+public:
+	virtual void AddFeature(const CFeature*, float alpha = 1.0f);
 	virtual void DelFeature(const CFeature*);
-	virtual void SwapFeatures();
+	
 	virtual void AddProjectile(const CProjectile*);
 	virtual void DelProjectile(const CProjectile*);
 
@@ -45,17 +46,13 @@ public:
 
 protected:
 	typedef std::vector<CUnit*>                       UnitSet;
-	typedef std::map<CFeature*, float>                 FeatureSet;
-	typedef std::map<CFeature*, float>::const_iterator FeatureSetIt;
+	typedef std::vector<PDrawFeature>                 FeatureSet;
 	typedef std::vector<CProjectile*>                 ProjectileSet;
 
 	// textureType ==> modelSet
 	typedef std::map<int, UnitSet>                       UnitRenderBin;
-	typedef std::map<int, UnitSet>::const_iterator       UnitRenderBinIt;
 	typedef std::map<int, FeatureSet>                    FeatureRenderBin;
-	typedef std::map<int, FeatureSet>::const_iterator    FeatureRenderBinIt;
 	typedef std::map<int, ProjectileSet>                 ProjectileRenderBin;
-	typedef std::map<int, ProjectileSet>::const_iterator ProjectileRenderBinIt;
 
 	virtual void DrawModels(const UnitSet&);
 	virtual void DrawModels(const FeatureSet&);
@@ -65,15 +62,13 @@ protected:
 	virtual void DrawModel(const CProjectile*) {}
 
 	UnitRenderBin units;              // all opaque or all cloaked
-	FeatureRenderBin features;        // opaque only, culled via GridVisibility()
-	FeatureRenderBin featuresSave;    // opaque only, culled via GridVisibility()
+	FeatureRenderBin features;        // opaque and fade
 	ProjectileRenderBin projectiles;  // opaque only, (synced && (piece || weapon)) only
 
 	int modelType;
 
 	int numUnits;
 	int numFeatures;
-	int numFeaturesSave;
 	int numProjectiles;
 
 public:

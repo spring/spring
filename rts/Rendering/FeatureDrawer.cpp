@@ -32,6 +32,10 @@
 
 #define DRAW_QUAD_SIZE 32
 
+#define ALPHA_OPAQUE 0.99f
+#define ALPHA_DONT_DRAW -1.0f
+
+
 CONFIG(bool, ShowRezBars).defaultValue(true).headlessValue(false);
 
 CONFIG(float, FeatureDrawDistance)
@@ -52,14 +56,12 @@ CR_BIND(CFeatureDrawer, )
 
 CR_REG_METADATA(CFeatureDrawer, (
 	CR_IGNORED(unsortedFeatures),
-	CR_IGNORED(drawQuads),
 	CR_IGNORED(drawQuadsX),
 	CR_IGNORED(drawQuadsY),
 	CR_IGNORED(farDist),
 	CR_IGNORED(featureDrawDistance),
 	CR_IGNORED(featureFadeDistance),
-	CR_IGNORED(opaqueModelRenderers),
-	CR_IGNORED(cloakedModelRenderers),
+	CR_IGNORED(modelRenderers),
 
 	CR_POSTLOAD(PostLoad)
 ))
@@ -74,15 +76,12 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 
 	drawQuadsX = mapDims.mapx/DRAW_QUAD_SIZE;
 	drawQuadsY = mapDims.mapy/DRAW_QUAD_SIZE;
-	drawQuads.resize(drawQuadsX * drawQuadsY);
 	featureDrawDistance = configHandler->GetFloat("FeatureDrawDistance");
 	featureFadeDistance = std::min(configHandler->GetFloat("FeatureFadeDistance"), featureDrawDistance);
-	opaqueModelRenderers.resize(MODELTYPE_OTHER, NULL);
-	cloakedModelRenderers.resize(MODELTYPE_OTHER, NULL);
+	modelRenderers.resize(MODELTYPE_OTHER, NULL);
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		opaqueModelRenderers[modelType] = IWorldObjectModelRenderer::GetInstance(modelType);
-		cloakedModelRenderers[modelType] = IWorldObjectModelRenderer::GetInstance(modelType);
+		modelRenderers[modelType] = IWorldObjectModelRenderer::GetInstance(modelType);
 	}
 }
 
@@ -92,12 +91,10 @@ CFeatureDrawer::~CFeatureDrawer()
 	eventHandler.RemoveClient(this);
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		delete opaqueModelRenderers[modelType];
-		delete cloakedModelRenderers[modelType];
+		delete modelRenderers[modelType];
 	}
 
-	opaqueModelRenderers.clear();
-	cloakedModelRenderers.clear();
+	modelRenderers.clear();
 }
 
 
@@ -109,8 +106,8 @@ void CFeatureDrawer::RenderFeatureCreated(const CFeature* feature)
 
 	if (feature->def->drawType == DRAWTYPE_MODEL) {
 		f->drawQuad = -1;
+		modelRenderers[MDL_TYPE(f)]->AddFeature(f, ALPHA_DONT_DRAW);
 		UpdateDrawQuad(f);
-
 		unsortedFeatures.push_back(f);
 	}
 }
@@ -134,14 +131,8 @@ void CFeatureDrawer::RenderFeatureDestroyed(const CFeature* feature)
 		erase(unsortedFeatures, f);
 	}
 
-	if (f->drawQuad >= 0) {
-		DrawQuad* dq = &drawQuads[f->drawQuad];
-		erase(dq->features, f);
-	}
-
 	if (f->model) {
-		opaqueModelRenderers[MDL_TYPE(f)]->DelFeature(f);
-		cloakedModelRenderers[MDL_TYPE(f)]->DelFeature(f);
+		modelRenderers[MDL_TYPE(f)]->DelFeature(f);
 	}
 
 	if (feature->objectDef->decalDef.useGroundDecal)
@@ -176,9 +167,6 @@ void CFeatureDrawer::UpdateDrawQuad(CFeature* feature)
 	assert(oldDrawQuad < drawQuadsX * drawQuadsY);
 	assert(newDrawQuad < drawQuadsX * drawQuadsY);
 
-	if (oldDrawQuad >= 0)
-		erase(drawQuads[oldDrawQuad].features, feature);
-	drawQuads[newDrawQuad].features.push_back(feature);
 	feature->drawQuad = newDrawQuad;
 }
 
@@ -221,9 +209,9 @@ void CFeatureDrawer::Draw()
 	GetVisibleFeatures(0, true);
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		opaqueModelRenderers[modelType]->PushRenderState();
+		modelRenderers[modelType]->PushRenderState();
 		DrawOpaqueFeatures(modelType);
-		opaqueModelRenderers[modelType]->PopRenderState();
+		modelRenderers[modelType]->PopRenderState();
 	}
 
 	unitDrawer->CleanUpUnitDrawing(false);
@@ -245,24 +233,18 @@ void CFeatureDrawer::Draw()
 
 void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 {
-	FeatureRenderBin& featureBin = opaqueModelRenderers[modelType]->GetFeatureBinMutable();
+	auto &featureBin = modelRenderers[modelType]->GetFeatureBin();
 
-	FeatureRenderBin::iterator featureBinIt;
-	FeatureSet::iterator featureSetIt;
-
-	for (featureBinIt = featureBin.begin(); featureBinIt != featureBin.end(); ++featureBinIt) {
+	for (auto &fs: featureBin) {
 		if (modelType != MODELTYPE_3DO) {
-			texturehandlerS3O->SetS3oTexture(featureBinIt->first);
+			texturehandlerS3O->SetS3oTexture(fs.first);
 		}
-
-		FeatureSet& featureSet = featureBinIt->second;
-
-		for (featureSetIt = featureSet.begin(); featureSetIt != featureSet.end(); ) {
-			if (!DrawFeatureNow(featureSetIt->first)) {
-				featureSetIt = set_erase(featureSet, featureSetIt);
-			} else {
-				++featureSetIt;
-			}
+		
+		for (auto &df: fs.second) {
+			if (df.second != ALPHA_OPAQUE)
+				continue;
+			
+			DrawFeatureNow(df.first);
 		}
 	}
 }
@@ -320,9 +302,9 @@ void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 
 		{
 			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-				cloakedModelRenderers[modelType]->PushRenderState();
+				modelRenderers[modelType]->PushRenderState();
 				DrawFadeFeaturesHelper(modelType);
-				cloakedModelRenderers[modelType]->PopRenderState();
+				modelRenderers[modelType]->PopRenderState();
 			}
 		}
 
@@ -340,38 +322,36 @@ void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 	}
 }
 
-void CFeatureDrawer::DrawFadeFeaturesHelper(int modelType) {
-	{
-		FeatureRenderBin& featureBin = cloakedModelRenderers[modelType]->GetFeatureBinMutable();
+void CFeatureDrawer::DrawFadeFeaturesHelper(int modelType)
+{
+	auto &featureBin = modelRenderers[modelType]->GetFeatureBin();
 
-		for (FeatureRenderBinIt it = featureBin.begin(); it != featureBin.end(); ++it) {
-			if (modelType != MODELTYPE_3DO) {
-				texturehandlerS3O->SetS3oTexture(it->first);
-			}
-
-			DrawFadeFeaturesSet(it->second, modelType);
+	for (auto &fs: featureBin) {
+		if (modelType != MODELTYPE_3DO) {
+			texturehandlerS3O->SetS3oTexture(fs.first);
 		}
+
+		DrawFadeFeaturesSet(fs.second, modelType);
 	}
 }
 
-void CFeatureDrawer::DrawFadeFeaturesSet(FeatureSet& fadeFeatures, int modelType)
+void CFeatureDrawer::DrawFadeFeaturesSet(const FeatureSet& fadeFeatures, int modelType)
 {
-	for (FeatureSet::iterator fi = fadeFeatures.begin(); fi != fadeFeatures.end(); ) {
-		const float cols[] = {1.0f, 1.0f, 1.0f, fi->second};
+	for (auto &df: fadeFeatures) {
+		if (df.second == ALPHA_OPAQUE || df.second == ALPHA_DONT_DRAW)
+			continue;
+		
+		const float cols[] = {1.0f, 1.0f, 1.0f, df.second};
 
 		if (modelType != MODELTYPE_3DO) {
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, cols);
 		}
 
 		// hack, sorting objects by distance would look better
-		glAlphaFunc(GL_GREATER, fi->second / 2.0f);
+		glAlphaFunc(GL_GREATER, df.second / 2.0f);
 		glColor4fv(cols);
 
-		if (!DrawFeatureNow(fi->first, fi->second)) {
-			fi = set_erase(fadeFeatures, fi);
-		} else {
-			++fi;
-		}
+		DrawFeatureNow(df.first, df.second);
 	}
 }
 
@@ -439,8 +419,6 @@ public:
 	float sqFadeDistBegin;
 	float sqFadeDistEnd;
 
-	std::vector<CFeatureDrawer::DrawQuad>* drawQuads;
-
 	void ResetState() {
 		drawQuadsX = 0;
 
@@ -450,70 +428,72 @@ public:
 
 		sqFadeDistBegin = 0.0f;
 		sqFadeDistEnd   = 0.0f;
-
-		drawQuads = nullptr;
 	}
 	void DrawQuad(int x, int y) {
-		std::vector<IWorldObjectModelRenderer*>& opaqueModelRenderers = featureDrawer->opaqueModelRenderers;
-		std::vector<IWorldObjectModelRenderer*>& cloakedModelRenderers = featureDrawer->cloakedModelRenderers;
-
-		const CFeatureDrawer::DrawQuad* dq = &(*drawQuads)[y * drawQuadsX + x];
-
-		for (CFeature* f: dq->features) {
-			if (f->IsInVoid())
-				continue;
-
-			assert(f->def->drawType == DRAWTYPE_MODEL);
-
-			if (gu->spectatingFullView || f->IsInLosForAllyTeam(gu->myAllyTeam)) {
-				if (drawReflection) {
-					float3 zeroPos;
-
-					if (f->midPos.y < 0.0f) {
-						zeroPos = f->midPos;
-					} else {
-						const float dif = f->midPos.y - camera->GetPos().y;
-						zeroPos =
-							camera->GetPos() * (f->midPos.y / dif) +
-							f->midPos * (-camera->GetPos().y / dif);
-					}
-					if (CGround::GetApproximateHeight(zeroPos.x, zeroPos.z, false) > f->drawRadius) {
+		std::vector<IWorldObjectModelRenderer*>& modelRenderers = featureDrawer->modelRenderers;
+		const int dq = y * drawQuadsX + x;
+		const float3 cameraPos = camera->GetPos();
+		for(int i = 0; i < MODELTYPE_OTHER; ++i) {
+			auto &featureBin = modelRenderers[i]->GetFeatureBinMutable();
+			for (auto &fs: featureBin) {
+				for (auto &df: fs.second) {
+					CFeature* f = df.first;
+					if (f->drawQuad != dq) {
 						continue;
 					}
-				}
-				if (drawRefraction) {
-					if (f->pos.y > 0.0f)
+					if (f->IsInVoid())
 						continue;
-				}
 
-				const float sqDist = (f->pos - camera->GetPos()).SqLength();
-				const float farLength = f->sqRadius * unitDrawer->unitDrawDistSqr;
+					assert(f->def->drawType == DRAWTYPE_MODEL);
 
-				if (sqDist < farLength) {
-					float sqFadeDistE;
-					float sqFadeDistB;
+					if (gu->spectatingFullView || f->IsInLosForAllyTeam(gu->myAllyTeam)) {
+						if (drawReflection) {
+							float3 zeroPos;
 
-					if (farLength < sqFadeDistEnd) {
-						sqFadeDistE = farLength;
-						sqFadeDistB = farLength * sqFadeDistBegin / sqFadeDistEnd;
-					} else {
-						sqFadeDistE = sqFadeDistEnd;
-						sqFadeDistB = sqFadeDistBegin;
-					}
+							if (f->midPos.y < 0.0f) {
+								zeroPos = f->midPos;
+							} else {
+								const float dif = f->midPos.y - cameraPos.y;
+								zeroPos =
+									cameraPos * (f->midPos.y / dif) +
+									f->midPos * (-cameraPos.y / dif);
+							}
+							if (CGround::GetApproximateHeight(zeroPos.x, zeroPos.z, false) > f->drawRadius) {
+								continue;
+							}
+						}
+						if (drawRefraction) {
+							if (f->pos.y > 0.0f)
+								continue;
+						}
 
-					if (sqDist < sqFadeDistB) {
-						cloakedModelRenderers[MDL_TYPE(f)]->DelFeature(f);
-						if (camera->InView(f->drawMidPos, f->drawRadius))
-							opaqueModelRenderers[MDL_TYPE(f)]->AddFeature(f);
-					} else if (sqDist < sqFadeDistE) {
-						const float falpha = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
-						opaqueModelRenderers[MDL_TYPE(f)]->DelFeature(f);
-						if (camera->InView(f->drawMidPos, f->drawRadius))
-							cloakedModelRenderers[MDL_TYPE(f)]->AddFeature(f, falpha);
-					}
-				} else {
-					if (farFeatures) {
-						farTextureHandler->Queue(f);
+						const float sqDist = (f->pos - cameraPos).SqLength();
+						const float farLength = f->sqRadius * unitDrawer->unitDrawDistSqr;
+
+						if (sqDist < farLength) {
+							float sqFadeDistE;
+							float sqFadeDistB;
+
+							if (farLength < sqFadeDistEnd) {
+								sqFadeDistE = farLength;
+								sqFadeDistB = farLength * sqFadeDistBegin / sqFadeDistEnd;
+							} else {
+								sqFadeDistE = sqFadeDistEnd;
+								sqFadeDistB = sqFadeDistBegin;
+							}
+
+							if (sqDist < sqFadeDistB) {
+								if (camera->InView(f->drawMidPos, f->drawRadius))
+									df.second = ALPHA_OPAQUE;
+							} else if (sqDist < sqFadeDistE) {
+								if (camera->InView(f->drawMidPos, f->drawRadius))
+									df.second = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
+							}
+						} else {
+							if (farFeatures) {
+								farTextureHandler->Queue(f);
+							}
+						}
 					}
 				}
 			}
@@ -526,33 +506,27 @@ public:
 void CFeatureDrawer::GetVisibleFeatures(int extraSize, bool drawFar)
 {
 	CFeatureQuadDrawer drawer;
-	drawer.drawQuads = &drawQuads;
 	drawer.drawQuadsX = drawQuadsX;
 	drawer.drawReflection = water->DrawReflectionPass();
 	drawer.drawRefraction = water->DrawRefractionPass();
 	drawer.sqFadeDistEnd = featureDrawDistance * featureDrawDistance;
 	drawer.sqFadeDistBegin = featureFadeDistance * featureFadeDistance;
 	drawer.farFeatures = drawFar;
-
-	readMap->GridVisibility(camera, DRAW_QUAD_SIZE, featureDrawDistance, &drawer, extraSize);
-}
-
-void CFeatureDrawer::SwapFeatures() {
+	
 	for(int i = 0; i < MODELTYPE_OTHER; ++i) {
-		opaqueModelRenderers[i]->SwapFeatures();
-		cloakedModelRenderers[i]->SwapFeatures();
+		auto &featureBin = modelRenderers[i]->GetFeatureBinMutable();
+		for (auto &fs: featureBin) {
+			for (auto &df: fs.second) {
+				df.second = ALPHA_DONT_DRAW;
+			}
+		}
 	}
+	
+	readMap->GridVisibility(camera, DRAW_QUAD_SIZE, featureDrawDistance, &drawer, extraSize);
 }
 
 void CFeatureDrawer::PostLoad()
 {
 	drawQuadsX = mapDims.mapx/DRAW_QUAD_SIZE;
 	drawQuadsY = mapDims.mapy/DRAW_QUAD_SIZE;
-	drawQuads.clear();
-	drawQuads.resize(drawQuadsX * drawQuadsY);
-
-	const CFeatureSet& fs = featureHandler->GetActiveFeatures();
-	for (CFeature* f: fs)
-		if (f->drawQuad >= 0)
-			drawQuads[f->drawQuad].features.push_back(f);
 }

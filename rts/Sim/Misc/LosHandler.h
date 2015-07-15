@@ -4,14 +4,12 @@
 #define LOS_HANDLER_H
 
 #include <vector>
-#include <list>
 #include <deque>
 #include <boost/noncopyable.hpp>
 #include "Map/Ground.h"
 #include "Sim/Objects/WorldObject.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/RadarHandler.h"
-#include "System/MemPool.h"
 #include "System/type2.h"
 
 #define LOSHANDLER_ALWAYSVISIBLE_OVERRIDES_CLOAKED
@@ -66,7 +64,7 @@ public:
 		, toBeDeleted(false)
 	{}
 
- 	std::vector<int> losSquares;
+	std::vector<int> losSquares;
 	int losSize;
 	int airLosSize;
 	int refCount;
@@ -109,6 +107,8 @@ public:
 	void MoveUnit(CUnit* unit, bool redoCurrent);
 	void FreeInstance(LosInstance* instance);
 
+	bool InLos(const CUnit* unit, int allyTeam) const;
+
 	inline bool InLos(const CWorldObject* obj, int allyTeam) const {
 		if (obj->alwaysVisible || gs->globalLOS[allyTeam])
 			return true;
@@ -121,53 +121,19 @@ public:
 		return (InLos(obj->pos, allyTeam) || InLos(obj->pos + obj->speed, allyTeam));
 	}
 
-	inline bool InLos(const CUnit* unit, int allyTeam) const {
-		// NOTE: units are treated differently than world objects in two ways:
-		//   1. they can be cloaked (has to be checked BEFORE all other cases)
-		//   2. when underwater, they are only considered to be in LOS if they
-		//      are also in radar ("sonar") coverage if requireSonarUnderWater
-		//      is enabled --> underwater units can NOT BE SEEN AT ALL without
-		//      active radar!
-		#ifdef LOSHANDLER_ALWAYSVISIBLE_OVERRIDES_CLOAKED
-		if (unit->alwaysVisible)
-			return true;
-		if (unit->isCloaked)
-			return false;
-		#else
-		if (unit->isCloaked)
-			return false;
-		if (unit->alwaysVisible)
-			return true;
-		#endif
-
-		// isCloaked always overrides globalLOS
-		if (gs->globalLOS[allyTeam])
-			return true;
-		if (unit->useAirLos)
-			return (InAirLos(unit->pos, allyTeam) || InAirLos(unit->pos + unit->speed, allyTeam));
-
-		if (requireSonarUnderWater) {
-			if (unit->IsUnderWater() && !radarHandler->InRadar(unit, allyTeam)) {
-				return false;
-			}
-		}
-
-		return (InLos(unit->pos, allyTeam) || InLos(unit->pos + unit->speed, allyTeam));
-	}
-
 	inline bool InLos(const float3& pos, int allyTeam) const {
 		if (gs->globalLOS[allyTeam])
 			return true;
-		const int gx = pos.x * invLosDiv;
-		const int gz = pos.z * invLosDiv;
+		const int gx = Round(pos.x * invLosDiv);
+		const int gz = Round(pos.z * invLosDiv);
 		return (losMaps[allyTeam].At(gx, gz) != 0);
 	}
 
 	inline bool InAirLos(const float3& pos, int allyTeam) const {
 		if (gs->globalLOS[allyTeam])
 			return true;
-		const int gx = pos.x * invAirDiv;
-		const int gz = pos.z * invAirDiv;
+		const int gx = Round(pos.x * invAirDiv);
+		const int gz = Round(pos.z * invAirDiv);
 		return (airLosMaps[allyTeam].At(gx, gz) != 0);
 	}
 
@@ -175,15 +141,15 @@ public:
 	inline bool InLos(int hmx, int hmz, int allyTeam) const {
 		if (gs->globalLOS[allyTeam])
 			return true;
-		const int gx = hmx * SQUARE_SIZE * invLosDiv;
-		const int gz = hmz * SQUARE_SIZE * invLosDiv;
+		const int gx = Round(hmx * SQUARE_SIZE * invLosDiv);
+		const int gz = Round(hmz * SQUARE_SIZE * invLosDiv);
 		return (losMaps[allyTeam].At(gx, gz) != 0);
 	}
 	inline bool InAirLos(int hmx, int hmz, int allyTeam) const {
 		if (gs->globalLOS[allyTeam])
 			return true;
-		const int gx = hmx * SQUARE_SIZE * invAirDiv;
-		const int gz = hmz * SQUARE_SIZE * invAirDiv;
+		const int gx = Round(hmx * SQUARE_SIZE * invAirDiv);
+		const int gz = Round(hmz * SQUARE_SIZE * invAirDiv);
 		return (airLosMaps[allyTeam].At(gx, gz) != 0);
 	}
 
@@ -217,7 +183,7 @@ private:
 
 	CLosAlgorithm losAlgo;
 
-	std::list<LosInstance*> instanceHash[LOSHANDLER_MAGIC_PRIME];
+	std::deque<LosInstance*> instanceHash[LOSHANDLER_MAGIC_PRIME];
 
 	std::deque<LosInstance*> toBeDeleted;
 

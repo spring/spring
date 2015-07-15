@@ -3,9 +3,8 @@
 #ifndef MINIMAP_H
 #define MINIMAP_H
 
-#include <vector>
 #include <string>
-#include <list>
+#include <deque>
 #include "InputReceiver.h"
 #include "Rendering/GL/FBO.h"
 #include "System/Color.h"
@@ -180,7 +179,7 @@ class CMiniMap : public CInputReceiver {
 			float3 pos;
 			float color[4];
 		};
-		std::list<Notification> notes;
+		std::deque<Notification> notes;
 };
 
 

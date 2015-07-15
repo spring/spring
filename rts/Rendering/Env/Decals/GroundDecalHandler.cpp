@@ -37,7 +37,6 @@ using std::list;
 using std::min;
 using std::max;
 
-CGroundDecalHandler* groundDecals_ = NULL;
 
 CONFIG(int, GroundScarAlphaFade).defaultValue(0);
 
@@ -109,16 +108,16 @@ CGroundDecalHandler::~CGroundDecalHandler()
 		delete *ti;
 	}
 
-	for (std::vector<SolidObjectDecalType*>::iterator tti = objectDecalTypes.begin(); tti != objectDecalTypes.end(); ++tti) {
-		for (set<SolidObjectGroundDecal*>::iterator ti = (*tti)->objectDecals.begin(); ti != (*tti)->objectDecals.end(); ++ti) {
-			if ((*ti)->owner)
-				(*ti)->owner->groundDecal = 0;
-			if ((*ti)->gbOwner)
-				(*ti)->gbOwner->decal = 0;
-			delete *ti;
+	for (SolidObjectDecalType* dctype: objectDecalTypes) {
+		for (SolidObjectGroundDecal* dc: dctype->objectDecals) {
+			if (dc->owner)
+				dc->owner->groundDecal = nullptr;
+			if (dc->gbOwner)
+				dc->gbOwner->decal = nullptr;
+			delete dc;
 		}
-		glDeleteTextures (1, &(*tti)->texture);
-		delete *tti;
+		glDeleteTextures(1, &dctype->texture);
+		delete dctype;
 	}
 	for (std::list<Scar*>::iterator si = scars.begin(); si != scars.end(); ++si) {
 		delete *si;

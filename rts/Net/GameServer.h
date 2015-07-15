@@ -149,6 +149,7 @@ private:
 	void Update();
 	void ProcessPacket(const unsigned playerNum, boost::shared_ptr<const netcode::RawPacket> packet);
 	void CheckSync();
+	void HandleConnectionAttempts();
 	void ServerReadNet();
 
 	void LagProtection();
@@ -175,9 +176,6 @@ private:
 
 	void AddToPacketCache(boost::shared_ptr<const netcode::RawPacket>& pckt);
 
-	bool AdjustPlayerNumber(netcode::RawPacket* buf, int pos, int val = -1);
-	void UpdatePlayerNumberMap();
-
 	float GetDemoTime() const;
 
 private:
@@ -187,7 +185,6 @@ private:
 	boost::shared_ptr<const  CGameSetup> myGameSetup;
 
 	/////////////////// game status variables ///////////////////
-	unsigned char playerNumberMap[256];
 	volatile bool quitServer;
 	int serverFrameNum;
 
@@ -254,7 +251,7 @@ private:
 	void InternalSpeedChange(float newSpeed);
 	void UserSpeedChange(float newSpeed, int player);
 
-	void AddAdditionalUser( const std::string& name, const std::string& passwd, bool fromDemo = false, bool spectator = true, int team = 0);
+	void AddAdditionalUser( const std::string& name, const std::string& passwd, bool fromDemo = false, bool spectator = true, int team = 0, int playerNum = -1);
 	unsigned char ReserveNextAvailableSkirmishAIId();
 	void FreeSkirmishAIId(const unsigned char skirmishAIId);
 

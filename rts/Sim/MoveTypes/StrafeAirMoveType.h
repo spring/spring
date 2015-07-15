@@ -76,6 +76,7 @@ public:
 	float maxAileron;
 	float maxElevator;
 	float maxRudder;
+	// fighters abort dive toward target if within this distance and climb back to normal altitude
 	float attackSafetyDistance;
 
 	/// used while landing

@@ -31,6 +31,7 @@ CR_REG_METADATA(CFeature, (
 	CR_MEMBER(isRepairingBeforeResurrect),
 	CR_MEMBER(isAtFinalHeight),
 	CR_MEMBER(inUpdateQue),
+	CR_MEMBER(deleteMe),
 	CR_MEMBER(resurrectProgress),
 	CR_MEMBER(reclaimLeft),
 	CR_MEMBER(resources),
@@ -55,6 +56,7 @@ CFeature::CFeature()
 , isRepairingBeforeResurrect(false)
 , isAtFinalHeight(false)
 , inUpdateQue(false)
+, deleteMe(false)
 , finalHeight(0.0f)
 , resurrectProgress(0.0f)
 , reclaimLeft(1.0f)
@@ -77,10 +79,6 @@ CFeature::~CFeature()
 {
 	UnBlock();
 	quadField->RemoveFeature(this);
-
-	if (featureHandler != NULL) {
-		featureHandler->SetFeatureUpdateable(this, false);
-	}
 
 	if (myFire != NULL) {
 		myFire->StopFire();
@@ -450,7 +448,7 @@ void CFeature::SetVelocity(const float3& v)
 	UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, v != ZeroVector);
 
 	if (IsMoving()) {
-		featureHandler->SetFeatureUpdateable(this, true);
+		featureHandler->SetFeatureUpdateable(this);
 	}
 }
 
@@ -646,7 +644,7 @@ void CFeature::StartFire()
 		return;
 
 	fireTime = 200 + (int)(gs->randFloat() * GAME_SPEED);
-	featureHandler->SetFeatureUpdateable(this, true);
+	featureHandler->SetFeatureUpdateable(this);
 
 	myFire = new CFireProjectile(midPos, UpVector, 0, 300, 70, radius * 0.8f, 20.0f);
 }

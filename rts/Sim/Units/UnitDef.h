@@ -278,7 +278,6 @@ public:
 	float maxAileron;
 	float maxElevator;
 	float maxRudder;
-	float attackSafetyDistance;
 	float crashDrag;
 
 	float loadingRadius;							///< for transports

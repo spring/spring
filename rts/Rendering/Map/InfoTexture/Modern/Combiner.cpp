@@ -6,6 +6,7 @@
 #include "Rendering/Shaders/Shader.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "System/Exceptions.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 
@@ -55,6 +56,10 @@ CInfoTextureCombiner::CInfoTextureCombiner()
 	}
 
 	shader = shaderHandler->CreateProgramObject("[CInfoTextureCombiner]", "CInfoTextureCombiner", false);
+
+	if (!fbo.IsValid() /*|| !shader->IsValid()*/) { // don't check shader (it gets created/switched at runtime)
+		throw opengl_error("");
+	}
 }
 
 
@@ -113,6 +118,7 @@ void CInfoTextureCombiner::Update()
 {
 	shader->Enable();
 	fbo.Bind();
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
 	glViewport(0,0, texSize.x, texSize.y);
 	glEnable(GL_BLEND);
 
@@ -130,6 +136,7 @@ void CInfoTextureCombiner::Update()
 	glEnd();
 
 	glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	FBO::Unbind();
 	shader->Disable();
 

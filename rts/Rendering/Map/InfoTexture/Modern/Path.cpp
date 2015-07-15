@@ -13,6 +13,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "System/Color.h"
+#include "System/Exceptions.h"
 #include "System/ThreadPool.h"
 #include "System/Log/ILog.h"
 
@@ -48,6 +49,10 @@ CPathTexture::CPathTexture()
 		fbo.AttachTexture(texture);
 		/*bool status =*/ fbo.CheckStatus("CPathTexture");
 		FBO::Unbind();
+	}
+
+	if (!fbo.IsValid()) {
+		throw opengl_error("");
 	}
 }
 

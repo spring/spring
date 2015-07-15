@@ -1288,7 +1288,8 @@ int LuaUnsyncedRead::GetLosViewColors(lua_State* L)
 	PACK_COLOR_VECTOR(gd->losColor);
 	PACK_COLOR_VECTOR(gd->radarColor);
 	PACK_COLOR_VECTOR(gd->jamColor);
-	return 4;
+	PACK_COLOR_VECTOR(gd->radarColor2);
+	return 5;
 }
 
 

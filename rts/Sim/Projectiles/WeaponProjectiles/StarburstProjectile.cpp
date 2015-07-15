@@ -186,74 +186,12 @@ void CStarburstProjectile::Update()
 		if (u != NULL) {
 			targetPos = u->GetErrorPos(allyteamID, true);
 		}
-	}
 
-	if (uptime > 0) {
-		if (!luaMoveCtrl) {
-			if (speed.w < maxSpeed)
-				speed.w += weaponDef->weaponacceleration;
-
-			// do not need to update dir or speed.w here
-			CWorldObject::SetVelocity(dir * speed.w);
-		}
-	} else if (doturn && ttl > 0 && distanceToTravel > 0.0f) {
-		if (!luaMoveCtrl) {
-			float3 targetErrorVec = ((targetPos - pos).Normalize() + aimError).Normalize();
-
-			if (targetErrorVec.dot(dir) > 0.99f) {
-				dir = targetErrorVec;
-				doturn = false;
-			} else {
-				targetErrorVec = targetErrorVec - dir;
-				targetErrorVec -= dir * (targetErrorVec.dot(dir));
-				targetErrorVec.Normalize();
-
-				if (weaponDef->turnrate != 0) {
-					dir = (dir + (targetErrorVec * weaponDef->turnrate)).Normalize();
-				} else {
-					dir = (dir + (targetErrorVec * 0.06f)).Normalize();
-				}
-			}
-
-			// do not need to update dir or speed.w here
-			CWorldObject::SetVelocity(dir * speed.w);
-
-			if (distanceToTravel != MAX_PROJECTILE_RANGE) {
-				distanceToTravel -= speed.Length2D();
-			}
-		}
-	} else if (ttl > 0 && distanceToTravel > 0.0f) {
-		if (!luaMoveCtrl) {
-			if (speed.w < maxSpeed)
-				speed.w += weaponDef->weaponacceleration;
-
-			float3 targetErrorVec = (targetPos - pos).Normalize();
-
-			if (targetErrorVec.dot(dir) > maxGoodDif) {
-				dir = targetErrorVec;
-			} else {
-				targetErrorVec = targetErrorVec - dir;
-				targetErrorVec = (targetErrorVec - (dir * (targetErrorVec.dot(dir)))).SafeNormalize();
-
-				dir = (dir + (targetErrorVec * tracking)).SafeNormalize();
-			}
-
-			// do not need to update dir or speed.w here
-			CWorldObject::SetVelocity(dir * speed.w);
-
-			if (distanceToTravel != MAX_PROJECTILE_RANGE) {
-				distanceToTravel -= speed.Length2D();
-			}
-		}
-	} else {
-		if (!luaMoveCtrl) {
-			// changes dir and speed.w, must keep speed-vector in sync
-			SetDirectionAndSpeed((dir + (UpVector * mygravity)).Normalize(), speed.w - mygravity);
-		}
+		targetPos += aimError;
 	}
 
 	if (!luaMoveCtrl) {
-		SetPosition(pos + speed);
+		UpdateTrajectory();
 	}
 
 	if (ttl > 0) {
@@ -320,6 +258,69 @@ void CStarburstProjectile::Update()
 	}
 
 	UpdateInterception();
+}
+
+void CStarburstProjectile::UpdateTrajectory()
+{
+	if (uptime > 0) {
+		// stage 1: going upwards
+		speed.w += weaponDef->weaponacceleration;
+		speed.w = std::min(speed.w, maxSpeed);
+		CWorldObject::SetVelocity(dir * speed.w); // do not need to update dir or speed.w here
+
+	} else if (doturn && ttl > 0 && distanceToTravel > 0.0f) {
+		// stage 2: turn to target
+		float3 targetErrorVec = (targetPos - pos).Normalize();
+
+		if (targetErrorVec.dot(dir) > 0.99f) {
+			dir = targetErrorVec;
+			doturn = false;
+		} else {
+			targetErrorVec = targetErrorVec - dir;
+			targetErrorVec = (targetErrorVec - (dir * (targetErrorVec.dot(dir)))).SafeNormalize();
+
+			if (weaponDef->turnrate != 0) {
+				dir = (dir + (targetErrorVec * weaponDef->turnrate)).Normalize();
+			} else {
+				dir = (dir + (targetErrorVec * 0.06f)).Normalize();
+			}
+		}
+
+		// do not need to update dir or speed.w here
+		CWorldObject::SetVelocity(dir * speed.w);
+
+		if (distanceToTravel != MAX_PROJECTILE_RANGE) {
+			distanceToTravel -= speed.Length2D();
+		}
+
+	} else if (ttl > 0 && distanceToTravel > 0.0f) {
+		// stage 3: hit target
+		float3 targetErrorVec = (targetPos - pos).Normalize();
+
+		if (targetErrorVec.dot(dir) > maxGoodDif) {
+			dir = targetErrorVec;
+		} else {
+			targetErrorVec = targetErrorVec - dir;
+			targetErrorVec = (targetErrorVec - (dir * (targetErrorVec.dot(dir)))).SafeNormalize();
+
+			dir = (dir + (targetErrorVec * tracking)).SafeNormalize();
+		}
+
+		speed.w += weaponDef->weaponacceleration;
+		speed.w = std::min(speed.w, maxSpeed);
+		CWorldObject::SetVelocity(dir * speed.w);
+
+		if (distanceToTravel != MAX_PROJECTILE_RANGE) {
+			distanceToTravel -= speed.Length2D();
+		}
+
+	} else {
+		// stage "out of fuel"
+		// changes dir and speed.w, must keep speed-vector in sync
+		SetDirectionAndSpeed((dir + (UpVector * mygravity)).Normalize(), speed.w - mygravity);
+	}
+
+	SetPosition(pos + speed);
 }
 
 void CStarburstProjectile::Draw()

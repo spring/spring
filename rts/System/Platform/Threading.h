@@ -193,13 +193,14 @@ namespace Threading {
 	public:
 		AtomicCounterInt64(boost::int64_t start = 0) : num(start) {}
 
+		// prefix
 		boost::int64_t operator++() {
 	#ifdef _MSC_VER
 			return InterlockedIncrement64(&num);
 	#elif defined(__APPLE__)
 			return OSAtomicIncrement64(&num);
-	#else // assuming GCC (__sync_fetch_and_add is a builtin)
-			return __sync_fetch_and_add(&num, boost::int64_t(1));
+	#else // assuming GCC (__sync_add_and_fetch is a builtin)
+			return __sync_add_and_fetch(&num, boost::int64_t(1));
 	#endif
 		}
 

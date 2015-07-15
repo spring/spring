@@ -131,23 +131,27 @@ void CDemoRecorder::SetTime(int gameTime, int wallclockTime)
 	fileHeader.wallclockTime = wallclockTime;
 }
 
-void CDemoRecorder::InitializeStats(int numPlayers, int numTeams )
+void CDemoRecorder::InitializeStats(int numPlayers, int numTeams)
 {
-	fileHeader.numPlayers = numPlayers;
-	fileHeader.numTeams = numTeams;
-
 	playerStats.resize(numPlayers);
 	teamStats.resize(numTeams);
 }
 
+
+void CDemoRecorder::AddNewPlayer(const std::string& name, int playerNum)
+{
+	if (playerNum >= playerStats.size()) {
+		playerStats.resize(playerNum + 1);
+	}
+}
+
+
 /** @brief Set (overwrite) the CPlayer::Statistics for player playerNum */
 void CDemoRecorder::SetPlayerStats(int playerNum, const PlayerStatistics& stats)
 {
-	// player who sent the NETMSG_PLAYERSTAT might be a spectator
-	// that joined later (only statistics for the original players
-	// are saved)
-	if (playerNum >= playerStats.size())
-		return;
+	if (playerNum >= playerStats.size()) {
+		playerStats.resize(playerNum + 1);
+	}
 
 	playerStats[playerNum] = stats;
 }
@@ -155,7 +159,7 @@ void CDemoRecorder::SetPlayerStats(int playerNum, const PlayerStatistics& stats)
 /** @brief Set (overwrite) the TeamStatistics history for team teamNum */
 void CDemoRecorder::SetTeamStats(int teamNum, const std::list< TeamStatistics >& stats)
 {
-	assert((unsigned)teamNum < teamStats.size());
+	assert((unsigned)teamNum < teamStats.size()); //FIXME
 
 	teamStats[teamNum].clear();
 	teamStats[teamNum].reserve(stats.size());
@@ -207,19 +211,17 @@ unsigned int CDemoRecorder::WriteFileHeader(bool updateStreamLength)
 /** @brief Write the CPlayer::Statistics at the current position in the file. */
 void CDemoRecorder::WritePlayerStats()
 {
-	if (fileHeader.numPlayers == 0)
-		return;
-
 	int pos = demoStream.tellp();
 
-	for (std::vector< PlayerStatistics >::iterator it = playerStats.begin(); it != playerStats.end(); ++it) {
-		PlayerStatistics& stats = *it;
+	for (PlayerStatistics& stats: playerStats) {
 		stats.swab();
 		demoStream.write(reinterpret_cast<char*>(&stats), sizeof(PlayerStatistics));
 	}
-	playerStats.clear();
 
+	fileHeader.numPlayers = playerStats.size();
 	fileHeader.playerStatSize = (int)demoStream.tellp() - pos;
+
+	playerStats.clear();
 }
 
 
@@ -245,26 +247,24 @@ void CDemoRecorder::WriteWinnerList()
 /** @brief Write the TeamStatistics at the current position in the file. */
 void CDemoRecorder::WriteTeamStats()
 {
-	if (fileHeader.numTeams == 0)
-		return;
-
 	int pos = demoStream.tellp();
 
 	// Write array of dwords indicating number of TeamStatistics per team.
-	for (std::vector< std::vector< TeamStatistics > >::iterator it = teamStats.begin(); it != teamStats.end(); ++it) {
-		unsigned int c = swabDWord(it->size());
+	for (std::vector<TeamStatistics>& history: teamStats) {
+		unsigned int c = swabDWord(history.size());
 		demoStream.write((char*)&c, sizeof(unsigned int));
 	}
 
 	// Write big array of TeamStatistics.
-	for (std::vector< std::vector< TeamStatistics > >::iterator it = teamStats.begin(); it != teamStats.end(); ++it) {
-		for (std::vector< TeamStatistics >::iterator it2 = it->begin(); it2 != it->end(); ++it2) {
-			TeamStatistics& stats = *it2;
+	for (std::vector<TeamStatistics>& history: teamStats) {
+		for (TeamStatistics& stats: history) {
 			stats.swab();
 			demoStream.write(reinterpret_cast<char*>(&stats), sizeof(TeamStatistics));
 		}
 	}
-	teamStats.clear();
 
+	fileHeader.numTeams = teamStats.size();
 	fileHeader.teamStatSize = (int)demoStream.tellp() - pos;
+
+	teamStats.clear();
 }

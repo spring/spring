@@ -638,7 +638,7 @@ bool CReadMap::HasHeightMapChanged(const int lmx, const int lmy)
 #ifdef USE_UNSYNCED_HEIGHTMAP
 	const int losSquaresX = losHandler->losSizeX;
 	const int idx = lmx + lmy * (losSquaresX + 1);
-	assert(idx < syncedHeightMapDigests.size());
+	assert(idx < syncedHeightMapDigests.size() && idx >= 0);
 	const bool heightmapChanged = (unsyncedHeightMapDigests[idx] != syncedHeightMapDigests[idx]);
 	if (heightmapChanged) {
 		unsyncedHeightMapDigests[idx] = syncedHeightMapDigests[idx];

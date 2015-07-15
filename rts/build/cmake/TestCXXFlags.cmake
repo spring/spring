@@ -179,7 +179,8 @@ if   (CMAKE_COMPILER_IS_GNUCXX)
 
 	if    (hasGold EQUAL 0)
 		set(LDGOLD_FOUND TRUE)
-		set(LDGOLD_LINKER_FLAGS " -Wl,--compress-debug-sections=zlib")   # compress debug symbols
+		set(LDGOLD_LINKER_FLAGS "")
+		#set(LDGOLD_LINKER_FLAGS " -Wl,--stats ${LDGOLD_LINKER_FLAGS}")
 		set(LDGOLD_LINKER_FLAGS " -Wl,-O3 ${LDGOLD_LINKER_FLAGS}")       # e.g. tries to optimize duplicated strings across the binary
 		set(LDGOLD_LINKER_FLAGS " -Wl,--icf=all ${LDGOLD_LINKER_FLAGS}") # Identical Code Folding
 	endif (hasGold EQUAL 0)

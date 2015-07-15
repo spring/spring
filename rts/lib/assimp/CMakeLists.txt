@@ -53,6 +53,10 @@ add_definitions(
 -DASSIMP_BUILD_NO_XGL_IMPORTER
 )
 
+if(NOT DEBUG_BUILD)
+	add_definitions(-DASSIMP_BUILD_NO_VALIDATEDS_PROCESS)
+endif()
+
 # Assimp code
 ADD_SUBDIRECTORY(code)
 

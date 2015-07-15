@@ -97,10 +97,15 @@ CProjectileHandler::CProjectileHandler()
 		freeUnsyncedIDs.push_back(i);
 	}
 	std::random_shuffle(freeUnsyncedIDs.begin(), freeUnsyncedIDs.end(), gu->rng);
+
+	// register ConfigNotify()
+	configHandler->NotifyOnChange(this);
 }
 
 CProjectileHandler::~CProjectileHandler()
 {
+	configHandler->RemoveObserver(this);
+
 	for (CProjectile* p: syncedProjectiles) {
 		delete p;
 	}
@@ -159,6 +164,16 @@ void CProjectileHandler::Serialize(creg::ISerializer* s)
 }
 
 
+void CProjectileHandler::ConfigNotify(const std::string& key, const std::string& value)
+{
+	if (key != "MaxParticles" && key != "MaxNanoParticles")
+		return;
+
+	maxParticles     = configHandler->GetInt("MaxParticles");
+	maxNanoParticles = configHandler->GetInt("MaxNanoParticles");
+}
+
+
 static void MAPPOS_SANITY_CHECK(const float3 v)
 {
 	v.AssertNaNs();
@@ -173,23 +188,37 @@ static void MAPPOS_SANITY_CHECK(const float3 v)
 
 void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool synced)
 {
-	ProjectileContainer::iterator pci = pc.begin();
-	while (pci != pc.end()) {
-		CProjectile* p = *pci;
+	// WARNING: we can't use iters here cause ProjectileCreated and ProjectileDestroyed events
+	// may add new projectiles to the container!
+	for (size_t i=0; i<pc.size();) {
+		CProjectile* p = pc[i];
 		assert(p);
 		assert(p->synced == synced);
 		assert(p->synced == !!(p->GetClass()->binder->flags & creg::CF_Synced));
-
+		if (p->callEvent) {
+		#if UNSYNCED_PROJ_NOEVENT
+			if (synced) {
+				eventHandler.ProjectileCreated(p, p->GetAllyteamID());
+			} else {
+				eventHandler.UnsyncedProjectileCreated(p);
+			}
+		#else
+			eventHandler.ProjectileCreated(p, p->GetAllyteamID());
+		#endif
+			p->callEvent = false;
+		}
 		if (!p->deleteMe) {
-			++pci;
+			++i;
 			continue;
 		}
-		*pci = pc.back();
+		pc[i] = pc.back();
 		pc.pop_back();
 		if (synced) { //FIXME move outside of loop!
 			eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
 			syncedProjectileIDs[p->id] = nullptr;
 			freeSyncedIDs.push_back(p->id);
+			ASSERT_SYNCED(p->pos);
+			ASSERT_SYNCED(p->id);
 		} else {
 		#if UNSYNCED_PROJ_NOEVENT
 			eventHandler.UnsyncedProjectileDestroyed(p);
@@ -205,8 +234,6 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 	SCOPED_TIMER("ProjectileHandler::Update::PP");
 
 	//WARNING: we can't use iters here cause p->Update() may add new projectiles to the container!
-	// Also we only update the already existing projectiles, any new added ones don't get updated.
-	//for (size_t i=0,s=pc.size(); i<s; ++i) {
 	for (size_t i=0; i<pc.size(); ++i) {
 		CProjectile* p = pc[i];
 		assert(p);
@@ -273,10 +300,10 @@ void CProjectileHandler::Update()
 	for (const CProjectile* p: syncedProjectiles) {
 		lastCurrentParticles += p->GetProjectilesCount();
 	}
-	lastSyncedProjectilesCount = syncedProjectiles.size();
 	for (const CProjectile* p: unsyncedProjectiles) {
 		lastCurrentParticles += p->GetProjectilesCount();
 	}
+	lastSyncedProjectilesCount = syncedProjectiles.size();
 	lastUnsyncedProjectilesCount = unsyncedProjectiles.size();
 }
 
@@ -286,7 +313,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 {
 	// already initialized?
 	assert(p->id < 0);
-
+	assert(p->callEvent);
 	std::deque<int>* freeIDs = NULL;
 	ProjectileMap* proIDs = NULL;
 
@@ -298,7 +325,6 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 	} else {
 		unsyncedProjectiles.push_back(p);
 #if UNSYNCED_PROJ_NOEVENT
-		eventHandler.UnsyncedProjectileCreated(p);
 		return;
 #endif
 		freeIDs = &freeUnsyncedIDs;
@@ -334,8 +360,6 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 		tracefile << ", type: " << p->GetProjectileType() << " pos: <" << p->pos.x << ", " << p->pos.y << ", " << p->pos.z << ">\n";
 #endif
 	}
-
-	eventHandler.ProjectileCreated(p, p->GetAllyteamID());
 }
 
 

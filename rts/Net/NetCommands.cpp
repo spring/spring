@@ -296,11 +296,9 @@ void CGame::ClientReadNet()
 				CPlayer* player = playerHandler->Player(playerNum);
 				player->currentStats = *reinterpret_cast<const PlayerStatistics*>(&inbuf[2]);
 
-				if (gameOver) {
-					CDemoRecorder* record = clientNet->GetDemoRecorder();
-					if (record != NULL) {
-						record->SetPlayerStats(playerNum, player->currentStats);
-					}
+				CDemoRecorder* record = clientNet->GetDemoRecorder();
+				if (record != NULL) {
+					record->SetPlayerStats(playerNum, player->currentStats);
 				}
 				AddTraffic(playerNum, packetCode, dataLength);
 				break;
@@ -543,10 +541,6 @@ void CGame::ClientReadNet()
 					unsigned  int  checkSum; pckt >> checkSum;
 
 					const unsigned int ourCheckSum = mySyncChecksums[frameNum];
-
-					const char* fmtStr =
-						"[DESYNC_WARNING] checksum %x from player %d (%s)"
-						" does not match our checksum %x for frame-number %d";
 					const CPlayer* player = playerHandler->Player(playerNum);
 
 					// check if our checksum for this frame matches what
@@ -555,6 +549,9 @@ void CGame::ClientReadNet()
 					if (playerNum == gu->myPlayerNum) { break; }
 					if (checkSum == ourCheckSum) { break; }
 
+					const char* fmtStr =
+						"[DESYNC_WARNING] checksum %x from player %d (%s)"
+						" does not match our checksum %x for frame-number %d";
 					LOG_L(L_ERROR, fmtStr, checkSum, playerNum, player->name.c_str(), ourCheckSum, frameNum);
 				}
 #endif
@@ -1274,8 +1271,8 @@ void CGame::ClientReadNet()
 					player.spectator = spectator;
 					player.team = team;
 					player.playerNum = playerNum;
+
 					// add the new player
-					// TODO NETMSG_CREATE_NEWPLAYER perhaps add a lua hook; hook should be able to reassign the player to a team and/or create a new team/allyteam
 					playerHandler->AddPlayer(player);
 					eventHandler.PlayerAdded(player.playerNum);
 
@@ -1285,6 +1282,10 @@ void CGame::ClientReadNet()
 						eventHandler.TeamChanged(player.team);
 					}
 
+					CDemoRecorder* record = clientNet->GetDemoRecorder();
+					if (record != NULL) {
+						record->AddNewPlayer(player.name, playerNum);
+					}
 					AddTraffic(-1, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "[Game::%s] invalid NETMSG_CREATE_NEWPLAYER: %s", __FUNCTION__, ex.what());

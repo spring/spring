@@ -1663,6 +1663,7 @@ int CUnitScript::ModelToScript(int lmodelPieceNum) const {
 
 void CUnitScript::ShowUnitScriptError(const std::string& error)
 {
-	ShowScriptError(error + std::string(" ") + IntToString(unit->id) + std::string(" of type ") + unit->unitDef->name);
+	ShowScriptError(unit ? error + std::string(" ") + IntToString(unit->id) + std::string(" of type ") + unit->unitDef->name
+						 : error + std::string(" -> Unit doesn't have a script!"));
 }
 

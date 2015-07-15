@@ -143,7 +143,10 @@ void CObject::AddDeathDependence(CObject* obj, DependenceType dep)
 
 void CObject::DeleteDeathDependence(CObject* obj, DependenceType dep)
 {
-	assert(!detached && !obj->detached);
+	assert(!detached);
+	if (obj->detached)
+		return;
+	
 	obj->listeners[dep]->erase(this);
 
 	listening[dep]->erase(obj);

@@ -1,7 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
-#include <list>
 #include <cstdlib>
 #include <cstring>
 
@@ -14,7 +12,6 @@
 #include "System/Log/ILog.h"
 #include "System/TimeProfiler.h"
 #include "System/creg/STL_Deque.h"
-#include "System/creg/STL_List.h"
 
 using std::min;
 using std::max;
@@ -40,9 +37,9 @@ CR_REG_METADATA(LosInstance,(
 void CLosHandler::PostLoad()
 {
 	for (int a = 0; a < LOSHANDLER_MAGIC_PRIME; ++a) {
-		for (std::list<LosInstance*>::iterator li = instanceHash[a].begin(); li != instanceHash[a].end(); ++li) {
-			if ((*li)->refCount) {
-				LosAdd(*li);
+		for (LosInstance* li: instanceHash[a]) {
+			if (li->refCount) {
+				LosAdd(li);
 			}
 		}
 	}
@@ -110,10 +107,8 @@ CLosHandler::CLosHandler() :
 CLosHandler::~CLosHandler()
 {
 	for (int a = 0; a < LOSHANDLER_MAGIC_PRIME; ++a) {
-		for (std::list<LosInstance*>::iterator li = instanceHash[a].begin(); li != instanceHash[a].end(); ++li) {
-			LosInstance* i = *li;
-			i->_DestructInstance(i);
-			mempool.Free(i, sizeof(LosInstance));
+		for (LosInstance* li: instanceHash[a]) {
+			delete li;
 		}
 	}
 
@@ -136,14 +131,14 @@ void CLosHandler::MoveUnit(CUnit* unit, bool redoCurrent)
 
 	unit->lastLosUpdate = gs->frameNum;
 
-	const float3& losPos = unit->pos;
+	const float3& losPos = unit->midPos;
 	const int allyteam = unit->allyteam;
 
-	const int baseX = max(0, min(losSizeX - 1, int(losPos.x * invLosDiv)));
-	const int baseY = max(0, min(losSizeY - 1, int(losPos.z * invLosDiv)));
+	const int baseX = Round(losPos.x * invLosDiv);
+	const int baseY = Round(losPos.z * invLosDiv);
+	const int baseAirX = Round(losPos.x * invAirDiv);
+	const int baseAirY = Round(losPos.z * invAirDiv);
 	const int baseSquare = baseY * losSizeX + baseX;
-	const int baseAirX = max(0, min(airSizeX - 1, int(losPos.x * invAirDiv)));
-	const int baseAirY = max(0, min(airSizeY - 1, int(losPos.z * invAirDiv)));
 
 	LosInstance* instance = NULL;
 	if (redoCurrent) {
@@ -166,24 +161,23 @@ void CLosHandler::MoveUnit(CUnit* unit, bool redoCurrent)
 		FreeInstance(unit->los);
 		const int hash = GetHashNum(unit);
 
-		std::list<LosInstance*>::iterator lii;
-		for (lii = instanceHash[hash].begin(); lii != instanceHash[hash].end(); ++lii) {
-			if ((*lii)->baseSquare == baseSquare         &&
-			    (*lii)->losSize    == unit->losRadius    &&
-			    (*lii)->airLosSize == unit->airLosRadius &&
-			    (*lii)->baseHeight == unit->losHeight    &&
-			    (*lii)->allyteam   == allyteam) {
-				AllocInstance(*lii);
-				unit->los = *lii;
+		for (LosInstance* li: instanceHash[hash]) {
+			if (li->baseSquare == baseSquare         &&
+			    li->losSize    == unit->losRadius    &&
+			    li->airLosSize == unit->airLosRadius &&
+			    li->baseHeight == unit->losHeight    &&
+			    li->allyteam   == allyteam) {
+				AllocInstance(li);
+				unit->los = li;
 				return;
 			}
 		}
 
-		instance = new(mempool.Alloc(sizeof(LosInstance))) LosInstance(
+		instance = new LosInstance(
 			unit->losRadius,
 			unit->airLosRadius,
 			allyteam,
-			int2(baseX,baseY),
+			int2(baseX, baseY),
 			baseSquare,
 			int2(baseAirX, baseAirY),
 			hash, unit->losHeight
@@ -211,50 +205,46 @@ void CLosHandler::LosAdd(LosInstance* instance)
 
 void CLosHandler::FreeInstance(LosInstance* instance)
 {
-	if (instance == 0)
+	if (instance == nullptr)
 		return;
 
 	instance->refCount--;
 
-	if (instance->refCount == 0) {
-		CleanupInstance(instance);
+	if (instance->refCount > 0) {
+		return;
+	}
 
-		if (!instance->toBeDeleted) {
-			instance->toBeDeleted = true;
-			toBeDeleted.push_back(instance);
-		}
+	CleanupInstance(instance);
 
-		if (instance->hashNum >= LOSHANDLER_MAGIC_PRIME || instance->hashNum < 0) {
+	if (!instance->toBeDeleted) {
+		instance->toBeDeleted = true;
+		toBeDeleted.push_back(instance);
+	}
+
+	if (instance->hashNum >= LOSHANDLER_MAGIC_PRIME || instance->hashNum < 0) {
+		LOG_L(L_WARNING,
+				"[LosHandler::FreeInstance][1] bad LOS-instance hash (%d)",
+				instance->hashNum);
+	}
+
+	if (toBeDeleted.size() > 500) {
+		LosInstance* i = toBeDeleted.front();
+		toBeDeleted.pop_front();
+
+		if (i->hashNum >= LOSHANDLER_MAGIC_PRIME || i->hashNum < 0) {
 			LOG_L(L_WARNING,
-					"[LosHandler::FreeInstance][1] bad LOS-instance hash (%d)",
-					instance->hashNum);
+					"[LosHandler::FreeInstance][2] bad LOS-instance hash (%d)",
+					i->hashNum);
+			return;
 		}
 
-		if (toBeDeleted.size() > 500) {
-			LosInstance* i = toBeDeleted.front();
-			toBeDeleted.pop_front();
+		i->toBeDeleted = false;
 
-			if (i->hashNum >= LOSHANDLER_MAGIC_PRIME || i->hashNum < 0) {
-				LOG_L(L_WARNING,
-						"[LosHandler::FreeInstance][2] bad LOS-instance hash (%d)",
-						i->hashNum);
-				return;
-			}
-
-			i->toBeDeleted = false;
-
-			if (i->refCount == 0) {
-				std::list<LosInstance*>::iterator lii;
-
-				for (lii = instanceHash[i->hashNum].begin(); lii != instanceHash[i->hashNum].end(); ++lii) {
-					if ((*lii) == i) {
-						instanceHash[i->hashNum].erase(lii);
-						i->_DestructInstance(i);
-						mempool.Free(i, sizeof(LosInstance));
-						break;
-					}
-				}
-			}
+		if (i->refCount == 0) {
+			auto& cont = instanceHash[i->hashNum];
+			auto it = std::find(cont.begin(), cont.end(), i);
+			cont.erase(it);
+			delete i;
 		}
 	}
 }
@@ -302,4 +292,40 @@ void CLosHandler::DelayedFreeInstance(LosInstance* instance)
 	di.timeoutTime = (gs->frameNum + (GAME_SPEED + (GAME_SPEED >> 1)));
 
 	delayQue.push_back(di);
+}
+
+
+bool CLosHandler::InLos(const CUnit* unit, int allyTeam) const
+{
+	// NOTE: units are treated differently than world objects in two ways:
+	//   1. they can be cloaked (has to be checked BEFORE all other cases)
+	//   2. when underwater, they are only considered to be in LOS if they
+	//      are also in radar ("sonar") coverage if requireSonarUnderWater
+	//      is enabled --> underwater units can NOT BE SEEN AT ALL without
+	//      active radar!
+	#ifdef LOSHANDLER_ALWAYSVISIBLE_OVERRIDES_CLOAKED
+	if (unit->alwaysVisible)
+		return true;
+	if (unit->isCloaked)
+		return false;
+	#else
+	if (unit->isCloaked)
+		return false;
+	if (unit->alwaysVisible)
+		return true;
+	#endif
+
+	// isCloaked always overrides globalLOS
+	if (gs->globalLOS[allyTeam])
+		return true;
+	if (unit->useAirLos)
+		return (InAirLos(unit->pos, allyTeam) || InAirLos(unit->pos + unit->speed, allyTeam));
+
+	if (requireSonarUnderWater) {
+		if (unit->IsUnderWater() && !radarHandler->InRadar(unit, allyTeam)) {
+			return false;
+		}
+	}
+
+	return (InLos(unit->pos, allyTeam) || InLos(unit->pos + unit->speed, allyTeam));
 }
