@@ -21,9 +21,9 @@ public:
 	ISound();
 	virtual ~ISound() {};
 
-	static void Initialize();
+	static void Initialize(bool forceNullSound = false);
 	static void Shutdown();
-	static bool IsInitialized();
+	static bool IsInitialized() { return (singleton != NULL); }
 	static inline ISound* GetInstance() {
 		return singleton;
 	}
@@ -49,13 +49,15 @@ public:
 	virtual bool IsMuted() const = 0;
 
 	///change current output device
-	static bool ChangeOutput();
+	static bool ChangeOutput(bool forceNullSound = false);
 
 	virtual void Iconified(bool state) = 0;
 
 	virtual void PrintDebugInfo() = 0;
 
+	virtual bool SoundThreadQuit() const = 0;
 	virtual bool CanLoadSoundDefs() const = 0;
+
 	bool LoadSoundDefs(const std::string& fileName);
 	
 	virtual const float3& GetListenerPos() const = 0;

@@ -54,7 +54,9 @@ public:
 
 	virtual void PrintDebugInfo();
 
+	bool SoundThreadQuit() const { return soundThreadQuit; }
 	bool CanLoadSoundDefs() const { return canLoadDefs; }
+
 	bool LoadSoundDefsImpl(const std::string& fileName);
 	const float3& GetListenerPos() const { return myPos; }
 
