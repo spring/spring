@@ -12,7 +12,6 @@
 #include "Sim/Misc/RadarHandler.h"
 #include "System/type2.h"
 
-#define LOSHANDLER_ALWAYSVISIBLE_OVERRIDES_CLOAKED
 
 /**
  * CLosHandler specific data attached to each unit.

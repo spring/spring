@@ -303,17 +303,17 @@ bool CLosHandler::InLos(const CUnit* unit, int allyTeam) const
 	//      are also in radar ("sonar") coverage if requireSonarUnderWater
 	//      is enabled --> underwater units can NOT BE SEEN AT ALL without
 	//      active radar!
-	#ifdef LOSHANDLER_ALWAYSVISIBLE_OVERRIDES_CLOAKED
-	if (unit->alwaysVisible)
-		return true;
-	if (unit->isCloaked)
-		return false;
-	#else
-	if (unit->isCloaked)
-		return false;
-	if (unit->alwaysVisible)
-		return true;
-	#endif
+	if (modInfo.alwaysVisibleOverridesCloaked) {
+		if (unit->alwaysVisible)
+			return true;
+		if (unit->isCloaked)
+			return false;
+	} else {
+		if (unit->isCloaked)
+			return false;
+		if (unit->alwaysVisible)
+			return true;
+	}
 
 	// isCloaked always overrides globalLOS
 	if (gs->globalLOS[allyTeam])

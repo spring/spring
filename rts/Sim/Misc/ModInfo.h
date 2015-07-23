@@ -131,6 +131,8 @@ public:
 	float airLosMul;
 	/// when underwater, units are not in LOS unless also in sonar
 	bool requireSonarUnderWater;
+	///
+	bool alwaysVisibleOverridesCloaked;
 
 	enum {
 		FEATURELOS_NONE = 0, FEATURELOS_GAIAONLY, FEATURELOS_GAIAALLIED, FEATURELOS_ALL,

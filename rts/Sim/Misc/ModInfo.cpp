@@ -234,6 +234,7 @@ void CModInfo::Init(const char* modArchive)
 		const LuaTable& los = sensors.SubTable("los");
 
 		requireSonarUnderWater = sensors.GetBool("requireSonarUnderWater", true);
+		alwaysVisibleOverridesCloaked = sensors.GetBool("alwaysVisibleOverridesCloaked", false);
 
 		// losMipLevel is used as index to readMap->mipHeightmaps,
 		// so the max value is CReadMap::numHeightMipMaps - 1
