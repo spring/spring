@@ -6,7 +6,6 @@
 #include "System/float3.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
-#include "System/ThreadPool.h"
 #ifdef USE_UNSYNCED_HEIGHTMAP
 	#include "Game/GlobalUnsynced.h" // for myAllyTeam
 #endif
@@ -161,7 +160,6 @@ public:
 
 private:
 	static CLosTables instance;
-	static const size_t MAX_LOS_SIZE = 300;
 	std::vector<LosTable> lostables;
 
 private:
@@ -178,20 +176,15 @@ CLosTables CLosTables::instance;
 
 const LosTable& CLosTables::GetForLosSize(size_t losSize)
 {
-	assert(losSize < MAX_LOS_SIZE);
-	losSize = std::min<size_t>(losSize, MAX_LOS_SIZE);
-	size_t s = instance.lostables.size();
-
-	if (losSize + 1 > s) {
-		//SCOPED_TIMER("LosTables");
+	if (instance.lostables.size() <= losSize) {
 		instance.lostables.resize(losSize+1);
-
-		for_mt(s, losSize+1, [&](const int i) {
-			instance.lostables[i] = std::move(GetLosRays(i));
-		});
 	}
 
-	return instance.lostables[losSize];
+	LosTable& tl = instance.lostables[losSize];
+	if (tl.empty() && losSize > 0)
+		tl = std::move(GetLosRays(losSize));
+
+	return tl;
 }
 
 
