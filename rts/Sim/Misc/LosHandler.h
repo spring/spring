@@ -164,7 +164,6 @@ public:
 
 private:
 	void LosAdd(LosInstance* instance);
-	int GetHashNum(CUnit* unit);
 	void AllocInstance(LosInstance* instance);
 	void CleanupInstance(LosInstance* instance);
 
