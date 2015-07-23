@@ -186,7 +186,7 @@ local callInLists = {
   'TweakIsAbove',
   'TweakGetTooltip',
   'RecvFromSynced',
-
+  'TextInput',
 -- these use mouseOwner instead of lists
 --  'MouseMove',
 --  'MouseRelease',
@@ -1358,6 +1358,18 @@ function widgetHandler:KeyRelease(key, mods, label, unicode)
   return false
 end
 
+function widgetHandler:TextInput(utf8, ...)
+  if (self.tweakMode) then
+    return true
+  end
+
+  for _,w in ipairs(self.TextInputList) do
+    if (w:TextInput(utf8, ...)) then
+      return true
+    end
+  end
+  return false
+end
 
 --------------------------------------------------------------------------------
 --

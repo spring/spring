@@ -1731,6 +1731,20 @@ function gadgetHandler:KeyRelease(key, mods, label, unicode)
 end
 
 
+function gadgetHandler:TextInput(utf8, ...)
+  if (self.tweakMode) then
+    return true
+  end
+
+  for _,g in ipairs(self.TextInputList) do
+    if (g:TextInput(utf8, ...)) then
+      return true
+    end
+  end
+  return false
+end
+
+
 function gadgetHandler:MousePress(x, y, button)
   local mo = self.mouseOwner
   if (mo) then

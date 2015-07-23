@@ -150,6 +150,7 @@ CALLIN_LIST = {
 	-- moved from LuaUI
 	"KeyPress",
 	"KeyRelease",
+	"TextInput",
 	"MousePress",
 	"MouseRelease",
 	"MouseMove",
