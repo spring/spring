@@ -181,15 +181,24 @@ void CLosHandler::MoveUnit(CUnit* unit, bool redoCurrent)
 }
 
 
-void CLosHandler::LosAdd(LosInstance* instance)
+void CLosHandler::LosAdd(LosInstance* li)
 {
-	assert(instance);
-	assert(teamHandler->IsValidAllyTeam(instance->allyteam));
+	assert(li);
+	assert(teamHandler->IsValidAllyTeam(li->allyteam));
 
-	losAlgo.LosAdd(instance->basePos, instance->losSize, instance->baseHeight, instance->losSquares);
+	if (li->losRadius > 0) {
+		if (li->losSquares.empty())
+			losAlgo.LosAdd(li->basePos, li->losRadius, li->baseHeight, li->losSquares);
+		losMaps[li->allyteam].AddMapSquares(li->losSquares, li->allyteam, 1);
+	}
+	if (li->airLosRadius > 0) { airLosMaps[li->allyteam].AddMapArea(li->baseAirPos, li->allyteam, li->airLosRadius, 1); }
+}
 
-	if (instance->losSize > 0) { losMaps[instance->allyteam].AddMapSquares(instance->losSquares, instance->allyteam, 1); }
-	if (instance->airLosSize > 0) { airLosMaps[instance->allyteam].AddMapArea(instance->baseAirPos, instance->allyteam, instance->airLosSize, 1); }
+
+void CLosHandler::LosRemove(LosInstance* li)
+{
+	if (li->losRadius > 0) { losMaps[li->allyteam].AddMapSquares(li->losSquares, li->allyteam, -1); }
+	if (li->airLosRadius > 0) { airLosMaps[li->allyteam].AddMapArea(li->baseAirPos, li->allyteam, li->airLosRadius, -1); }
 }
 
 
@@ -204,7 +213,7 @@ void CLosHandler::FreeInstance(LosInstance* instance)
 		return;
 	}
 
-	CleanupInstance(instance);
+	LosRemove(instance);
 
 	if (!instance->toBeDeleted) {
 		instance->toBeDeleted = true;
@@ -256,13 +265,6 @@ void CLosHandler::AllocInstance(LosInstance* instance)
 		LosAdd(instance);
 	}
 	instance->refCount++;
-}
-
-
-void CLosHandler::CleanupInstance(LosInstance* instance)
-{
-	if (instance->losSize > 0) { losMaps[instance->allyteam].AddMapSquares(instance->losSquares, instance->allyteam, -1); }
-	if (instance->airLosSize > 0) { airLosMaps[instance->allyteam].AddMapArea(instance->baseAirPos, instance->allyteam, instance->airLosSize, -1); }
 }
 
 

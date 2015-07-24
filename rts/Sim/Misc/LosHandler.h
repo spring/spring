@@ -104,7 +104,6 @@ class CLosHandler : public boost::noncopyable
 
 public:
 	void MoveUnit(CUnit* unit, bool redoCurrent);
-	void FreeInstance(LosInstance* instance);
 public:
 	int2 GetLosSquare(const float3 pos) const { return int2( Round(pos.x * invLosDiv), Round(pos.z * invLosDiv) ); }
 	int2 GetAirSquare(const float3 pos) const { return int2( Round(pos.x * invAirDiv), Round(pos.z * invAirDiv) ); }
@@ -157,15 +156,17 @@ private:
 	static const unsigned int LOSHANDLER_MAGIC_PRIME = 2309;
 
 	void PostLoad();
+
 	void LosAdd(LosInstance* instance);
+	void LosRemove(LosInstance* instance);
 	int GetHashNum(CUnit* unit);
 	void AllocInstance(LosInstance* instance);
-	void CleanupInstance(LosInstance* instance);
+	void FreeInstance(LosInstance* instance);
+	void DelayedFreeInstance(LosInstance* instance);
 
+private:
 	CLosAlgorithm losAlgo;
-
 	std::deque<LosInstance*> instanceHash[LOSHANDLER_MAGIC_PRIME];
-
 	std::deque<LosInstance*> toBeDeleted;
 
 	struct DelayedInstance {
@@ -178,7 +179,6 @@ private:
 
 public:
 	void Update();
-	void DelayedFreeInstance(LosInstance* instance);
 };
 
 extern CLosHandler* losHandler;
