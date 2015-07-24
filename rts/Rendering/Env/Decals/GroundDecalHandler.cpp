@@ -654,7 +654,7 @@ void CGroundDecalHandler::AddScars()
 		for (int y = y1; y <= y2; ++y) {
 			for (int x = x1; x <= x2; ++x) {
 				auto &quad = scarField[y * scarFieldX + x];
-				assert(std::find(quad.begin(), quad.end(), scar) == quad.end());
+				assert(std::find(quad.begin(), quad.end(), s) == quad.end());
 				quad.push_back(s);
 			}
 		}
