@@ -24,12 +24,26 @@ CR_REG_METADATA(LosInstance,(
 	CR_IGNORED(losSquares),
 	CR_MEMBER(losSize),
 	CR_MEMBER(airLosSize),
+	CR_MEMBER(refCount),
 	CR_MEMBER(allyteam),
 	CR_MEMBER(basePos),
 	CR_MEMBER(baseSquare),
 	CR_MEMBER(baseAirPos),
-	CR_MEMBER(baseHeight)
+	CR_MEMBER(hashNum),
+	CR_MEMBER(baseHeight),
+	CR_MEMBER(toBeDeleted)
 ))
+
+void CLosHandler::PostLoad()
+{
+	for (int a = 0; a < LOSHANDLER_MAGIC_PRIME; ++a) {
+		for (LosInstance* li: instanceHash[a]) {
+			if (li->refCount) {
+				LosAdd(li);
+			}
+		}
+	}
+}
 
 CR_REG_METADATA(CLosHandler,(
 	CR_IGNORED(losMipLevel),
@@ -47,7 +61,10 @@ CR_REG_METADATA(CLosHandler,(
 	CR_MEMBER(losAlgo),
 	CR_MEMBER(losMaps),
 	CR_MEMBER(airLosMaps),
-	CR_MEMBER(delayQue)
+	CR_MEMBER(instanceHash),
+	CR_MEMBER(toBeDeleted),
+	CR_MEMBER(delayQue),
+	CR_POSTLOAD(PostLoad)
 ))
 
 CR_REG_METADATA_SUB(CLosHandler,DelayedInstance, (
@@ -88,7 +105,14 @@ CLosHandler::CLosHandler() :
 
 
 CLosHandler::~CLosHandler()
-{ }
+{
+	for (int a = 0; a < LOSHANDLER_MAGIC_PRIME; ++a) {
+		for (LosInstance* li: instanceHash[a]) {
+			delete li;
+		}
+	}
+
+}
 
 
 void CLosHandler::MoveUnit(CUnit* unit, bool redoCurrent)
@@ -135,7 +159,19 @@ void CLosHandler::MoveUnit(CUnit* unit, bool redoCurrent)
 		}
 
 		FreeInstance(unit->los);
+		const int hash = GetHashNum(unit);
 
+		for (LosInstance* li: instanceHash[hash]) {
+			if (li->baseSquare == baseSquare         &&
+			    li->losSize    == unit->losRadius    &&
+			    li->airLosSize == unit->airLosRadius &&
+			    li->baseHeight == unit->losHeight    &&
+			    li->allyteam   == allyteam) {
+				AllocInstance(li);
+				unit->los = li;
+				return;
+			}
+		}
 
 		instance = new LosInstance(
 			unit->losRadius,
@@ -144,9 +180,10 @@ void CLosHandler::MoveUnit(CUnit* unit, bool redoCurrent)
 			int2(baseX, baseY),
 			baseSquare,
 			int2(baseAirX, baseAirY),
-			unit->losHeight
+			hash, unit->losHeight
 		);
 
+		instanceHash[hash].push_back(instance);
 		unit->los = instance;
 	}
 
@@ -171,9 +208,64 @@ void CLosHandler::FreeInstance(LosInstance* instance)
 	if (instance == nullptr)
 		return;
 
+	instance->refCount--;
+
+	if (instance->refCount > 0) {
+		return;
+	}
+
 	CleanupInstance(instance);
 
-	delete instance;
+	if (!instance->toBeDeleted) {
+		instance->toBeDeleted = true;
+		toBeDeleted.push_back(instance);
+	}
+
+	if (instance->hashNum >= LOSHANDLER_MAGIC_PRIME || instance->hashNum < 0) {
+		LOG_L(L_WARNING,
+				"[LosHandler::FreeInstance][1] bad LOS-instance hash (%d)",
+				instance->hashNum);
+	}
+
+	if (toBeDeleted.size() > 500) {
+		LosInstance* i = toBeDeleted.front();
+		toBeDeleted.pop_front();
+
+		if (i->hashNum >= LOSHANDLER_MAGIC_PRIME || i->hashNum < 0) {
+			LOG_L(L_WARNING,
+					"[LosHandler::FreeInstance][2] bad LOS-instance hash (%d)",
+					i->hashNum);
+			return;
+		}
+
+		i->toBeDeleted = false;
+
+		if (i->refCount == 0) {
+			auto& cont = instanceHash[i->hashNum];
+			auto it = std::find(cont.begin(), cont.end(), i);
+			cont.erase(it);
+			delete i;
+		}
+	}
+}
+
+
+int CLosHandler::GetHashNum(CUnit* unit)
+{
+	const unsigned int t =
+		(unit->mapSquare * unit->losRadius + unit->allyteam) ^
+		(*(unsigned int*) &unit->losHeight);
+	//! hash-value range is [0, LOSHANDLER_MAGIC_PRIME - 1]
+	return (t % LOSHANDLER_MAGIC_PRIME);
+}
+
+
+void CLosHandler::AllocInstance(LosInstance* instance)
+{
+	if (instance->refCount == 0) {
+		LosAdd(instance);
+	}
+	instance->refCount++;
 }
 
 

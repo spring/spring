@@ -40,31 +40,40 @@ private:
 	LosInstance()
 		: losSize(0)
 		, airLosSize(0)
+		, refCount(0)
 		, allyteam(-1)
 		, baseSquare(0)
+		, hashNum(-1)
 		, baseHeight(0.0f)
+		, toBeDeleted(false)
 	{}
 
 public:
 	LosInstance(int lossize, int airLosSize, int allyteam, int2 basePos,
-			int baseSquare, int2 baseAirPos, float baseHeight)
+			int baseSquare, int2 baseAirPos, int hashNum, float baseHeight)
 		: losSize(lossize)
 		, airLosSize(airLosSize)
+		, refCount(1)
 		, allyteam(allyteam)
 		, basePos(basePos)
 		, baseSquare(baseSquare)
 		, baseAirPos(baseAirPos)
+		, hashNum(hashNum)
 		, baseHeight(baseHeight)
+		, toBeDeleted(false)
 	{}
 
 	std::vector<int> losSquares;
 	int losSize;
 	int airLosSize;
+	int refCount;
 	int allyteam;
 	int2 basePos;
 	int baseSquare;
 	int2 baseAirPos;
+	int hashNum;
 	float baseHeight;
+	bool toBeDeleted;
 };
 
 /**
@@ -163,12 +172,19 @@ public:
 	const bool requireSonarUnderWater;
 
 private:
+	static const unsigned int LOSHANDLER_MAGIC_PRIME = 2309;
+
+	void PostLoad();
 	void LosAdd(LosInstance* instance);
 	int GetHashNum(CUnit* unit);
 	void AllocInstance(LosInstance* instance);
 	void CleanupInstance(LosInstance* instance);
 
 	CLosAlgorithm losAlgo;
+
+	std::deque<LosInstance*> instanceHash[LOSHANDLER_MAGIC_PRIME];
+
+	std::deque<LosInstance*> toBeDeleted;
 
 	struct DelayedInstance {
 		CR_DECLARE_STRUCT(DelayedInstance)
