@@ -52,8 +52,7 @@ CGroundDecalHandler::CGroundDecalHandler()
 
 	groundScarAlphaFade = (configHandler->GetInt("GroundScarAlphaFade") != 0);
 
-	unsigned char* buf=new unsigned char[512*512*4];
-	memset(buf,0,512*512*4);
+	unsigned char buf[512*512*4] = {0};
 
 	LuaParser resourcesParser("gamedata/resources.lua",
 	                          SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
@@ -76,12 +75,10 @@ CGroundDecalHandler::CGroundDecalHandler()
 
 	scarFieldX=mapDims.mapx/32;
 	scarFieldY=mapDims.mapy/32;
-	scarField=new std::set<Scar*>[scarFieldX*scarFieldY];
+	scarField=new std::vector<Scar*>[scarFieldX*scarFieldY];
 
 	lastTest=0;
 	maxOverlap=decalLevel+1;
-
-	delete[] buf;
 
 	LoadDecalShaders();
 }
@@ -119,11 +116,11 @@ CGroundDecalHandler::~CGroundDecalHandler()
 		glDeleteTextures(1, &dctype->texture);
 		delete dctype;
 	}
-	for (std::list<Scar*>::iterator si = scars.begin(); si != scars.end(); ++si) {
-		delete *si;
+	for (auto &scar: scars) {
+		delete scar;
 	}
-	for (std::vector<Scar*>::iterator si = scarsToBeAdded.begin(); si != scarsToBeAdded.end(); ++si) {
-		delete *si;
+	for (auto &scar: scarsToBeAdded) {
+		delete scar;
 	}
 	if (scarField != NULL) {
 		delete[] scarField;
@@ -646,17 +643,7 @@ void CGroundDecalHandler::CleanTracks()
 
 void CGroundDecalHandler::AddScars()
 {
-	scarsToBeChecked.clear();
-
-	{
-		for (std::vector<Scar*>::iterator si = scarsToBeAdded.begin(); si != scarsToBeAdded.end(); ++si)
-			scarsToBeChecked.push_back(*si);
-
-		scarsToBeAdded.clear();
-	}
-
-	for (std::vector<Scar*>::iterator si = scarsToBeChecked.begin(); si != scarsToBeChecked.end(); ++si) {
-		Scar* s = *si;
+	for (Scar* s: scarsToBeAdded) {
 		TestOverlaps(s);
 
 		int x1 = s->x1 / 16;
@@ -666,28 +653,32 @@ void CGroundDecalHandler::AddScars()
 
 		for (int y = y1; y <= y2; ++y) {
 			for (int x = x1; x <= x2; ++x) {
-				std::set<Scar*>* quad = &scarField[y * scarFieldX + x];
-				quad->insert(s);
+				auto &quad = scarField[y * scarFieldX + x];
+				assert(std::find(quad.begin(), quad.end(), scar) == quad.end());
+				quad.push_back(s);
 			}
 		}
-
+		assert(std::find(scars.begin(), scars.end(), scar) == scars.end());
 		scars.push_back(s);
 	}
+	
+	scarsToBeAdded.clear();
 }
 
 void CGroundDecalHandler::DrawScars() {
 	// create and draw the 16x16 quads for each ground scar
-	for (std::list<Scar*>::iterator si = scars.begin(); si != scars.end(); ) {
-		Scar* scar = *si;
+	for (int i = 0; i < scars.size();) {
+		Scar* scar = scars[i];
 
 		if (scar->lifeTime < gs->frameNum) {
-			RemoveScar(*si, false);
-			si = scars.erase(si);
+			RemoveScar(scar, false);
+			scars[i] = scars.back();
+			scars.pop_back();
 			continue;
 		}
 
 		DrawGroundScar(scar, groundScarAlphaFade);
-		++si;
+		++i;
 	}
 }
 
@@ -1093,27 +1084,27 @@ void CGroundDecalHandler::TestOverlaps(Scar* scar)
 
 	for(int y=y1;y<=y2;++y){
 		for(int x=x1;x<=x2;++x){
-			std::set<Scar*>* quad=&scarField[y*scarFieldX+x];
-			bool redoScan=false;
-			do {
-				redoScan=false;
-				for(std::set<Scar*>::iterator si=quad->begin();si!=quad->end();++si){
-					if(lastTest!=(*si)->lastTest && scar->lifeTime>=(*si)->lifeTime){
-						Scar* tested=*si;
-						tested->lastTest=lastTest;
-						int overlap=OverlapSize(scar,tested);
-						if(overlap>0 && tested->basesize>0){
-							float part=overlap/tested->basesize;
-							tested->overdrawn+=part;
-							if(tested->overdrawn>maxOverlap){
-								RemoveScar(tested,true);
-								redoScan=true;
-								break;
-							}
+			auto &quad = scarField[y*scarFieldX+x];
+			for(int i = 0;i < quad.size();){
+				Scar* tested = quad[i];
+				if(lastTest != tested->lastTest && scar->lifeTime >= tested->lifeTime) {
+					tested->lastTest = lastTest;
+					int overlap = OverlapSize(scar, tested);
+					if(overlap > 0 && tested->basesize > 0){
+						float part = overlap / tested->basesize;
+						tested->overdrawn += part;
+						if(tested->overdrawn > maxOverlap){
+							RemoveScar(tested, true);
+						} else {
+							++i;
 						}
+					} else {
+						++i;
 					}
+				} else {
+					++i;
 				}
-			} while(redoScan);
+			}
 		}
 	}
 }
@@ -1128,13 +1119,20 @@ void CGroundDecalHandler::RemoveScar(Scar* scar, bool removeFromScars)
 
 	for (int y = y1;y <= y2; ++y) {
 		for (int x = x1; x <= x2; ++x) {
-			std::set<Scar*>* quad = &scarField[y * scarFieldX + x];
-			quad->erase(scar);
+			auto &quad = scarField[y * scarFieldX + x];
+			auto it = std::find(quad.begin(), quad.end(), scar);
+			assert(it != quad.end());
+			*it = quad.back();
+			quad.pop_back();
 		}
 	}
 
-	if (removeFromScars)
-		scars.remove(scar);
+	if (removeFromScars) {
+		auto it = std::find(scars.begin(), scars.end(), scar);
+		assert(it != scars.end());
+		*it = scars.back();
+		scars.pop_back();
+	}
 
 	delete scar;
 }

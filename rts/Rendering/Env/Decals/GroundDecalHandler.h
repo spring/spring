@@ -255,9 +255,8 @@ private:
 	std::vector<Shader::IProgramObject*> decalShaders;
 	std::vector<SolidObjectGroundDecal*> decalsToDraw;
 
-	std::list<Scar*> scars;
+	std::vector<Scar*> scars;
 	std::vector<Scar*> scarsToBeAdded;
-	std::vector<Scar*> scarsToBeChecked;
 
 	std::vector<TrackToAdd> tracksToBeAdded;
 	std::vector<TrackToClean> tracksToBeCleaned;
@@ -266,7 +265,7 @@ private:
 	int lastTest;
 	float maxOverlap;
 
-	std::set<Scar*>* scarField;
+	std::vector<Scar*>* scarField;
 	int scarFieldX;
 	int scarFieldY;
 
