@@ -32,8 +32,8 @@ CR_REG_METADATA(LosInstance,(
 
 void CLosHandler::PostLoad()
 {
-	for (int a = 0; a < LOSHANDLER_MAGIC_PRIME; ++a) {
-		for (LosInstance* li: instanceHash[a]) {
+	for (auto& bucket: instanceHash) {
+		for (LosInstance* li: bucket) {
 			if (li->refCount) {
 				LosAdd(li);
 			}
@@ -98,10 +98,11 @@ CLosHandler::CLosHandler() :
 
 CLosHandler::~CLosHandler()
 {
-	for (int a = 0; a < LOSHANDLER_MAGIC_PRIME; ++a) {
-		for (LosInstance* li: instanceHash[a]) {
+	for (auto& bucket: instanceHash) {
+		for (LosInstance* li: bucket) {
 			delete li;
 		}
+		bucket.clear();
 	}
 
 }
