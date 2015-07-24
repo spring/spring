@@ -115,20 +115,24 @@ void IModelDrawer::UnitCloaked(const CUnit* unit) {
 	CUnit* u = const_cast<CUnit*>(unit);
 	LOG_L(L_DEBUG, "[%s] id=%d", __FUNCTION__, u->id);
 
+	#if (MODEL_DRAWER_DEBUG_RENDERING)
 	if (u->model) {
 		cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
 		opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 	}
+	#endif
 }
 
 void IModelDrawer::UnitDecloaked(const CUnit* unit) {
 	CUnit* u = const_cast<CUnit*>(unit);
 	LOG_L(L_DEBUG, "[%s] id=%d", __FUNCTION__, u->id);
 
+	#if (MODEL_DRAWER_DEBUG_RENDERING)
 	if (u->model) {
 		opaqueModelRenderers[MDL_TYPE(u)]->AddUnit(u);
 		cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 	}
+	#endif
 }
 
 
