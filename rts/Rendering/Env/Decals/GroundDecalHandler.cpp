@@ -658,7 +658,7 @@ void CGroundDecalHandler::AddScars()
 				quad.push_back(s);
 			}
 		}
-		assert(std::find(scars.begin(), scars.end(), scar) == scars.end());
+		assert(std::find(scars.begin(), scars.end(), s) == scars.end());
 		scars.push_back(s);
 	}
 	
