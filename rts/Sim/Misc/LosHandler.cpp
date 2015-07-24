@@ -116,40 +116,40 @@ void CLosHandler::MoveUnit(CUnit* unit, bool redoCurrent)
 	const int baseAirY = Round(losPos.z * invAirDiv);
 	const int baseSquare = baseY * losSizeX + baseX;
 
-	LosInstance* instance = unit->los;
+	LosInstance* instance = NULL;
 	if (redoCurrent) {
-		if (!instance) {
+		if (!unit->los) {
 			return;
 		}
+		instance = unit->los;
+		CleanupInstance(instance);
+		instance->losSquares.clear();
+		instance->basePos.x = baseX;
+		instance->basePos.y = baseY;
+		instance->baseSquare = baseSquare; //this could be a problem if several units are sharing the same instance
+		instance->baseAirPos.x = baseAirX;
+		instance->baseAirPos.y = baseAirY;
 	} else {
 		if (unit->los && (unit->los->baseSquare == baseSquare)) {
 			return;
 		}
-		if (!instance) {
-			instance = new LosInstance(
-				unit->losRadius,
-				unit->airLosRadius,
-				allyteam,
-				int2(baseX, baseY),
-				baseSquare,
-				int2(baseAirX, baseAirY),
-				unit->losHeight
-			);
-			unit->los = instance;
-		} else {
-			instance->allyteam = allyteam;
-			instance->losSize = unit->losRadius;
-			instance->airLosSize = unit->airLosRadius;
-		}
 
+		FreeInstance(unit->los);
+
+
+		instance = new LosInstance(
+			unit->losRadius,
+			unit->airLosRadius,
+			allyteam,
+			int2(baseX, baseY),
+			baseSquare,
+			int2(baseAirX, baseAirY),
+			unit->losHeight
+		);
+
+		unit->los = instance;
 	}
-	CleanupInstance(instance);
-	instance->losSquares.clear();
-	instance->basePos.x = baseX;
-	instance->basePos.y = baseY;
-	instance->baseSquare = baseSquare; //this could be a problem if several units are sharing the same instance
-	instance->baseAirPos.x = baseAirX;
-	instance->baseAirPos.y = baseAirY;
+
 	LosAdd(instance);
 }
 

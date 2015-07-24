@@ -481,6 +481,7 @@ void CLosAlgorithm::UnsafeLosAdd(int2 pos, int radius, float losHeight, std::vec
 		float maxAng2 = minMaxAng;
 		float maxAng3 = minMaxAng;
 		float maxAng4 = minMaxAng;
+		float r = 1;
 
 		for (const int2& square: line) {
 			const float invR = math::isqrt2(square.x*square.x + square.y*square.y);
@@ -490,6 +491,7 @@ void CLosAlgorithm::UnsafeLosAdd(int2 pos, int radius, float losHeight, std::vec
 			CastLos(&squares, &maxAng2, MAP_SQUARE(pos - square),                    invR, heightmap, losHeight);
 			CastLos(&squares, &maxAng3, MAP_SQUARE(pos + int2(square.y, -square.x)), invR, heightmap, losHeight);
 			CastLos(&squares, &maxAng4, MAP_SQUARE(pos + int2(-square.y, square.x)), invR, heightmap, losHeight);
+			r++;
 		}
 	}
 }
@@ -516,6 +518,7 @@ void CLosAlgorithm::SafeLosAdd(int2 pos, int radius, float losHeight, std::vecto
 		float maxAng2 = minMaxAng;
 		float maxAng3 = minMaxAng;
 		float maxAng4 = minMaxAng;
+		float r = 1;
 
 		for (const int2 square: line) {
 			const float invR = math::isqrt2(square.x*square.x + square.y*square.y);
@@ -532,6 +535,8 @@ void CLosAlgorithm::SafeLosAdd(int2 pos, int radius, float losHeight, std::vecto
 			if (safeRect.Inside(pos + int2(-square.y, square.x))) {
 				CastLos(&squares, &maxAng4, MAP_SQUARE(pos + int2(-square.y, square.x)), invR, heightmap, losHeight);
 			}
+
+			r++;
 		}
 	}
 }
