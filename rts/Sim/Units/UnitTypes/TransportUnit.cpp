@@ -302,7 +302,7 @@ bool CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	}
 
 	unit->UnBlock();
-	losHandler->FreeInstance(unit->los);
+	losHandler->RemoveUnit(unit);
 	radarHandler->RemoveUnit(unit);
 
 	// do not remove unit from QF, otherwise projectiles
@@ -313,8 +313,6 @@ bool CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	// ::Update
 	//
 	// quadField->RemoveUnit(unit);
-
-	unit->los = NULL;
 
 	if (dynamic_cast<CBuilding*>(unit) != NULL) {
 		unitLoader->RestoreGround(unit);

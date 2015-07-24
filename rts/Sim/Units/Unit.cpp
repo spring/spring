@@ -262,8 +262,7 @@ CUnit::~CUnit()
 	}
 
 	quadField->RemoveUnit(this);
-	losHandler->DelayedFreeInstance(los);
-	los = NULL;
+	losHandler->RemoveUnit(this, true);
 	radarHandler->RemoveUnit(this);
 
 	modelParser->DeleteLocalModel(localModel);
@@ -1425,8 +1424,7 @@ void CUnit::DoSeismicPing(float pingSize)
 
 void CUnit::ChangeLos(int losRad, int airRad)
 {
-	losHandler->FreeInstance(los);
-	los = NULL;
+	losHandler->RemoveUnit(this);
 	losRadius = losRad;
 	airLosRadius = airRad;
 	losHandler->MoveUnit(this, false);
@@ -1462,8 +1460,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 
 	quadField->RemoveUnit(this);
 	quads.clear();
-	losHandler->FreeInstance(los);
-	los = 0;
+	losHandler->RemoveUnit(this);
 	radarHandler->RemoveUnit(this);
 
 	if (unitDef->isAirBase) {

@@ -181,6 +181,17 @@ void CLosHandler::MoveUnit(CUnit* unit, bool redoCurrent)
 }
 
 
+void CLosHandler::RemoveUnit(CUnit* unit, bool delayed)
+{
+	if (delayed) {
+		DelayedFreeInstance(unit->los);
+	} else {
+		FreeInstance(unit->los);
+	}
+	unit->los = nullptr;
+}
+
+
 void CLosHandler::LosAdd(LosInstance* li)
 {
 	assert(li);
@@ -208,7 +219,6 @@ void CLosHandler::FreeInstance(LosInstance* instance)
 		return;
 
 	instance->refCount--;
-
 	if (instance->refCount > 0) {
 		return;
 	}
@@ -220,30 +230,25 @@ void CLosHandler::FreeInstance(LosInstance* instance)
 		toBeDeleted.push_back(instance);
 	}
 
-	if (instance->hashNum >= LOSHANDLER_MAGIC_PRIME || instance->hashNum < 0) {
-		LOG_L(L_WARNING,
-				"[LosHandler::FreeInstance][1] bad LOS-instance hash (%d)",
-				instance->hashNum);
-	}
-
+	// reached max cache size, free one instance
 	if (toBeDeleted.size() > 500) {
-		LosInstance* i = toBeDeleted.front();
+		LosInstance* li = toBeDeleted.front();
 		toBeDeleted.pop_front();
 
-		if (i->hashNum >= LOSHANDLER_MAGIC_PRIME || i->hashNum < 0) {
+		if (li->hashNum >= LOSHANDLER_MAGIC_PRIME || li->hashNum < 0) {
 			LOG_L(L_WARNING,
 					"[LosHandler::FreeInstance][2] bad LOS-instance hash (%d)",
-					i->hashNum);
+					li->hashNum);
 			return;
 		}
 
-		i->toBeDeleted = false;
+		li->toBeDeleted = false;
 
-		if (i->refCount == 0) {
-			auto& cont = instanceHash[i->hashNum];
-			auto it = std::find(cont.begin(), cont.end(), i);
+		if (li->refCount == 0) {
+			auto& cont = instanceHash[li->hashNum];
+			auto it = std::find(cont.begin(), cont.end(), li);
 			cont.erase(it);
-			delete i;
+			delete li;
 		}
 	}
 }

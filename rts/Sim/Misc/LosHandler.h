@@ -104,6 +104,7 @@ class CLosHandler : public boost::noncopyable
 
 public:
 	void MoveUnit(CUnit* unit, bool redoCurrent);
+	void RemoveUnit(CUnit* unit, bool delayed = false);
 public:
 	int2 GetLosSquare(const float3 pos) const { return int2( Round(pos.x * invLosDiv), Round(pos.z * invLosDiv) ); }
 	int2 GetAirSquare(const float3 pos) const { return int2( Round(pos.x * invAirDiv), Round(pos.z * invAirDiv) ); }
