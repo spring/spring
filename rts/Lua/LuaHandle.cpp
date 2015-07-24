@@ -283,7 +283,7 @@ int CLuaHandle::RunCallInTraceback(
 			handle->SetHandleRunning(state, true);
 
 			GLMatrixStateTracker& matTracker = GetLuaContextData(state)->glMatrixTracker;
-			MatrixStateData prevMatState = matTracker.PushMatrixState();
+			SMatrixStateData prevMatState = matTracker.PushMatrixState();
 			LuaOpenGL::InitMatrixState(state, func);
 
 			top = lua_gettop(state);
