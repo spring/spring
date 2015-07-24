@@ -396,7 +396,7 @@ void CReadMap::UpdateHeightMapSynced(SRectangle rect, bool initialize)
 	} else {
 		InitHeightMapDigestsVectors();
 
-		const int losSquaresX = losHandler->losSizeX; // size of LOS square in heightmap coords
+		const int losSquaresX = losHandler->losSize.x; // size of LOS square in heightmap coords
 		const SRectangle& lm = rect * (SQUARE_SIZE * losHandler->invLosDiv); // LOS space
 
 		// we updated the heightmap so change their digest (byte-overflow is intentional!)
@@ -599,7 +599,7 @@ void CReadMap::HeightMapUpdateLOSCheck(const SRectangle& rect)
 			hmx = lmx * losSqSize;
 
 			#ifdef USE_UNSYNCED_HEIGHTMAP
-			if (!(gu->spectatingFullView || losHandler->InLos(hmx, hmz, gu->myAllyTeam))) {
+			if (!(gu->spectatingFullView || losHandler->InLos(SquareToFloat3(hmx, hmz), gu->myAllyTeam))) {
 				PUSH_RECT
 				continue;
 			}
@@ -623,8 +623,8 @@ void CReadMap::InitHeightMapDigestsVectors()
 {
 #ifdef USE_UNSYNCED_HEIGHTMAP
 	if (syncedHeightMapDigests.empty()) {
-		const int losSquaresX = losHandler->losSizeX;
-		const int losSquaresY = losHandler->losSizeY;
+		const int losSquaresX = losHandler->losSize.x;
+		const int losSquaresY = losHandler->losSize.y;
 		const int size = (losSquaresX + 1) * (losSquaresY + 1);
 		syncedHeightMapDigests.resize(size, 0);
 		unsyncedHeightMapDigests.resize(size, 0);
@@ -636,7 +636,7 @@ void CReadMap::InitHeightMapDigestsVectors()
 bool CReadMap::HasHeightMapChanged(const int lmx, const int lmy)
 {
 #ifdef USE_UNSYNCED_HEIGHTMAP
-	const int losSquaresX = losHandler->losSizeX;
+	const int losSquaresX = losHandler->losSize.x;
 	const int idx = lmx + lmy * (losSquaresX + 1);
 	assert(idx < syncedHeightMapDigests.size() && idx >= 0);
 	const bool heightmapChanged = (unsyncedHeightMapDigests[idx] != syncedHeightMapDigests[idx]);

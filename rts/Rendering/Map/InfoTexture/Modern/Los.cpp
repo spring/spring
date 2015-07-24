@@ -16,7 +16,7 @@ CLosTexture::CLosTexture()
 : CPboInfoTexture("los")
 , uploadTex(0)
 {
-	texSize = int2(losHandler->losSizeX, losHandler->losSizeY);
+	texSize = losHandler->losSize;
 	texChannels = 1;
 
 	glGenTextures(1, &texture);

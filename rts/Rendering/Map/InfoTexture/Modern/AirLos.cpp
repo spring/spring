@@ -16,7 +16,7 @@ CAirLosTexture::CAirLosTexture()
 : CPboInfoTexture("airlos")
 , uploadTex(0)
 {
-	texSize = int2(losHandler->airSizeX, losHandler->airSizeY);
+	texSize = losHandler->airSize;
 	texChannels = 1;
 
 	glGenTextures(1, &texture);

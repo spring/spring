@@ -105,6 +105,9 @@ class CLosHandler : public boost::noncopyable
 public:
 	void MoveUnit(CUnit* unit, bool redoCurrent);
 	void FreeInstance(LosInstance* instance);
+public:
+	int2 GetLosSquare(const float3 pos) const { return int2( Round(pos.x * invLosDiv), Round(pos.z * invLosDiv) ); }
+	int2 GetAirSquare(const float3 pos) const { return int2( Round(pos.x * invAirDiv), Round(pos.z * invAirDiv) ); }
 
 	bool InLos(const CUnit* unit, int allyTeam) const;
 
@@ -120,37 +123,18 @@ public:
 		return (InLos(obj->pos, allyTeam) || InLos(obj->pos + obj->speed, allyTeam));
 	}
 
-	inline bool InLos(const float3& pos, int allyTeam) const {
+	inline bool InLos(const float3 pos, int allyTeam) const {
 		if (gs->globalLOS[allyTeam])
 			return true;
-		const int gx = Round(pos.x * invLosDiv);
-		const int gz = Round(pos.z * invLosDiv);
-		return (losMaps[allyTeam].At(gx, gz) != 0);
+		return (losMaps[allyTeam].At(GetLosSquare(pos)) != 0);
 	}
 
-	inline bool InAirLos(const float3& pos, int allyTeam) const {
+	inline bool InAirLos(const float3 pos, int allyTeam) const {
 		if (gs->globalLOS[allyTeam])
 			return true;
-		const int gx = Round(pos.x * invAirDiv);
-		const int gz = Round(pos.z * invAirDiv);
-		return (airLosMaps[allyTeam].At(gx, gz) != 0);
+		return (airLosMaps[allyTeam].At(GetAirSquare(pos)) != 0);
 	}
 
-
-	inline bool InLos(int hmx, int hmz, int allyTeam) const {
-		if (gs->globalLOS[allyTeam])
-			return true;
-		const int gx = Round(hmx * SQUARE_SIZE * invLosDiv);
-		const int gz = Round(hmz * SQUARE_SIZE * invLosDiv);
-		return (losMaps[allyTeam].At(gx, gz) != 0);
-	}
-	inline bool InAirLos(int hmx, int hmz, int allyTeam) const {
-		if (gs->globalLOS[allyTeam])
-			return true;
-		const int gx = Round(hmx * SQUARE_SIZE * invAirDiv);
-		const int gz = Round(hmz * SQUARE_SIZE * invAirDiv);
-		return (airLosMaps[allyTeam].At(gx, gz) != 0);
-	}
 
 	CLosHandler();
 	~CLosHandler();
@@ -164,10 +148,8 @@ public:
 	const int airDiv;
 	const float invLosDiv;
 	const float invAirDiv;
-	const int airSizeX;
-	const int airSizeY;
-	const int losSizeX;
-	const int losSizeY;
+	const int2 airSize;
+	const int2 losSize;
 
 	const bool requireSonarUnderWater;
 

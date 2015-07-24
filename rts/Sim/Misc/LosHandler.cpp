@@ -1,7 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <cstdlib>
-#include <cstring>
 
 #include "LosHandler.h"
 #include "ModInfo.h"
@@ -13,8 +11,6 @@
 #include "System/TimeProfiler.h"
 #include "System/creg/STL_Deque.h"
 
-using std::min;
-using std::max;
 
 CR_BIND(LosInstance, )
 CR_BIND(CLosHandler, )
@@ -52,10 +48,8 @@ CR_REG_METADATA(CLosHandler,(
 	CR_IGNORED(airDiv),
 	CR_IGNORED(invLosDiv),
 	CR_IGNORED(invAirDiv),
-	CR_IGNORED(airSizeX),
-	CR_IGNORED(airSizeY),
-	CR_IGNORED(losSizeX),
-	CR_IGNORED(losSizeY),
+	CR_IGNORED(airSize),
+	CR_IGNORED(losSize),
 	CR_IGNORED(requireSonarUnderWater),
 
 	CR_MEMBER(losAlgo),
@@ -90,16 +84,14 @@ CLosHandler::CLosHandler() :
 	airDiv(SQUARE_SIZE * (1 << airMipLevel)),
 	invLosDiv(1.0f / losDiv),
 	invAirDiv(1.0f / airDiv),
-	airSizeX(std::max(1, mapDims.mapx >> airMipLevel)),
-	airSizeY(std::max(1, mapDims.mapy >> airMipLevel)),
-	losSizeX(std::max(1, mapDims.mapx >> losMipLevel)),
-	losSizeY(std::max(1, mapDims.mapy >> losMipLevel)),
-	requireSonarUnderWater(modInfo.requireSonarUnderWater),
-	losAlgo(int2(losSizeX, losSizeY), -1e6f, 15, readMap->GetMIPHeightMapSynced(losMipLevel))
+	airSize(std::max(1, mapDims.mapx >> airMipLevel), std::max(1, mapDims.mapy >> airMipLevel)),
+	losSize(std::max(1, mapDims.mapx >> losMipLevel), std::max(1, mapDims.mapy >> losMipLevel)),
+	requireSonarUnderWater(),
+	losAlgo(losSize, -1e6f, 15, readMap->GetMIPHeightMapSynced(losMipLevel))
 {
 	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
-		losMaps[a].SetSize(losSizeX, losSizeY, true);
-		airLosMaps[a].SetSize(airSizeX, airSizeY, false);
+		losMaps[a].SetSize(losSize.x, losSize.y, true);
+		airLosMaps[a].SetSize(airSize.x, airSize.y, false);
 	}
 }
 
@@ -134,11 +126,9 @@ void CLosHandler::MoveUnit(CUnit* unit, bool redoCurrent)
 	const float3& losPos = unit->midPos;
 	const int allyteam = unit->allyteam;
 
-	const int baseX = Round(losPos.x * invLosDiv);
-	const int baseY = Round(losPos.z * invLosDiv);
-	const int baseAirX = Round(losPos.x * invAirDiv);
-	const int baseAirY = Round(losPos.z * invAirDiv);
-	const int baseSquare = baseY * losSizeX + baseX;
+	const int2 base = GetLosSquare(losPos);
+	const int2 baseAir = GetAirSquare(losPos);
+	const int baseSquare = base.y * losSize.x + base.x;
 
 	LosInstance* instance = NULL;
 	if (redoCurrent) {
@@ -148,11 +138,9 @@ void CLosHandler::MoveUnit(CUnit* unit, bool redoCurrent)
 		instance = unit->los;
 		CleanupInstance(instance);
 		instance->losSquares.clear();
-		instance->basePos.x = baseX;
-		instance->basePos.y = baseY;
+		instance->basePos = base;
 		instance->baseSquare = baseSquare; //this could be a problem if several units are sharing the same instance
-		instance->baseAirPos.x = baseAirX;
-		instance->baseAirPos.y = baseAirY;
+		instance->baseAirPos = baseAir;
 	} else {
 		if (unit->los && (unit->los->baseSquare == baseSquare)) {
 			return;
@@ -177,10 +165,11 @@ void CLosHandler::MoveUnit(CUnit* unit, bool redoCurrent)
 			unit->losRadius,
 			unit->airLosRadius,
 			allyteam,
-			int2(baseX, baseY),
+			base,
 			baseSquare,
-			int2(baseAirX, baseAirY),
-			hash, unit->losHeight
+			baseAir,
+			hash,
+			unit->losHeight
 		);
 
 		instanceHash[hash].push_back(instance);

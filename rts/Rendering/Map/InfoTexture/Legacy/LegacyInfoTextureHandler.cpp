@@ -308,7 +308,7 @@ bool CLegacyInfoTextureHandler::UpdateExtraTexture(BaseGroundDrawMode texDrawMod
 						const int alx = ((x*2) >> losHandler->losMipLevel);
 						const int aly = ((y*2) >> losHandler->losMipLevel);
 
-						if (myLos[alx + (aly * losHandler->losSizeX)]) {
+						if (myLos[alx + (aly * losHandler->losSize.x)]) {
 							infoTexMem[a + COLOR_R] = (unsigned char)std::min(255.0f, 900.0f * fastmath::apxsqrt(fastmath::apxsqrt(extractDepthMap[y_hmapx + x])));
 						} else {
 							infoTexMem[a + COLOR_R] = 0;
@@ -363,10 +363,10 @@ bool CLegacyInfoTextureHandler::UpdateExtraTexture(BaseGroundDrawMode texDrawMod
 				const int lowRes = highResInfoTexWanted ? 0 : -1;
 				const int endx = highResInfoTexWanted ? mapDims.mapx : mapDims.hmapx;
 				const int pwr2mapx = mapDims.pwr2mapx >> (-lowRes);
-				const int losSizeX = losHandler->losSizeX;
-				const int losSizeY = losHandler->losSizeY;
-				const int airSizeX = losHandler->airSizeX;
-				const int airSizeY = losHandler->airSizeY;
+				const int losSizeX = losHandler->losSize.x;
+				const int losSizeY = losHandler->losSize.y;
+				const int airSizeX = losHandler->airSize.x;
+				const int airSizeY = losHandler->airSize.y;
 				const int losMipLevel = losHandler->losMipLevel + lowRes;
 				const int airMipLevel = losHandler->airMipLevel + lowRes;
 				const int rxsize = radarHandler->xsize;

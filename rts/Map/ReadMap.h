@@ -279,7 +279,7 @@ protected:
 	 * mipPointerHeightMaps[0  ] is full resolution (centerHeightMap),
 	 * mipPointerHeightMaps[n+1] is half resolution of mipPointerHeightMaps[n] (mipCenterHeightMaps[n - 1])
 	 */
-	std::vector< float* > mipPointerHeightMaps;
+	std::vector<float*> mipPointerHeightMaps;
 
 	std::vector<float3> visVertexNormals;      //< size:  (mapx + 1) * (mapy + 1), contains one vertex normal per corner-heightmap pixel [UNSYNCED]
 	std::vector<float3> faceNormalsSynced;     //< size: 2*mapx      *  mapy     , contains 2 normals per quad -> triangle strip [SYNCED]
@@ -344,14 +344,18 @@ inline float CReadMap::AddHeight(const int idx, const float a) {
 
 
 /// Converts a map-square into a float3-position.
-inline float3 SquareToFloat3(int xSquare, int zSquare) {
+static inline float3 SquareToFloat3(int xSquare, int zSquare) {
 	const float* hm = readMap->GetCenterHeightMapSynced();
 	const float h = hm[(zSquare * mapDims.mapx) + xSquare];
 	return float3(xSquare * SQUARE_SIZE, h, zSquare * SQUARE_SIZE);
 }
 
+static inline float3 SquareToFloat3(int2 sq) {
+	return SquareToFloat3(sq.x, sq.y);
+}
+
 /// TODO: use in SM3 renderer also
-inline float GetVisibleVertexHeight(int idx) {
+static inline float GetVisibleVertexHeight(int idx) {
 	const float* hm = readMap->GetCornerHeightMapUnsynced();
 	return hm[idx];
 }

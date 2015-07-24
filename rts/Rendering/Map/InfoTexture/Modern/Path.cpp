@@ -246,7 +246,7 @@ void CPathTexture::Update()
 
 				float scale = 1.0f;
 
-				if (losFullView || losHandler->InLos(sq.x, sq.y, gu->myAllyTeam)) {
+				if (losFullView || losHandler->InLos(SquareToFloat3(sq), gu->myAllyTeam)) {
 					if (CMoveMath::IsBlocked(*md, sq.x,     sq.y    , NULL) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
 					if (CMoveMath::IsBlocked(*md, sq.x + 1, sq.y    , NULL) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
 					if (CMoveMath::IsBlocked(*md, sq.x,     sq.y + 1, NULL) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }

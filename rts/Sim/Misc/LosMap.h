@@ -28,10 +28,10 @@ public:
 
 	int operator[] (int square) const { return map[square]; }
 
-	int At(int x, int y) const {
-		x = Clamp(x, 0, size.x - 1);
-		y = Clamp(y, 0, size.y - 1);
-		return map[y * size.x + x];
+	int At(int2 p) const {
+		p.x = Clamp(p.x, 0, size.x - 1);
+		p.y = Clamp(p.y, 0, size.y - 1);
+		return map[p.y * size.x + p.x];
 	}
 
 	// FIXME temp fix for CBaseGroundDrawer and AI interface, which need raw data

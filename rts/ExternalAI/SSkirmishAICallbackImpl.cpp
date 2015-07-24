@@ -1810,7 +1810,7 @@ EXPORT(int) skirmishAiCallback_Map_getSlopeMap(int skirmishAIId,
 EXPORT(int) skirmishAiCallback_Map_getLosMap(int skirmishAIId,
 		int* losValues, int losValues_sizeMax) {
 
-	static const int losValues_sizeReal = losHandler->losSizeX * losHandler->losSizeY;
+	static const int losValues_sizeReal = losHandler->losSize.x * losHandler->losSize.y;
 
 	int losValues_size = losValues_sizeReal;
 
