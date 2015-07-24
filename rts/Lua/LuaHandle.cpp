@@ -281,10 +281,10 @@ int CLuaHandle::RunCallInTraceback(
 			, popErrFunc(_popErrFunc)
 		{
 			handle->SetHandleRunning(state, true);
-			const bool synced = GetLuaContextData(state)->synced;
+			const bool unsynced = !GetLuaContextData(state)->synced;
 			SMatrixStateData prevMatState;
 			GLMatrixStateTracker& matTracker = GetLuaContextData(state)->glMatrixTracker;
-			if (synced) {
+			if (unsynced) {
 				prevMatState = matTracker.PushMatrixState();
 				LuaOpenGL::InitMatrixState(state, func);
 			}
@@ -296,7 +296,7 @@ int CLuaHandle::RunCallInTraceback(
 			error = lua_pcall(state, nInArgs, nOutArgs, errFuncIdx);
 			// only run GC inside of "SetHandleRunning(L, true) ... SetHandleRunning(L, false)"!
 			lua_gc(state, LUA_GCSTOP, 0);
-			if (synced) {
+			if (unsynced) {
 				LuaOpenGL::CheckMatrixState(state, func, error);
 				matTracker.PopMatrixState(prevMatState);
 			}
