@@ -271,7 +271,6 @@ void CBasicMapDamage::UpdateLos()
 		if (relosUnits.empty()) {
 			return;
 		}
-
 		CUnit* unit = unitHandler->units[relosUnits.front()];
 		relosUnits.pop_front();
 
@@ -279,7 +278,7 @@ void CBasicMapDamage::UpdateLos()
 			continue;
 		}
 
-		// FIXME: why only losHandler and not also radarHandler?
 		losHandler->MoveUnit(unit, true);
+		radarHandler->MoveUnit(unit);
 	}
 }
