@@ -137,7 +137,7 @@ void CLosHandler::MoveUnit(CUnit* unit, bool redoCurrent)
 			return;
 		}
 		instance = unit->los;
-		CleanupInstance(instance);
+		LosRemove(instance);
 		instance->losSquares.clear();
 		instance->basePos = base;
 		instance->baseSquare = baseSquare; //this could be a problem if several units are sharing the same instance
@@ -209,7 +209,7 @@ void CLosHandler::LosAdd(LosInstance* li)
 void CLosHandler::LosRemove(LosInstance* li)
 {
 	if (li->losSize > 0) { losMaps[li->allyteam].AddMapSquares(li->losSquares, li->allyteam, -1); }
-	if (li->airSize > 0) { airLosMaps[li->allyteam].AddMapArea(li->baseAirPos, li->allyteam, li->airLosSize, -1); }
+	if (li->airLosSize > 0) { airLosMaps[li->allyteam].AddMapArea(li->baseAirPos, li->allyteam, li->airLosSize, -1); }
 }
 
 
