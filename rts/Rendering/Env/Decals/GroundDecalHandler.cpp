@@ -33,7 +33,6 @@
 #include "System/Util.h"
 #include "System/FileSystem/FileSystem.h"
 
-using std::list;
 using std::min;
 using std::max;
 
@@ -523,8 +522,8 @@ void CGroundDecalHandler::AddTracks() {
 			bool replace = false;
 
 			if (unit->myTrack->parts.size() > 1) {
-				list<TrackPart *>::iterator pi = --unit->myTrack->parts.end();
-				list<TrackPart *>::iterator pi2 = pi--;
+				std::deque<TrackPart *>::iterator pi = --unit->myTrack->parts.end();
+				std::deque<TrackPart *>::iterator pi2 = pi--;
 
 				replace = (((tp->pos1 + (*pi)->pos1) * 0.5f).SqDistance((*pi2)->pos1) < 1.0f);
 			}
@@ -584,8 +583,8 @@ void CGroundDecalHandler::DrawTracks() {
 
 			// walk across the track parts from front (oldest) to back (newest) and draw
 			// a quad between "connected" parts (ie. parts differing 8 sim-frames in age)
-			list<TrackPart*>::const_iterator curPart =   (track->parts.begin());
-			list<TrackPart*>::const_iterator nxtPart = ++(track->parts.begin());
+			std::deque<TrackPart*>::const_iterator curPart =   (track->parts.begin());
+			std::deque<TrackPart*>::const_iterator nxtPart = ++(track->parts.begin());
 
 			curPartColor[3] = std::max(0.0f, (1.0f - (gs->frameNum - (*curPart)->creationTime) * track->alphaFalloff) * 255.0f);
 

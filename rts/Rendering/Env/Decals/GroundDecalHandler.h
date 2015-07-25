@@ -3,7 +3,7 @@
 #ifndef GROUND_DECAL_HANDLER_H
 #define GROUND_DECAL_HANDLER_H
 
-#include <list>
+#include <deque>
 #include <vector>
 #include <string>
 
@@ -55,7 +55,7 @@ struct UnitTrackStruct {
 	float alphaFalloff;
 
 	TrackPart* lastAdded;
-	std::list<TrackPart*> parts;
+	std::deque<TrackPart*> parts;
 };
 
 struct TrackToAdd {
