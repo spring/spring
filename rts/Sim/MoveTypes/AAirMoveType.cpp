@@ -251,9 +251,7 @@ void AAirMoveType::CheckForCollision()
 		lastColWarningType = 0;
 	}
 
-	for (std::vector<CUnit*>::const_iterator ui = others.begin(); ui != others.end(); ++ui) {
-		const CUnit* unit = *ui;
-
+	for (CUnit* unit: others) {
 		if (unit == owner || !unit->unitDef->canfly) {
 			continue;
 		}
@@ -283,11 +281,11 @@ void AAirMoveType::CheckForCollision()
 		return;
 	}
 
-	for (std::vector<CUnit*>::const_iterator ui = others.begin(); ui != others.end(); ++ui) {
-		if (*ui == owner)
+	for (CUnit* u: others) {
+		if (u == owner)
 			continue;
-		if (((*ui)->midPos - pos).SqLength() < (dist * dist)) {
-			lastColWarning = *ui;
+		if ((u->midPos - pos).SqLength() < (dist * dist)) {
+			lastColWarning = u;
 		}
 	}
 

@@ -325,16 +325,13 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	mapSquare = CGround::GetSquare((params.pos).cClampInMap());
 
 	heading  = GetHeadingFromFacing(buildFacing);
-	frontdir = GetVectorFromHeading(heading);
-	updir    = UpVector;
-	rightdir = frontdir.cross(updir);
 	upright  = unitDef->upright;
+	UpdateDirVectors(!upright);
 
 	SetVelocity(params.speed);
 	Move((params.pos).cClampInMap(), false);
 	SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
 	SetRadiusAndHeight(model);
-	UpdateDirVectors(!upright);
 	UpdateMidAndAimPos();
 
 	unitHandler->AddUnit(this);
