@@ -15,7 +15,7 @@ template<typename t> struct type2 {
 
 	bool operator == (const type2<t>& v) const { return (x == v.x) && (y == v.y); }
 	bool operator != (const type2<t>& v) const { return (x != v.x) || (y != v.y); }
-	bool operator  < (const type2<t>& f) const { return (x != f.x) ? (x < f.x) : (y < f.y); }
+	bool operator  < (const type2<t>& f) const { return (y == f.y) ? (x < f.x) : (y < f.y); }
 
 	type2<t> operator + (const type2<t>& v) const { return (type2<t>(x + v.x, y + v.y)); }
 	type2<t> operator - (const type2<t>& v) const { return (type2<t>(x - v.x, y - v.y)); }
@@ -48,7 +48,7 @@ template<typename t> struct itype2 : public type2<t> {
 
 	bool operator == (const type2<int>& v) const { return (type2<t>::x == v.x) && (type2<t>::y == v.y); }
 	bool operator != (const type2<int>& v) const { return (type2<t>::x != v.x) || (type2<t>::y != v.y); }
-	bool operator  < (const type2<int>& f) const { return (type2<t>::x != f.x) ? (type2<t>::x < f.x) : (type2<t>::y < f.y); }
+	bool operator  < (const type2<int>& f) const { return (type2<t>::y == f.y) ? (type2<t>::x < f.x) : (type2<t>::y < f.y); }
 
 	type2<int> operator + (const type2<int>& v) const { return (type2<int>(type2<t>::x + v.x, type2<t>::y + v.y)); }
 	type2<int> operator - (const type2<int>& v) const { return (type2<int>(type2<t>::x - v.x, type2<t>::y - v.y)); }
