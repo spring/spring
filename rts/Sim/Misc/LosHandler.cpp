@@ -110,7 +110,7 @@ CLosHandler::~CLosHandler()
 }
 
 
-void CLosHandler::MoveUnit(CUnit* unit, bool redoCurrent)
+void CLosHandler::MoveUnit(CUnit* unit)
 {
 	SCOPED_TIMER("LOSHandler::MoveUnit");
 

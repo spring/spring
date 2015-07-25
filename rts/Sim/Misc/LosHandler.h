@@ -100,7 +100,8 @@ class CLosHandler : public boost::noncopyable
 	CR_DECLARE_SUB(DelayedInstance)
 
 public:
-	void MoveUnit(CUnit* unit, bool redoCurrent);
+	void Update();
+	void MoveUnit(CUnit* unit);
 	void RemoveUnit(CUnit* unit, bool delayed = false);
 public:
 	int2 GetLosSquare(const float3 pos) const { return int2( Round(pos.x * invLosDiv), Round(pos.z * invLosDiv) ); }
@@ -173,9 +174,6 @@ private:
 		int timeoutTime;
 	};
 	std::deque<DelayedInstance> delayQue;
-
-public:
-	void Update();
 };
 
 extern CLosHandler* losHandler;

@@ -71,9 +71,8 @@ void AMoveType::SlowUpdate()
 				}
 			}
 
-			losHandler->MoveUnit(owner, false);
+			losHandler->MoveUnit(owner);
 			radarHandler->MoveUnit(owner);
-
 		}
 
 		quadField->MovedUnit(owner);

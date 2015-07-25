@@ -652,7 +652,7 @@ void CUnit::ForcedMove(const float3& newPos)
 	eventHandler.UnitMoved(this);
 
 	quadField->MovedUnit(this);
-	losHandler->MoveUnit(this, false);
+	losHandler->MoveUnit(this);
 	radarHandler->MoveUnit(this);
 }
 
@@ -1423,7 +1423,7 @@ void CUnit::ChangeLos(int losRad, int airRad)
 	losHandler->RemoveUnit(this);
 	losRadius = losRad;
 	airLosRadius = airRad;
-	losHandler->MoveUnit(this, false);
+	losHandler->MoveUnit(this);
 }
 
 
@@ -1458,6 +1458,9 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	quads.clear();
 	losHandler->RemoveUnit(this);
 	radarHandler->RemoveUnit(this);
+	losHandler->MoveUnit(this);
+	quadField->MovedUnit(this);
+	radarHandler->MoveUnit(this);
 
 	if (unitDef->isAirBase) {
 		airBaseHandler->DeregisterAirBase(this);
@@ -1496,10 +1499,6 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 			UpdateLosStatus(at);
 		}
 	}
-
-	losHandler->MoveUnit(this, false);
-	quadField->MovedUnit(this);
-	radarHandler->MoveUnit(this);
 
 	if (unitDef->isAirBase) {
 		airBaseHandler->RegisterAirBase(this);
