@@ -4,6 +4,7 @@
 #include "RadarHandler.h"
 #include "LosHandler.h"
 #include "Map/ReadMap.h"
+#include "Sim/Units/UnitDef.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "System/TimeProfiler.h"
 
