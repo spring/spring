@@ -1240,13 +1240,14 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 			unsigned  int  checkSum; pckt >> checkSum;
 
 			assert(a == playerNum);
+			GameParticipant& p = players[a];
 
 			if (outstandingSyncFrames.find(frameNum) != outstandingSyncFrames.end())
-				players[a].syncResponse[frameNum] = checkSum;
+				p.syncResponse[frameNum] = checkSum;
 
 			// update player's ping (if !defined(SYNCCHECK) this is done in NETMSG_KEYFRAME)
-			if (frameNum <= serverFrameNum && frameNum > players[a].lastFrameResponse)
-				players[a].lastFrameResponse = frameNum;
+			if (frameNum <= serverFrameNum && frameNum > p.lastFrameResponse)
+				p.lastFrameResponse = frameNum;
 
 			// send player <a>'s sync-response back to everybody
 			// (the only purpose of this is to allow a client to
@@ -2440,13 +2441,12 @@ void CGameServer::UpdateLoop()
 		Broadcast(CBaseNetProtocol::Get().SendQuit("Server shutdown"));
 
 		if (!reloadingServer) {
-			// flush the quit messages to reduce ugly network error messages on the client side
 			// this is to make sure the Flush has any effect at all (we don't want a forced flush)
-			//
 			// when reloading, we can assume there is only a local client and skip the sleep()'s
 			spring_sleep(spring_msecs(1000));
 		}
 
+		// flush the quit messages to reduce ugly network error messages on the client side
 		for (GameParticipant& p: players) {
 			if (p.link)
 				p.link->Flush();

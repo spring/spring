@@ -410,28 +410,28 @@ void CGame::ClientReadNet()
 			case NETMSG_STARTPOS: {
 				const unsigned char playerID = inbuf[1];
 				const unsigned int teamID = inbuf[2];
-				const unsigned char rdyState = inbuf[3];
 
 				if (!playerHandler->IsValidPlayer(playerID) && playerID != SERVER_PLAYER) {
 					LOG_L(L_ERROR, "Got invalid player num %i in start pos msg", playerID);
 					break;
 				}
-
 				if (!teamHandler->IsValidTeam(teamID)) {
 					LOG_L(L_ERROR, "Got invalid team num %i in startpos msg", teamID);
-				} else {
-					float3 rawPickPos(*(float*) &inbuf[4], *(float*) &inbuf[8], *(float*) &inbuf[12]);
-					float3 clampedPos(rawPickPos);
+					break;
+				}
 
-					CTeam* team = teamHandler->Team(teamID);
-					team->ClampStartPosInStartBox(&clampedPos);
+				const unsigned char rdyState = inbuf[3];
+				float3 rawPickPos(*(float*) &inbuf[4], *(float*) &inbuf[8], *(float*) &inbuf[12]);
+				float3 clampedPos(rawPickPos);
 
-					if (eventHandler.AllowStartPosition(playerID, rdyState, clampedPos, rawPickPos)) {
-						team->SetStartPos(clampedPos);
+				CTeam* team = teamHandler->Team(teamID);
+				team->ClampStartPosInStartBox(&clampedPos);
 
-						if (playerID != SERVER_PLAYER) {
-							playerHandler->Player(playerID)->SetReadyToStart(rdyState != CPlayer::PLAYER_RDYSTATE_UPDATED);
-						}
+				if (eventHandler.AllowStartPosition(playerID, rdyState, clampedPos, rawPickPos)) {
+					team->SetStartPos(clampedPos);
+
+					if (playerID != SERVER_PLAYER) {
+						playerHandler->Player(playerID)->SetReadyToStart(rdyState != CPlayer::PLAYER_RDYSTATE_UPDATED);
 					}
 				}
 
