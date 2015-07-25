@@ -49,13 +49,16 @@ public:
 	}
 
 	int &GetDepth(unsigned int mode) {
-		assert(mode == GL_MODELVIEW || mode == GL_PROJECTION || mode == GL_TEXTURE);
-		switch (mode) {
-			case GL_MODELVIEW: return matrixData.modelView;
-			case GL_PROJECTION: return matrixData.projection;
-			case GL_TEXTURE: return matrixData.texture;
-		}
-	}
+        switch (mode) {
+            case GL_MODELVIEW: return matrixData.modelView;
+            case GL_PROJECTION: return matrixData.projection;
+            case GL_TEXTURE: return matrixData.texture;
+            default:
+                LOG_L(L_ERROR, "unknown matrix mode = %u", mode);
+                abort();
+                break;
+        }
+    }
 
 	bool PushMatrix() {
 		unsigned int mode = GetMode();
