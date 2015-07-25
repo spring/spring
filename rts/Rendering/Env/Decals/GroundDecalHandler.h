@@ -3,7 +3,6 @@
 #ifndef GROUND_DECAL_HANDLER_H
 #define GROUND_DECAL_HANDLER_H
 
-#include <set>
 #include <list>
 #include <vector>
 #include <string>
@@ -75,12 +74,12 @@ struct TrackToClean {
 		: track(NULL)
 		, tracks(NULL)
 	{}
-	TrackToClean(UnitTrackStruct* t, std::set<UnitTrackStruct*>* ts)
+	TrackToClean(UnitTrackStruct* t, std::vector<UnitTrackStruct*>* ts)
 		: track(t)
 		, tracks(ts)
 	{}
 	UnitTrackStruct* track;
-	std::set<UnitTrackStruct*>* tracks;
+	std::vector<UnitTrackStruct*>* tracks;
 };
 
 
@@ -174,7 +173,7 @@ private:
 			: texture(0)
 		{}
 		std::string name;
-		std::set<UnitTrackStruct*> tracks;
+		std::vector<UnitTrackStruct*> tracks;
 		unsigned int texture;
 	};
 
@@ -182,7 +181,7 @@ private:
 		SolidObjectDecalType(): texture(0) {}
 
 		std::string name;
-		std::set<SolidObjectGroundDecal*> objectDecals;
+		std::vector<SolidObjectGroundDecal*> objectDecals;
 
 		unsigned int texture;
 	};

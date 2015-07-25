@@ -89,12 +89,12 @@ CGroundDecalHandler::~CGroundDecalHandler()
 {
 	eventHandler.RemoveClient(this);
 
-	for (std::vector<TrackType*>::iterator tti = trackTypes.begin(); tti != trackTypes.end(); ++tti) {
-		for (set<UnitTrackStruct*>::iterator ti = (*tti)->tracks.begin(); ti != (*tti)->tracks.end(); ++ti) {
-			delete *ti;
+	for (TrackType* tt: trackTypes) {
+		for (UnitTrackStruct* uts: tt->tracks) {
+			delete uts;
 		}
-		glDeleteTextures(1, &(*tti)->texture);
-		delete *tti;
+		glDeleteTextures(1, &tt->texture);
+		delete tt;
 	}
 	for (std::vector<TrackToAdd>::iterator ti = tracksToBeAdded.begin(); ti != tracksToBeAdded.end(); ++ti) {
 		delete (*ti).tp;
@@ -396,10 +396,10 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar,
 void CGroundDecalHandler::GatherDecalsForType(CGroundDecalHandler::SolidObjectDecalType* decalType) {
 	decalsToDraw.clear();
 
-	set<SolidObjectGroundDecal*>::const_iterator bgdi = decalType->objectDecals.begin();
+	auto &objectDecals = decalType->objectDecals;
 
-	while (bgdi != decalType->objectDecals.end()) {
-		SolidObjectGroundDecal* decal = *bgdi;
+	for (int i = 0; i < objectDecals.size();) {
+		SolidObjectGroundDecal* decal = objectDecals[i];
 		CSolidObject* decalOwner = decal->owner;
 
 		const CUnit* decalOwnerUnit = NULL;
@@ -426,13 +426,14 @@ void CGroundDecalHandler::GatherDecalsForType(CGroundDecalHandler::SolidObjectDe
 				decalOwner->groundDecal = NULL;
 			}
 
-			bgdi = set_erase(decalType->objectDecals, bgdi);
+			objectDecals[i] = objectDecals.back();
+			objectDecals.pop_back();
 
 			delete decal;
 			continue;
 		}
 
-		++bgdi;
+		++i;
 
 		if (decalOwner == NULL) {
 			decalsToDraw.push_back(decal);
@@ -496,26 +497,27 @@ void CGroundDecalHandler::DrawObjectDecals() {
 void CGroundDecalHandler::AddTracks() {
 	{
 		// Delayed addition of new tracks
-		for (std::vector<TrackToAdd>::iterator ti = tracksToBeAdded.begin(); ti != tracksToBeAdded.end(); ++ti) {
-			const TrackToAdd* tta = &(*ti);
+		for (TrackToAdd &tta: tracksToBeAdded) {
 
-			if (tta->ts->owner == NULL) {
-				delete tta->tp;
+			if (tta.ts->owner == NULL) {
+				delete tta.tp;
 
-				if (tta->unit == NULL)
-					tracksToBeDeleted.push_back(tta->ts);
+				if (tta.unit == NULL)
+					tracksToBeDeleted.push_back(tta.ts);
 
 				continue; // unit removed
 			}
 
-			const CUnit* unit = tta->unit;
+			const CUnit* unit = tta.unit;
 
 			if (unit == NULL) {
-				unit = tta->ts->owner;
-				trackTypes[unit->unitDef->decalDef.trackDecalType]->tracks.insert(tta->ts);
+				unit = tta.ts->owner;
+				auto &tracks = trackTypes[unit->unitDef->decalDef.trackDecalType]->tracks;
+				assert(std::find(tracks.begin(), tracks.end(), tta.ts) == tracks.end());
+				tracks.push_back(tta.ts);
 			}
 
-			TrackPart* tp = tta->tp;
+			TrackPart* tp = tta.tp;
 
 			// if the unit is moving in a straight line only place marks at half the rate by replacing old ones
 			bool replace = false;
@@ -538,8 +540,8 @@ void CGroundDecalHandler::AddTracks() {
 		tracksToBeAdded.clear();
 	}
 
-	for (std::vector<UnitTrackStruct *>::iterator ti = tracksToBeDeleted.begin(); ti != tracksToBeDeleted.end(); ++ti) {
-		delete *ti;
+	for (UnitTrackStruct *uts: tracksToBeDeleted) {
+		delete uts;
 	}
 
 	tracksToBeDeleted.clear();
@@ -551,21 +553,17 @@ void CGroundDecalHandler::DrawTracks() {
 	unsigned char nxtPartColor[4] = {255, 255, 255, 255};
 
 	// create and draw the unit footprint quads
-	for (std::vector<TrackType*>::iterator tti = trackTypes.begin(); tti != trackTypes.end(); ++tti) {
-		TrackType* tt = *tti;
+	for (TrackType* tt: trackTypes) {
 
 		if (tt->tracks.empty())
 			continue;
 
-		set<UnitTrackStruct*>::iterator utsi = tt->tracks.begin();
 
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
 		glBindTexture(GL_TEXTURE_2D, tt->texture);
 
-		while (utsi != tt->tracks.end()) {
-			UnitTrackStruct* track = *utsi;
-			++utsi;
+		for (UnitTrackStruct* track: tt->tracks) {
 
 			if (track->parts.empty()) {
 				tracksToBeCleaned.push_back(TrackToClean(track, &(tt->tracks)));
@@ -615,9 +613,8 @@ void CGroundDecalHandler::DrawTracks() {
 void CGroundDecalHandler::CleanTracks()
 {
 	// Cleanup old tracks
-	for (std::vector<TrackToClean>::iterator ti = tracksToBeCleaned.begin(); ti != tracksToBeCleaned.end(); ++ti) {
-		TrackToClean* ttc = &(*ti);
-		UnitTrackStruct* track = ttc->track;
+	for (TrackToClean &ttc: tracksToBeCleaned) {
+		UnitTrackStruct* track = ttc.track;
 
 		while (!track->parts.empty()) {
 			// stop at the first part that is still too young for deletion
@@ -633,7 +630,11 @@ void CGroundDecalHandler::CleanTracks()
 				track->owner->myTrack = NULL;
 				track->owner = NULL;
 			}
-			ttc->tracks->erase(track);
+			auto &tracks = *ttc.tracks;
+			auto it = std::find(tracks.begin(), tracks.end(), track);
+			assert(it != tracks.end());
+			*it = tracks.back();
+			tracks.pop_back();
 			tracksToBeDeleted.push_back(track);
 		}
 	}
@@ -1185,7 +1186,7 @@ void CGroundDecalHandler::MoveSolidObject(CSolidObject* object, const float3& po
 	decal->posy = (pos.z / SQUARE_SIZE) - (decal->ysize >> 1);
 
 	object->groundDecal = decal;
-	objectDecalTypes[decalDef.groundDecalType]->objectDecals.insert(decal);
+	objectDecalTypes[decalDef.groundDecalType]->objectDecals.push_back(decal);
 }
 
 
