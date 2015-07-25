@@ -2443,7 +2443,7 @@ void CGameServer::UpdateLoop()
 		if (!reloadingServer) {
 			// this is to make sure the Flush has any effect at all (we don't want a forced flush)
 			// when reloading, we can assume there is only a local client and skip the sleep()'s
-			spring_sleep(spring_msecs(1000));
+			spring_sleep(spring_msecs(500));
 		}
 
 		// flush the quit messages to reduce ugly network error messages on the client side
@@ -2454,7 +2454,7 @@ void CGameServer::UpdateLoop()
 
 		if (!reloadingServer) {
 			// now let clients close their connections
-			spring_sleep(spring_msecs(3000));
+			spring_sleep(spring_msecs(1500));
 		}
 
 	} CATCH_SPRING_ERRORS
