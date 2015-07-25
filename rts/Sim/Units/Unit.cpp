@@ -141,8 +141,6 @@ CUnit::CUnit()
 , losRadius(0)
 , airLosRadius(0)
 , lastLosUpdate(0)
-, losHeight(0.0f)
-, radarHeight(0.0f)
 , radarRadius(0)
 , sonarRadius(0)
 , jammerRadius(0)
@@ -362,8 +360,6 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	power = unitDef->power;
 	maxHealth = unitDef->health;
 	health = beingBuilt? 0.1f: unitDef->health;
-	losHeight = unitDef->losHeight;
-	radarHeight = unitDef->radarHeight;
 	cost.metal = unitDef->metal;
 	cost.energy = unitDef->energy;
 	buildTime = unitDef->buildTime;
@@ -2446,9 +2442,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(losRadius),
 	CR_MEMBER(airLosRadius),
 	CR_MEMBER(lastLosUpdate),
-
-	CR_MEMBER(losHeight),
-	CR_MEMBER(radarHeight),
 
 	CR_MEMBER(radarRadius),
 	CR_MEMBER(sonarRadius),

@@ -5,10 +5,13 @@
 #include "ModInfo.h"
 
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Map/ReadMap.h"
 #include "System/Log/ILog.h"
 #include "System/TimeProfiler.h"
+#include "System/Sync/HsiehHash.h"
 #include "System/creg/STL_Deque.h"
 
 
@@ -18,12 +21,11 @@ CR_BIND(CLosHandler::DelayedInstance, )
 
 CR_REG_METADATA(LosInstance,(
 	CR_IGNORED(losSquares),
-	CR_MEMBER(losSize),
-	CR_MEMBER(airLosSize),
+	CR_MEMBER(losRadius),
+	CR_MEMBER(airLosRadius),
 	CR_MEMBER(refCount),
 	CR_MEMBER(allyteam),
 	CR_MEMBER(basePos),
-	CR_MEMBER(baseSquare),
 	CR_MEMBER(baseAirPos),
 	CR_MEMBER(hashNum),
 	CR_MEMBER(baseHeight),
@@ -126,57 +128,44 @@ void CLosHandler::MoveUnit(CUnit* unit, bool redoCurrent)
 
 	const float3& losPos = unit->midPos;
 	const int allyteam = unit->allyteam;
-
-	const int2 base = GetLosSquare(losPos);
+	const float losHeight = losPos.y + unit->unitDef->losHeight;
+	const float iLosHeight = ((int(losHeight) >> (losMipLevel + 1)) << (losMipLevel + 1)) + ((1 << (losMipLevel + 1)) * 0.5f); // save losHeight in buckets //FIXME Round
+	const int2 baseLos = GetLosSquare(losPos);
 	const int2 baseAir = GetAirSquare(losPos);
-	const int baseSquare = base.y * losSize.x + base.x;
 
-	LosInstance* instance = NULL;
-	if (redoCurrent) {
-		if (!unit->los) {
+	// unchanged?
+	if (unit->los && (unit->los->basePos == baseLos) && (unit->los->baseHeight == iLosHeight)) {
+		return;
+	}
+	FreeInstance(unit->los);
+	const int hash = GetHashNum(unit, baseLos, baseAir);
+
+	// Cache - search if there is already an instance with same properties
+	for (LosInstance* li: instanceHash[hash]) {
+		if (li->basePos      == baseLos            &&
+		    li->losRadius    == unit->losRadius    &&
+		    li->airLosRadius == unit->airLosRadius &&
+		    li->baseHeight   == iLosHeight         &&
+		    li->allyteam     == allyteam
+		) {
+			AllocInstance(li);
+			unit->los = li;
 			return;
 		}
-		instance = unit->los;
-		LosRemove(instance);
-		instance->losSquares.clear();
-		instance->basePos = base;
-		instance->baseSquare = baseSquare; //this could be a problem if several units are sharing the same instance
-		instance->baseAirPos = baseAir;
-	} else {
-		if (unit->los && (unit->los->baseSquare == baseSquare)) {
-			return;
-		}
-
-		FreeInstance(unit->los);
-		const int hash = GetHashNum(unit);
-
-		for (LosInstance* li: instanceHash[hash]) {
-			if (li->baseSquare == baseSquare         &&
-			    li->losSize    == unit->losRadius    &&
-			    li->airLosSize == unit->airLosRadius &&
-			    li->baseHeight == unit->losHeight    &&
-			    li->allyteam   == allyteam) {
-				AllocInstance(li);
-				unit->los = li;
-				return;
-			}
-		}
-
-		instance = new LosInstance(
-			unit->losRadius,
-			unit->airLosRadius,
-			allyteam,
-			base,
-			baseSquare,
-			baseAir,
-			hash,
-			unit->losHeight
-		);
-
-		instanceHash[hash].push_back(instance);
-		unit->los = instance;
 	}
 
+	// New - create a new one
+	LosInstance* instance = new LosInstance(
+		unit->losRadius,
+		unit->airLosRadius,
+		allyteam,
+		baseLos,
+		baseAir,
+		hash,
+		iLosHeight
+	);
+	instanceHash[hash].push_back(instance);
+	unit->los = instance;
 	LosAdd(instance);
 }
 
@@ -197,19 +186,19 @@ void CLosHandler::LosAdd(LosInstance* li)
 	assert(li);
 	assert(teamHandler->IsValidAllyTeam(li->allyteam));
 
-	if (li->losSize > 0) {
+	if (li->losRadius > 0) {
 		if (li->losSquares.empty())
-			losAlgo.LosAdd(li->basePos, li->losSize, li->baseHeight, li->losSquares);
+			losAlgo.LosAdd(li->basePos, li->losRadius, li->baseHeight, li->losSquares);
 		losMaps[li->allyteam].AddMapSquares(li->losSquares, li->allyteam, 1);
 	}
-	if (li->airLosSize > 0) { airLosMaps[li->allyteam].AddMapArea(li->baseAirPos, li->allyteam, li->airLosSize, 1); }
+	if (li->airLosRadius > 0) { airLosMaps[li->allyteam].AddMapArea(li->baseAirPos, li->allyteam, li->airLosRadius, 1); }
 }
 
 
 void CLosHandler::LosRemove(LosInstance* li)
 {
-	if (li->losSize > 0) { losMaps[li->allyteam].AddMapSquares(li->losSquares, li->allyteam, -1); }
-	if (li->airLosSize > 0) { airLosMaps[li->allyteam].AddMapArea(li->baseAirPos, li->allyteam, li->airLosSize, -1); }
+	if (li->losRadius > 0) { losMaps[li->allyteam].AddMapSquares(li->losSquares, li->allyteam, -1); }
+	if (li->airLosRadius > 0) { airLosMaps[li->allyteam].AddMapArea(li->baseAirPos, li->allyteam, li->airLosRadius, -1); }
 }
 
 
@@ -254,13 +243,15 @@ void CLosHandler::FreeInstance(LosInstance* instance)
 }
 
 
-int CLosHandler::GetHashNum(CUnit* unit)
+int CLosHandler::GetHashNum(const CUnit* unit, const int2 baseLos, const int2 baseAirLos)
 {
-	const unsigned int t =
-		(unit->mapSquare * unit->losRadius + unit->allyteam) ^
-		(*(unsigned int*) &unit->losHeight);
+	boost::uint32_t hash = 127;
+	hash = HsiehHash(&unit->allyteam,  sizeof(unit->allyteam), hash);
+	hash = HsiehHash(&baseLos,         sizeof(baseLos), hash);
+	hash = HsiehHash(&baseAirLos,      sizeof(baseAirLos), hash); //FIXME
+
 	//! hash-value range is [0, LOSHANDLER_MAGIC_PRIME - 1]
-	return (t % LOSHANDLER_MAGIC_PRIME);
+	return (hash % LOSHANDLER_MAGIC_PRIME);
 }
 
 

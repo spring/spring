@@ -38,41 +38,38 @@ private:
 
 	/// default constructor for creg
 	LosInstance()
-		: losSize(0)
-		, airLosSize(0)
-		, refCount(0)
+		: refCount(0)
+		, losRadius(0)
+		, airLosRadius(0)
 		, allyteam(-1)
-		, baseSquare(0)
-		, hashNum(-1)
 		, baseHeight(0.0f)
+		, hashNum(-1)
 		, toBeDeleted(false)
 	{}
 
 public:
 	LosInstance(int lossize, int airLosSize, int allyteam, int2 basePos,
-			int baseSquare, int2 baseAirPos, int hashNum, float baseHeight)
-		: losSize(lossize)
-		, airLosSize(airLosSize)
-		, refCount(1)
+			int2 baseAirPos, int hashNum, float baseHeight)
+		: refCount(1)
+		, losRadius(lossize)
+		, airLosRadius(airLosSize)
 		, allyteam(allyteam)
 		, basePos(basePos)
-		, baseSquare(baseSquare)
+		, baseHeight(baseHeight)
 		, baseAirPos(baseAirPos)
 		, hashNum(hashNum)
-		, baseHeight(baseHeight)
 		, toBeDeleted(false)
 	{}
 
-	std::vector<int> losSquares;
-	int losSize;
-	int airLosSize;
 	int refCount;
+	std::vector<int> losSquares;
+	int losRadius;
+	int airLosRadius;
 	int allyteam;
 	int2 basePos;
-	int baseSquare;
+	float baseHeight;
 	int2 baseAirPos;
 	int hashNum;
-	float baseHeight;
 	bool toBeDeleted;
 };
 
@@ -155,12 +152,12 @@ public:
 
 private:
 	static const unsigned int LOSHANDLER_MAGIC_PRIME = 2309;
+	static int GetHashNum(const CUnit* unit, const int2 baseLos, const int2 baseAirLos);
 
 	void PostLoad();
 
 	void LosAdd(LosInstance* instance);
 	void LosRemove(LosInstance* instance);
-	int GetHashNum(CUnit* unit);
 	void AllocInstance(LosInstance* instance);
 	void FreeInstance(LosInstance* instance);
 	void DelayedFreeInstance(LosInstance* instance);
@@ -175,7 +172,6 @@ private:
 		LosInstance* instance;
 		int timeoutTime;
 	};
-
 	std::deque<DelayedInstance> delayQue;
 
 public:

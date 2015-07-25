@@ -111,7 +111,8 @@ void CRadarHandler::MoveUnit(CUnit* unit)
 		if (unit->radarRadius) {
 			airRadarMaps[unit->allyteam].AddMapArea(newPos, -123, unit->radarRadius, 1);
 			if (!circularRadar) {
-				radarAlgo.LosAdd(newPos, unit->radarRadius, unit->radarHeight, unit->radarSquares);
+				const float radarHeight = unit->midPos.y + unit->unitDef->radarHeight;
+				radarAlgo.LosAdd(newPos, unit->radarRadius, radarHeight, unit->radarSquares);
 				radarMaps[unit->allyteam].AddMapSquares(unit->radarSquares, -123, 1);
 			}
 		}

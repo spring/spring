@@ -427,11 +427,12 @@ void CLosTables::Debug(const LosTable& losRays, const std::vector<int2>& points,
 
 void CLosAlgorithm::LosAdd(int2 pos, int radius, float baseHeight, std::vector<int>& squares)
 {
+
+	assert(radius > 0);
 	if (radius <= 0) { return; }
 
-	SRectangle safeRect(radius, radius, size.x - radius, size.y - radius);
-
 	// add all squares that are in the los radius
+	SRectangle safeRect(radius, radius, size.x - radius, size.y - radius);
 	if (safeRect.Inside(pos)) {
 		// we aren't touching the map borders -> we don't need to check for the map boundaries
 		UnsafeLosAdd(pos, radius, baseHeight, squares);
@@ -473,8 +474,6 @@ void CLosAlgorithm::UnsafeLosAdd(int2 pos, int radius, float losHeight, std::vec
 	}
 	squares.reserve(neededSpace);
 
-	losHeight += heightmap[mapSquare]; //FIXME comment
-
 	squares.push_back(mapSquare);
 	for (const LosLine& line: table) {
 		float maxAng1 = minMaxAng;
@@ -510,7 +509,6 @@ void CLosAlgorithm::SafeLosAdd(int2 pos, int radius, float losHeight, std::vecto
 	SRectangle safeRect(0, 0, size.x, size.y);
 
 	if (safeRect.Inside(pos)) {
-		losHeight += heightmap[mapSquare]; //FIXME comment
 		squares.push_back(mapSquare);
 	}
 	for (const LosLine& line: table) {

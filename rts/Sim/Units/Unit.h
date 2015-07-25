@@ -393,9 +393,6 @@ public:
 	int airLosRadius;
 	int lastLosUpdate;
 
-	float losHeight;
-	float radarHeight;
-
 	int radarRadius;
 	int sonarRadius;
 	int jammerRadius;
