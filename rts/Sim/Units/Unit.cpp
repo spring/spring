@@ -260,7 +260,6 @@ CUnit::~CUnit()
 	}
 
 	quadField->RemoveUnit(this);
-	losHandler->RemoveUnit(this, true);
 	radarHandler->RemoveUnit(this);
 
 	modelParser->DeleteLocalModel(localModel);
@@ -649,7 +648,6 @@ void CUnit::ForcedMove(const float3& newPos)
 	eventHandler.UnitMoved(this);
 
 	quadField->MovedUnit(this);
-	losHandler->MoveUnit(this);
 	radarHandler->MoveUnit(this);
 }
 
@@ -1417,10 +1415,8 @@ void CUnit::DoSeismicPing(float pingSize)
 
 void CUnit::ChangeLos(int losRad, int airRad)
 {
-	losHandler->RemoveUnit(this);
 	losRadius = losRad;
 	airLosRadius = airRad;
-	losHandler->MoveUnit(this);
 }
 
 
@@ -1453,9 +1449,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 
 	quadField->RemoveUnit(this);
 	quads.clear();
-	losHandler->RemoveUnit(this);
 	radarHandler->RemoveUnit(this);
-	losHandler->MoveUnit(this);
 	quadField->MovedUnit(this);
 	radarHandler->MoveUnit(this);
 

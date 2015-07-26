@@ -1,11 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "LosHandler.h"
 #include "ModInfo.h"
 
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Map/ReadMap.h"
@@ -13,6 +13,7 @@
 #include "System/TimeProfiler.h"
 #include "System/Sync/HsiehHash.h"
 #include "System/creg/STL_Deque.h"
+#include "System/EventHandler.h"
 
 
 CR_BIND(LosInstance, )
@@ -76,25 +77,26 @@ CR_REG_METADATA_SUB(CLosHandler,DelayedInstance, (
 CLosHandler* losHandler;
 
 
-CLosHandler::CLosHandler() :
-	losMaps(teamHandler->ActiveAllyTeams()),
-	airLosMaps(teamHandler->ActiveAllyTeams()),
-	// airAlgo(int2(airSizeX, airSizeY), -1e6f, 15, readMap->GetMIPHeightMapSynced(airMipLevel)),
-	losMipLevel(modInfo.losMipLevel),
-	airMipLevel(modInfo.airMipLevel),
-	losDiv(SQUARE_SIZE * (1 << losMipLevel)),
-	airDiv(SQUARE_SIZE * (1 << airMipLevel)),
-	invLosDiv(1.0f / losDiv),
-	invAirDiv(1.0f / airDiv),
-	airSize(std::max(1, mapDims.mapx >> airMipLevel), std::max(1, mapDims.mapy >> airMipLevel)),
-	losSize(std::max(1, mapDims.mapx >> losMipLevel), std::max(1, mapDims.mapy >> losMipLevel)),
-	requireSonarUnderWater(),
-	losAlgo(losSize, -1e6f, 15, readMap->GetMIPHeightMapSynced(losMipLevel))
+CLosHandler::CLosHandler()
+	: CEventClient("[CLosHandler]", 271993, true)
+	, losMaps(teamHandler->ActiveAllyTeams())
+	, airLosMaps(teamHandler->ActiveAllyTeams())
+	, losMipLevel(modInfo.losMipLevel)
+	, airMipLevel(modInfo.airMipLevel)
+	, losDiv(SQUARE_SIZE * (1 << losMipLevel))
+	, airDiv(SQUARE_SIZE * (1 << airMipLevel))
+	, invLosDiv(1.0f / losDiv)
+	, invAirDiv(1.0f / airDiv)
+	, airSize(std::max(1, mapDims.mapx >> airMipLevel), std::max(1, mapDims.mapy >> airMipLevel))
+	, losSize(std::max(1, mapDims.mapx >> losMipLevel), std::max(1, mapDims.mapy >> losMipLevel))
+	, requireSonarUnderWater(modInfo.requireSonarUnderWater)
+	, losAlgo(losSize, -1e6f, 15, readMap->GetMIPHeightMapSynced(losMipLevel))
 {
 	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
 		losMaps[a].SetSize(losSize.x, losSize.y, true);
 		airLosMaps[a].SetSize(airSize.x, airSize.y, false);
 	}
+	eventHandler.AddClient(this);
 }
 
 
@@ -110,6 +112,24 @@ CLosHandler::~CLosHandler()
 }
 
 
+void CLosHandler::UnitDestroyed(const CUnit* unit, const CUnit* attacker)
+{
+	RemoveUnit(const_cast<CUnit*>(unit), true);
+}
+
+
+void CLosHandler::UnitTaken(const CUnit* unit, int oldTeam, int newTeam)
+{
+	RemoveUnit(const_cast<CUnit*>(unit));
+}
+
+
+void CLosHandler::UnitLoaded(const CUnit* unit, const CUnit* transport)
+{
+	RemoveUnit(const_cast<CUnit*>(unit));
+}
+
+
 void CLosHandler::MoveUnit(CUnit* unit)
 {
 	SCOPED_TIMER("LOSHandler::MoveUnit");
@@ -120,6 +140,8 @@ void CLosHandler::MoveUnit(CUnit* unit)
 	// globalLOS and *stopped moving* will still provide LOS at their old
 	// square *after* it is disabled (until they start moving again)
 	if (gs->globalLOS[unit->allyteam])
+		return;
+	if (unit->isDead || unit->transporter != nullptr)
 		return;
 	if (unit->losRadius <= 0 && unit->airLosRadius <= 0)
 		return;
@@ -134,7 +156,13 @@ void CLosHandler::MoveUnit(CUnit* unit)
 	const int2 baseAir = GetAirSquare(losPos);
 
 	// unchanged?
-	if (unit->los && (unit->los->basePos == baseLos) && (unit->los->baseHeight == iLosHeight)) {
+	LosInstance* uli = unit->los;
+	if (uli
+	    && (uli->basePos == baseLos)
+	    && (uli->baseHeight == iLosHeight)
+	    && (uli->losRadius == unit->losRadius)
+	    && (uli->airLosRadius == unit->airLosRadius)
+	) {
 		return;
 	}
 	FreeInstance(unit->los);
@@ -269,6 +297,10 @@ void CLosHandler::Update()
 	while (!delayQue.empty() && delayQue.front().timeoutTime < gs->frameNum) {
 		FreeInstance(delayQue.front().instance);
 		delayQue.pop_front();
+	}
+
+	for (CUnit* u: unitHandler->activeUnits) {
+		MoveUnit(u);
 	}
 }
 

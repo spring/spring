@@ -11,6 +11,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "System/type2.h"
+#include "System/EventClient.h"
 
 
 /**
@@ -94,16 +95,13 @@ public:
  * DelayedFreeInstance is called. This keeps the LosInstance (including the
  * actual sight) alive until 1.5 game seconds after the unit got killed.
  */
-class CLosHandler : public boost::noncopyable
+class CLosHandler : public boost::noncopyable, public CEventClient
 {
 	CR_DECLARE_STRUCT(CLosHandler)
 	CR_DECLARE_SUB(DelayedInstance)
 
 public:
-	void Update();
-	void MoveUnit(CUnit* unit);
-	void RemoveUnit(CUnit* unit, bool delayed = false);
-public:
+	// the Interface
 	int2 GetLosSquare(const float3 pos) const { return int2( Round(pos.x * invLosDiv), Round(pos.z * invLosDiv) ); }
 	int2 GetAirSquare(const float3 pos) const { return int2( Round(pos.x * invAirDiv), Round(pos.z * invAirDiv) ); }
 
@@ -133,7 +131,7 @@ public:
 		return (airLosMaps[allyTeam].At(GetAirSquare(pos)) != 0);
 	}
 
-
+public:
 	CLosHandler();
 	~CLosHandler();
 
@@ -151,11 +149,29 @@ public:
 
 	const bool requireSonarUnderWater;
 
+public:
+	// CEventClient interface
+	bool WantsEvent(const std::string& eventName) {
+		return (eventName == "UnitDestroyed") || (eventName == "UnitTaken") || (eventName == "UnitLoaded");
+	}
+	bool GetFullRead() const { return true; }
+	int  GetReadAllyTeam() const { return AllAccessTeam; }
+
+	void UnitDestroyed(const CUnit* unit, const CUnit* attacker) override;
+	void UnitTaken(const CUnit* unit, int oldTeam, int newTeam) override;
+	void UnitLoaded(const CUnit* unit, const CUnit* transport) override;
+
+public:
+	void Update();
+
 private:
 	static const unsigned int LOSHANDLER_MAGIC_PRIME = 2309;
 	static int GetHashNum(const CUnit* unit, const int2 baseLos, const int2 baseAirLos);
 
 	void PostLoad();
+
+	void MoveUnit(CUnit* unit);
+	void RemoveUnit(CUnit* unit, bool delayed = false);
 
 	void LosAdd(LosInstance* instance);
 	void LosRemove(LosInstance* instance);

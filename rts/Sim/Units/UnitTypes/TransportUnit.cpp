@@ -302,7 +302,6 @@ bool CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	}
 
 	unit->UnBlock();
-	losHandler->RemoveUnit(unit);
 	radarHandler->RemoveUnit(unit);
 
 	// do not remove unit from QF, otherwise projectiles

@@ -278,7 +278,6 @@ void CBasicMapDamage::UpdateLos()
 			continue;
 		}
 
-		losHandler->MoveUnit(unit);
 		radarHandler->MoveUnit(unit);
 	}
 }

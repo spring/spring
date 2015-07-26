@@ -5,7 +5,6 @@
 
 #include "MoveType.h"
 #include "Map/Ground.h"
-#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Units/Unit.h"
@@ -71,7 +70,6 @@ void AMoveType::SlowUpdate()
 				}
 			}
 
-			losHandler->MoveUnit(owner);
 			radarHandler->MoveUnit(owner);
 		}
 
