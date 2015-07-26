@@ -11,6 +11,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "System/type2.h"
+#include "System/Rectangle.h"
 #include "System/EventClient.h"
 
 
@@ -163,6 +164,7 @@ public:
 
 public:
 	void Update();
+	void UpdateHeightMapSynced(SRectangle rect);
 
 private:
 	static const unsigned int LOSHANDLER_MAGIC_PRIME = 2309;

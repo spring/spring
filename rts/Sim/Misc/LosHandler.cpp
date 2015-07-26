@@ -315,6 +315,56 @@ void CLosHandler::DelayedFreeInstance(LosInstance* instance)
 }
 
 
+void CLosHandler::UpdateHeightMapSynced(SRectangle rect)
+{
+	auto CheckOverlap = [&](LosInstance* li, SRectangle rect) -> bool {
+		int2 pos = int2(li->basePos.x * losDiv, li->basePos.y * losDiv);
+		int radius = std::max(li->losRadius * losDiv, li->airLosRadius * airDiv);
+
+		const int hw = rect.GetWidth() * SQUARE_SIZE / 2;
+		const int hh = rect.GetHeight() * SQUARE_SIZE / 2;
+
+		int2 circleDistance;
+		circleDistance.x = std::abs(pos.x - rect.x1 * SQUARE_SIZE) - hw;
+		circleDistance.y = std::abs(pos.y - rect.y1 * SQUARE_SIZE) - hh;
+
+		if (circleDistance.x > radius) { return false; }
+		if (circleDistance.y > radius) { return false; }
+		if (circleDistance.x <= 0) { return true; }
+		if (circleDistance.y <= 0) { return true; }
+
+		return (Square(circleDistance.x) + Square(circleDistance.y)) <= Square(radius);
+	};
+
+	// delete unused instances that overlap with the changed rectangle
+	for (auto it = toBeDeleted.begin(); it != toBeDeleted.end();) {
+		LosInstance* li = *it;
+		if (li->refCount > 0 || !CheckOverlap(li, rect)) {
+			++it;
+			continue;
+		}
+
+		it = toBeDeleted.erase(it);
+		auto& cont = instanceHash[li->hashNum];
+		auto jt = std::find(cont.begin(), cont.end(), li);
+		cont.erase(jt);
+		delete li;
+	}
+
+	// relos used instances
+	for (auto& bucket: instanceHash) {
+		for (LosInstance* li: bucket) {
+			if (!CheckOverlap(li, rect))
+				continue;
+
+			LosRemove(li);
+			li->losSquares.clear();
+			LosAdd(li);
+		}
+	}
+}
+
+
 bool CLosHandler::InLos(const CUnit* unit, int allyTeam) const
 {
 	// NOTE: units are treated differently than world objects in two ways:
