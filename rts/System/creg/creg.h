@@ -521,6 +521,7 @@ namespace creg {
 		creg::ClassStrong<TClass>* class_ = static_cast<creg::ClassStrong<TClass>*>(class_base_); \
 		Type* null=nullptr;						\
 		(void)null; /*suppress compiler warning if this isn't used*/	\
+		(void)class_; /*suppress compiler warning if this isn't used*/	\
 		Members; }									\
 	} static TClass##mreg;
 
@@ -537,7 +538,8 @@ namespace creg {
 	void RegisterMembers(creg::Class* class_base_) { \
 		creg::ClassStrong<TSubClass>* class_ = static_cast<creg::ClassStrong<TSubClass>*>(class_base_); \
 		Type* null=nullptr; \
-		(void)null; \
+		(void)null; /*suppress compiler warning if this isn't used*/	\
+		(void)class_; /*suppress compiler warning if this isn't used*/	\
 		Members; } \
 	} static TSuperClass##TSubClass##mreg;
 

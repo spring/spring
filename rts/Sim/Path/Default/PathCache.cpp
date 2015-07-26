@@ -23,7 +23,12 @@ CPathCache::CPathCache(int blocksX, int blocksZ)
 
 CPathCache::~CPathCache()
 {
-	LOG("[%s(%ux%u)] cacheHits=%u hitPercentage=%.0f%% numHashColls=%u maxCacheSize=%lu",
+	LOG(
+#ifdef _WIN32
+	"[%s(%ux%u)] cacheHits=%u hitPercentage=%.0f%% numHashColls=%u maxCacheSize=%I64u",
+#else
+	"[%s(%ux%u)] cacheHits=%u hitPercentage=%.0f%% numHashColls=%u maxCacheSize=%lu",
+#endif
 		__FUNCTION__, numBlocksX, numBlocksZ, numCacheHits, GetCacheHitPercentage(), numHashCollisions, maxCacheSize);
 
 	for (CachedPathConstIter iter = cachedPaths.begin(); iter != cachedPaths.end(); ++iter)
@@ -166,7 +171,11 @@ bool CPathCache::HashCollision(
 
 	if (hashColl) {
 		LOG_L(L_DEBUG,
+#ifdef _WIN32
+			"[%s][f=%d][hash=%I64u] Hash(sb=<%d,%d> gb=<%d,%d> gr=%.2f pt=%d)==Hash(sb=<%d,%d> gb=<%d,%d> gr=%.2f pt=%d)",
+#else
 			"[%s][f=%d][hash=%lu] Hash(sb=<%d,%d> gb=<%d,%d> gr=%.2f pt=%d)==Hash(sb=<%d,%d> gb=<%d,%d> gr=%.2f pt=%d)",
+#endif
 			__FUNCTION__, gs->frameNum,
 			GetHash(strtBlk, goalBlk, goalRadius, pathType),
 			ci->strtBlock.x, ci->strtBlock.y,
