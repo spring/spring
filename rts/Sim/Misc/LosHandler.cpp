@@ -132,8 +132,6 @@ void CLosHandler::UnitLoaded(const CUnit* unit, const CUnit* transport)
 
 void CLosHandler::MoveUnit(CUnit* unit)
 {
-	SCOPED_TIMER("LOSHandler::MoveUnit");
-
 	// NOTE: under normal circumstances, this only gets called if a unit
 	// has moved to a new map square since its last SlowUpdate cycle, so
 	// any units that changed position between enabling and disabling of
@@ -254,7 +252,7 @@ void CLosHandler::FreeInstance(LosInstance* instance)
 
 		if (li->hashNum >= LOSHANDLER_MAGIC_PRIME || li->hashNum < 0) {
 			LOG_L(L_WARNING,
-					"[LosHandler::FreeInstance][2] bad LOS-instance hash (%d)",
+					"[LosHandler::FreeInstance] bad LOS-instance hash (%d)",
 					li->hashNum);
 			return;
 		}
@@ -271,18 +269,6 @@ void CLosHandler::FreeInstance(LosInstance* instance)
 }
 
 
-int CLosHandler::GetHashNum(const CUnit* unit, const int2 baseLos, const int2 baseAirLos)
-{
-	boost::uint32_t hash = 127;
-	hash = HsiehHash(&unit->allyteam,  sizeof(unit->allyteam), hash);
-	hash = HsiehHash(&baseLos,         sizeof(baseLos), hash);
-	hash = HsiehHash(&baseAirLos,      sizeof(baseAirLos), hash); //FIXME
-
-	//! hash-value range is [0, LOSHANDLER_MAGIC_PRIME - 1]
-	return (hash % LOSHANDLER_MAGIC_PRIME);
-}
-
-
 void CLosHandler::AllocInstance(LosInstance* instance)
 {
 	if (instance->refCount == 0) {
@@ -292,8 +278,22 @@ void CLosHandler::AllocInstance(LosInstance* instance)
 }
 
 
+int CLosHandler::GetHashNum(const CUnit* unit, const int2 baseLos, const int2 baseAirLos)
+{
+	boost::uint32_t hash = 127;
+	hash = HsiehHash(&unit->allyteam,  sizeof(unit->allyteam), hash);
+	hash = HsiehHash(&baseLos,         sizeof(baseLos), hash);
+	hash = HsiehHash(&baseAirLos,      sizeof(baseAirLos), hash); //FIXME
+
+	// hash-value range is [0, LOSHANDLER_MAGIC_PRIME - 1]
+	return (hash % LOSHANDLER_MAGIC_PRIME);
+}
+
+
 void CLosHandler::Update()
 {
+	SCOPED_TIMER("LosHandler::Update");
+
 	while (!delayQue.empty() && delayQue.front().timeoutTime < gs->frameNum) {
 		FreeInstance(delayQue.front().instance);
 		delayQue.pop_front();
