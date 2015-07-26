@@ -314,7 +314,10 @@ struct CAdvTreeSquareDrawer : public CReadMap::IQuadDrawer
 		, cy(cy)
 		, treeDistance(treeDistance)
 		, drawDetailed(drawDetailed)
-	{}
+		, blendEnabled(false)
+	{
+		glDisable(GL_BLEND);
+	}
 
 	void ResetState() {
 		td = nullptr;
@@ -324,6 +327,8 @@ struct CAdvTreeSquareDrawer : public CReadMap::IQuadDrawer
 
 		treeDistance = 0.0f;
 		drawDetailed = false;
+		blendEnabled = false;
+		glDisable(GL_BLEND);
 	}
 
 	void DrawQuad(int x, int y);
@@ -332,6 +337,7 @@ struct CAdvTreeSquareDrawer : public CReadMap::IQuadDrawer
 	int cx, cy;
 	float treeDistance;
 	bool drawDetailed;
+	bool blendEnabled;
 };
 
 void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
@@ -385,9 +391,12 @@ void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 			glEndList();
 		}
 
-		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		glDisable(GL_BLEND);
-		glAlphaFunc(GL_GREATER, 0.5f);
+		if (blendEnabled) {
+			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+			glDisable(GL_BLEND);
+			glAlphaFunc(GL_GREATER, 0.5f);
+			blendEnabled = false;
+		}
 		glCallList(tss->dispList);
 		return;
 	}
@@ -429,15 +438,20 @@ void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 
 		if (distFactor > FADE_TREE_DIST_FACTOR) {
 			// faded far trees
-			const float alpha = 1.0f - ((distFactor - FADE_TREE_DIST_FACTOR) / (FAR_TREE_DIST_FACTOR - FADE_TREE_DIST_FACTOR));
-
-			glEnable(GL_BLEND);
-			glColor4f(1.0f, 1.0f, 1.0f, alpha);
-			glAlphaFunc(GL_GREATER, alpha * 0.5f);
+			if (!blendEnabled) {
+				const float alpha = 1.0f - ((distFactor - FADE_TREE_DIST_FACTOR) / (FAR_TREE_DIST_FACTOR - FADE_TREE_DIST_FACTOR));
+				glEnable(GL_BLEND);
+				glColor4f(1.0f, 1.0f, 1.0f, alpha);
+				glAlphaFunc(GL_GREATER, alpha * 0.5f);
+				blendEnabled = true;
+			}
 		} else {
-			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-			glDisable(GL_BLEND);
-			glAlphaFunc(GL_GREATER, 0.5f);
+			if (blendEnabled) {
+				glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+				glDisable(GL_BLEND);
+				glAlphaFunc(GL_GREATER, 0.5f);
+				blendEnabled = false;
+			}
 		}
 
 		glCallList(tss->farDispList);
