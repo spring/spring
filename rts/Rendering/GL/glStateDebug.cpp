@@ -14,57 +14,53 @@
 
 #include "System/Platform/Threading.h"
 
-#define VERIFYGL(func, type, pname, default, pstr) \
-	{ \
-		if (errorsSet.find(id + pstr) == errorsSet.end()) { \
-			type _temp; \
-			func(pname, &_temp); \
-			if (_temp != default) \
-			{ \
-				LOG_L(L_ERROR, "%s was not set correctly when %s %s: %f", pstr, AREA,  id.c_str(), (float) _temp); \
-				LOG_L(L_ERROR, "last time set here: %s", lastSet[pstr].c_str()); \
-				errorsSet.insert(id + pstr); \
-			} \
-		} \
+template<typename T, typename F>
+static void VERIFYGL(F func, GLenum pname, T defaultValue, std::string pstr, std::string area) {
+	if (CGLStateChecker::errorsSet.find(area + pstr) == CGLStateChecker::errorsSet.end()) {
+		T _temp;
+		func(pname, &_temp);
+		if (_temp != defaultValue) {
+			LOG_L(L_ERROR, "%s was not set correctly when %s: %f", pstr.c_str(), area.c_str(), (float) _temp);
+			LOG_L(L_ERROR, "last time set here: %s", CGLStateChecker::lastSet[pstr].c_str());
+			CGLStateChecker::errorsSet.insert(area + pstr);
+		}
 	}
-	
-#define VERIFYGL2(func, type, pname, default0, default1, pstr) \
-	{ \
-		if (errorsSet.find(id + pstr) == errorsSet.end()) { \
-			type _temp[2]; \
-			func(pname, _temp); \
-			if (_temp[0] != default0 || _temp[1] != default1) \
-			{ \
-				LOG_L(L_ERROR, "%s was not set correctly when %s %s: %f %f", pstr, AREA,  id.c_str(), (float) _temp[0], (float) _temp[1]); \
-				LOG_L(L_ERROR, "last time set here: %s", lastSet[pstr].c_str()); \
-				errorsSet.insert(id + pstr); \
-			} \
-		} \
+}
+
+template<typename T, typename F>
+static void VERIFYGL2(F func, GLenum pname, T default0, T default1, std::string pstr, std::string area) {
+	if (CGLStateChecker::errorsSet.find(area + pstr) == CGLStateChecker::errorsSet.end()) {
+		T _temp[4];
+		func(pname, _temp);
+		if (_temp[0] != default0 || _temp[1] != default1) {
+			LOG_L(L_ERROR, "%s was not set correctly when %s: %f %f", pstr.c_str(), area.c_str(), (float) _temp[0], (float) _temp[1]);
+			LOG_L(L_ERROR, "last time set here: %s", CGLStateChecker::lastSet[pstr].c_str());
+			CGLStateChecker::errorsSet.insert(area + pstr);
+		}
 	}
-	
-#define VERIFYGL4(func, type, pname, default0, default1, default2, default3, pstr) \
-	{ \
-		if (errorsSet.find(id + pstr) == errorsSet.end()) { \
-			type _temp[4]; \
-			func(pname, _temp); \
-			if (_temp[0] != default0 || _temp[1] != default1 || _temp[2] != default2 || _temp[3] != default3) \
-			{ \
-				LOG_L(L_ERROR, "%s was not set correctly when %s %s: %f %f %f %f", pstr, AREA,  id.c_str(), (float) _temp[0], (float) _temp[1], (float) _temp[2], (float) _temp[3]); \
-				LOG_L(L_ERROR, "last time set here: %s", lastSet[pstr].c_str()); \
-				errorsSet.insert(id + pstr); \
-			} \
-		} \
+}
+
+template<typename T, typename F>
+static void VERIFYGL4(F func, GLenum pname, T default0, T default1, T default2, T default3, std::string pstr, std::string area) {
+	if (CGLStateChecker::errorsSet.find(area + pstr) == CGLStateChecker::errorsSet.end()) {
+		T _temp[4];
+		func(pname, _temp);
+		if (_temp[0] != default0 || _temp[1] != default1 || _temp[2] != default2 || _temp[3] != default3) {
+			LOG_L(L_ERROR, "%s was not set correctly when %s: %f %f %f %f", pstr.c_str(), area.c_str(), (float) _temp[0], (float) _temp[1], (float) _temp[2], (float) _temp[3]);
+			LOG_L(L_ERROR, "last time set here: %s", CGLStateChecker::lastSet[pstr].c_str());
+			CGLStateChecker::errorsSet.insert(area + pstr);
+		}
 	}
+}
 	
+#define VERIFYGLBOOL(pname, defaultValue, area) VERIFYGL(glGetBooleanv, pname, (GLboolean) defaultValue, #pname, area)
+#define VERIFYGLBOOL4(pname, default0, default1, default2, default3, area) VERIFYGL4(glGetBooleanv, pname, (GLboolean) default0, (GLboolean) default1, (GLboolean) default2, (GLboolean) default3, #pname, area)
 
-#define VERIFYGLBOOL(pname, default) VERIFYGL(glGetBooleanv, GLboolean, pname, default, #pname)
-#define VERIFYGLBOOL4(pname, default0, default1, default2, default3) VERIFYGL4(glGetBooleanv, GLboolean, pname, default0, default1, default2, default3, #pname)
+#define VERIFYGLFLOAT(pname, defaultValue, area) VERIFYGL(glGetFloatv, pname, (GLfloat) defaultValue, #pname, area)
+#define VERIFYGLFLOAT4(pname, default0, default1, default2, default3, area) VERIFYGL4(glGetFloatv, pname, (GLfloat) default0, (GLfloat) default1, (GLfloat) default2, (GLfloat) default3, #pname, area)
 
-#define VERIFYGLFLOAT(pname, default) VERIFYGL(glGetFloatv, GLfloat, pname, default, #pname)
-#define VERIFYGLFLOAT4(pname, default0, default1, default2, default3) VERIFYGL4(glGetFloatv, GLfloat, pname, default0, default1, default2, default3, #pname)
-
-#define VERIFYGLINT(pname, default) VERIFYGL(glGetIntegerv, GLint, pname, default, #pname)
-#define VERIFYGLINT2(pname, default0, default1) VERIFYGL2(glGetIntegerv, GLint, pname, default0, default1, #pname)
+#define VERIFYGLINT(pname, defaultValue, area) VERIFYGL(glGetIntegerv, pname, (GLint) defaultValue, #pname, area)
+#define VERIFYGLINT2(pname, default0, default1, area) VERIFYGL2(glGetIntegerv, pname, (GLint) default0, (GLint) default1, #pname, area)
 
 std::map<std::string, std::string> CGLStateChecker::lastSet;
 std::set<std::string> CGLStateChecker::errorsSet;
@@ -167,86 +163,53 @@ void _wrap_glColorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean
 	glColorMask(red, green, blue, alpha);
 }
 
-CGLStateChecker::CGLStateChecker(std::string id) : id(id)
-{
-#define AREA "entering"
+void CGLStateChecker::VerifyState(std::string area) {
 	if (Threading::IsMainThread())
 	{
+		std::string _area = area + " " + id;
 		//VERIFYGLBOOL(GL_CULL_FACE, GL_FALSE)
-		VERIFYGLBOOL(GL_ALPHA_TEST, GL_FALSE)
-		VERIFYGLBOOL(GL_LIGHTING, GL_FALSE)
-		VERIFYGLBOOL(GL_SCISSOR_TEST, GL_FALSE)
-		VERIFYGLBOOL(GL_STENCIL_TEST, GL_FALSE)
+		VERIFYGLBOOL(GL_ALPHA_TEST, GL_FALSE, _area);
+		VERIFYGLBOOL(GL_LIGHTING, GL_FALSE, _area);
+		VERIFYGLBOOL(GL_SCISSOR_TEST, GL_FALSE, _area);
+		VERIFYGLBOOL(GL_STENCIL_TEST, GL_FALSE, _area);
 		// VERIFYGLBOOL(GL_TEXTURE_2D, GL_FALSE);
 		// VERIFYGLBOOL(GL_TEXTURE_GEN_S, GL_FALSE);
 		// VERIFYGLBOOL(GL_TEXTURE_GEN_T, GL_FALSE);
 		// VERIFYGLBOOL(GL_TEXTURE_GEN_R, GL_FALSE);
 		// VERIFYGLBOOL(GL_TEXTURE_GEN_Q, GL_FALSE);
-		VERIFYGLINT(GL_STENCIL_WRITEMASK, ~0)
-		VERIFYGLINT2(GL_POLYGON_MODE, GL_FILL, GL_FILL)
-		VERIFYGLBOOL(GL_POLYGON_OFFSET_FILL, GL_FALSE)
-		VERIFYGLBOOL(GL_POLYGON_OFFSET_LINE, GL_FALSE)
-		VERIFYGLBOOL(GL_POLYGON_OFFSET_POINT, GL_FALSE)
-		VERIFYGLBOOL(GL_LINE_STIPPLE, GL_FALSE)
-		VERIFYGLBOOL(GL_CLIP_PLANE0, GL_FALSE)
-		VERIFYGLBOOL(GL_CLIP_PLANE1, GL_FALSE)
-		VERIFYGLBOOL(GL_CLIP_PLANE2, GL_FALSE)
-		VERIFYGLBOOL(GL_CLIP_PLANE3, GL_FALSE)
-		VERIFYGLBOOL(GL_CLIP_PLANE4, GL_FALSE)
-		VERIFYGLBOOL(GL_CLIP_PLANE5, GL_FALSE)
-		VERIFYGLFLOAT(GL_LINE_WIDTH, 1.0f)
-		VERIFYGLFLOAT(GL_POINT_SIZE, 1.0f)
-		VERIFYGLFLOAT4(GL_CURRENT_COLOR, 1.0f, 1.0f, 1.0f, 1.0f)
-		VERIFYGLBOOL4(GL_COLOR_WRITEMASK, GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE)
-		VERIFYGLBOOL(GL_DEPTH_WRITEMASK, GL_TRUE)
-		VERIFYGLINT(GL_DEPTH_FUNC, GL_LEQUAL)
-		VERIFYGLINT(GL_BLEND_SRC_RGB, GL_SRC_ALPHA)
-		VERIFYGLINT(GL_BLEND_SRC_ALPHA, GL_SRC_ALPHA)
-		VERIFYGLINT(GL_BLEND_DST_RGB, GL_ONE_MINUS_SRC_ALPHA)
-		VERIFYGLINT(GL_BLEND_DST_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+		VERIFYGLINT(GL_STENCIL_WRITEMASK, ~0, _area);
+		VERIFYGLINT2(GL_POLYGON_MODE, GL_FILL, GL_FILL, _area);
+		VERIFYGLBOOL(GL_POLYGON_OFFSET_FILL, GL_FALSE, _area);
+		VERIFYGLBOOL(GL_POLYGON_OFFSET_LINE, GL_FALSE, _area);
+		VERIFYGLBOOL(GL_POLYGON_OFFSET_POINT, GL_FALSE, _area);
+		VERIFYGLBOOL(GL_LINE_STIPPLE, GL_FALSE, _area);
+		VERIFYGLBOOL(GL_CLIP_PLANE0, GL_FALSE, _area);
+		VERIFYGLBOOL(GL_CLIP_PLANE1, GL_FALSE, _area);
+		VERIFYGLBOOL(GL_CLIP_PLANE2, GL_FALSE, _area);
+		VERIFYGLBOOL(GL_CLIP_PLANE3, GL_FALSE, _area);
+		VERIFYGLBOOL(GL_CLIP_PLANE4, GL_FALSE, _area);
+		VERIFYGLBOOL(GL_CLIP_PLANE5, GL_FALSE, _area);
+		VERIFYGLFLOAT(GL_LINE_WIDTH, 1.0f, _area);
+		VERIFYGLFLOAT(GL_POINT_SIZE, 1.0f, _area);
+		VERIFYGLFLOAT4(GL_CURRENT_COLOR, 1.0f, 1.0f, 1.0f, 1.0f, _area);
+		VERIFYGLBOOL4(GL_COLOR_WRITEMASK, GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE, _area);
+		VERIFYGLBOOL(GL_DEPTH_WRITEMASK, GL_TRUE, _area);
+		VERIFYGLINT(GL_DEPTH_FUNC, GL_LEQUAL, _area);
+		VERIFYGLINT(GL_BLEND_SRC_RGB, GL_SRC_ALPHA, _area);
+		VERIFYGLINT(GL_BLEND_SRC_ALPHA, GL_SRC_ALPHA, _area);
+		VERIFYGLINT(GL_BLEND_DST_RGB, GL_ONE_MINUS_SRC_ALPHA, _area);
+		VERIFYGLINT(GL_BLEND_DST_ALPHA, GL_ONE_MINUS_SRC_ALPHA, _area);
 	}
-#undef AREA
+}
+
+CGLStateChecker::CGLStateChecker(std::string id) : id(id)
+{
+	VerifyState("entering");
 }
 
 CGLStateChecker::~CGLStateChecker()
 {
-#define AREA "exiting"
-	if (Threading::IsMainThread())
-	{
-		//VERIFYGLBOOL(GL_CULL_FACE, GL_FALSE)
-		VERIFYGLBOOL(GL_ALPHA_TEST, GL_FALSE)
-		VERIFYGLBOOL(GL_LIGHTING, GL_FALSE)
-		VERIFYGLBOOL(GL_SCISSOR_TEST, GL_FALSE)
-		VERIFYGLBOOL(GL_STENCIL_TEST, GL_FALSE)
-		// VERIFYGLBOOL(GL_TEXTURE_2D, GL_FALSE);
-		// VERIFYGLBOOL(GL_TEXTURE_GEN_S, GL_FALSE);
-		// VERIFYGLBOOL(GL_TEXTURE_GEN_T, GL_FALSE);
-		// VERIFYGLBOOL(GL_TEXTURE_GEN_R, GL_FALSE);
-		// VERIFYGLBOOL(GL_TEXTURE_GEN_Q, GL_FALSE);
-		VERIFYGLINT(GL_STENCIL_WRITEMASK, ~0)
-		VERIFYGLINT2(GL_POLYGON_MODE, GL_FILL, GL_FILL)
-		VERIFYGLBOOL(GL_POLYGON_OFFSET_FILL, GL_FALSE)
-		VERIFYGLBOOL(GL_POLYGON_OFFSET_LINE, GL_FALSE)
-		VERIFYGLBOOL(GL_POLYGON_OFFSET_POINT, GL_FALSE)
-		VERIFYGLBOOL(GL_LINE_STIPPLE, GL_FALSE)
-		VERIFYGLBOOL(GL_CLIP_PLANE0, GL_FALSE)
-		VERIFYGLBOOL(GL_CLIP_PLANE1, GL_FALSE)
-		VERIFYGLBOOL(GL_CLIP_PLANE2, GL_FALSE)
-		VERIFYGLBOOL(GL_CLIP_PLANE3, GL_FALSE)
-		VERIFYGLBOOL(GL_CLIP_PLANE4, GL_FALSE)
-		VERIFYGLBOOL(GL_CLIP_PLANE5, GL_FALSE)
-		VERIFYGLFLOAT(GL_LINE_WIDTH, 1.0f)
-		VERIFYGLFLOAT(GL_POINT_SIZE, 1.0f)
-		VERIFYGLFLOAT4(GL_CURRENT_COLOR, 1.0f, 1.0f, 1.0f, 1.0f)
-		VERIFYGLBOOL4(GL_COLOR_WRITEMASK, GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE)
-		VERIFYGLBOOL(GL_DEPTH_WRITEMASK, GL_TRUE)
-		VERIFYGLINT(GL_DEPTH_FUNC, GL_LEQUAL)
-		VERIFYGLINT(GL_BLEND_SRC_RGB, GL_SRC_ALPHA)
-		VERIFYGLINT(GL_BLEND_SRC_ALPHA, GL_SRC_ALPHA)
-		VERIFYGLINT(GL_BLEND_DST_RGB, GL_ONE_MINUS_SRC_ALPHA)
-		VERIFYGLINT(GL_BLEND_DST_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-	}
-#undef AREA
+	VerifyState("exiting");
 }
 
 #endif //DEBUG_GLSTATE

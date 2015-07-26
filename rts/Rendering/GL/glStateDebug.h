@@ -89,6 +89,8 @@ public:
 	const std::string id;
 	static std::map<std::string, std::string> lastSet;
 	static std::set<std::string> errorsSet;
+private:
+	void VerifyState(std::string area);
 };
 
 #endif // DEBUG_GLSTATE
