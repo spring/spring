@@ -47,6 +47,7 @@ void CUnitHandler::PostLoad()
 {
 	// reset any synced stuff that is not saved
 	activeSlowUpdateUnit = 0;
+	activeUpdateUnit = 0;
 }
 
 
@@ -74,6 +75,7 @@ CUnitHandler::CUnitHandler()
 	idPool.Expand(0, units.size());
 
 	activeSlowUpdateUnit = 0;
+	activeUpdateUnit = 0;
 	airBaseHandler = new CAirBaseHandler();
 }
 
@@ -98,9 +100,13 @@ void CUnitHandler::InsertActiveUnit(CUnit* unit)
 	assert(unit->id < units.size());
 	assert(units[unit->id] == NULL);
 
+	assert(insertionPos >= 0 && insertionPos <= activeUnits.size());
 	activeUnits.insert(activeUnits.begin() + insertionPos, unit);
 	if (insertionPos <= activeSlowUpdateUnit) {
 		++activeSlowUpdateUnit;
+	}
+	if (insertionPos <= activeUpdateUnit) {
+		++activeUpdateUnit;
 	}
 	units[unit->id] = unit;
 }
@@ -130,7 +136,6 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 {
 	//we want to call RenderUnitDestroyed while the unit is still valid
 	eventHandler.RenderUnitDestroyed(delUnit);
-	
 	for (int i = 0; i < activeUnits.size();++i) {
 		if (activeUnits[i] != delUnit)
 			continue;
@@ -145,6 +150,8 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 		if (activeSlowUpdateUnit > i) {
 			--activeSlowUpdateUnit;
 		}
+		
+		assert(activeUnits.size() == i || activeUnits[i] != delUnit);
 		
 		unitsByDefs[delTeam][delType].erase(delUnit);
 		idPool.FreeID(delUnit->id, true);
@@ -202,8 +209,9 @@ void CUnitHandler::Update()
 
 	{
 		SCOPED_TIMER("Unit::MoveType::Update");
-
-		for (CUnit* unit: activeUnits) {
+		
+		for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size();++activeUpdateUnit) {
+			CUnit *unit = activeUnits[activeUpdateUnit];
 			AMoveType* moveType = unit->moveType;
 
 			UNIT_SANITY_CHECK(unit);
@@ -218,12 +226,14 @@ void CUnitHandler::Update()
 			}
 
 			UNIT_SANITY_CHECK(unit);
+			assert(activeUnits[activeUpdateUnit] == unit);
 		}
 	}
 
 	{
 		// Delete dead units
-		for (CUnit* unit: activeUnits) {
+		for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size();++activeUpdateUnit) {
+			CUnit *unit = activeUnits[activeUpdateUnit];
 			if (!unit->deathScriptFinished)
 				continue;
 
@@ -233,12 +243,13 @@ void CUnitHandler::Update()
 			// (KU returns early if isDead)
 			unit->KillUnit(NULL, false, true);
 			DeleteUnit(unit);
+			assert(activeUnits[activeUpdateUnit] == unit);
 		}
 	}
 
 	{
 		SCOPED_TIMER("Unit::UpdatePieceMatrices");
-
+		//Shouldn't insert new units
 		for (CUnit* unit: activeUnits) {
 			// UnitScript only applies piece-space transforms so
 			// we apply the forward kinematics update separately
@@ -273,22 +284,26 @@ void CUnitHandler::Update()
 	{
 		SCOPED_TIMER("Unit::Update");
 
-		for (CUnit* unit: activeUnits) {
+		for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size();++activeUpdateUnit) {
+			CUnit *unit = activeUnits[activeUpdateUnit];
 			UNIT_SANITY_CHECK(unit);
 			unit->Update();
 			UNIT_SANITY_CHECK(unit);
+			assert(activeUnits[activeUpdateUnit] == unit);
 		}
 	}
 
 	{
 		SCOPED_TIMER("Unit::Weapon::Update");
 
-		for (CUnit* unit: activeUnits) {
+		for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size();++activeUpdateUnit) {
+			CUnit *unit = activeUnits[activeUpdateUnit];
 			if (unit->CanUpdateWeapons()) {
 				for (CWeapon* w: unit->weapons) {
 					w->Update();
 				}
 			}
+			assert(activeUnits[activeUpdateUnit] == unit);
 		}
 	}
 }

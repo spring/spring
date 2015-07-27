@@ -66,6 +66,7 @@ private:
 
 	std::vector<CUnit*> unitsToBeRemoved;              ///< units that will be removed at start of next update
 	size_t activeSlowUpdateUnit;  ///< first unit of batch that will be SlowUpdate'd this frame
+	size_t activeUpdateUnit;  ///< first unit of batch that will be SlowUpdate'd this frame
 
 	///< global unit-limit (derived from the per-team limit)
 	///< units.size() is equal to this and constant at runtime
