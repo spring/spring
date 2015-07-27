@@ -99,7 +99,7 @@ void CUnitHandler::InsertActiveUnit(CUnit* unit)
 	assert(units[unit->id] == NULL);
 
 	activeUnits.insert(activeUnits.begin() + insertionPos, unit);
-	if (insertionPos < activeSlowUpdateUnit) {
+	if (insertionPos <= activeSlowUpdateUnit) {
 		++activeSlowUpdateUnit;
 	}
 	units[unit->id] = unit;
@@ -142,7 +142,7 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 		teamHandler->Team(delTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
 		activeUnits.erase(activeUnits.begin() + i);
 		
-		if (activeSlowUpdateUnit < i) {
+		if (activeSlowUpdateUnit > i) {
 			--activeSlowUpdateUnit;
 		}
 		
@@ -249,7 +249,7 @@ void CUnitHandler::Update()
 
 	{
 		SCOPED_TIMER("Unit::SlowUpdate");
-
+		assert(activeSlowUpdateUnit >= 0);
 		// reset the iterator every <UNIT_SLOWUPDATE_RATE> frames
 		if ((gs->frameNum % UNIT_SLOWUPDATE_RATE) == 0) {
 			activeSlowUpdateUnit = 0;
