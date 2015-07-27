@@ -225,9 +225,8 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 			}
 		} else {
 			// all units
-			std::list<CUnit*>* au=&unitHandler->activeUnits;
-			for (std::list<CUnit*>::iterator ui=au->begin();ui!=au->end();++ui){
-				selection.push_back(*ui);
+			for (CUnit *unit: unitHandler->activeUnits){
+				selection.push_back(unit);
 			}
 		}
 	} else if(s=="Visible"){
@@ -241,10 +240,9 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 			}
 		} else {
 		  // all units in viewport
-			std::list<CUnit*>* au=&unitHandler->activeUnits;
-			for (std::list<CUnit*>::iterator ui=au->begin();ui!=au->end();++ui){
-				if (camera->InView((*ui)->midPos,(*ui)->radius)){
-					selection.push_back(*ui);
+			for (CUnit *unit: unitHandler->activeUnits){
+				if (camera->InView(unit->midPos,unit->radius)){
+					selection.push_back(unit);
 				}
 			}
 		}
@@ -277,14 +275,13 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 			}
 		} else {
 		  // all units in mouse range
-			std::list<CUnit*>* au=&unitHandler->activeUnits;
-			for(std::list<CUnit*>::iterator ui=au->begin();ui!=au->end();++ui){
-				float3 up = (*ui)->pos;
+			for(CUnit *unit: unitHandler->activeUnits){
+				float3 up = unit->pos;
 				if (cylindrical) {
 					up.y = 0;
 				}
 				if(mp.SqDistance(up)<Square(maxDist)){
-					selection.push_back(*ui);
+					selection.push_back(unit);
 				}
 			}
 		}

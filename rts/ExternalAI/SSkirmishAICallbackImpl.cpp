@@ -3924,9 +3924,7 @@ EXPORT(int) skirmishAiCallback_getTeamUnits(int skirmishAIId, int* unitIds, int 
 	int a = 0;
 
 	const int teamId = skirmishAIId_teamId[skirmishAIId];
-	for (std::list<CUnit*>::iterator ui = unitHandler->activeUnits.begin();
-			ui != unitHandler->activeUnits.end(); ++ui) {
-		CUnit* u = *ui;
+	for (CUnit *u: unitHandler->activeUnits) {
 
 		if (u->team == teamId) {
 			if (a < unitIds_sizeMax) {

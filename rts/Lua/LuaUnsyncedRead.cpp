@@ -65,8 +65,6 @@
 	#include "System/Sound/OpenAL/EFXPresets.h"
 #endif
 
-#include <set>
-#include <list>
 #include <cctype>
 
 #include <SDL_clipboard.h>

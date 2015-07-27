@@ -201,7 +201,7 @@ static inline bool unit_IsEnemy(CUnit* unit) {
 int CAICheats::GetEnemyUnits(int* unitIds, int unitIds_max)
 {
 	myAllyTeamId = teamHandler->AllyTeam(ai->GetTeamId());
-	return FilterUnitsList(unitHandler->activeUnits, unitIds, unitIds_max, &unit_IsEnemy);
+	return FilterUnitsVector(unitHandler->activeUnits, unitIds, unitIds_max, &unit_IsEnemy);
 }
 
 int CAICheats::GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
@@ -213,7 +213,7 @@ int CAICheats::GetEnemyUnits(int* unitIds, const float3& pos, float radius, int 
 
 int CAICheats::GetNeutralUnits(int* unitIds, int unitIds_max)
 {
-	return FilterUnitsList(unitHandler->activeUnits, unitIds, unitIds_max, &unit_IsNeutral);
+	return FilterUnitsVector(unitHandler->activeUnits, unitIds, unitIds_max, &unit_IsNeutral);
 }
 
 int CAICheats::GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)

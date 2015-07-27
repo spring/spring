@@ -69,7 +69,6 @@
 #include "System/Util.h"
 
 #include <set>
-#include <list>
 #include <map>
 #include <cctype>
 
@@ -1590,15 +1589,15 @@ int LuaSyncedRead::GetAllUnits(lua_State* L)
 	std::list<CUnit*>::const_iterator uit;
 	if (CLuaHandle::GetHandleFullRead(L)) {
 		lua_createtable(L, unitHandler->activeUnits.size(), 0);
-		for (uit = unitHandler->activeUnits.begin(); uit != unitHandler->activeUnits.end(); ++uit) {
-			lua_pushnumber(L, (*uit)->id);
+		for (CUnit *unit: unitHandler->activeUnits) {
+			lua_pushnumber(L, unit->id);
 			lua_rawseti(L, -2, count++);
 		}
 	} else {
 		lua_newtable(L);
-		for (uit = unitHandler->activeUnits.begin(); uit != unitHandler->activeUnits.end(); ++uit) {
-			if (IsUnitVisible(L, *uit)) {
-				lua_pushnumber(L, (*uit)->id);
+		for (CUnit *unit: unitHandler->activeUnits) {
+			if (IsUnitVisible(L, unit)) {
+				lua_pushnumber(L, unit->id);
 				lua_rawseti(L, -2, count++);
 			}
 		}

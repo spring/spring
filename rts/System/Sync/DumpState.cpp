@@ -83,18 +83,17 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 	if ((gs->frameNum % gFramePeriod) != 0) { return; }
 
 	// we only care about the synced projectile data here
-	const std::list<CUnit*>& units = unitHandler->activeUnits;
+	const std::vector<CUnit*>& units = unitHandler->activeUnits;
 	const CFeatureSet& features = featureHandler->GetActiveFeatures();
 	      ProjectileContainer& projectiles = projectileHandler->syncedProjectiles;
 
-	std::list<CUnit*>::const_iterator unitsIt;
 	CFeatureSet::const_iterator featuresIt;
 	ProjectileContainer::iterator projectilesIt;
 	std::vector<LocalModelPiece*>::const_iterator piecesIt;
 	std::vector<CWeapon*>::const_iterator weaponsIt;
 
 	file << "frame: " << gs->frameNum << ", seed: " << gs->GetRandSeed() << "\n";
-	file << "\tunits: " << units.size() << "\n";
+	file << "\tunits: " << unitHandler->activeUnits.size() << "\n";
 
 	#define DUMP_UNIT_DATA
 	#define DUMP_UNIT_PIECE_DATA
@@ -107,8 +106,7 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 	// #define DUMP_ALLYTEAM_DATA
 
 	#ifdef DUMP_UNIT_DATA
-	for (unitsIt = units.begin(); unitsIt != units.end(); ++unitsIt) {
-		const CUnit* u = *unitsIt;
+	for (CUnit* u: units) {
 		const std::vector<CWeapon*>& weapons = u->weapons;
 		const LocalModel* lm = u->localModel;
 		const std::vector<LocalModelPiece*>& pieces = lm->pieces;

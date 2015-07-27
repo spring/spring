@@ -46,7 +46,7 @@ CR_REG_METADATA(CUnitHandler, (
 void CUnitHandler::PostLoad()
 {
 	// reset any synced stuff that is not saved
-	activeSlowUpdateUnit = activeUnits.end();
+	activeSlowUpdateUnit = 0;
 }
 
 
@@ -73,17 +73,17 @@ CUnitHandler::CUnitHandler()
 	// (furthermore all id's are treated equally, none have special status)
 	idPool.Expand(0, units.size());
 
-	activeSlowUpdateUnit = activeUnits.end();
+	activeSlowUpdateUnit = 0;
 	airBaseHandler = new CAirBaseHandler();
 }
 
 
 CUnitHandler::~CUnitHandler()
 {
-	for (std::list<CUnit*>::iterator usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
+	for (CUnit* u: activeUnits) {
 		// ~CUnit dereferences featureHandler which is destroyed already
-		(*usi)->delayedWreckLevel = -1;
-		delete (*usi);
+		u->delayedWreckLevel = -1;
+		delete u;
 	}
 
 	delete airBaseHandler;
@@ -91,24 +91,17 @@ CUnitHandler::~CUnitHandler()
 
 void CUnitHandler::InsertActiveUnit(CUnit* unit)
 {
-	std::list<CUnit*>::iterator ui = activeUnits.begin();
-
-	if (ui != activeUnits.end()) {
-		// randomize this to make the slow-update order random (good if one
-		// builds say many buildings at once and then many mobile ones etc)
-		const unsigned int insertionPos = gs->randFloat() * activeUnits.size();
-
-		for (unsigned int n = 0; n < insertionPos; ++n) {
-			++ui;
-		}
-	}
-
+	const unsigned int insertionPos = gs->randFloat() * activeUnits.size();
+	
 	idPool.AssignID(unit);
 
 	assert(unit->id < units.size());
 	assert(units[unit->id] == NULL);
 
-	activeUnits.insert(ui, unit);
+	activeUnits.insert(activeUnits.begin() + insertionPos, unit);
+	if (insertionPos < activeSlowUpdateUnit) {
+		++activeSlowUpdateUnit;
+	}
 	units[unit->id] = unit;
 }
 
@@ -137,21 +130,22 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 {
 	//we want to call RenderUnitDestroyed while the unit is still valid
 	eventHandler.RenderUnitDestroyed(delUnit);
-
-	if (activeSlowUpdateUnit != activeUnits.end() && delUnit == *activeSlowUpdateUnit) {
-		++activeSlowUpdateUnit;
-	}
-
-	for (auto usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
-		if (*usi != delUnit)
+	
+	for (int i = 0; i < activeUnits.size();++i) {
+		if (activeUnits[i] != delUnit)
 			continue;
 
+			
 		int delTeam = delUnit->team;
 		int delType = delUnit->unitDef->id;
 
 		teamHandler->Team(delTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
-
-		activeUnits.erase(usi);
+		activeUnits.erase(activeUnits.begin() + i);
+		
+		if (activeSlowUpdateUnit < i) {
+			--activeSlowUpdateUnit;
+		}
+		
 		unitsByDefs[delTeam][delType].erase(delUnit);
 		idPool.FreeID(delUnit->id, true);
 
@@ -160,17 +154,17 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 		CSolidObject::SetDeletingRefID(delUnit->id);
 		delete delUnit;
 		CSolidObject::SetDeletingRefID(-1);
-
+		
 		break;
 	}
 
 #ifdef _DEBUG
-	for (auto usi = activeUnits.begin(); usi != activeUnits.end(); /* no post-op */) {
-		if (*usi == delUnit) {
+	for (int i = 0; i < activeUnits.size();) {
+		if (activeUnits[i] == delUnit) {
 			LOG_L(L_ERROR, "Duplicated unit found in active units on erase");
-			usi = activeUnits.erase(usi);
+			activeUnits.erase(activeUnits.begin() + i);
 		} else {
-			++usi;
+			++i;
 		}
 	}
 #endif
@@ -258,14 +252,14 @@ void CUnitHandler::Update()
 
 		// reset the iterator every <UNIT_SLOWUPDATE_RATE> frames
 		if ((gs->frameNum % UNIT_SLOWUPDATE_RATE) == 0) {
-			activeSlowUpdateUnit = activeUnits.begin();
+			activeSlowUpdateUnit = 0;
 		}
 
 		// stagger the SlowUpdate's
 		unsigned int n = (activeUnits.size() / UNIT_SLOWUPDATE_RATE) + 1;
 
-		for (; activeSlowUpdateUnit != activeUnits.end() && n != 0; ++activeSlowUpdateUnit) {
-			CUnit* unit = *activeSlowUpdateUnit;
+		for (; activeSlowUpdateUnit < activeUnits.size() && n != 0; ++activeSlowUpdateUnit) {
+			CUnit* unit = activeUnits[activeSlowUpdateUnit];
 
 			UNIT_SANITY_CHECK(unit);
 			unit->SlowUpdate();

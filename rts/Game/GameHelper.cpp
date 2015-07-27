@@ -1261,11 +1261,8 @@ Command CGameHelper::GetBuildCommand(const float3& pos, const float3& dir) {
 
 	CCommandQueue::iterator ci;
 
-	const std::list<CUnit*>& units = unitHandler->activeUnits;
-	      std::list<CUnit*>::const_iterator ui;
 
-	for (ui = units.begin(); ui != units.end(); ++ui) {
-		const CUnit* unit = *ui;
+	for (CUnit *unit: unitHandler->activeUnits) {
 
 		if (unit->team != gu->myTeam) {
 			continue;
