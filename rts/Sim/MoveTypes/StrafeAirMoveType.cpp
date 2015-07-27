@@ -432,14 +432,11 @@ bool CStrafeAirMoveType::Update()
 	// (the kill-on-impact code is not reached in that case)
 	if ((owner->IsStunned() && !owner->IsCrashing()) || owner->beingBuilt) {
 		UpdateAirPhysics(0.0f * lastRudderPos, lastAileronPos, lastElevatorPos, 0.0f, ZeroVector);
-		return (HandleCollisions(collide && !owner->beingBuilt && (padStatus == PAD_STATUS_FLYING) && (aircraftState != AIRCRAFT_TAKEOFF)));
+		return (HandleCollisions(collide && !owner->beingBuilt && (aircraftState != AIRCRAFT_TAKEOFF)));
 	}
 
-	// somewhat hackish, but planes that have attack orders
-	// while no pad is available would otherwise continue
-	// attacking even if out of fuel
 	const bool outOfFuel = (owner->currentFuel <= 0.0f && owner->unitDef->maxFuel > 0.0f);
-	const bool allowAttack = (reservedPad == NULL && !outOfFuel);
+	const bool allowAttack = !outOfFuel;
 
 	if (aircraftState != AIRCRAFT_CRASHING) {
 		if (owner->UnderFirstPersonControl()) {
@@ -458,25 +455,8 @@ bool CStrafeAirMoveType::Update()
 			UpdateAirPhysics(0.0f, aileron, elevator, 1.0f, owner->frontdir);
 			maneuverState = MANEUVER_FLY_STRAIGHT;
 
-			return (HandleCollisions(collide && !owner->beingBuilt && (padStatus == PAD_STATUS_FLYING) && (aircraftState != AIRCRAFT_TAKEOFF)));
+			return (HandleCollisions(collide && !owner->beingBuilt && (aircraftState != AIRCRAFT_TAKEOFF)));
 
-		}
-
-		if (reservedPad != NULL) {
-			MoveToRepairPad();
-		} else {
-			if (outOfFuel && airBaseHandler->HaveAirBase(owner->allyteam)) {
-				// out of fuel, keep us in the air to reach our landing
-				// goalPos (which is/will be set to a pad's position by
-				// MobileCAI) so long as there is at least one friendly
-				// base
-				//
-				// NOTE:
-				//   technically need to pass minAirBasePower as well,
-				//   otherwise aircraft might keep flying and never be
-				//   serviced
-				SetState(AIRCRAFT_FLYING);
-			}
 		}
 	}
 
@@ -558,7 +538,7 @@ bool CStrafeAirMoveType::Update()
 	if (lastSpd == ZeroVector && owner->speed != ZeroVector) { owner->script->StartMoving(false); }
 	if (lastSpd != ZeroVector && owner->speed == ZeroVector) { owner->script->StopMoving(); }
 
-	return (HandleCollisions(collide && !owner->beingBuilt && (padStatus == PAD_STATUS_FLYING) && (aircraftState != AIRCRAFT_TAKEOFF)));
+	return (HandleCollisions(collide && !owner->beingBuilt && (aircraftState != AIRCRAFT_TAKEOFF)));
 }
 
 
@@ -586,7 +566,7 @@ bool CStrafeAirMoveType::HandleCollisions(bool checkCollisions) {
 
 		bool hitBuilding = false;
 
-		// check for collisions if not on a pad, not being built, or not taking off
+		// check for collisions if not being built or not taking off
 		if (checkCollisions) {
 			const vector<CUnit*>& nearUnits = quadField->GetUnitsExact(pos, owner->radius + 6);
 
@@ -817,16 +797,7 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	//   turnRadius is often way too small, but cannot calculate one
 	//   because we have no turnRate (and unitDef->turnRate can be 0)
 	//   --> would lead to infinite circling without adjusting goal
-	if (reservedPad != NULL) {
-		const float3& padPos = (reservedPad->GetUnit())->pos;
-		const float3  padVec = padPos - pos;
-
-		if (padVec.dot(frontdir) < -0.1f && padVec.SqLength2D() < Square(TurnRadius(turnRadius, spd.w))) {
-			SetGoal(pos + frontdir * TurnRadius(turnRadius, spd.w));
-		} else {
-			SetGoal(padPos);
-		}
-	}
+	
 
 	const float3 goalVec = goalPos - pos;
 
@@ -978,9 +949,9 @@ void CStrafeAirMoveType::UpdateLanding()
 {
 	const float3& pos = owner->pos;
 
-	// if not landing on a pad, use higher brake-rate
+	// use higher brake-rate
 	// to overshoot less (see the fixme comment below)
-	const float modDecRate = decRate * (1 + (reservedPad == NULL));
+	const float modDecRate = decRate * 2;
 
 	SyncedFloat3& rightdir = owner->rightdir;
 	SyncedFloat3& frontdir = owner->frontdir;
@@ -1015,7 +986,7 @@ void CStrafeAirMoveType::UpdateLanding()
 
 	// FIXME:
 	//   only gets called AFTER we have already passed our goal (see ::StopMoving)
-	//   this means we will always overshoot any landing position (or repair-pad)
+	//   this means we will always overshoot any landing position
 	//   FindLandingPos() picks the spot at (pos + dir * brakingDistance) for us
 	const float3 reservedLandingPosDir = reservedLandingPos - pos;
 	const float3 wantedVelocity = GetWantedLandingVelocity(owner->speed, owner->frontdir, reservedLandingPosDir, modDecRate, altitudeRate);
@@ -1129,7 +1100,7 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 	//   stunned, so the same applies there
 	if (modInfo.allowAircraftToHitGround) {
 		const bool groundContact = (gHeight > (owner->midPos.y - owner->radius));
-		const bool handleContact = (aircraftState != AIRCRAFT_LANDED && aircraftState != AIRCRAFT_TAKEOFF && padStatus == PAD_STATUS_FLYING);
+		const bool handleContact = (aircraftState != AIRCRAFT_LANDED && aircraftState != AIRCRAFT_TAKEOFF);
 
 		if (groundContact && handleContact) {
 			owner->Move(UpVector * (gHeight - (owner->midPos.y - owner->radius) + 0.01f), true);

@@ -5,7 +5,6 @@ add_library(engineSim STATIC
 		"${CMAKE_CURRENT_SOURCE_DIR}/Features/Feature.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Features/FeatureDef.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Features/FeatureHandler.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/AirBaseHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/AllyTeam.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/CategoryHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/CollisionHandler.cpp"

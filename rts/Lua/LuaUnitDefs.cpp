@@ -885,8 +885,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("maxFuel",    ud.maxFuel);
 	ADD_FLOAT("refuelTime", ud.refuelTime);
 
-	ADD_FLOAT("minAirBasePower", ud.minAirBasePower);
-
 //	unsigned char* yardmapLevels[6];
 //	unsigned char* yardmaps[4];			//Iterations of the Ymap for building rotation
 

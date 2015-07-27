@@ -2557,13 +2557,11 @@ int LuaSyncedRead::GetUnitStates(lua_State* L)
 		const CHoverAirMoveType* hAMT = dynamic_cast<const CHoverAirMoveType*>(mt);
 		if (hAMT) {
 			HSTR_PUSH_BOOL  (L, "autoland",        hAMT->autoLand);
-			HSTR_PUSH_NUMBER(L, "autorepairlevel", hAMT->GetRepairBelowHealth());
 		} else {
 			const CStrafeAirMoveType* sAMT = dynamic_cast<const CStrafeAirMoveType*>(mt);
 			if (sAMT) {
 				HSTR_PUSH_BOOL  (L, "autoland",        sAMT->autoLand);
 				HSTR_PUSH_BOOL  (L, "loopbackattack",  sAMT->loopbackAttack);
-				HSTR_PUSH_NUMBER(L, "autorepairlevel", sAMT->GetRepairBelowHealth());
 			}
 		}
 	}
@@ -3813,13 +3811,6 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State* L)
 		HSTR_PUSH_NUMBER(L, "pathFailures", 0);
 
 		return 1;
-	}
-
-	const AAirMoveType* aamt = dynamic_cast<AAirMoveType*>(unit->moveType);
-
-	if (aamt != NULL) {
-		HSTR_PUSH_NUMBER(L, "padStatus", aamt->GetPadStatus());
-		HSTR_PUSH_NUMBER(L, "repairBelowHealth", aamt->GetRepairBelowHealth());
 	}
 
 	const CHoverAirMoveType* hAMT = dynamic_cast<CHoverAirMoveType*>(unit->moveType);

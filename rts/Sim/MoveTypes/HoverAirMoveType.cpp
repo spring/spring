@@ -842,7 +842,7 @@ void CHoverAirMoveType::UpdateAirPhysics()
 	// UpdateAirPhysics() so we ignore terrain while we are in those states
 	if (modInfo.allowAircraftToHitGround) {
 		const bool groundContact = (curAbsHeight > (owner->midPos.y - owner->radius));
-		const bool handleContact = (aircraftState != AIRCRAFT_LANDED && aircraftState != AIRCRAFT_TAKEOFF && padStatus == PAD_STATUS_FLYING);
+		const bool handleContact = (aircraftState != AIRCRAFT_LANDED && aircraftState != AIRCRAFT_TAKEOFF);
 
 		if (groundContact && handleContact) {
 			owner->Move(UpVector * (curAbsHeight - (owner->midPos.y - owner->radius) + 0.01f), true);
@@ -894,7 +894,7 @@ bool CHoverAirMoveType::Update()
 		wantedSpeed = ZeroVector;
 
 		UpdateAirPhysics();
-		return (HandleCollisions(collide && !owner->beingBuilt && (padStatus == PAD_STATUS_FLYING) && (aircraftState != AIRCRAFT_TAKEOFF)));
+		return (HandleCollisions(collide && !owner->beingBuilt && (aircraftState != AIRCRAFT_TAKEOFF)));
 	}
 
 	// allow us to stop if wanted (changes aircraft state)
@@ -930,14 +930,6 @@ bool CHoverAirMoveType::Update()
 
 			UpdateAirPhysics();
 			wantedHeading = GetHeadingFromVector(flatForward.x, flatForward.z);
-		}
-
-		if (reservedPad != NULL) {
-			MoveToRepairPad();
-
-			if (padStatus >= PAD_STATUS_LANDING) {
-				flyState = FLY_LANDING;
-			}
 		}
 	}
 
@@ -985,23 +977,12 @@ bool CHoverAirMoveType::Update()
 	UpdateHeading();
 	UpdateBanking(aircraftState == AIRCRAFT_HOVERING);
 
-	return (HandleCollisions(collide && !owner->beingBuilt && (padStatus == PAD_STATUS_FLYING) && (aircraftState != AIRCRAFT_TAKEOFF)));
+	return (HandleCollisions(collide && !owner->beingBuilt && (aircraftState != AIRCRAFT_TAKEOFF)));
 }
 
 void CHoverAirMoveType::SlowUpdate()
 {
 	UpdateFuel();
-
-	// HoverAirMoveType aircraft are controlled by AirCAI's,
-	// but only MobileCAI's reserve pads so we need to do
-	// this for ourselves
-	if (reservedPad == NULL && aircraftState == AIRCRAFT_FLYING && WantsRepair()) {
-		CAirBaseHandler::LandingPad* lp = airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower, true);
-
-		if (lp != NULL) {
-			AAirMoveType::ReservePad(lp);
-		}
-	}
 
 	UpdateMoveRate();
 	// note: NOT AAirMoveType::SlowUpdate
@@ -1085,7 +1066,7 @@ bool CHoverAirMoveType::HandleCollisions(bool checkCollisions)
 
 		bool hitBuilding = false;
 
-		// check for collisions if not on a pad, not being built, or not taking off
+		// check for collisions if not being built or not taking off
 		// includes an extra condition for transports, which are exempt while loading
 		if (!forceHeading && checkCollisions) {
 			const vector<CUnit*>& nearUnits = quadField->GetUnitsExact(pos, owner->radius + 6);

@@ -3193,10 +3193,6 @@ EXPORT(float) skirmishAiCallback_UnitDef_getRefuelTime(int skirmishAIId, int uni
 	return getUnitDefById(skirmishAIId, unitDefId)->refuelTime;
 }
 
-EXPORT(float) skirmishAiCallback_UnitDef_getMinAirBasePower(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->minAirBasePower;
-}
-
 EXPORT(int) skirmishAiCallback_UnitDef_getMaxThisUnit(int skirmishAIId, int unitDefId) {
 	return getUnitDefById(skirmishAIId, unitDefId)->maxThisUnit;
 }
@@ -5315,7 +5311,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->UnitDef_getBuildingDecalDecaySpeed = &skirmishAiCallback_UnitDef_getBuildingDecalDecaySpeed;
 	callback->UnitDef_getMaxFuel = &skirmishAiCallback_UnitDef_getMaxFuel;
 	callback->UnitDef_getRefuelTime = &skirmishAiCallback_UnitDef_getRefuelTime;
-	callback->UnitDef_getMinAirBasePower = &skirmishAiCallback_UnitDef_getMinAirBasePower;
 	callback->UnitDef_getMaxThisUnit = &skirmishAiCallback_UnitDef_getMaxThisUnit;
 	callback->UnitDef_getDecoyDef = &skirmishAiCallback_UnitDef_getDecoyDef;
 	callback->UnitDef_isDontLand = &skirmishAiCallback_UnitDef_isDontLand;

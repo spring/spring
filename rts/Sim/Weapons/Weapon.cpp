@@ -397,11 +397,6 @@ bool CWeapon::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRe
 	if (fpsPlayer != NULL && !fpsPlayer->fpsController.mouse1 && !fpsPlayer->fpsController.mouse2)
 		return false;
 
-	// FIXME: there is already CUnit::dontUseWeapons but only used by HoverAirMoveType when landed
-	const AAirMoveType* airMoveType = dynamic_cast<AAirMoveType*>(owner->moveType);
-	if (airMoveType != NULL && airMoveType->GetPadStatus() != AAirMoveType::PAD_STATUS_FLYING)
-		return false;
-
 	return true;
 }
 

@@ -34,7 +34,6 @@
 #include "Rendering/GroundFlash.h"
 
 #include "Game/UI/Groups/Group.h"
-#include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GlobalConstants.h"
@@ -211,10 +210,6 @@ CUnit::~CUnit()
 		// to be as short as possible to prevent position jumps)
 		FeatureLoadParams params = {featureHandler->GetFeatureDefByID(featureDefID), unitDef, pos, deathSpeed, -1, team, -1, heading, buildFacing, 0};
 		featureHandler->CreateWreckage(params, delayedWreckLevel - 1, true);
-	}
-
-	if (unitDef->isAirBase) {
-		airBaseHandler->DeregisterAirBase(this);
 	}
 
 #ifdef TRACE_SYNC
@@ -538,10 +533,6 @@ void CUnit::FinishedBuilding(bool postInit)
 	// Sets the frontdir in sync with heading.
 	frontdir = GetVectorFromHeading(heading) + float3(0, frontdir.y, 0);
 
-	if (unitDef->isAirBase) {
-		airBaseHandler->RegisterAirBase(this);
-	}
-
 	eventHandler.UnitFinished(this);
 	eoh->UnitFinished(*this);
 
@@ -745,9 +736,6 @@ void CUnit::Update()
 	flankingBonusMobility += flankingBonusMobilityAdd;
 
 	if (IsStunned()) {
-		// leave the pad if reserved
-		moveType->UnreservePad(moveType->GetReservedPad());
-
 		// paralyzed weapons shouldn't reload
 		for (CWeapon* w: weapons) {
 			++(w->reloadStatus);
@@ -1415,9 +1403,6 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	quads.clear();
 	quadField->MovedUnit(this);
 
-	if (unitDef->isAirBase) {
-		airBaseHandler->DeregisterAirBase(this);
-	}
 
 	if (type == ChangeGiven) {
 		teamHandler->Team(oldteam)->RemoveUnit(this, CTeam::RemoveGiven);
@@ -1451,10 +1436,6 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 			losStatus[at] = 0;
 			UpdateLosStatus(at);
 		}
-	}
-
-	if (unitDef->isAirBase) {
-		airBaseHandler->RegisterAirBase(this);
 	}
 
 	eventHandler.UnitGiven(this, oldteam, newteam);

@@ -706,7 +706,6 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 		unitDef->isFirePlatform = sAICallback->UnitDef_isFirePlatform(skirmishAIId, unitDefId);
 		unitDef->maxFuel = sAICallback->UnitDef_getMaxFuel(skirmishAIId, unitDefId);
 		unitDef->refuelTime = sAICallback->UnitDef_getRefuelTime(skirmishAIId, unitDefId);
-		unitDef->minAirBasePower = sAICallback->UnitDef_getMinAirBasePower(skirmishAIId, unitDefId);
 		unitDef->maxThisUnit = sAICallback->UnitDef_getMaxThisUnit(skirmishAIId, unitDefId);
 		//unitDef->decoyDef = sAICallback->UnitDef_getDecoyDefId(skirmishAIId, unitDefId);
 		unitDef->shieldWeaponDef = this->GetWeaponDefById(sAICallback->UnitDef_getShieldDef(skirmishAIId, unitDefId));

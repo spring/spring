@@ -21,7 +21,6 @@ CR_REG_METADATA(AMoveType, (
 	CR_MEMBER(maxSpeed),
 	CR_MEMBER(maxSpeedDef),
 	CR_MEMBER(maxWantedSpeed),
-	CR_MEMBER(repairBelowHealth),
 	CR_MEMBER(maneuverLeash),
 
 	CR_MEMBER(useHeading),
@@ -43,7 +42,6 @@ AMoveType::AMoveType(CUnit* owner):
 	maxSpeedDef(owner? owner->unitDef->speed / GAME_SPEED : 0.0f),
 	maxWantedSpeed(owner? owner->unitDef->speed / GAME_SPEED : 0.0f),
 
-	repairBelowHealth(0.3f),
 	maneuverLeash(500.0f)
 {
 }
@@ -89,22 +87,17 @@ float AMoveType::CalcStaticTurnRadius() const {
 
 
 
-bool AMoveType::WantsRepair() const { return (owner->health      < (repairBelowHealth * owner->maxHealth)); }
-bool AMoveType::WantsRefuel() const { return (owner->currentFuel < (repairBelowHealth * owner->unitDef->maxFuel)); }
-
 bool AMoveType::SetMemberValue(unsigned int memberHash, void* memberValue) {
 	#define MEMBER_CHARPTR_HASH(memberName) HsiehHash(memberName, strlen(memberName),     0)
 	#define MEMBER_LITERAL_HASH(memberName) HsiehHash(memberName, sizeof(memberName) - 1, 0)
 
 	#define          MAXSPEED_MEMBER_IDX 0
 	#define    MAXWANTEDSPEED_MEMBER_IDX 1
-	#define REPAIRBELOWHEALTH_MEMBER_IDX 2
-	#define     MANEUVERLEASH_MEMBER_IDX 3
+	#define     MANEUVERLEASH_MEMBER_IDX 2
 
 	static const unsigned int floatMemberHashes[] = {
 		MEMBER_LITERAL_HASH(         "maxSpeed"),
 		MEMBER_LITERAL_HASH(   "maxWantedSpeed"),
-		MEMBER_LITERAL_HASH("repairBelowHealth"),
 		MEMBER_LITERAL_HASH(    "maneuverLeash"),
 	};
 
@@ -116,7 +109,6 @@ bool AMoveType::SetMemberValue(unsigned int memberHash, void* memberValue) {
 	float* floatMemberPtrs[] = {
 		&maxSpeed,
 		&maxWantedSpeed,
-		&repairBelowHealth,
 	};
 	*/
 
@@ -127,10 +119,6 @@ bool AMoveType::SetMemberValue(unsigned int memberHash, void* memberValue) {
 	}
 	if (memberHash == floatMemberHashes[MAXWANTEDSPEED_MEMBER_IDX]) {
 		SetWantedMaxSpeed((*reinterpret_cast<float*>(memberValue)) / GAME_SPEED);
-		return true;
-	}
-	if (memberHash == floatMemberHashes[REPAIRBELOWHEALTH_MEMBER_IDX]) {
-		SetRepairBelowHealth(*reinterpret_cast<float*>(memberValue));
 		return true;
 	}
 	if (memberHash == floatMemberHashes[MANEUVERLEASH_MEMBER_IDX]) {

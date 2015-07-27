@@ -7,7 +7,6 @@
 #include "UnitDefHandler.h"
 #include "CommandAI/BuilderCAI.h"
 #include "Rendering/Models/3DModel.h"
-#include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
@@ -77,7 +76,6 @@ CUnitHandler::CUnitHandler()
 
 	activeSlowUpdateUnit = 0;
 	activeUpdateUnit = 0;
-	airBaseHandler = new CAirBaseHandler();
 }
 
 
@@ -88,8 +86,6 @@ CUnitHandler::~CUnitHandler()
 		u->delayedWreckLevel = -1;
 		delete u;
 	}
-
-	delete airBaseHandler;
 }
 
 void CUnitHandler::InsertActiveUnit(CUnit* unit)

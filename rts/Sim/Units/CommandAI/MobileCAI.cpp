@@ -8,7 +8,6 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Map/Ground.h"
-#include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -58,6 +57,8 @@ CR_REG_METADATA(CMobileCAI, (
 	CR_MEMBER(buggerOffPos),
 	CR_MEMBER(buggerOffRadius),
 
+	CR_MEMBER(repairBelowHealth),
+	
 	CR_MEMBER(commandPos1),
 	CR_MEMBER(commandPos2),
 
@@ -81,6 +82,7 @@ CMobileCAI::CMobileCAI():
 	lastBuggerOffTime(-BUGGER_OFF_TTL),
 	buggerOffPos(ZeroVector),
 	buggerOffRadius(0),
+	repairBelowHealth(0.0f),
 	commandPos1(ZeroVector),
 	commandPos2(ZeroVector),
 	cancelDistance(1024),
@@ -102,6 +104,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 	lastBuggerOffTime(-BUGGER_OFF_TTL),
 	buggerOffPos(ZeroVector),
 	buggerOffRadius(0),
+	repairBelowHealth(0.0f),
 	commandPos1(ZeroVector),
 	commandPos2(ZeroVector),
 	cancelDistance(1024),
@@ -215,10 +218,10 @@ void CMobileCAI::GiveCommandReal(const Command& c, bool fromSynced)
 				return;
 
 			switch ((int) c.params[0]) {
-				case 0: { airMT->SetRepairBelowHealth(0.0f); break; }
-				case 1: { airMT->SetRepairBelowHealth(0.3f); break; }
-				case 2: { airMT->SetRepairBelowHealth(0.5f); break; }
-				case 3: { airMT->SetRepairBelowHealth(0.8f); break; }
+				case 0: { repairBelowHealth = 0.0f; break; }
+				case 1: { repairBelowHealth = 0.3f; break; }
+				case 2: { repairBelowHealth = 0.5f; break; }
+				case 3: { repairBelowHealth = 0.8f; break; }
 			}
 
 			for (unsigned int n = 0; n < possibleCommands.size(); n++) {
@@ -271,92 +274,35 @@ void CMobileCAI::GiveCommandReal(const Command& c, bool fromSynced)
 	CCommandAI::GiveAllowedCommand(c);
 }
 
+bool CMobileCAI::WantsRefuel() const
+{
+	return (owner->currentFuel < (repairBelowHealth * owner->unitDef->maxFuel));
+}
+
+bool CMobileCAI::WantsRepair() const
+{
+	return (owner->health      < (repairBelowHealth * owner->maxHealth));
+}
+
 
 /// returns true if the unit has to land
 bool CMobileCAI::RefuelIfNeeded()
 {
-	if (owner->unitDef->maxFuel <= 0.0f)
+	if (!WantsRefuel())
 		return false;
-
-	if (owner->moveType->GetReservedPad() != NULL) {
-		// we already have a pad
-		return true;
-	}
-
-	if (owner->currentFuel <= 0.0f) {
-		// we're completely out of fuel
-		owner->DropCurrentAttackTarget();
-		inCommand = false;
-
-		CAirBaseHandler::LandingPad* lp =
-			airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower, true);
-
-		if (lp != NULL) {
-			// found a pad
-			owner->moveType->ReservePad(lp);
-		} else {
-			// no pads available, search for a landing
-			// spot near any that are currently occupied
-			const float3& landingPos = airBaseHandler->FindClosestAirBasePos(owner, owner->unitDef->minAirBasePower);
-
-			if (landingPos != ZeroVector) {
-				StopMove();
-				owner->DropCurrentAttackTarget();
-				owner->moveType->ReservePad(lp);
-				inCommand = false;
-			} else {
-				StopMove();
-			}
-		}
-
-		return true;
-	} else if (owner->moveType->WantsRefuel()) {
-		// current fuel level is below our bingo threshold
-		// note: force the refuel attempt (irrespective of
-		// what our currently active command is)
-
-		CAirBaseHandler::LandingPad* lp =
-			airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower, true);
-
-		if (lp != NULL) {
-			StopMove();
-			owner->DropCurrentAttackTarget();
-			owner->moveType->ReservePad(lp);
-			inCommand = false;
-			return true;
-		}
-	}
-
+	
+	//TODO: actually refuel
 	return false;
+
 }
 
 /// returns true if the unit has to land
 bool CMobileCAI::LandRepairIfNeeded()
 {
-	if (owner->moveType->GetReservedPad() != NULL)
-		return true;
-
-	if (!owner->moveType->WantsRepair())
+	if (!WantsRepair())
 		return false;
-
-	// we're damaged, just seek a pad for repairs
-	CAirBaseHandler::LandingPad* lp =
-		airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower, true);
-
-	if (lp != NULL) {
-		StopMove();
-		owner->DropCurrentAttackTarget();
-		owner->moveType->ReservePad(lp);
-		inCommand = false;
-		return true;
-	}
-
-	const float3& newGoal = airBaseHandler->FindClosestAirBasePos(owner, owner->unitDef->minAirBasePower);
-
-	if (newGoal != ZeroVector) {
-		SetGoal(newGoal, owner->pos);
-		return true;
-	}
+	
+	//TODO: actually repair
 
 	return false;
 }
@@ -368,8 +314,7 @@ void CMobileCAI::SlowUpdate()
 
 	if (!owner->UsingScriptMoveType() && owner->unitDef->IsAirUnit()) {
 		LandRepairIfNeeded() || RefuelIfNeeded();
-		if (owner->moveType->GetReservedPad())
-			return;
+		//TODO bail if repaired
 	}
 
 

@@ -1060,9 +1060,6 @@ struct SSkirmishAICallback {
 	/** Time to fully refuel the unit */
 	float             (CALLING_CONV *UnitDef_getRefuelTime)(int skirmishAIId, int unitDefId);
 
-	/** Minimum build power of airbases that this aircraft can land on */
-	float             (CALLING_CONV *UnitDef_getMinAirBasePower)(int skirmishAIId, int unitDefId);
-
 	/** Number of units of this type allowed simultaneously in the game */
 	int               (CALLING_CONV *UnitDef_getMaxThisUnit)(int skirmishAIId, int unitDefId);
 

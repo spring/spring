@@ -245,7 +245,6 @@ UnitDef::UnitDef()
 	, nanoColor(ZeroVector)
 	, maxFuel(0.0f)
 	, refuelTime(0.0f)
-	, minAirBasePower(0.0f)
 	, maxThisUnit(0)
 	, realMetalCost(0.0f)
 	, realEnergyCost(0.0f)
@@ -494,7 +493,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	maxFuel = udTable.GetFloat("maxFuel", 0.0f); //max flight time in seconds before aircraft must return to base
 	refuelTime = udTable.GetFloat("refuelTime", 5.0f);
-	minAirBasePower = udTable.GetFloat("minAirBasePower", 0.0f);
 	maxThisUnit = udTable.GetInt("unitRestricted", MAX_UNITS);
 	maxThisUnit = std::min(maxThisUnit, gameSetup->GetRestrictedUnitLimit(name, MAX_UNITS));
 

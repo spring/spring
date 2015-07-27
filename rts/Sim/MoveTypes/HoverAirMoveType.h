@@ -54,7 +54,7 @@ private:
 
 	void UpdateVerticalSpeed(const float4& spd, float curRelHeight, float curVertSpeed) const;
 
-	bool CanLand(bool busy) const { return (!busy && ((!dontLand && autoLand) || (reservedPad != NULL))); }
+	bool CanLand(bool busy) const { return (!busy && (!dontLand && autoLand)); }
 	bool CanLandAt(const float3& pos) const;
 
 	void ExecuteStop();

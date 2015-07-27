@@ -38,6 +38,8 @@ public:
 	void ExecuteAttack(Command& c);
 	void ExecuteStop(Command& c);
 
+	bool WantsRepair() const;
+	bool WantsRefuel() const;
 	bool RefuelIfNeeded();
 	bool LandRepairIfNeeded();
 
@@ -69,6 +71,7 @@ public:
 	float3 buggerOffPos;
 	float buggerOffRadius;
 
+	float repairBelowHealth;
 	/**
 	 * Used to avoid stuff in maneuvre mode moving too far away from patrol path
 	 */

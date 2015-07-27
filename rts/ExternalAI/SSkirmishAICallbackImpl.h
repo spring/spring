@@ -611,8 +611,6 @@ EXPORT(float            ) skirmishAiCallback_UnitDef_getMaxFuel(int skirmishAIId
 
 EXPORT(float            ) skirmishAiCallback_UnitDef_getRefuelTime(int skirmishAIId, int unitDefId);
 
-EXPORT(float            ) skirmishAiCallback_UnitDef_getMinAirBasePower(int skirmishAIId, int unitDefId);
-
 EXPORT(int              ) skirmishAiCallback_UnitDef_getMaxThisUnit(int skirmishAIId, int unitDefId);
 
 EXPORT(int              ) skirmishAiCallback_UnitDef_getDecoyDef(int skirmishAIId, int unitDefId);
