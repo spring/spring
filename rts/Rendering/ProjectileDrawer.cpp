@@ -412,11 +412,11 @@ void CProjectileDrawer::DrawProjectiles(int modelType, bool drawReflection, bool
 void CProjectileDrawer::DrawProjectilesSet(const std::vector<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction)
 {
 	for (CProjectile* p: projectiles) {
-		DrawProjectile(p, drawReflection, drawRefraction);
+		DrawProjectileNow(p, drawReflection, drawRefraction);
 	}
 }
 
-void CProjectileDrawer::DrawProjectile(CProjectile* pro, bool drawReflection, bool drawRefraction)
+void CProjectileDrawer::DrawProjectileNow(CProjectile* pro, bool drawReflection, bool drawRefraction)
 {
 	const CUnit* owner = pro->owner();
 

@@ -100,7 +100,7 @@ private:
 	void DrawProjectilesSet(const std::vector<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction);
 	static void DrawProjectilesSetShadow(const std::vector<CProjectile*>& projectiles);
 
-	void DrawProjectile(CProjectile* projectile, bool drawReflection, bool drawRefraction);
+	void DrawProjectileNow(CProjectile* projectile, bool drawReflection, bool drawRefraction);
 	static void DrawProjectileShadow(CProjectile* projectile);
 	static bool DrawProjectileModel(const CProjectile* projectile, bool shadowPass);
 
