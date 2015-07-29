@@ -95,6 +95,7 @@ CMiniMap::CMiniMap()
 	, renderToTexture(true)
 	, multisampledFBO(false)
 	, minimapTex(0)
+	, lastClicked(nullptr)
  {
 	lastWindowSizeX = globalRendering->viewSizeX;
 	lastWindowSizeY = globalRendering->viewSizeY;
@@ -475,8 +476,10 @@ void CMiniMap::MoveView(int x, int y)
 }
 
 
-void CMiniMap::SelectUnits(int x, int y) const
+void CMiniMap::SelectUnits(int x, int y)
 {
+	const CUnit *_lastClicked = lastClicked;
+	lastClicked = nullptr;
 	if (!KeyInput::GetKeyModState(KMOD_SHIFT) && !KeyInput::GetKeyModState(KMOD_CTRL)) {
 		selectedUnitsHandler.ClearSelected();
 	}
@@ -510,9 +513,13 @@ void CMiniMap::SelectUnits(int x, int y) const
 		} else {
 			unit = CGameHelper::GetClosestFriendlyUnit(NULL, pos, size, gu->myAllyTeam);
 		}
+		lastClicked = unit;
+		const bool selectType = bp.lastRelease >= (gu->gameTime - mouse->doubleClickTime) && unit == _lastClicked;
 
-		selectedUnitsHandler.HandleSingleUnitClickSelection(unit, false);
+		selectedUnitsHandler.HandleSingleUnitClickSelection(unit, false, selectType);
 	}
+
+	bp.lastRelease = gu->gameTime;
 }
 
 /******************************************************************************/

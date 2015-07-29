@@ -291,7 +291,7 @@ void CSelectedUnitsHandler::HandleUnitBoxSelection(const float4& planeRight, con
 }
 
 
-void CSelectedUnitsHandler::HandleSingleUnitClickSelection(CUnit* unit, bool doInViewTest)
+void CSelectedUnitsHandler::HandleSingleUnitClickSelection(CUnit* unit, bool doInViewTest, bool selectType)
 {
 	//FIXME make modular?
 	const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
@@ -301,7 +301,7 @@ void CSelectedUnitsHandler::HandleSingleUnitClickSelection(CUnit* unit, bool doI
 	if (unit->team != gu->myTeam && !gu->spectatingFullSelect && !gs->godMode)
 		return;
 
-	if (bp.lastRelease < (gu->gameTime - mouse->doubleClickTime)) {
+	if (!selectType) {
 		if (KeyInput::GetKeyModState(KMOD_CTRL) && (selectedUnits.find(unit) != selectedUnits.end())) {
 			RemoveUnit(unit);
 		} else {

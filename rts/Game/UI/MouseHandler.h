@@ -15,7 +15,7 @@ static const int NUM_BUTTONS = 10;
 
 class CInputReceiver;
 class CCameraController;
-
+class CUnit;
 
 class CMouseHandler
 {
@@ -127,6 +127,8 @@ private:
 
 	float scrollx;
 	float scrolly;
+
+	CUnit* lastClicked;
 
 	std::map<std::string, CMouseCursor*> cursorFileMap;
 	std::map<std::string, CMouseCursor*> cursorCommandMap;
