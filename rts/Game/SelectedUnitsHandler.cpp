@@ -294,7 +294,6 @@ void CSelectedUnitsHandler::HandleUnitBoxSelection(const float4& planeRight, con
 void CSelectedUnitsHandler::HandleSingleUnitClickSelection(CUnit* unit, bool doInViewTest, bool selectType)
 {
 	//FIXME make modular?
-	//const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
 
 	if (unit == NULL)
 		return;

@@ -169,7 +169,6 @@ EXPORT(void) aiInterfaceCallback_Log_logsl(int interfaceId, const char* section,
 
 	CHECK_INTERFACE_ID(interfaceId);
 
-	const CAIInterfaceLibraryInfo* info = infos[interfaceId];
 	log_frontend_record(section, loglevel, "%s", msg);
 }
 
