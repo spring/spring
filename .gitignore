@@ -42,6 +42,7 @@ progress.make
 
 # Ninja related
 /.ninja_log
+/.ninja_deps
 /build.ninja
 /rules.ninja
 
@@ -82,10 +83,21 @@ progress.make
 /AI/Skirmish/*/build
 /AI/Interfaces/Java/target
 /AI/Wrappers/JavaOO/target
+/AI/Wrappers/JavaOO/sourceFiles.txt
+/AI/Interfaces/Java/myGeneratedSourceDir.stub
 /AI/Skirmish/*/target
+/AI/Skirmish/NullJavaAI/sourceFiles.txt
+/AI/Skirmish/NullOOJavaAI/sourceFiles.txt
+/AI/Interfaces/Java/src-generated/
+/AI/Interfaces/Java/sourceFiles.txt
+*.jar
+
+# AI Interface files
+/AI/Wrappers/Cpp/src-generated/
 
 # Misc file endings (eg. build or temp files)
 *.o
+*.so
 *.log
 *~
 .*.swp
@@ -95,6 +107,14 @@ progress.make
 *.class
 *.orig
 *.dylib
+
+# generated files
+/demotool
+/spring
+/spring-dedicated
+/spring-headless
+/springsettings.cfg
+/src-generated
 
 #buildbot generated dir
 /build
