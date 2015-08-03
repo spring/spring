@@ -27,6 +27,7 @@
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Rendering/Models/3DModel.h"
 #include "Rendering/Env/GrassDrawer.h"
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/Env/ITreeDrawer.h"
@@ -95,7 +96,8 @@ static int heightMapz2 = 0;
 
 static float heightMapAmountChanged = 0.0f;
 static float smoothMeshAmountChanged = 0.0f;
-
+struct S3DModelPiece;
+struct LocalModelPiece;
 
 /******************************************************************************/
 
@@ -1168,6 +1170,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 		return 0;
 	}
 	if (!unitHandler->CanBuildUnit(unitDef, teamID)) {
+		luaL_error(L, "Unot a controllable team (%d)", __FUNCTION__, teamID);
 		return 0; // unit limit reached
 	}
 
@@ -2127,6 +2130,239 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 	vol->InitShape(scales, offset, vType, CollisionVolume::COLVOL_HITTEST_CONT, pAxis);
 	vol->SetIgnoreHits(!luaL_checkboolean(L, 3));
 	return 0;
+}
+
+
+
+LocalModelPiece * GetLocalModelPiece(int PieceNr, const UnitDef* unitDef, const CUnit* Unit,  std::map<int,const S3DModelPiece*>* OriginalPosition)
+{
+
+	return  new LocalModelPiece( OriginalPosition->at(PieceNr));
+}
+
+//Helper Function for Setting a full UnitPiece Hierarchy
+ int SetHierarchy( std::vector<PieceHierarchy*>* PiecesToGo, const LocalModel* Model, const UnitDef* unitDef, const CUnit* Unit )
+{
+		LocalModelPiece* lmpChild;
+		LocalModelPiece* lmpParent;
+		LocalModelPiece* FirstPiece;
+		std::map<int,const S3DModelPiece*> OriginalPosition;
+
+	
+		//Convert
+		for (int i=0; i< Unit->localModel->pieces.size();i++)
+			{OriginalPosition.insert( std::pair<int,const S3DModelPiece*>(i,Unit->localModel->pieces[i]->original));}
+		
+		
+		//Prep and cleanup of the old piece hierarchy
+		Unit->localModel->pieces.erase(Unit->localModel->pieces.begin(),Unit->localModel->pieces.end());
+
+		//Iterate over the HierarchyInfo  in the Vector and create 
+			std::map<int, LocalModelPiece*> AllreadyInstancedPieces;
+		
+		
+			for (int i=0; i< PiecesToGo->size();i++)
+			{
+				std::map<int, LocalModelPiece*>::iterator head;
+				//if Head is not in Set instanciate it
+				head= AllreadyInstancedPieces.find(PiecesToGo->at(i)->HigherPiece);
+				if (head != AllreadyInstancedPieces.end())
+				{
+					lmpParent=AllreadyInstancedPieces[PiecesToGo->at(i)->HigherPiece];
+			
+				}
+				else //create local Model Piece
+				{
+					 lmpParent= GetLocalModelPiece(PiecesToGo->at(i)->HigherPiece,unitDef,Unit,&OriginalPosition);
+					  AllreadyInstancedPieces.insert ( std::pair<int, LocalModelPiece*>(PiecesToGo->at(i)->HigherPiece,lmpParent)) ;
+				}
+				
+					//iterate over the subpieces searching wether the piece was allready integrated into the hierarchy
+					for (int subPiece=0;subPiece < PiecesToGo->at(i)->SubPieces->size();subPiece++)
+					{
+						std::map<int, LocalModelPiece*>::iterator sub;
+						sub=AllreadyInstancedPieces.find(PiecesToGo->at(i)->SubPieces->at(subPiece));
+						
+						if (sub != AllreadyInstancedPieces.end())
+						{
+								 lmpParent=AllreadyInstancedPieces[PiecesToGo->at(i)->HigherPiece];
+								 lmpChild->SetParent(lmpParent);											
+								 lmpParent->AddChild(lmpChild);
+						}
+						else //create local Model Piece
+						{
+							 int temp_O_Rary =(int)( PiecesToGo->at(i)->SubPieces->at(subPiece));
+							 lmpChild= GetLocalModelPiece(temp_O_Rary ,unitDef,Unit, &OriginalPosition);
+			
+							 AllreadyInstancedPieces.insert ( std::pair<int, LocalModelPiece*>( temp_O_Rary,lmpChild)) ;
+							 
+							 Unit->localModel->pieces.push_back(lmpChild);
+						}
+
+					}
+					Unit->localModel->pieces.push_back(lmpParent);
+					lmpParent->SetLModelPieceIndex(Unit->localModel->pieces.size() - 1);
+				
+				
+				}
+					
+
+		
+				
+			
+}
+
+
+
+// TableFromLUA={piecenr,{furtherpieces},{furtherpieces}} > {piecenr LowerPieces SEPERATOR }
+bool parsePieceHierarchy(lua_State* L, int posInTable, std::vector<PieceHierarchy*>* PiecesHierarchy,float Head)
+{
+	
+//Conditions for a succesfull state-flow are: 
+// first piece must be a number (must not have subpieces)
+// all subpiecegroups must have a father, but fathers may not have subpieces
+
+bool FirstPiece=false;
+bool ReadSuccesfull=true;
+
+luaL_error(L,  "Starting parsing");	
+
+
+lua_pushnil(L);  /* first key */
+while (lua_next(L, posInTable) != 0) 
+{
+		
+		PieceHierarchy * currentPiece= new PieceHierarchy();
+		int HeadsAndTails=0;
+		
+		if (FirstPiece==false)
+		{
+			HeadsAndTails+=1;
+			FirstPiece=true; HeadsAndTails+=2;
+			currentPiece->HigherPiece=Head;
+		
+				if (lua_istable(L,-1) )
+				{
+				HeadsAndTails+=4;
+				const int nrOfArguments = lua_gettop(L); 
+				float  * values = new float [nrOfArguments];
+				
+				const int v = LuaUtils::ParseFloatArray(L, -1, values,nrOfArguments);	
+				
+					for (int i=0; i < v; i++)
+					{
+						currentPiece->SubPieces->push_back(values[i]);
+					}
+				}
+			}
+			else
+			{
+			
+			
+				HeadsAndTails+=1;
+				currentPiece->HigherPiece=lua_tofloat(L, -2);
+				
+		
+			
+				HeadsAndTails+=4;
+				const int nrOfArguments = lua_gettop(L); 
+				float  * values = new float [nrOfArguments];
+				
+				const int v = LuaUtils::ParseFloatArray(L, -1, values,nrOfArguments);	
+				
+					for (int i=0; i < v; i++)
+					{
+						currentPiece->SubPieces->push_back(values[i]);
+					}
+				
+			}
+		
+		if ((HeadsAndTails & 3) || (HeadsAndTails & 5))
+			{
+			PiecesHierarchy->push_back(currentPiece);
+			}
+		else
+		{
+			luaL_error(L, "PieceHierarchy Table has wrong format: [Key]={Number, Number,Number},[Key]={Number, Number,Number},.. expected");	
+			ReadSuccesfull=false;
+		}
+   lua_pop(L, 1);			
+	}
+return ReadSuccesfull;
+}
+
+
+/*recives a unitid, a HeadPiece and a table that represents the unitpieces new hierarchy in PieceIDs
+ * Spring.SetUnitPieceHierarchy(unitID, HeadPiece, Table={ "HierarchicalHigherPiece"={LowerPieces}}
+ * */
+int LuaSyncedCtrl::SetUnitPieceHierarchy(lua_State* L)
+{
+	
+	
+	 CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
+	const UnitDef* unitDef =	unit->unitDef;
+	
+	if (unit == NULL)
+		return 0;
+	
+	//Getting a new UnitModel to work with- yes, hoppling over the old one and rearranging would be cheaper
+	
+	//We get the Units current local Model
+	const LocalModel* localModel = unit->localModel;
+	//And draft a copy to restore it should the remap fail miserably
+	const LocalModel Copy= *unit->localModel;
+	
+	//The model into which the remapped Version is saved into - costly but KISS
+	 LocalModel* reMappedModel = new LocalModel(unitDef->LoadModel());
+
+	bool SuccessFullReMap=false;
+	float HeadPiece;
+	
+	if (lua_isnumber(L,2))
+	{
+	HeadPiece=lua_tonumber(L,2);	
+	}
+	else
+	{
+			luaL_error(L,  "SetUnitPieceHierarchy - Arg2 not a number, Head Piece missing");			
+	} 
+	
+	if(lua_istable(L, 3)) 
+	{
+		const int table = 2;
+		
+		std::vector<struct PieceHierarchy*>* PieceHierarchy= new std::vector<struct PieceHierarchy*>();
+		
+		if (parsePieceHierarchy(L ,2,PieceHierarchy,HeadPiece)==false)
+		 {	
+		luaL_error(L,  "Unable to parse Hierarchy Table");	
+
+		return 0;
+		}
+		
+		//add the first piece to the new local Model
+			//we itterate recursive over the piectable, and add the pieces to the local model
+		SetHierarchy(PieceHierarchy, localModel,unitDef ,unit);
+
+		SuccessFullReMap=true;
+		}
+	
+	if (SuccessFullReMap)
+		{
+			return 1;
+		}
+	else
+	{
+			
+					luaL_error(L,   "Restoring old Local Model, Piece Hierarchy not altered");	
+	
+	//we restore the Units original LocalModel
+	*unit->localModel=Copy;
+	return 1;
+	}
+
+return 0;
 }
 
 

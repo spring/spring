@@ -2,6 +2,8 @@
 
 #ifndef LUA_SYNCED_CTRL_H
 #define LUA_SYNCED_CTRL_H
+#include <vector>
+#include <map>
 
 struct lua_State;
 
@@ -87,6 +89,7 @@ class LuaSyncedCtrl
 		static int SetUnitMidAndAimPos(lua_State* L);
 		static int SetUnitRadiusAndHeight(lua_State* L);
 		static int SetUnitCollisionVolumeData(lua_State* L);
+		static int SetUnitPieceHierarchy(lua_State* L);
 		static int SetUnitPieceCollisionVolumeData(lua_State* L);
 		static int SetUnitSensorRadius(lua_State* L);
 		static int SetUnitPosErrorParams(lua_State* L);
@@ -172,6 +175,22 @@ class LuaSyncedCtrl
 		static int SetExperienceGrade(lua_State* L);
 
 		static int SetRadarErrorParams(lua_State* L);
+};
+
+//Stores Pieces Hierarchy Information
+struct PieceHierarchy
+{
+	float HigherPiece;
+	std::vector<float> * SubPieces;
+
+	PieceHierarchy()
+	{
+		this->SubPieces= new std::vector<float>();	
+	}
+	~PieceHierarchy()
+	{
+	delete(SubPieces);
+	}
 };
 
 
