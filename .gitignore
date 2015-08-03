@@ -108,6 +108,10 @@ progress.make
 *.orig
 *.dylib
 
+*.obj
+*.dll
+*.exe
+
 # generated files
 /demotool
 /spring
