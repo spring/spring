@@ -10,7 +10,7 @@ compiler:
 env:
   matrix:
     - TARGET="AAI CppTestAI E323AI HughAI KAIK NullAI NullJavaAI NullOOJavaAI RAI Shard"
-    - TARGET="engine-headless tests test"
+    - TARGET="engine-headless tests check"
 
 matrix:
   fast_finish: true
