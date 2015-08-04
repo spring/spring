@@ -214,9 +214,9 @@ Else  (NOT Boost_FOUND)
 	Add_Dependencies(tests test_BitwiseEnum)
 
 	# negative tests (must not compile)
-	spring_test_compile_fail(testBitwiseEnum_fail1 ${test_src} "-DTEST1")
-	spring_test_compile_fail(testBitwiseEnum_fail2 ${test_src} "-DTEST2")
-	spring_test_compile_fail(testBitwiseEnum_fail3 ${test_src} "-DTEST3")
+	#spring_test_compile_fail(testBitwiseEnum_fail1 ${test_src} "-DTEST1")
+	#spring_test_compile_fail(testBitwiseEnum_fail2 ${test_src} "-DTEST2")
+	#spring_test_compile_fail(testBitwiseEnum_fail3 ${test_src} "-DTEST3")
 
 
 ################################################################################
