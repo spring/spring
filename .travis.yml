@@ -11,7 +11,7 @@ env:
     - SPRING_DATADIR=~/build/spring/spring
   matrix:
     - TARGET="AAI CppTestAI E323AI HughAI KAIK NullAI NullJavaAI NullOOJavaAI RAI Shard"
-    - TARGET="engine-headless springcontent unitsync tests check"
+    - TARGET="engine-headless tests check"
 
 matrix:
   fast_finish: true
