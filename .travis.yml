@@ -10,8 +10,7 @@ compiler:
 env:
   matrix:
     - TARGET="AAI CppTestAI E323AI HughAI KAIK NullAI NullJavaAI NullOOJavaAI RAI Shard"
-    - TARGET=engine-headless
-    - TARGET=tests
+    - TARGET="engine-headless tests test"
 
 matrix:
   fast_finish: true
@@ -23,7 +22,7 @@ install:
   - tools/scripts/travis_install.sh
 
 before_script:
-  - cmake .
+  - cmake -DCMAKE_C_FLAGS=-gtoggle -DCMAKE_CXX_FLAGS=-gtoggle .
 
 script:
   - make -k $TARGET
