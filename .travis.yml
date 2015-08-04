@@ -8,7 +8,7 @@ compiler:
 #  - clang
 env:
   global:
-    - SPRING_DATADIR=.
+    - SPRING_DATADIR=~/build/spring/spring
   matrix:
     - TARGET="AAI CppTestAI E323AI HughAI KAIK NullAI NullJavaAI NullOOJavaAI RAI Shard"
     - TARGET="engine-headless springcontent unitsync tests check"
