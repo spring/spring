@@ -28,6 +28,7 @@
 
 #include "Game/Game.h"
 #include "Game/WordCompletion.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Units/BuildInfo.h"

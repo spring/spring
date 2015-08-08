@@ -7,12 +7,13 @@
 #include <deque>
 #include <boost/noncopyable.hpp>
 #include "Map/Ground.h"
+#include "Sim/Misc/LosMap.h"
 #include "Sim/Objects/WorldObject.h"
 #include "Sim/Units/Unit.h"
-#include "Sim/Misc/RadarHandler.h"
 #include "System/type2.h"
 #include "System/Rectangle.h"
 #include "System/EventClient.h"
+
 
 
 /**
@@ -33,55 +34,40 @@
  * (basePos, baseSquare) on the LOS map, has the same LOS and air LOS
  * radius, is in the same ally-team and has the same base-height.
  */
-struct LosInstance : public boost::noncopyable
+struct SLosInstance
 {
-private:
-	CR_DECLARE_STRUCT(LosInstance)
+	CR_DECLARE_STRUCT(SLosInstance)
 
-	/// default constructor for creg
-	LosInstance()
-		: refCount(0)
-		, losRadius(0)
-		, airLosRadius(0)
-		, allyteam(-1)
-		, baseHeight(0.0f)
-		, hashNum(-1)
-		, toBeDeleted(false)
-	{}
-
-public:
-	LosInstance(int lossize, int airLosSize, int allyteam, int2 basePos,
-			int2 baseAirPos, int hashNum, float baseHeight)
-		: refCount(1)
-		, losRadius(lossize)
-		, airLosRadius(airLosSize)
-		, allyteam(allyteam)
+	SLosInstance(int radius, int allyteam, int2 basePos, float baseHeight, int hashNum)
+		: allyteam(allyteam)
+		, radius(radius)
 		, basePos(basePos)
 		, baseHeight(baseHeight)
-		, baseAirPos(baseAirPos)
+		, refCount(1)
 		, hashNum(hashNum)
 		, toBeDeleted(false)
+		, needsRecalc(false)
 	{}
 
-	int refCount;
-	std::vector<int> losSquares;
-	int losRadius;
-	int airLosRadius;
+	// hash properties
 	int allyteam;
+	int radius;
 	int2 basePos;
 	float baseHeight;
-	int2 baseAirPos;
+
+	// working data
+	int refCount;
+	std::vector<int> squares;
+
+	// helpers
 	int hashNum;
 	bool toBeDeleted;
+	bool needsRecalc;
 };
 
+
+//FIXME
 /**
- * Handles line of sight (LOS) updates for all units and all ally-teams.
- *
- * Units have both LOS and air LOS. The former is ray-casted against the terrain
- * so hills obstruct view (see CLosAlgorithm). The second is circular: air LOS
- * is not influenced by terrain.
- *
  * LOS is implemented using CLosMap, which is a 2d array essentially containing
  * a reference count. That is to say, each position on the map counts how many
  * LosInstances "can see" that square. Units may share their "presence" on
@@ -96,19 +82,105 @@ public:
  * DelayedFreeInstance is called. This keeps the LosInstance (including the
  * actual sight) alive until 1.5 game seconds after the unit got killed.
  */
-class CLosHandler : public boost::noncopyable, public CEventClient
+class ILosType
 {
-	CR_DECLARE_STRUCT(CLosHandler)
+	CR_DECLARE_STRUCT(ILosType)
 	CR_DECLARE_SUB(DelayedInstance)
 
 public:
 	// the Interface
-	int2 GetLosSquare(const float3 pos) const { return int2( Round(pos.x * invLosDiv), Round(pos.z * invLosDiv) ); }
-	int2 GetAirSquare(const float3 pos) const { return int2( Round(pos.x * invAirDiv), Round(pos.z * invAirDiv) ); }
+	int2 PosToSquare(const float3 pos) const { return int2( Round(pos.x * invDiv), Round(pos.z * invDiv) ); }
 
+	inline bool InSight(const float3 pos, int allyTeam) const {
+		assert(allyTeam < losMaps.size());
+		return (losMaps[allyTeam].At(PosToSquare(pos)) != 0);
+	}
+
+public:
+	enum LosAlgoType { LOS_ALGO_RAYCAST, LOS_ALGO_CIRCLE };
+	enum LosType {
+		LOS_TYPE_LOS,
+		LOS_TYPE_AIRLOS,
+		LOS_TYPE_RADAR,
+		LOS_TYPE_SONAR,
+		LOS_TYPE_JAMMER,
+		LOS_TYPE_SEISMIC,
+		LOS_TYPE_SONAR_JAMMER,
+		LOS_TYPE_COUNT
+	};
+
+	ILosType(const int mipLevel, LosType type);
+	~ILosType();
+
+public:
+	void Update();
+	void UpdateHeightMapSynced(SRectangle rect);
+	void RemoveUnit(CUnit* unit, bool delayed = false);
+
+private:
+	//void PostLoad();
+
+	void MoveUnit(CUnit* unit);
+
+	void LosAdd(SLosInstance* instance);
+	void LosRemove(SLosInstance* instance);
+
+	void RefInstance(SLosInstance* instance);
+	void UnrefInstance(SLosInstance* instance);
+	void DelayedFreeInstance(SLosInstance* instance);
+
+	void DeleteInstance(SLosInstance* instance);
+
+private:
+	static constexpr unsigned CACHE_SIZE  = 1000;
+	static constexpr unsigned MAGIC_PRIME = 509; //2309;
+	static int GetHashNum(const CUnit* unit, const int2 baseLos);
+
+	float GetRadius(const CUnit* unit) const;
+	float GetHeight(const CUnit* unit) const;
+
+public:
+	const int   mipLevel;
+	const int   divisor;
+	const float invDiv;
+	const int2  size;
+	const LosType type;
+	const LosAlgoType algoType;
+	std::vector<CLosMap> losMaps;
+
+private:
+	struct DelayedInstance {
+		CR_DECLARE_STRUCT(DelayedInstance)
+		SLosInstance* instance;
+		int timeoutTime;
+	};
+
+	std::deque<SLosInstance*> instanceHash[MAGIC_PRIME];
+	std::deque<SLosInstance*> toBeDeleted;
+	std::deque<DelayedInstance> delayQue;
+};
+
+
+
+//FIXME
+/**
+ * Handles line of sight (LOS) updates for all units and all ally-teams.
+ *
+ * Units have both LOS and air LOS. The former is ray-casted against the terrain
+ * so hills obstruct view (see CLosAlgorithm). The second is circular: air LOS
+ * is not influenced by terrain.
+ */
+class CLosHandler : public boost::noncopyable, public CEventClient
+{
+	CR_DECLARE_STRUCT(CLosHandler)
+	CLosHandler();
+	~CLosHandler();
+
+public:
+	// the Interface
 	bool InLos(const CUnit* unit, int allyTeam) const;
 
-	inline bool InLos(const CWorldObject* obj, int allyTeam) const {
+	bool InLos(const CWorldObject* obj, int allyTeam) const {
 		if (obj->alwaysVisible || gs->globalLOS[allyTeam])
 			return true;
 		if (obj->useAirLos)
@@ -120,35 +192,46 @@ public:
 		return (InLos(obj->pos, allyTeam) || InLos(obj->pos + obj->speed, allyTeam));
 	}
 
-	inline bool InLos(const float3 pos, int allyTeam) const {
+	bool InLos(const float3 pos, int allyTeam) const {
 		if (gs->globalLOS[allyTeam])
 			return true;
-		return (losMaps[allyTeam].At(GetLosSquare(pos)) != 0);
+		return los.InSight(pos, allyTeam);
 	}
 
-	inline bool InAirLos(const float3 pos, int allyTeam) const {
+	bool InAirLos(const float3 pos, int allyTeam) const {
 		if (gs->globalLOS[allyTeam])
 			return true;
-		return (airLosMaps[allyTeam].At(GetAirSquare(pos)) != 0);
+		return airLos.InSight(pos, allyTeam);
+	}
+
+
+	bool InRadar(const float3 pos, int allyTeam) const;
+	bool InRadar(const CUnit* unit, int allyTeam) const;
+
+
+	// returns whether a square is being radar- or sonar-jammed
+	// (even when the square is not in radar- or sonar-coverage)
+	bool InJammer(const float3 pos, int allyTeam) const;
+	bool InJammer(const CUnit* unit, int allyTeam) const;
+
+
+	bool InSeismicDistance(const CUnit* unit, int allyTeam) const {
+		return seismic.InSight(unit->pos, allyTeam);
 	}
 
 public:
-	CLosHandler();
-	~CLosHandler();
+	// default operations for targeting-facilities
+	void IncreaseAllyTeamRadarErrorSize(int allyTeam) { radarErrorSizes[allyTeam] *= baseRadarErrorMult; }
+	void DecreaseAllyTeamRadarErrorSize(int allyTeam) { radarErrorSizes[allyTeam] /= baseRadarErrorMult; }
 
-	std::vector<CLosMap> losMaps;
-	std::vector<CLosMap> airLosMaps;
+	// API functions
+	void SetAllyTeamRadarErrorSize(int allyTeam, float size) { radarErrorSizes[allyTeam] = size; }
+	float GetAllyTeamRadarErrorSize(int allyTeam) const { return radarErrorSizes[allyTeam]; }
 
-	const int losMipLevel;
-	const int airMipLevel;
-	const int losDiv;
-	const int airDiv;
-	const float invLosDiv;
-	const float invAirDiv;
-	const int2 airSize;
-	const int2 losSize;
-
-	const bool requireSonarUnderWater;
+	void SetBaseRadarErrorSize(float size) { baseRadarErrorSize = size; }
+	void SetBaseRadarErrorMult(float mult) { baseRadarErrorMult = mult; }
+	float GetBaseRadarErrorSize() const { return baseRadarErrorSize; }
+	float GetBaseRadarErrorMult() const { return baseRadarErrorMult; }
 
 public:
 	// CEventClient interface
@@ -166,33 +249,25 @@ public:
 	void Update();
 	void UpdateHeightMapSynced(SRectangle rect);
 
-private:
-	static const unsigned int LOSHANDLER_MAGIC_PRIME = 2309;
-	static int GetHashNum(const CUnit* unit, const int2 baseLos, const int2 baseAirLos);
-
-	void PostLoad();
-
-	void MoveUnit(CUnit* unit);
-	void RemoveUnit(CUnit* unit, bool delayed = false);
-
-	void LosAdd(LosInstance* instance);
-	void LosRemove(LosInstance* instance);
-	void AllocInstance(LosInstance* instance);
-	void FreeInstance(LosInstance* instance);
-	void DelayedFreeInstance(LosInstance* instance);
+public:
+	ILosType los;
+	ILosType airLos;
+	ILosType radar;
+	ILosType sonar;
+	ILosType seismic;
+	ILosType commonJammer;
+	ILosType commonSonarJammer;
 
 private:
-	CLosAlgorithm losAlgo;
-	std::deque<LosInstance*> instanceHash[LOSHANDLER_MAGIC_PRIME];
-	std::deque<LosInstance*> toBeDeleted;
+	static constexpr float defBaseRadarErrorSize = 96.0f;
+	static constexpr float defBaseRadarErrorMult = 20.f;
 
-	struct DelayedInstance {
-		CR_DECLARE_STRUCT(DelayedInstance)
-		LosInstance* instance;
-		int timeoutTime;
-	};
-	std::deque<DelayedInstance> delayQue;
+	float baseRadarErrorSize;
+	float baseRadarErrorMult;
+	std::vector<float> radarErrorSizes;
+	std::vector<ILosType*> losTypes;
 };
+
 
 extern CLosHandler* losHandler;
 

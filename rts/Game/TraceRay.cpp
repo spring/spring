@@ -10,9 +10,9 @@
 #include "Sim/Misc/CollisionHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/GeometricObjects.h"
+#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Misc/RadarHandler.h"
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "System/myMath.h"
 
@@ -314,7 +314,7 @@ float GuiTraceRay(
 		// Unit Intersection
 		for (CUnit* unit: quad.units) {
 			const bool unitIsEnemy = !teamHandler->Ally(unit->allyteam, gu->myAllyTeam);
-			const bool unitOnRadar = (useRadar && radarHandler->InRadar(unit, gu->myAllyTeam));
+			const bool unitOnRadar = (useRadar && losHandler->InRadar(unit, gu->myAllyTeam));
 			const bool unitInSight = (unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR));
 			const bool unitVisible = !unitIsEnemy || unitOnRadar || unitInSight || gu->spectatingFullView;
 

@@ -27,6 +27,7 @@
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
 #include "Net/GameServer.h"
+#include "Map/Ground.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
 #include "Map/SMF/SMFGroundDrawer.h"

@@ -14,6 +14,8 @@
 #include "Sim/Misc/QuadField.h"
 #include "Map/Ground.h"
 #include "System/Matrix44f.h"
+#include "System/myMath.h"
+
 
 CR_BIND_DERIVED(CWeaponProjectile, CProjectile, )
 

@@ -16,7 +16,7 @@ CAirLosTexture::CAirLosTexture()
 : CPboInfoTexture("airlos")
 , uploadTex(0)
 {
-	texSize = losHandler->airSize;
+	texSize = losHandler->airLos.size;
 	texChannels = 1;
 
 	glGenTextures(1, &texture);
@@ -102,7 +102,7 @@ void CAirLosTexture::UpdateCPU()
 	auto infoTexMem = reinterpret_cast<unsigned char*>(infoTexPBO.MapBuffer());
 
 	if (!gs->globalLOS[gu->myAllyTeam]) {
-		const unsigned short* myAirLos = &losHandler->airLosMaps[gu->myAllyTeam].front();
+		const unsigned short* myAirLos = &losHandler->airLos.losMaps[gu->myAllyTeam].front();
 		for (int y = 0; y < texSize.y; ++y) {
 			for (int x = 0; x < texSize.x; ++x) {
 				infoTexMem[y * texSize.x + x] = (myAirLos[y * texSize.x + x] != 0) ? 255 : 0;
@@ -141,7 +141,7 @@ void CAirLosTexture::Update()
 
 	infoTexPBO.Bind();
 	auto infoTexMem = reinterpret_cast<unsigned char*>(infoTexPBO.MapBuffer());
-	const unsigned short* myAirLos = &losHandler->airLosMaps[gu->myAllyTeam].front();
+	const unsigned short* myAirLos = &losHandler->airLos.losMaps[gu->myAllyTeam].front();
 	memcpy(infoTexMem, myAirLos, texSize.x * texSize.y * texChannels * 2);
 	infoTexPBO.UnmapBuffer();
 

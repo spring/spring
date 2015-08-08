@@ -16,7 +16,7 @@ CLosTexture::CLosTexture()
 : CPboInfoTexture("los")
 , uploadTex(0)
 {
-	texSize = losHandler->losSize;
+	texSize = losHandler->los.size;
 	texChannels = 1;
 
 	glGenTextures(1, &texture);
@@ -104,7 +104,7 @@ void CLosTexture::UpdateCPU()
 	auto infoTexMem = reinterpret_cast<unsigned char*>(infoTexPBO.MapBuffer());
 
 	if (!gs->globalLOS[gu->myAllyTeam]) {
-		const unsigned short* myLos = &losHandler->losMaps[gu->myAllyTeam].front();
+		const unsigned short* myLos = &losHandler->los.losMaps[gu->myAllyTeam].front();
 		for (int y = 0; y < texSize.y; ++y) {
 			for (int x = 0; x < texSize.x; ++x) {
 				infoTexMem[y * texSize.x + x] = (myLos[y * texSize.x + x] != 0) ? 255 : 0;
@@ -143,7 +143,7 @@ void CLosTexture::Update()
 
 	infoTexPBO.Bind();
 	auto infoTexMem = reinterpret_cast<unsigned char*>(infoTexPBO.MapBuffer());
-	const unsigned short* myLos = &losHandler->losMaps[gu->myAllyTeam].front();
+	const unsigned short* myLos = &losHandler->los.losMaps[gu->myAllyTeam].front();
 	memcpy(infoTexMem, myLos, texSize.x * texSize.y * texChannels * 2);
 	infoTexPBO.UnmapBuffer();
 

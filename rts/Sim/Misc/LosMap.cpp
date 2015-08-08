@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "LosMap.h"
+#include "LosHandler.h"
 #include "Map/ReadMap.h"
 #include "System/myMath.h"
 #include "System/float3.h"
@@ -9,138 +10,19 @@
 #ifdef USE_UNSYNCED_HEIGHTMAP
 	#include "Game/GlobalUnsynced.h" // for myAllyTeam
 #endif
-
 #include <algorithm>
-#include <cstring>
-#include <array>
 
 
-CR_BIND(CLosMap, )
 
+CR_BIND(CLosMap, (int2(), false, nullptr))
 CR_REG_METADATA(CLosMap, (
 	CR_MEMBER(size),
 	CR_MEMBER(map),
-	CR_MEMBER(sendReadmapEvents)
-))
-
-
-
-CR_BIND(CLosAlgorithm, (int2(), 0.0f, 0.0f, NULL))
-
-CR_REG_METADATA(CLosAlgorithm, (
-	CR_MEMBER(size),
-	CR_MEMBER(minMaxAng),
-	CR_MEMBER(extraHeight)//,
+	CR_MEMBER(sendReadmapEvents)//,
 	//CR_MEMBER(heightmap)
 ))
 
 
-
-
-
-//////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////
-/// CLosMap implementation
-
-void CLosMap::SetSize(int2 newSize, bool newSendReadmapEvents)
-{
-	size = newSize;
-	sendReadmapEvents = newSendReadmapEvents;
-	map.clear();
-	map.resize(size.x * size.y, 0);
-}
-
-
-
-void CLosMap::AddMapArea(int2 pos, int allyteam, int radius, int amount)
-{
-	#ifdef USE_UNSYNCED_HEIGHTMAP
-	const int LOS2HEIGHT_X = mapDims.mapx / size.x;
-	const int LOS2HEIGHT_Z = mapDims.mapy / size.y;
-
-	const bool updateUnsyncedHeightMap = (sendReadmapEvents && allyteam >= 0 && (allyteam == gu->myAllyTeam || gu->spectatingFullView));
-	#endif
-
-	const int sx = std::max(         0, pos.x - radius);
-	const int ex = std::min(size.x - 1, pos.x + radius);
-	const int sy = std::max(         0, pos.y - radius);
-	const int ey = std::min(size.y - 1, pos.y + radius);
-
-	const int rr = (radius * radius);
-
-	for (int lmz = sy; lmz <= ey; ++lmz) {
-		const int rrx = rr - Square(pos.y - lmz);
-		for (int lmx = sx; lmx <= ex; ++lmx) {
-			const int losMapSquareIdx = (lmz * size.x) + lmx;
-			#ifdef USE_UNSYNCED_HEIGHTMAP
-			const bool squareEnteredLOS = (map[losMapSquareIdx] == 0 && amount > 0);
-			#endif
-
-			if (Square(pos.x - lmx) > rrx) {
-				continue;
-			}
-
-			map[losMapSquareIdx] += amount;
-
-			#ifdef USE_UNSYNCED_HEIGHTMAP
-			// update unsynced heightmap for all squares that
-			// cover LOSmap square <x, y> (LOSmap resolution
-			// is never greater than that of the heightmap)
-			//
-			// NOTE:
-			//     CLosMap is also used by RadarHandler, so only
-			//     update the unsynced heightmap from LosHandler
-			//     (by checking if allyteam >= 0)
-			//
-			if (!updateUnsyncedHeightMap) { continue; }
-			if (!squareEnteredLOS) { continue; }
-
-			const int
-				x1 = lmx * LOS2HEIGHT_X,
-				z1 = lmz * LOS2HEIGHT_Z;
-			const int
-				x2 = std::min((lmx + 1) * LOS2HEIGHT_X, mapDims.mapxm1),
-				z2 = std::min((lmz + 1) * LOS2HEIGHT_Z, mapDims.mapym1);
-
-			readMap->UpdateLOS(SRectangle(x1, z1, x2, z2));
-			#endif
-		}
-	}
-}
-
-void CLosMap::AddMapSquares(const std::vector<int>& squares, int allyteam, int amount)
-{
-	#ifdef USE_UNSYNCED_HEIGHTMAP
-	const int LOS2HEIGHT_X = mapDims.mapx / size.x;
-	const int LOS2HEIGHT_Z = mapDims.mapy / size.y;
-
-	const bool updateUnsyncedHeightMap = (sendReadmapEvents && allyteam >= 0 && (allyteam == gu->myAllyTeam || gu->spectatingFullView));
-	#endif
-
-	for (const int losMapSquareIdx: squares) {
-		#ifdef USE_UNSYNCED_HEIGHTMAP
-		const bool squareEnteredLOS = (map[losMapSquareIdx] == 0 && amount > 0);
-		#endif
-
-		map[losMapSquareIdx] += amount;
-
-		#ifdef USE_UNSYNCED_HEIGHTMAP
-		if (!updateUnsyncedHeightMap) { continue; }
-		if (!squareEnteredLOS) { continue; }
-
-		const int
-			lmx = losMapSquareIdx % size.x,
-			lmz = losMapSquareIdx / size.x;
-		const int
-			x1 = lmx * LOS2HEIGHT_X,
-			z1 = lmz * LOS2HEIGHT_Z,
-			x2 = std::min((lmx + 1) * LOS2HEIGHT_X, mapDims.mapxm1),
-			z2 = std::min((lmz + 1) * LOS2HEIGHT_Z, mapDims.mapym1);
-
-		readMap->UpdateLOS(SRectangle(x1, z1, x2, z2));
-		#endif
-	}
-}
 
 
 
@@ -419,17 +301,132 @@ void CLosTables::Debug(const LosTable& losRays, const std::vector<int2>& points,
 
 
 
+
+
+
+
+
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
-/// CLosAlgorithm implementation
+/// CLosMap implementation
 
-
-
-void CLosAlgorithm::LosAdd(int2 pos, int radius, float baseHeight, std::vector<int>& squares)
+void CLosMap::AddCircle(SLosInstance* instance, int amount)
 {
+	const int sx = std::max(         0, instance->basePos.x - instance->radius);
+	const int ex = std::min(size.x - 1, instance->basePos.x + instance->radius);
+	const int sy = std::max(         0, instance->basePos.y - instance->radius);
+	const int ey = std::min(size.y - 1, instance->basePos.y + instance->radius);
+
+	const int rr = Square(instance->radius);
+
+#ifdef USE_UNSYNCED_HEIGHTMAP
+	const bool updateUnsyncedHeightMap = (sendReadmapEvents && instance->allyteam >= 0 && (instance->allyteam == gu->myAllyTeam || gu->spectatingFullView));
+	if (updateUnsyncedHeightMap) {
+		const int LOS2HEIGHT_X = mapDims.mapx / size.x;
+		const int LOS2HEIGHT_Z = mapDims.mapy / size.y;
+
+		for (int lmz = sy; lmz <= ey; ++lmz) {
+			const int rrx = rr - Square(instance->basePos.y - lmz);
+			for (int lmx = sx; lmx <= ex; ++lmx) {
+				if (Square(instance->basePos.x - lmx) > rrx) {
+					continue;
+				}
+
+				const int losMapSquareIdx = (lmz * size.x) + lmx;
+				const bool squareEnteredLOS = (map[losMapSquareIdx] == 0 && amount > 0);
+				map[losMapSquareIdx] += amount;
+
+				// update unsynced heightmap for all squares that
+				// cover LOSmap square <x, y> (LOSmap resolution
+				// is never greater than that of the heightmap)
+				//
+				// NOTE:
+				//     CLosMap is also used by RadarHandler, so only
+				//     update the unsynced heightmap from LosHandler
+				//     (by checking if allyteam >= 0)
+				//
+				if (!squareEnteredLOS) { continue; }
+
+				const int
+					x1 = lmx * LOS2HEIGHT_X,
+					z1 = lmz * LOS2HEIGHT_Z,
+					x2 = std::min((lmx + 1) * LOS2HEIGHT_X, mapDims.mapxm1),
+					z2 = std::min((lmz + 1) * LOS2HEIGHT_Z, mapDims.mapym1);
+
+				readMap->UpdateLOS(SRectangle(x1, z1, x2, z2));
+			}
+		}
+
+		return;
+	}
+#endif
+
+	for (int lmz = sy; lmz <= ey; ++lmz) {
+		const int rrx = rr - Square(instance->basePos.y - lmz);
+		for (int lmx = sx; lmx <= ex; ++lmx) {
+			if (Square(instance->basePos.x - lmx) > rrx) {
+				continue;
+			}
+
+			map[(lmz * size.x) + lmx] += amount;
+		}
+	}
+}
+
+void CLosMap::AddRaycast(SLosInstance* instance, int amount)
+{
+	if (instance->squares.empty()) { //FIXME watch if unit has zero vision (underground etc.)
+		LosAdd(instance->basePos, instance->radius, instance->baseHeight, instance->squares);
+	}
+
+#ifdef USE_UNSYNCED_HEIGHTMAP
+	const bool updateUnsyncedHeightMap = (sendReadmapEvents && instance->allyteam >= 0 && (instance->allyteam == gu->myAllyTeam || gu->spectatingFullView));
+	if (updateUnsyncedHeightMap) {
+		const int LOS2HEIGHT_X = mapDims.mapx / size.x;
+		const int LOS2HEIGHT_Z = mapDims.mapy / size.y;
+
+		for (const int losMapSquareIdx: instance->squares) {
+			const bool squareEnteredLOS = (map[losMapSquareIdx] == 0 && amount > 0);
+			map[losMapSquareIdx] += amount;
+
+			if (!squareEnteredLOS) { continue; }
+
+			const int
+				lmx = losMapSquareIdx % size.x,
+				lmz = losMapSquareIdx / size.x;
+			const int
+				x1 = lmx * LOS2HEIGHT_X,
+				z1 = lmz * LOS2HEIGHT_Z,
+				x2 = std::min((lmx + 1) * LOS2HEIGHT_X, mapDims.mapxm1),
+				z2 = std::min((lmz + 1) * LOS2HEIGHT_Z, mapDims.mapym1);
+
+			readMap->UpdateLOS(SRectangle(x1, z1, x2, z2));
+		}
+
+		return;
+	}
+#endif
+
+	for (const int losMapSquareIdx: instance->squares) {
+		map[losMapSquareIdx] += amount;
+	}
+}
+
+
+
+#define USE_FULL_HEIGHTMAP
+
+#define MAP_SQUARE2(pos) (((pos).y << losHandler->los.mipLevel) * mapDims.mapx + ((pos).x << losHandler->los.mipLevel))
+#define MAP_SQUARE(pos) ((pos).y * size.x + (pos).x)
+
+
+void CLosMap::LosAdd(int2 pos, int radius, float baseHeight, std::vector<int>& squares)
+{
+	const float* heightmapFull = readMap->GetCenterHeightMapSynced();
 
 	assert(radius > 0);
 	if (radius <= 0) { return; }
+	if (SRectangle(0,0,size.x,size.y).Inside(pos) && baseHeight <= heightmapFull[MAP_SQUARE2(pos)]) { return; }
 
 	// add all squares that are in the los radius
 	SRectangle safeRect(radius, radius, size.x - radius, size.y - radius);
@@ -440,101 +437,104 @@ void CLosAlgorithm::LosAdd(int2 pos, int radius, float baseHeight, std::vector<i
 		// we need to check each square if it's outsid of the map boundaries
 		SafeLosAdd(pos, radius, baseHeight, squares);
 	}
-
-	// delete duplicates
-	std::sort(squares.begin(), squares.end());
-	auto it = std::unique(squares.begin(), squares.end());
-	squares.erase(it, squares.end());
 }
 
 
-inline static void CastLos(std::vector<int>* squares, float* maxAng, const int square, const float invR, const float* heightmap, float losHeight)
+void CLosMap::CastLos(std::vector<int>* squares, float* maxAng, const int2 pos, const int2 off, const float invR, float losHeight, std::vector<bool>& squaresMap, const int radius) const
 {
-	const float dh = heightmap[square] - losHeight;
+	const float* heightmap2 = readMap->GetCenterHeightMapSynced();
+
+	const int idx = MAP_SQUARE(pos + off);
+	const int idx2 = MAP_SQUARE2(pos + off);
+	const float bonusHeight = 5.f * invR;
+
+	const float dh2 = heightmap2[idx2] - losHeight;
+	float ang2 = dh2 * invR;
+	if ((ang2 + bonusHeight) >= *maxAng) {
+		const int2 oi = off + int2(radius, radius);
+		if (!squaresMap[oi.y * (2*radius + 1) + oi.x]) {
+			squares->push_back(idx);
+			squaresMap[oi.y * (2*radius + 1) + oi.x] = true;
+		}
+		*maxAng = ang2;
+		return;
+	}
+
+	const float dh = heightmap[idx] - losHeight;
 	float ang = dh * invR;
-	if (ang >= *maxAng) {
-		squares->push_back(square);
+	if ((ang + bonusHeight) >= *maxAng) {
+		const int2 oi = off + int2(radius, radius);
+		if (!squaresMap[oi.y * (2*radius + 1) + oi.x]) {
+			squares->push_back(idx);
+			squaresMap[oi.y * (2*radius + 1) + oi.x] = true;
+		}
 		*maxAng = ang;
 	}
 }
 
 
-#define MAP_SQUARE(pos) ((pos).y * size.x + (pos).x)
-
-
-void CLosAlgorithm::UnsafeLosAdd(int2 pos, int radius, float losHeight, std::vector<int>& squares)
+void CLosMap::UnsafeLosAdd(int2 pos, int radius, float losHeight, std::vector<int>& squares)
 {
-	const int mapSquare = MAP_SQUARE(pos);
+	const size_t area = Square((2*radius)+1);
+
 	const LosTable& table = CLosTables::GetForLosSize(radius);
-
-
 	size_t neededSpace = squares.size() + 1;
 	for (const LosLine& line: table) {
 		neededSpace += line.size() * 4;
 	}
+	neededSpace = std::min(neededSpace, area);
 	squares.reserve(neededSpace);
-
-	squares.push_back(mapSquare);
+	std::vector<bool> squaresMap(area, false); // used to filter duplicates
+	squares.push_back(MAP_SQUARE(pos));
 	for (const LosLine& line: table) {
-		float maxAng1 = minMaxAng;
-		float maxAng2 = minMaxAng;
-		float maxAng3 = minMaxAng;
-		float maxAng4 = minMaxAng;
-		float r = 1;
+		float maxAng[4] = {-1e7, -1e7, -1e7, -1e7};
 
 		for (const int2& square: line) {
 			const float invR = math::isqrt2(square.x*square.x + square.y*square.y);
-
-
-			CastLos(&squares, &maxAng1, MAP_SQUARE(pos + square),                    invR, heightmap, losHeight);
-			CastLos(&squares, &maxAng2, MAP_SQUARE(pos - square),                    invR, heightmap, losHeight);
-			CastLos(&squares, &maxAng3, MAP_SQUARE(pos + int2(square.y, -square.x)), invR, heightmap, losHeight);
-			CastLos(&squares, &maxAng4, MAP_SQUARE(pos + int2(-square.y, square.x)), invR, heightmap, losHeight);
-			r++;
+			CastLos(&squares, &maxAng[0], pos, square,                    invR, losHeight, squaresMap, radius);
+			CastLos(&squares, &maxAng[1], pos, -square,                   invR, losHeight, squaresMap, radius);
+			CastLos(&squares, &maxAng[2], pos, int2(square.y, -square.x), invR, losHeight, squaresMap, radius);
+			CastLos(&squares, &maxAng[3], pos, int2(-square.y, square.x), invR, losHeight, squaresMap, radius);
 		}
 	}
 }
 
 
-void CLosAlgorithm::SafeLosAdd(int2 pos, int radius, float losHeight, std::vector<int>& squares)
+void CLosMap::SafeLosAdd(int2 pos, int radius, float losHeight, std::vector<int>& squares)
 {
-	const int mapSquare = MAP_SQUARE(pos);
+	const size_t area = Square((2*radius)+1);
 	const LosTable& table = CLosTables::GetForLosSize(radius);
 	size_t neededSpace = squares.size() + 1;
 	for (const LosLine& line: table) {
 		neededSpace += line.size() * 4;
 	}
+	neededSpace = std::min(neededSpace, area);
 	squares.reserve(neededSpace);
+	std::vector<bool> squaresMap(area, false); // used to filter duplicates
 
 	SRectangle safeRect(0, 0, size.x, size.y);
-
 	if (safeRect.Inside(pos)) {
-		squares.push_back(mapSquare);
+		squares.push_back(MAP_SQUARE(pos));
 	}
+
 	for (const LosLine& line: table) {
-		float maxAng1 = minMaxAng;
-		float maxAng2 = minMaxAng;
-		float maxAng3 = minMaxAng;
-		float maxAng4 = minMaxAng;
-		float r = 1;
+		float maxAng[4] = {-1e7, -1e7, -1e7, -1e7};
 
 		for (const int2 square: line) {
 			const float invR = math::isqrt2(square.x*square.x + square.y*square.y);
 
 			if (safeRect.Inside(pos + square)) {
-				CastLos(&squares, &maxAng1, MAP_SQUARE(pos + square),                    invR, heightmap, losHeight);
+				CastLos(&squares, &maxAng[0], pos, square,                    invR, losHeight, squaresMap, radius);
 			}
 			if (safeRect.Inside(pos - square)) {
-				CastLos(&squares, &maxAng2, MAP_SQUARE(pos - square),                    invR, heightmap, losHeight);
+				CastLos(&squares, &maxAng[1], pos, -square,                   invR, losHeight, squaresMap, radius);
 			}
 			if (safeRect.Inside(pos + int2(square.y, -square.x))) {
-				CastLos(&squares, &maxAng3, MAP_SQUARE(pos + int2(square.y, -square.x)), invR, heightmap, losHeight);
+				CastLos(&squares, &maxAng[2], pos, int2(square.y, -square.x), invR, losHeight, squaresMap, radius);
 			}
 			if (safeRect.Inside(pos + int2(-square.y, square.x))) {
-				CastLos(&squares, &maxAng4, MAP_SQUARE(pos + int2(-square.y, square.x)), invR, heightmap, losHeight);
+				CastLos(&squares, &maxAng[3], pos, int2(-square.y, square.x), invR, losHeight, squaresMap, radius);
 			}
-
-			r++;
 		}
 	}
 }

@@ -2,6 +2,7 @@
 
 #include "MoveMath.h"
 
+#include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"

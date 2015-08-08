@@ -6,7 +6,6 @@
 #include "MoveType.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/Misc/RadarHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/myMath.h"
@@ -69,8 +68,6 @@ void AMoveType::SlowUpdate()
 					owner->Block();
 				}
 			}
-
-			radarHandler->MoveUnit(owner);
 		}
 
 		quadField->MovedUnit(owner);

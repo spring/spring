@@ -14,6 +14,7 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/QuadField.h"
+#include "Sim/Units/Unit.h"
 #include "Sim/Weapons/Weapon.h"
 
 static const float4 DEFAULT_VOLUME_COLOR = float4(0.45f, 0.0f, 0.45f, 0.35f);

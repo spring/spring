@@ -396,8 +396,8 @@ void CReadMap::UpdateHeightMapSynced(SRectangle rect, bool initialize)
 	} else {
 		InitHeightMapDigestsVectors();
 
-		const int losSquaresX = losHandler->losSize.x; // size of LOS square in heightmap coords
-		const SRectangle& lm = rect * (SQUARE_SIZE * losHandler->invLosDiv); // LOS space
+		const int losSquaresX = losHandler->los.size.x; // size of LOS square in heightmap coords
+		const SRectangle& lm = rect * (SQUARE_SIZE * losHandler->los.invDiv); // LOS space
 
 		// we updated the heightmap so change their digest (byte-overflow is intentional!)
 		for (int lmx = lm.x1; lmx <= lm.x2; ++lmx) {
@@ -579,8 +579,8 @@ void CReadMap::UpdateSlopemap(const SRectangle& rect, bool initialize)
 void CReadMap::HeightMapUpdateLOSCheck(const SRectangle& rect)
 {
 	InitHeightMapDigestsVectors();
-	const int losSqSize = losHandler->losDiv / SQUARE_SIZE; // size of LOS square in heightmap coords
-	const SRectangle& lm = rect * (SQUARE_SIZE * losHandler->invLosDiv); // LOS space
+	const int losSqSize = losHandler->los.divisor / SQUARE_SIZE; // size of LOS square in heightmap coords
+	const SRectangle& lm = rect * (SQUARE_SIZE * losHandler->los.invDiv); // LOS space
 
 	for (int lmz = lm.z1; lmz <= lm.z2; ++lmz) {
 		const int hmz = lmz * losSqSize;
@@ -625,9 +625,7 @@ void CReadMap::InitHeightMapDigestsVectors()
 {
 #ifdef USE_UNSYNCED_HEIGHTMAP
 	if (syncedHeightMapDigests.empty()) {
-		const int losSquaresX = losHandler->losSize.x;
-		const int losSquaresY = losHandler->losSize.y;
-		const int size = (losSquaresX + 1) * (losSquaresY + 1);
+		const int size = (losHandler->los.size.x + 1) * (losHandler->los.size.y + 1);
 		syncedHeightMapDigests.resize(size, 0);
 		unsyncedHeightMapDigests.resize(size, 0);
 	}
@@ -638,7 +636,7 @@ void CReadMap::InitHeightMapDigestsVectors()
 bool CReadMap::HasHeightMapChanged(const int lmx, const int lmy)
 {
 #ifdef USE_UNSYNCED_HEIGHTMAP
-	const int losSquaresX = losHandler->losSize.x;
+	const int losSquaresX = losHandler->los.size.x;
 	const int idx = lmx + lmy * (losSquaresX + 1);
 	assert(idx < syncedHeightMapDigests.size() && idx >= 0);
 	const bool heightmapChanged = (unsyncedHeightMapDigests[idx] != syncedHeightMapDigests[idx]);

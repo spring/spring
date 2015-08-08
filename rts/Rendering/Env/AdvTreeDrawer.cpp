@@ -19,6 +19,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Features/Feature.h"
+#include "Sim/Misc/LosHandler.h"
 #include "System/Matrix44f.h"
 
 static const float TEX_LEAF_START_Y1 = 0.001f;

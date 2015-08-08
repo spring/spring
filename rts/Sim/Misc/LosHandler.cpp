@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "LosHandler.h"
-#include "ModInfo.h"
 
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
@@ -10,127 +9,100 @@
 #include "Sim/Misc/ModInfo.h"
 #include "Map/ReadMap.h"
 #include "System/Log/ILog.h"
-#include "System/TimeProfiler.h"
 #include "System/Sync/HsiehHash.h"
 #include "System/creg/STL_Deque.h"
 #include "System/EventHandler.h"
+#include "System/TimeProfiler.h"
 
 
-CR_BIND(LosInstance, )
+CR_BIND(SLosInstance, (0, 0, int2(), 0.f, 0))
+CR_BIND(ILosType, (0, LOS_TYPE_LOS))
+CR_BIND(ILosType::DelayedInstance, )
 CR_BIND(CLosHandler, )
-CR_BIND(CLosHandler::DelayedInstance, )
 
-CR_REG_METADATA(LosInstance,(
-	CR_IGNORED(losSquares),
-	CR_MEMBER(losRadius),
-	CR_MEMBER(airLosRadius),
+
+//CR_REG_METADATA(ILosType,(
+	//FIXME
+//))
+CR_REG_METADATA(SLosInstance, (
+	CR_IGNORED(squares),
+	CR_MEMBER(radius),
 	CR_MEMBER(refCount),
 	CR_MEMBER(allyteam),
 	CR_MEMBER(basePos),
-	CR_MEMBER(baseAirPos),
 	CR_MEMBER(hashNum),
 	CR_MEMBER(baseHeight),
-	CR_MEMBER(toBeDeleted)
-))
-
-void CLosHandler::PostLoad()
-{
-	for (auto& bucket: instanceHash) {
-		for (LosInstance* li: bucket) {
-			if (li->refCount) {
-				LosAdd(li);
-			}
-		}
-	}
-}
-
-CR_REG_METADATA(CLosHandler,(
-	CR_IGNORED(losMipLevel),
-	CR_IGNORED(airMipLevel),
-	CR_IGNORED(losDiv),
-	CR_IGNORED(airDiv),
-	CR_IGNORED(invLosDiv),
-	CR_IGNORED(invAirDiv),
-	CR_IGNORED(airSize),
-	CR_IGNORED(losSize),
-	CR_IGNORED(requireSonarUnderWater),
-
-	CR_MEMBER(losAlgo),
-	CR_MEMBER(losMaps),
-	CR_MEMBER(airLosMaps),
-	CR_MEMBER(instanceHash),
 	CR_MEMBER(toBeDeleted),
-	CR_MEMBER(delayQue),
-	CR_POSTLOAD(PostLoad)
+	CR_MEMBER(needsRecalc)
 ))
-
-CR_REG_METADATA_SUB(CLosHandler,DelayedInstance, (
+CR_REG_METADATA_SUB(ILosType, DelayedInstance, (
 	CR_MEMBER(instance),
 	CR_MEMBER(timeoutTime)))
 
 
+CR_REG_METADATA(CLosHandler,(
+	CR_MEMBER(los),
+	CR_MEMBER(airLos),
+	CR_MEMBER(radar),
+	CR_MEMBER(sonar),
+	CR_MEMBER(commonJammer),
+	CR_MEMBER(commonSonarJammer),
+	CR_MEMBER(seismic),
+	CR_MEMBER(radarErrorSizes)
+))
+
+
+
+
 //////////////////////////////////////////////////////////////////////
-// Construction/Destruction
+// ILosType
 //////////////////////////////////////////////////////////////////////
 
 
-CLosHandler* losHandler;
-
-
-CLosHandler::CLosHandler()
-	: CEventClient("[CLosHandler]", 271993, true)
-	, losMaps(teamHandler->ActiveAllyTeams())
-	, airLosMaps(teamHandler->ActiveAllyTeams())
-	, losMipLevel(modInfo.losMipLevel)
-	, airMipLevel(modInfo.airMipLevel)
-	, losDiv(SQUARE_SIZE * (1 << losMipLevel))
-	, airDiv(SQUARE_SIZE * (1 << airMipLevel))
-	, invLosDiv(1.0f / losDiv)
-	, invAirDiv(1.0f / airDiv)
-	, airSize(std::max(1, mapDims.mapx >> airMipLevel), std::max(1, mapDims.mapy >> airMipLevel))
-	, losSize(std::max(1, mapDims.mapx >> losMipLevel), std::max(1, mapDims.mapy >> losMipLevel))
-	, requireSonarUnderWater(modInfo.requireSonarUnderWater)
-	, losAlgo(losSize, -1e6f, 15, readMap->GetMIPHeightMapSynced(losMipLevel))
+ILosType::ILosType(const int mipLevel_, LosType type_)
+	: losMaps(
+		(type != LOS_TYPE_JAMMER && type != LOS_TYPE_SONAR_JAMMER) ? teamHandler->ActiveAllyTeams() : 1,
+		CLosMap(size, type == LOS_TYPE_LOS, readMap->GetMIPHeightMapSynced(mipLevel_)))
+	, mipLevel(mipLevel_)
+	, divisor(SQUARE_SIZE * (1 << mipLevel))
+	, invDiv(1.0f / divisor)
+	, size(std::max(1, mapDims.mapx >> mipLevel), std::max(1, mapDims.mapy >> mipLevel))
+	, type(type_)
+	, algoType((type == LOS_TYPE_LOS || type == LOS_TYPE_RADAR) ? LOS_ALGO_RAYCAST : LOS_ALGO_CIRCLE)
 {
-	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
-		losMaps[a].SetSize(losSize.x, losSize.y, true);
-		airLosMaps[a].SetSize(airSize.x, airSize.y, false);
+}
+
+
+ILosType::~ILosType()
+{
+}
+
+
+float ILosType::GetRadius(const CUnit* unit) const
+{
+	switch (type) {
+		case LOS_TYPE_LOS:          return unit->losRadius;
+		case LOS_TYPE_AIRLOS:       return unit->airLosRadius;
+		case LOS_TYPE_RADAR:        return unit->radarRadius;
+		case LOS_TYPE_SONAR:        return unit->sonarRadius;
+		case LOS_TYPE_JAMMER:       return unit->jammerRadius;
+		case LOS_TYPE_SEISMIC:      return unit->seismicRadius;
+		case LOS_TYPE_SONAR_JAMMER: return unit->sonarJamRadius;
 	}
-	eventHandler.AddClient(this);
+	assert(false);
+	return 0.f;
 }
 
 
-CLosHandler::~CLosHandler()
+float ILosType::GetHeight(const CUnit* unit) const
 {
-	for (auto& bucket: instanceHash) {
-		for (LosInstance* li: bucket) {
-			delete li;
-		}
-		bucket.clear();
-	}
-
+	const float losHeight = unit->midPos.y + unit->unitDef->losHeight;
+	const float iLosHeight = ((int(losHeight) >> (mipLevel + 1)) << (mipLevel + 1)) + ((1 << (mipLevel + 1)) * 0.5f); // save losHeight in buckets //FIXME Round
+	return (algoType == LOS_ALGO_RAYCAST) ? iLosHeight : 0.f;
 }
 
 
-void CLosHandler::UnitDestroyed(const CUnit* unit, const CUnit* attacker)
-{
-	RemoveUnit(const_cast<CUnit*>(unit), true);
-}
-
-
-void CLosHandler::UnitTaken(const CUnit* unit, int oldTeam, int newTeam)
-{
-	RemoveUnit(const_cast<CUnit*>(unit));
-}
-
-
-void CLosHandler::UnitLoaded(const CUnit* unit, const CUnit* transport)
-{
-	RemoveUnit(const_cast<CUnit*>(unit));
-}
-
-
-void CLosHandler::MoveUnit(CUnit* unit)
+void ILosType::MoveUnit(CUnit* unit)
 {
 	// NOTE: under normal circumstances, this only gets called if a unit
 	// has moved to a new map square since its last SlowUpdate cycle, so
@@ -141,94 +113,136 @@ void CLosHandler::MoveUnit(CUnit* unit)
 		return;
 	if (unit->isDead || unit->transporter != nullptr)
 		return;
-	if (unit->losRadius <= 0 && unit->airLosRadius <= 0)
-		return;
 
-	unit->lastLosUpdate = gs->frameNum;
-
-	const float3& losPos = unit->midPos;
-	const int allyteam = unit->allyteam;
-	const float losHeight = losPos.y + unit->unitDef->losHeight;
-	const float iLosHeight = ((int(losHeight) >> (losMipLevel + 1)) << (losMipLevel + 1)) + ((1 << (losMipLevel + 1)) * 0.5f); // save losHeight in buckets //FIXME Round
-	const int2 baseLos = GetLosSquare(losPos);
-	const int2 baseAir = GetAirSquare(losPos);
-
-	// unchanged?
-	LosInstance* uli = unit->los;
-	if (uli
-	    && (uli->basePos == baseLos)
-	    && (uli->baseHeight == iLosHeight)
-	    && (uli->losRadius == unit->losRadius)
-	    && (uli->airLosRadius == unit->airLosRadius)
-	) {
+	if (unit->beingBuilt) {
+		if (unit->los[type] != nullptr) {
+			RemoveUnit(unit);
+		}
 		return;
 	}
-	FreeInstance(unit->los);
-	const int hash = GetHashNum(unit, baseLos, baseAir);
+
+	// NOTE:
+	//   when stunned, we are not called during Unit::SlowUpdate's
+	//   but units can in principle still be given on/off commands
+	//   this creates an exploit via Unit::Activate if the unit is
+	//   a transported radar/jammer and leaves a detached coverage
+	//   zone behind
+	const bool isPureSight = (type == LOS_TYPE_LOS) || (type == LOS_TYPE_AIRLOS);
+	if (!isPureSight && (!unit->activated || unit->IsStunned())) {
+		// deactivate any type of radar/jam when deactivated
+		if (unit->los[type] != nullptr) {
+			RemoveUnit(unit);
+		}
+		return;
+	}
+
+
+	const float3& losPos = unit->midPos;
+	const float radius = GetRadius(unit);
+	const float height = GetHeight(unit);
+	const int2 baseLos = PosToSquare(losPos);
+	const int allyteam = (type != LOS_TYPE_JAMMER && type != LOS_TYPE_SONAR_JAMMER) ? unit->allyteam : 0;
+
+	if (radius <= 0)
+		return;
+
+	auto IS_FITTING_INSTANCE = [&](SLosInstance* li) -> bool {
+		return (li
+		    && (li->basePos    == baseLos)
+		    && (li->baseHeight == height)
+		    && (li->radius     == radius)
+		    && (li->allyteam   == allyteam)
+		);
+	};
+
+	// unchanged?
+	SLosInstance* uli = reinterpret_cast<SLosInstance*>(unit->los[type]);
+	if (IS_FITTING_INSTANCE(uli)) {
+		return;
+	}
+	UnrefInstance(uli);
+	const int hash = GetHashNum(unit, baseLos);
 
 	// Cache - search if there is already an instance with same properties
-	for (LosInstance* li: instanceHash[hash]) {
-		if (li->basePos      == baseLos            &&
-		    li->losRadius    == unit->losRadius    &&
-		    li->airLosRadius == unit->airLosRadius &&
-		    li->baseHeight   == iLosHeight         &&
-		    li->allyteam     == allyteam
-		) {
-			AllocInstance(li);
-			unit->los = li;
+	for (SLosInstance* li: instanceHash[hash]) {
+		if (IS_FITTING_INSTANCE(li)) {
+			unit->los[type] = li;
+			RefInstance(li);
 			return;
 		}
 	}
 
 	// New - create a new one
-	LosInstance* instance = new LosInstance(
-		unit->losRadius,
-		unit->airLosRadius,
+	SLosInstance* li = new SLosInstance(
+		radius,
 		allyteam,
 		baseLos,
-		baseAir,
-		hash,
-		iLosHeight
+		height,
+		hash
 	);
-	instanceHash[hash].push_back(instance);
-	unit->los = instance;
-	LosAdd(instance);
+	instanceHash[hash].push_back(li);
+	unit->los[type] = li;
+	LosAdd(li);
 }
 
 
-void CLosHandler::RemoveUnit(CUnit* unit, bool delayed)
+void ILosType::RemoveUnit(CUnit* unit, bool delayed)
 {
 	if (delayed) {
-		DelayedFreeInstance(unit->los);
+		DelayedFreeInstance(reinterpret_cast<SLosInstance*>(unit->los[type]));
 	} else {
-		FreeInstance(unit->los);
+		UnrefInstance(reinterpret_cast<SLosInstance*>(unit->los[type]));
 	}
-	unit->los = nullptr;
+	unit->los[type] = nullptr;
 }
 
 
-void CLosHandler::LosAdd(LosInstance* li)
+void ILosType::LosAdd(SLosInstance* li)
 {
 	assert(li);
 	assert(teamHandler->IsValidAllyTeam(li->allyteam));
 
-	if (li->losRadius > 0) {
-		if (li->losSquares.empty())
-			losAlgo.LosAdd(li->basePos, li->losRadius, li->baseHeight, li->losSquares);
-		losMaps[li->allyteam].AddMapSquares(li->losSquares, li->allyteam, 1);
+	if (li->radius > 0) {
+		if (algoType == LOS_ALGO_RAYCAST) {
+			losMaps[li->allyteam].AddRaycast(li, 1);
+		} else {
+			losMaps[li->allyteam].AddCircle(li, 1);
+		}
 	}
-	if (li->airLosRadius > 0) { airLosMaps[li->allyteam].AddMapArea(li->baseAirPos, li->allyteam, li->airLosRadius, 1); }
 }
 
 
-void CLosHandler::LosRemove(LosInstance* li)
+void ILosType::LosRemove(SLosInstance* li)
 {
-	if (li->losRadius > 0) { losMaps[li->allyteam].AddMapSquares(li->losSquares, li->allyteam, -1); }
-	if (li->airLosRadius > 0) { airLosMaps[li->allyteam].AddMapArea(li->baseAirPos, li->allyteam, li->airLosRadius, -1); }
+	if (li->radius > 0) {
+		if (algoType == LOS_ALGO_RAYCAST) {
+			losMaps[li->allyteam].AddRaycast(li, -1);
+		} else {
+			losMaps[li->allyteam].AddCircle(li, -1);
+		}
+	}
 }
 
 
-void CLosHandler::FreeInstance(LosInstance* instance)
+void ILosType::DeleteInstance(SLosInstance* li)
+{
+	auto& cont = instanceHash[li->hashNum];
+	auto it = std::find(cont.begin(), cont.end(), li);
+	cont.erase(it);
+	delete li;
+}
+
+
+void ILosType::RefInstance(SLosInstance* instance)
+{
+	if (instance->refCount == 0) {
+		LosAdd(instance);
+	}
+	instance->refCount++;
+}
+
+
+void ILosType::UnrefInstance(SLosInstance* instance)
 {
 	if (instance == nullptr)
 		return;
@@ -240,86 +254,96 @@ void CLosHandler::FreeInstance(LosInstance* instance)
 
 	LosRemove(instance);
 
+	if (algoType == LOS_ALGO_CIRCLE) {
+		// in case of circle the instance doesn't keep any relevant buffer,
+		// so there is no need to cache it
+		DeleteInstance(instance);
+		return;
+	}
+
 	if (!instance->toBeDeleted) {
 		instance->toBeDeleted = true;
 		toBeDeleted.push_back(instance);
 	}
 
 	// reached max cache size, free one instance
-	if (toBeDeleted.size() > 500) {
-		LosInstance* li = toBeDeleted.front();
+	if (toBeDeleted.size() > CACHE_SIZE) {
+		SLosInstance* li = toBeDeleted.front();
 		toBeDeleted.pop_front();
 
-		if (li->hashNum >= LOSHANDLER_MAGIC_PRIME || li->hashNum < 0) {
+		if (li->hashNum >= MAGIC_PRIME || li->hashNum < 0) {
 			LOG_L(L_WARNING,
-					"[LosHandler::FreeInstance] bad LOS-instance hash (%d)",
-					li->hashNum);
+				"[LosHandler::FreeInstance] bad LOS-instance hash (%d)",
+				li->hashNum);
 			return;
 		}
 
 		li->toBeDeleted = false;
 
 		if (li->refCount == 0) {
-			auto& cont = instanceHash[li->hashNum];
-			auto it = std::find(cont.begin(), cont.end(), li);
-			cont.erase(it);
-			delete li;
+			DeleteInstance(li);
 		}
 	}
 }
 
 
-void CLosHandler::AllocInstance(LosInstance* instance)
-{
-	if (instance->refCount == 0) {
-		LosAdd(instance);
-	}
-	instance->refCount++;
-}
-
-
-int CLosHandler::GetHashNum(const CUnit* unit, const int2 baseLos, const int2 baseAirLos)
+int ILosType::GetHashNum(const CUnit* unit, const int2 baseLos)
 {
 	boost::uint32_t hash = 127;
 	hash = HsiehHash(&unit->allyteam,  sizeof(unit->allyteam), hash);
 	hash = HsiehHash(&baseLos,         sizeof(baseLos), hash);
-	hash = HsiehHash(&baseAirLos,      sizeof(baseAirLos), hash); //FIXME
 
-	// hash-value range is [0, LOSHANDLER_MAGIC_PRIME - 1]
-	return (hash % LOSHANDLER_MAGIC_PRIME);
+	// hash-value range is [0, MAGIC_PRIME - 1]
+	return (hash % MAGIC_PRIME);
 }
 
 
-void CLosHandler::Update()
-{
-	SCOPED_TIMER("LosHandler::Update");
-
-	while (!delayQue.empty() && delayQue.front().timeoutTime < gs->frameNum) {
-		FreeInstance(delayQue.front().instance);
-		delayQue.pop_front();
-	}
-
-	for (CUnit* u: unitHandler->activeUnits) {
-		MoveUnit(u);
-	}
-}
-
-
-void CLosHandler::DelayedFreeInstance(LosInstance* instance)
+void ILosType::DelayedFreeInstance(SLosInstance* instance)
 {
 	DelayedInstance di;
 	di.instance = instance;
 	di.timeoutTime = (gs->frameNum + (GAME_SPEED + (GAME_SPEED >> 1)));
-
 	delayQue.push_back(di);
 }
 
 
-void CLosHandler::UpdateHeightMapSynced(SRectangle rect)
+void ILosType::Update()
 {
-	auto CheckOverlap = [&](LosInstance* li, SRectangle rect) -> bool {
-		int2 pos = int2(li->basePos.x * losDiv, li->basePos.y * losDiv);
-		int radius = std::max(li->losRadius * losDiv, li->airLosRadius * airDiv);
+	// update LoS pos/radius
+	for (CUnit* u: unitHandler->activeUnits) {
+		MoveUnit(u);
+	}
+
+	// delayed delete
+	while (!delayQue.empty() && delayQue.front().timeoutTime < gs->frameNum) {
+		UnrefInstance(delayQue.front().instance);
+		delayQue.pop_front();
+	}
+
+	// terraform
+	if ((gs->frameNum-1) % LOS_TERRAFORM_SLOWUPDATE_RATE == 0) {
+		for (auto& bucket: instanceHash) {
+			for (SLosInstance* li: bucket) {
+				if (!li->needsRecalc)
+					continue;
+				if (li->refCount == 0)
+					continue;
+
+				LosRemove(li);
+				li->squares.clear();
+				LosAdd(li);
+				li->needsRecalc = false;
+			}
+		}
+	}
+}
+
+
+void ILosType::UpdateHeightMapSynced(SRectangle rect)
+{
+	auto CheckOverlap = [&](SLosInstance* li, SRectangle rect) -> bool {
+		int2 pos = li->basePos * divisor;
+		const int radius = li->radius * divisor;
 
 		const int hw = rect.GetWidth() * SQUARE_SIZE / 2;
 		const int hh = rect.GetHeight() * SQUARE_SIZE / 2;
@@ -338,29 +362,112 @@ void CLosHandler::UpdateHeightMapSynced(SRectangle rect)
 
 	// delete unused instances that overlap with the changed rectangle
 	for (auto it = toBeDeleted.begin(); it != toBeDeleted.end();) {
-		LosInstance* li = *it;
+		SLosInstance* li = *it;
 		if (li->refCount > 0 || !CheckOverlap(li, rect)) {
 			++it;
 			continue;
 		}
 
 		it = toBeDeleted.erase(it);
-		auto& cont = instanceHash[li->hashNum];
-		auto jt = std::find(cont.begin(), cont.end(), li);
-		cont.erase(jt);
-		delete li;
+		DeleteInstance(li);
 	}
 
 	// relos used instances
 	for (auto& bucket: instanceHash) {
-		for (LosInstance* li: bucket) {
+		for (SLosInstance* li: bucket) {
+			if (li->needsRecalc)
+				continue;
 			if (!CheckOverlap(li, rect))
 				continue;
 
-			LosRemove(li);
-			li->losSquares.clear();
-			LosAdd(li);
+			li->needsRecalc = true;
 		}
+	}
+}
+
+
+
+
+//////////////////////////////////////////////////////////////////////
+// Construction/Destruction
+//////////////////////////////////////////////////////////////////////
+
+CLosHandler* losHandler;
+
+static const int RADAR_MIPLEVEL = 3;
+
+
+CLosHandler::CLosHandler()
+	: CEventClient("[CLosHandler]", 271993, true)
+
+	, los(modInfo.losMipLevel, ILosType::LOS_TYPE_LOS)
+	, airLos(modInfo.airMipLevel, ILosType::LOS_TYPE_AIRLOS)
+	, radar(RADAR_MIPLEVEL, ILosType::LOS_TYPE_RADAR) //FIXME make mipLevel configurable!!!
+	, sonar(RADAR_MIPLEVEL, ILosType::LOS_TYPE_SONAR)
+	, seismic(RADAR_MIPLEVEL, ILosType::LOS_TYPE_SEISMIC)
+	, commonJammer(RADAR_MIPLEVEL, ILosType::LOS_TYPE_JAMMER)
+	, commonSonarJammer(RADAR_MIPLEVEL, ILosType::LOS_TYPE_SONAR_JAMMER)
+
+	, baseRadarErrorSize(defBaseRadarErrorSize)
+	, baseRadarErrorMult(defBaseRadarErrorMult)
+	, radarErrorSizes(teamHandler->ActiveAllyTeams(), defBaseRadarErrorSize)
+{
+	losTypes.reserve(ILosType::LOS_TYPE_COUNT);
+	losTypes.push_back(&los);
+	losTypes.push_back(&airLos);
+	losTypes.push_back(&radar);
+	losTypes.push_back(&sonar);
+	losTypes.push_back(&seismic);
+	losTypes.push_back(&commonJammer);
+	losTypes.push_back(&commonSonarJammer);
+
+	eventHandler.AddClient(this);
+}
+
+
+CLosHandler::~CLosHandler()
+{
+}
+
+
+void CLosHandler::UnitDestroyed(const CUnit* unit, const CUnit* attacker)
+{
+	for (ILosType* lt: losTypes) {
+		lt->RemoveUnit(const_cast<CUnit*>(unit), true);
+	}
+}
+
+
+void CLosHandler::UnitTaken(const CUnit* unit, int oldTeam, int newTeam)
+{
+	for (ILosType* lt: losTypes) {
+		lt->RemoveUnit(const_cast<CUnit*>(unit));
+	}
+}
+
+
+void CLosHandler::UnitLoaded(const CUnit* unit, const CUnit* transport)
+{
+	for (ILosType* lt: losTypes) {
+		lt->RemoveUnit(const_cast<CUnit*>(unit));
+	}
+}
+
+
+void CLosHandler::Update()
+{
+	SCOPED_TIMER("LosHandler::Update");
+	for (ILosType* lt: losTypes) {
+		lt->Update();
+	}
+}
+
+
+void CLosHandler::UpdateHeightMapSynced(SRectangle rect)
+{
+	SCOPED_TIMER("LosHandler::Update");
+	for (ILosType* lt: losTypes) {
+		lt->UpdateHeightMapSynced(rect);
 	}
 }
 
@@ -391,11 +498,68 @@ bool CLosHandler::InLos(const CUnit* unit, int allyTeam) const
 	if (unit->useAirLos)
 		return (InAirLos(unit->pos, allyTeam) || InAirLos(unit->pos + unit->speed, allyTeam));
 
-	if (requireSonarUnderWater) {
-		if (unit->IsUnderWater() && !radarHandler->InRadar(unit, allyTeam)) {
+	if (modInfo.requireSonarUnderWater) {
+		if (unit->IsUnderWater() && !InRadar(unit, allyTeam)) {
 			return false;
 		}
 	}
 
 	return (InLos(unit->pos, allyTeam) || InLos(unit->pos + unit->speed, allyTeam));
+}
+
+
+bool CLosHandler::InRadar(const float3 pos, int allyTeam) const
+{
+	if (pos.y < 0.0f) {
+		// position is underwater, only sonar can see it
+		return (sonar.InSight(pos, allyTeam) && !commonSonarJammer.InSight(pos, 0));
+	}
+
+	return (radar.InSight(pos, allyTeam) && !commonJammer.InSight(pos, 0));
+}
+
+
+bool CLosHandler::InRadar(const CUnit* unit, int allyTeam) const
+{
+	if (unit->IsUnderWater()) {
+		// unit is completely submerged, only sonar can see it
+		if (unit->sonarStealth && !unit->beingBuilt) {
+			return false;
+		}
+
+		return (sonar.InSight(unit->pos, allyTeam) && !commonSonarJammer.InSight(unit->pos, 0));
+	}
+
+	// (surface) units that are not completely submerged can potentially
+	// be seen by both radar and sonar (by sonar iff the lowest point on
+	// the model is still inside water)
+	const bool radarVisible =
+		(!unit->stealth || unit->beingBuilt) &&
+		(radar.InSight(unit->pos, allyTeam)) &&
+		(!commonJammer.InSight(unit->pos, 0));
+	const bool sonarVisible =
+		(unit->IsUnderWater()) &&
+		(!unit->sonarStealth || unit->beingBuilt) &&
+		(sonar.InSight(unit->pos, allyTeam)) &&
+		(!commonSonarJammer.InSight(unit->pos, 0));
+
+	return (radarVisible || sonarVisible);
+}
+
+
+bool CLosHandler::InJammer(const float3 pos, int allyTeam) const
+{
+	if (pos.y < 0.0f) {
+		return commonSonarJammer.InSight(pos, 0);
+	}
+	return commonJammer.InSight(pos, 0);
+}
+
+
+bool CLosHandler::InJammer(const CUnit* unit, int allyTeam) const
+{
+	if (unit->IsUnderWater()) {
+		return commonSonarJammer.InSight(unit->pos, 0);
+	}
+	return commonJammer.InSight(unit->pos, 0);
 }

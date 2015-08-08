@@ -4,7 +4,9 @@
 #include "GeoThermSmokeProjectile.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/Wind.h"
+
 
 CR_BIND_DERIVED(CGeoThermSmokeProjectile, CSmokeProjectile, (ZeroVector, ZeroVector, 1, NULL))
 

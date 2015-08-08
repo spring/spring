@@ -35,7 +35,6 @@
 #include "Sim/Misc/ResourceHandler.h"
 #include "Sim/Misc/ResourceMapAnalyzer.h"
 #include "Sim/Misc/LosHandler.h"
-#include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/QuadField.h" // for quadField->GetFeaturesExact(pos, radius)
@@ -1810,7 +1809,7 @@ EXPORT(int) skirmishAiCallback_Map_getSlopeMap(int skirmishAIId,
 EXPORT(int) skirmishAiCallback_Map_getLosMap(int skirmishAIId,
 		int* losValues, int losValues_sizeMax) {
 
-	static const int losValues_sizeReal = losHandler->losSize.x * losHandler->losSize.y;
+	static const int losValues_sizeReal = losHandler->los.size.x * losHandler->los.size.y;
 
 	int losValues_size = losValues_sizeReal;
 
@@ -1829,7 +1828,7 @@ EXPORT(int) skirmishAiCallback_Map_getLosMap(int skirmishAIId,
 EXPORT(int) skirmishAiCallback_Map_getRadarMap(int skirmishAIId,
 		int* radarValues, int radarValues_sizeMax) {
 
-	static const int radarValues_sizeReal = radarHandler->xsize * radarHandler->zsize;
+	static const int radarValues_sizeReal = losHandler->radar.size.x * losHandler->radar.size.y;
 
 	int radarValues_size = radarValues_sizeReal;
 
@@ -1848,8 +1847,7 @@ EXPORT(int) skirmishAiCallback_Map_getRadarMap(int skirmishAIId,
 EXPORT(int) skirmishAiCallback_Map_getJammerMap(int skirmishAIId,
 		int* jammerValues, int jammerValues_sizeMax) {
 
-	// Yes, it is correct, jammer-map has the same size as the radar map
-	static const int jammerValues_sizeReal = radarHandler->xsize * radarHandler->zsize;
+	const int jammerValues_sizeReal = losHandler->commonJammer.size.x * losHandler->commonJammer.size.y;
 
 	int jammerValues_size = jammerValues_sizeReal;
 

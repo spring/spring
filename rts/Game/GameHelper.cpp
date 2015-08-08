@@ -20,7 +20,6 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
@@ -570,7 +569,8 @@ namespace {
 				const float dist = pos.distance(u->midPos) - u->radius;
 
 				if (dist <= closeDist &&
-					(canBeBlind || u->losRadius * losHandler->losDiv > dist)) {
+					(canBeBlind || ((u->losRadius * losHandler->los.divisor) > dist))
+				) {
 					closeDist = dist;
 					closeUnit = u;
 				}
@@ -596,7 +596,8 @@ namespace {
 				const float sqDist = (pos - u->midPos).SqLength2D();
 
 				if (sqDist <= closeSqDist &&
-					(canBeBlind || Square(u->losRadius * losHandler->losDiv) > sqDist)) {
+					(canBeBlind || Square(u->losRadius * losHandler->los.divisor) > sqDist)
+				) {
 					closeSqDist = sqDist;
 					closeUnit = u;
 				}

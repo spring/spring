@@ -2132,36 +2132,33 @@ int LuaSyncedCtrl::SetUnitSensorRadius(lua_State* L)
 	const string key = luaL_checkstring(L, 2);
 	const float radius = luaL_checkfloat(L, 3);
 
-	const int radarDiv    = radarHandler->radarDiv;
-	const int radarRadius = (int)(radius * radarHandler->invRadarDiv);
-
 	if (key == "los") {
-		const int losRange = (int)(radius * losHandler->invLosDiv);
+		const int losRange = (int)(radius * losHandler->los.invDiv);
 		unit->ChangeLos(losRange, unit->realAirLosRadius);
 		unit->realLosRadius = losRange;
-		lua_pushnumber(L, unit->losRadius * losHandler->losDiv);
+		lua_pushnumber(L, unit->losRadius * losHandler->los.divisor);
 	} else if (key == "airLos") {
-		const int airRange = (int)(radius * losHandler->invAirDiv);
+		const int airRange = (int)(radius * losHandler->airLos.invDiv);
 		unit->ChangeLos(unit->realLosRadius, airRange);
 		unit->realAirLosRadius = airRange;
-		lua_pushnumber(L, unit->airLosRadius * losHandler->airDiv);
+		lua_pushnumber(L, unit->airLosRadius * losHandler->airLos.divisor);
 	} else if (key == "radar") {
-		unit->ChangeSensorRadius(&unit->radarRadius, radarRadius);
-		lua_pushnumber(L, unit->radarRadius * radarDiv);
+		unit->radarRadius = (int)(radius * losHandler->radar.invDiv);
+		lua_pushnumber(L, unit->radarRadius * losHandler->radar.divisor);
 	} else if (key == "sonar") {
-		unit->ChangeSensorRadius(&unit->sonarRadius, radarRadius);
-		lua_pushnumber(L, unit->sonarRadius * radarDiv);
+		unit->sonarRadius = (int)(radius * losHandler->sonar.invDiv);
+		lua_pushnumber(L, unit->sonarRadius * losHandler->sonar.divisor);
 	} else if (key == "seismic") {
-		unit->ChangeSensorRadius(&unit->seismicRadius, radarRadius);
-		lua_pushnumber(L, unit->seismicRadius * radarDiv);
+		unit->seismicRadius = (int)(radius * losHandler->seismic.invDiv);
+		lua_pushnumber(L, unit->seismicRadius * losHandler->seismic.divisor);
 	} else if (key == "radarJammer") {
-		unit->ChangeSensorRadius(&unit->jammerRadius, radarRadius);
-		lua_pushnumber(L, unit->jammerRadius * radarDiv);
+		unit->jammerRadius = (int)(radius * losHandler->commonJammer.invDiv);
+		lua_pushnumber(L, unit->jammerRadius * losHandler->commonJammer.divisor);
 	} else if (key == "sonarJammer") {
-		unit->ChangeSensorRadius(&unit->sonarJamRadius, radarRadius);
-		lua_pushnumber(L, unit->sonarJamRadius * radarDiv);
+		unit->sonarJamRadius = (int)(radius * losHandler->commonSonarJammer.invDiv);
+		lua_pushnumber(L, unit->sonarJamRadius * losHandler->commonSonarJammer.divisor);
 	} else {
-		return 0; // unknown sensor type
+		luaL_error(L, "Unknown sensor type to SetUnitSensorRadius()");
 	}
 
 	return 1;
@@ -3797,9 +3794,9 @@ int LuaSyncedCtrl::SetRadarErrorParams(lua_State* L)
 	if (!teamHandler->IsValidAllyTeam(allyTeamID))
 		return 0;
 
-	radarHandler->SetAllyTeamRadarErrorSize(allyTeamID, luaL_checknumber(L, 2));
-	radarHandler->SetBaseRadarErrorSize(luaL_optnumber(L, 3, radarHandler->GetBaseRadarErrorSize()));
-	radarHandler->SetBaseRadarErrorMult(luaL_optnumber(L, 4, radarHandler->GetBaseRadarErrorMult()));
+	losHandler->SetAllyTeamRadarErrorSize(allyTeamID, luaL_checknumber(L, 2));
+	losHandler->SetBaseRadarErrorSize(luaL_optnumber(L, 3, losHandler->GetBaseRadarErrorSize()));
+	losHandler->SetBaseRadarErrorMult(luaL_optnumber(L, 4, losHandler->GetBaseRadarErrorMult()));
 	return 0;
 }
 

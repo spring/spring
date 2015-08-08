@@ -9,23 +9,31 @@
 #include "System/type2.h"
 #include "System/myMath.h"
 
+
+struct SLosInstance;
+
+
 /// map containing counts of how many units have Line Of Sight (LOS) to each square
 class CLosMap
 {
 	CR_DECLARE_STRUCT(CLosMap)
 
 public:
-	CLosMap() : size(0, 0), sendReadmapEvents(false) {}
+	CLosMap(int2 size_, bool sendReadmapEvents_, const float* heightmap_)
+	: size(size_)
+	, map(size.x * size.y, 0)
+	, sendReadmapEvents(sendReadmapEvents_)
+	, heightmap(heightmap_)
+	{ }
 
-	void SetSize(int2 size, bool sendReadmapEvents);
-	void SetSize(int w, int h, bool sendReadmapEvents) { SetSize(int2(w, h), sendReadmapEvents); }
-
+public:
 	/// circular area, for airLosMap, circular radar maps, jammer maps, ...
-	void AddMapArea(int2 pos, int allyteam, int radius, int amount);
+	void AddCircle(SLosInstance* instance, int amount);
 
 	/// arbitrary area, for losMap, non-circular radar maps, ...
-	void AddMapSquares(const std::vector<int>& squares, int allyteam, int amount);
+	void AddRaycast(SLosInstance* instance, int amount);
 
+public:
 	int operator[] (int square) const { return map[square]; }
 
 	int At(int2 p) const {
@@ -37,31 +45,17 @@ public:
 	// FIXME temp fix for CBaseGroundDrawer and AI interface, which need raw data
 	unsigned short& front() { return map.front(); }
 
+private:
+	void LosAdd(int2 pos, int radius, float baseHeight, std::vector<int>& squares);
+	void UnsafeLosAdd(int2 pos, int radius, float baseHeight, std::vector<int>& squares);
+	void SafeLosAdd(int2 pos, int radius, float baseHeight, std::vector<int>& squares);
+
+	inline void CastLos(std::vector<int>* squares, float* maxAng, const int2 pos, const int2 off, const float invR, float losHeight, std::vector<bool>& squaresMap, const int radius) const;
+
 protected:
 	int2 size;
 	std::vector<unsigned short> map;
 	bool sendReadmapEvents;
-};
-
-
-/// algorithm to calculate LOS squares using raycasting, taking terrain into account
-class CLosAlgorithm
-{
-	CR_DECLARE_STRUCT(CLosAlgorithm)
-
-public:
-	CLosAlgorithm(int2 size, float minMaxAng, float extraHeight, const float* heightmap)
-	: size(size), minMaxAng(minMaxAng), extraHeight(extraHeight), heightmap(heightmap) {}
-
-	void LosAdd(int2 pos, int radius, float baseHeight, std::vector<int>& squares);
-
-private:
-	void UnsafeLosAdd(int2 pos, int radius, float baseHeight, std::vector<int>& squares);
-	void SafeLosAdd(int2 pos, int radius, float baseHeight, std::vector<int>& squares);
-
-	int2 size;
-	float minMaxAng;
-	float extraHeight;
 	const float* const heightmap;
 };
 

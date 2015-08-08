@@ -14,7 +14,6 @@
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/UnitTypes/Building.h"
 #include "Sim/Misc/DamageArray.h"
-#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/QuadField.h"
@@ -302,7 +301,6 @@ bool CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	}
 
 	unit->UnBlock();
-	radarHandler->RemoveUnit(unit);
 
 	// do not remove unit from QF, otherwise projectiles
 	// will not be able to connect with (ie. damage) it

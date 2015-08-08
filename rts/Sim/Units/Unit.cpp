@@ -41,7 +41,6 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Misc/ModInfo.h"
@@ -96,7 +95,7 @@ CUnit::CUnit()
 , commandAI(NULL)
 , localModel(NULL)
 , script(NULL)
-, los(NULL)
+, los(ILosType::LOS_TYPE_COUNT, nullptr)
 , losStatus(teamHandler->ActiveAllyTeams(), 0)
 , fpsControlPlayer(NULL)
 , deathSpeed(ZeroVector)
@@ -140,18 +139,14 @@ CUnit::CUnit()
 , realAirLosRadius(0)
 , losRadius(0)
 , airLosRadius(0)
-, lastLosUpdate(0)
 , radarRadius(0)
 , sonarRadius(0)
 , jammerRadius(0)
 , sonarJamRadius(0)
 , seismicRadius(0)
 , seismicSignature(0.0f)
-, oldRadarPos(0, 0)
-, hasRadarPos(false)
 , stealth(false)
 , sonarStealth(false)
-, hasRadarCapacity(false)
 , energyTickMake(0.0f)
 , metalExtract(0.0f)
 , cost(100.0f, 0.0f)
@@ -233,7 +228,7 @@ CUnit::~CUnit()
 	}
 
 	if (activated && unitDef->targfac) {
-		radarHandler->IncreaseAllyTeamRadarErrorSize(allyteam);
+		losHandler->IncreaseAllyTeamRadarErrorSize(allyteam);
 	}
 
 	SetMetalStorage(0);
@@ -260,7 +255,6 @@ CUnit::~CUnit()
 	}
 
 	quadField->RemoveUnit(this);
-	radarHandler->RemoveUnit(this);
 
 	modelParser->DeleteLocalModel(localModel);
 }
@@ -336,8 +330,6 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	unitHandler->AddUnit(this);
 	quadField->MovedUnit(this);
 
-	hasRadarPos = false;
-
 	losStatus[allyteam] = LOS_ALL_MASK_BITS | LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
 
 #ifdef TRACE_SYNC
@@ -378,10 +370,6 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	sonarJamRadius   = unitDef->sonarJamRadius / (SQUARE_SIZE * 8);
 	seismicRadius    = unitDef->seismicRadius  / (SQUARE_SIZE * 8);
 	seismicSignature = unitDef->seismicSignature;
-	hasRadarCapacity =
-		(radarRadius   > 0.0f) || (sonarRadius    > 0.0f) ||
-		(jammerRadius  > 0.0f) || (sonarJamRadius > 0.0f) ||
-		(seismicRadius > 0.0f);
 	stealth = unitDef->stealth;
 	sonarStealth = unitDef->sonarStealth;
 
@@ -646,9 +634,7 @@ void CUnit::ForcedMove(const float3& newPos)
 	Block();
 
 	eventHandler.UnitMoved(this);
-
 	quadField->MovedUnit(this);
-	radarHandler->MoveUnit(this);
 }
 
 
@@ -665,9 +651,9 @@ float3 CUnit::GetErrorVector(int allyteam) const
 	}
 
 	if ((losStatus[allyteam] & LOS_INRADAR) != 0) {
-		return (posErrorVector * radarHandler->GetAllyTeamRadarErrorSize(allyteam));
+		return (posErrorVector * losHandler->GetAllyTeamRadarErrorSize(allyteam));
 	} else {
-		return (posErrorVector * radarHandler->GetBaseRadarErrorSize() * 2.0f);
+		return (posErrorVector * losHandler->GetBaseRadarErrorSize() * 2.0f);
 	}
 }
 
@@ -852,7 +838,7 @@ unsigned short CUnit::CalcLosStatus(int at)
 			newStatus &= ~(mask & (LOS_PREVLOS | LOS_CONTRADAR));
 		}
 	}
-	else if (radarHandler->InRadar(this, at)) {
+	else if (losHandler->InRadar(this, at)) {
 		newStatus |=  (mask & LOS_INRADAR);
 		newStatus &= ~(mask & LOS_INLOS);
 	}
@@ -1335,24 +1321,6 @@ const CollisionVolume* CUnit::GetCollisionVolume(const LocalModelPiece* lmp) con
 /******************************************************************************/
 /******************************************************************************/
 
-void CUnit::ChangeSensorRadius(int* valuePtr, int newValue)
-{
-	radarHandler->RemoveUnit(this);
-
-	*valuePtr = newValue;
-
-	if (newValue != 0) {
-		hasRadarCapacity = true;
-	} else if (hasRadarCapacity) {
-		hasRadarCapacity = (radarRadius   > 0.0f) || (jammerRadius   > 0.0f) ||
-		                   (sonarRadius   > 0.0f) || (sonarJamRadius > 0.0f) ||
-		                   (seismicRadius > 0.0f);
-	}
-
-	radarHandler->MoveUnit(this);
-}
-
-
 void CUnit::AddExperience(float exp)
 {
 	if (exp == 0.0f)
@@ -1393,18 +1361,14 @@ void CUnit::DoSeismicPing(float pingSize)
 	float rx = gs->randFloat();
 	float rz = gs->randFloat();
 
-	if (!(losStatus[gu->myAllyTeam] & LOS_INLOS) &&
-	    radarHandler->InSeismicDistance(this, gu->myAllyTeam)) {
-
-		const float3 err(radarHandler->GetAllyTeamRadarErrorSize(gu->myAllyTeam) * (0.5f - rx), 0.0f,
-		                 radarHandler->GetAllyTeamRadarErrorSize(gu->myAllyTeam) * (0.5f - rz));
+	if (!(losStatus[gu->myAllyTeam] & LOS_INLOS) && losHandler->InSeismicDistance(this, gu->myAllyTeam)) {
+		const float3 err = float3(0.5f - rx, 0.0f, 0.5f - rz) * losHandler->GetAllyTeamRadarErrorSize(gu->myAllyTeam);
 
 		new CSeismicGroundFlash(pos + err, 30, 15, 0, pingSize, 1, float3(0.8f, 0.0f, 0.0f));
 	}
 	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
-		if (radarHandler->InSeismicDistance(this, a)) {
-			const float3 err(radarHandler->GetAllyTeamRadarErrorSize(a) * (0.5f - rx), 0.0f,
-			                 radarHandler->GetAllyTeamRadarErrorSize(a) * (0.5f - rz));
+		if (losHandler->InSeismicDistance(this, a)) {
+			const float3 err = float3(0.5f - rx, 0.0f, 0.5f - rz) * losHandler->GetAllyTeamRadarErrorSize(a);
 			const float3 pingPos = (pos + err);
 			eventHandler.UnitSeismicPing(this, a, pingPos, pingSize);
 			eoh->SeismicPing(a, *this, pingPos, pingSize);
@@ -1449,9 +1413,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 
 	quadField->RemoveUnit(this);
 	quads.clear();
-	radarHandler->RemoveUnit(this);
 	quadField->MovedUnit(this);
-	radarHandler->MoveUnit(this);
 
 	if (unitDef->isAirBase) {
 		airBaseHandler->DeregisterAirBase(this);
@@ -2203,10 +2165,9 @@ void CUnit::Activate()
 	script->Activate();
 
 	if (unitDef->targfac) {
-		radarHandler->DecreaseAllyTeamRadarErrorSize(allyteam);
+		losHandler->DecreaseAllyTeamRadarErrorSize(allyteam);
 	}
 
-	radarHandler->MoveUnit(this);
 
 	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
 		Channels::General->PlayRandomSample(unitDef->sounds.activate, this);
@@ -2223,10 +2184,9 @@ void CUnit::Deactivate()
 	script->Deactivate();
 
 	if (unitDef->targfac) {
-		radarHandler->IncreaseAllyTeamRadarErrorSize(allyteam);
+		losHandler->IncreaseAllyTeamRadarErrorSize(allyteam);
 	}
 
-	radarHandler->RemoveUnit(this);
 
 	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
 		Channels::General->PlayRandomSample(unitDef->sounds.deactivate, this);
@@ -2425,13 +2385,12 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(category),
 
 	CR_MEMBER(quads),
-	CR_MEMBER(los),
+	//CR_MEMBER(los),
 
 	CR_MEMBER(mapSquare),
 
 	CR_MEMBER(losRadius),
 	CR_MEMBER(airLosRadius),
-	CR_MEMBER(lastLosUpdate),
 
 	CR_MEMBER(radarRadius),
 	CR_MEMBER(sonarRadius),
@@ -2439,10 +2398,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(sonarJamRadius),
 	CR_MEMBER(seismicRadius),
 	CR_MEMBER(seismicSignature),
-	CR_MEMBER(hasRadarCapacity),
-	CR_MEMBER(radarSquares),
-	CR_MEMBER(oldRadarPos),
-	CR_MEMBER(hasRadarPos),
 	CR_MEMBER(stealth),
 	CR_MEMBER(sonarStealth),
 

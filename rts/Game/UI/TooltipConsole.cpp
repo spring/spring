@@ -14,7 +14,6 @@
 #include "Rendering/Fonts/glFont.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
-#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Units/Unit.h"

@@ -23,7 +23,6 @@ add_library(engineSim STATIC
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/ModInfo.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/NanoPieceCache.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/QuadField.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/RadarHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/Resource.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/ResourceHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/ResourceMapAnalyzer.cpp"

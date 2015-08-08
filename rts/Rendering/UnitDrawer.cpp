@@ -36,7 +36,6 @@
 
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/LosHandler.h"
-#include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"

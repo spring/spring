@@ -11,6 +11,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/CollisionVolume.h"
+#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/FireProjectile.h"

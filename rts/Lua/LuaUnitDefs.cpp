@@ -29,7 +29,6 @@
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
-#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"

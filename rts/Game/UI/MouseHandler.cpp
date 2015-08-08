@@ -28,7 +28,6 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/Feature.h"
-#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"

@@ -31,7 +31,6 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/LosHandler.h"
-#include "Sim/Misc/RadarHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
@@ -1505,21 +1504,20 @@ void CMiniMap::DrawUnitIcons() const
 void CMiniMap::DrawUnitRanges() const
 {
 	// draw unit ranges
-	const float radarSquare = radarHandler->radarDiv;
 	CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
 	for(const CUnit* unit: selUnits) {
 		// LOS Ranges
 		if (unit->radarRadius && !unit->beingBuilt && unit->activated) {
 			glColor3fv(cmdColors.rangeRadar);
-			DrawCircle(unit->pos, (unit->radarRadius * radarSquare));
+			DrawCircle(unit->pos, (unit->radarRadius * losHandler->radar.divisor));
 		}
 		if (unit->sonarRadius && !unit->beingBuilt && unit->activated) {
 			glColor3fv(cmdColors.rangeSonar);
-			DrawCircle(unit->pos, (unit->sonarRadius * radarSquare));
+			DrawCircle(unit->pos, (unit->sonarRadius * losHandler->sonar.divisor));
 		}
 		if (unit->jammerRadius && !unit->beingBuilt && unit->activated) {
 			glColor3fv(cmdColors.rangeJammer);
-			DrawCircle(unit->pos, (unit->jammerRadius * radarSquare));
+			DrawCircle(unit->pos, (unit->jammerRadius * losHandler->commonJammer.divisor));
 		}
 
 		// Interceptor Ranges

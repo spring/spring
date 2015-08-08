@@ -1539,23 +1539,23 @@ void CUnitScript::SetUnitVal(int val, int param)
 			break;
 		}
 		case RADAR_RADIUS: {
-			unit->ChangeSensorRadius(&unit->radarRadius, param);
+			unit->radarRadius = param;
 			break;
 		}
 		case JAMMER_RADIUS: {
-			unit->ChangeSensorRadius(&unit->jammerRadius, param);
+			unit->jammerRadius = param;
 			break;
 		}
 		case SONAR_RADIUS: {
-			unit->ChangeSensorRadius(&unit->sonarRadius, param);
+			unit->sonarRadius = param;
 			break;
 		}
 		case SONAR_JAM_RADIUS: {
-			unit->ChangeSensorRadius(&unit->sonarJamRadius, param);
+			unit->sonarJamRadius = param;
 			break;
 		}
 		case SEISMIC_RADIUS: {
-			unit->ChangeSensorRadius(&unit->seismicRadius, param);
+			unit->seismicRadius = param;
 			break;
 		}
 		case CURRENT_FUEL: {

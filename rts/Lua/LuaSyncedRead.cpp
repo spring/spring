@@ -2639,24 +2639,22 @@ int LuaSyncedRead::GetUnitSensorRadius(lua_State* L)
 	}
 	const string key = luaL_checkstring(L, 2);
 
-	const int radarDiv = radarHandler->radarDiv;
-
 	if (key == "los") {
-		lua_pushnumber(L, unit->losRadius * losHandler->losDiv);
+		lua_pushnumber(L, unit->losRadius * losHandler->los.divisor);
 	} else if (key == "airLos") {
-		lua_pushnumber(L, unit->airLosRadius * losHandler->airDiv);
+		lua_pushnumber(L, unit->airLosRadius * losHandler->airLos.divisor);
 	} else if (key == "radar") {
-		lua_pushnumber(L, unit->radarRadius * radarDiv);
+		lua_pushnumber(L, unit->radarRadius * losHandler->radar.divisor);
 	} else if (key == "sonar") {
-		lua_pushnumber(L, unit->sonarRadius * radarDiv);
+		lua_pushnumber(L, unit->sonarRadius * losHandler->sonar.divisor);
 	} else if (key == "seismic") {
-		lua_pushnumber(L, unit->seismicRadius * radarDiv);
+		lua_pushnumber(L, unit->seismicRadius * losHandler->seismic.divisor);
 	} else if (key == "radarJammer") {
-		lua_pushnumber(L, unit->jammerRadius * radarDiv);
+		lua_pushnumber(L, unit->jammerRadius * losHandler->commonJammer.divisor);
 	} else if (key == "sonarJammer") {
-		lua_pushnumber(L, unit->sonarJamRadius * radarDiv);
+		lua_pushnumber(L, unit->sonarJamRadius * losHandler->commonSonarJammer.divisor);
 	} else {
-		return 0; // unknown sensor type
+		luaL_error(L, "Unknown sensor type to GetUnitSensorRadius()");
 	}
 
 	return 1;
@@ -5081,18 +5079,18 @@ int LuaSyncedRead::GetPositionLosState(lua_State* L)
 
 	if (allyTeamID >= 0) {
 		inLos    = losHandler->InLos(pos, allyTeamID);
-		inRadar  = radarHandler->InRadar(pos, allyTeamID);
-		inJammer = radarHandler->InJammer(pos, allyTeamID);
+		inRadar  = losHandler->InRadar(pos, allyTeamID);
+		inJammer = losHandler->InJammer(pos, allyTeamID);
 	} else {
-		// this does not seem useful
+		//FIXME this does not seem useful
 		for (int at = 0; at < teamHandler->ActiveAllyTeams(); at++) {
 			if (losHandler->InLos(pos, at)) {
 				inLos = true;
 			}
-			if (radarHandler->InRadar(pos, at)) {
+			if (losHandler->InRadar(pos, at)) {
 				inRadar = true;
 			}
-			if (radarHandler->InJammer(pos, at)) {
+			if (losHandler->InJammer(pos, at)) {
 				inJammer = true;
 			}
 		}
@@ -5142,11 +5140,11 @@ int LuaSyncedRead::IsPosInRadar(lua_State* L)
 
 	bool state = false;
 	if (allyTeamID >= 0) {
-		state = radarHandler->InRadar(pos, allyTeamID);
+		state = losHandler->InRadar(pos, allyTeamID);
 	}
 	else {
 		for (int at = 0; at < teamHandler->ActiveAllyTeams(); at++) {
-			if (radarHandler->InRadar(pos, at)) {
+			if (losHandler->InRadar(pos, at)) {
 				state = true;
 				break;
 			}
@@ -5466,9 +5464,9 @@ int LuaSyncedRead::GetRadarErrorParams(lua_State* L)
 	if (!teamHandler->IsValidAllyTeam(allyTeamID))
 		return 0;
 
-	lua_pushnumber(L, radarHandler->GetAllyTeamRadarErrorSize(allyTeamID));
-	lua_pushnumber(L, radarHandler->GetBaseRadarErrorSize());
-	lua_pushnumber(L, radarHandler->GetBaseRadarErrorMult());
+	lua_pushnumber(L, losHandler->GetAllyTeamRadarErrorSize(allyTeamID));
+	lua_pushnumber(L, losHandler->GetBaseRadarErrorSize());
+	lua_pushnumber(L, losHandler->GetBaseRadarErrorMult());
 	return 3;
 }
 

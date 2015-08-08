@@ -94,7 +94,6 @@
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/SideParser.h"
 #include "Sim/Misc/SmoothHeightMesh.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -545,7 +544,6 @@ void CGame::PostLoadSimulation()
 	featureHandler = new CFeatureHandler(defsParser);
 
 	losHandler = new CLosHandler();
-	radarHandler = new CRadarHandler(false);
 
 	// pre-load the PFS, gets finalized after Lua
 	//
@@ -886,7 +884,6 @@ void CGame::KillSimulation()
 	SafeDelete(readMap);
 	SafeDelete(smoothGround);
 	SafeDelete(groundBlockingObjectMap);
-	SafeDelete(radarHandler);
 	SafeDelete(losHandler);
 	SafeDelete(mapDamage);
 	SafeDelete(quadField);

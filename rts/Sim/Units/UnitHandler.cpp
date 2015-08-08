@@ -8,6 +8,7 @@
 #include "CommandAI/BuilderCAI.h"
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/AirBaseHandler.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Weapons/Weapon.h"

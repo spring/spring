@@ -24,7 +24,6 @@ class AMoveType;
 class CWeapon;
 class CUnitScript;
 struct DamageArray;
-struct LosInstance;
 struct LocalModel;
 struct LocalModelPiece;
 struct UnitDef;
@@ -99,7 +98,6 @@ public:
 	int GetBlockingMapID() const { return id; }
 
 	void ChangeLos(int losRad, int airRad);
-	void ChangeSensorRadius(int* valuePtr, int newValue);
 	/// negative amount=reclaim, return= true -> build power was successfully applied
 	bool AddBuildPower(CUnit* builder, float amount);
 	/// turn the unit on
@@ -275,7 +273,7 @@ public:
 	CUnitScript* script;
 
 	/// which squares the unit can currently observe
-	LosInstance* los;
+	std::vector<void*> los;
 
 	/// indicate the los/radar status the allyteam has on this unit
 	std::vector<unsigned short> losStatus;
@@ -285,7 +283,6 @@ public:
 
 	/// quads the unit is part of
 	std::vector<int> quads;
-	std::vector<int> radarSquares;
 
 	std::list<CMissileProjectile*> incomingMissiles; //FIXME make std::set?
 
@@ -391,7 +388,6 @@ public:
 
 	int losRadius;
 	int airLosRadius;
-	int lastLosUpdate;
 
 	int radarRadius;
 	int sonarRadius;
@@ -399,11 +395,8 @@ public:
 	int sonarJamRadius;
 	int seismicRadius;
 	float seismicSignature;
-	int2 oldRadarPos;
-	bool hasRadarPos;
 	bool stealth;
 	bool sonarStealth;
-	bool hasRadarCapacity;
 
 	/// only when the unit is active
 	SResourcePack resourcesCondUse;

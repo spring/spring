@@ -3206,14 +3206,11 @@ void CGuiHandler::DrawOptionLEDs(const IconInfo& icon)
 /******************************************************************************/
 /******************************************************************************/
 
-static inline void DrawSensorRange(int radius,
-                                   const float* color, const float3& pos)
+static inline void DrawSensorRange(int radius, const float* color, const float3& pos)
 {
-	const int sensorScale = radarHandler->radarDiv;
-	const int realRadius = ((radius / sensorScale) * sensorScale);
-	if (realRadius > 0) {
+	if (radius > 0) {
 		glColor4fv(color);
-		glSurfaceCircle(pos, (float)realRadius, 40);
+		glSurfaceCircle(pos, (float)radius, 40);
 	}
 }
 
@@ -3523,11 +3520,11 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 			// draw sensor and jammer ranges
 			if (unitdef->onoffable || unitdef->activateWhenBuilt) {
 				const float3& p = unit->pos;
-				DrawSensorRange(unitdef->radarRadius,    cmdColors.rangeRadar, p);
-				DrawSensorRange(unitdef->sonarRadius,    cmdColors.rangeSonar, p);
-				DrawSensorRange(unitdef->seismicRadius,  cmdColors.rangeSeismic, p);
-				DrawSensorRange(unitdef->jammerRadius,   cmdColors.rangeJammer, p);
-				DrawSensorRange(unitdef->sonarJamRadius, cmdColors.rangeSonarJammer, p);
+				DrawSensorRange(unitdef->radarRadius    * losHandler->radar.divisor,             cmdColors.rangeRadar, p);
+				DrawSensorRange(unitdef->sonarRadius    * losHandler->sonar.divisor,             cmdColors.rangeSonar, p);
+				DrawSensorRange(unitdef->seismicRadius  * losHandler->seismic.divisor,           cmdColors.rangeSeismic, p);
+				DrawSensorRange(unitdef->jammerRadius   * losHandler->commonJammer.divisor,      cmdColors.rangeJammer, p);
+				DrawSensorRange(unitdef->sonarJamRadius * losHandler->commonSonarJammer.divisor, cmdColors.rangeSonarJammer, p);
 			}
 			// draw interceptor range
 			if (unitdef->maxCoverage > 0.0f) {
@@ -3632,11 +3629,11 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 					// draw sensor and jammer ranges
 					if (unitdef->onoffable || unitdef->activateWhenBuilt) {
 						const float3& p = buildpos;
-						DrawSensorRange(unitdef->radarRadius,    cmdColors.rangeRadar, p);
-						DrawSensorRange(unitdef->sonarRadius,    cmdColors.rangeSonar, p);
-						DrawSensorRange(unitdef->seismicRadius,  cmdColors.rangeSeismic, p);
-						DrawSensorRange(unitdef->jammerRadius,   cmdColors.rangeJammer, p);
-						DrawSensorRange(unitdef->sonarJamRadius, cmdColors.rangeSonarJammer, p);
+						DrawSensorRange(unitdef->radarRadius    * losHandler->radar.divisor,             cmdColors.rangeRadar, p);
+						DrawSensorRange(unitdef->sonarRadius    * losHandler->sonar.divisor,             cmdColors.rangeSonar, p);
+						DrawSensorRange(unitdef->seismicRadius  * losHandler->seismic.divisor,           cmdColors.rangeSeismic, p);
+						DrawSensorRange(unitdef->jammerRadius   * losHandler->commonJammer.divisor,      cmdColors.rangeJammer, p);
+						DrawSensorRange(unitdef->sonarJamRadius * losHandler->commonSonarJammer.divisor, cmdColors.rangeSonarJammer, p);
 					}
 
 					std::vector<Command> cv;

@@ -4,13 +4,12 @@
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/LosHandler.h"
-#include "Sim/Misc/RadarHandler.h"
 
 
 CRadarTexture::CRadarTexture()
 : CPboInfoTexture("radar")
 {
-	texSize = int2(radarHandler->xsize, radarHandler->zsize);
+	texSize = losHandler->radar.size; //FIXME split radar & jammer
 	texChannels = 2;
 
 	glGenTextures(1, &texture);
@@ -29,11 +28,11 @@ CRadarTexture::CRadarTexture()
 
 void CRadarTexture::Update()
 {
-	const unsigned short* myRadar       = &radarHandler->radarMaps[gu->myAllyTeam].front();
-	const unsigned short* myJammer      = &radarHandler->jammerMaps[gu->myAllyTeam].front();
-#ifdef RADARHANDLER_SONAR_JAMMER_MAPS
-	const unsigned short* mySonar       = &radarHandler->sonarMaps[gu->myAllyTeam].front();
-	const unsigned short* mySonarJammer = &radarHandler->sonarJammerMaps[gu->myAllyTeam].front();
+	const unsigned short* myRadar       = &losHandler->radar.losMaps[gu->myAllyTeam].front();
+	const unsigned short* myJammer      = &losHandler->commonJammer.losMaps[0].front();
+#ifdef RADARHANDLER_SONAR_JAMMER_MAPS //FIXME
+	const unsigned short* mySonar       = &losHandler->sonar.losMaps[gu->myAllyTeam].front();
+	const unsigned short* mySonarJammer = &losHandler->commonSonarJammer.losMaps[0].front();
 #endif
 
 	infoTexPBO.Bind();
@@ -51,7 +50,7 @@ void CRadarTexture::Update()
 			const size_t zPos = y << radarHandler->radarMipLevel;
 			const bool useSonar = (CGround::GetHeightReal(xPos, zPos, false) < 0.0f);
 			if (!useSonar) {
-				radarMap  = mySonar;
+				radarMap  = mySonar; //FIXME use also when not RADARHANDLER_SONAR_JAMMER_MAPS?
 				jammerMap = mySonarJammer;
 			}
 		#endif
