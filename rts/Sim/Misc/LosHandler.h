@@ -148,6 +148,10 @@ public:
 	const LosAlgoType algoType;
 	std::vector<CLosMap> losMaps;
 
+	static size_t cacheFails;
+	static size_t cacheHits;
+	static size_t cacheReactivated;
+
 private:
 	struct DelayedInstance {
 		CR_DECLARE_STRUCT(DelayedInstance)

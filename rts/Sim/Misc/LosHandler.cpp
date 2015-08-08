@@ -58,6 +58,10 @@ CR_REG_METADATA(CLosHandler,(
 // ILosType
 //////////////////////////////////////////////////////////////////////
 
+size_t ILosType::cacheFails = 0;
+size_t ILosType::cacheHits  = 0;
+size_t ILosType::cacheReactivated  = 0;
+
 
 ILosType::ILosType(const int mipLevel_, LosType type_)
 	: losMaps(
@@ -75,6 +79,21 @@ ILosType::ILosType(const int mipLevel_, LosType type_)
 
 ILosType::~ILosType()
 {
+	if (algoType == LOS_ALGO_RAYCAST) {
+		unsigned empties = 0;
+		unsigned hashCount = 1; // 1 to prevent div0
+		unsigned squaresCount = 1;
+		for (auto& bucket: instanceHash) {
+			if (bucket.empty()) {
+				++empties;
+				continue;
+			}
+			++squaresCount;
+			hashCount += bucket.size();
+		}
+
+		LOG_L(L_DEBUG, "LosHandler: empties=%.0f%% avgHashCol=%0.1f", float(empties * 100) / MAGIC_PRIME, float(hashCount) / squaresCount);
+	}
 }
 
 
@@ -166,6 +185,7 @@ void ILosType::MoveUnit(CUnit* unit)
 	// Cache - search if there is already an instance with same properties
 	for (SLosInstance* li: instanceHash[hash]) {
 		if (IS_FITTING_INSTANCE(li)) {
+			if (algoType == LOS_ALGO_RAYCAST) ++cacheHits;
 			unit->los[type] = li;
 			RefInstance(li);
 			return;
@@ -173,6 +193,7 @@ void ILosType::MoveUnit(CUnit* unit)
 	}
 
 	// New - create a new one
+	if (algoType == LOS_ALGO_RAYCAST) ++cacheFails;
 	SLosInstance* li = new SLosInstance(
 		radius,
 		allyteam,
@@ -236,6 +257,7 @@ void ILosType::DeleteInstance(SLosInstance* li)
 void ILosType::RefInstance(SLosInstance* instance)
 {
 	if (instance->refCount == 0) {
+		if (algoType == LOS_ALGO_RAYCAST) ++cacheReactivated;
 		LosAdd(instance);
 	}
 	instance->refCount++;
@@ -427,6 +449,10 @@ CLosHandler::CLosHandler()
 
 CLosHandler::~CLosHandler()
 {
+	LOG("LosHandler stats: %.0f%% (%u of %u) instances shared with a %.0f%% cache hitrate",
+		100.f * float(ILosType::cacheHits) / (ILosType::cacheHits + ILosType::cacheFails),
+		unsigned(ILosType::cacheHits), unsigned(ILosType::cacheHits + ILosType::cacheFails),
+		100.f * float(ILosType::cacheReactivated) / ILosType::cacheHits);
 }
 
 
