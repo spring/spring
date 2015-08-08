@@ -61,6 +61,9 @@ CR_REG_METADATA(CLosHandler,(
 size_t ILosType::cacheFails = 0;
 size_t ILosType::cacheHits  = 0;
 size_t ILosType::cacheReactivated  = 0;
+constexpr float CLosHandler::defBaseRadarErrorSize;
+constexpr float CLosHandler::defBaseRadarErrorMult;
+
 
 
 ILosType::ILosType(const int mipLevel_, LosType type_)
