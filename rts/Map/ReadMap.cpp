@@ -659,7 +659,7 @@ void CReadMap::UpdateLOS(const SRectangle& rect)
 	// currently we use the LOS for view updates (alternatives are AirLOS and/or radar)
 	// cause the others use different resolutions we must check it here for safety
 	// (if you want to use another source you need to change the res. of syncedHeightMapDigests etc.)
-	assert(rect.GetWidth() <= losHandler->losDiv / SQUARE_SIZE);
+	assert(rect.GetWidth() <= losHandler->los.divisor / SQUARE_SIZE);
 
 	//HACK: UpdateLOS() is called for single LOS squares, but we use <= in HeightMapUpdateLOSCheck().
 	// This would make our update area 4x as large, so we need to make the rectangle a point. Better
