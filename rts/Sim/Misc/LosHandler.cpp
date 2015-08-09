@@ -54,15 +54,15 @@ constexpr float CLosHandler::defBaseRadarErrorMult;
 
 
 ILosType::ILosType(const int mipLevel_, LosType type_)
-	: losMaps(
-		(type != LOS_TYPE_JAMMER && type != LOS_TYPE_SONAR_JAMMER) ? teamHandler->ActiveAllyTeams() : 1,
-		CLosMap(size, type == LOS_TYPE_LOS, readMap->GetMIPHeightMapSynced(mipLevel_)))
-	, mipLevel(mipLevel_)
+	: mipLevel(mipLevel_)
 	, divisor(SQUARE_SIZE * (1 << mipLevel))
 	, invDiv(1.0f / divisor)
 	, size(std::max(1, mapDims.mapx >> mipLevel), std::max(1, mapDims.mapy >> mipLevel))
 	, type(type_)
 	, algoType((type == LOS_TYPE_LOS || type == LOS_TYPE_RADAR) ? LOS_ALGO_RAYCAST : LOS_ALGO_CIRCLE)
+	, losMaps(
+		(type != LOS_TYPE_JAMMER && type != LOS_TYPE_SONAR_JAMMER) ? teamHandler->ActiveAllyTeams() : 1,
+		CLosMap(size, type == LOS_TYPE_LOS, readMap->GetMIPHeightMapSynced(mipLevel_)))
 {
 }
 
