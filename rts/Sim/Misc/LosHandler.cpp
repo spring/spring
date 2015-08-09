@@ -45,9 +45,9 @@ CR_REG_METADATA(CLosHandler,(
 // ILosType
 //////////////////////////////////////////////////////////////////////
 
-size_t ILosType::cacheFails = 0;
-size_t ILosType::cacheHits  = 0;
-size_t ILosType::cacheReactivated  = 0;
+size_t ILosType::cacheFails = 1;
+size_t ILosType::cacheHits  = 1;
+size_t ILosType::cacheReactivated  = 1;
 constexpr float CLosHandler::defBaseRadarErrorSize;
 constexpr float CLosHandler::defBaseRadarErrorMult;
 
