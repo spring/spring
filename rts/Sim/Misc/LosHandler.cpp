@@ -105,9 +105,13 @@ float ILosType::GetRadius(const CUnit* unit) const
 
 float ILosType::GetHeight(const CUnit* unit) const
 {
-	const float losHeight = unit->midPos.y + unit->unitDef->losHeight;
+	if (algoType == LOS_ALGO_CIRCLE) {
+		return 0.f;
+	}
+	const float emitHeight = (type == LOS_TYPE_LOS || type == LOS_TYPE_AIRLOS) ? unit->unitDef->losHeight : unit->unitDef->radarHeight;
+	const float losHeight = unit->midPos.y + emitHeight;
 	const float iLosHeight = ((int(losHeight) >> (mipLevel + 1)) << (mipLevel + 1)) + ((1 << (mipLevel + 1)) * 0.5f); // save losHeight in buckets //FIXME Round
-	return (algoType == LOS_ALGO_RAYCAST) ? iLosHeight : 0.f;
+	return iLosHeight;
 }
 
 
