@@ -15,40 +15,27 @@
 #include "System/TimeProfiler.h"
 
 
-CR_BIND(SLosInstance, (0, 0, int2(), 0.f, 0))
-CR_BIND(ILosType, (0, LOS_TYPE_LOS))
-CR_BIND(ILosType::DelayedInstance, )
 CR_BIND(CLosHandler, )
 
-
-//CR_REG_METADATA(ILosType,(
-	//FIXME
-//))
-CR_REG_METADATA(SLosInstance, (
-	CR_IGNORED(squares),
-	CR_MEMBER(radius),
-	CR_MEMBER(refCount),
-	CR_MEMBER(allyteam),
-	CR_MEMBER(basePos),
-	CR_MEMBER(hashNum),
-	CR_MEMBER(baseHeight),
-	CR_MEMBER(toBeDeleted),
-	CR_MEMBER(needsRecalc)
-))
-CR_REG_METADATA_SUB(ILosType, DelayedInstance, (
-	CR_MEMBER(instance),
-	CR_MEMBER(timeoutTime)))
-
-
+// ILosTypes aren't creg'ed cause they repopulate themselves in case of loading a saved game
 CR_REG_METADATA(CLosHandler,(
-	CR_MEMBER(los),
-	CR_MEMBER(airLos),
-	CR_MEMBER(radar),
-	CR_MEMBER(sonar),
-	CR_MEMBER(commonJammer),
-	CR_MEMBER(commonSonarJammer),
-	CR_MEMBER(seismic),
-	CR_MEMBER(radarErrorSizes)
+	CR_IGNORED(autoLinkEvents),
+	CR_IGNORED(autoLinkedEvents),
+	CR_IGNORED(name),
+	CR_IGNORED(order),
+	CR_IGNORED(synced_),
+
+	CR_IGNORED(los),
+	CR_IGNORED(airLos),
+	CR_IGNORED(radar),
+	CR_IGNORED(sonar),
+	CR_IGNORED(seismic),
+	CR_IGNORED(commonJammer),
+	CR_IGNORED(commonSonarJammer),
+	CR_MEMBER(baseRadarErrorSize),
+	CR_MEMBER(baseRadarErrorMult),
+	CR_MEMBER(radarErrorSizes),
+	CR_IGNORED(losTypes)
 ))
 
 
@@ -178,7 +165,7 @@ void ILosType::MoveUnit(CUnit* unit)
 	};
 
 	// unchanged?
-	SLosInstance* uli = reinterpret_cast<SLosInstance*>(unit->los[type]);
+	SLosInstance* uli = unit->los[type];
 	if (IS_FITTING_INSTANCE(uli)) {
 		return;
 	}
@@ -213,9 +200,9 @@ void ILosType::MoveUnit(CUnit* unit)
 void ILosType::RemoveUnit(CUnit* unit, bool delayed)
 {
 	if (delayed) {
-		DelayedFreeInstance(reinterpret_cast<SLosInstance*>(unit->los[type]));
+		DelayedFreeInstance(unit->los[type]);
 	} else {
-		UnrefInstance(reinterpret_cast<SLosInstance*>(unit->los[type]));
+		UnrefInstance(unit->los[type]);
 	}
 	unit->los[type] = nullptr;
 }

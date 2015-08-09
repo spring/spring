@@ -2385,7 +2385,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(category),
 
 	CR_MEMBER(quads),
-	//CR_MEMBER(los),
+	CR_IGNORED(los),
 
 	CR_MEMBER(mapSquare),
 

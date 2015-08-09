@@ -29,6 +29,8 @@ struct LocalModelPiece;
 struct UnitDef;
 struct UnitTrackStruct;
 struct UnitLoadParams;
+struct SLosInstance;
+
 
 namespace icon {
 	class CIconData;
@@ -273,7 +275,7 @@ public:
 	CUnitScript* script;
 
 	/// which squares the unit can currently observe
-	std::vector<void*> los;
+	std::vector<SLosInstance*> los;
 
 	/// indicate the los/radar status the allyteam has on this unit
 	std::vector<unsigned short> losStatus;

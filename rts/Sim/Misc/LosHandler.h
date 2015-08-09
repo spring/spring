@@ -36,8 +36,6 @@
  */
 struct SLosInstance
 {
-	CR_DECLARE_STRUCT(SLosInstance)
-
 	SLosInstance(int radius, int allyteam, int2 basePos, float baseHeight, int hashNum)
 		: allyteam(allyteam)
 		, radius(radius)
@@ -84,9 +82,6 @@ struct SLosInstance
  */
 class ILosType
 {
-	CR_DECLARE_STRUCT(ILosType)
-	CR_DECLARE_SUB(DelayedInstance)
-
 public:
 	// the Interface
 	int2 PosToSquare(const float3 pos) const { return int2( Round(pos.x * invDiv), Round(pos.z * invDiv) ); }
@@ -154,7 +149,6 @@ public:
 
 private:
 	struct DelayedInstance {
-		CR_DECLARE_STRUCT(DelayedInstance)
 		SLosInstance* instance;
 		int timeoutTime;
 	};
@@ -174,7 +168,7 @@ private:
  * so hills obstruct view (see CLosAlgorithm). The second is circular: air LOS
  * is not influenced by terrain.
  */
-class CLosHandler : public boost::noncopyable, public CEventClient
+class CLosHandler : public CEventClient
 {
 	CR_DECLARE_STRUCT(CLosHandler)
 	CLosHandler();

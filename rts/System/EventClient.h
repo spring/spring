@@ -74,37 +74,28 @@ class CEventClient
 			return (GetFullRead() || (GetReadAllyTeam() == allyTeam));
 		}
 
-	public:
+	protected:
+		CEventClient(const std::string& name, int order, bool synced);
+		virtual ~CEventClient();
+
+	protected:
+		const std::string name;
+		const int         order;
+		const bool        synced_;
+		      bool        autoLinkEvents;
+
+	protected:
 		friend class CEventHandler;
-
-		typedef void (*eventFuncPtr)();
-
 		std::map<std::string, bool> autoLinkedEvents;
 
 		template <class T>
 		void RegisterLinkedEvents(T* foo) {
-			// old way needed gcc's pmf extension to cast member functions
-			//autoLinkedEvents[#eventname]  = (reinterpret_cast<eventFuncPtr>(&T::eventname) != reinterpret_cast<eventFuncPtr>(&CEventClient::eventname));
-
-			// new way, works everywhere
 			#define SETUP_EVENT(eventname, props) \
 				autoLinkedEvents[#eventname] = (typeid(&T::eventname) != typeid(&CEventClient::eventname));
 
 				#include "Events.def"
 			#undef SETUP_EVENT
 		}
-
-	private:
-		const std::string name;
-		const int         order;
-		const bool        synced_;
-
-	protected:
-		      bool        autoLinkEvents;
-
-	protected:
-		CEventClient(const std::string& name, int order, bool synced);
-		virtual ~CEventClient();
 
 	public:
 		/**

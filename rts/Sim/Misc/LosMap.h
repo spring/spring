@@ -16,8 +16,6 @@ struct SLosInstance;
 /// map containing counts of how many units have Line Of Sight (LOS) to each square
 class CLosMap
 {
-	CR_DECLARE_STRUCT(CLosMap)
-
 public:
 	CLosMap(int2 size_, bool sendReadmapEvents_, const float* heightmap_)
 	: size(size_)

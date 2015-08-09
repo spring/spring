@@ -14,20 +14,6 @@
 
 
 
-CR_BIND(CLosMap, (int2(), false, nullptr))
-CR_REG_METADATA(CLosMap, (
-	CR_MEMBER(size),
-	CR_MEMBER(map),
-	CR_MEMBER(sendReadmapEvents)//,
-	//CR_MEMBER(heightmap)
-))
-
-
-
-
-
-
-
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 /// CLosTables precalc helper
@@ -476,7 +462,6 @@ void CLosMap::CastLos(std::vector<int>* squares, float* maxAng, const int2 pos, 
 void CLosMap::UnsafeLosAdd(int2 pos, int radius, float losHeight, std::vector<int>& squares)
 {
 	const size_t area = Square((2*radius)+1);
-
 	const LosTable& table = CLosTables::GetForLosSize(radius);
 	size_t neededSpace = squares.size() + 1;
 	for (const LosLine& line: table) {
