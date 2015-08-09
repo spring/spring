@@ -410,19 +410,16 @@ void ILosType::UpdateHeightMapSynced(SRectangle rect)
 
 CLosHandler* losHandler;
 
-static const int RADAR_MIPLEVEL = 3;
-
-
 CLosHandler::CLosHandler()
 	: CEventClient("[CLosHandler]", 271993, true)
 
 	, los(modInfo.losMipLevel, ILosType::LOS_TYPE_LOS)
 	, airLos(modInfo.airMipLevel, ILosType::LOS_TYPE_AIRLOS)
-	, radar(RADAR_MIPLEVEL, ILosType::LOS_TYPE_RADAR) //FIXME make mipLevel configurable!!!
-	, sonar(RADAR_MIPLEVEL, ILosType::LOS_TYPE_SONAR)
-	, seismic(RADAR_MIPLEVEL, ILosType::LOS_TYPE_SEISMIC)
-	, commonJammer(RADAR_MIPLEVEL, ILosType::LOS_TYPE_JAMMER)
-	, commonSonarJammer(RADAR_MIPLEVEL, ILosType::LOS_TYPE_SONAR_JAMMER)
+	, radar(modInfo.radarMipLevel, ILosType::LOS_TYPE_RADAR)
+	, sonar(modInfo.radarMipLevel, ILosType::LOS_TYPE_SONAR)
+	, seismic(modInfo.radarMipLevel, ILosType::LOS_TYPE_SEISMIC)
+	, commonJammer(modInfo.radarMipLevel, ILosType::LOS_TYPE_JAMMER)
+	, commonSonarJammer(modInfo.radarMipLevel, ILosType::LOS_TYPE_SONAR_JAMMER)
 
 	, baseRadarErrorSize(defBaseRadarErrorSize)
 	, baseRadarErrorMult(defBaseRadarErrorMult)

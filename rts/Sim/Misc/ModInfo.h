@@ -125,10 +125,13 @@ public:
 	int losMipLevel;
 	/// miplevel to use for airlos
 	int airMipLevel;
+	/// miplevel to use for radar, sonar, seismic, jammer, ...
+	int radarMipLevel;
 	/// units sightdistance will be multiplied with this, for testing purposes
 	float losMul;
 	/// units airsightdistance will be multiplied with this, for testing purposes
 	float airLosMul;
+
 	/// when underwater, units are not in LOS unless also in sonar
 	bool requireSonarUnderWater;
 	///
