@@ -2,6 +2,7 @@
 
 
 #include <set>
+#include <vector>
 #include <list>
 #include <cctype>
 
@@ -194,6 +195,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitRadiusAndHeight);
 	REGISTER_LUA_CFUNC(SetUnitCollisionVolumeData);
 	REGISTER_LUA_CFUNC(SetUnitPieceCollisionVolumeData);
+	REGISTER_LUA_CFUNC(SetUnitPieceParent);
 	REGISTER_LUA_CFUNC(SetUnitSensorRadius);
 	REGISTER_LUA_CFUNC(SetUnitPosErrorParams);
 
@@ -2087,6 +2089,90 @@ int LuaSyncedCtrl::SetUnitRadiusAndHeight(lua_State* L)
 	return 1;
 }
 
+
+LocalModelPiece * getLocalModelPiece(CUnit* unit, float PieceNumber)
+{
+	
+		for (int i=0;i< unit->localModel->pieces.size();i++)
+		{
+			if (unit->localModel->pieces.at(i)->scriptPieceIndex == (unsigned int) PieceNumber)
+				return (unit->localModel->pieces.at(i));
+		}
+		
+
+return NULL;
+};
+
+bool isPieceRoot(CUnit* unit, const UnitDef* Def, float PieceNumber)
+{
+	 S3DModelPiece*  OrgRoot = unit->model->GetRootPiece();
+
+	
+	if ( LocalModelPiece(OrgRoot).scriptPieceIndex == PieceNumber) return true;
+
+return false;
+};
+
+//Needs unitID,  Piece,Parent)
+int LuaSyncedCtrl::SetUnitPieceParent(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	const UnitDef* unitDef =	unit->unitDef;
+	LocalModelPiece* lmpAlteredPiece;
+	LocalModelPiece* lmpParentPiece;
+
+	float AlteredPiece;
+	float ParentPiece;
+	
+		if (unit == NULL)
+			return 0;	
+		
+		//if first argument is no number
+		if (lua_isnumber(L,2))
+		{
+			AlteredPiece= lua_tonumber(L,2);	
+			//Check wether Piece is Root
+			if (isPieceRoot(unit,unitDef, AlteredPiece)) 
+			{
+				luaL_error(L,  "Piece to set in Hierarchy is root");	
+				return 0;
+			}
+		
+			lmpAlteredPiece= getLocalModelPiece(unit,AlteredPiece);
+			
+		} 
+		else  
+		{
+			luaL_error(L,  "Argument 2 - Not a valid piecenumber");
+			return 0;
+		}
+		
+		//if second argument is no number
+		if (lua_isnumber(L,3))
+		{
+			ParentPiece=lua_tonumber(L,3);	
+			lmpParentPiece= getLocalModelPiece(unit,ParentPiece);
+		} 
+		else
+		{ 
+			luaL_error(L,  "Argument 3 - Not a valid piecenumber");
+			return 0;
+		} 
+		
+	//we hold now both the new parentpiece and the childpiece
+		//we remove the AlteredPiece from its parent
+		//const_cast<LocalModelPiece*>()
+		lmpAlteredPiece->parent->RemoveChild(lmpAlteredPiece );
+		
+		//we set the new Parent
+		 lmpAlteredPiece->SetParent(lmpParentPiece);		
+		//we add the Child
+		 lmpParentPiece->AddChild(lmpAlteredPiece);
+								 
+		//And are done
+		return 1;
+}
+
 int LuaSyncedCtrl::SetUnitCollisionVolumeData(lua_State* L)
 {
 	return (SetSolidObjectCollisionVolumeData(L, ParseUnit(L, __FUNCTION__, 1)));
@@ -2132,33 +2218,36 @@ int LuaSyncedCtrl::SetUnitSensorRadius(lua_State* L)
 	const string key = luaL_checkstring(L, 2);
 	const float radius = luaL_checkfloat(L, 3);
 
+	const int radarDiv    = radarHandler->radarDiv;
+	const int radarRadius = (int)(radius * radarHandler->invRadarDiv);
+
 	if (key == "los") {
-		const int losRange = (int)(radius * losHandler->los.invDiv);
+		const int losRange = (int)(radius * losHandler->invLosDiv);
 		unit->ChangeLos(losRange, unit->realAirLosRadius);
 		unit->realLosRadius = losRange;
-		lua_pushnumber(L, unit->losRadius * losHandler->los.divisor);
+		lua_pushnumber(L, unit->losRadius * losHandler->losDiv);
 	} else if (key == "airLos") {
-		const int airRange = (int)(radius * losHandler->airLos.invDiv);
+		const int airRange = (int)(radius * losHandler->invAirDiv);
 		unit->ChangeLos(unit->realLosRadius, airRange);
 		unit->realAirLosRadius = airRange;
-		lua_pushnumber(L, unit->airLosRadius * losHandler->airLos.divisor);
+		lua_pushnumber(L, unit->airLosRadius * losHandler->airDiv);
 	} else if (key == "radar") {
-		unit->radarRadius = (int)(radius * losHandler->radar.invDiv);
-		lua_pushnumber(L, unit->radarRadius * losHandler->radar.divisor);
+		unit->ChangeSensorRadius(&unit->radarRadius, radarRadius);
+		lua_pushnumber(L, unit->radarRadius * radarDiv);
 	} else if (key == "sonar") {
-		unit->sonarRadius = (int)(radius * losHandler->sonar.invDiv);
-		lua_pushnumber(L, unit->sonarRadius * losHandler->sonar.divisor);
+		unit->ChangeSensorRadius(&unit->sonarRadius, radarRadius);
+		lua_pushnumber(L, unit->sonarRadius * radarDiv);
 	} else if (key == "seismic") {
-		unit->seismicRadius = (int)(radius * losHandler->seismic.invDiv);
-		lua_pushnumber(L, unit->seismicRadius * losHandler->seismic.divisor);
+		unit->ChangeSensorRadius(&unit->seismicRadius, radarRadius);
+		lua_pushnumber(L, unit->seismicRadius * radarDiv);
 	} else if (key == "radarJammer") {
-		unit->jammerRadius = (int)(radius * losHandler->commonJammer.invDiv);
-		lua_pushnumber(L, unit->jammerRadius * losHandler->commonJammer.divisor);
+		unit->ChangeSensorRadius(&unit->jammerRadius, radarRadius);
+		lua_pushnumber(L, unit->jammerRadius * radarDiv);
 	} else if (key == "sonarJammer") {
-		unit->sonarJamRadius = (int)(radius * losHandler->commonSonarJammer.invDiv);
-		lua_pushnumber(L, unit->sonarJamRadius * losHandler->commonSonarJammer.divisor);
+		unit->ChangeSensorRadius(&unit->sonarJamRadius, radarRadius);
+		lua_pushnumber(L, unit->sonarJamRadius * radarDiv);
 	} else {
-		luaL_error(L, "Unknown sensor type to SetUnitSensorRadius()");
+		return 0; // unknown sensor type
 	}
 
 	return 1;
@@ -3794,9 +3883,9 @@ int LuaSyncedCtrl::SetRadarErrorParams(lua_State* L)
 	if (!teamHandler->IsValidAllyTeam(allyTeamID))
 		return 0;
 
-	losHandler->SetAllyTeamRadarErrorSize(allyTeamID, luaL_checknumber(L, 2));
-	losHandler->SetBaseRadarErrorSize(luaL_optnumber(L, 3, losHandler->GetBaseRadarErrorSize()));
-	losHandler->SetBaseRadarErrorMult(luaL_optnumber(L, 4, losHandler->GetBaseRadarErrorMult()));
+	radarHandler->SetAllyTeamRadarErrorSize(allyTeamID, luaL_checknumber(L, 2));
+	radarHandler->SetBaseRadarErrorSize(luaL_optnumber(L, 3, radarHandler->GetBaseRadarErrorSize()));
+	radarHandler->SetBaseRadarErrorMult(luaL_optnumber(L, 4, radarHandler->GetBaseRadarErrorMult()));
 	return 0;
 }
 

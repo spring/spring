@@ -88,6 +88,7 @@ class LuaSyncedCtrl
 		static int SetUnitRadiusAndHeight(lua_State* L);
 		static int SetUnitCollisionVolumeData(lua_State* L);
 		static int SetUnitPieceCollisionVolumeData(lua_State* L);
+		static int SetUnitPieceParent(lua_State* L);
 		static int SetUnitSensorRadius(lua_State* L);
 		static int SetUnitPosErrorParams(lua_State* L);
 

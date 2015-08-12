@@ -227,6 +227,7 @@ struct LocalModelPiece
 	~LocalModelPiece();
 
 	void AddChild(LocalModelPiece* c) { children.push_back(c); }
+	void RemoveChild( LocalModelPiece* c) {children.erase(std::remove(children.begin(), children.end(), const_cast<const LocalModelPiece*>(c) ), children.end()); }
 	void SetParent(LocalModelPiece* p) { parent = p; }
 
 	void SetLModelPieceIndex(unsigned int idx) { lmodelPieceIndex = idx; }
@@ -280,7 +281,7 @@ public:
 	unsigned int dispListID;
 
 	const S3DModelPiece* original;
-	const LocalModelPiece* parent;
+		  LocalModelPiece* parent;
 
 	std::vector<LocalModelPiece*> children;
 	std::vector<unsigned int> lodDispLists;
