@@ -2093,20 +2093,20 @@ int LuaSyncedCtrl::SetUnitPieceParent(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 
-	if (unit == NULL) {
+	if (unit == NULL)
 		return 0;
-	}
-	auto &localModel = unit->localModel;
 
-	const int alteredPiece = luaL_checkint(L, 2) - 1;
-	const int parentPiece = luaL_checkint(L, 3) - 1;
+	LocalModel* localModel = unit->localModel;
 
-	if ((alteredPiece < 0) || ((size_t)alteredPiece >= localModel->pieces.size())) {
+	const size_t alteredPiece = luaL_checkint(L, 2) - 1;
+	const size_t parentPiece = luaL_checkint(L, 3) - 1;
+
+	if (alteredPiece >= localModel->pieces.size()) {
 		luaL_error(L,  "invalid piece");
 		return 0;
 	}
 
-	if ((parentPiece < 0) || ((size_t)parentPiece >= localModel->pieces.size())) {
+	if (parentPiece >= localModel->pieces.size()) {
 		luaL_error(L,  "invalid parent piece");
 		return 0;
 	}
@@ -2114,8 +2114,7 @@ int LuaSyncedCtrl::SetUnitPieceParent(lua_State* L)
 	LocalModelPiece* lmpAlteredPiece = localModel->pieces[alteredPiece];
 	LocalModelPiece* lmpParentPiece = localModel->pieces[parentPiece];
 
-	if (lmpAlteredPiece == localModel->GetRoot())
-	{
+	if (lmpAlteredPiece == localModel->GetRoot()) {
 		luaL_error(L,  "Can't change a root piece's parent");
 		return 0;
 	}
@@ -2123,7 +2122,6 @@ int LuaSyncedCtrl::SetUnitPieceParent(lua_State* L)
 	lmpAlteredPiece->parent->RemoveChild(lmpAlteredPiece );
 	lmpAlteredPiece->SetParent(lmpParentPiece);
 	lmpParentPiece->AddChild(lmpAlteredPiece);
-
 	return 0;
 }
 
