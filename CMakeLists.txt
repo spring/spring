@@ -132,26 +132,18 @@ else  (UNIX AND NOT MINGW)
 	set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 
 	if(MSVC)
-		set(CMAKE_LIBRARY_PATH ${MINGWLIBS})
-		set(CMAKE_FIND_ROOT_PATH
-			${MINGWLIBS}/SDL2
-			${MINGWLIBS}/DevIL
-			${MINGWLIBS}/zlib
-			${MINGWLIBS}/ogg_vorbis
-			${MINGWLIBS}/glew
-			${MINGWLIBS}/freetype
-			${CMAKE_FIND_ROOT_PATH})
 		set(ENV{OPENALDIR} ${MINGWLIBS}/OpenAL)
-		include_directories(${ZLIB_INCLUDE_DIR})
-
-		set(BOOST_LIBRARYDIR ${MINGWLIBS}/boost/lib)
+		set(BOOST_LIBRARYDIR ${MINGWLIBS}/lib)
 		add_definitions("-DBOOST_ALL_NO_LIB")
 		set(Boost_USE_STATIC_LIBS ON)
-		set(GLEW_STATIC ON)
+		#set(GLEW_STATIC ON)
 		
 		add_definitions("-DNOMINMAX")
 
 		set(EXE_FLAGS WIN32)
+		include_directories(${MINGWLIBS}/include)
+		set(CMAKE_LIBRARY_PATH ${MINGWLIBS}/dll)
+		
 	else(MSVC)
 		include_directories(${MINGWLIBS}/include)
 		set(CMAKE_LIBRARY_PATH ${MINGWLIBS}/dll)
@@ -241,9 +233,9 @@ endif (USE_LIBSQUISH)
 
 
 ### external libs
-if    (MINGW)
+if    (MINGW OR MSVC)
 	set(SDL2_INCLUDE_DIR "${MINGWLIBS}/include/SDL2")
-endif (MINGW)
+endif (MINGW OR MSVC)
 
 FIND_PACKAGE(Boost 1.47.0 COMPONENTS thread regex program_options system chrono signals filesystem REQUIRED)
 FIND_PACKAGE(Boost 1.47.0 COMPONENTS timer)
@@ -417,7 +409,8 @@ elseif (CMAKE_COMPILER_IS_GNUCXX)
 
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SSE_FLAGS}") # SSE1
 elseif (MSVC)
-	# nothing to be done here
+	# silence warnings
+	add_definitions(-D_SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS)
 else   (MSVC)
 	Message(WARNING "unknown compiler")
 endif ($ENV{CXX} MATCHES "icpc")
