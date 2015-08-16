@@ -368,14 +368,12 @@ bool CLegacyInfoTextureHandler::UpdateExtraTexture(BaseGroundDrawMode texDrawMod
 
 						if (!gs->globalLOS[gu->myAllyTeam]) {
 							const int inLos = InterpolateLos(myLos,    losHandler->los.size, losMipLevel, 128, pos);
-							const int inAir = InterpolateLos(myAirLos, losHandler->airLos.size, airMipLevel, 128, pos);
+							const int inAir = InterpolateLos(myAirLos, losHandler->airLos.size, airMipLevel, 127, pos);
 							totalLos = inLos + inAir;
 						}
 
-						const unsigned short* radarMap  = myRadar;
-						const unsigned short* jammerMap = myJammer;
-						const int inRadar = InterpolateLos(radarMap,  losHandler->radar.size, 3 + lowRes, 255, pos);
-						const int inJam   = InterpolateLos(jammerMap, losHandler->commonJammer.size, 3 + lowRes, 255, pos);
+						const int inRadar = InterpolateLos(myRadar, losHandler->radar.size, 3 + lowRes, 255, pos);
+						const int inJam   = (totalLos == 255) ? InterpolateLos(myJammer, losHandler->commonJammer.size, 3 + lowRes, 255, pos) : 0;
 
 						const int a = ((y * pwr2mapx) + x) * 4 - offset;
 
