@@ -357,6 +357,9 @@ void ILosType::Update()
 
 void ILosType::UpdateHeightMapSynced(SRectangle rect)
 {
+	if (algoType == LOS_ALGO_CIRCLE)
+		return;
+
 	auto CheckOverlap = [&](SLosInstance* li, SRectangle rect) -> bool {
 		int2 pos = li->basePos * divisor;
 		const int radius = li->radius * divisor;
