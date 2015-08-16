@@ -1220,7 +1220,7 @@ int LuaSyncedRead::GetTeamUnitStats(lua_State* L)
 		return 0;
 	}
 
-	const CTeam::Statistics& stats = *team->currentStats;
+	const TeamStatistics& stats = *team->currentStats;
 	lua_pushnumber(L, stats.unitsKilled);
 	lua_pushnumber(L, stats.unitsDied);
 	lua_pushnumber(L, stats.unitsCaptured);
@@ -1244,7 +1244,7 @@ int LuaSyncedRead::GetTeamResourceStats(lua_State* L)
 		return 0;
 	}
 
-	const CTeam::Statistics& stats = *team->currentStats;
+	const TeamStatistics& stats = *team->currentStats;
 
 	const string type = luaL_checkstring(L, 2);
 	if (type == "metal") {
@@ -1332,8 +1332,8 @@ int LuaSyncedRead::GetTeamStatsHistory(lua_State* L)
 		return 1;
 	}
 
-	const std::list<CTeam::Statistics>& teamStats = team->statHistory;
-	std::list<CTeam::Statistics>::const_iterator it = teamStats.begin();
+	const std::list<TeamStatistics>& teamStats = team->statHistory;
+	std::list<TeamStatistics>::const_iterator it = teamStats.begin();
 	const int statCount = teamStats.size();
 
 	int start = 0;
@@ -1354,7 +1354,7 @@ int LuaSyncedRead::GetTeamStatsHistory(lua_State* L)
 	if (statCount > 0) {
 		int count = 1;
 		for (int i = start; i <= end; ++i, ++it) {
-			const CTeam::Statistics& stats = *it;
+			const TeamStatistics& stats = *it;
 			lua_newtable(L); {
 				if (i+1 == teamStats.size()) {
 					//! the `stats.frame` var indicates the frame when a new entry needs to get added,

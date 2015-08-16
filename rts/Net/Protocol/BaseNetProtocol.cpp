@@ -213,6 +213,15 @@ PacketType CBaseNetProtocol::SendPlayerStat(uchar myPlayerNum, const PlayerStati
 	return PacketType(packet);
 }
 
+PacketType CBaseNetProtocol::SendTeamStat(uchar teamNum, const TeamStatistics& currentStats)
+{
+	PackPacket* packet = new netcode::PackPacket(2 + sizeof(TeamStatistics), NETMSG_TEAMSTAT);
+	*packet << teamNum << currentStats;
+	return PacketType(packet);
+}
+
+
+
 PacketType CBaseNetProtocol::SendGameOver(uchar myPlayerNum, const std::vector<uchar>& winningAllyTeams)
 {
 	const unsigned size = (3 * sizeof(uchar)) + (winningAllyTeams.size() * sizeof(uchar));

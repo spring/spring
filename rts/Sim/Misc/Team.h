@@ -95,7 +95,6 @@ public:
 	int nextHistoryEntry;
 	TeamStatistics* currentStats;
 	std::list<TeamStatistics> statHistory;
-	typedef TeamStatistics Statistics; //< for easier access via CTeam::Statistics
 
 	/// mod controlled parameters
 	LuaRulesParams::Params  modParams;

@@ -16,6 +16,7 @@ namespace netcode
 	class RawPacket;
 }
 struct PlayerStatistics;
+struct TeamStatistics;
 
 
 static const unsigned short NETWORK_VERSION = atoi(SpringVersion::GetMajor().c_str());
@@ -171,7 +172,6 @@ public:
 	PacketType SendRejectConnect(const std::string& reason);
 	PacketType SendShare(uchar myPlayerNum, uchar shareTeam, uchar bShareUnits, float shareMetal, float shareEnergy);
 	PacketType SendSetShare(uchar myPlayerNum, uchar myTeam, float metalShareFraction, float energyShareFraction);
-	PacketType SendPlayerStat(uchar myPlayerNum, const PlayerStatistics& currentStats);
 	PacketType SendGameOver(uchar myPlayerNum, const std::vector<uchar>& winningAllyTeams);
 	PacketType SendMapErase(uchar myPlayerNum, short x, short z);
 	PacketType SendMapDrawLine(uchar myPlayerNum, short x1, short z1, short x2, short z2, bool);
@@ -183,6 +183,9 @@ public:
 	PacketType SendPlayerLeft(uchar myPlayerNum, uchar bIntended);
 	PacketType SendLuaMsg(uchar myPlayerNum, unsigned short script, uchar mode, const std::vector<boost::uint8_t>& msg);
 	PacketType SendCurrentFrameProgress(int frameNum);
+
+	PacketType SendPlayerStat(uchar myPlayerNum, const PlayerStatistics& currentStats);
+	PacketType SendTeamStat(uchar teamNum, const TeamStatistics& currentStats);
 
 	PacketType SendGiveAwayEverything(uchar myPlayerNum, uchar giveToTeam);
 	/**
