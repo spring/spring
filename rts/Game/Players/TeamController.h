@@ -25,13 +25,14 @@ public:
 	 * @brief Constructor assigning default values.
 	 */
 	TeamController() :
-		team(0),
+		team(-1),
 		name("no name") {}
 
 	/**
 	 * Id of the controlled team.
 	 */
 	int team;
+
 	/**
 	 * The purely informative name of the controlling instance.
 	 * This is either the human players nick or the Skirmish AIs instance nick.
