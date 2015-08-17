@@ -482,7 +482,6 @@ bool CStrafeAirMoveType::Update()
 
 	switch (aircraftState) {
 		case AIRCRAFT_FLYING: {
-			owner->restTime = 0;
 
 			const CCommandQueue& cmdQue = owner->commandAI->commandQue;
 
