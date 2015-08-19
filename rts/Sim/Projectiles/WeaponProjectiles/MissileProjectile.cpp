@@ -156,16 +156,14 @@ void CMissileProjectile::Update()
 
 			if (weaponDef->tracks && target != NULL) {
 				const CSolidObject* so = dynamic_cast<const CSolidObject*>(target);
-				const CWeaponProjectile* po = dynamic_cast<const CWeaponProjectile*>(target);
 
 				targetPos = target->pos;
+				targetVel = target->speed;
 
 				if (so != NULL) {
 					targetPos = so->aimPos;
-					targetVel = so->speed;
-					const bool exactTarget = weaponDef->interceptor && (pos.SqDistance(so->aimPos) < Square(150.0f));
 
-					if (allyteamID != -1 && !exactTarget) {
+					if (allyteamID != -1) {
 						// if we have an owner and our target is a unit,
 						// set target-position to its error-position for
 						// our owner's allyteam
@@ -175,9 +173,6 @@ void CMissileProjectile::Update()
 							targetPos = tgt->GetErrorPos(allyteamID, true);
 						}
 					}
-				}
-				if (po != NULL) {
-					targetVel = po->speed;
 				}
 			}
 
