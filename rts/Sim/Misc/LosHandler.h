@@ -17,7 +17,7 @@
 
 
 /**
- * CLosHandler specific data attached to each unit.
+ * LoS Instance
  *
  * The main goal of this object is to store the squares on the LOS map that
  * have been incremented (CLosHandler::LosAdd) when the unit last moved.
@@ -31,8 +31,8 @@
  * used to track how many units currently use one instance.
  *
  * An instance will be shared iff the other unit is in the same square
- * (basePos, baseSquare) on the LOS map, has the same LOS and air LOS
- * radius, is in the same ally-team and has the same base-height.
+ * (basePos, baseSquare) on the LOS map, has the same radius, is in the
+ * same ally-team and has the same height.
  */
 struct SLosInstance
 {
@@ -64,12 +64,13 @@ struct SLosInstance
 };
 
 
-//FIXME
+
 /**
- * LOS is implemented using CLosMap, which is a 2d array essentially containing
- * a reference count. That is to say, each position on the map counts how many
- * LosInstances "can see" that square. Units may share their "presence" on
- * the LOS map through sharing a single LosInstance.
+ * All different types of LOS are implemented using ILosType, which is a
+ * 2d array essentially containing a reference count. That is to say, each
+ * position on the map counts how many LosInstances "can see" that square.
+ * Units may share their "presence" on the LOS map through sharing a single
+ * LosInstance.
  *
  * To quickly find LosInstances that can be shared CLosHandler implements a
  * hash table (instanceHash). Additionally, LosInstances that reach a refCount
@@ -128,7 +129,7 @@ private:
 
 private:
 	static constexpr unsigned CACHE_SIZE  = 1000;
-	static constexpr unsigned MAGIC_PRIME = 509; //2309;
+	static constexpr unsigned MAGIC_PRIME = 509;
 	static int GetHashNum(const CUnit* unit, const int2 baseLos);
 
 	float GetRadius(const CUnit* unit) const;
@@ -160,13 +161,11 @@ private:
 
 
 
-//FIXME
+
 /**
  * Handles line of sight (LOS) updates for all units and all ally-teams.
  *
- * Units have both LOS and air LOS. The former is ray-casted against the terrain
- * so hills obstruct view (see CLosAlgorithm). The second is circular: air LOS
- * is not influenced by terrain.
+ * Helper class to access the different types of LoS.
  */
 class CLosHandler : public CEventClient
 {
