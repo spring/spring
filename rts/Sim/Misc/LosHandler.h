@@ -85,7 +85,7 @@ class ILosType
 {
 public:
 	// the Interface
-	int2 PosToSquare(const float3 pos) const { return int2( Round(pos.x * invDiv), Round(pos.z * invDiv) ); }
+	int2 PosToSquare(const float3 pos) const { return int2(pos.x * invDiv, pos.z * invDiv); }
 
 	inline bool InSight(const float3 pos, int allyTeam) const {
 		assert(allyTeam < losMaps.size());
