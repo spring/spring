@@ -1016,7 +1016,7 @@ const unsigned short* CAICallback::GetRadarMap()
 
 const unsigned short* CAICallback::GetJammerMap()
 {
-	return &losHandler->commonJammer.losMaps[teamHandler->AllyTeam(team)].front();
+	return &losHandler->commonJammer.losMaps[0].front();
 }
 
 const unsigned char* CAICallback::GetMetalMap()

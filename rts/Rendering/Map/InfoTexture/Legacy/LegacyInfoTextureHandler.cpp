@@ -353,7 +353,7 @@ bool CLegacyInfoTextureHandler::UpdateExtraTexture(BaseGroundDrawMode texDrawMod
 				const unsigned short* myLos         = &losHandler->los.losMaps[gu->myAllyTeam].front();
 				const unsigned short* myAirLos      = &losHandler->airLos.losMaps[gu->myAllyTeam].front();
 				const unsigned short* myRadar       = &losHandler->radar.losMaps[gu->myAllyTeam].front();
-				const unsigned short* myJammer      = &losHandler->commonJammer.losMaps[gu->myAllyTeam].front();
+				const unsigned short* myJammer      = &losHandler->commonJammer.losMaps[0].front();
 
 				const int lowRes = highResInfoTexWanted ? 0 : -1;
 				const int endx = highResInfoTexWanted ? mapDims.mapx : mapDims.hmapx;

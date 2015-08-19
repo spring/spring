@@ -30,7 +30,7 @@ CRadarTexture::CRadarTexture()
 	glSpringTexStorage2D(GL_TEXTURE_2D, -1, GL_RG8, texSize.x, texSize.y);
 
 	infoTexPBO.Bind();
-	infoTexPBO.New(texSize.x * texSize.y * texChannels * 2, GL_STREAM_DRAW);
+	infoTexPBO.New(texSize.x * texSize.y * texChannels * sizeof(unsigned short), GL_STREAM_DRAW);
 	infoTexPBO.Unbind();
 
 	if (FBO::IsSupported()) {
@@ -126,7 +126,7 @@ void CRadarTexture::UpdateCPU()
 		const unsigned short* myLos = &losHandler->los.losMaps[gu->myAllyTeam].front();
 
 		const unsigned short* myRadar  = &losHandler->radar.losMaps[gu->myAllyTeam].front();
-		const unsigned short* myJammer = &losHandler->commonJammer.losMaps[gu->myAllyTeam].front();
+		const unsigned short* myJammer = &losHandler->commonJammer.losMaps[0].front();
 		for (int y = 0; y < texSize.y; ++y) {
 			for (int x = 0; x < texSize.x; ++x) {
 				const int idx = y * texSize.x + x;
@@ -172,10 +172,10 @@ void CRadarTexture::Update()
 	}
 
 	infoTexPBO.Bind();
-	const size_t arraySize = texSize.x * texSize.y * texChannels;
+	const size_t arraySize = texSize.x * texSize.y * sizeof(unsigned short);
 	auto infoTexMem = reinterpret_cast<unsigned char*>(infoTexPBO.MapBuffer());
 	const unsigned short* myRadar  = &losHandler->radar.losMaps[gu->myAllyTeam].front();
-	const unsigned short* myJammer = &losHandler->commonJammer.losMaps[gu->myAllyTeam].front();
+	const unsigned short* myJammer = &losHandler->commonJammer.losMaps[0].front();
 	memcpy(infoTexMem,  myRadar, arraySize);
 	infoTexMem += arraySize;
 	memcpy(infoTexMem, myJammer, arraySize);
