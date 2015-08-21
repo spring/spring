@@ -18,7 +18,7 @@ float CMoveMath::ShipSpeedMod(const MoveDef& moveDef, float height, float slope,
 {
 	// uphill slopes can lead even closer to shore, so
 	// block movement if we are above our minWaterDepth
-	if ((dirSlopeMod > 0.0f) && (-height < moveDef.depth))
+	if (height >= 0.0f || ((dirSlopeMod >= 0.0f) && (-height < moveDef.depth)))
 		return 0.0f;
 
 	return 1.0f;
