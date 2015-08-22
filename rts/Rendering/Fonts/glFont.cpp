@@ -948,7 +948,7 @@ void CglFont::glFormat(float x, float y, float s, const int options, const char*
 }
 
 
-void CglFont::glFormat(float x, float y, float s, const int options, const std::string& fmt, ...)
+void CglFont::glFormat(float x, float y, float s, const int options, const std::string fmt, ...)
 {
 	FORMAT_STRING(fmt,fmt.c_str(),text);
 	glPrint(x, y, s, options, std::string(text));

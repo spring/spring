@@ -56,7 +56,7 @@ public:
 	 */
 	void glPrint(float x, float y, float s, const int options, const std::string& str);
 	void glPrintTable(float x, float y, float s, const int options, const std::string& str);
-	void glFormat(float x, float y, float s, const int options, const std::string& fmt, ...);
+	void glFormat(float x, float y, float s, const int options, const std::string fmt, ...);
 	void glFormat(float x, float y, float s, const int options, const char* fmt, ...);
 
 	void SetAutoOutlineColor(bool enable); //! auto select outline color for in-text-colorcodes
