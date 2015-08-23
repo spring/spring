@@ -435,8 +435,7 @@ bool CWaitCommandsAI::Wait::IsWaitingOn(const CUnit* unit) const
 }
 
 
-void CWaitCommandsAI::Wait::SendCommand(const Command& cmd,
-																				const CUnitSet& unitSet)
+void CWaitCommandsAI::Wait::SendCommand(const Command& cmd,	const CUnitSet& unitSet)
 {
 	if (unitSet.empty()) {
 		return;
