@@ -137,42 +137,33 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 {
 	//we want to call RenderUnitDestroyed while the unit is still valid
 	eventHandler.RenderUnitDestroyed(delUnit);
-	for (int i = 0; i < activeUnits.size();++i) {
-		if (activeUnits[i] != delUnit)
-			continue;
 
-			
+	auto it = std::find(activeUnits.begin(), activeUnits.end(), delUnit);
+	assert(it != activeUnits.end());
+	{
 		int delTeam = delUnit->team;
 		int delType = delUnit->unitDef->id;
 
 		teamHandler->Team(delTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
-		activeUnits.erase(activeUnits.begin() + i);
-		
-		if (activeSlowUpdateUnit > i) {
+
+		if (activeSlowUpdateUnit > std::distance(activeUnits.begin(), it)) {
 			--activeSlowUpdateUnit;
 		}
-		
-		assert(activeUnits.size() == i || activeUnits[i] != delUnit);
-		
+
+		activeUnits.erase(it);
 		unitsByDefs[delTeam][delType].erase(delUnit);
 		idPool.FreeID(delUnit->id, true);
-
-		units[delUnit->id] = NULL;
+		units[delUnit->id] = nullptr;
 
 		CSolidObject::SetDeletingRefID(delUnit->id);
 		delete delUnit;
 		CSolidObject::SetDeletingRefID(-1);
-		
-		break;
 	}
 
 #ifdef _DEBUG
-	for (int i = 0; i < activeUnits.size();) {
-		if (activeUnits[i] == delUnit) {
+	for (CUnit* u: activeUnits) {
+		if (u == delUnit) {
 			LOG_L(L_ERROR, "Duplicated unit found in active units on erase");
-			activeUnits.erase(activeUnits.begin() + i);
-		} else {
-			++i;
 		}
 	}
 #endif
