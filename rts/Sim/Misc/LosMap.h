@@ -17,8 +17,9 @@ struct SLosInstance;
 class CLosMap
 {
 public:
-	CLosMap(int2 size_, bool sendReadmapEvents_, const float* heightmap_)
+	CLosMap(int2 size_, bool sendReadmapEvents_, const float* heightmap_, const int2 mapDims)
 	: size(size_)
+	, LOS2HEIGHT(mapDims / size)
 	, map(size.x * size.y, 0)
 	, sendReadmapEvents(sendReadmapEvents_)
 	, heightmap(heightmap_)
@@ -51,7 +52,8 @@ private:
 	inline void CastLos(std::vector<int>* squares, float* maxAng, const int2 pos, const int2 off, const float invR, float losHeight, std::vector<bool>& squaresMap, const int radius) const;
 
 protected:
-	int2 size;
+	const int2 size;
+	const int2 LOS2HEIGHT;
 	std::vector<unsigned short> map;
 	bool sendReadmapEvents;
 	const float* const heightmap;
