@@ -460,7 +460,7 @@ void AAIMap::ReadMapCacheFile()
 
 void AAIMap::ReadContinentFile()
 {
-	const std::string filename = cfg->GetFileName(cfg->getUniqueName(true, true, true, true), MAP_CACHE_PATH, "_continent.dat", true);
+	const std::string filename = cfg->GetFileName(ai, cfg->getUniqueName(ai, true, true, true, true), MAP_CACHE_PATH, "_continent.dat", true);
 	FILE* file = fopen(filename.c_str(), "r");
 
 	if(file != NULL)
@@ -522,7 +522,7 @@ void AAIMap::ReadContinentFile()
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////
 	// save movement maps
-	const std::string movementfile = cfg->GetFileName(cfg->getUniqueName(true, false, true, false), MAP_CACHE_PATH, "_movement.dat", true);
+	const std::string movementfile = cfg->GetFileName(ai, cfg->getUniqueName(ai, true, false, true, false), MAP_CACHE_PATH, "_movement.dat", true);
 	file = fopen(movementfile.c_str(), "w+");
 
 	fprintf(file, "%s\n",  CONTINENT_DATA_VERSION);
@@ -552,12 +552,12 @@ void AAIMap::ReadContinentFile()
 
 std::string AAIMap::LocateMapLearnFile() const
 {
-	return cfg->GetFileName(cfg->getUniqueName(true, true, true, true), MAP_LEARN_PATH, "_maplearn.dat", true);
+	return cfg->GetFileName(ai, cfg->getUniqueName(ai, true, true, true, true), MAP_LEARN_PATH, "_maplearn.dat", true);
 }
 
 std::string AAIMap::LocateMapCacheFile() const
 {
-	return cfg->GetFileName(cfg->getUniqueName(false, false, true, true), MAP_LEARN_PATH, "_mapcache.dat", true);
+	return cfg->GetFileName(ai, cfg->getUniqueName(ai, false, false, true, true), MAP_LEARN_PATH, "_mapcache.dat", true);
 }
 
 void AAIMap::ReadMapLearnFile(bool auto_set)
@@ -2464,7 +2464,7 @@ void AAIMap::AddDefence(float3 *pos, int defence)
 		}
 	}
 
-	const std::string filename = cfg->GetFileName("AAIDefMap.txt", "", "", true);
+	const std::string filename = cfg->GetFileName(ai, "AAIDefMap.txt", "", "", true);
 	FILE* file = fopen(filename.c_str(), "w+");
 	for(int y = 0; y < yDefMapSize; ++y)
 	{
@@ -2605,7 +2605,7 @@ float AAIMap::GetDefenceBuildsite(float3 *best_pos, const UnitDef *def, int xSta
 
 	float range =  ai->Getbt()->units_static[def->id].range / 8.0;
 
-	const std::string filename = cfg->GetFileName("AAIDebug.txt", "", "", true);
+	const std::string filename = cfg->GetFileName(ai, "AAIDebug.txt", "", "", true);
 	FILE* file = fopen(filename.c_str(), "w+");
 	fprintf(file, "Search area: (%i, %i) x (%i, %i)\n", xStart, yStart, xEnd, yEnd);
 	fprintf(file, "Range: %g\n", range);
