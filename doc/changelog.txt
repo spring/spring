@@ -2,6 +2,10 @@ Spring changelog
 (since 85.0: "!" prefix indicate backward compability broke)
 (numbers in brackets normally mean the mantis ticket ID)
 
+-- 101.0 --------------------------------------------------------
+Lua:
+ ! GameID callin now gets the ID string encoded in hex.
+
 -- 100.0 --------------------------------------------------------
 Major:
  - bugfixes
@@ -118,7 +122,7 @@ Collisions:
 
 Units:
  - base automatic attack commands for idle units on weapon priorities
- 
+
 Weapons:
  - refactor weapon code:
   - use LeadTargetPos more often
@@ -669,7 +673,7 @@ Sim:
       3) be intersectable by either synced or unsynced rays
       4) block any other objects from existing on top of them
       5) be selectable
-    
+
  - hovercraft now take water damage by default
 
 Lua:
@@ -753,10 +757,10 @@ Lua:
      GetProjectileTarget now always returns two arguments (if given projectileID is valid)
      GetProjectileTarget now always returns a target position if projectile has no target object
      SetProjectileTarget now takes a number instead of a string to indicate target-type
-    
+
      GetProjectileTarget(number projectileID) --> nil | [number targetType, number targetID | table targetPos = {[1] = x, ...}]
      SetProjectileTarget(number projectileID, [number targetID [, number targetType]]  |  [number x, number y, number z]) --> nil | boolean
-    
+
    where targetType is one of {string.byte('g') = GROUND, string.byte('u') = UNIT, string.byte('f') = FEATURE, string.byte('p') = PROJECTILE}
 
  - LuaSynced*:
