@@ -293,7 +293,7 @@ static void DrawProfiler()
 
 		// print timer name
 		fStartX += 0.01f;
-		font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM, pi->first);
+		font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM, "%s", pi->first.c_str());
 	}
 
 
