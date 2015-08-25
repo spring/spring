@@ -382,18 +382,14 @@ void CLosMap::AddRaycast(SLosInstance* instance, int amount)
 
 
 
-#define USE_FULL_HEIGHTMAP
-
 #define MAP_SQUARE2(pos) (((pos).y << losHandler->los.mipLevel) * mapDims.mapx + ((pos).x << losHandler->los.mipLevel))
 #define MAP_SQUARE(pos) ((pos).y * size.x + (pos).x)
 
 
 void CLosMap::LosAdd(int2 pos, int radius, float baseHeight, std::vector<int>& squares)
 {
-	const float* heightmapFull = readMap->GetCenterHeightMapSynced();
-
 	assert(radius > 0);
-	if (radius <= 0) { return; }
+	const float* heightmapFull = readMap->GetCenterHeightMapSynced();
 	if (SRectangle(0,0,size.x,size.y).Inside(pos) && baseHeight <= heightmapFull[MAP_SQUARE2(pos)]) { return; }
 
 	// add all squares that are in the los radius
