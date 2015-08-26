@@ -1668,10 +1668,9 @@ int LuaOpenGL::DrawListAtUnit(lua_State* L)
 	if (unit == NULL)
 		return 0;
 
-	const CUnit* trans = unit->GetTransporter();
-
-	if (trans != NULL)
+	while (CUnit* trans = unit->GetTransporter()) {
 		unit = trans;
+	}
 
 	const unsigned int listIndex = (unsigned int)luaL_checkint(L, 2);
 	const CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
@@ -1712,10 +1711,9 @@ int LuaOpenGL::DrawFuncAtUnit(lua_State* L)
 	if (unit == NULL)
 		return 0;
 
-	const CUnit* trans = unit->GetTransporter();
-
-	if (trans != NULL)
+	while (CUnit* trans = unit->GetTransporter()) {
 		unit = trans;
+	}
 
 	const bool useMidPos = luaL_checkboolean(L, 2);
 	const float3 drawPos = (useMidPos)? unit->drawMidPos: unit->drawPos;
