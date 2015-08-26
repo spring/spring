@@ -25,7 +25,6 @@
 CR_BIND_DERIVED(CTransportCAI,CMobileCAI , )
 
 CR_REG_METADATA(CTransportCAI, (
-	CR_MEMBER(toBeTransportedUnitId),
 	CR_RESERVED(1),
 	CR_MEMBER(lastCall),
 	CR_MEMBER(unloadType),
@@ -41,7 +40,6 @@ CR_REG_METADATA(CTransportCAI, (
 CTransportCAI::CTransportCAI()
 	: CMobileCAI()
 	, unloadType(-1)
-	, toBeTransportedUnitId(-1)
 	, lastCall(0)
 	, isFirstIteration(true)
 {}
@@ -49,7 +47,6 @@ CTransportCAI::CTransportCAI()
 
 CTransportCAI::CTransportCAI(CUnit* owner)
 	: CMobileCAI(owner)
-	, toBeTransportedUnitId(-1)
 	, lastCall(0)
 	, isFirstIteration(true)
 {
@@ -90,26 +87,15 @@ CTransportCAI::~CTransportCAI()
 
 
 void CTransportCAI::SetTransportee(CUnit* unit) {
-	if (unit != NULL) {
-		// reset existing transportee
-		if (toBeTransportedUnitId != unit->id) {
-			CUnit* transportee = (toBeTransportedUnitId == -1) ? NULL : unitHandler->GetUnitUnsafe(toBeTransportedUnitId);
-			if ((transportee != NULL) && (transportee->loadingTransportId == owner->id))
-				transportee->loadingTransportId = -1;
-			toBeTransportedUnitId = unit->id;
-		}
+	if (orderTarget != nullptr && orderTarget->loadingTransportId == owner->id) {
+		orderTarget->loadingTransportId = -1;
+	}
+	SetOrderTarget(unit);
+	if (unit != nullptr) {
 		CUnit* transport = (unit->loadingTransportId == -1) ? NULL : unitHandler->GetUnitUnsafe(unit->loadingTransportId);
 		// let the closest transport be loadingTransportId, in case of multiple fighting transports
 		if ((transport == NULL) || ((transport != owner) && (transport->pos.SqDistance(unit->pos) > owner->pos.SqDistance(unit->pos)))) {
 			unit->loadingTransportId = owner->id;
-		}
-	} else {
-		if (toBeTransportedUnitId != -1) {
-			CUnit* transportee = unitHandler->GetUnitUnsafe(toBeTransportedUnitId);
-			// only reset loadingTransportId if it is this transport
-			if ((transportee != NULL) && (transportee->loadingTransportId == owner->id))
-				transportee->loadingTransportId = -1;
-			toBeTransportedUnitId = -1;
 		}
 	}
 }

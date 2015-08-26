@@ -45,7 +45,6 @@ public:
 	virtual void ExecuteLoadUnits(Command& c);
 
 	int unloadType;
-	int toBeTransportedUnitId;
 	int lastCall;
 
 private:
