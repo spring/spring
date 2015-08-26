@@ -33,6 +33,7 @@
 #define AIRTRANSPORT_DOCKING_RADIUS 16
 #define AIRTRANSPORT_DOCKING_ANGLE 50
 #define UNLOAD_LAND 0
+#define UNLOAD_DROP 1
 #define UNLOAD_LANDFLOOD 2
 
 // MobileCAI is not always assigned to aircraft
@@ -1359,6 +1360,13 @@ void CMobileCAI::ExecuteUnloadUnits(Command& c)
 		case UNLOAD_LAND: {
 			UnloadUnits_Land(c);
 		} break;
+		case UNLOAD_DROP: {
+			if (owner->unitDef->canfly) {
+				UnloadUnits_Drop(c);
+			} else {
+				UnloadUnits_Land(c);
+			}
+		} break;
 		case UNLOAD_LANDFLOOD: {
 			UnloadUnits_LandFlood(c);
 		} break;
@@ -1384,7 +1392,13 @@ void CMobileCAI::ExecuteUnloadUnit(Command& c)
 	// new methods
 	switch (owner->unitDef->transportUnloadMethod) {
 		case UNLOAD_LAND: UnloadLand(c); break;
-
+		case UNLOAD_DROP: {
+			if (owner->unitDef->canfly) {
+				UnloadDrop(c);
+			} else {
+				UnloadLand(c);
+			}
+		} break;
 		case UNLOAD_LANDFLOOD: UnloadLandFlood(c); break;
 
 		default: UnloadLand(c); break;
@@ -1614,6 +1628,41 @@ bool CMobileCAI::SpotIsClearIgnoreSelf(float3 pos, CUnit* unitToUnload)
 }
 
 
+bool CMobileCAI::FindEmptyDropSpots(float3 startpos, float3 endpos, std::vector<float3>& dropSpots)
+{
+	if (dynamic_cast<CHoverAirMoveType*>(owner->moveType) == NULL)
+		return false;
+
+	const float maxDist = startpos.SqDistance(endpos);
+	const float3 spreadVector = (endpos - startpos).Normalize() * owner->unitDef->unloadSpread;
+	const auto& transportees = owner->transportedUnits;
+	auto ti = transportees.begin();
+
+	float3 nextPos = startpos - spreadVector * ti->unit->radius;
+
+	// remaining spots
+	while (ti != transportees.end()) {
+		const float3 gap = spreadVector * ti->unit->radius;
+		nextPos += gap;
+
+		if (startpos.SqDistance(nextPos) > maxDist) {
+			break;
+		}
+
+		nextPos.y = CGround::GetHeightAboveWater(nextPos.x, nextPos.z);
+		// check landing spot is ok for landing on
+		if (!SpotIsClear(nextPos, ti->unit))
+			continue;
+
+		dropSpots.push_back(nextPos);
+		nextPos += gap;
+		++ti;
+	}
+
+	return dropSpots.size() > 0;
+}
+
+
 void CMobileCAI::UnloadUnits_Land(Command& c)
 {
 	const auto& transportees = owner->transportedUnits;
@@ -1638,6 +1687,30 @@ void CMobileCAI::UnloadUnits_Land(Command& c)
 		return;
 	}
 	FinishCommand();
+}
+
+
+void CMobileCAI::UnloadUnits_Drop(Command& c)
+{
+	const auto& transportees = owner->transportedUnits;
+	std::vector<float3> dropSpots;
+	const float3 startingDropPos = c.GetPos(0);
+	const float3 approachVector = (startingDropPos - owner->pos).Normalize();
+	bool canUnload = FindEmptyDropSpots(startingDropPos, startingDropPos + approachVector * std::max(16.0f, c.params[3]), dropSpots);
+	FinishCommand();
+	if (canUnload) {
+		auto ti = transportees.begin();
+		auto di = dropSpots.rbegin();
+		for (;ti != transportees.end(), di != dropSpots.rend(); ++ti, ++di) {
+			Command c2(CMD_UNLOAD_UNIT, c.options | INTERNAL_ORDER, *di);
+			commandQue.push_front(c2);
+
+			SlowUpdate();
+			return;
+		}
+	} else {
+		FinishCommand();
+	}
 }
 
 
@@ -1750,6 +1823,41 @@ void CMobileCAI::UnloadLand(Command& c)
 			StopMove();
 			owner->script->TransportDrop(transportee, wantedPos);
 		}
+	}
+}
+
+
+void CMobileCAI::UnloadDrop(Command& c)
+{
+	float3 pos = c.GetPos(0);
+
+	// head towards goal
+	// note that HoverAirMoveType must be modified to allow
+	// non-stop movement through goals for this to work well
+	if (goalPos.SqDistance2D(pos) > Square(20.0f)) {
+		SetGoal(pos, owner->pos);
+	}
+
+	CHoverAirMoveType* am = dynamic_cast<CHoverAirMoveType*>(owner->moveType);
+	CUnit* transportee = owner->transportedUnits.front().unit;
+
+	if (am != NULL) {
+		pos.y = CGround::GetHeightAboveWater(pos.x, pos.z);
+		am->maxDrift = 1.0f;
+
+		// if near target or passed it accidentally, drop unit
+		if (owner->pos.SqDistance2D(pos) < Square(40.0f) || (((pos - owner->pos).Normalize()).SqDistance(owner->frontdir) > 0.25 && owner->pos.SqDistance2D(pos)< (205*205))) {
+			am->SetAllowLanding(false);
+
+			owner->script->EndTransport();
+			owner->DetachUnitFromAir(transportee, pos);
+
+			FinishCommand();
+		}
+	} else {
+		inCommand = true;
+		StopMove();
+		owner->script->TransportDrop(transportee, pos);
 	}
 }
 

@@ -7,6 +7,8 @@
 #include "Sim/Misc/GlobalConstants.h" // for SQUARE_SIZE
 #include "System/float3.h"
 
+#include <vector>
+
 class CUnit;
 class CFeature;
 class CWeapon;
@@ -63,14 +65,17 @@ public:
 
 	void SetTransportee(CUnit* unit);
 	bool FindEmptySpot(const float3& center, float radius, float spread, float3& found, const CUnit* unitToUnload, bool fromSynced = true);
+	bool FindEmptyDropSpots(float3 startpos, float3 endpos, std::vector<float3>& dropSpots);
 	CUnit* FindUnitToTransport(float3 center, float radius);
 	bool LoadStillValid(CUnit* unit);
 	bool SpotIsClear(float3 pos, CUnit* u);
 	bool SpotIsClearIgnoreSelf(float3 pos, CUnit* unitToUnload);
 
 	void UnloadUnits_Land(Command& c);
+	void UnloadUnits_Drop(Command& c);
 	void UnloadUnits_LandFlood(Command& c);
 	void UnloadLand(Command& c);
+	void UnloadDrop(Command& c);
 	void UnloadLandFlood(Command& c);
 
 	float3 goalPos;
