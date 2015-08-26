@@ -15,7 +15,6 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/Log/ILog.h"
@@ -58,7 +57,7 @@ CR_REG_METADATA(CMobileCAI, (
 	CR_MEMBER(buggerOffRadius),
 
 	CR_MEMBER(repairBelowHealth),
-	
+
 	CR_MEMBER(commandPos1),
 	CR_MEMBER(commandPos2),
 
@@ -290,7 +289,7 @@ bool CMobileCAI::RefuelIfNeeded()
 {
 	if (!WantsRefuel())
 		return false;
-	
+
 	//TODO: actually refuel
 	return false;
 
@@ -301,7 +300,7 @@ bool CMobileCAI::LandRepairIfNeeded()
 {
 	if (!WantsRepair())
 		return false;
-	
+
 	//TODO: actually repair
 
 	return false;
@@ -394,9 +393,8 @@ void CMobileCAI::ExecuteMove(Command &c)
 
 void CMobileCAI::ExecuteLoadUnits(Command &c) {
 	CUnit* unit = unitHandler->GetUnit(c.params[0]);
-	CTransportUnit* tran = dynamic_cast<CTransportUnit*>(unit);
 
-	if (!tran) {
+	if (unit == nullptr || !unit->unitDef->IsTransportUnit()) {
 		FinishCommand();
 		return;
 	}
@@ -404,7 +402,7 @@ void CMobileCAI::ExecuteLoadUnits(Command &c) {
 	if (!inCommand) {
 		inCommand = true;
 		Command newCommand(CMD_LOAD_UNITS, INTERNAL_ORDER | SHIFT_KEY, owner->id);
-		tran->commandAI->GiveCommandReal(newCommand);
+		unit->commandAI->GiveCommandReal(newCommand);
 	}
 	if (owner->GetTransporter() != NULL) {
 		if (!commandQue.empty())
@@ -694,9 +692,9 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 		float edgeFactor = 0.0f; // percent offset to target center
 		const float3 targetMidPosVec = owner->midPos - orderTarget->midPos;
-		
+
 		const float3 errPos = orderTarget->GetErrorPos(owner->allyteam, false);
-		
+
 		const float targetGoalDist = errPos.SqDistance2D(goalPos);
 		const float targetPosDist = Square(10.0f + orderTarget->pos.distance2D(owner->pos) * 0.2f);
 		const float minPointingDist = std::min(1.0f * owner->losRadius * losHandler->los.divisor, owner->maxRange * 0.9f);
@@ -1063,12 +1061,12 @@ bool CMobileCAI::GenerateAttackCmd()
 					}
 				}
 			}
-			
+
 			//Get target from wherever
 			if (newAttackTargetId < 0) {
 				const float searchRadius = owner->maxRange + 150.0f * owner->moveState * owner->moveState;
 				const CUnit* enemy = CGameHelper::GetClosestValidTarget(owner->pos, searchRadius, owner->allyteam, this);
-	
+
 				if (enemy != NULL) {
 					newAttackTargetId = enemy->id;
 				}

@@ -34,7 +34,6 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDef.h"
@@ -67,7 +66,7 @@ void CUnitScript::InitVars(int numTeams, int numAllyTeams)
 	for (int t = 0; t < numTeams; t++) {
 		teamVars[t].resize(TEAM_VAR_COUNT, 0);
 	}
-	
+
 	for (int t = 0; t < numAllyTeams; t++) {
 		allyVars[t].resize(ALLY_VAR_COUNT, 0);
 	}
@@ -701,10 +700,8 @@ void CUnitScript::AttachUnit(int piece, int u)
 	}
 
 #ifndef _CONSOLE
-	CTransportUnit* tu = dynamic_cast<CTransportUnit*>(unit);
-
-	if (tu && unitHandler->units[u]) {
-		tu->AttachUnit(unitHandler->units[u], piece);
+	if (unit->unitDef->IsTransportUnit() && unitHandler->units[u]) {
+		unit->AttachUnit(unitHandler->units[u], piece);
 	}
 #endif
 }
@@ -713,10 +710,8 @@ void CUnitScript::AttachUnit(int piece, int u)
 void CUnitScript::DropUnit(int u)
 {
 #ifndef _CONSOLE
-	CTransportUnit* tu = dynamic_cast<CTransportUnit*>(unit);
-
-	if (tu && unitHandler->units[u]) {
-		tu->DetachUnit(unitHandler->units[u]);
+	if (unit->unitDef->IsTransportUnit() && unitHandler->units[u]) {
+		unit->DetachUnit(unitHandler->units[u]);
 	}
 #endif
 }

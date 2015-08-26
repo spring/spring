@@ -45,7 +45,6 @@
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Game/UI/Groups/Group.h"
 #include "Game/UI/Groups/GroupHandler.h"
 #include "Net/Protocol/NetProtocol.h"

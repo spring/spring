@@ -137,7 +137,6 @@ add_library(engineSim STATIC
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/UnitTypes/Building.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/UnitTypes/ExtractorBuilding.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/UnitTypes/Factory.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Units/UnitTypes/TransportUnit.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/BeamLaser.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/BombDropper.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/Cannon.cpp"

@@ -25,7 +25,6 @@
 #include "Sim/Units/UnitTypes/Builder.h"
 #include "Sim/Units/UnitTypes/Building.h"
 #include "Sim/Units/UnitTypes/Factory.h"
-#include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "System/myMath.h"
 #include "System/Util.h"
 #include "System/EventHandler.h"
@@ -175,7 +174,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 		}
 
 		c.tooltip += ud->humanName + " - " + ud->tooltip;
-		c.tooltip += 
+		c.tooltip +=
 			("\nHealth "      + FloatToString(ud->health, "%.0f")) +
 			("\nMetal cost "  + FloatToString(ud->metal, "%.0f")) +
 			("\nEnergy cost " + FloatToString(ud->energy, "%.0f")) +

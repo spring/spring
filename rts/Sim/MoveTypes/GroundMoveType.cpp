@@ -21,7 +21,6 @@
 #include "Sim/Path/IPathController.hpp"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Units/Scripts/CobInstance.h"
-#include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/MobileCAI.h"
 #include "Sim/Units/UnitDef.h"

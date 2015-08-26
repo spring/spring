@@ -36,8 +36,6 @@ namespace icon {
 	class CIconData;
 }
 
-class CTransportUnit;
-
 
 // LOS state bits
 #define LOS_INLOS      (1 << 0)  // the unit is currently in the los of the allyteam
@@ -189,10 +187,30 @@ public:
 	virtual bool ChangeTeam(int team, ChangeType type);
 	virtual void StopAttackingAllyTeam(int ally);
 
-	void SetTransporter(CTransportUnit* trans) { transporter = trans; }
-	inline CTransportUnit* GetTransporter() const {
+	//Transporter stuff
+	CR_DECLARE_SUB(TransportedUnit)
+
+	struct TransportedUnit {
+		CR_DECLARE_STRUCT(TransportedUnit)
+		CUnit* unit;
+		int piece;
+	};
+
+	void SetTransporter(CUnit* trans) { transporter = trans; }
+	inline CUnit* GetTransporter() const {
 		return transporter;
 	}
+
+	bool AttachUnit(CUnit* unit, int piece);
+	bool CanTransport(const CUnit* unit) const;
+
+	bool DetachUnit(CUnit* unit);
+	bool DetachUnitCore(CUnit* unit);
+	bool DetachUnitFromAir(CUnit* unit, const float3& pos); ///< moves to position after
+
+	bool CanLoadUnloadAtPos(const float3& wantedPos, const CUnit* unit, float* wantedHeightPtr = NULL) const;
+	float GetTransporteeWantedHeight(const float3& wantedPos, const CUnit* unit, bool* ok = NULL) const;
+	short GetTransporteeWantedHeading(const CUnit* unit) const;
 
 public:
 	virtual void KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSequence = true);
@@ -264,7 +282,12 @@ public:
 	SWeaponTarget curTarget;
 
 	/// transport that the unit is currently in
-	CTransportUnit* transporter;
+	CUnit* transporter;
+
+	//Transporter stuff
+	int transportCapacityUsed;
+	float transportMassUsed;
+	std::list<TransportedUnit> transportedUnits;
 
 	AMoveType* moveType;
 	AMoveType* prevMoveType;

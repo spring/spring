@@ -45,7 +45,6 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/Building.h"
-#include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Weapons/Weapon.h"
 
 #include "System/Config/ConfigHandler.h"
@@ -1633,7 +1632,7 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 }
 
 inline void CUnitDrawer::UpdateUnitDrawPos(CUnit* u) {
-	const CTransportUnit* trans = u->GetTransporter();
+	const CUnit* trans = u->GetTransporter();
 
 	if (trans != NULL) {
 		u->drawPos = u->pos + (trans->speed * globalRendering->timeOffset);

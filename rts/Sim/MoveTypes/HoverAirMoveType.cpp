@@ -11,8 +11,8 @@
 #include "Sim/Misc/SmoothHeightMesh.h"
 #include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
 #include "Sim/Units/Scripts/UnitScript.h"
+#include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "System/myMath.h"
 #include "System/Matrix44f.h"
@@ -373,7 +373,7 @@ void CHoverAirMoveType::UpdateHovering()
 	const bool b0 = (aircraftState != AIRCRAFT_LANDING && owner->commandAI->HasMoreMoveCommands());
 	const bool b1 = (goalDistance < brakeDistance && goalDistance > 1.0f);
 
-	if (b0 && b1 && dynamic_cast<CTransportUnit*>(owner) == NULL) {
+	if (b0 && b1 && !owner->unitDef->IsTransportUnit()) {
 		deltaDir = owner->frontdir;
 	} else {
 		deltaDir *= smoothstep(0.0f, 20.0f, goalDistance) / goalDistance;
@@ -441,7 +441,7 @@ void CHoverAirMoveType::UpdateFlying()
 				const int topCmdID = cmdQue.empty() ? 0 : cmdQue.front().GetID();
 
 				// NOTE: should CMD_LOAD_ONTO be here?
-				const bool isTransporter = (dynamic_cast<CTransportUnit*>(owner) != NULL);
+				const bool isTransporter = owner->unitDef->IsTransportUnit();
 				const bool hasLoadCmds = isTransporter && (topCmdID == CMD_LOAD_ONTO || topCmdID == CMD_LOAD_UNITS);
 				// [?] transport aircraft need some time to detect that they can pickup
 				const bool canLoad = isTransporter && (++waitCounter < ((GAME_SPEED << 1) - 5));

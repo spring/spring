@@ -11,7 +11,6 @@
 #include "UnitTypes/Builder.h"
 #include "UnitTypes/ExtractorBuilding.h"
 #include "UnitTypes/Factory.h"
-#include "UnitTypes/TransportUnit.h"
 
 #include "CommandAI/AirCAI.h"
 #include "CommandAI/BuilderCAI.h"
@@ -74,9 +73,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitLoadParams& cparams)
 				throw content_error("Invalid team and no gaia team to put unit in");
 		}
 
-		if (ud->IsTransportUnit()) {
-			unit = new CTransportUnit();
-		} else if (ud->IsFactoryUnit()) {
+		if (ud->IsFactoryUnit()) {
 			// special static builder structures that can always be given
 			// move orders (which are passed on to all mobile buildees)
 			unit = new CFactory();

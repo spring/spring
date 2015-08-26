@@ -14,7 +14,6 @@
 #define UNLOAD_LANDFLOOD 2
 #define UNLOAD_CRASHFLOOD 3
 
-class CTransportUnit;
 class CUnit;
 class CFeature;
 struct Command;
@@ -50,10 +49,10 @@ public:
 	int lastCall;
 
 private:
-	void UnloadUnits_Land(Command& c, CTransportUnit* transport);
-	void UnloadUnits_Drop(Command& c, CTransportUnit* transport);
-	void UnloadUnits_LandFlood(Command& c, CTransportUnit* transport);
-	void UnloadUnits_CrashFlood(Command& c, CTransportUnit* transport); // FIXME incomplete
+	void UnloadUnits_Land(Command& c);
+	void UnloadUnits_Drop(Command& c);
+	void UnloadUnits_LandFlood(Command& c);
+	void UnloadUnits_CrashFlood(Command& c); // FIXME incomplete
 
 	void UnloadNormal(Command& c);
 	void UnloadLand(Command& c);

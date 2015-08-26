@@ -59,7 +59,6 @@
 #include "Sim/Units/Scripts/LuaUnitScript.h"
 #include "Sim/Units/UnitTypes/Builder.h"
 #include "Sim/Units/UnitTypes/Factory.h"
-#include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/FactoryCAI.h"

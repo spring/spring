@@ -27,7 +27,6 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Game/UI/Groups/GroupHandler.h"
 #include "Game/UI/Groups/Group.h"
-#include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Color.h"
 #include "System/EventHandler.h"
@@ -339,7 +338,7 @@ void CSelectedUnitsHandler::AddUnit(CUnit* unit)
 {
 	// if unit is being transported by eg. Hulk or Atlas
 	// then we should not be able to select it
-	const CTransportUnit* trans = unit->GetTransporter();
+	const CUnit* trans = unit->GetTransporter();
 	if (trans != NULL && !trans->unitDef->isFirePlatform) {
 		return;
 	}

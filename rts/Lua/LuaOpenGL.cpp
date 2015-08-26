@@ -59,7 +59,6 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitDefImage.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "System/Log/ILog.h"
 #include "System/Matrix44f.h"
 #include "System/Config/ConfigHandler.h"
@@ -1669,7 +1668,7 @@ int LuaOpenGL::DrawListAtUnit(lua_State* L)
 	if (unit == NULL)
 		return 0;
 
-	const CTransportUnit* trans = unit->GetTransporter();
+	const CUnit* trans = unit->GetTransporter();
 
 	if (trans != NULL)
 		unit = trans;
@@ -1713,7 +1712,7 @@ int LuaOpenGL::DrawFuncAtUnit(lua_State* L)
 	if (unit == NULL)
 		return 0;
 
-	const CTransportUnit* trans = unit->GetTransporter();
+	const CUnit* trans = unit->GetTransporter();
 
 	if (trans != NULL)
 		unit = trans;

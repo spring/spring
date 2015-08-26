@@ -54,7 +54,6 @@
 #include "Sim/Units/Scripts/CobInstance.h"
 #include "Sim/Units/UnitTypes/Builder.h"
 #include "Sim/Units/UnitTypes/Factory.h"
-#include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/FactoryCAI.h"
@@ -3108,18 +3107,15 @@ int LuaSyncedRead::GetUnitTransporter(lua_State* L)
 int LuaSyncedRead::GetUnitIsTransporting(lua_State* L)
 {
 	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	if (unit == nullptr || !unit->unitDef->IsTransportUnit()) {
 		return 0;
 	}
-	const CTransportUnit* tu = dynamic_cast<CTransportUnit*>(unit);
-	if (tu == NULL) {
-		return 0;
-	}
+
 	lua_newtable(L);
-	std::list<CTransportUnit::TransportedUnit>::const_iterator it;
+
 	int count = 1;
-	for (it = tu->GetTransportedUnits().begin(); it != tu->GetTransportedUnits().end(); ++it) {
-		const CUnit* carried = it->unit;
+	for (CUnit::TransportedUnit &tu: unit->transportedUnits) {
+		const CUnit* carried = tu.unit;
 		lua_pushnumber(L, carried->id);
 		lua_rawseti(L, -2, count++);
 	}
@@ -4699,7 +4695,7 @@ int LuaSyncedRead::GetProjectileIsIntercepted(lua_State* L)
 		return 0;
 
 	const CWeaponProjectile* wpro = static_cast<const CWeaponProjectile*>(pro);
-	
+
 	lua_pushboolean(L, wpro->IsBeingIntercepted());
 	return 1;
 }
@@ -4712,7 +4708,7 @@ int LuaSyncedRead::GetProjectileTimeToLive(lua_State* L)
 		return 0;
 
 	const CWeaponProjectile* wpro = static_cast<const CWeaponProjectile*>(pro);
-	
+
 	lua_pushnumber(L, wpro->GetTimeToLive());
 	return 1;
 }
@@ -4727,7 +4723,7 @@ int LuaSyncedRead::GetProjectileOwnerID(lua_State* L)
 	const int unitID = pro->GetOwnerID();
 	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits()))
 		return 0;
-	
+
 	lua_pushnumber(L, unitID);
 	return 1;
 }
@@ -4741,7 +4737,7 @@ int LuaSyncedRead::GetProjectileTeamID(lua_State* L)
 
 	if (!teamHandler->IsValidTeam(pro->GetTeamID()))
 		return 0;
-	
+
 	lua_pushnumber(L, pro->GetTeamID());
 	return 1;
 }
