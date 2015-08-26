@@ -1704,13 +1704,12 @@ void CMobileCAI::UnloadUnits_Drop(Command& c)
 		for (;ti != transportees.end(), di != dropSpots.rend(); ++ti, ++di) {
 			Command c2(CMD_UNLOAD_UNIT, c.options | INTERNAL_ORDER, *di);
 			commandQue.push_front(c2);
-
-			SlowUpdate();
-			return;
 		}
-	} else {
-		FinishCommand();
+		SlowUpdate();
+		return;
 	}
+
+	FinishCommand();
 }
 
 
