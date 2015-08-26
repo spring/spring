@@ -5,7 +5,6 @@
 
 #include <assert.h>
 
-#include "TransportCAI.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnitsHandler.h"
@@ -1289,8 +1288,6 @@ int CBuilderCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 				return CMD_RECLAIM;
 			}
 		} else {
-			const CTransportCAI* tran = dynamic_cast<CTransportCAI*>(pointed->commandAI);
-
 			const bool canAssistPointed = ownerBuilder->CanAssistUnit(pointed);
 			const bool canRepairPointed = ownerBuilder->CanRepairUnit(pointed);
 
@@ -1298,7 +1295,7 @@ int CBuilderCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 				return CMD_REPAIR;
 			} else if (canRepairPointed) {
 				return CMD_REPAIR;
-			} else if (tran && tran->CanTransport(owner)) {
+			} else if (pointed->CanTransport(owner)) {
 				return CMD_LOAD_ONTO;
 			} else if (owner->unitDef->canGuard) {
 				return CMD_GUARD;

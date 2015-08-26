@@ -2,7 +2,6 @@
 
 
 #include "MobileCAI.h"
-#include "TransportCAI.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
@@ -873,9 +872,7 @@ int CMobileCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 				return CMD_ATTACK;
 			}
 		} else {
-			const CTransportCAI* tran = dynamic_cast<CTransportCAI*>(pointed->commandAI);
-
-			if (tran != NULL && tran->CanTransport(owner)) {
+			if (pointed->CanTransport(owner)) {
 				return CMD_LOAD_ONTO;
 			} else if (owner->unitDef->canGuard) {
 				return CMD_GUARD;

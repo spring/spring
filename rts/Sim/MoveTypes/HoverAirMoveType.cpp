@@ -314,7 +314,7 @@ void CHoverAirMoveType::StopMoving(bool callScript, bool hardStop)
 {
 	// transports switch to landed state (via SetState which calls
 	// us) during pickup but must *not* be allowed to change their
-	// heading while "landed" (see TransportCAI)
+	// heading while "landed" (see MobileCAI)
 	forceHeading &= (aircraftState == AIRCRAFT_LANDED);
 	wantToStop = true;
 	wantedHeight = orgWantedHeight;

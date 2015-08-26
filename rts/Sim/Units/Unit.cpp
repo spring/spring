@@ -17,7 +17,6 @@
 #include "CommandAI/CommandAI.h"
 #include "CommandAI/FactoryCAI.h"
 #include "CommandAI/MobileCAI.h"
-#include "CommandAI/TransportCAI.h"
 
 #include "ExternalAI/EngineOutHandler.h"
 #include "Game/GameHelper.h"
