@@ -30,37 +30,27 @@ public:
 	void GiveCommandReal(const Command& c, bool fromSynced = true);
 	void SlowUpdate();
 
-	bool CanTransport(const CUnit* unit) const;
 	bool FindEmptySpot(const float3& center, float radius, float spread, float3& found, const CUnit* unitToUnload, bool fromSynced = true);
-	bool FindEmptyDropSpots(float3 startpos, float3 endpos, std::list<float3>& dropSpots);
-	bool FindEmptyFloodSpots(float3 startpos, float3 endpos, std::list<float3>& dropSpots, std::vector<float3> exitDirs);
+	bool FindEmptyDropSpots(float3 startpos, float3 endpos);
 	CUnit* FindUnitToTransport(float3 center, float radius);
 	int GetDefaultCmd(const CUnit* pointed, const CFeature* feature);
 	void FinishCommand();
-	bool IsBusyLoading(const CUnit* unit) const;
 	bool LoadStillValid(CUnit* unit);
 
 	virtual void ExecuteUnloadUnit(Command& c);
 	virtual void ExecuteUnloadUnits(Command& c);
 	virtual void ExecuteLoadUnits(Command& c);
 
-	int unloadType;
-	int lastCall;
-
 private:
 	void UnloadUnits_Land(Command& c);
 	void UnloadUnits_Drop(Command& c);
 	void UnloadUnits_LandFlood(Command& c);
-	void UnloadUnits_CrashFlood(Command& c); // FIXME incomplete
 
-	void UnloadNormal(Command& c);
 	void UnloadLand(Command& c);
 	/// parachute drop units
 	void UnloadDrop(Command& c);
 	/// land and dispatch units all at once
 	void UnloadLandFlood(Command& c);
-	/// slam into landscape abruptly and dispatch units all at once (incomplete)
-	void UnloadCrashFlood(Command& c);
 
 	virtual bool AllowedCommand(const Command& c, bool fromSynced);
 	bool SpotIsClear(float3 pos, CUnit* u);
@@ -73,11 +63,7 @@ private:
 private:
 	std::list<float3> dropSpots;
 	bool isFirstIteration;
-	float3 startingDropPos;
-	float3 lastDropPos;
 	/// direction from which we travel to drop point
-	float3 approachVector;
-	float3 endDropPos;
 };
 
 #endif /* TRANSPORT_CAI_H */
