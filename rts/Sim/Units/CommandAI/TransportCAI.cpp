@@ -997,7 +997,7 @@ bool CTransportCAI::LoadStillValid(CUnit* unit)
 
 	const float3& cmdPos = cmd.GetPos(0);
 
-	if (owner->CanLoadUnloadAtPos(cmdPos, unit)) {
+	if (!owner->CanLoadUnloadAtPos(cmdPos, unit)) {
 		return false;
 	}
 
