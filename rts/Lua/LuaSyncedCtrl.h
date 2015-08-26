@@ -160,6 +160,10 @@ class LuaSyncedCtrl
 		static int UnitWeaponFire(lua_State* L);
 		static int UnitWeaponHoldFire(lua_State* L);
 
+		static int UnitAttach(lua_State* L);
+		static int UnitDetach(lua_State* L);
+		static int UnitDetachFromAir(lua_State* L);
+
 		static int SpawnProjectile(lua_State* L);
 		static int SpawnCEG(lua_State* L);
 

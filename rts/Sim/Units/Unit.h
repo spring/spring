@@ -201,7 +201,7 @@ public:
 		return transporter;
 	}
 
-	bool AttachUnit(CUnit* unit, int piece);
+	bool AttachUnit(CUnit* unit, int piece, bool force = false);
 	bool CanTransport(const CUnit* unit) const;
 
 	bool DetachUnit(CUnit* unit);

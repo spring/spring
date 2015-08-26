@@ -2477,7 +2477,7 @@ bool CUnit::CanTransport(const CUnit* unit) const
 }
 
 
-bool CUnit::AttachUnit(CUnit* unit, int piece)
+bool CUnit::AttachUnit(CUnit* unit, int piece, bool force)
 {
 	assert(unit != this);
 
@@ -2508,7 +2508,7 @@ bool CUnit::AttachUnit(CUnit* unit, int piece)
 	}
 
 	// covers the case where unit->transporter != NULL
-	if (!CanTransport(unit)) {
+	if (!force && !CanTransport(unit)) {
 		return false;
 	}
 

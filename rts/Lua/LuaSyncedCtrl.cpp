@@ -280,6 +280,9 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(UnitWeaponFire);
 	REGISTER_LUA_CFUNC(UnitWeaponHoldFire);
 
+	REGISTER_LUA_CFUNC(UnitAttach);
+	REGISTER_LUA_CFUNC(UnitDetach);
+
 	REGISTER_LUA_CFUNC(SpawnProjectile);
 	REGISTER_LUA_CFUNC(SpawnCEG);
 
@@ -3721,6 +3724,7 @@ int LuaSyncedCtrl::UnitWeaponFire(lua_State* L)
 	unit->weapons[idx]->Fire(false);
 	return 0;
 }
+
 int LuaSyncedCtrl::UnitWeaponHoldFire(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -3735,6 +3739,70 @@ int LuaSyncedCtrl::UnitWeaponHoldFire(lua_State* L)
 	unit->weapons[idx]->DropCurrentTarget();
 	return 0;
 }
+
+int LuaSyncedCtrl::UnitAttach(lua_State* L)
+{
+	CUnit* transporter = ParseUnit(L, __FUNCTION__, 1);
+
+	if (transporter == NULL)
+		return 0;
+
+	CUnit* transportee = ParseUnit(L, __FUNCTION__, 2);
+
+	if (transportee == NULL)
+		return 0;
+
+	const int piece = luaL_checkint(L, 3) - 1;
+
+	if (piece >= (int) transporter->localModel->pieces.size()) {
+		luaL_error(L,  "invalid piece number");
+		return 0;
+	}
+
+	transporter->AttachUnit(transportee, piece, !transporter->unitDef->IsTransportUnit());
+
+	return 0;
+}
+
+
+int LuaSyncedCtrl::UnitDetach(lua_State* L)
+{
+	CUnit* transportee = ParseUnit(L, __FUNCTION__, 1);
+
+	if (transportee == NULL)
+		return 0;
+
+	CUnit* transporter = transportee->GetTransporter();
+
+	transporter->DetachUnit(transportee);
+
+	return 0;
+}
+
+
+int LuaSyncedCtrl::UnitDetachFromAir(lua_State* L)
+{
+	CUnit* transportee = ParseUnit(L, __FUNCTION__, 1);
+
+	if (transportee == NULL)
+		return 0;
+
+	CUnit* transporter = transportee->GetTransporter();
+
+	const int args = lua_gettop(L);
+	float3 pos;
+	if (args >= 4) {
+		pos = float3(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
+	} else {
+		pos = transportee->pos;
+		pos.y = CGround::GetHeightAboveWater(pos.x, pos.z);
+	}
+
+	transporter->DetachUnitFromAir(transportee, pos);
+
+	return 0;
+}
+
 
 int LuaSyncedCtrl::SpawnProjectile(lua_State* L)
 {
