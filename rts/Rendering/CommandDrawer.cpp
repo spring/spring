@@ -18,7 +18,6 @@
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "Sim/Units/CommandAI/FactoryCAI.h"
 #include "Sim/Units/CommandAI/MobileCAI.h"
-#include "Sim/Units/CommandAI/TransportCAI.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -46,7 +45,6 @@ void CommandDrawer::Draw(const CCommandAI* cai) const {
 	const       CAirCAI* aCAI; if ((aCAI = dynamic_cast<const       CAirCAI*>(cai)) != NULL) {        DrawAirCAICommands(aCAI); return; }
 	const   CBuilderCAI* bCAI; if ((bCAI = dynamic_cast<const   CBuilderCAI*>(cai)) != NULL) {    DrawBuilderCAICommands(bCAI); return; }
 	const   CFactoryCAI* fCAI; if ((fCAI = dynamic_cast<const   CFactoryCAI*>(cai)) != NULL) {    DrawFactoryCAICommands(fCAI); return; }
-	const CTransportCAI* tCAI; if ((tCAI = dynamic_cast<const CTransportCAI*>(cai)) != NULL) {  DrawTransportCAICommands(tCAI); return; }
 	const    CMobileCAI* mCAI; if ((mCAI = dynamic_cast<const    CMobileCAI*>(cai)) != NULL) {     DrawMobileCAICommands(mCAI); return; }
 
 	DrawCommands(cai);
@@ -576,82 +574,6 @@ void CommandDrawer::DrawMobileCAICommands(const CMobileCAI* cai) const
 				lineDrawer.DrawLineAndIcon(cmdID, unit->pos, cmdColors.load);
 				break;
 			}
-			case CMD_WAIT: {
-				DrawWaitIcon(*ci);
-				break;
-			}
-			case CMD_SELFD: {
-				lineDrawer.DrawIconAtLastPos(cmdID);
-				break;
-			}
-			default: {
-				DrawDefaultCommand(*ci, owner);
-				break;
-			}
-		}
-	}
-	lineDrawer.FinishPath();
-}
-
-
-
-void CommandDrawer::DrawTransportCAICommands(const CTransportCAI* cai) const
-{
-	const CUnit* owner = cai->owner;
-	const CCommandQueue& commandQue = cai->commandQue;
-
-	lineDrawer.StartPath(owner->drawMidPos, cmdColors.start);
-
-	if (owner->selfDCountdown != 0) {
-		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
-	}
-
-	for (auto ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
-		const int cmdID = ci->GetID();
-
-		switch (cmdID) {
-			case CMD_MOVE: {
-				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-				lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.move);
-				break;
-			}
-			case CMD_FIGHT: {
-				if (ci->params.size() >= 3) {
-					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-					lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.fight);
-				}
-				break;
-			}
-			case CMD_PATROL: {
-				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
-				lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.patrol);
-				break;
-			}
-			case CMD_ATTACK: {
-				if (ci->params.size() == 1) {
-					const CUnit* unit = unitHandler->GetUnit(ci->params[0]);
-
-					if ((unit != NULL) && IsUnitTrackable(unit, owner)) {
-						const float3& endPos = unit->GetDrawErrorPos(owner->allyteam);
-						lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.attack);
-					}
-				} else {
-					const float x = ci->params[0];
-					const float z = ci->params[2];
-					const float y = CGround::GetHeightReal(x, z, false) + 3.0f;
-
-					lineDrawer.DrawLineAndIcon(cmdID, float3(x, y, z), cmdColors.attack);
-				}
-				break;
-			}
-			case CMD_GUARD: {
-				const CUnit* unit = unitHandler->GetUnit(ci->params[0]);
-				if ((unit != NULL) && IsUnitTrackable(unit, owner)) {
-					const float3& endPos = unit->GetDrawErrorPos(owner->allyteam);
-					lineDrawer.DrawLineAndIcon(cmdID, endPos, cmdColors.guard);
-				}
-				break;
-			}
 			case CMD_LOAD_UNITS: {
 				if (ci->params.size() == 4) {
 					const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
@@ -695,17 +617,14 @@ void CommandDrawer::DrawTransportCAICommands(const CTransportCAI* cai) const
 				lineDrawer.DrawIconAtLastPos(cmdID);
 				break;
 			}
-			default:
+			default: {
 				DrawDefaultCommand(*ci, owner);
 				break;
+			}
 		}
 	}
 	lineDrawer.FinishPath();
 }
-
-
-
-
 
 
 void CommandDrawer::DrawWaitIcon(const Command& cmd) const

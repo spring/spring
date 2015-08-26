@@ -18,7 +18,7 @@ public:
 	CR_DECLARE(CMobileCAI)
 	CMobileCAI(CUnit* owner);
 	CMobileCAI();
-	virtual ~CMobileCAI() {}
+	virtual ~CMobileCAI();
 
 	virtual void SetGoal(const float3& pos, const float3& curPos, float goalRadius = SQUARE_SIZE);
 	virtual void SetGoal(const float3& pos, const float3& curPos, float goalRadius, float speed);
@@ -27,6 +27,7 @@ public:
 	void StopMove();
 	void StopMoveAndKeepPointing(const float3& p, const float r, bool b);
 
+	bool AllowedCommand(const Command& c, bool fromSynced);
 	int GetDefaultCmd(const CUnit* pointed, const CFeature* feature);
 	void SlowUpdate();
 	void GiveCommandReal(const Command& c, bool fromSynced = true);
@@ -49,12 +50,28 @@ public:
 	virtual void ExecutePatrol(Command& c);
 	virtual void ExecuteMove(Command& c);
 	virtual void ExecuteSetWantedMaxSpeed(Command& c);
+	virtual void ExecuteLoadOnto(Command& c);
+
+	virtual void ExecuteUnloadUnit(Command& c);
+	virtual void ExecuteUnloadUnits(Command& c);
 	virtual void ExecuteLoadUnits(Command& c);
 
 	int GetCancelDistance() { return cancelDistance; }
 
 	virtual bool IsValidTarget(const CUnit* enemy) const;
 	virtual bool CanWeaponAutoTarget(const CWeapon* weapon) const;
+
+	void SetTransportee(CUnit* unit);
+	bool FindEmptySpot(const float3& center, float radius, float spread, float3& found, const CUnit* unitToUnload, bool fromSynced = true);
+	CUnit* FindUnitToTransport(float3 center, float radius);
+	bool LoadStillValid(CUnit* unit);
+	bool SpotIsClear(float3 pos, CUnit* u);
+	bool SpotIsClearIgnoreSelf(float3 pos, CUnit* unitToUnload);
+
+	void UnloadUnits_Land(Command& c);
+	void UnloadUnits_LandFlood(Command& c);
+	void UnloadLand(Command& c);
+	void UnloadLandFlood(Command& c);
 
 	float3 goalPos;
 	float  goalRadius;

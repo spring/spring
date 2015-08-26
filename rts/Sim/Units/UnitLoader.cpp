@@ -17,7 +17,6 @@
 #include "CommandAI/CommandAI.h"
 #include "CommandAI/FactoryCAI.h"
 #include "CommandAI/MobileCAI.h"
-#include "CommandAI/TransportCAI.h"
 
 #include "Game/GameHelper.h"
 #include "Map/Ground.h"
@@ -96,9 +95,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitLoadParams& cparams)
 
 		unit->PreInit(params);
 
-		if (ud->IsTransportUnit()) {
-			new CTransportCAI(unit);
-		} else if (ud->IsFactoryUnit()) {
+		if (ud->IsFactoryUnit()) {
 			new CFactoryCAI(unit);
 		} else if (ud->IsMobileBuilderUnit() || ud->IsStaticBuilderUnit()) {
 			new CBuilderCAI(unit);
