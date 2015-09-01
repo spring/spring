@@ -29,7 +29,6 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
-#include "System/TimeProfiler.h"
 #include "System/Util.h"
 
 #define DRAW_QUAD_SIZE 32
@@ -199,7 +198,6 @@ inline void CFeatureDrawer::UpdateDrawPos(CFeature* f)
 
 void CFeatureDrawer::Draw()
 {
-	SCOPED_TIMER("FeatureDrawer::Draw");
 	ISky::SetupFog();
 
 	if (infoTextureHandler->IsEnabled()) {
@@ -243,7 +241,6 @@ void CFeatureDrawer::Draw()
 
 void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 {
-	SCOPED_TIMER("FeatureDrawer::DrawOpaqueFeatures");
 	for (auto &qmr: modelRenderers) {
 		if (!qmr.second)
 			continue;
@@ -298,7 +295,6 @@ bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature, float alpha)
 
 void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 {
-	SCOPED_TIMER("FeatureDrawer::DrawFadeFeatures");
 	const bool oldAdvShading = unitDrawer->UseAdvShading();
 
 	{
@@ -360,7 +356,7 @@ void CFeatureDrawer::DrawFadeFeaturesHelper(int modelType)
 void CFeatureDrawer::DrawFadeFeaturesSet(const FeatureSet& fadeFeatures, int modelType)
 {
 	for (CFeature* f: fadeFeatures) {
-		if (f->drawAlpha == ALPHA_OPAQUE)
+		if (f->drawAlpha == ALPHA_OPAQUE || f->drawAlpha < 0.01f)
 			continue;
 
 		const float cols[] = {1.0f, 1.0f, 1.0f, f->drawAlpha};
@@ -514,6 +510,7 @@ public:
 							if (farFeatures) {
 								farTextureHandler->Queue(f);
 							}
+							f->drawAlpha = 0.0f;
 						}
 					}
 				}
@@ -526,7 +523,6 @@ public:
 
 void CFeatureDrawer::GetVisibleFeatures(int extraSize, bool drawFar)
 {
-	SCOPED_TIMER("FeatureDrawer::GetVisibleFeatures");
 	CFeatureQuadDrawer drawer;
 	drawer.drawQuadsX = drawQuadsX;
 	drawer.drawReflection = water->DrawReflectionPass();
