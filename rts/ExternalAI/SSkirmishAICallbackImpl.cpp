@@ -3185,14 +3185,6 @@ EXPORT(bool) skirmishAiCallback_UnitDef_isFirePlatform(int skirmishAIId, int uni
 	return getUnitDefById(skirmishAIId, unitDefId)->isFirePlatform;
 }
 
-EXPORT(float) skirmishAiCallback_UnitDef_getMaxFuel(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->maxFuel;
-}
-
-EXPORT(float) skirmishAiCallback_UnitDef_getRefuelTime(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->refuelTime;
-}
-
 EXPORT(int) skirmishAiCallback_UnitDef_getMaxThisUnit(int skirmishAIId, int unitDefId) {
 	return getUnitDefById(skirmishAIId, unitDefId)->maxThisUnit;
 }
@@ -3363,10 +3355,6 @@ EXPORT(void) skirmishAiCallback_UnitDef_WeaponMount_getMainDir(int skirmishAIId,
 
 EXPORT(float) skirmishAiCallback_UnitDef_WeaponMount_getMaxAngleDif(int skirmishAIId, int unitDefId, int weaponMountId) {
 	return getUnitDefById(skirmishAIId, unitDefId)->weapons.at(weaponMountId).maxMainDirAngleDif;
-}
-
-EXPORT(float) skirmishAiCallback_UnitDef_WeaponMount_getFuelUsage(int skirmishAIId, int unitDefId, int weaponMountId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->weapons.at(weaponMountId).fuelUsage;
 }
 
 EXPORT(int) skirmishAiCallback_UnitDef_WeaponMount_getBadTargetCategory(int skirmishAIId, int unitDefId, int weaponMountId) {
@@ -3554,16 +3542,6 @@ EXPORT(int) skirmishAiCallback_Unit_getStockpileQueued(int skirmishAIId, int uni
 		stockpileQueue = -1;
 	}
 	return stockpileQueue;
-}
-
-EXPORT(float) skirmishAiCallback_Unit_getCurrentFuel(int skirmishAIId, int unitId) {
-	CAICallback* clb = skirmishAIId_callback[skirmishAIId];
-	float currentFuel;
-	const bool fetchOk = clb->GetProperty(unitId, AIVAL_CURRENT_FUEL, &currentFuel);
-	if (!fetchOk) {
-		currentFuel = -1.0f;
-	}
-	return currentFuel;
 }
 
 EXPORT(float) skirmishAiCallback_Unit_getMaxSpeed(int skirmishAIId, int unitId) {
@@ -5309,8 +5287,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->UnitDef_getBuildingDecalSizeX = &skirmishAiCallback_UnitDef_getBuildingDecalSizeX;
 	callback->UnitDef_getBuildingDecalSizeY = &skirmishAiCallback_UnitDef_getBuildingDecalSizeY;
 	callback->UnitDef_getBuildingDecalDecaySpeed = &skirmishAiCallback_UnitDef_getBuildingDecalDecaySpeed;
-	callback->UnitDef_getMaxFuel = &skirmishAiCallback_UnitDef_getMaxFuel;
-	callback->UnitDef_getRefuelTime = &skirmishAiCallback_UnitDef_getRefuelTime;
 	callback->UnitDef_getMaxThisUnit = &skirmishAiCallback_UnitDef_getMaxThisUnit;
 	callback->UnitDef_getDecoyDef = &skirmishAiCallback_UnitDef_getDecoyDef;
 	callback->UnitDef_isDontLand = &skirmishAiCallback_UnitDef_isDontLand;
@@ -5343,7 +5319,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->UnitDef_WeaponMount_getSlavedTo = &skirmishAiCallback_UnitDef_WeaponMount_getSlavedTo;
 	callback->UnitDef_WeaponMount_getMainDir = &skirmishAiCallback_UnitDef_WeaponMount_getMainDir;
 	callback->UnitDef_WeaponMount_getMaxAngleDif = &skirmishAiCallback_UnitDef_WeaponMount_getMaxAngleDif;
-	callback->UnitDef_WeaponMount_getFuelUsage = &skirmishAiCallback_UnitDef_WeaponMount_getFuelUsage;
 	callback->UnitDef_WeaponMount_getBadTargetCategory = &skirmishAiCallback_UnitDef_WeaponMount_getBadTargetCategory;
 	callback->UnitDef_WeaponMount_getOnlyTargetCategory = &skirmishAiCallback_UnitDef_WeaponMount_getOnlyTargetCategory;
 	callback->Unit_getLimit = &skirmishAiCallback_Unit_getLimit;
@@ -5369,7 +5344,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Unit_getAiHint = &skirmishAiCallback_Unit_getAiHint;
 	callback->Unit_getStockpile = &skirmishAiCallback_Unit_getStockpile;
 	callback->Unit_getStockpileQueued = &skirmishAiCallback_Unit_getStockpileQueued;
-	callback->Unit_getCurrentFuel = &skirmishAiCallback_Unit_getCurrentFuel;
 	callback->Unit_getMaxSpeed = &skirmishAiCallback_Unit_getMaxSpeed;
 	callback->Unit_getMaxRange = &skirmishAiCallback_Unit_getMaxRange;
 	callback->Unit_getMaxHealth = &skirmishAiCallback_Unit_getMaxHealth;

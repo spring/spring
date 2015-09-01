@@ -1070,8 +1070,8 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		unit->DoSeismicPing(pingSize);
 		break;
 
-	case CURRENT_FUEL:
-		return int(unit->currentFuel * float(COBSCALE));
+	case CURRENT_FUEL: //deprecated
+		return 0;
 	case TRANSPORT_ID:
 		return unit->transporter?unit->transporter->id:-1;
 
@@ -1553,8 +1553,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 			unit->seismicRadius = param;
 			break;
 		}
-		case CURRENT_FUEL: {
-			unit->currentFuel = param / (float) COBSCALE;
+		case CURRENT_FUEL: { //deprecated
 			break;
 		}
 		case SHIELD_POWER: {

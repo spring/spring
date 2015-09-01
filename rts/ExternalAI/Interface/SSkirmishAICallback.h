@@ -1051,15 +1051,6 @@ struct SSkirmishAICallback {
 
 	float             (CALLING_CONV *UnitDef_getBuildingDecalDecaySpeed)(int skirmishAIId, int unitDefId);
 
-	/**
-	 * Maximum flight time in seconds before the aircraft needs
-	 * to return to an air repair bay to refuel.
-	 */
-	float             (CALLING_CONV *UnitDef_getMaxFuel)(int skirmishAIId, int unitDefId);
-
-	/** Time to fully refuel the unit */
-	float             (CALLING_CONV *UnitDef_getRefuelTime)(int skirmishAIId, int unitDefId);
-
 	/** Number of units of this type allowed simultaneously in the game */
 	int               (CALLING_CONV *UnitDef_getMaxThisUnit)(int skirmishAIId, int unitDefId);
 
@@ -1134,11 +1125,6 @@ struct SSkirmishAICallback {
 	void              (CALLING_CONV *UnitDef_WeaponMount_getMainDir)(int skirmishAIId, int unitDefId, int weaponMountId, float* return_posF3_out);
 
 	float             (CALLING_CONV *UnitDef_WeaponMount_getMaxAngleDif)(int skirmishAIId, int unitDefId, int weaponMountId);
-
-	/**
-	 * How many seconds of fuel it costs for the owning unit to fire this weapon.
-	 */
-	float             (CALLING_CONV *UnitDef_WeaponMount_getFuelUsage)(int skirmishAIId, int unitDefId, int weaponMountId);
 
 	/**
 	 * Returns the bit field value denoting the categories this weapon should
@@ -1307,8 +1293,6 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *Unit_getStockpile)(int skirmishAIId, int unitId);
 
 	int               (CALLING_CONV *Unit_getStockpileQueued)(int skirmishAIId, int unitId);
-
-	float             (CALLING_CONV *Unit_getCurrentFuel)(int skirmishAIId, int unitId);
 
 	/** The unit's max speed */
 	float             (CALLING_CONV *Unit_getMaxSpeed)(int skirmishAIId, int unitId);

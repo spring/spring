@@ -178,7 +178,6 @@ CUnit::CUnit()
 , lastTerrainType(-1)
 , curTerrainType(0)
 , selfDCountdown(0)
-, currentFuel(0.0f)
 , cegDamage(1)
 
 , noDraw(false)
@@ -348,7 +347,6 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	cost.metal = unitDef->metal;
 	cost.energy = unitDef->energy;
 	buildTime = unitDef->buildTime;
-	currentFuel = unitDef->maxFuel;
 	armoredMultiple = std::max(0.0001f, unitDef->armoredMultiple); // armored multiple of 0 will crash spring
 	armorType = unitDef->armorType;
 	category = unitDef->category;
@@ -2909,8 +2907,6 @@ CR_REG_METADATA(CUnit, (
 
 	CR_MEMBER(incomingMissiles),
 	CR_MEMBER(lastFlareDrop),
-
-	CR_MEMBER(currentFuel),
 
 	CR_MEMBER(cegDamage),
 

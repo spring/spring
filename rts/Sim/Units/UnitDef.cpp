@@ -25,7 +25,6 @@
 UnitDefWeapon::UnitDefWeapon()
 : def(NULL)
 , slavedTo(0)
-, fuelUsage(0.0f)
 , maxMainDirAngleDif(-1.0f)
 , badTargetCat(0)
 , onlyTargetCat(0)
@@ -43,7 +42,6 @@ UnitDefWeapon::UnitDefWeapon(const WeaponDef* weaponDef, const LuaTable& weaponT
 	this->def = weaponDef;
 
 	this->slavedTo = weaponTable.GetInt("slaveTo", 0);
-	this->fuelUsage = weaponTable.GetFloat("fuelUsage", 0.0f);
 
 	// NOTE:
 	//     <maxAngleDif> specifies the full-width arc,
@@ -243,8 +241,6 @@ UnitDef::UnitDef()
 	, showNanoFrame(false)
 	, showNanoSpray(false)
 	, nanoColor(ZeroVector)
-	, maxFuel(0.0f)
-	, refuelTime(0.0f)
 	, maxThisUnit(0)
 	, realMetalCost(0.0f)
 	, realEnergyCost(0.0f)
@@ -491,8 +487,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	maxElevator = udTable.GetFloat("maxElevator", 0.01f);  // turn speed around pitch axis
 	maxRudder   = udTable.GetFloat("maxRudder",   0.004f); // turn speed around yaw axis
 
-	maxFuel = udTable.GetFloat("maxFuel", 0.0f); //max flight time in seconds before aircraft must return to base
-	refuelTime = udTable.GetFloat("refuelTime", 5.0f);
 	maxThisUnit = udTable.GetInt("unitRestricted", MAX_UNITS);
 	maxThisUnit = std::min(maxThisUnit, gameSetup->GetRestrictedUnitLimit(name, MAX_UNITS));
 

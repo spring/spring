@@ -66,14 +66,11 @@ public:
 protected:
 	void CheckForCollision();
 
-	void UpdateFuel(bool slowUpdate = true);
-
 	/// unit found to be dangerously close to our path
 	CUnit* lastColWarning;
 
 	/// 1=generally forward of us, 2=directly in path
 	int lastColWarningType;
-	int lastFuelUpdateFrame;
 };
 
 #endif // A_AIR_MOVE_TYPE_H_

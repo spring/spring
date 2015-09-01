@@ -58,7 +58,7 @@ CWeapon* CWeaponLoader::LoadWeapon(CUnit* owner, const UnitDefWeapon* defWeapon)
 
 	const WeaponDef* weaponDef = defWeapon->def;
 	const std::string& weaponType = weaponDef->type;
-	
+
 	if (StringToLower(weaponDef->name) == "noweapon") {
 		weapon = new CNoWeapon(owner, weaponDef);
 	} else if (weaponType == "Cannon") {
@@ -134,7 +134,6 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 		weapon->slavedTo = owner->weapons[defWeapon->slavedTo - 1];
 	}
 
-	weapon->fuelUsage = defWeapon->fuelUsage;
 	weapon->heightBoostFactor = weaponDef->heightBoostFactor;
 	weapon->collisionFlags = weaponDef->collisionFlags;
 

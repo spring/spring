@@ -179,7 +179,6 @@ void CAirCAI::SlowUpdate()
 	if (owner->UsingScriptMoveType())
 		return;
 
-	const bool wantToRefuel = (LandRepairIfNeeded() || RefuelIfNeeded());
 
 	#if (AUTO_GENERATE_ATTACK_ORDERS == 1)
 	if (commandQue.empty()) {
@@ -207,15 +206,6 @@ void CAirCAI::SlowUpdate()
 		c.GetID() != CMD_IDLEMODE && c.GetID() != CMD_SET_WANTED_MAX_SPEED)
 	{
 		myPlane->Takeoff();
-	}
-
-	if (wantToRefuel) {
-		switch (c.GetID()) {
-			case CMD_AREA_ATTACK:
-			case CMD_ATTACK:
-			case CMD_FIGHT:
-				return;
-		}
 	}
 
 	switch (c.GetID()) {

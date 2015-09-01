@@ -1647,8 +1647,8 @@ bool CAICallback::GetProperty(int unitId, int property, void* data)
 				}
 				return true;
 			}
-			case AIVAL_CURRENT_FUEL: {
-				(*(float*)data) = unit->currentFuel;
+			case AIVAL_CURRENT_FUEL: { //Deprecated
+				(*(float*)data) = 0;
 				return true;
 			}
 			case AIVAL_STOCKPILED: {

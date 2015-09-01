@@ -74,7 +74,6 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(heightBoostFactor),
 	CR_MEMBER(avoidFlags),
 	CR_MEMBER(collisionFlags),
-	CR_MEMBER(fuelUsage),
 	CR_MEMBER(weaponNum),
 
 	CR_MEMBER(relAimFromPos),
@@ -142,7 +141,6 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	heightBoostFactor(-1.f),
 	avoidFlags(0),
 	collisionFlags(0),
-	fuelUsage(0),
 
 	relAimFromPos(UpVector),
 	aimFromPos(ZeroVector),
@@ -389,9 +387,6 @@ bool CWeapon::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRe
 			return false;
 	}
 
-	if ((fuelUsage > 0.0f) && (owner->currentFuel <= 0.0f))
-		return false;
-
 	// if in FPS mode, player must be pressing at least one button to fire
 	const CPlayer* fpsPlayer = owner->fpsControlPlayer;
 	if (fpsPlayer != NULL && !fpsPlayer->fpsController.mouse1 && !fpsPlayer->fpsController.mouse2)
@@ -428,7 +423,6 @@ void CWeapon::UpdateFire()
 			return;
 		}
 		ownerTeam->resPull += shotRes;
-		owner->currentFuel = std::max(0.0f, owner->currentFuel - fuelUsage);
 	} else {
 		const int oldCount = numStockpiled;
 		numStockpiled--;
@@ -581,7 +575,7 @@ bool CWeapon::AllowWeaponAutoTarget() const
 	if (checkAllowed >= 0) {
 		return checkAllowed;
 	}
-	
+
 	//FIXME these need to be merged
 	if (weaponDef->noAutoTarget || noAutoTarget) { return false; }
 	if (owner->fireState < FIRESTATE_FIREATWILL) { return false; }
@@ -997,7 +991,7 @@ bool CWeapon::TryTargetRotate(const CUnit* unit, bool userTarget, bool manualFir
 	const short enemyHeading = GetHeadingFromVector(tempTargetPos.x - aimFromPos.x, tempTargetPos.z - aimFromPos.z);
 	SWeaponTarget trg(unit, userTarget);
 	trg.isManualFire = manualFire;
-	
+
 	return TryTargetHeading(enemyHeading - weaponHeading, trg);
 }
 
@@ -1009,7 +1003,7 @@ bool CWeapon::TryTargetRotate(float3 pos, bool userTarget, bool manualFire)
 	const short enemyHeading = GetHeadingFromVector(pos.x - aimFromPos.x, pos.z - aimFromPos.z);
 	SWeaponTarget trg(pos, userTarget);
 	trg.isManualFire = manualFire;
-	
+
 	return TryTargetHeading(enemyHeading - weaponHeading, trg);
 }
 

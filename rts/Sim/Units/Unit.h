@@ -519,8 +519,6 @@ public:
 
 	int selfDCountdown;
 
-	float currentFuel;
-
 	/// the damage value passed to CEGs spawned by this unit's script
 	int cegDamage;
 

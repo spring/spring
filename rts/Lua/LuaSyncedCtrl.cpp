@@ -1970,15 +1970,7 @@ int LuaSyncedCtrl::SetUnitTravel(lua_State* L)
 }
 
 
-int LuaSyncedCtrl::SetUnitFuel(lua_State* L)
-{
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-	unit->currentFuel = luaL_checkfloat(L, 2);
-	return 0;
-}
+int LuaSyncedCtrl::SetUnitFuel(lua_State* L) { return 0; } // DEPRECATED
 
 
 int LuaSyncedCtrl::SetUnitNeutral(lua_State* L)

@@ -983,8 +983,6 @@ bool CHoverAirMoveType::Update()
 
 void CHoverAirMoveType::SlowUpdate()
 {
-	UpdateFuel();
-
 	UpdateMoveRate();
 	// note: NOT AAirMoveType::SlowUpdate
 	AMoveType::SlowUpdate();

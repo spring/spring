@@ -3530,15 +3530,7 @@ int LuaSyncedRead::GetUnitTravel(lua_State* L)
 }
 
 
-int LuaSyncedRead::GetUnitFuel(lua_State* L)
-{
-	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-	lua_pushnumber(L, unit->currentFuel);
-	return 1;
-}
+int LuaSyncedRead::GetUnitFuel(lua_State* L) { lua_pushnumber(L, 0.0f); return 1; } // DEPRECATED
 
 
 int LuaSyncedRead::GetUnitEstimatedPath(lua_State* L)

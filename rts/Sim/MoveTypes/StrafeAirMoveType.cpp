@@ -437,9 +437,6 @@ bool CStrafeAirMoveType::Update()
 		return (HandleCollisions(collide && !owner->beingBuilt && (aircraftState != AIRCRAFT_TAKEOFF)));
 	}
 
-	const bool outOfFuel = (owner->currentFuel <= 0.0f && owner->unitDef->maxFuel > 0.0f);
-	const bool allowAttack = !outOfFuel;
-
 	if (aircraftState != AIRCRAFT_CRASHING) {
 		if (owner->UnderFirstPersonControl()) {
 			SetState(AIRCRAFT_FLYING);
@@ -479,7 +476,7 @@ bool CStrafeAirMoveType::Update()
 			} else
 			*/
 			{
-				if (isAttacking && allowAttack && keepAttacking) {
+				if (isAttacking && keepAttacking) {
 					switch (owner->curTarget.type) {
 						case Target_None: { } break;
 						case Target_Unit: { SetGoal(owner->curTarget.unit->pos); } break;
@@ -654,8 +651,6 @@ bool CStrafeAirMoveType::HandleCollisions(bool checkCollisions) {
 
 void CStrafeAirMoveType::SlowUpdate()
 {
-	UpdateFuel();
-
 	// note: NOT AAirMoveType::SlowUpdate
 	AMoveType::SlowUpdate();
 }
@@ -1272,13 +1267,9 @@ void CStrafeAirMoveType::StopMoving(bool callScript, bool hardStop)
 	if (aircraftState != AAirMoveType::AIRCRAFT_FLYING)
 		return;
 
-	if (owner->unitDef->maxFuel <= 0.0f || owner->currentFuel > 0.0f) {
-		// if not using fuel or not out of fuel, allow disregarding stop
-		if (owner->unitDef->DontLand() || !autoLand) {
-			return;
-		}
+	if (owner->unitDef->DontLand() || !autoLand) {
+		return;
 	}
-
 	SetState(AIRCRAFT_LANDING);
 }
 
@@ -1287,13 +1278,11 @@ void CStrafeAirMoveType::StopMoving(bool callScript, bool hardStop)
 void CStrafeAirMoveType::Takeoff()
 {
 	if (aircraftState != AAirMoveType::AIRCRAFT_FLYING) {
-		if ((owner->currentFuel > 0.0f) || owner->unitDef->maxFuel <= 0.0f) {
-			if (aircraftState == AAirMoveType::AIRCRAFT_LANDED) {
-				SetState(AAirMoveType::AIRCRAFT_TAKEOFF);
-			}
-			if (aircraftState == AAirMoveType::AIRCRAFT_LANDING) {
-				SetState(AAirMoveType::AIRCRAFT_FLYING);
-			}
+		if (aircraftState == AAirMoveType::AIRCRAFT_LANDED) {
+			SetState(AAirMoveType::AIRCRAFT_TAKEOFF);
+		}
+		if (aircraftState == AAirMoveType::AIRCRAFT_LANDING) {
+			SetState(AAirMoveType::AIRCRAFT_FLYING);
 		}
 	}
 }

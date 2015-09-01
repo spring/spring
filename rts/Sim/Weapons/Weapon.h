@@ -172,8 +172,6 @@ public:
 	unsigned int avoidFlags;
 	unsigned int collisionFlags;
 
-	float fuelUsage;
-
 	float3 relAimFromPos;         // aimFromPos relative to the unit
 	float3 aimFromPos;            // absolute weapon pos
 	float3 relWeaponMuzzlePos;    // position of the firepoint

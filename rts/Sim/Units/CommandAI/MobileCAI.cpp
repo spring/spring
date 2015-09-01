@@ -307,48 +307,11 @@ void CMobileCAI::GiveCommandReal(const Command& c, bool fromSynced)
 	CCommandAI::GiveAllowedCommand(c);
 }
 
-bool CMobileCAI::WantsRefuel() const
-{
-	return (owner->currentFuel < (repairBelowHealth * owner->unitDef->maxFuel));
-}
-
-bool CMobileCAI::WantsRepair() const
-{
-	return (owner->health      < (repairBelowHealth * owner->maxHealth));
-}
-
-
-/// returns true if the unit has to land
-bool CMobileCAI::RefuelIfNeeded()
-{
-	if (!WantsRefuel())
-		return false;
-
-	//TODO: actually refuel
-	return false;
-
-}
-
-/// returns true if the unit has to land
-bool CMobileCAI::LandRepairIfNeeded()
-{
-	if (!WantsRepair())
-		return false;
-
-	//TODO: actually repair
-
-	return false;
-}
 
 void CMobileCAI::SlowUpdate()
 {
 	if (gs->paused) // Commands issued may invoke SlowUpdate when paused
 		return;
-
-	if (!owner->UsingScriptMoveType() && owner->unitDef->IsAirUnit()) {
-		LandRepairIfNeeded() || RefuelIfNeeded();
-		//TODO bail if repaired
-	}
 
 
 	if (!commandQue.empty() && commandQue.front().timeOut < gs->frameNum) {

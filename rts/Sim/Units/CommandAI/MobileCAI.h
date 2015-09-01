@@ -41,11 +41,6 @@ public:
 	void ExecuteAttack(Command& c);
 	void ExecuteStop(Command& c);
 
-	bool WantsRepair() const;
-	bool WantsRefuel() const;
-	bool RefuelIfNeeded();
-	bool LandRepairIfNeeded();
-
 	virtual void Execute();
 	virtual void ExecuteGuard(Command& c);
 	virtual void ExecuteFight(Command& c);

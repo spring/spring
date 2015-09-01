@@ -391,7 +391,6 @@ static int WeaponsTable(lua_State* L, const void* data)
 		lua_newtable(L); {
 			HSTR_PUSH_NUMBER(L, "weaponDef",   weapon->id);
 			HSTR_PUSH_NUMBER(L, "slavedTo",    udw.slavedTo-1+LUA_WEAPON_BASE_INDEX);
-			HSTR_PUSH_NUMBER(L, "fuelUsage",   udw.fuelUsage);
 			HSTR_PUSH_NUMBER(L, "maxAngleDif", udw.maxMainDirAngleDif);
 			HSTR_PUSH_NUMBER(L, "mainDirX",    udw.mainDir.x);
 			HSTR_PUSH_NUMBER(L, "mainDirY",    udw.mainDir.y);
@@ -874,7 +873,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	// >= 0 indicates how much the unit will move during hovering on the spot
 	ADD_FLOAT("dlHoverFactor", ud.dlHoverFactor);
 
-//	bool DontLand (") { return dlHoverFactor >= 0.0f; }
+	//	bool DontLand (") { return dlHoverFactor >= 0.0f; }
 
 	ADD_FLOAT("maxAcc",      ud.maxAcc);
 	ADD_FLOAT("maxDec",      ud.maxDec);
@@ -882,11 +881,8 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("maxElevator", ud.maxElevator);
 	ADD_FLOAT("maxRudder",   ud.maxRudder);
 
-	ADD_FLOAT("maxFuel",    ud.maxFuel);
-	ADD_FLOAT("refuelTime", ud.refuelTime);
-
-//	unsigned char* yardmapLevels[6];
-//	unsigned char* yardmaps[4];			//Iterations of the Ymap for building rotation
+	//	unsigned char* yardmapLevels[6];
+	//	unsigned char* yardmaps[4];			//Iterations of the Ymap for building rotation
 
 	ADD_INT("xsize", ud.xsize);
 	ADD_INT("zsize", ud.zsize);
