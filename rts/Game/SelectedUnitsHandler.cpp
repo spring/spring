@@ -339,7 +339,7 @@ void CSelectedUnitsHandler::AddUnit(CUnit* unit)
 	// if unit is being transported by eg. Hulk or Atlas
 	// then we should not be able to select it
 	const CUnit* trans = unit->GetTransporter();
-	if (trans != NULL && !trans->unitDef->isFirePlatform) {
+	if (trans != NULL && trans->unitDef->IsTransportUnit() && !trans->unitDef->isFirePlatform) {
 		return;
 	}
 

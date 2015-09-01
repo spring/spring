@@ -608,16 +608,16 @@ void CHoverAirMoveType::UpdateLanding()
 	}
 
 
-	const float localAltitude = pos.y - (owner->unitDef->canSubmerge ?
-		CGround::GetHeightReal(owner->pos.x, owner->pos.z):
-		CGround::GetHeightAboveWater(owner->pos.x, owner->pos.z));
-
 	UpdateLandingHeight();
 
-	if (reservedLandingPos.SqDistance2D(pos) > owner->radius * owner->radius) {
+	float altitude = pos.y - reservedLandingPos.y;
+	float distSq2D = reservedLandingPos.SqDistance2D(pos);
+	float radiusSq = owner->radius * owner->radius;
+
+	if (distSq2D > radiusSq) {
 		float tmpWantedHeight = wantedHeight;
 		SetGoal(reservedLandingPos);
-		wantedHeight = std::min(localAltitude, orgWantedHeight);
+		wantedHeight = std::min((orgWantedHeight - wantedHeight) * distSq2D / altitude + wantedHeight, orgWantedHeight);
 		flyState = FLY_LANDING;
 		UpdateFlying();
 		wantedHeight = tmpWantedHeight;
@@ -629,8 +629,8 @@ void CHoverAirMoveType::UpdateLanding()
 	// We want to land, and therefore cancel our speed first
 	wantedSpeed = ZeroVector;
 
-	float distSq = (pos- reservedLandingPos).SqLength();
-	if (distSq <= owner->radius * owner->radius) {
+	float distSq = reservedLandingPos.SqDistance(pos);
+	if (distSq <= radiusSq) {
 		SetState(AIRCRAFT_LANDED);
 	}
 

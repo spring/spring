@@ -1016,7 +1016,8 @@ void CUnit::SlowUpdate()
 		static_cast<AMoveType*>(moveType)->SlowUpdate();
 
 		const bool b0 = (paralyzeDamage <= (modInfo.paralyzeOnMaxHealth? maxHealth: health));
-		const bool b1 = (transporter == NULL || transporter->unitDef->isFirePlatform);
+		const bool b1 = (transporter == NULL || !transporter->unitDef->IsTransportUnit() ||
+			transporter->unitDef->isFirePlatform);
 
 		// de-stun only if we are not (still) inside a non-firebase transport
 		if (b0 && b1) {
@@ -2517,7 +2518,7 @@ bool CUnit::AttachUnit(CUnit* unit, int piece, bool force)
 
 	unit->SetTransporter(this);
 	unit->loadingTransportId = -1;
-	unit->SetStunned(!unitDef->isFirePlatform);
+	unit->SetStunned(!unitDef->isFirePlatform && unitDef->IsTransportUnit());
 	unit->UpdateVoidState(piece < 0);
 
 	if (unit->IsStunned()) {
