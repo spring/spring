@@ -34,7 +34,7 @@ CR_REG_METADATA(CStrafeAirMoveType, (
 	CR_MEMBER(wingAngle),
 	CR_MEMBER(invDrag),
 	CR_MEMBER(crashDrag),
-	CR_MEMBER(sqBrakeDistance),
+	CR_MEMBER(brakeDistanceSq),
 	CR_MEMBER(frontToSpeed),
 	CR_MEMBER(speedToFront),
 	CR_MEMBER(myGravity),
@@ -357,7 +357,7 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	wingAngle(0.1f),
 	invDrag(0.995f),
 	crashDrag(0.995f),
-	sqBrakeDistance(0),
+	brakeDistanceSq(0),
 	frontToSpeed(0.04f),
 	speedToFront(0.01f),
 	myGravity(0.8f),
@@ -972,7 +972,7 @@ void CStrafeAirMoveType::UpdateLanding()
 	float wh = orgWantedHeight;
 
 
-	if (owner->pos.SqDistance2D(reservedLandingPos) < sqBrakeDistance) {
+	if (owner->pos.SqDistance2D(reservedLandingPos) < brakeDistanceSq) {
 		if (facingGoal) {
 			owner->Deactivate();
 			engine = 0.0f;
@@ -1242,8 +1242,7 @@ void CStrafeAirMoveType::SetMaxSpeed(float speed)
 
 		pos += spd;
 	}
-	sqBrakeDistance = pos.x * pos.x;
-	LOG_L(L_WARNING, "square brake dist: %f", sqBrakeDistance);
+	brakeDistanceSq = pos.x * pos.x;
 }
 
 

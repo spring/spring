@@ -65,7 +65,7 @@ public:
 	/// actually the invDrag of crashDrag
 	float crashDrag;
 
-	float sqBrakeDistance;
+	float brakeDistanceSq;
 
 	float frontToSpeed;
 	float speedToFront;
