@@ -97,6 +97,7 @@ float ILosType::GetRadius(const CUnit* unit) const
 		case LOS_TYPE_JAMMER:       return unit->jammerRadius;
 		case LOS_TYPE_SEISMIC:      return unit->seismicRadius;
 		case LOS_TYPE_SONAR_JAMMER: return unit->sonarJamRadius;
+		case LOS_TYPE_COUNT:        break; //make the compiler happy
 	}
 	assert(false);
 	return 0.f;
