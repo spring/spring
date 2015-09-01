@@ -704,8 +704,6 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 		unitDef->buildingDecalSizeY = sAICallback->UnitDef_getBuildingDecalSizeY(skirmishAIId, unitDefId);
 		unitDef->buildingDecalDecaySpeed = sAICallback->UnitDef_getBuildingDecalDecaySpeed(skirmishAIId, unitDefId);
 		unitDef->isFirePlatform = sAICallback->UnitDef_isFirePlatform(skirmishAIId, unitDefId);
-		unitDef->maxFuel = sAICallback->UnitDef_getMaxFuel(skirmishAIId, unitDefId);
-		unitDef->refuelTime = sAICallback->UnitDef_getRefuelTime(skirmishAIId, unitDefId);
 		unitDef->maxThisUnit = sAICallback->UnitDef_getMaxThisUnit(skirmishAIId, unitDefId);
 		//unitDef->decoyDef = sAICallback->UnitDef_getDecoyDefId(skirmishAIId, unitDefId);
 		unitDef->shieldWeaponDef = this->GetWeaponDefById(sAICallback->UnitDef_getShieldDef(skirmishAIId, unitDefId));
@@ -775,7 +773,6 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 			sAICallback->UnitDef_WeaponMount_getMainDir(skirmishAIId, unitDefId, w, pos_cache);
 			unitDef->weapons[w].mainDir = pos_cache;
 			unitDef->weapons[w].maxAngleDif = sAICallback->UnitDef_WeaponMount_getMaxAngleDif(skirmishAIId, unitDefId, w);
-			unitDef->weapons[w].fuelUsage = sAICallback->UnitDef_WeaponMount_getFuelUsage(skirmishAIId, unitDefId, w);
 			unitDef->weapons[w].badTargetCat = sAICallback->UnitDef_WeaponMount_getBadTargetCategory(skirmishAIId, unitDefId, w);
 			unitDef->weapons[w].onlyTargetCat = sAICallback->UnitDef_WeaponMount_getOnlyTargetCategory(skirmishAIId, unitDefId, w);
 		}
@@ -1030,8 +1027,8 @@ bool springLegacyAI::CAIAICallback::GetProperty(int unitId, int propertyId, void
 			return false;
 		}
 		case AIVAL_CURRENT_FUEL: {
-			(*(float*)data) = sAICallback->Unit_getCurrentFuel(skirmishAIId, unitId);
-			return (*(float*)data) != -1.0f;
+			(*(float*)data) = 0.0f;
+			return true;
 		}
 		case AIVAL_STOCKPILED: {
 			(*(int*)data) = sAICallback->Unit_getStockpile(skirmishAIId, unitId);
