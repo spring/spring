@@ -958,11 +958,13 @@ void CStrafeAirMoveType::UpdateLanding()
 		CGround::GetHeightAboveWater(owner->pos.x, owner->pos.z));
 
 	const float distSq = reservedLandingPosVector.SqLength();
-	const float radiusSq = owner->radius * owner->radius;
+	const float radius = std::max(owner->radius, 10.0f);
+	const float radiusSq = radius * radius;
 
 	const bool facingGoal = reservedLandingPosVector.dot(owner->frontdir) > 0.7f;
 
-	if (distSq <= radiusSq || (!facingGoal && (distSq < 16 * radiusSq) && (localAltitude < wantedHeight + owner->radius + 8.0f))) {
+	if (distSq <= radiusSq || (!facingGoal && (distSq < 16 * radiusSq) && (localAltitude < wantedHeight + radius))) {
+		owner->Deactivate();
 		SetState(AIRCRAFT_LANDED);
 		return;
 	}
@@ -979,14 +981,7 @@ void CStrafeAirMoveType::UpdateLanding()
 			wh = wantedHeight;
 
 			//check if we're diving too fast/too slow
-			const float ytime = localAltitude / owner->speed.y;
-			const float dtime = reservedLandingPosVector.Length2D() / owner->speed.Length2D();
-			if (dtime > 2 * ytime) {
-				engine = 0.5f;
-			} else if (ytime > 2 * dtime) {
-				engine = -0.5f;
-			}
-			if (localAltitude <= wantedHeight + owner->radius) {
+			if (localAltitude <= wantedHeight + radius) {
 				wh += 10;
 				engine = 1.0f;
 			}
