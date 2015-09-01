@@ -3,6 +3,10 @@ Spring changelog
 (numbers in brackets normally mean the mantis ticket ID)
 
 -- 101.0 --------------------------------------------------------
+
+General:
+ ! change default screenshot file type to jpg. to create png use /screenshot png
+
 Lua:
  ! GameID callin now gets the ID string encoded in hex.
 
