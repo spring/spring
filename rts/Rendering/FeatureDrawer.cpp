@@ -269,7 +269,6 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature, float alpha)
 {
 	if (feature->IsInVoid()) { return false; }
-	if (!camera->InView(feature->drawMidPos, feature->drawRadius)) { return false; }
 	if (!feature->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView) { return false; }
 
 	const float sqDist = (feature->pos - camera->GetPos()).SqLength();
@@ -277,6 +276,7 @@ bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature, float alpha)
 	const float sqFadeDistEnd = featureDrawDistance * featureDrawDistance;
 
 	if (sqDist >= std::min(farLength, sqFadeDistEnd)) return false;
+	if (!camera->InView(feature->drawMidPos, feature->drawRadius)) { return false; }
 
 	glPushMatrix();
 	glMultMatrixf(feature->GetTransformMatrixRef());
@@ -504,11 +504,11 @@ public:
 							}
 
 							if (sqDist < sqFadeDistB) {
-								if (camera->InView(f->drawMidPos, f->drawRadius))
-									f->drawAlpha = ALPHA_OPAQUE;
+								f->drawAlpha = ALPHA_OPAQUE;
 							} else if (sqDist < sqFadeDistE) {
-								if (camera->InView(f->drawMidPos, f->drawRadius))
-									f->drawAlpha = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
+								f->drawAlpha = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
+							} else {
+								f->drawAlpha = 0.0f;
 							}
 						} else {
 							if (farFeatures) {

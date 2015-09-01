@@ -426,8 +426,6 @@ void CProjectileDrawer::DrawProjectileNow(CProjectile* pro, bool drawReflection,
 
 	if (!visible)
 		return;
-	if (!camera->InView(pro->pos, pro->drawRadius))
-		return;
 
 	if (drawReflection) {
 		if (pro->pos.y < -pro->drawRadius) {
@@ -440,11 +438,12 @@ void CProjectileDrawer::DrawProjectileNow(CProjectile* pro, bool drawReflection,
 		if (CGround::GetApproximateHeight(zeroPos.x, zeroPos.z, false) > 3 + 0.5f * pro->drawRadius) {
 			return;
 		}
-	}
-
-	if (drawRefraction && pro->pos.y > pro->drawRadius) {
+	} else if (drawRefraction && pro->pos.y > pro->drawRadius) {
 		return;
 	}
+
+	if (!camera->InView(pro->pos, pro->drawRadius))
+		return;
 
 	DrawProjectileModel(pro, false);
 
@@ -762,7 +761,7 @@ void CProjectileDrawer::DrawGroundFlashes()
 	glFogfv(GL_FOG_COLOR, black);
 
 	GroundFlashContainer& gfc = projectileHandler->groundFlashes;
-	
+
 	CGroundFlash::va = GetVertexArray();
 	CGroundFlash::va->Initialize();
 	CGroundFlash::va->EnlargeArrays(8 * gfc.size(), 0, VA_SIZE_TC);

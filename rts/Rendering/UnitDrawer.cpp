@@ -329,37 +329,38 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 		return;
 	if (unit->IsInVoid())
 		return;
+	if (unit->isIcon)
+		return;
+
+	if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
+		return;
+
+	if (drawReflection) {
+		float3 zeroPos = unit->drawMidPos;
+		if (unit->drawMidPos.y >= 0.0f) {
+			const float dif = unit->drawMidPos.y - camera->GetPos().y;
+			zeroPos =
+				camera->GetPos()  * (unit->drawMidPos.y / dif) +
+				unit->drawMidPos * (-camera->GetPos().y / dif);
+		}
+		if (CGround::GetApproximateHeight(zeroPos.x, zeroPos.z, false) > unit->drawRadius) {
+			return;
+		}
+	} else if (drawRefraction) {
+		if (unit->pos.y > 0.0f) {
+			return;
+		}
+	}
+
 	if (!camera->InView(unit->drawMidPos, unit->drawRadius))
 		return;
 
-	if ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView) {
-		if (drawReflection) {
-			float3 zeroPos = unit->drawMidPos;
-			if (unit->drawMidPos.y >= 0.0f) {
-				const float dif = unit->drawMidPos.y - camera->GetPos().y;
-				zeroPos =
-					camera->GetPos()  * (unit->drawMidPos.y / dif) +
-					unit->drawMidPos * (-camera->GetPos().y / dif);
-			}
-			if (CGround::GetApproximateHeight(zeroPos.x, zeroPos.z, false) > unit->drawRadius) {
-				return;
-			}
-		}
-		else if (drawRefraction) {
-			if (unit->pos.y > 0.0f) {
-				return;
-			}
-		}
-
-		if (!unit->isIcon) {
-			if ((unit->pos).SqDistance(camera->GetPos()) > (unit->sqRadius * unitDrawDistSqr)) {
-				farTextureHandler->Queue(unit);
-			} else {
-				if (!DrawUnitLOD(unit)) {
-					SetTeamColour(unit->team);
-					DrawUnitNow(unit);
-				}
-			}
+	if ((unit->pos).SqDistance(camera->GetPos()) > (unit->sqRadius * unitDrawDistSqr)) {
+		farTextureHandler->Queue(unit);
+	} else {
+		if (!DrawUnitLOD(unit)) {
+			SetTeamColour(unit->team);
+			DrawUnitNow(unit);
 		}
 	}
 }
