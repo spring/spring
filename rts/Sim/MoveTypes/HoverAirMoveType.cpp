@@ -578,15 +578,6 @@ void CHoverAirMoveType::UpdateLanding()
 	const float3& pos = owner->pos;
 	const float4& spd = owner->speed;
 
-	// We want to land, and therefore cancel our speed first
-	wantedSpeed = ZeroVector;
-
-	// Hang around for a while so queued commands have a chance to take effect
-	if ((++waitCounter) < GAME_SPEED) {
-		UpdateAirPhysics();
-		return;
-	}
-
 	if (reservedLandingPos.x < 0.0f) {
 		if (CanLandAt(pos)) {
 			// found a landing spot
@@ -594,13 +585,11 @@ void CHoverAirMoveType::UpdateLanding()
 			goalPos = pos;
 			wantedHeight = 0;
 
-
 			const float3 originalPos = pos;
 
 			owner->Move(reservedLandingPos, false);
 			owner->Block();
 			owner->Move(originalPos, false);
-			owner->Deactivate();
 			owner->script->StopMoving();
 		} else {
 			if (goalPos.SqDistance2D(pos) < (30.0f * 30.0f)) {
@@ -618,27 +607,40 @@ void CHoverAirMoveType::UpdateLanding()
 		}
 	}
 
+
+	const float localAltitude = pos.y - (owner->unitDef->canSubmerge ?
+		CGround::GetHeightReal(owner->pos.x, owner->pos.z):
+		CGround::GetHeightAboveWater(owner->pos.x, owner->pos.z));
+
+	UpdateLandingHeight();
+
+	if (reservedLandingPos.SqDistance2D(pos) > owner->radius * owner->radius) {
+		float tmpWantedHeight = wantedHeight;
+		SetGoal(reservedLandingPos);
+		wantedHeight = std::min(localAltitude, orgWantedHeight);
+		flyState = FLY_LANDING;
+		UpdateFlying();
+		wantedHeight = tmpWantedHeight;
+		return;
+	}
+	flyState = FLY_LANDING;
+	owner->Deactivate();
+
+	// We want to land, and therefore cancel our speed first
+	wantedSpeed = ZeroVector;
+
+	float distSq = (pos- reservedLandingPos).SqLength();
+	if (distSq <= owner->radius * owner->radius) {
+		SetState(AIRCRAFT_LANDED);
+	}
+
 	// We should wait until we actually have stopped smoothly
 	if (spd.SqLength2D() > 1.0f) {
 		UpdateFlying();
-		UpdateAirPhysics();
 		return;
 	}
 
-	// We have stopped, time to land
-	// NOTE: wantedHeight is interpreted as RELATIVE altitude
-	UpdateLandingHeight();
-
-	float altitude = pos.y - reservedLandingPos.y;
-
 	UpdateAirPhysics();
-
-	// collision detection does not let us get
-	// closer to the ground than <radius> elmos
-	// (wrt. midPos.y)
-	if (altitude <= owner->radius) {
-		SetState(AIRCRAFT_LANDED);
-	}
 }
 
 
@@ -1073,11 +1075,10 @@ bool CHoverAirMoveType::HandleCollisions(bool checkCollisions)
 			for (vector<CUnit*>::const_iterator ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
 				CUnit* unit = *ui;
 
-				if (unit->id == owner->loadingTransportId)
+				if (unit->id == owner->loadingTransportId ||
+				    unit == owner->transporter || unit->transporter != NULL) {
 					continue;
-
-				if (unit->transporter != NULL)
-					continue;
+				}
 
 				const float sqDist = (pos - unit->pos).SqLength();
 				const float totRad = owner->radius + unit->radius;

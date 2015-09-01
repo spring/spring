@@ -575,8 +575,10 @@ bool CStrafeAirMoveType::HandleCollisions(bool checkCollisions) {
 			for (vector<CUnit*>::const_iterator ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
 				CUnit* unit = *ui;
 
-				if (unit->id == owner->loadingTransportId)
+				if (unit->id == owner->loadingTransportId ||
+				    unit == owner->transporter || unit->transporter != NULL) {
 					continue;
+				}
 
 				const float sqDist = (pos - unit->pos).SqLength();
 				const float totRad = owner->radius + unit->radius;
@@ -920,38 +922,6 @@ void CStrafeAirMoveType::UpdateTakeOff()
 }
 
 
-
-float3 GetWantedLandingVelocity(
-	const float3& curVelocity,
-	const float3& curDirection,
-	float3 landingPosVec,
-	float brakeRate,
-	float descendRate
-) {
-	// const float landPosDistXZ = landingPosVec.Length2D() + 0.1f;
-	// const float landPosDistY = landingPosVec.y;
-
-	// landingPosVec.Normalize2D();
-
-	// const float curSpeedXZ = curVelocity.Length2D();
-	// const float newSpeedXZ = curSpeedXZ - brakeRate * (brakeDistance >= landPosDistXZ && landingPosVec.dot(curDirection) > 0.8f);
-
-	// maxSpeed is set to 0 (when landing) before we are fully
-	// on the ground, so make sure to not get stuck in mid-air
-	// note: assume losing altitude is easier than gaining it?
-	float3 wantedVel;
-	// wantedVel.x = landingPosVec.x * std::max(0.0f, newSpeedXZ);
-	// wantedVel.z = landingPosVec.z * std::max(0.0f, newSpeedXZ);
-	// wantedVel.y = -descendRate * (brakeDistance >= landPosDistXZ || landingPosVec.dot(curDirection) > 0.8f);
-
-	// if (landPosDistXZ > 0.1f && curSpeedXZ > 0.1f) {
-		// wantedVel.y = std::max(wantedVel.y, landPosDistY / (landPosDistXZ / curSpeedXZ));
-	// }
-
-	return wantedVel;
-}
-
-
 void CStrafeAirMoveType::UpdateLanding()
 {
 	const float3& pos = owner->pos;
@@ -1034,25 +1004,6 @@ void CStrafeAirMoveType::UpdateLanding()
 
 
 	UpdateFlying(wh, engine);
-	// owner->SetVelocityAndSpeed(wantedVelocity);
-
-	// // make the aircraft right itself up and turn toward goal
-	     // if (rightdir.y < -0.01f) { updir -= (rightdir * 0.02f); }
-	// else if (rightdir.y >  0.01f) { updir += (rightdir * 0.02f); }
-
-	     // if (frontdir.y < -0.01f) { frontdir += (updir * 0.02f); }
-	// else if (frontdir.y >  0.01f) { frontdir -= (updir * 0.02f); }
-
-	     // if (rightdir.dot(reservedLandingPosDir) >  0.01f) { frontdir += (rightdir * 0.02f); }
-	// else if (rightdir.dot(reservedLandingPosDir) < -0.01f) { frontdir -= (rightdir * 0.02f); }
-
-	// owner->Move(owner->speed, true);
-	// owner->UpdateDirVectors(owner->IsOnGround());
-	// owner->UpdateMidAndAimPos();
-
-	// collision detection does not let us get
-	// closer to the ground than <radius> elmos
-	// (wrt. midPos.y)
 }
 
 
