@@ -35,6 +35,10 @@ public:
 	virtual void SetState(AircraftState state) {}
 	virtual AircraftState GetLandingState() const { return AIRCRAFT_LANDING; }
 
+	void LandAt(float3 pos);
+
+	void UpdateLandingHeight();
+
 	bool CanApplyImpulse(const float3&) { return true; }
 	bool UseSmoothMesh() const;
 
@@ -61,7 +65,7 @@ public:
 
 protected:
 	void CheckForCollision();
-	
+
 	void UpdateFuel(bool slowUpdate = true);
 
 	/// unit found to be dangerously close to our path

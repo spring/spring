@@ -197,6 +197,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitPieceParent);
 	REGISTER_LUA_CFUNC(SetUnitSensorRadius);
 	REGISTER_LUA_CFUNC(SetUnitPosErrorParams);
+	REGISTER_LUA_CFUNC(SetUnitLandPos);
 
 	REGISTER_LUA_CFUNC(SetUnitPhysics);
 	REGISTER_LUA_CFUNC(SetUnitPosition);
@@ -282,6 +283,8 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(UnitAttach);
 	REGISTER_LUA_CFUNC(UnitDetach);
+	REGISTER_LUA_CFUNC(UnitDetachFromAir);
+	REGISTER_LUA_CFUNC(SetUnitLoadingTransport);
 
 	REGISTER_LUA_CFUNC(SpawnProjectile);
 	REGISTER_LUA_CFUNC(SpawnCEG);
@@ -2204,6 +2207,7 @@ int LuaSyncedCtrl::SetUnitSensorRadius(lua_State* L)
 	return 1;
 }
 
+
 int LuaSyncedCtrl::SetUnitPosErrorParams(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -2214,6 +2218,27 @@ int LuaSyncedCtrl::SetUnitPosErrorParams(lua_State* L)
 	unit->posErrorVector = float3(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
 	unit->posErrorDelta = float3(luaL_checkfloat(L, 5), luaL_checkfloat(L, 6), luaL_checkfloat(L, 7));
 	unit->nextPosErrorUpdate = luaL_optint(L, 8, unit->nextPosErrorUpdate);
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetUnitLandPos(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
+	if (unit == NULL) {
+		return 0;
+	}
+
+	AAirMoveType* amt = dynamic_cast<AAirMoveType*>(unit->moveType);
+	if (!amt) {
+		luaL_error(L, "Not a flying unit");
+	}
+
+	const float3 landPos(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
+
+	amt->LandAt(landPos);
+
 	return 0;
 }
 
@@ -3752,13 +3777,16 @@ int LuaSyncedCtrl::UnitAttach(lua_State* L)
 	if (transportee == NULL)
 		return 0;
 
-	const int piece = luaL_checkint(L, 3) - 1;
+	int piece = luaL_checkint(L, 3) - 1;
+	auto &pieces = transporter->localModel->pieces;
 
-	if (piece >= (int) transporter->localModel->pieces.size()) {
+	if (piece >= (int) pieces.size()) {
 		luaL_error(L,  "invalid piece number");
 		return 0;
 	}
-
+	if (piece >= 0) {
+		piece = pieces[piece]->scriptPieceIndex;
+	}
 	transporter->AttachUnit(transportee, piece, !transporter->unitDef->IsTransportUnit());
 
 	return 0;
@@ -3799,6 +3827,29 @@ int LuaSyncedCtrl::UnitDetachFromAir(lua_State* L)
 	}
 
 	transporter->DetachUnitFromAir(transportee, pos);
+
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetUnitLoadingTransport(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	if (lua_isnil(L, 2)) {
+		unit->loadingTransportId = -1;
+		return 0;
+	}
+
+	CUnit* transport = ParseUnit(L, __FUNCTION__, 2);
+	if (transport == NULL) {
+		return 0;
+	}
+
+	unit->loadingTransportId = transport->id;
 
 	return 0;
 }

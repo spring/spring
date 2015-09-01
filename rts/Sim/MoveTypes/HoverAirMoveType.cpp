@@ -592,8 +592,14 @@ void CHoverAirMoveType::UpdateLanding()
 			// found a landing spot
 			reservedLandingPos = pos;
 			goalPos = pos;
+			wantedHeight = 0;
 
+
+			const float3 originalPos = pos;
+
+			owner->Move(reservedLandingPos, false);
 			owner->Block();
+			owner->Move(originalPos, false);
 			owner->Deactivate();
 			owner->script->StopMoving();
 		} else {
@@ -621,16 +627,9 @@ void CHoverAirMoveType::UpdateLanding()
 
 	// We have stopped, time to land
 	// NOTE: wantedHeight is interpreted as RELATIVE altitude
-	const float gh = CGround::GetHeightAboveWater(pos.x, pos.z);
-	const float gah = CGround::GetHeightReal(pos.x, pos.z);
-	float altitude = (wantedHeight = 0.0f);
+	UpdateLandingHeight();
 
-	// can we submerge and are we still above water?
-	if ((owner->unitDef->canSubmerge) && (gah < 0.0f)) {
-		altitude = pos.y - gah;
-	} else {
-		altitude = pos.y - gh;
-	}
+	float altitude = pos.y - reservedLandingPos.y;
 
 	UpdateAirPhysics();
 
@@ -1073,6 +1072,9 @@ bool CHoverAirMoveType::HandleCollisions(bool checkCollisions)
 
 			for (vector<CUnit*>::const_iterator ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
 				CUnit* unit = *ui;
+
+				if (unit->id == owner->loadingTransportId)
+					continue;
 
 				if (unit->transporter != NULL)
 					continue;

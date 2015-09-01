@@ -167,6 +167,28 @@ void AAirMoveType::UpdateFuel(bool slowUpdate) {
 }
 
 
+void AAirMoveType::LandAt(float3 pos)
+{
+	if (aircraftState != AIRCRAFT_LANDING) {
+		SetState(AIRCRAFT_LANDING);
+	}
+	reservedLandingPos = pos;
+	const float3 originalPos = owner->pos;
+	owner->Move(reservedLandingPos, false);
+	owner->Block();
+	owner->Move(originalPos, false);
+
+	const float gh = CGround::GetHeightReal(reservedLandingPos.x, reservedLandingPos.z);
+	wantedHeight = reservedLandingPos.y - (owner->unitDef->canSubmerge ? gh : std::max(0.0f, gh));
+}
+
+
+void AAirMoveType::UpdateLandingHeight()
+{
+	const float gh = CGround::GetHeightReal(reservedLandingPos.x, reservedLandingPos.z);
+	reservedLandingPos.y = wantedHeight + (owner->unitDef->canSubmerge ? gh : std::max(0.0f, gh));
+}
+
 
 void AAirMoveType::CheckForCollision()
 {

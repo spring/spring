@@ -40,9 +40,9 @@ public:
 		const float3& engineVector
 	);
 	void SetState(AircraftState state);
-	void UpdateTakeOff(float wantedHeight);
+	void UpdateTakeOff();
 
-	float3 FindLandingPos(float brakeRate) const;
+	float3 FindLandingPos() const;
 
 	void SetMaxSpeed(float speed);
 
@@ -64,6 +64,8 @@ public:
 	float invDrag;
 	/// actually the invDrag of crashDrag
 	float crashDrag;
+
+	float sqBrakeDistance;
 
 	float frontToSpeed;
 	float speedToFront;

@@ -91,6 +91,7 @@ class LuaSyncedCtrl
 		static int SetUnitPieceParent(lua_State* L);
 		static int SetUnitSensorRadius(lua_State* L);
 		static int SetUnitPosErrorParams(lua_State* L);
+		static int SetUnitLandPos(lua_State* L);
 
 		static int SetUnitPhysics(lua_State* L);
 		static int SetUnitPosition(lua_State* L);
@@ -163,6 +164,7 @@ class LuaSyncedCtrl
 		static int UnitAttach(lua_State* L);
 		static int UnitDetach(lua_State* L);
 		static int UnitDetachFromAir(lua_State* L);
+		static int SetUnitLoadingTransport(lua_State* L);
 
 		static int SpawnProjectile(lua_State* L);
 		static int SpawnCEG(lua_State* L);
