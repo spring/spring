@@ -134,6 +134,10 @@ void CFeatureDrawer::RenderFeatureDestroyed(const CFeature* feature)
 	if (f->def->drawType == DRAWTYPE_MODEL) {
 		erase(unsortedFeatures, f);
 	}
+	if (f->model && f->drawQuad >= 0) {
+		modelRenderers[f->drawQuad].first[MDL_TYPE(f)]->DelFeature(f);
+		f->drawQuad = -1;
+	}
 
 	if (feature->objectDef->decalDef.useGroundDecal)
 		groundDecals->RemoveSolidObject(f, NULL);
