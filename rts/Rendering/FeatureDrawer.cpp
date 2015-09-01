@@ -35,7 +35,6 @@
 #define DRAW_QUAD_SIZE 32
 
 #define ALPHA_OPAQUE 0.99f
-#define ALPHA_DONT_DRAW -1.0f
 
 
 CONFIG(bool, ShowRezBars).defaultValue(true).headlessValue(false);
@@ -112,7 +111,7 @@ void CFeatureDrawer::RenderFeatureCreated(const CFeature* feature)
 
 	if (feature->def->drawType == DRAWTYPE_MODEL) {
 		f->drawQuad = -1;
-		f->drawAlpha = ALPHA_DONT_DRAW;
+		f->drawAlpha = 0.0f;
 		UpdateDrawQuad(f);
 		unsortedFeatures.push_back(f);
 	}
@@ -361,7 +360,7 @@ void CFeatureDrawer::DrawFadeFeaturesHelper(int modelType)
 void CFeatureDrawer::DrawFadeFeaturesSet(const FeatureSet& fadeFeatures, int modelType)
 {
 	for (CFeature* f: fadeFeatures) {
-		if (f->drawAlpha == ALPHA_OPAQUE || f->drawAlpha == ALPHA_DONT_DRAW)
+		if (f->drawAlpha == ALPHA_OPAQUE)
 			continue;
 
 		const float cols[] = {1.0f, 1.0f, 1.0f, f->drawAlpha};
