@@ -29,6 +29,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
+#include "System/TimeProfiler.h"
 #include "System/Util.h"
 
 #define DRAW_QUAD_SIZE 32
@@ -79,10 +80,12 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 	drawQuadsY = mapDims.mapy/DRAW_QUAD_SIZE;
 	featureDrawDistance = configHandler->GetFloat("FeatureDrawDistance");
 	featureFadeDistance = std::min(configHandler->GetFloat("FeatureFadeDistance"), featureDrawDistance);
-	modelRenderers.resize(MODELTYPE_OTHER, NULL);
-
-	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		modelRenderers[modelType] = IWorldObjectModelRenderer::GetInstance(modelType);
+	modelRenderers.resize(drawQuadsX * drawQuadsY);
+	for (auto &qmr: modelRenderers) {
+		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+			qmr.first[modelType] = IWorldObjectModelRenderer::GetInstance(modelType);
+		}
+		qmr.second = false;
 	}
 }
 
@@ -91,8 +94,10 @@ CFeatureDrawer::~CFeatureDrawer()
 {
 	eventHandler.RemoveClient(this);
 
-	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		delete modelRenderers[modelType];
+	for (auto &qmr: modelRenderers) {
+		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+			delete qmr.first[modelType];
+		}
 	}
 
 	modelRenderers.clear();
@@ -107,7 +112,7 @@ void CFeatureDrawer::RenderFeatureCreated(const CFeature* feature)
 
 	if (feature->def->drawType == DRAWTYPE_MODEL) {
 		f->drawQuad = -1;
-		modelRenderers[MDL_TYPE(f)]->AddFeature(f, ALPHA_DONT_DRAW);
+		f->drawAlpha = ALPHA_DONT_DRAW;
 		UpdateDrawQuad(f);
 		unsortedFeatures.push_back(f);
 	}
@@ -130,10 +135,6 @@ void CFeatureDrawer::RenderFeatureDestroyed(const CFeature* feature)
 
 	if (f->def->drawType == DRAWTYPE_MODEL) {
 		erase(unsortedFeatures, f);
-	}
-
-	if (f->model) {
-		modelRenderers[MDL_TYPE(f)]->DelFeature(f);
 	}
 
 	if (feature->objectDef->decalDef.useGroundDecal)
@@ -166,7 +167,15 @@ void CFeatureDrawer::UpdateDrawQuad(CFeature* feature)
 	//TODO check if out of map features get drawn, when the camera is outside of the map
 	//     (q: does DrawGround render the border quads in such cases?)
 	assert(oldDrawQuad < drawQuadsX * drawQuadsY);
-	assert(newDrawQuad < drawQuadsX * drawQuadsY);
+	assert(newDrawQuad < drawQuadsX * drawQuadsY && newDrawQuad >= 0);
+
+	if (feature->model) {
+		if (oldDrawQuad >= 0) {
+			modelRenderers[oldDrawQuad].first[MDL_TYPE(feature)]->DelFeature(feature);
+		}
+
+		modelRenderers[newDrawQuad].first[MDL_TYPE(feature)]->AddFeature(feature);
+	}
 
 	feature->drawQuad = newDrawQuad;
 }
@@ -191,6 +200,7 @@ inline void CFeatureDrawer::UpdateDrawPos(CFeature* f)
 
 void CFeatureDrawer::Draw()
 {
+	SCOPED_TIMER("FeatureDrawer::Draw");
 	ISky::SetupFog();
 
 	if (infoTextureHandler->IsEnabled()) {
@@ -210,9 +220,9 @@ void CFeatureDrawer::Draw()
 	GetVisibleFeatures(0, true);
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		modelRenderers[modelType]->PushRenderState();
+		modelRenderers[0].first[modelType]->PushRenderState();
 		DrawOpaqueFeatures(modelType);
-		modelRenderers[modelType]->PopRenderState();
+		modelRenderers[0].first[modelType]->PopRenderState();
 	}
 
 	unitDrawer->CleanUpUnitDrawing(false);
@@ -234,18 +244,24 @@ void CFeatureDrawer::Draw()
 
 void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 {
-	auto &featureBin = modelRenderers[modelType]->GetFeatureBin();
+	SCOPED_TIMER("FeatureDrawer::DrawOpaqueFeatures");
+	for (auto &qmr: modelRenderers) {
+		if (!qmr.second)
+			continue;
 
-	for (auto &fs: featureBin) {
-		if (modelType != MODELTYPE_3DO) {
-			texturehandlerS3O->SetS3oTexture(fs.first);
-		}
-		
-		for (auto &df: fs.second) {
-			if (df.second != ALPHA_OPAQUE)
-				continue;
-			
-			DrawFeatureNow(df.first);
+		auto &featureBin = qmr.first[modelType]->GetFeatureBin();
+
+		for (auto &fs: featureBin) {
+			if (modelType != MODELTYPE_3DO) {
+				texturehandlerS3O->SetS3oTexture(fs.first);
+			}
+
+			for (CFeature* f: fs.second) {
+				if (f->drawAlpha != ALPHA_OPAQUE)
+					continue;
+
+				DrawFeatureNow(f, f->drawAlpha);
+			}
 		}
 	}
 }
@@ -283,6 +299,7 @@ bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature, float alpha)
 
 void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 {
+	SCOPED_TIMER("FeatureDrawer::DrawFadeFeatures");
 	const bool oldAdvShading = unitDrawer->UseAdvShading();
 
 	{
@@ -303,9 +320,9 @@ void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 
 		{
 			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-				modelRenderers[modelType]->PushRenderState();
+				modelRenderers[0].first[modelType]->PushRenderState();
 				DrawFadeFeaturesHelper(modelType);
-				modelRenderers[modelType]->PopRenderState();
+				modelRenderers[0].first[modelType]->PopRenderState();
 			}
 		}
 
@@ -325,34 +342,39 @@ void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 
 void CFeatureDrawer::DrawFadeFeaturesHelper(int modelType)
 {
-	auto &featureBin = modelRenderers[modelType]->GetFeatureBin();
+	for (auto &qmr: modelRenderers) {
+		if (!qmr.second)
+			continue;
 
-	for (auto &fs: featureBin) {
-		if (modelType != MODELTYPE_3DO) {
-			texturehandlerS3O->SetS3oTexture(fs.first);
+		auto &featureBin = qmr.first[modelType]->GetFeatureBin();
+
+		for (auto &fs: featureBin) {
+			if (modelType != MODELTYPE_3DO) {
+				texturehandlerS3O->SetS3oTexture(fs.first);
+			}
+
+			DrawFadeFeaturesSet(fs.second, modelType);
 		}
-
-		DrawFadeFeaturesSet(fs.second, modelType);
 	}
 }
 
 void CFeatureDrawer::DrawFadeFeaturesSet(const FeatureSet& fadeFeatures, int modelType)
 {
-	for (auto &df: fadeFeatures) {
-		if (df.second == ALPHA_OPAQUE || df.second == ALPHA_DONT_DRAW)
+	for (CFeature* f: fadeFeatures) {
+		if (f->drawAlpha == ALPHA_OPAQUE || f->drawAlpha == ALPHA_DONT_DRAW)
 			continue;
-		
-		const float cols[] = {1.0f, 1.0f, 1.0f, df.second};
+
+		const float cols[] = {1.0f, 1.0f, 1.0f, f->drawAlpha};
 
 		if (modelType != MODELTYPE_3DO) {
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, cols);
 		}
 
 		// hack, sorting objects by distance would look better
-		glAlphaFunc(GL_GREATER, df.second / 2.0f);
+		glAlphaFunc(GL_GREATER, f->drawAlpha / 2.0f);
 		glColor4fv(cols);
 
-		DrawFeatureNow(df.first, df.second);
+		DrawFeatureNow(f, f->drawAlpha);
 	}
 }
 
@@ -431,17 +453,16 @@ public:
 		sqFadeDistEnd   = 0.0f;
 	}
 	void DrawQuad(int x, int y) {
-		std::vector<IWorldObjectModelRenderer*>& modelRenderers = featureDrawer->modelRenderers;
 		const int dq = y * drawQuadsX + x;
+		auto &qmr = featureDrawer->modelRenderers[dq];
+		qmr.second = true;
 		const float3 cameraPos = camera->GetPos();
 		for(int i = 0; i < MODELTYPE_OTHER; ++i) {
-			auto &featureBin = modelRenderers[i]->GetFeatureBinMutable();
+			auto &featureBin = qmr.first[i]->GetFeatureBinMutable();
 			for (auto &fs: featureBin) {
-				for (auto &df: fs.second) {
-					CFeature* f = df.first;
-					if (f->drawQuad != dq) {
-						continue;
-					}
+				for (CFeature* f: fs.second) {
+					assert(dq == f->drawQuad);
+
 					if (f->IsInVoid())
 						continue;
 
@@ -485,10 +506,10 @@ public:
 
 							if (sqDist < sqFadeDistB) {
 								if (camera->InView(f->drawMidPos, f->drawRadius))
-									df.second = ALPHA_OPAQUE;
+									f->drawAlpha = ALPHA_OPAQUE;
 							} else if (sqDist < sqFadeDistE) {
 								if (camera->InView(f->drawMidPos, f->drawRadius))
-									df.second = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
+									f->drawAlpha = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
 							}
 						} else {
 							if (farFeatures) {
@@ -506,6 +527,7 @@ public:
 
 void CFeatureDrawer::GetVisibleFeatures(int extraSize, bool drawFar)
 {
+	SCOPED_TIMER("FeatureDrawer::GetVisibleFeatures");
 	CFeatureQuadDrawer drawer;
 	drawer.drawQuadsX = drawQuadsX;
 	drawer.drawReflection = water->DrawReflectionPass();
@@ -513,16 +535,11 @@ void CFeatureDrawer::GetVisibleFeatures(int extraSize, bool drawFar)
 	drawer.sqFadeDistEnd = featureDrawDistance * featureDrawDistance;
 	drawer.sqFadeDistBegin = featureFadeDistance * featureFadeDistance;
 	drawer.farFeatures = drawFar;
-	
-	for(int i = 0; i < MODELTYPE_OTHER; ++i) {
-		auto &featureBin = modelRenderers[i]->GetFeatureBinMutable();
-		for (auto &fs: featureBin) {
-			for (auto &df: fs.second) {
-				df.second = ALPHA_DONT_DRAW;
-			}
-		}
+
+	for (auto &qmr: modelRenderers) {
+		qmr.second = false;
 	}
-	
+
 	readMap->GridVisibility(camera, DRAW_QUAD_SIZE, featureDrawDistance, &drawer, extraSize);
 }
 

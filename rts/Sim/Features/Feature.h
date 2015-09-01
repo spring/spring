@@ -84,7 +84,7 @@ public:
 	bool isAtFinalHeight;
 	bool inUpdateQue;
 	bool deleteMe;
-	
+
 	float finalHeight;
 
 	float resurrectProgress;
@@ -94,6 +94,7 @@ public:
 
 	/// which drawQuad we are part of
 	int drawQuad;
+	float drawAlpha;
 	int fireTime;
 	int smokeTime;
 

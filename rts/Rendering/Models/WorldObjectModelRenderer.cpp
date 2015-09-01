@@ -77,7 +77,7 @@ void IWorldObjectModelRenderer::DrawModels(const UnitSet& models)
 void IWorldObjectModelRenderer::DrawModels(const FeatureSet& models)
 {
 	for (auto drawFeature: models) {
-		DrawModel(drawFeature.first);
+		DrawModel(drawFeature);
 	}
 }
 
@@ -94,7 +94,7 @@ void IWorldObjectModelRenderer::AddUnit(const CUnit* u)
 {
 	UnitSet& us = units[TEX_TYPE(u)];
 	assert(std::find(us.begin(), us.end(), const_cast<CUnit*>(u)) == us.end());
-	
+
 	// updating a unit's draw-position requires mutability
 	us.push_back(const_cast<CUnit*>(u));
 	numUnits += 1;
@@ -103,10 +103,10 @@ void IWorldObjectModelRenderer::AddUnit(const CUnit* u)
 void IWorldObjectModelRenderer::DelUnit(const CUnit* u)
 {
 	UnitSet& us = units[TEX_TYPE(u)];
-	
+
 	// Unit can be absent from the container, since we can't know in UnitDrawer.cpp
 	// whether it's cloaked or not.
-	
+
 	auto it = std::find(us.begin(), us.end(), const_cast<CUnit*>(u));
 	if (it != us.end()) {
 		*it = us.back();
@@ -119,20 +119,20 @@ void IWorldObjectModelRenderer::DelUnit(const CUnit* u)
 }
 
 
-void IWorldObjectModelRenderer::AddFeature(const CFeature* f, float alpha)
+void IWorldObjectModelRenderer::AddFeature(const CFeature* f)
 {
 	FeatureSet& fs = features[TEX_TYPE(f)];
-	assert(std::find_if(fs.begin(), fs.end(), [f](const PDrawFeature& p){ return p.first == f;}) == fs.end());
-	
-	fs.push_back(std::make_pair(const_cast<CFeature*>(f), alpha));
+	assert(std::find(fs.begin(), fs.end(), const_cast<CFeature*>(f)) == fs.end());
+
+	fs.push_back(const_cast<CFeature*>(f));
 	numFeatures += 1;
 }
 
 void IWorldObjectModelRenderer::DelFeature(const CFeature* f)
 {
 	FeatureSet& fs = features[TEX_TYPE(f)];
-	auto it = std::find_if(fs.begin(), fs.end(), [f](const PDrawFeature& p){ return p.first == f;});
 
+	auto it = std::find(fs.begin(), fs.end(), const_cast<CFeature*>(f));
 	assert(it != fs.end());
 	*it = fs.back();
 	fs.pop_back();
@@ -143,7 +143,7 @@ void IWorldObjectModelRenderer::AddProjectile(const CProjectile* p)
 {
 	ProjectileSet& ps = projectiles[TEX_TYPE(p)];
 	assert(std::find(ps.begin(), ps.end(), const_cast<CProjectile*>(p)) == ps.end());
-	
+
 	// updating a unit's draw-position requires mutability
 	ps.push_back(const_cast<CProjectile*>(p));
 	numProjectiles += 1;
@@ -152,10 +152,10 @@ void IWorldObjectModelRenderer::AddProjectile(const CProjectile* p)
 void IWorldObjectModelRenderer::DelProjectile(const CProjectile* p)
 {
 	ProjectileSet &ps = projectiles[TEX_TYPE(p)];
-	
+
 	auto it = std::find(ps.begin(), ps.end(), const_cast<CProjectile*>(p));
 	assert(it != ps.end());
-	
+
 	*it = ps.back();
 	ps.pop_back();
 	numProjectiles -= 1;

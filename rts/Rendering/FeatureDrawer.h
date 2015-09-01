@@ -15,8 +15,8 @@ class IWorldObjectModelRenderer;
 class CFeatureDrawer: public CEventClient
 {
 	CR_DECLARE_STRUCT(CFeatureDrawer)
-	typedef std::pair<CFeature*, float> PDrawFeature;
-	typedef std::vector<PDrawFeature>   FeatureSet;
+	typedef std::vector<CFeature*>   FeatureSet;
+	typedef std::array<IWorldObjectModelRenderer*, MODELTYPE_OTHER> quadRenderers;
 
 public:
 	CFeatureDrawer();
@@ -62,7 +62,7 @@ private:
 	float featureDrawDistance;
 	float featureFadeDistance;
 
-	std::vector<IWorldObjectModelRenderer*> modelRenderers;
+	std::vector<std::pair<quadRenderers, bool>> modelRenderers;
 
 	friend class CFeatureQuadDrawer;
 };

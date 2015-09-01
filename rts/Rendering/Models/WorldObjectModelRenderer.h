@@ -31,12 +31,10 @@ public:
 
 	virtual void AddUnit(const CUnit*);
 	virtual void DelUnit(const CUnit*);
-private:
-	typedef std::pair<CFeature*, float> PDrawFeature;
 public:
-	virtual void AddFeature(const CFeature*, float alpha = 1.0f);
+	virtual void AddFeature(const CFeature*);
 	virtual void DelFeature(const CFeature*);
-	
+
 	virtual void AddProjectile(const CProjectile*);
 	virtual void DelProjectile(const CProjectile*);
 
@@ -46,7 +44,7 @@ public:
 
 protected:
 	typedef std::vector<CUnit*>                       UnitSet;
-	typedef std::vector<PDrawFeature>                 FeatureSet;
+	typedef std::vector<CFeature*>                    FeatureSet;
 	typedef std::vector<CProjectile*>                 ProjectileSet;
 
 	// textureType ==> modelSet
