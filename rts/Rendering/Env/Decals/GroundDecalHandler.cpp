@@ -206,11 +206,6 @@ static inline void AddQuadVertices(CVertexArray* va, int x, float* yv, int z, co
 
 inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 {
-	// TODO: do we want LOS-checks for decals?
-	if (!camera->InView(decal->pos, decal->radius))
-		return;
-
-
 	const float* hm = readMap->GetCornerHeightMapUnsynced();
 	const int gsmx = mapDims.mapx;
 	const int gsmx1 = gsmx + 1;
@@ -401,90 +396,65 @@ void CGroundDecalHandler::GatherDecalsForType(CGroundDecalHandler::SolidObjectDe
 		SolidObjectGroundDecal* decal = objectDecals[i];
 		CSolidObject* decalOwner = decal->owner;
 
-		const CUnit* decalOwnerUnit = NULL;
-		const CFeature* decalOwnerFeature = NULL;
-
-		// must use static_cast, not enough RTTI
-		if (decalOwner != NULL) {
-			if (decalOwner->GetBlockingMapID() < unitHandler->MaxUnits()) {
-				decalOwnerUnit = static_cast<const CUnit*>(decalOwner);
-			} else {
-				decalOwnerFeature = static_cast<const CFeature*>(decalOwner);
-			}
-		}
-
-		if (decalOwnerUnit != NULL) {
-			decal->alpha = std::max(0.0f, decalOwnerUnit->buildProgress);
-		} else if (decalOwner == NULL && decal->gbOwner == NULL) {
-			decal->alpha -= (decal->alphaFalloff * globalRendering->lastFrameTime * 0.001f * gs->speedFactor);
-		}
-
-		if (decal->alpha < 0.0f) {
-			// make sure RemoveSolidObject() won't try to modify this decal
-			if (decalOwner != NULL) {
-				decalOwner->groundDecal = NULL;
-			}
-
-			objectDecals[i] = objectDecals.back();
-			objectDecals.pop_back();
-
-			delete decal;
-			continue;
-		}
-
-		++i;
-
 		if (decalOwner == NULL) {
-			decalsToDraw.push_back(decal);
-			continue;
-		}
-		if (gu->spectatingFullView) {
-			decalsToDraw.push_back(decal);
-			continue;
-		}
-
-		if (decalOwnerUnit == NULL) {
-			assert(decalOwnerFeature != NULL);
-
-			if (decalOwnerFeature->IsInLosForAllyTeam(gu->myAllyTeam)) {
-				decalsToDraw.push_back(decal);
+			if (decal->gbOwner == NULL) {
+				decal->alpha -= (decal->alphaFalloff * globalRendering->lastFrameTime * 0.001f * gs->speedFactor);
 			}
+			if (decal->alpha < 0.0f) {
+			// make sure RemoveSolidObject() won't try to modify this decal
+				if (decalOwner != NULL) {
+					decalOwner->groundDecal = NULL;
+				}
+
+				objectDecals[i] = objectDecals.back();
+				objectDecals.pop_back();
+
+				delete decal;
+				continue;
+			}
+			++i;
 		} else {
-			assert(decalOwnerFeature == NULL);
-
-			// unit is in LOS
-			if ((decalOwnerUnit->losStatus[gu->myAllyTeam] & LOS_INLOS) != 0) {
-				decalsToDraw.push_back(decal);
-				continue;
-			}
-
-			// unit is out of LOS
-			// if ghosted buildings are disabled, ground plates should not
-			// remain visible even when object itself has been seen before
-			if (gameSetup->ghostedBuildings && (decalOwnerUnit->losStatus[gu->myAllyTeam] & LOS_PREVLOS) != 0) {
-				decalsToDraw.push_back(decal);
-				continue;
+			++i;
+			if (decalOwner->GetBlockingMapID() < unitHandler->MaxUnits()) {
+				const CUnit* decalOwnerUnit = static_cast<const CUnit*>(decalOwner);
+				if (decalOwnerUnit->isIcon)
+					continue;
+				if ((decalOwnerUnit->losStatus[gu->myAllyTeam] & LOS_INLOS) == 0 && !gu->spectatingFullView)
+					continue;
+				if (!gameSetup->ghostedBuildings || (decalOwnerUnit->losStatus[gu->myAllyTeam] & LOS_PREVLOS) == 0)
+					continue;
+				decal->alpha = std::max(0.0f, decalOwnerUnit->buildProgress);
+			} else {
+				const CFeature* decalOwnerFeature = static_cast<const CFeature*>(decalOwner);
+				if (!decalOwnerFeature->IsInLosForAllyTeam(gu->myAllyTeam))
+					continue;
+				if (decalOwnerFeature->drawAlpha < 0.01f)
+					continue;
+				decal->alpha = decalOwnerFeature->drawAlpha;
 			}
 		}
+		if (!camera->InView(decal->pos, decal->radius))
+			continue;
+		decalsToDraw.push_back(decal);
 	}
 }
 
 void CGroundDecalHandler::DrawObjectDecals() {
 	// create and draw the quads for each building decal
-	for (unsigned int n = 0; n < objectDecalTypes.size(); n++) {
-		SolidObjectDecalType* decalType = objectDecalTypes[n];
+	for (SolidObjectDecalType* decalType: objectDecalTypes) {
 
 		if (decalType->objectDecals.empty())
 			continue;
-
-		glBindTexture(GL_TEXTURE_2D, decalType->texture);
 
 		{
 			GatherDecalsForType(decalType);
 		}
 
-		for (unsigned int k = 0; k < decalsToDraw.size(); k++) {
-			DrawObjectDecal(decalsToDraw[k]);
+		if (decalsToDraw.size() > 0) {
+			glBindTexture(GL_TEXTURE_2D, decalType->texture);
+			for (SolidObjectGroundDecal* decal: decalsToDraw) {
+				DrawObjectDecal(decal);
+			}
 		}
 
 		// glBindTexture(GL_TEXTURE_2D, 0);
@@ -661,7 +631,7 @@ void CGroundDecalHandler::AddScars()
 		assert(std::find(scars.begin(), scars.end(), s) == scars.end());
 		scars.push_back(s);
 	}
-	
+
 	scarsToBeAdded.clear();
 }
 

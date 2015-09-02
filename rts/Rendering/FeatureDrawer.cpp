@@ -187,7 +187,10 @@ void CFeatureDrawer::Update()
 {
 	for (CFeature* f: unsortedFeatures) {
 		UpdateDrawPos(f);
+		f->drawAlpha = 0.0f;
 	}
+
+	GetVisibleFeatures(0, true);
 }
 
 
@@ -218,7 +221,6 @@ void CFeatureDrawer::Draw()
 	}
 
 	unitDrawer->SetupForUnitDrawing(false);
-	GetVisibleFeatures(0, true);
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		modelRenderers[0].first[modelType]->PushRenderState();
@@ -507,14 +509,11 @@ public:
 								f->drawAlpha = ALPHA_OPAQUE;
 							} else if (sqDist < sqFadeDistE) {
 								f->drawAlpha = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
-							} else {
-								f->drawAlpha = 0.0f;
 							}
 						} else {
 							if (farFeatures) {
 								farTextureHandler->Queue(f);
 							}
-							f->drawAlpha = 0.0f;
 						}
 					}
 				}
