@@ -320,20 +320,25 @@ void main() {
 		normal = normalize(mix(normal, stnMatrix * dtNormal, dtSample.a));
 	}
 	#endif
+	vec4 detailCol;
 	#ifndef SMF_DETAIL_NORMAL_TEXTURE_SPLATTING
-		vec4 detailCol = GetDetailTextureColor(specTexCoords);
+	{
+		detailCol = GetDetailTextureColor(specTexCoords);
+	}
 	#else 
+	{
 		float splatStrength = 0.0;
 		//the splatStrength param is needed to accurately mix normals, it is the sum of the splat distribution texture
 		vec4 detailNormal = GetDetailTextureNormal(specTexCoords, splatStrength); //second param is OUT
 		//convert the splat detail normal to world space, mix:
 		normal = mix(normal, normalize(stnMatrix * detailNormal.xyz), min(1.0, splatStrength));  
 		#ifdef SMF_DETAIL_NORMAL_DIFFUSE_ALPHA
-			vec4 detailCol = vec4(detailNormal.a);
+			detailCol = vec4(detailNormal.a);
 		#else
 			// The alpha channel of standard normal maps is not 127 by default, so we must clear them
-			vec4 detailCol = vec4(0.0);
+			detailCol = vec4(0.0);
 		#endif
+	}
 	#endif
 #ifndef DEFERRED_MODE
 	float cosAngleDiffuse = clamp(dot(lightDir.xyz, normal), 0.0, 1.0);

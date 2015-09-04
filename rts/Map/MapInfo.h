@@ -182,13 +182,11 @@ public:
 		std::string lightEmissionTexName;
 		std::string parallaxHeightTexName;
 
-		std::string splatDetailNormalTex1Name; //Contains the splatted detail normal textures 1-4
-		std::string splatDetailNormalTex2Name;
-		std::string splatDetailNormalTex3Name;
-		std::string splatDetailNormalTex4Name;
-		//Controls wether the alpha channel of each splatted detail normal texture 
+		std::string splatDetailNormalTexNames[4]; //Contains the splatted detail normal textures 1-4
+
+		//Controls whether the alpha channel of each splatted detail normal texture
 		//contains a diffuse channel, which behaves like the old splatted detail textures
-		bool  splatDetailNormalDiffuseAlpha; 
+		bool  splatDetailNormalDiffuseAlpha;
 		// SMF overrides
 		std::string minimapTexName;
 		std::string typemapTexName;

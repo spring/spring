@@ -65,7 +65,7 @@ CMapInfo::CMapInfo(const std::string& mapInfoFile, const string& mapName)
 	ReadSound();
 
 	//FIXME save all data in an array, so we can destroy the lua context (to save mem)?
-	//delete parser; 
+	//delete parser;
 }
 
 CMapInfo::~CMapInfo()
@@ -330,10 +330,10 @@ void CMapInfo::ReadSMF()
 	smf.specularTexName    = mapResTable.GetString("specularTex", "");
 	smf.splatDetailTexName = mapResTable.GetString("splatDetailTex", "");
 	smf.splatDistrTexName  = mapResTable.GetString("splatDistrTex", "");
-	smf.splatDetailNormalTex1Name  = mapResTable.GetString("splatDetailNormalTex1", "");
-	smf.splatDetailNormalTex2Name  = mapResTable.GetString("splatDetailNormalTex2", "");
-	smf.splatDetailNormalTex3Name  = mapResTable.GetString("splatDetailNormalTex3", "");
-	smf.splatDetailNormalTex4Name  = mapResTable.GetString("splatDetailNormalTex4", "");
+	smf.splatDetailNormalTexNames[0]  = mapResTable.GetString("splatDetailNormalTex1", "");
+	smf.splatDetailNormalTexNames[1]  = mapResTable.GetString("splatDetailNormalTex2", "");
+	smf.splatDetailNormalTexNames[2]  = mapResTable.GetString("splatDetailNormalTex3", "");
+	smf.splatDetailNormalTexNames[3]  = mapResTable.GetString("splatDetailNormalTex4", "");
 	smf.splatDetailNormalDiffuseAlpha = mapResTable.GetBool("splatDetailNormalDiffuseAlpha", false);
 
 	smf.grassShadingTexName = mapResTable.GetString("grassShadingTex", "");
@@ -360,10 +360,9 @@ void CMapInfo::ReadSMF()
 	if (!smf.lightEmissionTexName.empty() ) { smf.lightEmissionTexName  = "maps/" + smf.lightEmissionTexName; }
 	if (!smf.parallaxHeightTexName.empty()) { smf.parallaxHeightTexName = "maps/" + smf.parallaxHeightTexName; }
 
-	if (!smf.splatDetailNormalTex1Name.empty()) { smf.splatDetailNormalTex1Name = "maps/" + smf.splatDetailNormalTex1Name; }
-	if (!smf.splatDetailNormalTex2Name.empty()) { smf.splatDetailNormalTex2Name = "maps/" + smf.splatDetailNormalTex2Name; }
-	if (!smf.splatDetailNormalTex3Name.empty()) { smf.splatDetailNormalTex3Name = "maps/" + smf.splatDetailNormalTex3Name; }
-	if (!smf.splatDetailNormalTex4Name.empty()) { smf.splatDetailNormalTex4Name = "maps/" + smf.splatDetailNormalTex4Name; }
+	for (int i = 0; i < 4; i++){
+		if (!smf.splatDetailNormalTexNames[i].empty()) { smf.splatDetailNormalTexNames[i] = "maps/" + smf.splatDetailNormalTexNames[i]; }
+	}
 	// smf overrides
 	const LuaTable& smfTable = parser->GetRoot().SubTable("smf");
 

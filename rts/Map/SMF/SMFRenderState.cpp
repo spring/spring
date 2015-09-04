@@ -452,11 +452,12 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	glActiveTexture(GL_TEXTURE12); glBindTexture(GL_TEXTURE_2D, smfMap->GetLightEmissionTexture());
 	glActiveTexture(GL_TEXTURE13); glBindTexture(GL_TEXTURE_2D, smfMap->GetParallaxHeightTexture());
 	glActiveTexture(GL_TEXTURE14); glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
-	glActiveTexture(GL_TEXTURE15); glBindTexture(GL_TEXTURE_2D, smfMap->GetSplatDetailNormalTexture1());
-	glActiveTexture(GL_TEXTURE16); glBindTexture(GL_TEXTURE_2D, smfMap->GetSplatDetailNormalTexture2());
-	glActiveTexture(GL_TEXTURE17); glBindTexture(GL_TEXTURE_2D, smfMap->GetSplatDetailNormalTexture3());
-	glActiveTexture(GL_TEXTURE18); glBindTexture(GL_TEXTURE_2D, smfMap->GetSplatDetailNormalTexture4());
-
+	if (smfMap->HaveSplatNormalTexture()){
+		const int detailNormalTextureBindings [4] = {GL_TEXTURE15,GL_TEXTURE16,GL_TEXTURE17,GL_TEXTURE18};
+		for (int i = 0; i < 4; i++){
+			glActiveTexture(detailNormalTextureBindings[i]); glBindTexture(GL_TEXTURE_2D, smfMap->GetSplatDetailNormalTexture(i));
+		}
+	}
 	glActiveTexture(GL_TEXTURE0);
 }
 

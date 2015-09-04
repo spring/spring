@@ -39,10 +39,7 @@ public:
 	unsigned int GetSpecularTexture() const { return specularTex; }
 	unsigned int GetGrassShadingTexture() const { return grassShadingTex; }
 	unsigned int GetSplatDetailTexture() const { return splatDetailTex; }
-	unsigned int GetSplatDetailNormalTexture1() const { return splatDetailNormalTex1; }
-	unsigned int GetSplatDetailNormalTexture2() const { return splatDetailNormalTex2; }
-	unsigned int GetSplatDetailNormalTexture3() const { return splatDetailNormalTex3; }
-	unsigned int GetSplatDetailNormalTexture4() const { return splatDetailNormalTex4; }
+	unsigned int GetSplatDetailNormalTexture(int i) const { return splatDetailNormalTextures[i]; }
 	unsigned int GetSplatDistrTexture() const { return splatDistrTex; }
 	unsigned int GetSkyReflectModTexture() const { return skyReflectModTex; }
 	unsigned int GetDetailNormalTexture() const { return detailNormalTex; }
@@ -128,10 +125,7 @@ protected:
 	unsigned int normalsTex;        // holds vertex normals in RGBA32F internal format (GL_RGBA + GL_FLOAT)
 	unsigned int minimapTex;        // supplied by the map
 	unsigned int splatDetailTex;    // contains per-channel separate greyscale detail-textures (overrides detailTex)
-	unsigned int splatDetailNormalTex1;    // contains RGBA texture with RGB channels containing normals and alpha containing greyscale diffuse for splat detail normals (overrides detailTex)
-	unsigned int splatDetailNormalTex2;    // contains RGBA texture with RGB channels containing normals and alpha containing greyscale diffuse for splat detail normals (overrides detailTex)
-	unsigned int splatDetailNormalTex3;    // contains RGBA texture with RGB channels containing normals and alpha containing greyscale diffuse for splat detail normals (overrides detailTex)
-	unsigned int splatDetailNormalTex4;    // contains RGBA texture with RGB channels containing normals and alpha containing greyscale diffuse for splat detail normals (overrides detailTex)
+	unsigned int splatDetailNormalTextures[4];    // contains RGBA texture with RGB channels containing normals and alpha containing greyscale diffuse for splat detail normals (overrides detailTex)
 	unsigned int splatDistrTex;     // specifies the per-channel distribution of splatDetailTex (map-wide, overrides detailTex)
 	unsigned int grassShadingTex;   // specifies grass-blade modulation color (defaults to minimapTex)
 	unsigned int skyReflectModTex;  // modulates sky-reflection RGB intensities (must be the same size as specularTex)
