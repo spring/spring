@@ -233,7 +233,7 @@ class CLuaHandle : public CEventClient
 		//FIXME void MetalMapChanged(const int x, const int z);
 
 		void CollectGarbage();
-		
+
 		void DownloadQueued(int ID, const string& archiveName, const string& archiveType);
 		void DownloadStarted(int ID);
 		void DownloadFinished(int ID);

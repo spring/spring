@@ -95,8 +95,8 @@ int LuaVFSDownload::DownloadArchive(lua_State* L)
 	if (category.empty())
 		return 0;
 	queuedID++;
-	queue.push_back(DownloadItem(filename, category, queuedID));	
-	//eventHandler.DownloadQueued(downloadID, filename, category);
+	queue.push_back(DownloadItem(filename, category, queuedID));
+	eventHandler.DownloadQueued(downloadID, filename, category);
 	if (queue.size() == 1) {
 		StartDownload();
 	}
@@ -111,7 +111,7 @@ int LuaVFSDownload::CalcMd5(lua_State* L)
 	MD5Update(&ctx, (unsigned char*) sstr.c_str(), sstr.size());
 	MD5Final(&ctx);
 	const unsigned char* md5sum = ctx.digest;
-	std::string encoded = base64_encode(md5sum, 16); 
+	std::string encoded = base64_encode(md5sum, 16);
 	//const char* md5sum = CalculateMd5((unsigned char*) str.c_str());
 	printf("input: %s digest: %s", sstr.c_str(), encoded.c_str());
 	lua_pushsstring(L, encoded);

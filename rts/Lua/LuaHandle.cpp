@@ -2401,7 +2401,7 @@ const char* CLuaHandle::RecvSkirmishAIMessage(int aiTeam, const char* inData, in
 	lua_pop(L, 1);
 	return outData;
 }
-		
+
 void CLuaHandle::DownloadQueued(int ID, const string& archiveName, const string& archiveType) {
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 3, __FUNCTION__);
@@ -2470,7 +2470,7 @@ void CLuaHandle::DownloadFailed(int ID, int errorID) {
 	}
 
 	int argCount = 2;
- 	lua_pushinteger(L, ID);
+	lua_pushinteger(L, ID);
 	lua_pushinteger(L, errorID);
 
 	// call the routine
