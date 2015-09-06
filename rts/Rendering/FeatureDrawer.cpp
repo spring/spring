@@ -134,6 +134,10 @@ void CFeatureDrawer::RenderFeatureDestroyed(const CFeature* feature)
 	if (f->def->drawType == DRAWTYPE_MODEL) {
 		erase(unsortedFeatures, f);
 	}
+	if (f->model && f->drawQuad >= 0) {
+		modelRenderers[f->drawQuad].first[MDL_TYPE(f)]->DelFeature(f);
+		f->drawQuad = -1;
+	}
 
 	if (feature->objectDef->decalDef.useGroundDecal)
 		groundDecals->RemoveSolidObject(f, NULL);
@@ -183,7 +187,10 @@ void CFeatureDrawer::Update()
 {
 	for (CFeature* f: unsortedFeatures) {
 		UpdateDrawPos(f);
+		f->drawAlpha = 0.0f;
 	}
+
+	GetVisibleFeatures(0, true);
 }
 
 
@@ -214,7 +221,6 @@ void CFeatureDrawer::Draw()
 	}
 
 	unitDrawer->SetupForUnitDrawing(false);
-	GetVisibleFeatures(0, true);
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		modelRenderers[0].first[modelType]->PushRenderState();
@@ -265,7 +271,6 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature, float alpha)
 {
 	if (feature->IsInVoid()) { return false; }
-	if (!camera->InView(feature->drawMidPos, feature->drawRadius)) { return false; }
 	if (!feature->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView) { return false; }
 
 	const float sqDist = (feature->pos - camera->GetPos()).SqLength();
@@ -273,6 +278,7 @@ bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature, float alpha)
 	const float sqFadeDistEnd = featureDrawDistance * featureDrawDistance;
 
 	if (sqDist >= std::min(farLength, sqFadeDistEnd)) return false;
+	if (!camera->InView(feature->drawMidPos, feature->drawRadius)) { return false; }
 
 	glPushMatrix();
 	glMultMatrixf(feature->GetTransformMatrixRef());
@@ -500,17 +506,14 @@ public:
 							}
 
 							if (sqDist < sqFadeDistB) {
-								if (camera->InView(f->drawMidPos, f->drawRadius))
-									f->drawAlpha = ALPHA_OPAQUE;
+								f->drawAlpha = ALPHA_OPAQUE;
 							} else if (sqDist < sqFadeDistE) {
-								if (camera->InView(f->drawMidPos, f->drawRadius))
-									f->drawAlpha = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
+								f->drawAlpha = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
 							}
 						} else {
 							if (farFeatures) {
 								farTextureHandler->Queue(f);
 							}
-							f->drawAlpha = 0.0f;
 						}
 					}
 				}
