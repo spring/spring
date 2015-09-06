@@ -1615,9 +1615,7 @@ void CLuaHandle::Update()
 	// call the routine
 	RunCallIn(L, cmdStr, 0, 0);
 
-/* FIXME!
-	eventHandler->ProcessDownloads();
-*/
+	eventHandler.ProcessDownloads();
 }
 
 

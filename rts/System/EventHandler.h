@@ -38,7 +38,27 @@ class CEventHandler
 		bool IsManaged(const std::string& ciName) const;
 		bool IsUnsynced(const std::string& ciName) const;
 		bool IsController(const std::string& ciName) const;
-
+	public: //VFSDownload stuff
+		struct dlStarted {
+			int ID;
+		};
+		dlStarted* dls = NULL;
+		struct dlFinished {
+			int ID;
+		};
+		dlFinished* dlfi = NULL;
+		struct dlFailed {
+			int ID;
+			int errorID;
+		};
+		dlFailed* dlfa = NULL;
+		struct dlProgress {
+			int ID;
+			long downloaded;
+			long total;
+		};
+		dlProgress* dlp = NULL;
+		void ProcessDownloads();
 
 	public:
 		/**

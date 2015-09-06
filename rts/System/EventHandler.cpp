@@ -717,21 +717,25 @@ void CEventHandler::DownloadQueued(int ID, const string& archiveName, const stri
 
 void CEventHandler::DownloadStarted(int ID)
 {
+	dls = new dlStarted(); dls->ID = ID;
 	ITERATE_EVENTCLIENTLIST(DownloadStarted, ID);
 }
 
 void CEventHandler::DownloadFinished(int ID)
 {
+	dlfi = new dlFinished(); dlfi->ID = ID;
 	ITERATE_EVENTCLIENTLIST(DownloadFinished, ID);
 }
 
 void CEventHandler::DownloadFailed(int ID, int errorID)
 {
+	dlfa = new dlFailed(); dlfa->ID = ID; dlfa->errorID = errorID;
 	ITERATE_EVENTCLIENTLIST(DownloadFailed, ID, errorID);
 }
 
 void CEventHandler::DownloadProgress(int ID, long downloaded, long total)
 {
+	dlp = new dlProgress(); dlp->ID = ID; dlp->downloaded = downloaded; dlp->total = total;
 	ITERATE_EVENTCLIENTLIST(DownloadProgress, ID, downloaded, total);
 }
 
@@ -760,3 +764,23 @@ void CEventHandler::MetalMapChanged(const int x, const int z)
 {
 	ITERATE_EVENTCLIENTLIST(MetalMapChanged, x, z);
 }
+
+void CEventHandler::ProcessDownloads() {
+	if (dls != nullptr) {
+		eventHandler.DownloadStarted(dls->ID);
+		SafeDelete(dls);
+	}
+	if (dlfi != nullptr) {
+		eventHandler.DownloadFinished(dlfi->ID);
+		SafeDelete(dlfi);
+	}
+	if (dlfa != nullptr) {
+		eventHandler.DownloadFailed(dlfa->ID, dlfa->errorID);
+		SafeDelete(dlfa);
+	}
+	if (dlp != nullptr) {
+		eventHandler.DownloadProgress(dlp->ID, dlp->downloaded, dlp->total);
+		SafeDelete(dlp);
+	}
+}
+
