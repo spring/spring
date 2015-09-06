@@ -5,6 +5,7 @@
 #include "LuaVFSDownload.h"
 #include "System/Util.h"
 #include "System/EventHandler.h"
+#include "System/Platform/Threading.h"
 
 #include <future>
 
@@ -103,7 +104,7 @@ int Download(const std::string& filename)
 			LOG_L(L_DEBUG, "Download info: %s %d %d", dl.filename, dl.type, dl.cat);
 		}
 	}
-	eventHandler.DownloadStarted(downloadID);
+	QueueDownloadStarted(downloadID);
 	int result = DownloadStart();
 	DownloadShutdown();
 	LOG_L(L_DEBUG, "download finished %s", filename.c_str());
@@ -167,7 +168,7 @@ int LuaVFSDownload::CalcMd5(lua_State* L)
 
 void LuaVFSDownload::ProcessDownloads()
 {
-	//FIXME: add assert for main thread here
+	assert(Threading::IsMainThread() || Threading::IsGameLoadThread());
 	if (dls != nullptr) {
 		eventHandler.DownloadStarted(dls->ID);
 		SafeDelete(dls);
