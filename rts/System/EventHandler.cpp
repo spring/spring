@@ -761,22 +761,3 @@ void CEventHandler::MetalMapChanged(const int x, const int z)
 	ITERATE_EVENTCLIENTLIST(MetalMapChanged, x, z);
 }
 
-void CEventHandler::ProcessDownloads() {
-	if (dls != nullptr) {
-		DownloadStarted(dls->ID);
-		SafeDelete(dls);
-	}
-	if (dlfi != nullptr) {
-		DownloadFinished(dlfi->ID);
-		SafeDelete(dlfi);
-	}
-	if (dlfa != nullptr) {
-		DownloadFailed(dlfa->ID, dlfa->errorID);
-		SafeDelete(dlfa);
-	}
-	if (dlp != nullptr) {
-		DownloadProgress(dlp->ID, dlp->downloaded, dlp->total);
-		SafeDelete(dlp);
-	}
-}
-

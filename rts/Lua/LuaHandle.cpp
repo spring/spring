@@ -12,6 +12,7 @@
 #include "LuaBitOps.h"
 #include "LuaMathExtra.h"
 #include "LuaUtils.h"
+#include "LuaVFSDownload.h"
 #include "LuaZip.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/Players/Player.h"
@@ -1615,7 +1616,7 @@ void CLuaHandle::Update()
 	// call the routine
 	RunCallIn(L, cmdStr, 0, 0);
 
-	eventHandler.ProcessDownloads();
+	LuaVFSDownload::ProcessDownloads();
 }
 
 

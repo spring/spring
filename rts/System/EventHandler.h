@@ -38,50 +38,6 @@ class CEventHandler
 		bool IsManaged(const std::string& ciName) const;
 		bool IsUnsynced(const std::string& ciName) const;
 		bool IsController(const std::string& ciName) const;
-	public: //VFSDownload stuff
-		struct dlStarted {
-			int ID;
-		};
-		dlStarted* dls = NULL;
-		struct dlFinished {
-			int ID;
-		};
-		dlFinished* dlfi = NULL;
-		struct dlFailed {
-			int ID;
-			int errorID;
-		};
-		dlFailed* dlfa = NULL;
-		struct dlProgress {
-			int ID;
-			long downloaded;
-			long total;
-		};
-		dlProgress* dlp = NULL;
-		//checks if some events have arrived from other threads and then fires the events
-		void ProcessDownloads();
-
-		void QueueDownloadStarted(int ID) //queue from other thread download started event
-		{
-			dls = new dlStarted(); dls->ID = ID;
-		}
-
-		void QueueDownloadFinished(int ID) //queue from other thread download started event
-		{
-			dlfi = new dlFinished(); dlfi->ID = ID;
-
-		}
-
-		void QueueDownloadFailed(int ID, int errorID) //queue from other thread download started event
-		{
-			dlfa = new dlFailed(); dlfa->ID = ID; dlfa->errorID = errorID;
-		}
-
-		void QueueDownloadProgress(int ID, long downloaded, long total) //queue from other thread download started event
-		{
-			dlp = new dlProgress(); dlp->ID = ID; dlp->downloaded = downloaded; dlp->total = total;
-		}
-
 	public:
 		/**
 		 * @name Synced_events

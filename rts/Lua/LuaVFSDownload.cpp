@@ -3,6 +3,8 @@
 #include "System/EventHandler.h"
 
 #include "LuaVFSDownload.h"
+#include "System/Util.h"
+#include "System/EventHandler.h"
 
 #include <future>
 
@@ -17,6 +19,49 @@
         lua_pushstring(L, #x);      \
         lua_pushcfunction(L, x);    \
         lua_rawset(L, -3)
+
+struct dlStarted {
+	int ID;
+};
+dlStarted* dls = NULL;
+struct dlFinished {
+	int ID;
+};
+dlFinished* dlfi = NULL;
+struct dlFailed {
+	int ID;
+	int errorID;
+};
+dlFailed* dlfa = NULL;
+struct dlProgress {
+	int ID;
+	long downloaded;
+	long total;
+};
+dlProgress* dlp = NULL;
+
+void QueueDownloadStarted(int ID) //queue from other thread download started event
+{
+	dls = new dlStarted(); dls->ID = ID;
+}
+
+void QueueDownloadFinished(int ID) //queue from other thread download started event
+{
+	dlfi = new dlFinished(); dlfi->ID = ID;
+
+}
+
+void QueueDownloadFailed(int ID, int errorID) //queue from other thread download started event
+{
+	dlfa = new dlFailed(); dlfa->ID = ID; dlfa->errorID = errorID;
+}
+
+void QueueDownloadProgress(int ID, long downloaded, long total) //queue from other thread download started event
+{
+	dlp = new dlProgress(); dlp->ID = ID; dlp->downloaded = downloaded; dlp->total = total;
+}
+
+
 
 bool LuaVFSDownload::PushEntries(lua_State* L)
 {
@@ -40,7 +85,7 @@ static std::list<DownloadItem> queue;
 void StartDownload();
 
 void UpdateProgress(int done, int size) {
-	eventHandler.QueueDownloadProgress(downloadID, done, size);
+	QueueDownloadProgress(downloadID, done, size);
 }
 
 int Download(const std::string& filename)
@@ -77,9 +122,9 @@ void StartDownload() {
 	result = std::async(std::launch::async, [filename, category, ID]() {
 			int result = Download(filename);
 			if (result == 0) {
-				eventHandler.QueueDownloadFinished(ID);
+				QueueDownloadFinished(ID);
 			} else {
-				eventHandler.QueueDownloadFailed(ID, result);
+				QueueDownloadFailed(ID, result);
 			}
 			return result;
 		}
@@ -119,3 +164,25 @@ int LuaVFSDownload::CalcMd5(lua_State* L)
 	lua_pushsstring(L, encoded);
 	return 1;
 }
+
+void LuaVFSDownload::ProcessDownloads()
+{
+	//FIXME: add assert for main thread here
+	if (dls != nullptr) {
+		eventHandler.DownloadStarted(dls->ID);
+		SafeDelete(dls);
+	}
+	if (dlfi != nullptr) {
+		eventHandler.DownloadFinished(dlfi->ID);
+		SafeDelete(dlfi);
+	}
+	if (dlfa != nullptr) {
+		eventHandler.DownloadFailed(dlfa->ID, dlfa->errorID);
+		SafeDelete(dlfa);
+	}
+	if (dlp != nullptr) {
+		eventHandler.DownloadProgress(dlp->ID, dlp->downloaded, dlp->total);
+		SafeDelete(dlp);
+	}
+}
+
