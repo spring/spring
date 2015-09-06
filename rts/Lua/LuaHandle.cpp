@@ -1615,7 +1615,9 @@ void CLuaHandle::Update()
 	// call the routine
 	RunCallIn(L, cmdStr, 0, 0);
 
-	eventBatchHandler->ProcessDownloads();
+/* FIXME!
+	eventHandler->ProcessDownloads();
+*/
 }
 
 

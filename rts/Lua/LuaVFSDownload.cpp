@@ -40,12 +40,12 @@ static std::list<DownloadItem> queue;
 void StartDownload();
 
 void UpdateProgress(int done, int size) {
-	eventBatchHandler->DownloadProgress(downloadID, done, size);
+	//eventHandler.ownloadProgress(downloadID, done, size);
 }
 
 int Download(const std::string& filename)
 {
-	SetDownloadListener(UpdateProgress);
+//	SetDownloadListener(UpdateProgress);
 	LOG_L(L_DEBUG, "going to download %s", filename.c_str());
 	DownloadInit();
 	const int count = DownloadSearch(DL_ANY, CAT_ANY, filename.c_str());
@@ -56,7 +56,7 @@ int Download(const std::string& filename)
 			LOG_L(L_DEBUG, "Download info: %s %d %d", dl.filename, dl.type, dl.cat);
 		}
 	}
-	eventBatchHandler->DownloadStarted(downloadID);
+	//eventBatchHandler.DownloadStarted(downloadID);
 	int result = DownloadStart();
 	DownloadShutdown();
 	LOG_L(L_DEBUG, "download finished %s", filename.c_str());
@@ -75,9 +75,9 @@ void StartDownload() {
 	result = std::async(std::launch::async, [filename, category, ID]() {
 			int result = Download(filename);
 			if (result == 0) {
-				eventBatchHandler->DownloadFinished(ID);
+				//eventBatchHandler.DownloadFinished(ID);
 			} else {
-				eventBatchHandler->DownloadFailed(ID, result);
+				//eventBatchHandler.DownloadFailed(ID, result);
 			}
 			return result;
 		}
@@ -96,7 +96,7 @@ int LuaVFSDownload::DownloadArchive(lua_State* L)
 		return 0;
 	queuedID++;
 	queue.push_back(DownloadItem(filename, category, queuedID));	
-	eventHandler.DownloadQueued(downloadID, filename, category);
+	//eventHandler.DownloadQueued(downloadID, filename, category);
 	if (queue.size() == 1) {
 		StartDownload();
 	}
