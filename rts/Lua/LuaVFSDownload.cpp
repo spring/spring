@@ -40,7 +40,7 @@ static std::list<DownloadItem> queue;
 void StartDownload();
 
 void UpdateProgress(int done, int size) {
-	eventHandler.DownloadProgress(downloadID, done, size);
+	eventHandler.QueueDownloadProgress(downloadID, done, size);
 }
 
 int Download(const std::string& filename)
@@ -77,9 +77,9 @@ void StartDownload() {
 	result = std::async(std::launch::async, [filename, category, ID]() {
 			int result = Download(filename);
 			if (result == 0) {
-				eventHandler.DownloadFinished(ID);
+				eventHandler.QueueDownloadFinished(ID);
 			} else {
-				eventHandler.DownloadFailed(ID, result);
+				eventHandler.QueueDownloadFailed(ID, result);
 			}
 			return result;
 		}

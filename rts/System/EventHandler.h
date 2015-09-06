@@ -58,7 +58,29 @@ class CEventHandler
 			long total;
 		};
 		dlProgress* dlp = NULL;
+		//checks if some events have arrived from other threads and then fires the events
 		void ProcessDownloads();
+
+		void QueueDownloadStarted(int ID) //queue from other thread download started event
+		{
+			dls = new dlStarted(); dls->ID = ID;
+		}
+
+		void QueueDownloadFinished(int ID) //queue from other thread download started event
+		{
+			dlfi = new dlFinished(); dlfi->ID = ID;
+
+		}
+
+		void QueueDownloadFailed(int ID, int errorID) //queue from other thread download started event
+		{
+			dlfa = new dlFailed(); dlfa->ID = ID; dlfa->errorID = errorID;
+		}
+
+		void QueueDownloadProgress(int ID, long downloaded, long total) //queue from other thread download started event
+		{
+			dlp = new dlProgress(); dlp->ID = ID; dlp->downloaded = downloaded; dlp->total = total;
+		}
 
 	public:
 		/**
