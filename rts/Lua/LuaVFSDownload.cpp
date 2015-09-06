@@ -89,10 +89,10 @@ void UpdateProgress(int done, int size) {
 	QueueDownloadProgress(downloadID, done, size);
 }
 
-int Download(const std::string& filename)
+int Download(const std::string& filename, const std::string& category, int ID)
 {
 	SetDownloadListener(UpdateProgress);
-	LOG_L(L_DEBUG, "going to download %s", filename.c_str());
+	LOG_L(L_DEBUG, "Going to download %s", filename.c_str());
 	DownloadInit();
 	const int count = DownloadSearch(DL_ANY, CAT_ANY, filename.c_str());
 	for(int i=0; i<count; i++) {
@@ -102,13 +102,21 @@ int Download(const std::string& filename)
 			LOG_L(L_DEBUG, "Download info: %s %d %d", dl.filename, dl.type, dl.cat);
 		}
 	}
-	QueueDownloadStarted(downloadID);
-	int result = DownloadStart();
-	DownloadShutdown();
-	LOG_L(L_DEBUG, "download finished %s", filename.c_str());
+	int result;
+	if (count == 0) { // there's nothing to download
+		result = 2;
+		QueueDownloadFailed(ID, result);
+	} else {
+		QueueDownloadStarted(ID);
+		int result = DownloadStart();
+		DownloadShutdown();
+		LOG_L(L_DEBUG, "Download finished %s", filename.c_str());
+	}
+
 	if (!queue.empty()) {
 		StartDownload();
 	}
+
 	return result;
 }
 
@@ -119,7 +127,7 @@ void StartDownload() {
 	const std::string category = downloadItem.category;
 	const int ID = downloadItem.ID;
 	result = std::async(std::launch::async, [filename, category, ID]() {
-			int result = Download(filename);
+			int result = Download(filename, category, ID);
 			if (result == 0) {
 				QueueDownloadFinished(ID);
 			} else {
@@ -158,8 +166,6 @@ int LuaVFSDownload::CalcMd5(lua_State* L)
 	MD5Final(&ctx);
 	const unsigned char* md5sum = ctx.digest;
 	std::string encoded = base64_encode(md5sum, 16);
-	//const char* md5sum = CalculateMd5((unsigned char*) str.c_str());
-	printf("input: %s digest: %s", sstr.c_str(), encoded.c_str());
 	lua_pushsstring(L, encoded);
 	return 1;
 }
