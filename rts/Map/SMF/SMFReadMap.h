@@ -131,6 +131,7 @@ protected:
 
 	bool haveSpecularTexture;
 	bool haveSplatTexture;
+	bool minimapOverride;
 
 	unsigned char waterHeightColors[1024 * 4];
 

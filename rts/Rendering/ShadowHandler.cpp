@@ -6,6 +6,7 @@
 #include "Game/Camera.h"
 #include "Game/GameVersion.h"
 #include "Map/BaseGroundDrawer.h"
+#include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"

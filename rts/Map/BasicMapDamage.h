@@ -21,8 +21,6 @@ public:
 	void Update();
 
 private:
-	void UpdateLos();
-
 	struct ExploBuilding {
 		/**
 		 * Searching for building pointers inside these on DependentDied
@@ -45,21 +43,6 @@ private:
 	};
 
 	std::deque<Explo*> explosions;
-
-	struct RelosSquare {
-		int x;
-		int y;
-		/// frame number
-		int neededUpdate;
-		int numUnits;
-	};
-	std::deque<RelosSquare> relosQue;
-
-	bool* inRelosQue;
-	int relosSize;
-	/// frame number when LOS-update-required was triggered
-	int neededLosUpdate;
-	std::deque<int> relosUnits;
 
 	static const unsigned int CRATER_TABLE_SIZE = 200;
 

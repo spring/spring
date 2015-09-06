@@ -20,6 +20,7 @@ CallInsList = {
 
   "KeyPress",
   "KeyRelease",
+  "TextInput",
   "MouseMove",
   "MousePress",
   "MouseRelease",

@@ -29,7 +29,6 @@
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
-#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
@@ -89,11 +88,18 @@ bool LuaUnitDefs::PushEntries(lua_State* L)
 
 	const ObjectDefMapType& defsMap = unitDefHandler->unitDefIDsByName;
 
-	const char* indxOpers[] = {"__index", "__newindex", "__metatable"};
-	const char* iterOpers[] = {"pairs", "next"};
+	const std::array<const LuaHashString, 3> indxOpers = {{
+		LuaHashString("__index"),
+		LuaHashString("__newindex"),
+		LuaHashString("__metatable")
+	}};
+	const std::array<const LuaHashString, 2> iterOpers = {{
+		LuaHashString("pairs"),
+		LuaHashString("next")
+	}};
 
-	const IndxFuncType indxFuncs[] = {&UnitDefIndex, &UnitDefNewIndex, &UnitDefMetatable};
-	const IterFuncType iterFuncs[] = {&Pairs, &Next};
+	const std::array<const IndxFuncType, 3> indxFuncs = {UnitDefIndex, UnitDefNewIndex, UnitDefMetatable};
+	const std::array<const IterFuncType, 2> iterFuncs = {Pairs, Next};
 
 	for (auto it = defsMap.cbegin(); it != defsMap.cend(); ++it) {
 		const auto def = unitDefHandler->GetUnitDefByID(it->second);
@@ -385,7 +391,6 @@ static int WeaponsTable(lua_State* L, const void* data)
 		lua_newtable(L); {
 			HSTR_PUSH_NUMBER(L, "weaponDef",   weapon->id);
 			HSTR_PUSH_NUMBER(L, "slavedTo",    udw.slavedTo-1+LUA_WEAPON_BASE_INDEX);
-			HSTR_PUSH_NUMBER(L, "fuelUsage",   udw.fuelUsage);
 			HSTR_PUSH_NUMBER(L, "maxAngleDif", udw.maxMainDirAngleDif);
 			HSTR_PUSH_NUMBER(L, "mainDirX",    udw.mainDir.x);
 			HSTR_PUSH_NUMBER(L, "mainDirY",    udw.mainDir.y);
@@ -537,6 +542,9 @@ static int ColVolTable(lua_State* L, const void* data) {
 			break;
 		case CollisionVolume::COLVOL_TYPE_BOX:
 			HSTR_PUSH_STRING(L, "type", "box");
+			break;
+		case CollisionVolume::COLVOL_TYPE_SPHERE:
+			HSTR_PUSH_STRING(L, "type", "sphere");
 			break;
 	}
 
@@ -750,6 +758,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_INT("selfDCountdown", ud.selfDCountdown);
 
 	ADD_FLOAT("speed",    ud.speed);
+	ADD_FLOAT("rSpeed",    ud.rSpeed);
 	ADD_FLOAT("turnRate", ud.turnRate);
 	ADD_BOOL("turnInPlace", ud.turnInPlace);
 	ADD_FLOAT("turnInPlaceSpeedLimit", ud.turnInPlaceSpeedLimit);
@@ -864,7 +873,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	// >= 0 indicates how much the unit will move during hovering on the spot
 	ADD_FLOAT("dlHoverFactor", ud.dlHoverFactor);
 
-//	bool DontLand (") { return dlHoverFactor >= 0.0f; }
+	//	bool DontLand (") { return dlHoverFactor >= 0.0f; }
 
 	ADD_FLOAT("maxAcc",      ud.maxAcc);
 	ADD_FLOAT("maxDec",      ud.maxDec);
@@ -872,13 +881,8 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("maxElevator", ud.maxElevator);
 	ADD_FLOAT("maxRudder",   ud.maxRudder);
 
-	ADD_FLOAT("maxFuel",    ud.maxFuel);
-	ADD_FLOAT("refuelTime", ud.refuelTime);
-
-	ADD_FLOAT("minAirBasePower", ud.minAirBasePower);
-
-//	unsigned char* yardmapLevels[6];
-//	unsigned char* yardmaps[4];			//Iterations of the Ymap for building rotation
+	//	unsigned char* yardmapLevels[6];
+	//	unsigned char* yardmaps[4];			//Iterations of the Ymap for building rotation
 
 	ADD_INT("xsize", ud.xsize);
 	ADD_INT("zsize", ud.zsize);

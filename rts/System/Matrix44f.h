@@ -14,9 +14,9 @@ public:
 	CMatrix44f();
 	CMatrix44f(const CMatrix44f& mat);
 
-	CMatrix44f(const float3& pos, const float3& x, const float3& y, const float3& z);
+	CMatrix44f(const float3 pos, const float3 x, const float3 y, const float3 z);
 	CMatrix44f(const float rotX, const float rotY, const float rotZ);
-	explicit CMatrix44f(const float3& pos);
+	explicit CMatrix44f(const float3 pos);
 
 	// these return zero on success, non-zero otherwise
 	int IsOrthoNormal(float eps = 0.01f) const;
@@ -24,17 +24,17 @@ public:
 
 	CMatrix44f& LoadIdentity();
 
-	void SetUpVector(const float3& up);
+	void SetUpVector(const float3 up);
 	CMatrix44f& RotateX(float rad);
 	CMatrix44f& RotateY(float rad);
 	CMatrix44f& RotateZ(float rad);
-	CMatrix44f& Rotate(float rad, const float3& axis); //! axis is assumed to be normalized
+	CMatrix44f& Rotate(float rad, const float3 axis); //! axis is assumed to be normalized
 	CMatrix44f& Translate(const float x, const float y, const float z);
-	CMatrix44f& Translate(const float3& pos) { return Translate(pos.x, pos.y, pos.z); }
+	CMatrix44f& Translate(const float3 pos) { return Translate(pos.x, pos.y, pos.z); }
 
 	CMatrix44f& Scale(const float3 scales);
 
-	void SetPos(const float3& pos);
+	void SetPos(const float3 pos);
 	float3 GetPos() const { return float3(m[12], m[13], m[14]); }
 	float3 GetX() const { return float3(m[0], m[1], m[ 2]); }
 	float3 GetY() const { return float3(m[4], m[5], m[ 6]); }
@@ -56,9 +56,9 @@ public:
 	CMatrix44f InvertAffine() const;
 
 	/// vector multiply
-	float3 operator* (const float3& v) const;
-	float3 Mul(const float3& v) const { return (*this) * v; }
-	float4 operator* (const float4& v) const;
+	float3 operator* (const float3 v) const;
+	float3 Mul(const float3 v) const { return (*this) * v; }
+	float4 operator* (const float4 v) const;
 
 	/// matrix multiply
 	CMatrix44f operator* (const CMatrix44f& mat) const;

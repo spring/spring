@@ -54,7 +54,7 @@ public:
 
 	std::vector<CUnit*> units;                        ///< used to get units from IDs (0 if not created)
 	std::vector< std::vector<CUnitSet> > unitsByDefs; ///< units sorted by team and unitDef
-	std::list<CUnit*> activeUnits;                    ///< used to get all active units
+	std::vector<CUnit*> activeUnits;                    ///< used to get all active units
 
 	std::map<unsigned int, CBuilderCAI*> builderCAIs;
 
@@ -65,7 +65,8 @@ private:
 	SimObjectIDPool idPool;
 
 	std::vector<CUnit*> unitsToBeRemoved;              ///< units that will be removed at start of next update
-	std::list<CUnit*>::iterator activeSlowUpdateUnit;  ///< first unit of batch that will be SlowUpdate'd this frame
+	size_t activeSlowUpdateUnit;  ///< first unit of batch that will be SlowUpdate'd this frame
+	size_t activeUpdateUnit;  ///< first unit of batch that will be SlowUpdate'd this frame
 
 	///< global unit-limit (derived from the per-team limit)
 	///< units.size() is equal to this and constant at runtime

@@ -161,29 +161,6 @@ static int FilterUnitsVector(const std::vector<CUnit*>& units, int* unitIds, int
 
 	return a;
 }
-static int FilterUnitsList(const std::list<CUnit*>& units, int* unitIds, int unitIds_max, bool (*includeUnit)(CUnit*) = NULL)
-{
-	int a = 0;
-
-	if (unitIds_max < 0) {
-		unitIds = NULL;
-		unitIds_max = MAX_UNITS;
-	}
-
-	std::list<CUnit*>::const_iterator ui;
-	for (ui = units.begin(); (ui != units.end()) && (a < unitIds_max); ++ui) {
-		CUnit* u = *ui;
-
-		if ((includeUnit == NULL) || (*includeUnit)(u)) {
-			if (unitIds != NULL) {
-				unitIds[a] = u->id;
-			}
-			a++;
-		}
-	}
-
-	return a;
-}
 
 static inline bool unit_IsNeutral(CUnit* unit) {
 	return unit->IsNeutral();
@@ -201,7 +178,7 @@ static inline bool unit_IsEnemy(CUnit* unit) {
 int CAICheats::GetEnemyUnits(int* unitIds, int unitIds_max)
 {
 	myAllyTeamId = teamHandler->AllyTeam(ai->GetTeamId());
-	return FilterUnitsList(unitHandler->activeUnits, unitIds, unitIds_max, &unit_IsEnemy);
+	return FilterUnitsVector(unitHandler->activeUnits, unitIds, unitIds_max, &unit_IsEnemy);
 }
 
 int CAICheats::GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
@@ -213,7 +190,7 @@ int CAICheats::GetEnemyUnits(int* unitIds, const float3& pos, float radius, int 
 
 int CAICheats::GetNeutralUnits(int* unitIds, int unitIds_max)
 {
-	return FilterUnitsList(unitHandler->activeUnits, unitIds, unitIds_max, &unit_IsNeutral);
+	return FilterUnitsVector(unitHandler->activeUnits, unitIds, unitIds_max, &unit_IsNeutral);
 }
 
 int CAICheats::GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)

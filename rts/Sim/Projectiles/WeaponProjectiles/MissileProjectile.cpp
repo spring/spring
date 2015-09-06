@@ -116,7 +116,7 @@ CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponP
 void CMissileProjectile::Collision()
 {
 	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
+		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, drawTrail, nullptr, weaponDef->visuals.texture2);
 	}
 
 	CWeaponProjectile::Collision();
@@ -126,7 +126,7 @@ void CMissileProjectile::Collision()
 void CMissileProjectile::Collision(CUnit* unit)
 {
 	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
+		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, drawTrail, nullptr, weaponDef->visuals.texture2);
 	}
 
 	CWeaponProjectile::Collision(unit);
@@ -136,7 +136,7 @@ void CMissileProjectile::Collision(CUnit* unit)
 void CMissileProjectile::Collision(CFeature* feature)
 {
 	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
+		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, drawTrail, nullptr, weaponDef->visuals.texture2);
 	}
 
 	CWeaponProjectile::Collision(feature);
@@ -156,27 +156,23 @@ void CMissileProjectile::Update()
 
 			if (weaponDef->tracks && target != NULL) {
 				const CSolidObject* so = dynamic_cast<const CSolidObject*>(target);
-				const CWeaponProjectile* po = dynamic_cast<const CWeaponProjectile*>(target);
 
 				targetPos = target->pos;
+				targetVel = target->speed;
 
 				if (so != NULL) {
 					targetPos = so->aimPos;
-					targetVel = so->speed;
 
-					if (own != NULL && pos.SqDistance(so->aimPos) > Square(150.0f)) {
+					if (allyteamID != -1) {
 						// if we have an owner and our target is a unit,
 						// set target-position to its error-position for
 						// our owner's allyteam
 						const CUnit* tgt = dynamic_cast<const CUnit*>(so);
 
 						if (tgt != NULL) {
-							targetPos = tgt->GetErrorPos(own->allyteam, true);
+							targetPos = tgt->GetErrorPos(allyteamID, true);
 						}
 					}
-				}
-				if (po != NULL) {
-					targetVel = po->speed;
 				}
 			}
 
@@ -438,4 +434,9 @@ int CMissileProjectile::ShieldRepulse(
 	}
 
 	return 0;
+}
+
+int CMissileProjectile::GetProjectilesCount() const
+{
+	return 2 + ((weaponDef->visuals.smokeTrail) ? numParts : 0);
 }

@@ -8,7 +8,8 @@
 #include "System/Misc/SpringTime.h"
 
 GameParticipant::GameParticipant()
-: myState(UNCONNECTED)
+: id(-1)
+, myState(UNCONNECTED)
 , lastFrameResponse(0)
 , speedControl(0)
 , isLocal(false)

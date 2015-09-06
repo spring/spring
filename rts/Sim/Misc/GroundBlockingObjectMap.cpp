@@ -188,18 +188,26 @@ bool CGroundBlockingObjectMap::GroundBlocked(const float3& pos, CSolidObject* ig
   * Opens up a yard in a blocked area.
   * When a factory opens up, for example.
   */
-void CGroundBlockingObjectMap::OpenBlockingYard(CSolidObject* object) {
+void CGroundBlockingObjectMap::OpenBlockingYard(CSolidObject* object)
+{
 	RemoveGroundBlockingObject(object);
 	AddGroundBlockingObject(object, YARDMAP_YARDFREE);
+	object->yardOpen = true;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+///
+///
 
 /**
   * Closes a yard, blocking the area.
   * When a factory closes, for example.
   */
-void CGroundBlockingObjectMap::CloseBlockingYard(CSolidObject* object) {
+void CGroundBlockingObjectMap::CloseBlockingYard(CSolidObject* object)
+{
 	RemoveGroundBlockingObject(object);
 	AddGroundBlockingObject(object, YARDMAP_YARDBLOCKED);
+	object->yardOpen = false;
 }
 
 

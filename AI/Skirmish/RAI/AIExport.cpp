@@ -24,7 +24,7 @@
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "ExternalAI/Interface/SSkirmishAICallback.h"
 #include "LegacyCpp/AIAI.h"
-#include "Game/GameVersion.h"
+//#include "Game/GameVersion.h"
 #include "CUtils/Util.h"
 
 // RAI stuff
@@ -38,7 +38,7 @@ static std::map<int, CAIAI*> myAIs;
 // callbacks for all the instances controlled by this Skirmish AI
 static std::map<int, const struct SSkirmishAICallback*> skirmishAIId_callback;
 
-
+/*
 EXPORT(enum LevelOfSupport) getLevelOfSupportFor(
 		const char* aiShortName, const char* aiVersion,
 		const char* engineVersionString, int engineVersionNumber,
@@ -51,6 +51,7 @@ EXPORT(enum LevelOfSupport) getLevelOfSupportFor(
 
 	return LOS_None;
 }
+*/
 
 EXPORT(int) init(int skirmishAIId, const struct SSkirmishAICallback* callback) {
 

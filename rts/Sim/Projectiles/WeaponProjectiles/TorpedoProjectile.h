@@ -11,8 +11,10 @@ class CTorpedoProjectile : public CWeaponProjectile
 public:
 	CTorpedoProjectile(const ProjectileParams& params);
 
-	void Update();
-	void Draw();
+	void Update() override;
+	void Draw() override;
+
+	virtual int GetProjectilesCount() const override;
 
 private:
 	float tracking;

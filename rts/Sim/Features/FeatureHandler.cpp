@@ -3,6 +3,7 @@
 #include "FeatureHandler.h"
 
 #include "Lua/LuaParser.h"
+#include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/QuadField.h"
@@ -27,7 +28,6 @@ CR_REG_METADATA(CFeatureHandler, (
 	CR_MEMBER(toBeFreedFeatureIDs),
 	CR_MEMBER(activeFeatures),
 	CR_MEMBER(features),
-	CR_MEMBER(toBeRemoved),
 	CR_MEMBER(updateFeatures)
 ))
 
@@ -375,16 +375,15 @@ bool CFeatureHandler::AddFeature(CFeature* feature)
 	}
 
 	InsertActiveFeature(feature);
-	SetFeatureUpdateable(feature, true);
+	SetFeatureUpdateable(feature);
 	return true;
 }
 
 
 void CFeatureHandler::DeleteFeature(CFeature* feature)
 {
-	eventHandler.FeatureDestroyed(feature);
-
-	toBeRemoved.push_back(feature->id);
+	SetFeatureUpdateable(feature);
+	feature->deleteMe = true;
 }
 
 CFeature* CFeatureHandler::GetFeature(int id)
@@ -450,85 +449,67 @@ void CFeatureHandler::Update()
 		}
 	}
 
-	{
-		if (!toBeRemoved.empty()) {
-
-			eventHandler.DeleteSyncedObjects();
-
-
-			while (!toBeRemoved.empty()) {
-				CFeature* feature = GetFeature(toBeRemoved.back());
-				toBeRemoved.pop_back();
-
-				if (feature) {
-					toBeFreedFeatureIDs.push_back(feature->id);
-					activeFeatures.erase(feature);
-					features[feature->id] = NULL;
-
-					CSolidObject::SetDeletingRefID(feature->id + unitHandler->MaxUnits());
-					// destructor removes feature from update-queue
-					delete feature;
-					CSolidObject::SetDeletingRefID(-1);
-				}
-			}
-		}
-	}
-
-	CFeatureSet::iterator fi = updateFeatures.begin();
+	auto fi = updateFeatures.begin();
 
 	while (fi != updateFeatures.end()) {
 		CFeature* feature = *fi;
-		++fi;
-
 		assert(feature->inUpdateQue);
+		
+		if (feature->deleteMe) {
+			eventHandler.RenderFeatureDestroyed(feature);
+			eventHandler.FeatureDestroyed(feature);
+			toBeFreedFeatureIDs.push_back(feature->id);
+			activeFeatures.erase(feature);
+			features[feature->id] = NULL;
 
-		if (!feature->Update()) {
-			// feature is done updating itself, remove from queue
-			SetFeatureUpdateable(feature, false);
+			CSolidObject::SetDeletingRefID(feature->id + unitHandler->MaxUnits());
+			// destructor removes feature from update-queue
+			delete feature;
+			CSolidObject::SetDeletingRefID(-1);
+			
+			*fi = updateFeatures.back();
+			updateFeatures.pop_back();
+		} else {
+
+			if (!feature->Update()) {
+				// feature is done updating itself, remove from queue
+				feature->inUpdateQue = false;
+				*fi = updateFeatures.back();
+				updateFeatures.pop_back();
+				
+			} else {
+				++fi;
+			}
 		}
 	}
 }
 
 
-void CFeatureHandler::SetFeatureUpdateable(CFeature* feature, bool updateable)
+void CFeatureHandler::SetFeatureUpdateable(CFeature* feature)
 {
-	if (updateable) {
-		if (feature->inUpdateQue) {
-			assert(updateFeatures.find(feature) != updateFeatures.end());
+	if (feature->inUpdateQue) {
+			assert(std::find(updateFeatures.begin(), updateFeatures.end(), feature) != updateFeatures.end());
 			return;
-		}
-
-		updateFeatures.insert(feature);
-	} else {
-		if (!feature->inUpdateQue) {
-			assert(updateFeatures.find(feature) == updateFeatures.end());
-			return;
-		}
-
-		updateFeatures.erase(feature);
 	}
-
-	feature->inUpdateQue = updateable;
+	assert(std::find(updateFeatures.begin(), updateFeatures.end(), feature) == updateFeatures.end());
+	updateFeatures.push_back(feature);
+	feature->inUpdateQue = true;
 }
 
 
 void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 {
-	const std::vector<int>& quads = quadField->GetQuadsRectangle(
+	const auto& quads = quadField->GetQuadsRectangle(
 		float3(x1 * SQUARE_SIZE, 0, y1 * SQUARE_SIZE),
 		float3(x2 * SQUARE_SIZE, 0, y2 * SQUARE_SIZE)
 	);
 
-	for (std::vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
-		std::list<CFeature*>::const_iterator fi;
-		const std::list<CFeature*>& features = quadField->GetQuad(*qi).features;
-
-		for (fi = features.begin(); fi != features.end(); ++fi) {
-			CFeature* feature = *fi;
+	for (const int qi: quads) {
+		for (CFeature* feature: quadField->GetQuad(qi).features) {
 			feature->UpdateFinalHeight(true);
 
 			// put this feature back in the update-queue
-			SetFeatureUpdateable(feature, true);
+			SetFeatureUpdateable(feature);
 		}
 	}
 }

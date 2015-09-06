@@ -40,7 +40,7 @@ public:
 
 	virtual CSoundSource* GetNextBestSource(bool lock = true);
 
-	virtual void UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime);
+	virtual void UpdateListener(const float3& campos, const float3& camdir, const float3& camup);
 	virtual void NewFrame();
 
 	/// @see ConfigHandler::ConfigNotifyCallback
@@ -54,7 +54,9 @@ public:
 
 	virtual void PrintDebugInfo();
 
+	bool SoundThreadQuit() const { return soundThreadQuit; }
 	bool CanLoadSoundDefs() const { return canLoadDefs; }
+
 	bool LoadSoundDefsImpl(const std::string& fileName);
 	const float3& GetListenerPos() const { return myPos; }
 
@@ -66,6 +68,7 @@ private:
 	void StartThread(int maxSounds);
 	void Update();
 	int GetMaxMonoSources(ALCdevice* device, int maxSounds);
+	void UpdateListenerReal();
 
 	size_t MakeItemFromDef(const soundItemDef& itemDef);
 
@@ -87,7 +90,10 @@ private:
 
 	/// unscaled
 	float3 myPos;
+	float3 camDir;
+	float3 camUp;
 	float3 prevVelocity;
+	bool listenerNeedsUpdate;
 
 	typedef boost::ptr_vector<CSoundSource> sourceVecT;
 	sourceVecT sources;

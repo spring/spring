@@ -22,6 +22,7 @@
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
+#include "System/Platform/Threading.h"
 #include "System/Rectangle.h"
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
@@ -31,7 +32,7 @@
 #undef GetTempPathA
 #endif
 
-#define NUL_RECTANGLE SRectangle(0, 0,         0,        0)
+#define NUL_RECTANGLE SRectangle(0, 0,             0,            0)
 #define MAP_RECTANGLE SRectangle(0, 0,  mapDims.mapx, mapDims.mapy)
 
 namespace QTPFS {
@@ -228,9 +229,7 @@ void QTPFS::PathManager::Load() {
 			maxNumLeafNodes = std::max(nodeLayers[layerNum].GetNumLeafNodes(), maxNumLeafNodes);
 		}
 
-		#ifdef SYNCDEBUG
 		{ SyncedUint tmp(pfsCheckSum); }
-		#endif
 
 		PathSearch::InitGlobalQueue(maxNumLeafNodes);
 	}
@@ -434,8 +433,8 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle
 	SRectangle mr;
 	SRectangle ur;
 
-	mr.x1 = std::max((r.x1 - md->xsizeh) - int(QTNode::MinSizeX() >> 1),        0);
-	mr.z1 = std::max((r.z1 - md->zsizeh) - int(QTNode::MinSizeZ() >> 1),        0);
+	mr.x1 = std::max((r.x1 - md->xsizeh) - int(QTNode::MinSizeX() >> 1),            0);
+	mr.z1 = std::max((r.z1 - md->zsizeh) - int(QTNode::MinSizeZ() >> 1),            0);
 	mr.x2 = std::min((r.x2 + md->xsizeh) + int(QTNode::MinSizeX() >> 1), mapDims.mapx);
 	mr.z2 = std::min((r.z2 + md->zsizeh) + int(QTNode::MinSizeZ() >> 1), mapDims.mapy);
 	ur.x1 = mr.x1;
@@ -469,8 +468,8 @@ void QTPFS::PathManager::QueueNodeLayerUpdates(const SRectangle& r) {
 		SRectangle mr;
 		// SRectangle ur;
 
-		mr.x1 = std::max((r.x1 - md->xsizeh) - int(QTNode::MinSizeX() >> 1),        0);
-		mr.z1 = std::max((r.z1 - md->zsizeh) - int(QTNode::MinSizeZ() >> 1),        0);
+		mr.x1 = std::max((r.x1 - md->xsizeh) - int(QTNode::MinSizeX() >> 1),            0);
+		mr.z1 = std::max((r.z1 - md->zsizeh) - int(QTNode::MinSizeZ() >> 1),            0);
 		mr.x2 = std::min((r.x2 + md->xsizeh) + int(QTNode::MinSizeX() >> 1), mapDims.mapx);
 		mr.z2 = std::min((r.z2 + md->zsizeh) + int(QTNode::MinSizeZ() >> 1), mapDims.mapy);
 
@@ -970,8 +969,8 @@ void QTPFS::PathManager::DeletePath(unsigned int pathID) {
 unsigned int QTPFS::PathManager::RequestPath(
 	CSolidObject* object,
 	const MoveDef* moveDef,
-	const float3& sourcePoint,
-	const float3& targetPoint,
+	float3 sourcePoint,
+	float3 targetPoint,
 	float radius,
 	bool synced)
 {

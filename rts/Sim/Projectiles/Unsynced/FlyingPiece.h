@@ -3,7 +3,6 @@
 #ifndef FLYING_PIECE_H
 #define FLYING_PIECE_H
 
-#include "System/MemPool.h"
 
 #include "System/float3.h"
 #include "System/Matrix44f.h"
@@ -23,11 +22,12 @@ public:
 	size_t GetTeam() const { return team; }
 	size_t GetTexture() const { return texture; }
 
-	inline void* operator new(size_t size) { return mempool.Alloc(size); }
-	inline void operator delete(void* p, size_t size) { mempool.Free(p, size); }
+	float3 GetPos() const { return pos; }
+	float GetRadius() const { return radius + speed.Length() * 2.0f; }
+
 
 protected:
-	void InitCommon(const float3& _pos, const float3& _speed, int _team);
+	void InitCommon(const float3 _pos, const float3 _speed, const float _radius, int _team);
 	void DrawCommon(size_t* lastTeam, CVertexArray* va);
 
 protected:
@@ -36,6 +36,8 @@ protected:
 	float3 pos;
 	float3 speed;
 	float3 rotAxis;
+
+	float radius;
 
 	float rotAngle;
 	float rotSpeed;
@@ -48,13 +50,7 @@ protected:
 
 struct S3DOFlyingPiece: public FlyingPiece {
 public:
-	S3DOFlyingPiece(const float3& pos, const float3& speed, int team, const S3DOPiece* _piece, const S3DOPrimitive* _chunk)
-	{
-		InitCommon(pos, speed, team);
-
-		piece = _piece;
-		chunk = _chunk;
-	}
+	S3DOFlyingPiece(const float3& pos, const float3& speed, int team, const S3DOPiece* _piece, const S3DOPrimitive* _chunk);
 
 	void Draw(size_t* lastTeam, size_t* lastTex, CVertexArray* va);
 
@@ -66,13 +62,8 @@ private:
 struct SS3OFlyingPiece: public FlyingPiece {
 public:
 	~SS3OFlyingPiece();
-	SS3OFlyingPiece(const float3& pos, const float3& speed, int team, int textureType, const SS3OVertex* _chunk)
-	{
-		InitCommon(pos, speed, team);
+	SS3OFlyingPiece(const float3& pos, const float3& speed, int team, int textureType, const SS3OVertex* _chunk);
 
-		chunk = _chunk;
-		texture = textureType;
-	}
 
 	void Draw(size_t* lastTeam, size_t* lastTex, CVertexArray* va);
 

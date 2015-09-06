@@ -71,7 +71,18 @@ public:
 	 *
 	 * Tests whether teams are allied
 	 */
-	bool AlliedTeams(int a, int b) const { return allyTeams[AllyTeam(a)].allies[AllyTeam(b)]; }
+	bool AlliedTeams(int teamA, int teamB) const { return allyTeams[AllyTeam(teamA)].allies[AllyTeam(teamB)]; }
+
+	/**
+	 * @brief allied allyteams
+	 * @param a first allyteam
+	 * @param b second allyteam
+	 * @return whether allyteams are allied
+	 *
+	 * Tests whether allyteams are allied
+	 */
+	bool AlliedAllyTeams(int allyA, int allyB) const { return allyTeams[allyA].allies[allyB]; }
+
 
 	/**
 	 * @brief set ally team

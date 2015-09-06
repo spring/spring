@@ -43,7 +43,7 @@ public:
 
 	void Draw();
 	bool Update();
-
+private:
 	float3 side1;
 	float3 side2;
 
@@ -75,7 +75,7 @@ public:
 	void Init(const CUnit* owner, const float3& offset);
 	void Draw();
 	bool Update();
-
+private:
 	float3 side1;
 	float3 side2;
 
@@ -103,7 +103,7 @@ public:
 	void Draw();
 	/// @return false when it should be deleted
 	bool Update();
-
+private:
 	float3 side1;
 	float3 side2;
 

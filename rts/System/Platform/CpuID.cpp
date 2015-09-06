@@ -91,6 +91,12 @@ namespace springproc {
 			getIdsAmd();
 		}
 	}
+	CpuId::~CpuId()
+	{
+		delete affinityMaskOfCores;
+		delete affinityMaskOfPackages;
+		delete processorApicIds;
+	}
 
 	// Function based on Figure 1 from Kuo_CpuTopology_rc1.rh1.final.pdf
 	void CpuId::getIdsIntel()

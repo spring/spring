@@ -33,11 +33,9 @@
 #include "System/Util.h"
 #include "System/FileSystem/FileSystem.h"
 
-using std::list;
 using std::min;
 using std::max;
 
-CGroundDecalHandler* groundDecals_ = NULL;
 
 CONFIG(int, GroundScarAlphaFade).defaultValue(0);
 
@@ -53,8 +51,7 @@ CGroundDecalHandler::CGroundDecalHandler()
 
 	groundScarAlphaFade = (configHandler->GetInt("GroundScarAlphaFade") != 0);
 
-	unsigned char* buf=new unsigned char[512*512*4];
-	memset(buf,0,512*512*4);
+	unsigned char buf[512*512*4] = {0};
 
 	LuaParser resourcesParser("gamedata/resources.lua",
 	                          SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
@@ -77,12 +74,10 @@ CGroundDecalHandler::CGroundDecalHandler()
 
 	scarFieldX=mapDims.mapx/32;
 	scarFieldY=mapDims.mapy/32;
-	scarField=new std::set<Scar*>[scarFieldX*scarFieldY];
+	scarField=new std::vector<Scar*>[scarFieldX*scarFieldY];
 
 	lastTest=0;
 	maxOverlap=decalLevel+1;
-
-	delete[] buf;
 
 	LoadDecalShaders();
 }
@@ -93,12 +88,12 @@ CGroundDecalHandler::~CGroundDecalHandler()
 {
 	eventHandler.RemoveClient(this);
 
-	for (std::vector<TrackType*>::iterator tti = trackTypes.begin(); tti != trackTypes.end(); ++tti) {
-		for (set<UnitTrackStruct*>::iterator ti = (*tti)->tracks.begin(); ti != (*tti)->tracks.end(); ++ti) {
-			delete *ti;
+	for (TrackType* tt: trackTypes) {
+		for (UnitTrackStruct* uts: tt->tracks) {
+			delete uts;
 		}
-		glDeleteTextures(1, &(*tti)->texture);
-		delete *tti;
+		glDeleteTextures(1, &tt->texture);
+		delete tt;
 	}
 	for (std::vector<TrackToAdd>::iterator ti = tracksToBeAdded.begin(); ti != tracksToBeAdded.end(); ++ti) {
 		delete (*ti).tp;
@@ -109,22 +104,22 @@ CGroundDecalHandler::~CGroundDecalHandler()
 		delete *ti;
 	}
 
-	for (std::vector<SolidObjectDecalType*>::iterator tti = objectDecalTypes.begin(); tti != objectDecalTypes.end(); ++tti) {
-		for (set<SolidObjectGroundDecal*>::iterator ti = (*tti)->objectDecals.begin(); ti != (*tti)->objectDecals.end(); ++ti) {
-			if ((*ti)->owner)
-				(*ti)->owner->groundDecal = 0;
-			if ((*ti)->gbOwner)
-				(*ti)->gbOwner->decal = 0;
-			delete *ti;
+	for (SolidObjectDecalType* dctype: objectDecalTypes) {
+		for (SolidObjectGroundDecal* dc: dctype->objectDecals) {
+			if (dc->owner)
+				dc->owner->groundDecal = nullptr;
+			if (dc->gbOwner)
+				dc->gbOwner->decal = nullptr;
+			delete dc;
 		}
-		glDeleteTextures (1, &(*tti)->texture);
-		delete *tti;
+		glDeleteTextures(1, &dctype->texture);
+		delete dctype;
 	}
-	for (std::list<Scar*>::iterator si = scars.begin(); si != scars.end(); ++si) {
-		delete *si;
+	for (auto &scar: scars) {
+		delete scar;
 	}
-	for (std::vector<Scar*>::iterator si = scarsToBeAdded.begin(); si != scarsToBeAdded.end(); ++si) {
-		delete *si;
+	for (auto &scar: scarsToBeAdded) {
+		delete scar;
 	}
 	if (scarField != NULL) {
 		delete[] scarField;
@@ -400,10 +395,10 @@ inline void CGroundDecalHandler::DrawGroundScar(CGroundDecalHandler::Scar* scar,
 void CGroundDecalHandler::GatherDecalsForType(CGroundDecalHandler::SolidObjectDecalType* decalType) {
 	decalsToDraw.clear();
 
-	set<SolidObjectGroundDecal*>::const_iterator bgdi = decalType->objectDecals.begin();
+	auto &objectDecals = decalType->objectDecals;
 
-	while (bgdi != decalType->objectDecals.end()) {
-		SolidObjectGroundDecal* decal = *bgdi;
+	for (int i = 0; i < objectDecals.size();) {
+		SolidObjectGroundDecal* decal = objectDecals[i];
 		CSolidObject* decalOwner = decal->owner;
 
 		const CUnit* decalOwnerUnit = NULL;
@@ -430,13 +425,14 @@ void CGroundDecalHandler::GatherDecalsForType(CGroundDecalHandler::SolidObjectDe
 				decalOwner->groundDecal = NULL;
 			}
 
-			bgdi = set_erase(decalType->objectDecals, bgdi);
+			objectDecals[i] = objectDecals.back();
+			objectDecals.pop_back();
 
 			delete decal;
 			continue;
 		}
 
-		++bgdi;
+		++i;
 
 		if (decalOwner == NULL) {
 			decalsToDraw.push_back(decal);
@@ -500,33 +496,34 @@ void CGroundDecalHandler::DrawObjectDecals() {
 void CGroundDecalHandler::AddTracks() {
 	{
 		// Delayed addition of new tracks
-		for (std::vector<TrackToAdd>::iterator ti = tracksToBeAdded.begin(); ti != tracksToBeAdded.end(); ++ti) {
-			const TrackToAdd* tta = &(*ti);
+		for (TrackToAdd &tta: tracksToBeAdded) {
 
-			if (tta->ts->owner == NULL) {
-				delete tta->tp;
+			if (tta.ts->owner == NULL) {
+				delete tta.tp;
 
-				if (tta->unit == NULL)
-					tracksToBeDeleted.push_back(tta->ts);
+				if (tta.unit == NULL)
+					tracksToBeDeleted.push_back(tta.ts);
 
 				continue; // unit removed
 			}
 
-			const CUnit* unit = tta->unit;
+			const CUnit* unit = tta.unit;
 
 			if (unit == NULL) {
-				unit = tta->ts->owner;
-				trackTypes[unit->unitDef->decalDef.trackDecalType]->tracks.insert(tta->ts);
+				unit = tta.ts->owner;
+				auto &tracks = trackTypes[unit->unitDef->decalDef.trackDecalType]->tracks;
+				assert(std::find(tracks.begin(), tracks.end(), tta.ts) == tracks.end());
+				tracks.push_back(tta.ts);
 			}
 
-			TrackPart* tp = tta->tp;
+			TrackPart* tp = tta.tp;
 
 			// if the unit is moving in a straight line only place marks at half the rate by replacing old ones
 			bool replace = false;
 
 			if (unit->myTrack->parts.size() > 1) {
-				list<TrackPart *>::iterator pi = --unit->myTrack->parts.end();
-				list<TrackPart *>::iterator pi2 = pi--;
+				std::deque<TrackPart *>::iterator pi = --unit->myTrack->parts.end();
+				std::deque<TrackPart *>::iterator pi2 = pi--;
 
 				replace = (((tp->pos1 + (*pi)->pos1) * 0.5f).SqDistance((*pi2)->pos1) < 1.0f);
 			}
@@ -542,8 +539,8 @@ void CGroundDecalHandler::AddTracks() {
 		tracksToBeAdded.clear();
 	}
 
-	for (std::vector<UnitTrackStruct *>::iterator ti = tracksToBeDeleted.begin(); ti != tracksToBeDeleted.end(); ++ti) {
-		delete *ti;
+	for (UnitTrackStruct *uts: tracksToBeDeleted) {
+		delete uts;
 	}
 
 	tracksToBeDeleted.clear();
@@ -555,21 +552,17 @@ void CGroundDecalHandler::DrawTracks() {
 	unsigned char nxtPartColor[4] = {255, 255, 255, 255};
 
 	// create and draw the unit footprint quads
-	for (std::vector<TrackType*>::iterator tti = trackTypes.begin(); tti != trackTypes.end(); ++tti) {
-		TrackType* tt = *tti;
+	for (TrackType* tt: trackTypes) {
 
 		if (tt->tracks.empty())
 			continue;
 
-		set<UnitTrackStruct*>::iterator utsi = tt->tracks.begin();
 
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
 		glBindTexture(GL_TEXTURE_2D, tt->texture);
 
-		while (utsi != tt->tracks.end()) {
-			UnitTrackStruct* track = *utsi;
-			++utsi;
+		for (UnitTrackStruct* track: tt->tracks) {
 
 			if (track->parts.empty()) {
 				tracksToBeCleaned.push_back(TrackToClean(track, &(tt->tracks)));
@@ -590,8 +583,8 @@ void CGroundDecalHandler::DrawTracks() {
 
 			// walk across the track parts from front (oldest) to back (newest) and draw
 			// a quad between "connected" parts (ie. parts differing 8 sim-frames in age)
-			list<TrackPart*>::const_iterator curPart =   (track->parts.begin());
-			list<TrackPart*>::const_iterator nxtPart = ++(track->parts.begin());
+			std::deque<TrackPart*>::const_iterator curPart =   (track->parts.begin());
+			std::deque<TrackPart*>::const_iterator nxtPart = ++(track->parts.begin());
 
 			curPartColor[3] = std::max(0.0f, (1.0f - (gs->frameNum - (*curPart)->creationTime) * track->alphaFalloff) * 255.0f);
 
@@ -619,9 +612,8 @@ void CGroundDecalHandler::DrawTracks() {
 void CGroundDecalHandler::CleanTracks()
 {
 	// Cleanup old tracks
-	for (std::vector<TrackToClean>::iterator ti = tracksToBeCleaned.begin(); ti != tracksToBeCleaned.end(); ++ti) {
-		TrackToClean* ttc = &(*ti);
-		UnitTrackStruct* track = ttc->track;
+	for (TrackToClean &ttc: tracksToBeCleaned) {
+		UnitTrackStruct* track = ttc.track;
 
 		while (!track->parts.empty()) {
 			// stop at the first part that is still too young for deletion
@@ -637,7 +629,11 @@ void CGroundDecalHandler::CleanTracks()
 				track->owner->myTrack = NULL;
 				track->owner = NULL;
 			}
-			ttc->tracks->erase(track);
+			auto &tracks = *ttc.tracks;
+			auto it = std::find(tracks.begin(), tracks.end(), track);
+			assert(it != tracks.end());
+			*it = tracks.back();
+			tracks.pop_back();
 			tracksToBeDeleted.push_back(track);
 		}
 	}
@@ -647,17 +643,7 @@ void CGroundDecalHandler::CleanTracks()
 
 void CGroundDecalHandler::AddScars()
 {
-	scarsToBeChecked.clear();
-
-	{
-		for (std::vector<Scar*>::iterator si = scarsToBeAdded.begin(); si != scarsToBeAdded.end(); ++si)
-			scarsToBeChecked.push_back(*si);
-
-		scarsToBeAdded.clear();
-	}
-
-	for (std::vector<Scar*>::iterator si = scarsToBeChecked.begin(); si != scarsToBeChecked.end(); ++si) {
-		Scar* s = *si;
+	for (Scar* s: scarsToBeAdded) {
 		TestOverlaps(s);
 
 		int x1 = s->x1 / 16;
@@ -667,28 +653,32 @@ void CGroundDecalHandler::AddScars()
 
 		for (int y = y1; y <= y2; ++y) {
 			for (int x = x1; x <= x2; ++x) {
-				std::set<Scar*>* quad = &scarField[y * scarFieldX + x];
-				quad->insert(s);
+				auto &quad = scarField[y * scarFieldX + x];
+				assert(std::find(quad.begin(), quad.end(), s) == quad.end());
+				quad.push_back(s);
 			}
 		}
-
+		assert(std::find(scars.begin(), scars.end(), s) == scars.end());
 		scars.push_back(s);
 	}
+	
+	scarsToBeAdded.clear();
 }
 
 void CGroundDecalHandler::DrawScars() {
 	// create and draw the 16x16 quads for each ground scar
-	for (std::list<Scar*>::iterator si = scars.begin(); si != scars.end(); ) {
-		Scar* scar = *si;
+	for (int i = 0; i < scars.size();) {
+		Scar* scar = scars[i];
 
 		if (scar->lifeTime < gs->frameNum) {
-			RemoveScar(*si, false);
-			si = scars.erase(si);
+			RemoveScar(scar, false);
+			scars[i] = scars.back();
+			scars.pop_back();
 			continue;
 		}
 
 		DrawGroundScar(scar, groundScarAlphaFade);
-		++si;
+		++i;
 	}
 }
 
@@ -820,12 +810,12 @@ void CGroundDecalHandler::Draw()
 }
 
 
-void CGroundDecalHandler::RenderUnitMoved(const CUnit* unit, const float3& newpos)
+void CGroundDecalHandler::UnitMoved(const CUnit* unit)
 {
 	if (decalLevel == 0)
 		return;
 
-	AddDecalAndTrack(const_cast<CUnit*>(unit), newpos);
+	AddDecalAndTrack(const_cast<CUnit*>(unit), unit->pos);
 }
 
 
@@ -1094,27 +1084,27 @@ void CGroundDecalHandler::TestOverlaps(Scar* scar)
 
 	for(int y=y1;y<=y2;++y){
 		for(int x=x1;x<=x2;++x){
-			std::set<Scar*>* quad=&scarField[y*scarFieldX+x];
-			bool redoScan=false;
-			do {
-				redoScan=false;
-				for(std::set<Scar*>::iterator si=quad->begin();si!=quad->end();++si){
-					if(lastTest!=(*si)->lastTest && scar->lifeTime>=(*si)->lifeTime){
-						Scar* tested=*si;
-						tested->lastTest=lastTest;
-						int overlap=OverlapSize(scar,tested);
-						if(overlap>0 && tested->basesize>0){
-							float part=overlap/tested->basesize;
-							tested->overdrawn+=part;
-							if(tested->overdrawn>maxOverlap){
-								RemoveScar(tested,true);
-								redoScan=true;
-								break;
-							}
+			auto &quad = scarField[y*scarFieldX+x];
+			for(int i = 0;i < quad.size();){
+				Scar* tested = quad[i];
+				if(lastTest != tested->lastTest && scar->lifeTime >= tested->lifeTime) {
+					tested->lastTest = lastTest;
+					int overlap = OverlapSize(scar, tested);
+					if(overlap > 0 && tested->basesize > 0){
+						float part = overlap / tested->basesize;
+						tested->overdrawn += part;
+						if(tested->overdrawn > maxOverlap){
+							RemoveScar(tested, true);
+						} else {
+							++i;
 						}
+					} else {
+						++i;
 					}
+				} else {
+					++i;
 				}
-			} while(redoScan);
+			}
 		}
 	}
 }
@@ -1129,13 +1119,20 @@ void CGroundDecalHandler::RemoveScar(Scar* scar, bool removeFromScars)
 
 	for (int y = y1;y <= y2; ++y) {
 		for (int x = x1; x <= x2; ++x) {
-			std::set<Scar*>* quad = &scarField[y * scarFieldX + x];
-			quad->erase(scar);
+			auto &quad = scarField[y * scarFieldX + x];
+			auto it = std::find(quad.begin(), quad.end(), scar);
+			assert(it != quad.end());
+			*it = quad.back();
+			quad.pop_back();
 		}
 	}
 
-	if (removeFromScars)
-		scars.remove(scar);
+	if (removeFromScars) {
+		auto it = std::find(scars.begin(), scars.end(), scar);
+		assert(it != scars.end());
+		*it = scars.back();
+		scars.pop_back();
+	}
 
 	delete scar;
 }
@@ -1188,7 +1185,7 @@ void CGroundDecalHandler::MoveSolidObject(CSolidObject* object, const float3& po
 	decal->posy = (pos.z / SQUARE_SIZE) - (decal->ysize >> 1);
 
 	object->groundDecal = decal;
-	objectDecalTypes[decalDef.groundDecalType]->objectDecals.insert(decal);
+	objectDecalTypes[decalDef.groundDecalType]->objectDecals.push_back(decal);
 }
 
 
@@ -1310,9 +1307,9 @@ void CGroundDecalHandler::RenderFeatureCreated(const CFeature* feature)
 		MoveSolidObject(const_cast<CFeature*>(feature), feature->pos);
 }
 
-void CGroundDecalHandler::RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos) {
+void CGroundDecalHandler::FeatureMoved(const CFeature* feature, const float3& oldpos) {
 	if (feature->objectDef->decalDef.useGroundDecal && (feature->def->drawType == DRAWTYPE_MODEL))
-		MoveSolidObject(const_cast<CFeature *>(feature), newpos);
+		MoveSolidObject(const_cast<CFeature *>(feature), feature->pos);
 }
 
 void CGroundDecalHandler::UnitLoaded(const CUnit* unit, const CUnit* transport) {

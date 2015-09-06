@@ -161,3 +161,8 @@ void CRepulseGfx::Update()
 		deleteMe = true;
 	}
 }
+
+int CRepulseGfx::GetProjectilesCount() const
+{
+	return 20;
+}

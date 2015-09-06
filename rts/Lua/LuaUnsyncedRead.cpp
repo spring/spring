@@ -39,12 +39,12 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureHandler.h"
+#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Game/UI/Groups/Group.h"
 #include "Game/UI/Groups/GroupHandler.h"
 #include "Net/Protocol/NetProtocol.h"
@@ -65,8 +65,6 @@
 	#include "System/Sound/OpenAL/EFXPresets.h"
 #endif
 
-#include <set>
-#include <list>
 #include <cctype>
 
 #include <SDL_clipboard.h>
@@ -653,7 +651,7 @@ enum UnitAllegiance {
 // never instantiated directly
 template<class T> class CWorldObjectQuadDrawer: public CReadMap::IQuadDrawer {
 public:
-	typedef std::list<T*> ObjectList;
+	typedef std::vector<T*> ObjectList;
 	typedef std::vector< const ObjectList* > ObjectVector;
 
 	void ResetState() {
@@ -1288,7 +1286,8 @@ int LuaUnsyncedRead::GetLosViewColors(lua_State* L)
 	PACK_COLOR_VECTOR(gd->losColor);
 	PACK_COLOR_VECTOR(gd->radarColor);
 	PACK_COLOR_VECTOR(gd->jamColor);
-	return 4;
+	PACK_COLOR_VECTOR(gd->radarColor2);
+	return 5;
 }
 
 
@@ -1513,10 +1512,9 @@ static void AddPlayerToRoster(lua_State* L, int playerID, bool includePathingFla
 	PUSH_ROSTER_ENTRY(number, teamHandler->AllyTeam(p->team));
 	PUSH_ROSTER_ENTRY(boolean, p->spectator);
 	PUSH_ROSTER_ENTRY(number, p->cpuUsage);
-	const float pingScale = (GAME_SPEED * gs->speedFactor);
 
 	if (!includePathingFlag || p->ping != PATHING_FLAG) {
-		const float pingSecs = float(p->ping - 1) / pingScale;
+		const float pingSecs = p->ping * 0.001f;
 		PUSH_ROSTER_ENTRY(number, pingSecs);
 	} else {
 		const float pingSecs = float(p->ping);

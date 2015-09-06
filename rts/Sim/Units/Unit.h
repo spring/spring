@@ -3,7 +3,6 @@
 #ifndef UNIT_H
 #define UNIT_H
 
-#include <map>
 #include <list>
 #include <vector>
 #include <string>
@@ -12,6 +11,7 @@
 #include "Lua/LuaUnitMaterial.h"
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Misc/Resource.h"
+#include "Sim/Weapons/WeaponTarget.h"
 #include "System/Matrix44f.h"
 #include "System/type2.h"
 
@@ -24,18 +24,17 @@ class AMoveType;
 class CWeapon;
 class CUnitScript;
 struct DamageArray;
-struct LosInstance;
 struct LocalModel;
 struct LocalModelPiece;
 struct UnitDef;
 struct UnitTrackStruct;
 struct UnitLoadParams;
+struct SLosInstance;
+
 
 namespace icon {
 	class CIconData;
 }
-
-class CTransportUnit;
 
 
 // LOS state bits
@@ -94,11 +93,11 @@ public:
 
 	bool AttackUnit(CUnit* unit, bool isUserTarget, bool wantManualFire, bool fpsMode = false);
 	bool AttackGround(const float3& pos, bool isUserTarget, bool wantManualFire, bool fpsMode = false);
+	void DropCurrentAttackTarget();
 
 	int GetBlockingMapID() const { return id; }
 
 	void ChangeLos(int losRad, int airRad);
-	void ChangeSensorRadius(int* valuePtr, int newValue);
 	/// negative amount=reclaim, return= true -> build power was successfully applied
 	bool AddBuildPower(CUnit* builder, float amount);
 	/// turn the unit on
@@ -141,6 +140,7 @@ public:
 	bool AddHarvestedMetal(float metal);
 
 	void SetStorage(const SResourcePack& newstorage);
+	bool HaveResources(const SResourcePack& res) const;
 	bool UseResources(const SResourcePack& res);
 	void AddResources(const SResourcePack& res, bool useIncomeMultiplier = true);
 	bool IssueResourceOrder(SResourceOrder* order);
@@ -168,6 +168,8 @@ public:
 	bool IsCloaked() const { return isCloaked; }
 	bool IsIdle() const;
 
+	bool CanUpdateWeapons() const;
+
 	void SetStunned(bool stun);
 	bool IsStunned() const { return stunned; }
 
@@ -185,10 +187,30 @@ public:
 	virtual bool ChangeTeam(int team, ChangeType type);
 	virtual void StopAttackingAllyTeam(int ally);
 
-	void SetTransporter(CTransportUnit* trans) { transporter = trans; }
-	inline CTransportUnit* GetTransporter() const {
+	//Transporter stuff
+	CR_DECLARE_SUB(TransportedUnit)
+
+	struct TransportedUnit {
+		CR_DECLARE_STRUCT(TransportedUnit)
+		CUnit* unit;
+		int piece;
+	};
+
+	void SetTransporter(CUnit* trans) { transporter = trans; }
+	inline CUnit* GetTransporter() const {
 		return transporter;
 	}
+
+	bool AttachUnit(CUnit* unit, int piece, bool force = false);
+	bool CanTransport(const CUnit* unit) const;
+
+	bool DetachUnit(CUnit* unit);
+	bool DetachUnitCore(CUnit* unit);
+	bool DetachUnitFromAir(CUnit* unit, const float3& pos); ///< moves to position after
+
+	bool CanLoadUnloadAtPos(const float3& wantedPos, const CUnit* unit, float* wantedHeightPtr = NULL) const;
+	float GetTransporteeWantedHeight(const float3& wantedPos, const CUnit* unit, bool* ok = NULL) const;
+	short GetTransporteeWantedHeading(const CUnit* unit) const;
 
 public:
 	virtual void KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSequence = true);
@@ -196,6 +218,7 @@ public:
 
 	void TempHoldFire(int cmdID);
 	void ReleaseTempHoldFire() { dontFire = false; }
+	bool HaveTarget() const;
 
 	/// start this unit in free fall from parent unit
 	void Drop(const float3& parentPos, const float3& parentDir, CUnit* parent);
@@ -244,8 +267,6 @@ public:
 	CUnit* soloBuilder;
 	/// last attacker
 	CUnit* lastAttacker;
-	/// current attackee
-	CUnit* attackTarget;
 
 	/// piece that was last hit by a projectile
 	LocalModelPiece* lastAttackedPiece;
@@ -257,8 +278,16 @@ public:
 	/// last time this unit fired a weapon
 	int lastFireWeapon;
 
+	/// current attackee
+	SWeaponTarget curTarget;
+
 	/// transport that the unit is currently in
-	CTransportUnit* transporter;
+	CUnit* transporter;
+
+	//Transporter stuff
+	int transportCapacityUsed;
+	float transportMassUsed;
+	std::list<TransportedUnit> transportedUnits;
 
 	AMoveType* moveType;
 	AMoveType* prevMoveType;
@@ -269,7 +298,7 @@ public:
 	CUnitScript* script;
 
 	/// which squares the unit can currently observe
-	LosInstance* los;
+	std::vector<SLosInstance*> los;
 
 	/// indicate the los/radar status the allyteam has on this unit
 	std::vector<unsigned short> losStatus;
@@ -279,12 +308,9 @@ public:
 
 	/// quads the unit is part of
 	std::vector<int> quads;
-	std::vector<int> radarSquares;
 
 	std::list<CMissileProjectile*> incomingMissiles; //FIXME make std::set?
 
-
-	float3 attackPos;
 	float3 deathSpeed;
 	float3 lastMuzzleFlameDir;
 
@@ -372,10 +398,6 @@ public:
 	float reloadSpeed;
 	float maxRange;
 
-	/// true if at least one weapon has targetType != Target_None
-	bool haveTarget;
-	bool haveManualFireRequest;
-
 	/// used to determine muzzle flare size
 	float lastMuzzleFlameSize;
 
@@ -391,10 +413,6 @@ public:
 
 	int losRadius;
 	int airLosRadius;
-	int lastLosUpdate;
-
-	float losHeight;
-	float radarHeight;
 
 	int radarRadius;
 	int sonarRadius;
@@ -402,11 +420,8 @@ public:
 	int sonarJamRadius;
 	int seismicRadius;
 	float seismicSignature;
-	int2 oldRadarPos;
-	bool hasRadarPos;
 	bool stealth;
 	bool sonarStealth;
-	bool hasRadarCapacity;
 
 	/// only when the unit is active
 	SResourcePack resourcesCondUse;
@@ -449,8 +464,6 @@ public:
 
 	int fireState;
 	int moveState;
-
-	bool userAttackGround;
 
 	/// if the unit is in it's 'on'-state
 	bool activated;
@@ -506,10 +519,6 @@ public:
 
 	int selfDCountdown;
 
-	float currentFuel;
-
-	/// minimum alpha value for a texel to be drawn
-	float alphaThreshold;
 	/// the damage value passed to CEGs spawned by this unit's script
 	int cegDamage;
 

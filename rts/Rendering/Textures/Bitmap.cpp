@@ -3,6 +3,7 @@
 #include <utility>
 #include <ostream>
 #include <fstream>
+#include <memory>
 #include <string.h>
 #include <IL/il.h>
 //#include <IL/ilu.h>
@@ -385,7 +386,11 @@ bool CBitmap::Save(std::string const& filename, bool opaque) const
 #endif // !BITMAP_NO_OPENGL
 	}
 
-	unsigned char* buf = new unsigned char[xsize * ysize * 4];
+	if (!mem || channels != 4) {
+		return false;
+	}
+
+	std::unique_ptr<unsigned char[]> buf(new unsigned char[xsize * ysize * 4]);
 	const int ymax = (ysize - 1);
 	/* HACK Flip the image so it saves the right way up.
 		(Fiddling with ilOriginFunc didn't do anything?)
@@ -412,15 +417,55 @@ bool CBitmap::Save(std::string const& filename, bool opaque) const
 	ilGenImages(1, &ImageName);
 	ilBindImage(ImageName);
 
-	ilTexImage(xsize, ysize, 1, 4, IL_RGBA, IL_UNSIGNED_BYTE, buf);
+	ilTexImage(xsize, ysize, 1, 4, IL_RGBA, IL_UNSIGNED_BYTE, buf.get());
 
 	const std::string fullpath = dataDirsAccess.LocateFile(filename, FileQueryFlags::WRITE);
-	const bool success = ilSaveImage((char*)fullpath.c_str());
+	const bool success = ilSaveImage(fullpath.c_str());
 
 	ilDeleteImages(1, &ImageName);
 	ilDisable(IL_ORIGIN_SET);
-	delete[] buf;
+	return success;
+}
 
+
+bool CBitmap::SaveFloat(std::string const& filename) const
+{
+	// small hack: we read the RGBA pack as a single FLT32 value!
+	if (!mem || channels != 4) {
+		return false;
+	}
+
+	// seems IL_ORIGIN_SET only works in ilLoad and not in ilTexImage nor in ilSaveImage
+	// so we need to flip the image ourself
+	const float* memf = reinterpret_cast<const float*>(mem);
+	typedef unsigned short uint16;
+	std::unique_ptr<uint16[]> buf(new uint16[xsize * ysize]);
+	const int ymax = (ysize - 1);
+	for (int y = 0; y < ysize; ++y) {
+		for (int x = 0; x < xsize; ++x) {
+			const int bi = x + (xsize * (ymax - y));
+			const int mi = x + (xsize * (y));
+			uint16 us = memf[mi] * 0xFFFF; // convert float 0..1 to ushort
+			buf[bi] = us;
+		}
+	}
+
+	boost::mutex::scoped_lock lck(devilMutex);
+	ilHint(IL_COMPRESSION_HINT, IL_USE_COMPRESSION);
+	ilSetInteger(IL_JPG_QUALITY, 80);
+
+	ILuint ImageName = 0;
+	ilGenImages(1, &ImageName);
+	ilBindImage(ImageName);
+
+	// note: DevIL only generates a 16bit grayscale PNG when format is IL_UNSIGNED_SHORT!
+	//       IL_FLOAT is converted to RGB with 8bit colordepth!
+	ilTexImage(xsize, ysize, 1, 1, IL_LUMINANCE, IL_UNSIGNED_SHORT, buf.get());
+
+	const std::string fullpath = dataDirsAccess.LocateFile(filename, FileQueryFlags::WRITE);
+	const bool success = ilSaveImage(fullpath.c_str());
+
+	ilDeleteImages(1, &ImageName);
 	return success;
 }
 

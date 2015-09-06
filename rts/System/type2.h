@@ -15,8 +15,9 @@ template<typename t> struct type2 {
 
 	bool operator == (const type2<t>& v) const { return (x == v.x) && (y == v.y); }
 	bool operator != (const type2<t>& v) const { return (x != v.x) || (y != v.y); }
-	bool operator  < (const type2<t>& f) const { return (x != f.x) ? (x < f.x) : (y < f.y); }
+	bool operator  < (const type2<t>& f) const { return (y == f.y) ? (x < f.x) : (y < f.y); }
 
+	type2<t> operator - () const { return (type2<t>(-x, -y)); }
 	type2<t> operator + (const type2<t>& v) const { return (type2<t>(x + v.x, y + v.y)); }
 	type2<t> operator - (const type2<t>& v) const { return (type2<t>(x - v.x, y - v.y)); }
 	type2<t> operator / (const type2<t>& v) const { return (type2<t>(x / v.x, y / v.y)); }
@@ -39,7 +40,31 @@ template<typename t> struct type2 {
 	t y;
 };
 
+template<typename t> struct itype2 : public type2<t> {
+	CR_DECLARE_STRUCT(itype2)
+
+	itype2<t>() {}
+	itype2<t>(const t nx, const t ny) : type2<t>(nx, ny) {}
+	itype2<t>(const type2<int>& v) : type2<t>(v.x, v.y) {}
+
+	bool operator == (const type2<int>& v) const { return (type2<t>::x == v.x) && (type2<t>::y == v.y); }
+	bool operator != (const type2<int>& v) const { return (type2<t>::x != v.x) || (type2<t>::y != v.y); }
+	bool operator  < (const type2<int>& f) const { return (type2<t>::y == f.y) ? (type2<t>::x < f.x) : (type2<t>::y < f.y); }
+
+	type2<int> operator + (const type2<int>& v) const { return (type2<int>(type2<t>::x + v.x, type2<t>::y + v.y)); }
+	type2<int> operator - (const type2<int>& v) const { return (type2<int>(type2<t>::x - v.x, type2<t>::y - v.y)); }
+	type2<int> operator / (const type2<int>& v) const { return (type2<int>(type2<t>::x / v.x, type2<t>::y / v.y)); }
+	type2<int> operator / (const int& i) const        { return (type2<int>(type2<t>::x / i  , type2<t>::y / i  )); }
+	type2<int> operator * (const type2<int>& v) const { return (type2<int>(type2<t>::x * v.x, type2<t>::y * v.y)); }
+	type2<int> operator * (const int& i) const        { return (type2<int>(type2<t>::x * i  , type2<t>::y * i  )); }
+
+	operator type2<int> () const { return (type2<int>(type2<t>::x, type2<t>::y)); }
+};
+
+
 typedef type2<  int>   int2;
 typedef type2<float> float2;
+typedef itype2<short> short2;
+typedef itype2<unsigned short> ushort2;
 
 #endif

@@ -1193,13 +1193,22 @@ end
 
 
 function gadgetHandler:AllowWeaponTargetCheck(attackerID, attackerWeaponNum, attackerWeaponDefID)
+	local ignore = true
 	for _, g in ipairs(self.AllowWeaponTargetCheckList) do
-		if (not g:AllowWeaponTargetCheck(attackerID, attackerWeaponNum, attackerWeaponDefID)) then
-			return false
+		local allowCheck, ignoreCheck = g:AllowWeaponTargetCheck(attackerID, attackerWeaponNum, attackerWeaponDefID)
+		if not ignoreCheck then
+			ignore = false
+			if not allowCheck then
+				return 0
+			end
 		end
 	end
-
-	return true
+	
+	if ignore then
+		return -1
+	else
+		return 1
+	end
 end
 
 function gadgetHandler:AllowWeaponTarget(attackerID, targetID, attackerWeaponNum, attackerWeaponDefID, defPriority)
@@ -1342,6 +1351,17 @@ function gadgetHandler:UnitDamaged(
     g:UnitDamaged(unitID, unitDefID, unitTeam,
                   damage, paralyzer, weaponDefID, projectileID,
                   attackerID, attackerDefID, attackerTeam)
+  end
+end
+
+function gadgetHandler:UnitStunned(
+  unitID,
+  unitDefID,
+  unitTeam,
+  stunned
+)
+  for _,g in ipairs(self.UnitStunnedList) do
+    g:UnitStunned(unitID, unitDefID, unitTeam, stunned)
   end
 end
 
@@ -1704,6 +1724,20 @@ end
 function gadgetHandler:KeyRelease(key, mods, label, unicode)
   for _,g in ipairs(self.KeyReleaseList) do
     if (g:KeyRelease(key, mods, label, unicode)) then
+      return true
+    end
+  end
+  return false
+end
+
+
+function gadgetHandler:TextInput(utf8, ...)
+  if (self.tweakMode) then
+    return true
+  end
+
+  for _,g in ipairs(self.TextInputList) do
+    if (g:TextInput(utf8, ...)) then
       return true
     end
   end

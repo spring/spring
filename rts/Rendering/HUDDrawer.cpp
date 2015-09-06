@@ -218,15 +218,15 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 					glColor4f(0.0f, 0.0f, 1.0f, 0.7f);
 			}
 
-			if (w->targetType != Target_None) {
-				float3 pos = w->targetPos;
-				float3 v1 = (pos-camera->GetPos()).ANormalize();
+			if (w->HaveTarget()) {
+				float3 pos = w->GetCurrentTargetPos();
+				float3 v1 = (pos - camera->GetPos()).ANormalize();
 				float3 v2 = (v1.cross(UpVector)).ANormalize();
 				float3 v3 = (v2.cross(v1)).Normalize();
 				float radius = 10.0f;
 
-				if (w->targetType == Target_Unit)
-					radius = w->targetUnit->radius;
+				if (w->GetCurrentTarget().type == Target_Unit)
+					radius = w->GetCurrentTarget().unit->radius;
 
 				// draw the reticle
 				glBegin(GL_LINE_STRIP);
@@ -240,7 +240,7 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 					const FPSUnitController& c = p->fpsController;
 					const float dist = std::min(c.targetDist, w->range * 0.9f);
 
-					pos = w->weaponPos + w->wantedDir * dist;
+					pos = w->aimFromPos + w->wantedDir * dist;
 					v1 = (pos - camera->GetPos()).ANormalize();
 					v2 = (v1.cross(UpVector)).ANormalize();
 					v3 = (v2.cross(v1)).ANormalize();
@@ -256,7 +256,7 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 				glBegin(GL_LINES);
 				if (!w->onlyForward) {
 					glVertexf3(pos);
-					glVertexf3(w->targetPos);
+					glVertexf3(w->GetCurrentTargetPos());
 
 					glVertexf3(pos + (v2 * fastmath::sin(PI * 0.25f) + v3 * fastmath::cos(PI * 0.25f)) * radius);
 					glVertexf3(pos + (v2 * fastmath::sin(PI * 1.25f) + v3 * fastmath::cos(PI * 1.25f)) * radius);
@@ -264,8 +264,8 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 					glVertexf3(pos + (v2 * fastmath::sin(PI * -0.25f) + v3 * fastmath::cos(PI * -0.25f)) * radius);
 					glVertexf3(pos + (v2 * fastmath::sin(PI * -1.25f) + v3 * fastmath::cos(PI * -1.25f)) * radius);
 				}
-				if ((w->targetPos - camera->GetPos()).ANormalize().dot(camera->GetDir()) < 0.7f) {
-					glVertexf3(w->targetPos);
+				if ((w->GetCurrentTargetPos() - camera->GetPos()).ANormalize().dot(camera->GetDir()) < 0.7f) {
+					glVertexf3(w->GetCurrentTargetPos());
 					glVertexf3(camera->GetPos() + camera->GetDir() * 100.0f);
 				}
 				glEnd();

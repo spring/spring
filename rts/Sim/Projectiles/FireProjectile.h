@@ -22,10 +22,13 @@ public:
 		float particleSize
 	);
 
-	void Draw();
-	void Update();
+	void Draw() override;
+	void Update() override;
 	void StopFire();
 
+	virtual int GetProjectilesCount() const override;
+
+public:
 	int ttl;
 	float3 emitPos;
 	float emitRadius;
@@ -45,13 +48,10 @@ public:
 		int smokeType;
 	};
 
-	typedef std::list<SubParticle> part_list_type;
+	typedef std::list<SubParticle> part_list_type; //FIXME
 
 	part_list_type subParticles;
 	part_list_type subParticles2;
-
-private:
-	virtual void FireImpl() {};
 };
 
 #endif // FIRE_PROJECTILE_H

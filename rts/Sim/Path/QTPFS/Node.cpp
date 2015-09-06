@@ -14,8 +14,6 @@
 #include "Map/ReadMap.h"
 #include "Sim/Misc/GlobalConstants.h"
 
-#define QTNODE_CHILD_COUNT 4
-
 unsigned int QTPFS::QTNode::MIN_SIZE_X;
 unsigned int QTPFS::QTNode::MIN_SIZE_Z;
 unsigned int QTPFS::QTNode::MAX_DEPTH;
@@ -226,12 +224,7 @@ QTPFS::QTNode::QTNode(
 	prevNode = NULL;
 
 	// for leafs, all children remain NULL
-	children.resize(QTNODE_CHILD_COUNT, NULL);
-}
-
-QTPFS::QTNode::~QTNode() {
-	children.clear();
-	neighbors.clear();
+	children.fill(NULL);
 }
 
 void QTPFS::QTNode::Delete() {
@@ -241,7 +234,6 @@ void QTPFS::QTNode::Delete() {
 		}
 	}
 
-	neighbors.clear();
 	delete this;
 }
 
@@ -252,7 +244,8 @@ boost::uint64_t QTPFS::QTNode::GetMemFootPrint() const {
 
 	if (IsLeaf()) {
 		memFootPrint += (neighbors.size() * sizeof(INode*));
-		memFootPrint += (children.size() * sizeof(QTNode*));
+		// already counted; std::array<> statically allocates
+		// memFootPrint += (children.size() * sizeof(QTNode*));
 		memFootPrint += (netpoints.size() * sizeof(float3));
 	} else {
 		for (unsigned int i = 0; i < children.size(); i++) {
@@ -636,9 +629,9 @@ bool QTPFS::QTNode::UpdateMoveCost(
 unsigned int QTPFS::QTNode::GetMaxNumNeighbors() const {
 	unsigned int n = 0;
 
-	if (xmin() > (           0)) { n += zsize(); } // count EDGE_L ngbs
+	if (xmin() > (               0)) { n += zsize(); } // count EDGE_L ngbs
 	if (xmax() < (mapDims.mapx - 1)) { n += zsize(); } // count EDGE_R ngbs
-	if (zmin() > (           0)) { n += xsize(); } // count EDGE_T ngbs
+	if (zmin() > (               0)) { n += xsize(); } // count EDGE_T ngbs
 	if (zmax() < (mapDims.mapy - 1)) { n += xsize(); } // count EDGE_B ngbs
 
 	return n;

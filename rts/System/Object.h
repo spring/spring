@@ -5,10 +5,10 @@
 
 #include <map>
 #include <set>
+#include <array>
 #include "ObjectDependenceTypes.h"
 #include "System/Platform/Threading.h"
 #include "System/creg/creg_cond.h"
-
 
 class CObject
 {
@@ -19,7 +19,6 @@ public:
 	virtual ~CObject();
 	void Serialize(creg::ISerializer* ser);
 	void PostLoad();
-	virtual void Detach();
 
 	/// Request to not inform this when obj dies
 	virtual void DeleteDeathDependence(CObject* obj, DependenceType dep);
@@ -49,7 +48,7 @@ public:
 					AIRMOVETYPE,
 					TAAIRMOVETYPE,
 			COMMANDAI=(1<<COMMANDAI_BIT),
-				FACTORYCAI,TRANSPORTCAI,MOBILECAI,
+				FACTORYCAI,MOBILECAI,
 			EXPGENSPAWNABLE=(1<<EXPGENSPAWNABLE_BIT),
 				PROJECTILE=(1<<PROJECTILE_BIT)|EXPGENSPAWNABLE,
 					SHIELDPARTPROJECTILE,
@@ -83,16 +82,16 @@ private:
 
 public:
 	typedef std::set<CObject*, syncsafe_compare> TSyncSafeSet;
-	typedef std::map<DependenceType, TSyncSafeSet> TDependenceMap;
+	typedef std::array<TSyncSafeSet*, DEPENDENCE_COUNT> TDependenceMap;
+	bool detached;
 
 protected:
-	const TSyncSafeSet& GetListeners(const DependenceType dep) { return listeners[dep]; }
+	const TSyncSafeSet& GetListeners(const DependenceType dep) { return listeners[dep] ? *listeners[dep] : *(listeners[dep] = new TSyncSafeSet()); }
 	const TDependenceMap& GetAllListeners() const { return listeners; }
-	const TSyncSafeSet& GetListening(const DependenceType dep)  { return listening[dep]; }
+	const TSyncSafeSet& GetListening(const DependenceType dep)  { return listening[dep] ? *listening[dep] : *(listening[dep] = new TSyncSafeSet()); }
 	const TDependenceMap& GetAllListening() const { return listening; }
 
 protected:
-	bool detached;
 	TDependenceMap listeners;
 	TDependenceMap listening;
 };

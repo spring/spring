@@ -36,8 +36,8 @@ fi
 
 # limit to 1.5GB RAM
 ulimit -v 1500000
-# max 3 min cpu time
-ulimit -t 220
+# max 4 min cpu time
+ulimit -t 240
 
 # delete path cache
 rm -rf ~/.config/spring/cache/

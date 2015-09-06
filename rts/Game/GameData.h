@@ -16,6 +16,7 @@ class GameData
 {
 public:
 	GameData();
+	GameData(const std::string& setup);
 	GameData(boost::shared_ptr<const netcode::RawPacket> pckt);
 	
 	const netcode::RawPacket* Pack() const;

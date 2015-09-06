@@ -4,7 +4,6 @@
 #define MOVETYPE_H
 
 #include "System/creg/creg_cond.h"
-#include "Sim/Misc/AirBaseHandler.h"
 #include "System/Object.h"
 #include "System/float3.h"
 
@@ -51,19 +50,9 @@ public:
 	virtual bool IsFlying() const { return false; }
 	virtual bool IsReversing() const { return false; }
 
-	virtual void ReservePad(CAirBaseHandler::LandingPad* lp) { /* AAirMoveType only */ }
-	virtual void UnreservePad(CAirBaseHandler::LandingPad* lp) { /* AAirMoveType only */ }
-	virtual CAirBaseHandler::LandingPad* GetReservedPad() { return NULL; }
-
-	bool WantsRepair() const;
-	bool WantsRefuel() const;
-
-	void SetRepairBelowHealth(float rbHealth) { repairBelowHealth = rbHealth; }
-
 	float GetMaxSpeed() const { return maxSpeed; }
 	float GetMaxSpeedDef() const { return maxSpeedDef; }
 	float GetMaxWantedSpeed() const { return maxWantedSpeed; }
-	float GetRepairBelowHealth() const { return repairBelowHealth; }
 	float GetManeuverLeash() const { return maneuverLeash; }
 
 	float CalcStaticTurnRadius() const;
@@ -90,7 +79,6 @@ protected:
 	float maxSpeedDef;         // default maximum speed owner can reach (as defined by its UnitDef, never changes)
 	float maxWantedSpeed;      // maximum speed (temporarily) set by a CMD_SET_WANTED_MAX_SPEED modifier command
 
-	float repairBelowHealth;
 	float maneuverLeash;       // maximum distance away a target can be and still be chased
 };
 

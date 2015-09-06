@@ -31,7 +31,6 @@ public:
 	void UpdateManeuver();
 	void UpdateAttack();
 	bool UpdateFlying(float wantedHeight, float engine);
-	void UpdateLanded();
 	void UpdateLanding();
 	void UpdateAirPhysics(
 		float rudder,
@@ -41,9 +40,9 @@ public:
 		const float3& engineVector
 	);
 	void SetState(AircraftState state);
-	void UpdateTakeOff(float wantedHeight);
+	void UpdateTakeOff();
 
-	float3 FindLandingPos(float brakeRate) const;
+	float3 FindLandingPos() const;
 
 	void SetMaxSpeed(float speed);
 
@@ -66,6 +65,8 @@ public:
 	/// actually the invDrag of crashDrag
 	float crashDrag;
 
+	float brakeDistanceSq;
+
 	float frontToSpeed;
 	float speedToFront;
 	float myGravity;
@@ -77,6 +78,8 @@ public:
 	float maxAileron;
 	float maxElevator;
 	float maxRudder;
+	// fighters abort dive toward target if within this distance and climb back to normal altitude
+	float attackSafetyDistance;
 
 	/// used while landing
 	float crashAileron;

@@ -5,6 +5,7 @@
 #include "VertexArray.h"
 #include "Map/Ground.h"
 #include "Sim/Weapons/Weapon.h"
+#include "Sim/Weapons/WeaponDef.h"
 #include "System/ThreadPool.h"
 
 /**
@@ -73,6 +74,7 @@ void glBallisticCircle(const float3& center, const float radius,
 	va->EnlargeArrays(resolution, 0, VA_SIZE_0);
 
 	float3* vertices = va->GetTypedVertexArray<float3>(resolution);
+	const float heightMod = weapon ? weapon->weaponDef->heightmod : 1.0f;
 
 	for_mt(0, resolution, [&](const int i) {
 		const float radians = (2.0f * PI) * (float)i / (float)resolution;
@@ -85,7 +87,7 @@ void glBallisticCircle(const float3& center, const float radius,
 		pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false);
 		float heightDiff = (pos.y - center.y) * 0.5f;
 		rad -= heightDiff * slope;
-		float adjRadius = weapon ? weapon->GetRange2D(heightDiff * weapon->heightMod) : rad;
+		float adjRadius = weapon ? weapon->GetRange2D(heightDiff * heightMod) : rad;
 		float adjustment = rad * 0.5f;
 		float ydiff = 0;
 		for(int j = 0; j < rdiv && math::fabs(adjRadius - rad) + ydiff > .01 * rad; j++){
@@ -101,7 +103,7 @@ void glBallisticCircle(const float3& center, const float radius,
 			ydiff = math::fabs(pos.y - newY);
 			pos.y = newY;
 			heightDiff = (pos.y - center.y);
-			adjRadius = weapon ? weapon->GetRange2D(heightDiff * weapon->heightMod) : rad;
+			adjRadius = weapon ? weapon->GetRange2D(heightDiff * heightMod) : rad;
 		}
 		pos.x = center.x + (sinR * adjRadius);
 		pos.z = center.z + (cosR * adjRadius);

@@ -142,3 +142,10 @@ void CFireBallProjectile::Collision()
 	CWeaponProjectile::Collision();
 	deleteMe = false;
 }
+
+int CFireBallProjectile::GetProjectilesCount() const
+{
+	int numSparks = sparks.size();
+	int numFire = std::min(10, numSparks);
+	return (numSparks + numFire);
+}

@@ -116,3 +116,8 @@ void CLightningProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& poin
 	lines.AddVertexQC(targetPos, lcolor);
 }
 
+int CLightningProjectile::GetProjectilesCount() const
+{
+	return displacements_size * 2;
+}
+

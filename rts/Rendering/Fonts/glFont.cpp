@@ -931,25 +931,15 @@ void CglFont::glPrintTable(float x, float y, float s, const int options, const s
 	}
 }
 
-
-// macro for formatting printf-style
-#define FORMAT_STRING(lastarg,fmt,out)                         \
-		char out[512];                         \
-		va_list ap;                            \
-		if (fmt == NULL) return;               \
-		va_start(ap, lastarg);                 \
-		VSNPRINTF(out, sizeof(out), fmt, ap);  \
-		va_end(ap);
-
 void CglFont::glFormat(float x, float y, float s, const int options, const char* fmt, ...)
 {
-	FORMAT_STRING(fmt,fmt,text);
-	glPrint(x, y, s, options, std::string(text));
+	char out[512];
+	va_list ap;
+	if (fmt == NULL) return;
+	va_start(ap, fmt);
+	VSNPRINTF(out, sizeof(out), fmt, ap);
+	va_end(ap);
+	glPrint(x, y, s, options, std::string(out));
 }
 
 
-void CglFont::glFormat(float x, float y, float s, const int options, const std::string& fmt, ...)
-{
-	FORMAT_STRING(fmt,fmt.c_str(),text);
-	glPrint(x, y, s, options, std::string(text));
-}

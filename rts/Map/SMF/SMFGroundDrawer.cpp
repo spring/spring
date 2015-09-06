@@ -170,7 +170,7 @@ void CSMFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
 	const float alphainc = fastmath::PI2 / 32;
 	float alpha,r1,r2;
 
-	float3 p(0.0f, std::min(-200.0f, smfMap->GetInitMinHeight() - 400.0f), 0.0f);
+	float3 p(0.0f, 0.0f, 0.0f);
 
 	for (int n = (camOufOfMap) ? 0 : 1; n < 4 ; ++n) {
 		if ((n == 1) && !camOufOfMap) {
@@ -206,7 +206,10 @@ inline void CSMFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
 		const bool skipUnderground = (camera->GetPos().IsInBounds() && !mapInfo->map.voidWater);
 		const unsigned int dispList = skipUnderground ? waterPlaneCamInDispList: waterPlaneCamOutDispList;
 
+		glPushMatrix();
+		glTranslatef(0.f, std::min(-200.0f, smfMap->GetCurrMinHeight() - 400.0f), 0.f);
 		glCallList(dispList);
+		glPopMatrix();
 	}
 }
 

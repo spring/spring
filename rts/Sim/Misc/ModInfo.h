@@ -41,15 +41,16 @@ public:
 	std::string description;
 
 	// Movement behaviour
-	bool allowAircraftToLeaveMap;    // determines if gunships are allowed to leave map boundaries
-	bool allowAircraftToHitGround;   // determines if aircraft (both types) can collide with terrain
-	bool allowPushingEnemyUnits;     // determines if enemy (ground-)units can be pushed during collisions
-	bool allowCrushingAlliedUnits;   // determines if allied (ground-)units can be crushed during collisions
-	bool allowUnitCollisionDamage;   // determines if units take damage from (skidding) collisions
-	bool allowUnitCollisionOverlap;  // determines if unit footprints are allowed to semi-overlap during collisions
-	bool allowGroundUnitGravity;     // determines if (ground-)units experience gravity during regular movement
-	bool allowHoverUnitStrafing;     // determines if (hover-)units carry their momentum sideways when turning
-	bool useClassicGroundMoveType;   // determines if (ground-)units use the CClassicGroundMoveType path-follower
+	bool allowDirectionalPathing;    //< determines if ground speed going downhill != going uphill
+	bool allowAircraftToLeaveMap;    //< determines if gunships are allowed to leave map boundaries
+	bool allowAircraftToHitGround;   //< determines if aircraft (both types) can collide with terrain
+	bool allowPushingEnemyUnits;     //< determines if enemy (ground-)units can be pushed during collisions
+	bool allowCrushingAlliedUnits;   //< determines if allied (ground-)units can be crushed during collisions
+	bool allowUnitCollisionDamage;   //< determines if units take damage from (skidding) collisions
+	bool allowUnitCollisionOverlap;  //< determines if unit footprints are allowed to semi-overlap during collisions
+	bool allowGroundUnitGravity;     //< determines if (ground-)units experience gravity during regular movement
+	bool allowHoverUnitStrafing;     //< determines if (hover-)units carry their momentum sideways when turning
+	bool useClassicGroundMoveType;   //< determines if (ground-)units use the CClassicGroundMoveType path-follower
 
 	// Build behaviour
 	/// Should constructions without builders decay?
@@ -124,12 +125,17 @@ public:
 	int losMipLevel;
 	/// miplevel to use for airlos
 	int airMipLevel;
+	/// miplevel to use for radar, sonar, seismic, jammer, ...
+	int radarMipLevel;
 	/// units sightdistance will be multiplied with this, for testing purposes
 	float losMul;
 	/// units airsightdistance will be multiplied with this, for testing purposes
 	float airLosMul;
+
 	/// when underwater, units are not in LOS unless also in sonar
 	bool requireSonarUnderWater;
+	///
+	bool alwaysVisibleOverridesCloaked;
 
 	enum {
 		FEATURELOS_NONE = 0, FEATURELOS_GAIAONLY, FEATURELOS_GAIAALLIED, FEATURELOS_ALL,

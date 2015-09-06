@@ -266,3 +266,8 @@ void CLargeBeamLaserProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray&
 	lines.AddVertexQC(startPos,  color);
 	lines.AddVertexQC(targetPos, color);
 }
+
+int CLargeBeamLaserProjectile::GetProjectilesCount() const
+{
+	return 32; // too lazy to compute the correct one ...
+}

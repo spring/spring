@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/EventHandler.h"
-#include "System/EventBatchHandler.h"
 
 #include "Lua/LuaCallInCheck.h"
 #include "Lua/LuaOpenGL.h"  // FIXME -- should be moved
@@ -35,15 +34,10 @@ CEventHandler::CEventHandler()
 	mouseOwner = NULL;
 
 	SetupEvents();
-
-	// helper event client (always created)
-	EventBatchHandler::CreateInstance();
 }
 
 CEventHandler::~CEventHandler()
-{
-	EventBatchHandler::DeleteInstance();
-}
+{ }
 
 
 void CEventHandler::ResetState()
@@ -54,9 +48,6 @@ void CEventHandler::ResetState()
 	handles.clear();
 
 	SetupEvents();
-
-	EventBatchHandler::DeleteInstance();
-	EventBatchHandler::CreateInstance();
 }
 
 void CEventHandler::SetupEvents()
@@ -518,20 +509,6 @@ void CEventHandler::Update()
 
 
 
-void CEventHandler::DeleteSyncedUnits() { eventBatchHandler->DeleteSyncedUnits(); }
-
-inline void ExecuteAllCallsFromSynced() { } //FIXME delete
-
-void CEventHandler::DeleteSyncedProjectiles() {
-	ExecuteAllCallsFromSynced();
-}
-
-void CEventHandler::DeleteSyncedObjects() {
-	ExecuteAllCallsFromSynced();
-}
-
-
-
 void CEventHandler::SunChanged(const float3& sunDir)
 {
 	ITERATE_EVENTCLIENTLIST(SunChanged, sunDir);
@@ -783,22 +760,3 @@ void CEventHandler::MetalMapChanged(const int x, const int z)
 {
 	ITERATE_EVENTCLIENTLIST(MetalMapChanged, x, z);
 }
-
-
-/******************************************************************************/
-/******************************************************************************/
-
-void CEventHandler::UnsyncedProjectileCreated(const CProjectile* proj) {
-	//FIXME no real event
-	(eventBatchHandler->GetUnsyncedProjectileCreatedDestroyedBatch()).insert(proj);
-}
-
-void CEventHandler::UnsyncedProjectileDestroyed(const CProjectile* proj) {
-	//FIXME no real event
-	(eventBatchHandler->GetUnsyncedProjectileCreatedDestroyedBatch()).erase_delete(proj);
-}
-
-
-/******************************************************************************/
-/******************************************************************************/
-

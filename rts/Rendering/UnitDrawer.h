@@ -3,9 +3,7 @@
 #ifndef UNIT_DRAWER_H
 #define UNIT_DRAWER_H
 
-#include <set>
 #include <vector>
-#include <list>
 #include <string>
 #include <map>
 
@@ -13,7 +11,6 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/LightHandler.h"
 #include "System/EventClient.h"
-#include "lib/gml/ThreadSafeContainers.h"
 
 struct UnitDef;
 class CWorldObject;
@@ -36,9 +33,11 @@ public:
 	//! CEventClient interface
 	bool WantsEvent(const std::string& eventName) {
 		return
-			(eventName == "RenderUnitCreated"      || eventName == "RenderUnitDestroyed" ) ||
-			(eventName == "RenderUnitCloakChanged" || eventName == "RenderUnitLOSChanged") ||
-			(eventName == "PlayerChanged"          || eventName == "SunChanged"          );
+			eventName == "RenderUnitCreated"      || eventName == "RenderUnitDestroyed"  ||
+			eventName == "UnitCloaked"            || eventName == "UnitDecloaked"        ||
+			eventName == "UnitEnteredRadar"       || eventName == "UnitEnteredLos"       ||
+			eventName == "UnitLeftRadar"          || eventName == "UnitLeftLos"          ||
+			eventName == "PlayerChanged"          || eventName == "SunChanged";
 	}
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
@@ -46,9 +45,14 @@ public:
 	void RenderUnitCreated(const CUnit*, int cloaked);
 	void RenderUnitDestroyed(const CUnit*);
 
-	void RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus);
-	void RenderUnitCloakChanged(const CUnit* unit, int cloaked);
+	void UnitEnteredRadar(const CUnit* unit, int allyTeam);
+	void UnitEnteredLos(const CUnit* unit, int allyTeam);
+	void UnitLeftRadar(const CUnit* unit, int allyTeam);
+	void UnitLeftLos(const CUnit* unit, int allyTeam);
 
+	void UnitCloaked(const CUnit* unit);
+	void UnitDecloaked(const CUnit* unit);
+	
 	void PlayerChanged(int playerNum);
 	void SunChanged(const float3& sunDir);
 
@@ -104,7 +108,7 @@ public:
 	static unsigned int CalcUnitShadowLOD(const CUnit* unit, unsigned int lastLOD);
 	static void SetUnitLODCount(CUnit* unit, unsigned int count);
 
-	const std::set<CUnit*>& GetUnsortedUnits() const { return unsortedUnits; }
+	const std::vector<CUnit*>& GetUnsortedUnits() const { return unsortedUnits; }
 	IWorldObjectModelRenderer* GetOpaqueModelRenderer(int modelType) { return opaqueModelRenderers[modelType]; }
 	IWorldObjectModelRenderer* GetCloakedModelRenderer(int modelType) { return cloakedModelRenderers[modelType]; }
 
@@ -217,17 +221,17 @@ private:
 	 * units being rendered (note that this is a completely
 	 * unsorted set of 3DO, S3O, opaque, and cloaked models!)
 	 */
-	std::set<CUnit*> unsortedUnits;
+	std::vector<CUnit*> unsortedUnits;
 
 	/// buildings that were in LOS_PREVLOS when they died and not in LOS since
-	std::vector<std::set<GhostSolidObject*> > deadGhostBuildings;
+	std::vector<std::vector<GhostSolidObject*> > deadGhostBuildings;
 	/// buildings that left LOS but are still alive
-	std::vector<std::set<CUnit*> > liveGhostBuildings;
+	std::vector<std::vector<CUnit*> > liveGhostBuildings;
 
-	std::set<CUnit*> drawIcon;
+	std::vector<CUnit*> drawIcon;
 
-	std::vector<std::set<CUnit*> > unitRadarIcons;
-	std::map<icon::CIconData*, std::set<const CUnit*> > unitsByIcon;
+	std::vector<std::vector<CUnit*> > unitRadarIcons;
+	std::map<icon::CIconData*, std::vector<const CUnit*> > unitsByIcon;
 
 	IUnitDrawerState* unitDrawerStateSSP; // default shader-driven rendering path
 	IUnitDrawerState* unitDrawerStateFFP; // fallback shader-less rendering path

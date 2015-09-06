@@ -262,7 +262,7 @@ void SetThreadCount(int num)
 			assert(thread_group.empty());
 	}
 
-	LOG("[ThreadPool::%s][2] #threads=%lu", __FUNCTION__, thread_group.size());
+	LOG("[ThreadPool::%s][2] #threads=%u", __FUNCTION__, (unsigned) thread_group.size());
 }
 
 void SetThreadSpinTime(int milliSeconds)

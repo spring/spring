@@ -28,7 +28,6 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/Feature.h"
-#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
@@ -97,6 +96,7 @@ CMouseHandler::CMouseHandler()
 	, dragScrollThreshold(0.0f)
 	, scrollx(0.0f)
 	, scrolly(0.0f)
+	, lastClicked(nullptr)
 {
 	const int2 mousepos = IMouseInput::GetInstance()->GetPos();
 	lastx = mousepos.x;
@@ -371,6 +371,9 @@ void CMouseHandler::GetSelectionBoxCoeff(const float3& pos1, const float3& dir1,
 
 void CMouseHandler::MouseRelease(int x, int y, int button)
 {
+	const CUnit *_lastClicked = lastClicked;
+	lastClicked = nullptr;
+
 	if (button > NUM_BUTTONS)
 		return;
 
@@ -439,8 +442,10 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			CUnit* unit;
 			CFeature* feature;
 			TraceRay::GuiTraceRay(camera->GetPos(), dir, globalRendering->viewRange * 1.4f, NULL, unit, feature, false);
+			lastClicked = unit;
+			const bool selectType = bp.lastRelease >= (gu->gameTime - doubleClickTime) && unit == _lastClicked;
 
-			selectedUnitsHandler.HandleSingleUnitClickSelection(unit, true);
+			selectedUnitsHandler.HandleSingleUnitClickSelection(unit, true, selectType);
 		}
 
 		bp.lastRelease = gu->gameTime;

@@ -117,8 +117,11 @@ static inline DerivedMoveType* ParseDerivedMoveType(lua_State* L, const char* ca
 {
 	CUnit* unit = ParseUnit(L, caller, index);
 
-	if (unit == NULL)
-		return NULL;
+	if (unit == nullptr)
+		return nullptr;
+
+	if (unit->moveType == nullptr)
+		return nullptr;
 
 	return (dynamic_cast<DerivedMoveType*>(unit->moveType));
 }
@@ -545,7 +548,7 @@ static int SetMoveTypeData(lua_State* L, AMoveType* moveType, const char* caller
 	int numAssignedValues = 0;
 
 	if (moveType == NULL) {
-		luaL_error(L, "[%s] unit %d has incompatible movetype for %s", __FUNCTION__, caller, lua_tonumber(L, 1));
+		luaL_error(L, "[%s] unit %d has incompatible movetype for %s", __FUNCTION__, lua_tonumber(L, 1), caller);
 		return numAssignedValues;
 	}
 

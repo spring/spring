@@ -150,7 +150,8 @@ namespace QTPFS {
 		void IterateNodeNeighbors(const std::vector<INode*>& nxtNodes);
 
 		void TracePath(IPath* path);
-		void SmoothPath(IPath* path);
+		void SmoothPath(IPath* path) const;
+		bool SmoothPathIter(IPath* path) const;
 
 		// global queue: allocated once, re-used by all searches without clear()'s
 		// this relies on INode::operator< to sort the INode*'s by increasing f-cost

@@ -51,6 +51,8 @@ public:
 	      CWorldObject* GetTargetObject()       { return target; }
 
 	const WeaponDef* GetWeaponDef() const { return weaponDef; }
+	
+	int GetTimeToLive() const { return ttl; }
 
 	void SetStartPos(const float3& newStartPos) { startPos = newStartPos; }
 	void SetTargetPos(const float3& newTargetPos) { targetPos = newTargetPos; }
@@ -60,6 +62,7 @@ public:
 
 	void SetBeingIntercepted(bool b) { targeted = b; }
 	bool IsBeingIntercepted() const { return targeted; }
+	bool CanBeInterceptedBy(const WeaponDef*) const;
 
 	bool TraveledRange() const;
 

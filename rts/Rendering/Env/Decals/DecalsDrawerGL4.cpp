@@ -716,7 +716,7 @@ void CDecalsDrawerGL4::AddExplosion(float3 pos, float damage, float radius, bool
 	const float altitude = pos.y - CGround::GetHeightReal(pos.x, pos.z, false);
 
 	// no decals for below-ground & in-air explosions
-	if (abs(altitude) > radius) { return; }
+	if (std::abs(altitude) > radius) { return; }
 
 	pos.y -= altitude;
 	radius -= altitude;

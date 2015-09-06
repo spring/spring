@@ -132,6 +132,20 @@ public:
 	bool useLuaGaia;
 
 private:
+	class SyncedRNG
+	{
+	public:
+		int operator()(unsigned N)
+		{
+			extern CGlobalSynced* gs;
+			return gs->randInt()%N;
+		};
+	};
+
+public:
+	static SyncedRNG rng;
+
+private:
 	/**
 	* @brief random seed
 	*
@@ -148,15 +162,5 @@ private:
 };
 
 extern CGlobalSynced* gs;
-
-
-class SyncedRNG
-{
-public:
-	int operator()(unsigned N)
-	{
-		return gs->randInt()%N;
-	};
-};
 
 #endif // _GLOBAL_SYNCED_H

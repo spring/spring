@@ -34,7 +34,6 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDef.h"
@@ -67,7 +66,7 @@ void CUnitScript::InitVars(int numTeams, int numAllyTeams)
 	for (int t = 0; t < numTeams; t++) {
 		teamVars[t].resize(TEAM_VAR_COUNT, 0);
 	}
-	
+
 	for (int t = 0; t < numAllyTeams; t++) {
 		allyVars[t].resize(ALLY_VAR_COUNT, 0);
 	}
@@ -76,7 +75,6 @@ void CUnitScript::InitVars(int numTeams, int numAllyTeams)
 
 CUnitScript::CUnitScript(CUnit* unit, const std::vector<LocalModelPiece*>& pieces)
 	: unit(unit)
-	, yardOpen(false)
 	, busy(false)
 	, hasSetSFXOccupy(false)
 	, hasRockUnit(false)
@@ -387,6 +385,7 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float
 		default: {
 		} break;
 	}
+	assert(overrideType >= 0);
 
 	if (animInfoIt != anims[overrideType].end())
 		RemoveAnim(overrideType, animInfoIt);
@@ -526,7 +525,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 		return;
 	}
 
-	if (projectileHandler->particleSaturation > 1.0f && sfxType < SFX_CEG) {
+	if (projectileHandler->GetParticleSaturation() > 1.0f && sfxType < SFX_CEG) {
 		// skip adding (unsynced!) particles when we have too many
 		return;
 	}
@@ -639,25 +638,23 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 			else if (sfxType & SFX_FIRE_WEAPON) {
 				// make a weapon fire from the piece
 				const unsigned index = sfxType - SFX_FIRE_WEAPON;
-				if (index >= unit->weapons.size() || unit->weapons[index] == NULL) {
+				if (index >= unit->weapons.size()) {
 					ShowUnitScriptError("Invalid weapon index for emit-sfx");
 					break;
 				}
-
-				CWeapon* weapon = unit->weapons[index];
-
-				const float3 targetPos = weapon->targetPos;
-				const float3 weaponMuzzlePos = weapon->weaponMuzzlePos;
-
-				weapon->targetPos = pos + dir;
-				weapon->weaponMuzzlePos = pos;
-				weapon->Fire(true);
-				weapon->weaponMuzzlePos = weaponMuzzlePos;
-				weapon->targetPos = targetPos;
+				CWeapon* w = unit->weapons[index];
+				const SWeaponTarget origTarget = w->GetCurrentTarget();
+				const float3 origWeaponMuzzlePos = w->weaponMuzzlePos;
+				w->SetAttackTarget(SWeaponTarget(pos + dir));
+				w->weaponMuzzlePos = pos;
+				w->Fire(true);
+				w->weaponMuzzlePos = origWeaponMuzzlePos;
+				bool origRestored = w->Attack(origTarget);
+				assert(origRestored);
 			}
 			else if (sfxType & SFX_DETONATE_WEAPON) {
 				const unsigned index = sfxType - SFX_DETONATE_WEAPON;
-				if (index >= unit->weapons.size() || unit->weapons[index] == NULL) {
+				if (index >= unit->weapons.size()) {
 					ShowUnitScriptError("Invalid weapon index for emit-sfx");
 					break;
 				}
@@ -703,10 +700,8 @@ void CUnitScript::AttachUnit(int piece, int u)
 	}
 
 #ifndef _CONSOLE
-	CTransportUnit* tu = dynamic_cast<CTransportUnit*>(unit);
-
-	if (tu && unitHandler->units[u]) {
-		tu->AttachUnit(unitHandler->units[u], piece);
+	if (unit->unitDef->IsTransportUnit() && unitHandler->units[u]) {
+		unit->AttachUnit(unitHandler->units[u], piece);
 	}
 #endif
 }
@@ -715,10 +710,8 @@ void CUnitScript::AttachUnit(int piece, int u)
 void CUnitScript::DropUnit(int u)
 {
 #ifndef _CONSOLE
-	CTransportUnit* tu = dynamic_cast<CTransportUnit*>(unit);
-
-	if (tu && unitHandler->units[u]) {
-		tu->DetachUnit(unitHandler->units[u]);
+	if (unit->unitDef->IsTransportUnit() && unitHandler->units[u]) {
+		unit->DetachUnit(unitHandler->units[u]);
 	}
 #endif
 }
@@ -810,11 +803,14 @@ void CUnitScript::Explode(int piece, int flags)
 	// projectiles that don't fall could live forever
 	int newflags = PF_Fall;
 
+	const float partSat = projectileHandler->GetParticleSaturation();
+
 	if (flags & PF_Explode) { newflags |= PF_Explode; }
 	// if (flags & PF_Fall) { newflags |=  PF_Fall; }
-	if ((flags & PF_Smoke) && projectileHandler->particleSaturation < 1.0f) { newflags |= PF_Smoke; }
-	if ((flags & PF_Fire) && projectileHandler->particleSaturation < 0.95f) { newflags |= PF_Fire; }
+	if ((flags & PF_Smoke) && partSat < 1.0f) { newflags |= PF_Smoke; }
+	if ((flags & PF_Fire) && partSat < 0.95f) { newflags |= PF_Fire; }
 	if (flags & PF_NoCEGTrail) { newflags |= PF_NoCEGTrail; }
+	if (flags & PF_Recursive) { newflags |= PF_Recursive; }
 
 	new CPieceProjectile(unit, pieces[piece], absPos, explSpeed, newflags, 0.5f);
 #endif
@@ -825,7 +821,7 @@ void CUnitScript::Shatter(int piece, const float3& pos, const float3& speed)
 {
 	const LocalModelPiece* lmp = pieces[piece];
 	const S3DModelPiece* omp = lmp->original;
-	const float pieceChance = 1.0f - (projectileHandler->currentParticles - (projectileHandler->maxParticles - 2000)) / 2000.0f;
+	const float pieceChance = 1.0f - (projectileHandler->GetCurrentParticles() - (projectileHandler->maxParticles - 2000)) / 2000.0f;
 
 	if (pieceChance > 0.0f) {
 		omp->Shatter(pieceChance, unit->model->textureType, unit->team, pos, speed);
@@ -965,17 +961,11 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		return int((1.0f - unit->buildProgress) * 100);
 
 	case YARD_OPEN:
-		if (yardOpen)
-			return 1;
-		else
-			return 0;
+		return (unit->yardOpen) ? 1 : 0;
 	case BUGGER_OFF:
 		break;
 	case ARMORED:
-		if (unit->armoredState)
-			return 1;
-		else
-			return 0;
+		return (unit->armoredState) ? 1 : 0;
 	case VETERAN_LEVEL:
 		return int(100 * unit->experience);
 	case CURRENT_SPEED:
@@ -1004,11 +994,9 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	}
 	case UNIT_BUILD_PERCENT_LEFT: {
 		const CUnit* u = unitHandler->GetUnit(p1);
-
 		if (u != NULL) {
 			return int((1.0f - u->buildProgress) * 100);
 		}
-
 		return 0;
 	}
 	case MAX_SPEED: {
@@ -1039,22 +1027,18 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		if (u != NULL) {
 			return u->heading;
 		}
-
 		return -1;
 	}
 	case TARGET_ID: {
-		if (unit->weapons[p1 - 1]) {
-			const CWeapon* weapon = unit->weapons[p1 - 1];
-			const TargetType tType = weapon->targetType;
-
-			if (tType == Target_Unit)
-				return unit->weapons[p1 - 1]->targetUnit->id;
-			else if (tType == Target_None)
-				return -1;
-			else if (tType == Target_Pos)
-				return -2;
-			else // Target_Intercept
-				return -3;
+		if (size_t(p1 - 1) < unit->weapons.size()) {
+			const CWeapon* w = unit->weapons[p1 - 1];
+			auto curTarget = w->GetCurrentTarget();
+			switch (curTarget.type) {
+				case Target_Unit:      return curTarget.unit->id;
+				case Target_None:      return -1;
+				case Target_Pos:       return -2;
+				case Target_Intercept: return -3;
+			}
 		}
 		return -4; // weapon does not exist
 	}
@@ -1086,8 +1070,8 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		unit->DoSeismicPing(pingSize);
 		break;
 
-	case CURRENT_FUEL:
-		return int(unit->currentFuel * float(COBSCALE));
+	case CURRENT_FUEL: //deprecated
+		return 0;
 	case TRANSPORT_ID:
 		return unit->transporter?unit->transporter->id:-1;
 
@@ -1108,9 +1092,6 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	}
 	case CRASHING:
 		return !!unit->IsCrashing();
-	case ALPHA_THRESHOLD: {
-		return int(unit->alphaThreshold * 255);
-	}
 
 	case COB_ID: {
 		if (p1 <= 0) {
@@ -1185,7 +1166,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		//! if targetID is 0, just sets weapon->haveUserTarget
 		//! to false (and targetType to None) without attacking
 		CUnit* target = (targetID > 0)? unitHandler->GetUnit(targetID): NULL;
-		return (weapon->AttackUnit(target, userTarget) ? 1 : 0);
+		return (weapon->Attack(SWeaponTarget(target, userTarget)) ? 1 : 0);
 	}
 	case SET_WEAPON_GROUND_TARGET: {
 		const int weaponID = p1 - 1;
@@ -1199,7 +1180,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		CWeapon* weapon = unit->weapons[weaponID];
 		if (weapon == NULL) { return 0; }
 
-		return weapon->AttackGround(pos, userTarget) ? 1 : 0;
+		return weapon->Attack(SWeaponTarget(pos, userTarget)) ? 1 : 0;
 	}
 	case MIN:
 		return std::min(p1, p2);
@@ -1492,12 +1473,10 @@ void CUnitScript::SetUnitVal(int val, int param)
 				if (param == 0) {
 					if (groundBlockingObjectMap->CanCloseYard(unit)) {
 						groundBlockingObjectMap->CloseBlockingYard(unit);
-						yardOpen = false;
 					}
 				} else {
 					if (groundBlockingObjectMap->CanOpenYard(unit)) {
 						groundBlockingObjectMap->OpenBlockingYard(unit);
-						yardOpen = true;
 					}
 				}
 			}
@@ -1555,27 +1534,26 @@ void CUnitScript::SetUnitVal(int val, int param)
 			break;
 		}
 		case RADAR_RADIUS: {
-			unit->ChangeSensorRadius(&unit->radarRadius, param);
+			unit->radarRadius = param;
 			break;
 		}
 		case JAMMER_RADIUS: {
-			unit->ChangeSensorRadius(&unit->jammerRadius, param);
+			unit->jammerRadius = param;
 			break;
 		}
 		case SONAR_RADIUS: {
-			unit->ChangeSensorRadius(&unit->sonarRadius, param);
+			unit->sonarRadius = param;
 			break;
 		}
 		case SONAR_JAM_RADIUS: {
-			unit->ChangeSensorRadius(&unit->sonarJamRadius, param);
+			unit->sonarJamRadius = param;
 			break;
 		}
 		case SEISMIC_RADIUS: {
-			unit->ChangeSensorRadius(&unit->seismicRadius, param);
+			unit->seismicRadius = param;
 			break;
 		}
-		case CURRENT_FUEL: {
-			unit->currentFuel = param / (float) COBSCALE;
+		case CURRENT_FUEL: { //deprecated
 			break;
 		}
 		case SHIELD_POWER: {
@@ -1609,10 +1587,6 @@ void CUnitScript::SetUnitVal(int val, int param)
 			if (param >= unit->weapons.size()) { return; }
 
 			unit->weapons[param]->avoidTarget = true;
-			break;
-		}
-		case ALPHA_THRESHOLD: {
-			unit->alphaThreshold = param / 255.0f;
 			break;
 		}
 		case CEG_DAMAGE: {
@@ -1683,6 +1657,7 @@ int CUnitScript::ModelToScript(int lmodelPieceNum) const {
 
 void CUnitScript::ShowUnitScriptError(const std::string& error)
 {
-	ShowScriptError(error + std::string(" ") + IntToString(unit->id) + std::string(" of type ") + unit->unitDef->name);
+	ShowScriptError(unit ? error + std::string(" ") + IntToString(unit->id) + std::string(" of type ") + unit->unitDef->name
+						 : error + std::string(" -> Unit doesn't have a script!"));
 }
 

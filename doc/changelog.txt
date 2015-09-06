@@ -2,18 +2,69 @@ Spring changelog
 (since 85.0: "!" prefix indicate backward compability broke)
 (numbers in brackets normally mean the mantis ticket ID)
 
+-- 101.0 --------------------------------------------------------
+
+General:
+ ! change default screenshot file type to jpg. to create png use /screenshot png
+
+Lua:
+ ! GameID callin now gets the ID string encoded in hex.
+
+-- 100.0 --------------------------------------------------------
+Major:
+ - bugfixes
+
+InfoTexture:
+ ! Added radar2 los colour for colouring the inside of the radar edge.
+  - it is changeable through SetLosViewColors (see Lua changes)
+
+WeaponDefs:
+ - fix visibleShieldHitFrames not read from shield subtable
+ ! scale flighttime with GAME_SPEED and not 32
+ - warn on unknown tags
+  - weapondefs_post.lua: set legacy weapontype tags to nil, so they don't cause engine warnings
+
+LOS:
+ - make little bit more accurate
+
+Lua:
+ ! SetLosViewColors changed:
+  - radar2 colour (see Map changes) is required.
+  - parameters are now in the form of GetLosViewColors output:
+    (always = {r,g,b}, LOS = {r,g,b}, radar = {r,g,b}, jammer = {r,g,b}, radar2 = {r,g,b})
+ - changed args of Spring.GetGroundNormal
+  - new 3rd arg: bool smoothedNormal (default false)
+  - 4th return arg: float slope
+ ! convert UnitDef::attackSafetyDistance to a key recognized by Spring.SetMoveTypeData
+
+NetProtocol:
+ - handle rejected connection attempts (when version differs)
+
+Pathing:
+ - make path cache part of synced state -> player desyncs right from the start when got an invalid one
+
+ConfigTags:
+ - make "MaxParticles" & "MaxNanoParticles" runtime changeable
+
+Misc:
+ - fix #4837: hang in linux crashhandler
+ - fix #4819: ai interface log messages are now logged into infolog.txt
+ - fix #4882: endlessloop at start when MaxSounds = 0
+ - unselect AI when game is selected in old menu
+ - demotool: add more info to dump output
+
 -- 99.0 ---------------------------------------------------------
 Major:
  - new shader based InfoTexture
- - new linux crashhandler by Major Bor3d0m
+ - new linux crashhandler (by Major Bor3d0m)
  - new rotatable default camera
- - bugfixes & improvements
- - add unsynced Spring.Reload(script)
+ - MASSIVE speedup in lategame rendering (cutting rendertime upto 1.5-3 times!)
  - add Spring.Reload(script) to change/map & game without exiting spring
-   ! modified Spring.Restart(parameters, script): it only restarts spring when parameters isn't empty
-   ! removed alias "/quit" (use /quitforce)
-   - add "quit to menu" to quit-box
-   - add "/reloadforce"
+ - added lua override for InfoMaps (by enetheru)
+ - allow to enable isolated mode by creating a file isolated.txt next to spring executable
+ - internal weapon refactor
+ - fix particle limit
+
 
 Cameras:
  ! removed TW, Orbital & Smooth camera
@@ -38,40 +89,143 @@ System:
  ! new linux crashhandler by Major Bor3d0m
   - libunwind is required to compile spring on linux
  - fix headless compile on systems w/o x11 & SDL
+ ! save windowed size in separate tags (#4388)
+ - fix crash with intel gpus
+ - fix bug that caused to recompress groundtextures always to ect1 on intel/mesa even when there was no need for it
 
 (G)UI:
- - fix #4576 F6 does not sound mute
+ - fix #4576: F6 does not sound mute
  - fix #4578: backspace key events aren't captured by chat entry mode
- - disable in-map draw when user starts writing (should fix #4455)
+ - fix #4455: disable in-map draw when user starts writing
+ - fix #4706: do not ignore next char in ChatActionExecutor
  - document keychains in uikeys.txt
  - improve default cmdcolors.txt
  - improve default los colors
  - OverheadCamera: make angle 100% stable when doing `mousewheel down then up`
  ! remove los view w/o radar a.k.a. [;] (can be emulated with Spring.SetLosViewColors)
+ - draw weapon debug spheres in /debugcolvol (aimfrom pos, muzzle pos, target pos)
 
 Sim:
  - fix harvesting
  - fix #4591: builders `randomly` remove build orders from queue
+ - fix #4587: (stuck units in labs): remove a failing optimization CPathEstimator::FindOffset()
  - fix units disobey move cmds
- - fix #4587 (stuck units in labs): remove a failing optimization CPathEstimator::FindOffset()
+ - fix user target being set for all weapons
+ ! change TEAM_SLOWUPDATE_RATE to 30 / UNIT_SLOWUPDATE_RATE to 15
+ - fix aircraft in groups (e.g. brawlers) not being able to attack the target and landing instead at target pos
+
+Pathing:
+ ! fixed shaking units when getting close to blocked squares
+ - repath GroundMoveType only every SlowUpdate() (to save cpu cycles)
+ - runtime cache failed paths, too (and use a lower lifeTime for them)
 
 Collisions:
  - fix #4592: broken per-piece coldet
- - fix and improve CQuadField::GetUnitsAndFeaturesColVol (fixes #4602)
+ - fix #4602 and improve CQuadField::GetUnitsAndFeaturesColVol
+ - speed up UnitCollisions
+
+Units:
+ - base automatic attack commands for idle units on weapon priorities
+
+Weapons:
+ - refactor weapon code:
+  - use LeadTargetPos more often
+  - give current unit's target higher priority than weapon ones
+  - plasmarepulsor: spawn projectiles from QueryWeapon (when defined)
+  - drop bombs from QueryWeapon() (when defined) and not AimFromWeapon()
+  - call AimWeapon() more often (depending on fireTolerance tag)
+   - see fireTolerance & allowNonBlockingAim tags
+ - fix impactOnly BeamLasers or LightninghtCannons dealing damage to units in the path of a beam blocked by water or a shield.  (by GoogleFrog)
+
+WeaponDefs:
+ - add fallback name:
+  - weaponVelocity := maxVelocity
+  - weaponAcceleration := acceleration
+ - add fireTolerance tag: Angle which prevents a weapon from firing in CanFire. (GoogleFrog)
+ - add allowNonBlockingAim tag (default false = old behaviour). When enabled it makes AimWeapon() LUS/COB calls non-blocking (still the fireTolerance tag might prevent the weapon firing).
+   This is very useful for fast units that need to retarget often (e.g. armflash driving next to a llt).
+
+UnitDefs:
+ - add new tag attackSafetyDistance used by airplanes (by springraaar)
+
+Projectiles:
+ - randomize IDs
+ - add SFX.RECURSIVE flag to Explode(), allowing to draw the piece and all its children recursively.
 
 New InfoTexture Renderer:
  - new shader based InfoTexture (faster, shinier & modular)
   - add new `/ToggleInfo %name_or_shader_path%`
   - fix #4608: add new /showpathtype [movdefname | movedefid | unitdefname | -1]
 
+Rendering:
+ - removed multiple linked lists from rendering (massive speed up, cutting rendertime upto 2-3 times!)
+ ! fix particle limit being ignored for particles created in the same GameFrame
+ - ShieldParticles: reduce count of particles by more than half
+ - always draw WaterPlane (that's not the water surface) below current minimum terrain height
+ - FlyingPieces: add camera frustum check
+ ! SMFTexAniso: changed default to 4 (was 0)
+ - add UseShaderCache config tag (default true)
+
+Map:
+ - allow to override the following InfoMaps via mapinfo.lua:  (by enetheru)
+  - metalmapTex
+  - typemapTex
+  - grassmapTex
+  - minimapTex
+ - allow to load dds as detailtex
+
 Lua:
+ - add Spring.Reload(script) to change/map & game without exiting spring
+  ! modified Spring.Restart(parameters, script): it only restarts spring when parameters isn't empty
+  ! removed alias "/quit" (use /quitforce)
+  - add "quit to menu" to quit-box
+  - add "/reloadforce"
+ - add callouts to read and set engagement range of a unit (by FLOZi)
+   - Spring.GetUnitMaxRange(unitID) -> number maxRange
+   - Spring.SetUnitMaxRange(unitID, maxRange) -> nil
  - add Spring.GetLosViewColors
+ - add new call-in: UnitStunned(unitID, unitDefID, unitTeam, stunned) -- called whenever a unit changes its stun status
+ - add Set/GetProjectileIsIntercepted
+ - add GetProjectileTimeToLive, GetProjectileOwnerID and GetProjectileTeamID.
+ - add a second return value to AllowWeaponTargetCheck callin to allow ignoring the callin.
  ! remove Spring.UpdateInfoTexture
  ! fix Spring.GetKeyState & Spring.PressedKeys expecting SDL2 keycodes while whole lua gets SDL1 ones
  ! Spring.PressedKeys now also returns keynames
+ - fix missing COLVOL_TYPE_SPHERE in luadefs
+ - add new tag `grayscale16bit` to gl.SaveImage() to save single color 16bit PNG
+ - add Spring.SetUnitTarget(unitid, nil) syntax
+ - expose some tags to LuaDefs: (by sprunk)
+  - expose maxReverseSpeed to LuaUnitDefs
+  - expose dynDamage tags to LuaWeaponDefs
+  - expose flightTime tag to LuaWeaponDefs
+
+StartScript:
+ - support rapid tags
+ - allow to disable demo file recording in script.txt via RecordDemo = 0
+ - add DefaultStartScript config setting:
+   - if set, automaticly start it!
+   - add --oldmenu command line parameter to always get to the old menu
+
+AI: (all by rlcevg)
+ - add Lua.callRules, Lua.callUI to JavaOO
+ - added weapon related callouts: Unit_getWeapons, Unit_getWeapon, Unit_Weapon_getDef, Unit_Weapon_getReloadTime
+ - expose resources via Game_getTeamResource* & Economy_get*
+
+OS:
+ - new linux crashhandler (by Major Bor3d0m)
+ - HWCursor: support for 48x48 & 96x96 sizes
+ - allow to enable isolated mode by creating a file isolated.txt next to spring executable
 
 Buildbot/Installer:
  ! merged spring-headless / spring-dedicated into linux static builds / windows installer
+ ! remove broken maven support
+
+CMake:
+ - colorize gcc output
+ ! remove DEBUG2 & DEBUG3, replaced with just DEBUG
+ - enable "Identical Code Folding" with ld.gold
+ - disable unused ASSIMP formats at compiletime
+ - add cmake option DEBUG_LUANAN to enable lua check for nans in a release build
 
 
 -- 98.0 ---------------------------------------------------------
@@ -523,7 +677,7 @@ Sim:
       3) be intersectable by either synced or unsynced rays
       4) block any other objects from existing on top of them
       5) be selectable
-    
+
  - hovercraft now take water damage by default
 
 Lua:
@@ -607,10 +761,10 @@ Lua:
      GetProjectileTarget now always returns two arguments (if given projectileID is valid)
      GetProjectileTarget now always returns a target position if projectile has no target object
      SetProjectileTarget now takes a number instead of a string to indicate target-type
-    
+
      GetProjectileTarget(number projectileID) --> nil | [number targetType, number targetID | table targetPos = {[1] = x, ...}]
      SetProjectileTarget(number projectileID, [number targetID [, number targetType]]  |  [number x, number y, number z]) --> nil | boolean
-    
+
    where targetType is one of {string.byte('g') = GROUND, string.byte('u') = UNIT, string.byte('f') = FEATURE, string.byte('p') = PROJECTILE}
 
  - LuaSynced*:

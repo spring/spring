@@ -90,3 +90,8 @@ void CGenericParticleProjectile::Draw()
 		va->AddVertexTC(drawPos - camera->GetRight() * size + camera->GetUp() * size, texture->xstart, texture->yend,   color);
 	}
 }
+
+int CGenericParticleProjectile::GetProjectilesCount() const
+{
+	return 1;
+}

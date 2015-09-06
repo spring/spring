@@ -29,6 +29,7 @@ private:
 public:
 	CGame(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
 	virtual ~CGame();
+	void KillLua();
 
 public:
 	enum GameDrawMode {
@@ -66,7 +67,6 @@ private:
 	void LoadFinalize();
 	void PostLoad();
 
-	void KillLua();
 	void KillMisc();
 	void KillRendering();
 	void KillInterface();

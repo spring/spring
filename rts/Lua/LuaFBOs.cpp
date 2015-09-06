@@ -99,6 +99,8 @@ void LuaFBOs::FBO::Init(lua_State* L)
 	id     = 0;
 	target = GL_FRAMEBUFFER_EXT;
 	luaRef = LUA_NOREF;
+	xsize = 0;
+	ysize = 0;
 }
 
 
@@ -344,14 +346,7 @@ bool LuaFBOs::ApplyDrawBuffers(lua_State* L, int index)
 			buffers.push_back(buffer);
 		}
 
-		GLenum* bufArray = new GLenum[buffers.size()];
-		for (int d = 0; d < (int)buffers.size(); d++) {
-			bufArray[d] = buffers[d];
-		}
-
-		glDrawBuffersARB(buffers.size(), bufArray);
-
-		delete[] bufArray;
+		glDrawBuffersARB(buffers.size(), &buffers.front());
 
 		return true;
 	}

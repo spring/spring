@@ -77,60 +77,63 @@ static inline float LineGroundSquareCol(
 	if (!inMap)
 		return -1.0f;
 
-	const float3& faceNormalTL = normalmap[(ys * mapDims.mapx + xs) * 2    ];
-	const float3& faceNormalBR = normalmap[(ys * mapDims.mapx + xs) * 2 + 1];
-	float3 cornerVertex;
-
 	// The terrain grid is "composed" of two right-isosceles triangles
 	// per square, so we have to check both faces (triangles) whether an
 	// intersection exists
 	// for each triangle, we pick one representative vertex
 
 	// top-left corner vertex
-	cornerVertex.x = xs * SQUARE_SIZE;
-	cornerVertex.z = ys * SQUARE_SIZE;
-	cornerVertex.y = heightmap[ys * mapDims.mapxp1 + xs];
+	{
+		float3 cornerVertex;
+		cornerVertex.x = xs * SQUARE_SIZE;
+		cornerVertex.z = ys * SQUARE_SIZE;
+		cornerVertex.y = heightmap[ys * mapDims.mapxp1 + xs];
 
-	// project \<to - cornerVertex\> vector onto the TL-normal
-	// if \<to\> lies below the terrain, this will be negative
-	float toFacePlaneDist = (to - cornerVertex).dot(faceNormalTL);
-	float fromFacePlaneDist = 0.0f;
+		// project \<to - cornerVertex\> vector onto the TL-normal
+		// if \<to\> lies below the terrain, this will be negative
+		const float3 faceNormalTL = normalmap[(ys * mapDims.mapx + xs) * 2    ];
+		float toFacePlaneDist = (to - cornerVertex).dot(faceNormalTL);
 
-	if (toFacePlaneDist <= 0.0f) {
-		// project \<from - cornerVertex\> onto the TL-normal
-		fromFacePlaneDist = (from - cornerVertex).dot(faceNormalTL);
+		if (toFacePlaneDist <= 0.0f) {
+			// project \<from - cornerVertex\> onto the TL-normal
+			float fromFacePlaneDist = (from - cornerVertex).dot(faceNormalTL);
 
-		if (fromFacePlaneDist != toFacePlaneDist) {
-			const float alpha = fromFacePlaneDist / (fromFacePlaneDist - toFacePlaneDist);
-			const float3 col = from * (1.0f - alpha) + to * alpha;
+			if (fromFacePlaneDist != toFacePlaneDist) {
+				const float alpha = fromFacePlaneDist / (fromFacePlaneDist - toFacePlaneDist);
+				const float3 col = mix(from, to, alpha);
 
-			if ((col.x >= cornerVertex.x) && (col.z >= cornerVertex.z) && (col.x + col.z <= cornerVertex.x + cornerVertex.z + SQUARE_SIZE)) {
-				// point of intersection is inside the TL triangle
-				return col.distance(from);
+				if ((col.x >= cornerVertex.x) && (col.z >= cornerVertex.z) && (col.x + col.z <= cornerVertex.x + cornerVertex.z + SQUARE_SIZE)) {
+					// point of intersection is inside the TL triangle
+					return col.distance(from);
+				}
 			}
 		}
 	}
 
 	// bottom-right corner vertex
-	cornerVertex.x += SQUARE_SIZE;
-	cornerVertex.z += SQUARE_SIZE;
-	cornerVertex.y = heightmap[(ys + 1) * mapDims.mapxp1 + (xs + 1)];
+	{
+		float3 cornerVertex;
+		cornerVertex.x = (xs + 1) * SQUARE_SIZE;
+		cornerVertex.z = (ys + 1) * SQUARE_SIZE;
+		cornerVertex.y = heightmap[(ys + 1) * mapDims.mapxp1 + (xs + 1)];
 
-	// project \<to - cornerVertex\> vector onto the TL-normal
-	// if \<to\> lies below the terrain, this will be negative
-	toFacePlaneDist = (to - cornerVertex).dot(faceNormalBR);
+		// project \<to - cornerVertex\> vector onto the TL-normal
+		// if \<to\> lies below the terrain, this will be negative
+		const float3 faceNormalBR = normalmap[(ys * mapDims.mapx + xs) * 2 + 1];
+		float toFacePlaneDist = (to - cornerVertex).dot(faceNormalBR);
 
-	if (toFacePlaneDist <= 0.0f) {
-		// project \<from - cornerVertex\> onto the BR-normal
-		fromFacePlaneDist = (from - cornerVertex).dot(faceNormalBR);
+		if (toFacePlaneDist <= 0.0f) {
+			// project \<from - cornerVertex\> onto the BR-normal
+			float fromFacePlaneDist = (from - cornerVertex).dot(faceNormalBR);
 
-		if (fromFacePlaneDist != toFacePlaneDist) {
-			const float alpha = fromFacePlaneDist / (fromFacePlaneDist - toFacePlaneDist);
-			const float3 col = from * (1.0f - alpha) + to * alpha;
+			if (fromFacePlaneDist != toFacePlaneDist) {
+				const float alpha = fromFacePlaneDist / (fromFacePlaneDist - toFacePlaneDist);
+				const float3 col = mix(from, to, alpha);
 
-			if ((col.x <= cornerVertex.x) && (col.z <= cornerVertex.z) && (col.x + col.z >= cornerVertex.x + cornerVertex.z - SQUARE_SIZE)) {
-				// point of intersection is inside the BR triangle
-				return col.distance(from);
+				if ((col.x <= cornerVertex.x) && (col.z <= cornerVertex.z) && (col.x + col.z >= cornerVertex.x + cornerVertex.z - SQUARE_SIZE)) {
+					// point of intersection is inside the BR triangle
+					return col.distance(from);
+				}
 			}
 		}
 	}
@@ -245,13 +248,13 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced)
 	const int dirx = (dx > 0.0f) ? 1 : -1;
 	const int dirz = (dz > 0.0f) ? 1 : -1;
 
-	// Claming is done cause LineGroundSquareCol() operates on the 2 triangles faces each heightmap
+	// Clamping is done cause LineGroundSquareCol() operates on the 2 triangles faces each heightmap
 	// square is formed of.
 	const float ffsx = Clamp(from.x / SQUARE_SIZE, 0.0f, (float)mapDims.mapx);
 	const float ffsz = Clamp(from.z / SQUARE_SIZE, 0.0f, (float)mapDims.mapy);
 	const float ttsx = Clamp(to.x / SQUARE_SIZE, 0.0f, (float)mapDims.mapx);
 	const float ttsz = Clamp(to.z / SQUARE_SIZE, 0.0f, (float)mapDims.mapy);
-	const int fsx = ffsx; // a>=0: int(a):=floor(a)
+	const int fsx = ffsx;
 	const int fsz = ffsz;
 	const int tsx = ttsx;
 	const int tsz = ttsz;
@@ -277,7 +280,6 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced)
 			}
 
 			keepgoing = (zp != tsz);
-
 			zp += dirz;
 		}
 	} else if (fsz == tsz) {
@@ -292,7 +294,6 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced)
 			}
 
 			keepgoing = (xp != tsx);
-
 			xp += dirx;
 		}
 	} else {

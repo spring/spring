@@ -27,6 +27,7 @@ public:
 	void ResetResourceState();
 	void SlowUpdate();
 
+	bool HaveResources(const SResourcePack& amount) const;
 	void AddResources(SResourcePack res, bool useIncomeMultiplier = true);
 	bool UseResources(const SResourcePack& res);
 
@@ -94,7 +95,6 @@ public:
 	int nextHistoryEntry;
 	TeamStatistics* currentStats;
 	std::list<TeamStatistics> statHistory;
-	typedef TeamStatistics Statistics; //< for easier access via CTeam::Statistics
 
 	/// mod controlled parameters
 	LuaRulesParams::Params  modParams;

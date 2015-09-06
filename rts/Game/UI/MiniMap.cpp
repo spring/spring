@@ -3,8 +3,6 @@
 #include <SDL_keycode.h>
 #include <SDL_mouse.h>
 
-#include "lib/gml/ThreadSafeContainers.h"
-
 #include "CommandColors.h"
 #include "CursorIcons.h"
 #include "GuiHandler.h"
@@ -33,7 +31,6 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/LosHandler.h"
-#include "Sim/Misc/RadarHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
@@ -97,6 +94,7 @@ CMiniMap::CMiniMap()
 	, renderToTexture(true)
 	, multisampledFBO(false)
 	, minimapTex(0)
+	, lastClicked(nullptr)
  {
 	lastWindowSizeX = globalRendering->viewSizeX;
 	lastWindowSizeY = globalRendering->viewSizeY;
@@ -477,8 +475,10 @@ void CMiniMap::MoveView(int x, int y)
 }
 
 
-void CMiniMap::SelectUnits(int x, int y) const
+void CMiniMap::SelectUnits(int x, int y)
 {
+	const CUnit *_lastClicked = lastClicked;
+	lastClicked = nullptr;
 	if (!KeyInput::GetKeyModState(KMOD_SHIFT) && !KeyInput::GetKeyModState(KMOD_CTRL)) {
 		selectedUnitsHandler.ClearSelected();
 	}
@@ -512,9 +512,13 @@ void CMiniMap::SelectUnits(int x, int y) const
 		} else {
 			unit = CGameHelper::GetClosestFriendlyUnit(NULL, pos, size, gu->myAllyTeam);
 		}
+		lastClicked = unit;
+		const bool selectType = bp.lastRelease >= (gu->gameTime - mouse->doubleClickTime) && unit == _lastClicked;
 
-		selectedUnitsHandler.HandleSingleUnitClickSelection(unit, false);
+		selectedUnitsHandler.HandleSingleUnitClickSelection(unit, false, selectType);
 	}
+
+	bp.lastRelease = gu->gameTime;
 }
 
 /******************************************************************************/
@@ -1371,7 +1375,7 @@ void CMiniMap::DrawNotes()
 	const float baseSize = mapDims.mapx * SQUARE_SIZE;
 	CVertexArray* va = GetVertexArray();
 	va->Initialize();
-	std::list<Notification>::iterator ni = notes.begin();
+	std::deque<Notification>::iterator ni = notes.begin();
 	while (ni != notes.end()) {
 		const float age = gu->gameTime - ni->creationTime;
 		if (age > 2) {
@@ -1379,7 +1383,7 @@ void CMiniMap::DrawNotes()
 			continue;
 		}
 
-		const SColor color(ni->color[0], ni->color[1], ni->color[2], ni->color[3]);
+		SColor color(ni->color[0], ni->color[1], ni->color[2], ni->color[3]);
 		for (int a = 0; a < 3; ++a) {
 			const float modage = age + a * 0.1f;
 			const float rot = modage * 3;
@@ -1393,6 +1397,7 @@ void CMiniMap::DrawNotes()
 					size = baseSize * 1.4f - modage * baseSize * 0.9f;
 				}
 			}
+			color.a = (255 * ni->color[3]) / (3 - a);
 			const float sinSize = fastmath::sin(rot) * size;
 			const float cosSize = fastmath::cos(rot) * size;
 			va->AddVertexC(float3(ni->pos.x + sinSize, ni->pos.z + cosSize, 0.0f),color);
@@ -1499,21 +1504,20 @@ void CMiniMap::DrawUnitIcons() const
 void CMiniMap::DrawUnitRanges() const
 {
 	// draw unit ranges
-	const float radarSquare = radarHandler->radarDiv;
 	CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
 	for(const CUnit* unit: selUnits) {
 		// LOS Ranges
 		if (unit->radarRadius && !unit->beingBuilt && unit->activated) {
 			glColor3fv(cmdColors.rangeRadar);
-			DrawCircle(unit->pos, (unit->radarRadius * radarSquare));
+			DrawCircle(unit->pos, (unit->radarRadius * losHandler->radar.divisor));
 		}
 		if (unit->sonarRadius && !unit->beingBuilt && unit->activated) {
 			glColor3fv(cmdColors.rangeSonar);
-			DrawCircle(unit->pos, (unit->sonarRadius * radarSquare));
+			DrawCircle(unit->pos, (unit->sonarRadius * losHandler->sonar.divisor));
 		}
 		if (unit->jammerRadius && !unit->beingBuilt && unit->activated) {
 			glColor3fv(cmdColors.rangeJammer);
-			DrawCircle(unit->pos, (unit->jammerRadius * radarSquare));
+			DrawCircle(unit->pos, (unit->jammerRadius * losHandler->commonJammer.divisor));
 		}
 
 		// Interceptor Ranges

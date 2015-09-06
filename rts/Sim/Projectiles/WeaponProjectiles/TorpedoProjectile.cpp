@@ -86,11 +86,11 @@ void CTorpedoProjectile::Update()
 						targetPos = so->aimPos;
 						targetVel = so->speed;
 
-						if (owner() != NULL && pos.SqDistance(so->aimPos) > Square(150.0f)) {
+						if (allyteamID != -1 && pos.SqDistance(so->aimPos) > Square(150.0f)) {
 							const CUnit* u = dynamic_cast<const CUnit*>(so);
 
 							if (u != NULL) {
-								targetPos = u->GetErrorPos(owner()->allyteam, true);
+								targetPos = u->GetErrorPos(allyteamID, true);
 							}
 						}
 					}
@@ -160,16 +160,9 @@ void CTorpedoProjectile::Draw()
 		return;
 	}
 
-	inArray = true;
-
-	unsigned char col[4];
-	col[0] = 60;
-	col[1] = 60;
-	col[2] = 100;
-	col[3] = 255;
-
+	SColor col(60, 60, 100, 255);
 	float3 r = dir.cross(UpVector);
-	if (r.Length() < 0.001f) {
+	if (r.SqLength() < 0.001f) {
 		r = float3(RgtVector);
 	}
 	r.Normalize();
@@ -177,6 +170,7 @@ void CTorpedoProjectile::Draw()
 	const float h = 12;
 	const float w = 2;
 
+	inArray = true;
 	va->EnlargeArrays(32, 0, VA_SIZE_TC);
 
 	va->AddVertexQTC(drawPos + (r * w),             texx, texy, col);
@@ -219,4 +213,9 @@ void CTorpedoProjectile::Draw()
 	va->AddVertexQTC(drawPos + (r * w) + (dir * h), texx, texy, col);
 	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
 	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
+}
+
+int CTorpedoProjectile::GetProjectilesCount() const
+{
+	return 8;
 }

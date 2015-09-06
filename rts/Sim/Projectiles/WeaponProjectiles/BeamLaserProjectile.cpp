@@ -177,3 +177,8 @@ void CBeamLaserProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& poin
 	lines.AddVertexQC(startPos, color);
 	lines.AddVertexQC(targetPos, color);
 }
+
+int CBeamLaserProjectile::GetProjectilesCount() const
+{
+	return 8;
+}

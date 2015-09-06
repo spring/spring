@@ -27,8 +27,6 @@ include_directories(
 
 # Set these for Interfaces and AIs with C sources
 set(CMAKE_C_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG}")
-set(CMAKE_C_FLAGS_DEBUG2         "${CMAKE_CXX_FLAGS_DEBUG2}")
-set(CMAKE_C_FLAGS_DEBUG3         "${CMAKE_CXX_FLAGS_DEBUG3}")
 set(CMAKE_C_FLAGS_RELEASE        "${CMAKE_CXX_FLAGS_RELEASE}")
 set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
 set(CMAKE_C_FLAGS_PROFILE        "${CMAKE_CXX_FLAGS_PROFILE}")
@@ -42,7 +40,7 @@ endif (MINGW)
 
 
 # Assemble common additional native AI sources
-list(APPEND ai_common_SRC "${rts}/Game/GameVersion.cpp")
+#list(APPEND ai_common_SRC "${rts}/Game/GameVersion.cpp")
 list(APPEND ai_common_SRC "${rts}/System/SafeCStrings.c")
 
 

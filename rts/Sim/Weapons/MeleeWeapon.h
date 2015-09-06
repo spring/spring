@@ -11,11 +11,9 @@ class CMeleeWeapon: public CWeapon
 public:
 	CMeleeWeapon(CUnit* owner, const WeaponDef* def);
 
-	void Update();
-
 private:
-	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const;
-	void FireImpl(bool scriptCall);
+	bool HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const override final;
+	void FireImpl(const bool scriptCall) override final;
 };
 
 #endif /* MELEEWEAPON_H */

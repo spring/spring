@@ -20,9 +20,9 @@ public:
 	virtual ~IPathManager() {}
 
 	virtual unsigned int GetPathFinderType() const = 0;
-	virtual boost::uint32_t GetPathCheckSum() const { return 0; }
+	virtual boost::uint32_t GetPathCheckSum() const = 0;
 
-	virtual boost::int64_t Finalize() { return 0; }
+	virtual boost::int64_t Finalize() = 0;
 
 	/**
 	 * returns if a path was changed after RequestPath returned its pathID
@@ -32,7 +32,7 @@ public:
 	virtual bool PathUpdated(unsigned int pathID) { return false; }
 
 	virtual void Update() {}
-	virtual void UpdatePath(const CSolidObject* owner, unsigned int pathID) {}
+	virtual void UpdatePath(const CSolidObject* owner, unsigned int pathID) = 0;
 
 	/**
 	 * When a path is no longer used, call this function to release it from
@@ -40,7 +40,7 @@ public:
 	 * @param pathID
 	 *     The path-id returned by RequestPath.
 	 */
-	virtual void DeletePath(unsigned int pathID) {}
+	virtual void DeletePath(unsigned int pathID) = 0;
 
 	/**
 	 * Returns the next waypoint of the path.
@@ -74,7 +74,7 @@ public:
 		float3 callerPos,
 		float radius,
 		bool synced
-	) { return ZeroVector; }
+	) = 0;
 
 
 	/**
@@ -97,7 +97,7 @@ public:
 		unsigned int pathID,
 		std::vector<float3>& points,
 		std::vector<int>& starts
-	) const {}
+	) const = 0;
 
 
 	/**
@@ -131,11 +131,11 @@ public:
 	virtual unsigned int RequestPath(
 		CSolidObject* caller,
 		const MoveDef* moveDef,
-		const float3& startPos,
-		const float3& goalPos,
+		float3 startPos,
+		float3 goalPos,
 		float goalRadius,
 		bool synced
-	) { return 0; }
+	) = 0;
 
 	/**
 	 * Whenever there are any changes in the terrain
@@ -155,7 +155,7 @@ public:
 	 *     affected by the changes.
 	 * @param type see @TerrainChangeTypes
 	 */
-	virtual void TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2, unsigned int type) {}
+	virtual void TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2, unsigned int type) = 0;
 
 	virtual bool SetNodeExtraCosts(const float* costs, unsigned int sizex, unsigned int sizez, bool synced) { return false; }
 	virtual bool SetNodeExtraCost(unsigned int x, unsigned int z, float cost, bool synced) { return false; }

@@ -2,7 +2,7 @@
 
 
 #include "Game/Camera.h"
-#include "GfxProjectile.h"
+#include "NanoProjectile.h"
 #include "Rendering/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
@@ -10,43 +10,39 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 
-CR_BIND_DERIVED(CGfxProjectile, CProjectile, )
+CR_BIND_DERIVED(CNanoProjectile, CProjectile, )
 
-CR_REG_METADATA(CGfxProjectile,
+CR_REG_METADATA(CNanoProjectile,
 (
 	CR_MEMBER_BEGINFLAG(CM_Config),
-		CR_MEMBER(creationTime),
-		CR_MEMBER(lifeTime),
+		CR_MEMBER(deathFrame),
 		CR_MEMBER(color),
 	CR_MEMBER_ENDFLAG(CM_Config),
 	CR_RESERVED(8)
 ))
 
+
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CGfxProjectile::CGfxProjectile(): CProjectile()
+CNanoProjectile::CNanoProjectile(): CProjectile()
 {
-	creationTime = lifeTime = 0;
+	deathFrame = 0;
 	color[0] = color[1] = color[2] = color[3] = 255;
 
 	checkCol = false;
 	drawSorted = false;
 }
 
-CGfxProjectile::CGfxProjectile(const float3& pos, const float3& speed, int lifeTime, const float3& color):
-	CProjectile(pos, speed, NULL, false, false, false),
-	creationTime(gs->frameNum),
-	lifeTime(lifeTime)
+CNanoProjectile::CNanoProjectile(float3 pos, float3 speed, int lifeTime, SColor c)
+	: CProjectile(pos, speed, NULL, false, false, false)
+	, deathFrame(gs->frameNum + lifeTime)
+	, color(c)
 {
 	checkCol = false;
 	drawSorted = false;
-
-	this->color[0] = (unsigned char) (color[0] * 255);
-	this->color[1] = (unsigned char) (color[1] * 255);
-	this->color[2] = (unsigned char) (color[2] * 255);
-	this->color[3] = 20;
 	drawRadius = 3;
 
 	if (projectileHandler != NULL) {
@@ -54,7 +50,7 @@ CGfxProjectile::CGfxProjectile(const float3& pos, const float3& speed, int lifeT
 	}
 }
 
-CGfxProjectile::~CGfxProjectile()
+CNanoProjectile::~CNanoProjectile()
 {
 	if (projectileHandler != NULL) {
 		projectileHandler->currentNanoParticles -= 1;
@@ -62,28 +58,31 @@ CGfxProjectile::~CGfxProjectile()
 }
 
 
-void CGfxProjectile::Update()
+void CNanoProjectile::Update()
 {
 	pos += speed;
-	if (gs->frameNum >= creationTime + lifeTime) {
+	if (gs->frameNum >= deathFrame) {
 		deleteMe = true;
 	}
 }
 
-void CGfxProjectile::Draw()
+void CNanoProjectile::Draw()
 {
 	inArray = true;
 
-	#define gfxt projectileDrawer->gfxtex
+	const auto* gfxt = projectileDrawer->gfxtex;
 	va->AddVertexTC(drawPos - camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, gfxt->xstart, gfxt->ystart, color);
 	va->AddVertexTC(drawPos + camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, gfxt->xend,   gfxt->ystart, color);
 	va->AddVertexTC(drawPos + camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, gfxt->xend,   gfxt->yend,   color);
 	va->AddVertexTC(drawPos - camera->GetRight() * drawRadius + camera->GetUp() * drawRadius, gfxt->xstart, gfxt->yend,   color);
-	#undef gfxt
 }
 
-void CGfxProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+void CNanoProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 {
 	points.AddVertexQC(pos, color4::green);
 }
 
+int CNanoProjectile::GetProjectilesCount() const
+{
+	return 0; // nano particles use their own counter
+}

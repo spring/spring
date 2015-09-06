@@ -105,10 +105,11 @@ void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 				return;
 
 			switch ((int) c.params[0]) {
-				case 0: { airMT->SetRepairBelowHealth(0.0f); break; }
-				case 1: { airMT->SetRepairBelowHealth(0.3f); break; }
-				case 2: { airMT->SetRepairBelowHealth(0.5f); break; }
-				case 3: { airMT->SetRepairBelowHealth(0.8f); break; }
+				case 0: { repairBelowHealth = 0.0f; break; }
+				case 1: { repairBelowHealth = 0.3f; break; }
+				case 2: { repairBelowHealth = 0.5f; break; }
+				case 3: { repairBelowHealth = 0.8f; break; }
+				default: { /*no op*/ } break;
 			}
 
 			for (unsigned int n = 0; n < possibleCommands.size(); n++) {
@@ -130,6 +131,7 @@ void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 			switch ((int) c.params[0]) {
 				case 0: { airMT->autoLand = false; break; }
 				case 1: { airMT->autoLand = true;  break; }
+				default: { /*no op*/ } break;
 			}
 
 			for (unsigned int n = 0; n < possibleCommands.size(); n++) {
@@ -177,7 +179,6 @@ void CAirCAI::SlowUpdate()
 	if (owner->UsingScriptMoveType())
 		return;
 
-	const bool wantToRefuel = (LandRepairIfNeeded() || RefuelIfNeeded());
 
 	#if (AUTO_GENERATE_ATTACK_ORDERS == 1)
 	if (commandQue.empty()) {
@@ -205,15 +206,6 @@ void CAirCAI::SlowUpdate()
 		c.GetID() != CMD_IDLEMODE && c.GetID() != CMD_SET_WANTED_MAX_SPEED)
 	{
 		myPlane->Takeoff();
-	}
-
-	if (wantToRefuel) {
-		switch (c.GetID()) {
-			case CMD_AREA_ATTACK:
-			case CMD_ATTACK:
-			case CMD_FIGHT:
-				return;
-		}
 	}
 
 	switch (c.GetID()) {
@@ -398,7 +390,7 @@ void CAirCAI::ExecuteAttack(Command& c)
 	if (tempOrder && owner->moveState == MOVESTATE_MANEUVER) {
 		// limit how far away we fly
 		if (orderTarget && LinePointDist(commandPos1, commandPos2, orderTarget->pos) > 1500) {
-			owner->AttackUnit(NULL, false, false);
+			owner->DropCurrentAttackTarget();
 			FinishCommand();
 			return;
 		}
@@ -411,12 +403,12 @@ void CAirCAI::ExecuteAttack(Command& c)
 		}
 		if (orderTarget != NULL) {
 			if (orderTarget->unitDef->canfly && orderTarget->IsCrashing()) {
-				owner->AttackUnit(NULL, false, false);
+				owner->DropCurrentAttackTarget();
 				FinishCommand();
 				return;
 			}
 			if (!(c.options & ALT_KEY) && SkipParalyzeTarget(orderTarget)) {
-				owner->AttackUnit(NULL, false, false);
+				owner->DropCurrentAttackTarget();
 				FinishCommand();
 				return;
 			}
@@ -467,8 +459,6 @@ void CAirCAI::ExecuteAreaAttack(Command& c)
 			inCommand = false;
 
 		if (orderTarget && orderTarget->pos.SqDistance2D(pos) > Square(radius)) {
-			inCommand = false;
-
 			// target wandered out of the attack-area
 			SetOrderTarget(NULL);
 			SelectNewAreaAttackTargetOrPos(c);
@@ -565,11 +555,10 @@ void CAirCAI::SetGoal(const float3& pos, const float3& curPos, float goalRadius)
 	CMobileCAI::SetGoal(pos, curPos, goalRadius);
 }
 
-bool CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac) {
-	assert(ac.GetID() == CMD_AREA_ATTACK || (ac.GetID() == CMD_ATTACK && ac.GetParamsCount() >= 3));
-
-	if (ac.GetID() == CMD_ATTACK) {
-		FinishCommand();
+bool CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac)
+{
+	assert(ac.GetID() == CMD_AREA_ATTACK);
+	if (ac.GetID() != CMD_AREA_ATTACK) {
 		return false;
 	}
 

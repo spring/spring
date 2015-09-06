@@ -11,11 +11,9 @@ class CLightningCannon: public CWeapon
 public:
 	CLightningCannon(CUnit* owner, const WeaponDef* def);
 
-	void Update();
-	void SlowUpdate();
-
 private:
-	void FireImpl(bool scriptCall);
+	void FireImpl(const bool scriptCall) override final;
+	float GetPredictedImpactTime(float3 p) const override final;
 
 private:
 	float3 color;

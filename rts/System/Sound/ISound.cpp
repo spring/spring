@@ -21,7 +21,7 @@
 CONFIG(bool, Sound).defaultValue(true).description("Select the Sound driver, true = OpenAL, false = NullAudio");
 
 // defined here so spring-headless contains them, too (default & headless should contain the same set of configtags!)
-CONFIG(int, MaxSounds).defaultValue(128).headlessValue(0).minimumValue(0).description("Maximum parallel played sounds.");
+CONFIG(int, MaxSounds).defaultValue(128).headlessValue(1).minimumValue(1).description("Maximum parallel played sounds.");
 CONFIG(bool, PitchAdjust).defaultValue(false).description("When enabled adjust sound speed/pitch to game speed.");
 CONFIG(int, snd_volmaster).defaultValue(60).minimumValue(0).maximumValue(200).description("Master sound volume.");
 CONFIG(int, snd_volgeneral).defaultValue(100).minimumValue(0).maximumValue(200).description("Volume for \"general\" sound channel.");
@@ -43,11 +43,11 @@ ISound::ISound()
 {
 }
 
-void ISound::Initialize()
+void ISound::Initialize(bool forceNullSound)
 {
 	if (singleton == NULL) {
 #ifndef NO_SOUND
-		if (!IsNullAudio()) {
+		if (!IsNullAudio() && !forceNullSound) {
 			Channels::BGMusic = new AudioChannel();
 			Channels::General = new AudioChannel();
 			Channels::Battle = new AudioChannel();
@@ -59,6 +59,11 @@ void ISound::Initialize()
 			// for it to finish (otherwise LoadSoundDefs can fail)
 			while (!singleton->CanLoadSoundDefs()) {
 				spring_sleep(spring_msecs(100));
+
+				if (singleton->SoundThreadQuit()) {
+					// no device or context found, fallback
+					ChangeOutput(true); break;
+				}
 			}
 		} else
 #endif // NO_SOUND
@@ -93,27 +98,22 @@ void ISound::Shutdown()
 }
 
 
-bool ISound::IsInitialized()
-{
-	return (singleton != NULL);
-}
-
 bool ISound::IsNullAudio()
 {
 	return !configHandler->GetBool("Sound");
 }
 
 
-bool ISound::ChangeOutput()
+bool ISound::ChangeOutput(bool forceNullSound)
 {
 	if (IsNullAudio()) {
 		//FIXME: on reload, sound-ids change (depends on order when they are requested, see GetSoundId()/GetSoundItem()
 		LOG_L(L_ERROR, "re-enabling sound isn't supported yet, expect problems!");
 	}
 	Shutdown();
-	configHandler->Set("Sound", IsNullAudio());
-	Initialize();
-	return IsNullAudio();
+	configHandler->Set("Sound", IsNullAudio() || forceNullSound);
+	Initialize(forceNullSound);
+	return (IsNullAudio() || forceNullSound);
 }
 
 bool ISound::LoadSoundDefs(const std::string& filename)

@@ -20,7 +20,6 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
@@ -116,11 +115,11 @@ void CGameHelper::DoExplosionDamage(
 	const float3& volPos = vol->GetWorldSpacePos(unit, lapPos);
 
 	// linear damage falloff with distance
-	const float expDist = vol->GetPointSurfaceDistance(unit, lap, expPos);
+	const float expDist = (expRadius != 0.0f) ? vol->GetPointSurfaceDistance(unit, lap, expPos) : 0.0f;
 	const float expRim = expDist * expEdgeEffect;
 
 	// return early if (distance > radius)
-	if (expDist >= expRadius)
+	if (expDist > expRadius)
 		return;
 
 	// expEdgeEffect should be in [0, 1], so expRadius >= expDist >= expDist*expEdgeEffect
@@ -128,7 +127,7 @@ void CGameHelper::DoExplosionDamage(
 
 	// expMod will also be in [0, 1], no negatives
 	// TODO: damage attenuation for underwater units from surface explosions?
-	const float expDistanceMod = (expRadius - expDist) / (expRadius + 0.01f - expRim);
+	const float expDistanceMod = (expRadius + 0.001f - expDist) / (expRadius + 0.001f - expRim);
 	const float modImpulseScale = CalcImpulseScale(damages, expDistanceMod);
 
 	// NOTE: if an explosion occurs right underneath a
@@ -168,15 +167,15 @@ void CGameHelper::DoExplosionDamage(
 	const CollisionVolume* vol = feature->GetCollisionVolume(NULL);
 	const float3& volPos = vol->GetWorldSpacePos(feature, ZeroVector);
 
-	const float expDist = vol->GetPointSurfaceDistance(feature, NULL, expPos);
+	const float expDist = (expRadius != 0.0f) ? vol->GetPointSurfaceDistance(feature, NULL, expPos) : 0.0f;
 	const float expRim = expDist * expEdgeEffect;
 
-	if (expDist >= expRadius)
+	if (expDist > expRadius)
 		return;
 
 	assert(expRadius >= expRim);
 
-	const float expDistanceMod = (expRadius - expDist) / (expRadius + 0.01f - expRim);
+	const float expDistanceMod = (expRadius + 0.001f - expDist) / (expRadius + 0.001f - expRim);
 	const float modImpulseScale = CalcImpulseScale(damages, expDistanceMod);
 
 	const float3 impulseDir = (volPos - expPos).SafeNormalize();
@@ -258,7 +257,7 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 				params.hitUnit,
 				params.owner,
 				params.pos,
-				damageAOE,
+				0.0f,
 				params.explosionSpeed,
 				params.edgeEffectiveness,
 				params.ignoreOwner,
@@ -273,7 +272,7 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 				params.hitFeature,
 				params.owner,
 				params.pos,
-				damageAOE,
+				0.0f,
 				params.edgeEffectiveness,
 				params.damages,
 				weaponDefID,
@@ -317,7 +316,7 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 	if (weaponDef != NULL) {
 		const GuiSoundSet& soundSet = weaponDef->hitSound;
 
-		const unsigned int soundFlags = CCustomExplosionGenerator::GetFlagsFromHeight(params.pos.y, altitude);
+		const unsigned int soundFlags = CCustomExplosionGenerator::GetFlagsFromHeight(params.pos.y, realHeight);
 		const unsigned int soundMask = CCustomExplosionGenerator::SPW_WATER | CCustomExplosionGenerator::SPW_UNDERWATER;
 
 		const int soundNum = ((soundFlags & soundMask) != 0);
@@ -354,23 +353,20 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 template<typename TFilter, typename TQuery>
 static inline void QueryUnits(TFilter filter, TQuery& query)
 {
-	const vector<int> &quads = quadField->GetQuads(query.pos, query.radius);
-
+	const auto& quads = quadField->GetQuads(query.pos, query.radius);
 	const int tempNum = gs->tempNum++;
 
-	for (vector<int>::const_iterator qi = quads.begin(); qi != quads.end(); ++qi) {
-		const CQuadField::Quad& quad = quadField->GetQuad(*qi);
-		for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
-			if (!filter.Team(t)) {
-				continue;
-			}
-			std::list<CUnit*>::const_iterator ui;
-			const std::list<CUnit*>& allyTeamUnits = quad.teamUnits[t];
-			for (ui = allyTeamUnits.begin(); ui != allyTeamUnits.end(); ++ui) {
-				if ((*ui)->tempNum != tempNum) {
-					(*ui)->tempNum = tempNum;
-					if (filter.Unit(*ui)) {
-						query.AddUnit(*ui);
+	for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) { //FIXME
+		if (!filter.Team(t)) {
+			continue;
+		}
+		for (const int qi: quads) {
+			const std::vector<CUnit*>& allyTeamUnits = quadField->GetQuad(qi).teamUnits[t];
+			for (CUnit* u: allyTeamUnits) {
+				if (u->tempNum != tempNum) {
+					u->tempNum = tempNum;
+					if (filter.Unit(u)) {
+						query.AddUnit(u);
 					}
 				}
 			}
@@ -573,7 +569,8 @@ namespace {
 				const float dist = pos.distance(u->midPos) - u->radius;
 
 				if (dist <= closeDist &&
-					(canBeBlind || u->losRadius * losHandler->losDiv > dist)) {
+					(canBeBlind || ((u->losRadius * losHandler->los.divisor) > dist))
+				) {
 					closeDist = dist;
 					closeUnit = u;
 				}
@@ -599,7 +596,8 @@ namespace {
 				const float sqDist = (pos - u->midPos).SqLength2D();
 
 				if (sqDist <= closeSqDist &&
-					(canBeBlind || Square(u->losRadius * losHandler->losDiv) > sqDist)) {
+					(canBeBlind || Square(u->losRadius * losHandler->los.divisor) > sqDist)
+				) {
 					closeSqDist = sqDist;
 					closeUnit = u;
 				}
@@ -633,69 +631,54 @@ namespace {
 static int tempTargetUnits[MAX_UNITS] = {0};
 static int targetTempNum = 2;
 
-void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* lastTargetUnit, std::multimap<float, CUnit*>& targets)
+void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoidUnit, std::multimap<float, CUnit*>& targets)
 {
-	const CUnit* attacker = weapon->owner;
+	const CUnit* owner    = weapon->owner;
 	const float radius    = weapon->range;
-	const float3& pos     = attacker->pos;
-	const float heightMod = weapon->heightMod;
-	const float aHeight   = weapon->weaponPos.y;
+	const float3& pos     = owner->pos;
+	const float aHeight   = weapon->aimFromPos.y;
+	const CUnit* lastAttacker = ((owner->lastAttackFrame + 200) <= gs->frameNum) ? owner->lastAttacker : nullptr;
 
 	const WeaponDef* weaponDef = weapon->weaponDef;
+	const float heightMod = weaponDef->heightmod;
 
 	// how much damage the weapon deals over 1 second
 	const float secDamage = weaponDef->damages.GetDefaultDamage() * weapon->salvoSize / weapon->reloadTime * GAME_SPEED;
 	const bool paralyzer  = (weaponDef->damages.paralyzeDamageTime != 0);
 
-	const std::vector<int>& quads = quadField->GetQuads(pos, radius + (aHeight - std::max(0.0f, readMap->GetInitMinHeight())) * heightMod);
-
+	const auto& quads = quadField->GetQuads(pos, radius + (aHeight - std::max(0.0f, readMap->GetInitMinHeight())) * heightMod);
 	const int tempNum = targetTempNum++;
 
-	typedef std::vector<int>::const_iterator VectorIt;
-	typedef std::list<CUnit*>::const_iterator ListIt;
+	for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
+		if (teamHandler->Ally(owner->allyteam, t)) {
+			continue;
+		}
+		for (const int qi: quads) {
+			const std::vector<CUnit*>& allyTeamUnits = quadField->GetQuad(qi).teamUnits[t];
 
-	for (VectorIt qi = quads.begin(); qi != quads.end(); ++qi) {
-		for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
-			if (teamHandler->Ally(attacker->allyteam, t)) {
-				continue;
-			}
-
-			const std::list<CUnit*>& allyTeamUnits = quadField->GetQuad(*qi).teamUnits[t];
-
-			for (ListIt ui = allyTeamUnits.begin(); ui != allyTeamUnits.end(); ++ui) {
-				CUnit* targetUnit = *ui;
+			for (CUnit* targetUnit: allyTeamUnits) {
 				float targetPriority = 1.0f;
 
-				if (!(targetUnit->category & weapon->onlyTargetCategory)) {
-					continue;
-				}
-				if (targetUnit->GetTransporter() != NULL) {
-					if (!modInfo.targetableTransportedUnits)
-						continue;
-					// the transportee might be "hidden" below terrain, in which case we can't target it
-					if (targetUnit->pos.y < CGround::GetHeightReal(targetUnit->pos.x, targetUnit->pos.z))
-						continue;
-				}
 				if (tempTargetUnits[targetUnit->id] == tempNum) {
 					continue;
 				}
-
 				tempTargetUnits[targetUnit->id] = tempNum;
 
-				if (targetUnit->IsUnderWater() && !weaponDef->waterweapon) {
+				if (!weapon->TestTarget(float3(), SWeaponTarget(targetUnit))) {
 					continue;
 				}
-				if (targetUnit->isDead) {
-					continue;
+
+				if (targetUnit == avoidUnit) {
+					targetPriority *= 10.0f;
 				}
 
 				float3 targPos;
-				const unsigned short targetLOSState = targetUnit->losStatus[attacker->allyteam];
+				const unsigned short targetLOSState = targetUnit->losStatus[owner->allyteam];
 
 				if (targetLOSState & LOS_INLOS) {
 					targPos = targetUnit->aimPos;
 				} else if (targetLOSState & LOS_INRADAR) {
-					targPos = targetUnit->aimPos + (targetUnit->posErrorVector * radarHandler->GetAllyTeamRadarErrorSize(attacker->allyteam));
+					targPos = weapon->GetUnitPositionWithError(targetUnit);
 					targetPriority *= 10.0f;
 				} else {
 					continue;
@@ -703,7 +686,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 
 				const float modRange = radius + (aHeight - targPos.y) * heightMod;
 
-				if ((pos - targPos).SqLength2D() > modRange * modRange) {
+				if (pos.SqDistance2D(targPos) > modRange * modRange) {
 					continue;
 				}
 
@@ -715,10 +698,6 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 
 				if (targetLOSState & LOS_INLOS) {
 					targetPriority *= (secDamage + targetUnit->health);
-
-					if (targetUnit == lastTargetUnit) {
-						targetPriority *= weapon->avoidTarget ? 10.0f : 0.4f;
-					}
 
 					if (paralyzer && targetUnit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? targetUnit->maxHealth: targetUnit->health)) {
 						targetPriority *= 4.0f;
@@ -740,9 +719,12 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 					if (targetUnit->IsCrashing()) {
 						targetPriority *= 1000.0f;
 					}
+					if (targetUnit == lastAttacker) {
+						targetPriority *= 0.5f;
+					}
 				}
 
-				if (!eventHandler.AllowWeaponTarget(attacker->id, targetUnit->id, weapon->weaponNum, weaponDef->id, &targetPriority)) {
+				if (!eventHandler.AllowWeaponTarget(owner->id, targetUnit->id, weapon->weaponNum, weaponDef->id, &targetPriority)) {
 					continue;
 				}
 
@@ -753,7 +735,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* last
 
 #ifdef TRACE_SYNC
 	{
-		tracefile << "[GenerateWeaponTargets] attackerID, attackRadius: " << attacker->id << ", " << radius << " ";
+		tracefile << "[GenerateWeaponTargets] ownerID, attackRadius: " << owner->id << ", " << radius << " ";
 
 		for (std::multimap<float, CUnit*>::const_iterator ti = targets.begin(); ti != targets.end(); ++ti)
 			tracefile << "\tpriority: " << (ti->first) <<  ", targetID: " << (ti->second)->id <<  " ";
@@ -969,9 +951,7 @@ float3 CGameHelper::ClosestBuildSite(int team, const UnitDef* unitDef, float3 po
 							continue;
 						if (!solObj->immobile)
 							continue;
-						if (dynamic_cast<CFactory*>(solObj) == NULL)
-							continue;
-						if (!static_cast<CFactory*>(solObj)->opening)
+						if (!solObj->yardOpen)
 							continue;
 
 						good = false;
@@ -1282,11 +1262,8 @@ Command CGameHelper::GetBuildCommand(const float3& pos, const float3& dir) {
 
 	CCommandQueue::iterator ci;
 
-	const std::list<CUnit*>& units = unitHandler->activeUnits;
-	      std::list<CUnit*>::const_iterator ui;
 
-	for (ui = units.begin(); ui != units.end(); ++ui) {
-		const CUnit* unit = *ui;
+	for (CUnit *unit: unitHandler->activeUnits) {
 
 		if (unit->team != gu->myTeam) {
 			continue;

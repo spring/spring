@@ -82,7 +82,7 @@ PathFlowMap::~PathFlowMap() {
 
 void PathFlowMap::Update() {
 	return;
-
+/*
 	std::vector<FlowCell>& fCells = buffers[fBufferIdx];
 	std::vector<FlowCell>& bCells = buffers[bBufferIdx];
 	std::set<unsigned int>& fIndices = indices[fBufferIdx];
@@ -157,11 +157,12 @@ void PathFlowMap::Update() {
 	bBufferIdx = (bBufferIdx + 1) & 1;
 
 	maxFlow[bBufferIdx] = 0.0f;
+*/
 }
 
 void PathFlowMap::AddFlow(const CSolidObject* o) {
 	return;
-
+/*
 	if (!o->HasCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS)) {
 		return;
 	}
@@ -220,6 +221,7 @@ void PathFlowMap::AddFlow(const CSolidObject* o) {
 	#endif
 
 	maxFlow[bBufferIdx] = std::max(maxFlow[bBufferIdx], bCell.flowVector.y);
+*/
 }
 
 
@@ -233,16 +235,17 @@ unsigned int PathFlowMap::GetCellIdx(const CSolidObject* o) const {
 
 const float3& PathFlowMap::GetFlowVec(unsigned int hmx, unsigned int hmz) const {
 	return ZeroVector;
-
+/*
 	const std::vector<FlowCell>& fCells = buffers[fBufferIdx];
 	const unsigned int fCellIdx = (hmz / zscale) * xsize + (hmx / xscale);
 
 	return (fCells[fCellIdx].flowVector);
+*/
 }
 
 float PathFlowMap::GetFlowCost(unsigned int x, unsigned int z, const MoveDef& md, unsigned int pathOpt) const {
 	return 0.0f;
-
+/*
 	const float3& flowVec = GetFlowVec(x, z);
 	const float3& pathDir = pathOptDirs[pathOpt];
 
@@ -250,4 +253,5 @@ float PathFlowMap::GetFlowCost(unsigned int x, unsigned int z, const MoveDef& md
 	const float flowCost = (flowVec.y * FLOW_COST_MULT) * flowScale;
 
 	return flowCost;
+*/
 }

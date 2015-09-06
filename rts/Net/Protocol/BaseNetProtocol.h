@@ -16,6 +16,7 @@ namespace netcode
 	class RawPacket;
 }
 struct PlayerStatistics;
+struct TeamStatistics;
 
 
 static const unsigned short NETWORK_VERSION = atoi(SpringVersion::GetMajor().c_str());
@@ -73,7 +74,7 @@ enum NETMSG {
 	NETMSG_SYNCRESPONSE     = 33, // uchar myPlayerNum; int frameNum; uint checksum;
 	NETMSG_SYSTEMMSG        = 35, // uchar myPlayerNum, std::string message;
 	NETMSG_STARTPOS         = 36, // uchar myPlayerNum, uchar myTeam, ready /*0: not ready, 1: ready, 2: don't update readiness*/; float x, y, z;
-	NETMSG_PLAYERINFO       = 38, // uchar myPlayerNum; float cpuUsage; int ping /*in frames*/;
+	NETMSG_PLAYERINFO       = 38, // uchar myPlayerNum; float cpuUsage; int ping /*in milliseconds*/;
 	NETMSG_PLAYERLEFT       = 39, // uchar myPlayerNum, bIntended /*0: lost connection, 1: left, 2: forced (kicked) */;
 
 #ifdef SYNCDEBUG
@@ -93,6 +94,7 @@ enum NETMSG {
 	NETMSG_TEAMSTAT         = 60, // uchar teamNum, struct TeamStatistics statistics      # used by LadderBot #
 
 	NETMSG_ATTEMPTCONNECT   = 65, // ushort msgsize, ushort netversion, string playername, string passwd, string VERSION_STRING_DETAILED
+	NETMSG_REJECT_CONNECT   = 66, // string reason
 
 	NETMSG_AI_CREATED       = 70, // /* uchar messageSize */, uchar myPlayerNum, uchar whichSkirmishAI, uchar team, std::string name (ends with \0)
 	NETMSG_AI_STATE_CHANGED = 71, // uchar myPlayerNum, uchar whichSkirmishAI, uchar newState
@@ -167,9 +169,9 @@ public:
 	PacketType SendDirectControl(uchar myPlayerNum);
 	PacketType SendDirectControlUpdate(uchar myPlayerNum, uchar status, short heading, short pitch);
 	PacketType SendAttemptConnect(const std::string& name, const std::string& passwd, const std::string& version, int netloss, bool reconnect = false);
+	PacketType SendRejectConnect(const std::string& reason);
 	PacketType SendShare(uchar myPlayerNum, uchar shareTeam, uchar bShareUnits, float shareMetal, float shareEnergy);
 	PacketType SendSetShare(uchar myPlayerNum, uchar myTeam, float metalShareFraction, float energyShareFraction);
-	PacketType SendPlayerStat(uchar myPlayerNum, const PlayerStatistics& currentStats);
 	PacketType SendGameOver(uchar myPlayerNum, const std::vector<uchar>& winningAllyTeams);
 	PacketType SendMapErase(uchar myPlayerNum, short x, short z);
 	PacketType SendMapDrawLine(uchar myPlayerNum, short x1, short z1, short x2, short z2, bool);
@@ -181,6 +183,9 @@ public:
 	PacketType SendPlayerLeft(uchar myPlayerNum, uchar bIntended);
 	PacketType SendLuaMsg(uchar myPlayerNum, unsigned short script, uchar mode, const std::vector<boost::uint8_t>& msg);
 	PacketType SendCurrentFrameProgress(int frameNum);
+
+	PacketType SendPlayerStat(uchar myPlayerNum, const PlayerStatistics& currentStats);
+	PacketType SendTeamStat(uchar teamNum, const TeamStatistics& currentStats);
 
 	PacketType SendGiveAwayEverything(uchar myPlayerNum, uchar giveToTeam);
 	/**

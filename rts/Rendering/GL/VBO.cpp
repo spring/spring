@@ -79,7 +79,9 @@ VBO::~VBO()
 		UnmapBuffer();
 		Unbind();
 	}
-	glDeleteBuffers(1, &vboId);
+	if (GLEW_ARB_vertex_buffer_object) {
+		glDeleteBuffers(1, &vboId);
+	}
 	delete[] data;
 	data = nullptr;
 }
@@ -280,6 +282,7 @@ GLubyte* VBO::MapBuffer(GLintptr offset, GLsizeiptr _size, GLbitfield access)
 		case GL_READ_ONLY:
 			access = GL_MAP_READ_BIT | GL_MAP_UNSYNCHRONIZED_BIT;
 			break;
+		default: break;
 	}
 
 	if (_size == 0) {

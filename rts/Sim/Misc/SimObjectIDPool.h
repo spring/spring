@@ -3,10 +3,9 @@
 #ifndef SIMOBJECT_IDPOOL_H
 #define SIMOBJECT_IDPOOL_H
 
-// #include <map>
-#include <vector>
+#include <map>
+#include "System/creg/creg_cond.h"
 
-#include "System/creg/STL_Map.h"
 
 class CSolidObject;
 class SimObjectIDPool {

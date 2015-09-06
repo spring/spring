@@ -529,7 +529,7 @@ static void LogStacktrace(const int logLevel, StackTrace& stacktrace)
 	const std::string& exe_path = Platform::GetProcessExecutablePath();
 	const std::string& cwd_path = Platform::GetOrigCWD();
 	for (auto fit = stacktrace.begin(); fit != stacktrace.end(); fit++) {
-        for (auto eit = fit->entries.begin(); eit != fit->entries.end(); eit++) {
+		for (auto eit = fit->entries.begin(); eit != fit->entries.end(); eit++) {
 			eit->abbrev_funcname = eit->funcname;
 			std::string fileline = eit->fileline;
 			if (fileline[1] == '?') {  // case "??:?", ":?"
@@ -551,37 +551,19 @@ static void LogStacktrace(const int logLevel, StackTrace& stacktrace)
 			}
 
 			colFileline = std::max(colFileline, (int)eit->abbrev_fileline.length());
-        }
-    }
+		}
+	}
 
-    bool hideSignalHandler = true;
-
-    // Print out the translated StackTrace
-    unsigned numLine = 0;
-    unsigned hiddenLines = 0;
-    while (numLine == 0) { // outer loop at most twice -- tries to find the signal handler once and if that doesn't work, then just print every frame
-        for (auto fit = stacktrace.cbegin(); fit != stacktrace.cend(); fit++) {
-            for (auto eit = fit->entries.begin(); eit != fit->entries.end(); eit++) {
-
-                if (hideSignalHandler) {
-                    hiddenLines++;
-					if (eit->fileline.find("sigaction.c:?") == 0) {
-                        hideSignalHandler = false;
-                        LOG_I(logLevel, "(Signal handler calls suppressed [%d]. Inlined calls denoted by < > brackets.)", hiddenLines);
-                    }
-                    continue;
-                }
-
-                if (eit->inLine) {
-					LOG_I(logLevel, "  <%02u> %*s  %s", fit->level, colFileline, eit->abbrev_fileline.c_str(), eit->abbrev_funcname.c_str());
-                } else {
-					LOG_I(logLevel, "[%02u]   %*s  %s", fit->level, colFileline, eit->abbrev_fileline.c_str(), eit->abbrev_funcname.c_str());
-                }
-                numLine++;
-            }
-        }
-        hideSignalHandler = false;
-    }
+	// Print out the translated StackTrace
+	for (auto fit = stacktrace.cbegin(); fit != stacktrace.cend(); fit++) {
+		for (auto eit = fit->entries.begin(); eit != fit->entries.end(); eit++) {
+			if (eit->inLine) {
+				LOG_I(logLevel, "  <%02u> %*s  %s", fit->level, colFileline, eit->abbrev_fileline.c_str(), eit->abbrev_funcname.c_str());
+			} else {
+				LOG_I(logLevel, "[%02u]   %*s  %s", fit->level, colFileline, eit->abbrev_fileline.c_str(), eit->abbrev_funcname.c_str());
+			}
+		}
+	}
 }
 
 #endif  // !(__APPLE__)
@@ -774,11 +756,10 @@ namespace CrashHandler
         {
             // process and analyse the raw stack trace
             void* iparray[MAX_STACKTRACE_DEPTH];
-            int numLines = -1;
 
 			ctls->Suspend();
 
-            numLines = thread_unwind(&ctls->ucontext, iparray, stacktrace);
+			const int numLines = thread_unwind(&ctls->ucontext, iparray, stacktrace);
 
 			ctls->Resume();
 
@@ -830,9 +811,8 @@ namespace CrashHandler
         {
             // process and analyse the raw stack trace
             void* iparray[MAX_STACKTRACE_DEPTH];
-            int numLines = -1;
 
-            numLines = thread_unwind(nullptr, iparray, stacktrace);
+            const int numLines = thread_unwind(nullptr, iparray, stacktrace);
 
             LOG_L(L_DEBUG, "HaltedStacktrace[2]");
 

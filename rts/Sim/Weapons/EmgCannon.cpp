@@ -20,29 +20,9 @@ CEmgCannon::CEmgCannon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 }
 
 
-void CEmgCannon::Update()
+void CEmgCannon::FireImpl(const bool scriptCall)
 {
-	if (targetType != Target_None) {
-		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
-		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
-
-		float3 wantedDirTemp = targetPos - weaponPos;
-		const float targetDist = wantedDirTemp.LengthNormalize();
-
-		if (!onlyForward && targetDist != 0.0f) {
-			wantedDir = wantedDirTemp;
-		}
-
-		predict = targetDist / projectileSpeed;
-	}
-	CWeapon::Update();
-}
-
-
-
-void CEmgCannon::FireImpl(bool scriptCall)
-{
-	float3 dir = targetPos - weaponMuzzlePos;
+	float3 dir = currentTargetPos - weaponMuzzlePos;
 	const float dist = dir.LengthNormalize();
 
 	if (onlyForward && owner->unitDef->IsStrafingAirUnit()) {

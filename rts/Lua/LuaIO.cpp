@@ -73,7 +73,7 @@ bool LuaIO::SafeReadPath(const string& path)
 }
 
 
-bool LuaIO::SafeWritePath(lua_State* L, const string& path)
+bool LuaIO::SafeWritePath(const string& path)
 {
 	const size_t numExtensions = 5;
 	const char* exeFiles[numExtensions] = {"exe", "dll", "so", "bat", "com"};
@@ -135,7 +135,7 @@ int LuaIO::system(lua_State* L, const char* command)
 
 int LuaIO::remove(lua_State* L, const char* pathname)
 {
-	if (!SafeWritePath(L, pathname)
+	if (!SafeWritePath(pathname)
 		|| !IsSafePath(pathname)) {
 		errno = EPERM; //EACCESS?
 		return -1;
@@ -146,7 +146,7 @@ int LuaIO::remove(lua_State* L, const char* pathname)
 
 int LuaIO::rename(lua_State* L, const char* oldpath, const char* newpath)
 {
-	if (!SafeWritePath(L, oldpath) || !SafeWritePath(L, newpath)
+	if (!SafeWritePath(oldpath) || !SafeWritePath(newpath)
 		|| !IsSafePath(oldpath) || !IsSafePath(newpath)) {
 		errno = EPERM; //EACCESS?
 		return -1;

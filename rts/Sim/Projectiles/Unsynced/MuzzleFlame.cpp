@@ -12,7 +12,6 @@
 CR_BIND_DERIVED(CMuzzleFlame, CProjectile, (ZeroVector, ZeroVector, ZeroVector, 0))
 
 CR_REG_METADATA(CMuzzleFlame,(
-	CR_SERIALIZER(creg_Serialize), // randSmokeDir
 	CR_MEMBER(size),
 	CR_MEMBER(age),
 	CR_MEMBER(numFlame),
@@ -20,11 +19,6 @@ CR_REG_METADATA(CMuzzleFlame,(
 	CR_MEMBER(randSmokeDir),
 	CR_RESERVED(8)
 	))
-
-void CMuzzleFlame::creg_Serialize(creg::ISerializer* s)
-{
-//	s.Serialize(randSmokeDir, numSmoke*sizeof(float3));
-}
 
 CMuzzleFlame::CMuzzleFlame(const float3& pos, const float3& speed, const float3& dir, float size):
 	CProjectile(pos, speed, NULL, false, false, false),
@@ -106,4 +100,7 @@ void CMuzzleFlame::Draw()
 	}
 }
 
-
+int CMuzzleFlame::GetProjectilesCount() const
+{
+	return numSmoke * 2;
+}

@@ -201,7 +201,8 @@ but it may open other files & directories for reading.
 Isolation Mode
 --------------
 Not to confuse with Portable Mode, this mode disables all automatic Data Dir scanning and limit reading & writing to a single folder.
-This is very usefull when games want to run separate from other Spring games.
+This is very useful when games want to run separate from other Spring games.
+Isolation mode can be enabled by placing an empty isolated.txt next to the spring executable or by setting SPRING_ISOLATED env var.
 
 Data Dirs
 --------

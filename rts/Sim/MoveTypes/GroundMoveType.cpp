@@ -21,7 +21,6 @@
 #include "Sim/Path/IPathController.hpp"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Units/Scripts/CobInstance.h"
-#include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/MobileCAI.h"
 #include "Sim/Units/UnitDef.h"
@@ -100,6 +99,7 @@ CR_REG_METADATA(CGroundMoveType, (
 
 	CR_MEMBER(atGoal),
 	CR_MEMBER(atEndOfPath),
+	CR_MEMBER(wantRepath),
 
 	CR_MEMBER(currWayPointDist),
 	CR_MEMBER(prevWayPointDist),
@@ -112,7 +112,6 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(pathID),
 
 	CR_MEMBER(nextObstacleAvoidanceFrame),
-	CR_MEMBER(lastPathRequestFrame),
 
 	CR_MEMBER(reversing),
 	CR_MEMBER(idling),
@@ -155,6 +154,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 
 	atGoal(false),
 	atEndOfPath(false),
+	wantRepath(false),
 
 	currWayPointDist(0.0f),
 	prevWayPointDist(0.0f),
@@ -172,7 +172,6 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	pathID(0),
 
 	nextObstacleAvoidanceFrame(0),
-	lastPathRequestFrame(0),
 
 	numIdlingUpdates(0),
 	numIdlingSlowUpdates(0),
@@ -344,7 +343,7 @@ void CGroundMoveType::SlowUpdate()
 							owner->id, pathID, numIdlingUpdates);
 
 					if (numIdlingSlowUpdates < MAX_IDLING_SLOWUPDATES) {
-						ReRequestPath(false, true);
+						ReRequestPath(true);
 					} else {
 						// unit probably ended up on a non-traversable
 						// square, or got stuck in a non-moving crowd
@@ -354,7 +353,10 @@ void CGroundMoveType::SlowUpdate()
 			} else {
 				// case B: we want to be moving but don't have a path
 				LOG_L(L_DEBUG, "SlowUpdate: unit %i has no path", owner->id);
-				ReRequestPath(false, true);
+				ReRequestPath(true);
+			}
+			if (wantRepath) {
+				ReRequestPath(true);
 			}
 		}
 
@@ -425,7 +427,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadius) {
 	// units passing intermediate waypoints will TYPICALLY not cause any
 	// script->{Start,Stop}Moving calls now (even when turnInPlace=true)
 	// unless they come to a full stop first
-	ReRequestPath(false, true);
+	ReRequestPath(true); //FIXME WTF?
 
 	if (owner->team == gu->myTeam) {
 		Channels::General->PlayRandomSample(owner->unitDef->sounds.activate, owner);
@@ -1254,17 +1256,16 @@ unsigned int CGroundMoveType::GetNewPath()
 	return newPathID;
 }
 
-bool CGroundMoveType::ReRequestPath(bool callScript, bool forceRequest) {
-	// limit frequency of repath-requests from outside SlowUpdate
-	// Only allow at most 2 requests between SlowUpdate.
-	if (((gs->frameNum - lastPathRequestFrame) < ((UNIT_SLOWUPDATE_RATE >> 1) + 1)) && (!forceRequest))
-		return false;
+void CGroundMoveType::ReRequestPath(bool forceRequest) {
+	if (forceRequest) {
+		StopEngine(false);
+		StartEngine(false);
+		wantRepath = false;
+		return;
+	}
 
-	StopEngine(callScript);
-	StartEngine(callScript);
-
-	lastPathRequestFrame = gs->frameNum;
-	return true;
+	wantRepath = true;
+	return;
 }
 
 
@@ -1343,7 +1344,7 @@ bool CGroundMoveType::CanGetNextWayPoint() {
 
 			for (int x = xmin; x < xmax; x++) {
 				for (int z = zmin; z < zmax; z++) {
-					if (ownerMD->TestMoveSquare(owner, x, z, ZeroVector, true, true, true)) {
+					if (ownerMD->TestMoveSquare(owner, x, z, owner->speed, true, true, true)) {
 						continue;
 					}
 					// if still further than SS elmos from waypoint, disallow skipping
@@ -1393,18 +1394,15 @@ void CGroundMoveType::GetNextWayPoint()
 	if (nextWayPoint.x == -1.0f && nextWayPoint.z == -1.0f) {
 		Fail(false);
 	} else {
-		#define CWP_BLOCK_MASK CMoveMath::SquareIsBlocked(*owner->moveDef, currWayPoint, owner)
-		#define NWP_BLOCK_MASK CMoveMath::SquareIsBlocked(*owner->moveDef, nextWayPoint, owner)
+		const auto CWP_BLOCK_MASK = CMoveMath::SquareIsBlocked(*owner->moveDef, currWayPoint, owner);
+		const auto NWP_BLOCK_MASK = CMoveMath::SquareIsBlocked(*owner->moveDef, nextWayPoint, owner);
 
 		if ((CWP_BLOCK_MASK & CMoveMath::BLOCK_STRUCTURE) != 0 || (NWP_BLOCK_MASK & CMoveMath::BLOCK_STRUCTURE) != 0) {
 			// this can happen if we crushed a non-blocking feature
 			// and it spawned another feature which we cannot crush
 			// (eg.) --> repath
-			ReRequestPath(false, false);
+			ReRequestPath(false);
 		}
-
-		#undef NWP_BLOCK_MASK
-		#undef CWP_BLOCK_MASK
 	}
 }
 
@@ -1653,7 +1651,7 @@ void CGroundMoveType::HandleStaticObjectCollision(
 				const int zabs = zmid + z;
 
 				if (checkTerrain) {
-					if (CMoveMath::GetPosSpeedMod(*colliderMD, xabs, zabs) > 0.01f)
+					if (CMoveMath::GetPosSpeedMod(*colliderMD, xabs, zabs, collider->speed) > 0.01f)
 						continue;
 				} else {
 					if ((CMoveMath::SquareIsBlocked(*colliderMD, xabs, zabs, collider) & CMoveMath::BLOCK_STRUCTURE) == 0)
@@ -1702,7 +1700,7 @@ void CGroundMoveType::HandleStaticObjectCollision(
 			bounceVec = bounceVec.SafeNormalize2D() * mix(bounceScale, fpsBounceScale, owner->UnderFirstPersonControl());
 
 			// if checkTerrain is true, test only the center square
-			if (colliderMD->TestMoveSquare(collider, collider->pos + strafeVec + bounceVec, ZeroVector, checkTerrain, checkYardMap, checkTerrain)) {
+			if (colliderMD->TestMoveSquare(collider, collider->pos + strafeVec + bounceVec, collider->speed, checkTerrain, checkYardMap, checkTerrain)) {
 				collider->Move(strafeVec + bounceVec, true);
 			} else {
 				collider->Move(oldPos - collider->pos, wantRequestPath = true);
@@ -1726,7 +1724,7 @@ void CGroundMoveType::HandleStaticObjectCollision(
 		const float3 strafeVec = (collider->rightdir * colSlideSign) * strafeScale;
 		const float3 bounceVec = (   separationVector / sepDistance) * bounceScale;
 
-		if (colliderMD->TestMoveSquare(collider, collider->pos + strafeVec + bounceVec, ZeroVector, true, true, true)) {
+		if (colliderMD->TestMoveSquare(collider, collider->pos + strafeVec + bounceVec, collider->speed, true, true, true)) {
 			collider->Move(strafeVec + bounceVec, true);
 		} else {
 			// move back to previous-frame position
@@ -1745,7 +1743,7 @@ void CGroundMoveType::HandleStaticObjectCollision(
 	}
 
 	if (canRequestPath && wantRequestPath) {
-		ReRequestPath(false, false);
+		ReRequestPath(false);
 	}
 }
 
@@ -1761,20 +1759,27 @@ void CGroundMoveType::HandleUnitCollisions(
 	const float searchRadius = colliderSpeed + (colliderRadius * 2.0f);
 
 	const std::vector<CUnit*>& nearUnits = quadField->GetUnitsExact(collider->pos, searchRadius);
-	      std::vector<CUnit*>::const_iterator uit;
 
 	// NOTE: probably too large for most units (eg. causes tree falling animations to be skipped)
 	const int dirSign = Sign(int(!reversing));
 	const float3 crushImpulse = collider->speed * collider->mass * dirSign;
 
-	for (uit = nearUnits.begin(); uit != nearUnits.end(); ++uit) {
-		CUnit* collidee = const_cast<CUnit*>(*uit);
+	for (CUnit* collidee: nearUnits) {
+		if (collidee == collider) continue;
+		if (collidee->IsSkidding()) continue;
+		if (collidee->IsFlying()) continue;
 
 		const UnitDef* collideeUD = collidee->unitDef;
 		const MoveDef* collideeMD = collidee->moveDef;
 
 		const bool colliderMobile = (colliderMD != NULL); // always true
 		const bool collideeMobile = (collideeMD != NULL); // maybe true
+
+		// don't push/crush either party if the collidee does not block the collider (or vv.)
+		if (colliderMobile && CMoveMath::IsNonBlocking(*colliderMD, collidee, collider))
+			continue;
+		if (collideeMobile && CMoveMath::IsNonBlocking(*collideeMD, collider, collidee))
+			continue;
 
 		// use the collidee's MoveDef footprint as radius if it is mobile
 		// use the collidee's Unit (not UnitDef) footprint as radius otherwise
@@ -1788,10 +1793,6 @@ void CGroundMoveType::HandleUnitCollisions(
 
 		if ((separationVector.SqLength() - separationMinDistSq) > 0.01f)
 			continue;
-
-		if (collidee == collider) continue;
-		if (collidee->IsSkidding()) continue;
-		if (collidee->IsFlying()) continue;
 
 		// disable collisions between collider and collidee
 		// if collidee is currently inside any transporter,
@@ -1817,26 +1818,8 @@ void CGroundMoveType::HandleUnitCollisions(
 		const bool collideeYields = (collider->IsMoving() && !collidee->IsMoving());
 		const bool ignoreCollidee = (collideeYields && alliedCollision);
 
-		// FIXME:
-		//   allowPushingEnemyUnits is (now) useless because alliances are bi-directional
-		//   ie. if !alliedCollision, pushCollider and pushCollidee BOTH become false and
-		//   the collision is treated normally --> not what we want here, but the desired
-		//   behavior (making each party stop and block the other) has many corner-cases
-		//   this also happens when both parties are pushResistant --> make each respond
-		//   to the other as a static obstacle so the tags still have some effect
-		pushCollider &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collider->blockEnemyPushing);
-		pushCollidee &= (alliedCollision || modInfo.allowPushingEnemyUnits || !collidee->blockEnemyPushing);
-		pushCollider &= (!collider->beingBuilt && !collider->UsingScriptMoveType() && !colliderUD->pushResistant);
-		pushCollidee &= (!collidee->beingBuilt && !collidee->UsingScriptMoveType() && !collideeUD->pushResistant);
-
 		crushCollidee |= (!alliedCollision || modInfo.allowCrushingAlliedUnits);
 		crushCollidee &= ((colliderSpeed * collider->mass) > (collideeSpeed * collidee->mass));
-
-		// don't push/crush either party if the collidee does not block the collider (or vv.)
-		if (colliderMobile && CMoveMath::IsNonBlocking(*colliderMD, collidee, collider))
-			continue;
-		if (collideeMobile && CMoveMath::IsNonBlocking(*collideeMD, collider, collidee))
-			continue;
 
 		if (crushCollidee && !CMoveMath::CrushResistant(*colliderMD, collidee))
 			collidee->Kill(collider, crushImpulse, true);
@@ -1856,7 +1839,7 @@ void CGroundMoveType::HandleUnitCollisions(
 		//
 		// CFactory applies random jitter to otherwise equal goal
 		// positions of at most TWOPI elmos, use half as threshold
-		if ((collider->moveType->goalPos - collidee->moveType->goalPos).SqLength2D() < (PI * PI)) {
+		if (collider->moveType->goalPos.SqDistance2D(collidee->moveType->goalPos) < (PI * PI)) {
 			if (collider->IsMoving() && collider->moveType->progressState == AMoveType::Active) {
 				if (!collidee->IsMoving() && collidee->moveType->progressState == AMoveType::Done) {
 					if (UNIT_CMD_QUE_SIZE(collidee) == 0) {
@@ -1865,6 +1848,18 @@ void CGroundMoveType::HandleUnitCollisions(
 				}
 			}
 		}
+
+		// FIXME:
+		//   allowPushingEnemyUnits is (now) useless because alliances are bi-directional
+		//   ie. if !alliedCollision, pushCollider and pushCollidee BOTH become false and
+		//   the collision is treated normally --> not what we want here, but the desired
+		//   behavior (making each party stop and block the other) has many corner-cases
+		//   this also happens when both parties are pushResistant --> make each respond
+		//   to the other as a static obstacle so the tags still have some effect
+		pushCollider = pushCollider && (alliedCollision || modInfo.allowPushingEnemyUnits || !collider->blockEnemyPushing);
+		pushCollidee = pushCollidee && (alliedCollision || modInfo.allowPushingEnemyUnits || !collidee->blockEnemyPushing);
+		pushCollider = pushCollider && (!collider->beingBuilt && !collider->UsingScriptMoveType() && !colliderUD->pushResistant);
+		pushCollidee = pushCollidee && (!collidee->beingBuilt && !collidee->UsingScriptMoveType() && !collideeUD->pushResistant);
 
 		if ((!collideeMobile && !collideeUD->IsAirUnit()) || (!pushCollider && !pushCollidee)) {
 			// building (always axis-aligned, possibly has a yardmap)
@@ -1927,16 +1922,18 @@ void CGroundMoveType::HandleUnitCollisions(
 		const float3 collideePushVec  = -colResponseVec * collideeMassScale;
 		const float3 colliderSlideVec = collider->rightdir * colliderSlideSign * (1.0f / penDistance) * r2;
 		const float3 collideeSlideVec = collidee->rightdir * collideeSlideSign * (1.0f / penDistance) * r1;
+		const float3 colliderMoveVec = colliderPushVec + colliderSlideVec;
+		const float3 collideeMoveVec = collideePushVec + collideeSlideVec;
 
 		if ((pushCollider || !pushCollidee) && colliderMobile) {
-			if (colliderMD->TestMoveSquare(collider, collider->pos + colliderPushVec + colliderSlideVec)) {
-				collider->Move(colliderPushVec + colliderSlideVec, true);
+			if (colliderMD->TestMoveSquare(collider, collider->pos + colliderMoveVec, colliderMoveVec)) {
+				collider->Move(colliderMoveVec, true);
 			}
 		}
 
 		if ((pushCollidee || !pushCollider) && collideeMobile) {
-			if (collideeMD->TestMoveSquare(collidee, collidee->pos + collideePushVec + collideeSlideVec)) {
-				collidee->Move(collideePushVec + collideeSlideVec, true);
+			if (collideeMD->TestMoveSquare(collidee, collidee->pos + collideeMoveVec, collideeMoveVec)) {
+				collidee->Move(collideeMoveVec, true);
 			}
 		}
 	}
@@ -2080,7 +2077,7 @@ void CGroundMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive
 	//   before unit is at goalPos!)
 	//   for this reason StopMoving always updates goalPos so internal
 	//   GetNewPath's are no-ops (while CAI does not call StartMoving)
-	if (!frontWeapon->TryTarget(mainHeadingPos, true, NULL)) {
+	if (!frontWeapon->TestRange(mainHeadingPos, SWeaponTarget(mainHeadingPos, true))) {
 		progressState = Active;
 	}
 }
@@ -2126,7 +2123,7 @@ void CGroundMoveType::SetMainHeading() {
 		}
 	} else {
 		if (owner->heading != newHeading) {
-			if (!frontWeapon->TryTarget(mainHeadingPos, true, NULL)) {
+			if (!frontWeapon->TestRange(mainHeadingPos, SWeaponTarget(mainHeadingPos, true))) {
 				progressState = Active;
 			}
 		}
@@ -2316,14 +2313,14 @@ void CGroundMoveType::UpdateOwnerPos(const float3& oldSpeedVector, const float3&
  		//   relies on assumption that PFS will not search if start-sqr
  		//   is blocked, so too fragile
 		//
-		if (!pathController->IgnoreTerrain(*owner->moveDef, owner->pos) && !owner->moveDef->TestMoveSquare(owner, owner->pos, ZeroVector, true, false, true)) {
+		if (!pathController->IgnoreTerrain(*owner->moveDef, owner->pos) && !owner->moveDef->TestMoveSquare(owner, owner->pos, owner->speed, true, false, true)) {
 			bool updatePos = false;
 
 			for (unsigned int n = 1; n <= SQUARE_SIZE; n++) {
-				if (!updatePos && (updatePos = owner->moveDef->TestMoveSquare(owner, owner->pos + owner->rightdir * n, ZeroVector, true, false, true))) {
+				if (!updatePos && (updatePos = owner->moveDef->TestMoveSquare(owner, owner->pos + owner->rightdir * n, owner->speed, true, false, true))) {
 					owner->Move(owner->pos + owner->rightdir * n, false); break;
 				}
-				if (!updatePos && (updatePos = owner->moveDef->TestMoveSquare(owner, owner->pos - owner->rightdir * n, ZeroVector, true, false, true))) {
+				if (!updatePos && (updatePos = owner->moveDef->TestMoveSquare(owner, owner->pos - owner->rightdir * n, owner->speed, true, false, true))) {
 					owner->Move(owner->pos - owner->rightdir * n, false); break;
 				}
 			}
@@ -2337,7 +2334,7 @@ void CGroundMoveType::UpdateOwnerPos(const float3& oldSpeedVector, const float3&
 		//   this can fail when gravity is allowed (a unit catching air
 		//   can easily end up on an impassable square, especially when
 		//   terrain contains micro-bumps) --> more likely at lower g's
-		// assert(owner->moveDef->TestMoveSquare(owner, owner->pos, ZeroVector, true, false, true));
+		// assert(owner->moveDef->TestMoveSquare(owner, owner->pos, owner->speed, true, false, true));
 	}
 
 	reversing    = (newSpeedVector.dot(flatFrontDir) < 0.0f);

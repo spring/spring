@@ -362,6 +362,16 @@ struct SSkirmishAICallback {
 	 */
 	float             (CALLING_CONV *Game_getTeamResourceStorage)(int skirmishAIId, int otherTeamId, int resourceId);
 
+	float             (CALLING_CONV *Game_getTeamResourcePull)(int skirmishAIId, int otherTeamId, int resourceId);
+
+	float             (CALLING_CONV *Game_getTeamResourceShare)(int skirmishAIId, int otherTeamId, int resourceId);
+
+	float             (CALLING_CONV *Game_getTeamResourceSent)(int skirmishAIId, int otherTeamId, int resourceId);
+
+	float             (CALLING_CONV *Game_getTeamResourceReceived)(int skirmishAIId, int otherTeamId, int resourceId);
+
+	float             (CALLING_CONV *Game_getTeamResourceExcess)(int skirmishAIId, int otherTeamId, int resourceId);
+
 	/// Returns true, if the two supplied ally-teams are currently allied
 	bool              (CALLING_CONV *Game_isAllied)(int skirmishAIId, int firstAllyTeamId, int secondAllyTeamId);
 
@@ -502,6 +512,16 @@ struct SSkirmishAICallback {
 	float             (CALLING_CONV *Economy_getUsage)(int skirmishAIId, int resourceId); //$ REF:resourceId->Resource
 
 	float             (CALLING_CONV *Economy_getStorage)(int skirmishAIId, int resourceId); //$ REF:resourceId->Resource
+
+	float             (CALLING_CONV *Economy_getPull)(int skirmishAIId, int resourceId); //$ REF:resourceId->Resource
+
+	float             (CALLING_CONV *Economy_getShare)(int skirmishAIId, int resourceId); //$ REF:resourceId->Resource
+
+	float             (CALLING_CONV *Economy_getSent)(int skirmishAIId, int resourceId); //$ REF:resourceId->Resource
+
+	float             (CALLING_CONV *Economy_getReceived)(int skirmishAIId, int resourceId); //$ REF:resourceId->Resource
+
+	float             (CALLING_CONV *Economy_getExcess)(int skirmishAIId, int resourceId); //$ REF:resourceId->Resource
 
 // END OBJECT Resource
 
@@ -1031,18 +1051,6 @@ struct SSkirmishAICallback {
 
 	float             (CALLING_CONV *UnitDef_getBuildingDecalDecaySpeed)(int skirmishAIId, int unitDefId);
 
-	/**
-	 * Maximum flight time in seconds before the aircraft needs
-	 * to return to an air repair bay to refuel.
-	 */
-	float             (CALLING_CONV *UnitDef_getMaxFuel)(int skirmishAIId, int unitDefId);
-
-	/** Time to fully refuel the unit */
-	float             (CALLING_CONV *UnitDef_getRefuelTime)(int skirmishAIId, int unitDefId);
-
-	/** Minimum build power of airbases that this aircraft can land on */
-	float             (CALLING_CONV *UnitDef_getMinAirBasePower)(int skirmishAIId, int unitDefId);
-
 	/** Number of units of this type allowed simultaneously in the game */
 	int               (CALLING_CONV *UnitDef_getMaxThisUnit)(int skirmishAIId, int unitDefId);
 
@@ -1117,11 +1125,6 @@ struct SSkirmishAICallback {
 	void              (CALLING_CONV *UnitDef_WeaponMount_getMainDir)(int skirmishAIId, int unitDefId, int weaponMountId, float* return_posF3_out);
 
 	float             (CALLING_CONV *UnitDef_WeaponMount_getMaxAngleDif)(int skirmishAIId, int unitDefId, int weaponMountId);
-
-	/**
-	 * How many seconds of fuel it costs for the owning unit to fire this weapon.
-	 */
-	float             (CALLING_CONV *UnitDef_WeaponMount_getFuelUsage)(int skirmishAIId, int unitDefId, int weaponMountId);
 
 	/**
 	 * Returns the bit field value denoting the categories this weapon should
@@ -1291,8 +1294,6 @@ struct SSkirmishAICallback {
 
 	int               (CALLING_CONV *Unit_getStockpileQueued)(int skirmishAIId, int unitId);
 
-	float             (CALLING_CONV *Unit_getCurrentFuel)(int skirmishAIId, int unitId);
-
 	/** The unit's max speed */
 	float             (CALLING_CONV *Unit_getMaxSpeed)(int skirmishAIId, int unitId);
 
@@ -1388,6 +1389,9 @@ struct SSkirmishAICallback {
 	/** Number of the last frame this unit received an order from a player. */
 	int               (CALLING_CONV *Unit_getLastUserOrderFrame)(int skirmishAIId, int unitId);
 
+	int               (CALLING_CONV *Unit_getWeapons)(int skirmishAIId, int unitId); //$ FETCHER:MULTI:NUM:Weapon
+
+	int               (CALLING_CONV *Unit_getWeapon)(int skirmishAIId, int unitId, int weaponMountId); //$ REF:weaponMountId->WeaponMount REF:RETURN->Weapon
 // END OBJECT Unit
 
 
@@ -2403,6 +2407,20 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *WeaponDef_getCustomParams)(int skirmishAIId, int weaponDefId, const char** keys, const char** values); //$ MAP
 
 // END OBJECT WeaponDef
+
+
+// BEGINN OBJECT Weapon
+	int               (CALLING_CONV *Unit_Weapon_getDef)(int skirmishAIId, int unitId, int weaponId); //$ REF:RETURN->WeaponDef
+
+	/** Next tick the weapon can fire again. */
+	int               (CALLING_CONV *Unit_Weapon_getReloadFrame)(int skirmishAIId, int unitId, int weaponId);
+
+	/** Time between succesive fires in ticks. */
+	int               (CALLING_CONV *Unit_Weapon_getReloadTime)(int skirmishAIId, int unitId, int weaponId);
+
+	float             (CALLING_CONV *Unit_Weapon_getRange)(int skirmishAIId, int unitId, int weaponId);
+
+// END OBJECT Weapon
 
 	bool              (CALLING_CONV *Debug_GraphDrawer_isEnabled)(int skirmishAIId);
 

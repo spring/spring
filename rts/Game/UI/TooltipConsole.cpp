@@ -14,7 +14,6 @@
 #include "Rendering/Fonts/glFont.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
-#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Units/Unit.h"
@@ -219,11 +218,6 @@ std::string CTooltipConsole::MakeUnitStatsString(const SUnitStats& stats)
 	charsPrinted += SNPRINTF(&s[charsPrinted], 512 - charsPrinted, "\nHealth %.0f/%.0f", stats.health, stats.maxHealth);
 	charsPrinted = std::min<size_t>(512, charsPrinted);
 
-	if (stats.maxFuel > 0.0f) {
-		charsPrinted += SNPRINTF(&s[charsPrinted], 512 - charsPrinted, " Fuel %.0f/%.0f", stats.currentFuel, stats.maxFuel);
-		charsPrinted = std::min<size_t>(512, charsPrinted);
-	}
-
 	if (stats.harvestMetalMax > 0.0f || stats.harvestEnergyMax > 0.0f) {
 		charsPrinted += SNPRINTF(&s[charsPrinted], 512 - charsPrinted,
 			"\nExperience %.2f Cost %.0f Range %.0f\n"
@@ -316,8 +310,6 @@ std::string CTooltipConsole::MakeGroundString(const float3& pos)
 SUnitStats::SUnitStats()
 : health(0.0f)
 , maxHealth(0.0f)
-, currentFuel(0.0f)
-, maxFuel(0.0f)
 , experience(0.0f)
 , cost(0.0f)
 , maxRange(0.0f)
@@ -342,8 +334,6 @@ void SUnitStats::AddUnit(const CUnit* unit, bool enemy)
 	if (!decoyDef) {
 		health           += unit->health;
 		maxHealth        += unit->maxHealth;
-		currentFuel      += unit->currentFuel;
-		maxFuel          += unit->unitDef->maxFuel;
 		experience        = (experience * (count - 1) + unit->experience) / count; // average xp
 		cost             += unit->cost.metal + (unit->cost.energy / 60.0f);
 		maxRange          = std::max(maxRange, unit->maxRange);
@@ -358,18 +348,12 @@ void SUnitStats::AddUnit(const CUnit* unit, bool enemy)
 	} else {
 		// display adjusted decoy stats
 		const float healthScale = (decoyDef->health / unit->unitDef->health);
-		float fuelScale = 0.0f;
-		if (unit->unitDef->maxFuel > 0.0f) {
-			fuelScale = (decoyDef->maxFuel / unit->unitDef->maxFuel);
-		}
 
 		float metalMake_, metalUse_, energyMake_, energyUse_;
 		GetDecoyResources(unit, metalMake_, metalUse_, energyMake_, energyUse_);
 
 		health           += unit->health * healthScale;
 		maxHealth        += unit->maxHealth * healthScale;
-		currentFuel      += unit->currentFuel * fuelScale;
-		maxFuel          += decoyDef->maxFuel;
 		experience        = (experience * (count - 1) + unit->experience) / count;
 		cost             += decoyDef->metal + (decoyDef->energy / 60.0f);
 		maxRange          = std::max(maxRange, decoyDef->maxWeaponRange);

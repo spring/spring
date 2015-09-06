@@ -252,32 +252,46 @@ void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdate(unsigned int currFrameNum, un
 		// in row-major order; every GetNeighbors() call invokes
 		// UpdateNeighborCache if the magic numbers do not match
 		// (nodes can be visited multiple times per block update)
-		const int xmin =         (xoff +           0               ), zmin =         (zoff +           0               );
+		const int xmin =         (xoff +           0                   ), zmin =         (zoff +           0                   );
 		const int xmax = std::min(xmin + SQUARE_SIZE, mapDims.mapx >> 1), zmax = std::min(zmin + SQUARE_SIZE, mapDims.mapy >> 1);
 
-		for (int z = zmin; z < zmax; z++) {
+		for (int z = zmin; z < zmax; ) {
+			unsigned int zspan = zsize;
+
 			for (int x = xmin; x < xmax; ) {
 				n = nodeGrid[z * xsize + x];
 				x = n->xmax();
 
+				zspan = std::min(zspan, n->zmax() - z);
+				zspan = std::max(zspan, 1u);
+
 				n->SetMagicNumber(currMagicNum);
 				n->GetNeighbors(nodeGrid);
 			}
+
+			z += zspan;
 		}
 	}
 	{
 		// top-right quadrant: [mapDims.mapx >> 1, mapDims.mapx) x [0, mapDims.mapy >> 1)
-		const int xmin =         (xoff +              (mapDims.mapx >> 1)), zmin =         (zoff +           0               );
+		const int xmin =         (xoff +              (mapDims.mapx >> 1)), zmin =         (zoff +           0                   );
 		const int xmax = std::min(xmin + SQUARE_SIZE,  mapDims.mapx      ), zmax = std::min(zmin + SQUARE_SIZE, mapDims.mapy >> 1);
 
-		for (int z = zmin; z < zmax; z++) {
+		for (int z = zmin; z < zmax; ) {
+			unsigned int zspan = zsize;
+
 			for (int x = xmin; x < xmax; ) {
 				n = nodeGrid[z * xsize + x];
 				x = n->xmax();
 
+				zspan = std::min(zspan, n->zmax() - z);
+				zspan = std::max(zspan, 1u);
+
 				n->SetMagicNumber(currMagicNum);
 				n->GetNeighbors(nodeGrid);
 			}
+
+			z += zspan;
 		}
 	}
 	{
@@ -285,29 +299,43 @@ void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdate(unsigned int currFrameNum, un
 		const int xmin =         (xoff +              (mapDims.mapx >> 1)), zmin =         (zoff +              (mapDims.mapy >> 1));
 		const int xmax = std::min(xmin + SQUARE_SIZE,  mapDims.mapx      ), zmax = std::min(zmin + SQUARE_SIZE,  mapDims.mapy      );
 
-		for (int z = zmin; z < zmax; z++) {
+		for (int z = zmin; z < zmax; ) {
+			unsigned int zspan = zsize;
+
 			for (int x = xmin; x < xmax; ) {
 				n = nodeGrid[z * xsize + x];
 				x = n->xmax();
 
+				zspan = std::min(zspan, n->zmax() - z);
+				zspan = std::max(zspan, 1u);
+
 				n->SetMagicNumber(currMagicNum);
 				n->GetNeighbors(nodeGrid);
 			}
+
+			z += zspan;
 		}
 	}
 	{
 		// bottom-left quadrant: [0, mapDims.mapx >> 1) x [mapDims.mapy >> 1, mapDims.mapy)
-		const int xmin =         (xoff +           0               ), zmin =         (zoff +              (mapDims.mapy >> 1));
+		const int xmin =         (xoff +           0                   ), zmin =         (zoff +              (mapDims.mapy >> 1));
 		const int xmax = std::min(xmin + SQUARE_SIZE, mapDims.mapx >> 1), zmax = std::min(zmin + SQUARE_SIZE,  mapDims.mapy      );
 
-		for (int z = zmin; z < zmax; z++) {
+		for (int z = zmin; z < zmax; ) {
+			unsigned int zspan = zsize;
+
 			for (int x = xmin; x < xmax; ) {
 				n = nodeGrid[z * xsize + x];
 				x = n->xmax();
 
+				zspan = std::min(zspan, n->zmax() - z);
+				zspan = std::max(zspan, 1u);
+
 				n->SetMagicNumber(currMagicNum);
 				n->GetNeighbors(nodeGrid);
 			}
+
+			z += zspan;
 		}
 	}
 }
@@ -324,10 +352,16 @@ void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdates(const SRectangle& ur, unsign
 
 	INode* n = NULL;
 
-	for (int z = zmin; z < zmax; z++) {
+	for (int z = zmin; z < zmax; ) {
+		unsigned int zspan = zsize;
+
 		for (int x = xmin; x < xmax; ) {
 			n = nodeGrid[z * xsize + x];
 			x = n->xmax();
+
+			// calculate largest safe z-increment along this row
+			zspan = std::min(zspan, n->zmax() - z);
+			zspan = std::max(zspan, 1u);
 
 			// NOTE:
 			//   during initialization, currMagicNum == 0 which nodes start with already 
@@ -335,6 +369,8 @@ void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdates(const SRectangle& ur, unsign
 			n->SetMagicNumber(currMagicNum);
 			n->UpdateNeighborCache(nodeGrid);
 		}
+
+		z += zspan;
 	}
 }
 

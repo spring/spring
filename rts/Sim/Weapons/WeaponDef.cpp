@@ -55,9 +55,9 @@ WEAPONTAG(float, edgeEffectiveness).defaultValue(0.0f).maximumValue(0.999f);
 WEAPONTAG(float, collisionSize).defaultValue(0.05f);
 
 // Projectile Properties
-WEAPONTAG(float, projectilespeed).externalName("weaponVelocity").defaultValue(0.0f).minimumValue(0.01f).scaleValue(1.0f / GAME_SPEED);
+WEAPONTAG(float, projectilespeed).externalName("weaponVelocity").fallbackName("maxVelocity").defaultValue(0.0f).minimumValue(0.01f).scaleValue(1.0f / GAME_SPEED);
 WEAPONTAG(float, startvelocity).defaultValue(0.0f).minimumValue(0.01f).scaleValue(1.0f / GAME_SPEED);
-WEAPONTAG(float, weaponacceleration).defaultValue(0.0f).scaleValue(1.0f / (GAME_SPEED * GAME_SPEED));
+WEAPONTAG(float, weaponacceleration).fallbackName("acceleration").defaultValue(0.0f).scaleValue(1.0f / (GAME_SPEED * GAME_SPEED));
 WEAPONTAG(float, reload).externalName("reloadTime").defaultValue(1.0f);
 WEAPONTAG(float, salvodelay).externalName("burstRate").defaultValue(0.1f);
 WEAPONTAG(int, salvosize).externalName("burst").defaultValue(1);
@@ -90,8 +90,8 @@ WEAPONTAG(float, targetBorder).defaultValue(0.0f).minimumValue(-1.0f).maximumVal
 WEAPONTAG(float, cylinderTargeting).fallbackName("cylinderTargetting").defaultValue(0.0f).minimumValue(0.0f).maximumValue(128.0f);
 WEAPONTAG(bool, turret).defaultValue(false).description("Does the unit aim within an arc (up-to and including full 360° turret traverse) or always aim along the owner's heading?");
 WEAPONTAG(bool, fixedLauncher).defaultValue(false);
-WEAPONTAG(float, maxAngle).externalName("tolerance").defaultValue(3000.0f).scaleValue(180.0f / COBSCALEHALF);
-WEAPONTAG(float, maxFireAngle).externalName("firetolerance").defaultValue(32768.0f).scaleValue(180.0f / COBSCALEHALF);
+WEAPONTAG(float, maxAngle).externalName("tolerance").defaultValue(3000.0f).scaleValue(TAANG2RAD);
+WEAPONDUMMYTAG(float, maxFireAngle).externalName("firetolerance").defaultValue(3640.0f).scaleValue(TAANG2RAD); // default value is 20degree
 WEAPONTAG(int, highTrajectory).defaultValue(2);
 WEAPONTAG(float, trajectoryHeight).defaultValue(0.0f);
 WEAPONTAG(bool, tracks).defaultValue(false);
@@ -101,10 +101,11 @@ WEAPONTAG(bool, gravityAffected).defaultValue(false);
 WEAPONTAG(float, myGravity).defaultValue(0.0f);
 WEAPONTAG(bool, canAttackGround).defaultValue(true);
 WEAPONTAG(float, uptime).externalName("weaponTimer").defaultValue(0.0f);
-WEAPONDUMMYTAG(float, flighttime).defaultValue(0).scaleValue(32); // needs to be written as int and read as float
+WEAPONDUMMYTAG(float, flighttime).defaultValue(0).scaleValue(GAME_SPEED).description("Flighttime of missiles in seconds."); // needs to be written as int and read as float
 WEAPONTAG(float, turnrate).defaultValue(0.0f).scaleValue(float(TAANG2RAD) / GAME_SPEED);
 WEAPONTAG(float, heightBoostFactor).defaultValue(-1.0f);
 WEAPONTAG(float, proximityPriority).defaultValue(1.0f);
+WEAPONTAG(bool, allowNonBlockingAim).defaultValue(false).description("When false, the weapon is blocked from fireing till AimWeapon() returns.");
 
 // Target Error
 TAGFUNCTION(AccuracyToSin, float, math::sin(x * PI / 0xafff)) // should really be tan but TA seem to cap it somehow, should also be 7fff or ffff theoretically but neither seems good
@@ -140,7 +141,7 @@ WEAPONTAG(float, fireStarter).defaultValue(0.0f).minimumValue(0.0f).maximumValue
 WEAPONTAG(bool, paralyzer).defaultValue(false).description("Is the weapon a paralyzer? If true the weapon only stuns enemy units and does not cause damage in the form of lost hit-points.");
 WEAPONTAG(int, paralyzeTime,  damages.paralyzeDamageTime).defaultValue(10).minimumValue(0).description("Determines the maximum length of time in seconds that the target will be paralyzed. The timer is restarted every time the target is hit by the weapon. Cannot be less than 0.");
 WEAPONTAG(bool, stockpile).defaultValue(false).description("Does each round of the weapon have to be built and stockpiled by the player? Will only correctly function for the first of each stockpiled weapons a unit has.");
-WEAPONTAG(float, stockpileTime).fallbackName("reload").defaultValue(1.0f).description("The time in seconds taken to stockpile one round of the weapon.");
+WEAPONTAG(float, stockpileTime).fallbackName("reload").defaultValue(1.0f).scaleValue(GAME_SPEED).description("The time in seconds taken to stockpile one round of the weapon.");
 
 // Interceptor
 WEAPONTAG(int, targetable).defaultValue(0).description("Bitmask representing the types of weapon that can intercept this weapon. Each digit of binary that is set to one means that a weapon with the corresponding digit in its interceptor tag will intercept this weapon. Instant-hitting weapons such as [#BeamLaser], [#LightningCannon] and [#Rifle] cannot be targeted.");
@@ -188,7 +189,7 @@ WEAPONTAG(bool, visibleShield).externalName("shield.visible").fallbackName("visi
 	.defaultValue(false).description("Is the shield visible or not?");
 WEAPONTAG(bool, visibleShieldRepulse).externalName("shield.visibleRepulse").fallbackName("visibleShieldRepulse")
 	.defaultValue(false).description("Is the (hard-coded) repulse effect rendered or not?");
-WEAPONTAG(int, visibleShieldHitFrames).externalName("visibleHitFrames").fallbackName("visibleShieldHitFrames")
+WEAPONTAG(int, visibleShieldHitFrames).externalName("shield.visibleHitFrames").fallbackName("visibleShieldHitFrames")
 	.defaultValue(0).description("The number of frames a shield becomes visible for when hit.");
 WEAPONTAG(float3, shieldBadColor).externalName("shield.badColor").fallbackName("shieldBadColor")
 	.defaultValue(float3(1.0f, 0.5f, 0.5f)).description("The RGB colour the shield transitions to as its hit-points are reduced towards 0.");
@@ -283,6 +284,7 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	, collisionFlags(0)
 {
 	WeaponDefs.Load(this, wdTable);
+	WeaponDefs.ReportUnknownTags(name, wdTable);
 
 	if (wdTable.KeyExists("cylinderTargetting"))
 		LOG_L(L_WARNING, "WeaponDef (%s) cylinderTargetting is deprecated and will be removed in the next release (use cylinderTargeting).", name.c_str());
@@ -295,8 +297,9 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 
 	shieldRechargeDelay = int(wdTable.GetFloat("rechargeDelay", 0) * GAME_SPEED);
 	shieldArmorType = damageArrayHandler->GetTypeFromName(shieldArmorTypeName);
-	flighttime = int(wdTable.GetFloat("flighttime", 0.0f) * 32);
-
+	flighttime = int(wdTable.GetFloat("flighttime", 0.0f) * GAME_SPEED);
+	maxFireAngle = math::cos(wdTable.GetFloat("firetolerance", 3640.0f) * TAANG2RAD);
+	
 	//FIXME may be smarter to merge the collideXYZ tags with avoidXYZ and removing the collisionFlags tag (and move the code into CWeapon)?
 	collisionFlags = 0;
 	if (!wdTable.GetBool("collideEnemy",    true)) { collisionFlags |= Collision::NOENEMIES;    }
@@ -479,10 +482,9 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 
 	const std::string& colormap = wdTable.GetString("colormap", "");
 
+	visuals.colorMap = nullptr;
 	if (!colormap.empty()) {
 		visuals.colorMap = CColorMap::LoadFromDefString(colormap);
-	} else {
-		visuals.colorMap = NULL;
 	}
 
 	ParseWeaponSounds(wdTable);

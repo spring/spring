@@ -87,3 +87,8 @@ void CBubbleProjectile::Draw()
 	va->AddVertexTC(drawPos - camera->GetRight() * interSize + camera->GetUp() * interSize, bt->xstart, bt->yend,   col);
 	#undef bt
 }
+
+int CBubbleProjectile::GetProjectilesCount() const
+{
+	return 1;
+}

@@ -41,12 +41,6 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 endif()
 
 # set some internal vars
-If    ("${CMAKE_BUILD_TYPE}" MATCHES "^DEBUG")
-	Set(DEBUG_BUILD TRUE)
-Else  ("${CMAKE_BUILD_TYPE}" MATCHES "^DEBUG")
-	Set(DEBUG_BUILD FALSE)
-EndIf ("${CMAKE_BUILD_TYPE}" MATCHES "^DEBUG")
-
 
 if(NOT "${CMAKE_C_FLAGS}" STREQUAL "")
 	Message(WARNING "Using custom C_FLAGS: ${CMAKE_C_FLAGS} this build will very likely not sync in online mode!")
@@ -65,9 +59,16 @@ endif (CUSTOM_COMPILER_DEFINITIONS)
 ### set the default build type
 if    (NOT CMAKE_BUILD_TYPE)
 	SET(CMAKE_BUILD_TYPE RELWITHDEBINFO CACHE STRING
-		"Choose the type of build, options are: RELWITHDEBINFO DEBUG DEBUG2 DEBUG3 RELEASE PROFILE"
+		"Choose the type of build, options are: RELWITHDEBINFO DEBUG RELEASE PROFILE"
 		FORCE)
 endif (NOT CMAKE_BUILD_TYPE)
+
+string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_UPPER)
+if(${CMAKE_BUILD_TYPE_UPPER} MATCHES "^DEBUG")
+	set(DEBUG_BUILD TRUE)
+else()
+	set(DEBUG_BUILD FALSE)
+endif()
 
 
 # Tell windows to pass arguments around in @response files
@@ -131,26 +132,18 @@ else  (UNIX AND NOT MINGW)
 	set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 
 	if(MSVC)
-		set(CMAKE_LIBRARY_PATH ${MINGWLIBS})
-		set(CMAKE_FIND_ROOT_PATH
-			${MINGWLIBS}/SDL2
-			${MINGWLIBS}/DevIL
-			${MINGWLIBS}/zlib
-			${MINGWLIBS}/ogg_vorbis
-			${MINGWLIBS}/glew
-			${MINGWLIBS}/freetype
-			${CMAKE_FIND_ROOT_PATH})
 		set(ENV{OPENALDIR} ${MINGWLIBS}/OpenAL)
-		include_directories(${ZLIB_INCLUDE_DIR})
-
-		set(BOOST_LIBRARYDIR ${MINGWLIBS}/boost/lib)
+		set(BOOST_LIBRARYDIR ${MINGWLIBS}/lib)
 		add_definitions("-DBOOST_ALL_NO_LIB")
 		set(Boost_USE_STATIC_LIBS ON)
-		set(GLEW_STATIC ON)
+		#set(GLEW_STATIC ON)
 		
 		add_definitions("-DNOMINMAX")
 
 		set(EXE_FLAGS WIN32)
+		include_directories(${MINGWLIBS}/include)
+		set(CMAKE_LIBRARY_PATH ${MINGWLIBS}/dll)
+		
 	else(MSVC)
 		include_directories(${MINGWLIBS}/include)
 		set(CMAKE_LIBRARY_PATH ${MINGWLIBS}/dll)
@@ -240,9 +233,9 @@ endif (USE_LIBSQUISH)
 
 
 ### external libs
-if    (MINGW)
+if    (MINGW OR MSVC)
 	set(SDL2_INCLUDE_DIR "${MINGWLIBS}/include/SDL2")
-endif (MINGW)
+endif (MINGW OR MSVC)
 
 FIND_PACKAGE(Boost 1.47.0 COMPONENTS thread regex program_options system chrono signals filesystem REQUIRED)
 FIND_PACKAGE(Boost 1.47.0 COMPONENTS timer)
@@ -309,13 +302,18 @@ if    (CMAKE_SIZEOF_VOID_P EQUAL 8)
 	Message(STATUS "Building Spring for 64bit environment")
 	set(MARCH_BITS 64 INTERNAL)
 	if     (MINGW)
-		Message(FATAL_ERROR "Spring's MinGWLibs don't include 64bit libraries (yet). Please, compile as 32bit.")
+		Message(FATAL_ERROR "Spring's MinGWLibs don't include 64bit libraries (yet). Please, compile as 32bit. See https://springrts.com/wiki/Building_Spring_on_Windows for instructions.")
 	endif  (MINGW)
 else  (CMAKE_SIZEOF_VOID_P EQUAL 8)
 	Message(STATUS "Building Spring for 32bit environment")
 	set(MARCH_BITS 32 INTERNAL)
 endif (CMAKE_SIZEOF_VOID_P EQUAL 8)
 
+INCLUDE (CheckFunctionExists)
+CHECK_FUNCTION_EXISTS(strnlen HAVE_STRNLEN)
+if (NOT HAVE_STRNLEN)
+	Message(FATAL_ERROR "this compiler/environment isn't supported, the function strnlen is missing!")
+endif()
 
 ### Add Link-Time-Optimization flags, if supported (GCC >= 4.5) and enabled
 Set(CMAKE_CXX_FLAGS           "${CMAKE_CXX_FLAGS}           ${LTO_FLAGS}")
@@ -324,8 +322,14 @@ Set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LTO_FLAGS}")
 
 
 ### ld.gold
+option(COMPRESS_DEBUG_SYMBOLS "Compresses the DebugSymbols (needs ld.gold, beware: slow)" FALSE)
 if    (LDGOLD_FOUND)
-	Message(STATUS "Found ld.gold, compressing debugsymbols")
+	Message(STATUS "Found ld.gold")
+	if    (COMPRESS_DEBUG_SYMBOLS)
+		Message(STATUS "Compressing debug symbols")
+		set(LDGOLD_LINKER_FLAGS " -Wl,--compress-debug-sections=zlib ${LDGOLD_LINKER_FLAGS}")
+	endif (COMPRESS_DEBUG_SYMBOLS)
+
 	set(CMAKE_LINKER LD_GOLD)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LDGOLD_CXX_FLAGS}")
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LDGOLD_LINKER_FLAGS}")
@@ -335,13 +339,10 @@ endif (LDGOLD_FOUND)
 
 
 ### C++11
-option(USE_CXX11 "Enable c++11" TRUE)
-if    (USE_CXX11)
-	Message(STATUS "Compiling with C++11")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_FLAGS}")
-	add_definitions(-D_GLIBCXX_USE_NANOSLEEP) # issue in std::chrono with gentoo and few other distros
-	add_definitions(-D_RANDOM_TCC) # don't include <bits/random.tcc>, it fails to compile with single precision constants
-endif (USE_CXX11)
+Message(STATUS "Compiling with C++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX11_FLAGS}")
+add_definitions(-D_GLIBCXX_USE_NANOSLEEP) # issue in std::chrono with gentoo and few other distros
+add_definitions(-D_RANDOM_TCC) # don't include <bits/random.tcc>, it fails to compile with single precision constants
 
 
 ### our custom OpenMP replacement
@@ -355,6 +356,7 @@ if (THREADPOOL)
 endif(THREADPOOL)
 
 
+### warnings
 if(NOT MSVC)
 	### SigNan
 	option(SIGNAL_NANS "Enable NaN-Signalling" ${DEBUG_BUILD})
@@ -380,7 +382,12 @@ if(NOT MSVC)
 	endif (MAX_WARNINGS)
 endif(NOT MSVC)
 
-### CXX_FLAGS
+
+### streflop
+add_definitions(-DSTREFLOP_SSE) # would break AI compiling, but is undefined in ./AI/CMakeLists.txt
+
+
+### compiler specific flags
 set(CXX_FLAGS_DEBUG_ADDITIONAL "")
 if    ($ENV{CXX} MATCHES "icpc")
 	# intel C/C++ compiler fix; it does not support these flags:
@@ -388,22 +395,28 @@ if    ($ENV{CXX} MATCHES "icpc")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -axK") # SSE1
 	set(CXX_FLAGS_DEBUG_ADDITIONAL "-g -debug full")
 elseif (CMAKE_COMPILER_IS_GNUCXX)
+	if    (UNIX)
+		CHECK_AND_ADD_FLAGS(CMAKE_CXX_FLAGS "-fdiagnostics-color=always")
+	endif (UNIX)
+
 	if    (MARCH_FLAG)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${MARCH_FLAG}")
 		Message(STATUS "using march=${MARCH_FLAG}")
 	else  (MARCH_FLAG)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=generic")
-		Message(STATUS "using mtune=generic (unsure if it will sync in online gaming)")
+		Message(STATUS "using mtune=generic")
 	endif (MARCH_FLAG)
+
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SSE_FLAGS}") # SSE1
 elseif (MSVC)
-	# nothing to be done here
+	# silence warnings
+	add_definitions(-D_SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS)
 else   (MSVC)
 	Message(WARNING "unknown compiler")
 endif ($ENV{CXX} MATCHES "icpc")
 
-add_definitions(-DSTREFLOP_SSE) # would break AI compiling, but is undefined in ./AI/CMakeLists.txt
 
+#### build types
 if    (MSVC)
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LARGEADDRESSAWARE")
 else  (MSVC)
@@ -420,18 +433,14 @@ else  (MSVC)
 
 	add_definitions(-DBOOST_NO_FENV_H) # streflop overrides fenv.h
 
-	set(CMAKE_CXX_FLAGS_DEBUG           "${CXX_FLAGS_DEBUG_ADDITIONAL} -O1     ${DEBUG_WARNINGS}  -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
-	set(CMAKE_CXX_FLAGS_DEBUG2          "${CXX_FLAGS_DEBUG_ADDITIONAL} -O0     ${DEBUG_WARNINGS}  -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
-	set(CMAKE_CXX_FLAGS_DEBUG3          "${CXX_FLAGS_DEBUG_ADDITIONAL} -O0     ${DEBUG_WARNINGS}  -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
+	set(CMAKE_CXX_FLAGS_DEBUG           "${CXX_FLAGS_DEBUG_ADDITIONAL} -O0     ${DEBUG_WARNINGS}  -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO  "${CXX_FLAGS_DEBUG_ADDITIONAL} -O2     ${COMMON_WARNINGS} -DNDEBUG")
 	set(CMAKE_CXX_FLAGS_RELEASE         "                              -O2     ${COMMON_WARNINGS} -DNDEBUG")
 	set(CMAKE_CXX_FLAGS_PROFILE         "                              -O2 -pg ${DEBUG_WARNINGS}  -DNDEBUG -DPROFILE")
 	set(CMAKE_MODULE_LINKER_FLAGS_PROFILE "-pg")
 	set(CMAKE_SHARED_LINKER_FLAGS_PROFILE "-pg")
 
-	set(CMAKE_CXX_FLAGS_DEBUG           "${CMAKE_CXX_FLAGS_DEBUG}  -ggdb1")
-	set(CMAKE_CXX_FLAGS_DEBUG2          "${CMAKE_CXX_FLAGS_DEBUG2} -ggdb2")
-	set(CMAKE_CXX_FLAGS_DEBUG3          "${CMAKE_CXX_FLAGS_DEBUG3} -ggdb3")
+	set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG} -ggdb")
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g")
 
 	if     (MINGW)

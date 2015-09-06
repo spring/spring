@@ -11,6 +11,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/CollisionVolume.h"
+#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/FireProjectile.h"
@@ -31,12 +32,14 @@ CR_REG_METADATA(CFeature, (
 	CR_MEMBER(isRepairingBeforeResurrect),
 	CR_MEMBER(isAtFinalHeight),
 	CR_MEMBER(inUpdateQue),
+	CR_MEMBER(deleteMe),
 	CR_MEMBER(resurrectProgress),
 	CR_MEMBER(reclaimLeft),
 	CR_MEMBER(resources),
 	CR_MEMBER(finalHeight),
 	CR_MEMBER(lastReclaim),
 	CR_MEMBER(drawQuad),
+	CR_MEMBER(drawAlpha),
 	CR_MEMBER(fireTime),
 	CR_MEMBER(smokeTime),
 	CR_MEMBER(fireTime),
@@ -55,12 +58,14 @@ CFeature::CFeature()
 , isRepairingBeforeResurrect(false)
 , isAtFinalHeight(false)
 , inUpdateQue(false)
+, deleteMe(false)
 , finalHeight(0.0f)
 , resurrectProgress(0.0f)
 , reclaimLeft(1.0f)
 , lastReclaim(0)
 , resources(0.0f, 1.0f)
 , drawQuad(-2)
+, drawAlpha(1.0)
 , fireTime(0)
 , smokeTime(0)
 , def(NULL)
@@ -77,10 +82,6 @@ CFeature::~CFeature()
 {
 	UnBlock();
 	quadField->RemoveFeature(this);
-
-	if (featureHandler != NULL) {
-		featureHandler->SetFeatureUpdateable(this, false);
-	}
 
 	if (myFire != NULL) {
 		myFire->StopFire();
@@ -221,6 +222,7 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 
 	// allow Spring.SetFeatureBlocking to be called from gadget:FeatureCreated
 	eventHandler.FeatureCreated(this);
+	eventHandler.RenderFeatureCreated(this);
 
 	if (def->floating) {
 		finalHeight = CGround::GetHeightAboveWater(pos.x, pos.z);
@@ -450,7 +452,7 @@ void CFeature::SetVelocity(const float3& v)
 	UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, v != ZeroVector);
 
 	if (IsMoving()) {
-		featureHandler->SetFeatureUpdateable(this, true);
+		featureHandler->SetFeatureUpdateable(this);
 	}
 }
 
@@ -620,7 +622,7 @@ bool CFeature::Update()
 	continueUpdating |= (def->geoThermal);
 
 	if (smokeTime != 0) {
-		if (!((gs->frameNum + id) & 3) && projectileHandler->particleSaturation < 0.7f) {
+		if (!((gs->frameNum + id) & 3) && projectileHandler->GetParticleSaturation() < 0.7f) {
 			new CSmokeProjectile(NULL, midPos + gu->RandVector() * radius * 0.3f,
 				gu->RandVector() * 0.3f + UpVector, smokeTime / 6 + 20, 6, 0.4f, 0.5f);
 		}
@@ -646,7 +648,7 @@ void CFeature::StartFire()
 		return;
 
 	fireTime = 200 + (int)(gs->randFloat() * GAME_SPEED);
-	featureHandler->SetFeatureUpdateable(this, true);
+	featureHandler->SetFeatureUpdateable(this);
 
 	myFire = new CFireProjectile(midPos, UpVector, 0, 300, 70, radius * 0.8f, 20.0f);
 }
@@ -683,7 +685,8 @@ void CFeature::EmitGeoSmoke()
 	const CUnit* u = dynamic_cast<CUnit*>(solidOnTop);
 
 	if (u == NULL || !u->unitDef->needGeo) {
-		if ((projectileHandler->particleSaturation < 0.7f) || (projectileHandler->particleSaturation < 1 && !(gs->frameNum & 3))) {
+		const float partSat = !(gs->frameNum & 3) ? 1.0f : 0.7f;
+		if (projectileHandler->GetParticleSaturation() < partSat) {
 			const float3 pPos = gu->RandVector() * 10.0f + float3(pos.x, pos.y - 10.0f, pos.z);
 			const float3 pSpeed = (gu->RandVector() * 0.5f) + (UpVector * 2.0f);
 

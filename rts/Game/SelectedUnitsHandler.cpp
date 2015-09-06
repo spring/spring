@@ -27,7 +27,6 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Game/UI/Groups/GroupHandler.h"
 #include "Game/UI/Groups/Group.h"
-#include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Color.h"
 #include "System/EventHandler.h"
@@ -291,17 +290,16 @@ void CSelectedUnitsHandler::HandleUnitBoxSelection(const float4& planeRight, con
 }
 
 
-void CSelectedUnitsHandler::HandleSingleUnitClickSelection(CUnit* unit, bool doInViewTest)
+void CSelectedUnitsHandler::HandleSingleUnitClickSelection(CUnit* unit, bool doInViewTest, bool selectType)
 {
 	//FIXME make modular?
-	const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
 
 	if (unit == NULL)
 		return;
 	if (unit->team != gu->myTeam && !gu->spectatingFullSelect && !gs->godMode)
 		return;
 
-	if (bp.lastRelease < (gu->gameTime - mouse->doubleClickTime)) {
+	if (!selectType) {
 		if (KeyInput::GetKeyModState(KMOD_CTRL) && (selectedUnits.find(unit) != selectedUnits.end())) {
 			RemoveUnit(unit);
 		} else {
@@ -340,8 +338,8 @@ void CSelectedUnitsHandler::AddUnit(CUnit* unit)
 {
 	// if unit is being transported by eg. Hulk or Atlas
 	// then we should not be able to select it
-	const CTransportUnit* trans = unit->GetTransporter();
-	if (trans != NULL && !trans->unitDef->isFirePlatform) {
+	const CUnit* trans = unit->GetTransporter();
+	if (trans != NULL && trans->unitDef->IsTransportUnit() && !trans->unitDef->isFirePlatform) {
 		return;
 	}
 
@@ -521,7 +519,7 @@ void CSelectedUnitsHandler::Draw()
 	color2.g = 255 - color2.g;
 	color2.b = 255 - color2.b;
 
-	if (cmdColors.unitBox[3] > 0.05f) {
+	if (color1.a > 0) {
 		const CUnitSet* unitSet;
 		if (selectedGroup != -1) {
 			// note: units in this set are not necessarily all selected themselves, eg.

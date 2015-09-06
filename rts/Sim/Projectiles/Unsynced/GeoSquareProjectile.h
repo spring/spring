@@ -16,8 +16,10 @@ public:
 	);
 	virtual ~CGeoSquareProjectile();
 
-	void Draw();
-	void Update();
+	void Draw() override;
+	void Update() override;
+
+	virtual int GetProjectilesCount() const override;
 
 	void SetColor(float r, float g, float b, float a) {
 		this->r = r;

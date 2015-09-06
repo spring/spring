@@ -27,7 +27,7 @@
 using std::max;
 
 CONFIG(bool, GroundNormalTextureHighPrecision).defaultValue(false);
-CONFIG(float, SMFTexAniso).defaultValue(0.0f);
+CONFIG(float, SMFTexAniso).defaultValue(4.0f).minimumValue(0.0f);
 
 CR_BIND_DERIVED(CSMFReadMap, CReadMap, (""))
 
@@ -53,6 +53,7 @@ CSMFReadMap::CSMFReadMap(std::string mapname)
 
 	haveSpecularTexture = !(mapInfo->smf.specularTexName.empty());
 	haveSplatTexture = (!mapInfo->smf.splatDetailTexName.empty() && !mapInfo->smf.splatDistrTexName.empty());
+	minimapOverride = !(mapInfo->smf.minimapTexName.empty());
 
 	ParseHeader();
 	LoadHeightMap();
@@ -76,7 +77,7 @@ CSMFReadMap::CSMFReadMap(std::string mapname)
 
 CSMFReadMap::~CSMFReadMap()
 {
-	delete groundDrawer;
+	SafeDelete(groundDrawer);
 
 	glDeleteTextures(1, &detailTex        );
 	glDeleteTextures(1, &specularTex      );
@@ -141,6 +142,12 @@ void CSMFReadMap::LoadHeightMap()
 
 void CSMFReadMap::LoadMinimap()
 {
+	CBitmap minimapTexBM;
+	if (minimapTexBM.Load(mapInfo->smf.minimapTexName)) {
+		minimapTex = minimapTexBM.CreateTexture(false);
+		return;
+	}
+
 	// the minimap is a static texture
 	std::vector<unsigned char> minimapTexBuf(MINIMAP_SIZE, 0);
 	file.ReadMinimap(&minimapTexBuf[0]);
@@ -256,14 +263,10 @@ void CSMFReadMap::CreateDetailTex()
 		throw content_error("Could not load detail texture from file " + mapInfo->smf.detailTexName);
 	}
 
-	glGenTextures(1, &detailTex);
-	glBindTexture(GL_TEXTURE_2D, detailTex);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	detailTex = detailTexBM.CreateTexture(true);
 	if (anisotropy != 0.0f) {
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
 	}
-	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, detailTexBM.xsize, detailTexBM.ysize, GL_RGBA, GL_UNSIGNED_BYTE, detailTexBM.mem);
 }
 
 
@@ -828,13 +831,42 @@ const char* CSMFReadMap::GetFeatureTypeName (int typeID)
 
 unsigned char* CSMFReadMap::GetInfoMap(const std::string& name, MapBitmapInfo* bmInfo)
 {
+	char failMsg[512];
 	// get size
 	file.GetInfoMapSize(name, bmInfo);
 	if (bmInfo->width <= 0) return NULL;
+	unsigned char* data = new unsigned char[bmInfo->width * bmInfo->height];
+
+	CBitmap infomapBM;
+	std::string texName;
+	if (name == "metal" && !mapInfo->smf.metalmapTexName.empty()) {
+		texName = mapInfo->smf.metalmapTexName;
+	} else if (name == "type" && !mapInfo->smf.typemapTexName.empty()) {
+		texName = mapInfo->smf.typemapTexName;
+	} else if (name == "grass" && !mapInfo->smf.grassmapTexName.empty()) {
+		texName = mapInfo->smf.grassmapTexName;
+	}
+
+	if (!texName.empty() && !infomapBM.LoadGrayscale(texName)) {
+		throw content_error("[CSMFReadMap::GetInfoMap] cannot load: " + texName);
+	}
+
+	if (infomapBM.mem) {
+		if (infomapBM.xsize == bmInfo->width && infomapBM.ysize == bmInfo->height) {
+			memcpy( data, infomapBM.mem, bmInfo->width * bmInfo->height);
+			return data;
+		}
+		sprintf(failMsg, "[CSMFReadMap::GetInfoMap] Invalid image dimensions: %s %ix%i != %ix%i",
+			texName.c_str(), infomapBM.xsize, infomapBM.ysize,
+			bmInfo->width, bmInfo->height);
+		throw content_error( failMsg );
+	}
 
 	// get data
-	unsigned char* data = new unsigned char[bmInfo->width * bmInfo->height];
-	file.ReadInfoMap(name, data);
+	if ( !file.ReadInfoMap(name, data) ) {
+		delete[] data;
+		data = NULL;
+	}
 	return data;
 }
 

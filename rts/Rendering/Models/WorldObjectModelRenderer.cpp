@@ -33,14 +33,14 @@ IWorldObjectModelRenderer* IWorldObjectModelRenderer::GetInstance(int modelType)
 
 IWorldObjectModelRenderer::~IWorldObjectModelRenderer()
 {
-	for (UnitRenderBinIt uIt = units.begin(); uIt != units.end(); ++uIt) {
-		units[uIt->first].clear();
+	for (auto& uIt: units) {
+		uIt.second.clear();
 	}
-	for (FeatureRenderBinIt fIt = features.begin(); fIt != features.end(); ++fIt) {
-		features[fIt->first].clear();
+	for (auto& fIt: features) {
+		fIt.second.clear();
 	}
-	for (ProjectileRenderBinIt pIt = projectiles.begin(); pIt != projectiles.end(); ++pIt) {
-		projectiles[pIt->first].clear();
+	for (auto& pIt: projectiles) {
+		pIt.second.clear();
 	}
 
 	units.clear();
@@ -52,15 +52,16 @@ void IWorldObjectModelRenderer::Draw()
 {
 	PushRenderState();
 
-	for (UnitRenderBinIt uIt = units.begin(); uIt != units.end(); ++uIt) {
-		DrawModels(units[uIt->first]);
+	for (auto& uIt: units) {
+		DrawModels(uIt.second);
 	}
-	for (FeatureRenderBinIt fIt = features.begin(); fIt != features.end(); ++fIt) {
-		DrawModels(features[fIt->first]);
+	for (auto& fIt: features) {
+		DrawModels(fIt.second);
 	}
-	for (ProjectileRenderBinIt pIt = projectiles.begin(); pIt != projectiles.end(); ++pIt) {
-		DrawModels(projectiles[pIt->first]);
+	for (auto& pIt: projectiles) {
+		DrawModels(pIt.second);
 	}
+
 	PopRenderState();
 }
 
@@ -68,22 +69,22 @@ void IWorldObjectModelRenderer::Draw()
 
 void IWorldObjectModelRenderer::DrawModels(const UnitSet& models)
 {
-	for (UnitSetIt uIt = models.begin(); uIt != models.end(); ++uIt) {
-		DrawModel(*uIt);
+	for (auto& unit: models) {
+		DrawModel(unit);
 	}
 }
 
 void IWorldObjectModelRenderer::DrawModels(const FeatureSet& models)
 {
-	for (FeatureSetIt fIt = models.begin(); fIt != models.end(); ++fIt) {
-		DrawModel(fIt->first);
+	for (auto drawFeature: models) {
+		DrawModel(drawFeature);
 	}
 }
 
 void IWorldObjectModelRenderer::DrawModels(const ProjectileSet& models)
 {
-	for (ProjectileSetIt pIt = models.begin(); pIt != models.end(); ++pIt) {
-		DrawModel(*pIt);
+	for (auto& projectile: models) {
+		DrawModel(projectile);
 	}
 }
 
@@ -91,94 +92,73 @@ void IWorldObjectModelRenderer::DrawModels(const ProjectileSet& models)
 
 void IWorldObjectModelRenderer::AddUnit(const CUnit* u)
 {
-	if (units.find(TEX_TYPE(u)) == units.end()) {
-		units[TEX_TYPE(u)] = UnitSet();
-	}
+	UnitSet& us = units[TEX_TYPE(u)];
+	assert(std::find(us.begin(), us.end(), const_cast<CUnit*>(u)) == us.end());
 
 	// updating a unit's draw-position requires mutability
-	if(units[TEX_TYPE(u)].insert(const_cast<CUnit*>(u)).second)
-		numUnits += 1;
+	us.push_back(const_cast<CUnit*>(u));
+	numUnits += 1;
 }
 
 void IWorldObjectModelRenderer::DelUnit(const CUnit* u)
 {
-	if(units[TEX_TYPE(u)].erase(const_cast<CUnit*>(u)))
-		numUnits -= 1;
+	UnitSet& us = units[TEX_TYPE(u)];
 
-	if (units[TEX_TYPE(u)].empty()) {
-		units.erase(TEX_TYPE(u));
+	// Unit can be absent from the container, since we can't know in UnitDrawer.cpp
+	// whether it's cloaked or not.
+
+	auto it = std::find(us.begin(), us.end(), const_cast<CUnit*>(u));
+	if (it != us.end()) {
+		*it = us.back();
+		us.pop_back();
+		numUnits -= 1;
 	}
+
+	if (us.empty())
+		units.erase(TEX_TYPE(u));
 }
 
 
-void IWorldObjectModelRenderer::AddFeature(const CFeature* f, float alpha)
+void IWorldObjectModelRenderer::AddFeature(const CFeature* f)
 {
-	if (features.find(TEX_TYPE(f)) == features.end()) {
-		features[TEX_TYPE(f)] = FeatureSet();
-	}
+	FeatureSet& fs = features[TEX_TYPE(f)];
+	assert(std::find(fs.begin(), fs.end(), const_cast<CFeature*>(f)) == fs.end());
 
-	FeatureSet &fs = features.find(TEX_TYPE(f))->second;
-	FeatureSet::iterator i = fs.find(const_cast<CFeature*>(f));
-	if(i != fs.end()) {
-		if(i->second != alpha) {
-			fs[const_cast<CFeature*>(f)] = alpha;
-		}
-	}
-	else {
-		fs[const_cast<CFeature*>(f)] = alpha;
-		numFeatures += 1;
-	}
+	fs.push_back(const_cast<CFeature*>(f));
+	numFeatures += 1;
 }
 
 void IWorldObjectModelRenderer::DelFeature(const CFeature* f)
 {
-	{
-		FeatureRenderBin::iterator i = features.find(TEX_TYPE(f));
-		if (i != features.end()) {
-			if((*i).second.erase(const_cast<CFeature*>(f)))
-				numFeatures -= 1;
+	FeatureSet& fs = features[TEX_TYPE(f)];
 
-			if ((*i).second.empty())
-				features.erase(TEX_TYPE(f));
-		}
-	}
-
-	{
-		FeatureRenderBin::iterator i = featuresSave.find(TEX_TYPE(f));
-		if (i != featuresSave.end()) {
-			if((*i).second.erase(const_cast<CFeature*>(f)))
-				numFeaturesSave -= 1;
-
-			if ((*i).second.empty())
-				featuresSave.erase(TEX_TYPE(f));
-		}
-	}
-}
-
-void IWorldObjectModelRenderer::SwapFeatures()
-{
-	features.swap(featuresSave);
-	std::swap(numFeatures, numFeaturesSave);
+	auto it = std::find(fs.begin(), fs.end(), const_cast<CFeature*>(f));
+	assert(it != fs.end());
+	*it = fs.back();
+	fs.pop_back();
+	numFeatures -= 1;
 }
 
 void IWorldObjectModelRenderer::AddProjectile(const CProjectile* p)
 {
-	if (projectiles.find(TEX_TYPE(p)) == projectiles.end()) {
-		projectiles[TEX_TYPE(p)] = ProjectileSet();
-	}
+	ProjectileSet& ps = projectiles[TEX_TYPE(p)];
+	assert(std::find(ps.begin(), ps.end(), const_cast<CProjectile*>(p)) == ps.end());
 
-	if(projectiles[TEX_TYPE(p)].insert(const_cast<CProjectile*>(p)).second)
-		numProjectiles += 1;
+	// updating a unit's draw-position requires mutability
+	ps.push_back(const_cast<CProjectile*>(p));
+	numProjectiles += 1;
 }
 
 void IWorldObjectModelRenderer::DelProjectile(const CProjectile* p)
 {
-	if(projectiles[TEX_TYPE(p)].erase(const_cast<CProjectile*>(p)))
-		numProjectiles -= 1;
+	ProjectileSet &ps = projectiles[TEX_TYPE(p)];
 
-	if (projectiles[TEX_TYPE(p)].empty()) {
-		projectiles.erase(TEX_TYPE(p));
-	}
+	auto it = std::find(ps.begin(), ps.end(), const_cast<CProjectile*>(p));
+	assert(it != ps.end());
+
+	*it = ps.back();
+	ps.pop_back();
+	numProjectiles -= 1;
 }
 
 

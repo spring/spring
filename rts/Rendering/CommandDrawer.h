@@ -11,7 +11,6 @@ class CAirCAI;
 class CBuilderCAI;
 class CFactoryCAI;
 class CMobileCAI;
-class CTransportCAI;
 class CUnit;
 
 struct CommandDrawer {
@@ -33,7 +32,6 @@ private:
 	void DrawBuilderCAICommands(const CBuilderCAI*) const;
 	void DrawFactoryCAICommands(const CFactoryCAI*) const;
 	void DrawMobileCAICommands(const CMobileCAI*) const;
-	void DrawTransportCAICommands(const CTransportCAI*) const;
 
 	void DrawWaitIcon(const Command&) const;
 	void DrawDefaultCommand(const Command&, const CUnit*) const;

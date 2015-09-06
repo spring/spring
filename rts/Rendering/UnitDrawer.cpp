@@ -36,7 +36,6 @@
 
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/LosHandler.h"
-#include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
@@ -46,7 +45,6 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/Building.h"
-#include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Weapons/Weapon.h"
 
 #include "System/Config/ConfigHandler.h"
@@ -94,6 +92,27 @@ static float GetLODFloat(const string& name)
 	}
 	return (1.0f / value);
 }
+
+template<typename T>
+static void erase(T& v, CUnit* u)
+{
+	auto it = std::find(v.begin(), v.end(), u);
+	if (it != v.end()) {
+		*it = v.back();
+		v.pop_back();
+	}
+}
+
+template<typename T>
+static void insert_unique(T& v, CUnit* u)
+{
+	auto it = std::find(v.begin(), v.end(), u);
+	if (it == v.end()) {
+		v.push_back(u);
+	}
+}
+
+
 
 
 CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
@@ -179,11 +198,8 @@ CUnitDrawer::~CUnitDrawer()
 	cubeMapHandler->Free();
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		std::set<GhostSolidObject*>& ghostSet = deadGhostBuildings[modelType];
-		std::set<GhostSolidObject*>::iterator ghostSetIt;
-
-		for (ghostSetIt = ghostSet.begin(); ghostSetIt != ghostSet.end(); ++ghostSetIt) {
-			delete *ghostSetIt;
+		for (GhostSolidObject* ghost: deadGhostBuildings[modelType]) {
+			delete ghost;
 		}
 
 		deadGhostBuildings[modelType].clear();
@@ -224,7 +240,6 @@ void CUnitDrawer::SetUnitIconDist(float dist)
 void CUnitDrawer::Update()
 {
 	{
-
 		while (!tempDrawUnits.empty() && tempDrawUnits.begin()->first < gs->frameNum - 1) {
 			tempDrawUnits.erase(tempDrawUnits.begin());
 		}
@@ -234,11 +249,8 @@ void CUnitDrawer::Update()
 	}
 
 	{
-
 		drawIcon.clear();
-		for (std::set<CUnit*>::iterator usi = unsortedUnits.begin(); usi != unsortedUnits.end(); ++usi) {
-			CUnit* unit = *usi;
-
+		for (CUnit* unit: unsortedUnits) {
 			UpdateUnitIconState(unit);
 			UpdateUnitDrawPos(unit);
 		}
@@ -322,11 +334,8 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 
 	if ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView) {
 		if (drawReflection) {
-			float3 zeroPos;
-
-			if (unit->drawMidPos.y < 0.0f) {
-				zeroPos = unit->drawMidPos;
-			} else {
+			float3 zeroPos = unit->drawMidPos;
+			if (unit->drawMidPos.y >= 0.0f) {
 				const float dif = unit->drawMidPos.y - camera->GetPos().y;
 				zeroPos =
 					camera->GetPos()  * (unit->drawMidPos.y / dif) +
@@ -456,25 +465,20 @@ void CUnitDrawer::DrawDeferredPass(const CUnit* excludeUnit, bool drawReflection
 
 void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction)
 {
-	typedef std::set<CUnit*> UnitSet;
+	typedef std::vector<CUnit*> UnitSet;
 	typedef std::map<int, UnitSet> UnitBin;
 
 	const UnitBin& unitBin = opaqueModelRenderers[modelType]->GetUnitBin();
 
 	UnitBin::const_iterator unitBinIt;
-	UnitSet::const_iterator unitSetIt;
 
 	for (unitBinIt = unitBin.begin(); unitBinIt != unitBin.end(); ++unitBinIt) {
 		if (modelType != MODELTYPE_3DO) {
 			texturehandlerS3O->SetS3oTexture(unitBinIt->first);
 		}
 
-		const UnitSet& unitSet = unitBinIt->second;
-
-		{
-			for (unitSetIt = unitSet.begin(); unitSetIt != unitSet.end(); ++unitSetIt) {
-				DrawOpaqueUnit(*unitSetIt, excludeUnit, drawReflection, drawRefraction);
-			}
+		for (CUnit* unit: unitBinIt->second) {
+			DrawOpaqueUnit(unit, excludeUnit, drawReflection, drawRefraction);
 		}
 	}
 
@@ -508,12 +512,12 @@ void CUnitDrawer::DrawUnitIcons(bool drawReflection)
 		glEnable(GL_ALPHA_TEST);
 		glAlphaFunc(GL_GREATER, 0.5f);
 
-		for (std::set<CUnit*>::iterator ui = drawIcon.begin(); ui != drawIcon.end(); ++ui) {
-			DrawIcon(*ui, false);
+		for (CUnit* u: drawIcon) {
+			DrawIcon(u, false);
 		}
 		if (!gu->spectatingFullView) {
-			for (std::set<CUnit*>::const_iterator ui = unitRadarIcons[gu->myAllyTeam].begin(); ui != unitRadarIcons[gu->myAllyTeam].end(); ++ui) {
-				DrawIcon(*ui, ((*ui)->losStatus[gu->myAllyTeam] & (LOS_PREVLOS | LOS_CONTRADAR)) != (LOS_PREVLOS | LOS_CONTRADAR));
+			for (CUnit* u: unitRadarIcons[gu->myAllyTeam]) {
+				DrawIcon(u, (u->losStatus[gu->myAllyTeam] & (LOS_PREVLOS | LOS_CONTRADAR)) != (LOS_PREVLOS | LOS_CONTRADAR));
 			}
 		}
 
@@ -699,28 +703,6 @@ void CUnitDrawer::DrawShadowShaderUnits(unsigned int matType)
 
 
 inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
-	// do shadow alpha-masking for S3O units only
-	// (3DO's need more setup than it is worth)
-	#ifdef UNIT_SHADOW_ALPHA_MASKING
-		#define S3O_TEX(model) \
-			texturehandlerS3O->GetS3oTex(model->textureType)
-		#define PUSH_SHADOW_TEXTURE_STATE(model)                      \
-			if (model->type != MODELTYPE_3DO) {                       \
-				glActiveTexture(GL_TEXTURE0);                         \
-				glEnable(GL_TEXTURE_2D);                              \
-				glBindTexture(GL_TEXTURE_2D, S3O_TEX(model)->tex2);   \
-			}
-		#define POP_SHADOW_TEXTURE_STATE(model)   \
-			if (model->type != MODELTYPE_3DO) {   \
-				glBindTexture(GL_TEXTURE_2D, 0);  \
-				glDisable(GL_TEXTURE_2D);         \
-				glActiveTexture(GL_TEXTURE0);     \
-			}
-	#else
-		#define PUSH_SHADOW_TEXTURE_STATE(model)
-		#define POP_SHADOW_TEXTURE_STATE(model)
-	#endif
-
 	const bool unitInLOS = ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView);
 
 	if (unit->noDraw)
@@ -739,44 +721,43 @@ inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 	if (unit->isCloaked) { return; }
 	if (DrawAsIcon(unit, sqDist)) { return; }
 
-	if (unit->lodCount <= 0) {
-		PUSH_SHADOW_TEXTURE_STATE(unit->model);
-		DrawUnitNow(unit);
-		POP_SHADOW_TEXTURE_STATE(unit->model);
-	} else {
+	LuaUnitLODMaterial* lodMat = nullptr;
+	if (unit->lodCount > 0) {
 		LuaUnitMaterial& unitMat = unit->luaMats[LUAMAT_SHADOW];
-		const unsigned lod = CalcUnitLOD(unit, unitMat.GetLastLOD());
-		unit->currentLOD = lod;
-		LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(lod);
-
-		if ((lodMat != NULL) && lodMat->IsActive()) {
-			lodMat->AddUnit(unit);
-		} else {
-			PUSH_SHADOW_TEXTURE_STATE(unit->model);
-			DrawUnitNow(unit);
-			POP_SHADOW_TEXTURE_STATE(unit->model);
-		}
+		unit->currentLOD = CalcUnitLOD(unit, unitMat.GetLastLOD());
+		lodMat = unitMat.GetMaterial(unit->currentLOD);
 	}
 
-	#undef PUSH_SHADOW_TEXTURE_STATE
-	#undef POP_SHADOW_TEXTURE_STATE
+	if ((lodMat != nullptr) && lodMat->IsActive()) {
+		lodMat->AddUnit(unit);
+	} else {
+		DrawUnitNow(unit);
+	}
 }
+
+
 void CUnitDrawer::DrawOpaqueUnitsShadow(int modelType) {
-	typedef std::set<CUnit*> UnitSet;
-	typedef std::map<int, UnitSet> UnitBin;
+	const auto& unitBin = opaqueModelRenderers[modelType]->GetUnitBin();
 
-	const UnitBin& unitBin = opaqueModelRenderers[modelType]->GetUnitBin();
+	for (const auto& unitBinP: unitBin) {
+		const auto& unitSet = unitBinP.second;
+		const int textureType = unitBinP.first;
 
-	UnitBin::const_iterator unitBinIt;
-	UnitSet::const_iterator unitSetIt;
+		if (modelType != MODELTYPE_3DO) {
+			glActiveTexture(GL_TEXTURE0);
+			glEnable(GL_TEXTURE_2D);
+			const auto modelTex = texturehandlerS3O->GetS3oTex(textureType);
+			glBindTexture(GL_TEXTURE_2D, modelTex->tex2);
+		}
 
-	for (unitBinIt = unitBin.begin(); unitBinIt != unitBin.end(); ++unitBinIt) {
-		const UnitSet& unitSet = unitBinIt->second;
+		for (const auto& unitSetP: unitSet) {
+			DrawOpaqueUnitShadow(unitSetP);
+		}
 
-		{
-			for (unitSetIt = unitSet.begin(); unitSetIt != unitSet.end(); ++unitSetIt) {
-				DrawOpaqueUnitShadow(*unitSetIt);
-			}
+		if (modelType != MODELTYPE_3DO) {
+			glBindTexture(GL_TEXTURE_2D, 0);
+			glDisable(GL_TEXTURE_2D);
+			glActiveTexture(GL_TEXTURE0);
 		}
 	}
 }
@@ -985,7 +966,7 @@ void CUnitDrawer::DrawCloakedUnitsHelper(int modelType)
 	}
 
 	{
-		typedef std::set<CUnit*> UnitSet;
+		typedef std::vector<CUnit*> UnitSet;
 		typedef std::map<int, UnitSet> UnitRenderBin;
 		typedef std::map<int, UnitSet>::const_iterator UnitRenderBinIt;
 
@@ -999,8 +980,8 @@ void CUnitDrawer::DrawCloakedUnitsHelper(int modelType)
 
 			const UnitSet& unitSet = it->second;
 
-			for (UnitSet::const_iterator ui = unitSet.begin(); ui != unitSet.end(); ++ui) {
-				DrawCloakedUnit(*ui, modelType, false);
+			for (auto &unit: unitSet) {
+				DrawCloakedUnit(unit, modelType, false);
 			}
 		}
 	}
@@ -1112,19 +1093,20 @@ void CUnitDrawer::DrawCloakedAIUnits()
 
 void CUnitDrawer::DrawGhostedBuildings(int modelType)
 {
-	std::set<GhostSolidObject*>& deadGhostedBuildings = deadGhostBuildings[modelType];
-	std::set<CUnit*>& liveGhostedBuildings = liveGhostBuildings[modelType];
+	std::vector<GhostSolidObject*>& deadGhostedBuildings = deadGhostBuildings[modelType];
+	std::vector<CUnit*>& liveGhostedBuildings = liveGhostBuildings[modelType];
 
 	glColor4f(0.6f, 0.6f, 0.6f, cloakAlpha1);
 
 	// buildings that died while ghosted
-	for (std::set<GhostSolidObject*>::iterator it = deadGhostedBuildings.begin(); it != deadGhostedBuildings.end(); ) {
+	for (std::vector<GhostSolidObject*>::iterator it = deadGhostedBuildings.begin(); it != deadGhostedBuildings.end(); ) {
 		if (losHandler->InLos((*it)->pos, gu->myAllyTeam) || gu->spectatingFullView) {
 			// obtained LOS on the ghost of a dead building
 			groundDecals->GhostDestroyed(*it);
 
 			delete *it;
-			it = set_erase(deadGhostedBuildings, it);
+			*it = deadGhostedBuildings.back();
+			deadGhostedBuildings.pop_back();
 		} else {
 			if (camera->InView((*it)->pos, (*it)->model->drawRadius)) {
 				glPushMatrix();
@@ -1144,9 +1126,9 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 	}
 
 	if (!gu->spectatingFullView) {
-		for (std::set<CUnit*>::const_iterator ui = liveGhostedBuildings.begin(); ui != liveGhostedBuildings.end(); ++ui) {
-			if (!((*ui)->losStatus[gu->myAllyTeam] & LOS_INLOS)) // because of team switching via cheat, ghost buildings can exist for units in LOS
-				DrawCloakedUnit(*ui, modelType, true);
+		for (CUnit* u: liveGhostedBuildings) {
+			if (!(u->losStatus[gu->myAllyTeam] & LOS_INLOS)) // because of team switching via cheat, ghost buildings can exist for units in LOS
+				DrawCloakedUnit(u, modelType, true);
 		}
 	}
 }
@@ -1355,13 +1337,7 @@ void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int team, float3 po
 		case MODELTYPE_3DO: {
 			texturehandler3DO->Set3doAtlases();
 		} break;
-		case MODELTYPE_S3O:
-		case MODELTYPE_OBJ:
-		case MODELTYPE_ASS: {
-			texturehandlerS3O->SetS3oTexture(model->textureType);
-		} break;
-		default: {
-		} break;
+		default: texturehandlerS3O->SetS3oTexture(model->textureType);
 	}
 
 	SetupBasicS3OTexture1();
@@ -1421,11 +1397,7 @@ void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
 		case MODELTYPE_3DO: {
 			texturehandler3DO->Set3doAtlases();
 		} break;
-		case MODELTYPE_S3O: {
-			texturehandlerS3O->SetS3oTexture(model->textureType);
-		} break;
-		default: {
-		} break;
+		default: texturehandlerS3O->SetS3oTexture(model->textureType);
 	}
 
 	// tint it with the current glColor in texunit 1
@@ -1569,14 +1541,6 @@ inline void CUnitDrawer::DrawUnitModel(CUnit* unit) {
 
 void CUnitDrawer::DrawUnitNow(CUnit* unit)
 {
-	/*
-	// this interferes with Lua material management
-	if (unit->alphaThreshold != 0.1f) {
-		glPushAttrib(GL_COLOR_BUFFER_BIT);
-		glAlphaFunc(GL_GREATER, unit->alphaThreshold);
-	}
-	*/
-
 	glPushMatrix();
 	glMultMatrixf(unit->GetTransformMatrix());
 
@@ -1586,12 +1550,6 @@ void CUnitDrawer::DrawUnitNow(CUnit* unit)
 		DrawUnitBeingBuilt(unit);
 	}
 	glPopMatrix();
-
-	/*
-	if (unit->alphaThreshold != 0.1f) {
-		glPopAttrib();
-	}
-	*/
 }
 
 
@@ -1670,11 +1628,11 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 	}
 
 	if (unit->isIcon && !unit->noDraw && !unit->IsInVoid())
-		drawIcon.insert(unit);
+		drawIcon.push_back(unit);
 }
 
 inline void CUnitDrawer::UpdateUnitDrawPos(CUnit* u) {
-	const CTransportUnit* trans = u->GetTransporter();
+	const CUnit* trans = u->GetTransporter();
 
 	if (trans != NULL) {
 		u->drawPos = u->pos + (trans->speed * globalRendering->timeOffset);
@@ -1911,14 +1869,13 @@ void CUnitDrawer::DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const
 //   the latter has been replaced by this, do the same for the former
 //   (mini-map icons and real-map radar icons are the same anyway)
 void CUnitDrawer::DrawUnitMiniMapIcons() const {
-	std::map<icon::CIconData*, std::set<const CUnit*> >::const_iterator iconIt;
-	std::set<const CUnit*>::const_iterator unitIt;
+	std::map<icon::CIconData*, std::vector<const CUnit*> >::const_iterator iconIt;
 
 	CVertexArray* va = GetVertexArray();
 
 	for (iconIt = unitsByIcon.begin(); iconIt != unitsByIcon.end(); ++iconIt) {
 		const icon::CIconData* icon = iconIt->first;
-		const std::set<const CUnit*>& units = iconIt->second;
+		const std::vector<const CUnit*>& units = iconIt->second;
 
 		if (icon == NULL)
 			continue;
@@ -1929,9 +1886,9 @@ void CUnitDrawer::DrawUnitMiniMapIcons() const {
 		va->EnlargeArrays(units.size() * 4, 0, VA_SIZE_2DTC);
 		icon->BindTexture();
 
-		for (unitIt = units.begin(); unitIt != units.end(); ++unitIt) {
-			assert((*unitIt)->myIcon == icon);
-			DrawUnitMiniMapIcon(*unitIt, va);
+		for (const CUnit* unit: units) {
+			assert(unit->myIcon == icon);
+			DrawUnitMiniMapIcon(unit, va);
 		}
 
 		va->DrawArray2dTC(GL_QUADS);
@@ -1946,11 +1903,11 @@ void CUnitDrawer::UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool kil
 
 	if (!killed) {
 		if ((oldIcon != newIcon) || forced) {
-			unitsByIcon[oldIcon].erase(u);
-			unitsByIcon[newIcon].insert(u);
+			erase(unitsByIcon[oldIcon], u);
+			unitsByIcon[newIcon].push_back(u);
 		}
 	} else {
-		unitsByIcon[oldIcon].erase(u);
+		erase(unitsByIcon[oldIcon], u);
 	}
 
 	u->myIcon = killed? NULL: newIcon;
@@ -1971,13 +1928,12 @@ void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 	}
 
 	UpdateUnitMiniMapIcon(u, false, false);
-	unsortedUnits.insert(unit);
+	unsortedUnits.push_back(unit);
 }
 
 
 void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 	CUnit* u = const_cast<CUnit*>(unit);
-
 	if ((dynamic_cast<CBuilding*>(u) != NULL) && gameSetup->ghostedBuildings &&
 		!(u->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) &&
 		(u->losStatus[gu->myAllyTeam] & (LOS_PREVLOS)) && !gu->spectatingFullView
@@ -1994,77 +1950,99 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 		gb->dir    = u->frontdir;
 		gb->team   = u->team;
 
-		deadGhostBuildings[gbModel->type].insert(gb);
+		deadGhostBuildings[gbModel->type].push_back(gb);
 
 		groundDecals->GhostCreated(u, gb);
 	}
 
 	if (u->model) {
-		// renderer unit cloak state may not match sim (because of MT) - erase from both renderers to be sure
+		//Don't dare checking u->isCloaked, it may not exist.
 		cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 		opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 	}
 
-	unsortedUnits.erase(u);
-	liveGhostBuildings[MDL_TYPE(u)].erase(u);
+	erase(unsortedUnits, u);
+	erase(liveGhostBuildings[MDL_TYPE(u)], u);
 
 	// remove the icon for all ally-teams
-	for (std::vector<std::set<CUnit*> >::iterator it = unitRadarIcons.begin(); it != unitRadarIcons.end(); ++it) {
-		(*it).erase(u);
+	for (std::vector<std::vector<CUnit*> >::iterator it = unitRadarIcons.begin(); it != unitRadarIcons.end(); ++it) {
+		erase(*it, u);
 	}
 	UpdateUnitMiniMapIcon(unit, false, true);
 	SetUnitLODCount(u, 0);
 }
 
 
-void CUnitDrawer::RenderUnitCloakChanged(const CUnit* unit, int cloaked) {
+void CUnitDrawer::UnitCloaked(const CUnit* unit) {
 	CUnit* u = const_cast<CUnit*>(unit);
 
 	if (u->model) {
-		if (cloaked) {
-			cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
-			opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
-		} else {
-			opaqueModelRenderers[MDL_TYPE(u)]->AddUnit(u);
-			cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
-		}
+		cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
+		opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 	}
 }
 
-
-void CUnitDrawer::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus) {
+void CUnitDrawer::UnitDecloaked(const CUnit* unit) {
 	CUnit* u = const_cast<CUnit*>(unit);
 
-	if (newStatus & LOS_INLOS) {
-		if (allyTeam == gu->myAllyTeam) {
-			if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
-				liveGhostBuildings[MDL_TYPE(unit)].erase(u);
-			}
-		}
-		unitRadarIcons[allyTeam].erase(u);
-	} else {
-		if (newStatus & LOS_PREVLOS) {
-			if (allyTeam == gu->myAllyTeam) {
-				if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
-					liveGhostBuildings[MDL_TYPE(unit)].insert(u);
-				}
-			}
-		}
+	if (u->model) {
+		opaqueModelRenderers[MDL_TYPE(u)]->AddUnit(u);
+		cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
+	}
+}
 
-		if (newStatus & LOS_INRADAR) {
-			unitRadarIcons[allyTeam].insert(u);
-		} else {
-			unitRadarIcons[allyTeam].erase(u);
-		}
+void CUnitDrawer::UnitEnteredLos(const CUnit* unit, int allyTeam) {
+	if (allyTeam != gu->myAllyTeam) {
+		return;
+	}
+
+	CUnit* u = const_cast<CUnit*>(unit); //cleanup
+	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
+		erase(liveGhostBuildings[MDL_TYPE(unit)], u);
+	}
+	erase(unitRadarIcons[allyTeam], u);
+
+	UpdateUnitMiniMapIcon(unit, false, false);
+}
+
+void CUnitDrawer::UnitLeftLos(const CUnit* unit, int allyTeam) {
+	if (allyTeam != gu->myAllyTeam) {
+		return;
+	}
+
+	CUnit* u = const_cast<CUnit*>(unit); //cleanup
+	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
+		insert_unique(liveGhostBuildings[MDL_TYPE(unit)], u);
+	}
+
+	if (unit->losStatus[allyTeam] & LOS_INRADAR) {
+		insert_unique(unitRadarIcons[allyTeam], u);
 	}
 
 	UpdateUnitMiniMapIcon(unit, false, false);
 }
 
+void CUnitDrawer::UnitEnteredRadar(const CUnit* unit, int allyTeam) {
+	if (allyTeam != gu->myAllyTeam) {
+		return;
+	}
 
+	CUnit* u = const_cast<CUnit*>(unit);
+	insert_unique(unitRadarIcons[allyTeam], u);
 
+	UpdateUnitMiniMapIcon(unit, false, false);
+}
 
+void CUnitDrawer::UnitLeftRadar(const CUnit* unit, int allyTeam) {
+	if (allyTeam != gu->myAllyTeam) {
+		return;
+	}
 
+	CUnit* u = const_cast<CUnit*>(unit);
+	erase(unitRadarIcons[allyTeam], u);
+
+	UpdateUnitMiniMapIcon(unit, false, false);
+}
 
 unsigned int CUnitDrawer::CalcUnitLOD(const CUnit* unit, unsigned int lastLOD)
 {
@@ -2128,16 +2106,14 @@ void CUnitDrawer::PlayerChanged(int playerNum) {
 	if (playerNum != gu->myPlayerNum)
 		return;
 
-	std::map<icon::CIconData*, std::set<const CUnit*> >::iterator iconIt;
-	std::set<CUnit*>::const_iterator unitIt;
-
+	std::map<icon::CIconData*, std::vector<const CUnit*> >::iterator iconIt;
 	for (iconIt = unitsByIcon.begin(); iconIt != unitsByIcon.end(); ++iconIt) {
 		(iconIt->second).clear();
 	}
 
-	for (unitIt = unsortedUnits.begin(); unitIt != unsortedUnits.end(); ++unitIt) {
+	for (CUnit* unit: unsortedUnits) {
 		// force an erase (no-op) followed by an insert
-		UpdateUnitMiniMapIcon(*unitIt, true, false);
+		UpdateUnitMiniMapIcon(unit, true, false);
 	}
 }
 

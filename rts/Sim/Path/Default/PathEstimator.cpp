@@ -28,6 +28,8 @@
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileQueryFlags.h"
+#include "System/Platform/Threading.h"
+#include "System/Sync/HsiehHash.h"
 
 
 CONFIG(int, MaxPathCostsMemoryFootPrint).defaultValue(512).minimumValue(64).description("Maximum memusage (in MByte) of mutlithreaded pathcache generator at loading time.");
@@ -154,6 +156,9 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 		WriteFile(cacheFileName, map);
 		loadscreen->SetLoadMessage("PathCosts: written", true);
 	}
+
+	// Calculate PreCached PathData Checksum
+	pathChecksum = CalcChecksum();
 
 	// switch to runtime wanted IPathFinder (maybe PF or PE)
 	delete pathFinders[0];
@@ -560,14 +565,14 @@ IPath::SearchResult CPathEstimator::DoSearch(const MoveDef& moveDef, const CPath
 		// no, test the 8 surrounding blocks
 		// NOTE: each of these calls increments openBlockBuffer.idx by 1, so
 		// maxBlocksToBeSearched is always less than <MAX_SEARCHED_NODES_PE - 8>
-		TestBlock(moveDef, peDef, ob, owner, PATHDIR_LEFT,       PATHOPT_OPEN, 1.f, true);
-		TestBlock(moveDef, peDef, ob, owner, PATHDIR_LEFT_UP,    PATHOPT_OPEN, 1.f, true);
-		TestBlock(moveDef, peDef, ob, owner, PATHDIR_UP,         PATHOPT_OPEN, 1.f, true);
-		TestBlock(moveDef, peDef, ob, owner, PATHDIR_RIGHT_UP,   PATHOPT_OPEN, 1.f, true);
-		TestBlock(moveDef, peDef, ob, owner, PATHDIR_RIGHT,      PATHOPT_OPEN, 1.f, true);
-		TestBlock(moveDef, peDef, ob, owner, PATHDIR_RIGHT_DOWN, PATHOPT_OPEN, 1.f, true);
-		TestBlock(moveDef, peDef, ob, owner, PATHDIR_DOWN,       PATHOPT_OPEN, 1.f, true);
-		TestBlock(moveDef, peDef, ob, owner, PATHDIR_LEFT_DOWN,  PATHOPT_OPEN, 1.f, true);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_LEFT,       PATHOPT_OPEN, 1.f);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_LEFT_UP,    PATHOPT_OPEN, 1.f);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_UP,         PATHOPT_OPEN, 1.f);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_RIGHT_UP,   PATHOPT_OPEN, 1.f);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_RIGHT,      PATHOPT_OPEN, 1.f);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_RIGHT_DOWN, PATHOPT_OPEN, 1.f);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_DOWN,       PATHOPT_OPEN, 1.f);
+		TestBlock(moveDef, peDef, ob, owner, PATHDIR_LEFT_DOWN,  PATHOPT_OPEN, 1.f);
 
 		// mark this block as closed
 		blockStates.nodeMask[ob->nodeNum] |= PATHOPT_CLOSED;
@@ -602,8 +607,7 @@ bool CPathEstimator::TestBlock(
 	const CSolidObject* /*owner*/,
 	const unsigned int pathDir,
 	const unsigned int /*blockStatus*/,
-	float /*speedMod*/,
-	bool /*withinConstraints*/
+	float /*speedMod*/
 ) {
 	testedBlocks++;
 
@@ -734,7 +738,6 @@ IPath::SearchResult CPathEstimator::FinishSearch(const MoveDef& moveDef, const C
 
 /**
  * Try to read offset and vertices data from file, return false on failure
- * TODO: Read-error-check.
  */
 bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::string& map)
 {
@@ -780,7 +783,7 @@ bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::strin
 			return false;
 
 		// Read block-center-offset data.
-		const unsigned blockSize = blockStates.GetSize() * sizeof(int2);
+		const unsigned blockSize = blockStates.GetSize() * sizeof(short2);
 		if (buffer.size() < pos + blockSize * moveDefHandler->GetNumMoveDefs())
 			return false;
 
@@ -832,7 +835,7 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
 
 	// Write block-center-offsets.
 	for (int pathType = 0; pathType < moveDefHandler->GetNumMoveDefs(); ++pathType)
-		zipWriteInFileInZip(file, (void*) &blockStates.peNodeOffsets[pathType][0], blockStates.GetSize() * sizeof(int2));
+		zipWriteInFileInZip(file, (void*) &blockStates.peNodeOffsets[pathType][0], blockStates.GetSize() * sizeof(short2));
 
 	// Write vertices.
 	zipWriteInFileInZip(file, &vertexCosts[0], vertexCosts.size() * sizeof(float));
@@ -853,6 +856,20 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
 	}
 
 	delete pfile;
+}
+
+
+boost::uint32_t CPathEstimator::CalcChecksum() const
+{
+	boost::uint32_t pathChecksum = 0;
+
+	for (auto& pathTypeOffsets: blockStates.peNodeOffsets) {
+		pathChecksum = HsiehHash(&pathTypeOffsets[0], pathTypeOffsets.size() * sizeof(short2), pathChecksum);
+	}
+
+	pathChecksum = HsiehHash(&vertexCosts[0], vertexCosts.size() * sizeof(float), pathChecksum);
+
+	return pathChecksum;
 }
 
 

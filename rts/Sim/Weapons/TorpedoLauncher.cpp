@@ -20,20 +20,7 @@ CTorpedoLauncher::CTorpedoLauncher(CUnit* owner, const WeaponDef* def): CWeapon(
 }
 
 
-void CTorpedoLauncher::Update()
-{
-	if (targetType != Target_None) {
-		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
-		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
-
-		wantedDir = targetPos - weaponPos;
-		predict = wantedDir.LengthNormalize() / projectileSpeed;
-	}
-
-	CWeapon::Update();
-}
-
-bool CTorpedoLauncher::TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const
+bool CTorpedoLauncher::TestTarget(const float3 pos, const SWeaponTarget& trg) const
 {
 	// by default we are a waterweapon, therefore:
 	//   if muzzle is above water, target position is only allowed to be IN water
@@ -50,18 +37,18 @@ bool CTorpedoLauncher::TestTarget(const float3& pos, bool userTarget, const CUni
 	//   able to, see #3951
 	//
 	// land- or air-based launchers cannot target anything not in water
-	if (weaponMuzzlePos.y >  0.0f &&                           !TargetUnitOrPositionInWater(pos, unit))
+	if (weaponMuzzlePos.y >  0.0f &&                           !TargetInWater(pos, trg))
 		return false;
 	// water-based launchers cannot target anything not in water unless submissile
-	if (weaponMuzzlePos.y <= 0.0f && !weaponDef->submissile && !TargetUnitOrPositionInWater(pos, unit))
+	if (weaponMuzzlePos.y <= 0.0f && !weaponDef->submissile && !TargetInWater(pos, trg))
 		return false;
 
-	return (CWeapon::TestTarget(pos, userTarget, unit));
+	return (CWeapon::TestTarget(pos, trg));
 }
 
-void CTorpedoLauncher::FireImpl(bool scriptCall)
+void CTorpedoLauncher::FireImpl(const bool scriptCall)
 {
-	float3 dir = targetPos - weaponMuzzlePos;
+	float3 dir = currentTargetPos - weaponMuzzlePos;
 	float3 vel;
 
 	const float dist = dir.LengthNormalize();
@@ -76,7 +63,7 @@ void CTorpedoLauncher::FireImpl(bool scriptCall)
 	ProjectileParams params = GetProjectileParams();
 	params.speed = vel;
 	params.pos = weaponMuzzlePos;
-	params.end = targetPos;
+	params.end = currentTargetPos;
 	params.ttl = (weaponDef->flighttime == 0)? std::ceil(std::max(dist, range) / projectileSpeed + 25): weaponDef->flighttime;
 	params.tracking = tracking;
 

@@ -4,10 +4,8 @@
 #define PROJECTILE_DRAWER_HDR
 
 #include "Rendering/GL/myGL.h"
-#include <list>
 #include <set>
 
-#include "lib/gml/ThreadSafeContainers.h"
 #include "Rendering/GL/FBO.h"
 #include "Sim/Projectiles/ProjectileFunctors.h"
 #include "System/EventClient.h"
@@ -20,9 +18,6 @@ class IWorldObjectModelRenderer;
 class LuaTable;
 
 
-typedef ThreadListSimRender<std::list<CGroundFlash*>, std::set<CGroundFlash*>, CGroundFlash*> GroundFlashContainer;
-typedef ThreadListSimRender<std::set<FlyingPiece*, FlyingPieceComparator>, void, FlyingPiece*> FlyingPieceContainer;
-
 
 class CProjectileDrawer: public CEventClient {
 public:
@@ -30,11 +25,9 @@ public:
 	~CProjectileDrawer();
 
 	typedef std::set<CProjectile*, ProjectileDistanceComparator> SortedProjectileSet;
-	typedef std::list<CProjectile*> UnsortedProjectileList;
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
 	void DrawProjectilesMiniMap();
-	bool DrawProjectileModel(const CProjectile* projectile, bool shadowPass);
 	void DrawGroundFlashes();
 	void DrawShadowPass();
 
@@ -98,27 +91,33 @@ public:
 	std::vector<const AtlasedTexture*> smoketex;
 
 private:
-	void ParseAtlasTextures(const bool, const LuaTable&, std::set<std::string>&, CTextureAtlas*);
+	static void ParseAtlasTextures(const bool, const LuaTable&, std::set<std::string>&, CTextureAtlas*);
 
-	void DrawProjectiles(int modelType, int numFlyingPieces, int* drawnPieces, bool drawReflection, bool drawRefraction);
-	void DrawProjectilesSet(std::set<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction);
-	void DrawProjectile(CProjectile* projectile, bool drawReflection, bool drawRefraction);
+	void DrawProjectiles(int modelType, bool drawReflection, bool drawRefraction);
 	void DrawProjectilesShadow(int modelType);
-	void DrawProjectileShadow(CProjectile* projectile);
-	void DrawProjectilesSetShadow(std::set<CProjectile*>& projectiles);
-	void DrawFlyingPieces(int modelType, int numFlyingPieces, int* drawnPieces);
+	void DrawFlyingPieces(int modelType);
+
+	void DrawProjectilesSet(const std::vector<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction);
+	static void DrawProjectilesSetShadow(const std::vector<CProjectile*>& projectiles);
+
+	void DrawProjectileNow(CProjectile* projectile, bool drawReflection, bool drawRefraction);
+	static void DrawProjectileShadow(CProjectile* projectile);
+	static bool DrawProjectileModel(const CProjectile* projectile, bool shadowPass);
 
 	void UpdatePerlin();
-	void GenerateNoiseTex(unsigned int tex, int size);
+	static void GenerateNoiseTex(unsigned int tex);
 
-	GLuint perlinTex[8];
+private:
+	static constexpr int perlinBlendTexSize = 16;
+	static constexpr int perlinTexSize = 128;
+	GLuint perlinBlendTex[8];
 	float perlinBlend[4];
 	FBO perlinFB;
 	int perlinTexObjects;
 	bool drawPerlinTex;
 
 	/// projectiles without a model
-	std::set<CProjectile*> renderProjectiles;
+	std::vector<CProjectile*> renderProjectiles;
 	/// projectiles with a model
 	std::vector<IWorldObjectModelRenderer*> modelRenderers;
 
@@ -127,7 +126,7 @@ private:
 	 * to render particle effects in back-to-front order
 	 */
 	SortedProjectileSet zSortedProjectiles;
-	UnsortedProjectileList unsortedProjectiles;
+	std::vector<CProjectile*> unsortedProjectiles;
 };
 
 extern CProjectileDrawer* projectileDrawer;

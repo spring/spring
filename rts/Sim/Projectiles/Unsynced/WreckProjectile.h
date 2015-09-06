@@ -11,9 +11,11 @@ class CWreckProjectile : public CProjectile
 public:
 	CWreckProjectile(CUnit* owner, float3 pos, float3 speed, float temperature);
 
-	void Update();
-	void Draw();
-	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
+	void Update() override;
+	void Draw() override;
+	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
+
+	virtual int GetProjectilesCount() const override;
 };
 
 #endif /* WRECK_PROJECTILE_H */

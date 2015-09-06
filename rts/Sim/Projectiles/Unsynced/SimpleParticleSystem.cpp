@@ -139,13 +139,13 @@ void CSimpleParticleSystem::Update()
 {
 	deleteMe = true;
 
-	for (int i = 0; i < numParticles; i++) {
-		if (particles[i].life < 1.0f) {
-			particles[i].pos += particles[i].speed;
-			particles[i].speed += gravity;
-			particles[i].speed *= airdrag;
-			particles[i].life += particles[i].decayrate;
-			particles[i].size = particles[i].size * sizeMod + sizeGrowth;
+	for (auto& p: particles) {
+		if (p.life < 1.0f) {
+			p.pos   += p.speed;
+			p.speed += gravity;
+			p.speed *= airdrag;
+			p.life  += p.decayrate;
+			p.size   = p.size * sizeMod + sizeGrowth;
 
 			deleteMe = false;
 		}
@@ -155,8 +155,6 @@ void CSimpleParticleSystem::Update()
 void CSimpleParticleSystem::Init(const CUnit* owner, const float3& offset)
 {
 	CProjectile::Init(owner, offset);
-
-	particles.resize(numParticles);
 
 	const float3 up = emitVector;
 	const float3 right = up.cross(float3(up.y, up.z, -up.x));
@@ -172,21 +170,25 @@ void CSimpleParticleSystem::Init(const CUnit* owner, const float3& offset)
 		LOG_L(L_WARNING, "[CSimpleParticleSystem::%s] no texture specified", __FUNCTION__);
 	}
 
-	for (int i = 0; i < numParticles; i++) {
+	particles.resize(numParticles);
+	for (auto& p: particles) {
 		float az = gu->RandFloat() * 2 * PI;
 		float ay = (emitRot + (emitRotSpread * gu->RandFloat())) * (PI / 180.0);
 
-		particles[i].pos = offset;
-		particles[i].speed = ((up * emitMul.y) * math::cos(ay) - ((right * emitMul.x) * math::cos(az) - (forward * emitMul.z) * math::sin(az)) * math::sin(ay)) * (particleSpeed + (gu->RandFloat() * particleSpeedSpread));
-		particles[i].life = 0;
-		particles[i].decayrate = 1.0f / (particleLife + (gu->RandFloat() * particleLifeSpread));
-		particles[i].size = particleSize + gu->RandFloat()*particleSizeSpread;
+		p.pos = offset;
+		p.speed = ((up * emitMul.y) * fastmath::cos(ay) - ((right * emitMul.x) * fastmath::cos(az) - (forward * emitMul.z) * fastmath::sin(az)) * fastmath::sin(ay)) * (particleSpeed + (gu->RandFloat() * particleSpeedSpread));
+		p.life = 0;
+		p.decayrate = 1.0f / (particleLife + (gu->RandFloat() * particleLifeSpread));
+		p.size = particleSize + gu->RandFloat()*particleSizeSpread;
 	}
 
 	drawRadius = (particleSpeed + particleSpeedSpread) * (particleLife * particleLifeSpread);
 }
 
-
+int CSimpleParticleSystem::GetProjectilesCount() const
+{
+	return numParticles;
+}
 
 
 

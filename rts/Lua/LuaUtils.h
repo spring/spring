@@ -130,13 +130,13 @@ class LuaUtils {
 
 
 
-template<typename ObjectDefType, typename IndexFuncType, typename IterFuncType>
+template<typename ObjectDefType, size_t indxFuncsSize, size_t iterFuncsSize>
 static void PushObjectDefProxyTable(
 	lua_State* L,
-	const char* indxOpers[3],
-	const char* iterOpers[2],
-	const IndexFuncType indxFuncs[3],
-	const IterFuncType iterFuncs[2],
+	const std::array<const LuaHashString, indxFuncsSize>& indxOpers,
+	const std::array<const LuaHashString, iterFuncsSize>& iterOpers,
+	const std::array<const lua_CFunction, indxFuncsSize>& indxFuncs,
+	const std::array<const lua_CFunction, iterFuncsSize>& iterFuncs,
 	const ObjectDefType* def
 ) {
 	lua_pushnumber(L, def->id);
@@ -144,8 +144,8 @@ static void PushObjectDefProxyTable(
 
 		lua_newtable(L); // the metatable
 
-		for (unsigned int n = 0; n < (sizeof(indxFuncs) / sizeof(indxFuncs[0])); n++) {
-			HSTR_PUSH(L, indxOpers[n]);
+		for (size_t n = 0; n < indxFuncsSize; n++) {
+			indxOpers[n].Push(L);
 			lua_pushlightuserdata(L, (void*) def);
 			lua_pushcclosure(L, indxFuncs[n], 1);
 			lua_rawset(L, -3); // closure
@@ -154,8 +154,8 @@ static void PushObjectDefProxyTable(
 		lua_setmetatable(L, -2);
 	}
 
-	for (unsigned int n = 0; n < (sizeof(iterFuncs) / sizeof(iterFuncs[0])); n++) {
-		HSTR_PUSH(L, iterOpers[n]);
+	for (size_t n = 0; n < iterFuncsSize; n++) {
+		iterOpers[n].Push(L);
 		lua_pushcfunction(L, iterFuncs[n]);
 		lua_rawset(L, -3);
 	}

@@ -4,6 +4,7 @@
 #define SELECTIONWIDGET_H
 
 #include <string>
+#include <vector>
 #include <boost/bind.hpp>
 
 #include "aGui/GuiElement.h"
@@ -73,9 +74,9 @@ public:
 	void ShowMapList();
 	void ShowScriptList();
 
-	void SelectMod(std::string);
-	void SelectScript(std::string);
-	void SelectMap(std::string);
+	void SelectMod(const std::string&);
+	void SelectScript(const std::string&);
+	void SelectMap(const std::string&);
 
 	std::string userScript;
 	std::string userMap;
@@ -83,7 +84,8 @@ public:
 
 private:
 	void CleanWindow();
-
+	void UpdateAvailableScripts();
+	
 	agui::Button* mod;
 	agui::TextElement* modT;
 	agui::Button* map;
@@ -91,6 +93,7 @@ private:
 	agui::Button* script;
 	agui::TextElement* scriptT;
 	ListSelectWnd* curSelect;
+	std::vector<std::string> availableScripts;
 };
 
 #endif

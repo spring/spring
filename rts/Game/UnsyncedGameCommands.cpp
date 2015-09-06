@@ -27,6 +27,7 @@
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
 #include "Net/GameServer.h"
+#include "Map/Ground.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
 #include "Map/SMF/SMFGroundDrawer.h"
@@ -587,11 +588,11 @@ public:
 	 * @param kill whether this executor should function as the kill-
 	 * or the reload-AI command
 	 */
-	AIKillReloadActionExecutor(bool kill)
-		: IUnsyncedActionExecutor((kill ? "AIKill" : "AIReload"),
-			std::string(kill ? "Kills" : "Reloads")
+	AIKillReloadActionExecutor(bool kill_)
+		: IUnsyncedActionExecutor((kill_ ? "AIKill" : "AIReload"),
+			std::string(kill_ ? "Kills" : "Reloads")
 				+ " the Skirmish AI controlling a specified team")
-		, kill(kill)
+		, kill(kill_)
 	{}
 
 	bool Execute(const UnsyncedAction& action) const {
@@ -1073,7 +1074,7 @@ public:
 		game->userInput = game->userInputPrefix;
 		game->writingPos = (int)game->userInput.length();
 		game->chatting = true;
-		game->ignoreNextChar = true;
+		game->ignoreNextChar = false;
 		game->consoleHistory->ResetPosition();
 		inMapDrawer->SetDrawMode(false);
 

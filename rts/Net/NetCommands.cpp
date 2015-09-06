@@ -22,6 +22,7 @@
 #include "Game/UI/MouseHandler.h"
 #include "Lua/LuaHandle.h"
 #include "Rendering/GlobalRendering.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Path/IPathManager.h"
 #include "System/EventHandler.h"
@@ -296,11 +297,9 @@ void CGame::ClientReadNet()
 				CPlayer* player = playerHandler->Player(playerNum);
 				player->currentStats = *reinterpret_cast<const PlayerStatistics*>(&inbuf[2]);
 
-				if (gameOver) {
-					CDemoRecorder* record = clientNet->GetDemoRecorder();
-					if (record != NULL) {
-						record->SetPlayerStats(playerNum, player->currentStats);
-					}
+				CDemoRecorder* record = clientNet->GetDemoRecorder();
+				if (record != NULL) {
+					record->SetPlayerStats(playerNum, player->currentStats);
 				}
 				AddTraffic(playerNum, packetCode, dataLength);
 				break;
@@ -351,15 +350,16 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_PLAYERINFO: {
-				const unsigned char player = inbuf[1];
-				if (!playerHandler->IsValidPlayer(player)) {
-					LOG_L(L_ERROR, "Got invalid player num %i in playerinfo msg", player);
+				const unsigned char playerId = inbuf[1];
+				if (!playerHandler->IsValidPlayer(playerId)) {
+					LOG_L(L_ERROR, "Got invalid player num %i in playerinfo msg", playerId);
 					break;
 				}
-				playerHandler->Player(player)->cpuUsage = *(float*) &inbuf[2];
-				playerHandler->Player(player)->ping = *(boost::uint32_t*) &inbuf[6];
+				CPlayer* p  = playerHandler->Player(playerId);
+				p->cpuUsage =           *(float*) &inbuf[2];
+				p->ping     = *(boost::uint32_t*) &inbuf[6];
 
-				AddTraffic(player, packetCode, dataLength);
+				AddTraffic(playerId, packetCode, dataLength);
 				break;
 			}
 
@@ -411,28 +411,28 @@ void CGame::ClientReadNet()
 			case NETMSG_STARTPOS: {
 				const unsigned char playerID = inbuf[1];
 				const unsigned int teamID = inbuf[2];
-				const unsigned char rdyState = inbuf[3];
 
 				if (!playerHandler->IsValidPlayer(playerID) && playerID != SERVER_PLAYER) {
 					LOG_L(L_ERROR, "Got invalid player num %i in start pos msg", playerID);
 					break;
 				}
-
 				if (!teamHandler->IsValidTeam(teamID)) {
 					LOG_L(L_ERROR, "Got invalid team num %i in startpos msg", teamID);
-				} else {
-					float3 rawPickPos(*(float*) &inbuf[4], *(float*) &inbuf[8], *(float*) &inbuf[12]);
-					float3 clampedPos(rawPickPos);
+					break;
+				}
 
-					CTeam* team = teamHandler->Team(teamID);
-					team->ClampStartPosInStartBox(&clampedPos);
+				const unsigned char rdyState = inbuf[3];
+				float3 rawPickPos(*(float*) &inbuf[4], *(float*) &inbuf[8], *(float*) &inbuf[12]);
+				float3 clampedPos(rawPickPos);
 
-					if (eventHandler.AllowStartPosition(playerID, rdyState, clampedPos, rawPickPos)) {
-						team->SetStartPos(clampedPos);
+				CTeam* team = teamHandler->Team(teamID);
+				team->ClampStartPosInStartBox(&clampedPos);
 
-						if (playerID != SERVER_PLAYER) {
-							playerHandler->Player(playerID)->SetReadyToStart(rdyState != CPlayer::PLAYER_RDYSTATE_UPDATED);
-						}
+				if (eventHandler.AllowStartPosition(playerID, rdyState, clampedPos, rawPickPos)) {
+					team->SetStartPos(clampedPos);
+
+					if (playerID != SERVER_PLAYER) {
+						playerHandler->Player(playerID)->SetReadyToStart(rdyState != CPlayer::PLAYER_RDYSTATE_UPDATED);
 					}
 				}
 
@@ -542,10 +542,6 @@ void CGame::ClientReadNet()
 					unsigned  int  checkSum; pckt >> checkSum;
 
 					const unsigned int ourCheckSum = mySyncChecksums[frameNum];
-
-					const char* fmtStr =
-						"[DESYNC_WARNING] checksum %x from player %d (%s)"
-						" does not match our checksum %x for frame-number %d";
 					const CPlayer* player = playerHandler->Player(playerNum);
 
 					// check if our checksum for this frame matches what
@@ -554,6 +550,9 @@ void CGame::ClientReadNet()
 					if (playerNum == gu->myPlayerNum) { break; }
 					if (checkSum == ourCheckSum) { break; }
 
+					const char* fmtStr =
+						"[DESYNC_WARNING] checksum %x from player %d (%s)"
+						" does not match our checksum %x for frame-number %d";
 					LOG_L(L_ERROR, fmtStr, checkSum, playerNum, player->name.c_str(), ourCheckSum, frameNum);
 				}
 #endif
@@ -1273,8 +1272,8 @@ void CGame::ClientReadNet()
 					player.spectator = spectator;
 					player.team = team;
 					player.playerNum = playerNum;
+
 					// add the new player
-					// TODO NETMSG_CREATE_NEWPLAYER perhaps add a lua hook; hook should be able to reassign the player to a team and/or create a new team/allyteam
 					playerHandler->AddPlayer(player);
 					eventHandler.PlayerAdded(player.playerNum);
 
@@ -1284,6 +1283,10 @@ void CGame::ClientReadNet()
 						eventHandler.TeamChanged(player.team);
 					}
 
+					CDemoRecorder* record = clientNet->GetDemoRecorder();
+					if (record != NULL) {
+						record->AddNewPlayer(player.name, playerNum);
+					}
 					AddTraffic(-1, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "[Game::%s] invalid NETMSG_CREATE_NEWPLAYER: %s", __FUNCTION__, ex.what());

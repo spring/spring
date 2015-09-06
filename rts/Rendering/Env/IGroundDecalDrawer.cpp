@@ -32,7 +32,7 @@ IGroundDecalDrawer* IGroundDecalDrawer::GetInstance()
 		} catch(const opengl_error& ex) {
 			LOG_L(L_ERROR, "IGroundDecalDrawer loading failed: %s", ex.what());
 #endif
-			delete singleton;
+			SafeDelete(singleton);
 			singleton = new CGroundDecalHandler();
 			LOG_L(L_INFO, "Loaded DecalsDrawer: %s", "Legacy");
 
@@ -47,6 +47,5 @@ IGroundDecalDrawer* IGroundDecalDrawer::GetInstance()
 
 void IGroundDecalDrawer::FreeInstance()
 {
-	delete singleton;
-	singleton = NULL;
+	SafeDelete(singleton);
 }

@@ -1,11 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "Combiner.h"
+#include "Game/GlobalUnsynced.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Map/ReadMap.h"
-#include "Sim/Misc/GlobalSynced.h"
+#include "System/Exceptions.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 
@@ -55,6 +56,10 @@ CInfoTextureCombiner::CInfoTextureCombiner()
 	}
 
 	shader = shaderHandler->CreateProgramObject("[CInfoTextureCombiner]", "CInfoTextureCombiner", false);
+
+	if (!fbo.IsValid() /*|| !shader->IsValid()*/) { // don't check shader (it gets created/switched at runtime)
+		throw opengl_error("");
+	}
 }
 
 
@@ -113,11 +118,12 @@ void CInfoTextureCombiner::Update()
 {
 	shader->Enable();
 	fbo.Bind();
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
 	glViewport(0,0, texSize.x, texSize.y);
 	glEnable(GL_BLEND);
 
 	shader->BindTextures();
-	shader->SetUniform("time", float(gs->frameNum + globalRendering->timeOffset));
+	shader->SetUniform("time", gu->gameTime);
 
 	const float isx = 2.0f * (mapDims.mapx / float(mapDims.pwr2mapx)) - 1.0f;
 	const float isy = 2.0f * (mapDims.mapy / float(mapDims.pwr2mapy)) - 1.0f;
@@ -130,6 +136,7 @@ void CInfoTextureCombiner::Update()
 	glEnd();
 
 	glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	FBO::Unbind();
 	shader->Disable();
 

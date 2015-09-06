@@ -18,19 +18,23 @@ public:
 	CStarburstProjectile(const ProjectileParams& params);
 	~CStarburstProjectile();
 
-	virtual void Detach();
-	void Collision(CUnit* unit);
-	void Collision(CFeature* feature);
-	void Collision();
-	void Update();
-	void Draw();
+	void Collision(CUnit* unit) override;
+	void Collision(CFeature* feature) override;
+	void Collision() override;
+	void Update() override;
+	void Draw() override;
+
+	virtual int GetProjectilesCount() const override;
 
 	int ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos,
-			float shieldForce, float shieldMaxSpeed);
+			float shieldForce, float shieldMaxSpeed) override;
 
 private:
-	void DrawCallback();
+	void DrawCallback() override;
 
+	void UpdateTrajectory();
+
+private:
 	float tracking;
 	float maxGoodDif;
 	float maxSpeed;

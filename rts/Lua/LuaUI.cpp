@@ -41,6 +41,7 @@
 #include "Game/UI/MouseHandler.h"
 #include "Map/ReadMap.h"
 #include "Rendering/IconHandler.h"
+#include "Sim/Misc/LosHandler.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"

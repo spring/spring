@@ -60,7 +60,7 @@ std::string DataDirsAccess::LocateFileInternal(const std::string& file) const
 
 	const std::vector<DataDir>& datadirs = dataDirLocater.GetDataDirs();
 	for (const DataDir& d: datadirs) {
-		std::string fn(d.path + file);
+		const std::string fn(d.path + file);
 		// does the file exist, and is it readable?
 		if (FileSystem::IsReadableFile(fn)) {
 			return fn;

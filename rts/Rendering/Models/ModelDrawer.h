@@ -4,7 +4,6 @@
 #define MODEL_DRAWER_HDR
 
 #include <map>
-#include <set>
 
 #include "System/EventClient.h"
 
@@ -27,7 +26,8 @@ public:
 
 	virtual void RenderUnitCreated(const CUnit* u, int cloaked);
 	virtual void RenderUnitDestroyed(const CUnit* u);
-	virtual void RenderUnitCloakChanged(const CUnit* u, int cloaked);
+	virtual void UnitCloaked(const CUnit* unit);
+	virtual void UnitDecloaked(const CUnit* unit);
 	virtual void RenderFeatureCreated(const CFeature* f);
 	virtual void RenderFeatureDestroyed(const CFeature* f);
 	virtual void RenderProjectileCreated(const CProjectile* p);
@@ -35,9 +35,9 @@ public:
 
 	virtual bool WantsEvent(const std::string& eventName) {
 		return
-			(eventName == "RenderUnitCreated" || eventName == "RenderUnitDestroyed") ||
-			(eventName == "RenderUnitCloakChanged") ||
-			(eventName == "RenderFeatureCreated" || eventName == "RenderFeatureDestroyed") ||
+			(eventName == "RenderUnitCreated"       || eventName == "RenderUnitDestroyed") ||
+			(eventName == "UnitCloaked"             || eventName == "UnitDecloaked") ||
+			(eventName == "RenderFeatureCreated"    || eventName == "RenderFeatureDestroyed") ||
 			(eventName == "RenderProjectileCreated" || eventName == "RenderProjectileDestroyed");
 	}
 	virtual bool GetFullRead() const { return true; }

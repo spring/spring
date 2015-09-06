@@ -18,6 +18,7 @@ public:
 	CWind();
 	~CWind();
 
+	void ResetState();
 	void LoadWind(float min, float max);
 	void Update();
 

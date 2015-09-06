@@ -76,3 +76,8 @@ void CTracerProjectile::Draw()
 	glColor4f(1, 1, 1, 1);
 	glTexCoord2f(0, 0);
 }
+
+int CTracerProjectile::GetProjectilesCount() const
+{
+	return 100; // glBeginEnd is ways more evil than VA draw!
+}

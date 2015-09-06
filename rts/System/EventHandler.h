@@ -39,11 +39,7 @@ class CEventHandler
 		bool IsUnsynced(const std::string& ciName) const;
 		bool IsController(const std::string& ciName) const;
 
-	public: // EventBatchHandler
-		void DeleteSyncedUnits();
 
-		void DeleteSyncedProjectiles();
-		void DeleteSyncedObjects();
 	public:
 		/**
 		 * @name Synced_events
@@ -75,16 +71,10 @@ class CEventHandler
 		//FIXME no events
 		void RenderUnitCreated(const CUnit* unit, int cloaked);
 		void RenderUnitDestroyed(const CUnit* unit);
-		void RenderUnitCloakChanged(const CUnit* unit, int cloaked);
-		void RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus);
-		void RenderUnitMoved(const CUnit* unit, const float3& newpos);
 		void RenderFeatureCreated(const CFeature* feature);
 		void RenderFeatureDestroyed(const CFeature* feature);
-		void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
 		void RenderProjectileCreated(const CProjectile* proj);
 		void RenderProjectileDestroyed(const CProjectile* proj);
-		void UnsyncedProjectileCreated(const CProjectile* proj);
-		void UnsyncedProjectileDestroyed(const CProjectile* proj);
 
 		void UnitIdle(const CUnit* unit);
 		void UnitCommand(const CUnit* unit, const Command& command);
@@ -96,6 +86,7 @@ class CEventHandler
 			int weaponDefID,
 			int projectileID,
 			bool paralyzer);
+		void UnitStunned(const CUnit* unit, bool stunned);
 		void UnitExperience(const CUnit* unit, float oldExperience);
 		void UnitHarvestStorageFull(const CUnit* unit);
 
@@ -467,6 +458,13 @@ inline void CEventHandler::UnitDamaged(
 	ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(UnitDamaged, unit, attacker, damage, weaponDefID, projectileID, paralyzer)
 }
 
+inline void CEventHandler::UnitStunned(
+	const CUnit* unit,
+	bool stunned)
+{
+	ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(UnitStunned, unit, stunned)
+}
+
 
 inline void CEventHandler::UnitExperience(const CUnit* unit,
                                               float oldExperience)
@@ -653,20 +651,6 @@ inline void CEventHandler::RenderUnitDestroyed(const CUnit* unit)
 	ITERATE_EVENTCLIENTLIST(RenderUnitDestroyed, unit)
 }
 
-inline void CEventHandler::RenderUnitCloakChanged(const CUnit* unit, int cloaked)
-{
-	ITERATE_EVENTCLIENTLIST(RenderUnitCloakChanged, unit, cloaked)
-}
-
-inline void CEventHandler::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus)
-{
-	ITERATE_EVENTCLIENTLIST(RenderUnitLOSChanged, unit, allyTeam, newStatus)
-}
-
-inline void CEventHandler::RenderUnitMoved(const CUnit* unit, const float3& newpos)
-{
-	ITERATE_EVENTCLIENTLIST(RenderUnitMoved, unit, newpos)
-}
 
 inline void CEventHandler::RenderFeatureCreated(const CFeature* feature)
 {
@@ -678,10 +662,6 @@ inline void CEventHandler::RenderFeatureDestroyed(const CFeature* feature)
 	ITERATE_EVENTCLIENTLIST(RenderFeatureDestroyed, feature)
 }
 
-inline void CEventHandler::RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos)
-{
-	ITERATE_EVENTCLIENTLIST(RenderFeatureMoved, feature, oldpos, newpos)
-}
 
 inline void CEventHandler::RenderProjectileCreated(const CProjectile* proj)
 {

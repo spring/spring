@@ -11,12 +11,11 @@ class CStarburstLauncher: public CWeapon
 public:
 	CStarburstLauncher(CUnit* owner, const WeaponDef* def);
 
-	void Update();
-	float GetRange2D(float yDiff) const;
+	float GetRange2D(const float yDiff) const override final;
 
 private:
-	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const;
-	void FireImpl(bool scriptCall);
+	bool HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const override final;
+	void FireImpl(const bool scriptCall) override final;
 
 private:
 	float tracking;

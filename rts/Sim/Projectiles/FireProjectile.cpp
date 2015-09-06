@@ -80,7 +80,8 @@ void CFireProjectile::Update()
 {
 	ttl--;
 	if (ttl > 0) {
-		if (projectileHandler->particleSaturation < 0.8f || (projectileHandler->particleSaturation < 1 && (gs->frameNum & 1))) {
+		const float partSat = (gs->frameNum & 1) ? 1.0f : 0.8f;
+		if (projectileHandler->GetParticleSaturation() < partSat) {
 			// unsynced code
 			SubParticle sub;
 			sub.age = 0;
@@ -106,14 +107,15 @@ void CFireProjectile::Update()
 			const std::vector<CFeature*>& features = quadField->GetFeaturesExact(emitPos + wind.GetCurrentWind() * 0.7f, emitRadius * 2);
 			const std::vector<CUnit*>& units = quadField->GetUnitsExact(emitPos + wind.GetCurrentWind() * 0.7f, emitRadius * 2);
 
-			for (std::vector<CFeature*>::const_iterator fi = features.begin(); fi != features.end(); ++fi) {
+			for (CFeature* f: features) {
 				if (gs->randFloat() > 0.8f) {
-					(*fi)->StartFire();
+					f->StartFire();
 				}
 			}
 
-			for (std::vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
-				(*ui)->DoDamage(DamageArray(30), ZeroVector, NULL, -CSolidObject::DAMAGE_EXTSOURCE_FIRE, -1);
+			const DamageArray fireDmg(30);
+			for (CUnit* u: units) {
+				u->DoDamage(fireDmg, ZeroVector, NULL, -CSolidObject::DAMAGE_EXTSOURCE_FIRE, -1);
 			}
 		}
 	}
@@ -137,9 +139,7 @@ void CFireProjectile::Update()
 		pi->posDif*=0.9f;
 	}
 
-	if (subParticles.empty() && (ttl <= 0)) {
-		deleteMe = true;
-	}
+	deleteMe |= ttl <= -particleTime;
 }
 
 void CFireProjectile::Draw()
@@ -213,5 +213,11 @@ void CFireProjectile::Draw()
 		va->AddVertexQTC(interPos + dir1 + dir2, at->xend,   at->yend,   col2);
 		va->AddVertexQTC(interPos - dir1 + dir2, at->xstart, at->yend,   col2);
 	}
+}
+
+
+int CFireProjectile::GetProjectilesCount() const
+{
+	return subParticles2.size() + subParticles.size() * 2;
 }
 

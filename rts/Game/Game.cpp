@@ -2,14 +2,6 @@
 
 #include "Rendering/GL/myGL.h"
 
-#include <stdlib.h>
-#include <time.h>
-#include <cctype>
-#include <locale>
-#include <fstream>
-#include <stdexcept>
-#include <functional> // C++11
-
 #include <SDL_keyboard.h>
 
 #include "Game.h"
@@ -94,7 +86,6 @@
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/SideParser.h"
 #include "Sim/Misc/SmoothHeightMesh.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -141,24 +132,17 @@
 #include "System/SpringApp.h"
 #include "System/Util.h"
 #include "System/Input/KeyInput.h"
-#include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/LoadSave/LoadSaveHandler.h"
 #include "System/LoadSave/DemoRecorder.h"
 #include "System/Log/ILog.h"
-#include "System/Net/PackPacket.h"
-#include "System/Platform/CrashHandler.h"
 #include "System/Platform/Watchdog.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/ISoundChannels.h"
 #include "System/Sync/DumpState.h"
-#include "System/Sync/SyncedPrimitiveIO.h"
-#include "System/Sync/SyncTracer.h"
 #include "System/TimeProfiler.h"
 
-#include <boost/cstdint.hpp>
-#include <boost/thread.hpp>
 
 #undef CreateDirectory
 
@@ -318,6 +302,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	// clear left-over receivers in case we reloaded
 	commandConsole.ResetState();
 
+	wind.ResetState();
 
 	modInfo.ResetState();
 	modInfo.Init(modName.c_str());
@@ -522,7 +507,7 @@ void CGame::PreLoadSimulation()
 
 	loadscreen->SetLoadMessage("Creating QuadField & CEGs");
 	moveDefHandler = new MoveDefHandler(defsParser);
-	quadField = new CQuadField((mapDims.mapx * SQUARE_SIZE) / CQuadField::BASE_QUAD_SIZE, (mapDims.mapy * SQUARE_SIZE) / CQuadField::BASE_QUAD_SIZE);
+	quadField = new CQuadField(int2(mapDims.mapx, mapDims.mapy), CQuadField::BASE_QUAD_SIZE);
 	damageArrayHandler = new CDamageArrayHandler(defsParser);
 	explGenHandler = new CExplosionGeneratorHandler();
 }
@@ -544,7 +529,6 @@ void CGame::PostLoadSimulation()
 	featureHandler = new CFeatureHandler(defsParser);
 
 	losHandler = new CLosHandler();
-	radarHandler = new CRadarHandler(false);
 
 	// pre-load the PFS, gets finalized after Lua
 	//
@@ -789,8 +773,9 @@ void CGame::KillLua()
 	CLuaRules::FreeHandler();
 
 	LOG("[%s][3]", __FUNCTION__);
-	// done by ~GUIHandler
-	// CLuaUI::FreeHandler();
+	//even though it's done by ~GUIHandler, you have to kill it before all handler pointers
+	//become invalid
+	CLuaUI::FreeHandler();
 
 	LOG("[%s][4]", __FUNCTION__);
 	LuaOpenGL::Free();
@@ -884,7 +869,6 @@ void CGame::KillSimulation()
 	SafeDelete(readMap);
 	SafeDelete(smoothGround);
 	SafeDelete(groundBlockingObjectMap);
-	SafeDelete(radarHandler);
 	SafeDelete(losHandler);
 	SafeDelete(mapDamage);
 	SafeDelete(quadField);
@@ -1098,7 +1082,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	}
 
 	if ((currentTime - frameStartTime).toMilliSecsf() >= 1000.0f) {
-		globalRendering->FPS = (numDrawFrames * 1000.0f) / (currentTime - frameStartTime).toMilliSecsf();
+		globalRendering->FPS = (numDrawFrames * 1000.0f) / std::max(0.01f, (currentTime - frameStartTime).toMilliSecsf());
 
 		// update FPS counter once every second
 		frameStartTime = currentTime;
@@ -1145,7 +1129,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 		}
 
 		// TODO call only when camera changed
-		sound->UpdateListener(camera->GetPos(), camera->GetDir(), camera->GetUp(), unsyncedUpdateDeltaTime);
+		sound->UpdateListener(camera->GetPos(), camera->GetDir(), camera->GetUp());
 	}
 
 	SetDrawMode(gameNormalDraw); //TODO move to ::Draw()?
@@ -1685,10 +1669,7 @@ void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool tim
 		for (int i = 0; i < numTeams; ++i) {
 			const CTeam* team = teamHandler->Team(i);
 			record->SetTeamStats(i, team->statHistory);
-			netcode::PackPacket* buf = new netcode::PackPacket(2 + sizeof(CTeam::Statistics), NETMSG_TEAMSTAT);
-			*buf << static_cast<uint8_t>(team->teamNum);
-			*buf << *(team->currentStats);
-			clientNet->Send(buf);
+			clientNet->Send(CBaseNetProtocol::Get().SendTeamStat(team->teamNum, *(team->currentStats)));
 		}
 	}
 

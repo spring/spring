@@ -19,17 +19,23 @@
 
 
 
-CPathManager::CPathManager(): nextPathID(0)
+CPathManager::CPathManager()
+: maxResPF(nullptr)
+, medResPE(nullptr)
+, lowResPE(nullptr)
+, pathFlowMap(nullptr)
+, pathHeatMap(nullptr)
+, nextPathID(0)
 {
 	CPathFinder::InitDirectionVectorsTable();
 	CPathFinder::InitDirectionCostsTable();
 
-	maxResPF = NULL;
-	medResPE = NULL;
-	lowResPE = NULL;
-
 	pathFlowMap = PathFlowMap::GetInstance();
 	pathHeatMap = PathHeatMap::GetInstance();
+
+	// PathNode::nodePos is ushort2, also PathNode::nodeNum is int
+	// so max map size is limited by 64k*64k
+	assert(mapDims.mapx <= 0xFFFFU && mapDims.mapy <= 0xFFFFU);
 }
 
 CPathManager::~CPathManager()
@@ -50,19 +56,13 @@ boost::int64_t CPathManager::Finalize() {
 		medResPE = new CPathEstimator(maxResPF, MEDRES_PE_BLOCKSIZE, "pe",  mapInfo->map.name);
 		lowResPE = new CPathEstimator(medResPE, LOWRES_PE_BLOCKSIZE, "pe2", mapInfo->map.name);
 
-		#ifdef SYNCDEBUG
-		// clients may have a non-writable cache directory (which causes
-		// the estimator path-file checksum to remain zero), so we can't
-		// update the sync-checker with this in normal builds
-		// NOTE: better to just checksum the in-memory data and broadcast
-		// that instead of relying on the zip-file CRC?
+		// make cached path data checksum part of synced state
+		// so when one client got a corrupted/incorrect cache
+		// it desyncs from the starts and not minutes later
 		{ SyncedUint tmp(GetPathCheckSum()); }
-		#endif
 	}
 
-	const spring_time t1 = spring_gettime();
-	const spring_time dt = t1 - t0;
-
+	const spring_time dt = spring_gettime() - t0;
 	return (dt.toMilliSecsi());
 }
 
@@ -208,7 +208,7 @@ IPath::SearchResult CPathManager::ArrangePath(
 		int advPathRes = origPathRes;
 		int maxRes = PATH_MED_RES;
 
-		while (advPathRes-- >= maxRes) {
+		while (--advPathRes >= maxRes) {
 			switch (advPathRes) {
 				case PATH_MAX_RES: result = maxResPF->GetPath(*moveDef, *pfDef, caller, startPos, newPath->maxResPath, MAX_SEARCHED_NODES_PF >> 3); break;
 				case PATH_MED_RES: result = medResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->medResPath, MAX_SEARCHED_NODES_PE >> 3); break;
@@ -227,48 +227,30 @@ IPath::SearchResult CPathManager::ArrangePath(
 
 
 /*
-Help-function.
-Turns a start->goal-request into a well-defined request.
-*/
-unsigned int CPathManager::RequestPath(
-	CSolidObject* caller,
-	const MoveDef* moveDef,
-	const float3& startPos,
-	const float3& goalPos,
-	float goalRadius,
-	bool synced
-) {
-	float3 sp(startPos); sp.ClampInBounds();
-	float3 gp(goalPos); gp.ClampInBounds();
-
-	// Create an estimator definition.
-	CCircularSearchConstraint* pfDef = new CCircularSearchConstraint(sp, gp, goalRadius, 3.0f, 2000);
-
-	// Make request.
-	return (RequestPath(moveDef, sp, gp, pfDef, caller, synced));
-}
-
-
-/*
 Request a new multipath, store the result and return a handle-id to it.
 */
 unsigned int CPathManager::RequestPath(
-	const MoveDef* moveDef,
-	const float3& startPos,
-	const float3& goalPos,
-	CPathFinderDef* pfDef,
 	CSolidObject* caller,
+	const MoveDef* moveDef,
+	float3 startPos,
+	float3 goalPos,
+	float goalRadius,
 	bool synced
 ) {
-	SCOPED_TIMER("PathManager::RequestPath");
-
 	if (!IsFinalized())
 		return 0;
 
+	SCOPED_TIMER("PathManager::RequestPath");
+	startPos.ClampInBounds();
+	goalPos.ClampInBounds();
+
+	// Create an estimator definition.
+	goalRadius = std::max<float>(goalRadius, PATH_NODE_SPACING * SQUARE_SIZE); //FIXME do on a per PE & PF level?
+	CCircularSearchConstraint* pfDef = new CCircularSearchConstraint(startPos, goalPos, goalRadius, 3.0f, 2000);
 	assert(moveDef == moveDefHandler->GetMoveDefByPathType(moveDef->pathType));
 
 	// Creates a new multipath.
-	MultiPath* newPath = new MultiPath(startPos, pfDef, moveDef);
+	MultiPath* newPath = new MultiPath(startPos, pfDef, moveDef); // deletes pfDef in dtor
 	newPath->finalGoal = goalPos;
 	newPath->caller = caller;
 	pfDef->synced = synced;
@@ -356,7 +338,7 @@ void CPathManager::MedRes2MaxRes(MultiPath& multiPath, const float3& startPos, c
 
 	// Perform the search.
 	// If this is the final improvement of the path, then use the original goal.
-	auto pfd = (medResPath.path.empty() && lowResPath.path.empty()) ? *multiPath.peDef : rangedGoalDef;
+	auto& pfd = (medResPath.path.empty() && lowResPath.path.empty()) ? *multiPath.peDef : rangedGoalDef;
 	const IPath::SearchResult result = maxResPF->GetPath(*multiPath.moveDef, pfd, owner, startPos, maxResPath, MAX_SEARCHED_NODES_ON_REFINE);
 
 	// If no refined path could be found, set goal as desired goal.
@@ -395,7 +377,7 @@ void CPathManager::LowRes2MedRes(MultiPath& multiPath, const float3& startPos, c
 
 	// Perform the search.
 	// If there is no low-res path left, use original goal.
-	auto pfd = (lowResPath.path.empty()) ? *multiPath.peDef : rangedGoalDef;
+	auto& pfd = (lowResPath.path.empty()) ? *multiPath.peDef : rangedGoalDef;
 	const IPath::SearchResult result = medResPE->GetPath(*multiPath.moveDef, pfd, owner, startPos, medResPath, MAX_SEARCHED_NODES_ON_REFINE);
 
 	// If no refined path could be found, set goal as desired goal.

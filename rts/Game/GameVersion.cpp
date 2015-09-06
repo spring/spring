@@ -95,6 +95,12 @@ std::string GetAdditional()
 	#define GV_ADD_SPACE " "
 #endif
 
+#if defined  __SUPPORT_SNAN__
+	GV_ADD_SPACE "Signal-NaNs"
+	#undef  GV_ADD_SPACE
+	#define GV_ADD_SPACE " "
+#endif
+
 #if defined HEADLESS && !defined DEDICATED
 	GV_ADD_SPACE "Headless"
 	#undef  GV_ADD_SPACE
@@ -115,12 +121,6 @@ std::string GetAdditional()
 	;
 
 	return additional;
-}
-
-const std::string& GetBuildTime()
-{
-	static const std::string buildTime = __DATE__ " " __TIME__;
-	return buildTime;
 }
 
 #define QUOTEME_(x) #x

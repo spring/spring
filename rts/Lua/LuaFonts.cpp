@@ -258,6 +258,7 @@ int LuaFonts::Print(lua_State* L)
 				case 'O': { options |= FONT_OUTLINE;       break; }
 
 				case 'n': { options ^= FONT_NEAREST;       break; }
+				default: break;
 			}
 	  		c++;
 		}

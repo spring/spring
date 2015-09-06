@@ -11,7 +11,6 @@
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Units/UnitHandler.h"
 #include "System/Matrix44f.h"
-#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/Resource.h"
 
 #define TREE_RADIUS 20
@@ -84,6 +83,7 @@ public:
 	bool isRepairingBeforeResurrect;
 	bool isAtFinalHeight;
 	bool inUpdateQue;
+	bool deleteMe;
 
 	float finalHeight;
 
@@ -94,6 +94,7 @@ public:
 
 	/// which drawQuad we are part of
 	int drawQuad;
+	float drawAlpha;
 	int fireTime;
 	int smokeTime;
 

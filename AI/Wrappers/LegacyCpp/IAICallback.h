@@ -517,11 +517,9 @@ public:
 	/**
 	 * 1. 'inData' can be setup to NULL to skip passing in a string
 	 * 2. if inSize is less than 0, the data size is calculated using strlen()
-	 * 3. the return data is subject to lua garbage collection,
-	 *    copy it if you wish to continue using it
 	 */
-	virtual const char* CallLuaRules(const char* inData, int inSize = -1, int* outSize = NULL) = 0;
-	virtual const char* CallLuaUI(const char* inData, int inSize = -1, int* outSize = NULL) = 0;
+	virtual std::string CallLuaRules(const char* inData, int inSize = -1) = 0;
+	virtual std::string CallLuaUI(const char* inData, int inSize = -1) = 0;
 
 	virtual std::map<std::string, std::string> GetMyInfo() = 0;
 	virtual std::map<std::string, std::string> GetMyOptionValues() = 0;

@@ -115,8 +115,11 @@ netcode::RawPacket* CDemoReader::GetData(const float readTime)
 			nextDemoReadTime = chunkHeader.modGameTime + demoTimeOffset;
 			bytesRemaining -= sizeof(chunkHeader);
 		}
-
-		return (readTime < 0) ? NULL : buf;
+		if (readTime < 0) {
+			delete buf;
+			return NULL;
+		}
+		return buf;
 	} else {
 		return NULL;
 	}

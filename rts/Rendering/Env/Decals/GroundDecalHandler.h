@@ -3,8 +3,7 @@
 #ifndef GROUND_DECAL_HANDLER_H
 #define GROUND_DECAL_HANDLER_H
 
-#include <set>
-#include <list>
+#include <deque>
 #include <vector>
 #include <string>
 
@@ -56,7 +55,7 @@ struct UnitTrackStruct {
 	float alphaFalloff;
 
 	TrackPart* lastAdded;
-	std::list<TrackPart*> parts;
+	std::deque<TrackPart*> parts;
 };
 
 struct TrackToAdd {
@@ -75,12 +74,12 @@ struct TrackToClean {
 		: track(NULL)
 		, tracks(NULL)
 	{}
-	TrackToClean(UnitTrackStruct* t, std::set<UnitTrackStruct*>* ts)
+	TrackToClean(UnitTrackStruct* t, std::vector<UnitTrackStruct*>* ts)
 		: track(t)
 		, tracks(ts)
 	{}
 	UnitTrackStruct* track;
-	std::set<UnitTrackStruct*>* tracks;
+	std::vector<UnitTrackStruct*>* tracks;
 };
 
 
@@ -147,9 +146,9 @@ public:
 			(eventName == "SunChanged") ||
 			(eventName == "RenderUnitCreated") ||
 			(eventName == "RenderUnitDestroyed") ||
-			(eventName == "RenderUnitMoved") ||
+			(eventName == "UnitMoved") ||
 			(eventName == "RenderFeatureCreated") ||
-			(eventName == "RenderFeatureMoved") ||
+			(eventName == "FeatureMoved") ||
 			(eventName == "UnitLoaded") ||
 			(eventName == "UnitUnloaded");
 	}
@@ -160,8 +159,8 @@ public:
 	void RenderUnitCreated(const CUnit*, int cloaked);
 	void RenderUnitDestroyed(const CUnit*);
 	void RenderFeatureCreated(const CFeature* feature);
-	void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
-	void RenderUnitMoved(const CUnit* unit, const float3& newpos);
+	void FeatureMoved(const CFeature* feature, const float3& oldpos);
+	void UnitMoved(const CUnit* unit);
 	void UnitLoaded(const CUnit* unit, const CUnit* transport);
 	void UnitUnloaded(const CUnit* unit, const CUnit* transport);
 
@@ -174,7 +173,7 @@ private:
 			: texture(0)
 		{}
 		std::string name;
-		std::set<UnitTrackStruct*> tracks;
+		std::vector<UnitTrackStruct*> tracks;
 		unsigned int texture;
 	};
 
@@ -182,7 +181,7 @@ private:
 		SolidObjectDecalType(): texture(0) {}
 
 		std::string name;
-		std::set<SolidObjectGroundDecal*> objectDecals;
+		std::vector<SolidObjectGroundDecal*> objectDecals;
 
 		unsigned int texture;
 	};
@@ -255,9 +254,8 @@ private:
 	std::vector<Shader::IProgramObject*> decalShaders;
 	std::vector<SolidObjectGroundDecal*> decalsToDraw;
 
-	std::list<Scar*> scars;
+	std::vector<Scar*> scars;
 	std::vector<Scar*> scarsToBeAdded;
-	std::vector<Scar*> scarsToBeChecked;
 
 	std::vector<TrackToAdd> tracksToBeAdded;
 	std::vector<TrackToClean> tracksToBeCleaned;
@@ -266,7 +264,7 @@ private:
 	int lastTest;
 	float maxOverlap;
 
-	std::set<Scar*>* scarField;
+	std::vector<Scar*>* scarField;
 	int scarFieldX;
 	int scarFieldY;
 
@@ -279,7 +277,5 @@ private:
 	unsigned int LoadTexture(const std::string& name);
 	void LoadScar(const std::string& file, unsigned char* buf, int xoffset, int yoffset);
 };
-
-extern CGroundDecalHandler* groundDecals_;
 
 #endif // GROUND_DECAL_HANDLER_H

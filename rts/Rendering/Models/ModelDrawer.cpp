@@ -104,27 +104,33 @@ void IModelDrawer::RenderUnitDestroyed(const CUnit* u)
 
 	#if (MODEL_DRAWER_DEBUG_RENDERING)
 	if (u->model) {
+		//Don't dare checking u->isCloaked, it may not exist.
 		cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 		opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 	}
 	#endif
 }
 
-
-void IModelDrawer::RenderUnitCloakChanged(const CUnit* u, int cloaked)
-{
+void IModelDrawer::UnitCloaked(const CUnit* unit) {
+	CUnit* u = const_cast<CUnit*>(unit);
 	LOG_L(L_DEBUG, "[%s] id=%d", __FUNCTION__, u->id);
 
 	#if (MODEL_DRAWER_DEBUG_RENDERING)
 	if (u->model) {
-		if(cloaked) {
-			cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
-			opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
-		}
-		else {
-			opaqueModelRenderers[MDL_TYPE(u)]->AddUnit(u);
-			cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
-		}
+		cloakedModelRenderers[MDL_TYPE(u)]->AddUnit(u);
+		opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
+	}
+	#endif
+}
+
+void IModelDrawer::UnitDecloaked(const CUnit* unit) {
+	CUnit* u = const_cast<CUnit*>(unit);
+	LOG_L(L_DEBUG, "[%s] id=%d", __FUNCTION__, u->id);
+
+	#if (MODEL_DRAWER_DEBUG_RENDERING)
+	if (u->model) {
+		opaqueModelRenderers[MDL_TYPE(u)]->AddUnit(u);
+		cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 	}
 	#endif
 }

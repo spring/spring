@@ -22,27 +22,7 @@ CLaserCannon::CLaserCannon(CUnit* owner, const WeaponDef* def)
 }
 
 
-
-void CLaserCannon::Update()
-{
-	if (targetType != Target_None) {
-		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
-		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
-
-		float3 wantedDirTemp = targetPos - weaponPos;
-		const float targetDist = wantedDirTemp.LengthNormalize();
-
-		if (!onlyForward && targetDist != 0.0f) {
-			wantedDir = wantedDirTemp;
-		}
-
-		predict = targetDist / projectileSpeed;
-	}
-
-	CWeapon::Update();
-}
-
-void CLaserCannon::UpdateRange(float val)
+void CLaserCannon::UpdateRange(const float val)
 {
 	// round range *DOWN* to integer multiple of projectile speed
 	//
@@ -53,9 +33,9 @@ void CLaserCannon::UpdateRange(float val)
 }
 
 
-void CLaserCannon::FireImpl(bool scriptCall)
+void CLaserCannon::FireImpl(const bool scriptCall)
 {
-	float3 dir = targetPos - weaponMuzzlePos;
+	float3 dir = currentTargetPos - weaponMuzzlePos;
 
 	const float dist = dir.LengthNormalize();
 	const int ttlreq = std::ceil(dist / weaponDef->projectilespeed);

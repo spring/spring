@@ -13,8 +13,6 @@
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
-#include "Sim/Misc/LosHandler.h"
-#include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/PieceProjectile.h"
@@ -30,7 +28,6 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Weapons/BeamLaser.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
@@ -357,7 +354,7 @@ void CCobInstance::StartBuilding(float heading, float pitch)
 
 int CCobInstance::QueryNanoPiece()
 {
-	vector<int> args(1, 0);
+	vector<int> args(1, -1);
 	Call(COBFN_QueryNanoPiece, args);
 	return args[0];
 }
@@ -365,7 +362,7 @@ int CCobInstance::QueryNanoPiece()
 
 int CCobInstance::QueryBuildInfo()
 {
-	vector<int> args(1, 0);
+	vector<int> args(1, -1);
 	Call(COBFN_QueryBuildInfo, args);
 	return args[0];
 }
@@ -373,7 +370,7 @@ int CCobInstance::QueryBuildInfo()
 
 int CCobInstance::QueryWeapon(int weaponNum)
 {
-	vector<int> args(1, 0);
+	vector<int> args(1, -1);
 	Call(COBFN_QueryPrimary + COBFN_Weapon_Funcs * weaponNum, args);
 	return args[0];
 }
@@ -413,7 +410,7 @@ void CCobInstance::AimShieldWeapon(CPlasmaRepulser* weapon)
 
 int CCobInstance::AimFromWeapon(int weaponNum)
 {
-	vector<int> args(1, 0);
+	vector<int> args(1, -1);
 	Call(COBFN_AimFromPrimary + COBFN_Weapon_Funcs * weaponNum, args);
 	return args[0];
 }

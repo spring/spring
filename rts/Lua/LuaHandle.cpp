@@ -7,7 +7,6 @@
 #include "LuaUI.h"
 
 #include "LuaCallInCheck.h"
-#include "LuaEventBatch.h"
 #include "LuaHashString.h"
 #include "LuaOpenGL.h"
 #include "LuaBitOps.h"
@@ -34,7 +33,6 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
-#include "System/EventBatchHandler.h"
 #include "System/Exceptions.h"
 #include "System/GlobalConfig.h"
 #include "System/Rectangle.h"
@@ -283,10 +281,13 @@ int CLuaHandle::RunCallInTraceback(
 			, popErrFunc(_popErrFunc)
 		{
 			handle->SetHandleRunning(state, true);
-
+			const bool canDraw = LuaOpenGL::IsDrawingEnabled(state);
+			SMatrixStateData prevMatState;
 			GLMatrixStateTracker& matTracker = GetLuaContextData(state)->glMatrixTracker;
-			MatrixStateData prevMatState = matTracker.PushMatrixState();
-			LuaOpenGL::InitMatrixState(state, func);
+			if (canDraw) {
+				prevMatState = matTracker.PushMatrixState();
+				LuaOpenGL::InitMatrixState(state, func);
+			}
 
 			top = lua_gettop(state);
 			// note1: disable GC outside of this scope to prevent sync errors and similar
@@ -295,9 +296,10 @@ int CLuaHandle::RunCallInTraceback(
 			error = lua_pcall(state, nInArgs, nOutArgs, errFuncIdx);
 			// only run GC inside of "SetHandleRunning(L, true) ... SetHandleRunning(L, false)"!
 			lua_gc(state, LUA_GCSTOP, 0);
-
-			LuaOpenGL::CheckMatrixState(state, func, error);
-			matTracker.PopMatrixState(prevMatState);
+			if (canDraw) {
+				LuaOpenGL::CheckMatrixState(state, func, error);
+				matTracker.PopMatrixState(prevMatState);
+			}
 
 			handle->SetHandleRunning(state, false);
 		}
@@ -631,8 +633,13 @@ void CLuaHandle::GameID(const unsigned char* gameID, unsigned int numBytes)
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return;
 	}
+	char buf[33];
 
-	lua_pushlstring(L, reinterpret_cast<const char*>(gameID), numBytes);
+	SNPRINTF(buf, sizeof(buf),
+			"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+			gameID[ 0], gameID[ 1], gameID[ 2], gameID[ 3], gameID[ 4], gameID[ 5], gameID[ 6], gameID[ 7],
+			gameID[ 8], gameID[ 9], gameID[10], gameID[11], gameID[12], gameID[13], gameID[14], gameID[15]);
+	lua_pushstring(L, buf);
 
 	RunCallInTraceback(L, cmdStr, 1, 0, traceBack.GetErrFuncIdx(), false);
 }
@@ -989,6 +996,27 @@ void CLuaHandle::UnitDamaged(
 	RunCallInTraceback(L, cmdStr, argCount, 0, traceBack.GetErrFuncIdx(), false);
 }
 
+void CLuaHandle::UnitStunned(
+	const CUnit* unit,
+	bool stunned)
+{
+	LUA_CALL_IN_CHECK(L);
+	luaL_checkstack(L, 5, __FUNCTION__);
+
+	static const LuaHashString cmdStr(__FUNCTION__);
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
+
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
+
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, unit->team);
+	lua_pushboolean(L, stunned);
+
+	// call the routine
+	RunCallInTraceback(L, cmdStr, 4, 0, traceBack.GetErrFuncIdx(), false);
+}
 
 void CLuaHandle::UnitExperience(const CUnit* unit, float oldExperience)
 {

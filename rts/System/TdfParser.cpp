@@ -76,9 +76,10 @@ bool TdfParser::TdfSection::remove(const std::string& key, bool caseSensitive)
 			values.erase(it);
 		}
 	} else {
-		// assume <key> is already in lowercase
+		// don't assume <key> is already in lowercase
+		const std::string lowerKey = StringToLower(key);
 		for (valueMap_t::iterator it = values.begin(); it != values.end(); ) {
-			if (StringToLower(it->first) == key) {
+			if (StringToLower(it->first) == lowerKey) {
 				it = set_erase(values, it);
 				ret = true;
 			} else {

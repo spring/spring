@@ -138,18 +138,17 @@ public:
 	 * @param filename relative path of the file in the spring data dir
 	 * @param mode mode file to open, see manpage of fopen
 	 */
-	std::string GetFileName(const std::string& filename, const std::string& prefix = "", const std::string& suffix = "", bool write = false) const;
-	std::string getUniqueName(bool game, bool gamehash, bool map, bool maphash) const;
+	std::string GetFileName(AAI* ai, const std::string& filename, const std::string& prefix = "", const std::string& suffix = "", bool write = false) const;
+	std::string getUniqueName(AAI* ai, bool game, bool gamehash, bool map, bool maphash) const;
 
 private:
 	~AAIConfig(void);
 
-	const UnitDef* GetUnitDef(const std::string& name);
-	int GetInt(FILE* file);
-	float GetFloat(FILE* file);
-	std::string GetString(FILE* file);
+	const UnitDef* GetUnitDef(AAI* ai, const std::string& name);
+	int GetInt(AAI* ai, FILE* file);
+	float GetFloat(AAI* ai, FILE* file);
+	std::string GetString(AAI* ai, FILE* file);
 
-	AAI *ai;
 	int CONSTRUCTION_TIMEOUT;
 	float WATER_MAP_RATIO;
 	float LAND_WATER_MAP_RATIO;

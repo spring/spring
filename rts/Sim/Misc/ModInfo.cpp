@@ -25,6 +25,7 @@ void CModInfo::ResetState()
 	mutator.clear();
 	description.clear();
 
+	allowDirectionalPathing   = true;
 	allowAircraftToLeaveMap   = true;
 	allowAircraftToHitGround  = true;
 	allowPushingEnemyUnits    = false;
@@ -72,6 +73,7 @@ void CModInfo::ResetState()
 
 	losMipLevel = 0;
 	airMipLevel = 0;
+	radarMipLevel = 0;
 	losMul      = 1.0f;
 	airLosMul   = 1.0f;
 
@@ -117,12 +119,14 @@ void CModInfo::Init(const char* modArchive)
 
 		pathFinderSystem = system.GetInt("pathFinderSystem", PFS_TYPE_DEFAULT) % PFS_NUM_TYPES;
 		pfUpdateRate = system.GetFloat("pathFinderUpdateRate", 0.007f);
+
 	}
 
 	{
 		// movement
 		const LuaTable& movementTbl = root.SubTable("movement");
 
+		allowDirectionalPathing = movementTbl.GetBool("allowDirectionalPathing", true);
 		allowAircraftToLeaveMap = movementTbl.GetBool("allowAirPlanesToLeaveMap", true);
 		allowAircraftToHitGround = movementTbl.GetBool("allowAircraftToHitGround", true);
 		allowPushingEnemyUnits = movementTbl.GetBool("allowPushingEnemyUnits", false);
@@ -231,19 +235,28 @@ void CModInfo::Init(const char* modArchive)
 		const LuaTable& los = sensors.SubTable("los");
 
 		requireSonarUnderWater = sensors.GetBool("requireSonarUnderWater", true);
+		alwaysVisibleOverridesCloaked = sensors.GetBool("alwaysVisibleOverridesCloaked", false);
 
 		// losMipLevel is used as index to readMap->mipHeightmaps,
 		// so the max value is CReadMap::numHeightMipMaps - 1
 		losMipLevel = los.GetInt("losMipLevel", 1);
 		losMul = los.GetFloat("losMul", 1.0f);
+
 		// airLosMipLevel doesn't have such restrictions, it's just used in various
 		// bitshifts with signed integers
 		airMipLevel = los.GetInt("airMipLevel", 2);
 		airLosMul = los.GetFloat("airLosMul", 1.0f);
 
+		radarMipLevel = los.GetInt("radarMipLevel", 3);
+
 		if ((losMipLevel < 0) || (losMipLevel > 6)) {
 			throw content_error("Sensors\\Los\\LosMipLevel out of bounds. "
 				                "The minimum value is 0. The maximum value is 6.");
+		}
+
+		if ((radarMipLevel < 0) || (radarMipLevel > 6)) {
+			throw content_error("Sensors\\Los\\LosMipLevel out of bounds. "
+						"The minimum value is 0. The maximum value is 6.");
 		}
 
 		if ((airMipLevel < 0) || (airMipLevel > 30)) {

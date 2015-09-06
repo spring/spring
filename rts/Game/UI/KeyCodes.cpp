@@ -26,9 +26,7 @@ std::string CKeyCodes::GetName(int code) const
 {
 	const auto it = codeToName.find(code);
 	if (it == codeToName.end()) {
-		char buf[64];
-		SNPRINTF(buf, sizeof(buf), "0x%03X", code);
-		return buf;
+		return IntToString(code, "0x%03X");
 	}
 	return it->second;
 }
@@ -38,9 +36,7 @@ std::string CKeyCodes::GetDefaultName(int code) const
 {
 	const auto it = defaultCodeToName.find(code);
 	if (it == defaultCodeToName.end()) {
-		char buf[64];
-		SNPRINTF(buf, sizeof(buf), "0x%03X", code);
-		return buf;
+		return IntToString(code, "0x%03X");
 	}
 	return it->second;
 }
@@ -277,11 +273,6 @@ void CKeyCodes::SaveUserKeySymbols(FILE* file) const
 			// this keysym is not standard
 			const int code = p.second;
 			std::string name = GetDefaultName(code);
-			if (name.empty()) {
-				char buf[16];
-				SNPRINTF(buf, 16, "0x%03X", code);
-				name = buf;
-			}
 			fprintf(file, "keysym  %-10s  %s\n", keysym.c_str(), name.c_str());
 			output = true;
 		}

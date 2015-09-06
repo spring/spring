@@ -147,3 +147,8 @@ int CExplosiveProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPo
 
 	return 0;
 }
+
+int CExplosiveProjectile::GetProjectilesCount() const
+{
+	return weaponDef->visuals.stages;
+}

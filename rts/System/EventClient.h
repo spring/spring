@@ -74,37 +74,28 @@ class CEventClient
 			return (GetFullRead() || (GetReadAllyTeam() == allyTeam));
 		}
 
-	public:
+	protected:
+		CEventClient(const std::string& name, int order, bool synced);
+		virtual ~CEventClient();
+
+	protected:
+		const std::string name;
+		const int         order;
+		const bool        synced_;
+		      bool        autoLinkEvents;
+
+	protected:
 		friend class CEventHandler;
-
-		typedef void (*eventFuncPtr)();
-
 		std::map<std::string, bool> autoLinkedEvents;
 
 		template <class T>
 		void RegisterLinkedEvents(T* foo) {
-			// old way needed gcc's pmf extension to cast member functions
-			//autoLinkedEvents[#eventname]  = (reinterpret_cast<eventFuncPtr>(&T::eventname) != reinterpret_cast<eventFuncPtr>(&CEventClient::eventname));
-
-			// new way, works everywhere
 			#define SETUP_EVENT(eventname, props) \
 				autoLinkedEvents[#eventname] = (typeid(&T::eventname) != typeid(&CEventClient::eventname));
 
 				#include "Events.def"
 			#undef SETUP_EVENT
 		}
-
-	private:
-		const std::string name;
-		const int         order;
-		const bool        synced_;
-
-	protected:
-		      bool        autoLinkEvents;
-
-	protected:
-		CEventClient(const std::string& name, int order, bool synced);
-		virtual ~CEventClient();
 
 	public:
 		/**
@@ -144,6 +135,7 @@ class CEventClient
 			int weaponDefID,
 			int projectileID,
 			bool paralyzer) {}
+		virtual void UnitStunned(const CUnit* unit, bool stunned) {}
 		virtual void UnitExperience(const CUnit* unit, float oldExperience) {}
 		virtual void UnitHarvestStorageFull(const CUnit* unit) {}
 
@@ -167,9 +159,6 @@ class CEventClient
 
 		virtual void RenderUnitCreated(const CUnit* unit, int cloaked) {}
 		virtual void RenderUnitDestroyed(const CUnit* unit) {}
-		virtual void RenderUnitCloakChanged(const CUnit* unit, int cloaked) {}
-		virtual void RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus) {}
-		virtual void RenderUnitMoved(const CUnit* unit, const float3& newpos) {}
 
 		virtual void UnitUnitCollision(const CUnit* collider, const CUnit* collidee) {}
 		virtual void UnitFeatureCollision(const CUnit* collider, const CFeature* collidee) {}
@@ -188,7 +177,6 @@ class CEventClient
 
 		virtual void RenderFeatureCreated(const CFeature* feature) {}
 		virtual void RenderFeatureDestroyed(const CFeature* feature) {}
-		virtual void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos) {}
 
 		virtual void ProjectileCreated(const CProjectile* proj) {}
 		virtual void ProjectileDestroyed(const CProjectile* proj) {}

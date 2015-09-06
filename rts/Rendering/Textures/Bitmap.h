@@ -35,6 +35,7 @@ public:
 	/// Load data from a gray-scale file on the VFS
 	bool LoadGrayscale(std::string const& filename);
 	bool Save(std::string const& filename, bool opaque = true) const;
+	bool SaveFloat(std::string const& filename) const;
 
 	const unsigned int CreateTexture(bool mipmaps = false) const;
 	const unsigned int CreateDDSTexture(unsigned int texID = 0, bool mipmaps = false) const;

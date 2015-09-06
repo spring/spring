@@ -6,6 +6,7 @@
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Sim/Misc/LosHandler.h"
+#include "System/Exceptions.h"
 #include "System/TimeProfiler.h"
 #include "System/Log/ILog.h"
 
@@ -15,7 +16,7 @@ CLosTexture::CLosTexture()
 : CPboInfoTexture("los")
 , uploadTex(0)
 {
-	texSize = int2(losHandler->losSizeX, losHandler->losSizeY);
+	texSize = losHandler->los.size;
 	texChannels = 1;
 
 	glGenTextures(1, &texture);
@@ -84,6 +85,10 @@ CLosTexture::CLosTexture()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glSpringTexStorage2D(GL_TEXTURE_2D, 1, GL_RG8, texSize.x, texSize.y);
 	}
+
+	if (!fbo.IsValid() || !shader->IsValid()) {
+		throw opengl_error("");
+	}
 }
 
 
@@ -99,7 +104,7 @@ void CLosTexture::UpdateCPU()
 	auto infoTexMem = reinterpret_cast<unsigned char*>(infoTexPBO.MapBuffer());
 
 	if (!gs->globalLOS[gu->myAllyTeam]) {
-		const unsigned short* myLos = &losHandler->losMaps[gu->myAllyTeam].front();
+		const unsigned short* myLos = &losHandler->los.losMaps[gu->myAllyTeam].front();
 		for (int y = 0; y < texSize.y; ++y) {
 			for (int x = 0; x < texSize.x; ++x) {
 				infoTexMem[y * texSize.x + x] = (myLos[y * texSize.x + x] != 0) ? 255 : 0;
@@ -138,7 +143,7 @@ void CLosTexture::Update()
 
 	infoTexPBO.Bind();
 	auto infoTexMem = reinterpret_cast<unsigned char*>(infoTexPBO.MapBuffer());
-	const unsigned short* myLos = &losHandler->losMaps[gu->myAllyTeam].front();
+	const unsigned short* myLos = &losHandler->los.losMaps[gu->myAllyTeam].front();
 	memcpy(infoTexMem, myLos, texSize.x * texSize.y * texChannels * 2);
 	infoTexPBO.UnmapBuffer();
 

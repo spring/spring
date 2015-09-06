@@ -67,7 +67,7 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 	, areaOfEffect(0.0f)
 	, distanceToTravel(params.maxRange)
 
-	, uptime(0)
+	, uptime(params.upTime)
 	, age(0)
 
 	, oldSmoke(pos)
@@ -87,7 +87,11 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 	if (weaponDef != NULL) {
 		maxSpeed = weaponDef->projectilespeed;
 		areaOfEffect = weaponDef->damageAreaOfEffect;
-		uptime = weaponDef->uptime * GAME_SPEED;
+		
+		// Default uptime is -1. Positive values override the weapondef.
+		if (uptime < 0) {
+			uptime = weaponDef->uptime * GAME_SPEED;
+		}
 
 		if (weaponDef->flighttime == 0) {
 			ttl = std::min(3000.0f, uptime + weaponDef->range / maxSpeed + 100);
@@ -121,20 +125,14 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 #endif
 }
 
-void CStarburstProjectile::Detach()
+
+CStarburstProjectile::~CStarburstProjectile()
 {
-	// SYNCED
 	if (curCallback) {
 		// this is unsynced, but it prevents some callback crash on exit
 		curCallback->drawCallbacker = NULL;
 	}
 
-	CProjectile::Detach();
-}
-
-CStarburstProjectile::~CStarburstProjectile()
-{
-	// UNSYNCED
 	for (unsigned int a = 0; a < NUM_TRACER_PARTS; ++a) {
 		tracerParts[a].ageMods.clear();
 	}
@@ -144,7 +142,7 @@ CStarburstProjectile::~CStarburstProjectile()
 void CStarburstProjectile::Collision()
 {
 	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, drawTrail, 0, weaponDef->visuals.texture2);
+		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, drawTrail, nullptr, weaponDef->visuals.texture2);
 	}
 
 	oldSmokeDir = dir;
@@ -155,7 +153,7 @@ void CStarburstProjectile::Collision()
 void CStarburstProjectile::Collision(CUnit* unit)
 {
 	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, drawTrail, 0, weaponDef->visuals.texture2);
+		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, drawTrail, nullptr, weaponDef->visuals.texture2);
 	}
 
 	oldSmokeDir = dir;
@@ -181,81 +179,19 @@ void CStarburstProjectile::Update()
 	uptime--;
 	missileAge++;
 
-	if (target != NULL && owner() != NULL && weaponDef->tracks) {
+	if (target != NULL && allyteamID != -1 && weaponDef->tracks) {
 		targetPos = target->pos;
 		CUnit* u = dynamic_cast<CUnit*>(target);
 
 		if (u != NULL) {
-			targetPos = u->GetErrorPos(owner()->allyteam, true);
+			targetPos = u->GetErrorPos(allyteamID, true);
 		}
-	}
 
-	if (uptime > 0) {
-		if (!luaMoveCtrl) {
-			if (speed.w < maxSpeed)
-				speed.w += weaponDef->weaponacceleration;
-
-			// do not need to update dir or speed.w here
-			CWorldObject::SetVelocity(dir * speed.w);
-		}
-	} else if (doturn && ttl > 0 && distanceToTravel > 0.0f) {
-		if (!luaMoveCtrl) {
-			float3 targetErrorVec = ((targetPos - pos).Normalize() + aimError).Normalize();
-
-			if (targetErrorVec.dot(dir) > 0.99f) {
-				dir = targetErrorVec;
-				doturn = false;
-			} else {
-				targetErrorVec = targetErrorVec - dir;
-				targetErrorVec -= dir * (targetErrorVec.dot(dir));
-				targetErrorVec.Normalize();
-
-				if (weaponDef->turnrate != 0) {
-					dir = (dir + (targetErrorVec * weaponDef->turnrate)).Normalize();
-				} else {
-					dir = (dir + (targetErrorVec * 0.06f)).Normalize();
-				}
-			}
-
-			// do not need to update dir or speed.w here
-			CWorldObject::SetVelocity(dir * speed.w);
-
-			if (distanceToTravel != MAX_PROJECTILE_RANGE) {
-				distanceToTravel -= speed.Length2D();
-			}
-		}
-	} else if (ttl > 0 && distanceToTravel > 0.0f) {
-		if (!luaMoveCtrl) {
-			if (speed.w < maxSpeed)
-				speed.w += weaponDef->weaponacceleration;
-
-			float3 targetErrorVec = (targetPos - pos).Normalize();
-
-			if (targetErrorVec.dot(dir) > maxGoodDif) {
-				dir = targetErrorVec;
-			} else {
-				targetErrorVec = targetErrorVec - dir;
-				targetErrorVec = (targetErrorVec - (dir * (targetErrorVec.dot(dir)))).SafeNormalize();
-
-				dir = (dir + (targetErrorVec * tracking)).SafeNormalize();
-			}
-
-			// do not need to update dir or speed.w here
-			CWorldObject::SetVelocity(dir * speed.w);
-
-			if (distanceToTravel != MAX_PROJECTILE_RANGE) {
-				distanceToTravel -= speed.Length2D();
-			}
-		}
-	} else {
-		if (!luaMoveCtrl) {
-			// changes dir and speed.w, must keep speed-vector in sync
-			SetDirectionAndSpeed((dir + (UpVector * mygravity)).Normalize(), speed.w - mygravity);
-		}
+		targetPos += aimError;
 	}
 
 	if (!luaMoveCtrl) {
-		SetPosition(pos + speed);
+		UpdateTrajectory();
 	}
 
 	if (ttl > 0) {
@@ -322,6 +258,69 @@ void CStarburstProjectile::Update()
 	}
 
 	UpdateInterception();
+}
+
+void CStarburstProjectile::UpdateTrajectory()
+{
+	if (uptime > 0) {
+		// stage 1: going upwards
+		speed.w += weaponDef->weaponacceleration;
+		speed.w = std::min(speed.w, maxSpeed);
+		CWorldObject::SetVelocity(dir * speed.w); // do not need to update dir or speed.w here
+
+	} else if (doturn && ttl > 0 && distanceToTravel > 0.0f) {
+		// stage 2: turn to target
+		float3 targetErrorVec = (targetPos - pos).Normalize();
+
+		if (targetErrorVec.dot(dir) > 0.99f) {
+			dir = targetErrorVec;
+			doturn = false;
+		} else {
+			targetErrorVec = targetErrorVec - dir;
+			targetErrorVec = (targetErrorVec - (dir * (targetErrorVec.dot(dir)))).SafeNormalize();
+
+			if (weaponDef->turnrate != 0) {
+				dir = (dir + (targetErrorVec * weaponDef->turnrate)).Normalize();
+			} else {
+				dir = (dir + (targetErrorVec * 0.06f)).Normalize();
+			}
+		}
+
+		// do not need to update dir or speed.w here
+		CWorldObject::SetVelocity(dir * speed.w);
+
+		if (distanceToTravel != MAX_PROJECTILE_RANGE) {
+			distanceToTravel -= speed.Length2D();
+		}
+
+	} else if (ttl > 0 && distanceToTravel > 0.0f) {
+		// stage 3: hit target
+		float3 targetErrorVec = (targetPos - pos).Normalize();
+
+		if (targetErrorVec.dot(dir) > maxGoodDif) {
+			dir = targetErrorVec;
+		} else {
+			targetErrorVec = targetErrorVec - dir;
+			targetErrorVec = (targetErrorVec - (dir * (targetErrorVec.dot(dir)))).SafeNormalize();
+
+			dir = (dir + (targetErrorVec * tracking)).SafeNormalize();
+		}
+
+		speed.w += weaponDef->weaponacceleration;
+		speed.w = std::min(speed.w, maxSpeed);
+		CWorldObject::SetVelocity(dir * speed.w);
+
+		if (distanceToTravel != MAX_PROJECTILE_RANGE) {
+			distanceToTravel -= speed.Length2D();
+		}
+
+	} else {
+		// stage "out of fuel"
+		// changes dir and speed.w, must keep speed-vector in sync
+		SetDirectionAndSpeed((dir + (UpVector * mygravity)).Normalize(), speed.w - mygravity);
+	}
+
+	SetPosition(pos + speed);
 }
 
 void CStarburstProjectile::Draw()
@@ -396,10 +395,10 @@ void CStarburstProjectile::Draw()
 void CStarburstProjectile::DrawCallback()
 {
 	inArray = true;
-
 	unsigned char col[4];
-
 	unsigned int part = curTracerPart;
+	const auto wt3 = weaponDef->visuals.texture3;
+	const auto wt1 = weaponDef->visuals.texture1;
 
 	for (unsigned int a = 0; a < NUM_TRACER_PARTS; ++a) {
 		const TracerPart* tracerPart = &tracerParts[part];
@@ -431,12 +430,10 @@ void CStarburstProjectile::DrawCallback()
 
 			const float drawsize = 1.0f + age2 * 0.8f * ageMod * 7;
 
-			#define wt3 weaponDef->visuals.texture3
 			va->AddVertexTC(interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, wt3->xstart, wt3->ystart, col);
 			va->AddVertexTC(interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, wt3->xend,   wt3->ystart, col);
 			va->AddVertexTC(interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, wt3->xend,   wt3->yend,   col);
 			va->AddVertexTC(interPos - camera->GetRight() * drawsize + camera->GetUp() * drawsize, wt3->xstart, wt3->yend,   col);
-			#undef wt3
 		}
 
 		// unsigned, so LHS will wrap around to UINT_MAX
@@ -450,13 +447,10 @@ void CStarburstProjectile::DrawCallback()
 	col[3] =   1;
 
 	const float fsize = 25.0f;
-
-	#define wt1 weaponDef->visuals.texture1
 	va->AddVertexTC(drawPos - camera->GetRight() * fsize - camera->GetUp() * fsize, wt1->xstart, wt1->ystart, col);
 	va->AddVertexTC(drawPos + camera->GetRight() * fsize - camera->GetUp() * fsize, wt1->xend,   wt1->ystart, col);
 	va->AddVertexTC(drawPos + camera->GetRight() * fsize + camera->GetUp() * fsize, wt1->xend,   wt1->yend,   col);
 	va->AddVertexTC(drawPos - camera->GetRight() * fsize + camera->GetUp() * fsize, wt1->xstart, wt1->yend,   col);
-	#undef wt1
 }
 
 int CStarburstProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed)
@@ -480,4 +474,9 @@ int CStarburstProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPo
 	}
 
 	return 0;
+}
+
+int CStarburstProjectile::GetProjectilesCount() const
+{
+	return numParts + 1;
 }

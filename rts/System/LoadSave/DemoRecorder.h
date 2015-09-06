@@ -33,7 +33,8 @@ public:
 	void SetGameID(const unsigned char* buf);
 	void SetTime(int gameTime, int wallclockTime);
 
-	void InitializeStats(int numPlayers, int numTeams );
+	void AddNewPlayer(const std::string& name, int playerNum);
+	void InitializeStats(int numPlayers, int numTeams);
 	void SetPlayerStats(int playerNum, const PlayerStatistics& stats);
 	void SetTeamStats(int teamNum, const std::list< TeamStatistics >& stats);
 	void SetWinningAllyTeams(const std::vector<unsigned char>& winningAllyTeams);

@@ -37,7 +37,7 @@ const char* jniUtil_getJniRetValDescription(const jint retVal) {
 bool jniUtil_checkException(JNIEnv* env, const char* const errorMsg) {
 
 	if ((*env)->ExceptionCheck(env)) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR, errorMsg);
+		simpleLog_logL(LOG_LEVEL_ERROR, errorMsg);
 		(*env)->ExceptionDescribe(env);
 		return true;
 	}
@@ -52,7 +52,7 @@ jclass jniUtil_findClass(JNIEnv* env, const char* const className) {
 	res = (*env)->FindClass(env, className);
 	const bool hasException = (*env)->ExceptionCheck(env);
 	if (res == NULL || hasException) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR, "Class not found: \"%s\"", className);
+		simpleLog_logL(LOG_LEVEL_ERROR, "Class not found: \"%s\"", className);
 		if (hasException) {
 			(*env)->ExceptionDescribe(env);
 		}
@@ -72,7 +72,7 @@ jobject jniUtil_makeGlobalRef(JNIEnv* env, jobject localObject, const char* objD
 	// but only if explicitly deleted with DeleteGlobalRef
 	res = (*env)->NewGlobalRef(env, localObject);
 	if ((*env)->ExceptionCheck(env)) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+		simpleLog_logL(LOG_LEVEL_ERROR,
 				"Failed to make %s a global reference.",
 				((objDesc == NULL) ? "" : objDesc));
 		(*env)->ExceptionDescribe(env);
@@ -89,7 +89,7 @@ bool jniUtil_deleteGlobalRef(JNIEnv* env, jobject globalObject,
 	// so it will be garbage collected
 	(*env)->DeleteGlobalRef(env, globalObject);
 	if ((*env)->ExceptionCheck(env)) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+		simpleLog_logL(LOG_LEVEL_ERROR,
 				"Failed to delete global reference %s.",
 				((objDesc == NULL) ? "" : objDesc));
 		(*env)->ExceptionDescribe(env);
@@ -107,7 +107,7 @@ jmethodID jniUtil_getMethodID(JNIEnv* env, jclass cls,
 	res = (*env)->GetMethodID(env, cls, name, signature);
 	const bool hasException = (*env)->ExceptionCheck(env);
 	if (res == NULL || hasException) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR, "Method not found: %s(%s)",
+		simpleLog_logL(LOG_LEVEL_ERROR, "Method not found: %s(%s)",
 				name, signature);
 		if (hasException) {
 			(*env)->ExceptionDescribe(env);
@@ -126,7 +126,7 @@ jmethodID jniUtil_getStaticMethodID(JNIEnv* env, jclass cls,
 	res = (*env)->GetStaticMethodID(env, cls, name, signature);
 	const bool hasException = (*env)->ExceptionCheck(env);
 	if (res == NULL || hasException) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR, "Method not found: %s(%s)",
+		simpleLog_logL(LOG_LEVEL_ERROR, "Method not found: %s(%s)",
 				name, signature);
 		if (hasException) {
 			(*env)->ExceptionDescribe(env);
@@ -175,7 +175,7 @@ jobject jniUtil_createURLObject(JNIEnv* env, const char* const url) {
 			if (jniUtil_checkException(env, "Failed creating Java URL.")) { jurl = NULL; }
 		}
 	} else {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+		simpleLog_logL(LOG_LEVEL_ERROR,
 				"Failed creating Java URL; URL class not initialized.");
 	}
 
@@ -194,7 +194,7 @@ jobjectArray jniUtil_createURLArray(JNIEnv* env, size_t size) {
 		jurlArr = (*env)->NewObjectArray(env, size, g_cls_url, NULL);
 		if (jniUtil_checkException(env, "Failed creating URL[].")) { jurlArr = NULL; }
 	} else {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+		simpleLog_logL(LOG_LEVEL_ERROR,
 				"Failed creating Java URL[]; URL class not initialized.");
 	}
 
@@ -250,7 +250,7 @@ jobject jniUtil_createURLClassLoader(JNIEnv* env, jobject urlArray) {
 		classLoader = (*env)->NewObject(env, g_cls_urlClassLoader, g_m_urlClassLoader_ctor, urlArray);
 		if (jniUtil_checkException(env, "Failed creating class-loader.")) { return NULL; }
 	} else {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+		simpleLog_logL(LOG_LEVEL_ERROR,
 				"Failed creating class-loader; class-loader class not initialized.");
 	}
 
@@ -271,7 +271,7 @@ jclass jniUtil_findClassThroughLoader(JNIEnv* env, jobject classLoader, const ch
 		cls = (*env)->CallObjectMethod(env, classLoader, g_m_urlClassLoader_findClass, jstr_className);
 		const bool hasException = (*env)->ExceptionCheck(env);
 		if (cls == NULL || hasException) {
-			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+			simpleLog_logL(LOG_LEVEL_ERROR,
 					"Class not found \"%s\"", className);
 			if (hasException) {
 				(*env)->ExceptionDescribe(env);
@@ -279,7 +279,7 @@ jclass jniUtil_findClassThroughLoader(JNIEnv* env, jobject classLoader, const ch
 			cls = NULL;
 		}
 	} else {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+		simpleLog_logL(LOG_LEVEL_ERROR,
 				"Failed finding class; class-loader class not initialized.");
 	}
 

@@ -20,7 +20,8 @@ CONFIG(bool,  CamSpringEnabled).defaultValue(true).headlessValue(false);
 CONFIG(int,   CamSpringScrollSpeed).defaultValue(10);
 CONFIG(float, CamSpringFOV).defaultValue(45.0f);
 CONFIG(bool,  CamSpringLockCardinalDirections).defaultValue(true).description("If when rotating cardinal directions should be `locked` for a short time.");
-CONFIG(bool,  CamSpringZoomOutFromMousePos).defaultValue(true);
+CONFIG(bool,  CamSpringZoomOutFromMousePos).defaultValue(false);
+CONFIG(bool,  CamSpringEdgeRotate).defaultValue(false).description("Rotate camera when cursor touches screen borders.");
 
 
 CSpringController::CSpringController()
@@ -71,7 +72,8 @@ void CSpringController::MouseMove(float3 move)
 
 void CSpringController::ScreenEdgeMove(float3 move)
 {
-	if (mouse->lasty < globalRendering->viewSizeY / 3) {
+	if (configHandler->GetBool("CamSpringEdgeRotate") && (mouse->lasty < globalRendering->viewSizeY / 3) && (mouse->lasty > globalRendering->viewSizeY / 10)) {
+		// rotate camera when mouse touches top screen borders
 		move *= (1 + KeyInput::GetKeyModState(KMOD_SHIFT) * 3);
 		camera->SetRotY(MoveAzimuth(move.x * 0.75f));
 		move.x = 0.0f;
@@ -107,7 +109,7 @@ void CSpringController::MouseWheelMove(float move)
 			} else {
 				float zoomInDist = CGround::LineGroundCol(curCamPos, curCamPos + mouse->dir * 150000.f, false);
 				if (zoomInDist > 0.0f) {
-					// zoominpos -> campos
+					// current campos -> zoominpos groundpos -> wanted campos
 					const float3 zoomInGroundPos = curCamPos + mouse->dir * zoomInDist;
 					zoomInDist *= (1.0f + (move * shiftSpeed * 0.007f));
 					const float3 wantedCamPos = zoomInGroundPos - mouse->dir * zoomInDist;
@@ -172,9 +174,9 @@ void CSpringController::MouseWheelMove(float move)
 void CSpringController::Update()
 {
 	pos.ClampInMap();
-	pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false);
 
 	rot.x = Clamp(rot.x, PI * 0.51f, PI * 0.99f);
+	dist = Clamp(dist, 20.f, maxDist);
 	dir = camera->GetDir();
 
 	pixelSize = (camera->GetTanHalfFov() * 2.0f) / globalRendering->viewSizeY * dist * 2.0f;

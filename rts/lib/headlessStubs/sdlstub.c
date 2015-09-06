@@ -271,6 +271,13 @@ extern DECLSPEC void SDL_SetWindowPosition(SDL_Window * window, int x, int y) {
 extern DECLSPEC void SDL_SetWindowSize(SDL_Window * window, int w, int h) {
 }
 
+
+extern DECLSPEC SDL_PowerState SDL_GetPowerInfo(int *secs, int *pct) {
+	return SDL_POWERSTATE_UNKNOWN;
+}
+
+
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

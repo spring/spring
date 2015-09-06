@@ -19,6 +19,7 @@
 #include "LuaContextData.h"
 #include "LuaHandle.h"
 #include "LuaHashString.h"
+#include "LuaIO.h"
 #include "LuaShaders.h"
 #include "LuaTextures.h"
 //FIXME#include "LuaVBOs.h"
@@ -52,14 +53,12 @@
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
-#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitDefImage.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "System/Log/ILog.h"
 #include "System/Matrix44f.h"
 #include "System/Config/ConfigHandler.h"
@@ -1246,6 +1245,7 @@ int LuaOpenGL::Text(lua_State* L)
 				case 'O': { options |= FONT_OUTLINE; outline = true; lightOut = true;     break; }
 
 				case 'n': { options ^= FONT_NEAREST;       break; }
+				default: break;
 			}
 	  		c++;
 		}
@@ -1668,10 +1668,9 @@ int LuaOpenGL::DrawListAtUnit(lua_State* L)
 	if (unit == NULL)
 		return 0;
 
-	const CTransportUnit* trans = unit->GetTransporter();
-
-	if (trans != NULL)
+	while (CUnit* trans = unit->GetTransporter()) {
 		unit = trans;
+	}
 
 	const unsigned int listIndex = (unsigned int)luaL_checkint(L, 2);
 	const CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
@@ -1712,10 +1711,9 @@ int LuaOpenGL::DrawFuncAtUnit(lua_State* L)
 	if (unit == NULL)
 		return 0;
 
-	const CTransportUnit* trans = unit->GetTransporter();
-
-	if (trans != NULL)
+	while (CUnit* trans = unit->GetTransporter()) {
 		unit = trans;
+	}
 
 	const bool useMidPos = luaL_checkboolean(L, 2);
 	const float3 drawPos = (useMidPos)? unit->drawMidPos: unit->drawPos;
@@ -4081,9 +4079,9 @@ int LuaOpenGL::CreateList(lua_State* L)
 
 	// build the list with the specified lua call/args
 	glNewList(list, GL_COMPILE);
-	MatrixStateData prevMSD = GetLuaContextData(L)->glMatrixTracker.PushMatrixState(true);
+	SMatrixStateData prevMSD = GetLuaContextData(L)->glMatrixTracker.PushMatrixState(true);
 	const int error = lua_pcall(L, (args - 1), 0, 0);
-	MatrixStateData matData = GetLuaContextData(L)->glMatrixTracker.GetMatrixState();
+	SMatrixStateData matData = GetLuaContextData(L)->glMatrixTracker.GetMatrixState();
 	GetLuaContextData(L)->glMatrixTracker.PopMatrixState(prevMSD, false);
 	glEndList();
 
@@ -4113,7 +4111,7 @@ int LuaOpenGL::CallList(lua_State* L)
 	const CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
 	const unsigned int dlist = displayLists.GetDList(listIndex);
 	if (dlist) {
-		MatrixStateData matrixStateData = displayLists.GetMatrixState(listIndex);
+		SMatrixStateData matrixStateData = displayLists.GetMatrixState(listIndex);
 		int error = GetLuaContextData(L)->glMatrixTracker.ApplyMatrixState(matrixStateData);
 		if (error == 0) {
 			glCallList(dlist);
@@ -4286,41 +4284,46 @@ int LuaOpenGL::SaveImage(lua_State* L)
 	const GLsizei height = (GLsizei)luaL_checknumber(L, 4);
 	const string filename = luaL_checkstring(L, 5);
 
+	if (!LuaIO::SafeWritePath(filename) || !LuaIO::IsSimplePath(filename)) {
+		LOG_L(L_WARNING, "gl.SaveImage: tried to write to illegal path localtion");
+		return 0;
+	}
+	if ((width <= 0) || (height <= 0)) {
+		LOG_L(L_WARNING, "gl.SaveImage: tried to write empty image");
+		return 0;
+	}
+
 	bool alpha = false;
 	bool yflip = false;
+	bool gray16b = false;
 	const int table = 6;
 	if (lua_istable(L, table)) {
 		lua_getfield(L, table, "alpha");
-		if (lua_isboolean(L, -1)) {
-			alpha = lua_toboolean(L, -1);
-		}
+		alpha = luaL_optboolean(L, -1, false);
 		lua_pop(L, 1);
+
 		lua_getfield(L, table, "yflip");
-		if (lua_isboolean(L, -1)) {
-			yflip = lua_toboolean(L, -1);
-		}
+		yflip = luaL_optboolean(L, -1, false);
+		lua_pop(L, 1);
+
+		lua_getfield(L, table, "grayscale16bit");
+		gray16b = luaL_optboolean(L, -1, false);
 		lua_pop(L, 1);
 	}
 
-	if ((width <= 0) || (height <= 0)) {
-		return 0;
+	CBitmap bitmap;
+	bitmap.Alloc(width, height);
+
+	if (!gray16b) {
+		glReadPixels(x, y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
+		if (!yflip) bitmap.ReverseYAxis();
+		lua_pushboolean(L, bitmap.Save(filename, !alpha));
+	} else {
+		// single channel only!
+		glReadPixels(x, y, width, height, GL_LUMINANCE, GL_FLOAT, bitmap.mem);
+		if (!yflip) bitmap.ReverseYAxis();
+		lua_pushboolean(L, bitmap.SaveFloat(filename));
 	}
-	const int memsize = width * height * 4;
-
-	unsigned char* img = new unsigned char[memsize];
-	memset(img, 0, memsize);
-	glReadPixels(x, y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, img);
-
-	CBitmap bitmap(img, width, height);
-	if (!yflip) {
-		bitmap.ReverseYAxis();
-	}
-
-	// FIXME Check file path permission here
-
-	lua_pushboolean(L, bitmap.Save(filename, !alpha));
-
-	delete[] img;
 
 	return 1;
 }

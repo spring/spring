@@ -182,6 +182,15 @@ PacketType CBaseNetProtocol::SendAttemptConnect(const std::string& name, const s
 }
 
 
+PacketType CBaseNetProtocol::SendRejectConnect(const std::string& reason)
+{
+	unsigned size = 3 + reason.size() + 1;
+	PackPacket* packet = new PackPacket(size, NETMSG_REJECT_CONNECT);
+	*packet << static_cast<boost::uint16_t>(size) << reason;
+	return PacketType(packet);
+}
+
+
 PacketType CBaseNetProtocol::SendShare(uchar myPlayerNum, uchar shareTeam, uchar bShareUnits, float shareMetal, float shareEnergy)
 {
 	PackPacket* packet = new PackPacket(12, NETMSG_SHARE);
@@ -203,6 +212,15 @@ PacketType CBaseNetProtocol::SendPlayerStat(uchar myPlayerNum, const PlayerStati
 	*packet << myPlayerNum << currentStats;
 	return PacketType(packet);
 }
+
+PacketType CBaseNetProtocol::SendTeamStat(uchar teamNum, const TeamStatistics& currentStats)
+{
+	PackPacket* packet = new netcode::PackPacket(2 + sizeof(TeamStatistics), NETMSG_TEAMSTAT);
+	*packet << teamNum << currentStats;
+	return PacketType(packet);
+}
+
+
 
 PacketType CBaseNetProtocol::SendGameOver(uchar myPlayerNum, const std::vector<uchar>& winningAllyTeams)
 {
@@ -423,13 +441,7 @@ PacketType CBaseNetProtocol::SendSdBlockresponse(uchar myPlayerNum, std::vector<
 	return PacketType(packet);
 }
 #endif // SYNCDEBUG
-/* FIXME: add these:
- NETMSG_SD_CHKREQUEST    = 41,
- NETMSG_SD_CHKRESPONSE   = 42,
- NETMSG_SD_BLKREQUEST    = 43,
- NETMSG_SD_BLKRESPONSE   = 44,
- NETMSG_SD_RESET         = 45,
-*/
+
 
 CBaseNetProtocol::CBaseNetProtocol()
 {
@@ -463,6 +475,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_DIRECT_CONTROL, 2);
 	proto->AddType(NETMSG_DC_UPDATE, 7);
 	proto->AddType(NETMSG_ATTEMPTCONNECT, -2);
+	proto->AddType(NETMSG_REJECT_CONNECT, -2);
 	proto->AddType(NETMSG_SHARE, 12);
 	proto->AddType(NETMSG_SETSHARE, 11);
 

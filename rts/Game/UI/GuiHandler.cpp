@@ -1062,8 +1062,6 @@ bool CGuiHandler::TryTarget(const CommandDescription& cmdDesc) const
 	const float dist = TraceRay::GuiTraceRay(camera->GetPos(), mouse->dir, viewRange, NULL, targetUnit, targetFeature, true);
 	const float3 groundPos = camera->GetPos() + mouse->dir * dist;
 
-	float3 modGroundPos;
-
 	if (dist <= 0.0f)
 		return false;
 
@@ -1074,18 +1072,20 @@ bool CGuiHandler::TryTarget(const CommandDescription& cmdDesc) const
 			return true;
 
 		for (const CWeapon* w: u->weapons) {
-			w->AdjustTargetPosToWater(modGroundPos = groundPos, targetUnit == NULL);
+			float3 modGroundPos = groundPos;
+			w->AdjustTargetPosToWater(modGroundPos, targetUnit == NULL);
+			const SWeaponTarget wtrg = SWeaponTarget(targetUnit, modGroundPos);
 
 			if (u->immobile) {
 				// immobile unit
 				// check range and weapon target properties
-				if (w->TryTarget(modGroundPos, false, targetUnit)) {
+				if (w->TryTarget(wtrg)) {
 					return true;
 				}
 			} else {
 				// mobile units can always move into range
 				// only check if we got a weapon that can shot the target (i.e. anti-air/anti-sub)
-				if (w->TestTarget(modGroundPos, false, targetUnit)) {
+				if (w->TestTarget(w->GetLeadTargetPos(wtrg), wtrg)) {
 					return true;
 				}
 			}
@@ -3206,14 +3206,11 @@ void CGuiHandler::DrawOptionLEDs(const IconInfo& icon)
 /******************************************************************************/
 /******************************************************************************/
 
-static inline void DrawSensorRange(int radius,
-                                   const float* color, const float3& pos)
+static inline void DrawSensorRange(int radius, const float* color, const float3& pos)
 {
-	const int sensorScale = radarHandler->radarDiv;
-	const int realRadius = ((radius / sensorScale) * sensorScale);
-	if (realRadius > 0) {
+	if (radius > 0) {
 		glColor4fv(color);
-		glSurfaceCircle(pos, (float)realRadius, 40);
+		glSurfaceCircle(pos, (float)radius, 40);
 	}
 }
 
@@ -3270,20 +3267,16 @@ static void DrawWeaponCone(const float3& pos,
 
 static inline void DrawWeaponArc(const CUnit* unit)
 {
-	for (unsigned int n = 0; n < unit->weapons.size(); n++) {
-		const CWeapon* w = unit->weapons[n];
-
+	for (const CWeapon* w: unit->weapons) {
 		// attack order needs to have been issued or wantedDir is undefined
-		if (w->targetType == Target_None)
+		if (!w->HaveTarget())
 			continue;
 		if (w->weaponDef->projectileType == WEAPON_BASE_PROJECTILE)
 			continue;
 
-		const float3 weaponDir = (unit->frontdir * w->onlyForward) + (w->wantedDir * (1 - w->onlyForward));
-
 		const float hrads   = math::acos(w->maxForwardAngleDif);
-		const float heading = math::atan2(-weaponDir.z, weaponDir.x);
-		const float pitch   = math::asin(weaponDir.y);
+		const float heading = math::atan2(-w->wantedDir.z, w->wantedDir.x);
+		const float pitch   = math::asin(w->wantedDir.y);
 
 		// note: cone visualization is invalid for ballistic weapons
 		DrawWeaponCone(w->weaponMuzzlePos, w->range, hrads, heading, pitch);
@@ -3527,11 +3520,11 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 			// draw sensor and jammer ranges
 			if (unitdef->onoffable || unitdef->activateWhenBuilt) {
 				const float3& p = unit->pos;
-				DrawSensorRange(unitdef->radarRadius,    cmdColors.rangeRadar, p);
-				DrawSensorRange(unitdef->sonarRadius,    cmdColors.rangeSonar, p);
-				DrawSensorRange(unitdef->seismicRadius,  cmdColors.rangeSeismic, p);
-				DrawSensorRange(unitdef->jammerRadius,   cmdColors.rangeJammer, p);
-				DrawSensorRange(unitdef->sonarJamRadius, cmdColors.rangeSonarJammer, p);
+				DrawSensorRange(unitdef->radarRadius    * losHandler->radar.divisor,             cmdColors.rangeRadar, p);
+				DrawSensorRange(unitdef->sonarRadius    * losHandler->sonar.divisor,             cmdColors.rangeSonar, p);
+				DrawSensorRange(unitdef->seismicRadius  * losHandler->seismic.divisor,           cmdColors.rangeSeismic, p);
+				DrawSensorRange(unitdef->jammerRadius   * losHandler->commonJammer.divisor,      cmdColors.rangeJammer, p);
+				DrawSensorRange(unitdef->sonarJamRadius * losHandler->commonSonarJammer.divisor, cmdColors.rangeSonarJammer, p);
 			}
 			// draw interceptor range
 			if (unitdef->maxCoverage > 0.0f) {
@@ -3636,11 +3629,11 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 					// draw sensor and jammer ranges
 					if (unitdef->onoffable || unitdef->activateWhenBuilt) {
 						const float3& p = buildpos;
-						DrawSensorRange(unitdef->radarRadius,    cmdColors.rangeRadar, p);
-						DrawSensorRange(unitdef->sonarRadius,    cmdColors.rangeSonar, p);
-						DrawSensorRange(unitdef->seismicRadius,  cmdColors.rangeSeismic, p);
-						DrawSensorRange(unitdef->jammerRadius,   cmdColors.rangeJammer, p);
-						DrawSensorRange(unitdef->sonarJamRadius, cmdColors.rangeSonarJammer, p);
+						DrawSensorRange(unitdef->radarRadius    * losHandler->radar.divisor,             cmdColors.rangeRadar, p);
+						DrawSensorRange(unitdef->sonarRadius    * losHandler->sonar.divisor,             cmdColors.rangeSonar, p);
+						DrawSensorRange(unitdef->seismicRadius  * losHandler->seismic.divisor,           cmdColors.rangeSeismic, p);
+						DrawSensorRange(unitdef->jammerRadius   * losHandler->commonJammer.divisor,      cmdColors.rangeJammer, p);
+						DrawSensorRange(unitdef->sonarJamRadius * losHandler->commonSonarJammer.divisor, cmdColors.rangeSonarJammer, p);
 					}
 
 					std::vector<Command> cv;

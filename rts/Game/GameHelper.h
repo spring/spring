@@ -8,7 +8,6 @@
 #include "Sim/Units/CommandAI/Command.h"
 #include "System/float3.h"
 #include "System/type2.h"
-#include "System/MemPool.h"
 
 #include <list>
 #include <map>
@@ -119,7 +118,7 @@ public:
 	 */
 	static float3 ClosestBuildSite(int team, const UnitDef* unitDef, float3 pos, float searchRadius, int minDist, int facing = 0);
 
-	static void GenerateWeaponTargets(const CWeapon* weapon, const CUnit* lastTargetUnit, std::multimap<float, CUnit*>& targets);
+	static void GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoidUnit, std::multimap<float, CUnit*>& targets);
 
 	void Update();
 
@@ -155,14 +154,6 @@ private:
 	CStdExplosionGenerator* stdExplosionGenerator;
 
 	struct WaitingDamage {
-#if !defined(SYNCIFY)
-		inline void* operator new(size_t size) {
-			return mempool.Alloc(size);
-		};
-		inline void operator delete(void* p, size_t size) {
-			mempool.Free(p, size);
-		};
-#endif
 		WaitingDamage(int attacker, int target, const DamageArray& damage, const float3& impulse, const int _weaponID, const int _projectileID)
 		: target(target)
 		, attacker(attacker)

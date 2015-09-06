@@ -195,6 +195,9 @@ bool CCollisionHandler::Collision(const CollisionVolume* v, const CMatrix44f& m,
 
 bool CCollisionHandler::MouseHit(const CUnit* u, const float3& p0, const float3& p1, const CollisionVolume* v, CollisionQuery* cq)
 {
+	if (cq != NULL)
+		cq->Reset();
+	
 	if (!u->IsInVoid()) {
 		if (v->DefaultToPieceTree()) {
 			return (CCollisionHandler::IntersectPieceTree(u, p0, p1, cq));

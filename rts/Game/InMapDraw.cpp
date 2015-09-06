@@ -103,16 +103,16 @@ void CInMapDraw::MousePress(int x, int y, int button)
 				PromptLabel(pos);
 			}
 			lastLeftClickTime = gu->gameTime;
-			break;
-		}
-		case SDL_BUTTON_RIGHT: {
-			SendErase(pos);
-			break;
-		}
+		} break;
 		case SDL_BUTTON_MIDDLE:{
 			SendPoint(pos, "", false);
-			break;
-		}
+
+		} break;
+		case SDL_BUTTON_RIGHT: {
+			SendErase(pos);
+		} break;
+		default: {
+		} break;
 	}
 
 	lastPos = pos;

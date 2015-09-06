@@ -166,7 +166,7 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 							const int sqx = (tx << 1);
 							const int sqy = (ty << 1);
 							const int texIdx = ((ty * (mapDims.pwr2mapx >> 1)) + tx) * 4 - offset;
-							const bool losSqr = losHandler->InLos(sqx, sqy, gu->myAllyTeam);
+							const bool losSqr = losHandler->InLos(SquareToFloat3(sqx, sqy), gu->myAllyTeam);
 
 							float scale = 1.0f;
 

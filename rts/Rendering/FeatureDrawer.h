@@ -3,7 +3,6 @@
 #ifndef FEATUREDRAWER_H_
 #define FEATUREDRAWER_H_
 
-#include <set>
 #include <vector>
 #include "System/creg/creg_cond.h"
 #include "System/EventClient.h"
@@ -16,10 +15,8 @@ class IWorldObjectModelRenderer;
 class CFeatureDrawer: public CEventClient
 {
 	CR_DECLARE_STRUCT(CFeatureDrawer)
-
-	typedef std::map<CFeature*, float> FeatureSet;
-	typedef std::map<int, FeatureSet> FeatureRenderBin;
-	typedef std::map<int, FeatureSet>::iterator FeatureRenderBinIt;
+	typedef std::vector<CFeature*>   FeatureSet;
+	typedef std::array<IWorldObjectModelRenderer*, MODELTYPE_OTHER> quadRenderers;
 
 public:
 	CFeatureDrawer();
@@ -32,17 +29,16 @@ public:
 	void DrawShadowPass();
 
 	void DrawFadeFeatures(bool noAdvShading = false);
-	void SwapFeatures();
 
 	bool WantsEvent(const std::string& eventName) {
-		return (eventName == "RenderFeatureCreated" || eventName == "RenderFeatureDestroyed" || eventName == "RenderFeatureMoved");
+		return (eventName == "RenderFeatureCreated" || eventName == "RenderFeatureDestroyed" || eventName == "FeatureMoved");
 	}
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
 
 	virtual void RenderFeatureCreated(const CFeature* feature);
 	virtual void RenderFeatureDestroyed(const CFeature* feature);
-	virtual void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
+	virtual void FeatureMoved(const CFeature* feature, const float3& oldpos);
 
 private:
 	static void UpdateDrawPos(CFeature* f);
@@ -51,19 +47,13 @@ private:
 	void DrawFarFeatures();
 	bool DrawFeatureNow(const CFeature*, float alpha = 0.99f);
 	void DrawFadeFeaturesHelper(int);
-	void DrawFadeFeaturesSet(FeatureSet&, int);
+	void DrawFadeFeaturesSet(const FeatureSet&, int);
 	void GetVisibleFeatures(int, bool drawFar);
 
 	void PostLoad();
 
 private:
-	std::set<CFeature*> unsortedFeatures;
-
-	struct DrawQuad {
-		std::set<CFeature*> features;
-	};
-
-	std::vector<DrawQuad> drawQuads;
+	std::vector<CFeature*> unsortedFeatures;
 
 	int drawQuadsX;
 	int drawQuadsY;
@@ -72,8 +62,7 @@ private:
 	float featureDrawDistance;
 	float featureFadeDistance;
 
-	std::vector<IWorldObjectModelRenderer*> opaqueModelRenderers;
-	std::vector<IWorldObjectModelRenderer*> cloakedModelRenderers;
+	std::vector<std::pair<quadRenderers, bool>> modelRenderers;
 
 	friend class CFeatureQuadDrawer;
 };

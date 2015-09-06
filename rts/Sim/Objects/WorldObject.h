@@ -28,9 +28,9 @@ public:
 		, alwaysVisible(false)
 		, model(NULL)
 	{}
-	CWorldObject(const float3& pos, const float3& spd) {
-		*this = CWorldObject();
-
+	CWorldObject(const float3& pos, const float3& spd)
+		: CWorldObject()
+	{
 		SetPosition(pos);
 		SetVelocity(spd);
 	}

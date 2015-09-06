@@ -23,9 +23,8 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/Exceptions.h"
+#include "System/Util.h"
 #include "System/Log/ILog.h"
-
-#define DEG2RAD(a) ((a) * (3.141592653f / 180.0f))
 
 CWeaponLoader* CWeaponLoader::GetInstance()
 {
@@ -44,11 +43,9 @@ void CWeaponLoader::LoadWeapons(CUnit* unit)
 
 	weapons.reserve(defWeapons.size());
 
-	for (unsigned int i = 0; i < defWeapons.size(); i++) {
-		const UnitDefWeapon* defWeapon = &defWeapons[i];
-		CWeapon* weapon = LoadWeapon(unit, defWeapon);
-
-		weapons.push_back(InitWeapon(unit, weapon, defWeapon));
+	for (const UnitDefWeapon& defWeapon: defWeapons) {
+		CWeapon* weapon = LoadWeapon(unit, &defWeapon);
+		weapons.push_back(InitWeapon(unit, weapon, &defWeapon));
 		unit->maxRange = std::max(weapon->range, unit->maxRange);
 	}
 }
@@ -62,7 +59,9 @@ CWeapon* CWeaponLoader::LoadWeapon(CUnit* owner, const UnitDefWeapon* defWeapon)
 	const WeaponDef* weaponDef = defWeapon->def;
 	const std::string& weaponType = weaponDef->type;
 
-	if (weaponType == "Cannon") {
+	if (StringToLower(weaponDef->name) == "noweapon") {
+		weapon = new CNoWeapon(owner, weaponDef);
+	} else if (weaponType == "Cannon") {
 		weapon = new CCannon(owner, weaponDef);
 	} else if (weaponType == "Rifle") {
 		weapon = new CRifle(owner, weaponDef);
@@ -99,7 +98,7 @@ CWeapon* CWeaponLoader::LoadWeapon(CUnit* owner, const UnitDefWeapon* defWeapon)
 		weapon = new CStarburstLauncher(owner, weaponDef);
 	} else {
 		weapon = new CNoWeapon(owner, weaponDef);
-		LOG_L(L_ERROR, "weapon-type %s unknown or NOWEAPON", weaponType.c_str());
+		LOG_L(L_ERROR, "weapon-type %s unknown, using noweapon", weaponType.c_str());
 	}
 
 	return weapon;
@@ -110,29 +109,20 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 	const WeaponDef* weaponDef = defWeapon->def;
 
 	weapon->reloadTime = std::max(1, int(weaponDef->reload * GAME_SPEED));
-	weapon->heightMod = weaponDef->heightmod;
 	weapon->projectileSpeed = weaponDef->projectilespeed;
 
-	weapon->damageAreaOfEffect = weaponDef->damageAreaOfEffect;
-	weapon->craterAreaOfEffect = weaponDef->craterAreaOfEffect;
 	weapon->accuracyError = weaponDef->accuracy;
 	weapon->sprayAngle = weaponDef->sprayAngle;
-
-	weapon->stockpileTime = int(weaponDef->stockpileTime * GAME_SPEED);
 
 	weapon->salvoSize = weaponDef->salvosize;
 	weapon->salvoDelay = int(weaponDef->salvodelay * GAME_SPEED);
 	weapon->projectilesPerShot = weaponDef->projectilespershot;
 
-	weapon->metalFireCost = weaponDef->metalcost;
-	weapon->energyFireCost = weaponDef->energycost;
-
 	weapon->fireSoundId = weaponDef->fireSound.getID(0);
 	weapon->fireSoundVolume = weaponDef->fireSound.getVolume(0);
 
 	weapon->onlyForward = weaponDef->onlyForward;
-	weapon->maxForwardAngleDif = math::cos(DEG2RAD(weaponDef->maxAngle));
-	weapon->maxAngleAtCanFireCheck = math::cos(DEG2RAD(weaponDef->maxFireAngle));
+	weapon->maxForwardAngleDif = math::cos(weaponDef->maxAngle);
 	weapon->maxMainDirAngleDif = defWeapon->maxMainDirAngleDif;
 	weapon->mainDir = defWeapon->mainDir;
 
@@ -144,10 +134,6 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 		weapon->slavedTo = owner->weapons[defWeapon->slavedTo - 1];
 	}
 
-	weapon->fuelUsage = defWeapon->fuelUsage;
-	weapon->targetBorder = weaponDef->targetBorder;
-	weapon->cylinderTargeting = weaponDef->cylinderTargeting;
-	weapon->minIntensity = weaponDef->minIntensity;
 	weapon->heightBoostFactor = weaponDef->heightBoostFactor;
 	weapon->collisionFlags = weaponDef->collisionFlags;
 

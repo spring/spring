@@ -50,9 +50,7 @@ void CClassicGroundMoveType::LeaveTransport() {}
 #include "MoveMath/MoveMath.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
-#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Units/Scripts/CobInstance.h"
@@ -1508,9 +1506,10 @@ void CClassicGroundMoveType::KeepPointingTo(float3 pos, float distance, bool agg
 			short heading =
 				GetHeadingFromVector(dir2.x, dir2.z) -
 				GetHeadingFromVector(dir1.x, dir1.z);
-			if (owner->heading != heading
-					&& !(owner->weapons.front()->TryTarget(
-					mainHeadingPos, true, 0))) {
+			if (
+				(owner->heading != heading)
+				&& !(owner->weapons.front()->TryTarget(SWeaponTarget(mainHeadingPos, true)))
+			) {
 				progressState = Active;
 			}
 		}
@@ -1548,7 +1547,7 @@ void CClassicGroundMoveType::SetMainHeading() {
 				ChangeHeading(heading);
 			} else if (progressState != Active
 			  && owner->heading != heading
-			  && !owner->weapons.front()->TryTarget(mainHeadingPos, true, 0)) {
+			  && !owner->weapons.front()->TryTarget(SWeaponTarget(mainHeadingPos, true))) {
 				progressState = Active;
 				owner->script->StartMoving(false);
 				ChangeHeading(heading);

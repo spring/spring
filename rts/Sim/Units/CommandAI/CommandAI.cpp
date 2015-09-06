@@ -719,7 +719,7 @@ bool CCommandAI::ExecuteStateCommand(const Command& c)
 void CCommandAI::ClearTargetLock(const Command &c) {
 	if (((c.GetID() == CMD_ATTACK) || (c.GetID() == CMD_MANUALFIRE)) && (c.options & META_KEY) == 0) {
 		// no meta-bit attack lock, clear the order
-		owner->AttackUnit(NULL, false, false);
+		owner->DropCurrentAttackTarget();
 	}
 }
 
@@ -876,7 +876,7 @@ void CCommandAI::GiveWaitCommand(const Command& c)
 	}
 	else {
 		// shutdown the current order
-		owner->AttackUnit(NULL, false, true);
+		owner->DropCurrentAttackTarget();
 		StopMove();
 		inCommand = false;
 		targetDied = false;
@@ -1304,11 +1304,10 @@ void CCommandAI::ExecuteAttack(Command& c)
 
 void CCommandAI::ExecuteStop(Command &c)
 {
-	owner->AttackUnit(NULL, false, true);
-	std::vector<CWeapon*>::iterator wi;
+	owner->DropCurrentAttackTarget();
 
-	for (wi = owner->weapons.begin(); wi != owner->weapons.end(); ++wi) {
-		(*wi)->HoldFire();
+	for (CWeapon* w: owner->weapons) {
+		w->DropCurrentTarget();
 	}
 
 	FinishCommand();
@@ -1501,20 +1500,29 @@ void CCommandAI::UpdateStockpileIcon()
 	}
 }
 
-void CCommandAI::WeaponFired(CWeapon* weapon, bool mainWeapon, bool lastSalvo)
+void CCommandAI::WeaponFired(CWeapon* weapon, const bool searchForNewTarget)
 {
-	// copy: SelectNewAreaAttackTargetOrPos can call
-	// FinishCommand which would invalidate a pointer
-	const Command c = commandQue.empty()? Command(CMD_STOP): commandQue.front();
+	if (!inCommand)
+		return;
+
+	const Command& c = commandQue.front();
 
 	const bool haveGroundAttackCmd = (c.GetID() == CMD_ATTACK && c.GetParamsCount() >= 3);
 	const bool haveAreaAttackCmd = (c.GetID() == CMD_AREA_ATTACK);
 
-	bool nextOrder = false;
+	bool orderFinished = false;
+	
+	if (searchForNewTarget) {
+		// manual fire or attack commands with meta will only fire a single salvo
+		// noAutoTarget weapons finish an attack commands after a 
+		// salvo if they have more orders queued
+		if (weapon->weaponDef->manualfire && !(c.options & META_KEY))
+			orderFinished = true;
 
-	if (mainWeapon && lastSalvo && (haveAreaAttackCmd || (haveGroundAttackCmd && HasMoreMoveCommands()))) {
-		// if we have an area-attack command (or a regular attack command
-		// followed by anything that requires movement) and this was the
+		if (weapon->noAutoTarget && !(c.options & META_KEY) && haveGroundAttackCmd && HasMoreMoveCommands())
+			orderFinished = true;
+		
+		// if we have an area-attack command and this was the
 		// last salvo of our main weapon, assume we completed an attack
 		// (run) on one position and move to the next
 		//
@@ -1523,37 +1531,29 @@ void CCommandAI::WeaponFired(CWeapon* weapon, bool mainWeapon, bool lastSalvo)
 		//   SlowUpdate --> ExecuteAttack (inCommand=true) -->
 		//   queue has advanced
 		//
-		nextOrder = !SelectNewAreaAttackTargetOrPos(c);
+		// @SelectNewAreaAttackTargetOrPos
+		// return argument says if a new area attack target was chosen, else finish current command
+		if (haveAreaAttackCmd) {
+			orderFinished = !SelectNewAreaAttackTargetOrPos(c);
+		}
 	}
 
-	if (!inCommand)
-		return;
-	if (!weapon->weaponDef->manualfire || (c.options & META_KEY))
-		return;
+	// when this fails, we need to take a copy at top instead of a reference
+	assert(&c == &commandQue.front());
 
-	if (c.GetID() == CMD_ATTACK || c.GetID() == CMD_MANUALFIRE) {
-		if (c.GetParamsCount() < 3) {
-			// clear previous target
-			owner->AttackUnit(NULL, (c.options & INTERNAL_ORDER) == 0, true);
-		} else {
-			// not needed in this case
-			// owner->AttackGround(ZeroVector, (c.options & INTERNAL_ORDER) == 0, true);
-		}
-
-		eoh->WeaponFired(*owner, *(weapon->weaponDef));
-
-		if (!nextOrder) {
-			FinishCommand();
-		}
+	eoh->WeaponFired(*owner, *(weapon->weaponDef));
+	if (orderFinished) {
+		FinishCommand();
 	}
 }
 
 void CCommandAI::PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cmdPos2)
 {
-	const float3 pos = ClosestPointOnLine(cmdPos1, cmdPos2, owner->pos);
-	Command& c(commandQue.front());
+	assert(!commandQue.empty());
+	Command& c = commandQue.front();
 	assert(c.GetID() == CMD_FIGHT && c.params.size() >= 3);
 
+	const float3 pos = ClosestPointOnLine(cmdPos1, cmdPos2, owner->pos);
 	if (c.params.size() >= 6) {
 		c.SetPos(0, pos);
 	} else {

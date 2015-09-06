@@ -53,7 +53,7 @@ std::string MakeFileSystemCompatible(const std::string& str) {
 }
 
 
-int AAIConfig::GetInt(FILE* file)
+int AAIConfig::GetInt(AAI* ai, FILE* file)
 {
 	int val = 0;
 	int res = fscanf(file, "%i", &val);
@@ -63,7 +63,7 @@ int AAIConfig::GetInt(FILE* file)
 	return val;
 }
 
-std::string AAIConfig::GetString(FILE* file)
+std::string AAIConfig::GetString(AAI* ai, FILE* file)
 {
 	char buf[128];
 	buf[0] = 0; //safety!
@@ -74,7 +74,7 @@ std::string AAIConfig::GetString(FILE* file)
 	return std::string(buf);
 }
 
-float AAIConfig::GetFloat(FILE* file)
+float AAIConfig::GetFloat(AAI* ai, FILE* file)
 {
 	float val = 0.0f;
 	int res = fscanf(file, "%f", &val);
@@ -171,7 +171,6 @@ AAIConfig::AAIConfig(void)
 	LAND_WATER_MAP_RATIO = 0.3f;
 
 	GAME_PERIODS = 4;
-	ai = NULL;
 	initialized = false;
 }
 
@@ -182,7 +181,7 @@ AAIConfig::~AAIConfig(void)
 }
 
 
-std::string AAIConfig::GetFileName(const std::string& filename, const std::string& prefix, const std::string& suffix, bool write) const
+std::string AAIConfig::GetFileName(AAI* ai, const std::string& filename, const std::string& prefix, const std::string& suffix, bool write) const
 {
 	std::string name = prefix + MakeFileSystemCompatible(filename) + suffix;
 
@@ -200,14 +199,13 @@ std::string AAIConfig::GetFileName(const std::string& filename, const std::strin
 
 void AAIConfig::LoadConfig(AAI *ai)
 {
-	this->ai = ai;
 	MAX_UNITS = ai->Getcb()->GetMaxUnits();
 
 
 	std::list<string> paths;
-	paths.push_back(GetFileName(ai->Getcb()->GetModHumanName(), MOD_CFG_PATH, CONFIG_SUFFIX));
-	paths.push_back(GetFileName(ai->Getcb()->GetModName(), MOD_CFG_PATH, CONFIG_SUFFIX));
-	paths.push_back(GetFileName(ai->Getcb()->GetModShortName(), MOD_CFG_PATH, CONFIG_SUFFIX));
+	paths.push_back(GetFileName(ai, ai->Getcb()->GetModHumanName(), MOD_CFG_PATH, CONFIG_SUFFIX));
+	paths.push_back(GetFileName(ai, ai->Getcb()->GetModName(), MOD_CFG_PATH, CONFIG_SUFFIX));
+	paths.push_back(GetFileName(ai, ai->Getcb()->GetModShortName(), MOD_CFG_PATH, CONFIG_SUFFIX));
 	FILE* file = NULL;
 	std::string configfile;
 	for(const std::string& path: paths) {
@@ -237,13 +235,13 @@ void AAIConfig::LoadConfig(AAI *ai)
 	while(EOF != fscanf(file, "%s", keyword))
 	{
 		if(!strcmp(keyword,"SIDES")) {
-			SIDES = GetInt(file);
+			SIDES = GetInt(ai, file);
 		}
 		else if(!strcmp(keyword, "START_UNITS")) {
 			START_UNITS.resize(SIDES);
 			for(int i = 0; i < SIDES; i++) {
-				START_UNITS[i] = GetString(file);
-				if(!GetUnitDef(START_UNITS[i].c_str())) {
+				START_UNITS[i] = GetString(ai, file);
+				if(!GetUnitDef(ai, START_UNITS[i].c_str())) {
 					error = true;
 					break;
 				}
@@ -251,15 +249,15 @@ void AAIConfig::LoadConfig(AAI *ai)
 		} else if(!strcmp(keyword, "SIDE_NAMES")) {
 			SIDE_NAMES.resize(SIDES);
 			for(int i = 0; i < SIDES; i++) {
-				SIDE_NAMES[i] = GetString(file);
+				SIDE_NAMES[i] = GetString(ai, file);
 			}
 		} else if(!strcmp(keyword, "SCOUTS")) {
 			// get number of scouts
-			const int count = GetInt(file);
+			const int count = GetInt(ai, file);
 			for(int i = 0; i < count; ++i) {
-				const std::string unitdef = GetString(file);
-				if(GetUnitDef(unitdef)) {
-					SCOUTS.push_back(GetUnitDef(unitdef)->id);
+				const std::string unitdef = GetString(ai, file);
+				if(GetUnitDef(ai, unitdef)) {
+					SCOUTS.push_back(GetUnitDef(ai, unitdef)->id);
 				} else {
 					error = true;
 					break;
@@ -267,12 +265,12 @@ void AAIConfig::LoadConfig(AAI *ai)
 			}
 		} else if(!strcmp(keyword, "ATTACKERS")) {
 			// get number of attackers
-			const int count = GetInt(file);
+			const int count = GetInt(ai, file);
 
 			for(int i = 0; i < count; ++i) {
-				const std::string unitdef = GetString(file);
-				if(GetUnitDef(unitdef))
-					ATTACKERS.push_back(GetUnitDef(unitdef)->id);
+				const std::string unitdef = GetString(ai, file);
+				if(GetUnitDef(ai, unitdef))
+					ATTACKERS.push_back(GetUnitDef(ai, unitdef)->id);
 				else {
 					error = true;
 					break;
@@ -280,12 +278,12 @@ void AAIConfig::LoadConfig(AAI *ai)
 			}
 		} else if(!strcmp(keyword, "TRANSPORTERS")) {
 			// get number of transporters
-			const int count = GetInt(file);
+			const int count = GetInt(ai, file);
 
 			for(int i = 0; i < count; ++i) {
-				const std::string unitdef = GetString(file);
-				if(GetUnitDef(unitdef))
-					TRANSPORTERS.push_back(GetUnitDef(unitdef)->id);
+				const std::string unitdef = GetString(ai, file);
+				if(GetUnitDef(ai, unitdef))
+					TRANSPORTERS.push_back(GetUnitDef(ai, unitdef)->id);
 				else {
 					error = true;
 					break;
@@ -293,11 +291,11 @@ void AAIConfig::LoadConfig(AAI *ai)
 			}
 		} else if(!strcmp(keyword, "METAL_MAKERS")) {
 			// get number of transporters
-			const int count = GetInt(file);
+			const int count = GetInt(ai, file);
 			for(int i = 0; i < count; ++i) {
-				const std::string unitdef = GetString(file);
-				if(GetUnitDef(unitdef))
-					METAL_MAKERS.push_back(GetUnitDef(unitdef)->id);
+				const std::string unitdef = GetString(ai, file);
+				if(GetUnitDef(ai, unitdef))
+					METAL_MAKERS.push_back(GetUnitDef(ai, unitdef)->id);
 				else {
 					error = true;
 					break;
@@ -305,11 +303,11 @@ void AAIConfig::LoadConfig(AAI *ai)
 			}
 		} else if(!strcmp(keyword, "DONT_BUILD")) {
 			// get number of units that should not be built
-			const int count = GetInt(file);
+			const int count = GetInt(ai, file);
 			for(int i = 0; i < count; ++i) {
-				const std::string unitdef = GetString(file);
-				if(GetUnitDef(unitdef))
-					DONT_BUILD.push_back(GetUnitDef(unitdef)->id);
+				const std::string unitdef = GetString(ai, file);
+				if(GetUnitDef(ai, unitdef))
+					DONT_BUILD.push_back(GetUnitDef(ai, unitdef)->id);
 				else {
 					error = true;
 					break;
@@ -317,14 +315,14 @@ void AAIConfig::LoadConfig(AAI *ai)
 			}
 		} else if(!strcmp(keyword, "COST_MULTIPLIER")) {
 			// get the unit def
-			const std::string unitdef = GetString(file);
-			const UnitDef* def = GetUnitDef(unitdef);
+			const std::string unitdef = GetString(ai, file);
+			const UnitDef* def = GetUnitDef(ai, unitdef);
 
 			if(def)
 			{
 				CostMultiplier temp;
 				temp.id = def->id;
-				temp.multiplier = GetFloat(file);
+				temp.multiplier = GetFloat(ai, file);
 
 				cost_multipliers.push_back(temp);
 			} else {
@@ -332,124 +330,124 @@ void AAIConfig::LoadConfig(AAI *ai)
 				break;
 			}
 		} else if(!strcmp(keyword,"SECTOR_SIZE")) {
-			SECTOR_SIZE = GetFloat(file);
+			SECTOR_SIZE = GetFloat(ai, file);
 			ai->Log("SECTOR_SIZE set to %f", SECTOR_SIZE);
 		} else if(!strcmp(keyword,"MIN_ENERGY")) {
-			MIN_ENERGY = GetInt(file);
+			MIN_ENERGY = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MAX_UNITS")) {
-			MAX_UNITS = GetInt(file);
+			MAX_UNITS = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MAX_SCOUTS")) {
-			MAX_SCOUTS = GetInt(file);
+			MAX_SCOUTS = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MAX_SECTOR_IMPORTANCE")) {
-			MAX_SECTOR_IMPORTANCE = GetInt(file);
+			MAX_SECTOR_IMPORTANCE = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MAX_XROW")) {
-			MAX_XROW = GetInt(file);
+			MAX_XROW = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MAX_YROW")) {
-			MAX_YROW = GetInt(file);
+			MAX_YROW = GetInt(ai, file);
 		} else if(!strcmp(keyword, "X_SPACE")) {
-			X_SPACE = GetInt(file);
+			X_SPACE = GetInt(ai, file);
 		} else if(!strcmp(keyword, "Y_SPACE")) {
-			Y_SPACE = GetInt(file);
+			Y_SPACE = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MAX_GROUP_SIZE")) {
-			MAX_GROUP_SIZE = GetInt(file);
+			MAX_GROUP_SIZE = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MAX_AIR_GROUP_SIZE")) {
-			MAX_AIR_GROUP_SIZE = GetInt(file);
+			MAX_AIR_GROUP_SIZE = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MAX_NAVAL_GROUP_SIZE")) {
-			MAX_NAVAL_GROUP_SIZE = GetInt(file);
+			MAX_NAVAL_GROUP_SIZE = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MAX_SUBMARINE_GROUP_SIZE")) {
-			MAX_SUBMARINE_GROUP_SIZE = GetInt(file);
+			MAX_SUBMARINE_GROUP_SIZE = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MAX_ANTI_AIR_GROUP_SIZE")) {
-			MAX_ANTI_AIR_GROUP_SIZE = GetInt(file);
+			MAX_ANTI_AIR_GROUP_SIZE = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MAX_ARTY_GROUP_SIZE")) {
-			MAX_ARTY_GROUP_SIZE = GetInt(file);
+			MAX_ARTY_GROUP_SIZE = GetInt(ai, file);
 		} else if(!strcmp(keyword, "UNIT_SPEED_SUBGROUPS")) {
-			UNIT_SPEED_SUBGROUPS = GetInt(file);
+			UNIT_SPEED_SUBGROUPS = GetInt(ai, file);
 		} else if(!strcmp(keyword, "FALLBACK_DIST_RATIO")) {
-			FALLBACK_DIST_RATIO = GetInt(file);
+			FALLBACK_DIST_RATIO = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MIN_FALLBACK_RANGE")) {
-			MIN_FALLBACK_RANGE = GetInt(file);
+			MIN_FALLBACK_RANGE = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MAX_FALLBACK_RANGE")) {
-			MAX_FALLBACK_RANGE = GetInt(file);
+			MAX_FALLBACK_RANGE = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MIN_FALLBACK_TURNRATE")) {
-			MIN_FALLBACK_TURNRATE = GetFloat(file);
+			MIN_FALLBACK_TURNRATE = GetFloat(ai, file);
 		} else if(!strcmp(keyword, "MIN_EFFICIENCY")) {
-			MIN_EFFICIENCY = GetFloat(file);
+			MIN_EFFICIENCY = GetFloat(ai, file);
 		} else if(!strcmp(keyword, "MIN_AIR_SUPPORT_EFFICIENCY")) {
-			MIN_AIR_SUPPORT_EFFICIENCY = GetFloat(file);
+			MIN_AIR_SUPPORT_EFFICIENCY = GetFloat(ai, file);
 		} else if(!strcmp(keyword, "MAX_BUILDERS")) {
-			MAX_BUILDERS = GetInt(file);
+			MAX_BUILDERS = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MAX_BUILDQUE_SIZE")) {
-			MAX_BUILDQUE_SIZE = GetInt(file);
+			MAX_BUILDQUE_SIZE = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MAX_ASSISTANTS")) {
-			MAX_ASSISTANTS = GetInt(file);
+			MAX_ASSISTANTS = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MIN_ASSISTANCE_BUILDSPEED")) {
-			MIN_ASSISTANCE_BUILDSPEED = GetInt(file);
+			MIN_ASSISTANCE_BUILDSPEED = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MAX_BASE_SIZE")) {
-			MAX_BASE_SIZE = GetInt(file);
+			MAX_BASE_SIZE = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MAX_AIR_TARGETS")) {
-			MAX_AIR_TARGETS = GetInt(file);
+			MAX_AIR_TARGETS = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MIN_AIR_ATTACK_COST")) {
-			MIN_AIR_ATTACK_COST = GetInt(file);
+			MIN_AIR_ATTACK_COST = GetInt(ai, file);
 		} else if(!strcmp(keyword, "SCOUT_SPEED")) {
-			SCOUT_SPEED = GetFloat(file);
+			SCOUT_SPEED = GetFloat(ai, file);
 		} else if(!strcmp(keyword, "GROUND_ARTY_RANGE")) {
-			GROUND_ARTY_RANGE = GetInt(file);
+			GROUND_ARTY_RANGE = GetInt(ai, file);
 		} else if(!strcmp(keyword, "SEA_ARTY_RANGE")) {
-			SEA_ARTY_RANGE = GetFloat(file);
+			SEA_ARTY_RANGE = GetFloat(ai, file);
 		} else if(!strcmp(keyword, "HOVER_ARTY_RANGE")) {
-			HOVER_ARTY_RANGE = GetFloat(file);
+			HOVER_ARTY_RANGE = GetFloat(ai, file);
 		} else if(!strcmp(keyword, "STATIONARY_ARTY_RANGE")) {
-			STATIONARY_ARTY_RANGE = GetFloat(file);
+			STATIONARY_ARTY_RANGE = GetFloat(ai, file);
 		} else if(!strcmp(keyword, "MAX_BUILDERS_PER_TYPE")) {
-			MAX_BUILDERS_PER_TYPE = GetInt(file);
+			MAX_BUILDERS_PER_TYPE = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MAX_FACTORIES_PER_TYPE")) {
-			MAX_FACTORIES_PER_TYPE = GetInt(file);
+			MAX_FACTORIES_PER_TYPE = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MIN_ASSISTANCE_BUILDTIME")) {
-			MIN_ASSISTANCE_BUILDTIME = GetInt(file);
+			MIN_ASSISTANCE_BUILDTIME = GetInt(ai, file);
 		} else if(!strcmp(keyword, "AIR_DEFENCE")) {
-			AIR_DEFENCE = GetInt(file);
+			AIR_DEFENCE = GetInt(ai, file);
 		} else if(!strcmp(keyword, "AIRCRAFT_RATE")) {
-			AIRCRAFT_RATE = GetInt(file);
+			AIRCRAFT_RATE = GetInt(ai, file);
 		} else if(!strcmp(keyword, "HIGH_RANGE_UNITS_RATE")) {
-			HIGH_RANGE_UNITS_RATE = GetInt(file);
+			HIGH_RANGE_UNITS_RATE = GetInt(ai, file);
 		} else if(!strcmp(keyword, "FAST_UNITS_RATE")) {
-			FAST_UNITS_RATE = GetInt(file);
+			FAST_UNITS_RATE = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MAX_METAL_COST")) {
-			MAX_METAL_COST = GetInt(file);
+			MAX_METAL_COST = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MAX_DEFENCES")) {
-			MAX_DEFENCES = GetInt(file);
+			MAX_DEFENCES = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MIN_SECTOR_THREAT")) {
-			MIN_SECTOR_THREAT = GetFloat(file);
+			MIN_SECTOR_THREAT = GetFloat(ai, file);
 		} else if(!strcmp(keyword, "MAX_STAT_ARTY")) {
-			MAX_STAT_ARTY = GetInt(file);
+			MAX_STAT_ARTY = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MAX_AIR_BASE")) {
-			MAX_AIR_BASE = GetInt(file);
+			MAX_AIR_BASE = GetInt(ai, file);
 		} else if(!strcmp(keyword, "AIR_ONLY_MOD")) {
-			AIR_ONLY_MOD = (bool)GetInt(file);
+			AIR_ONLY_MOD = (bool)GetInt(ai, file);
 		} else if(!strcmp(keyword, "METAL_ENERGY_RATIO")) {
-			METAL_ENERGY_RATIO = GetFloat(file);
+			METAL_ENERGY_RATIO = GetFloat(ai, file);
 		} else if(!strcmp(keyword, "NON_AMPHIB_MAX_WATERDEPTH")) {
-			NON_AMPHIB_MAX_WATERDEPTH = GetFloat(file);
+			NON_AMPHIB_MAX_WATERDEPTH = GetFloat(ai, file);
 		} else if(!strcmp(keyword, "MAX_METAL_MAKERS")) {
-			MAX_METAL_MAKERS = GetInt(file);
+			MAX_METAL_MAKERS = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MAX_STORAGE")) {
-			MAX_STORAGE = GetInt(file);
+			MAX_STORAGE = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MIN_METAL_MAKER_ENERGY")) {
-			MIN_METAL_MAKER_ENERGY = GetFloat(file);
+			MIN_METAL_MAKER_ENERGY = GetFloat(ai, file);
 		} else if(!strcmp(keyword, "MAX_MEX_DISTANCE")) {
-			MAX_MEX_DISTANCE = GetInt(file);
+			MAX_MEX_DISTANCE = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MAX_MEX_DEFENCE_DISTANCE")) {
-			MAX_MEX_DEFENCE_DISTANCE = GetInt(file);
+			MAX_MEX_DEFENCE_DISTANCE = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MIN_FACTORIES_FOR_DEFENCES")) {
-			MIN_FACTORIES_FOR_DEFENCES = GetInt(file);
+			MIN_FACTORIES_FOR_DEFENCES = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MIN_FACTORIES_FOR_STORAGE")) {
-			MIN_FACTORIES_FOR_STORAGE = GetInt(file);
+			MIN_FACTORIES_FOR_STORAGE = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MIN_FACTORIES_FOR_RADAR_JAMMER")) {
-			MIN_FACTORIES_FOR_RADAR_JAMMER = GetInt(file);
+			MIN_FACTORIES_FOR_RADAR_JAMMER = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MIN_SUBMARINE_WATERLINE")) {
-			MIN_SUBMARINE_WATERLINE = GetInt(file);
+			MIN_SUBMARINE_WATERLINE = GetInt(ai, file);
 		} else if(!strcmp(keyword, "MAX_ATTACKS")) {
-			MAX_ATTACKS = GetInt(file);
+			MAX_ATTACKS = GetInt(ai, file);
 		} else {
 			error = true;
 			break;
@@ -466,7 +464,7 @@ void AAIConfig::LoadConfig(AAI *ai)
 	ai->Log("Mod config file %s loaded\n", configfile.c_str());
 
 	// load general settings
-	const std::string generalcfg = GetFileName(GENERAL_CFG_FILE, CFG_PATH);
+	const std::string generalcfg = GetFileName(ai, GENERAL_CFG_FILE, CFG_PATH);
 	file = fopen(generalcfg.c_str(), "r");
 	if(file == NULL) {
 		ai->Log("Couldn't load general config file %s\n", generalcfg.c_str());
@@ -476,17 +474,17 @@ void AAIConfig::LoadConfig(AAI *ai)
 	while(EOF != fscanf(file, "%s", keyword))
 	{
 		if(!strcmp(keyword, "LEARN_RATE")) {
-			LEARN_RATE = GetInt(file);
+			LEARN_RATE = GetInt(ai, file);
 		} else if(!strcmp(keyword, "LEARN_SPEED")) {
-			LEARN_SPEED = GetFloat(file);
+			LEARN_SPEED = GetFloat(ai, file);
 		} else if(!strcmp(keyword, "WATER_MAP_RATIO")) {
-			WATER_MAP_RATIO = GetFloat(file);
+			WATER_MAP_RATIO = GetFloat(ai, file);
 		} else if(!strcmp(keyword, "LAND_WATER_MAP_RATIO")) {
-			LAND_WATER_MAP_RATIO = GetFloat(file);
+			LAND_WATER_MAP_RATIO = GetFloat(ai, file);
 		} else if(!strcmp(keyword, "SCOUT_UPDATE_FREQUENCY")) {
-			SCOUT_UPDATE_FREQUENCY = GetInt(file);;
+			SCOUT_UPDATE_FREQUENCY = GetInt(ai, file);;
 		} else if(!strcmp(keyword, "SCOUTING_MEMORY_FACTOR")) {
-			SCOUTING_MEMORY_FACTOR = GetFloat(file);
+			SCOUTING_MEMORY_FACTOR = GetFloat(ai, file);
 		} else {
 			error = true;
 			break;
@@ -503,7 +501,7 @@ void AAIConfig::LoadConfig(AAI *ai)
 	initialized = true;
 }
 
-const UnitDef* AAIConfig::GetUnitDef(const std::string& name)
+const UnitDef* AAIConfig::GetUnitDef(AAI* ai, const std::string& name)
 {
 	const UnitDef* res = ai->Getcb()->GetUnitDef(name.c_str());
 	if (res == NULL) {
@@ -512,7 +510,7 @@ const UnitDef* AAIConfig::GetUnitDef(const std::string& name)
 	return res;
 }
 
-std::string AAIConfig::getUniqueName(bool game, bool gamehash, bool map, bool maphash) const
+std::string AAIConfig::getUniqueName(AAI* ai, bool game, bool gamehash, bool map, bool maphash) const
 {
 	std::string res;
 	if (map) {

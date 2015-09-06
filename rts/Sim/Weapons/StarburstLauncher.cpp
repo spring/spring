@@ -22,27 +22,14 @@ CStarburstLauncher::CStarburstLauncher(CUnit* owner, const WeaponDef* def): CWea
 }
 
 
-void CStarburstLauncher::Update(void)
-{
-	if (targetType != Target_None) {
-		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
-		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
-
-		// the aiming upward is apperently implicid so aim toward target
-		wantedDir = (targetPos - weaponPos).Normalize();
-	}
-
-	CWeapon::Update();
-}
-
-void CStarburstLauncher::FireImpl(bool scriptCall)
+void CStarburstLauncher::FireImpl(const bool scriptCall)
 {
 	const float3 speed = ((weaponDef->fixedLauncher)? weaponDir: UpVector) * weaponDef->startvelocity;
 	const float3 aimError = (gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
 
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos + UpVector * 2.0f;
-	params.end = targetPos;
+	params.end = currentTargetPos;
 	params.speed = speed;
 	params.error = aimError;
 	params.ttl = 200; //???
@@ -52,7 +39,7 @@ void CStarburstLauncher::FireImpl(bool scriptCall)
 	WeaponProjectileFactory::LoadProjectile(params);
 }
 
-bool CStarburstLauncher::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const
+bool CStarburstLauncher::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const
 {
 	const float3& wdir = weaponDef->fixedLauncher? weaponDir: UpVector;
 
@@ -63,7 +50,7 @@ bool CStarburstLauncher::HaveFreeLineOfFire(const float3& pos, bool userTarget, 
 	return true;
 }
 
-float CStarburstLauncher::GetRange2D(float yDiff) const
+float CStarburstLauncher::GetRange2D(const float yDiff) const
 {
-	return range + (yDiff * heightMod);
+	return range + (yDiff * weaponDef->heightmod);
 }

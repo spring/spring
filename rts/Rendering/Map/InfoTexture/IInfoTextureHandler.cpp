@@ -5,6 +5,9 @@
 #include "Modern/InfoTextureHandler.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/FBO.h"
+#include "System/Exceptions.h"
+#include "System/Log/ILog.h"
+
 
 IInfoTextureHandler* infoTextureHandler = nullptr;
 
@@ -16,10 +19,20 @@ void IInfoTextureHandler::Create()
 		&& glGenerateMipmap && FBO::IsSupported()
 		&& GLEW_ARB_texture_query_lod && GLEW_VERSION_3_0
 	) {
-		infoTextureHandler = new CInfoTextureHandler();
+		try {
+			infoTextureHandler = new CInfoTextureHandler();
+		} catch(const opengl_error& glerr) {
+			infoTextureHandler = nullptr;
+		}
 	}
 
 	if (infoTextureHandler == nullptr) {
 		infoTextureHandler = new CLegacyInfoTextureHandler();
+	}
+
+	if (!!dynamic_cast<CInfoTextureHandler*>(infoTextureHandler)) {
+		LOG("InfoTexture: shaders");
+	} else {
+		LOG("InfoTexture: legacy");
 	}
 }

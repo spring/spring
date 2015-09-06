@@ -92,3 +92,8 @@ int CEmgProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, flo
 
 	return 0;
 }
+
+int CEmgProjectile::GetProjectilesCount() const
+{
+	return 1;
+}

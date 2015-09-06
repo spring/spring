@@ -5,7 +5,6 @@ add_library(engineSim STATIC
 		"${CMAKE_CURRENT_SOURCE_DIR}/Features/Feature.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Features/FeatureDef.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Features/FeatureHandler.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/AirBaseHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/AllyTeam.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/CategoryHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/CollisionHandler.cpp"
@@ -23,7 +22,6 @@ add_library(engineSim STATIC
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/ModInfo.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/NanoPieceCache.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/QuadField.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/RadarHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/Resource.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/ResourceHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/ResourceMapAnalyzer.cpp"
@@ -84,7 +82,7 @@ add_library(engineSim STATIC
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/GenericParticleProjectile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/GeoSquareProjectile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/GeoThermSmokeProjectile.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/GfxProjectile.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/NanoProjectile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/HeatCloudProjectile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/MuzzleFlame.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Projectiles/Unsynced/RepulseGfx.cpp"
@@ -117,7 +115,6 @@ add_library(engineSim STATIC
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/CommandAI/CommandAI.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/CommandAI/FactoryCAI.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/CommandAI/MobileCAI.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Units/CommandAI/TransportCAI.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/Scripts/CobEngine.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/Scripts/CobFile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/Scripts/CobInstance.cpp"
@@ -139,7 +136,6 @@ add_library(engineSim STATIC
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/UnitTypes/Building.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/UnitTypes/ExtractorBuilding.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/UnitTypes/Factory.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Units/UnitTypes/TransportUnit.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/BeamLaser.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/BombDropper.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/Cannon.cpp"
@@ -159,19 +155,19 @@ add_library(engineSim STATIC
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/WeaponDef.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/WeaponDefHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/WeaponLoader.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Weapons/WeaponTarget.cpp"
 	)
 
 include_directories(${GLEW_INCLUDE_DIR})
 
-get_property(SPRING_SIM_LIBRARIES TARGET engineSim PROPERTY LOCATION)
 if( CMAKE_COMPILER_IS_GNUCXX)
 	# FIXME: hack to avoid linkers to remove not referenced symbols. required because of
 	# http://springrts.com/mantis/view.php?id=4511
 	if(APPLE)
-		MakeGlobalVar(SPRING_SIM_LIBRARIES "-Wl,-force_load ${SPRING_SIM_LIBRARIES}")
+		MakeGlobalVar(SPRING_SIM_LIBRARIES "-Wl,-force_load" engineSim)
 	else()
-		MakeGlobalVar(SPRING_SIM_LIBRARIES "-Wl,-whole-archive ${SPRING_SIM_LIBRARIES} -Wl,-no-whole-archive")
+		MakeGlobalVar(SPRING_SIM_LIBRARIES "-Wl,-whole-archive" engineSim "-Wl,-no-whole-archive")
 	endif()
 else()
-	MakeGlobalVar(SPRING_SIM_LIBRARIES "${SPRING_SIM_LIBRARIES}")
+	MakeGlobalVar(SPRING_SIM_LIBRARIES engineSim)
 endif()

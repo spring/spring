@@ -3,8 +3,6 @@
 #ifndef LUA_CONTEXT_DATA_H
 #define LUA_CONTEXT_DATA_H
 
-#include <map>
-
 #include "LuaShaders.h"
 #include "LuaTextures.h"
 #include "LuaFBOs.h"
@@ -20,112 +18,114 @@ class CLuaHandle;
 //FIXME move to diff file
 struct GLMatrixStateTracker {
 public:
-	MatrixStateData matrixData; // [>0] = stack depth for mode, [0] = matrix mode
+	SMatrixStateData matrixData; // [>0] = stack depth for mode, [0] = matrix mode
 	bool listMode; // if creating display list
 
 public:
 	GLMatrixStateTracker() : listMode(false) {}
 
-	MatrixStateData PushMatrixState() {
-		MatrixStateData md;
-		matrixData.swap(md);
+	SMatrixStateData PushMatrixState() {
+		SMatrixStateData md;
+		std::swap(matrixData, md);
 		return md;
 	}
 
-	MatrixStateData PushMatrixState(bool lm) {
+	SMatrixStateData PushMatrixState(bool lm) {
 		listMode = lm;
 		return PushMatrixState();
 	}
 
-	void PopMatrixState(MatrixStateData& md) {
-		matrixData.swap(md);
+	void PopMatrixState(SMatrixStateData& md) {
+		std::swap(matrixData, md);
 	}
 
-	void PopMatrixState(MatrixStateData& md, bool lm) {
+	void PopMatrixState(SMatrixStateData& md, bool lm) {
 		listMode = lm;
 		PopMatrixState(md);
 	}
 
 	unsigned int GetMode() const {
-		MatrixStateData::const_iterator i = matrixData.find(0);
-		return (i == matrixData.end()) ? GL_MODELVIEW : i->second;
+		return matrixData.mode;
 	}
 
-	int GetDepth(unsigned int mode) const {
-		MatrixStateData::const_iterator i = matrixData.find(mode);
-		return (i == matrixData.end()) ? 0 : i->second;
-	}
+	int &GetDepth(unsigned int mode) {
+        switch (mode) {
+            case GL_MODELVIEW: return matrixData.modelView;
+            case GL_PROJECTION: return matrixData.projection;
+            case GL_TEXTURE: return matrixData.texture;
+            default:
+                LOG_L(L_ERROR, "unknown matrix mode = %u", mode);
+                abort();
+                break;
+        }
+    }
 
 	bool PushMatrix() {
 		unsigned int mode = GetMode();
-		int depth = GetDepth(mode);
+		int &depth = GetDepth(mode);
 		if (!listMode && depth >= 255)
 			return false;
-		matrixData[mode] = depth + 1;
+		depth += 1;
 		return true;
 	}
 
 	bool PopMatrix() {
 		unsigned int mode = GetMode();
-		int depth = GetDepth(mode);
+		int &depth = GetDepth(mode);
 		if (listMode) {
-			matrixData[mode] = depth - 1;
+			depth -= 1;
 			return true;
 		}
 		if (depth == 0)
 			return false;
-		if (depth == 1)
-			matrixData.erase(mode);
-		else
-			matrixData[mode] = depth - 1;
+		depth -= 1;
 		return true;
 	}
 
 	bool SetMatrixMode(int mode) {
-		if (mode <= 0)
-			return false;
-		if (!listMode && mode == GL_MODELVIEW)
-			matrixData.erase(0);
-		else
-			matrixData[0] = mode;
-		return true;
+		if (mode == GL_MODELVIEW || mode == GL_PROJECTION || mode == GL_TEXTURE) {
+			matrixData.mode = mode;
+			return true;
+		}
+		return false;
 	}
 
-	int ApplyMatrixState(MatrixStateData& m) {
+	
+	int ApplyMatrixState(SMatrixStateData& m) {
 		// validate
-		for (MatrixStateData::iterator i = m.begin(); i != m.end(); ++i) {
-			if (i->first == 0)
-				continue;
-			int newdepth = GetDepth(i->first) + i->second;
-			if (newdepth < 0)
-				return -1;
-			if (newdepth >= 255)
-				return 1;
+#define VALIDATE(modeName) \
+		{ \
+			int newDepth = m.modeName + matrixData.modeName; \
+			if (newDepth < 0) \
+				return -1; \
+			if (newDepth >= 255) \
+				return 1; \
 		}
+			
+		VALIDATE(modelView)
+		VALIDATE(projection)
+		VALIDATE(texture)
+		
+#undef VALIDATE
+		
 		// apply
-		for (MatrixStateData::iterator i = m.begin(); i != m.end(); ++i) {
-			if (i->first == 0) {
-				if (i->second == GL_MODELVIEW)
-					matrixData.erase(0);
-				else
-					matrixData[0] = i->second;
-				continue;
-			}
-			int newdepth = GetDepth(i->first) + i->second;
-			if (newdepth == 0)
-				matrixData.erase(i->first);
-			else
-				matrixData[i->first] = newdepth;
-		}
+		matrixData.mode = m.mode;
+		matrixData.modelView += m.modelView;
+		matrixData.projection += m.projection;
+		matrixData.texture += m.texture;
+		
 		return 0;
 	}
 
-	const MatrixStateData& GetMatrixState() const {
+	const SMatrixStateData& GetMatrixState() const {
 		return matrixData;
 	}
 
 	bool HasMatrixStateError() const {
-		return !matrixData.empty();
+		return matrixData.mode != GL_MODELVIEW ||
+			matrixData.modelView != 0 ||
+			matrixData.projection != 0 ||
+			matrixData.texture != 0;
 	}
 
 	void HandleMatrixStateError(int error, const char* errsrc) {
@@ -136,21 +136,27 @@ public:
 		if (error == 0 && mode != GL_MODELVIEW)
 			LOG_L(L_ERROR, "%s: OpenGL state check error, matrix mode = %d, please restore mode to GL.MODELVIEW before end", errsrc, mode);
 
-		for (MatrixStateData::iterator i = matrixData.begin(); i != matrixData.end(); ++i) {
-			if (i->first == 0)
-				continue;
-			// check if the lua code fucked up the stack for matrix mode X
-			if (error == 0)
-				LOG_L(L_ERROR, "%s: OpenGL stack check error, matrix mode = %d, depth = %d, please make sure to pop all matrices before end", errsrc, i->first, i->second);
-
-			glMatrixMode(i->first);
-
-			for (int p = 0; p < i->second; ++p) {
-				glPopMatrix();
-			}
+		
+#define CHECK_MODE(modeName, glMode) \
+		assert(matrixData.modeName >= 0); \
+		if (matrixData.modeName != 0) {\
+			if (error == 0){ \
+				LOG_L(L_ERROR, "%s: OpenGL stack check error, matrix mode = %s, depth = %d, please make sure to pop all matrices before end", errsrc, #glMode, matrixData.modeName); \
+			} \
+			glMatrixMode(glMode); \
+			for (int p = 0; p < matrixData.modeName; ++p) { \
+				glPopMatrix(); \
+			} \
+			matrixData.modeName = 0;\
 		}
+			
+		CHECK_MODE(modelView, GL_MODELVIEW)
+		CHECK_MODE(projection, GL_PROJECTION)
+		CHECK_MODE(texture, GL_TEXTURE)
+		
+#undef CHECK_MODE
+		
 		glMatrixMode(GL_MODELVIEW);
-		matrixData.clear();
 	}
 };
 

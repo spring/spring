@@ -18,25 +18,7 @@ CInterface::CInterface(int interfaceId,
 		const struct SAIInterfaceCallback* callback)
 		: interfaceId(interfaceId), callback(callback) {
 
-	char* logFileName = util_allocStrCatFSPath(2, "log", "interface-log.txt");
-	bool timeStamps = true;
-#ifdef DEBUG
-	int logLevel = SIMPLELOG_LEVEL_FINE;
-#else
-	int logLevel = SIMPLELOG_LEVEL_ERROR;
-#endif
-	static const unsigned int logFilePath_sizeMax = 1024;
-	char logFilePath[logFilePath_sizeMax];
-	// eg: "~/.spring/AI/Interfaces/C/log/interface-log.txt"
-	bool ok = callback->DataDirs_locatePath(interfaceId,
-			logFilePath, logFilePath_sizeMax,
-			logFileName, true, true, false, false);
-	if (!ok) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-			"Failed locating the log file %s.", logFileName);
-	}
-
-	simpleLog_init(logFilePath, timeStamps, logLevel, false);
+	simpleLog_initcallback(interfaceId, "C Interface", callback->Log_logsl, LOG_LEVEL_INFO);
 
 	const char* const myShortName = callback->AIInterface_Info_getValueByKey(interfaceId,
 			AI_INTERFACE_PROPERTY_SHORT_NAME);
@@ -45,11 +27,7 @@ CInterface::CInterface(int interfaceId,
 
 	simpleLog_log("This is the log-file of the %s v%s AI Interface",
 			myShortName, myVersion);
-	simpleLog_log("Using read/write data-directory: %s",
-			callback->DataDirs_getWriteableDir(interfaceId));
-	simpleLog_log("Using log file: %s", logFileName);
 
-	FREE(logFileName);
 }
 
 //LevelOfSupport CInterface::GetLevelOfSupportFor(
@@ -212,7 +190,7 @@ void CInterface::reportInterfaceFunctionError(const std::string& libFilePath,
 }
 
 void CInterface::reportError(const std::string& msg) {
-	simpleLog_logL(SIMPLELOG_LEVEL_ERROR, msg.c_str());
+	simpleLog_logL(LOG_LEVEL_ERROR, msg.c_str());
 }
 
 

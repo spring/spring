@@ -45,11 +45,11 @@ public:
 	unsigned int RequestPath(
 		CSolidObject* caller,
 		const MoveDef* moveDef,
-		const float3& startPos,
-		const float3& goalPos,
+		float3 startPos,
+		float3 goalPos,
 		float goalRadius,
 		bool synced
-	);
+	) override;
 
 	/**
 	 * Returns waypoints of the max-resolution path segments.
@@ -111,15 +111,6 @@ private:
 	};
 
 private:
-	unsigned int RequestPath(
-		const MoveDef* moveDef,
-		const float3& startPos,
-		const float3& goalPos,
-		CPathFinderDef* peDef,
-		CSolidObject* caller,
-		bool synced = true
-	);
-
 	IPath::SearchResult ArrangePath(
 		MultiPath* newPath,
 		const MoveDef* moveDef,

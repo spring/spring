@@ -10,7 +10,7 @@ if [ $# -ne 1 ]; then
 fi
 
 HEADLESS=$1
-MAXWAIT=60
+MAXWAIT=90
 
 for (( i=0; $i<$MAXWAIT; i++ ));
 do

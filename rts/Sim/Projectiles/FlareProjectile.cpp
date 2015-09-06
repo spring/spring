@@ -130,3 +130,9 @@ void CFlareProjectile::Draw()
 		#undef fpt
 	}
 }
+
+
+int CFlareProjectile::GetProjectilesCount() const
+{
+	return subPos.size();
+}

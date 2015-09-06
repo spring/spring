@@ -38,8 +38,8 @@ public:
 
 
 	// returns a speed-multiplier for given position or data
-	static float GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare);
-	static float GetPosSpeedMod(const MoveDef& moveDef, int xSquare, int zSquare, const float3& moveDir);
+	static float GetPosSpeedMod(const MoveDef& moveDef, unsigned xSquare, unsigned zSquare);
+	static float GetPosSpeedMod(const MoveDef& moveDef, unsigned xSquare, unsigned zSquare, float3 moveDir);
 	static float GetPosSpeedMod(const MoveDef& moveDef, const float3& pos)
 	{
 		return (GetPosSpeedMod(moveDef, pos.x / SQUARE_SIZE, pos.z / SQUARE_SIZE));

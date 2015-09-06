@@ -69,7 +69,7 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 	ifs->Seek(header.tilesPtr);
 
 	MapTileHeader tileHeader;
-	READPTR_MAPTILEHEADER(tileHeader, ifs);
+	CSMFMapFile::ReadMapTileHeader(tileHeader, *ifs);
 
 	if (smfMap->tileCount <= 0) {
 		throw content_error("Error loading map: count of tiles is 0.");
@@ -129,7 +129,7 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 		}
 
 		TileFileHeader tfh;
-		READ_TILEFILEHEADER(tfh, tileFile);
+		CSMFMapFile::ReadMapTileFileHeader(tfh, tileFile);
 
 		if (strcmp(tfh.magic, "spring tilefile") != 0 || tfh.version != 1 || tfh.tileSize != 32 || tfh.compressionType != 1) {
 			char t[500];
@@ -150,7 +150,7 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 	}
 
 #if defined(USE_LIBSQUISH) && !defined(HEADLESS) && defined(GLEW_ARB_ES3_compatibility)
-	if (RecompressTiles(!GLEW_EXT_texture_compression_s3tc && GLEW_ARB_ES3_compatibility)) {
+	if (RecompressTilesIfNeeded()) {
 		// Not all FOSS drivers support S3TC, use ETC1 for those if possible
 		// ETC2 is backward compatible with ETC1! GLEW doesn't have the ETC1 extension :<
 		tileTexFormat = GL_COMPRESSED_RGB8_ETC2;
@@ -244,10 +244,15 @@ void CSMFGroundTextures::ConvolveHeightMap(const int mapWidth, const int mipLeve
 }
 
 #if defined(USE_LIBSQUISH) && !defined(HEADLESS) && defined(GLEW_ARB_ES3_compatibility)
-bool CSMFGroundTextures::RecompressTiles(bool canRecompress)
+// Not all FOSS drivers support S3TC, use ETC1 for those if possible
+bool CSMFGroundTextures::RecompressTilesIfNeeded()
 {
-	// Not all FOSS drivers support S3TC, use ETC1 for those if possible
-	if (!canRecompress)
+	// if DXT1 is supported, we don't need to recompress
+	if (GLEW_EXT_texture_compression_s3tc || GLEW_EXT_texture_compression_dxt1)
+		return false;
+
+	// check if ETC1/2 is supported
+	if (!GLEW_ARB_ES3_compatibility)
 		return false;
 
 	// note 1: Mesa should support this

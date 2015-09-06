@@ -66,14 +66,21 @@ bool LuaWeaponDefs::PushEntries(lua_State* L)
 
 	const ObjectDefMapType& defsMap = weaponDefHandler->weaponID;
 
-	const char* indxOpers[] = {"__index", "__newindex", "__metatable"};
-	const char* iterOpers[] = {"pairs", "next"};
+	const std::array<const LuaHashString, 3> indxOpers = {{
+		LuaHashString("__index"),
+		LuaHashString("__newindex"),
+		LuaHashString("__metatable")
+	}};
+	const std::array<const LuaHashString, 2> iterOpers = {{
+		LuaHashString("pairs"),
+		LuaHashString("next")
+	}};
 
-	const IndxFuncType indxFuncs[] = {&WeaponDefIndex, &WeaponDefNewIndex, &WeaponDefMetatable};
-	const IterFuncType iterFuncs[] = {&Pairs, &Next};
+	const std::array<const IndxFuncType, 3> indxFuncs = {WeaponDefIndex, WeaponDefNewIndex, WeaponDefMetatable};
+	const std::array<const IterFuncType, 2> iterFuncs = {Pairs, Next};
 
 	for (auto it = defsMap.cbegin(); it != defsMap.cend(); ++it) {
-		const auto def = &weaponDefHandler->weaponDefs[it->second];
+		const auto def = weaponDefHandler->GetWeaponDefByID(it->second);
 
 		if (def == NULL)
 			continue;
@@ -452,6 +459,11 @@ static bool InitParamMap()
 	ADD_FLOAT("leadBonus", wd.leadBonus);
 	ADD_FLOAT("predictBoost", wd.predictBoost);
 	ADD_INT("highTrajectory", wd.highTrajectory);
+ 
+	ADD_FLOAT("dynDamageExp", wd.dynDamageExp);
+	ADD_FLOAT("dynDamageMin", wd.dynDamageMin);
+	ADD_FLOAT("dynDamageRange", wd.dynDamageRange);
+	ADD_BOOL("dynDamageInverted", wd.dynDamageInverted);
 
 	ADD_BOOL("noSelfDamage",  wd.noSelfDamage);
 	ADD_BOOL("impactOnly",    wd.impactOnly);
@@ -521,6 +533,7 @@ static bool InitParamMap()
 	ADD_FLOAT("dance",  wd.dance);
 
 	ADD_FLOAT("trajectoryHeight", wd.trajectoryHeight);
+	ADD_INT("flightTime", wd.flighttime);
 
 	ADD_BOOL("largeBeamLaser", wd.largeBeamLaser);
 	ADD_BOOL("laserHardStop", wd.laserHardStop);

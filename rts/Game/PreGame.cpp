@@ -169,7 +169,6 @@ bool CPreGame::Update()
 {
 	ENTER_SYNCED_CODE();
 	good_fpu_control_registers("CPreGame::Update");
-	clientNet->Update();
 	UpdateClientNet();
 	LEAVE_SYNCED_CODE();
 
@@ -245,6 +244,8 @@ void CPreGame::UpdateClientNet()
 {
 	//FIXME move this code to a external file and move that to rts/Net/
 
+	clientNet->Update();
+
 	if (clientNet->CheckTimeout(0, true)) {
 		LOG_L(L_WARNING, "Server not reachable");
 		SetExitCode(1);
@@ -263,6 +264,7 @@ void CPreGame::UpdateClientNet()
 		}
 
 		switch (inbuf[0]) {
+			case NETMSG_REJECT_CONNECT:
 			case NETMSG_QUIT: {
 				try {
 					netcode::UnpackPacket pckt(packet, 3);
@@ -357,7 +359,6 @@ void CPreGame::StartServerForDemo(const std::string& demoName)
 	TdfParser::TdfSection* tgame = script.GetRootSection()->sections["game"];
 
 	std::ostringstream moddedDemoScript;
-	std::string playerStr;
 
 	{
 		// server will always use a modified copy of this
@@ -367,7 +368,12 @@ void CPreGame::StartServerForDemo(const std::string& demoName)
 		tgame->AddPair("MapName", gameSetup->mapName);
 		tgame->AddPair("Gametype", gameSetup->modName);
 		tgame->AddPair("Demofile", demoName);
-		tgame->AddPair("OnlyLocal", 1);
+		tgame->remove("OnlyLocal", false);
+		tgame->remove("HostIP", false);
+		tgame->remove("HostPort", false);
+		tgame->remove("AutohostPort", false);
+		tgame->remove("SourcePort", false);
+		//tgame->remove("IsHost", false);
 
 		for (std::map<std::string, TdfParser::TdfSection*>::iterator it = tgame->sections.begin(); it != tgame->sections.end(); ++it) {
 			if (it->first.size() > 6 && it->first.substr(0, 6) == "player") {
@@ -375,31 +381,11 @@ void CPreGame::StartServerForDemo(const std::string& demoName)
 			}
 		}
 
-		// add local spectator (and assert we didn't already have MAX_PLAYERS players)
-		for (int myPlayerNum = MAX_PLAYERS - 1; myPlayerNum >= 0; --myPlayerNum) {
-			char section[16];
-			sprintf(section, "game\\player%i", myPlayerNum);
-			string s(section);
-
-			if (script.SectionExist(s)) {
-				sprintf(section, "player%i", myPlayerNum + 1);
-				playerStr = std::string(section);
-				break;
-			}
-		}
-
-		assert(!playerStr.empty());
-
-		TdfParser::TdfSection* me = tgame->construct_subsection(playerStr);
-		me->AddPair("name", clientSetup->myPlayerName);
-		me->AddPair("spectator", 1);
-		tgame->AddPair("myplayername", clientSetup->myPlayerName);
-
 		// is this needed?
 		TdfParser::TdfSection* modopts = tgame->construct_subsection("MODOPTIONS");
-		modopts->AddPair("MaxSpeed", 20);
+		modopts->remove("maxspeed", false);
+		modopts->remove("minspeed", false);
 	}
-
 
 	script.print(moddedDemoScript);
 	gameData->SetSetupText(moddedDemoScript.str());
@@ -427,30 +413,13 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 	LOG("[%s] pre-scanning demo file for game data...", __FUNCTION__);
 	CDemoReader scanner(demoName, 0);
 
-	boost::shared_ptr<const RawPacket> buf(scanner.GetData(static_cast<float>(FLT_MAX)));
-
-	while (buf) {
-		if (buf->data[0] == NETMSG_GAMEDATA) {
-			try {
-				gameData.reset(new GameData(boost::shared_ptr<const RawPacket>(buf)));
-			} catch (const netcode::UnpackPacketException& ex) {
-				throw content_error(std::string("Demo contains invalid GameData: ") + ex.what());
-			}
-
-			if (CGameSetup::LoadReceivedScript(gameData->GetSetupText(), true)) {
-				StartServerForDemo(demoName);
-			} else {
-				throw content_error("Demo contains incorrect script");
-			}
-
-			break;
+	{
+		gameData.reset(new GameData(scanner.GetSetupScript()));
+		if (CGameSetup::LoadReceivedScript(gameData->GetSetupText(), true)) {
+			StartServerForDemo(demoName);
+		} else {
+			throw content_error("Demo contains incorrect script");
 		}
-
-		if (scanner.ReachedEnd()) {
-			throw content_error("End of demo reached and no game data found");
-		}
-
-		buf.reset(scanner.GetData(FLT_MAX));
 	}
 
 	assert(gameServer != NULL);
@@ -510,6 +479,10 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 		archiveScanner->CheckArchive(modArchive, gameData->GetModChecksum());
 	} catch (const content_error& ex) {
 		LOG_L(L_WARNING, "Incompatible game-checksum: %s", ex.what());
+	}
+
+	if (clientSetup->isHost && !gameSetup->recordDemo) { //script.txt allows to disable demo file recording (host only, used for menu)
+		wantDemo = false;
 	}
 
 	if (clientNet != NULL && wantDemo) {

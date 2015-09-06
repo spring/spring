@@ -30,22 +30,21 @@ Release Time
 		git reset --hard origin/master
 		git merge develop --no-ff
 2) Tag the release:
-		export REL_VERS=98.0
+		export REL_VERS=99.0
 		git tag -a -m "${REL_VERS} release [changed APIs: Lua, unitsync, AI]" ${REL_VERS}
-   Make sure it looks correct:
-		gitk master develop &
-3) Tag the develop branch:
-		git tag -a -m "dev version after the ${REL_VERS} release" ${REL_VERS}.1
-4) POINT OF NO RETURN: Push to the main repo (and delete the release branch):
-		git push --tags origin develop :release master
-
-5) switch back your local branch to develop so you don't commit into the master branch by accident:
+3) switch back your local branch to develop so you don't commit into the master branch by accident:
 		git checkout develop
-6) The Buildbot should automaticly start build the release on the buildslaves, wait for it until all builds are done,
+4) Tag the develop branch:
+		git tag -a -m "dev version after the ${REL_VERS} release" ${REL_VERS}.1
+5) Make sure it looks correct:
+		gitk master develop &
+6) POINT OF NO RETURN: Push to the main repo:
+		git push --tags origin develop master
+7) The Buildbot should automaticly start build the release on the buildslaves, wait for it until all builds are done,
    the OS-X buildslave will take about one hour or more!
-7) Write the news post for the springrts.com frontpage, while waiting for the
+8) Write the news post for the springrts.com frontpage, while waiting for the
    buildbot to compile the master branch.
-8) Check if everything went fine on http://buildbot.springrts.com/waterfall and fetch these archives:
+9) Check if everything went fine on http://buildbot.springrts.com/waterfall and fetch these archives:
 		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/win32/spring_${REL_VERS}.exe
 		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/win32/spring_${REL_VERS}_portable.7z
 		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/osx64/spring_${REL_VERS}_MacOSX-10.6-SnowLeopard.zip
@@ -53,7 +52,7 @@ Release Time
 		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/linux64/spring_${REL_VERS}_minimal-portable-linux64-static.7z
 		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/source/spring_${REL_VERS}_src.tar.gz
 		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/source/spring_${REL_VERS}_src.tar.lzma
-9) you should now have these files:
+10) you should now have these files:
 	* spring_${REL_VERS}.exe
 	* spring_${REL_VERS}_MacOSX-10.6-SnowLeopard.zip
 	* spring_${REL_VERS}_portable.7z
@@ -61,9 +60,10 @@ Release Time
 	* spring_${REL_VERS}_src.tar.lzma
 	Upload them to SF (replace USER with your SF account name):
 		rsync --progress -h spring_${REL_VERS}* USER,springrts@frs.sourceforge.net:/home/frs/project/s/sp/springrts/springrts/spring-${REL_VERS}/
-10) Post the news post.
-
-11) After a week, set it as default version on the server:
+11) Post the news post.
+12) add the release to mantis: ( ${REL_VERS}+git and ${REL_VERS + 1}) and mark old stable versions as obsolete.
+	https://springrts.com/mantis/manage_proj_page.php
+13) After a week, set it as default version on the server:
 	Ask a lobby admin to set the default version on the lobby server:
 		http://springrts.com/wiki/Uberserver#set_spring_version
 	Update download page by chaning the version templates on the Wiki.

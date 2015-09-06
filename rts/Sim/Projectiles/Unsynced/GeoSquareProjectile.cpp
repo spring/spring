@@ -85,3 +85,8 @@ void CGeoSquareProjectile::Draw()
 void CGeoSquareProjectile::Update()
 {
 }
+
+int CGeoSquareProjectile::GetProjectilesCount() const
+{
+	return 1;
+}

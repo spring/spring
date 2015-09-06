@@ -3,7 +3,7 @@
 #ifndef PROJECTILE_H
 #define PROJECTILE_H
 
-#include <list>
+#include <vector>
 
 #ifdef _MSC_VER
 #pragma warning(disable:4291)
@@ -37,36 +37,22 @@ public:
 		bool isHitScan = false
 	);
 	virtual ~CProjectile();
-	virtual void Detach();
 
 	virtual void Collision();
 	virtual void Collision(CUnit* unit);
 	virtual void Collision(CFeature* feature);
 	virtual void Update();
-	virtual void Init(const CUnit* owner, const float3& offset);
+	virtual void Init(const CUnit* owner, const float3& offset) override;
 
 	virtual void Draw() {}
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 	virtual void DrawCallback() {}
 
-	struct QuadFieldCellData {
-		CR_DECLARE_STRUCT(QuadFieldCellData)
-
-		// must match typeof(QuadField::Quad::projectiles)
-		typedef std::list<CProjectile*>::iterator iter;
-
-		const int2& GetCoor(unsigned int idx) const { return coors[idx]; }
-		const iter& GetIter(unsigned int idx) const { return iters[idx]; }
-
-		void SetCoor(unsigned int idx, const int2& co) { coors[idx] = co; }
-		void SetIter(unsigned int idx, const iter& it) { iters[idx] = it; }
-
-	private:
-		// coordinates and iterators for pos, (pos+spd)*0.5, pos+spd
-		// non-hitscan projectiles *only* use coors[0] and iters[0]!
-		int2 coors[3];
-		iter iters[3];
-	};
+	virtual int GetProjectilesCount() const
+	{
+		assert(false); // this method should be pure virtual, but cause of CREG we can't do so
+		return 0;
+	}
 
 	// override WorldObject::SetVelocityAndSpeed so
 	// we can keep <dir> in sync with speed-vector
@@ -75,7 +61,7 @@ public:
 	//
 	// should be called when speed-vector is changed
 	// s.t. both speed.w and dir need to be updated
-	void SetVelocityAndSpeed(const float3& vel) {
+	void SetVelocityAndSpeed(const float3& vel) override {
 		CWorldObject::SetVelocityAndSpeed(vel);
 
 		if (speed.w > 0.0f) {
@@ -95,10 +81,7 @@ public:
 
 	unsigned int GetOwnerID() const { return ownerID; }
 	unsigned int GetTeamID() const { return teamID; }
-
-	void SetQuadFieldCellData(const QuadFieldCellData& qfcd) { qfCellData = qfcd; }
-	const QuadFieldCellData& GetQuadFieldCellData() const { return qfCellData; }
-	      QuadFieldCellData& GetQuadFieldCellData()       { return qfCellData; }
+	int GetAllyteamID() const { return allyteamID; }
 
 	unsigned int GetProjectileType() const { return projectileType; }
 	unsigned int GetCollisionFlags() const { return collisionFlags; }
@@ -114,7 +97,7 @@ public:
 public:
 	static bool inArray;
 	static CVertexArray* va;
-	static int DrawArray();
+	static void DrawArray();
 
 	bool synced;  ///< is this projectile part of the simulation?
 	bool weapon;  ///< is this a weapon projectile? (true implies synced true)
@@ -125,7 +108,8 @@ public:
 	bool checkCol;
 	bool ignoreWater;
 	bool deleteMe;
-
+	bool callEvent; //do we need to call the ProjectileCreated event
+	
 	bool castShadow;
 	bool drawSorted;
 
@@ -139,12 +123,14 @@ public:
 protected:
 	unsigned int ownerID;
 	unsigned int teamID;
+	int allyteamID;
 	unsigned int cegID;
 
 	unsigned int projectileType;
 	unsigned int collisionFlags;
 
-	QuadFieldCellData qfCellData;
+public:
+	std::vector<int> quads;
 };
 
 #endif /* PROJECTILE_H */

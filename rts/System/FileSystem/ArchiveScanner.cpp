@@ -519,6 +519,14 @@ std::string CArchiveScanner::SearchMapFile(const IArchive* ar, std::string& erro
 	return "";
 }
 
+static bool IsBaseContent(const std::string& fileName)
+{
+	return ((fileName == "bitmaps.sdz")
+		|| (fileName == "springcontent.sdz")
+		|| (fileName == "maphelper.sdz")
+		|| (fileName == "cursors.sdz"));
+}
+
 void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 {
 	const std::string fn    = FileSystem::GetFilename(fullName);
@@ -557,7 +565,12 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 				return;
 			} else {
 				if (aii->second.updated) {
-					LOG_L(L_ERROR, "Found a \"%s\" already in \"%s\", ignoring one in \"%s\"", aii->first.c_str(), aii->second.path.c_str(), fpath.c_str());
+					const std::string filename = aii->first;
+					LOG_L(L_ERROR, "Found a \"%s\" already in \"%s\", ignoring.", fullName.c_str(), (aii->second.path + aii->second.origName).c_str());
+					if (IsBaseContent(filename)) {
+						throw user_error(std::string("duplicate base content detected:\n\t") + aii->second.path + std::string("\n\t") + fpath
+							+ std::string("\nPlease fix your configuration/installation as this can cause desyncs!"));
+					}
 					return;
 				}
 

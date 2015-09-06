@@ -61,6 +61,7 @@ class LuaSyncedCtrl
 		static int SetUnitMaxHealth(lua_State* L);
 		static int SetUnitStockpile(lua_State* L);
 		static int SetUnitWeaponState(lua_State* L);
+		static int SetUnitMaxRange(lua_State* L);
 		static int SetUnitExperience(lua_State* L);
 		static int SetUnitArmored(lua_State* L);
 		static int SetUnitLosMask(lua_State* L);
@@ -87,8 +88,10 @@ class LuaSyncedCtrl
 		static int SetUnitRadiusAndHeight(lua_State* L);
 		static int SetUnitCollisionVolumeData(lua_State* L);
 		static int SetUnitPieceCollisionVolumeData(lua_State* L);
+		static int SetUnitPieceParent(lua_State* L);
 		static int SetUnitSensorRadius(lua_State* L);
 		static int SetUnitPosErrorParams(lua_State* L);
+		static int SetUnitLandPos(lua_State* L);
 
 		static int SetUnitPhysics(lua_State* L);
 		static int SetUnitPosition(lua_State* L);
@@ -127,6 +130,7 @@ class LuaSyncedCtrl
 		static int SetProjectileVelocity(lua_State* L);
 		static int SetProjectileCollision(lua_State* L);
 		static int SetProjectileTarget(lua_State* L);
+		static int SetProjectileIsIntercepted(lua_State* L);
 
 		static int SetProjectileGravity(lua_State* L);
 		static int SetProjectileSpinAngle(lua_State* L); // DEPRECATED
@@ -156,6 +160,11 @@ class LuaSyncedCtrl
 
 		static int UnitWeaponFire(lua_State* L);
 		static int UnitWeaponHoldFire(lua_State* L);
+
+		static int UnitAttach(lua_State* L);
+		static int UnitDetach(lua_State* L);
+		static int UnitDetachFromAir(lua_State* L);
+		static int SetUnitLoadingTransport(lua_State* L);
 
 		static int SpawnProjectile(lua_State* L);
 		static int SpawnCEG(lua_State* L);

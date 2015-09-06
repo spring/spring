@@ -511,7 +511,7 @@ void CEndGameBox::FillTeamStats()
 			continue;
 		}
 
-		for (std::list<CTeam::Statistics>::const_iterator si = pteam->statHistory.begin(); si != pteam->statHistory.end(); ++si) {
+		for (std::list<TeamStatistics>::const_iterator si = pteam->statHistory.begin(); si != pteam->statHistory.end(); ++si) {
 			stats[0].AddStat(team, 0);
 
 			stats[1].AddStat(team, si->metalUsed);
