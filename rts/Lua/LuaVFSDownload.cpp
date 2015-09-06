@@ -56,7 +56,7 @@ int Download(const std::string& filename)
 			LOG_L(L_DEBUG, "Download info: %s %d %d", dl.filename, dl.type, dl.cat);
 		}
 	}
-	//eventBatchHandler.DownloadStarted(downloadID);
+	eventHandler.DownloadStarted(downloadID);
 	int result = DownloadStart();
 	DownloadShutdown();
 	LOG_L(L_DEBUG, "download finished %s", filename.c_str());
@@ -75,9 +75,9 @@ void StartDownload() {
 	result = std::async(std::launch::async, [filename, category, ID]() {
 			int result = Download(filename);
 			if (result == 0) {
-				//eventBatchHandler.DownloadFinished(ID);
+				eventHandler.DownloadFinished(ID);
 			} else {
-				//eventBatchHandler.DownloadFailed(ID, result);
+				eventHandler.DownloadFailed(ID, result);
 			}
 			return result;
 		}
