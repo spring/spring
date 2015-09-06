@@ -16,11 +16,11 @@ function widget:Initialize()
 end
 
 function widget:DownloadStarted(id)
-	Spring.Echo("download finished" .. id)
+	Spring.Echo("download started" .. id)
 end
 
 function widget:DownloadQueued(id)
-	Spring.Echo("download finished" .. id)
+	Spring.Echo("download queued" .. id)
 end
 
 function widget:DownloadFinished(id)
@@ -32,6 +32,6 @@ function widget:DownloadFailed(id, errorid)
 end
 
 function widget:DownloadProgress(id, downloaded, total)
-	Spring.Echo("download progress" .. id)
+	Spring.Echo("download progress" .. id .. downloaded .. total)
 end
 
