@@ -40,12 +40,14 @@ static std::list<DownloadItem> queue;
 void StartDownload();
 
 void UpdateProgress(int done, int size) {
-	//eventHandler.ownloadProgress(downloadID, done, size);
+	eventHandler.DownloadProgress(downloadID, done, size);
 }
 
 int Download(const std::string& filename)
 {
-//	SetDownloadListener(UpdateProgress);
+/*	FIXME, seems not implemented in pr-downloader?!
+	SetDownloadListener(UpdateProgress);
+*/
 	LOG_L(L_DEBUG, "going to download %s", filename.c_str());
 	DownloadInit();
 	const int count = DownloadSearch(DL_ANY, CAT_ANY, filename.c_str());
