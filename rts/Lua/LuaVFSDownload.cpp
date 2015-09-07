@@ -73,9 +73,9 @@ bool LuaVFSDownload::PushEntries(lua_State* L)
 
 struct DownloadItem {
 	std::string filename;
-	std::string category;
+	category cat;
 	int ID;
-	DownloadItem(int ID, const std::string& filename, const std::string& category) : ID(ID), filename(filename), category(category) {
+	DownloadItem(int ID, const std::string& filename, category& cat) : ID(ID), filename(filename), cat(cat) {
 	}
 };
 static std::future<int> result;
@@ -88,13 +88,13 @@ void UpdateProgress(int done, int size) {
 	QueueDownloadProgress(queueIDCount, done, size);
 }
 
-int Download(int ID, const std::string& filename, const std::string& category)
+int Download(int ID, const std::string& filename, category cat)
 {
 	SetDownloadListener(UpdateProgress);
 	LOG_L(L_DEBUG, "Going to download %s", filename.c_str());
 	DownloadInit();
-	const int count = DownloadSearch(DL_ANY, CAT_ANY, filename.c_str());
-	for(int i=0; i<count; i++) {
+	const int count = DownloadSearch(DL_ANY, cat, filename.c_str());
+	for (int i = 0; i < count; i++) {
 		DownloadAdd(i);
 		struct downloadInfo dl;
 		if (DownloadGetSearchInfo(i, dl)) {
@@ -123,10 +123,10 @@ void StartDownload() {
 	const DownloadItem& downloadItem = queue.front();
 	queue.pop_front();
 	const std::string filename = downloadItem.filename;
-	const std::string category = downloadItem.category;
+	category cat = downloadItem.cat;
 	const int ID = downloadItem.ID;
-	result = std::async(std::launch::async, [ID, filename, category]() {
-			int result = Download(ID, filename, category);
+	result = std::async(std::launch::async, [ID, filename, cat]() {
+			int result = Download(ID, filename, cat);
 			if (result == 0) {
 				QueueDownloadFinished(ID);
 			} else {
@@ -142,14 +142,27 @@ void StartDownload() {
 int LuaVFSDownload::DownloadArchive(lua_State* L)
 {
 	const std::string filename = luaL_checkstring(L, 1);
-	const std::string category = luaL_checkstring(L, 2);
-	if (filename.empty())
-		return 0;
-	if (category.empty())
-		return 0;
+	std::string categoryStr = luaL_optstring(L, 2, "any");
+	if (filename.empty()) {
+		luaL_error(L, "Missing download archive name.");
+	}
+
+	category cat;
+	if (categoryStr == "map") {
+		cat = CAT_MAP;
+	} else if (categoryStr == "game") {
+		cat = CAT_GAME;
+	} else if (categoryStr == "engine") {
+		cat = CAT_ENGINE;
+	} else if (categoryStr == "any") {
+		cat = CAT_ANY;
+	} else {
+		luaL_error(L, "If specified, category must be one of: map, game, engine, any.");
+	}
+
 	queueIDCount++;
-	queue.push_back(DownloadItem(queueIDCount, filename, category));
-	eventHandler.DownloadQueued(queueIDCount, filename, category);
+	queue.push_back(DownloadItem(queueIDCount, filename, cat));
+	eventHandler.DownloadQueued(queueIDCount, filename, categoryStr);
 	if (queue.size() == 1) {
 		StartDownload();
 	}
