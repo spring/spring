@@ -75,21 +75,20 @@ struct DownloadItem {
 	std::string filename;
 	std::string category;
 	int ID;
-	DownloadItem(const std::string& filename, const std::string& category, int ID) : filename(filename), category(category), ID(ID) {
+	DownloadItem(int ID, const std::string& filename, const std::string& category) : ID(ID), filename(filename), category(category) {
 	}
 };
 static std::future<int> result;
-static int downloadID = -1;
-static int queuedID = -1;
+static int queueIDCount = -1;
 static std::list<DownloadItem> queue;
 
 void StartDownload();
 
 void UpdateProgress(int done, int size) {
-	QueueDownloadProgress(downloadID, done, size);
+	QueueDownloadProgress(queueIDCount, done, size);
 }
 
-int Download(const std::string& filename, const std::string& category, int ID)
+int Download(int ID, const std::string& filename, const std::string& category)
 {
 	SetDownloadListener(UpdateProgress);
 	LOG_L(L_DEBUG, "Going to download %s", filename.c_str());
@@ -126,8 +125,8 @@ void StartDownload() {
 	const std::string filename = downloadItem.filename;
 	const std::string category = downloadItem.category;
 	const int ID = downloadItem.ID;
-	result = std::async(std::launch::async, [filename, category, ID]() {
-			int result = Download(filename, category, ID);
+	result = std::async(std::launch::async, [ID, filename, category]() {
+			int result = Download(ID, filename, category);
 			if (result == 0) {
 				QueueDownloadFinished(ID);
 			} else {
@@ -148,9 +147,9 @@ int LuaVFSDownload::DownloadArchive(lua_State* L)
 		return 0;
 	if (category.empty())
 		return 0;
-	queuedID++;
-	queue.push_back(DownloadItem(filename, category, queuedID));
-	eventHandler.DownloadQueued(downloadID, filename, category);
+	queueIDCount++;
+	queue.push_back(DownloadItem(queueIDCount, filename, category));
+	eventHandler.DownloadQueued(queueIDCount, filename, category);
 	if (queue.size() == 1) {
 		StartDownload();
 	}
