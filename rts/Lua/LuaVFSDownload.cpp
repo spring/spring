@@ -201,6 +201,7 @@ int LuaVFSDownload::CalcMd5(lua_State* L)
 void LuaVFSDownload::ProcessDownloads()
 {
 	assert(Threading::IsMainThread() || Threading::IsGameLoadThread());
+	// FIXME: These events might not be executed in the order they were received, which could cause for weird things to happen as Lua will probably expect no DownloadProgress events to be issued after DownloadFailed/DownloadFinished, and also no such events before DownloadStarted.
 	if (dls != nullptr) {
 		// TODO: lock here
 		int ID = dls->ID;
