@@ -41,6 +41,7 @@ struct dlProgress {
 };
 dlProgress* dlp = NULL;
 
+// TODO: all these functions need to lock the appropriate variables.
 void QueueDownloadStarted(int ID) //queue from other thread download started event
 {
 	dls = new dlStarted(); dls->ID = ID;
@@ -78,18 +79,22 @@ struct DownloadItem {
 	DownloadItem(int ID, const std::string& filename, category& cat) : ID(ID), filename(filename), cat(cat) {
 	}
 };
-static std::future<int> result;
+
 static int queueIDCount = -1;
+static int currentDownloadID = -1;
 static std::list<DownloadItem> queue;
+static bool isDownloading = false;
 
 void StartDownload();
 
 void UpdateProgress(int done, int size) {
-	QueueDownloadProgress(queueIDCount, done, size);
+	QueueDownloadProgress(currentDownloadID, done, size);
 }
 
 int Download(int ID, const std::string& filename, category cat)
 {
+	currentDownloadID = ID;
+	// FIXME: Progress is incorrectly updated when rapid is queried to check for existing packages.
 	SetDownloadListener(UpdateProgress);
 	LOG_L(L_DEBUG, "Going to download %s", filename.c_str());
 	DownloadInit();
@@ -102,39 +107,47 @@ int Download(int ID, const std::string& filename, category cat)
 		}
 	}
 	int result;
-	if (count == 0) { // there's nothing to download
+	printf("Download count: %d\n", count);
+	// TODO: count will be 1 when archives already exist. We should instead return a different result with DownloadFailed/DownloadFinished?
+	if (count == 1) { // there's nothing to download
 		result = 2;
 		QueueDownloadFailed(ID, result);
 	} else {
 		QueueDownloadStarted(ID);
-		int result = DownloadStart();
-		DownloadShutdown();
+		result = DownloadStart();
 		LOG_L(L_DEBUG, "Download finished %s", filename.c_str());
 	}
-
-	if (!queue.empty()) {
-		StartDownload();
-	}
+	DownloadShutdown();
 
 	return result;
 }
 
 void StartDownload() {
+	isDownloading = true;
 	const DownloadItem& downloadItem = queue.front();
 	queue.pop_front();
 	const std::string filename = downloadItem.filename;
 	category cat = downloadItem.cat;
 	const int ID = downloadItem.ID;
-	result = std::async(std::launch::async, [ID, filename, cat]() {
+	if (filename.c_str() != nullptr) {
+		printf("\n\nDOWNLOADING: %s\n\n", filename.c_str());
+	}
+	std::thread {[ID, filename, cat]() {
 			int result = Download(ID, filename, cat);
 			if (result == 0) {
 				QueueDownloadFinished(ID);
 			} else {
 				QueueDownloadFailed(ID, result);
 			}
-			return result;
+
+			// TODO: needs to lock the queue/isDownloading variables before checking
+			if (!queue.empty()) {
+				StartDownload();
+			} else {
+				isDownloading = false;
+			}
 		}
-	);
+	}.detach();
 }
 
 /******************************************************************************/
@@ -161,10 +174,13 @@ int LuaVFSDownload::DownloadArchive(lua_State* L)
 	}
 
 	queueIDCount++;
+	// TODO: needs to lock queue variable
 	queue.push_back(DownloadItem(queueIDCount, filename, cat));
 	eventHandler.DownloadQueued(queueIDCount, filename, categoryStr);
-	if (queue.size() == 1) {
-		StartDownload();
+	if (!isDownloading) {
+		if (queue.size() == 1) {
+			StartDownload();
+		}
 	}
 	return 0;
 }
@@ -186,20 +202,35 @@ void LuaVFSDownload::ProcessDownloads()
 {
 	assert(Threading::IsMainThread() || Threading::IsGameLoadThread());
 	if (dls != nullptr) {
-		eventHandler.DownloadStarted(dls->ID);
+		// TODO: lock here
+		int ID = dls->ID;
 		SafeDelete(dls);
+		// TODO: unlock here
+		eventHandler.DownloadStarted(ID);
 	}
 	if (dlfi != nullptr) {
-		eventHandler.DownloadFinished(dlfi->ID);
+		// TODO: lock here
+		int ID = dlfi->ID;
 		SafeDelete(dlfi);
+		// TODO: unlock here
+		eventHandler.DownloadFinished(ID);
 	}
 	if (dlfa != nullptr) {
-		eventHandler.DownloadFailed(dlfa->ID, dlfa->errorID);
+		// TODO: lock here
+		int ID = dlfa->ID;
+		int errorID = dlfa->errorID;
 		SafeDelete(dlfa);
+		// TODO: unlock here
+		eventHandler.DownloadFailed(ID, errorID);
 	}
 	if (dlp != nullptr) {
-		eventHandler.DownloadProgress(dlp->ID, dlp->downloaded, dlp->total);
+		// TODO: lock here
+		int ID = dlp->ID;
+		int downloaded = dlp->downloaded;
+		int total = dlp->total;
 		SafeDelete(dlp);
+		// TODO: unlock here
+		eventHandler.DownloadProgress(ID, downloaded, total);
 	}
 }
 

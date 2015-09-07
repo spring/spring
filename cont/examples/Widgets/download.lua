@@ -10,28 +10,35 @@ return {
 }
 end
 
+local LOG_SECTION = "RapidDownload"
+
+local archiveName = "ba:stable"
+local archiveType = "game" -- Optional. If undefined it will be auto-detected.
+
 function widget:Initialize()
-	Spring.Echo("Starting to download")
-	VFS.DownloadArchive("ba:stable", "game")
+	Spring.Log(LOG_SECTION, LOG.NOTICE, "Starting download of " .. archiveType .. " " .. archiveName)
+	VFS.DownloadArchive(archiveName, archiveType)
+	-- FIXME: there are issues if multiple archives are queued. Rapid doesn't seem to be shutting down cleanly.
+	--VFS.DownloadArchive(archiveName, archiveType)
 end
 
 function widget:DownloadStarted(id)
-	Spring.Echo("download started" .. id)
+	Spring.Log(LOG_SECTION, LOG.NOTICE, "Download started. ID: " .. id)
 end
 
 function widget:DownloadQueued(id)
-	Spring.Echo("download queued" .. id)
+	Spring.Log(LOG_SECTION, LOG.NOTICE, "Download queued. ID: " .. id)
 end
 
 function widget:DownloadFinished(id)
-	Spring.Echo("download finished" .. id)
+	Spring.Log(LOG_SECTION, LOG.NOTICE, "Download finished. ID: " .. id)
 end
 
 function widget:DownloadFailed(id, errorid)
-	Spring.Echo("download failed" .. id .. errorid)
+	Spring.Log(LOG_SECTION, LOG.NOTICE, "Download failed. ID: " .. id .. ", error ID: " .. errorid)
 end
 
 function widget:DownloadProgress(id, downloaded, total)
-	Spring.Echo("download progress" .. id .. downloaded .. total)
+	Spring.Log(LOG_SECTION, LOG.NOTICE, "Download progress. ID: " .. id .. ", progress: " .. downloaded .. "/" .. total)
 end
 
