@@ -31,7 +31,7 @@ Set(VERSION_REGEX_PATCH "${D10}+")
 Set(VERSION_REGEX_PATCH_MATCH_EXAMPLES "\"0\", \"5\", \"999\"")
 
 # Matches the engine dev version postfix (".1-<#commits>-g<SHA1> <branch>")
-Set(VERSION_REGEX_DEV_POSTFIX "[.]1-(${D10}+)-g(${D16}${D16}${D16}${D16}${D16}${D16}${D16}${D16}?) ([^ ]+)")
+Set(VERSION_REGEX_DEV_POSTFIX "[.]1-(${D10}+)-g(${D16}+) ([^ ]+)")
 Set(VERSION_REGEX_DEV_POSTFIX_MATCH_EXAMPLES "\".1-13-g1234aaf develop\", \".1-1354-g1234567 release\"")
 
 
