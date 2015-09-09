@@ -142,6 +142,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(KillTeam);
 	REGISTER_LUA_CFUNC(AssignPlayerToTeam);
 	REGISTER_LUA_CFUNC(GameOver);
+	REGISTER_LUA_CFUNC(SetGlobalLos);
 
 	REGISTER_LUA_CFUNC(AddTeamResource);
 	REGISTER_LUA_CFUNC(UseTeamResource);
@@ -676,6 +677,20 @@ int LuaSyncedCtrl::GameOver(lua_State* L)
 	lua_pushnumber(L, winningAllyTeams.size());
 	return 1;
 }
+
+
+int LuaSyncedCtrl::SetGlobalLos(lua_State* L)
+{
+	const int allyTeam = luaL_checkint(L, 1);
+	if (!teamHandler->IsValidAllyTeam(allyTeam)) {
+		luaL_error(L, "bad allyTeam");
+	}
+
+	losHandler->globalLOS[allyTeam] = luaL_checkboolean(L, 2);
+	return 0;
+}
+
+
 
 
 int LuaSyncedCtrl::AddTeamResource(lua_State* L)

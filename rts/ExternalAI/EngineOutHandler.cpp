@@ -15,6 +15,7 @@
 #include "Game/Players/PlayerHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/Team.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
@@ -44,7 +45,7 @@ static inline bool IsUnitInLosOrRadarOfAllyTeam(const CUnit& unit, const int all
 	//     (thus UnitCreated will not produce EnemyCreated,
 	//     etc. without this, even when globalLOS is enabled
 	//     (for non-cheating AI's))
-	return (gs->globalLOS[allyTeamId] || (unit.losStatus[allyTeamId] & (LOS_INLOS | LOS_INRADAR)));
+	return (losHandler->globalLOS[allyTeamId] || (unit.losStatus[allyTeamId] & (LOS_INLOS | LOS_INRADAR)));
 }
 
 /////////////////////////////
