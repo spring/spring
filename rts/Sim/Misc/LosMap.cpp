@@ -14,6 +14,8 @@
 
 
 
+constexpr float LOS_BONUS_HEIGHT = 5.f;
+
 
 // Midpoint circle algorithm
 template<typename F>
@@ -402,8 +404,8 @@ void CLosMap::AddRaycast(SLosInstance* instance, int amount)
 
 
 
-#define MAP_SQUARE2(pos) (((pos).y << losHandler->los.mipLevel) * mapDims.mapx + ((pos).x << losHandler->los.mipLevel))
 #define MAP_SQUARE(pos) ((pos).y * size.x + (pos).x)
+#define MAP_SQUARE2(pos) (((pos).y << losHandler->los.mipLevel) * mapDims.mapx + ((pos).x << losHandler->los.mipLevel))
 
 
 void CLosMap::LosAdd(int2 pos, int radius, float baseHeight, std::vector<int>& squares)
@@ -424,60 +426,98 @@ void CLosMap::LosAdd(int2 pos, int radius, float baseHeight, std::vector<int>& s
 }
 
 
-void CLosMap::CastLos(std::vector<int>* squares, float* maxAng, const int2 pos, const int2 off, const float invR, float losHeight, std::vector<bool>& squaresMap, const int radius) const
+static float isqrt_lookup(unsigned r)
 {
-	const float* heightmap2 = readMap->GetCenterHeightMapSynced();
+	static std::vector<float> t(1, -1e8);
+
+	if (r >= t.size()) {
+		for (unsigned i=t.size(); i<=r; ++i)
+			t.push_back(math::isqrt2(i));
+	}
+
+	return t[r];
+}
+
+
+inline static size_t ToAngleMapIdx(const int2 p, const int radius)
+{
+	// [-radius, +radius]^2 -> [0, +2*radius]^2 -> idx
+	return (p.y + radius) * (2*radius + 1) + (p.x + radius);
+}
+
+
+
+void CLosMap::CastLos(std::vector<int>* squares, float* maxAng, const int2 pos, const int2 off, std::vector<bool>& squaresMap, std::vector<float>& anglesMap, const int radius) const
+{
+	const size_t oidx = ToAngleMapIdx(off, radius);
+	if ((anglesMap[oidx]) < *maxAng)
+		return;
+
+	const float invR = isqrt_lookup(off.x*off.x + off.y*off.y);
+	*maxAng = anglesMap[oidx] - LOS_BONUS_HEIGHT * invR; // remove bonusHeight from the cached maxHeight
+	if (squaresMap[oidx])
+		return;
 
 	const int idx = MAP_SQUARE(pos + off);
-	const int idx2 = MAP_SQUARE2(pos + off);
-	const float bonusHeight = 5.f * invR;
-
-	const float dh2 = heightmap2[idx2] - losHeight;
-	float ang2 = dh2 * invR;
-	if ((ang2 + bonusHeight) >= *maxAng) {
-		const int2 oi = off + int2(radius, radius);
-		if (!squaresMap[oi.y * (2*radius + 1) + oi.x]) {
-			squares->push_back(idx);
-			squaresMap[oi.y * (2*radius + 1) + oi.x] = true;
-		}
-		*maxAng = ang2;
-		return;
-	}
-
-	const float dh = heightmap[idx] - losHeight;
-	float ang = dh * invR;
-	if ((ang + bonusHeight) >= *maxAng) {
-		const int2 oi = off + int2(radius, radius);
-		if (!squaresMap[oi.y * (2*radius + 1) + oi.x]) {
-			squares->push_back(idx);
-			squaresMap[oi.y * (2*radius + 1) + oi.x] = true;
-		}
-		*maxAng = ang;
-	}
+	squaresMap[oidx] = true;
+	squares->push_back(idx);
 }
 
 
 void CLosMap::UnsafeLosAdd(int2 pos, int radius, float losHeight, std::vector<int>& squares)
 {
-	const size_t area = Square((2*radius)+1);
+	// How does it work?
+	// We spawn rays (those returned by CLosTables::GetForLosSize), and cast them on the
+	// heightmap. Meaning we compute the angle to the given squares and compare them with
+	// the highest cached one on that ray. When the new angle is higher the square is
+	// visible and gets added to the squares array.
+
+	const size_t area = Square((2*radius) + 1);
 	const LosTable& table = CLosTables::GetForLosSize(radius);
-	size_t neededSpace = squares.size() + 1;
-	for (const LosLine& line: table) {
-		neededSpace += line.size() * 4;
-	}
-	neededSpace = std::min(neededSpace, area);
-	squares.reserve(neededSpace);
+	squares.reserve(area);
 	std::vector<bool> squaresMap(area, false); // used to filter duplicates
+	std::vector<float> anglesMap(area, -1e8);
+
+
+	// Optimization: precalc all angles, cause:
+	// 1. Many squares are accessed by multiple rays. Imagine you got a 128 radius circle
+	//    then the center squares are accessed much more often than the circle border ones.
+	// 2. The heightmap is much bigger than the circle, and won't fit into the L2/L3. So
+	//    when we buffer the precalc in a vector just large enough for the processed data,
+	//    we reduce latter the amount of cache misses.
+	MidpointCircleAlgoPerLine(radius, [&](int width, int y) {
+		const unsigned y_ = pos.y + y;
+		const unsigned sx = pos.x - width;
+		const unsigned ex = pos.x + width + 1;
+
+		for (unsigned x_ = sx; x_ < ex; ++x_) {
+			const int2 wpos = int2(x_,y_);
+			const int2  off = int2(wpos.x - pos.x, y);
+
+			if (off == int2(0,0))
+				continue;
+
+			const float invR = isqrt_lookup(off.x*off.x + off.y*off.y);
+
+			const int idx = MAP_SQUARE(wpos);
+			const float dh = std::max(0.f, heightmap[idx]) - losHeight;
+			const size_t oidx = ToAngleMapIdx(off, radius);
+
+			assert(anglesMap[oidx] == -1e8);
+			anglesMap[oidx] = (dh + LOS_BONUS_HEIGHT) * invR;
+		}
+	});
+
+
+	// Cast the Rays
 	squares.push_back(MAP_SQUARE(pos));
 	for (const LosLine& line: table) {
 		float maxAng[4] = {-1e7, -1e7, -1e7, -1e7};
-
 		for (const int2& square: line) {
-			const float invR = math::isqrt2(square.x*square.x + square.y*square.y);
-			CastLos(&squares, &maxAng[0], pos, square,                    invR, losHeight, squaresMap, radius);
-			CastLos(&squares, &maxAng[1], pos, -square,                   invR, losHeight, squaresMap, radius);
-			CastLos(&squares, &maxAng[2], pos, int2(square.y, -square.x), invR, losHeight, squaresMap, radius);
-			CastLos(&squares, &maxAng[3], pos, int2(-square.y, square.x), invR, losHeight, squaresMap, radius);
+			CastLos(&squares, &maxAng[0], pos, square,                    squaresMap, anglesMap, radius);
+			CastLos(&squares, &maxAng[1], pos, -square,                   squaresMap, anglesMap, radius);
+			CastLos(&squares, &maxAng[2], pos, int2(square.y, -square.x), squaresMap, anglesMap, radius);
+			CastLos(&squares, &maxAng[3], pos, int2(-square.y, square.x), squaresMap, anglesMap, radius);
 		}
 	}
 }
@@ -485,38 +525,91 @@ void CLosMap::UnsafeLosAdd(int2 pos, int radius, float losHeight, std::vector<in
 
 void CLosMap::SafeLosAdd(int2 pos, int radius, float losHeight, std::vector<int>& squares)
 {
-	const size_t area = Square((2*radius)+1);
-	const LosTable& table = CLosTables::GetForLosSize(radius);
-	size_t neededSpace = squares.size() + 1;
-	for (const LosLine& line: table) {
-		neededSpace += line.size() * 4;
-	}
-	neededSpace = std::min(neededSpace, area);
-	squares.reserve(neededSpace);
-	std::vector<bool> squaresMap(area, false); // used to filter duplicates
+	// How does it work?
+	// see above
 
+	const size_t area = Square((2*radius) + 1);
+	const LosTable& table = CLosTables::GetForLosSize(radius);
+	squares.reserve(area);
+	std::vector<bool> squaresMap(area, false); // used to filter duplicates
+	std::vector<float> anglesMap(area, -1e8);
 	SRectangle safeRect(0, 0, size.x, size.y);
-	if (safeRect.Inside(pos)) {
+
+
+	// Optimization: precalc all angles
+	MidpointCircleAlgoPerLine(radius, [&](int width, int y) {
+		const unsigned y_ = pos.y + y;
+		if (y_ < size.y) {
+			const unsigned sx = Clamp(pos.x - width,     0, size.x);
+			const unsigned ex = Clamp(pos.x + width + 1, 0, size.x);
+
+			for (unsigned x_ = sx; x_ < ex; ++x_) {
+				const int2 wpos = int2(x_,y_);
+				const int2  off = int2(wpos.x - pos.x, y);
+
+				if (off == int2(0,0))
+					continue;
+
+				assert(safeRect.Inside(wpos));
+				const float invR = isqrt_lookup(off.x*off.x + off.y*off.y);
+
+				const int idx = MAP_SQUARE(wpos);
+				const float dh = std::max(0.f, heightmap[idx]) - losHeight;
+				const size_t oidx = ToAngleMapIdx(off, radius);
+
+				anglesMap[oidx] = (dh + LOS_BONUS_HEIGHT) * invR;
+			}
+		}
+	});
+
+
+	// Cast the Rays
+	bool emitPosInsideMap = safeRect.Inside(pos);
+	if (emitPosInsideMap) {
 		squares.push_back(MAP_SQUARE(pos));
 	}
+	if (emitPosInsideMap) {
+		for (const LosLine& line: table) {
+			float maxAng[4] = {-1e7, -1e7, -1e7, -1e7};
 
-	for (const LosLine& line: table) {
-		float maxAng[4] = {-1e7, -1e7, -1e7, -1e7};
+			for (const int2& square: line) {
+				if (!safeRect.Inside(pos + square))
+					break;
+				CastLos(&squares, &maxAng[0], pos, square,                    squaresMap, anglesMap, radius);
+			}
+			for (const int2& square: line) {
+				if (!safeRect.Inside(pos - square))
+					break;
+				CastLos(&squares, &maxAng[1], pos, -square,                   squaresMap, anglesMap, radius);
+			}
+			for (const int2& square: line) {
+				if (!safeRect.Inside(pos + int2(square.y, -square.x)))
+					break;
+				CastLos(&squares, &maxAng[2], pos, int2(square.y, -square.x), squaresMap, anglesMap, radius);
+			}
+			for (const int2& square: line) {
+				if (!safeRect.Inside(pos + int2(-square.y, square.x)))
+					break;
+				CastLos(&squares, &maxAng[3], pos, int2(-square.y, square.x), squaresMap, anglesMap, radius);
+			}
+		}
+	} else {
+		for (const LosLine& line: table) {
+			float maxAng[4] = {-1e7, -1e7, -1e7, -1e7};
 
-		for (const int2 square: line) {
-			const float invR = math::isqrt2(square.x*square.x + square.y*square.y);
-
-			if (safeRect.Inside(pos + square)) {
-				CastLos(&squares, &maxAng[0], pos, square,                    invR, losHeight, squaresMap, radius);
-			}
-			if (safeRect.Inside(pos - square)) {
-				CastLos(&squares, &maxAng[1], pos, -square,                   invR, losHeight, squaresMap, radius);
-			}
-			if (safeRect.Inside(pos + int2(square.y, -square.x))) {
-				CastLos(&squares, &maxAng[2], pos, int2(square.y, -square.x), invR, losHeight, squaresMap, radius);
-			}
-			if (safeRect.Inside(pos + int2(-square.y, square.x))) {
-				CastLos(&squares, &maxAng[3], pos, int2(-square.y, square.x), invR, losHeight, squaresMap, radius);
+			for (const int2& square: line) {
+				if (safeRect.Inside(pos + square)) {
+					CastLos(&squares, &maxAng[0], pos, square,                    squaresMap, anglesMap, radius);
+				}
+				if (safeRect.Inside(pos - square)) {
+					CastLos(&squares, &maxAng[1], pos, -square,                   squaresMap, anglesMap, radius);
+				}
+				if (safeRect.Inside(pos + int2(square.y, -square.x))) {
+					CastLos(&squares, &maxAng[2], pos, int2(square.y, -square.x), squaresMap, anglesMap, radius);
+				}
+				if (safeRect.Inside(pos + int2(-square.y, square.x))) {
+					CastLos(&squares, &maxAng[3], pos, int2(-square.y, square.x), squaresMap, anglesMap, radius);
+				}
 			}
 		}
 	}

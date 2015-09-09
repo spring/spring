@@ -49,7 +49,7 @@ private:
 	void UnsafeLosAdd(int2 pos, int radius, float baseHeight, std::vector<int>& squares);
 	void SafeLosAdd(int2 pos, int radius, float baseHeight, std::vector<int>& squares);
 
-	inline void CastLos(std::vector<int>* squares, float* maxAng, const int2 pos, const int2 off, const float invR, float losHeight, std::vector<bool>& squaresMap, const int radius) const;
+	inline void CastLos(std::vector<int>* squares, float* maxAng, const int2 pos, const int2 off, std::vector<bool>& squaresMap, std::vector<float>& anglesMap, const int radius) const;
 
 protected:
 	const int2 size;
