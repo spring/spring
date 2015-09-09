@@ -18,6 +18,7 @@
 #include "Lua/LuaRules.h"
 #include "Lua/LuaUI.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -104,18 +105,17 @@ public:
 		const std::string& args = action.GetArgs();
 		const unsigned int argAllyTeam = atoi(args.c_str());
 		const unsigned int maxAllyTeam = teamHandler->ActiveAllyTeams();
-		// const unsigned int maxAllyTeams = sizeof(gs->globalLOS) / sizeof(gs->globalLOS[0]);
 
 		if (args.empty()) {
 			for (unsigned int n = 0; n < maxAllyTeam; n++) {
-				gs->globalLOS[n] = !gs->globalLOS[n];
+				losHandler->globalLOS[n] = !losHandler->globalLOS[n];
 			}
 
 			LOG("[GlobalLosActionExecutor] global LOS toggled for all allyteams");
 			return true;
 		}
 		if (argAllyTeam < maxAllyTeam) {
-			gs->globalLOS[argAllyTeam] = !gs->globalLOS[argAllyTeam];
+			losHandler->globalLOS[argAllyTeam] = !losHandler->globalLOS[argAllyTeam];
 
 			LOG("[GlobalLosActionExecutor] global LOS toggled for allyteam %u", argAllyTeam);
 			return true;

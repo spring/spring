@@ -214,7 +214,7 @@ void CPathTexture::Update()
 	SColor* infoTexMem = reinterpret_cast<SColor*>(infoTexPBO.MapBuffer(offset * sizeof(SColor), (updateProcess - start) * texSize.x * sizeof(SColor)));
 
 	//FIXME make global func
-	const bool losFullView = ((gu->spectating && gu->spectatingFullView) || gs->globalLOS[gu->myAllyTeam]);
+	const bool losFullView = ((gu->spectating && gu->spectatingFullView) || losHandler->globalLOS[gu->myAllyTeam]);
 
 	if (ud != nullptr) {
 		for_mt(start, updateProcess, [&](const int y) {

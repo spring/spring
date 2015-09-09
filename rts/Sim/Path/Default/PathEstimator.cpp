@@ -766,42 +766,41 @@ bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::strin
 	IArchive& file(*pfile);
 
 	const unsigned fid = file.FindFile("pathinfo");
+	if (fid >= file.NumFiles())
+		return false;
 
-	if (fid < file.NumFiles()) {
-		pathChecksum = file.GetCrc32(fid);
+	pathChecksum = file.GetCrc32(fid);
 
-		std::vector<boost::uint8_t> buffer;
-		file.GetFile(fid, buffer);
+	std::vector<boost::uint8_t> buffer;
+	if (!file.GetFile(fid, buffer))
+		return false;
 
-		if (buffer.size() < 4)
-			return false;
+	if (buffer.size() < 4)
+		return false;
 
-		unsigned pos = 0;
-		unsigned filehash = *((unsigned*)&buffer[pos]);
-		pos += sizeof(unsigned);
-		if (filehash != hash)
-			return false;
+	unsigned pos = 0;
+	unsigned filehash = *((unsigned*)&buffer[pos]);
+	pos += sizeof(unsigned);
+	if (filehash != hash)
+		return false;
 
-		// Read block-center-offset data.
-		const unsigned blockSize = blockStates.GetSize() * sizeof(short2);
-		if (buffer.size() < pos + blockSize * moveDefHandler->GetNumMoveDefs())
-			return false;
+	// Read block-center-offset data.
+	const unsigned blockSize = blockStates.GetSize() * sizeof(short2);
+	if (buffer.size() < pos + blockSize * moveDefHandler->GetNumMoveDefs())
+		return false;
 
-		for (int pathType = 0; pathType < moveDefHandler->GetNumMoveDefs(); ++pathType) {
-			std::memcpy(&blockStates.peNodeOffsets[pathType][0], &buffer[pos], blockSize);
-			pos += blockSize;
-		}
-
-		// Read vertices data.
-		if (buffer.size() < pos + vertexCosts.size() * sizeof(float))
-			return false;
-		std::memcpy(&vertexCosts[0], &buffer[pos], vertexCosts.size() * sizeof(float));
-
-		// File read successful.
-		return true;
+	for (int pathType = 0; pathType < moveDefHandler->GetNumMoveDefs(); ++pathType) {
+		std::memcpy(&blockStates.peNodeOffsets[pathType][0], &buffer[pos], blockSize);
+		pos += blockSize;
 	}
 
-	return false;
+	// Read vertices data.
+	if (buffer.size() < pos + vertexCosts.size() * sizeof(float))
+		return false;
+	std::memcpy(&vertexCosts[0], &buffer[pos], vertexCosts.size() * sizeof(float));
+
+	// File read successful.
+	return true;
 }
 
 

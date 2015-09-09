@@ -366,7 +366,7 @@ bool CLegacyInfoTextureHandler::UpdateExtraTexture(BaseGroundDrawMode texDrawMod
 						int totalLos = 255;
 						int2 pos(x,y);
 
-						if (!gs->globalLOS[gu->myAllyTeam]) {
+						if (!losHandler->globalLOS[gu->myAllyTeam]) {
 							const int inLos = InterpolateLos(myLos,    losHandler->los.size, losMipLevel, 128, pos);
 							const int inAir = InterpolateLos(myAirLos, losHandler->airLos.size, airMipLevel, 127, pos);
 							totalLos = inLos + inAir;
