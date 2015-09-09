@@ -107,7 +107,7 @@ int Download(int ID, const std::string& filename, category cat)
 		}
 	}
 	int result;
-	printf("Download count: %d\n", count);
+	LOG_L(L_DEBUG, "Download count: %d", count);
 	// TODO: count will be 1 when archives already exist. We should instead return a different result with DownloadFailed/DownloadFinished?
 	if (count == 1) { // there's nothing to download
 		result = 2;
@@ -130,7 +130,7 @@ void StartDownload() {
 	category cat = downloadItem.cat;
 	const int ID = downloadItem.ID;
 	if (filename.c_str() != nullptr) {
-		printf("\n\nDOWNLOADING: %s\n\n", filename.c_str());
+		LOG_L(L_DEBUG, "DOWNLOADING: %s", filename.c_str());
 	}
 	std::thread {[ID, filename, cat]() {
 			int result = Download(ID, filename, cat);
