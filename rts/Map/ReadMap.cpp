@@ -314,14 +314,10 @@ unsigned int CReadMap::CalcHeightmapChecksum()
 		originalHeightMap[i] = heightmap[i];
 		if (heightmap[i] < initMinHeight) { initMinHeight = heightmap[i]; }
 		if (heightmap[i] > initMaxHeight) { initMaxHeight = heightmap[i]; }
-		checksum +=  (unsigned int) (heightmap[i] * 100);
-		checksum ^= *(unsigned int*) &heightmap[i];
+		checksum = HsiehHash(&heightmap[i], sizeof(heightmap[i]), checksum);
 	}
 
-	for (unsigned int a = 0; a < mapInfo->map.name.size(); ++a) {
-		checksum += mapInfo->map.name[a];
-		checksum *= mapInfo->map.name[a];
-	}
+	checksum = HsiehHash(mapInfo->map.name.c_str(), mapInfo->map.name.size(), checksum);
 
 	currMinHeight = initMinHeight;
 	currMaxHeight = initMaxHeight;

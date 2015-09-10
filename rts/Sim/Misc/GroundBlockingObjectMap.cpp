@@ -9,6 +9,7 @@
 #include "Sim/Objects/SolidObjectDef.h"
 #include "Sim/Path/IPathManager.h"
 #include "System/creg/STL_Map.h"
+#include "System/Sync/HsiehHash.h"
 
 CGroundBlockingObjectMap* groundBlockingObjectMap = NULL;
 
@@ -239,11 +240,11 @@ bool CGroundBlockingObjectMap::CanCloseYard(CSolidObject* yardUnit) const
 
 unsigned int CGroundBlockingObjectMap::CalcChecksum() const
 {
-	unsigned int checksum = 0;
-	for (int i = 0; i < groundBlockingMap.size(); ++i) {
+	unsigned int checksum = 666;
+
+	for (unsigned int i = 0; i < groundBlockingMap.size(); ++i) {
 		if (!groundBlockingMap[i].empty()) {
-			checksum ^= i;
-			checksum = (checksum << 1) | (checksum >> (sizeof(checksum) * 8 - 1));
+			checksum = HsiehHash(&i, sizeof(i), checksum);
 		}
 	}
 
