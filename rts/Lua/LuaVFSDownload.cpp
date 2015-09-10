@@ -73,9 +73,9 @@ bool LuaVFSDownload::PushEntries(lua_State* L)
 }
 
 struct DownloadItem {
+	int ID;
 	std::string filename;
 	category cat;
-	int ID;
 	DownloadItem(int ID, const std::string& filename, category& cat) : ID(ID), filename(filename), cat(cat) {
 	}
 };
