@@ -221,6 +221,7 @@ public:
 	} pfs;
 
 
+	//If this struct is changed, please fix CReadMap::CalcTypemapChecksum accordingly
 	struct TerrainType {
 		std::string name;
 		float hardness;

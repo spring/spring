@@ -21,6 +21,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Misc/RectangleOptimizer.h"
+#include "System/Sync/HsiehHash.h"
 
 #ifdef USE_UNSYNCED_HEIGHTMAP
 #include "Game/GlobalUnsynced.h"
@@ -324,6 +325,22 @@ unsigned int CReadMap::CalcHeightmapChecksum()
 
 	currMinHeight = initMinHeight;
 	currMaxHeight = initMaxHeight;
+
+	return checksum;
+}
+
+
+unsigned int CReadMap::CalcTypemapChecksum()
+{
+	unsigned int checksum = 0;
+	checksum = HsiehHash(&typeMap[0], typeMap.size() * sizeof(typeMap[0]), checksum);
+
+	for (unsigned int i = 0; i < CMapInfo::NUM_TERRAIN_TYPES; i++) {
+		const CMapInfo::TerrainType& tt = mapInfo->terrainTypes[i];
+
+		checksum = HsiehHash(tt.name.c_str(), tt.name.size(), checksum);
+		checksum = HsiehHash(&tt.hardness, offsetof(CMapInfo::TerrainType, receiveTracks) - offsetof(CMapInfo::TerrainType, hardness), checksum);
+	}
 
 	return checksum;
 }

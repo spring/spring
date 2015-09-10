@@ -246,6 +246,7 @@ public:
 
 	unsigned int GetMapChecksum() const { return mapChecksum; }
 	unsigned int CalcHeightmapChecksum();
+	unsigned int CalcTypemapChecksum();
 
 private:
 	void UpdateCenterHeightmap(const SRectangle& rect, bool initialize);

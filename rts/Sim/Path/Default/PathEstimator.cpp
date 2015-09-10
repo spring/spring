@@ -879,6 +879,7 @@ boost::uint32_t CPathEstimator::CalcChecksum() const
 unsigned int CPathEstimator::Hash() const
 {
 	return readMap->CalcHeightmapChecksum() +
+	       readMap->CalcTypemapChecksum() +
 	       moveDefHandler->GetCheckSum() +
 	       groundBlockingObjectMap->CalcChecksum() +
 	       BLOCK_SIZE + PATHESTIMATOR_VERSION;
