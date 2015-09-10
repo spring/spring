@@ -16,6 +16,7 @@
 #include "PathFlowMap.hpp"
 #include "PathLog.h"
 #include "Game/LoadScreen.h"
+#include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
@@ -874,9 +875,11 @@ boost::uint32_t CPathEstimator::CalcChecksum() const
 
 /**
  * Returns a hash-code identifying the dataset of this estimator.
- * FIXME: uses checksum of raw heightmap (before Lua has seen it)
  */
 unsigned int CPathEstimator::Hash() const
 {
-	return (readMap->GetMapChecksum() + moveDefHandler->GetCheckSum() + BLOCK_SIZE + PATHESTIMATOR_VERSION);
+	return readMap->CalcHeightmapChecksum() +
+	       moveDefHandler->GetCheckSum() +
+	       groundBlockingObjectMap->CalcChecksum() +
+	       BLOCK_SIZE + PATHESTIMATOR_VERSION;
 }

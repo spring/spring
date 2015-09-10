@@ -230,7 +230,22 @@ bool CGroundBlockingObjectMap::CanOpenYard(CSolidObject* yardUnit) const
 	return CheckYard(yardUnit, YARDMAP_YARDINV);
 }
 
+
 bool CGroundBlockingObjectMap::CanCloseYard(CSolidObject* yardUnit) const
 {
 	return CheckYard(yardUnit, YARDMAP_YARD);
+}
+
+
+unsigned int CGroundBlockingObjectMap::CalcChecksum() const
+{
+	unsigned int checksum = 0;
+	for (int i = 0; i < groundBlockingMap.size(); ++i) {
+		if (!groundBlockingMap[i].empty()) {
+			checksum ^= i;
+			checksum = (checksum << 1) | (checksum >> (sizeof(checksum) * 8 - 1));
+		}
+	}
+
+	return checksum;
 }

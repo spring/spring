@@ -293,7 +293,7 @@ void CReadMap::Initialize()
 		sharedSlopeMaps[1] = &slopeMap[0];
 	}
 
-	CalcHeightmapChecksum();
+	mapChecksum = CalcHeightmapChecksum();
 	UpdateHeightMapSynced(SRectangle(0, 0, mapDims.mapx, mapDims.mapy), true);
 
 	// FIXME can't call that yet cause sky & skyLight aren't created yet (crashes in SMFReadMap.cpp)
@@ -301,29 +301,31 @@ void CReadMap::Initialize()
 }
 
 
-void CReadMap::CalcHeightmapChecksum()
+unsigned int CReadMap::CalcHeightmapChecksum()
 {
 	const float* heightmap = GetCornerHeightMapSynced();
 
 	initMinHeight =  std::numeric_limits<float>::max();
 	initMaxHeight = -std::numeric_limits<float>::max();
 
-	mapChecksum = 0;
+	unsigned int checksum = 0;
 	for (int i = 0; i < (mapDims.mapxp1 * mapDims.mapyp1); ++i) {
 		originalHeightMap[i] = heightmap[i];
 		if (heightmap[i] < initMinHeight) { initMinHeight = heightmap[i]; }
 		if (heightmap[i] > initMaxHeight) { initMaxHeight = heightmap[i]; }
-		mapChecksum +=  (unsigned int) (heightmap[i] * 100);
-		mapChecksum ^= *(unsigned int*) &heightmap[i];
+		checksum +=  (unsigned int) (heightmap[i] * 100);
+		checksum ^= *(unsigned int*) &heightmap[i];
 	}
 
 	for (unsigned int a = 0; a < mapInfo->map.name.size(); ++a) {
-		mapChecksum += mapInfo->map.name[a];
-		mapChecksum *= mapInfo->map.name[a];
+		checksum += mapInfo->map.name[a];
+		checksum *= mapInfo->map.name[a];
 	}
 
 	currMinHeight = initMinHeight;
 	currMaxHeight = initMaxHeight;
+
+	return checksum;
 }
 
 
