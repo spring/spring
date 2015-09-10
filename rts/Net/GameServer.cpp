@@ -70,7 +70,7 @@ using boost::format;
 CONFIG(int, AutohostPort).defaultValue(0);
 CONFIG(int, SpeedControl).defaultValue(1).minimumValue(1).maximumValue(2)
 	.description("Sets how server adjusts speed according to player's load (CPU), 1: use average, 2: use highest");
-CONFIG(bool, AllowSpectatorJoin).defaultValue(false).description("allow any unauthenticated clients to join as spectator with any unchecked name, thus permitting impersonation");
+CONFIG(bool, AllowSpectatorJoin).defaultValue(true).description("allow any unauthenticated clients to join as spectator with any unchecked name, thus permitting impersonation");
 CONFIG(bool, WhiteListAdditionalPlayers).defaultValue(true);
 CONFIG(bool, ServerRecordDemos).defaultValue(false).dedicatedValue(true);
 CONFIG(bool, ServerLogInfoMessages).defaultValue(false);
