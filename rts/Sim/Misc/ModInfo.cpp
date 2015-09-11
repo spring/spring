@@ -241,9 +241,9 @@ void CModInfo::Init(const char* modArchive)
 
 		// airLosMipLevel doesn't have such restrictions, it's just used in various
 		// bitshifts with signed integers
-		airMipLevel = los.GetInt("airMipLevel", 2);
+		airMipLevel = los.GetInt("airMipLevel", 1);
 
-		radarMipLevel = los.GetInt("radarMipLevel", 3);
+		radarMipLevel = los.GetInt("radarMipLevel", 2);
 
 		if ((losMipLevel < 0) || (losMipLevel > 6)) {
 			throw content_error("Sensors\\Los\\LosMipLevel out of bounds. "
