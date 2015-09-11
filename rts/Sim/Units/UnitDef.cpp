@@ -295,15 +295,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	cobID = udTable.GetInt("cobID", -1);
 
-	losRadius = udTable.GetFloat("sightDistance", 0.0f) * modInfo.losMul / (SQUARE_SIZE * (1 << modInfo.losMipLevel));
-	airLosRadius = udTable.GetFloat("airSightDistance", -1.0f);
-	if (airLosRadius == -1.0f) {
-		airLosRadius = udTable.GetFloat("sightDistance", 0.0f) * modInfo.airLosMul * 1.5f / (SQUARE_SIZE * (1 << modInfo.airMipLevel));
-	} else {
-		airLosRadius = airLosRadius * modInfo.airLosMul / (SQUARE_SIZE * (1 << modInfo.airMipLevel));
-	}
-
-
 	buildRange3D = udTable.GetBool("buildRange3D", false);
 	// 128.0f is the ancient default
 	buildDistance = udTable.GetFloat("buildDistance", 128.0f);
@@ -395,6 +386,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	losHeight = udTable.GetFloat("losEmitHeight", 20.0f);
 	radarHeight = udTable.GetFloat("radarEmitHeight", losHeight);
 
+	losRadius = udTable.GetFloat("sightDistance", 0.0f);
+	airLosRadius = udTable.GetFloat("airSightDistance", 1.5f * losRadius);
 	radarRadius    = udTable.GetInt("radarDistance",    0);
 	sonarRadius    = udTable.GetInt("sonarDistance",    0);
 	jammerRadius   = udTable.GetInt("radarDistanceJam", 0);

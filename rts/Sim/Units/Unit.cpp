@@ -358,12 +358,11 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	// sensor parameters
 	realLosRadius = int(unitDef->losRadius);
 	realAirLosRadius = int(unitDef->airLosRadius);
-
-	radarRadius      = unitDef->radarRadius    / (SQUARE_SIZE * 8);
-	sonarRadius      = unitDef->sonarRadius    / (SQUARE_SIZE * 8);
-	jammerRadius     = unitDef->jammerRadius   / (SQUARE_SIZE * 8);
-	sonarJamRadius   = unitDef->sonarJamRadius / (SQUARE_SIZE * 8);
-	seismicRadius    = unitDef->seismicRadius  / (SQUARE_SIZE * 8);
+	radarRadius      = unitDef->radarRadius;
+	sonarRadius      = unitDef->sonarRadius;
+	jammerRadius     = unitDef->jammerRadius;
+	sonarJamRadius   = unitDef->sonarJamRadius;
+	seismicRadius    = unitDef->seismicRadius;
 	seismicSignature = unitDef->seismicSignature;
 	stealth = unitDef->stealth;
 	sonarStealth = unitDef->sonarStealth;

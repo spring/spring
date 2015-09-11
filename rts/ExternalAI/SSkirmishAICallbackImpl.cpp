@@ -1700,14 +1700,6 @@ EXPORT(int) skirmishAiCallback_Mod_getAirMipLevel(int skirmishAIId) {
 	return modInfo.airMipLevel;
 }
 
-EXPORT(float) skirmishAiCallback_Mod_getLosMul(int skirmishAIId) {
-	return modInfo.losMul;
-}
-
-EXPORT(float) skirmishAiCallback_Mod_getAirLosMul(int skirmishAIId) {
-	return modInfo.airLosMul;
-}
-
 EXPORT(bool) skirmishAiCallback_Mod_getRequireSonarUnderWater(int skirmishAIId) {
 	return modInfo.requireSonarUnderWater;
 }
@@ -5433,8 +5425,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Mod_getFlankingBonusModeDefault = &skirmishAiCallback_Mod_getFlankingBonusModeDefault;
 	callback->Mod_getLosMipLevel = &skirmishAiCallback_Mod_getLosMipLevel;
 	callback->Mod_getAirMipLevel = &skirmishAiCallback_Mod_getAirMipLevel;
-	callback->Mod_getLosMul = &skirmishAiCallback_Mod_getLosMul;
-	callback->Mod_getAirLosMul = &skirmishAiCallback_Mod_getAirLosMul;
 	callback->Mod_getRequireSonarUnderWater = &skirmishAiCallback_Mod_getRequireSonarUnderWater;
 	callback->Map_getChecksum = &skirmishAiCallback_Map_getChecksum;
 	callback->Map_getStartPos = &skirmishAiCallback_Map_getStartPos;
