@@ -3,12 +3,15 @@
 import os, subprocess
 import prepare
 
-if not "MINGWLIBS_PATH" in os.environ:
+MINGWLIBS_PATH=""
+if "MINGWLIBS_PATH" in os.environ:
+	MINGWLIBS_PATH = os.environ["MINGWLIBS_PATH"]
 	print('MINGWLIBS_PATH not set')
-	exit(1)
+else:
+	MINGWLIBS_PATH = 'vclibs'
 
+assert(len(MINGWLIBS_PATH) > 0)
 
-MINGWLIBS_PATH = os.environ["MINGWLIBS_PATH"]
 if not os.path.isdir(MINGWLIBS_PATH):
 	print("cloning mingwlibs git-repo...")
 	subprocess.call(["git", "clone", "git://github.com/spring/vclibs14.git", MINGWLIBS_PATH])
