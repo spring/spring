@@ -3,18 +3,20 @@
 import prepare
 import os, subprocess, sys
 
-BUILDDIR=os.environ['BUILDDIR']
-CMAKEPARAM=os.environ['CMAKEPARAM']
+
+CMAKEPARAM=[]
+if 'CMAKEPARAM' in os.environ:
+	CMAKEPARAM=os.environ['CMAKEPARAM'].split(" ")
 
 
-print("Creating BUILDDIR: %s" %(BUILDDIR))
-if not os.path.isdir(BUILDDIR):
-	os.makedirs(BUILDDIR)
+print("Creating BUILDDIR: %s" %(prepare.BUILDDIR))
+if not os.path.isdir(prepare.BUILDDIR):
+	os.makedirs(prepare.BUILDDIR)
 
-print("configuring %s with %s %s ..." %(prepare.SOURCEDIR, CMAKEPARAM, sys.argv[3:]))
+print("configuring %s with %s ..." %(prepare.SOURCEDIR, CMAKEPARAM + sys.argv[3:]))
 
-os.chdir(BUILDDIR)
-subprocess.call(['cmake', CMAKEPARAM ] + sys.argv[3:] + [prepare.SOURCEDIR])
+os.chdir(prepare.BUILDDIR)
+subprocess.call(['cmake'] + CMAKEPARAM + sys.argv[3:] + [prepare.SOURCEDIR])
 
 print("erasing old base content...")
 if os.path.isdir("base"):
