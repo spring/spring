@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import prepare
-import os, subprocess, sys
+import os, subprocess, sys, shutil
 
 
 CMAKEPARAM=[]
@@ -13,14 +13,12 @@ print("Creating BUILDDIR: %s" %(prepare.BUILDDIR))
 if not os.path.isdir(prepare.BUILDDIR):
 	os.makedirs(prepare.BUILDDIR)
 
-print("configuring %s with %s ..." %(prepare.SOURCEDIR, CMAKEPARAM + sys.argv[3:]))
+basedir = os.path.join(prepare.BUILDDIR, 'base')
+if os.path.isdir(basedir):
+	print("erasing old base content... %s" %(basedir))
+	shutil.rmtree(basedir)
 
-os.chdir(prepare.BUILDDIR)
-subprocess.call(['cmake'] + CMAKEPARAM + sys.argv[3:] + [prepare.SOURCEDIR])
-
-print("erasing old base content...")
-if os.path.isdir("base"):
-	os.removedirs("base")
-
-subprocess.call([prepare.MAKE, "generateSources"])
+print("configuring %s with %s in %s" %(prepare.SOURCEDIR, CMAKEPARAM + sys.argv[3:], prepare.BUILDDIR))
+subprocess.call(['cmake'] + CMAKEPARAM + sys.argv[3:] + [prepare.SOURCEDIR], cwd=prepare.BUILDDIR)
+subprocess.call([prepare.MAKE, "generateSources"], cwd=prepare.BUILDDIR)
 
