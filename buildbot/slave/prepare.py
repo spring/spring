@@ -32,7 +32,10 @@ REV=subprocess.check_output(["git", "describe", "--tags"]).strip()
 SOURCEDIR=os.getcwd()
 BUILDDIR=os.path.join(os.getcwd(), "build", CONFIG)
 TMP_BASE=os.path.join(tempfile.gettempdir(), "spring")
-TMP_PATH=os.path.join(TMP_BASE, CONFIG, BRANCH, REV, os.environ['OUTPUTDIR'])
+TMP_PATH=os.path.join(TMP_BASE, CONFIG, BRANCH, REV)
+
+if 'OUTPUTDIR' in os.environ:
+	TMP_PATH=os.path.join(TMP_PATH, os.environ['OUTPUTDIR'])
 
 if CONFIG == "default":
    CONFIG_=''
