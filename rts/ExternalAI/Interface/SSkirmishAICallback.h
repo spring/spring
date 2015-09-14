@@ -1670,16 +1670,6 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *Mod_getAirMipLevel)(int skirmishAIId);
 
 	/**
-	 * units sightdistance will be multiplied with this, for testing purposes
-	 */
-	float             (CALLING_CONV *Mod_getLosMul)(int skirmishAIId);
-
-	/**
-	 * units airsightdistance will be multiplied with this, for testing purposes
-	 */
-	float             (CALLING_CONV *Mod_getAirLosMul)(int skirmishAIId);
-
-	/**
 	 * when underwater, units are not in LOS unless also in sonar
 	 */
 	bool              (CALLING_CONV *Mod_getRequireSonarUnderWater)(int skirmishAIId);

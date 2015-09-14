@@ -25,6 +25,7 @@ CR_REG_METADATA(CLosHandler,(
 	CR_IGNORED(order),
 	CR_IGNORED(synced_),
 
+	CR_MEMBER(globalLOS),
 	CR_IGNORED(los),
 	CR_IGNORED(airLos),
 	CR_IGNORED(radar),
@@ -90,13 +91,13 @@ ILosType::~ILosType()
 float ILosType::GetRadius(const CUnit* unit) const
 {
 	switch (type) {
-		case LOS_TYPE_LOS:          return unit->losRadius;
-		case LOS_TYPE_AIRLOS:       return unit->airLosRadius;
-		case LOS_TYPE_RADAR:        return unit->radarRadius;
-		case LOS_TYPE_SONAR:        return unit->sonarRadius;
-		case LOS_TYPE_JAMMER:       return unit->jammerRadius;
-		case LOS_TYPE_SEISMIC:      return unit->seismicRadius;
-		case LOS_TYPE_SONAR_JAMMER: return unit->sonarJamRadius;
+		case LOS_TYPE_LOS:          return (unit->losRadius      / SQUARE_SIZE) >> mipLevel;
+		case LOS_TYPE_AIRLOS:       return (unit->airLosRadius   / SQUARE_SIZE) >> mipLevel;
+		case LOS_TYPE_RADAR:        return (unit->radarRadius    / SQUARE_SIZE) >> mipLevel;
+		case LOS_TYPE_SONAR:        return (unit->sonarRadius    / SQUARE_SIZE) >> mipLevel;
+		case LOS_TYPE_JAMMER:       return (unit->jammerRadius   / SQUARE_SIZE) >> mipLevel;
+		case LOS_TYPE_SEISMIC:      return (unit->seismicRadius  / SQUARE_SIZE) >> mipLevel;
+		case LOS_TYPE_SONAR_JAMMER: return (unit->sonarJamRadius / SQUARE_SIZE) >> mipLevel;
 		case LOS_TYPE_COUNT:        break; //make the compiler happy
 	}
 	assert(false);
@@ -123,7 +124,7 @@ void ILosType::MoveUnit(CUnit* unit)
 	// any units that changed position between enabling and disabling of
 	// globalLOS and *stopped moving* will still provide LOS at their old
 	// square *after* it is disabled (until they start moving again)
-	if (gs->globalLOS[unit->allyteam])
+	if (losHandler->globalLOS[unit->allyteam])
 		return;
 	if (unit->isDead || unit->transporter != nullptr)
 		return;
@@ -417,6 +418,7 @@ CLosHandler* losHandler;
 CLosHandler::CLosHandler()
 	: CEventClient("[CLosHandler]", 271993, true)
 
+	, globalLOS{false}
 	, los(modInfo.losMipLevel, ILosType::LOS_TYPE_LOS)
 	, airLos(modInfo.airMipLevel, ILosType::LOS_TYPE_AIRLOS)
 	, radar(modInfo.radarMipLevel, ILosType::LOS_TYPE_RADAR)
@@ -514,7 +516,7 @@ bool CLosHandler::InLos(const CUnit* unit, int allyTeam) const
 	}
 
 	// isCloaked always overrides globalLOS
-	if (gs->globalLOS[allyTeam])
+	if (globalLOS[allyTeam])
 		return true;
 	if (unit->useAirLos)
 		return (InAirLos(unit->pos, allyTeam) || InAirLos(unit->pos + unit->speed, allyTeam));

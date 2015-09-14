@@ -1664,7 +1664,7 @@ void CMobileCAI::UnloadUnits_Drop(Command& c)
 	if (canUnload) {
 		auto ti = transportees.begin();
 		auto di = dropSpots.rbegin();
-		for (;ti != transportees.end(), di != dropSpots.rend(); ++ti, ++di) {
+		for (;ti != transportees.end() && di != dropSpots.rend(); ++ti, ++di) {
 			Command c2(CMD_UNLOAD_UNIT, c.options | INTERNAL_ORDER, *di);
 			commandQue.push_front(c2);
 		}

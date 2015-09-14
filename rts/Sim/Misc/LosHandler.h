@@ -178,7 +178,7 @@ public:
 	bool InLos(const CUnit* unit, int allyTeam) const;
 
 	bool InLos(const CWorldObject* obj, int allyTeam) const {
-		if (obj->alwaysVisible || gs->globalLOS[allyTeam])
+		if (obj->alwaysVisible || globalLOS[allyTeam])
 			return true;
 		if (obj->useAirLos)
 			return (InAirLos(obj->pos, allyTeam) || InAirLos(obj->pos + obj->speed, allyTeam));
@@ -190,13 +190,13 @@ public:
 	}
 
 	bool InLos(const float3 pos, int allyTeam) const {
-		if (gs->globalLOS[allyTeam])
+		if (globalLOS[allyTeam])
 			return true;
 		return los.InSight(pos, allyTeam);
 	}
 
 	bool InAirLos(const float3 pos, int allyTeam) const {
-		if (gs->globalLOS[allyTeam])
+		if (globalLOS[allyTeam])
 			return true;
 		return airLos.InSight(pos, allyTeam);
 	}
@@ -247,6 +247,14 @@ public:
 	void UpdateHeightMapSynced(SRectangle rect);
 
 public:
+	/**
+	* @brief global line-of-sight
+	*
+	* Whether everything on the map is visible at all times to a given ALLYteam
+	* There can never be more allyteams than teams, hence the size is MAX_TEAMS
+	*/
+	bool globalLOS[MAX_TEAMS];
+
 	ILosType los;
 	ILosType airLos;
 	ILosType radar;

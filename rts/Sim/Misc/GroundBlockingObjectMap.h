@@ -50,6 +50,8 @@ public:
 		return groundBlockingMap[mapSquare];
 	}
 
+	unsigned int CalcChecksum() const;
+
 private:
 	bool CheckYard(CSolidObject* yardUnit, const YardMapStatus& mask) const;
 

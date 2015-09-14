@@ -22,9 +22,7 @@
 extern "C" {
 #endif
 
-#ifndef _MSC_VER
-	#include <stdbool.h>
-#endif
+#include <stdbool.h>
 
 // BEGINN: String realated functions
 

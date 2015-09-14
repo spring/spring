@@ -21,6 +21,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Misc/RectangleOptimizer.h"
+#include "System/Sync/HsiehHash.h"
 
 #ifdef USE_UNSYNCED_HEIGHTMAP
 #include "Game/GlobalUnsynced.h"
@@ -293,7 +294,7 @@ void CReadMap::Initialize()
 		sharedSlopeMaps[1] = &slopeMap[0];
 	}
 
-	CalcHeightmapChecksum();
+	mapChecksum = CalcHeightmapChecksum();
 	UpdateHeightMapSynced(SRectangle(0, 0, mapDims.mapx, mapDims.mapy), true);
 
 	// FIXME can't call that yet cause sky & skyLight aren't created yet (crashes in SMFReadMap.cpp)
@@ -301,29 +302,43 @@ void CReadMap::Initialize()
 }
 
 
-void CReadMap::CalcHeightmapChecksum()
+unsigned int CReadMap::CalcHeightmapChecksum()
 {
 	const float* heightmap = GetCornerHeightMapSynced();
 
 	initMinHeight =  std::numeric_limits<float>::max();
 	initMaxHeight = -std::numeric_limits<float>::max();
 
-	mapChecksum = 0;
+	unsigned int checksum = 0;
 	for (int i = 0; i < (mapDims.mapxp1 * mapDims.mapyp1); ++i) {
 		originalHeightMap[i] = heightmap[i];
 		if (heightmap[i] < initMinHeight) { initMinHeight = heightmap[i]; }
 		if (heightmap[i] > initMaxHeight) { initMaxHeight = heightmap[i]; }
-		mapChecksum +=  (unsigned int) (heightmap[i] * 100);
-		mapChecksum ^= *(unsigned int*) &heightmap[i];
+		checksum = HsiehHash(&heightmap[i], sizeof(heightmap[i]), checksum);
 	}
 
-	for (unsigned int a = 0; a < mapInfo->map.name.size(); ++a) {
-		mapChecksum += mapInfo->map.name[a];
-		mapChecksum *= mapInfo->map.name[a];
-	}
+	checksum = HsiehHash(mapInfo->map.name.c_str(), mapInfo->map.name.size(), checksum);
 
 	currMinHeight = initMinHeight;
 	currMaxHeight = initMaxHeight;
+
+	return checksum;
+}
+
+
+unsigned int CReadMap::CalcTypemapChecksum()
+{
+	unsigned int checksum = 0;
+	checksum = HsiehHash(&typeMap[0], typeMap.size() * sizeof(typeMap[0]), checksum);
+
+	for (unsigned int i = 0; i < CMapInfo::NUM_TERRAIN_TYPES; i++) {
+		const CMapInfo::TerrainType& tt = mapInfo->terrainTypes[i];
+
+		checksum = HsiehHash(tt.name.c_str(), tt.name.size(), checksum);
+		checksum = HsiehHash(&tt.hardness, offsetof(CMapInfo::TerrainType, receiveTracks) - offsetof(CMapInfo::TerrainType, hardness), checksum);
+	}
+
+	return checksum;
 }
 
 
