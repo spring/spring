@@ -13,11 +13,7 @@
 
 #if       !defined __cplusplus && !defined bool
 /* include the bool type (defines: bool, true, false) */
-#if defined _MSC_VER
-#include "System/booldefines.h"
-#else
 #include <stdbool.h>
-#endif
 #endif /* !defined __cplusplus && !defined bool */
 
 /* define if we have a X11 enviroment (:= linux/freebsd) */

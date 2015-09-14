@@ -74,8 +74,6 @@ void CModInfo::ResetState()
 	losMipLevel = 0;
 	airMipLevel = 0;
 	radarMipLevel = 0;
-	losMul      = 1.0f;
-	airLosMul   = 1.0f;
 
 	requireSonarUnderWater = true;
 
@@ -240,14 +238,12 @@ void CModInfo::Init(const char* modArchive)
 		// losMipLevel is used as index to readMap->mipHeightmaps,
 		// so the max value is CReadMap::numHeightMipMaps - 1
 		losMipLevel = los.GetInt("losMipLevel", 1);
-		losMul = los.GetFloat("losMul", 1.0f);
 
 		// airLosMipLevel doesn't have such restrictions, it's just used in various
 		// bitshifts with signed integers
-		airMipLevel = los.GetInt("airMipLevel", 2);
-		airLosMul = los.GetFloat("airLosMul", 1.0f);
+		airMipLevel = los.GetInt("airMipLevel", 1);
 
-		radarMipLevel = los.GetInt("radarMipLevel", 3);
+		radarMipLevel = los.GetInt("radarMipLevel", 2);
 
 		if ((losMipLevel < 0) || (losMipLevel > 6)) {
 			throw content_error("Sensors\\Los\\LosMipLevel out of bounds. "

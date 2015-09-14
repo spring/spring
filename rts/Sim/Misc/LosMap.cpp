@@ -405,14 +405,21 @@ void CLosMap::AddRaycast(SLosInstance* instance, int amount)
 
 
 #define MAP_SQUARE(pos) ((pos).y * size.x + (pos).x)
-#define MAP_SQUARE2(pos) (((pos).y << losHandler->los.mipLevel) * mapDims.mapx + ((pos).x << losHandler->los.mipLevel))
 
 
 void CLosMap::LosAdd(int2 pos, int radius, float baseHeight, std::vector<int>& squares)
 {
+	auto MAP_SQUARE_FULLRES = [&](int2 pos) {
+		float2 fpos = pos;
+		fpos += 0.5f;
+		fpos /= float2(size);
+		int2 ipos = fpos * float2(mapDims.mapx, mapDims.mapy);
+		return ipos.y * mapDims.mapx + ipos.x;
+	};
+
 	assert(radius > 0);
 	const float* heightmapFull = readMap->GetCenterHeightMapSynced();
-	if (SRectangle(0,0,size.x,size.y).Inside(pos) && baseHeight <= heightmapFull[MAP_SQUARE2(pos)]) { return; }
+	if (SRectangle(0,0,size.x,size.y).Inside(pos) && baseHeight <= heightmapFull[MAP_SQUARE_FULLRES(pos)]) { return; }
 
 	// add all squares that are in the los radius
 	SRectangle safeRect(radius, radius, size.x - radius, size.y - radius);
@@ -449,15 +456,16 @@ inline static size_t ToAngleMapIdx(const int2 p, const int radius)
 
 void CLosMap::CastLos(std::vector<int>* squares, float* maxAng, const int2 pos, const int2 off, std::vector<bool>& squaresMap, std::vector<float>& anglesMap, const int radius) const
 {
+	// check if we got a new maxAngle
 	const size_t oidx = ToAngleMapIdx(off, radius);
 	if ((anglesMap[oidx]) < *maxAng)
 		return;
-
 	const float invR = isqrt_lookup(off.x*off.x + off.y*off.y);
-	*maxAng = anglesMap[oidx] - LOS_BONUS_HEIGHT * invR; // remove bonusHeight from the cached maxHeight
+	*maxAng = anglesMap[oidx] - LOS_BONUS_HEIGHT * invR; // remove bonusHeight for the cached maxHeight
+
+	// add square to visibility list when not already done
 	if (squaresMap[oidx])
 		return;
-
 	const int idx = MAP_SQUARE(pos + off);
 	squaresMap[oidx] = true;
 	squares->push_back(idx);

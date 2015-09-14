@@ -126,7 +126,6 @@ protected:
 
 	/// called by implementations of CReadMap
 	void Initialize();
-	void CalcHeightmapChecksum();
 
 	virtual void UpdateHeightMapUnsynced(const SRectangle&) = 0;
 
@@ -246,6 +245,8 @@ public:
 	bool HasOnlyVoidWater() const;
 
 	unsigned int GetMapChecksum() const { return mapChecksum; }
+	unsigned int CalcHeightmapChecksum();
+	unsigned int CalcTypemapChecksum();
 
 private:
 	void UpdateCenterHeightmap(const SRectangle& rect, bool initialize);

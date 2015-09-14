@@ -139,4 +139,4 @@ progress.make
 *.vcxproj
 *.vcxproj.filters
 *.vcxproj.user
-
+*.pyc

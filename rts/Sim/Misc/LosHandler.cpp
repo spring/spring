@@ -91,13 +91,13 @@ ILosType::~ILosType()
 float ILosType::GetRadius(const CUnit* unit) const
 {
 	switch (type) {
-		case LOS_TYPE_LOS:          return unit->losRadius;
-		case LOS_TYPE_AIRLOS:       return unit->airLosRadius;
-		case LOS_TYPE_RADAR:        return unit->radarRadius;
-		case LOS_TYPE_SONAR:        return unit->sonarRadius;
-		case LOS_TYPE_JAMMER:       return unit->jammerRadius;
-		case LOS_TYPE_SEISMIC:      return unit->seismicRadius;
-		case LOS_TYPE_SONAR_JAMMER: return unit->sonarJamRadius;
+		case LOS_TYPE_LOS:          return (unit->losRadius      / SQUARE_SIZE) >> mipLevel;
+		case LOS_TYPE_AIRLOS:       return (unit->airLosRadius   / SQUARE_SIZE) >> mipLevel;
+		case LOS_TYPE_RADAR:        return (unit->radarRadius    / SQUARE_SIZE) >> mipLevel;
+		case LOS_TYPE_SONAR:        return (unit->sonarRadius    / SQUARE_SIZE) >> mipLevel;
+		case LOS_TYPE_JAMMER:       return (unit->jammerRadius   / SQUARE_SIZE) >> mipLevel;
+		case LOS_TYPE_SEISMIC:      return (unit->seismicRadius  / SQUARE_SIZE) >> mipLevel;
+		case LOS_TYPE_SONAR_JAMMER: return (unit->sonarJamRadius / SQUARE_SIZE) >> mipLevel;
 		case LOS_TYPE_COUNT:        break; //make the compiler happy
 	}
 	assert(false);

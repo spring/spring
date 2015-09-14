@@ -115,7 +115,7 @@ void CVertexArray::AddVertexQ2dT(float x, float y, float tx, float ty) {
 }
 
 void CVertexArray::AddVertexQ2dTC(float x, float y, float tx, float ty, const unsigned char* c) {
-	ASSERT_SIZE(VA_SIZE_2DT)
+	ASSERT_SIZE(VA_SIZE_2DTC)
 	VA_TYPE_2dTC* vat = GetTypedVertexArrayQ<VA_TYPE_2dTC>(1);
 	vat->x = x;
 	vat->y = y;

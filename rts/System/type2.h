@@ -12,6 +12,7 @@ template<typename t> struct type2 {
 
 	type2<t>(): x(t(0)), y(t(0)) {}
 	type2<t>(const t nx, const t ny) : x(nx), y(ny) {}
+	template<typename T2> type2<t>(const T2 v) : x(v.x), y(v.y) {}
 
 	bool operator == (const type2<t>& v) const { return (x == v.x) && (y == v.y); }
 	bool operator != (const type2<t>& v) const { return (x != v.x) || (y != v.y); }
@@ -25,10 +26,14 @@ template<typename t> struct type2 {
 	type2<t> operator * (const type2<t>& v) const { return (type2<t>(x * v.x, y * v.y)); }
 	type2<t> operator * (const t& i) const        { return (type2<t>(x * i  , y * i  )); }
 
+	type2<t>& operator += (const t& i) { x += i; y += i; return *this; }
 	type2<t>& operator += (const type2<t>& v) { x += v.x; y += v.y; return *this; }
+	type2<t>& operator -= (const t& i) { x -= i; y -= i; return *this; }
 	type2<t>& operator -= (const type2<t>& v) { x -= v.x; y -= v.y; return *this; }
 	type2<t>& operator *= (const t& i) { x *= i; y *= i; return *this; }
+	type2<t>& operator *= (const type2<t>& v) { x *= v.x; y *= v.y; return *this; }
 	type2<t>& operator /= (const t& i) { x /= i; y /= i; return *this; }
+	type2<t>& operator /= (const type2<t>& v) { x /= v.x; y /= v.y; return *this; }
 
 	t distance(const type2<t>& f) const {
 		const t dx = x - f.x;

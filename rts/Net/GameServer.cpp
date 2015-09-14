@@ -70,7 +70,7 @@ using boost::format;
 CONFIG(int, AutohostPort).defaultValue(0);
 CONFIG(int, SpeedControl).defaultValue(1).minimumValue(1).maximumValue(2)
 	.description("Sets how server adjusts speed according to player's load (CPU), 1: use average, 2: use highest");
-CONFIG(bool, AllowSpectatorJoin).defaultValue(true);
+CONFIG(bool, AllowSpectatorJoin).defaultValue(true).description("allow any unauthenticated clients to join as spectator with any name, name will be prefixed with ~");
 CONFIG(bool, WhiteListAdditionalPlayers).defaultValue(true);
 CONFIG(bool, ServerRecordDemos).defaultValue(false).dedicatedValue(true);
 CONFIG(bool, ServerLogInfoMessages).defaultValue(false);
@@ -356,7 +356,7 @@ void CGameServer::StripGameSetupText(const GameData* newGameData)
 {
 	// modify and save GameSetup text (remove passwords)
 	TdfParser parser((newGameData->GetSetupText()).c_str(), (newGameData->GetSetupText()).length());
-	TdfParser::TdfSection* rootSec = parser.GetRootSection();
+	TdfParser::TdfSection* rootSec = parser.GetRootSection()->sections["game"];
 
 	for (TdfParser::sectionsMap_t::iterator it = rootSec->sections.begin(); it != rootSec->sections.end(); ++it) {
 		const std::string& sectionKey = StringToLower(it->first);
@@ -2625,6 +2625,9 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 
 	// not found in the original start script, allow spector join?
 	if (errmsg.empty() && newPlayerNumber >= players.size()) {
+		if (!demoReader && allowSpecJoin) { //add prefix to "anonymous" spectators (#4949)
+			name = std::string("~") + name;
+		}
 		if (demoReader || allowSpecJoin)
 			AddAdditionalUser(name, passwd);
 		else
