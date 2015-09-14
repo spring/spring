@@ -120,11 +120,10 @@ else  (UNIX AND NOT MINGW)
 	endif (NOT EXISTS "${MINGWLIBS}" OR NOT IS_DIRECTORY "${MINGWLIBS}")
 
 	set(CMAKE_PREFIX_PATH ${MINGWLIBS})
-	if   (MSVC)
-		add_definitions(-D_WIN32_WINNT=0x502) ## vista is minimum due to InterlockedIncrement64
-	else (MSVC)
-		add_definitions(-D_WIN32_WINNT=0x500) ## win2k is minimum
-	endif(MSVC)
+	add_definitions(-D_WIN32_WINNT=0x502) ## vista is minimum due to InterlockedIncrement64
+
+	include_directories(${MINGWLIBS}/include)
+	set(CMAKE_LIBRARY_PATH ${MINGWLIBS}/dll)
 
 	# some cross-compile fixes
 	set(CMAKE_FIND_ROOT_PATH ${MINGWLIBS} ${CMAKE_FIND_ROOT_PATH})
@@ -132,22 +131,11 @@ else  (UNIX AND NOT MINGW)
 	set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 
 	if(MSVC)
-		set(ENV{OPENALDIR} ${MINGWLIBS}/OpenAL)
-		set(BOOST_LIBRARYDIR ${MINGWLIBS}/lib)
-		add_definitions("-DBOOST_ALL_NO_LIB")
+		add_definitions(-DBOOST_ALL_NO_LIB -DNOMINMAX)
 		set(Boost_USE_STATIC_LIBS ON)
 		#set(GLEW_STATIC ON)
-		
-		add_definitions("-DNOMINMAX")
-
 		set(EXE_FLAGS WIN32)
-		include_directories(${MINGWLIBS}/include)
-		set(CMAKE_LIBRARY_PATH ${MINGWLIBS}/dll)
-		
-	else(MSVC)
-		include_directories(${MINGWLIBS}/include)
-		set(CMAKE_LIBRARY_PATH ${MINGWLIBS}/dll)
-	endif(MSVC)
+	endif()
 endif (UNIX AND NOT MINGW)
 
 ## Artificial Intelligence
