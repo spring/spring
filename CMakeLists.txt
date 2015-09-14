@@ -123,7 +123,7 @@ else  (UNIX AND NOT MINGW)
 	add_definitions(-D_WIN32_WINNT=0x502) ## vista is minimum due to InterlockedIncrement64
 
 	include_directories(${MINGWLIBS}/include)
-	set(CMAKE_LIBRARY_PATH ${MINGWLIBS}/dll)
+	set(CMAKE_LIBRARY_PATH ${MINGWLIBS}/dll ${MINGWLIBS}/lib)
 
 	# some cross-compile fixes
 	set(CMAKE_FIND_ROOT_PATH ${MINGWLIBS} ${CMAKE_FIND_ROOT_PATH})
