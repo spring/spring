@@ -11,7 +11,8 @@
 #include <zlib.h>
 #include <string.h> //strnlen
 
-const int bufsize = 4096;
+static const int bufsize = 4096;
+
 class RapidEntry{
 public:
 	RapidEntry(const std::string& line) {
