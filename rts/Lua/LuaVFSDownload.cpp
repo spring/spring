@@ -12,7 +12,7 @@
 #include "LuaInclude.h"
 #include "../tools/pr-downloader/src/pr-downloader.h"
 #include "../tools/pr-downloader/src/lib/md5/md5.h"
-#include "base64.h"
+#include "../tools/pr-downloader/src/lib/base64/base64.h"
 
 /******************************************************************************/
 /******************************************************************************/
