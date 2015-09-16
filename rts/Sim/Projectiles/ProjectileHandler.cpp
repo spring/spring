@@ -244,7 +244,7 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 
 template<class T>
 static void UPDATE_CONTAINER(T& cont) {
-#ifdef DEBUG
+#ifndef NDEBUG
 	const auto* origStart = cont.empty() ? nullptr : &(*cont.begin());
 #endif
 
