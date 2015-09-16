@@ -68,7 +68,7 @@ void QueueDownloadProgress(int ID, long downloaded, long total) //queue from oth
 bool LuaVFSDownload::PushEntries(lua_State* L)
 {
 	REGISTER_LUA_CFUNC(DownloadArchive);
-	REGISTER_LUA_CFUNC(CalcMd5);
+	REGISTER_LUA_CFUNC(HashLobbyPassword);
 	return true;
 }
 
@@ -185,7 +185,7 @@ int LuaVFSDownload::DownloadArchive(lua_State* L)
 	return 0;
 }
 
-int LuaVFSDownload::CalcMd5(lua_State* L)
+int LuaVFSDownload::HashLobbyPassword(lua_State* L)
 {
 	const std::string sstr = luaL_checkstring(L, 1);
 	MD5_CTX ctx;
