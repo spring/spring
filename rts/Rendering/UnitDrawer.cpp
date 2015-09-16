@@ -2029,7 +2029,10 @@ void CUnitDrawer::UnitEnteredRadar(const CUnit* unit, int allyTeam) {
 	}
 
 	CUnit* u = const_cast<CUnit*>(unit);
-	insert_unique(unitRadarIcons[allyTeam], u);
+
+	if (!(unit->losStatus[allyTeam] & LOS_INLOS)) {
+		insert_unique(unitRadarIcons[allyTeam], u);
+	}
 
 	UpdateUnitMiniMapIcon(unit, false, false);
 }

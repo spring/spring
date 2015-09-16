@@ -20,7 +20,7 @@ public:
 	CLosMap(int2 size_, bool sendReadmapEvents_, const float* heightmap_, const int2 mapDims)
 	: size(size_)
 	, LOS2HEIGHT(mapDims / size)
-	, map(size.x * size.y, 0)
+	, losmap(size.x * size.y, 0)
 	, sendReadmapEvents(sendReadmapEvents_)
 	, heightmap(heightmap_)
 	{ }
@@ -33,16 +33,16 @@ public:
 	void AddRaycast(SLosInstance* instance, int amount);
 
 public:
-	int operator[] (int square) const { return map[square]; }
+	int operator[] (int square) const { return losmap[square]; }
 
 	int At(int2 p) const {
 		p.x = Clamp(p.x, 0, size.x - 1);
 		p.y = Clamp(p.y, 0, size.y - 1);
-		return map[p.y * size.x + p.x];
+		return losmap[p.y * size.x + p.x];
 	}
 
 	// FIXME temp fix for CBaseGroundDrawer and AI interface, which need raw data
-	unsigned short& front() { return map.front(); }
+	unsigned short& front() { return losmap.front(); }
 
 private:
 	void LosAdd(int2 pos, int radius, float baseHeight, std::vector<int>& squares);
@@ -54,7 +54,7 @@ private:
 protected:
 	const int2 size;
 	const int2 LOS2HEIGHT;
-	std::vector<unsigned short> map;
+	std::vector<unsigned short> losmap;
 	bool sendReadmapEvents;
 	const float* const heightmap;
 };

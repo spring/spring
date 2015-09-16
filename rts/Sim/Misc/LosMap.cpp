@@ -352,7 +352,7 @@ void CLosMap::AddCircle(SLosInstance* instance, int amount)
 			const unsigned ex = Clamp(instance->basePos.x + width + 1, 0, size.x);
 
 			for (unsigned x_ = sx; x_ < ex; ++x_) {
-				map[(y_ * size.x) + x_] += amount;
+				losmap[(y_ * size.x) + x_] += amount;
 			}
 		}
 	});
@@ -376,8 +376,8 @@ void CLosMap::AddRaycast(SLosInstance* instance, int amount)
 	const bool updateUnsyncedHeightMap = (sendReadmapEvents && instance->allyteam >= 0 && (instance->allyteam == gu->myAllyTeam || gu->spectatingFullView));
 	if ((amount > 0) && updateUnsyncedHeightMap) {
 		for (const int losMapSquareIdx: instance->squares) {
-			const bool squareEnteredLOS = (map[losMapSquareIdx] == 0);
-			map[losMapSquareIdx] += amount;
+			const bool squareEnteredLOS = (losmap[losMapSquareIdx] == 0);
+			losmap[losMapSquareIdx] += amount;
 
 			if (!squareEnteredLOS) { continue; }
 
@@ -398,7 +398,7 @@ void CLosMap::AddRaycast(SLosInstance* instance, int amount)
 #endif
 
 	for (const int losMapSquareIdx: instance->squares) {
-		map[losMapSquareIdx] += amount;
+		losmap[losMapSquareIdx] += amount;
 	}
 }
 
