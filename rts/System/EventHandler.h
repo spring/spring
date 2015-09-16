@@ -38,6 +38,8 @@ class CEventHandler
 		bool IsManaged(const std::string& ciName) const;
 		bool IsUnsynced(const std::string& ciName) const;
 		bool IsController(const std::string& ciName) const;
+
+
 	public:
 		/**
 		 * @name Synced_events
