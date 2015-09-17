@@ -11,8 +11,6 @@
 
 #include "LuaInclude.h"
 #include "../tools/pr-downloader/src/pr-downloader.h"
-#include "../tools/pr-downloader/src/lib/md5/md5.h"
-#include "../tools/pr-downloader/src/lib/base64/base64.h"
 
 /******************************************************************************/
 /******************************************************************************/
@@ -68,7 +66,6 @@ void QueueDownloadProgress(int ID, long downloaded, long total) //queue from oth
 bool LuaVFSDownload::PushEntries(lua_State* L)
 {
 	REGISTER_LUA_CFUNC(DownloadArchive);
-	REGISTER_LUA_CFUNC(HashLobbyPassword);
 	return true;
 }
 
@@ -183,19 +180,6 @@ int LuaVFSDownload::DownloadArchive(lua_State* L)
 		}
 	}
 	return 0;
-}
-
-int LuaVFSDownload::HashLobbyPassword(lua_State* L)
-{
-	const std::string sstr = luaL_checkstring(L, 1);
-	MD5_CTX ctx;
-	MD5Init(&ctx);
-	MD5Update(&ctx, (unsigned char*) sstr.c_str(), sstr.size());
-	MD5Final(&ctx);
-	const unsigned char* md5sum = ctx.digest;
-	std::string encoded = base64_encode(md5sum, 16);
-	lua_pushsstring(L, encoded);
-	return 1;
 }
 
 void LuaVFSDownload::ProcessDownloads()

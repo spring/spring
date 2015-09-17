@@ -13,7 +13,6 @@ class LuaVFSDownload {
 
 	private:
 		static int DownloadArchive(lua_State* L);
-		static int HashLobbyPassword(lua_State* L);
 
 };
 
