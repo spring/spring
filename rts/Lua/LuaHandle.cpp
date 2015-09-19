@@ -799,7 +799,6 @@ void CLuaHandle::UnitFromFactory(const CUnit* unit,
 {
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 9, __FUNCTION__);
-
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr("UnitFromFactory");
@@ -816,6 +815,13 @@ void CLuaHandle::UnitFromFactory(const CUnit* unit,
 
 	// call the routine
 	RunCallInTraceback(L, cmdStr, 6, 0, traceBack.GetErrFuncIdx(), false);
+}
+
+
+void CLuaHandle::UnitNanoframed(const CUnit* unit)
+{
+	static const LuaHashString cmdStr("UnitNanoframed");
+	UnitCallIn(cmdStr, unit);
 }
 
 

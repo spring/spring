@@ -39,6 +39,7 @@
 	SETUP_EVENT(UnitCreated,     MANAGED_BIT)
 	SETUP_EVENT(UnitFinished,    MANAGED_BIT)
 	SETUP_EVENT(UnitFromFactory, MANAGED_BIT)
+	SETUP_EVENT(UnitNanoframed,  MANAGED_BIT)
 	SETUP_EVENT(UnitDestroyed,   MANAGED_BIT)
 	SETUP_EVENT(UnitTaken,       MANAGED_BIT)
 	SETUP_EVENT(UnitGiven,       MANAGED_BIT)
