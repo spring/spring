@@ -19,6 +19,9 @@
         lua_pushcfunction(L, x);    \
         lua_rawset(L, -3)
 
+LuaVFSDownload* luavfsdownload = nullptr;
+
+
 struct dlStarted {
 	int ID;
 };
@@ -61,6 +64,17 @@ void QueueDownloadProgress(int ID, long downloaded, long total) //queue from oth
 	dlp = new dlProgress(); dlp->ID = ID; dlp->downloaded = downloaded; dlp->total = total;
 }
 
+
+LuaVFSDownload::LuaVFSDownload():
+	CEventClient("[LuaVFSDownload]", 314161, false)
+{
+	eventHandler.AddClient(this);
+}
+
+LuaVFSDownload::~LuaVFSDownload()
+{
+	eventHandler.RemoveClient(this);
+}
 
 
 bool LuaVFSDownload::PushEntries(lua_State* L)
@@ -182,7 +196,7 @@ int LuaVFSDownload::DownloadArchive(lua_State* L)
 	return 0;
 }
 
-void LuaVFSDownload::ProcessDownloads()
+void LuaVFSDownload::Update()
 {
 	assert(Threading::IsMainThread() || Threading::IsGameLoadThread());
 	// FIXME: These events might not be executed in the order they were received, which could cause for weird things to happen as Lua will probably expect no DownloadProgress events to be issued after DownloadFailed/DownloadFinished, and also no such events before DownloadStarted.

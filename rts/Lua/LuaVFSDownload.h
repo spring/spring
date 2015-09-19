@@ -5,16 +5,24 @@
 
 struct lua_State;
 
-class LuaVFSDownload {
+class LuaVFSDownload: public CEventClient {
 	public:
+		LuaVFSDownload();
+		virtual ~LuaVFSDownload();
+
+		bool WantsEvent(const std::string& eventName) {
+			return (eventName == "Update");
+		 }
+
 		static bool PushEntries(lua_State* L);
 		//checks if some events have arrived from other threads and then fires the events
-		static void ProcessDownloads();
+		void Update();
 
 	private:
 		static int DownloadArchive(lua_State* L);
 
 };
 
+extern LuaVFSDownload* luavfsdownload;
 
 #endif /* LUA_DOWNLOADER_H */
