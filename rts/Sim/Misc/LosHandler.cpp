@@ -117,7 +117,7 @@ float ILosType::GetHeight(const CUnit* unit) const
 }
 
 
-void ILosType::MoveUnit(CUnit* unit)
+inline void ILosType::MoveUnit(CUnit* unit)
 {
 	// NOTE: under normal circumstances, this only gets called if a unit
 	// has moved to a new map square since its last SlowUpdate cycle, so
@@ -138,18 +138,15 @@ void ILosType::MoveUnit(CUnit* unit)
 	const bool isPureSight = (type == LOS_TYPE_LOS) || (type == LOS_TYPE_AIRLOS);
 	if (!isPureSight && (!unit->activated || unit->IsStunned())) {
 		// deactivate any type of radar/jam when deactivated
-		if (unit->los[type] != nullptr) {
-			RemoveUnit(unit);
-		}
+		RemoveUnit(unit);
 		return;
 	}
 
-
-	const float3& losPos = unit->midPos;
+	const float3 losPos = unit->midPos;
 	const float radius = GetRadius(unit);
 	const float height = GetHeight(unit);
 	const int2 baseLos = PosToSquare(losPos);
-	const int allyteam = (type != LOS_TYPE_JAMMER && type != LOS_TYPE_SONAR_JAMMER) ? unit->allyteam : 0;
+	const int allyteam = (type != LOS_TYPE_JAMMER && type != LOS_TYPE_SONAR_JAMMER) ? unit->allyteam : 0; // jammers share all the same map independent of the allyTeam
 
 	if (radius <= 0)
 		return;
@@ -196,7 +193,7 @@ void ILosType::MoveUnit(CUnit* unit)
 }
 
 
-void ILosType::RemoveUnit(CUnit* unit, bool delayed)
+inline void ILosType::RemoveUnit(CUnit* unit, bool delayed)
 {
 	if (delayed) {
 		DelayedFreeInstance(unit->los[type]);
@@ -207,34 +204,30 @@ void ILosType::RemoveUnit(CUnit* unit, bool delayed)
 }
 
 
-void ILosType::LosAdd(SLosInstance* li)
+inline void ILosType::LosAdd(SLosInstance* li)
 {
 	assert(li);
 	assert(teamHandler->IsValidAllyTeam(li->allyteam));
 
-	if (li->radius > 0) {
-		if (algoType == LOS_ALGO_RAYCAST) {
-			losMaps[li->allyteam].AddRaycast(li, 1);
-		} else {
-			losMaps[li->allyteam].AddCircle(li, 1);
-		}
+	if (algoType == LOS_ALGO_RAYCAST) {
+		losMaps[li->allyteam].AddRaycast(li, 1);
+	} else {
+		losMaps[li->allyteam].AddCircle(li, 1);
 	}
 }
 
 
-void ILosType::LosRemove(SLosInstance* li)
+inline void ILosType::LosRemove(SLosInstance* li)
 {
-	if (li->radius > 0) {
-		if (algoType == LOS_ALGO_RAYCAST) {
-			losMaps[li->allyteam].AddRaycast(li, -1);
-		} else {
-			losMaps[li->allyteam].AddCircle(li, -1);
-		}
+	if (algoType == LOS_ALGO_RAYCAST) {
+		losMaps[li->allyteam].AddRaycast(li, -1);
+	} else {
+		losMaps[li->allyteam].AddCircle(li, -1);
 	}
 }
 
 
-void ILosType::DeleteInstance(SLosInstance* li)
+inline void ILosType::DeleteInstance(SLosInstance* li)
 {
 	auto& cont = instanceHash[li->hashNum];
 	auto it = std::find(cont.begin(), cont.end(), li);
@@ -243,10 +236,11 @@ void ILosType::DeleteInstance(SLosInstance* li)
 }
 
 
-void ILosType::RefInstance(SLosInstance* instance)
+inline void ILosType::RefInstance(SLosInstance* instance)
 {
 	if (instance->refCount == 0) {
 		if (algoType == LOS_ALGO_RAYCAST) ++cacheReactivated;
+
 		LosAdd(instance);
 	}
 	instance->refCount++;
@@ -309,8 +303,11 @@ int ILosType::GetHashNum(const CUnit* unit, const int2 baseLos)
 }
 
 
-void ILosType::DelayedFreeInstance(SLosInstance* instance)
+inline void ILosType::DelayedFreeInstance(SLosInstance* instance)
 {
+	if (instance == nullptr)
+		return;
+
 	DelayedInstance di;
 	di.instance = instance;
 	di.timeoutTime = (gs->frameNum + (GAME_SPEED + (GAME_SPEED >> 1)));
