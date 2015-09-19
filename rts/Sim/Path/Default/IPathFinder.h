@@ -30,7 +30,7 @@ public:
 
 	unsigned int GetBlockSize() const { return BLOCK_SIZE; }
 	int2 GetNumBlocks() const { return nbrOfBlocks; }
-	int2 BlockIdxToPos(const int idx)  const { return int2(idx % nbrOfBlocks.x, idx / nbrOfBlocks.x); }
+	int2 BlockIdxToPos(const unsigned idx)  const { return int2(idx % nbrOfBlocks.x, idx / nbrOfBlocks.x); }
 	int  BlockPosToIdx(const int2 pos) const { return pos.y * nbrOfBlocks.x + pos.x; }
 
 
