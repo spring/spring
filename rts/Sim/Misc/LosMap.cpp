@@ -381,16 +381,11 @@ void CLosMap::AddRaycast(SLosInstance* instance, int amount)
 
 			if (!squareEnteredLOS) { continue; }
 
-			const int
-				lmx = losMapSquareIdx % size.x,
-				lmz = losMapSquareIdx / size.x;
-			const int
-				x1 = lmx * LOS2HEIGHT.x,
-				z1 = lmz * LOS2HEIGHT.y,
-				x2 = std::min((lmx + 1) * LOS2HEIGHT.x, mapDims.mapxm1),
-				z2 = std::min((lmz + 1) * LOS2HEIGHT.y, mapDims.mapym1);
+			const int2 lm = IdxToCoord(losMapSquareIdx, size.x);
+			const int2 p1 = lm * LOS2HEIGHT;
+			const int2 p2 = std::min(p1 + int2(1,1), int2(mapDims.mapxm1, mapDims.mapym1));
 
-			readMap->UpdateLOS(SRectangle(x1, z1, x2, z2));
+			readMap->UpdateLOS(SRectangle(p1.x, p1.y, p2.x, p2.y));
 		}
 
 		return;
@@ -446,7 +441,7 @@ static float isqrt_lookup(unsigned r)
 }
 
 
-inline static size_t ToAngleMapIdx(const int2 p, const int radius)
+inline static constexpr size_t ToAngleMapIdx(const int2 p, const int radius)
 {
 	// [-radius, +radius]^2 -> [0, +2*radius]^2 -> idx
 	return (p.y + radius) * (2*radius + 1) + (p.x + radius);
