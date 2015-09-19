@@ -2398,7 +2398,8 @@ const char* CLuaHandle::RecvSkirmishAIMessage(int aiTeam, const char* inData, in
 	return outData;
 }
 
-void CLuaHandle::DownloadQueued(int ID, const string& archiveName, const string& archiveType) {
+void CLuaHandle::DownloadQueued(int ID, const string& archiveName, const string& archiveType)
+{
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 3, __FUNCTION__);
 
@@ -2418,7 +2419,8 @@ void CLuaHandle::DownloadQueued(int ID, const string& archiveName, const string&
 	RunCallInTraceback(L, cmdStr, argCount, 0, traceBack.GetErrFuncIdx(), false);
 }
 
-void CLuaHandle::DownloadStarted(int ID) {
+void CLuaHandle::DownloadStarted(int ID)
+{
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 1, __FUNCTION__);
 
@@ -2436,7 +2438,8 @@ void CLuaHandle::DownloadStarted(int ID) {
 	RunCallInTraceback(L, cmdStr, argCount, 0, traceBack.GetErrFuncIdx(), false);
 }
 
-void CLuaHandle::DownloadFinished(int ID) {
+void CLuaHandle::DownloadFinished(int ID)
+{
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 1, __FUNCTION__);
 
@@ -2454,7 +2457,8 @@ void CLuaHandle::DownloadFinished(int ID) {
 	RunCallInTraceback(L, cmdStr, argCount, 0, traceBack.GetErrFuncIdx(), false);
 }
 
-void CLuaHandle::DownloadFailed(int ID, int errorID) {
+void CLuaHandle::DownloadFailed(int ID, int errorID)
+{
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 2, __FUNCTION__);
 
@@ -2473,7 +2477,8 @@ void CLuaHandle::DownloadFailed(int ID, int errorID) {
 	RunCallInTraceback(L, cmdStr, argCount, 0, traceBack.GetErrFuncIdx(), false);
 }
 
-void CLuaHandle::DownloadProgress(int ID, long downloaded, long total) {
+void CLuaHandle::DownloadProgress(int ID, long downloaded, long total)
+{
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 3, __FUNCTION__);
 
