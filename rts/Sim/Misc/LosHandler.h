@@ -112,11 +112,10 @@ public:
 	void Update();
 	void UpdateHeightMapSynced(SRectangle rect);
 	void RemoveUnit(CUnit* unit, bool delayed = false);
+	void UpdateUnit(CUnit* unit);
 
 private:
 	//void PostLoad();
-
-	void MoveUnit(CUnit* unit);
 
 	void LosAdd(SLosInstance* instance);
 	void LosRemove(SLosInstance* instance);

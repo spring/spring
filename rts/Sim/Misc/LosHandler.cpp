@@ -117,7 +117,7 @@ float ILosType::GetHeight(const CUnit* unit) const
 }
 
 
-inline void ILosType::MoveUnit(CUnit* unit)
+inline void ILosType::UpdateUnit(CUnit* unit)
 {
 	// NOTE: under normal circumstances, this only gets called if a unit
 	// has moved to a new map square since its last SlowUpdate cycle, so
@@ -317,11 +317,6 @@ inline void ILosType::DelayedFreeInstance(SLosInstance* instance)
 
 void ILosType::Update()
 {
-	// update LoS pos/radius
-	for (CUnit* u: unitHandler->activeUnits) {
-		MoveUnit(u);
-	}
-
 	// delayed delete
 	while (!delayQue.empty() && delayQue.front().timeoutTime < gs->frameNum) {
 		UnrefInstance(delayQue.front().instance);
@@ -478,6 +473,13 @@ void CLosHandler::UnitLoaded(const CUnit* unit, const CUnit* transport)
 void CLosHandler::Update()
 {
 	SCOPED_TIMER("LosHandler::Update");
+
+	for (CUnit* u: unitHandler->activeUnits) {
+		for (ILosType* lt: losTypes) {
+			lt->UpdateUnit(u);
+		}
+	}
+
 	for (ILosType* lt: losTypes) {
 		lt->Update();
 	}
