@@ -233,7 +233,7 @@ public:
 public:
 	// CEventClient interface
 	bool WantsEvent(const std::string& eventName) {
-		return (eventName == "UnitDestroyed") || (eventName == "UnitTaken") || (eventName == "UnitLoaded");
+		return (eventName == "UnitDestroyed") || (eventName == "UnitNanoframed") || (eventName == "UnitTaken") || (eventName == "UnitLoaded");
 	}
 	bool GetFullRead() const { return true; }
 	int  GetReadAllyTeam() const { return AllAccessTeam; }
@@ -241,6 +241,7 @@ public:
 	void UnitDestroyed(const CUnit* unit, const CUnit* attacker) override;
 	void UnitTaken(const CUnit* unit, int oldTeam, int newTeam) override;
 	void UnitLoaded(const CUnit* unit, const CUnit* transport) override;
+	void UnitNanoframed(const CUnit* unit) override;
 
 public:
 	void Update();

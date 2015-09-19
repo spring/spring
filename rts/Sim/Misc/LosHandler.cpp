@@ -126,15 +126,8 @@ void ILosType::MoveUnit(CUnit* unit)
 	// square *after* it is disabled (until they start moving again)
 	if (losHandler->globalLOS[unit->allyteam])
 		return;
-	if (unit->isDead || unit->transporter != nullptr)
+	if (unit->isDead || unit->beingBuilt || unit->transporter != nullptr)
 		return;
-
-	if (unit->beingBuilt) {
-		if (unit->los[type] != nullptr) {
-			RemoveUnit(unit);
-		}
-		return;
-	}
 
 	// NOTE:
 	//   when stunned, we are not called during Unit::SlowUpdate's
@@ -462,6 +455,14 @@ void CLosHandler::UnitDestroyed(const CUnit* unit, const CUnit* attacker)
 
 
 void CLosHandler::UnitTaken(const CUnit* unit, int oldTeam, int newTeam)
+{
+	for (ILosType* lt: losTypes) {
+		lt->RemoveUnit(const_cast<CUnit*>(unit));
+	}
+}
+
+
+void CLosHandler::UnitNanoframed(const CUnit* unit)
 {
 	for (ILosType* lt: losTypes) {
 		lt->RemoveUnit(const_cast<CUnit*>(unit));
