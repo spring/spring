@@ -10,13 +10,13 @@ class LuaVFSDownload: public CEventClient {
 		LuaVFSDownload();
 		virtual ~LuaVFSDownload();
 
-		bool WantsEvent(const std::string& eventName) {
+		bool WantsEvent(const std::string& eventName) override {
 			return (eventName == "Update");
 		 }
 
 		static bool PushEntries(lua_State* L);
 		//checks if some events have arrived from other threads and then fires the events
-		void Update();
+		void Update() override;
 
 	private:
 		static int DownloadArchive(lua_State* L);
