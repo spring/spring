@@ -1827,6 +1827,39 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
+function gadgetHandler:DownloadStarted(id)
+  for _,w in ipairs(self.DownloadStartedList) do
+    w:DownloadStarted(id)
+  end
+end
+
+function gadgetHandler:DownloadQueued(id)
+  for _,w in ipairs(self.DownloadQueuedList) do
+    w:DownloadQueued(id)
+  end
+end
+
+function gadgetHandler:DownloadFinished(id)
+  for _,w in ipairs(self.DownloadFinishedList) do
+    w:DownloadFinished(id)
+  end
+end
+
+function gadgetHandler:DownloadFailed(id, errorid)
+  for _,w in ipairs(self.DownloadFailedList) do
+    w:DownloadFailed(id, errorid)
+  end
+end
+
+function gadgetHandler:DownloadProgress(id, downloaded, total)
+  for _,w in ipairs(self.DownloadProgressList) do
+    w:DownloadProgress(id, downloaded, total)
+  end
+end
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
 function gadgetHandler:Save(zip)
   for _,g in ipairs(self.SaveList) do
     g:Save(zip)
