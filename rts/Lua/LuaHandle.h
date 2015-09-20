@@ -98,36 +98,36 @@ class CLuaHandle : public CEventClient
 		CLuaDisplayLists& GetDisplayLists(const lua_State* L = NULL) { return GetLuaContextData(L)->displayLists; }
 
 	public: // call-ins
-		bool WantsEvent(const string& name) { return HasCallIn(L, name); }
+		bool WantsEvent(const string& name) override { return HasCallIn(L, name); }
 		virtual bool HasCallIn(lua_State* L, const string& name);
 		virtual bool UpdateCallIn(lua_State* L, const string& name);
 
-		void Load(IArchive* archive);
+		void Load(IArchive* archive) override;
 
-		void GamePreload();
-		void GameStart();
-		void GameOver(const std::vector<unsigned char>& winningAllyTeams);
-		void GamePaused(int playerID, bool paused);
-		void GameFrame(int frameNum);
-		void GameID(const unsigned char* gameID, unsigned int numBytes);
+		void GamePreload() override;
+		void GameStart() override;
+		void GameOver(const std::vector<unsigned char>& winningAllyTeams) override;
+		void GamePaused(int playerID, bool paused) override;
+		void GameFrame(int frameNum) override;
+		void GameID(const unsigned char* gameID, unsigned int numBytes) override;
 
-		void TeamDied(int teamID);
-		void TeamChanged(int teamID);
-		void PlayerChanged(int playerID);
-		void PlayerAdded(int playerID);
-		void PlayerRemoved(int playerID, int reason);
+		void TeamDied(int teamID) override;
+		void TeamChanged(int teamID) override;
+		void PlayerChanged(int playerID) override;
+		void PlayerAdded(int playerID) override;
+		void PlayerRemoved(int playerID, int reason) override;
 
-		void UnitCreated(const CUnit* unit, const CUnit* builder);
-		void UnitFinished(const CUnit* unit);
-		void UnitFromFactory(const CUnit* unit, const CUnit* factory,
-		                     bool userOrders);
-		void UnitDestroyed(const CUnit* unit, const CUnit* attacker);
-		void UnitTaken(const CUnit* unit, int oldTeam, int newTeam);
-		void UnitGiven(const CUnit* unit, int oldTeam, int newTeam);
+		void UnitCreated(const CUnit* unit, const CUnit* builder) override;
+		void UnitFinished(const CUnit* unit) override;
+		void UnitFromFactory(const CUnit* unit, const CUnit* factory, bool userOrders) override;
+		void UnitNanoframed(const CUnit* unit) override;
+		void UnitDestroyed(const CUnit* unit, const CUnit* attacker) override;
+		void UnitTaken(const CUnit* unit, int oldTeam, int newTeam) override;
+		void UnitGiven(const CUnit* unit, int oldTeam, int newTeam) override;
 
-		void UnitIdle(const CUnit* unit);
-		void UnitCommand(const CUnit* unit, const Command& command);
-		void UnitCmdDone(const CUnit* unit, const Command& command);
+		void UnitIdle(const CUnit* unit) override;
+		void UnitCommand(const CUnit* unit, const Command& command) override;
+		void UnitCmdDone(const CUnit* unit, const Command& command) override;
 		void UnitDamaged(
 			const CUnit* unit,
 			const CUnit* attacker,
@@ -135,104 +135,104 @@ class CLuaHandle : public CEventClient
 			int weaponDefID,
 			int projectileID,
 			bool paralyzer);
-		void UnitStunned(const CUnit* unit, bool stunned);
-		void UnitExperience(const CUnit* unit, float oldExperience);
-		void UnitHarvestStorageFull(const CUnit* unit);
+		void UnitStunned(const CUnit* unit, bool stunned) override;
+		void UnitExperience(const CUnit* unit, float oldExperience) override;
+		void UnitHarvestStorageFull(const CUnit* unit) override;
 
 		void UnitSeismicPing(const CUnit* unit, int allyTeam,
-		                     const float3& pos, float strength);
-		void UnitEnteredRadar(const CUnit* unit, int allyTeam);
-		void UnitEnteredLos(const CUnit* unit, int allyTeam);
-		void UnitLeftRadar(const CUnit* unit, int allyTeam);
-		void UnitLeftLos(const CUnit* unit, int allyTeam);
+		                     const float3& pos, float strength) override;
+		void UnitEnteredRadar(const CUnit* unit, int allyTeam) override;
+		void UnitEnteredLos(const CUnit* unit, int allyTeam) override;
+		void UnitLeftRadar(const CUnit* unit, int allyTeam) override;
+		void UnitLeftLos(const CUnit* unit, int allyTeam) override;
 
-		void UnitEnteredWater(const CUnit* unit);
-		void UnitEnteredAir(const CUnit* unit);
-		void UnitLeftWater(const CUnit* unit);
-		void UnitLeftAir(const CUnit* unit);
+		void UnitEnteredWater(const CUnit* unit) override;
+		void UnitEnteredAir(const CUnit* unit) override;
+		void UnitLeftWater(const CUnit* unit) override;
+		void UnitLeftAir(const CUnit* unit) override;
 
-		void UnitLoaded(const CUnit* unit, const CUnit* transport);
-		void UnitUnloaded(const CUnit* unit, const CUnit* transport);
+		void UnitLoaded(const CUnit* unit, const CUnit* transport) override;
+		void UnitUnloaded(const CUnit* unit, const CUnit* transport) override;
 
-		void UnitCloaked(const CUnit* unit);
-		void UnitDecloaked(const CUnit* unit);
+		void UnitCloaked(const CUnit* unit) override;
+		void UnitDecloaked(const CUnit* unit) override;
 
-		void UnitUnitCollision(const CUnit* collider, const CUnit* collidee);
-		void UnitFeatureCollision(const CUnit* collider, const CFeature* collidee);
-		void UnitMoveFailed(const CUnit* unit);
+		void UnitUnitCollision(const CUnit* collider, const CUnit* collidee) override;
+		void UnitFeatureCollision(const CUnit* collider, const CFeature* collidee) override;
+		void UnitMoveFailed(const CUnit* unit) override;
 
-		void FeatureCreated(const CFeature* feature);
-		void FeatureDestroyed(const CFeature* feature);
+		void FeatureCreated(const CFeature* feature) override;
+		void FeatureDestroyed(const CFeature* feature) override;
 		void FeatureDamaged(
 			const CFeature* feature,
 			const CUnit* attacker,
 			float damage,
 			int weaponDefID,
-			int projectileID);
+			int projectileID) override;
 
-		void ProjectileCreated(const CProjectile* p);
-		void ProjectileDestroyed(const CProjectile* p);
+		void ProjectileCreated(const CProjectile* p) override;
+		void ProjectileDestroyed(const CProjectile* p) override;
 
-		bool Explosion(int weaponID, int projectileID, const float3& pos, const CUnit* owner);
+		bool Explosion(int weaponID, int projectileID, const float3& pos, const CUnit* owner) override;
 
 		void StockpileChanged(const CUnit* owner,
-		                      const CWeapon* weapon, int oldCount);
+		                      const CWeapon* weapon, int oldCount) override;
 
-		void Save(zipFile archive);
+		void Save(zipFile archive) override;
 
-		void UnsyncedHeightMapUpdate(const SRectangle& rect);
-		void Update();
+		void UnsyncedHeightMapUpdate(const SRectangle& rect) override;
+		void Update() override;
 
-		bool KeyPress(int key, bool isRepeat);
-		bool KeyRelease(int key);
-		bool TextInput(const std::string& utf8);
-		bool MouseMove(int x, int y, int dx, int dy, int button);
-		bool MousePress(int x, int y, int button);
-		void MouseRelease(int x, int y, int button);
-		bool MouseWheel(bool up, float value);
-		bool JoystickEvent(const std::string& event, int val1, int val2);
-		bool IsAbove(int x, int y);
-		string GetTooltip(int x, int y);
+		bool KeyPress(int key, bool isRepeat) override;
+		bool KeyRelease(int key) override;
+		bool TextInput(const std::string& utf8) override;
+		bool MouseMove(int x, int y, int dx, int dy, int button) override;
+		bool MousePress(int x, int y, int button) override;
+		void MouseRelease(int x, int y, int button) override;
+		bool MouseWheel(bool up, float value) override;
+		bool JoystickEvent(const std::string& event, int val1, int val2) override;
+		bool IsAbove(int x, int y) override;
+		string GetTooltip(int x, int y) override;
 
-		bool DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd);
+		bool DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd) override;
 
-		bool CommandNotify(const Command& cmd);
+		bool CommandNotify(const Command& cmd) override;
 
-		bool AddConsoleLine(const string& msg, const string& section, int level);
+		bool AddConsoleLine(const string& msg, const string& section, int level) override;
 
-		bool GroupChanged(int groupID);
+		bool GroupChanged(int groupID) override;
 
 		bool GameSetup(const string& state, bool& ready,
-		               const map<int, string>& playerStates);
+		               const map<int, string>& playerStates) override;
 
 		const char* RecvSkirmishAIMessage(int aiID, const char* data, int inSize);
 
 		string WorldTooltip(const CUnit* unit,
 		                    const CFeature* feature,
-		                    const float3* groundPos);
+		                    const float3* groundPos) override;
 
 		bool MapDrawCmd(int playerID, int type,
 		                const float3* pos0,
 		                const float3* pos1,
-		                const string* labe);
+		                const string* labe) override;
 
-		void ViewResize();
+		void ViewResize() override;
 
-		void DrawGenesis();
-		void DrawWorld();
-		void DrawWorldPreUnit();
-		void DrawWorldShadow();
-		void DrawWorldReflection();
-		void DrawWorldRefraction();
-		void DrawScreenEffects();
-		void DrawScreen();
-		void DrawInMiniMap();
-		void DrawInMiniMapBackground();
+		void DrawGenesis() override;
+		void DrawWorld() override;
+		void DrawWorldPreUnit() override;
+		void DrawWorldShadow() override;
+		void DrawWorldReflection() override;
+		void DrawWorldRefraction() override;
+		void DrawScreenEffects() override;
+		void DrawScreen() override;
+		void DrawInMiniMap() override;
+		void DrawInMiniMapBackground() override;
 
-		void GameProgress(int frameNum);
+		void GameProgress(int frameNum) override;
 		//FIXME void MetalMapChanged(const int x, const int z);
 
-		void CollectGarbage();
+		void CollectGarbage() override;
 
 		void DownloadQueued(int ID, const string& archiveName, const string& archiveType);
 		void DownloadStarted(int ID);

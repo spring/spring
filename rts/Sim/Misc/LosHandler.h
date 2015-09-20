@@ -112,11 +112,10 @@ public:
 	void Update();
 	void UpdateHeightMapSynced(SRectangle rect);
 	void RemoveUnit(CUnit* unit, bool delayed = false);
+	void UpdateUnit(CUnit* unit);
 
 private:
 	//void PostLoad();
-
-	void MoveUnit(CUnit* unit);
 
 	void LosAdd(SLosInstance* instance);
 	void LosRemove(SLosInstance* instance);
@@ -233,7 +232,7 @@ public:
 public:
 	// CEventClient interface
 	bool WantsEvent(const std::string& eventName) {
-		return (eventName == "UnitDestroyed") || (eventName == "UnitTaken") || (eventName == "UnitLoaded");
+		return (eventName == "UnitDestroyed") || (eventName == "UnitNanoframed") || (eventName == "UnitTaken") || (eventName == "UnitLoaded");
 	}
 	bool GetFullRead() const { return true; }
 	int  GetReadAllyTeam() const { return AllAccessTeam; }
@@ -241,6 +240,7 @@ public:
 	void UnitDestroyed(const CUnit* unit, const CUnit* attacker) override;
 	void UnitTaken(const CUnit* unit, int oldTeam, int newTeam) override;
 	void UnitLoaded(const CUnit* unit, const CUnit* transport) override;
+	void UnitNanoframed(const CUnit* unit) override;
 
 public:
 	void Update();

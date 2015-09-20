@@ -125,6 +125,12 @@ template<class T> constexpr T Clamp(const T v, const T vmin, const T vmax) { ret
 template<class T> constexpr T Sign(const T v) { return ((v > T(0)) * T(2) - T(1)); }
 
 /**
+ * @brief does a division and returns additionally the remnant
+ */
+int2 IdxToCoord(unsigned x, unsigned array_width) _const _warn_unused_result;
+
+
+/**
  * @brief Clamps an radian angle between 0 .. 2*pi
  * @param f float* value to clamp
  */
