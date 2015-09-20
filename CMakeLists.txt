@@ -8,7 +8,7 @@
 # + works around command line length limited by using an @objectFilesList.txt parameter when linking
 # CMake 2.8.10
 # + adds support for CMAKE_CXX_COMPILER_ID (which is ignored with older cmake)
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.11)
 
 
 SET(CMAKE_MODULES_SPRING "${CMAKE_CURRENT_SOURCE_DIR}/rts/build/cmake")

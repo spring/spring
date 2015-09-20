@@ -15,5 +15,5 @@ sudo apt-get install libglew-dev libsdl2-dev libdevil-dev libopenal-dev libogg-d
 
 sudo apt-get install libboost-thread1.48-dev libboost-regex1.48-dev libboost-system1.48-dev \
   libboost-program-options1.48-dev libboost-signals1.48-dev libboost-chrono1.48-dev \
-  libboost-filesystem1.48-dev libboost-test1.48-dev binutils-gold
+  libboost-filesystem1.48-dev libboost-test1.48-dev binutils-gold cmake cmake-data
 
