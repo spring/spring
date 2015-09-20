@@ -120,7 +120,7 @@ int Download(int ID, const std::string& filename, category cat)
 	int result;
 	LOG_L(L_DEBUG, "Download count: %d", count);
 	// TODO: count will be 1 when archives already exist. We should instead return a different result with DownloadFailed/DownloadFinished?
-	if (count == 1) { // there's nothing to download
+	if (count == 0) { // there's nothing to download
 		result = 2;
 		QueueDownloadFailed(ID, result);
 	} else {
