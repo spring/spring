@@ -3547,8 +3547,12 @@ EXPORT(float) skirmishAiCallback_Unit_getMaxSpeed(int skirmishAIId, int unitId) 
 }
 
 EXPORT(float) skirmishAiCallback_Unit_getMaxRange(int skirmishAIId, int unitId) {
-	CAICallback* clb = skirmishAIId_callback[skirmishAIId];
-	return clb->GetUnitMaxRange(unitId);
+	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
+		const CUnit* unit = getUnit(unitId);
+		return (unit) ? unit->maxRange : -1.0f;
+	} else {
+		return skirmishAIId_callback[skirmishAIId]->GetUnitMaxRange(unitId);
+	}
 }
 
 EXPORT(float) skirmishAiCallback_Unit_getMaxHealth(int skirmishAIId, int unitId) {
