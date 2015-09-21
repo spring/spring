@@ -4225,24 +4225,43 @@ EXPORT(int) skirmishAiCallback_getFeaturesIn(int skirmishAIId, float* pos_posF3,
 
 EXPORT(int) skirmishAiCallback_Feature_getDef(int skirmishAIId, int featureId) {
 
-	const FeatureDef* def = skirmishAIId_callback[skirmishAIId]->GetFeatureDef(featureId);
-	if (def == NULL) {
-		 return -1;
+	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
+		const CFeature* f = featureHandler->GetFeature(featureId);
+		return (f) ? f->def->id : -1;
 	} else {
-		return def->id;
+		const FeatureDef* def = skirmishAIId_callback[skirmishAIId]->GetFeatureDef(featureId);
+		return (def) ? def->id : -1;
 	}
 }
 
 EXPORT(float) skirmishAiCallback_Feature_getHealth(int skirmishAIId, int featureId) {
-	return skirmishAIId_callback[skirmishAIId]->GetFeatureHealth(featureId);
+
+	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
+		const CFeature* f = featureHandler->GetFeature(featureId);
+		return (f) ? f->health : 0.0f;
+	} else {
+		return skirmishAIId_callback[skirmishAIId]->GetFeatureHealth(featureId);
+	}
 }
 
 EXPORT(float) skirmishAiCallback_Feature_getReclaimLeft(int skirmishAIId, int featureId) {
-	return skirmishAIId_callback[skirmishAIId]->GetFeatureReclaimLeft(featureId);
+
+	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
+		const CFeature* f = featureHandler->GetFeature(featureId);
+		return (f) ? f->reclaimLeft : 0.0f;
+	} else {
+		return skirmishAIId_callback[skirmishAIId]->GetFeatureReclaimLeft(featureId);
+	}
 }
 
 EXPORT(void) skirmishAiCallback_Feature_getPosition(int skirmishAIId, int featureId, float* return_posF3_out) {
-	skirmishAIId_callback[skirmishAIId]->GetFeaturePos(featureId).copyInto(return_posF3_out);
+
+	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
+		const CFeature* f = featureHandler->GetFeature(featureId);
+		((f) ? f->pos : ZeroVector).copyInto(return_posF3_out);
+	} else {
+		skirmishAIId_callback[skirmishAIId]->GetFeaturePos(featureId).copyInto(return_posF3_out);
+	}
 }
 
 
