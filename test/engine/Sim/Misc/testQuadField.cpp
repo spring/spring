@@ -80,6 +80,7 @@ BOOST_AUTO_TEST_CASE( QuadField )
 			// over some edges when the ray is very close to the corner intersection (of 4 quads)
 			bool isAdditionalQuad = (bitmap[i] == 2);
 			if (!isAdditionalQuad) {
+				printf("start: %f %f %f dir: %f %f %f length: %f\n", start.x, start.y, start.z, dir.x, dir.y, dir.z, length);
 				fail = true;
 				break;
 			}
