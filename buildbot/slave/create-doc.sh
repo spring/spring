@@ -4,7 +4,7 @@
 set -e
 . buildbot/slave/prepare.sh
 
-DEST=${TMP_BASE}/doc
+DEST=${TMP_BASE}/doc/${REV}
 mkdir -p $DEST/engine
 mkdir -p $DEST/unitsync
 
@@ -30,7 +30,7 @@ mv dist/AI/Wrappers/JavaOO/doc/jdoc/ $DEST/JavaOO
 cd tools/unitsync
 (
 cat Doxyfile
-echo "OUTPUT_DIRECTORY = $DEST/engine"
+echo "OUTPUT_DIRECTORY = $DEST/unitsync"
 echo "HTML_OUTPUT = ./"
 ) | doxygen -
 
