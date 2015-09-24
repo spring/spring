@@ -6,7 +6,6 @@ set -e
 
 DEST=${TMP_BASE}/doc/${REV}
 mkdir -p $DEST/engine
-mkdir -p $DEST/unitsync
 
 echo $DEST
 (
@@ -26,13 +25,6 @@ cd AI/Wrappers/JavaOO/bin
 ant doc
 cd -
 mv dist/AI/Wrappers/JavaOO/doc/jdoc/ $DEST/JavaOO
-
-cd tools/unitsync
-(
-cat Doxyfile
-echo "OUTPUT_DIRECTORY = $DEST/unitsync"
-echo "HTML_OUTPUT = ./"
-) | doxygen -
 
 echo "Wrote doc to $DEST"
 
