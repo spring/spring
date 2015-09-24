@@ -2,10 +2,11 @@
 
 # generates documentation from springs source code
 set -e
+. buildbot/slave/prepare.sh
 
-DEST=$(mktemp -d)
-mkdir $DEST/engine
-mkdir $DEST/unitsync
+DEST=${TMP_BASE}/inst/doc
+mkdir -p $DEST/engine
+mkdir -p $DEST/unitsync
 
 echo $DEST
 (
