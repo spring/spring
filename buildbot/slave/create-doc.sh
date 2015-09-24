@@ -4,7 +4,7 @@
 set -e
 . buildbot/slave/prepare.sh
 
-DEST=${TMP_BASE}/inst/doc
+DEST=${TMP_BASE}/doc
 mkdir -p $DEST/engine
 mkdir -p $DEST/unitsync
 
