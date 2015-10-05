@@ -763,7 +763,7 @@ bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::strin
 	sprintf(calcMsg, "Reading Estimate PathCosts [%d]", BLOCK_SIZE);
 	loadscreen->SetLoadMessage(calcMsg);
 
-	std::auto_ptr<IArchive> auto_pfile(pfile);
+	std::unique_ptr<IArchive> auto_pfile(pfile);
 	IArchive& file(*pfile);
 
 	const unsigned fid = file.FindFile("pathinfo");
