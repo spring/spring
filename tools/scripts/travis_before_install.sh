@@ -12,6 +12,8 @@ sudo add-apt-repository --yes ppa:george-edison55/precise-backports
 if [ "$CXX" = "g++" ]; then
 	sudo add-apt-repository --yes ppa:ubuntu-toolchain-r/test
 fi
+# boost
+sudo add-apt-repository --yes ppa:boost-latest/ppa
 
 sudo apt-get update -qq
 
