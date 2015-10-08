@@ -10,6 +10,7 @@
 #include <string.h>
 
 //SPRING
+#include <array>
 #include <boost/lexical_cast.hpp>
 #include "streflop_cond.h"
 
