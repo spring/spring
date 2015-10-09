@@ -189,6 +189,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitTravel);
 	REGISTER_LUA_CFUNC(SetUnitFuel);
 	REGISTER_LUA_CFUNC(SetUnitMoveGoal);
+	REGISTER_LUA_CFUNC(SetUnitLandGoal);
 	REGISTER_LUA_CFUNC(SetUnitNeutral);
 	REGISTER_LUA_CFUNC(SetUnitTarget);
 	REGISTER_LUA_CFUNC(SetUnitMidAndAimPos);
@@ -198,7 +199,6 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitPieceParent);
 	REGISTER_LUA_CFUNC(SetUnitSensorRadius);
 	REGISTER_LUA_CFUNC(SetUnitPosErrorParams);
-	REGISTER_LUA_CFUNC(SetUnitLandPos);
 
 	REGISTER_LUA_CFUNC(SetUnitPhysics);
 	REGISTER_LUA_CFUNC(SetUnitPosition);
@@ -2229,27 +2229,6 @@ int LuaSyncedCtrl::SetUnitPosErrorParams(lua_State* L)
 }
 
 
-int LuaSyncedCtrl::SetUnitLandPos(lua_State* L)
-{
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-
-	if (unit == NULL) {
-		return 0;
-	}
-
-	AAirMoveType* amt = dynamic_cast<AAirMoveType*>(unit->moveType);
-	if (!amt) {
-		luaL_error(L, "Not a flying unit");
-	}
-
-	const float3 landPos(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
-
-	amt->LandAt(landPos);
-
-	return 0;
-}
-
-
 int LuaSyncedCtrl::SetUnitMoveGoal(lua_State* L)
 {
 	CheckAllowGameChanges(L);
@@ -2270,6 +2249,28 @@ int LuaSyncedCtrl::SetUnitMoveGoal(lua_State* L)
 	} else {
 		unit->moveType->StartMoving(pos, radius, speed);
 	}
+
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetUnitLandGoal(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
+	if (unit == NULL) {
+		return 0;
+	}
+
+	AAirMoveType* amt = dynamic_cast<AAirMoveType*>(unit->moveType);
+	if (!amt) {
+		luaL_error(L, "Not a flying unit");
+	}
+
+	const float3 landPos(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
+	const float radius = luaL_optfloat(L, 5, 0.0f);
+
+	amt->LandAt(landPos, radius);
 
 	return 0;
 }
