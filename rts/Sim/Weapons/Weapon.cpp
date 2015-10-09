@@ -706,8 +706,11 @@ void CWeapon::SlowUpdate()
 		// If unit got an attack target, clone the job (independent of AutoTarget!)
 		// Also do this unconditionally (owner's target always has priority over weapon one!)
 		Attack(owner->curTarget);
+	} else
+	if (!HaveTarget() && owner->lastAttacker != nullptr && owner->fireState == FIRESTATE_RETURNFIRE) {
+		//Try to return fire
+		Attack(owner->lastAttacker);
 	}
-
 	// AutoTarget: Find new/better Target
 	AutoTarget();
 }
