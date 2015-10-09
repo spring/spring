@@ -35,7 +35,7 @@ public:
 	virtual void SetState(AircraftState state) {}
 	virtual AircraftState GetLandingState() const { return AIRCRAFT_LANDING; }
 
-	void LandAt(float3 pos);
+	void LandAt(float3 pos, float distance);
 
 	void UpdateLandingHeight();
 
@@ -48,6 +48,7 @@ public:
 	/// goalpos to resume flying to after landing
 	float3 oldGoalPos;
 	float3 reservedLandingPos;
+	float landRadiusSq;
 
 	float wantedHeight;
 	/// to reset altitude back

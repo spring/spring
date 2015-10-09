@@ -20,6 +20,7 @@ CR_REG_METADATA(AAirMoveType, (
 	CR_MEMBER(oldGoalPos),
 	CR_MEMBER(reservedLandingPos),
 
+	CR_MEMBER(landRadiusSq),
 	CR_MEMBER(wantedHeight),
 	CR_MEMBER(orgWantedHeight),
 
@@ -42,6 +43,7 @@ AAirMoveType::AAirMoveType(CUnit* unit):
 
 	reservedLandingPos(-1.0f, -1.0f, -1.0f),
 
+	landRadiusSq(0.0f),
 	wantedHeight(80.0f),
 	orgWantedHeight(0.0f),
 
@@ -136,11 +138,13 @@ void AAirMoveType::UpdateLanded()
 	owner->UpdateMidAndAimPos();
 }
 
-void AAirMoveType::LandAt(float3 pos)
+void AAirMoveType::LandAt(float3 pos, float distance)
 {
 	if (aircraftState != AIRCRAFT_LANDING) {
 		SetState(AIRCRAFT_LANDING);
 	}
+	const float landRadius = std::max(distance, std::max(owner->radius, 10.0f));
+	landRadiusSq = landRadius * landRadius;
 	reservedLandingPos = pos;
 	const float3 originalPos = owner->pos;
 	owner->Move(reservedLandingPos, false);
