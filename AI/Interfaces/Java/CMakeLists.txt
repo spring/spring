@@ -242,7 +242,7 @@ endif (AI_TYPES_JAVA AND myName MATCHES "${AI_EXCLUDE_REGEX}")
 # Look for dependencies, but only if the user wants to build the interface
 if    (AI_TYPES_JAVA)
 	if    (NOT JAVA_FOUND)
-		set(JAVA_FIND_QUIETLY TRUE)
+		#set(JAVA_FIND_QUIETLY TRUE)
 		FIND_PACKAGE(JavaExtended) # Note: this is not the CMake built-in FindJava
 		MakeGlobal(
 			JAVA_FOUND
