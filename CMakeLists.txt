@@ -70,6 +70,12 @@ else()
 	set(DEBUG_BUILD FALSE)
 endif()
 
+if(DEBUG_BUILD)
+	set(JAVA_COMPILE_FLAG_CONDITIONAL "-g:lines,source,vars")
+else()
+	set(JAVA_COMPILE_FLAG_CONDITIONAL "-g:lines,source")
+endif()
+
 
 # Tell windows to pass arguments around in @response files
 # (32k arg limit workaround)

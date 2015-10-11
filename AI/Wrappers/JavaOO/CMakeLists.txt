@@ -316,13 +316,13 @@ if    (BUILD_${myName}_AIWRAPPER)
 			"-E" "remove_directory" "${myJavaBuildDir}"
 		COMMAND "${CMAKE_COMMAND}"
 			"-E" "make_directory" "${myJavaBuildDir}"
-		COMMAND "${JAVA_COMPILE}"
+		COMMAND "${Java_JAVAC_EXECUTABLE}"
 			"${JAVA_COMPILE_FLAG_CONDITIONAL}"
 			"-Xlint:deprecation"
 			"-cp" "${myClassPath}"
 			"-d" "${myJavaBuildDir}"
 			"@${mySrcArgFile}"
-		COMMAND "${JAVA_ARCHIVE}" ARGS
+		COMMAND "${Java_JAR_EXECUTABLE}" ARGS
 			${myBinJarArgs} "${myBuildDir}/${myBinJarFile}"
 			"-C" "${myJavaBuildDir}" "${myPkgFirstPart}"
 		DEPENDS
@@ -339,10 +339,10 @@ if    (BUILD_${myName}_AIWRAPPER)
 	add_custom_command(
 		OUTPUT
 			"${myBuildDir}/${mySrcJarFile}"
-		COMMAND "${JAVA_ARCHIVE}" ARGS
+		COMMAND "${Java_JAR_EXECUTABLE}" ARGS
 			"cf" "${${myName}_AIWRAPPER_JAR_SRC}"
 			"-C" "${mySourceDir}"          "${myPkgFirstPart}"
-		COMMAND "${JAVA_ARCHIVE}" ARGS
+		COMMAND "${Java_JAR_EXECUTABLE}" ARGS
 			"uf" "${${myName}_AIWRAPPER_JAR_SRC}"
 			"-C" "${myGeneratedSourceDir}" "${myPkgFirstPart}"
 		DEPENDS
