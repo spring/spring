@@ -42,10 +42,6 @@ namespace Threading {
 	static bool haveGameLoadThreadID = false;
 	static bool haveWatchDogThreadID = false;
 
-	// static boost::thread::id boostMainThreadID;
-	// static boost::thread::id boostGameLoadThreadID;
-	// static boost::thread::id boostWatchDogThreadID;
-
 	static NativeThreadId nativeMainThreadID;
 	static NativeThreadId nativeGameLoadThreadID;
 	static NativeThreadId nativeWatchDogThreadID;
@@ -274,7 +270,7 @@ namespace Threading {
 
 		{
 #ifndef UNIT_TEST
-			int workerCount = std::min(ThreadPool::GetMaxThreads() - 1, configHandler->GetUnsigned("WorkerThreadCount"));
+			int workerCount = configHandler->GetUnsigned("WorkerThreadCount");
 			ThreadPool::SetThreadSpinTime(configHandler->GetUnsigned("WorkerThreadSpinTime"));
 #else
 			int workerCount = -1;
