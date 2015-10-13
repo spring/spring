@@ -1172,10 +1172,7 @@ int CSyncedLuaHandle::SyncedRandomSeed(lua_State* L)
 
 int CSyncedLuaHandle::SyncedNext(lua_State* L)
 {
-	auto* slh = GetSyncedHandle(L);
-	assert(slh->origNextRef > 0);
-
-	const std::set<int> whiteList = {
+	constexpr int whiteList[] = {
 		LUA_TSTRING,
 		LUA_TNUMBER,
 		LUA_TBOOLEAN,
@@ -1183,8 +1180,9 @@ int CSyncedLuaHandle::SyncedNext(lua_State* L)
 		LUA_TTHREAD //FIXME LUA_TTHREAD is normally _not_ synced safe but LUS handler needs it atm (and uses it in a safe way)
 	};
 
+	auto* slh = GetSyncedHandle(L);
+	assert(slh->origNextRef > 0);
 	const int oldTop = lua_gettop(L);
-
 	lua_rawgeti(L, LUA_REGISTRYINDEX, slh->origNextRef);
 	lua_pushvalue(L, 1);
 	if (oldTop >= 2) { lua_pushvalue(L, 2); } else { lua_pushnil(L); }
@@ -1194,7 +1192,9 @@ int CSyncedLuaHandle::SyncedNext(lua_State* L)
 
 	if (retCount >= 2) {
 		const int keyType = lua_type(L, -2);
-		if (whiteList.find(keyType) == whiteList.end()) {
+		const auto it = std::find(std::begin(whiteList), std::end(whiteList), keyType);
+
+		if (it == std::end(whiteList)) {
 			if (LuaUtils::PushDebugTraceback(L) > 0) {
 				lua_pushfstring(L, "Iterating a table with keys of type \"%s\" in synced context!", lua_typename(L, keyType));
 				lua_call(L, 1, 1);
