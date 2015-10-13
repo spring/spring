@@ -270,8 +270,8 @@ namespace Threading {
 
 		{
 #ifndef UNIT_TEST
-			int workerCount = configHandler->GetUnsigned("WorkerThreadCount");
-			ThreadPool::SetThreadSpinTime(configHandler->GetUnsigned("WorkerThreadSpinTime"));
+			int workerCount = configHandler->GetInt("WorkerThreadCount");
+			ThreadPool::SetThreadSpinTime(configHandler->GetInt("WorkerThreadSpinTime"));
 #else
 			int workerCount = -1;
 #endif
