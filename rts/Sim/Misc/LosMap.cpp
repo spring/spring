@@ -7,6 +7,7 @@
 #include "System/float3.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
+#include "System/Threading/SpringMutex.h"
 #ifdef USE_UNSYNCED_HEIGHTMAP
 	#include "Game/GlobalUnsynced.h" // for myAllyTeam
 #endif
@@ -17,7 +18,29 @@
 constexpr float LOS_BONUS_HEIGHT = 5.f;
 
 
+static spring::spinlock mutex;
+static spring::spinlock mutex_isqrt;
+static std::vector<float> isqrt_table(1, -1e8);
+
+
+static float isqrt_lookup(unsigned r)
+{
+	if (r >= isqrt_table.size()) {
+		boost::lock_guard<spring::spinlock> lck(mutex_isqrt);
+		if (r >= isqrt_table.size()) {
+			for (unsigned i=isqrt_table.size(); i<=r; ++i)
+				isqrt_table.push_back(math::isqrt2(i));
+		}
+	}
+
+	return isqrt_table[r];
+}
+
+
+
 // Midpoint circle algorithm
+// func() only get called for the lower top right octant.
+// The others need to get by mirroring.
 template<typename F>
 void MidpointCircleAlgo(int radius, F func)
 {
@@ -67,6 +90,9 @@ void MidpointCircleAlgoPerLine(int radius, F func)
 
 
 
+
+
+
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 /// CLosTables precalc helper
@@ -98,12 +124,20 @@ CLosTables CLosTables::instance;
 const LosTable& CLosTables::GetForLosSize(size_t losSize)
 {
 	if (instance.lostables.size() <= losSize) {
-		instance.lostables.resize(losSize+1);
+		boost::lock_guard<spring::spinlock> lck(mutex);
+		if (instance.lostables.size() <= losSize) {
+			instance.lostables.resize(losSize+1);
+		}
 	}
 
 	LosTable& tl = instance.lostables[losSize];
-	if (tl.empty() && losSize > 0)
-		tl = std::move(GetLosRays(losSize));
+	if (tl.empty() && losSize > 0) {
+		auto lrays = GetLosRays(losSize);
+		boost::lock_guard<spring::spinlock> lck(mutex);
+		if (tl.empty()) {
+			tl = std::move(lrays);
+		}
+	}
 
 	return tl;
 }
@@ -341,8 +375,7 @@ void CLosTables::Debug(const LosTable& losRays, const std::vector<int2>& points,
 void CLosMap::AddCircle(SLosInstance* instance, int amount)
 {
 #ifdef USE_UNSYNCED_HEIGHTMAP
-	const bool updateUnsyncedHeightMap = (sendReadmapEvents && instance->allyteam >= 0 && (instance->allyteam == gu->myAllyTeam || gu->spectatingFullView));
-	assert(!updateUnsyncedHeightMap); //only AddRaycast supports UnsyncedHeightMap updates
+	//only AddRaycast supports UnsyncedHeightMap updates
 #endif
 
 	MidpointCircleAlgoPerLine(instance->radius, [&](int width, int y) {
@@ -361,13 +394,7 @@ void CLosMap::AddCircle(SLosInstance* instance, int amount)
 
 void CLosMap::AddRaycast(SLosInstance* instance, int amount)
 {
-	if (instance->squares.empty()) {
-		LosAdd(instance->basePos, instance->radius, instance->baseHeight, instance->squares);
-		if (instance->squares.empty()) {
-			instance->squares.push_back(-1);
-		}
-	}
-	if (instance->squares.front() < 0) {
+	if (instance->squares.empty() || instance->squares.front().length == SLosInstance::EMPTY_RLE.length) {
 		return;
 	}
 
@@ -375,69 +402,74 @@ void CLosMap::AddRaycast(SLosInstance* instance, int amount)
 	// Inform ReadMap when squares enter LoS
 	const bool updateUnsyncedHeightMap = (sendReadmapEvents && instance->allyteam >= 0 && (instance->allyteam == gu->myAllyTeam || gu->spectatingFullView));
 	if ((amount > 0) && updateUnsyncedHeightMap) {
-		for (const int losMapSquareIdx: instance->squares) {
-			const bool squareEnteredLOS = (losmap[losMapSquareIdx] == 0);
-			losmap[losMapSquareIdx] += amount;
+		for (const SLosInstance::RLE rle: instance->squares) {
+			int idx = rle.start;
+			for (int l = rle.length; l>0; --l, ++idx) {
+				const bool squareEnteredLOS = (losmap[idx] == 0);
+				losmap[idx] += amount;
 
-			if (!squareEnteredLOS) { continue; }
+				if (!squareEnteredLOS) { continue; }
 
-			const int2 lm = IdxToCoord(losMapSquareIdx, size.x);
-			const int2 p1 = lm * LOS2HEIGHT;
-			const int2 p2 = std::min(p1 + int2(1,1), int2(mapDims.mapxm1, mapDims.mapym1));
+				const int2 lm = IdxToCoord(idx, size.x);
+				const int2 p1 = lm * LOS2HEIGHT;
+				const int2 p2 = std::min(p1 + int2(1,1), int2(mapDims.mapxm1, mapDims.mapym1));
 
-			readMap->UpdateLOS(SRectangle(p1.x, p1.y, p2.x, p2.y));
+				readMap->UpdateLOS(SRectangle(p1.x, p1.y, p2.x, p2.y));
+			}
 		}
 
 		return;
 	}
 #endif
 
-	for (const int losMapSquareIdx: instance->squares) {
-		losmap[losMapSquareIdx] += amount;
+	for (const SLosInstance::RLE rle: instance->squares) {
+		int idx = rle.start;
+		for (int l = rle.length; l>0; --l, ++idx) {
+			losmap[idx] += amount;
+		}
 	}
 }
 
+
+void CLosMap::PrepareRaycast(SLosInstance* instance) const
+{
+	if (!instance->squares.empty())
+		return;
+
+	LosAdd(instance);
+	if (instance->squares.empty()) {
+		instance->squares.push_back(SLosInstance::EMPTY_RLE);
+	}
+}
 
 
 #define MAP_SQUARE(pos) ((pos).y * size.x + (pos).x)
 
 
-void CLosMap::LosAdd(int2 pos, int radius, float baseHeight, std::vector<int>& squares)
+void CLosMap::LosAdd(SLosInstance* li) const
 {
 	auto MAP_SQUARE_FULLRES = [&](int2 pos) {
 		float2 fpos = pos;
 		fpos += 0.5f;
 		fpos /= float2(size);
 		int2 ipos = fpos * float2(mapDims.mapx, mapDims.mapy);
+		//assert(ipos.y * mapDims.mapx + ipos.x < (mapDims.mapx * mapDims.mapy));
 		return ipos.y * mapDims.mapx + ipos.x;
 	};
 
-	assert(radius > 0);
+	//assert(li->radius > 0);
 	const float* heightmapFull = readMap->GetCenterHeightMapSynced();
-	if (SRectangle(0,0,size.x,size.y).Inside(pos) && baseHeight <= heightmapFull[MAP_SQUARE_FULLRES(pos)]) { return; }
+	if (SRectangle(0,0,size.x,size.y).Inside(li->basePos) && li->baseHeight <= heightmapFull[MAP_SQUARE_FULLRES(li->basePos)]) { return; }
 
 	// add all squares that are in the los radius
-	SRectangle safeRect(radius, radius, size.x - radius, size.y - radius);
-	if (safeRect.Inside(pos)) {
+	SRectangle safeRect(li->radius, li->radius, size.x - li->radius, size.y - li->radius);
+	if (safeRect.Inside(li->basePos)) {
 		// we aren't touching the map borders -> we don't need to check for the map boundaries
-		UnsafeLosAdd(pos, radius, baseHeight, squares);
+		UnsafeLosAdd(li);
 	} else {
-		// we need to check each square if it's outsid of the map boundaries
-		SafeLosAdd(pos, radius, baseHeight, squares);
+		// we need to check each square if it's outside of the map boundaries
+		SafeLosAdd(li);
 	}
-}
-
-
-static float isqrt_lookup(unsigned r)
-{
-	static std::vector<float> t(1, -1e8);
-
-	if (r >= t.size()) {
-		for (unsigned i=t.size(); i<=r; ++i)
-			t.push_back(math::isqrt2(i));
-	}
-
-	return t[r];
 }
 
 
@@ -449,7 +481,7 @@ inline static constexpr size_t ToAngleMapIdx(const int2 p, const int radius)
 
 
 
-void CLosMap::CastLos(std::vector<int>* squares, float* maxAng, const int2 pos, const int2 off, std::vector<bool>& squaresMap, std::vector<float>& anglesMap, const int radius) const
+void CLosMap::CastLos(float* maxAng, const int2 off, std::vector<bool>& squaresMap, std::vector<float>& anglesMap, const int radius) const
 {
 	// check if we got a new maxAngle
 	const size_t oidx = ToAngleMapIdx(off, radius);
@@ -461,13 +493,34 @@ void CLosMap::CastLos(std::vector<int>* squares, float* maxAng, const int2 pos, 
 	// add square to visibility list when not already done
 	if (squaresMap[oidx])
 		return;
-	const int idx = MAP_SQUARE(pos + off);
 	squaresMap[oidx] = true;
-	squares->push_back(idx);
 }
 
 
-void CLosMap::UnsafeLosAdd(int2 pos, int radius, float losHeight, std::vector<int>& squares)
+void CLosMap::AddSquaresToInstance(SLosInstance* li, const std::vector<bool>& squaresMap) const
+{
+	const int2 pos   = li->basePos;
+	const int radius = li->radius;
+
+	for (int y = -radius; y<=radius; ++y) {
+		SLosInstance::RLE rle = {MAP_SQUARE(pos + int2(-radius,y)), 0};
+		for (int x = -radius; x<=radius; ++x) {
+			const int2 off = int2(x, y);
+			const size_t oidx = ToAngleMapIdx(off, radius);
+			if (squaresMap[oidx]) {
+				++rle.length;
+			} else {
+				if (rle.length > 0) li->squares.push_back(rle);
+				rle.start  = MAP_SQUARE(pos + off);
+				rle.length = 0;
+			}
+		}
+		if (rle.length > 0) li->squares.push_back(rle);
+	}
+}
+
+
+void CLosMap::UnsafeLosAdd(SLosInstance* li) const
 {
 	// How does it work?
 	// We spawn rays (those returned by CLosTables::GetForLosSize), and cast them on the
@@ -475,12 +528,13 @@ void CLosMap::UnsafeLosAdd(int2 pos, int radius, float losHeight, std::vector<in
 	// the highest cached one on that ray. When the new angle is higher the square is
 	// visible and gets added to the squares array.
 
+	const int2 pos   = li->basePos;
+	const int radius = li->radius;
+	const float losHeight = li->baseHeight;
 	const size_t area = Square((2*radius) + 1);
-	const LosTable& table = CLosTables::GetForLosSize(radius);
-	squares.reserve(area);
-	std::vector<bool> squaresMap(area, false); // used to filter duplicates
+	const LosTable& table = CLosTables::GetForLosSize(li->radius);
+	std::vector<bool> squaresMap(area, false); // saves the list of visible squares
 	std::vector<float> anglesMap(area, -1e8);
-
 
 	// Optimization: precalc all angles, cause:
 	// 1. Many squares are accessed by multiple rays. Imagine you got a 128 radius circle
@@ -506,38 +560,41 @@ void CLosMap::UnsafeLosAdd(int2 pos, int radius, float losHeight, std::vector<in
 			const float dh = std::max(0.f, heightmap[idx]) - losHeight;
 			const size_t oidx = ToAngleMapIdx(off, radius);
 
-			assert(anglesMap[oidx] == -1e8);
+			//assert(anglesMap[oidx] == -1e8);
 			anglesMap[oidx] = (dh + LOS_BONUS_HEIGHT) * invR;
 		}
 	});
 
-
 	// Cast the Rays
-	squares.push_back(MAP_SQUARE(pos));
+	squaresMap[ToAngleMapIdx(int2(0,0), radius)] = true;
 	for (const LosLine& line: table) {
 		float maxAng[4] = {-1e7, -1e7, -1e7, -1e7};
 		for (const int2& square: line) {
-			CastLos(&squares, &maxAng[0], pos, square,                    squaresMap, anglesMap, radius);
-			CastLos(&squares, &maxAng[1], pos, -square,                   squaresMap, anglesMap, radius);
-			CastLos(&squares, &maxAng[2], pos, int2(square.y, -square.x), squaresMap, anglesMap, radius);
-			CastLos(&squares, &maxAng[3], pos, int2(-square.y, square.x), squaresMap, anglesMap, radius);
+			CastLos(&maxAng[0], square,                    squaresMap, anglesMap, radius);
+			CastLos(&maxAng[1], -square,                   squaresMap, anglesMap, radius);
+			CastLos(&maxAng[2], int2(square.y, -square.x), squaresMap, anglesMap, radius);
+			CastLos(&maxAng[3], int2(-square.y, square.x), squaresMap, anglesMap, radius);
 		}
 	}
+
+	// translate visible square indices to map square idx + RLE
+	AddSquaresToInstance(li, squaresMap);
 }
 
 
-void CLosMap::SafeLosAdd(int2 pos, int radius, float losHeight, std::vector<int>& squares)
+void CLosMap::SafeLosAdd(SLosInstance* li) const
 {
 	// How does it work?
 	// see above
 
+	const int2 pos   = li->basePos;
+	const int radius = li->radius;
+	const float losHeight = li->baseHeight;
 	const size_t area = Square((2*radius) + 1);
 	const LosTable& table = CLosTables::GetForLosSize(radius);
-	squares.reserve(area);
-	std::vector<bool> squaresMap(area, false); // used to filter duplicates
+	std::vector<bool> squaresMap(area, false); // saves the list of visible squares
 	std::vector<float> anglesMap(area, -1e8);
 	SRectangle safeRect(0, 0, size.x, size.y);
-
 
 	// Optimization: precalc all angles
 	MidpointCircleAlgoPerLine(radius, [&](int width, int y) {
@@ -553,7 +610,7 @@ void CLosMap::SafeLosAdd(int2 pos, int radius, float losHeight, std::vector<int>
 				if (off == int2(0,0))
 					continue;
 
-				assert(safeRect.Inside(wpos));
+				//assert(safeRect.Inside(wpos));
 				const float invR = isqrt_lookup(off.x*off.x + off.y*off.y);
 
 				const int idx = MAP_SQUARE(wpos);
@@ -569,7 +626,7 @@ void CLosMap::SafeLosAdd(int2 pos, int radius, float losHeight, std::vector<int>
 	// Cast the Rays
 	bool emitPosInsideMap = safeRect.Inside(pos);
 	if (emitPosInsideMap) {
-		squares.push_back(MAP_SQUARE(pos));
+		squaresMap[ToAngleMapIdx(int2(0,0), radius)] = true;
 	}
 	if (emitPosInsideMap) {
 		for (const LosLine& line: table) {
@@ -578,22 +635,22 @@ void CLosMap::SafeLosAdd(int2 pos, int radius, float losHeight, std::vector<int>
 			for (const int2& square: line) {
 				if (!safeRect.Inside(pos + square))
 					break;
-				CastLos(&squares, &maxAng[0], pos, square,                    squaresMap, anglesMap, radius);
+				CastLos(&maxAng[0], square,                    squaresMap, anglesMap, radius);
 			}
 			for (const int2& square: line) {
 				if (!safeRect.Inside(pos - square))
 					break;
-				CastLos(&squares, &maxAng[1], pos, -square,                   squaresMap, anglesMap, radius);
+				CastLos(&maxAng[1], -square,                   squaresMap, anglesMap, radius);
 			}
 			for (const int2& square: line) {
 				if (!safeRect.Inside(pos + int2(square.y, -square.x)))
 					break;
-				CastLos(&squares, &maxAng[2], pos, int2(square.y, -square.x), squaresMap, anglesMap, radius);
+				CastLos(&maxAng[2], int2(square.y, -square.x), squaresMap, anglesMap, radius);
 			}
 			for (const int2& square: line) {
 				if (!safeRect.Inside(pos + int2(-square.y, square.x)))
 					break;
-				CastLos(&squares, &maxAng[3], pos, int2(-square.y, square.x), squaresMap, anglesMap, radius);
+				CastLos(&maxAng[3], int2(-square.y, square.x), squaresMap, anglesMap, radius);
 			}
 		}
 	} else {
@@ -602,18 +659,21 @@ void CLosMap::SafeLosAdd(int2 pos, int radius, float losHeight, std::vector<int>
 
 			for (const int2& square: line) {
 				if (safeRect.Inside(pos + square)) {
-					CastLos(&squares, &maxAng[0], pos, square,                    squaresMap, anglesMap, radius);
+					CastLos(&maxAng[0], square,                    squaresMap, anglesMap, radius);
 				}
 				if (safeRect.Inside(pos - square)) {
-					CastLos(&squares, &maxAng[1], pos, -square,                   squaresMap, anglesMap, radius);
+					CastLos(&maxAng[1], -square,                   squaresMap, anglesMap, radius);
 				}
 				if (safeRect.Inside(pos + int2(square.y, -square.x))) {
-					CastLos(&squares, &maxAng[2], pos, int2(square.y, -square.x), squaresMap, anglesMap, radius);
+					CastLos(&maxAng[2], int2(square.y, -square.x), squaresMap, anglesMap, radius);
 				}
 				if (safeRect.Inside(pos + int2(-square.y, square.x))) {
-					CastLos(&squares, &maxAng[3], pos, int2(-square.y, square.x), squaresMap, anglesMap, radius);
+					CastLos(&maxAng[3], int2(-square.y, square.x), squaresMap, anglesMap, radius);
 				}
 			}
 		}
 	}
+
+	// translate visible square indices to map square idx + RLE
+	AddSquaresToInstance(li, squaresMap);
 }
