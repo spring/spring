@@ -4,6 +4,7 @@
 #define FEATUREDRAWER_H_
 
 #include <vector>
+#include <array>
 #include "System/creg/creg_cond.h"
 #include "System/EventClient.h"
 #include "Rendering/Models/WorldObjectModelRenderer.h"
