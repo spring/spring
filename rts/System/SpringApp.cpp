@@ -793,7 +793,10 @@ void SpringApp::StartScript(const std::string& inputFile)
 
 void SpringApp::LoadSpringMenu()
 {
-	const std::string defaultscript = configHandler->GetString("DefaultStartScript");
+	std::string defaultscript = configHandler->GetString("DefaultStartScript");
+	if (defaultscript.empty() && CFileHandler("defaultstartscript.txt", SPRING_VFS_PWD_ALL).FileExists()) {
+		defaultscript = "defaultstartscript.txt";
+	}
 
 	if (cmdline->IsSet("oldmenu") || defaultscript.empty()) {
 		// old menu
