@@ -527,9 +527,9 @@
 @@ lua_str2number converts a string to a number.
 */
 //SPRING#define LUA_NUMBER_SCAN		"%lf"
-#define LUA_NUMBER_SCAN		"%f" // Format for reading from lua files
-#define LUA_NUMBER_FMT		"%.14g" // Format for printing into files/stdout
-//SPRING#define lua_number2str(s,n)	sprintf((s), LUA_NUMBER_FMT, (n)) - changed into boost::lexical_cast in the file
+#define LUA_NUMBER_SCAN		"%f"
+#define LUA_NUMBER_FMT		"%.14g"
+#define lua_number2str(s,n)	sprintf((s), LUA_NUMBER_FMT, (n))
 #define LUAI_MAXNUMBER2STR	32 /* 16 digits, sign, point, and \0 */
 #define lua_str2number(s,p)	strtod((s), (p))
 

@@ -231,8 +231,8 @@ if    (MINGW OR MSVC)
 	set(SDL2_INCLUDE_DIR "${MINGWLIBS}/include/SDL2")
 endif (MINGW OR MSVC)
 
-FIND_PACKAGE(Boost 1.51.0 COMPONENTS thread regex program_options system chrono signals filesystem REQUIRED)
-FIND_PACKAGE(Boost 1.51.0 COMPONENTS timer)
+FIND_PACKAGE(Boost 1.47.0 COMPONENTS thread regex program_options system chrono signals filesystem REQUIRED)
+FIND_PACKAGE(Boost 1.47.0 COMPONENTS timer)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 
 # boost::chrono depends on clock_gettime which we need to link ourself when boost is static linked

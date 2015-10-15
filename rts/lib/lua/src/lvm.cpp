@@ -10,8 +10,6 @@
 #include <string.h>
 
 //SPRING
-#include <array>
-#include <boost/lexical_cast.hpp>
 #include "streflop_cond.h"
 
 #define lvm_c
@@ -53,30 +51,29 @@ int luaV_tostring (lua_State *L, StkId obj) {
   if (!ttisnumber(obj))
     return 0;
   else {
-    typedef std::array<char, LUAI_MAXNUMBER2STR> str_buf;
-    str_buf s;
+    char s[LUAI_MAXNUMBER2STR];
     lua_Number n = nvalue(obj);
     // SPRING -- synced safety change
-    //        -- using lexical_cast for formatting to force sync
+    //        -- need a custom number formatter?
     if (math::isfinite(n)) {
-      s = boost::lexical_cast<str_buf>(n);
+      lua_number2str(s, n);
     }
     else {
       if (math::isnan(n)) {
-        strcpy(s.begin(), "nan");
+        strcpy(s, "nan");
       }
       else {
         const int inf_type = math::isinf(n);
         if (inf_type == 1) {
-          strcpy(s.begin(), "+inf");
+          strcpy(s, "+inf");
         } else if (inf_type == -1) {
-          strcpy(s.begin(), "-inf");
+          strcpy(s, "-inf");
         } else {
-          strcpy(s.begin(), "weird_number");
+          strcpy(s, "weird_number");
         }
       }
-    }
-    setsvalue2s(L, obj, luaS_new(L, s.begin()));
+    } 
+    setsvalue2s(L, obj, luaS_new(L, s));
     return 1;
   }
 }
@@ -150,7 +147,7 @@ void luaV_gettable (lua_State *L, const TValue *t, TValue *key, StkId val) {
       callTMres(L, val, tm, t, key);
       return;
     }
-    t = tm;  /* else repeat with `tm' */
+    t = tm;  /* else repeat with `tm' */ 
   }
   luaG_runerror(L, "loop in gettable");
 }
