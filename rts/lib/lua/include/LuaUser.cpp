@@ -225,3 +225,97 @@ void spring_lua_alloc_update_stats(bool clear)
 	}
 }
 
+//////////////////////////////////////////////////////////
+////// Custom synced float to string
+//////////////////////////////////////////////////////////
+void spring_lua_ftoa(float f, char *buf)
+{
+	//get rid of integers
+	if ((float) (int) f == f) {
+		sprintf(buf,"%d",(int) f);
+		return;
+	}
+
+	if (f < 0.0f) {
+		f = -f;
+		buf[0] = '-';
+		++buf;
+	}
+
+	int nDigits = 8;
+	int e = 0;
+
+	while (f >= 10.0f) {
+		f /= 10;
+		e += 1;
+	}
+	while (f < 1.0f) {
+		f *= 10;
+		e -= 1;
+	}
+
+
+
+	int pointPos = (e < 10 && e > 0) ? (1 + e) : 1;
+
+	int pos = 0;
+
+	int lastRealDigit = 0;
+	while (nDigits > 0) {
+		int intPart = f;
+		f = f - intPart;
+		//assert(intPart >= 0 && intPart < 10);
+		buf[pos] = intPart + '0';
+		if (intPart != 0 || pos < pointPos) {
+			lastRealDigit = pos;
+		}
+
+		f *= 10;
+		++pos;
+		--nDigits;
+		if (pos == pointPos) {
+			buf[pos] = '.';
+			++pos;
+		}
+	}
+	//Round
+	if (f > 5.0f) {
+		pos -= 1;
+		while (pos >= 0) {
+			if (buf[pos] == '9') {
+				buf[pos] = '0';
+				if (pos > pointPos) {
+					lastRealDigit = pos - 1;
+				}
+			} else if (buf[pos] == '.') {
+				lastRealDigit = pos - 1;
+			} else {
+				buf[pos] += 1;
+				if (pos > pointPos) {
+					lastRealDigit = pos;
+				}
+				break;
+			}
+
+			--pos;
+		}
+		if (pos < 0) {
+			//Recalculate exponent and point position
+			buf[0] = '1';
+			buf[pointPos] = '0';
+			e += 1;
+			pointPos = (e < 10 && e > 0) ? (1 + e) : 1;
+			buf[pointPos] = '.';
+		}
+
+	}
+
+	if (e >= 10) {
+		sprintf(buf + lastRealDigit + 1, "e+%02d", e);
+		lastRealDigit += 4;
+	} else if (e < 0) {
+		sprintf(buf + lastRealDigit + 1, "e%03d", e);
+		lastRealDigit += 4;
+	}
+	buf[lastRealDigit + 1] = '\0';
+}
