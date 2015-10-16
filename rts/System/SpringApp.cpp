@@ -402,6 +402,10 @@ bool SpringApp::CreateSDLWindow(const char* title)
 	streflop::streflop_init<streflop::Simple>();
 #endif
 
+#if defined(WIN32)
+	_set_output_format(_TWO_DIGIT_EXPONENT);
+#endif
+
 #if !defined(HEADLESS)
 	// disable desktop compositing to fix tearing
 	// (happens at 300fps, neither fullscreen nor vsync fixes it, so disable compositing)
