@@ -33,6 +33,12 @@ BOOST_AUTO_TEST_CASE( Printf )
 		LOG("%s",s);
 		BOOST_CHECK(strcmp(s, p.second) == 0);
 	}
+
+	for (const auto& p: testNumbers) {
+		__builtin_sprintf(s, FMT_STRING, p.first);
+		LOG("%s",s);
+		BOOST_CHECK((strcmp(s, p.second) == 0) || isWindows); // it's known to not sync `Mingw vs. Linux`
+	}
 #endif
 
 
@@ -43,9 +49,4 @@ BOOST_AUTO_TEST_CASE( Printf )
 	}
 
 
-	for (const auto& p: testNumbers) {
-		__builtin_sprintf(s, FMT_STRING, p.first);
-		LOG("%s",s);
-		BOOST_CHECK((strcmp(s, p.second) == 0) || isWindows); // it's known to not sync `Mingw vs. Linux`
-	}
 }
