@@ -2,8 +2,9 @@
 
 #include "System/Log/ILog.h"
 //FIXME #include "System/Sync/FPUCheck.h"
-#include <stdio.h>
 
+#define __USE_MINGW_ANSI_STDIO 1
+#include <stdio.h>
 
 #define BOOST_TEST_MODULE Printf
 #include <boost/test/unit_test.hpp>
@@ -20,6 +21,7 @@ BOOST_AUTO_TEST_CASE( Printf )
 	__mingw_sprintf(s, "%.14g", 1e16);
 	LOG("%s",s);
 	BOOST_CHECK(strcmp(s, "1.0000000272564e+16") == 0);
+
 	__mingw_sprintf(s, "%.14g", 4266.38916015625);
 	LOG("%s",s);
 	BOOST_CHECK(strcmp(s, "4266.3891601562") == 0); //prints 4266.3891601563
@@ -28,7 +30,17 @@ BOOST_AUTO_TEST_CASE( Printf )
 	sprintf(s, "%.14g", 1e16);
 	LOG("%s",s);
 	BOOST_CHECK(strcmp(s, "1.0000000272564e+16") == 0);
-	__mingw_sprintf(s, "%.14g", 4266.38916015625);
+
+	sprintf(s, "%.14g", 4266.38916015625);
+	LOG("%s",s);
+	BOOST_CHECK(strcmp(s, "4266.3891601562") == 0);
+
+
+	__builtin_sprintf(s, "%.14g", 1e16);
+	LOG("%s",s);
+	BOOST_CHECK(strcmp(s, "1.0000000272564e+16") == 0);
+
+	__builtin_sprintf(s, "%.14g", 4266.38916015625);
 	LOG("%s",s);
 	BOOST_CHECK(strcmp(s, "4266.3891601562") == 0);
 }
