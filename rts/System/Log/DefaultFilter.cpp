@@ -36,8 +36,9 @@ struct log_filter_section_compare {
 		return LOG_SECTION_COMPARE(section1, section2);
 	}
 };
-
-
+#ifdef __cplusplus
+}
+#endif
 
 namespace {
 	typedef std::set<const char*, log_filter_section_compare> secSet_t;
@@ -66,6 +67,9 @@ namespace {
 	}
 }
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 static inline int log_filter_section_getDefaultMinLevel(const char* section) {

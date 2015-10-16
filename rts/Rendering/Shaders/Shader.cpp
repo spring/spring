@@ -431,7 +431,7 @@ namespace Shader {
 	}
 
 	GLSLProgramObject::~GLSLProgramObject() {
-		IProgramObject::Release();
+		Release();
 		glDeleteProgram(objID);
 		objID = 0;
 	}
