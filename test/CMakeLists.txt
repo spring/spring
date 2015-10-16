@@ -361,6 +361,19 @@ endif()
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
 
 ################################################################################
+### Printf
+	set(test_name Printf)
+	Set(test_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/other/testPrintf.cpp"
+			${test_Log_sources}
+		)
+	set(test_libs
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+		)
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
+
+
+################################################################################
 ### EventClient
 	set(test_name EventClient)
 	Set(test_src
