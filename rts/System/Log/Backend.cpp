@@ -7,11 +7,7 @@
 #include <set>
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
-extern char* log_formatter_format(const char* section, int level, const char* fmt, va_list arguments);
 
 namespace {
 	std::set<log_sink_ptr>& log_formatter_getSinks() {
@@ -25,6 +21,11 @@ namespace {
 	}
 }
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern char* log_formatter_format(const char* section, int level, const char* fmt, va_list arguments);
 
 void log_backend_registerSink(log_sink_ptr sink) { log_formatter_getSinks().insert(sink); }
 void log_backend_unregisterSink(log_sink_ptr sink) { log_formatter_getSinks().erase(sink); }
