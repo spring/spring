@@ -264,7 +264,7 @@ void spring_lua_ftoa(float f, char *buf)
 	while (nDigits > 0) {
 		int intPart = f;
 		f = f - intPart;
-		//assert(intPart >= 0 && intPart < 10);
+		assert(intPart >= 0 && intPart < 10);
 		buf[pos] = intPart + '0';
 		if (intPart != 0 || pos < pointPos) {
 			lastRealDigit = pos;
