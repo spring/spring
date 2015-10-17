@@ -365,12 +365,16 @@ endif()
 	set(test_name Printf)
 	Set(test_src
 			"${CMAKE_CURRENT_SOURCE_DIR}/other/testPrintf.cpp"
+			"${ENGINE_SOURCE_DIR}/lib/lua/include/LuaUser.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
 			${test_Log_sources}
 		)
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			${Boost_SYSTEM_LIBRARY}
 		)
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
+	target_include_directories(test_${test_name} PRIVATE ${ENGINE_SOURCE_DIR}/lib/lua/include)
 
 
 ################################################################################

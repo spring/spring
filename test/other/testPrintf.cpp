@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/Log/ILog.h"
+#include "lib/lua/include/LuaUser.h"
 //FIXME #include "System/Sync/FPUCheck.h"
 
 #define __USE_MINGW_ANSI_STDIO 1 // use __mingw_sprintf() for sprintf(), instead of __builtin_sprintf()
@@ -9,8 +10,6 @@
 
 #define BOOST_TEST_MODULE Printf
 #include <boost/test/unit_test.hpp>
-
-
 
 BOOST_AUTO_TEST_CASE( Printf )
 {
@@ -44,6 +43,18 @@ BOOST_AUTO_TEST_CASE( Printf )
 
 	for (const auto& p: testNumbers) {
 		sprintf(s, FMT_STRING, p.first);
+		LOG("%s",s);
+		BOOST_CHECK(strcmp(s, p.second) == 0);
+	}
+
+	std::map<float, const char*> springTestNumbers = {
+		{1e16, "1.0000002e+16"},
+		{4266.38916015625, "4266.3889"},
+		{1.6, "1.6"},
+	};
+
+	for (const auto& p: springTestNumbers) {
+		spring_lua_ftoa(p.first, s);
 		LOG("%s",s);
 		BOOST_CHECK(strcmp(s, p.second) == 0);
 	}
