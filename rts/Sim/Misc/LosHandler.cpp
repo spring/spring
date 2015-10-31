@@ -552,7 +552,7 @@ void ILosType::UpdateHeightMapSynced(SRectangle rect)
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CLosHandler* losHandler;
+CLosHandler* losHandler = nullptr;
 
 CLosHandler::CLosHandler()
 	: CEventClient("[CLosHandler]", 271993, true)
