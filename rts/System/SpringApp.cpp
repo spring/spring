@@ -234,6 +234,8 @@ bool SpringApp::Initialize()
 	creg::System::InitializeClasses();
 	GlobalConfig::Instantiate();
 
+	agui::InitGui(); //needs to be initialized before window is created, see UpdateViewPortGeometry
+
 	// Create Window
 	if (!InitWindow(("Spring " + SpringVersion::GetSync()).c_str())) {
 		SDL_Quit();
@@ -262,7 +264,6 @@ bool SpringApp::Initialize()
 	gu = new CGlobalUnsynced();
 
 	// GUIs
-	agui::InitGui();
 	LoadFonts();
 	CNamedTextures::Init();
 	LuaOpenGL::Init();
