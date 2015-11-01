@@ -1492,15 +1492,15 @@ int LuaOpenGL::UnitPiece(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const LocalModel* localModel = unit->localModel;
+	LocalModel* localModel = unit->localModel;
 
 	const int piece = luaL_checkint(L, 2) - 1;
 	if ((piece < 0) || ((size_t)piece >= localModel->pieces.size())) {
 		return 0;
 	}
-	LocalModelPiece* localPiece = localModel->pieces[piece];
+	LocalModelPiece& localPiece = localModel->pieces[piece];
 
-	glCallList(localPiece->dispListID);
+	glCallList(localPiece.dispListID);
 
 	return 0;
 }

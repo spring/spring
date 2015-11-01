@@ -154,7 +154,7 @@ int LuaUnitRendering::SetPieceList(lua_State* L)
 		return 0;
 	}
 
-	const LocalModel* localModel = unit->localModel;
+	LocalModel* localModel = unit->localModel;
 
 	const unsigned int lod   = (unsigned int)luaL_checknumber(L, 2) - 1;
 	if (lod >= unit->lodCount) {
@@ -164,7 +164,7 @@ int LuaUnitRendering::SetPieceList(lua_State* L)
 	if (piece >= localModel->pieces.size()) {
 		return 0;
 	}
-	LocalModelPiece* localPiece = localModel->pieces[piece];
+	LocalModelPiece* localPiece = &localModel->pieces[piece];
 
 	unsigned int dlist = 0;
 	if (lua_isnumber(L, 4)) {

@@ -2123,8 +2123,8 @@ int LuaSyncedCtrl::SetUnitPieceParent(lua_State* L)
 		return 0;
 	}
 
-	LocalModelPiece* lmpAlteredPiece = localModel->pieces[alteredPiece];
-	LocalModelPiece* lmpParentPiece = localModel->pieces[parentPiece];
+	LocalModelPiece* lmpAlteredPiece = &localModel->pieces[alteredPiece];
+	LocalModelPiece* lmpParentPiece = &localModel->pieces[parentPiece];
 
 	if (lmpAlteredPiece == localModel->GetRoot()) {
 		luaL_error(L,  "Can't change a root piece's parent");
@@ -2149,14 +2149,14 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 	if (unit == NULL)
 		return 0;
 
-	const LocalModel* localModel = unit->localModel;
+	LocalModel* localModel = unit->localModel;
 	const unsigned int pieceIndex = luaL_checkint(L, 2);
 
 	if (pieceIndex >= localModel->pieces.size())
 		luaL_argerror(L, 2, "invalid piece index");
 
-	LocalModelPiece* lmp = localModel->pieces[pieceIndex];
-	CollisionVolume* vol = lmp->GetCollisionVolume();
+	LocalModelPiece& lmp = localModel->pieces[pieceIndex];
+	CollisionVolume* vol = lmp.GetCollisionVolume();
 
 	const float3 scales(luaL_checkfloat(L, 4), luaL_checkfloat(L, 5), luaL_checkfloat(L, 6));
 	const float3 offset(luaL_checkfloat(L, 7), luaL_checkfloat(L, 8), luaL_checkfloat(L, 9));
@@ -3793,7 +3793,7 @@ int LuaSyncedCtrl::UnitAttach(lua_State* L)
 		return 0;
 	}
 	if (piece >= 0) {
-		piece = pieces[piece]->scriptPieceIndex;
+		piece = pieces[piece].scriptPieceIndex;
 	}
 	transporter->AttachUnit(transportee, piece, !transporter->unitDef->IsTransportUnit());
 

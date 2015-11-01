@@ -131,37 +131,37 @@ void S3DModelPiece::DrawStatic() const
 void LocalModel::DrawPieces() const
 {
 	for (const auto& p: pieces) {
-		p->Draw();
+		p.Draw();
 	}
 }
 
 void LocalModel::DrawPiecesLOD(unsigned int lod) const
 {
 	for (const auto& p: pieces) {
-		p->DrawLOD(lod);
+		p.DrawLOD(lod);
 	}
 }
 
 void LocalModel::SetLODCount(unsigned int count)
 {
-	pieces[0]->SetLODCount(lodCount = count);
+	pieces[0].SetLODCount(lodCount = count);
 }
 
 
 
 void LocalModel::ReloadDisplayLists()
 {
-	for (unsigned int n = 0; n < pieces.size(); n++) {
-		pieces[n]->dispListID = pieces[n]->original->GetDisplayListID();
+	for (auto &p: pieces) {
+		p.dispListID = p.original->GetDisplayListID();
 	}
 }
 
 LocalModelPiece* LocalModel::CreateLocalModelPieces(const S3DModelPiece* mpParent)
 {
-	LocalModelPiece* lmpParent = new LocalModelPiece(mpParent);
 	LocalModelPiece* lmpChild = NULL;
 
-	pieces.push_back(lmpParent);
+	pieces.emplace_back(mpParent);
+	LocalModelPiece *lmpParent = &pieces.back();
 
 	lmpParent->SetLModelPieceIndex(pieces.size() - 1);
 	lmpParent->SetScriptPieceIndex(pieces.size() - 1);

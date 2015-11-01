@@ -51,7 +51,7 @@ inline bool CCobInstance::HasFunction(int id) const
 
 
 CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
-	: CUnitScript(_unit, pieces)
+	: CUnitScript(_unit)
 	, script(_script)
 {
 	staticVars.reserve(script.numStaticVars);
@@ -102,21 +102,21 @@ CCobInstance::~CCobInstance()
 void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 {
 	std::vector<std::string>& pieceNames = script.pieceNames; // already in lowercase!
-	std::vector<LocalModelPiece*>& lmodelPieces = lmodel->pieces;
+	std::vector<LocalModelPiece>& lmodelPieces = lmodel->pieces;
 
 	pieces.clear();
 	pieces.reserve(pieceNames.size());
 
 	// clear the default assumed 1:1 mapping
 	for (size_t lmodelPieceNum = 0; lmodelPieceNum < lmodelPieces.size(); lmodelPieceNum++) {
-		lmodelPieces[lmodelPieceNum]->SetScriptPieceIndex(-1);
+		lmodelPieces[lmodelPieceNum].SetScriptPieceIndex(-1);
 	}
 	for (size_t scriptPieceNum = 0; scriptPieceNum < pieceNames.size(); scriptPieceNum++) {
 		unsigned int lmodelPieceNum;
 
 		// Map this piecename to an index in the script's pieceinfo
 		for (lmodelPieceNum = 0; lmodelPieceNum < lmodelPieces.size(); lmodelPieceNum++) {
-			if (lmodelPieces[lmodelPieceNum]->original->name.compare(pieceNames[scriptPieceNum]) == 0) {
+			if (lmodelPieces[lmodelPieceNum].original->name.compare(pieceNames[scriptPieceNum]) == 0) {
 				break;
 			}
 		}
@@ -124,7 +124,7 @@ void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 		// Not found? Try lowercase
 		if (lmodelPieceNum == lmodelPieces.size()) {
 			for (lmodelPieceNum = 0; lmodelPieceNum < lmodelPieces.size(); lmodelPieceNum++) {
-				if (StringToLower(lmodelPieces[lmodelPieceNum]->original->name).compare(pieceNames[scriptPieceNum]) == 0) {
+				if (StringToLower(lmodelPieces[lmodelPieceNum].original->name).compare(pieceNames[scriptPieceNum]) == 0) {
 					break;
 				}
 			}
@@ -132,8 +132,8 @@ void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 
 		// Did we find it?
 		if (lmodelPieceNum < lmodelPieces.size()) {
-			lmodelPieces[lmodelPieceNum]->SetScriptPieceIndex(scriptPieceNum);
-			pieces.push_back(lmodelPieces[lmodelPieceNum]);
+			lmodelPieces[lmodelPieceNum].SetScriptPieceIndex(scriptPieceNum);
+			pieces.push_back(&lmodelPieces[lmodelPieceNum]);
 		} else {
 			pieces.push_back(NULL);
 

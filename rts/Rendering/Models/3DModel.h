@@ -223,6 +223,7 @@ struct LocalModelPiece
 {
 	CR_DECLARE_STRUCT(LocalModelPiece)
 
+	LocalModelPiece() {}
 	LocalModelPiece(const S3DModelPiece* piece);
 	~LocalModelPiece();
 
@@ -304,16 +305,12 @@ struct LocalModel
 
 	~LocalModel()
 	{
-		// delete the local piece copies
-		for (std::vector<LocalModelPiece*>::iterator pi = pieces.begin(); pi != pieces.end(); ++pi) {
-			delete *pi;
-		}
 		pieces.clear();
 	}
 
 	bool HasPiece(unsigned int i) const { return (i < pieces.size()); }
-	LocalModelPiece* GetPiece(unsigned int i) const { assert(HasPiece(i)); return pieces[i]; }
-	LocalModelPiece* GetRoot() const { return GetPiece(0); }
+	LocalModelPiece* GetPiece(unsigned int i) { assert(HasPiece(i)); return &pieces[i]; }
+	LocalModelPiece* GetRoot() { return GetPiece(0); }
 
 	void Draw() const { DrawPieces(); }
 	void DrawLOD(unsigned int lod) const {
@@ -325,7 +322,7 @@ struct LocalModel
 
 	void UpdatePieceMatrices() {
 		if (dirtyPieces > 0) {
-			pieces[0]->UpdateMatricesRec(false);
+			pieces[0].UpdateMatricesRec(false);
 		}
 		dirtyPieces = 0;
 	}
@@ -346,10 +343,10 @@ struct LocalModel
 	//   it returns a direction in piece-space, NOT model-space as the "Raw" suggests
 	//   this direction is vertex[0].pos - vertex[1].pos for pieces with >= 2 vertices
 	//   only LuaSyncedRead::GetUnitPieceDirection calls it, better mark as DEPRECATED
-	void GetRawEmitDirPos(int pieceIdx, float3& emitPos, float3& emitDir) const { pieces[pieceIdx]->GetEmitDirPos(emitPos, emitDir); }
-	float3 GetRawPiecePos(int pieceIdx) const { return pieces[pieceIdx]->GetAbsolutePos(); }
-	float3 GetRawPieceDirection(int pieceIdx) const { return pieces[pieceIdx]->GetDirection(); }
-	const CMatrix44f& GetRawPieceMatrix(int pieceIdx) const { return pieces[pieceIdx]->GetModelSpaceMatrix(); }
+	void GetRawEmitDirPos(int pieceIdx, float3& emitPos, float3& emitDir) const { pieces[pieceIdx].GetEmitDirPos(emitPos, emitDir); }
+	float3 GetRawPiecePos(int pieceIdx) const { return pieces[pieceIdx].GetAbsolutePos(); }
+	float3 GetRawPieceDirection(int pieceIdx) const { return pieces[pieceIdx].GetDirection(); }
+	const CMatrix44f& GetRawPieceMatrix(int pieceIdx) const { return pieces[pieceIdx].GetModelSpaceMatrix(); }
 
 private:
 	LocalModelPiece* CreateLocalModelPieces(const S3DModelPiece* mpParent);
@@ -359,7 +356,7 @@ public:
 	unsigned int dirtyPieces;
 	unsigned int lodCount;
 
-	std::vector<LocalModelPiece*> pieces;
+	std::vector<LocalModelPiece> pieces;
 };
 
 #endif /* _3DMODEL_H */

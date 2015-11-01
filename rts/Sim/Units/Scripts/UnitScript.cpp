@@ -73,13 +73,12 @@ void CUnitScript::InitVars(int numTeams, int numAllyTeams)
 }
 
 
-CUnitScript::CUnitScript(CUnit* unit, const std::vector<LocalModelPiece*>& pieces)
+CUnitScript::CUnitScript(CUnit* unit)
 	: unit(unit)
 	, busy(false)
 	, hasSetSFXOccupy(false)
 	, hasRockUnit(false)
 	, hasStartBuilding(false)
-	, pieces(pieces)
 {
 	memset(unitVars, 0, sizeof(unitVars));
 }
@@ -1645,7 +1644,7 @@ int CUnitScript::ScriptToModel(int scriptPieceNum) const {
 }
 
 int CUnitScript::ModelToScript(int lmodelPieceNum) const {
-	const LocalModel* lm = unit->localModel;
+	LocalModel* lm = unit->localModel;
 
 	if (!lm->HasPiece(lmodelPieceNum))
 		return -1;

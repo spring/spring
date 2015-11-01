@@ -7,8 +7,6 @@
 
 class CNullUnitScript : public CUnitScript
 {
-private:
-	std::vector<LocalModelPiece*> pieces;
 
 protected:
 	CNullUnitScript();

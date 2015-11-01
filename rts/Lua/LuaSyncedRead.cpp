@@ -3604,14 +3604,14 @@ int LuaSyncedRead::GetUnitPieceCollisionVolumeData(lua_State* L)
 		return 0;
 	}
 
-	const LocalModel* lm = unit->localModel;
+	LocalModel* lm = unit->localModel;
 	const int pieceIndex = luaL_checkint(L, 2);
 
 	if (pieceIndex < 0 || pieceIndex >= lm->pieces.size()) {
 		return 0;
 	}
 
-	const LocalModelPiece* lmp = lm->pieces[pieceIndex];
+	const LocalModelPiece* lmp = &lm->pieces[pieceIndex];
 	const CollisionVolume* vol = lmp->GetCollisionVolume();
 
 	return (PushCollisionVolumeData(L, vol));
@@ -5244,13 +5244,13 @@ int LuaSyncedRead::GetUnitPieceMap(lua_State* L)
 	if (unit == NULL)
 		return 0;
 
-	const LocalModel* localModel = unit->localModel;
+	LocalModel* localModel = unit->localModel;
 
 	lua_createtable(L, 0, localModel->pieces.size());
 
 	// {"piece" = 123, ...}
 	for (size_t i = 0; i < localModel->pieces.size(); i++) {
-		const LocalModelPiece& lp = *localModel->pieces[i];
+		const LocalModelPiece& lp = localModel->pieces[i];
 		lua_pushsstring(L, lp.original->name);
 		lua_pushnumber(L, i + 1);
 		lua_rawset(L, -3);
@@ -5266,13 +5266,13 @@ int LuaSyncedRead::GetUnitPieceList(lua_State* L)
 	if (unit == NULL)
 		return 0;
 
-	const LocalModel* localModel = unit->localModel;
+	LocalModel* localModel = unit->localModel;
 
 	lua_createtable(L, localModel->pieces.size(), 0);
 
 	// {[1] = "piece", ...}
 	for (size_t i = 0; i < localModel->pieces.size(); i++) {
-		const LocalModelPiece& lp = *localModel->pieces[i];
+		const LocalModelPiece& lp = localModel->pieces[i];
 		lua_pushsstring(L, lp.original->name);
 		lua_rawseti(L, -2, i + 1);
 	}
@@ -5332,14 +5332,14 @@ int LuaSyncedRead::GetUnitPieceInfo(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const LocalModel* localModel = unit->localModel;
+	LocalModel* localModel = unit->localModel;
 
 	const int piece = luaL_checkint(L, 2) - 1;
 	if ((piece < 0) || ((size_t)piece >= localModel->pieces.size())) {
 		return 0;
 	}
 
-	const S3DModelPiece& op = *localModel->pieces[piece]->original;
+	const S3DModelPiece& op = *localModel->pieces[piece].original;
 	return ::GetUnitPieceInfo(L, op);
 }
 
@@ -5350,7 +5350,7 @@ int LuaSyncedRead::GetUnitPiecePosition(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const LocalModel* localModel = unit->localModel;
+	LocalModel* localModel = unit->localModel;
 	if (localModel == NULL) {
 		return 0;
 	}
@@ -5372,7 +5372,7 @@ int LuaSyncedRead::GetUnitPiecePosDir(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const LocalModel* localModel = unit->localModel;
+	LocalModel* localModel = unit->localModel;
 	if (localModel == NULL) {
 		return 0;
 	}
@@ -5405,7 +5405,7 @@ int LuaSyncedRead::GetUnitPieceDirection(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const LocalModel* localModel = unit->localModel;
+	LocalModel* localModel = unit->localModel;
 	if (localModel == NULL) {
 		return 0;
 	}
@@ -5427,7 +5427,7 @@ int LuaSyncedRead::GetUnitPieceMatrix(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const LocalModel* localModel = unit->localModel;
+	LocalModel* localModel = unit->localModel;
 	if (localModel == NULL) {
 		return 0;
 	}
