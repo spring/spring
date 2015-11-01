@@ -234,7 +234,6 @@ bool SpringApp::Initialize()
 	creg::System::InitializeClasses();
 	GlobalConfig::Instantiate();
 
-	agui::InitGui(); //needs to be initialized before window is created, see UpdateViewPortGeometry
 
 	// Create Window
 	if (!InitWindow(("Spring " + SpringVersion::GetSync()).c_str())) {
@@ -264,6 +263,7 @@ bool SpringApp::Initialize()
 	gu = new CGlobalUnsynced();
 
 	// GUIs
+	agui::InitGui();
 	LoadFonts();
 	CNamedTextures::Init();
 	LuaOpenGL::Init();
@@ -501,7 +501,9 @@ void SpringApp::SetupViewportGeometry()
 	const int vpx = globalRendering->viewPosX;
 	const int vpy = globalRendering->winSizeY - globalRendering->viewSizeY - globalRendering->viewPosY;
 
-	agui::gui->UpdateScreenGeometry(globalRendering->viewSizeX, globalRendering->viewSizeY, vpx, vpy);
+	if (agui::gui != nullptr) {
+		agui::gui->UpdateScreenGeometry(globalRendering->viewSizeX, globalRendering->viewSizeY, vpx, vpy);
+	}
 }
 
 
