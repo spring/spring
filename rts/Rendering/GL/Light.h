@@ -59,13 +59,13 @@ namespace GL {
 		const float3& GetSpecularDecayRate() const { return specularDecayRate; }
 		const float3& GetDecayFunctionType() const { return decayFunctionType; }
 
-		void SetPosition(const float array[3]) { position = array; }
+		void SetPosition(const float array[3]) { position.fromFloat3(array); }
 		void SetDirection(const float array[3]) { direction = array; }
 		void SetTrackPosition(const float3* pos) { trackPosition = pos; }
 		void SetTrackDirection(const float3* dir) { trackDirection = dir; }
-		void SetAmbientColor(const float array[3]) { ambientColor = array; }
-		void SetDiffuseColor(const float array[3]) { diffuseColor = array; }
-		void SetSpecularColor(const float array[3]) { specularColor = array; }
+		void SetAmbientColor(const float array[3]) { ambientColor.fromFloat3(array); }
+		void SetDiffuseColor(const float array[3]) { diffuseColor.fromFloat3(array); }
+		void SetSpecularColor(const float array[3]) { specularColor.fromFloat3(array); }
 		void SetIntensityWeight(const float array[3]) { intensityWeight = array; }
 		void SetAttenuation(const float array[3]) { attenuation = array; }
 		void SetAmbientDecayRate(const float array[3]) { ambientDecayRate = array; }
