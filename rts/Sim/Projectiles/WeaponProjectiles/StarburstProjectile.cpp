@@ -87,7 +87,8 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 	if (weaponDef != NULL) {
 		maxSpeed = weaponDef->projectilespeed;
 		areaOfEffect = weaponDef->damageAreaOfEffect;
-		
+		ttl = weaponDef->flighttime;
+
 		// Default uptime is -1. Positive values override the weapondef.
 		if (uptime < 0) {
 			uptime = weaponDef->uptime * GAME_SPEED;
@@ -95,8 +96,6 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 
 		if (weaponDef->flighttime == 0) {
 			ttl = std::min(3000.0f, uptime + weaponDef->range / maxSpeed + 100);
-		} else {
-			ttl = weaponDef->flighttime;
 		}
 	}
 
