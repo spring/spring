@@ -71,6 +71,8 @@ BOOL CALLING_CONV DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpReserved)
 #endif
 
 
+CONFIG(bool, UnitsyncAutoUnLoadMaps).defaultValue(true).description("Automaticly load and unload the required map for some unitsync functions.");
+CONFIG(bool, UnitsyncAutoUnLoadMapsIsSupported).defaultValue(true).readOnly(true).description("Check for support of UnitsyncAutoUnLoadMaps");
 
 //////////////////////////
 //////////////////////////
@@ -192,7 +194,7 @@ void LoadGameDataUnitDefs() {
 	}
 }
 
-
+static bool autoUnLoadmap = true;
 
 //////////////////////////
 //////////////////////////
@@ -271,6 +273,8 @@ class ScopedMapLoader {
 		ScopedMapLoader(const std::string& mapName, const std::string& mapFile)
 			: oldHandler(vfsHandler)
 		{
+			if (!autoUnLoadmap)
+				return;
 			CFileHandler f(mapFile);
 			if (f.FileExists()) {
 				return;
@@ -282,6 +286,8 @@ class ScopedMapLoader {
 
 		~ScopedMapLoader()
 		{
+			if (!autoUnLoadmap)
+				return;
 			if (vfsHandler != oldHandler) {
 				delete vfsHandler;
 				vfsHandler = oldHandler;
@@ -338,6 +344,25 @@ static void CheckForImportantFilesInVFS()
 	}
 }
 
+class UnitsyncConfigObserver
+{
+public:
+	UnitsyncConfigObserver() {
+		configHandler->NotifyOnChange(this);
+	}
+
+	~UnitsyncConfigObserver() {
+		configHandler->RemoveObserver(this);
+	}
+
+	void ConfigNotify(const std::string& key, const std::string& value) {
+		if (key == "UnitsyncAutoUnLoadMaps" ) {
+			autoUnLoadmap = configHandler->GetBool("UnitsyncAutoUnLoadMaps");
+		}
+	}
+};
+
+static UnitsyncConfigObserver* unitsyncConfigObserver = nullptr;
 
 EXPORT(int) Init(bool isServer, int id)
 {
@@ -376,7 +401,8 @@ EXPORT(int) Init(bool isServer, int id)
 		// check if VFS is okay (throws if not)
 		CheckForImportantFilesInVFS();
 		ThreadPool::SetThreadCount(0);
-
+		configHandler->Set("UnitsyncAutoUnLoadMaps", true); //reset on each load (backwards compatibility)
+		unitsyncConfigObserver = new UnitsyncConfigObserver();
 		ret = 1;
 		LOG("[UnitSync::%s] initialized %s (call %d) as %s", __FUNCTION__, springFull.c_str(), numCalls, (isServer? "server": "client"));
 	}
@@ -390,6 +416,7 @@ EXPORT(int) Init(bool isServer, int id)
 EXPORT(void) UnInit()
 {
 	try {
+		SafeDelete(unitsyncConfigObserver);
 		_Cleanup();
 		FileSystemInitializer::Cleanup();
 		ConfigHandler::Deallocate();
