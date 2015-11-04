@@ -404,7 +404,7 @@ EXPORT(int) Init(bool isServer, int id)
 		configHandler->Set("UnitsyncAutoUnLoadMaps", true); //reset on each load (backwards compatibility)
 		unitsyncConfigObserver = new UnitsyncConfigObserver();
 		ret = 1;
-		LOG("[UnitSync::%s] initialized %s (call %d) as %s", __FUNCTION__, springFull.c_str(), numCalls, (isServer? "server": "client"));
+		LOG("[UnitSync::%s] initialized %s (call %d)", __FUNCTION__, springFull.c_str(), numCalls);
 	}
 
 	UNITSYNC_CATCH_BLOCKS;
