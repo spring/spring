@@ -476,6 +476,7 @@ EXPORT(int) ProcessUnits()
 
 EXPORT(int) ProcessUnitsNoChecksum()
 {
+	DEPRECATED;
 	return ProcessUnits();
 }
 
@@ -2539,6 +2540,7 @@ EXPORT(int) OpenArchive(const char* name)
 
 EXPORT(int) OpenArchiveType(const char* name, const char* type)
 {
+	DEPRECATED;
 	try {
 		CheckInit();
 		CheckNullOrEmpty(name);
