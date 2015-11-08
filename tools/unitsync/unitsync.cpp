@@ -474,13 +474,6 @@ EXPORT(int) ProcessUnits()
 	return 0;
 }
 
-EXPORT(int) ProcessUnitsNoChecksum()
-{
-	DEPRECATED;
-	return ProcessUnits();
-}
-
-
 EXPORT(int) GetUnitCount()
 {
 	int count = -1;
@@ -857,7 +850,7 @@ static void internal_deleteMapInfos() {
 }
 
 EXPORT(const char*) GetMapDescription(int index) {
-
+	DEPRECATED;
 	const InternalMapInfo* mapInfo = internal_getMapInfo(index);
 	if (mapInfo) {
 		return mapInfo->description.c_str();
@@ -867,7 +860,7 @@ EXPORT(const char*) GetMapDescription(int index) {
 }
 
 EXPORT(const char*) GetMapAuthor(int index) {
-
+	DEPRECATED;
 	const InternalMapInfo* mapInfo = internal_getMapInfo(index);
 	if (mapInfo) {
 		return mapInfo->author.c_str();
@@ -877,7 +870,7 @@ EXPORT(const char*) GetMapAuthor(int index) {
 }
 
 EXPORT(int) GetMapWidth(int index) {
-
+	DEPRECATED;
 	const InternalMapInfo* mapInfo = internal_getMapInfo(index);
 	if (mapInfo) {
 		return mapInfo->width;
@@ -887,7 +880,7 @@ EXPORT(int) GetMapWidth(int index) {
 }
 
 EXPORT(int) GetMapHeight(int index) {
-
+	DEPRECATED;
 	const InternalMapInfo* mapInfo = internal_getMapInfo(index);
 	if (mapInfo) {
 		return mapInfo->height;
@@ -897,7 +890,7 @@ EXPORT(int) GetMapHeight(int index) {
 }
 
 EXPORT(int) GetMapTidalStrength(int index) {
-
+	DEPRECATED;
 	const InternalMapInfo* mapInfo = internal_getMapInfo(index);
 	if (mapInfo) {
 		return mapInfo->tidalStrength;
@@ -907,7 +900,7 @@ EXPORT(int) GetMapTidalStrength(int index) {
 }
 
 EXPORT(int) GetMapWindMin(int index) {
-
+	DEPRECATED;
 	const InternalMapInfo* mapInfo = internal_getMapInfo(index);
 	if (mapInfo) {
 		return mapInfo->minWind;
@@ -917,7 +910,7 @@ EXPORT(int) GetMapWindMin(int index) {
 }
 
 EXPORT(int) GetMapWindMax(int index) {
-
+	DEPRECATED;
 	const InternalMapInfo* mapInfo = internal_getMapInfo(index);
 	if (mapInfo) {
 		return mapInfo->maxWind;
@@ -927,7 +920,7 @@ EXPORT(int) GetMapWindMax(int index) {
 }
 
 EXPORT(int) GetMapGravity(int index) {
-
+	DEPRECATED;
 	const InternalMapInfo* mapInfo = internal_getMapInfo(index);
 	if (mapInfo) {
 		return mapInfo->gravity;
@@ -937,11 +930,12 @@ EXPORT(int) GetMapGravity(int index) {
 }
 
 EXPORT(int) GetMapResourceCount(int index) {
+	DEPRECATED;
 	return 1;
 }
 
 EXPORT(const char*) GetMapResourceName(int index, int resourceIndex) {
-
+	DEPRECATED;
 	if (resourceIndex == 0) {
 		return "Metal";
 	} else {
@@ -952,7 +946,7 @@ EXPORT(const char*) GetMapResourceName(int index, int resourceIndex) {
 }
 
 EXPORT(float) GetMapResourceMax(int index, int resourceIndex) {
-
+	DEPRECATED;
 	if (resourceIndex == 0) {
 		const InternalMapInfo* mapInfo = internal_getMapInfo(index);
 		if (mapInfo) {
@@ -966,7 +960,7 @@ EXPORT(float) GetMapResourceMax(int index, int resourceIndex) {
 }
 
 EXPORT(int) GetMapResourceExtractorRadius(int index, int resourceIndex) {
-
+	DEPRECATED;
 	if (resourceIndex == 0) {
 		const InternalMapInfo* mapInfo = internal_getMapInfo(index);
 		if (mapInfo) {
@@ -981,7 +975,7 @@ EXPORT(int) GetMapResourceExtractorRadius(int index, int resourceIndex) {
 
 
 EXPORT(int) GetMapPosCount(int index) {
-
+	DEPRECATED;
 	int count = -1;
 
 	const InternalMapInfo* mapInfo = internal_getMapInfo(index);
@@ -992,9 +986,8 @@ EXPORT(int) GetMapPosCount(int index) {
 	return count;
 }
 
-//FIXME: rename to GetMapStartPosX ?
 EXPORT(float) GetMapPosX(int index, int posIndex) {
-
+	DEPRECATED;
 	const InternalMapInfo* mapInfo = internal_getMapInfo(index);
 	if (mapInfo) {
 		return mapInfo->xPos[posIndex];
@@ -1003,9 +996,8 @@ EXPORT(float) GetMapPosX(int index, int posIndex) {
 	return -1.0f;
 }
 
-//FIXME: rename to GetMapStartPosZ ?
 EXPORT(float) GetMapPosZ(int index, int posIndex) {
-
+	DEPRECATED;
 	const InternalMapInfo* mapInfo = internal_getMapInfo(index);
 	if (mapInfo) {
 		return mapInfo->zPos[posIndex];
@@ -1843,6 +1835,35 @@ EXPORT(int) GetSkirmishAIInfoCount(int aiIndex) {
 			infoSet.clear();
 		}
 
+		return (int)info.size();
+	}
+	UNITSYNC_CATCH_BLOCKS;
+
+	info.clear();
+
+	return -1;
+}
+
+EXPORT(int) GetMapInfoCount(int index) {
+	try{
+		info.clear();
+		CheckBounds(index, mapNames.size());
+		const InternalMapInfo* mapInfo = internal_getMapInfo(index);
+		info.push_back(InfoItem("description", "", mapInfo->description));
+		info.push_back(InfoItem("author", "", mapInfo->author));
+		info.push_back(InfoItem("tidalStrength", "", mapInfo->tidalStrength));
+		info.push_back(InfoItem("gravity", "", mapInfo->gravity));
+		info.push_back(InfoItem("maxMetal", "", mapInfo->maxMetal));
+		info.push_back(InfoItem("extractorRadius", "", mapInfo->extractorRadius));
+		info.push_back(InfoItem("minWind", "", mapInfo->minWind));
+		info.push_back(InfoItem("maxWind", "", mapInfo->maxWind));
+		info.push_back(InfoItem("width", "", mapInfo->width));
+		info.push_back(InfoItem("height", "", mapInfo->height));
+		info.push_back(InfoItem("resource", "", "Metal"));
+		for(int i = 0; i < mapInfo->xPos.size() && i < mapInfo->zPos.size(); i++) {
+			info.push_back(InfoItem("xPos", "", mapInfo->xPos[i]));
+			info.push_back(InfoItem("zPos", "", mapInfo->zPos[i]));
+		}
 		return (int)info.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -2777,3 +2798,19 @@ EXPORT(void) DeleteSpringConfigKey(const char* name)
 	}
 	UNITSYNC_CATCH_BLOCKS;
 }
+
+#ifdef ENABLE_DEPRECATED_FUNCTIONS
+/*
+**********************DEPRECATED SECTION
+*/
+EXPORT(int) ProcessUnitsNoChecksum()
+{
+	DEPRECATED;
+	return ProcessUnits();
+}
+
+#endif //
+/*
+**********************DEPRECATED SECTION END
+*/
+
