@@ -13,9 +13,6 @@
 	#include "System/exportdefines.h"
 #endif
 
-#define ENABLE_DEPRECATED_FUNCTIONS 1
-
-
 // from unitsync.cpp:
 
 /** @addtogroup unitsync_api
@@ -1230,3 +1227,4 @@ EXPORT(int         ) OpenArchiveType(const char* name, const char* type);
 /** @} */
 
 #endif // _UNITSYNC_API_H
+

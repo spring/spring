@@ -101,16 +101,6 @@ private:
 	const std::string message;
 };
 
-#define DEPRECATED \
-	static CMessageOnce msg( \
-			"The deprecated unitsync function " \
-			+ std::string(__FUNCTION__) + " was called." \
-			" Please update your lobby client"); \
-	msg.print(); \
-	SetLastError("deprecated unitsync function called: " \
-			+ std::string(__FUNCTION__))
-
-
 
 //////////////////////////
 //////////////////////////
@@ -686,55 +676,6 @@ static bool internal_GetMapInfo(const char* mapName, InternalMapInfo* outInfo)
 	return true;
 }
 
-static bool _GetMapInfoEx(const char* mapName, MapInfo* outInfo, int version)
-{
-	CheckInit();
-	CheckNullOrEmpty(mapName);
-	CheckNull(outInfo);
-
-	bool fetchOk;
-
-	InternalMapInfo internalMapInfo;
-	fetchOk = internal_GetMapInfo(mapName, &internalMapInfo);
-
-	if (fetchOk) {
-		safe_strzcpy(outInfo->description, internalMapInfo.description, 255);
-		outInfo->tidalStrength   = internalMapInfo.tidalStrength;
-		outInfo->gravity         = internalMapInfo.gravity;
-		outInfo->maxMetal        = internalMapInfo.maxMetal;
-		outInfo->extractorRadius = internalMapInfo.extractorRadius;
-		outInfo->minWind         = internalMapInfo.minWind;
-		outInfo->maxWind         = internalMapInfo.maxWind;
-
-		outInfo->width           = internalMapInfo.width;
-		outInfo->height          = internalMapInfo.height;
-		outInfo->posCount        = internalMapInfo.xPos.size();
-		if (outInfo->posCount > 16) {
-			// legacy interface does not support more then 16
-			outInfo->posCount = 16;
-		}
-		for (size_t curTeam = 0; curTeam < outInfo->posCount; ++curTeam) {
-			outInfo->positions[curTeam].x = internalMapInfo.xPos[curTeam];
-			outInfo->positions[curTeam].z = internalMapInfo.zPos[curTeam];
-		}
-
-		if (version >= 1) {
-			safe_strzcpy(outInfo->author, internalMapInfo.author, 200);
-		}
-	} else {
-		// contains the error message
-		safe_strzcpy(outInfo->description, internalMapInfo.description, 255);
-
- 		// Fill in stuff so TASClient does not crash
- 		outInfo->posCount = 0;
-		if (version >= 1) {
-			outInfo->author[0] = '\0';
-		}
-		return false;
-	}
-
-	return fetchOk;
-}
 
 // Updated on every call to GetMapCount
 static std::vector<std::string> mapNames;
@@ -2484,6 +2425,68 @@ EXPORT(void) DeleteSpringConfigKey(const char* name)
 /*
 **********************DEPRECATED SECTION
 */
+
+#define DEPRECATED \
+	static CMessageOnce msg( \
+			"The deprecated unitsync function " \
+			+ std::string(__FUNCTION__) + " was called." \
+			" Please update your lobby client"); \
+	msg.print(); \
+	SetLastError("deprecated unitsync function called: " \
+			+ std::string(__FUNCTION__))
+
+
+
+static bool _GetMapInfoEx(const char* mapName, MapInfo* outInfo, int version)
+{
+	CheckInit();
+	CheckNullOrEmpty(mapName);
+	CheckNull(outInfo);
+
+	bool fetchOk;
+
+	InternalMapInfo internalMapInfo;
+	fetchOk = internal_GetMapInfo(mapName, &internalMapInfo);
+
+	if (fetchOk) {
+		safe_strzcpy(outInfo->description, internalMapInfo.description, 255);
+		outInfo->tidalStrength   = internalMapInfo.tidalStrength;
+		outInfo->gravity         = internalMapInfo.gravity;
+		outInfo->maxMetal        = internalMapInfo.maxMetal;
+		outInfo->extractorRadius = internalMapInfo.extractorRadius;
+		outInfo->minWind         = internalMapInfo.minWind;
+		outInfo->maxWind         = internalMapInfo.maxWind;
+
+		outInfo->width           = internalMapInfo.width;
+		outInfo->height          = internalMapInfo.height;
+		outInfo->posCount        = internalMapInfo.xPos.size();
+		if (outInfo->posCount > 16) {
+			// legacy interface does not support more then 16
+			outInfo->posCount = 16;
+		}
+		for (size_t curTeam = 0; curTeam < outInfo->posCount; ++curTeam) {
+			outInfo->positions[curTeam].x = internalMapInfo.xPos[curTeam];
+			outInfo->positions[curTeam].z = internalMapInfo.zPos[curTeam];
+		}
+
+		if (version >= 1) {
+			safe_strzcpy(outInfo->author, internalMapInfo.author, 200);
+		}
+	} else {
+		// contains the error message
+		safe_strzcpy(outInfo->description, internalMapInfo.description, 255);
+
+		// Fill in stuff so TASClient does not crash
+		outInfo->posCount = 0;
+		if (version >= 1) {
+			outInfo->author[0] = '\0';
+		}
+		return false;
+	}
+
+	return fetchOk;
+}
+
 EXPORT(int) ProcessUnitsNoChecksum()
 {
 	DEPRECATED;
