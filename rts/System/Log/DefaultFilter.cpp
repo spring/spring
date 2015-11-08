@@ -56,7 +56,7 @@ namespace {
 		return sections;
 	}
 
-	void log_filter_printSectionMinLevels(const char* func) {
+	void inline log_filter_printSectionMinLevels(const char* func) {
 		printf("[%s][caller=%s]\n", __FUNCTION__, func);
 
 		const auto& secLevels = log_filter_getSectionMinLevels();
