@@ -154,6 +154,10 @@ static std::vector<InfoItem> info;
 static std::set<std::string> infoSet;
 
 
+struct GameDataUnitDef {
+	std::string name;
+	std::string fullName;
+};
 
 static std::vector<GameDataUnitDef> unitDefs;
 
