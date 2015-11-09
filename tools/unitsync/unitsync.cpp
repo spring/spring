@@ -1714,16 +1714,6 @@ EXPORT(const char*) GetOptionSection(int optIndex)
 	return NULL;
 }
 
-EXPORT(const char*) GetOptionStyle(int optIndex)
-{
-	try {
-		CheckOptionIndex(optIndex);
-		return GetStr(options[optIndex].style);
-	}
-	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
-}
-
 EXPORT(const char*) GetOptionDesc(int optIndex)
 {
 	try {
@@ -2820,7 +2810,17 @@ EXPORT(int) OpenArchiveType(const char* name, const char* type)
 	return 0;
 }
 
-
+// when removing this function, remove "std::string style" in Option.h, too
+EXPORT(const char*) GetOptionStyle(int optIndex)
+{
+	DEPRECATED;
+	try {
+		CheckOptionIndex(optIndex);
+		return GetStr(options[optIndex].style);
+	}
+	UNITSYNC_CATCH_BLOCKS;
+	return NULL;
+}
 
 
 #endif //

@@ -686,20 +686,6 @@ EXPORT(const char* ) GetOptionName(int optIndex);
  */
 EXPORT(const char* ) GetOptionSection(int optIndex);
 /**
- * @brief Retrieve an option's style
- * @param optIndex option index/id
- * @return NULL on error; the option's style on success
- *
- * XXX The format of an option style string is currently undecided.
- *
- * Do not use this before having called Get*OptionCount().
- * @see GetMapOptionCount
- * @see GetModOptionCount
- * @see GetSkirmishAIOptionCount
- * @see GetCustomOptionCount
- */
-EXPORT(const char* ) GetOptionStyle(int optIndex);
-/**
  * @brief Retrieve an option's description
  * @param optIndex option index/id
  * @return NULL on error; the option's description on success
@@ -1222,6 +1208,10 @@ EXPORT(const char* ) GetPrimaryModDescription(int index);
  * @deprecated use OpenArchive instead
  */
 EXPORT(int         ) OpenArchiveType(const char* name, const char* type);
+/**
+ * @deprecated unused
+ */
+EXPORT(const char* ) GetOptionStyle(int optIndex);
 
 #endif // ENABLE_DEPRECATED_FUNCTIONS
 /** @} */
