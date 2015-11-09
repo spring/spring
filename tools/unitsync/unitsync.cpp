@@ -311,11 +311,32 @@ EXPORT(bool) IsSpringReleaseVersion()
 	return SpringVersion::IsRelease();
 }
 
+class UnitsyncConfigObserver
+{
+public:
+	UnitsyncConfigObserver() {
+		configHandler->NotifyOnChange(this);
+	}
+
+	~UnitsyncConfigObserver() {
+		configHandler->RemoveObserver(this);
+	}
+
+	void ConfigNotify(const std::string& key, const std::string& value) {
+		if (key == "UnitsyncAutoUnLoadMaps" ) {
+			autoUnLoadmap = configHandler->GetBool("UnitsyncAutoUnLoadMaps");
+		}
+	}
+};
+
+
 
 static void internal_deleteMapInfos();
+static UnitsyncConfigObserver* unitsyncConfigObserver = nullptr;
 
 static void _Cleanup()
 {
+	SafeDelete(unitsyncConfigObserver);
 	internal_deleteMapInfos();
 
 	lpClose();
@@ -338,25 +359,6 @@ static void CheckForImportantFilesInVFS()
 	}
 }
 
-class UnitsyncConfigObserver
-{
-public:
-	UnitsyncConfigObserver() {
-		configHandler->NotifyOnChange(this);
-	}
-
-	~UnitsyncConfigObserver() {
-		configHandler->RemoveObserver(this);
-	}
-
-	void ConfigNotify(const std::string& key, const std::string& value) {
-		if (key == "UnitsyncAutoUnLoadMaps" ) {
-			autoUnLoadmap = configHandler->GetBool("UnitsyncAutoUnLoadMaps");
-		}
-	}
-};
-
-static UnitsyncConfigObserver* unitsyncConfigObserver = nullptr;
 
 EXPORT(int) Init(bool isServer, int id)
 {
@@ -410,7 +412,6 @@ EXPORT(int) Init(bool isServer, int id)
 EXPORT(void) UnInit()
 {
 	try {
-		SafeDelete(unitsyncConfigObserver);
 		_Cleanup();
 		FileSystemInitializer::Cleanup();
 		ConfigHandler::Deallocate();
