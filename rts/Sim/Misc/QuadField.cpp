@@ -209,7 +209,7 @@ std::vector<int> CQuadField::GetQuadsOnRay(const float3 start, const float3 dir,
 	}
 
 	// to prevent Div0
-	if (dir.z == 0.f) {
+	if (noZdir) {
 		int startX = Clamp<int>(start.x * invQuadSize.x, 0, numQuadsX - 1);
 		int finalX = Clamp<int>(   to.x * invQuadSize.x, 0, numQuadsX - 1);
 		if (finalX < startX) std::swap(startX, finalX);
