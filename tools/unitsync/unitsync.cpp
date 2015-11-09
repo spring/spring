@@ -1509,6 +1509,9 @@ EXPORT(int) GetMapInfoCount(int index) {
 		info.clear();
 		CheckBounds(index, mapNames.size());
 		const InternalMapInfo* mapInfo = internal_getMapInfo(index);
+		if (mapInfo == nullptr) {
+			return -1;
+		}
 		info.push_back(InfoItem("description", "", mapInfo->description));
 		info.push_back(InfoItem("author", "", mapInfo->author));
 		info.push_back(InfoItem("tidalStrength", "", mapInfo->tidalStrength));
