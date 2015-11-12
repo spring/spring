@@ -887,9 +887,7 @@ void CGame::ClientReadNet()
 
 						if (unit->isDead)
 							continue;
-						if (unit->beingBuilt)
-							continue; // why?
-						if (unit->IsStunned() || unit->IsCrashing())
+						if (unit->IsCrashing())
 							continue;
 
 						unit->ChangeTeam(dstTeamID, CUnit::ChangeGiven);
