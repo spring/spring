@@ -9,6 +9,7 @@ General:
 
 Lua:
  ! GameID callin now gets the ID string encoded in hex.
+ - new GetUICommands function to obtain a list of all UI commands (e.g. /luaui reload)
 
 -- 100.0 --------------------------------------------------------
 Major:

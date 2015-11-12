@@ -16,6 +16,7 @@
 #include "LuaSyncedCtrl.h"
 #include "LuaSyncedRead.h"
 #include "LuaSyncedTable.h"
+#include "LuaUICommand.h"
 #include "LuaUnsyncedCtrl.h"
 #include "LuaUnsyncedRead.h"
 #include "LuaFeatureDefs.h"
@@ -121,6 +122,7 @@ bool CUnsyncedLuaHandle::Init(const string& code, const string& file)
 	    !AddEntriesToTable(L, "Spring",      LuaSyncedRead::PushEntries)   ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries) ||
 	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedRead::PushEntries) ||
+	    !AddEntriesToTable(L, "Spring",      LuaUICommand::PushEntries)    ||
 	    !AddEntriesToTable(L, "gl",          LuaOpenGL::PushEntries)       ||
 	    !AddEntriesToTable(L, "GL",          LuaConstGL::PushEntries)      ||
 	    !AddEntriesToTable(L, "Game",        LuaConstGame::PushEntries)    ||
@@ -400,6 +402,7 @@ bool CSyncedLuaHandle::Init(const string& code, const string& file)
 		!AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries) ||
 		!AddEntriesToTable(L, "Spring",      LuaSyncedCtrl::PushEntries)   ||
 		!AddEntriesToTable(L, "Spring",      LuaSyncedRead::PushEntries)   ||
+		!AddEntriesToTable(L, "Spring",      LuaUICommand::PushEntries)    ||
 		!AddEntriesToTable(L, "Game",        LuaConstGame::PushEntries)    ||
 		!AddEntriesToTable(L, "CMD",         LuaConstCMD::PushEntries)     ||
 		!AddEntriesToTable(L, "CMDTYPE",     LuaConstCMDTYPE::PushEntries) ||
