@@ -24,8 +24,8 @@ bool LuaUICommand::PushEntries(lua_State* L)
 	lua_rawset(L, -3)
 
 	REGISTER_LUA_CFUNC(GetUICommands);
-	REGISTER_LUA_CFUNC(RegisterUICommand);
-	REGISTER_LUA_CFUNC(DeregisterUICommand);
+// 	REGISTER_LUA_CFUNC(RegisterUICommand);
+// 	REGISTER_LUA_CFUNC(DeregisterUICommand);
 	
 	return true;
 }
