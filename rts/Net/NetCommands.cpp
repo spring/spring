@@ -887,6 +887,8 @@ void CGame::ClientReadNet()
 
 						if (unit->isDead)
 							continue;
+						if (unit->beingBuilt)
+							continue;
 						if (unit->IsCrashing())
 							continue;
 
