@@ -1872,6 +1872,35 @@ struct SSkirmishAICallback {
 
 	float             (CALLING_CONV *Map_getWaterDamage)(int skirmishAIId);
 
+	bool              (CALLING_CONV *Map_isDeformable)(int skirmishAIId);
+
+	/** Returns global map hardness */
+	float             (CALLING_CONV *Map_getHardness)(int skirmishAIId);
+
+	/**
+	 * Returns hardness modifiers of the squares adjusted by terrain type.
+	 *
+	 * - index 0 is top left
+	 * - each data position is 2*2 in size (relative to heightmap)
+	 * - the value for the full resolution position (x, z) is at index ((z * width + x) / 2)
+	 * - the last value, bottom right, is at index (width/2 * height/2 - 1)
+	 *
+	 * @see getHardness()
+	 */
+	int               (CALLING_CONV *Map_getHardnessModMap)(int skirmishAIId, float* hardMods, int hardMods_sizeMax); //$ ARRAY:hardMods
+
+	/**
+	 * Returns speed modifiers of the squares
+	 * for specific speedModClass adjusted by terrain type.
+	 *
+	 * - index 0 is top left
+	 * - each data position is 2*2 in size (relative to heightmap)
+	 * - the value for the full resolution position (x, z) is at index ((z * width + x) / 2)
+	 * - the last value, bottom right, is at index (width/2 * height/2 - 1)
+	 *
+	 * @see MoveData#getSpeedModClass
+	 */
+	int               (CALLING_CONV *Map_getSpeedModMap)(int skirmishAIId, int speedModClass, float* speedMods, int speedMods_sizeMax); //$ ARRAY:speedMods
 
 	/**
 	 * Returns all points drawn with this AIs team color,
