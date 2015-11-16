@@ -1989,6 +1989,73 @@ EXPORT(float) skirmishAiCallback_Map_getWaterDamage(int skirmishAIId) {
 }
 
 
+EXPORT(bool) skirmishAiCallback_Map_isDeformable(int skirmishAIId) {
+	return !mapInfo->map.notDeformable;
+}
+
+EXPORT(float) skirmishAiCallback_Map_getHardness(int skirmishAIId) {
+	return mapInfo->map.hardness;
+}
+
+EXPORT(int) skirmishAiCallback_Map_getHardnessModMap(int skirmishAIId,
+		float* hardMods, int hardMods_sizeMax) {
+
+	const int hardMods_sizeReal = mapDims.hmapx * mapDims.hmapy;
+
+	int hardMods_size = hardMods_sizeReal;
+
+	if (hardMods != NULL) {
+		const unsigned char* typeMap = readMap->GetTypeMapSynced();
+		hardMods_size = min(hardMods_sizeReal, hardMods_sizeMax);
+
+		for (int i = 0; i < hardMods_size; ++i) {
+			hardMods[i] = mapInfo->terrainTypes[typeMap[i]].hardness;
+		}
+	}
+
+	return hardMods_size;
+}
+
+EXPORT(int) skirmishAiCallback_Map_getSpeedModMap(int skirmishAIId, int speedModClass,
+		float* speedMods, int speedMods_sizeMax) {
+
+	const int speedMods_sizeReal = mapDims.hmapx * mapDims.hmapy;
+
+	int speedMods_size = speedMods_sizeReal;
+
+	if (speedMods != NULL) {
+		const unsigned char* typeMap = readMap->GetTypeMapSynced();
+		speedMods_size = min(speedMods_sizeReal, speedMods_sizeMax);
+
+		switch (speedModClass) {
+			case MoveDef::Tank:
+				for (int i = 0; i < speedMods_size; ++i) {
+					speedMods[i] = mapInfo->terrainTypes[typeMap[i]].tankSpeed;
+				}
+				break;
+			case MoveDef::KBot:
+				for (int i = 0; i < speedMods_size; ++i) {
+					speedMods[i] = mapInfo->terrainTypes[typeMap[i]].kbotSpeed;
+				}
+				break;
+			case MoveDef::Hover:
+				for (int i = 0; i < speedMods_size; ++i) {
+					speedMods[i] = mapInfo->terrainTypes[typeMap[i]].hoverSpeed;
+				}
+				break;
+			case MoveDef::Ship:
+				for (int i = 0; i < speedMods_size; ++i) {
+					speedMods[i] = mapInfo->terrainTypes[typeMap[i]].shipSpeed;
+				}
+				break;
+			default:
+				assert(false);
+		}
+	}
+
+	return speedMods_size;
+}
+
 
 EXPORT(bool) skirmishAiCallback_Map_isPossibleToBuildAt(int skirmishAIId, int unitDefId,
 		float* pos_posF3, int facing) {
@@ -5479,6 +5546,10 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Map_getTidalStrength = &skirmishAiCallback_Map_getTidalStrength;
 	callback->Map_getGravity = &skirmishAiCallback_Map_getGravity;
 	callback->Map_getWaterDamage = &skirmishAiCallback_Map_getWaterDamage;
+	callback->Map_isDeformable = &skirmishAiCallback_Map_isDeformable;
+	callback->Map_getHardness = &skirmishAiCallback_Map_getHardness;
+	callback->Map_getHardnessModMap = &skirmishAiCallback_Map_getHardnessModMap;
+	callback->Map_getSpeedModMap = &skirmishAiCallback_Map_getSpeedModMap;
 	callback->Map_getPoints = &skirmishAiCallback_Map_getPoints;
 	callback->Map_Point_getPosition = &skirmishAiCallback_Map_Point_getPosition;
 	callback->Map_Point_getColor = &skirmishAiCallback_Map_Point_getColor;
