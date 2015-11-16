@@ -55,7 +55,8 @@ void main(void)
 	vec3 reflection = textureCube(reflectTex,  reflectDir).rgb;
 
 #if (USE_SHADOWS == 1)
-	float shadow = shadow2DProj(shadowTex, gl_TexCoord[1]).r;
+	// Move the texel closer to the light a little bit to reduce shadow acne, and also clamp shadows to only use the actual [0; 0.5] range to reduce artefacting.
+	float shadow = clamp(shadow2DProj(shadowTex, gl_TexCoord[1]+vec4(0.0, 0.0, -0.00005, 0.0)).r * 2.0, 0.0, 1.0); 
 	shadow      = 1.0 - (1.0 - shadow) * shadowDensity;
 	vec3 shade  = mix(sunAmbient, light, shadow);
 	reflection  = mix(shade, reflection, extraColor.g); // reflection
