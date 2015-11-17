@@ -5,7 +5,6 @@
 
 //#define USE_FUTEX
 
-#include <atomic>
 #if   defined(_WIN32)
 	#include "CriticalSection.h"
 #elif defined(__APPLE__) || !defined(USE_FUTEX)
@@ -14,8 +13,6 @@
 	#include "Futex.h"
 	#include <mutex>
 #endif
-
-
 
 
 namespace spring {
@@ -30,26 +27,6 @@ namespace spring {
 	//typedef recursive_futex recursive_mutex;
 	typedef std::recursive_mutex recursive_mutex;
 #endif
-
-
-	class spinlock {
-	private:
-		std::atomic_flag state;
-
-	public:
-		spinlock() : state(ATOMIC_FLAG_INIT) {}
-
-		void lock()
-		{
-			while (state.test_and_set(std::memory_order_acquire)) {
-				/* busy-wait */
-			}
-		}
-		void unlock()
-		{
-			state.clear(std::memory_order_release);
-		}
-	};
 }
 
 #endif // SPRINGMUTEX_H

@@ -32,10 +32,8 @@ public:
 	/// arbitrary area, for losMap, non-circular radar maps, ...
 	void AddRaycast(SLosInstance* instance, int amount);
 
-	/// arbitrary area, for losMap, non-circular radar maps, ...
-	void PrepareRaycast(SLosInstance* instance) const;
-
 public:
+	int operator[] (int square) const { return losmap[square]; }
 
 	int At(int2 p) const {
 		p.x = Clamp(p.x, 0, size.x - 1);
@@ -47,12 +45,11 @@ public:
 	unsigned short& front() { return losmap.front(); }
 
 private:
-	void LosAdd(SLosInstance* instance) const;
-	void UnsafeLosAdd(SLosInstance* instance) const;
-	void SafeLosAdd(SLosInstance* instance) const;
+	void LosAdd(int2 pos, int radius, float baseHeight, std::vector<int>& squares);
+	void UnsafeLosAdd(int2 pos, int radius, float baseHeight, std::vector<int>& squares);
+	void SafeLosAdd(int2 pos, int radius, float baseHeight, std::vector<int>& squares);
 
-	inline void CastLos(float* maxAng, const int2 off, std::vector<bool>& squaresMap, std::vector<float>& anglesMap, const int radius) const;
-	void AddSquaresToInstance(SLosInstance* li, const std::vector<bool>& squaresMap) const;
+	inline void CastLos(std::vector<int>* squares, float* maxAng, const int2 pos, const int2 off, std::vector<bool>& squaresMap, std::vector<float>& anglesMap, const int radius) const;
 
 protected:
 	const int2 size;
