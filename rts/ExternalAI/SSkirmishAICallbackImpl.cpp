@@ -30,6 +30,7 @@
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
+#include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/Resource.h"
 #include "Sim/Misc/ResourceHandler.h"
@@ -4946,6 +4947,44 @@ EXPORT(float) skirmishAiCallback_Unit_Weapon_getRange(int skirmishAIId, int unit
 	return unit->weapons[weaponId]->range;
 }
 
+EXPORT(bool) skirmishAiCallback_Unit_Weapon_isShieldEnabled(int skirmishAIId, int unitId, int weaponId) {
+	const CUnit* unit = getUnit(unitId);
+	if (!unit) {
+		return false;
+	}
+
+	const CPlasmaRepulser* shield = NULL;
+	if ((size_t)weaponId >= unit->weapons.size()) {
+		shield = static_cast<const CPlasmaRepulser*>(unit->shieldWeapon);
+	} else {
+		shield = dynamic_cast<const CPlasmaRepulser*>(unit->weapons[weaponId]);
+	}
+	if (!shield) {
+		return false;
+	}
+
+	return shield->IsEnabled();
+}
+
+EXPORT(float) skirmishAiCallback_Unit_Weapon_getShieldPower(int skirmishAIId, int unitId, int weaponId) {
+	const CUnit* unit = getUnit(unitId);
+	if (!unit) {
+		return -1.0f;
+	}
+
+	const CPlasmaRepulser* shield = NULL;
+	if ((size_t)weaponId >= unit->weapons.size()) {
+		shield = static_cast<const CPlasmaRepulser*>(unit->shieldWeapon);
+	} else {
+		shield = dynamic_cast<const CPlasmaRepulser*>(unit->weapons[weaponId]);
+	}
+	if (!shield) {
+		return -1.0f;
+	}
+
+	return shield->GetCurPower();
+}
+
 //########### END Weapon
 
 
@@ -5719,6 +5758,8 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Unit_Weapon_getReloadFrame = &skirmishAiCallback_Unit_Weapon_getReloadFrame;
 	callback->Unit_Weapon_getReloadTime = &skirmishAiCallback_Unit_Weapon_getReloadTime;
 	callback->Unit_Weapon_getRange = &skirmishAiCallback_Unit_Weapon_getRange;
+	callback->Unit_Weapon_isShieldEnabled = &skirmishAiCallback_Unit_Weapon_isShieldEnabled;
+	callback->Unit_Weapon_getShieldPower = &skirmishAiCallback_Unit_Weapon_getShieldPower;
 	callback->Debug_GraphDrawer_isEnabled = &skirmishAiCallback_Debug_GraphDrawer_isEnabled;
 }
 

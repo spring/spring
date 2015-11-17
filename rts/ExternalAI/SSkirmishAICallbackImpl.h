@@ -1351,6 +1351,10 @@ EXPORT(int              ) skirmishAiCallback_Unit_Weapon_getReloadTime(int skirm
 
 EXPORT(float            ) skirmishAiCallback_Unit_Weapon_getRange(int skirmishAIId, int unitId, int weaponId);
 
+EXPORT(bool             ) skirmishAiCallback_Unit_Weapon_isShieldEnabled(int skirmishAIId, int unitId, int weaponId);
+
+EXPORT(float            ) skirmishAiCallback_Unit_Weapon_getShieldPower(int skirmishAIId, int unitId, int weaponId);
+
 // END OBJECT Weapon
 
 EXPORT(bool             ) skirmishAiCallback_Debug_GraphDrawer_isEnabled(int skirmishAIId);
