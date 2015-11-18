@@ -22,6 +22,7 @@ public:
 	/** Terrain type, there can be 256 of these:
 	    "MAP\TerrainType0" up to "MAP\TerrainType255" */
 	static const int NUM_TERRAIN_TYPES = 256;
+	static const int NUM_SPLAT_DETAIL_NORMALS = 4;
 
 	/**
 	 * @param mapInfoFile mapinfo file, aka sm3 / smf (full path)
@@ -182,24 +183,25 @@ public:
 		std::string lightEmissionTexName;
 		std::string parallaxHeightTexName;
 
-		std::string splatDetailNormalTexNames[4]; //Contains the splatted detail normal textures 1-4
+		// Contains the splatted detail normal textures
+		std::string splatDetailNormalTexNames[NUM_SPLAT_DETAIL_NORMALS];
 
-		//Controls whether the alpha channel of each splatted detail normal texture
-		//contains a diffuse channel, which behaves like the old splatted detail textures
-		bool  splatDetailNormalDiffuseAlpha;
 		// SMF overrides
 		std::string minimapTexName;
 		std::string typemapTexName;
 		std::string metalmapTexName;
 		std::string grassmapTexName;
 
+		std::vector<std::string> smtFileNames;
 
 		float minHeight;
-		bool  minHeightOverride;
 		float maxHeight;
+		bool  minHeightOverride;
 		bool  maxHeightOverride;
 
-		std::vector<std::string> smtFileNames;
+		// Controls whether the alpha channel of each splatted detail normal texture
+		// contains a diffuse channel, which behaves like the old splatted detail textures
+		bool splatDetailNormalDiffuseAlpha;
 	} smf;
 
 	/** SM3 specific settings

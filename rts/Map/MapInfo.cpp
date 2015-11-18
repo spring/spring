@@ -11,6 +11,7 @@
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
 #include "System/myMath.h"
+#include "System/Util.h"
 
 #if !defined(HEADLESS) && !defined(NO_SOUND)
 #include "System/Sound/OpenAL/EFX.h"
@@ -330,18 +331,13 @@ void CMapInfo::ReadSMF()
 	smf.specularTexName    = mapResTable.GetString("specularTex", "");
 	smf.splatDetailTexName = mapResTable.GetString("splatDetailTex", "");
 	smf.splatDistrTexName  = mapResTable.GetString("splatDistrTex", "");
-	smf.splatDetailNormalTexNames[0]  = mapResTable.GetString("splatDetailNormalTex1", "");
-	smf.splatDetailNormalTexNames[1]  = mapResTable.GetString("splatDetailNormalTex2", "");
-	smf.splatDetailNormalTexNames[2]  = mapResTable.GetString("splatDetailNormalTex3", "");
-	smf.splatDetailNormalTexNames[3]  = mapResTable.GetString("splatDetailNormalTex4", "");
-	smf.splatDetailNormalDiffuseAlpha = mapResTable.GetBool("splatDetailNormalDiffuseAlpha", false);
-
 	smf.grassShadingTexName = mapResTable.GetString("grassShadingTex", "");
-
 	smf.skyReflectModTexName  = mapResTable.GetString("skyReflectModTex", "");
 	smf.detailNormalTexName   = mapResTable.GetString("detailNormalTex", "");
 	smf.lightEmissionTexName  = mapResTable.GetString("lightEmissionTex", "");
 	smf.parallaxHeightTexName = mapResTable.GetString("parallaxHeightTex", "");
+
+	smf.splatDetailNormalDiffuseAlpha = mapResTable.GetBool("splatDetailNormalDiffuseAlpha", false);
 
 	if (!smf.detailTexName.empty()) {
 		smf.detailTexName = "maps/" + smf.detailTexName;
@@ -351,18 +347,31 @@ void CMapInfo::ReadSMF()
 		smf.detailTexName = "bitmaps/" + smf.detailTexName;
 	}
 
-	if (!smf.specularTexName.empty()      ) { smf.specularTexName       = "maps/" + smf.specularTexName; }
-	if (!smf.splatDetailTexName.empty()   ) { smf.splatDetailTexName    = "maps/" + smf.splatDetailTexName; }
-	if (!smf.splatDistrTexName.empty()    ) { smf.splatDistrTexName     = "maps/" + smf.splatDistrTexName; }
-	if (!smf.grassShadingTexName.empty()  ) { smf.grassShadingTexName   = "maps/" + smf.grassShadingTexName; }
-	if (!smf.skyReflectModTexName.empty() ) { smf.skyReflectModTexName  = "maps/" + smf.skyReflectModTexName; }
-	if (!smf.detailNormalTexName.empty()  ) { smf.detailNormalTexName   = "maps/" + smf.detailNormalTexName; }
-	if (!smf.lightEmissionTexName.empty() ) { smf.lightEmissionTexName  = "maps/" + smf.lightEmissionTexName; }
-	if (!smf.parallaxHeightTexName.empty()) { smf.parallaxHeightTexName = "maps/" + smf.parallaxHeightTexName; }
+	const std::vector<std::string*> texNames = {
+		&smf.specularTexName,
+		&smf.splatDetailTexName,
+		&smf.splatDistrTexName,
+		&smf.grassShadingTexName,
+		&smf.skyReflectModTexName,
+		&smf.detailNormalTexName,
+		&smf.lightEmissionTexName,
+		&smf.parallaxHeightTexName,
+	};
 
-	for (int i = 0; i < 4; i++){
-		if (!smf.splatDetailNormalTexNames[i].empty()) { smf.splatDetailNormalTexNames[i] = "maps/" + smf.splatDetailNormalTexNames[i]; }
+	for (size_t i = 0; i < texNames.size(); i++) {
+		if (!texNames[i]->empty()) {
+			*texNames[i] = "maps/" + *texNames[i];
+		}
 	}
+
+	for (int i = 0; i < NUM_SPLAT_DETAIL_NORMALS; i++) {
+		smf.splatDetailNormalTexNames[i] = mapResTable.GetString("splatDetailNormalTex" + IntToString(i + 1), "");
+
+		if (!smf.splatDetailNormalTexNames[i].empty()) {
+			smf.splatDetailNormalTexNames[i] = "maps/" + smf.splatDetailNormalTexNames[i];
+		}
+	}
+
 	// smf overrides
 	const LuaTable& smfTable = parser->GetRoot().SubTable("smf");
 

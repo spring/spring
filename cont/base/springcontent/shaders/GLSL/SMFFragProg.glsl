@@ -135,6 +135,8 @@ vec3 GetFragmentNormal(vec2 uv) {
 #endif
 	return normal;
 }
+
+
 #ifndef SMF_DETAIL_NORMAL_TEXTURE_SPLATTING
 vec4 GetDetailTextureColor(vec2 uv) {
 	#ifndef SMF_DETAIL_TEXTURE_SPLATTING
@@ -154,22 +156,34 @@ vec4 GetDetailTextureColor(vec2 uv) {
 	#endif
 	return detailCol;
 }
-#else //SMF_DETAIL_NORMAL_TEXTURE_SPLATTING is defined
-vec4 GetDetailTextureNormal(vec2 uv, out float splatStrength) {
+#else // SMF_DETAIL_NORMAL_TEXTURE_SPLATTING is defined
+vec4 GetSplatDetailTextureNormal(vec2 uv, out vec2 splatDetailStrength) {
 	vec4 splatTexCoord0 = vertexWorldPos.xzxz * splatTexScales.rrgg;
 	vec4 splatTexCoord1 = vertexWorldPos.xzxz * splatTexScales.bbaa;
 	vec4 splatCofac = texture2D(splatDistrTex, uv) * splatTexMults;
-	splatStrength = dot(splatCofac, vec4(1.0));
-	vec4 detailNormal = vec4(0.0, 0.01, 0.0, 0.0); //because if all the splatcofacs are zero, 
-		//we will return a 0 vector which cannot be normalized. Better have it pointing up.
-		detailNormal += (texture2D(splatDetailNormalTex1, splatTexCoord0.st) * 2.0 - 1.0) * splatCofac.r;
-		detailNormal += (texture2D(splatDetailNormalTex2, splatTexCoord0.pq) * 2.0 - 1.0) * splatCofac.g;
-		detailNormal += (texture2D(splatDetailNormalTex3, splatTexCoord1.st) * 2.0 - 1.0) * splatCofac.b;
-		detailNormal += (texture2D(splatDetailNormalTex4, splatTexCoord1.pq) * 2.0 - 1.0) * splatCofac.a;
-	// detailNormal.xyz is intentionally not normalized, as it will be rotated by the map's normal vector and then normalized.
-	return detailNormal;
+
+	// dot with 1's to sum up the splat distribution weights
+	splatDetailStrength.x = min(1.0, dot(splatCofac, vec4(1.0)));
+
+	vec4 splatDetailNormal;
+		splatDetailNormal += ((texture2D(splatDetailNormalTex1, splatTexCoord0.st) * 2.0 - 1.0) * splatCofac.r);
+		splatDetailNormal += ((texture2D(splatDetailNormalTex2, splatTexCoord0.pq) * 2.0 - 1.0) * splatCofac.g);
+		splatDetailNormal += ((texture2D(splatDetailNormalTex3, splatTexCoord1.st) * 2.0 - 1.0) * splatCofac.b);
+		splatDetailNormal += ((texture2D(splatDetailNormalTex4, splatTexCoord1.pq) * 2.0 - 1.0) * splatCofac.a);
+
+	// note: y=0.01 (pointing up) in case all splat-cofacs are zero
+	splatDetailNormal.y = max(splatDetailNormal.y, 0.01);
+
+	#ifdef SMF_DETAIL_NORMAL_DIFFUSE_ALPHA
+		splatDetailStrength.y = splatDetailNormal.a;
+	#endif
+
+	// note: .xyz is intentionally not normalized here
+	// (the normal will be rotated to worldspace first)
+	return splatDetailNormal;
 }
 #endif
+
 
 vec4 GetShadeInt(float groundLightInt, float groundShadowCoeff, float groundDiffuseAlpha) {
 	vec4 groundShadeInt = vec4(0.0, 0.0, 0.0, 1.0);
@@ -320,26 +334,30 @@ void main() {
 		normal = normalize(mix(normal, stnMatrix * dtNormal, dtSample.a));
 	}
 	#endif
-	vec4 detailCol;
+
+
 	#ifndef SMF_DETAIL_NORMAL_TEXTURE_SPLATTING
 	{
-		detailCol = GetDetailTextureColor(specTexCoords);
+		vec4 detailCol = GetDetailTextureColor(specTexCoords);
 	}
 	#else 
 	{
-		float splatStrength = 0.0;
-		//the splatStrength param is needed to accurately mix normals, it is the sum of the splat distribution texture
-		vec4 detailNormal = GetDetailTextureNormal(specTexCoords, splatStrength); //second param is OUT
-		//convert the splat detail normal to world space, mix:
-		normal = mix(normal, normalize(stnMatrix * detailNormal.xyz), min(1.0, splatStrength));  
-		#ifdef SMF_DETAIL_NORMAL_DIFFUSE_ALPHA
-			detailCol = vec4(detailNormal.a);
-		#else
-			// The alpha channel of standard normal maps is not 127 by default, so we must clear them
-			detailCol = vec4(0.0);
-		#endif
+		// x-component modules mixing of normals
+		// y-component contains the detail color (splatDetailNormal.a if SMF_DETAIL_NORMAL_DIFFUSE_ALPHA, 0.0 otherwise)
+		vec2 splatDetailStrength = vec2(0.0, 0.0);
+
+		// note: splatDetailStrength is an OUT-param
+		vec4 splatDetailNormal = GetSplatDetailTextureNormal(specTexCoords, splatDetailStrength);
+		vec4 detailCol = vec4(splatDetailStrength.y);
+
+		// convert the splat detail normal to worldspace,
+		// then mix it with the regular one (note: needs
+		// another normalization?)
+		normal = mix(normal, normalize(stnMatrix * splatDetailNormal.xyz), splatDetailStrength.x);
 	}
 	#endif
+
+
 #ifndef DEFERRED_MODE
 	float cosAngleDiffuse = clamp(dot(lightDir.xyz, normal), 0.0, 1.0);
 	float cosAngleSpecular = clamp(dot(normalize(halfDir), normal), 0.001, 1.0);

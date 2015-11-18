@@ -53,15 +53,16 @@ CSMFReadMap::CSMFReadMap(std::string mapname)
 
 	haveSpecularTexture = !(mapInfo->smf.specularTexName.empty());
 	haveSplatTexture = (!mapInfo->smf.splatDetailTexName.empty() && !mapInfo->smf.splatDistrTexName.empty());
+	haveSplatDetailNormalTexture = false;
 
-	haveSplatNormalTexture = false;
-	//Detail Normal Splatting requires at least one splatDetailNormalTexture and a distribution texture
-	for (int i = 0; i < 4; i++){
-		splatDetailNormalTextures[i]=0;
-		haveSplatNormalTexture = haveSplatNormalTexture || !mapInfo->smf.splatDetailNormalTexNames[i].empty();
+	for (int i = 0; i < CMapInfo::NUM_SPLAT_DETAIL_NORMALS; i++) {
+		splatDetailNormalTextures[i]  = 0;
+		haveSplatDetailNormalTexture |= (!mapInfo->smf.splatDetailNormalTexNames[i].empty());
 	}
-	haveSplatNormalTexture = haveSplatNormalTexture && !mapInfo->smf.splatDistrTexName.empty();
-	haveDetailNormalDiffuseAlpha = mapInfo->smf.splatDetailNormalDiffuseAlpha;
+
+	// Detail Normal Splatting requires at least one splatDetailNormalTexture and a distribution texture
+	haveSplatDetailNormalTexture &= !mapInfo->smf.splatDistrTexName.empty();
+	haveDetailNormalDiffuseAlpha  =  mapInfo->smf.splatDetailNormalDiffuseAlpha;
 
 	minimapOverride = !(mapInfo->smf.minimapTexName.empty());
 
@@ -101,9 +102,7 @@ CSMFReadMap::~CSMFReadMap()
 	glDeleteTextures(1, &detailNormalTex  );
 	glDeleteTextures(1, &lightEmissionTex );
 	glDeleteTextures(1, &parallaxHeightTex);
-	for (int i = 0; i < 4; i++){
-		glDeleteTextures(1, &splatDetailNormalTextures[i]);
-	}
+	glDeleteTextures(CMapInfo::NUM_SPLAT_DETAIL_NORMALS, &splatDetailNormalTextures[0]);
 }
 
 
@@ -256,19 +255,22 @@ void CSMFReadMap::CreateSplatDetailTextures()
 	splatDetailTex = splatDetailTexBM.CreateTexture(true);
 	splatDistrTex = splatDistrTexBM.CreateTexture(true);
 
-	if (!haveSplatNormalTexture){
-		return;//Only load the splat detail normals if any of them are defined and present
-	}
-	for (int i = 0; i < 4; i++){
+	// only load the splat detail normals if any of them are defined and present
+	if (!haveSplatDetailNormalTexture)
+		return;
+
+	for (int i = 0; i < CMapInfo::NUM_SPLAT_DETAIL_NORMALS; i++) {
 		CBitmap splatDetailNormalTextureBM;
+
 		if (!splatDetailNormalTextureBM.Load(mapInfo->smf.splatDetailNormalTexNames[i])) {
 			splatDetailNormalTextureBM.channels = 4;
 			splatDetailNormalTextureBM.Alloc(1, 1);
-			splatDetailNormalTextureBM.mem[0] = 127; //RGB is packed standard normal map
+			splatDetailNormalTextureBM.mem[0] = 127; // RGB is packed standard normal map
 			splatDetailNormalTextureBM.mem[1] = 127;
-			splatDetailNormalTextureBM.mem[2] = 255; //With a single upward (+Z) pointing vector
-			splatDetailNormalTextureBM.mem[3] = 127; //Alpha is diffuse as in old-style detail textures
+			splatDetailNormalTextureBM.mem[2] = 255; // With a single upward (+Z) pointing vector
+			splatDetailNormalTextureBM.mem[3] = 127; // Alpha is diffuse as in old-style detail textures
 		}
+
 		splatDetailNormalTextures[i] = splatDetailNormalTextureBM.CreateTexture(true);
 	}
 
