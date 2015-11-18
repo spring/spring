@@ -336,19 +336,22 @@ void main() {
 	#endif
 
 
+	vec4 detailCol;
+
 	#ifndef SMF_DETAIL_NORMAL_TEXTURE_SPLATTING
 	{
-		vec4 detailCol = GetDetailTextureColor(specTexCoords);
+		detailCol = GetDetailTextureColor(specTexCoords);
 	}
 	#else 
 	{
-		// x-component modules mixing of normals
-		// y-component contains the detail color (splatDetailNormal.a if SMF_DETAIL_NORMAL_DIFFUSE_ALPHA, 0.0 otherwise)
+		// x-component modulates mixing of normals
+		// y-component contains the detail color (splatDetailNormal.a if SMF_DETAIL_NORMAL_DIFFUSE_ALPHA)
 		vec2 splatDetailStrength = vec2(0.0, 0.0);
 
 		// note: splatDetailStrength is an OUT-param
 		vec4 splatDetailNormal = GetSplatDetailTextureNormal(specTexCoords, splatDetailStrength);
-		vec4 detailCol = vec4(splatDetailStrength.y);
+
+		detailCol = vec4(splatDetailStrength.y);
 
 		// convert the splat detail normal to worldspace,
 		// then mix it with the regular one (note: needs
