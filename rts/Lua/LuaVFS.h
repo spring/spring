@@ -72,6 +72,9 @@ class LuaVFS {
 		static int UnpackS16(lua_State* L);
 		static int UnpackS32(lua_State* L);
 		static int UnpackF32(lua_State* L);
+		
+		//md5
+		static int CalcMd5(lua_State* L);
 };
 
 

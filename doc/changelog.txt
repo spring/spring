@@ -6,10 +6,12 @@ Spring changelog
 
 General:
  ! change default screenshot file type to jpg. to create png use /screenshot png
+ - pr-downloader dependency is now mandatory (statically linked with spring)
 
 Lua:
  ! GameID callin now gets the ID string encoded in hex.
- - new GetUICommands function to obtain a list of all UI commands (e.g. /luaui reload)
+ - new Spring.GetUICommands function to obtain a list of all UI commands (e.g. /luaui reload)
+ - new VFS.CalcMd5 function that calculates the MD5 hash (in base64 form) of a given string
 
 -- 100.0 --------------------------------------------------------
 Major:
