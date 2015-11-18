@@ -65,7 +65,7 @@ CMapInfo::CMapInfo(const std::string& mapInfoFile, const string& mapName)
 	ReadSound();
 
 	//FIXME save all data in an array, so we can destroy the lua context (to save mem)?
-	//delete parser; 
+	//delete parser;
 }
 
 CMapInfo::~CMapInfo()
@@ -330,6 +330,11 @@ void CMapInfo::ReadSMF()
 	smf.specularTexName    = mapResTable.GetString("specularTex", "");
 	smf.splatDetailTexName = mapResTable.GetString("splatDetailTex", "");
 	smf.splatDistrTexName  = mapResTable.GetString("splatDistrTex", "");
+	smf.splatDetailNormalTexNames[0]  = mapResTable.GetString("splatDetailNormalTex1", "");
+	smf.splatDetailNormalTexNames[1]  = mapResTable.GetString("splatDetailNormalTex2", "");
+	smf.splatDetailNormalTexNames[2]  = mapResTable.GetString("splatDetailNormalTex3", "");
+	smf.splatDetailNormalTexNames[3]  = mapResTable.GetString("splatDetailNormalTex4", "");
+	smf.splatDetailNormalDiffuseAlpha = mapResTable.GetBool("splatDetailNormalDiffuseAlpha", false);
 
 	smf.grassShadingTexName = mapResTable.GetString("grassShadingTex", "");
 
@@ -355,6 +360,9 @@ void CMapInfo::ReadSMF()
 	if (!smf.lightEmissionTexName.empty() ) { smf.lightEmissionTexName  = "maps/" + smf.lightEmissionTexName; }
 	if (!smf.parallaxHeightTexName.empty()) { smf.parallaxHeightTexName = "maps/" + smf.parallaxHeightTexName; }
 
+	for (int i = 0; i < 4; i++){
+		if (!smf.splatDetailNormalTexNames[i].empty()) { smf.splatDetailNormalTexNames[i] = "maps/" + smf.splatDetailNormalTexNames[i]; }
+	}
 	// smf overrides
 	const LuaTable& smfTable = parser->GetRoot().SubTable("smf");
 

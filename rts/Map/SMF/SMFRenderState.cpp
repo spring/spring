@@ -113,6 +113,8 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 		glslShaders[n]->SetFlag("SMF_VOID_GROUND",              mapInfo->map.voidGround);
 		glslShaders[n]->SetFlag("SMF_SPECULAR_LIGHTING",        smfMap->HaveSpecularTexture());
 		glslShaders[n]->SetFlag("SMF_DETAIL_TEXTURE_SPLATTING", smfMap->HaveSplatTexture());
+		glslShaders[n]->SetFlag("SMF_DETAIL_NORMAL_TEXTURE_SPLATTING",  smfMap->HaveSplatNormalTexture());
+		glslShaders[n]->SetFlag("SMF_DETAIL_NORMAL_DIFFUSE_ALPHA",      smfMap->HaveDetailNormalDiffuseAlpha());
 		glslShaders[n]->SetFlag("SMF_WATER_ABSORPTION",         smfMap->HasVisibleWater());
 		glslShaders[n]->SetFlag("SMF_SKY_REFLECTIONS",          (smfMap->GetSkyReflectModTexture() != 0));
 		glslShaders[n]->SetFlag("SMF_DETAIL_NORMALS",           (smfMap->GetDetailNormalTexture() != 0));
@@ -150,6 +152,10 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 		glslShaders[n]->SetUniform("lightEmissionTex",  12);
 		glslShaders[n]->SetUniform("parallaxHeightTex", 13);
 		glslShaders[n]->SetUniform("infoTex",           14);
+		glslShaders[n]->SetUniform("splatDetailNormalTex1",15);
+		glslShaders[n]->SetUniform("splatDetailNormalTex2",16);
+		glslShaders[n]->SetUniform("splatDetailNormalTex3",17);
+		glslShaders[n]->SetUniform("splatDetailNormalTex4",18);
 
 		glslShaders[n]->SetUniform("mapSizePO2", float(mapDims.pwr2mapx * SQUARE_SIZE), float(mapDims.pwr2mapy * SQUARE_SIZE));
 		glslShaders[n]->SetUniform("mapSize",    float(mapDims.mapx * SQUARE_SIZE),     float(mapDims.mapy * SQUARE_SIZE));
@@ -446,7 +452,12 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	glActiveTexture(GL_TEXTURE12); glBindTexture(GL_TEXTURE_2D, smfMap->GetLightEmissionTexture());
 	glActiveTexture(GL_TEXTURE13); glBindTexture(GL_TEXTURE_2D, smfMap->GetParallaxHeightTexture());
 	glActiveTexture(GL_TEXTURE14); glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
-
+	if (smfMap->HaveSplatNormalTexture()){
+		const int detailNormalTextureBindings [4] = {GL_TEXTURE15,GL_TEXTURE16,GL_TEXTURE17,GL_TEXTURE18};
+		for (int i = 0; i < 4; i++){
+			glActiveTexture(detailNormalTextureBindings[i]); glBindTexture(GL_TEXTURE_2D, smfMap->GetSplatDetailNormalTexture(i));
+		}
+	}
 	glActiveTexture(GL_TEXTURE0);
 }
 

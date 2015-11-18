@@ -1,4 +1,4 @@
-#version 120
+#version 130
 
 #ifdef NOSPRING
 	#define SMF_INTENSITY_MULT (210.0 / 255.0)
@@ -67,13 +67,22 @@ varying vec2 diffuseTexCoords;
 	uniform vec3 waterAbsorbColor;
 #endif
 
-#ifdef SMF_DETAIL_TEXTURE_SPLATTING
+#if defined(SMF_DETAIL_TEXTURE_SPLATTING) && !defined(SMF_DETAIL_NORMAL_TEXTURE_SPLATTING)
 	uniform sampler2D splatDetailTex;
 	uniform sampler2D splatDistrTex;
 	uniform vec4 splatTexMults;  // per-channel splat intensity multipliers
 	uniform vec4 splatTexScales; // defaults to SMF_DETAILTEX_RES per channel
 #endif
 
+#ifdef SMF_DETAIL_NORMAL_TEXTURE_SPLATTING
+	uniform sampler2D splatDetailNormalTex1;
+	uniform sampler2D splatDetailNormalTex2;
+	uniform sampler2D splatDetailNormalTex3;
+	uniform sampler2D splatDetailNormalTex4;
+	uniform sampler2D splatDistrTex;
+	uniform vec4 splatTexMults;  // per-channel splat intensity multipliers
+	uniform vec4 splatTexScales; // defaults to SMF_DETAILTEX_RES per channel
+#endif
 #ifdef SMF_SKY_REFLECTIONS
 	uniform samplerCube skyReflectTex;
 	uniform sampler2D skyReflectModTex;
@@ -126,27 +135,41 @@ vec3 GetFragmentNormal(vec2 uv) {
 #endif
 	return normal;
 }
-
+#ifndef SMF_DETAIL_NORMAL_TEXTURE_SPLATTING
 vec4 GetDetailTextureColor(vec2 uv) {
-#ifndef SMF_DETAIL_TEXTURE_SPLATTING
-	vec2 detailTexCoord = vertexWorldPos.xz * vec2(SMF_DETAILTEX_RES);
-	vec4 detailCol = (texture2D(detailTex, detailTexCoord) * 2.0) - 1.0;
-#else
-	vec4 splatTexCoord0 = vertexWorldPos.xzxz * splatTexScales.rrgg;
-	vec4 splatTexCoord1 = vertexWorldPos.xzxz * splatTexScales.bbaa;
-	vec4 splatDetails;
-		splatDetails.r = texture2D(splatDetailTex, splatTexCoord0.st).r;
-		splatDetails.g = texture2D(splatDetailTex, splatTexCoord0.pq).g;
-		splatDetails.b = texture2D(splatDetailTex, splatTexCoord1.st).b;
-		splatDetails.a = texture2D(splatDetailTex, splatTexCoord1.pq).a;
-		splatDetails   = (splatDetails * 2.0) - 1.0;
-
-	vec4 splatCofac = texture2D(splatDistrTex, uv) * splatTexMults;
-	vec4 detailCol = vec4(dot(splatDetails, splatCofac));
-#endif
-
+	#ifndef SMF_DETAIL_TEXTURE_SPLATTING
+		vec2 detailTexCoord = vertexWorldPos.xz * vec2(SMF_DETAILTEX_RES);
+		vec4 detailCol = (texture2D(detailTex, detailTexCoord) * 2.0) - 1.0;
+	#else
+		vec4 splatTexCoord0 = vertexWorldPos.xzxz * splatTexScales.rrgg;
+		vec4 splatTexCoord1 = vertexWorldPos.xzxz * splatTexScales.bbaa;
+		vec4 splatDetails;
+			splatDetails.r = texture2D(splatDetailTex, splatTexCoord0.st).r;
+			splatDetails.g = texture2D(splatDetailTex, splatTexCoord0.pq).g;
+			splatDetails.b = texture2D(splatDetailTex, splatTexCoord1.st).b;
+			splatDetails.a = texture2D(splatDetailTex, splatTexCoord1.pq).a;
+			splatDetails   = (splatDetails * 2.0) - 1.0;
+		vec4 splatCofac = texture2D(splatDistrTex, uv) * splatTexMults;
+		vec4 detailCol = vec4(dot(splatDetails, splatCofac));
+	#endif
 	return detailCol;
 }
+#else //SMF_DETAIL_NORMAL_TEXTURE_SPLATTING is defined
+vec4 GetDetailTextureNormal(vec2 uv, out float splatStrength) {
+	vec4 splatTexCoord0 = vertexWorldPos.xzxz * splatTexScales.rrgg;
+	vec4 splatTexCoord1 = vertexWorldPos.xzxz * splatTexScales.bbaa;
+	vec4 splatCofac = texture2D(splatDistrTex, uv) * splatTexMults;
+	splatStrength = dot(splatCofac, vec4(1.0));
+	vec4 detailNormal = vec4(0.0, 0.01, 0.0, 0.0); //because if all the splatcofacs are zero, 
+		//we will return a 0 vector which cannot be normalized. Better have it pointing up.
+		detailNormal += (texture2D(splatDetailNormalTex1, splatTexCoord0.st) * 2.0 - 1.0) * splatCofac.r;
+		detailNormal += (texture2D(splatDetailNormalTex2, splatTexCoord0.pq) * 2.0 - 1.0) * splatCofac.g;
+		detailNormal += (texture2D(splatDetailNormalTex3, splatTexCoord1.st) * 2.0 - 1.0) * splatCofac.b;
+		detailNormal += (texture2D(splatDetailNormalTex4, splatTexCoord1.pq) * 2.0 - 1.0) * splatCofac.a;
+	// detailNormal.xyz is intentionally not normalized, as it will be rotated by the map's normal vector and then normalized.
+	return detailNormal;
+}
+#endif
 
 vec4 GetShadeInt(float groundLightInt, float groundShadowCoeff, float groundDiffuseAlpha) {
 	vec4 groundShadeInt = vec4(0.0, 0.0, 0.0, 1.0);
@@ -217,7 +240,9 @@ vec3 DynamicLighting(vec3 normal, vec3 diffuseCol, vec3 specularCol, float specu
 		float lightDistance = length(lightVec);
 		float lightScale = float(lightDistance <= lightRadius);
 		float lightCosAngDiff = clamp(dot(normal, lightVec / lightDistance), 0.0, 1.0);
-		float lightCosAngSpec = clamp(dot(normal, normalize(halfVec)), 0.0, 1.0);
+		//clamp lightCosAngSpec from 0.001 because this will later be in a power function
+		//results are undefined if x==0 or if x==0 and y==0. 
+		float lightCosAngSpec = clamp(dot(normal, normalize(halfVec)), 0.001, 1.0);
 	#ifdef OGL_SPEC_ATTENUATION
 		float lightAttenuation =
 			(gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].constantAttenuation) +
@@ -259,7 +284,7 @@ void main() {
 	vec3 cameraDir = vertexWorldPos.xyz - cameraPos;
 	vec3 normal = GetFragmentNormal(normTexCoords);
 
-	#if defined(SMF_DETAIL_NORMALS) || defined(SMF_PARALLAX_MAPPING)
+	#if defined(SMF_DETAIL_NORMALS) || defined(SMF_PARALLAX_MAPPING) || defined(SMF_DETAIL_NORMAL_TEXTURE_SPLATTING)
 		// detail-normals are (assumed to be) defined within STN space
 		// (for a regular vertex normal equal to <0, 1, 0>, the S- and
 		// T-tangents are aligned with Spring's +x and +z (!) axes)
@@ -295,14 +320,32 @@ void main() {
 		normal = normalize(mix(normal, stnMatrix * dtNormal, dtSample.a));
 	}
 	#endif
-
+	vec4 detailCol;
+	#ifndef SMF_DETAIL_NORMAL_TEXTURE_SPLATTING
+	{
+		detailCol = GetDetailTextureColor(specTexCoords);
+	}
+	#else 
+	{
+		float splatStrength = 0.0;
+		//the splatStrength param is needed to accurately mix normals, it is the sum of the splat distribution texture
+		vec4 detailNormal = GetDetailTextureNormal(specTexCoords, splatStrength); //second param is OUT
+		//convert the splat detail normal to world space, mix:
+		normal = mix(normal, normalize(stnMatrix * detailNormal.xyz), min(1.0, splatStrength));  
+		#ifdef SMF_DETAIL_NORMAL_DIFFUSE_ALPHA
+			detailCol = vec4(detailNormal.a);
+		#else
+			// The alpha channel of standard normal maps is not 127 by default, so we must clear them
+			detailCol = vec4(0.0);
+		#endif
+	}
+	#endif
 #ifndef DEFERRED_MODE
 	float cosAngleDiffuse = clamp(dot(lightDir.xyz, normal), 0.0, 1.0);
-	float cosAngleSpecular = clamp(dot(normalize(halfDir), normal), 0.0, 1.0);
+	float cosAngleSpecular = clamp(dot(normalize(halfDir), normal), 0.001, 1.0);
 #endif
 
 	vec4 diffuseCol = texture2D(diffuseTex, diffTexCoords);
-	vec4 detailCol = GetDetailTextureColor(specTexCoords);
 	vec4 specularCol = vec4(0.0, 0.0, 0.0, 1.0);
 	vec4 emissionCol = vec4(0.0, 0.0, 0.0, 0.0);
 
