@@ -546,7 +546,7 @@ int LuaVFS::ZlibDecompress(lua_State* L)
 
 int LuaVFS::CalcMd5(lua_State* L)
 {
-	const std::string sstr = luaL_checkstring(L, 1);
+	const std::string sstr = luaL_checksstring(L, 1);
 	MD5_CTX ctx;
 	MD5Init(&ctx);
 	MD5Update(&ctx, (unsigned char*) sstr.c_str(), sstr.size());
