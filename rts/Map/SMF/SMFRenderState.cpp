@@ -454,7 +454,7 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	glActiveTexture(GL_TEXTURE14); glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
 
 	if (smfMap->HaveSplatDetailNormalTexture()) {
-		for (int i = 0; i < CMapInfo::NUM_SPLAT_DETAIL_NORMALS; i++) {
+		for (int i = 0; i < CSMFReadMap::NUM_SPLAT_DETAIL_NORMALS; i++) {
 			glActiveTexture(GL_TEXTURE15 + i); glBindTexture(GL_TEXTURE_2D, smfMap->GetSplatDetailNormalTexture(i));
 		}
 	}

@@ -22,7 +22,6 @@ public:
 	/** Terrain type, there can be 256 of these:
 	    "MAP\TerrainType0" up to "MAP\TerrainType255" */
 	static const int NUM_TERRAIN_TYPES = 256;
-	static const int NUM_SPLAT_DETAIL_NORMALS = 4;
 
 	/**
 	 * @param mapInfoFile mapinfo file, aka sm3 / smf (full path)
@@ -184,7 +183,7 @@ public:
 		std::string parallaxHeightTexName;
 
 		// Contains the splatted detail normal textures
-		std::string splatDetailNormalTexNames[NUM_SPLAT_DETAIL_NORMALS];
+		std::vector<std::string> splatDetailNormalTexNames;
 
 		// SMF overrides
 		std::string minimapTexName;

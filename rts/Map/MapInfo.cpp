@@ -364,11 +364,18 @@ void CMapInfo::ReadSMF()
 		}
 	}
 
-	for (int i = 0; i < NUM_SPLAT_DETAIL_NORMALS; i++) {
-		smf.splatDetailNormalTexNames[i] = mapResTable.GetString("splatDetailNormalTex" + IntToString(i + 1), "");
+	for (int i = 0; true; i++) {
+		const std::string key = "splatDetailNormalTex" + IntToString(i + 1);
 
-		if (!smf.splatDetailNormalTexNames[i].empty()) {
-			smf.splatDetailNormalTexNames[i] = "maps/" + smf.splatDetailNormalTexNames[i];
+		if (!mapResTable.KeyExists(key))
+			break;
+
+		const std::string& val = mapResTable.GetString(key, "");
+
+		if (!val.empty()) {
+			smf.splatDetailNormalTexNames.push_back("maps/" + val);
+		} else {
+			smf.splatDetailNormalTexNames.push_back("");
 		}
 	}
 

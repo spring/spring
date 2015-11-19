@@ -101,6 +101,7 @@ public:
 	// constants
 	static const int tileScale     = 4;
 	static const int bigSquareSize = 32 * tileScale;
+	static const int NUM_SPLAT_DETAIL_NORMALS = 4;
 
 	// globals for SMFGround{Drawer, Textures}
 	int numBigTexX;
@@ -119,17 +120,22 @@ public:
 protected:
 	CSMFMapFile file;
 
-	unsigned int detailTex;                     // supplied by the map
-	unsigned int specularTex;                   // supplied by the map, moderates specular contribution
-	unsigned int shadingTex;                    // holds precomputed dot(lightDir, vertexNormal) values
-	unsigned int normalsTex;                    // holds vertex normals in RGBA32F internal format (GL_RGBA + GL_FLOAT)
-	unsigned int minimapTex;                    // supplied by the map
-	unsigned int splatDetailTex;                // contains per-channel separate greyscale detail-textures (overrides detailTex)
-	unsigned int splatDetailNormalTextures[4];  // contains RGBA texture with RGB channels containing normals and alpha containing greyscale diffuse for splat detail normals (overrides detailTex)
-	unsigned int splatDistrTex;                 // specifies the per-channel distribution of splatDetailTex (map-wide, overrides detailTex)
-	unsigned int grassShadingTex;               // specifies grass-blade modulation color (defaults to minimapTex)
-	unsigned int skyReflectModTex;              // modulates sky-reflection RGB intensities (must be the same size as specularTex)
-	unsigned int detailNormalTex;               // tangent-space offset normals
+	unsigned int detailTex;           // supplied by the map
+	unsigned int specularTex;         // supplied by the map, moderates specular contribution
+	unsigned int shadingTex;          // holds precomputed dot(lightDir, vertexNormal) values
+	unsigned int normalsTex;          // holds vertex normals in RGBA32F internal format (GL_RGBA + GL_FLOAT)
+	unsigned int minimapTex;          // supplied by the map
+	unsigned int splatDetailTex;      // contains per-channel separate greyscale detail-textures (overrides detailTex)
+
+	// contains RGBA texture with RGB channels containing normals and
+	// alpha containing greyscale diffuse for splat detail normals
+	// (overrides detailTex)
+	unsigned int splatDetailNormalTextures[NUM_SPLAT_DETAIL_NORMALS];
+
+	unsigned int splatDistrTex;       // specifies the per-channel distribution of splatDetailTex (map-wide, overrides detailTex)
+	unsigned int grassShadingTex;     // specifies grass-blade modulation color (defaults to minimapTex)
+	unsigned int skyReflectModTex;    // modulates sky-reflection RGB intensities (must be the same size as specularTex)
+	unsigned int detailNormalTex;     // tangent-space offset normals
 	unsigned int lightEmissionTex;
 	unsigned int parallaxHeightTex;
 

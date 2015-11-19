@@ -55,9 +55,10 @@ CSMFReadMap::CSMFReadMap(std::string mapname)
 	haveSplatTexture = (!mapInfo->smf.splatDetailTexName.empty() && !mapInfo->smf.splatDistrTexName.empty());
 	haveSplatDetailNormalTexture = false;
 
-	for (int i = 0; i < CMapInfo::NUM_SPLAT_DETAIL_NORMALS; i++) {
-		splatDetailNormalTextures[i]  = 0;
-		haveSplatDetailNormalTexture |= (!mapInfo->smf.splatDetailNormalTexNames[i].empty());
+	memset(&splatDetailNormalTextures[0], 0, NUM_SPLAT_DETAIL_NORMALS * sizeof(splatDetailNormalTextures[0]));
+
+	for (const std::string& texName: mapInfo->smf.splatDetailNormalTexNames) {
+		haveSplatDetailNormalTexture |= !texName.empty();
 	}
 
 	// Detail Normal Splatting requires at least one splatDetailNormalTexture and a distribution texture
@@ -102,7 +103,7 @@ CSMFReadMap::~CSMFReadMap()
 	glDeleteTextures(1, &detailNormalTex  );
 	glDeleteTextures(1, &lightEmissionTex );
 	glDeleteTextures(1, &parallaxHeightTex);
-	glDeleteTextures(CMapInfo::NUM_SPLAT_DETAIL_NORMALS, &splatDetailNormalTextures[0]);
+	glDeleteTextures(NUM_SPLAT_DETAIL_NORMALS, &splatDetailNormalTextures[0]);
 }
 
 
@@ -259,7 +260,10 @@ void CSMFReadMap::CreateSplatDetailTextures()
 	if (!haveSplatDetailNormalTexture)
 		return;
 
-	for (int i = 0; i < CMapInfo::NUM_SPLAT_DETAIL_NORMALS; i++) {
+	for (size_t i = 0; i < mapInfo->smf.splatDetailNormalTexNames.size(); i++) {
+		if (i == NUM_SPLAT_DETAIL_NORMALS)
+			break;
+
 		CBitmap splatDetailNormalTextureBM;
 
 		if (!splatDetailNormalTextureBM.Load(mapInfo->smf.splatDetailNormalTexNames[i])) {
