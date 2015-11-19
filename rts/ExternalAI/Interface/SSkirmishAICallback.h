@@ -2439,6 +2439,10 @@ struct SSkirmishAICallback {
 
 	float             (CALLING_CONV *Unit_Weapon_getRange)(int skirmishAIId, int unitId, int weaponId);
 
+	bool              (CALLING_CONV *Unit_Weapon_isShieldEnabled)(int skirmishAIId, int unitId, int weaponId);
+
+	float             (CALLING_CONV *Unit_Weapon_getShieldPower)(int skirmishAIId, int unitId, int weaponId);
+
 // END OBJECT Weapon
 
 	bool              (CALLING_CONV *Debug_GraphDrawer_isEnabled)(int skirmishAIId);
