@@ -322,10 +322,27 @@ void CMapInfo::ReadWater()
 }
 
 
+template<typename T> bool ParseSplatDetailNormalTexture(const LuaTable& table, const T key, std::vector<std::string>& texNames)
+{
+	if (!table.KeyExists(key))
+		return false;
+
+	const std::string& val = table.GetString(key, "");
+
+	if (!val.empty()) {
+		texNames.push_back("maps/" + val);
+	} else {
+		texNames.push_back("");
+	}
+
+	return true;
+}
+
 void CMapInfo::ReadSMF()
 {
 	// SMF specific settings
 	const LuaTable& mapResTable = parser->GetRoot().SubTable("resources");
+	const LuaTable& sdnTexTable = mapResTable.SubTable("splatDetailNormalTex");
 
 	smf.detailTexName      = mapResTable.GetString("detailTex", "");
 	smf.specularTexName    = mapResTable.GetString("specularTex", "");
@@ -336,8 +353,6 @@ void CMapInfo::ReadSMF()
 	smf.detailNormalTexName   = mapResTable.GetString("detailNormalTex", "");
 	smf.lightEmissionTexName  = mapResTable.GetString("lightEmissionTex", "");
 	smf.parallaxHeightTexName = mapResTable.GetString("parallaxHeightTex", "");
-
-	smf.splatDetailNormalDiffuseAlpha = mapResTable.GetBool("splatDetailNormalDiffuseAlpha", false);
 
 	if (!smf.detailTexName.empty()) {
 		smf.detailTexName = "maps/" + smf.detailTexName;
@@ -364,22 +379,26 @@ void CMapInfo::ReadSMF()
 		}
 	}
 
-	for (int i = 0; true; i++) {
-		const std::string key = "splatDetailNormalTex" + IntToString(i + 1);
+	if (sdnTexTable.IsValid()) {
+		smf.splatDetailNormalDiffuseAlpha = sdnTexTable.GetBool("alpha", false);
 
-		if (!mapResTable.KeyExists(key))
-			break;
+		for (int i = 0; true; i++) {
+			if (!ParseSplatDetailNormalTexture(sdnTexTable, i + 1, smf.splatDetailNormalTexNames)) {
+				break;
+			}
+		}
+	} else {
+		smf.splatDetailNormalDiffuseAlpha = mapResTable.GetBool("splatDetailNormalDiffuseAlpha", false);
 
-		const std::string& val = mapResTable.GetString(key, "");
-
-		if (!val.empty()) {
-			smf.splatDetailNormalTexNames.push_back("maps/" + val);
-		} else {
-			smf.splatDetailNormalTexNames.push_back("");
+		for (int i = 0; true; i++) {
+			if (!ParseSplatDetailNormalTexture(mapResTable, "splatDetailNormalTex" + IntToString(i + 1), smf.splatDetailNormalTexNames)) {
+				break;
+			}
 		}
 	}
 
-	// smf overrides
+
+	// overrides for compiled parameters
 	const LuaTable& smfTable = parser->GetRoot().SubTable("smf");
 
 	smf.minHeightOverride = smfTable.KeyExists("minHeight");
