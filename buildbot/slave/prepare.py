@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # This file is included by the other shell scripts to set up some variables.
 # Each of the scripts (including this) gets 2 arguments: <config> <branch>
 
