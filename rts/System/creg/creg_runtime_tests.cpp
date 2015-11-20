@@ -214,7 +214,7 @@ static bool TestCregClasses3()
 					}
 				}
 				if (!nextMember) {
-					i = classSize;
+					i = classSize - 1;
 				}
 
 				if (prevMember && nextMember) {
