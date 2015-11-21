@@ -19,8 +19,7 @@
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
-#include "../tools/pr-downloader/src/lib/md5/md5.h"
-#include "../tools/pr-downloader/src/lib/base64/base64.h"
+#include "../tools/pr-downloader/src/pr-downloader.h"
 
 using std::min;
 
@@ -56,7 +55,7 @@ bool LuaVFS::PushCommon(lua_State* L)
 	HSTR_PUSH_CFUNC(L, "UnpackF32", UnpackF32);
 
 	HSTR_PUSH_CFUNC(L, "ZlibDecompress", ZlibDecompress);
-	HSTR_PUSH_CFUNC(L, "CalcMd5",        CalcMd5);
+	HSTR_PUSH_CFUNC(L, "CalculateHash",        CalculateHash);
 
 	return true;
 }
@@ -544,16 +543,16 @@ int LuaVFS::ZlibDecompress(lua_State* L)
 	}
 }
 
-int LuaVFS::CalcMd5(lua_State* L)
+int LuaVFS::CalculateHash(lua_State* L)
 {
 	const std::string sstr = luaL_checksstring(L, 1);
-	MD5_CTX ctx;
-	MD5Init(&ctx);
-	MD5Update(&ctx, (unsigned char*) sstr.c_str(), sstr.size());
-	MD5Final(&ctx);
-	const unsigned char* md5sum = ctx.digest;
-	std::string encoded = base64_encode(md5sum, 16); 
-	lua_pushsstring(L, encoded);
+	const unsigned int hashType = luaL_checkint(L, 2);
+	if (hashType != 0) { // only 0 (md5) is supported atm
+		return luaL_error(L, "Unsupported hash type");
+	}
+	char* hash = CalcHash(sstr.c_str(), sstr.size(), hashType);
+	lua_pushsstring(L, std::string(hash));
+	free(hash);
 	return 1;
 }
 
