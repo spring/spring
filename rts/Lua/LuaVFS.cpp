@@ -547,10 +547,10 @@ int LuaVFS::CalculateHash(lua_State* L)
 {
 	const std::string sstr = luaL_checksstring(L, 1);
 	const unsigned int hashType = luaL_checkint(L, 2);
-	if (hashType != 0) { // only 0 (md5) is supported atm
+	char* hash = CalcHash(sstr.c_str(), sstr.size(), hashType);
+	if (hash == NULL) {
 		return luaL_error(L, "Unsupported hash type");
 	}
-	char* hash = CalcHash(sstr.c_str(), sstr.size(), hashType);
 	lua_pushsstring(L, std::string(hash));
 	free(hash);
 	return 1;
