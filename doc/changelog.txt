@@ -11,7 +11,7 @@ General:
 Lua:
  ! GameID callin now gets the ID string encoded in hex.
  - new Spring.GetUICommands function to obtain a list of all UI commands (e.g. /luaui reload)
- - new VFS.CalcMd5 function that calculates the MD5 hash (in base64 form) of a given string
+ - new VFS.CalculateHash function that calculates hash (in base64 form) of a given string (with md5 support initially)
 
 -- 100.0 --------------------------------------------------------
 Major:
