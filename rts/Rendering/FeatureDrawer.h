@@ -16,8 +16,8 @@ class IWorldObjectModelRenderer;
 class CFeatureDrawer: public CEventClient
 {
 	CR_DECLARE_STRUCT(CFeatureDrawer)
-	typedef std::vector<CFeature*>   FeatureSet;
-	typedef std::array<IWorldObjectModelRenderer*, MODELTYPE_OTHER> quadRenderers;
+
+	typedef std::vector<CFeature*> FeatureSet;
 
 public:
 	CFeatureDrawer();
@@ -54,8 +54,6 @@ private:
 	void PostLoad();
 
 private:
-	std::vector<CFeature*> unsortedFeatures;
-
 	int drawQuadsX;
 	int drawQuadsY;
 
@@ -63,9 +61,28 @@ private:
 	float featureDrawDistance;
 	float featureFadeDistance;
 
-	std::vector<std::pair<quadRenderers, bool>> modelRenderers;
-
 	friend class CFeatureQuadDrawer;
+	struct ModelRendererProxy {
+		ModelRendererProxy(): lastDrawFrame(0) {
+			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+				rendererTypes[modelType] = IWorldObjectModelRenderer::GetInstance(modelType);
+			}
+		}
+		~ModelRendererProxy() {
+			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+				delete rendererTypes[modelType];
+			}
+		}
+
+		std::array<IWorldObjectModelRenderer*, MODELTYPE_OTHER> rendererTypes;
+
+		// frame on which this proxy's owner quad last
+		// received a DrawQuad call (i.e. was in view)
+		unsigned int lastDrawFrame;
+	};
+
+	std::vector<ModelRendererProxy> modelRenderers;
+	std::vector<CFeature*> unsortedFeatures;
 };
 
 extern CFeatureDrawer* featureDrawer;

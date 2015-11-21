@@ -141,8 +141,8 @@ bool CCollisionHandler::Collision(const CollisionVolume* v, const CMatrix44f& m,
 	// apply it to the projectile's position, then test
 	// if the transformed position lies within the axis-
 	// aligned collision volume
-	CMatrix44f mInv = m.Invert();
-	float3 pi = mInv.Mul(p);
+	const CMatrix44f mInv = m.Invert();
+	const float3 pi = mInv.Mul(p);
 
 	bool hit = false;
 
@@ -260,6 +260,7 @@ bool CCollisionHandler::IntersectPiecesHelper(
 	CMatrix44f volMat;
 
 	float minDistSq = std::numeric_limits<float>::max();
+	float curDistSq = minDistSq;
 
 	for (unsigned int n = 0; n < u->localModel->pieces.size(); n++) {
 		      LocalModelPiece* lmp = u->localModel->GetPiece(n);
@@ -280,22 +281,22 @@ bool CCollisionHandler::IntersectPiecesHelper(
 			continue;
 
 		// save the closest intersection (others are not needed)
-		if (cqn.GetHitPos().SqDistance(p0) >= minDistSq)
+		if ((curDistSq = (cqn.GetHitPos()).SqDistance(p0)) >= minDistSq)
 			continue;
 
-		minDistSq = cqn.GetHitPos().SqDistance(p0);
+		minDistSq = curDistSq;
 
-		if (cq != nullptr) {
-			*cq = cqn;
-			cq->SetHitPiece(lmp);
-		} else {
+		// return early if caller only wants to know a collision exists
+		if (cq == nullptr)
 			return true;
-		}
+
+		*cq = cqn;
+		cq->SetHitPiece(lmp);
 	}
 
 	// true iff at least one piece was intersected
 	// (query must have been reset by calling code)
-	return (cq != nullptr) ? (cq->GetHitPiece() != nullptr) : false;
+	return (cq != nullptr && cq->GetHitPiece() != nullptr);
 }
 
 
@@ -337,7 +338,7 @@ bool CCollisionHandler::Intersect(const CollisionVolume* v, const CMatrix44f& m,
 {
 	numContTests += 1;
 
-	CMatrix44f mInv = m.Invert();
+	const CMatrix44f mInv = m.Invert();
 	const float3 pi0 = mInv.Mul(p0);
 	const float3 pi1 = mInv.Mul(p1);
 	bool intersect = false;
