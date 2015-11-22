@@ -36,7 +36,7 @@ LuaMatHandler& luaMatHandler = LuaMatHandler::handler;
 //  LuaUnitUniforms
 //
 
-void LuaUnitUniforms::Execute(CUnit* unit) const
+void LuaUnitUniforms::Execute(const CUnit* unit) const
 {
 	// FIXME use vertex attributes
 	if (!haveUniforms) {
@@ -56,7 +56,7 @@ void LuaUnitUniforms::Execute(CUnit* unit) const
 	}
 	if (customLoc >= 0) {
 		if (customCount > 0) {
-			glUniform1fv(customLoc, customCount, customData);
+			glUniform1fv(customLoc, customCount, &customData[0]);
 		}
 	}
 }
@@ -65,12 +65,12 @@ void LuaUnitUniforms::Execute(CUnit* unit) const
 void LuaUnitUniforms::SetCustomCount(int count)
 {
 	customCount = count;
-	delete[] customData;
+
 	if (count > 0) {
-		customData = new float[count];
-		memset(customData, 0, customCount * sizeof(GLfloat));
+		customData.resize(count);
+		memset(&customData[0], 0, customCount * sizeof(GLfloat));
 	} else {
-		customData = NULL;
+		customData.clear();
 	}
 }
 
@@ -79,8 +79,7 @@ LuaUnitUniforms& LuaUnitUniforms::operator=(const LuaUnitUniforms& u)
 {
 	// do not assign to self
 	if (this != &u) {
-		delete[] customData;
-		customData = NULL;
+		customData.clear();
 
 		haveUniforms = u.haveUniforms;
 		speedLoc     = u.speedLoc;
@@ -91,8 +90,8 @@ LuaUnitUniforms& LuaUnitUniforms::operator=(const LuaUnitUniforms& u)
 		customCount  = u.customCount;
 
 		if (customCount > 0) {
-			customData = new GLfloat[customCount];
-			memcpy(customData, u.customData, customCount * sizeof(GLfloat));
+			customData.resize(customCount);
+			memcpy(&customData[0], &u.customData[0], customCount * sizeof(GLfloat));
 		}
 	}
 
@@ -102,7 +101,6 @@ LuaUnitUniforms& LuaUnitUniforms::operator=(const LuaUnitUniforms& u)
 
 LuaUnitUniforms::LuaUnitUniforms(const LuaUnitUniforms& u)
 {
-	customData = NULL;
 	*this = u;
 }
 
@@ -619,3 +617,23 @@ void LuaMatHandler::PrintAllBins(const string& indent) const
 
 /******************************************************************************/
 /******************************************************************************/
+
+float LuaUnitMaterialData::UNIT_GLOBAL_LOD_FACTOR = 1.0f;
+
+unsigned int LuaUnitMaterialData::CalcCurrentLOD(float lodDist, unsigned int lastLOD) const
+{
+	if (lastLOD == 0)
+		return 0;
+
+	// positive values only!
+	const float lpp = std::max(0.0f, lodDist * UNIT_GLOBAL_LOD_FACTOR);
+
+	for (/* no-op */; lastLOD != 0; lastLOD--) {
+		if (lpp > lodLengths[lastLOD]) {
+			break;
+		}
+	}
+
+	return lastLOD;
+}
+

@@ -233,6 +233,9 @@ protected:
 public: // unsynced methods
 	bool SetGroup(CGroup* newGroup, bool fromFactory = false);
 
+	const LuaUnitMaterialData* GetLuaMaterialData() const { return &luaMaterialData; }
+	      LuaUnitMaterialData* GetLuaMaterialData()       { return &luaMaterialData; }
+
 public:
 	static void  SetExpMultiplier(float value) { expMultiplier = value; }
 	static void  SetExpPowerScale(float value) { expPowerScale = value; }
@@ -542,11 +545,7 @@ public:
 	UnitTrackStruct* myTrack;
 	icon::CIconData* myIcon;
 
-	/// LOD length-per-pixel
-	unsigned int lodCount;
-	unsigned int currentLOD;
-	std::vector<float> lodLengths;
-	LuaUnitMaterial luaMats[LUAMAT_TYPE_COUNT];
+	LuaUnitMaterialData luaMaterialData;
 
 private:
 	/// if we are stunned by a weapon or for other reason, access via IsStunned/SetStunned(bool)

@@ -74,10 +74,10 @@ public:
 	void DrawShadowPass();
 	void DrawDeferredPass(const CUnit* excludeUnit, bool drawReflection, bool drawRefraction);
 
-	void DrawUnitRaw(CUnit* unit);
-	void DrawUnitRawModel(CUnit* unit);
-	void DrawUnitWithLists(CUnit* unit, unsigned int preList, unsigned int postList);
-	void DrawUnitRawWithLists(CUnit* unit, unsigned int preList, unsigned int postList);
+	void DrawUnitRaw(const CUnit* unit);
+	void DrawUnitRawModel(const CUnit* unit);
+	void DrawUnitWithLists(const CUnit* unit, unsigned int preList, unsigned int postList);
+	void DrawUnitRawWithLists(const CUnit* unit, unsigned int preList, unsigned int postList);
 
 	void SetTeamColour(int team, float alpha = 1.0f) const;
 	void SetupForUnitDrawing(bool deferredPass);
@@ -152,9 +152,9 @@ private:
 	bool UpdateGeometryBuffer(bool init);
 
 	// note: make these static?
-	void DrawUnitBeingBuilt(CUnit* unit);
-	void DrawUnitModel(CUnit* unit);
-	void DrawUnitNow(CUnit* unit);
+	void DrawUnitBeingBuilt(const CUnit* unit);
+	void DrawUnitModel(const CUnit* unit);
+	void DrawUnitNow(const CUnit* unit);
 
 	void UpdateUnitIconState(CUnit* unit);
 	static void UpdateUnitDrawPos(CUnit* unit);

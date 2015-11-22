@@ -99,48 +99,41 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 int LuaUnitRendering::SetLODCount(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
-	const unsigned int count = (unsigned int)luaL_checkint(L, 2);
-	if (count > 1024) {
-		luaL_error(L, "SetLODCount() ridiculous lod count");
-	}
-	unitDrawer->SetUnitLODCount(unit, count);
+
+	unitDrawer->SetUnitLODCount(unit, std::min(1024, luaL_checkint(L, 2)));
 	return 0;
 }
 
 
 int LuaUnitRendering::SetLODLength(lua_State* L)
 {
-	// Actual Length-Per-Pixel
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
-	const unsigned int lod = (unsigned int)luaL_checknumber(L, 2) - 1;
-	if (lod >= unit->lodCount) {
-		return 0;
-	}
-	const float lpp = luaL_checkfloat(L, 3);
-	unit->lodLengths[lod] = lpp;
+
+	LuaUnitMaterialData* lmd = unit->GetLuaMaterialData();
+
+	// actual Length-Per-Pixel
+	lmd->SetLODLength(luaL_checknumber(L, 2) - 1, luaL_checkfloat(L, 3));
 	return 0;
 }
 
 int LuaUnitRendering::SetLODDistance(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
-	const unsigned int lod = (unsigned int)luaL_checknumber(L, 2) - 1;
-	if (lod >= unit->lodCount) {
-		return 0;
-	}
-	// adjusted for 45 degree FOV with a 1024x768 screen
-	const float scale = 2.0f * (float)math::tanf((45.0 * 0.5) * (PI / 180.0)) / 768.0f;
-	const float dist = luaL_checkfloat(L, 3);
-	unit->lodLengths[lod] = dist * scale;
+
+	LuaUnitMaterialData* lmd = unit->GetLuaMaterialData();
+
+	// length adjusted for 45 degree FOV with a 1024x768 screen; the magic
+	// constant is 2.0f * math::tanf((45.0f * 0.5f) * (PI / 180.0f)) / 768.0f)
+	lmd->SetLODLength(luaL_checknumber(L, 2) - 1, luaL_checkfloat(L, 3) * 0.0010786811520132682f);
 	return 0;
 }
 
@@ -150,33 +143,34 @@ int LuaUnitRendering::SetLODDistance(lua_State* L)
 int LuaUnitRendering::SetPieceList(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if ((unit == NULL) || (unit->localModel == NULL)) {
+
+	if ((unit == NULL) || (unit->localModel == NULL))
 		return 0;
-	}
+
+	const LuaUnitMaterialData* lmd = unit->GetLuaMaterialData();
+	const unsigned int lod = luaL_checknumber(L, 2) - 1;
+
+	if (lod >= lmd->GetLODCount())
+		return 0;
 
 	LocalModel* localModel = unit->localModel;
+	const unsigned int piece = luaL_checknumber(L, 3) - 1;
 
-	const unsigned int lod   = (unsigned int)luaL_checknumber(L, 2) - 1;
-	if (lod >= unit->lodCount) {
+	if (piece >= localModel->pieces.size())
 		return 0;
-	}
-	const unsigned int piece = (unsigned int)luaL_checknumber(L, 3) - 1;
-	if (piece >= localModel->pieces.size()) {
-		return 0;
-	}
+
 	LocalModelPiece* localPiece = &localModel->pieces[piece];
 
 	unsigned int dlist = 0;
+
 	if (lua_isnumber(L, 4)) {
-		const unsigned int ilist = (unsigned int)luaL_checknumber(L, 4);
 		CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
-		dlist = displayLists.GetDList(ilist);
+		dlist = displayLists.GetDList(luaL_checknumber(L, 4));
 	} else {
 		dlist = localPiece->dispListID; // set to the default
 	}
 
 	localPiece->lodDispLists[lod] = dlist;
-
 	return 0;
 }
 
@@ -201,11 +195,11 @@ static const map<string, LuaMatType>& GetMatNameMap()
 static LuaMatType ParseMaterialType(const string& matName)
 {
 	const string lower = StringToLower(matName);
-	map<string, LuaMatType>::const_iterator it;
-	it = GetMatNameMap().find(lower);
-	if (it == GetMatNameMap().end()) {
+	const auto it = GetMatNameMap().find(lower);
+
+	if (it == GetMatNameMap().end())
 		return (LuaMatType) -1;
-	}
+
 	return it->second;
 }
 
@@ -213,10 +207,12 @@ static LuaMatType ParseMaterialType(const string& matName)
 static LuaUnitMaterial* GetUnitMaterial(CUnit* unit, const string& matName)
 {
 	LuaMatType type = ParseMaterialType(matName);
-	if (type < 0) {
+	LuaUnitMaterialData* lmd = unit->GetLuaMaterialData();
+
+	if (type < 0)
 		return NULL;
-	}
-	return &unit->luaMats[type];
+
+	return (lmd->GetLuaMaterial(type));
 }
 
 
@@ -663,13 +659,12 @@ int LuaUnitRendering::SetFeatureLuaDraw(lua_State* L)
 	const int featureID = luaL_checkint(L, 1);
 	CFeature* feature = featureHandler->GetFeature(featureID);
 
-	if (feature == NULL) {
+	if (feature == NULL)
 		return 0;
-	}
 
-	if (!lua_isboolean(L, 2)) {
+	if (!lua_isboolean(L, 2))
 		return 0;
-	}
+
 	feature->luaDraw = lua_toboolean(L, 2);
 	return 0;
 }
@@ -677,14 +672,19 @@ int LuaUnitRendering::SetFeatureLuaDraw(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-static void PrintUnitLOD(CUnit* unit, int lod)
+static void PrintUnitLOD(const CUnit* unit, int lod)
 {
+	const LuaUnitMaterialData* lmd = unit->GetLuaMaterialData();
+	const LuaUnitMaterial* mats = lmd->GetLuaMaterials();
+
 	LOG("  LOD %i:", lod);
-	LOG("    LodLength = %f", unit->lodLengths[lod]);
+	LOG("    LodLength = %f", lmd->GetLODLength(lod));
+
 	for (int type = 0; type < LUAMAT_TYPE_COUNT; type++) {
-		const LuaUnitMaterial& luaMat = unit->luaMats[type];
+		const LuaUnitMaterial& luaMat = mats[type];
 		const LuaUnitLODMaterial* lodMat = luaMat.GetMaterial(lod);
 		const LuaMatBin* bin = lodMat->matref.GetBin();
+
 		if (bin) {
 			bin->Print("    ");
 		}
@@ -695,35 +695,41 @@ static void PrintUnitLOD(CUnit* unit, int lod)
 int LuaUnitRendering::Debug(lua_State* L)
 {
 	const int args = lua_gettop(L);
+
 	if (args == 0) {
 		luaMatHandler.PrintAllBins("");
 		return 0;
 	}
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	const CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
+	if (unit == NULL)
 		return 0;
-	}
+
+	const LuaUnitMaterialData* lmd = unit->GetLuaMaterialData();
+	const LuaUnitMaterial* mats = lmd->GetLuaMaterials();
 
 	LOG_L(L_DEBUG, "%s", "");
 	LOG_L(L_DEBUG, "UnitID      = %i", unit->id);
 	LOG_L(L_DEBUG, "UnitDefID   = %i", unit->unitDef->id);
 	LOG_L(L_DEBUG, "UnitDefName = %s", unit->unitDef->name.c_str());
-	LOG_L(L_DEBUG, "LodCount    = %i", unit->lodCount);
-	LOG_L(L_DEBUG, "CurrentLod  = %i", unit->currentLOD);
+	LOG_L(L_DEBUG, "LodCount    = %i", lmd->GetLODCount());
+	LOG_L(L_DEBUG, "CurrentLod  = %i", lmd->GetCurrentLOD());
 	LOG_L(L_DEBUG, "%s", "");
 
-	const LuaUnitMaterial& alphaMat      = unit->luaMats[LUAMAT_ALPHA];
-	const LuaUnitMaterial& opaqueMat     = unit->luaMats[LUAMAT_OPAQUE];
-	const LuaUnitMaterial& alphaReflMat  = unit->luaMats[LUAMAT_ALPHA_REFLECT];
-	const LuaUnitMaterial& opaqueReflMat = unit->luaMats[LUAMAT_OPAQUE_REFLECT];
-	const LuaUnitMaterial& shadowMat     = unit->luaMats[LUAMAT_SHADOW];
+	const LuaUnitMaterial& alphaMat      = mats[LUAMAT_ALPHA];
+	const LuaUnitMaterial& opaqueMat     = mats[LUAMAT_OPAQUE];
+	const LuaUnitMaterial& alphaReflMat  = mats[LUAMAT_ALPHA_REFLECT];
+	const LuaUnitMaterial& opaqueReflMat = mats[LUAMAT_OPAQUE_REFLECT];
+	const LuaUnitMaterial& shadowMat     = mats[LUAMAT_SHADOW];
+
 	LOG_L(L_DEBUG, "LUAMAT_ALPHA          lastLOD = %i", alphaMat.GetLastLOD());
 	LOG_L(L_DEBUG, "LUAMAT_OPAQUE         lastLOD = %i", opaqueMat.GetLastLOD());
 	LOG_L(L_DEBUG, "LUAMAT_ALPHA_REFLECT  lastLOD = %i", alphaReflMat.GetLastLOD());
 	LOG_L(L_DEBUG, "LUAMAT_OPAQUE_REFLECT lastLOD = %i", opaqueReflMat.GetLastLOD());
 	LOG_L(L_DEBUG, "LUAMAT_SHADOW         lastLOD = %i", shadowMat.GetLastLOD());
 
-	for (unsigned lod = 0; lod < unit->lodCount; lod++) {
+	for (unsigned lod = 0; lod < lmd->GetLODCount(); lod++) {
 		PrintUnitLOD(unit, lod);
 	}
 

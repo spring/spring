@@ -72,14 +72,12 @@ class LuaUnitUniforms {
 		  unitIDLoc(-1),
 		  teamIDLoc(-1),
 		  customLoc(-1),
-		  customCount(0),
-		  customData(NULL)
+		  customCount(0)
 		{}
 		LuaUnitUniforms(const LuaUnitUniforms&);
 		LuaUnitUniforms& operator=(const LuaUnitUniforms&);
-		~LuaUnitUniforms() { delete[] customData; }
 
-		void Execute(CUnit* unit) const;
+		void Execute(const CUnit* unit) const;
 
 		void SetCustomCount(int count);
 
@@ -91,7 +89,7 @@ class LuaUnitUniforms {
 		GLint teamIDLoc;
 		GLint customLoc;
 		int customCount;
-		GLfloat* customData;
+		vector<GLfloat> customData;
 
 
 	// FIXME: do this differently
@@ -123,7 +121,7 @@ class LuaUnitLODMaterial {
 
 		inline void ExecuteMaterial() const { matref.Execute(); }
 
-		inline void ExecuteUniforms(CUnit* unit) const
+		inline void ExecuteUniforms(const CUnit* unit) const
 		{
 			uniforms.Execute(unit);
 		}
@@ -173,6 +171,107 @@ class LuaUnitMaterial {
 		unsigned int lodCount;
 		unsigned int lastLOD;
 		vector<LuaUnitLODMaterial> lodMats;
+};
+
+
+/******************************************************************************/
+
+struct LuaUnitMaterialData {
+public:
+	LuaUnitMaterialData() {
+		lodCount = 0;
+		currentLOD = 0;
+	}
+
+	bool Enabled() const { return (lodCount > 0); }
+
+	const LuaUnitMaterial* GetLuaMaterials() const { return &luaMats[0]; }
+
+	const LuaUnitMaterial* GetLuaMaterial(LuaMatType type) const { return &luaMats[type]; }
+	      LuaUnitMaterial* GetLuaMaterial(LuaMatType type)       { return &luaMats[type]; }
+
+	const LuaUnitLODMaterial* GetLuaLODMaterial(LuaMatType type) const {
+		const LuaUnitMaterial* mat = GetLuaMaterial(type);
+		const LuaUnitLODMaterial* lodMat = mat->GetMaterial(currentLOD);
+		return lodMat;
+	}
+
+	LuaUnitLODMaterial* GetLuaLODMaterial(LuaMatType type) {
+		LuaUnitMaterial* mat = GetLuaMaterial(type);
+		LuaUnitLODMaterial* lodMat = mat->GetMaterial(currentLOD);
+		return lodMat;
+	}
+
+	void UpdateCurrentLOD(float lodDist, LuaMatType type) {
+		SetCurrentLOD(CalcCurrentLOD(lodDist, luaMats[type].GetLastLOD()));
+	}
+
+	unsigned int CalcCurrentLOD(float lodDist, unsigned int lastLOD) const;
+	unsigned int SetCurrentLOD(unsigned int lod) { return (currentLOD = lod); }
+
+	unsigned int GetLODCount() const { return lodCount; }
+	unsigned int GetCurrentLOD() const { return currentLOD; }
+
+	float GetLODLength(unsigned int lod) const { return lodLengths[lod]; }
+
+
+	void PushLODCount(unsigned int tmpCount) { lodStack.push_back(lodCount); lodCount = tmpCount; }
+	void PopLODCount() { lodCount = lodStack.back(); lodStack.pop_back(); }
+
+	void SetLODCount(unsigned int count) {
+		const unsigned int oldCount = lodCount;
+
+		lodLengths.resize(lodCount = count);
+
+		for (unsigned int i = oldCount; i < count; i++) {
+			lodLengths[i] = -1.0f;
+		}
+
+		for (int m = 0; m < LUAMAT_TYPE_COUNT; m++) {
+			luaMats[m].SetLODCount(count);
+		}
+	}
+
+	void SetLODLength(unsigned int lod, float length) {
+		if (lod >= lodCount)
+			return;
+
+		lodLengths[lod] = length;
+	}
+
+	bool AddUnitForLOD(CUnit* unit, LuaMatType type, float lodDist) {
+		if (!Enabled())
+			return false;
+
+		LuaUnitMaterial* unitMat = GetLuaMaterial(type);
+		LuaUnitLODMaterial* lodMat = unitMat->GetMaterial(SetCurrentLOD(CalcCurrentLOD(lodDist, unitMat->GetLastLOD())));
+
+		if ((lodMat != NULL) && lodMat->IsActive()) {
+			lodMat->AddUnit(unit);
+			return true;
+		}
+
+		return false;
+	}
+
+	static void SetGlobalLODFactor(float value) {
+		UNIT_GLOBAL_LOD_FACTOR = value;
+	}
+
+private:
+	static float UNIT_GLOBAL_LOD_FACTOR;
+
+	// equal to lodLengths.size(); if non-zero, then at least
+	// one LOD-level has been assigned a custom Lua material
+	unsigned int lodCount;
+	// which LuaUnitLODMaterial should be used
+	unsigned int currentLOD;
+
+	// length-per-pixel; see CalcCurrentLOD
+	std::vector<float> lodLengths;
+	std::vector<unsigned int> lodStack;
+
+	LuaUnitMaterial luaMats[LUAMAT_TYPE_COUNT];
 };
 
 

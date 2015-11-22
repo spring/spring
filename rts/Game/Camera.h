@@ -100,6 +100,22 @@ public:
 
 	static float3 GetRotFromDir(float3 dir);
 
+	float ProjectedDistance(const float3 objPos) const {
+		const float3 diff = objPos - GetPos();
+		const float dist = diff.dot(GetDir());
+		return dist;
+	}
+
+	/*
+	float ProjectedDistanceShadow(const float3 objPos, const float3 sunDir) const {
+		// FIXME: fix it, cap it for shallow shadows?
+		const float3 diff = (GetPos() - objPos);
+		const float  dot  = diff.dot(sunDir);
+		const float3 gap  = diff - (sunDir * dot);
+		return (gap.Length());
+	}
+	*/
+
 private:
 	void ComputeViewRange();
 

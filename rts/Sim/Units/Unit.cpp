@@ -191,8 +191,6 @@ CUnit::CUnit()
 , group(nullptr)
 , myTrack(NULL)
 , myIcon(NULL)
-, lodCount(0)
-, currentLOD(0)
 
 , stunned(false)
 {
@@ -2924,11 +2922,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(lastUnitUpdate),
 
 	CR_MEMBER_UN(tooltip),
-
-	CR_MEMBER_UN(lodCount),
-	CR_MEMBER_UN(currentLOD),
-	CR_MEMBER_UN(lodLengths),
-	CR_MEMBER_UN(luaMats),
 
 	CR_MEMBER(stunned),
 

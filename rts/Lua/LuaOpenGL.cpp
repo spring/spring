@@ -1327,127 +1327,92 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 
 /******************************************************************************/
 
+
+static bool UnitDrawPreCommon(lua_State* L, CUnit* unit)
+{
+	LuaUnitMaterialData* lmd = unit->GetLuaMaterialData();
+
+	if (!lmd->Enabled())
+		return false;
+
+	if (!lua_isnumber(L, 3)) {
+		// calculate new LOD level
+		lmd->UpdateCurrentLOD(camera->ProjectedDistance(unit->pos), (water->DrawReflectionPass())? LUAMAT_OPAQUE_REFLECT: LUAMAT_OPAQUE);
+		return true;
+	} else {
+		// set new LOD level manually
+		if (lua_toint(L, 3) >= 0) {
+			lmd->SetCurrentLOD(std::min(lmd->GetLODCount() - 1, static_cast<unsigned int>(lua_toint(L, 3))));
+			return true;
+		}
+	}
+
+	return false;
+}
+
+static void UnitDrawPostCommon(CUnit* unit, bool applyTransform, bool doRawDraw, bool useLuaMat) {
+	glPushAttrib(GL_ENABLE_BIT);
+
+	LuaUnitMaterialData* lmd = unit->GetLuaMaterialData();
+
+	if (!useLuaMat) {
+		// "scoped" draw; this prevents any Lua-assigned
+		// material(s) from being used by the calls below
+		lmd->PushLODCount(0);
+	}
+
+	if (applyTransform) {
+		if (doRawDraw) {
+			unitDrawer->DrawUnitRaw(unit);
+		} else {
+			unitDrawer->DrawIndividual(unit);
+		}
+	} else {
+		if (doRawDraw) {
+			unitDrawer->DrawUnitRawModel(unit);
+		} else {
+			// FIXME? no no-transform version of this
+			// unitDrawer->DrawIndividual(unit);
+		}
+	}
+
+	if (!useLuaMat) {
+		lmd->PopLODCount();
+	}
+
+	glPopAttrib();
+}
+
+
 int LuaOpenGL::Unit(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
 
-	const bool rawDraw = luaL_optboolean(L, 2, false);
+	const bool doRawDraw = luaL_optboolean(L, 2, false);
+	const bool useLuaMat = UnitDrawPreCommon(L, unit);
 
-	bool useLOD = true;
-	if (unit->lodCount <= 0) {
-		useLOD = false;
-	}
-	else {
-		unsigned int lod = 0;
-		if (!lua_isnumber(L, 3)) {
-			const LuaMatType matType =
-				(water->DrawReflectionPass()) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
-			lod = unitDrawer->CalcUnitLOD(unit, unit->luaMats[matType].GetLastLOD());
-		} else {
-			int tmpLod = lua_toint(L, 3);
-			if (tmpLod < 0) {
-				useLOD = false;
-			} else {
-				lod = std::min(unit->lodCount - 1, (unsigned int)tmpLod);
-			}
-		}
-		unit->currentLOD = lod;
-	}
-
-	glPushAttrib(GL_ENABLE_BIT);
-
-	if (rawDraw) {
-		if (useLOD) {
-			unitDrawer->DrawUnitRaw(unit);
-		} else {
-			const unsigned int origLodCount = unit->lodCount;
-			unit->lodCount = 0;
-			unitDrawer->DrawUnitRaw(unit);
-			unit->lodCount = origLodCount;
-		}
-	}
-	else {
-		if (useLOD) {
-			unitDrawer->DrawIndividual(unit);
-		} else {
-			const unsigned int origLodCount = unit->lodCount;
-			unit->lodCount = 0;
-			unitDrawer->DrawIndividual(unit);
-			unit->lodCount = origLodCount;
-		}
-	}
-
-	glPopAttrib();
-
+	UnitDrawPostCommon(unit, true, doRawDraw, useLuaMat);
 	return 0;
 }
-
 
 int LuaOpenGL::UnitRaw(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
 
-	const bool rawDraw = luaL_optboolean(L, 2, false);
+	const bool doRawDraw = luaL_optboolean(L, 2, false);
+	const bool useLuaMat = UnitDrawPreCommon(L, unit);
 
-	bool useLOD = true;
-	if (unit->lodCount <= 0) {
-		useLOD = false;
-	}
-	else {
-		unsigned int lod = 0;
-		if (!lua_isnumber(L, 3)) {
-			const LuaMatType matType =
-				(water->DrawReflectionPass()) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
-			lod = unitDrawer->CalcUnitLOD(unit, unit->luaMats[matType].GetLastLOD());
-		} else {
-			int tmpLod = lua_toint(L, 3);
-			if (tmpLod < 0) {
-				useLOD = false;
-			} else {
-				lod = std::min(unit->lodCount - 1, (unsigned int)tmpLod);
-			}
-		}
-		unit->currentLOD = lod;
-	}
-
-	glPushAttrib(GL_ENABLE_BIT);
-
-	if (rawDraw) {
-		if (useLOD) {
-			unitDrawer->DrawUnitRawModel(unit);
-		} else {
-			const unsigned int origLodCount = unit->lodCount;
-			unit->lodCount = 0;
-			// transformation is not applied
-			unitDrawer->DrawUnitRawModel(unit);
-			unit->lodCount = origLodCount;
-		}
-	}
-	else {
-/*
-		if (useLOD) {
-			unitDrawer->DrawIndividual(unit);
-		} else {
-			const unsigned int origLodCount = unit->lodCount;
-			unit->lodCount = 0;
-			unitDrawer->DrawIndividual(unit);
-			unit->lodCount = origLodCount;
-		}
-*/
-	}
-
-	glPopAttrib();
-
+	UnitDrawPostCommon(unit, false, doRawDraw, useLuaMat);
 	return 0;
 }
 
