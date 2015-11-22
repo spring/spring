@@ -19,6 +19,7 @@
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
+#include "../tools/pr-downloader/src/pr-downloader.h"
 
 using std::min;
 
@@ -54,6 +55,7 @@ bool LuaVFS::PushCommon(lua_State* L)
 	HSTR_PUSH_CFUNC(L, "UnpackF32", UnpackF32);
 
 	HSTR_PUSH_CFUNC(L, "ZlibDecompress", ZlibDecompress);
+	HSTR_PUSH_CFUNC(L, "CalculateHash",        CalculateHash);
 
 	return true;
 }
@@ -541,6 +543,18 @@ int LuaVFS::ZlibDecompress(lua_State* L)
 	}
 }
 
+int LuaVFS::CalculateHash(lua_State* L)
+{
+	const std::string sstr = luaL_checksstring(L, 1);
+	const unsigned int hashType = luaL_checkint(L, 2);
+	char* hash = CalcHash(sstr.c_str(), sstr.size(), hashType);
+	if (hash == NULL) {
+		return luaL_error(L, "Unsupported hash type");
+	}
+	lua_pushsstring(L, std::string(hash));
+	free(hash);
+	return 1;
+}
 
 /******************************************************************************/
 /******************************************************************************/
