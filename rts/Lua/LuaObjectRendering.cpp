@@ -142,6 +142,7 @@ static inline CFeature* ParseFeature(lua_State* L, const char* caller, int index
 
 int LuaObjectRendering::SetLODCount(lua_State* L)
 {
+	// <objID, lodCount [, objType]>
 	const unsigned int objType = luaL_optint(L, 3, LUAOBJ_UNIT);
 	const unsigned int lodCount = std::min(1024, luaL_checkint(L, 2));
 
