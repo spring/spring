@@ -659,6 +659,7 @@ static int SetObjectLuaDraw(lua_State* L, CSolidObject* obj)
 		return 0;
 
 	obj->luaDraw = lua_toboolean(L, 2);
+	return 0;
 }
 
 

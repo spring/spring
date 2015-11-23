@@ -222,7 +222,10 @@ public:
 				break;
 			}
 		}
+
+		return lastLOD;
 	}
+
 	unsigned int SetCurrentLOD(unsigned int lod) { return (currentLOD = lod); }
 
 	unsigned int GetLODCount() const { return lodCount; }
