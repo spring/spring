@@ -12,17 +12,12 @@
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
-#include "Rendering/Textures/NamedTextures.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Features/Feature.h"
+// #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
-
-
-using std::min;
-using std::max;
 
 
 
@@ -70,39 +65,6 @@ static void CreateMatRefMetatable(lua_State* L)
 
 /******************************************************************************/
 /******************************************************************************/
-
-#define REGISTER_LUA_CFUNC(x) \
-	lua_pushstring(L, #x);    \
-	lua_pushcfunction(L, x);  \
-	lua_rawset(L, -3)
-
-bool LuaObjectRendering::PushEntries(lua_State* L)
-{
-	CreateMatRefMetatable(L);
-
-	REGISTER_LUA_CFUNC(SetLODCount);
-	REGISTER_LUA_CFUNC(SetLODLength);
-	REGISTER_LUA_CFUNC(SetLODDistance);
-
-	REGISTER_LUA_CFUNC(GetMaterial);
-	REGISTER_LUA_CFUNC(SetMaterial);
-
-	REGISTER_LUA_CFUNC(SetMaterialLastLOD);
-	REGISTER_LUA_CFUNC(SetMaterialDisplayLists);
-
-	REGISTER_LUA_CFUNC(SetPieceList);
-	REGISTER_LUA_CFUNC(SetObjectUniform);
-
-	REGISTER_LUA_CFUNC(SetUnitLuaDraw);
-	REGISTER_LUA_CFUNC(SetFeatureLuaDraw);
-
-	REGISTER_LUA_CFUNC(Debug);
-	return true;
-}
-
-
-/******************************************************************************/
-/******************************************************************************/
 //
 //  Parsing helpers
 //
@@ -137,13 +99,46 @@ static inline CFeature* ParseFeature(lua_State* L, const char* caller, int index
 }
 
 
+
 /******************************************************************************/
 /******************************************************************************/
 
-int LuaObjectRendering::SetLODCount(lua_State* L)
+std::vector<LuaObjType> LuaObjectRenderingImpl::objectTypeStack;
+
+bool LuaObjectRenderingImpl::PushEntries(lua_State* L)
 {
-	// <objID, lodCount [, objType]>
-	const unsigned int objType = luaL_optint(L, 3, LUAOBJ_UNIT);
+	CreateMatRefMetatable(L);
+
+	#define REGISTER_LUA_CFUNC(x) \
+		lua_pushstring(L, #x);    \
+		lua_pushcfunction(L, x);  \
+		lua_rawset(L, -3)
+
+	REGISTER_LUA_CFUNC(SetLODCount);
+	REGISTER_LUA_CFUNC(SetLODLength);
+	REGISTER_LUA_CFUNC(SetLODDistance);
+
+	REGISTER_LUA_CFUNC(GetMaterial);
+	REGISTER_LUA_CFUNC(SetMaterial);
+
+	REGISTER_LUA_CFUNC(SetMaterialLastLOD);
+	REGISTER_LUA_CFUNC(SetMaterialDisplayLists);
+
+	REGISTER_LUA_CFUNC(SetPieceList);
+	REGISTER_LUA_CFUNC(SetObjectUniform);
+
+	REGISTER_LUA_CFUNC(SetUnitLuaDraw);
+	REGISTER_LUA_CFUNC(SetFeatureLuaDraw);
+
+	REGISTER_LUA_CFUNC(Debug);
+	return true;
+}
+
+
+int LuaObjectRenderingImpl::SetLODCount(lua_State* L)
+{
+	// args=<objID, lodCount>
+	const unsigned int objType = GetObjectType();
 	const unsigned int lodCount = std::min(1024, luaL_checkint(L, 2));
 
 	switch (objType) {
@@ -178,25 +173,25 @@ static int SetLODLengthCommon(lua_State* L, CSolidObject* obj, float scale)
 	return 0;
 }
 
-int LuaObjectRendering::SetLODLength(lua_State* L)
+int LuaObjectRenderingImpl::SetLODLength(lua_State* L)
 {
-	// <objID, lodLevel, lodLength [, objType]>
-	return (SetLODLengthCommon(L, ParseSolidObject(L, __FUNCTION__, 1, luaL_optint(L, 4, LUAOBJ_UNIT)), 1.0f));
+	// args=<objID, lodLevel, lodLength>
+	return (SetLODLengthCommon(L, ParseSolidObject(L, __FUNCTION__, 1, GetObjectType()), 1.0f));
 }
 
-int LuaObjectRendering::SetLODDistance(lua_State* L)
+int LuaObjectRenderingImpl::SetLODDistance(lua_State* L)
 {
-	// <objID, lodLevel, lodLength [, objType]>
+	// args=<objID, lodLevel, lodLength>
 	//
 	// length adjusted for 45 degree FOV with a 1024x768 screen; the magic
 	// constant is 2.0f * math::tanf((45.0f * 0.5f) * (PI / 180.0f)) / 768.0f)
-	return (SetLODLengthCommon(L, ParseSolidObject(L, __FUNCTION__, 1, luaL_optint(L, 4, LUAOBJ_UNIT)), 0.0010786811520132682f));
+	return (SetLODLengthCommon(L, ParseSolidObject(L, __FUNCTION__, 1, GetObjectType()), 0.0010786811520132682f));
 }
 
 
 /******************************************************************************/
 
-int LuaObjectRendering::SetPieceList(lua_State* L)
+int LuaObjectRenderingImpl::SetPieceList(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 
@@ -262,13 +257,13 @@ static LuaMatType ParseMaterialType(const string& matName)
 
 static LuaObjectMaterial* GetObjectMaterial(CSolidObject* obj, const string& matName)
 {
-	LuaMatType type = ParseMaterialType(matName);
+	LuaMatType matType = ParseMaterialType(matName);
 	LuaObjectMaterialData* lmd = obj->GetLuaMaterialData();
 
-	if (type < 0)
+	if (matType < 0)
 		return NULL;
 
-	return (lmd->GetLuaMaterial(type));
+	return (lmd->GetLuaMaterial(matType));
 }
 
 
@@ -524,7 +519,7 @@ static LuaMatRef ParseMaterial(lua_State* L, const char* caller, int index,
 /******************************************************************************/
 /******************************************************************************/
 
-int LuaObjectRendering::GetMaterial(lua_State* L)
+int LuaObjectRenderingImpl::GetMaterial(lua_State* L)
 {
 	const LuaMatType matType = ParseMaterialType(luaL_checkstring(L, 1));
 
@@ -546,10 +541,10 @@ int LuaObjectRendering::GetMaterial(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-int LuaObjectRendering::SetMaterial(lua_State* L)
+int LuaObjectRenderingImpl::SetMaterial(lua_State* L)
 {
-	// <objID, lodMatNum, matName, matRef [, objType]>
-	CSolidObject* obj = ParseSolidObject(L, __FUNCTION__, 1, luaL_optint(L, 5, LUAOBJ_UNIT));
+	// args=<objID, lodMatNum, matName, matRef>
+	CSolidObject* obj = ParseSolidObject(L, __FUNCTION__, 1, GetObjectType());
 
 	if (obj == NULL)
 		return 0;
@@ -580,10 +575,10 @@ int LuaObjectRendering::SetMaterial(lua_State* L)
 }
 
 
-int LuaObjectRendering::SetMaterialLastLOD(lua_State* L)
+int LuaObjectRenderingImpl::SetMaterialLastLOD(lua_State* L)
 {
-	// <objID, matName, lodMatNum [, objType]>
-	CSolidObject* obj = ParseSolidObject(L, __FUNCTION__, 1, luaL_optint(L, 4, LUAOBJ_UNIT));
+	// args=<objID, matName, lodMatNum>
+	CSolidObject* obj = ParseSolidObject(L, __FUNCTION__, 1, GetObjectType());
 
 	if (obj == NULL)
 		return 0;
@@ -598,10 +593,10 @@ int LuaObjectRendering::SetMaterialLastLOD(lua_State* L)
 }
 
 
-int LuaObjectRendering::SetMaterialDisplayLists(lua_State* L)
+int LuaObjectRenderingImpl::SetMaterialDisplayLists(lua_State* L)
 {
-	// <objID, lodLevel, matName, preListID, postListID [, objType]>
-	CSolidObject* obj = ParseSolidObject(L, __FUNCTION__, 1, luaL_optint(L, 6, LUAOBJ_UNIT));
+	// args=<objID, lodLevel, matName, preListID, postListID>
+	CSolidObject* obj = ParseSolidObject(L, __FUNCTION__, 1, GetObjectType());
 
 	if (obj == NULL)
 		return 0;
@@ -622,11 +617,11 @@ int LuaObjectRendering::SetMaterialDisplayLists(lua_State* L)
 }
 
 
-int LuaObjectRendering::SetObjectUniform(lua_State* L)
+int LuaObjectRenderingImpl::SetObjectUniform(lua_State* L)
 {
 	/*
-	// <objID, matName, lodLevel, objType [, ...]>
-	CSolidObject* obj = ParseSolidObject(L, __FUNCTION__, 1, luaL_checkint(L, 4));
+	// args=<objID, matName, lodLevel [, ...]>
+	CSolidObject* obj = ParseSolidObject(L, __FUNCTION__, 1, GetObjectType());
 
 	if (obj == NULL)
 		return 0;
@@ -642,7 +637,7 @@ int LuaObjectRendering::SetObjectUniform(lua_State* L)
 		return 0;
 
 	const int args = lua_gettop(L) - 3;
-	const int lastArg = min(args, lodMat->uniforms.customCount + 3);
+	const int lastArg = std::min(args, lodMat->uniforms.customCount + 3);
 
 	for (int i = 3; i <= lastArg; i++) {
 		// FIXME: Set all lods at once?
@@ -667,12 +662,12 @@ static int SetObjectLuaDraw(lua_State* L, CSolidObject* obj)
 }
 
 
-int LuaObjectRendering::SetUnitLuaDraw(lua_State* L)
+int LuaObjectRenderingImpl::SetUnitLuaDraw(lua_State* L)
 {
 	return (SetObjectLuaDraw(L, unitHandler->GetUnit(luaL_checkint(L, 1))));
 }
 
-int LuaObjectRendering::SetFeatureLuaDraw(lua_State* L)
+int LuaObjectRenderingImpl::SetFeatureLuaDraw(lua_State* L)
 {
 	return (SetObjectLuaDraw(L, featureHandler->GetFeature(luaL_checkint(L, 1))));
 }
@@ -700,7 +695,7 @@ static void PrintObjectLOD(const CSolidObject* obj, int lod)
 }
 
 
-int LuaObjectRendering::Debug(lua_State* L)
+int LuaObjectRenderingImpl::Debug(lua_State* L)
 {
 	if (lua_gettop(L) == 0) {
 		// no arguments, dump all bins
@@ -708,8 +703,8 @@ int LuaObjectRendering::Debug(lua_State* L)
 		return 0;
 	}
 
-	// <objID [, objType]>
-	const CSolidObject* obj = ParseSolidObject(L, __FUNCTION__, 1, luaL_optint(L, 2, LUAOBJ_UNIT));
+	// args=<objID>
+	const CSolidObject* obj = ParseSolidObject(L, __FUNCTION__, 1, GetObjectType());
 
 	if (obj == NULL)
 		return 0;

@@ -11,7 +11,6 @@ typedef          float GLfloat;
 typedef unsigned   int  GLenum;
 
 #include <vector>
-#include <cstddef>
 
 class CSolidObject;
 class LuaMatBin;
@@ -23,6 +22,7 @@ class LuaMatBin;
 enum LuaObjType {
 	LUAOBJ_UNIT    = 0,
 	LUAOBJ_FEATURE = 1,
+	LUAOBJ_LAST    = 2,
 };
 
 enum LuaMatType {
@@ -42,7 +42,7 @@ class LuaMatRef {
 	friend class LuaMatHandler;
 
 	public:
-		LuaMatRef() : bin(NULL) {}
+		LuaMatRef() : bin(nullptr) {}
 		LuaMatRef(const LuaMatRef&);
 		LuaMatRef& operator=(const LuaMatRef&);
 		~LuaMatRef();
@@ -54,7 +54,7 @@ class LuaMatRef {
 
 		void Execute() const;
 
-		inline bool IsActive() const { return (bin != NULL); }
+		inline bool IsActive() const { return (bin != nullptr); }
 
 		inline const LuaMatBin* GetBin() const { return bin; }
 
@@ -159,14 +159,14 @@ class LuaObjectMaterial {
 
 		inline LuaObjectLODMaterial* GetMaterial(unsigned int lod) {
 			if (lod >= lodCount)
-				return NULL;
+				return nullptr;
 
 			return &lodMats[lod];
 		}
 
 		inline const LuaObjectLODMaterial* GetMaterial(unsigned int lod) const {
 			if (lod >= lodCount)
-				return NULL;
+				return nullptr;
 
 			return &lodMats[lod];
 		}
@@ -263,7 +263,7 @@ public:
 		LuaObjectMaterial* objMat = GetLuaMaterial(matType);
 		LuaObjectLODMaterial* lodMat = objMat->GetMaterial(SetCurrentLOD(CalcCurrentLOD(objType, lodDist, objMat->GetLastLOD())));
 
-		if ((lodMat != NULL) && lodMat->IsActive()) {
+		if ((lodMat != nullptr) && lodMat->IsActive()) {
 			switch (objType) {
 				case LUAOBJ_UNIT   : { lodMat->AddUnit   (o); } break;
 				case LUAOBJ_FEATURE: { lodMat->AddFeature(o); } break;

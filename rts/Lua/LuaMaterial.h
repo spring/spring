@@ -14,7 +14,6 @@ using std::set;
 #include "LuaObjectMaterial.h" // for LuaMatRef
 
 #include "Rendering/GL/myGL.h"
-#include "Rendering/ShadowHandler.h"
 
 class CSolidObject;
 

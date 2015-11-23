@@ -79,15 +79,14 @@ bool CLuaRules::AddUnsyncedCode(lua_State *L)
 {
 	lua_getglobal(L, "Spring");
 
-	// maintain backward compatibility for now (23/11/2015)
 	lua_pushliteral(L, "UnitRendering");
 	lua_newtable(L);
-	LuaObjectRendering::PushEntries(L);
+	LuaObjectRendering<LUAOBJ_UNIT>::PushEntries(L);
 	lua_rawset(L, -3);
 
-	lua_pushliteral(L, "ObjectRendering");
+	lua_pushliteral(L, "FeatureRendering");
 	lua_newtable(L);
-	LuaObjectRendering::PushEntries(L);
+	LuaObjectRendering<LUAOBJ_FEATURE>::PushEntries(L);
 	lua_rawset(L, -3);
 
 	lua_pop(L, 1); // Spring
