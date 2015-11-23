@@ -11,7 +11,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/Env/ISky.h"
-#include "Sim/Units/Unit.h"
+#include "Sim/Objects/SolidObject.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
 
@@ -36,23 +36,23 @@ LuaMatHandler& luaMatHandler = LuaMatHandler::handler;
 //  LuaUnitUniforms
 //
 
-void LuaUnitUniforms::Execute(const CUnit* unit) const
+void LuaUnitUniforms::Execute(const CSolidObject* o) const
 {
 	// FIXME use vertex attributes
-	if (!haveUniforms) {
+	if (!haveUniforms)
 		return;
-	}
+
 	if (speedLoc >= 0) {
-		glUniformf3(speedLoc, unit->speed);
+		glUniformf3(speedLoc, o->speed);
 	}
 	if (healthLoc >= 0) {
-		glUniform1f(healthLoc, unit->health / unit->maxHealth);
+		glUniform1f(healthLoc, o->health / o->maxHealth);
 	}
 	if (unitIDLoc >= 0) {
-		glUniform1i(unitIDLoc, unit->id);
+		glUniform1i(unitIDLoc, o->id);
 	}
 	if (teamIDLoc >= 0) {
-		glUniform1i(teamIDLoc, unit->id);
+		glUniform1i(teamIDLoc, o->team);
 	}
 	if (customLoc >= 0) {
 		if (customCount > 0) {
@@ -108,10 +108,10 @@ LuaUnitUniforms::LuaUnitUniforms(const LuaUnitUniforms& u)
 /******************************************************************************/
 /******************************************************************************/
 //
-//  LuaUnitMaterial
+//  LuaObjectMaterial
 //
 
-bool LuaUnitMaterial::SetLODCount(unsigned int count)
+bool LuaObjectMaterial::SetLODCount(unsigned int count)
 {
 	lodCount = count;
 	lastLOD = lodCount - 1;
@@ -120,7 +120,7 @@ bool LuaUnitMaterial::SetLODCount(unsigned int count)
 }
 
 
-bool LuaUnitMaterial::SetLastLOD(unsigned int lod)
+bool LuaObjectMaterial::SetLastLOD(unsigned int lod)
 {
 	lastLOD = std::min(lod, lodCount - 1);
 	return true;
@@ -465,11 +465,18 @@ LuaMatRef::LuaMatRef(const LuaMatRef& mr)
 }
 
 
-void LuaMatRef::AddUnit(CUnit* unit)
+void LuaMatRef::AddUnit(CSolidObject* o)
 {
-  if (bin != NULL) {
-    bin->AddUnit(unit);
-  }
+	if (bin != NULL) {
+		bin->AddUnit(o);
+	}
+}
+
+void LuaMatRef::AddFeature(CSolidObject* o)
+{
+	if (bin != NULL) {
+		bin->AddFeature(o);
+	}
 }
 
 
@@ -496,7 +503,8 @@ void LuaMatBin::UnRef()
 
 void LuaMatBin::Print(const string& indent) const
 {
-	LOG("%sunitCount = %i", indent.c_str(), (int)units.size());
+	LOG("%s|units| = %lu", indent.c_str(), units.size());
+	LOG("%s|features| = %lu", indent.c_str(), features.size());
 	LOG("%spointer = %p", indent.c_str(), this);
 	LuaMaterial::Print(indent + "  ");
 }
@@ -551,24 +559,29 @@ LuaMatRef LuaMatHandler::GetRef(const LuaMaterial& mat)
 }
 
 
-void LuaMatHandler::ClearBins(LuaMatType type)
+void LuaMatHandler::ClearBins(LuaObjType objType, LuaMatType matType)
 {
-	if ((type < 0) || (type >= LUAMAT_TYPE_COUNT)) {
+	if ((matType < 0) || (matType >= LUAMAT_TYPE_COUNT))
 		return;
-	}
-	LuaMatBinSet& binSet = binTypes[type];
+
+	LuaMatBinSet& binSet = binTypes[matType];
 	LuaMatBinSet::iterator it;
+
 	for (it = binSet.begin(); it != binSet.end(); ++it) {
 		LuaMatBin* bin = *it;
-		bin->Clear();
+
+		switch (objType) {
+			case LUAOBJ_UNIT   : { bin->ClearUnits   (); } break;
+			case LUAOBJ_FEATURE: { bin->ClearFeatures(); } break;
+		}
 	}
 }
 
 
-void LuaMatHandler::ClearBins()
+void LuaMatHandler::ClearBins(LuaObjType objType)
 {
 	for (int m = 0; m < LUAMAT_TYPE_COUNT; m++) {
-		ClearBins(LuaMatType(m));
+		ClearBins(objType, LuaMatType(m));
 	}
 }
 
@@ -618,22 +631,5 @@ void LuaMatHandler::PrintAllBins(const string& indent) const
 /******************************************************************************/
 /******************************************************************************/
 
-float LuaUnitMaterialData::UNIT_GLOBAL_LOD_FACTOR = 1.0f;
-
-unsigned int LuaUnitMaterialData::CalcCurrentLOD(float lodDist, unsigned int lastLOD) const
-{
-	if (lastLOD == 0)
-		return 0;
-
-	// positive values only!
-	const float lpp = std::max(0.0f, lodDist * UNIT_GLOBAL_LOD_FACTOR);
-
-	for (/* no-op */; lastLOD != 0; lastLOD--) {
-		if (lpp > lodLengths[lastLOD]) {
-			break;
-		}
-	}
-
-	return lastLOD;
-}
+float LuaObjectMaterialData::GLOBAL_LOD_FACTORS[2] = {1.0f, 1.0f};
 

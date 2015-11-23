@@ -1330,14 +1330,14 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 
 static bool UnitDrawPreCommon(lua_State* L, CUnit* unit)
 {
-	LuaUnitMaterialData* lmd = unit->GetLuaMaterialData();
+	LuaObjectMaterialData* lmd = unit->GetLuaMaterialData();
 
 	if (!lmd->Enabled())
 		return false;
 
 	if (!lua_isnumber(L, 3)) {
 		// calculate new LOD level
-		lmd->UpdateCurrentLOD(camera->ProjectedDistance(unit->pos), (water->DrawReflectionPass())? LUAMAT_OPAQUE_REFLECT: LUAMAT_OPAQUE);
+		lmd->UpdateCurrentLOD(LUAOBJ_UNIT, camera->ProjectedDistance(unit->pos), (water->DrawReflectionPass())? LUAMAT_OPAQUE_REFLECT: LUAMAT_OPAQUE);
 		return true;
 	} else {
 		// set new LOD level manually
@@ -1353,7 +1353,7 @@ static bool UnitDrawPreCommon(lua_State* L, CUnit* unit)
 static void UnitDrawPostCommon(CUnit* unit, bool applyTransform, bool doRawDraw, bool useLuaMat) {
 	glPushAttrib(GL_ENABLE_BIT);
 
-	LuaUnitMaterialData* lmd = unit->GetLuaMaterialData();
+	LuaObjectMaterialData* lmd = unit->GetLuaMaterialData();
 
 	if (!useLuaMat) {
 		// "scoped" draw; this prevents any Lua-assigned

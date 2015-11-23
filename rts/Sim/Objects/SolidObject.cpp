@@ -21,6 +21,8 @@ CR_BIND_DERIVED(CSolidObject, CWorldObject, )
 CR_REG_METADATA(CSolidObject,
 (
 	CR_MEMBER(health),
+	CR_MEMBER(maxHealth),
+
 	CR_MEMBER(mass),
 	CR_MEMBER(crushResistance),
 
@@ -74,6 +76,8 @@ CR_REG_METADATA(CSolidObject,
 
 CSolidObject::CSolidObject():
 	health(0.0f),
+	maxHealth(1.0f),
+
 	mass(DEFAULT_MASS),
 	crushResistance(0.0f),
 

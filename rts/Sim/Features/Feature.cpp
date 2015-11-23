@@ -171,6 +171,7 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 
 	mass = def->mass;
 	health = def->health;
+	maxHealth = def->health;
 
 	resources = SResourcePack(def->metal, def->energy);
 

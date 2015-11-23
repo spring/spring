@@ -8,7 +8,6 @@
 #include <string>
 
 #include "Lua/LuaRulesParams.h"
-#include "Lua/LuaUnitMaterial.h"
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Misc/Resource.h"
 #include "Sim/Weapons/WeaponTarget.h"
@@ -233,9 +232,6 @@ protected:
 public: // unsynced methods
 	bool SetGroup(CGroup* newGroup, bool fromFactory = false);
 
-	const LuaUnitMaterialData* GetLuaMaterialData() const { return &luaMaterialData; }
-	      LuaUnitMaterialData* GetLuaMaterialData()       { return &luaMaterialData; }
-
 public:
 	static void  SetExpMultiplier(float value) { expMultiplier = value; }
 	static void  SetExpPowerScale(float value) { expPowerScale = value; }
@@ -344,7 +340,6 @@ public:
 	/// 0.0-1.0
 	float buildProgress;
 
-	float maxHealth;
 	/// if health-this is negative the unit is stunned
 	float paralyzeDamage;
 	/// how close this unit is to being captured
@@ -544,8 +539,6 @@ public:
 
 	UnitTrackStruct* myTrack;
 	icon::CIconData* myIcon;
-
-	LuaUnitMaterialData luaMaterialData;
 
 private:
 	/// if we are stunned by a weapon or for other reason, access via IsStunned/SetStunned(bool)

@@ -6,17 +6,17 @@
 #include <string>
 #include <vector>
 #include <set>
+
 using std::string;
-using std::vector;
 using std::set;
 
 #include "LuaOpenGLUtils.h"
-#include "LuaUnitMaterial.h" // for LuaMatRef
+#include "LuaObjectMaterial.h" // for LuaMatRef
 
 #include "Rendering/GL/myGL.h"
 #include "Rendering/ShadowHandler.h"
 
-class CUnit;
+class CSolidObject;
 
 
 class LuaMatTexSetRef;
@@ -139,13 +139,17 @@ class LuaMatBin : public LuaMaterial {
 	friend class LuaMatHandler;
 
 	public:
-		void Clear() { units.clear(); }
-		const std::vector<CUnit*>& GetUnits() const { return units; }
+		void ClearUnits() { units.clear(); }
+		void ClearFeatures() { features.clear(); }
+
+		const std::vector<CSolidObject*>& GetUnits() const { return units; }
+		const std::vector<CSolidObject*>& GetFeatures() const { return features; }
 
 		void Ref();
 		void UnRef();
 
-		void AddUnit(CUnit* unit) { units.push_back(unit); }
+		void AddUnit(CSolidObject* o) { units.push_back(o); }
+		void AddFeature(CSolidObject* o) { features.push_back(o); }
 
 		void Print(const string& indent) const;
 
@@ -156,7 +160,9 @@ class LuaMatBin : public LuaMaterial {
 
 	private:
 		int refCount;
-		std::vector<CUnit*> units;
+
+		std::vector<CSolidObject*> units;
+		std::vector<CSolidObject*> features;
 };
 
 
@@ -183,8 +189,8 @@ class LuaMatHandler {
 			return binTypes[type];
 		}
 
-		void ClearBins();
-		void ClearBins(LuaMatType type);
+		void ClearBins(LuaObjType objType);
+		void ClearBins(LuaObjType objType, LuaMatType type);
 
 		void FreeBin(LuaMatBin* bin);
 

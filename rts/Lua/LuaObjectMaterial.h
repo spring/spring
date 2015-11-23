@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef LUA_UNIT_MATERIAL_H
-#define LUA_UNIT_MATERIAL_H
+#ifndef LUA_OBJECT_MATERIAL_H
+#define LUA_OBJECT_MATERIAL_H
 
 // NOTE: some implementation is done in LuaMaterial.cpp
 
@@ -11,15 +11,19 @@ typedef          float GLfloat;
 typedef unsigned   int  GLenum;
 
 #include <vector>
-using std::vector;
-#include <stddef.h>
+#include <cstddef>
 
-class CUnit;
+class CSolidObject;
 class LuaMatBin;
 
 
 /******************************************************************************/
 /******************************************************************************/
+
+enum LuaObjType {
+	LUAOBJ_UNIT    = 0,
+	LUAOBJ_FEATURE = 1,
+};
 
 enum LuaMatType {
 	LUAMAT_ALPHA          = 0,
@@ -27,7 +31,7 @@ enum LuaMatType {
 	LUAMAT_ALPHA_REFLECT  = 2,
 	LUAMAT_OPAQUE_REFLECT = 3,
 	LUAMAT_SHADOW         = 4,
-	LUAMAT_TYPE_COUNT     = 5
+	LUAMAT_TYPE_COUNT     = 5,
 };
 
 
@@ -45,7 +49,9 @@ class LuaMatRef {
 
 		void Reset();
 
-		void AddUnit(CUnit*);
+		void AddUnit(CSolidObject*);
+		void AddFeature(CSolidObject*);
+
 		void Execute() const;
 
 		inline bool IsActive() const { return (bin != NULL); }
@@ -77,7 +83,7 @@ class LuaUnitUniforms {
 		LuaUnitUniforms(const LuaUnitUniforms&);
 		LuaUnitUniforms& operator=(const LuaUnitUniforms&);
 
-		void Execute(const CUnit* unit) const;
+		void Execute(const CSolidObject*) const;
 
 		void SetCustomCount(int count);
 
@@ -89,7 +95,7 @@ class LuaUnitUniforms {
 		GLint teamIDLoc;
 		GLint customLoc;
 		int customCount;
-		vector<GLfloat> customData;
+		std::vector<GLfloat> customData;
 
 
 	// FIXME: do this differently
@@ -102,33 +108,31 @@ class LuaUnitUniforms {
 		GLfloat* floatData;
 		void* data;
 	};
-	vector<EngineData> uniforms;
+	std::vector<EngineData> uniforms;
 };
 
 
 /******************************************************************************/
 
-class LuaUnitLODMaterial {
+class LuaObjectLODMaterial {
 	public:
-		LuaUnitLODMaterial()
+		LuaObjectLODMaterial()
 		: preDisplayList(0),
 		  postDisplayList(0)
 		{}
 
 		inline bool IsActive() const { return matref.IsActive(); }
 
-		inline void AddUnit(CUnit* unit) { matref.AddUnit(unit); }
+		inline void AddUnit(CSolidObject* o) { matref.AddUnit(o); }
+		inline void AddFeature(CSolidObject* o) { matref.AddFeature(o); }
 
 		inline void ExecuteMaterial() const { matref.Execute(); }
-
-		inline void ExecuteUniforms(const CUnit* unit) const
-		{
-			uniforms.Execute(unit);
-		}
+		inline void ExecuteUniforms(const CSolidObject* o) const { uniforms.Execute(o); }
 
 	public:
 		GLuint          preDisplayList;
 		GLuint          postDisplayList;
+
 		LuaMatRef       matref;
 		LuaUnitUniforms uniforms;
 };
@@ -136,9 +140,9 @@ class LuaUnitLODMaterial {
 
 /******************************************************************************/
 
-class LuaUnitMaterial {
+class LuaObjectMaterial {
 	public:
-		LuaUnitMaterial() : lodCount(0), lastLOD(0) {}
+		LuaObjectMaterial() : lodCount(0), lastLOD(0) {}
 
 		bool SetLODCount(unsigned int count);
 		bool SetLastLOD(unsigned int count);
@@ -147,66 +151,78 @@ class LuaUnitMaterial {
 		inline const unsigned int GetLastLOD() const { return lastLOD; }
 
 		inline bool IsActive(unsigned int lod) const {
-			if (lod >= lodCount) {
+			if (lod >= lodCount)
 				return false;
-			}
+
 			return lodMats[lod].IsActive();
 		}
 
-		inline LuaUnitLODMaterial* GetMaterial(unsigned int lod) {
-			if (lod >= lodCount) {
+		inline LuaObjectLODMaterial* GetMaterial(unsigned int lod) {
+			if (lod >= lodCount)
 				return NULL;
-			}
+
 			return &lodMats[lod];
 		}
 
-		inline const LuaUnitLODMaterial* GetMaterial(unsigned int lod) const {
-			if (lod >= lodCount) {
+		inline const LuaObjectLODMaterial* GetMaterial(unsigned int lod) const {
+			if (lod >= lodCount)
 				return NULL;
-			}
+
 			return &lodMats[lod];
 		}
 
 	private:
 		unsigned int lodCount;
 		unsigned int lastLOD;
-		vector<LuaUnitLODMaterial> lodMats;
+		std::vector<LuaObjectLODMaterial> lodMats;
 };
 
 
 /******************************************************************************/
 
-struct LuaUnitMaterialData {
+struct LuaObjectMaterialData {
 public:
-	LuaUnitMaterialData() {
+	LuaObjectMaterialData() {
 		lodCount = 0;
 		currentLOD = 0;
 	}
 
 	bool Enabled() const { return (lodCount > 0); }
 
-	const LuaUnitMaterial* GetLuaMaterials() const { return &luaMats[0]; }
+	const LuaObjectMaterial* GetLuaMaterials() const { return &luaMats[0]; }
 
-	const LuaUnitMaterial* GetLuaMaterial(LuaMatType type) const { return &luaMats[type]; }
-	      LuaUnitMaterial* GetLuaMaterial(LuaMatType type)       { return &luaMats[type]; }
+	const LuaObjectMaterial* GetLuaMaterial(LuaMatType type) const { return &luaMats[type]; }
+	      LuaObjectMaterial* GetLuaMaterial(LuaMatType type)       { return &luaMats[type]; }
 
-	const LuaUnitLODMaterial* GetLuaLODMaterial(LuaMatType type) const {
-		const LuaUnitMaterial* mat = GetLuaMaterial(type);
-		const LuaUnitLODMaterial* lodMat = mat->GetMaterial(currentLOD);
+	const LuaObjectLODMaterial* GetLuaLODMaterial(LuaMatType type) const {
+		const LuaObjectMaterial* mat = GetLuaMaterial(type);
+		const LuaObjectLODMaterial* lodMat = mat->GetMaterial(currentLOD);
 		return lodMat;
 	}
 
-	LuaUnitLODMaterial* GetLuaLODMaterial(LuaMatType type) {
-		LuaUnitMaterial* mat = GetLuaMaterial(type);
-		LuaUnitLODMaterial* lodMat = mat->GetMaterial(currentLOD);
+	LuaObjectLODMaterial* GetLuaLODMaterial(LuaMatType type) {
+		LuaObjectMaterial* mat = GetLuaMaterial(type);
+		LuaObjectLODMaterial* lodMat = mat->GetMaterial(currentLOD);
 		return lodMat;
 	}
 
-	void UpdateCurrentLOD(float lodDist, LuaMatType type) {
-		SetCurrentLOD(CalcCurrentLOD(lodDist, luaMats[type].GetLastLOD()));
+	void UpdateCurrentLOD(LuaObjType objType, float lodDist, LuaMatType matType) {
+		SetCurrentLOD(CalcCurrentLOD(objType, lodDist, luaMats[matType].GetLastLOD()));
 	}
 
-	unsigned int CalcCurrentLOD(float lodDist, unsigned int lastLOD) const;
+	unsigned int CalcCurrentLOD(LuaObjType objType, float lodDist, unsigned int lastLOD) const {
+		if (lastLOD == 0)
+			return 0;
+
+		// positive values only!
+		const float lpp = std::max(0.0f, lodDist * GLOBAL_LOD_FACTORS[objType]);
+
+		for (/* no-op */; lastLOD != 0; lastLOD--) {
+			if (lpp > lodLengths[lastLOD]) {
+				break;
+			}
+		}
+	}
 	unsigned int SetCurrentLOD(unsigned int lod) { return (currentLOD = lod); }
 
 	unsigned int GetLODCount() const { return lodCount; }
@@ -239,39 +255,44 @@ public:
 		lodLengths[lod] = length;
 	}
 
-	bool AddUnitForLOD(CUnit* unit, LuaMatType type, float lodDist) {
+
+	bool AddObjectForLOD(CSolidObject* o, LuaObjType objType, LuaMatType matType, float lodDist) {
 		if (!Enabled())
 			return false;
 
-		LuaUnitMaterial* unitMat = GetLuaMaterial(type);
-		LuaUnitLODMaterial* lodMat = unitMat->GetMaterial(SetCurrentLOD(CalcCurrentLOD(lodDist, unitMat->GetLastLOD())));
+		LuaObjectMaterial* objMat = GetLuaMaterial(matType);
+		LuaObjectLODMaterial* lodMat = objMat->GetMaterial(SetCurrentLOD(CalcCurrentLOD(objType, lodDist, objMat->GetLastLOD())));
 
 		if ((lodMat != NULL) && lodMat->IsActive()) {
-			lodMat->AddUnit(unit);
+			switch (objType) {
+				case LUAOBJ_UNIT   : { lodMat->AddUnit   (o); } break;
+				case LUAOBJ_FEATURE: { lodMat->AddFeature(o); } break;
+			}
+
 			return true;
 		}
 
 		return false;
 	}
 
-	static void SetGlobalLODFactor(float value) {
-		UNIT_GLOBAL_LOD_FACTOR = value;
+	static void SetGlobalLODFactor(LuaObjType objType, float lodFactor) {
+		GLOBAL_LOD_FACTORS[objType] = lodFactor;
 	}
 
 private:
-	static float UNIT_GLOBAL_LOD_FACTOR;
+	static float GLOBAL_LOD_FACTORS[2];
 
 	// equal to lodLengths.size(); if non-zero, then at least
 	// one LOD-level has been assigned a custom Lua material
 	unsigned int lodCount;
-	// which LuaUnitLODMaterial should be used
+	// which LuaObjectLODMaterial should be used
 	unsigned int currentLOD;
 
 	// length-per-pixel; see CalcCurrentLOD
 	std::vector<float> lodLengths;
 	std::vector<unsigned int> lodStack;
 
-	LuaUnitMaterial luaMats[LUAMAT_TYPE_COUNT];
+	LuaObjectMaterial luaMats[LUAMAT_TYPE_COUNT];
 };
 
 
@@ -279,4 +300,4 @@ private:
 /******************************************************************************/
 
 
-#endif /* LUA_UNIT_MATERIAL_H */
+#endif /* LUA_OBJECT_MATERIAL_H */

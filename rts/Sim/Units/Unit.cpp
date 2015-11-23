@@ -108,7 +108,6 @@ CUnit::CUnit()
 , featureDefID(-1)
 , power(100.0f)
 , buildProgress(0.0f)
-, maxHealth(100.0f)
 , paralyzeDamage(0.0f)
 , captureProgress(0.0f)
 , experience(0.0f)
@@ -2756,7 +2755,6 @@ CR_REG_METADATA(CUnit, (
 
 	CR_MEMBER(power),
 
-	CR_MEMBER(maxHealth),
 	CR_MEMBER(paralyzeDamage),
 	CR_MEMBER(captureProgress),
 	CR_MEMBER(experience),

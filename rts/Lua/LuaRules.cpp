@@ -5,7 +5,7 @@
 #include "LuaInclude.h"
 
 #include "LuaUtils.h"
-#include "LuaUnitRendering.h"
+#include "LuaObjectRendering.h"
 #include "LuaCallInCheck.h"
 
 #include "Sim/Misc/GlobalSynced.h"
@@ -78,10 +78,18 @@ bool CLuaRules::AddSyncedCode(lua_State *L)
 bool CLuaRules::AddUnsyncedCode(lua_State *L)
 {
 	lua_getglobal(L, "Spring");
+
+	// maintain backward compatibility for now (23/11/2015)
 	lua_pushliteral(L, "UnitRendering");
 	lua_newtable(L);
-	LuaUnitRendering::PushEntries(L);
+	LuaObjectRendering::PushEntries(L);
 	lua_rawset(L, -3);
+
+	lua_pushliteral(L, "ObjectRendering");
+	lua_newtable(L);
+	LuaObjectRendering::PushEntries(L);
+	lua_rawset(L, -3);
+
 	lua_pop(L, 1); // Spring
 
 	return true;

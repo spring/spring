@@ -104,10 +104,6 @@ public:
 
 	void DrawUnitMiniMapIcons() const;
 
-	static unsigned int CalcUnitLOD(const CUnit* unit, unsigned int lastLOD);
-	static unsigned int CalcUnitShadowLOD(const CUnit* unit, unsigned int lastLOD);
-	static void SetUnitLODCount(CUnit* unit, unsigned int count);
-
 	const std::vector<CUnit*>& GetUnsortedUnits() const { return unsortedUnits; }
 	IWorldObjectModelRenderer* GetOpaqueModelRenderer(int modelType) { return opaqueModelRenderers[modelType]; }
 	IWorldObjectModelRenderer* GetCloakedModelRenderer(int modelType) { return cloakedModelRenderers[modelType]; }

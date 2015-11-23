@@ -4,6 +4,7 @@
 #define SOLID_OBJECT_H
 
 #include "WorldObject.h"
+#include "Lua/LuaObjectMaterial.h" // XXX
 #include "System/bitops.h"
 #include "System/Matrix44f.h"
 #include "System/type2.h"
@@ -149,6 +150,9 @@ public:
 
 	virtual const CollisionVolume* GetCollisionVolume(const LocalModelPiece* lmp) const { return collisionVolume; }
 
+	const LuaObjectMaterialData* GetLuaMaterialData() const { return &luaMaterialData; }
+	      LuaObjectMaterialData* GetLuaMaterialData()       { return &luaMaterialData; }
+
 
 	/**
 	 * adds this object to the GroundBlockingMap if and only
@@ -244,6 +248,8 @@ private:
 
 public:
 	float health;
+	float maxHealth;
+
 	float mass;                                 ///< the physical mass of this object (run-time constant)
 	float crushResistance;                      ///< how much MoveDef::crushStrength is required to crush this object (run-time constant)
 
@@ -273,6 +279,8 @@ public:
 	MoveDef* moveDef;                           ///< mobility information about this object (if NULL, object is either static or aircraft)
 	CollisionVolume* collisionVolume;
 	SolidObjectGroundDecal* groundDecal;
+
+	LuaObjectMaterialData luaMaterialData;      ///< custom Lua-set material this object should be rendered with (UNSYNCED)
 
 	SyncedFloat3 frontdir;                      ///< object-local z-axis (in WS)
 	SyncedFloat3 rightdir;                      ///< object-local x-axis (in WS)

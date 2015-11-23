@@ -12,7 +12,7 @@
 #include "Game/Players/Player.h"
 #include "Game/UI/MiniMap.h"
 #include "Lua/LuaMaterial.h"
-#include "Lua/LuaUnitMaterial.h"
+#include "Lua/LuaObjectMaterial.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
@@ -287,7 +287,7 @@ bool CUnitDrawer::UpdateGeometryBuffer(bool init)
 // only called by DrawOpaqueUnit
 inline bool CUnitDrawer::DrawUnitLOD(CUnit* unit)
 {
-	LuaUnitMaterialData* matData = unit->GetLuaMaterialData();
+	LuaObjectMaterialData* matData = unit->GetLuaMaterialData();
 
 	const LuaMatType  alphaMats[2] = {LUAMAT_ALPHA, LUAMAT_ALPHA_REFLECT};
 	const LuaMatType opaqueMats[2] = {LUAMAT_OPAQUE, LUAMAT_OPAQUE_REFLECT};
@@ -295,9 +295,9 @@ inline bool CUnitDrawer::DrawUnitLOD(CUnit* unit)
 	bool ret = false;
 
 	if (unit->IsCloaked()) {
-		ret = (matData->AddUnitForLOD(unit,  alphaMats[water->DrawReflectionPass()], camera->ProjectedDistance(unit->pos)));
+		ret = (matData->AddObjectForLOD(unit, LUAOBJ_UNIT,  alphaMats[water->DrawReflectionPass()], camera->ProjectedDistance(unit->pos)));
 	} else {
-		ret = (matData->AddUnitForLOD(unit, opaqueMats[water->DrawReflectionPass()], camera->ProjectedDistance(unit->pos)));
+		ret = (matData->AddObjectForLOD(unit, LUAOBJ_UNIT, opaqueMats[water->DrawReflectionPass()], camera->ProjectedDistance(unit->pos)));
 	}
 
 	return ret;
@@ -356,11 +356,11 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	ISky::SetupFog();
 
 	if (drawReflection) {
-		LuaUnitMaterialData::SetGlobalLODFactor(LODScale * LODScaleReflection * camera->GetLPPScale());
+		LuaObjectMaterialData::SetGlobalLODFactor(LUAOBJ_UNIT, LODScale * LODScaleReflection * camera->GetLPPScale());
 	} else if (drawRefraction) {
-		LuaUnitMaterialData::SetGlobalLODFactor(LODScale * LODScaleRefraction * camera->GetLPPScale());
+		LuaObjectMaterialData::SetGlobalLODFactor(LUAOBJ_UNIT, LODScale * LODScaleRefraction * camera->GetLPPScale());
 	} else {
-		LuaUnitMaterialData::SetGlobalLODFactor(LODScale * camera->GetLPPScale());
+		LuaObjectMaterialData::SetGlobalLODFactor(LUAOBJ_UNIT, LODScale * camera->GetLPPScale());
 	}
 
 	camNorm = camera->GetDir();
@@ -547,11 +547,14 @@ static void DrawLuaMatBins(LuaMatType type, bool deferredPass)
 		bin->Execute(*currMat, deferredPass);
 		currMat = bin;
 
-		const std::vector<CUnit*>& units = bin->GetUnits();
+		const std::vector<CSolidObject*>& objects = bin->GetUnits();
 
-		for (const CUnit* unit: units) {
-			const LuaUnitMaterialData* matData = unit->GetLuaMaterialData();
-			const LuaUnitLODMaterial* lodMat = matData->GetLuaLODMaterial(type);
+		for (const CSolidObject* obj: objects) {
+			// we can safely do this because bins store objects separately
+			const CUnit* unit = static_cast<const CUnit*>(obj);
+
+			const LuaObjectMaterialData* matData = unit->GetLuaMaterialData();
+			const LuaObjectLODMaterial* lodMat = matData->GetLuaLODMaterial(type);
 
 			lodMat->uniforms.Execute(unit);
 
@@ -561,7 +564,7 @@ static void DrawLuaMatBins(LuaMatType type, bool deferredPass)
 	}
 
 	LuaMaterial::defMat.Execute(*currMat, deferredPass);
-	luaMatHandler.ClearBins(type);
+	luaMatHandler.ClearBins(LUAOBJ_UNIT, type);
 
 	glPopAttrib();
 
@@ -707,9 +710,9 @@ inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 	if (DrawAsIcon(unit, sqDist))
 		return;
 
-	LuaUnitMaterialData* matData = unit->GetLuaMaterialData();
+	LuaObjectMaterialData* matData = unit->GetLuaMaterialData();
 
-	if (!matData->AddUnitForLOD(unit, LUAMAT_SHADOW, camera->ProjectedDistance(unit->pos))) {
+	if (!matData->AddObjectForLOD(unit, LUAOBJ_UNIT, LUAMAT_SHADOW, camera->ProjectedDistance(unit->pos))) {
 		DrawUnitNow(unit);
 	}
 }
@@ -756,7 +759,7 @@ void CUnitDrawer::DrawShadowPass()
 		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 	po->Enable();
 
-	LuaUnitMaterialData::SetGlobalLODFactor(LODScale * LODScaleShadow * camera->GetLPPScale());
+	LuaObjectMaterialData::SetGlobalLODFactor(LUAOBJ_UNIT, LODScale * LODScaleShadow * camera->GetLPPScale());
 
 	{
 		// 3DO's have clockwise-wound faces and
@@ -1244,15 +1247,15 @@ void CUnitDrawer::DrawIndividual(CUnit* unit)
 	const bool origDebug = globalRendering->drawdebug;
 	globalRendering->drawdebug = false;
 
-	LuaUnitMaterialData* matData = unit->GetLuaMaterialData();
-	LuaUnitLODMaterial* lodMat = NULL;
+	LuaObjectMaterialData* matData = unit->GetLuaMaterialData();
+	LuaObjectLODMaterial* lodMat = NULL;
 
 	if (matData->Enabled()) {
 		lodMat = matData->GetLuaLODMaterial((water->DrawReflectionPass())? LUAMAT_OPAQUE_REFLECT: LUAMAT_OPAQUE);
 	}
 
 	if (lodMat != NULL && lodMat->IsActive()) {
-		LuaUnitMaterialData::SetGlobalLODFactor(LODScale * camera->GetLPPScale());
+		LuaObjectMaterialData::SetGlobalLODFactor(LUAOBJ_UNIT, LODScale * camera->GetLPPScale());
 
 		luaMatHandler.setup3doShader = SetupOpaque3DO;
 		luaMatHandler.reset3doShader = ResetOpaque3DO;
@@ -1507,7 +1510,7 @@ inline void CUnitDrawer::DrawUnitModel(const CUnit* unit) {
 	if (unit->luaDraw && eventHandler.DrawUnit(unit))
 		return;
 
-	const LuaUnitMaterialData* matData = unit->GetLuaMaterialData();
+	const LuaObjectMaterialData* matData = unit->GetLuaMaterialData();
 
 	if (matData->Enabled()) {
 		unit->localModel->DrawLOD(matData->GetCurrentLOD());
@@ -1564,7 +1567,7 @@ void CUnitDrawer::DrawUnitRaw(const CUnit* unit)
 
 void CUnitDrawer::DrawUnitRawModel(const CUnit* unit)
 {
-	const LuaUnitMaterialData* matData = unit->GetLuaMaterialData();
+	const LuaObjectMaterialData* matData = unit->GetLuaMaterialData();
 
 	if (matData->Enabled()) {
 		unit->localModel->DrawLOD(matData->GetCurrentLOD());
@@ -1948,8 +1951,11 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 	for (std::vector<std::vector<CUnit*> >::iterator it = unitRadarIcons.begin(); it != unitRadarIcons.end(); ++it) {
 		erase(*it, u);
 	}
+
 	UpdateUnitMiniMapIcon(unit, false, true);
-	SetUnitLODCount(u, 0);
+
+	u->GetLuaMaterialData()->SetLODCount(0);
+	u->localModel->SetLODCount(0);
 }
 
 
@@ -2027,14 +2033,6 @@ void CUnitDrawer::UnitLeftRadar(const CUnit* unit, int allyTeam) {
 	UpdateUnitMiniMapIcon(unit, false, false);
 }
 
-
-void CUnitDrawer::SetUnitLODCount(CUnit* unit, unsigned int count)
-{
-	LuaUnitMaterialData* matData = unit->GetLuaMaterialData();
-
-	matData->SetLODCount(count);
-	unit->localModel->SetLODCount(count);
-}
 
 void CUnitDrawer::PlayerChanged(int playerNum) {
 	if (playerNum != gu->myPlayerNum)
