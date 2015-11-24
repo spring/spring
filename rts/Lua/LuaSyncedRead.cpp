@@ -265,6 +265,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetFeatureRadius);
 	REGISTER_LUA_CFUNC(GetFeaturePosition);
 	REGISTER_LUA_CFUNC(GetFeatureDirection);
+	REGISTER_LUA_CFUNC(GetFeatureVelocity);
 	REGISTER_LUA_CFUNC(GetFeatureHeading);
 	REGISTER_LUA_CFUNC(GetFeatureResources);
 	REGISTER_LUA_CFUNC(GetFeatureBlocking);
