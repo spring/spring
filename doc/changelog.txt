@@ -8,6 +8,10 @@ General:
  ! change default screenshot file type to jpg. to create png use /screenshot png
  - pr-downloader dependency is now mandatory (statically linked with spring)
 
+ FeatureDefs:
+ - new tag lockPosition, affects whether the feature is locked to XZ coordinate (like currently trees, rocks etc. are).
+   Integer value: -1 (default) = current behaviour: locked unless resurrectable; 0 = not locked, free to move; everything else = locked, cannot move
+ 
 Lua:
  ! GameID callin now gets the ID string encoded in hex.
  - new Spring.GetUICommands function to obtain a list of all UI commands (e.g. /luaui reload)

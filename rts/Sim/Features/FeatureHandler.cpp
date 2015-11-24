@@ -129,6 +129,7 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const std
 	fd->resurrectable =  fdTable.GetInt("resurrectable",    -1);
 	fd->geoThermal    =  fdTable.GetBool("geoThermal",      false);
 	fd->floating      =  fdTable.GetBool("floating",        false);
+	fd->lockPosition  =  fdTable.GetInt("lockPosition",     -1);
 
 	fd->metal       = fdTable.GetFloat("metal",  0.0f);
 	fd->energy      = fdTable.GetFloat("energy", 0.0f);
@@ -187,6 +188,7 @@ FeatureDef* CFeatureHandler::CreateDefaultTreeFeatureDef(const std::string& name
 	fd->health = 5.0f;
 	fd->xsize = 2;
 	fd->zsize = 2;
+	fd->lockPosition = 1;
 	fd->name = name;
 	fd->description = "Tree";
 	fd->mass = 20;
@@ -210,6 +212,7 @@ FeatureDef* CFeatureHandler::CreateDefaultGeoFeatureDef(const std::string& name)
 	fd->health = 0.0f;
 	fd->xsize = 0;
 	fd->zsize = 0;
+	fd->lockPosition = 1;
 	fd->name = name;
 	fd->mass = CSolidObject::DEFAULT_MASS;
 	// geothermal features have no physical map presence

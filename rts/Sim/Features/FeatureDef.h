@@ -31,6 +31,9 @@ struct FeatureDef: public SolidObjectDef
 	/// -1 := only if it is the 1st wreckage of the unitdef (default), 0 := no it isn't, 1 := yes it is
 	int resurrectable;
 
+	/// whether the feature can move horizontally, 0 = yes, 1 = no, -1 (default) = only if not first-level wreckage
+	int lockPosition;
+
 	int smokeTime;
 
 	bool destructable;
