@@ -50,7 +50,9 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(objectDef),
 	CR_MEMBER(moveDef),
 	CR_MEMBER(collisionVolume),
+
 	CR_IGNORED(groundDecal),
+	CR_IGNORED(luaMaterialData),
 
 	CR_MEMBER(frontdir),
 	CR_MEMBER(rightdir),

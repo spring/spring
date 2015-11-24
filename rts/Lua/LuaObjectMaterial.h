@@ -283,7 +283,7 @@ public:
 	}
 
 private:
-	static float GLOBAL_LOD_FACTORS[2];
+	static float GLOBAL_LOD_FACTORS[LUAOBJ_LAST];
 
 	// equal to lodLengths.size(); if non-zero, then at least
 	// one LOD-level has been assigned a custom Lua material

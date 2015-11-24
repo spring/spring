@@ -631,5 +631,5 @@ void LuaMatHandler::PrintAllBins(const string& indent) const
 /******************************************************************************/
 /******************************************************************************/
 
-float LuaObjectMaterialData::GLOBAL_LOD_FACTORS[2] = {1.0f, 1.0f};
+float LuaObjectMaterialData::GLOBAL_LOD_FACTORS[LUAOBJ_LAST] = {1.0f, 1.0f};
 
