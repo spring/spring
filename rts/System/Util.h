@@ -177,10 +177,10 @@ void InverseOrSetBool(bool& container, const std::string& argValue, const bool i
 /// Helper function to avoid division by Zero
 static inline float SafeDivide(const float a, const float b)
 {
-	if (b==0)
+	if (b == 0.0f)
 		return a;
-	else
-		return a/b;
+
+	return (a / b);
 }
 
 /**

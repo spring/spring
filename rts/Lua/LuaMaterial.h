@@ -3,6 +3,7 @@
 #ifndef LUA_MATERIAL_H
 #define LUA_MATERIAL_H
 
+#include <functional>
 #include <string>
 #include <vector>
 #include <set>
@@ -31,16 +32,15 @@ class LuaMatShader {
 			LUASHADER_NONE = 0,
 			LUASHADER_GL   = 1,
 			LUASHADER_3DO  = 2,
-			LUASHADER_S3O  = 3
+			LUASHADER_S3O  = 3,
+			LUASHADER_LAST = 4,
 		};
 
 	public:
 		LuaMatShader() : type(LUASHADER_NONE), openglID(0) {}
 
 		void Finalize();
-
 		void Execute(const LuaMatShader& prev, bool deferredPass) const;
-
 		void Print(const string& indent) const;
 
 		static int Compare(const LuaMatShader& a, const LuaMatShader& b);
@@ -88,9 +88,7 @@ class LuaMaterial {
 		{}
 
 		void Finalize();
-
 		void Execute(const LuaMaterial& prev, bool deferredPass) const;
-
 		void Print(const string& indent) const;
 
 		static int Compare(const LuaMaterial& a, const LuaMaterial& b);
@@ -143,12 +141,28 @@ class LuaMatBin : public LuaMaterial {
 
 		const std::vector<CSolidObject*>& GetUnits() const { return units; }
 		const std::vector<CSolidObject*>& GetFeatures() const { return features; }
+		const std::vector<CSolidObject*>& GetObjects(LuaObjType objType) const {
+			static const std::vector<CSolidObject*> dummy;
+
+			switch (objType) {
+				case LUAOBJ_UNIT   : { return (GetUnits   ()); } break;
+				case LUAOBJ_FEATURE: { return (GetFeatures()); } break;
+			}
+
+			return dummy;
+		}
 
 		void Ref();
 		void UnRef();
 
 		void AddUnit(CSolidObject* o) { units.push_back(o); }
 		void AddFeature(CSolidObject* o) { features.push_back(o); }
+		void AddObject(CSolidObject* o, LuaObjType objType) {
+			switch (objType) {
+				case LUAOBJ_UNIT   : { AddUnit   (o); } break;
+				case LUAOBJ_FEATURE: { AddFeature(o); } break;
+			}
+		}
 
 		void Print(const string& indent) const;
 
@@ -189,7 +203,7 @@ class LuaMatHandler {
 		}
 
 		void ClearBins(LuaObjType objType);
-		void ClearBins(LuaObjType objType, LuaMatType type);
+		void ClearBins(LuaObjType objType, LuaMatType matType);
 
 		void FreeBin(LuaMatBin* bin);
 
@@ -197,10 +211,9 @@ class LuaMatHandler {
 		void PrintAllBins(const string& indent) const;
 
 	public:
-		void (*setup3doShader)(bool);
-		void (*reset3doShader)(bool);
-		void (*setupS3oShader)(bool);
-		void (*resetS3oShader)(bool);
+		// note: only the 3DO and S3O entries can be non-NULL
+		std::function<void(unsigned int, bool)> setupDrawStateFuncs[LuaMatShader::LUASHADER_LAST];
+		std::function<void(unsigned int, bool)> resetDrawStateFuncs[LuaMatShader::LUASHADER_LAST];
 
 	private:
 		LuaMatHandler();

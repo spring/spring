@@ -8,8 +8,8 @@
 #include "LuaOpenGL.h"
 
 #include "Game/Camera.h"
+#include "Rendering/Models/3DModel.h"
 #include "Rendering/ShadowHandler.h"
-#include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/Env/ISky.h"
 #include "Sim/Objects/SolidObject.h"
 #include "System/Log/ILog.h"
@@ -158,24 +158,37 @@ int LuaMatShader::Compare(const LuaMatShader& a, const LuaMatShader& b)
 void LuaMatShader::Execute(const LuaMatShader& prev, bool deferredPass) const
 {
 	if (type != prev.type) {
-		if (prev.type == LUASHADER_GL) {
-			glUseProgram(0);
-		}
-		else if (prev.type == LUASHADER_3DO) {
-			if (luaMatHandler.reset3doShader) { luaMatHandler.reset3doShader(deferredPass); }
-		}
-		else if (prev.type == LUASHADER_S3O) {
-			if (luaMatHandler.resetS3oShader) { luaMatHandler.resetS3oShader(deferredPass); }
+		switch (prev.type) {
+			case LUASHADER_GL: {
+				glUseProgram(0);
+			} break;
+			case LUASHADER_3DO: {
+				if (luaMatHandler.resetDrawStateFuncs[LUASHADER_3DO]) {
+					luaMatHandler.resetDrawStateFuncs[LUASHADER_3DO](MODELTYPE_3DO, deferredPass);
+				}
+			} break;
+			case LUASHADER_S3O: {
+				if (luaMatHandler.resetDrawStateFuncs[LUASHADER_S3O]) {
+					luaMatHandler.resetDrawStateFuncs[LUASHADER_S3O](MODELTYPE_S3O, deferredPass);
+				}
+			} break;
 		}
 
-		if (type == LUASHADER_GL) {
-			glUseProgram(openglID);
-		}
-		else if (type == LUASHADER_3DO) {
-			if (luaMatHandler.setup3doShader) { luaMatHandler.setup3doShader(deferredPass); }
-		}
-		else if (type == LUASHADER_S3O) {
-			if (luaMatHandler.setupS3oShader) { luaMatHandler.setupS3oShader(deferredPass); }
+		switch (type) {
+			case LUASHADER_GL: {
+				// custom shader
+				glUseProgram(openglID);
+			} break;
+			case LUASHADER_3DO: {
+				if (luaMatHandler.setupDrawStateFuncs[LUASHADER_3DO]) {
+					luaMatHandler.setupDrawStateFuncs[LUASHADER_3DO](MODELTYPE_3DO, deferredPass);
+				}
+			} break;
+			case LUASHADER_S3O: {
+				if (luaMatHandler.setupDrawStateFuncs[LUASHADER_S3O]) {
+					luaMatHandler.setupDrawStateFuncs[LUASHADER_S3O](MODELTYPE_S3O, deferredPass);
+				}
+			} break;
 		}
 	}
 	else if (type == LUASHADER_GL) {
@@ -518,10 +531,10 @@ void LuaMatBin::Print(const string& indent) const
 
 LuaMatHandler::LuaMatHandler()
 {
-	setup3doShader = NULL;
-	reset3doShader = NULL;
-	setupS3oShader = NULL;
-	resetS3oShader = NULL;
+	for (unsigned int i = LuaMatShader::LUASHADER_NONE; i < LuaMatShader::LUASHADER_LAST; i++) {
+		setupDrawStateFuncs[i] = nullptr;
+		resetDrawStateFuncs[i] = nullptr;
+	}
 
 	prevMat = NULL;
 }

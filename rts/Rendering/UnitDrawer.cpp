@@ -27,6 +27,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/IconHandler.h"
+#include "Rendering/LuaObjectDrawer.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -70,23 +71,7 @@ CONFIG(int, MaxDynamicModelLights)
 CONFIG(bool, AdvUnitShading).defaultValue(true).headlessValue(false).safemodeValue(false).description("Determines whether specular highlights and other lighting effects are rendered for units.");
 CONFIG(bool, AllowDeferredModelRendering).defaultValue(false).safemodeValue(false);
 
-CONFIG(float, LODScale).defaultValue(1.0f);
-CONFIG(float, LODScaleShadow).defaultValue(1.0f);
-CONFIG(float, LODScaleReflection).defaultValue(1.0f);
-CONFIG(float, LODScaleRefraction).defaultValue(1.0f);
 
-// true when Lua material-bins are being rendered
-static bool LUA_DRAWING = false;
-
-static float GetLODFloat(const string& name)
-{
-	// NOTE: the inverse of the value is used
-	const float value = configHandler->GetFloat(name);
-	if (value <= 0.0f) {
-		return 1.0f;
-	}
-	return (1.0f / value);
-}
 
 template<typename T>
 static void erase(T& v, CUnit* u)
@@ -114,13 +99,9 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 {
 	eventHandler.AddClient(this);
 
+	LuaObjectDrawer::ReadLODScales(LUAOBJ_UNIT);
 	SetUnitDrawDist((float)configHandler->GetInt("UnitLodDist"));
 	SetUnitIconDist((float)configHandler->GetInt("UnitIconDist"));
-
-	LODScale           = GetLODFloat("LODScale");
-	LODScaleShadow     = GetLODFloat("LODScaleShadow");
-	LODScaleReflection = GetLODFloat("LODScaleReflection");
-	LODScaleRefraction = GetLODFloat("LODScaleRefraction");
 
 	unitAmbientColor = mapInfo->light.unitAmbientColor;
 	unitSunColor = mapInfo->light.unitSunColor;
@@ -355,12 +336,13 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	ISky::SetupFog();
 
+	// set these in case we have non-empty Lua bins
 	if (drawReflection) {
-		LuaObjectMaterialData::SetGlobalLODFactor(LUAOBJ_UNIT, LODScale * LODScaleReflection * camera->GetLPPScale());
+		LuaObjectMaterialData::SetGlobalLODFactor(LUAOBJ_UNIT, LuaObjectDrawer::GetLODScaleReflection() * camera->GetLPPScale());
 	} else if (drawRefraction) {
-		LuaObjectMaterialData::SetGlobalLODFactor(LUAOBJ_UNIT, LODScale * LODScaleRefraction * camera->GetLPPScale());
+		LuaObjectMaterialData::SetGlobalLODFactor(LUAOBJ_UNIT, LuaObjectDrawer::GetLODScaleRefraction() * camera->GetLPPScale());
 	} else {
-		LuaObjectMaterialData::SetGlobalLODFactor(LUAOBJ_UNIT, LODScale * camera->GetLPPScale());
+		LuaObjectMaterialData::SetGlobalLODFactor(LUAOBJ_UNIT, LuaObjectDrawer::GetLODScale() * camera->GetLPPScale());
 	}
 
 	camNorm = camera->GetDir();
@@ -383,6 +365,9 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 			opaqueModelRenderers[modelType]->PopRenderState();
 		}
 	}
+
+	// not true during DynWater::DrawRefraction
+	// assert(drawReflection == water->DrawReflectionPass());
 
 	CleanUpUnitDrawing(false);
 	DrawOpaqueShaderUnits((water->DrawReflectionPass())? LUAMAT_OPAQUE_REFLECT: LUAMAT_OPAQUE, false);
@@ -514,175 +499,26 @@ void CUnitDrawer::DrawUnitIcons(bool drawReflection)
 
 
 
-
-
 /******************************************************************************/
-/******************************************************************************/
-
-static void DrawLuaMatBins(LuaMatType type, bool deferredPass)
-{
-	const LuaMatBinSet& bins = luaMatHandler.GetBins(type);
-
-	if (bins.empty())
-		return;
-
-	LUA_DRAWING = true;
-
-	glPushAttrib(GL_TEXTURE_BIT | GL_ENABLE_BIT | GL_TRANSFORM_BIT);
-
-	if (type == LUAMAT_ALPHA || type == LUAMAT_ALPHA_REFLECT) {
-		glEnable(GL_ALPHA_TEST);
-		glAlphaFunc(GL_GREATER, 0.1f);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	} else {
-		glEnable(GL_ALPHA_TEST);
-		glAlphaFunc(GL_GREATER, 0.5f);
-	}
-
-	const LuaMaterial* currMat = &LuaMaterial::defMat;
-
-	for (auto it = bins.cbegin(); it != bins.cend(); ++it) {
-		LuaMatBin* bin = *it;
-		bin->Execute(*currMat, deferredPass);
-		currMat = bin;
-
-		const std::vector<CSolidObject*>& objects = bin->GetUnits();
-
-		for (const CSolidObject* obj: objects) {
-			// we can safely do this because bins store objects separately
-			const CUnit* unit = static_cast<const CUnit*>(obj);
-
-			const LuaObjectMaterialData* matData = unit->GetLuaMaterialData();
-			const LuaObjectLODMaterial* lodMat = matData->GetLuaLODMaterial(type);
-
-			lodMat->uniforms.Execute(unit);
-
-			unitDrawer->SetTeamColour(unit->team);
-			unitDrawer->DrawUnitWithLists(unit, lodMat->preDisplayList, lodMat->postDisplayList);
-		}
-	}
-
-	LuaMaterial::defMat.Execute(*currMat, deferredPass);
-	luaMatHandler.ClearBins(LUAOBJ_UNIT, type);
-
-	glPopAttrib();
-
-	LUA_DRAWING = false;
-}
-
-
-/******************************************************************************/
-
-static void SetupShadowDrawing()
-{
-	//FIXME setup face culling for s3o?
-
-	glColor3f(1.0f, 1.0f, 1.0f);
-	glDisable(GL_TEXTURE_2D);
-
-	glPolygonOffset(1.0f, 1.0f);
-	glEnable(GL_POLYGON_OFFSET_FILL);
-
-	Shader::IProgramObject* po =
-		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
-	po->Enable();
-}
-
-
-static void CleanUpShadowDrawing()
-{
-	Shader::IProgramObject* po =
-		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
-
-	po->Disable();
-	glDisable(GL_POLYGON_OFFSET_FILL);
-}
-
-
-/******************************************************************************/
-
-#define ud unitDrawer
-static void SetupOpaque3DO(bool deferredPass) {
-	ud->SetupForUnitDrawing(deferredPass);
-	ud->GetOpaqueModelRenderer(MODELTYPE_3DO)->PushRenderState();
-}
-static void ResetOpaque3DO(bool deferredPass) {
-	ud->GetOpaqueModelRenderer(MODELTYPE_3DO)->PopRenderState();
-	ud->CleanUpUnitDrawing(deferredPass);
-}
-static void SetupOpaqueS3O(bool deferredPass) {
-	ud->SetupForUnitDrawing(deferredPass);
-	ud->GetOpaqueModelRenderer(MODELTYPE_S3O)->PushRenderState();
-}
-static void ResetOpaqueS3O(bool deferredPass) {
-	ud->GetOpaqueModelRenderer(MODELTYPE_S3O)->PopRenderState();
-	ud->CleanUpUnitDrawing(deferredPass);
-}
-
-static void SetupAlpha3DO(bool) {
-	ud->SetupForGhostDrawing();
-	ud->GetCloakedModelRenderer(MODELTYPE_3DO)->PushRenderState();
-}
-static void ResetAlpha3DO(bool) {
-	ud->GetCloakedModelRenderer(MODELTYPE_3DO)->PopRenderState();
-	ud->CleanUpGhostDrawing();
-}
-static void SetupAlphaS3O(bool) {
-	ud->SetupForGhostDrawing();
-	ud->GetCloakedModelRenderer(MODELTYPE_S3O)->PushRenderState();
-}
-static void ResetAlphaS3O(bool) {
-	ud->GetCloakedModelRenderer(MODELTYPE_S3O)->PopRenderState();
-	ud->CleanUpGhostDrawing();
-}
-#undef ud
-
-static void SetupShadow3DO(bool) { SetupShadowDrawing();   }
-static void ResetShadow3DO(bool) { CleanUpShadowDrawing(); }
-static void SetupShadowS3O(bool) { SetupShadowDrawing();   }
-static void ResetShadowS3O(bool) { CleanUpShadowDrawing(); }
-
-
-
 /******************************************************************************/
 
 void CUnitDrawer::DrawOpaqueShaderUnits(unsigned int matType, bool deferredPass)
 {
-	luaMatHandler.setup3doShader = SetupOpaque3DO;
-	luaMatHandler.reset3doShader = ResetOpaque3DO;
-	luaMatHandler.setupS3oShader = SetupOpaqueS3O;
-	luaMatHandler.resetS3oShader = ResetOpaqueS3O;
-
-	DrawLuaMatBins(LuaMatType(matType), deferredPass);
+	// LuaObjectMaterialData::SetGlobalLODFactor(LUAOBJ_UNIT, ...); (done in Draw)
+	LuaObjectDrawer::DrawOpaqueMaterialObjects(LUAOBJ_UNIT, LuaMatType(matType), deferredPass);
 }
 
-
-void CUnitDrawer::DrawCloakedShaderUnits(unsigned int matType)
+void CUnitDrawer::DrawAlphaShaderUnits(unsigned int matType)
 {
-	luaMatHandler.setup3doShader = SetupAlpha3DO;
-	luaMatHandler.reset3doShader = ResetAlpha3DO;
-	luaMatHandler.setupS3oShader = SetupAlphaS3O;
-	luaMatHandler.resetS3oShader = ResetAlphaS3O;
-
-	// FIXME: deferred shading and transparency is a PITA
-	DrawLuaMatBins(LuaMatType(matType), false);
+	// LuaObjectMaterialData::SetGlobalLODFactor(LUAOBJ_UNIT, ...); (done in Draw)
+	LuaObjectDrawer::DrawAlphaMaterialObjects(LUAOBJ_UNIT, LuaMatType(matType), false);
 }
-
 
 void CUnitDrawer::DrawShadowShaderUnits(unsigned int matType)
 {
-	luaMatHandler.setup3doShader = SetupShadow3DO;
-	luaMatHandler.reset3doShader = ResetShadow3DO;
-	luaMatHandler.setupS3oShader = SetupShadowS3O;
-	luaMatHandler.resetS3oShader = ResetShadowS3O;
-
-	// we neither want nor need a deferred shadow
-	// pass for custom- or default-shader models!
-	DrawLuaMatBins(LuaMatType(matType), false);
+	LuaObjectMaterialData::SetGlobalLODFactor(LUAOBJ_UNIT, LuaObjectDrawer::GetLODScaleShadow() * camera->GetLPPScale());
+	LuaObjectDrawer::DrawShadowMaterialObjects(LUAOBJ_UNIT, LuaMatType(matType), false);
 }
-
-
 
 /******************************************************************************/
 /******************************************************************************/
@@ -758,8 +594,6 @@ void CUnitDrawer::DrawShadowPass()
 	Shader::IProgramObject* po =
 		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 	po->Enable();
-
-	LuaObjectMaterialData::SetGlobalLODFactor(LUAOBJ_UNIT, LODScale * LODScaleShadow * camera->GetLPPScale());
 
 	{
 		// 3DO's have clockwise-wound faces and
@@ -934,8 +768,7 @@ void CUnitDrawer::DrawCloakedUnits(bool disableAdvShading)
 
 		advShading = oldAdvShading;
 
-		// shader rendering
-		DrawCloakedShaderUnits((water->DrawReflectionPass())? LUAMAT_ALPHA_REFLECT: LUAMAT_ALPHA);
+		DrawAlphaShaderUnits((water->DrawReflectionPass())? LUAMAT_ALPHA_REFLECT: LUAMAT_ALPHA);
 	}
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -1247,33 +1080,7 @@ void CUnitDrawer::DrawIndividual(CUnit* unit)
 	const bool origDebug = globalRendering->drawdebug;
 	globalRendering->drawdebug = false;
 
-	LuaObjectMaterialData* matData = unit->GetLuaMaterialData();
-	LuaObjectLODMaterial* lodMat = NULL;
-
-	if (matData->Enabled()) {
-		lodMat = matData->GetLuaLODMaterial((water->DrawReflectionPass())? LUAMAT_OPAQUE_REFLECT: LUAMAT_OPAQUE);
-	}
-
-	if (lodMat != NULL && lodMat->IsActive()) {
-		LuaObjectMaterialData::SetGlobalLODFactor(LUAOBJ_UNIT, LODScale * camera->GetLPPScale());
-
-		luaMatHandler.setup3doShader = SetupOpaque3DO;
-		luaMatHandler.reset3doShader = ResetOpaque3DO;
-		luaMatHandler.setupS3oShader = SetupOpaqueS3O;
-		luaMatHandler.resetS3oShader = ResetOpaqueS3O;
-
-		const LuaMaterial& mat = (LuaMaterial&) *lodMat->matref.GetBin();
-
-		// NOTE: doesn't make sense to supported deferred mode for this?
-		mat.Execute(LuaMaterial::defMat, false);
-
-		lodMat->uniforms.Execute(unit);
-
-		SetTeamColour(unit->team);
-		DrawUnitRawWithLists(unit, lodMat->preDisplayList, lodMat->postDisplayList);
-
-		LuaMaterial::defMat.Execute(mat, false);
-	} else {
+	if (!LuaObjectDrawer::DrawSingleObject(unit, LUAOBJ_UNIT)) {
 		SetupForUnitDrawing(false);
 		opaqueModelRenderers[MDL_TYPE(unit)]->PushRenderState();
 

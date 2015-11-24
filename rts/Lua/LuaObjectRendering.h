@@ -3,7 +3,7 @@
 #ifndef LUA_OBJECT_RENDERING_H
 #define LUA_OBJECT_RENDERING_H
 
-// LUAOBJ_*
+// for LuaObjType
 #include "LuaObjectMaterial.h"
 
 struct lua_State;

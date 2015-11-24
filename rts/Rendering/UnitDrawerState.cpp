@@ -316,7 +316,7 @@ void UnitDrawerStateARB::SetTeamColor(int team, float alpha) const {
 	}
 
 	#if 0
-	if (CUnitDrawer::LUA_DRAWING) {
+	if (LuaObjectDrawer::InDrawPass()) {
 		SetBasicTeamColor(team, alpha);
 	}
 	#endif
@@ -468,7 +468,7 @@ void UnitDrawerStateGLSL::SetTeamColor(int team, float alpha) const {
 	}
 
 	#if 0
-	if (CUnitDrawer::LUA_DRAWING) {
+	if (LuaObjectDrawer::InDrawPass()) {
 		SetBasicTeamColor(team, alpha);
 	}
 	#endif

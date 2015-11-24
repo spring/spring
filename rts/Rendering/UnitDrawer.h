@@ -134,7 +134,7 @@ private:
 
 	void DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction);
 	void DrawOpaqueShaderUnits(unsigned int matType, bool deferredPass);
-	void DrawCloakedShaderUnits(unsigned int matType);
+	void DrawAlphaShaderUnits(unsigned int matType);
 	void DrawShadowShaderUnits(unsigned int matType);
 
 	void DrawOpaqueAIUnits();
@@ -171,11 +171,6 @@ public:
 
 
 public:
-	float LODScale;
-	float LODScaleShadow;
-	float LODScaleReflection;
-	float LODScaleRefraction;
-
 	float unitDrawDist;
 	float unitDrawDistSqr;
 	float unitIconDist;
