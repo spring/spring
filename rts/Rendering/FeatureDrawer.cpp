@@ -179,6 +179,8 @@ void CFeatureDrawer::Update()
 		UpdateDrawPos(f);
 		f->drawAlpha = 0.0f;
 	}
+
+	GetVisibleFeatures(0, true);
 }
 
 
@@ -209,7 +211,6 @@ void CFeatureDrawer::Draw()
 	}
 
 	unitDrawer->SetupForUnitDrawing(false);
-	GetVisibleFeatures(0, true);
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		// arbitrarily pick first proxy to prepare state
