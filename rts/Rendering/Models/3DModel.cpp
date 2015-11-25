@@ -5,7 +5,6 @@
 
 #include "3DOParser.h"
 #include "S3OParser.h"
-#include "Rendering/FarTextureHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/Exceptions.h"
