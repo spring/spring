@@ -147,6 +147,7 @@ class LuaMatBin : public LuaMaterial {
 			switch (objType) {
 				case LUAOBJ_UNIT   : { return (GetUnits   ()); } break;
 				case LUAOBJ_FEATURE: { return (GetFeatures()); } break;
+				default            : {          assert(false); } break;
 			}
 
 			return dummy;
@@ -161,6 +162,7 @@ class LuaMatBin : public LuaMaterial {
 			switch (objType) {
 				case LUAOBJ_UNIT   : { AddUnit   (o); } break;
 				case LUAOBJ_FEATURE: { AddFeature(o); } break;
+				default            : { assert(false); } break;
 			}
 		}
 

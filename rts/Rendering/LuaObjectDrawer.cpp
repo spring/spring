@@ -196,6 +196,9 @@ const LuaMaterial* LuaObjectDrawer::DrawMaterialBin(
 				// also sets team-color (needs a specific alpha-value)
 				featureDrawer->DrawFeatureWithLists(static_cast<const CFeature*>(obj), lodMat->preDisplayList, lodMat->postDisplayList);
 			} break;
+			default: {
+				assert(false);
+			} break;
 		}
 	}
 
@@ -228,6 +231,9 @@ bool LuaObjectDrawer::DrawSingleObject(CSolidObject* obj, LuaObjType objType)
 			luaMatHandler.setupDrawStateFuncs[LuaMatShader::LUASHADER_S3O] = SetupOpaqueFeatureDrawState;
 			luaMatHandler.resetDrawStateFuncs[LuaMatShader::LUASHADER_S3O] = ResetOpaqueFeatureDrawState;
 		} break;
+		default: {
+			assert(false);
+		} break;
 	}
 
 	// use the normal scale for single-object drawing
@@ -248,6 +254,9 @@ bool LuaObjectDrawer::DrawSingleObject(CSolidObject* obj, LuaObjType objType)
 		case LUAOBJ_FEATURE: {
 			// not implemented (nor "raw" versions in general)
 			// featureDrawer->DrawFeatureRawWithLists(static_cast<const CFeature*>(obj), lodMat->preDisplayList, lodMat->postDisplayList);
+		} break;
+		default: {
+			assert(false);
 		} break;
 	}
 
@@ -284,6 +293,9 @@ void LuaObjectDrawer::DrawOpaqueMaterialObjects(LuaObjType objType, bool deferre
 			luaMatHandler.setupDrawStateFuncs[LuaMatShader::LUASHADER_S3O] = SetupOpaqueFeatureDrawState;
 			luaMatHandler.resetDrawStateFuncs[LuaMatShader::LUASHADER_S3O] = ResetOpaqueFeatureDrawState;
 		} break;
+		default: {
+			assert(false);
+		} break;
 	}
 
 	DrawMaterialBins(objType, (water->DrawReflectionPass())? LUAMAT_OPAQUE_REFLECT: LUAMAT_OPAQUE, deferredPass);
@@ -303,6 +315,9 @@ void LuaObjectDrawer::DrawAlphaMaterialObjects(LuaObjType objType, bool)
 			luaMatHandler.resetDrawStateFuncs[LuaMatShader::LUASHADER_3DO] = ResetAlphaFeatureDrawState;
 			luaMatHandler.setupDrawStateFuncs[LuaMatShader::LUASHADER_S3O] = SetupAlphaFeatureDrawState;
 			luaMatHandler.resetDrawStateFuncs[LuaMatShader::LUASHADER_S3O] = ResetAlphaFeatureDrawState;
+		} break;
+		default: {
+			assert(false);
 		} break;
 	}
 
@@ -324,6 +339,9 @@ void LuaObjectDrawer::DrawShadowMaterialObjects(LuaObjType objType, bool)
 			luaMatHandler.resetDrawStateFuncs[LuaMatShader::LUASHADER_3DO] = ResetShadowFeatureDrawState;
 			luaMatHandler.setupDrawStateFuncs[LuaMatShader::LUASHADER_S3O] = SetupShadowFeatureDrawState;
 			luaMatHandler.resetDrawStateFuncs[LuaMatShader::LUASHADER_S3O] = ResetShadowFeatureDrawState;
+		} break;
+		default: {
+			assert(false);
 		} break;
 	}
 

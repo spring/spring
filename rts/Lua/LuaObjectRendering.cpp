@@ -71,9 +71,7 @@ static inline CSolidObject* ParseSolidObject(lua_State* L, const char* caller, i
 	switch (objType) {
 		case LUAOBJ_UNIT   : { return (   unitHandler->GetUnit   (lua_toint(L, index))); } break;
 		case LUAOBJ_FEATURE: { return (featureHandler->GetFeature(lua_toint(L, index))); } break;
-		default: {
-			assert(false);
-		} break;
+		default            : {                                            assert(false); } break;
 	}
 
 	return NULL;

@@ -586,6 +586,7 @@ void LuaMatHandler::ClearBins(LuaObjType objType, LuaMatType matType)
 		switch (objType) {
 			case LUAOBJ_UNIT   : { bin->ClearUnits   (); } break;
 			case LUAOBJ_FEATURE: { bin->ClearFeatures(); } break;
+			default            : {        assert(false); } break;
 		}
 	}
 }
