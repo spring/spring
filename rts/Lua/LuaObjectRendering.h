@@ -11,14 +11,15 @@ struct lua_State;
 template<LuaObjType T> class LuaObjectRendering;
 
 class LuaObjectRenderingImpl {
-public:
-	static bool PushEntries(lua_State* L);
-	static void PushObjectType(LuaObjType type) { objectTypeStack.push_back(type); }
-	static void PopObjectType() { objectTypeStack.pop_back(); }
-
 private:
 	friend class LuaObjectRendering<LUAOBJ_UNIT>;
 	friend class LuaObjectRendering<LUAOBJ_FEATURE>;
+
+	static void CreateMatRefMetatable(lua_State* L);
+	static void PushFunction(lua_State* L, int (*fnPntr)(lua_State*), const char* fnName);
+
+	static void PushObjectType(LuaObjType type) { objectTypeStack.push_back(type); }
+	static void PopObjectType() { objectTypeStack.pop_back(); }
 
 	static LuaObjType GetObjectType() {
 		if (!objectTypeStack.empty())
@@ -56,7 +57,31 @@ private:
 template<LuaObjType T> class LuaObjectRendering {
 public:
 	static bool PushEntries(lua_State* L) {
-		return (LuaObjectRenderingImpl::PushEntries(L));
+		LuaObjectRenderingImpl::CreateMatRefMetatable(L);
+
+		// register our wrapper functions so the implementations know
+		// the proper LuaObjType value for their corresponding tables
+		#define PUSH_FUNCTION(x) LuaObjectRenderingImpl::PushFunction(L, x, #x)
+
+		PUSH_FUNCTION(SetLODCount);
+		PUSH_FUNCTION(SetLODLength);
+		PUSH_FUNCTION(SetLODDistance);
+
+		PUSH_FUNCTION(GetMaterial);
+		PUSH_FUNCTION(SetMaterial);
+
+		PUSH_FUNCTION(SetMaterialLastLOD);
+		PUSH_FUNCTION(SetMaterialDisplayLists);
+
+		PUSH_FUNCTION(SetPieceList);
+		PUSH_FUNCTION(SetObjectUniform);
+
+		PUSH_FUNCTION(SetUnitLuaDraw);
+		PUSH_FUNCTION(SetFeatureLuaDraw);
+
+		PUSH_FUNCTION(Debug);
+
+		#undef PUSH_FUNCTION
 	}
 
 private:

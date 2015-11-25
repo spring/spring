@@ -277,46 +277,18 @@ inline bool CUnitDrawer::DrawUnitLOD(CUnit* unit)
 
 inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction)
 {
-	if (unit == excludeUnit)
-		return;
-	if (unit->noDraw)
-		return;
-	if (unit->IsInVoid())
-		return;
-	if (unit->isIcon)
-		return;
-
-	if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
-		return;
-
-	if (drawReflection) {
-		float3 zeroPos = unit->drawMidPos;
-		if (unit->drawMidPos.y >= 0.0f) {
-			const float dif = unit->drawMidPos.y - camera->GetPos().y;
-			zeroPos =
-				camera->GetPos()  * (unit->drawMidPos.y / dif) +
-				unit->drawMidPos * (-camera->GetPos().y / dif);
-		}
-		if (CGround::GetApproximateHeight(zeroPos.x, zeroPos.z, false) > unit->drawRadius) {
-			return;
-		}
-	} else if (drawRefraction) {
-		if (unit->pos.y > 0.0f) {
-			return;
-		}
-	}
-
-	if (!camera->InView(unit->drawMidPos, unit->drawRadius))
+	if (!CanDrawOpaqueUnit(unit, excludeUnit, drawReflection, drawRefraction))
 		return;
 
 	if ((unit->pos).SqDistance(camera->GetPos()) > (unit->sqRadius * unitDrawDistSqr)) {
 		farTextureHandler->Queue(unit);
-	} else {
-		if (!DrawUnitLOD(unit)) {
-			// draw the unit with the default (non-Lua) material
-			SetTeamColour(unit->team);
-			DrawUnitNow(unit);
-		}
+		return;
+	}
+
+	if (!DrawUnitLOD(unit)) {
+		// draw the unit with the default (non-Lua) material
+		SetTeamColour(unit->team);
+		DrawUnitNoLists(unit);
 	}
 }
 
@@ -326,15 +298,6 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 {
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	ISky::SetupFog();
-
-	// set these in case we have non-empty Lua bins
-	if (drawReflection) {
-		LuaObjectMaterialData::SetGlobalLODFactor(LUAOBJ_UNIT, LuaObjectDrawer::GetLODScaleReflection() * camera->GetLPPScale());
-	} else if (drawRefraction) {
-		LuaObjectMaterialData::SetGlobalLODFactor(LUAOBJ_UNIT, LuaObjectDrawer::GetLODScaleRefraction() * camera->GetLPPScale());
-	} else {
-		LuaObjectMaterialData::SetGlobalLODFactor(LUAOBJ_UNIT, LuaObjectDrawer::GetLODScale() * camera->GetLPPScale());
-	}
 
 	camNorm = camera->GetDir();
 	camNorm.y = -0.1f;
@@ -361,7 +324,9 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	// assert(drawReflection == water->DrawReflectionPass());
 
 	CleanUpUnitDrawing(false);
-	DrawOpaqueShaderUnits((water->DrawReflectionPass())? LUAMAT_OPAQUE_REFLECT: LUAMAT_OPAQUE, false);
+
+	LuaObjectDrawer::SetGlobalDrawPassLODFactor(LUAOBJ_UNIT);
+	LuaObjectDrawer::DrawOpaqueMaterialObjects(LUAOBJ_UNIT, false);
 
 	farTextureHandler->Draw();
 	DrawUnitIcons(drawReflection);
@@ -412,7 +377,9 @@ void CUnitDrawer::DrawDeferredPass(const CUnit* excludeUnit, bool drawReflection
 	}
 
 	CleanUpUnitDrawing(true);
-	DrawOpaqueShaderUnits((water->DrawReflectionPass())? LUAMAT_OPAQUE_REFLECT: LUAMAT_OPAQUE, true);
+
+	LuaObjectDrawer::SetGlobalDrawPassLODFactor(LUAOBJ_UNIT);
+	LuaObjectDrawer::DrawOpaqueMaterialObjects(LUAOBJ_UNIT, true);
 
 	geomBuffer.UnBind();
 
@@ -493,54 +460,80 @@ void CUnitDrawer::DrawUnitIcons(bool drawReflection)
 /******************************************************************************/
 /******************************************************************************/
 
-void CUnitDrawer::DrawOpaqueShaderUnits(unsigned int matType, bool deferredPass)
-{
-	// LuaObjectMaterialData::SetGlobalLODFactor(LUAOBJ_UNIT, ...); (done in Draw)
-	LuaObjectDrawer::DrawOpaqueMaterialObjects(LUAOBJ_UNIT, LuaMatType(matType), deferredPass);
+bool CUnitDrawer::CanDrawOpaqueUnit(
+	const CUnit* unit,
+	const CUnit* excludeUnit,
+	bool drawReflection,
+	bool drawRefraction
+) const {
+	if (unit == excludeUnit)
+		return false;
+	if (unit->noDraw)
+		return false;
+	if (unit->IsInVoid())
+		return false;
+	if (unit->isIcon)
+		return false;
+
+	if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
+		return false;
+
+	if (drawReflection) {
+		float3 zeroPos = unit->drawMidPos;
+
+		if (unit->drawMidPos.y >= 0.0f) {
+			const float dif = unit->drawMidPos.y - camera->GetPos().y;
+
+			zeroPos  = (camera->GetPos()  * (unit->drawMidPos.y / dif));
+			zeroPos += (unit->drawMidPos * (-camera->GetPos().y / dif));
+		}
+		if (CGround::GetApproximateHeight(zeroPos.x, zeroPos.z, false) > unit->drawRadius) {
+			return false;
+		}
+	} else if (drawRefraction) {
+		if (unit->pos.y > 0.0f) {
+			return false;
+		}
+	}
+
+	return (camera->InView(unit->drawMidPos, unit->drawRadius));
 }
 
-void CUnitDrawer::DrawAlphaShaderUnits(unsigned int matType)
+bool CUnitDrawer::CanDrawOpaqueUnitShadow(const CUnit* unit) const
 {
-	// LuaObjectMaterialData::SetGlobalLODFactor(LUAOBJ_UNIT, ...); (done in Draw)
-	LuaObjectDrawer::DrawAlphaMaterialObjects(LUAOBJ_UNIT, LuaMatType(matType), false);
-}
-
-void CUnitDrawer::DrawShadowShaderUnits(unsigned int matType)
-{
-	LuaObjectMaterialData::SetGlobalLODFactor(LUAOBJ_UNIT, LuaObjectDrawer::GetLODScaleShadow() * camera->GetLPPScale());
-	LuaObjectDrawer::DrawShadowMaterialObjects(LUAOBJ_UNIT, LuaMatType(matType), false);
-}
-
-/******************************************************************************/
-/******************************************************************************/
-
-
-inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 	const bool unitInLOS = ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView);
 
 	if (unit->noDraw)
-		return;
+		return false;
 	if (unit->IsInVoid())
-		return;
+		return false;
 
 	// FIXME: test against the shadow projection intersection
 	if (!(unitInLOS && camera->InView(unit->drawMidPos, unit->drawRadius + 700.0f)))
-		return;
+		return false;
 
 	const float sqDist = (unit->pos - camera->GetPos()).SqLength();
 	const float farLength = unit->sqRadius * unitDrawDistSqr;
 
 	if (sqDist >= farLength)
-		return;
+		return false;
 	if (unit->isCloaked)
-		return;
-	if (DrawAsIcon(unit, sqDist))
+		return false;
+
+	return (!DrawAsIcon(unit, sqDist));
+}
+
+
+
+
+void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
+	if (!CanDrawOpaqueUnitShadow(unit))
 		return;
 
 	LuaObjectMaterialData* matData = unit->GetLuaMaterialData();
 
 	if (!matData->AddObjectForLOD(unit, LUAOBJ_UNIT, LUAMAT_SHADOW, camera->ProjectedDistance(unit->pos))) {
-		DrawUnitNow(unit);
+		DrawUnitNoLists(unit);
 	}
 }
 
@@ -610,7 +603,8 @@ void CUnitDrawer::DrawShadowPass()
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
 
-	DrawShadowShaderUnits(LUAMAT_SHADOW);
+	LuaObjectDrawer::SetGlobalDrawPassLODFactor(LUAOBJ_UNIT);
+	LuaObjectDrawer::DrawShadowMaterialObjects(LUAOBJ_UNIT, false);
 }
 
 
@@ -758,11 +752,12 @@ void CUnitDrawer::DrawCloakedUnits(bool disableAdvShading)
 		}
 
 		advShading = oldAdvShading;
-
-		DrawAlphaShaderUnits((water->DrawReflectionPass())? LUAMAT_ALPHA_REFLECT: LUAMAT_ALPHA);
 	}
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+	LuaObjectDrawer::SetGlobalDrawPassLODFactor(LUAOBJ_UNIT);
+	LuaObjectDrawer::DrawAlphaMaterialObjects(LUAOBJ_UNIT, false);
 }
 
 void CUnitDrawer::DrawCloakedUnitsHelper(int modelType)
@@ -807,7 +802,7 @@ inline void CUnitDrawer::DrawCloakedUnit(CUnit* unit, int modelType, bool drawGh
 		if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
 			if (!unit->isIcon) {
 				SetTeamColour(unit->team, cloakAlpha);
-				DrawUnitNow(unit);
+				DrawUnitNoLists(unit);
 			}
 		}
 	} else {
@@ -1080,7 +1075,7 @@ void CUnitDrawer::DrawIndividual(CUnit* unit)
 		}
 
 		SetTeamColour(unit->team);
-		DrawUnitRaw(unit);
+		DrawUnitRawNoLists(unit);
 
 		opaqueModelRenderers[MDL_TYPE(unit)]->PopRenderState();
 		CleanUpUnitDrawing(false);
@@ -1304,10 +1299,17 @@ void CUnitDrawer::DrawUnitBeingBuilt(const CUnit* unit)
 
 
 
+
 inline void CUnitDrawer::DrawUnitModel(const CUnit* unit) {
 	if (unit->luaDraw && eventHandler.DrawUnit(unit))
 		return;
 
+	DrawUnitRawModel(unit);
+}
+
+// "raw" version (does not call into Lua)
+void CUnitDrawer::DrawUnitRawModel(const CUnit* unit)
+{
 	const LuaObjectMaterialData* matData = unit->GetLuaMaterialData();
 
 	if (matData->Enabled()) {
@@ -1318,19 +1320,12 @@ inline void CUnitDrawer::DrawUnitModel(const CUnit* unit) {
 }
 
 
-void CUnitDrawer::DrawUnitNow(const CUnit* unit)
+
+
+void CUnitDrawer::DrawUnitNoLists(const CUnit* unit)
 {
-	glPushMatrix();
-	glMultMatrixf(unit->GetTransformMatrix());
-
-	if (!unit->beingBuilt || !unit->unitDef->showNanoFrame) {
-		DrawUnitModel(unit);
-	} else {
-		DrawUnitBeingBuilt(unit);
-	}
-	glPopMatrix();
+	DrawUnitWithLists(unit, 0, 0);
 }
-
 
 void CUnitDrawer::DrawUnitWithLists(const CUnit* unit, unsigned int preList, unsigned int postList)
 {
@@ -1350,30 +1345,15 @@ void CUnitDrawer::DrawUnitWithLists(const CUnit* unit, unsigned int preList, uns
 	if (postList != 0) {
 		glCallList(postList);
 	}
+
 	glPopMatrix();
 }
 
 
-void CUnitDrawer::DrawUnitRaw(const CUnit* unit)
+void CUnitDrawer::DrawUnitRawNoLists(const CUnit* unit)
 {
-	glPushMatrix();
-	glMultMatrixf(unit->GetTransformMatrix());
-	DrawUnitModel(unit);
-	glPopMatrix();
+	DrawUnitRawWithLists(unit, 0, 0);
 }
-
-
-void CUnitDrawer::DrawUnitRawModel(const CUnit* unit)
-{
-	const LuaObjectMaterialData* matData = unit->GetLuaMaterialData();
-
-	if (matData->Enabled()) {
-		unit->localModel->DrawLOD(matData->GetCurrentLOD());
-	} else {
-		unit->localModel->Draw();
-	}
-}
-
 
 void CUnitDrawer::DrawUnitRawWithLists(const CUnit* unit, unsigned int preList, unsigned int postList)
 {
@@ -1384,7 +1364,7 @@ void CUnitDrawer::DrawUnitRawWithLists(const CUnit* unit, unsigned int preList, 
 		glCallList(preList);
 	}
 
-	DrawUnitModel(unit);
+	DrawUnitRawModel(unit);
 
 	if (postList != 0) {
 		glCallList(postList);
@@ -1392,6 +1372,9 @@ void CUnitDrawer::DrawUnitRawWithLists(const CUnit* unit, unsigned int preList, 
 
 	glPopMatrix();
 }
+
+
+
 
 inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 	const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];

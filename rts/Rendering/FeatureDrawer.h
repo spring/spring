@@ -31,24 +31,30 @@ public:
 
 	void DrawFadeFeatures(bool noAdvShading = false);
 
+	void DrawFeatureNoLists(const CFeature*, float alpha);
+	void DrawFeatureWithLists(const CFeature*, unsigned int preList, unsigned int postList, float alpha = 1.0f);
+
+
 	bool WantsEvent(const std::string& eventName) {
 		return (eventName == "RenderFeatureCreated" || eventName == "RenderFeatureDestroyed" || eventName == "FeatureMoved");
 	}
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
 
-	virtual void RenderFeatureCreated(const CFeature* feature);
-	virtual void RenderFeatureDestroyed(const CFeature* feature);
-	virtual void FeatureMoved(const CFeature* feature, const float3& oldpos);
+	void RenderFeatureCreated(const CFeature* feature);
+	void RenderFeatureDestroyed(const CFeature* feature);
+	void FeatureMoved(const CFeature* feature, const float3& oldpos);
 
 private:
 	static void UpdateDrawPos(CFeature* f);
 
-	void DrawOpaqueFeatures(int);
+	void DrawOpaqueFeatures(int modelType, int luaMatType);
 	void DrawFarFeatures();
-	bool DrawFeatureNow(const CFeature*, float alpha = 0.99f);
-	void DrawFadeFeaturesHelper(int);
-	void DrawFadeFeaturesSet(const FeatureSet&, int);
+
+	bool CanDrawFeature(const CFeature*) const;
+
+	void DrawFadeFeaturesHelper(int, int);
+	void DrawFadeFeaturesSet(const FeatureSet&, int, int);
 	void GetVisibleFeatures(int, bool drawFar);
 
 	void PostLoad();

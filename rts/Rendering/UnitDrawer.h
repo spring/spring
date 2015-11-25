@@ -74,9 +74,14 @@ public:
 	void DrawShadowPass();
 	void DrawDeferredPass(const CUnit* excludeUnit, bool drawReflection, bool drawRefraction);
 
-	void DrawUnitRaw(const CUnit* unit);
+	// note: make these static?
+	void DrawUnitModel(const CUnit* unit);
 	void DrawUnitRawModel(const CUnit* unit);
+	void DrawUnitBeingBuilt(const CUnit* unit);
+
+	void DrawUnitNoLists(const CUnit* unit);
 	void DrawUnitWithLists(const CUnit* unit, unsigned int preList, unsigned int postList);
+	void DrawUnitRawNoLists(const CUnit* unit);
 	void DrawUnitRawWithLists(const CUnit* unit, unsigned int preList, unsigned int postList);
 
 	void SetTeamColour(int team, float alpha = 1.0f) const;
@@ -127,15 +132,14 @@ public:
 
 
 private:
+	bool CanDrawOpaqueUnit(const CUnit* unit, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction) const;
+	bool CanDrawOpaqueUnitShadow(const CUnit* unit) const;
+
 	bool DrawUnitLOD(CUnit* unit);
 	void DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction);
 	void DrawOpaqueUnitShadow(CUnit* unit);
 	void DrawOpaqueUnitsShadow(int modelType);
-
 	void DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction);
-	void DrawOpaqueShaderUnits(unsigned int matType, bool deferredPass);
-	void DrawAlphaShaderUnits(unsigned int matType);
-	void DrawShadowShaderUnits(unsigned int matType);
 
 	void DrawOpaqueAIUnits();
 	void DrawCloakedAIUnits();
@@ -146,11 +150,6 @@ private:
 	void UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool killed);
 
 	bool UpdateGeometryBuffer(bool init);
-
-	// note: make these static?
-	void DrawUnitBeingBuilt(const CUnit* unit);
-	void DrawUnitModel(const CUnit* unit);
-	void DrawUnitNow(const CUnit* unit);
 
 	void UpdateUnitIconState(CUnit* unit);
 	static void UpdateUnitDrawPos(CUnit* unit);

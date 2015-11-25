@@ -1363,7 +1363,7 @@ static void UnitDrawPostCommon(CUnit* unit, bool applyTransform, bool doRawDraw,
 
 	if (applyTransform) {
 		if (doRawDraw) {
-			unitDrawer->DrawUnitRaw(unit);
+			unitDrawer->DrawUnitRawNoLists(unit);
 		} else {
 			unitDrawer->DrawIndividual(unit);
 		}

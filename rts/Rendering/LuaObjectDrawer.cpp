@@ -11,6 +11,7 @@
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/ShadowHandler.h"
 #include "Sim/Objects/SolidObject.h"
+#include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Util.h"
@@ -24,10 +25,10 @@ CONFIG(float, LODScaleRefraction).defaultValue(1.0f);
 
 bool LuaObjectDrawer::inDrawPass = false;
 
-float LuaObjectDrawer::LODScale           = 1.0f;
-float LuaObjectDrawer::LODScaleShadow     = 1.0f;
-float LuaObjectDrawer::LODScaleReflection = 1.0f;
-float LuaObjectDrawer::LODScaleRefraction = 1.0f;
+float LuaObjectDrawer::LODScale[LUAOBJ_LAST];
+float LuaObjectDrawer::LODScaleShadow[LUAOBJ_LAST];
+float LuaObjectDrawer::LODScaleReflection[LUAOBJ_LAST];
+float LuaObjectDrawer::LODScaleRefraction[LUAOBJ_LAST];
 
 
 static float GetLODFloat(const std::string& name)
@@ -51,8 +52,9 @@ static void ResetOpaqueUnitDrawState(unsigned int modelType, bool deferredPass) 
 	unitDrawer->CleanUpUnitDrawing(deferredPass);
 }
 
-static void SetupOpaqueFeatureDrawState(unsigned int modelType, bool deferredPass) {}
-static void ResetOpaqueFeatureDrawState(unsigned int modelType, bool deferredPass) {}
+// NOTE: incomplete (FeatureDrawer::Draw sets more state)
+static void SetupOpaqueFeatureDrawState(unsigned int modelType, bool deferredPass) { SetupOpaqueUnitDrawState(modelType, deferredPass); }
+static void ResetOpaqueFeatureDrawState(unsigned int modelType, bool deferredPass) { ResetOpaqueUnitDrawState(modelType, deferredPass); }
 
 
 
@@ -67,8 +69,9 @@ static void ResetAlphaUnitDrawState(unsigned int modelType, bool deferredPass) {
 	unitDrawer->CleanUpGhostDrawing();
 }
 
-static void SetupAlphaFeatureDrawState(unsigned int modelType, bool deferredPass) {}
-static void ResetAlphaFeatureDrawState(unsigned int modelType, bool deferredPass) {}
+// NOTE: incomplete (FeatureDrawer::DrawFadeFeatures sets more state)
+static void SetupAlphaFeatureDrawState(unsigned int modelType, bool deferredPass) { SetupAlphaUnitDrawState(modelType, deferredPass); }
+static void ResetAlphaFeatureDrawState(unsigned int modelType, bool deferredPass) { ResetAlphaUnitDrawState(modelType, deferredPass); }
 
 
 
@@ -94,20 +97,39 @@ static void ResetShadowUnitDrawState(unsigned int modelType, bool deferredPass) 
 	glDisable(GL_POLYGON_OFFSET_FILL);
 }
 
-
-static void SetupShadowFeatureDrawState(unsigned int modelType, bool deferredPass) {}
-static void ResetShadowFeatureDrawState(unsigned int modelType, bool deferredPass) {}
+// NOTE: incomplete (FeatureDrawer::DrawShadowPass sets more state)
+static void SetupShadowFeatureDrawState(unsigned int modelType, bool deferredPass) { SetupShadowUnitDrawState(modelType, deferredPass); }
+static void ResetShadowFeatureDrawState(unsigned int modelType, bool deferredPass) { ResetShadowUnitDrawState(modelType, deferredPass); }
 
 
 
 
 void LuaObjectDrawer::ReadLODScales(LuaObjType objType)
 {
-	// TODO: separate values for units and features?
-	LODScale           = GetLODFloat("LODScale");
-	LODScaleShadow     = GetLODFloat("LODScaleShadow");
-	LODScaleReflection = GetLODFloat("LODScaleReflection");
-	LODScaleRefraction = GetLODFloat("LODScaleRefraction");
+	LODScale          [objType] = GetLODFloat("LODScale");
+	LODScaleShadow    [objType] = GetLODFloat("LODScaleShadow");
+	LODScaleReflection[objType] = GetLODFloat("LODScaleReflection");
+	LODScaleRefraction[objType] = GetLODFloat("LODScaleRefraction");
+}
+
+void LuaObjectDrawer::SetGlobalDrawPassLODFactor(LuaObjType objType)
+{
+	if (shadowHandler->inShadowPass) {
+		LuaObjectMaterialData::SetGlobalLODFactor(objType, GetLODScaleShadow(objType) * camera->GetLPPScale());
+		return;
+	}
+
+	if (water->DrawReflectionPass()) {
+		LuaObjectMaterialData::SetGlobalLODFactor(objType, GetLODScaleReflection(objType) * camera->GetLPPScale());
+		return;
+	}
+
+	if (water->DrawRefractionPass()) {
+		LuaObjectMaterialData::SetGlobalLODFactor(objType, GetLODScaleRefraction(objType) * camera->GetLPPScale());
+		return;
+	}
+
+	LuaObjectMaterialData::SetGlobalLODFactor(objType, GetLODScale(objType) * camera->GetLPPScale());
 }
 
 void LuaObjectDrawer::DrawMaterialBins(LuaObjType objType, LuaMatType matType, bool deferredPass)
@@ -164,11 +186,15 @@ const LuaMaterial* LuaObjectDrawer::DrawMaterialBin(
 
 		switch (objType) {
 			case LUAOBJ_UNIT: {
+				// note: only makes sense to set team-color if the
+				// material has a standard (engine) shader attached
 				// note: must use static_cast here because of GetTransformMatrix (!)
 				unitDrawer->SetTeamColour(obj->team);
 				unitDrawer->DrawUnitWithLists(static_cast<const CUnit*>(obj), lodMat->preDisplayList, lodMat->postDisplayList);
 			} break;
 			case LUAOBJ_FEATURE: {
+				// also sets team-color (needs a specific alpha-value)
+				featureDrawer->DrawFeatureWithLists(static_cast<const CFeature*>(obj), lodMat->preDisplayList, lodMat->postDisplayList);
 			} break;
 		}
 	}
@@ -205,7 +231,7 @@ bool LuaObjectDrawer::DrawSingleObject(CSolidObject* obj, LuaObjType objType)
 	}
 
 	// use the normal scale for single-object drawing
-	LuaObjectMaterialData::SetGlobalLODFactor(objType, LODScale * camera->GetLPPScale());
+	LuaObjectMaterialData::SetGlobalLODFactor(objType, LODScale[objType] * camera->GetLPPScale());
 
 	// get the ref-counted actual material
 	const LuaMaterial& mat = (LuaMaterial&) *lodMat->matref.GetBin();
@@ -220,6 +246,8 @@ bool LuaObjectDrawer::DrawSingleObject(CSolidObject* obj, LuaObjType objType)
 			unitDrawer->DrawUnitRawWithLists(static_cast<const CUnit*>(obj), lodMat->preDisplayList, lodMat->postDisplayList);
 		} break;
 		case LUAOBJ_FEATURE: {
+			// not implemented (nor "raw" versions in general)
+			// featureDrawer->DrawFeatureRawWithLists(static_cast<const CFeature*>(obj), lodMat->preDisplayList, lodMat->postDisplayList);
 		} break;
 	}
 
@@ -241,7 +269,7 @@ void LuaObjectDrawer::SetObjectLOD(CSolidObject* obj, LuaObjType objType, unsign
 
 
 
-void LuaObjectDrawer::DrawOpaqueMaterialObjects(LuaObjType objType, LuaMatType matType, bool deferredPass)
+void LuaObjectDrawer::DrawOpaqueMaterialObjects(LuaObjType objType, bool deferredPass)
 {
 	switch (objType) {
 		case LUAOBJ_UNIT: {
@@ -258,10 +286,10 @@ void LuaObjectDrawer::DrawOpaqueMaterialObjects(LuaObjType objType, LuaMatType m
 		} break;
 	}
 
-	DrawMaterialBins(objType, matType, deferredPass);
+	DrawMaterialBins(objType, (water->DrawReflectionPass())? LUAMAT_OPAQUE_REFLECT: LUAMAT_OPAQUE, deferredPass);
 }
 
-void LuaObjectDrawer::DrawAlphaMaterialObjects(LuaObjType objType, LuaMatType matType, bool)
+void LuaObjectDrawer::DrawAlphaMaterialObjects(LuaObjType objType, bool)
 {
 	switch (objType) {
 		case LUAOBJ_UNIT: {
@@ -279,10 +307,10 @@ void LuaObjectDrawer::DrawAlphaMaterialObjects(LuaObjType objType, LuaMatType ma
 	}
 
 	// FIXME: deferred shading and transparency is a PITA
-	DrawMaterialBins(objType, matType, false);
+	DrawMaterialBins(objType, (water->DrawReflectionPass())? LUAMAT_ALPHA_REFLECT: LUAMAT_ALPHA, false);
 }
 
-void LuaObjectDrawer::DrawShadowMaterialObjects(LuaObjType objType, LuaMatType matType, bool)
+void LuaObjectDrawer::DrawShadowMaterialObjects(LuaObjType objType, bool)
 {
 	switch (objType) {
 		case LUAOBJ_UNIT: {
@@ -301,6 +329,6 @@ void LuaObjectDrawer::DrawShadowMaterialObjects(LuaObjType objType, LuaMatType m
 
 	// we neither want nor need a deferred shadow
 	// pass for custom- or default-shader models!
-	DrawMaterialBins(objType, matType, false);
+	DrawMaterialBins(objType, LUAMAT_SHADOW, false);
 }
 

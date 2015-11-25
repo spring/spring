@@ -24,22 +24,23 @@ public:
 	static bool DrawSingleObject(CSolidObject* obj, LuaObjType objType);
 	static void SetObjectLOD(CSolidObject* obj, LuaObjType objType, unsigned int lodCount);
 
-	static void DrawOpaqueMaterialObjects(LuaObjType objType, LuaMatType matType, bool deferredPass);
-	static void DrawAlphaMaterialObjects(LuaObjType objType, LuaMatType matType, bool deferredPass);
-	static void DrawShadowMaterialObjects(LuaObjType objType, LuaMatType matType, bool deferredPass);
+	static void DrawOpaqueMaterialObjects(LuaObjType objType, bool deferredPass);
+	static void DrawAlphaMaterialObjects(LuaObjType objType, bool deferredPass);
+	static void DrawShadowMaterialObjects(LuaObjType objType, bool deferredPass);
 
 public:
 	static void ReadLODScales(LuaObjType objType);
+	static void SetGlobalDrawPassLODFactor(LuaObjType objType);
 
-	static float GetLODScale          () { return (LODScale                     ); }
-	static float GetLODScaleShadow    () { return (LODScale * LODScaleShadow    ); }
-	static float GetLODScaleReflection() { return (LODScale * LODScaleReflection); }
-	static float GetLODScaleRefraction() { return (LODScale * LODScaleRefraction); }
+	static float GetLODScale          (int objType) { return (LODScale[objType]                              ); }
+	static float GetLODScaleShadow    (int objType) { return (LODScale[objType] * LODScaleShadow    [objType]); }
+	static float GetLODScaleReflection(int objType) { return (LODScale[objType] * LODScaleReflection[objType]); }
+	static float GetLODScaleRefraction(int objType) { return (LODScale[objType] * LODScaleRefraction[objType]); }
 
-	static float SetLODScale          (float v) { return (LODScale           = v); }
-	static float SetLODScaleShadow    (float v) { return (LODScaleShadow     = v); }
-	static float SetLODScaleReflection(float v) { return (LODScaleReflection = v); }
-	static float SetLODScaleRefraction(float v) { return (LODScaleRefraction = v); }
+	static float SetLODScale          (int objType, float v) { return (LODScale          [objType] = v); }
+	static float SetLODScaleShadow    (int objType, float v) { return (LODScaleShadow    [objType] = v); }
+	static float SetLODScaleReflection(int objType, float v) { return (LODScaleReflection[objType] = v); }
+	static float SetLODScaleRefraction(int objType, float v) { return (LODScaleRefraction[objType] = v); }
 
 private:
 	static void DrawMaterialBins(LuaObjType objType, LuaMatType matType, bool deferredPass);
@@ -54,10 +55,10 @@ private:
 private:
 	static bool inDrawPass;
 
-	static float LODScale;
-	static float LODScaleShadow;
-	static float LODScaleReflection;
-	static float LODScaleRefraction;
+	static float LODScale[LUAOBJ_LAST];
+	static float LODScaleShadow[LUAOBJ_LAST];
+	static float LODScaleReflection[LUAOBJ_LAST];
+	static float LODScaleRefraction[LUAOBJ_LAST];
 };
 
 #endif

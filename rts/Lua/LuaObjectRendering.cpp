@@ -4,7 +4,6 @@
 #include "LuaMaterial.h"
 
 #include "LuaInclude.h"
-
 #include "LuaHandle.h"
 #include "LuaHashString.h"
 #include "LuaUtils.h"
@@ -14,9 +13,7 @@
 // see ParseUnitTexture
 // #include "Rendering/Textures/3DOTextureHandler.h"
 // #include "Rendering/Textures/S3OTextureHandler.h"
-#include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-// #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
@@ -54,16 +51,6 @@ static int material_gc(lua_State* L)
 }
 
 
-static void CreateMatRefMetatable(lua_State* L)
-{
-	luaL_newmetatable(L, "MatRef");
-	HSTR_PUSH_CFUNC(L, "__gc",       material_gc);
-	HSTR_PUSH_CFUNC(L, "__index",    material_index);
-	HSTR_PUSH_CFUNC(L, "__newindex", material_newindex);
-	lua_pop(L, 1);
-}
-
-
 
 /******************************************************************************/
 /******************************************************************************/
@@ -84,6 +71,9 @@ static inline CSolidObject* ParseSolidObject(lua_State* L, const char* caller, i
 	switch (objType) {
 		case LUAOBJ_UNIT   : { return (   unitHandler->GetUnit   (lua_toint(L, index))); } break;
 		case LUAOBJ_FEATURE: { return (featureHandler->GetFeature(lua_toint(L, index))); } break;
+		default: {
+			assert(false);
+		} break;
 	}
 
 	return NULL;
@@ -107,34 +97,24 @@ static inline CFeature* ParseFeature(lua_State* L, const char* caller, int index
 
 std::vector<LuaObjType> LuaObjectRenderingImpl::objectTypeStack;
 
-bool LuaObjectRenderingImpl::PushEntries(lua_State* L)
+
+
+void LuaObjectRenderingImpl::CreateMatRefMetatable(lua_State* L)
 {
-	CreateMatRefMetatable(L);
-
-	#define REGISTER_LUA_CFUNC(x) \
-		lua_pushstring(L, #x);    \
-		lua_pushcfunction(L, x);  \
-		lua_rawset(L, -3)
-
-	REGISTER_LUA_CFUNC(SetLODCount);
-	REGISTER_LUA_CFUNC(SetLODLength);
-	REGISTER_LUA_CFUNC(SetLODDistance);
-
-	REGISTER_LUA_CFUNC(GetMaterial);
-	REGISTER_LUA_CFUNC(SetMaterial);
-
-	REGISTER_LUA_CFUNC(SetMaterialLastLOD);
-	REGISTER_LUA_CFUNC(SetMaterialDisplayLists);
-
-	REGISTER_LUA_CFUNC(SetPieceList);
-	REGISTER_LUA_CFUNC(SetObjectUniform);
-
-	REGISTER_LUA_CFUNC(SetUnitLuaDraw);
-	REGISTER_LUA_CFUNC(SetFeatureLuaDraw);
-
-	REGISTER_LUA_CFUNC(Debug);
-	return true;
+	luaL_newmetatable(L, "MatRef");
+	HSTR_PUSH_CFUNC(L, "__gc",       material_gc);
+	HSTR_PUSH_CFUNC(L, "__index",    material_index);
+	HSTR_PUSH_CFUNC(L, "__newindex", material_newindex);
+	lua_pop(L, 1);
 }
+
+void LuaObjectRenderingImpl::PushFunction(lua_State* L, int (*fnPntr)(lua_State*), const char* fnName)
+{
+	lua_pushstring(L, fnName);
+	lua_pushcfunction(L, fnPntr);
+	lua_rawset(L, -3);
+}
+
 
 
 int LuaObjectRenderingImpl::SetLODCount(lua_State* L)

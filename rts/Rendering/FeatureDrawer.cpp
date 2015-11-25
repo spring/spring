@@ -17,6 +17,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
+#include "Rendering/LuaObjectDrawer.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
@@ -24,7 +25,7 @@
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Models/WorldObjectModelRenderer.h"
 #include "Sim/Features/Feature.h"
-#include "Sim/Features/FeatureHandler.h"
+#include "Sim/Features/FeatureDef.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
@@ -73,6 +74,8 @@ CR_REG_METADATA(CFeatureDrawer, (
 CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false)
 {
 	eventHandler.AddClient(this);
+
+	LuaObjectDrawer::ReadLODScales(LUAOBJ_FEATURE);
 
 	drawQuadsX = mapDims.mapx / DRAW_QUAD_SIZE;
 	drawQuadsY = mapDims.mapy / DRAW_QUAD_SIZE;
@@ -129,14 +132,14 @@ void CFeatureDrawer::RenderFeatureDestroyed(const CFeature* feature)
 
 	if (feature->objectDef->decalDef.useGroundDecal)
 		groundDecals->RemoveSolidObject(f, NULL);
+
+	LuaObjectDrawer::SetObjectLOD(f, LUAOBJ_FEATURE, 0);
 }
 
 
 void CFeatureDrawer::FeatureMoved(const CFeature* feature, const float3& oldpos)
 {
-	CFeature* f = const_cast<CFeature*>(feature);
-
-	UpdateDrawQuad(f);
+	UpdateDrawQuad(const_cast<CFeature*>(feature));
 }
 
 void CFeatureDrawer::UpdateDrawQuad(CFeature* feature)
@@ -211,12 +214,16 @@ void CFeatureDrawer::Draw()
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		// arbitrarily pick first proxy to prepare state
+		// TODO: also add a deferred pass for features
 		modelRenderers[0].rendererTypes[modelType]->PushRenderState();
-		DrawOpaqueFeatures(modelType);
+		DrawOpaqueFeatures(modelType, (water->DrawReflectionPass())? LUAMAT_OPAQUE_REFLECT: LUAMAT_OPAQUE);
 		modelRenderers[0].rendererTypes[modelType]->PopRenderState();
 	}
 
 	unitDrawer->CleanUpUnitDrawing(false);
+
+	LuaObjectDrawer::SetGlobalDrawPassLODFactor(LUAOBJ_FEATURE);
+	LuaObjectDrawer::DrawOpaqueMaterialObjects(LUAOBJ_FEATURE, false);
 
 	farTextureHandler->Draw();
 
@@ -233,7 +240,7 @@ void CFeatureDrawer::Draw()
 	glDisable(GL_FOG);
 }
 
-void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
+void CFeatureDrawer::DrawOpaqueFeatures(int modelType, int luaMatType)
 {
 	for (const auto& mdlRenderProxy: modelRenderers) {
 		if (mdlRenderProxy.lastDrawFrame < globalRendering->drawFrame)
@@ -246,42 +253,70 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 				texturehandlerS3O->SetS3oTexture(binElem.first);
 			}
 
-			for (const CFeature* f: binElem.second) {
-				if (f->drawAlpha != ALPHA_OPAQUE)
+			for (CFeature* f: binElem.second) {
+				LuaObjectMaterialData* matData = f->GetLuaMaterialData();
+
+				// if <f> is supposed to be drawn faded, skip it during this pass
+				if (f->drawAlpha < ALPHA_OPAQUE)
 					continue;
 
-				DrawFeatureNow(f, f->drawAlpha);
+				if (matData->AddObjectForLOD(f, LUAOBJ_FEATURE, LuaMatType(luaMatType), camera->ProjectedDistance(f->pos)))
+					continue;
+
+				DrawFeatureNoLists(f, f->drawAlpha);
 			}
 		}
 	}
 }
 
-bool CFeatureDrawer::DrawFeatureNow(const CFeature* feature, float alpha)
+bool CFeatureDrawer::CanDrawFeature(const CFeature* feature) const
 {
-	if (feature->IsInVoid()) { return false; }
-	if (!feature->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView) { return false; }
+	if (feature->IsInVoid())
+		return false;
+	if (!feature->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView)
+		return false;
 
 	const float sqDist = (feature->pos - camera->GetPos()).SqLength();
 	const float farLength = feature->sqRadius * unitDrawer->unitDrawDistSqr;
 	const float sqFadeDistEnd = featureDrawDistance * featureDrawDistance;
 
-	if (sqDist >= std::min(farLength, sqFadeDistEnd)) return false;
-	if (!camera->InView(feature->drawMidPos, feature->drawRadius)) { return false; }
+	if (sqDist >= std::min(farLength, sqFadeDistEnd))
+		return false;
+
+	return (camera->InView(feature->drawMidPos, feature->drawRadius));
+}
+
+
+void CFeatureDrawer::DrawFeatureNoLists(const CFeature* feature, float alpha)
+{
+	DrawFeatureWithLists(feature, 0, 0, alpha);
+}
+
+void CFeatureDrawer::DrawFeatureWithLists(const CFeature* feature, unsigned int preList, unsigned int postList, float alpha)
+{
+	if (!CanDrawFeature(feature))
+		return;
 
 	glPushMatrix();
 	glMultMatrixf(feature->GetTransformMatrixRef());
 
+	// TODO: move this out of UnitDrawer(State)
 	unitDrawer->SetTeamColour(feature->team, alpha);
+
+	if (preList != 0) {
+		glCallList(preList);
+	}
 
 	if (!(feature->luaDraw && eventHandler.DrawFeature(feature))) {
 		feature->model->DrawStatic();
 	}
 
+	if (postList != 0) {
+		glCallList(postList);
+	}
+
 	glPopMatrix();
-
-	return true;
 }
-
 
 
 
@@ -310,7 +345,7 @@ void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 		{
 			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 				modelRenderers[0].rendererTypes[modelType]->PushRenderState();
-				DrawFadeFeaturesHelper(modelType);
+				DrawFadeFeaturesHelper(modelType, (water->DrawReflectionPass())? LUAMAT_ALPHA_REFLECT: LUAMAT_ALPHA);
 				modelRenderers[0].rendererTypes[modelType]->PopRenderState();
 			}
 		}
@@ -327,9 +362,12 @@ void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 
 		unitDrawer->SetUseAdvShading(oldAdvShading);
 	}
+
+	LuaObjectDrawer::SetGlobalDrawPassLODFactor(LUAOBJ_FEATURE);
+	LuaObjectDrawer::DrawAlphaMaterialObjects(LUAOBJ_FEATURE, false);
 }
 
-void CFeatureDrawer::DrawFadeFeaturesHelper(int modelType)
+void CFeatureDrawer::DrawFadeFeaturesHelper(int modelType, int luaMatType)
 {
 	for (const auto& mdlRenderProxy: modelRenderers) {
 		if (mdlRenderProxy.lastDrawFrame < globalRendering->drawFrame)
@@ -342,15 +380,21 @@ void CFeatureDrawer::DrawFadeFeaturesHelper(int modelType)
 				texturehandlerS3O->SetS3oTexture(binElem.first);
 			}
 
-			DrawFadeFeaturesSet(binElem.second, modelType);
+			DrawFadeFeaturesSet(binElem.second, modelType, luaMatType);
 		}
 	}
 }
 
-void CFeatureDrawer::DrawFadeFeaturesSet(const FeatureSet& fadeFeatures, int modelType)
+void CFeatureDrawer::DrawFadeFeaturesSet(const FeatureSet& fadeFeatures, int modelType, int luaMatType)
 {
 	for (CFeature* f: fadeFeatures) {
-		if (f->drawAlpha == ALPHA_OPAQUE || f->drawAlpha < 0.01f)
+		LuaObjectMaterialData* matData = f->GetLuaMaterialData();
+
+		// if <f> is not supposed to be drawn faded, skip it during this pass
+		if (f->drawAlpha >= ALPHA_OPAQUE || f->drawAlpha <= (1.0f - ALPHA_OPAQUE))
+			continue;
+
+		if (matData->AddObjectForLOD(f, LUAOBJ_FEATURE, LuaMatType(luaMatType), camera->ProjectedDistance(f->pos)))
 			continue;
 
 		const float cols[] = {1.0f, 1.0f, 1.0f, f->drawAlpha};
@@ -363,7 +407,7 @@ void CFeatureDrawer::DrawFadeFeaturesSet(const FeatureSet& fadeFeatures, int mod
 		glAlphaFunc(GL_GREATER, f->drawAlpha / 2.0f);
 		glColor4fv(cols);
 
-		DrawFeatureNow(f, f->drawAlpha);
+		DrawFeatureNoLists(f, f->drawAlpha);
 	}
 }
 
@@ -403,11 +447,11 @@ void CFeatureDrawer::DrawShadowPass()
 		// (usually) holes, so disable backface
 		// culling for them
 		glDisable(GL_CULL_FACE);
-		DrawOpaqueFeatures(MODELTYPE_3DO);
+		DrawOpaqueFeatures(MODELTYPE_3DO, LUAMAT_SHADOW);
 		glEnable(GL_CULL_FACE);
 
 		for (int modelType = MODELTYPE_S3O; modelType < MODELTYPE_OTHER; modelType++) {
-			DrawOpaqueFeatures(modelType);
+			DrawOpaqueFeatures(modelType, LUAMAT_SHADOW);
 		}
 
 		glPopAttrib();
@@ -417,6 +461,9 @@ void CFeatureDrawer::DrawShadowPass()
 	po->Disable();
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
+
+	LuaObjectDrawer::SetGlobalDrawPassLODFactor(LUAOBJ_FEATURE);
+	LuaObjectDrawer::DrawShadowMaterialObjects(LUAOBJ_FEATURE, false);
 }
 
 
@@ -470,7 +517,6 @@ public:
 					if (!gu->spectatingFullView && !f->IsInLosForAllyTeam(gu->myAllyTeam))
 						continue;
 
-
 					if (drawReflection) {
 						float3 zeroPos;
 
@@ -507,8 +553,10 @@ public:
 						}
 
 						if (sqDist < sqFadeDistB) {
+							// draw feature as normal, no fading
 							f->drawAlpha = ALPHA_OPAQUE;
 						} else if (sqDist < sqFadeDistE) {
+							// otherwise save it for the fade-pass
 							f->drawAlpha = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
 						}
 					} else {
