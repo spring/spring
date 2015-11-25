@@ -271,6 +271,7 @@ public:
 				case LUAOBJ_UNIT   : { lodMat->AddUnit   (o); } break;
 				case LUAOBJ_FEATURE: { lodMat->AddFeature(o); } break;
 				case LUAOBJ_LAST: break; // silence compile warning
+				default: break; // gcc needs always a default case, else it's not able to optimize the switch
 			}
 
 			return true;
