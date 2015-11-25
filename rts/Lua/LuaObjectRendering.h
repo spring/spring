@@ -82,6 +82,7 @@ public:
 		PUSH_FUNCTION(Debug);
 
 		#undef PUSH_FUNCTION
+		return true;
 	}
 
 private:

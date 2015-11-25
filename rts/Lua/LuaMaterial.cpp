@@ -172,6 +172,7 @@ void LuaMatShader::Execute(const LuaMatShader& prev, bool deferredPass) const
 					luaMatHandler.resetDrawStateFuncs[LUASHADER_S3O](MODELTYPE_S3O, deferredPass);
 				}
 			} break;
+			default: { assert(false); } break;
 		}
 
 		switch (type) {
@@ -189,6 +190,7 @@ void LuaMatShader::Execute(const LuaMatShader& prev, bool deferredPass) const
 					luaMatHandler.setupDrawStateFuncs[LUASHADER_S3O](MODELTYPE_S3O, deferredPass);
 				}
 			} break;
+			default: { assert(false); } break;
 		}
 	}
 	else if (type == LUASHADER_GL) {
@@ -207,6 +209,7 @@ void LuaMatShader::Print(const string& indent) const
 		STRING_CASE(typeName, LUASHADER_GL);
 		STRING_CASE(typeName, LUASHADER_3DO);
 		STRING_CASE(typeName, LUASHADER_S3O);
+		default: { assert(false); } break;
 	}
 	LOG("%s%s %i", indent.c_str(), typeName, openglID);
 }
