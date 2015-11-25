@@ -82,6 +82,7 @@ public:
 	 */
 	bool isRepairingBeforeResurrect;
 	bool isAtFinalHeight;
+	bool lockPosition;
 	bool inUpdateQue;
 	bool deleteMe;
 

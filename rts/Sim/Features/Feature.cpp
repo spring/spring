@@ -31,6 +31,7 @@ CR_REG_METADATA(CFeature, (
 	CR_MEMBER(defID),
 	CR_MEMBER(isRepairingBeforeResurrect),
 	CR_MEMBER(isAtFinalHeight),
+	CR_MEMBER(lockPosition),
 	CR_MEMBER(inUpdateQue),
 	CR_MEMBER(deleteMe),
 	CR_MEMBER(resurrectProgress),
@@ -58,6 +59,7 @@ CFeature::CFeature()
 , defID(-1)
 , isRepairingBeforeResurrect(false)
 , isAtFinalHeight(false)
+, lockPosition(false)
 , inUpdateQue(false)
 , deleteMe(false)
 , finalHeight(0.0f)
@@ -174,6 +176,9 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	mass = def->mass;
 	health = def->health;
 	maxHealth = def->health;
+
+	// by default, lock position of non-resurrectable features (backward compatibility)
+	lockPosition = (udef == NULL);
 
 	resources = SResourcePack(def->metal, def->energy);
 
@@ -422,7 +427,7 @@ void CFeature::DoDamage(
 	eventHandler.FeatureDamaged(this, attacker, baseDamage, weaponDefID, projectileID);
 
 	if (health <= 0.0f && def->destructable) {
-		FeatureLoadParams params = {featureHandler->GetFeatureDefByID(def->deathFeatureDefID), NULL, pos, ZeroVector, -1, team, -1, heading, buildFacing, 0};
+		FeatureLoadParams params = {featureHandler->GetFeatureDefByID(def->deathFeatureDefID), NULL, pos, speed, -1, team, -1, heading, buildFacing, 0};
 		CFeature* deathFeature = featureHandler->CreateWreckage(params, 0, false);
 
 		if (deathFeature != NULL) {
@@ -494,18 +499,14 @@ bool CFeature::UpdatePosition()
 {
 	const float3 oldPos = pos;
 
-	if (udef != NULL) {
-		// we are a wreck of a dead unit, possibly with residual impulse
-		// in this case we do not care about <finalHeight> and are always
-		// affected by gravity
-		// note that def->floating is unreliable (eg. it can be true for
-		// ground-unit wrecks), so just assume wrecks always sink in water
-		// even if their "owner" was a floating object (as is the case for
-		// ships anyway)
+	if (!lockPosition) {
+		// non-locked feature. we do not care about <finalHeight>,
+		// are always affected by gravity, and are subject to impulse
 		if (IsMoving()) {
 			const float realGroundHeight = CGround::GetHeightReal(pos.x, pos.z);
 			const bool reachedWater  = ( pos.y                     <= 0.1f);
 			const bool reachedGround = ((pos.y - realGroundHeight) <= 0.1f);
+			const float waterSpeed = 2 * mapInfo->map.gravity; // legacy value, though works decently
 
 			// NOTE:
 			//   all these calls use the base-class because FeatureHandler::Update
@@ -514,20 +515,20 @@ bool CFeature::UpdatePosition()
 			CWorldObject::SetVelocity(speed + GetDragAccelerationVec(float4(mapInfo->atmosphere.fluidDensity, mapInfo->water.fluidDensity, 1.0f, 0.1f)));
 
 			if (speed.SqLength2D() > 0.01f) {
-				//hint: only this updates horizontal position all other
-				//   lines in this function update vertical speed only!
+				//hint: only this updates horizontal position
+				//all other lines in this function update vertical speed only!
 
 				quadField->RemoveFeature(this);
 				UnBlock();
 
-				// update our forward speed (and quadfield
-				// position) if it is still greater than 0
-				Move(speed, true);
+				// update our horizontal position (and quadfield
+				// position) if XZ speed is still greater than 0
+				Move(speed * XZVector, true);
 
 				Block();
 				quadField->AddFeature(this);
 			} else {
-				CWorldObject::SetVelocity(speed * UpVector);
+				CWorldObject::SetVelocity(UpVector * speed.y);
 			}
 
 			if (!reachedGround) {
@@ -535,11 +536,21 @@ bool CFeature::UpdatePosition()
 					// quadratic acceleration if not in water
 					CWorldObject::SetVelocity(speed + (UpVector * mapInfo->map.gravity));
 				} else {
-					// constant downward speed otherwise
-					CWorldObject::SetVelocity((speed * XZVector) + (UpVector * mapInfo->map.gravity));
+					if (!def->floating) {
+						// arrive at a constant downward speed if in water and not floating
+						CWorldObject::SetVelocity((speed * XZVector) + (UpVector * std::max(speed.y + waterSpeed, waterSpeed)));
+					} else {
+						if (pos.y >= waterSpeed && speed.y >= 0) {
+							// we are at the surface and floating up
+							// snap to y=0 and cease vertical movement
+							CWorldObject::SetVelocity(speed * XZVector);
+							Move(UpVector * (-pos.y), true);
+						} else {
+							// arrive at a constant upwards speed
+							CWorldObject::SetVelocity((speed * XZVector) + (UpVector * std::min(speed.y - waterSpeed, -waterSpeed)));
+						}
+					}
 				}
-
-				Move(UpVector * speed.y, true);
 			} else {
 				CWorldObject::SetVelocity(speed * XZVector);
 
@@ -548,6 +559,7 @@ bool CFeature::UpdatePosition()
 				// larger than ground height, correct
 				Move(UpVector * (realGroundHeight - pos.y), true);
 			}
+			Move(UpVector * speed.y, true);
 
 			if (!pos.IsInBounds()) {
 				pos.ClampInBounds();
@@ -555,21 +567,20 @@ bool CFeature::UpdatePosition()
 				// ensure that no more forward-speed updates are done
 				// (prevents wrecks floating in mid-air at edge of map
 				// due to gravity no longer being applied either)
-				CWorldObject::SetVelocity(ZeroVector);
+				CWorldObject::SetVelocity(UpVector * speed.y);
 			}
 
 			eventHandler.FeatureMoved(this, oldPos);
 			CalculateTransform();
 		}
 	} else {
-		// any feature that is not a dead unit (ie. rocks, trees, ...)
-		// these never move in the xz-plane no matter how much impulse
-		// is applied, only gravity affects them (FIXME: arbitrary..?)
+		// these features never move in the xz-plane no matter how much impulse
+		// is applied, only gravity and y-impulse affects them 
 		if (pos.y > finalHeight) {
 			if (pos.y > 0.0f) {
-				CWorldObject::SetVelocity(speed + (UpVector * mapInfo->map.gravity));
+				CWorldObject::SetVelocity(UpVector * (mapInfo->map.gravity + speed.y));
 			} else {
-				CWorldObject::SetVelocity((speed * XZVector) + (UpVector * mapInfo->map.gravity));
+				CWorldObject::SetVelocity(UpVector * mapInfo->map.gravity);
 			}
 
 			// stop falling when we reach our finalHeight
@@ -578,7 +589,7 @@ bool CFeature::UpdatePosition()
 			eventHandler.FeatureMoved(this, oldPos);
 		} else if (pos.y < finalHeight) {
 			// stop vertical movement and teleport up
-			CWorldObject::SetVelocity(speed * XZVector);
+			CWorldObject::SetVelocity(ZeroVector);
 
 			Move(UpVector * (finalHeight - pos.y), true);
 			eventHandler.FeatureMoved(this, oldPos);
