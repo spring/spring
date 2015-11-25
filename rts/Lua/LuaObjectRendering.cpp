@@ -123,7 +123,12 @@ int LuaObjectRenderingImpl::SetLODCount(lua_State* L)
 	const unsigned int objType = GetObjectType();
 	const unsigned int lodCount = std::min(1024, luaL_checkint(L, 2));
 
-	LuaObjectDrawer::SetObjectLOD(ParseSolidObject(L, __FUNCTION__, 1, objType), LuaObjType(objType), lodCount);
+	CSolidObject* obj = ParseSolidObject(L, __FUNCTION__, 1, objType);
+
+	if (obj == NULL)
+		return 0;
+
+	LuaObjectDrawer::SetObjectLOD(obj, LuaObjType(objType), lodCount);
 	return 0;
 }
 
