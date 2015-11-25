@@ -1752,9 +1752,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 	}
 
 	UpdateUnitMiniMapIcon(unit, false, true);
-
-	u->GetLuaMaterialData()->SetLODCount(0);
-	u->localModel->SetLODCount(0);
+	LuaObjectDrawer::SetObjectLOD(u, LUAOBJ_UNIT, 0);
 }
 
 

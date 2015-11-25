@@ -22,6 +22,7 @@ class LuaObjectDrawer {
 public:
 	static bool InDrawPass() { return inDrawPass; }
 	static bool DrawSingleObject(CSolidObject* obj, LuaObjType objType);
+	static void SetObjectLOD(CSolidObject* obj, LuaObjType objType, unsigned int lodCount);
 
 	static void DrawOpaqueMaterialObjects(LuaObjType objType, LuaMatType matType, bool deferredPass);
 	static void DrawAlphaMaterialObjects(LuaObjType objType, LuaMatType matType, bool deferredPass);

@@ -9,9 +9,11 @@
 #include "LuaHashString.h"
 #include "LuaUtils.h"
 
+#include "Rendering/LuaObjectDrawer.h"
 #include "Rendering/Models/3DModel.h"
-#include "Rendering/Textures/3DOTextureHandler.h"
-#include "Rendering/Textures/S3OTextureHandler.h"
+// see ParseUnitTexture
+// #include "Rendering/Textures/3DOTextureHandler.h"
+// #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 // #include "Sim/Features/Feature.h"
@@ -141,22 +143,7 @@ int LuaObjectRenderingImpl::SetLODCount(lua_State* L)
 	const unsigned int objType = GetObjectType();
 	const unsigned int lodCount = std::min(1024, luaL_checkint(L, 2));
 
-	switch (objType) {
-		case LUAOBJ_UNIT: {
-			CUnit* u = ParseUnit(L, __FUNCTION__, 1);
-			LuaObjectMaterialData* m = u->GetLuaMaterialData();
-
-			m->SetLODCount(lodCount);
-			u->localModel->SetLODCount(lodCount);
-		} break;
-		case LUAOBJ_FEATURE: {
-			CFeature* f = ParseFeature(L, __FUNCTION__, 1);
-			LuaObjectMaterialData* m = f->GetLuaMaterialData();
-
-			m->SetLODCount(lodCount);
-		} break;
-	}
-
+	LuaObjectDrawer::SetObjectLOD(ParseSolidObject(L, __FUNCTION__, 1, objType), LuaObjType(objType), lodCount);
 	return 0;
 }
 

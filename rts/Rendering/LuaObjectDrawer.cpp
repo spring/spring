@@ -227,6 +227,18 @@ bool LuaObjectDrawer::DrawSingleObject(CSolidObject* obj, LuaObjType objType)
 	return true;
 }
 
+void LuaObjectDrawer::SetObjectLOD(CSolidObject* obj, LuaObjType objType, unsigned int lodCount)
+{
+	// features do not have a LocalModel, sometimes not even a 3DModel
+	// LuaMaterialData should be stored inside one of those structures,
+	// but for now is held by SolidObject to avoid introducing dummies
+	obj->GetLuaMaterialData()->SetLODCount(lodCount);
+
+	if (objType == LUAOBJ_UNIT) {
+		(static_cast<CUnit*>(obj))->localModel->SetLODCount(lodCount);
+	}
+}
+
 
 
 void LuaObjectDrawer::DrawOpaqueMaterialObjects(LuaObjType objType, LuaMatType matType, bool deferredPass)
