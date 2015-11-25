@@ -17,6 +17,7 @@ CR_REG_METADATA(FeatureDef, (
 	CR_MEMBER(floating),
 	CR_MEMBER(geoThermal),
 	CR_MEMBER(deathFeatureDefID),
+	CR_MEMBER(lockPosition),
 	CR_MEMBER(smokeTime)
 ))
 
@@ -25,6 +26,7 @@ FeatureDef::FeatureDef()
 	, reclaimTime(0)
 	, drawType(DRAWTYPE_NONE)
 	, resurrectable(false)
+	, lockPosition(-1)
 	, smokeTime(0)
 	, destructable(false)
 	, autoreclaim(true)

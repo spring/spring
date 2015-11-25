@@ -492,14 +492,10 @@ bool CFeature::UpdatePosition()
 {
 	const float3 oldPos = pos;
 
-	if (udef != NULL) {
-		// we are a wreck of a dead unit, possibly with residual impulse
-		// in this case we do not care about <finalHeight> and are always
-		// affected by gravity
-		// note that def->floating is unreliable (eg. it can be true for
-		// ground-unit wrecks), so just assume wrecks always sink in water
-		// even if their "owner" was a floating object (as is the case for
-		// ships anyway)
+	if ((def->lockPosition == 0) || (def->lockPosition == -1 && udef != NULL)) {
+		// in the default case we are a wreck of a dead unit
+		// possibly with residual impulse
+		// we do not care about <finalHeight> and are always affected by gravity
 		if (IsMoving()) {
 			const float realGroundHeight = CGround::GetHeightReal(pos.x, pos.z);
 			const bool reachedWater  = ( pos.y                     <= 0.1f);
@@ -533,11 +529,20 @@ bool CFeature::UpdatePosition()
 					// quadratic acceleration if not in water
 					CWorldObject::SetVelocity(speed + (UpVector * mapInfo->map.gravity));
 				} else {
-					// constant downward speed otherwise
-					CWorldObject::SetVelocity((speed * XZVector) + (UpVector * mapInfo->map.gravity));
+					if (!def->floating) {
+						// constant downward speed if in water and not floating
+						CWorldObject::SetVelocity((speed * XZVector) + (UpVector * mapInfo->map.gravity));
+					} else {
+						if (pos.y >= -mapInfo->map.gravity) {
+							// we are at the surface, snap to it and rest there
+							CWorldObject::SetVelocity(speed * XZVector);
+							Move(UpVector * (-pos.y), true);
+						} else {
+							// we are underwater, keep floating upwards at constant speed
+							CWorldObject::SetVelocity((speed * XZVector) + (UpVector * -mapInfo->map.gravity));
+						}
+					}
 				}
-
-				Move(UpVector * speed.y, true);
 			} else {
 				CWorldObject::SetVelocity(speed * XZVector);
 
@@ -560,14 +565,14 @@ bool CFeature::UpdatePosition()
 			CalculateTransform();
 		}
 	} else {
-		// any feature that is not a dead unit (ie. rocks, trees, ...)
+		// by default this includes any feature that is not a dead unit (ie. rocks, trees, ...)
 		// these never move in the xz-plane no matter how much impulse
 		// is applied, only gravity affects them (FIXME: arbitrary..?)
 		if (pos.y > finalHeight) {
 			if (pos.y > 0.0f) {
-				CWorldObject::SetVelocity(speed + (UpVector * mapInfo->map.gravity));
+				CWorldObject::SetVelocity(UpVector * (mapInfo->map.gravity + speed.y));
 			} else {
-				CWorldObject::SetVelocity((speed * XZVector) + (UpVector * mapInfo->map.gravity));
+				CWorldObject::SetVelocity(UpVector * mapInfo->map.gravity);
 			}
 
 			// stop falling when we reach our finalHeight

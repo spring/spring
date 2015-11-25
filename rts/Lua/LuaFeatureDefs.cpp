@@ -497,6 +497,7 @@ static bool InitParamMap()
 	ADD_BOOL("geoThermal",   fd.geoThermal);
 	ADD_BOOL("noSelect",     fd.selectable);
 	ADD_INT("resurrectable", fd.resurrectable);
+	ADD_INT("lockPosition",  fd.lockPosition);
 
 	ADD_INT("smokeTime",    fd.smokeTime);
 
