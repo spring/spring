@@ -270,6 +270,7 @@ public:
 			switch (objType) {
 				case LUAOBJ_UNIT   : { lodMat->AddUnit   (o); } break;
 				case LUAOBJ_FEATURE: { lodMat->AddFeature(o); } break;
+				case LUAOBJ_LAST: break; // silence compile warning
 			}
 
 			return true;
