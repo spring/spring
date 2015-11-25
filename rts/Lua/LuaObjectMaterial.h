@@ -10,6 +10,7 @@ typedef unsigned   int  GLuint;
 typedef          float GLfloat;
 typedef unsigned   int  GLenum;
 
+#include <cassert>
 #include <vector>
 
 class CSolidObject;
