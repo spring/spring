@@ -489,11 +489,14 @@ void CShadowHandler::CreateShadows()
 	}
 
 	if (L->GetLightIntensity() > 0.0f) {
-		// HACK
-		// needed for particle/billboard rendering
-		// NOT for frustum checking (which is semi broken for shadows)!
-		const float3 camUp = camera->up;
+		// TODO: use this actual camera for the SP instead of raw LoadMatrix
+		// CCamera::SetActiveCamera(CCamera::CAMTYPE_SHADOW);
+
+		// HACK: needed for particle/billboard rendering, NOT for
+		// frustum checking (which is semi broken for shadows)!
 		const float3 camRgt = camera->right;
+		const float3 camUp = camera->up;
+
 		camera->right = sunDirX;
 		camera->up = sunDirY;
 

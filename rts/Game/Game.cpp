@@ -604,8 +604,6 @@ void CGame::LoadInterface()
 {
 	{
 		ScopedOnceTimer timer("Game::LoadInterface (Camera&Mouse)");
-		camera = new CCamera();
-		cam2 = new CCamera();
 		mouse = new CMouseHandler();
 		camHandler = new CCameraHandler();
 	}
@@ -831,8 +829,6 @@ void CGame::KillInterface()
 
 	LOG("[%s][2]", __FUNCTION__);
 	SafeDelete(camHandler);
-	SafeDelete(camera);
-	SafeDelete(cam2);
 
 	for (unsigned int i = 0; i < grouphandlers.size(); i++) {
 		SafeDelete(grouphandlers[i]);

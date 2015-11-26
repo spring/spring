@@ -16,8 +16,6 @@
 CONFIG(int, CubeTexSizeSpecular).defaultValue(128).minimumValue(1);
 CONFIG(int, CubeTexSizeReflection).defaultValue(128).minimumValue(1);
 
-static char cameraMemBuf[sizeof(CCamera)];
-
 CubeMapHandler* cubeMapHandler = NULL;
 
 CubeMapHandler::CubeMapHandler() {
@@ -190,36 +188,53 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 		glEnable(GL_DEPTH_TEST);
 	}
 
-	// anti-crash workaround for multi-threading
-	new (cameraMemBuf) CCamera(*camera);
+	{
+		CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_ENVMAP);
+		CCamera* curCam = CCamera::GetActiveCamera();
 
-	game->SetDrawMode(CGame::gameReflectionDraw);
+		// work around CCamera::GetRgtFromRot bugs
+		switch (glType) {
+			case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB: { curCam->forward =  RgtVector; curCam->right =  FwdVector; curCam->up =   UpVector; } break;
+			case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB: { curCam->forward = -RgtVector; curCam->right = -FwdVector; curCam->up =   UpVector; } break;
+			case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB: { curCam->forward =   UpVector; curCam->right =  RgtVector; curCam->up = -FwdVector; } break;
+			case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB: { curCam->forward =  -UpVector; curCam->right =  RgtVector; curCam->up =  FwdVector; } break;
+			case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB: { curCam->forward =  FwdVector; curCam->right = -RgtVector; curCam->up =   UpVector; } break;
+			case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB: { curCam->forward = -FwdVector; curCam->right =  RgtVector; curCam->up =   UpVector; } break;
+			default: {} break;
+		}
 
-	camera->SetRotZ(0.f);
-	camera->SetDir(camDir);
-	camera->SetFov(90.0f);
-	camera->SetPos((camera->GetPos()) * XZVector + UpVector * (CGround::GetHeightAboveWater(camera->GetPos().x, camera->GetPos().z, false) + 50.0f));
-	// calculate temporary new coor-system and matrices
-	camera->Update();
+		// env-reflections are only correct when drawn from an inverted
+		// perspective (meaning right becomes left and up becomes down)
+		curCam->right *= -1.0f;
+		curCam->up    *= -1.0f;
 
-	sky->Draw();
+		curCam->SetFov(90.0f);
+		curCam->SetPos(prvCam->GetPos());
+		// curCam->SetRotZ(0.0f);
+		// curCam->SetDir(camDir);
 
-	if (!skyOnly) {
-		readMap->GetGroundDrawer()->Draw(DrawPass::TerrainReflection);
+		// calculate matrices
+		curCam->Update(false);
+
+
+		game->SetDrawMode(CGame::gameReflectionDraw);
+		sky->Draw();
+
+		if (!skyOnly) {
+			readMap->GetGroundDrawer()->Draw(DrawPass::TerrainReflection);
+		}
+
+		game->SetDrawMode(CGame::gameNormalDraw);
+
+
+		CCamera::SetActiveCamera(prvCam->GetCamType());
+		prvCam->Update();
 	}
 
 	// NOTE we do this later to save render context switches (this is one of the slowest OpenGL operations!)
 	// reflectionCubeFBO.Unbind();
 	// glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glPopAttrib();
-
-	game->SetDrawMode(CGame::gameNormalDraw);
-
-	camera->~CCamera();
-	new (camera) CCamera(*reinterpret_cast<CCamera*>(cameraMemBuf));
-	reinterpret_cast<CCamera*>(cameraMemBuf)->~CCamera();
-
-	camera->Update();
 }
 
 

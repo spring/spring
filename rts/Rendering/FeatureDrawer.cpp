@@ -34,8 +34,8 @@
 
 #define DRAW_QUAD_SIZE 32
 
-#define ALPHA_OPAQUE 0.99f
-#define ALPHA_FAR -1.0f
+#define FD_ALPHA_OPAQUE  0.99f
+#define FD_ALPHA_FARTEX -1.00f
 
 
 CONFIG(bool, ShowRezBars).defaultValue(true).headlessValue(false);
@@ -258,12 +258,12 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType, int luaMatType)
 				LuaObjectMaterialData* matData = f->GetLuaMaterialData();
 
 				// if <f> is supposed to be drawn faded, skip it during this pass
-				if (f->drawAlpha < ALPHA_OPAQUE) {
+				if (f->drawAlpha < FD_ALPHA_OPAQUE) {
 					// if it's supposed to be drawn as a far texture and we're not
-					// during a shadow pass, queue it.
-					if (f->drawAlpha < 0.0f && luaMatType != LUAMAT_SHADOW) {
+					// inside a shadow pass, queue it.
+					if (f->drawAlpha <= FD_ALPHA_FARTEX && luaMatType != LUAMAT_SHADOW)
 						farTextureHandler->Queue(f);
-					}
+
 					continue;
 				}
 
@@ -399,7 +399,7 @@ void CFeatureDrawer::DrawFadeFeaturesSet(const FeatureSet& fadeFeatures, int mod
 		LuaObjectMaterialData* matData = f->GetLuaMaterialData();
 
 		// if <f> is not supposed to be drawn faded, skip it during this pass
-		if (f->drawAlpha >= ALPHA_OPAQUE || f->drawAlpha <= (1.0f - ALPHA_OPAQUE))
+		if (f->drawAlpha >= FD_ALPHA_OPAQUE || f->drawAlpha <= (1.0f - FD_ALPHA_OPAQUE))
 			continue;
 
 		if (matData->AddObjectForLOD(f, LUAOBJ_FEATURE, LuaMatType(luaMatType), camera->ProjectedDistance(f->pos)))
@@ -562,13 +562,13 @@ public:
 
 						if (sqDist < sqFadeDistB) {
 							// draw feature as normal, no fading
-							f->drawAlpha = ALPHA_OPAQUE;
+							f->drawAlpha = FD_ALPHA_OPAQUE;
 						} else if (sqDist < sqFadeDistE) {
 							// otherwise save it for the fade-pass
 							f->drawAlpha = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
 						}
 					} else if (farFeatures) {
-						f->drawAlpha = ALPHA_FAR;
+						f->drawAlpha = FD_ALPHA_FARTEX;
 					}
 				}
 			}

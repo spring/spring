@@ -21,15 +21,14 @@ CONFIG(bool, EdgeMoveDynamic)
 	.description("If EdgeMove scrolling speed should fade with edge distance.");
 
 
+CCamera* CCamera::camTypes[CCamera::CAMTYPE_COUNT] = {nullptr};
+
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CCamera* camera;
-CCamera* cam2;
-
-
-CCamera::CCamera()
+CCamera::CCamera(unsigned int cameraType)
 	: pos(ZeroVector)
 	, rot(ZeroVector)
 	, forward(RgtVector)
@@ -40,11 +39,10 @@ CCamera::CCamera()
 	, lppScale(0.0f)
 	, posOffset(ZeroVector)
 	, tiltOffset(ZeroVector)
+	, camType(cameraType)
 {
-	if (gs) {
-		// center map
-		pos = float3(mapDims.mapx * 0.5f * SQUARE_SIZE, 1000.f, mapDims.mapy * 0.5f * SQUARE_SIZE);
-	}
+	// place us at center of the map
+	pos = float3(mapDims.mapx * 0.5f * SQUARE_SIZE, 1000.f, mapDims.mapy * 0.5f * SQUARE_SIZE);
 
 	memset(viewport, 0, 4 * sizeof(int));
 	memset(movState, 0, sizeof(movState));
@@ -64,19 +62,22 @@ void CCamera::CopyState(const CCamera* cam) {
 	rgtFrustumSideDir = cam->rgtFrustumSideDir;
 	lftFrustumSideDir = cam->lftFrustumSideDir;
 
-	forward   = cam->forward;
-	right     = cam->right;
-	up        = cam->up;
+	forward   = cam->GetForward();
+	right     = cam->GetRight();
+	up        = cam->GetUp();
 
-	pos       = cam->pos;
-	rot       = cam->rot;
+	pos       = cam->GetPos();
+	rot       = cam->GetRot();
 
-	lppScale  = cam->lppScale;
+	lppScale  = cam->GetLPPScale();
+	camType   = cam->GetCamType();
 }
 
-void CCamera::Update()
+void CCamera::Update(bool updateDirs)
 {
-	UpdateDirFromRot();
+	if (updateDirs) {
+		UpdateDirsFromRot(rot);
+	}
 
 	const float aspect = globalRendering->aspectRatio;
 	const float viewx = math::tan(aspect * halfFov);
@@ -193,12 +194,7 @@ bool CCamera::InView(const float3& p, float radius) const
 		return false;
 	}
 
-	const float lsq = t.SqLength();
-	if (lsq > Square(globalRendering->viewRange)) {
-		return false;
-	}
-
-	return true;
+	return (t.SqLength() <= Square(globalRendering->viewRange));
 }
 
 
@@ -210,66 +206,65 @@ void CCamera::SetFov(const float myfov)
 }
 
 
-float3 CCamera::GetRotFromDir(float3 dir)
+
+float3 CCamera::GetRotFromDir(float3 fwd)
 {
-	dir.Normalize();
-	return float3(
-		math::acos(dir.y),
-		math::atan2(dir.x, -dir.z), // azimuth's 0 is on -z axis!
-		0.f
-	);
+	fwd.Normalize();
+
+	// NOTE:
+	//   atan2(0.0,  0.0) returns 0.0
+	//   atan2(0.0, -0.0) returns PI
+	//   azimuth (yaw) 0 is on negative z-axis
+	//
+	float3 r;
+	r.x = math::acos(fwd.y);
+	r.y = math::atan2(fwd.x, -fwd.z);
+	r.z = 0.0f;
+	return r;
 }
 
+float3 CCamera::GetFwdFromRot(const float3 r)
+{
+	float3 fwd;
+	fwd.x = math::sin(r.x) *   math::sin(r.y);
+	fwd.z = math::sin(r.x) * (-math::cos(r.y));
+	fwd.y = math::cos(r.x);
+	return fwd;
+}
+
+float3 CCamera::GetRgtFromRot(const float3 r)
+{
+	// FIXME:
+	//   right should always be "right" relative to forward
+	//   (i.e. up should always point "up" in WS and camera
+	//   can not flip upside down) but is not
+	//
+	//   fwd=(0, 1,0) -> rot=GetRotFromDir(fwd)=(0.0, PI, 0.0) -> GetRgtFromRot(rot)=(-1.0, 0.0, 0.0)
+	//   fwd=(0,-1,0) -> rot=GetRotFromDir(fwd)=( PI, PI, 0.0) -> GetRgtFromRot(rot)=(-1.0, 0.0, 0.0)
+	//
+	float3 rgt;
+	rgt.x = math::sin(HALFPI - r.z) *   math::sin(r.y + HALFPI);
+	rgt.z = math::sin(HALFPI - r.z) * (-math::cos(r.y + HALFPI));
+	rgt.y = math::cos(HALFPI - r.z);
+	return rgt;
+}
+
+
+void CCamera::UpdateDirsFromRot(const float3 r)
+{
+	forward  = std::move(GetFwdFromRot(r));
+	right    = std::move(GetRgtFromRot(r));
+	up       = (right.cross(forward)).Normalize();
+}
 
 void CCamera::SetDir(const float3 dir)
 {
-	//if (dir == forward) return;
-	rot = GetRotFromDir(dir) + float3(0.f,0.f,rot.z);
-	UpdateDirFromRot();
+	// if (dir == forward) return;
+	// update our axis-system from the angles
+	SetRot(GetRotFromDir(dir) + (FwdVector * rot.z));
 	assert(dir.dot(forward) > 0.9f);
 }
 
-
-void CCamera::SetRot(const float3 r)
-{
-	rot = r;
-	UpdateDirFromRot();
-}
-
-
-void CCamera::SetRotX(const float x)
-{
-	rot.x = x;
-	UpdateDirFromRot();
-}
-
-
-void CCamera::SetRotY(const float y)
-{
-	rot.y = y;
-	UpdateDirFromRot();
-}
-
-
-void CCamera::SetRotZ(const float z)
-{
-	rot.z = z;
-	UpdateDirFromRot();
-}
-
-
-void CCamera::UpdateDirFromRot()
-{
-	forward.x = math::sin(rot.x) * math::sin(rot.y);
-	forward.z = math::sin(rot.x) * (-math::cos(rot.y));
-	forward.y = math::cos(rot.x);
-
-	right.x = math::sin(HALFPI - rot.z) * math::sin(rot.y + HALFPI); //FIXME
-	right.z = math::sin(HALFPI - rot.z) * (-math::cos(rot.y + HALFPI));
-	right.y = math::cos(HALFPI - rot.z);
-
-	up = right.cross(forward);
-}
 
 
 float3 CCamera::CalcPixelDir(int x, int y) const

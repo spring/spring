@@ -446,27 +446,23 @@ void CDynWater::DrawReflection(CGame* game)
 {
 //	const bool shadowsLoaded = shadowHandler->shadowsLoaded;
 
-//	CCamera* realCam = camera;
-//	camera = new CCamera(*realCam);
-	char realCam[sizeof(CCamera)];
-	new (realCam) CCamera(*camera); // anti-crash workaround for multithreading
-
-	camera->SetDir(camera->GetDir() * float3(1.0f, -1.0f, 1.0f));
-	camera->SetPos(camera->GetPos() * float3(1.0f, -1.0f, 1.0f));
-	camera->SetRotZ(-camera->GetRot().z);
-	camera->Update();
-
-	reflectRight = camera->GetRight();
-	reflectUp = camera->GetUp();
-	reflectForward = camera->GetDir();
-
 	reflectFBO.Bind();
 	glViewport(0, 0, 512, 512);
 	glClearColor(0.5f, 0.6f, 0.8f, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
+	CCamera* curCam = CCamera::GetActiveCamera();
+
 	{
-		drawReflection = true;
+		curCam->SetDir(prvCam->GetDir() * float3(1.0f, -1.0f, 1.0f));
+		curCam->SetPos(prvCam->GetPos() * float3(1.0f, -1.0f, 1.0f));
+		curCam->SetRotZ(-prvCam->GetRot().z);
+		curCam->Update();
+
+		reflectRight   = curCam->GetRight();
+		reflectUp      = curCam->GetUp();
+		reflectForward = curCam->GetDir();
 
 		game->SetDrawMode(CGame::gameReflectionDraw);
 		sky->Draw();
@@ -477,45 +473,46 @@ void CDynWater::DrawReflection(CGame* game)
 			glEnable(GL_CLIP_PLANE2);
 			glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
 
-			// FIXME-3429:
-			//   this causes the SMF shader to be RECOMPILED each frame
-			//   (because of abdb611014fbb903341fe731835ecf831e31d9b2)
-			// shadowHandler->shadowsLoaded = false;
+			{
+				drawReflection = true;
 
-			CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-				gd->SetupReflDrawPass();
-				gd->Draw(DrawPass::WaterReflection);
-				gd->SetupBaseDrawPass();
+				// FIXME-3429:
+				//   this causes the SMF shader to be RECOMPILED each frame
+				//   (because of abdb611014fbb903341fe731835ecf831e31d9b2)
+				// shadowHandler->shadowsLoaded = false;
 
-			// shadowHandler->shadowsLoaded = shadowsLoaded;
+				CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
+					gd->SetupReflDrawPass();
+					gd->Draw(DrawPass::WaterReflection);
+					gd->SetupBaseDrawPass();
 
-			unitDrawer->Draw(true);
-			featureDrawer->Draw();
-			unitDrawer->DrawCloakedUnits(true);
-			featureDrawer->DrawFadeFeatures(true);
+				// shadowHandler->shadowsLoaded = shadowsLoaded;
 
-			projectileDrawer->Draw(true);
-			eventHandler.DrawWorldReflection();
+				unitDrawer->Draw(true);
+				featureDrawer->Draw();
+				unitDrawer->DrawCloakedUnits(true);
+				featureDrawer->DrawFadeFeatures(true);
+
+				projectileDrawer->Draw(true);
+				eventHandler.DrawWorldReflection();
+
+				drawReflection = false;
+			}
 
 			glDisable(GL_CLIP_PLANE2);
 		}
 
-		sky->DrawSun();
+		// needed?
+		// sky->DrawSun();
 		game->SetDrawMode(CGame::gameNormalDraw);
-
-		drawReflection = false;
 	}
+
+	CCamera::SetActiveCamera(prvCam->GetCamType());
+	prvCam->Update();
 
 	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 1);
 
-//	delete camera;
-//	camera = realCam;
-	camera->~CCamera();
-	new (camera) CCamera(*(reinterpret_cast<CCamera*>(realCam)));
-	reinterpret_cast<CCamera*>(realCam)->~CCamera();
-
-	camera->Update();
 }
 
 void CDynWater::DrawRefraction(CGame* game)
