@@ -239,8 +239,8 @@ float3 CCamera::GetRgtFromRot(const float3 r)
 	//   (i.e. up should always point "up" in WS and camera
 	//   can not flip upside down) but is not
 	//
-	//   fwd=(0, 1,0) -> rot=GetRotFromDir(fwd)=(0.0, PI, 0.0) -> GetRgtFromRot(rot)=(-1.0, 0.0, 0.0)
-	//   fwd=(0,-1,0) -> rot=GetRotFromDir(fwd)=( PI, PI, 0.0) -> GetRgtFromRot(rot)=(-1.0, 0.0, 0.0)
+	//   fwd=(0,+1,0) -> rot=GetRotFromDir(fwd)=(0.0, PI, 0.0) -> GetRgtFromRot(rot)=(-1.0, 0.0, 0.0)
+	//   fwd=(0,-1,0) -> rot=GetRotFromDir(fwd)=( PI, PI, 0.0) -> GetRgtFromRot(rot)=(+1.0, 0.0, 0.0)
 	//
 	float3 rgt;
 	rgt.x = math::sin(HALFPI - r.z) *   math::sin(r.y + HALFPI);
