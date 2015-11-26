@@ -261,7 +261,7 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType, int luaMatType)
 				if (f->drawAlpha < ALPHA_OPAQUE) {
 					// if it's supposed to be drawn as a far texture and we're not
 					// during a shadow pass, queue it.
-					if (f->drawAlpha < 0 && luaMatType != LUAMAT_SHADOW) {
+					if (f->drawAlpha < 0.0f && luaMatType != LUAMAT_SHADOW) {
 						farTextureHandler->Queue(f);
 					}
 					continue;
