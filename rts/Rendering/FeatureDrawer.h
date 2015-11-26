@@ -31,8 +31,8 @@ public:
 
 	void DrawFadeFeatures(bool noAdvShading = false);
 
-	void DrawFeatureNoLists(const CFeature*, float alpha);
-	void DrawFeatureWithLists(const CFeature*, unsigned int preList, unsigned int postList, float alpha = 1.0f);
+	void DrawFeatureNoLists(const CFeature*);
+	void DrawFeatureWithLists(const CFeature*, unsigned int preList, unsigned int postList, bool luaCall);
 
 
 	bool WantsEvent(const std::string& eventName) {

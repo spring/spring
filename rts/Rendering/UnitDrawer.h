@@ -80,9 +80,9 @@ public:
 	void DrawUnitBeingBuilt(const CUnit* unit);
 
 	void DrawUnitNoLists(const CUnit* unit);
-	void DrawUnitWithLists(const CUnit* unit, unsigned int preList, unsigned int postList);
+	void DrawUnitWithLists(const CUnit* unit, unsigned int preList, unsigned int postList, bool luaCall);
 	void DrawUnitRawNoLists(const CUnit* unit);
-	void DrawUnitRawWithLists(const CUnit* unit, unsigned int preList, unsigned int postList);
+	void DrawUnitRawWithLists(const CUnit* unit, unsigned int preList, unsigned int postList, bool luaCall);
 
 	void SetTeamColour(int team, float alpha = 1.0f) const;
 	void SetupForUnitDrawing(bool deferredPass);

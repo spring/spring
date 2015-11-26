@@ -188,13 +188,15 @@ const LuaMaterial* LuaObjectDrawer::DrawMaterialBin(
 			case LUAOBJ_UNIT: {
 				// note: only makes sense to set team-color if the
 				// material has a standard (engine) shader attached
+				// (check if *Shader.type == LUASHADER_{3DO,S3O})
+				//
 				// note: must use static_cast here because of GetTransformMatrix (!)
 				unitDrawer->SetTeamColour(obj->team);
-				unitDrawer->DrawUnitWithLists(static_cast<const CUnit*>(obj), lodMat->preDisplayList, lodMat->postDisplayList);
+				unitDrawer->DrawUnitWithLists(static_cast<const CUnit*>(obj), lodMat->preDisplayList, lodMat->postDisplayList, true);
 			} break;
 			case LUAOBJ_FEATURE: {
 				// also sets team-color (needs a specific alpha-value)
-				featureDrawer->DrawFeatureWithLists(static_cast<const CFeature*>(obj), lodMat->preDisplayList, lodMat->postDisplayList);
+				featureDrawer->DrawFeatureWithLists(static_cast<const CFeature*>(obj), lodMat->preDisplayList, lodMat->postDisplayList, true);
 			} break;
 			default: {
 				assert(false);
@@ -249,11 +251,11 @@ bool LuaObjectDrawer::DrawSingleObject(CSolidObject* obj, LuaObjType objType)
 	switch (objType) {
 		case LUAOBJ_UNIT: {
 			unitDrawer->SetTeamColour(obj->team);
-			unitDrawer->DrawUnitRawWithLists(static_cast<const CUnit*>(obj), lodMat->preDisplayList, lodMat->postDisplayList);
+			unitDrawer->DrawUnitRawWithLists(static_cast<const CUnit*>(obj), lodMat->preDisplayList, lodMat->postDisplayList, true);
 		} break;
 		case LUAOBJ_FEATURE: {
 			// not implemented (nor "raw" versions in general)
-			// featureDrawer->DrawFeatureRawWithLists(static_cast<const CFeature*>(obj), lodMat->preDisplayList, lodMat->postDisplayList);
+			// featureDrawer->DrawFeatureRawWithLists(static_cast<const CFeature*>(obj), lodMat->preDisplayList, lodMat->postDisplayList, true);
 		} break;
 		default: {
 			assert(false);

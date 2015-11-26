@@ -271,7 +271,7 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType, int luaMatType)
 				if (matData->AddObjectForLOD(f, LUAOBJ_FEATURE, LuaMatType(luaMatType), camera->ProjectedDistance(f->pos)))
 					continue;
 
-				DrawFeatureNoLists(f, f->drawAlpha);
+				DrawFeatureNoLists(f);
 			}
 		}
 	}
@@ -295,12 +295,12 @@ bool CFeatureDrawer::CanDrawFeature(const CFeature* feature) const
 }
 
 
-void CFeatureDrawer::DrawFeatureNoLists(const CFeature* feature, float alpha)
+void CFeatureDrawer::DrawFeatureNoLists(const CFeature* feature)
 {
-	DrawFeatureWithLists(feature, 0, 0, alpha);
+	DrawFeatureWithLists(feature, 0, 0, false);
 }
 
-void CFeatureDrawer::DrawFeatureWithLists(const CFeature* feature, unsigned int preList, unsigned int postList, float alpha)
+void CFeatureDrawer::DrawFeatureWithLists(const CFeature* feature, unsigned int preList, unsigned int postList, bool /*luaCall*/)
 {
 	if (!CanDrawFeature(feature))
 		return;
@@ -309,7 +309,7 @@ void CFeatureDrawer::DrawFeatureWithLists(const CFeature* feature, unsigned int 
 	glMultMatrixf(feature->GetTransformMatrixRef());
 
 	// TODO: move this out of UnitDrawer(State)
-	unitDrawer->SetTeamColour(feature->team, alpha);
+	unitDrawer->SetTeamColour(feature->team, feature->drawAlpha);
 
 	if (preList != 0) {
 		glCallList(preList);
@@ -415,7 +415,7 @@ void CFeatureDrawer::DrawFadeFeaturesSet(const FeatureSet& fadeFeatures, int mod
 		glAlphaFunc(GL_GREATER, f->drawAlpha / 2.0f);
 		glColor4fv(cols);
 
-		DrawFeatureNoLists(f, f->drawAlpha);
+		DrawFeatureNoLists(f);
 	}
 }
 

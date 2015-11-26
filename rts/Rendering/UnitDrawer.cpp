@@ -1324,10 +1324,10 @@ void CUnitDrawer::DrawUnitRawModel(const CUnit* unit)
 
 void CUnitDrawer::DrawUnitNoLists(const CUnit* unit)
 {
-	DrawUnitWithLists(unit, 0, 0);
+	DrawUnitWithLists(unit, 0, 0, false);
 }
 
-void CUnitDrawer::DrawUnitWithLists(const CUnit* unit, unsigned int preList, unsigned int postList)
+void CUnitDrawer::DrawUnitWithLists(const CUnit* unit, unsigned int preList, unsigned int postList, bool luaCall)
 {
 	glPushMatrix();
 	glMultMatrixf(unit->GetTransformMatrix());
@@ -1336,7 +1336,15 @@ void CUnitDrawer::DrawUnitWithLists(const CUnit* unit, unsigned int preList, uns
 		glCallList(preList);
 	}
 
-	if (!unit->beingBuilt || !unit->unitDef->showNanoFrame) {
+	// if called from LuaObjectDrawer, unit has a custom material
+	//
+	// DrawUnitBeingBuilt disables *any* shader that is currently
+	// active for its first stage and only enables a standard one
+	// for its second, while we want the Lua shader (if provided)
+	// to have full control over the build visualisation: keep it
+	// simple and bypass the engine path
+	//
+	if (luaCall || !unit->beingBuilt || !unit->unitDef->showNanoFrame) {
 		DrawUnitModel(unit);
 	} else {
 		DrawUnitBeingBuilt(unit);
@@ -1352,10 +1360,10 @@ void CUnitDrawer::DrawUnitWithLists(const CUnit* unit, unsigned int preList, uns
 
 void CUnitDrawer::DrawUnitRawNoLists(const CUnit* unit)
 {
-	DrawUnitRawWithLists(unit, 0, 0);
+	DrawUnitRawWithLists(unit, 0, 0, false);
 }
 
-void CUnitDrawer::DrawUnitRawWithLists(const CUnit* unit, unsigned int preList, unsigned int postList)
+void CUnitDrawer::DrawUnitRawWithLists(const CUnit* unit, unsigned int preList, unsigned int postList, bool /*luaCall*/)
 {
 	glPushMatrix();
 	glMultMatrixf(unit->GetTransformMatrix());
