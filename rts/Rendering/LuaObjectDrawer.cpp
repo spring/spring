@@ -30,6 +30,9 @@ float LuaObjectDrawer::LODScaleShadow[LUAOBJ_LAST];
 float LuaObjectDrawer::LODScaleReflection[LUAOBJ_LAST];
 float LuaObjectDrawer::LODScaleRefraction[LUAOBJ_LAST];
 
+static const LuaMatType opaqueMats[2] = {LUAMAT_OPAQUE, LUAMAT_OPAQUE_REFLECT};
+static const LuaMatType  alphaMats[2] = {LUAMAT_ALPHA, LUAMAT_ALPHA_REFLECT};
+
 
 static float GetLODFloat(const std::string& name)
 {
@@ -132,6 +135,11 @@ void LuaObjectDrawer::SetGlobalDrawPassLODFactor(LuaObjType objType)
 	LuaObjectMaterialData::SetGlobalLODFactor(objType, GetLODScale(objType) * camera->GetLPPScale());
 }
 
+
+LuaMatType LuaObjectDrawer::GetDrawPassOpaqueMat() { return opaqueMats[water->DrawReflectionPass()]; }
+LuaMatType LuaObjectDrawer::GetDrawPassAlphaMat() { return alphaMats[water->DrawReflectionPass()]; }
+
+
 void LuaObjectDrawer::DrawMaterialBins(LuaObjType objType, LuaMatType matType, bool deferredPass)
 {
 	const LuaMatBinSet& bins = luaMatHandler.GetBins(matType);
@@ -215,7 +223,7 @@ bool LuaObjectDrawer::DrawSingleObject(CSolidObject* obj, LuaObjType objType)
 	if (!matData->Enabled())
 		return false;
 
-	if ((lodMat = matData->GetLuaLODMaterial((water->DrawReflectionPass())? LUAMAT_OPAQUE_REFLECT: LUAMAT_OPAQUE)) == nullptr)
+	if ((lodMat = matData->GetLuaLODMaterial(GetDrawPassOpaqueMat())) == nullptr)
 		return false;
 	if (!lodMat->IsActive())
 		return false;
@@ -300,7 +308,7 @@ void LuaObjectDrawer::DrawOpaqueMaterialObjects(LuaObjType objType, bool deferre
 		} break;
 	}
 
-	DrawMaterialBins(objType, (water->DrawReflectionPass())? LUAMAT_OPAQUE_REFLECT: LUAMAT_OPAQUE, deferredPass);
+	DrawMaterialBins(objType, GetDrawPassOpaqueMat(), deferredPass);
 }
 
 void LuaObjectDrawer::DrawAlphaMaterialObjects(LuaObjType objType, bool)
@@ -324,7 +332,7 @@ void LuaObjectDrawer::DrawAlphaMaterialObjects(LuaObjType objType, bool)
 	}
 
 	// FIXME: deferred shading and transparency is a PITA
-	DrawMaterialBins(objType, (water->DrawReflectionPass())? LUAMAT_ALPHA_REFLECT: LUAMAT_ALPHA, false);
+	DrawMaterialBins(objType, GetDrawPassAlphaMat(), false);
 }
 
 void LuaObjectDrawer::DrawShadowMaterialObjects(LuaObjType objType, bool)

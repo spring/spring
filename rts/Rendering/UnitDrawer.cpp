@@ -261,15 +261,12 @@ inline bool CUnitDrawer::DrawUnitLOD(CUnit* unit)
 {
 	LuaObjectMaterialData* matData = unit->GetLuaMaterialData();
 
-	const LuaMatType  alphaMats[2] = {LUAMAT_ALPHA, LUAMAT_ALPHA_REFLECT};
-	const LuaMatType opaqueMats[2] = {LUAMAT_OPAQUE, LUAMAT_OPAQUE_REFLECT};
-
 	bool ret = false;
 
 	if (unit->IsCloaked()) {
-		ret = (matData->AddObjectForLOD(unit, LUAOBJ_UNIT,  alphaMats[water->DrawReflectionPass()], camera->ProjectedDistance(unit->pos)));
+		ret = (matData->AddObjectForLOD(unit, LUAOBJ_UNIT, LuaObjectDrawer::GetDrawPassAlphaMat(), camera->ProjectedDistance(unit->pos)));
 	} else {
-		ret = (matData->AddObjectForLOD(unit, LUAOBJ_UNIT, opaqueMats[water->DrawReflectionPass()], camera->ProjectedDistance(unit->pos)));
+		ret = (matData->AddObjectForLOD(unit, LUAOBJ_UNIT, LuaObjectDrawer::GetDrawPassOpaqueMat(), camera->ProjectedDistance(unit->pos)));
 	}
 
 	return ret;

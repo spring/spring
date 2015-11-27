@@ -42,6 +42,9 @@ public:
 	static float SetLODScaleReflection(int objType, float v) { return (LODScaleReflection[objType] = v); }
 	static float SetLODScaleRefraction(int objType, float v) { return (LODScaleRefraction[objType] = v); }
 
+	static LuaMatType GetDrawPassOpaqueMat();
+	static LuaMatType GetDrawPassAlphaMat();
+
 private:
 	static void DrawMaterialBins(LuaObjType objType, LuaMatType matType, bool deferredPass);
 	static const LuaMaterial* DrawMaterialBin(

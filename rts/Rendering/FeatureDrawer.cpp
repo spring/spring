@@ -217,7 +217,7 @@ void CFeatureDrawer::Draw()
 		// arbitrarily pick first proxy to prepare state
 		// TODO: also add a deferred pass for features
 		modelRenderers[0].rendererTypes[modelType]->PushRenderState();
-		DrawOpaqueFeatures(modelType, (water->DrawReflectionPass())? LUAMAT_OPAQUE_REFLECT: LUAMAT_OPAQUE);
+		DrawOpaqueFeatures(modelType, LuaObjectDrawer::GetDrawPassOpaqueMat());
 		modelRenderers[0].rendererTypes[modelType]->PopRenderState();
 	}
 
@@ -353,7 +353,7 @@ void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 		{
 			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 				modelRenderers[0].rendererTypes[modelType]->PushRenderState();
-				DrawFadeFeaturesHelper(modelType, (water->DrawReflectionPass())? LUAMAT_ALPHA_REFLECT: LUAMAT_ALPHA);
+				DrawFadeFeaturesHelper(modelType, LuaObjectDrawer::GetDrawPassAlphaMat());
 				modelRenderers[0].rendererTypes[modelType]->PopRenderState();
 			}
 		}
