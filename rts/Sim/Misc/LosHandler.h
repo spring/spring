@@ -37,19 +37,23 @@
 struct SLosInstance
 {
 	SLosInstance(int id)
-		: allyteam(-1)
+		: id(id)
+		, allyteam(-1)
 		, radius(-1)
 		, basePos()
 		, baseHeight(-1)
 		, refCount(0)
 		, hashNum(-1)
 		, status(NONE)
-		, toBeDeleted(false)
-		, id(id)
+		, isCache(false)
+		, isQueuedForUpdate(false)
+		, isQueuedForTerraform(false)
 	{}
 	void Init(int radius, int allyteam, int2 basePos, float baseHeight, int hashNum);
 
+public:
 	// hash properties
+	int id;
 	int allyteam;
 	int radius;
 	int2 basePos;
@@ -71,8 +75,10 @@ struct SLosInstance
 		REMOVE = 8,
 	};
 	int status;
-	bool toBeDeleted;
-	int id;
+
+	bool isCache;
+	bool isQueuedForUpdate;
+	bool isQueuedForTerraform;
 };
 
 

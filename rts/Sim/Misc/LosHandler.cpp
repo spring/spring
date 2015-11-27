@@ -55,7 +55,9 @@ inline void SLosInstance::Init(int radius, int allyteam, int2 basePos, float bas
 	this->refCount = 0;
 	this->hashNum = hashNum;
 	this->status = NONE;
-	this->toBeDeleted = false;
+	this->isCache = false;
+	this->isQueuedForUpdate = false;
+	this->isQueuedForTerraform = false;
 }
 
 
@@ -233,38 +235,38 @@ inline void ILosType::LosRemove(SLosInstance* li)
 }
 
 
-inline void ILosType::RefInstance(SLosInstance* instance)
+inline void ILosType::RefInstance(SLosInstance* li)
 {
-	instance->refCount++;
-	if (instance->refCount == 1) {
-		if (instance->toBeDeleted) {
+	li->refCount++;
+	if (li->refCount == 1) {
+		if (li->isCache) {
 			if (algoType == LOS_ALGO_RAYCAST) ++cacheReactivated;
-			auto it = std::find(losCache.begin(), losCache.end(), instance);
-			instance->toBeDeleted = false;
+			auto it = std::find(losCache.begin(), losCache.end(), li);
+			li->isCache = false;
 			losCache.erase(it);
 		}
 
-		UpdateInstanceStatus(instance, SLosInstance::TLosStatus::REACTIVATE);
+		UpdateInstanceStatus(li, SLosInstance::TLosStatus::REACTIVATE);
 	}
 }
 
 
-void ILosType::UnrefInstance(SLosInstance* instance)
+void ILosType::UnrefInstance(SLosInstance* li)
 {
-	assert(instance->refCount > 0);
-	instance->refCount--;
-	if (instance->refCount > 0) {
+	assert(li->refCount > 0);
+	li->refCount--;
+	if (li->refCount > 0) {
 		return;
 	}
 
-	UpdateInstanceStatus(instance, SLosInstance::TLosStatus::REMOVE);
+	UpdateInstanceStatus(li, SLosInstance::TLosStatus::REMOVE);
 }
 
 
-inline void ILosType::DelayedUnrefInstance(SLosInstance* instance)
+inline void ILosType::DelayedUnrefInstance(SLosInstance* li)
 {
 	DelayedInstance di;
-	di.instance = instance;
+	di.instance = li;
 	di.timeoutTime = (gs->frameNum + (GAME_SPEED + (GAME_SPEED >> 1)));
 	delayedDeleteQue.push_back(di);
 }
@@ -273,11 +275,12 @@ inline void ILosType::DelayedUnrefInstance(SLosInstance* instance)
 inline void ILosType::AddInstanceToCache(SLosInstance* li)
 {
 	if (li->status & SLosInstance::TLosStatus::RECALC) {
+		assert(!li->isCache);
 		DeleteInstance(li);
 		return;
 	}
 
-	li->toBeDeleted = true;
+	li->isCache = true;
 	losCache.push_back(li);
 }
 
@@ -303,16 +306,19 @@ inline void ILosType::DeleteInstance(SLosInstance* li)
 	instanceHash.erase(it);
 
 	// caller has to do that
-	/*if (li->toBeDeleted) {
+	assert(!li->isCache);
+	/*if (li->isCache) {
 		auto it = std::find(losCache.begin(), losCache.end(), li);
 		losCache.erase(it);
 	}*/
 
-	if (li->status & SLosInstance::TLosStatus::RECALC) {
+	if (li->isQueuedForTerraform) {
 		auto it = std::find_if(delayedTerraQue.begin(), delayedTerraQue.end(), [&](const DelayedInstance& inst) {
 			return inst.instance == li;
 		});
-		delayedTerraQue.erase(it);
+		if (it != delayedTerraQue.end())
+			delayedTerraQue.erase(it);
+		li->isQueuedForTerraform = false;
 	}
 
 	li->squares.clear();
@@ -322,25 +328,32 @@ inline void ILosType::DeleteInstance(SLosInstance* li)
 
 inline void ILosType::UpdateInstanceStatus(SLosInstance* li, SLosInstance::TLosStatus status)
 {
+	// queue for update
 	if (status == SLosInstance::TLosStatus::RECALC) {
-		if (li->status == 0) {
+		if (!li->isQueuedForTerraform && !li->isQueuedForUpdate) {
+			li->isQueuedForTerraform = true;
+
 			DelayedInstance di;
 			di.instance = li;
 			di.timeoutTime = (gs->frameNum + 2 * GAME_SPEED);
 			delayedTerraQue.push_back(di);
 		}
 	} else {
-		if ((li->status & ~SLosInstance::TLosStatus::RECALC) == 0)
+		if (!li->isQueuedForUpdate) {
+			li->isQueuedForUpdate = true;
 			losUpdate.push_back(li);
+		}
 	}
 
+
+	// mark the type of update needed
 	assert((li->status & status) == 0 || status == SLosInstance::TLosStatus::RECALC);
 	li->status |= status;
 
-	assert(li->refCount > 0 || li->status & SLosInstance::TLosStatus::REMOVE || li->toBeDeleted);
 
+	// sanity checks (debug only)
 	constexpr auto b = SLosInstance::TLosStatus::REACTIVATE | SLosInstance::TLosStatus::RECALC;
-	assert((li->status & b) != b);
+	assert((li->status & b) != b || (li->status & SLosInstance::TLosStatus::REMOVE));
 
 	constexpr auto c = SLosInstance::TLosStatus::NEW | SLosInstance::TLosStatus::RECALC;
 	assert((li->status & c) != c);
@@ -350,6 +363,15 @@ inline void ILosType::UpdateInstanceStatus(SLosInstance* li, SLosInstance::TLosS
 
 	constexpr auto e = SLosInstance::TLosStatus::NEW | SLosInstance::TLosStatus::REMOVE;
 	assert((li->status & e) != e);
+
+	if (li->status & SLosInstance::TLosStatus::RECALC)
+		assert(li->refCount > 0 || (li->status & SLosInstance::TLosStatus::REMOVE));
+
+	if (li->refCount == 0)
+		assert(li->isCache || (li->status & SLosInstance::TLosStatus::REMOVE));
+
+	if (status == SLosInstance::TLosStatus::REMOVE)
+		assert(li->refCount == 0);
 }
 
 
@@ -402,7 +424,11 @@ void ILosType::Update()
 
 	// relos after terraform is delayed
 	while (!delayedTerraQue.empty() && delayedTerraQue.front().timeoutTime < gs->frameNum) {
-		losUpdate.push_back( delayedTerraQue.front().instance );
+		SLosInstance* li = delayedTerraQue.front().instance;
+		li->isQueuedForTerraform = false;
+		if (!li->isQueuedForUpdate) {
+			losUpdate.push_back(li);
+		}
 		delayedTerraQue.pop_front();
 	}
 
@@ -422,6 +448,7 @@ void ILosType::Update()
 	// filter the updates into their subparts
 	for (SLosInstance* li: losUpdate) {
 		const auto status = OptimizeInstanceUpdate(li);
+		li->isQueuedForUpdate = false;
 
 		switch (status) {
 			case SLosInstance::TLosStatus::NEW: {
@@ -446,7 +473,8 @@ void ILosType::Update()
 		}
 
 		if (status == SLosInstance::TLosStatus::REMOVE) {
-			// clear all bits except recalc. cause when we delete it, recalc ones won't get cached
+			// clear all bits except recalc
+			// so the instance gets deleted right away in AddInstanceToCache()
 			li->status &= SLosInstance::TLosStatus::RECALC;
 		} else {
 			li->status = SLosInstance::TLosStatus::NONE;
@@ -477,8 +505,10 @@ void ILosType::Update()
 	// delete / move to cache unused instances
 	if (algoType == LOS_ALGO_RAYCAST) {
 		while (!losCache.empty() && ((losCache.size() + losDeleted.size()) > CACHE_SIZE)) {
-			DeleteInstance(losCache.front());
+			SLosInstance* li = losCache.front();
 			losCache.pop_front();
+			li->isCache = false;
+			DeleteInstance(li);
 		}
 
 		for (SLosInstance* li: losDeleted) {
@@ -529,6 +559,7 @@ void ILosType::UpdateHeightMapSynced(SRectangle rect)
 		}
 
 		it = losCache.erase(it);
+		li->isCache = false;
 		DeleteInstance(li);
 	}
 
