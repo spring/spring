@@ -22,7 +22,13 @@ class LuaObjectDrawer {
 public:
 	static bool InDrawPass() { return inDrawPass; }
 	static bool DrawSingleObject(CSolidObject* obj, LuaObjType objType);
+
 	static void SetObjectLOD(CSolidObject* obj, LuaObjType objType, unsigned int lodCount);
+	static bool AddObjectForLOD(CSolidObject* obj, LuaObjType objType, bool useAlphaMat, bool useShadowMat);
+
+	static bool AddOpaqueMaterialObject(CSolidObject* obj, LuaObjType objType);
+	static bool AddAlphaMaterialObject(CSolidObject* obj, LuaObjType objType);
+	static bool AddShadowMaterialObject(CSolidObject* obj, LuaObjType objType);
 
 	static void DrawOpaqueMaterialObjects(LuaObjType objType, bool deferredPass);
 	static void DrawAlphaMaterialObjects(LuaObjType objType, bool deferredPass);
@@ -44,6 +50,7 @@ public:
 
 	static LuaMatType GetDrawPassOpaqueMat();
 	static LuaMatType GetDrawPassAlphaMat();
+	static LuaMatType GetDrawPassShadowMat() { return LUAMAT_SHADOW; }
 
 private:
 	static void DrawMaterialBins(LuaObjType objType, LuaMatType matType, bool deferredPass);

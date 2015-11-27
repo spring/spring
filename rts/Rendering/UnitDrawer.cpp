@@ -254,24 +254,6 @@ bool CUnitDrawer::UpdateGeometryBuffer(bool init)
 
 
 
-
-
-// only called by DrawOpaqueUnit
-inline bool CUnitDrawer::DrawUnitLOD(CUnit* unit)
-{
-	LuaObjectMaterialData* matData = unit->GetLuaMaterialData();
-
-	bool ret = false;
-
-	if (unit->IsCloaked()) {
-		ret = (matData->AddObjectForLOD(unit, LUAOBJ_UNIT, LuaObjectDrawer::GetDrawPassAlphaMat(), camera->ProjectedDistance(unit->pos)));
-	} else {
-		ret = (matData->AddObjectForLOD(unit, LUAOBJ_UNIT, LuaObjectDrawer::GetDrawPassOpaqueMat(), camera->ProjectedDistance(unit->pos)));
-	}
-
-	return ret;
-}
-
 inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction)
 {
 	if (!CanDrawOpaqueUnit(unit, excludeUnit, drawReflection, drawRefraction))
@@ -282,11 +264,12 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 		return;
 	}
 
-	if (!DrawUnitLOD(unit)) {
-		// draw the unit with the default (non-Lua) material
-		SetTeamColour(unit->team);
-		DrawUnitNoLists(unit);
-	}
+	if (LuaObjectDrawer::AddOpaqueMaterialObject(unit, LUAOBJ_UNIT))
+		return;
+
+	// draw the unit with the default (non-Lua) material
+	SetTeamColour(unit->team);
+	DrawUnitNoLists(unit);
 }
 
 
@@ -527,11 +510,10 @@ void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 	if (!CanDrawOpaqueUnitShadow(unit))
 		return;
 
-	LuaObjectMaterialData* matData = unit->GetLuaMaterialData();
+	if (LuaObjectDrawer::AddShadowMaterialObject(unit, LUAOBJ_UNIT))
+		return;
 
-	if (!matData->AddObjectForLOD(unit, LUAOBJ_UNIT, LUAMAT_SHADOW, camera->ProjectedDistance(unit->pos))) {
-		DrawUnitNoLists(unit);
-	}
+	DrawUnitNoLists(unit);
 }
 
 
@@ -789,9 +771,11 @@ void CUnitDrawer::DrawCloakedUnitsHelper(int modelType)
 }
 
 inline void CUnitDrawer::DrawCloakedUnit(CUnit* unit, int modelType, bool drawGhostBuildingsPass) {
-	if (!camera->InView(unit->drawMidPos, unit->drawRadius)) {
+	if (!camera->InView(unit->drawMidPos, unit->drawRadius))
 		return;
-	}
+
+	if (LuaObjectDrawer::AddAlphaMaterialObject(unit, LUAOBJ_UNIT))
+		return;
 
 	const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
 
@@ -814,9 +798,8 @@ inline void CUnitDrawer::DrawCloakedUnit(CUnit* unit, int modelType, bool drawGh
 		}
 
 		// FIXME: needs a second pass
-		if (model->type != modelType) {
+		if (model->type != modelType)
 			return;
-		}
 
 		// ghosted enemy units
 		if (losStatus & LOS_CONTRADAR) {

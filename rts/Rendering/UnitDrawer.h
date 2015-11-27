@@ -135,7 +135,6 @@ private:
 	bool CanDrawOpaqueUnit(const CUnit* unit, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction) const;
 	bool CanDrawOpaqueUnitShadow(const CUnit* unit) const;
 
-	bool DrawUnitLOD(CUnit* unit);
 	void DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction);
 	void DrawOpaqueUnitShadow(CUnit* unit);
 	void DrawOpaqueUnitsShadow(int modelType);

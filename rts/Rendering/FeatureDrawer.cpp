@@ -243,6 +243,8 @@ void CFeatureDrawer::Draw()
 
 void CFeatureDrawer::DrawOpaqueFeatures(int modelType, int luaMatType)
 {
+	const bool shadowPass = (luaMatType == LuaObjectDrawer::GetDrawPassShadowMat());
+
 	for (const auto& mdlRenderProxy: modelRenderers) {
 		if (mdlRenderProxy.lastDrawFrame < globalRendering->drawFrame)
 			continue;
@@ -255,20 +257,23 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType, int luaMatType)
 			}
 
 			for (CFeature* f: binElem.second) {
-				LuaObjectMaterialData* matData = f->GetLuaMaterialData();
-
 				// if <f> is supposed to be drawn faded, skip it during this pass
 				if (f->drawAlpha < FD_ALPHA_OPAQUE) {
 					// if it's supposed to be drawn as a far texture and we're not
 					// inside a shadow pass, queue it.
-					if (f->drawAlpha <= FD_ALPHA_FARTEX && luaMatType != LUAMAT_SHADOW)
+					if (f->drawAlpha <= FD_ALPHA_FARTEX && !shadowPass)
 						farTextureHandler->Queue(f);
 
 					continue;
 				}
 
+				// test this before the LOD calls (for consistency with UD)
+				if (!CanDrawFeature(f))
+					return;
 
-				if (matData->AddObjectForLOD(f, LUAOBJ_FEATURE, LuaMatType(luaMatType), camera->ProjectedDistance(f->pos)))
+				if ( shadowPass && LuaObjectDrawer::AddShadowMaterialObject(f, LUAOBJ_FEATURE))
+					continue;
+				if (!shadowPass && LuaObjectDrawer::AddOpaqueMaterialObject(f, LUAOBJ_FEATURE))
 					continue;
 
 				DrawFeatureNoLists(f);
@@ -302,9 +307,6 @@ void CFeatureDrawer::DrawFeatureNoLists(const CFeature* feature)
 
 void CFeatureDrawer::DrawFeatureWithLists(const CFeature* feature, unsigned int preList, unsigned int postList, bool /*luaCall*/)
 {
-	if (!CanDrawFeature(feature))
-		return;
-
 	glPushMatrix();
 	glMultMatrixf(feature->GetTransformMatrixRef());
 
@@ -396,13 +398,14 @@ void CFeatureDrawer::DrawFadeFeaturesHelper(int modelType, int luaMatType)
 void CFeatureDrawer::DrawFadeFeaturesSet(const FeatureSet& fadeFeatures, int modelType, int luaMatType)
 {
 	for (CFeature* f: fadeFeatures) {
-		LuaObjectMaterialData* matData = f->GetLuaMaterialData();
-
 		// if <f> is not supposed to be drawn faded, skip it during this pass
 		if (f->drawAlpha >= FD_ALPHA_OPAQUE || f->drawAlpha <= (1.0f - FD_ALPHA_OPAQUE))
 			continue;
 
-		if (matData->AddObjectForLOD(f, LUAOBJ_FEATURE, LuaMatType(luaMatType), camera->ProjectedDistance(f->pos)))
+		if (!CanDrawFeature(f))
+			continue;
+
+		if (LuaObjectDrawer::AddAlphaMaterialObject(f, LUAOBJ_FEATURE))
 			continue;
 
 		const float cols[] = {1.0f, 1.0f, 1.0f, f->drawAlpha};
@@ -455,11 +458,11 @@ void CFeatureDrawer::DrawShadowPass()
 		// (usually) holes, so disable backface
 		// culling for them
 		glDisable(GL_CULL_FACE);
-		DrawOpaqueFeatures(MODELTYPE_3DO, LUAMAT_SHADOW);
+		DrawOpaqueFeatures(MODELTYPE_3DO, LuaObjectDrawer::GetDrawPassShadowMat());
 		glEnable(GL_CULL_FACE);
 
 		for (int modelType = MODELTYPE_S3O; modelType < MODELTYPE_OTHER; modelType++) {
-			DrawOpaqueFeatures(modelType, LUAMAT_SHADOW);
+			DrawOpaqueFeatures(modelType, LuaObjectDrawer::GetDrawPassShadowMat());
 		}
 
 		glPopAttrib();

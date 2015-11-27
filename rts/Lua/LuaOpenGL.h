@@ -209,6 +209,9 @@ class LuaOpenGL {
 		static int GetTextWidth(lua_State* L);
 		static int GetTextHeight(lua_State* L);
 
+		// internal wrapper for Unit and UnitRaw
+		static int UnitCommon(lua_State* L, bool applyTransform);
+
 		static int Unit(lua_State* L);
 		static int UnitRaw(lua_State* L);
 		static int UnitShape(lua_State* L);

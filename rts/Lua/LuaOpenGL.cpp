@@ -40,6 +40,7 @@
 #include "Rendering/IconHandler.h"
 #include "Rendering/LineDrawer.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/LuaObjectDrawer.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/IWater.h"
@@ -1327,7 +1328,6 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 
 /******************************************************************************/
 
-
 static bool UnitDrawPreCommon(lua_State* L, CUnit* unit)
 {
 	LuaObjectMaterialData* lmd = unit->GetLuaMaterialData();
@@ -1337,20 +1337,20 @@ static bool UnitDrawPreCommon(lua_State* L, CUnit* unit)
 
 	if (!lua_isnumber(L, 3)) {
 		// calculate new LOD level
-		lmd->UpdateCurrentLOD(LUAOBJ_UNIT, camera->ProjectedDistance(unit->pos), (water->DrawReflectionPass())? LUAMAT_OPAQUE_REFLECT: LUAMAT_OPAQUE);
+		lmd->UpdateCurrentLOD(LUAOBJ_UNIT, camera->ProjectedDistance(unit->pos), LuaObjectDrawer::GetDrawPassOpaqueMat());
 		return true;
-	} else {
-		// set new LOD level manually
-		if (lua_toint(L, 3) >= 0) {
-			lmd->SetCurrentLOD(std::min(lmd->GetLODCount() - 1, static_cast<unsigned int>(lua_toint(L, 3))));
-			return true;
-		}
+	}
+
+	// set new LOD level manually
+	if (lua_toint(L, 3) >= 0) {
+		lmd->SetCurrentLOD(std::min(lmd->GetLODCount() - 1, static_cast<unsigned int>(lua_toint(L, 3))));
+		return true;
 	}
 
 	return false;
 }
 
-static void UnitDrawPostCommon(CUnit* unit, bool applyTransform, bool doRawDraw, bool useLuaMat) {
+static void UnitDrawPostCommon(CUnit* unit, bool applyTransform, bool noLuaCall, bool useLuaMat) {
 	glPushAttrib(GL_ENABLE_BIT);
 
 	LuaObjectMaterialData* lmd = unit->GetLuaMaterialData();
@@ -1362,13 +1362,13 @@ static void UnitDrawPostCommon(CUnit* unit, bool applyTransform, bool doRawDraw,
 	}
 
 	if (applyTransform) {
-		if (doRawDraw) {
+		if (noLuaCall) {
 			unitDrawer->DrawUnitRawNoLists(unit);
 		} else {
 			unitDrawer->DrawIndividual(unit);
 		}
 	} else {
-		if (doRawDraw) {
+		if (noLuaCall) {
 			unitDrawer->DrawUnitRawModel(unit);
 		} else {
 			// FIXME? no no-transform version of this
@@ -1384,37 +1384,24 @@ static void UnitDrawPostCommon(CUnit* unit, bool applyTransform, bool doRawDraw,
 }
 
 
-int LuaOpenGL::Unit(lua_State* L)
+int LuaOpenGL::UnitCommon(lua_State* L, bool applyTransform)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	LuaOpenGL::CheckDrawingEnabled(L, __FUNCTION__);
 
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 
 	if (unit == NULL)
 		return 0;
 
-	const bool doRawDraw = luaL_optboolean(L, 2, false);
+	const bool noLuaCall = luaL_optboolean(L, 2, false);
 	const bool useLuaMat = UnitDrawPreCommon(L, unit);
 
-	UnitDrawPostCommon(unit, true, doRawDraw, useLuaMat);
+	UnitDrawPostCommon(unit, true, noLuaCall, useLuaMat);
 	return 0;
 }
 
-int LuaOpenGL::UnitRaw(lua_State* L)
-{
-	CheckDrawingEnabled(L, __FUNCTION__);
-
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-
-	if (unit == NULL)
-		return 0;
-
-	const bool doRawDraw = luaL_optboolean(L, 2, false);
-	const bool useLuaMat = UnitDrawPreCommon(L, unit);
-
-	UnitDrawPostCommon(unit, false, doRawDraw, useLuaMat);
-	return 0;
-}
+int LuaOpenGL::Unit(lua_State* L) { return (UnitCommon(L, true)); }
+int LuaOpenGL::UnitRaw(lua_State* L) { return (UnitCommon(L, false)); }
 
 
 int LuaOpenGL::UnitShape(lua_State* L)

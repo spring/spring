@@ -274,6 +274,8 @@ bool LuaObjectDrawer::DrawSingleObject(CSolidObject* obj, LuaObjType objType)
 	return true;
 }
 
+
+
 void LuaObjectDrawer::SetObjectLOD(CSolidObject* obj, LuaObjType objType, unsigned int lodCount)
 {
 	// features do not have a LocalModel, sometimes not even a 3DModel
@@ -284,6 +286,48 @@ void LuaObjectDrawer::SetObjectLOD(CSolidObject* obj, LuaObjType objType, unsign
 	if (objType == LUAOBJ_UNIT) {
 		(static_cast<CUnit*>(obj))->localModel->SetLODCount(lodCount);
 	}
+}
+
+bool LuaObjectDrawer::AddObjectForLOD(CSolidObject* obj, LuaObjType objType, bool useAlphaMat, bool useShadowMat)
+{
+	if (useShadowMat)
+		return (AddShadowMaterialObject(obj, objType));
+	if (useAlphaMat)
+		return (AddAlphaMaterialObject(obj, objType));
+
+	return (AddOpaqueMaterialObject(obj, objType));
+}
+
+
+
+bool LuaObjectDrawer::AddOpaqueMaterialObject(CSolidObject* obj, LuaObjType objType)
+{
+	LuaObjectMaterialData* matData = obj->GetLuaMaterialData();
+
+	const LuaMatType matType = GetDrawPassOpaqueMat();
+	const float      lodDist = camera->ProjectedDistance(obj->pos);
+
+	return (matData->AddObjectForLOD(obj, objType, matType, lodDist));
+}
+
+bool LuaObjectDrawer::AddAlphaMaterialObject(CSolidObject* obj, LuaObjType objType)
+{
+	LuaObjectMaterialData* matData = obj->GetLuaMaterialData();
+
+	const LuaMatType matType = GetDrawPassAlphaMat();
+	const float      lodDist = camera->ProjectedDistance(obj->pos);
+
+	return (matData->AddObjectForLOD(obj, objType, matType, lodDist));
+}
+
+bool LuaObjectDrawer::AddShadowMaterialObject(CSolidObject* obj, LuaObjType objType)
+{
+	LuaObjectMaterialData* matData = obj->GetLuaMaterialData();
+
+	const LuaMatType matType = GetDrawPassShadowMat();
+	const float      lodDist = camera->ProjectedDistance(obj->pos);
+
+	return (matData->AddObjectForLOD(obj, objType, matType, lodDist));
 }
 
 
@@ -357,6 +401,6 @@ void LuaObjectDrawer::DrawShadowMaterialObjects(LuaObjType objType, bool)
 
 	// we neither want nor need a deferred shadow
 	// pass for custom- or default-shader models!
-	DrawMaterialBins(objType, LUAMAT_SHADOW, false);
+	DrawMaterialBins(objType, GetDrawPassShadowMat(), false);
 }
 
