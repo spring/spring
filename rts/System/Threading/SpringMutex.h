@@ -14,7 +14,7 @@
 	#include "Futex.h"
 	#include <mutex>
 #endif
-
+#include <boost/thread/shared_mutex.hpp>
 
 
 
@@ -48,6 +48,18 @@ namespace spring {
 		void unlock()
 		{
 			state.clear(std::memory_order_release);
+		}
+	};
+
+
+	class shared_spinlock : public boost::shared_mutex {
+	public:
+		void lock() {
+			while (!try_lock()) { /* busy-wait */ }
+		}
+
+		void lock_shared() {
+			while (!try_lock_shared()) { /* busy-wait */ }
 		}
 	};
 }

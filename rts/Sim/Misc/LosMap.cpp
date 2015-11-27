@@ -19,14 +19,16 @@ constexpr float LOS_BONUS_HEIGHT = 5.f;
 
 
 static spring::spinlock mutex;
-static spring::spinlock mutex_isqrt;
+static spring::shared_spinlock mutex_isqrt;
 static std::vector<float> isqrt_table(1, -1e8);
 
 
 static float isqrt_lookup(unsigned r)
 {
+	boost::upgrade_lock<spring::shared_spinlock> lock(mutex_isqrt);
+
 	if (r >= isqrt_table.size()) {
-		boost::lock_guard<spring::spinlock> lck(mutex_isqrt);
+		boost::upgrade_to_unique_lock<spring::shared_spinlock> uniqueLock(lock);
 		if (r >= isqrt_table.size()) {
 			for (unsigned i=isqrt_table.size(); i<=r; ++i)
 				isqrt_table.push_back(math::isqrt2(i));
