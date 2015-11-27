@@ -1396,7 +1396,7 @@ int LuaOpenGL::UnitCommon(lua_State* L, bool applyTransform)
 	const bool noLuaCall = luaL_optboolean(L, 2, false);
 	const bool useLuaMat = UnitDrawPreCommon(L, unit);
 
-	UnitDrawPostCommon(unit, true, noLuaCall, useLuaMat);
+	UnitDrawPostCommon(unit, applyTransform, noLuaCall, useLuaMat);
 	return 0;
 }
 
