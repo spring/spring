@@ -289,12 +289,14 @@ bool CFeatureDrawer::CanDrawFeature(const CFeature* feature) const
 	if (!feature->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView)
 		return false;
 
-	const float sqDist = (feature->pos - camera->GetPos()).SqLength();
-	const float farLength = feature->sqRadius * unitDrawer->unitDrawDistSqr;
-	const float sqFadeDistEnd = featureDrawDistance * featureDrawDistance;
+	if (feature->fade) {
+		const float sqDist = (feature->pos - camera->GetPos()).SqLength();
+		const float farLength = feature->sqRadius * unitDrawer->unitDrawDistSqr;
+		const float sqFadeDistEnd = featureDrawDistance * featureDrawDistance;
 
-	if (sqDist >= std::min(farLength, sqFadeDistEnd))
-		return false;
+		if (sqDist >= std::min(farLength, sqFadeDistEnd))
+			return false;
+	}
 
 	return (camera->InView(feature->drawMidPos, feature->drawRadius));
 }
@@ -546,6 +548,10 @@ public:
 					if (drawRefraction) {
 						if (f->pos.y > 0.0f)
 							continue;
+					}
+					if (!f->fade) {
+						f->drawAlpha = FD_ALPHA_OPAQUE;
+						continue;
 					}
 
 					const float sqDist = (f->pos - cameraPos).SqLength();
