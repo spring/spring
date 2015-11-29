@@ -519,8 +519,8 @@ void LuaMatBin::UnRef()
 
 void LuaMatBin::Print(const string& indent) const
 {
-	LOG("%s|units| = %lu", indent.c_str(), units.size());
-	LOG("%s|features| = %lu", indent.c_str(), features.size());
+	LOG("%s|units| = " _STPF_, indent.c_str(), units.size());
+	LOG("%s|features| = " _STPF_, indent.c_str(), features.size());
 	LOG("%spointer = %p", indent.c_str(), this);
 	LuaMaterial::Print(indent + "  ");
 }
