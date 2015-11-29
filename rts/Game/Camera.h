@@ -160,6 +160,8 @@ public:
 
 private:
 	void ComputeViewRange();
+	void UpdateFrustum();
+	void UpdateMatrices();
 
 	void myGluPerspective(float aspect, float zNear, float zFar);
 	void myGluLookAt(const float3&, const float3&, const float3&);

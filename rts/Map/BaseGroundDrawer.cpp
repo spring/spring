@@ -97,32 +97,3 @@ void CBaseGroundDrawer::DrawTrees(bool drawReflection) const
 	glDisable(GL_BLEND);
 }
 
-
-
-void CBaseGroundDrawer::UpdateCamRestraints(CCamera* cam)
-{
-	cam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f,  SQUARE_SIZE);
-
-	/*
-	// CAMERA DISTANCE IS ALREADY CHECKED IN CGroundDrawer::GridVisibility()!
-	//
-	// add restraint for maximum view distance (use flat z-dir as side)
-	// this is supposed to prevent (far) terrain from first being drawn
-	// and then immediately z-clipped away
-	const float3& camDir3D = cam->forward;
-	      float3  camDirXZ = float3(camDir3D.x, 0.0f, camDir3D.z);
-
-	// FIXME magic constants
-	static const float miny = 0.0f;
-	static const float maxy = 255.0f / 3.5f;
-
-	// prevent colinearity in top-down view
-	if (math::fabs(camDir3D.dot(UpVector)) < 0.95f) {
-		const float3 camDir2D  = camDirXZ.SafeANormalize();
-		const float3 camOffset = camDir2D * globalRendering->viewRange * 1.05f;
-
-		cam->GetFrustumSide(camDir2D, camOffset, miny, maxy, SQUARE_SIZE, (camDir3D.y > 0.0f), false);
-	}
-	*/
-}
-

@@ -84,6 +84,20 @@ void CCamera::Update(bool updateDirs)
 		lppScale = (2.0f * tanHalfFov) / globalRendering->viewSizeY;
 	}
 
+	ComputeViewRange();
+	UpdateFrustum();
+	UpdateMatrices();
+
+	// viewport
+	viewport[0] = 0;
+	viewport[1] = 0;
+	viewport[2] = globalRendering->viewSizeX;
+	viewport[3] = globalRendering->viewSizeY;
+}
+
+void CCamera::UpdateFrustum()
+{
+	// NOTE: "-" because we want normals
 	const float3 forwardy = (-forward *                                          tanHalfFov );
 	const float3 forwardx = (-forward * math::tan(globalRendering->aspectRatio *    halfFov));
 
@@ -92,26 +106,31 @@ void CCamera::Update(bool updateDirs)
 	frustumPlanes[FRUSTUM_PLANE_RGT] = (forwardx + right).UnsafeANormalize();
 	frustumPlanes[FRUSTUM_PLANE_LFT] = (forwardx - right).UnsafeANormalize();
 
+	if (camType == CAMTYPE_PLAYER || camType == CAMTYPE_SHADOW) {
+		// vis-culling is always performed from player's (or light's)
+		// POV; copy over the frustum planes we just calculated above
+		// note that this is the only place where VISCUL is updated!
+		camTypes[CAMTYPE_VISCUL]->CopyState(camTypes[camType]);
+	}
+}
 
-	// apply and store the projection transform
-	ComputeViewRange();
-	glMatrixMode(GL_PROJECTION);
+void CCamera::UpdateMatrices()
+{
+	// store and apply the projection transform
 	myGluPerspective(globalRendering->aspectRatio, globalRendering->zNear, globalRendering->viewRange);
 
-	// FIXME: should be applying the offsets to pos/up/right/forward/etc,
-	//        but without affecting the real positions (need an intermediary)
-	float3 fShake = (forward * (1.0f + tiltOffset.z)) +
-	                (right   * tiltOffset.x) +
-	                (up      * tiltOffset.y);
-
+	// FIXME:
+	//   should be applying the offsets to pos/up/right/forward/etc,
+	//   but without affecting the real positions (need an intermediary)
+	const float3 fShake = ((forward * (1.0f + tiltOffset.z)) + (right * tiltOffset.x) + (up * tiltOffset.y)).ANormalize();
 	const float3 camPos = pos + posOffset;
-	const float3 center = camPos + fShake.ANormalize();
+	const float3 center = camPos + fShake;
 
-	// apply and store the view transform
-	glMatrixMode(GL_MODELVIEW);
+	// store and apply the view transform
 	myGluLookAt(camPos, center, up);
 
-	// create extra matrices
+
+	// create extra matrices (useful for shaders)
 	viewProjectionMatrix = projectionMatrix * viewMatrix;
 	viewMatrixInverse = viewMatrix.InvertAffine();
 	projectionMatrixInverse = projectionMatrix.Invert();
@@ -122,12 +141,6 @@ void CCamera::Update(bool updateDirs)
 	billboardMatrix.SetPos(ZeroVector);
 	billboardMatrix.Transpose(); // viewMatrix is affine, equals inverse
 	billboardMatrix[15] = 1.0f; // SetPos() touches m[15]
-
-	// viewport
-	viewport[0] = 0;
-	viewport[1] = 0;
-	viewport[2] = globalRendering->viewSizeX;
-	viewport[3] = globalRendering->viewSizeY;
 }
 
 
@@ -305,6 +318,7 @@ inline void CCamera::myGluPerspective(float aspect, float zNear, float zFar) {
 
 	projectionMatrix[14] = -(2.0f * zFar * zNear) / (zFar - zNear);
 
+	glMatrixMode(GL_PROJECTION);
 	glLoadMatrixf(projectionMatrix);
 }
 
@@ -331,6 +345,7 @@ inline void CCamera::myGluLookAt(const float3& eye, const float3& center, const 
 	viewMatrix[13] = ( u.x * -eye.x) + ( u.y * -eye.y) + ( u.z * -eye.z);
 	viewMatrix[14] = (-f.x * -eye.x) + (-f.y * -eye.y) + (-f.z * -eye.z);
 
+	glMatrixMode(GL_MODELVIEW);
 	glLoadMatrixf(viewMatrix);
 }
 

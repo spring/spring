@@ -55,8 +55,6 @@ public:
 
 	CBaseGroundTextures* GetGroundTextures() { return groundTextures; }
 
-	void UpdateCamRestraints(CCamera* cam);
-
 public:
 	float LODScaleReflection;
 	float LODScaleRefraction;

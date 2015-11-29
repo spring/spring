@@ -774,15 +774,12 @@ void CSMFReadMap::GridVisibility(CCamera* visCam, int quadSize, float maxDist, C
 {
 	if (visCam == nullptr) {
 		// allow passing in a custom camera for grid-visibility testing
-		// otherwise just copy state from the player's camera (not e.g.
-		// UWREFL!)
 		visCam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
-		visCam->CopyState(CCamera::GetCamera(CCamera::CAMTYPE_PLAYER));
 		// for other cameras, KISS and just assume caller has done this
-		visCam->GetFrustumSides(GetCurrMinHeight() - 100.0f, GetCurrMaxHeight() + 100.0f,  SQUARE_SIZE);
+		visCam->GetFrustumSides(GetCurrMinHeight() - 100.0f, GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 	}
 
-	// figure out the player camera's own quad
+	// figure out the camera's own quad
 	const int cx = visCam->GetPos().x / (SQUARE_SIZE * quadSize);
 	const int cy = visCam->GetPos().z / (SQUARE_SIZE * quadSize);
 

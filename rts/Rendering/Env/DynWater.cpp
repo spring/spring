@@ -834,22 +834,21 @@ void CDynWater::DrawWaterSurface()
 	va = GetVertexArray();
 	va->Initialize();
 
-	CCamera* vcc = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
-	// TODO
-	// vcc->CopyState(CCamera::GetCamera(CCamera::CAMTYPE_PLAYER));
-	// vcc->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f,  SQUARE_SIZE);
+	CCamera* visCam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
+	// TODO: split drawing from (duplicated) GridVisibility code below
+	// visCam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 
 	camPosBig2.x = math::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapx*SQUARE_SIZE - WH_SIZE, camera->GetPos().x))/(W_SIZE*16))*(W_SIZE*16);
 	camPosBig2.z = math::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapy*SQUARE_SIZE - WH_SIZE, camera->GetPos().z))/(W_SIZE*16))*(W_SIZE*16);
 
-	const std::vector<CCamera::FrustumLine> negSides; // = vcc->GetNegFrustumSides();
-	const std::vector<CCamera::FrustumLine> posSides; // = vcc->GetPosFrustumSides();
+	const std::vector<CCamera::FrustumLine> negSides; // = visCam->GetNegFrustumSides();
+	const std::vector<CCamera::FrustumLine> posSides; // = visCam->GetPosFrustumSides();
 
 	std::vector<CCamera::FrustumLine>::const_iterator fli;
 
 	for (int lod = 1; lod < (2 << 5); lod *= 2) {
-		int cx = (int)(vcc->GetPos().x / WSQUARE_SIZE);
-		int cy = (int)(vcc->GetPos().z / WSQUARE_SIZE);
+		int cx = (int)(visCam->GetPos().x / WSQUARE_SIZE);
+		int cy = (int)(visCam->GetPos().z / WSQUARE_SIZE);
 
 		cx = (cx / lod) * lod;
 		cy = (cy / lod) * lod;
@@ -883,23 +882,17 @@ void CDynWater::DrawWaterSurface()
 				const float xtf = fli->base / WSQUARE_SIZE + fli->dir * y;
 				xtest = ((int)xtf) / lod * lod - lod;
 				xtest2 = ((int)(xtf + fli->dir * lod)) / lod * lod - lod;
-				if (xtest > xtest2) {
-					xtest = xtest2;
-				}
-				if (xtest > xs) {
-					xs = xtest;
-				}
+
+				xtest = std::max(xtest, xtest2);
+				xs = std::max(xs, xtest);
 			}
 			for (fli = posSides.begin(); fli != posSides.end(); ++fli) {
 				const float xtf = fli->base / WSQUARE_SIZE + fli->dir * y;
 				xtest = ((int)xtf) / lod * lod - lod;
 				xtest2 = ((int)(xtf + fli->dir * lod)) / lod * lod - lod;
-				if (xtest < xtest2) {
-					xtest = xtest2;
-				}
-				if (xtest < xe) {
-					xe = xtest;
-				}
+
+				xtest = std::min(xtest, xtest2);
+				xe = std::min(xe, xtest);
 			}
 
 			const int ylod = y + lod;
