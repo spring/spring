@@ -269,7 +269,7 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType, int luaMatType)
 
 				// test this before the LOD calls (for consistency with UD)
 				if (!CanDrawFeature(f))
-					return;
+					continue;
 
 				if ( shadowPass && LuaObjectDrawer::AddShadowMaterialObject(f, LUAOBJ_FEATURE))
 					continue;
