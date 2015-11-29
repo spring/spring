@@ -13,6 +13,16 @@ Lua:
  - new Spring.GetUICommands function to obtain a list of all UI commands (e.g. /luaui reload)
  - new VFS.CalculateHash function that calculates hash (in base64 form) of a given string (with md5 support initially)
  - new Spring.SetFeatureFade(featureID, bool) to control whether a feature will fade or not when zoomed out.
+ - add Spring.FeatureRendering API; acts as counterpart to Spring.UnitRendering
+   note: the following functions are no-ops
+     Spring.UnitRendering.SetFeatureLuaDraw
+     Spring.FeatureRendering.SetUnitLuaDraw
+     Spring.FeatureRendering.SetPieceList
+
+Rendering:
+ - add support for SSMF Splat Detail Normal Textures (by Beherith)
+ - allow custom shaders for being-built units
+
 
 -- 100.0 --------------------------------------------------------
 Major:
