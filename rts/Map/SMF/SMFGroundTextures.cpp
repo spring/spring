@@ -277,6 +277,7 @@ bool CSMFGroundTextures::RecompressTilesIfNeeded()
 
 inline bool CSMFGroundTextures::TexSquareInView(int btx, int bty) const
 {
+	const CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
 	const float* hm = readMap->GetCornerHeightMapUnsynced();
 
 	static const float bigTexSquareRadius = fastmath::apxsqrt(
@@ -289,18 +290,20 @@ inline bool CSMFGroundTextures::TexSquareInView(int btx, int bty) const
 	const int idx = (y >> 3) * smfMap->heightMapSizeX + (x >> 3);
 	const float3 bigTexSquarePos(x, hm[idx], y);
 
-	return (cam2->InView(bigTexSquarePos, bigTexSquareRadius));
+	return (cam->InView(bigTexSquarePos, bigTexSquareRadius));
 }
 
 void CSMFGroundTextures::DrawUpdate()
 {
+	const CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
+
 	// screen-diagonal number of pixels
 	const float vsxSq = globalRendering->viewSizeX * globalRendering->viewSizeX;
 	const float vsySq = globalRendering->viewSizeY * globalRendering->viewSizeY;
 	const float vdiag = fastmath::apxsqrt(vsxSq + vsySq);
 
 	for (int y = 0; y < smfMap->numBigTexY; ++y) {
-		float dz = cam2->GetPos().z - (y * smfMap->bigSquareSize * SQUARE_SIZE);
+		float dz = cam->GetPos().z - (y * smfMap->bigSquareSize * SQUARE_SIZE);
 		dz -= (SQUARE_SIZE << 6);
 		dz = std::max(0.0f, float(math::fabs(dz) - (SQUARE_SIZE << 6)));
 
@@ -322,14 +325,14 @@ void CSMFGroundTextures::DrawUpdate()
 				continue;
 			}
 
-			float dx = cam2->GetPos().x - (x * smfMap->bigSquareSize * SQUARE_SIZE);
+			float dx = cam->GetPos().x - (x * smfMap->bigSquareSize * SQUARE_SIZE);
 			dx -= (SQUARE_SIZE << 6);
 			dx = std::max(0.0f, float(math::fabs(dx) - (SQUARE_SIZE << 6)));
 
 			const float hAvg =
 				(heightMaxima[y * smfMap->numBigTexX + x] +
 				 heightMinima[y * smfMap->numBigTexX + x]) / 2.0f;
-			const float dy = std::max(cam2->GetPos().y - hAvg, 0.0f);
+			const float dy = std::max(cam->GetPos().y - hAvg, 0.0f);
 			const float dist = fastmath::apxsqrt(dx * dx + dy * dy + dz * dz);
 
 			// we work under the following assumptions:

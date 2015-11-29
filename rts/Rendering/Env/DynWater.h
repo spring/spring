@@ -34,7 +34,6 @@ private:
 	void AddExplosions();
 	void DrawUpdateSquare(float dx,float dy, int* resetTexs);
 	void DrawSingleUpdateSquare(float startx, float starty,float endx,float endy);
-	void UpdateCamRestraints(CCamera* cam);
 
 	int refractSize;
 	GLuint reflectTexture;

@@ -163,8 +163,8 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 	if (sx > ex)
 		return;
 
-	const float cx2 = cam2->GetPos().x / SQUARE_SIZE;
-	const float cy2 = cam2->GetPos().z / SQUARE_SIZE;
+	const float cx2 = cam->GetPos().x / SQUARE_SIZE;
+	const float cy2 = cam->GetPos().z / SQUARE_SIZE;
 
 	for (int btx = sx; btx < ex; ++btx) {
 		ma->Initialize();
@@ -222,7 +222,7 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 				int xs = xstart;
 				int xe = xend;
 
-				FindRange(cam2, /*inout*/ xs, /*inout*/ xe, y, lod);
+				FindRange(cam, /*inout*/ xs, /*inout*/ xe, y, lod);
 
 				// If FindRange modifies (xs, xe) to a (less then) empty range,
 				// continue to the next row.
@@ -453,7 +453,7 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 				y = maxly;
 				int xs = std::max(xstart - lod, mintx);
 				int xe = std::min(xend + lod,   maxtx);
-				FindRange(cam2, xs, xe, y, lod);
+				FindRange(cam, xs, xe, y, lod);
 
 				if (xs < xe) {
 					x = xs;
@@ -491,7 +491,7 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 				y = minly - lod;
 				int xs = std::max(xstart - lod, mintx);
 				int xe = std::min(xend + lod,   maxtx);
-				FindRange(cam2, xs, xe, y, lod);
+				FindRange(cam, xs, xe, y, lod);
 
 				if (xs < xe) {
 					x = xs;
@@ -565,19 +565,16 @@ void CLegacyMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 
 	//waterDrawn = (drawPass == DrawPass::WaterReflection);
 
-	{ // profiler scope
-		{
-			int camBty = math::floor(cam2->GetPos().z / (smfReadMap->bigSquareSize * SQUARE_SIZE));
-			camBty = std::max(0, std::min(smfReadMap->numBigTexY - 1, camBty));
+	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
 
-			//! try to render in "front to back" (so start with the camera nearest BigGroundLines)
-			for (int bty = camBty; bty >= 0; --bty) {
-				DoDrawGroundRow(cam2, bty);
-			}
-			for (int bty = camBty + 1; bty < smfReadMap->numBigTexY; ++bty) {
-				DoDrawGroundRow(cam2, bty);
-			}
-		}
+	const int camBty = Clamp(int(cam->GetPos().z / (smfReadMap->bigSquareSize * SQUARE_SIZE)), 0, smfReadMap->numBigTexY - 1);
+
+	//! try to render in "front to back" (so start with the camera nearest BigGroundLines)
+	for (int bty = camBty; bty >= 0; --bty) {
+		DoDrawGroundRow(cam, bty);
+	}
+	for (int bty = camBty + 1; bty < smfReadMap->numBigTexY; ++bty) {
+		DoDrawGroundRow(cam, bty);
 	}
 }
 

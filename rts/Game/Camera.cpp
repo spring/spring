@@ -57,10 +57,9 @@ CCamera::CCamera(unsigned int cameraType)
 }
 
 void CCamera::CopyState(const CCamera* cam) {
-	topFrustumSideDir = cam->topFrustumSideDir;
-	botFrustumSideDir = cam->botFrustumSideDir;
-	rgtFrustumSideDir = cam->rgtFrustumSideDir;
-	lftFrustumSideDir = cam->lftFrustumSideDir;
+	for (unsigned int i = 0; i < FRUSTUM_PLANE_CNT; i++) {
+		frustumPlanes[i] = cam->frustumPlanes[i];
+	}
 
 	forward   = cam->GetForward();
 	right     = cam->GetRight();
@@ -79,32 +78,25 @@ void CCamera::Update(bool updateDirs)
 		UpdateDirsFromRot(rot);
 	}
 
-	const float aspect = globalRendering->aspectRatio;
-	const float viewx = math::tan(aspect * halfFov);
-	const float viewy = tanHalfFov;
-
 	if (globalRendering->viewSizeY <= 0) {
 		lppScale = 0.0f;
 	} else {
 		lppScale = (2.0f * tanHalfFov) / globalRendering->viewSizeY;
 	}
 
-	const float3 forwardy = (-forward * viewy);
-	const float3 forwardx = (-forward * viewx);
+	const float3 forwardy = (-forward *                                          tanHalfFov );
+	const float3 forwardx = (-forward * math::tan(globalRendering->aspectRatio *    halfFov));
 
-	// note: top- and bottom-dir should be parallel to <forward>
-	topFrustumSideDir = (forwardy +    up).UnsafeANormalize();
-	botFrustumSideDir = (forwardy -    up).UnsafeANormalize();
-	rgtFrustumSideDir = (forwardx + right).UnsafeANormalize();
-	lftFrustumSideDir = (forwardx - right).UnsafeANormalize();
+	frustumPlanes[FRUSTUM_PLANE_TOP] = (forwardy +    up).UnsafeANormalize();
+	frustumPlanes[FRUSTUM_PLANE_BOT] = (forwardy -    up).UnsafeANormalize();
+	frustumPlanes[FRUSTUM_PLANE_RGT] = (forwardx + right).UnsafeANormalize();
+	frustumPlanes[FRUSTUM_PLANE_LFT] = (forwardx - right).UnsafeANormalize();
 
-	if (this == camera)
-		cam2->CopyState(this);
 
 	// apply and store the projection transform
 	ComputeViewRange();
 	glMatrixMode(GL_PROJECTION);
-	myGluPerspective(aspect, globalRendering->zNear, globalRendering->viewRange);
+	myGluPerspective(globalRendering->aspectRatio, globalRendering->zNear, globalRendering->viewRange);
 
 	// FIXME: should be applying the offsets to pos/up/right/forward/etc,
 	//        but without affecting the real positions (need an intermediary)
@@ -161,9 +153,12 @@ void CCamera::ComputeViewRange()
 }
 
 
-static inline bool AABBInOriginPlane(const float3& plane, const float3& camPos,
-                                     const float3& mins, const float3& maxs)
-{
+static inline bool AABBInOriginPlane(
+	const float3& plane,
+	const float3& camPos,
+	const float3& mins,
+	const float3& maxs
+) {
 	float3 fp; // far point
 	fp.x = (plane.x > 0.0f) ? mins.x : maxs.x;
 	fp.y = (plane.y > 0.0f) ? mins.y : maxs.y;
@@ -174,27 +169,28 @@ static inline bool AABBInOriginPlane(const float3& plane, const float3& camPos,
 
 bool CCamera::InView(const float3& mins, const float3& maxs) const
 {
-	// Axis-aligned bounding box test  (AABB)
-	if (!AABBInOriginPlane(rgtFrustumSideDir, pos, mins, maxs)) return false;
-	if (!AABBInOriginPlane(lftFrustumSideDir, pos, mins, maxs)) return false;
-	if (!AABBInOriginPlane(botFrustumSideDir, pos, mins, maxs)) return false;
-	if (!AABBInOriginPlane(topFrustumSideDir, pos, mins, maxs)) return false;
+	// axis-aligned bounding box test (AABB)
+	for (unsigned int i = 0; i < FRUSTUM_PLANE_CNT; i++) {
+		if (!AABBInOriginPlane(frustumPlanes[i], pos, mins, maxs)) {
+			return false;
+		}
+	}
 
 	return true;
 }
 
 bool CCamera::InView(const float3& p, float radius) const
 {
-	const float3 t(p - pos);
+	const float3 vec = p - pos;
 
-	if ((t.dot(rgtFrustumSideDir) > radius) ||
-	    (t.dot(lftFrustumSideDir) > radius) ||
-	    (t.dot(botFrustumSideDir) > radius) ||
-	    (t.dot(topFrustumSideDir) > radius)) {
-		return false;
+	for (unsigned int i = 0; i < FRUSTUM_PLANE_CNT; i++) {
+		if (vec.dot(frustumPlanes[i]) > radius) {
+			return false;
+		}
 	}
 
-	return (t.SqLength() <= Square(globalRendering->viewRange));
+	// final test against base-plane
+	return (vec.SqLength() <= Square(globalRendering->viewRange + radius));
 }
 
 
@@ -343,11 +339,11 @@ inline void CCamera::myGluLookAt(const float3& eye, const float3& center, const 
 void CCamera::GetFrustumSides(float miny, float maxy, float scale, bool negSide) {
 
 	ClearFrustumSides();
+
 	// note: order does not matter
-	GetFrustumSide(topFrustumSideDir, ZeroVector,  miny, maxy, scale,  (topFrustumSideDir.y > 0.0f), negSide);
-	GetFrustumSide(botFrustumSideDir, ZeroVector,  miny, maxy, scale,  (botFrustumSideDir.y > 0.0f), negSide);
-	GetFrustumSide(lftFrustumSideDir, ZeroVector,  miny, maxy, scale,  (lftFrustumSideDir.y > 0.0f), negSide);
-	GetFrustumSide(rgtFrustumSideDir, ZeroVector,  miny, maxy, scale,  (rgtFrustumSideDir.y > 0.0f), negSide);
+	for (unsigned int i = 0; i < FRUSTUM_PLANE_CNT; i++) {
+		GetFrustumSide(frustumPlanes[i], ZeroVector,  miny, maxy, scale,  (frustumPlanes[i].y > 0.0f), negSide);
+	}
 }
 
 void CCamera::GetFrustumSide(
@@ -391,7 +387,7 @@ void CCamera::GetFrustumSide(
 	line.dir  = (xdir.x / xdir.z);
 	line.base = (pInt.x - (pInt.z * line.dir)) / scale;
 	line.sign = (xdir.z <= 0.0f)? 1: -1;
-	line.minz = (                  0.0f) - (mapDims.mapy);
+	line.minz = (                      0.0f) - (mapDims.mapy);
 	line.maxz = (mapDims.mapy * SQUARE_SIZE) + (mapDims.mapy);
 
 	if (line.sign == 1 || negSide) {

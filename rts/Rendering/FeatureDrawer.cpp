@@ -505,10 +505,9 @@ public:
 	}
 
 	void DrawQuad(int x, int y) {
-		const int dq = y * drawQuadsX + x;
 		const float3 cameraPos = camera->GetPos();
 
-		auto& mdlRenderProxy = featureDrawer->modelRenderers[dq];
+		auto& mdlRenderProxy = featureDrawer->modelRenderers[y * drawQuadsX + x];
 
 		if (mdlRenderProxy.lastDrawFrame >= globalRendering->drawFrame)
 			return;
@@ -520,7 +519,7 @@ public:
 
 			for (auto& binElem: featureBin) {
 				for (CFeature* f: binElem.second) {
-					assert(dq == f->drawQuad);
+					assert((y * drawQuadsX + x) == f->drawQuad);
 
 					if (f->IsInVoid())
 						continue;
@@ -597,7 +596,7 @@ void CFeatureDrawer::GetVisibleFeatures(int extraSize, bool drawFar)
 	drawer.sqFadeDistBegin = featureFadeDistance * featureFadeDistance;
 	drawer.farFeatures = drawFar;
 
-	readMap->GridVisibility(camera, DRAW_QUAD_SIZE, featureDrawDistance, &drawer, extraSize);
+	readMap->GridVisibility(nullptr, DRAW_QUAD_SIZE, featureDrawDistance, &drawer, extraSize);
 }
 
 void CFeatureDrawer::PostLoad()

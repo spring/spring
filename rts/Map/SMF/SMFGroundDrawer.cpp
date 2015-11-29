@@ -277,7 +277,8 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 
 	// note: shared by deferred pass
 	SelectRenderState(smfRenderStateSSP->CanEnable(this));
-	UpdateCamRestraints(cam2);
+	// NOTE: other places (e.g. DynWater) might want different constraints
+	UpdateCamRestraints(CCamera::GetCamera(CCamera::CAMTYPE_VISCUL));
 
 	glDisable(GL_BLEND);
 	glEnable(GL_CULL_FACE);

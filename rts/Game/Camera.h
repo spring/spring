@@ -30,6 +30,14 @@ public:
 	};
 
 	enum {
+		FRUSTUM_PLANE_TOP = 0,
+		FRUSTUM_PLANE_BOT = 1,
+		FRUSTUM_PLANE_LFT = 2,
+		FRUSTUM_PLANE_RGT = 3,
+		FRUSTUM_PLANE_CNT = 4,
+	};
+
+	enum {
 		MOVE_STATE_FWD = 0, // forward
 		MOVE_STATE_BCK = 1, // back
 		MOVE_STATE_LFT = 2, // left
@@ -171,12 +179,10 @@ public:
 	float lppScale;    ///< length-per-pixel scale
 
 public:
-	float3 topFrustumSideDir;
-	float3 botFrustumSideDir;
-	float3 rgtFrustumSideDir;
-	float3 lftFrustumSideDir;
+	// frustum-pyramid planes (infinite)
+	float3 frustumPlanes[FRUSTUM_PLANE_CNT];
 
-	// Lua-controlled parameters, camera-only (not cam2)
+	// Lua-controlled parameters, player-camera only
 	float3 posOffset;
 	float3 tiltOffset;
 
@@ -204,7 +210,5 @@ private:
 };
 
 #define camera (CCamera::GetCamera(CCamera::CAMTYPE_ACTIVE))
-#define cam2   (CCamera::GetCamera(CCamera::CAMTYPE_VISCUL))
-
 #endif // _CAMERA_H
 

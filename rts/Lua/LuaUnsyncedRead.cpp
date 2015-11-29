@@ -768,7 +768,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 
 	{
 		unitQuadIter.ResetState();
-		readMap->GridVisibility(camera, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 1e9, &unitQuadIter, INT_MAX);
+		readMap->GridVisibility(CCamera::GetCamera(CCamera::CAMTYPE_PLAYER), CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 1e9, &unitQuadIter, INT_MAX);
 
 		lua_createtable(L, unitQuadIter.GetObjectCount(), 0);
 
@@ -894,7 +894,7 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 
 	{
 		featureQuadIter.ResetState();
-		readMap->GridVisibility(camera, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 3000.0f * 2.0f, &featureQuadIter, INT_MAX);
+		readMap->GridVisibility(CCamera::GetCamera(CCamera::CAMTYPE_PLAYER), CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 3000.0f * 2.0f, &featureQuadIter, INT_MAX);
 
 		lua_createtable(L, featureQuadIter.GetObjectCount(), 0);
 
@@ -980,7 +980,7 @@ int LuaUnsyncedRead::GetVisibleProjectiles(lua_State* L)
 
 	{
 		projQuadIter.ResetState();
-		readMap->GridVisibility(camera, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 1e9, &projQuadIter, INT_MAX);
+		readMap->GridVisibility(CCamera::GetCamera(CCamera::CAMTYPE_PLAYER), CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 1e9, &projQuadIter, INT_MAX);
 
 		lua_createtable(L, projQuadIter.GetObjectCount(), 0);
 
@@ -1367,10 +1367,10 @@ int LuaUnsyncedRead::GetCameraVectors(lua_State* L)
 	PACK_CAMERA_VECTOR(forward, GetDir());
 	PACK_CAMERA_VECTOR(up, GetUp());
 	PACK_CAMERA_VECTOR(right, GetRight());
-	PACK_CAMERA_VECTOR(topFrustumSideDir, topFrustumSideDir);
-	PACK_CAMERA_VECTOR(botFrustumSideDir, botFrustumSideDir);
-	PACK_CAMERA_VECTOR(lftFrustumSideDir, lftFrustumSideDir);
-	PACK_CAMERA_VECTOR(rgtFrustumSideDir, rgtFrustumSideDir);
+	PACK_CAMERA_VECTOR(topFrustumPlane, frustumPlanes[CCamera::FRUSTUM_PLANE_TOP]);
+	PACK_CAMERA_VECTOR(botFrustumPlane, frustumPlanes[CCamera::FRUSTUM_PLANE_BOT]);
+	PACK_CAMERA_VECTOR(lftFrustumPlane, frustumPlanes[CCamera::FRUSTUM_PLANE_LFT]);
+	PACK_CAMERA_VECTOR(rgtFrustumPlane, frustumPlanes[CCamera::FRUSTUM_PLANE_RGT]);
 
 	return 1;
 }

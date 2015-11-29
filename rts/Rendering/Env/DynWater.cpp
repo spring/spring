@@ -834,22 +834,22 @@ void CDynWater::DrawWaterSurface()
 	va = GetVertexArray();
 	va->Initialize();
 
-	camPosBig2.x = math::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapx*SQUARE_SIZE - WH_SIZE, (float)camera->GetPos().x))/(W_SIZE*16))*(W_SIZE*16);
-	camPosBig2.z = math::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapy*SQUARE_SIZE - WH_SIZE, (float)camera->GetPos().z))/(W_SIZE*16))*(W_SIZE*16);
+	CCamera* vcc = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
+	// TODO
+	// vcc->CopyState(CCamera::GetCamera(CCamera::CAMTYPE_PLAYER));
+	// vcc->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f,  SQUARE_SIZE);
 
-	// FIXME:
-	//     1. DynWater::UpdateCamRestraints was never called ==> <this->left> and <this->right> were always empty
-	//     2. even if it had been, DynWater::UpdateCamRestraints always used <cam2> to get the sides, not <camera>
-	// UpdateCamRestraints(cam2);
+	camPosBig2.x = math::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapx*SQUARE_SIZE - WH_SIZE, camera->GetPos().x))/(W_SIZE*16))*(W_SIZE*16);
+	camPosBig2.z = math::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapy*SQUARE_SIZE - WH_SIZE, camera->GetPos().z))/(W_SIZE*16))*(W_SIZE*16);
 
-	const std::vector<CCamera::FrustumLine> negSides /*= cam2->GetNegFrustumSides()*/;
-	const std::vector<CCamera::FrustumLine> posSides /*= cam2->GetPosFrustumSides()*/;
+	const std::vector<CCamera::FrustumLine> negSides; // = vcc->GetNegFrustumSides();
+	const std::vector<CCamera::FrustumLine> posSides; // = vcc->GetPosFrustumSides();
 
 	std::vector<CCamera::FrustumLine>::const_iterator fli;
 
 	for (int lod = 1; lod < (2 << 5); lod *= 2) {
-		int cx = (int)(cam2->GetPos().x / WSQUARE_SIZE);
-		int cy = (int)(cam2->GetPos().z / WSQUARE_SIZE);
+		int cx = (int)(vcc->GetPos().x / WSQUARE_SIZE);
+		int cy = (int)(vcc->GetPos().z / WSQUARE_SIZE);
 
 		cx = (cx / lod) * lod;
 		cy = (cy / lod) * lod;
@@ -1376,25 +1376,3 @@ void CDynWater::DrawOuterSurface()
 	va->DrawArray0(GL_QUADS);
 }
 
-
-
-/*
-void CDynWater::UpdateCamRestraints(CCamera* cam) {
-	cam->GetFrustumSides(-10.0f, 10.0f, 1.0f);
-
-	const float3& camDir3D  = cam->forward;
-	      float3  camDir2D  = float3(camDir3D.x, 0.0f, camDir3D.z);
-	      float3  camOffset = ZeroVector;
-
-	static const float miny = 0.0f;
-	static const float maxy = 255.0f / 3.5f;
-
-	// prevent colinearity in top-down view
-	if (math::fabs(camDir3D.dot(UpVector)) < 0.95f) {
-		camDir2D  = camDir2D.SafeANormalize();
-		camOffset = camDir2D * globalRendering->viewRange * 1.05f;
-
-		cam->GetFrustumSide(camDir2D, camOffset, miny, maxy, SQUARE_SIZE, (camDir3D.y > 0.0f), false);
-	}
-}
-*/

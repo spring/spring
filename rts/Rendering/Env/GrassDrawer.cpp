@@ -503,18 +503,20 @@ void CGrassDrawer::DrawNearBillboards(const std::vector<InviewNearGrass>& inview
 
 void CGrassDrawer::Update()
 {
+	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
+
 	// update visible turfs
-	if (oldCamPos != camera->GetPos() || oldCamDir != camera->GetDir()) {
+	if (oldCamPos != cam->GetPos() || oldCamDir != cam->GetDir()) {
 		SCOPED_TIMER("Grass::Update");
-		oldCamPos = camera->GetPos();
-		oldCamDir = camera->GetDir();
+		oldCamPos = cam->GetPos();
+		oldCamDir = cam->GetDir();
 		lastVisibilityUpdate = globalRendering->drawFrame;
 
 		blockDrawer.ResetState();
-		blockDrawer.cx = int(camera->GetPos().x / bMSsq);
-		blockDrawer.cy = int(camera->GetPos().z / bMSsq);
+		blockDrawer.cx = int(cam->GetPos().x / bMSsq);
+		blockDrawer.cy = int(cam->GetPos().z / bMSsq);
 		blockDrawer.gd = this;
-		readMap->GridVisibility(camera, blockMapSize, maxGrassDist, &blockDrawer);
+		readMap->GridVisibility(nullptr, blockMapSize, maxGrassDist, &blockDrawer);
 
 		if (
 			globalRendering->haveGLSL
@@ -594,12 +596,14 @@ void CGrassDrawer::DrawShadow()
 	glPushMatrix();
 	glLoadIdentity();
 
+	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
+
 	static CGrassBlockDrawer blockDrawer;
 	blockDrawer.ResetState();
-	blockDrawer.cx = int(camera->GetPos().x / bMSsq);
-	blockDrawer.cy = int(camera->GetPos().z / bMSsq);
+	blockDrawer.cx = int(cam->GetPos().x / bMSsq);
+	blockDrawer.cy = int(cam->GetPos().z / bMSsq);
 	blockDrawer.gd = this;
-	readMap->GridVisibility(camera, blockMapSize, maxGrassDist, &drawer);
+	readMap->GridVisibility(nullptr, blockMapSize, maxGrassDist, &drawer);
 
 	DrawNear(blockDrawer.inviewGrass);
 
