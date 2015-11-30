@@ -21,6 +21,7 @@
 
 // applies to both units and features
 CONFIG(bool, AllowDeferredModelRendering).defaultValue(false).safemodeValue(false);
+CONFIG(bool, AllowDeferredModelBufferReset).defaultValue(false).safemodeValue(false);
 
 CONFIG(float, LODScale).defaultValue(1.0f);
 CONFIG(float, LODScaleShadow).defaultValue(1.0f);
@@ -31,6 +32,7 @@ CONFIG(float, LODScaleRefraction).defaultValue(1.0f);
 bool LuaObjectDrawer::inDrawPass = false;
 bool LuaObjectDrawer::drawDeferred = false;
 bool LuaObjectDrawer::drawDeferredAllowed = false;
+bool LuaObjectDrawer::bufferResetAllowed = false;
 
 float LuaObjectDrawer::LODScale[LUAOBJ_LAST];
 float LuaObjectDrawer::LODScaleShadow[LUAOBJ_LAST];
@@ -40,6 +42,8 @@ float LuaObjectDrawer::LODScaleRefraction[LUAOBJ_LAST];
 
 // these should remain valid on reload
 static std::function<void(CEventHandler*)> eventFuncs[LUAOBJ_LAST] = {nullptr, nullptr};
+
+static bool bufferResetFlags[LUAOBJ_LAST] = {true, true};
 
 static const LuaMatType opaqueMats[2] = {LUAMAT_OPAQUE, LUAMAT_OPAQUE_REFLECT};
 static const LuaMatType  alphaMats[2] = {LUAMAT_ALPHA, LUAMAT_ALPHA_REFLECT};
@@ -125,6 +129,7 @@ void LuaObjectDrawer::Update(bool init)
 		eventFuncs[LUAOBJ_FEATURE] = &CEventHandler::DrawFeaturesPostDeferred;
 
 		drawDeferredAllowed = configHandler->GetBool("AllowDeferredModelRendering");
+		bufferResetAllowed = configHandler->GetBool("AllowDeferredModelBufferReset");
 
 		// handle a potential reload since our buffer is static
 		geomBuffer->Kill();
@@ -135,6 +140,16 @@ void LuaObjectDrawer::Update(bool init)
 	// update buffer only if it is valid
 	if (drawDeferredAllowed && (drawDeferred = geomBuffer->Valid())) {
 		drawDeferred &= (geomBuffer->Update(init));
+
+		bufferResetFlags[LUAOBJ_UNIT   ] = unitDrawer->DrawDeferred();
+		bufferResetFlags[LUAOBJ_FEATURE] = featureDrawer->DrawDeferred();
+
+		// if both object types are going to be drawn deferred, only
+		// reset buffer for the first s.t. just a single shading pass
+		// is needed (in Lua)
+		if (bufferResetFlags[LUAOBJ_UNIT] && bufferResetFlags[LUAOBJ_FEATURE]) {
+			bufferResetFlags[LUAOBJ_FEATURE] = bufferResetAllowed;
+		}
 	}
 }
 
@@ -262,10 +277,15 @@ void LuaObjectDrawer::DrawDeferredPass(const CSolidObject* excludeObj, LuaObjTyp
 	if (!unitDrawer->DrawDeferredSupported())
 		return;
 
+	geomBuffer->Bind();
 	// reset the buffer (since we do not perform a single pass
 	// writing both units and features into it at the same time)
-	geomBuffer->Bind();
-	geomBuffer->Reset();
+	// this however forces Lua to execute two shading passes and
+	// listen to the *PostDeferred events, so not ideal
+	// geomBuffer->Reset();
+
+	if (bufferResetFlags[objType])
+		geomBuffer->Reset();
 
 	switch (objType) {
 		case LUAOBJ_UNIT: {

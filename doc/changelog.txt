@@ -26,7 +26,8 @@ Lua:
 Rendering:
  - add support for SSMF Splat Detail Normal Textures (by Beherith)
  - add deferred pass for features; note that these are drawn into
-   the same buffer as units (overwriting it)
+   the same buffer as units (overwriting it, unless the new config
+   variable AllowDeferredModelBufferReset is set to false [default])
  - allow custom shaders for being-built units
 
 

@@ -81,6 +81,8 @@ private:
 	static bool drawDeferred;
 	// whether deferred object drawing is allowed by user
 	static bool drawDeferredAllowed;
+	// whether the deferred feature pass clears the GB
+	static bool bufferResetAllowed;
 
 	static float LODScale[LUAOBJ_LAST];
 	static float LODScaleShadow[LUAOBJ_LAST];
