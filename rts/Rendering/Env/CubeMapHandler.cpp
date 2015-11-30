@@ -29,14 +29,12 @@ CubeMapHandler::CubeMapHandler() {
 	currReflectionFace = 0;
 	specularTexIter = 0;
 	mapSkyReflections = false;
-
-	specTexBuf = NULL;
 }
 
 bool CubeMapHandler::Init() {
 	specTexSize = configHandler->GetInt("CubeTexSizeSpecular");
 	reflTexSize = configHandler->GetInt("CubeTexSizeReflection");
-	specTexBuf = new unsigned char[specTexSize * 4];
+	specTexBuf.resize(specTexSize * 4, 0);
 
 	mapSkyReflections = !(mapInfo->smf.skyReflectModTexName.empty());
 
@@ -116,8 +114,6 @@ void CubeMapHandler::Free() {
 		glDeleteTextures(1, &skyReflectionTexID);
 		skyReflectionTexID = 0;
 	}
-
-	delete [] specTexBuf;
 }
 
 
@@ -249,18 +245,18 @@ void CubeMapHandler::UpdateSpecularTexture()
 
 	switch (specularTexIter % 3) {
 		case 0: {
-			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, specTexSize, float3( 1,  1,  1), float3( 0, 0, -2), float3(0, -2,  0), specularTexRow, specTexBuf);
-			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, specTexSize, float3(-1,  1, -1), float3( 0, 0,  2), float3(0, -2,  0), specularTexRow, specTexBuf);
+			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, specTexSize, float3( 1,  1,  1), float3( 0, 0, -2), float3(0, -2,  0), specularTexRow, &specTexBuf[0]);
+			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, specTexSize, float3(-1,  1, -1), float3( 0, 0,  2), float3(0, -2,  0), specularTexRow, &specTexBuf[0]);
 			break;
 		}
 		case 1: {
-			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, specTexSize, float3(-1,  1, -1), float3( 2, 0,  0), float3(0,  0,  2), specularTexRow, specTexBuf);
-			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, specTexSize, float3(-1, -1,  1), float3( 2, 0,  0), float3(0,  0, -2), specularTexRow, specTexBuf);
+			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, specTexSize, float3(-1,  1, -1), float3( 2, 0,  0), float3(0,  0,  2), specularTexRow, &specTexBuf[0]);
+			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, specTexSize, float3(-1, -1,  1), float3( 2, 0,  0), float3(0,  0, -2), specularTexRow, &specTexBuf[0]);
 			break;
 		}
 		case 2: {
-			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, specTexSize, float3(-1,  1,  1), float3( 2, 0,  0), float3(0, -2,  0), specularTexRow, specTexBuf);
-			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, specTexSize, float3( 1,  1, -1), float3(-2, 0,  0), float3(0, -2,  0), specularTexRow, specTexBuf);
+			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, specTexSize, float3(-1,  1,  1), float3( 2, 0,  0), float3(0, -2,  0), specularTexRow, &specTexBuf[0]);
+			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, specTexSize, float3( 1,  1, -1), float3(-2, 0,  0), float3(0, -2,  0), specularTexRow, &specTexBuf[0]);
 			break;
 		}
 	}

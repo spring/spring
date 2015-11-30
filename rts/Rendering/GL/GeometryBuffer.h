@@ -24,7 +24,7 @@ namespace GL {
 
 		void Init();
 		void Kill();
-		void Reset();
+		void Clear();
 
 		void DetachTextures(const bool init);
 		void DrawDebug(unsigned int texID);
