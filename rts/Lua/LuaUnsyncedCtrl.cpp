@@ -38,6 +38,7 @@
 #include "Rendering/CommandDrawer.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/LineDrawer.h"
+#include "Rendering/FeatureDrawer.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -985,8 +986,10 @@ int LuaUnsyncedCtrl::SetDrawGroundDeferred(lua_State* L)
 int LuaUnsyncedCtrl::SetDrawModelsDeferred(lua_State* L)
 {
 	unitDrawer->SetDrawDeferredPass(luaL_checkboolean(L, 1));
+	featureDrawer->SetDrawDeferredPass(luaL_checkboolean(L, 2));
 	lua_pushboolean(L, unitDrawer->DrawDeferred());
-	return 1;
+	lua_pushboolean(L, featureDrawer->DrawDeferred());
+	return 2;
 }
 
 
