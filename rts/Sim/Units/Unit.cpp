@@ -623,11 +623,12 @@ void CUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool sh
 	}
 	transportedUnits.clear();
 
-	deathSpeed = speed;
 
 	// TODO: add UnitPreDestroyed, call these later
 	eventHandler.UnitDestroyed(this, attacker);
 	eoh->UnitDestroyed(*this, attacker);
+
+	deathSpeed = speed;
 
 	// Will be called in the destructor again, but this can not hurt
 	SetGroup(nullptr);
