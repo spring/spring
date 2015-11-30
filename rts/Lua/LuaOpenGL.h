@@ -68,6 +68,15 @@ class LuaOpenGL {
 		static void ResetDrawWorldRefraction();
 		static void DisableDrawWorldRefraction();
 
+		// no-ops (should probably guard some state)
+		static void EnableDrawUnitsPostDeferred() {}
+		static void ResetDrawUnitsPostDeferred() {}
+		static void DisableDrawUnitsPostDeferred() {}
+		// no-ops
+		static void EnableDrawFeaturesPostDeferred() {}
+		static void ResetDrawFeaturesPostDeferred() {}
+		static void DisableDrawFeaturesPostDeferred() {}
+
 		static void EnableDrawScreenEffects();
 		static void ResetDrawScreenEffects();
 		static void DisableDrawScreenEffects();

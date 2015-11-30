@@ -1722,42 +1722,50 @@ void CLuaHandle::RunDrawCallIn(const LuaHashString& hs)
 
 void CLuaHandle::DrawGenesis()
 {
-	static const LuaHashString cmdStr("DrawGenesis");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	RunDrawCallIn(cmdStr);
 }
-
 
 void CLuaHandle::DrawWorld()
 {
-	static const LuaHashString cmdStr("DrawWorld");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	RunDrawCallIn(cmdStr);
 }
-
 
 void CLuaHandle::DrawWorldPreUnit()
 {
-	static const LuaHashString cmdStr("DrawWorldPreUnit");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	RunDrawCallIn(cmdStr);
 }
-
 
 void CLuaHandle::DrawWorldShadow()
 {
-	static const LuaHashString cmdStr("DrawWorldShadow");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	RunDrawCallIn(cmdStr);
 }
-
 
 void CLuaHandle::DrawWorldReflection()
 {
-	static const LuaHashString cmdStr("DrawWorldReflection");
+	static const LuaHashString cmdStr(__FUNCTION__);
+	RunDrawCallIn(cmdStr);
+}
+
+void CLuaHandle::DrawWorldRefraction()
+{
+	static const LuaHashString cmdStr(__FUNCTION__);
 	RunDrawCallIn(cmdStr);
 }
 
 
-void CLuaHandle::DrawWorldRefraction()
+void CLuaHandle::DrawUnitsPostDeferred()
 {
-	static const LuaHashString cmdStr("DrawWorldRefraction");
+	static const LuaHashString cmdStr(__FUNCTION__);
+	RunDrawCallIn(cmdStr);
+}
+
+void CLuaHandle::DrawFeaturesPostDeferred()
+{
+	static const LuaHashString cmdStr(__FUNCTION__);
 	RunDrawCallIn(cmdStr);
 }
 

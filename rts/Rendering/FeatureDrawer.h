@@ -12,6 +12,9 @@
 class CFeature;
 class IWorldObjectModelRenderer;
 
+namespace GL {
+	struct GeometryBuffer;
+}
 
 class CFeatureDrawer: public CEventClient
 {
@@ -27,14 +30,17 @@ public:
 	void Update();
 
 	void Draw();
+	void DrawOpaquePass(bool deferredPass, bool drawReflection, bool drawRefraction);
 	void DrawShadowPass();
-
 	void DrawFadeFeatures(bool noAdvShading = false);
+
+	void SetDrawDeferredPass(bool b) { drawDeferred = b; }
 
 	void DrawFeatureNoLists(const CFeature*);
 	void DrawFeatureWithLists(const CFeature*, unsigned int preList, unsigned int postList, bool luaCall);
 
-
+public:
+	// CEventClient interface
 	bool WantsEvent(const std::string& eventName) {
 		return (eventName == "RenderFeatureCreated" || eventName == "RenderFeatureDestroyed" || eventName == "FeatureMoved");
 	}
@@ -44,6 +50,12 @@ public:
 	void RenderFeatureCreated(const CFeature* feature);
 	void RenderFeatureDestroyed(const CFeature* feature);
 	void FeatureMoved(const CFeature* feature, const float3& oldpos);
+
+public:
+	const GL::GeometryBuffer* GetGeometryBuffer() const { return geomBuffer; }
+	      GL::GeometryBuffer* GetGeometryBuffer()       { return geomBuffer; }
+
+	bool DrawDeferred() const { return drawDeferred; }
 
 private:
 	static void UpdateDrawPos(CFeature* f);
@@ -67,6 +79,8 @@ private:
 	float featureDrawDistance;
 	float featureFadeDistance;
 
+	bool drawDeferred;
+
 	friend class CFeatureQuadDrawer;
 	struct ModelRendererProxy {
 		ModelRendererProxy(): lastDrawFrame(0) {
@@ -89,6 +103,8 @@ private:
 
 	std::vector<ModelRendererProxy> modelRenderers;
 	std::vector<CFeature*> unsortedFeatures;
+
+	GL::GeometryBuffer* geomBuffer;
 };
 
 extern CFeatureDrawer* featureDrawer;

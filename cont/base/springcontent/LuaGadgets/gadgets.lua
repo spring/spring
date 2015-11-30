@@ -1640,47 +1640,49 @@ function gadgetHandler:DrawGenesis()
   for _,g in ipairs(self.DrawGenesisList) do
     g:DrawGenesis()
   end
-  return
 end
-
 
 function gadgetHandler:DrawWorld()
   for _,g in ipairs(self.DrawWorldList) do
     g:DrawWorld()
   end
-  return
 end
-
 
 function gadgetHandler:DrawWorldPreUnit()
   for _,g in ipairs(self.DrawWorldPreUnitList) do
     g:DrawWorldPreUnit()
   end
-  return
 end
-
 
 function gadgetHandler:DrawWorldShadow()
   for _,g in ipairs(self.DrawWorldShadowList) do
     g:DrawWorldShadow()
   end
-  return
 end
-
 
 function gadgetHandler:DrawWorldReflection()
   for _,g in ipairs(self.DrawWorldReflectionList) do
     g:DrawWorldReflection()
   end
-  return
 end
-
 
 function gadgetHandler:DrawWorldRefraction()
   for _,g in ipairs(self.DrawWorldRefractionList) do
     g:DrawWorldRefraction()
   end
-  return
+end
+
+
+function gadgetHandler:DrawUnitsPostDeferred
+  for _,g in ipairs(self.DrawUnitsPostDeferred) do
+    g:DrawUnitsPostDeferred()
+  end
+end
+
+function gadgetHandler:DrawFeaturesPostDeferred
+  for _,g in ipairs(self.DrawFeaturesPostDeferred) do
+    g:DrawFeaturesPostDeferred()
+  end
 end
 
 

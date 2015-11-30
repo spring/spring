@@ -112,17 +112,6 @@ void CEventClient::ViewResize() {}
 
 bool CEventClient::DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd) { return false; }
 
-void CEventClient::DrawGenesis() {}
-void CEventClient::DrawWorld() {}
-void CEventClient::DrawWorldPreUnit() {}
-void CEventClient::DrawWorldShadow() {}
-void CEventClient::DrawWorldReflection() {}
-void CEventClient::DrawWorldRefraction() {}
-void CEventClient::DrawScreenEffects() {}
-void CEventClient::DrawScreen() {}
-void CEventClient::DrawInMiniMap() {}
-void CEventClient::DrawInMiniMapBackground() {}
-
 bool CEventClient::DrawUnit(const CUnit* unit) { return false; }
 bool CEventClient::DrawFeature(const CFeature* feature) { return false; }
 bool CEventClient::DrawShield(const CUnit* unit, const CWeapon* weapon) { return false; }

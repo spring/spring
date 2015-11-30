@@ -14,8 +14,13 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/EventHandler.h"
 #include "System/Util.h"
 
+#define geomBuffer (GetGeometryBuffer())
+
+// applies to both units and features
+CONFIG(bool, AllowDeferredModelRendering).defaultValue(false).safemodeValue(false);
 
 CONFIG(float, LODScale).defaultValue(1.0f);
 CONFIG(float, LODScaleShadow).defaultValue(1.0f);
@@ -24,11 +29,20 @@ CONFIG(float, LODScaleRefraction).defaultValue(1.0f);
 
 
 bool LuaObjectDrawer::inDrawPass = false;
+bool LuaObjectDrawer::drawDeferred = false;
+bool LuaObjectDrawer::drawDeferredAllowed = false;
 
 float LuaObjectDrawer::LODScale[LUAOBJ_LAST];
 float LuaObjectDrawer::LODScaleShadow[LUAOBJ_LAST];
 float LuaObjectDrawer::LODScaleReflection[LUAOBJ_LAST];
 float LuaObjectDrawer::LODScaleRefraction[LUAOBJ_LAST];
+
+
+// these should remain valid on reload
+static std::function<void(CEventHandler*)> eventFuncs[LUAOBJ_LAST] = {
+	&CEventHandler::DrawUnitsPostDeferred,
+	&CEventHandler::DrawFeaturesPostDeferred,
+};
 
 static const LuaMatType opaqueMats[2] = {LUAMAT_OPAQUE, LUAMAT_OPAQUE_REFLECT};
 static const LuaMatType  alphaMats[2] = {LUAMAT_ALPHA, LUAMAT_ALPHA_REFLECT};
@@ -105,6 +119,24 @@ static void SetupShadowFeatureDrawState(unsigned int modelType, bool deferredPas
 static void ResetShadowFeatureDrawState(unsigned int modelType, bool deferredPass) { ResetShadowUnitDrawState(modelType, deferredPass); }
 
 
+
+
+void LuaObjectDrawer::Update(bool init)
+{
+	if (init) {
+		// handle a potential reload since our buffer is static
+		geomBuffer->Kill();
+		geomBuffer->Init();
+		geomBuffer->SetName("LUAOBJECTDRAWER-GBUFFER");
+
+		drawDeferredAllowed = configHandler->GetBool("AllowDeferredModelRendering");
+	}
+
+	// update buffer only if it is valid
+	if (drawDeferredAllowed && (drawDeferred = geomBuffer->Valid())) {
+		drawDeferred &= (geomBuffer->Update(init));
+	}
+}
 
 
 void LuaObjectDrawer::ReadLODScales(LuaObjType objType)
@@ -198,7 +230,7 @@ const LuaMaterial* LuaObjectDrawer::DrawMaterialBin(
 				// material has a standard (engine) shader attached
 				// (check if *Shader.type == LUASHADER_{3DO,S3O})
 				//
-				// note: must use static_cast here because of GetTransformMatrix (!)
+				// must use static_cast here because of GetTransformMatrix (!)
 				unitDrawer->SetTeamColour(obj->team);
 				unitDrawer->DrawUnitWithLists(static_cast<const CUnit*>(obj), lodMat->preDisplayList, lodMat->postDisplayList, true);
 			} break;
@@ -214,6 +246,58 @@ const LuaMaterial* LuaObjectDrawer::DrawMaterialBin(
 
 	return currBin;
 }
+
+
+void LuaObjectDrawer::DrawDeferredPass(const CSolidObject* excludeObj, LuaObjType objType)
+{
+	if (!drawDeferred)
+		return;
+	if (!geomBuffer->Valid())
+		return;
+
+	// deferred pass must be executed with GLSL base shaders so
+	// bail early if the FFP state *is going to be* selected by
+	// SetupForUnitDrawing, and also if our shader-path happens
+	// to be ARB instead (saves an FBO bind)
+	if (!unitDrawer->DrawDeferredSupported())
+		return;
+
+	// reset the buffer (since we do not perform a single pass
+	// writing both units and features into it at the same time)
+	geomBuffer->Bind();
+	geomBuffer->Reset();
+
+	switch (objType) {
+		case LUAOBJ_UNIT: {
+			if (unitDrawer->DrawDeferred()) {
+				unitDrawer->DrawOpaquePass(static_cast<const CUnit*>(excludeObj), true, false, false);
+			}
+		} break;
+		case LUAOBJ_FEATURE: {
+			if (featureDrawer->DrawDeferred()) {
+				featureDrawer->DrawOpaquePass(true, false, false);
+			}
+		} break;
+		default: {
+			assert(false);
+		} break;
+	}
+
+	geomBuffer->UnBind();
+
+	#if 0
+	geomBuffer->DrawDebug(geomBuffer->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_NORMTEX));
+	#endif
+
+	// these sit in between the WorldPreUnit and World events
+	//
+	// at this point the buffer has been filled (all standard
+	// models and custom Lua material bins have been rendered
+	// into it) and unbound, notify scripts
+	eventFuncs[objType](&eventHandler);
+}
+
+
 
 bool LuaObjectDrawer::DrawSingleObject(CSolidObject* obj, LuaObjType objType)
 {

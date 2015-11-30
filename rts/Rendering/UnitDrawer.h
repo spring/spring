@@ -7,7 +7,6 @@
 #include <string>
 #include <map>
 
-#include "Rendering/GL/GeometryBuffer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/LightHandler.h"
 #include "System/EventClient.h"
@@ -26,11 +25,14 @@ struct IUnitDrawerState;
 namespace icon {
 	class CIconData;
 }
+namespace GL {
+	struct GeometryBuffer;
+}
 
 class CUnitDrawer: public CEventClient
 {
 public:
-	//! CEventClient interface
+	// CEventClient interface
 	bool WantsEvent(const std::string& eventName) {
 		return
 			eventName == "RenderUnitCreated"      || eventName == "RenderUnitDestroyed"  ||
@@ -62,17 +64,13 @@ public:
 
 	void Update();
 
-	void SetDrawDeferredPass(bool b) {
-		if ((drawDeferred = b)) {
-			drawDeferred &= UpdateGeometryBuffer(false);
-		}
-	}
-
 	void Draw(bool drawReflection, bool drawRefraction = false);
+	void DrawOpaquePass(const CUnit* excludeUnit, bool deferredPass, bool drawReflection, bool drawRefraction);
+	void DrawShadowPass();
 	/// cloaked units must be drawn after all others
 	void DrawCloakedUnits(bool noAdvShading = false);
-	void DrawShadowPass();
-	void DrawDeferredPass(const CUnit* excludeUnit, bool drawReflection, bool drawRefraction);
+
+	void SetDrawDeferredPass(bool b) { drawDeferred = b; }
 
 	// note: make these static?
 	void DrawUnitModel(const CUnit* unit);
@@ -116,9 +114,10 @@ public:
 	const GL::LightHandler* GetLightHandler() const { return &lightHandler; }
 	      GL::LightHandler* GetLightHandler()       { return &lightHandler; }
 
-	const GL::GeometryBuffer* GetGeometryBuffer() const { return &geomBuffer; }
-	      GL::GeometryBuffer* GetGeometryBuffer()       { return &geomBuffer; }
+	const GL::GeometryBuffer* GetGeometryBuffer() const { return geomBuffer; }
+	      GL::GeometryBuffer* GetGeometryBuffer()       { return geomBuffer; }
 
+	bool DrawDeferredSupported() const;
 	bool DrawDeferred() const { return drawDeferred; }
 
 	bool UseAdvShading() const { return advShading; }
@@ -147,8 +146,6 @@ private:
 	void DrawUnitIcons(bool drawReflection);
 	void DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const;
 	void UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool killed);
-
-	bool UpdateGeometryBuffer(bool init);
 
 	void UpdateUnitIconState(CUnit* unit);
 	static void UpdateUnitDrawPos(CUnit* unit);
@@ -224,10 +221,10 @@ private:
 
 	IUnitDrawerState* unitDrawerStateSSP; // default shader-driven rendering path
 	IUnitDrawerState* unitDrawerStateFFP; // fallback shader-less rendering path
-	IUnitDrawerState* unitDrawerState;
+	IUnitDrawerState* unitDrawerState;    // currently selected state
 
 	GL::LightHandler lightHandler;
-	GL::GeometryBuffer geomBuffer;
+	GL::GeometryBuffer* geomBuffer;
 };
 
 extern CUnitDrawer* unitDrawer;

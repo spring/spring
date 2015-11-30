@@ -60,7 +60,6 @@ CONFIG(int, MaxDynamicModelLights)
 	.minimumValue(0);
 
 CONFIG(bool, AdvUnitShading).defaultValue(true).headlessValue(false).safemodeValue(false).description("Determines whether specular highlights and other lighting effects are rendered for units.");
-CONFIG(bool, AllowDeferredModelRendering).defaultValue(false).safemodeValue(false);
 
 
 
@@ -131,7 +130,6 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 
 	// LH must be initialized before drawer-state is initialized
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicModelLights"));
-	geomBuffer.SetName("UNITDRAWER-GBUFFER");
 
 	unitDrawerStateSSP = IUnitDrawerState::GetInstance(globalRendering->haveARB, globalRendering->haveGLSL);
 	unitDrawerStateFFP = IUnitDrawerState::GetInstance(                   false,                     false);
@@ -139,6 +137,9 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	// also set in ::SetupForUnitDrawing, but SunChanged can be
 	// called first if DynamicSun is enabled --> must be non-NULL
 	SelectRenderState(false);
+
+	// shared with FeatureDrawer!
+	geomBuffer = LuaObjectDrawer::GetGeometryBuffer();
 
 	// NOTE:
 	//     advShading can NOT change at runtime if initially false***
@@ -148,11 +149,7 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	//     *** except for DrawCloakedUnits
 	advFading = GLEW_NV_vertex_program2;
 	advShading = (unitDrawerStateSSP->Init(this) && cubeMapHandler->Init());
-	drawDeferred = geomBuffer.Valid();
-
-	if (drawDeferred) {
-		drawDeferred &= UpdateGeometryBuffer(true);
-	}
+	drawDeferred = (geomBuffer->Valid());
 }
 
 CUnitDrawer::~CUnitDrawer()
@@ -235,42 +232,8 @@ void CUnitDrawer::Update()
 
 		sqCamDistToGroundForIcons = overGround * overGround;
 	}
-
-	if (drawDeferred) {
-		drawDeferred &= UpdateGeometryBuffer(false);
-	}
 }
 
-bool CUnitDrawer::UpdateGeometryBuffer(bool init)
-{
-	static const bool drawDeferredAllowed = configHandler->GetBool("AllowDeferredModelRendering");
-
-	if (!drawDeferredAllowed)
-		return false;
-
-	return (geomBuffer.Update(init));
-}
-
-
-
-
-inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction)
-{
-	if (!CanDrawOpaqueUnit(unit, excludeUnit, drawReflection, drawRefraction))
-		return;
-
-	if ((unit->pos).SqDistance(camera->GetPos()) > (unit->sqRadius * unitDrawDistSqr)) {
-		farTextureHandler->Queue(unit);
-		return;
-	}
-
-	if (LuaObjectDrawer::AddOpaqueMaterialObject(unit, LUAOBJ_UNIT))
-		return;
-
-	// draw the unit with the default (non-Lua) material
-	SetTeamColour(unit->team);
-	DrawUnitNoLists(unit);
-}
 
 
 
@@ -286,27 +249,14 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	const CPlayer* myPlayer = gu->GetMyPlayer();
 	const CUnit* excludeUnit = drawReflection? NULL: myPlayer->fpsController.GetControllee();
 
-	if (drawDeferred) {
-		DrawDeferredPass(excludeUnit, drawReflection, drawRefraction);
+	// first do the deferred pass; conditional because
+	// most of the water renderers use their own FBO's
+	if (!drawReflection && !drawRefraction) {
+		LuaObjectDrawer::DrawDeferredPass(excludeUnit, LUAOBJ_UNIT);
 	}
 
-	SetupForUnitDrawing(false);
-
-	{
-		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-			opaqueModelRenderers[modelType]->PushRenderState();
-			DrawOpaqueUnits(modelType, excludeUnit, drawReflection, drawRefraction);
-			opaqueModelRenderers[modelType]->PopRenderState();
-		}
-	}
-
-	// not true during DynWater::DrawRefraction
-	// assert(drawReflection == water->DrawReflectionPass());
-
-	CleanUpUnitDrawing(false);
-
-	LuaObjectDrawer::SetGlobalDrawPassLODFactor(LUAOBJ_UNIT);
-	LuaObjectDrawer::DrawOpaqueMaterialObjects(LUAOBJ_UNIT, false);
+	// now do the regular forward pass
+	DrawOpaquePass(excludeUnit, false, drawReflection, drawRefraction);
 
 	farTextureHandler->Draw();
 	DrawUnitIcons(drawReflection);
@@ -316,56 +266,24 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	glDisable(GL_TEXTURE_2D);
 }
 
-void CUnitDrawer::DrawDeferredPass(const CUnit* excludeUnit, bool drawReflection, bool drawRefraction)
+void CUnitDrawer::DrawOpaquePass(const CUnit* excludeUnit, bool deferredPass, bool drawReflection, bool drawRefraction)
 {
-	if (!geomBuffer.Valid())
-		return;
+	SetupForUnitDrawing(deferredPass);
 
-	// some water renderers use FBO's for the reflection pass
-	if (drawReflection)
-		return;
-	// some water renderers use FBO's for the refraction pass
-	if (drawRefraction)
-		return;
-
-	// deferred pass must be executed with GLSL shaders
-	// bail early if the FFP state *is going to be* selected by
-	// SetupForUnitDrawing and if our shader-path happens to be
-	// ARB instead
-	if (!unitDrawerStateSSP->CanEnable(this))
-		return;
-	if (!unitDrawerStateSSP->CanDrawDeferred())
-		return;
-
-	geomBuffer.Bind();
-
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// this selects the render-state (FFP, SSP); needs to be
-	// enabled and disabled by us (as well as ::Draw) because
-	// custom-shader models do not use it and we want to draw
-	// those deferred as well
-	SetupForUnitDrawing(true);
-
-	{
-		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-			opaqueModelRenderers[modelType]->PushRenderState();
-			DrawOpaqueUnits(modelType, excludeUnit, drawReflection, drawRefraction);
-			opaqueModelRenderers[modelType]->PopRenderState();
-		}
+	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+		opaqueModelRenderers[modelType]->PushRenderState();
+		DrawOpaqueUnits(modelType, excludeUnit, drawReflection, drawRefraction);
+		opaqueModelRenderers[modelType]->PopRenderState();
 	}
 
-	CleanUpUnitDrawing(true);
+	// not true during DynWater::DrawRefraction
+	// assert(drawReflection == water->DrawReflectionPass());
 
+	CleanUpUnitDrawing(deferredPass);
+
+	// draw all custom'ed units that were bypassed in the loop above
 	LuaObjectDrawer::SetGlobalDrawPassLODFactor(LUAOBJ_UNIT);
-	LuaObjectDrawer::DrawOpaqueMaterialObjects(LUAOBJ_UNIT, true);
-
-	geomBuffer.UnBind();
-
-	#if 0
-	geomBuffer.DrawDebug(geomBuffer.GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_NORMTEX));
-	#endif
+	LuaObjectDrawer::DrawOpaqueMaterialObjects(LUAOBJ_UNIT, deferredPass);
 }
 
 
@@ -393,6 +311,25 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool 
 		DrawOpaqueAIUnits();
 	}
 }
+
+inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction)
+{
+	if (!CanDrawOpaqueUnit(unit, excludeUnit, drawReflection, drawRefraction))
+		return;
+
+	if ((unit->pos).SqDistance(camera->GetPos()) > (unit->sqRadius * unitDrawDistSqr)) {
+		farTextureHandler->Queue(unit);
+		return;
+	}
+
+	if (LuaObjectDrawer::AddOpaqueMaterialObject(unit, LUAOBJ_UNIT))
+		return;
+
+	// draw the unit with the default (non-Lua) material
+	SetTeamColour(unit->team);
+	DrawUnitNoLists(unit);
+}
+
 
 void CUnitDrawer::DrawOpaqueAIUnits()
 {
@@ -908,7 +845,8 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 
 	if (!gu->spectatingFullView) {
 		for (CUnit* u: liveGhostedBuildings) {
-			if (!(u->losStatus[gu->myAllyTeam] & LOS_INLOS)) // because of team switching via cheat, ghost buildings can exist for units in LOS
+			// because of team switching via cheat, ghost buildings can exist for units in LOS
+			if (!(u->losStatus[gu->myAllyTeam] & LOS_INLOS))
 				DrawCloakedUnit(u, modelType, true);
 		}
 	}
@@ -926,13 +864,14 @@ void CUnitDrawer::SetupForUnitDrawing(bool deferredPass)
 	glAlphaFunc(GL_GREATER, 0.5f);
 	glEnable(GL_ALPHA_TEST);
 
+	// pick base shaders (ARB/GLSL) or FFP; not used by custom-material models
 	SelectRenderState(unitDrawerStateSSP->CanEnable(this));
 	unitDrawerState->Enable(this, deferredPass);
 
 	// NOTE:
 	//   when deferredPass is true we MUST be able to use unitDrawerStateSSP
-	//   all calling code (reached from DrawDeferredPass) should ensure this
-	//   is the case
+	//   all calling code (reached from DrawOpaquePass(deferred=true)) should
+	//   ensure this is the case
 	assert(!deferredPass || unitDrawerState == unitDrawerStateSSP);
 }
 
@@ -945,6 +884,15 @@ void CUnitDrawer::CleanUpUnitDrawing(bool deferredPass) const
 }
 
 
+bool CUnitDrawer::DrawDeferredSupported() const {
+	if (!unitDrawerStateSSP->CanEnable(this))
+		return false;
+	if (!unitDrawerStateSSP->CanDrawDeferred())
+		return false;
+
+	return true;
+}
+
 
 void CUnitDrawer::SetTeamColour(int team, float alpha) const
 {
@@ -953,8 +901,6 @@ void CUnitDrawer::SetTeamColour(int team, float alpha) const
 		unitDrawerState->SetTeamColor(team, alpha);
 	}
 }
-
-
 
 /**
  * Set up the texture environment in texture unit 0

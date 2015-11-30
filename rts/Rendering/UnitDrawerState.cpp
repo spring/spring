@@ -9,6 +9,7 @@
 #include "Rendering/Env/IWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/Env/SkyLight.h"
+#include "Rendering/GL/GeometryBuffer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"

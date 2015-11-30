@@ -5,6 +5,7 @@
 
 // for LuaObjType and LuaMatType
 #include "Lua/LuaObjectMaterial.h"
+#include "Rendering/GL/GeometryBuffer.h"
 
 class CSolidObject;
 
@@ -22,6 +23,9 @@ class LuaObjectDrawer {
 public:
 	static bool InDrawPass() { return inDrawPass; }
 	static bool DrawSingleObject(CSolidObject* obj, LuaObjType objType);
+	static void DrawDeferredPass(const CSolidObject* excludeObj, LuaObjType objType);
+
+	static void Update(bool init);
 
 	static void SetObjectLOD(CSolidObject* obj, LuaObjType objType, unsigned int lodCount);
 	static bool AddObjectForLOD(CSolidObject* obj, LuaObjType objType, bool useAlphaMat, bool useShadowMat);
@@ -52,6 +56,14 @@ public:
 	static LuaMatType GetDrawPassAlphaMat();
 	static LuaMatType GetDrawPassShadowMat() { return LUAMAT_SHADOW; }
 
+	// shared by {Unit,Feature}Drawer; initialized on the
+	// first call to Update and wrapped inside a function
+	// to avoid static initialization issues
+	static GL::GeometryBuffer* GetGeometryBuffer() {
+		static GL::GeometryBuffer buffer;
+		return &buffer;
+	}
+
 private:
 	static void DrawMaterialBins(LuaObjType objType, LuaMatType matType, bool deferredPass);
 	static const LuaMaterial* DrawMaterialBin(
@@ -63,7 +75,12 @@ private:
 	);
 
 private:
+	// whether we are currently in DrawMaterialBins
 	static bool inDrawPass;
+	// whether we can execute DrawDeferredPass
+	static bool drawDeferred;
+	// whether deferred object drawing is allowed by user
+	static bool drawDeferredAllowed;
 
 	static float LODScale[LUAOBJ_LAST];
 	static float LODScaleShadow[LUAOBJ_LAST];

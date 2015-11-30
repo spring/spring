@@ -78,6 +78,10 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 
 	LuaObjectDrawer::ReadLODScales(LUAOBJ_FEATURE);
 
+	// shared with UnitDrawer!
+	geomBuffer = LuaObjectDrawer::GetGeometryBuffer();
+	drawDeferred = (geomBuffer->Valid());
+
 	drawQuadsX = mapDims.mapx / DRAW_QUAD_SIZE;
 	drawQuadsY = mapDims.mapy / DRAW_QUAD_SIZE;
 	featureDrawDistance = configHandler->GetFloat("FeatureDrawDistance");
@@ -211,20 +215,14 @@ void CFeatureDrawer::Draw()
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 
-	unitDrawer->SetupForUnitDrawing(false);
-
-	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		// arbitrarily pick first proxy to prepare state
-		// TODO: also add a deferred pass for features
-		modelRenderers[0].rendererTypes[modelType]->PushRenderState();
-		DrawOpaqueFeatures(modelType, LuaObjectDrawer::GetDrawPassOpaqueMat());
-		modelRenderers[0].rendererTypes[modelType]->PopRenderState();
+	// first do the deferred pass; conditional because
+	// most of the water renderers use their own FBO's
+	if (!water->DrawReflectionPass() && !water->DrawRefractionPass()) {
+		LuaObjectDrawer::DrawDeferredPass(nullptr, LUAOBJ_FEATURE);
 	}
 
-	unitDrawer->CleanUpUnitDrawing(false);
-
-	LuaObjectDrawer::SetGlobalDrawPassLODFactor(LUAOBJ_FEATURE);
-	LuaObjectDrawer::DrawOpaqueMaterialObjects(LUAOBJ_FEATURE, false);
+	// now do the regular forward pass
+	DrawOpaquePass(false, false, false);
 
 	farTextureHandler->Draw();
 
@@ -239,6 +237,24 @@ void CFeatureDrawer::Draw()
 
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_FOG);
+}
+
+void CFeatureDrawer::DrawOpaquePass(bool deferredPass, bool, bool)
+{
+	unitDrawer->SetupForUnitDrawing(deferredPass);
+
+	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+		// arbitrarily pick first proxy to prepare state
+		modelRenderers[0].rendererTypes[modelType]->PushRenderState();
+		DrawOpaqueFeatures(modelType, LuaObjectDrawer::GetDrawPassOpaqueMat());
+		modelRenderers[0].rendererTypes[modelType]->PopRenderState();
+	}
+
+	unitDrawer->CleanUpUnitDrawing(deferredPass);
+
+	// draw all custom'ed features that were bypassed in the loop above
+	LuaObjectDrawer::SetGlobalDrawPassLODFactor(LUAOBJ_FEATURE);
+	LuaObjectDrawer::DrawOpaqueMaterialObjects(LUAOBJ_FEATURE, deferredPass);
 }
 
 void CFeatureDrawer::DrawOpaqueFeatures(int modelType, int luaMatType)
@@ -312,7 +328,9 @@ void CFeatureDrawer::DrawFeatureWithLists(const CFeature* feature, unsigned int 
 	glPushMatrix();
 	glMultMatrixf(feature->GetTransformMatrixRef());
 
-	// TODO: move this out of UnitDrawer(State)
+	// TODO:
+	//   move this out of UnitDrawer(State), maybe to ModelDrawer
+	//   in general FeatureDrawer should make no UnitDrawer calls
 	unitDrawer->SetTeamColour(feature->team, feature->drawAlpha);
 
 	if (preList != 0) {

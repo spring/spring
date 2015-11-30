@@ -22,6 +22,12 @@ void GL::GeometryBuffer::Kill() {
 	}
 }
 
+void GL::GeometryBuffer::Reset() {
+	// assert(buffer.IsBound());
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
 void GL::GeometryBuffer::DetachTextures(const bool init) {
 	if (init) {
 		// nothing to detach yet during init

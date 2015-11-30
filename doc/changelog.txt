@@ -18,9 +18,15 @@ Lua:
      Spring.UnitRendering.SetFeatureLuaDraw
      Spring.FeatureRendering.SetUnitLuaDraw
      Spring.FeatureRendering.SetPieceList
+ - add new callins DrawUnitsPostDeferred and DrawFeaturesPostDeferred
+   these run at the end of their respective deferred passes to inform
+   Lua code it should make use of the $model_gbuffer_* textures before
+   another pass overwrites them
 
 Rendering:
  - add support for SSMF Splat Detail Normal Textures (by Beherith)
+ - add deferred pass for features; note that these are drawn into
+   the same buffer as units (overwriting it)
  - allow custom shaders for being-built units
 
 
