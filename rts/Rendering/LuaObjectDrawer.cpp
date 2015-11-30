@@ -39,10 +39,7 @@ float LuaObjectDrawer::LODScaleRefraction[LUAOBJ_LAST];
 
 
 // these should remain valid on reload
-static std::function<void(CEventHandler*)> eventFuncs[LUAOBJ_LAST] = {
-	&CEventHandler::DrawUnitsPostDeferred,
-	&CEventHandler::DrawFeaturesPostDeferred,
-};
+static std::function<void(CEventHandler*)> eventFuncs[LUAOBJ_LAST] = {nullptr, nullptr};
 
 static const LuaMatType opaqueMats[2] = {LUAMAT_OPAQUE, LUAMAT_OPAQUE_REFLECT};
 static const LuaMatType  alphaMats[2] = {LUAMAT_ALPHA, LUAMAT_ALPHA_REFLECT};
@@ -124,12 +121,15 @@ static void ResetShadowFeatureDrawState(unsigned int modelType, bool deferredPas
 void LuaObjectDrawer::Update(bool init)
 {
 	if (init) {
+		eventFuncs[LUAOBJ_UNIT   ] = &CEventHandler::DrawUnitsPostDeferred;
+		eventFuncs[LUAOBJ_FEATURE] = &CEventHandler::DrawFeaturesPostDeferred;
+
+		drawDeferredAllowed = configHandler->GetBool("AllowDeferredModelRendering");
+
 		// handle a potential reload since our buffer is static
 		geomBuffer->Kill();
 		geomBuffer->Init();
 		geomBuffer->SetName("LUAOBJECTDRAWER-GBUFFER");
-
-		drawDeferredAllowed = configHandler->GetBool("AllowDeferredModelRendering");
 	}
 
 	// update buffer only if it is valid
@@ -269,14 +269,10 @@ void LuaObjectDrawer::DrawDeferredPass(const CSolidObject* excludeObj, LuaObjTyp
 
 	switch (objType) {
 		case LUAOBJ_UNIT: {
-			if (unitDrawer->DrawDeferred()) {
-				unitDrawer->DrawOpaquePass(static_cast<const CUnit*>(excludeObj), true, false, false);
-			}
+			unitDrawer->DrawOpaquePass(static_cast<const CUnit*>(excludeObj), true, false, false);
 		} break;
 		case LUAOBJ_FEATURE: {
-			if (featureDrawer->DrawDeferred()) {
-				featureDrawer->DrawOpaquePass(true, false, false);
-			}
+			featureDrawer->DrawOpaquePass(true, false, false);
 		} break;
 		default: {
 			assert(false);
@@ -294,6 +290,7 @@ void LuaObjectDrawer::DrawDeferredPass(const CSolidObject* excludeObj, LuaObjTyp
 	// at this point the buffer has been filled (all standard
 	// models and custom Lua material bins have been rendered
 	// into it) and unbound, notify scripts
+	assert(eventFuncs[objType] != nullptr);
 	eventFuncs[objType](&eventHandler);
 }
 

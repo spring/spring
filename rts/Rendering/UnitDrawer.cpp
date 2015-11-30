@@ -251,7 +251,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 
 	// first do the deferred pass; conditional because
 	// most of the water renderers use their own FBO's
-	if (!drawReflection && !drawRefraction) {
+	if (drawDeferred && !drawReflection && !drawRefraction) {
 		LuaObjectDrawer::DrawDeferredPass(excludeUnit, LUAOBJ_UNIT);
 	}
 

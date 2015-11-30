@@ -217,7 +217,7 @@ void CFeatureDrawer::Draw()
 
 	// first do the deferred pass; conditional because
 	// most of the water renderers use their own FBO's
-	if (!water->DrawReflectionPass() && !water->DrawRefractionPass()) {
+	if (drawDeferred && !water->DrawReflectionPass() && !water->DrawRefractionPass()) {
 		LuaObjectDrawer::DrawDeferredPass(nullptr, LUAOBJ_FEATURE);
 	}
 
