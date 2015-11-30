@@ -914,17 +914,11 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 	for (CFeatureSet::const_iterator featureIt = featureSet.begin(); featureIt != featureSet.end(); ++featureIt) {
 		const CFeature& f = **featureIt;
 
-		if (noGeos && f.def->geoThermal)
+		if (noIcons && f.drawAlpha < 0.01f)
 			continue;
 
-		if (noIcons) {
-			const float sqDist = (f.pos - camera->GetPos()).SqLength2D();
-			const float farLength = f.sqRadius * unitDrawer->unitDrawDist * unitDrawer->unitDrawDist;
-
-			if (sqDist >= farLength) {
-				continue;
-			}
-		}
+		if (noGeos && f.def->geoThermal)
+			continue;
 
 		if (!gu->spectatingFullView && !f.IsInLosForAllyTeam(allyTeamID))
 			continue;
