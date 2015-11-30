@@ -29,8 +29,6 @@ public:
 	void SetAllowLanding(bool b);
 
 	AircraftState GetLandingState() const { return AIRCRAFT_FLYING; }
-	void SetWantedAltitude(float altitude);
-	void SetDefaultAltitude(float altitude);
 
 	// Main state handlers
 	void UpdateLanded();

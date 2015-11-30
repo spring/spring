@@ -163,6 +163,42 @@ void AAirMoveType::UpdateLandingHeight()
 }
 
 
+void AAirMoveType::UpdateLanding()
+{
+	const float3& pos = owner->pos;
+
+	const float radius = std::max(owner->radius, 10.0f);
+	const float radiusSq = radius * radius;
+	const float distSq = reservedLandingPos.SqDistance(pos);
+
+
+	const float localAltitude = pos.y - (owner->unitDef->canSubmerge ?
+		CGround::GetHeightReal(owner->pos.x, owner->pos.z):
+		CGround::GetHeightAboveWater(owner->pos.x, owner->pos.z));
+
+	if (distSq <= radiusSq || (distSq < landRadiusSq && localAltitude < wantedHeight + radius)) {
+		SetState(AIRCRAFT_LANDED);
+		owner->SetVelocityAndSpeed(ZeroVector);
+		owner->Deactivate();
+	}
+}
+
+void AAirMoveType::SetWantedAltitude(float altitude)
+{
+	if (altitude == 0.0f) {
+		wantedHeight = orgWantedHeight;
+	} else {
+		wantedHeight = altitude;
+	}
+}
+
+void AAirMoveType::SetDefaultAltitude(float altitude)
+{
+	wantedHeight = altitude;
+	orgWantedHeight = altitude;
+}
+
+
 void AAirMoveType::CheckForCollision()
 {
 	if (!collide)

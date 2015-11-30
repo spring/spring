@@ -35,9 +35,12 @@ public:
 	virtual void SetState(AircraftState state) {}
 	virtual AircraftState GetLandingState() const { return AIRCRAFT_LANDING; }
 
-	void LandAt(float3 pos, float distance);
+	void SetWantedAltitude(float altitude);
+	void SetDefaultAltitude(float altitude);
 
+	void LandAt(float3 pos, float distance);
 	void UpdateLandingHeight();
+	void UpdateLanding();
 
 	bool CanApplyImpulse(const float3&) { return true; }
 	bool UseSmoothMesh() const;
