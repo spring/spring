@@ -1592,19 +1592,17 @@ static inline CUnit* ParseDrawUnit(lua_State* L, const char* caller, int index)
 			return NULL;
 		}
 	}
-	if (!camera->InView(unit->midPos, unit->radius)) {
+
+	if (unit->isIcon)
 		return NULL;
-	}
-	const float sqDist = (unit->pos - camera->GetPos()).SqLength();
+	if (!camera->InView(unit->midPos, unit->radius))
+		return NULL;
+
+	//const float sqDist = (unit->pos - camera->GetPos()).SqLength();
 	//const float farLength = unit->sqRadius * unitDrawDist * unitDrawDist;
 	//if (sqDist >= farLength) {
 	//	return NULL;
 	//}
-	const float iconDistSqrMult = unit->unitDef->iconType->GetDistanceSqr();
-	const float realIconLength = unitDrawer->iconLength * iconDistSqrMult;
-	if (sqDist >= realIconLength) {
-		return NULL;
-	}
 
 	return unit;
 }
