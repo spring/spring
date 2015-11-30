@@ -424,6 +424,8 @@ bool CUnitDrawer::CanDrawOpaqueUnitShadow(const CUnit* unit) const
 		return false;
 	if (unit->IsInVoid())
 		return false;
+	if (unit->isIcon)
+		return false;
 
 	// FIXME: test against the shadow projection intersection
 	if (!(unitInLOS && camera->InView(unit->drawMidPos, unit->drawRadius + 700.0f)))
@@ -437,7 +439,7 @@ bool CUnitDrawer::CanDrawOpaqueUnitShadow(const CUnit* unit) const
 	if (unit->isCloaked)
 		return false;
 
-	return (!DrawAsIcon(unit, sqDist));
+	return true;
 }
 
 

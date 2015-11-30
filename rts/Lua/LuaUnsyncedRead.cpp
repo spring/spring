@@ -482,12 +482,6 @@ int LuaUnsyncedRead::IsUnitInView(lua_State* L)
 }
 
 
-static bool UnitIsIcon(const CUnit* unit)
-{
-	return (unitDrawer->DrawAsIcon(unit, (unit->pos - camera->GetPos()).SqLength()));
-}
-
-
 int LuaUnsyncedRead::IsUnitVisible(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -504,7 +498,7 @@ int LuaUnsyncedRead::IsUnitVisible(lua_State* L)
 			lua_pushboolean(L, false);
 		} else {
 			lua_pushboolean(L,
-				(!checkIcon || !UnitIsIcon(unit)) &&
+				(!checkIcon || !unit->isIcon) &&
 				camera->InView(unit->midPos, radius));
 		}
 	}
@@ -513,7 +507,7 @@ int LuaUnsyncedRead::IsUnitVisible(lua_State* L)
 			lua_pushboolean(L, false);
 		} else {
 			lua_pushboolean(L,
-				(!checkIcon || !UnitIsIcon(unit)) &&
+				(!checkIcon || !unit->isIcon) &&
 				camera->InView(unit->midPos, radius));
 		}
 	}
@@ -527,7 +521,7 @@ int LuaUnsyncedRead::IsUnitIcon(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	lua_pushboolean(L, UnitIsIcon(unit));
+	lua_pushboolean(L, unit->isIcon);
 	return 1;
 }
 
@@ -750,7 +744,6 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 	const bool noIcons = !luaL_optboolean(L, 3, true);
 
 	float testRadius = WORLDOBJECT_DEFAULT_DRAWRADIUS;
-	const float iconLength = unitDrawer->iconLength;
 
 	if (lua_israwnumber(L, 2)) {
 		testRadius = lua_tofloat(L, 2);
@@ -832,14 +825,8 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 			if (allyTeamID >= 0 && !(unit->losStatus[allyTeamID] & LOS_INLOS))
 				continue;
 
-			if (noIcons) {
-				const float sqDist = (unit->pos - camera->GetPos()).SqLength();
-				const float iconDistSqrMult = unit->unitDef->iconType->GetDistanceSqr();
-				const float realIconLength = iconLength * iconDistSqrMult;
-
-				if (sqDist > realIconLength)
+			if (noIcons && unit->isIcon)
 					continue;
-			}
 
 			if (!camera->InView(unit->midPos, testRadius + (unit->drawRadius * !fixedRadius)))
 				continue;
