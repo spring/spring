@@ -1663,7 +1663,7 @@ void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool tim
 			record->SetPlayerStats(i, playerHandler->Player(i)->currentStats);
 		}
 		for (int i = 0; i < numTeams; ++i) {
-			CTeam* team = teamHandler->Team(i);
+			const CTeam* team = teamHandler->Team(i);
 			record->SetTeamStats(i, team->statHistory);
 			clientNet->Send(CBaseNetProtocol::Get().SendTeamStat(team->teamNum, team->GetCurrentStats()));
 		}

@@ -49,6 +49,7 @@ public:
 	bool AtUnitLimit() const { return (units.size() >= maxUnits); }
 
 	TeamStatistics& GetCurrentStats() { return statHistory.back(); }
+	const TeamStatistics& GetCurrentStats() const { return statHistory.back(); }
 
 	CTeam& operator = (const TeamBase& base) {
 		TeamBase::operator = (base);

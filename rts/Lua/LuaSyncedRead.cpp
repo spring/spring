@@ -1212,7 +1212,7 @@ int LuaSyncedRead::GetTeamResources(lua_State* L)
 
 int LuaSyncedRead::GetTeamUnitStats(lua_State* L)
 {
-	CTeam* team = ParseTeam(L, __FUNCTION__, 1);
+	const CTeam* team = ParseTeam(L, __FUNCTION__, 1);
 	if (team == NULL || game == NULL) {
 		return 0;
 	}
@@ -1236,7 +1236,7 @@ int LuaSyncedRead::GetTeamUnitStats(lua_State* L)
 
 int LuaSyncedRead::GetTeamResourceStats(lua_State* L)
 {
-	CTeam* team = ParseTeam(L, __FUNCTION__, 1);
+	const CTeam* team = ParseTeam(L, __FUNCTION__, 1);
 	if (team == NULL || game == NULL) {
 		return 0;
 	}
