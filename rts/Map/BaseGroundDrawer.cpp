@@ -20,8 +20,10 @@ CBaseGroundDrawer::CBaseGroundDrawer()
 	LODScaleRefraction = configHandler->GetFloat("GroundLODScaleRefraction");
 	LODScaleTerrainReflection = configHandler->GetFloat("GroundLODScaleTerrainReflection");
 
-	drawMapEdges = false;
+	drawForward = true;
 	drawDeferred = false;
+	drawMapEdges = false;
+
 	wireframe = false;
 	advShading = false;
 

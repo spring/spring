@@ -70,6 +70,7 @@ public:
 	/// cloaked units must be drawn after all others
 	void DrawCloakedUnits(bool noAdvShading = false);
 
+	void SetDrawForwardPass(bool b) { drawForward = b; }
 	void SetDrawDeferredPass(bool b) { drawDeferred = b; }
 
 	// note: make these static?
@@ -117,8 +118,9 @@ public:
 	const GL::GeometryBuffer* GetGeometryBuffer() const { return geomBuffer; }
 	      GL::GeometryBuffer* GetGeometryBuffer()       { return geomBuffer; }
 
-	bool DrawDeferredSupported() const;
+	bool DrawForward() const { return drawForward; }
 	bool DrawDeferred() const { return drawDeferred; }
+	bool DrawDeferredSupported() const;
 
 	bool UseAdvShading() const { return advShading; }
 	bool UseAdvFading() const { return advFading; }
@@ -188,9 +190,11 @@ public:
 	float3 camNorm; ///< used to draw far-textures
 
 private:
+	bool drawForward;
+	bool drawDeferred;
+
 	bool advShading;
 	bool advFading;
-	bool drawDeferred;
 
 	bool useDistToGroundForIcons;
 	float sqCamDistToGroundForIcons;

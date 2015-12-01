@@ -59,8 +59,9 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicMapLights"));
 	geomBuffer.SetName("GROUNDDRAWER-GBUFFER");
 
-	drawMapEdges = configHandler->GetBool("MapBorder");
+	drawForward = true;
 	drawDeferred = geomBuffer.Valid();
+	drawMapEdges = configHandler->GetBool("MapBorder");
 
 	// NOTE:
 	//     advShading can NOT change at runtime if initially false
@@ -235,9 +236,7 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass)
 		return;
 
 	geomBuffer.Bind();
-
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	geomBuffer.Clear();
 
 	{
 		// switch current SSP shader to deferred version
@@ -294,7 +293,7 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 		DrawDeferredPass(drawPass);
 	}
 
-	{
+	if (drawForward) {
 		smfRenderState->Enable(this, drawPass);
 
 		if (wireframe) {

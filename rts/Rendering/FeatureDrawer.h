@@ -34,6 +34,7 @@ public:
 	void DrawShadowPass();
 	void DrawFadeFeatures(bool noAdvShading = false);
 
+	void SetDrawForwardPass(bool b) { drawForward = b; }
 	void SetDrawDeferredPass(bool b) { drawDeferred = b; }
 
 	void DrawFeatureNoLists(const CFeature*);
@@ -55,6 +56,7 @@ public:
 	const GL::GeometryBuffer* GetGeometryBuffer() const { return geomBuffer; }
 	      GL::GeometryBuffer* GetGeometryBuffer()       { return geomBuffer; }
 
+	bool DrawForward() const { return drawForward; }
 	bool DrawDeferred() const { return drawDeferred; }
 
 private:
@@ -79,6 +81,7 @@ private:
 	float featureDrawDistance;
 	float featureFadeDistance;
 
+	bool drawForward;
 	bool drawDeferred;
 
 	friend class CFeatureQuadDrawer;

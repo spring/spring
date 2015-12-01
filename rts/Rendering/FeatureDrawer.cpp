@@ -80,6 +80,8 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 
 	// shared with UnitDrawer!
 	geomBuffer = LuaObjectDrawer::GetGeometryBuffer();
+
+	drawForward = true;
 	drawDeferred = (geomBuffer->Valid());
 
 	drawQuadsX = mapDims.mapx / DRAW_QUAD_SIZE;
@@ -213,7 +215,9 @@ void CFeatureDrawer::Draw()
 	}
 
 	// now do the regular forward pass
-	DrawOpaquePass(false, false, false);
+	if (drawForward) {
+		DrawOpaquePass(false, water->DrawReflectionPass(), water->DrawRefractionPass());
+	}
 
 	farTextureHandler->Draw();
 

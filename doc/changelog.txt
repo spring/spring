@@ -24,6 +24,19 @@ Lua:
    these run at the end of their respective deferred passes to inform
    Lua code it should make use of the $model_gbuffer_* textures before
    another pass overwrites them
+ - allow Lua to disable the forward {Unit,Feature,Ground}Drawer passes;
+   use the callouts
+     Spring.SetDrawGroundDeferred(
+          boolean drawGroundDeferred
+       [, boolean drawGroundForward]
+     )
+   and
+     Spring.SetDrawModelsDeferred(
+          boolean drawUnitsDeferred,
+          boolean drawFeaturesDeferred
+       [, boolean drawUnitsForward
+       [, boolean drawFeaturesForward ]]
+     )
 
 Rendering:
  - add support for SSMF Splat Detail Normal Textures (by Beherith)

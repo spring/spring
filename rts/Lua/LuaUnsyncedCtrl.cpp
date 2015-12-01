@@ -978,18 +978,30 @@ int LuaUnsyncedCtrl::SetDrawGround(lua_State* L)
 
 int LuaUnsyncedCtrl::SetDrawGroundDeferred(lua_State* L)
 {
-	readMap->GetGroundDrawer()->SetDrawDeferredPass(luaL_checkboolean(L, 1));
-	lua_pushboolean(L, readMap->GetGroundDrawer()->DrawDeferred());
+	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
+
+	gd->SetDrawDeferredPass(luaL_checkboolean(L, 1));
+	gd->SetDrawForwardPass(luaL_optboolean(L, 2, gd->DrawForward()));
+
+	lua_pushboolean(L, gd->DrawDeferred());
+	lua_pushboolean(L, gd->DrawForward());
 	return 1;
 }
 
 int LuaUnsyncedCtrl::SetDrawModelsDeferred(lua_State* L)
 {
+	// NOTE the argument ordering
 	unitDrawer->SetDrawDeferredPass(luaL_checkboolean(L, 1));
+	unitDrawer->SetDrawForwardPass(luaL_optboolean(L, 3, unitDrawer->DrawForward()));
+
 	featureDrawer->SetDrawDeferredPass(luaL_checkboolean(L, 2));
-	lua_pushboolean(L, unitDrawer->DrawDeferred());
+	featureDrawer->SetDrawForwardPass(luaL_optboolean(L, 4, featureDrawer->DrawForwarD()));
+
+	lua_pushboolean(L,    unitDrawer->DrawDeferred());
 	lua_pushboolean(L, featureDrawer->DrawDeferred());
-	return 2;
+	lua_pushboolean(L,    unitDrawer->DrawForward());
+	lua_pushboolean(L, featureDrawer->DrawForward());
+	return 4;
 }
 
 

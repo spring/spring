@@ -35,6 +35,7 @@ public:
 	virtual void DecreaseDetail() = 0;
 	virtual int GetGroundDetail(const DrawPass::e& drawPass = DrawPass::Normal) const = 0;
 
+	virtual void SetDrawForwardPass(bool b) { drawForward = b; }
 	virtual void SetDrawDeferredPass(bool) {}
 	virtual bool ToggleMapBorder() { drawMapEdges = !drawMapEdges; return drawMapEdges; }
 
@@ -45,6 +46,7 @@ public:
 
 	void DrawTrees(bool drawReflection = false) const;
 
+	bool DrawForward() const { return drawForward; }
 	bool DrawDeferred() const { return drawDeferred; }
 
 	bool UseAdvShading() const { return advShading; }
@@ -71,8 +73,9 @@ public:
 protected:
 	CBaseGroundTextures* groundTextures;
 
-	bool drawMapEdges;
+	bool drawForward;
 	bool drawDeferred;
+	bool drawMapEdges;
 
 	bool wireframe;
 	bool advShading;

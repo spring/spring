@@ -119,6 +119,9 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	// shared with FeatureDrawer!
 	geomBuffer = LuaObjectDrawer::GetGeometryBuffer();
 
+	drawForward = true;
+	drawDeferred = (geomBuffer->Valid());
+
 	// NOTE:
 	//     advShading can NOT change at runtime if initially false***
 	//     (see AdvModelShadingActionExecutor), so we will always use
@@ -127,7 +130,6 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	//     *** except for DrawCloakedUnits
 	advFading = GLEW_NV_vertex_program2;
 	advShading = (unitDrawerStateSSP->Init(this) && cubeMapHandler->Init());
-	drawDeferred = (geomBuffer->Valid());
 }
 
 CUnitDrawer::~CUnitDrawer()
@@ -234,7 +236,9 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	}
 
 	// now do the regular forward pass
-	DrawOpaquePass(excludeUnit, false, drawReflection, drawRefraction);
+	if (drawForward) {
+		DrawOpaquePass(excludeUnit, false, drawReflection, drawRefraction);
+	}
 
 	farTextureHandler->Draw();
 	DrawUnitIcons(drawReflection);
