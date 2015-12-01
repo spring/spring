@@ -1212,7 +1212,7 @@ int LuaSyncedRead::GetTeamResources(lua_State* L)
 
 int LuaSyncedRead::GetTeamUnitStats(lua_State* L)
 {
-	const CTeam* team = ParseTeam(L, __FUNCTION__, 1);
+	CTeam* team = ParseTeam(L, __FUNCTION__, 1);
 	if (team == NULL || game == NULL) {
 		return 0;
 	}
@@ -1222,7 +1222,7 @@ int LuaSyncedRead::GetTeamUnitStats(lua_State* L)
 		return 0;
 	}
 
-	const TeamStatistics& stats = *team->currentStats;
+	const TeamStatistics& stats = team->GetCurrentStats();
 	lua_pushnumber(L, stats.unitsKilled);
 	lua_pushnumber(L, stats.unitsDied);
 	lua_pushnumber(L, stats.unitsCaptured);
@@ -1236,7 +1236,7 @@ int LuaSyncedRead::GetTeamUnitStats(lua_State* L)
 
 int LuaSyncedRead::GetTeamResourceStats(lua_State* L)
 {
-	const CTeam* team = ParseTeam(L, __FUNCTION__, 1);
+	CTeam* team = ParseTeam(L, __FUNCTION__, 1);
 	if (team == NULL || game == NULL) {
 		return 0;
 	}
@@ -1246,7 +1246,7 @@ int LuaSyncedRead::GetTeamResourceStats(lua_State* L)
 		return 0;
 	}
 
-	const TeamStatistics& stats = *team->currentStats;
+	const TeamStatistics& stats = team->GetCurrentStats();
 
 	const string type = luaL_checkstring(L, 2);
 	if (type == "metal") {

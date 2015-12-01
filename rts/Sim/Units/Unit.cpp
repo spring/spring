@@ -1232,12 +1232,12 @@ static void AddUnitDamageStats(CUnit* unit, float damage, bool dealt)
 		return;
 
 	CTeam* team = teamHandler->Team(unit->team);
-	TeamStatistics* stats = team->currentStats;
+	TeamStatistics& stats = team->GetCurrentStats();
 
 	if (dealt) {
-		stats->damageDealt += damage;
+		stats.damageDealt += damage;
 	} else {
-		stats->damageReceived += damage;
+		stats.damageReceived += damage;
 	}
 }
 
@@ -1365,7 +1365,7 @@ void CUnit::DoDamage(
 
 		if (!teamHandler->Ally(allyteam, attacker->allyteam)) {
 			attacker->AddExperience(expMultiplier * 0.1f * (power / attacker->power));
-			teamHandler->Team(attacker->team)->currentStats->unitsKilled++;
+			teamHandler->Team(attacker->team)->GetCurrentStats().unitsKilled++;
 		}
 	}
 }

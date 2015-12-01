@@ -878,22 +878,22 @@ int LuaSyncedCtrl::ShareTeamResource(lua_State* L)
 	if (type == "metal") {
 		amount = std::min(amount, (float)team1->res.metal);
 		if (eventHandler.AllowResourceTransfer(teamID1, teamID2, "m", amount)) { //FIXME can cause an endless loop
-			team1->res.metal                   -= amount;
-			team1->resSent.metal               += amount;
-			team1->currentStats->metalSent     += amount;
-			team2->res.metal                   += amount;
-			team2->resReceived.metal           += amount;
-			team2->currentStats->metalReceived += amount;
+			team1->res.metal                       -= amount;
+			team1->resSent.metal                   += amount;
+			team1->GetCurrentStats().metalSent     += amount;
+			team2->res.metal                       += amount;
+			team2->resReceived.metal               += amount;
+			team2->GetCurrentStats().metalReceived += amount;
 		}
 	} else if (type == "energy") {
 		amount = std::min(amount, (float)team1->res.energy);
 		if (eventHandler.AllowResourceTransfer(teamID1, teamID2, "e", amount)) { //FIXME can cause an endless loop
-			team1->res.energy                   -= amount;
-			team1->resSent.energy               += amount;
-			team1->currentStats->energySent     += amount;
-			team2->res.energy                   += amount;
-			team2->resReceived.energy           += amount;
-			team2->currentStats->energyReceived += amount;
+			team1->res.energy                       -= amount;
+			team1->resSent.energy                   += amount;
+			team1->GetCurrentStats().energySent     += amount;
+			team2->res.energy                       += amount;
+			team2->resReceived.energy               += amount;
+			team2->GetCurrentStats().energyReceived += amount;
 		}
 	}
 	return 0;

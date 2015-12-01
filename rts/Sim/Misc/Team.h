@@ -7,7 +7,6 @@
 #include <vector>
 #include <map>
 #include <list>
-#include <boost/noncopyable.hpp>
 
 #include "TeamBase.h"
 #include "TeamStatistics.h"
@@ -18,11 +17,11 @@
 #include "Lua/LuaRulesParams.h"
 
 
-class CTeam : public TeamBase, private boost::noncopyable //! cannot allow shallow copying of Teams, contains pointers
+class CTeam : public TeamBase
 {
 	CR_DECLARE(CTeam)
 public:
-	CTeam(int _teamNum);
+	CTeam();
 
 	void ResetResourceState();
 	void SlowUpdate();
@@ -48,6 +47,8 @@ public:
 	void SetMaxUnits(unsigned int n) { maxUnits = n; }
 	unsigned int GetMaxUnits() const { return maxUnits; }
 	bool AtUnitLimit() const { return (units.size() >= maxUnits); }
+
+	TeamStatistics& GetCurrentStats() { return statHistory.back(); }
 
 	CTeam& operator = (const TeamBase& base) {
 		TeamBase::operator = (base);
@@ -93,7 +94,6 @@ public:
 	SResourcePack resPrevExcess;
 
 	int nextHistoryEntry;
-	TeamStatistics* currentStats;
 	std::list<TeamStatistics> statHistory;
 
 	/// mod controlled parameters
