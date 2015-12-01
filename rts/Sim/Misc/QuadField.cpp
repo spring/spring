@@ -15,6 +15,8 @@
 	#include "Sim/Projectiles/Projectile.h"
 #endif
 
+#include "System/Util.h"
+
 CR_BIND(CQuadField, (int2(1,1), 1))
 CR_REG_METADATA(CQuadField, (
 	CR_MEMBER(baseQuads),
