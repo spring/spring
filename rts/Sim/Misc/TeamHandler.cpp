@@ -77,7 +77,7 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 		gaiaAllyTeamID = static_cast<int>(allyTeams.size());
 
 		// setup the Gaia team
-		teams.push_back(CTeam());
+		teams.emplace_back();
 		CTeam &gaia = teams.back();
 
 		gaia.teamNum = gaiaTeamID;
@@ -86,7 +86,7 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 		gaia.color[2] = 255;
 		gaia.color[3] = 255;
 		gaia.gaia = true;
-		gaia.SetMaxUnits(MAX_UNITS - (teams.size() * teams[0].GetMaxUnits()));
+		gaia.SetMaxUnits(MAX_UNITS - ((teams.size() - 1) * teams[0].GetMaxUnits()));
 		gaia.SetStartPos(ZeroVector);
 		gaia.teamAllyteam = gaiaAllyTeamID;
 
