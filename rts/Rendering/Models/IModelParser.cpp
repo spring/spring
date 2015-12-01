@@ -243,21 +243,6 @@ void C3DModelLoader::AddModelToCache(S3DModel* model, const std::string& modelNa
 
 
 
-void C3DModelLoader::CreateLocalModel(LocalModel* localModel)
-{
-	const LocalModelPiece* lmpRoot = localModel->GetRoot();
-	const S3DModelPiece* ompRoot = lmpRoot->original;
-
-	if (ompRoot->GetDisplayListID() != 0)
-		return;
-}
-
-void C3DModelLoader::DeleteLocalModel(LocalModel* localModel)
-{
-	delete localModel;
-}
-
-
 void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
 {
 	o->UploadGeometryVBOs();

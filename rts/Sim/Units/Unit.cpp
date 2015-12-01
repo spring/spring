@@ -227,9 +227,10 @@ CUnit::~CUnit()
 	SetMetalStorage(0);
 	SetEnergyStorage(0);
 
-	delete commandAI;       commandAI       = NULL;
-	delete moveType;        moveType        = NULL;
-	delete prevMoveType;    prevMoveType    = NULL;
+	SafeDelete(commandAI);
+	SafeDelete(moveType);
+	SafeDelete(prevMoveType);
+	SafeDelete(localModel);
 
 	// not all unit deletions run through KillUnit(),
 	// but we always want to call this for ourselves
@@ -239,17 +240,14 @@ CUnit::~CUnit()
 	SetGroup(nullptr);
 
 	if (script != &CNullUnitScript::value) {
-		delete script;
-		script = NULL;
+		SafeDelete(script);
 	}
 	// ScriptCallback may reference weapons, so delete the script first
-	for (std::vector<CWeapon*>::const_iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
+	for (auto wi = weapons.cbegin(); wi != weapons.cend(); ++wi) {
 		delete *wi;
 	}
 
 	quadField->RemoveUnit(this);
-
-	modelParser->DeleteLocalModel(localModel);
 }
 
 
@@ -301,7 +299,6 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	model = unitDef->LoadModel();
 	localModel = new LocalModel(model);
 	collisionVolume = new CollisionVolume(unitDef->collisionVolume);
-	modelParser->CreateLocalModel(localModel);
 
 	if (collisionVolume->DefaultToSphere())
 		collisionVolume->InitSphere(model->radius);
@@ -472,7 +469,6 @@ void CUnit::PostLoad()
 	objectDef = unitDef;
 	model = unitDef->LoadModel();
 	localModel = new LocalModel(model);
-	modelParser->CreateLocalModel(localModel);
 	blockMap = (unitDef->GetYardMap().empty())? NULL: &unitDef->GetYardMap()[0];
 
 	SetMidAndAimPos(model->relMidPos, model->relMidPos, true);

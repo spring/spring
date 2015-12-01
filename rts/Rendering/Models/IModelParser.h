@@ -25,9 +25,6 @@ public:
 	C3DModelLoader();
 	~C3DModelLoader();
 
-	void CreateLocalModel(LocalModel* model);
-	void DeleteLocalModel(LocalModel* model);
-
 	std::string FindModelPath(std::string name) const;
 	S3DModel* Load3DModel(std::string modelName);
 
