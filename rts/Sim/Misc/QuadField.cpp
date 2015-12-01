@@ -281,7 +281,6 @@ void CQuadField::MovedUnit(CUnit* unit)
 	for (const int qi: unit->quads) {
 		std::vector<CUnit*>& quadUnits     = baseQuads[qi].units;
 		std::vector<CUnit*>& quadAllyUnits = baseQuads[qi].teamUnits[unit->allyteam];
-		std::vector<CUnit*>::iterator ui;
 
 		VectorErase(quadUnits, unit);
 		VectorErase(quadAllyUnits, unit);
@@ -300,7 +299,6 @@ void CQuadField::RemoveUnit(CUnit* unit)
 	for (const int qi: unit->quads) {
 		std::vector<CUnit*>& quadUnits     = baseQuads[qi].units;
 		std::vector<CUnit*>& quadAllyUnits = baseQuads[qi].teamUnits[unit->allyteam];
-		std::vector<CUnit*>::iterator ui;
 
 		VectorErase(quadUnits, unit);
 		VectorErase(quadAllyUnits, unit);

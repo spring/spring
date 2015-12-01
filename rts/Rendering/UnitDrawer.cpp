@@ -1691,11 +1691,11 @@ void CUnitDrawer::UnitLeftLos(const CUnit* unit, int allyTeam) {
 
 	CUnit* u = const_cast<CUnit*>(unit); //cleanup
 	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
-		VectorInsertUnique(liveGhostBuildings[MDL_TYPE(unit)], u);
+		VectorInsertUnique(liveGhostBuildings[MDL_TYPE(unit)], u, true);
 	}
 
 	if (unit->losStatus[allyTeam] & LOS_INRADAR) {
-		VectorInsertUnique(unitRadarIcons[allyTeam], u);
+		VectorInsertUnique(unitRadarIcons[allyTeam], u, true);
 	}
 
 	UpdateUnitMiniMapIcon(unit, false, false);
@@ -1709,7 +1709,7 @@ void CUnitDrawer::UnitEnteredRadar(const CUnit* unit, int allyTeam) {
 	CUnit* u = const_cast<CUnit*>(unit);
 
 	if (!(unit->losStatus[allyTeam] & LOS_INLOS)) {
-		VectorInsertUnique(unitRadarIcons[allyTeam], u);
+		VectorInsertUnique(unitRadarIcons[allyTeam], u, true);
 	}
 
 	UpdateUnitMiniMapIcon(unit, false, false);

@@ -200,16 +200,22 @@ static bool VectorErase(std::vector<T>& v, T e)
 }
 
 template<typename T>
-static bool VectorInsertUnique(std::vector<T>& v, T e)
+static bool VectorInsertUnique(std::vector<T>& v, T e, bool b = false)
 {
-	auto it = std::find(v.begin(), v.end(), e);
+	if (b) {
+		// do not assume uniqueness, test for it
+		if (std::find(v.begin(), v.end(), e) == v.end()) {
+			v.push_back(e);
+			return true;
+		}
 
-	if (it == v.end()) {
-		v.push_back(e);
-		return true;
+		return false;
 	}
 
-	return false;
+	// assume caller knows best, skip the test
+	assert(std::find(v.begin(), v.end(), e) == v.end());
+	v.push_back(e);
+	return true;
 }
 
 
