@@ -19,17 +19,8 @@
 #include "System/Exceptions.h"
 #include "lib/assimp/include/assimp/Importer.hpp"
 
-C3DModelLoader* modelParser = NULL;
+C3DModelLoader* modelParser = nullptr;
 
-
-static inline S3DModelPiece* ModelTypeToModelPiece(const ModelType& type) {
-	if (type == MODELTYPE_3DO) { return (new S3DOPiece()); }
-	if (type == MODELTYPE_S3O) { return (new SS3OPiece()); }
-	if (type == MODELTYPE_OBJ) { return (new SOBJPiece()); }
-	// NOTE: SAssPiece is not yet fully implemented
-	if (type == MODELTYPE_ASS) { return (new SAssPiece()); }
-	return NULL;
-}
 
 static void RegisterAssimpModelFormats(C3DModelLoader::FormatMap& formats) {
 	std::set<std::string> whitelist;
@@ -72,6 +63,18 @@ static void RegisterAssimpModelFormats(C3DModelLoader::FormatMap& formats) {
 	LOG("[%s] supported Assimp model formats: %s", __FUNCTION__, enabledExtensions.c_str());
 }
 
+static S3DModel* CreateDummyModel()
+{
+	// create a crash-dummy
+	S3DModel* model = new S3DModel();
+	model->type = MODELTYPE_3DO;
+	model->numPieces = 1;
+	// give it one empty piece
+	model->SetRootPiece(new S3DOPiece());
+	model->GetRootPiece()->SetCollisionVolume(new CollisionVolume("box", -UpVector, ZeroVector));
+	return model;
+}
+
 
 
 C3DModelLoader::C3DModelLoader()
@@ -91,7 +94,7 @@ C3DModelLoader::C3DModelLoader()
 
 	// dummy first model, model IDs start at 1
 	models.reserve(32);
-	models.push_back(NULL);
+	models.push_back(nullptr);
 }
 
 
@@ -101,11 +104,11 @@ C3DModelLoader::~C3DModelLoader()
 	for (unsigned int n = 1; n < models.size(); n++) {
 		S3DModel* model = models[n];
 
-		assert(model != NULL);
-		assert(model->GetRootPiece() != NULL);
+		assert(model != nullptr);
+		assert(model->GetRootPiece() != nullptr);
 
 		model->DeletePieces(model->GetRootPiece());
-		model->SetRootPiece(NULL);
+		model->SetRootPiece(nullptr);
 
 		delete model;
 	}
@@ -181,7 +184,7 @@ S3DModel* C3DModelLoader::Load3DModel(std::string modelName)
 {
 	// cannot happen except through SpawnProjectile
 	if (modelName.empty())
-		return NULL;
+		return nullptr;
 
 	StringToLowerInPlace(modelName);
 
@@ -189,57 +192,37 @@ S3DModel* C3DModelLoader::Load3DModel(std::string modelName)
 	ModelMap::iterator ci;
 	FormatMap::iterator fi;
 
-	if ((ci = cache.find(modelName)) != cache.end()) {
+	if ((ci = cache.find(modelName)) != cache.end())
 		return models[ci->second];
-	}
 
-	const std::string modelPath = FindModelPath(modelName);
-
-	if ((ci = cache.find(modelPath)) != cache.end()) {
-		return models[ci->second];
-	}
-
-
-	// not found in cache, create the model and cache it
+	const std::string& modelPath = FindModelPath(modelName);
 	const std::string& fileExt = StringToLower(FileSystem::GetExtension(modelPath));
 
-	if ((fi = formats.find(fileExt)) != formats.end()) {
-		IModelParser* p = parsers[fi->second];
-		S3DModel* model = NULL;
-		S3DModelPiece* root = NULL;
+	if ((ci = cache.find(modelPath)) != cache.end())
+		return models[ci->second];
 
-		try {
-			model = p->Load(modelPath);
-		} catch (const content_error& ex) {
-			LOG_L(L_WARNING, "could not load model \"%s\" (reason: %s)", modelName.c_str(), ex.what());
-			goto dummy;
-		}
-
-		if ((root = model->GetRootPiece()) != NULL) {
-			CreateLists(root);
-		}
-
-		AddModelToCache(model, modelName, modelPath);
-		CheckModelNormals(model);
-		return model;
+	if ((fi = formats.find(fileExt)) == formats.end()) {
+		LOG_L(L_ERROR, "could not find a parser for model \"%s\" (unknown format?)", modelName.c_str());
+		return (CreateDummyModel());
 	}
 
-	LOG_L(L_ERROR, "could not find a parser for model \"%s\" (unknown format?)", modelName.c_str());
+	// not found in cache, create the model and cache it
+	IModelParser* p = parsers[fi->second];
+	S3DModel* model = nullptr;
 
-dummy:
-	// crash-dummy
-	S3DModel* model = new S3DModel();
-	model->type = MODELTYPE_3DO;
-	model->numPieces = 1;
-	// give it one dummy piece
-	model->SetRootPiece(ModelTypeToModelPiece(MODELTYPE_3DO));
-	model->GetRootPiece()->SetCollisionVolume(new CollisionVolume("box", -UpVector, ZeroVector));
-
-	if (model->GetRootPiece() != NULL) {
-		CreateLists(model->GetRootPiece());
+	try {
+		model = p->Load(modelPath);
+	} catch (const content_error& ex) {
+		LOG_L(L_WARNING, "could not load model \"%s\" (reason: %s)", modelName.c_str(), ex.what());
+		model = CreateDummyModel();
 	}
 
+	assert(model->GetRootPiece() != nullptr);
+
+	CreateLists(model->GetRootPiece());
 	AddModelToCache(model, modelName, modelPath);
+	CheckModelNormals(model);
+
 	return model;
 }
 

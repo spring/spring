@@ -3,7 +3,7 @@
 #ifndef IMODELPARSER_H
 #define IMODELPARSER_H
 
-#include <map>
+#include <unordered_map>
 #include <string>
 #include <list>
 
@@ -31,9 +31,9 @@ public:
 	std::string FindModelPath(std::string name) const;
 	S3DModel* Load3DModel(std::string modelName);
 
-	typedef std::map<std::string, unsigned int> ModelMap; // "armflash.3do" --> id
-	typedef std::map<std::string, unsigned int> FormatMap; // "3do" --> MODELTYPE_3DO
-	typedef std::map<unsigned int, IModelParser*> ParserMap; // MODELTYPE_3DO --> parser
+	typedef std::unordered_map<std::string, unsigned int> ModelMap; // "armflash.3do" --> id
+	typedef std::unordered_map<std::string, unsigned int> FormatMap; // "3do" --> MODELTYPE_3DO
+	typedef std::unordered_map<unsigned int, IModelParser*> ParserMap; // MODELTYPE_3DO --> parser
 
 private:
 	void AddModelToCache(S3DModel* model, const std::string& modelName, const std::string& modelPath);
@@ -44,11 +44,8 @@ private:
 	FormatMap formats;
 	ParserMap parsers;
 
+	// all unique models loaded so far
 	std::vector<S3DModel*> models;
-	std::list<S3DModelPiece*> createLists;
-
-	std::list<LocalModel*> fixLocalModels;
-	std::list<LocalModel*> deleteLocalModels;
 };
 
 extern C3DModelLoader* modelParser;
