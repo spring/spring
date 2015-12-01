@@ -71,7 +71,7 @@ static S3DModel* CreateDummyModel()
 	model->numPieces = 1;
 	// give it one empty piece
 	model->SetRootPiece(new S3DOPiece());
-	model->GetRootPiece()->SetCollisionVolume(new CollisionVolume("box", -UpVector, ZeroVector));
+	model->GetRootPiece()->SetCollisionVolume(CollisionVolume("box", -UpVector, ZeroVector));
 	return model;
 }
 

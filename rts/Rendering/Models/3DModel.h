@@ -8,6 +8,7 @@
 #include <set>
 #include <map>
 #include "Rendering/GL/VBO.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "System/Matrix44f.h"
 #include "System/creg/creg_cond.h"
 
@@ -104,9 +105,9 @@ struct S3DModelPiece {
 	// draw piece and children statically (ie. without script-transforms)
 	void DrawStatic() const;
 
-	void SetCollisionVolume(CollisionVolume* cv) { colvol = cv; }
-	const CollisionVolume* GetCollisionVolume() const { return colvol; }
-	      CollisionVolume* GetCollisionVolume()       { return colvol; }
+	void SetCollisionVolume(const CollisionVolume& cv) { colvol = cv; }
+	const CollisionVolume* GetCollisionVolume() const { return &colvol; }
+	      CollisionVolume* GetCollisionVolume()       { return &colvol; }
 
 	unsigned int GetChildCount() const { return children.size(); }
 	S3DModelPiece* GetChild(unsigned int i) const { return children[i]; }
@@ -130,7 +131,7 @@ public:
 	std::vector<S3DModelPiece*> children;
 
 	S3DModelPiece* parent;
-	CollisionVolume* colvol;
+	CollisionVolume colvol;
 
 	AxisMappingType axisMapType;
 
@@ -225,7 +226,7 @@ struct LocalModelPiece
 
 	LocalModelPiece() {}
 	LocalModelPiece(const S3DModelPiece* piece);
-	~LocalModelPiece();
+	~LocalModelPiece() {}
 
 	void AddChild(LocalModelPiece* c) { children.push_back(c); }
 	void RemoveChild(LocalModelPiece* c) { children.erase(std::remove(children.begin(), children.end(), c), children.end()); }
@@ -257,8 +258,8 @@ struct LocalModelPiece
 	const CMatrix44f& GetPieceSpaceMatrix() const { return pieceSpaceMat; }
 	const CMatrix44f& GetModelSpaceMatrix() const { return modelSpaceMat; }
 
-	const CollisionVolume* GetCollisionVolume() const { return colvol; }
-	      CollisionVolume* GetCollisionVolume()       { return colvol; }
+	const CollisionVolume* GetCollisionVolume() const { return &colvol; }
+	      CollisionVolume* GetCollisionVolume()       { return &colvol; }
 
 private:
 	float3 pos; // translation relative to parent LMP, *INITIALLY* equal to original->offset
@@ -268,7 +269,7 @@ private:
 	CMatrix44f pieceSpaceMat; // transform relative to parent LMP (SYNCED), combines <pos> and <rot>
 	CMatrix44f modelSpaceMat; // transform relative to root LMP (SYNCED)
 
-	CollisionVolume* colvol;
+	CollisionVolume colvol;
 
 	unsigned numUpdatesSynced; // triggers UpdateMatrix (via UpdateMatricesRec) if != lastMatrixUpdate
 	unsigned lastMatrixUpdate;

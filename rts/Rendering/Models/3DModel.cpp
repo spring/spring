@@ -72,7 +72,6 @@ S3DModelPiece* S3DModel::FindPiece(const std::string& name) const
 
 S3DModelPiece::S3DModelPiece()
 	: parent(NULL)
-	, colvol(NULL)
 	, axisMapType(AXIS_MAPPING_XYZ)
 	, hasGeometryData(false)
 	, hasIdentityRot(true)
@@ -87,7 +86,6 @@ S3DModelPiece::S3DModelPiece()
 S3DModelPiece::~S3DModelPiece()
 {
 	glDeleteLists(dispListID, 1);
-	delete colvol;
 }
 
 unsigned int S3DModelPiece::CreateDrawForList() const
@@ -185,7 +183,7 @@ LocalModelPiece* LocalModel::CreateLocalModelPieces(const S3DModelPiece* mpParen
  */
 
 LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
-	: colvol(new CollisionVolume(piece->GetCollisionVolume()))
+	: colvol(piece->GetCollisionVolume())
 
 	, numUpdatesSynced(1)
 	, lastMatrixUpdate(0)
@@ -208,10 +206,6 @@ LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 	dispListID = piece->GetDisplayListID();
 
 	children.reserve(piece->children.size());
-}
-
-LocalModelPiece::~LocalModelPiece() {
-	delete colvol; colvol = NULL;
 }
 
 
