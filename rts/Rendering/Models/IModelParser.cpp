@@ -201,21 +201,26 @@ S3DModel* C3DModelLoader::Load3DModel(std::string modelName)
 	if ((ci = cache.find(modelPath)) != cache.end())
 		return models[ci->second];
 
-	if ((fi = formats.find(fileExt)) == formats.end()) {
-		LOG_L(L_ERROR, "could not find a parser for model \"%s\" (unknown format?)", modelName.c_str());
-		return (CreateDummyModel());
-	}
+	S3DModel* model = nullptr;
+	IModelParser* parser = nullptr;
 
 	// not found in cache, create the model and cache it
-	IModelParser* p = parsers[fi->second];
-	S3DModel* model = nullptr;
-
-	try {
-		model = p->Load(modelPath);
-	} catch (const content_error& ex) {
-		LOG_L(L_WARNING, "could not load model \"%s\" (reason: %s)", modelName.c_str(), ex.what());
-		model = CreateDummyModel();
+	if ((fi = formats.find(fileExt)) == formats.end()) {
+		LOG_L(L_ERROR, "could not find a parser for model \"%s\" (unknown format?)", modelName.c_str());
+	} else {
+		parser = parsers[fi->second];
 	}
+
+	if (parser != nullptr) {
+		try {
+			model = parser->Load(modelPath);
+		} catch (const content_error& ex) {
+			LOG_L(L_WARNING, "could not load model \"%s\" (reason: %s)", modelName.c_str(), ex.what());
+		}
+	}
+
+	if (model == nullptr)
+		model = CreateDummyModel();
 
 	assert(model->GetRootPiece() != nullptr);
 
