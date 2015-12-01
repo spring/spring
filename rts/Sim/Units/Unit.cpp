@@ -28,7 +28,6 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 
-#include "Rendering/Models/IModelParser.h"
 #include "Rendering/GroundFlash.h"
 
 #include "Game/UI/Groups/Group.h"
