@@ -183,6 +183,37 @@ static inline float SafeDivide(const float a, const float b)
 	return (a / b);
 }
 
+
+
+template<typename T>
+static bool VectorErase(std::vector<T>& v, T e)
+{
+	auto it = std::find(v.begin(), v.end(), e);
+
+	if (it != v.end()) {
+		*it = v.back();
+		v.pop_back();
+		return true;
+	}
+
+	return false;
+}
+
+template<typename T>
+static bool VectorInsertUnique(std::vector<T>& v, T e)
+{
+	auto it = std::find(v.begin(), v.end(), e);
+
+	if (it == v.end()) {
+		v.push_back(e);
+		return true;
+	}
+
+	return false;
+}
+
+
+
 /**
  * @brief Safe alternative to "delete obj;"
  * Safely deletes an object, by first setting the pointer to NULL and then

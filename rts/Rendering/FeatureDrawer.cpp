@@ -113,22 +113,13 @@ void CFeatureDrawer::RenderFeatureCreated(const CFeature* feature)
 }
 
 
-static void erase(std::vector<CFeature*>& v, CFeature* f)
-{
-	auto it = std::find(v.begin(), v.end(), f);
-	if (it != v.end()) {
-		*it = v.back();
-		v.pop_back();
-	}
-}
-
 
 void CFeatureDrawer::RenderFeatureDestroyed(const CFeature* feature)
 {
 	CFeature* f = const_cast<CFeature*>(feature);
 
 	if (f->def->drawType == DRAWTYPE_MODEL) {
-		erase(unsortedFeatures, f);
+		VectorErase(unsortedFeatures, f);
 	}
 	if (f->model && f->drawQuad >= 0) {
 		modelRenderers[f->drawQuad].rendererTypes[MDL_TYPE(f)]->DelFeature(f);

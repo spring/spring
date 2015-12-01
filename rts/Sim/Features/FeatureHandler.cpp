@@ -488,11 +488,14 @@ void CFeatureHandler::Update()
 void CFeatureHandler::SetFeatureUpdateable(CFeature* feature)
 {
 	if (feature->inUpdateQue) {
-			assert(std::find(updateFeatures.begin(), updateFeatures.end(), feature) != updateFeatures.end());
-			return;
+		assert(std::find(updateFeatures.begin(), updateFeatures.end(), feature) != updateFeatures.end());
+		return;
 	}
-	assert(std::find(updateFeatures.begin(), updateFeatures.end(), feature) == updateFeatures.end());
-	updateFeatures.push_back(feature);
+
+	if (!VectorInsertUnique(updateFeatures, feature)) {
+		assert(false);
+	}
+
 	feature->inUpdateQue = true;
 }
 

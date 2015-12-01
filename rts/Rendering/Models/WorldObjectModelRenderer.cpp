@@ -9,6 +9,7 @@
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/Unit.h"
 #include "System/Log/ILog.h"
+#include "System/Util.h"
 
 #define LOG_SECTION_WORLD_OBJECT_MODEL_RENDERER "WorldObjectModelRenderer"
 LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_WORLD_OBJECT_MODEL_RENDERER)
@@ -93,10 +94,11 @@ void IWorldObjectModelRenderer::DrawModels(const ProjectileSet& models)
 void IWorldObjectModelRenderer::AddUnit(const CUnit* u)
 {
 	UnitSet& us = units[TEX_TYPE(u)];
-	assert(std::find(us.begin(), us.end(), const_cast<CUnit*>(u)) == us.end());
 
 	// updating a unit's draw-position requires mutability
-	us.push_back(const_cast<CUnit*>(u));
+	if (!VectorInsertUnique(us, const_cast<CUnit*>(u)))
+		assert(false);
+
 	numUnits += 1;
 }
 
@@ -104,27 +106,25 @@ void IWorldObjectModelRenderer::DelUnit(const CUnit* u)
 {
 	UnitSet& us = units[TEX_TYPE(u)];
 
-	// Unit can be absent from the container, since we can't know in UnitDrawer.cpp
-	// whether it's cloaked or not.
-
-	auto it = std::find(us.begin(), us.end(), const_cast<CUnit*>(u));
-	if (it != us.end()) {
-		*it = us.back();
-		us.pop_back();
+	// Unit can be absent from this container, since we can't
+	// know in UnitDrawer.cpp whether it's cloaked or not.
+	if (VectorErase(us, const_cast<CUnit*>(u))) {
 		numUnits -= 1;
 	}
 
-	if (us.empty())
+	if (us.empty()) {
 		units.erase(TEX_TYPE(u));
+	}
 }
 
 
 void IWorldObjectModelRenderer::AddFeature(const CFeature* f)
 {
 	FeatureSet& fs = features[TEX_TYPE(f)];
-	assert(std::find(fs.begin(), fs.end(), const_cast<CFeature*>(f)) == fs.end());
 
-	fs.push_back(const_cast<CFeature*>(f));
+	if (!VectorInsertUnique(fs, const_cast<CFeature*>(f)))
+		assert(false);
+
 	numFeatures += 1;
 }
 
@@ -132,32 +132,31 @@ void IWorldObjectModelRenderer::DelFeature(const CFeature* f)
 {
 	FeatureSet& fs = features[TEX_TYPE(f)];
 
-	auto it = std::find(fs.begin(), fs.end(), const_cast<CFeature*>(f));
-	assert(it != fs.end());
-	*it = fs.back();
-	fs.pop_back();
+	if (!VectorErase(fs, const_cast<CFeature*>(f)))
+		assert(false);
+
 	numFeatures -= 1;
 }
+
 
 void IWorldObjectModelRenderer::AddProjectile(const CProjectile* p)
 {
 	ProjectileSet& ps = projectiles[TEX_TYPE(p)];
-	assert(std::find(ps.begin(), ps.end(), const_cast<CProjectile*>(p)) == ps.end());
 
-	// updating a unit's draw-position requires mutability
-	ps.push_back(const_cast<CProjectile*>(p));
+	// updating a projectile's draw-position requires mutability
+	if (!VectorInsertUnique(ps, const_cast<CProjectile*>(p)))
+		assert(false);
+
 	numProjectiles += 1;
 }
 
 void IWorldObjectModelRenderer::DelProjectile(const CProjectile* p)
 {
-	ProjectileSet &ps = projectiles[TEX_TYPE(p)];
+	ProjectileSet& ps = projectiles[TEX_TYPE(p)];
 
-	auto it = std::find(ps.begin(), ps.end(), const_cast<CProjectile*>(p));
-	assert(it != ps.end());
+	if (!VectorErase(ps, const_cast<CProjectile*>(p)))
+		assert(false);
 
-	*it = ps.back();
-	ps.pop_back();
 	numProjectiles -= 1;
 }
 

@@ -63,28 +63,6 @@ CONFIG(bool, AdvUnitShading).defaultValue(true).headlessValue(false).safemodeVal
 
 
 
-template<typename T>
-static void erase(T& v, CUnit* u)
-{
-	auto it = std::find(v.begin(), v.end(), u);
-	if (it != v.end()) {
-		*it = v.back();
-		v.pop_back();
-	}
-}
-
-template<typename T>
-static void insert_unique(T& v, CUnit* u)
-{
-	auto it = std::find(v.begin(), v.end(), u);
-	if (it == v.end()) {
-		v.push_back(u);
-	}
-}
-
-
-
-
 CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 {
 	eventHandler.AddClient(this);
@@ -1599,18 +1577,16 @@ void CUnitDrawer::UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool kil
 	icon::CIconData* oldIcon = unit->myIcon;
 	icon::CIconData* newIcon = const_cast<icon::CIconData*>(GetUnitIcon(unit));
 
-	CUnit* u = const_cast<CUnit*>(unit);
-
 	if (!killed) {
 		if ((oldIcon != newIcon) || forced) {
-			erase(unitsByIcon[oldIcon], u);
-			unitsByIcon[newIcon].push_back(u);
+			VectorErase(unitsByIcon[oldIcon], unit);
+			unitsByIcon[newIcon].push_back(unit);
 		}
 	} else {
-		erase(unitsByIcon[oldIcon], u);
+		VectorErase(unitsByIcon[oldIcon], unit);
 	}
 
-	u->myIcon = killed? NULL: newIcon;
+	(const_cast<CUnit*>(unit))->myIcon = killed? NULL: newIcon;
 }
 
 
@@ -1657,17 +1633,17 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 	}
 
 	if (u->model) {
-		//Don't dare checking u->isCloaked, it may not exist.
+		// delete from both; cloaked state is unreliable at this point
 		cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 		opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 	}
 
-	erase(unsortedUnits, u);
-	erase(liveGhostBuildings[MDL_TYPE(u)], u);
+	VectorErase(unsortedUnits, u);
+	VectorErase(liveGhostBuildings[MDL_TYPE(u)], u);
 
 	// remove the icon for all ally-teams
 	for (std::vector<std::vector<CUnit*> >::iterator it = unitRadarIcons.begin(); it != unitRadarIcons.end(); ++it) {
-		erase(*it, u);
+		VectorErase(*it, u);
 	}
 
 	UpdateUnitMiniMapIcon(unit, false, true);
@@ -1699,11 +1675,12 @@ void CUnitDrawer::UnitEnteredLos(const CUnit* unit, int allyTeam) {
 	}
 
 	CUnit* u = const_cast<CUnit*>(unit); //cleanup
-	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
-		erase(liveGhostBuildings[MDL_TYPE(unit)], u);
-	}
-	erase(unitRadarIcons[allyTeam], u);
 
+	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
+		VectorErase(liveGhostBuildings[MDL_TYPE(unit)], u);
+	}
+
+	VectorErase(unitRadarIcons[allyTeam], u);
 	UpdateUnitMiniMapIcon(unit, false, false);
 }
 
@@ -1714,11 +1691,11 @@ void CUnitDrawer::UnitLeftLos(const CUnit* unit, int allyTeam) {
 
 	CUnit* u = const_cast<CUnit*>(unit); //cleanup
 	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
-		insert_unique(liveGhostBuildings[MDL_TYPE(unit)], u);
+		VectorInsertUnique(liveGhostBuildings[MDL_TYPE(unit)], u);
 	}
 
 	if (unit->losStatus[allyTeam] & LOS_INRADAR) {
-		insert_unique(unitRadarIcons[allyTeam], u);
+		VectorInsertUnique(unitRadarIcons[allyTeam], u);
 	}
 
 	UpdateUnitMiniMapIcon(unit, false, false);
@@ -1732,7 +1709,7 @@ void CUnitDrawer::UnitEnteredRadar(const CUnit* unit, int allyTeam) {
 	CUnit* u = const_cast<CUnit*>(unit);
 
 	if (!(unit->losStatus[allyTeam] & LOS_INLOS)) {
-		insert_unique(unitRadarIcons[allyTeam], u);
+		VectorInsertUnique(unitRadarIcons[allyTeam], u);
 	}
 
 	UpdateUnitMiniMapIcon(unit, false, false);
@@ -1744,8 +1721,8 @@ void CUnitDrawer::UnitLeftRadar(const CUnit* unit, int allyTeam) {
 	}
 
 	CUnit* u = const_cast<CUnit*>(unit);
-	erase(unitRadarIcons[allyTeam], u);
 
+	VectorErase(unitRadarIcons[allyTeam], u);
 	UpdateUnitMiniMapIcon(unit, false, false);
 }
 

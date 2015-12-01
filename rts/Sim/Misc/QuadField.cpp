@@ -283,19 +283,15 @@ void CQuadField::MovedUnit(CUnit* unit)
 		std::vector<CUnit*>& quadAllyUnits = baseQuads[qi].teamUnits[unit->allyteam];
 		std::vector<CUnit*>::iterator ui;
 
-		ui = std::find(quadUnits.begin(), quadUnits.end(), unit);
-		if (ui != quadUnits.end())
-			quadUnits.erase(ui);
-
-		ui = std::find(quadAllyUnits.begin(), quadAllyUnits.end(), unit);
-		if (ui != quadAllyUnits.end())
-			quadAllyUnits.erase(ui);
+		VectorErase(quadUnits, unit);
+		VectorErase(quadAllyUnits, unit);
 	}
 
 	for (const int qi: newQuads) {
 		baseQuads[qi].units.push_back(unit);
 		baseQuads[qi].teamUnits[unit->allyteam].push_back(unit);
 	}
+
 	unit->quads = std::move(newQuads);
 }
 
@@ -306,14 +302,10 @@ void CQuadField::RemoveUnit(CUnit* unit)
 		std::vector<CUnit*>& quadAllyUnits = baseQuads[qi].teamUnits[unit->allyteam];
 		std::vector<CUnit*>::iterator ui;
 
-		ui = std::find(quadUnits.begin(), quadUnits.end(), unit);
-		if (ui != quadUnits.end())
-			quadUnits.erase(ui);
-
-		ui = std::find(quadAllyUnits.begin(), quadAllyUnits.end(), unit);
-		if (ui != quadAllyUnits.end())
-			quadAllyUnits.erase(ui);
+		VectorErase(quadUnits, unit);
+		VectorErase(quadAllyUnits, unit);
 	}
+
 	unit->quads.clear();
 }
 
@@ -333,10 +325,7 @@ void CQuadField::RemoveFeature(CFeature* feature)
 	const auto& quads = GetQuads(feature->pos, feature->radius);
 
 	for (const int qi: quads) {
-		auto& quadFeatures = baseQuads[qi].features;
-		auto fi = std::find(quadFeatures.begin(), quadFeatures.end(), feature);
-		if (fi != quadFeatures.end())
-			quadFeatures.erase(fi);
+		VectorErase(baseQuads[qi].features, feature);
 	}
 
 	#ifdef DEBUG_QUADFIELD
@@ -390,11 +379,9 @@ void CQuadField::RemoveProjectile(CProjectile* p)
 	assert(p->synced);
 
 	for (const int qi: p->quads) {
-		auto& quadProjectiles = baseQuads[qi].projectiles;
-		auto pi = std::find(quadProjectiles.begin(), quadProjectiles.end(), p);
-		if (pi != quadProjectiles.end())
-			quadProjectiles.erase(pi);
+		VectorErase(baseQuads[qi].projectiles, p);
 	}
+
 	p->quads.clear();
 }
 
