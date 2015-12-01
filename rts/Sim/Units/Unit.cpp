@@ -226,11 +226,6 @@ CUnit::~CUnit()
 	SetMetalStorage(0);
 	SetEnergyStorage(0);
 
-	SafeDelete(commandAI);
-	SafeDelete(moveType);
-	SafeDelete(prevMoveType);
-	SafeDelete(localModel);
-
 	// not all unit deletions run through KillUnit(),
 	// but we always want to call this for ourselves
 	UnBlock();
@@ -238,9 +233,15 @@ CUnit::~CUnit()
 	// Remove us from our group, if we were in one
 	SetGroup(nullptr);
 
-	if (script != &CNullUnitScript::value) {
+	// delete script first so any callouts still see valid ptrs
+	if (script != &CNullUnitScript::value)
 		SafeDelete(script);
-	}
+
+	SafeDelete(commandAI);
+	SafeDelete(moveType);
+	SafeDelete(prevMoveType);
+	SafeDelete(localModel);
+
 	// ScriptCallback may reference weapons, so delete the script first
 	for (auto wi = weapons.cbegin(); wi != weapons.cend(); ++wi) {
 		delete *wi;
