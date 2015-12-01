@@ -995,7 +995,7 @@ int LuaUnsyncedCtrl::SetDrawModelsDeferred(lua_State* L)
 	unitDrawer->SetDrawForwardPass(luaL_optboolean(L, 3, unitDrawer->DrawForward()));
 
 	featureDrawer->SetDrawDeferredPass(luaL_checkboolean(L, 2));
-	featureDrawer->SetDrawForwardPass(luaL_optboolean(L, 4, featureDrawer->DrawForwarD()));
+	featureDrawer->SetDrawForwardPass(luaL_optboolean(L, 4, featureDrawer->DrawForward()));
 
 	lua_pushboolean(L,    unitDrawer->DrawDeferred());
 	lua_pushboolean(L, featureDrawer->DrawDeferred());
