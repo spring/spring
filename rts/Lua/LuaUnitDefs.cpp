@@ -643,7 +643,7 @@ static bool InitParamMap()
 	paramMap["pairs"] = DataElement(READONLY_TYPE);
 
 	// dummy UnitDef for address lookups
-	const UnitDef& ud = *unitDefHandler->unitDefs[0];
+	const UnitDef& ud = unitDefHandler->unitDefs[0];
 	const char* start = ADDRESS(ud);
 
 /*

@@ -46,7 +46,7 @@ public:
 	std::set<int> startUnitIDs;
 
 //protected: //FIXME UnitDef::*ExplGens,buildingDecalType,trackType are initialized in UnitDrawer.cpp
-	std::vector<UnitDef*> unitDefs;
+	std::vector<UnitDef> unitDefs;
 	std::map<std::string, int> unitDefIDsByName;
 
 protected:
@@ -58,7 +58,7 @@ protected:
 
 	void FindStartUnits();
 
-	void AssignTechLevel(UnitDef* ud, int level);
+	void AssignTechLevel(UnitDef& ud, int level);
 
 private:
 	std::map<std::string, std::string> decoyNameMap;

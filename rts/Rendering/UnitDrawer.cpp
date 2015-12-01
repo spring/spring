@@ -103,14 +103,14 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 
 	// load unit explosion generators and decals
 	for (size_t unitDefID = 1; unitDefID < unitDefHandler->unitDefs.size(); unitDefID++) {
-		UnitDef* ud = unitDefHandler->unitDefs[unitDefID];
+		UnitDef& ud = unitDefHandler->unitDefs[unitDefID];
 
-		for (unsigned int n = 0; n < ud->modelCEGTags.size(); n++) {
-			ud->SetModelExplosionGeneratorID(n, explGenHandler->LoadGeneratorID(ud->modelCEGTags[n]));
+		for (unsigned int n = 0; n < ud.modelCEGTags.size(); n++) {
+			ud.SetModelExplosionGeneratorID(n, explGenHandler->LoadGeneratorID(ud.modelCEGTags[n]));
 		}
-		for (unsigned int n = 0; n < ud->pieceCEGTags.size(); n++) {
+		for (unsigned int n = 0; n < ud.pieceCEGTags.size(); n++) {
 			// these can only be custom EG's so prefix is not required game-side
-			ud->SetPieceExplosionGeneratorID(n, explGenHandler->LoadGeneratorID(CEG_PREFIX_STRING + ud->pieceCEGTags[n]));
+			ud.SetPieceExplosionGeneratorID(n, explGenHandler->LoadGeneratorID(CEG_PREFIX_STRING + ud.pieceCEGTags[n]));
 		}
 	}
 
