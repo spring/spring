@@ -7,7 +7,7 @@
 #include <vector>
 #include <map>
 #include <list>
-#include <boost/utility.hpp> //! boost::noncopyable
+#include <boost/noncopyable.hpp>
 
 #include "TeamBase.h"
 #include "TeamStatistics.h"

@@ -71,7 +71,6 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 #include <boost/thread/future.hpp>
 #undef gt
 #include <boost/chrono/include.hpp>
-#include <boost/utility.hpp>
 #include <memory>
 
 #ifdef UNITSYNC

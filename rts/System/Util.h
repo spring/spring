@@ -6,7 +6,7 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
-#include <boost/utility.hpp>
+#include <boost/noncopyable.hpp>
 
 #include "System/maindefines.h"
 

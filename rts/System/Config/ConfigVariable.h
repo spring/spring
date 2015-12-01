@@ -3,7 +3,7 @@
 #ifndef CONFIG_VALUE_H
 #define CONFIG_VALUE_H
 
-#include <boost/utility.hpp>
+#include <boost/noncopyable.hpp>
 #include <map>
 #include <sstream>
 #include <string>

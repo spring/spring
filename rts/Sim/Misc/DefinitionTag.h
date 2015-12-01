@@ -6,7 +6,7 @@
 #define DEFINTION_TAG_H
 
 #include <assert.h>
-#include <boost/utility.hpp>
+#include <boost/noncopyable.hpp>
 #include <boost/static_assert.hpp>
 #include <map>
 #include <vector>
