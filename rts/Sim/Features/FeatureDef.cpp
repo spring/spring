@@ -21,7 +21,8 @@ CR_REG_METADATA(FeatureDef, (
 ))
 
 FeatureDef::FeatureDef()
-	: deathFeatureDefID(-1)
+	: SolidObjectDef()
+	, deathFeatureDefID(-1)
 	, reclaimTime(0)
 	, drawType(DRAWTYPE_NONE)
 	, resurrectable(false)

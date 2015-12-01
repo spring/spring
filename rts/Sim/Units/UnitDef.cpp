@@ -64,7 +64,8 @@ UnitDefWeapon::UnitDefWeapon(const WeaponDef* weaponDef, const LuaTable& weaponT
 /******************************************************************************/
 
 UnitDef::UnitDef()
-	: cobID(-1)
+	: SolidObjectDef()
+	, cobID(-1)
 	, decoyDef(NULL)
 	, techLevel(-1)
 	, metalUpkeep(0.0f)

@@ -643,10 +643,10 @@ void CGame::LoadInterface()
 		}
 
 		const std::map<std::string, int>& unitDefs = unitDefHandler->unitDefIDsByName;
-		const std::map<std::string, const FeatureDef*>& featureDefs = featureHandler->GetFeatureDefs();
+		const std::map<std::string, int>& featureDefs = featureHandler->GetFeatureDefs();
 
 		std::map<std::string, int>::const_iterator uit;
-		std::map<std::string, const FeatureDef*>::const_iterator fit;
+		std::map<std::string, int>::const_iterator fit;
 
 		for (uit = unitDefs.begin(); uit != unitDefs.end(); ++uit) {
 			wordCompletion->AddWord(uit->first + " ", false, true, false);
