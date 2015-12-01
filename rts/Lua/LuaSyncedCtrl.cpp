@@ -481,7 +481,7 @@ static int SetSolidObjectCollisionVolumeData(lua_State* L, CSolidObject* o)
 	const float3 scales(xs, ys, zs);
 	const float3 offsets(xo, yo, zo);
 
-	o->collisionVolume->InitShape(scales, offsets, vType, tType, pAxis);
+	o->collisionVolume.InitShape(scales, offsets, vType, tType, pAxis);
 	return 0;
 }
 

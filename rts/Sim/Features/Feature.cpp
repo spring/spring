@@ -207,12 +207,12 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	CalculateTransform();
 
 	// note: gets deleted in ~CSolidObject
-	collisionVolume = new CollisionVolume(def->collisionVolume);
+	collisionVolume = def->collisionVolume;
 
-	if (collisionVolume->DefaultToSphere())
-		collisionVolume->InitSphere(radius);
-	if (collisionVolume->DefaultToFootPrint())
-		collisionVolume->InitBox(float3(xsize * SQUARE_SIZE, height, zsize * SQUARE_SIZE));
+	if (collisionVolume.DefaultToSphere())
+		collisionVolume.InitSphere(radius);
+	if (collisionVolume.DefaultToFootPrint())
+		collisionVolume.InitBox(float3(xsize * SQUARE_SIZE, height, zsize * SQUARE_SIZE));
 
 	// feature does not have an assigned ID yet
 	// this MUST be done before the Block() call

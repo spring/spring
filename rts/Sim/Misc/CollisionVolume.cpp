@@ -263,7 +263,7 @@ float3 CollisionVolume::GetWorldSpacePos(const CSolidObject* o, const float3& ex
 
 
 float CollisionVolume::GetPointSurfaceDistance(const CUnit* u, const LocalModelPiece* lmp, const float3& p) const {
-	const CollisionVolume* vol = u->collisionVolume;
+	const CollisionVolume* vol = &u->collisionVolume;
 
 	CMatrix44f mat = u->GetTransformMatrix(true);
 

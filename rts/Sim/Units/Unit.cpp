@@ -299,12 +299,12 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	// NOTE: gets deleted in ~CSolidObject
 	model = unitDef->LoadModel();
 	localModel = new LocalModel(model);
-	collisionVolume = new CollisionVolume(unitDef->collisionVolume);
+	collisionVolume = unitDef->collisionVolume;
 
-	if (collisionVolume->DefaultToSphere())
-		collisionVolume->InitSphere(model->radius);
-	if (collisionVolume->DefaultToFootPrint())
-		collisionVolume->InitBox(float3(xsize * SQUARE_SIZE, model->height, zsize * SQUARE_SIZE));
+	if (collisionVolume.DefaultToSphere())
+		collisionVolume.InitSphere(model->radius);
+	if (collisionVolume.DefaultToFootPrint())
+		collisionVolume.InitBox(float3(xsize * SQUARE_SIZE, model->height, zsize * SQUARE_SIZE));
 
 	mapSquare = CGround::GetSquare((params.pos).cClampInMap());
 
@@ -1408,9 +1408,9 @@ CMatrix44f CUnit::GetTransformMatrix(const bool synced, const bool error) const
 
 const CollisionVolume* CUnit::GetCollisionVolume(const LocalModelPiece* lmp) const {
 	if (lmp == NULL)
-		return collisionVolume;
-	if (!collisionVolume->DefaultToPieceTree())
-		return collisionVolume;
+		return &collisionVolume;
+	if (!collisionVolume.DefaultToPieceTree())
+		return &collisionVolume;
 
 	return (lmp->GetCollisionVolume());
 }

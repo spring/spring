@@ -109,7 +109,6 @@ CSolidObject::CSolidObject():
 
 	objectDef(NULL),
 	moveDef(NULL),
-	collisionVolume(NULL),
 	groundDecal(NULL),
 
 	frontdir( FwdVector),
@@ -125,13 +124,6 @@ CSolidObject::CSolidObject():
 	yardOpen(false),
 	buildFacing(0)
 {
-}
-
-CSolidObject::~CSolidObject() {
-	ClearCollidableStateBit(CSTATE_BIT_SOLIDOBJECTS | CSTATE_BIT_PROJECTILES | CSTATE_BIT_QUADMAPRAYS);
-
-	delete collisionVolume;
-	collisionVolume = NULL;
 }
 
 void CSolidObject::UpdatePhysicalState(float eps) {
@@ -192,7 +184,7 @@ bool CSolidObject::SetVoidState() {
 	SetPhysicalStateBit(PSTATE_BIT_INVOID);
 
 	UnBlock();
-	collisionVolume->SetIgnoreHits(true);
+	collisionVolume.SetIgnoreHits(true);
 	return true;
 }
 
@@ -206,7 +198,7 @@ bool CSolidObject::ClearVoidState() {
 	ClearPhysicalStateBit(PSTATE_BIT_INVOID);
 
 	Block();
-	collisionVolume->SetIgnoreHits(false);
+	collisionVolume.SetIgnoreHits(false);
 	return true;
 }
 

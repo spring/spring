@@ -32,7 +32,7 @@ inline static bool TestConeHelper(
 	const float spread,
 	const CSolidObject* obj)
 {
-	const CollisionVolume* cv = obj->collisionVolume;
+	const CollisionVolume* cv = &obj->collisionVolume;
 
 	const float3 objVec3D = cv->GetWorldSpacePos(obj, ZeroVector) - pos3D;
 	const float  objDst1D = Clamp(objVec3D.dot(dir3D), 0.0f, length);
@@ -103,7 +103,7 @@ inline static bool TestTrajectoryConeHelper(
 	//   THE TRAJECTORY CURVE MIGHT STILL INTERSECT
 	//   EVEN WHEN <x, f(x)> DOES NOT LIE INSIDE CV
 	//   SO THIS CAN GENERATE FALSE NEGATIVES
-	const CollisionVolume* cv = obj->collisionVolume;
+	const CollisionVolume* cv = &obj->collisionVolume;
 
 	const float3 objVec3D = cv->GetWorldSpacePos(obj, ZeroVector) - pos3D;
 	const float  objDst1D = Clamp(objVec3D.dot(dir2D), 0.0f, length);

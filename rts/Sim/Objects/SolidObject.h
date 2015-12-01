@@ -5,6 +5,7 @@
 
 #include "WorldObject.h"
 #include "Lua/LuaObjectMaterial.h" // XXX
+#include "Sim/Misc/CollisionVolume.h"
 #include "System/bitops.h"
 #include "System/Matrix44f.h"
 #include "System/type2.h"
@@ -13,7 +14,6 @@
 #include "System/Sync/SyncedPrimitive.h"
 
 struct MoveDef;
-struct CollisionVolume;
 struct LocalModelPiece;
 struct SolidObjectDef;
 struct SolidObjectGroundDecal;
@@ -93,7 +93,7 @@ public:
 	};
 
 	CSolidObject();
-	virtual ~CSolidObject();
+	virtual ~CSolidObject() {}
 
 	virtual bool AddBuildPower(CUnit* builder, float amount) { return false; }
 	virtual void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID) {}
@@ -148,7 +148,7 @@ public:
 		return CMatrix44f();
 	}
 
-	virtual const CollisionVolume* GetCollisionVolume(const LocalModelPiece* lmp) const { return collisionVolume; }
+	virtual const CollisionVolume* GetCollisionVolume(const LocalModelPiece* lmp) const { return &collisionVolume; }
 
 	const LuaObjectMaterialData* GetLuaMaterialData() const { return &luaMaterialData; }
 	      LuaObjectMaterialData* GetLuaMaterialData()       { return &luaMaterialData; }
@@ -211,7 +211,7 @@ public:
 
 	bool    HasCollidableStateBit(unsigned int bit) const { return ((collidableState & bit) != 0); }
 	void    SetCollidableStateBit(unsigned int bit) { unsigned int cs = collidableState; cs |= ( bit); collidableState = static_cast<CollidableState>(cs); }
-	void  ClearCollidableStateBit(unsigned int bit) { unsigned int cs = collidableState; cs &= (~bit); collidableState = static_cast<CollidableState>(cs); } 
+	void  ClearCollidableStateBit(unsigned int bit) { unsigned int cs = collidableState; cs &= (~bit); collidableState = static_cast<CollidableState>(cs); }
 	void   PushCollidableStateBit(unsigned int bit) { UpdateCollidableStateBit(1u << (32u - (bits_ffs(bit) - 1u)), HasCollidableStateBit(bit)); }
 	void    PopCollidableStateBit(unsigned int bit) { UpdateCollidableStateBit(bit, HasCollidableStateBit(1u << (32u - (bits_ffs(bit) - 1u)))); }
 	bool UpdateCollidableStateBit(unsigned int bit, bool set) {
@@ -277,7 +277,7 @@ public:
 	const SolidObjectDef* objectDef;            ///< points to a UnitDef or to a FeatureDef instance
 
 	MoveDef* moveDef;                           ///< mobility information about this object (if NULL, object is either static or aircraft)
-	CollisionVolume* collisionVolume;
+	CollisionVolume collisionVolume;
 	SolidObjectGroundDecal* groundDecal;
 
 	LuaObjectMaterialData luaMaterialData;      ///< custom Lua-set material this object should be rendered with (UNSYNCED)

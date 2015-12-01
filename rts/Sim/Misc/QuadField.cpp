@@ -634,7 +634,7 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 			if (u->tempNum == tempNum)
 				continue;
 
-			const auto* colvol = u->collisionVolume;
+			const auto* colvol = &u->collisionVolume;
 			const float totRad = radius + colvol->GetBoundingRadius();
 
 			if (pos.SqDistance(colvol->GetWorldSpacePos(u)) >= (totRad * totRad))
@@ -657,7 +657,7 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 			if (f->tempNum == tempNum)
 				continue;
 
-			const auto* colvol = f->collisionVolume;
+			const auto* colvol = &f->collisionVolume;
 			const float totRad = radius + colvol->GetBoundingRadius();
 
 			if (pos.SqDistance(colvol->GetWorldSpacePos(f)) >= (totRad * totRad))

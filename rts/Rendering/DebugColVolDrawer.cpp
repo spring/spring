@@ -103,7 +103,7 @@ static inline void DrawObjectMidAndAimPos(const CSolidObject* o)
 
 static inline void DrawFeatureColVol(const CFeature* f)
 {
-	const CollisionVolume* v = f->collisionVolume;
+	const CollisionVolume* v = &f->collisionVolume;
 
 	if (f->IsInVoid()) return;
 	if (!f->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView) return;
@@ -191,7 +191,7 @@ static inline void DrawUnitColVol(const CUnit* u)
 	if (!(u->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView) return;
 	if (!camera->InView(u->drawMidPos, u->drawRadius)) return;
 
-	const CollisionVolume* v = u->collisionVolume;
+	const CollisionVolume* v = &u->collisionVolume;
 	const bool vCustomType = (v->GetVolumeType() < CollisionVolume::COLVOL_TYPE_SPHERE);
 	const bool vCustomDims = ((v->GetOffsets()).SqLength() >= 1.0f || math::fabs(v->GetBoundingRadius() - u->radius) >= 1.0f);
 

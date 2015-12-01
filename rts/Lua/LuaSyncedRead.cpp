@@ -3595,7 +3595,7 @@ int LuaSyncedRead::GetUnitCollisionVolumeData(lua_State* L)
 		return 0;
 	}
 
-	return (PushCollisionVolumeData(L, unit->collisionVolume));
+	return (PushCollisionVolumeData(L, &unit->collisionVolume));
 }
 
 int LuaSyncedRead::GetUnitPieceCollisionVolumeData(lua_State* L)
@@ -4563,7 +4563,7 @@ int LuaSyncedRead::GetFeatureCollisionVolumeData(lua_State* L)
 		return 0;
 	}
 
-	return (PushCollisionVolumeData(L, feature->collisionVolume));
+	return (PushCollisionVolumeData(L, &feature->collisionVolume));
 }
 
 

@@ -27,7 +27,7 @@ void CCollisionHandler::PrintStats()
 
 bool CCollisionHandler::DetectHit(const CSolidObject* o, const float3 p0, const float3 p1, CollisionQuery* cq, bool forceTrace)
 {
-	return (DetectHit(o->collisionVolume, o, p0, p1, cq, forceTrace));
+	return (DetectHit(&o->collisionVolume, o, p0, p1, cq, forceTrace));
 }
 
 bool CCollisionHandler::DetectHit(const CollisionVolume* v, const CSolidObject* o, const float3 p0, const float3 p1, CollisionQuery* cq, bool forceTrace)
@@ -197,7 +197,7 @@ bool CCollisionHandler::MouseHit(const CUnit* u, const float3& p0, const float3&
 {
 	if (cq != NULL)
 		cq->Reset();
-	
+
 	if (!u->IsInVoid()) {
 		if (v->DefaultToPieceTree()) {
 			return (CCollisionHandler::IntersectPieceTree(u, p0, p1, cq));

@@ -799,7 +799,7 @@ float3 CWeapon::GetTargetBorderPos(
 
 	const float tbScale = math::fabsf(weaponDef->targetBorder);
 
-	CollisionVolume  tmpColVol = CollisionVolume(targetUnit->collisionVolume);
+	CollisionVolume  tmpColVol = targetUnit->collisionVolume;
 	CollisionQuery   tmpColQry;
 
 	// test for "collision" with a temporarily volume
