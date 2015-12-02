@@ -196,14 +196,15 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 	// Read the model file to build a scene object
 	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Importing model file: %s", modelFilePath.c_str());
 
-	const aiScene* scene;
+	const aiScene* scene = nullptr;
+
 	{
 		// ASSIMP spams many SIGFPEs atm in normal & tangent generation
 		ScopedDisableFpuExceptions fe;
 		scene = importer.ReadFile(modelFilePath, ASS_POSTPROCESS_OPTIONS);
 	}
 
-	if (scene != NULL) {
+	if (scene != nullptr) {
 		LOG_SL(LOG_SECTION_MODEL, L_INFO,
 			"Processing scene for model: %s (%d meshes / %d materials / %d textures)",
 			modelFilePath.c_str(), scene->mNumMeshes, scene->mNumMaterials,
@@ -211,6 +212,8 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 	} else {
 		throw content_error("[AssimpParser] Model Import: " + std::string(importer.GetErrorString()));
 	}
+
+	ModelPieceMap pieceMap;
 
 	S3DModel* model = new S3DModel();
 	model->name = modelFilePath;
@@ -223,10 +226,10 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 
 	// Load all pieces in the model
 	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Loading pieces from root node '%s'", scene->mRootNode->mName.data);
-	LoadPiece(model, scene->mRootNode, scene, modelTable);
+	LoadPiece(model, scene->mRootNode, scene, modelTable, pieceMap);
 
 	// Update piece hierarchy based on metadata
-	BuildPieceHierarchy(model);
+	BuildPieceHierarchy(model, pieceMap);
 	CalculateModelProperties(model, modelTable);
 
 	// Verbose logging of model properties
@@ -440,8 +443,12 @@ bool CAssParser::SetModelRadiusAndHeight(
 	return false;
 }
 
-void CAssParser::SetPieceName(SAssPiece* piece, const S3DModel* model, const aiNode* pieceNode)
-{
+void CAssParser::SetPieceName(
+	SAssPiece* piece,
+	const S3DModel* model,
+	const aiNode* pieceNode,
+	ModelPieceMap& pieceMap
+) {
 	assert(piece->name.empty());
 	piece->name = std::string(pieceNode->mName.data);
 
@@ -456,12 +463,12 @@ void CAssParser::SetPieceName(SAssPiece* piece, const S3DModel* model, const aiN
 	}
 
 	// find a new name if none given or if a piece with the same name already exists
-	ModelPieceMap::const_iterator it = model->pieceMap.find(piece->name);
+	ModelPieceMap::const_iterator it = pieceMap.find(piece->name);
 
-	for (unsigned int i = 0; it != model->pieceMap.end(); i++) {
+	for (unsigned int i = 0; it != pieceMap.end(); i++) {
 		const std::string newPieceName = piece->name + IntToString(i, "%02i");
 
-		if ((it = model->pieceMap.find(newPieceName)) == model->pieceMap.end()) {
+		if ((it = pieceMap.find(newPieceName)) == pieceMap.end()) {
 			piece->name = newPieceName; break;
 		}
 	}
@@ -590,7 +597,8 @@ SAssPiece* CAssParser::LoadPiece(
 	S3DModel* model,
 	const aiNode* pieceNode,
 	const aiScene* scene,
-	const LuaTable& modelTable
+	const LuaTable& modelTable,
+	ModelPieceMap& pieceMap
 ) {
 	++model->numPieces;
 
@@ -603,7 +611,7 @@ SAssPiece* CAssParser::LoadPiece(
 		model->SetRootPiece(piece);
 	}
 
-	SetPieceName(piece, model, pieceNode);
+	SetPieceName(piece, model, pieceNode, pieceMap);
 
 	LOG_SL(LOG_SECTION_PIECE, L_INFO, "Converting node '%s' to piece '%s' (%d meshes).", pieceNode->mName.data, piece->name.c_str(), pieceNode->mNumMeshes);
 
@@ -630,19 +638,19 @@ SAssPiece* CAssParser::LoadPiece(
 
 	// Recursively process all child pieces
 	for (unsigned int i = 0; i < pieceNode->mNumChildren; ++i) {
-		LoadPiece(model, pieceNode->mChildren[i], scene, modelTable);
+		LoadPiece(model, pieceNode->mChildren[i], scene, modelTable, pieceMap);
 	}
 
-	model->pieceMap[piece->name] = piece;
+	pieceMap[piece->name] = piece;
 	return piece;
 }
 
 
 // Because of metadata overrides we don't know the true hierarchy until all pieces have been loaded
-void CAssParser::BuildPieceHierarchy(S3DModel* model)
+void CAssParser::BuildPieceHierarchy(S3DModel* model, ModelPieceMap& pieceMap)
 {
 	// Loop through all pieces and create missing hierarchy info
-	for (ModelPieceMap::const_iterator it = model->pieceMap.begin(); it != model->pieceMap.end(); ++it) {
+	for (auto it = pieceMap.cbegin(); it != pieceMap.cend(); ++it) {
 		SAssPiece* piece = static_cast<SAssPiece*>(it->second);
 
 		if (piece == model->GetRootPiece()) {
@@ -652,11 +660,14 @@ void CAssParser::BuildPieceHierarchy(S3DModel* model)
 		}
 
 		if (!piece->parentName.empty()) {
-			if ((piece->parent = model->FindPiece(piece->parentName)) == NULL) {
+			const auto it = pieceMap.find(piece->parentName);
+
+			if (it == pieceMap.end()) {
 				LOG_SL(LOG_SECTION_PIECE, L_ERROR,
 					"Missing piece '%s' declared as parent of '%s'.",
 					piece->parentName.c_str(), piece->name.c_str());
 			} else {
+				piece->parent = it->second;
 				piece->parent->children.push_back(piece);
 			}
 

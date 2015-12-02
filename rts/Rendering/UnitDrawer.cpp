@@ -264,7 +264,7 @@ void CUnitDrawer::DrawOpaquePass(const CUnit* excludeUnit, bool deferredPass, bo
 	CleanUpUnitDrawing(deferredPass);
 
 	// draw all custom'ed units that were bypassed in the loop above
-	LuaObjectDrawer::SetGlobalDrawPassLODFactor(LUAOBJ_UNIT);
+	LuaObjectDrawer::SetDrawPassGlobalLODFactor(LUAOBJ_UNIT);
 	LuaObjectDrawer::DrawOpaqueMaterialObjects(LUAOBJ_UNIT, deferredPass);
 }
 
@@ -503,7 +503,7 @@ void CUnitDrawer::DrawShadowPass()
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
 
-	LuaObjectDrawer::SetGlobalDrawPassLODFactor(LUAOBJ_UNIT);
+	LuaObjectDrawer::SetDrawPassGlobalLODFactor(LUAOBJ_UNIT);
 	LuaObjectDrawer::DrawShadowMaterialObjects(LUAOBJ_UNIT, false);
 }
 
@@ -656,7 +656,7 @@ void CUnitDrawer::DrawCloakedUnits(bool disableAdvShading)
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
-	LuaObjectDrawer::SetGlobalDrawPassLODFactor(LUAOBJ_UNIT);
+	LuaObjectDrawer::SetDrawPassGlobalLODFactor(LUAOBJ_UNIT);
 	LuaObjectDrawer::DrawAlphaMaterialObjects(LUAOBJ_UNIT, false);
 }
 

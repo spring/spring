@@ -165,7 +165,7 @@ void LuaObjectDrawer::ReadLODScales(LuaObjType objType)
 	LODScaleRefraction[objType] = GetLODFloat("LODScaleRefraction");
 }
 
-void LuaObjectDrawer::SetGlobalDrawPassLODFactor(LuaObjType objType)
+void LuaObjectDrawer::SetDrawPassGlobalLODFactor(LuaObjType objType)
 {
 	if (shadowHandler->inShadowPass) {
 		LuaObjectMaterialData::SetGlobalLODFactor(objType, GetLODScaleShadow(objType) * camera->GetLPPScale());

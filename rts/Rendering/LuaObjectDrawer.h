@@ -40,7 +40,7 @@ public:
 
 public:
 	static void ReadLODScales(LuaObjType objType);
-	static void SetGlobalDrawPassLODFactor(LuaObjType objType);
+	static void SetDrawPassGlobalLODFactor(LuaObjType objType);
 
 	static float GetLODScale          (int objType) { return (LODScale[objType]                              ); }
 	static float GetLODScaleShadow    (int objType) { return (LODScale[objType] * LODScaleShadow    [objType]); }

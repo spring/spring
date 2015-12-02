@@ -5,8 +5,7 @@
 
 #include <vector>
 #include <string>
-#include <set>
-#include <map>
+
 #include "Rendering/GL/VBO.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/Matrix44f.h"
@@ -37,7 +36,6 @@ struct S3DModelPiece;
 struct LocalModel;
 struct LocalModelPiece;
 
-typedef std::map<std::string, S3DModelPiece*> ModelPieceMap;
 
 
 /**
@@ -181,7 +179,6 @@ struct S3DModel
 	}
 
 	S3DModelPiece* GetRootPiece() const { return rootPiece; }
-	S3DModelPiece* FindPiece(const std::string& name) const;
 
 	void SetRootPiece(S3DModelPiece* p) { rootPiece = p; }
 	void DrawStatic() const { rootPiece->DrawStatic(); }
@@ -210,7 +207,6 @@ public:
 	float3 relMidPos;
 
 	S3DModelPiece* rootPiece;   /// The piece at the base of the model hierarchy
-	ModelPieceMap pieceMap;     /// Lookup table for pieces by name
 };
 
 

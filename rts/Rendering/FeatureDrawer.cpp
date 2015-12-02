@@ -248,7 +248,7 @@ void CFeatureDrawer::DrawOpaquePass(bool deferredPass, bool, bool)
 	unitDrawer->CleanUpUnitDrawing(deferredPass);
 
 	// draw all custom'ed features that were bypassed in the loop above
-	LuaObjectDrawer::SetGlobalDrawPassLODFactor(LUAOBJ_FEATURE);
+	LuaObjectDrawer::SetDrawPassGlobalLODFactor(LUAOBJ_FEATURE);
 	LuaObjectDrawer::DrawOpaqueMaterialObjects(LUAOBJ_FEATURE, deferredPass);
 }
 
@@ -388,7 +388,7 @@ void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 		unitDrawer->SetUseAdvShading(oldAdvShading);
 	}
 
-	LuaObjectDrawer::SetGlobalDrawPassLODFactor(LUAOBJ_FEATURE);
+	LuaObjectDrawer::SetDrawPassGlobalLODFactor(LUAOBJ_FEATURE);
 	LuaObjectDrawer::DrawAlphaMaterialObjects(LUAOBJ_FEATURE, false);
 }
 
@@ -488,7 +488,7 @@ void CFeatureDrawer::DrawShadowPass()
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
 
-	LuaObjectDrawer::SetGlobalDrawPassLODFactor(LUAOBJ_FEATURE);
+	LuaObjectDrawer::SetDrawPassGlobalLODFactor(LUAOBJ_FEATURE);
 	LuaObjectDrawer::DrawShadowMaterialObjects(LUAOBJ_FEATURE, false);
 }
 

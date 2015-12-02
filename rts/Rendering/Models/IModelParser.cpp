@@ -75,6 +75,32 @@ static S3DModel* CreateDummyModel()
 	return model;
 }
 
+static void CheckPieceNormals(const S3DModel* model, const S3DModelPiece* modelPiece)
+{
+	if (modelPiece->GetVertexCount() != 0) {
+		unsigned int numNullNormals = 0;
+
+		for (unsigned int n = 0; n < modelPiece->GetVertexCount(); n++) {
+			numNullNormals += (modelPiece->GetNormal(n).SqLength() < 0.5f);
+		}
+
+		if (numNullNormals > 0) {
+			const char* formatStr =
+				"[%s] piece \"%s\" of model \"%s\" has %u (of %u) null-normals!"
+				"It will either be rendered fully black or with black splotches!";
+
+			const char* modelName = model->name.c_str();
+			const char* pieceName = modelPiece->name.c_str();
+
+			LOG_L(L_WARNING, formatStr, __FUNCTION__, pieceName, modelName, numNullNormals, modelPiece->GetVertexCount());
+		}
+	}
+
+	for (const S3DModelPiece* childPiece: modelPiece->children) {
+		CheckPieceNormals(model, childPiece);
+	}
+}
+
 
 
 C3DModelLoader::C3DModelLoader()
@@ -123,33 +149,6 @@ C3DModelLoader::~C3DModelLoader()
 
 }
 
-
-
-void CheckModelNormals(const S3DModel* model) {
-	const char* modelName = model->name.c_str();
-	const char* formatStr =
-		"[%s] piece \"%s\" of model \"%s\" has %u (of %u) null-normals!"
-		"It will either be rendered fully black or with black splotches!";
-
-	// Warn about models with null normals (they break lighting and appear black)
-	for (ModelPieceMap::const_iterator it = model->pieceMap.begin(); it != model->pieceMap.end(); ++it) {
-		const S3DModelPiece* modelPiece = it->second;
-		const char* pieceName = it->first.c_str();
-
-		if (modelPiece->GetVertexCount() == 0)
-			continue;
-
-		unsigned int numNullNormals = 0;
-
-		for (unsigned int n = 0; n < modelPiece->GetVertexCount(); n++) {
-			numNullNormals += (modelPiece->GetNormal(n).SqLength() < 0.5f);
-		}
-
-		if (numNullNormals > 0) {
-			LOG_L(L_WARNING, formatStr, __FUNCTION__, pieceName, modelName, numNullNormals, modelPiece->GetVertexCount());
-		}
-	}
-}
 
 
 std::string C3DModelLoader::FindModelPath(std::string name) const
@@ -226,7 +225,8 @@ S3DModel* C3DModelLoader::Load3DModel(std::string modelName)
 
 	CreateLists(model->GetRootPiece());
 	AddModelToCache(model, modelName, modelPath);
-	CheckModelNormals(model);
+	// warn about models with bad normals (they break lighting and appear black)
+	CheckPieceNormals(model, model->GetRootPiece());
 
 	return model;
 }
