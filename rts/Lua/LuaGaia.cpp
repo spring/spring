@@ -69,13 +69,13 @@ CLuaGaia::~CLuaGaia()
 }
 
 
-bool CLuaGaia::AddSyncedCode(lua_State *L)
+bool CLuaGaia::AddSyncedCode(lua_State* L)
 {
 	return true;
 }
 
 
-bool CLuaGaia::AddUnsyncedCode(lua_State *L)
+bool CLuaGaia::AddUnsyncedCode(lua_State* L)
 {
 	return true;
 }

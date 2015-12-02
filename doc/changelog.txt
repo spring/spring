@@ -44,6 +44,9 @@ Lua:
        [, boolean drawFeaturesForward ]]
      )
 
+   note: the *PostDeferred events are only sent (and only have a real
+   purpose) if forward drawing is disabled!
+
 Rendering:
  - add support for SSMF Splat Detail Normal Textures (by Beherith)
  - add deferred pass for features; note that these are drawn into

@@ -422,8 +422,8 @@ std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& pos, float radius, b
 			const float totRad       = radius + u->radius;
 			const float totRadSq     = totRad * totRad;
 			const float posUnitDstSq = spherical?
-				pos.SqDistance(u->midPos):
-				pos.SqDistance2D(u->midPos);
+				pos.SqDistance(u->pos):
+				pos.SqDistance2D(u->pos);
 
 			if (posUnitDstSq >= totRadSq)
 				continue;
@@ -444,7 +444,7 @@ std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& mins, const float3& 
 
 	for (const int qi: quads) {
 		for (CUnit* unit: baseQuads[qi].units) {
-			const float3& pos = unit->midPos;
+			const float3& pos = unit->pos;
 
 			if (unit->tempNum == tempNum) { continue; }
 			if (pos.x < mins.x || pos.x > maxs.x) { continue; }
@@ -473,8 +473,8 @@ std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos, float rad
 			const float totRad       = radius + f->radius;
 			const float totRadSq     = totRad * totRad;
 			const float posDstSq = spherical?
-				pos.SqDistance(f->midPos):
-				pos.SqDistance2D(f->midPos);
+				pos.SqDistance(f->pos):
+				pos.SqDistance2D(f->pos);
 
 			if (posDstSq >= totRadSq)
 				continue;
@@ -495,7 +495,7 @@ std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& mins, const fl
 
 	for (const int qi: quads) {
 		for (CFeature* feature: baseQuads[qi].features) {
-			const float3& pos = feature->midPos;
+			const float3& pos = feature->pos;
 
 			if (feature->tempNum == tempNum) { continue; }
 			if (pos.x < mins.x || pos.x > maxs.x) { continue; }
@@ -568,7 +568,7 @@ std::vector<CSolidObject*> CQuadField::GetSolidsExact(
 				continue;
 			if (!u->HasCollidableStateBit(collisionStateBits))
 				continue;
-			if ((pos - u->midPos).SqLength() >= Square(radius + u->radius))
+			if ((pos - u->pos).SqLength() >= Square(radius + u->radius))
 				continue;
 
 			u->tempNum = tempNum;
@@ -582,7 +582,7 @@ std::vector<CSolidObject*> CQuadField::GetSolidsExact(
 				continue;
 			if (!f->HasCollidableStateBit(collisionStateBits))
 				continue;
-			if ((pos - f->midPos).SqLength() >= Square(radius + f->radius))
+			if ((pos - f->pos).SqLength() >= Square(radius + f->radius))
 				continue;
 
 			f->tempNum = tempNum;

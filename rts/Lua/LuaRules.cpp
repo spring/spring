@@ -65,7 +65,7 @@ CLuaRules::~CLuaRules()
 
 
 
-bool CLuaRules::AddSyncedCode(lua_State *L)
+bool CLuaRules::AddSyncedCode(lua_State* L)
 {
 	lua_getglobal(L, "Script");
 	LuaPushNamedCFunc(L, "PermitHelperAIs", PermitHelperAIs);
@@ -75,7 +75,7 @@ bool CLuaRules::AddSyncedCode(lua_State *L)
 }
 
 
-bool CLuaRules::AddUnsyncedCode(lua_State *L)
+bool CLuaRules::AddUnsyncedCode(lua_State* L)
 {
 	lua_getglobal(L, "Spring");
 

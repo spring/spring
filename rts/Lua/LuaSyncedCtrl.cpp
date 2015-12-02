@@ -3506,7 +3506,7 @@ static inline void ParseSmoothMeshParams(lua_State* L, const char* caller,
 }
 
 
-int LuaSyncedCtrl::LevelSmoothMesh(lua_State *L)
+int LuaSyncedCtrl::LevelSmoothMesh(lua_State* L)
 {
 	float height;
 	int x1, x2, z1, z2;
@@ -3521,7 +3521,7 @@ int LuaSyncedCtrl::LevelSmoothMesh(lua_State *L)
 	return 0;
 }
 
-int LuaSyncedCtrl::AdjustSmoothMesh(lua_State *L)
+int LuaSyncedCtrl::AdjustSmoothMesh(lua_State* L)
 {
 	float height;
 	int x1, x2, z1, z2;
@@ -3537,7 +3537,7 @@ int LuaSyncedCtrl::AdjustSmoothMesh(lua_State *L)
 	return 0;
 }
 
-int LuaSyncedCtrl::RevertSmoothMesh(lua_State *L)
+int LuaSyncedCtrl::RevertSmoothMesh(lua_State* L)
 {
 	float origFactor;
 	int x1, x2, z1, z2;
@@ -3570,7 +3570,7 @@ int LuaSyncedCtrl::RevertSmoothMesh(lua_State *L)
 }
 
 
-int LuaSyncedCtrl::AddSmoothMesh(lua_State *L)
+int LuaSyncedCtrl::AddSmoothMesh(lua_State* L)
 {
 	if (!inSmoothMesh) {
 		luaL_error(L, "AddSmoothMesh() can only be called in SetSmoothMeshFunc()");
@@ -3600,7 +3600,7 @@ int LuaSyncedCtrl::AddSmoothMesh(lua_State *L)
 	return 1;
 }
 
-int LuaSyncedCtrl::SetSmoothMesh(lua_State *L)
+int LuaSyncedCtrl::SetSmoothMesh(lua_State* L)
 {
 	if (!inSmoothMesh) {
 		luaL_error(L, "SetSmoothMesh() can only be called in SetSmoothMeshFunc()");
@@ -3639,7 +3639,7 @@ int LuaSyncedCtrl::SetSmoothMesh(lua_State *L)
 	return 1;
 }
 
-int LuaSyncedCtrl::SetSmoothMeshFunc(lua_State *L)
+int LuaSyncedCtrl::SetSmoothMeshFunc(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 1) || !lua_isfunction(L, 1)) {

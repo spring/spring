@@ -43,7 +43,8 @@ float LuaObjectDrawer::LODScaleRefraction[LUAOBJ_LAST];
 // these should remain valid on reload
 static std::function<void(CEventHandler*)> eventFuncs[LUAOBJ_LAST] = {nullptr, nullptr};
 
-static bool bufferClearFlags[LUAOBJ_LAST] = {true, true};
+static bool notifyEventFlags[LUAOBJ_LAST] = {false, false};
+static bool bufferClearFlags[LUAOBJ_LAST] = { true,  true};
 
 static const LuaMatType opaqueMats[2] = {LUAMAT_OPAQUE, LUAMAT_OPAQUE_REFLECT};
 static const LuaMatType  alphaMats[2] = {LUAMAT_ALPHA, LUAMAT_ALPHA_REFLECT};
@@ -141,8 +142,10 @@ void LuaObjectDrawer::Update(bool init)
 	if (drawDeferredAllowed && (drawDeferred = geomBuffer->Valid())) {
 		drawDeferred &= (geomBuffer->Update(init));
 
-		bufferClearFlags[LUAOBJ_UNIT   ] = unitDrawer->DrawDeferred();
-		bufferClearFlags[LUAOBJ_FEATURE] = featureDrawer->DrawDeferred();
+		notifyEventFlags[LUAOBJ_UNIT   ] = !unitDrawer->DrawForward();
+		bufferClearFlags[LUAOBJ_UNIT   ] =  unitDrawer->DrawDeferred();
+		notifyEventFlags[LUAOBJ_FEATURE] = !featureDrawer->DrawForward();
+		bufferClearFlags[LUAOBJ_FEATURE] =  featureDrawer->DrawDeferred();
 
 		// if both object types are going to be drawn deferred, only
 		// reset buffer for the first s.t. just a single shading pass
@@ -305,13 +308,15 @@ void LuaObjectDrawer::DrawDeferredPass(const CSolidObject* excludeObj, LuaObjTyp
 	geomBuffer->DrawDebug(geomBuffer->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_NORMTEX));
 	#endif
 
-	// these sit in between the WorldPreUnit and World events
-	//
-	// at this point the buffer has been filled (all standard
-	// models and custom Lua material bins have been rendered
-	// into it) and unbound, notify scripts
-	assert(eventFuncs[objType] != nullptr);
-	eventFuncs[objType](&eventHandler);
+	if (notifyEventFlags[objType]) {
+		// these sit in between the WorldPreUnit and World events
+		//
+		// at this point the buffer has been filled (all standard
+		// models and custom Lua material bins have been rendered
+		// into it) and unbound, notify scripts
+		assert(eventFuncs[objType] != nullptr);
+		eventFuncs[objType](&eventHandler);
+	}
 }
 
 

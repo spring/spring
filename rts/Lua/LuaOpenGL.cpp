@@ -1482,7 +1482,7 @@ int LuaOpenGL::UnitPieceMultMatrix(lua_State* L)
 
 /******************************************************************************/
 
-static inline bool IsFeatureVisible(const lua_State *L, const CFeature* feature)
+static inline bool IsFeatureVisible(const lua_State* L, const CFeature* feature)
 {
 	if (CLuaHandle::GetHandleFullRead(L))
 		return true;

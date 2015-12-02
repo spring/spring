@@ -221,19 +221,19 @@ static inline void LuaInsertDualMapPair(lua_State* L, const string& name, int nu
 }
 
 
-static inline bool FullCtrl(const lua_State *L)
+static inline bool FullCtrl(const lua_State* L)
 {
 	return CLuaHandle::GetHandleFullCtrl(L);
 }
 
 
-static inline int CtrlTeam(const lua_State *L)
+static inline int CtrlTeam(const lua_State* L)
 {
 	return CLuaHandle::GetHandleCtrlTeam(L);
 }
 
 
-static inline int CtrlAllyTeam(const lua_State *L)
+static inline int CtrlAllyTeam(const lua_State* L)
 {
 	const int ctrlTeam = CtrlTeam(L);
 	if (ctrlTeam < 0) {
@@ -243,7 +243,7 @@ static inline int CtrlAllyTeam(const lua_State *L)
 }
 
 
-static inline bool CanControlTeam(const lua_State *L, int teamID)
+static inline bool CanControlTeam(const lua_State* L, int teamID)
 {
 	const int ctrlTeam = CtrlTeam(L);
 	if (ctrlTeam < 0) {
@@ -253,7 +253,7 @@ static inline bool CanControlTeam(const lua_State *L, int teamID)
 }
 
 
-static inline bool CanControlAllyTeam(const lua_State *L, int allyTeamID)
+static inline bool CanControlAllyTeam(const lua_State* L, int allyTeamID)
 {
 	const int ctrlTeam = CtrlTeam(L);
 	if (ctrlTeam < 0) {
@@ -263,7 +263,7 @@ static inline bool CanControlAllyTeam(const lua_State *L, int allyTeamID)
 }
 
 
-static inline bool CanControlUnit(const lua_State *L, const CUnit* unit)
+static inline bool CanControlUnit(const lua_State* L, const CUnit* unit)
 {
 	const int ctrlTeam = CtrlTeam(L);
 	if (ctrlTeam < 0) {
@@ -273,7 +273,7 @@ static inline bool CanControlUnit(const lua_State *L, const CUnit* unit)
 }
 
 
-static inline bool CanControlFeatureAllyTeam(const lua_State *L, int allyTeamID)
+static inline bool CanControlFeatureAllyTeam(const lua_State* L, int allyTeamID)
 {
 	const int ctrlTeam = CtrlTeam(L);
 	if (ctrlTeam < 0) {
@@ -286,13 +286,13 @@ static inline bool CanControlFeatureAllyTeam(const lua_State *L, int allyTeamID)
 }
 
 
-static inline bool CanControlFeature(const lua_State *L, const CFeature* feature)
+static inline bool CanControlFeature(const lua_State* L, const CFeature* feature)
 {
 	return CanControlFeatureAllyTeam(L, feature->allyteam);
 }
 
 
-static inline bool CanControlProjectileAllyTeam(const lua_State *L, int allyTeamID)
+static inline bool CanControlProjectileAllyTeam(const lua_State* L, int allyTeamID)
 {
 	const int ctrlTeam = CtrlTeam(L);
 	if (ctrlTeam < 0) {
@@ -305,7 +305,7 @@ static inline bool CanControlProjectileAllyTeam(const lua_State *L, int allyTeam
 }
 
 
-static inline LocalModelPiece* ParseUnitLocalModelPiece(lua_State *L, CUnit* unit, int pieceIndex)
+static inline LocalModelPiece* ParseUnitLocalModelPiece(lua_State* L, CUnit* unit, int pieceIndex)
 {
 	assert(unit != nullptr);
 	const unsigned piece = luaL_checkint(L, pieceIndex) - 1;

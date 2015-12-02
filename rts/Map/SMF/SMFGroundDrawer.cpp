@@ -265,7 +265,9 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass)
 	geomBuffer.DrawDebug(geomBuffer.GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_NORMTEX));
 	#endif
 
-	eventHandler.DrawGroundPostDeferred();
+	if (!drawForward) {
+		eventHandler.DrawGroundPostDeferred();
+	}
 }
 
 void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)

@@ -2199,7 +2199,7 @@ static void ParseUnitArray(lua_State* L, const char* caller,
 
 /******************************************************************************/
 
-static bool CanGiveOrders(const lua_State *L)
+static bool CanGiveOrders(const lua_State* L)
 {
 	if (gs->frameNum <= 0) {
 		return false;

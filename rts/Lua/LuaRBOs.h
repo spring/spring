@@ -26,7 +26,7 @@ class LuaRBOs {
 		struct RBO {
 			RBO() : id(0), target(0), format(0), xsize(0), ysize(0) {}
 			void Init();
-			void Free(lua_State *L);
+			void Free(lua_State* L);
 
 			GLuint id;
 			GLenum target;

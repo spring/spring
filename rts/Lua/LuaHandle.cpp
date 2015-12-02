@@ -71,7 +71,7 @@ void CLuaHandle::PushTracebackFuncToRegistry(lua_State* L)
 
 
 
-static int handlepanic(lua_State *L)
+static int handlepanic(lua_State* L)
 {
 	std::string err = luaL_optsstring(L, 1, "lua paniced");
 	throw content_error(err);
@@ -397,7 +397,7 @@ bool CLuaHandle::RunCallInTraceback(lua_State* L, const LuaHashString& hs, int i
 /******************************************************************************/
 /******************************************************************************/
 
-bool CLuaHandle::LoadCode(lua_State *L, const string& code, const string& debug)
+bool CLuaHandle::LoadCode(lua_State* L, const string& code, const string& debug)
 {
 	lua_settop(L, 0);
 
@@ -2480,7 +2480,7 @@ void CLuaHandle::CollectGarbage()
 /******************************************************************************/
 /******************************************************************************/
 
-bool CLuaHandle::AddBasicCalls(lua_State *L)
+bool CLuaHandle::AddBasicCalls(lua_State* L)
 {
 	HSTR_PUSH(L, "Script");
 	lua_newtable(L); {

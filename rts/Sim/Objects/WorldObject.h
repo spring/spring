@@ -41,8 +41,9 @@ public:
 	virtual void SetVelocity(const float3& v) { speed = v; }
 
 	virtual void SetVelocityAndSpeed(const float3& v) {
-		SetSpeed(v);
+		// set velocity first; do not assume f4::op=(f3) will not touch .w
 		SetVelocity(v);
+		SetSpeed(v);
 	}
 
 	// by default, SetVelocity does not set magnitude (for efficiency)
