@@ -262,8 +262,8 @@ bool CCollisionHandler::IntersectPiecesHelper(
 	float minDistSq = std::numeric_limits<float>::max();
 	float curDistSq = minDistSq;
 
-	for (unsigned int n = 0; n < u->localModel->pieces.size(); n++) {
-		      LocalModelPiece* lmp = u->localModel->GetPiece(n);
+	for (unsigned int n = 0; n < u->localModel.pieces.size(); n++) {
+		const LocalModelPiece* lmp = u->localModel.GetPiece(n);
 		const CollisionVolume* lmpVol = lmp->GetCollisionVolume();
 
 		if (!lmp->scriptSetVisible || lmpVol->IgnoreHits())

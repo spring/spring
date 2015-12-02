@@ -385,7 +385,7 @@ void LuaObjectDrawer::SetObjectLOD(CSolidObject* obj, LuaObjType objType, unsign
 	obj->GetLuaMaterialData()->SetLODCount(lodCount);
 
 	if (objType == LUAOBJ_UNIT) {
-		(static_cast<CUnit*>(obj))->localModel->SetLODCount(lodCount);
+		(static_cast<CUnit*>(obj))->localModel.SetLODCount(lodCount);
 	}
 }
 

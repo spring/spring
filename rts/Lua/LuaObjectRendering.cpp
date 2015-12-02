@@ -164,23 +164,19 @@ int LuaObjectRenderingImpl::SetLODDistance(lua_State* L)
 int LuaObjectRenderingImpl::SetPieceList(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == nullptr)
+		return 0;
 
-	if ((unit == NULL) || (unit->localModel == NULL))
+	const unsigned int lod = luaL_checknumber(L, 2) - 1;
+	LocalModelPiece* localPiece = ParseUnitLocalModelPiece(L, unit, 3);
+
+	if (localPiece == nullptr)
 		return 0;
 
 	const LuaObjectMaterialData* lmd = unit->GetLuaMaterialData();
-	const unsigned int lod = luaL_checknumber(L, 2) - 1;
-	const unsigned int piece = luaL_checknumber(L, 3) - 1;
 
 	if (lod >= lmd->GetLODCount())
 		return 0;
-
-	LocalModel* localModel = unit->localModel;
-
-	if (piece >= localModel->pieces.size())
-		return 0;
-
-	LocalModelPiece* localPiece = &localModel->pieces[piece];
 
 	unsigned int dlist = 0;
 

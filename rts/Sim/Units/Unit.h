@@ -8,6 +8,7 @@
 #include <string>
 
 #include "Lua/LuaRulesParams.h"
+#include "Rendering/Models/3DModel.h"
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Misc/Resource.h"
 #include "Sim/Weapons/WeaponTarget.h"
@@ -23,8 +24,6 @@ class AMoveType;
 class CWeapon;
 class CUnitScript;
 struct DamageArray;
-struct LocalModel;
-struct LocalModelPiece;
 struct UnitDef;
 struct UnitTrackStruct;
 struct UnitLoadParams;
@@ -114,11 +113,11 @@ public:
 	const CollisionVolume* GetCollisionVolume(const LocalModelPiece* lmp) const;
 
 	void SetLastAttacker(CUnit* attacker);
-	void SetLastAttackedPiece(LocalModelPiece* p, int f) {
+	void SetLastAttackedPiece(const LocalModelPiece* p, int f) {
 		lastAttackedPiece      = p;
 		lastAttackedPieceFrame = f;
 	}
-	LocalModelPiece* GetLastAttackedPiece(int f) const {
+	const LocalModelPiece* GetLastAttackedPiece(int f) const {
 		if (lastAttackedPieceFrame == f)
 			return lastAttackedPiece;
 		return NULL;
@@ -268,7 +267,7 @@ public:
 	CUnit* lastAttacker;
 
 	/// piece that was last hit by a projectile
-	LocalModelPiece* lastAttackedPiece;
+	const LocalModelPiece* lastAttackedPiece;
 
 	/// frame in which lastAttackedPiece was hit
 	int lastAttackedPieceFrame;
@@ -293,7 +292,7 @@ public:
 
 	CCommandAI* commandAI;
 
-	LocalModel* localModel;
+	LocalModel localModel;
 	CUnitScript* script;
 
 	/// which squares the unit can currently observe

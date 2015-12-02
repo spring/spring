@@ -91,7 +91,7 @@ CUnitHandler::~CUnitHandler()
 void CUnitHandler::InsertActiveUnit(CUnit* unit)
 {
 	const unsigned int insertionPos = gs->randFloat() * activeUnits.size();
-	
+
 	idPool.AssignID(unit);
 
 	assert(unit->id < units.size());
@@ -197,7 +197,7 @@ void CUnitHandler::Update()
 
 	{
 		SCOPED_TIMER("Unit::MoveType::Update");
-		
+
 		for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size();++activeUpdateUnit) {
 			CUnit *unit = activeUnits[activeUpdateUnit];
 			AMoveType* moveType = unit->moveType;
@@ -242,7 +242,7 @@ void CUnitHandler::Update()
 			// UnitScript only applies piece-space transforms so
 			// we apply the forward kinematics update separately
 			// (only if we have any dirty pieces)
-			unit->localModel->UpdatePieceMatrices();
+			unit->localModel.UpdatePieceMatrices();
 		}
 	}
 

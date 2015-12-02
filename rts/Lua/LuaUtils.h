@@ -304,4 +304,21 @@ static inline bool CanControlProjectileAllyTeam(const lua_State *L, int allyTeam
 	return (teamHandler->AllyTeam(ctrlTeam) == allyTeamID);
 }
 
+
+static inline LocalModelPiece* ParseUnitLocalModelPiece(lua_State *L, CUnit* unit, int pieceIndex)
+{
+	assert(unit != nullptr);
+	const unsigned piece = luaL_checkint(L, pieceIndex) - 1;
+
+	LocalModel& localModel = unit->localModel;
+
+	if (!localModel.Initialized())
+		return nullptr;
+
+	if (!localModel.HasPiece(piece))
+		return nullptr;
+
+	return localModel.GetPiece(piece);
+}
+
 #endif // LUA_UTILS_H

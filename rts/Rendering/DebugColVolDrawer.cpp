@@ -160,8 +160,8 @@ static void DrawUnitDebugPieces(const CUnit* u)
 {
 	const LocalModelPiece* lap = u->lastAttackedPiece;
 
-	for (unsigned int n = 0; n < u->localModel->pieces.size(); n++) {
-		const LocalModelPiece* lmp = u->localModel->GetPiece(n);
+	for (unsigned int n = 0; n < u->localModel.pieces.size(); n++) {
+		const LocalModelPiece* lmp = u->localModel.GetPiece(n);
 		const CollisionVolume* lmpVol = lmp->GetCollisionVolume();
 		const bool lmpHit = ((u->lastAttackedPieceFrame > 0) && ((gs->frameNum - u->lastAttackedPieceFrame) < 150));
 

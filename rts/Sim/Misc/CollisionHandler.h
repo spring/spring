@@ -56,8 +56,8 @@ public:
 	float GetIngressPosDist(const float3& pos, const float3& dir) const { return (std::max(0.0f, ((GetIngressPos() - pos).dot(dir)))); }
 	float GetEgressPosDist(const float3& pos, const float3& dir) const { return (std::max(0.0f, ((GetEgressPos() - pos).dot(dir)))); }
 
-	LocalModelPiece* GetHitPiece() const { return lmp; }
-	void SetHitPiece(LocalModelPiece* p) { lmp = p; }
+	const LocalModelPiece* GetHitPiece() const { return lmp; }
+	void SetHitPiece(const LocalModelPiece* p) { lmp = p; }
 
 private:
 	friend class CCollisionHandler;
@@ -66,7 +66,7 @@ private:
 	float  t0, t1;        ///< distance parameter for ingress and egress point
 	float3 p0, p1;        ///< ray-volume ingress and egress points
 
-	LocalModelPiece* lmp; ///< impacted piece
+	const LocalModelPiece* lmp; ///< impacted piece
 };
 
 /**

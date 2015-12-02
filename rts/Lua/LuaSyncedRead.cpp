@@ -3600,19 +3600,15 @@ int LuaSyncedRead::GetUnitCollisionVolumeData(lua_State* L)
 
 int LuaSyncedRead::GetUnitPieceCollisionVolumeData(lua_State* L)
 {
-	const CUnit* unit = ParseInLosUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	CUnit* unit = ParseInLosUnit(L, __FUNCTION__, 1);
+	if (unit == NULL)
 		return 0;
-	}
 
-	LocalModel* lm = unit->localModel;
-	const int pieceIndex = luaL_checkint(L, 2);
+	LocalModelPiece* lmp = ParseUnitLocalModelPiece(L, unit, 2);
 
-	if (pieceIndex < 0 || pieceIndex >= lm->pieces.size()) {
+	if (lmp == nullptr)
 		return 0;
-	}
 
-	const LocalModelPiece* lmp = &lm->pieces[pieceIndex];
 	const CollisionVolume* vol = lmp->GetCollisionVolume();
 
 	return (PushCollisionVolumeData(L, vol));
@@ -5245,13 +5241,13 @@ int LuaSyncedRead::GetUnitPieceMap(lua_State* L)
 	if (unit == NULL)
 		return 0;
 
-	LocalModel* localModel = unit->localModel;
+	const LocalModel& localModel = unit->localModel;
 
-	lua_createtable(L, 0, localModel->pieces.size());
+	lua_createtable(L, 0, localModel.pieces.size());
 
 	// {"piece" = 123, ...}
-	for (size_t i = 0; i < localModel->pieces.size(); i++) {
-		const LocalModelPiece& lp = localModel->pieces[i];
+	for (size_t i = 0; i < localModel.pieces.size(); i++) {
+		const LocalModelPiece& lp = localModel.pieces[i];
 		lua_pushsstring(L, lp.original->name);
 		lua_pushnumber(L, i + 1);
 		lua_rawset(L, -3);
@@ -5267,13 +5263,13 @@ int LuaSyncedRead::GetUnitPieceList(lua_State* L)
 	if (unit == NULL)
 		return 0;
 
-	LocalModel* localModel = unit->localModel;
+	const LocalModel& localModel = unit->localModel;
 
-	lua_createtable(L, localModel->pieces.size(), 0);
+	lua_createtable(L, localModel.pieces.size(), 0);
 
 	// {[1] = "piece", ...}
-	for (size_t i = 0; i < localModel->pieces.size(); i++) {
-		const LocalModelPiece& lp = localModel->pieces[i];
+	for (size_t i = 0; i < localModel.pieces.size(); i++) {
+		const LocalModelPiece& lp = localModel.pieces[i];
 		lua_pushsstring(L, lp.original->name);
 		lua_rawseti(L, -2, i + 1);
 	}
@@ -5330,17 +5326,15 @@ static int GetUnitPieceInfo(lua_State* L, const ModelType& op)
 int LuaSyncedRead::GetUnitPieceInfo(lua_State* L)
 {
 	CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	if (unit == NULL)
 		return 0;
-	}
-	LocalModel* localModel = unit->localModel;
 
-	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || ((size_t)piece >= localModel->pieces.size())) {
+	LocalModelPiece* localPiece = ParseUnitLocalModelPiece(L, unit, 2);
+
+	if (localPiece == nullptr)
 		return 0;
-	}
 
-	const S3DModelPiece& op = *localModel->pieces[piece].original;
+	const S3DModelPiece& op = *localPiece->original;
 	return ::GetUnitPieceInfo(L, op);
 }
 
@@ -5348,18 +5342,16 @@ int LuaSyncedRead::GetUnitPieceInfo(lua_State* L)
 int LuaSyncedRead::GetUnitPiecePosition(lua_State* L)
 {
 	CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	if (unit == NULL)
 		return 0;
-	}
-	LocalModel* localModel = unit->localModel;
-	if (localModel == NULL) {
+
+	LocalModelPiece* localPiece = ParseUnitLocalModelPiece(L, unit, 2);
+
+	if (localPiece == nullptr)
 		return 0;
-	}
-	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || ((size_t)piece >= localModel->pieces.size())) {
-		return 0;
-	}
-	const float3 pos = localModel->GetRawPiecePos(piece);
+
+
+	const float3 pos = localPiece->GetAbsolutePos();
 	lua_pushnumber(L, pos.x);
 	lua_pushnumber(L, pos.y);
 	lua_pushnumber(L, pos.z);
@@ -5370,21 +5362,17 @@ int LuaSyncedRead::GetUnitPiecePosition(lua_State* L)
 int LuaSyncedRead::GetUnitPiecePosDir(lua_State* L)
 {
 	CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	if (unit == NULL)
 		return 0;
-	}
-	LocalModel* localModel = unit->localModel;
-	if (localModel == NULL) {
+
+	LocalModelPiece* localPiece = ParseUnitLocalModelPiece(L, unit, 2);
+
+	if (localPiece == nullptr)
 		return 0;
-	}
-	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || ((size_t)piece >= localModel->pieces.size())) {
-		return 0;
-	}
 
 	float3 dir;
 	float3 pos;
-	localModel->GetRawEmitDirPos(piece, pos, dir);
+	localPiece->GetEmitDirPos(pos, dir);
 
 	// transform
 	pos = unit->GetObjectSpacePos(pos);
@@ -5403,18 +5391,15 @@ int LuaSyncedRead::GetUnitPiecePosDir(lua_State* L)
 int LuaSyncedRead::GetUnitPieceDirection(lua_State* L)
 {
 	CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	if (unit == NULL)
 		return 0;
-	}
-	LocalModel* localModel = unit->localModel;
-	if (localModel == NULL) {
+
+	LocalModelPiece* localPiece = ParseUnitLocalModelPiece(L, unit, 2);
+
+	if (localPiece == nullptr)
 		return 0;
-	}
-	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || ((size_t)piece >= localModel->pieces.size())) {
-		return 0;
-	}
-	const float3 dir = localModel->GetRawPieceDirection(piece);
+
+	const float3 dir = localPiece->GetDirection();
 	lua_pushnumber(L, dir.x);
 	lua_pushnumber(L, dir.y);
 	lua_pushnumber(L, dir.z);
@@ -5425,18 +5410,15 @@ int LuaSyncedRead::GetUnitPieceDirection(lua_State* L)
 int LuaSyncedRead::GetUnitPieceMatrix(lua_State* L)
 {
 	CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	if (unit == NULL)
 		return 0;
-	}
-	LocalModel* localModel = unit->localModel;
-	if (localModel == NULL) {
+
+	LocalModelPiece* localPiece = ParseUnitLocalModelPiece(L, unit, 2);
+
+	if (localPiece == nullptr)
 		return 0;
-	}
-	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || ((size_t)piece >= localModel->pieces.size())) {
-		return 0;
-	}
-	const CMatrix44f& mat = localModel->GetRawPieceMatrix(piece);
+
+	const CMatrix44f& mat = localPiece->GetModelSpaceMatrix();
 	for (int m = 0; m < 16; m++) {
 		lua_pushnumber(L, mat.m[m]);
 	}

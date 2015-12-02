@@ -59,7 +59,7 @@ CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
 		staticVars.push_back(0);
 	}
 
-	MapScriptToModelPieces(unit->localModel);
+	MapScriptToModelPieces(&unit->localModel);
 
 	hasSetSFXOccupy  = HasFunction(COBFN_SetSFXOccupy);
 	hasRockUnit      = HasFunction(COBFN_RockUnit);

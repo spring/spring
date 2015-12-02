@@ -14,20 +14,22 @@
 #include <algorithm>
 
 #include "LuaOpenGL.h"
+
 #include "LuaInclude.h"
 
 #include "LuaContextData.h"
+#include "LuaDisplayLists.h"
+#include "LuaFBOs.h"
+#include "LuaFonts.h"
 #include "LuaHandle.h"
 #include "LuaHashString.h"
 #include "LuaIO.h"
+#include "LuaOpenGLUtils.h"
+#include "LuaRBOs.h"
 #include "LuaShaders.h"
 #include "LuaTextures.h"
+#include "LuaUtils.h"
 //FIXME#include "LuaVBOs.h"
-#include "LuaFBOs.h"
-#include "LuaRBOs.h"
-#include "LuaFonts.h"
-#include "LuaOpenGLUtils.h"
-#include "LuaDisplayLists.h"
 #include "Game/Camera.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/MiniMap.h"
@@ -1441,18 +1443,15 @@ int LuaOpenGL::UnitMultMatrix(lua_State* L)
 int LuaOpenGL::UnitPiece(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	if (unit == nullptr)
 		return 0;
-	}
-	LocalModel* localModel = unit->localModel;
 
-	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || ((size_t)piece >= localModel->pieces.size())) {
+	LocalModelPiece* localPiece = ParseUnitLocalModelPiece(L, unit, 2);
+
+	if (localPiece == nullptr)
 		return 0;
-	}
-	LocalModelPiece& localPiece = localModel->pieces[piece];
 
-	glCallList(localPiece.dispListID);
+	glCallList(localPiece->dispListID);
 
 	return 0;
 }
@@ -1467,21 +1466,16 @@ int LuaOpenGL::UnitPieceMultMatrix(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 
-	const CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == nullptr)
 		return 0;
-	}
 
-	const LocalModel* localModel = unit->localModel;
-	if (localModel == NULL) {
-		return 0;
-	}
-	const unsigned int piece = luaL_checkint(L, 2) - 1;
-	if (piece >= localModel->pieces.size()) {
-		return 0;
-	}
+	LocalModelPiece* localPiece = ParseUnitLocalModelPiece(L, unit, 2);
 
-	glMultMatrixf(localModel->GetRawPieceMatrix(piece));
+	if (localPiece == nullptr)
+		return 0;
+
+	glMultMatrixf(localPiece->GetModelSpaceMatrix());
 	return 0;
 }
 

@@ -200,7 +200,7 @@ CLuaUnitScript::CLuaUnitScript(lua_State* L, CUnit* unit)
 		scriptNames.insert(pair<string, int>(fname, r));
 		UpdateCallIn(fname, r);
 	}
-	for (auto& p: unit->localModel->pieces) {
+	for (auto& p: unit->localModel.pieces) {
 		pieces.push_back(&p);
 	}
 }

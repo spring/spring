@@ -294,23 +294,25 @@ struct LocalModel
 {
 	CR_DECLARE_STRUCT(LocalModel)
 
-	LocalModel(const S3DModel* model)
-		: dirtyPieces(model->numPieces)
-		, lodCount(0)
+	LocalModel() {}
+	~LocalModel()
 	{
+		pieces.clear();
+	}
+
+	void SetModel(const S3DModel* model) {
+		dirtyPieces = model->numPieces;
+		lodCount = 0;
 		assert(model->numPieces >= 1);
 		pieces.reserve(model->numPieces);
 		CreateLocalModelPieces(model->GetRootPiece());
 		assert(pieces.size() == model->numPieces);
 	}
 
-	~LocalModel()
-	{
-		pieces.clear();
-	}
-
 	bool HasPiece(unsigned int i) const { return (i < pieces.size()); }
+	bool Initialized() const { return !pieces.empty(); }
 	LocalModelPiece* GetPiece(unsigned int i) { assert(HasPiece(i)); return &pieces[i]; }
+	const LocalModelPiece* GetPiece(unsigned int i)  const { assert(HasPiece(i)); return &pieces[i]; }
 	LocalModelPiece* GetRoot() { return GetPiece(0); }
 
 	void Draw() const { DrawPieces(); }

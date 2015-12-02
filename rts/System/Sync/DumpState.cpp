@@ -91,7 +91,6 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 
 	CFeatureSet::const_iterator featuresIt;
 	ProjectileContainer::iterator projectilesIt;
-	std::vector<LocalModelPiece*>::const_iterator piecesIt;
 	std::vector<CWeapon*>::const_iterator weaponsIt;
 
 	file << "frame: " << gs->frameNum << ", seed: " << gs->GetRandSeed() << "\n";
@@ -110,8 +109,8 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 	#ifdef DUMP_UNIT_DATA
 	for (CUnit* u: units) {
 		const std::vector<CWeapon*>& weapons = u->weapons;
-		const LocalModel* lm = u->localModel;
-		const std::vector<LocalModelPiece>& pieces = lm->pieces;
+		const LocalModel& lm = u->localModel;
+		const std::vector<LocalModelPiece>& pieces = lm.pieces;
 		const float3& pos = u->pos;
 		const float3& xdir = u->rightdir;
 		const float3& ydir = u->updir;
@@ -130,7 +129,7 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 		file << "\t\t\tpieces: " << pieces.size() << "\n";
 
 		#ifdef DUMP_UNIT_PIECE_DATA
-		for (const auto& lmp: pieces) {
+		for (const LocalModelPiece& lmp: pieces) {
 			const S3DModelPiece* omp = lmp.original;
 			const float3& ppos = lmp.GetPosition();
 			const float3& prot = lmp.GetRotation();

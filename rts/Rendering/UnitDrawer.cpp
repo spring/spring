@@ -1223,9 +1223,9 @@ void CUnitDrawer::DrawUnitRawModel(const CUnit* unit)
 	const LuaObjectMaterialData* matData = unit->GetLuaMaterialData();
 
 	if (matData->Enabled()) {
-		unit->localModel->DrawLOD(matData->GetCurrentLOD());
+		unit->localModel.DrawLOD(matData->GetCurrentLOD());
 	} else {
-		unit->localModel->Draw();
+		unit->localModel.Draw();
 	}
 }
 

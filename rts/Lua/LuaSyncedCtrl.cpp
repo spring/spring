@@ -1851,7 +1851,7 @@ int LuaSyncedCtrl::SetUnitNanoPieces(lua_State* L)
 		if (lua_israwnumber(L, -1)) {
 			const int modelPieceNum = lua_toint(L, -1) - 1; //lua 1-indexed, c++ 0-indexed
 
-			if (unit->localModel->HasPiece(modelPieceNum)) {
+			if (unit->localModel.HasPiece(modelPieceNum)) {
 				nanoPieces->push_back(modelPieceNum);
 			} else {
 				luaL_error(L, "[SetUnitNanoPieces] incorrect model-piece number %d", modelPieceNum);
@@ -2109,25 +2109,19 @@ int LuaSyncedCtrl::SetUnitPieceParent(lua_State* L)
 	if (unit == NULL)
 		return 0;
 
-	LocalModel* localModel = unit->localModel;
-
-	const size_t alteredPiece = luaL_checkint(L, 2) - 1;
-	const size_t parentPiece = luaL_checkint(L, 3) - 1;
-
-	if (alteredPiece >= localModel->pieces.size()) {
+	LocalModelPiece* lmpAlteredPiece = ParseUnitLocalModelPiece(L, unit, 2);
+	if (lmpAlteredPiece == nullptr) {
 		luaL_error(L,  "invalid piece");
 		return 0;
 	}
 
-	if (parentPiece >= localModel->pieces.size()) {
+	LocalModelPiece* lmpParentPiece = ParseUnitLocalModelPiece(L, unit, 3);
+	if (lmpParentPiece == nullptr) {
 		luaL_error(L,  "invalid parent piece");
 		return 0;
 	}
 
-	LocalModelPiece* lmpAlteredPiece = &localModel->pieces[alteredPiece];
-	LocalModelPiece* lmpParentPiece = &localModel->pieces[parentPiece];
-
-	if (lmpAlteredPiece == localModel->GetRoot()) {
+	if (lmpAlteredPiece == unit->localModel.GetRoot()) {
 		luaL_error(L,  "Can't change a root piece's parent");
 		return 0;
 	}
@@ -2145,19 +2139,17 @@ int LuaSyncedCtrl::SetUnitCollisionVolumeData(lua_State* L)
 
 int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 {
-	const CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 
 	if (unit == NULL)
 		return 0;
 
-	LocalModel* localModel = unit->localModel;
-	const unsigned int pieceIndex = luaL_checkint(L, 2);
+	LocalModelPiece* lmp = ParseUnitLocalModelPiece(L, unit, 2);
 
-	if (pieceIndex >= localModel->pieces.size())
-		luaL_argerror(L, 2, "invalid piece index");
+	if (lmp == nullptr)
+		luaL_argerror(L, 2, "invalid piece");
 
-	LocalModelPiece& lmp = localModel->pieces[pieceIndex];
-	CollisionVolume* vol = lmp.GetCollisionVolume();
+	CollisionVolume* vol = lmp->GetCollisionVolume();
 
 	const float3 scales(luaL_checkfloat(L, 4), luaL_checkfloat(L, 5), luaL_checkfloat(L, 6));
 	const float3 offset(luaL_checkfloat(L, 7), luaL_checkfloat(L, 8), luaL_checkfloat(L, 9));
@@ -3798,7 +3790,7 @@ int LuaSyncedCtrl::UnitAttach(lua_State* L)
 		return 0;
 
 	int piece = luaL_checkint(L, 3) - 1;
-	auto &pieces = transporter->localModel->pieces;
+	auto &pieces = transporter->localModel.pieces;
 
 	if (piece >= (int) pieces.size()) {
 		luaL_error(L,  "invalid piece number");

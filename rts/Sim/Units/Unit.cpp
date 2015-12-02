@@ -94,7 +94,6 @@ CUnit::CUnit()
 , moveType(NULL)
 , prevMoveType(NULL)
 , commandAI(NULL)
-, localModel(NULL)
 , script(NULL)
 , los(ILosType::LOS_TYPE_COUNT, nullptr)
 , losStatus(teamHandler->ActiveAllyTeams(), 0)
@@ -241,7 +240,6 @@ CUnit::~CUnit()
 	SafeDelete(commandAI);
 	SafeDelete(moveType);
 	SafeDelete(prevMoveType);
-	SafeDelete(localModel);
 
 	// ScriptCallback may reference weapons, so delete the script first
 	for (auto wi = weapons.cbegin(); wi != weapons.cend(); ++wi) {
@@ -298,7 +296,7 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	// copy the UnitDef volume instance
 	// NOTE: gets deleted in ~CSolidObject
 	model = unitDef->LoadModel();
-	localModel = new LocalModel(model);
+	localModel.SetModel(model);
 	collisionVolume = unitDef->collisionVolume;
 
 	if (collisionVolume.DefaultToSphere())
@@ -469,7 +467,7 @@ void CUnit::PostLoad()
 	unitDef = unitDefHandler->GetUnitDefByID(unitDefID); // strange. creg should handle this by itself already, but it doesn't
 	objectDef = unitDef;
 	model = unitDef->LoadModel();
-	localModel = new LocalModel(model);
+	localModel.SetModel(model);
 	blockMap = (unitDef->GetYardMap().empty())? NULL: &unitDef->GetYardMap()[0];
 
 	SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
@@ -2792,7 +2790,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(weapons),
 	CR_MEMBER(shieldWeapon),
 	CR_MEMBER(stockpileWeapon),
-	CR_MEMBER(localModel),
 
 	CR_MEMBER(reloadSpeed),
 	CR_MEMBER(maxRange),
