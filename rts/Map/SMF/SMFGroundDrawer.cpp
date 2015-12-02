@@ -16,6 +16,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/Shader.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/EventHandler.h"
 #include "System/FastMath.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
@@ -263,6 +264,8 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass)
 	#if 0
 	geomBuffer.DrawDebug(geomBuffer.GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_NORMTEX));
 	#endif
+
+	eventHandler.DrawGroundPostDeferred();
 }
 
 void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)

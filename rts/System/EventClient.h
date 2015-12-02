@@ -292,6 +292,7 @@ class CEventClient
 		virtual void DrawWorldShadow() {}
 		virtual void DrawWorldReflection() {}
 		virtual void DrawWorldRefraction() {}
+		virtual void DrawGroundPostDeferred() {}
 		virtual void DrawUnitsPostDeferred() {}
 		virtual void DrawFeaturesPostDeferred() {}
 		virtual void DrawScreenEffects() {}

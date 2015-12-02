@@ -124,6 +124,7 @@ CALLIN_LIST = {
 	"DrawWorldShadow",
 	"DrawWorldReflection",
 	"DrawWorldRefraction",
+	"DrawGroundPostDeferred",
 	"DrawUnitsPostDeferred",
 	"DrawFeaturesPostDeferred",
 	"DrawScreenEffects",

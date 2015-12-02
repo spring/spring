@@ -1757,6 +1757,12 @@ void CLuaHandle::DrawWorldRefraction()
 }
 
 
+void CLuaHandle::DrawGroundPostDeferred()
+{
+	static const LuaHashString cmdStr(__FUNCTION__);
+	RunDrawCallIn(cmdStr);
+}
+
 void CLuaHandle::DrawUnitsPostDeferred()
 {
 	static const LuaHashString cmdStr(__FUNCTION__);

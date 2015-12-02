@@ -1673,6 +1673,12 @@ function gadgetHandler:DrawWorldRefraction()
 end
 
 
+function gadgetHandler:DrawGroundPostDeferred()
+  for _,g in ipairs(self.DrawGroundPostDeferred) do
+    g:DrawGroundPostDeferred()
+  end
+end
+
 function gadgetHandler:DrawUnitsPostDeferred()
   for _,g in ipairs(self.DrawUnitsPostDeferred) do
     g:DrawUnitsPostDeferred()
