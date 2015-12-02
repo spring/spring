@@ -231,6 +231,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetFeatureMidAndAimPos);
 	REGISTER_LUA_CFUNC(SetFeatureRadiusAndHeight);
 	REGISTER_LUA_CFUNC(SetFeatureCollisionVolumeData);
+	REGISTER_LUA_CFUNC(SetFeatureLockPosition);
 
 
 	REGISTER_LUA_CFUNC(SetProjectileAlwaysVisible);
@@ -2803,6 +2804,16 @@ int LuaSyncedCtrl::SetFeatureRadiusAndHeight(lua_State* L)
 int LuaSyncedCtrl::SetFeatureCollisionVolumeData(lua_State* L)
 {
 	return (SetSolidObjectCollisionVolumeData(L, ParseFeature(L, __FUNCTION__, 1)));
+}
+
+int LuaSyncedCtrl::SetFeatureLockPosition(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+	if (feature == NULL) {
+		return 0;
+	}
+	feature->lockPosition = !!luaL_checkboolean(L, 2);
+	return 0;
 }
 
 /******************************************************************************/

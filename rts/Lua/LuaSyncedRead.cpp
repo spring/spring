@@ -273,6 +273,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetFeatureResurrect);
 	REGISTER_LUA_CFUNC(GetFeatureCollisionVolumeData);
 	REGISTER_LUA_CFUNC(GetFeatureSeparation);
+	REGISTER_LUA_CFUNC(GetFeatureLockPosition);
 
 	REGISTER_LUA_CFUNC(GetProjectilePosition);
 	REGISTER_LUA_CFUNC(GetProjectileDirection);
@@ -4562,6 +4563,16 @@ int LuaSyncedRead::GetFeatureCollisionVolumeData(lua_State* L)
 	return (PushCollisionVolumeData(L, &feature->collisionVolume));
 }
 
+
+int LuaSyncedRead::GetFeatureLockPosition(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+	if (feature == NULL || !IsFeatureVisible(L, feature)) {
+		return 0;
+	}
+	lua_pushboolean(L, feature->lockPosition);
+	return 1;
+}
 
 /******************************************************************************/
 /******************************************************************************/
