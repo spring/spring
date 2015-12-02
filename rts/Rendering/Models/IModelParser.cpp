@@ -77,7 +77,8 @@ static S3DModel* CreateDummyModel()
 
 static void CheckPieceNormals(const S3DModel* model, const S3DModelPiece* modelPiece)
 {
-	if (modelPiece->GetVertexCount() != 0) {
+	if (modelPiece->GetVertexCount() >= 3) {
+		// do not check pseudo-pieces
 		unsigned int numNullNormals = 0;
 
 		for (unsigned int n = 0; n < modelPiece->GetVertexCount(); n++) {
@@ -86,7 +87,7 @@ static void CheckPieceNormals(const S3DModel* model, const S3DModelPiece* modelP
 
 		if (numNullNormals > 0) {
 			const char* formatStr =
-				"[%s] piece \"%s\" of model \"%s\" has %u (of %u) null-normals!"
+				"[%s] piece \"%s\" of model \"%s\" has %u (of %u) null-normals! "
 				"It will either be rendered fully black or with black splotches!";
 
 			const char* modelName = model->name.c_str();
@@ -225,8 +226,12 @@ S3DModel* C3DModelLoader::Load3DModel(std::string modelName)
 
 	CreateLists(model->GetRootPiece());
 	AddModelToCache(model, modelName, modelPath);
-	// warn about models with bad normals (they break lighting and appear black)
-	CheckPieceNormals(model, model->GetRootPiece());
+
+	if (model->type != MODELTYPE_3DO) {
+		// warn about models with bad normals (they break lighting)
+		// skip for 3DO's, it causes a LARGE amount of warning spam
+		CheckPieceNormals(model, model->GetRootPiece());
+	}
 
 	return model;
 }
