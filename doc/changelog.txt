@@ -28,7 +28,7 @@ Lua:
    these run at the end of their respective deferred passes to inform
    Lua code it should make use of the $model_gbuffer_* textures before
    another pass overwrites them (and to allow proper blending with e.g.
-   cloaked objects which are drawn between them and DrawWorld)
+   cloaked objects which are drawn between these events and DrawWorld)
  - allow Lua to disable the forward {Unit,Feature,Ground}Drawer passes;
    use the callouts
      Spring.SetDrawGroundDeferred(
