@@ -572,7 +572,7 @@ namespace {
 				const float dist = pos.distance(u->midPos) - u->radius;
 
 				if (dist <= closeDist &&
-					(canBeBlind || ((u->losRadius * losHandler->los.divisor) > dist))
+					(canBeBlind || (u->losRadius > dist))
 				) {
 					closeDist = dist;
 					closeUnit = u;
@@ -599,7 +599,7 @@ namespace {
 				const float sqDist = (pos - u->midPos).SqLength2D();
 
 				if (sqDist <= closeSqDist &&
-					(canBeBlind || Square(u->losRadius * losHandler->los.divisor) > sqDist)
+					(canBeBlind || Square(u->losRadius) > sqDist)
 				) {
 					closeSqDist = sqDist;
 					closeUnit = u;

@@ -2679,19 +2679,19 @@ int LuaSyncedRead::GetUnitSensorRadius(lua_State* L)
 	const string key = luaL_checkstring(L, 2);
 
 	if (key == "los") {
-		lua_pushnumber(L, unit->losRadius * losHandler->los.divisor);
+		lua_pushnumber(L, unit->losRadius);
 	} else if (key == "airLos") {
-		lua_pushnumber(L, unit->airLosRadius * losHandler->airLos.divisor);
+		lua_pushnumber(L, unit->airLosRadius);
 	} else if (key == "radar") {
-		lua_pushnumber(L, unit->radarRadius * losHandler->radar.divisor);
+		lua_pushnumber(L, unit->radarRadius);
 	} else if (key == "sonar") {
-		lua_pushnumber(L, unit->sonarRadius * losHandler->sonar.divisor);
+		lua_pushnumber(L, unit->sonarRadius);
 	} else if (key == "seismic") {
-		lua_pushnumber(L, unit->seismicRadius * losHandler->seismic.divisor);
+		lua_pushnumber(L, unit->seismicRadius);
 	} else if (key == "radarJammer") {
-		lua_pushnumber(L, unit->jammerRadius * losHandler->commonJammer.divisor);
+		lua_pushnumber(L, unit->jammerRadius);
 	} else if (key == "sonarJammer") {
-		lua_pushnumber(L, unit->sonarJamRadius * losHandler->commonSonarJammer.divisor);
+		lua_pushnumber(L, unit->sonarJamRadius);
 	} else {
 		luaL_error(L, "Unknown sensor type to GetUnitSensorRadius()");
 	}

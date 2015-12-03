@@ -1511,15 +1511,15 @@ void CMiniMap::DrawUnitRanges() const
 		// LOS Ranges
 		if (unit->radarRadius && !unit->beingBuilt && unit->activated) {
 			glColor3fv(cmdColors.rangeRadar);
-			DrawCircle(unit->pos, (unit->radarRadius * losHandler->radar.divisor));
+			DrawCircle(unit->pos, unit->radarRadius);
 		}
 		if (unit->sonarRadius && !unit->beingBuilt && unit->activated) {
 			glColor3fv(cmdColors.rangeSonar);
-			DrawCircle(unit->pos, (unit->sonarRadius * losHandler->sonar.divisor));
+			DrawCircle(unit->pos, unit->sonarRadius);
 		}
 		if (unit->jammerRadius && !unit->beingBuilt && unit->activated) {
 			glColor3fv(cmdColors.rangeJammer);
-			DrawCircle(unit->pos, (unit->jammerRadius * losHandler->commonJammer.divisor));
+			DrawCircle(unit->pos, unit->jammerRadius);
 		}
 
 		// Interceptor Ranges

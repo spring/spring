@@ -2166,30 +2166,28 @@ int LuaSyncedCtrl::SetUnitSensorRadius(lua_State* L)
 	const float radius = luaL_checkfloat(L, 3);
 
 	if (key == "los") {
-		const int losRange = (int)(radius * losHandler->los.invDiv);
-		unit->ChangeLos(losRange, unit->realAirLosRadius);
-		unit->realLosRadius = losRange;
-		lua_pushnumber(L, unit->losRadius * losHandler->los.divisor);
+		unit->ChangeLos(radius, unit->realAirLosRadius);
+		unit->realLosRadius = radius;
+		lua_pushnumber(L, unit->losRadius);
 	} else if (key == "airLos") {
-		const int airRange = (int)(radius * losHandler->airLos.invDiv);
-		unit->ChangeLos(unit->realLosRadius, airRange);
-		unit->realAirLosRadius = airRange;
-		lua_pushnumber(L, unit->airLosRadius * losHandler->airLos.divisor);
+		unit->ChangeLos(unit->realLosRadius, radius);
+		unit->realAirLosRadius = radius;
+		lua_pushnumber(L, unit->airLosRadius);
 	} else if (key == "radar") {
-		unit->radarRadius = (int)(radius * losHandler->radar.invDiv);
-		lua_pushnumber(L, unit->radarRadius * losHandler->radar.divisor);
+		unit->radarRadius = radius;
+		lua_pushnumber(L, unit->radarRadius);
 	} else if (key == "sonar") {
-		unit->sonarRadius = (int)(radius * losHandler->sonar.invDiv);
-		lua_pushnumber(L, unit->sonarRadius * losHandler->sonar.divisor);
+		unit->sonarRadius = radius;
+		lua_pushnumber(L, unit->sonarRadius);
 	} else if (key == "seismic") {
-		unit->seismicRadius = (int)(radius * losHandler->seismic.invDiv);
-		lua_pushnumber(L, unit->seismicRadius * losHandler->seismic.divisor);
+		unit->seismicRadius = radius;
+		lua_pushnumber(L, unit->seismicRadius);
 	} else if (key == "radarJammer") {
-		unit->jammerRadius = (int)(radius * losHandler->commonJammer.invDiv);
-		lua_pushnumber(L, unit->jammerRadius * losHandler->commonJammer.divisor);
+		unit->jammerRadius = radius;
+		lua_pushnumber(L, unit->jammerRadius);
 	} else if (key == "sonarJammer") {
-		unit->sonarJamRadius = (int)(radius * losHandler->commonSonarJammer.invDiv);
-		lua_pushnumber(L, unit->sonarJamRadius * losHandler->commonSonarJammer.divisor);
+		unit->sonarJamRadius = radius;
+		lua_pushnumber(L, unit->sonarJamRadius);
 	} else {
 		luaL_error(L, "Unknown sensor type to SetUnitSensorRadius()");
 	}

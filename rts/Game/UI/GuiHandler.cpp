@@ -3215,6 +3215,45 @@ static inline void DrawSensorRange(int radius, const float* color, const float3&
 }
 
 
+static void DrawUnitDefRanges(const UnitDef* unitdef, const float3 pos)
+{
+	// draw build range for immobile builders
+	if (unitdef->builder) {
+		const float radius = unitdef->buildDistance;
+		if (radius > 0.0f) {
+			glColor4fv(cmdColors.rangeBuild);
+			glSurfaceCircle(pos, radius, 40);
+		}
+	}
+	// draw shield range for immobile units
+	if (unitdef->shieldWeaponDef) {
+		glColor4fv(cmdColors.rangeShield);
+		glSurfaceCircle(pos, unitdef->shieldWeaponDef->shieldRadius, 40);
+	}
+	// draw sensor and jammer ranges
+	if (unitdef->onoffable || unitdef->activateWhenBuilt) {
+		DrawSensorRange(unitdef->radarRadius   , cmdColors.rangeRadar,       pos);
+		DrawSensorRange(unitdef->sonarRadius   , cmdColors.rangeSonar,       pos);
+		DrawSensorRange(unitdef->seismicRadius , cmdColors.rangeSeismic,     pos);
+		DrawSensorRange(unitdef->jammerRadius  , cmdColors.rangeJammer,      pos);
+		DrawSensorRange(unitdef->sonarJamRadius, cmdColors.rangeSonarJammer, pos);
+	}
+	// draw self destruct and damage distance
+	if (unitdef->kamikazeDist > 0) {
+		glColor4fv(cmdColors.rangeKamikaze);
+		glSurfaceCircle(pos, unitdef->kamikazeDist, 40);
+
+		const WeaponDef* wd = unitdef->selfdExpWeaponDef;
+		if (wd != NULL) {
+			glColor4fv(cmdColors.rangeSelfDestruct);
+			glSurfaceCircle(pos, wd->damageAreaOfEffect, 40);
+		}
+	}
+
+}
+
+
+
 static inline GLuint GetConeList()
 {
 	static GLuint list = 0; // FIXME: put in the class
@@ -3468,6 +3507,8 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 				unitdef = unitdef->decoyDef;
 			}
 
+			DrawUnitDefRanges(unitdef, unit->pos);
+
 			// draw weapon range
 			if (unitdef->maxWeaponRange > 0) {
 				glDisable(GL_DEPTH_TEST);
@@ -3491,40 +3532,6 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 				} else { // cylindrical
 					glSurfaceCircle(unit->pos, unit->decloakDistance, 40);
 				}
-			}
-			// draw self destruct and damage distance
-			if (unitdef->kamikazeDist > 0) {
-				glColor4fv(cmdColors.rangeKamikaze);
-				glSurfaceCircle(unit->pos, unitdef->kamikazeDist, 40);
-
-				const WeaponDef* wd = unitdef->selfdExpWeaponDef;
-
-				if (wd != NULL) {
-					glColor4fv(cmdColors.rangeSelfDestruct);
-					glSurfaceCircle(unit->pos, wd->damageAreaOfEffect, 40);
-				}
-			}
-			// draw build distance for immobile builders
-			if (unitdef->builder) {
-				const float radius = unitdef->buildDistance;
-				if (radius > 0.0f) {
-					glColor4fv(cmdColors.rangeBuild);
-					glSurfaceCircle(unit->pos, radius, 40);
-				}
-			}
-			// draw shield range for immobile units
-			if (unitdef->shieldWeaponDef) {
-				glColor4fv(cmdColors.rangeShield);
-				glSurfaceCircle(unit->pos, unitdef->shieldWeaponDef->shieldRadius, 40);
-			}
-			// draw sensor and jammer ranges
-			if (unitdef->onoffable || unitdef->activateWhenBuilt) {
-				const float3& p = unit->pos;
-				DrawSensorRange(unitdef->radarRadius    * losHandler->radar.divisor,             cmdColors.rangeRadar, p);
-				DrawSensorRange(unitdef->sonarRadius    * losHandler->sonar.divisor,             cmdColors.rangeSonar, p);
-				DrawSensorRange(unitdef->seismicRadius  * losHandler->seismic.divisor,           cmdColors.rangeSeismic, p);
-				DrawSensorRange(unitdef->jammerRadius   * losHandler->commonJammer.divisor,      cmdColors.rangeJammer, p);
-				DrawSensorRange(unitdef->sonarJamRadius * losHandler->commonSonarJammer.divisor, cmdColors.rangeSonarJammer, p);
 			}
 			// draw interceptor range
 			if (unitdef->maxCoverage > 0.0f) {
@@ -3594,6 +3601,9 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 
 				for (std::vector<BuildInfo>::iterator bpi = buildPos.begin(); bpi != buildPos.end(); ++bpi) {
 					const float3& buildpos = bpi->pos;
+
+					DrawUnitDefRanges(unitdef, buildpos);
+
 					// draw weapon range
 					if (!unitdef->weapons.empty()) {
 						glDisable(GL_DEPTH_TEST);
@@ -3607,33 +3617,11 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 						glColor4fv(cmdColors.rangeExtract);
 						glSurfaceCircle(buildpos, unitdef->extractRange, 40);
 					}
-					// draw build range for immobile builders
-					if (unitdef->builder) {
-						const float radius = unitdef->buildDistance;
-						if (radius > 0.0f) {
-							glColor4fv(cmdColors.rangeBuild);
-							glSurfaceCircle(buildpos, radius, 40);
-						}
-					}
-					// draw shield range for immobile units
-					if (unitdef->shieldWeaponDef) {
-						glColor4fv(cmdColors.rangeShield);
-						glSurfaceCircle(buildpos, unitdef->shieldWeaponDef->shieldRadius, 40);
-					}
 					// draw interceptor range
 					const WeaponDef* wd = unitdef->stockpileWeaponDef;
 					if ((wd != NULL) && wd->interceptor) {
 						glColor4fv(cmdColors.rangeInterceptorOn);
 						glSurfaceCircle(buildpos, wd->coverageRange, 40);
-					}
-					// draw sensor and jammer ranges
-					if (unitdef->onoffable || unitdef->activateWhenBuilt) {
-						const float3& p = buildpos;
-						DrawSensorRange(unitdef->radarRadius    * losHandler->radar.divisor,             cmdColors.rangeRadar, p);
-						DrawSensorRange(unitdef->sonarRadius    * losHandler->sonar.divisor,             cmdColors.rangeSonar, p);
-						DrawSensorRange(unitdef->seismicRadius  * losHandler->seismic.divisor,           cmdColors.rangeSeismic, p);
-						DrawSensorRange(unitdef->jammerRadius   * losHandler->commonJammer.divisor,      cmdColors.rangeJammer, p);
-						DrawSensorRange(unitdef->sonarJamRadius * losHandler->commonSonarJammer.divisor, cmdColors.rangeSonarJammer, p);
 					}
 
 					std::vector<Command> cv;

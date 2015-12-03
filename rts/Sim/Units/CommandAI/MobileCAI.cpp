@@ -698,7 +698,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 		const float targetGoalDist = errPos.SqDistance2D(goalPos);
 		const float targetPosDist = Square(10.0f + orderTarget->pos.distance2D(owner->pos) * 0.2f);
-		const float minPointingDist = std::min(1.0f * owner->losRadius * losHandler->los.divisor, owner->maxRange * 0.9f);
+		const float minPointingDist = std::min(1.0f * owner->losRadius, owner->maxRange * 0.9f);
 
 		// FIXME? targetMidPosMaxDist is 3D, but compared with a 2D value
 		const float targetMidPosDist2D = targetMidPosVec.Length2D();
