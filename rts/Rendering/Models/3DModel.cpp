@@ -135,8 +135,10 @@ void LocalModel::DrawPiecesLOD(unsigned int lod) const
 void LocalModel::SetLODCount(unsigned int count)
 {
 	assert(Initialized());
+	lodCount = count;
+
 	luaMaterialData.SetLODCount(lodCount);
-	pieces[0].SetLODCount(lodCount = count);
+	pieces[0].SetLODCount(lodCount);
 }
 
 
