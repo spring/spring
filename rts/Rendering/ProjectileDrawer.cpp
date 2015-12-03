@@ -771,7 +771,7 @@ void CProjectileDrawer::DrawGroundFlashes()
 	bool depthMask = false;
 
 	for (CGroundFlash* gf: gfc) {
-		const bool inLos = gf->alwaysVisible || gu->spectatingFullView || losHandler->InAirLos(gf->pos, gu->myAllyTeam);
+		const bool inLos = gf->alwaysVisible || gu->spectatingFullView || losHandler->InAirLos(gf, gu->myAllyTeam);
 		if (!inLos)
 			continue;
 

@@ -1840,7 +1840,7 @@ EXPORT(int) skirmishAiCallback_Map_getRadarMap(int skirmishAIId,
 EXPORT(int) skirmishAiCallback_Map_getJammerMap(int skirmishAIId,
 		int* jammerValues, int jammerValues_sizeMax) {
 
-	const int jammerValues_sizeReal = losHandler->commonJammer.size.x * losHandler->commonJammer.size.y;
+	const int jammerValues_sizeReal = losHandler->jammer.size.x * losHandler->jammer.size.y;
 
 	int jammerValues_size = jammerValues_sizeReal;
 
