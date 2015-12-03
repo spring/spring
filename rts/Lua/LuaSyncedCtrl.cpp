@@ -323,57 +323,43 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 
 static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 {
-	const int unitID = luaL_checkint(L, index);
-	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits())) {
-		luaL_error(L, "%s(): Bad unitID: %d\n", caller, unitID);
-	}
-	CUnit* unit = unitHandler->units[unitID];
-	if (unit == NULL) {
-		return NULL;
-	}
-	return unit;
+	return (unitHandler->GetUnit(luaL_checkint(L, index)));
 }
-
 
 static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 {
 	CUnit* unit = ParseRawUnit(L, caller, index);
-	if (unit == NULL) {
-		return NULL;
-	}
-	if (!CanControlUnit(L, unit)) {
-		return NULL;
-	}
+
+	if (unit == nullptr)
+		return nullptr;
+	if (!CanControlUnit(L, unit))
+		return nullptr;
+
 	return unit;
 }
 
-
-static inline CFeature* ParseFeature(lua_State* L,
-                                     const char* caller, int index)
+static inline CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 {
-	const int featureID = luaL_checkint(L, index);
-	CFeature* f = featureHandler->GetFeature(featureID);
+	CFeature* f = featureHandler->GetFeature(luaL_checkint(L, index));
 
-	if (!f)
-		return NULL;
+	if (f == nullptr)
+		return nullptr;
+	if (!CanControlFeature(L, f))
+		return nullptr;
 
-	if (!CanControlFeature(L, f)) {
-		return NULL;
-	}
 	return f;
 }
 
-
-static inline CProjectile* ParseProjectile(lua_State* L,
-                                           const char* caller, int index)
+static inline CProjectile* ParseProjectile(lua_State* L, const char* caller, int index)
 {
 	CProjectile* p = projectileHandler->GetProjectileBySyncedID(luaL_checkint(L, index));
-	if (p == NULL) {
-		return NULL;
-	}
-	if (!CanControlProjectileAllyTeam(L, p->GetAllyteamID())) {
-		return NULL;
-	}
+
+	if (p == nullptr)
+		return nullptr;
+
+	if (!CanControlProjectileAllyTeam(L, p->GetAllyteamID()))
+		return nullptr;
+
 	return p;
 }
 
@@ -453,15 +439,14 @@ static CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 		luaL_error(L, "%s(): Bad teamID", caller);
 		return NULL;
 	}
+
 	const int teamID = lua_toint(L, index);
-	if (!teamHandler->IsValidTeam(teamID)) {
+
+	if (!teamHandler->IsValidTeam(teamID))
 		luaL_error(L, "%s(): Bad teamID: %d", caller, teamID);
-	}
-	CTeam* team = teamHandler->Team(teamID);
-	if (team == NULL) {
-		return NULL;
-	}
-	return team;
+
+
+	return (teamHandler->Team(teamID));
 }
 
 static int SetSolidObjectCollisionVolumeData(lua_State* L, CSolidObject* o)
