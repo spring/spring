@@ -310,6 +310,10 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(IsPosInLos);
 	REGISTER_LUA_CFUNC(IsPosInRadar);
 	REGISTER_LUA_CFUNC(IsPosInAirLos);
+	REGISTER_LUA_CFUNC(IsUnitInLos);
+	REGISTER_LUA_CFUNC(IsUnitInAirLos);
+	REGISTER_LUA_CFUNC(IsUnitInRadar);
+	REGISTER_LUA_CFUNC(IsUnitInJammer);
 	REGISTER_LUA_CFUNC(GetClosestValidPosition);
 
 	REGISTER_LUA_CFUNC(GetUnitPieceMap);
@@ -5106,7 +5110,7 @@ static int GetEffectiveLosAllyTeam(lua_State* L, int arg)
 	const bool isGaia = (CLuaHandle::GetHandleReadAllyTeam(L) == teamHandler->GaiaAllyTeamID());
 	if (CLuaHandle::GetHandleFullRead(L) || isGaia) {
 		const int at = luaL_checkint(L, arg);
-		if (at >= teamHandler->ActiveAllyTeams()) {
+		if (!teamHandler->IsValidAllyTeam(at)) {
 			luaL_error(L, "Invalid allyTeam");
 		}
 		if (isGaia && (at >= 0) && (at != teamHandler->GaiaAllyTeamID())) {
@@ -5128,29 +5132,13 @@ int LuaSyncedRead::GetPositionLosState(lua_State* L)
 	                 luaL_checkfloat(L, 3));
 
 	const int allyTeamID = GetEffectiveLosAllyTeam(L, 4);
-
-	bool inLos    = false;
-	bool inRadar  = false;
-	bool inJammer = false;
-
-	if (allyTeamID >= 0) {
-		inLos    = losHandler->InLos(pos, allyTeamID);
-		inRadar  = losHandler->InRadar(pos, allyTeamID);
-		inJammer = losHandler->InJammer(pos, allyTeamID);
-	} else {
-		//FIXME this does not seem useful
-		for (int at = 0; at < teamHandler->ActiveAllyTeams(); at++) {
-			if (losHandler->InLos(pos, at)) {
-				inLos = true;
-			}
-			if (losHandler->InRadar(pos, at)) {
-				inRadar = true;
-			}
-			if (losHandler->InJammer(pos, at)) {
-				inJammer = true;
-			}
-		}
+	if (!teamHandler->IsValidAllyTeam(allyTeamID)) {
+		luaL_error(L, "Invalid allyTeam");
 	}
+
+	bool inLos    = losHandler->InLos(pos, allyTeamID);
+	bool inRadar  = losHandler->InRadar(pos, allyTeamID);
+	bool inJammer = losHandler->InJammer(pos, allyTeamID);
 
 	lua_pushboolean(L, inLos || inRadar);
 	lua_pushboolean(L, inLos);
@@ -5167,21 +5155,11 @@ int LuaSyncedRead::IsPosInLos(lua_State* L)
 	                 luaL_checkfloat(L, 3));
 
 	const int allyTeamID = GetEffectiveLosAllyTeam(L, 4);
-
-	bool state = false;
-	if (allyTeamID >= 0) {
-		state = losHandler->InLos(pos, allyTeamID);
+	if (!teamHandler->IsValidAllyTeam(allyTeamID)) {
+		luaL_error(L, "Invalid allyTeam");
 	}
-	else {
-		for (int at = 0; at < teamHandler->ActiveAllyTeams(); at++) {
-			if (losHandler->InLos(pos, at)) {
-				state = true;
-				break;
-			}
-		}
-	}
-	lua_pushboolean(L, state);
 
+	lua_pushboolean(L, losHandler->InLos(pos, allyTeamID));
 	return 1;
 }
 
@@ -5193,21 +5171,11 @@ int LuaSyncedRead::IsPosInRadar(lua_State* L)
 	                 luaL_checkfloat(L, 3));
 
 	const int allyTeamID = GetEffectiveLosAllyTeam(L, 4);
-
-	bool state = false;
-	if (allyTeamID >= 0) {
-		state = losHandler->InRadar(pos, allyTeamID);
+	if (!teamHandler->IsValidAllyTeam(allyTeamID)) {
+		luaL_error(L, "Invalid allyTeam");
 	}
-	else {
-		for (int at = 0; at < teamHandler->ActiveAllyTeams(); at++) {
-			if (losHandler->InRadar(pos, at)) {
-				state = true;
-				break;
-			}
-		}
-	}
-	lua_pushboolean(L, state);
 
+	lua_pushboolean(L, losHandler->InRadar(pos, allyTeamID));
 	return 1;
 }
 
@@ -5219,21 +5187,71 @@ int LuaSyncedRead::IsPosInAirLos(lua_State* L)
 	                 luaL_checkfloat(L, 3));
 
 	const int allyTeamID = GetEffectiveLosAllyTeam(L, 4);
-
-	bool state = false;
-	if (allyTeamID >= 0) {
-		state = losHandler->InAirLos(pos, allyTeamID);
+	if (!teamHandler->IsValidAllyTeam(allyTeamID)) {
+		luaL_error(L, "Invalid allyTeam");
 	}
-	else {
-		for (int at = 0; at < teamHandler->ActiveAllyTeams(); at++) {
-			if (losHandler->InAirLos(pos, at)) {
-				state = true;
-				break;
-			}
-		}
-	}
-	lua_pushboolean(L, state);
 
+	lua_pushboolean(L, losHandler->InAirLos(pos, allyTeamID));
+	return 1;
+}
+
+
+int LuaSyncedRead::IsUnitInLos(lua_State* L)
+{
+	const CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
+	if (unit == NULL)
+		return 0;
+
+	const int allyTeamID = GetEffectiveLosAllyTeam(L, 2);
+	if (!teamHandler->IsValidAllyTeam(allyTeamID)) {
+		luaL_error(L, "Invalid allyTeam");
+	}
+	lua_pushboolean(L, losHandler->InLos(unit, allyTeamID));
+	return 1;
+}
+
+
+int LuaSyncedRead::IsUnitInAirLos(lua_State* L)
+{
+	const CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
+	if (unit == NULL)
+		return 0;
+
+	const int allyTeamID = GetEffectiveLosAllyTeam(L, 2);
+	if (!teamHandler->IsValidAllyTeam(allyTeamID)) {
+		luaL_error(L, "Invalid allyTeam");
+	}
+	lua_pushboolean(L, losHandler->InAirLos(unit, allyTeamID));
+	return 1;
+}
+
+
+int LuaSyncedRead::IsUnitInRadar(lua_State* L)
+{
+	const CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
+	if (unit == NULL)
+		return 0;
+
+	const int allyTeamID = GetEffectiveLosAllyTeam(L, 2);
+	if (!teamHandler->IsValidAllyTeam(allyTeamID)) {
+		luaL_error(L, "Invalid allyTeam");
+	}
+	lua_pushboolean(L, losHandler->InRadar(unit, allyTeamID));
+	return 1;
+}
+
+
+int LuaSyncedRead::IsUnitInJammer(lua_State* L)
+{
+	const CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
+	if (unit == NULL)
+		return 0;
+
+	const int allyTeamID = GetEffectiveLosAllyTeam(L, 2);
+	if (!teamHandler->IsValidAllyTeam(allyTeamID)) {
+		luaL_error(L, "Invalid allyTeam");
+	}
+	lua_pushboolean(L, losHandler->InJammer(unit, allyTeamID)); //FIXME
 	return 1;
 }
 
