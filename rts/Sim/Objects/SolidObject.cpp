@@ -46,6 +46,7 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(allyteam),
 
 	CR_MEMBER(tempNum),
+	CR_MEMBER(lastHitPieceFrame),
 
 	CR_MEMBER(objectDef),
 	CR_MEMBER(moveDef),
