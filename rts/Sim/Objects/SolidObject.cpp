@@ -50,7 +50,7 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(objectDef),
 	CR_MEMBER(moveDef),
 
-	CR_MEMBER(localModel),
+	CR_IGNORED(localModel), // TODO
 	CR_MEMBER(collisionVolume),
 	CR_MEMBER(lastHitPiece),
 
