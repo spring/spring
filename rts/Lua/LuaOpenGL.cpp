@@ -1442,17 +1442,17 @@ int LuaOpenGL::UnitMultMatrix(lua_State* L)
 
 int LuaOpenGL::UnitPiece(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	const CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
 	if (unit == nullptr)
 		return 0;
 
-	LocalModelPiece* localPiece = ParseUnitLocalModelPiece(L, unit, 2);
+	const LocalModelPiece* localPiece = ParseObjectLocalModelPiece(L, unit, 2);
 
 	if (localPiece == nullptr)
 		return 0;
 
 	glCallList(localPiece->dispListID);
-
 	return 0;
 }
 
@@ -1466,11 +1466,12 @@ int LuaOpenGL::UnitPieceMultMatrix(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	const CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
 	if (unit == nullptr)
 		return 0;
 
-	LocalModelPiece* localPiece = ParseUnitLocalModelPiece(L, unit, 2);
+	const LocalModelPiece* localPiece = ParseObjectLocalModelPiece(L, unit, 2);
 
 	if (localPiece == nullptr)
 		return 0;

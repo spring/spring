@@ -32,7 +32,6 @@ private:
 	static int SetLODLength(lua_State* L);
 	static int SetLODDistance(lua_State* L);
 
-	// LUAOBJ_UNIT only
 	static int SetPieceList(lua_State* L);
 
 	static int GetMaterial(lua_State* L);
@@ -107,10 +106,10 @@ private:
 
 
 	static int SetPieceList(lua_State* L) {
-		if (T != LUAOBJ_UNIT)
-			return 0;
-
-		return (LuaObjectRenderingImpl::SetPieceList(L));
+		LuaObjectRenderingImpl::PushObjectType(T);
+		const int ret = LuaObjectRenderingImpl::SetPieceList(L);
+		LuaObjectRenderingImpl::PopObjectType();
+		return ret;
 	}
 
 

@@ -271,7 +271,9 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetFeatureBlocking);
 	REGISTER_LUA_CFUNC(GetFeatureNoSelect);
 	REGISTER_LUA_CFUNC(GetFeatureResurrect);
+	REGISTER_LUA_CFUNC(GetFeatureLastAttackedPiece);
 	REGISTER_LUA_CFUNC(GetFeatureCollisionVolumeData);
+	REGISTER_LUA_CFUNC(GetFeaturePieceCollisionVolumeData);
 	REGISTER_LUA_CFUNC(GetFeatureSeparation);
 
 	REGISTER_LUA_CFUNC(GetProjectilePosition);
@@ -451,6 +453,28 @@ static inline bool IsProjectileVisible(lua_State* L, const CProjectile* pro)
 /******************************************************************************/
 /******************************************************************************/
 
+static int GetSolidObjectLastHitPiece(lua_State* L, const CSolidObject* o, bool isFeature)
+{
+	if (o == NULL)
+		return 0;
+	if (o->lastHitPiece == nullptr)
+		return 0;
+
+	if (isFeature && !IsFeatureVisible(L, static_cast<const CFeature*>(o)))
+		return 0;
+
+	const LocalModelPiece* lmp = o->lastHitPiece;
+	const S3DModelPiece* omp = lmp->original;
+
+	if (lua_isboolean(L, 1) && lua_toboolean(L, 1)) {
+		lua_pushnumber(L, lmp->GetLModelPieceIndex() + 1);
+	} else {
+		lua_pushsstring(L, omp->name);
+	}
+
+	lua_pushnumber(L, o->lastHitPieceFrame);
+	return 2;
+}
 
 static int PushCollisionVolumeData(lua_State* L, const CollisionVolume* vol) {
 	lua_pushnumber(L, vol->GetScales().x);
@@ -465,6 +489,23 @@ static int PushCollisionVolumeData(lua_State* L, const CollisionVolume* vol) {
 	lua_pushboolean(L, vol->IgnoreHits());
 	return 10;
 }
+
+static int PushPieceCollisionVolumeData(lua_State* L, const CSolidObject* o, bool isFeature)
+{
+	if (o == NULL)
+		return 0;
+
+	if (isFeature && !IsFeatureVisible(L, static_cast<const CFeature*>(o)))
+		return 0;
+
+	const LocalModelPiece* lmp = ParseObjectLocalModelPiece(L, o, 2);
+
+	if (lmp == nullptr)
+		return 0;
+
+	return (PushCollisionVolumeData(L, lmp->GetCollisionVolume()));
+}
+
 
 static int PushTerrainTypeData(lua_State* L, const CMapInfo::TerrainType* tt, bool groundInfo) {
 	lua_pushsstring(L, tt->name);
@@ -543,9 +584,11 @@ static int GetSolidObjectPosition(lua_State* L, const CSolidObject* o, bool isFe
 	return (3 + (3 * returnMidPos) + (3 * returnAimPos));
 }
 
-static int GetSolidObjectBlocking(lua_State* L, const CSolidObject* o)
+static int GetSolidObjectBlocking(lua_State* L, const CSolidObject* o, bool isFeature)
 {
 	if (o == NULL)
+		return 0;
+	if (isFeature && !IsFeatureVisible(L, static_cast<const CFeature*>(o)))
 		return 0;
 
 	lua_pushboolean(L, o->HasPhysicalStateBit(CSolidObject::PSTATE_BIT_BLOCKING));
@@ -3565,53 +3608,25 @@ int LuaSyncedRead::GetUnitLastAttacker(lua_State* L)
 	return 1;
 }
 
+
 int LuaSyncedRead::GetUnitLastAttackedPiece(lua_State* L)
 {
-	const CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1); // ?
-
-	if (unit == NULL)
-		return 0;
-	if (unit->lastAttackedPiece == NULL)
-		return 0;
-
-	const LocalModelPiece* lmp = unit->lastAttackedPiece;
-	const S3DModelPiece* omp = lmp->original;
-
-	if (lua_isboolean(L, 1) && lua_toboolean(L, 1)) {
-		lua_pushnumber(L, lmp->GetLModelPieceIndex() + 1);
-	} else {
-		lua_pushsstring(L, omp->name);
-	}
-
-	lua_pushnumber(L, unit->lastAttackedPieceFrame);
-	return 2;
+	return (GetSolidObjectLastHitPiece(L, ParseAllyUnit(L, __FUNCTION__, 1), false));
 }
-
 
 int LuaSyncedRead::GetUnitCollisionVolumeData(lua_State* L)
 {
 	const CUnit* unit = ParseInLosUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
 
 	return (PushCollisionVolumeData(L, &unit->collisionVolume));
 }
 
 int LuaSyncedRead::GetUnitPieceCollisionVolumeData(lua_State* L)
 {
-	CUnit* unit = ParseInLosUnit(L, __FUNCTION__, 1);
-	if (unit == NULL)
-		return 0;
-
-	LocalModelPiece* lmp = ParseUnitLocalModelPiece(L, unit, 2);
-
-	if (lmp == nullptr)
-		return 0;
-
-	const CollisionVolume* vol = lmp->GetCollisionVolume();
-
-	return (PushCollisionVolumeData(L, vol));
+	return (PushPieceCollisionVolumeData(L, ParseInLosUnit(L, __FUNCTION__, 1), false));
 }
 
 
@@ -3749,7 +3764,7 @@ int LuaSyncedRead::GetUnitDefDimensions(lua_State* L)
 
 int LuaSyncedRead::GetUnitBlocking(lua_State* L)
 {
-	return (GetSolidObjectBlocking(L, ParseTypedUnit(L, __FUNCTION__, 1)));
+	return (GetSolidObjectBlocking(L, ParseTypedUnit(L, __FUNCTION__, 1), false));
 }
 
 
@@ -4519,16 +4534,17 @@ int LuaSyncedRead::GetFeatureResources(lua_State* L)
 
 int LuaSyncedRead::GetFeatureBlocking(lua_State* L)
 {
-	return (GetSolidObjectBlocking(L, ParseFeature(L, __FUNCTION__, 1)));
+	return (GetSolidObjectBlocking(L, ParseFeature(L, __FUNCTION__, 1), true));
 }
 
 
 int LuaSyncedRead::GetFeatureNoSelect(lua_State* L)
 {
-	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL || !IsFeatureVisible(L, feature)) {
+	const CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+
+	if (feature == NULL || !IsFeatureVisible(L, feature))
 		return 0;
-	}
+
 	lua_pushboolean(L, feature->noSelect);
 	return 1;
 }
@@ -4536,10 +4552,10 @@ int LuaSyncedRead::GetFeatureNoSelect(lua_State* L)
 
 int LuaSyncedRead::GetFeatureResurrect(lua_State* L)
 {
-	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	const CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+
+	if (feature == NULL)
 		return 0;
-	}
 
 	if (feature->udef == NULL) {
 		lua_pushliteral(L, "");
@@ -4552,14 +4568,24 @@ int LuaSyncedRead::GetFeatureResurrect(lua_State* L)
 }
 
 
+int LuaSyncedRead::GetFeatureLastAttackedPiece(lua_State* L)
+{
+	return (GetSolidObjectLastHitPiece(L, ParseFeature(L, __FUNCTION__, 1), true));
+}
+
 int LuaSyncedRead::GetFeatureCollisionVolumeData(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+
+	if (feature == NULL)
 		return 0;
-	}
 
 	return (PushCollisionVolumeData(L, &feature->collisionVolume));
+}
+
+int LuaSyncedRead::GetFeaturePieceCollisionVolumeData(lua_State* L)
+{
+	return (PushPieceCollisionVolumeData(L, ParseFeature(L, __FUNCTION__, 1), true));
 }
 
 
@@ -5329,7 +5355,7 @@ int LuaSyncedRead::GetUnitPieceInfo(lua_State* L)
 	if (unit == NULL)
 		return 0;
 
-	LocalModelPiece* localPiece = ParseUnitLocalModelPiece(L, unit, 2);
+	LocalModelPiece* localPiece = ParseObjectLocalModelPiece(L, unit, 2);
 
 	if (localPiece == nullptr)
 		return 0;
@@ -5345,7 +5371,7 @@ int LuaSyncedRead::GetUnitPiecePosition(lua_State* L)
 	if (unit == NULL)
 		return 0;
 
-	LocalModelPiece* localPiece = ParseUnitLocalModelPiece(L, unit, 2);
+	LocalModelPiece* localPiece = ParseObjectLocalModelPiece(L, unit, 2);
 
 	if (localPiece == nullptr)
 		return 0;
@@ -5365,7 +5391,7 @@ int LuaSyncedRead::GetUnitPiecePosDir(lua_State* L)
 	if (unit == NULL)
 		return 0;
 
-	LocalModelPiece* localPiece = ParseUnitLocalModelPiece(L, unit, 2);
+	LocalModelPiece* localPiece = ParseObjectLocalModelPiece(L, unit, 2);
 
 	if (localPiece == nullptr)
 		return 0;
@@ -5394,7 +5420,7 @@ int LuaSyncedRead::GetUnitPieceDirection(lua_State* L)
 	if (unit == NULL)
 		return 0;
 
-	LocalModelPiece* localPiece = ParseUnitLocalModelPiece(L, unit, 2);
+	LocalModelPiece* localPiece = ParseObjectLocalModelPiece(L, unit, 2);
 
 	if (localPiece == nullptr)
 		return 0;
@@ -5413,7 +5439,7 @@ int LuaSyncedRead::GetUnitPieceMatrix(lua_State* L)
 	if (unit == NULL)
 		return 0;
 
-	LocalModelPiece* localPiece = ParseUnitLocalModelPiece(L, unit, 2);
+	LocalModelPiece* localPiece = ParseObjectLocalModelPiece(L, unit, 2);
 
 	if (localPiece == nullptr)
 		return 0;

@@ -184,7 +184,9 @@ class LuaSyncedRead {
 		static int GetFeatureBlocking(lua_State* L);
 		static int GetFeatureNoSelect(lua_State* L);
 		static int GetFeatureResurrect(lua_State* L);
+		static int GetFeatureLastAttackedPiece(lua_State* L);
 		static int GetFeatureCollisionVolumeData(lua_State* L);
+		static int GetFeaturePieceCollisionVolumeData(lua_State* L);
 
 		static int GetProjectilePosition(lua_State* L);
 		static int GetProjectileDirection(lua_State* L);

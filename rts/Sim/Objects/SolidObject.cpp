@@ -49,10 +49,12 @@ CR_REG_METADATA(CSolidObject,
 
 	CR_MEMBER(objectDef),
 	CR_MEMBER(moveDef),
+
+	CR_MEMBER(localModel),
 	CR_MEMBER(collisionVolume),
+	CR_MEMBER(lastHitPiece),
 
 	CR_IGNORED(groundDecal),
-	CR_IGNORED(luaMaterialData),
 
 	CR_MEMBER(frontdir),
 	CR_MEMBER(rightdir),
@@ -106,10 +108,13 @@ CSolidObject::CSolidObject():
 	allyteam(0),
 
 	tempNum(0),
+	lastHitPieceFrame(-1),
 
-	objectDef(NULL),
-	moveDef(NULL),
-	groundDecal(NULL),
+	objectDef(nullptr),
+	moveDef(nullptr),
+
+	lastHitPiece(nullptr),
+	groundDecal(nullptr),
 
 	frontdir( FwdVector),
 	rightdir(-RgtVector),
@@ -120,7 +125,7 @@ CSolidObject::CSolidObject():
 
 	dragScales(OnesVector),
 
-	blockMap(NULL),
+	blockMap(nullptr),
 	yardOpen(false),
 	buildFacing(0)
 {
@@ -367,7 +372,7 @@ float3 CSolidObject::GetWantedUpDir(bool useGroundNormal) const {
 	const float3 gn = CGround::GetSmoothNormal(pos.x, pos.z) * (    useGroundNormal);
 	const float3 wn =                             UpVector  * (1 - useGroundNormal);
 
-	if (moveDef == NULL) {
+	if (moveDef == nullptr) {
 		// aircraft cannot use updir reliably or their
 		// coordinate-system would degenerate too much
 		// over time without periodic re-ortho'ing

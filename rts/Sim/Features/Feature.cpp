@@ -103,10 +103,12 @@ void CFeature::PostLoad()
 
 	//FIXME is this really needed (aren't all those tags saved via creg?)
 	if (def->drawType == DRAWTYPE_MODEL) {
-		model = def->LoadModel();
+		if ((model = def->LoadModel()) != NULL) {
+			SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
+			SetRadiusAndHeight(model);
 
-		SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
-		SetRadiusAndHeight(model);
+			localModel.SetModel(model);
+		}
 	} else if (def->drawType >= DRAWTYPE_TREE) {
 		SetMidAndAimPos(UpVector * TREE_RADIUS, UpVector * TREE_RADIUS, true);
 		SetRadiusAndHeight(TREE_RADIUS, TREE_RADIUS * 2.0f);
@@ -191,11 +193,16 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	CWorldObject::SetVelocity(params.speed);
 
 	if (def->drawType == DRAWTYPE_MODEL) {
-		if ((model = def->LoadModel()) == NULL) {
-			LOG_L(L_ERROR, "[%s] couldn't load model for %s", __FUNCTION__, def->name.c_str());
-		} else {
+		if ((model = def->LoadModel()) != NULL) {
 			SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
 			SetRadiusAndHeight(model);
+
+			// only initialize the LM for modelled features
+			// (this is still never animated but allows for
+			// custom piece display-lists, etc)
+			localModel.SetModel(model);
+		} else {
+			LOG_L(L_ERROR, "[%s] couldn't load model for %s", __FUNCTION__, def->name.c_str());
 		}
 	} else if (def->drawType >= DRAWTYPE_TREE) {
 		// LoadFeaturesFromMap() doesn't set a scale for trees
@@ -206,13 +213,14 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	UpdateMidAndAimPos();
 	CalculateTransform();
 
-	// note: gets deleted in ~CSolidObject
+
 	collisionVolume = def->collisionVolume;
 
 	if (collisionVolume.DefaultToSphere())
 		collisionVolume.InitSphere(radius);
 	if (collisionVolume.DefaultToFootPrint())
 		collisionVolume.InitBox(float3(xsize * SQUARE_SIZE, height, zsize * SQUARE_SIZE));
+
 
 	// feature does not have an assigned ID yet
 	// this MUST be done before the Block() call

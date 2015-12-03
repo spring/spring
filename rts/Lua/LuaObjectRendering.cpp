@@ -163,17 +163,18 @@ int LuaObjectRenderingImpl::SetLODDistance(lua_State* L)
 
 int LuaObjectRenderingImpl::SetPieceList(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == nullptr)
+	CSolidObject* obj = ParseSolidObject(L, __FUNCTION__, 1, GetObjectType());
+
+	if (obj == nullptr)
 		return 0;
 
-	const unsigned int lod = luaL_checknumber(L, 2) - 1;
-	LocalModelPiece* localPiece = ParseUnitLocalModelPiece(L, unit, 3);
+	const LuaObjectMaterialData* lmd = obj->GetLuaMaterialData();
+	LocalModelPiece* localPiece = ParseObjectLocalModelPiece(L, obj, 3);
 
 	if (localPiece == nullptr)
 		return 0;
 
-	const LuaObjectMaterialData* lmd = unit->GetLuaMaterialData();
+	const unsigned int lod = luaL_checknumber(L, 2) - 1;
 
 	if (lod >= lmd->GetLODCount())
 		return 0;
@@ -184,7 +185,8 @@ int LuaObjectRenderingImpl::SetPieceList(lua_State* L)
 		CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
 		dlist = displayLists.GetDList(luaL_checknumber(L, 4));
 	} else {
-		dlist = localPiece->dispListID; // set to the default
+		// set to the default
+		dlist = localPiece->dispListID;
 	}
 
 	localPiece->lodDispLists[lod] = dlist;

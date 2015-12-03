@@ -108,14 +108,14 @@ void CGameHelper::DoExplosionDamage(
 	if (ignoreOwner && (unit == owner))
 		return;
 
-	const LocalModelPiece* lap = unit->GetLastAttackedPiece(gs->frameNum);
-	const CollisionVolume* vol = unit->GetCollisionVolume(lap);
+	const LocalModelPiece* lhp = unit->GetLastHitPiece(gs->frameNum);
+	const CollisionVolume* vol = unit->GetCollisionVolume(lhp);
 
-	const float3& lapPos = (lap != NULL && vol == lap->GetCollisionVolume())? lap->GetAbsolutePos(): ZeroVector;
-	const float3& volPos = vol->GetWorldSpacePos(unit, lapPos);
+	const float3& lhpPos = (lhp != NULL && vol == lhp->GetCollisionVolume())? lhp->GetAbsolutePos(): ZeroVector;
+	const float3& volPos = vol->GetWorldSpacePos(unit, lhpPos);
 
 	// linear damage falloff with distance
-	const float expDist = (expRadius != 0.0f) ? vol->GetPointSurfaceDistance(unit, lap, expPos) : 0.0f;
+	const float expDist = (expRadius != 0.0f) ? vol->GetPointSurfaceDistance(unit, lhp, expPos) : 0.0f;
 	const float expRim = expDist * expEdgeEffect;
 
 	// return early if (distance > radius)
@@ -164,8 +164,11 @@ void CGameHelper::DoExplosionDamage(
 ) {
 	assert(feature != NULL);
 
-	const CollisionVolume* vol = feature->GetCollisionVolume(NULL);
-	const float3& volPos = vol->GetWorldSpacePos(feature, ZeroVector);
+	const LocalModelPiece* lhp = feature->GetLastHitPiece(gs->frameNum);
+	const CollisionVolume* vol = feature->GetCollisionVolume(lhp);
+
+	const float3& lhpPos = (lhp != NULL && vol == lhp->GetCollisionVolume())? lhp->GetAbsolutePos(): ZeroVector;
+	const float3& volPos = vol->GetWorldSpacePos(feature, lhpPos);
 
 	const float expDist = (expRadius != 0.0f) ? vol->GetPointSurfaceDistance(feature, NULL, expPos) : 0.0f;
 	const float expRim = expDist * expEdgeEffect;

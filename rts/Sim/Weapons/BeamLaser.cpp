@@ -367,7 +367,7 @@ void CBeamLaser::FireInternal(float3 curDir)
 		return;
 
 	if (hitUnit != NULL) {
-		hitUnit->SetLastAttackedPiece(hitColQuery.GetHitPiece(), gs->frameNum);
+		hitUnit->SetLastHitPiece(hitColQuery.GetHitPiece(), gs->frameNum);
 
 		if (weaponDef->targetBorder > 0.0f) {
 			actualRange += (hitUnit->radius * weaponDef->targetBorder);

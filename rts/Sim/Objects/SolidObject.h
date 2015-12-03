@@ -4,7 +4,7 @@
 #define SOLID_OBJECT_H
 
 #include "WorldObject.h"
-#include "Lua/LuaObjectMaterial.h" // XXX
+#include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/bitops.h"
 #include "System/Matrix44f.h"
@@ -148,11 +148,29 @@ public:
 		return CMatrix44f();
 	}
 
-	virtual const CollisionVolume* GetCollisionVolume(const LocalModelPiece* lmp) const { return &collisionVolume; }
+	const CollisionVolume* GetCollisionVolume(const LocalModelPiece* lmp) const {
+		if (lmp == nullptr)
+			return &collisionVolume;
+		if (!collisionVolume.DefaultToPieceTree())
+			return &collisionVolume;
 
-	const LuaObjectMaterialData* GetLuaMaterialData() const { return &luaMaterialData; }
-	      LuaObjectMaterialData* GetLuaMaterialData()       { return &luaMaterialData; }
+		return (lmp->GetCollisionVolume());
+	}
 
+	const LuaObjectMaterialData* GetLuaMaterialData() const { return (localModel.GetLuaMaterialData()); }
+	      LuaObjectMaterialData* GetLuaMaterialData()       { return (localModel.GetLuaMaterialData()); }
+
+	const LocalModelPiece* GetLastHitPiece(int f) const {
+		if (lastHitPieceFrame == f)
+			return lastHitPiece;
+
+		return nullptr;
+	}
+
+	void SetLastHitPiece(const LocalModelPiece* p, int f) {
+		lastHitPiece      = p;
+		lastHitPieceFrame = f;
+	}
 
 	/**
 	 * adds this object to the GroundBlockingMap if and only
@@ -273,14 +291,17 @@ public:
 	int allyteam;                               ///< allyteam that this->team is part of
 
 	int tempNum;                                ///< used to check if object has already been processed (in QuadField queries, etc)
+	int lastHitPieceFrame;                      ///< frame in which lastHitPiece was hit
+
 
 	const SolidObjectDef* objectDef;            ///< points to a UnitDef or to a FeatureDef instance
-
 	MoveDef* moveDef;                           ///< mobility information about this object (if NULL, object is either static or aircraft)
-	CollisionVolume collisionVolume;
-	SolidObjectGroundDecal* groundDecal;
 
-	LuaObjectMaterialData luaMaterialData;      ///< custom Lua-set material this object should be rendered with (UNSYNCED)
+	LocalModel localModel;
+	CollisionVolume collisionVolume;
+
+	const LocalModelPiece* lastHitPiece;        ///< piece that was last hit by a projectile
+	      SolidObjectGroundDecal* groundDecal;
 
 	SyncedFloat3 frontdir;                      ///< object-local z-axis (in WS)
 	SyncedFloat3 rightdir;                      ///< object-local x-axis (in WS)

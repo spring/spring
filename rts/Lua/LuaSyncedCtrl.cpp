@@ -584,6 +584,30 @@ static int SetSolidObjectPhysicalState(lua_State* L, CSolidObject* o)
 	return 0;
 }
 
+static int SetSolidObjectPieceCollisionVolumeData(lua_State* L, CSolidObject* obj)
+{
+	if (obj == NULL)
+		return 0;
+
+	LocalModelPiece* lmp = ParseObjectLocalModelPiece(L, obj, 2);
+
+	if (lmp == nullptr)
+		luaL_argerror(L, 2, "invalid piece");
+
+	CollisionVolume* vol = lmp->GetCollisionVolume();
+
+	const float3 scales(luaL_checkfloat(L, 4), luaL_checkfloat(L, 5), luaL_checkfloat(L, 6));
+	const float3 offset(luaL_checkfloat(L, 7), luaL_checkfloat(L, 8), luaL_checkfloat(L, 9));
+
+	const unsigned int vType = luaL_optint(L, 10, vol->GetVolumeType());
+	const unsigned int pAxis = luaL_optint(L, 11, vol->GetPrimaryAxis());
+
+	// piece volumes are not allowed to use discrete hit-testing
+	vol->InitShape(scales, offset, vType, CollisionVolume::COLVOL_HITTEST_CONT, pAxis);
+	vol->SetIgnoreHits(!luaL_checkboolean(L, 3));
+	return 0;
+}
+
 static int SetWorldObjectAlwaysVisible(lua_State* L, CWorldObject* o, const char* caller)
 {
 	if (o == NULL)
@@ -2109,13 +2133,13 @@ int LuaSyncedCtrl::SetUnitPieceParent(lua_State* L)
 	if (unit == NULL)
 		return 0;
 
-	LocalModelPiece* lmpAlteredPiece = ParseUnitLocalModelPiece(L, unit, 2);
+	LocalModelPiece* lmpAlteredPiece = ParseObjectLocalModelPiece(L, unit, 2);
 	if (lmpAlteredPiece == nullptr) {
 		luaL_error(L,  "invalid piece");
 		return 0;
 	}
 
-	LocalModelPiece* lmpParentPiece = ParseUnitLocalModelPiece(L, unit, 3);
+	LocalModelPiece* lmpParentPiece = ParseObjectLocalModelPiece(L, unit, 3);
 	if (lmpParentPiece == nullptr) {
 		luaL_error(L,  "invalid parent piece");
 		return 0;
@@ -2132,6 +2156,7 @@ int LuaSyncedCtrl::SetUnitPieceParent(lua_State* L)
 	return 0;
 }
 
+
 int LuaSyncedCtrl::SetUnitCollisionVolumeData(lua_State* L)
 {
 	return (SetSolidObjectCollisionVolumeData(L, ParseUnit(L, __FUNCTION__, 1)));
@@ -2139,28 +2164,7 @@ int LuaSyncedCtrl::SetUnitCollisionVolumeData(lua_State* L)
 
 int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-
-	if (unit == NULL)
-		return 0;
-
-	LocalModelPiece* lmp = ParseUnitLocalModelPiece(L, unit, 2);
-
-	if (lmp == nullptr)
-		luaL_argerror(L, 2, "invalid piece");
-
-	CollisionVolume* vol = lmp->GetCollisionVolume();
-
-	const float3 scales(luaL_checkfloat(L, 4), luaL_checkfloat(L, 5), luaL_checkfloat(L, 6));
-	const float3 offset(luaL_checkfloat(L, 7), luaL_checkfloat(L, 8), luaL_checkfloat(L, 9));
-
-	const unsigned int vType = luaL_optint(L, 10, vol->GetVolumeType());
-	const unsigned int pAxis = luaL_optint(L, 11, vol->GetPrimaryAxis());
-
-	// piece volumes are not allowed to use discrete hit-testing
-	vol->InitShape(scales, offset, vType, CollisionVolume::COLVOL_HITTEST_CONT, pAxis);
-	vol->SetIgnoreHits(!luaL_checkboolean(L, 3));
-	return 0;
+	return (SetSolidObjectPieceCollisionVolumeData(L, ParseUnit(L, __FUNCTION__, 1)));
 }
 
 
@@ -2800,10 +2804,17 @@ int LuaSyncedCtrl::SetFeatureRadiusAndHeight(lua_State* L)
 	return 1;
 }
 
+
 int LuaSyncedCtrl::SetFeatureCollisionVolumeData(lua_State* L)
 {
 	return (SetSolidObjectCollisionVolumeData(L, ParseFeature(L, __FUNCTION__, 1)));
 }
+
+int LuaSyncedCtrl::SetFeaturePieceCollisionVolumeData(lua_State* L)
+{
+	return (SetSolidObjectPieceCollisionVolumeData(L, ParseFeature(L, __FUNCTION__, 1)));
+}
+
 
 /******************************************************************************/
 /******************************************************************************/

@@ -53,7 +53,7 @@ CFeatureHandler::CFeatureHandler(LuaParser* defsParser)
 		const std::string& nameLowerCase = StringToLower(nameMixedCase);
 		const LuaTable& fdTable = rootTable.SubTable(nameMixedCase);
 
-		AddFeatureDef(nameLowerCase, CreateFeatureDef(fdTable, nameLowerCase));
+		AddFeatureDef(nameLowerCase, CreateFeatureDef(fdTable, nameLowerCase), false);
 	}
 	for (unsigned int i = 0; i < keys.size(); i++) {
 		const std::string& nameMixedCase = keys[i];
@@ -83,16 +83,15 @@ CFeatureHandler::~CFeatureHandler()
 }
 
 
-void CFeatureHandler::AddFeatureDef(const std::string& name, FeatureDef* fd)
+void CFeatureHandler::AddFeatureDef(const std::string& name, FeatureDef* fd, bool isDefaultFeature)
 {
 	if (fd == NULL)
 		return;
 
 	assert(featureDefs.find(name) == featureDefs.end());
 
-
-	// MUST be false for CollisionHandler (features have no LocalModel)
-	fd->collisionVolume.SetDefaultToPieceTree(false);
+	// generated trees, etc have no pieces
+	fd->collisionVolume.SetDefaultToPieceTree(fd->collisionVolume.DefaultToPieceTree() && !isDefaultFeature);
 	fd->collisionVolume.SetIgnoreHits(fd->geoThermal);
 
 	featureDefs[name] = fd->id;
@@ -253,10 +252,10 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 
 		if (GetFeatureDef(name, false) == NULL) {
 			if (name.find("treetype") != string::npos) {
-				AddFeatureDef(name, CreateDefaultTreeFeatureDef(name));
+				AddFeatureDef(name, CreateDefaultTreeFeatureDef(name), true);
 			}
 			else if (name.find("geovent") != string::npos) {
-				AddFeatureDef(name, CreateDefaultGeoFeatureDef(name));
+				AddFeatureDef(name, CreateDefaultGeoFeatureDef(name), true);
 			}
 			else {
 				LOG_L(L_ERROR, "[%s] unknown map feature type \"%s\"",
@@ -267,7 +266,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 
 	// add a default geovent FeatureDef if the map did not
 	if (GetFeatureDef("geovent", false) == NULL) {
-		AddFeatureDef("geovent", CreateDefaultGeoFeatureDef("geovent"));
+		AddFeatureDef("geovent", CreateDefaultGeoFeatureDef("geovent"), true);
 	}
 
 	if (!onlyCreateDefs) {

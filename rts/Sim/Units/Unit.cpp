@@ -84,8 +84,6 @@ CUnit::CUnit()
 , stockpileWeapon(NULL)
 , soloBuilder(NULL)
 , lastAttacker(NULL)
-, lastAttackedPiece(NULL)
-, lastAttackedPieceFrame(-1)
 , lastAttackFrame(-200)
 , lastFireWeapon(0)
 , transporter(NULL)
@@ -293,16 +291,18 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	xsize = ((buildFacing & 1) == 0) ? unitDef->xsize : unitDef->zsize;
 	zsize = ((buildFacing & 1) == 1) ? unitDef->xsize : unitDef->zsize;
 
+
 	// copy the UnitDef volume instance
-	// NOTE: gets deleted in ~CSolidObject
 	model = unitDef->LoadModel();
-	localModel.SetModel(model);
 	collisionVolume = unitDef->collisionVolume;
+
+	localModel.SetModel(model);
 
 	if (collisionVolume.DefaultToSphere())
 		collisionVolume.InitSphere(model->radius);
 	if (collisionVolume.DefaultToFootPrint())
 		collisionVolume.InitBox(float3(xsize * SQUARE_SIZE, model->height, zsize * SQUARE_SIZE));
+
 
 	mapSquare = CGround::GetSquare((params.pos).cClampInMap());
 
@@ -1403,17 +1403,6 @@ CMatrix44f CUnit::GetTransformMatrix(const bool synced, const bool error) const
 
 	return CMatrix44f(interPos, -rightdir, updir, frontdir);
 }
-
-const CollisionVolume* CUnit::GetCollisionVolume(const LocalModelPiece* lmp) const {
-	if (lmp == NULL)
-		return &collisionVolume;
-	if (!collisionVolume.DefaultToPieceTree())
-		return &collisionVolume;
-
-	return (lmp->GetCollisionVolume());
-}
-
-
 
 /******************************************************************************/
 /******************************************************************************/
@@ -2852,8 +2841,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(buildTime),
 
 	CR_MEMBER(lastAttacker),
-	CR_MEMBER(lastAttackedPiece),
-	CR_MEMBER(lastAttackedPieceFrame),
 	CR_MEMBER(lastAttackFrame),
 	CR_MEMBER(lastFireWeapon),
 	CR_MEMBER(recentDamage),

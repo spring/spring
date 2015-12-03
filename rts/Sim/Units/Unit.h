@@ -8,7 +8,6 @@
 #include <string>
 
 #include "Lua/LuaRulesParams.h"
-#include "Rendering/Models/3DModel.h"
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Misc/Resource.h"
 #include "Sim/Weapons/WeaponTarget.h"
@@ -110,20 +109,6 @@ public:
 
 	CMatrix44f GetTransformMatrix(const bool synced = false, const bool error = false) const;
 
-	const CollisionVolume* GetCollisionVolume(const LocalModelPiece* lmp) const;
-
-	void SetLastAttacker(CUnit* attacker);
-	void SetLastAttackedPiece(const LocalModelPiece* p, int f) {
-		lastAttackedPiece      = p;
-		lastAttackedPieceFrame = f;
-	}
-	const LocalModelPiece* GetLastAttackedPiece(int f) const {
-		if (lastAttackedPieceFrame == f)
-			return lastAttackedPiece;
-		return NULL;
-	}
-
-
 	void DependentDied(CObject* o);
 
 	bool AllowedReclaim(CUnit* builder) const;
@@ -194,10 +179,10 @@ public:
 		int piece;
 	};
 
+	void SetLastAttacker(CUnit* attacker);
+
 	void SetTransporter(CUnit* trans) { transporter = trans; }
-	inline CUnit* GetTransporter() const {
-		return transporter;
-	}
+	inline CUnit* GetTransporter() const { return transporter; }
 
 	bool AttachUnit(CUnit* unit, int piece, bool force = false);
 	bool CanTransport(const CUnit* unit) const;
@@ -266,11 +251,7 @@ public:
 	/// last attacker
 	CUnit* lastAttacker;
 
-	/// piece that was last hit by a projectile
-	const LocalModelPiece* lastAttackedPiece;
 
-	/// frame in which lastAttackedPiece was hit
-	int lastAttackedPieceFrame;
 	/// last frame unit was attacked by other unit
 	int lastAttackFrame;
 	/// last time this unit fired a weapon
@@ -291,8 +272,6 @@ public:
 	AMoveType* prevMoveType;
 
 	CCommandAI* commandAI;
-
-	LocalModel localModel;
 	CUnitScript* script;
 
 	/// which squares the unit can currently observe

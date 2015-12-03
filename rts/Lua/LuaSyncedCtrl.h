@@ -125,6 +125,7 @@ class LuaSyncedCtrl
 		static int SetFeatureMidAndAimPos(lua_State* L);
 		static int SetFeatureRadiusAndHeight(lua_State* L);
 		static int SetFeatureCollisionVolumeData(lua_State* L);
+		static int SetFeaturePieceCollisionVolumeData(lua_State* L);
 
 		static int SetProjectileAlwaysVisible(lua_State* L);
 		static int SetProjectileMoveControl(lua_State* L);

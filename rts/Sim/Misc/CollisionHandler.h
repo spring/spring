@@ -6,11 +6,10 @@
 #include "System/creg/creg_cond.h"
 #include "System/float3.h"
 
+class CSolidObject;
+struct LocalModelPiece;
 struct CollisionVolume;
 class CMatrix44f;
-class CSolidObject;
-class CUnit;
-struct LocalModelPiece;
 
 enum {
 	CQ_POINT_NO_INT = 0,
@@ -78,15 +77,50 @@ class CCollisionHandler {
 	public:
 		static void PrintStats();
 
-		static bool DetectHit(const CSolidObject* o, const float3 p0, const float3 p1, CollisionQuery* cq = NULL, bool forceTrace = false);
-		static bool DetectHit(const CollisionVolume* v, const CSolidObject* o, const float3 p0, const float3 p1, CollisionQuery* cq, bool forceTrace = false);
-		static bool MouseHit(const CUnit* u, const float3& p0, const float3& p1, const CollisionVolume* v, CollisionQuery* cq);
+		static bool DetectHit(
+			const CSolidObject* o,
+			const CMatrix44f& m,
+			const float3 p0,
+			const float3 p1,
+			CollisionQuery* cq = nullptr,
+			bool forceTrace = false
+		);
+		static bool DetectHit(
+			const CSolidObject* o,
+			const CollisionVolume* v,
+			const CMatrix44f& m,
+			const float3 p0,
+			const float3 p1,
+			CollisionQuery* cq = nullptr,
+			bool forceTrace = false
+		);
+		static bool MouseHit(
+			const CSolidObject* o,
+			const CMatrix44f& m,
+			const float3& p0,
+			const float3& p1,
+			const CollisionVolume* v,
+			CollisionQuery* cq = nullptr
+		);
 
 	private:
 		// HITTEST_DISC helpers for DetectHit
-		static bool Collision(const CollisionVolume* v, const CSolidObject* u, const float3 p, CollisionQuery* cq);
+		static bool Collision(
+			const CSolidObject* o,
+			const CollisionVolume* v,
+			const CMatrix44f& m,
+			const float3 p,
+			CollisionQuery* cq
+		);
 		// HITTEST_CONT helpers for DetectHit
-		static bool Intersect(const CollisionVolume* v, const CSolidObject* o, const float3 p0, const float3 p1, CollisionQuery* cq);
+		static bool Intersect(
+			const CSolidObject* o,
+			const CollisionVolume* v,
+			const CMatrix44f& m,
+			const float3 p0,
+			const float3 p1,
+			CollisionQuery* cq
+		);
 
 	private:
 		/**
@@ -106,9 +140,8 @@ class CCollisionHandler {
 		 * @param p1 end of ray (in world-coordinates)
 		 */
 		static bool Intersect(const CollisionVolume* v, const CMatrix44f& m, const float3& p0, const float3& p1, CollisionQuery* cq);
-		static bool IntersectPieceTree(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* cq);
-
-		static bool IntersectPiecesHelper(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* cqp);
+		static bool IntersectPieceTree(const CSolidObject* o, const CMatrix44f& m, const float3& p0, const float3& p1, CollisionQuery* cq);
+		static bool IntersectPiecesHelper(const CSolidObject* o, const CMatrix44f& m, const float3& p0, const float3& p1, CollisionQuery* cqp);
 
 	public:
 		static bool IntersectEllipsoid(const CollisionVolume* v, const float3& pi0, const float3& pi1, CollisionQuery* cq);

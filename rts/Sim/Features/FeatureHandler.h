@@ -91,7 +91,7 @@ private:
 
 	FeatureDef& GetNewFeatureDef();
 
-	void AddFeatureDef(const std::string& name, FeatureDef* feature);
+	void AddFeatureDef(const std::string& name, FeatureDef* feature, bool isDefaultFeature);
 
 private:
 	SimObjectIDPool idPool;

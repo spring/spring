@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 
+#include "Lua/LuaObjectMaterial.h"
 #include "Rendering/GL/VBO.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/Matrix44f.h"
@@ -290,25 +291,33 @@ struct LocalModel
 {
 	CR_DECLARE_STRUCT(LocalModel)
 
-	LocalModel() {}
-	~LocalModel()
-	{
+	LocalModel() {
+		dirtyPieces = 0;
+		lodCount = 0;
+	}
+	~LocalModel() {
 		pieces.clear();
 	}
 
 	void SetModel(const S3DModel* model) {
+		// make sure we do not get called for trees, etc
+		assert(model != nullptr);
+		assert(model->numPieces >= 1);
+
 		dirtyPieces = model->numPieces;
 		lodCount = 0;
-		assert(model->numPieces >= 1);
+
 		pieces.reserve(model->numPieces);
 		CreateLocalModelPieces(model->GetRootPiece());
 		assert(pieces.size() == model->numPieces);
 	}
 
 	bool HasPiece(unsigned int i) const { return (i < pieces.size()); }
-	bool Initialized() const { return !pieces.empty(); }
-	LocalModelPiece* GetPiece(unsigned int i) { assert(HasPiece(i)); return &pieces[i]; }
+	bool Initialized() const { return (!pieces.empty()); }
+
 	const LocalModelPiece* GetPiece(unsigned int i)  const { assert(HasPiece(i)); return &pieces[i]; }
+	      LocalModelPiece* GetPiece(unsigned int i)        { assert(HasPiece(i)); return &pieces[i]; }
+
 	LocalModelPiece* GetRoot() { return GetPiece(0); }
 
 	void Draw() const { DrawPieces(); }
@@ -347,6 +356,9 @@ struct LocalModel
 	float3 GetRawPieceDirection(int pieceIdx) const { return pieces[pieceIdx].GetDirection(); }
 	const CMatrix44f& GetRawPieceMatrix(int pieceIdx) const { return pieces[pieceIdx].GetModelSpaceMatrix(); }
 
+	const LuaObjectMaterialData* GetLuaMaterialData() const { return &luaMaterialData; }
+	      LuaObjectMaterialData* GetLuaMaterialData()       { return &luaMaterialData; }
+
 private:
 	LocalModelPiece* CreateLocalModelPieces(const S3DModelPiece* mpParent);
 
@@ -356,6 +368,9 @@ public:
 	unsigned int lodCount;
 
 	std::vector<LocalModelPiece> pieces;
+
+	///< custom Lua-set material this model should be rendered with
+	LuaObjectMaterialData luaMaterialData;
 };
 
 #endif /* _3DMODEL_H */
