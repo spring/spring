@@ -231,6 +231,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetFeatureMidAndAimPos);
 	REGISTER_LUA_CFUNC(SetFeatureRadiusAndHeight);
 	REGISTER_LUA_CFUNC(SetFeatureCollisionVolumeData);
+	REGISTER_LUA_CFUNC(SetFeaturePieceCollisionVolumeData);
 
 
 	REGISTER_LUA_CFUNC(SetProjectileAlwaysVisible);
