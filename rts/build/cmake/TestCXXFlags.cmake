@@ -120,14 +120,7 @@ EndIf (NOT DEFINED CXX11_FLAGS)
 
 If    (NOT MSVC AND NOT DEFINED LTO_FLAGS)
 	Set(LTO_FLAGS "")
-
-	Set(LTO       FALSE CACHE BOOL "Link Time Optimizations (LTO)")
-	If    (LTO)
-		CHECK_AND_ADD_FLAGS(LTO_FLAGS -flto)
-		if    (NOT LTO_FLAGS)
-			Message(WARNING "Tried to enable LTO, but compiler doesn't support it!")
-		endif (NOT LTO_FLAGS)
-	EndIf (LTO)
+	CHECK_AND_ADD_FLAGS(LTO_FLAGS -flto)
 EndIf (NOT MSVC AND NOT DEFINED LTO_FLAGS)
 
 
