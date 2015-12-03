@@ -17,8 +17,6 @@
 #include "System/EventHandler.h"
 #include "System/Util.h"
 
-#define geomBuffer (GetGeometryBuffer())
-
 // applies to both units and features
 CONFIG(bool, AllowDeferredModelRendering).defaultValue(false).safemodeValue(false);
 CONFIG(bool, AllowDeferredModelBufferClear).defaultValue(false).safemodeValue(false);
@@ -42,6 +40,7 @@ float LuaObjectDrawer::LODScaleRefraction[LUAOBJ_LAST];
 
 // these should remain valid on reload
 static std::function<void(CEventHandler*)> eventFuncs[LUAOBJ_LAST] = {nullptr, nullptr};
+static GL::GeometryBuffer* geomBuffer = nullptr;
 
 static bool notifyEventFlags[LUAOBJ_LAST] = {false, false};
 static bool bufferClearFlags[LUAOBJ_LAST] = { true,  true};
@@ -132,11 +131,15 @@ void LuaObjectDrawer::Update(bool init)
 		drawDeferredAllowed = configHandler->GetBool("AllowDeferredModelRendering");
 		bufferClearAllowed = configHandler->GetBool("AllowDeferredModelBufferClear");
 
+		geomBuffer = GetGeometryBuffer();
+
 		// handle a potential reload since our buffer is static
 		geomBuffer->Kill();
 		geomBuffer->Init();
 		geomBuffer->SetName("LUAOBJECTDRAWER-GBUFFER");
 	}
+
+	assert(geomBuffer != nullptr);
 
 	// update buffer only if it is valid
 	if (drawDeferredAllowed && (drawDeferred = geomBuffer->Valid())) {

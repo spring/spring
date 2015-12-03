@@ -169,9 +169,9 @@ int LuaObjectRenderingImpl::SetPieceList(lua_State* L)
 		return 0;
 
 	const LuaObjectMaterialData* lmd = obj->GetLuaMaterialData();
-	LocalModelPiece* localPiece = ParseObjectLocalModelPiece(L, obj, 3);
+	LocalModelPiece* lmp = ParseObjectLocalModelPiece(L, obj, 3);
 
-	if (localPiece == nullptr)
+	if (lmp == nullptr)
 		return 0;
 
 	const unsigned int lod = luaL_checknumber(L, 2) - 1;
@@ -179,17 +179,15 @@ int LuaObjectRenderingImpl::SetPieceList(lua_State* L)
 	if (lod >= lmd->GetLODCount())
 		return 0;
 
-	unsigned int dlist = 0;
+	// (re)set the default if no fourth argument
+	unsigned int dlist = lmp->dispListID;
 
 	if (lua_isnumber(L, 4)) {
 		CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
 		dlist = displayLists.GetDList(luaL_checknumber(L, 4));
-	} else {
-		// set to the default
-		dlist = localPiece->dispListID;
 	}
 
-	localPiece->lodDispLists[lod] = dlist;
+	lmp->lodDispLists[lod] = dlist;
 	return 0;
 }
 

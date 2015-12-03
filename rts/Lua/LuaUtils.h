@@ -305,25 +305,22 @@ static inline bool CanControlProjectileAllyTeam(const lua_State* L, int allyTeam
 }
 
 
-static inline const LocalModelPiece* ParseObjectLocalModelPiece(lua_State* L, const CSolidObject* obj, int pieceIndex)
+static inline const LocalModelPiece* ParseObjectConstLocalModelPiece(lua_State* L, const CSolidObject* obj, int pieceArg)
 {
 	assert(obj != nullptr);
 
-	const unsigned piece = luaL_checkint(L, pieceIndex) - 1;
-	const LocalModel& localModel = obj->localModel;
+	const unsigned int pieceIdx = luaL_checkint(L, pieceArg) - 1;
 
-	if (!localModel.Initialized())
+	// automatically false if LM was not initialized
+	if (!obj->localModel.HasPiece(pieceIdx))
 		return nullptr;
 
-	if (!localModel.HasPiece(piece))
-		return nullptr;
-
-	return (localModel.GetPiece(piece));
+	return (obj->localModel.GetPiece(pieceIdx));
 }
 
-static inline LocalModelPiece* ParseObjectLocalModelPiece(lua_State* L, CSolidObject* obj, int pieceIndex)
+static inline LocalModelPiece* ParseObjectLocalModelPiece(lua_State* L, CSolidObject* obj, int pieceArg)
 {
-	return (const_cast<LocalModelPiece*>(ParseObjectLocalModelPiece(L, obj, pieceIndex)));
+	return (const_cast<LocalModelPiece*>(ParseObjectConstLocalModelPiece(L, obj, pieceArg)));
 }
 
 #endif // LUA_UTILS_H

@@ -1447,7 +1447,7 @@ int LuaOpenGL::UnitPiece(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	const LocalModelPiece* localPiece = ParseObjectLocalModelPiece(L, unit, 2);
+	const LocalModelPiece* localPiece = ParseObjectConstLocalModelPiece(L, unit, 2);
 
 	if (localPiece == nullptr)
 		return 0;
@@ -1471,7 +1471,7 @@ int LuaOpenGL::UnitPieceMultMatrix(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	const LocalModelPiece* localPiece = ParseObjectLocalModelPiece(L, unit, 2);
+	const LocalModelPiece* localPiece = ParseObjectConstLocalModelPiece(L, unit, 2);
 
 	if (localPiece == nullptr)
 		return 0;

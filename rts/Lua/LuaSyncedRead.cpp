@@ -498,7 +498,7 @@ static int PushPieceCollisionVolumeData(lua_State* L, const CSolidObject* o, boo
 	if (isFeature && !IsFeatureVisible(L, static_cast<const CFeature*>(o)))
 		return 0;
 
-	const LocalModelPiece* lmp = ParseObjectLocalModelPiece(L, o, 2);
+	const LocalModelPiece* lmp = ParseObjectConstLocalModelPiece(L, o, 2);
 
 	if (lmp == nullptr)
 		return 0;
