@@ -86,8 +86,8 @@ bool LuaVFSDownload::PushEntries(lua_State* L)
 struct DownloadItem {
 	int ID;
 	std::string filename;
-	category cat;
-	DownloadItem(int ID, const std::string& filename, category& cat) : ID(ID), filename(filename), cat(cat) {
+	DownloadEnum::Category cat;
+	DownloadItem(int ID, const std::string& filename, DownloadEnum::Category& cat) : ID(ID), filename(filename), cat(cat) {
 	}
 };
 
@@ -102,19 +102,19 @@ void UpdateProgress(int done, int size) {
 	QueueDownloadProgress(currentDownloadID, done, size);
 }
 
-int Download(int ID, const std::string& filename, category cat)
+int Download(int ID, const std::string& filename, DownloadEnum::Category cat)
 {
 	currentDownloadID = ID;
 	// FIXME: Progress is incorrectly updated when rapid is queried to check for existing packages.
 	SetDownloadListener(UpdateProgress);
 	LOG_L(L_DEBUG, "Going to download %s", filename.c_str());
 	DownloadInit();
-	const int count = DownloadSearch(DL_ANY, cat, filename.c_str());
+	const int count = DownloadSearch(cat, filename.c_str());
 	for (int i = 0; i < count; i++) {
 		DownloadAdd(i);
 		struct downloadInfo dl;
-		if (DownloadGetSearchInfo(i, dl)) {
-			LOG_L(L_DEBUG, "Download info: %s %d %d", dl.filename, dl.type, dl.cat);
+		if (DownloadGetInfo(i, dl)) {
+			LOG_L(L_DEBUG, "Download info: %s %d", dl.filename, dl.cat);
 		}
 	}
 	int result;
@@ -138,7 +138,7 @@ void StartDownload() {
 	const DownloadItem& downloadItem = queue.front();
 	queue.pop_front();
 	const std::string filename = downloadItem.filename;
-	category cat = downloadItem.cat;
+	DownloadEnum::Category cat = downloadItem.cat;
 	const int ID = downloadItem.ID;
 	if (filename.c_str() != nullptr) {
 		LOG_L(L_DEBUG, "DOWNLOADING: %s", filename.c_str());
@@ -166,22 +166,20 @@ void StartDownload() {
 int LuaVFSDownload::DownloadArchive(lua_State* L)
 {
 	const std::string filename = luaL_checkstring(L, 1);
-	std::string categoryStr = luaL_optstring(L, 2, "any");
+	const std::string categoryStr = luaL_checkstring(L, 2);
 	if (filename.empty()) {
 		luaL_error(L, "Missing download archive name.");
 	}
 
-	category cat;
+	DownloadEnum::Category cat;
 	if (categoryStr == "map") {
-		cat = CAT_MAP;
+		cat = DownloadEnum::CAT_MAP;
 	} else if (categoryStr == "game") {
-		cat = CAT_GAME;
+		cat = DownloadEnum::CAT_GAME;
 	} else if (categoryStr == "engine") {
-		cat = CAT_ENGINE;
-	} else if (categoryStr == "any") {
-		cat = CAT_ANY;
+		cat = DownloadEnum::CAT_ENGINE;
 	} else {
-		luaL_error(L, "If specified, category must be one of: map, game, engine, any.");
+		luaL_error(L, "Category must be one of: map, game, engine.");
 	}
 
 	queueIDCount++;
