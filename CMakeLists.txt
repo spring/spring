@@ -374,13 +374,14 @@ if(NOT MSVC)
 		set(COMMON_WARNINGS "${COMMON_WARNINGS} -Wno-unknown-pragmas")
 	endif (NOT OPENMP)
 
-	if    (MAX_WARNINGS)
+	option(DEBUG_MAX_WARNINGS "Enable verbose compile" ${DEBUG_BUILD})
+	if    (DEBUG_MAX_WARNINGS)
 		# This would produce the maximum on warnings
 		set(DEBUG_WARNINGS "-Wall -Wconversion ${COMMON_WARNINGS}")
-	else  (MAX_WARNINGS)
+	else  (DEBUG_MAX_WARNINGS)
 		# This should produce a sane amount of warnings
 		set(DEBUG_WARNINGS "-Wall -Wno-sign-compare ${COMMON_WARNINGS}")
-	endif (MAX_WARNINGS)
+	endif (DEBUG_MAX_WARNINGS)
 endif(NOT MSVC)
 
 
