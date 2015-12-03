@@ -322,6 +322,18 @@ if    (LTO)
 endif (LTO)
 
 
+### Memory Access Protection (BoundsChecking)
+option(DEBUG_BOUNDSCHECK "Array/Pointer BoundsChecking a.k.a. buffer overflow protection (debug)" FALSE)
+if    (DEBUG_BOUNDSCHECK)
+	if    (NOT MPX_FLAGS)
+		Message(WARNING "Tried to enable BoundsCheck, but compiler doesn't support it!")
+	endif (NOT MPX_FLAGS)
+	Set(CMAKE_CXX_FLAGS           "${CMAKE_CXX_FLAGS}           ${MPX_FLAGS}")
+	Set(CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS}    ${MPX_FLAGS}")
+	Set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${MPX_FLAGS}")
+endif (DEBUG_BOUNDSCHECK)
+
+
 ### ld.gold
 option(COMPRESS_DEBUG_SYMBOLS "Compresses the DebugSymbols (needs ld.gold, beware: slow)" FALSE)
 if    (LDGOLD_FOUND)
