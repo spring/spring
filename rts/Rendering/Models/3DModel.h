@@ -318,7 +318,7 @@ struct LocalModel
 	const LocalModelPiece* GetPiece(unsigned int i)  const { assert(HasPiece(i)); return &pieces[i]; }
 	      LocalModelPiece* GetPiece(unsigned int i)        { assert(HasPiece(i)); return &pieces[i]; }
 
-	LocalModelPiece* GetRoot() { return GetPiece(0); }
+	LocalModelPiece* GetRoot() { return (GetPiece(0)); }
 
 	void Draw() const { DrawPieces(); }
 	void DrawLOD(unsigned int lod) const {
@@ -346,14 +346,7 @@ struct LocalModel
 	void ReloadDisplayLists();
 
 	// raw forms, the piece-index must be valid
-	// NOTE:
-	//   GetRawPieceDirection is only useful for special pieces (used for emit-sfx)
-	//   it returns a direction in piece-space, NOT model-space as the "Raw" suggests
-	//   this direction is vertex[0].pos - vertex[1].pos for pieces with >= 2 vertices
-	//   only LuaSyncedRead::GetUnitPieceDirection calls it, better mark as DEPRECATED
-	void GetRawEmitDirPos(int pieceIdx, float3& emitPos, float3& emitDir) const { pieces[pieceIdx].GetEmitDirPos(emitPos, emitDir); }
-	float3 GetRawPiecePos(int pieceIdx) const { return pieces[pieceIdx].GetAbsolutePos(); }
-	float3 GetRawPieceDirection(int pieceIdx) const { return pieces[pieceIdx].GetDirection(); }
+	const float3 GetRawPiecePos(int pieceIdx) const { return pieces[pieceIdx].GetAbsolutePos(); }
 	const CMatrix44f& GetRawPieceMatrix(int pieceIdx) const { return pieces[pieceIdx].GetModelSpaceMatrix(); }
 
 	const LuaObjectMaterialData* GetLuaMaterialData() const { return &luaMaterialData; }

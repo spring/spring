@@ -14,8 +14,16 @@ Lua:
  - new Spring.GetUICommands function to obtain a list of all UI commands (e.g. /luaui reload)
  - new VFS.CalculateHash function that calculates hash (in base64 form) of a given string (with md5 support initially)
  - new Spring.SetFeatureFade(featureID, bool) to control whether a feature will fade or not when zoomed out.
- - add Spring.GetFeatureLastAttackedPiece callout
- - add Spring.{Get,Set}FeaturePieceCollisionVolumeData callouts
+ - add callouts
+     Spring.{Get,Set}FeaturePieceCollisionVolumeData
+     Spring.GetFeatureLastAttackedPiece
+     Spring.GetFeaturePieceMap
+     Spring.GetFeaturePieceList
+     Spring.GetFeaturePieceInfo
+     Spring.GetFeaturePiecePosition
+     Spring.GetFeaturePieceDirection
+     Spring.GetFeaturePiecePosDir
+     Spring.GetFeaturePieceMatrix
 
  - add Spring.FeatureRendering API; allows custom shaders (technically,
    materials) for features as its Spring.UnitRendering counterpart does

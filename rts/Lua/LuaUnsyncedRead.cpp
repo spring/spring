@@ -232,24 +232,23 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 {
 	if (!lua_isnumber(L, index)) {
-		luaL_error(L, "%s(): Bad unitID", caller);
+		luaL_error(L, "%s(): unitID not a number", caller);
 		return NULL;
 	}
-	const int unitID = lua_toint(L, index);
-	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits())) {
-		luaL_error(L, "%s(): Bad unitID: %d\n", caller, unitID);
-	}
-	CUnit* unit = unitHandler->units[unitID];
-	if (unit == NULL) {
-		return NULL;
-	}
+
+	CUnit* unit = unitHandler->GetUnit(lua_toint(L, index));
+
+	if (unit == nullptr)
+		return nullptr;
+
 	const int readAllyTeam = CLuaHandle::GetHandleReadAllyTeam(L);
-	if (readAllyTeam < 0) {
+
+	if (readAllyTeam < 0)
 		return CLuaHandle::GetHandleFullRead(L) ? unit : NULL;
-	}
-	if ((unit->losStatus[readAllyTeam] & (LOS_INLOS | LOS_INRADAR)) == 0) {
-		return NULL;
-	}
+
+	if ((unit->losStatus[readAllyTeam] & (LOS_INLOS | LOS_INRADAR)) == 0)
+		return nullptr;
+
 	return unit;
 }
 
@@ -259,17 +258,22 @@ static inline CFeature* ParseFeature(lua_State* L, const char* caller, int index
 		luaL_error(L, "%s(): Bad featureID", caller);
 		return NULL;
 	}
-	const int featureID = lua_toint(L, index);
-	CFeature* feature = featureHandler->GetFeature(featureID);
 
-	if (CLuaHandle::GetHandleFullRead(L)) { return feature; }
+	CFeature* feature = featureHandler->GetFeature(lua_toint(L, index));
+
+	if (CLuaHandle::GetHandleFullRead(L))
+		return feature;
 
 	const int readAllyTeam = CLuaHandle::GetHandleReadAllyTeam(L);
-	if (readAllyTeam < 0) { return NULL; }
-	if (feature == NULL) { return NULL; }
-	if (feature->IsInLosForAllyTeam(readAllyTeam)) { return feature; }
 
-	return NULL;
+	if (readAllyTeam < 0)
+		return nullptr;
+	if (feature == nullptr)
+		return nullptr;
+	if (feature->IsInLosForAllyTeam(readAllyTeam))
+		return feature;
+
+	return nullptr;
 }
 
 
