@@ -360,10 +360,10 @@ endif(THREADPOOL)
 ### warnings
 if(NOT MSVC)
 	### SigNan
-	option(SIGNAL_NANS "Enable NaN-Signalling" ${DEBUG_BUILD})
-	if (SIGNAL_NANS)
+	option(DEBUG_SIGNAL_NANS "Enable NaN-Signaling" ${DEBUG_BUILD})
+	if (DEBUG_SIGNAL_NANS)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsignaling-nans")
-	endif(SIGNAL_NANS)
+	endif(DEBUG_SIGNAL_NANS)
 
 
 	### CompileTime Warnings
