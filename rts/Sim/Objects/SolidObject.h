@@ -160,8 +160,10 @@ public:
 	const LuaObjectMaterialData* GetLuaMaterialData() const { return (localModel.GetLuaMaterialData()); }
 	      LuaObjectMaterialData* GetLuaMaterialData()       { return (localModel.GetLuaMaterialData()); }
 
-	const LocalModelPiece* GetLastHitPiece(int f) const {
-		if (lastHitPieceFrame == f)
+	const LocalModelPiece* GetLastHitPiece(int frame) const {
+		if (frame < 0)
+			return lastHitPiece;
+		if (frame == lastHitPieceFrame)
 			return lastHitPiece;
 
 		return nullptr;

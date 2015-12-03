@@ -331,7 +331,7 @@ float GuiTraceRay(
 			CollisionVolume cv = u->collisionVolume;
 
 			if (u->isIcon || (!unitInSight && unitOnRadar && unitIsEnemy)) {
-				// for iconified us, just pretend the collision
+				// for iconified units, just pretend the collision
 				// volume is a sphere of radius <unit->IconRadius>
 				// (count radar blips as such too)
 				cv.InitSphere(u->iconRadius);
