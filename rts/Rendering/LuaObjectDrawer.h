@@ -78,7 +78,7 @@ private:
 	// whether we are currently in DrawMaterialBins
 	static bool inDrawPass;
 	// whether we can execute DrawDeferredPass
-	static bool drawDeferred;
+	static bool drawDeferredEnabled;
 	// whether deferred object drawing is allowed by user
 	static bool drawDeferredAllowed;
 	// whether the deferred feature pass clears the GB

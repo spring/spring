@@ -143,13 +143,6 @@ void LocalModel::SetLODCount(unsigned int count)
 
 
 
-void LocalModel::ReloadDisplayLists()
-{
-	for (auto &p: pieces) {
-		p.dispListID = p.original->GetDisplayListID();
-	}
-}
-
 LocalModelPiece* LocalModel::CreateLocalModelPieces(const S3DModelPiece* mpParent)
 {
 	LocalModelPiece* lmpChild = NULL;
@@ -266,13 +259,6 @@ void LocalModelPiece::SetLODCount(unsigned int count)
 	for (unsigned int i = 0; i < children.size(); i++) {
 		children[i]->SetLODCount(count);
 	}
-}
-
-
-float3 LocalModelPiece::GetAbsolutePos() const
-{
-	// note: actually OBJECT_TO_WORLD but transform is the same
-	return (modelSpaceMat.GetPos() * WORLD_TO_OBJECT_SPACE);
 }
 
 

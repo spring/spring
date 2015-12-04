@@ -94,11 +94,11 @@ bool CCollisionHandler::Collision(
 
 		if (!hit) {
 			// transform into midpos-relative space
-			CMatrix44f mat = m;
-			mat.Translate(o->relMidPos * WORLD_TO_OBJECT_SPACE);
-			mat.Translate(v->GetOffsets());
+			CMatrix44f mr = m;
+			mr.Translate(o->relMidPos * WORLD_TO_OBJECT_SPACE);
+			mr.Translate(v->GetOffsets());
 
-			hit = CCollisionHandler::Collision(v, mat, p);
+			hit = CCollisionHandler::Collision(v, mr, p);
 		}
 	}
 
@@ -314,9 +314,15 @@ bool CCollisionHandler::IntersectPieceTree(
 	const float3& p1,
 	CollisionQuery* cq
 ) {
-	// TODO:
-	//   needs an early-out test, but gets complicated because
-	//   pieces can move --> no clearly defined bounding volume
+	const LocalModel& lm = o->localModel;
+	const CollisionVolume* bv = lm.GetBoundingVolume();
+
+	// defer to IntersectBox for the early-out test; align OOBB
+	// to object's axes (this acts as regular CV, so also place
+	// it at midPos)
+	if (!CCollisionHandler::Intersect(o, bv, m, p0, p1, cq))
+		return false;
+
 	return (IntersectPiecesHelper(o, m, p0, p1, cq));
 }
 
@@ -329,35 +335,16 @@ inline bool CCollisionHandler::Intersect(
 	CollisionQuery* cq
 ) {
 	// transform into midpos-relative space (where the CV
-	// gets drawn)
+	// is positioned); we have to translate by relMidPos to
+	// get to midPos because GetTransformMatrix() only uses
+	// pos for all CSolidObject types
 	//
-	// we have to translate by relMidPos to get to midPos
-	// because GetTransformMatrix() only uses pos for all
-	// CSolidObject's
-	//
-	CMatrix44f mat = m;
-	mat.Translate(o->relMidPos * WORLD_TO_OBJECT_SPACE);
-	mat.Translate(v->GetOffsets());
+	CMatrix44f mr = m;
+	mr.Translate(o->relMidPos * WORLD_TO_OBJECT_SPACE);
+	mr.Translate(v->GetOffsets());
 
-	return (CCollisionHandler::Intersect(v, mat, p0, p1, cq));
+	return (CCollisionHandler::Intersect(v, mr, p0, p1, cq));
 }
-
-/*
-bool CCollisionHandler::IntersectAlt(const collisionVolume* d, const CMatrix44f& m, const float3& p0, const float3& p1, CollisionQuery*)
-{
-	// alternative numerical integration method (unused)
-	const float delta = 1.0f;
-	const float length = (p1 - p0).Length();
-	const float3 dir = (p1 - p0).Normalize();
-
-	for (float t = 0.0f; t <= length; t += delta) {
-		if (::Collision(d, m, p0 + dir * t)) return true;
-	}
-
-	return false;
-}
-*/
-
 
 bool CCollisionHandler::Intersect(const CollisionVolume* v, const CMatrix44f& m, const float3& p0, const float3& p1, CollisionQuery* q)
 {

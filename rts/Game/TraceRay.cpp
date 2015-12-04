@@ -34,7 +34,7 @@ inline static bool TestConeHelper(
 {
 	const CollisionVolume* cv = &obj->collisionVolume;
 
-	const float3 objVec3D = cv->GetWorldSpacePos(obj, ZeroVector) - pos3D;
+	const float3 objVec3D = cv->GetWorldSpacePos(obj) - pos3D;
 	const float  objDst1D = Clamp(objVec3D.dot(dir3D), 0.0f, length);
 	const float  coneSize = math::fabs(objDst1D) * spread + 1.0f;
 
@@ -105,7 +105,7 @@ inline static bool TestTrajectoryConeHelper(
 	//   SO THIS CAN GENERATE FALSE NEGATIVES
 	const CollisionVolume* cv = &obj->collisionVolume;
 
-	const float3 objVec3D = cv->GetWorldSpacePos(obj, ZeroVector) - pos3D;
+	const float3 objVec3D = cv->GetWorldSpacePos(obj) - pos3D;
 	const float  objDst1D = Clamp(objVec3D.dot(dir2D), 0.0f, length);
 	const float  coneSize = math::fabs(objDst1D) * spread + baseSize;
 

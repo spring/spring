@@ -28,7 +28,7 @@ CONFIG(float, LODScaleRefraction).defaultValue(1.0f);
 
 
 bool LuaObjectDrawer::inDrawPass = false;
-bool LuaObjectDrawer::drawDeferred = false;
+bool LuaObjectDrawer::drawDeferredEnabled = false;
 bool LuaObjectDrawer::drawDeferredAllowed = false;
 bool LuaObjectDrawer::bufferClearAllowed = false;
 
@@ -142,8 +142,8 @@ void LuaObjectDrawer::Update(bool init)
 	assert(geomBuffer != nullptr);
 
 	// update buffer only if it is valid
-	if (drawDeferredAllowed && (drawDeferred = geomBuffer->Valid())) {
-		drawDeferred &= (geomBuffer->Update(init));
+	if (drawDeferredAllowed && (drawDeferredEnabled = geomBuffer->Valid())) {
+		drawDeferredEnabled &= (geomBuffer->Update(init));
 
 		notifyEventFlags[LUAOBJ_UNIT   ] = !unitDrawer->DrawForward();
 		bufferClearFlags[LUAOBJ_UNIT   ] =  unitDrawer->DrawDeferred();
@@ -271,7 +271,7 @@ const LuaMaterial* LuaObjectDrawer::DrawMaterialBin(
 
 void LuaObjectDrawer::DrawDeferredPass(const CSolidObject* excludeObj, LuaObjType objType)
 {
-	if (!drawDeferred)
+	if (!drawDeferredEnabled)
 		return;
 	if (!geomBuffer->Valid())
 		return;
@@ -312,8 +312,6 @@ void LuaObjectDrawer::DrawDeferredPass(const CSolidObject* excludeObj, LuaObjTyp
 	#endif
 
 	if (notifyEventFlags[objType]) {
-		// these sit in between the WorldPreUnit and World events
-		//
 		// at this point the buffer has been filled (all standard
 		// models and custom Lua material bins have been rendered
 		// into it) and unbound, notify scripts
