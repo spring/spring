@@ -369,8 +369,8 @@ struct LocalModel
 	void UpdateBoundingVolume(unsigned int frameNum) {
 		bvFrameTime = frameNum;
 
-		bbMins = DEF_MAX_SIZE;
-		bbMaxs = DEF_MIN_SIZE;
+		bbMins = DEF_MIN_SIZE;
+		bbMaxs = DEF_MAX_SIZE;
 
 		for (unsigned int n = 0; n < pieces.size(); n++) {
 			const CMatrix44f& matrix = pieces[n].GetModelSpaceMatrix();
