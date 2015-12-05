@@ -54,7 +54,7 @@ public:
 	 * @param radius the object's default radius
 	 */
 	void InitSphere(float radius);
-	void InitBox(const float3& scales);
+	void InitBox(const float3& scales, const float3& offsets = ZeroVector);
 	void InitShape(
 		const float3& scales,
 		const float3& offsets,	

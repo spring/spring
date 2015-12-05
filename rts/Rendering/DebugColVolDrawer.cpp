@@ -268,6 +268,8 @@ static inline void DrawUnitColVol(const CUnit* u)
 					glColor3f((1.0f - ((gs->frameNum - u->lastAttackFrame) / 150.0f)), 0.0f, 0.0f);
 				}
 
+				// if drawing this, disable the DrawObjectMidAndAimPos call
+				// DrawCollisionVolume((u->localModel).GetBoundingVolume());
 				DrawCollisionVolume(v);
 
 				if (u->lastAttackFrame > 0 && ((gs->frameNum - u->lastAttackFrame) < 150)) {

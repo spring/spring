@@ -119,7 +119,8 @@ class CCollisionHandler {
 			const CMatrix44f& m,
 			const float3 p0,
 			const float3 p1,
-			CollisionQuery* cq
+			CollisionQuery* cq,
+			float s = 1.0f
 		);
 
 	private:

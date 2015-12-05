@@ -58,7 +58,7 @@ struct S3DModelPiece {
 
 	virtual const float3& GetVertexPos(const int) const = 0;
 	virtual const float3& GetNormal(const int) const = 0;
-	virtual float3 GetPosOffset() const { return ZeroVector; }
+
 	virtual void Shatter(float, int, int, const float3&, const float3&) const {}
 
 	CMatrix44f& ComposeRotation(CMatrix44f& m, const float3& r) const {
@@ -244,7 +244,7 @@ struct LocalModelPiece
 	// note: actually OBJECT_TO_WORLD but transform is the same
 	float3 GetAbsolutePos() const { return (modelSpaceMat.GetPos() * WORLD_TO_OBJECT_SPACE); }
 
-	bool GetEmitDirPos(float3& pos, float3& dir) const;
+	bool GetEmitDirPos(float3& emitPos, float3& emitDir) const;
 
 	void SetPosition(const float3& p) { pos = p; ++numUpdatesSynced; }
 	void SetRotation(const float3& r) { rot = r; ++numUpdatesSynced; }
@@ -302,24 +302,6 @@ struct LocalModel
 		pieces.clear();
 	}
 
-	void SetModel(const S3DModel* model) {
-		// make sure we do not get called for trees, etc
-		assert(model != nullptr);
-		assert(model->numPieces >= 1);
-
-		dirtyPieces = model->numPieces;
-		bvFrameTime = 0;
-		lodCount = 0;
-
-		pieces.reserve(model->numPieces);
-		boundingVolume.InitBox(OnesVector);
-
-		CreateLocalModelPieces(model->GetRootPiece());
-		UpdateBoundingVolume(0);
-
-		assert(pieces.size() == model->numPieces);
-	}
-
 
 	bool HasPiece(unsigned int i) const { return (i < pieces.size()); }
 	bool Initialized() const { return (!pieces.empty()); }
@@ -358,34 +340,13 @@ struct LocalModel
 	}
 
 
-
 	void DrawPieces() const;
 	void DrawPiecesLOD(unsigned int lod) const;
 
+	void SetModel(const S3DModel* model);
 	void SetLODCount(unsigned int count);
 	void PieceUpdated(unsigned int pieceIdx) { dirtyPieces += 1; }
-
-
-	void UpdateBoundingVolume(unsigned int frameNum) {
-		bvFrameTime = frameNum;
-
-		bbMins = DEF_MIN_SIZE;
-		bbMaxs = DEF_MAX_SIZE;
-
-		for (unsigned int n = 0; n < pieces.size(); n++) {
-			const CMatrix44f& matrix = pieces[n].GetModelSpaceMatrix();
-			const S3DModelPiece* piece = pieces[n].original;
-
-			for (unsigned int k = 0; k < piece->GetVertexCount(); k++) {
-				const float3 vertex = matrix * piece->GetVertexPos(k);
-
-				bbMins = float3::min(bbMins, vertex);
-				bbMaxs = float3::max(bbMaxs, vertex);
-			}
-		}
-
-		boundingVolume.SetAxisScales(bbMaxs - bbMins);
-	}
+	void UpdateBoundingVolume(unsigned int frameNum);
 
 
 	void GetBoundingBoxVerts(std::vector<float3>& verts) const {

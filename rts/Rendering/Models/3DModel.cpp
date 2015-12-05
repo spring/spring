@@ -143,6 +143,24 @@ void LocalModel::SetLODCount(unsigned int count)
 
 
 
+void LocalModel::SetModel(const S3DModel* model)
+{
+	// make sure we do not get called for trees, etc
+	assert(model != nullptr);
+	assert(model->numPieces >= 1);
+
+	dirtyPieces = model->numPieces;
+	bvFrameTime = 0;
+	lodCount = 0;
+
+	pieces.reserve(model->numPieces);
+
+	CreateLocalModelPieces(model->GetRootPiece());
+	UpdateBoundingVolume(0);
+
+	assert(pieces.size() == model->numPieces);
+}
+
 LocalModelPiece* LocalModel::CreateLocalModelPieces(const S3DModelPiece* mpParent)
 {
 	LocalModelPiece* lmpChild = NULL;
@@ -164,6 +182,29 @@ LocalModelPiece* LocalModel::CreateLocalModelPieces(const S3DModelPiece* mpParen
 	}
 
 	return lmpParent;
+}
+
+void LocalModel::UpdateBoundingVolume(unsigned int frameNum)
+{
+	bvFrameTime = frameNum;
+
+	bbMins = DEF_MIN_SIZE;
+	bbMaxs = DEF_MAX_SIZE;
+
+	for (unsigned int n = 0; n < pieces.size(); n++) {
+		const CMatrix44f& matrix = pieces[n].GetModelSpaceMatrix();
+		const S3DModelPiece* piece = pieces[n].original;
+
+		for (unsigned int k = 0; k < piece->GetVertexCount(); k++) {
+			const float3 vertex = matrix * piece->GetVertexPos(k);
+
+			bbMins = float3::min(bbMins, vertex);
+			bbMaxs = float3::max(bbMaxs, vertex);
+		}
+	}
+
+	// note: offset is relative to object->pos
+	boundingVolume.InitBox(bbMaxs - bbMins, (bbMaxs + bbMins) * 0.5f);
 }
 
 
@@ -189,8 +230,8 @@ LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 {
 	assert(piece != NULL);
 
-	pos        =  piece->offset;
-	dir        = (piece->GetVertexCount() >= 2)? (piece->GetVertexPos(0) - piece->GetVertexPos(1)): FwdVector;
+	pos =  piece->offset;
+	dir = (piece->GetVertexCount() >= 2)? (piece->GetVertexPos(0) - piece->GetVertexPos(1)): FwdVector;
 
 	identityTransform = UpdateMatrix();
 	dispListID = piece->GetDisplayListID();

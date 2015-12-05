@@ -318,9 +318,10 @@ bool CCollisionHandler::IntersectPieceTree(
 	const CollisionVolume* bv = lm.GetBoundingVolume();
 
 	// defer to IntersectBox for the early-out test; align OOBB
-	// to object's axes (this acts as regular CV, so also place
-	// it at midPos)
-	if (!CCollisionHandler::Intersect(o, bv, m, p0, p1, cq))
+	// to object's axes (unlike a regular CV this is positioned
+	// relative to o->pos, so do NOT include the extra relMidPos
+	// translation by scaling it to 0)
+	if (!CCollisionHandler::Intersect(o, bv, m, p0, p1, cq, 0.0f))
 		return false;
 
 	return (IntersectPiecesHelper(o, m, p0, p1, cq));
@@ -332,7 +333,8 @@ inline bool CCollisionHandler::Intersect(
 	const CMatrix44f& m,
 	const float3 p0,
 	const float3 p1,
-	CollisionQuery* cq
+	CollisionQuery* cq,
+	float s
 ) {
 	// transform into midpos-relative space (where the CV
 	// is positioned); we have to translate by relMidPos to
@@ -340,7 +342,7 @@ inline bool CCollisionHandler::Intersect(
 	// pos for all CSolidObject types
 	//
 	CMatrix44f mr = m;
-	mr.Translate(o->relMidPos * WORLD_TO_OBJECT_SPACE);
+	mr.Translate(o->relMidPos * WORLD_TO_OBJECT_SPACE * s);
 	mr.Translate(v->GetOffsets());
 
 	return (CCollisionHandler::Intersect(v, mr, p0, p1, cq));

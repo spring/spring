@@ -112,9 +112,9 @@ void CollisionVolume::InitSphere(float radius)
 	InitShape(OnesVector * radius * 2.0f, ZeroVector, COLVOL_TYPE_SPHERE, COLVOL_HITTEST_CONT, COLVOL_AXIS_Z);
 }
 
-void CollisionVolume::InitBox(const float3& scales)
+void CollisionVolume::InitBox(const float3& scales, const float3& offsets)
 {
-	InitShape(scales, ZeroVector, COLVOL_TYPE_BOX, COLVOL_HITTEST_CONT, COLVOL_AXIS_Z);
+	InitShape(scales, offsets, COLVOL_TYPE_BOX, COLVOL_HITTEST_CONT, COLVOL_AXIS_Z);
 }
 
 void CollisionVolume::InitShape(
