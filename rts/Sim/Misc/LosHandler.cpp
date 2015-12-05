@@ -629,9 +629,9 @@ CLosHandler::~CLosHandler()
 	}
 	LOG_L(L_WARNING, "LosHandler MemUsage: ~%.1fMB", memUsage / (1024.f * 1024.f));*/
 
-	LOG("LosHandler stats: total instances=%u; reused=%.0f%%; from cache=%.0f%%",
+	LOG("LosHandler stats: total instances=%u; shared=%.0f%%; from cache=%.0f%%",
 		unsigned(ILosType::cacheHits + ILosType::cacheFails),
-		100.f * float(ILosType::cacheHits) / (ILosType::cacheHits + ILosType::cacheFails),
+		100.f * float(ILosType::cacheHits - ILosType::cacheReactivated) / (ILosType::cacheHits + ILosType::cacheFails),
 		100.f * float(ILosType::cacheReactivated) / (ILosType::cacheHits + ILosType::cacheFails));
 }
 
