@@ -133,7 +133,7 @@ public:
 	///
 	bool alwaysVisibleOverridesCloaked;
 	/// should _all_ allyteams share the same jammermap
-	bool seperateJammers;
+	bool separateJammers;
 
 
 	enum {

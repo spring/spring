@@ -351,7 +351,7 @@ bool CLegacyInfoTextureHandler::UpdateExtraTexture(BaseGroundDrawMode texDrawMod
 			} break;
 
 			case drawLos: {
-				const int jammerAllyTeam = modInfo.seperateJammers ? gu->myAllyTeam : 0;
+				const int jammerAllyTeam = modInfo.separateJammers ? gu->myAllyTeam : 0;
 				const unsigned short* myLos         = &losHandler->los.losMaps[gu->myAllyTeam].front();
 				const unsigned short* myAirLos      = &losHandler->airLos.losMaps[gu->myAllyTeam].front();
 				const unsigned short* myRadar       = &losHandler->radar.losMaps[gu->myAllyTeam].front();

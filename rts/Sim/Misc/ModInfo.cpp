@@ -74,7 +74,7 @@ void CModInfo::ResetState()
 
 	requireSonarUnderWater = true;
 	alwaysVisibleOverridesCloaked = false;
-	seperateJammers = true;
+	separateJammers = true;
 
 	featureVisibility = FEATURELOS_NONE;
 
@@ -233,7 +233,7 @@ void CModInfo::Init(const char* modArchive)
 
 		requireSonarUnderWater = sensors.GetBool("requireSonarUnderWater", true);
 		alwaysVisibleOverridesCloaked = sensors.GetBool("alwaysVisibleOverridesCloaked", false);
-		seperateJammers = sensors.GetBool("seperateJammers", true);
+		separateJammers = sensors.GetBool("separateJammers", true);
 
 		// losMipLevel is used as index to readMap->mipHeightmaps,
 		// so the max value is CReadMap::numHeightMipMaps - 1

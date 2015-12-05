@@ -148,7 +148,7 @@ inline void ILosType::UpdateUnit(CUnit* unit)
 
 	// jammers share all the same map independent of the allyTeam
 	if (type == LOS_TYPE_JAMMER || type == LOS_TYPE_SONAR_JAMMER)
-		if (!modInfo.seperateJammers)
+		if (!modInfo.separateJammers)
 			allyteam = 0;
 
 	if (radius <= 0)
@@ -768,10 +768,10 @@ bool CLosHandler::InRadar(const float3 pos, int allyTeam) const
 	if (pos.y < 0.0f) {
 		// position is underwater, only sonar can see it
 		// note: only check jammers when we have a common jammer map, else jammers only apply to objects!
-		return (sonar.InSight(pos, allyTeam) && !(!modInfo.seperateJammers && sonarJammer.InSight(pos, 0)));
+		return (sonar.InSight(pos, allyTeam) && !(!modInfo.separateJammers && sonarJammer.InSight(pos, 0)));
 	}
 
-	return (radar.InSight(pos, allyTeam) && !(!modInfo.seperateJammers && jammer.InSight(pos, 0)));
+	return (radar.InSight(pos, allyTeam) && !(!modInfo.separateJammers && jammer.InSight(pos, 0)));
 }
 
 
@@ -795,7 +795,7 @@ bool CLosHandler::InRadar(const CUnit* unit, int allyTeam) const
 
 bool CLosHandler::InJammer(const float3 pos, int allyTeam) const
 {
-	const int jammerAlly = modInfo.seperateJammers ? allyTeam : 0;
+	const int jammerAlly = modInfo.separateJammers ? allyTeam : 0;
 
 	if (pos.y < 0.0f) {
 		return sonarJammer.InSight(pos, jammerAlly);
@@ -812,7 +812,7 @@ bool CLosHandler::InJammer(const CUnit* unit, int allyTeam) const
 
 	//TODO handle ingame alliances
 
-	const int jammerAlly = modInfo.seperateJammers ? unit->allyteam : 0;
+	const int jammerAlly = modInfo.separateJammers ? unit->allyteam : 0;
 
 	if (unit->IsUnderWater()) {
 		return sonarJammer.InSight(unit->pos, jammerAlly);

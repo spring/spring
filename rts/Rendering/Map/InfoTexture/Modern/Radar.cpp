@@ -124,7 +124,7 @@ void CRadarTexture::UpdateCPU()
 	auto infoTexMem = reinterpret_cast<unsigned char*>(infoTexPBO.MapBuffer());
 
 	if (!losHandler->globalLOS[gu->myAllyTeam]) {
-		const int jammerAllyTeam = modInfo.seperateJammers ? gu->myAllyTeam : 0;
+		const int jammerAllyTeam = modInfo.separateJammers ? gu->myAllyTeam : 0;
 
 		const unsigned short* myLos = &losHandler->los.losMaps[gu->myAllyTeam].front();
 
@@ -174,7 +174,7 @@ void CRadarTexture::Update()
 		return;
 	}
 
-	const int jammerAllyTeam = modInfo.seperateJammers ? gu->myAllyTeam : 0;
+	const int jammerAllyTeam = modInfo.separateJammers ? gu->myAllyTeam : 0;
 
 	infoTexPBO.Bind();
 	const size_t arraySize = texSize.x * texSize.y * sizeof(unsigned short);
