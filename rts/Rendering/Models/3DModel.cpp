@@ -195,12 +195,44 @@ void LocalModel::UpdateBoundingVolume(unsigned int frameNum)
 		const CMatrix44f& matrix = pieces[n].GetModelSpaceMatrix();
 		const S3DModelPiece* piece = pieces[n].original;
 
-		for (unsigned int k = 0; k < piece->GetVertexCount(); k++) {
-			const float3 vertex = matrix * piece->GetVertexPos(k);
+		#if 0
+		const unsigned int vcount = piece->GetVertexCount();
 
-			bbMins = float3::min(bbMins, vertex);
-			bbMaxs = float3::max(bbMaxs, vertex);
+		if (vcount >= 8) {
+		#endif
+			// transform only the corners of the piece's bounding-box
+			const float3 pMins = piece->mins;
+			const float3 pMaxs = piece->maxs;
+			const float3 verts[8] = {
+				// bottom
+				float3(pMins.x,  pMins.y,  pMins.z),
+				float3(pMaxs.x,  pMins.y,  pMins.z),
+				float3(pMaxs.x,  pMins.y,  pMaxs.z),
+				float3(pMins.x,  pMins.y,  pMaxs.z),
+				// top
+				float3(pMins.x,  pMaxs.y,  pMins.z),
+				float3(pMaxs.x,  pMaxs.y,  pMins.z),
+				float3(pMaxs.x,  pMaxs.y,  pMaxs.z),
+				float3(pMins.x,  pMaxs.y,  pMaxs.z),
+			};
+
+			for (unsigned int k = 0; k < 8; k++) {
+				const float3 vertex = matrix * verts[k];
+
+				bbMins = float3::min(bbMins, vertex);
+				bbMaxs = float3::max(bbMaxs, vertex);
+			}
+		#if 0
+		} else {
+			// note: not as efficient because of branching and virtual calls
+			for (unsigned int k = 0; k < vcount; k++) {
+				const float3 vertex = matrix * piece->GetVertexPos(k);
+
+				bbMins = float3::min(bbMins, vertex);
+				bbMaxs = float3::max(bbMaxs, vertex);
+			}
 		}
+		#endif
 	}
 
 	// note: offset is relative to object->pos
