@@ -52,7 +52,7 @@ struct Option {
 	std::string name;
 	std::string desc;
 	std::string section;
-	std::string style;
+	std::string style; //deprecated, see unitsync GetOptionStyle()
 
 	std::string type; ///< "bool", "number", "string", "list", "section"
 

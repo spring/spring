@@ -95,7 +95,7 @@ protected:
 
 public:
 	// subclass is responsible for populating this with script pieces
-	const std::vector<LocalModelPiece*>& pieces;
+	std::vector<LocalModelPiece*> pieces;
 
 	bool PieceExists(unsigned int scriptPieceNum) const {
 		// NOTE: there can be NULL pieces present from the remapping in CobInstance
@@ -131,7 +131,7 @@ public:
 	}
 
 public:
-	CUnitScript(CUnit* unit, const std::vector<LocalModelPiece*>& pieces);
+	CUnitScript(CUnit* unit);
 	virtual ~CUnitScript();
 
 	bool IsBusy() const { return busy; }

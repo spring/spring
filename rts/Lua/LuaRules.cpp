@@ -5,7 +5,7 @@
 #include "LuaInclude.h"
 
 #include "LuaUtils.h"
-#include "LuaUnitRendering.h"
+#include "LuaObjectRendering.h"
 #include "LuaCallInCheck.h"
 
 #include "Sim/Misc/GlobalSynced.h"
@@ -65,7 +65,7 @@ CLuaRules::~CLuaRules()
 
 
 
-bool CLuaRules::AddSyncedCode(lua_State *L)
+bool CLuaRules::AddSyncedCode(lua_State* L)
 {
 	lua_getglobal(L, "Script");
 	LuaPushNamedCFunc(L, "PermitHelperAIs", PermitHelperAIs);
@@ -75,13 +75,20 @@ bool CLuaRules::AddSyncedCode(lua_State *L)
 }
 
 
-bool CLuaRules::AddUnsyncedCode(lua_State *L)
+bool CLuaRules::AddUnsyncedCode(lua_State* L)
 {
 	lua_getglobal(L, "Spring");
+
 	lua_pushliteral(L, "UnitRendering");
 	lua_newtable(L);
-	LuaUnitRendering::PushEntries(L);
+	LuaObjectRendering<LUAOBJ_UNIT>::PushEntries(L);
 	lua_rawset(L, -3);
+
+	lua_pushliteral(L, "FeatureRendering");
+	lua_newtable(L);
+	LuaObjectRendering<LUAOBJ_FEATURE>::PushEntries(L);
+	lua_rawset(L, -3);
+
 	lua_pop(L, 1); // Spring
 
 	return true;

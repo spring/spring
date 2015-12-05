@@ -526,23 +526,23 @@ void CEventHandler::GameProgress(int gameFrame)
 }
 
 
-#define DRAW_CALLIN(name)                         \
-  void CEventHandler:: Draw ## name ()            \
-  {                                               \
-    if (listDraw ## name.empty())                 \
-      return;                                     \
-    LuaOpenGL::EnableDraw ## name ();             \
-    listDraw ## name [0]->Draw ## name ();        \
-                                                  \
-    for (int i = 1; i < listDraw ## name.size(); ) { \
-      LuaOpenGL::ResetDraw ## name ();            \
-      CEventClient* ec = listDraw ## name [i];    \
-      ec-> Draw ## name ();                       \
+#define DRAW_CALLIN(name)                                            \
+  void CEventHandler:: Draw ## name ()                               \
+  {                                                                  \
+    if (listDraw ## name.empty())                                    \
+      return;                                                        \
+    LuaOpenGL::EnableDraw ## name ();                                \
+    listDraw ## name [0]->Draw ## name ();                           \
+                                                                     \
+    for (int i = 1; i < listDraw ## name.size(); ) {                 \
+      LuaOpenGL::ResetDraw ## name ();                               \
+      CEventClient* ec = listDraw ## name [i];                       \
+      ec-> Draw ## name ();                                          \
       if (i < listDraw ## name.size() && ec == listDraw ## name [i]) \
-	    ++i;                                      \
-    }                                             \
-                                                  \
-    LuaOpenGL::DisableDraw ## name ();            \
+	    ++i;                                                         \
+    }                                                                \
+                                                                     \
+    LuaOpenGL::DisableDraw ## name ();                               \
   }
 
 DRAW_CALLIN(Genesis)
@@ -551,6 +551,9 @@ DRAW_CALLIN(WorldPreUnit)
 DRAW_CALLIN(WorldShadow)
 DRAW_CALLIN(WorldReflection)
 DRAW_CALLIN(WorldRefraction)
+DRAW_CALLIN(GroundPostDeferred)
+DRAW_CALLIN(UnitsPostDeferred)
+DRAW_CALLIN(FeaturesPostDeferred)
 DRAW_CALLIN(ScreenEffects)
 DRAW_CALLIN(Screen)
 DRAW_CALLIN(InMiniMap)

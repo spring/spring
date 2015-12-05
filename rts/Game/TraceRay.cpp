@@ -32,9 +32,9 @@ inline static bool TestConeHelper(
 	const float spread,
 	const CSolidObject* obj)
 {
-	const CollisionVolume* cv = obj->collisionVolume;
+	const CollisionVolume* cv = &obj->collisionVolume;
 
-	const float3 objVec3D = cv->GetWorldSpacePos(obj, ZeroVector) - pos3D;
+	const float3 objVec3D = cv->GetWorldSpacePos(obj) - pos3D;
 	const float  objDst1D = Clamp(objVec3D.dot(dir3D), 0.0f, length);
 	const float  coneSize = math::fabs(objDst1D) * spread + 1.0f;
 
@@ -103,9 +103,9 @@ inline static bool TestTrajectoryConeHelper(
 	//   THE TRAJECTORY CURVE MIGHT STILL INTERSECT
 	//   EVEN WHEN <x, f(x)> DOES NOT LIE INSIDE CV
 	//   SO THIS CAN GENERATE FALSE NEGATIVES
-	const CollisionVolume* cv = obj->collisionVolume;
+	const CollisionVolume* cv = &obj->collisionVolume;
 
-	const float3 objVec3D = cv->GetWorldSpacePos(obj, ZeroVector) - pos3D;
+	const float3 objVec3D = cv->GetWorldSpacePos(obj) - pos3D;
 	const float  objDst1D = Clamp(objVec3D.dot(dir2D), 0.0f, length);
 	const float  coneSize = math::fabs(objDst1D) * spread + baseSize;
 
@@ -203,7 +203,7 @@ float TraceRay(
 					if (!f->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 						continue;
 
-					if (CCollisionHandler::DetectHit(f, start, start + dir * length, &cq, true)) {
+					if (CCollisionHandler::DetectHit(f, f->GetTransformMatrix(true), start, start + dir * length, &cq, true)) {
 						const float len = cq.GetHitPosDist(start, dir);
 
 						// we want the closest feature (intersection point) on the ray
@@ -236,7 +236,7 @@ float TraceRay(
 					if (ignoreCloaked && u->IsCloaked())
 						continue;
 
-					if (CCollisionHandler::DetectHit(u, start, start + dir * length, &cq, true)) {
+					if (CCollisionHandler::DetectHit(u, u->GetTransformMatrix(true), start, start + dir * length, &cq, true)) {
 						const float len = cq.GetHitPosDist(start, dir);
 
 						// we want the closest unit (intersection point) on the ray
@@ -312,38 +312,38 @@ float GuiTraceRay(
 		const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
 		// Unit Intersection
-		for (CUnit* unit: quad.units) {
-			const bool unitIsEnemy = !teamHandler->Ally(unit->allyteam, gu->myAllyTeam);
-			const bool unitOnRadar = (useRadar && losHandler->InRadar(unit, gu->myAllyTeam));
-			const bool unitInSight = (unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR));
+		for (CUnit* u: quad.units) {
+			const bool unitIsEnemy = !teamHandler->Ally(u->allyteam, gu->myAllyTeam);
+			const bool unitOnRadar = (useRadar && losHandler->InRadar(u, gu->myAllyTeam));
+			const bool unitInSight = (u->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR));
 			const bool unitVisible = !unitIsEnemy || unitOnRadar || unitInSight || gu->spectatingFullView;
 
-			if (unit == exclude)
+			if (u == exclude)
 				continue;
 			// test this bit only in synced traces, rely on noSelect here
-			if (false && !unit->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
+			if (false && !u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 				continue;
-			if (unit->noSelect)
+			if (u->noSelect)
 				continue;
 			if (!unitVisible)
 				continue;
 
-			CollisionVolume cv(unit->collisionVolume);
+			CollisionVolume cv = u->collisionVolume;
 
-			if (unit->isIcon || (!unitInSight && unitOnRadar && unitIsEnemy)) {
+			if (u->isIcon || (!unitInSight && unitOnRadar && unitIsEnemy)) {
 				// for iconified units, just pretend the collision
 				// volume is a sphere of radius <unit->IconRadius>
 				// (count radar blips as such too)
-				cv.InitSphere(unit->iconRadius);
+				cv.InitSphere(u->iconRadius);
 			}
 
-			if (CCollisionHandler::MouseHit(unit, start, start + dir * guiRayLength, &cv, &cq)) {
+			if (CCollisionHandler::MouseHit(u, u->GetTransformMatrix(false), start, start + dir * guiRayLength, &cv, &cq)) {
 				// get the distance to the ray-volume ingress point
 				// (not likely to generate inside-hit special cases)
 				const float ingressDist = cq.GetIngressPosDist(start, dir);
 				const float  egressDist = cq.GetEgressPosDist(start, dir);
 
-				const bool factoryUnderCursor = unit->unitDef->IsFactoryUnit();
+				const bool factoryUnderCursor = u->unitDef->IsFactoryUnit();
 				const bool factoryHitBeforeUnit = ((hitFactory && ingressDist < minIngressDist) || (!hitFactory &&  egressDist < minIngressDist));
 				const bool unitHitInsideFactory = ((hitFactory && ingressDist <  minEgressDist) || (!hitFactory && ingressDist < minIngressDist));
 
@@ -353,7 +353,7 @@ float GuiTraceRay(
 					minIngressDist = ingressDist;
 					minEgressDist = egressDist;
 
-					hitUnit = unit;
+					hitUnit = u;
 					hitFeature = NULL;
 				}
 			}
@@ -369,7 +369,9 @@ float GuiTraceRay(
 			if (f->noSelect)
 				continue;
 
-			if (CCollisionHandler::DetectHit(f, start, start + dir * guiRayLength, &cq, true)) {
+			CollisionVolume cv = f->collisionVolume;
+
+			if (CCollisionHandler::MouseHit(f, f->GetTransformMatrix(false), start, start + dir * guiRayLength, &cv, &cq)) {
 				const float hitDist = cq.GetHitPosDist(start, dir);
 
 				const bool factoryHitBeforeUnit = ( hitFactory && hitDist <  minEgressDist);

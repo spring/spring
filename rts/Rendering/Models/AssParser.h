@@ -62,17 +62,19 @@ public:
 class CAssParser: public IModelParser
 {
 public:
+	typedef std::map<std::string, S3DModelPiece*> ModelPieceMap;
+
 	S3DModel* Load(const std::string& modelFileName);
 	ModelType GetType() const { return MODELTYPE_ASS; }
 
 private:
-	static void SetPieceName(SAssPiece* piece, const S3DModel* model, const aiNode* pieceNode);
+	static void SetPieceName(SAssPiece* piece, const S3DModel* model, const aiNode* pieceNode, ModelPieceMap& pieceMap);
 	static void SetPieceParentName(SAssPiece* piece, const S3DModel* model, const aiNode* pieceNode, const LuaTable& pieceTable);
 	static void LoadPieceTransformations(SAssPiece* piece, const S3DModel* model, const aiNode* pieceNode, const LuaTable& pieceTable);
 	static void LoadPieceGeometry(SAssPiece* piece, const aiNode* pieceNode, const aiScene* scene);
-	static SAssPiece* LoadPiece(S3DModel* model, const aiNode* pieceNode, const aiScene* scene, const LuaTable& modelTable);
+	static SAssPiece* LoadPiece(S3DModel* model, const aiNode* pieceNode, const aiScene* scene, const LuaTable& modelTable, ModelPieceMap& pieceMap);
 
-	static void BuildPieceHierarchy(S3DModel* model);
+	static void BuildPieceHierarchy(S3DModel* model, ModelPieceMap& pieceMap);
 	static void CalculateModelDimensions(S3DModel* model, S3DModelPiece* piece);
 	static void CalculateModelProperties(S3DModel* model, const LuaTable& pieceTable);
 	static void FindTextures(S3DModel* model, const aiScene* scene, const LuaTable& pieceTable, const std::string& modelPath, const std::string& modelName);

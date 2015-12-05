@@ -13,7 +13,6 @@
 	#include "System/exportdefines.h"
 #endif
 
-
 // from unitsync.cpp:
 
 /** @addtogroup unitsync_api
@@ -262,6 +261,18 @@ EXPORT(const char* ) GetArchivePath(const char* archiveName);
  *		@endcode
  */
 EXPORT(int         ) GetMapCount();
+
+/**
+ * @brief Retrieves the number of info items available for a given Map
+ * @param index Map index/id
+ * @return negative integer (< 0) on error;
+ *   the number of info items available (>= 0) on success
+ * @see GetMapCount
+ * @see GetInfoKey
+ *
+ * Be sure to call GetMapCount() prior to using this function.
+ */
+EXPORT(int         ) GetMapInfoCount(int index);
 /**
  * @brief Get the name of a map
  * @return NULL on error; the name of the map (e.g. "SmallDivide") on success
@@ -273,94 +284,6 @@ EXPORT(const char* ) GetMapName(int index);
  *   on success
  */
 EXPORT(const char* ) GetMapFileName(int index);
-/**
- * @brief Get the description of a map
- * @return NULL on error; the description of the map
- *         (e.g. "Lot of metal in middle") on success
- */
-EXPORT(const char* ) GetMapDescription(int index);
-/**
- * @brief Get the name of the author of a map
- * @return NULL on error; the name of the author of a map on success
- */
-EXPORT(const char* ) GetMapAuthor(int index);
-/**
- * @brief Get the width of a map
- * @return negative integer (< 0) on error;
- *   the width of a map (>= 0) on success
- */
-EXPORT(int         ) GetMapWidth(int index);
-/**
- * @brief Get the height of a map
- * @return negative integer (< 0) on error;
- *   the height of a map (>= 0) on success
- */
-EXPORT(int         ) GetMapHeight(int index);
-/**
- * @brief Get the tidal speed of a map
- * @return negative integer (< 0) on error;
- *   the tidal speed of the map (>= 0) on success
- */
-EXPORT(int         ) GetMapTidalStrength(int index);
-/**
- * @brief Get the minimum wind speed on a map
- * @return negative integer (< 0) on error;
- *   the minimum wind speed on the map (>= 0) on success
- */
-EXPORT(int         ) GetMapWindMin(int index);
-/**
- * @brief Get the maximum wind strenght on a map
- * @return negative integer (< 0) on error;
- *   the maximum wind strenght on the map (>= 0) on success
- */
-EXPORT(int         ) GetMapWindMax(int index);
-/**
- * @brief Get the gravity of a map
- * @return negative integer (< 0) on error;
- *   the gravity of the map (>= 0) on success
- */
-EXPORT(int         ) GetMapGravity(int index);
-/**
- * @brief Get the number of supported resources
- * @return negative integer (< 0) on error;
- *   the number of supported resources (>= 0) on success
- */
-EXPORT(int         ) GetMapResourceCount(int index);
-/**
- * @brief Get the name of a map resource
- * @return NULL on error; the name of a map resource (e.g. "Metal") on success
- */
-EXPORT(const char* ) GetMapResourceName(int index, int resourceIndex);
-/**
- * @brief Get the scale factor of a resource map
- * @return 0.0f on error; the scale factor of a resource map on success
- */
-EXPORT(float       ) GetMapResourceMax(int index, int resourceIndex);
-/**
- * @brief Get the extractor radius for a map resource
- * @return negative integer (< 0) on error;
- *   the extractor radius for a map resource (>= 0) on success
- */
-EXPORT(int         ) GetMapResourceExtractorRadius(int index, int resourceIndex);
-
-/**
- * @brief Get the number of defined start positions for a map
- * @return negative integer (< 0) on error;
- *   the number of defined start positions for a map (>= 0) on success
- */
-EXPORT(int         ) GetMapPosCount(int index);
-/**
- * @brief Get the position on the x-axis for a start position on a map
- * @return -1.0f on error; the position on the x-axis for a start position
- *         on a map on success
- */
-EXPORT(float       ) GetMapPosX(int index, int posIndex);
-/**
- * @brief Get the position on the z-axis for a start position on a map
- * @return -1.0f on error; the position on the z-axis for a start position
- *         on a map on success
- */
-EXPORT(float       ) GetMapPosZ(int index, int posIndex);
 
 /**
  * @brief return the map's minimum height
@@ -762,20 +685,6 @@ EXPORT(const char* ) GetOptionName(int optIndex);
  * @see GetCustomOptionCount
  */
 EXPORT(const char* ) GetOptionSection(int optIndex);
-/**
- * @brief Retrieve an option's style
- * @param optIndex option index/id
- * @return NULL on error; the option's style on success
- *
- * XXX The format of an option style string is currently undecided.
- *
- * Do not use this before having called Get*OptionCount().
- * @see GetMapOptionCount
- * @see GetModOptionCount
- * @see GetSkirmishAIOptionCount
- * @see GetCustomOptionCount
- */
-EXPORT(const char* ) GetOptionStyle(int optIndex);
 /**
  * @brief Retrieve an option's description
  * @param optIndex option index/id
@@ -1227,20 +1136,42 @@ EXPORT(const char*) lpGetIntKeyStrVal(int key, const char* defValue);
 EXPORT(const char*) lpGetStrKeyStrVal(const char* key, const char* defValue);
 
 /* deprecated functions */
+
+#ifdef ENABLE_DEPRECATED_FUNCTIONS
 /**
  * @deprecated in June 2011, use ProcessUnits() instead
  */
 EXPORT(int         ) ProcessUnitsNoChecksum();
 #if       !defined(PLAIN_API_STRUCTURE)
 /**
- * @deprecated use GetMapCount instead
+ * @deprecated use GetMapOptionCount instead
  */
 EXPORT(int         ) GetMapInfoEx(const char* mapName, MapInfo* outInfo, int version);
 /**
- * @deprecated use GetMapCount instead
+ * @deprecated use GetMapOptionCount instead
  */
 EXPORT(int         ) GetMapInfo(const char* mapName, MapInfo* outInfo);
 #endif // !defined(PLAIN_API_STRUCTURE)
+
+/**
+ * @deprecated use GetMapInfoCount instead
+ */
+EXPORT(const char* ) GetMapDescription(int index);
+EXPORT(const char* ) GetMapAuthor(int index);
+EXPORT(int         ) GetMapWidth(int index);
+EXPORT(int         ) GetMapHeight(int index);
+EXPORT(int         ) GetMapTidalStrength(int index);
+EXPORT(int         ) GetMapWindMin(int index);
+EXPORT(int         ) GetMapWindMax(int index);
+EXPORT(int         ) GetMapGravity(int index);
+EXPORT(int         ) GetMapResourceCount(int index);
+EXPORT(const char* ) GetMapResourceName(int index, int resourceIndex);
+EXPORT(float       ) GetMapResourceMax(int index, int resourceIndex);
+EXPORT(int         ) GetMapResourceExtractorRadius(int index, int resourceIndex);
+EXPORT(int         ) GetMapPosCount(int index);
+EXPORT(float       ) GetMapPosX(int index, int posIndex);
+EXPORT(float       ) GetMapPosZ(int index, int posIndex);
+
 /**
  * @deprecated use GetInfoValue* instead
  */
@@ -1277,7 +1208,13 @@ EXPORT(const char* ) GetPrimaryModDescription(int index);
  * @deprecated use OpenArchive instead
  */
 EXPORT(int         ) OpenArchiveType(const char* name, const char* type);
+/**
+ * @deprecated unused
+ */
+EXPORT(const char* ) GetOptionStyle(int optIndex);
 
+#endif // ENABLE_DEPRECATED_FUNCTIONS
 /** @} */
 
 #endif // _UNITSYNC_API_H
+

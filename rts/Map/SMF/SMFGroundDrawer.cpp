@@ -16,6 +16,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/Shader.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/EventHandler.h"
 #include "System/FastMath.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
@@ -59,8 +60,9 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicMapLights"));
 	geomBuffer.SetName("GROUNDDRAWER-GBUFFER");
 
-	drawMapEdges = configHandler->GetBool("MapBorder");
+	drawForward = true;
 	drawDeferred = geomBuffer.Valid();
+	drawMapEdges = configHandler->GetBool("MapBorder");
 
 	// NOTE:
 	//     advShading can NOT change at runtime if initially false
@@ -235,9 +237,7 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass)
 		return;
 
 	geomBuffer.Bind();
-
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	geomBuffer.Clear();
 
 	{
 		// switch current SSP shader to deferred version
@@ -264,6 +264,10 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass)
 	#if 0
 	geomBuffer.DrawDebug(geomBuffer.GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_NORMTEX));
 	#endif
+
+	if (!drawForward) {
+		eventHandler.DrawGroundPostDeferred();
+	}
 }
 
 void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
@@ -275,9 +279,13 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 	if (readMap->HasOnlyVoidWater())
 		return;
 
+	CCamera* visCam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
+
 	// note: shared by deferred pass
 	SelectRenderState(smfRenderStateSSP->CanEnable(this));
-	UpdateCamRestraints(cam2);
+	// NOTE: other places (e.g. DynWater) might want different constraints
+	visCam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
+
 
 	glDisable(GL_BLEND);
 	glEnable(GL_CULL_FACE);
@@ -290,7 +298,7 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 		DrawDeferredPass(drawPass);
 	}
 
-	{
+	if (drawForward) {
 		smfRenderState->Enable(this, drawPass);
 
 		if (wireframe) {

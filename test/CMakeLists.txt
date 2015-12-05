@@ -183,11 +183,8 @@ Else  (NOT Boost_FOUND)
 			${Boost_SYSTEM_LIBRARY}
 			${Boost_CHRONO_LIBRARY_WITH_RT}
 			${Boost_THREAD_LIBRARY}
+			${WINMM_LIBRARY}
 		)
-
-	IF (WIN32)
-		LIST(APPEND test_libs ${WINMM_LIBRARY})
-	ENDIF (WIN32)
 
 	set(test_flags "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
 	if (Boost_TIMER_FOUND)
@@ -317,10 +314,14 @@ Else  (NOT Boost_FOUND)
 			${Boost_SYSTEM_LIBRARY}
 			${WINMM_LIBRARY}
 		)
-if(NOT WIN32)
-# FIXME: sometimes fails on windows
+if(WIN32)
+	# FIXME: sometimes fails on windows
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DUNITSYNC")
+else()
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSYNC")
 endif()
+
+
 
 ################################################################################
 ### Mutex
@@ -359,6 +360,26 @@ endif()
 		)
 	set(test_flags "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
+
+################################################################################
+### Printf
+	set(test_name Printf)
+	Set(test_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/other/testPrintf.cpp"
+			"${ENGINE_SOURCE_DIR}/lib/lua/include/LuaUser.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
+			${test_Log_sources}
+		)
+	set(test_libs
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			${Boost_SYSTEM_LIBRARY}
+			${Boost_CHRONO_LIBRARY_WITH_RT}
+			${Boost_THREAD_LIBRARY}
+			${WINMM_LIBRARY}
+		)
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
+	target_include_directories(test_${test_name} PRIVATE ${ENGINE_SOURCE_DIR}/lib/lua/include)
+
 
 ################################################################################
 ### EventClient

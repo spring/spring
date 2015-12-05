@@ -73,13 +73,12 @@ void CUnitScript::InitVars(int numTeams, int numAllyTeams)
 }
 
 
-CUnitScript::CUnitScript(CUnit* unit, const std::vector<LocalModelPiece*>& pieces)
+CUnitScript::CUnitScript(CUnit* unit)
 	: unit(unit)
 	, busy(false)
 	, hasSetSFXOccupy(false)
 	, hasRockUnit(false)
 	, hasStartBuilding(false)
-	, pieces(pieces)
 {
 	memset(unitVars, 0, sizeof(unitVars));
 }
@@ -233,7 +232,7 @@ void CUnitScript::TickAnims(int deltaTime, AnimType type, std::list< std::list<A
 				}
 
 				pieces[ai->piece]->SetPosition(pos);
-				unit->localModel->PieceUpdated(ai->piece);
+				unit->localModel.PieceUpdated(ai->piece);
 			}
 		} break;
 
@@ -247,7 +246,7 @@ void CUnitScript::TickAnims(int deltaTime, AnimType type, std::list< std::list<A
 				}
 
 				pieces[ai->piece]->SetRotation(rot);
-				unit->localModel->PieceUpdated(ai->piece);
+				unit->localModel.PieceUpdated(ai->piece);
 			}
 		} break;
 
@@ -261,7 +260,7 @@ void CUnitScript::TickAnims(int deltaTime, AnimType type, std::list< std::list<A
 				}
 
 				pieces[ai->piece]->SetRotation(rot);
-				unit->localModel->PieceUpdated(ai->piece);
+				unit->localModel.PieceUpdated(ai->piece);
 			}
 		} break;
 
@@ -478,14 +477,14 @@ void CUnitScript::MoveNow(int piece, int axis, float destination)
 		return;
 	}
 
-	LocalModel* m = unit->localModel;
+	LocalModel& m = unit->localModel;
 	LocalModelPiece* p = pieces[piece];
 
 	float3 pos = p->GetPosition();
 	pos[axis] = pieces[piece]->original->offset[axis] + destination;
 
 	p->SetPosition(pos);
-	m->PieceUpdated(piece);
+	m.PieceUpdated(piece);
 }
 
 
@@ -496,14 +495,14 @@ void CUnitScript::TurnNow(int piece, int axis, float destination)
 		return;
 	}
 
-	LocalModel* m = unit->localModel;
+	LocalModel& m = unit->localModel;
 	LocalModelPiece* p = pieces[piece];
 
 	float3 rot = p->GetRotation();
 	rot[axis] = destination;
 
 	p->SetRotation(rot);
-	m->PieceUpdated(piece);
+	m.PieceUpdated(piece);
 }
 
 
@@ -1645,12 +1644,12 @@ int CUnitScript::ScriptToModel(int scriptPieceNum) const {
 }
 
 int CUnitScript::ModelToScript(int lmodelPieceNum) const {
-	const LocalModel* lm = unit->localModel;
+	LocalModel& lm = unit->localModel;
 
-	if (!lm->HasPiece(lmodelPieceNum))
+	if (!lm.HasPiece(lmodelPieceNum))
 		return -1;
 
-	const LocalModelPiece* lmp = lm->GetPiece(lmodelPieceNum);
+	const LocalModelPiece* lmp = lm.GetPiece(lmodelPieceNum);
 
 	return (lmp->GetScriptPieceIndex());
 }

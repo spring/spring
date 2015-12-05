@@ -9,6 +9,7 @@
 #include "Rendering/Env/IWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/Env/SkyLight.h"
+#include "Rendering/GL/GeometryBuffer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
@@ -316,7 +317,7 @@ void UnitDrawerStateARB::SetTeamColor(int team, float alpha) const {
 	}
 
 	#if 0
-	if (CUnitDrawer::LUA_DRAWING) {
+	if (LuaObjectDrawer::InDrawPass()) {
 		SetBasicTeamColor(team, alpha);
 	}
 	#endif
@@ -468,7 +469,7 @@ void UnitDrawerStateGLSL::SetTeamColor(int team, float alpha) const {
 	}
 
 	#if 0
-	if (CUnitDrawer::LUA_DRAWING) {
+	if (LuaObjectDrawer::InDrawPass()) {
 		SetBasicTeamColor(team, alpha);
 	}
 	#endif

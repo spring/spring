@@ -21,6 +21,8 @@ CR_BIND_DERIVED(CSolidObject, CWorldObject, )
 CR_REG_METADATA(CSolidObject,
 (
 	CR_MEMBER(health),
+	CR_MEMBER(maxHealth),
+
 	CR_MEMBER(mass),
 	CR_MEMBER(crushResistance),
 
@@ -44,10 +46,15 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(allyteam),
 
 	CR_MEMBER(tempNum),
+	CR_MEMBER(lastHitPieceFrame),
 
 	CR_MEMBER(objectDef),
 	CR_MEMBER(moveDef),
+
+	CR_IGNORED(localModel), // TODO
 	CR_MEMBER(collisionVolume),
+	CR_MEMBER(lastHitPiece),
+
 	CR_IGNORED(groundDecal),
 
 	CR_MEMBER(frontdir),
@@ -74,6 +81,8 @@ CR_REG_METADATA(CSolidObject,
 
 CSolidObject::CSolidObject():
 	health(0.0f),
+	maxHealth(1.0f),
+
 	mass(DEFAULT_MASS),
 	crushResistance(0.0f),
 
@@ -100,11 +109,13 @@ CSolidObject::CSolidObject():
 	allyteam(0),
 
 	tempNum(0),
+	lastHitPieceFrame(-1),
 
-	objectDef(NULL),
-	moveDef(NULL),
-	collisionVolume(NULL),
-	groundDecal(NULL),
+	objectDef(nullptr),
+	moveDef(nullptr),
+
+	lastHitPiece(nullptr),
+	groundDecal(nullptr),
 
 	frontdir( FwdVector),
 	rightdir(-RgtVector),
@@ -115,17 +126,10 @@ CSolidObject::CSolidObject():
 
 	dragScales(OnesVector),
 
-	blockMap(NULL),
+	blockMap(nullptr),
 	yardOpen(false),
 	buildFacing(0)
 {
-}
-
-CSolidObject::~CSolidObject() {
-	ClearCollidableStateBit(CSTATE_BIT_SOLIDOBJECTS | CSTATE_BIT_PROJECTILES | CSTATE_BIT_QUADMAPRAYS);
-
-	delete collisionVolume;
-	collisionVolume = NULL;
 }
 
 void CSolidObject::UpdatePhysicalState(float eps) {
@@ -186,7 +190,7 @@ bool CSolidObject::SetVoidState() {
 	SetPhysicalStateBit(PSTATE_BIT_INVOID);
 
 	UnBlock();
-	collisionVolume->SetIgnoreHits(true);
+	collisionVolume.SetIgnoreHits(true);
 	return true;
 }
 
@@ -200,7 +204,7 @@ bool CSolidObject::ClearVoidState() {
 	ClearPhysicalStateBit(PSTATE_BIT_INVOID);
 
 	Block();
-	collisionVolume->SetIgnoreHits(false);
+	collisionVolume.SetIgnoreHits(false);
 	return true;
 }
 
@@ -369,7 +373,7 @@ float3 CSolidObject::GetWantedUpDir(bool useGroundNormal) const {
 	const float3 gn = CGround::GetSmoothNormal(pos.x, pos.z) * (    useGroundNormal);
 	const float3 wn =                             UpVector  * (1 - useGroundNormal);
 
-	if (moveDef == NULL) {
+	if (moveDef == nullptr) {
 		// aircraft cannot use updir reliably or their
 		// coordinate-system would degenerate too much
 		// over time without periodic re-ortho'ing

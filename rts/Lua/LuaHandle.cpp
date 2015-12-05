@@ -71,7 +71,7 @@ void CLuaHandle::PushTracebackFuncToRegistry(lua_State* L)
 
 
 
-static int handlepanic(lua_State *L)
+static int handlepanic(lua_State* L)
 {
 	std::string err = luaL_optsstring(L, 1, "lua paniced");
 	throw content_error(err);
@@ -397,7 +397,7 @@ bool CLuaHandle::RunCallInTraceback(lua_State* L, const LuaHashString& hs, int i
 /******************************************************************************/
 /******************************************************************************/
 
-bool CLuaHandle::LoadCode(lua_State *L, const string& code, const string& debug)
+bool CLuaHandle::LoadCode(lua_State* L, const string& code, const string& debug)
 {
 	lua_settop(L, 0);
 
@@ -1722,42 +1722,56 @@ void CLuaHandle::RunDrawCallIn(const LuaHashString& hs)
 
 void CLuaHandle::DrawGenesis()
 {
-	static const LuaHashString cmdStr("DrawGenesis");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	RunDrawCallIn(cmdStr);
 }
-
 
 void CLuaHandle::DrawWorld()
 {
-	static const LuaHashString cmdStr("DrawWorld");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	RunDrawCallIn(cmdStr);
 }
-
 
 void CLuaHandle::DrawWorldPreUnit()
 {
-	static const LuaHashString cmdStr("DrawWorldPreUnit");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	RunDrawCallIn(cmdStr);
 }
-
 
 void CLuaHandle::DrawWorldShadow()
 {
-	static const LuaHashString cmdStr("DrawWorldShadow");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	RunDrawCallIn(cmdStr);
 }
-
 
 void CLuaHandle::DrawWorldReflection()
 {
-	static const LuaHashString cmdStr("DrawWorldReflection");
+	static const LuaHashString cmdStr(__FUNCTION__);
+	RunDrawCallIn(cmdStr);
+}
+
+void CLuaHandle::DrawWorldRefraction()
+{
+	static const LuaHashString cmdStr(__FUNCTION__);
 	RunDrawCallIn(cmdStr);
 }
 
 
-void CLuaHandle::DrawWorldRefraction()
+void CLuaHandle::DrawGroundPostDeferred()
 {
-	static const LuaHashString cmdStr("DrawWorldRefraction");
+	static const LuaHashString cmdStr(__FUNCTION__);
+	RunDrawCallIn(cmdStr);
+}
+
+void CLuaHandle::DrawUnitsPostDeferred()
+{
+	static const LuaHashString cmdStr(__FUNCTION__);
+	RunDrawCallIn(cmdStr);
+}
+
+void CLuaHandle::DrawFeaturesPostDeferred()
+{
+	static const LuaHashString cmdStr(__FUNCTION__);
 	RunDrawCallIn(cmdStr);
 }
 
@@ -2566,7 +2580,7 @@ void CLuaHandle::CollectGarbage()
 /******************************************************************************/
 /******************************************************************************/
 
-bool CLuaHandle::AddBasicCalls(lua_State *L)
+bool CLuaHandle::AddBasicCalls(lua_State* L)
 {
 	HSTR_PUSH(L, "Script");
 	lua_newtable(L); {

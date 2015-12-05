@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 import prepare
 import os, subprocess, sys, shutil
@@ -20,5 +20,5 @@ if os.path.isdir(basedir):
 
 print("configuring %s with %s in %s" %(prepare.SOURCEDIR, CMAKEPARAM + sys.argv[3:], prepare.BUILDDIR))
 subprocess.call(['cmake'] + CMAKEPARAM + sys.argv[3:] + [prepare.SOURCEDIR], cwd=prepare.BUILDDIR)
-subprocess.call([prepare.MAKE, "generateSources"], cwd=prepare.BUILDDIR)
+subprocess.call([prepare.MAKE, "generateSources", "-j1"], cwd=prepare.BUILDDIR)
 

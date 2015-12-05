@@ -224,6 +224,9 @@ class CLuaHandle : public CEventClient
 		void DrawWorldShadow() override;
 		void DrawWorldReflection() override;
 		void DrawWorldRefraction() override;
+		void DrawGroundPostDeferred() override;
+		void DrawUnitsPostDeferred() override;
+		void DrawFeaturesPostDeferred() override;
 		void DrawScreenEffects() override;
 		void DrawScreen() override;
 		void DrawInMiniMap() override;

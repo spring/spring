@@ -39,6 +39,7 @@ CR_REG_METADATA(CFeature, (
 	CR_MEMBER(finalHeight),
 	CR_MEMBER(lastReclaim),
 	CR_MEMBER(drawQuad),
+	CR_MEMBER(fade),
 	CR_MEMBER(drawAlpha),
 	CR_MEMBER(fireTime),
 	CR_MEMBER(smokeTime),
@@ -65,6 +66,7 @@ CFeature::CFeature()
 , lastReclaim(0)
 , resources(0.0f, 1.0f)
 , drawQuad(-2)
+, fade(true)
 , drawAlpha(1.0)
 , fireTime(0)
 , smokeTime(0)
@@ -101,10 +103,12 @@ void CFeature::PostLoad()
 
 	//FIXME is this really needed (aren't all those tags saved via creg?)
 	if (def->drawType == DRAWTYPE_MODEL) {
-		model = def->LoadModel();
+		if ((model = def->LoadModel()) != NULL) {
+			SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
+			SetRadiusAndHeight(model);
 
-		SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
-		SetRadiusAndHeight(model);
+			localModel.SetModel(model);
+		}
 	} else if (def->drawType >= DRAWTYPE_TREE) {
 		SetMidAndAimPos(UpVector * TREE_RADIUS, UpVector * TREE_RADIUS, true);
 		SetRadiusAndHeight(TREE_RADIUS, TREE_RADIUS * 2.0f);
@@ -171,6 +175,7 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 
 	mass = def->mass;
 	health = def->health;
+	maxHealth = def->health;
 
 	resources = SResourcePack(def->metal, def->energy);
 
@@ -188,11 +193,16 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	CWorldObject::SetVelocity(params.speed);
 
 	if (def->drawType == DRAWTYPE_MODEL) {
-		if ((model = def->LoadModel()) == NULL) {
-			LOG_L(L_ERROR, "[%s] couldn't load model for %s", __FUNCTION__, def->name.c_str());
-		} else {
+		if ((model = def->LoadModel()) != NULL) {
 			SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
 			SetRadiusAndHeight(model);
+
+			// only initialize the LM for modelled features
+			// (this is still never animated but allows for
+			// custom piece display-lists, etc)
+			localModel.SetModel(model);
+		} else {
+			LOG_L(L_ERROR, "[%s] couldn't load model for %s", __FUNCTION__, def->name.c_str());
 		}
 	} else if (def->drawType >= DRAWTYPE_TREE) {
 		// LoadFeaturesFromMap() doesn't set a scale for trees
@@ -203,13 +213,14 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	UpdateMidAndAimPos();
 	CalculateTransform();
 
-	// note: gets deleted in ~CSolidObject
-	collisionVolume = new CollisionVolume(def->collisionVolume);
 
-	if (collisionVolume->DefaultToSphere())
-		collisionVolume->InitSphere(radius);
-	if (collisionVolume->DefaultToFootPrint())
-		collisionVolume->InitBox(float3(xsize * SQUARE_SIZE, height, zsize * SQUARE_SIZE));
+	collisionVolume = def->collisionVolume;
+
+	if (collisionVolume.DefaultToSphere())
+		collisionVolume.InitSphere(radius);
+	if (collisionVolume.DefaultToFootPrint())
+		collisionVolume.InitBox(float3(xsize * SQUARE_SIZE, height, zsize * SQUARE_SIZE));
+
 
 	// feature does not have an assigned ID yet
 	// this MUST be done before the Block() call

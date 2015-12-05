@@ -8,7 +8,6 @@
 #include <string>
 
 #include "Lua/LuaRulesParams.h"
-#include "Lua/LuaUnitMaterial.h"
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Misc/Resource.h"
 #include "Sim/Weapons/WeaponTarget.h"
@@ -24,8 +23,6 @@ class AMoveType;
 class CWeapon;
 class CUnitScript;
 struct DamageArray;
-struct LocalModel;
-struct LocalModelPiece;
 struct UnitDef;
 struct UnitTrackStruct;
 struct UnitLoadParams;
@@ -112,20 +109,6 @@ public:
 
 	CMatrix44f GetTransformMatrix(const bool synced = false, const bool error = false) const;
 
-	const CollisionVolume* GetCollisionVolume(const LocalModelPiece* lmp) const;
-
-	void SetLastAttacker(CUnit* attacker);
-	void SetLastAttackedPiece(LocalModelPiece* p, int f) {
-		lastAttackedPiece      = p;
-		lastAttackedPieceFrame = f;
-	}
-	LocalModelPiece* GetLastAttackedPiece(int f) const {
-		if (lastAttackedPieceFrame == f)
-			return lastAttackedPiece;
-		return NULL;
-	}
-
-
 	void DependentDied(CObject* o);
 
 	bool AllowedReclaim(CUnit* builder) const;
@@ -196,10 +179,10 @@ public:
 		int piece;
 	};
 
+	void SetLastAttacker(CUnit* attacker);
+
 	void SetTransporter(CUnit* trans) { transporter = trans; }
-	inline CUnit* GetTransporter() const {
-		return transporter;
-	}
+	inline CUnit* GetTransporter() const { return transporter; }
 
 	bool AttachUnit(CUnit* unit, int piece, bool force = false);
 	bool CanTransport(const CUnit* unit) const;
@@ -268,11 +251,7 @@ public:
 	/// last attacker
 	CUnit* lastAttacker;
 
-	/// piece that was last hit by a projectile
-	LocalModelPiece* lastAttackedPiece;
 
-	/// frame in which lastAttackedPiece was hit
-	int lastAttackedPieceFrame;
 	/// last frame unit was attacked by other unit
 	int lastAttackFrame;
 	/// last time this unit fired a weapon
@@ -293,8 +272,6 @@ public:
 	AMoveType* prevMoveType;
 
 	CCommandAI* commandAI;
-
-	LocalModel* localModel;
 	CUnitScript* script;
 
 	/// which squares the unit can currently observe
@@ -341,7 +318,6 @@ public:
 	/// 0.0-1.0
 	float buildProgress;
 
-	float maxHealth;
 	/// if health-this is negative the unit is stunned
 	float paralyzeDamage;
 	/// how close this unit is to being captured
@@ -541,12 +517,6 @@ public:
 
 	UnitTrackStruct* myTrack;
 	icon::CIconData* myIcon;
-
-	/// LOD length-per-pixel
-	unsigned int lodCount;
-	unsigned int currentLOD;
-	std::vector<float> lodLengths;
-	LuaUnitMaterial luaMats[LUAMAT_TYPE_COUNT];
 
 private:
 	/// if we are stunned by a weapon or for other reason, access via IsStunned/SetStunned(bool)

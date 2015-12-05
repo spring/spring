@@ -14,20 +14,22 @@
 #include <algorithm>
 
 #include "LuaOpenGL.h"
+
 #include "LuaInclude.h"
 
 #include "LuaContextData.h"
+#include "LuaDisplayLists.h"
+#include "LuaFBOs.h"
+#include "LuaFonts.h"
 #include "LuaHandle.h"
 #include "LuaHashString.h"
 #include "LuaIO.h"
+#include "LuaOpenGLUtils.h"
+#include "LuaRBOs.h"
 #include "LuaShaders.h"
 #include "LuaTextures.h"
+#include "LuaUtils.h"
 //FIXME#include "LuaVBOs.h"
-#include "LuaFBOs.h"
-#include "LuaRBOs.h"
-#include "LuaFonts.h"
-#include "LuaOpenGLUtils.h"
-#include "LuaDisplayLists.h"
 #include "Game/Camera.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/MiniMap.h"
@@ -40,6 +42,7 @@
 #include "Rendering/IconHandler.h"
 #include "Rendering/LineDrawer.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/LuaObjectDrawer.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/IWater.h"
@@ -1327,129 +1330,80 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 
 /******************************************************************************/
 
-int LuaOpenGL::Unit(lua_State* L)
+static bool UnitDrawPreCommon(lua_State* L, CUnit* unit)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	LuaObjectMaterialData* lmd = unit->GetLuaMaterialData();
 
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
+	if (!lmd->Enabled())
+		return false;
+
+	if (!lua_isnumber(L, 3)) {
+		// calculate new LOD level
+		lmd->UpdateCurrentLOD(LUAOBJ_UNIT, camera->ProjectedDistance(unit->pos), LuaObjectDrawer::GetDrawPassOpaqueMat());
+		return true;
 	}
 
-	const bool rawDraw = luaL_optboolean(L, 2, false);
-
-	bool useLOD = true;
-	if (unit->lodCount <= 0) {
-		useLOD = false;
-	}
-	else {
-		unsigned int lod = 0;
-		if (!lua_isnumber(L, 3)) {
-			const LuaMatType matType =
-				(water->DrawReflectionPass()) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
-			lod = unitDrawer->CalcUnitLOD(unit, unit->luaMats[matType].GetLastLOD());
-		} else {
-			int tmpLod = lua_toint(L, 3);
-			if (tmpLod < 0) {
-				useLOD = false;
-			} else {
-				lod = std::min(unit->lodCount - 1, (unsigned int)tmpLod);
-			}
-		}
-		unit->currentLOD = lod;
+	// set new LOD level manually
+	if (lua_toint(L, 3) >= 0) {
+		lmd->SetCurrentLOD(std::min(lmd->GetLODCount() - 1, static_cast<unsigned int>(lua_toint(L, 3))));
+		return true;
 	}
 
+	return false;
+}
+
+static void UnitDrawPostCommon(CUnit* unit, bool applyTransform, bool noLuaCall, bool useLuaMat) {
 	glPushAttrib(GL_ENABLE_BIT);
 
-	if (rawDraw) {
-		if (useLOD) {
-			unitDrawer->DrawUnitRaw(unit);
+	LuaObjectMaterialData* lmd = unit->GetLuaMaterialData();
+
+	if (!useLuaMat) {
+		// "scoped" draw; this prevents any Lua-assigned
+		// material(s) from being used by the calls below
+		lmd->PushLODCount(0);
+	}
+
+	if (applyTransform) {
+		if (noLuaCall) {
+			unitDrawer->DrawUnitRawNoLists(unit);
 		} else {
-			const unsigned int origLodCount = unit->lodCount;
-			unit->lodCount = 0;
-			unitDrawer->DrawUnitRaw(unit);
-			unit->lodCount = origLodCount;
+			unitDrawer->DrawIndividual(unit);
+		}
+	} else {
+		if (noLuaCall) {
+			unitDrawer->DrawUnitRawModel(unit);
+		} else {
+			// FIXME? no no-transform version of this
+			// unitDrawer->DrawIndividual(unit);
 		}
 	}
-	else {
-		if (useLOD) {
-			unitDrawer->DrawIndividual(unit);
-		} else {
-			const unsigned int origLodCount = unit->lodCount;
-			unit->lodCount = 0;
-			unitDrawer->DrawIndividual(unit);
-			unit->lodCount = origLodCount;
-		}
+
+	if (!useLuaMat) {
+		lmd->PopLODCount();
 	}
 
 	glPopAttrib();
-
-	return 0;
 }
 
 
-int LuaOpenGL::UnitRaw(lua_State* L)
+int LuaOpenGL::UnitCommon(lua_State* L, bool applyTransform)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	LuaOpenGL::CheckDrawingEnabled(L, __FUNCTION__);
 
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
 
-	const bool rawDraw = luaL_optboolean(L, 2, false);
+	const bool noLuaCall = luaL_optboolean(L, 2, false);
+	const bool useLuaMat = UnitDrawPreCommon(L, unit);
 
-	bool useLOD = true;
-	if (unit->lodCount <= 0) {
-		useLOD = false;
-	}
-	else {
-		unsigned int lod = 0;
-		if (!lua_isnumber(L, 3)) {
-			const LuaMatType matType =
-				(water->DrawReflectionPass()) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
-			lod = unitDrawer->CalcUnitLOD(unit, unit->luaMats[matType].GetLastLOD());
-		} else {
-			int tmpLod = lua_toint(L, 3);
-			if (tmpLod < 0) {
-				useLOD = false;
-			} else {
-				lod = std::min(unit->lodCount - 1, (unsigned int)tmpLod);
-			}
-		}
-		unit->currentLOD = lod;
-	}
-
-	glPushAttrib(GL_ENABLE_BIT);
-
-	if (rawDraw) {
-		if (useLOD) {
-			unitDrawer->DrawUnitRawModel(unit);
-		} else {
-			const unsigned int origLodCount = unit->lodCount;
-			unit->lodCount = 0;
-			// transformation is not applied
-			unitDrawer->DrawUnitRawModel(unit);
-			unit->lodCount = origLodCount;
-		}
-	}
-	else {
-/*
-		if (useLOD) {
-			unitDrawer->DrawIndividual(unit);
-		} else {
-			const unsigned int origLodCount = unit->lodCount;
-			unit->lodCount = 0;
-			unitDrawer->DrawIndividual(unit);
-			unit->lodCount = origLodCount;
-		}
-*/
-	}
-
-	glPopAttrib();
-
+	UnitDrawPostCommon(unit, applyTransform, noLuaCall, useLuaMat);
 	return 0;
 }
+
+int LuaOpenGL::Unit(lua_State* L) { return (UnitCommon(L, true)); }
+int LuaOpenGL::UnitRaw(lua_State* L) { return (UnitCommon(L, false)); }
 
 
 int LuaOpenGL::UnitShape(lua_State* L)
@@ -1488,20 +1442,17 @@ int LuaOpenGL::UnitMultMatrix(lua_State* L)
 
 int LuaOpenGL::UnitPiece(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-	const LocalModel* localModel = unit->localModel;
+	const CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 
-	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || ((size_t)piece >= localModel->pieces.size())) {
+	if (unit == nullptr)
 		return 0;
-	}
-	LocalModelPiece* localPiece = localModel->pieces[piece];
+
+	const LocalModelPiece* localPiece = ParseObjectConstLocalModelPiece(L, unit, 2);
+
+	if (localPiece == nullptr)
+		return 0;
 
 	glCallList(localPiece->dispListID);
-
 	return 0;
 }
 
@@ -1516,27 +1467,23 @@ int LuaOpenGL::UnitPieceMultMatrix(lua_State* L)
 	CheckDrawingEnabled(L, __FUNCTION__);
 
 	const CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
 
-	const LocalModel* localModel = unit->localModel;
-	if (localModel == NULL) {
+	if (unit == nullptr)
 		return 0;
-	}
-	const unsigned int piece = luaL_checkint(L, 2) - 1;
-	if (piece >= localModel->pieces.size()) {
-		return 0;
-	}
 
-	glMultMatrixf(localModel->GetRawPieceMatrix(piece));
+	const LocalModelPiece* localPiece = ParseObjectConstLocalModelPiece(L, unit, 2);
+
+	if (localPiece == nullptr)
+		return 0;
+
+	glMultMatrixf(localPiece->GetModelSpaceMatrix());
 	return 0;
 }
 
 
 /******************************************************************************/
 
-static inline bool IsFeatureVisible(const lua_State *L, const CFeature* feature)
+static inline bool IsFeatureVisible(const lua_State* L, const CFeature* feature)
 {
 	if (CLuaHandle::GetHandleFullRead(L))
 		return true;
@@ -1640,19 +1587,17 @@ static inline CUnit* ParseDrawUnit(lua_State* L, const char* caller, int index)
 			return NULL;
 		}
 	}
-	if (!camera->InView(unit->midPos, unit->radius)) {
+
+	if (unit->isIcon)
 		return NULL;
-	}
-	const float sqDist = (unit->pos - camera->GetPos()).SqLength();
+	if (!camera->InView(unit->midPos, unit->radius))
+		return NULL;
+
+	//const float sqDist = (unit->pos - camera->GetPos()).SqLength();
 	//const float farLength = unit->sqRadius * unitDrawDist * unitDrawDist;
 	//if (sqDist >= farLength) {
 	//	return NULL;
 	//}
-	const float iconDistSqrMult = unit->unitDef->iconType->GetDistanceSqr();
-	const float realIconLength = unitDrawer->iconLength * iconDistSqrMult;
-	if (sqDist >= realIconLength) {
-		return NULL;
-	}
 
 	return unit;
 }

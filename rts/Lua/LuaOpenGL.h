@@ -68,6 +68,19 @@ class LuaOpenGL {
 		static void ResetDrawWorldRefraction();
 		static void DisableDrawWorldRefraction();
 
+		// no-ops (should probably guard some state)
+		static void EnableDrawGroundPostDeferred() {}
+		static void ResetDrawGroundPostDeferred() {}
+		static void DisableDrawGroundPostDeferred() {}
+		// no-ops
+		static void EnableDrawUnitsPostDeferred() {}
+		static void ResetDrawUnitsPostDeferred() {}
+		static void DisableDrawUnitsPostDeferred() {}
+		// no-ops
+		static void EnableDrawFeaturesPostDeferred() {}
+		static void ResetDrawFeaturesPostDeferred() {}
+		static void DisableDrawFeaturesPostDeferred() {}
+
 		static void EnableDrawScreenEffects();
 		static void ResetDrawScreenEffects();
 		static void DisableDrawScreenEffects();
@@ -208,6 +221,9 @@ class LuaOpenGL {
 		static int EndText(lua_State* L);
 		static int GetTextWidth(lua_State* L);
 		static int GetTextHeight(lua_State* L);
+
+		// internal wrapper for Unit and UnitRaw
+		static int UnitCommon(lua_State* L, bool applyTransform);
 
 		static int Unit(lua_State* L);
 		static int UnitRaw(lua_State* L);

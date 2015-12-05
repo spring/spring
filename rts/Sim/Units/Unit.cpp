@@ -28,7 +28,6 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 
-#include "Rendering/Models/IModelParser.h"
 #include "Rendering/GroundFlash.h"
 
 #include "Game/UI/Groups/Group.h"
@@ -60,6 +59,7 @@
 #include "System/Sound/ISoundChannels.h"
 #include "System/Sync/SyncedPrimitive.h"
 #include "System/Sync/SyncTracer.h"
+#include "System/Util.h"
 
 
 // See end of source for member bindings
@@ -84,8 +84,6 @@ CUnit::CUnit()
 , stockpileWeapon(NULL)
 , soloBuilder(NULL)
 , lastAttacker(NULL)
-, lastAttackedPiece(NULL)
-, lastAttackedPieceFrame(-1)
 , lastAttackFrame(-200)
 , lastFireWeapon(0)
 , transporter(NULL)
@@ -94,7 +92,6 @@ CUnit::CUnit()
 , moveType(NULL)
 , prevMoveType(NULL)
 , commandAI(NULL)
-, localModel(NULL)
 , script(NULL)
 , los(ILosType::LOS_TYPE_COUNT, nullptr)
 , losStatus(teamHandler->ActiveAllyTeams(), 0)
@@ -108,7 +105,6 @@ CUnit::CUnit()
 , featureDefID(-1)
 , power(100.0f)
 , buildProgress(0.0f)
-, maxHealth(100.0f)
 , paralyzeDamage(0.0f)
 , captureProgress(0.0f)
 , experience(0.0f)
@@ -191,8 +187,6 @@ CUnit::CUnit()
 , group(nullptr)
 , myTrack(NULL)
 , myIcon(NULL)
-, lodCount(0)
-, currentLOD(0)
 
 , stunned(false)
 {
@@ -230,10 +224,6 @@ CUnit::~CUnit()
 	SetMetalStorage(0);
 	SetEnergyStorage(0);
 
-	delete commandAI;       commandAI       = NULL;
-	delete moveType;        moveType        = NULL;
-	delete prevMoveType;    prevMoveType    = NULL;
-
 	// not all unit deletions run through KillUnit(),
 	// but we always want to call this for ourselves
 	UnBlock();
@@ -241,18 +231,20 @@ CUnit::~CUnit()
 	// Remove us from our group, if we were in one
 	SetGroup(nullptr);
 
-	if (script != &CNullUnitScript::value) {
-		delete script;
-		script = NULL;
-	}
+	// delete script first so any callouts still see valid ptrs
+	if (script != &CNullUnitScript::value)
+		SafeDelete(script);
+
+	SafeDelete(commandAI);
+	SafeDelete(moveType);
+	SafeDelete(prevMoveType);
+
 	// ScriptCallback may reference weapons, so delete the script first
-	for (std::vector<CWeapon*>::const_iterator wi = weapons.begin(); wi != weapons.end(); ++wi) {
+	for (auto wi = weapons.cbegin(); wi != weapons.cend(); ++wi) {
 		delete *wi;
 	}
 
 	quadField->RemoveUnit(this);
-
-	modelParser->DeleteLocalModel(localModel);
 }
 
 
@@ -299,17 +291,18 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	xsize = ((buildFacing & 1) == 0) ? unitDef->xsize : unitDef->zsize;
 	zsize = ((buildFacing & 1) == 1) ? unitDef->xsize : unitDef->zsize;
 
-	// copy the UnitDef volume instance
-	// NOTE: gets deleted in ~CSolidObject
-	model = unitDef->LoadModel();
-	localModel = new LocalModel(model);
-	collisionVolume = new CollisionVolume(unitDef->collisionVolume);
-	modelParser->CreateLocalModel(localModel);
 
-	if (collisionVolume->DefaultToSphere())
-		collisionVolume->InitSphere(model->radius);
-	if (collisionVolume->DefaultToFootPrint())
-		collisionVolume->InitBox(float3(xsize * SQUARE_SIZE, model->height, zsize * SQUARE_SIZE));
+	// copy the UnitDef volume instance
+	model = unitDef->LoadModel();
+	collisionVolume = unitDef->collisionVolume;
+
+	localModel.SetModel(model);
+
+	if (collisionVolume.DefaultToSphere())
+		collisionVolume.InitSphere(model->radius);
+	if (collisionVolume.DefaultToFootPrint())
+		collisionVolume.InitBox(float3(xsize * SQUARE_SIZE, model->height, zsize * SQUARE_SIZE));
+
 
 	mapSquare = CGround::GetSquare((params.pos).cClampInMap());
 
@@ -474,8 +467,7 @@ void CUnit::PostLoad()
 	unitDef = unitDefHandler->GetUnitDefByID(unitDefID); // strange. creg should handle this by itself already, but it doesn't
 	objectDef = unitDef;
 	model = unitDef->LoadModel();
-	localModel = new LocalModel(model);
-	modelParser->CreateLocalModel(localModel);
+	localModel.SetModel(model);
 	blockMap = (unitDef->GetYardMap().empty())? NULL: &unitDef->GetYardMap()[0];
 
 	SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
@@ -626,11 +618,12 @@ void CUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool sh
 	}
 	transportedUnits.clear();
 
-	deathSpeed = speed;
 
 	// TODO: add UnitPreDestroyed, call these later
 	eventHandler.UnitDestroyed(this, attacker);
 	eoh->UnitDestroyed(*this, attacker);
+
+	deathSpeed = speed;
 
 	// Will be called in the destructor again, but this can not hurt
 	SetGroup(nullptr);
@@ -1238,12 +1231,12 @@ static void AddUnitDamageStats(CUnit* unit, float damage, bool dealt)
 		return;
 
 	CTeam* team = teamHandler->Team(unit->team);
-	TeamStatistics* stats = team->currentStats;
+	TeamStatistics& stats = team->GetCurrentStats();
 
 	if (dealt) {
-		stats->damageDealt += damage;
+		stats.damageDealt += damage;
 	} else {
-		stats->damageReceived += damage;
+		stats.damageReceived += damage;
 	}
 }
 
@@ -1371,7 +1364,7 @@ void CUnit::DoDamage(
 
 		if (!teamHandler->Ally(allyteam, attacker->allyteam)) {
 			attacker->AddExperience(expMultiplier * 0.1f * (power / attacker->power));
-			teamHandler->Team(attacker->team)->currentStats->unitsKilled++;
+			teamHandler->Team(attacker->team)->GetCurrentStats().unitsKilled++;
 		}
 	}
 }
@@ -1410,17 +1403,6 @@ CMatrix44f CUnit::GetTransformMatrix(const bool synced, const bool error) const
 
 	return CMatrix44f(interPos, -rightdir, updir, frontdir);
 }
-
-const CollisionVolume* CUnit::GetCollisionVolume(const LocalModelPiece* lmp) const {
-	if (lmp == NULL)
-		return collisionVolume;
-	if (!collisionVolume->DefaultToPieceTree())
-		return collisionVolume;
-
-	return (lmp->GetCollisionVolume());
-}
-
-
 
 /******************************************************************************/
 /******************************************************************************/
@@ -2758,7 +2740,6 @@ CR_REG_METADATA(CUnit, (
 
 	CR_MEMBER(power),
 
-	CR_MEMBER(maxHealth),
 	CR_MEMBER(paralyzeDamage),
 	CR_MEMBER(captureProgress),
 	CR_MEMBER(experience),
@@ -2798,7 +2779,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(weapons),
 	CR_MEMBER(shieldWeapon),
 	CR_MEMBER(stockpileWeapon),
-	CR_MEMBER(localModel),
 
 	CR_MEMBER(reloadSpeed),
 	CR_MEMBER(maxRange),
@@ -2861,8 +2841,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(buildTime),
 
 	CR_MEMBER(lastAttacker),
-	CR_MEMBER(lastAttackedPiece),
-	CR_MEMBER(lastAttackedPieceFrame),
 	CR_MEMBER(lastAttackFrame),
 	CR_MEMBER(lastFireWeapon),
 	CR_MEMBER(recentDamage),
@@ -2924,11 +2902,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(lastUnitUpdate),
 
 	CR_MEMBER_UN(tooltip),
-
-	CR_MEMBER_UN(lodCount),
-	CR_MEMBER_UN(currentLOD),
-	CR_MEMBER_UN(lodLengths),
-	CR_MEMBER_UN(luaMats),
 
 	CR_MEMBER(stunned),
 

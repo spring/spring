@@ -1,8 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/ThreadPool.h"
+#include "System/Log/ILog.h"
 #include "System/UnsyncedRNG.h"
+#include <boost/thread/future.hpp>
 #include <vector>
+#include <atomic>
 
 #define BOOST_TEST_MODULE ThreadPool
 #include <boost/test/unit_test.hpp>

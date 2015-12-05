@@ -98,9 +98,13 @@ CRoamMeshDrawer::~CRoamMeshDrawer()
 void CRoamMeshDrawer::Update()
 {
 	//FIXME this retessellates with the current camera frustum, shadow pass and others don't have to see the same patches!
+	CCamera* cam = nullptr;
 
-	// CCamera* cam = (inShadowPass)? camera: cam2;
-	CCamera* cam = cam2;
+	if (false && shadowHandler->inShadowPass) {
+		cam = CCamera::GetCamera(CCamera::CAMTYPE_SHADOW);
+	} else {
+		cam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
+	}
 
 	// Update Patch visibility
 	Patch::UpdateVisibility(cam, roamPatches, numPatchesX);
@@ -193,9 +197,9 @@ void CRoamMeshDrawer::Update()
 				camera->GetPos().x,
 				camera->GetPos().y,
 				camera->GetPos().z,
-				cam2->pos.x,
-				cam2->pos.y,
-				cam2->pos.z
+				cam->pos.x,
+				cam->pos.y,
+				cam->pos.z
 				);
 		}*/
 
@@ -213,11 +217,19 @@ void CRoamMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 {
 	const bool inShadowPass = (drawPass == DrawPass::Shadow);
 
+	CCamera* cam = nullptr;
+
 	// FIXME: this only updates the *visibilty* of patches
 	//  It doesn't update the *tessellation*, neither are indices sent to the GPU.
 	//  It just re-uses the last tessellation pattern which may have been created
 	//  with a totally different camera.
-	CCamera* cam = (inShadowPass)? camera: cam2;
+	//
+	if (false && inShadowPass) {
+		cam = CCamera::GetCamera(CCamera::CAMTYPE_SHADOW);
+	} else {
+		cam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
+	}
+
 
 	Patch::UpdateVisibility(cam, roamPatches, numPatchesX);
 

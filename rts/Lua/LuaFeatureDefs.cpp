@@ -53,7 +53,7 @@ bool LuaFeatureDefs::PushEntries(lua_State* L)
 
 	typedef int (*IndxFuncType)(lua_State*);
 	typedef int (*IterFuncType)(lua_State*);
-	typedef std::map<std::string, const FeatureDef*> ObjectDefMapType;
+	typedef std::map<std::string, int> ObjectDefMapType;
 
 	const ObjectDefMapType& defsMap = featureHandler->GetFeatureDefs();
 
@@ -71,12 +71,12 @@ bool LuaFeatureDefs::PushEntries(lua_State* L)
 	const std::array<const IterFuncType, 2> iterFuncs = {Pairs, Next};
 
 	for (auto it = defsMap.cbegin(); it != defsMap.cend(); ++it) {
-		const auto def = it->second; // ObjectDefMapType::mapped_type
+		const auto def = featureHandler->GetFeatureDefByID(it->second); // ObjectDefMapType::mapped_type
 
 		if (def == NULL)
 			continue;
 
-		PushObjectDefProxyTable(L, indxOpers, iterOpers, indxFuncs, iterFuncs, it->second);
+		PushObjectDefProxyTable(L, indxOpers, iterOpers, indxFuncs, iterFuncs, def);
 	}
 
 	return true;
@@ -468,7 +468,7 @@ static bool InitParamMap()
 	ADD_FUNCTION("midz",      fd, ModelMidz);
 	ADD_FUNCTION("maxz",      fd, ModelMaxz);
 	ADD_FUNCTION("modelname", fd, ModelName);
-	
+
 	ADD_INT("id", fd.id);
 	ADD_INT("deathFeatureID", fd.deathFeatureDefID);
 

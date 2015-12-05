@@ -4,6 +4,8 @@
 #define SOLID_OBJECT_H
 
 #include "WorldObject.h"
+#include "Rendering/Models/3DModel.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "System/bitops.h"
 #include "System/Matrix44f.h"
 #include "System/type2.h"
@@ -12,7 +14,6 @@
 #include "System/Sync/SyncedPrimitive.h"
 
 struct MoveDef;
-struct CollisionVolume;
 struct LocalModelPiece;
 struct SolidObjectDef;
 struct SolidObjectGroundDecal;
@@ -92,7 +93,7 @@ public:
 	};
 
 	CSolidObject();
-	virtual ~CSolidObject();
+	virtual ~CSolidObject() {}
 
 	virtual bool AddBuildPower(CUnit* builder, float amount) { return false; }
 	virtual void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID) {}
@@ -147,8 +148,31 @@ public:
 		return CMatrix44f();
 	}
 
-	virtual const CollisionVolume* GetCollisionVolume(const LocalModelPiece* lmp) const { return collisionVolume; }
+	const CollisionVolume* GetCollisionVolume(const LocalModelPiece* lmp) const {
+		if (lmp == nullptr)
+			return &collisionVolume;
+		if (!collisionVolume.DefaultToPieceTree())
+			return &collisionVolume;
 
+		return (lmp->GetCollisionVolume());
+	}
+
+	const LuaObjectMaterialData* GetLuaMaterialData() const { return (localModel.GetLuaMaterialData()); }
+	      LuaObjectMaterialData* GetLuaMaterialData()       { return (localModel.GetLuaMaterialData()); }
+
+	const LocalModelPiece* GetLastHitPiece(int frame) const {
+		if (frame < 0)
+			return lastHitPiece;
+		if (frame == lastHitPieceFrame)
+			return lastHitPiece;
+
+		return nullptr;
+	}
+
+	void SetLastHitPiece(const LocalModelPiece* p, int f) {
+		lastHitPiece      = p;
+		lastHitPieceFrame = f;
+	}
 
 	/**
 	 * adds this object to the GroundBlockingMap if and only
@@ -207,7 +231,7 @@ public:
 
 	bool    HasCollidableStateBit(unsigned int bit) const { return ((collidableState & bit) != 0); }
 	void    SetCollidableStateBit(unsigned int bit) { unsigned int cs = collidableState; cs |= ( bit); collidableState = static_cast<CollidableState>(cs); }
-	void  ClearCollidableStateBit(unsigned int bit) { unsigned int cs = collidableState; cs &= (~bit); collidableState = static_cast<CollidableState>(cs); } 
+	void  ClearCollidableStateBit(unsigned int bit) { unsigned int cs = collidableState; cs &= (~bit); collidableState = static_cast<CollidableState>(cs); }
 	void   PushCollidableStateBit(unsigned int bit) { UpdateCollidableStateBit(1u << (32u - (bits_ffs(bit) - 1u)), HasCollidableStateBit(bit)); }
 	void    PopCollidableStateBit(unsigned int bit) { UpdateCollidableStateBit(bit, HasCollidableStateBit(1u << (32u - (bits_ffs(bit) - 1u)))); }
 	bool UpdateCollidableStateBit(unsigned int bit, bool set) {
@@ -244,6 +268,8 @@ private:
 
 public:
 	float health;
+	float maxHealth;
+
 	float mass;                                 ///< the physical mass of this object (run-time constant)
 	float crushResistance;                      ///< how much MoveDef::crushStrength is required to crush this object (run-time constant)
 
@@ -267,12 +293,17 @@ public:
 	int allyteam;                               ///< allyteam that this->team is part of
 
 	int tempNum;                                ///< used to check if object has already been processed (in QuadField queries, etc)
+	int lastHitPieceFrame;                      ///< frame in which lastHitPiece was hit
+
 
 	const SolidObjectDef* objectDef;            ///< points to a UnitDef or to a FeatureDef instance
-
 	MoveDef* moveDef;                           ///< mobility information about this object (if NULL, object is either static or aircraft)
-	CollisionVolume* collisionVolume;
-	SolidObjectGroundDecal* groundDecal;
+
+	LocalModel localModel;
+	CollisionVolume collisionVolume;
+
+	const LocalModelPiece* lastHitPiece;        ///< piece that was last hit by a projectile
+	      SolidObjectGroundDecal* groundDecal;
 
 	SyncedFloat3 frontdir;                      ///< object-local z-axis (in WS)
 	SyncedFloat3 rightdir;                      ///< object-local x-axis (in WS)

@@ -314,7 +314,7 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 			case NETMSG_LUAMSG:
 				{
 				std::cout << "LUAMSG length:" << packet->length << " Player:" << (unsigned)buffer[3] << " Script: " << *(uint16_t*)&buffer[4] << " Mode: " << (unsigned)buffer[6] << " Msg: ";
-				PrintBinary(&packet->data[7], packet->length);
+				PrintBinary(&packet->data[7], packet->length - 7);
 				std::cout << std::endl;
 				break;
 				}

@@ -489,11 +489,14 @@ void CShadowHandler::CreateShadows()
 	}
 
 	if (L->GetLightIntensity() > 0.0f) {
-		// HACK
-		// needed for particle/billboard rendering
-		// NOT for frustum checking (which is semi broken for shadows)!
-		const float3 camUp = camera->up;
+		// TODO: use this actual camera for the SP instead of raw LoadMatrix
+		// CCamera::SetActiveCamera(CCamera::CAMTYPE_SHADOW);
+
+		// HACK: needed for particle/billboard rendering, NOT for
+		// frustum checking (which is semi broken for shadows)!
 		const float3 camRgt = camera->right;
+		const float3 camUp = camera->up;
+
 		camera->right = sunDirX;
 		camera->up = sunDirY;
 
@@ -662,8 +665,10 @@ void CShadowHandler::CalcMinMaxView()
 	// derive the size of the shadow-map from the
 	// intersection points of the camera frustum
 	// with the xz-plane
-	cam2->GetFrustumSides(0.0f, 0.0f, 1.0f, true);
-	cam2->ClipFrustumLines(true, -20000.0f, mapDims.mapy * SQUARE_SIZE + 20000.0f);
+	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
+
+	cam->GetFrustumSides(0.0f, 0.0f, 1.0f, true);
+	cam->ClipFrustumLines(true, -20000.0f, mapDims.mapy * SQUARE_SIZE + 20000.0f);
 
 	shadowProjMinMax.x = -100.0f;
 	shadowProjMinMax.y =  100.0f;
@@ -680,8 +685,8 @@ void CShadowHandler::CalcMinMaxView()
 		maxSize *= 1.2f;
 	}
 
-	const std::vector<CCamera::FrustumLine> negSides = cam2->GetNegFrustumSides();
-	const std::vector<CCamera::FrustumLine> posSides = cam2->GetPosFrustumSides();
+	const std::vector<CCamera::FrustumLine>& negSides = cam->GetNegFrustumSides();
+	const std::vector<CCamera::FrustumLine>& posSides = cam->GetPosFrustumSides();
 	std::vector<CCamera::FrustumLine>::const_iterator fli;
 
 	if (!negSides.empty()) {

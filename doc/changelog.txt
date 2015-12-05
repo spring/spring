@@ -6,9 +6,67 @@ Spring changelog
 
 General:
  ! change default screenshot file type to jpg. to create png use /screenshot png
+ - pr-downloader dependency is now mandatory (statically linked with spring)
 
 Lua:
+ ! {Set,Get}UnitPieceCollisionVolumeData now receive 1-based piece index argument (was 0-based).
  ! GameID callin now gets the ID string encoded in hex.
+ - new Spring.GetUICommands function to obtain a list of all UI commands (e.g. /luaui reload)
+ - new VFS.CalculateHash function that calculates hash (in base64 form) of a given string (with md5 support initially)
+ - new Spring.SetFeatureFade(featureID, bool) to control whether a feature will fade or not when zoomed out.
+ - add callouts
+     Spring.{Get,Set}FeaturePieceCollisionVolumeData
+     Spring.GetFeatureLastAttackedPiece
+     Spring.GetFeaturePieceMap
+     Spring.GetFeaturePieceList
+     Spring.GetFeaturePieceInfo
+     Spring.GetFeaturePiecePosition
+     Spring.GetFeaturePieceDirection
+     Spring.GetFeaturePiecePosDir
+     Spring.GetFeaturePieceMatrix
+
+ - add Spring.FeatureRendering API; allows custom shaders (technically,
+   materials) for features as its Spring.UnitRendering counterpart does
+   for units
+   note: the following two functions are no-ops
+     Spring.UnitRendering.SetFeatureLuaDraw
+     Spring.FeatureRendering.SetUnitLuaDraw
+
+ - add new callin DrawGroundPostDeferred; this runs at the end of its
+   respective deferred pass and allows proper frame compositing (with
+   ground flashes/decals/foliage/etc, which are drawn between it and
+   DrawWorldPreUnit)
+
+ - add new callins DrawUnitsPostDeferred and DrawFeaturesPostDeferred
+   these run at the end of their respective deferred passes to inform
+   Lua code it should make use of the $model_gbuffer_* textures before
+   another pass overwrites them (and to allow proper blending with e.g.
+   cloaked objects which are drawn between these events and DrawWorld)
+
+ - allow Lua to disable the forward {Unit,Feature,Ground}Drawer passes;
+   use the callouts
+     Spring.SetDrawGroundDeferred(
+          boolean drawGroundDeferred
+       [, boolean drawGroundForward]
+     )
+   and
+     Spring.SetDrawModelsDeferred(
+          boolean drawUnitsDeferred,
+          boolean drawFeaturesDeferred
+       [, boolean drawUnitsForward
+       [, boolean drawFeaturesForward ]]
+     )
+
+   note: the *PostDeferred events are only sent (and only have a real
+   purpose) if forward drawing is disabled!
+
+Rendering:
+ - add support for SSMF Splat Detail Normal Textures (by Beherith)
+ - add deferred pass for features; note that these are drawn into
+   the same buffer as units (overwriting it, unless the new config
+   variable AllowDeferredModelBufferClear is set to false [default])
+ - allow custom shaders for being-built units
+
 
 -- 100.0 --------------------------------------------------------
 Major:

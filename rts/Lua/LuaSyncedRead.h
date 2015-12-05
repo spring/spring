@@ -184,7 +184,9 @@ class LuaSyncedRead {
 		static int GetFeatureBlocking(lua_State* L);
 		static int GetFeatureNoSelect(lua_State* L);
 		static int GetFeatureResurrect(lua_State* L);
+		static int GetFeatureLastAttackedPiece(lua_State* L);
 		static int GetFeatureCollisionVolumeData(lua_State* L);
+		static int GetFeaturePieceCollisionVolumeData(lua_State* L);
 
 		static int GetProjectilePosition(lua_State* L);
 		static int GetProjectileDirection(lua_State* L);
@@ -230,8 +232,17 @@ class LuaSyncedRead {
 		static int GetUnitPieceDirection(lua_State* L);
 		static int GetUnitPiecePosDir(lua_State* L);
 		static int GetUnitPieceMatrix(lua_State* L);
+
 		static int GetUnitScriptPiece(lua_State* L);
 		static int GetUnitScriptNames(lua_State* L);
+
+		static int GetFeaturePieceMap(lua_State* L);
+		static int GetFeaturePieceList(lua_State* L);
+		static int GetFeaturePieceInfo(lua_State* L);
+		static int GetFeaturePiecePosition(lua_State* L);
+		static int GetFeaturePieceDirection(lua_State* L);
+		static int GetFeaturePiecePosDir(lua_State* L);
+		static int GetFeaturePieceMatrix(lua_State* L);
 
 		static int GetRadarErrorParams(lua_State* L);
 

@@ -23,6 +23,8 @@ namespace ThreadPool {
 	static inline int GetNumThreads() { return 1; }
 	static inline void NotifyWorkerThreads() {}
 	static inline bool HasThreads() { return false; }
+
+	static constexpr int MAX_THREADS = 1;
 }
 
 
@@ -69,7 +71,6 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 #include <boost/thread/future.hpp>
 #undef gt
 #include <boost/chrono/include.hpp>
-#include <boost/utility.hpp>
 #include <memory>
 
 #ifdef UNITSYNC
@@ -122,6 +123,8 @@ namespace ThreadPool {
 	int GetMaxThreads();
 	int GetNumThreads();
 	void NotifyWorkerThreads();
+
+	static constexpr int MAX_THREADS = 16;
 }
 
 
@@ -295,14 +298,10 @@ static inline void for_mt(int start, int end, int step, const std::function<void
 	if (end <= start)
 		return;
 
-	if ((end - start) < step) {
-		// single iteration -> directly process
-		f(start);
-		return;
-	}
+	const bool singleIteration = (end - start) < step;
 
 	// do not use HasThreads because that counts main as a worker
-	if (!ThreadPool::HasThreads()) {
+	if (!ThreadPool::HasThreads() || singleIteration) {
 		for (int i = start; i < end; i += step) {
 			f(i);
 		}

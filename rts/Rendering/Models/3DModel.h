@@ -5,9 +5,10 @@
 
 #include <vector>
 #include <string>
-#include <set>
-#include <map>
+
+#include "Lua/LuaObjectMaterial.h"
 #include "Rendering/GL/VBO.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "System/Matrix44f.h"
 #include "System/creg/creg_cond.h"
 
@@ -36,7 +37,6 @@ struct S3DModelPiece;
 struct LocalModel;
 struct LocalModelPiece;
 
-typedef std::map<std::string, S3DModelPiece*> ModelPieceMap;
 
 
 /**
@@ -58,7 +58,7 @@ struct S3DModelPiece {
 
 	virtual const float3& GetVertexPos(const int) const = 0;
 	virtual const float3& GetNormal(const int) const = 0;
-	virtual float3 GetPosOffset() const { return ZeroVector; }
+
 	virtual void Shatter(float, int, int, const float3&, const float3&) const {}
 
 	CMatrix44f& ComposeRotation(CMatrix44f& m, const float3& r) const {
@@ -104,9 +104,9 @@ struct S3DModelPiece {
 	// draw piece and children statically (ie. without script-transforms)
 	void DrawStatic() const;
 
-	void SetCollisionVolume(CollisionVolume* cv) { colvol = cv; }
-	const CollisionVolume* GetCollisionVolume() const { return colvol; }
-	      CollisionVolume* GetCollisionVolume()       { return colvol; }
+	void SetCollisionVolume(const CollisionVolume& cv) { colvol = cv; }
+	const CollisionVolume* GetCollisionVolume() const { return &colvol; }
+	      CollisionVolume* GetCollisionVolume()       { return &colvol; }
 
 	unsigned int GetChildCount() const { return children.size(); }
 	S3DModelPiece* GetChild(unsigned int i) const { return children[i]; }
@@ -130,7 +130,7 @@ public:
 	std::vector<S3DModelPiece*> children;
 
 	S3DModelPiece* parent;
-	CollisionVolume* colvol;
+	CollisionVolume colvol;
 
 	AxisMappingType axisMapType;
 
@@ -180,7 +180,6 @@ struct S3DModel
 	}
 
 	S3DModelPiece* GetRootPiece() const { return rootPiece; }
-	S3DModelPiece* FindPiece(const std::string& name) const;
 
 	void SetRootPiece(S3DModelPiece* p) { rootPiece = p; }
 	void DrawStatic() const { rootPiece->DrawStatic(); }
@@ -209,7 +208,6 @@ public:
 	float3 relMidPos;
 
 	S3DModelPiece* rootPiece;   /// The piece at the base of the model hierarchy
-	ModelPieceMap pieceMap;     /// Lookup table for pieces by name
 };
 
 
@@ -223,8 +221,9 @@ struct LocalModelPiece
 {
 	CR_DECLARE_STRUCT(LocalModelPiece)
 
+	LocalModelPiece() {}
 	LocalModelPiece(const S3DModelPiece* piece);
-	~LocalModelPiece();
+	~LocalModelPiece() {}
 
 	void AddChild(LocalModelPiece* c) { children.push_back(c); }
 	void RemoveChild(LocalModelPiece* c) { children.erase(std::remove(children.begin(), children.end(), c), children.end()); }
@@ -242,8 +241,10 @@ struct LocalModelPiece
 	bool UpdateMatrix();
 	void UpdateMatricesRec(bool updateChildMatrices);
 
-	bool GetEmitDirPos(float3& pos, float3& dir) const;
-	float3 GetAbsolutePos() const;
+	// note: actually OBJECT_TO_WORLD but transform is the same
+	float3 GetAbsolutePos() const { return (modelSpaceMat.GetPos() * WORLD_TO_OBJECT_SPACE); }
+
+	bool GetEmitDirPos(float3& emitPos, float3& emitDir) const;
 
 	void SetPosition(const float3& p) { pos = p; ++numUpdatesSynced; }
 	void SetRotation(const float3& r) { rot = r; ++numUpdatesSynced; }
@@ -256,8 +257,8 @@ struct LocalModelPiece
 	const CMatrix44f& GetPieceSpaceMatrix() const { return pieceSpaceMat; }
 	const CMatrix44f& GetModelSpaceMatrix() const { return modelSpaceMat; }
 
-	const CollisionVolume* GetCollisionVolume() const { return colvol; }
-	      CollisionVolume* GetCollisionVolume()       { return colvol; }
+	const CollisionVolume* GetCollisionVolume() const { return &colvol; }
+	      CollisionVolume* GetCollisionVolume()       { return &colvol; }
 
 private:
 	float3 pos; // translation relative to parent LMP, *INITIALLY* equal to original->offset
@@ -267,7 +268,7 @@ private:
 	CMatrix44f pieceSpaceMat; // transform relative to parent LMP (SYNCED), combines <pos> and <rot>
 	CMatrix44f modelSpaceMat; // transform relative to root LMP (SYNCED)
 
-	CollisionVolume* colvol;
+	CollisionVolume colvol;
 
 	unsigned numUpdatesSynced; // triggers UpdateMatrix (via UpdateMatricesRec) if != lastMatrixUpdate
 	unsigned lastMatrixUpdate;
@@ -292,28 +293,32 @@ struct LocalModel
 {
 	CR_DECLARE_STRUCT(LocalModel)
 
-	LocalModel(const S3DModel* model)
-		: dirtyPieces(model->numPieces)
-		, lodCount(0)
-	{
-		assert(model->numPieces >= 1);
-		pieces.reserve(model->numPieces);
-		CreateLocalModelPieces(model->GetRootPiece());
-		assert(pieces.size() == model->numPieces);
+	LocalModel() {
+		dirtyPieces = 0;
+		bvFrameTime = 0;
+		lodCount = 0;
 	}
-
-	~LocalModel()
-	{
-		// delete the local piece copies
-		for (std::vector<LocalModelPiece*>::iterator pi = pieces.begin(); pi != pieces.end(); ++pi) {
-			delete *pi;
-		}
+	~LocalModel() {
 		pieces.clear();
 	}
 
+
 	bool HasPiece(unsigned int i) const { return (i < pieces.size()); }
-	LocalModelPiece* GetPiece(unsigned int i) const { assert(HasPiece(i)); return pieces[i]; }
-	LocalModelPiece* GetRoot() const { return GetPiece(0); }
+	bool Initialized() const { return (!pieces.empty()); }
+
+	const LocalModelPiece* GetPiece(unsigned int i)  const { assert(HasPiece(i)); return &pieces[i]; }
+	      LocalModelPiece* GetPiece(unsigned int i)        { assert(HasPiece(i)); return &pieces[i]; }
+
+	const LocalModelPiece* GetRoot() const { return (GetPiece(0)); }
+	const CollisionVolume* GetBoundingVolume() const { return &boundingVolume; }
+
+	const LuaObjectMaterialData* GetLuaMaterialData() const { return &luaMaterialData; }
+	      LuaObjectMaterialData* GetLuaMaterialData()       { return &luaMaterialData; }
+
+	// raw forms, the piece-index must be valid
+	const float3 GetRawPiecePos(int pieceIdx) const { return pieces[pieceIdx].GetAbsolutePos(); }
+	const CMatrix44f& GetRawPieceMatrix(int pieceIdx) const { return pieces[pieceIdx].GetModelSpaceMatrix(); }
+
 
 	void Draw() const { DrawPieces(); }
 	void DrawLOD(unsigned int lod) const {
@@ -323,33 +328,47 @@ struct LocalModel
 		DrawPiecesLOD(lod);
 	}
 
-	void UpdatePieceMatrices() {
-		if (dirtyPieces > 0) {
-			pieces[0]->UpdateMatricesRec(false);
-		}
+	void Update(unsigned int frameNum) {
+		if (dirtyPieces > 0)
+			pieces[0].UpdateMatricesRec(false);
+
+		// has its own fixed schedule independent of dirtyPieces
+		if ((frameNum - bvFrameTime) >= 15)
+			UpdateBoundingVolume(frameNum);
+
 		dirtyPieces = 0;
 	}
-
 
 
 	void DrawPieces() const;
 	void DrawPiecesLOD(unsigned int lod) const;
 
+	void SetModel(const S3DModel* model);
 	void SetLODCount(unsigned int count);
 	void PieceUpdated(unsigned int pieceIdx) { dirtyPieces += 1; }
+	void UpdateBoundingVolume(unsigned int frameNum);
 
-	void ReloadDisplayLists();
 
-	// raw forms, the piece-index must be valid
-	// NOTE:
-	//   GetRawPieceDirection is only useful for special pieces (used for emit-sfx)
-	//   it returns a direction in piece-space, NOT model-space as the "Raw" suggests
-	//   this direction is vertex[0].pos - vertex[1].pos for pieces with >= 2 vertices
-	//   only LuaSyncedRead::GetUnitPieceDirection calls it, better mark as DEPRECATED
-	void GetRawEmitDirPos(int pieceIdx, float3& emitPos, float3& emitDir) const { pieces[pieceIdx]->GetEmitDirPos(emitPos, emitDir); }
-	float3 GetRawPiecePos(int pieceIdx) const { return pieces[pieceIdx]->GetAbsolutePos(); }
-	float3 GetRawPieceDirection(int pieceIdx) const { return pieces[pieceIdx]->GetDirection(); }
-	const CMatrix44f& GetRawPieceMatrix(int pieceIdx) const { return pieces[pieceIdx]->GetModelSpaceMatrix(); }
+	void GetBoundingBoxVerts(std::vector<float3>& verts) const {
+		verts.resize(8 + 2); GetBoundingBoxVerts(&verts[0]);
+	}
+
+	void GetBoundingBoxVerts(float3* verts) const {
+		// bottom
+		verts[0] = float3(bbMins.x,  bbMins.y,  bbMins.z);
+		verts[1] = float3(bbMaxs.x,  bbMins.y,  bbMins.z);
+		verts[2] = float3(bbMaxs.x,  bbMins.y,  bbMaxs.z);
+		verts[3] = float3(bbMins.x,  bbMins.y,  bbMaxs.z);
+		// top
+		verts[4] = float3(bbMins.x,  bbMaxs.y,  bbMins.z);
+		verts[5] = float3(bbMaxs.x,  bbMaxs.y,  bbMins.z);
+		verts[6] = float3(bbMaxs.x,  bbMaxs.y,  bbMaxs.z);
+		verts[7] = float3(bbMins.x,  bbMaxs.y,  bbMaxs.z);
+		// extrema
+		verts[8] = bbMins;
+		verts[9] = bbMaxs;
+	}
+
 
 private:
 	LocalModelPiece* CreateLocalModelPieces(const S3DModelPiece* mpParent);
@@ -357,9 +376,21 @@ private:
 public:
 	// increased by UnitScript whenever a piece is transformed
 	unsigned int dirtyPieces;
+	unsigned int bvFrameTime;
 	unsigned int lodCount;
 
-	std::vector<LocalModelPiece*> pieces;
+	std::vector<LocalModelPiece> pieces;
+
+private:
+	// object-oriented box; accounts for piece movement
+	CollisionVolume boundingVolume;
+
+	// custom Lua-set material this model should be rendered with
+	LuaObjectMaterialData luaMaterialData;
+
+	// bounding-box extrema (local space)
+	float3 bbMins;
+	float3 bbMaxs;
 };
 
 #endif /* _3DMODEL_H */

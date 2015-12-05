@@ -11,8 +11,6 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/Players/Player.h"
 #include "Game/UI/MiniMap.h"
-#include "Lua/LuaMaterial.h"
-#include "Lua/LuaUnitMaterial.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
@@ -22,11 +20,11 @@
 #include "Rendering/Env/IWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/FarTextureHandler.h"
-#include "Rendering/Fonts/glFont.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/IconHandler.h"
+#include "Rendering/LuaObjectDrawer.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -38,21 +36,15 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
-#include "Sim/Units/CommandAI/BuilderCAI.h"
-#include "Game/UI/Groups/Group.h"
+#include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/UnitTypes/Building.h"
-#include "Sim/Weapons/Weapon.h"
 
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
-#include "System/Platform/Watchdog.h"
-#include "System/TimeProfiler.h"
 #include "System/Util.h"
 
 #define UNIT_SHADOW_ALPHA_MASKING
@@ -68,50 +60,6 @@ CONFIG(int, MaxDynamicModelLights)
 	.minimumValue(0);
 
 CONFIG(bool, AdvUnitShading).defaultValue(true).headlessValue(false).safemodeValue(false).description("Determines whether specular highlights and other lighting effects are rendered for units.");
-CONFIG(bool, AllowDeferredModelRendering).defaultValue(false).safemodeValue(false);
-
-CONFIG(float, LODScale).defaultValue(1.0f);
-CONFIG(float, LODScaleShadow).defaultValue(1.0f);
-CONFIG(float, LODScaleReflection).defaultValue(1.0f);
-CONFIG(float, LODScaleRefraction).defaultValue(1.0f);
-
-static bool LUA_DRAWING = false; // FIXME
-static float UNIT_GLOBAL_LOD_FACTOR = 1.0f;
-
-inline static void SetUnitGlobalLODFactor(float value)
-{
-	UNIT_GLOBAL_LOD_FACTOR = (value * camera->GetLPPScale());
-}
-
-static float GetLODFloat(const string& name)
-{
-	// NOTE: the inverse of the value is used
-	const float value = configHandler->GetFloat(name);
-	if (value <= 0.0f) {
-		return 1.0f;
-	}
-	return (1.0f / value);
-}
-
-template<typename T>
-static void erase(T& v, CUnit* u)
-{
-	auto it = std::find(v.begin(), v.end(), u);
-	if (it != v.end()) {
-		*it = v.back();
-		v.pop_back();
-	}
-}
-
-template<typename T>
-static void insert_unique(T& v, CUnit* u)
-{
-	auto it = std::find(v.begin(), v.end(), u);
-	if (it == v.end()) {
-		v.push_back(u);
-	}
-}
-
 
 
 
@@ -119,13 +67,9 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 {
 	eventHandler.AddClient(this);
 
+	LuaObjectDrawer::ReadLODScales(LUAOBJ_UNIT);
 	SetUnitDrawDist((float)configHandler->GetInt("UnitLodDist"));
 	SetUnitIconDist((float)configHandler->GetInt("UnitIconDist"));
-
-	LODScale           = GetLODFloat("LODScale");
-	LODScaleShadow     = GetLODFloat("LODScaleShadow");
-	LODScaleReflection = GetLODFloat("LODScaleReflection");
-	LODScaleRefraction = GetLODFloat("LODScaleRefraction");
 
 	unitAmbientColor = mapInfo->light.unitAmbientColor;
 	unitSunColor = mapInfo->light.unitSunColor;
@@ -137,14 +81,14 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 
 	// load unit explosion generators and decals
 	for (size_t unitDefID = 1; unitDefID < unitDefHandler->unitDefs.size(); unitDefID++) {
-		UnitDef* ud = unitDefHandler->unitDefs[unitDefID];
+		UnitDef& ud = unitDefHandler->unitDefs[unitDefID];
 
-		for (unsigned int n = 0; n < ud->modelCEGTags.size(); n++) {
-			ud->SetModelExplosionGeneratorID(n, explGenHandler->LoadGeneratorID(ud->modelCEGTags[n]));
+		for (unsigned int n = 0; n < ud.modelCEGTags.size(); n++) {
+			ud.SetModelExplosionGeneratorID(n, explGenHandler->LoadGeneratorID(ud.modelCEGTags[n]));
 		}
-		for (unsigned int n = 0; n < ud->pieceCEGTags.size(); n++) {
+		for (unsigned int n = 0; n < ud.pieceCEGTags.size(); n++) {
 			// these can only be custom EG's so prefix is not required game-side
-			ud->SetPieceExplosionGeneratorID(n, explGenHandler->LoadGeneratorID(CEG_PREFIX_STRING + ud->pieceCEGTags[n]));
+			ud.SetPieceExplosionGeneratorID(n, explGenHandler->LoadGeneratorID(CEG_PREFIX_STRING + ud.pieceCEGTags[n]));
 		}
 	}
 
@@ -164,7 +108,6 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 
 	// LH must be initialized before drawer-state is initialized
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicModelLights"));
-	geomBuffer.SetName("UNITDRAWER-GBUFFER");
 
 	unitDrawerStateSSP = IUnitDrawerState::GetInstance(globalRendering->haveARB, globalRendering->haveGLSL);
 	unitDrawerStateFFP = IUnitDrawerState::GetInstance(                   false,                     false);
@@ -172,6 +115,12 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	// also set in ::SetupForUnitDrawing, but SunChanged can be
 	// called first if DynamicSun is enabled --> must be non-NULL
 	SelectRenderState(false);
+
+	// shared with FeatureDrawer!
+	geomBuffer = LuaObjectDrawer::GetGeometryBuffer();
+
+	drawForward = true;
+	drawDeferred = (geomBuffer->Valid());
 
 	// NOTE:
 	//     advShading can NOT change at runtime if initially false***
@@ -181,11 +130,6 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	//     *** except for DrawCloakedUnits
 	advFading = GLEW_NV_vertex_program2;
 	advShading = (unitDrawerStateSSP->Init(this) && cubeMapHandler->Init());
-	drawDeferred = geomBuffer.Valid();
-
-	if (drawDeferred) {
-		drawDeferred &= UpdateGeometryBuffer(true);
-	}
 }
 
 CUnitDrawer::~CUnitDrawer()
@@ -268,102 +212,8 @@ void CUnitDrawer::Update()
 
 		sqCamDistToGroundForIcons = overGround * overGround;
 	}
-
-	if (drawDeferred) {
-		drawDeferred &= UpdateGeometryBuffer(false);
-	}
 }
 
-bool CUnitDrawer::UpdateGeometryBuffer(bool init)
-{
-	static const bool drawDeferredAllowed = configHandler->GetBool("AllowDeferredModelRendering");
-
-	if (!drawDeferredAllowed)
-		return false;
-
-	return (geomBuffer.Update(init));
-}
-
-
-
-
-
-
-// only called by DrawOpaqueUnit
-inline bool CUnitDrawer::DrawUnitLOD(CUnit* unit)
-{
-	if (unit->lodCount > 0) {
-		if (unit->isCloaked) {
-			const LuaMatType matType = (water->DrawReflectionPass())?
-				LUAMAT_ALPHA_REFLECT: LUAMAT_ALPHA;
-			LuaUnitMaterial& unitMat = unit->luaMats[matType];
-			const unsigned lod = CalcUnitLOD(unit, unitMat.GetLastLOD());
-			unit->currentLOD = lod;
-			LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(lod);
-
-			if ((lodMat != NULL) && lodMat->IsActive()) {
-				lodMat->AddUnit(unit); return true;
-			}
-		} else {
-			const LuaMatType matType =
-				(water->DrawReflectionPass()) ? LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
-			LuaUnitMaterial& unitMat = unit->luaMats[matType];
-			const unsigned lod = CalcUnitLOD(unit, unitMat.GetLastLOD());
-			unit->currentLOD = lod;
-			LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(lod);
-
-			if ((lodMat != NULL) && lodMat->IsActive()) {
-				lodMat->AddUnit(unit); return true;
-			}
-		}
-	}
-
-	return false;
-}
-
-inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction)
-{
-	if (unit == excludeUnit)
-		return;
-	if (unit->noDraw)
-		return;
-	if (unit->IsInVoid())
-		return;
-	if (unit->isIcon)
-		return;
-
-	if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
-		return;
-
-	if (drawReflection) {
-		float3 zeroPos = unit->drawMidPos;
-		if (unit->drawMidPos.y >= 0.0f) {
-			const float dif = unit->drawMidPos.y - camera->GetPos().y;
-			zeroPos =
-				camera->GetPos()  * (unit->drawMidPos.y / dif) +
-				unit->drawMidPos * (-camera->GetPos().y / dif);
-		}
-		if (CGround::GetApproximateHeight(zeroPos.x, zeroPos.z, false) > unit->drawRadius) {
-			return;
-		}
-	} else if (drawRefraction) {
-		if (unit->pos.y > 0.0f) {
-			return;
-		}
-	}
-
-	if (!camera->InView(unit->drawMidPos, unit->drawRadius))
-		return;
-
-	if ((unit->pos).SqDistance(camera->GetPos()) > (unit->sqRadius * unitDrawDistSqr)) {
-		farTextureHandler->Queue(unit);
-	} else {
-		if (!DrawUnitLOD(unit)) {
-			SetTeamColour(unit->team);
-			DrawUnitNow(unit);
-		}
-	}
-}
 
 
 
@@ -372,14 +222,6 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	ISky::SetupFog();
 
-	if (drawReflection) {
-		SetUnitGlobalLODFactor(LODScale * LODScaleReflection);
-	} else if (drawRefraction) {
-		SetUnitGlobalLODFactor(LODScale * LODScaleRefraction);
-	} else {
-		SetUnitGlobalLODFactor(LODScale);
-	}
-
 	camNorm = camera->GetDir();
 	camNorm.y = -0.1f;
 	camNorm.ANormalize();
@@ -387,22 +229,16 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	const CPlayer* myPlayer = gu->GetMyPlayer();
 	const CUnit* excludeUnit = drawReflection? NULL: myPlayer->fpsController.GetControllee();
 
-	if (drawDeferred) {
-		DrawDeferredPass(excludeUnit, drawReflection, drawRefraction);
+	// first do the deferred pass; conditional because
+	// most of the water renderers use their own FBO's
+	if (drawDeferred && !drawReflection && !drawRefraction) {
+		LuaObjectDrawer::DrawDeferredPass(excludeUnit, LUAOBJ_UNIT);
 	}
 
-	SetupForUnitDrawing(false);
-
-	{
-		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-			opaqueModelRenderers[modelType]->PushRenderState();
-			DrawOpaqueUnits(modelType, excludeUnit, drawReflection, drawRefraction);
-			opaqueModelRenderers[modelType]->PopRenderState();
-		}
+	// now do the regular forward pass
+	if (drawForward) {
+		DrawOpaquePass(excludeUnit, false, drawReflection, drawRefraction);
 	}
-
-	CleanUpUnitDrawing(false);
-	DrawOpaqueShaderUnits((water->DrawReflectionPass())? LUAMAT_OPAQUE_REFLECT: LUAMAT_OPAQUE, false);
 
 	farTextureHandler->Draw();
 	DrawUnitIcons(drawReflection);
@@ -412,54 +248,24 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	glDisable(GL_TEXTURE_2D);
 }
 
-void CUnitDrawer::DrawDeferredPass(const CUnit* excludeUnit, bool drawReflection, bool drawRefraction)
+void CUnitDrawer::DrawOpaquePass(const CUnit* excludeUnit, bool deferredPass, bool drawReflection, bool drawRefraction)
 {
-	if (!geomBuffer.Valid())
-		return;
+	SetupForUnitDrawing(deferredPass);
 
-	// some water renderers use FBO's for the reflection pass
-	if (drawReflection)
-		return;
-	// some water renderers use FBO's for the refraction pass
-	if (drawRefraction)
-		return;
-
-	// deferred pass must be executed with GLSL shaders
-	// bail early if the FFP state *is going to be* selected by
-	// SetupForUnitDrawing and if our shader-path happens to be
-	// ARB instead
-	if (!unitDrawerStateSSP->CanEnable(this))
-		return;
-	if (!unitDrawerStateSSP->CanDrawDeferred())
-		return;
-
-	geomBuffer.Bind();
-
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// this selects the render-state (FFP, SSP); needs to be
-	// enabled and disabled by us (as well as ::Draw) because
-	// custom-shader models do not use it and we want to draw
-	// those deferred as well
-	SetupForUnitDrawing(true);
-
-	{
-		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-			opaqueModelRenderers[modelType]->PushRenderState();
-			DrawOpaqueUnits(modelType, excludeUnit, drawReflection, drawRefraction);
-			opaqueModelRenderers[modelType]->PopRenderState();
-		}
+	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+		opaqueModelRenderers[modelType]->PushRenderState();
+		DrawOpaqueUnits(modelType, excludeUnit, drawReflection, drawRefraction);
+		opaqueModelRenderers[modelType]->PopRenderState();
 	}
 
-	CleanUpUnitDrawing(true);
-	DrawOpaqueShaderUnits((water->DrawReflectionPass())? LUAMAT_OPAQUE_REFLECT: LUAMAT_OPAQUE, true);
+	// not true during DynWater::DrawRefraction
+	// assert(drawReflection == water->DrawReflectionPass());
 
-	geomBuffer.UnBind();
+	CleanUpUnitDrawing(deferredPass);
 
-	#if 0
-	geomBuffer.DrawDebug(geomBuffer.GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_NORMTEX));
-	#endif
+	// draw all custom'ed units that were bypassed in the loop above
+	LuaObjectDrawer::SetDrawPassGlobalLODFactor(LUAOBJ_UNIT);
+	LuaObjectDrawer::DrawOpaqueMaterialObjects(LUAOBJ_UNIT, deferredPass);
 }
 
 
@@ -487,6 +293,25 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool 
 		DrawOpaqueAIUnits();
 	}
 }
+
+inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction)
+{
+	if (!CanDrawOpaqueUnit(unit, excludeUnit, drawReflection, drawRefraction))
+		return;
+
+	if ((unit->pos).SqDistance(camera->GetPos()) > (unit->sqRadius * unitDrawDistSqr)) {
+		farTextureHandler->Queue(unit);
+		return;
+	}
+
+	if (LuaObjectDrawer::AddOpaqueMaterialObject(unit, LUAOBJ_UNIT))
+		return;
+
+	// draw the unit with the default (non-Lua) material
+	SetTeamColour(unit->team);
+	DrawUnitNoLists(unit);
+}
+
 
 void CUnitDrawer::DrawOpaqueAIUnits()
 {
@@ -531,209 +356,85 @@ void CUnitDrawer::DrawUnitIcons(bool drawReflection)
 
 
 
-
-
 /******************************************************************************/
 /******************************************************************************/
 
-static void DrawLuaMatBins(LuaMatType type, bool deferredPass)
-{
-	const LuaMatBinSet& bins = luaMatHandler.GetBins(type);
-	if (bins.empty()) {
-		return;
-	}
+bool CUnitDrawer::CanDrawOpaqueUnit(
+	const CUnit* unit,
+	const CUnit* excludeUnit,
+	bool drawReflection,
+	bool drawRefraction
+) const {
+	if (unit == excludeUnit)
+		return false;
+	if (unit->noDraw)
+		return false;
+	if (unit->IsInVoid())
+		return false;
+	if (unit->isIcon)
+		return false;
 
-	LUA_DRAWING = true;
+	if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
+		return false;
 
-	glPushAttrib(GL_TEXTURE_BIT | GL_ENABLE_BIT | GL_TRANSFORM_BIT);
-	if (type == LUAMAT_ALPHA || type == LUAMAT_ALPHA_REFLECT) {
-		glEnable(GL_ALPHA_TEST);
-		glAlphaFunc(GL_GREATER, 0.1f);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	} else {
-		glEnable(GL_ALPHA_TEST);
-		glAlphaFunc(GL_GREATER, 0.5f);
-	}
+	if (drawReflection) {
+		float3 zeroPos = unit->drawMidPos;
 
-	const LuaMaterial* currMat = &LuaMaterial::defMat;
+		if (unit->drawMidPos.y >= 0.0f) {
+			const float dif = unit->drawMidPos.y - camera->GetPos().y;
 
-	LuaMatBinSet::const_iterator it;
-	for (it = bins.begin(); it != bins.end(); ++it) {
-		LuaMatBin* bin = *it;
-		bin->Execute(*currMat, deferredPass);
-		currMat = bin;
-
-		const std::vector<CUnit*>& units = bin->GetUnits();
-		const int count = (int)units.size();
-		for (int i = 0; i < count; i++) {
-			CUnit* unit = units[i];
-
-			const LuaUnitMaterial& unitMat = unit->luaMats[type];
-			const LuaUnitLODMaterial* lodMat = unitMat.GetMaterial(unit->currentLOD);
-			lodMat->uniforms.Execute(unit);
-
-			unitDrawer->SetTeamColour(unit->team);
-			unitDrawer->DrawUnitWithLists(unit, lodMat->preDisplayList, lodMat->postDisplayList);
+			zeroPos  = (camera->GetPos()  * (unit->drawMidPos.y / dif));
+			zeroPos += (unit->drawMidPos * (-camera->GetPos().y / dif));
+		}
+		if (CGround::GetApproximateHeight(zeroPos.x, zeroPos.z, false) > unit->drawRadius) {
+			return false;
+		}
+	} else if (drawRefraction) {
+		if (unit->pos.y > 0.0f) {
+			return false;
 		}
 	}
 
-	LuaMaterial::defMat.Execute(*currMat, deferredPass);
-	luaMatHandler.ClearBins(type);
-
-	glPopAttrib();
-
-	LUA_DRAWING = false;
+	return (camera->InView(unit->drawMidPos, unit->drawRadius));
 }
 
-
-/******************************************************************************/
-
-static void SetupShadowDrawing()
+bool CUnitDrawer::CanDrawOpaqueUnitShadow(const CUnit* unit) const
 {
-	//FIXME setup face culling for s3o?
-
-	glColor3f(1.0f, 1.0f, 1.0f);
-	glDisable(GL_TEXTURE_2D);
-
-	glPolygonOffset(1.0f, 1.0f);
-	glEnable(GL_POLYGON_OFFSET_FILL);
-
-	Shader::IProgramObject* po =
-		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
-	po->Enable();
-}
-
-
-static void CleanUpShadowDrawing()
-{
-	Shader::IProgramObject* po =
-		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
-
-	po->Disable();
-	glDisable(GL_POLYGON_OFFSET_FILL);
-}
-
-
-/******************************************************************************/
-
-#define ud unitDrawer
-static void SetupOpaque3DO(bool deferredPass) {
-	ud->SetupForUnitDrawing(deferredPass);
-	ud->GetOpaqueModelRenderer(MODELTYPE_3DO)->PushRenderState();
-}
-static void ResetOpaque3DO(bool deferredPass) {
-	ud->GetOpaqueModelRenderer(MODELTYPE_3DO)->PopRenderState();
-	ud->CleanUpUnitDrawing(deferredPass);
-}
-static void SetupOpaqueS3O(bool deferredPass) {
-	ud->SetupForUnitDrawing(deferredPass);
-	ud->GetOpaqueModelRenderer(MODELTYPE_S3O)->PushRenderState();
-}
-static void ResetOpaqueS3O(bool deferredPass) {
-	ud->GetOpaqueModelRenderer(MODELTYPE_S3O)->PopRenderState();
-	ud->CleanUpUnitDrawing(deferredPass);
-}
-
-static void SetupAlpha3DO(bool) {
-	ud->SetupForGhostDrawing();
-	ud->GetCloakedModelRenderer(MODELTYPE_3DO)->PushRenderState();
-}
-static void ResetAlpha3DO(bool) {
-	ud->GetCloakedModelRenderer(MODELTYPE_3DO)->PopRenderState();
-	ud->CleanUpGhostDrawing();
-}
-static void SetupAlphaS3O(bool) {
-	ud->SetupForGhostDrawing();
-	ud->GetCloakedModelRenderer(MODELTYPE_S3O)->PushRenderState();
-}
-static void ResetAlphaS3O(bool) {
-	ud->GetCloakedModelRenderer(MODELTYPE_S3O)->PopRenderState();
-	ud->CleanUpGhostDrawing();
-}
-#undef ud
-
-static void SetupShadow3DO(bool) { SetupShadowDrawing();   }
-static void ResetShadow3DO(bool) { CleanUpShadowDrawing(); }
-static void SetupShadowS3O(bool) { SetupShadowDrawing();   }
-static void ResetShadowS3O(bool) { CleanUpShadowDrawing(); }
-
-
-
-/******************************************************************************/
-
-void CUnitDrawer::DrawOpaqueShaderUnits(unsigned int matType, bool deferredPass)
-{
-	luaMatHandler.setup3doShader = SetupOpaque3DO;
-	luaMatHandler.reset3doShader = ResetOpaque3DO;
-	luaMatHandler.setupS3oShader = SetupOpaqueS3O;
-	luaMatHandler.resetS3oShader = ResetOpaqueS3O;
-
-	DrawLuaMatBins(LuaMatType(matType), deferredPass);
-}
-
-
-void CUnitDrawer::DrawCloakedShaderUnits(unsigned int matType)
-{
-	luaMatHandler.setup3doShader = SetupAlpha3DO;
-	luaMatHandler.reset3doShader = ResetAlpha3DO;
-	luaMatHandler.setupS3oShader = SetupAlphaS3O;
-	luaMatHandler.resetS3oShader = ResetAlphaS3O;
-
-	// FIXME: deferred shading and transparency is a PITA
-	DrawLuaMatBins(LuaMatType(matType), false);
-}
-
-
-void CUnitDrawer::DrawShadowShaderUnits(unsigned int matType)
-{
-	luaMatHandler.setup3doShader = SetupShadow3DO;
-	luaMatHandler.reset3doShader = ResetShadow3DO;
-	luaMatHandler.setupS3oShader = SetupShadowS3O;
-	luaMatHandler.resetS3oShader = ResetShadowS3O;
-
-	// we neither want nor need a deferred shadow
-	// pass for custom- or default-shader models!
-	DrawLuaMatBins(LuaMatType(matType), false);
-}
-
-
-
-/******************************************************************************/
-/******************************************************************************/
-
-
-inline void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 	const bool unitInLOS = ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView);
 
 	if (unit->noDraw)
-		return;
+		return false;
 	if (unit->IsInVoid())
-		return;
+		return false;
+	if (unit->isIcon)
+		return false;
+
 	// FIXME: test against the shadow projection intersection
-	if (!(unitInLOS && camera->InView(unit->drawMidPos, unit->drawRadius + 700.0f))) {
-		return;
-	}
+	if (!(unitInLOS && camera->InView(unit->drawMidPos, unit->drawRadius + 700.0f)))
+		return false;
 
 	const float sqDist = (unit->pos - camera->GetPos()).SqLength();
 	const float farLength = unit->sqRadius * unitDrawDistSqr;
 
-	if (sqDist >= farLength) { return; }
-	if (unit->isCloaked) { return; }
-	if (DrawAsIcon(unit, sqDist)) { return; }
+	if (sqDist >= farLength)
+		return false;
+	if (unit->isCloaked)
+		return false;
 
-	LuaUnitLODMaterial* lodMat = nullptr;
-	if (unit->lodCount > 0) {
-		LuaUnitMaterial& unitMat = unit->luaMats[LUAMAT_SHADOW];
-		unit->currentLOD = CalcUnitLOD(unit, unitMat.GetLastLOD());
-		lodMat = unitMat.GetMaterial(unit->currentLOD);
-	}
+	return true;
+}
 
-	if ((lodMat != nullptr) && lodMat->IsActive()) {
-		lodMat->AddUnit(unit);
-	} else {
-		DrawUnitNow(unit);
-	}
+
+
+
+void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
+	if (!CanDrawOpaqueUnitShadow(unit))
+		return;
+
+	if (LuaObjectDrawer::AddShadowMaterialObject(unit, LUAOBJ_UNIT))
+		return;
+
+	DrawUnitNoLists(unit);
 }
 
 
@@ -778,8 +479,6 @@ void CUnitDrawer::DrawShadowPass()
 		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 	po->Enable();
 
-	SetUnitGlobalLODFactor(LODScale * LODScaleShadow);
-
 	{
 		// 3DO's have clockwise-wound faces and
 		// (usually) holes, so disable backface
@@ -804,7 +503,8 @@ void CUnitDrawer::DrawShadowPass()
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
 
-	DrawShadowShaderUnits(LUAMAT_SHADOW);
+	LuaObjectDrawer::SetDrawPassGlobalLODFactor(LUAOBJ_UNIT);
+	LuaObjectDrawer::DrawShadowMaterialObjects(LUAOBJ_UNIT, false);
 }
 
 
@@ -952,12 +652,12 @@ void CUnitDrawer::DrawCloakedUnits(bool disableAdvShading)
 		}
 
 		advShading = oldAdvShading;
-
-		// shader rendering
-		DrawCloakedShaderUnits((water->DrawReflectionPass())? LUAMAT_ALPHA_REFLECT: LUAMAT_ALPHA);
 	}
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+	LuaObjectDrawer::SetDrawPassGlobalLODFactor(LUAOBJ_UNIT);
+	LuaObjectDrawer::DrawAlphaMaterialObjects(LUAOBJ_UNIT, false);
 }
 
 void CUnitDrawer::DrawCloakedUnitsHelper(int modelType)
@@ -992,9 +692,11 @@ void CUnitDrawer::DrawCloakedUnitsHelper(int modelType)
 }
 
 inline void CUnitDrawer::DrawCloakedUnit(CUnit* unit, int modelType, bool drawGhostBuildingsPass) {
-	if (!camera->InView(unit->drawMidPos, unit->drawRadius)) {
+	if (!camera->InView(unit->drawMidPos, unit->drawRadius))
 		return;
-	}
+
+	if (LuaObjectDrawer::AddAlphaMaterialObject(unit, LUAOBJ_UNIT))
+		return;
 
 	const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
 
@@ -1002,7 +704,7 @@ inline void CUnitDrawer::DrawCloakedUnit(CUnit* unit, int modelType, bool drawGh
 		if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
 			if (!unit->isIcon) {
 				SetTeamColour(unit->team, cloakAlpha);
-				DrawUnitNow(unit);
+				DrawUnitNoLists(unit);
 			}
 		}
 	} else {
@@ -1017,9 +719,8 @@ inline void CUnitDrawer::DrawCloakedUnit(CUnit* unit, int modelType, bool drawGh
 		}
 
 		// FIXME: needs a second pass
-		if (model->type != modelType) {
+		if (model->type != modelType)
 			return;
-		}
 
 		// ghosted enemy units
 		if (losStatus & LOS_CONTRADAR) {
@@ -1128,7 +829,8 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 
 	if (!gu->spectatingFullView) {
 		for (CUnit* u: liveGhostedBuildings) {
-			if (!(u->losStatus[gu->myAllyTeam] & LOS_INLOS)) // because of team switching via cheat, ghost buildings can exist for units in LOS
+			// because of team switching via cheat, ghost buildings can exist for units in LOS
+			if (!(u->losStatus[gu->myAllyTeam] & LOS_INLOS))
 				DrawCloakedUnit(u, modelType, true);
 		}
 	}
@@ -1146,13 +848,14 @@ void CUnitDrawer::SetupForUnitDrawing(bool deferredPass)
 	glAlphaFunc(GL_GREATER, 0.5f);
 	glEnable(GL_ALPHA_TEST);
 
+	// pick base shaders (ARB/GLSL) or FFP; not used by custom-material models
 	SelectRenderState(unitDrawerStateSSP->CanEnable(this));
 	unitDrawerState->Enable(this, deferredPass);
 
 	// NOTE:
 	//   when deferredPass is true we MUST be able to use unitDrawerStateSSP
-	//   all calling code (reached from DrawDeferredPass) should ensure this
-	//   is the case
+	//   all calling code (reached from DrawOpaquePass(deferred=true)) should
+	//   ensure this is the case
 	assert(!deferredPass || unitDrawerState == unitDrawerStateSSP);
 }
 
@@ -1165,6 +868,15 @@ void CUnitDrawer::CleanUpUnitDrawing(bool deferredPass) const
 }
 
 
+bool CUnitDrawer::DrawDeferredSupported() const {
+	if (!unitDrawerStateSSP->CanEnable(this))
+		return false;
+	if (!unitDrawerStateSSP->CanDrawDeferred())
+		return false;
+
+	return true;
+}
+
 
 void CUnitDrawer::SetTeamColour(int team, float alpha) const
 {
@@ -1173,8 +885,6 @@ void CUnitDrawer::SetTeamColour(int team, float alpha) const
 		unitDrawerState->SetTeamColor(team, alpha);
 	}
 }
-
-
 
 /**
  * Set up the texture environment in texture unit 0
@@ -1266,35 +976,7 @@ void CUnitDrawer::DrawIndividual(CUnit* unit)
 	const bool origDebug = globalRendering->drawdebug;
 	globalRendering->drawdebug = false;
 
-	LuaUnitLODMaterial* lodMat = NULL;
-
-	if (unit->lodCount > 0) {
-		const LuaMatType matType = (water->DrawReflectionPass())?
-			LUAMAT_OPAQUE_REFLECT : LUAMAT_OPAQUE;
-		LuaUnitMaterial& unitMat = unit->luaMats[matType];
-		lodMat = unitMat.GetMaterial(unit->currentLOD);
-	}
-
-	if (lodMat && lodMat->IsActive()) {
-		SetUnitGlobalLODFactor(LODScale);
-
-		luaMatHandler.setup3doShader = SetupOpaque3DO;
-		luaMatHandler.reset3doShader = ResetOpaque3DO;
-		luaMatHandler.setupS3oShader = SetupOpaqueS3O;
-		luaMatHandler.resetS3oShader = ResetOpaqueS3O;
-
-		const LuaMaterial& mat = (LuaMaterial&) *lodMat->matref.GetBin();
-
-		// NOTE: doesn't make sense to supported deferred mode for this?
-		mat.Execute(LuaMaterial::defMat, false);
-
-		lodMat->uniforms.Execute(unit);
-
-		SetTeamColour(unit->team);
-		DrawUnitRawWithLists(unit, lodMat->preDisplayList, lodMat->postDisplayList);
-
-		LuaMaterial::defMat.Execute(mat, false);
-	} else {
+	if (!LuaObjectDrawer::DrawSingleObject(unit, LUAOBJ_UNIT)) {
 		SetupForUnitDrawing(false);
 		opaqueModelRenderers[MDL_TYPE(unit)]->PushRenderState();
 
@@ -1303,7 +985,7 @@ void CUnitDrawer::DrawIndividual(CUnit* unit)
 		}
 
 		SetTeamColour(unit->team);
-		DrawUnitRaw(unit);
+		DrawUnitRawNoLists(unit);
 
 		opaqueModelRenderers[MDL_TYPE(unit)]->PopRenderState();
 		CleanUpUnitDrawing(false);
@@ -1427,7 +1109,7 @@ void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
 
 
 
-void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
+void CUnitDrawer::DrawUnitBeingBuilt(const CUnit* unit)
 {
 	if (shadowHandler->inShadowPass) {
 		if (unit->buildProgress > (2.0f / 3.0f)) {
@@ -1527,75 +1209,35 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 
 
 
-inline void CUnitDrawer::DrawUnitModel(CUnit* unit) {
-	if (unit->luaDraw && eventHandler.DrawUnit(unit)) {
+
+inline void CUnitDrawer::DrawUnitModel(const CUnit* unit) {
+	if (unit->luaDraw && eventHandler.DrawUnit(unit))
 		return;
-	}
 
-	if (unit->lodCount <= 0) {
-		unit->localModel->Draw();
-	} else {
-		unit->localModel->DrawLOD(unit->currentLOD);
-	}
+	DrawUnitRawModel(unit);
 }
 
-
-void CUnitDrawer::DrawUnitNow(CUnit* unit)
+// "raw" version (does not call into Lua)
+void CUnitDrawer::DrawUnitRawModel(const CUnit* unit)
 {
-	glPushMatrix();
-	glMultMatrixf(unit->GetTransformMatrix());
+	const LuaObjectMaterialData* matData = unit->GetLuaMaterialData();
 
-	if (!unit->beingBuilt || !unit->unitDef->showNanoFrame) {
-		DrawUnitModel(unit);
+	if (matData->Enabled()) {
+		unit->localModel.DrawLOD(matData->GetCurrentLOD());
 	} else {
-		DrawUnitBeingBuilt(unit);
+		unit->localModel.Draw();
 	}
-	glPopMatrix();
 }
 
 
-void CUnitDrawer::DrawUnitWithLists(CUnit* unit, unsigned int preList, unsigned int postList)
+
+
+void CUnitDrawer::DrawUnitNoLists(const CUnit* unit)
 {
-	glPushMatrix();
-	glMultMatrixf(unit->GetTransformMatrix());
-
-	if (preList != 0) {
-		glCallList(preList);
-	}
-
-	if (!unit->beingBuilt || !unit->unitDef->showNanoFrame) {
-		DrawUnitModel(unit);
-	} else {
-		DrawUnitBeingBuilt(unit);
-	}
-
-	if (postList != 0) {
-		glCallList(postList);
-	}
-	glPopMatrix();
+	DrawUnitWithLists(unit, 0, 0, false);
 }
 
-
-void CUnitDrawer::DrawUnitRaw(CUnit* unit)
-{
-	glPushMatrix();
-	glMultMatrixf(unit->GetTransformMatrix());
-	DrawUnitModel(unit);
-	glPopMatrix();
-}
-
-
-void CUnitDrawer::DrawUnitRawModel(CUnit* unit)
-{
-	if (unit->lodCount <= 0) {
-		unit->localModel->Draw();
-	} else {
-		unit->localModel->DrawLOD(unit->currentLOD);
-	}
-}
-
-
-void CUnitDrawer::DrawUnitRawWithLists(CUnit* unit, unsigned int preList, unsigned int postList)
+void CUnitDrawer::DrawUnitWithLists(const CUnit* unit, unsigned int preList, unsigned int postList, bool luaCall)
 {
 	glPushMatrix();
 	glMultMatrixf(unit->GetTransformMatrix());
@@ -1604,7 +1246,19 @@ void CUnitDrawer::DrawUnitRawWithLists(CUnit* unit, unsigned int preList, unsign
 		glCallList(preList);
 	}
 
-	DrawUnitModel(unit);
+	// if called from LuaObjectDrawer, unit has a custom material
+	//
+	// DrawUnitBeingBuilt disables *any* shader that is currently
+	// active for its first stage and only enables a standard one
+	// for its second, while we want the Lua shader (if provided)
+	// to have full control over the build visualisation: keep it
+	// simple and bypass the engine path
+	//
+	if (luaCall || !unit->beingBuilt || !unit->unitDef->showNanoFrame) {
+		DrawUnitModel(unit);
+	} else {
+		DrawUnitBeingBuilt(unit);
+	}
 
 	if (postList != 0) {
 		glCallList(postList);
@@ -1612,6 +1266,33 @@ void CUnitDrawer::DrawUnitRawWithLists(CUnit* unit, unsigned int preList, unsign
 
 	glPopMatrix();
 }
+
+
+void CUnitDrawer::DrawUnitRawNoLists(const CUnit* unit)
+{
+	DrawUnitRawWithLists(unit, 0, 0, false);
+}
+
+void CUnitDrawer::DrawUnitRawWithLists(const CUnit* unit, unsigned int preList, unsigned int postList, bool /*luaCall*/)
+{
+	glPushMatrix();
+	glMultMatrixf(unit->GetTransformMatrix());
+
+	if (preList != 0) {
+		glCallList(preList);
+	}
+
+	DrawUnitRawModel(unit);
+
+	if (postList != 0) {
+		glCallList(postList);
+	}
+
+	glPopMatrix();
+}
+
+
+
 
 inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 	const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
@@ -1900,18 +1581,16 @@ void CUnitDrawer::UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool kil
 	icon::CIconData* oldIcon = unit->myIcon;
 	icon::CIconData* newIcon = const_cast<icon::CIconData*>(GetUnitIcon(unit));
 
-	CUnit* u = const_cast<CUnit*>(unit);
-
 	if (!killed) {
 		if ((oldIcon != newIcon) || forced) {
-			erase(unitsByIcon[oldIcon], u);
-			unitsByIcon[newIcon].push_back(u);
+			VectorErase(unitsByIcon[oldIcon], unit);
+			unitsByIcon[newIcon].push_back(unit);
 		}
 	} else {
-		erase(unitsByIcon[oldIcon], u);
+		VectorErase(unitsByIcon[oldIcon], unit);
 	}
 
-	u->myIcon = killed? NULL: newIcon;
+	(const_cast<CUnit*>(unit))->myIcon = killed? NULL: newIcon;
 }
 
 
@@ -1935,7 +1614,8 @@ void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 
 void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 	CUnit* u = const_cast<CUnit*>(unit);
-	if ((dynamic_cast<CBuilding*>(u) != NULL) && gameSetup->ghostedBuildings &&
+
+	if (u->unitDef->IsBuildingUnit() && gameSetup->ghostedBuildings &&
 		!(u->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) &&
 		(u->losStatus[gu->myAllyTeam] & (LOS_PREVLOS)) && !gu->spectatingFullView
 	) {
@@ -1957,20 +1637,21 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 	}
 
 	if (u->model) {
-		//Don't dare checking u->isCloaked, it may not exist.
+		// delete from both; cloaked state is unreliable at this point
 		cloakedModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 		opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 	}
 
-	erase(unsortedUnits, u);
-	erase(liveGhostBuildings[MDL_TYPE(u)], u);
+	VectorErase(unsortedUnits, u);
+	VectorErase(liveGhostBuildings[MDL_TYPE(u)], u);
 
 	// remove the icon for all ally-teams
 	for (std::vector<std::vector<CUnit*> >::iterator it = unitRadarIcons.begin(); it != unitRadarIcons.end(); ++it) {
-		erase(*it, u);
+		VectorErase(*it, u);
 	}
+
 	UpdateUnitMiniMapIcon(unit, false, true);
-	SetUnitLODCount(u, 0);
+	LuaObjectDrawer::SetObjectLOD(u, LUAOBJ_UNIT, 0);
 }
 
 
@@ -1998,11 +1679,12 @@ void CUnitDrawer::UnitEnteredLos(const CUnit* unit, int allyTeam) {
 	}
 
 	CUnit* u = const_cast<CUnit*>(unit); //cleanup
-	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
-		erase(liveGhostBuildings[MDL_TYPE(unit)], u);
-	}
-	erase(unitRadarIcons[allyTeam], u);
 
+	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
+		VectorErase(liveGhostBuildings[MDL_TYPE(unit)], u);
+	}
+
+	VectorErase(unitRadarIcons[allyTeam], u);
 	UpdateUnitMiniMapIcon(unit, false, false);
 }
 
@@ -2013,11 +1695,11 @@ void CUnitDrawer::UnitLeftLos(const CUnit* unit, int allyTeam) {
 
 	CUnit* u = const_cast<CUnit*>(unit); //cleanup
 	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
-		insert_unique(liveGhostBuildings[MDL_TYPE(unit)], u);
+		VectorInsertUnique(liveGhostBuildings[MDL_TYPE(unit)], u, true);
 	}
 
 	if (unit->losStatus[allyTeam] & LOS_INRADAR) {
-		insert_unique(unitRadarIcons[allyTeam], u);
+		VectorInsertUnique(unitRadarIcons[allyTeam], u, true);
 	}
 
 	UpdateUnitMiniMapIcon(unit, false, false);
@@ -2031,7 +1713,7 @@ void CUnitDrawer::UnitEnteredRadar(const CUnit* unit, int allyTeam) {
 	CUnit* u = const_cast<CUnit*>(unit);
 
 	if (!(unit->losStatus[allyTeam] & LOS_INLOS)) {
-		insert_unique(unitRadarIcons[allyTeam], u);
+		VectorInsertUnique(unitRadarIcons[allyTeam], u, true);
 	}
 
 	UpdateUnitMiniMapIcon(unit, false, false);
@@ -2043,75 +1725,18 @@ void CUnitDrawer::UnitLeftRadar(const CUnit* unit, int allyTeam) {
 	}
 
 	CUnit* u = const_cast<CUnit*>(unit);
-	erase(unitRadarIcons[allyTeam], u);
 
+	VectorErase(unitRadarIcons[allyTeam], u);
 	UpdateUnitMiniMapIcon(unit, false, false);
 }
 
-unsigned int CUnitDrawer::CalcUnitLOD(const CUnit* unit, unsigned int lastLOD)
-{
-	if (lastLOD == 0) { return 0; }
-
-	const float3 diff = (unit->pos - camera->GetPos());
-	const float dist = diff.dot(camera->GetDir());
-	const float lpp = std::max(0.0f, dist * UNIT_GLOBAL_LOD_FACTOR);
-
-	for (/* no-op */; lastLOD != 0; lastLOD--) {
-		if (lpp > unit->lodLengths[lastLOD]) {
-			break;
-		}
-	}
-
-	return lastLOD;
-}
-
-// unused
-unsigned int CUnitDrawer::CalcUnitShadowLOD(const CUnit* unit, unsigned int lastLOD)
-{
-	return CalcUnitLOD(unit, lastLOD); // FIXME
-
-	// FIXME -- the more 'correct' method
-	if (lastLOD == 0) { return 0; }
-
-	// FIXME: fix it, cap it for shallow shadows?
-	const float3& sun = sky->GetLight()->GetLightDir();
-	const float3 diff = (camera->GetPos() - unit->pos);
-	const float  dot  = diff.dot(sun);
-	const float3 gap  = diff - (sun * dot);
-	const float  lpp  = std::max(0.0f, gap.Length() * UNIT_GLOBAL_LOD_FACTOR);
-
-	for (/* no-op */; lastLOD != 0; lastLOD--) {
-		if (lpp > unit->lodLengths[lastLOD]) {
-			break;
-		}
-	}
-
-	return lastLOD;
-}
-
-void CUnitDrawer::SetUnitLODCount(CUnit* unit, unsigned int count)
-{
-	const unsigned int oldCount = unit->lodCount;
-
-	unit->lodCount = count;
-	unit->lodLengths.resize(count);
-	unit->localModel->SetLODCount(count);
-
-	for (unsigned int i = oldCount; i < count; i++) {
-		unit->lodLengths[i] = -1.0f;
-	}
-
-	for (int m = 0; m < LUAMAT_TYPE_COUNT; m++) {
-		unit->luaMats[m].SetLODCount(count);
-	}
-}
 
 void CUnitDrawer::PlayerChanged(int playerNum) {
 	if (playerNum != gu->myPlayerNum)
 		return;
 
-	std::map<icon::CIconData*, std::vector<const CUnit*> >::iterator iconIt;
-	for (iconIt = unitsByIcon.begin(); iconIt != unitsByIcon.end(); ++iconIt) {
+	// unitsByIcon is a map of (Icon*, std::vector) entries
+	for (auto iconIt = unitsByIcon.begin(); iconIt != unitsByIcon.end(); ++iconIt) {
 		(iconIt->second).clear();
 	}
 

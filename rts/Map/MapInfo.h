@@ -182,19 +182,25 @@ public:
 		std::string lightEmissionTexName;
 		std::string parallaxHeightTexName;
 
+		// Contains the splatted detail normal textures
+		std::vector<std::string> splatDetailNormalTexNames;
+
 		// SMF overrides
 		std::string minimapTexName;
 		std::string typemapTexName;
 		std::string metalmapTexName;
 		std::string grassmapTexName;
 
+		std::vector<std::string> smtFileNames;
 
 		float minHeight;
-		bool  minHeightOverride;
 		float maxHeight;
+		bool  minHeightOverride;
 		bool  maxHeightOverride;
 
-		std::vector<std::string> smtFileNames;
+		// Controls whether the alpha channel of each splatted detail normal texture
+		// contains a diffuse channel, which behaves like the old splatted detail textures
+		bool splatDetailNormalDiffuseAlpha;
 	} smf;
 
 	/** SM3 specific settings

@@ -45,8 +45,8 @@ class CLuaRules : public CLuaHandleSynced
 		virtual ~CLuaRules();
 
 	protected:
-		bool AddSyncedCode(lua_State *L);
-		bool AddUnsyncedCode(lua_State *L);
+		bool AddSyncedCode(lua_State* L);
+		bool AddUnsyncedCode(lua_State* L);
 
 		int UnpackCobArg(lua_State* L);
 

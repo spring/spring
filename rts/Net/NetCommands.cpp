@@ -851,22 +851,22 @@ void CGame::ClientReadNet()
 
 				if (metalShare > 0.0f) {
 					if (eventHandler.AllowResourceTransfer(srcTeamID, dstTeamID, "m", metalShare)) {
-						srcTeam->res.metal                   -= metalShare;
-						srcTeam->resSent.metal               += metalShare;
-						srcTeam->currentStats->metalSent     += metalShare;
-						dstTeam->res.metal                   += metalShare;
-						dstTeam->resReceived.metal           += metalShare;
-						dstTeam->currentStats->metalReceived += metalShare;
+						srcTeam->res.metal                       -= metalShare;
+						srcTeam->resSent.metal                   += metalShare;
+						srcTeam->GetCurrentStats().metalSent     += metalShare;
+						dstTeam->res.metal                       += metalShare;
+						dstTeam->resReceived.metal               += metalShare;
+						dstTeam->GetCurrentStats().metalReceived += metalShare;
 					}
 				}
 				if (energyShare > 0.0f) {
 					if (eventHandler.AllowResourceTransfer(srcTeamID, dstTeamID, "e", energyShare)) {
-						srcTeam->res.energy                   -= energyShare;
-						srcTeam->resSent.energy               += energyShare;
-						srcTeam->currentStats->energySent     += energyShare;
-						dstTeam->res.energy                   += energyShare;
-						dstTeam->resReceived.energy           += energyShare;
-						dstTeam->currentStats->energyReceived += energyShare;
+						srcTeam->res.energy                       -= energyShare;
+						srcTeam->resSent.energy                   += energyShare;
+						srcTeam->GetCurrentStats().energySent     += energyShare;
+						dstTeam->res.energy                       += energyShare;
+						dstTeam->resReceived.energy               += energyShare;
+						dstTeam->GetCurrentStats().energyReceived += energyShare;
 					}
 				}
 
@@ -888,8 +888,8 @@ void CGame::ClientReadNet()
 						if (unit->isDead)
 							continue;
 						if (unit->beingBuilt)
-							continue; // why?
-						if (unit->IsStunned() || unit->IsCrashing())
+							continue;
+						if (unit->IsCrashing())
 							continue;
 
 						unit->ChangeTeam(dstTeamID, CUnit::ChangeGiven);

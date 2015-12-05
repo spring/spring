@@ -37,10 +37,6 @@ CTeamHandler::~CTeamHandler()
 
 void CTeamHandler::ResetState()
 {
-	for (unsigned int n = 0; n < teams.size(); n++) {
-		delete teams[n]; teams[n] = NULL;
-	}
-
 	teams.clear();
 	allyTeams.clear();
 }
@@ -64,15 +60,15 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 	const int maxUnitsPerTeam = std::min(setup->maxUnitsPerTeam, int(MAX_UNITS / numTeams));
 
 	for (size_t i = 0; i < teams.size(); ++i) {
-		teams[i] = new CTeam(i);
-		*teams[i] = setup->GetTeamStartingDataCont()[i];
+		teams[i].teamNum = i;
+		teams[i] = setup->GetTeamStartingDataCont()[i];
 
 		// all non-Gaia teams (within one allyteam) get and maintain the same unit-limit
 		// (because of this it would be better treated as a pool owned by class AllyTeam)
-		teams[i]->SetMaxUnits(maxUnitsPerTeam);
+		teams[i].SetMaxUnits(maxUnitsPerTeam);
 
-		assert(teams[i]->teamAllyteam >=                0);
-		assert(teams[i]->teamAllyteam <  allyTeams.size());
+		assert(teams[i].teamAllyteam >=                0);
+		assert(teams[i].teamAllyteam <  allyTeams.size());
 	}
 
 	if (gs->useLuaGaia) {
@@ -81,18 +77,20 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 		gaiaAllyTeamID = static_cast<int>(allyTeams.size());
 
 		// setup the Gaia team
-		CTeam* gaia = new CTeam(gaiaTeamID);
-		gaia->color[0] = 255;
-		gaia->color[1] = 255;
-		gaia->color[2] = 255;
-		gaia->color[3] = 255;
-		gaia->gaia = true;
-		gaia->SetMaxUnits(MAX_UNITS - (teams.size() * teams[0]->GetMaxUnits()));
-		gaia->SetStartPos(ZeroVector);
-		gaia->teamAllyteam = gaiaAllyTeamID;
-		teams.push_back(gaia);
+		teams.emplace_back();
+		CTeam &gaia = teams.back();
 
-		assert((((teams.size() - 1) * teams[0]->GetMaxUnits()) + gaia->GetMaxUnits()) == MAX_UNITS);
+		gaia.teamNum = gaiaTeamID;
+		gaia.color[0] = 255;
+		gaia.color[1] = 255;
+		gaia.color[2] = 255;
+		gaia.color[3] = 255;
+		gaia.gaia = true;
+		gaia.SetMaxUnits(MAX_UNITS - ((teams.size() - 1) * teams[0].GetMaxUnits()));
+		gaia.SetStartPos(ZeroVector);
+		gaia.teamAllyteam = gaiaAllyTeamID;
+
+		assert((((teams.size() - 1) * teams[0].GetMaxUnits()) + gaia.GetMaxUnits()) == MAX_UNITS);
 
 		for (std::vector< ::AllyTeam >::iterator it = allyTeams.begin(); it != allyTeams.end(); ++it) {
 			it->allies.push_back(false); // enemy to everyone
@@ -109,10 +107,10 @@ void CTeamHandler::GameFrame(int frameNum)
 {
 	if ((frameNum % TEAM_SLOWUPDATE_RATE) == 0) {
 		for (int a = 0; a < ActiveTeams(); ++a) {
-			teams[a]->ResetResourceState();
+			teams[a].ResetResourceState();
 		}
 		for (int a = 0; a < ActiveTeams(); ++a) {
-			teams[a]->SlowUpdate();
+			teams[a].SlowUpdate();
 		}
 	}
 }
@@ -126,7 +124,7 @@ unsigned int CTeamHandler::GetNumTeamsInAllyTeam(unsigned int allyTeamNum, bool 
 	for (unsigned int teamNum = 0; teamNum < teamHandler->ActiveTeams(); teamNum++) {
 		if (AllyTeam(teamNum) != allyTeamNum)
 			continue;
-		if (Team(teamNum)->isDead && !countDeadTeams)
+		if (teams[teamNum].isDead && !countDeadTeams)
 			continue;
 
 		numTeams += 1;
@@ -137,7 +135,7 @@ unsigned int CTeamHandler::GetNumTeamsInAllyTeam(unsigned int allyTeamNum, bool 
 
 void CTeamHandler::UpdateTeamUnitLimitsPreSpawn(int liveTeamNum)
 {
-	CTeam* liveTeam = teams[liveTeamNum];
+	CTeam* liveTeam = &teams[liveTeamNum];
 	CTeam* tempTeam = NULL;
 
 	// will be set to true immediately after we return
@@ -165,7 +163,7 @@ void CTeamHandler::UpdateTeamUnitLimitsPreSpawn(int liveTeamNum)
 		if (Team(tempTeamNum)->isDead)
 			continue;
 
-		tempTeam = teams[tempTeamNum];
+		tempTeam = &teams[tempTeamNum];
 		tempTeam->SetMaxUnits((tempTeam->GetMaxUnits() * numRemainingActiveTeams) / (numRemainingActiveTeams + 1));
 	}
 
@@ -175,7 +173,7 @@ void CTeamHandler::UpdateTeamUnitLimitsPreSpawn(int liveTeamNum)
 
 void CTeamHandler::UpdateTeamUnitLimitsPreDeath(int deadTeamNum)
 {
-	CTeam* deadTeam = teams[deadTeamNum];
+	CTeam* deadTeam = &teams[deadTeamNum];
 	CTeam* tempTeam = NULL;
 
 	// will be set to false immediately after we return
@@ -209,12 +207,12 @@ void CTeamHandler::UpdateTeamUnitLimitsPreDeath(int deadTeamNum)
 			continue;
 		if (AllyTeam(tempTeamNum) != AllyTeam(deadTeamNum))
 			continue;
-		if (teams[tempTeamNum]->isDead)
+		if (teams[tempTeamNum].isDead)
 			continue;
 
-		assert(teams[tempTeamNum]->GetMaxUnits() == deadTeam->GetMaxUnits());
+		assert(teams[tempTeamNum].GetMaxUnits() == deadTeam->GetMaxUnits());
 
-		tempTeam = teams[tempTeamNum];
+		tempTeam = &teams[tempTeamNum];
 		tempTeam->SetMaxUnits((tempTeam->GetMaxUnits() * numRemainingActiveTeams) / (numRemainingActiveTeams - 1));
 	}
 

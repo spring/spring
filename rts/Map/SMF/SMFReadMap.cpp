@@ -53,6 +53,18 @@ CSMFReadMap::CSMFReadMap(std::string mapname)
 
 	haveSpecularTexture = !(mapInfo->smf.specularTexName.empty());
 	haveSplatTexture = (!mapInfo->smf.splatDetailTexName.empty() && !mapInfo->smf.splatDistrTexName.empty());
+	haveSplatDetailNormalTexture = false;
+
+	memset(&splatDetailNormalTextures[0], 0, NUM_SPLAT_DETAIL_NORMALS * sizeof(splatDetailNormalTextures[0]));
+
+	for (const std::string& texName: mapInfo->smf.splatDetailNormalTexNames) {
+		haveSplatDetailNormalTexture |= !texName.empty();
+	}
+
+	// Detail Normal Splatting requires at least one splatDetailNormalTexture and a distribution texture
+	haveSplatDetailNormalTexture &= !mapInfo->smf.splatDistrTexName.empty();
+	haveDetailNormalDiffuseAlpha  =  mapInfo->smf.splatDetailNormalDiffuseAlpha;
+
 	minimapOverride = !(mapInfo->smf.minimapTexName.empty());
 
 	ParseHeader();
@@ -91,6 +103,7 @@ CSMFReadMap::~CSMFReadMap()
 	glDeleteTextures(1, &detailNormalTex  );
 	glDeleteTextures(1, &lightEmissionTex );
 	glDeleteTextures(1, &parallaxHeightTex);
+	glDeleteTextures(NUM_SPLAT_DETAIL_NORMALS, &splatDetailNormalTextures[0]);
 }
 
 
@@ -242,6 +255,29 @@ void CSMFReadMap::CreateSplatDetailTextures()
 
 	splatDetailTex = splatDetailTexBM.CreateTexture(true);
 	splatDistrTex = splatDistrTexBM.CreateTexture(true);
+
+	// only load the splat detail normals if any of them are defined and present
+	if (!haveSplatDetailNormalTexture)
+		return;
+
+	for (size_t i = 0; i < mapInfo->smf.splatDetailNormalTexNames.size(); i++) {
+		if (i == NUM_SPLAT_DETAIL_NORMALS)
+			break;
+
+		CBitmap splatDetailNormalTextureBM;
+
+		if (!splatDetailNormalTextureBM.Load(mapInfo->smf.splatDetailNormalTexNames[i])) {
+			splatDetailNormalTextureBM.channels = 4;
+			splatDetailNormalTextureBM.Alloc(1, 1);
+			splatDetailNormalTextureBM.mem[0] = 127; // RGB is packed standard normal map
+			splatDetailNormalTextureBM.mem[1] = 127;
+			splatDetailNormalTextureBM.mem[2] = 255; // With a single upward (+Z) pointing vector
+			splatDetailNormalTextureBM.mem[3] = 127; // Alpha is diffuse as in old-style detail textures
+		}
+
+		splatDetailNormalTextures[i] = splatDetailNormalTextureBM.CreateTexture(true);
+	}
+
 }
 
 
@@ -734,73 +770,72 @@ void CSMFReadMap::DrawMinimap() const
 }
 
 
-void CSMFReadMap::GridVisibility(CCamera* cam, int quadSize, float maxdist, CReadMap::IQuadDrawer* qd, int extraSize)
+void CSMFReadMap::GridVisibility(CCamera* visCam, int quadSize, float maxDist, CReadMap::IQuadDrawer* qd, int extraSize)
 {
-	const int cx = cam->GetPos().x / (SQUARE_SIZE * quadSize);
-	const int cy = cam->GetPos().z / (SQUARE_SIZE * quadSize);
+	if (visCam == nullptr) {
+		// allow passing in a custom camera for grid-visibility testing
+		visCam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
+		// for other cameras, KISS and just assume caller has done this
+		visCam->GetFrustumSides(GetCurrMinHeight() - 100.0f, GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
+	}
 
-	const int drawSquare = int(maxdist / (SQUARE_SIZE * quadSize)) + 1;
+	// figure out the camera's own quad
+	const int cx = visCam->GetPos().x / (SQUARE_SIZE * quadSize);
+	const int cy = visCam->GetPos().z / (SQUARE_SIZE * quadSize);
+
+	// and how many quads fit into the given maxDist
+	const int drawSquare = int(maxDist / (SQUARE_SIZE * quadSize)) + 1;
 
 	const int drawQuadsX = mapDims.mapx / quadSize;
 	const int drawQuadsY = mapDims.mapy / quadSize;
 
-	int sy  = Clamp(cy - drawSquare, 0, drawQuadsY - 1);
-	int ey  = Clamp(cy + drawSquare, 0, drawQuadsY - 1);
-	int sxi = Clamp(cx - drawSquare, 0, drawQuadsX - 1);
-	int exi = Clamp(cx + drawSquare, 0, drawQuadsX - 1);
+	// clamp the area of quads around the camera to valid range
+	const int sy  = Clamp(cy - drawSquare, 0, drawQuadsY - 1);
+	const int ey  = Clamp(cy + drawSquare, 0, drawQuadsY - 1);
+	const int sxi = Clamp(cx - drawSquare, 0, drawQuadsX - 1);
+	const int exi = Clamp(cx + drawSquare, 0, drawQuadsX - 1);
 
-	// NOTE:
-	//     GridVisibility is only ever passed <camera>, not <cam2>
-	//     (but only <cam2> has sides calculated for it at present
-	//     by SMFGroundDrawer::UpdateCamRestraints, and older code
-	//     iterated over SMFGroundDrawer::{left, right})
-	// UpdateCamRestraints(cam);
-	CCamera* frustumCam = cam2;
-
-	// When called from within Lua for GetVisible{Units, Features}, camera might not be updated
-	if (extraSize == INT_MAX) {
+	if (extraSize == INT_MAX)
 		extraSize = 0;
-		frustumCam = cam;
-		groundDrawer->UpdateCamRestraints(frustumCam);
-	}
 
-	const std::vector<CCamera::FrustumLine> negSides = frustumCam->GetNegFrustumSides();
-	const std::vector<CCamera::FrustumLine> posSides = frustumCam->GetPosFrustumSides();
+	const std::vector<CCamera::FrustumLine>& negSides = visCam->GetNegFrustumSides();
+	const std::vector<CCamera::FrustumLine>& posSides = visCam->GetPosFrustumSides();
 
 	std::vector<CCamera::FrustumLine>::const_iterator fli;
 
+	// iterate over quads row-wise between the left and right frustum lines
 	for (int y = sy; y <= ey; y++) {
 		int sx = sxi;
 		int ex = exi;
 		float xtest, xtest2;
 
+		// find the starting x-coordinate
 		for (fli = negSides.begin(); fli != negSides.end(); ++fli) {
 			xtest  = ((fli->base + fli->dir * ( y * quadSize)            ));
 			xtest2 = ((fli->base + fli->dir * ((y * quadSize) + quadSize)));
 
-			if (xtest2 < xtest) //use std::min?
-				xtest = xtest2;
-
+			xtest = std::min(xtest, xtest2);
 			xtest /= quadSize;
 
-			if (xtest - extraSize > sx)
+			if ((xtest - extraSize) > sx)
 				sx = ((int) xtest) - extraSize;
 		}
+
+		// find the ending x-coordinate
 		for (fli = posSides.begin(); fli != posSides.end(); ++fli) {
 			xtest  = ((fli->base + fli->dir *  (y * quadSize)           ));
 			xtest2 = ((fli->base + fli->dir * ((y * quadSize) + quadSize)));
 
-			if (xtest2 > xtest)
-				xtest = xtest2;
-
+			xtest = std::max(xtest, xtest2);
 			xtest /= quadSize;
 
-			if (xtest + extraSize < ex)
+			if ((xtest + extraSize) < ex)
 				ex = ((int) xtest) + extraSize;
 		}
 
-		for (int x = sx; x <= ex; x++)
+		for (int x = sx; x <= ex; x++) {
 			qd->DrawQuad(x, y);
+		}
 	}
 }
 

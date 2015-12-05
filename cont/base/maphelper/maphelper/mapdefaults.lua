@@ -93,16 +93,23 @@ local mapDefaults = {
   },
 
   resources = {
-    detailTex         = '',
-    specularTex       = '',
-    splatDetailTex    = '',
-    splatDistrTex     = '',
-    grassBladeTex     = '',
-    grassShadingTex   = '',
-    skyReflectModTex  = '',
-    detailNormalTex   = '',
-    lightEmissionTex  = '',
-    parallaxHeightTex = '',
+    detailTex            = '',
+    specularTex          = '',
+    splatDetailTex       = '',
+    splatDistrTex        = '',
+    grassBladeTex        = '',
+    grassShadingTex      = '',
+    skyReflectModTex     = '',
+    detailNormalTex      = '',
+    lightEmissionTex     = '',
+    parallaxHeightTex    = '',
+    splatDetailNormalTex = {
+      '', -- 1
+      '', -- 2
+      '', -- 3
+      '', -- 4
+      alpha = false,
+    },
   },
 
   defaultTerrainType = {

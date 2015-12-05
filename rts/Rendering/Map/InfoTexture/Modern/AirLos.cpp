@@ -142,7 +142,7 @@ void CAirLosTexture::Update()
 	infoTexPBO.Bind();
 	auto infoTexMem = reinterpret_cast<unsigned char*>(infoTexPBO.MapBuffer());
 	const unsigned short* myAirLos = &losHandler->airLos.losMaps[gu->myAllyTeam].front();
-	memcpy(infoTexMem, myAirLos, texSize.x * texSize.y * texChannels * 2);
+	memcpy(infoTexMem, myAirLos, texSize.x * texSize.y * texChannels * sizeof(short));
 	infoTexPBO.UnmapBuffer();
 
 	//Trick: Upload the ushort as 2 ubytes, and then check both for `!=0` in the shader.

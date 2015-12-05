@@ -604,8 +604,6 @@ void CGame::LoadInterface()
 {
 	{
 		ScopedOnceTimer timer("Game::LoadInterface (Camera&Mouse)");
-		camera = new CCamera();
-		cam2 = new CCamera();
 		mouse = new CMouseHandler();
 		camHandler = new CCameraHandler();
 	}
@@ -645,10 +643,10 @@ void CGame::LoadInterface()
 		}
 
 		const std::map<std::string, int>& unitDefs = unitDefHandler->unitDefIDsByName;
-		const std::map<std::string, const FeatureDef*>& featureDefs = featureHandler->GetFeatureDefs();
+		const std::map<std::string, int>& featureDefs = featureHandler->GetFeatureDefs();
 
 		std::map<std::string, int>::const_iterator uit;
-		std::map<std::string, const FeatureDef*>::const_iterator fit;
+		std::map<std::string, int>::const_iterator fit;
 
 		for (uit = unitDefs.begin(); uit != unitDefs.end(); ++uit) {
 			wordCompletion->AddWord(uit->first + " ", false, true, false);
@@ -831,8 +829,6 @@ void CGame::KillInterface()
 
 	LOG("[%s][2]", __FUNCTION__);
 	SafeDelete(camHandler);
-	SafeDelete(camera);
-	SafeDelete(cam2);
 
 	for (unsigned int i = 0; i < grouphandlers.size(); i++) {
 		SafeDelete(grouphandlers[i]);
@@ -1669,7 +1665,7 @@ void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool tim
 		for (int i = 0; i < numTeams; ++i) {
 			const CTeam* team = teamHandler->Team(i);
 			record->SetTeamStats(i, team->statHistory);
-			clientNet->Send(CBaseNetProtocol::Get().SendTeamStat(team->teamNum, *(team->currentStats)));
+			clientNet->Send(CBaseNetProtocol::Get().SendTeamStat(team->teamNum, team->GetCurrentStats()));
 		}
 	}
 

@@ -980,6 +980,14 @@ EXPORT(float            ) skirmishAiCallback_Map_getGravity(int skirmishAIId);
 
 EXPORT(float            ) skirmishAiCallback_Map_getWaterDamage(int skirmishAIId);
 
+EXPORT(bool             ) skirmishAiCallback_Map_isDeformable(int skirmishAIId);
+
+EXPORT(float            ) skirmishAiCallback_Map_getHardness(int skirmishAIId);
+
+EXPORT(int              ) skirmishAiCallback_Map_getHardnessModMap(int skirmishAIId, float* hardMods, int hardMods_sizeMax);
+
+EXPORT(int              ) skirmishAiCallback_Map_getSpeedModMap(int skirmishAIId, int speedModClass, float* speedMods, int speedMods_sizeMax);
+
 EXPORT(int              ) skirmishAiCallback_Map_getPoints(int skirmishAIId, bool includeAllies);
 
 EXPORT(void             ) skirmishAiCallback_Map_Point_getPosition(int skirmishAIId, int pointId, float* return_posF3_out);
@@ -1342,6 +1350,10 @@ EXPORT(int              ) skirmishAiCallback_Unit_Weapon_getReloadFrame(int skir
 EXPORT(int              ) skirmishAiCallback_Unit_Weapon_getReloadTime(int skirmishAIId, int unitId, int weaponId);
 
 EXPORT(float            ) skirmishAiCallback_Unit_Weapon_getRange(int skirmishAIId, int unitId, int weaponId);
+
+EXPORT(bool             ) skirmishAiCallback_Unit_Weapon_isShieldEnabled(int skirmishAIId, int unitId, int weaponId);
+
+EXPORT(float            ) skirmishAiCallback_Unit_Weapon_getShieldPower(int skirmishAIId, int unitId, int weaponId);
 
 // END OBJECT Weapon
 

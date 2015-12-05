@@ -232,24 +232,23 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 {
 	if (!lua_isnumber(L, index)) {
-		luaL_error(L, "%s(): Bad unitID", caller);
+		luaL_error(L, "%s(): unitID not a number", caller);
 		return NULL;
 	}
-	const int unitID = lua_toint(L, index);
-	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits())) {
-		luaL_error(L, "%s(): Bad unitID: %d\n", caller, unitID);
-	}
-	CUnit* unit = unitHandler->units[unitID];
-	if (unit == NULL) {
-		return NULL;
-	}
+
+	CUnit* unit = unitHandler->GetUnit(lua_toint(L, index));
+
+	if (unit == nullptr)
+		return nullptr;
+
 	const int readAllyTeam = CLuaHandle::GetHandleReadAllyTeam(L);
-	if (readAllyTeam < 0) {
+
+	if (readAllyTeam < 0)
 		return CLuaHandle::GetHandleFullRead(L) ? unit : NULL;
-	}
-	if ((unit->losStatus[readAllyTeam] & (LOS_INLOS | LOS_INRADAR)) == 0) {
-		return NULL;
-	}
+
+	if ((unit->losStatus[readAllyTeam] & (LOS_INLOS | LOS_INRADAR)) == 0)
+		return nullptr;
+
 	return unit;
 }
 
@@ -259,17 +258,22 @@ static inline CFeature* ParseFeature(lua_State* L, const char* caller, int index
 		luaL_error(L, "%s(): Bad featureID", caller);
 		return NULL;
 	}
-	const int featureID = lua_toint(L, index);
-	CFeature* feature = featureHandler->GetFeature(featureID);
 
-	if (CLuaHandle::GetHandleFullRead(L)) { return feature; }
+	CFeature* feature = featureHandler->GetFeature(lua_toint(L, index));
+
+	if (CLuaHandle::GetHandleFullRead(L))
+		return feature;
 
 	const int readAllyTeam = CLuaHandle::GetHandleReadAllyTeam(L);
-	if (readAllyTeam < 0) { return NULL; }
-	if (feature == NULL) { return NULL; }
-	if (feature->IsInLosForAllyTeam(readAllyTeam)) { return feature; }
 
-	return NULL;
+	if (readAllyTeam < 0)
+		return nullptr;
+	if (feature == nullptr)
+		return nullptr;
+	if (feature->IsInLosForAllyTeam(readAllyTeam))
+		return feature;
+
+	return nullptr;
 }
 
 
@@ -482,12 +486,6 @@ int LuaUnsyncedRead::IsUnitInView(lua_State* L)
 }
 
 
-static bool UnitIsIcon(const CUnit* unit)
-{
-	return (unitDrawer->DrawAsIcon(unit, (unit->pos - camera->GetPos()).SqLength()));
-}
-
-
 int LuaUnsyncedRead::IsUnitVisible(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -504,7 +502,7 @@ int LuaUnsyncedRead::IsUnitVisible(lua_State* L)
 			lua_pushboolean(L, false);
 		} else {
 			lua_pushboolean(L,
-				(!checkIcon || !UnitIsIcon(unit)) &&
+				(!checkIcon || !unit->isIcon) &&
 				camera->InView(unit->midPos, radius));
 		}
 	}
@@ -513,7 +511,7 @@ int LuaUnsyncedRead::IsUnitVisible(lua_State* L)
 			lua_pushboolean(L, false);
 		} else {
 			lua_pushboolean(L,
-				(!checkIcon || !UnitIsIcon(unit)) &&
+				(!checkIcon || !unit->isIcon) &&
 				camera->InView(unit->midPos, radius));
 		}
 	}
@@ -527,7 +525,7 @@ int LuaUnsyncedRead::IsUnitIcon(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	lua_pushboolean(L, UnitIsIcon(unit));
+	lua_pushboolean(L, unit->isIcon);
 	return 1;
 }
 
@@ -750,7 +748,6 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 	const bool noIcons = !luaL_optboolean(L, 3, true);
 
 	float testRadius = WORLDOBJECT_DEFAULT_DRAWRADIUS;
-	const float iconLength = unitDrawer->iconLength;
 
 	if (lua_israwnumber(L, 2)) {
 		testRadius = lua_tofloat(L, 2);
@@ -768,7 +765,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 
 	{
 		unitQuadIter.ResetState();
-		readMap->GridVisibility(camera, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 1e9, &unitQuadIter, INT_MAX);
+		readMap->GridVisibility(CCamera::GetCamera(CCamera::CAMTYPE_PLAYER), CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 1e9, &unitQuadIter, INT_MAX);
 
 		lua_createtable(L, unitQuadIter.GetObjectCount(), 0);
 
@@ -832,14 +829,8 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 			if (allyTeamID >= 0 && !(unit->losStatus[allyTeamID] & LOS_INLOS))
 				continue;
 
-			if (noIcons) {
-				const float sqDist = (unit->pos - camera->GetPos()).SqLength();
-				const float iconDistSqrMult = unit->unitDef->iconType->GetDistanceSqr();
-				const float realIconLength = iconLength * iconDistSqrMult;
-
-				if (sqDist > realIconLength)
+			if (noIcons && unit->isIcon)
 					continue;
-			}
 
 			if (!camera->InView(unit->midPos, testRadius + (unit->drawRadius * !fixedRadius)))
 				continue;
@@ -894,7 +885,7 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 
 	{
 		featureQuadIter.ResetState();
-		readMap->GridVisibility(camera, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 3000.0f * 2.0f, &featureQuadIter, INT_MAX);
+		readMap->GridVisibility(CCamera::GetCamera(CCamera::CAMTYPE_PLAYER), CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 3000.0f * 2.0f, &featureQuadIter, INT_MAX);
 
 		lua_createtable(L, featureQuadIter.GetObjectCount(), 0);
 
@@ -927,17 +918,11 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 	for (CFeatureSet::const_iterator featureIt = featureSet.begin(); featureIt != featureSet.end(); ++featureIt) {
 		const CFeature& f = **featureIt;
 
-		if (noGeos && f.def->geoThermal)
+		if (noIcons && f.drawAlpha < 0.01f)
 			continue;
 
-		if (noIcons) {
-			const float sqDist = (f.pos - camera->GetPos()).SqLength2D();
-			const float farLength = f.sqRadius * unitDrawer->unitDrawDist * unitDrawer->unitDrawDist;
-
-			if (sqDist >= farLength) {
-				continue;
-			}
-		}
+		if (noGeos && f.def->geoThermal)
+			continue;
 
 		if (!gu->spectatingFullView && !f.IsInLosForAllyTeam(allyTeamID))
 			continue;
@@ -980,7 +965,7 @@ int LuaUnsyncedRead::GetVisibleProjectiles(lua_State* L)
 
 	{
 		projQuadIter.ResetState();
-		readMap->GridVisibility(camera, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 1e9, &projQuadIter, INT_MAX);
+		readMap->GridVisibility(CCamera::GetCamera(CCamera::CAMTYPE_PLAYER), CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 1e9, &projQuadIter, INT_MAX);
 
 		lua_createtable(L, projQuadIter.GetObjectCount(), 0);
 
@@ -1367,10 +1352,10 @@ int LuaUnsyncedRead::GetCameraVectors(lua_State* L)
 	PACK_CAMERA_VECTOR(forward, GetDir());
 	PACK_CAMERA_VECTOR(up, GetUp());
 	PACK_CAMERA_VECTOR(right, GetRight());
-	PACK_CAMERA_VECTOR(topFrustumSideDir, topFrustumSideDir);
-	PACK_CAMERA_VECTOR(botFrustumSideDir, botFrustumSideDir);
-	PACK_CAMERA_VECTOR(lftFrustumSideDir, lftFrustumSideDir);
-	PACK_CAMERA_VECTOR(rgtFrustumSideDir, rgtFrustumSideDir);
+	PACK_CAMERA_VECTOR(topFrustumPlane, frustumPlanes[CCamera::FRUSTUM_PLANE_TOP]);
+	PACK_CAMERA_VECTOR(botFrustumPlane, frustumPlanes[CCamera::FRUSTUM_PLANE_BOT]);
+	PACK_CAMERA_VECTOR(lftFrustumPlane, frustumPlanes[CCamera::FRUSTUM_PLANE_LFT]);
+	PACK_CAMERA_VECTOR(rgtFrustumPlane, frustumPlanes[CCamera::FRUSTUM_PLANE_RGT]);
 
 	return 1;
 }

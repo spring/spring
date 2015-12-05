@@ -481,9 +481,11 @@ void CGroundDecalHandler::AddTracks() {
 
 			if (unit == NULL) {
 				unit = tta.ts->owner;
-				auto &tracks = trackTypes[unit->unitDef->decalDef.trackDecalType]->tracks;
-				assert(std::find(tracks.begin(), tracks.end(), tta.ts) == tracks.end());
-				tracks.push_back(tta.ts);
+				auto& tracks = trackTypes[unit->unitDef->decalDef.trackDecalType]->tracks;
+
+				if (!VectorInsertUnique(tracks, tta.ts)) {
+					assert(false);
+				}
 			}
 
 			TrackPart* tp = tta.tp;
@@ -599,11 +601,11 @@ void CGroundDecalHandler::CleanTracks()
 				track->owner->myTrack = NULL;
 				track->owner = NULL;
 			}
-			auto &tracks = *ttc.tracks;
-			auto it = std::find(tracks.begin(), tracks.end(), track);
-			assert(it != tracks.end());
-			*it = tracks.back();
-			tracks.pop_back();
+
+			if (!VectorErase(*ttc.tracks, track)) {
+				assert(false);
+			}
+
 			tracksToBeDeleted.push_back(track);
 		}
 	}
@@ -623,13 +625,15 @@ void CGroundDecalHandler::AddScars()
 
 		for (int y = y1; y <= y2; ++y) {
 			for (int x = x1; x <= x2; ++x) {
-				auto &quad = scarField[y * scarFieldX + x];
-				assert(std::find(quad.begin(), quad.end(), s) == quad.end());
-				quad.push_back(s);
+				if (!VectorInsertUnique(scarField[y * scarFieldX + x], s)) {
+					assert(false);
+				}
 			}
 		}
-		assert(std::find(scars.begin(), scars.end(), s) == scars.end());
-		scars.push_back(s);
+
+		if (!VectorInsertUnique(scars, s)) {
+			assert(false);
+		}
 	}
 
 	scarsToBeAdded.clear();
@@ -1089,19 +1093,16 @@ void CGroundDecalHandler::RemoveScar(Scar* scar, bool removeFromScars)
 
 	for (int y = y1;y <= y2; ++y) {
 		for (int x = x1; x <= x2; ++x) {
-			auto &quad = scarField[y * scarFieldX + x];
-			auto it = std::find(quad.begin(), quad.end(), scar);
-			assert(it != quad.end());
-			*it = quad.back();
-			quad.pop_back();
+			if (!VectorErase(scarField[y * scarFieldX + x], scar)) {
+				assert(false);
+			}
 		}
 	}
 
 	if (removeFromScars) {
-		auto it = std::find(scars.begin(), scars.end(), scar);
-		assert(it != scars.end());
-		*it = scars.back();
-		scars.pop_back();
+		if (!VectorErase(scars, scar)) {
+			assert(false);
+		}
 	}
 
 	delete scar;

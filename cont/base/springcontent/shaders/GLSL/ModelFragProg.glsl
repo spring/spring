@@ -55,7 +55,7 @@ void main(void)
 	vec3 reflection = textureCube(reflectTex,  reflectDir).rgb;
 
 #if (USE_SHADOWS == 1)
-	float shadow = shadow2DProj(shadowTex, gl_TexCoord[1]).r;
+	float shadow = shadow2DProj(shadowTex, gl_TexCoord[1] + vec4(0.0, 0.0, -0.00005, 0.0)).r;
 	shadow      = 1.0 - (1.0 - shadow) * shadowDensity;
 	vec3 shade  = mix(sunAmbient, light, shadow);
 	reflection  = mix(shade, reflection, extraColor.g); // reflection
@@ -105,7 +105,7 @@ void main(void)
 	#endif
 
 	#if (DEFERRED_MODE == 1)
-	gl_FragData[GBUFFER_NORMTEX_IDX] = vec4(normal, 1.0);
+	gl_FragData[GBUFFER_NORMTEX_IDX] = vec4((normal + vec3(1.0, 1.0, 1.0)) * 0.5, 1.0);
 	gl_FragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(diffuse.rgb, teamColor.rgb, diffuse.a), extraColor.a * teamColor.a);
 	// do not premultiply reflection, leave it to the deferred lighting pass
 	// gl_FragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(diffuse.rgb, teamColor.rgb, diffuse.a) * reflection, extraColor.a * teamColor.a);

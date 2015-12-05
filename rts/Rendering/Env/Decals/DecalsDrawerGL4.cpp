@@ -233,8 +233,8 @@ void CDecalsDrawerGL4::LoadShaders()
 void CDecalsDrawerGL4::GenerateAtlasTexture()
 {
 	std::map<std::string, STex> textures;
-	for (std::vector<UnitDef*>::const_iterator it = unitDefHandler->unitDefs.begin(); it != unitDefHandler->unitDefs.end(); ++it) {
-		SolidObjectDecalDef& decalDef = (*it)->decalDef;
+	for (UnitDef& unitDef: unitDefHandler->unitDefs) {
+		SolidObjectDecalDef& decalDef = unitDef.decalDef;
 
 		if (!decalDef.useGroundDecal)
 			continue;

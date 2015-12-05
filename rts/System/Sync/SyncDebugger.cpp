@@ -163,7 +163,9 @@ void CSyncDebugger::Backtrace(int index, const char* prefix) const
 		for (unsigned i = 0; i < historybt[index].bt_size; ++i) {
 			// the "{%p}" part is resolved to "functionname [filename:lineno]"
 			// by the CLogger class.
-			logger.AddLine("%s#%u {%p}", prefix, i, historybt[index].bt[i]);
+			if (historybt[index].bt[i] != 0) { //%p prints (nul), ignore it
+				logger.AddLine("%s#%u {%p}", prefix, i, historybt[index].bt[i]);
+			}
 		}
 	}
 }

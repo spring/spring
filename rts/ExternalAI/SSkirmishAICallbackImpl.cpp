@@ -30,6 +30,7 @@
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
+#include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/Resource.h"
 #include "Sim/Misc/ResourceHandler.h"
@@ -1989,6 +1990,73 @@ EXPORT(float) skirmishAiCallback_Map_getWaterDamage(int skirmishAIId) {
 }
 
 
+EXPORT(bool) skirmishAiCallback_Map_isDeformable(int skirmishAIId) {
+	return !mapInfo->map.notDeformable;
+}
+
+EXPORT(float) skirmishAiCallback_Map_getHardness(int skirmishAIId) {
+	return mapInfo->map.hardness;
+}
+
+EXPORT(int) skirmishAiCallback_Map_getHardnessModMap(int skirmishAIId,
+		float* hardMods, int hardMods_sizeMax) {
+
+	const int hardMods_sizeReal = mapDims.hmapx * mapDims.hmapy;
+
+	int hardMods_size = hardMods_sizeReal;
+
+	if (hardMods != NULL) {
+		const unsigned char* typeMap = readMap->GetTypeMapSynced();
+		hardMods_size = min(hardMods_sizeReal, hardMods_sizeMax);
+
+		for (int i = 0; i < hardMods_size; ++i) {
+			hardMods[i] = mapInfo->terrainTypes[typeMap[i]].hardness;
+		}
+	}
+
+	return hardMods_size;
+}
+
+EXPORT(int) skirmishAiCallback_Map_getSpeedModMap(int skirmishAIId, int speedModClass,
+		float* speedMods, int speedMods_sizeMax) {
+
+	const int speedMods_sizeReal = mapDims.hmapx * mapDims.hmapy;
+
+	int speedMods_size = speedMods_sizeReal;
+
+	if (speedMods != NULL) {
+		const unsigned char* typeMap = readMap->GetTypeMapSynced();
+		speedMods_size = min(speedMods_sizeReal, speedMods_sizeMax);
+
+		switch (speedModClass) {
+			case MoveDef::Tank:
+				for (int i = 0; i < speedMods_size; ++i) {
+					speedMods[i] = mapInfo->terrainTypes[typeMap[i]].tankSpeed;
+				}
+				break;
+			case MoveDef::KBot:
+				for (int i = 0; i < speedMods_size; ++i) {
+					speedMods[i] = mapInfo->terrainTypes[typeMap[i]].kbotSpeed;
+				}
+				break;
+			case MoveDef::Hover:
+				for (int i = 0; i < speedMods_size; ++i) {
+					speedMods[i] = mapInfo->terrainTypes[typeMap[i]].hoverSpeed;
+				}
+				break;
+			case MoveDef::Ship:
+				for (int i = 0; i < speedMods_size; ++i) {
+					speedMods[i] = mapInfo->terrainTypes[typeMap[i]].shipSpeed;
+				}
+				break;
+			default:
+				assert(false);
+		}
+	}
+
+	return speedMods_size;
+}
+
 
 EXPORT(bool) skirmishAiCallback_Map_isPossibleToBuildAt(int skirmishAIId, int unitDefId,
 		float* pos_posF3, int facing) {
@@ -3547,8 +3615,12 @@ EXPORT(float) skirmishAiCallback_Unit_getMaxSpeed(int skirmishAIId, int unitId) 
 }
 
 EXPORT(float) skirmishAiCallback_Unit_getMaxRange(int skirmishAIId, int unitId) {
-	CAICallback* clb = skirmishAIId_callback[skirmishAIId];
-	return clb->GetUnitMaxRange(unitId);
+	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
+		const CUnit* unit = getUnit(unitId);
+		return (unit) ? unit->maxRange : -1.0f;
+	} else {
+		return skirmishAIId_callback[skirmishAIId]->GetUnitMaxRange(unitId);
+	}
 }
 
 EXPORT(float) skirmishAiCallback_Unit_getMaxHealth(int skirmishAIId, int unitId) {
@@ -4027,7 +4099,7 @@ EXPORT(const char*) skirmishAiCallback_Team_TeamRulesParam_getValueString(int sk
 //########### BEGINN FeatureDef
 EXPORT(int) skirmishAiCallback_getFeatureDefs(int skirmishAIId, int* featureDefIds, int featureDefIds_sizeMax) {
 
-	const std::map<std::string, const FeatureDef*>& fds
+	const std::map<std::string, int>& fds
 			= featureHandler->GetFeatureDefs();
 	const int featureDefIds_sizeReal = fds.size();
 
@@ -4036,9 +4108,9 @@ EXPORT(int) skirmishAiCallback_getFeatureDefs(int skirmishAIId, int* featureDefI
 	if (featureDefIds != NULL) {
 		featureDefIds_size = min(featureDefIds_sizeReal, featureDefIds_sizeMax);
 		int f;
-		std::map<std::string, const FeatureDef*>::const_iterator fdi;
+		std::map<std::string, int>::const_iterator fdi;
 		for (f=0, fdi=fds.begin(); f < featureDefIds_size; ++f, ++fdi) {
-			featureDefIds[f] = fdi->second->id;
+			featureDefIds[f] = fdi->second;
 		}
 	}
 
@@ -4221,24 +4293,43 @@ EXPORT(int) skirmishAiCallback_getFeaturesIn(int skirmishAIId, float* pos_posF3,
 
 EXPORT(int) skirmishAiCallback_Feature_getDef(int skirmishAIId, int featureId) {
 
-	const FeatureDef* def = skirmishAIId_callback[skirmishAIId]->GetFeatureDef(featureId);
-	if (def == NULL) {
-		 return -1;
+	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
+		const CFeature* f = featureHandler->GetFeature(featureId);
+		return (f) ? f->def->id : -1;
 	} else {
-		return def->id;
+		const FeatureDef* def = skirmishAIId_callback[skirmishAIId]->GetFeatureDef(featureId);
+		return (def) ? def->id : -1;
 	}
 }
 
 EXPORT(float) skirmishAiCallback_Feature_getHealth(int skirmishAIId, int featureId) {
-	return skirmishAIId_callback[skirmishAIId]->GetFeatureHealth(featureId);
+
+	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
+		const CFeature* f = featureHandler->GetFeature(featureId);
+		return (f) ? f->health : 0.0f;
+	} else {
+		return skirmishAIId_callback[skirmishAIId]->GetFeatureHealth(featureId);
+	}
 }
 
 EXPORT(float) skirmishAiCallback_Feature_getReclaimLeft(int skirmishAIId, int featureId) {
-	return skirmishAIId_callback[skirmishAIId]->GetFeatureReclaimLeft(featureId);
+
+	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
+		const CFeature* f = featureHandler->GetFeature(featureId);
+		return (f) ? f->reclaimLeft : 0.0f;
+	} else {
+		return skirmishAIId_callback[skirmishAIId]->GetFeatureReclaimLeft(featureId);
+	}
 }
 
 EXPORT(void) skirmishAiCallback_Feature_getPosition(int skirmishAIId, int featureId, float* return_posF3_out) {
-	skirmishAIId_callback[skirmishAIId]->GetFeaturePos(featureId).copyInto(return_posF3_out);
+
+	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
+		const CFeature* f = featureHandler->GetFeature(featureId);
+		((f) ? f->pos : ZeroVector).copyInto(return_posF3_out);
+	} else {
+		skirmishAIId_callback[skirmishAIId]->GetFeaturePos(featureId).copyInto(return_posF3_out);
+	}
 }
 
 
@@ -4856,6 +4947,44 @@ EXPORT(float) skirmishAiCallback_Unit_Weapon_getRange(int skirmishAIId, int unit
 	return unit->weapons[weaponId]->range;
 }
 
+EXPORT(bool) skirmishAiCallback_Unit_Weapon_isShieldEnabled(int skirmishAIId, int unitId, int weaponId) {
+	const CUnit* unit = getUnit(unitId);
+	if (!unit) {
+		return false;
+	}
+
+	const CPlasmaRepulser* shield = NULL;
+	if ((size_t)weaponId >= unit->weapons.size()) {
+		shield = static_cast<const CPlasmaRepulser*>(unit->shieldWeapon);
+	} else {
+		shield = dynamic_cast<const CPlasmaRepulser*>(unit->weapons[weaponId]);
+	}
+	if (!shield) {
+		return false;
+	}
+
+	return shield->IsEnabled();
+}
+
+EXPORT(float) skirmishAiCallback_Unit_Weapon_getShieldPower(int skirmishAIId, int unitId, int weaponId) {
+	const CUnit* unit = getUnit(unitId);
+	if (!unit) {
+		return -1.0f;
+	}
+
+	const CPlasmaRepulser* shield = NULL;
+	if ((size_t)weaponId >= unit->weapons.size()) {
+		shield = static_cast<const CPlasmaRepulser*>(unit->shieldWeapon);
+	} else {
+		shield = dynamic_cast<const CPlasmaRepulser*>(unit->weapons[weaponId]);
+	}
+	if (!shield) {
+		return -1.0f;
+	}
+
+	return shield->GetCurPower();
+}
+
 //########### END Weapon
 
 
@@ -5456,6 +5585,10 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Map_getTidalStrength = &skirmishAiCallback_Map_getTidalStrength;
 	callback->Map_getGravity = &skirmishAiCallback_Map_getGravity;
 	callback->Map_getWaterDamage = &skirmishAiCallback_Map_getWaterDamage;
+	callback->Map_isDeformable = &skirmishAiCallback_Map_isDeformable;
+	callback->Map_getHardness = &skirmishAiCallback_Map_getHardness;
+	callback->Map_getHardnessModMap = &skirmishAiCallback_Map_getHardnessModMap;
+	callback->Map_getSpeedModMap = &skirmishAiCallback_Map_getSpeedModMap;
 	callback->Map_getPoints = &skirmishAiCallback_Map_getPoints;
 	callback->Map_Point_getPosition = &skirmishAiCallback_Map_Point_getPosition;
 	callback->Map_Point_getColor = &skirmishAiCallback_Map_Point_getColor;
@@ -5625,6 +5758,8 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Unit_Weapon_getReloadFrame = &skirmishAiCallback_Unit_Weapon_getReloadFrame;
 	callback->Unit_Weapon_getReloadTime = &skirmishAiCallback_Unit_Weapon_getReloadTime;
 	callback->Unit_Weapon_getRange = &skirmishAiCallback_Unit_Weapon_getRange;
+	callback->Unit_Weapon_isShieldEnabled = &skirmishAiCallback_Unit_Weapon_isShieldEnabled;
+	callback->Unit_Weapon_getShieldPower = &skirmishAiCallback_Unit_Weapon_getShieldPower;
 	callback->Debug_GraphDrawer_isEnabled = &skirmishAiCallback_Debug_GraphDrawer_isEnabled;
 }
 

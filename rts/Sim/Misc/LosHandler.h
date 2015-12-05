@@ -13,7 +13,7 @@
 #include "System/type2.h"
 #include "System/Rectangle.h"
 #include "System/EventClient.h"
-
+#include <boost/unordered_map.hpp>
 
 
 /**
@@ -36,18 +36,24 @@
  */
 struct SLosInstance
 {
-	SLosInstance(int radius, int allyteam, int2 basePos, float baseHeight, int hashNum)
-		: allyteam(allyteam)
-		, radius(radius)
-		, basePos(basePos)
-		, baseHeight(baseHeight)
-		, refCount(1)
-		, hashNum(hashNum)
-		, toBeDeleted(false)
-		, needsRecalc(false)
+	SLosInstance(int id)
+		: id(id)
+		, allyteam(-1)
+		, radius(-1)
+		, basePos()
+		, baseHeight(-1)
+		, refCount(0)
+		, hashNum(-1)
+		, status(NONE)
+		, isCache(false)
+		, isQueuedForUpdate(false)
+		, isQueuedForTerraform(false)
 	{}
+	void Init(int radius, int allyteam, int2 basePos, float baseHeight, int hashNum);
 
+public:
 	// hash properties
+	int id;
 	int allyteam;
 	int radius;
 	int2 basePos;
@@ -55,13 +61,26 @@ struct SLosInstance
 
 	// working data
 	int refCount;
-	std::vector<int> squares;
+	struct RLE { int start; unsigned length; };
+	static constexpr RLE EMPTY_RLE = {0,0};
+	std::vector<RLE> squares;
 
 	// helpers
 	int hashNum;
-	bool toBeDeleted;
-	bool needsRecalc;
+	enum TLosStatus {
+		NONE = 0,
+		NEW  = 1,
+		REACTIVATE = 2,
+		RECALC = 4,
+		REMOVE = 8,
+	};
+	int status;
+
+	bool isCache;
+	bool isQueuedForUpdate;
+	bool isQueuedForTerraform;
 };
+
 
 
 
@@ -122,14 +141,17 @@ private:
 
 	void RefInstance(SLosInstance* instance);
 	void UnrefInstance(SLosInstance* instance);
-	void DelayedFreeInstance(SLosInstance* instance);
+	void DelayedUnrefInstance(SLosInstance* instance);
+	void AddInstanceToCache(SLosInstance* instance);
 
+	void UpdateInstanceStatus(SLosInstance* instance, SLosInstance::TLosStatus status);
+	static SLosInstance::TLosStatus OptimizeInstanceUpdate(SLosInstance* instance);
+
+	SLosInstance* CreateInstance();
 	void DeleteInstance(SLosInstance* instance);
 
 private:
-	static constexpr unsigned CACHE_SIZE  = 1000;
-	static constexpr unsigned MAGIC_PRIME = 509;
-	static int GetHashNum(const CUnit* unit, const int2 baseLos);
+	int GetHashNum(const int allyteam, const int2 baseLos, const float radius) const;
 
 	float GetRadius(const CUnit* unit) const;
 	float GetHeight(const CUnit* unit) const;
@@ -147,15 +169,21 @@ public:
 	static size_t cacheHits;
 	static size_t cacheReactivated;
 
+	boost::unordered_multimap<int, SLosInstance*> instanceHash; // we intentionally use boost version here, gcc's one uses a linked listed and so is much slower
+	std::deque<SLosInstance> instances;
+	std::deque<int> freeIDs;
+
 private:
 	struct DelayedInstance {
 		SLosInstance* instance;
 		int timeoutTime;
 	};
 
-	std::deque<SLosInstance*> instanceHash[MAGIC_PRIME];
-	std::deque<SLosInstance*> toBeDeleted;
-	std::deque<DelayedInstance> delayQue;
+	std::deque<DelayedInstance> delayedDeleteQue;
+	std::deque<DelayedInstance> delayedTerraQue;
+	std::deque<SLosInstance*> losUpdate;
+	std::deque<SLosInstance*> losCache;
+	static constexpr int CACHE_SIZE = 4096;
 };
 
 

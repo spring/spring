@@ -47,6 +47,7 @@
 #include "Rendering/Screenshot.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/TeamHighlight.h"
+#include "Rendering/LuaObjectDrawer.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/VerticalSync.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
@@ -2573,18 +2574,23 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		if (!action.GetArgs().empty()) {
 			const vector<string> &args = CSimpleParser::Tokenize(action.GetArgs(), 0);
-			if (args.size() == 1) {
-				const float value = (float)atof(args[0].c_str());
-				unitDrawer->LODScale = value;
+
+			if (args.size() == 2) {
+				const int objType = Clamp(atoi(args[0].c_str()), int(LUAOBJ_UNIT), int(LUAOBJ_FEATURE));
+				const float lodScale = atof(args[1].c_str());
+
+				LuaObjectDrawer::SetLODScale(objType, lodScale);
 			}
-			else if (args.size() == 2) {
-				const float value = (float)atof(args[1].c_str());
+			else if (args.size() == 3) {
+				const int objType = Clamp(atoi(args[1].c_str()), int(LUAOBJ_UNIT), int(LUAOBJ_FEATURE));
+				const float lodScale = atof(args[2].c_str());
+
 				if (args[0] == "shadow") {
-					unitDrawer->LODScaleShadow = value;
+					LuaObjectDrawer::SetLODScaleShadow(objType, lodScale);
 				} else if (args[0] == "reflection") {
-					unitDrawer->LODScaleReflection = value;
+					LuaObjectDrawer::SetLODScaleReflection(objType, lodScale);
 				} else if (args[0] == "refraction") {
-					unitDrawer->LODScaleRefraction = value;
+					LuaObjectDrawer::SetLODScaleRefraction(objType, lodScale);
 				}
 			} else {
 				LOG_L(L_WARNING, "/%s: wrong syntax", GetCommand().c_str());

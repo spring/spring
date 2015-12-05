@@ -8,10 +8,10 @@
 #include "LuaOpenGL.h"
 
 #include "Game/Camera.h"
+#include "Rendering/Models/3DModel.h"
 #include "Rendering/ShadowHandler.h"
-#include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/Env/ISky.h"
-#include "Sim/Units/Unit.h"
+#include "Sim/Objects/SolidObject.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
 
@@ -36,27 +36,27 @@ LuaMatHandler& luaMatHandler = LuaMatHandler::handler;
 //  LuaUnitUniforms
 //
 
-void LuaUnitUniforms::Execute(CUnit* unit) const
+void LuaUnitUniforms::Execute(const CSolidObject* o) const
 {
 	// FIXME use vertex attributes
-	if (!haveUniforms) {
+	if (!haveUniforms)
 		return;
-	}
+
 	if (speedLoc >= 0) {
-		glUniformf3(speedLoc, unit->speed);
+		glUniformf3(speedLoc, o->speed);
 	}
 	if (healthLoc >= 0) {
-		glUniform1f(healthLoc, unit->health / unit->maxHealth);
+		glUniform1f(healthLoc, o->health / o->maxHealth);
 	}
 	if (unitIDLoc >= 0) {
-		glUniform1i(unitIDLoc, unit->id);
+		glUniform1i(unitIDLoc, o->id);
 	}
 	if (teamIDLoc >= 0) {
-		glUniform1i(teamIDLoc, unit->id);
+		glUniform1i(teamIDLoc, o->team);
 	}
 	if (customLoc >= 0) {
 		if (customCount > 0) {
-			glUniform1fv(customLoc, customCount, customData);
+			glUniform1fv(customLoc, customCount, &customData[0]);
 		}
 	}
 }
@@ -65,12 +65,12 @@ void LuaUnitUniforms::Execute(CUnit* unit) const
 void LuaUnitUniforms::SetCustomCount(int count)
 {
 	customCount = count;
-	delete[] customData;
+
 	if (count > 0) {
-		customData = new float[count];
-		memset(customData, 0, customCount * sizeof(GLfloat));
+		customData.resize(count);
+		memset(&customData[0], 0, customCount * sizeof(GLfloat));
 	} else {
-		customData = NULL;
+		customData.clear();
 	}
 }
 
@@ -79,8 +79,7 @@ LuaUnitUniforms& LuaUnitUniforms::operator=(const LuaUnitUniforms& u)
 {
 	// do not assign to self
 	if (this != &u) {
-		delete[] customData;
-		customData = NULL;
+		customData.clear();
 
 		haveUniforms = u.haveUniforms;
 		speedLoc     = u.speedLoc;
@@ -91,8 +90,8 @@ LuaUnitUniforms& LuaUnitUniforms::operator=(const LuaUnitUniforms& u)
 		customCount  = u.customCount;
 
 		if (customCount > 0) {
-			customData = new GLfloat[customCount];
-			memcpy(customData, u.customData, customCount * sizeof(GLfloat));
+			customData.resize(customCount);
+			memcpy(&customData[0], &u.customData[0], customCount * sizeof(GLfloat));
 		}
 	}
 
@@ -102,7 +101,6 @@ LuaUnitUniforms& LuaUnitUniforms::operator=(const LuaUnitUniforms& u)
 
 LuaUnitUniforms::LuaUnitUniforms(const LuaUnitUniforms& u)
 {
-	customData = NULL;
 	*this = u;
 }
 
@@ -110,10 +108,10 @@ LuaUnitUniforms::LuaUnitUniforms(const LuaUnitUniforms& u)
 /******************************************************************************/
 /******************************************************************************/
 //
-//  LuaUnitMaterial
+//  LuaObjectMaterial
 //
 
-bool LuaUnitMaterial::SetLODCount(unsigned int count)
+bool LuaObjectMaterial::SetLODCount(unsigned int count)
 {
 	lodCount = count;
 	lastLOD = lodCount - 1;
@@ -122,7 +120,7 @@ bool LuaUnitMaterial::SetLODCount(unsigned int count)
 }
 
 
-bool LuaUnitMaterial::SetLastLOD(unsigned int lod)
+bool LuaObjectMaterial::SetLastLOD(unsigned int lod)
 {
 	lastLOD = std::min(lod, lodCount - 1);
 	return true;
@@ -160,24 +158,39 @@ int LuaMatShader::Compare(const LuaMatShader& a, const LuaMatShader& b)
 void LuaMatShader::Execute(const LuaMatShader& prev, bool deferredPass) const
 {
 	if (type != prev.type) {
-		if (prev.type == LUASHADER_GL) {
-			glUseProgram(0);
-		}
-		else if (prev.type == LUASHADER_3DO) {
-			if (luaMatHandler.reset3doShader) { luaMatHandler.reset3doShader(deferredPass); }
-		}
-		else if (prev.type == LUASHADER_S3O) {
-			if (luaMatHandler.resetS3oShader) { luaMatHandler.resetS3oShader(deferredPass); }
+		switch (prev.type) {
+			case LUASHADER_GL: {
+				glUseProgram(0);
+			} break;
+			case LUASHADER_3DO: {
+				if (luaMatHandler.resetDrawStateFuncs[LUASHADER_3DO]) {
+					luaMatHandler.resetDrawStateFuncs[LUASHADER_3DO](MODELTYPE_3DO, deferredPass);
+				}
+			} break;
+			case LUASHADER_S3O: {
+				if (luaMatHandler.resetDrawStateFuncs[LUASHADER_S3O]) {
+					luaMatHandler.resetDrawStateFuncs[LUASHADER_S3O](MODELTYPE_S3O, deferredPass);
+				}
+			} break;
+			default: { assert(false); } break;
 		}
 
-		if (type == LUASHADER_GL) {
-			glUseProgram(openglID);
-		}
-		else if (type == LUASHADER_3DO) {
-			if (luaMatHandler.setup3doShader) { luaMatHandler.setup3doShader(deferredPass); }
-		}
-		else if (type == LUASHADER_S3O) {
-			if (luaMatHandler.setupS3oShader) { luaMatHandler.setupS3oShader(deferredPass); }
+		switch (type) {
+			case LUASHADER_GL: {
+				// custom shader
+				glUseProgram(openglID);
+			} break;
+			case LUASHADER_3DO: {
+				if (luaMatHandler.setupDrawStateFuncs[LUASHADER_3DO]) {
+					luaMatHandler.setupDrawStateFuncs[LUASHADER_3DO](MODELTYPE_3DO, deferredPass);
+				}
+			} break;
+			case LUASHADER_S3O: {
+				if (luaMatHandler.setupDrawStateFuncs[LUASHADER_S3O]) {
+					luaMatHandler.setupDrawStateFuncs[LUASHADER_S3O](MODELTYPE_S3O, deferredPass);
+				}
+			} break;
+			default: { assert(false); } break;
 		}
 	}
 	else if (type == LUASHADER_GL) {
@@ -196,6 +209,7 @@ void LuaMatShader::Print(const string& indent) const
 		STRING_CASE(typeName, LUASHADER_GL);
 		STRING_CASE(typeName, LUASHADER_3DO);
 		STRING_CASE(typeName, LUASHADER_S3O);
+		default: { assert(false); } break;
 	}
 	LOG("%s%s %i", indent.c_str(), typeName, openglID);
 }
@@ -467,11 +481,18 @@ LuaMatRef::LuaMatRef(const LuaMatRef& mr)
 }
 
 
-void LuaMatRef::AddUnit(CUnit* unit)
+void LuaMatRef::AddUnit(CSolidObject* o)
 {
-  if (bin != NULL) {
-    bin->AddUnit(unit);
-  }
+	if (bin != NULL) {
+		bin->AddUnit(o);
+	}
+}
+
+void LuaMatRef::AddFeature(CSolidObject* o)
+{
+	if (bin != NULL) {
+		bin->AddFeature(o);
+	}
 }
 
 
@@ -498,7 +519,8 @@ void LuaMatBin::UnRef()
 
 void LuaMatBin::Print(const string& indent) const
 {
-	LOG("%sunitCount = %i", indent.c_str(), (int)units.size());
+	LOG("%s|units| = " _STPF_, indent.c_str(), units.size());
+	LOG("%s|features| = " _STPF_, indent.c_str(), features.size());
 	LOG("%spointer = %p", indent.c_str(), this);
 	LuaMaterial::Print(indent + "  ");
 }
@@ -512,10 +534,10 @@ void LuaMatBin::Print(const string& indent) const
 
 LuaMatHandler::LuaMatHandler()
 {
-	setup3doShader = NULL;
-	reset3doShader = NULL;
-	setupS3oShader = NULL;
-	resetS3oShader = NULL;
+	for (unsigned int i = LuaMatShader::LUASHADER_NONE; i < LuaMatShader::LUASHADER_LAST; i++) {
+		setupDrawStateFuncs[i] = nullptr;
+		resetDrawStateFuncs[i] = nullptr;
+	}
 
 	prevMat = NULL;
 }
@@ -553,24 +575,30 @@ LuaMatRef LuaMatHandler::GetRef(const LuaMaterial& mat)
 }
 
 
-void LuaMatHandler::ClearBins(LuaMatType type)
+void LuaMatHandler::ClearBins(LuaObjType objType, LuaMatType matType)
 {
-	if ((type < 0) || (type >= LUAMAT_TYPE_COUNT)) {
+	if ((matType < 0) || (matType >= LUAMAT_TYPE_COUNT))
 		return;
-	}
-	LuaMatBinSet& binSet = binTypes[type];
+
+	LuaMatBinSet& binSet = binTypes[matType];
 	LuaMatBinSet::iterator it;
+
 	for (it = binSet.begin(); it != binSet.end(); ++it) {
 		LuaMatBin* bin = *it;
-		bin->Clear();
+
+		switch (objType) {
+			case LUAOBJ_UNIT   : { bin->ClearUnits   (); } break;
+			case LUAOBJ_FEATURE: { bin->ClearFeatures(); } break;
+			default            : {        assert(false); } break;
+		}
 	}
 }
 
 
-void LuaMatHandler::ClearBins()
+void LuaMatHandler::ClearBins(LuaObjType objType)
 {
 	for (int m = 0; m < LUAMAT_TYPE_COUNT; m++) {
-		ClearBins(LuaMatType(m));
+		ClearBins(objType, LuaMatType(m));
 	}
 }
 
@@ -619,3 +647,6 @@ void LuaMatHandler::PrintAllBins(const string& indent) const
 
 /******************************************************************************/
 /******************************************************************************/
+
+float LuaObjectMaterialData::GLOBAL_LOD_FACTORS[LUAOBJ_LAST] = {1.0f, 1.0f};
+

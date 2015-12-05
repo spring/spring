@@ -19,17 +19,8 @@
 #include "System/Exceptions.h"
 #include "lib/assimp/include/assimp/Importer.hpp"
 
-C3DModelLoader* modelParser = NULL;
+C3DModelLoader* modelParser = nullptr;
 
-
-static inline S3DModelPiece* ModelTypeToModelPiece(const ModelType& type) {
-	if (type == MODELTYPE_3DO) { return (new S3DOPiece()); }
-	if (type == MODELTYPE_S3O) { return (new SS3OPiece()); }
-	if (type == MODELTYPE_OBJ) { return (new SOBJPiece()); }
-	// NOTE: SAssPiece is not yet fully implemented
-	if (type == MODELTYPE_ASS) { return (new SAssPiece()); }
-	return NULL;
-}
 
 static void RegisterAssimpModelFormats(C3DModelLoader::FormatMap& formats) {
 	std::set<std::string> whitelist;
@@ -72,6 +63,45 @@ static void RegisterAssimpModelFormats(C3DModelLoader::FormatMap& formats) {
 	LOG("[%s] supported Assimp model formats: %s", __FUNCTION__, enabledExtensions.c_str());
 }
 
+static S3DModel* CreateDummyModel()
+{
+	// create a crash-dummy
+	S3DModel* model = new S3DModel();
+	model->type = MODELTYPE_3DO;
+	model->numPieces = 1;
+	// give it one empty piece
+	model->SetRootPiece(new S3DOPiece());
+	model->GetRootPiece()->SetCollisionVolume(CollisionVolume("box", -UpVector, ZeroVector));
+	return model;
+}
+
+static void CheckPieceNormals(const S3DModel* model, const S3DModelPiece* modelPiece)
+{
+	if (modelPiece->GetVertexCount() >= 3) {
+		// do not check pseudo-pieces
+		unsigned int numNullNormals = 0;
+
+		for (unsigned int n = 0; n < modelPiece->GetVertexCount(); n++) {
+			numNullNormals += (modelPiece->GetNormal(n).SqLength() < 0.5f);
+		}
+
+		if (numNullNormals > 0) {
+			const char* formatStr =
+				"[%s] piece \"%s\" of model \"%s\" has %u (of %u) null-normals! "
+				"It will either be rendered fully black or with black splotches!";
+
+			const char* modelName = model->name.c_str();
+			const char* pieceName = modelPiece->name.c_str();
+
+			LOG_L(L_WARNING, formatStr, __FUNCTION__, pieceName, modelName, numNullNormals, modelPiece->GetVertexCount());
+		}
+	}
+
+	for (const S3DModelPiece* childPiece: modelPiece->children) {
+		CheckPieceNormals(model, childPiece);
+	}
+}
+
 
 
 C3DModelLoader::C3DModelLoader()
@@ -91,7 +121,7 @@ C3DModelLoader::C3DModelLoader()
 
 	// dummy first model, model IDs start at 1
 	models.reserve(32);
-	models.push_back(NULL);
+	models.push_back(nullptr);
 }
 
 
@@ -101,11 +131,11 @@ C3DModelLoader::~C3DModelLoader()
 	for (unsigned int n = 1; n < models.size(); n++) {
 		S3DModel* model = models[n];
 
-		assert(model != NULL);
-		assert(model->GetRootPiece() != NULL);
+		assert(model != nullptr);
+		assert(model->GetRootPiece() != nullptr);
 
 		model->DeletePieces(model->GetRootPiece());
-		model->SetRootPiece(NULL);
+		model->SetRootPiece(nullptr);
 
 		delete model;
 	}
@@ -120,33 +150,6 @@ C3DModelLoader::~C3DModelLoader()
 
 }
 
-
-
-void CheckModelNormals(const S3DModel* model) {
-	const char* modelName = model->name.c_str();
-	const char* formatStr =
-		"[%s] piece \"%s\" of model \"%s\" has %u (of %u) null-normals!"
-		"It will either be rendered fully black or with black splotches!";
-
-	// Warn about models with null normals (they break lighting and appear black)
-	for (ModelPieceMap::const_iterator it = model->pieceMap.begin(); it != model->pieceMap.end(); ++it) {
-		const S3DModelPiece* modelPiece = it->second;
-		const char* pieceName = it->first.c_str();
-
-		if (modelPiece->GetVertexCount() == 0)
-			continue;
-
-		unsigned int numNullNormals = 0;
-
-		for (unsigned int n = 0; n < modelPiece->GetVertexCount(); n++) {
-			numNullNormals += (modelPiece->GetNormal(n).SqLength() < 0.5f);
-		}
-
-		if (numNullNormals > 0) {
-			LOG_L(L_WARNING, formatStr, __FUNCTION__, pieceName, modelName, numNullNormals, modelPiece->GetVertexCount());
-		}
-	}
-}
 
 
 std::string C3DModelLoader::FindModelPath(std::string name) const
@@ -181,7 +184,7 @@ S3DModel* C3DModelLoader::Load3DModel(std::string modelName)
 {
 	// cannot happen except through SpawnProjectile
 	if (modelName.empty())
-		return NULL;
+		return nullptr;
 
 	StringToLowerInPlace(modelName);
 
@@ -189,57 +192,47 @@ S3DModel* C3DModelLoader::Load3DModel(std::string modelName)
 	ModelMap::iterator ci;
 	FormatMap::iterator fi;
 
-	if ((ci = cache.find(modelName)) != cache.end()) {
+	if ((ci = cache.find(modelName)) != cache.end())
 		return models[ci->second];
-	}
 
-	const std::string modelPath = FindModelPath(modelName);
-
-	if ((ci = cache.find(modelPath)) != cache.end()) {
-		return models[ci->second];
-	}
-
-
-	// not found in cache, create the model and cache it
+	const std::string& modelPath = FindModelPath(modelName);
 	const std::string& fileExt = StringToLower(FileSystem::GetExtension(modelPath));
 
-	if ((fi = formats.find(fileExt)) != formats.end()) {
-		IModelParser* p = parsers[fi->second];
-		S3DModel* model = NULL;
-		S3DModelPiece* root = NULL;
+	if ((ci = cache.find(modelPath)) != cache.end())
+		return models[ci->second];
 
+	S3DModel* model = nullptr;
+	IModelParser* parser = nullptr;
+
+	// not found in cache, create the model and cache it
+	if ((fi = formats.find(fileExt)) == formats.end()) {
+		LOG_L(L_ERROR, "could not find a parser for model \"%s\" (unknown format?)", modelName.c_str());
+	} else {
+		parser = parsers[fi->second];
+	}
+
+	if (parser != nullptr) {
 		try {
-			model = p->Load(modelPath);
+			model = parser->Load(modelPath);
 		} catch (const content_error& ex) {
 			LOG_L(L_WARNING, "could not load model \"%s\" (reason: %s)", modelName.c_str(), ex.what());
-			goto dummy;
 		}
-
-		if ((root = model->GetRootPiece()) != NULL) {
-			CreateLists(root);
-		}
-
-		AddModelToCache(model, modelName, modelPath);
-		CheckModelNormals(model);
-		return model;
 	}
 
-	LOG_L(L_ERROR, "could not find a parser for model \"%s\" (unknown format?)", modelName.c_str());
+	if (model == nullptr)
+		model = CreateDummyModel();
 
-dummy:
-	// crash-dummy
-	S3DModel* model = new S3DModel();
-	model->type = MODELTYPE_3DO;
-	model->numPieces = 1;
-	// give it one dummy piece
-	model->SetRootPiece(ModelTypeToModelPiece(MODELTYPE_3DO));
-	model->GetRootPiece()->SetCollisionVolume(new CollisionVolume("box", -UpVector, ZeroVector));
+	assert(model->GetRootPiece() != nullptr);
 
-	if (model->GetRootPiece() != NULL) {
-		CreateLists(model->GetRootPiece());
-	}
-
+	CreateLists(model->GetRootPiece());
 	AddModelToCache(model, modelName, modelPath);
+
+	if (model->type != MODELTYPE_3DO) {
+		// warn about models with bad normals (they break lighting)
+		// skip for 3DO's, it causes a LARGE amount of warning spam
+		CheckPieceNormals(model, model->GetRootPiece());
+	}
+
 	return model;
 }
 
@@ -253,21 +246,6 @@ void C3DModelLoader::AddModelToCache(S3DModel* model, const std::string& modelNa
 	cache[modelPath] = model->id;
 }
 
-
-
-void C3DModelLoader::CreateLocalModel(LocalModel* localModel)
-{
-	const LocalModelPiece* lmpRoot = localModel->GetRoot();
-	const S3DModelPiece* ompRoot = lmpRoot->original;
-
-	if (ompRoot->GetDisplayListID() != 0)
-		return;
-}
-
-void C3DModelLoader::DeleteLocalModel(LocalModel* localModel)
-{
-	delete localModel;
-}
 
 
 void C3DModelLoader::CreateListsNow(S3DModelPiece* o)

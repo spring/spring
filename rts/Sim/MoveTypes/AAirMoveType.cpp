@@ -20,6 +20,7 @@ CR_REG_METADATA(AAirMoveType, (
 	CR_MEMBER(oldGoalPos),
 	CR_MEMBER(reservedLandingPos),
 
+	CR_MEMBER(landRadiusSq),
 	CR_MEMBER(wantedHeight),
 	CR_MEMBER(orgWantedHeight),
 
@@ -42,6 +43,7 @@ AAirMoveType::AAirMoveType(CUnit* unit):
 
 	reservedLandingPos(-1.0f, -1.0f, -1.0f),
 
+	landRadiusSq(0.0f),
 	wantedHeight(80.0f),
 	orgWantedHeight(0.0f),
 
@@ -136,11 +138,13 @@ void AAirMoveType::UpdateLanded()
 	owner->UpdateMidAndAimPos();
 }
 
-void AAirMoveType::LandAt(float3 pos)
+void AAirMoveType::LandAt(float3 pos, float distance)
 {
 	if (aircraftState != AIRCRAFT_LANDING) {
 		SetState(AIRCRAFT_LANDING);
 	}
+	const float landRadius = std::max(distance, std::max(owner->radius, 10.0f));
+	landRadiusSq = landRadius * landRadius;
 	reservedLandingPos = pos;
 	const float3 originalPos = owner->pos;
 	owner->Move(reservedLandingPos, false);
@@ -156,6 +160,42 @@ void AAirMoveType::UpdateLandingHeight()
 {
 	const float gh = CGround::GetHeightReal(reservedLandingPos.x, reservedLandingPos.z);
 	reservedLandingPos.y = wantedHeight + (owner->unitDef->canSubmerge ? gh : std::max(0.0f, gh));
+}
+
+
+void AAirMoveType::UpdateLanding()
+{
+	const float3& pos = owner->pos;
+
+	const float radius = std::max(owner->radius, 10.0f);
+	const float radiusSq = radius * radius;
+	const float distSq = reservedLandingPos.SqDistance(pos);
+
+
+	const float localAltitude = pos.y - (owner->unitDef->canSubmerge ?
+		CGround::GetHeightReal(owner->pos.x, owner->pos.z):
+		CGround::GetHeightAboveWater(owner->pos.x, owner->pos.z));
+
+	if (distSq <= radiusSq || (distSq < landRadiusSq && localAltitude < wantedHeight + radius)) {
+		SetState(AIRCRAFT_LANDED);
+		owner->SetVelocityAndSpeed(ZeroVector);
+		owner->Deactivate();
+	}
+}
+
+void AAirMoveType::SetWantedAltitude(float altitude)
+{
+	if (altitude == 0.0f) {
+		wantedHeight = orgWantedHeight;
+	} else {
+		wantedHeight = altitude;
+	}
+}
+
+void AAirMoveType::SetDefaultAltitude(float altitude)
+{
+	wantedHeight = altitude;
+	orgWantedHeight = altitude;
 }
 
 

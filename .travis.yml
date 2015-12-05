@@ -5,7 +5,7 @@ os:
 language: cpp
 compiler:
   - gcc
-#  - clang
+  - clang
 env:
   global:
     - SPRING_DATADIR=~/build/spring/spring
@@ -23,7 +23,7 @@ install:
   - tools/scripts/travis_install.sh
 
 before_script:
-  - cmake -DCMAKE_C_FLAGS=-gtoggle -DCMAKE_CXX_FLAGS=-gtoggle .
+  - tools/scripts/travis_before_script.sh
 
 script:
   - make -k $TARGET

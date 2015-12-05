@@ -38,6 +38,7 @@
 #include "Rendering/CommandDrawer.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/LineDrawer.h"
+#include "Rendering/FeatureDrawer.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -977,16 +978,30 @@ int LuaUnsyncedCtrl::SetDrawGround(lua_State* L)
 
 int LuaUnsyncedCtrl::SetDrawGroundDeferred(lua_State* L)
 {
-	readMap->GetGroundDrawer()->SetDrawDeferredPass(luaL_checkboolean(L, 1));
-	lua_pushboolean(L, readMap->GetGroundDrawer()->DrawDeferred());
+	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
+
+	gd->SetDrawDeferredPass(luaL_checkboolean(L, 1));
+	gd->SetDrawForwardPass(luaL_optboolean(L, 2, gd->DrawForward()));
+
+	lua_pushboolean(L, gd->DrawDeferred());
+	lua_pushboolean(L, gd->DrawForward());
 	return 1;
 }
 
 int LuaUnsyncedCtrl::SetDrawModelsDeferred(lua_State* L)
 {
+	// NOTE the argument ordering
 	unitDrawer->SetDrawDeferredPass(luaL_checkboolean(L, 1));
-	lua_pushboolean(L, unitDrawer->DrawDeferred());
-	return 1;
+	unitDrawer->SetDrawForwardPass(luaL_optboolean(L, 3, unitDrawer->DrawForward()));
+
+	featureDrawer->SetDrawDeferredPass(luaL_checkboolean(L, 2));
+	featureDrawer->SetDrawForwardPass(luaL_optboolean(L, 4, featureDrawer->DrawForward()));
+
+	lua_pushboolean(L,    unitDrawer->DrawDeferred());
+	lua_pushboolean(L, featureDrawer->DrawDeferred());
+	lua_pushboolean(L,    unitDrawer->DrawForward());
+	lua_pushboolean(L, featureDrawer->DrawForward());
+	return 4;
 }
 
 
@@ -2184,7 +2199,7 @@ static void ParseUnitArray(lua_State* L, const char* caller,
 
 /******************************************************************************/
 
-static bool CanGiveOrders(const lua_State *L)
+static bool CanGiveOrders(const lua_State* L)
 {
 	if (gs->frameNum <= 0) {
 		return false;

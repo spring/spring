@@ -7,6 +7,7 @@
 #
 
 
+from __future__ import print_function
 import subprocess, sys
 
 def uniquify(list):
@@ -25,6 +26,11 @@ def parseArgv(argv):
 	if len(config)==2:
 		prefix=config[1]
 	return config[0], prefix
+
+def sortPaths(argv):
+	argv.sort(key=lambda x: x.count("\\"), reverse=True)
+	return argv
+
 
 def getContents(archives):
 	"""
@@ -73,9 +79,11 @@ def writeNsh(files, paths, argv):
 				prefix=prefix[:-1]
 			print('RmDir "$INSTDIR\%s"'%(prefix))
 
+
 if len(sys.argv)<2:
-	print("Usage %s [<7z archive>[:<subpath to extract]]+"%(sys.argv[0]))
+	print("Usage %s [<7z archive>[:<subpath to extract]]+"%(sys.argv[0]), file=sys.stderr)
+	sys.exit(1)
 else:
 	files, paths = getContents(sys.argv[1:])
-	writeNsh(files, paths, sys.argv[1:])
+	writeNsh(files, sortPaths(paths), sys.argv[1:])
 

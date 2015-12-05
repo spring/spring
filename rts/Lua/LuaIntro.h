@@ -26,10 +26,10 @@ class CLuaIntro : public CLuaHandle
 		std::string LoadFile(const std::string& filename) const;
 
 	private:
-		static bool LoadUnsyncedCtrlFunctions(lua_State *L);
-		static bool LoadUnsyncedReadFunctions(lua_State *L);
-		static bool LoadSyncedReadFunctions(lua_State *L);
-		static bool RemoveSomeOpenGLFunctions(lua_State *L);
+		static bool LoadUnsyncedCtrlFunctions(lua_State* L);
+		static bool LoadUnsyncedReadFunctions(lua_State* L);
+		static bool LoadSyncedReadFunctions(lua_State* L);
+		static bool RemoveSomeOpenGLFunctions(lua_State* L);
 };
 
 

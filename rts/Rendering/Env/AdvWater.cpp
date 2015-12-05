@@ -233,8 +233,7 @@ void CAdvWater::UpdateWater(CGame* game)
 	if (!mapInfo->water.forceRendering && !readMap->HasVisibleWater())
 		return;
 
-	glPushAttrib(GL_FOG_BIT);
-	glPushAttrib(GL_COLOR_BUFFER_BIT);
+	glPushAttrib(GL_FOG_BIT | GL_COLOR_BUFFER_BIT);
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
@@ -302,56 +301,57 @@ void CAdvWater::UpdateWater(CGame* game)
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	glColor3f(1, 1, 1);
-
-//	CCamera* realCam = camera;
-//	camera = new CCamera(*realCam);
-	char realCam[sizeof(CCamera)];
-	new (realCam) CCamera(*camera); // anti-crash workaround for multithreading
-
-	camera->SetDir(camera->GetDir() * float3(1.0f, -1.0f, 1.0f));
-	camera->SetPos(camera->GetPos() * float3(1.0f, -1.0f, 1.0f));
-	camera->SetRotZ(-camera->GetRot().z);
-	camera->Update();
-
 	reflectFBO.Bind();
 	glViewport(0, 0, 512, 512);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
-	game->SetDrawMode(CGame::gameReflectionDraw);
+	CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
+	CCamera* curCam = CCamera::GetActiveCamera();
 
-	sky->Draw();
+	{
+		curCam->SetDir(prvCam->GetDir() * float3(1.0f, -1.0f, 1.0f));
+		curCam->SetPos(prvCam->GetPos() * float3(1.0f, -1.0f, 1.0f));
+		curCam->SetRotZ(-prvCam->GetRot().z);
+		curCam->Update();
 
-	glEnable(GL_CLIP_PLANE2);
-	double plane[4] = {0, 1, 0, 0};
-	glClipPlane(GL_CLIP_PLANE2, plane);
-	drawReflection = true;
 
-	readMap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
-	unitDrawer->Draw(true);
-	featureDrawer->Draw();
-	unitDrawer->DrawCloakedUnits(true);
-	featureDrawer->DrawFadeFeatures(true);
-	projectileDrawer->Draw(true);
-	eventHandler.DrawWorldReflection();
+		game->SetDrawMode(CGame::gameReflectionDraw);
+		sky->Draw();
 
-	game->SetDrawMode(CGame::gameNormalDraw);
+		{
+			const double clipPlaneEq[4] = {0.0, 1.0, 0.0, 1.0};
 
-	drawReflection = false;
-	glDisable(GL_CLIP_PLANE2);
+			glEnable(GL_CLIP_PLANE2);
+			glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
+
+			{
+				drawReflection = true;
+
+				readMap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
+				unitDrawer->Draw(true);
+				featureDrawer->Draw();
+				unitDrawer->DrawCloakedUnits(true);
+				featureDrawer->DrawFadeFeatures(true);
+				projectileDrawer->Draw(true);
+				eventHandler.DrawWorldReflection();
+
+				drawReflection = false;
+			}
+
+			glDisable(GL_CLIP_PLANE2);
+		}
+
+		game->SetDrawMode(CGame::gameNormalDraw);
+	}
+
+	CCamera::SetActiveCamera(prvCam->GetCamType());
+	prvCam->Update();
 
 	FBO::Unbind();
 
 	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 1);
 
-//	delete camera;
-//	camera = realCam;
-	camera->~CCamera();
-	new (camera) CCamera(*(reinterpret_cast<CCamera*>(realCam)));
-	reinterpret_cast<CCamera*>(realCam)->~CCamera();
-
-	camera->Update();
-	glPopAttrib();
 	glPopAttrib();
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }

@@ -10,7 +10,7 @@ CNullUnitScript CNullUnitScript::value;
 
 
 CNullUnitScript::CNullUnitScript()
-	: CUnitScript(NULL, pieces)
+	: CUnitScript(NULL)
 {
 }
 

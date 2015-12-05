@@ -189,6 +189,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitTravel);
 	REGISTER_LUA_CFUNC(SetUnitFuel);
 	REGISTER_LUA_CFUNC(SetUnitMoveGoal);
+	REGISTER_LUA_CFUNC(SetUnitLandGoal);
 	REGISTER_LUA_CFUNC(SetUnitNeutral);
 	REGISTER_LUA_CFUNC(SetUnitTarget);
 	REGISTER_LUA_CFUNC(SetUnitMidAndAimPos);
@@ -198,7 +199,6 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitPieceParent);
 	REGISTER_LUA_CFUNC(SetUnitSensorRadius);
 	REGISTER_LUA_CFUNC(SetUnitPosErrorParams);
-	REGISTER_LUA_CFUNC(SetUnitLandPos);
 
 	REGISTER_LUA_CFUNC(SetUnitPhysics);
 	REGISTER_LUA_CFUNC(SetUnitPosition);
@@ -218,6 +218,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(RemoveGrass);
 
 	REGISTER_LUA_CFUNC(SetFeatureAlwaysVisible);
+	REGISTER_LUA_CFUNC(SetFeatureFade);
 	REGISTER_LUA_CFUNC(SetFeatureHealth);
 	REGISTER_LUA_CFUNC(SetFeatureReclaim);
 	REGISTER_LUA_CFUNC(SetFeatureResurrect);
@@ -230,6 +231,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetFeatureMidAndAimPos);
 	REGISTER_LUA_CFUNC(SetFeatureRadiusAndHeight);
 	REGISTER_LUA_CFUNC(SetFeatureCollisionVolumeData);
+	REGISTER_LUA_CFUNC(SetFeaturePieceCollisionVolumeData);
 
 
 	REGISTER_LUA_CFUNC(SetProjectileAlwaysVisible);
@@ -321,57 +323,43 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 
 static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 {
-	const int unitID = luaL_checkint(L, index);
-	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits())) {
-		luaL_error(L, "%s(): Bad unitID: %d\n", caller, unitID);
-	}
-	CUnit* unit = unitHandler->units[unitID];
-	if (unit == NULL) {
-		return NULL;
-	}
-	return unit;
+	return (unitHandler->GetUnit(luaL_checkint(L, index)));
 }
-
 
 static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 {
 	CUnit* unit = ParseRawUnit(L, caller, index);
-	if (unit == NULL) {
-		return NULL;
-	}
-	if (!CanControlUnit(L, unit)) {
-		return NULL;
-	}
+
+	if (unit == nullptr)
+		return nullptr;
+	if (!CanControlUnit(L, unit))
+		return nullptr;
+
 	return unit;
 }
 
-
-static inline CFeature* ParseFeature(lua_State* L,
-                                     const char* caller, int index)
+static inline CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 {
-	const int featureID = luaL_checkint(L, index);
-	CFeature* f = featureHandler->GetFeature(featureID);
+	CFeature* f = featureHandler->GetFeature(luaL_checkint(L, index));
 
-	if (!f)
-		return NULL;
+	if (f == nullptr)
+		return nullptr;
+	if (!CanControlFeature(L, f))
+		return nullptr;
 
-	if (!CanControlFeature(L, f)) {
-		return NULL;
-	}
 	return f;
 }
 
-
-static inline CProjectile* ParseProjectile(lua_State* L,
-                                           const char* caller, int index)
+static inline CProjectile* ParseProjectile(lua_State* L, const char* caller, int index)
 {
 	CProjectile* p = projectileHandler->GetProjectileBySyncedID(luaL_checkint(L, index));
-	if (p == NULL) {
-		return NULL;
-	}
-	if (!CanControlProjectileAllyTeam(L, p->GetAllyteamID())) {
-		return NULL;
-	}
+
+	if (p == nullptr)
+		return nullptr;
+
+	if (!CanControlProjectileAllyTeam(L, p->GetAllyteamID()))
+		return nullptr;
+
 	return p;
 }
 
@@ -451,15 +439,14 @@ static CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 		luaL_error(L, "%s(): Bad teamID", caller);
 		return NULL;
 	}
+
 	const int teamID = lua_toint(L, index);
-	if (!teamHandler->IsValidTeam(teamID)) {
+
+	if (!teamHandler->IsValidTeam(teamID))
 		luaL_error(L, "%s(): Bad teamID: %d", caller, teamID);
-	}
-	CTeam* team = teamHandler->Team(teamID);
-	if (team == NULL) {
-		return NULL;
-	}
-	return team;
+
+
+	return (teamHandler->Team(teamID));
 }
 
 static int SetSolidObjectCollisionVolumeData(lua_State* L, CSolidObject* o)
@@ -480,7 +467,7 @@ static int SetSolidObjectCollisionVolumeData(lua_State* L, CSolidObject* o)
 	const float3 scales(xs, ys, zs);
 	const float3 offsets(xo, yo, zo);
 
-	o->collisionVolume->InitShape(scales, offsets, vType, tType, pAxis);
+	o->collisionVolume.InitShape(scales, offsets, vType, tType, pAxis);
 	return 0;
 }
 
@@ -580,6 +567,30 @@ static int SetSolidObjectPhysicalState(lua_State* L, CSolidObject* o)
 	// do not need ForcedSpin, above three calls cover it
 	o->ForcedMove(pos);
 	o->SetVelocityAndSpeed(speed);
+	return 0;
+}
+
+static int SetSolidObjectPieceCollisionVolumeData(lua_State* L, CSolidObject* obj)
+{
+	if (obj == NULL)
+		return 0;
+
+	LocalModelPiece* lmp = ParseObjectLocalModelPiece(L, obj, 2);
+
+	if (lmp == nullptr)
+		luaL_argerror(L, 2, "invalid piece");
+
+	CollisionVolume* vol = lmp->GetCollisionVolume();
+
+	const float3 scales(luaL_checkfloat(L, 4), luaL_checkfloat(L, 5), luaL_checkfloat(L, 6));
+	const float3 offset(luaL_checkfloat(L, 7), luaL_checkfloat(L, 8), luaL_checkfloat(L, 9));
+
+	const unsigned int vType = luaL_optint(L, 10, vol->GetVolumeType());
+	const unsigned int pAxis = luaL_optint(L, 11, vol->GetPrimaryAxis());
+
+	// piece volumes are not allowed to use discrete hit-testing
+	vol->InitShape(scales, offset, vType, CollisionVolume::COLVOL_HITTEST_CONT, pAxis);
+	vol->SetIgnoreHits(!luaL_checkboolean(L, 3));
 	return 0;
 }
 
@@ -877,22 +888,22 @@ int LuaSyncedCtrl::ShareTeamResource(lua_State* L)
 	if (type == "metal") {
 		amount = std::min(amount, (float)team1->res.metal);
 		if (eventHandler.AllowResourceTransfer(teamID1, teamID2, "m", amount)) { //FIXME can cause an endless loop
-			team1->res.metal                   -= amount;
-			team1->resSent.metal               += amount;
-			team1->currentStats->metalSent     += amount;
-			team2->res.metal                   += amount;
-			team2->resReceived.metal           += amount;
-			team2->currentStats->metalReceived += amount;
+			team1->res.metal                       -= amount;
+			team1->resSent.metal                   += amount;
+			team1->GetCurrentStats().metalSent     += amount;
+			team2->res.metal                       += amount;
+			team2->resReceived.metal               += amount;
+			team2->GetCurrentStats().metalReceived += amount;
 		}
 	} else if (type == "energy") {
 		amount = std::min(amount, (float)team1->res.energy);
 		if (eventHandler.AllowResourceTransfer(teamID1, teamID2, "e", amount)) { //FIXME can cause an endless loop
-			team1->res.energy                   -= amount;
-			team1->resSent.energy               += amount;
-			team1->currentStats->energySent     += amount;
-			team2->res.energy                   += amount;
-			team2->resReceived.energy           += amount;
-			team2->currentStats->energyReceived += amount;
+			team1->res.energy                       -= amount;
+			team1->resSent.energy                   += amount;
+			team1->GetCurrentStats().energySent     += amount;
+			team2->res.energy                       += amount;
+			team2->resReceived.energy               += amount;
+			team2->GetCurrentStats().energyReceived += amount;
 		}
 	}
 	return 0;
@@ -1850,7 +1861,7 @@ int LuaSyncedCtrl::SetUnitNanoPieces(lua_State* L)
 		if (lua_israwnumber(L, -1)) {
 			const int modelPieceNum = lua_toint(L, -1) - 1; //lua 1-indexed, c++ 0-indexed
 
-			if (unit->localModel->HasPiece(modelPieceNum)) {
+			if (unit->localModel.HasPiece(modelPieceNum)) {
 				nanoPieces->push_back(modelPieceNum);
 			} else {
 				luaL_error(L, "[SetUnitNanoPieces] incorrect model-piece number %d", modelPieceNum);
@@ -2108,25 +2119,19 @@ int LuaSyncedCtrl::SetUnitPieceParent(lua_State* L)
 	if (unit == NULL)
 		return 0;
 
-	LocalModel* localModel = unit->localModel;
-
-	const size_t alteredPiece = luaL_checkint(L, 2) - 1;
-	const size_t parentPiece = luaL_checkint(L, 3) - 1;
-
-	if (alteredPiece >= localModel->pieces.size()) {
+	LocalModelPiece* lmpAlteredPiece = ParseObjectLocalModelPiece(L, unit, 2);
+	if (lmpAlteredPiece == nullptr) {
 		luaL_error(L,  "invalid piece");
 		return 0;
 	}
 
-	if (parentPiece >= localModel->pieces.size()) {
+	LocalModelPiece* lmpParentPiece = ParseObjectLocalModelPiece(L, unit, 3);
+	if (lmpParentPiece == nullptr) {
 		luaL_error(L,  "invalid parent piece");
 		return 0;
 	}
 
-	LocalModelPiece* lmpAlteredPiece = localModel->pieces[alteredPiece];
-	LocalModelPiece* lmpParentPiece = localModel->pieces[parentPiece];
-
-	if (lmpAlteredPiece == localModel->GetRoot()) {
+	if (lmpAlteredPiece == unit->localModel.GetRoot()) {
 		luaL_error(L,  "Can't change a root piece's parent");
 		return 0;
 	}
@@ -2137,6 +2142,7 @@ int LuaSyncedCtrl::SetUnitPieceParent(lua_State* L)
 	return 0;
 }
 
+
 int LuaSyncedCtrl::SetUnitCollisionVolumeData(lua_State* L)
 {
 	return (SetSolidObjectCollisionVolumeData(L, ParseUnit(L, __FUNCTION__, 1)));
@@ -2144,30 +2150,7 @@ int LuaSyncedCtrl::SetUnitCollisionVolumeData(lua_State* L)
 
 int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 {
-	const CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-
-	if (unit == NULL)
-		return 0;
-
-	const LocalModel* localModel = unit->localModel;
-	const unsigned int pieceIndex = luaL_checkint(L, 2);
-
-	if (pieceIndex >= localModel->pieces.size())
-		luaL_argerror(L, 2, "invalid piece index");
-
-	LocalModelPiece* lmp = localModel->pieces[pieceIndex];
-	CollisionVolume* vol = lmp->GetCollisionVolume();
-
-	const float3 scales(luaL_checkfloat(L, 4), luaL_checkfloat(L, 5), luaL_checkfloat(L, 6));
-	const float3 offset(luaL_checkfloat(L, 7), luaL_checkfloat(L, 8), luaL_checkfloat(L, 9));
-
-	const unsigned int vType = luaL_optint(L, 10, vol->GetVolumeType());
-	const unsigned int pAxis = luaL_optint(L, 11, vol->GetPrimaryAxis());
-
-	// piece volumes are not allowed to use discrete hit-testing
-	vol->InitShape(scales, offset, vType, CollisionVolume::COLVOL_HITTEST_CONT, pAxis);
-	vol->SetIgnoreHits(!luaL_checkboolean(L, 3));
-	return 0;
+	return (SetSolidObjectPieceCollisionVolumeData(L, ParseUnit(L, __FUNCTION__, 1)));
 }
 
 
@@ -2229,27 +2212,6 @@ int LuaSyncedCtrl::SetUnitPosErrorParams(lua_State* L)
 }
 
 
-int LuaSyncedCtrl::SetUnitLandPos(lua_State* L)
-{
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-
-	if (unit == NULL) {
-		return 0;
-	}
-
-	AAirMoveType* amt = dynamic_cast<AAirMoveType*>(unit->moveType);
-	if (!amt) {
-		luaL_error(L, "Not a flying unit");
-	}
-
-	const float3 landPos(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
-
-	amt->LandAt(landPos);
-
-	return 0;
-}
-
-
 int LuaSyncedCtrl::SetUnitMoveGoal(lua_State* L)
 {
 	CheckAllowGameChanges(L);
@@ -2270,6 +2232,28 @@ int LuaSyncedCtrl::SetUnitMoveGoal(lua_State* L)
 	} else {
 		unit->moveType->StartMoving(pos, radius, speed);
 	}
+
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetUnitLandGoal(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
+	if (unit == NULL) {
+		return 0;
+	}
+
+	AAirMoveType* amt = dynamic_cast<AAirMoveType*>(unit->moveType);
+	if (!amt) {
+		luaL_error(L, "Not a flying unit");
+	}
+
+	const float3 landPos(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
+	const float radius = luaL_optfloat(L, 5, 0.0f);
+
+	amt->LandAt(landPos, radius);
 
 	return 0;
 }
@@ -2640,6 +2624,17 @@ int LuaSyncedCtrl::SetFeatureAlwaysVisible(lua_State* L)
 }
 
 
+int LuaSyncedCtrl::SetFeatureFade(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+	if (feature == NULL) {
+		return 0;
+	}
+	feature->fade = luaL_checkboolean(L, 2);
+	return 0;
+}
+
+
 int LuaSyncedCtrl::SetFeatureHealth(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
@@ -2795,10 +2790,17 @@ int LuaSyncedCtrl::SetFeatureRadiusAndHeight(lua_State* L)
 	return 1;
 }
 
+
 int LuaSyncedCtrl::SetFeatureCollisionVolumeData(lua_State* L)
 {
 	return (SetSolidObjectCollisionVolumeData(L, ParseFeature(L, __FUNCTION__, 1)));
 }
+
+int LuaSyncedCtrl::SetFeaturePieceCollisionVolumeData(lua_State* L)
+{
+	return (SetSolidObjectPieceCollisionVolumeData(L, ParseFeature(L, __FUNCTION__, 1)));
+}
+
 
 /******************************************************************************/
 /******************************************************************************/
@@ -3501,7 +3503,7 @@ static inline void ParseSmoothMeshParams(lua_State* L, const char* caller,
 }
 
 
-int LuaSyncedCtrl::LevelSmoothMesh(lua_State *L)
+int LuaSyncedCtrl::LevelSmoothMesh(lua_State* L)
 {
 	float height;
 	int x1, x2, z1, z2;
@@ -3516,7 +3518,7 @@ int LuaSyncedCtrl::LevelSmoothMesh(lua_State *L)
 	return 0;
 }
 
-int LuaSyncedCtrl::AdjustSmoothMesh(lua_State *L)
+int LuaSyncedCtrl::AdjustSmoothMesh(lua_State* L)
 {
 	float height;
 	int x1, x2, z1, z2;
@@ -3532,7 +3534,7 @@ int LuaSyncedCtrl::AdjustSmoothMesh(lua_State *L)
 	return 0;
 }
 
-int LuaSyncedCtrl::RevertSmoothMesh(lua_State *L)
+int LuaSyncedCtrl::RevertSmoothMesh(lua_State* L)
 {
 	float origFactor;
 	int x1, x2, z1, z2;
@@ -3565,7 +3567,7 @@ int LuaSyncedCtrl::RevertSmoothMesh(lua_State *L)
 }
 
 
-int LuaSyncedCtrl::AddSmoothMesh(lua_State *L)
+int LuaSyncedCtrl::AddSmoothMesh(lua_State* L)
 {
 	if (!inSmoothMesh) {
 		luaL_error(L, "AddSmoothMesh() can only be called in SetSmoothMeshFunc()");
@@ -3595,7 +3597,7 @@ int LuaSyncedCtrl::AddSmoothMesh(lua_State *L)
 	return 1;
 }
 
-int LuaSyncedCtrl::SetSmoothMesh(lua_State *L)
+int LuaSyncedCtrl::SetSmoothMesh(lua_State* L)
 {
 	if (!inSmoothMesh) {
 		luaL_error(L, "SetSmoothMesh() can only be called in SetSmoothMeshFunc()");
@@ -3634,7 +3636,7 @@ int LuaSyncedCtrl::SetSmoothMesh(lua_State *L)
 	return 1;
 }
 
-int LuaSyncedCtrl::SetSmoothMeshFunc(lua_State *L)
+int LuaSyncedCtrl::SetSmoothMeshFunc(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 1) || !lua_isfunction(L, 1)) {
@@ -3785,14 +3787,14 @@ int LuaSyncedCtrl::UnitAttach(lua_State* L)
 		return 0;
 
 	int piece = luaL_checkint(L, 3) - 1;
-	auto &pieces = transporter->localModel->pieces;
+	auto &pieces = transporter->localModel.pieces;
 
 	if (piece >= (int) pieces.size()) {
 		luaL_error(L,  "invalid piece number");
 		return 0;
 	}
 	if (piece >= 0) {
-		piece = pieces[piece]->scriptPieceIndex;
+		piece = pieces[piece].scriptPieceIndex;
 	}
 	transporter->AttachUnit(transportee, piece, !transporter->unitDef->IsTransportUnit());
 

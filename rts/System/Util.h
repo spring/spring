@@ -6,7 +6,7 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
-#include <boost/utility.hpp>
+#include <boost/noncopyable.hpp>
 
 #include "System/maindefines.h"
 
@@ -177,11 +177,42 @@ void InverseOrSetBool(bool& container, const std::string& argValue, const bool i
 /// Helper function to avoid division by Zero
 static inline float SafeDivide(const float a, const float b)
 {
-	if (b==0)
+	if (b == 0.0f)
 		return a;
-	else
-		return a/b;
+
+	return (a / b);
 }
+
+
+
+template<typename T>
+static bool VectorErase(std::vector<T>& v, T e)
+{
+	auto it = std::find(v.begin(), v.end(), e);
+
+	if (it != v.end()) {
+		*it = v.back();
+		v.pop_back();
+		return true;
+	}
+
+	return false;
+}
+
+template<typename T>
+static bool VectorInsertUnique(std::vector<T>& v, T e, bool b = false)
+{
+	// do not assume uniqueness, test for it
+	if (b && std::find(v.begin(), v.end(), e) != v.end())
+		return false;
+
+	// assume caller knows best, skip the test
+	assert(b || std::find(v.begin(), v.end(), e) == v.end());
+	v.push_back(e);
+	return true;
+}
+
+
 
 /**
  * @brief Safe alternative to "delete obj;"

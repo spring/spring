@@ -12,6 +12,7 @@
 #include "System/Sync/HsiehHash.h"
 #include "System/creg/STL_Deque.h"
 #include "System/EventHandler.h"
+#include "System/ThreadPool.h"
 #include "System/TimeProfiler.h"
 
 
@@ -41,6 +42,24 @@ CR_REG_METADATA(CLosHandler,(
 
 
 
+//////////////////////////////////////////////////////////////////////
+// SLosInstance
+//////////////////////////////////////////////////////////////////////
+
+inline void SLosInstance::Init(int radius, int allyteam, int2 basePos, float baseHeight, int hashNum)
+{
+	this->allyteam = allyteam;
+	this->radius = radius;
+	this->basePos = basePos;
+	this->baseHeight = baseHeight;
+	this->refCount = 0;
+	this->hashNum = hashNum;
+	this->status = NONE;
+	this->isCache = false;
+	this->isQueuedForUpdate = false;
+	this->isQueuedForTerraform = false;
+}
+
 
 //////////////////////////////////////////////////////////////////////
 // ILosType
@@ -48,10 +67,10 @@ CR_REG_METADATA(CLosHandler,(
 
 size_t ILosType::cacheFails = 1;
 size_t ILosType::cacheHits  = 1;
-size_t ILosType::cacheReactivated  = 1;
+size_t ILosType::cacheReactivated = 1;
 constexpr float CLosHandler::defBaseRadarErrorSize;
 constexpr float CLosHandler::defBaseRadarErrorMult;
-
+constexpr SLosInstance::RLE SLosInstance::EMPTY_RLE;
 
 
 ILosType::ILosType(const int mipLevel_, LosType type_)
@@ -70,21 +89,6 @@ ILosType::ILosType(const int mipLevel_, LosType type_)
 
 ILosType::~ILosType()
 {
-	if (algoType == LOS_ALGO_RAYCAST) {
-		unsigned empties = 0;
-		unsigned hashCount = 1; // 1 to prevent div0
-		unsigned squaresCount = 1;
-		for (auto& bucket: instanceHash) {
-			if (bucket.empty()) {
-				++empties;
-				continue;
-			}
-			++squaresCount;
-			hashCount += bucket.size();
-		}
-
-		LOG_L(L_DEBUG, "LosHandler: empties=%.0f%% avgHashCol=%0.1f", float(empties * 100) / MAGIC_PRIME, float(hashCount) / squaresCount);
-	}
 }
 
 
@@ -165,11 +169,16 @@ inline void ILosType::UpdateUnit(CUnit* unit)
 	if (IS_FITTING_INSTANCE(uli)) {
 		return;
 	}
-	UnrefInstance(uli);
-	const int hash = GetHashNum(unit, baseLos);
+	if (uli) {
+		unit->los[type] = nullptr;
+		UnrefInstance(uli);
+	}
+	const int hash = GetHashNum(unit->allyteam, baseLos, radius);
 
 	// Cache - search if there is already an instance with same properties
-	for (SLosInstance* li: instanceHash[hash]) {
+	auto pair = instanceHash.equal_range(hash);
+	for (auto it = pair.first; it != pair.second; ++it) {
+		SLosInstance* li = it->second;
 		if (IS_FITTING_INSTANCE(li)) {
 			if (algoType == LOS_ALGO_RAYCAST) ++cacheHits;
 			unit->los[type] = li;
@@ -180,23 +189,22 @@ inline void ILosType::UpdateUnit(CUnit* unit)
 
 	// New - create a new one
 	if (algoType == LOS_ALGO_RAYCAST) ++cacheFails;
-	SLosInstance* li = new SLosInstance(
-		radius,
-		allyteam,
-		baseLos,
-		height,
-		hash
-	);
-	instanceHash[hash].push_back(li);
+	SLosInstance* li = CreateInstance();
+	li->Init(radius, allyteam, baseLos, height, hash);
+	li->refCount++;
 	unit->los[type] = li;
-	LosAdd(li);
+	instanceHash.emplace(hash, li);
+	UpdateInstanceStatus(li, SLosInstance::TLosStatus::NEW);
 }
 
 
 inline void ILosType::RemoveUnit(CUnit* unit, bool delayed)
 {
+	if (unit->los[type] == nullptr)
+		return;
+
 	if (delayed) {
-		DelayedFreeInstance(unit->los[type]);
+		DelayedUnrefInstance(unit->los[type]);
 	} else {
 		UnrefInstance(unit->los[type]);
 	}
@@ -227,118 +235,294 @@ inline void ILosType::LosRemove(SLosInstance* li)
 }
 
 
+inline void ILosType::RefInstance(SLosInstance* li)
+{
+	li->refCount++;
+	if (li->refCount == 1) {
+		if (li->isCache) {
+			if (algoType == LOS_ALGO_RAYCAST) ++cacheReactivated;
+			auto it = std::find(losCache.begin(), losCache.end(), li);
+			li->isCache = false;
+			losCache.erase(it);
+		}
+
+		UpdateInstanceStatus(li, SLosInstance::TLosStatus::REACTIVATE);
+	}
+}
+
+
+void ILosType::UnrefInstance(SLosInstance* li)
+{
+	assert(li->refCount > 0);
+	li->refCount--;
+	if (li->refCount > 0) {
+		return;
+	}
+
+	UpdateInstanceStatus(li, SLosInstance::TLosStatus::REMOVE);
+}
+
+
+inline void ILosType::DelayedUnrefInstance(SLosInstance* li)
+{
+	DelayedInstance di;
+	di.instance = li;
+	di.timeoutTime = (gs->frameNum + (GAME_SPEED + (GAME_SPEED >> 1)));
+	delayedDeleteQue.push_back(di);
+}
+
+
+inline void ILosType::AddInstanceToCache(SLosInstance* li)
+{
+	if (li->status & SLosInstance::TLosStatus::RECALC) {
+		assert(!li->isCache);
+		DeleteInstance(li);
+		return;
+	}
+
+	li->isCache = true;
+	losCache.push_back(li);
+}
+
+
+inline SLosInstance* ILosType::CreateInstance()
+{
+	if (!freeIDs.empty()) {
+		int id = freeIDs.back();
+		freeIDs.pop_back();
+		return &instances[id];
+	}
+
+	instances.emplace_back(instances.size());
+	return &instances.back();
+}
+
+
 inline void ILosType::DeleteInstance(SLosInstance* li)
 {
-	auto& cont = instanceHash[li->hashNum];
-	auto it = std::find(cont.begin(), cont.end(), li);
-	cont.erase(it);
-	delete li;
+	assert(li->refCount == 0);
+	auto pair = instanceHash.equal_range(li->hashNum);
+	auto it = std::find_if(pair.first, pair.second, [&](decltype(*pair.first)& p){ return (p.second == li); });
+	instanceHash.erase(it);
+
+	// caller has to do that
+	assert(!li->isCache);
+	/*if (li->isCache) {
+		auto it = std::find(losCache.begin(), losCache.end(), li);
+		losCache.erase(it);
+	}*/
+
+	if (li->isQueuedForTerraform) {
+		auto it = std::find_if(delayedTerraQue.begin(), delayedTerraQue.end(), [&](const DelayedInstance& inst) {
+			return inst.instance == li;
+		});
+		if (it != delayedTerraQue.end())
+			delayedTerraQue.erase(it);
+		li->isQueuedForTerraform = false;
+	}
+
+	li->squares.clear();
+	freeIDs.push_back(li->id);
 }
 
 
-inline void ILosType::RefInstance(SLosInstance* instance)
+inline void ILosType::UpdateInstanceStatus(SLosInstance* li, SLosInstance::TLosStatus status)
 {
-	if (instance->refCount == 0) {
-		if (algoType == LOS_ALGO_RAYCAST) ++cacheReactivated;
+	// queue for update
+	if (status == SLosInstance::TLosStatus::RECALC) {
+		if (!li->isQueuedForTerraform && !li->isQueuedForUpdate) {
+			li->isQueuedForTerraform = true;
 
-		LosAdd(instance);
-	}
-	instance->refCount++;
-}
-
-
-void ILosType::UnrefInstance(SLosInstance* instance)
-{
-	if (instance == nullptr)
-		return;
-
-	instance->refCount--;
-	if (instance->refCount > 0) {
-		return;
-	}
-
-	LosRemove(instance);
-
-	if (algoType == LOS_ALGO_CIRCLE) {
-		// in case of circle the instance doesn't keep any relevant buffer,
-		// so there is no need to cache it
-		DeleteInstance(instance);
-		return;
-	}
-
-	if (!instance->toBeDeleted) {
-		instance->toBeDeleted = true;
-		toBeDeleted.push_back(instance);
-	}
-
-	// reached max cache size, free one instance
-	if (toBeDeleted.size() > CACHE_SIZE) {
-		SLosInstance* li = toBeDeleted.front();
-		toBeDeleted.pop_front();
-
-		if (li->hashNum >= MAGIC_PRIME || li->hashNum < 0) {
-			LOG_L(L_WARNING,
-				"[LosHandler::FreeInstance] bad LOS-instance hash (%d)",
-				li->hashNum);
-			return;
+			DelayedInstance di;
+			di.instance = li;
+			di.timeoutTime = (gs->frameNum + 2 * GAME_SPEED);
+			delayedTerraQue.push_back(di);
 		}
-
-		li->toBeDeleted = false;
-
-		if (li->refCount == 0) {
-			DeleteInstance(li);
+	} else {
+		if (!li->isQueuedForUpdate) {
+			li->isQueuedForUpdate = true;
+			losUpdate.push_back(li);
 		}
 	}
+
+
+	// mark the type of update needed
+	assert((li->status & status) == 0 || status == SLosInstance::TLosStatus::RECALC);
+	li->status |= status;
+
+
+	// sanity checks (debug only)
+	constexpr auto b = SLosInstance::TLosStatus::REACTIVATE | SLosInstance::TLosStatus::RECALC;
+	assert((li->status & b) != b || (li->status & SLosInstance::TLosStatus::REMOVE));
+
+	constexpr auto c = SLosInstance::TLosStatus::NEW | SLosInstance::TLosStatus::RECALC;
+	assert((li->status & c) != c);
+
+	constexpr auto d = SLosInstance::TLosStatus::NEW | SLosInstance::TLosStatus::REACTIVATE;
+	assert((li->status & d) != d);
+
+	constexpr auto e = SLosInstance::TLosStatus::NEW | SLosInstance::TLosStatus::REMOVE;
+	assert((li->status & e) != e);
+
+	if (li->status & SLosInstance::TLosStatus::RECALC)
+		assert(li->refCount > 0 || (li->status & SLosInstance::TLosStatus::REMOVE));
+
+	if (li->refCount == 0)
+		assert(li->isCache || (li->status & SLosInstance::TLosStatus::REMOVE));
+
+	if (status == SLosInstance::TLosStatus::REMOVE)
+		assert(li->refCount == 0);
 }
 
 
-int ILosType::GetHashNum(const CUnit* unit, const int2 baseLos)
+inline SLosInstance::TLosStatus ILosType::OptimizeInstanceUpdate(SLosInstance* li)
 {
-	boost::uint32_t hash = 127;
-	hash = HsiehHash(&unit->allyteam,  sizeof(unit->allyteam), hash);
-	hash = HsiehHash(&baseLos,         sizeof(baseLos), hash);
+	constexpr auto a = SLosInstance::TLosStatus::REACTIVATE | SLosInstance::TLosStatus::REMOVE;
+	if ((li->status & a) == a) {
+		assert(li->refCount > 0);
+		li->status &= ~a;
+	}
 
-	// hash-value range is [0, MAGIC_PRIME - 1]
-	return (hash % MAGIC_PRIME);
+
+	if (li->status & SLosInstance::TLosStatus::NEW) {
+		assert(li->refCount > 0);
+		return SLosInstance::TLosStatus::NEW;
+	} else
+	if (li->status & SLosInstance::TLosStatus::REMOVE) {
+		assert(li->refCount == 0);
+		return SLosInstance::TLosStatus::REMOVE;
+	} else
+	if (li->status & SLosInstance::TLosStatus::REACTIVATE) {
+		assert(li->refCount > 0);
+		return SLosInstance::TLosStatus::REACTIVATE;
+	} else
+	if (li->status & SLosInstance::TLosStatus::RECALC) {
+		assert(li->refCount > 0);
+		return SLosInstance::TLosStatus::RECALC;
+	}
+	return SLosInstance::TLosStatus::NONE;
 }
 
 
-inline void ILosType::DelayedFreeInstance(SLosInstance* instance)
+inline int ILosType::GetHashNum(const int allyteam, const int2 baseLos, const float radius) const
 {
-	if (instance == nullptr)
-		return;
-
-	DelayedInstance di;
-	di.instance = instance;
-	di.timeoutTime = (gs->frameNum + (GAME_SPEED + (GAME_SPEED >> 1)));
-	delayQue.push_back(di);
+	boost::uint32_t hash = 0;
+	hash = HsiehHash(&allyteam, sizeof(allyteam), hash);
+	hash = HsiehHash(&baseLos,  sizeof(baseLos),  hash);
+	hash = HsiehHash(&radius,   sizeof(radius),   hash);
+	return hash;
 }
 
 
 void ILosType::Update()
 {
 	// delayed delete
-	while (!delayQue.empty() && delayQue.front().timeoutTime < gs->frameNum) {
-		UnrefInstance(delayQue.front().instance);
-		delayQue.pop_front();
+	while (!delayedDeleteQue.empty() && delayedDeleteQue.front().timeoutTime < gs->frameNum) {
+		UnrefInstance(delayedDeleteQue.front().instance);
+		delayedDeleteQue.pop_front();
 	}
 
-	// terraform
-	if ((gs->frameNum-1) % LOS_TERRAFORM_SLOWUPDATE_RATE == 0) {
-		for (auto& bucket: instanceHash) {
-			for (SLosInstance* li: bucket) {
-				if (!li->needsRecalc)
-					continue;
-				if (li->refCount == 0)
-					continue;
+	// relos after terraform is delayed
+	while (!delayedTerraQue.empty() && delayedTerraQue.front().timeoutTime < gs->frameNum) {
+		SLosInstance* li = delayedTerraQue.front().instance;
+		li->isQueuedForTerraform = false;
+		if (!li->isQueuedForUpdate) {
+			losUpdate.push_back(li);
+		}
+		delayedTerraQue.pop_front();
+	}
 
-				LosRemove(li);
-				li->squares.clear();
-				LosAdd(li);
-				li->needsRecalc = false;
-			}
+	// no updates? -> early exit
+	if (losUpdate.empty())
+		return;
+
+	std::vector<SLosInstance*> losRemove;
+	std::vector<SLosInstance*> losRecalc;
+	std::vector<SLosInstance*> losAdd;
+	std::vector<SLosInstance*> losDeleted;
+	losRemove.reserve(losUpdate.size());
+	if (algoType == LOS_ALGO_RAYCAST) losRecalc.reserve(losUpdate.size());
+	losAdd.reserve(losUpdate.size());
+	losDeleted.reserve(losUpdate.size());
+
+	// filter the updates into their subparts
+	for (SLosInstance* li: losUpdate) {
+		const auto status = OptimizeInstanceUpdate(li);
+		li->isQueuedForUpdate = false;
+
+		switch (status) {
+			case SLosInstance::TLosStatus::NEW: {
+				if (algoType == LOS_ALGO_RAYCAST) losRecalc.push_back(li);
+				losAdd.push_back(li);
+			} break;
+			case SLosInstance::TLosStatus::REACTIVATE: {
+				losAdd.push_back(li);
+			} break;
+			case SLosInstance::TLosStatus::RECALC: {
+				losRemove.push_back(li);
+				if (algoType == LOS_ALGO_RAYCAST) losRecalc.push_back(li);
+				losAdd.push_back(li);
+			} break;
+			case SLosInstance::TLosStatus::REMOVE: {
+				losRemove.push_back(li);
+				losDeleted.push_back(li);
+			} break;
+			case SLosInstance::TLosStatus::NONE: {
+			} break;
+			default: assert(false);
+		}
+
+		if (status == SLosInstance::TLosStatus::REMOVE) {
+			// clear all bits except recalc
+			// so the instance gets deleted right away in AddInstanceToCache()
+			li->status &= SLosInstance::TLosStatus::RECALC;
+		} else {
+			li->status = SLosInstance::TLosStatus::NONE;
 		}
 	}
+
+	// remove sight
+	for (SLosInstance* li: losRemove) {
+		LosRemove(li);
+	}
+
+	// raycast terrain
+	if (algoType == LOS_ALGO_RAYCAST)  {
+		for_mt(0, losRecalc.size(), [&](const int idx) {
+			auto li = losRecalc[idx];
+			assert(li->refCount > 0);
+			li->squares.clear();
+			losMaps[li->allyteam].PrepareRaycast(li);
+		});
+	}
+
+	// add sight
+	for (SLosInstance* li: losAdd) {
+		assert(li->refCount > 0);
+		LosAdd(li);
+	}
+
+	// delete / move to cache unused instances
+	if (algoType == LOS_ALGO_RAYCAST) {
+		while (!losCache.empty() && ((losCache.size() + losDeleted.size()) > CACHE_SIZE)) {
+			SLosInstance* li = losCache.front();
+			losCache.pop_front();
+			li->isCache = false;
+			DeleteInstance(li);
+		}
+
+		for (SLosInstance* li: losDeleted) {
+			assert(li->refCount == 0);
+			AddInstanceToCache(li);
+		}
+	} else {
+		assert(losCache.empty());
+		for (SLosInstance* li: losDeleted) {
+			DeleteInstance(li);
+		}
+	}
+
+	losUpdate.clear();
 }
 
 
@@ -351,8 +535,8 @@ void ILosType::UpdateHeightMapSynced(SRectangle rect)
 		int2 pos = li->basePos * divisor;
 		const int radius = li->radius * divisor;
 
-		const int hw = rect.GetWidth() * SQUARE_SIZE / 2;
-		const int hh = rect.GetHeight() * SQUARE_SIZE / 2;
+		const int hw = rect.GetWidth() * (SQUARE_SIZE / 2);
+		const int hh = rect.GetHeight() * (SQUARE_SIZE / 2);
 
 		int2 circleDistance;
 		circleDistance.x = std::abs(pos.x - rect.x1 * SQUARE_SIZE) - hw;
@@ -367,27 +551,28 @@ void ILosType::UpdateHeightMapSynced(SRectangle rect)
 	};
 
 	// delete unused instances that overlap with the changed rectangle
-	for (auto it = toBeDeleted.begin(); it != toBeDeleted.end();) {
+	for (auto it = losCache.begin(); it != losCache.end();) {
 		SLosInstance* li = *it;
 		if (li->refCount > 0 || !CheckOverlap(li, rect)) {
 			++it;
 			continue;
 		}
 
-		it = toBeDeleted.erase(it);
+		it = losCache.erase(it);
+		li->isCache = false;
 		DeleteInstance(li);
 	}
 
 	// relos used instances
-	for (auto& bucket: instanceHash) {
-		for (SLosInstance* li: bucket) {
-			if (li->needsRecalc)
-				continue;
-			if (!CheckOverlap(li, rect))
-				continue;
+	for (auto& p: instanceHash) {
+		SLosInstance* li = p.second;
 
-			li->needsRecalc = true;
-		}
+		if (li->status & SLosInstance::TLosStatus::RECALC)
+			continue;
+		if (!CheckOverlap(li, rect))
+			continue;
+
+		UpdateInstanceStatus(li, SLosInstance::TLosStatus::RECALC);
 	}
 }
 
@@ -398,7 +583,7 @@ void ILosType::UpdateHeightMapSynced(SRectangle rect)
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CLosHandler* losHandler;
+CLosHandler* losHandler = nullptr;
 
 CLosHandler::CLosHandler()
 	: CEventClient("[CLosHandler]", 271993, true)
@@ -431,10 +616,23 @@ CLosHandler::CLosHandler()
 
 CLosHandler::~CLosHandler()
 {
-	LOG("LosHandler stats: %.0f%% (%u of %u) instances shared with a %.0f%% cache hitrate",
+	/*size_t memUsage = 0;
+	for (ILosType* lt: losTypes) {
+		memUsage += lt->instances.size() * sizeof(SLosInstance);
+		for (SLosInstance& li: lt->instances) {
+			memUsage += li.squares.capacity() * sizeof(SLosInstance::RLE);
+		}
+		memUsage += lt->losMaps.size() * sizeof(CLosMap);
+		for (CLosMap& lm: lt->losMaps) {
+			memUsage += lm.losmap.capacity() * sizeof(unsigned short);
+		}
+	}
+	LOG_L(L_WARNING, "LosHandler MemUsage: ~%.1fMB", memUsage / (1024.f * 1024.f));*/
+
+	LOG("LosHandler stats: total instances=%u; reused=%.0f%%; from cache=%.0f%%",
+		unsigned(ILosType::cacheHits + ILosType::cacheFails),
 		100.f * float(ILosType::cacheHits) / (ILosType::cacheHits + ILosType::cacheFails),
-		unsigned(ILosType::cacheHits), unsigned(ILosType::cacheHits + ILosType::cacheFails),
-		100.f * float(ILosType::cacheReactivated) / ILosType::cacheHits);
+		100.f * float(ILosType::cacheReactivated) / (ILosType::cacheHits + ILosType::cacheFails));
 }
 
 
@@ -474,21 +672,21 @@ void CLosHandler::Update()
 {
 	SCOPED_TIMER("LosHandler::Update");
 
-	for (CUnit* u: unitHandler->activeUnits) {
-		for (ILosType* lt: losTypes) {
+	for_mt(0, losTypes.size(), [&](const int idx){
+		ILosType* lt = losTypes[idx];
+
+		for (CUnit* u: unitHandler->activeUnits) {
 			lt->UpdateUnit(u);
 		}
-	}
 
-	for (ILosType* lt: losTypes) {
 		lt->Update();
-	}
+	});
 }
 
 
 void CLosHandler::UpdateHeightMapSynced(SRectangle rect)
 {
-	SCOPED_TIMER("LosHandler::Update");
+	SCOPED_TIMER("LosHandler::UpdateHeightMapSynced");
 	for (ILosType* lt: losTypes) {
 		lt->UpdateHeightMapSynced(rect);
 	}

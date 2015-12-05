@@ -57,7 +57,7 @@ static void SetThreadNum(const int idx)
 int GetMaxThreads()
 {
 #ifndef UNIT_TEST
-	return Threading::GetPhysicalCpuCores();
+	return std::min(MAX_THREADS, Threading::GetPhysicalCpuCores());
 #else
 	return 10;
 #endif

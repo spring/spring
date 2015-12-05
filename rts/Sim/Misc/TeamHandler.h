@@ -31,11 +31,11 @@ public:
 	 *
 	 * Accesses a CTeam instance at a given index
 	 */
-	CTeam* Team(int i) const
+	CTeam* Team(int i)
 	{
 		assert(i >=            0);
 		assert(i <  teams.size());
-		return teams[i];
+		return &teams[i];
 	}
 
 	/**
@@ -55,7 +55,7 @@ public:
 	 *
 	 * returns the team2ally at given index
 	 */
-	int AllyTeam(int team) const { return teams[team]->teamAllyteam; }
+	int AllyTeam(int team) const { return teams[team].teamAllyteam; }
 	::AllyTeam& GetAllyTeam(size_t id) { return allyTeams[id]; };
 
 	bool ValidAllyTeam(size_t id) const
@@ -91,7 +91,7 @@ public:
 	 *
 	 * Sets team's ally team
 	 */
-	void SetAllyTeam(int team, int allyteam) { teams[team]->teamAllyteam = allyteam; }
+	void SetAllyTeam(int team, int allyteam) { teams[team].teamAllyteam = allyteam; }
 
 	/**
 	 * @brief set ally
@@ -120,7 +120,7 @@ public:
 		return ((id >= 0) && (id < ActiveTeams()));
 	}
 	bool IsActiveTeam(int id) const {
-		return (IsValidTeam(id) && !teams[id]->isDead);
+		return (IsValidTeam(id) && !teams[id].isDead);
 	}
 
 	bool IsValidAllyTeam(int id) const {
@@ -158,7 +158,7 @@ private:
 	 *
 	 * Array of CTeam instances for teams in game
 	 */
-	std::vector<CTeam *> teams;
+	std::vector<CTeam> teams;
 	std::vector< ::AllyTeam > allyTeams;
 };
 

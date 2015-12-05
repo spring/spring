@@ -706,8 +706,11 @@ void CWeapon::SlowUpdate()
 		// If unit got an attack target, clone the job (independent of AutoTarget!)
 		// Also do this unconditionally (owner's target always has priority over weapon one!)
 		Attack(owner->curTarget);
+	} else
+	if (!HaveTarget() && owner->lastAttacker != nullptr && owner->fireState == FIRESTATE_RETURNFIRE) {
+		//Try to return fire
+		Attack(owner->lastAttacker);
 	}
-
 	// AutoTarget: Find new/better Target
 	AutoTarget();
 }
@@ -796,7 +799,7 @@ float3 CWeapon::GetTargetBorderPos(
 
 	const float tbScale = math::fabsf(weaponDef->targetBorder);
 
-	CollisionVolume  tmpColVol = CollisionVolume(targetUnit->collisionVolume);
+	CollisionVolume  tmpColVol = targetUnit->collisionVolume;
 	CollisionQuery   tmpColQry;
 
 	// test for "collision" with a temporarily volume
@@ -806,7 +809,8 @@ float3 CWeapon::GetTargetBorderPos(
 	tmpColVol.SetBoundingRadius();
 	tmpColVol.SetUseContHitTest(false);
 
-	if (CCollisionHandler::DetectHit(&tmpColVol, targetUnit, weaponMuzzlePos, ZeroVector, NULL)) { //FIXME use aimFromPos ?
+	if (CCollisionHandler::DetectHit(targetUnit, &tmpColVol, targetUnit->GetTransformMatrix(true), weaponMuzzlePos, ZeroVector, NULL)) {
+		// FIXME use aimFromPos ?
 		// our weapon muzzle is inside the target unit's volume
 		targetBorderPos = weaponMuzzlePos;
 	} else {
@@ -827,7 +831,7 @@ float3 CWeapon::GetTargetBorderPos(
 		const float3 targetRayPos = rawTargetPos + targetOffset;
 
 		// adjust the length of <targetVec> based on the targetBorder factor
-		if (CCollisionHandler::DetectHit(&tmpColVol, targetUnit, weaponMuzzlePos, targetRayPos, &tmpColQry)) {
+		if (CCollisionHandler::DetectHit(targetUnit, &tmpColVol, targetUnit->GetTransformMatrix(true), weaponMuzzlePos, targetRayPos, &tmpColQry)) {
 			targetBorderPos = (weaponDef->targetBorder > 0.0f) ? tmpColQry.GetIngressPos() : tmpColQry.GetEgressPos();
 		}
 	}

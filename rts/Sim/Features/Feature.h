@@ -94,6 +94,7 @@ public:
 
 	/// which drawQuad we are part of
 	int drawQuad;
+	bool fade;
 	float drawAlpha;
 	int fireTime;
 	int smokeTime;

@@ -464,10 +464,11 @@ void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 
 void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 {
-	const int activeFarTex = treeGen->farTex[camera->GetDir().z >= 0.0f];
-	const bool drawDetailed = ((treeDistance >= 4.0f) || drawReflection);
-
+	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
 	Shader::IProgramObject* treeShader = NULL;
+
+	const int activeFarTex = treeGen->farTex[cam->GetDir().z >= 0.0f];
+	const bool drawDetailed = ((treeDistance >= 4.0f) || drawReflection);
 
 	const CMapInfo::light_t& light = mapInfo->light;
 
@@ -505,16 +506,15 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 		glBindTexture(GL_TEXTURE_2D, activeFarTex);
 	}
 
-
-	const int cx = int(camera->GetPos().x / (SQUARE_SIZE * TREE_SQUARE_SIZE));
-	const int cy = int(camera->GetPos().z / (SQUARE_SIZE * TREE_SQUARE_SIZE));
+	const int cx = int(cam->GetPos().x / (SQUARE_SIZE * TREE_SQUARE_SIZE));
+	const int cy = int(cam->GetPos().z / (SQUARE_SIZE * TREE_SQUARE_SIZE));
 
 	CAdvTreeSquareDrawer drawer(this, cx, cy, treeDistance * SQUARE_SIZE * TREE_SQUARE_SIZE, drawDetailed);
 
 	oldTreeDistance = treeDistance;
 
 	// draw far-trees using map-dependent grid-visibility (FIXME: ignores LOS)
-	readMap->GridVisibility(camera, TREE_SQUARE_SIZE, drawer.treeDistance * 2.0f, &drawer);
+	readMap->GridVisibility(nullptr, TREE_SQUARE_SIZE, drawer.treeDistance * 2.0f, &drawer);
 
 
 	if (drawDetailed) {
@@ -554,13 +554,13 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 
 		if (globalRendering->haveGLSL) {
-			treeShader->SetUniform3fv(0, &camera->GetRight()[0]);
-			treeShader->SetUniform3fv(1, &camera->GetUp()[0]);
+			treeShader->SetUniform3fv(0, &cam->GetRight()[0]);
+			treeShader->SetUniform3fv(1, &cam->GetUp()[0]);
 			treeShader->SetUniform2f(5, 0.20f * (1.0f / MAX_TREE_HEIGHT), 0.85f);
 		} else {
 			treeShader->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
-			treeShader->SetUniform3f(13, camera->GetRight().x, camera->GetRight().y, camera->GetRight().z);
-			treeShader->SetUniform3f( 9, camera->GetUp().x,    camera->GetUp().y,    camera->GetUp().z   );
+			treeShader->SetUniform3f(13, cam->GetRight().x, cam->GetRight().y, cam->GetRight().z);
+			treeShader->SetUniform3f( 9, cam->GetUp().x,    cam->GetUp().y,    cam->GetUp().z   );
 			treeShader->SetUniform4f(11, light.groundSunColor.x,     light.groundSunColor.y,     light.groundSunColor.z,     0.85f);
 			treeShader->SetUniform4f(14, light.groundAmbientColor.x, light.groundAmbientColor.y, light.groundAmbientColor.z, 0.85f);
 			treeShader->SetUniform4f(12, 0.0f, 0.0f, 0.0f, 0.20f * (1.0f / MAX_TREE_HEIGHT)); // w = alpha/height modifier
@@ -591,10 +591,10 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 						continue;
 					if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 						continue;
-					if (!camera->InView(ts->pos + (UpVector * (MAX_TREE_HEIGHT / 2.0f)), MAX_TREE_HEIGHT / 2.0f))
+					if (!cam->InView(ts->pos + (UpVector * (MAX_TREE_HEIGHT / 2.0f)), MAX_TREE_HEIGHT / 2.0f))
 						continue;
 
-					const float camDist = (ts->pos - camera->GetPos()).SqLength();
+					const float camDist = (ts->pos - cam->GetPos()).SqLength();
 					int type = ts->type;
 					float dy = 0.0f;
 					unsigned int dispList;
@@ -614,7 +614,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 						glCallList(dispList);
 					} else if (camDist < (SQUARE_SIZE * SQUARE_SIZE * 125 * 125)) {
 						// draw mid-distance tree
-						const float relDist = (ts->pos.distance(camera->GetPos()) - SQUARE_SIZE * 110) / (SQUARE_SIZE * 15);
+						const float relDist = (ts->pos.distance(cam->GetPos()) - SQUARE_SIZE * 110) / (SQUARE_SIZE * 15);
 
 						treeShader->SetUniform3f(((globalRendering->haveGLSL)? 2: 10), ts->pos.x, ts->pos.y, ts->pos.z);
 
@@ -650,7 +650,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 			//   continue;
 			if (!losHandler->InLos(pos, gu->myAllyTeam))
 				continue;
-			if (!camera->InView(pos + (UpVector * (MAX_TREE_HEIGHT / 2.0f)), MAX_TREE_HEIGHT / 2.0f))
+			if (!cam->InView(pos + (UpVector * (MAX_TREE_HEIGHT / 2.0f)), MAX_TREE_HEIGHT / 2.0f))
 				continue;
 
 			const float ang = fti->fallPos * PI;
@@ -704,7 +704,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 				continue;
 			if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 				continue;
-			if (!camera->InView(pFTree->pos, MAX_TREE_HEIGHT / 2.0f))
+			if (!cam->InView(pFTree->pos, MAX_TREE_HEIGHT / 2.0f))
 				continue;
 
 			va = GetVertexArray();
@@ -908,8 +908,11 @@ void CAdvTreeSquareShadowPassDrawer::DrawQuad(int x, int y)
 
 void CAdvTreeDrawer::DrawShadowPass()
 {
+	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
+	Shader::IProgramObject* po = NULL;
+
 	const float treeDistance = oldTreeDistance;
-	const int activeFarTex = (camera->GetDir().z < 0.0f)? treeGen->farTex[0] : treeGen->farTex[1];
+	const int activeFarTex = (cam->GetDir().z < 0.0f)? treeGen->farTex[0] : treeGen->farTex[1];
 	const bool drawDetailed = (treeDistance >= 4.0f);
 
 	glActiveTexture(GL_TEXTURE0);
@@ -922,17 +925,15 @@ void CAdvTreeDrawer::DrawShadowPass()
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
 	CAdvTreeSquareShadowPassDrawer drawer;
-	const int cx = drawer.cx = (int)(camera->GetPos().x / (SQUARE_SIZE * TREE_SQUARE_SIZE));
-	const int cy = drawer.cy = (int)(camera->GetPos().z / (SQUARE_SIZE * TREE_SQUARE_SIZE));
+	const int cx = drawer.cx = (int)(cam->GetPos().x / (SQUARE_SIZE * TREE_SQUARE_SIZE));
+	const int cy = drawer.cy = (int)(cam->GetPos().z / (SQUARE_SIZE * TREE_SQUARE_SIZE));
 
 	drawer.drawDetailed = drawDetailed;
 	drawer.td = this;
 	drawer.treeDistance = treeDistance * SQUARE_SIZE * TREE_SQUARE_SIZE;
 
-	Shader::IProgramObject* po = NULL;
-
 	// draw with extraSize=1
-	readMap->GridVisibility(camera, TREE_SQUARE_SIZE, drawer.treeDistance * 2.0f, &drawer, 1);
+	readMap->GridVisibility(nullptr, TREE_SQUARE_SIZE, drawer.treeDistance * 2.0f, &drawer, 1);
 
 	if (drawDetailed) {
 		const int xstart = Clamp(cx - 2, 0, mapDims.mapx / TREE_SQUARE_SIZE - 1);
@@ -947,12 +948,12 @@ void CAdvTreeDrawer::DrawShadowPass()
 		po->Enable();
 
 		if (globalRendering->haveGLSL) {
-			po->SetUniform3fv(1, &camera->GetRight()[0]);
-			po->SetUniform3fv(2, &camera->GetUp()[0]);
+			po->SetUniform3fv(1, &cam->GetRight()[0]);
+			po->SetUniform3fv(2, &cam->GetUp()[0]);
 		} else {
 			po->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
-			po->SetUniform4f(13, camera->GetRight().x, camera->GetRight().y, camera->GetRight().z, 0.0f);
-			po->SetUniform4f(9,  camera->GetUp().x,    camera->GetUp().y,    camera->GetUp().z,    0.0f);
+			po->SetUniform4f(13, cam->GetRight().x, cam->GetRight().y, cam->GetRight().z, 0.0f);
+			po->SetUniform4f(9,  cam->GetUp().x,    cam->GetUp().y,    cam->GetUp().z,    0.0f);
 			po->SetUniform4f(11, 1.0f, 1.0f, 1.0f, 0.85f                           );
 			po->SetUniform4f(12, 0.0f, 0.0f, 0.0f, 0.20f * (1.0f / MAX_TREE_HEIGHT));   // w = alpha/height modifier
 		}
@@ -980,10 +981,10 @@ void CAdvTreeDrawer::DrawShadowPass()
 						continue;
 					if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 						continue;
-					if (!camera->InView(ts->pos + float3(0, MAX_TREE_HEIGHT / 2, 0), MAX_TREE_HEIGHT / 2 + 150))
+					if (!cam->InView(ts->pos + float3(0, MAX_TREE_HEIGHT / 2, 0), MAX_TREE_HEIGHT / 2 + 150))
 						continue;
 
-					const float camDist = (ts->pos - camera->GetPos()).SqLength();
+					const float camDist = (ts->pos - cam->GetPos()).SqLength();
 					int type = ts->type;
 					float dy = 0.0f;
 					unsigned int dispList;
@@ -1001,7 +1002,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 						po->SetUniform3f((globalRendering->haveGLSL? 3: 10), ts->pos.x, ts->pos.y, ts->pos.z);
 						glCallList(dispList);
 					} else if (camDist < SQUARE_SIZE * SQUARE_SIZE * 125 * 125) {
-						const float relDist = (ts->pos.distance(camera->GetPos()) - SQUARE_SIZE * 110) / (SQUARE_SIZE * 15);
+						const float relDist = (ts->pos.distance(cam->GetPos()) - SQUARE_SIZE * 110) / (SQUARE_SIZE * 15);
 
 						glAlphaFunc(GL_GREATER, 0.8f + relDist * 0.2f);
 						po->SetUniform3f((globalRendering->haveGLSL? 3: 10), ts->pos.x, ts->pos.y, ts->pos.z);
@@ -1033,7 +1034,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 			//   continue;
 			if (!losHandler->InLos(pos, gu->myAllyTeam))
 				continue;
-			if (!camera->InView(pos + (UpVector * (MAX_TREE_HEIGHT / 2.0f)), MAX_TREE_HEIGHT / 2.0f))
+			if (!cam->InView(pos + (UpVector * (MAX_TREE_HEIGHT / 2.0f)), MAX_TREE_HEIGHT / 2.0f))
 				continue;
 
 			const float ang = fti->fallPos * PI;
@@ -1077,7 +1078,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 				continue;
 			if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 				continue;
-			if (!camera->InView(pFTree->pos, MAX_TREE_HEIGHT / 2.0f))
+			if (!cam->InView(pFTree->pos, MAX_TREE_HEIGHT / 2.0f))
 				continue;
 
 			va = GetVertexArray();

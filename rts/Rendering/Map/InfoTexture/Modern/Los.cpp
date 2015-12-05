@@ -144,7 +144,7 @@ void CLosTexture::Update()
 	infoTexPBO.Bind();
 	auto infoTexMem = reinterpret_cast<unsigned char*>(infoTexPBO.MapBuffer());
 	const unsigned short* myLos = &losHandler->los.losMaps[gu->myAllyTeam].front();
-	memcpy(infoTexMem, myLos, texSize.x * texSize.y * texChannels * 2);
+	memcpy(infoTexMem, myLos, texSize.x * texSize.y * texChannels * sizeof(short));
 	infoTexPBO.UnmapBuffer();
 
 	//Trick: Upload the ushort as 2 ubytes, and then check both for `!=0` in the shader.

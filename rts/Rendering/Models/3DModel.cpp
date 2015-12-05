@@ -5,7 +5,6 @@
 
 #include "3DOParser.h"
 #include "S3OParser.h"
-#include "Rendering/FarTextureHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/Exceptions.h"
@@ -38,7 +37,7 @@ CR_REG_METADATA(LocalModelPiece, (
 	CR_IGNORED(lodDispLists) //FIXME GL idx!
 ))
 
-CR_BIND(LocalModel, (NULL))
+CR_BIND(LocalModel, )
 CR_REG_METADATA(LocalModel, (
 	CR_IGNORED(dirtyPieces),
 	CR_IGNORED(lodCount), //FIXME?
@@ -58,13 +57,6 @@ void S3DModel::DeletePieces(S3DModelPiece* piece)
 	delete piece;
 }
 
-S3DModelPiece* S3DModel::FindPiece(const std::string& name) const
-{
-	const ModelPieceMap::const_iterator it = pieceMap.find(name);
-	if (it != pieceMap.end())
-		return it->second;
-	return NULL;
-}
 
 
 /** ****************************************************************************************************
@@ -73,7 +65,6 @@ S3DModelPiece* S3DModel::FindPiece(const std::string& name) const
 
 S3DModelPiece::S3DModelPiece()
 	: parent(NULL)
-	, colvol(NULL)
 	, axisMapType(AXIS_MAPPING_XYZ)
 	, hasGeometryData(false)
 	, hasIdentityRot(true)
@@ -88,7 +79,6 @@ S3DModelPiece::S3DModelPiece()
 S3DModelPiece::~S3DModelPiece()
 {
 	glDeleteLists(dispListID, 1);
-	delete colvol;
 }
 
 unsigned int S3DModelPiece::CreateDrawForList() const
@@ -131,37 +121,52 @@ void S3DModelPiece::DrawStatic() const
 void LocalModel::DrawPieces() const
 {
 	for (const auto& p: pieces) {
-		p->Draw();
+		p.Draw();
 	}
 }
 
 void LocalModel::DrawPiecesLOD(unsigned int lod) const
 {
 	for (const auto& p: pieces) {
-		p->DrawLOD(lod);
+		p.DrawLOD(lod);
 	}
 }
 
 void LocalModel::SetLODCount(unsigned int count)
 {
-	pieces[0]->SetLODCount(lodCount = count);
+	assert(Initialized());
+	lodCount = count;
+
+	luaMaterialData.SetLODCount(lodCount);
+	pieces[0].SetLODCount(lodCount);
 }
 
 
 
-void LocalModel::ReloadDisplayLists()
+void LocalModel::SetModel(const S3DModel* model)
 {
-	for (unsigned int n = 0; n < pieces.size(); n++) {
-		pieces[n]->dispListID = pieces[n]->original->GetDisplayListID();
-	}
+	// make sure we do not get called for trees, etc
+	assert(model != nullptr);
+	assert(model->numPieces >= 1);
+
+	dirtyPieces = model->numPieces;
+	bvFrameTime = 0;
+	lodCount = 0;
+
+	pieces.reserve(model->numPieces);
+
+	CreateLocalModelPieces(model->GetRootPiece());
+	UpdateBoundingVolume(0);
+
+	assert(pieces.size() == model->numPieces);
 }
 
 LocalModelPiece* LocalModel::CreateLocalModelPieces(const S3DModelPiece* mpParent)
 {
-	LocalModelPiece* lmpParent = new LocalModelPiece(mpParent);
 	LocalModelPiece* lmpChild = NULL;
 
-	pieces.push_back(lmpParent);
+	pieces.emplace_back(mpParent);
+	LocalModelPiece *lmpParent = &pieces.back();
 
 	lmpParent->SetLModelPieceIndex(pieces.size() - 1);
 	lmpParent->SetScriptPieceIndex(pieces.size() - 1);
@@ -179,6 +184,29 @@ LocalModelPiece* LocalModel::CreateLocalModelPieces(const S3DModelPiece* mpParen
 	return lmpParent;
 }
 
+void LocalModel::UpdateBoundingVolume(unsigned int frameNum)
+{
+	bvFrameTime = frameNum;
+
+	bbMins = DEF_MIN_SIZE;
+	bbMaxs = DEF_MAX_SIZE;
+
+	for (unsigned int n = 0; n < pieces.size(); n++) {
+		const CMatrix44f& matrix = pieces[n].GetModelSpaceMatrix();
+		const S3DModelPiece* piece = pieces[n].original;
+
+		for (unsigned int k = 0; k < piece->GetVertexCount(); k++) {
+			const float3 vertex = matrix * piece->GetVertexPos(k);
+
+			bbMins = float3::min(bbMins, vertex);
+			bbMaxs = float3::max(bbMaxs, vertex);
+		}
+	}
+
+	// note: offset is relative to object->pos
+	boundingVolume.InitBox(bbMaxs - bbMins, (bbMaxs + bbMins) * 0.5f);
+}
+
 
 
 /** ****************************************************************************************************
@@ -186,7 +214,7 @@ LocalModelPiece* LocalModel::CreateLocalModelPieces(const S3DModelPiece* mpParen
  */
 
 LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
-	: colvol(new CollisionVolume(piece->GetCollisionVolume()))
+	: colvol(piece->GetCollisionVolume())
 
 	, numUpdatesSynced(1)
 	, lastMatrixUpdate(0)
@@ -202,17 +230,13 @@ LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 {
 	assert(piece != NULL);
 
-	pos        =  piece->offset;
-	dir        = (piece->GetVertexCount() >= 2)? (piece->GetVertexPos(0) - piece->GetVertexPos(1)): FwdVector;
+	pos =  piece->offset;
+	dir = (piece->GetVertexCount() >= 2)? (piece->GetVertexPos(0) - piece->GetVertexPos(1)): FwdVector;
 
 	identityTransform = UpdateMatrix();
 	dispListID = piece->GetDisplayListID();
 
 	children.reserve(piece->children.size());
-}
-
-LocalModelPiece::~LocalModelPiece() {
-	delete colvol; colvol = NULL;
 }
 
 
@@ -276,13 +300,6 @@ void LocalModelPiece::SetLODCount(unsigned int count)
 	for (unsigned int i = 0; i < children.size(); i++) {
 		children[i]->SetLODCount(count);
 	}
-}
-
-
-float3 LocalModelPiece::GetAbsolutePos() const
-{
-	// note: actually OBJECT_TO_WORLD but transform is the same
-	return (modelSpaceMat.GetPos() * WORLD_TO_OBJECT_SPACE);
 }
 
 

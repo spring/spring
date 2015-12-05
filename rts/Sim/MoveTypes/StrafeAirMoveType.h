@@ -45,6 +45,7 @@ public:
 	float3 FindLandingPos() const;
 
 	void SetMaxSpeed(float speed);
+	float GetBrakeDistance();
 
 	void KeepPointingTo(float3 pos, float distance, bool aggressive) {}
 	void StartMoving(float3 pos, float goalRadius);
@@ -64,8 +65,6 @@ public:
 	float invDrag;
 	/// actually the invDrag of crashDrag
 	float crashDrag;
-
-	float brakeDistanceSq;
 
 	float frontToSpeed;
 	float speedToFront;

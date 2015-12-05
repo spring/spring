@@ -45,25 +45,6 @@ struct S3DOPiece: public S3DModelPiece {
 	const float3& GetVertexPos(const int idx) const { return vertices[idx].pos; }
 	const float3& GetNormal(const int idx) const { return vertices[idx].normal; }
 
-	float3 GetPosOffset() const {
-		//FIXME merge into float3 offset???
-		float3 p = ZeroVector;
-
-		// fix for 3DO *A units with two-vertex pieces
-		if (vertices.size() == 2) {
-			const S3DOVertex& v0 = vertices[0];
-			const S3DOVertex& v1 = vertices[1];
-
-			if (v0.pos.y > v1.pos.y) {
-				p = float3(v0.pos.x, v0.pos.y, -v0.pos.z);
-			} else {
-				p = float3(v1.pos.x, v1.pos.y, -v1.pos.z);
-			}
-		}
-
-		return p;
-	}
-
 	void Shatter(float pieceChance, int texType, int team, const float3& pos, const float3& speed) const;
 
 	std::vector<S3DOVertex> vertices;

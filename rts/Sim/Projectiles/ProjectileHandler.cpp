@@ -389,9 +389,9 @@ void CProjectileHandler::CheckUnitCollisions(
 			}
 		}
 
-		if (CCollisionHandler::DetectHit(unit, ppos0, ppos1, &cq)) {
+		if (CCollisionHandler::DetectHit(unit, unit->GetTransformMatrix(true), ppos0, ppos1, &cq)) {
 			if (cq.GetHitPiece() != NULL) {
-				unit->SetLastAttackedPiece(cq.GetHitPiece(), gs->frameNum);
+				unit->SetLastHitPiece(cq.GetHitPiece(), gs->frameNum);
 			}
 
 			if (!cq.InsideHit()) {
@@ -429,7 +429,11 @@ void CProjectileHandler::CheckFeatureCollisions(
 		if (!feature->HasCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES))
 			continue;
 
-		if (CCollisionHandler::DetectHit(feature, ppos0, ppos1, &cq)) {
+		if (CCollisionHandler::DetectHit(feature, feature->GetTransformMatrix(true), ppos0, ppos1, &cq)) {
+			if (cq.GetHitPiece() != NULL) {
+				feature->SetLastHitPiece(cq.GetHitPiece(), gs->frameNum);
+			}
+
 			if (!cq.InsideHit()) {
 				p->SetPosition(cq.GetHitPos());
 				p->Collision(feature);

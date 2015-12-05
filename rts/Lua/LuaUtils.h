@@ -221,87 +221,106 @@ static inline void LuaInsertDualMapPair(lua_State* L, const string& name, int nu
 }
 
 
-static inline bool FullCtrl(const lua_State *L)
+static inline bool FullCtrl(const lua_State* L)
 {
 	return CLuaHandle::GetHandleFullCtrl(L);
 }
 
-
-static inline int CtrlTeam(const lua_State *L)
+static inline int CtrlTeam(const lua_State* L)
 {
 	return CLuaHandle::GetHandleCtrlTeam(L);
 }
 
-
-static inline int CtrlAllyTeam(const lua_State *L)
+static inline int CtrlAllyTeam(const lua_State* L)
 {
 	const int ctrlTeam = CtrlTeam(L);
-	if (ctrlTeam < 0) {
+
+	if (ctrlTeam < 0)
 		return ctrlTeam;
-	}
+
 	return teamHandler->AllyTeam(ctrlTeam);
 }
 
 
-static inline bool CanControlTeam(const lua_State *L, int teamID)
+static inline bool CanControlTeam(const lua_State* L, int teamID)
 {
 	const int ctrlTeam = CtrlTeam(L);
-	if (ctrlTeam < 0) {
-		return (ctrlTeam == CEventClient::AllAccessTeam) ? true : false;
-	}
+
+	if (ctrlTeam < 0)
+		return (ctrlTeam == CEventClient::AllAccessTeam);
+
 	return (ctrlTeam == teamID);
 }
 
-
-static inline bool CanControlAllyTeam(const lua_State *L, int allyTeamID)
+static inline bool CanControlAllyTeam(const lua_State* L, int allyTeamID)
 {
 	const int ctrlTeam = CtrlTeam(L);
-	if (ctrlTeam < 0) {
-		return (ctrlTeam == CEventClient::AllAccessTeam) ? true : false;
-	}
+
+	if (ctrlTeam < 0)
+		return (ctrlTeam == CEventClient::AllAccessTeam);
+
+	return (teamHandler->AllyTeam(ctrlTeam) == allyTeamID);
+}
+
+static inline bool CanControlFeatureAllyTeam(const lua_State* L, int allyTeamID)
+{
+	const int ctrlTeam = CtrlTeam(L);
+
+	if (ctrlTeam < 0)
+		return (ctrlTeam == CEventClient::AllAccessTeam);
+
+	if (allyTeamID < 0)
+		return (ctrlTeam == teamHandler->GaiaTeamID());
+
+	return (teamHandler->AllyTeam(ctrlTeam) == allyTeamID);
+}
+
+static inline bool CanControlProjectileAllyTeam(const lua_State* L, int allyTeamID)
+{
+	const int ctrlTeam = CtrlTeam(L);
+
+	if (ctrlTeam < 0)
+		return (ctrlTeam == CEventClient::AllAccessTeam);
+
+	if (allyTeamID < 0)
+		return false;
+
 	return (teamHandler->AllyTeam(ctrlTeam) == allyTeamID);
 }
 
 
-static inline bool CanControlUnit(const lua_State *L, const CUnit* unit)
+static inline bool CanControlUnit(const lua_State* L, const CUnit* unit)
 {
 	const int ctrlTeam = CtrlTeam(L);
-	if (ctrlTeam < 0) {
-		return (ctrlTeam == CEventClient::AllAccessTeam) ? true : false;
-	}
+
+	if (ctrlTeam < 0)
+		return (ctrlTeam == CEventClient::AllAccessTeam);
+
 	return (ctrlTeam == unit->team);
 }
 
-
-static inline bool CanControlFeatureAllyTeam(const lua_State *L, int allyTeamID)
-{
-	const int ctrlTeam = CtrlTeam(L);
-	if (ctrlTeam < 0) {
-		return (ctrlTeam == CEventClient::AllAccessTeam) ? true : false;
-	}
-	if (allyTeamID < 0) {
-		return (ctrlTeam == teamHandler->GaiaTeamID());
-	}
-	return (teamHandler->AllyTeam(ctrlTeam) == allyTeamID);
-}
-
-
-static inline bool CanControlFeature(const lua_State *L, const CFeature* feature)
+static inline bool CanControlFeature(const lua_State* L, const CFeature* feature)
 {
 	return CanControlFeatureAllyTeam(L, feature->allyteam);
 }
 
 
-static inline bool CanControlProjectileAllyTeam(const lua_State *L, int allyTeamID)
+static inline const LocalModelPiece* ParseObjectConstLocalModelPiece(lua_State* L, const CSolidObject* obj, int pieceArg)
 {
-	const int ctrlTeam = CtrlTeam(L);
-	if (ctrlTeam < 0) {
-		return (ctrlTeam == CEventClient::AllAccessTeam) ? true : false;
-	}
-	if (allyTeamID < 0) {
-		return false;
-	}
-	return (teamHandler->AllyTeam(ctrlTeam) == allyTeamID);
+	assert(obj != nullptr);
+
+	const unsigned int pieceIdx = luaL_checkint(L, pieceArg) - 1;
+
+	// automatically false if LM was not initialized
+	if (!obj->localModel.HasPiece(pieceIdx))
+		return nullptr;
+
+	return (obj->localModel.GetPiece(pieceIdx));
+}
+
+static inline LocalModelPiece* ParseObjectLocalModelPiece(lua_State* L, CSolidObject* obj, int pieceArg)
+{
+	return (const_cast<LocalModelPiece*>(ParseObjectConstLocalModelPiece(L, obj, pieceArg)));
 }
 
 #endif // LUA_UTILS_H

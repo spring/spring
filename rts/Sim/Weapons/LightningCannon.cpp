@@ -68,7 +68,7 @@ void CLightningCannon::FireImpl(const bool scriptCall)
 	}
 
 	if (hitUnit != NULL) {
-		hitUnit->SetLastAttackedPiece(hitColQuery.GetHitPiece(), gs->frameNum);
+		hitUnit->SetLastHitPiece(hitColQuery.GetHitPiece(), gs->frameNum);
 	}
 
 	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(weaponDef, weaponMuzzlePos, currentTargetPos);

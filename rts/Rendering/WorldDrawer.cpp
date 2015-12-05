@@ -14,6 +14,7 @@
 #include "Rendering/DebugColVolDrawer.h"
 #include "Rendering/FarTextureHandler.h"
 #include "Rendering/LineDrawer.h"
+#include "Rendering/LuaObjectDrawer.h"
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/ProjectileDrawer.h"
 #include "Rendering/UnitDrawer.h"
@@ -32,7 +33,6 @@
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/Game.h"
 #include "Game/LoadScreen.h"
-#include "Game/UI/UnitTracker.h"
 #include "Game/UI/CommandColors.h"
 #include "Game/UI/GuiHandler.h"
 #include "System/EventHandler.h"
@@ -99,19 +99,23 @@ CWorldDrawer::~CWorldDrawer()
 
 void CWorldDrawer::Update()
 {
-	readMap->UpdateDraw((numUpdates++) == 0);
+	LuaObjectDrawer::Update(numUpdates == 0);
+	readMap->UpdateDraw(numUpdates == 0);
 
 	if (globalRendering->drawGround) {
 		SCOPED_TIMER("GroundDrawer::Update");
 		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 		gd->Update();
 	}
+
 	//XXX: do in CGame, cause it needs to get updated even when doDrawWorld==false, cause it updates unitdrawpos which is used for maximized minimap too
 	//unitDrawer->Update();
 	//lineDrawer.UpdateLineStipple();
 	treeDrawer->Update();
 	featureDrawer->Update();
 	IWater::ApplyPushedChanges(game);
+
+	numUpdates += 1;
 }
 
 

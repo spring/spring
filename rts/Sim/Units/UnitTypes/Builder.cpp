@@ -835,10 +835,10 @@ void CBuilder::CreateNanoParticle(const float3& goal, float radius, bool inverse
 {
 	const int modelNanoPiece = nanoPieceCache.GetNanoPiece(script);
 
-	if (localModel == NULL || !localModel->HasPiece(modelNanoPiece))
+	if (!localModel.Initialized() || !localModel.HasPiece(modelNanoPiece))
 		return;
 
-	const float3 relNanoFirePos = localModel->GetRawPiecePos(modelNanoPiece);
+	const float3 relNanoFirePos = localModel.GetRawPiecePos(modelNanoPiece);
 	const float3 nanoPos = this->GetObjectSpacePos(relNanoFirePos);
 
 	// unsynced

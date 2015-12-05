@@ -235,6 +235,7 @@ bool SpringApp::Initialize()
 	creg::System::InitializeClasses();
 	GlobalConfig::Instantiate();
 
+
 	// Create Window
 	if (!InitWindow(("Spring " + SpringVersion::GetSync()).c_str())) {
 		SDL_Quit();
@@ -404,6 +405,10 @@ bool SpringApp::CreateSDLWindow(const char* title)
 	streflop::streflop_init<streflop::Simple>();
 #endif
 
+#if defined(WIN32)
+	_set_output_format(_TWO_DIGIT_EXPONENT);
+#endif
+
 #if !defined(HEADLESS)
 	// disable desktop compositing to fix tearing
 	// (happens at 300fps, neither fullscreen nor vsync fixes it, so disable compositing)
@@ -498,7 +503,9 @@ void SpringApp::SetupViewportGeometry()
 	const int vpx = globalRendering->viewPosX;
 	const int vpy = globalRendering->winSizeY - globalRendering->viewSizeY - globalRendering->viewPosY;
 
-	agui::gui->UpdateScreenGeometry(globalRendering->viewSizeX, globalRendering->viewSizeY, vpx, vpy);
+	if (agui::gui != nullptr) {
+		agui::gui->UpdateScreenGeometry(globalRendering->viewSizeX, globalRendering->viewSizeY, vpx, vpy);
+	}
 }
 
 
@@ -795,7 +802,10 @@ void SpringApp::StartScript(const std::string& inputFile)
 
 void SpringApp::LoadSpringMenu()
 {
-	const std::string defaultscript = configHandler->GetString("DefaultStartScript");
+	std::string defaultscript = configHandler->GetString("DefaultStartScript");
+	if (defaultscript.empty() && CFileHandler("defaultstartscript.txt", SPRING_VFS_PWD_ALL).FileExists()) {
+		defaultscript = "defaultstartscript.txt";
+	}
 
 	if (cmdline->IsSet("oldmenu") || defaultscript.empty()) {
 		// old menu
@@ -1013,7 +1023,9 @@ void SpringApp::ShutDown()
 	ThreadPool::SetThreadCount(0);
 	LOG("[SpringApp::%s][2]", __FUNCTION__);
 
-	game->KillLua(); // must be called before `game` var gets nulled, else stuff in LuaSyncedRead.cpp will fail
+	if (game != nullptr) {
+		game->KillLua(); // must be called before `game` var gets nulled, else stuff in LuaSyncedRead.cpp will fail
+	}
 	SafeDelete(game);
 	SafeDelete(pregame);
 

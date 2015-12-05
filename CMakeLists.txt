@@ -8,7 +8,7 @@
 # + works around command line length limited by using an @objectFilesList.txt parameter when linking
 # CMake 2.8.10
 # + adds support for CMAKE_CXX_COMPILER_ID (which is ignored with older cmake)
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.11)
 
 
 SET(CMAKE_MODULES_SPRING "${CMAKE_CURRENT_SOURCE_DIR}/rts/build/cmake")
@@ -70,6 +70,12 @@ else()
 	set(DEBUG_BUILD FALSE)
 endif()
 
+if(DEBUG_BUILD)
+	set(JAVA_COMPILE_FLAG_CONDITIONAL "-g:lines,source,vars")
+else()
+	set(JAVA_COMPILE_FLAG_CONDITIONAL "-g:lines,source")
+endif()
+
 
 # Tell windows to pass arguments around in @response files
 # (32k arg limit workaround)
@@ -121,6 +127,7 @@ else  (UNIX AND NOT MINGW)
 
 	set(CMAKE_PREFIX_PATH ${MINGWLIBS})
 	add_definitions(-D_WIN32_WINNT=0x502) ## vista is minimum due to InterlockedIncrement64
+	add_definitions(-D__USE_MINGW_ANSI_STDIO=1) ## use __mingw_sprintf instead of __builtin_sprintf (it's used by lua in a synced way, and builtin doesn't sync)
 
 	include_directories(${MINGWLIBS}/include)
 	set(CMAKE_LIBRARY_PATH ${MINGWLIBS}/dll ${MINGWLIBS}/lib)
@@ -225,8 +232,8 @@ if    (MINGW OR MSVC)
 	set(SDL2_INCLUDE_DIR "${MINGWLIBS}/include/SDL2")
 endif (MINGW OR MSVC)
 
-FIND_PACKAGE(Boost 1.47.0 COMPONENTS thread regex program_options system chrono signals filesystem REQUIRED)
-FIND_PACKAGE(Boost 1.47.0 COMPONENTS timer)
+FIND_PACKAGE(Boost 1.51.0 COMPONENTS thread regex program_options system chrono signals filesystem REQUIRED)
+FIND_PACKAGE(Boost 1.51.0 COMPONENTS timer)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 
 # boost::chrono depends on clock_gettime which we need to link ourself when boost is static linked

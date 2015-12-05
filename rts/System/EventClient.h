@@ -293,16 +293,19 @@ class CEventClient
 
 		virtual void ViewResize();
 
-		virtual void DrawGenesis();
-		virtual void DrawWorld();
-		virtual void DrawWorldPreUnit();
-		virtual void DrawWorldShadow();
-		virtual void DrawWorldReflection();
-		virtual void DrawWorldRefraction();
-		virtual void DrawScreenEffects();
-		virtual void DrawScreen();
-		virtual void DrawInMiniMap();
-		virtual void DrawInMiniMapBackground();
+		virtual void DrawGenesis() {}
+		virtual void DrawWorld() {}
+		virtual void DrawWorldPreUnit() {}
+		virtual void DrawWorldShadow() {}
+		virtual void DrawWorldReflection() {}
+		virtual void DrawWorldRefraction() {}
+		virtual void DrawGroundPostDeferred() {}
+		virtual void DrawUnitsPostDeferred() {}
+		virtual void DrawFeaturesPostDeferred() {}
+		virtual void DrawScreenEffects() {}
+		virtual void DrawScreen() {}
+		virtual void DrawInMiniMap() {}
+		virtual void DrawInMiniMapBackground() {}
 
 		virtual bool DrawUnit(const CUnit* unit);
 		virtual bool DrawFeature(const CFeature* feature);

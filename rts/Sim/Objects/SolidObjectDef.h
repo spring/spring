@@ -6,10 +6,10 @@
 #include <string>
 #include <map>
 
+#include "Sim/Misc/CollisionVolume.h"
 #include "System/creg/creg_cond.h"
 
 struct S3DModel;
-struct CollisionVolume;
 class LuaTable;
 
 struct SolidObjectDecalDef {
@@ -42,7 +42,7 @@ public:
 	CR_DECLARE_STRUCT(SolidObjectDef)
 
 	SolidObjectDef();
-	virtual ~SolidObjectDef();
+	virtual ~SolidObjectDef() { }
 
 	S3DModel* LoadModel() const;
 	float GetModelRadius() const;
@@ -71,7 +71,7 @@ public:
 
 	// must be mutable because models are lazy-loaded even for defs
 	mutable S3DModel* model;
-	CollisionVolume* collisionVolume;
+	CollisionVolume collisionVolume;
 
 	SolidObjectDecalDef decalDef;
 

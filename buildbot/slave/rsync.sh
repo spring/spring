@@ -8,6 +8,11 @@ REMOTE_BASE=/home/buildbot/www
 RSYNC="rsync -avz --chmod=D+rx,F+r --bwlimit 4000 --exclude=download/ --exclude=tests/ --remove-source-files"
 REMOTE_RSYNC="nice -19 ionice -c3 rsync" #prevent QQ about rsync killing server
 
+if [ -z "${TMP_BASE}" ]; then
+	echo "TMP_BASE is empty, something went wrong!"
+	exit 1
+fi
+
 umask 022
 
 # use old files as base to reduce upload
@@ -24,4 +29,7 @@ if [ ${REMOTE_HOST} = localhost ] && [ -w ${REMOTE_BASE} ]; then
 else
 	${RSYNC} --rsync-path="${REMOTE_RSYNC}" ${TMP_BASE}/ ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_BASE}/
 fi
+
+# delete empty dirs (--remove-source-files doesn't remove dirs)
+find ${TMP_BASE}/ -depth -type d -empty -delete
 

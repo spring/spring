@@ -83,6 +83,7 @@ class LuaSyncedCtrl
 		static int SetUnitTravel(lua_State* L);
 		static int SetUnitFuel(lua_State* L);
 		static int SetUnitMoveGoal(lua_State* L);
+		static int SetUnitLandGoal(lua_State* L);
 		static int SetUnitNeutral(lua_State* L);
 		static int SetUnitTarget(lua_State* L);
 		static int SetUnitMidAndAimPos(lua_State* L);
@@ -92,7 +93,6 @@ class LuaSyncedCtrl
 		static int SetUnitPieceParent(lua_State* L);
 		static int SetUnitSensorRadius(lua_State* L);
 		static int SetUnitPosErrorParams(lua_State* L);
-		static int SetUnitLandPos(lua_State* L);
 
 		static int SetUnitPhysics(lua_State* L);
 		static int SetUnitPosition(lua_State* L);
@@ -112,6 +112,7 @@ class LuaSyncedCtrl
 		static int RemoveGrass(lua_State* L);
 
 		static int SetFeatureAlwaysVisible(lua_State* L);
+		static int SetFeatureFade(lua_State* L);
 		static int SetFeatureHealth(lua_State* L);
 		static int SetFeatureReclaim(lua_State* L);
 		static int SetFeatureResurrect(lua_State* L);
@@ -124,6 +125,7 @@ class LuaSyncedCtrl
 		static int SetFeatureMidAndAimPos(lua_State* L);
 		static int SetFeatureRadiusAndHeight(lua_State* L);
 		static int SetFeatureCollisionVolumeData(lua_State* L);
+		static int SetFeaturePieceCollisionVolumeData(lua_State* L);
 
 		static int SetProjectileAlwaysVisible(lua_State* L);
 		static int SetProjectileMoveControl(lua_State* L);
