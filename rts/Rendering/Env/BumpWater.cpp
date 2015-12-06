@@ -1106,7 +1106,7 @@ void CBumpWater::Draw()
 	waterShader->SetUniform1f(1, (gs->frameNum + globalRendering->timeOffset) / 15000.0f);
 
 	if (shadowHandler && shadowHandler->shadowsLoaded) {
-		waterShader->SetUniformMatrix4fv(13, false, &shadowHandler->shadowMatrix.m[0]);
+		waterShader->SetUniformMatrix4fv(13, false, shadowHandler->GetShadowMatrixRaw());
 
 		glActiveTexture(GL_TEXTURE9);
 		glBindTexture(GL_TEXTURE_2D, (shadowHandler && shadowHandler->shadowsLoaded) ? shadowHandler->shadowTexture : 0);

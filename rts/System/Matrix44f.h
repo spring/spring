@@ -31,18 +31,25 @@ public:
 	CMatrix44f& Rotate(float rad, const float3 axis); //! axis is assumed to be normalized
 	CMatrix44f& Translate(const float x, const float y, const float z);
 	CMatrix44f& Translate(const float3 pos) { return Translate(pos.x, pos.y, pos.z); }
-
 	CMatrix44f& Scale(const float3 scales);
 
-	void SetPos(const float3 pos);
-	float3 GetPos() const { return float3(m[12], m[13], m[14]); }
-	float3 GetX() const { return float3(m[0], m[1], m[ 2]); }
-	float3 GetY() const { return float3(m[4], m[5], m[ 6]); }
-	float3 GetZ() const { return float3(m[8], m[9], m[10]); }
+	void SetPos(const float3 pos) { m[12] = pos.x; m[13] = pos.y; m[14] = pos.z; }
+	void SetX  (const float3 dir) { m[ 0] = dir.x; m[ 1] = dir.y; m[ 2] = dir.z; }
+	void SetY  (const float3 dir) { m[ 4] = dir.x; m[ 5] = dir.y; m[ 6] = dir.z; }
+	void SetZ  (const float3 dir) { m[ 8] = dir.x; m[ 9] = dir.y; m[10] = dir.z; }
 
-	inline void operator*= (const float a) {
-		for (size_t i=0; i < 16; ++i)
-			m[i] *= a;
+	float3 GetPos() const { return float3(m[12], m[13], m[14]); }
+	float3 GetX  () const { return float3(m[ 0], m[ 1], m[ 2]); }
+	float3 GetY  () const { return float3(m[ 4], m[ 5], m[ 6]); }
+	float3 GetZ  () const { return float3(m[ 8], m[ 9], m[10]); }
+
+	inline void operator *= (const float a) {
+		for (size_t i = 0; i < 16; i += 4) {
+			m[i + 0] *= a;
+			m[i + 1] *= a;
+			m[i + 2] *= a;
+			m[i + 3] *= a;
+		}
 	}
 
 	CMatrix44f& Transpose();
@@ -53,25 +60,40 @@ public:
 
 	/// affine matrix inversion
 	CMatrix44f& InvertAffineInPlace();
-	CMatrix44f InvertAffine() const;
+	CMatrix44f  InvertAffine() const;
 
 	/// vector multiply
 	float3 operator* (const float3 v) const;
-	float3 Mul(const float3 v) const { return (*this) * v; }
+	float3 Mul(const float3 v) const { return ((*this) * v); }
 	float4 operator* (const float4 v) const;
 
 	/// matrix multiply
-	CMatrix44f operator* (const CMatrix44f& mat) const;
-	CMatrix44f& operator>>= (const CMatrix44f& mat);
-	CMatrix44f& operator<<= (const CMatrix44f& mat);
-	CMatrix44f& operator*= (const CMatrix44f& mat) { return (*this <<= mat); }
+	CMatrix44f  operator  *  (const CMatrix44f& mat) const;
+	CMatrix44f& operator >>= (const CMatrix44f& mat);
+	CMatrix44f& operator <<= (const CMatrix44f& mat);
+	CMatrix44f& operator  *= (const CMatrix44f& mat) { return ((*this) <<= mat); }
 
-	float& operator[](int a) { return m[a]; }
-	float operator[](int a) const { return m[a]; }
+	// matrix addition
+	CMatrix44f& operator += (const CMatrix44f& mat) { return ((*this) = (*this) + mat); }
+	CMatrix44f  operator +  (const CMatrix44f& mat) const {
+		CMatrix44f r;
+
+		for (size_t i = 0; i < 16; i += 4) {
+			r[i + 0] = m[i + 0] + mat[i + 0];
+			r[i + 1] = m[i + 1] + mat[i + 1];
+			r[i + 2] = m[i + 2] + mat[i + 2];
+			r[i + 3] = m[i + 3] + mat[i + 3];
+		}
+
+		return r;
+	}
+
+	float& operator [] (int a)       { return m[a]; }
+	float  operator [] (int a) const { return m[a]; }
 
 	/// Allows implicit conversion to float* (for passing to gl functions)
 	operator const float* () const { return m; }
-	operator float* () { return m; }
+	operator       float* ()       { return m; }
 
 public:
 	/// OpenGL ordered (ie. column-major)

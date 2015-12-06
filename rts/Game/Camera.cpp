@@ -39,7 +39,9 @@ CCamera::CCamera(unsigned int cameraType)
 	, lppScale(0.0f)
 	, posOffset(ZeroVector)
 	, tiltOffset(ZeroVector)
+
 	, camType(cameraType)
+	, projType((cameraType == CAMTYPE_SHADOW)? PROJTYPE_ORTHO: PROJTYPE_PERSP)
 {
 	// place us at center of the map
 	pos = float3(mapDims.mapx * 0.5f * SQUARE_SIZE, 1000.f, mapDims.mapy * 0.5f * SQUARE_SIZE);
@@ -47,11 +49,6 @@ CCamera::CCamera(unsigned int cameraType)
 	memset(viewport, 0, 4 * sizeof(int));
 	memset(movState, 0, sizeof(movState));
 	memset(rotState, 0, sizeof(rotState));
-
-	// stuff that will not change can be initialised here,
-	// so it does not need to be reinitialised every update
-	projectionMatrix[15] = 0.0f;
-	billboardMatrix[15] = 1.0f;
 
 	SetFov(45.0f);
 }
@@ -97,14 +94,24 @@ void CCamera::Update(bool updateDirs)
 
 void CCamera::UpdateFrustum()
 {
-	// NOTE: "-" because we want normals
-	const float3 forwardy = (-forward *                                          tanHalfFov );
-	const float3 forwardx = (-forward * math::tan(globalRendering->aspectRatio *    halfFov));
+	switch (projType) {
+		case PROJTYPE_PERSP: {
+			// NOTE: "-" because we want normals
+			const float3 forwardy = (-forward *                                          tanHalfFov );
+			const float3 forwardx = (-forward * math::tan(globalRendering->aspectRatio *    halfFov));
 
-	frustumPlanes[FRUSTUM_PLANE_TOP] = (forwardy +    up).UnsafeANormalize();
-	frustumPlanes[FRUSTUM_PLANE_BOT] = (forwardy -    up).UnsafeANormalize();
-	frustumPlanes[FRUSTUM_PLANE_RGT] = (forwardx + right).UnsafeANormalize();
-	frustumPlanes[FRUSTUM_PLANE_LFT] = (forwardx - right).UnsafeANormalize();
+			frustumPlanes[FRUSTUM_PLANE_TOP] = (forwardy +    up).UnsafeANormalize();
+			frustumPlanes[FRUSTUM_PLANE_BOT] = (forwardy -    up).UnsafeANormalize();
+			frustumPlanes[FRUSTUM_PLANE_RGT] = (forwardx + right).UnsafeANormalize();
+			frustumPlanes[FRUSTUM_PLANE_LFT] = (forwardx - right).UnsafeANormalize();
+		} break;
+		case PROJTYPE_ORTHO: {
+			frustumPlanes[FRUSTUM_PLANE_TOP] =     up;
+			frustumPlanes[FRUSTUM_PLANE_BOT] =    -up;
+			frustumPlanes[FRUSTUM_PLANE_RGT] =  right;
+			frustumPlanes[FRUSTUM_PLANE_LFT] = -right;
+		} break;
+	}
 
 	if (camType == CAMTYPE_PLAYER || camType == CAMTYPE_SHADOW) {
 		// vis-culling is always performed from player's (or light's)
@@ -117,7 +124,18 @@ void CCamera::UpdateFrustum()
 void CCamera::UpdateMatrices()
 {
 	// store and apply the projection transform
-	myGluPerspective(globalRendering->aspectRatio, globalRendering->zNear, globalRendering->viewRange);
+	switch (projType) {
+		case PROJTYPE_PERSP: {
+			gluPerspectiveSpring(globalRendering->aspectRatio, globalRendering->zNear, globalRendering->viewRange);
+		} break;
+		case PROJTYPE_ORTHO: {
+			glOrthoScaledSpring(globalRendering->viewSizeX, globalRendering->viewSizeY, globalRendering->zNear, globalRendering->viewRange);
+		} break;
+		default: {
+			assert(false);
+		} break;
+	}
+
 
 	// FIXME:
 	//   should be applying the offsets to pos/up/right/forward/etc,
@@ -127,7 +145,7 @@ void CCamera::UpdateMatrices()
 	const float3 center = camPos + fShake;
 
 	// store and apply the view transform
-	myGluLookAt(camPos, center, up);
+	gluLookAtSpring(camPos, center, up);
 
 
 	// create extra matrices (useful for shaders)
@@ -140,7 +158,6 @@ void CCamera::UpdateMatrices()
 	billboardMatrix = viewMatrix;
 	billboardMatrix.SetPos(ZeroVector);
 	billboardMatrix.Transpose(); // viewMatrix is affine, equals inverse
-	billboardMatrix[15] = 1.0f; // SetPos() touches m[15]
 }
 
 
@@ -164,6 +181,8 @@ void CCamera::ComputeViewRange()
 	globalRendering->zNear     = CGlobalRendering::NEAR_PLANE * factor;
 	globalRendering->viewRange = CGlobalRendering::MAX_VIEW_RANGE * factor;
 }
+
+
 
 
 static inline bool AABBInOriginPlane(
@@ -205,6 +224,8 @@ bool CCamera::InView(const float3& p, float radius) const
 	// final test against base-plane
 	return (vec.SqLength() <= Square(globalRendering->viewRange + radius));
 }
+
+
 
 
 void CCamera::SetFov(const float myfov)
@@ -291,7 +312,7 @@ float3 CCamera::CalcPixelDir(int x, int y) const
 
 float3 CCamera::CalcWindowCoordinates(const float3& objPos) const
 {
-	// does same as gluProject()
+	// same as gluProject()
 	const float4 v = viewProjectionMatrix * float4(objPos, 1.0f);
 	float3 winPos;
 	winPos.x = viewport[0] + viewport[2] * (v.x / v.w + 1.0f) * 0.5f;
@@ -301,29 +322,102 @@ float3 CCamera::CalcWindowCoordinates(const float3& objPos) const
 }
 
 
-inline void CCamera::myGluPerspective(float aspect, float zNear, float zFar) {
-	const float t = zNear * tanHalfFov;
+
+
+inline void CCamera::gluPerspectiveSpring(float aspect, float zn, float zf) {
+	const float t = zn * tanHalfFov;
 	const float b = -t;
 	const float l = b * aspect;
 	const float r = t * aspect;
 
-	projectionMatrix[ 0] = (2.0f * zNear) / (r - l);
+	glFrustumSpring(l, r,  b, t,  zn, zf);
+}
 
-	projectionMatrix[ 5] = (2.0f * zNear) / (t - b);
+inline void CCamera::glFrustumSpring(
+	const float l,
+	const float r,
+	const float b,
+	const float t,
+	const float zn,
+	const float zf
+) {
+	projectionMatrix[ 0] = (2.0f * zn) / (r - l);
+	projectionMatrix[ 1] =  0.0f;
+	projectionMatrix[ 2] =  0.0f;
+	projectionMatrix[ 3] =  0.0f;
+
+	projectionMatrix[ 4] =  0.0f;
+	projectionMatrix[ 5] = (2.0f * zn) / (t - b);
+	projectionMatrix[ 6] =  0.0f;
+	projectionMatrix[ 7] =  0.0f;
 
 	projectionMatrix[ 8] = (r + l) / (r - l);
 	projectionMatrix[ 9] = (t + b) / (t - b);
-	projectionMatrix[10] = -(zFar + zNear) / (zFar - zNear);
+	projectionMatrix[10] = -(zf + zn) / (zf - zn);
 	projectionMatrix[11] = -1.0f;
 
-	projectionMatrix[14] = -(2.0f * zFar * zNear) / (zFar - zNear);
+	projectionMatrix[12] =   0.0f;
+	projectionMatrix[13] =   0.0f;
+	projectionMatrix[14] = -(2.0f * zf * zn) / (zf - zn);
+	projectionMatrix[15] =   0.0f;
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadMatrixf(projectionMatrix);
 }
 
+// same as glOrtho(-1, 1, -1, 1, zn, zf) plus glScalef(sx, sy, 1)
+inline void CCamera::glOrthoScaledSpring(
+	const float sx,
+	const float sy,
+	const float zn,
+	const float zf
+) {
+	const float l = -1.0f * sx;
+	const float r =  1.0f * sx;
+	const float t =  1.0f * sy;
+	const float b = -1.0f * sy;
 
-inline void CCamera::myGluLookAt(const float3& eye, const float3& center, const float3& up) {
+	glOrthoSpring(l, r,  b, t,  zn, zf);
+}
+
+inline void CCamera::glOrthoSpring(
+	const float l,
+	const float r,
+	const float b,
+	const float t,
+	const float zn,
+	const float zf
+) {
+	const float tx = -((r + l) / (r - l));
+	const float ty = -((t + b) / (t - b));
+	const float tz = -((zf + zn) / (zf - zn));
+
+	projectionMatrix[ 0] =  2.0f / (r - l);
+	projectionMatrix[ 1] =  0.0f;
+	projectionMatrix[ 2] =  0.0f;
+	projectionMatrix[ 3] =  0.0f;
+
+	projectionMatrix[ 4] =  0.0f;
+	projectionMatrix[ 5] =  2.0f / (t - b);
+	projectionMatrix[ 6] =  0.0f;
+	projectionMatrix[ 7] =  0.0f;
+
+	projectionMatrix[ 8] =  0.0f;
+	projectionMatrix[ 9] =  0.0f;
+	projectionMatrix[10] = -2.0f / (zf - zn);
+	projectionMatrix[11] =  0.0f;
+
+	projectionMatrix[12] = tx;
+	projectionMatrix[13] = ty;
+	projectionMatrix[14] = tz;
+	projectionMatrix[15] = 1.0f;
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadMatrixf(projectionMatrix);
+}
+
+inline void CCamera::gluLookAtSpring(const float3& eye, const float3& center, const float3& up)
+{
 	const float3 f = (center - eye).ANormalize();
 	const float3 s = f.cross(up);
 	const float3 u = s.cross(f);
@@ -348,6 +442,7 @@ inline void CCamera::myGluLookAt(const float3& eye, const float3& center, const 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadMatrixf(viewMatrix);
 }
+
 
 
 

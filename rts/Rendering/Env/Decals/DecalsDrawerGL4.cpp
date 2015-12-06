@@ -587,7 +587,7 @@ void CDecalsDrawerGL4::Draw()
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
 			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
 
-		decalShader->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler->shadowMatrix.m);
+		decalShader->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler->GetShadowMatrixRaw());
 		decalShader->SetUniform("shadowDensity", sky->GetLight()->GetGroundShadowDensity()); //FIXME only do on shadow change?
 	}
 

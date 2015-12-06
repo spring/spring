@@ -74,9 +74,8 @@ void CShadowHandler::Init()
 	shadowTexture = 0;
 	dummyColorTexture = 0;
 
-	if (!tmpFirstInit && !shadowsSupported) {
+	if (!tmpFirstInit && !shadowsSupported)
 		return;
-	}
 
 	// possible values for the "Shadows" config-parameter:
 	// < 0: disable and don't try to initialize
@@ -386,44 +385,21 @@ void CShadowHandler::SetShadowMapSizeFactors()
 	#endif
 }
 
-void CShadowHandler::CreateShadows()
+
+static CMatrix44f ComposeLightMatrix(const ISkyLight* light)
 {
-	fb.Bind();
-
-	glDisable(GL_BLEND);
-	glDisable(GL_LIGHTING);
-	glDisable(GL_ALPHA_TEST);
-	glDisable(GL_TEXTURE_2D);
-
-	glShadeModel(GL_FLAT);
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-	glDepthMask(GL_TRUE);
-	glEnable(GL_DEPTH_TEST);
-
-	glViewport(0, 0, shadowMapSize, shadowMapSize);
-
-	// glClearColor(0, 0, 0, 0);
-	// glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glClear(GL_DEPTH_BUFFER_BIT);
-
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0, 1, 0, 1, 0, -1);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-
-	const ISkyLight* L = sky->GetLight();
+	CMatrix44f lightMatrix;
 
 	// sun direction is in world-space, invert it
-	sunDirZ = -float3(L->GetLightDir());
-	sunDirX = (sunDirZ.cross(UpVector)).ANormalize();
-	sunDirY = (sunDirX.cross(sunDirZ)).ANormalize();
+	lightMatrix.SetZ(-(light->GetLightDir()));
+	lightMatrix.SetX(((lightMatrix.GetZ()).cross(   UpVector       )).ANormalize());
+	lightMatrix.SetY(((lightMatrix.GetX()).cross(lightMatrix.GetZ())).ANormalize());
 
-	SetShadowMapSizeFactors();
+	return lightMatrix;
+}
 
+void CShadowHandler::SetShadowMatrix(const CMatrix44f& lightMatrix)
+{
 	// NOTE:
 	//     the xy-scaling factors from CalcMinMaxView do not change linearly
 	//     or smoothly with camera movements, creating visible artefacts (eg.
@@ -448,29 +424,64 @@ void CShadowHandler::CreateShadows()
 	//     when DynamicSun is enabled, the orbit is always circular in the xz
 	//     plane, instead of elliptical when the map has an aspect-ratio != 1
 	//
-	const float xyScale = GetShadowProjectionRadius(camera, centerPos, -sunDirZ);
-	const float xScale = xyScale;
-	const float yScale = xyScale;
-	const float zScale = globalRendering->viewRange;
+	const float xyScale = GetShadowProjectionRadius(camera, centerPos, -lightMatrix.GetZ());
+	const float  zScale = globalRendering->viewRange;
 
-	shadowMatrix[ 0] = sunDirX.x / xScale;
-	shadowMatrix[ 1] = sunDirY.x / yScale;
-	shadowMatrix[ 2] = sunDirZ.x / zScale;
+	// note: we can Scale() either before after Translate(), since
+	//
+	//   dot(A,  B)*K == (A.x*  B.x + A.y*  B.y + ...)*K == (A.x*B.x*K + A.y*B.y*K + ...)
+	//   dot(A*K,B)   == (A.x*K*B.x + A.y*K*B.y + ...)   == (A.x*B.x*K + A.y*B.y*K + ...)
+	//
+	shadowMatrix.LoadIdentity();
+	shadowMatrix.SetPos(ZeroVector);
+	shadowMatrix.SetX(std::move(lightMatrix.GetX()));
+	shadowMatrix.SetY(std::move(lightMatrix.GetY()));
+	shadowMatrix.SetZ(std::move(lightMatrix.GetZ()));
+	shadowMatrix.Transpose(); // invert rotation (R^T == R^{-1})
+	shadowMatrix.Translate(-centerPos); // move into sun-space
+	shadowMatrix.Scale(OnesVector / float3(xyScale, xyScale, zScale)); // reshape frustum
+	shadowMatrix.SetPos(shadowMatrix.GetPos() + (FwdVector * 0.5f)); // add z-bias
 
-	shadowMatrix[ 4] = sunDirX.y / xScale;
-	shadowMatrix[ 5] = sunDirY.y / yScale;
-	shadowMatrix[ 6] = sunDirZ.y / zScale;
+	glViewport(0, 0, shadowMapSize, shadowMapSize);
 
-	shadowMatrix[ 8] = sunDirX.z / xScale;
-	shadowMatrix[ 9] = sunDirY.z / yScale;
-	shadowMatrix[10] = sunDirZ.z / zScale;
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0, 1, 0, 1, 0, -1);
 
-	// rotate the target position into sun-space for the translation
-	shadowMatrix[12] = (-sunDirX.dot(centerPos) / xScale);
-	shadowMatrix[13] = (-sunDirY.dot(centerPos) / yScale);
-	shadowMatrix[14] = (-sunDirZ.dot(centerPos) / zScale) + 0.5f;
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 
-	glLoadMatrixf(shadowMatrix.m);
+	glLoadMatrixf(&shadowMatrix.m[0]);
+}
+
+void CShadowHandler::CreateShadows()
+{
+	fb.Bind();
+
+	glDisable(GL_BLEND);
+	glDisable(GL_LIGHTING);
+	glDisable(GL_ALPHA_TEST);
+	glDisable(GL_TEXTURE_2D);
+
+	glShadeModel(GL_FLAT);
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+	glDepthMask(GL_TRUE);
+	glEnable(GL_DEPTH_TEST);
+
+	// glClearColor(0, 0, 0, 0);
+	// glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_DEPTH_BUFFER_BIT);
+
+	#if 0
+	CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_SHADOW);
+	CCamera* curCam = CCamera::GetActiveCamera();
+	#endif
+
+	const CMatrix44f lightMatrix = std::move(ComposeLightMatrix(sky->GetLight()));
+
+	SetShadowMapSizeFactors();
+	SetShadowMatrix(lightMatrix);
 
 	// set the shadow-parameter registers
 	// NOTE: so long as any part of Spring rendering still uses
@@ -488,17 +499,15 @@ void CShadowHandler::CreateShadows()
 		}
 	}
 
-	if (L->GetLightIntensity() > 0.0f) {
-		// TODO: use this actual camera for the SP instead of raw LoadMatrix
-		// CCamera::SetActiveCamera(CCamera::CAMTYPE_SHADOW);
-
-		// HACK: needed for particle/billboard rendering, NOT for
-		// frustum checking (which is semi broken for shadows)!
+	if ((sky->GetLight())->GetLightIntensity() > 0.0f) {
+		// HACK:
+		//   needed for particle / billboard rendering, NOT for
+		//   frustum checking (which is semi broken for shadows)!
 		const float3 camRgt = camera->right;
 		const float3 camUp = camera->up;
 
-		camera->right = sunDirX;
-		camera->up = sunDirY;
+		camera->right = std::move(lightMatrix.GetX());
+		camera->up = std::move(lightMatrix.GetY());
 
 		DrawShadowPasses();
 
@@ -506,12 +515,16 @@ void CShadowHandler::CreateShadows()
 		camera->up = camUp;
 	}
 
+	#if 0
+	CCamera::SetActiveCamera(prvCam->GetCamType());
+	#endif
+
 	glShadeModel(GL_SMOOTH);
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
 	// we do this later to save render context switches (this is one of the slowest opengl operations!)
 	// fb.Unbind();
-	// glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
+	// glViewport(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
 }
 
 

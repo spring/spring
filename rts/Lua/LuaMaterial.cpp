@@ -275,7 +275,7 @@ void LuaMaterial::Execute(const LuaMaterial& prev, bool deferredPass) const
 	}
 
 	if (shadowLoc >= 0) {
-		glUniformMatrix4fv(shadowLoc, 1, GL_FALSE, shadowHandler->shadowMatrix.m);
+		glUniformMatrix4fv(shadowLoc, 1, GL_FALSE, shadowHandler->GetShadowMatrixRaw());
 	}
 
 	if (shadowParamsLoc >= 0) {

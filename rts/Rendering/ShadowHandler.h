@@ -56,6 +56,9 @@ public:
 		return shadowGenProgs[p];
 	}
 
+	const CMatrix44f& GetShadowMatrix   () const { return  shadowMatrix;      }
+	const      float* GetShadowMatrixRaw() const { return &shadowMatrix.m[0]; }
+
 private:
 	void Init();
 	void Kill();
@@ -63,9 +66,13 @@ private:
 
 	bool InitDepthTarget();
 	bool WorkaroundUnsupportedFboRenderTargets();
+
 	void DrawShadowPasses();
 	void LoadShadowGenShaderProgs();
+
 	void SetShadowMapSizeFactors();
+	void SetShadowMatrix(const CMatrix44f& lightMatrix);
+
 	float GetShadowProjectionRadius(CCamera*, float3&, const float3&);
 	float GetOrthoProjectedMapRadius(const float3&, float3&);
 	float GetOrthoProjectedFrustumRadius(CCamera*, float3&);
@@ -87,13 +94,7 @@ public:
 	float3 centerPos;
 	float3 orthoProjMidPos;
 	float3 orthoProjMapPos;
-
-	float3 sunDirX;
-	float3 sunDirY;
-	float3 sunDirZ;
 	float3 sunProjDir;
-
-	CMatrix44f shadowMatrix;
 
 private:
 	FBO fb;
@@ -108,6 +109,8 @@ private:
 	float4 shadowProjMinMax;
 	/// xmid, ymid, p17, p18
 	float4 shadowTexProjCenter;
+
+	CMatrix44f shadowMatrix;
 };
 
 extern CShadowHandler* shadowHandler;

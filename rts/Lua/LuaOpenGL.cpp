@@ -1002,7 +1002,7 @@ void LuaOpenGL::ResetWorldShadowMatrices()
 		glOrtho(0.0, 1.0, 0.0, 1.0, 0.0, -1.0);
 	}
 	glMatrixMode(GL_MODELVIEW); {
-		glLoadMatrixf(shadowHandler->shadowMatrix.m);
+		glLoadMatrixf(shadowHandler->GetShadowMatrixRaw());
 	}
 }
 

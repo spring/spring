@@ -30,6 +30,12 @@ public:
 	};
 
 	enum {
+		PROJTYPE_PERSP = 0,
+		PROJTYPE_ORTHO = 1,
+		PROJTYPE_COUNT = 2,
+	};
+
+	enum {
 		FRUSTUM_PLANE_TOP = 0,
 		FRUSTUM_PLANE_BOT = 1,
 		FRUSTUM_PLANE_LFT = 2,
@@ -56,18 +62,16 @@ public:
 
 	/// @param fov in degree
 	void SetPos(const float3& p) { pos = p; }
-	void SetFov(const float fov);
 	void SetDir(const float3 dir);
 
 	const float3& GetPos() const { return pos; }
-	float GetFov() const { return fov; }
-	const float3& GetDir() const     { return forward; }
+	const float3& GetDir() const { return forward; }
 
 	const float3& GetForward() const { return forward; }
 	const float3& GetRight() const   { return right; }
 	const float3& GetUp() const      { return up; }
+	const float3& GetRot() const     { return rot; }
 
-	const float3& GetRot() const { return rot; }
 	void SetRot(const float3 r) { UpdateDirsFromRot(rot = r); }
 	void SetRotX(const float x) { SetRot(float3(    x, rot.y, rot.z)); }
 	void SetRotY(const float y) { SetRot(float3(rot.x,     y, rot.z)); }
@@ -93,6 +97,7 @@ public:
 		negFrustumSides.clear();
 	}
 	void ClipFrustumLines(bool left, const float zmin, const float zmax);
+
 	const std::vector<FrustumLine>& GetNegFrustumSides() const { return negFrustumSides; }
 	const std::vector<FrustumLine>& GetPosFrustumSides() const { return posFrustumSides; }
 
@@ -104,6 +109,9 @@ public:
 	const CMatrix44f& GetViewProjectionMatrixInverse() const { return viewProjectionMatrixInverse; }
 	const CMatrix44f& GetBillBoardMatrix() const { return billboardMatrix; }
 
+	void SetFov(const float fov);
+
+	float GetFov() const { return fov; }
 	float GetHalfFov() const { return halfFov; }
 	float GetTanHalfFov() const { return tanHalfFov; }
 	float GetLPPScale() const { return lppScale; }
@@ -163,8 +171,11 @@ private:
 	void UpdateFrustum();
 	void UpdateMatrices();
 
-	void myGluPerspective(float aspect, float zNear, float zFar);
-	void myGluLookAt(const float3&, const float3&, const float3&);
+	void gluPerspectiveSpring(const float aspect, const float zn, const float zf);
+	void glFrustumSpring(const float l, const float r,  const float b, const float t,  const float zn, const float zf);
+	void glOrthoScaledSpring(const float sx, const float sy, const float zn, const float zf);
+	void glOrthoSpring(const float l, const float r,  const float b, const float t,  const float zn, const float zf);
+	void gluLookAtSpring(const float3&, const float3&, const float3&);
 
 	void UpdateDirsFromRot(const float3 r);
 
@@ -206,6 +217,8 @@ private:
 
 	// CAMTYPE_*
 	unsigned int camType;
+	// PROJTYPE_*
+	unsigned int projType;
 
 	bool movState[8]; // fwd, back, left, right, up, down, fast, slow
 	bool rotState[4]; // unused

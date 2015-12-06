@@ -363,7 +363,7 @@ void CGrassDrawer::EnableShader(const GrassShaderProgram type) {
 	grassShader->SetUniform3v("camRight",  &camera->GetRight().x);
 
 	grassShader->SetUniform("groundShadowDensity", mapInfo->light.groundShadowDensity);
-	grassShader->SetUniformMatrix4x4("shadowMatrix", false, &shadowHandler->shadowMatrix.m[0]);
+	grassShader->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler->GetShadowMatrixRaw());
 	grassShader->SetUniform4v("shadowParams", &shadowHandler->GetShadowParams().x);
 
 	grassShader->SetUniform3v("ambientLightColor",  &mapInfo->light.unitAmbientColor.x);

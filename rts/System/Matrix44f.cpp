@@ -247,28 +247,15 @@ CMatrix44f& CMatrix44f::Scale(const float3 scales)
 	return *this;
 }
 
-
 CMatrix44f& CMatrix44f::Translate(const float x, const float y, const float z)
 {
-	m[12] += x*m[0] + y*m[4] + z*m[ 8];
-	m[13] += x*m[1] + y*m[5] + z*m[ 9];
-	m[14] += x*m[2] + y*m[6] + z*m[10];
-	m[15] += x*m[3] + y*m[7] + z*m[11];
+	m[12] += (x*m[0] + y*m[4] + z*m[ 8]);
+	m[13] += (x*m[1] + y*m[5] + z*m[ 9]);
+	m[14] += (x*m[2] + y*m[6] + z*m[10]);
+	m[15] += (x*m[3] + y*m[7] + z*m[11]);
 	return *this;
 }
 
-
-void CMatrix44f::SetPos(const float3 pos)
-{
-	const float x = pos.x;
-	const float y = pos.y;
-	const float z = pos.z;
-
-	m[12] = x*m[0] + y*m[4] + z*m[ 8];
-	m[13] = x*m[1] + y*m[5] + z*m[ 9];
-	m[14] = x*m[2] + y*m[6] + z*m[10];
-	m[15] = x*m[3] + y*m[7] + z*m[11];
-}
 
 
 __FORCE_ALIGN_STACK__

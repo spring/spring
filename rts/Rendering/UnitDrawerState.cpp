@@ -282,7 +282,7 @@ void UnitDrawerStateARB::Enable(const CUnitDrawer* ud, bool) {
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(11, ud->unitAmbientColor.x, ud->unitAmbientColor.y, ud->unitAmbientColor.z, 1.0f);
 
 	glMatrixMode(GL_MATRIX0_ARB);
-	glLoadMatrixf(shadowHandler->shadowMatrix);
+	glLoadMatrixf(shadowHandler->GetShadowMatrixRaw());
 	glMatrixMode(GL_MODELVIEW);
 }
 
@@ -420,7 +420,7 @@ void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud, bool deferredPass) {
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform3fv(6, &camera->GetPos()[0]);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(7, false, camera->GetViewMatrix());
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(8, false, camera->GetViewMatrixInverse());
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(13, false, shadowHandler->shadowMatrix);
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(13, false, shadowHandler->GetShadowMatrixRaw());
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(14, &(shadowHandler->GetShadowParams().x));
 
 	const_cast<GL::LightHandler*>(ud->GetLightHandler())->Update(modelShaders[MODEL_SHADER_ACTIVE]);

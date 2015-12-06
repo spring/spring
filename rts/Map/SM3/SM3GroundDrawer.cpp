@@ -87,7 +87,7 @@ void CSM3GroundDrawer::Draw(const DrawPass::e& drawPass)
 		params.shadowMap = shadowHandler->shadowTexture;
 
 		for (int a = 0; a < 16; a++)
-			params.shadowMatrix[a] = shadowHandler->shadowMatrix[a];
+			params.shadowMatrix[a] = shadowHandler->GetShadowMatrixRaw()[a];
 
 		tr->SetShadowParams(&params);
 	}

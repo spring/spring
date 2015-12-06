@@ -490,7 +490,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 		treeShader->Enable();
 
 		if (globalRendering->haveGLSL) {
-			treeShader->SetUniformMatrix4fv(7, false, &shadowHandler->shadowMatrix.m[0]);
+			treeShader->SetUniformMatrix4fv(7, false, shadowHandler->GetShadowMatrixRaw());
 			treeShader->SetUniform4fv(8, &(shadowHandler->GetShadowParams().x));
 		} else {
 			treeShader->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
@@ -499,7 +499,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 			treeShader->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 
 			glMatrixMode(GL_MATRIX0_ARB);
-			glLoadMatrixf(shadowHandler->shadowMatrix.m);
+			glLoadMatrixf(shadowHandler->GetShadowMatrixRaw());
 			glMatrixMode(GL_MODELVIEW);
 		}
 	} else {
@@ -530,7 +530,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 			treeShader->Enable();
 
 			if (globalRendering->haveGLSL) {
-				treeShader->SetUniformMatrix4fv(7, false, &shadowHandler->shadowMatrix.m[0]);
+				treeShader->SetUniformMatrix4fv(7, false, shadowHandler->GetShadowMatrixRaw());
 				treeShader->SetUniform4fv(8, &(shadowHandler->GetShadowParams().x));
 			}
 
