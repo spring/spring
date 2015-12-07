@@ -36,8 +36,8 @@ public:
 	bool CanCloseYard(CSolidObject* object) const;
 
 
-	// these retrieve either the top-most or the bottom-most
-	// object in a given cell, or NULL if the cell is empty
+	// these retrieve either the first object in
+	// a given cell, or NULL if the cell is empty
 	CSolidObject* GroundBlocked(int x, int z) const;
 	CSolidObject* GroundBlocked(const float3& pos) const;
 

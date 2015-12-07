@@ -122,19 +122,19 @@ bool CGroundBlockingObjectMap::GroundBlocked(int x, int z, const CSolidObject* i
 	if ((unsigned)x >= mapDims.mapx || (unsigned)z >= mapDims.mapy)
 		return false;
 
-	const int mapSquare = z * mapDims.mapx + x;
-	const BlockingMapCell& cell = GetCellUnsafeConst(mapSquare);
+	const BlockingMapCell& cell = GetCellUnsafeConst(z * mapDims.mapx + x);
 
 	if (cell.empty())
 		return false;
 
-	const auto it = cell.cbegin();
-
-	// check if there are other objects blocking the square
-	if (*it != ignoreObj)
+	// check if the first object in <cell> is NOT the ignoree
+	// if so the ground is definitely blocked at this location
+	if (*(cell.cbegin()) != ignoreObj)
 		return true;
 
-	// ignoreObj is in the square. Check if there are other objects, too
+	// otherwise the ground is considered blocked only if there
+	// is at least one other object in <cell> together with the
+	// ignoree
 	return (cell.size() >= 2);
 }
 
