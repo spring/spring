@@ -34,11 +34,10 @@ public:
 	void DrawShadowPass();
 	void DrawFadeFeatures(bool noAdvShading = false);
 
+	void DrawFeature(const CFeature*, unsigned int preList, unsigned int postList, bool lodCall, bool rawCall);
+
 	void SetDrawForwardPass(bool b) { drawForward = b; }
 	void SetDrawDeferredPass(bool b) { drawDeferred = b; }
-
-	void DrawFeatureNoLists(const CFeature*);
-	void DrawFeatureWithLists(const CFeature*, unsigned int preList, unsigned int postList, bool luaCall);
 
 public:
 	// CEventClient interface
@@ -66,6 +65,8 @@ private:
 	void DrawFarFeatures();
 
 	bool CanDrawFeature(const CFeature*) const;
+
+	void DrawFeatureModel(const CFeature* feature, bool rawCall = false);
 
 	void DrawFadeFeaturesHelper(int, int);
 	void DrawFadeFeaturesSet(const FeatureSet&, int, int);

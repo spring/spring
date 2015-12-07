@@ -320,12 +320,12 @@ struct LocalModel
 	const CMatrix44f& GetRawPieceMatrix(int pieceIdx) const { return pieces[pieceIdx].GetModelSpaceMatrix(); }
 
 
-	void Draw() const { DrawPieces(); }
-	void DrawLOD(unsigned int lod) const {
-		if (lod > lodCount)
-			return;
-
-		DrawPiecesLOD(lod);
+	void Draw() const {
+		if (luaMaterialData.Enabled()) {
+			DrawLOD(luaMaterialData.GetCurrentLOD());
+		} else {
+			DrawNoLOD();
+		}
 	}
 
 	void Update(unsigned int frameNum) {
@@ -372,6 +372,14 @@ struct LocalModel
 
 private:
 	LocalModelPiece* CreateLocalModelPieces(const S3DModelPiece* mpParent);
+
+	void DrawNoLOD() const { DrawPieces(); }
+	void DrawLOD(unsigned int lod) const {
+		if (lod > lodCount)
+			return;
+
+		DrawPiecesLOD(lod);
+	}
 
 public:
 	// increased by UnitScript whenever a piece is transformed

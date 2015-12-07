@@ -253,11 +253,11 @@ const LuaMaterial* LuaObjectDrawer::DrawMaterialBin(
 				//
 				// must use static_cast here because of GetTransformMatrix (!)
 				unitDrawer->SetTeamColour(obj->team);
-				unitDrawer->DrawUnitWithLists(static_cast<const CUnit*>(obj), lodMat->preDisplayList, lodMat->postDisplayList, true);
+				unitDrawer->DrawUnit(static_cast<const CUnit*>(obj), lodMat->preDisplayList, lodMat->postDisplayList, true, false);
 			} break;
 			case LUAOBJ_FEATURE: {
 				// also sets team-color (needs a specific alpha-value)
-				featureDrawer->DrawFeatureWithLists(static_cast<const CFeature*>(obj), lodMat->preDisplayList, lodMat->postDisplayList, true);
+				featureDrawer->DrawFeature(static_cast<const CFeature*>(obj), lodMat->preDisplayList, lodMat->postDisplayList, true, false);
 			} break;
 			default: {
 				assert(false);
@@ -366,11 +366,10 @@ bool LuaObjectDrawer::DrawSingleObject(CSolidObject* obj, LuaObjType objType)
 	switch (objType) {
 		case LUAOBJ_UNIT: {
 			unitDrawer->SetTeamColour(obj->team);
-			unitDrawer->DrawUnitRawWithLists(static_cast<const CUnit*>(obj), lodMat->preDisplayList, lodMat->postDisplayList, true);
+			unitDrawer->DrawUnit(static_cast<const CUnit*>(obj), lodMat->preDisplayList, lodMat->postDisplayList, true, true);
 		} break;
 		case LUAOBJ_FEATURE: {
-			// not implemented (nor "raw" versions in general)
-			// featureDrawer->DrawFeatureRawWithLists(static_cast<const CFeature*>(obj), lodMat->preDisplayList, lodMat->postDisplayList, true);
+			featureDrawer->DrawFeature(static_cast<const CFeature*>(obj), lodMat->preDisplayList, lodMat->postDisplayList, true, true);
 		} break;
 		default: {
 			assert(false);

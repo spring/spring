@@ -309,7 +309,7 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, b
 
 	// draw the unit with the default (non-Lua) material
 	SetTeamColour(unit->team);
-	DrawUnitNoLists(unit);
+	DrawUnit(unit, 0, 0, false, false);
 }
 
 
@@ -434,7 +434,7 @@ void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 	if (LuaObjectDrawer::AddShadowMaterialObject(unit, LUAOBJ_UNIT))
 		return;
 
-	DrawUnitNoLists(unit);
+	DrawUnit(unit, 0, 0, false, false);
 }
 
 
@@ -704,7 +704,7 @@ inline void CUnitDrawer::DrawCloakedUnit(CUnit* unit, int modelType, bool drawGh
 		if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
 			if (!unit->isIcon) {
 				SetTeamColour(unit->team, cloakAlpha);
-				DrawUnitNoLists(unit);
+				DrawUnit(unit, 0, 0, false, false);
 			}
 		}
 	} else {
@@ -985,7 +985,7 @@ void CUnitDrawer::DrawIndividual(CUnit* unit)
 		}
 
 		SetTeamColour(unit->team);
-		DrawUnitRawNoLists(unit);
+		DrawUnit(unit, 0, 0, false, true);
 
 		opaqueModelRenderers[MDL_TYPE(unit)]->PopRenderState();
 		CleanUpUnitDrawing(false);
@@ -1210,34 +1210,14 @@ void CUnitDrawer::DrawUnitBeingBuilt(const CUnit* unit)
 
 
 
-inline void CUnitDrawer::DrawUnitModel(const CUnit* unit) {
-	if (unit->luaDraw && eventHandler.DrawUnit(unit))
+void CUnitDrawer::DrawUnitModel(const CUnit* unit, bool rawCall) {
+	if (!rawCall && unit->luaDraw && eventHandler.DrawUnit(unit))
 		return;
 
-	DrawUnitRawModel(unit);
+	unit->localModel.Draw();
 }
 
-// "raw" version (does not call into Lua)
-void CUnitDrawer::DrawUnitRawModel(const CUnit* unit)
-{
-	const LuaObjectMaterialData* matData = unit->GetLuaMaterialData();
-
-	if (matData->Enabled()) {
-		unit->localModel.DrawLOD(matData->GetCurrentLOD());
-	} else {
-		unit->localModel.Draw();
-	}
-}
-
-
-
-
-void CUnitDrawer::DrawUnitNoLists(const CUnit* unit)
-{
-	DrawUnitWithLists(unit, 0, 0, false);
-}
-
-void CUnitDrawer::DrawUnitWithLists(const CUnit* unit, unsigned int preList, unsigned int postList, bool luaCall)
+void CUnitDrawer::DrawUnit(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool rawCall)
 {
 	glPushMatrix();
 	glMultMatrixf(unit->GetTransformMatrix());
@@ -1254,35 +1234,13 @@ void CUnitDrawer::DrawUnitWithLists(const CUnit* unit, unsigned int preList, uns
 	// to have full control over the build visualisation: keep it
 	// simple and bypass the engine path
 	//
-	if (luaCall || !unit->beingBuilt || !unit->unitDef->showNanoFrame) {
-		DrawUnitModel(unit);
+	// NOTE: "raw" calls will no longer skip DrawUnitBeingBuilt
+	//
+	if (lodCall || !unit->beingBuilt || !unit->unitDef->showNanoFrame) {
+		DrawUnitModel(unit, rawCall);
 	} else {
 		DrawUnitBeingBuilt(unit);
 	}
-
-	if (postList != 0) {
-		glCallList(postList);
-	}
-
-	glPopMatrix();
-}
-
-
-void CUnitDrawer::DrawUnitRawNoLists(const CUnit* unit)
-{
-	DrawUnitRawWithLists(unit, 0, 0, false);
-}
-
-void CUnitDrawer::DrawUnitRawWithLists(const CUnit* unit, unsigned int preList, unsigned int postList, bool /*luaCall*/)
-{
-	glPushMatrix();
-	glMultMatrixf(unit->GetTransformMatrix());
-
-	if (preList != 0) {
-		glCallList(preList);
-	}
-
-	DrawUnitRawModel(unit);
 
 	if (postList != 0) {
 		glCallList(postList);

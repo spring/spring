@@ -74,14 +74,9 @@ public:
 	void SetDrawDeferredPass(bool b) { drawDeferred = b; }
 
 	// note: make these static?
-	void DrawUnitModel(const CUnit* unit);
-	void DrawUnitRawModel(const CUnit* unit);
+	void DrawUnitModel(const CUnit* unit, bool rawCall = false);
 	void DrawUnitBeingBuilt(const CUnit* unit);
-
-	void DrawUnitNoLists(const CUnit* unit);
-	void DrawUnitWithLists(const CUnit* unit, unsigned int preList, unsigned int postList, bool luaCall);
-	void DrawUnitRawNoLists(const CUnit* unit);
-	void DrawUnitRawWithLists(const CUnit* unit, unsigned int preList, unsigned int postList, bool luaCall);
+	void DrawUnit(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool rawCall);
 
 	void SetTeamColour(int team, float alpha = 1.0f) const;
 	void SetupForUnitDrawing(bool deferredPass);

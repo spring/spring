@@ -287,7 +287,7 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType, int luaMatType)
 				if (!shadowPass && LuaObjectDrawer::AddOpaqueMaterialObject(f, LUAOBJ_FEATURE))
 					continue;
 
-				DrawFeatureNoLists(f);
+				DrawFeature(f, 0, 0, false, false);
 			}
 		}
 	}
@@ -313,12 +313,15 @@ bool CFeatureDrawer::CanDrawFeature(const CFeature* feature) const
 }
 
 
-void CFeatureDrawer::DrawFeatureNoLists(const CFeature* feature)
-{
-	DrawFeatureWithLists(feature, 0, 0, false);
+
+inline void CFeatureDrawer::DrawFeatureModel(const CFeature* feature, bool rawCall) {
+	if (!rawCall && feature->luaDraw && eventHandler.DrawFeature(feature))
+		return;
+
+	feature->localModel.Draw();
 }
 
-void CFeatureDrawer::DrawFeatureWithLists(const CFeature* feature, unsigned int preList, unsigned int postList, bool /*luaCall*/)
+void CFeatureDrawer::DrawFeature(const CFeature* feature, unsigned int preList, unsigned int postList, bool /*lodCall*/, bool rawCall)
 {
 	glPushMatrix();
 	glMultMatrixf(feature->GetTransformMatrixRef());
@@ -332,9 +335,7 @@ void CFeatureDrawer::DrawFeatureWithLists(const CFeature* feature, unsigned int 
 		glCallList(preList);
 	}
 
-	if (!(feature->luaDraw && eventHandler.DrawFeature(feature))) {
-		feature->model->DrawStatic();
-	}
+	DrawFeatureModel(feature, rawCall);
 
 	if (postList != 0) {
 		glCallList(postList);
@@ -342,7 +343,6 @@ void CFeatureDrawer::DrawFeatureWithLists(const CFeature* feature, unsigned int 
 
 	glPopMatrix();
 }
-
 
 
 
@@ -433,7 +433,7 @@ void CFeatureDrawer::DrawFadeFeaturesSet(const FeatureSet& fadeFeatures, int mod
 		glAlphaFunc(GL_GREATER, f->drawAlpha / 2.0f);
 		glColor4fv(cols);
 
-		DrawFeatureNoLists(f);
+		DrawFeature(f, 0, 0, false, false);
 	}
 }
 
