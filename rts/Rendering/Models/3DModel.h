@@ -340,9 +340,6 @@ struct LocalModel
 	}
 
 
-	void DrawPieces() const;
-	void DrawPiecesLOD(unsigned int lod) const;
-
 	void SetModel(const S3DModel* model);
 	void SetLODCount(unsigned int count);
 	void PieceUpdated(unsigned int pieceIdx) { dirtyPieces += 1; }
@@ -380,6 +377,9 @@ private:
 
 		DrawPiecesLOD(lod);
 	}
+
+	void DrawPieces() const;
+	void DrawPiecesLOD(unsigned int lod) const;
 
 public:
 	// increased by UnitScript whenever a piece is transformed
