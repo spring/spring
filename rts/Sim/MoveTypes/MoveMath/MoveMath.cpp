@@ -208,11 +208,9 @@ CMoveMath::BlockType CMoveMath::SquareIsBlocked(const MoveDef& moveDef, int xSqu
 
 	BlockType r = BLOCK_NONE;
 
-	const BlockingMapCell& c = groundBlockingObjectMap->GetCell(zSquare * mapDims.mapx + xSquare);
+	const BlockingMapCell& cell = groundBlockingObjectMap->GetCellUnsafeConst(zSquare * mapDims.mapx + xSquare);
 
-	for (BlockingMapCellIt it = c.begin(); it != c.end(); ++it) {
-		const CSolidObject* collidee = it->second;
-
+	for (const CSolidObject* collidee: cell) {
 		if (IsNonBlocking(moveDef, collidee, collider))
 			continue;
 
