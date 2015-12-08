@@ -1364,19 +1364,9 @@ static void UnitDrawPostCommon(CUnit* unit, bool applyTransform, bool noLuaCall,
 	}
 
 	if (applyTransform) {
-		if (noLuaCall) {
-			unitDrawer->DrawUnit(unit, 0, 0, false, true);
-		} else {
-			// this goes through LuaObjectDrawer::DrawSingleObject,
-			// but it still issues a raw call if DSO returns early
-			unitDrawer->DrawIndividual(unit);
-		}
+		unitDrawer->DrawUnit(unit, 0, 0, false, noLuaCall);
 	} else {
-		if (noLuaCall) {
-			unitDrawer->DrawUnitModel(unit, true);
-		} else {
-			unitDrawer->DrawUnitModel(unit, false);
-		}
+		unitDrawer->DrawUnitModel(unit, noLuaCall);
 	}
 
 	if (!useLuaMat) {
