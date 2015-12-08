@@ -533,15 +533,16 @@ void LuaUtils::PrintStack(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-// from LuaShaders.cpp
 int LuaUtils::ParseIntArray(lua_State* L, int index, int* array, int size)
 {
-	if (!lua_istable(L, -1)) {
+	if (!lua_istable(L, index))
 		return -1;
-	}
-	const int table = lua_gettop(L);
+
+	const int absIdx = (index > 0)? index: (lua_gettop(L) + index + 1);
+
 	for (int i = 0; i < size; i++) {
-		lua_rawgeti(L, table, (i + 1));
+		lua_rawgeti(L, absIdx, (i + 1));
+
 		if (lua_isnumber(L, -1)) {
 			array[i] = lua_toint(L, -1);
 			lua_pop(L, 1);
@@ -553,15 +554,16 @@ int LuaUtils::ParseIntArray(lua_State* L, int index, int* array, int size)
 	return size;
 }
 
-
 int LuaUtils::ParseFloatArray(lua_State* L, int index, float* array, int size)
 {
-	if (!lua_istable(L, index)) {
+	if (!lua_istable(L, index))
 		return -1;
-	}
-	const int table = (index > 0) ? index : (lua_gettop(L) + index + 1);
+
+	const int absIdx = (index > 0)? index: (lua_gettop(L) + index + 1);
+
 	for (int i = 0; i < size; i++) {
-		lua_rawgeti(L, table, (i + 1));
+		lua_rawgeti(L, absIdx, (i + 1));
+
 		if (lua_isnumber(L, -1)) {
 			array[i] = lua_tofloat(L, -1);
 			lua_pop(L, 1);
@@ -570,6 +572,7 @@ int LuaUtils::ParseFloatArray(lua_State* L, int index, float* array, int size)
 			return i;
 		}
 	}
+
 	return size;
 }
 

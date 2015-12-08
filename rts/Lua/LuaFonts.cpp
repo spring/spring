@@ -101,21 +101,6 @@ inline CglFont* tofont(lua_State* L, int idx)
 }
 
 
-static int ParseFloatArray(lua_State* L, int idx, float* array, int size)
-{
-	for (int i = 0; i < size; i++) {
-		lua_rawgeti(L, idx, (i + 1));
-		if (lua_isnumber(L, -1)) {
-			array[i] = lua_tofloat(L, -1);
-			lua_pop(L, 1);
-		} else {
-			lua_pop(L, 1);
-			return i;
-		}
-	}
-	return size;
-}
-
 /******************************************************************************/
 /******************************************************************************/
 
@@ -352,7 +337,7 @@ int LuaFonts::SetTextColor(lua_State* L)
 
 	if (lua_istable(L, 2)) {
 		color = new float4;
-		const int count = ParseFloatArray(L, 2, *color, 4);
+		const int count = LuaUtils::ParseFloatArray(L, 2, *color, 4);
 		if (count < 3) {
 			luaL_error(L, "Incorrect arguments to font:SetTextColor([\"textColor\"])");
 		}
@@ -388,7 +373,7 @@ int LuaFonts::SetOutlineColor(lua_State* L)
 
 	if (lua_istable(L, 2)) {
 		color = new float4;
-		const int count = ParseFloatArray(L, 2, *color, 4);
+		const int count = LuaUtils::ParseFloatArray(L, 2, *color, 4);
 		if (count < 3) {
 			luaL_error(L, "Incorrect arguments to font:SetOutlineColor([\"outlineColor\"])");
 		}

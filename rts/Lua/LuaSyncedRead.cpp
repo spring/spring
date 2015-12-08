@@ -594,6 +594,8 @@ static int GetSolidObjectBlocking(lua_State* L, const CSolidObject* o)
 }
 
 
+
+
 /******************************************************************************/
 /******************************************************************************/
 //
@@ -603,14 +605,10 @@ static int GetSolidObjectBlocking(lua_State* L, const CSolidObject* o)
 static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 {
 	if (!lua_isnumber(L, index)) {
-		if (caller != nullptr) {
-			luaL_error(L, "Bad unitID parameter in %s()\n", caller);
-		}
-
+		luaL_error(L, "Bad unitID parameter in %s()\n", caller);
 		return nullptr;
 	}
 
-	// returns NULL for bad ID's
 	return (unitHandler->GetUnit(lua_toint(L, index)));
 }
 
@@ -672,10 +670,7 @@ static inline CUnit* ParseTypedUnit(lua_State* L, const char* caller, int index)
 static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 {
 	if (!lua_isnumber(L, index)) {
-		if (caller != nullptr) {
-			luaL_error(L, "Incorrect arguments to %s(featureID)", caller);
-		}
-
+		luaL_error(L, "Incorrect arguments to %s(featureID)", caller);
 		return nullptr;
 	}
 
@@ -706,9 +701,6 @@ static CProjectile* ParseProjectile(lua_State* L, const char* caller, int index)
 }
 
 
-/******************************************************************************/
-
-
 static inline CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 {
 	const int teamID = luaL_checkint(L, index);
@@ -716,27 +708,6 @@ static inline CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 		luaL_error(L, "Bad teamID in %s\n", caller);
 	}
 	return teamHandler->Team(teamID);
-}
-
-
-static int ParseFloatArray(lua_State* L, float* array, int size)
-{
-	if (!lua_istable(L, -1)) {
-		return -1;
-	}
-	// FIXME: changed this, test GetUnitsInPlanes() ...
-	const int table = lua_gettop(L);
-	for (int i = 0; i < size; i++) {
-		lua_rawgeti(L, table, (i + 1));
-		if (lua_isnumber(L, -1)) {
-			array[i] = lua_tofloat(L, -1);
-			lua_pop(L, 1);
-		} else {
-			lua_pop(L, 1);
-			return i;
-		}
-	}
-	return size;
 }
 
 
@@ -2313,7 +2284,7 @@ int LuaSyncedRead::GetUnitsInPlanes(lua_State* L)
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_istable(L, -1)) {
 			float values[4];
-			const int v = ParseFloatArray(L, values, 4);
+			const int v = LuaUtils::ParseFloatArray(L, -1, values, 4);
 			if (v == 4) {
 				Plane plane = { values[0], values[1], values[2], values[3] };
 				planes.push_back(plane);

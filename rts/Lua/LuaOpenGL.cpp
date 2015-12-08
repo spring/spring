@@ -94,6 +94,80 @@ float LuaOpenGL::screenDistance = 0.60f;
 
 std::set<unsigned int> LuaOpenGL::occlusionQueries;
 
+
+
+
+static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index, bool allyCheck = true)
+{
+	if (!lua_isnumber(L, index)) {
+		luaL_error(L, "Bad unitID parameter in %s()\n", caller);
+		return nullptr;
+	}
+
+	CUnit* unit = unitHandler->GetUnit(lua_toint(L, index));
+
+	if (unit == nullptr)
+		return nullptr;
+
+	const int readAllyTeam = CLuaHandle::GetHandleReadAllyTeam(L);
+
+	if (readAllyTeam < 0)
+		return ((readAllyTeam == CEventClient::NoAccessTeam)? nullptr: unit);
+
+	if (allyCheck && teamHandler->Ally(readAllyTeam, unit->allyteam))
+		return unit;
+	if ((unit->losStatus[readAllyTeam] & LOS_INLOS) != 0)
+		return unit;
+
+	return nullptr;
+}
+
+static inline CUnit* ParseDrawUnit(lua_State* L, const char* caller, int index)
+{
+	CUnit* unit = ParseUnit(L, caller, index, false);
+
+	if (unit == nullptr)
+		return nullptr;
+	if (unit->isIcon)
+		return nullptr;
+	if (!camera->InView(unit->midPos, unit->radius))
+		return nullptr;
+
+	return unit;
+}
+
+
+
+
+static inline bool IsFeatureVisible(const lua_State* L, const CFeature* feature)
+{
+	if (CLuaHandle::GetHandleFullRead(L))
+		return true;
+
+	const int readAllyTeam = CLuaHandle::GetHandleReadAllyTeam(L);
+
+	if (readAllyTeam < 0)
+		return (readAllyTeam == CEventClient::AllAccessTeam);
+
+	return (feature->IsInLosForAllyTeam(readAllyTeam));
+}
+
+static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
+{
+	CFeature* feature = featureHandler->GetFeature(luaL_checkint(L, index));
+
+	if (feature == nullptr)
+		return nullptr;
+
+	if (!IsFeatureVisible(L, feature))
+		return nullptr;
+
+	return feature;
+}
+
+
+
+
 /******************************************************************************/
 /******************************************************************************/
 
@@ -1062,26 +1136,6 @@ inline void LuaOpenGL::CheckDrawingEnabled(lua_State* L, const char* caller)
 }
 
 
-static int ParseFloatArray(lua_State* L, float* array, int size)
-{
-	if (!lua_istable(L, -1)) {
-		return -1;
-	}
-	const int table = lua_gettop(L);
-	for (int i = 0; i < size; i++) {
-		lua_rawgeti(L, table, (i + 1));
-		if (lua_isnumber(L, -1)) {
-			array[i] = lua_tofloat(L, -1);
-			lua_pop(L, 1);
-		} else {
-			lua_pop(L, 1);
-			return i;
-		}
-	}
-	return size;
-}
-
-
 /******************************************************************************/
 
 int LuaOpenGL::HasExtension(lua_State* L)
@@ -1300,38 +1354,6 @@ int LuaOpenGL::GetTextHeight(lua_State* L)
 
 
 /******************************************************************************/
-/******************************************************************************/
-
-static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
-{
-	if (!lua_isnumber(L, index)) {
-		if (caller != nullptr) {
-			luaL_error(L, "Bad unitID parameter in %s()\n", caller);
-		}
-
-		return nullptr;
-	}
-
-	CUnit* unit = unitHandler->GetUnit(lua_toint(L, index));
-
-	if (unit == nullptr)
-		return nullptr;
-
-	const int readAllyTeam = CLuaHandle::GetHandleReadAllyTeam(L);
-
-	if (readAllyTeam < 0)
-		return ((readAllyTeam == CEventClient::NoAccessTeam)? nullptr: unit);
-
-	if (teamHandler->Ally(readAllyTeam, unit->allyteam))
-		return unit;
-	if ((unit->losStatus[readAllyTeam] & LOS_INLOS) != 0)
-		return unit;
-
-	return nullptr;
-}
-
-
-/******************************************************************************/
 
 static void ObjectPiece(lua_State* L, const CSolidObject* obj)
 {
@@ -1474,33 +1496,6 @@ int LuaOpenGL::UnitPieceMultMatrix(lua_State* L)
 
 /******************************************************************************/
 
-static inline bool IsFeatureVisible(const lua_State* L, const CFeature* feature)
-{
-	if (CLuaHandle::GetHandleFullRead(L))
-		return true;
-
-	const int readAllyTeam = CLuaHandle::GetHandleReadAllyTeam(L);
-
-	if (readAllyTeam < 0)
-		return (readAllyTeam == CEventClient::AllAccessTeam);
-
-	return (feature->IsInLosForAllyTeam(readAllyTeam));
-}
-
-static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
-{
-	CFeature* feature = featureHandler->GetFeature(luaL_checkint(L, index));
-
-	if (feature == nullptr)
-		return nullptr;
-
-	if (!IsFeatureVisible(L, feature))
-		return nullptr;
-
-	return feature;
-}
-
-
 int LuaOpenGL::FeatureCommon(lua_State* L, bool applyTransform)
 {
 	LuaOpenGL::CheckDrawingEnabled(L, __FUNCTION__);
@@ -1606,51 +1601,6 @@ int LuaOpenGL::FeaturePieceMultMatrix(lua_State* L)
 
 /******************************************************************************/
 /******************************************************************************/
-
-
-
-static inline CUnit* ParseDrawUnit(lua_State* L, const char* caller, int index)
-{
-	if (!lua_isnumber(L, index)) {
-		if (caller != NULL) {
-			luaL_error(L, "Bad unitID parameter in %s()\n", caller);
-		} else {
-			return NULL;
-		}
-	}
-	const int unitID = lua_toint(L, index);
-	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits())) {
-		luaL_error(L, "%s(): Bad unitID: %d\n", caller, unitID);
-	}
-	CUnit* unit = unitHandler->units[unitID];
-	if (unit == NULL) {
-		return NULL;
-	}
-	const int readAllyTeam = CLuaHandle::GetHandleReadAllyTeam(L);
-	if (readAllyTeam < 0) {
-		if (!CLuaHandle::GetHandleFullRead(L)) {
-			return NULL;
-		}
-	} else {
-		if ((unit->losStatus[readAllyTeam] & LOS_INLOS) == 0) {
-			return NULL;
-		}
-	}
-
-	if (unit->isIcon)
-		return NULL;
-	if (!camera->InView(unit->midPos, unit->radius))
-		return NULL;
-
-	//const float sqDist = (unit->pos - camera->GetPos()).SqLength();
-	//const float farLength = unit->sqRadius * unitDrawDist * unitDrawDist;
-	//if (sqDist >= farLength) {
-	//	return NULL;
-	//}
-
-	return unit;
-}
-
 
 int LuaOpenGL::DrawListAtUnit(lua_State* L)
 {
@@ -1885,7 +1835,7 @@ static bool ParseVertexData(lua_State* L, VertexData& vd)
 
 		if ((key == "v") || (key == "vertex")) {
 			vd.vert[0] = 0.0f; vd.vert[1] = 0.0f; vd.vert[2] = 0.0f;
-			if (ParseFloatArray(L, vd.vert, 3) >= 2) {
+			if (LuaUtils::ParseFloatArray(L, -1, vd.vert, 3) >= 2) {
 				vd.hasVert = true;
 			} else {
 				luaL_error(L, "gl.Shape: bad vertex array");
@@ -1895,7 +1845,7 @@ static bool ParseVertexData(lua_State* L, VertexData& vd)
 		}
 		else if ((key == "n") || (key == "normal")) {
 			vd.norm[0] = 0.0f; vd.norm[1] = 1.0f; vd.norm[2] = 0.0f;
-			if (ParseFloatArray(L, vd.norm, 3) == 3) {
+			if (LuaUtils::ParseFloatArray(L, -1, vd.norm, 3) == 3) {
 				vd.hasNorm = true;
 			} else {
 				luaL_error(L, "gl.Shape: bad normal array");
@@ -1905,7 +1855,7 @@ static bool ParseVertexData(lua_State* L, VertexData& vd)
 		}
 		else if ((key == "t") || (key == "texcoord")) {
 			vd.txcd[0] = 0.0f; vd.txcd[1] = 0.0f;
-			if (ParseFloatArray(L, vd.txcd, 2) == 2) {
+			if (LuaUtils::ParseFloatArray(L, -1, vd.txcd, 2) == 2) {
 				vd.hasTxcd = true;
 			} else {
 				luaL_error(L, "gl.Shape: bad texcoord array");
@@ -1916,7 +1866,7 @@ static bool ParseVertexData(lua_State* L, VertexData& vd)
 		else if ((key == "c") || (key == "color")) {
 			vd.color[0] = 1.0f; vd.color[1] = 1.0f;
 			vd.color[2] = 1.0f; vd.color[3] = 1.0f;
-			if (ParseFloatArray(L, vd.color, 4) >= 0) {
+			if (LuaUtils::ParseFloatArray(L, -1, vd.color, 4) >= 0) {
 				vd.hasColor = true;
 			} else {
 				luaL_error(L, "gl.Shape: bad color array");
@@ -2383,7 +2333,7 @@ int LuaOpenGL::Color(lua_State* L)
 		if (!lua_istable(L, 1)) {
 			luaL_error(L, "Incorrect arguments to gl.Color()");
 		}
-		const int count = ParseFloatArray(L, color, 4);
+		const int count = LuaUtils::ParseFloatArray(L, -1, color, 4);
 		if (count < 3) {
 			luaL_error(L, "Incorrect arguments to gl.Color()");
 		}
@@ -2434,7 +2384,7 @@ int LuaOpenGL::Material(lua_State* L)
 			continue;
 		}
 
-		const int count = ParseFloatArray(L, color, 4);
+		const int count = LuaUtils::ParseFloatArray(L, -1, color, 4);
 		if (count == 3) {
 			color[3] = 1.0f;
 		}
@@ -3815,7 +3765,7 @@ int LuaOpenGL::LoadMatrix(lua_State* L)
 	} else {
 		GLfloat matrix[16];
 		if (luaType == LUA_TTABLE) {
-			if (ParseFloatArray(L, matrix, 16) != 16) {
+			if (LuaUtils::ParseFloatArray(L, -1, matrix, 16) != 16) {
 				luaL_error(L, "gl.LoadMatrix requires all 16 values");
 			}
 		}
@@ -3846,7 +3796,7 @@ int LuaOpenGL::MultMatrix(lua_State* L)
 	} else {
 		GLfloat matrix[16];
 		if (luaType == LUA_TTABLE) {
-			if (ParseFloatArray(L, matrix, 16) != 16) {
+			if (LuaUtils::ParseFloatArray(L, -1, matrix, 16) != 16) {
 				luaL_error(L, "gl.LoadMatrix requires all 16 values");
 			}
 		}

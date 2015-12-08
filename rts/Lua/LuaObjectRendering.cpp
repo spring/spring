@@ -27,7 +27,7 @@ static int material_index(lua_State* L)
 	const string key = luaL_checkstring(L, 2);
 	const LuaMatBin* bin = (*matRef)->GetBin();
 
-	if (bin == NULL)
+	if (bin == nullptr)
 		return 0;
 
 	//const LuaMaterial& mat = *bin;
@@ -52,6 +52,7 @@ static int material_gc(lua_State* L)
 
 
 
+
 /******************************************************************************/
 /******************************************************************************/
 //
@@ -61,11 +62,8 @@ static int material_gc(lua_State* L)
 static inline CSolidObject* ParseSolidObject(lua_State* L, const char* caller, int index, int objType)
 {
 	if (!lua_isnumber(L, index)) {
-		if (caller != NULL) {
-			luaL_error(L, "Bad objectID parameter in %s()\n", caller);
-		} else {
-			return NULL;
-		}
+		luaL_error(L, "Bad objectID parameter in %s()\n", caller);
+		return nullptr;
 	}
 
 	switch (objType) {
@@ -74,7 +72,7 @@ static inline CSolidObject* ParseSolidObject(lua_State* L, const char* caller, i
 		default            : {                                            assert(false); } break;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 
@@ -87,6 +85,7 @@ static inline CFeature* ParseFeature(lua_State* L, const char* caller, int index
 {
 	return (static_cast<CFeature*>(ParseSolidObject(L, caller, index, LUAOBJ_FEATURE)));
 }
+
 
 
 
