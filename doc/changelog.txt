@@ -25,6 +25,12 @@ Lua:
      Spring.GetFeaturePiecePosDir
      Spring.GetFeaturePieceMatrix
 
+     gl.FeatureRaw
+     gl.FeatureMultMatrix
+     gl.FeaturePiece
+     gl.FeaturePieceMatrix
+     gl.FeaturePieceMultMatrix
+
  - add Spring.FeatureRendering API; allows custom shaders (technically,
    materials) for features as its Spring.UnitRendering counterpart does
    for units

@@ -16,7 +16,6 @@
 #include "LuaOpenGL.h"
 
 #include "LuaInclude.h"
-
 #include "LuaContextData.h"
 #include "LuaDisplayLists.h"
 #include "LuaFBOs.h"
@@ -43,6 +42,7 @@
 #include "Rendering/LineDrawer.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/LuaObjectDrawer.h"
+#include "Rendering/FeatureDrawer.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/IWater.h"
@@ -245,8 +245,15 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(UnitPiece);
 	REGISTER_LUA_CFUNC(UnitPieceMatrix);
 	REGISTER_LUA_CFUNC(UnitPieceMultMatrix);
+
 	REGISTER_LUA_CFUNC(Feature);
+	REGISTER_LUA_CFUNC(FeatureRaw);
 	REGISTER_LUA_CFUNC(FeatureShape);
+	REGISTER_LUA_CFUNC(FeatureMultMatrix);
+	REGISTER_LUA_CFUNC(FeaturePiece);
+	REGISTER_LUA_CFUNC(FeaturePieceMatrix);
+	REGISTER_LUA_CFUNC(FeaturePieceMultMatrix);
+
 	REGISTER_LUA_CFUNC(DrawListAtUnit);
 	REGISTER_LUA_CFUNC(DrawFuncAtUnit);
 	REGISTER_LUA_CFUNC(DrawGroundCircle);
@@ -1330,16 +1337,42 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 
 /******************************************************************************/
 
-static bool UnitDrawPreCommon(lua_State* L, CUnit* unit)
+static void ObjectPiece(lua_State* L, const CSolidObject* obj)
 {
-	LuaObjectMaterialData* lmd = unit->GetLuaMaterialData();
+	if (obj == nullptr)
+		return;
+
+	const LocalModelPiece* lmp = ParseObjectConstLocalModelPiece(L, obj, 2);
+
+	if (lmp == nullptr)
+		return;
+
+	glCallList(lmp->dispListID);
+}
+
+static void ObjectPieceMultMatrix(lua_State* L, const CSolidObject* obj)
+{
+	if (obj == nullptr)
+		return;
+
+	const LocalModelPiece* lmp = ParseObjectConstLocalModelPiece(L, obj, 2);
+
+	if (lmp == nullptr)
+		return;
+
+	glMultMatrixf(lmp->GetModelSpaceMatrix());
+}
+
+static bool ObjectDrawWithLuaMat(lua_State* L, CSolidObject* obj, LuaObjType objType)
+{
+	LuaObjectMaterialData* lmd = obj->GetLuaMaterialData();
 
 	if (!lmd->Enabled())
 		return false;
 
 	if (!lua_isnumber(L, 3)) {
 		// calculate new LOD level
-		lmd->UpdateCurrentLOD(LUAOBJ_UNIT, camera->ProjectedDistance(unit->pos), LuaObjectDrawer::GetDrawPassOpaqueMat());
+		lmd->UpdateCurrentLOD(objType, camera->ProjectedDistance(obj->pos), LuaObjectDrawer::GetDrawPassOpaqueMat());
 		return true;
 	}
 
@@ -1352,7 +1385,20 @@ static bool UnitDrawPreCommon(lua_State* L, CUnit* unit)
 	return false;
 }
 
-static void UnitDrawPostCommon(CUnit* unit, bool applyTransform, bool noLuaCall, bool useLuaMat) {
+
+int LuaOpenGL::UnitCommon(lua_State* L, bool applyTransform)
+{
+	LuaOpenGL::CheckDrawingEnabled(L, __FUNCTION__);
+
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
+	if (unit == nullptr)
+		return 0;
+
+	const bool noLuaCall = luaL_optboolean(L, 2, false);
+	const bool useLuaMat = ObjectDrawWithLuaMat(L, unit, LUAOBJ_UNIT);
+
+
 	glPushAttrib(GL_ENABLE_BIT);
 
 	const std::function<void(CUnitDrawer*, const CUnit*, unsigned int, unsigned int, bool, bool)> rawDrawFuncs[2] = {
@@ -1376,22 +1422,6 @@ static void UnitDrawPostCommon(CUnit* unit, bool applyTransform, bool noLuaCall,
 	}
 
 	glPopAttrib();
-}
-
-
-int LuaOpenGL::UnitCommon(lua_State* L, bool applyTransform)
-{
-	LuaOpenGL::CheckDrawingEnabled(L, __FUNCTION__);
-
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-
-	if (unit == nullptr)
-		return 0;
-
-	const bool noLuaCall = luaL_optboolean(L, 2, false);
-	const bool useLuaMat = UnitDrawPreCommon(L, unit);
-
-	UnitDrawPostCommon(unit, applyTransform, noLuaCall, useLuaMat);
 	return 0;
 }
 
@@ -1403,18 +1433,17 @@ int LuaOpenGL::UnitShape(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 
-	const int unitDefID = luaL_checkint(L, 1);
-	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
-	if (ud == NULL) {
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(luaL_checkint(L, 1));
+
+	if (ud == nullptr)
 		return 0;
-	}
+
 	const int teamID = luaL_checkint(L, 2);
-	if (!teamHandler->IsValidTeam(teamID)) {
+
+	if (!teamHandler->IsValidTeam(teamID))
 		return 0;
-	}
 
 	unitDrawer->DrawUnitDef(ud, teamID);
-
 	return 0;
 }
 
@@ -1423,53 +1452,26 @@ int LuaOpenGL::UnitMultMatrix(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	const CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
+	if (unit == nullptr)
 		return 0;
-	}
 
 	glMultMatrixf(unit->GetTransformMatrix());
 	return 0;
 }
 
-
 int LuaOpenGL::UnitPiece(lua_State* L)
 {
-	const CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-
-	if (unit == nullptr)
-		return 0;
-
-	const LocalModelPiece* localPiece = ParseObjectConstLocalModelPiece(L, unit, 2);
-
-	if (localPiece == nullptr)
-		return 0;
-
-	glCallList(localPiece->dispListID);
+	ObjectPiece(L, ParseUnit(L, __FUNCTION__, 1));
 	return 0;
 }
 
-
-int LuaOpenGL::UnitPieceMatrix(lua_State* L)
-{
-	return (UnitPieceMultMatrix(L));
-}
-
+int LuaOpenGL::UnitPieceMatrix(lua_State* L) { return (UnitPieceMultMatrix(L)); }
 int LuaOpenGL::UnitPieceMultMatrix(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
-
-	const CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-
-	if (unit == nullptr)
-		return 0;
-
-	const LocalModelPiece* localPiece = ParseObjectConstLocalModelPiece(L, unit, 2);
-
-	if (localPiece == nullptr)
-		return 0;
-
-	glMultMatrixf(localPiece->GetModelSpaceMatrix());
+	ObjectPieceMultMatrix(L, ParseUnit(L, __FUNCTION__, 1));
 	return 0;
 }
 
@@ -1482,68 +1484,126 @@ static inline bool IsFeatureVisible(const lua_State* L, const CFeature* feature)
 		return true;
 
 	const int readAllyTeam = CLuaHandle::GetHandleReadAllyTeam(L);
-	if (readAllyTeam < 0) {
-		return (readAllyTeam == CEventClient::AllAccessTeam);
-	}
-	return feature->IsInLosForAllyTeam(readAllyTeam);
-}
 
+	if (readAllyTeam < 0)
+		return (readAllyTeam == CEventClient::AllAccessTeam);
+
+	return (feature->IsInLosForAllyTeam(readAllyTeam));
+}
 
 static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 {
-	const int featureID = luaL_checkint(L, index);
-	CFeature* feature = featureHandler->GetFeature(featureID);
+	CFeature* feature = featureHandler->GetFeature(luaL_checkint(L, index));
 
-	if (!feature)
-		return NULL;
+	if (feature == nullptr)
+		return nullptr;
 
-	if (!IsFeatureVisible(L, feature)) {
-		return NULL;
-	}
+	if (!IsFeatureVisible(L, feature))
+		return nullptr;
+
 	return feature;
 }
 
 
-int LuaOpenGL::Feature(lua_State* L) // FIXME -- implement properly
+int LuaOpenGL::FeatureCommon(lua_State* L, bool applyTransform)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
-	const CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
-		return 0;
-	}
-	if (feature->model == NULL) {
-	  return 0;
-	}
-	glPushMatrix();
-	glMultMatrixf(feature->GetTransformMatrixRef());
-	feature->model->DrawStatic();
-	glPopMatrix();
+	LuaOpenGL::CheckDrawingEnabled(L, __FUNCTION__);
 
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+
+	if (feature == nullptr)
+		return 0;
+	if (feature->model == nullptr)
+		return 0;
+
+	const bool noLuaCall = luaL_optboolean(L, 2, false);
+	const bool useLuaMat = ObjectDrawWithLuaMat(L, feature, LUAOBJ_FEATURE);
+
+
+	glPushAttrib(GL_ENABLE_BIT);
+
+	const std::function<void(CFeatureDrawer*, const CFeature*, unsigned int, unsigned int, bool, bool)> rawDrawFuncs[2] = {
+		&CFeatureDrawer::DrawFeatureNoTrans,
+		&CFeatureDrawer::DrawFeature,
+	};
+	const std::function<void(CFeatureDrawer*, const CFeature*, bool)> matDrawFuncs[2] = {
+		nullptr, // TODO: &CFeatureDrawer::DrawIndividualNoTrans,
+		nullptr, // TODO: &CFeatureDrawer::DrawIndividual,
+	};
+
+	if (!useLuaMat) {
+		// "scoped" draw; this prevents any Lua-assigned
+		// material(s) from being used by the call below
+		(feature->GetLuaMaterialData())->PushLODCount(0);
+		rawDrawFuncs[applyTransform](featureDrawer, feature, 0, 0, false, noLuaCall);
+		(feature->GetLuaMaterialData())->PopLODCount();
+	} else {
+		// draw with full Lua or default material state
+		// matDrawFuncs[applyTransform](featureDrawer, feature, noLuaCall);
+	}
+
+	glPopAttrib();
 	return 0;
 }
+
+int LuaOpenGL::Feature(lua_State* L) { return (FeatureCommon(L, true)); }
+int LuaOpenGL::FeatureRaw(lua_State* L) { return (FeatureCommon(L, false)); }
 
 
 int LuaOpenGL::FeatureShape(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 
-	const int fDefID = luaL_checkint(L, 1);
-	//const int teamID = luaL_checkint(L, 2);
+	const FeatureDef* fd = featureHandler->GetFeatureDefByID(luaL_checkint(L, 1));
 
-	//if (!teamHandler->IsValidTeam(teamID)) {
-	//	return 0;
-	//}
-	const FeatureDef* fd = featureHandler->GetFeatureDefByID(fDefID);
-	if (fd == NULL) {
+	if (fd == nullptr)
 		return 0;
-	}
+
 	const S3DModel* model = fd->LoadModel();
-	if (model == NULL) {
-		return 0;
-	}
-	// TODO teamcolor?
-	model->DrawStatic(); // FIXME: finish this, 3do/s3o, copy DrawIndividual...
 
+	if (model == nullptr)
+		return 0;
+
+	#if 0
+	const int teamID = luaL_checkint(L, 2);
+
+	if (!teamHandler->IsValidTeam(teamID))
+		return 0;
+
+	// TODO: finish this, copy DrawIndividual, team-color...
+	featureDrawer->DrawFeatureDef(fd, teamID);
+	#else
+	model->DrawStatic();
+	#endif
+	return 0;
+}
+
+
+int LuaOpenGL::FeatureMultMatrix(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+
+	const CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+
+	if (feature == nullptr)
+		return 0;
+
+	glMultMatrixf(feature->GetTransformMatrixRef());
+	return 0;
+}
+
+int LuaOpenGL::FeaturePiece(lua_State* L)
+{
+	ObjectPiece(L, ParseFeature(L, __FUNCTION__, 1));
+	return 0;
+}
+
+
+int LuaOpenGL::FeaturePieceMatrix(lua_State* L) { return (FeaturePieceMultMatrix(L)); }
+int LuaOpenGL::FeaturePieceMultMatrix(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+	ObjectPieceMultMatrix(L, ParseFeature(L, __FUNCTION__, 1));
 	return 0;
 }
 

@@ -232,8 +232,19 @@ class LuaOpenGL {
 		static int UnitPiece(lua_State* L);
 		static int UnitPieceMatrix(lua_State* L);
 		static int UnitPieceMultMatrix(lua_State* L);
+
+		// internal wrapper for Feature and FeatureRaw
+		static int FeatureCommon(lua_State* L, bool applyTransform);
+
 		static int Feature(lua_State* L);
+		static int FeatureRaw(lua_State* L);
 		static int FeatureShape(lua_State* L);
+		static int FeatureMultMatrix(lua_State* L);
+		static int FeaturePiece(lua_State* L);
+		static int FeaturePieceMatrix(lua_State* L);
+		static int FeaturePieceMultMatrix(lua_State* L);
+
+
 		static int DrawListAtUnit(lua_State* L);
 		static int DrawFuncAtUnit(lua_State* L);
 		static int DrawGroundCircle(lua_State* L);
