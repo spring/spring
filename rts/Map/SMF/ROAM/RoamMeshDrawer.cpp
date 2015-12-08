@@ -97,15 +97,19 @@ CRoamMeshDrawer::~CRoamMeshDrawer()
  */
 void CRoamMeshDrawer::Update()
 {
-	//FIXME this retessellates with the current camera frustum, shadow pass and others don't have to see the same patches!
 	CCamera* cam = nullptr;
 
+	// TODO:
+	//   remove the "false &&" when ShadowHandler uses its own camera
+	//   otherwise this retessellates with the current camera frustum,
+	//   shadow pass and others don't have to see the same patches!
 	if (false && shadowHandler->inShadowPass) {
 		cam = CCamera::GetCamera(CCamera::CAMTYPE_SHADOW);
 	} else {
 		cam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
 	}
 
+	cam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 	// Update Patch visibility
 	Patch::UpdateVisibility(cam, roamPatches, numPatchesX);
 
@@ -219,18 +223,20 @@ void CRoamMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 
 	CCamera* cam = nullptr;
 
-	// FIXME: this only updates the *visibilty* of patches
+	// FIXME:
+	//  this only updates the *visibility* of patches
 	//  It doesn't update the *tessellation*, neither are indices sent to the GPU.
 	//  It just re-uses the last tessellation pattern which may have been created
-	//  with a totally different camera.
-	//
+	//  with a totally different camera (remove the "false &&" when ShadowHandler
+	//  uses its own camera)
 	if (false && inShadowPass) {
 		cam = CCamera::GetCamera(CCamera::CAMTYPE_SHADOW);
 	} else {
 		cam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
 	}
 
-
+	// NOTE: other places (e.g. DynWater) might want different constraints
+	cam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 	Patch::UpdateVisibility(cam, roamPatches, numPatchesX);
 
 	for (std::vector<Patch>::iterator it = roamPatches.begin(); it != roamPatches.end(); ++it) {

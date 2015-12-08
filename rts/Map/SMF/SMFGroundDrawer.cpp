@@ -279,13 +279,9 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 	if (readMap->HasOnlyVoidWater())
 		return;
 
-	CCamera* visCam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
 
 	// note: shared by deferred pass
 	SelectRenderState(smfRenderStateSSP->CanEnable(this));
-	// NOTE: other places (e.g. DynWater) might want different constraints
-	visCam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
-
 
 	glDisable(GL_BLEND);
 	glEnable(GL_CULL_FACE);
