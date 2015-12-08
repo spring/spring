@@ -963,36 +963,57 @@ void CUnitDrawer::CleanupBasicS3OTexture0()
 
 
 
-/**
- * Draw one unit.
- *
- * Used for drawing the view of the controlled unit.
- *
- * Note: does all the GL state setting for that one unit, so you might want
- * something else for drawing many units.
- */
-void CUnitDrawer::DrawIndividual(CUnit* unit)
+
+bool CUnitDrawer::DrawIndividualPreCommon(const CUnit* unit)
 {
-	const bool origDebug = globalRendering->drawdebug;
+	const bool origDrawDebug = globalRendering->drawdebug;
 	globalRendering->drawdebug = false;
 
-	if (!LuaObjectDrawer::DrawSingleObject(unit, LUAOBJ_UNIT)) {
-		SetupForUnitDrawing(false);
-		opaqueModelRenderers[MDL_TYPE(unit)]->PushRenderState();
+	// set the full default state
+	SetupForUnitDrawing(false);
+	opaqueModelRenderers[MDL_TYPE(unit)]->PushRenderState();
 
-		if (MDL_TYPE(unit) != MODELTYPE_3DO) {
-			texturehandlerS3O->SetS3oTexture(TEX_TYPE(unit));
-		}
-
-		SetTeamColour(unit->team);
-		DrawUnit(unit, 0, 0, false, true);
-
-		opaqueModelRenderers[MDL_TYPE(unit)]->PopRenderState();
-		CleanUpUnitDrawing(false);
+	if (MDL_TYPE(unit) != MODELTYPE_3DO) {
+		texturehandlerS3O->SetS3oTexture(TEX_TYPE(unit));
 	}
 
-	globalRendering->drawdebug = origDebug;
+	SetTeamColour(unit->team);
+
+	return origDrawDebug;
 }
+
+void CUnitDrawer::DrawIndividualPostCommon(const CUnit* unit, bool origDrawDebug)
+{
+	opaqueModelRenderers[MDL_TYPE(unit)]->PopRenderState();
+	CleanUpUnitDrawing(false);
+
+	globalRendering->drawdebug = origDrawDebug;
+}
+
+
+void CUnitDrawer::DrawIndividual(const CUnit* unit, bool noLuaCall)
+{
+	const bool origDrawDebug = DrawIndividualPreCommon(unit);
+
+	if (!LuaObjectDrawer::DrawSingleObject(unit, LUAOBJ_UNIT /*, noLuaCall*/)) {
+		DrawUnit(unit, 0, 0, false, noLuaCall);
+	}
+
+	DrawIndividualPostCommon(unit, origDrawDebug);
+}
+
+void CUnitDrawer::DrawIndividualNoTrans(const CUnit* unit, bool noLuaCall)
+{
+	const bool origDrawDebug = DrawIndividualPreCommon(unit);
+
+	if (!LuaObjectDrawer::DrawSingleObjectNoTrans(unit, LUAOBJ_UNIT /*, noLuaCall*/)) {
+		DrawUnitModel(unit, noLuaCall);
+	}
+
+	DrawIndividualPostCommon(unit, origDrawDebug);
+}
+
+
 
 
 /**
@@ -1109,11 +1130,12 @@ void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
 
 
 
-void CUnitDrawer::DrawUnitBeingBuilt(const CUnit* unit)
+
+void CUnitDrawer::DrawUnitModelBeingBuilt(const CUnit* unit, bool noLuaCall)
 {
 	if (shadowHandler->inShadowPass) {
 		if (unit->buildProgress > (2.0f / 3.0f)) {
-			DrawUnitModel(unit);
+			DrawUnitModel(unit, noLuaCall);
 		}
 		return;
 	}
@@ -1152,7 +1174,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(const CUnit* unit)
 
 	if (!globalRendering->atiHacks) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		DrawUnitModel(unit);
+		DrawUnitModel(unit, noLuaCall);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	} else {
 		// some ATi mobility cards/drivers dont like clipping wireframes...
@@ -1160,7 +1182,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(const CUnit* unit)
 		glDisable(GL_CLIP_PLANE1);
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		DrawUnitModel(unit);
+		DrawUnitModel(unit, noLuaCall);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 		glEnable(GL_CLIP_PLANE0);
@@ -1175,7 +1197,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(const CUnit* unit)
 		glClipPlane(GL_CLIP_PLANE0, plane0);
 		glClipPlane(GL_CLIP_PLANE1, plane1);
 
-		DrawUnitModel(unit);
+		DrawUnitModel(unit, noLuaCall);
 	}
 
 	glDisable(GL_CLIP_PLANE1);
@@ -1190,7 +1212,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(const CUnit* unit)
 
 			glPolygonOffset(1.0f, 1.0f);
 			glEnable(GL_POLYGON_OFFSET_FILL);
-				DrawUnitModel(unit);
+				DrawUnitModel(unit, noLuaCall);
 			glDisable(GL_POLYGON_OFFSET_FILL);
 		} else {
 			const double plane0[4] = {0, -1, 0 , start + height * (unit->buildProgress * 3 - 2)};
@@ -1198,7 +1220,7 @@ void CUnitDrawer::DrawUnitBeingBuilt(const CUnit* unit)
 
 			glPolygonOffset(1.0f, 1.0f);
 			glEnable(GL_POLYGON_OFFSET_FILL);
-				DrawUnitModel(unit);
+				DrawUnitModel(unit, noLuaCall);
 			glDisable(GL_POLYGON_OFFSET_FILL);
 		}
 	}
@@ -1210,18 +1232,20 @@ void CUnitDrawer::DrawUnitBeingBuilt(const CUnit* unit)
 
 
 
-void CUnitDrawer::DrawUnitModel(const CUnit* unit, bool rawCall) {
-	if (!rawCall && unit->luaDraw && eventHandler.DrawUnit(unit))
+void CUnitDrawer::DrawUnitModel(const CUnit* unit, bool noLuaCall) {
+	if (!noLuaCall && unit->luaDraw && eventHandler.DrawUnit(unit))
 		return;
 
 	unit->localModel.Draw();
 }
 
-void CUnitDrawer::DrawUnit(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool rawCall)
-{
-	glPushMatrix();
-	glMultMatrixf(unit->GetTransformMatrix());
-
+void CUnitDrawer::DrawUnitNoTrans(
+	const CUnit* unit,
+	unsigned int preList,
+	unsigned int postList,
+	bool lodCall,
+	bool noLuaCall
+) {
 	if (preList != 0) {
 		glCallList(preList);
 	}
@@ -1237,14 +1261,22 @@ void CUnitDrawer::DrawUnit(const CUnit* unit, unsigned int preList, unsigned int
 	// NOTE: "raw" calls will no longer skip DrawUnitBeingBuilt
 	//
 	if (lodCall || !unit->beingBuilt || !unit->unitDef->showNanoFrame) {
-		DrawUnitModel(unit, rawCall);
+		DrawUnitModel(unit, noLuaCall);
 	} else {
-		DrawUnitBeingBuilt(unit);
+		DrawUnitModelBeingBuilt(unit, noLuaCall);
 	}
 
 	if (postList != 0) {
 		glCallList(postList);
 	}
+}
+
+void CUnitDrawer::DrawUnit(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall)
+{
+	glPushMatrix();
+	glMultMatrixf(unit->GetTransformMatrix());
+
+	DrawUnitNoTrans(unit, preList, postList, lodCall, noLuaCall);
 
 	glPopMatrix();
 }

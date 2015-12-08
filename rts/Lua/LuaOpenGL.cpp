@@ -1361,16 +1361,21 @@ static void UnitDrawPostCommon(CUnit* unit, bool applyTransform, bool noLuaCall,
 		// "scoped" draw; this prevents any Lua-assigned
 		// material(s) from being used by the calls below
 		lmd->PushLODCount(0);
-	}
 
-	if (applyTransform) {
-		unitDrawer->DrawUnit(unit, 0, 0, false, noLuaCall);
-	} else {
-		unitDrawer->DrawUnitModel(unit, noLuaCall);
-	}
+		if (applyTransform) {
+			unitDrawer->DrawUnit(unit, 0, 0, false, noLuaCall);
+		} else {
+			unitDrawer->DrawUnitModel(unit, noLuaCall);
+		}
 
-	if (!useLuaMat) {
 		lmd->PopLODCount();
+	} else {
+		// draw with full Lua or default material state
+		if (applyTransform) {
+			unitDrawer->DrawIndividual(unit, noLuaCall);
+		} else {
+			unitDrawer->DrawIndividualNoTrans(unit, noLuaCall);
+		}
 	}
 
 	glPopAttrib();
@@ -1383,7 +1388,7 @@ int LuaOpenGL::UnitCommon(lua_State* L, bool applyTransform)
 
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 
-	if (unit == NULL)
+	if (unit == nullptr)
 		return 0;
 
 	const bool noLuaCall = luaL_optboolean(L, 2, false);

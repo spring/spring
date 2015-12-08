@@ -22,8 +22,18 @@ class LuaMatBin;
 class LuaObjectDrawer {
 public:
 	static bool InDrawPass() { return inDrawPass; }
-	static bool DrawSingleObject(CSolidObject* obj, LuaObjType objType);
 	static void DrawDeferredPass(const CSolidObject* excludeObj, LuaObjType objType);
+
+	static void DrawObject(
+		const CSolidObject* obj,
+		LuaObjType objType,
+		unsigned int preList,
+		unsigned int postList,
+		bool applyTrans,
+		bool noLuaCall
+	);
+	static bool DrawSingleObject(const CSolidObject* obj, LuaObjType objType);
+	static bool DrawSingleObjectNoTrans(const CSolidObject* obj, LuaObjType objType);
 
 	static void Update(bool init);
 

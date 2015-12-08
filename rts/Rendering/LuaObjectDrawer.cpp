@@ -40,6 +40,10 @@ float LuaObjectDrawer::LODScaleRefraction[LUAOBJ_LAST];
 
 // these should remain valid on reload
 static std::function<void(CEventHandler*)> eventFuncs[LUAOBJ_LAST] = {nullptr, nullptr};
+// transform and no-transform variants
+static std::function<void(CUnitDrawer*, const CUnit*, unsigned int, unsigned int, bool, bool)> unitDrawFuncs[2] = {nullptr, nullptr};
+static std::function<void(CFeatureDrawer*, const CFeature*, unsigned int, unsigned int, bool, bool)> featureDrawFuncs[2] = {nullptr, nullptr};
+
 static GL::GeometryBuffer* geomBuffer = nullptr;
 
 static bool notifyEventFlags[LUAOBJ_LAST] = {false, false};
@@ -127,6 +131,12 @@ void LuaObjectDrawer::Update(bool init)
 	if (init) {
 		eventFuncs[LUAOBJ_UNIT   ] = &CEventHandler::DrawUnitsPostDeferred;
 		eventFuncs[LUAOBJ_FEATURE] = &CEventHandler::DrawFeaturesPostDeferred;
+
+		unitDrawFuncs[0] = &CUnitDrawer::DrawUnitNoTrans;
+		unitDrawFuncs[1] = &CUnitDrawer::DrawUnit;
+
+		featureDrawFuncs[0] = &CFeatureDrawer::DrawFeatureNoTrans;
+		featureDrawFuncs[1] = &CFeatureDrawer::DrawFeature;
 
 		drawDeferredAllowed = configHandler->GetBool("AllowDeferredModelRendering");
 		bufferClearAllowed = configHandler->GetBool("AllowDeferredModelBufferClear");
@@ -245,27 +255,38 @@ const LuaMaterial* LuaObjectDrawer::DrawMaterialBin(
 
 		lodMat->uniforms.Execute(obj);
 
-		switch (objType) {
-			case LUAOBJ_UNIT: {
-				// note: only makes sense to set team-color if the
-				// material has a standard (engine) shader attached
-				// (check if *Shader.type == LUASHADER_{3DO,S3O})
-				//
-				// must use static_cast here because of GetTransformMatrix (!)
-				unitDrawer->SetTeamColour(obj->team);
-				unitDrawer->DrawUnit(static_cast<const CUnit*>(obj), lodMat->preDisplayList, lodMat->postDisplayList, true, false);
-			} break;
-			case LUAOBJ_FEATURE: {
-				// also sets team-color (needs a specific alpha-value)
-				featureDrawer->DrawFeature(static_cast<const CFeature*>(obj), lodMat->preDisplayList, lodMat->postDisplayList, true, false);
-			} break;
-			default: {
-				assert(false);
-			} break;
-		}
+		DrawObject(obj, objType, lodMat->preDisplayList, lodMat->postDisplayList, true, false);
 	}
 
 	return currBin;
+}
+
+void LuaObjectDrawer::DrawObject(
+	const CSolidObject* obj,
+	LuaObjType objType,
+	unsigned int preList,
+	unsigned int postList,
+	bool applyTrans,
+	bool noLuaCall
+) {
+	switch (objType) {
+		case LUAOBJ_UNIT: {
+			// note: only makes sense to set team-color if the
+			// material has a standard (engine) shader attached
+			// (check if *Shader.type == LUASHADER_{3DO,S3O})
+			//
+			// must use static_cast here because of GetTransformMatrix (!)
+			unitDrawer->SetTeamColour(obj->team);
+			unitDrawFuncs[applyTrans](unitDrawer, static_cast<const CUnit*>(obj), preList, postList, true, noLuaCall);
+		} break;
+		case LUAOBJ_FEATURE: {
+			// also sets team-color (needs a specific alpha-value)
+			featureDrawFuncs[applyTrans](featureDrawer, static_cast<const CFeature*>(obj), preList, postList, true, noLuaCall);
+		} break;
+		default: {
+			assert(false);
+		} break;
+	}
 }
 
 
@@ -322,15 +343,16 @@ void LuaObjectDrawer::DrawDeferredPass(const CSolidObject* excludeObj, LuaObjTyp
 
 
 
-bool LuaObjectDrawer::DrawSingleObject(CSolidObject* obj, LuaObjType objType)
+
+static bool DrawSingleObjectCommon(const CSolidObject* obj, LuaObjType objType, bool applyTrans)
 {
-	LuaObjectMaterialData* matData = obj->GetLuaMaterialData();
-	LuaObjectLODMaterial* lodMat = nullptr;
+	const LuaObjectMaterialData* matData = obj->GetLuaMaterialData();
+	const LuaObjectLODMaterial* lodMat = nullptr;
 
 	if (!matData->Enabled())
 		return false;
 
-	if ((lodMat = matData->GetLuaLODMaterial(GetDrawPassOpaqueMat())) == nullptr)
+	if ((lodMat = matData->GetLuaLODMaterial(LuaObjectDrawer::GetDrawPassOpaqueMat())) == nullptr)
 		return false;
 	if (!lodMat->IsActive())
 		return false;
@@ -354,31 +376,34 @@ bool LuaObjectDrawer::DrawSingleObject(CSolidObject* obj, LuaObjType objType)
 	}
 
 	// use the normal scale for single-object drawing
-	LuaObjectMaterialData::SetGlobalLODFactor(objType, LODScale[objType] * camera->GetLPPScale());
+	LuaObjectMaterialData::SetGlobalLODFactor(objType, LuaObjectDrawer::GetLODScale(objType) * camera->GetLPPScale());
 
 	// get the ref-counted actual material
-	const LuaMaterial& mat = (LuaMaterial&) *lodMat->matref.GetBin();
+	const LuaMatBin* bin = lodMat->matref.GetBin();
+	const LuaMaterial* mat = bin;
 
-	// NOTE: doesn't make sense to supported deferred mode for this?
-	mat.Execute(LuaMaterial::defMat, false);
+	// NOTE: doesn't make sense to support deferred mode for this? (extra arg in gl.Unit, etc)
+	mat->Execute(LuaMaterial::defMat, false);
 	lodMat->uniforms.Execute(obj);
 
-	switch (objType) {
-		case LUAOBJ_UNIT: {
-			unitDrawer->SetTeamColour(obj->team);
-			unitDrawer->DrawUnit(static_cast<const CUnit*>(obj), lodMat->preDisplayList, lodMat->postDisplayList, true, true);
-		} break;
-		case LUAOBJ_FEATURE: {
-			featureDrawer->DrawFeature(static_cast<const CFeature*>(obj), lodMat->preDisplayList, lodMat->postDisplayList, true, true);
-		} break;
-		default: {
-			assert(false);
-		} break;
-	}
+	LuaObjectDrawer::DrawObject(obj, objType, lodMat->preDisplayList, lodMat->postDisplayList, applyTrans, true);
 
-	LuaMaterial::defMat.Execute(mat, false);
+	// switch back to default material
+	LuaMaterial::defMat.Execute(*mat, false);
 	return true;
 }
+
+
+bool LuaObjectDrawer::DrawSingleObject(const CSolidObject* obj, LuaObjType objType)
+{
+	return (DrawSingleObjectCommon(obj, objType, true));
+}
+
+bool LuaObjectDrawer::DrawSingleObjectNoTrans(const CSolidObject* obj, LuaObjType objType)
+{
+	return (DrawSingleObjectCommon(obj, objType, false));
+}
+
 
 
 

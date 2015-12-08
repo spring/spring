@@ -74,9 +74,11 @@ public:
 	void SetDrawDeferredPass(bool b) { drawDeferred = b; }
 
 	// note: make these static?
-	void DrawUnitModel(const CUnit* unit, bool rawCall = false);
-	void DrawUnitBeingBuilt(const CUnit* unit);
-	void DrawUnit(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool rawCall);
+	void DrawUnitModel(const CUnit* unit, bool noLuaCall);
+	void DrawUnitModelBeingBuilt(const CUnit* unit, bool noLuaCall);
+
+	void DrawUnitNoTrans(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
+	void DrawUnit(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
 
 	void SetTeamColour(int team, float alpha = 1.0f) const;
 	void SetupForUnitDrawing(bool deferredPass);
@@ -98,8 +100,11 @@ public:
 	/// Returns true if the given unit should be drawn as icon in the current frame.
 	bool DrawAsIcon(const CUnit* unit, const float sqUnitCamDist) const;
 
-	/** LuaOpenGL::Unit{Raw} **/
-	void DrawIndividual(CUnit* unit);
+	/// LuaOpenGL::Unit{Raw}: draw a single unit with full state setup
+	bool DrawIndividualPreCommon(const CUnit* unit);
+	void DrawIndividualPostCommon(const CUnit* unit, bool dbg);
+	void DrawIndividual(const CUnit* unit, bool noLuaCall);
+	void DrawIndividualNoTrans(const CUnit* unit, bool noLuaCall);
 
 	void DrawUnitMiniMapIcons() const;
 

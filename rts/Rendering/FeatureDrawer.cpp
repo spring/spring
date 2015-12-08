@@ -314,18 +314,20 @@ bool CFeatureDrawer::CanDrawFeature(const CFeature* feature) const
 
 
 
-inline void CFeatureDrawer::DrawFeatureModel(const CFeature* feature, bool rawCall) {
-	if (!rawCall && feature->luaDraw && eventHandler.DrawFeature(feature))
+inline void CFeatureDrawer::DrawFeatureModel(const CFeature* feature, bool noLuaCall) {
+	if (!noLuaCall && feature->luaDraw && eventHandler.DrawFeature(feature))
 		return;
 
 	feature->localModel.Draw();
 }
 
-void CFeatureDrawer::DrawFeature(const CFeature* feature, unsigned int preList, unsigned int postList, bool /*lodCall*/, bool rawCall)
-{
-	glPushMatrix();
-	glMultMatrixf(feature->GetTransformMatrixRef());
-
+void CFeatureDrawer::DrawFeatureNoTrans(
+	const CFeature* feature,
+	unsigned int preList,
+	unsigned int postList,
+	bool /*lodCall*/,
+	bool noLuaCall
+) {
 	// TODO:
 	//   move this out of UnitDrawer(State), maybe to ModelDrawer
 	//   in general FeatureDrawer should make no UnitDrawer calls
@@ -335,11 +337,19 @@ void CFeatureDrawer::DrawFeature(const CFeature* feature, unsigned int preList, 
 		glCallList(preList);
 	}
 
-	DrawFeatureModel(feature, rawCall);
+	DrawFeatureModel(feature, noLuaCall);
 
 	if (postList != 0) {
 		glCallList(postList);
 	}
+}
+
+void CFeatureDrawer::DrawFeature(const CFeature* feature, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall)
+{
+	glPushMatrix();
+	glMultMatrixf(feature->GetTransformMatrixRef());
+
+	DrawFeatureNoTrans(feature, preList, postList, lodCall, noLuaCall);
 
 	glPopMatrix();
 }
