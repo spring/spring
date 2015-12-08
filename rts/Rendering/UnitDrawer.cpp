@@ -1007,7 +1007,7 @@ void CUnitDrawer::DrawIndividualNoTrans(const CUnit* unit, bool noLuaCall)
 	const bool origDrawDebug = DrawIndividualPreCommon(unit);
 
 	if (!LuaObjectDrawer::DrawSingleObjectNoTrans(unit, LUAOBJ_UNIT /*, noLuaCall*/)) {
-		DrawUnitModel(unit, noLuaCall);
+		DrawUnitNoTrans(unit, 0, 0, false, noLuaCall);
 	}
 
 	DrawIndividualPostCommon(unit, origDrawDebug);
