@@ -1305,33 +1305,29 @@ int LuaOpenGL::GetTextHeight(lua_State* L)
 static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 {
 	if (!lua_isnumber(L, index)) {
-		if (caller != NULL) {
+		if (caller != nullptr) {
 			luaL_error(L, "Bad unitID parameter in %s()\n", caller);
-		} else {
-			return NULL;
 		}
-	}
-	const int unitID = lua_toint(L, index);
-	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits())) {
-		luaL_error(L, "%s(): Bad unitID: %d\n", caller, unitID);
-	}
-	CUnit* unit = unitHandler->units[unitID];
-	if (unit == NULL) {
-		return NULL;
+
+		return nullptr;
 	}
 
+	CUnit* unit = unitHandler->GetUnit(lua_toint(L, index));
+
+	if (unit == nullptr)
+		return nullptr;
+
 	const int readAllyTeam = CLuaHandle::GetHandleReadAllyTeam(L);
-	if (readAllyTeam < 0) {
-		if (readAllyTeam == CEventClient::NoAccessTeam) {
-			return NULL;
-		}
-	} else {
-		if (!teamHandler->Ally(readAllyTeam, unit->allyteam) &&
-		    !(unit->losStatus[readAllyTeam] & LOS_INLOS)) {
-			return NULL;
-		}
-	}
-	return unit;
+
+	if (readAllyTeam < 0)
+		return ((readAllyTeam == CEventClient::NoAccessTeam)? nullptr: unit);
+
+	if (teamHandler->Ally(readAllyTeam, unit->allyteam))
+		return unit;
+	if ((unit->losStatus[readAllyTeam] & LOS_INLOS) != 0)
+		return unit;
+
+	return nullptr;
 }
 
 
