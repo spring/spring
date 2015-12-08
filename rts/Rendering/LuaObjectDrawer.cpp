@@ -41,7 +41,7 @@ float LuaObjectDrawer::LODScaleRefraction[LUAOBJ_LAST];
 // these should remain valid on reload
 static std::function<void(CEventHandler*)> eventFuncs[LUAOBJ_LAST] = {nullptr, nullptr};
 // transform and no-transform variants
-static std::function<void(CUnitDrawer*, const CUnit*, unsigned int, unsigned int, bool, bool)> unitDrawFuncs[2] = {nullptr, nullptr};
+static std::function<void(CUnitDrawer*,    const CUnit*,    unsigned int, unsigned int, bool, bool)>    unitDrawFuncs[2] = {nullptr, nullptr};
 static std::function<void(CFeatureDrawer*, const CFeature*, unsigned int, unsigned int, bool, bool)> featureDrawFuncs[2] = {nullptr, nullptr};
 
 static GL::GeometryBuffer* geomBuffer = nullptr;
@@ -132,11 +132,11 @@ void LuaObjectDrawer::Update(bool init)
 		eventFuncs[LUAOBJ_UNIT   ] = &CEventHandler::DrawUnitsPostDeferred;
 		eventFuncs[LUAOBJ_FEATURE] = &CEventHandler::DrawFeaturesPostDeferred;
 
-		unitDrawFuncs[0] = &CUnitDrawer::DrawUnitNoTrans;
-		unitDrawFuncs[1] = &CUnitDrawer::DrawUnit;
+		unitDrawFuncs[false] = &CUnitDrawer::DrawUnitNoTrans;
+		unitDrawFuncs[ true] = &CUnitDrawer::DrawUnit;
 
-		featureDrawFuncs[0] = &CFeatureDrawer::DrawFeatureNoTrans;
-		featureDrawFuncs[1] = &CFeatureDrawer::DrawFeature;
+		featureDrawFuncs[false] = &CFeatureDrawer::DrawFeatureNoTrans;
+		featureDrawFuncs[ true] = &CFeatureDrawer::DrawFeature;
 
 		drawDeferredAllowed = configHandler->GetBool("AllowDeferredModelRendering");
 		bufferClearAllowed = configHandler->GetBool("AllowDeferredModelBufferClear");
