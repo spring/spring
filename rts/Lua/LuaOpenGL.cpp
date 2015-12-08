@@ -1355,27 +1355,24 @@ static bool UnitDrawPreCommon(lua_State* L, CUnit* unit)
 static void UnitDrawPostCommon(CUnit* unit, bool applyTransform, bool noLuaCall, bool useLuaMat) {
 	glPushAttrib(GL_ENABLE_BIT);
 
-	LuaObjectMaterialData* lmd = unit->GetLuaMaterialData();
+	const std::function<void(CUnitDrawer*, const CUnit*, unsigned int, unsigned int, bool, bool)> rawDrawFuncs[2] = {
+		&CUnitDrawer::DrawUnitNoTrans,
+		&CUnitDrawer::DrawUnit,
+	};
+	const std::function<void(CUnitDrawer*, const CUnit*, bool)> matDrawFuncs[2] = {
+		&CUnitDrawer::DrawIndividualNoTrans,
+		&CUnitDrawer::DrawIndividual,
+	};
 
 	if (!useLuaMat) {
 		// "scoped" draw; this prevents any Lua-assigned
-		// material(s) from being used by the calls below
-		lmd->PushLODCount(0);
-
-		if (applyTransform) {
-			unitDrawer->DrawUnit(unit, 0, 0, false, noLuaCall);
-		} else {
-			unitDrawer->DrawUnitModel(unit, noLuaCall);
-		}
-
-		lmd->PopLODCount();
+		// material(s) from being used by the call below
+		(unit->GetLuaMaterialData())->PushLODCount(0);
+		rawDrawFuncs[applyTransform](unitDrawer, unit, 0, 0, false, noLuaCall);
+		(unit->GetLuaMaterialData())->PopLODCount();
 	} else {
 		// draw with full Lua or default material state
-		if (applyTransform) {
-			unitDrawer->DrawIndividual(unit, noLuaCall);
-		} else {
-			unitDrawer->DrawIndividualNoTrans(unit, noLuaCall);
-		}
+		matDrawFuncs[applyTransform](unitDrawer, unit, noLuaCall);
 	}
 
 	glPopAttrib();
