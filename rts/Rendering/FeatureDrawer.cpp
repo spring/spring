@@ -357,6 +357,58 @@ void CFeatureDrawer::DrawFeature(const CFeature* feature, unsigned int preList, 
 
 
 
+bool CFeatureDrawer::DrawIndividualPreCommon(const CFeature* feature)
+{
+	const bool origDrawDebug = globalRendering->drawdebug;
+	globalRendering->drawdebug = false;
+
+	// set the full default state
+	unitDrawer->SetupForUnitDrawing(false);
+	modelRenderers[0].rendererTypes[MDL_TYPE(feature)]->PushRenderState();
+
+	if (MDL_TYPE(feature) != MODELTYPE_3DO) {
+		texturehandlerS3O->SetS3oTexture(TEX_TYPE(feature));
+	}
+
+	unitDrawer->SetTeamColour(feature->team, feature->drawAlpha);
+
+	return origDrawDebug;
+}
+
+void CFeatureDrawer::DrawIndividualPostCommon(const CFeature* feature, bool origDrawDebug)
+{
+	modelRenderers[0].rendererTypes[MDL_TYPE(feature)]->PopRenderState();
+	unitDrawer->CleanUpUnitDrawing(false);
+
+	globalRendering->drawdebug = origDrawDebug;
+}
+
+
+void CFeatureDrawer::DrawIndividual(const CFeature* feature, bool noLuaCall)
+{
+	const bool origDrawDebug = DrawIndividualPreCommon(feature);
+
+	if (!LuaObjectDrawer::DrawSingleObject(feature, LUAOBJ_FEATURE /*, noLuaCall*/)) {
+		DrawFeature(feature, 0, 0, false, noLuaCall);
+	}
+
+	DrawIndividualPostCommon(feature, origDrawDebug);
+}
+
+void CFeatureDrawer::DrawIndividualNoTrans(const CFeature* feature, bool noLuaCall)
+{
+	const bool origDrawDebug = DrawIndividualPreCommon(feature);
+
+	if (!LuaObjectDrawer::DrawSingleObjectNoTrans(feature, LUAOBJ_FEATURE /*, noLuaCall*/)) {
+		DrawFeatureNoTrans(feature, 0, 0, false, noLuaCall);
+	}
+
+	DrawIndividualPostCommon(feature, origDrawDebug);
+}
+
+
+
+
 void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 {
 	const bool oldAdvShading = unitDrawer->UseAdvShading();

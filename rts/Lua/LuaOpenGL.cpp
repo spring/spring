@@ -1518,8 +1518,8 @@ int LuaOpenGL::FeatureCommon(lua_State* L, bool applyTransform)
 		&CFeatureDrawer::DrawFeature,
 	};
 	const std::function<void(CFeatureDrawer*, const CFeature*, bool)> matDrawFuncs[2] = {
-		nullptr, // TODO: &CFeatureDrawer::DrawIndividualNoTrans,
-		nullptr, // TODO: &CFeatureDrawer::DrawIndividual,
+		&CFeatureDrawer::DrawIndividualNoTrans,
+		 &CFeatureDrawer::DrawIndividual,
 	};
 
 	if (!useLuaMat) {
@@ -1530,7 +1530,7 @@ int LuaOpenGL::FeatureCommon(lua_State* L, bool applyTransform)
 		(feature->GetLuaMaterialData())->PopLODCount();
 	} else {
 		// draw with full Lua or default material state
-		// matDrawFuncs[applyTransform](featureDrawer, feature, noLuaCall);
+		matDrawFuncs[applyTransform](featureDrawer, feature, noLuaCall);
 	}
 
 	glPopAttrib();

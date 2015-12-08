@@ -352,6 +352,7 @@ static bool DrawSingleObjectCommon(const CSolidObject* obj, LuaObjType objType, 
 	if (!matData->Enabled())
 		return false;
 
+	// note: always uses an opaque material (for now)
 	if ((lodMat = matData->GetLuaLODMaterial(LuaObjectDrawer::GetDrawPassOpaqueMat())) == nullptr)
 		return false;
 	if (!lodMat->IsActive())
