@@ -1519,7 +1519,7 @@ int LuaOpenGL::FeatureCommon(lua_State* L, bool applyTransform)
 	};
 	const std::function<void(CFeatureDrawer*, const CFeature*, bool)> matDrawFuncs[2] = {
 		&CFeatureDrawer::DrawIndividualNoTrans,
-		 &CFeatureDrawer::DrawIndividual,
+		&CFeatureDrawer::DrawIndividual,
 	};
 
 	if (!useLuaMat) {
