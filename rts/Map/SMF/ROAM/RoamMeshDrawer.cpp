@@ -286,9 +286,10 @@ void CRoamMeshDrawer::DrawInMiniMap()
 		glScalef(1.0f / mapDims.mapx, -1.0f / mapDims.mapy, 1.0f);
 
 	glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
-	for (std::vector<Patch>::iterator it = roamPatches.begin(); it != roamPatches.end(); ++it) {
-		if (!it->IsVisible()) {
-			glRectf(it->m_WorldX, it->m_WorldY, it->m_WorldX + PATCH_SIZE, it->m_WorldY + PATCH_SIZE);
+
+	for (const Patch& p: roamPatches) {
+		if (!p.IsVisible()) {
+			glRectf(p.coors.x, p.coors.y, p.coors.x + PATCH_SIZE, p.coors.y + PATCH_SIZE);
 		}
 	}
 
@@ -353,15 +354,15 @@ bool CRoamMeshDrawer::Tessellate(const float3& campos, int viewradius)
 	bool forceTess = false;
 
 	for (int idx = 0; idx < 9; ++idx) {
-		for_mt(0, roamPatches.size(), [&](const int i){
-			Patch* it = &roamPatches[i];
+		for_mt(0, roamPatches.size(), [&](const int i) {
+			Patch* p = &roamPatches[i];
 
-			const int X = it->m_WorldX;
-			const int Z = it->m_WorldY;
+			const int X = p->coors.x;
+			const int Z = p->coors.y;
 			const int subindex = (X % 3) + (Z % 3) * 3;
 
-			if ((subindex == idx) && it->IsVisible()) {
-				if (!it->Tessellate(campos, viewradius))
+			if ((subindex == idx) && p->IsVisible()) {
+				if (!p->Tessellate(campos, viewradius))
 					forceTess = true;
 			}
 		});
@@ -402,10 +403,10 @@ void CRoamMeshDrawer::UnsyncedHeightMapUpdate(const SRectangle& rect)
 
 			// clamp the update rect to the patch constraints
 			SRectangle prect(
-				std::max(rect.x1 - margin - p.m_WorldX, 0),
-				std::max(rect.z1 - margin - p.m_WorldY, 0),
-				std::min(rect.x2 + margin - p.m_WorldX, PATCH_SIZE),
-				std::min(rect.z2 + margin - p.m_WorldY, PATCH_SIZE)
+				std::max(rect.x1 - margin - p.coors.x, 0),
+				std::max(rect.z1 - margin - p.coors.y, 0),
+				std::min(rect.x2 + margin - p.coors.x, PATCH_SIZE),
+				std::min(rect.z2 + margin - p.coors.y, PATCH_SIZE)
 			);
 
 			p.UpdateHeightMap(prect);

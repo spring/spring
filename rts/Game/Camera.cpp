@@ -113,9 +113,13 @@ void CCamera::UpdateFrustum()
 		} break;
 	}
 
-	if (camType == CAMTYPE_PLAYER || camType == CAMTYPE_SHADOW) {
+	if (camType != CAMTYPE_VISCUL) {
 		// vis-culling is always performed from player's (or light's)
-		// POV; copy over the frustum planes we just calculated above
+		// POV but also happens during e.g. cubemap generation; copy
+		// over the frustum planes we just calculated above such that
+		// GetFrustumSides can be called by all parties interested in
+		// VC
+		//
 		// note that this is the only place where VISCUL is updated!
 		camTypes[CAMTYPE_VISCUL]->CopyState(camTypes[camType]);
 	}

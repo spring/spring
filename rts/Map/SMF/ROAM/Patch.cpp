@@ -16,13 +16,13 @@
 #include "Game/Camera.h"
 #include "Map/ReadMap.h"
 #include "Map/SMF/SMFGroundDrawer.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Sim/Misc/GlobalConstants.h"
 #include "System/Log/ILog.h"
 #include "System/ThreadPool.h"
 #include "System/TimeProfiler.h"
-#include <cfloat>
-#include <limits.h>
+
+#include <climits>
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
@@ -91,6 +91,7 @@ void CTriNodePool::Reset()
 	// this saves use calling TriTreeNode's ctor which is slower than a memset
 	if (m_NextTriNode > 0)
 		memset(&pool[0], 0, sizeof(TriTreeNode) * m_NextTriNode);
+
 	m_NextTriNode = 0;
 }
 
@@ -99,11 +100,9 @@ TriTreeNode* CTriNodePool::AllocateTri()
 {
 	// IF we've run out of TriTreeNodes, just return NULL (this is handled gracefully)
 	if (RunOutOfNodes())
-		return NULL;
+		return nullptr;
 
-	TriTreeNode* pTri = &pool[m_NextTriNode++];
-	//*pTri = TriTreeNode();
-	return pTri;
+	return &pool[m_NextTriNode++];
 }
 
 
@@ -116,41 +115,37 @@ TriTreeNode* CTriNodePool::AllocateTri()
 // C'tor etc.
 //
 Patch::Patch()
-	: smfGroundDrawer(NULL)
-	, m_HeightMap(NULL)
-	, heightData(NULL)
-	, m_CurrentVariance(NULL)
-	, m_isVisible(false)
-	, m_isDirty(true)
-	, varianceMaxLimit(FLT_MAX)
-	, camDistLODFactor(1.f)
-	, m_WorldX(-1)
-	, m_WorldY(-1)
-	//, minHeight(FLT_MAX)
-	//, maxHeight(FLT_MIN)
+	: smfGroundDrawer(nullptr)
+	, heightMap(nullptr)
+	, currentVariance(nullptr)
+	, isDirty(true)
+	, varianceMaxLimit(std::numeric_limits<float>::max())
+	, camDistLODFactor(1.0f)
+	, coors(-1, -1)
+	, lastDrawFrame(0)
 	, vboVerticesUploaded(false)
 	, triList(0)
 	, vertexBuffer(0)
 	, vertexIndexBuffer(0)
 {
-	m_VarianceLeft.resize(1 << VARIANCE_DEPTH);
-	m_VarianceRight.resize(1 << VARIANCE_DEPTH);
+	varianceLeft.resize(1 << VARIANCE_DEPTH);
+	varianceRight.resize(1 << VARIANCE_DEPTH);
 }
 
 
-void Patch::Init(CSMFGroundDrawer* _drawer, int worldX, int worldZ)
+void Patch::Init(CSMFGroundDrawer* _drawer, int patchX, int patchZ)
 {
-	smfGroundDrawer = _drawer;
-	heightData = readMap->GetCornerHeightMapUnsynced();
-	m_WorldX = worldX;
-	m_WorldY = worldZ;
+	coors.x = patchX;
+	coors.y = patchZ;
 
-	// Attach the two m_Base triangles together
-	m_BaseLeft.BaseNeighbor  = &m_BaseRight;
-	m_BaseRight.BaseNeighbor = &m_BaseLeft;
+	smfGroundDrawer = _drawer;
 
 	// Store pointer to first byte of the height data for this patch.
-	m_HeightMap = &heightData[worldZ * mapDims.mapxp1 + worldX];
+	heightMap = &(readMap->GetCornerHeightMapUnsynced())[coors.y * mapDims.mapxp1 + coors.x];
+
+	// Attach the two m_Base triangles together
+	baseLeft.BaseNeighbor  = &baseRight;
+	baseRight.BaseNeighbor = &baseLeft;
 
 	// Create used OpenGL objects
 	triList = glGenLists(1);
@@ -178,12 +173,12 @@ Patch::~Patch()
 void Patch::Reset()
 {
 	// Reset the important relationships
-	m_BaseLeft  = TriTreeNode();
-	m_BaseRight = TriTreeNode();
+	baseLeft  = TriTreeNode();
+	baseRight = TriTreeNode();
 
 	// Attach the two m_Base triangles together
-	m_BaseLeft.BaseNeighbor  = &m_BaseRight;
-	m_BaseRight.BaseNeighbor = &m_BaseLeft;
+	baseLeft.BaseNeighbor  = &baseRight;
+	baseRight.BaseNeighbor = &baseLeft;
 }
 
 
@@ -193,8 +188,9 @@ void Patch::UpdateHeightMap(const SRectangle& rect)
 		// Initialize
 		vertices.resize(3 * (PATCH_SIZE + 1) * (PATCH_SIZE + 1));
 		int index = 0;
-		for (int z = m_WorldY; z <= (m_WorldY + PATCH_SIZE); z++) {
-			for (int x = m_WorldX; x <= (m_WorldX + PATCH_SIZE); x++) {
+
+		for (int z = coors.y; z <= (coors.y + PATCH_SIZE); z++) {
+			for (int x = coors.x; x <= (coors.x + PATCH_SIZE); x++) {
 				vertices[index++] = x * SQUARE_SIZE;
 				vertices[index++] = 0.0f;
 				vertices[index++] = z * SQUARE_SIZE;
@@ -206,17 +202,15 @@ void Patch::UpdateHeightMap(const SRectangle& rect)
 
 	for (int z = rect.z1; z <= rect.z2; z++) {
 		for (int x = rect.x1; x <= rect.x2; x++) {
-			const float& h = hMap[(z + m_WorldY) * mapDims.mapxp1 + (x + m_WorldX)];
+			const float h = hMap[(z + coors.y) * mapDims.mapxp1 + (x + coors.x)];
 			const int vindex = (z * (PATCH_SIZE + 1) + x) * 3;
-			vertices[vindex + 1] = h; // only update Y coord
 
-			//if (h < minHeight) minHeight = h;
-			//if (h > maxHeight) maxHeight = h;
+			vertices[vindex + 1] = h; // only update Y coord
 		}
 	}
 
 	VBOUploadVertices();
-	m_isDirty = true;
+	isDirty = true;
 }
 
 
@@ -266,8 +260,8 @@ void Patch::Split(TriTreeNode* tri)
 	if (!tri->IsBranch()) {
 		// make sure both nodes are NULL if just the right one failed
 		// special handling the cause that only one of them is NULL wouldn't make sense (only less performance)
-		tri->LeftChild  = NULL;
-		tri->RightChild = NULL;
+		tri->LeftChild  = nullptr;
+		tri->RightChild = nullptr;
 		return;
 	}
 
@@ -279,7 +273,7 @@ void Patch::Split(TriTreeNode* tri)
 	tri->RightChild->RightNeighbor = tri->LeftChild;
 
 	// Link our Left Neighbor to the new children
-	if (tri->LeftNeighbor != NULL) {
+	if (tri->LeftNeighbor != nullptr) {
 		if (tri->LeftNeighbor->BaseNeighbor == tri)
 			tri->LeftNeighbor->BaseNeighbor = tri->LeftChild;
 		else if (tri->LeftNeighbor->LeftNeighbor == tri)
@@ -291,7 +285,7 @@ void Patch::Split(TriTreeNode* tri)
 	}
 
 	// Link our Right Neighbor to the new children
-	if (tri->RightNeighbor != NULL) {
+	if (tri->RightNeighbor != nullptr) {
 		if (tri->RightNeighbor->BaseNeighbor == tri)
 			tri->RightNeighbor->BaseNeighbor = tri->RightChild;
 		else if (tri->RightNeighbor->RightNeighbor == tri)
@@ -303,7 +297,7 @@ void Patch::Split(TriTreeNode* tri)
 	}
 
 	// Link our Base Neighbor to the new children
-	if (tri->BaseNeighbor != NULL) {
+	if (tri->BaseNeighbor != nullptr) {
 		if (tri->BaseNeighbor->IsBranch()) {
 			tri->BaseNeighbor->LeftChild->RightNeighbor = tri->RightChild;
 			tri->BaseNeighbor->RightChild->LeftNeighbor = tri->LeftChild;
@@ -314,8 +308,8 @@ void Patch::Split(TriTreeNode* tri)
 		}
 	} else {
 		// An edge triangle, trivial case.
-		tri->LeftChild->RightNeighbor = NULL;
-		tri->RightChild->LeftNeighbor = NULL;
+		tri->LeftChild->RightNeighbor = nullptr;
+		tri->RightChild->LeftNeighbor = nullptr;
 	}
 }
 
@@ -335,7 +329,7 @@ void Patch::RecursTessellate(TriTreeNode* const tri, const int2 left, const int2
 	if (varianceSaved) {
 		// make max tessellation viewRadius dependent
 		// w/o this huge cliffs cause huge variances and so will always tessellate fully independent of camdist (-> huge/distfromcam ~= huge)
-		const float myVariance = std::min(m_CurrentVariance[node], varianceMaxLimit);
+		const float myVariance = std::min(currentVariance[node], varianceMaxLimit);
 
 		const int sizeX = std::max(left.x - right.x, right.x - left.x);
 		const int sizeY = std::max(left.y - right.y, right.y - left.y);
@@ -389,8 +383,8 @@ void Patch::RecursRender(TriTreeNode* const tri, const int2 left, const int2 rig
 void Patch::GenerateIndices()
 {
 	indices.clear();
-	RecursRender(&m_BaseLeft,  int2(0, PATCH_SIZE), int2(PATCH_SIZE, 0), int2(0, 0)                  );
-	RecursRender(&m_BaseRight, int2(PATCH_SIZE, 0), int2(0, PATCH_SIZE), int2(PATCH_SIZE, PATCH_SIZE));
+	RecursRender(&baseLeft,  int2(0, PATCH_SIZE), int2(PATCH_SIZE, 0), int2(0, 0)                  );
+	RecursRender(&baseRight, int2(PATCH_SIZE, 0), int2(0, PATCH_SIZE), int2(PATCH_SIZE, PATCH_SIZE));
 }
 
 
@@ -413,7 +407,7 @@ float Patch::RecursComputeVariance(const int leftX, const int leftY, const float
 	int centerY = (leftY + rightY) >> 1; // Compute Y coord...
 
 	// Get the height value at the middle of the Hypotenuse
-	float centerZ = m_HeightMap[(centerY * mapDims.mapxp1) + centerX];
+	float centerZ = heightMap[(centerY * mapDims.mapxp1) + centerX];
 
 	// Variance of this triangle is the actual height at it's hypotenuse midpoint minus the interpolated height.
 	// Use values passed on the stack instead of re-accessing the Height Field.
@@ -439,7 +433,7 @@ float Patch::RecursComputeVariance(const int leftX, const int leftY, const float
 
 	// Store the final variance for this node.
 	if (node < (1 << VARIANCE_DEPTH))
-		m_CurrentVariance[node] = myVariance;
+		currentVariance[node] = myVariance;
 
 	return myVariance;
 }
@@ -451,17 +445,19 @@ float Patch::RecursComputeVariance(const int leftX, const int leftY, const float
 void Patch::ComputeVariance()
 {
 	// Compute variance on each of the base triangles...
-	m_CurrentVariance = &m_VarianceLeft[0];
-	RecursComputeVariance(0, PATCH_SIZE, m_HeightMap[PATCH_SIZE * mapDims.mapxp1],
-			PATCH_SIZE, 0, m_HeightMap[PATCH_SIZE], 0, 0, m_HeightMap[0], 1);
+	currentVariance = &varianceLeft[0];
 
-	m_CurrentVariance = &m_VarianceRight[0];
-	RecursComputeVariance(PATCH_SIZE, 0, m_HeightMap[PATCH_SIZE], 0,
-			PATCH_SIZE, m_HeightMap[PATCH_SIZE * mapDims.mapxp1], PATCH_SIZE, PATCH_SIZE,
-			m_HeightMap[(PATCH_SIZE * mapDims.mapxp1) + PATCH_SIZE], 1);
+	RecursComputeVariance(0, PATCH_SIZE, heightMap[PATCH_SIZE * mapDims.mapxp1],
+			PATCH_SIZE, 0, heightMap[PATCH_SIZE], 0, 0, heightMap[0], 1);
+
+	currentVariance = &varianceRight[0];
+
+	RecursComputeVariance(PATCH_SIZE, 0, heightMap[PATCH_SIZE], 0,
+			PATCH_SIZE, heightMap[PATCH_SIZE * mapDims.mapxp1], PATCH_SIZE, PATCH_SIZE,
+			heightMap[(PATCH_SIZE * mapDims.mapxp1) + PATCH_SIZE], 1);
 
 	// Clear the dirty flag for this patch
-	m_isDirty = false;
+	isDirty = false;
 }
 
 
@@ -471,9 +467,9 @@ void Patch::ComputeVariance()
 bool Patch::Tessellate(const float3& campos, int groundDetail)
 {
 	// Set/Update LOD params
-	const float myx = (m_WorldX + PATCH_SIZE / 2) * SQUARE_SIZE;
+	const float myx = (coors.x + PATCH_SIZE / 2) * SQUARE_SIZE;
 	const float myy = (readMap->GetCurrMinHeight() + readMap->GetCurrMaxHeight()) * 0.5f;
-	const float myz = (m_WorldY + PATCH_SIZE / 2) * SQUARE_SIZE;
+	const float myz = (coors.y + PATCH_SIZE / 2) * SQUARE_SIZE;
 	const float3 myPos(myx,myy,myz);
 
 	camDistLODFactor  = myPos.distance(campos);
@@ -487,18 +483,20 @@ bool Patch::Tessellate(const float3& campos, int groundDetail)
 	varianceMaxLimit = groundDetail * 0.35f;
 
 	// Split each of the base triangles
-	m_CurrentVariance = &m_VarianceLeft[0];
-	RecursTessellate(&m_BaseLeft,
-		int2(m_WorldX,              m_WorldY + PATCH_SIZE),
-		int2(m_WorldX + PATCH_SIZE, m_WorldY),
-		int2(m_WorldX,              m_WorldY),
+	currentVariance = &varianceLeft[0];
+
+	RecursTessellate(&baseLeft,
+		int2(coors.x,              coors.y + PATCH_SIZE),
+		int2(coors.x + PATCH_SIZE, coors.y),
+		int2(coors.x,              coors.y),
 		1);
 
-	m_CurrentVariance = &m_VarianceRight[0];
-	RecursTessellate(&m_BaseRight,
-		int2(m_WorldX + PATCH_SIZE, m_WorldY),
-		int2(m_WorldX,              m_WorldY + PATCH_SIZE),
-		int2(m_WorldX + PATCH_SIZE, m_WorldY + PATCH_SIZE),
+	currentVariance = &varianceRight[0];
+
+	RecursTessellate(&baseRight,
+		int2(coors.x + PATCH_SIZE, coors.y),
+		int2(coors.x,              coors.y + PATCH_SIZE),
+		int2(coors.x + PATCH_SIZE, coors.y + PATCH_SIZE),
 		1);
 
 	return !CTriNodePool::GetPool()->RunOutOfNodes();
@@ -615,15 +613,15 @@ void Patch::GenerateBorderIndices(CVertexArray* va)
 {
 	va->Initialize();
 
-	const bool isLeftBorder   = !m_BaseLeft.LeftNeighbor;
-	const bool isBottomBorder = !m_BaseRight.RightNeighbor;
-	const bool isRightBorder  = !m_BaseLeft.RightNeighbor;
-	const bool isTopBorder    = !m_BaseRight.LeftNeighbor;
+	const bool isLeftBorder   = !baseLeft.LeftNeighbor;
+	const bool isBottomBorder = !baseRight.RightNeighbor;
+	const bool isRightBorder  = !baseLeft.RightNeighbor;
+	const bool isTopBorder    = !baseRight.LeftNeighbor;
 
-	if (isLeftBorder)   RecursBorderRender(va, &m_BaseLeft,  int2(0, PATCH_SIZE), int2(PATCH_SIZE, 0), int2(0, 0),                   1, true);
-	if (isBottomBorder) RecursBorderRender(va, &m_BaseRight, int2(PATCH_SIZE, 0), int2(0, PATCH_SIZE), int2(PATCH_SIZE, PATCH_SIZE), 1, false);
-	if (isRightBorder)  RecursBorderRender(va, &m_BaseLeft,  int2(0, PATCH_SIZE), int2(PATCH_SIZE, 0), int2(0, 0),                   1, false);
-	if (isTopBorder)    RecursBorderRender(va, &m_BaseRight, int2(PATCH_SIZE, 0), int2(0, PATCH_SIZE), int2(PATCH_SIZE, PATCH_SIZE), 1, true);
+	if (isLeftBorder)   RecursBorderRender(va, &baseLeft,  int2(0, PATCH_SIZE), int2(PATCH_SIZE, 0), int2(0, 0),                   1, true);
+	if (isBottomBorder) RecursBorderRender(va, &baseRight, int2(PATCH_SIZE, 0), int2(0, PATCH_SIZE), int2(PATCH_SIZE, PATCH_SIZE), 1, false);
+	if (isRightBorder)  RecursBorderRender(va, &baseLeft,  int2(0, PATCH_SIZE), int2(PATCH_SIZE, 0), int2(0, 0),                   1, false);
+	if (isTopBorder)    RecursBorderRender(va, &baseRight, int2(PATCH_SIZE, 0), int2(0, PATCH_SIZE), int2(PATCH_SIZE, PATCH_SIZE), 1, true);
 }
 
 
@@ -662,7 +660,7 @@ void Patch::Upload()
 
 void Patch::SetSquareTexture() const
 {
-	smfGroundDrawer->SetupBigSquare(m_WorldX / PATCH_SIZE, m_WorldY / PATCH_SIZE);
+	smfGroundDrawer->SetupBigSquare(coors.x / PATCH_SIZE, coors.y / PATCH_SIZE);
 }
 
 
@@ -699,40 +697,37 @@ void Patch::SwitchRenderMode(int mode)
 }
 
 
+
 // ---------------------------------------------------------------------
 // Visibility Update Functions
 //
 
 /*void Patch::UpdateVisibility(CCamera*& cam)
 {
-	const float3 mins(
-		m_WorldX * SQUARE_SIZE,
-		readMap->GetCurrMinHeight(),
-		m_WorldY * SQUARE_SIZE
-	);
-	const float3 maxs(
-		(m_WorldX + PATCH_SIZE) * SQUARE_SIZE,
-		readMap->GetCurrMaxHeight(),
-		(m_WorldY + PATCH_SIZE) * SQUARE_SIZE
-	);
-	m_isVisible = cam->InView(mins, maxs);
+	const float3 mins( coors.x               * SQUARE_SIZE, readMap->GetCurrMinHeight(),  coors.y               * SQUARE_SIZE);
+	const float3 maxs((coors.x + PATCH_SIZE) * SQUARE_SIZE, readMap->GetCurrMaxHeight(), (coors.y + PATCH_SIZE) * SQUARE_SIZE);
+
+	isVisible = cam->InView(mins, maxs);
 }*/
 
 
 class CPatchInViewChecker : public CReadMap::IQuadDrawer
 {
 public:
-	std::vector<Patch>* patches;
-	int numPatchesX;
-
-	void ResetState() {
-		patches = nullptr;
-		numPatchesX = 0;
+	void ResetState() {}
+	void ResetState(Patch* p = nullptr, int xsize = 0) {
+		patchArray = p;
+		numPatchesX = xsize;
 	}
 
 	void DrawQuad(int x, int y) {
-		(*patches)[x + y * numPatchesX].m_isVisible = true;
+		patchArray[y * numPatchesX + x].lastDrawFrame = globalRendering->drawFrame;
 	}
+
+private:
+	Patch* patchArray;
+
+	int numPatchesX;
 };
 
 
@@ -740,21 +735,19 @@ void Patch::UpdateVisibility(CCamera*& cam, std::vector<Patch>& patches, const i
 {
 	#if 0
 	// very slow
-	for (std::vector<Patch>::iterator it = m_Patches.begin(); it != m_Patches.end(); ++it) {
-		it->UpdateVisibility(cam);
+	for (Patch& p: m_Patches) {
+		p.UpdateVisibility(cam);
 	}
 	#else
 	// very fast
 	static CPatchInViewChecker checker;
 
-	checker.ResetState();
-	checker.patches     = &patches;
-	checker.numPatchesX = numPatchesX;
-
-	for (std::vector<Patch>::iterator it = patches.begin(); it != patches.end(); ++it) {
-		it->m_isVisible = false;
-	}
-
+	checker.ResetState(&patches[0], numPatchesX);
 	readMap->GridVisibility(cam, PATCH_SIZE, 1e9, &checker, INT_MAX);
 	#endif
 }
+
+bool Patch::IsVisible() const {
+	return (lastDrawFrame >= globalRendering->drawFrame);
+}
+

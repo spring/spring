@@ -105,22 +105,23 @@ public:
 	};
 
 public:
-	Patch();
-	~Patch();
-	void Init(CSMFGroundDrawer* drawer, int worldX, int worldZ); //FIXME move this into the ctor
-
 	friend class CRoamMeshDrawer;
 	friend class CPatchInViewChecker;
 
+	Patch();
+	~Patch();
+
+	void Init(CSMFGroundDrawer* drawer, int worldX, int worldZ); //FIXME move this into the ctor
 	void Reset();
 
-	TriTreeNode* GetBaseLeft()  { return &m_BaseLeft;  }
-	TriTreeNode* GetBaseRight() { return &m_BaseRight; }
-	char IsDirty()     const { return m_isDirty; }
-	bool IsVisible()   const { return m_isVisible; }
-	int  GetTriCount() const { return indices.size() / 3; }
+	TriTreeNode* GetBaseLeft()  { return &baseLeft;  }
+	TriTreeNode* GetBaseRight() { return &baseRight; }
 
-	void UpdateHeightMap(const SRectangle& rect = SRectangle(0,0,PATCH_SIZE,PATCH_SIZE));
+	bool IsVisible() const;
+	char IsDirty() const { return isDirty; }
+	int GetTriCount() const { return (indices.size() / 3); }
+
+	void UpdateHeightMap(const SRectangle& rect = SRectangle(0, 0, PATCH_SIZE, PATCH_SIZE));
 
 	bool Tessellate(const float3& campos, int viewradius);
 	void ComputeVariance();
@@ -134,7 +135,7 @@ public:
 public:
 	static void SwitchRenderMode(int mode = -1);
 
-	//void UpdateVisibility(CCamera*& cam);
+	// void UpdateVisibility(CCamera*& cam);
 	static void UpdateVisibility(CCamera*& cam, std::vector<Patch>& patches, const int numPatchesX);
 
 protected:
@@ -149,34 +150,42 @@ private:
 
 	void RecursBorderRender(CVertexArray* va, TriTreeNode* const& tri, const int2& left, const int2& right, const int2& apex, int i, bool left_);
 	void GenerateBorderIndices(CVertexArray* va);
-protected:
+
+private:
 	static RenderMode renderMode;
 
 	CSMFGroundDrawer* smfGroundDrawer;
 
-	const float* m_HeightMap; //< Pointer to height map to use
-	const float* heightData;
+	//< Pointer to height map to use
+	const float* heightMap;
 
-	std::vector<float> m_VarianceLeft;  //< Left variance tree
-	std::vector<float> m_VarianceRight; //< Right variance tree
-	float* m_CurrentVariance;  //< Which varience we are currently using. [Only valid during the Tessellate and ComputeVariance passes]
+	//< Which variance we are currently using. [Only valid during the Tessellate and ComputeVariance passes]
+	float* currentVariance;
 
-	bool m_isVisible; //< Is this patch visible in the current frame?
-	bool m_isDirty; //< Does the Varience Tree need to be recalculated for this Patch?
-
-	TriTreeNode m_BaseLeft;  //< Left base triangle tree node
-	TriTreeNode m_BaseRight; //< Right base triangle tree node
+	//< Does the Variance Tree need to be recalculated for this Patch?
+	bool isDirty;
+	bool vboVerticesUploaded;
 
 	float varianceMaxLimit;
 	float camDistLODFactor; //< defines the LOD falloff in camera distance
 
-	int m_WorldX, m_WorldY; //< World coordinate offset of this patch.
-	//float minHeight, maxHeight;
+	//< World coordinate offsets of this patch.
+	int2 coors;
 
-	std::vector<float> vertices; // Why yes, this IS a mind bogglingly wasteful thing to do: TODO: remove this for both the Displaylist and the VBO implementations (only really needed for vertexarrays)
+	//< frame on which this patch was last visible
+	unsigned int lastDrawFrame;
+
+
+	TriTreeNode baseLeft;  //< Left base triangle tree node
+	TriTreeNode baseRight; //< Right base triangle tree node
+
+	std::vector<float> varianceLeft;  //< Left variance tree
+	std::vector<float> varianceRight; //< Right variance tree
+
+	// TODO: remove for both the Displaylist and the VBO implementations (only really needed for VA's)
+	std::vector<float> vertices;
 	std::vector<unsigned int> indices;
 
-	bool vboVerticesUploaded;
 
 	GLuint triList;
 	GLuint vertexBuffer;

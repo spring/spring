@@ -111,7 +111,9 @@ private:
 	bool UpdateUnsynced(const spring_time currentTime);
 
 	void DrawSkip(bool blackscreen = true);
+	void DrawInputReceivers();
 	void DrawInputText();
+	void DrawInterfaceWidgets();
 	void UpdateCam();
 
 	/// Format and display a chat message received over network

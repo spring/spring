@@ -13,7 +13,6 @@
 #include "CommandMessage.h"
 #include "ConsoleHistory.h"
 #include "GameHelper.h"
-#include "GameVersion.h"
 #include "GameSetup.h"
 #include "GlobalUnsynced.h"
 #include "LoadScreen.h"
@@ -37,24 +36,17 @@
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Rendering/WorldDrawer.h"
 #include "Rendering/Env/ISky.h"
-#include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/IWater.h"
-#include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/Fonts/CFontTexture.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/CommandDrawer.h"
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/LineDrawer.h"
-#include "Rendering/Screenshot.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.h"
 #include "Rendering/DebugDrawerAI.h"
 #include "Rendering/HUDDrawer.h"
-#include "Rendering/SmoothHeightMeshDrawer.h"
-#include "Rendering/IPathDrawer.h"
 #include "Rendering/IconHandler.h"
-#include "Rendering/InMapDrawView.h"
-#include "Rendering/ShadowHandler.h"
 #include "Rendering/TeamHighlight.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
@@ -101,7 +93,6 @@
 #include "Sim/Units/Scripts/CobEngine.h"
 #include "Sim/Units/Scripts/UnitScriptEngine.h"
 #include "Sim/Units/UnitDefHandler.h"
-#include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "UI/CommandColors.h"
 #include "UI/CursorIcons.h"
@@ -1095,7 +1086,6 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	camHandler->UpdateCam();
 	camera->Update();
 
-//	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 	unitDrawer->Update();
 	lineDrawer.UpdateLineStipple();
 	if (doDrawWorld) {
@@ -1253,38 +1243,8 @@ bool CGame::Draw() {
 		minimap->Update();
 
 		if (doDrawWorld) {
-			if (shadowHandler->shadowsLoaded) {
-				SCOPED_TIMER("ShadowHandler::CreateShadows");
-				SetDrawMode(gameShadowDraw);
-				shadowHandler->CreateShadows();
-				SetDrawMode(gameNormalDraw);
-			}
-
-			{
-				SCOPED_TIMER("CubeMapHandler::UpdateReflTex");
-				cubeMapHandler->UpdateReflectionTexture();
-			}
-
-			if (sky->GetLight()->IsDynamic()) {
-				{
-					SCOPED_TIMER("CubeMapHandler::UpdateSpecTex");
-					cubeMapHandler->UpdateSpecularTexture();
-				}
-				{
-					SCOPED_TIMER("Sky::UpdateSkyTex");
-					sky->UpdateSkyTexture();
-				}
-				{
-					SCOPED_TIMER("ReadMap::UpdateShadingTex");
-					readMap->UpdateShadingTexture();
-				}
-			}
+			worldDrawer->GenerateIBL();
 		}
-
-		if (FBO::IsSupported())
-			FBO::Unbind();
-
-		glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	}
 
 	glDepthMask(GL_TRUE);
@@ -1292,7 +1252,7 @@ bool CGame::Draw() {
 	glDisable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);	// Clear Screen And Depth&Stencil Buffer
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	camera->Update();
 
 	if (doDrawWorld) {
@@ -1321,65 +1281,9 @@ bool CGame::Draw() {
 	hudDrawer->Draw((gu->GetMyPlayer())->fpsController.GetControllee());
 	debugDrawerAI->Draw();
 
-	glEnable(GL_TEXTURE_2D);
-
-	{
-		SCOPED_TIMER("CInputReceiver::DrawScreen");
-
-		if (!hideInterface) {
-			std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
-			for (auto ri = inputReceivers.rbegin(); ri != inputReceivers.rend(); ++ri) {
-				CInputReceiver* rcvr = *ri;
-				if (rcvr) {
-					rcvr->Draw();
-				}
-			}
-		} else {
-			if (globalRendering->dualScreenMode) {
-				// minimap is on its own screen, so always draw it
-				minimap->Draw();
-			}
-		}
-	}
-
-	glEnable(GL_TEXTURE_2D);
-
-	#define KEY_FONT_FLAGS (FONT_SCALE | FONT_CENTER | FONT_NORM)
-	#define INF_FONT_FLAGS (FONT_RIGHT | FONT_SCALE | FONT_NORM | (FONT_OUTLINE * guihandler->GetOutlineFonts()))
-
-	if (userWriting) {
-		DrawInputText();
-	}
-
-	if (!hideInterface) {
-		smallFont->Begin();
-
-		if (showClock) {
-			const int seconds = (gs->frameNum / GAME_SPEED);
-			if (seconds < 3600) {
-				smallFont->glFormat(0.99f, 0.94f, 1.0f, INF_FONT_FLAGS, "%02i:%02i", seconds / 60, seconds % 60);
-			} else {
-				smallFont->glFormat(0.99f, 0.94f, 1.0f, INF_FONT_FLAGS, "%02i:%02i:%02i", seconds / 3600, (seconds / 60) % 60, seconds % 60);
-			}
-		}
-
-		if (showFPS) {
-			const float4 yellow(1.0f, 1.0f, 0.25f, 1.0f);
-			smallFont->SetColors(&yellow,NULL);
-			smallFont->glFormat(0.99f, 0.92f, 1.0f, INF_FONT_FLAGS, "%.0f", globalRendering->FPS);
-		}
-
-		if (showSpeed) {
-			const float4 speedcol(1.0f, gs->speedFactor < gs->wantedSpeedFactor * 0.99f ? 0.25f : 1.0f, 0.25f, 1.0f);
-			smallFont->SetColors(&speedcol, NULL);
-			smallFont->glFormat(0.99f, 0.90f, 1.0f, INF_FONT_FLAGS, "%2.2f", gs->speedFactor);
-		}
-
-		CPlayerRosterDrawer::Draw();
-
-		smallFont->End();
-	}
-
+	DrawInputReceivers();
+	DrawInputText();
+	DrawInterfaceWidgets();
 	mouse->DrawCursor();
 
 	glEnable(GL_DEPTH_TEST);
@@ -1396,6 +1300,67 @@ bool CGame::Draw() {
 	eventHandler.DbgTimingInfo(TIMING_VIDEO, currentTimePreDraw, currentTimePostDraw);
 
 	return true;
+}
+
+
+void CGame::DrawInputReceivers()
+{
+	SCOPED_TIMER("CInputReceiver::DrawScreen");
+
+	glEnable(GL_TEXTURE_2D);
+
+	if (!hideInterface) {
+		std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
+
+		for (auto ri = inputReceivers.rbegin(); ri != inputReceivers.rend(); ++ri) {
+			CInputReceiver* rcvr = *ri;
+			if (rcvr) {
+				rcvr->Draw();
+			}
+		}
+	} else {
+		if (globalRendering->dualScreenMode) {
+			// minimap is on its own screen, so always draw it
+			minimap->Draw();
+		}
+	}
+
+	glEnable(GL_TEXTURE_2D);
+}
+
+void CGame::DrawInterfaceWidgets()
+{
+	if (hideInterface)
+		return;
+
+	smallFont->Begin();
+
+	#define KEY_FONT_FLAGS (FONT_SCALE | FONT_CENTER | FONT_NORM)
+	#define INF_FONT_FLAGS (FONT_RIGHT | FONT_SCALE | FONT_NORM | (FONT_OUTLINE * guihandler->GetOutlineFonts()))
+
+	if (showClock) {
+		const int seconds = (gs->frameNum / GAME_SPEED);
+		if (seconds < 3600) {
+			smallFont->glFormat(0.99f, 0.94f, 1.0f, INF_FONT_FLAGS, "%02i:%02i", seconds / 60, seconds % 60);
+		} else {
+			smallFont->glFormat(0.99f, 0.94f, 1.0f, INF_FONT_FLAGS, "%02i:%02i:%02i", seconds / 3600, (seconds / 60) % 60, seconds % 60);
+		}
+	}
+
+	if (showFPS) {
+		const float4 yellow(1.0f, 1.0f, 0.25f, 1.0f);
+		smallFont->SetColors(&yellow,NULL);
+		smallFont->glFormat(0.99f, 0.92f, 1.0f, INF_FONT_FLAGS, "%.0f", globalRendering->FPS);
+	}
+
+	if (showSpeed) {
+		const float4 speedcol(1.0f, gs->speedFactor < gs->wantedSpeedFactor * 0.99f ? 0.25f : 1.0f, 0.25f, 1.0f);
+		smallFont->SetColors(&speedcol, NULL);
+		smallFont->glFormat(0.99f, 0.90f, 1.0f, INF_FONT_FLAGS, "%2.2f", gs->speedFactor);
+	}
+
+	CPlayerRosterDrawer::Draw();
+	smallFont->End();
 }
 
 
@@ -1418,6 +1383,9 @@ void CGame::ParseInputTextGeometry(const string& geo)
 
 void CGame::DrawInputText()
 {
+	if (!userWriting)
+		return;
+
 	const float fontSale = 1.0f;                       // TODO: make configurable again
 	const float fontSize = fontSale * font->GetSize();
 

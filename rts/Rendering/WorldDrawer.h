@@ -11,6 +11,7 @@ public:
 
 	void Update();
 	void Draw();
+	void GenerateIBL();
 
 private:
 	unsigned int numUpdates;
