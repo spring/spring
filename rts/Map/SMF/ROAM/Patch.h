@@ -117,7 +117,7 @@ public:
 	TriTreeNode* GetBaseLeft()  { return &baseLeft;  }
 	TriTreeNode* GetBaseRight() { return &baseRight; }
 
-	bool IsVisible() const;
+	bool IsVisible(bool shadowCam) const;
 	char IsDirty() const { return isDirty; }
 	int GetTriCount() const { return (indices.size() / 3); }
 
@@ -172,8 +172,8 @@ private:
 	//< World coordinate offsets of this patch.
 	int2 coors;
 
-	//< frame on which this patch was last visible
-	unsigned int lastDrawFrame;
+	//< frame on which this patch was last visible (regular and shadow pass)
+	unsigned int lastDrawFrame[2];
 
 
 	TriTreeNode baseLeft;  //< Left base triangle tree node

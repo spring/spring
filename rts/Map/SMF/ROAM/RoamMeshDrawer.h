@@ -10,9 +10,10 @@
 #include <vector>
 
 
+
 class CSMFReadMap;
 class CSMFGroundDrawer;
-
+class CCamera;
 
 
 
@@ -55,7 +56,7 @@ public:
 
 private:
 	void Reset();
-	bool Tessellate(const float3& campos, int viewradius);
+	bool Tessellate(const CCamera* cam, int viewradius);
 	bool IsInteriorPatch(int px, int py) const;
 	int Render(bool shadows);
 

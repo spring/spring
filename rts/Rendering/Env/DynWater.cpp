@@ -835,8 +835,7 @@ void CDynWater::DrawWaterSurface()
 	va->Initialize();
 
 	CCamera* visCam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
-	// TODO: split drawing from (duplicated) GridVisibility code below
-	// visCam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
+	visCam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 
 	camPosBig2.x = math::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapx*SQUARE_SIZE - WH_SIZE, camera->GetPos().x))/(W_SIZE*16))*(W_SIZE*16);
 	camPosBig2.z = math::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapy*SQUARE_SIZE - WH_SIZE, camera->GetPos().z))/(W_SIZE*16))*(W_SIZE*16);
@@ -873,6 +872,7 @@ void CDynWater::DrawWaterSurface()
 
 		int vrhlod = viewRadius * hlod;
 
+		// TODO: split drawing from (duplicated) GridVisibility code below
 		for (int y = ystart; y < yend; y += lod) {
 			int xs = xstart;
 			int xe = xend;
@@ -880,7 +880,7 @@ void CDynWater::DrawWaterSurface()
 
 			for (fli = negSides.begin(); fli != negSides.end(); ++fli) {
 				const float xtf = fli->base / WSQUARE_SIZE + fli->dir * y;
-				xtest = ((int)xtf) / lod * lod - lod;
+				xtest  = ((int) xtf                  ) / lod * lod - lod;
 				xtest2 = ((int)(xtf + fli->dir * lod)) / lod * lod - lod;
 
 				xtest = std::max(xtest, xtest2);
@@ -888,7 +888,7 @@ void CDynWater::DrawWaterSurface()
 			}
 			for (fli = posSides.begin(); fli != posSides.end(); ++fli) {
 				const float xtf = fli->base / WSQUARE_SIZE + fli->dir * y;
-				xtest = ((int)xtf) / lod * lod - lod;
+				xtest  = ((int) xtf                  ) / lod * lod - lod;
 				xtest2 = ((int)(xtf + fli->dir * lod)) / lod * lod - lod;
 
 				xtest = std::min(xtest, xtest2);

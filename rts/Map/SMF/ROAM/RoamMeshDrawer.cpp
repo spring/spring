@@ -103,7 +103,9 @@ void CRoamMeshDrawer::Update()
 	//   remove the "false &&" when ShadowHandler uses its own camera
 	//   otherwise this retessellates with the current camera frustum,
 	//   shadow pass and others don't have to see the same patches!
-	if (false && shadowHandler->inShadowPass) {
+	const bool useShadowCam = false && shadowHandler->inShadowPass;
+
+	if (useShadowCam) {
 		cam = CCamera::GetCamera(CCamera::CAMTYPE_SHADOW);
 	} else {
 		cam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
@@ -119,10 +121,11 @@ void CRoamMeshDrawer::Update()
 
 	{
 		SCOPED_TIMER("ROAM::ComputeVariance");
-		for (int i = 0; i < (numPatchesX * numPatchesY); ++i) { //FIXME multithread?
+		for (int i = 0; i < (numPatchesX * numPatchesY); ++i) {
+			//FIXME multithread?
 			Patch& p = roamPatches[i];
 		#if (RETESSELLATE_MODE == 2)
-			if (p.IsVisible()) {
+			if (p.IsVisible(useShadowCam)) {
 				if (patchVisGrid[i] == 0) {
 					patchVisGrid[i] = 1;
 					retessellate = true;
@@ -136,11 +139,11 @@ void CRoamMeshDrawer::Update()
 				patchVisGrid[i] = 0;
 			}
 		#else
-			if (char(p.IsVisible()) != patchVisGrid[i]) {
-				patchVisGrid[i] = char(p.IsVisible());
+			if (char(p.IsVisible(useShadowCam)) != patchVisGrid[i]) {
+				patchVisGrid[i] = char(p.IsVisible(useShadowCam));
 				retessellate = true;
 			}
-			if (p.IsVisible() && p.IsDirty()) {
+			if (p.IsVisible(useShadowCam) && p.IsDirty()) {
 				//FIXME don't retessellate on small heightmap changes?
 				p.ComputeVariance();
 				retessellate = true;
@@ -165,13 +168,13 @@ void CRoamMeshDrawer::Update()
 			//FIXME this tessellates with current camera + viewRadius
 			//  so it doesn't retessellate patches that are e.g. only vis. in the shadow frustum
 			Reset();
-			retessellateAgain = Tessellate(cam->GetPos(), smfGroundDrawer->GetGroundDetail());
+			retessellateAgain = Tessellate(cam, smfGroundDrawer->GetGroundDetail());
 		}
 
 		{ SCOPED_TIMER("ROAM::GenerateIndexArray");
 			for_mt(0, roamPatches.size(), [&](const int i){
 				Patch* it = &roamPatches[i];
-				if (it->IsVisible()) {
+				if (it->IsVisible(useShadowCam)) {
 					it->GenerateIndices();
 				}
 			});
@@ -179,7 +182,7 @@ void CRoamMeshDrawer::Update()
 
 		{ SCOPED_TIMER("ROAM::Upload");
 			for (std::vector<Patch>::iterator it = roamPatches.begin(); it != roamPatches.end(); ++it) {
-				if (it->IsVisible()) {
+				if (it->IsVisible(useShadowCam)) {
 					it->Upload();
 				}
 			}
@@ -188,7 +191,7 @@ void CRoamMeshDrawer::Update()
 		/*{
 			int tricount = 0;
 			for (std::vector<Patch>::iterator it = roamPatches.begin(); it != roamPatches.end(); it++) {
-				if (it->IsVisible()) {
+				if (it->IsVisible(useShadowCam)) {
 					tricount += it->GetTriCount();
 				}
 			}
@@ -220,6 +223,7 @@ void CRoamMeshDrawer::Update()
 void CRoamMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 {
 	const bool inShadowPass = (drawPass == DrawPass::Shadow);
+	const bool useShadowCam = false && inShadowPass;
 
 	CCamera* cam = nullptr;
 
@@ -229,7 +233,7 @@ void CRoamMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 	//  It just re-uses the last tessellation pattern which may have been created
 	//  with a totally different camera (remove the "false &&" when ShadowHandler
 	//  uses its own camera)
-	if (false && inShadowPass) {
+	if (useShadowCam) {
 		cam = CCamera::GetCamera(CCamera::CAMTYPE_SHADOW);
 	} else {
 		cam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
@@ -240,7 +244,7 @@ void CRoamMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 	Patch::UpdateVisibility(cam, roamPatches, numPatchesX);
 
 	for (std::vector<Patch>::iterator it = roamPatches.begin(); it != roamPatches.end(); ++it) {
-		if (it->IsVisible()) {
+		if (it->IsVisible(useShadowCam)) {
 			if (!inShadowPass)
 				it->SetSquareTexture();
 
@@ -252,6 +256,7 @@ void CRoamMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 void CRoamMeshDrawer::DrawBorderMesh(const DrawPass::e& drawPass)
 {
 	const bool inShadowPass = (drawPass == DrawPass::Shadow);
+	const bool useShadowCam = false && inShadowPass;
 
 	for (int py = 0; py < numPatchesY; ++py) {
 		for (int px = 0; px < numPatchesX; ++px) {
@@ -260,7 +265,7 @@ void CRoamMeshDrawer::DrawBorderMesh(const DrawPass::e& drawPass)
 
 			Patch& p = roamPatches[py * numPatchesX + px];
 
-			if (!p.IsVisible())
+			if (!p.IsVisible(useShadowCam))
 				continue;
 
 			if (!inShadowPass)
@@ -288,7 +293,7 @@ void CRoamMeshDrawer::DrawInMiniMap()
 	glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
 
 	for (const Patch& p: roamPatches) {
-		if (!p.IsVisible()) {
+		if (!p.IsVisible(false)) {
 			glRectf(p.coors.x, p.coors.y, p.coors.x + PATCH_SIZE, p.coors.y + PATCH_SIZE);
 		}
 	}
@@ -336,7 +341,7 @@ void CRoamMeshDrawer::Reset()
 // ---------------------------------------------------------------------
 // Create an approximate mesh of the landscape.
 //
-bool CRoamMeshDrawer::Tessellate(const float3& campos, int viewradius)
+bool CRoamMeshDrawer::Tessellate(const CCamera* cam, int viewradius)
 {
 	// Perform Tessellation
 	// hint: threading just helps a little with huge cpu usage in retessellation, still better than nothing
@@ -361,10 +366,13 @@ bool CRoamMeshDrawer::Tessellate(const float3& campos, int viewradius)
 			const int Z = p->coors.y;
 			const int subindex = (X % 3) + (Z % 3) * 3;
 
-			if ((subindex == idx) && p->IsVisible()) {
-				if (!p->Tessellate(campos, viewradius))
-					forceTess = true;
-			}
+			if (subindex != idx)
+				return;
+
+			if (!p->IsVisible(cam->GetCamType() == CCamera::CAMTYPE_SHADOW))
+				return;
+
+			forceTess |= (!p->Tessellate(cam->GetPos(), viewradius));
 		});
 
 		if (forceTess)

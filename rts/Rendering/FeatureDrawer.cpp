@@ -178,7 +178,7 @@ void CFeatureDrawer::Update()
 		f->drawAlpha = 0.0f;
 	}
 
-	GetVisibleFeatures(0, true);
+	GetVisibleFeatures(camera, 0, true);
 }
 
 
@@ -255,9 +255,12 @@ void CFeatureDrawer::DrawOpaquePass(bool deferredPass, bool, bool)
 void CFeatureDrawer::DrawOpaqueFeatures(int modelType, int luaMatType)
 {
 	const bool shadowPass = (luaMatType == LuaObjectDrawer::GetDrawPassShadowMat());
+	const bool shadowDraw = false && shadowPass;
+
+	const CCamera* cam = CCamera::GetCamera(shadowDraw? CCamera::CAMTYPE_SHADOW: CCamera::CAMTYPE_PLAYER);
 
 	for (const auto& mdlRenderProxy: modelRenderers) {
-		if (mdlRenderProxy.lastDrawFrame < globalRendering->drawFrame)
+		if (mdlRenderProxy.lastDrawFrame[shadowDraw] < globalRendering->drawFrame)
 			continue;
 
 		const auto& featureBin = mdlRenderProxy.rendererTypes[modelType]->GetFeatureBin();
@@ -277,7 +280,7 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType, int luaMatType)
 				}
 
 				// test this before the LOD calls (for consistency with UD)
-				if (!CanDrawFeature(f))
+				if (!CanDrawFeature(f, cam))
 					continue;
 
 				if ( shadowPass && LuaObjectDrawer::AddShadowMaterialObject(f, LUAOBJ_FEATURE))
@@ -291,7 +294,7 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType, int luaMatType)
 	}
 }
 
-bool CFeatureDrawer::CanDrawFeature(const CFeature* feature) const
+bool CFeatureDrawer::CanDrawFeature(const CFeature* feature, const CCamera* cam) const
 {
 	if (feature->noDraw)
 		return false;
@@ -301,7 +304,7 @@ bool CFeatureDrawer::CanDrawFeature(const CFeature* feature) const
 		return false;
 
 	if (feature->fade) {
-		const float sqDist = (feature->pos - camera->GetPos()).SqLength();
+		const float sqDist = (feature->pos - cam->GetPos()).SqLength();
 		const float farLength = feature->sqRadius * unitDrawer->unitDrawDistSqr;
 		const float sqFadeDistEnd = featureDrawDistance * featureDrawDistance;
 
@@ -309,7 +312,7 @@ bool CFeatureDrawer::CanDrawFeature(const CFeature* feature) const
 			return false;
 	}
 
-	return (camera->InView(feature->drawMidPos, feature->drawRadius));
+	return (cam->InView(feature->drawMidPos, feature->drawRadius));
 }
 
 
@@ -468,7 +471,7 @@ void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 void CFeatureDrawer::DrawFadeFeaturesHelper(int modelType, int luaMatType)
 {
 	for (const auto& mdlRenderProxy: modelRenderers) {
-		if (mdlRenderProxy.lastDrawFrame < globalRendering->drawFrame)
+		if (mdlRenderProxy.lastDrawFrame[false] < globalRendering->drawFrame)
 			continue;
 
 		const auto& featureBin = mdlRenderProxy.rendererTypes[modelType]->GetFeatureBin();
@@ -487,7 +490,7 @@ void CFeatureDrawer::DrawFadeFeaturesSet(const FeatureSet& fadeFeatures, int mod
 		if (f->drawAlpha >= FD_ALPHA_OPAQUE || f->drawAlpha <= (1.0f - FD_ALPHA_OPAQUE))
 			continue;
 
-		if (!CanDrawFeature(f))
+		if (!CanDrawFeature(f, camera))
 			continue;
 
 		if (LuaObjectDrawer::AddAlphaMaterialObject(f, LUAOBJ_FEATURE))
@@ -512,12 +515,11 @@ void CFeatureDrawer::DrawShadowPass()
 	po->Enable();
 
 	{
-		// note: for the shadow-pass, we want to make sure
-		// out-of-view features casting frustum-intersecting
-		// shadows are still rendered, but this is expensive
-		// and does not make much difference
-		//
-		// GetVisibleFeatures(1, false);
+		// TODO
+		//   for the shadow-pass, we want to make sure features
+		//   casting shadows intersecting the player-cam frustum
+		//   are still rendered
+		// GetVisibleFeatures(CCamera::GetCamera(CCamera::CAMTYPE_SHADOW), 1, false);
 
 		// need the alpha-mask for transparent features
 		glEnable(GL_TEXTURE_2D);
@@ -561,10 +563,13 @@ public:
 
 	bool drawReflection;
 	bool drawRefraction;
-	bool farFeatures;
+	bool drawShadowPass;
+	bool drawFarFeatures;
 
 	float sqFadeDistBegin;
 	float sqFadeDistEnd;
+
+	float3 cameraPos;
 
 public:
 	void ResetState() {
@@ -572,21 +577,22 @@ public:
 
 		drawReflection = false;
 		drawRefraction = false;
-		farFeatures = false;
+		drawShadowPass = false;
+		drawFarFeatures = false;
 
 		sqFadeDistBegin = 0.0f;
 		sqFadeDistEnd   = 0.0f;
+
+		cameraPos = ZeroVector;
 	}
 
 	void DrawQuad(int x, int y) {
-		const float3 cameraPos = camera->GetPos();
-
 		auto& mdlRenderProxy = featureDrawer->modelRenderers[y * drawQuadsX + x];
 
-		if (mdlRenderProxy.lastDrawFrame >= globalRendering->drawFrame)
+		if (mdlRenderProxy.lastDrawFrame[drawShadowPass] >= globalRendering->drawFrame)
 			return;
 
-		mdlRenderProxy.lastDrawFrame = globalRendering->drawFrame;
+		mdlRenderProxy.lastDrawFrame[drawShadowPass] = globalRendering->drawFrame;
 
 		for (int i = 0; i < MODELTYPE_OTHER; ++i) {
 			auto& featureBin = mdlRenderProxy.rendererTypes[i]->GetFeatureBinMutable();
@@ -612,6 +618,7 @@ public:
 							zeroPos = f->midPos;
 						} else {
 							const float dif = f->midPos.y - cameraPos.y;
+
 							zeroPos =
 								cameraPos * (f->midPos.y / dif) +
 								f->midPos * (-cameraPos.y / dif);
@@ -651,7 +658,7 @@ public:
 							// otherwise save it for the fade-pass
 							f->drawAlpha = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
 						}
-					} else if (farFeatures) {
+					} else if (drawFarFeatures) {
 						f->drawAlpha = FD_ALPHA_FARTEX;
 					}
 				}
@@ -662,15 +669,18 @@ public:
 
 
 
-void CFeatureDrawer::GetVisibleFeatures(int extraSize, bool drawFar)
+void CFeatureDrawer::GetVisibleFeatures(const CCamera* cam, int extraSize, bool drawFar)
 {
 	CFeatureQuadDrawer drawer;
+
 	drawer.drawQuadsX = drawQuadsX;
 	drawer.drawReflection = water->DrawReflectionPass();
 	drawer.drawRefraction = water->DrawRefractionPass();
+	drawer.drawShadowPass = false && shadowHandler->inShadowPass;
+	drawer.drawFarFeatures = drawFar;
 	drawer.sqFadeDistEnd = featureDrawDistance * featureDrawDistance;
 	drawer.sqFadeDistBegin = featureFadeDistance * featureFadeDistance;
-	drawer.farFeatures = drawFar;
+	drawer.cameraPos = cam->GetPos();
 
 	readMap->GridVisibility(nullptr, DRAW_QUAD_SIZE, featureDrawDistance, &drawer, extraSize);
 }

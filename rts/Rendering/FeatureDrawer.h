@@ -9,6 +9,7 @@
 #include "System/EventClient.h"
 #include "Rendering/Models/WorldObjectModelRenderer.h"
 
+class CCamera;
 class CFeature;
 class IWorldObjectModelRenderer;
 
@@ -71,13 +72,13 @@ private:
 	void DrawOpaqueFeatures(int modelType, int luaMatType);
 	void DrawFarFeatures();
 
-	bool CanDrawFeature(const CFeature*) const;
+	bool CanDrawFeature(const CFeature*, const CCamera*) const;
 
 	void DrawFeatureModel(const CFeature* feature, bool noLuaCall);
 
 	void DrawFadeFeaturesHelper(int, int);
 	void DrawFadeFeaturesSet(const FeatureSet&, int, int);
-	void GetVisibleFeatures(int, bool drawFar);
+	void GetVisibleFeatures(const CCamera*, int, bool drawFar);
 
 	void PostLoad();
 
@@ -94,7 +95,7 @@ private:
 
 	friend class CFeatureQuadDrawer;
 	struct ModelRendererProxy {
-		ModelRendererProxy(): lastDrawFrame(0) {
+		ModelRendererProxy(): lastDrawFrame{0, 0} {
 			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 				rendererTypes[modelType] = IWorldObjectModelRenderer::GetInstance(modelType);
 			}
@@ -109,7 +110,8 @@ private:
 
 		// frame on which this proxy's owner quad last
 		// received a DrawQuad call (i.e. was in view)
-		unsigned int lastDrawFrame;
+		// during the regular and shadow pass
+		unsigned int lastDrawFrame[2];
 	};
 
 	std::vector<ModelRendererProxy> modelRenderers;

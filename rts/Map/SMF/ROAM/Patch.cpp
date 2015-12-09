@@ -122,7 +122,7 @@ Patch::Patch()
 	, varianceMaxLimit(std::numeric_limits<float>::max())
 	, camDistLODFactor(1.0f)
 	, coors(-1, -1)
-	, lastDrawFrame(0)
+	, lastDrawFrame{0, 0}
 	, vboVerticesUploaded(false)
 	, triList(0)
 	, vertexBuffer(0)
@@ -715,16 +715,18 @@ class CPatchInViewChecker : public CReadMap::IQuadDrawer
 {
 public:
 	void ResetState() {}
-	void ResetState(Patch* p = nullptr, int xsize = 0) {
+	void ResetState(CCamera* c = nullptr, Patch* p = nullptr, int xsize = 0) {
 		patchArray = p;
+		testCamera = c;
 		numPatchesX = xsize;
 	}
 
 	void DrawQuad(int x, int y) {
-		patchArray[y * numPatchesX + x].lastDrawFrame = globalRendering->drawFrame;
+		patchArray[y * numPatchesX + x].lastDrawFrame[testCamera->GetCamType() == CCamera::CAMTYPE_SHADOW] = globalRendering->drawFrame;
 	}
 
 private:
+	CCamera* testCamera;
 	Patch* patchArray;
 
 	int numPatchesX;
@@ -742,12 +744,12 @@ void Patch::UpdateVisibility(CCamera*& cam, std::vector<Patch>& patches, const i
 	// very fast
 	static CPatchInViewChecker checker;
 
-	checker.ResetState(&patches[0], numPatchesX);
+	checker.ResetState(cam, &patches[0], numPatchesX);
 	readMap->GridVisibility(cam, PATCH_SIZE, 1e9, &checker, INT_MAX);
 	#endif
 }
 
-bool Patch::IsVisible() const {
-	return (lastDrawFrame >= globalRendering->drawFrame);
+bool Patch::IsVisible(bool shadowCam) const {
+	return (lastDrawFrame[shadowCam] >= globalRendering->drawFrame);
 }
 

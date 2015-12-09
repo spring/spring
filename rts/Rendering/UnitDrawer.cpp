@@ -443,8 +443,6 @@ bool CUnitDrawer::CanDrawOpaqueUnit(
 
 bool CUnitDrawer::CanDrawOpaqueUnitShadow(const CUnit* unit) const
 {
-	const bool unitInLOS = ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView);
-
 	if (unit->noDraw)
 		return false;
 	if (unit->IsInVoid())
@@ -452,11 +450,17 @@ bool CUnitDrawer::CanDrawOpaqueUnitShadow(const CUnit* unit) const
 	if (unit->isIcon)
 		return false;
 
-	// FIXME: test against the shadow projection intersection
-	if (!(unitInLOS && camera->InView(unit->drawMidPos, unit->drawRadius + 700.0f)))
+	// TODO: tree/grass/proj also uses CAMTYPE_PLAYER for in-view tests during SP
+	// const CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_SHADOW);
+	const CCamera* cam = camera;
+
+	const bool unitInLOS = ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView);
+	const bool unitInView = cam->InView(unit->drawMidPos, unit->drawRadius + 700.0f);
+
+	if (!unitInLOS || !unitInView)
 		return false;
 
-	const float sqDist = (unit->pos - camera->GetPos()).SqLength();
+	const float sqDist = (unit->pos - cam->GetPos()).SqLength();
 	const float farLength = unit->sqRadius * unitDrawDistSqr;
 
 	if (sqDist >= farLength)
