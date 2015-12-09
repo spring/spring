@@ -36,6 +36,7 @@ public:
 	static bool DrawSingleObjectNoTrans(const CSolidObject* obj, LuaObjType objType);
 
 	static void Update(bool init);
+	static void Kill();
 
 	static void SetObjectLOD(CSolidObject* obj, LuaObjType objType, unsigned int lodCount);
 	static bool AddObjectForLOD(CSolidObject* obj, LuaObjType objType, bool useAlphaMat, bool useShadowMat);
@@ -66,9 +67,10 @@ public:
 	static LuaMatType GetDrawPassAlphaMat();
 	static LuaMatType GetDrawPassShadowMat() { return LUAMAT_SHADOW; }
 
-	// shared by {Unit,Feature}Drawer; initialized on the
-	// first call to Update and wrapped inside a function
-	// to avoid static initialization issues
+	// shared by {Unit,Feature}Drawer; initialized
+	// on the first Update call (note: the pointer
+	// MUST already be valid during FeatureDrawer's
+	// ctor, which is called in PreLoadRendering)
 	static GL::GeometryBuffer* GetGeometryBuffer() {
 		static GL::GeometryBuffer buffer;
 		return &buffer;

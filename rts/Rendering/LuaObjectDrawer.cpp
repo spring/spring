@@ -144,8 +144,8 @@ void LuaObjectDrawer::Update(bool init)
 		geomBuffer = GetGeometryBuffer();
 
 		// handle a potential reload since our buffer is static
-		geomBuffer->Kill();
-		geomBuffer->Init();
+		geomBuffer->Kill(false);
+		geomBuffer->Init(false);
 		geomBuffer->SetName("LUAOBJECTDRAWER-GBUFFER");
 	}
 
@@ -167,6 +167,12 @@ void LuaObjectDrawer::Update(bool init)
 			bufferClearFlags[LUAOBJ_FEATURE] = bufferClearAllowed;
 		}
 	}
+}
+
+void LuaObjectDrawer::Kill()
+{
+	// run this so static de-init does not trigger asserts
+	geomBuffer->Kill(false);
 }
 
 

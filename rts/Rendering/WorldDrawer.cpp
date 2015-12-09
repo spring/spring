@@ -63,6 +63,7 @@ CWorldDrawer::CWorldDrawer(): numUpdates(0)
 	loadscreen->SetLoadMessage("Creating ProjectileDrawer & UnitDrawer");
 	projectileDrawer = new CProjectileDrawer();
 	projectileDrawer->LoadWeaponTextures();
+
 	unitDrawer = new CUnitDrawer();
 	// FIXME: see CGame::LoadSimulation (we only delete it)
 	// featureDrawer = new CFeatureDrawer();
@@ -94,6 +95,7 @@ CWorldDrawer::~CWorldDrawer()
 	SafeDelete(cubeMapHandler);
 	IGroundDecalDrawer::FreeInstance();
 	CShaderHandler::FreeInstance(CShaderHandler::GetInstance());
+	LuaObjectDrawer::Kill();
 }
 
 

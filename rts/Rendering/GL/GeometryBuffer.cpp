@@ -4,7 +4,10 @@
 #include "Rendering/GlobalRendering.h"
 #include <cstring> //memset
 
-void GL::GeometryBuffer::Init() {
+void GL::GeometryBuffer::Init(bool ctor) {
+	// if dead, this must be a non-ctor reload
+	assert(!dead || !ctor);
+
 	memset(&bufferTextureIDs[0], 0, sizeof(bufferTextureIDs));
 	memset(&bufferAttachments[0], 0, sizeof(bufferAttachments));
 
@@ -14,16 +17,27 @@ void GL::GeometryBuffer::Init() {
 	//   be (0, 0) so prevSize != currSize (when !init)
 	prevBufferSize = GetWantedSize(false);
 	currBufferSize = GetWantedSize(true);
+
+	dead = false;
+	bound = false;
 }
 
-void GL::GeometryBuffer::Kill() {
+void GL::GeometryBuffer::Kill(bool dtor) {
+	if (dead) {
+		// if already dead, this must be final cleanup
+		assert(dtor);
+		return;
+	}
+
 	if (buffer.IsValid()) {
 		DetachTextures(false);
 	}
+
+	dead = true;
 }
 
 void GL::GeometryBuffer::Clear() {
-	// assert(buffer.IsBound());
+	assert(bound);
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
@@ -111,7 +125,7 @@ bool GL::GeometryBuffer::Create(const int2 size) {
 	// can still invalidate it
 	assert(buffer.IsValid());
 
-	const bool ret = buffer.CheckStatus(bufferName);
+	const bool ret = buffer.CheckStatus(name);
 
 	buffer.Unbind();
 	return ret;
