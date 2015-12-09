@@ -295,6 +295,8 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType, int luaMatType)
 
 bool CFeatureDrawer::CanDrawFeature(const CFeature* feature) const
 {
+	if (feature->noDraw)
+		return false;
 	if (feature->IsInVoid())
 		return false;
 	if (!feature->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView)
@@ -485,6 +487,7 @@ void CFeatureDrawer::DrawFadeFeaturesSet(const FeatureSet& fadeFeatures, int mod
 		if (LuaObjectDrawer::AddAlphaMaterialObject(f, LUAOBJ_FEATURE))
 			continue;
 
+
 		const float cols[] = {1.0f, 1.0f, 1.0f, f->drawAlpha};
 
 		if (modelType != MODELTYPE_3DO) {
@@ -596,6 +599,8 @@ public:
 				for (CFeature* f: binElem.second) {
 					assert((y * drawQuadsX + x) == f->drawQuad);
 
+					if (f->noDraw)
+						continue;
 					if (f->IsInVoid())
 						continue;
 

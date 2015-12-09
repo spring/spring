@@ -119,6 +119,7 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitNoMinimap);
 	REGISTER_LUA_CFUNC(GetUnitNoSelect);
 	REGISTER_LUA_CFUNC(GetFeatureLuaDraw);
+	REGISTER_LUA_CFUNC(GetFeatureNoDraw);
 
 	REGISTER_LUA_CFUNC(GetUnitTransformMatrix);
 	REGISTER_LUA_CFUNC(GetUnitViewPosition);
@@ -276,6 +277,27 @@ static inline CFeature* ParseFeature(lua_State* L, const char* caller, int index
 		return feature;
 
 	return nullptr;
+}
+
+
+
+
+static int GetSolidObjectLuaDraw(lua_State* L, const CSolidObject* obj)
+{
+	if (obj == nullptr)
+		return 0;
+
+	lua_pushboolean(L, obj->luaDraw);
+	return 1;
+}
+
+static int GetSolidObjectNoDraw(lua_State* L, const CSolidObject* obj)
+{
+	if (obj == nullptr)
+		return 0;
+
+	lua_pushboolean(L, obj->noDraw);
+	return 1;
 }
 
 
@@ -547,23 +569,14 @@ int LuaUnsyncedRead::IsUnitSelected(lua_State* L)
 
 int LuaUnsyncedRead::GetUnitLuaDraw(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-	lua_pushboolean(L, unit->luaDraw);
-	return 1;
+	return (GetSolidObjectLuaDraw(L, ParseUnit(L, __FUNCTION__, 1)));
 }
 
 int LuaUnsyncedRead::GetUnitNoDraw(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-	lua_pushboolean(L, unit->noDraw);
-	return 1;
+	return (GetSolidObjectNoDraw(L, ParseUnit(L, __FUNCTION__, 1)));
 }
+
 
 int LuaUnsyncedRead::GetUnitNoMinimap(lua_State* L)
 {
@@ -588,12 +601,12 @@ int LuaUnsyncedRead::GetUnitNoSelect(lua_State* L)
 
 int LuaUnsyncedRead::GetFeatureLuaDraw(lua_State* L)
 {
-	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
-		return 0;
-	}
-	lua_pushboolean(L, feature->luaDraw);
-	return 1;
+	return (GetSolidObjectLuaDraw(L, ParseFeature(L, __FUNCTION__, 1)));
+}
+
+int LuaUnsyncedRead::GetFeatureNoDraw(lua_State* L)
+{
+	return (GetSolidObjectNoDraw(L, ParseFeature(L, __FUNCTION__, 1)));
 }
 
 
@@ -921,6 +934,9 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 	for (CFeatureSet::const_iterator featureIt = featureSet.begin(); featureIt != featureSet.end(); ++featureIt) {
 		const CFeature& f = **featureIt;
 
+		if (f.noDraw)
+			continue;
+
 		if (noIcons && f.drawAlpha < 0.01f)
 			continue;
 
@@ -933,7 +949,7 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 		if (!camera->InView(f.midPos, testRadius + (f.drawRadius * !fixedRadius)))
 			continue;
 
-		// add the unit
+		// add the feature
 		count++;
 		lua_pushnumber(L, f.id);
 		lua_rawseti(L, -2, count);

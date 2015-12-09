@@ -25,6 +25,9 @@ Lua:
      Spring.GetFeaturePiecePosDir
      Spring.GetFeaturePieceMatrix
 
+     Spring.SetFeatureNoDraw
+     Spring.GetFeatureNoDraw
+
      gl.FeatureRaw
      gl.FeatureMultMatrix
      gl.FeaturePiece

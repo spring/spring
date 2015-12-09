@@ -34,11 +34,10 @@ static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth, 
 
 static inline int PosAbsLuaIndex(lua_State* src, int index)
 {
-	if (index > 0) {
+	if (index > 0)
 		return index;
-	} else {
-		return (lua_gettop(src) + index + 1);
-	}
+
+	return (lua_gettop(src) + index + 1);
 }
 
 
@@ -538,7 +537,7 @@ int LuaUtils::ParseIntArray(lua_State* L, int index, int* array, int size)
 	if (!lua_istable(L, index))
 		return -1;
 
-	const int absIdx = (index > 0)? index: (lua_gettop(L) + index + 1);
+	const int absIdx = PosAbsLuaIndex(L, index);
 
 	for (int i = 0; i < size; i++) {
 		lua_rawgeti(L, absIdx, (i + 1));
@@ -559,7 +558,7 @@ int LuaUtils::ParseFloatArray(lua_State* L, int index, float* array, int size)
 	if (!lua_istable(L, index))
 		return -1;
 
-	const int absIdx = (index > 0)? index: (lua_gettop(L) + index + 1);
+	const int absIdx = PosAbsLuaIndex(L, index);
 
 	for (int i = 0; i < size; i++) {
 		lua_rawgeti(L, absIdx, (i + 1));

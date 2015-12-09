@@ -43,13 +43,13 @@
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
+#include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/CommandAI/CommandAI.h"
 #include "Game/UI/Groups/Group.h"
 #include "Game/UI/Groups/GroupHandler.h"
 #include "System/Config/ConfigHandler.h"
@@ -162,6 +162,8 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitNoMinimap);
 	REGISTER_LUA_CFUNC(SetUnitNoSelect);
 	REGISTER_LUA_CFUNC(SetUnitLeaveTracks);
+	REGISTER_LUA_CFUNC(SetFeatureNoDraw);
+	REGISTER_LUA_CFUNC(SetFeatureFade);
 
 	REGISTER_LUA_CFUNC(AddUnitIcon);
 	REGISTER_LUA_CFUNC(FreeUnitIcon);
@@ -254,81 +256,103 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 static inline CProjectile* ParseRawProjectile(lua_State* L, const char* caller, int index, bool synced)
 {
 	if (!lua_isnumber(L, index)) {
-		if (caller != NULL) {
-			luaL_error(L, "[%s] projectile ID parameter in %s() not a number\n", __FUNCTION__, caller);
-		}
-		return NULL;
+		luaL_error(L, "[%s] projectile ID parameter in %s() not a number\n", __FUNCTION__, caller);
+		return nullptr;
 	}
 
-	const int projID = lua_toint(L, index);
+	CProjectile* p = nullptr;
 
-	CProjectile* p = NULL;
 	if (synced) {
-		p = projectileHandler->GetProjectileBySyncedID(projID);
+		p = projectileHandler->GetProjectileBySyncedID(lua_toint(L, index));
 	} else {
-		p = projectileHandler->GetProjectileByUnsyncedID(projID);
+		p = projectileHandler->GetProjectileByUnsyncedID(lua_toint(L, index));
 	}
 
 	return p;
 }
 
+
 static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 {
 	if (!lua_isnumber(L, index)) {
-		if (caller != NULL) {
-			luaL_error(L, "[%s] unit ID parameter in %s() not a number\n", __FUNCTION__, caller);
-		}
-		return NULL;
+		luaL_error(L, "[%s] ID parameter in %s() not a number\n", __FUNCTION__, caller);
+		return nullptr;
 	}
 
-	const int unitID = lua_toint(L, index);
-	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits())) {
-		luaL_error(L, "%s(): Bad unitID: %d\n", caller, unitID);
+	return (unitHandler->GetUnit(lua_toint(L, index)));
+}
+
+static inline CFeature* ParseRawFeature(lua_State* L, const char* caller, int index)
+{
+	if (!lua_isnumber(L, index)) {
+		luaL_error(L, "[%s] ID parameter in %s() not a number\n", __FUNCTION__, caller);
+		return nullptr;
 	}
 
-	return unitHandler->units[unitID];
+	return (featureHandler->GetFeature(luaL_checkint(L, index)));
 }
 
 
 static inline CUnit* ParseAllyUnit(lua_State* L, const char* caller, int index)
 {
 	CUnit* unit = ParseRawUnit(L, caller, index);
-	if (unit == NULL) {
-		return NULL;
-	}
-	if (CLuaHandle::GetHandleReadAllyTeam(L) < 0) {
-		return CLuaHandle::GetHandleFullRead(L) ? unit : NULL;
-	}
-	return (unit->allyteam == CLuaHandle::GetHandleReadAllyTeam(L)) ? unit : NULL;
-}
 
+	if (unit == nullptr)
+		return nullptr;
 
-static inline CUnit* ParseCtrlUnit(lua_State* L,
-                                     const char* caller, int index)
-{
-	CUnit* unit = ParseRawUnit(L, caller, index);
-	if (unit == NULL) {
-		return NULL;
-	}
-	return (CanControlTeam(L, unit->team) ? unit : NULL);
-}
+	if (CLuaHandle::GetHandleReadAllyTeam(L) < 0)
+		return (CLuaHandle::GetHandleFullRead(L)? unit: nullptr);
 
-
-static inline CUnit* ParseSelectUnit(lua_State* L,
-                                     const char* caller, int index)
-{
-	CUnit* unit = ParseRawUnit(L, caller, index);
-	if (unit == NULL || unit->noSelect) {
-		return NULL;
-	}
-	const int selectTeam = CLuaHandle::GetHandleSelectTeam(L);
-	if (selectTeam < 0) {
-		return (selectTeam == CEventClient::AllAccessTeam) ? unit : NULL;
-	}
-	if (selectTeam == unit->team) {
+	if (unit->allyteam == CLuaHandle::GetHandleReadAllyTeam(L))
 		return unit;
-	}
-	return NULL;
+
+	return nullptr;
+}
+
+
+static inline CUnit* ParseCtrlUnit(lua_State* L, const char* caller, int index)
+{
+	CUnit* unit = ParseRawUnit(L, caller, index);
+
+	if (unit == nullptr)
+		return nullptr;
+
+	if (CanControlTeam(L, unit->team))
+		return unit;
+
+	return nullptr;
+}
+
+static inline CFeature* ParseCtrlFeature(lua_State* L, const char* caller, int index)
+{
+	CFeature* feature = ParseRawFeature(L, caller, index);
+
+	if (feature == nullptr)
+		return nullptr;
+
+	if (CanControlTeam(L, feature->team))
+		return feature;
+
+	return nullptr;
+}
+
+
+static inline CUnit* ParseSelectUnit(lua_State* L, const char* caller, int index)
+{
+	CUnit* unit = ParseRawUnit(L, caller, index);
+
+	if (unit == nullptr || unit->noSelect)
+		return nullptr;
+
+	const int selectTeam = CLuaHandle::GetHandleSelectTeam(L);
+
+	if (selectTeam < 0)
+		return ((selectTeam == CEventClient::AllAccessTeam)? unit: nullptr);
+
+	if (selectTeam == unit->team)
+		return unit;
+
+	return nullptr;
 }
 
 
@@ -1436,13 +1460,14 @@ int LuaUnsyncedCtrl::SetMapSquareTexture(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitNoDraw(lua_State* L)
 {
-	if (CLuaHandle::GetHandleUserMode(L)) {
+	if (CLuaHandle::GetHandleUserMode(L))
 		return 0;
-	}
+
 	CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == nullptr)
 		return 0;
-	}
+
 	unit->noDraw = luaL_checkboolean(L, 2);
 	return 0;
 }
@@ -1450,13 +1475,14 @@ int LuaUnsyncedCtrl::SetUnitNoDraw(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitNoMinimap(lua_State* L)
 {
-	if (CLuaHandle::GetHandleUserMode(L)) {
+	if (CLuaHandle::GetHandleUserMode(L))
 		return 0;
-	}
+
 	CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == nullptr)
 		return 0;
-	}
+
 	unit->noMinimap = luaL_checkboolean(L, 2);
 	return 0;
 }
@@ -1464,13 +1490,14 @@ int LuaUnsyncedCtrl::SetUnitNoMinimap(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitNoSelect(lua_State* L)
 {
-	if (CLuaHandle::GetHandleUserMode(L)) {
+	if (CLuaHandle::GetHandleUserMode(L))
 		return 0;
-	}
+
 	CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == nullptr)
 		return 0;
-	}
+
 	unit->noSelect = luaL_checkboolean(L, 2);
 
 	// deselect the unit if it's selected and shouldn't be
@@ -1487,13 +1514,45 @@ int LuaUnsyncedCtrl::SetUnitNoSelect(lua_State* L)
 int LuaUnsyncedCtrl::SetUnitLeaveTracks(lua_State* L)
 {
 	CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == nullptr)
 		return 0;
-	}
 
 	unit->leaveTracks = lua_toboolean(L, 2);
 	return 0;
 }
+
+
+int LuaUnsyncedCtrl::SetFeatureNoDraw(lua_State* L)
+{
+	if (CLuaHandle::GetHandleUserMode(L))
+		return 0;
+
+	CFeature* feature = ParseCtrlFeature(L, __FUNCTION__, 1);
+
+	if (feature == nullptr)
+		return 0;
+
+	feature->noDraw = luaL_checkboolean(L, 2);
+	return 0;
+}
+
+
+int LuaUnsyncedCtrl::SetFeatureFade(lua_State* L)
+{
+	// block LuaUI
+	if (CLuaHandle::GetHandleUserMode(L))
+		return 0;
+
+	CFeature* feature = ParseCtrlFeature(L, __FUNCTION__, 1);
+
+	if (feature == nullptr)
+		return 0;
+
+	feature->fade = luaL_checkboolean(L, 2);
+	return 0;
+}
+
 
 
 /******************************************************************************/

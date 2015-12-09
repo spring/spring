@@ -112,7 +112,6 @@ class LuaSyncedCtrl
 		static int RemoveGrass(lua_State* L);
 
 		static int SetFeatureAlwaysVisible(lua_State* L);
-		static int SetFeatureFade(lua_State* L);
 		static int SetFeatureHealth(lua_State* L);
 		static int SetFeatureReclaim(lua_State* L);
 		static int SetFeatureResurrect(lua_State* L);

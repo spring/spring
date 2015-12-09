@@ -176,7 +176,6 @@ CUnit::CUnit()
 , selfDCountdown(0)
 , cegDamage(1)
 
-, noDraw(false)
 , noMinimap(false)
 , leaveTracks(false)
 , isSelected(false)
@@ -2890,7 +2889,6 @@ CR_REG_METADATA(CUnit, (
 
 	CR_MEMBER(cegDamage),
 
-	CR_MEMBER_UN(noDraw),
 	CR_MEMBER_UN(noMinimap),
 	CR_MEMBER_UN(leaveTracks),
 

@@ -218,7 +218,6 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(RemoveGrass);
 
 	REGISTER_LUA_CFUNC(SetFeatureAlwaysVisible);
-	REGISTER_LUA_CFUNC(SetFeatureFade);
 	REGISTER_LUA_CFUNC(SetFeatureHealth);
 	REGISTER_LUA_CFUNC(SetFeatureReclaim);
 	REGISTER_LUA_CFUNC(SetFeatureResurrect);
@@ -2624,17 +2623,6 @@ int LuaSyncedCtrl::TransferFeature(lua_State* L)
 int LuaSyncedCtrl::SetFeatureAlwaysVisible(lua_State* L)
 {
 	return (SetWorldObjectAlwaysVisible(L, ParseFeature(L, __FUNCTION__, 1), __FUNCTION__));
-}
-
-
-int LuaSyncedCtrl::SetFeatureFade(lua_State* L)
-{
-	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
-		return 0;
-	}
-	feature->fade = luaL_checkboolean(L, 2);
-	return 0;
 }
 
 

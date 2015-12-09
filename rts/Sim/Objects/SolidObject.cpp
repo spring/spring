@@ -31,8 +31,9 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(blockEnemyPushing),
 	CR_MEMBER(blockHeightChanges),
 
-	CR_MEMBER(luaDraw),
-	CR_MEMBER(noSelect),
+	CR_MEMBER_UN(noDraw),
+	CR_MEMBER_UN(luaDraw),
+	CR_MEMBER_UN(noSelect),
 
 	CR_MEMBER(xsize),
 	CR_MEMBER(zsize),
@@ -91,6 +92,7 @@ CSolidObject::CSolidObject():
 	blockEnemyPushing(true),
 	blockHeightChanges(false),
 
+	noDraw(false),
 	luaDraw(false),
 	noSelect(false),
 

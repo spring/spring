@@ -500,7 +500,6 @@ public:
 
 
 	// unsynced vars
-	bool noDraw;
 	bool noMinimap;
 	bool leaveTracks;
 
