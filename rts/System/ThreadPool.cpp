@@ -79,7 +79,7 @@ bool HasThreads()
 /// returns false, when no further tasks were found
 static bool DoTask(boost::shared_lock<boost::shared_mutex>& lk_)
 {
-	if (waitForLock.load(std::memory_order_acquire))
+	if (waitForLock)
 		return true;
 
 #ifndef __MINGW32__
@@ -112,7 +112,7 @@ static bool DoTask(boost::shared_lock<boost::shared_mutex>& lk_)
 
 			if (foundEmpty) {
 				//FIXME this could be made lock-free too, but is it worth it?
-				waitForLock.store(true, std::memory_order_release);
+				waitForLock = true;
 				boost::unique_lock<boost::shared_mutex> ulk(taskMutex, boost::defer_lock);
 				while (!ulk.try_lock()) {}
 				for(auto it = taskGroups.begin(); it != taskGroups.end();) {
@@ -122,7 +122,7 @@ static bool DoTask(boost::shared_lock<boost::shared_mutex>& lk_)
 						++it;
 					}
 				}
-				waitForLock.store(false, std::memory_order_release);
+				waitForLock = false;
 				ulk.unlock();
 			}
 
@@ -193,11 +193,11 @@ void WaitForFinished(std::shared_ptr<ITaskGroup> taskgroup)
 
 void PushTaskGroup(std::shared_ptr<ITaskGroup> taskgroup)
 {
-	waitForLock.store(true, std::memory_order_release);
+	waitForLock = true;
 	boost::unique_lock<boost::shared_mutex> lk(taskMutex, boost::defer_lock);
 	while (!lk.try_lock()) {}
 	taskGroups.emplace_back(taskgroup);
-	waitForLock.store(false, std::memory_order_release);
+	waitForLock = false;
 	lk.unlock();
 	newTasks.notify_all();
 }
