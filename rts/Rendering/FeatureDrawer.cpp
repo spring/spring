@@ -263,9 +263,7 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType, int luaMatType)
 		const auto& featureBin = mdlRenderProxy.rendererTypes[modelType]->GetFeatureBin();
 
 		for (const auto& binElem: featureBin) {
-			if (modelType != MODELTYPE_3DO) {
-				texturehandlerS3O->SetS3oTexture(binElem.first);
-			}
+			CUnitDrawer::BindModelTypeTexture(modelType, binElem.first);
 
 			for (CFeature* f: binElem.second) {
 				// if <f> is supposed to be drawn faded, skip it during this pass
@@ -368,10 +366,7 @@ bool CFeatureDrawer::DrawIndividualPreCommon(const CFeature* feature)
 	unitDrawer->SetupForUnitDrawing(false);
 	modelRenderers[0].rendererTypes[MDL_TYPE(feature)]->PushRenderState();
 
-	if (MDL_TYPE(feature) != MODELTYPE_3DO) {
-		texturehandlerS3O->SetS3oTexture(TEX_TYPE(feature));
-	}
-
+	CUnitDrawer::BindModelTypeTexture(feature);
 	unitDrawer->SetTeamColour(feature->team, feature->drawAlpha);
 
 	return origDrawDebug;
@@ -409,6 +404,20 @@ void CFeatureDrawer::DrawIndividualNoTrans(const CFeature* feature, bool noLuaCa
 }
 
 
+
+
+static void SetFeatureAlphaMaterialFFP(const CFeature* f, bool set)
+{
+	const float cols[] = {1.0f, 1.0f, 1.0f, f->drawAlpha};
+
+	if (set) {
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, cols);
+	}
+
+	// hack, sorting objects by distance would look better
+	glAlphaFunc(GL_GREATER, f->drawAlpha * 0.5f);
+	glColor4fv(cols);
+}
 
 
 void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
@@ -465,10 +474,7 @@ void CFeatureDrawer::DrawFadeFeaturesHelper(int modelType, int luaMatType)
 		const auto& featureBin = mdlRenderProxy.rendererTypes[modelType]->GetFeatureBin();
 
 		for (const auto& binElem: featureBin) {
-			if (modelType != MODELTYPE_3DO) {
-				texturehandlerS3O->SetS3oTexture(binElem.first);
-			}
-
+			CUnitDrawer::BindModelTypeTexture(modelType, binElem.first);
 			DrawFadeFeaturesSet(binElem.second, modelType, luaMatType);
 		}
 	}
@@ -487,17 +493,7 @@ void CFeatureDrawer::DrawFadeFeaturesSet(const FeatureSet& fadeFeatures, int mod
 		if (LuaObjectDrawer::AddAlphaMaterialObject(f, LUAOBJ_FEATURE))
 			continue;
 
-
-		const float cols[] = {1.0f, 1.0f, 1.0f, f->drawAlpha};
-
-		if (modelType != MODELTYPE_3DO) {
-			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, cols);
-		}
-
-		// hack, sorting objects by distance would look better
-		glAlphaFunc(GL_GREATER, f->drawAlpha / 2.0f);
-		glColor4fv(cols);
-
+		SetFeatureAlphaMaterialFFP(f, modelType != MODELTYPE_3DO);
 		DrawFeature(f, 0, 0, false, false);
 	}
 }

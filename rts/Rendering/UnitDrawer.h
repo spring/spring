@@ -12,13 +12,14 @@
 #include "System/EventClient.h"
 
 struct UnitDef;
-class CWorldObject;
+struct S3DModel;
+
 class IWorldObjectModelRenderer;
+class CSolidObject;
 class CUnit;
-class CFeature;
+
 struct Command;
 struct BuildInfo;
-struct SolidObjectGroundDecal;
 struct GhostSolidObject;
 struct IUnitDrawerState;
 
@@ -160,6 +161,10 @@ private:
 	}
 
 public:
+	static void BindModelTypeTexture(int modelType, int texType, bool solo = false);
+	static void BindModelTypeTexture(const S3DModel* m, bool solo = false);
+	static void BindModelTypeTexture(const CSolidObject* o, bool solo = false);
+
 	static void SetupBasicS3OTexture0();
 	static void SetupBasicS3OTexture1();
 	static void CleanupBasicS3OTexture1();

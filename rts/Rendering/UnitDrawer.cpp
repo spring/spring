@@ -63,6 +63,45 @@ CONFIG(bool, AdvUnitShading).defaultValue(true).headlessValue(false).safemodeVal
 
 
 
+static const void BindShadowTex(const CS3OTextureHandler::S3OTexMat* textureMat) {
+	glActiveTexture(GL_TEXTURE0);
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, textureMat->tex2);
+}
+static const void KillShadowTex() {
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glDisable(GL_TEXTURE_2D);
+	glActiveTexture(GL_TEXTURE0);
+}
+
+static const std::function<void(int)> opaqueTexBindFuncs[MODELTYPE_OTHER * 2] = {
+	[](int texType) {                           (void)(texType); }, // 3DO (no-op, done by WOMR3DO::PushRenderState)
+	[](int texType) { texturehandlerS3O->SetS3oTexture(texType); }, // S3O
+	[](int texType) { texturehandlerS3O->SetS3oTexture(texType); }, // OBJ
+	[](int texType) { texturehandlerS3O->SetS3oTexture(texType); }, // ASS
+
+	[](int texType) { texturehandler3DO->Set3doAtlases(       ); }, // 3DO-solo
+	[](int texType) {            assert(false); (void)(texType); }, // S3O-solo; should never be called
+	[](int texType) {            assert(false); (void)(texType); }, // OBJ-solo; should never be called
+	[](int texType) {            assert(false); (void)(texType); }, // ASS-solo; should never be called
+};
+
+static const std::function<void(const CS3OTextureHandler::S3OTexMat*)> shadowTexBindFuncs[MODELTYPE_OTHER] = {
+	                  [](const CS3OTextureHandler::S3OTexMat* mat) {  (void)(mat); }, // 3DO (no-op)
+	BindShadowTex, // [](const CS3OTextureHandler::S3OTexMat* mat) { BindTex(mat); }, // S3O
+	BindShadowTex, // [](const CS3OTextureHandler::S3OTexMat* mat) { BindTex(mat); }, // OBJ
+	BindShadowTex, // [](const CS3OTextureHandler::S3OTexMat* mat) { BindTex(mat); }, // ASS
+};
+
+static const std::function<void()> shadowTexKillFuncs[MODELTYPE_OTHER] = {
+	                  []() {          ; }, // 3DO (no-op)
+	KillShadowTex, // []() { KillTex(); }, // S3O
+	KillShadowTex, // []() { KillTex(); }, // OBJ
+	KillShadowTex, // []() { KillTex(); }, // ASS
+};
+
+
+
 CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 {
 	eventHandler.AddClient(this);
@@ -167,6 +206,12 @@ CUnitDrawer::~CUnitDrawer()
 
 
 
+void CUnitDrawer::BindModelTypeTexture(int mdlType, int texType, bool solo) { opaqueTexBindFuncs[mdlType + solo * MODELTYPE_OTHER](texType); }
+void CUnitDrawer::BindModelTypeTexture(const     S3DModel* m, bool solo) { BindModelTypeTexture(m->type, m->textureType, solo); }
+void CUnitDrawer::BindModelTypeTexture(const CSolidObject* o, bool solo) { BindModelTypeTexture(o->model, solo); }
+
+
+
 void CUnitDrawer::SetUnitDrawDist(float dist)
 {
 	unitDrawDist = dist;
@@ -176,7 +221,7 @@ void CUnitDrawer::SetUnitDrawDist(float dist)
 void CUnitDrawer::SetUnitIconDist(float dist)
 {
 	unitIconDist = dist;
-	iconLength = 750 * unitIconDist * unitIconDist;
+	iconLength = 750.0f * unitIconDist * unitIconDist;
 }
 
 
@@ -280,9 +325,7 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool 
 	UnitBin::const_iterator unitBinIt;
 
 	for (unitBinIt = unitBin.begin(); unitBinIt != unitBin.end(); ++unitBinIt) {
-		if (modelType != MODELTYPE_3DO) {
-			texturehandlerS3O->SetS3oTexture(unitBinIt->first);
-		}
+		BindModelTypeTexture(modelType, unitBinIt->first);
 
 		for (CUnit* unit: unitBinIt->second) {
 			DrawOpaqueUnit(unit, excludeUnit, drawReflection, drawRefraction);
@@ -445,22 +488,13 @@ void CUnitDrawer::DrawOpaqueUnitsShadow(int modelType) {
 		const auto& unitSet = unitBinP.second;
 		const int textureType = unitBinP.first;
 
-		if (modelType != MODELTYPE_3DO) {
-			glActiveTexture(GL_TEXTURE0);
-			glEnable(GL_TEXTURE_2D);
-			const auto modelTex = texturehandlerS3O->GetS3oTex(textureType);
-			glBindTexture(GL_TEXTURE_2D, modelTex->tex2);
-		}
+		shadowTexBindFuncs[modelType](texturehandlerS3O->GetS3oTex(textureType));
 
 		for (const auto& unitSetP: unitSet) {
 			DrawOpaqueUnitShadow(unitSetP);
 		}
 
-		if (modelType != MODELTYPE_3DO) {
-			glBindTexture(GL_TEXTURE_2D, 0);
-			glDisable(GL_TEXTURE_2D);
-			glActiveTexture(GL_TEXTURE0);
-		}
+		shadowTexKillFuncs[modelType]();
 	}
 }
 
@@ -675,9 +709,7 @@ void CUnitDrawer::DrawCloakedUnitsHelper(int modelType)
 
 		// cloaked units
 		for (UnitRenderBinIt it = unitBin.begin(); it != unitBin.end(); ++it) {
-			if (modelType != MODELTYPE_3DO) {
-				texturehandlerS3O->SetS3oTexture(it->first);
-			}
+			BindModelTypeTexture(modelType, it->first);
 
 			const UnitSet& unitSet = it->second;
 
@@ -733,13 +765,11 @@ inline void CUnitDrawer::DrawCloakedUnit(CUnit* unit, int modelType, bool drawGh
 		glTranslatef3(unit->pos);
 		glRotatef(unit->buildFacing * 90.0f, 0, 1, 0);
 
-		if (modelType != MODELTYPE_3DO) {
-			// the units in liveGhostedBuildings[modelType] are not
-			// sorted by textureType, but we cannot merge them with
-			// cloakedModelRenderers[modelType] since they are not
-			// actually cloaked
-			texturehandlerS3O->SetS3oTexture(model->textureType);
-		}
+		// the units in liveGhostedBuildings[modelType] are not
+		// sorted by textureType, but we cannot merge them with
+		// cloakedModelRenderers[modelType] since they are not
+		// actually cloaked
+		BindModelTypeTexture(modelType, model->textureType);
 
 		SetTeamColour(unit->team, (losStatus & LOS_CONTRADAR) ? cloakAlpha2 : cloakAlpha1);
 		model->DrawStatic();
@@ -801,7 +831,7 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 	glColor4f(0.6f, 0.6f, 0.6f, cloakAlpha1);
 
 	// buildings that died while ghosted
-	for (std::vector<GhostSolidObject*>::iterator it = deadGhostedBuildings.begin(); it != deadGhostedBuildings.end(); ) {
+	for (auto it = deadGhostedBuildings.begin(); it != deadGhostedBuildings.end(); ) {
 		if (losHandler->InLos((*it)->pos, gu->myAllyTeam) || gu->spectatingFullView) {
 			// obtained LOS on the ghost of a dead building
 			groundDecals->GhostDestroyed(*it);
@@ -815,10 +845,9 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 				glTranslatef3((*it)->pos);
 				glRotatef((*it)->facing * 90.0f, 0, 1, 0);
 
-				if (modelType != MODELTYPE_3DO)
-					texturehandlerS3O->SetS3oTexture((*it)->model->textureType);
-
+				BindModelTypeTexture(modelType, (*it)->model->textureType);
 				SetTeamColour((*it)->team, cloakAlpha1);
+
 				(*it)->model->DrawStatic();
 				glPopMatrix();
 			}
@@ -973,10 +1002,7 @@ bool CUnitDrawer::DrawIndividualPreCommon(const CUnit* unit)
 	SetupForUnitDrawing(false);
 	opaqueModelRenderers[MDL_TYPE(unit)]->PushRenderState();
 
-	if (MDL_TYPE(unit) != MODELTYPE_3DO) {
-		texturehandlerS3O->SetS3oTexture(TEX_TYPE(unit));
-	}
-
+	BindModelTypeTexture(unit);
 	SetTeamColour(unit->team);
 
 	return origDrawDebug;
@@ -1035,15 +1061,9 @@ void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int team, float3 po
 
 	assert(teamHandler->IsValidTeam(team));
 	IUnitDrawerState::SetBasicTeamColor(team, 1.0f);
+
 	SetupBasicS3OTexture0();
-
-	switch (model->type) {
-		case MODELTYPE_3DO: {
-			texturehandler3DO->Set3doAtlases();
-		} break;
-		default: texturehandlerS3O->SetS3oTexture(model->textureType);
-	}
-
+	BindModelTypeTexture(model, true);
 	SetupBasicS3OTexture1();
 
 	/* Use the alpha given by glColor for the outgoing alpha.
@@ -1095,15 +1115,9 @@ void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
 	// get the team-coloured texture constructed by texunit 0
 	assert(teamHandler->IsValidTeam(team));
 	IUnitDrawerState::SetBasicTeamColor(team, 1.0f);
+
 	SetupBasicS3OTexture0();
-
-	switch (model->type) {
-		case MODELTYPE_3DO: {
-			texturehandler3DO->Set3doAtlases();
-		} break;
-		default: texturehandlerS3O->SetS3oTexture(model->textureType);
-	}
-
+	BindModelTypeTexture(model, true);
 	// tint it with the current glColor in texunit 1
 	SetupBasicS3OTexture1();
 

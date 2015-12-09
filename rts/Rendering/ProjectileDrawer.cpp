@@ -399,10 +399,7 @@ void CProjectileDrawer::DrawProjectiles(int modelType, bool drawReflection, bool
 	ProjectileBin& projectileBin = modelRenderers[modelType]->GetProjectileBinMutable();
 
 	for (ProjectileBinIt binIt = projectileBin.begin(); binIt != projectileBin.end(); ++binIt) {
-		if (modelType != MODELTYPE_3DO) {
-			texturehandlerS3O->SetS3oTexture(binIt->first);
-		}
-
+		CUnitDrawer::BindModelTypeTexture(modelType, binIt->first);
 		DrawProjectilesSet(binIt->second, drawReflection, drawRefraction);
 	}
 

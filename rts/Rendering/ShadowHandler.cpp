@@ -449,8 +449,6 @@ void CShadowHandler::SetShadowMatrix(const CMatrix44f& lightMatrix)
 	glOrtho(0, 1, 0, 1, 0, -1);
 
 	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
 	glLoadMatrixf(&shadowMatrix.m[0]);
 }
 

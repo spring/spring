@@ -173,9 +173,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	unitDrawer->GetOpaqueModelRenderer(model->type)->PushRenderState();
 	unitDrawer->SetTeamColour(obj->team);
 
-	if (model->type != MODELTYPE_3DO) {
-		texturehandlerS3O->SetS3oTexture(model->textureType);
-	}
+	CUnitDrawer::BindModelTypeTexture(model);
 
 	//const float xs = std::max(math::fabs(model->relMidPos.x + model->maxs.x), math::fabs(model->relMidPos.x + model->mins.x));
 	//const float ys = std::max(math::fabs(model->relMidPos.y + model->maxs.y), math::fabs(model->relMidPos.y + model->mins.y));

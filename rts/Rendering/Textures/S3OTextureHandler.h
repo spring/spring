@@ -46,18 +46,16 @@ public:
 
 public:
 	const S3OTexMat* GetS3oTex(unsigned int num) {
-		S3OTexMat* texMat = NULL;
-		texMat = (num < textures.size())? textures[num]: NULL;
-		return texMat;
+		if (num < textures.size())
+			return textures[num];
+
+		return nullptr;
 	}
 
 	void UpdateDraw();
 
 private:
 	S3OTexMat* InsertTextureMat(const S3DModel* model);
-
-	inline void DoUpdateDraw() {
-	}
 
 private:
 	typedef boost::unordered_map<std::string, CachedS3OTex> TextureCache;
@@ -69,7 +67,6 @@ private:
 	TextureTable textureTable; // stores (primary, secondary) texture-pairs by unique ident
 
 	std::vector<S3OTexMat*> textures;
-	std::vector<S3OTexMat*> texturesDraw;
 };
 
 extern CS3OTextureHandler* texturehandlerS3O;
