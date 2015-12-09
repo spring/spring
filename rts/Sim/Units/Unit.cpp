@@ -2812,7 +2812,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(commandAI),
 	CR_MEMBER(group),
 
-	CR_MEMBER(localModel),
 	CR_MEMBER(script),
 
 	CR_MEMBER(resourcesCondUse),
