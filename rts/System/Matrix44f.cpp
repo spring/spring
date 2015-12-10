@@ -226,24 +226,28 @@ CMatrix44f& CMatrix44f::Rotate(float rad, const float3 axis)
 }
 
 
+// multiply M by the scale-matrix (SX, SY, SZ, ST)
+//
+//  [SX][SY][SZ][ST]
+//  ----------------
+//  [sx   0   0   0]
+//  [ 0  sy   0   0]
+//  [ 0   0  sz   0]
+//  [ 0   0   0   1]
+//
 CMatrix44f& CMatrix44f::Scale(const float3 scales)
 {
 	m[ 0] *= scales.x;
-	m[ 1] *= scales.y;
-	m[ 2] *= scales.z;
+	m[ 1] *= scales.x;
+	m[ 2] *= scales.x;
 
-	m[ 4] *= scales.x;
+	m[ 4] *= scales.y;
 	m[ 5] *= scales.y;
-	m[ 6] *= scales.z;
+	m[ 6] *= scales.y;
 
-	m[ 8] *= scales.x;
-	m[ 9] *= scales.y;
+	m[ 8] *= scales.z;
+	m[ 9] *= scales.z;
 	m[10] *= scales.z;
-
-	m[12] *= scales.x;
-	m[13] *= scales.y;
-	m[14] *= scales.z;
-
 	return *this;
 }
 
