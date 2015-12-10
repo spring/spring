@@ -795,9 +795,6 @@ void CSMFReadMap::GridVisibility(CCamera* visCam, int quadSize, float maxDist, C
 	const int sxi = Clamp(cx - drawSquare, 0, drawQuadsX - 1);
 	const int exi = Clamp(cx + drawSquare, 0, drawQuadsX - 1);
 
-	if (extraSize == INT_MAX)
-		extraSize = 0;
-
 	const std::vector<CCamera::FrustumLine>& negSides = visCam->GetNegFrustumSides();
 	const std::vector<CCamera::FrustumLine>& posSides = visCam->GetPosFrustumSides();
 

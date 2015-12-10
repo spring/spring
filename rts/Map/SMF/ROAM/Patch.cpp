@@ -745,7 +745,7 @@ void Patch::UpdateVisibility(CCamera*& cam, std::vector<Patch>& patches, const i
 	static CPatchInViewChecker checker;
 
 	checker.ResetState(cam, &patches[0], numPatchesX);
-	readMap->GridVisibility(cam, PATCH_SIZE, 1e9, &checker, INT_MAX);
+	readMap->GridVisibility(cam, PATCH_SIZE, 1e9, &checker);
 	#endif
 }
 

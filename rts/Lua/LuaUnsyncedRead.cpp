@@ -781,7 +781,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 
 	{
 		unitQuadIter.ResetState();
-		readMap->GridVisibility(CCamera::GetCamera(CCamera::CAMTYPE_PLAYER), CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 1e9, &unitQuadIter, INT_MAX);
+		readMap->GridVisibility(nullptr, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 1e9, &unitQuadIter);
 
 		lua_createtable(L, unitQuadIter.GetObjectCount(), 0);
 
@@ -901,7 +901,7 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 
 	{
 		featureQuadIter.ResetState();
-		readMap->GridVisibility(CCamera::GetCamera(CCamera::CAMTYPE_PLAYER), CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 3000.0f * 2.0f, &featureQuadIter, INT_MAX);
+		readMap->GridVisibility(nullptr, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 3000.0f * 2.0f, &featureQuadIter);
 
 		lua_createtable(L, featureQuadIter.GetObjectCount(), 0);
 
@@ -984,7 +984,7 @@ int LuaUnsyncedRead::GetVisibleProjectiles(lua_State* L)
 
 	{
 		projQuadIter.ResetState();
-		readMap->GridVisibility(CCamera::GetCamera(CCamera::CAMTYPE_PLAYER), CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 1e9, &projQuadIter, INT_MAX);
+		readMap->GridVisibility(nullptr, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 1e9, &projQuadIter);
 
 		lua_createtable(L, projQuadIter.GetObjectCount(), 0);
 
