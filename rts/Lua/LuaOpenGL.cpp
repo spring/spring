@@ -1419,24 +1419,21 @@ int LuaOpenGL::UnitCommon(lua_State* L, bool applyTransform)
 
 	glPushAttrib(GL_ENABLE_BIT);
 
-	const std::function<void(CUnitDrawer*, const CUnit*, unsigned int, unsigned int, bool, bool)> rawDrawFuncs[2] = {
-		&CUnitDrawer::DrawUnitNoTrans,
-		&CUnitDrawer::DrawUnit,
-	};
-	const std::function<void(CUnitDrawer*, const CUnit*, bool)> matDrawFuncs[2] = {
-		&CUnitDrawer::DrawIndividualNoTrans,
-		&CUnitDrawer::DrawIndividual,
-	};
+	typedef void(CUnitDrawer::*RawDrawMemFunc)(const CUnit*, unsigned int, unsigned int, bool, bool);
+	typedef void(CUnitDrawer::*MatDrawMemFunc)(const CUnit*, bool);
+
+	const RawDrawMemFunc rawDrawFuncs[2] = {&CUnitDrawer::DrawUnitNoTrans, &CUnitDrawer::DrawUnit};
+	const MatDrawMemFunc matDrawFuncs[2] = {&CUnitDrawer::DrawIndividualNoTrans, &CUnitDrawer::DrawIndividual};
 
 	if (!useLuaMat) {
 		// "scoped" draw; this prevents any Lua-assigned
 		// material(s) from being used by the call below
 		(unit->GetLuaMaterialData())->PushLODCount(0);
-		rawDrawFuncs[applyTransform](unitDrawer, unit, 0, 0, false, noLuaCall);
+		(unitDrawer->*rawDrawFuncs[applyTransform])(unit, 0, 0, false, noLuaCall);
 		(unit->GetLuaMaterialData())->PopLODCount();
 	} else {
 		// draw with full Lua or default material state
-		matDrawFuncs[applyTransform](unitDrawer, unit, noLuaCall);
+		(unitDrawer->*matDrawFuncs[applyTransform])(unit, noLuaCall);
 	}
 
 	glPopAttrib();
@@ -1513,24 +1510,21 @@ int LuaOpenGL::FeatureCommon(lua_State* L, bool applyTransform)
 
 	glPushAttrib(GL_ENABLE_BIT);
 
-	const std::function<void(CFeatureDrawer*, const CFeature*, unsigned int, unsigned int, bool, bool)> rawDrawFuncs[2] = {
-		&CFeatureDrawer::DrawFeatureNoTrans,
-		&CFeatureDrawer::DrawFeature,
-	};
-	const std::function<void(CFeatureDrawer*, const CFeature*, bool)> matDrawFuncs[2] = {
-		&CFeatureDrawer::DrawIndividualNoTrans,
-		&CFeatureDrawer::DrawIndividual,
-	};
+	typedef void(CFeatureDrawer::*RawDrawMemFunc)(const CFeature*, unsigned int, unsigned int, bool, bool);
+	typedef void(CFeatureDrawer::*MatDrawMemFunc)(const CFeature*, bool);
+
+	const RawDrawMemFunc rawDrawFuncs[2] = {&CFeatureDrawer::DrawFeatureNoTrans, &CFeatureDrawer::DrawFeature};
+	const MatDrawMemFunc matDrawFuncs[2] = {&CFeatureDrawer::DrawIndividualNoTrans, &CFeatureDrawer::DrawIndividual};
 
 	if (!useLuaMat) {
 		// "scoped" draw; this prevents any Lua-assigned
 		// material(s) from being used by the call below
 		(feature->GetLuaMaterialData())->PushLODCount(0);
-		rawDrawFuncs[applyTransform](featureDrawer, feature, 0, 0, false, noLuaCall);
+		(featureDrawer->*rawDrawFuncs[applyTransform])(feature, 0, 0, false, noLuaCall);
 		(feature->GetLuaMaterialData())->PopLODCount();
 	} else {
 		// draw with full Lua or default material state
-		matDrawFuncs[applyTransform](featureDrawer, feature, noLuaCall);
+		(featureDrawer->*matDrawFuncs[applyTransform])(feature, noLuaCall);
 	}
 
 	glPopAttrib();

@@ -38,19 +38,55 @@ float LuaObjectDrawer::LODScaleReflection[LUAOBJ_LAST];
 float LuaObjectDrawer::LODScaleRefraction[LUAOBJ_LAST];
 
 
+
+#ifdef USE_STD_FUNCTION
+#define CALL_FUNC_NA(OBJ, FUN     ) (FUN)((OBJ)             )
+#define CALL_FUNC_VA(OBJ, FUN, ...) (FUN)((OBJ), __VA_ARGS__)
+
+typedef std::function<void(CEventHandler*)> EventFunc;
+typedef std::function<void(CUnitDrawer*,    const CUnit*,    unsigned int, unsigned int, bool, bool)>    UnitDrawFunc;
+typedef std::function<void(CFeatureDrawer*, const CFeature*, unsigned int, unsigned int, bool, bool)> FeatureDrawFunc;
+
+#else
+#define CALL_FUNC_NA(OBJ, FUN     ) ((OBJ)->*(FUN))(           )
+#define CALL_FUNC_VA(OBJ, FUN, ...) ((OBJ)->*(FUN))(__VA_ARGS__)
+
+// much nastier syntax especially for member functions
+// (another reason to use statics), but also much more
+// cache-friendly than std::function's ASM bloat
+//
+// (if only 'decltype(auto) unitDrawFuncs[2] = {&CUnitDrawer::DrawUnitNoTrans, ...}' would
+// work, or even 'std::array<auto, 2> unitDrawFuncs = {&CUnitDrawer::DrawUnitNoTrans, ...}'
+// while this can actually be done with C++11 forward magic, the code becomes unreadable)
+//
+typedef void(CEventHandler::*EventFunc)();
+typedef void(CUnitDrawer   ::*   UnitDrawFunc)(const CUnit*,    unsigned int, unsigned int, bool, bool);
+typedef void(CFeatureDrawer::*FeatureDrawFunc)(const CFeature*, unsigned int, unsigned int, bool, bool);
+
+#endif
+
+
+
+#ifdef USE_STD_ARRAY
+#define DECL_ARRAY(TYPE, NAME, SIZE) std::array<TYPE, SIZE> NAME
+#else
+#define DECL_ARRAY(TYPE, NAME, SIZE) TYPE NAME[SIZE]
+#endif
+
 // these should remain valid on reload
-static std::function<void(CEventHandler*)> eventFuncs[LUAOBJ_LAST] = {nullptr, nullptr};
+static DECL_ARRAY(      EventFunc,       eventFuncs, LUAOBJ_LAST) = {nullptr, nullptr};
+
 // transform and no-transform variants
-static std::function<void(CUnitDrawer*,    const CUnit*,    unsigned int, unsigned int, bool, bool)>    unitDrawFuncs[2] = {nullptr, nullptr};
-static std::function<void(CFeatureDrawer*, const CFeature*, unsigned int, unsigned int, bool, bool)> featureDrawFuncs[2] = {nullptr, nullptr};
+static DECL_ARRAY(   UnitDrawFunc,    unitDrawFuncs,           2) = {nullptr, nullptr};
+static DECL_ARRAY(FeatureDrawFunc, featureDrawFuncs,           2) = {nullptr, nullptr};
+
+static DECL_ARRAY(bool, notifyEventFlags, LUAOBJ_LAST) = {false, false};
+static DECL_ARRAY(bool, bufferClearFlags, LUAOBJ_LAST) = { true,  true};
+
+static const DECL_ARRAY(LuaMatType, opaqueMats, 2) = {LUAMAT_OPAQUE, LUAMAT_OPAQUE_REFLECT};
+static const DECL_ARRAY(LuaMatType,  alphaMats, 2) = {LUAMAT_ALPHA, LUAMAT_ALPHA_REFLECT};
 
 static GL::GeometryBuffer* geomBuffer = nullptr;
-
-static bool notifyEventFlags[LUAOBJ_LAST] = {false, false};
-static bool bufferClearFlags[LUAOBJ_LAST] = { true,  true};
-
-static const LuaMatType opaqueMats[2] = {LUAMAT_OPAQUE, LUAMAT_OPAQUE_REFLECT};
-static const LuaMatType  alphaMats[2] = {LUAMAT_ALPHA, LUAMAT_ALPHA_REFLECT};
 
 
 static float GetLODFloat(const std::string& name)
@@ -281,13 +317,13 @@ void LuaObjectDrawer::DrawObject(
 			// material has a standard (engine) shader attached
 			// (check if *Shader.type == LUASHADER_{3DO,S3O})
 			//
-			// must use static_cast here because of GetTransformMatrix (!)
 			unitDrawer->SetTeamColour(obj->team);
-			unitDrawFuncs[applyTrans](unitDrawer, static_cast<const CUnit*>(obj), preList, postList, true, noLuaCall);
+			// must use static_cast here because of GetTransformMatrix (!)
+			CALL_FUNC_VA(unitDrawer, unitDrawFuncs[applyTrans], static_cast<const CUnit*>(obj), preList, postList, true, noLuaCall);
 		} break;
 		case LUAOBJ_FEATURE: {
 			// also sets team-color (needs a specific alpha-value)
-			featureDrawFuncs[applyTrans](featureDrawer, static_cast<const CFeature*>(obj), preList, postList, true, noLuaCall);
+			CALL_FUNC_VA(featureDrawer, featureDrawFuncs[applyTrans], static_cast<const CFeature*>(obj), preList, postList, true, noLuaCall);
 		} break;
 		default: {
 			assert(false);
@@ -343,7 +379,7 @@ void LuaObjectDrawer::DrawDeferredPass(const CSolidObject* excludeObj, LuaObjTyp
 		// models and custom Lua material bins have been rendered
 		// into it) and unbound, notify scripts
 		assert(eventFuncs[objType] != nullptr);
-		eventFuncs[objType](&eventHandler);
+		CALL_FUNC_NA(&eventHandler, eventFuncs[objType]);
 	}
 }
 

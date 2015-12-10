@@ -378,8 +378,8 @@ inline void CCamera::glOrthoScaledSpring(
 ) {
 	const float l = -1.0f * sx;
 	const float r =  1.0f * sx;
-	const float t =  1.0f * sy;
 	const float b = -1.0f * sy;
+	const float t =  1.0f * sy;
 
 	glOrthoSpring(l, r,  b, t,  zn, zf);
 }
@@ -392,8 +392,8 @@ inline void CCamera::glOrthoSpring(
 	const float zn,
 	const float zf
 ) {
-	const float tx = -((r + l) / (r - l));
-	const float ty = -((t + b) / (t - b));
+	const float tx = -(( r +  l) / ( r -  l));
+	const float ty = -(( t +  b) / ( t -  b));
 	const float tz = -((zf + zn) / (zf - zn));
 
 	projectionMatrix[ 0] =  2.0f / (r - l);

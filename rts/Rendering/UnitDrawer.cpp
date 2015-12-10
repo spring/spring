@@ -63,41 +63,57 @@ CONFIG(bool, AdvUnitShading).defaultValue(true).headlessValue(false).safemodeVal
 
 
 
+static const void BindOpaqueTex(int texType) { texturehandlerS3O->SetS3oTexture(texType); }
+static const void BindOpaqueTexAtlas(int texType) { texturehandler3DO->Set3doAtlases(); }
+static const void BindOpaqueTexDummy(int texType) {}
+
+static const void BindShadowTexDummy(const CS3OTextureHandler::S3OTexMat* textureMat) {}
 static const void BindShadowTex(const CS3OTextureHandler::S3OTexMat* textureMat) {
 	glActiveTexture(GL_TEXTURE0);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, textureMat->tex2);
 }
+
+static const void KillShadowTexDummy() {}
 static const void KillShadowTex() {
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glDisable(GL_TEXTURE_2D);
 	glActiveTexture(GL_TEXTURE0);
 }
 
-static const std::function<void(int)> opaqueTexBindFuncs[MODELTYPE_OTHER * 2] = {
-	[](int texType) {                           (void)(texType); }, // 3DO (no-op, done by WOMR3DO::PushRenderState)
-	[](int texType) { texturehandlerS3O->SetS3oTexture(texType); }, // S3O
-	[](int texType) { texturehandlerS3O->SetS3oTexture(texType); }, // OBJ
-	[](int texType) { texturehandlerS3O->SetS3oTexture(texType); }, // ASS
 
-	[](int texType) { texturehandler3DO->Set3doAtlases(       ); }, // 3DO-solo
-	[](int texType) {            assert(false); (void)(texType); }, // S3O-solo; should never be called
-	[](int texType) {            assert(false); (void)(texType); }, // OBJ-solo; should never be called
-	[](int texType) {            assert(false); (void)(texType); }, // ASS-solo; should never be called
+
+// typedef std::function<void(int)>                                  BindOpaqueTexFunc;
+// typedef std::function<void(const CS3OTextureHandler::S3OTexMat*)> BindShadowTexFunc;
+// typedef std::function<void()>                                     KillShadowTexFunc;
+typedef const void (*BindOpaqueTexFunc)(int);
+typedef const void (*BindShadowTexFunc)(const CS3OTextureHandler::S3OTexMat*);
+typedef const void (*KillShadowTexFunc)();
+
+static const BindOpaqueTexFunc opaqueTexBindFuncs[MODELTYPE_OTHER * 2] = {
+	BindOpaqueTexDummy, // 3DO (no-op, done by WorldObjectModelRenderer3DO::PushRenderState)
+	BindOpaqueTex,      // S3O
+	BindOpaqueTex,      // OBJ
+	BindOpaqueTex,      // ASS
+
+	BindOpaqueTexAtlas, // 3DO-solo
+	BindOpaqueTexDummy, // S3O-solo; should never be called
+	BindOpaqueTexDummy, // OBJ-solo; should never be called
+	BindOpaqueTexDummy, // ASS-solo; should never be called
 };
 
-static const std::function<void(const CS3OTextureHandler::S3OTexMat*)> shadowTexBindFuncs[MODELTYPE_OTHER] = {
-	                  [](const CS3OTextureHandler::S3OTexMat* mat) {  (void)(mat); }, // 3DO (no-op)
-	BindShadowTex, // [](const CS3OTextureHandler::S3OTexMat* mat) { BindTex(mat); }, // S3O
-	BindShadowTex, // [](const CS3OTextureHandler::S3OTexMat* mat) { BindTex(mat); }, // OBJ
-	BindShadowTex, // [](const CS3OTextureHandler::S3OTexMat* mat) { BindTex(mat); }, // ASS
+static const BindShadowTexFunc shadowTexBindFuncs[MODELTYPE_OTHER] = {
+	BindShadowTexDummy, // 3DO (no-op)
+	BindShadowTex,      // S3O
+	BindShadowTex,      // OBJ
+	BindShadowTex,      // ASS
 };
 
-static const std::function<void()> shadowTexKillFuncs[MODELTYPE_OTHER] = {
-	                  []() {          ; }, // 3DO (no-op)
-	KillShadowTex, // []() { KillTex(); }, // S3O
-	KillShadowTex, // []() { KillTex(); }, // OBJ
-	KillShadowTex, // []() { KillTex(); }, // ASS
+static const KillShadowTexFunc shadowTexKillFuncs[MODELTYPE_OTHER] = {
+	KillShadowTexDummy, // 3DO (no-op)
+	KillShadowTex,      // S3O
+	KillShadowTex,      // OBJ
+	KillShadowTex,      // ASS
 };
 
 
