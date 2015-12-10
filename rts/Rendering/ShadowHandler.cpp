@@ -135,6 +135,7 @@ void CShadowHandler::Init()
 	}
 
 	// same as glOrtho(0, 1,  0, 1,  0, -1); maps [0,1] to [-1,1]
+	projMatrix.LoadIdentity();
 	projMatrix.Translate(-OnesVector);
 	projMatrix.Scale(OnesVector * 2.0f);
 
@@ -433,19 +434,14 @@ void CShadowHandler::SetShadowMatrix(const CMatrix44f& lightMatrix)
 	const float xyScale = GetShadowProjectionRadius(camera, centerPos, -lightMatrix.GetZ());
 	const float  zScale = globalRendering->viewRange;
 
-	// note: we can Scale() either before after Translate(), since
-	//
-	//   dot(A,  B)*K == (A.x*  B.x + A.y*  B.y + ...)*K == (A.x*B.x*K + A.y*B.y*K + ...)
-	//   dot(A*K,B)   == (A.x*K*B.x + A.y*K*B.y + ...)   == (A.x*B.x*K + A.y*B.y*K + ...)
-	//
 	viewMatrix.LoadIdentity();
 	viewMatrix.SetPos(ZeroVector);
 	viewMatrix.SetX(std::move(lightMatrix.GetX()));
 	viewMatrix.SetY(std::move(lightMatrix.GetY()));
 	viewMatrix.SetZ(std::move(lightMatrix.GetZ()));
+	viewMatrix.Scale(OnesVector / float3(xyScale, xyScale, zScale)); // reshape frustum
 	viewMatrix.Transpose(); // invert rotation (R^T == R^{-1})
 	viewMatrix.Translate(-centerPos); // move into sun-space
-	viewMatrix.Scale(OnesVector / float3(xyScale, xyScale, zScale)); // reshape frustum
 	viewMatrix.SetPos(viewMatrix.GetPos() + (FwdVector * 0.5f)); // add z-bias
 
 	glViewport(0, 0, shadowMapSize, shadowMapSize);
