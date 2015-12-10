@@ -54,7 +54,7 @@ float sqlength(vec2 v) {
 }
 
 
-void LoopIter(in out float maxDist, in out vec3 minDist, float i) {
+void LoopIter(inout float maxDist, inout vec3 minDist, float i) {
 	// 0____1____2
 	// |         |
 	// |         |
