@@ -74,11 +74,11 @@ typedef void(CFeatureDrawer::*FeatureDrawFunc)(const CFeature*, unsigned int, un
 #endif
 
 // these should remain valid on reload
-static DECL_ARRAY(      EventFunc,       eventFuncs, LUAOBJ_LAST) = {nullptr, nullptr};
+static DECL_ARRAY(EventFunc, eventFuncs, LUAOBJ_LAST) = {nullptr, nullptr};
 
 // transform and no-transform variants
-static DECL_ARRAY(   UnitDrawFunc,    unitDrawFuncs,           2) = {nullptr, nullptr};
-static DECL_ARRAY(FeatureDrawFunc, featureDrawFuncs,           2) = {nullptr, nullptr};
+static DECL_ARRAY(   UnitDrawFunc,    unitDrawFuncs, 2) = {nullptr, nullptr};
+static DECL_ARRAY(FeatureDrawFunc, featureDrawFuncs, 2) = {nullptr, nullptr};
 
 static DECL_ARRAY(bool, notifyEventFlags, LUAOBJ_LAST) = {false, false};
 static DECL_ARRAY(bool, bufferClearFlags, LUAOBJ_LAST) = { true,  true};
