@@ -1,5 +1,4 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
-
 #include <cfloat>
 
 #include "ShadowHandler.h"
@@ -134,6 +133,13 @@ void CShadowHandler::Init()
 		// shadowsLoaded is still false
 		return;
 	}
+
+	// same as glOrtho(0, 1,  0, 1,  0, -1); maps [0,1] to [-1,1]
+	projMatrix.Translate(-OnesVector);
+	projMatrix.Scale(OnesVector * 2.0f);
+
+	// same as glOrtho(-1, 1,  -1, 1,  -1, 1); just inverts Z
+	// projMatrix.SetZ(-FwdVector);
 
 	LoadShadowGenShaderProgs();
 }
@@ -432,24 +438,23 @@ void CShadowHandler::SetShadowMatrix(const CMatrix44f& lightMatrix)
 	//   dot(A,  B)*K == (A.x*  B.x + A.y*  B.y + ...)*K == (A.x*B.x*K + A.y*B.y*K + ...)
 	//   dot(A*K,B)   == (A.x*K*B.x + A.y*K*B.y + ...)   == (A.x*B.x*K + A.y*B.y*K + ...)
 	//
-	shadowMatrix.LoadIdentity();
-	shadowMatrix.SetPos(ZeroVector);
-	shadowMatrix.SetX(std::move(lightMatrix.GetX()));
-	shadowMatrix.SetY(std::move(lightMatrix.GetY()));
-	shadowMatrix.SetZ(std::move(lightMatrix.GetZ()));
-	shadowMatrix.Transpose(); // invert rotation (R^T == R^{-1})
-	shadowMatrix.Translate(-centerPos); // move into sun-space
-	shadowMatrix.Scale(OnesVector / float3(xyScale, xyScale, zScale)); // reshape frustum
-	shadowMatrix.SetPos(shadowMatrix.GetPos() + (FwdVector * 0.5f)); // add z-bias
+	viewMatrix.LoadIdentity();
+	viewMatrix.SetPos(ZeroVector);
+	viewMatrix.SetX(std::move(lightMatrix.GetX()));
+	viewMatrix.SetY(std::move(lightMatrix.GetY()));
+	viewMatrix.SetZ(std::move(lightMatrix.GetZ()));
+	viewMatrix.Transpose(); // invert rotation (R^T == R^{-1})
+	viewMatrix.Translate(-centerPos); // move into sun-space
+	viewMatrix.Scale(OnesVector / float3(xyScale, xyScale, zScale)); // reshape frustum
+	viewMatrix.SetPos(viewMatrix.GetPos() + (FwdVector * 0.5f)); // add z-bias
 
 	glViewport(0, 0, shadowMapSize, shadowMapSize);
 
 	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0, 1, 0, 1, 0, -1);
+	glLoadMatrixf(&projMatrix.m[0]);
 
 	glMatrixMode(GL_MODELVIEW);
-	glLoadMatrixf(&shadowMatrix.m[0]);
+	glLoadMatrixf(&viewMatrix.m[0]);
 }
 
 void CShadowHandler::CreateShadows()

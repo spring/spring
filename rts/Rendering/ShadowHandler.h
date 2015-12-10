@@ -56,8 +56,8 @@ public:
 		return shadowGenProgs[p];
 	}
 
-	const CMatrix44f& GetShadowMatrix   () const { return  shadowMatrix;      }
-	const      float* GetShadowMatrixRaw() const { return &shadowMatrix.m[0]; }
+	const CMatrix44f& GetShadowMatrix   () const { return  viewMatrix;      }
+	const      float* GetShadowMatrixRaw() const { return &viewMatrix.m[0]; }
 
 private:
 	void Init();
@@ -110,7 +110,8 @@ private:
 	/// xmid, ymid, p17, p18
 	float4 shadowTexProjCenter;
 
-	CMatrix44f shadowMatrix;
+	CMatrix44f projMatrix;
+	CMatrix44f viewMatrix;
 };
 
 extern CShadowHandler* shadowHandler;
