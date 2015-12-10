@@ -745,6 +745,9 @@ void Patch::UpdateVisibility(CCamera*& cam, std::vector<Patch>& patches, const i
 	static CPatchInViewChecker checker;
 
 	checker.ResetState(cam, &patches[0], numPatchesX);
+
+	// NOTE: other places (e.g. DynWater) might want different constraints
+	cam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 	readMap->GridVisibility(cam, PATCH_SIZE, 1e9, &checker);
 	#endif
 }

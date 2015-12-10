@@ -111,7 +111,6 @@ void CRoamMeshDrawer::Update()
 		cam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
 	}
 
-	cam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 	// Update Patch visibility
 	Patch::UpdateVisibility(cam, roamPatches, numPatchesX);
 
@@ -239,8 +238,6 @@ void CRoamMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 		cam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
 	}
 
-	// NOTE: other places (e.g. DynWater) might want different constraints
-	cam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 	Patch::UpdateVisibility(cam, roamPatches, numPatchesX);
 
 	for (std::vector<Patch>::iterator it = roamPatches.begin(); it != roamPatches.end(); ++it) {
