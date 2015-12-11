@@ -66,9 +66,6 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 		piece->primType = fp->primitiveType;
 		piece->name = (char*) &buf[fp->name];
 		piece->parent = parent;
-		if (parent != NULL) {
-			piece->parentName = parent->name;
-		}
 
 	piece->SetVertexCount(fp->numVertices);
 	piece->SetVertexDrawIndexCount(fp->vertexTableSize);

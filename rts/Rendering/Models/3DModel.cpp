@@ -127,6 +127,9 @@ void LocalModel::DrawPieces() const
 
 void LocalModel::DrawPiecesLOD(unsigned int lod) const
 {
+	if (lod > lodCount)
+		return;
+
 	for (const auto& p: pieces) {
 		p.DrawLOD(lod);
 	}

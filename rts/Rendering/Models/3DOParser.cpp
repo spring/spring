@@ -349,10 +349,6 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, in
 	S3DOPiece* piece = new S3DOPiece();
 		piece->name = s;
 		piece->parent = parent;
-		if (parent != NULL) {
-			piece->parentName = parent->name;
-		}
-
 		piece->offset.x =  me.XFromParent * SCALE_FACTOR_3DO;
 		piece->offset.y =  me.YFromParent * SCALE_FACTOR_3DO;
 		piece->offset.z = -me.ZFromParent * SCALE_FACTOR_3DO;

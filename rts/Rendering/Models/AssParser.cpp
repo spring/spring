@@ -214,6 +214,7 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 	}
 
 	ModelPieceMap pieceMap;
+	ParentNameMap parentMap;
 
 	S3DModel* model = new S3DModel();
 	model->name = modelFilePath;
@@ -226,10 +227,10 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 
 	// Load all pieces in the model
 	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Loading pieces from root node '%s'", scene->mRootNode->mName.data);
-	LoadPiece(model, scene->mRootNode, scene, modelTable, pieceMap);
+	LoadPiece(model, scene->mRootNode, scene, modelTable, pieceMap, parentMap);
 
 	// Update piece hierarchy based on metadata
-	BuildPieceHierarchy(model, pieceMap);
+	BuildPieceHierarchy(model, pieceMap, parentMap);
 	CalculateModelProperties(model, modelTable);
 
 	// Verbose logging of model properties
@@ -478,19 +479,25 @@ void CAssParser::SetPieceParentName(
 	SAssPiece* piece,
 	const S3DModel* model,
 	const aiNode* pieceNode,
-	const LuaTable& pieceTable
+	const LuaTable& pieceTable,
+	ParentNameMap& parentMap
 ) {
 	// Get parent name from metadata or model
 	if (pieceTable.KeyExists("parent")) {
-		piece->parentName = pieceTable.GetString("parent", "");
-	} else if (pieceNode->mParent != NULL) {
-		if (pieceNode->mParent->mParent != NULL) {
-			piece->parentName = std::string(pieceNode->mParent->mName.data);
-		} else {
-			// my parent is the root (which must already exist)
-			assert(model->GetRootPiece() != NULL);
-			piece->parentName = model->GetRootPiece()->name;
-		}
+		parentMap[piece] = pieceTable.GetString("parent", "");
+		return;
+	}
+
+	if (pieceNode->mParent == nullptr)
+		return;
+
+	if (pieceNode->mParent->mParent != nullptr) {
+		// parent is not the root
+		parentMap[piece] = std::string(pieceNode->mParent->mName.data);
+	} else {
+		// parent is the root (which must already exist)
+		assert(model->GetRootPiece() != nullptr);
+		parentMap[piece] = (model->GetRootPiece())->name;
 	}
 }
 
@@ -598,16 +605,17 @@ SAssPiece* CAssParser::LoadPiece(
 	const aiNode* pieceNode,
 	const aiScene* scene,
 	const LuaTable& modelTable,
-	ModelPieceMap& pieceMap
+	ModelPieceMap& pieceMap,
+	ParentNameMap& parentMap
 ) {
 	++model->numPieces;
 
 	SAssPiece* piece = new SAssPiece();
 
-	if (pieceNode->mParent == NULL) {
+	if (pieceNode->mParent == nullptr) {
 		// set the model's root piece ASAP, needed later
 		assert(pieceNode == scene->mRootNode);
-		assert(model->GetRootPiece() == NULL);
+		assert(model->GetRootPiece() == nullptr);
 		model->SetRootPiece(piece);
 	}
 
@@ -622,23 +630,29 @@ SAssPiece* CAssParser::LoadPiece(
 		LOG_SL(LOG_SECTION_PIECE, L_INFO, "Found metadata for piece '%s'", piece->name.c_str());
 	}
 
-	// Load transforms
+
 	LoadPieceTransformations(piece, model, pieceNode, pieceTable);
 
 	if (SetModelRadiusAndHeight(model, piece, pieceNode, pieceTable))
-		return NULL;
+		return nullptr;
 
 	LoadPieceGeometry(piece, pieceNode, scene);
-	SetPieceParentName(piece, model, pieceNode, pieceTable);
+	SetPieceParentName(piece, model, pieceNode, pieceTable, parentMap);
 
-	// Verbose logging of piece properties
-	LOG_SL(LOG_SECTION_PIECE, L_INFO, "Loaded model piece: %s with %d meshes", piece->name.c_str(), pieceNode->mNumMeshes);
-	LOG_SL(LOG_SECTION_PIECE, L_INFO, "piece->name: %s", piece->name.c_str());
-	LOG_SL(LOG_SECTION_PIECE, L_INFO, "piece->parent: %s", piece->parentName.c_str());
+	{
+		// operator[] creates an empty string if piece is not in map
+		const auto parentNameIt = parentMap.find(piece);
+		const std::string& parentName = (parentNameIt != parentMap.end())? (parentNameIt->second).c_str(): "[null]";
+
+		// Verbose logging of piece properties
+		LOG_SL(LOG_SECTION_PIECE, L_INFO, "Loaded model piece: %s with %d meshes", piece->name.c_str(), pieceNode->mNumMeshes);
+		LOG_SL(LOG_SECTION_PIECE, L_INFO, "piece->name: %s", piece->name.c_str());
+		LOG_SL(LOG_SECTION_PIECE, L_INFO, "piece->parent: %s", parentName.c_str());
+	}
 
 	// Recursively process all child pieces
 	for (unsigned int i = 0; i < pieceNode->mNumChildren; ++i) {
-		LoadPiece(model, pieceNode->mChildren[i], scene, modelTable, pieceMap);
+		LoadPiece(model, pieceNode->mChildren[i], scene, modelTable, pieceMap, parentMap);
 	}
 
 	pieceMap[piece->name] = piece;
@@ -647,28 +661,32 @@ SAssPiece* CAssParser::LoadPiece(
 
 
 // Because of metadata overrides we don't know the true hierarchy until all pieces have been loaded
-void CAssParser::BuildPieceHierarchy(S3DModel* model, ModelPieceMap& pieceMap)
+void CAssParser::BuildPieceHierarchy(S3DModel* model, ModelPieceMap& pieceMap, const ParentNameMap& parentMap)
 {
+	const char* fmt1 = "Missing piece '%s' declared as parent of '%s'.";
+	const char* fmt2 = "Missing root piece (parent of orphan '%s')";
+
 	// Loop through all pieces and create missing hierarchy info
 	for (auto it = pieceMap.cbegin(); it != pieceMap.cend(); ++it) {
 		SAssPiece* piece = static_cast<SAssPiece*>(it->second);
 
 		if (piece == model->GetRootPiece()) {
-			assert(piece->parent == NULL);
+			assert(piece->parent == nullptr);
 			assert(model->GetRootPiece() == piece);
 			continue;
 		}
 
-		if (!piece->parentName.empty()) {
-			const auto it = pieceMap.find(piece->parentName);
+		const auto parentNameIt = parentMap.find(piece);
 
-			if (it == pieceMap.end()) {
-				LOG_SL(LOG_SECTION_PIECE, L_ERROR,
-					"Missing piece '%s' declared as parent of '%s'.",
-					piece->parentName.c_str(), piece->name.c_str());
-			} else {
-				piece->parent = it->second;
+		if (parentNameIt != parentMap.end()) {
+			const std::string& parentName = parentNameIt->second;
+			const auto pieceIt = pieceMap.find(parentName);
+
+			if (pieceIt != pieceMap.end()) {
+				piece->parent = pieceIt->second;
 				piece->parent->children.push_back(piece);
+			} else {
+				LOG_SL(LOG_SECTION_PIECE, L_ERROR, fmt1, parentName.c_str(), piece->name.c_str());
 			}
 
 			continue;
@@ -676,8 +694,8 @@ void CAssParser::BuildPieceHierarchy(S3DModel* model, ModelPieceMap& pieceMap)
 
 		// a piece with no named parent that isn't the root (orphan)
 		// link these to the root piece if it exists (which it should)
-		if ((piece->parent = model->GetRootPiece()) == NULL) {
-			LOG_SL(LOG_SECTION_PIECE, L_ERROR, "Missing root piece");
+		if ((piece->parent = model->GetRootPiece()) == nullptr) {
+			LOG_SL(LOG_SECTION_PIECE, L_ERROR, fmt2, piece->name.c_str());
 		} else {
 			piece->parent->children.push_back(piece);
 		}
@@ -692,7 +710,7 @@ void CAssParser::CalculateModelDimensions(S3DModel* model, S3DModelPiece* piece)
 	piece->ComposeTransform(scaleRotMat, ZeroVector, ZeroVector, piece->scales);
 
 	// cannot set this until parent relations are known, so either here or in BuildPieceHierarchy()
-	piece->goffset = scaleRotMat.Mul(piece->offset) + ((piece->parent != NULL)? piece->parent->goffset: ZeroVector);
+	piece->goffset = scaleRotMat.Mul(piece->offset) + ((piece->parent != nullptr)? piece->parent->goffset: ZeroVector);
 
 	// update model min/max extents
 	model->mins = float3::min(piece->goffset + piece->mins, model->mins);

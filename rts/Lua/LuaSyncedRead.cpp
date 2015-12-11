@@ -5261,16 +5261,16 @@ static int GetSolidObjectPieceList(lua_State* L, const CSolidObject* o)
 }
 
 
-template<class ModelType>
-static int GetSolidObjectPieceInfoHelper(lua_State* L, const ModelType& op)
+
+static int GetSolidObjectPieceInfoHelper(lua_State* L, const S3DModelPiece& op)
 {
 	lua_newtable(L);
 	HSTR_PUSH_STRING(L, "name", op.name.c_str());
-	HSTR_PUSH_STRING(L, "parent", op.parentName.c_str());
+	HSTR_PUSH_STRING(L, "parent", ((op.parent != nullptr)? op.parent->name.c_str(): "[null]"));
 
 	HSTR_PUSH(L, "children");
 	lua_newtable(L);
-	for (int c = 0; c < (int)op.children.size(); c++) {
+	for (size_t c = 0; c < op.children.size(); c++) {
 		lua_pushsstring(L, op.children[c]->name);
 		lua_rawseti(L, -2, c + 1);
 	}

@@ -125,17 +125,12 @@ protected:
 
 public:
 	std::string name;
-	std::string parentName;
-
 	std::vector<S3DModelPiece*> children;
 
 	S3DModelPiece* parent;
 	CollisionVolume colvol;
 
 	AxisMappingType axisMapType;
-
-	bool hasGeometryData;      /// if piece contains any geometry data
-	bool hasIdentityRot;       /// if bakedRotMatrix is identity
 
 	CMatrix44f bakedRotMatrix; /// baked local-space rotations (assimp-only)
 
@@ -147,6 +142,9 @@ public:
 	float3 rotAxisSigns;
 
 protected:
+	bool hasGeometryData;      /// if piece contains any geometry data
+	bool hasIdentityRot;       /// if bakedRotMatrix is identity
+
 	unsigned int dispListID;
 
 	VBO vboIndices;
@@ -321,11 +319,12 @@ struct LocalModel
 
 
 	void Draw() const {
-		if (luaMaterialData.Enabled()) {
-			DrawLOD(luaMaterialData.GetCurrentLOD());
-		} else {
-			DrawNoLOD();
+		if (!luaMaterialData.Enabled()) {
+			DrawPieces();
+			return;
 		}
+
+		DrawPiecesLOD(luaMaterialData.GetCurrentLOD());
 	}
 
 	void Update(unsigned int frameNum) {
@@ -369,14 +368,6 @@ struct LocalModel
 
 private:
 	LocalModelPiece* CreateLocalModelPieces(const S3DModelPiece* mpParent);
-
-	void DrawNoLOD() const { DrawPieces(); }
-	void DrawLOD(unsigned int lod) const {
-		if (lod > lodCount)
-			return;
-
-		DrawPiecesLOD(lod);
-	}
 
 	void DrawPieces() const;
 	void DrawPiecesLOD(unsigned int lod) const;

@@ -14,7 +14,7 @@ namespace GL {
 			ATTACHMENT_DIFFTEX = 1, // diffuse texture fragments
 			ATTACHMENT_SPECTEX = 2, // specular texture fragments
 			ATTACHMENT_EMITTEX = 3, // emissive texture fragments
-			ATTACHMENT_MISCTEX = 4, // custom data for Lua UnitRendering shaders
+			ATTACHMENT_MISCTEX = 4, // custom data for LuaObjectRendering shaders
 			ATTACHMENT_ZVALTEX = 5, // fragment depth-values (must be last)
 			ATTACHMENT_COUNT   = 6,
 		};
@@ -24,10 +24,11 @@ namespace GL {
 
 		void Init(bool ctor);
 		void Kill(bool dtor);
-		void Clear();
+		void Clear() const;
 
 		void DetachTextures(const bool init);
-		void DrawDebug(unsigned int texID);
+		void DrawDebug(const unsigned int texID, const float2 texMins, const float2 texMaxs) const;
+		void DrawDebug(const unsigned int texID) const { DrawDebug(texID, float2(0.0f, 0.0f), float2(1.0f, 1.0f)); }
 		void SetName(const char* s) { name = s; }
 
 		bool HasAttachments() const { return (bufferTextureIDs[0] != 0); }

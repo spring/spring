@@ -131,10 +131,11 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 		#ifdef DUMP_UNIT_PIECE_DATA
 		for (const LocalModelPiece& lmp: pieces) {
 			const S3DModelPiece* omp = lmp.original;
+			const S3DModelPiece* par = omp->parent;
 			const float3& ppos = lmp.GetPosition();
 			const float3& prot = lmp.GetRotation();
 
-			file << "\t\t\t\tname: " << omp->name << " (parentName: " << omp->parentName << ")\n";
+			file << "\t\t\t\tname: " << omp->name << " (parentName: " << ((par != nullptr)? par->name: "[null]") << ")\n";
 			file << "\t\t\t\tpos: <" << ppos.x << ", " << ppos.y << ", " << ppos.z << ">\n";
 			file << "\t\t\t\trot: <" << prot.x << ", " << prot.y << ", " << prot.z << ">\n";
 			file << "\t\t\t\tvisible: " << lmp.scriptSetVisible << "\n";
