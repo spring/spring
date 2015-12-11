@@ -59,8 +59,6 @@ private:
 	unsigned int waveNormalVP;
 	unsigned int waveCopyHeightFP;
 	unsigned int waveCopyHeightVP;
-	unsigned int dwGroundRefractVP;
-	unsigned int dwGroundReflectIVP;
 	unsigned int dwDetailNormalVP;
 	unsigned int dwDetailNormalFP;
 	unsigned int dwAddSplashVP;
