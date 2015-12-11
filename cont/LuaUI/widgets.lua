@@ -442,6 +442,7 @@ function widgetHandler:LoadWidget(filename, fromZip)
     knownInfo.author   = widget.whInfo.author
     knownInfo.basename = widget.whInfo.basename
     knownInfo.filename = widget.whInfo.filename
+    knownInfo.enabled  = widget.whInfo.enabled or false
     knownInfo.fromZip  = fromZip
     self.knownWidgets[name] = knownInfo
     self.knownCount = self.knownCount + 1
