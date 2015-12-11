@@ -456,7 +456,7 @@ void main() {
 	gl_FragData[GBUFFER_DIFFTEX_IDX] = diffuseCol + detailCol;
 	gl_FragData[GBUFFER_SPECTEX_IDX] = specularCol;
 	gl_FragData[GBUFFER_EMITTEX_IDX] = emissionCol;
-	gl_FragData[GBUFFER_MISCTEX_IDX] = vec4(0.0);
+	gl_FragData[GBUFFER_MISCTEX_IDX] = vec4(0.0, 0.0, 0.0, 0.0);
 
 	// linearly transform the eye-space depths, might be more useful?
 	// gl_FragDepth = gl_FragCoord.z / gl_FragCoord.w;

@@ -32,6 +32,14 @@
 
 uniform int numModelDynLights;
 
+float GetShadowCoeff(vec4 shadowCoors)
+{
+	float coeff = shadow2DProj(shadowTex, shadowCoors).r;
+
+	coeff  = (1.0 - coeff);
+	coeff *= shadowDensity;
+	return (1.0 - coeff);
+}
 
 void main(void)
 {
@@ -45,7 +53,9 @@ void main(void)
 #else
 	vec3 normal = normalize(normalv);
 #endif
+
 	vec3 light = max(dot(normal, sunDir), 0.0) * sunDiffuse + sunAmbient;
+	vec3 shade = light;
 
 	vec4 diffuse     = texture2D(textureS3o1, gl_TexCoord[0].st);
 	vec4 extraColor  = texture2D(textureS3o2, gl_TexCoord[0].st);
@@ -55,16 +65,15 @@ void main(void)
 	vec3 reflection = textureCube(reflectTex,  reflectDir).rgb;
 
 #if (USE_SHADOWS == 1)
-	float shadow = shadow2DProj(shadowTex, gl_TexCoord[1] + vec4(0.0, 0.0, -0.00005, 0.0)).r;
-	shadow      = 1.0 - (1.0 - shadow) * shadowDensity;
-	vec3 shade  = mix(sunAmbient, light, shadow);
+	float shadow = GetShadowCoeff(gl_TexCoord[1] + vec4(0.0, 0.0, -0.00005, 0.0));
+
+	// no highlights if in shadow; decrease light to ambient level
+	specular *= shadow;
+	shade = mix(sunAmbient, light, shadow);
+#endif
+
 	reflection  = mix(shade, reflection, extraColor.g); // reflection
 	reflection += extraColor.rrr; // self-illum
-	specular   *= shadow;
-#else
-	reflection  = mix(light, reflection, extraColor.g); // reflection
-	reflection += extraColor.rrr; // self-illum
-#endif
 
 	#if (DEFERRED_MODE == 0)
 	gl_FragColor     = diffuse;
@@ -109,8 +118,9 @@ void main(void)
 	gl_FragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(diffuse.rgb, teamColor.rgb, diffuse.a), extraColor.a * teamColor.a);
 	// do not premultiply reflection, leave it to the deferred lighting pass
 	// gl_FragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(diffuse.rgb, teamColor.rgb, diffuse.a) * reflection, extraColor.a * teamColor.a);
-	gl_FragData[GBUFFER_SPECTEX_IDX] = vec4(specular, 1.0);
-	gl_FragData[GBUFFER_EMITTEX_IDX] = vec4(extraColor.r, extraColor.r, extraColor.r, 1.0);
+	// allows standard-lighting reconstruction by lazy materials using us
+	gl_FragData[GBUFFER_SPECTEX_IDX] = extraColor;
+	gl_FragData[GBUFFER_EMITTEX_IDX] = vec4(0.0, 0.0, 0.0, 0.0);
 	gl_FragData[GBUFFER_MISCTEX_IDX] = vec4(0.0, 0.0, 0.0, 0.0);
 	#else
 	gl_FragColor.rgb = mix(gl_Fog.color.rgb, gl_FragColor.rgb, fogFactor); // fog
