@@ -45,9 +45,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_DYN_WATER)
 #define WH_SIZE 2048
 */
 CDynWater::CDynWater()
-	: dwGroundRefractVP(0)
-	, dwGroundReflectIVP(0)
-	, camPosX(0)
+	: camPosX(0)
 	, camPosZ(0)
 {
 	if (!FBO::IsSupported()) {
