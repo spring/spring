@@ -17,7 +17,6 @@
 #include "Lua/LuaParser.h"
 #include "System/float3.h"
 #include "System/myMath.h"
-#include "System/StringConvertibleOptionalValue.h"
 
 // table placeholder (used for LuaTables)
 // example usage: DUMMYTAG(Defs, DefClass, table, customParams)
@@ -36,7 +35,7 @@ namespace {
 }
 
 // must be included after "std::ostream& operator<<" definitions for LLVM/Clang compilation
-#include "System/Util.h"
+#include "System/StringConvertibleOptionalValue.h"
 
 
 /**
