@@ -101,7 +101,6 @@ public:
 	void SaveGame(const std::string& filename, bool overwrite);
 
 	void ResizeEvent();
-	void SetupRenderingParams();
 
 	void SetDrawMode(GameDrawMode mode) { gameDrawMode = mode; }
 	GameDrawMode GetDrawMode() const { return gameDrawMode; }

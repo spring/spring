@@ -27,6 +27,9 @@ CONFIG(float, LODScaleReflection).defaultValue(1.0f);
 CONFIG(float, LODScaleRefraction).defaultValue(1.0f);
 
 
+
+GL::GeometryBuffer* LuaObjectDrawer::geomBuffer = nullptr;
+
 bool LuaObjectDrawer::inDrawPass = false;
 bool LuaObjectDrawer::drawDeferredEnabled = false;
 bool LuaObjectDrawer::drawDeferredAllowed = false;
@@ -86,7 +89,6 @@ static DECL_ARRAY(bool, bufferClearFlags, LUAOBJ_LAST) = { true,  true};
 static const DECL_ARRAY(LuaMatType, opaqueMats, 2) = {LUAMAT_OPAQUE, LUAMAT_OPAQUE_REFLECT};
 static const DECL_ARRAY(LuaMatType,  alphaMats, 2) = {LUAMAT_ALPHA, LUAMAT_ALPHA_REFLECT};
 
-static GL::GeometryBuffer* geomBuffer = nullptr;
 
 
 static float GetLODFloat(const std::string& name)
@@ -162,33 +164,52 @@ static void ResetShadowFeatureDrawState(unsigned int modelType, bool deferredPas
 
 
 
-void LuaObjectDrawer::Update(bool init)
+void LuaObjectDrawer::Init()
 {
-	if (init) {
-		eventFuncs[LUAOBJ_UNIT   ] = &CEventHandler::DrawUnitsPostDeferred;
-		eventFuncs[LUAOBJ_FEATURE] = &CEventHandler::DrawFeaturesPostDeferred;
+	eventFuncs[LUAOBJ_UNIT   ] = &CEventHandler::DrawUnitsPostDeferred;
+	eventFuncs[LUAOBJ_FEATURE] = &CEventHandler::DrawFeaturesPostDeferred;
 
-		unitDrawFuncs[false] = &CUnitDrawer::DrawUnitNoTrans;
-		unitDrawFuncs[ true] = &CUnitDrawer::DrawUnit;
+	unitDrawFuncs[false] = &CUnitDrawer::DrawUnitNoTrans;
+	unitDrawFuncs[ true] = &CUnitDrawer::DrawUnit;
 
-		featureDrawFuncs[false] = &CFeatureDrawer::DrawFeatureNoTrans;
-		featureDrawFuncs[ true] = &CFeatureDrawer::DrawFeature;
+	featureDrawFuncs[false] = &CFeatureDrawer::DrawFeatureNoTrans;
+	featureDrawFuncs[ true] = &CFeatureDrawer::DrawFeature;
 
-		drawDeferredAllowed = configHandler->GetBool("AllowDeferredModelRendering");
-		bufferClearAllowed = configHandler->GetBool("AllowDeferredModelBufferClear");
+	drawDeferredAllowed = configHandler->GetBool("AllowDeferredModelRendering");
+	bufferClearAllowed = configHandler->GetBool("AllowDeferredModelBufferClear");
 
-		geomBuffer = GetGeometryBuffer();
+	assert(geomBuffer == nullptr);
 
-		// handle a potential reload since our buffer is static
-		geomBuffer->Kill(false);
-		geomBuffer->Init(false);
-		geomBuffer->SetName("LUAOBJECTDRAWER-GBUFFER");
-	}
+	// cannot be a unique_ptr because it is leaked
+	geomBuffer = new GL::GeometryBuffer();
+	geomBuffer->SetName("LUAOBJECTDRAWER-GBUFFER");
+}
+
+void LuaObjectDrawer::Kill()
+{
+	eventFuncs[LUAOBJ_UNIT   ] = nullptr;
+	eventFuncs[LUAOBJ_FEATURE] = nullptr;
+
+	unitDrawFuncs[false] = nullptr;
+	unitDrawFuncs[ true] = nullptr;
+
+	featureDrawFuncs[false] = nullptr;
+	featureDrawFuncs[ true] = nullptr;
 
 	assert(geomBuffer != nullptr);
+	SafeDelete(geomBuffer);
+}
+
+
+void LuaObjectDrawer::Update(bool init)
+{
+	assert(geomBuffer != nullptr);
+
+	if (!drawDeferredAllowed)
+		return;
 
 	// update buffer only if it is valid
-	if (drawDeferredAllowed && (drawDeferredEnabled = geomBuffer->Valid())) {
+	if ((drawDeferredEnabled = geomBuffer->Valid())) {
 		drawDeferredEnabled &= (geomBuffer->Update(init));
 
 		notifyEventFlags[LUAOBJ_UNIT   ] = !unitDrawer->DrawForward();
@@ -203,12 +224,6 @@ void LuaObjectDrawer::Update(bool init)
 			bufferClearFlags[LUAOBJ_FEATURE] = bufferClearAllowed;
 		}
 	}
-}
-
-void LuaObjectDrawer::Kill()
-{
-	// run this so static de-init does not trigger asserts
-	geomBuffer->Kill(false);
 }
 
 

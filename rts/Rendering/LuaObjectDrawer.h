@@ -36,6 +36,7 @@ public:
 	static bool DrawSingleObjectNoTrans(const CSolidObject* obj, LuaObjType objType);
 
 	static void Update(bool init);
+	static void Init();
 	static void Kill();
 
 	static void SetObjectLOD(CSolidObject* obj, LuaObjType objType, unsigned int lodCount);
@@ -67,14 +68,10 @@ public:
 	static LuaMatType GetDrawPassAlphaMat();
 	static LuaMatType GetDrawPassShadowMat() { return LUAMAT_SHADOW; }
 
-	// shared by {Unit,Feature}Drawer; initialized
-	// on the first Update call (note: the pointer
-	// MUST already be valid during FeatureDrawer's
-	// ctor, which is called in PreLoadRendering)
-	static GL::GeometryBuffer* GetGeometryBuffer() {
-		static GL::GeometryBuffer buffer;
-		return &buffer;
-	}
+	// shared by {Unit,Feature}Drawer
+	// note: the pointer MUST already be valid during
+	// FeatureDrawer's ctor, in CWorldDrawer::LoadPre)
+	static GL::GeometryBuffer* GetGeometryBuffer() { return geomBuffer; }
 
 private:
 	static void DrawMaterialBins(LuaObjType objType, LuaMatType matType, bool deferredPass);
@@ -87,6 +84,8 @@ private:
 	);
 
 private:
+	static GL::GeometryBuffer* geomBuffer;
+
 	// whether we are currently in DrawMaterialBins
 	static bool inDrawPass;
 	// whether we can execute DrawDeferredPass

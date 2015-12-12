@@ -35,12 +35,10 @@
 #include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Rendering/WorldDrawer.h"
-#include "Rendering/Env/ISky.h"
 #include "Rendering/Env/IWater.h"
 #include "Rendering/Fonts/CFontTexture.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/CommandDrawer.h"
-#include "Rendering/FeatureDrawer.h"
 #include "Rendering/LineDrawer.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ProjectileDrawer.h"
@@ -50,12 +48,8 @@
 #include "Rendering/TeamHighlight.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
-#include "Rendering/Models/ModelDrawer.h"
-#include "Rendering/Models/IModelParser.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/NamedTextures.h"
-#include "Rendering/Textures/3DOTextureHandler.h"
-#include "Rendering/Textures/S3OTextureHandler.h"
 #include "Lua/LuaInputReceiver.h"
 #include "Lua/LuaHandle.h"
 #include "Lua/LuaGaia.h"
@@ -64,7 +58,6 @@
 #include "Lua/LuaParser.h"
 #include "Lua/LuaSyncedRead.h"
 #include "Lua/LuaUI.h"
-#include "Lua/LuaUnsyncedCtrl.h"
 #include "Lua/LuaUtils.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
@@ -560,36 +553,16 @@ void CGame::PostLoadSimulation()
 void CGame::PreLoadRendering()
 {
 	geometricObjects = new CGeometricObjects();
+	worldDrawer = new CWorldDrawer();
 
-	//! these need to be loaded before featureHandler
-	//! (maps with features have their models loaded at startup)
-	modelParser = new C3DModelLoader();
-
-	loadscreen->SetLoadMessage("Creating Unit Textures");
-	texturehandler3DO = new C3DOTextureHandler();
-	texturehandlerS3O = new CS3OTextureHandler();
-
-	featureDrawer = new CFeatureDrawer();
-	loadscreen->SetLoadMessage("Creating Sky");
-	sky = ISky::GetSky();
+	// load components that need to exist before PostLoadSimulation
+	worldDrawer->LoadPre();
 }
 
 void CGame::PostLoadRendering() {
-	worldDrawer = new CWorldDrawer();
+	worldDrawer->LoadPost();
 }
 
-void CGame::SetupRenderingParams()
-{
-	glLightfv(GL_LIGHT1, GL_AMBIENT, mapInfo->light.unitAmbientColor);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, mapInfo->light.unitSunColor);
-	glLightfv(GL_LIGHT1, GL_SPECULAR, mapInfo->light.unitAmbientColor);
-	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0);
-	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 0);
-
-	ISky::SetupFog();
-
-	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0.0f);
-}
 
 void CGame::LoadInterface()
 {
@@ -796,8 +769,6 @@ void CGame::KillRendering()
 	SafeDelete(infoTextureHandler);
 	SafeDelete(icon::iconHandler);
 	SafeDelete(geometricObjects);
-	SafeDelete(texturehandler3DO);
-	SafeDelete(texturehandlerS3O);
 	SafeDelete(worldDrawer);
 }
 
@@ -844,13 +815,10 @@ void CGame::KillSimulation()
 
 	LOG("[%s][2]", __FUNCTION__);
 	SafeDelete(featureHandler); // depends on unitHandler (via ~CFeature)
-	SafeDelete(unitHandler); // depends on modelParser (via ~CUnit)
+	SafeDelete(unitHandler);
 	SafeDelete(projectileHandler);
 
 	LOG("[%s][3]", __FUNCTION__);
-	SafeDelete(modelParser);
-
-	LOG("[%s][4]", __FUNCTION__);
 	IPathManager::FreeInstance(pathManager);
 
 	SafeDelete(readMap);
@@ -867,7 +835,7 @@ void CGame::KillSimulation()
 	SafeDelete(helper);
 	SafeDelete((mapInfo = const_cast<CMapInfo*>(mapInfo)));
 
-	LOG("[%s][5]", __FUNCTION__);
+	LOG("[%s][4]", __FUNCTION__);
 	CClassicGroundMoveType::DeleteLineTable();
 }
 
@@ -1088,17 +1056,11 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 
 	unitDrawer->Update();
 	lineDrawer.UpdateLineStipple();
+
 	if (doDrawWorld) {
-		worldDrawer->Update();
+		worldDrawer->Update(newSimFrame);
 		CNamedTextures::Update();
 		CFontTexture::Update();
-
-		if (newSimFrame) {
-			projectileDrawer->UpdateTextures();
-			sky->Update();
-			sky->GetLight()->Update();
-			water->Update();
-		}
 	}
 
 	static spring_time lastUnsyncedUpdateTime = spring_gettime();
@@ -1243,7 +1205,7 @@ bool CGame::Draw() {
 		minimap->Update();
 
 		if (doDrawWorld) {
-			worldDrawer->GenerateIBL();
+			worldDrawer->GenerateIBLTextures();
 		}
 	}
 
@@ -1258,16 +1220,8 @@ bool CGame::Draw() {
 	if (doDrawWorld) {
 		worldDrawer->Draw();
 	} else {
-		//reset fov
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		gluOrtho2D(0,1,0,1);
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-
-		glEnable(GL_BLEND);
-		glDisable(GL_DEPTH_TEST);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		// reset fov
+		worldDrawer->ResetMVPMatrices();
 	}
 
 	glDisable(GL_FOG);
