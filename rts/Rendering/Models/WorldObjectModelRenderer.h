@@ -43,24 +43,24 @@ public:
 	int GetNumProjectiles() const { return numProjectiles; }
 
 protected:
-	typedef std::vector<CUnit*>                       UnitSet;
-	typedef std::vector<CFeature*>                    FeatureSet;
-	typedef std::vector<CProjectile*>                 ProjectileSet;
+	typedef std::vector<      CUnit*>       UnitSet;
+	typedef std::vector<   CFeature*>    FeatureSet;
+	typedef std::vector<CProjectile*> ProjectileSet;
 
 	// textureType ==> modelSet
-	typedef std::map<int, UnitSet>                       UnitRenderBin;
-	typedef std::map<int, FeatureSet>                    FeatureRenderBin;
-	typedef std::map<int, ProjectileSet>                 ProjectileRenderBin;
+	typedef std::map<int,       UnitSet>       UnitRenderBin;
+	typedef std::map<int,    FeatureSet>    FeatureRenderBin;
+	typedef std::map<int, ProjectileSet> ProjectileRenderBin;
 
-	virtual void DrawModels(const UnitSet&);
-	virtual void DrawModels(const FeatureSet&);
+	virtual void DrawModels(const       UnitSet&);
+	virtual void DrawModels(const    FeatureSet&);
 	virtual void DrawModels(const ProjectileSet&);
-	virtual void DrawModel(const CUnit*) {}
-	virtual void DrawModel(const CFeature*) {}
+	virtual void DrawModel(const       CUnit*) {}
+	virtual void DrawModel(const    CFeature*) {}
 	virtual void DrawModel(const CProjectile*) {}
 
 	UnitRenderBin units;              // all opaque or all cloaked
-	FeatureRenderBin features;        // opaque and fade
+	FeatureRenderBin features;        // all (opaque and fade) or all shadow
 	ProjectileRenderBin projectiles;  // opaque only, (synced && (piece || weapon)) only
 
 	int modelType;

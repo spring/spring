@@ -507,7 +507,6 @@ public:
 	bool isIcon;
 	float iconRadius;
 
-	int lastDrawFrame;
 	unsigned int lastUnitUpdate;
 
 	std::string tooltip;

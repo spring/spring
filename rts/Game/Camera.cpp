@@ -169,17 +169,23 @@ void CCamera::UpdateViewPort(int px, int py, int sx, int sy)
 	viewport[3] = sy;
 }
 
-
-void CCamera::LoadMatrices()
+void CCamera::UpdateLoadViewPort(int px, int py, int sx, int sy)
 {
-	glMatrixMode(GL_PROJECTION);
-	glLoadMatrixf(&projectionMatrix[0]);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadMatrixf(&viewMatrix[0]);
+	UpdateViewPort(px, py, sx, sy);
+	LoadViewPort();
 }
 
-void CCamera::LoadViewPort()
+
+void CCamera::LoadMatrices() const
+{
+	glMatrixMode(GL_PROJECTION);
+	glLoadMatrixf(&projectionMatrix.m[0]);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadMatrixf(&viewMatrix.m[0]);
+}
+
+void CCamera::LoadViewPort() const
 {
 	glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 }
@@ -187,10 +193,10 @@ void CCamera::LoadViewPort()
 
 void CCamera::UpdateViewRange()
 {
-	const float azimuthCos       = forward.dot(UpVector);
 	const float maxDistToBorderX = std::max(pos.x, float3::maxxpos - pos.x);
 	const float maxDistToBorderZ = std::max(pos.z, float3::maxzpos - pos.z);
-	const float minViewRange     = (1.0f - azimuthCos) * math::sqrt(Square(maxDistToBorderX) + Square(maxDistToBorderZ));
+	const float maxDistToBorder  = math::sqrt(Square(maxDistToBorderX) + Square(maxDistToBorderZ));
+	const float minViewRange     = (1.0f - forward.dot(UpVector)) * maxDistToBorder;
 
 	float wantedViewRange = CGlobalRendering::MAX_VIEW_RANGE;
 

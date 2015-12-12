@@ -436,25 +436,30 @@ bool CUnitDrawer::CanDrawOpaqueUnit(
 	if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
 		return false;
 
+	const CCamera* cam = CCamera::GetActiveCamera();
+
+	assert(cam->GetCamType() != CCamera::CAMTYPE_SHADOW);
+
 	if (drawReflection) {
 		float3 zeroPos = unit->drawMidPos;
 
 		if (unit->drawMidPos.y >= 0.0f) {
-			const float dif = unit->drawMidPos.y - camera->GetPos().y;
+			const float dif = unit->drawMidPos.y - cam->GetPos().y;
 
-			zeroPos  = (camera->GetPos()  * (unit->drawMidPos.y / dif));
-			zeroPos += (unit->drawMidPos * (-camera->GetPos().y / dif));
+			zeroPos  = ( cam->GetPos()   * (unit->drawMidPos.y / dif));
+			zeroPos += (unit->drawMidPos * (  -cam->GetPos().y / dif));
 		}
+
 		if (CGround::GetApproximateHeight(zeroPos.x, zeroPos.z, false) > unit->drawRadius) {
-			return false;
-		}
-	} else if (drawRefraction) {
-		if (unit->pos.y > 0.0f) {
 			return false;
 		}
 	}
 
-	return (camera->InView(unit->drawMidPos, unit->drawRadius));
+	if (drawRefraction && !unit->IsInWater()) {
+		return false;
+	}
+
+	return (cam->InView(unit->drawMidPos, unit->drawRadius));
 }
 
 bool CUnitDrawer::CanDrawOpaqueUnitShadow(const CUnit* unit) const
@@ -466,12 +471,12 @@ bool CUnitDrawer::CanDrawOpaqueUnitShadow(const CUnit* unit) const
 	if (unit->isIcon)
 		return false;
 
-	// TODO: tree/grass/proj also uses CAMTYPE_PLAYER for in-view tests during SP
-	// const CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_SHADOW);
-	const CCamera* cam = camera;
+	const CCamera* cam = CCamera::GetActiveCamera();
+
+	assert(cam->GetCamType() == CCamera::CAMTYPE_SHADOW);
 
 	const bool unitInLOS = ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView);
-	const bool unitInView = cam->InView(unit->drawMidPos, unit->drawRadius + 700.0f);
+	const bool unitInView = cam->InView(unit->drawMidPos, unit->drawRadius);
 
 	if (!unitInLOS || !unitInView)
 		return false;

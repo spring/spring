@@ -123,8 +123,10 @@ void CubeMapHandler::UpdateReflectionTexture()
 	if (!unitDrawer->UseAdvShading())
 		return;
 
-
-	glViewport(0, 0, reflTexSize, reflTexSize);
+	// NOTE:
+	//   we unbind later in WorldDrawer::GenerateIBLTextures() to save render
+	//   context switches (which are one of the slowest OpenGL operations!)
+	//   together with VP restoration
 	reflectionCubeFBO.Bind();
 
 	switch (currReflectionFace) {
@@ -157,11 +159,6 @@ void CubeMapHandler::UpdateReflectionTexture()
 
 	currReflectionFace +=  1;
 	currReflectionFace %= 12;
-
-	// NOTE:
-	//   we do this later in WorldDrawer::GenerateIBLTextures() to save render
-	//   context switches (which are one of the slowest OpenGL operations!)
-	// reflectionCubeFBO.Unbind();
 }
 
 void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& camDir, bool skyOnly)
@@ -210,6 +207,7 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 		curCam->SetDir(camDir);
 		#endif
 
+		curCam->UpdateLoadViewPort(0, 0, reflTexSize, reflTexSize);
 		// update matrices (not dirs or viewport)
 		curCam->Update(false, true, false);
 

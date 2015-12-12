@@ -181,7 +181,6 @@ CUnit::CUnit()
 , isSelected(false)
 , isIcon(false)
 , iconRadius(0.0f)
-, lastDrawFrame(-30)
 , lastUnitUpdate(0)
 , group(nullptr)
 , myTrack(NULL)
@@ -2895,7 +2894,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER_UN(isIcon),
 	CR_MEMBER(iconRadius),
 
-	CR_MEMBER_UN(lastDrawFrame),
 	CR_MEMBER(lastUnitUpdate),
 
 	CR_MEMBER_UN(tooltip),

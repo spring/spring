@@ -202,7 +202,8 @@ void CWorldDrawer::GenerateIBLTextures() const
 	if (FBO::IsSupported())
 		FBO::Unbind();
 
-	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+	// restore the normal active camera's VP
+	camera->LoadViewPort();
 }
 
 void CWorldDrawer::ResetMVPMatrices() const
@@ -272,6 +273,7 @@ void CWorldDrawer::DrawOpaqueObjects() const
 		SCOPED_TIMER("WorldDrawer::Water");
 
 		water->OcclusionQuery();
+
 		if (water->DrawSolid()) {
 			water->UpdateWater(game);
 			water->Draw();

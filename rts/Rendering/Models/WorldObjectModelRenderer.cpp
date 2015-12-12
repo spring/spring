@@ -132,10 +132,13 @@ void IWorldObjectModelRenderer::DelFeature(const CFeature* f)
 {
 	FeatureSet& fs = features[TEX_TYPE(f)];
 
-	if (!VectorErase(fs, const_cast<CFeature*>(f)))
-		assert(false);
+	if (VectorErase(fs, const_cast<CFeature*>(f))) {
+		numFeatures -= 1;
+	}
 
-	numFeatures -= 1;
+	if (fs.empty()) {
+		features.erase(TEX_TYPE(f));
+	}
 }
 
 

@@ -122,6 +122,10 @@ public:
 	const CMatrix44f& GetViewProjectionMatrixInverse() const { return viewProjectionMatrixInverse; }
 	const CMatrix44f& GetBillBoardMatrix() const { return billboardMatrix; }
 
+	void LoadMatrices() const;
+	void LoadViewPort() const;
+	void UpdateLoadViewPort(int px, int py, int sx, int sy);
+
 	void SetFov(const float fov);
 
 	float GetFov() const { return fov; }
@@ -184,9 +188,6 @@ private:
 	void UpdateFrustum();
 	void UpdateMatrices();
 	void UpdateViewPort(int px, int py, int sx, int sy);
-
-	void LoadMatrices();
-	void LoadViewPort();
 
 	void gluPerspectiveSpring(const float aspect, const float zn, const float zf);
 	void glFrustumSpring(const float l, const float r,  const float b, const float t,  const float zn, const float zf);
