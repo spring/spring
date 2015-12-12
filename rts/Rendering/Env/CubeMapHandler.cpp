@@ -158,13 +158,10 @@ void CubeMapHandler::UpdateReflectionTexture()
 	currReflectionFace +=  1;
 	currReflectionFace %= 12;
 
-	#if 0
 	// NOTE:
-	//   we do this later in GenerateIBL() to save render context
-	//   switches (which are one of the slowest OpenGL operations!)
-	reflectionCubeFBO.Unbind();
-	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
-	#endif
+	//   we do this later in WorldDrawer::GenerateIBLTextures() to save render
+	//   context switches (which are one of the slowest OpenGL operations!)
+	// reflectionCubeFBO.Unbind();
 }
 
 void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& camDir, bool skyOnly)
@@ -213,8 +210,8 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 		curCam->SetDir(camDir);
 		#endif
 
-		// calculate matrices
-		curCam->Update(false);
+		// update matrices (not dirs or viewport)
+		curCam->Update(false, true, false);
 
 		// generate the face
 		game->SetDrawMode(CGame::gameReflectionDraw);

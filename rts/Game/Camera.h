@@ -58,7 +58,7 @@ public:
 	CCamera(unsigned int cameraType);
 
 	void CopyState(const CCamera*);
-	void Update(bool updateDirs = true);
+	void Update(bool updateDirs = true, bool updateMats = true, bool updatePort = true);
 
 	/// @param fov in degree
 	void SetPos(const float3& p) { pos = p; }
@@ -100,6 +100,19 @@ public:
 
 	const std::vector<FrustumLine>& GetNegFrustumSides() const { return negFrustumSides; }
 	const std::vector<FrustumLine>& GetPosFrustumSides() const { return posFrustumSides; }
+
+	void SetProjMatrix(const CMatrix44f& mat) { projectionMatrix = mat; }
+	void SetViewMatrix(const CMatrix44f& mat) {
+		viewMatrix = mat;
+
+		// FIXME: roll-angle might not be 0
+		pos = viewMatrix.GetPos();
+		rot = GetRotFromDir(viewMatrix.GetZ());
+
+		forward = viewMatrix.GetZ();
+		right   = viewMatrix.GetX();
+		up      = viewMatrix.GetY();
+	}
 
 	const CMatrix44f& GetViewMatrix() const { return viewMatrix; }
 	const CMatrix44f& GetViewMatrixInverse() const { return viewMatrixInverse; }
@@ -167,9 +180,13 @@ public:
 	}
 
 private:
-	void ComputeViewRange();
+	void UpdateViewRange();
 	void UpdateFrustum();
 	void UpdateMatrices();
+	void UpdateViewPort(int px, int py, int sx, int sy);
+
+	void LoadMatrices();
+	void LoadViewPort();
 
 	void gluPerspectiveSpring(const float aspect, const float zn, const float zf);
 	void glFrustumSpring(const float l, const float r,  const float b, const float t,  const float zn, const float zf);

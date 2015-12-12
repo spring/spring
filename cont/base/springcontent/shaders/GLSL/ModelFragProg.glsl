@@ -120,7 +120,7 @@ void main(void)
 	gl_FragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(diffuse.rgb, teamColor.rgb, diffuse.a), extraColor.a * teamColor.a);
 	// do not premultiply reflection, leave it to the deferred lighting pass
 	// gl_FragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(diffuse.rgb, teamColor.rgb, diffuse.a) * reflection, extraColor.a * teamColor.a);
-	// allows standard-lighting reconstruction by lazy materials using us
+	// allows standard-lighting reconstruction by lazy LuaMaterials using us
 	gl_FragData[GBUFFER_SPECTEX_IDX] = extraColor;
 	gl_FragData[GBUFFER_EMITTEX_IDX] = vec4(0.0, 0.0, 0.0, 0.0);
 	gl_FragData[GBUFFER_MISCTEX_IDX] = vec4(0.0, 0.0, 0.0, 0.0);

@@ -43,9 +43,6 @@ CCamera::CCamera(unsigned int cameraType)
 	, camType(cameraType)
 	, projType((cameraType == CAMTYPE_SHADOW)? PROJTYPE_ORTHO: PROJTYPE_PERSP)
 {
-	// place us at center of the map
-	pos = float3(mapDims.mapx * 0.5f * SQUARE_SIZE, 1000.f, mapDims.mapy * 0.5f * SQUARE_SIZE);
-
 	memset(viewport, 0, 4 * sizeof(int));
 	memset(movState, 0, sizeof(movState));
 	memset(rotState, 0, sizeof(rotState));
@@ -69,27 +66,27 @@ void CCamera::CopyState(const CCamera* cam) {
 	camType   = cam->GetCamType();
 }
 
-void CCamera::Update(bool updateDirs)
+void CCamera::Update(bool updateDirs, bool updateMats, bool updatePort)
 {
-	if (updateDirs) {
-		UpdateDirsFromRot(rot);
-	}
-
 	if (globalRendering->viewSizeY <= 0) {
 		lppScale = 0.0f;
 	} else {
 		lppScale = (2.0f * tanHalfFov) / globalRendering->viewSizeY;
 	}
 
-	ComputeViewRange();
-	UpdateFrustum();
-	UpdateMatrices();
+	if (updateDirs)
+		UpdateDirsFromRot(rot);
+	if (updateMats)
+		UpdateMatrices();
+	if (updatePort)
+		UpdateViewPort(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 
-	// viewport
-	viewport[0] = 0;
-	viewport[1] = 0;
-	viewport[2] = globalRendering->viewSizeX;
-	viewport[3] = globalRendering->viewSizeY;
+	UpdateViewRange();
+	UpdateFrustum();
+
+	LoadMatrices();
+	// not done here
+	// LoadViewPort();
 }
 
 void CCamera::UpdateFrustum()
@@ -127,7 +124,7 @@ void CCamera::UpdateFrustum()
 
 void CCamera::UpdateMatrices()
 {
-	// store and apply the projection transform
+	// recalculate the projection transform
 	switch (projType) {
 		case PROJTYPE_PERSP: {
 			gluPerspectiveSpring(globalRendering->aspectRatio, globalRendering->zNear, globalRendering->viewRange);
@@ -148,7 +145,7 @@ void CCamera::UpdateMatrices()
 	const float3 camPos = pos + posOffset;
 	const float3 center = camPos + fShake;
 
-	// store and apply the view transform
+	// recalculate the view transform
 	gluLookAtSpring(camPos, center, up);
 
 
@@ -164,15 +161,38 @@ void CCamera::UpdateMatrices()
 	billboardMatrix.Transpose(); // viewMatrix is affine, equals inverse
 }
 
-
-void CCamera::ComputeViewRange()
+void CCamera::UpdateViewPort(int px, int py, int sx, int sy)
 {
-	float wantedViewRange = CGlobalRendering::MAX_VIEW_RANGE;
+	viewport[0] = px;
+	viewport[1] = py;
+	viewport[2] = sx;
+	viewport[3] = sy;
+}
 
+
+void CCamera::LoadMatrices()
+{
+	glMatrixMode(GL_PROJECTION);
+	glLoadMatrixf(&projectionMatrix[0]);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadMatrixf(&viewMatrix[0]);
+}
+
+void CCamera::LoadViewPort()
+{
+	glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+}
+
+
+void CCamera::UpdateViewRange()
+{
 	const float azimuthCos       = forward.dot(UpVector);
 	const float maxDistToBorderX = std::max(pos.x, float3::maxxpos - pos.x);
 	const float maxDistToBorderZ = std::max(pos.z, float3::maxzpos - pos.z);
 	const float minViewRange     = (1.0f - azimuthCos) * math::sqrt(Square(maxDistToBorderX) + Square(maxDistToBorderZ));
+
+	float wantedViewRange = CGlobalRendering::MAX_VIEW_RANGE;
 
 	// Camera-height dependent (i.e. TAB-view)
 	wantedViewRange = std::max(wantedViewRange, (pos.y - std::max(0.0f, readMap->GetCurrMinHeight())) * 2.4f);
@@ -249,7 +269,7 @@ float3 CCamera::GetRotFromDir(float3 fwd)
 	//   atan2(0.0,  0.0) returns 0.0
 	//   atan2(0.0, -0.0) returns PI
 	//   azimuth (yaw) 0 is on negative z-axis
-	//
+	//   roll-angle (rot.z) is always 0 by default
 	float3 r;
 	r.x = math::acos(fwd.y);
 	r.y = math::atan2(fwd.x, -fwd.z);
@@ -364,9 +384,6 @@ inline void CCamera::glFrustumSpring(
 	projectionMatrix[13] =   0.0f;
 	projectionMatrix[14] = -(2.0f * zf * zn) / (zf - zn);
 	projectionMatrix[15] =   0.0f;
-
-	glMatrixMode(GL_PROJECTION);
-	glLoadMatrixf(projectionMatrix);
 }
 
 // same as glOrtho(-1, 1, -1, 1, zn, zf) plus glScalef(sx, sy, 1)
@@ -415,9 +432,6 @@ inline void CCamera::glOrthoSpring(
 	projectionMatrix[13] = ty;
 	projectionMatrix[14] = tz;
 	projectionMatrix[15] = 1.0f;
-
-	glMatrixMode(GL_PROJECTION);
-	glLoadMatrixf(projectionMatrix);
 }
 
 inline void CCamera::gluLookAtSpring(const float3& eye, const float3& center, const float3& up)
@@ -442,9 +456,6 @@ inline void CCamera::gluLookAtSpring(const float3& eye, const float3& center, co
 	viewMatrix[12] = ( s.x * -eye.x) + ( s.y * -eye.y) + ( s.z * -eye.z);
 	viewMatrix[13] = ( u.x * -eye.x) + ( u.y * -eye.y) + ( u.z * -eye.z);
 	viewMatrix[14] = (-f.x * -eye.x) + (-f.y * -eye.y) + (-f.z * -eye.z);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadMatrixf(viewMatrix);
 }
 
 

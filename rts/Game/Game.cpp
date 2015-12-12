@@ -1220,7 +1220,6 @@ bool CGame::Draw() {
 	if (doDrawWorld) {
 		worldDrawer->Draw();
 	} else {
-		// reset fov
 		worldDrawer->ResetMVPMatrices();
 	}
 

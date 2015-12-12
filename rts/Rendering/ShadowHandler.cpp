@@ -27,7 +27,7 @@
 #include "System/myMath.h"
 #include "System/Log/ILog.h"
 
-#define SHADOWMATRIX_NONLINEAR      0
+#define SHADOWMATRIX_NONLINEAR 0
 
 CONFIG(int, Shadows).defaultValue(2).headlessValue(-1).minimumValue(-1).safemodeValue(-1).description("Sets whether shadows are rendered.\n-1:=forceoff, 0:=off, 1:=full, 2:=fast (skip terrain)"); //FIXME document bitmask
 CONFIG(int, ShadowMapSize).defaultValue(CShadowHandler::DEF_SHADOWMAP_SIZE).minimumValue(32).description("Sets the resolution of shadows. Higher numbers increase quality at the cost of performance.");
@@ -405,7 +405,7 @@ static CMatrix44f ComposeLightMatrix(const ISkyLight* light)
 	return lightMatrix;
 }
 
-void CShadowHandler::SetShadowMatrix(const CMatrix44f& lightMatrix)
+void CShadowHandler::SetShadowMatrix(CCamera* playerCam, CCamera* lightCam)
 {
 	// NOTE:
 	//     the xy-scaling factors from CalcMinMaxView do not change linearly
@@ -431,26 +431,25 @@ void CShadowHandler::SetShadowMatrix(const CMatrix44f& lightMatrix)
 	//     when DynamicSun is enabled, the orbit is always circular in the xz
 	//     plane, instead of elliptical when the map has an aspect-ratio != 1
 	//
-	const float xyScale = GetShadowProjectionRadius(camera, centerPos, -lightMatrix.GetZ());
-	const float  zScale = globalRendering->viewRange;
+	const CMatrix44f lightMatrix = std::move(ComposeLightMatrix(sky->GetLight()));
+	const float3 viewScales = GetShadowProjectionScales(playerCam, -lightMatrix.GetZ());
 
 	viewMatrix.LoadIdentity();
 	viewMatrix.SetPos(ZeroVector);
 	viewMatrix.SetX(std::move(lightMatrix.GetX()));
 	viewMatrix.SetY(std::move(lightMatrix.GetY()));
 	viewMatrix.SetZ(std::move(lightMatrix.GetZ()));
-	viewMatrix.Scale(OnesVector / float3(xyScale, xyScale, zScale)); // reshape frustum
+	viewMatrix.Scale(OnesVector / viewScales); // reshape frustum
 	viewMatrix.Transpose(); // invert rotation (R^T == R^{-1})
 	viewMatrix.Translate(-centerPos); // move into sun-space
 	viewMatrix.SetPos(viewMatrix.GetPos() + (FwdVector * 0.5f)); // add z-bias
 
 	glViewport(0, 0, shadowMapSize, shadowMapSize);
 
-	glMatrixMode(GL_PROJECTION);
-	glLoadMatrixf(&projMatrix.m[0]);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadMatrixf(&viewMatrix.m[0]);
+	lightCam->SetProjMatrix(projMatrix);
+	lightCam->SetViewMatrix(viewMatrix);
+	// update frustum (FIXME: normalize planes), load matrices
+	lightCam->Update(false, false, false);
 }
 
 void CShadowHandler::CreateShadows()
@@ -472,15 +471,13 @@ void CShadowHandler::CreateShadows()
 	// glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
-	#if 0
+
 	CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_SHADOW);
 	CCamera* curCam = CCamera::GetActiveCamera();
-	#endif
 
-	const CMatrix44f lightMatrix = std::move(ComposeLightMatrix(sky->GetLight()));
 
 	SetShadowMapSizeFactors();
-	SetShadowMatrix(lightMatrix);
+	SetShadowMatrix(prvCam, curCam);
 
 	// set the shadow-parameter registers
 	// NOTE: so long as any part of Spring rendering still uses
@@ -498,56 +495,48 @@ void CShadowHandler::CreateShadows()
 		}
 	}
 
-	if ((sky->GetLight())->GetLightIntensity() > 0.0f) {
-		// HACK:
-		//   needed for particle / billboard rendering, NOT for
-		//   frustum checking (which is semi broken for shadows)!
-		const float3 camRgt = camera->right;
-		const float3 camUp = camera->up;
-
-		camera->right = std::move(lightMatrix.GetX());
-		camera->up = std::move(lightMatrix.GetY());
-
+	if ((sky->GetLight())->GetLightIntensity() > 0.0f)
 		DrawShadowPasses();
 
-		camera->right = camRgt;
-		camera->up = camUp;
-	}
 
-	#if 0
 	CCamera::SetActiveCamera(prvCam->GetCamType());
-	#endif
+	prvCam->Update();
+
 
 	glShadeModel(GL_SMOOTH);
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
-	// we do this later to save render context switches (this is one of the slowest opengl operations!)
+	// NOTE:
+	//   we do this later in WorldDrawer::GenerateIBLTextures() to save render
+	//   context switches (which are one of the slowest OpenGL operations!)
 	// fb.Unbind();
-	// glViewport(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
 }
 
 
 
-float CShadowHandler::GetShadowProjectionRadius(CCamera* cam, float3& projPos, const float3& projDir) {
-	float radius = 1.0f;
+float3 CShadowHandler::GetShadowProjectionScales(CCamera* cam, const float3& projDir) {
+	float3 scales;
+	float3 projPos[2];
 
 	switch (shadowProMode) {
 		case SHADOWPROMODE_CAM_CENTER: {
-			radius = GetOrthoProjectedFrustumRadius(cam, projPos);
+			scales.x = GetOrthoProjectedFrustumRadius(cam, centerPos);
 		} break;
 		case SHADOWPROMODE_MAP_CENTER: {
-			radius = GetOrthoProjectedMapRadius(projDir, projPos);
+			scales.x = GetOrthoProjectedMapRadius(projDir, centerPos);
 		} break;
 		case SHADOWPROMODE_MIX_CAMMAP: {
-			const float opfRad = GetOrthoProjectedFrustumRadius(cam, orthoProjMidPos);
-			const float opmRad = GetOrthoProjectedMapRadius(projDir, orthoProjMapPos);
+			const float opfRadius = GetOrthoProjectedFrustumRadius(cam, projPos[0]);
+			const float opmRadius = GetOrthoProjectedMapRadius(projDir, projPos[1]);
 
-			if (opfRad <= opmRad) { radius = opfRad; projPos = orthoProjMidPos; }
-			if (opmRad <= opfRad) { radius = opmRad; projPos = orthoProjMapPos; }
+			scales.x  = std::min(opfRadius, opmRadius);
+			centerPos = projPos[opfRadius >= opmRadius];
 		} break;
 	}
 
-	return radius;
+	scales.y = scales.x;
+	scales.z = globalRendering->viewRange;
+	return scales;
 }
 
 float CShadowHandler::GetOrthoProjectedMapRadius(const float3& sunDir, float3& projMidPos) {
@@ -564,35 +553,31 @@ float CShadowHandler::GetOrthoProjectedMapRadius(const float3& sunDir, float3& p
 	static float curMapDiameter = 0.0f;
 
 	if (sunProjDir != sunDir) {
-		// recalculate only if the sun-direction has changed
-		float3 sunDirXZ;
-		float3 mapVerts[2];
-
 		sunProjDir = sunDir;
 
-		sunDirXZ.x = sunProjDir.x;
-		sunDirXZ.z = sunProjDir.z;
-		sunDirXZ.ANormalize();
+		// recalculate only if the sun-direction has changed
+		float3 sunDirXZ = (sunDir * XZVector).ANormalize();
+		float3 mapVerts[2];
 
 		if (sunDirXZ.x >= 0.0f) {
 			if (sunDirXZ.z >= 0.0f) {
 				// use diagonal vector from top-right to bottom-left
-				mapVerts[0] = float3(mapDims.mapx * SQUARE_SIZE, 0.0f,                   0.0f);
-				mapVerts[1] = float3(                  0.0f, 0.0f, mapDims.mapy * SQUARE_SIZE);
+				mapVerts[0] = float3(mapDims.mapx * SQUARE_SIZE, 0.0f,                       0.0f);
+				mapVerts[1] = float3(                      0.0f, 0.0f, mapDims.mapy * SQUARE_SIZE);
 			} else {
 				// use diagonal vector from top-left to bottom-right
-				mapVerts[0] = float3(                  0.0f, 0.0f,                   0.0f);
+				mapVerts[0] = float3(                      0.0f, 0.0f,                       0.0f);
 				mapVerts[1] = float3(mapDims.mapx * SQUARE_SIZE, 0.0f, mapDims.mapy * SQUARE_SIZE);
 			}
 		} else {
 			if (sunDirXZ.z >= 0.0f) {
 				// use diagonal vector from bottom-right to top-left
 				mapVerts[0] = float3(mapDims.mapx * SQUARE_SIZE, 0.0f, mapDims.mapy * SQUARE_SIZE);
-				mapVerts[1] = float3(                  0.0f, 0.0f,                   0.0f);
+				mapVerts[1] = float3(                      0.0f, 0.0f,                       0.0f);
 			} else {
 				// use diagonal vector from bottom-left to top-right
-				mapVerts[0] = float3(                  0.0f, 0.0f, mapDims.mapy * SQUARE_SIZE);
-				mapVerts[1] = float3(mapDims.mapx * SQUARE_SIZE, 0.0f,                   0.0f);
+				mapVerts[0] = float3(                      0.0f, 0.0f, mapDims.mapy * SQUARE_SIZE);
+				mapVerts[1] = float3(mapDims.mapx * SQUARE_SIZE, 0.0f,                       0.0f);
 			}
 		}
 
