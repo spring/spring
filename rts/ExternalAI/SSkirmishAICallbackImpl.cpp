@@ -1799,62 +1799,34 @@ EXPORT(int) skirmishAiCallback_Map_getSlopeMap(int skirmishAIId,
 	return slopes_size;
 }
 
-EXPORT(int) skirmishAiCallback_Map_getLosMap(int skirmishAIId,
-		int* losValues, int losValues_sizeMax) {
-
-	static const int losValues_sizeReal = losHandler->los.size.x * losHandler->los.size.y;
-
-	int losValues_size = losValues_sizeReal;
-
-	if (losValues != NULL) {
-		const unsigned short* tmpMap =  skirmishAIId_callback[skirmishAIId]->GetLosMap();
-		losValues_size = min(losValues_sizeReal, losValues_sizeMax);
-		int i;
-		for (i=0; i < losValues_size; ++i) {
-			losValues[i] = tmpMap[i];
-		}
-	}
-
-	return losValues_size;
+#define GET_SENSOR_MAP(name, sensor)	\
+EXPORT(int) skirmishAiCallback_Map_get##name##Map(int skirmishAIId,	\
+		int* sensor##Values, int sensor##Values_sizeMax) {	\
+\
+	static const int sensor##Values_sizeReal = losHandler->sensor.size.x * losHandler->sensor.size.y;	\
+\
+	int sensor##Values_size = sensor##Values_sizeReal;	\
+\
+	if (sensor##Values != NULL) {	\
+		int teamId = skirmishAIId_teamId[skirmishAIId];	\
+		const unsigned short* tmpMap = &losHandler->sensor.losMaps[teamHandler->AllyTeam(teamId)].front();	\
+		sensor##Values_size = min(sensor##Values_sizeReal, sensor##Values_sizeMax);	\
+		int i;	\
+		for (i=0; i < sensor##Values_size; ++i) {	\
+			sensor##Values[i] = tmpMap[i];	\
+		}	\
+	}	\
+\
+	return sensor##Values_size;	\
 }
 
-EXPORT(int) skirmishAiCallback_Map_getRadarMap(int skirmishAIId,
-		int* radarValues, int radarValues_sizeMax) {
-
-	static const int radarValues_sizeReal = losHandler->radar.size.x * losHandler->radar.size.y;
-
-	int radarValues_size = radarValues_sizeReal;
-
-	if (radarValues != NULL) {
-		const unsigned short* tmpMap =  skirmishAIId_callback[skirmishAIId]->GetRadarMap();
-		radarValues_size = min(radarValues_sizeReal, radarValues_sizeMax);
-		int i;
-		for (i=0; i < radarValues_size; ++i) {
-			radarValues[i] = tmpMap[i];
-		}
-	}
-
-	return radarValues_size;
-}
-
-EXPORT(int) skirmishAiCallback_Map_getJammerMap(int skirmishAIId,
-		int* jammerValues, int jammerValues_sizeMax) {
-
-	const int jammerValues_sizeReal = losHandler->jammer.size.x * losHandler->jammer.size.y;
-
-	int jammerValues_size = jammerValues_sizeReal;
-
-	if (jammerValues != NULL) {
-		const unsigned short* tmpMap =  skirmishAIId_callback[skirmishAIId]->GetJammerMap();
-		jammerValues_size = min(jammerValues_sizeReal, jammerValues_sizeMax);
-		int i;
-		for (i=0; i < jammerValues_size; ++i) {
-			jammerValues[i] = tmpMap[i];
-		}
-	}
-
-	return jammerValues_size;
-}
+GET_SENSOR_MAP(Los, los)
+GET_SENSOR_MAP(AirLos, airLos)
+GET_SENSOR_MAP(Radar, radar)
+GET_SENSOR_MAP(Sonar, sonar)
+GET_SENSOR_MAP(Seismic, seismic)
+GET_SENSOR_MAP(Jammer, jammer)
+GET_SENSOR_MAP(SonarJammer, sonarJammer)
 
 EXPORT(int) skirmishAiCallback_Map_getResourceMapRaw(
 		int skirmishAIId, int resourceId, short* resources, int resources_sizeMax) {
@@ -5567,8 +5539,12 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Map_getMaxHeight = &skirmishAiCallback_Map_getMaxHeight;
 	callback->Map_getSlopeMap = &skirmishAiCallback_Map_getSlopeMap;
 	callback->Map_getLosMap = &skirmishAiCallback_Map_getLosMap;
+	callback->Map_getAirLosMap = &skirmishAiCallback_Map_getAirLosMap;
 	callback->Map_getRadarMap = &skirmishAiCallback_Map_getRadarMap;
+	callback->Map_getSonarMap = &skirmishAiCallback_Map_getSonarMap;
+	callback->Map_getSeismicMap = &skirmishAiCallback_Map_getSeismicMap;
 	callback->Map_getJammerMap = &skirmishAiCallback_Map_getJammerMap;
+	callback->Map_getSonarJammerMap = &skirmishAiCallback_Map_getSonarJammerMap;
 	callback->Map_getResourceMapRaw = &skirmishAiCallback_Map_getResourceMapRaw;
 	callback->Map_getResourceMapSpotsPositions = &skirmishAiCallback_Map_getResourceMapSpotsPositions;
 	callback->Map_getResourceMapSpotsAverageIncome = &skirmishAiCallback_Map_getResourceMapSpotsAverageIncome;

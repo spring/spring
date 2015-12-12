@@ -1768,6 +1768,13 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *Map_getLosMap)(int skirmishAIId, int* losValues, int losValues_sizeMax); //$ ARRAY:losValues
 
 	/**
+	 * @brief the level of sight map
+	 * mapDims.mapx >> airMipLevel
+	 * @see getLosMap()
+	 */
+	int               (CALLING_CONV *Map_getAirLosMap)(int skirmishAIId, int* airLosValues, int airLosValues_sizeMax); //$ ARRAY:airLosValues
+
+	/**
 	 * @brief the radar map
 	 * A square with value 0 means you do not have radar coverage on it.
 	 *
@@ -1778,6 +1785,12 @@ struct SSkirmishAICallback {
 	 * - the last value, bottom right, is at index (width/8 * height/8 - 1)
 	 */
 	int               (CALLING_CONV *Map_getRadarMap)(int skirmishAIId, int* radarValues, int radarValues_sizeMax); //$ ARRAY:radarValues
+
+	/** @see getRadarMap() */
+	int               (CALLING_CONV *Map_getSonarMap)(int skirmishAIId, int* sonarValues, int sonarValues_sizeMax); //$ ARRAY:sonarValues
+
+	/** @see getRadarMap() */
+	int               (CALLING_CONV *Map_getSeismicMap)(int skirmishAIId, int* seismicValues, int seismicValues_sizeMax); //$ ARRAY:seismicValues
 
 	/**
 	 * @brief the radar jammer map
@@ -1790,6 +1803,9 @@ struct SSkirmishAICallback {
 	 * - the last value, bottom right, is at index (width/8 * height/8 - 1)
 	 */
 	int               (CALLING_CONV *Map_getJammerMap)(int skirmishAIId, int* jammerValues, int jammerValues_sizeMax); //$ ARRAY:jammerValues
+
+	/** @see getJammerMap() */
+	int               (CALLING_CONV *Map_getSonarJammerMap)(int skirmishAIId, int* sonarJammerValues, int sonarJammerValues_sizeMax); //$ ARRAY:sonarJammerValues
 
 	/**
 	 * @brief resource maps
