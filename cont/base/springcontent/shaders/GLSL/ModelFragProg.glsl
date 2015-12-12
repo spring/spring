@@ -34,11 +34,15 @@ uniform int numModelDynLights;
 
 float GetShadowCoeff(vec4 shadowCoors)
 {
+	#if (USE_SHADOWS == 1)
 	float coeff = shadow2DProj(shadowTex, shadowCoors).r;
 
 	coeff  = (1.0 - coeff);
 	coeff *= shadowDensity;
 	return (1.0 - coeff);
+	#else
+	return 1.0;
+	#endif
 }
 
 void main(void)
@@ -55,7 +59,6 @@ void main(void)
 #endif
 
 	vec3 light = max(dot(normal, sunDir), 0.0) * sunDiffuse + sunAmbient;
-	vec3 shade = light;
 
 	vec4 diffuse     = texture2D(textureS3o1, gl_TexCoord[0].st);
 	vec4 extraColor  = texture2D(textureS3o2, gl_TexCoord[0].st);
@@ -64,15 +67,14 @@ void main(void)
 	vec3 specular   = textureCube(specularTex, reflectDir).rgb * extraColor.g * 4.0;
 	vec3 reflection = textureCube(reflectTex,  reflectDir).rgb;
 
-#if (USE_SHADOWS == 1)
 	float shadow = GetShadowCoeff(gl_TexCoord[1] + vec4(0.0, 0.0, -0.00005, 0.0));
 
 	// no highlights if in shadow; decrease light to ambient level
 	specular *= shadow;
-	shade = mix(sunAmbient, light, shadow);
-#endif
+	light = mix(sunAmbient, light, shadow);
 
-	reflection  = mix(shade, reflection, extraColor.g); // reflection
+
+	reflection  = mix(light, reflection, extraColor.g); // reflection
 	reflection += extraColor.rrr; // self-illum
 
 	#if (DEFERRED_MODE == 0)
