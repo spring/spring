@@ -1207,10 +1207,9 @@ void CBumpWater::DrawRefraction(CGame* game)
 
 void CBumpWater::DrawReflection(CGame* game)
 {
-	//! CREATE REFLECTION TEXTURE
 	reflectFBO.Bind();
-	glViewport(0, 0, reflTexSize, reflTexSize);
-	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0);
+
+	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
@@ -1220,7 +1219,8 @@ void CBumpWater::DrawReflection(CGame* game)
 		curCam->SetDir(prvCam->GetDir() * float3(1.0f, -1.0f, 1.0f));
 		curCam->SetPos(prvCam->GetPos() * float3(1.0f, -1.0f, 1.0f));
 		curCam->SetRotZ(-prvCam->GetRot().z);
-		curCam->Update();
+		curCam->UpdateLoadViewPort(0, 0, reflTexSize, reflTexSize);
+		curCam->Update(false, true, false);
 
 		game->SetDrawMode(CGame::gameReflectionDraw);
 		sky->Draw();
@@ -1258,6 +1258,8 @@ void CBumpWater::DrawReflection(CGame* game)
 
 	CCamera::SetActiveCamera(prvCam->GetCamType());
 	prvCam->Update();
+	// done by caller
+	// prvCam->LoadViewPort();
 }
 
 

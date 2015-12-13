@@ -442,11 +442,10 @@ void CDynWater::Update()
 
 void CDynWater::DrawReflection(CGame* game)
 {
-//	const bool shadowsLoaded = shadowHandler->shadowsLoaded;
-
 	reflectFBO.Bind();
-	glViewport(0, 0, 512, 512);
-	glClearColor(0.5f, 0.6f, 0.8f, 0);
+
+	// FIXME: hardcoded
+	glClearColor(0.5f, 0.6f, 0.8f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
@@ -456,7 +455,8 @@ void CDynWater::DrawReflection(CGame* game)
 		curCam->SetDir(prvCam->GetDir() * float3(1.0f, -1.0f, 1.0f));
 		curCam->SetPos(prvCam->GetPos() * float3(1.0f, -1.0f, 1.0f));
 		curCam->SetRotZ(-prvCam->GetRot().z);
-		curCam->Update();
+		curCam->UpdateLoadViewPort(0, 0, 512, 512);
+		curCam->Update(false, true, false);
 
 		reflectRight   = curCam->GetRight();
 		reflectUp      = curCam->GetUp();
@@ -507,10 +507,10 @@ void CDynWater::DrawReflection(CGame* game)
 
 	CCamera::SetActiveCamera(prvCam->GetCamType());
 	prvCam->Update();
+	prvCam->LoadViewPort();
 
-	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
-	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 1);
-
+	// needed?
+	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 1.0f);
 }
 
 void CDynWater::DrawRefraction(CGame* game)
@@ -832,20 +832,20 @@ void CDynWater::DrawWaterSurface()
 	va = GetVertexArray();
 	va->Initialize();
 
-	CCamera* visCam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
-	visCam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
+	CCamera* cam = CCamera::GetActiveCamera();
+	cam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 
-	camPosBig2.x = math::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapx*SQUARE_SIZE - WH_SIZE, camera->GetPos().x))/(W_SIZE*16))*(W_SIZE*16);
-	camPosBig2.z = math::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapy*SQUARE_SIZE - WH_SIZE, camera->GetPos().z))/(W_SIZE*16))*(W_SIZE*16);
+	camPosBig2.x = math::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapx*SQUARE_SIZE - WH_SIZE, cam->GetPos().x))/(W_SIZE*16))*(W_SIZE*16);
+	camPosBig2.z = math::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapy*SQUARE_SIZE - WH_SIZE, cam->GetPos().z))/(W_SIZE*16))*(W_SIZE*16);
 
-	const std::vector<CCamera::FrustumLine> negSides; // = visCam->GetNegFrustumSides();
-	const std::vector<CCamera::FrustumLine> posSides; // = visCam->GetPosFrustumSides();
+	const std::vector<CCamera::FrustumLine> negSides; // = cam->GetNegFrustumSides();
+	const std::vector<CCamera::FrustumLine> posSides; // = cam->GetPosFrustumSides();
 
 	std::vector<CCamera::FrustumLine>::const_iterator fli;
 
 	for (int lod = 1; lod < (2 << 5); lod *= 2) {
-		int cx = (int)(visCam->GetPos().x / WSQUARE_SIZE);
-		int cy = (int)(visCam->GetPos().z / WSQUARE_SIZE);
+		int cx = (int)(cam->GetPos().x / WSQUARE_SIZE);
+		int cy = (int)(cam->GetPos().z / WSQUARE_SIZE);
 
 		cx = (cx / lod) * lod;
 		cy = (cy / lod) * lod;
@@ -859,9 +859,9 @@ void CDynWater::DrawWaterSurface()
 		int maxtx = int(camPosBig2.x/WSQUARE_SIZE + 512);
 
 		int minly = cy + (-viewRadius + 2 - ysquaremod) * lod;
-		int maxly = cy + (viewRadius      - ysquaremod) * lod;
+		int maxly = cy + ( viewRadius     - ysquaremod) * lod;
 		int minlx = cx + (-viewRadius + 2 - xsquaremod) * lod;
-		int maxlx = cx + (viewRadius      - xsquaremod) * lod;
+		int maxlx = cx + ( viewRadius     - xsquaremod) * lod;
 
 		int xstart = std::max(minlx, mintx);
 		int xend   = std::min(maxlx, maxtx);
