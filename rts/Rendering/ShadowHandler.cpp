@@ -443,17 +443,14 @@ void CShadowHandler::SetShadowMatrix(CCamera* playerCam, CCamera* lightCam)
 	viewMatrix.Transpose(); // invert rotation (R^T == R^{-1})
 	viewMatrix.Translate(-centerPos); // move into sun-space
 	viewMatrix.SetPos(viewMatrix.GetPos() + (FwdVector * 0.5f)); // add z-bias
-
-	glViewport(0, 0, shadowMapSize, shadowMapSize);
-
-	lightCam->SetProjMatrix(projMatrix);
-	lightCam->SetViewMatrix(viewMatrix);
-	// update frustum (FIXME: normalize planes), load matrices
-	lightCam->Update(false, false, false);
 }
 
 void CShadowHandler::CreateShadows()
 {
+	// NOTE:
+	//   we unbind later in WorldDrawer::GenerateIBLTextures() to save render
+	//   context switches (which are one of the slowest OpenGL operations!)
+	//   together with VP restoration
 	fb.Bind();
 
 	glDisable(GL_BLEND);
@@ -479,13 +476,21 @@ void CShadowHandler::CreateShadows()
 	SetShadowMapSizeFactors();
 	SetShadowMatrix(prvCam, curCam);
 
-	// set the shadow-parameter registers
-	// NOTE: so long as any part of Spring rendering still uses
-	// ARB programs at run-time, these lines can not be removed
-	// (all ARB programs share the same environment)
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 16, shadowTexProjCenter.x, shadowTexProjCenter.y, 0.0f, 0.0f);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 17, shadowTexProjCenter.z, shadowTexProjCenter.z, 0.0f, 0.0f);
-	glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 18, shadowTexProjCenter.w, shadowTexProjCenter.w, 0.0f, 0.0f);
+	curCam->SetProjMatrix(projMatrix);
+	curCam->SetViewMatrix(viewMatrix);
+	// update frustum (FIXME), load matrices
+	curCam->Update(false, false, false);
+	curCam->UpdateLoadViewPort(0, 0, shadowMapSize, shadowMapSize);
+
+	if (globalRendering->haveARB) {
+		// set the shadow-parameter registers
+		// NOTE: so long as any part of Spring rendering still uses
+		// ARB programs at run-time, these lines can not be removed
+		// (all ARB programs share the same environment)
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 16, shadowTexProjCenter.x, shadowTexProjCenter.y, 0.0f, 0.0f);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 17, shadowTexProjCenter.z, shadowTexProjCenter.z, 0.0f, 0.0f);
+		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 18, shadowTexProjCenter.w, shadowTexProjCenter.w, 0.0f, 0.0f);
+	}
 
 	if (globalRendering->haveGLSL) {
 		for (int i = 0; i < SHADOWGEN_PROGRAM_LAST; i++) {
@@ -505,11 +510,6 @@ void CShadowHandler::CreateShadows()
 
 	glShadeModel(GL_SMOOTH);
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-
-	// NOTE:
-	//   we do this later in WorldDrawer::GenerateIBLTextures() to save render
-	//   context switches (which are one of the slowest OpenGL operations!)
-	// fb.Unbind();
 }
 
 
