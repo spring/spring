@@ -64,6 +64,12 @@ public:
 	const CMatrix44f& GetShadowMatrix   (unsigned int idx = SHADOWMAT_TYPE_DRAWING) const { return  viewMatrix[idx];      }
 	const      float* GetShadowMatrixRaw(unsigned int idx = SHADOWMAT_TYPE_DRAWING) const { return &viewMatrix[idx].m[0]; }
 
+	static bool ShadowsInitialized() { return firstInit; }
+	static bool ShadowsSupported() { return shadowsSupported; }
+
+	bool ShadowsLoaded() const { return shadowsLoaded; }
+	bool InShadowPass() const { return inShadowPass; }
+
 private:
 	void Init();
 	void Kill();
@@ -92,21 +98,18 @@ public:
 	unsigned int shadowTexture;
 	unsigned int dummyColorTexture;
 
-	static bool shadowsSupported;
-
 	bool shadowsLoaded;
 	bool inShadowPass;
 
 private:
-	FBO fb;
-
 	static bool firstInit;
+	static bool shadowsSupported;
 
 	/// these project geometry into light-space
 	/// to write the (FBO) depth-buffer texture
 	std::vector<Shader::IProgramObject*> shadowGenProgs;
 
-	float3 centerPos;
+	float3 projMidPos[2 + 1];
 	float3 sunProjDir;
 
 	/// x1, x2, y1, y2
@@ -117,6 +120,8 @@ private:
 	// culling and drawing versions of both matrices
 	CMatrix44f projMatrix[2];
 	CMatrix44f viewMatrix[2];
+
+	FBO fb;
 };
 
 extern CShadowHandler* shadowHandler;

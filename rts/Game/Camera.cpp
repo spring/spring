@@ -276,13 +276,17 @@ bool CCamera::InView(const float3& p, float radius) const
 {
 	const float3 vec = p - pos;
 
+	// test if <p> is closer than the near-plane
+	if (false && vec.dot(forward) < (frustumRange.x - radius))
+		return false;
+
 	for (unsigned int i = 0; i < FRUSTUM_PLANE_CNT; i++) {
 		if (vec.dot(frustumPlanes[i]) > radius) {
 			return false;
 		}
 	}
 
-	// final test against base-plane
+	// final test against far-plane
 	return (vec.SqLength() <= Square(frustumRange.y + radius));
 }
 

@@ -298,7 +298,7 @@ public:
 			LOG_L(L_WARNING, "Shadows are disabled; change your configuration and restart to use them");
 			return true;
 		}
-		if (!shadowHandler->shadowsSupported) {
+		if (!CShadowHandler::ShadowsSupported()) {
 			LOG_L(L_WARNING, "Your hardware/driver setup does not support shadows");
 			return true;
 		}
