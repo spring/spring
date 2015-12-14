@@ -76,7 +76,7 @@ private:
 	void LoadShadowGenShaderProgs();
 
 	void SetShadowMapSizeFactors();
-	void SetShadowMatrix(CCamera* playerCam);
+	void SetShadowMatrix(CCamera* playerCam, CCamera* lightCam);
 
 	float3 GetShadowProjectionScales(CCamera*, const float3&);
 

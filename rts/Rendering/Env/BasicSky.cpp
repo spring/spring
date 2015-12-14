@@ -223,9 +223,13 @@ CBasicSky::~CBasicSky()
 
 void CBasicSky::Draw()
 {
+	if (!globalRendering->drawSky)
+		return;
+
 	glDisable(GL_DEPTH_TEST);
 
-	if (wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	if (wireframe)
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	float3 modCamera=skydir1*camera->GetPos().x+skydir2*camera->GetPos().z;
 
@@ -244,7 +248,8 @@ void CBasicSky::Draw()
 	glMatrixMode(GL_MODELVIEW);
 		glPopMatrix();
 
-	if (wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	if (wireframe)
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -516,6 +521,8 @@ void CBasicSky::CreateTransformVectors()
 
 void CBasicSky::DrawSun()
 {
+	if (!globalRendering->drawSky)
+		return;
 	if (!SunVisible(camera->GetPos()))
 		return;
 

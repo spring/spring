@@ -42,6 +42,10 @@ public:
 		FRUSTUM_PLANE_RGT = 3,
 		FRUSTUM_PLANE_CNT = 4,
 	};
+	enum {
+		FRUSTUM_SIDE_POS = 0,
+		FRUSTUM_SIDE_NEG = 1,
+	};
 
 	enum {
 		MOVE_STATE_FWD = 0, // forward
@@ -58,6 +62,7 @@ public:
 	CCamera(unsigned int cameraType);
 
 	void CopyState(const CCamera*);
+	void CopyStateReflect(const CCamera*);
 	void Update(bool updateDirs = true, bool updateMats = true, bool updatePort = true);
 
 	/// @param fov in degree
@@ -85,21 +90,19 @@ public:
 
 	void GetFrustumSides(float miny, float maxy, float scale, bool negSide = false);
 	void GetFrustumSide(
-		const float3& zdir,
+		const float3& normal,
 		const float3& offset,
 		float miny,
 		float maxy,
 		float scale,
-		bool upwardDir,
-		bool negSide);
-	void ClearFrustumSides() {
-		posFrustumSides.clear();
-		negFrustumSides.clear();
-	}
-	void ClipFrustumLines(bool left, const float zmin, const float zmax);
+		unsigned int side
+	);
 
-	const std::vector<FrustumLine>& GetNegFrustumSides() const { return negFrustumSides; }
-	const std::vector<FrustumLine>& GetPosFrustumSides() const { return posFrustumSides; }
+	void ClipFrustumLines(bool left, const float zmin, const float zmax);
+	void SetFrustumScales(const float3 scales) { frustumScales = scales; }
+
+	const std::vector<FrustumLine>& GetPosFrustumSides() const { return frustumLines[FRUSTUM_SIDE_POS]; }
+	const std::vector<FrustumLine>& GetNegFrustumSides() const { return frustumLines[FRUSTUM_SIDE_NEG]; }
 
 	void SetProjMatrix(const CMatrix44f& mat) { projectionMatrix = mat; }
 	void SetViewMatrix(const CMatrix44f& mat) {
@@ -212,6 +215,10 @@ public:
 public:
 	// frustum-pyramid planes (infinite)
 	float3 frustumPlanes[FRUSTUM_PLANE_CNT];
+	// xyz-scales (for orthographic cameras only)
+	float3 frustumScales;
+	// .x := znear, .y := zfar, .z := unused
+	float3 frustumRange;
 
 	// Lua-controlled parameters, player-camera only
 	float3 posOffset;
@@ -228,8 +235,8 @@ private:
 	CMatrix44f viewProjectionMatrixInverse;
 	CMatrix44f billboardMatrix;
 
-	std::vector<FrustumLine> posFrustumSides;
-	std::vector<FrustumLine> negFrustumSides;
+	// positive sides [0], negative sides [1]
+	std::vector<FrustumLine> frustumLines[2];
 
 	static CCamera* camTypes[CAMTYPE_COUNT];
 

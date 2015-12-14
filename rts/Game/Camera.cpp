@@ -37,6 +37,7 @@ CCamera::CCamera(unsigned int cameraType)
 	, halfFov(0.0f)
 	, tanHalfFov(0.0f)
 	, lppScale(0.0f)
+	, frustumScales(ZeroVector)
 	, posOffset(ZeroVector)
 	, tiltOffset(ZeroVector)
 
@@ -50,20 +51,41 @@ CCamera::CCamera(unsigned int cameraType)
 	SetFov(45.0f);
 }
 
-void CCamera::CopyState(const CCamera* cam) {
+void CCamera::CopyState(const CCamera* cam)
+{
 	for (unsigned int i = 0; i < FRUSTUM_PLANE_CNT; i++) {
 		frustumPlanes[i] = cam->frustumPlanes[i];
 	}
 
-	forward   = cam->GetForward();
-	right     = cam->GetRight();
-	up        = cam->GetUp();
+	// note: scales are only relevant for CAMTYPE_SHADOW
+	frustumScales = cam->frustumScales;
+	frustumRange  = cam->frustumRange;
 
-	pos       = cam->GetPos();
-	rot       = cam->GetRot();
+	forward    = cam->GetForward();
+	right      = cam->GetRight();
+	up         = cam->GetUp();
 
-	lppScale  = cam->GetLPPScale();
-	camType   = cam->GetCamType();
+	pos        = cam->GetPos();
+	rot        = cam->GetRot();
+
+	fov        = cam->GetFov();
+	halfFov    = cam->GetHalfFov();
+	tanHalfFov = cam->GetTanHalfFov();
+	lppScale   = cam->GetLPPScale();
+
+	// do not copy this, each camera knows its own type
+	// camType = cam->GetCamType();
+}
+
+void CCamera::CopyStateReflect(const CCamera* cam)
+{
+	SetDir(cam->GetDir() * float3(1.0f, -1.0f, 1.0f));
+	SetPos(cam->GetPos() * float3(1.0f, -1.0f, 1.0f));
+	SetRotZ(-cam->GetRot().z);
+	Update(false, true, false);
+
+	// reflection pass needs the same range; Update might have changed it
+	frustumRange = cam->frustumRange;
 }
 
 void CCamera::Update(bool updateDirs, bool updateMats, bool updatePort)
@@ -127,10 +149,10 @@ void CCamera::UpdateMatrices()
 	// recalculate the projection transform
 	switch (projType) {
 		case PROJTYPE_PERSP: {
-			gluPerspectiveSpring(globalRendering->aspectRatio, globalRendering->zNear, globalRendering->viewRange);
+			gluPerspectiveSpring(globalRendering->aspectRatio, frustumRange.x, frustumRange.y);
 		} break;
 		case PROJTYPE_ORTHO: {
-			glOrthoScaledSpring(globalRendering->viewSizeX, globalRendering->viewSizeY, globalRendering->zNear, globalRendering->viewRange);
+			glOrthoScaledSpring(globalRendering->viewSizeX, globalRendering->viewSizeY, frustumRange.x, frustumRange.y);
 		} break;
 		default: {
 			assert(false);
@@ -196,20 +218,29 @@ void CCamera::UpdateViewRange()
 	const float maxDistToBorderX = std::max(pos.x, float3::maxxpos - pos.x);
 	const float maxDistToBorderZ = std::max(pos.z, float3::maxzpos - pos.z);
 	const float maxDistToBorder  = math::sqrt(Square(maxDistToBorderX) + Square(maxDistToBorderZ));
-	const float minViewRange     = (1.0f - forward.dot(UpVector)) * maxDistToBorder;
+
+	const float angleViewRange   = (1.0f - forward.dot(UpVector)) * maxDistToBorder;
+	const float heightViewRange  = (pos.y - std::max(0.0f, readMap->GetCurrMinHeight())) * 2.4f;
 
 	float wantedViewRange = CGlobalRendering::MAX_VIEW_RANGE;
 
-	// Camera-height dependent (i.e. TAB-view)
-	wantedViewRange = std::max(wantedViewRange, (pos.y - std::max(0.0f, readMap->GetCurrMinHeight())) * 2.4f);
-	// View-angle dependent (i.e. FPS-view)
-	wantedViewRange = std::max(wantedViewRange, minViewRange);
+	// camera-height dependent (i.e. TAB-view)
+	wantedViewRange = std::max(wantedViewRange, heightViewRange);
+	// view-angle dependent (i.e. FPS-view)
+	wantedViewRange = std::max(wantedViewRange, angleViewRange);
 
-	// Update
 	const float factor = wantedViewRange / CGlobalRendering::MAX_VIEW_RANGE;
 
-	globalRendering->zNear     = CGlobalRendering::NEAR_PLANE * factor;
-	globalRendering->viewRange = CGlobalRendering::MAX_VIEW_RANGE * factor;
+	frustumRange.x = CGlobalRendering::NEAR_PLANE * factor;
+	frustumRange.y = CGlobalRendering::MAX_VIEW_RANGE * factor;
+
+	if (camType == CAMTYPE_PLAYER) {
+		// we do not touch these for other cameras (they e.g.
+		// determine where fog starts and ends so larger maps
+		// would be half-covered in it when factor <= 1)
+		globalRendering->zNear     = frustumRange.x;
+		globalRendering->viewRange = frustumRange.y;
+	}
 }
 
 
@@ -252,7 +283,7 @@ bool CCamera::InView(const float3& p, float radius) const
 	}
 
 	// final test against base-plane
-	return (vec.SqLength() <= Square(globalRendering->viewRange + radius));
+	return (vec.SqLength() <= Square(frustumRange.y + radius));
 }
 
 
@@ -467,28 +498,36 @@ inline void CCamera::gluLookAtSpring(const float3& eye, const float3& center, co
 
 
 
-void CCamera::GetFrustumSides(float miny, float maxy, float scale, bool negSide) {
+void CCamera::GetFrustumSides(float miny, float maxy, float scale, bool negOnly) {
 
-	ClearFrustumSides();
+	frustumLines[FRUSTUM_SIDE_POS].clear();
+	frustumLines[FRUSTUM_SIDE_NEG].clear();
+
+	// only non-zero for orthographic cameras
+	const float3 posOffsets[FRUSTUM_PLANE_CNT] = {
+		    up * frustumScales.y,
+		   -up * frustumScales.y,
+		-right * frustumScales.x,
+		 right * frustumScales.x,
+	};
 
 	// note: order does not matter
 	for (unsigned int i = 0; i < FRUSTUM_PLANE_CNT; i++) {
-		GetFrustumSide(frustumPlanes[i], ZeroVector,  miny, maxy, scale,  (frustumPlanes[i].y > 0.0f), negSide);
+		GetFrustumSide(frustumPlanes[i], posOffsets[i],  miny, maxy, scale, negOnly? FRUSTUM_SIDE_NEG: FRUSTUM_SIDE_POS);
 	}
 }
 
 void CCamera::GetFrustumSide(
-	const float3& zdir,
+	const float3& normal,
 	const float3& offset,
 	float miny,
 	float maxy,
 	float scale,
-	bool upwardDir,
-	bool negSide)
-{
-	// compose an orthonormal axis-system around <zdir>
-	float3 xdir = (zdir.cross(UpVector)).UnsafeANormalize();
-	float3 ydir = (zdir.cross(xdir)).UnsafeANormalize();
+	unsigned int side
+) {
+	// compose an orthonormal axis-system around <normal>
+	float3 xdir = (normal.cross(UpVector)).UnsafeANormalize();
+	float3 ydir = (normal.cross(xdir)).UnsafeANormalize();
 
 	// intersection of vector from <pos> along <ydir> with xz-plane
 	float3 pInt;
@@ -498,12 +537,12 @@ void CCamera::GetFrustumSide(
 		xdir.z = 0.001f;
 
 	if (ydir.y != 0.0f) {
-		// if <zdir> is angled toward the sky instead of the ground,
+		// if normal is angled toward the sky instead of the ground,
 		// subtract <miny> from the camera's y-position, else <maxy>
-		if (upwardDir) {
-			pInt = (pos + offset) - ydir * ((pos.y - miny) / ydir.y);
+		if (normal.y > 0.0f) {
+			pInt = (pos + offset) - ydir * (((pos.y + offset.y) - miny) / ydir.y);
 		} else {
-			pInt = (pos + offset) - ydir * ((pos.y - maxy) / ydir.y);
+			pInt = (pos + offset) - ydir * (((pos.y + offset.y) - maxy) / ydir.y);
 		}
 	}
 
@@ -511,26 +550,23 @@ void CCamera::GetFrustumSide(
 	// in the xz-plane; <line.base> is the x-coordinate at which line intersects x-axis; <line.sign>
 	// indicates line direction, ie. left-to-right (whenever <xdir.z> is negative) or right-to-left
 	// NOTE:
-	//     (b.x / b.z) is actually the reciprocal of the DC (ie. the number of steps along +x for
-	//     one step along +y); the world z-axis is inverted wrt. a regular Carthesian grid, so the
-	//     DC is also inverted
+	//   (b.x / b.z) is actually the reciprocal of the DC (ie. the number of steps along +x for
+	//   one step along +y); the world z-axis is inverted wrt. a regular Carthesian grid, so the
+	//   DC is also inverted
 	FrustumLine line;
 	line.dir  = (xdir.x / xdir.z);
 	line.base = (pInt.x - (pInt.z * line.dir)) / scale;
-	line.sign = (xdir.z <= 0.0f)? 1: -1;
+	line.sign = Sign(int(xdir.z <= 0.0f));
 	line.minz = (                      0.0f) - (mapDims.mapy);
 	line.maxz = (mapDims.mapy * SQUARE_SIZE) + (mapDims.mapy);
 
-	if (line.sign == 1 || negSide) {
-		negFrustumSides.push_back(line);
-	} else {
-		posFrustumSides.push_back(line);
-	}
+	// store all lines in [NEG] (regardless of actual sign) if wanted by caller
+	frustumLines[line.sign == 1 || side == FRUSTUM_SIDE_NEG].push_back(line);
 }
 
 void CCamera::ClipFrustumLines(bool neg, const float zmin, const float zmax) {
 
-	std::vector<FrustumLine>& lines = neg? negFrustumSides: posFrustumSides;
+	std::vector<FrustumLine>& lines = frustumLines[neg];
 	std::vector<FrustumLine>::iterator fli, fli2;
 
 	for (fli = lines.begin(); fli != lines.end(); ++fli) {

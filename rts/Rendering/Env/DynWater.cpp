@@ -444,26 +444,21 @@ void CDynWater::DrawReflection(CGame* game)
 {
 	reflectFBO.Bind();
 
-	// FIXME: hardcoded
-	glClearColor(0.5f, 0.6f, 0.8f, 0.0f);
+	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
 	CCamera* curCam = CCamera::GetActiveCamera();
 
 	{
-		curCam->SetDir(prvCam->GetDir() * float3(1.0f, -1.0f, 1.0f));
-		curCam->SetPos(prvCam->GetPos() * float3(1.0f, -1.0f, 1.0f));
-		curCam->SetRotZ(-prvCam->GetRot().z);
+		curCam->CopyStateReflect(prvCam);
 		curCam->UpdateLoadViewPort(0, 0, 512, 512);
-		curCam->Update(false, true, false);
 
 		reflectRight   = curCam->GetRight();
 		reflectUp      = curCam->GetUp();
 		reflectForward = curCam->GetDir();
 
 		game->SetDrawMode(CGame::gameReflectionDraw);
-		sky->Draw();
 
 		{
 			const double clipPlaneEq[4] = {0.0, 1.0, 0.0, 1.0};
@@ -473,6 +468,8 @@ void CDynWater::DrawReflection(CGame* game)
 
 			{
 				drawReflection = true;
+
+				sky->Draw();
 
 				// FIXME-3429:
 				//   this causes the SMF shader to be RECOMPILED each frame
@@ -488,10 +485,12 @@ void CDynWater::DrawReflection(CGame* game)
 
 				unitDrawer->Draw(true);
 				featureDrawer->Draw();
+
 				unitDrawer->DrawCloakedUnits(true);
 				featureDrawer->DrawFadeFeatures(true);
-
 				projectileDrawer->Draw(true);
+				sky->DrawSun();
+
 				eventHandler.DrawWorldReflection();
 
 				drawReflection = false;
@@ -500,17 +499,12 @@ void CDynWater::DrawReflection(CGame* game)
 			glDisable(GL_CLIP_PLANE2);
 		}
 
-		// needed?
-		// sky->DrawSun();
 		game->SetDrawMode(CGame::gameNormalDraw);
 	}
 
 	CCamera::SetActiveCamera(prvCam->GetCamType());
 	prvCam->Update();
 	prvCam->LoadViewPort();
-
-	// needed?
-	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 1.0f);
 }
 
 void CDynWater::DrawRefraction(CGame* game)

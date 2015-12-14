@@ -50,6 +50,9 @@ CSkyBox::~CSkyBox()
 
 void CSkyBox::Draw()
 {
+	if (!globalRendering->drawSky)
+		return;
+
 	glColor3f(1,1,1);
 	glDisable(GL_FOG);
 	glDisable(GL_BLEND);

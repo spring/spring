@@ -305,21 +305,17 @@ void CAdvWater::UpdateWater(CGame* game)
 
 
 	reflectFBO.Bind();
-	glClear(GL_DEPTH_BUFFER_BIT);
+	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
 	CCamera* curCam = CCamera::GetActiveCamera();
 
 	{
-		curCam->SetDir(prvCam->GetDir() * float3(1.0f, -1.0f, 1.0f));
-		curCam->SetPos(prvCam->GetPos() * float3(1.0f, -1.0f, 1.0f));
-		curCam->SetRotZ(-prvCam->GetRot().z);
+		curCam->CopyStateReflect(prvCam);
 		curCam->UpdateLoadViewPort(0, 0, 512, 512);
-		curCam->Update(false, true, false);
-
 
 		game->SetDrawMode(CGame::gameReflectionDraw);
-		sky->Draw();
 
 		{
 			const double clipPlaneEq[4] = {0.0, 1.0, 0.0, 1.0};
@@ -330,12 +326,16 @@ void CAdvWater::UpdateWater(CGame* game)
 			{
 				drawReflection = true;
 
+				sky->Draw();
 				readMap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
 				unitDrawer->Draw(true);
 				featureDrawer->Draw();
+
 				unitDrawer->DrawCloakedUnits(true);
 				featureDrawer->DrawFadeFeatures(true);
 				projectileDrawer->Draw(true);
+				sky->DrawSun();
+
 				eventHandler.DrawWorldReflection();
 
 				drawReflection = false;
@@ -352,8 +352,6 @@ void CAdvWater::UpdateWater(CGame* game)
 	prvCam->LoadViewPort();
 
 	FBO::Unbind();
-	// needed?
-	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 1.0f);
 
 	glPopAttrib();
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

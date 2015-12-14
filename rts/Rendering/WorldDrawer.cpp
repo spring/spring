@@ -232,9 +232,7 @@ void CWorldDrawer::Draw() const
 		projectileDrawer->Draw(false);
 	}
 
-	if (globalRendering->drawSky) {
-		sky->DrawSun();
-	}
+	sky->DrawSun();
 
 	eventHandler.DrawWorld();
 
@@ -247,9 +245,7 @@ void CWorldDrawer::DrawOpaqueObjects() const
 {
 	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 
-	if (globalRendering->drawSky) {
-		sky->Draw();
-	}
+	sky->Draw();
 
 	if (globalRendering->drawGround) {
 		{

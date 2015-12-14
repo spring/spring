@@ -411,11 +411,14 @@ static CMatrix44f ComposeScaleMatrix(const float3 scales)
 	return (CMatrix44f(FwdVector * 0.5f, RgtVector / scales.x, UpVector / scales.y, FwdVector / scales.z));
 }
 
-void CShadowHandler::SetShadowMatrix(CCamera* playerCam)
+void CShadowHandler::SetShadowMatrix(CCamera* playerCam, CCamera* lightCam)
 {
 	const CMatrix44f lightMatrix = std::move(ComposeLightMatrix(sky->GetLight()));
 	const CMatrix44f scaleMatrix = std::move(ComposeScaleMatrix(GetShadowProjectionScales(playerCam, -lightMatrix.GetZ())));
 	const     float3 scaleVector = float3(scaleMatrix[0], scaleMatrix[5], scaleMatrix[10]); // (X.x, Y.y, Z.z)
+
+	// take inverse to undo division baked into scaleMatrix, convert diameter to radius
+	lightCam->SetFrustumScales((OnesVector / scaleVector) * float3(0.5f, 0.5f, 1.0f));
 
 	// reshape frustum (to maximize SM resolution); for culling we want
 	// the scales-matrix applied to projMatrix instead of to viewMatrix
@@ -442,6 +445,9 @@ void CShadowHandler::SetShadowMatrix(CCamera* playerCam)
 	viewMatrix[SHADOWMAT_TYPE_DRAWING].Transpose();
 	viewMatrix[SHADOWMAT_TYPE_DRAWING].SetPos(viewMatrix[SHADOWMAT_TYPE_DRAWING] * -centerPos);
 	viewMatrix[SHADOWMAT_TYPE_DRAWING].SetPos(viewMatrix[SHADOWMAT_TYPE_DRAWING].GetPos() + (FwdVector * 0.5f)); // add z-bias
+
+	// holds true, but needs an epsilon-tolerance equality test
+	// assert((viewMatrix[0] * projMatrix[0]) == (viewMatrix[1] * projMatrix[1]));
 }
 
 void CShadowHandler::CreateShadows()
@@ -473,7 +479,7 @@ void CShadowHandler::CreateShadows()
 
 
 	SetShadowMapSizeFactors();
-	SetShadowMatrix(prvCam);
+	SetShadowMatrix(prvCam, curCam);
 
 	// first set matrices needed by shaders (including ShadowGenVertProg)
 	curCam->SetProjMatrix(projMatrix[SHADOWMAT_TYPE_DRAWING]);

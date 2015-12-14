@@ -1168,7 +1168,6 @@ void CBumpWater::DrawRefraction(CGame* game)
 	glViewport(0, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//sky->Draw();
 	glDisable(GL_FOG); // fog has overground settings, if at all we should add special underwater settings
 
 	const float3 oldsun = unitDrawer->unitSunColor;
@@ -1184,6 +1183,7 @@ void CBumpWater::DrawRefraction(CGame* game)
 	glClipPlane(GL_CLIP_PLANE2, plane);
 
 	// opaque
+	sky->Draw();
 	readMap->GetGroundDrawer()->Draw(DrawPass::WaterRefraction);
 	unitDrawer->Draw(false, true);
 	featureDrawer->Draw();
@@ -1216,14 +1216,10 @@ void CBumpWater::DrawReflection(CGame* game)
 	CCamera* curCam = CCamera::GetActiveCamera();
 
 	{
-		curCam->SetDir(prvCam->GetDir() * float3(1.0f, -1.0f, 1.0f));
-		curCam->SetPos(prvCam->GetPos() * float3(1.0f, -1.0f, 1.0f));
-		curCam->SetRotZ(-prvCam->GetRot().z);
+		curCam->CopyStateReflect(prvCam);
 		curCam->UpdateLoadViewPort(0, 0, reflTexSize, reflTexSize);
-		curCam->Update(false, true, false);
 
 		game->SetDrawMode(CGame::gameReflectionDraw);
-		sky->Draw();
 
 		{
 			const double clipPlaneEq[4] = {0.0, 1.0, 0.0, 1.0};
@@ -1234,10 +1230,12 @@ void CBumpWater::DrawReflection(CGame* game)
 			{
 				drawReflection = true;
 
+				sky->Draw();
+
 				// opaque
-				if (reflection > 1) {
+				if (reflection > 1)
 					readMap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
-				}
+
 				unitDrawer->Draw(true);
 				featureDrawer->Draw();
 
@@ -1245,6 +1243,8 @@ void CBumpWater::DrawReflection(CGame* game)
 				unitDrawer->DrawCloakedUnits(true);
 				featureDrawer->DrawFadeFeatures(true);
 				projectileDrawer->Draw(true);
+				sky->DrawSun();
+
 				eventHandler.DrawWorldReflection();
 
 				drawReflection = false;
