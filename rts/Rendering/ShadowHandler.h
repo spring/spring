@@ -52,12 +52,17 @@ public:
 		SHADOWGEN_PROGRAM_LAST       = 5,
 	};
 
+	enum ShadowMatrixType {
+		SHADOWMAT_TYPE_CULLING = 0,
+		SHADOWMAT_TYPE_DRAWING = 1,
+	};
+
 	Shader::IProgramObject* GetShadowGenProg(ShadowGenProgram p) {
 		return shadowGenProgs[p];
 	}
 
-	const CMatrix44f& GetShadowMatrix   () const { return  viewMatrix;      }
-	const      float* GetShadowMatrixRaw() const { return &viewMatrix.m[0]; }
+	const CMatrix44f& GetShadowMatrix   (unsigned int idx = SHADOWMAT_TYPE_DRAWING) const { return  viewMatrix[idx];      }
+	const      float* GetShadowMatrixRaw(unsigned int idx = SHADOWMAT_TYPE_DRAWING) const { return &viewMatrix[idx].m[0]; }
 
 private:
 	void Init();
@@ -71,7 +76,7 @@ private:
 	void LoadShadowGenShaderProgs();
 
 	void SetShadowMapSizeFactors();
-	void SetShadowMatrix(CCamera* playerCam, CCamera* lightCam);
+	void SetShadowMatrix(CCamera* playerCam);
 
 	float3 GetShadowProjectionScales(CCamera*, const float3&);
 
@@ -92,9 +97,6 @@ public:
 	bool shadowsLoaded;
 	bool inShadowPass;
 
-	float3 centerPos;
-	float3 sunProjDir;
-
 private:
 	FBO fb;
 
@@ -104,13 +106,17 @@ private:
 	/// to write the (FBO) depth-buffer texture
 	std::vector<Shader::IProgramObject*> shadowGenProgs;
 
+	float3 centerPos;
+	float3 sunProjDir;
+
 	/// x1, x2, y1, y2
 	float4 shadowProjMinMax;
 	/// xmid, ymid, p17, p18
 	float4 shadowTexProjCenter;
 
-	CMatrix44f projMatrix;
-	CMatrix44f viewMatrix;
+	// culling and drawing versions of both matrices
+	CMatrix44f projMatrix[2];
+	CMatrix44f viewMatrix[2];
 };
 
 extern CShadowHandler* shadowHandler;

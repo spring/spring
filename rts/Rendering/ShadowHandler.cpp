@@ -134,13 +134,14 @@ void CShadowHandler::Init()
 		return;
 	}
 
-	// same as glOrtho(0, 1,  0, 1,  0, -1); maps [0,1] to [-1,1]
-	projMatrix.LoadIdentity();
-	projMatrix.Translate(-OnesVector);
-	projMatrix.Scale(OnesVector * 2.0f);
-
 	// same as glOrtho(-1, 1,  -1, 1,  -1, 1); just inverts Z
-	// projMatrix.SetZ(-FwdVector);
+	// projMatrix[SHADOWMAT_TYPE_DRAWING].LoadIdentity();
+	// projMatrix[SHADOWMAT_TYPE_DRAWING].SetZ(-FwdVector);
+
+	// same as glOrtho(0, 1,  0, 1,  0, -1); maps [0,1] to [-1,1]
+	projMatrix[SHADOWMAT_TYPE_DRAWING].LoadIdentity();
+	projMatrix[SHADOWMAT_TYPE_DRAWING].Translate(-OnesVector);
+	projMatrix[SHADOWMAT_TYPE_DRAWING].Scale(OnesVector * 2.0f);
 
 	LoadShadowGenShaderProgs();
 }
@@ -405,44 +406,42 @@ static CMatrix44f ComposeLightMatrix(const ISkyLight* light)
 	return lightMatrix;
 }
 
-void CShadowHandler::SetShadowMatrix(CCamera* playerCam, CCamera* lightCam)
+static CMatrix44f ComposeScaleMatrix(const float3 scales)
 {
-	// NOTE:
-	//     the xy-scaling factors from CalcMinMaxView do not change linearly
-	//     or smoothly with camera movements, creating visible artefacts (eg.
-	//     large jumps in shadow resolution)
-	//
-	//     therefore, EITHER use "fixed" scaling values such that the entire
-	//     map barely fits into the sun's frustum (by pretending it is embedded
-	//     in a sphere and taking its diameter), OR variable scaling such that
-	//     everything that can be seen by the camera maximally fills the sun's
-	//     frustum (choice of projection-style is left to the user and can be
-	//     changed at run-time)
-	//
-	//     the first option means larger maps will have more blurred/aliased
-	//     shadows if the depth buffer is kept at the same size, but no (map)
-	//     geometry is ever omitted
-	//
-	//     the second option means shadows have higher average resolution, but
-	//     become less sharp as the viewing volume increases (through eg.camera
-	//     rotations) and geometry can be omitted in some cases
-	//
-	// NOTE:
-	//     when DynamicSun is enabled, the orbit is always circular in the xz
-	//     plane, instead of elliptical when the map has an aspect-ratio != 1
-	//
-	const CMatrix44f lightMatrix = std::move(ComposeLightMatrix(sky->GetLight()));
-	const float3 viewScales = GetShadowProjectionScales(playerCam, -lightMatrix.GetZ());
+	return (CMatrix44f(FwdVector * 0.5f, RgtVector / scales.x, UpVector / scales.y, FwdVector / scales.z));
+}
 
-	viewMatrix.LoadIdentity();
-	viewMatrix.SetPos(ZeroVector);
-	viewMatrix.SetX(std::move(lightMatrix.GetX()));
-	viewMatrix.SetY(std::move(lightMatrix.GetY()));
-	viewMatrix.SetZ(std::move(lightMatrix.GetZ()));
-	viewMatrix.Scale(OnesVector / viewScales); // reshape frustum
-	viewMatrix.Transpose(); // invert rotation (R^T == R^{-1})
-	viewMatrix.Translate(-centerPos); // move into sun-space
-	viewMatrix.SetPos(viewMatrix.GetPos() + (FwdVector * 0.5f)); // add z-bias
+void CShadowHandler::SetShadowMatrix(CCamera* playerCam)
+{
+	const CMatrix44f lightMatrix = std::move(ComposeLightMatrix(sky->GetLight()));
+	const CMatrix44f scaleMatrix = std::move(ComposeScaleMatrix(GetShadowProjectionScales(playerCam, -lightMatrix.GetZ())));
+	const     float3 scaleVector = float3(scaleMatrix[0], scaleMatrix[5], scaleMatrix[10]); // (X.x, Y.y, Z.z)
+
+	// reshape frustum (to maximize SM resolution); for culling we want
+	// the scales-matrix applied to projMatrix instead of to viewMatrix
+	// ((V*S) * P = V * (S*P); note that S * P is a pre-multiplication
+	// so we express it as P * S in code)
+	projMatrix[SHADOWMAT_TYPE_CULLING] = projMatrix[SHADOWMAT_TYPE_DRAWING];
+	projMatrix[SHADOWMAT_TYPE_CULLING] *= scaleMatrix;
+
+	// frustum-culling needs this form
+	viewMatrix[SHADOWMAT_TYPE_CULLING].LoadIdentity();
+	viewMatrix[SHADOWMAT_TYPE_CULLING].SetX(std::move(lightMatrix.GetX()));
+	viewMatrix[SHADOWMAT_TYPE_CULLING].SetY(std::move(lightMatrix.GetY()));
+	viewMatrix[SHADOWMAT_TYPE_CULLING].SetZ(std::move(lightMatrix.GetZ()));
+	viewMatrix[SHADOWMAT_TYPE_CULLING].Transpose(); // invert rotation (R^T == R^{-1})
+	viewMatrix[SHADOWMAT_TYPE_CULLING].Translate(-centerPos); // same as SetPos(mat * -pos)
+
+	// shaders need this form, projection into SM-space is done by shadow2DProj()
+	// note: ShadowGenVertProg is a special case because it does not use uniforms
+	viewMatrix[SHADOWMAT_TYPE_DRAWING].LoadIdentity();
+	viewMatrix[SHADOWMAT_TYPE_DRAWING].SetX(std::move(lightMatrix.GetX()));
+	viewMatrix[SHADOWMAT_TYPE_DRAWING].SetY(std::move(lightMatrix.GetY()));
+	viewMatrix[SHADOWMAT_TYPE_DRAWING].SetZ(std::move(lightMatrix.GetZ()));
+	viewMatrix[SHADOWMAT_TYPE_DRAWING].Scale(scaleVector);
+	viewMatrix[SHADOWMAT_TYPE_DRAWING].Transpose();
+	viewMatrix[SHADOWMAT_TYPE_DRAWING].SetPos(viewMatrix[SHADOWMAT_TYPE_DRAWING] * -centerPos);
+	viewMatrix[SHADOWMAT_TYPE_DRAWING].SetPos(viewMatrix[SHADOWMAT_TYPE_DRAWING].GetPos() + (FwdVector * 0.5f)); // add z-bias
 }
 
 void CShadowHandler::CreateShadows()
@@ -474,13 +473,18 @@ void CShadowHandler::CreateShadows()
 
 
 	SetShadowMapSizeFactors();
-	SetShadowMatrix(prvCam, curCam);
+	SetShadowMatrix(prvCam);
 
-	curCam->SetProjMatrix(projMatrix);
-	curCam->SetViewMatrix(viewMatrix);
-	// update frustum (FIXME), load matrices
+	// first set matrices needed by shaders (including ShadowGenVertProg)
+	curCam->SetProjMatrix(projMatrix[SHADOWMAT_TYPE_DRAWING]);
+	curCam->SetViewMatrix(viewMatrix[SHADOWMAT_TYPE_DRAWING]);
+	// update frustum, load matrices into gl_{ModelView,Projection}Matrix
 	curCam->Update(false, false, false);
 	curCam->UpdateLoadViewPort(0, 0, shadowMapSize, shadowMapSize);
+	// next set matrices needed for SP visibility culling (these
+	// are *NEVER* loaded into gl_{ModelView,Projection}Matrix!)
+	curCam->SetProjMatrix(projMatrix[SHADOWMAT_TYPE_CULLING]);
+	curCam->SetViewMatrix(viewMatrix[SHADOWMAT_TYPE_CULLING]);
 
 	if (globalRendering->haveARB) {
 		// set the shadow-parameter registers
@@ -518,6 +522,30 @@ float3 CShadowHandler::GetShadowProjectionScales(CCamera* cam, const float3& pro
 	float3 scales;
 	float3 projPos[2];
 
+	// NOTE:
+	//   the xy-scaling factors from CalcMinMaxView do not change linearly
+	//   or smoothly with camera movements, creating visible artefacts (eg.
+	//   large jumps in shadow resolution)
+	//
+	//   therefore, EITHER use "fixed" scaling values such that the entire
+	//   map barely fits into the sun's frustum (by pretending it is embedded
+	//   in a sphere and taking its diameter), OR variable scaling such that
+	//   everything that can be seen by the camera maximally fills the sun's
+	//   frustum (choice of projection-style is left to the user and can be
+	//   changed at run-time)
+	//
+	//   the first option means larger maps will have more blurred/aliased
+	//   shadows if the depth buffer is kept at the same size, but no (map)
+	//   geometry is ever omitted
+	//
+	//   the second option means shadows have higher average resolution, but
+	//   become less sharp as the viewing volume increases (through eg.camera
+	//   rotations) and geometry can be omitted in some cases
+	//
+	// NOTE:
+	//   when DynamicSun is enabled, the orbit is always circular in the xz
+	//   plane, instead of elliptical when the map has an aspect-ratio != 1
+	//
 	switch (shadowProMode) {
 		case SHADOWPROMODE_CAM_CENTER: {
 			scales.x = GetOrthoProjectedFrustumRadius(cam, centerPos);
