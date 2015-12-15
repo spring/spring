@@ -413,14 +413,14 @@ static CMatrix44f ComposeScaleMatrix(const float3 scales)
 	return (CMatrix44f(FwdVector * 0.5f, RgtVector / scales.x, UpVector / scales.y, FwdVector / scales.z));
 }
 
-void CShadowHandler::SetShadowMatrix(CCamera* playerCam, CCamera* lightCam)
+void CShadowHandler::SetShadowMatrix(CCamera* playerCam, CCamera* shadowCam)
 {
 	const CMatrix44f lightMatrix = std::move(ComposeLightMatrix(sky->GetLight()));
 	const CMatrix44f scaleMatrix = std::move(ComposeScaleMatrix(GetShadowProjectionScales(playerCam, -lightMatrix.GetZ())));
 	const     float3 scaleVector = float3(scaleMatrix[0], scaleMatrix[5], scaleMatrix[10]); // (X.x, Y.y, Z.z)
 
 	// take inverse to undo division baked into scaleMatrix, convert diameter to radius
-	lightCam->SetFrustumScales((OnesVector / scaleVector) * float3(0.5f, 0.5f, 1.0f));
+	shadowCam->SetFrustumScales((OnesVector / scaleVector) * float3(0.5f, 0.5f, 1.0f));
 
 	#if 0
 	// reshape frustum (to maximize SM resolution); for culling we want
@@ -442,7 +442,7 @@ void CShadowHandler::SetShadowMatrix(CCamera* playerCam, CCamera* lightCam)
 	//
 	// we have two options: either place the camera such that it *looks at* projMidPos
 	// (along lightMatrix.GetZ()) or such that it is *at or behind* projMidPos looking
-	// in the inverse direction
+	// in the inverse direction (the latter here)
 	viewMatrix[SHADOWMAT_TYPE_CULLING].LoadIdentity();
 	viewMatrix[SHADOWMAT_TYPE_CULLING].SetX(-std::move(lightMatrix.GetX()));
 	viewMatrix[SHADOWMAT_TYPE_CULLING].SetY( std::move(lightMatrix.GetY()));
@@ -465,6 +465,21 @@ void CShadowHandler::SetShadowMatrix(CCamera* playerCam, CCamera* lightCam)
 	// holds true in the non-KISS case, but needs an epsilon-tolerance equality test
 	assert((viewMatrix[0] * projMatrix[0]) == (viewMatrix[1] * projMatrix[1]));
 	#endif
+}
+
+void CShadowHandler::SetShadowCamera(CCamera* shadowCam)
+{
+	// first set matrices needed by shaders (including ShadowGenVertProg)
+	shadowCam->SetProjMatrix(projMatrix[SHADOWMAT_TYPE_DRAWING]);
+	shadowCam->SetViewMatrix(viewMatrix[SHADOWMAT_TYPE_DRAWING]);
+	// update frustum, load matrices into gl_{ModelView,Projection}Matrix
+	shadowCam->Update(false, false, false);
+	shadowCam->UpdateLoadViewPort(0, 0, shadowMapSize, shadowMapSize);
+	// next set matrices needed for SP visibility culling (these
+	// are *NEVER* loaded into gl_{ModelView,Projection}Matrix!)
+	shadowCam->SetProjMatrix(projMatrix[SHADOWMAT_TYPE_CULLING]);
+	shadowCam->SetViewMatrix(viewMatrix[SHADOWMAT_TYPE_CULLING]);
+	shadowCam->UpdateFrustum();
 }
 
 void CShadowHandler::CreateShadows()
@@ -494,17 +509,7 @@ void CShadowHandler::CreateShadows()
 
 	SetShadowMapSizeFactors();
 	SetShadowMatrix(prvCam, curCam);
-
-	// first set matrices needed by shaders (including ShadowGenVertProg)
-	curCam->SetProjMatrix(projMatrix[SHADOWMAT_TYPE_DRAWING]);
-	curCam->SetViewMatrix(viewMatrix[SHADOWMAT_TYPE_DRAWING]);
-	// update frustum, load matrices into gl_{ModelView,Projection}Matrix
-	curCam->Update(false, false, false);
-	curCam->UpdateLoadViewPort(0, 0, shadowMapSize, shadowMapSize);
-	// next set matrices needed for SP visibility culling (these
-	// are *NEVER* loaded into gl_{ModelView,Projection}Matrix!)
-	curCam->SetProjMatrix(projMatrix[SHADOWMAT_TYPE_CULLING]);
-	curCam->SetViewMatrix(viewMatrix[SHADOWMAT_TYPE_CULLING]);
+	SetShadowCamera(curCam);
 
 	if (globalRendering->haveARB) {
 		// set the shadow-parameter registers

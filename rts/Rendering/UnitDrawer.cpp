@@ -436,6 +436,7 @@ bool CUnitDrawer::CanDrawOpaqueUnit(
 	if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
 		return false;
 
+	// either PLAYER or UWREFL
 	const CCamera* cam = CCamera::GetActiveCamera();
 
 	assert(cam->GetCamType() != CCamera::CAMTYPE_SHADOW);

@@ -72,13 +72,13 @@ private:
 	void DrawOpaqueFeatures(int modelType, int luaMatType);
 	void DrawFarFeatures();
 
-	bool CanDrawFeature(const CFeature*, const CCamera*) const;
+	bool CanDrawFeature(const CFeature*) const;
 
 	void DrawFeatureModel(const CFeature* feature, bool noLuaCall);
 
 	void DrawFadeFeaturesHelper(int, int);
 	void DrawFadeFeaturesSet(const FeatureSet&, int, int);
-	void GetVisibleFeatures(const CCamera*, int, bool drawFar);
+	void GetVisibleFeatures(CCamera*, int, bool drawFar);
 
 	void PostLoad();
 

@@ -247,24 +247,28 @@ void CCamera::UpdateViewRange()
 
 
 static inline bool AABBInOriginPlane(
-	const float3& plane,
 	const float3& camPos,
 	const float3& mins,
-	const float3& maxs
+	const float3& maxs,
+	const float3& normal,
+	const float offset
 ) {
 	float3 fp; // far point
-	fp.x = (plane.x > 0.0f) ? mins.x : maxs.x;
-	fp.y = (plane.y > 0.0f) ? mins.y : maxs.y;
-	fp.z = (plane.z > 0.0f) ? mins.z : maxs.z;
-	return (plane.dot(fp - camPos) < 0.0f);
+	fp.x = (normal.x > 0.0f) ? mins.x : maxs.x;
+	fp.y = (normal.y > 0.0f) ? mins.y : maxs.y;
+	fp.z = (normal.z > 0.0f) ? mins.z : maxs.z;
+	return (normal.dot(fp - camPos) < offset);
 }
 
 
 bool CCamera::InView(const float3& mins, const float3& maxs) const
 {
+	// orthographic plane offsets along each respective normal; TLBR
+	const float4 planeOffsets = {frustumScales.y, frustumScales.y, frustumScales.x, frustumScales.x};
+
 	// axis-aligned bounding box test (AABB)
 	for (unsigned int i = 0; i < FRUSTUM_PLANE_CNT; i++) {
-		if (!AABBInOriginPlane(frustumPlanes[i], pos, mins, maxs)) {
+		if (!AABBInOriginPlane(pos, mins, maxs, frustumPlanes[i], planeOffsets[i])) {
 			return false;
 		}
 	}
@@ -274,20 +278,22 @@ bool CCamera::InView(const float3& mins, const float3& maxs) const
 
 bool CCamera::InView(const float3& p, float radius) const
 {
-	const float3 vec = p - pos;
+	const float4 planeOffsets = {frustumScales.y, frustumScales.y, frustumScales.x, frustumScales.x};
+	const float3 objectVector = p - pos;
 
 	// test if <p> is closer than the near-plane
-	if (false && vec.dot(forward) < (frustumRange.x - radius))
+	if (false && objectVector.dot(forward) < (frustumRange.x - radius))
 		return false;
 
+	// test if <p> is behind at least one frustum-plane
 	for (unsigned int i = 0; i < FRUSTUM_PLANE_CNT; i++) {
-		if (vec.dot(frustumPlanes[i]) > radius) {
+		if (objectVector.dot(frustumPlanes[i]) > (planeOffsets[i] + radius)) {
 			return false;
 		}
 	}
 
 	// final test against far-plane
-	return (vec.SqLength() <= Square(frustumRange.y + radius));
+	return (objectVector.SqLength() <= Square(frustumRange.y + radius));
 }
 
 

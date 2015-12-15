@@ -88,7 +88,7 @@ public:
 	bool InView(const float3& p, float radius = 0) const;
 	bool InView(const float3& mins, const float3& maxs) const;
 
-	void GetFrustumSides(float miny, float maxy, float scale, bool negSide = false);
+	void GetFrustumSides(float miny, float maxy, float scale, bool negOnly = false);
 	void GetFrustumSide(
 		const float3& normal,
 		const float3& offset,
@@ -186,12 +186,13 @@ public:
 		return cam;
 	}
 
-private:
+public:
 	void UpdateViewRange();
 	void UpdateFrustum();
 	void UpdateMatrices();
 	void UpdateViewPort(int px, int py, int sx, int sy);
 
+private:
 	void gluPerspectiveSpring(const float aspect, const float zn, const float zf);
 	void glFrustumSpring(const float l, const float r,  const float b, const float t,  const float zn, const float zf);
 	void glOrthoScaledSpring(const float sx, const float sy, const float zn, const float zf);

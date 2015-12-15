@@ -774,6 +774,8 @@ void CSMFReadMap::GridVisibility(CCamera* visCam, int quadSize, float maxDist, C
 {
 	if (visCam == nullptr) {
 		// allow passing in a custom camera for grid-visibility testing
+		// otherwise this culls using the state of whichever camera most
+		// recently had Update() called on it
 		visCam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
 		// for other cameras, KISS and just assume caller has done this
 		visCam->GetFrustumSides(GetCurrMinHeight() - 100.0f, GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
