@@ -130,6 +130,9 @@ void CCamera::UpdateFrustum()
 			frustumPlanes[FRUSTUM_PLANE_RGT] =  right;
 			frustumPlanes[FRUSTUM_PLANE_LFT] = -right;
 		} break;
+		default: {
+			assert(false);
+		} break;
 	}
 
 	if (camType != CAMTYPE_VISCUL) {
