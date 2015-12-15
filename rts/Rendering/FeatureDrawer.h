@@ -95,7 +95,7 @@ private:
 
 	friend class CFeatureQuadDrawer;
 	struct ModelRendererProxy {
-		ModelRendererProxy(): lastDrawFrame{0, 0} {
+		ModelRendererProxy(): lastDrawFrame(0) {
 			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 				rendererTypes[modelType] = IWorldObjectModelRenderer::GetInstance(modelType);
 			}
@@ -106,15 +106,23 @@ private:
 			}
 		}
 
+		const IWorldObjectModelRenderer* GetRenderer(unsigned int i) const { return rendererTypes[i]; }
+		      IWorldObjectModelRenderer* GetRenderer(unsigned int i)       { return rendererTypes[i]; }
+
+		unsigned int GetLastDrawFrame() const { return lastDrawFrame; }
+		void SetLastDrawFrame(unsigned int f) { lastDrawFrame = f; }
+
+	private:
 		std::array<IWorldObjectModelRenderer*, MODELTYPE_OTHER> rendererTypes;
 
 		// frame on which this proxy's owner quad last
 		// received a DrawQuad call (i.e. was in view)
-		// during the regular and shadow pass
-		unsigned int lastDrawFrame[2];
+		// during *any* pass
+		unsigned int lastDrawFrame;
 	};
 
 	std::vector<ModelRendererProxy> modelRenderers;
+	std::vector<unsigned int> camVisibleQuadFlags;
 	std::vector<CFeature*> unsortedFeatures;
 
 	GL::GeometryBuffer* geomBuffer;

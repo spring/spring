@@ -398,7 +398,7 @@ CBumpWater::CBumpWater()
 			}
 		}
 
-		if (refraction>0) {
+		if (refraction > 0) {
 			refractFBO.Bind();
 			refractFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, depthRBOFormat, screenTextureX, screenTextureY);
 			refractFBO.AttachTexture(refractTexture,target);
@@ -1179,8 +1179,8 @@ void CBumpWater::DrawRefraction(CGame* game)
 	drawRefraction = true;
 
 	glEnable(GL_CLIP_PLANE2);
-	const double plane[4] = {0, -1, 0, 5};
-	glClipPlane(GL_CLIP_PLANE2, plane);
+	const double clipPlaneEq[4] = {0.0, -1.0, 0.0, 5.0};
+	glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
 
 	// opaque
 	sky->Draw();
@@ -1200,8 +1200,8 @@ void CBumpWater::DrawRefraction(CGame* game)
 
 	glEnable(GL_FOG);
 
-	unitDrawer->unitSunColor=oldsun;
-	unitDrawer->unitAmbientColor=oldambient;
+	unitDrawer->unitSunColor = oldsun;
+	unitDrawer->unitAmbientColor = oldambient;
 }
 
 

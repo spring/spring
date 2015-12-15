@@ -44,6 +44,44 @@ static bool DrawAlpha (const CFeature* f) { return (f->drawAlpha >  FD_ALPHA_FAR
 static bool DrawFarTex(const CFeature* f) { return (f->drawAlpha >  FD_ALPHA_SHADOW && f->drawAlpha <= FD_ALPHA_FARTEX); }
 static bool DrawShadow(const CFeature* f) { return (                                   f->drawAlpha <= FD_ALPHA_SHADOW); }
 
+static bool SetDrawAlphaValue(
+	CFeature* f,
+	CCamera* cam,
+	float sqFadeDistMin,
+	float sqFadeDistMax,
+	bool reset
+) {
+	if (reset) {
+		f->drawAlpha = 0.0f;
+		return false;
+	}
+
+	const float sqDist = (f->pos - cam->GetPos()).SqLength();
+	const float farLength = f->sqRadius * unitDrawer->unitDrawDistSqr;
+
+	if (sqDist >= farLength)
+		return false;
+
+	float sqFadeDistB = sqFadeDistMin;
+	float sqFadeDistE = sqFadeDistMax;
+
+	if (farLength < sqFadeDistMax) {
+		sqFadeDistE = farLength;
+		sqFadeDistB = farLength * (sqFadeDistMin / sqFadeDistMax);
+	}
+
+	if (sqDist < sqFadeDistB) {
+		// draw feature as normal, no fading
+		f->drawAlpha = FD_ALPHA_OPAQUE;
+	} else if (sqDist < sqFadeDistE) {
+		// otherwise save it for the fade-pass
+		f->drawAlpha = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
+	}
+
+	return true;
+}
+
+
 
 CONFIG(bool, ShowRezBars).defaultValue(true).headlessValue(false);
 
@@ -97,13 +135,16 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 	featureFadeDistance = std::min(configHandler->GetFloat("FeatureFadeDistance"), featureDrawDistance);
 
 	modelRenderers.resize(drawQuadsX * drawQuadsY);
+	camVisibleQuadFlags.resize(CCamera::CAMTYPE_COUNT, 0);
 }
 
 
 CFeatureDrawer::~CFeatureDrawer()
 {
 	eventHandler.RemoveClient(this);
+
 	modelRenderers.clear();
+	camVisibleQuadFlags.clear();
 }
 
 
@@ -116,6 +157,7 @@ void CFeatureDrawer::RenderFeatureCreated(const CFeature* feature)
 	if (feature->def->drawType == DRAWTYPE_MODEL) {
 		f->drawQuad = -1;
 		f->drawAlpha = 0.0f;
+
 		UpdateDrawQuad(f);
 		unsortedFeatures.push_back(f);
 	}
@@ -131,7 +173,7 @@ void CFeatureDrawer::RenderFeatureDestroyed(const CFeature* feature)
 		VectorErase(unsortedFeatures, f);
 	}
 	if (f->model && f->drawQuad >= 0) {
-		modelRenderers[f->drawQuad].rendererTypes[MDL_TYPE(f)]->DelFeature(f);
+		modelRenderers[f->drawQuad].GetRenderer(MDL_TYPE(f))->DelFeature(f);
 		f->drawQuad = -1;
 	}
 
@@ -168,10 +210,10 @@ void CFeatureDrawer::UpdateDrawQuad(CFeature* feature)
 
 	if (feature->model) {
 		if (oldDrawQuad >= 0) {
-			modelRenderers[oldDrawQuad].rendererTypes[MDL_TYPE(feature)]->DelFeature(feature);
+			modelRenderers[oldDrawQuad].GetRenderer(MDL_TYPE(feature))->DelFeature(feature);
 		}
 
-		modelRenderers[newDrawQuad].rendererTypes[MDL_TYPE(feature)]->AddFeature(feature);
+		modelRenderers[newDrawQuad].GetRenderer(MDL_TYPE(feature))->AddFeature(feature);
 	}
 
 	feature->drawQuad = newDrawQuad;
@@ -183,7 +225,7 @@ void CFeatureDrawer::Update()
 	for (CFeature* f: unsortedFeatures) {
 		UpdateDrawPos(f);
 		// reset all ALPHA_* values, touched or not
-		f->drawAlpha = 0.0f;
+		SetDrawAlphaValue(f, nullptr, -1.0f, -1.0f, true);
 	}
 }
 
@@ -216,8 +258,7 @@ void CFeatureDrawer::Draw()
 
 	// mark all features (in the quads we can see) with [ALPHA_FARTEX, ALPHA_OPAQUE]
 	// the pass below will ignore any features whose drawAlpha is not in this range
-	// note: only runs on the first call to Draw made this frame
-	GetVisibleFeatures(CCamera::GetCamera(CCamera::CAMTYPE_PLAYER), 0, true);
+	GetVisibleFeatures(CCamera::GetCamera(CCamera::CAMTYPE_ACTIVE), 0, true);
 
 	// first do the deferred pass; conditional because
 	// most of the water renderers use their own FBO's
@@ -251,9 +292,9 @@ void CFeatureDrawer::DrawOpaquePass(bool deferredPass, bool, bool)
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		// arbitrarily pick first proxy to prepare state
-		modelRenderers[0].rendererTypes[modelType]->PushRenderState();
+		modelRenderers[0].GetRenderer(modelType)->PushRenderState();
 		DrawOpaqueFeatures(modelType, LuaObjectDrawer::GetDrawPassOpaqueMat());
-		modelRenderers[0].rendererTypes[modelType]->PopRenderState();
+		modelRenderers[0].GetRenderer(modelType)->PopRenderState();
 	}
 
 	unitDrawer->CleanUpUnitDrawing(deferredPass);
@@ -268,10 +309,10 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType, int luaMatType)
 	const bool shadowPass = (luaMatType == LuaObjectDrawer::GetDrawPassShadowMat());
 
 	for (const auto& mdlRenderProxy: modelRenderers) {
-		if (mdlRenderProxy.lastDrawFrame[shadowPass] < globalRendering->drawFrame)
+		if (mdlRenderProxy.GetLastDrawFrame() < globalRendering->drawFrame)
 			continue;
 
-		const auto& mdlRenderer = mdlRenderProxy.rendererTypes[modelType];
+		const auto mdlRenderer = mdlRenderProxy.GetRenderer(modelType);
 		const auto& featureBin = mdlRenderer->GetFeatureBin();
 
 		for (const auto& binElem: featureBin) {
@@ -380,7 +421,7 @@ bool CFeatureDrawer::DrawIndividualPreCommon(const CFeature* feature)
 
 	// set the full default state
 	unitDrawer->SetupForUnitDrawing(false);
-	modelRenderers[0].rendererTypes[MDL_TYPE(feature)]->PushRenderState();
+	modelRenderers[0].GetRenderer(MDL_TYPE(feature))->PushRenderState();
 
 	CUnitDrawer::BindModelTypeTexture(feature);
 	unitDrawer->SetTeamColour(feature->team, feature->drawAlpha);
@@ -390,7 +431,7 @@ bool CFeatureDrawer::DrawIndividualPreCommon(const CFeature* feature)
 
 void CFeatureDrawer::DrawIndividualPostCommon(const CFeature* feature, bool origDrawDebug)
 {
-	modelRenderers[0].rendererTypes[MDL_TYPE(feature)]->PopRenderState();
+	modelRenderers[0].GetRenderer(MDL_TYPE(feature))->PopRenderState();
 	unitDrawer->CleanUpUnitDrawing(false);
 
 	globalRendering->drawdebug = origDrawDebug;
@@ -458,9 +499,9 @@ void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 
 		{
 			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-				modelRenderers[0].rendererTypes[modelType]->PushRenderState();
+				modelRenderers[0].GetRenderer(modelType)->PushRenderState();
 				DrawFadeFeaturesHelper(modelType, LuaObjectDrawer::GetDrawPassAlphaMat());
-				modelRenderers[0].rendererTypes[modelType]->PopRenderState();
+				modelRenderers[0].GetRenderer(modelType)->PopRenderState();
 			}
 		}
 
@@ -483,10 +524,11 @@ void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 void CFeatureDrawer::DrawFadeFeaturesHelper(int modelType, int luaMatType)
 {
 	for (const auto& mdlRenderProxy: modelRenderers) {
-		if (mdlRenderProxy.lastDrawFrame[false] < globalRendering->drawFrame)
+		if (mdlRenderProxy.GetLastDrawFrame() < globalRendering->drawFrame)
 			continue;
 
-		const auto& featureBin = mdlRenderProxy.rendererTypes[modelType]->GetFeatureBin();
+		const auto mdlRenderer = mdlRenderProxy.GetRenderer(modelType);
+		const auto& featureBin = mdlRenderer->GetFeatureBin();
 
 		for (const auto& binElem: featureBin) {
 			CUnitDrawer::BindModelTypeTexture(modelType, binElem.first);
@@ -579,7 +621,7 @@ public:
 	float sqFadeDistBegin;
 	float sqFadeDistEnd;
 
-	float3 cameraPos;
+	CCamera* cam;
 
 public:
 	void ResetState() {
@@ -593,19 +635,18 @@ public:
 		sqFadeDistBegin = 0.0f;
 		sqFadeDistEnd   = 0.0f;
 
-		cameraPos = ZeroVector;
+		cam = nullptr;
 	}
 
 	void DrawQuad(int x, int y) {
 		auto& mdlRenderProxy = featureDrawer->modelRenderers[y * drawQuadsX + x];
 
-		if (mdlRenderProxy.lastDrawFrame[drawShadowPass] >= globalRendering->drawFrame)
-			return;
-
-		mdlRenderProxy.lastDrawFrame[drawShadowPass] = globalRendering->drawFrame;
+		// used so we do not iterate over non-visited renderers (in any pass)
+		mdlRenderProxy.SetLastDrawFrame(globalRendering->drawFrame);
 
 		for (int i = 0; i < MODELTYPE_OTHER; ++i) {
-			auto& featureBin = mdlRenderProxy.rendererTypes[i]->GetFeatureBinMutable();
+			auto mdlRenderer = mdlRenderProxy.GetRenderer(i);
+			auto& featureBin = mdlRenderer->GetFeatureBinMutable();
 
 			for (auto& binElem: featureBin) {
 				for (CFeature* f: binElem.second) {
@@ -632,52 +673,15 @@ public:
 						continue;
 					}
 
-					if (drawReflection) {
-						float3 zeroPos;
-
-						if (f->midPos.y < 0.0f) {
-							zeroPos = f->midPos;
-						} else {
-							const float dif = f->midPos.y - cameraPos.y;
-
-							zeroPos =
-								cameraPos * (f->midPos.y / dif) +
-								f->midPos * (-cameraPos.y / dif);
-						}
-						if (CGround::GetApproximateHeight(zeroPos.x, zeroPos.z, false) > f->drawRadius) {
-							continue;
-						}
-					}
-
 					if (drawRefraction && !f->IsInWater())
 						continue;
 
-
-					const float sqDist = (f->pos - cameraPos).SqLength();
-					const float farLength = f->sqRadius * unitDrawer->unitDrawDistSqr;
-
-					if (sqDist < farLength) {
-						float sqFadeDistE;
-						float sqFadeDistB;
-
-						if (farLength < sqFadeDistEnd) {
-							sqFadeDistE = farLength;
-							sqFadeDistB = farLength * sqFadeDistBegin / sqFadeDistEnd;
-						} else {
-							sqFadeDistE = sqFadeDistEnd;
-							sqFadeDistB = sqFadeDistBegin;
-						}
-
-						if (sqDist < sqFadeDistB) {
-							// draw feature as normal, no fading
-							f->drawAlpha = FD_ALPHA_OPAQUE;
-						} else if (sqDist < sqFadeDistE) {
-							// otherwise save it for the fade-pass
-							f->drawAlpha = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
-						}
-
+					if (drawReflection && !CUnitDrawer::ObjectVisibleReflection(f, cam->GetPos()))
 						continue;
-					}
+
+
+					if (SetDrawAlphaValue(f, cam, sqFadeDistBegin, sqFadeDistEnd, false))
+						continue;
 
 					if (drawFarFeatures) {
 						f->drawAlpha = FD_ALPHA_FARTEX;
@@ -692,6 +696,14 @@ public:
 
 void CFeatureDrawer::GetVisibleFeatures(CCamera* cam, int extraSize, bool drawFar)
 {
+	// check if we already did a pass for this camera-type
+	// (e.g. water refraction and the standard opaque pass
+	// use CAMTYPE_PLAYER with equal state)
+	if (camVisibleQuadFlags[cam->GetCamType()] >= globalRendering->drawFrame)
+		return;
+
+	camVisibleQuadFlags[cam->GetCamType()] = globalRendering->drawFrame;
+
 	CFeatureQuadDrawer drawer;
 
 	drawer.drawQuadsX = drawQuadsX;
@@ -699,9 +711,9 @@ void CFeatureDrawer::GetVisibleFeatures(CCamera* cam, int extraSize, bool drawFa
 	drawer.drawRefraction = water->DrawRefractionPass();
 	drawer.drawShadowPass = (cam->GetCamType() == CCamera::CAMTYPE_SHADOW);
 	drawer.drawFarFeatures = drawFar;
-	drawer.sqFadeDistEnd = featureDrawDistance * featureDrawDistance;
 	drawer.sqFadeDistBegin = featureFadeDistance * featureFadeDistance;
-	drawer.cameraPos = cam->GetPos();
+	drawer.sqFadeDistEnd = featureDrawDistance * featureDrawDistance;
+	drawer.cam = cam;
 
 	cam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 	readMap->GridVisibility(cam, DRAW_QUAD_SIZE, featureDrawDistance, &drawer, extraSize);
@@ -712,3 +724,4 @@ void CFeatureDrawer::PostLoad()
 	drawQuadsX = mapDims.mapx/DRAW_QUAD_SIZE;
 	drawQuadsY = mapDims.mapy/DRAW_QUAD_SIZE;
 }
+

@@ -464,6 +464,7 @@ void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 
 void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 {
+	// trees are never drawn in any special (non-opaque) pass
 	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
 	Shader::IProgramObject* treeShader = NULL;
 
@@ -908,7 +909,7 @@ void CAdvTreeSquareShadowPassDrawer::DrawQuad(int x, int y)
 
 void CAdvTreeDrawer::DrawShadowPass()
 {
-	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
+	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_SHADOW);
 	Shader::IProgramObject* po = NULL;
 
 	const float treeDistance = oldTreeDistance;

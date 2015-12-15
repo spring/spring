@@ -388,6 +388,7 @@ void CShadowHandler::SetShadowMapSizeFactors()
 		shadowTexProjCenter.w = -0.05f;
 	}
 	#else
+	// .x = scale, .y = bias (vec2(x, y) * scale + vec2(bias, bias))
 	shadowTexProjCenter.x = 0.5f;
 	shadowTexProjCenter.y = 0.5f;
 	shadowTexProjCenter.z = FLT_MAX;
@@ -408,19 +409,19 @@ static CMatrix44f ComposeLightMatrix(const ISkyLight* light)
 	return lightMatrix;
 }
 
-static CMatrix44f ComposeScaleMatrix(const float3 scales)
+static CMatrix44f ComposeScaleMatrix(const float4 scales)
 {
-	return (CMatrix44f(FwdVector * 0.5f, RgtVector / scales.x, UpVector / scales.y, FwdVector / scales.z));
+	// note: T is z-bias, scales.z is z-near
+	return (CMatrix44f(FwdVector * 0.5f, RgtVector / scales.x, UpVector / scales.y, FwdVector / scales.w));
 }
 
 void CShadowHandler::SetShadowMatrix(CCamera* playerCam, CCamera* shadowCam)
 {
 	const CMatrix44f lightMatrix = std::move(ComposeLightMatrix(sky->GetLight()));
 	const CMatrix44f scaleMatrix = std::move(ComposeScaleMatrix(GetShadowProjectionScales(playerCam, -lightMatrix.GetZ())));
-	const     float3 scaleVector = float3(scaleMatrix[0], scaleMatrix[5], scaleMatrix[10]); // (X.x, Y.y, Z.z)
 
-	// take inverse to undo division baked into scaleMatrix, convert diameter to radius
-	shadowCam->SetFrustumScales((OnesVector / scaleVector) * float3(0.5f, 0.5f, 1.0f));
+	// convert xy-diameter to radius
+	shadowCam->SetFrustumScales(shadowProjScales * float4(0.5f, 0.5f, 1.0f, 1.0f));
 
 	#if 0
 	// reshape frustum (to maximize SM resolution); for culling we want
@@ -442,7 +443,7 @@ void CShadowHandler::SetShadowMatrix(CCamera* playerCam, CCamera* shadowCam)
 	//
 	// we have two options: either place the camera such that it *looks at* projMidPos
 	// (along lightMatrix.GetZ()) or such that it is *at or behind* projMidPos looking
-	// in the inverse direction (the latter here)
+	// in the inverse direction (the latter is chosen here)
 	viewMatrix[SHADOWMAT_TYPE_CULLING].LoadIdentity();
 	viewMatrix[SHADOWMAT_TYPE_CULLING].SetX(-std::move(lightMatrix.GetX()));
 	viewMatrix[SHADOWMAT_TYPE_CULLING].SetY( std::move(lightMatrix.GetY()));
@@ -456,7 +457,7 @@ void CShadowHandler::SetShadowMatrix(CCamera* playerCam, CCamera* shadowCam)
 	viewMatrix[SHADOWMAT_TYPE_DRAWING].SetX(std::move(lightMatrix.GetX()));
 	viewMatrix[SHADOWMAT_TYPE_DRAWING].SetY(std::move(lightMatrix.GetY()));
 	viewMatrix[SHADOWMAT_TYPE_DRAWING].SetZ(std::move(lightMatrix.GetZ()));
-	viewMatrix[SHADOWMAT_TYPE_DRAWING].Scale(scaleVector);
+	viewMatrix[SHADOWMAT_TYPE_DRAWING].Scale(float3(scaleMatrix[0], scaleMatrix[5], scaleMatrix[10])); // extract (X.x, Y.y, Z.z)
 	viewMatrix[SHADOWMAT_TYPE_DRAWING].Transpose();
 	viewMatrix[SHADOWMAT_TYPE_DRAWING].SetPos(viewMatrix[SHADOWMAT_TYPE_DRAWING] * -projMidPos[2]);
 	viewMatrix[SHADOWMAT_TYPE_DRAWING].SetPos(viewMatrix[SHADOWMAT_TYPE_DRAWING].GetPos() + (FwdVector * 0.5f)); // add z-bias
@@ -543,8 +544,8 @@ void CShadowHandler::CreateShadows()
 
 
 
-float3 CShadowHandler::GetShadowProjectionScales(CCamera* cam, const float3& projDir) {
-	float3 projScales;
+float4 CShadowHandler::GetShadowProjectionScales(CCamera* cam, const float3& projDir) {
+	float4 projScales;
 	float2 projRadius;
 
 	// NOTE:
@@ -589,8 +590,9 @@ float3 CShadowHandler::GetShadowProjectionScales(CCamera* cam, const float3& pro
 	}
 
 	projScales.y = projScales.x;
-	projScales.z = globalRendering->viewRange;
-	return projScales;
+	projScales.z = globalRendering->zNear;
+	projScales.w = globalRendering->viewRange;
+	return (shadowProjScales = projScales);
 }
 
 float CShadowHandler::GetOrthoProjectedMapRadius(const float3& sunDir, float3& projPos) {

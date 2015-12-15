@@ -36,11 +36,13 @@ public:
 	};
 
 	enum {
-		FRUSTUM_PLANE_TOP = 0,
-		FRUSTUM_PLANE_BOT = 1,
-		FRUSTUM_PLANE_LFT = 2,
-		FRUSTUM_PLANE_RGT = 3,
-		FRUSTUM_PLANE_CNT = 4,
+		FRUSTUM_PLANE_LFT = 0,
+		FRUSTUM_PLANE_RGT = 1,
+		FRUSTUM_PLANE_TOP = 2,
+		FRUSTUM_PLANE_BOT = 3,
+		FRUSTUM_PLANE_FRN = 4, // near
+		FRUSTUM_PLANE_BCK = 5, // far
+		FRUSTUM_PLANE_CNT = 6,
 	};
 	enum {
 		FRUSTUM_SIDE_POS = 0,
@@ -99,7 +101,7 @@ public:
 	);
 
 	void ClipFrustumLines(bool left, const float zmin, const float zmax);
-	void SetFrustumScales(const float3 scales) { frustumScales = scales; }
+	void SetFrustumScales(const float4 scales) { frustumScales = scales; }
 
 	const std::vector<FrustumLine>& GetPosFrustumSides() const { return frustumLines[FRUSTUM_SIDE_POS]; }
 	const std::vector<FrustumLine>& GetNegFrustumSides() const { return frustumLines[FRUSTUM_SIDE_NEG]; }
@@ -214,12 +216,10 @@ public:
 	float lppScale;    ///< length-per-pixel scale
 
 public:
-	// frustum-pyramid planes (infinite)
+	// frustum-volume planes (infinite)
 	float3 frustumPlanes[FRUSTUM_PLANE_CNT];
-	// xyz-scales (for orthographic cameras only)
-	float3 frustumScales;
-	// .x := znear, .y := zfar, .z := unused
-	float3 frustumRange;
+	// xy-scales (for orthographic cameras only), .z := znear, .w := zfar
+	float4 frustumScales;
 
 	// Lua-controlled parameters, player-camera only
 	float3 posOffset;

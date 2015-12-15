@@ -37,7 +37,7 @@ CCamera::CCamera(unsigned int cameraType)
 	, halfFov(0.0f)
 	, tanHalfFov(0.0f)
 	, lppScale(0.0f)
-	, frustumScales(ZeroVector)
+	, frustumScales(0.0f, 0.0f, 0.0f, 0.0f)
 	, posOffset(ZeroVector)
 	, tiltOffset(ZeroVector)
 
@@ -57,9 +57,8 @@ void CCamera::CopyState(const CCamera* cam)
 		frustumPlanes[i] = cam->frustumPlanes[i];
 	}
 
-	// note: scales are only relevant for CAMTYPE_SHADOW
+	// note: xy-scales are only relevant for CAMTYPE_SHADOW
 	frustumScales = cam->frustumScales;
-	frustumRange  = cam->frustumRange;
 
 	forward    = cam->GetForward();
 	right      = cam->GetRight();
@@ -79,13 +78,16 @@ void CCamera::CopyState(const CCamera* cam)
 
 void CCamera::CopyStateReflect(const CCamera* cam)
 {
+	assert(cam->GetCamType() != CAMTYPE_UWREFL);
+	assert(     GetCamType() == CAMTYPE_UWREFL);
+
 	SetDir(cam->GetDir() * float3(1.0f, -1.0f, 1.0f));
 	SetPos(cam->GetPos() * float3(1.0f, -1.0f, 1.0f));
 	SetRotZ(-cam->GetRot().z);
 	Update(false, true, false);
 
-	// reflection pass needs the same range; Update might have changed it
-	frustumRange = cam->frustumRange;
+	// reflection pass needs the same z-range; Update might have changed it
+	frustumScales = cam->frustumScales;
 }
 
 void CCamera::Update(bool updateDirs, bool updateMats, bool updatePort)
@@ -135,6 +137,9 @@ void CCamera::UpdateFrustum()
 		} break;
 	}
 
+	frustumPlanes[FRUSTUM_PLANE_FRN] = -forward;
+	frustumPlanes[FRUSTUM_PLANE_BCK] =  forward;
+
 	if (camType != CAMTYPE_VISCUL) {
 		// vis-culling is always performed from player's (or light's)
 		// POV but also happens during e.g. cubemap generation; copy
@@ -152,10 +157,10 @@ void CCamera::UpdateMatrices()
 	// recalculate the projection transform
 	switch (projType) {
 		case PROJTYPE_PERSP: {
-			gluPerspectiveSpring(globalRendering->aspectRatio, frustumRange.x, frustumRange.y);
+			gluPerspectiveSpring(globalRendering->aspectRatio, frustumScales.z, frustumScales.w);
 		} break;
 		case PROJTYPE_ORTHO: {
-			glOrthoScaledSpring(globalRendering->viewSizeX, globalRendering->viewSizeY, frustumRange.x, frustumRange.y);
+			glOrthoScaledSpring(globalRendering->viewSizeX, globalRendering->viewSizeY, frustumScales.z, frustumScales.w);
 		} break;
 		default: {
 			assert(false);
@@ -234,15 +239,15 @@ void CCamera::UpdateViewRange()
 
 	const float factor = wantedViewRange / CGlobalRendering::MAX_VIEW_RANGE;
 
-	frustumRange.x = CGlobalRendering::NEAR_PLANE * factor;
-	frustumRange.y = CGlobalRendering::MAX_VIEW_RANGE * factor;
+	frustumScales.z = CGlobalRendering::NEAR_PLANE * factor;
+	frustumScales.w = CGlobalRendering::MAX_VIEW_RANGE * factor;
 
 	if (camType == CAMTYPE_PLAYER) {
 		// we do not touch these for other cameras (they e.g.
 		// determine where fog starts and ends so larger maps
 		// would be half-covered in it when factor <= 1)
-		globalRendering->zNear     = frustumRange.x;
-		globalRendering->viewRange = frustumRange.y;
+		globalRendering->zNear     = frustumScales.z;
+		globalRendering->viewRange = frustumScales.w;
 	}
 }
 
@@ -266,12 +271,12 @@ static inline bool AABBInOriginPlane(
 
 bool CCamera::InView(const float3& mins, const float3& maxs) const
 {
-	// orthographic plane offsets along each respective normal; TLBR
-	const float4 planeOffsets = {frustumScales.y, frustumScales.y, frustumScales.x, frustumScales.x};
+	// orthographic plane offsets along each respective normal; [0] = LFT&RGT, [1] = TOP&BOT
+	const float planeOffsets[2] = {frustumScales.x, frustumScales.y};
 
 	// axis-aligned bounding box test (AABB)
-	for (unsigned int i = 0; i < FRUSTUM_PLANE_CNT; i++) {
-		if (!AABBInOriginPlane(pos, mins, maxs, frustumPlanes[i], planeOffsets[i])) {
+	for (unsigned int i = FRUSTUM_PLANE_LFT; i < FRUSTUM_PLANE_FRN; i++) {
+		if (!AABBInOriginPlane(pos, mins, maxs, frustumPlanes[i], planeOffsets[i >> 1])) {
 			return false;
 		}
 	}
@@ -281,22 +286,30 @@ bool CCamera::InView(const float3& mins, const float3& maxs) const
 
 bool CCamera::InView(const float3& p, float radius) const
 {
-	const float4 planeOffsets = {frustumScales.y, frustumScales.y, frustumScales.x, frustumScales.x};
+	// use arrays because neither float2 nor float4 have an operator[]
+	const float xyPlaneOffsets[2] = {frustumScales.x, frustumScales.y};
+	const float  zPlaneOffsets[2] = {frustumScales.z, frustumScales.w};
+
 	const float3 objectVector = p - pos;
 
-	// test if <p> is closer than the near-plane
-	if (false && objectVector.dot(forward) < (frustumRange.x - radius))
-		return false;
+	assert(FRUSTUM_PLANE_LFT == 0);
+	assert(FRUSTUM_PLANE_FRN == 4);
 
-	// test if <p> is behind at least one frustum-plane
-	for (unsigned int i = 0; i < FRUSTUM_PLANE_CNT; i++) {
-		if (objectVector.dot(frustumPlanes[i]) > (planeOffsets[i] + radius)) {
+	#if 0
+	// test if <p> is in front of the near-plane
+	if (objectVector.dot(frustumPlanes[FRUSTUM_PLANE_FRN]) > (zPlaneOffsets[0] + radius))
+		return false;
+	#endif
+
+	// test if <p> is in front of a side-plane (LRTB)
+	for (unsigned int i = FRUSTUM_PLANE_LFT; i < FRUSTUM_PLANE_FRN; i++) {
+		if (objectVector.dot(frustumPlanes[i]) > (xyPlaneOffsets[i >> 1] + radius)) {
 			return false;
 		}
 	}
 
-	// final test against far-plane
-	return (objectVector.SqLength() <= Square(frustumRange.y + radius));
+	// test if <p> is behind the far-plane
+	return (objectVector.dot(frustumPlanes[FRUSTUM_PLANE_BCK]) <= (zPlaneOffsets[1] + radius));
 }
 
 
@@ -517,15 +530,15 @@ void CCamera::GetFrustumSides(float miny, float maxy, float scale, bool negOnly)
 	frustumLines[FRUSTUM_SIDE_NEG].clear();
 
 	// only non-zero for orthographic cameras
-	const float3 posOffsets[FRUSTUM_PLANE_CNT] = {
-		    up * frustumScales.y,
-		   -up * frustumScales.y,
+	const float3 posOffsets[FRUSTUM_PLANE_FRN] = {
 		-right * frustumScales.x,
 		 right * frustumScales.x,
+		    up * frustumScales.y,
+		   -up * frustumScales.y,
 	};
 
 	// note: order does not matter
-	for (unsigned int i = 0; i < FRUSTUM_PLANE_CNT; i++) {
+	for (unsigned int i = 0; i < FRUSTUM_PLANE_FRN; i++) {
 		GetFrustumSide(frustumPlanes[i], posOffsets[i],  miny, maxy, scale, negOnly? FRUSTUM_SIDE_NEG: FRUSTUM_SIDE_POS);
 	}
 }

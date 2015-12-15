@@ -85,7 +85,7 @@ private:
 	void SetShadowMatrix(CCamera* playerCam, CCamera* shadowCam);
 	void SetShadowCamera(CCamera* shadowCam);
 
-	float3 GetShadowProjectionScales(CCamera*, const float3&);
+	float4 GetShadowProjectionScales(CCamera*, const float3&);
 
 	float GetOrthoProjectedMapRadius(const float3&, float3&);
 	float GetOrthoProjectedFrustumRadius(CCamera*, float3&);
@@ -106,14 +106,15 @@ private:
 	static bool firstInit;
 	static bool shadowsSupported;
 
-	/// these project geometry into light-space
-	/// to write the (FBO) depth-buffer texture
+	// these project geometry into light-space
+	// to write the (FBO) depth-buffer texture
 	std::vector<Shader::IProgramObject*> shadowGenProgs;
 
 	float3 projMidPos[2 + 1];
 	float3 sunProjDir;
 
-	/// x1, x2, y1, y2
+	float4 shadowProjScales;
+	/// frustum bounding-rectangle corners; x1, x2, y1, y2
 	float4 shadowProjMinMax;
 	/// xmid, ymid, p17, p18
 	float4 shadowTexProjCenter;

@@ -170,6 +170,8 @@ public:
 	static void CleanupBasicS3OTexture1();
 	static void CleanupBasicS3OTexture0();
 
+	static bool ObjectVisibleReflection(const CSolidObject* obj, const float3 camPos);
+
 
 public:
 	float unitDrawDist;

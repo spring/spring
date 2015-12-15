@@ -116,6 +116,10 @@ static const KillShadowTexFunc shadowTexKillFuncs[MODELTYPE_OTHER] = {
 	KillShadowTex,      // ASS
 };
 
+void CUnitDrawer::BindModelTypeTexture(int mdlType, int texType, bool solo) { opaqueTexBindFuncs[mdlType + solo * MODELTYPE_OTHER](texType); }
+void CUnitDrawer::BindModelTypeTexture(const     S3DModel* m, bool solo) { BindModelTypeTexture(m->type, m->textureType, solo); }
+void CUnitDrawer::BindModelTypeTexture(const CSolidObject* o, bool solo) { BindModelTypeTexture(o->model, solo); }
+
 
 
 CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
@@ -219,12 +223,6 @@ CUnitDrawer::~CUnitDrawer()
 	unitRadarIcons.clear();
 	unsortedUnits.clear();
 }
-
-
-
-void CUnitDrawer::BindModelTypeTexture(int mdlType, int texType, bool solo) { opaqueTexBindFuncs[mdlType + solo * MODELTYPE_OTHER](texType); }
-void CUnitDrawer::BindModelTypeTexture(const     S3DModel* m, bool solo) { BindModelTypeTexture(m->type, m->textureType, solo); }
-void CUnitDrawer::BindModelTypeTexture(const CSolidObject* o, bool solo) { BindModelTypeTexture(o->model, solo); }
 
 
 
@@ -441,24 +439,11 @@ bool CUnitDrawer::CanDrawOpaqueUnit(
 
 	assert(cam->GetCamType() != CCamera::CAMTYPE_SHADOW);
 
-	if (drawReflection) {
-		float3 zeroPos = unit->drawMidPos;
-
-		if (unit->drawMidPos.y >= 0.0f) {
-			const float dif = unit->drawMidPos.y - cam->GetPos().y;
-
-			zeroPos  = ( cam->GetPos()   * (unit->drawMidPos.y / dif));
-			zeroPos += (unit->drawMidPos * (  -cam->GetPos().y / dif));
-		}
-
-		if (CGround::GetApproximateHeight(zeroPos.x, zeroPos.z, false) > unit->drawRadius) {
-			return false;
-		}
-	}
-
-	if (drawRefraction && !unit->IsInWater()) {
+	if (drawRefraction && !unit->IsInWater())
 		return false;
-	}
+
+	if (drawReflection && !ObjectVisibleReflection(unit, cam->GetPos()))
+		return false;
 
 	return (cam->InView(unit->drawMidPos, unit->drawRadius));
 }
@@ -1778,5 +1763,23 @@ void CUnitDrawer::PlayerChanged(int playerNum) {
 
 void CUnitDrawer::SunChanged(const float3& sunDir) {
 	unitDrawerState->UpdateCurrentShader(this, sky->GetLight());
+}
+
+
+
+bool CUnitDrawer::ObjectVisibleReflection(const CSolidObject* obj, const float3 camPos)
+{
+	float3 zeroPos;
+
+	if (obj->drawMidPos.y < 0.0f) {
+		zeroPos = obj->drawMidPos;
+	} else {
+		const float dif = zeroPos.y - camPos.y;
+
+		zeroPos +=          camPos * (obj->drawMidPos.y / dif);
+		zeroPos += obj->drawMidPos * (        -camPos.y / dif);
+	}
+
+	return (CGround::GetApproximateHeight(zeroPos.x, zeroPos.z, false) <= obj->drawRadius);
 }
 

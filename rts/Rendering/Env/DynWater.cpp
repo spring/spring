@@ -516,14 +516,15 @@ void CDynWater::DrawRefraction(CGame* game)
 	refractUp = camera->GetUp();
 	refractForward = camera->GetDir();
 
+
 	refractFBO.Bind();
 	glViewport(0, 0, refractSize, refractSize);
 
-	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 1);
+	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	float3 oldsun=unitDrawer->unitSunColor;
-	float3 oldambient=unitDrawer->unitAmbientColor;
+	const float3 oldsun = unitDrawer->unitSunColor;
+	const float3 oldambient = unitDrawer->unitAmbientColor;
 
 	unitDrawer->unitSunColor *= float3(0.5f, 0.7f, 0.9f);
 	unitDrawer->unitAmbientColor *= float3(0.6f, 0.8f, 1.0f);
@@ -536,21 +537,28 @@ void CDynWater::DrawRefraction(CGame* game)
 		gd->SetupBaseDrawPass();
 
 	glEnable(GL_CLIP_PLANE2);
-	double plane[4]= {0, -1, 0, 2};
-	glClipPlane(GL_CLIP_PLANE2 ,plane);
-	drawReflection = true;
-	unitDrawer->Draw(false,true);
-	featureDrawer->Draw();
-	unitDrawer->DrawCloakedUnits(true);
-	featureDrawer->DrawFadeFeatures(true); // FIXME: Make it fade out correctly without "noAdvShading"
-	drawReflection = false;
+	const double clipPlaneEq[4] = {0.0, -1.0, 0.0, 2.0};
+	glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
+
+	{
+		// drawReflection = true;
+
+		unitDrawer->Draw(false, true);
+		featureDrawer->Draw();
+
+		unitDrawer->DrawCloakedUnits(true);
+		featureDrawer->DrawFadeFeatures(true); // FIXME: Make it fade out correctly without "noAdvShading"
+
+		// drawReflection = false;
+	}
+
 	projectileDrawer->Draw(false, true);
 	eventHandler.DrawWorldRefraction();
 	glDisable(GL_CLIP_PLANE2);
 
 	game->SetDrawMode(CGame::gameNormalDraw);
 
-	drawRefraction=false;
+	drawRefraction = false;
 
 
 	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
