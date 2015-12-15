@@ -71,7 +71,8 @@ public:
 	inline static CTriNodePool* GetPool();
 
 public:
-	CTriNodePool(const size_t& poolSize) {
+	CTriNodePool(const size_t poolSize) {
+		pool.resize(poolSize);
 		pool.resize(poolSize);
 		m_NextTriNode = 0;
 	}
@@ -79,12 +80,13 @@ public:
 	void Reset();
 	TriTreeNode* AllocateTri();
 
-	bool RunOutOfNodes() const {
+	bool OutOfNodes() const {
 		return (m_NextTriNode >= pool.size());
 	}
 
 private:
 	std::vector<TriTreeNode> pool;
+
 	size_t m_NextTriNode; //< Index to next free TriTreeNode
 };
 
@@ -117,7 +119,7 @@ public:
 	TriTreeNode* GetBaseLeft()  { return &baseLeft;  }
 	TriTreeNode* GetBaseRight() { return &baseRight; }
 
-	bool IsVisible(bool shadowCam) const;
+	bool IsVisible() const;
 	char IsDirty() const { return isDirty; }
 	int GetTriCount() const { return (indices.size() / 3); }
 
@@ -135,20 +137,36 @@ public:
 public:
 	static void SwitchRenderMode(int mode = -1);
 
-	// void UpdateVisibility(CCamera*& cam);
-	static void UpdateVisibility(CCamera*& cam, std::vector<Patch>& patches, const int numPatchesX);
+	void UpdateVisibility(CCamera* cam);
+	static void UpdateVisibility(CCamera* cam, std::vector<Patch>& patches, const int numPatchesX);
 
 protected:
 	void VBOUploadVertices();
 
 private:
-	// The recursive half of the Patch Class
+	// recursive functions
 	void Split(TriTreeNode* tri);
-	void RecursTessellate(TriTreeNode* const tri, const int2 left, const int2 right, const int2 apex, const int node);
-	void RecursRender(TriTreeNode* const tri, const int2 left, const int2 right, const int2 apex);
-	float RecursComputeVariance(const int leftX, const int leftY, const float leftZ, const int rightX, const int rightY, const float rightZ, const int apexX, const int apexY, const float apexZ, const int node);
+	void RecursTessellate(TriTreeNode* tri, const int2 left, const int2 right, const int2 apex, const int node);
+	void RecursRender(const TriTreeNode* tri, const int2 left, const int2 right, const int2 apex);
 
-	void RecursBorderRender(CVertexArray* va, TriTreeNode* const& tri, const int2& left, const int2& right, const int2& apex, int i, bool left_);
+	float RecursComputeVariance(
+		const   int2 left,
+		const   int2 rght,
+		const   int2 apex,
+		const float3 hgts,
+		const    int node
+	);
+
+	void RecursBorderRender(
+		CVertexArray* va,
+		const TriTreeNode* tri,
+		const int2 left,
+		const int2 rght,
+		const int2 apex,
+		int i,
+		bool leftChild
+	);
+
 	void GenerateBorderIndices(CVertexArray* va);
 
 private:
@@ -173,7 +191,7 @@ private:
 	int2 coors;
 
 	//< frame on which this patch was last visible (regular and shadow pass)
-	unsigned int lastDrawFrame[2];
+	unsigned int lastDrawFrame;
 
 
 	TriTreeNode baseLeft;  //< Left base triangle tree node

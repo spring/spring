@@ -440,7 +440,8 @@ void CSMFGroundDrawer::Update()
 		return;
 
 	groundTextures->DrawUpdate();
-	meshDrawer->Update();
+	// done by DrawMesh; needs to know the actual draw-pass
+	// meshDrawer->Update();
 
 	if (drawDeferred) {
 		drawDeferred &= UpdateGeometryBuffer(false);
@@ -448,12 +449,7 @@ void CSMFGroundDrawer::Update()
 }
 
 void CSMFGroundDrawer::UpdateSunDir() {
-	/* the GLSL shader may run even w/o shadows and depends on a correct sunDir
-	if (!shadowHandler->shadowsLoaded) {
-		return;
-	}
-	*/
-
+	// always update, SSMF shader needs current sundir even when shadows are disabled
 	smfRenderState->UpdateCurrentShader(sky->GetLight());
 }
 

@@ -30,43 +30,48 @@
 
 Patch::RenderMode Patch::renderMode = Patch::VBO;
 
+// one pool per thread
 static size_t poolSize = 0;
 static std::vector<CTriNodePool*> pools;
 
 void CTriNodePool::InitPools(const size_t newPoolSize)
 {
-	if (pools.empty()) {
-		//int numThreads = GetNumThreads();
-		int numThreads = ThreadPool::GetMaxThreads();
+	if (!pools.empty())
+		return;
 
-		poolSize = newPoolSize;
-		const size_t allocPerThread = std::max(newPoolSize / numThreads, newPoolSize / 3);
-		pools.reserve(numThreads);
-		for (; numThreads > 0; --numThreads) {
-			pools.push_back(new CTriNodePool(allocPerThread));
-		}
+	// int numThreads = GetNumThreads();
+	int numThreads = ThreadPool::GetMaxThreads();
+	const size_t allocPerThread = std::max(newPoolSize / numThreads, newPoolSize / 3);
+
+	poolSize = newPoolSize;
+
+	pools.reserve(numThreads);
+
+	for (; numThreads > 0; --numThreads) {
+		pools.push_back(new CTriNodePool(allocPerThread));
 	}
 }
 
-
 void CTriNodePool::FreePools()
 {
-	for (std::vector<CTriNodePool*>::iterator it = pools.begin(); it != pools.end(); ++it) {
-		delete (*it);
+	for (CTriNodePool* pool: pools) {
+		delete pool;
 	}
+
 	pools.clear();
 }
 
 
 void CTriNodePool::ResetAll()
 {
-	bool ranOutOfNodes = false;
-	for (CTriNodePool* p: pools) {
-		ranOutOfNodes |= p->RunOutOfNodes();
-		p->Reset();
+	bool outOfNodes = false;
+
+	for (CTriNodePool* pool: pools) {
+		outOfNodes |= pool->OutOfNodes();
+		pool->Reset();
 	}
 
-	if (ranOutOfNodes && (poolSize < MAX_POOL_SIZE)) {
+	if (outOfNodes && (poolSize < MAX_POOL_SIZE)) {
 		FreePools();
 		InitPools(std::min(poolSize * 2, size_t(MAX_POOL_SIZE)));
 	}
@@ -75,9 +80,7 @@ void CTriNodePool::ResetAll()
 
 CTriNodePool* CTriNodePool::GetPool()
 {
-	const size_t th_id = ThreadPool::GetThreadNum();
-	assert(th_id<pools.size());
-	return pools[th_id];
+	return (pools[ThreadPool::GetThreadNum()]);
 }
 
 
@@ -99,7 +102,7 @@ void CTriNodePool::Reset()
 TriTreeNode* CTriNodePool::AllocateTri()
 {
 	// IF we've run out of TriTreeNodes, just return NULL (this is handled gracefully)
-	if (RunOutOfNodes())
+	if (OutOfNodes())
 		return nullptr;
 
 	return &pool[m_NextTriNode++];
@@ -123,7 +126,7 @@ Patch::Patch()
 	, varianceMaxLimit(std::numeric_limits<float>::max())
 	, camDistLODFactor(1.0f)
 	, coors(-1, -1)
-	, lastDrawFrame{0, 0}
+	, lastDrawFrame(0)
 	, triList(0)
 	, vertexBuffer(0)
 	, vertexIndexBuffer(0)
@@ -187,7 +190,8 @@ void Patch::UpdateHeightMap(const SRectangle& rect)
 	if (vertices.empty()) {
 		// Initialize
 		vertices.resize(3 * (PATCH_SIZE + 1) * (PATCH_SIZE + 1));
-		int index = 0;
+
+		unsigned int index = 0;
 
 		for (int z = coors.y; z <= (coors.y + PATCH_SIZE); z++) {
 			for (int x = coors.x; x <= (coors.x + PATCH_SIZE); x++) {
@@ -202,10 +206,13 @@ void Patch::UpdateHeightMap(const SRectangle& rect)
 
 	for (int z = rect.z1; z <= rect.z2; z++) {
 		for (int x = rect.x1; x <= rect.x2; x++) {
-			const float h = hMap[(z + coors.y) * mapDims.mapxp1 + (x + coors.x)];
 			const int vindex = (z * (PATCH_SIZE + 1) + x) * 3;
 
-			vertices[vindex + 1] = h; // only update Y coord
+			const int xw = x + coors.x;
+			const int zw = z + coors.y;
+
+			// only update y-coord
+			vertices[vindex + 1] = hMap[zw * mapDims.mapxp1 + xw];
 		}
 	}
 
@@ -220,16 +227,8 @@ void Patch::VBOUploadVertices()
 		// Upload vertexBuffer
 		glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBuffer);
 		glBufferDataARB(GL_ARRAY_BUFFER_ARB, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW_ARB);
-		/*
-		int bufferSize = 0;
-		glGetBufferParameterivARB(GL_ARRAY_BUFFER_ARB, GL_BUFFER_SIZE_ARB, &bufferSize);
-		if(index != bufferSize) {
-			glDeleteBuffersARB(1, &vertexBuffer);
-			glDeleteBuffersARB(1, &vertexIndexBuffer);
-			LOG("[createVBO()] Data size is mismatch with input array\n");
-		}
-		*/
 		glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+
 		vboVerticesUploaded = true;
 	} else {
 		vboVerticesUploaded = false;
@@ -304,7 +303,8 @@ void Patch::Split(TriTreeNode* tri)
 			tri->LeftChild->RightNeighbor = tri->BaseNeighbor->RightChild;
 			tri->RightChild->LeftNeighbor = tri->BaseNeighbor->LeftChild;
 		} else {
-			Split(tri->BaseNeighbor); // Base Neighbor (in a diamond with us) was not split yet, so do that now.
+			// Base Neighbor (in a diamond with us) was not split yet, so do that now.
+			Split(tri->BaseNeighbor);
 		}
 	} else {
 		// An edge triangle, trivial case.
@@ -318,43 +318,42 @@ void Patch::Split(TriTreeNode* tri)
 // Tessellate a Patch.
 // Will continue to split until the variance metric is met.
 //
-void Patch::RecursTessellate(TriTreeNode* const tri, const int2 left, const int2 right, const int2 apex, const int node)
+void Patch::RecursTessellate(TriTreeNode* tri, const int2 left, const int2 right, const int2 apex, const int node)
 {
 	const bool canFurtherTes = ((abs(left.x - right.x) > 1) || (abs(left.y - right.y) > 1));
+
 	if (!canFurtherTes)
 		return;
 
-	float TriVariance;
-	const bool varianceSaved = (node < (1 << VARIANCE_DEPTH));
-	if (varianceSaved) {
+	// default > 1; when variance isn't saved this issues further tessellation
+	float TriVariance = 10.0f;
+
+	if (node < (1 << VARIANCE_DEPTH)) {
 		// make max tessellation viewRadius dependent
-		// w/o this huge cliffs cause huge variances and so will always tessellate fully independent of camdist (-> huge/distfromcam ~= huge)
+		// w/o this huge cliffs cause huge variances and will always tessellate
+		// fully independent of camdist (-> huge/distfromcam ~= huge)
 		const float myVariance = std::min(currentVariance[node], varianceMaxLimit);
 
 		const int sizeX = std::max(left.x - right.x, right.x - left.x);
 		const int sizeY = std::max(left.y - right.y, right.y - left.y);
 		const int size  = std::max(sizeX, sizeY);
 
-		// Take distance, variance and patch size into consideration
+		// take distance, variance and patch size into consideration
 		TriVariance = (myVariance * PATCH_SIZE * size) * camDistLODFactor;
-	} else {
-		TriVariance = 10.0f; // >1 -> When variance isn't saved issue further tessellation
 	}
 
-	if (TriVariance > 1.0f)
-	{
-		Split(tri); // Split this triangle.
+	// stop tesselation
+	if (TriVariance <= 1.0f)
+		return;
 
-		if (tri->IsBranch()) { // If this triangle was split, try to split it's children as well.
-			const int2 center(
-				(left.x + right.x) >> 1, // Compute X coordinate of center of Hypotenuse
-				(left.y + right.y) >> 1  // Compute Y coord...
-			);
-			RecursTessellate(tri->LeftChild,  apex,  left, center, (node << 1)    );
-			RecursTessellate(tri->RightChild, right, apex, center, (node << 1) + 1);
-		}
-	} else {
-		// stop tess
+	Split(tri);
+
+	if (tri->IsBranch()) {
+		// triangle was split, also try to split its children
+		const int2 center = {(left.x + right.x) >> 1, (left.y + right.y) >> 1};
+
+		RecursTessellate(tri->LeftChild,  apex,  left, center, (node << 1)    );
+		RecursTessellate(tri->RightChild, right, apex, center, (node << 1) + 1);
 	}
 }
 
@@ -363,75 +362,84 @@ void Patch::RecursTessellate(TriTreeNode* const tri, const int2 left, const int2
 // Render the tree.
 //
 
-void Patch::RecursRender(TriTreeNode* const tri, const int2 left, const int2 right, const int2 apex)
+void Patch::RecursRender(const TriTreeNode* tri, const int2 left, const int2 right, const int2 apex)
 {
-	if ( tri->IsLeaf()) {
+	if (tri->IsLeaf()) {
 		indices.push_back(apex.x  + apex.y  * (PATCH_SIZE + 1));
 		indices.push_back(left.x  + left.y  * (PATCH_SIZE + 1));
 		indices.push_back(right.x + right.y * (PATCH_SIZE + 1));
-	} else {
-		const int2 center(
-			(left.x + right.x) >> 1, // Compute X coordinate of center of Hypotenuse
-			(left.y + right.y) >> 1  // Compute Y coord...
-		);
-		RecursRender(tri->LeftChild,  apex,  left, center);
-		RecursRender(tri->RightChild, right, apex, center);
+		return;
 	}
+
+	const int2 center = {(left.x + right.x) >> 1, (left.y + right.y) >> 1};
+
+	RecursRender(tri->LeftChild,  apex,  left, center);
+	RecursRender(tri->RightChild, right, apex, center);
 }
 
 
 void Patch::GenerateIndices()
 {
 	indices.clear();
-	RecursRender(&baseLeft,  int2(0, PATCH_SIZE), int2(PATCH_SIZE, 0), int2(0, 0)                  );
-	RecursRender(&baseRight, int2(PATCH_SIZE, 0), int2(0, PATCH_SIZE), int2(PATCH_SIZE, PATCH_SIZE));
+	RecursRender(&baseLeft,  int2(         0, PATCH_SIZE), int2(PATCH_SIZE,          0), int2(         0,          0));
+	RecursRender(&baseRight, int2(PATCH_SIZE,          0), int2(         0, PATCH_SIZE), int2(PATCH_SIZE, PATCH_SIZE));
 }
 
 
 // ---------------------------------------------------------------------
 // Computes Variance over the entire tree.  Does not examine node relationships.
 //
-float Patch::RecursComputeVariance(const int leftX, const int leftY, const float leftZ,
-		const int rightX, const int rightY, const float rightZ,
-		const int apexX, const int apexY, const float apexZ, const int node)
-{
-	/*
-	 *       /|\
-	 *     /  |  \
-	 *   /    |    \
-	 * /      |      \
-	 * ~~~~~~~*~~~~~~~  <-- Compute the X and Y coordinates of '*'
+float Patch::RecursComputeVariance(
+	const   int2 left,
+	const   int2 rght,
+	const   int2 apex,
+	const float3 hgts,
+	const    int node
+) {
+	/*      A
+	 *     /|\
+	 *    / | \
+	 *   /  |  \
+	 *  /   |   \
+	 * L----M----R
+	 *
+	 * first compute the XZ coordinates of 'M' (hypotenuse middle)
 	 */
+	const int2 mpos = {(left.x + rght.x) >> 1, (left.y + rght.y) >> 1};
 
-	int centerX = (leftX + rightX) >> 1; // Compute X coordinate of center of Hypotenuse
-	int centerY = (leftY + rightY) >> 1; // Compute Y coord...
+	// get the height value at M
+	const float mhgt = heightMap[(mpos.y * mapDims.mapxp1) + mpos.x];
 
-	// Get the height value at the middle of the Hypotenuse
-	float centerZ = heightMap[(centerY * mapDims.mapxp1) + centerX];
+	// variance of this triangle is the actual height at its hypotenuse
+	// midpoint minus the interpolated height; use values passed on the
+	// stack instead of re-accessing the heightmap
+	float myVariance = math::fabs(mhgt - ((hgts.x + hgts.y) * 0.5f));
 
-	// Variance of this triangle is the actual height at it's hypotenuse midpoint minus the interpolated height.
-	// Use values passed on the stack instead of re-accessing the Height Field.
-	float myVariance = math::fabs(centerZ - ((leftZ + rightZ) / 2));
+	// shore lines get more variance for higher accuracy
+	// NOTE: .x := height(L), .y := height(R), .z := height(A)
+	//
+	if ((hgts.x * hgts.y) < 0.0f || (hgts.x * mhgt) < 0.0f || (hgts.y * mhgt) < 0.0f)
+		myVariance = std::max(myVariance * 1.5f, 20.0f);
 
-	if (leftZ*rightZ<0 || leftZ*centerZ<0 || rightZ*centerZ<0)
-		myVariance = std::max(myVariance * 1.5f, 20.0f); //shore lines get more variance for higher accuracy
+	// myVariance = MAX(abs(left.x - rght.x), abs(left.y - rght.y)) * myVariance;
 
-	//myVariance= MAX(abs(leftX - rightX),abs(leftY - rightY)) * myVariance;
+	// save some CPU, only calculate variance down to a 4x4 block
+	if ((abs(left.x - rght.x) >= 4) || (abs(left.y - rght.y) >= 4)) {
+		const float3 hgts1 = {hgts.z, hgts.x, mhgt};
+		const float3 hgts2 = {hgts.y, hgts.z, mhgt};
 
-	// Since we're after speed and not perfect representations,
-	//    only calculate variance down to a 4x4 block
-	if ((abs(leftX - rightX) >= 4) || (abs(leftY - rightY) >= 4)) {
-		// Final Variance for this node is the max of it's own variance and that of it's children.
-		const float child1Variance = RecursComputeVariance(apexX, apexY, apexZ, leftX, leftY, leftZ, centerX, centerY, centerZ, node<<1);
-		const float child2Variance = RecursComputeVariance(rightX, rightY, rightZ, apexX, apexY, apexZ, centerX, centerY, centerZ, 1+(node<<1));
+		const float child1Variance = RecursComputeVariance(apex, left, mpos, hgts1, (node << 1)    );
+		const float child2Variance = RecursComputeVariance(rght, apex, mpos, hgts2, (node << 1) + 1);
+
+		// final variance for this node is the max of its own variance and that of its children
 		myVariance = std::max(myVariance, child1Variance);
 		myVariance = std::max(myVariance, child2Variance);
 	}
 
-	// Note Variance is never zero.
+	// NOTE: Variance is never zero
 	myVariance = std::max(0.001f, myVariance);
 
-	// Store the final variance for this node.
+	// store the final variance for this node
 	if (node < (1 << VARIANCE_DEPTH))
 		currentVariance[node] = myVariance;
 
@@ -444,17 +452,35 @@ float Patch::RecursComputeVariance(const int leftX, const int leftY, const float
 //
 void Patch::ComputeVariance()
 {
-	// Compute variance on each of the base triangles...
-	currentVariance = &varianceLeft[0];
+	{
+		currentVariance = &varianceLeft[0];
 
-	RecursComputeVariance(0, PATCH_SIZE, heightMap[PATCH_SIZE * mapDims.mapxp1],
-			PATCH_SIZE, 0, heightMap[PATCH_SIZE], 0, 0, heightMap[0], 1);
+		const   int2 left = {         0, PATCH_SIZE};
+		const   int2 rght = {PATCH_SIZE,          0};
+		const   int2 apex = {         0,          0};
+		const float3 hgts = {
+			heightMap[left.y * mapDims.mapxp1 + left.x],
+			heightMap[rght.y * mapDims.mapxp1 + rght.x],
+			heightMap[apex.y * mapDims.mapxp1 + apex.x],
+		};
 
-	currentVariance = &varianceRight[0];
+		RecursComputeVariance(left, rght, apex, hgts, 1);
+	}
 
-	RecursComputeVariance(PATCH_SIZE, 0, heightMap[PATCH_SIZE], 0,
-			PATCH_SIZE, heightMap[PATCH_SIZE * mapDims.mapxp1], PATCH_SIZE, PATCH_SIZE,
-			heightMap[(PATCH_SIZE * mapDims.mapxp1) + PATCH_SIZE], 1);
+	{
+		currentVariance = &varianceRight[0];
+
+		const   int2 left = {PATCH_SIZE,          0};
+		const   int2 rght = {         0, PATCH_SIZE};
+		const   int2 apex = {PATCH_SIZE, PATCH_SIZE};
+		const float3 hgts = {
+			heightMap[left.y * mapDims.mapxp1 + left.x],
+			heightMap[rght.y * mapDims.mapxp1 + rght.x],
+			heightMap[apex.y * mapDims.mapxp1 + apex.x],
+		};
+
+		RecursComputeVariance(left, rght, apex, hgts, 1);
+	}
 
 	// Clear the dirty flag for this patch
 	isDirty = false;
@@ -487,19 +513,21 @@ bool Patch::Tessellate(const float3& campos, int groundDetail)
 
 	RecursTessellate(&baseLeft,
 		int2(coors.x,              coors.y + PATCH_SIZE),
-		int2(coors.x + PATCH_SIZE, coors.y),
-		int2(coors.x,              coors.y),
-		1);
+		int2(coors.x + PATCH_SIZE, coors.y             ),
+		int2(coors.x,              coors.y             ),
+		1
+	);
 
 	currentVariance = &varianceRight[0];
 
 	RecursTessellate(&baseRight,
-		int2(coors.x + PATCH_SIZE, coors.y),
+		int2(coors.x + PATCH_SIZE, coors.y             ),
 		int2(coors.x,              coors.y + PATCH_SIZE),
 		int2(coors.x + PATCH_SIZE, coors.y + PATCH_SIZE),
-		1);
+		1
+	);
 
-	return !CTriNodePool::GetPool()->RunOutOfNodes();
+	return (!CTriNodePool::GetPool()->OutOfNodes());
 }
 
 
@@ -510,35 +538,35 @@ bool Patch::Tessellate(const float3& campos, int groundDetail)
 void Patch::Draw()
 {
 	switch (renderMode) {
-		case VA:
-			glEnableClientState(GL_VERTEX_ARRAY);             // activate vertex coords array
-
+		case VA: {
+			glEnableClientState(GL_VERTEX_ARRAY);
 				glVertexPointer(3, GL_FLOAT, 0, &vertices[0]);
 				glDrawRangeElements(GL_TRIANGLES, 0, vertices.size(), indices.size(), GL_UNSIGNED_INT, &indices[0]);
+			glDisableClientState(GL_VERTEX_ARRAY);
+		} break;
 
-			glDisableClientState(GL_VERTEX_ARRAY);            // deactivate vertex array
-			break;
-
-		case DL:
+		case DL: {
 			glCallList(triList);
-			break;
+		} break;
 
-		case VBO:
+		case VBO: {
 			// enable VBOs
-			glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBuffer);              // for vertex coordinates
-			glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, vertexIndexBuffer); // for indices
+			glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBuffer); // coors
+			glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, vertexIndexBuffer); // indices
 
-				glEnableClientState(GL_VERTEX_ARRAY);             // activate vertex coords array
-
-					glVertexPointer(3, GL_FLOAT, 0, 0);       // last param is offset, not ptr
+				glEnableClientState(GL_VERTEX_ARRAY);
+					glVertexPointer(3, GL_FLOAT, 0, 0); // last param is offset, not ptr
 					glDrawRangeElements(GL_TRIANGLES, 0, vertices.size(), indices.size(), GL_UNSIGNED_INT, 0);
-
-				glDisableClientState(GL_VERTEX_ARRAY);            // deactivate vertex array
+				glDisableClientState(GL_VERTEX_ARRAY);
 
 			// disable VBO mode
 			glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
 			glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
-			break;
+		} break;
+
+		default: {
+			assert(false);
+		} break;
 	}
 }
 
@@ -551,12 +579,19 @@ void Patch::DrawBorder()
 }
 
 
-void Patch::RecursBorderRender(CVertexArray* va, TriTreeNode* const& tri, const int2& left, const int2& right, const int2& apex, int i, bool left_)
-{
-	if ( tri->IsLeaf() ) {
-		const float3& v1 = *(float3*)&vertices[(apex.x  + apex.y  * (PATCH_SIZE + 1))*3];
-		const float3& v2 = *(float3*)&vertices[(left.x  + left.y  * (PATCH_SIZE + 1))*3];
-		const float3& v3 = *(float3*)&vertices[(right.x + right.y * (PATCH_SIZE + 1))*3];
+void Patch::RecursBorderRender(
+	CVertexArray* va,
+	const TriTreeNode* tri,
+	const int2 left,
+	const int2 rght,
+	const int2 apex,
+	int i,
+	bool leftChild
+) {
+	if (tri->IsLeaf()) {
+		const float3& v1 = *(float3*)&vertices[(apex.x + apex.y * (PATCH_SIZE + 1))*3];
+		const float3& v2 = *(float3*)&vertices[(left.x + left.y * (PATCH_SIZE + 1))*3];
+		const float3& v3 = *(float3*)&vertices[(rght.x + rght.y * (PATCH_SIZE + 1))*3];
 
 		static const unsigned char white[] = {255,255,255,255};
 		static const unsigned char trans[] = {255,255,255,0};
@@ -571,7 +606,7 @@ void Patch::RecursBorderRender(CVertexArray* va, TriTreeNode* const& tri, const 
 			va->AddVertexQC(float3(v2.x, -400.0f, v2.z), trans);
 			va->AddVertexQC(float3(v3.x, -400.0f, v3.z), trans);
 		} else {
-			if (left_) {
+			if (leftChild) {
 				va->AddVertexQC(v1,                          white);
 				va->AddVertexQC(float3(v1.x, -400.0f, v1.z), trans);
 				va->AddVertexQC(float3(v2.x, v2.y, v2.z),    white);
@@ -591,20 +626,17 @@ void Patch::RecursBorderRender(CVertexArray* va, TriTreeNode* const& tri, const 
 		}
 
 	} else {
-		const int2 center(
-			(left.x + right.x) >> 1, // Compute X coordinate of center of Hypotenuse
-			(left.y + right.y) >> 1  // Compute Y coord...
-		);
+		const int2 center = {(left.x + rght.x) >> 1, (left.y + rght.y) >> 1};
 
-		if (i % 2 == 0) {
-			RecursBorderRender(va, tri->LeftChild,  apex,  left, center, i + 1, !left_);
-			return RecursBorderRender(va, tri->RightChild, right, apex, center, i + 1, left_); // return is needed for tail call optimization (it's still unlikely gcc does so...)
+		if ((i % 2) == 0) {
+			       RecursBorderRender(va, tri->LeftChild,  apex, left, center, i + 1, !leftChild);
+			return RecursBorderRender(va, tri->RightChild, rght, apex, center, i + 1,  leftChild); // return is needed for tail call optimization (it's still unlikely gcc does so...)
+		}
+
+		if (leftChild) {
+			return RecursBorderRender(va, tri->LeftChild,  apex, left, center, i + 1,  leftChild);
 		} else {
-			if (left_) {
-				return RecursBorderRender(va, tri->LeftChild,  apex,  left, center, i + 1, left_);
-			} else {
-				return RecursBorderRender(va, tri->RightChild, right, apex, center, i + 1, !left_);
-			}
+			return RecursBorderRender(va, tri->RightChild, rght, apex, center, i + 1, !leftChild);
 		}
 	}
 }
@@ -628,16 +660,16 @@ void Patch::GenerateBorderIndices(CVertexArray* va)
 void Patch::Upload()
 {
 	switch (renderMode) {
-		case DL:
+		case DL: {
 			glNewList(triList, GL_COMPILE);
 				glEnableClientState(GL_VERTEX_ARRAY);
 					glVertexPointer(3, GL_FLOAT, 0, &vertices[0]);
 					glDrawRangeElements(GL_TRIANGLES, 0, vertices.size(), indices.size(), GL_UNSIGNED_INT, &indices[0]);
 				glDisableClientState(GL_VERTEX_ARRAY);
 			glEndList();
-			break;
+		} break;
 
-		case VBO:
+		case VBO: {
 			if (!vboVerticesUploaded) VBOUploadVertices();
 			glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, vertexIndexBuffer);
 			glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, indices.size() * sizeof(unsigned), &indices[0], GL_DYNAMIC_DRAW_ARB);
@@ -652,9 +684,10 @@ void Patch::Upload()
 			*/
 
 			glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
-			break;
-		default:
-			break;
+		} break;
+
+		default: {
+		} break;
 	}
 }
 
@@ -679,18 +712,18 @@ void Patch::SwitchRenderMode(int mode)
 		return;
 
 	switch (mode) {
-		case VA:
+		case VA: {
 			LOG("Set ROAM mode to VA");
 			renderMode = VA;
-			break;
-		case DL:
+		} break;
+		case DL: {
 			LOG("Set ROAM mode to DisplayLists");
 			renderMode = DL;
-			break;
-		case VBO:
+		} break;
+		case VBO: {
 			LOG("Set ROAM mode to VBO");
 			renderMode = VBO;
-			break;
+		} break;
 	}
 
 	CRoamMeshDrawer::ForceTesselation();
@@ -702,13 +735,18 @@ void Patch::SwitchRenderMode(int mode)
 // Visibility Update Functions
 //
 
-/*void Patch::UpdateVisibility(CCamera*& cam)
+#if 0
+void Patch::UpdateVisibility(CCamera* cam)
 {
 	const float3 mins( coors.x               * SQUARE_SIZE, readMap->GetCurrMinHeight(),  coors.y               * SQUARE_SIZE);
 	const float3 maxs((coors.x + PATCH_SIZE) * SQUARE_SIZE, readMap->GetCurrMaxHeight(), (coors.y + PATCH_SIZE) * SQUARE_SIZE);
 
-	isVisible = cam->InView(mins, maxs);
-}*/
+	if (!cam->InView(mins, maxs))
+		return;
+
+	lastDrawFrame = globalRendering->drawFrame;
+}
+#endif
 
 
 class CPatchInViewChecker : public CReadMap::IQuadDrawer
@@ -722,7 +760,7 @@ public:
 	}
 
 	void DrawQuad(int x, int y) {
-		patchArray[y * numPatchesX + x].lastDrawFrame[testCamera->GetCamType() == CCamera::CAMTYPE_SHADOW] = globalRendering->drawFrame;
+		patchArray[y * numPatchesX + x].lastDrawFrame = globalRendering->drawFrame;
 	}
 
 private:
@@ -733,11 +771,11 @@ private:
 };
 
 
-void Patch::UpdateVisibility(CCamera*& cam, std::vector<Patch>& patches, const int numPatchesX)
+void Patch::UpdateVisibility(CCamera* cam, std::vector<Patch>& patches, const int numPatchesX)
 {
 	#if 0
 	// very slow
-	for (Patch& p: m_Patches) {
+	for (Patch& p: patches) {
 		p.UpdateVisibility(cam);
 	}
 	#else
@@ -746,13 +784,12 @@ void Patch::UpdateVisibility(CCamera*& cam, std::vector<Patch>& patches, const i
 
 	checker.ResetState(cam, &patches[0], numPatchesX);
 
-	// NOTE: other places (e.g. DynWater) might want different constraints
 	cam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 	readMap->GridVisibility(cam, PATCH_SIZE, 1e9, &checker);
 	#endif
 }
 
-bool Patch::IsVisible(bool shadowCam) const {
-	return (lastDrawFrame[shadowCam] >= globalRendering->drawFrame);
+bool Patch::IsVisible() const {
+	return (lastDrawFrame >= globalRendering->drawFrame);
 }
 

@@ -277,7 +277,7 @@ bool CSMFGroundTextures::RecompressTilesIfNeeded()
 
 inline bool CSMFGroundTextures::TexSquareInView(int btx, int bty) const
 {
-	const CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
+	const CCamera* cam = CCamera::GetActiveCamera();
 	const float* hm = readMap->GetCornerHeightMapUnsynced();
 
 	static const float bigTexSquareRadius = fastmath::apxsqrt(
@@ -295,7 +295,7 @@ inline bool CSMFGroundTextures::TexSquareInView(int btx, int bty) const
 
 void CSMFGroundTextures::DrawUpdate()
 {
-	const CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
+	const CCamera* cam = CCamera::GetActiveCamera();
 
 	// screen-diagonal number of pixels
 	const float vsxSq = globalRendering->viewSizeX * globalRendering->viewSizeX;

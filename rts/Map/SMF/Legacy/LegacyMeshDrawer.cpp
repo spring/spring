@@ -563,9 +563,7 @@ void CLegacyMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 
 	UpdateLODParams(drawPass);
 
-	//waterDrawn = (drawPass == DrawPass::WaterReflection);
-
-	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
+	CCamera* cam = CCamera::GetActiveCamera();
 	cam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 
 	const int camBigTexY = Clamp(int(cam->GetPos().z / (smfReadMap->bigSquareSize * SQUARE_SIZE)), 0, smfReadMap->numBigTexY - 1);
