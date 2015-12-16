@@ -6,7 +6,7 @@
 #define MDL_TYPE(o) (o->model->type)
 #define TEX_TYPE(o) (o->model->textureType)
 
-#include <map>
+#include <unordered_map>
 
 #include "Rendering/Models/3DModel.h"
 
@@ -48,9 +48,9 @@ protected:
 	typedef std::vector<CProjectile*> ProjectileSet;
 
 	// textureType ==> modelSet
-	typedef std::map<int,       UnitSet>       UnitRenderBin;
-	typedef std::map<int,    FeatureSet>    FeatureRenderBin;
-	typedef std::map<int, ProjectileSet> ProjectileRenderBin;
+	typedef std::unordered_map<int,       UnitSet>       UnitRenderBin;
+	typedef std::unordered_map<int,    FeatureSet>    FeatureRenderBin;
+	typedef std::unordered_map<int, ProjectileSet> ProjectileRenderBin;
 
 	virtual void DrawModels(const       UnitSet&);
 	virtual void DrawModels(const    FeatureSet&);

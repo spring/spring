@@ -334,11 +334,9 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool 
 	typedef std::vector<CUnit*> UnitSet;
 	typedef std::map<int, UnitSet> UnitBin;
 
-	const UnitBin& unitBin = opaqueModelRenderers[modelType]->GetUnitBin();
+	const auto& unitBin = opaqueModelRenderers[modelType]->GetUnitBin();
 
-	UnitBin::const_iterator unitBinIt;
-
-	for (unitBinIt = unitBin.begin(); unitBinIt != unitBin.end(); ++unitBinIt) {
+	for (auto unitBinIt = unitBin.cbegin(); unitBinIt != unitBin.cend(); ++unitBinIt) {
 		BindModelTypeTexture(modelType, unitBinIt->first);
 
 		for (CUnit* unit: unitBinIt->second) {
@@ -712,19 +710,15 @@ void CUnitDrawer::DrawCloakedUnitsHelper(int modelType)
 	}
 
 	{
-		typedef std::vector<CUnit*> UnitSet;
-		typedef std::map<int, UnitSet> UnitRenderBin;
-		typedef std::map<int, UnitSet>::const_iterator UnitRenderBinIt;
-
-		const UnitRenderBin& unitBin = cloakedModelRenderers[modelType]->GetUnitBin();
+		const auto& unitBin = cloakedModelRenderers[modelType]->GetUnitBin();
 
 		// cloaked units
-		for (UnitRenderBinIt it = unitBin.begin(); it != unitBin.end(); ++it) {
+		for (auto it = unitBin.begin(); it != unitBin.end(); ++it) {
 			BindModelTypeTexture(modelType, it->first);
 
-			const UnitSet& unitSet = it->second;
+			const auto & unitSet = it->second;
 
-			for (auto &unit: unitSet) {
+			for (CUnit* unit: unitSet) {
 				DrawCloakedUnit(unit, modelType, false);
 			}
 		}
