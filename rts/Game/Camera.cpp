@@ -44,6 +44,8 @@ CCamera::CCamera(unsigned int cameraType)
 	, camType(cameraType)
 	, projType((cameraType == CAMTYPE_SHADOW)? PROJTYPE_ORTHO: PROJTYPE_PERSP)
 {
+	assert(cameraType < CAMTYPE_ACTIVE);
+
 	memset(viewport, 0, 4 * sizeof(int));
 	memset(movState, 0, sizeof(movState));
 	memset(rotState, 0, sizeof(rotState));

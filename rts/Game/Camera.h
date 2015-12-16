@@ -21,10 +21,10 @@ public:
 
 	enum {
 		CAMTYPE_PLAYER = 0, // main camera
-		CAMTYPE_VISCUL = 1, // used for frustum culling
-		CAMTYPE_ENVMAP = 2, // used for cubemap generation
-		CAMTYPE_UWREFL = 3, // used for underwater reflections
-		CAMTYPE_SHADOW = 4, // used for shadowmap generation (TODO)
+		CAMTYPE_UWREFL = 1, // used for underwater reflections
+		CAMTYPE_SHADOW = 2, // used for shadowmap generation
+		CAMTYPE_ENVMAP = 3, // used for cubemap generation
+		CAMTYPE_VISCUL = 4, // used for frustum culling
 		CAMTYPE_ACTIVE = 5, // pointer to currently active camera
 		CAMTYPE_COUNT  = 6,
 	};
@@ -179,12 +179,6 @@ public:
 	static CCamera* GetSetActiveCamera(unsigned int camType) {
 		CCamera* cam = GetActiveCamera();
 		SetActiveCamera(camType);
-		return cam;
-	}
-	// sets the current active camera and returns it
-	static CCamera* SetGetActiveCamera(unsigned int camType) {
-		SetActiveCamera(camType);
-		CCamera* cam = GetActiveCamera();
 		return cam;
 	}
 

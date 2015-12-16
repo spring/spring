@@ -135,7 +135,7 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 	featureFadeDistance = std::min(configHandler->GetFloat("FeatureFadeDistance"), featureDrawDistance);
 
 	modelRenderers.resize(drawQuadsX * drawQuadsY);
-	camVisibleQuadFlags.resize(CCamera::CAMTYPE_COUNT, 0);
+	camVisibleQuadFlags.resize(CCamera::CAMTYPE_ENVMAP, 0);
 }
 
 
@@ -696,6 +696,9 @@ public:
 
 void CFeatureDrawer::GetVisibleFeatures(CCamera* cam, int extraSize, bool drawFar)
 {
+	// should only ever be called for the first three types
+	assert(cam->GetCamType() < camVisibleQuadFlags.size());
+
 	// check if we already did a pass for this camera-type
 	// (e.g. water refraction and the standard opaque pass
 	// use CAMTYPE_PLAYER with equal state)
