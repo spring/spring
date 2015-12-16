@@ -37,7 +37,7 @@ CCamera::CCamera(unsigned int cameraType)
 	, halfFov(0.0f)
 	, tanHalfFov(0.0f)
 	, lppScale(0.0f)
-	, frustumScales(0.0f, 0.0f, 0.0f, 0.0f)
+	, frustumScales(0.0f, 0.0f, CGlobalRendering::NEAR_PLANE, CGlobalRendering::MAX_VIEW_RANGE)
 	, posOffset(ZeroVector)
 	, tiltOffset(ZeroVector)
 
