@@ -23,7 +23,8 @@ class CCamera;
 
 
 /**
- * Map mesh drawer implementation
+ * Map mesh drawer implementation; based on the Tread Marks engine
+ * by Longbow Digital Arts (www.LongbowDigitalArts.com, circa 2000)
  */
 class CRoamMeshDrawer : public IMeshDrawer, public CEventClient
 {
@@ -47,7 +48,10 @@ public:
 	void DrawMesh(const DrawPass::e& drawPass);
 	void DrawBorderMesh(const DrawPass::e& drawPass);
 
-	static void ForceTesselation() { forceRetessellate = true; }
+	static void ForceTesselation() {
+		forceTessellate[0] = true;
+		forceTessellate[1] = true;
+	}
 
 private:
 	void Reset(std::vector<Patch>& patches);
@@ -70,7 +74,8 @@ private:
 	//< char instead of bool, accessors to different elements must be thread-safe
 	std::vector<uint8_t> patchVisFlags[2];
 
-	static bool forceRetessellate;
+	//< whether tessellation should be forcibly performed next frame
+	static bool forceTessellate[2];
 };
 
 #endif // _ROAM_MESH_DRAWER_H_

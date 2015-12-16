@@ -1,16 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-//
-// ROAM Simplistic Implementation
-// Added to Spring by Peter Sarkozy (mysterme AT gmail DOT com)
-// Billion thanks to Bryan Turner (Jan, 2000)
-//                    brturn@bellsouth.net
-//
-// Based on the Tread Marks engine by Longbow Digital Arts
-//                               (www.LongbowDigitalArts.com)
-// Much help and hints provided by Seumas McNally, LDA.
-
-
 #include "RoamMeshDrawer.h"
 #include "Game/Camera.h"
 #include "Map/ReadMap.h"
@@ -44,7 +33,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_ROAM)
 
 
 
-bool CRoamMeshDrawer::forceRetessellate = false;
+bool CRoamMeshDrawer::forceTessellate[2] = {false, false};
 
 
 
@@ -124,8 +113,8 @@ void CRoamMeshDrawer::Update()
 {
 	CCamera* cam = CCamera::GetActiveCamera();
 
-	bool retessellate = forceRetessellate;
 	bool shadowPass = (cam->GetCamType() == CCamera::CAMTYPE_SHADOW);
+	bool retessellate = forceTessellate[shadowPass];
 
 	auto& patches = patchMeshGrid[shadowPass];
 	auto& pvflags = patchVisFlags[shadowPass];
@@ -183,7 +172,7 @@ void CRoamMeshDrawer::Update()
 		SCOPED_TIMER("ROAM::Tessellate");
 
 		Reset(patchMeshGrid[shadowPass]);
-		forceRetessellate = Tessellate(patchMeshGrid[shadowPass], cam, smfGroundDrawer->GetGroundDetail());
+		forceTessellate[shadowPass] = Tessellate(patchMeshGrid[shadowPass], cam, smfGroundDrawer->GetGroundDetail());
 	}
 
 
