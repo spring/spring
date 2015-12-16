@@ -948,9 +948,17 @@ EXPORT(int              ) skirmishAiCallback_Map_getSlopeMap(int skirmishAIId, f
 
 EXPORT(int              ) skirmishAiCallback_Map_getLosMap(int skirmishAIId, int* losValues, int losValues_sizeMax);
 
+EXPORT(int              ) skirmishAiCallback_Map_getAirLosMap(int skirmishAIId, int* airLosValues, int airLosValues_sizeMax);
+
 EXPORT(int              ) skirmishAiCallback_Map_getRadarMap(int skirmishAIId, int* radarValues, int radarValues_sizeMax);
 
+EXPORT(int              ) skirmishAiCallback_Map_getSonarMap(int skirmishAIId, int* sonarValues, int sonarValues_sizeMax);
+
+EXPORT(int              ) skirmishAiCallback_Map_getSeismicMap(int skirmishAIId, int* seismicValues, int seismicValues_sizeMax);
+
 EXPORT(int              ) skirmishAiCallback_Map_getJammerMap(int skirmishAIId, int* jammerValues, int jammerValues_sizeMax);
+
+EXPORT(int              ) skirmishAiCallback_Map_getSonarJammerMap(int skirmishAIId, int* sonarJammerValues, int sonarJammerValues_sizeMax);
 
 EXPORT(int              ) skirmishAiCallback_Map_getResourceMapRaw(int skirmishAIId, int resourceId, short* resources, int resources_sizeMax);
 
