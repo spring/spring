@@ -1820,12 +1820,25 @@ EXPORT(int) skirmishAiCallback_Map_get##name##Map(int skirmishAIId,	\
 	return sensor##Values_size;	\
 }
 
+// skirmishAiCallback_Map_getLosMap
 GET_SENSOR_MAP(Los, los)
+
+// skirmishAiCallback_Map_getAirLosMap
 GET_SENSOR_MAP(AirLos, airLos)
+
+// skirmishAiCallback_Map_getRadarMap
 GET_SENSOR_MAP(Radar, radar)
+
+// skirmishAiCallback_Map_getSonarMap
 GET_SENSOR_MAP(Sonar, sonar)
+
+// skirmishAiCallback_Map_getSeismicMap
 GET_SENSOR_MAP(Seismic, seismic)
+
+// skirmishAiCallback_Map_getJammerMap
 GET_SENSOR_MAP(Jammer, jammer)
+
+// skirmishAiCallback_Map_getSonarJammerMap
 GET_SENSOR_MAP(SonarJammer, sonarJammer)
 
 EXPORT(int) skirmishAiCallback_Map_getResourceMapRaw(
@@ -1914,7 +1927,6 @@ EXPORT(const char*) skirmishAiCallback_Map_getHumanName(int skirmishAIId) {
 EXPORT(float) skirmishAiCallback_Map_getElevationAt(int skirmishAIId, float x, float z) {
 	return skirmishAIId_callback[skirmishAIId]->GetElevation(x, z);
 }
-
 
 
 EXPORT(float) skirmishAiCallback_Map_getMaxResource(
