@@ -159,6 +159,11 @@ void LocalModel::SetModel(const S3DModel* model)
 	pieces.reserve(model->numPieces);
 
 	CreateLocalModelPieces(model->GetRootPiece());
+
+	// must recursively update matrices here too: for features
+	// LocalModel::Update is never called, but they might have
+	// baked piece rotations (if .dae)
+	pieces[0].UpdateMatricesRec(false);
 	UpdateBoundingVolume(0);
 
 	assert(pieces.size() == model->numPieces);
@@ -168,8 +173,9 @@ LocalModelPiece* LocalModel::CreateLocalModelPieces(const S3DModelPiece* mpParen
 {
 	LocalModelPiece* lmpChild = NULL;
 
+	// construct an LMP(mp) in-place
 	pieces.emplace_back(mpParent);
-	LocalModelPiece *lmpParent = &pieces.back();
+	LocalModelPiece* lmpParent = &pieces.back();
 
 	lmpParent->SetLModelPieceIndex(pieces.size() - 1);
 	lmpParent->SetScriptPieceIndex(pieces.size() - 1);
