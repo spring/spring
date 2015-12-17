@@ -6,8 +6,10 @@
 #include "System/Util.h"
 #include "System/EventHandler.h"
 #include "System/Platform/Threading.h"
+#include "System/Threading/SpringMutex.h"
 
 #include <future>
+#include <queue>
 
 #include "LuaInclude.h"
 #include "../tools/pr-downloader/src/pr-downloader.h"
@@ -21,47 +23,73 @@
 
 LuaVFSDownload* luavfsdownload = nullptr;
 
+struct dlEvent {
+	int ID;
+	virtual void processEvent() = 0;
+};
 
-struct dlStarted {
-	int ID;
+struct dlStarted : public dlEvent {
+	void processEvent() {
+		eventHandler.DownloadStarted(ID);
+	}
 };
-dlStarted* dls = NULL;
-struct dlFinished {
-	int ID;
+struct dlFinished : public dlEvent {
+	void processEvent() {
+		eventHandler.DownloadFinished(ID);
+	}
 };
-dlFinished* dlfi = NULL;
-struct dlFailed {
-	int ID;
+struct dlFailed : public dlEvent {
 	int errorID;
+	void processEvent() {
+		eventHandler.DownloadFailed(ID, errorID);
+	}
 };
-dlFailed* dlfa = NULL;
-struct dlProgress {
-	int ID;
+struct dlProgress : public dlEvent {
 	long downloaded;
 	long total;
+	void processEvent() {
+		eventHandler.DownloadProgress(ID, downloaded, total);
+	}
 };
-dlProgress* dlp = NULL;
 
-// TODO: all these functions need to lock the appropriate variables.
+std::queue<dlEvent*> dlEventQueue;
+spring::mutex dlEventQueueMutex;
+
+void AddQueueEvent(dlEvent* ev) {
+	dlEventQueueMutex.lock();
+	dlEventQueue.push(ev);
+	dlEventQueueMutex.unlock();
+}
+
 void QueueDownloadStarted(int ID) //queue from other thread download started event
 {
-	dls = new dlStarted(); dls->ID = ID;
+	dlStarted* ev = new dlStarted(); 
+	ev->ID = ID;
+	AddQueueEvent(ev);
 }
 
 void QueueDownloadFinished(int ID) //queue from other thread download started event
 {
-	dlfi = new dlFinished(); dlfi->ID = ID;
-
+	dlFinished* ev = new dlFinished(); 
+	ev->ID = ID;
+	AddQueueEvent(ev);
 }
 
 void QueueDownloadFailed(int ID, int errorID) //queue from other thread download started event
 {
-	dlfa = new dlFailed(); dlfa->ID = ID; dlfa->errorID = errorID;
+	dlFailed* ev = new dlFailed(); 
+	ev->ID = ID;
+	ev->errorID = errorID;
+	AddQueueEvent(ev);
 }
 
 void QueueDownloadProgress(int ID, long downloaded, long total) //queue from other thread download started event
 {
-	dlp = new dlProgress(); dlp->ID = ID; dlp->downloaded = downloaded; dlp->total = total;
+	dlProgress* ev = new dlProgress(); 
+	ev->ID = ID;
+	ev->downloaded = downloaded; 
+	ev->total = total;
+	AddQueueEvent(ev);
 }
 
 
@@ -95,6 +123,7 @@ static int queueIDCount = -1;
 static int currentDownloadID = -1;
 static std::list<DownloadItem> queue;
 static bool isDownloading = false;
+spring::mutex queueMutex;
 
 void StartDownload();
 
@@ -151,11 +180,13 @@ void StartDownload() {
 				QueueDownloadFailed(ID, result);
 			}
 
-			// TODO: needs to lock the queue/isDownloading variables before checking
+			queueMutex.lock();
 			if (!queue.empty()) {
+				queueMutex.unlock();
 				StartDownload();
 			} else {
 				isDownloading = false;
+				queueMutex.unlock();
 			}
 		}
 	}.detach();
@@ -183,8 +214,9 @@ int LuaVFSDownload::DownloadArchive(lua_State* L)
 	}
 
 	queueIDCount++;
-	// TODO: needs to lock queue variable
+	queueMutex.lock();
 	queue.push_back(DownloadItem(queueIDCount, filename, cat));
+	queueMutex.unlock();
 	eventHandler.DownloadQueued(queueIDCount, filename, categoryStr);
 	if (!isDownloading) {
 		if (queue.size() == 1) {
@@ -197,37 +229,17 @@ int LuaVFSDownload::DownloadArchive(lua_State* L)
 void LuaVFSDownload::Update()
 {
 	assert(Threading::IsMainThread() || Threading::IsGameLoadThread());
-	// FIXME: These events might not be executed in the order they were received, which could cause for weird things to happen as Lua will probably expect no DownloadProgress events to be issued after DownloadFailed/DownloadFinished, and also no such events before DownloadStarted.
-	if (dls != nullptr) {
-		// TODO: lock here
-		int ID = dls->ID;
-		SafeDelete(dls);
-		// TODO: unlock here
-		eventHandler.DownloadStarted(ID);
-	}
-	if (dlfi != nullptr) {
-		// TODO: lock here
-		int ID = dlfi->ID;
-		SafeDelete(dlfi);
-		// TODO: unlock here
-		eventHandler.DownloadFinished(ID);
-	}
-	if (dlfa != nullptr) {
-		// TODO: lock here
-		int ID = dlfa->ID;
-		int errorID = dlfa->errorID;
-		SafeDelete(dlfa);
-		// TODO: unlock here
-		eventHandler.DownloadFailed(ID, errorID);
-	}
-	if (dlp != nullptr) {
-		// TODO: lock here
-		int ID = dlp->ID;
-		int downloaded = dlp->downloaded;
-		int total = dlp->total;
-		SafeDelete(dlp);
-		// TODO: unlock here
-		eventHandler.DownloadProgress(ID, downloaded, total);
+	// only locks the mutex if the queue is not empty
+	if (!dlEventQueue.empty()) {
+		dlEventQueueMutex.lock();
+		dlEvent* ev;
+		while (!dlEventQueue.empty()) {
+			ev = dlEventQueue.front();
+			dlEventQueue.pop();
+			ev->processEvent();
+			SafeDelete(ev);
+		}
+		dlEventQueueMutex.unlock();
 	}
 }
 
