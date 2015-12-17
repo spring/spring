@@ -119,6 +119,29 @@ public:
 
 
 
+enum {
+	// base textures
+	MAP_BASE_GRASS_TEX           =  0,
+	MAP_BASE_DETAIL_TEX          =  1,
+	MAP_BASE_MINIMAP_TEX         =  2,
+	MAP_BASE_SHADING_TEX         =  3,
+	MAP_BASE_NORMALS_TEX         =  4,
+
+	// SSMF textures
+	MAP_SSMF_NORMALS_TEX         =  5,
+	MAP_SSMF_SPECULAR_TEX        =  6,
+
+	MAP_SSMF_SPLAT_DISTRIB_TEX   =  9,
+	MAP_SSMF_SPLAT_DETAIL_TEX    =  7,
+	MAP_SSMF_SPLAT_NORMAL_TEX    =  8,
+
+	MAP_SSMF_SKY_REFLECTION_TEX  = 10,
+	MAP_SSMF_LIGHT_EMISSION_TEX  = 11,
+	MAP_SSMF_PARALLAX_HEIGHT_TEX = 12,
+};
+
+
+
 class CReadMap
 {
 protected:
@@ -159,14 +182,18 @@ public:
 	virtual void NewGroundDrawer() = 0;
 	virtual CBaseGroundDrawer* GetGroundDrawer() { return 0; }
 
-	virtual unsigned int GetMiniMapTexture() const { return 0; }
-	virtual int2 GetMiniMapTextureSize() const { return int2(0,0); }
+
 	virtual unsigned int GetGrassShadingTexture() const { return 0; }
+	virtual unsigned int GetMiniMapTexture() const { return 0; }
 	/**
 	 * a texture with RGB for shading and A for height
 	 * (0 := above water; 1-255 := under water = 255+height*10)
 	 */
 	virtual unsigned int GetShadingTexture() const = 0;
+
+	virtual unsigned int GetTexture(unsigned int type, unsigned int num = 0) const { return 0; }
+	virtual int2 GetTextureSize(unsigned int type) const { return int2(0, 0); }
+
 
 	/// Draws the minimap in a quad (with extends: (0,0)-(1,1))
 	virtual void DrawMinimap() const = 0;
@@ -196,7 +223,7 @@ public:
 		virtual void ResetState() = 0;
 		virtual void DrawQuad(int x, int y) = 0;
 	};
-	virtual void GridVisibility(CCamera* cam, int quadSize, float maxdist, IQuadDrawer* cb, int extraSize = 0) = 0;
+	virtual void GridVisibility(CCamera* cam, IQuadDrawer* cb, float maxDist, int quadSize, int extraSize = 0) = 0;
 
 
 	/// synced only

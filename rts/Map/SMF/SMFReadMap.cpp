@@ -55,7 +55,7 @@ CSMFReadMap::CSMFReadMap(std::string mapname)
 	haveSplatTexture = (!mapInfo->smf.splatDetailTexName.empty() && !mapInfo->smf.splatDistrTexName.empty());
 	haveSplatDetailNormalTexture = false;
 
-	memset(&splatDetailNormalTextures[0], 0, NUM_SPLAT_DETAIL_NORMALS * sizeof(splatDetailNormalTextures[0]));
+	memset(&splatNormalTextures[0], 0, NUM_SPLAT_DETAIL_NORMALS * sizeof(splatNormalTextures[0]));
 
 	for (const std::string& texName: mapInfo->smf.splatDetailNormalTexNames) {
 		haveSplatDetailNormalTexture |= !texName.empty();
@@ -103,7 +103,7 @@ CSMFReadMap::~CSMFReadMap()
 	glDeleteTextures(1, &detailNormalTex  );
 	glDeleteTextures(1, &lightEmissionTex );
 	glDeleteTextures(1, &parallaxHeightTex);
-	glDeleteTextures(NUM_SPLAT_DETAIL_NORMALS, &splatDetailNormalTextures[0]);
+	glDeleteTextures(NUM_SPLAT_DETAIL_NORMALS, &splatNormalTextures[0]);
 }
 
 
@@ -275,7 +275,7 @@ void CSMFReadMap::CreateSplatDetailTextures()
 			splatDetailNormalTextureBM.mem[3] = 127; // Alpha is diffuse as in old-style detail textures
 		}
 
-		splatDetailNormalTextures[i] = splatDetailNormalTextureBM.CreateTexture(true);
+		splatNormalTextures[i] = splatDetailNormalTextureBM.CreateTexture(true);
 	}
 
 }
@@ -770,20 +770,20 @@ void CSMFReadMap::DrawMinimap() const
 }
 
 
-void CSMFReadMap::GridVisibility(CCamera* visCam, int quadSize, float maxDist, CReadMap::IQuadDrawer* qd, int extraSize)
+void CSMFReadMap::GridVisibility(CCamera* cam, IQuadDrawer* qd, float maxDist, int quadSize, int extraSize)
 {
-	if (visCam == nullptr) {
+	if (cam == nullptr) {
 		// allow passing in a custom camera for grid-visibility testing
 		// otherwise this culls using the state of whichever camera most
 		// recently had Update() called on it
-		visCam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
+		cam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
 		// for other cameras, KISS and just assume caller has done this
-		visCam->GetFrustumSides(GetCurrMinHeight() - 100.0f, GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
+		cam->GetFrustumSides(GetCurrMinHeight() - 100.0f, GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 	}
 
 	// figure out the camera's own quad
-	const int cx = visCam->GetPos().x / (SQUARE_SIZE * quadSize);
-	const int cy = visCam->GetPos().z / (SQUARE_SIZE * quadSize);
+	const int cx = cam->GetPos().x / (SQUARE_SIZE * quadSize);
+	const int cy = cam->GetPos().z / (SQUARE_SIZE * quadSize);
 
 	// and how many quads fit into the given maxDist
 	const int drawSquare = int(maxDist / (SQUARE_SIZE * quadSize)) + 1;
@@ -797,8 +797,8 @@ void CSMFReadMap::GridVisibility(CCamera* visCam, int quadSize, float maxDist, C
 	const int sxi = Clamp(cx - drawSquare, 0, drawQuadsX - 1);
 	const int exi = Clamp(cx + drawSquare, 0, drawQuadsX - 1);
 
-	const std::vector<CCamera::FrustumLine>& negSides = visCam->GetNegFrustumSides();
-	const std::vector<CCamera::FrustumLine>& posSides = visCam->GetPosFrustumSides();
+	const std::vector<CCamera::FrustumLine>& negSides = cam->GetNegFrustumSides();
+	const std::vector<CCamera::FrustumLine>& posSides = cam->GetPosFrustumSides();
 
 	std::vector<CCamera::FrustumLine>::const_iterator fli;
 
@@ -809,7 +809,7 @@ void CSMFReadMap::GridVisibility(CCamera* visCam, int quadSize, float maxDist, C
 		float xtest, xtest2;
 
 		// find the starting x-coordinate
-		for (fli = negSides.begin(); fli != negSides.end(); ++fli) {
+		for (fli = negSides.cbegin(); fli != negSides.cend(); ++fli) {
 			xtest  = ((fli->base + fli->dir * ( y * quadSize)            ));
 			xtest2 = ((fli->base + fli->dir * ((y * quadSize) + quadSize)));
 
@@ -821,7 +821,7 @@ void CSMFReadMap::GridVisibility(CCamera* visCam, int quadSize, float maxDist, C
 		}
 
 		// find the ending x-coordinate
-		for (fli = posSides.begin(); fli != posSides.end(); ++fli) {
+		for (fli = posSides.cbegin(); fli != posSides.cend(); ++fli) {
 			xtest  = ((fli->base + fli->dir *  (y * quadSize)           ));
 			xtest2 = ((fli->base + fli->dir * ((y * quadSize) + quadSize)));
 

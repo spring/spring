@@ -517,7 +517,7 @@ void CGrassDrawer::Update()
 		blockDrawer.cx = int(cam->GetPos().x / bMSsq);
 		blockDrawer.cy = int(cam->GetPos().z / bMSsq);
 		blockDrawer.gd = this;
-		readMap->GridVisibility(nullptr, blockMapSize, maxGrassDist, &blockDrawer);
+		readMap->GridVisibility(nullptr, &blockDrawer, maxGrassDist, blockMapSize);
 
 		if (
 			globalRendering->haveGLSL
@@ -604,8 +604,8 @@ void CGrassDrawer::DrawShadow()
 	blockDrawer.cx = int(cam->GetPos().x / bMSsq);
 	blockDrawer.cy = int(cam->GetPos().z / bMSsq);
 	blockDrawer.gd = this;
-	readMap->GridVisibility(nullptr, blockMapSize, maxGrassDist, &drawer);
 
+	readMap->GridVisibility(nullptr, &drawer, maxGrassDist, blockMapSize);
 	DrawNear(blockDrawer.inviewGrass);
 
 	//FIXME needs own shader!

@@ -346,7 +346,7 @@ namespace DebugColVolDrawer
 			static CDebugColVolQuadDrawer drawer;
 
 			drawer.ResetState();
-			readMap->GridVisibility(nullptr, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 1e9, &drawer);
+			readMap->GridVisibility(nullptr, &drawer, 1e9, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE);
 
 			glLineWidth(1.0f);
 		glPopAttrib();

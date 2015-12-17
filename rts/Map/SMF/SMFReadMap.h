@@ -31,23 +31,76 @@ public:
 	void UpdateShadingTexture();
 	void UpdateHeightMapUnsynced(const SRectangle&);
 
-	unsigned int GetDetailTexture() const { return detailTex; }
+	unsigned int GetTexture(unsigned int type, unsigned int num = 0) const {
+		unsigned int texID = 0;
+
+		switch (type) {
+			case MAP_BASE_GRASS_TEX: { texID = GetGrassShadingTexture(); } break;
+			case MAP_BASE_DETAIL_TEX: { texID = GetDetailTexture(); } break;
+			case MAP_BASE_MINIMAP_TEX: { texID = GetMiniMapTexture(); } break;
+			case MAP_BASE_SHADING_TEX: { texID = GetShadingTexture(); } break;
+			case MAP_BASE_NORMALS_TEX: { texID = GetNormalsTexture(); } break;
+
+			case MAP_SSMF_NORMALS_TEX: { texID = GetDetailNormalTexture(); } break;
+			case MAP_SSMF_SPECULAR_TEX: { texID = GetSpecularTexture(); } break;
+
+			case MAP_SSMF_SPLAT_DISTRIB_TEX: { texID = GetSplatDistrTexture(); } break;
+			case MAP_SSMF_SPLAT_DETAIL_TEX: { texID = GetSplatDetailTexture(); } break;
+			case MAP_SSMF_SPLAT_NORMAL_TEX: { texID = GetSplatNormalTexture(num); } break;
+
+			case MAP_SSMF_SKY_REFLECTION_TEX: { texID = GetSkyReflectModTexture(); } break;
+			case MAP_SSMF_LIGHT_EMISSION_TEX: { texID = GetLightEmissionTexture(); } break;
+			case MAP_SSMF_PARALLAX_HEIGHT_TEX: { texID = GetParallaxHeightTexture(); } break;
+
+			default: {} break;
+		}
+
+		return texID;
+	}
+
+	int2 GetTextureSize(unsigned int type) const {
+		int2 size;
+
+		switch (type) {
+			case MAP_BASE_GRASS_TEX: {
+				size = int2(1024, 1024);
+			} break;
+			case MAP_BASE_MINIMAP_TEX: {
+				size = int2(1024, 1024);
+			} break;
+			case MAP_BASE_SHADING_TEX: {
+				size = int2(mapDims.pwr2mapx, mapDims.pwr2mapy);
+			} break;
+			case MAP_BASE_NORMALS_TEX: {
+				size = normalTexSize;
+			} break;
+		}
+
+		return size;
+	}
+
+
+	unsigned int GetGrassShadingTexture() const { return grassShadingTex; }
 	unsigned int GetMiniMapTexture() const { return minimapTex; }
-	int2 GetMiniMapTextureSize() const { return int2(1024, 1024); }
+	unsigned int GetDetailTexture() const { return detailTex; }
 	unsigned int GetShadingTexture() const { return shadingTex; }
 	unsigned int GetNormalsTexture() const { return normalsTex; }
-	unsigned int GetSpecularTexture() const { return specularTex; }
-	unsigned int GetGrassShadingTexture() const { return grassShadingTex; }
-	unsigned int GetSplatDetailTexture() const { return splatDetailTex; }
-	unsigned int GetSplatDetailNormalTexture(int i) const { return splatDetailNormalTextures[i]; }
-	unsigned int GetSplatDistrTexture() const { return splatDistrTex; }
-	unsigned int GetSkyReflectModTexture() const { return skyReflectModTex; }
+
+
 	unsigned int GetDetailNormalTexture() const { return detailNormalTex; }
+	unsigned int GetSpecularTexture() const { return specularTex; }
+
+	unsigned int GetSplatDistrTexture() const { return splatDistrTex; }
+	unsigned int GetSplatDetailTexture() const { return splatDetailTex; }
+	unsigned int GetSplatNormalTexture(int i) const { return splatNormalTextures[i]; }
+
+	unsigned int GetSkyReflectModTexture() const { return skyReflectModTex; }
 	unsigned int GetLightEmissionTexture() const { return lightEmissionTex; }
 	unsigned int GetParallaxHeightTexture() const { return parallaxHeightTex; }
 
+
 	void DrawMinimap() const;
-	void GridVisibility(CCamera* cam, int quadSize, float maxdist, IQuadDrawer* cb, int extraSize);
+	void GridVisibility(CCamera* cam, IQuadDrawer* cb, float maxDist, int quadSize, int extraSize = 0) override;
 
 	void NewGroundDrawer();
 
@@ -130,7 +183,7 @@ protected:
 	// contains RGBA texture with RGB channels containing normals and
 	// alpha containing greyscale diffuse for splat detail normals
 	// (overrides detailTex)
-	unsigned int splatDetailNormalTextures[NUM_SPLAT_DETAIL_NORMALS];
+	unsigned int splatNormalTextures[NUM_SPLAT_DETAIL_NORMALS];
 
 	unsigned int splatDistrTex;       // specifies the per-channel distribution of splatDetailTex (map-wide, overrides detailTex)
 	unsigned int grassShadingTex;     // specifies grass-blade modulation color (defaults to minimapTex)

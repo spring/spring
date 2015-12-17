@@ -33,7 +33,8 @@ public:
 	virtual int2   GetCurrentInfoTextureSize() const = 0;
 
 public:
-	virtual CInfoTexture* GetInfoTexture(const std::string& name) = 0;
+	virtual const CInfoTexture* GetInfoTextureConst(const std::string& name) const = 0;
+	virtual       CInfoTexture* GetInfoTexture     (const std::string& name)       = 0;
 };
 
 extern IInfoTextureHandler* infoTextureHandler;

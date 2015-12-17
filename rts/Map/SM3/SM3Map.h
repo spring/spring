@@ -46,8 +46,7 @@ public:
 	unsigned char* GetInfoMap (const std::string& name, MapBitmapInfo* bm);
 	void FreeInfoMap(const std::string& name, unsigned char* data);
 
-	void GridVisibility(CCamera* cam, int quadSize, float maxdist, IQuadDrawer* cb, int extraSize);
-
+	void GridVisibility(CCamera* cam, IQuadDrawer* cb, float maxDist, int quadSize, int extraSize = 0) override;
 
 protected:
 	CSM3GroundDrawer* groundDrawer;

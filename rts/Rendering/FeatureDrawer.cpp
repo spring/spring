@@ -719,7 +719,7 @@ void CFeatureDrawer::GetVisibleFeatures(CCamera* cam, int extraSize, bool drawFa
 	drawer.cam = cam;
 
 	cam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
-	readMap->GridVisibility(cam, DRAW_QUAD_SIZE, featureDrawDistance, &drawer, extraSize);
+	readMap->GridVisibility(cam, &drawer, featureDrawDistance, DRAW_QUAD_SIZE, extraSize);
 }
 
 void CFeatureDrawer::PostLoad()

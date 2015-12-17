@@ -69,6 +69,22 @@ Lua:
    note: the *PostDeferred events are only sent (and only have a real
    purpose) if forward drawing is disabled!
 
+   expose the following $named textures to LuaOpenGL
+     $map_reflection (same as $reflection)
+     $sky_reflection (defined for SSMF maps that have a skyReflectModTex)
+
+     $detail
+     $normals (auto-generated)
+
+     $ssmf_normals
+     $ssmf_specular
+     $ssmf_splat_distr
+     $ssmf_splat_detail
+     $ssmf_splat_normals
+     $ssmf_sky_refl
+     $ssmf_emission
+     $ssmf_parallax
+
 Rendering:
  - add support for SSMF Splat Detail Normal Textures (by Beherith)
  - add deferred pass for features; note that these are drawn into

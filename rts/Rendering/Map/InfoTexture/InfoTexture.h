@@ -16,7 +16,7 @@ public:
 	virtual ~CInfoTexture() {}
 
 public:
-	virtual GLuint GetTexture()        { return texture; }
+	virtual GLuint GetTexture() const  { return texture; }
 	int2   GetTexSize()          const { return texSize; }
 	int    GetTexChannels()      const { return texChannels; }
 	const std::string& GetName() const { return name; }
@@ -28,6 +28,11 @@ protected:
 	std::string name;
 	int2 texSize;
 	int texChannels;
+};
+
+class CDummyInfoTexture: public CInfoTexture {
+public:
+	CDummyInfoTexture(): CInfoTexture("dummy", 0, int2(0, 0)) {}
 };
 
 #endif // _INFO_TEXTURE_H

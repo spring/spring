@@ -46,6 +46,7 @@ static CLegacyInfoTextureHandler::BaseGroundDrawMode NameToDrawMode(const std::s
 		return CLegacyInfoTextureHandler::drawPathCost;
 	}
 
+	// maps to 0
 	return CLegacyInfoTextureHandler::drawNormal;
 }
 
@@ -199,6 +200,11 @@ int2 CLegacyInfoTextureHandler::GetCurrentInfoTextureSize() const
 	return (int2(mapDims.pwr2mapx >> 1, mapDims.pwr2mapy >> 1));
 }
 
+
+const CInfoTexture* CLegacyInfoTextureHandler::GetInfoTextureConst(const std::string& name) const
+{
+	return &infoTextures[NameToDrawMode(name)];
+}
 
 CInfoTexture* CLegacyInfoTextureHandler::GetInfoTexture(const std::string& name)
 {

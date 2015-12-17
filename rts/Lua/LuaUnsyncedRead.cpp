@@ -781,7 +781,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 
 	{
 		unitQuadIter.ResetState();
-		readMap->GridVisibility(nullptr, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 1e9, &unitQuadIter);
+		readMap->GridVisibility(nullptr, &unitQuadIter, 1e9, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE);
 
 		lua_createtable(L, unitQuadIter.GetObjectCount(), 0);
 
@@ -901,7 +901,7 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 
 	{
 		featureQuadIter.ResetState();
-		readMap->GridVisibility(nullptr, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 3000.0f * 2.0f, &featureQuadIter);
+		readMap->GridVisibility(nullptr, &featureQuadIter, 1e9, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE);
 
 		lua_createtable(L, featureQuadIter.GetObjectCount(), 0);
 
@@ -984,7 +984,7 @@ int LuaUnsyncedRead::GetVisibleProjectiles(lua_State* L)
 
 	{
 		projQuadIter.ResetState();
-		readMap->GridVisibility(nullptr, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 1e9, &projQuadIter);
+		readMap->GridVisibility(nullptr, &projQuadIter, 1e9, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE);
 
 		lua_createtable(L, projQuadIter.GetObjectCount(), 0);
 

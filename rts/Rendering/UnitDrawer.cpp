@@ -713,10 +713,10 @@ void CUnitDrawer::DrawCloakedUnitsHelper(int modelType)
 		const auto& unitBin = cloakedModelRenderers[modelType]->GetUnitBin();
 
 		// cloaked units
-		for (auto it = unitBin.begin(); it != unitBin.end(); ++it) {
+		for (auto it = unitBin.cbegin(); it != unitBin.cend(); ++it) {
 			BindModelTypeTexture(modelType, it->first);
 
-			const auto & unitSet = it->second;
+			const auto& unitSet = it->second;
 
 			for (CUnit* unit: unitSet) {
 				DrawCloakedUnit(unit, modelType, false);
