@@ -33,6 +33,8 @@ class LuaShaders {
 		};
 
 		struct Program {
+			Program(GLuint _id): id(_id) {}
+
 			GLuint id;
 			std::vector<Object> objects;
 		};

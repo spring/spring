@@ -168,12 +168,13 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	// LH must be initialized before drawer-state is initialized
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicModelLights"));
 
-	unitDrawerStateSSP = IUnitDrawerState::GetInstance(globalRendering->haveARB, globalRendering->haveGLSL);
-	unitDrawerStateFFP = IUnitDrawerState::GetInstance(                   false,                     false);
+	unitDrawerStates.resize(DRAWER_STATE_CNT, nullptr);
+	unitDrawerStates[DRAWER_STATE_SSP] = IUnitDrawerState::GetInstance(globalRendering->haveARB, globalRendering->haveGLSL);
+	unitDrawerStates[DRAWER_STATE_FFP] = IUnitDrawerState::GetInstance(                   false,                     false);
 
 	// also set in ::SetupForUnitDrawing, but SunChanged can be
 	// called first if DynamicSun is enabled --> must be non-NULL
-	SelectRenderState(false);
+	unitDrawerStates[DRAWER_STATE_SEL] = unitDrawerStates[DRAWER_STATE_FFP];
 
 	// shared with FeatureDrawer!
 	geomBuffer = LuaObjectDrawer::GetGeometryBuffer();
@@ -182,21 +183,22 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	drawDeferred = (geomBuffer->Valid());
 
 	// NOTE:
-	//     advShading can NOT change at runtime if initially false***
-	//     (see AdvModelShadingActionExecutor), so we will always use
-	//     unitDrawerStateFFP (in ::Draw) in that special case and it
-	//     does not matter if unitDrawerStateSSP is initialized
-	//     *** except for DrawCloakedUnits
+	//   advShading can NOT change at runtime if initially false***
+	//   (see AdvModelShadingActionExecutor), so we will always use
+	//   FFP renderer-state (in ::Draw) in that special case and it
+	//   does not matter whether SSP renderer-state is initialized
+	//   *** except for DrawCloakedUnits
 	advFading = GLEW_NV_vertex_program2;
-	advShading = (unitDrawerStateSSP->Init(this) && cubeMapHandler->Init());
+	advShading = (unitDrawerStates[DRAWER_STATE_SSP]->Init(this) && cubeMapHandler->Init());
 }
 
 CUnitDrawer::~CUnitDrawer()
 {
 	eventHandler.RemoveClient(this);
 
-	unitDrawerStateSSP->Kill(); IUnitDrawerState::FreeInstance(unitDrawerStateSSP);
-	unitDrawerStateFFP->Kill(); IUnitDrawerState::FreeInstance(unitDrawerStateFFP);
+	unitDrawerStates[DRAWER_STATE_SSP]->Kill(); IUnitDrawerState::FreeInstance(unitDrawerStates[DRAWER_STATE_SSP]);
+	unitDrawerStates[DRAWER_STATE_FFP]->Kill(); IUnitDrawerState::FreeInstance(unitDrawerStates[DRAWER_STATE_FFP]);
+	unitDrawerStates.clear();
 
 	cubeMapHandler->Free();
 
@@ -883,14 +885,14 @@ void CUnitDrawer::SetupForUnitDrawing(bool deferredPass)
 	glEnable(GL_ALPHA_TEST);
 
 	// pick base shaders (ARB/GLSL) or FFP; not used by custom-material models
-	SelectRenderState(unitDrawerStateSSP->CanEnable(this));
-	unitDrawerState->Enable(this, deferredPass);
+	unitDrawerStates[DRAWER_STATE_SEL] = unitDrawerStates[ int(unitDrawerStates[DRAWER_STATE_SSP]->CanEnable(this)) ];
+	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass);
 
 	// NOTE:
-	//   when deferredPass is true we MUST be able to use unitDrawerStateSSP
+	//   when deferredPass is true we MUST be able to use the SSP render-state
 	//   all calling code (reached from DrawOpaquePass(deferred=true)) should
 	//   ensure this is the case
-	assert(!deferredPass || unitDrawerState == unitDrawerStateSSP);
+	assert(!deferredPass || unitDrawerStates[DRAWER_STATE_SEL] == unitDrawerStates[DRAWER_STATE_SSP]);
 }
 
 void CUnitDrawer::CleanUpUnitDrawing(bool deferredPass) const
@@ -898,14 +900,14 @@ void CUnitDrawer::CleanUpUnitDrawing(bool deferredPass) const
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_ALPHA_TEST);
 
-	unitDrawerState->Disable(this, deferredPass);
+	unitDrawerStates[DRAWER_STATE_SEL]->Disable(this, deferredPass);
 }
 
 
 bool CUnitDrawer::DrawDeferredSupported() const {
-	if (!unitDrawerStateSSP->CanEnable(this))
+	if (!unitDrawerStates[DRAWER_STATE_SSP]->CanEnable(this))
 		return false;
-	if (!unitDrawerStateSSP->CanDrawDeferred())
+	if (!unitDrawerStates[DRAWER_STATE_SSP]->CanDrawDeferred())
 		return false;
 
 	return true;
@@ -916,7 +918,7 @@ void CUnitDrawer::SetTeamColour(int team, float alpha) const
 {
 	// need this because we can be called by no-team projectiles
 	if (teamHandler->IsValidTeam(team)) {
-		unitDrawerState->SetTeamColor(team, alpha);
+		unitDrawerStates[DRAWER_STATE_SEL]->SetTeamColor(team, alpha);
 	}
 }
 
@@ -1175,8 +1177,8 @@ void CUnitDrawer::DrawUnitModelBeingBuilt(const CUnit* unit, bool noLuaCall)
 	glColorf3(fc * col);
 
 	// render wireframe with FFP
-	unitDrawerState->DisableShaders(this);
-	unitDrawerState->DisableTextures(this);
+	unitDrawerStates[DRAWER_STATE_SEL]->DisableShaders(this);
+	unitDrawerStates[DRAWER_STATE_SEL]->DisableTextures(this);
 
 
 	// first stage: wireframe model
@@ -1221,8 +1223,8 @@ void CUnitDrawer::DrawUnitModelBeingBuilt(const CUnit* unit, bool noLuaCall)
 
 	glDisable(GL_CLIP_PLANE1);
 
-	unitDrawerState->EnableTextures(this);
-	unitDrawerState->EnableShaders(this);
+	unitDrawerStates[DRAWER_STATE_SEL]->EnableTextures(this);
+	unitDrawerStates[DRAWER_STATE_SEL]->EnableShaders(this);
 
 	// second stage: texture-mapped model
 	if (unit->buildProgress > (2.0f / 3.0f)) {
@@ -1756,7 +1758,7 @@ void CUnitDrawer::PlayerChanged(int playerNum) {
 }
 
 void CUnitDrawer::SunChanged(const float3& sunDir) {
-	unitDrawerState->UpdateCurrentShader(this, sky->GetLight());
+	unitDrawerStates[DRAWER_STATE_SEL]->UpdateCurrentShader(this, sky->GetLight());
 }
 
 

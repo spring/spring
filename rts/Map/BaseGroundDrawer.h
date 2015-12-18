@@ -14,6 +14,12 @@ namespace GL {
 	struct LightHandler;
 }
 
+struct LuaMapShaderData {
+	// [0] := standard program from gl.CreateShader
+	// [1] := deferred program from gl.CreateShader
+	unsigned int shaderIDs[2];
+};
+
 class CBaseGroundDrawer
 {
 public:
@@ -35,8 +41,10 @@ public:
 	virtual void DecreaseDetail() = 0;
 	virtual int GetGroundDetail(const DrawPass::e& drawPass = DrawPass::Normal) const = 0;
 
+	virtual void SetLuaShader(LuaMapShaderData*) {}
 	virtual void SetDrawForwardPass(bool b) { drawForward = b; }
 	virtual void SetDrawDeferredPass(bool) {}
+
 	virtual bool ToggleMapBorder() { drawMapEdges = !drawMapEdges; return drawMapEdges; }
 
 	virtual const GL::LightHandler* GetLightHandler() const { return nullptr; }

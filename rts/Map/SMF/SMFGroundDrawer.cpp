@@ -49,12 +49,14 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	groundTextures = new CSMFGroundTextures(smfMap);
 	meshDrawer = SwitchMeshDrawer((!!configHandler->GetInt("ROAM")) ? SMF_MESHDRAWER_ROAM : SMF_MESHDRAWER_LEGACY);
 
-	smfRenderStateSSP = ISMFRenderState::GetInstance(globalRendering->haveARB, globalRendering->haveGLSL);
-	smfRenderStateFFP = ISMFRenderState::GetInstance(                   false,                     false);
+	smfRenderStates.resize(RENDER_STATE_CNT, nullptr);
+	smfRenderStates[RENDER_STATE_SSP] = ISMFRenderState::GetInstance(globalRendering->haveARB, globalRendering->haveGLSL);
+	smfRenderStates[RENDER_STATE_FFP] = ISMFRenderState::GetInstance(                   false,                     false);
+	smfRenderStates[RENDER_STATE_LUA] = ISMFRenderState::GetInstance(                   false,                      true);
 
 	// also set in ::Draw, but UpdateSunDir can be called
 	// first if DynamicSun is enabled --> must be non-NULL
-	SelectRenderState(false);
+	smfRenderStates[RENDER_STATE_SEL] = smfRenderStates[RENDER_STATE_FFP];
 
 	// LH must be initialized before render-state is initialized
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicMapLights"));
@@ -65,12 +67,12 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	drawMapEdges = configHandler->GetBool("MapBorder");
 
 	// NOTE:
-	//     advShading can NOT change at runtime if initially false
-	//     (see AdvMapShadingActionExecutor), so we will always use
-	//     smfRenderStateFFP (in ::Draw) in that special case and it
-	//     does not matter if smfRenderStateSSP is initialized
+	//   advShading can NOT change at runtime if initially false
+	//   (see AdvMapShadingActionExecutor), so we will always use
+	//   FFP render-state (in ::Draw) in that special case and it
+	//   does not matter whether SSP render-state is initialized
 	groundDetail = configHandler->GetInt("GroundDetail");
-	advShading = smfRenderStateSSP->Init(this);
+	advShading = smfRenderStates[RENDER_STATE_SSP]->Init(this, nullptr);
 
 	waterPlaneCamInDispList  = 0;
 	waterPlaneCamOutDispList = 0;
@@ -99,11 +101,13 @@ CSMFGroundDrawer::~CSMFGroundDrawer()
 		configHandler->Set("ROAM", 0);
 	configHandler->Set("GroundDetail", groundDetail);
 
-	smfRenderStateSSP->Kill(); ISMFRenderState::FreeInstance(smfRenderStateSSP);
-	smfRenderStateFFP->Kill(); ISMFRenderState::FreeInstance(smfRenderStateFFP);
+	smfRenderStates[RENDER_STATE_FFP]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_FFP]);
+	smfRenderStates[RENDER_STATE_SSP]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_SSP]);
+	smfRenderStates[RENDER_STATE_LUA]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_LUA]);
+	smfRenderStates.clear();
 
-	delete groundTextures;
-	delete meshDrawer;
+	SafeDelete(groundTextures);
+	SafeDelete(meshDrawer);
 
 	if (waterPlaneCamInDispList) {
 		glDeleteLists(waterPlaneCamInDispList, 1);
@@ -217,6 +221,33 @@ inline void CSMFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
 
 
 
+void CSMFGroundDrawer::SelectRenderState(const DrawPass::e& drawPass)
+{
+	ISMFRenderState* state = nullptr;
+
+	// first, pick the state we want
+	switch (smfRenderStates[RENDER_STATE_LUA]->HasValidShader(drawPass)) {
+		case  true: { state = smfRenderStates[RENDER_STATE_LUA]; } break;
+		case false: { state = smfRenderStates[RENDER_STATE_SSP]; } break;
+		default: {} break;
+	}
+
+	// second, check if it can be used
+	// note: LUA reverts to FFP, not SSP
+	switch (state->CanEnable(this)) {
+		case  true: { smfRenderStates[RENDER_STATE_SEL] =                             state; } break;
+		case false: { smfRenderStates[RENDER_STATE_SEL] = smfRenderStates[RENDER_STATE_FFP]; } break;
+		default: {} break;
+	}
+
+	#if 0
+	// TODO: nicer to set custom uniforms based on an event
+	if (state == smfRenderStates[RENDER_STATE_LUA]) {
+		eventHandler.DrawMap(drawPass);
+	}
+	#endif
+}
+
 void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass)
 {
 	if (!geomBuffer.Valid())
@@ -233,16 +264,18 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass)
 		return;
 	// deferred pass must be executed with GLSL shaders
 	// if the FFP or ARB state was selected, bail early
-	if (!smfRenderState->CanDrawDeferred())
+	if (!smfRenderStates[RENDER_STATE_SEL]->CanDrawDeferred())
 		return;
 
 	geomBuffer.Bind();
 	geomBuffer.Clear();
 
 	{
-		// switch current SSP shader to deferred version
-		smfRenderState->SetCurrentShader(DrawPass::TerrainDeferred);
-		smfRenderState->Enable(this, drawPass);
+		// switch selected state's SSP or Lua shader to deferred version
+		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(DrawPass::TerrainDeferred);
+		smfRenderStates[RENDER_STATE_SEL]->Enable(this, drawPass, smfRenderStates[RENDER_STATE_SEL] == smfRenderStates[RENDER_STATE_LUA]);
+
+		assert(smfRenderStates[RENDER_STATE_SEL]->HasValidShader(drawPass));
 
 		if (mapInfo->map.voidGround || (mapInfo->map.voidWater && drawPass != DrawPass::WaterReflection)) {
 			glEnable(GL_ALPHA_TEST);
@@ -255,8 +288,8 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass)
 			glDisable(GL_ALPHA_TEST);
 		}
 
-		smfRenderState->Disable(this, drawPass);
-		smfRenderState->SetCurrentShader(drawPass);
+		smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass, smfRenderStates[RENDER_STATE_SEL] == smfRenderStates[RENDER_STATE_LUA]);
+		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(drawPass);
 	}
 
 	geomBuffer.UnBind();
@@ -279,13 +312,11 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 	if (readMap->HasOnlyVoidWater())
 		return;
 
-
-	// note: shared by deferred pass
-	SelectRenderState(smfRenderStateSSP->CanEnable(this));
-
 	glDisable(GL_BLEND);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
+
+	SelectRenderState(drawPass);
 
 	if (drawDeferred) {
 		// do the deferred pass first, will allow us to re-use
@@ -295,7 +326,7 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 	}
 
 	if (drawForward) {
-		smfRenderState->Enable(this, drawPass);
+		smfRenderStates[RENDER_STATE_SEL]->Enable(this, drawPass, smfRenderStates[RENDER_STATE_SEL] == smfRenderStates[RENDER_STATE_LUA]);
 
 		if (wireframe) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -314,7 +345,7 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		}
 
-		smfRenderState->Disable(this, drawPass);
+		smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass, smfRenderStates[RENDER_STATE_SEL] == smfRenderStates[RENDER_STATE_LUA]);
 	}
 
 	glDisable(GL_CULL_FACE);
@@ -337,8 +368,8 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 
-	SelectRenderState(false);
-	// smfRenderState->Enable(this, drawPass);
+	smfRenderStates[RENDER_STATE_SEL] = smfRenderStates[RENDER_STATE_FFP];
+	// smfRenderStates[RENDER_STATE_SEL]->Enable(this, drawPass, false);
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -372,16 +403,22 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 		if (wireframe) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		}
-			/*if (mapInfo->map.voidWater && (drawPass != DrawPass::WaterReflection)) {
-				glEnable(GL_ALPHA_TEST);
-				glAlphaFunc(GL_GREATER, 0.9f);
-			}*/
 
-				meshDrawer->DrawBorderMesh(drawPass);
+		/*
+		if (mapInfo->map.voidWater && (drawPass != DrawPass::WaterReflection)) {
+			glEnable(GL_ALPHA_TEST);
+			glAlphaFunc(GL_GREATER, 0.9f);
+		}
+		*/
 
-			/*if (mapInfo->map.voidWater && (drawPass != DrawPass::WaterReflection)) {
-				glDisable(GL_ALPHA_TEST);
-			}*/
+		meshDrawer->DrawBorderMesh(drawPass);
+
+		/*
+		if (mapInfo->map.voidWater && (drawPass != DrawPass::WaterReflection)) {
+			glDisable(GL_ALPHA_TEST);
+		}
+		*/
+
 		if (wireframe) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		}
@@ -396,7 +433,7 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 	glActiveTexture(GL_TEXTURE0);
 	glDisable(GL_TEXTURE_2D);
 
-	smfRenderState->Disable(this, drawPass);
+	smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass, false);
 	glDisable(GL_CULL_FACE);
 }
 
@@ -422,15 +459,21 @@ void CSMFGroundDrawer::DrawShadowPass()
 
 
 
-void CSMFGroundDrawer::SetupBaseDrawPass() { smfRenderStateSSP->SetCurrentShader(DrawPass::Normal); }
-void CSMFGroundDrawer::SetupReflDrawPass() { smfRenderStateSSP->SetCurrentShader(DrawPass::WaterReflection); }
-void CSMFGroundDrawer::SetupRefrDrawPass() { smfRenderStateSSP->SetCurrentShader(DrawPass::WaterRefraction); }
+void CSMFGroundDrawer::SetLuaShader(LuaMapShaderData* luaMapShaderData)
+{
+	smfRenderStates[RENDER_STATE_LUA]->Kill();
+	smfRenderStates[RENDER_STATE_LUA]->Init(this, luaMapShaderData);
+}
 
 void CSMFGroundDrawer::SetupBigSquare(const int bigSquareX, const int bigSquareY)
 {
 	groundTextures->BindSquareTexture(bigSquareX, bigSquareY);
-	smfRenderState->SetSquareTexGen(bigSquareX, bigSquareY);
+	smfRenderStates[RENDER_STATE_SEL]->SetSquareTexGen(bigSquareX, bigSquareY);
 }
+
+void CSMFGroundDrawer::SetupBaseDrawPass() { smfRenderStates[RENDER_STATE_SSP]->SetCurrentShader(DrawPass::Normal); }
+void CSMFGroundDrawer::SetupReflDrawPass() { smfRenderStates[RENDER_STATE_SSP]->SetCurrentShader(DrawPass::WaterReflection); }
+void CSMFGroundDrawer::SetupRefrDrawPass() { smfRenderStates[RENDER_STATE_SSP]->SetCurrentShader(DrawPass::WaterRefraction); }
 
 
 
@@ -449,8 +492,12 @@ void CSMFGroundDrawer::Update()
 }
 
 void CSMFGroundDrawer::UpdateSunDir() {
+	// Lua has gl.GetSun
+	if (smfRenderStates[RENDER_STATE_SEL] == smfRenderStates[RENDER_STATE_LUA])
+		return;
+
 	// always update, SSMF shader needs current sundir even when shadows are disabled
-	smfRenderState->UpdateCurrentShader(sky->GetLight());
+	smfRenderStates[RENDER_STATE_SEL]->UpdateCurrentShader(sky->GetLight());
 }
 
 

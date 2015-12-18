@@ -19,7 +19,7 @@
 
 
 IUnitDrawerState* IUnitDrawerState::GetInstance(bool haveARB, bool haveGLSL) {
-	IUnitDrawerState* instance = NULL;
+	IUnitDrawerState* instance = nullptr;
 
 	if (!haveARB && !haveGLSL) {
 		instance = new UnitDrawerStateFFP();
@@ -44,7 +44,7 @@ void IUnitDrawerState::EnableCommon(const CUnitDrawer* ud, bool deferredPass) {
 	glLoadIdentity();
 
 	SetActiveShader(shadowHandler->shadowsLoaded, deferredPass);
-	assert(modelShaders[MODEL_SHADER_ACTIVE] != NULL);
+	assert(modelShaders[MODEL_SHADER_ACTIVE] != nullptr);
 	modelShaders[MODEL_SHADER_ACTIVE]->Enable();
 
 	// TODO: refactor to use EnableTexturesCommon
@@ -77,7 +77,7 @@ void IUnitDrawerState::EnableCommon(const CUnitDrawer* ud, bool deferredPass) {
 }
 
 void IUnitDrawerState::DisableCommon(const CUnitDrawer* ud, bool) {
-	assert(modelShaders[MODEL_SHADER_ACTIVE] != NULL);
+	assert(modelShaders[MODEL_SHADER_ACTIVE] != nullptr);
 
 	modelShaders[MODEL_SHADER_ACTIVE]->Disable();
 	SetActiveShader(shadowHandler->shadowsLoaded, false);
@@ -225,7 +225,7 @@ void UnitDrawerStateFFP::SetTeamColor(int team, float alpha) const {
 
 
 bool UnitDrawerStateARB::Init(const CUnitDrawer* ud) {
-	modelShaders.resize(MODEL_SHADER_COUNT, NULL);
+	modelShaders.resize(MODEL_SHADER_COUNT, nullptr);
 
 	if (!globalRendering->haveARB) {
 		// not possible to do (ARB) shader-based model rendering
@@ -327,7 +327,7 @@ void UnitDrawerStateARB::SetTeamColor(int team, float alpha) const {
 
 
 bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
-	modelShaders.resize(MODEL_SHADER_COUNT, NULL);
+	modelShaders.resize(MODEL_SHADER_COUNT, nullptr);
 
 	if (!globalRendering->haveGLSL) {
 		// not possible to do (GLSL) shader-based model rendering

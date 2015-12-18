@@ -66,6 +66,7 @@ class LuaUnsyncedCtrl {
 		static int UpdateModelLight(lua_State* L);
 		static int SetMapLightTrackingState(lua_State* L);
 		static int SetModelLightTrackingState(lua_State* L);
+		static int SetMapShader(lua_State* L);
 		static int SetMapSquareTexture(lua_State* L);
 
 		static int SetUnitNoDraw(lua_State* L);

@@ -156,6 +156,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(UpdateModelLight);
 	REGISTER_LUA_CFUNC(SetMapLightTrackingState);
 	REGISTER_LUA_CFUNC(SetModelLightTrackingState);
+	REGISTER_LUA_CFUNC(SetMapShader);
 	REGISTER_LUA_CFUNC(SetMapSquareTexture);
 
 	REGISTER_LUA_CFUNC(SetUnitNoDraw);
@@ -985,13 +986,11 @@ int LuaUnsyncedCtrl::SetDrawSky(lua_State* L)
 	return 0;
 }
 
-
 int LuaUnsyncedCtrl::SetDrawWater(lua_State* L)
 {
 	globalRendering->drawWater = !!luaL_checkboolean(L, 1);
 	return 0;
 }
-
 
 int LuaUnsyncedCtrl::SetDrawGround(lua_State* L)
 {
@@ -1203,9 +1202,8 @@ static bool ParseLight(lua_State* L, GL::Light& light, const int tblIdx, const c
 
 int LuaUnsyncedCtrl::AddMapLight(lua_State* L)
 {
-	if (CLuaHandle::GetHandleSynced(L) || !CLuaHandle::GetHandleFullRead(L)) {
+	if (CLuaHandle::GetHandleSynced(L) || !CLuaHandle::GetHandleFullRead(L))
 		return 0;
-	}
 
 	GL::LightHandler* lightHandler = readMap->GetGroundDrawer()->GetLightHandler();
 	GL::Light light;
@@ -1224,9 +1222,8 @@ int LuaUnsyncedCtrl::AddMapLight(lua_State* L)
 
 int LuaUnsyncedCtrl::AddModelLight(lua_State* L)
 {
-	if (CLuaHandle::GetHandleSynced(L) || !CLuaHandle::GetHandleFullRead(L)) {
+	if (CLuaHandle::GetHandleSynced(L) || !CLuaHandle::GetHandleFullRead(L))
 		return 0;
-	}
 
 	GL::LightHandler* lightHandler = unitDrawer->GetLightHandler();
 	GL::Light light;
@@ -1248,9 +1245,8 @@ int LuaUnsyncedCtrl::UpdateMapLight(lua_State* L)
 {
 	const unsigned int lightHandle = luaL_checkint(L, 1);
 
-	if (CLuaHandle::GetHandleSynced(L) || !CLuaHandle::GetHandleFullRead(L)) {
+	if (CLuaHandle::GetHandleSynced(L) || !CLuaHandle::GetHandleFullRead(L))
 		return 0;
-	}
 
 	GL::LightHandler* lightHandler = readMap->GetGroundDrawer()->GetLightHandler();
 	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lightHandle): NULL;
@@ -1269,9 +1265,8 @@ int LuaUnsyncedCtrl::UpdateModelLight(lua_State* L)
 {
 	const unsigned int lightHandle = luaL_checkint(L, 1);
 
-	if (CLuaHandle::GetHandleSynced(L) || !CLuaHandle::GetHandleFullRead(L)) {
+	if (CLuaHandle::GetHandleSynced(L) || !CLuaHandle::GetHandleFullRead(L))
 		return 0;
-	}
 
 	GL::LightHandler* lightHandler = unitDrawer->GetLightHandler();
 	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lightHandle): NULL;
@@ -1346,9 +1341,9 @@ static bool AddLightTrackingTarget(lua_State* L, GL::Light* light, bool trackEna
 // the position of a moving object (unit or projectile)
 int LuaUnsyncedCtrl::SetMapLightTrackingState(lua_State* L)
 {
-	if (CLuaHandle::GetHandleSynced(L) || !CLuaHandle::GetHandleFullRead(L)) {
+	if (CLuaHandle::GetHandleSynced(L) || !CLuaHandle::GetHandleFullRead(L))
 		return 0;
-	}
+
 	if (!lua_isnumber(L, 2)) {
 		luaL_error(L, "[%s] 1st and 2nd arguments should be numbers, 3rd and 4th should be booleans", __FUNCTION__);
 		return 0;
@@ -1375,9 +1370,9 @@ int LuaUnsyncedCtrl::SetMapLightTrackingState(lua_State* L)
 // the position of a moving object (unit or projectile)
 int LuaUnsyncedCtrl::SetModelLightTrackingState(lua_State* L)
 {
-	if (CLuaHandle::GetHandleSynced(L) || !CLuaHandle::GetHandleFullRead(L)) {
+	if (CLuaHandle::GetHandleSynced(L) || !CLuaHandle::GetHandleFullRead(L))
 		return 0;
-	}
+
 	if (!lua_isnumber(L, 2)) {
 		luaL_error(L, "[%s] 1st and 2nd arguments should be numbers, 3rd and 4th should be booleans", __FUNCTION__);
 		return 0;
@@ -1402,11 +1397,30 @@ int LuaUnsyncedCtrl::SetModelLightTrackingState(lua_State* L)
 
 /******************************************************************************/
 
+int LuaUnsyncedCtrl::SetMapShader(lua_State* L)
+{
+	if (CLuaHandle::GetHandleSynced(L))
+		return 0;
+
+	// SMF_RENDER_STATE_LUA only accepts GLSL shaders
+	if (!globalRendering->haveGLSL)
+		return 0;
+
+	CBaseGroundDrawer* groundDrawer = readMap->GetGroundDrawer();
+	LuaMapShaderData luaMapShaderData;
+
+	for (unsigned int i = 0; i < 2; i++) {
+		luaMapShaderData.shaderIDs[i] = lua_tonumber(L, i + 1);
+	}
+
+	groundDrawer->SetLuaShader(&luaMapShaderData);
+	return 0;
+}
+
 int LuaUnsyncedCtrl::SetMapSquareTexture(lua_State* L)
 {
-	if (CLuaHandle::GetHandleSynced(L)) {
+	if (CLuaHandle::GetHandleSynced(L))
 		return 0;
-	}
 
 	const int texSquareX = luaL_checkint(L, 1);
 	const int texSquareY = luaL_checkint(L, 2);

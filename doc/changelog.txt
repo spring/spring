@@ -34,6 +34,8 @@ Lua:
      gl.FeaturePieceMatrix
      gl.FeaturePieceMultMatrix
 
+ - add unsynced callout Spring.SetMapShader(number standardShaderID, number deferredShaderID) -> nil
+
  - add Spring.FeatureRendering API; allows custom shaders (technically,
    materials) for features as its Spring.UnitRendering counterpart does
    for units
@@ -91,6 +93,7 @@ Rendering:
    the same buffer as units (overwriting it, unless the new config
    variable AllowDeferredModelBufferClear is set to false [default])
  - allow custom shaders for being-built units
+ - allow custom Lua map shaders
 
 
 -- 100.0 --------------------------------------------------------

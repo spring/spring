@@ -60,9 +60,7 @@ bool LuaShaders::PushEntries(lua_State* L)
 
 LuaShaders::LuaShaders()
 {
-	Program p;
-	p.id = 0;
-	programs.push_back(p);
+	programs.push_back(Program(0));
 }
 
 
@@ -92,21 +90,18 @@ inline void CheckDrawingEnabled(lua_State* L, const char* caller)
 
 GLuint LuaShaders::GetProgramName(unsigned int progID) const
 {
-	if (progID < programs.size()) {
+	if (progID < programs.size())
 		return programs[progID].id;
-	} else {
-		return 0;
-	}
-}
 
+	return 0;
+}
 
 GLuint LuaShaders::GetProgramName(lua_State* L, int index) const
 {
-	const int progID = (GLuint)luaL_checkint(L, 1);
-	if ((progID <= 0) || (progID >= (int)programs.size())) {
+	if (luaL_checkint(L, index) <= 0)
 		return 0;
-	}
-	return programs[progID].id;
+
+	return (GetProgramName(luaL_checkint(L, index)));
 }
 
 
@@ -437,8 +432,7 @@ int LuaShaders::CreateShader(lua_State* L)
 
 	const GLuint prog = glCreateProgram();
 
-	Program p;
-	p.id = prog;
+	Program p(prog);
 
 	if (vertObj != 0) {
 		glAttachShader(prog, vertObj);
@@ -629,9 +623,9 @@ int LuaShaders::GetUniformLocation(lua_State* L)
 {
 	const LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
 	const GLuint progName = shaders.GetProgramName(L, 1);
-	if (progName == 0) {
+
+	if (progName == 0)
 		return 0;
-	}
 
 	const string name = luaL_checkstring(L, 2);
 	const GLint location = glGetUniformLocation(progName, name.c_str());
@@ -654,23 +648,19 @@ int LuaShaders::Uniform(lua_State* L)
 	switch (numValues) {
 		case 1: {
 			glUniform1f(location, luaL_checkfloat(L, 2));
-			break;
-		}
+		} break;
 		case 2: {
 			glUniform2f(location, luaL_checkfloat(L, 2), luaL_checkfloat(L, 3));
-			break;
-		}
+		} break;
 		case 3: {
 			glUniform3f(location, luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
-			break;
-		}
+		} break;
 		case 4: {
 			glUniform4f(location, luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4), luaL_checkfloat(L, 5));
-			break;
-		}
+		} break;
 		default: {
 			luaL_error(L, "Incorrect arguments to gl.Uniform()");
-		}
+		} break;
 	}
 
 	return 0;

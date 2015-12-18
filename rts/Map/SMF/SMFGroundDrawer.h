@@ -37,6 +37,14 @@ public:
 	void Update();
 	void UpdateSunDir();
 
+
+	void SetLuaShader(LuaMapShaderData*);
+	void SetDrawDeferredPass(bool b) {
+		if ((drawDeferred = b)) {
+			drawDeferred &= UpdateGeometryBuffer(false);
+		}
+	}
+
 	void SetupBigSquare(const int bigSquareX, const int bigSquareY);
 
 	// for ARB-only clients
@@ -44,11 +52,6 @@ public:
 	void SetupReflDrawPass();
 	void SetupRefrDrawPass();
 
-	void SetDrawDeferredPass(bool b) {
-		if ((drawDeferred = b)) {
-			drawDeferred &= UpdateGeometryBuffer(false);
-		}
-	}
 
 	void IncreaseDetail();
 	void DecreaseDetail();
@@ -65,9 +68,7 @@ public:
 	IMeshDrawer* SwitchMeshDrawer(int mode = -1);
 
 private:
-	void SelectRenderState(bool shaderPath) {
-		smfRenderState = shaderPath? smfRenderStateSSP: smfRenderStateFFP;
-	}
+	void SelectRenderState(const DrawPass::e& drawPass);
 
 	void CreateWaterPlanes(bool camOufOfMap);
 	inline void DrawWaterPlane(bool drawWaterReflection);
@@ -84,9 +85,11 @@ protected:
 	GLuint waterPlaneCamOutDispList;
 	GLuint waterPlaneCamInDispList;
 
-	ISMFRenderState* smfRenderStateSSP; // default shader-driven rendering path
-	ISMFRenderState* smfRenderStateFFP; // fallback shader-less rendering path
-	ISMFRenderState* smfRenderState;
+	// [0] := fallback shader-less rendering path
+	// [1] := default shader-driven rendering path
+	// [2] := custom shader-driven rendering path (via Lua)
+	// [3] := currently selected state (shared by deferred pass)
+	std::vector<ISMFRenderState*> smfRenderStates;
 
 	GL::LightHandler lightHandler;
 	GL::GeometryBuffer geomBuffer;

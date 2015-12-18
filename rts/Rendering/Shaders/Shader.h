@@ -100,14 +100,17 @@ namespace Shader {
 		IProgramObject(const std::string& poName);
 		virtual ~IProgramObject() {}
 
+		void LoadFromID(unsigned int id) {
+			objID = id;
+			valid = (id != 0);
+			bound = false;
+
+			// not needed for pre-compiled programs
+			shaderObjs.clear();
+		}
+
 		/// create the whole shader from a lua file
 		bool LoadFromLua(const std::string& filename);
-
-		/// attach single shader objects (vertex, frag, ...) to the program
-		virtual void AttachShaderObject(IShaderObject* so) { shaderObjs.push_back(so); }
-		bool IsShaderAttached(const IShaderObject* so) const;
-		const std::vector<IShaderObject*>& GetAttachedShaderObjs() const { return shaderObjs; }
-		      std::vector<IShaderObject*>& GetAttachedShaderObjs()       { return shaderObjs; }
 
 		virtual void Enable();
 		virtual void Disable();
@@ -115,14 +118,24 @@ namespace Shader {
 		virtual void Validate() = 0;
 		virtual void Release() = 0;
 		virtual void Reload(bool reloadFromDisk, bool validate) = 0;
-		void RecompileIfNeeded(bool validate);
+		/// attach single shader objects (vertex, frag, ...) to the program
+		virtual void AttachShaderObject(IShaderObject* so) { shaderObjs.push_back(so); }
 
 		bool IsBound() const;
 		bool IsValid() const { return valid; }
-		const std::string& GetLog() const { return log; }
+		bool IsShaderAttached(const IShaderObject* so) const {
+			return (std::find(shaderObjs.begin(), shaderObjs.end(), so) != shaderObjs.end());
+		}
 
 		unsigned int GetObjID() const { return objID; }
+
 		const std::string& GetName() const { return name; }
+		const std::string& GetLog() const { return log; }
+
+		const std::vector<IShaderObject*>& GetAttachedShaderObjs() const { return shaderObjs; }
+		      std::vector<IShaderObject*>& GetAttachedShaderObjs()       { return shaderObjs; }
+
+		void RecompileIfNeeded(bool validate);
 		void PrintDebugInfo();
 
 	public:

@@ -156,10 +156,6 @@ private:
 	void DrawCloakedUnitsHelper(int modelType);
 	void DrawCloakedUnit(CUnit* unit, int modelType, bool drawGhostBuildingsPass);
 
-	void SelectRenderState(bool shaderPath) {
-		unitDrawerState = shaderPath? unitDrawerStateSSP: unitDrawerStateFFP;
-	}
-
 public:
 	static void BindModelTypeTexture(int modelType, int texType, bool solo = false);
 	static void BindModelTypeTexture(const S3DModel* m, bool solo = false);
@@ -229,9 +225,10 @@ private:
 	std::vector<std::vector<CUnit*> > unitRadarIcons;
 	std::map<icon::CIconData*, std::vector<const CUnit*> > unitsByIcon;
 
-	IUnitDrawerState* unitDrawerStateSSP; // default shader-driven rendering path
-	IUnitDrawerState* unitDrawerStateFFP; // fallback shader-less rendering path
-	IUnitDrawerState* unitDrawerState;    // currently selected state
+	// [0] := fallback shader-less rendering path
+	// [1] := default shader-driven rendering path
+	// [2] := currently selected state
+	std::vector<IUnitDrawerState*> unitDrawerStates;
 
 	GL::LightHandler lightHandler;
 	GL::GeometryBuffer* geomBuffer;
