@@ -226,18 +226,18 @@ void CSMFGroundDrawer::SelectRenderState(const DrawPass::e& drawPass)
 	ISMFRenderState* state = nullptr;
 
 	// first, pick the state we want
-	switch (smfRenderStates[RENDER_STATE_LUA]->HasValidShader(drawPass)) {
-		case  true: { state = smfRenderStates[RENDER_STATE_LUA]; } break;
-		case false: { state = smfRenderStates[RENDER_STATE_SSP]; } break;
-		default: {} break;
+	if (smfRenderStates[RENDER_STATE_LUA]->HasValidShader(drawPass)) {
+		state = smfRenderStates[RENDER_STATE_LUA];
+	} else {
+		state = smfRenderStates[RENDER_STATE_SSP];
 	}
 
 	// second, check if it can be used
 	// note: LUA reverts to FFP, not SSP
-	switch (state->CanEnable(this)) {
-		case  true: { smfRenderStates[RENDER_STATE_SEL] =                             state; } break;
-		case false: { smfRenderStates[RENDER_STATE_SEL] = smfRenderStates[RENDER_STATE_FFP]; } break;
-		default: {} break;
+	if (state->CanEnable(this)) {
+		smfRenderStates[RENDER_STATE_SEL] = state;
+	} else {
+		smfRenderStates[RENDER_STATE_SEL] = smfRenderStates[RENDER_STATE_FFP];
 	}
 
 	#if 0
