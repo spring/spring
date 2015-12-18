@@ -51,6 +51,7 @@ Else  (NOT Boost_FOUND)
 
 ################################################################################
 ### UDPListener
+# disabled for travis: https://springrts.com/mantis/view.php?id=5014
 if(NOT DEFINED ENV{CI})
 	set(test_name UDPListener)
 	Set(test_src
