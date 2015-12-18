@@ -51,6 +51,7 @@ Else  (NOT Boost_FOUND)
 
 ################################################################################
 ### UDPListener
+if(NOT DEFINED ENV{CI})
 	set(test_name UDPListener)
 	Set(test_src
 		"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Net/TestUDPListener.cpp"
@@ -82,6 +83,7 @@ Else  (NOT Boost_FOUND)
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
 	Add_Dependencies(test_UDPListener generateVersionFiles)
+endif()
 
 ################################################################################
 ### ILog
