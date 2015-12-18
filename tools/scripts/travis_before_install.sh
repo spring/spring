@@ -2,6 +2,9 @@
 
 # used in .travis.yml
 
+# travis-ci hack which enables the ipv6 loopback address
+sudo ip addr add dev lo ::1
+
 set -e
 
 # sdl2
