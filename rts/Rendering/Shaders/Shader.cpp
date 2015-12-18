@@ -464,7 +464,7 @@ namespace Shader {
 		}
 	}
 
-	void GLSLProgramObject::Validate() {
+	bool GLSLProgramObject::Validate() {
 		GLint validated = 0;
 
 		glValidateProgram(objID);
@@ -481,7 +481,7 @@ namespace Shader {
 		glGetProgramiv(objID, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxUniformNameLength);
 
 		if (maxUniformNameLength <= 0)
-			return;
+			return valid;
 
 		std::string bufname(maxUniformNameLength, 0);
 		for (int i = 0; i < numUniforms; ++i) {
@@ -504,6 +504,8 @@ namespace Shader {
 			//assert(false);
 		}
 	#endif
+
+		return valid;
 	}
 
 	void GLSLProgramObject::Release() {

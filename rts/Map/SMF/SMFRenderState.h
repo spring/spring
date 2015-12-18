@@ -28,7 +28,10 @@ public:
 	static void FreeInstance(ISMFRenderState* state) { delete state; }
 
 	virtual ~ISMFRenderState() {}
-	virtual bool Init(const CSMFGroundDrawer* smfGroundDrawer, LuaMapShaderData* luaMapShaderData) = 0;
+	virtual bool Init(
+		const CSMFGroundDrawer* smfGroundDrawer,
+		const LuaMapShaderData* luaMapShaderData
+	) = 0;
 	virtual void Kill() = 0;
 
 	virtual bool HasValidShader(const DrawPass::e& drawPass) const = 0;
@@ -48,7 +51,10 @@ public:
 
 struct SMFRenderStateFFP: public ISMFRenderState {
 public:
-	bool Init(const CSMFGroundDrawer* smfGroundDrawer, LuaMapShaderData* luaMapShaderData) { return false; }
+	bool Init(
+		const CSMFGroundDrawer* smfGroundDrawer,
+		const LuaMapShaderData* luaMapShaderData
+	) { return false; }
 	void Kill() {}
 
 	bool HasValidShader(const DrawPass::e& drawPass) const { return false; }
@@ -66,7 +72,10 @@ public:
 
 struct SMFRenderStateARB: public ISMFRenderState {
 public:
-	bool Init(const CSMFGroundDrawer* smfGroundDrawer, LuaMapShaderData* luaMapShaderData);
+	bool Init(
+		const CSMFGroundDrawer* smfGroundDrawer,
+		const LuaMapShaderData* luaMapShaderData
+	);
 	void Kill();
 
 	bool HasValidShader(const DrawPass::e& drawPass) const;
@@ -98,7 +107,10 @@ private:
 
 struct SMFRenderStateGLSL: public ISMFRenderState {
 public:
-	bool Init(const CSMFGroundDrawer* smfGroundDrawer, LuaMapShaderData* luaMapShaderData);
+	bool Init(
+		const CSMFGroundDrawer* smfGroundDrawer,
+		const LuaMapShaderData* luaMapShaderData
+	);
 	void Kill();
 
 	bool HasValidShader(const DrawPass::e& drawPass) const;

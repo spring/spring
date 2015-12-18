@@ -14,7 +14,8 @@ Lua:
  - new Spring.GetUICommands function to obtain a list of all UI commands (e.g. /luaui reload)
  - new VFS.CalculateHash function that calculates hash (in base64 form) of a given string (with md5 support initially)
  - new Spring.SetFeatureFade(featureID, bool) to control whether a feature will fade or not when zoomed out.
- - add callouts
+
+ - add callouts (see their Unit equivalents for documentation)
      Spring.{Get,Set}FeaturePieceCollisionVolumeData
      Spring.GetFeatureLastAttackedPiece
      Spring.GetFeaturePieceMap
@@ -34,34 +35,54 @@ Lua:
      gl.FeaturePieceMatrix
      gl.FeaturePieceMultMatrix
 
- - add unsynced callout Spring.SetMapShader(number standardShaderID, number deferredShaderID) -> nil
-   (the shader ID's must refer to valid programs returned by gl.CreateShader)
-
  - add Spring.FeatureRendering API; allows custom shaders (technically,
    materials) for features as its Spring.UnitRendering counterpart does
    for units
-   note: the following two functions are no-ops
+   note: the following two functions exist but are no-ops
      Spring.UnitRendering.SetFeatureLuaDraw
      Spring.FeatureRendering.SetUnitLuaDraw
+
+ - add unsynced callout Spring.SetMapShader(
+     number standardShaderID,
+     number deferredShaderID
+   ) -> nil
+   (the ID's must refer to valid programs returned by gl.CreateShader;
+   passing in 0, 0 will cause a revert back to the default map shader)
+   custom shaders that declare a uniform ivec2 named "texSquare" can
+   sample from the default diffuse texture(s), which are always bound
+   to TU 0
+
+ - add new callins DrawGroundPreForward and DrawGroundPreDeferred
+   these run at the start of their respective passes when a custom
+   map shader has been assigned via Spring.SetMapShader (convenient
+   for setting uniforms)
 
  - add new callin DrawGroundPostDeferred; this runs at the end of its
    respective deferred pass and allows proper frame compositing (with
    ground flashes/decals/foliage/etc, which are drawn between it and
-   DrawWorldPreUnit)
+   DrawWorldPreUnit) via gl.CopyToTexture
 
  - add new callins DrawUnitsPostDeferred and DrawFeaturesPostDeferred
    these run at the end of their respective deferred passes to inform
    Lua code it should make use of the $model_gbuffer_* textures before
    another pass overwrites them (and to allow proper blending with e.g.
-   cloaked objects which are drawn between these events and DrawWorld)
+   cloaked objects which are drawn between these events and DrawWorld
+   via gl.CopyToTexture)
 
- - allow Lua to disable the forward {Unit,Feature,Ground}Drawer passes;
-   use the callouts
+
+   NOTE: the *PostDeferred events are only sent (and only have a real
+   purpose) if forward drawing is disabled, whereas the DrawGroundPre*
+   events are only sent if the map has a custom shader!
+
+
+ - extend the signatures of the Spring.SetDraw{Ground,Models}Deferred
+   callouts; allows disabling the forward {Unit,Feature,Ground}Drawer
+   passes
      Spring.SetDrawGroundDeferred(
           boolean drawGroundDeferred
        [, boolean drawGroundForward]
      )
-   and
+
      Spring.SetDrawModelsDeferred(
           boolean drawUnitsDeferred,
           boolean drawFeaturesDeferred
@@ -69,8 +90,6 @@ Lua:
        [, boolean drawFeaturesForward ]]
      )
 
-   note: the *PostDeferred events are only sent (and only have a real
-   purpose) if forward drawing is disabled!
 
    expose the following $named textures to LuaOpenGL
      $map_reflection (same as $reflection)

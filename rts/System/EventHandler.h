@@ -237,6 +237,8 @@ class CEventHandler
 		void DrawWorldShadow();
 		void DrawWorldReflection();
 		void DrawWorldRefraction();
+		void DrawGroundPreForward();
+		void DrawGroundPreDeferred();
 		void DrawGroundPostDeferred();
 		void DrawUnitsPostDeferred();
 		void DrawFeaturesPostDeferred();

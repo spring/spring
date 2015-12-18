@@ -68,18 +68,19 @@ class LuaOpenGL {
 		static void ResetDrawWorldRefraction();
 		static void DisableDrawWorldRefraction();
 
+		#define NOOP_STATE_FUNCS(Name)    \
+		static void Enable  ## Name () {} \
+		static void Disable ## Name () {} \
+		static void Reset   ## Name () {}
+
 		// no-ops (should probably guard some state)
-		static void EnableDrawGroundPostDeferred() {}
-		static void ResetDrawGroundPostDeferred() {}
-		static void DisableDrawGroundPostDeferred() {}
-		// no-ops
-		static void EnableDrawUnitsPostDeferred() {}
-		static void ResetDrawUnitsPostDeferred() {}
-		static void DisableDrawUnitsPostDeferred() {}
-		// no-ops
-		static void EnableDrawFeaturesPostDeferred() {}
-		static void ResetDrawFeaturesPostDeferred() {}
-		static void DisableDrawFeaturesPostDeferred() {}
+		NOOP_STATE_FUNCS(DrawGroundPreForward)
+		NOOP_STATE_FUNCS(DrawGroundPreDeferred)
+		NOOP_STATE_FUNCS(DrawGroundPostDeferred)
+		NOOP_STATE_FUNCS(DrawUnitsPostDeferred)
+		NOOP_STATE_FUNCS(DrawFeaturesPostDeferred)
+
+		#undef NOOP_STATE_FUNCS
 
 		static void EnableDrawScreenEffects();
 		static void ResetDrawScreenEffects();

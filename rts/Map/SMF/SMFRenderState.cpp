@@ -40,7 +40,7 @@ ISMFRenderState* ISMFRenderState::GetInstance(bool haveARB, bool haveGLSL) {
 
 
 
-bool SMFRenderStateARB::Init(const CSMFGroundDrawer* smfGroundDrawer, LuaMapShaderData*) {
+bool SMFRenderStateARB::Init(const CSMFGroundDrawer* smfGroundDrawer, const LuaMapShaderData*) {
 	memset(&arbShaders[0], 0, sizeof(arbShaders));
 
 	if (!globalRendering->haveARB) {
@@ -91,7 +91,7 @@ bool SMFRenderStateARB::HasValidShader(const DrawPass::e& drawPass) const {
 
 
 
-bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer, LuaMapShaderData* luaMapShaderData) {
+bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer, const LuaMapShaderData* luaMapShaderData) {
 	memset(&glslShaders[0], 0, sizeof(glslShaders));
 
 	if (!globalRendering->haveGLSL) {
@@ -122,7 +122,6 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer, LuaMapSha
 			// NOTE: only non-custom shaders get engine flags and uniforms!
 			glslShaders[n] = shaderHandler->CreateProgramObject("[SMFGroundDrawer]", names[n] + "-Lua", false);
 			glslShaders[n]->LoadFromID(luaMapShaderData->shaderIDs[n]);
-			glslShaders[n]->Validate();
 		}
 	} else {
 		for (unsigned int n = GLSL_SHADER_STANDARD; n <= GLSL_SHADER_DEFERRED; n++) {
@@ -162,6 +161,7 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer, LuaMapSha
 			glslShaders[n]->Link();
 			glslShaders[n]->Enable();
 
+			// tex1 (shadingTex) is not used by SMFFragProg
 			glslShaders[n]->SetUniform("diffuseTex",             0);
 			glslShaders[n]->SetUniform("detailTex",              2);
 			glslShaders[n]->SetUniform("shadowTex",              4);
@@ -200,9 +200,9 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer, LuaMapSha
 
 			glslShaders[n]->SetUniform("infoTexIntensityMul", 1.0f);
 
-			glslShaders[n]->SetUniform("  normalTexGen", 1.0f / ((smfMap->normalTexSize.x - 1) * SQUARE_SIZE), 1.0f / ((smfMap->normalTexSize.y - 1) * SQUARE_SIZE));
+			glslShaders[n]->SetUniform(  "normalTexGen", 1.0f / ((smfMap->normalTexSize.x - 1) * SQUARE_SIZE), 1.0f / ((smfMap->normalTexSize.y - 1) * SQUARE_SIZE));
 			glslShaders[n]->SetUniform("specularTexGen", 1.0f / (mapDims.mapx     * SQUARE_SIZE), 1.0f / (mapDims.mapy     * SQUARE_SIZE));
-			glslShaders[n]->SetUniform("    infoTexGen", 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE));
+			glslShaders[n]->SetUniform(    "infoTexGen", 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE));
 
 			glslShaders[n]->Disable();
 			glslShaders[n]->Validate();
@@ -449,13 +449,16 @@ void SMFRenderStateARB::Disable(const CSMFGroundDrawer*, const DrawPass::e& draw
 
 void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e&, bool luaShader) {
 	if (luaShader) {
-		// GLSLProgramObject::Enable also calls RecompileIfNeeded
+		// use raw, GLSLProgramObject::Enable also calls RecompileIfNeeded
 		glUseProgram(glslShaders[GLSL_SHADER_CURRENT]->GetObjID());
+		// diffuse textures are always bound (SMFGroundDrawer::SetupBigSquare)
+		glActiveTexture(GL_TEXTURE0);
 		return;
 	}
 
 	const CSMFReadMap* smfMap = smfGroundDrawer->GetReadMap();
-	const GL::LightHandler* lightHandler = smfGroundDrawer->GetLightHandler();
+	const GL::LightHandler* cLightHandler = smfGroundDrawer->GetLightHandler();
+	      GL::LightHandler* mLightHandler = const_cast<GL::LightHandler*>(cLightHandler); // XXX
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -471,7 +474,7 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 
 	// already on the MV stack at this point
 	glLoadIdentity();
-	const_cast<GL::LightHandler*>(lightHandler)->Update(glslShaders[GLSL_SHADER_CURRENT]);
+	mLightHandler->Update(glslShaders[GLSL_SHADER_CURRENT]);
 	glMultMatrixf(camera->GetViewMatrix());
 
 	// setup for shadow2DProj
@@ -506,17 +509,18 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 
 void SMFRenderStateGLSL::Disable(const CSMFGroundDrawer*, const DrawPass::e&, bool luaShader) {
 	if (luaShader) {
+		glActiveTexture(GL_TEXTURE0);
 		glUseProgram(0);
 		return;
 	}
 
-	glslShaders[GLSL_SHADER_CURRENT]->Disable();
-
 	if (shadowHandler->shadowsLoaded) {
 		glActiveTexture(GL_TEXTURE4);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
-		glActiveTexture(GL_TEXTURE0);
 	}
+
+	glActiveTexture(GL_TEXTURE0);
+	glslShaders[GLSL_SHADER_CURRENT]->Disable();
 }
 
 
@@ -537,6 +541,8 @@ void SMFRenderStateARB::SetSquareTexGen(const int sqx, const int sqy) const {
 }
 
 void SMFRenderStateGLSL::SetSquareTexGen(const int sqx, const int sqy) const {
+	// needs to be set even for Lua shaders, is unknowable otherwise
+	// (works because SMFGroundDrawer::SetupBigSquare always calls us)
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("texSquare", sqx, sqy);
 }
 

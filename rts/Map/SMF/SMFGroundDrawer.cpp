@@ -22,7 +22,6 @@
 #include "System/myMath.h"
 #include "System/TimeProfiler.h"
 
-
 CONFIG(int, GroundDetail).defaultValue(60).headlessValue(0).minimumValue(0).maximumValue(200).description("Controls how detailed the map geometry will be. On lowered settings, cliffs may appear to be jagged or \"melting\".");
 CONFIG(bool, MapBorder).defaultValue(true).description("Draws a solid border at the edges of the map.");
 
@@ -74,18 +73,16 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	groundDetail = configHandler->GetInt("GroundDetail");
 	advShading = smfRenderStates[RENDER_STATE_SSP]->Init(this, nullptr);
 
-	waterPlaneCamInDispList  = 0;
-	waterPlaneCamOutDispList = 0;
+	waterPlaneDispLists[0] = 0;
+	waterPlaneDispLists[1] = 0;
 
 	if (mapInfo->water.hasWaterPlane) {
-		waterPlaneCamInDispList = glGenLists(1);
-		glNewList(waterPlaneCamInDispList, GL_COMPILE);
-		CreateWaterPlanes(false);
+		glNewList((waterPlaneDispLists[0] = glGenLists(1)), GL_COMPILE);
+		CreateWaterPlanes(true);
 		glEndList();
 
-		waterPlaneCamOutDispList = glGenLists(1);
-		glNewList(waterPlaneCamOutDispList, GL_COMPILE);
-		CreateWaterPlanes(true);
+		glNewList((waterPlaneDispLists[1] = glGenLists(1)), GL_COMPILE);
+		CreateWaterPlanes(false);
 		glEndList();
 	}
 
@@ -109,10 +106,7 @@ CSMFGroundDrawer::~CSMFGroundDrawer()
 	SafeDelete(groundTextures);
 	SafeDelete(meshDrawer);
 
-	if (waterPlaneCamInDispList) {
-		glDeleteLists(waterPlaneCamInDispList, 1);
-		glDeleteLists(waterPlaneCamOutDispList, 1);
-	}
+	glDeleteLists(waterPlaneDispLists[0], 2);
 }
 
 
@@ -208,44 +202,42 @@ void CSMFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
 
 
 inline void CSMFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
-	if (!drawWaterReflection) {
-		const bool skipUnderground = (camera->GetPos().IsInBounds() && !mapInfo->map.voidWater);
-		const unsigned int dispList = skipUnderground ? waterPlaneCamInDispList: waterPlaneCamOutDispList;
+	if (drawWaterReflection)
+		return;
 
-		glPushMatrix();
-		glTranslatef(0.f, std::min(-200.0f, smfMap->GetCurrMinHeight() - 400.0f), 0.f);
-		glCallList(dispList);
-		glPopMatrix();
-	}
+	glPushMatrix();
+	glTranslatef(0.f, std::min(-200.0f, smfMap->GetCurrMinHeight() - 400.0f), 0.f);
+	glCallList(waterPlaneDispLists[camera->GetPos().IsInBounds() && !mapInfo->map.voidWater]);
+	glPopMatrix();
 }
 
 
 
-void CSMFGroundDrawer::SelectRenderState(const DrawPass::e& drawPass)
+ISMFRenderState* CSMFGroundDrawer::SelectRenderState(const DrawPass::e& drawPass)
 {
 	ISMFRenderState* state = nullptr;
 
 	// first, pick the state we want
-	if (smfRenderStates[RENDER_STATE_LUA]->HasValidShader(drawPass)) {
-		state = smfRenderStates[RENDER_STATE_LUA];
-	} else {
-		state = smfRenderStates[RENDER_STATE_SSP];
+	switch (int(smfRenderStates[RENDER_STATE_LUA]->HasValidShader(drawPass))) {
+		case 1: { state = smfRenderStates[RENDER_STATE_LUA]; } break;
+		case 0: { state = smfRenderStates[RENDER_STATE_SSP]; } break;
+		default: {} break;
 	}
 
 	// second, check if it can be used
 	// note: LUA reverts to FFP, not SSP
-	if (state->CanEnable(this)) {
-		smfRenderStates[RENDER_STATE_SEL] = state;
-	} else {
-		smfRenderStates[RENDER_STATE_SEL] = smfRenderStates[RENDER_STATE_FFP];
+	switch (int(state->CanEnable(this))) {
+		case 1: { smfRenderStates[RENDER_STATE_SEL] =                             state; } break;
+		case 0: { smfRenderStates[RENDER_STATE_SEL] = smfRenderStates[RENDER_STATE_FFP]; } break;
+		default: {} break;
 	}
 
-	#if 0
-	// TODO: nicer to set custom uniforms based on an event
-	if (state == smfRenderStates[RENDER_STATE_LUA]) {
-		eventHandler.DrawMap(drawPass);
-	}
-	#endif
+	return smfRenderStates[RENDER_STATE_SEL];
+}
+
+bool CSMFGroundDrawer::HaveLuaRenderState() const
+{
+	return (smfRenderStates[RENDER_STATE_SEL] == smfRenderStates[RENDER_STATE_LUA]);
 }
 
 void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass)
@@ -273,7 +265,7 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass)
 	{
 		// switch selected state's SSP or Lua shader to deferred version
 		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(DrawPass::TerrainDeferred);
-		smfRenderStates[RENDER_STATE_SEL]->Enable(this, drawPass, smfRenderStates[RENDER_STATE_SEL] == smfRenderStates[RENDER_STATE_LUA]);
+		smfRenderStates[RENDER_STATE_SEL]->Enable(this, drawPass, HaveLuaRenderState());
 
 		assert(smfRenderStates[RENDER_STATE_SEL]->HasValidShader(drawPass));
 
@@ -282,13 +274,16 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass)
 			glAlphaFunc(GL_GREATER, mapInfo->map.voidAlphaMin);
 		}
 
+		if (HaveLuaRenderState())
+			eventHandler.DrawGroundPreDeferred();
+
 		meshDrawer->DrawMesh(drawPass);
 
 		if (mapInfo->map.voidGround || (mapInfo->map.voidWater && drawPass != DrawPass::WaterReflection)) {
 			glDisable(GL_ALPHA_TEST);
 		}
 
-		smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass, smfRenderStates[RENDER_STATE_SEL] == smfRenderStates[RENDER_STATE_LUA]);
+		smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass, HaveLuaRenderState());
 		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(drawPass);
 	}
 
@@ -326,7 +321,7 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 	}
 
 	if (drawForward) {
-		smfRenderStates[RENDER_STATE_SEL]->Enable(this, drawPass, smfRenderStates[RENDER_STATE_SEL] == smfRenderStates[RENDER_STATE_LUA]);
+		smfRenderStates[RENDER_STATE_SEL]->Enable(this, drawPass, HaveLuaRenderState());
 
 		if (wireframe) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -335,6 +330,9 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 			glEnable(GL_ALPHA_TEST);
 			glAlphaFunc(GL_GREATER, mapInfo->map.voidAlphaMin);
 		}
+
+		if (HaveLuaRenderState())
+			eventHandler.DrawGroundPreForward();
 
 		meshDrawer->DrawMesh(drawPass);
 
@@ -345,7 +343,7 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		}
 
-		smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass, smfRenderStates[RENDER_STATE_SEL] == smfRenderStates[RENDER_STATE_LUA]);
+		smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass, HaveLuaRenderState());
 	}
 
 	glDisable(GL_CULL_FACE);
@@ -391,12 +389,9 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 	glTexGenfv(GL_T, GL_EYE_PLANE, planeZ);
 	glEnable(GL_TEXTURE_GEN_T);
 
-	glActiveTexture(GL_TEXTURE3);
-	glDisable(GL_TEXTURE_2D);
-	glActiveTexture(GL_TEXTURE1);
-	glDisable(GL_TEXTURE_2D);
-	glActiveTexture(GL_TEXTURE0);
-	glEnable(GL_TEXTURE_2D); // needed for the non-shader case
+	glActiveTexture(GL_TEXTURE3); glDisable(GL_TEXTURE_2D);
+	glActiveTexture(GL_TEXTURE1); glDisable(GL_TEXTURE_2D);
+	glActiveTexture(GL_TEXTURE0); glEnable(GL_TEXTURE_2D); // needed for the non-shader case
 
 	glEnable(GL_BLEND);
 
@@ -459,7 +454,7 @@ void CSMFGroundDrawer::DrawShadowPass()
 
 
 
-void CSMFGroundDrawer::SetLuaShader(LuaMapShaderData* luaMapShaderData)
+void CSMFGroundDrawer::SetLuaShader(const LuaMapShaderData* luaMapShaderData)
 {
 	smfRenderStates[RENDER_STATE_LUA]->Kill();
 	smfRenderStates[RENDER_STATE_LUA]->Init(this, luaMapShaderData);
@@ -493,7 +488,7 @@ void CSMFGroundDrawer::Update()
 
 void CSMFGroundDrawer::UpdateSunDir() {
 	// Lua has gl.GetSun
-	if (smfRenderStates[RENDER_STATE_SEL] == smfRenderStates[RENDER_STATE_LUA])
+	if (HaveLuaRenderState())
 		return;
 
 	// always update, SSMF shader needs current sundir even when shadows are disabled
@@ -544,13 +539,13 @@ int CSMFGroundDrawer::GetGroundDetail(const DrawPass::e& drawPass) const
 		case DrawPass::WaterRefraction:
 			detail *= LODScaleRefraction;
 			break;
-		//TODO: currently the shadow mesh needs to be idential with the normal pass one
-		//  else we get z-fighting issues in the shadows. Ideal would be a special
-		//  shadow pass mesh renderer that reduce the mesh to `walls`/contours that cause the
-		//  same shadows as the original terrain
-		//case DrawPass::Shadow:
-		//	detail *= LODScaleShadow;
-		//	break;
+		case DrawPass::Shadow:
+			// TODO:
+			//   render a contour mesh for the SP? z-fighting / p-panning occur
+			//   when the regular and shadow-mesh tessellations differ too much,
+			//   more visible on larger or hillier maps
+			//   detail *= LODScaleShadow;
+			break;
 		default:
 			break;
 	}

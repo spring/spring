@@ -481,7 +481,7 @@ GLuint LuaMatTexture::GetTextureID() const
 		} break;
 
 
-		// map shading textures
+		// map shading textures (TODO: diffuse? needs coors and {G,S}etMapSquareTexture rework)
 		case LUATEX_SMF_GRASS:
 		case LUATEX_SMF_DETAIL:
 		case LUATEX_SMF_MINIMAP:
@@ -642,7 +642,7 @@ GLuint LuaMatTexture::GetTextureTarget() const
 		case LUATEX_FONT:
 		case LUATEX_FONTSMALL: {
 			texType = GL_TEXTURE_2D;
-		}
+		} break;
 
 		default:
 			assert(false);

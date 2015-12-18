@@ -1757,22 +1757,29 @@ void CLuaHandle::DrawWorldRefraction()
 }
 
 
+void CLuaHandle::DrawGroundPreForward()
+{
+	static const LuaHashString cmdStr(__FUNCTION__); RunDrawCallIn(cmdStr);
+}
+
+void CLuaHandle::DrawGroundPreDeferred()
+{
+	static const LuaHashString cmdStr(__FUNCTION__); RunDrawCallIn(cmdStr);
+}
+
 void CLuaHandle::DrawGroundPostDeferred()
 {
-	static const LuaHashString cmdStr(__FUNCTION__);
-	RunDrawCallIn(cmdStr);
+	static const LuaHashString cmdStr(__FUNCTION__); RunDrawCallIn(cmdStr);
 }
 
 void CLuaHandle::DrawUnitsPostDeferred()
 {
-	static const LuaHashString cmdStr(__FUNCTION__);
-	RunDrawCallIn(cmdStr);
+	static const LuaHashString cmdStr(__FUNCTION__); RunDrawCallIn(cmdStr);
 }
 
 void CLuaHandle::DrawFeaturesPostDeferred()
 {
-	static const LuaHashString cmdStr(__FUNCTION__);
-	RunDrawCallIn(cmdStr);
+	static const LuaHashString cmdStr(__FUNCTION__); RunDrawCallIn(cmdStr);
 }
 
 

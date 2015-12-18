@@ -18,8 +18,8 @@ public:
 
 public:
 	IInfoTextureHandler() {}
-	virtual ~IInfoTextureHandler() {}
 	IInfoTextureHandler(const IInfoTextureHandler&) = delete; // no-copy
+	virtual ~IInfoTextureHandler() {}
 
 	virtual void Update() = 0;
 public:

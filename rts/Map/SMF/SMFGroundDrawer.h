@@ -38,7 +38,7 @@ public:
 	void UpdateSunDir();
 
 
-	void SetLuaShader(LuaMapShaderData*);
+	void SetLuaShader(const LuaMapShaderData*);
 	void SetDrawDeferredPass(bool b) {
 		if ((drawDeferred = b)) {
 			drawDeferred &= UpdateGeometryBuffer(false);
@@ -68,12 +68,13 @@ public:
 	IMeshDrawer* SwitchMeshDrawer(int mode = -1);
 
 private:
-	void SelectRenderState(const DrawPass::e& drawPass);
+	ISMFRenderState* SelectRenderState(const DrawPass::e& drawPass);
 
 	void CreateWaterPlanes(bool camOufOfMap);
 	inline void DrawWaterPlane(bool drawWaterReflection);
 	inline void DrawBorder(const DrawPass::e drawPass);
 
+	bool HaveLuaRenderState() const;
 	bool UpdateGeometryBuffer(bool init);
 
 protected:
@@ -82,8 +83,7 @@ protected:
 
 	int groundDetail;
 
-	GLuint waterPlaneCamOutDispList;
-	GLuint waterPlaneCamInDispList;
+	GLuint waterPlaneDispLists[2];
 
 	// [0] := fallback shader-less rendering path
 	// [1] := default shader-driven rendering path

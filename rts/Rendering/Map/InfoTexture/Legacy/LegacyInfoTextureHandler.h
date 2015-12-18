@@ -49,8 +49,8 @@ public:
 	int2 GetCurrentInfoTextureSize() const;
 
 public:
-	const CInfoTexture* GetInfoTextureConst(const std::string& name) const;
-	      CInfoTexture* GetInfoTexture     (const std::string& name);
+	const CInfoTexture* GetInfoTextureConst(const std::string& name) const override;
+	      CInfoTexture* GetInfoTexture     (const std::string& name)       override;
 
 protected:
 	BaseGroundDrawMode drawMode;

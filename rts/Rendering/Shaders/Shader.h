@@ -102,7 +102,7 @@ namespace Shader {
 
 		void LoadFromID(unsigned int id) {
 			objID = id;
-			valid = (id != 0);
+			valid = (id != 0 && Validate());
 			bound = false;
 
 			// not needed for pre-compiled programs
@@ -115,7 +115,7 @@ namespace Shader {
 		virtual void Enable();
 		virtual void Disable();
 		virtual void Link() = 0;
-		virtual void Validate() = 0;
+		virtual bool Validate() = 0;
 		virtual void Release() = 0;
 		virtual void Reload(bool reloadFromDisk, bool validate) = 0;
 		/// attach single shader objects (vertex, frag, ...) to the program
@@ -255,7 +255,7 @@ namespace Shader {
 		void Disable() {}
 		void Release() {}
 		void Reload(bool reloadFromDisk, bool validate) {}
-		void Validate() {}
+		bool Validate() {}
 		void Link() {}
 
 		int GetUniformLoc(const std::string& name) { return -1; }
@@ -286,7 +286,7 @@ namespace Shader {
 		void Link();
 		void Release();
 		void Reload(bool reloadFromDisk, bool validate);
-		void Validate() {}
+		bool Validate() {}
 
 		int GetUniformLoc(const std::string& name);
 		int GetUniformType(const int loc) { return -1; }
@@ -320,7 +320,7 @@ namespace Shader {
 		void Enable();
 		void Disable();
 		void Link();
-		void Validate();
+		bool Validate();
 		void Release();
 		void Reload(bool reloadFromDisk, bool validate);
 
