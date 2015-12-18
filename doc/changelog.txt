@@ -35,6 +35,7 @@ Lua:
      gl.FeaturePieceMultMatrix
 
  - add unsynced callout Spring.SetMapShader(number standardShaderID, number deferredShaderID) -> nil
+   (the shader ID's must refer to valid programs returned by gl.CreateShader)
 
  - add Spring.FeatureRendering API; allows custom shaders (technically,
    materials) for features as its Spring.UnitRendering counterpart does
