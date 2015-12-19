@@ -41,7 +41,7 @@ public:
 			case MAP_BASE_SHADING_TEX: { texID = GetShadingTexture(); } break;
 			case MAP_BASE_NORMALS_TEX: { texID = GetNormalsTexture(); } break;
 
-			case MAP_SSMF_NORMALS_TEX: { texID = GetDetailNormalTexture(); } break;
+			case MAP_SSMF_NORMALS_TEX: { texID = GetBlendNormalsTexture(); } break;
 			case MAP_SSMF_SPECULAR_TEX: { texID = GetSpecularTexture(); } break;
 
 			case MAP_SSMF_SPLAT_DISTRIB_TEX: { texID = GetSplatDistrTexture(); } break;
@@ -87,7 +87,7 @@ public:
 	unsigned int GetNormalsTexture() const { return normalsTex; }
 
 
-	unsigned int GetDetailNormalTexture() const { return detailNormalTex; }
+	unsigned int GetBlendNormalsTexture() const { return blendNormalsTex; }
 	unsigned int GetSpecularTexture() const { return specularTex; }
 
 	unsigned int GetSplatDistrTexture() const { return splatDistrTex; }
@@ -120,8 +120,8 @@ public:
 	float GetAnisotropy() const { return anisotropy; }
 
 	bool HaveSpecularTexture() const { return haveSpecularTexture; }
-	bool HaveSplatTexture() const { return haveSplatTexture; }
-	bool HaveSplatDetailNormalTexture() const { return haveSplatDetailNormalTexture; }
+	bool HaveSplatDetailDistribTexture() const { return haveSplatDetailDistribTexture; }
+	bool HaveSplatNormalDistribTexture() const { return haveSplatNormalDistribTexture; }
 	bool HaveDetailNormalDiffuseAlpha() const { return haveDetailNormalDiffuseAlpha; }
 
 private:
@@ -170,37 +170,8 @@ public:
 
 	int2 normalTexSize;
 
-protected:
+private:
 	CSMFMapFile file;
-
-	unsigned int detailTex;           // supplied by the map
-	unsigned int specularTex;         // supplied by the map, moderates specular contribution
-	unsigned int shadingTex;          // holds precomputed dot(lightDir, vertexNormal) values
-	unsigned int normalsTex;          // holds vertex normals in RGBA32F internal format (GL_RGBA + GL_FLOAT)
-	unsigned int minimapTex;          // supplied by the map
-	unsigned int splatDetailTex;      // contains per-channel separate greyscale detail-textures (overrides detailTex)
-
-	// contains RGBA texture with RGB channels containing normals and
-	// alpha containing greyscale diffuse for splat detail normals
-	// (overrides detailTex)
-	unsigned int splatNormalTextures[NUM_SPLAT_DETAIL_NORMALS];
-
-	unsigned int splatDistrTex;       // specifies the per-channel distribution of splatDetailTex (map-wide, overrides detailTex)
-	unsigned int grassShadingTex;     // specifies grass-blade modulation color (defaults to minimapTex)
-	unsigned int skyReflectModTex;    // modulates sky-reflection RGB intensities (must be the same size as specularTex)
-	unsigned int detailNormalTex;     // tangent-space offset normals
-	unsigned int lightEmissionTex;
-	unsigned int parallaxHeightTex;
-
-	bool haveSpecularTexture;
-	bool haveSplatTexture;
-	bool haveSplatDetailNormalTexture;
-	bool haveDetailNormalDiffuseAlpha;
-
-	bool minimapOverride;
-
-	unsigned char waterHeightColors[1024 * 4];
-
 	CSMFGroundDrawer* groundDrawer;
 
 private:
@@ -208,10 +179,41 @@ private:
 	std::vector<float> cornerHeightMapUnsynced;
 
 	std::vector<unsigned char> shadingTexBuffer;
-	bool shadingTexUpdateNeeded;
+	std::vector<unsigned char> waterHeightColors;
+
+private:
+	unsigned int detailTex;             // supplied by the map
+	unsigned int specularTex;           // supplied by the map, moderates specular contribution
+	unsigned int shadingTex;            // holds precomputed dot(lightDir, vertexNormal) values
+	unsigned int normalsTex;            // holds vertex normals in RGBA32F internal format (GL_RGBA + GL_FLOAT)
+	unsigned int minimapTex;            // supplied by the map
+
+	unsigned int splatDistrTex;         // specifies the per-channel distribution of splatDetailTex (map-wide, overrides detailTex)
+	unsigned int splatDetailTex;        // contains per-channel separate greyscale detail-textures (overrides detailTex)
+
+	// contains RGBA texture with RGB channels containing normals;
+	// alpha contains greyscale diffuse for splat detail normals
+	// if haveDetailNormalDiffuseAlpha (overrides detailTex)
+	unsigned int splatNormalTextures[NUM_SPLAT_DETAIL_NORMALS];
+
+	unsigned int grassShadingTex;       // specifies grass-blade modulation color (defaults to minimapTex)
+	unsigned int skyReflectModTex;      // modulates sky-reflection RGB intensities (must be the same size as specularTex)
+	unsigned int blendNormalsTex;       // tangent-space offset normals
+	unsigned int lightEmissionTex;
+	unsigned int parallaxHeightTex;
+
+private:
 	int shadingTexUpdateProgress;
 
 	float anisotropy;
+
+	bool haveSpecularTexture;
+	bool haveSplatDetailDistribTexture; // true if we have both splatDetailTex and splatDistrTex
+	bool haveSplatNormalDistribTexture; // true if we have splatDistrTex and at least one splat[Detail]NormalTex
+	bool haveDetailNormalDiffuseAlpha;
+
+	bool minimapOverride;
+	bool shadingTexUpdateNeeded;
 };
 
 #endif

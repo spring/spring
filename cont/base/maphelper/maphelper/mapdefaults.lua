@@ -8,6 +8,8 @@
 --  Copyright (C) 2008.
 --  Licensed under the terms of the GNU GPL, v2 or later.
 --
+--  NOTE: most keys could be omitted, setupopts.lua only reads a limited subset
+--
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 

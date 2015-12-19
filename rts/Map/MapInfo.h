@@ -178,7 +178,7 @@ public:
 		std::string splatDetailTexName;
 		std::string grassShadingTexName;  // defaults to minimap texture
 		std::string skyReflectModTexName;
-		std::string detailNormalTexName;
+		std::string blendNormalsTexName;
 		std::string lightEmissionTexName;
 		std::string parallaxHeightTexName;
 

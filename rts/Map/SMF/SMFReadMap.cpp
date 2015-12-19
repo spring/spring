@@ -43,7 +43,7 @@ CSMFReadMap::CSMFReadMap(std::string mapname)
 	, splatDetailTex(0)
 	, splatDistrTex(0)
 	, skyReflectModTex(0)
-	, detailNormalTex(0)
+	, blendNormalsTex(0)
 	, lightEmissionTex(0)
 	, parallaxHeightTex(0)
 	, groundDrawer(NULL)
@@ -52,18 +52,18 @@ CSMFReadMap::CSMFReadMap(std::string mapname)
 	eventHandler.AddClient(this);
 
 	haveSpecularTexture = !(mapInfo->smf.specularTexName.empty());
-	haveSplatTexture = (!mapInfo->smf.splatDetailTexName.empty() && !mapInfo->smf.splatDistrTexName.empty());
-	haveSplatDetailNormalTexture = false;
+	haveSplatDetailDistribTexture = (!mapInfo->smf.splatDetailTexName.empty() && !mapInfo->smf.splatDistrTexName.empty());
+	haveSplatNormalDistribTexture = false;
 
 	memset(&splatNormalTextures[0], 0, NUM_SPLAT_DETAIL_NORMALS * sizeof(splatNormalTextures[0]));
 
 	for (const std::string& texName: mapInfo->smf.splatDetailNormalTexNames) {
-		haveSplatDetailNormalTexture |= !texName.empty();
+		haveSplatNormalDistribTexture |= !texName.empty();
 	}
 
 	// Detail Normal Splatting requires at least one splatDetailNormalTexture and a distribution texture
-	haveSplatDetailNormalTexture &= !mapInfo->smf.splatDistrTexName.empty();
-	haveDetailNormalDiffuseAlpha  =  mapInfo->smf.splatDetailNormalDiffuseAlpha;
+	haveSplatNormalDistribTexture &= !mapInfo->smf.splatDistrTexName.empty();
+	haveDetailNormalDiffuseAlpha   =  mapInfo->smf.splatDetailNormalDiffuseAlpha;
 
 	minimapOverride = !(mapInfo->smf.minimapTexName.empty());
 
@@ -100,7 +100,7 @@ CSMFReadMap::~CSMFReadMap()
 	glDeleteTextures(1, &splatDistrTex    );
 	glDeleteTextures(1, &grassShadingTex  );
 	glDeleteTextures(1, &skyReflectModTex );
-	glDeleteTextures(1, &detailNormalTex  );
+	glDeleteTextures(1, &blendNormalsTex  );
 	glDeleteTextures(1, &lightEmissionTex );
 	glDeleteTextures(1, &parallaxHeightTex);
 	glDeleteTextures(NUM_SPLAT_DETAIL_NORMALS, &splatNormalTextures[0]);
@@ -182,6 +182,8 @@ void CSMFReadMap::LoadMinimap()
 
 void CSMFReadMap::InitializeWaterHeightColors()
 {
+	waterHeightColors.resize(1024 * 4, 0);
+
 	for (int a = 0; a < 1024; ++a) {
 		for (int b = 0; b < 3; ++b) {
 			const float absorbColor = mapInfo->water.baseColor[b] - mapInfo->water.absorb[b] * a;
@@ -201,7 +203,7 @@ void CSMFReadMap::CreateSpecularTex()
 
 	CBitmap specularTexBM;
 	CBitmap skyReflectModTexBM;
-	CBitmap detailNormalTexBM;
+	CBitmap blendNormalsTexBM;
 	CBitmap lightEmissionTexBM;
 	CBitmap parallaxHeightTexBM;
 
@@ -218,8 +220,8 @@ void CSMFReadMap::CreateSpecularTex()
 		skyReflectModTex = skyReflectModTexBM.CreateTexture(false);
 	}
 
-	if (detailNormalTexBM.Load(mapInfo->smf.detailNormalTexName)) {
-		detailNormalTex = detailNormalTexBM.CreateTexture(false);
+	if (blendNormalsTexBM.Load(mapInfo->smf.blendNormalsTexName)) {
+		blendNormalsTex = blendNormalsTexBM.CreateTexture(false);
 	}
 
 	if (lightEmissionTexBM.Load(mapInfo->smf.lightEmissionTexName)) {
@@ -233,9 +235,8 @@ void CSMFReadMap::CreateSpecularTex()
 
 void CSMFReadMap::CreateSplatDetailTextures()
 {
-	if (!haveSplatTexture) {
+	if (!haveSplatDetailDistribTexture)
 		return;
-	}
 
 	CBitmap splatDistrTexBM;
 	CBitmap splatDetailTexBM;
@@ -257,7 +258,7 @@ void CSMFReadMap::CreateSplatDetailTextures()
 	splatDistrTex = splatDistrTexBM.CreateTexture(true);
 
 	// only load the splat detail normals if any of them are defined and present
-	if (!haveSplatDetailNormalTexture)
+	if (!haveSplatNormalDistribTexture)
 		return;
 
 	for (size_t i = 0; i < mapInfo->smf.splatDetailNormalTexNames.size(); i++) {
@@ -602,7 +603,7 @@ void CSMFReadMap::UpdateShadingTexPart(int idx1, int idx2, unsigned char* dst) c
 
 		if (height < 0.0f) {
 			// Underwater
-			const int clampedHeight = std::min((int)(-height), int(sizeof(waterHeightColors) / 4) - 1);
+			const int clampedHeight = std::min((int)(-height), int(waterHeightColors.size() / 4) - 1);
 			float lightIntensity = std::min((DiffuseSunCoeff(xi, yi) + 0.2f) * 2.0f, 1.0f);
 
 			if (height > -10.0f) {
