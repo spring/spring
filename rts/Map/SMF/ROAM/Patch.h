@@ -31,21 +31,21 @@ class CCamera;
 struct TriTreeNode
 {
 	TriTreeNode()
-		: LeftChild(NULL)
-		, RightChild(NULL)
-		, BaseNeighbor(NULL)
-		, LeftNeighbor(NULL)
-		, RightNeighbor(NULL)
+		: LeftChild(nullptr)
+		, RightChild(nullptr)
+		, BaseNeighbor(nullptr)
+		, LeftNeighbor(nullptr)
+		, RightNeighbor(nullptr)
 	{}
 
 	bool IsLeaf() const {
 		// All non-leaf nodes have both children, so just check for one
-		return (LeftChild == NULL);
+		return (LeftChild == nullptr);
 	}
 
 	bool IsBranch() const {
 		// All non-leaf nodes have both children, so just check for one
-		return !!RightChild;
+		return (RightChild != nullptr);
 	}
 
 	TriTreeNode* LeftChild;
@@ -119,7 +119,7 @@ public:
 	TriTreeNode* GetBaseLeft()  { return &baseLeft;  }
 	TriTreeNode* GetBaseRight() { return &baseRight; }
 
-	bool IsVisible() const;
+	bool IsVisible(const CCamera*) const;
 	char IsDirty() const { return isDirty; }
 	int GetTriCount() const { return (indices.size() / 3); }
 
@@ -163,7 +163,7 @@ private:
 		const int2 left,
 		const int2 rght,
 		const int2 apex,
-		int i,
+		int depth,
 		bool leftChild
 	);
 
@@ -190,9 +190,6 @@ private:
 	//< World coordinate offsets of this patch.
 	int2 coors;
 
-	//< frame on which this patch was last visible (regular and shadow pass)
-	unsigned int lastDrawFrame;
-
 
 	TriTreeNode baseLeft;  //< Left base triangle tree node
 	TriTreeNode baseRight; //< Right base triangle tree node
@@ -203,6 +200,9 @@ private:
 	// TODO: remove for both the Displaylist and the VBO implementations (only really needed for VA's)
 	std::vector<float> vertices;
 	std::vector<unsigned int> indices;
+
+	//< frame on which this patch was last visible, per pass
+	std::vector<unsigned int> lastDrawFrames;
 
 
 	GLuint triList;

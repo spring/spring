@@ -40,6 +40,12 @@ public:
 	void DrawInMiniMap();
 
 public:
+	enum {
+		MESH_NORMAL = 0,
+		MESH_SHADOW = 1,
+		MESH_COUNT  = 2,
+	};
+
 	CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd);
 	~CRoamMeshDrawer();
 
@@ -49,8 +55,8 @@ public:
 	void DrawBorderMesh(const DrawPass::e& drawPass);
 
 	static void ForceTesselation() {
-		forceTessellate[0] = true;
-		forceTessellate[1] = true;
+		forceTessellate[MESH_NORMAL] = true;
+		forceTessellate[MESH_SHADOW] = true;
 	}
 
 private:
@@ -63,19 +69,19 @@ private:
 
 	int numPatchesX;
 	int numPatchesY;
-	int lastGroundDetail[2];
+	int lastGroundDetail[MESH_COUNT];
 
-	float3 lastCamPos[2];
+	float3 lastCamPos[MESH_COUNT];
 
 	// [1] is used for the shadow pass, [0] is used for all other passes
-	std::vector< Patch > patchMeshGrid[2];
-	std::vector< Patch*> borderPatches[2];
+	std::vector< Patch > patchMeshGrid[MESH_COUNT];
+	std::vector< Patch*> borderPatches[MESH_COUNT];
 
 	//< char instead of bool, accessors to different elements must be thread-safe
-	std::vector<uint8_t> patchVisFlags[2];
+	std::vector<uint8_t> patchVisFlags[MESH_COUNT];
 
 	//< whether tessellation should be forcibly performed next frame
-	static bool forceTessellate[2];
+	static bool forceTessellate[MESH_COUNT];
 };
 
 #endif // _ROAM_MESH_DRAWER_H_

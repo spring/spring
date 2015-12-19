@@ -53,14 +53,14 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 	numPatchesY = mapDims.mapy / PATCH_SIZE;
 	// assert((numPatchesX == smfReadMap->numBigTexX) && (numPatchesY == smfReadMap->numBigTexY));
 
-	for (unsigned int i = 0; i < 2; i++) {
+	for (unsigned int i = MESH_NORMAL; i <= MESH_SHADOW; i++) {
 		patchMeshGrid[i].resize(numPatchesX * numPatchesY);
 		borderPatches[i].resize(4 + (numPatchesY - 2) * 2 + (numPatchesX - 2) * 2, nullptr);
 		patchVisFlags[i].resize(numPatchesX * numPatchesY, 0);
 	}
 
 	// initialize all terrain patches
-	for (unsigned int i = 0; i < 2; i++) {
+	for (unsigned int i = MESH_NORMAL; i <= MESH_SHADOW; i++) {
 		auto& patches = patchMeshGrid[i];
 
 		for (int y = 0; y < numPatchesY; ++y) {
@@ -73,7 +73,7 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 		}
 	}
 
-	for (unsigned int i = 0; i < 2; i++) {
+	for (unsigned int i = MESH_NORMAL; i <= MESH_SHADOW; i++) {
 		auto& patches = patchMeshGrid[i];
 
 		unsigned int patchIdx = 0;
@@ -132,7 +132,7 @@ void CRoamMeshDrawer::Update()
 			Patch& p = patches[i];
 
 		#if (RETESSELLATE_MODE == 2)
-			if (p.IsVisible()) {
+			if (p.IsVisible(cam)) {
 				if (pvflags[i] == 0) {
 					pvflags[i] = 1;
 					retessellate = true;
@@ -147,11 +147,11 @@ void CRoamMeshDrawer::Update()
 
 		#else
 
-			if (uint8_t(p.IsVisible()) != pvflags[i]) {
-				pvflags[i] = uint8_t(p.IsVisible());
+			if (uint8_t(p.IsVisible(cam)) != pvflags[i]) {
+				pvflags[i] = uint8_t(p.IsVisible(cam));
 				retessellate = true;
 			}
-			if (p.IsVisible() && p.IsDirty()) {
+			if (p.IsVisible(cam) && p.IsDirty()) {
 				p.ComputeVariance();
 				retessellate = true;
 			}
@@ -175,14 +175,13 @@ void CRoamMeshDrawer::Update()
 		forceTessellate[shadowPass] = Tessellate(patchMeshGrid[shadowPass], cam, smfGroundDrawer->GetGroundDetail());
 	}
 
-
 	{
 		SCOPED_TIMER("ROAM::GenerateIndexArray");
 
-		for_mt(0, patches.size(), [&patches](const int i) {
+		for_mt(0, patches.size(), [&patches, &cam](const int i) {
 			Patch* p = &patches[i];
 
-			if (p->IsVisible()) {
+			if (p->IsVisible(cam)) {
 				p->GenerateIndices();
 			}
 		});
@@ -192,7 +191,7 @@ void CRoamMeshDrawer::Update()
 		SCOPED_TIMER("ROAM::Upload");
 
 		for (Patch& p: patches) {
-			if (p.IsVisible()) {
+			if (p.IsVisible(cam)) {
 				p.Upload();
 			}
 		}
@@ -211,10 +210,20 @@ void CRoamMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 	//   patches at the same time, because both depend on the *current*
 	//   draw-pass (before Update would retessellate+upload indices and
 	//   Draw would update patch visibility)
-	Update();
+	//
+	//   Updating for all passes produces the optimal tessellation per
+	//   camera but consumes far too many cycles; force any non-shadow
+	//   pass to reuse MESH_NORMAL
+	switch (drawPass) {
+		case DrawPass::Normal: { Update(); } break;
+		case DrawPass::Shadow: { Update(); } break;
+		default: {
+			Patch::UpdateVisibility(CCamera::GetActiveCamera(), patchMeshGrid[MESH_NORMAL], numPatchesX);
+		} break;
+	}
 
 	for (Patch& p: patchMeshGrid[drawPass == DrawPass::Shadow]) {
-		if (!p.IsVisible())
+		if (!p.IsVisible(CCamera::GetActiveCamera()))
 			continue;
 
 		// do not need textures in the SP
@@ -228,7 +237,7 @@ void CRoamMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 void CRoamMeshDrawer::DrawBorderMesh(const DrawPass::e& drawPass)
 {
 	for (Patch* p: borderPatches[drawPass == DrawPass::Shadow]) {
-		if (!p->IsVisible())
+		if (!p->IsVisible(CCamera::GetActiveCamera()))
 			continue;
 
 		if (drawPass != DrawPass::Shadow)
@@ -254,8 +263,8 @@ void CRoamMeshDrawer::DrawInMiniMap()
 
 	glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
 
-	for (const Patch& p: patchMeshGrid[false]) {
-		if (!p.IsVisible()) {
+	for (const Patch& p: patchMeshGrid[MESH_NORMAL]) {
+		if (!p.IsVisible(CCamera::GetActiveCamera())) {
 			glRectf(p.coors.x, p.coors.y, p.coors.x + PATCH_SIZE, p.coors.y + PATCH_SIZE);
 		}
 	}
@@ -324,7 +333,7 @@ bool CRoamMeshDrawer::Tessellate(std::vector<Patch>& patches, const CCamera* cam
 			if (subindex != idx)
 				return;
 
-			if (!p->IsVisible())
+			if (!p->IsVisible(cam))
 				return;
 
 			forceTess |= (!p->Tessellate(cam->GetPos(), viewRadius));
@@ -351,7 +360,7 @@ void CRoamMeshDrawer::UnsyncedHeightMapUpdate(const SRectangle& rect)
 	const int zend   = std::min(numPatchesY, (int)math::ceil ((rect.z2 + margin) * INV_PATCH_SIZE));
 
 	// update patches in both tessellations
-	for (int i = 0; i < 2; i++) {
+	for (unsigned int i = MESH_NORMAL; i <= MESH_SHADOW; i++) {
 		auto& patches = patchMeshGrid[i];
 
 		for (int z = zstart; z < zend; ++z) {

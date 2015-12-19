@@ -79,14 +79,16 @@ void SMFRenderStateARB::Kill() {
 }
 
 bool SMFRenderStateARB::HasValidShader(const DrawPass::e& drawPass) const {
+	Shader::IProgramObject* shader = nullptr;
+
 	switch (drawPass) {
-		case DrawPass::Normal:          { return (arbShaders[ARB_SHADER_CURRENT] != nullptr && arbShaders[ARB_SHADER_CURRENT]->IsValid()); } break;
-		case DrawPass::WaterReflection: { return (arbShaders[ARB_SHADER_REFLECT] != nullptr && arbShaders[ARB_SHADER_REFLECT]->IsValid()); } break;
-		case DrawPass::WaterRefraction: { return (arbShaders[ARB_SHADER_REFRACT] != nullptr && arbShaders[ARB_SHADER_REFRACT]->IsValid()); } break;
+		case DrawPass::Normal:          { shader = arbShaders[ARB_SHADER_CURRENT]; } break;
+		case DrawPass::WaterReflection: { shader = arbShaders[ARB_SHADER_REFLECT]; } break;
+		case DrawPass::WaterRefraction: { shader = arbShaders[ARB_SHADER_REFRACT]; } break;
 		default: {} break;
 	}
 
-	return false;
+	return (shader != nullptr && shader->IsValid());
 }
 
 
@@ -218,12 +220,14 @@ void SMFRenderStateGLSL::Kill() {
 }
 
 bool SMFRenderStateGLSL::HasValidShader(const DrawPass::e& drawPass) const {
+	Shader::IProgramObject* shader = nullptr;
+
 	switch (drawPass) {
-		case DrawPass::TerrainDeferred: { return (glslShaders[GLSL_SHADER_DEFERRED] != nullptr && glslShaders[GLSL_SHADER_DEFERRED]->IsValid()); } break;
-		default:                        { return (glslShaders[GLSL_SHADER_CURRENT ] != nullptr && glslShaders[GLSL_SHADER_CURRENT ]->IsValid()); } break;
+		case DrawPass::TerrainDeferred: { shader = glslShaders[GLSL_SHADER_DEFERRED]; } break;
+		default:                        { shader = glslShaders[GLSL_SHADER_CURRENT ]; } break;
 	}
 
-	return false;
+	return (shader != nullptr && shader->IsValid());
 }
 
 
