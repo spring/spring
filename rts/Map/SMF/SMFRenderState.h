@@ -115,7 +115,7 @@ public:
 
 	bool HasValidShader(const DrawPass::e& drawPass) const;
 	bool CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const;
-	bool CanDrawDeferred() const { return true; }
+	bool CanDrawDeferred() const { return (HasValidShader(DrawPass::TerrainDeferred)); }
 
 	void Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass, bool luaShader);
 	void Disable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass, bool luaShader);

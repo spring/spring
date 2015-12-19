@@ -254,6 +254,7 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass)
 	// CubeMapHandler also uses an FBO for this pass
 	if (drawPass == DrawPass::TerrainReflection)
 		return;
+
 	// deferred pass must be executed with GLSL shaders
 	// if the FFP or ARB state was selected, bail early
 	if (!smfRenderStates[RENDER_STATE_SEL]->CanDrawDeferred())
@@ -266,8 +267,6 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass)
 		// switch selected state's SSP or Lua shader to deferred version
 		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(DrawPass::TerrainDeferred);
 		smfRenderStates[RENDER_STATE_SEL]->Enable(this, drawPass, HaveLuaRenderState());
-
-		assert(smfRenderStates[RENDER_STATE_SEL]->HasValidShader(drawPass));
 
 		if (mapInfo->map.voidGround || (mapInfo->map.voidWater && drawPass != DrawPass::WaterReflection)) {
 			glEnable(GL_ALPHA_TEST);

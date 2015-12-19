@@ -1673,20 +1673,33 @@ function gadgetHandler:DrawWorldRefraction()
 end
 
 
+function gadgetHandler:DrawGroundPreForward()
+  for _,g in ipairs(self.DrawGroundPreForwardList) do
+    g:DrawGroundPreForward()
+  end
+end
+
+function gadgetHandler:DrawGroundPreDeferred()
+  for _,g in ipairs(self.DrawGroundPreDeferredList) do
+    g:DrawGroundPreDeferred()
+  end
+end
+
 function gadgetHandler:DrawGroundPostDeferred()
-  for _,g in ipairs(self.DrawGroundPostDeferred) do
+  for _,g in ipairs(self.DrawGroundPostDeferredList) do
     g:DrawGroundPostDeferred()
   end
 end
 
+
 function gadgetHandler:DrawUnitsPostDeferred()
-  for _,g in ipairs(self.DrawUnitsPostDeferred) do
+  for _,g in ipairs(self.DrawUnitsPostDeferredList) do
     g:DrawUnitsPostDeferred()
   end
 end
 
 function gadgetHandler:DrawFeaturesPostDeferred()
-  for _,g in ipairs(self.DrawFeaturesPostDeferred) do
+  for _,g in ipairs(self.DrawFeaturesPostDeferredList) do
     g:DrawFeaturesPostDeferred()
   end
 end
