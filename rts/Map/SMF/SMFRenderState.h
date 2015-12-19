@@ -32,7 +32,7 @@ public:
 		const CSMFGroundDrawer* smfGroundDrawer,
 		const LuaMapShaderData* luaMapShaderData
 	) = 0;
-	virtual void Kill() = 0;
+	virtual void Kill(bool luaShader) = 0;
 
 	virtual bool HasValidShader(const DrawPass::e& drawPass) const = 0;
 	virtual bool CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const = 0;
@@ -55,7 +55,7 @@ public:
 		const CSMFGroundDrawer* smfGroundDrawer,
 		const LuaMapShaderData* luaMapShaderData
 	) { return false; }
-	void Kill() {}
+	void Kill(bool luaShader) {}
 
 	bool HasValidShader(const DrawPass::e& drawPass) const { return false; }
 	bool CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const;
@@ -76,7 +76,7 @@ public:
 		const CSMFGroundDrawer* smfGroundDrawer,
 		const LuaMapShaderData* luaMapShaderData
 	);
-	void Kill();
+	void Kill(bool luaShader);
 
 	bool HasValidShader(const DrawPass::e& drawPass) const;
 	bool CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const;
@@ -111,7 +111,7 @@ public:
 		const CSMFGroundDrawer* smfGroundDrawer,
 		const LuaMapShaderData* luaMapShaderData
 	);
-	void Kill();
+	void Kill(bool luaShader);
 
 	bool HasValidShader(const DrawPass::e& drawPass) const;
 	bool CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const;

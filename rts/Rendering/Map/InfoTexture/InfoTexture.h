@@ -16,9 +16,11 @@ public:
 	virtual ~CInfoTexture() {}
 
 public:
-	virtual GLuint GetTexture() const  { return texture; }
-	int2   GetTexSize()          const { return texSize; }
-	int    GetTexChannels()      const { return texChannels; }
+	virtual GLuint GetTexture() { return texture; }
+
+	int2 GetTexSize()     const { return texSize; }
+	int  GetTexChannels() const { return texChannels; }
+
 	const std::string& GetName() const { return name; }
 
 protected:

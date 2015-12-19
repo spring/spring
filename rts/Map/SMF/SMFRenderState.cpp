@@ -74,7 +74,7 @@ bool SMFRenderStateARB::Init(const CSMFGroundDrawer* smfGroundDrawer, const LuaM
 	return true;
 }
 
-void SMFRenderStateARB::Kill() {
+void SMFRenderStateARB::Kill(bool) {
 	shaderHandler->ReleaseProgramObjects("[SMFGroundDrawer]");
 }
 
@@ -215,7 +215,16 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer, const Lua
 	return true;
 }
 
-void SMFRenderStateGLSL::Kill() {
+void SMFRenderStateGLSL::Kill(bool luaShader) {
+	if (luaShader) {
+		// make sure SH does not delete these programs; managed by LuaShaders
+		for (unsigned int n = GLSL_SHADER_STANDARD; n <= GLSL_SHADER_DEFERRED; n++) {
+			if (glslShaders[n] != nullptr) {
+				glslShaders[n]->LoadFromID(0);
+			}
+		}
+	}
+
 	shaderHandler->ReleaseProgramObjects("[SMFGroundDrawer]");
 }
 

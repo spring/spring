@@ -362,7 +362,7 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 					return false;
 
 				infoTexNames.insert(infoTexName);
-				texUnit.type = LuaMatTexture::LUATEX_INFOTEX;
+				texUnit.type = LuaMatTexture::LUATEX_INFOTEX_NAMED;
 				texUnit.data = &*infoTexNames.find(infoTexName);
 			} break;
 
@@ -504,27 +504,24 @@ GLuint LuaMatTexture::GetTextureID() const
 
 
 		// map info-overlay textures
-		case LUATEX_INFOTEX: if (infoTextureHandler != nullptr) {
-			const std::string* name = static_cast<const std::string*>(data);
-			const CInfoTexture* itex = infoTextureHandler->GetInfoTextureConst(*name);
-
-			texID = itex->GetTexture();
+		case LUATEX_INFOTEX_NAMED: if (infoTextureHandler != nullptr) {
+			texID = (infoTextureHandler->GetInfoTexture(*static_cast<const std::string*>(data)))->GetTexture();
 		} break;
 
 		case LUATEX_INFOTEX_ACTIVE: if (infoTextureHandler != nullptr) {
 			texID = infoTextureHandler->GetCurrentInfoTexture();
 		} break;
 		case LUATEX_INFOTEX_LOSMAP: if (infoTextureHandler != nullptr) {
-			texID = (infoTextureHandler->GetInfoTextureConst("los"))->GetTexture();
+			texID = (infoTextureHandler->GetInfoTexture("los"))->GetTexture();
 		} break;
 		case LUATEX_INFOTEX_MTLMAP: if (infoTextureHandler != nullptr) {
-			texID = (infoTextureHandler->GetInfoTextureConst("metal"))->GetTexture();
+			texID = (infoTextureHandler->GetInfoTexture("metal"))->GetTexture();
 		} break;
 		case LUATEX_INFOTEX_HGTMAP: if (infoTextureHandler != nullptr) {
-			texID = (infoTextureHandler->GetInfoTextureConst("height"))->GetTexture();
+			texID = (infoTextureHandler->GetInfoTexture("height"))->GetTexture();
 		} break;
 		case LUATEX_INFOTEX_BLKMAP: if (infoTextureHandler != nullptr) {
-			texID = (infoTextureHandler->GetInfoTextureConst("path"))->GetTexture();
+			texID = (infoTextureHandler->GetInfoTexture("path"))->GetTexture();
 		} break;
 
 
@@ -612,7 +609,7 @@ GLuint LuaMatTexture::GetTextureTarget() const
 		case LUATEX_SSMF_PARALLAX:
 
 
-		case LUATEX_INFOTEX:
+		case LUATEX_INFOTEX_NAMED:
 		case LUATEX_INFOTEX_ACTIVE:
 		case LUATEX_INFOTEX_LOSMAP:
 		case LUATEX_INFOTEX_MTLMAP:
@@ -799,7 +796,7 @@ int2 LuaMatTexture::GetSize() const
 			}
 		} break;
 
-		case LUATEX_INFOTEX: {
+		case LUATEX_INFOTEX_NAMED: {
 			if (infoTextureHandler != nullptr) {
 				const std::string* name = static_cast<const std::string*>(data);
 				const CInfoTexture* itex = infoTextureHandler->GetInfoTextureConst(*name);
@@ -931,7 +928,7 @@ void LuaMatTexture::Print(const string& indent) const
 		STRING_CASE(typeName, LUATEX_SSMF_PARALLAX);
 
 
-		STRING_CASE(typeName, LUATEX_INFOTEX);
+		STRING_CASE(typeName, LUATEX_INFOTEX_NAMED);
 		STRING_CASE(typeName, LUATEX_INFOTEX_ACTIVE);
 		STRING_CASE(typeName, LUATEX_INFOTEX_LOSMAP);
 		STRING_CASE(typeName, LUATEX_INFOTEX_MTLMAP);

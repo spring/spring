@@ -19,8 +19,8 @@ public:
 	~CLosTexture();
 
 public:
-	void Update();
-	bool IsUpdateNeeded() { return true; }
+	void Update() override;
+	bool IsUpdateNeeded() override { return true; }
 
 private:
 	void UpdateCPU();

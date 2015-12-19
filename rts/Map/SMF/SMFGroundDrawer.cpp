@@ -98,9 +98,9 @@ CSMFGroundDrawer::~CSMFGroundDrawer()
 		configHandler->Set("ROAM", 0);
 	configHandler->Set("GroundDetail", groundDetail);
 
-	smfRenderStates[RENDER_STATE_FFP]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_FFP]);
-	smfRenderStates[RENDER_STATE_SSP]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_SSP]);
-	smfRenderStates[RENDER_STATE_LUA]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_LUA]);
+	smfRenderStates[RENDER_STATE_FFP]->Kill(false); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_FFP]);
+	smfRenderStates[RENDER_STATE_SSP]->Kill(false); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_SSP]);
+	smfRenderStates[RENDER_STATE_LUA]->Kill( true); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_LUA]);
 	smfRenderStates.clear();
 
 	SafeDelete(groundTextures);
@@ -456,7 +456,7 @@ void CSMFGroundDrawer::DrawShadowPass()
 
 void CSMFGroundDrawer::SetLuaShader(const LuaMapShaderData* luaMapShaderData)
 {
-	smfRenderStates[RENDER_STATE_LUA]->Kill();
+	smfRenderStates[RENDER_STATE_LUA]->Kill(true);
 	smfRenderStates[RENDER_STATE_LUA]->Init(this, luaMapShaderData);
 }
 

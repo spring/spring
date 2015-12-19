@@ -18,8 +18,8 @@ public:
 	CMetalExtractionTexture();
 
 public:
-	void Update();
-	bool IsUpdateNeeded();
+	void Update() override;
+	bool IsUpdateNeeded() override;
 
 private:
 	int updateN;

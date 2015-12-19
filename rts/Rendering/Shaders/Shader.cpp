@@ -432,8 +432,6 @@ namespace Shader {
 
 	GLSLProgramObject::~GLSLProgramObject() {
 		Release();
-		glDeleteProgram(objID);
-		objID = 0;
 	}
 
 	void GLSLProgramObject::Enable() {
@@ -512,9 +510,9 @@ namespace Shader {
 		IProgramObject::Release();
 		glDeleteProgram(objID);
 		ClearHash();
-		curFlagsHash = 0;
+
 		objID = 0;
-		objID = glCreateProgram();
+		curFlagsHash = 0;
 		curSrcHash = 0;
 	}
 
