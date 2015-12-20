@@ -7,6 +7,7 @@
 #include "LuaHashString.h"
 #include "LuaUtils.h"
 #include "LuaTextures.h"
+#include "LuaOpenGLUtils.h"
 
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/SkirmishAIHandler.h"
@@ -158,6 +159,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetModelLightTrackingState);
 	REGISTER_LUA_CFUNC(SetMapShader);
 	REGISTER_LUA_CFUNC(SetMapSquareTexture);
+	REGISTER_LUA_CFUNC(SetMapShadingTexture);
 
 	REGISTER_LUA_CFUNC(SetUnitNoDraw);
 	REGISTER_LUA_CFUNC(SetUnitNoMinimap);
@@ -247,6 +249,84 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	return true;
 }
 
+static const std::unordered_map<std::string, LuaMatTexture::Type> texNameToTypeMap = {
+// 	// atlases
+// 	{"$units",  LuaMatTexture::LUATEX_3DOTEXTURE},
+// 	{"$units1", LuaMatTexture::LUATEX_3DOTEXTURE},
+// 	{"$units2", LuaMatTexture::LUATEX_3DOTEXTURE},
+// 
+// 	// cubemaps
+// 	{"$specular", LuaMatTexture::LUATEX_SPECULAR},
+// 	{"$reflection", LuaMatTexture::LUATEX_MAP_REFLECTION},
+// 	{"$map_reflection", LuaMatTexture::LUATEX_MAP_REFLECTION},
+// 	{"$sky_reflection", LuaMatTexture::LUATEX_SKY_REFLECTION},
+// 
+// 	// specials
+// 	{"$shadow", LuaMatTexture::LUATEX_SHADOWMAP},
+// 	{"$heightmap", LuaMatTexture::LUATEX_HEIGHTMAP},
+
+	// SMF-mapsf
+	{"$grass", LuaMatTexture::LUATEX_SMF_GRASS},
+	{"$detail", LuaMatTexture::LUATEX_SMF_DETAIL},
+	{"$minimap", LuaMatTexture::LUATEX_SMF_MINIMAP},
+	{"$shading", LuaMatTexture::LUATEX_SMF_SHADING},
+	{"$normals", LuaMatTexture::LUATEX_SMF_NORMALS},
+	// SSMF-maps
+	{"ssmf_normals",       LuaMatTexture::LUATEX_SSMF_NORMALS },
+	{"ssmf_specular",      LuaMatTexture::LUATEX_SSMF_SPECULAR},
+	{"ssmf_splat_distr",   LuaMatTexture::LUATEX_SSMF_SDISTRIB},
+	{"ssmf_splat_detail",  LuaMatTexture::LUATEX_SSMF_SDETAIL },
+	{"ssmf_splat_normals", LuaMatTexture::LUATEX_SSMF_SNORMALS},
+	{"ssmf_sky_refl",      LuaMatTexture::LUATEX_SSMF_SKYREFL },
+	{"ssmf_emission",      LuaMatTexture::LUATEX_SSMF_EMISSION},
+	{"ssmf_parallax",      LuaMatTexture::LUATEX_SSMF_PARALLAX},
+
+
+// 	{"$info",        LuaMatTexture::LUATEX_INFOTEX_ACTIVE},
+// 	{"$info_losmap", LuaMatTexture::LUATEX_INFOTEX_LOSMAP},
+// 	{"$info_mtlmap", LuaMatTexture::LUATEX_INFOTEX_MTLMAP},
+// 	{"$info_hgtmap", LuaMatTexture::LUATEX_INFOTEX_HGTMAP},
+// 	{"$info_blkmap", LuaMatTexture::LUATEX_INFOTEX_BLKMAP},
+// 
+// 	{"$extra",        LuaMatTexture::LUATEX_INFOTEX_ACTIVE},
+// 	{"$extra_losmap", LuaMatTexture::LUATEX_INFOTEX_LOSMAP},
+// 	{"$extra_mtlmap", LuaMatTexture::LUATEX_INFOTEX_MTLMAP},
+// 	{"$extra_hgtmap", LuaMatTexture::LUATEX_INFOTEX_HGTMAP},
+// 	{"$extra_blkmap", LuaMatTexture::LUATEX_INFOTEX_BLKMAP},
+// 
+// 	{"$map_gb_nt", LuaMatTexture::LUATEX_MAP_GBUFFER_NORM},
+// 	{"$map_gb_dt", LuaMatTexture::LUATEX_MAP_GBUFFER_DIFF},
+// 	{"$map_gb_st", LuaMatTexture::LUATEX_MAP_GBUFFER_SPEC},
+// 	{"$map_gb_et", LuaMatTexture::LUATEX_MAP_GBUFFER_EMIT},
+// 	{"$map_gb_mt", LuaMatTexture::LUATEX_MAP_GBUFFER_MISC},
+// 	{"$map_gb_zt", LuaMatTexture::LUATEX_MAP_GBUFFER_ZVAL},
+// 
+// 	{"$map_gbuffer_normtex", LuaMatTexture::LUATEX_MAP_GBUFFER_NORM},
+// 	{"$map_gbuffer_difftex", LuaMatTexture::LUATEX_MAP_GBUFFER_DIFF},
+// 	{"$map_gbuffer_spectex", LuaMatTexture::LUATEX_MAP_GBUFFER_SPEC},
+// 	{"$map_gbuffer_emittex", LuaMatTexture::LUATEX_MAP_GBUFFER_EMIT},
+// 	{"$map_gbuffer_misctex", LuaMatTexture::LUATEX_MAP_GBUFFER_MISC},
+// 	{"$map_gbuffer_zvaltex", LuaMatTexture::LUATEX_MAP_GBUFFER_ZVAL},
+// 
+// 	{"$mdl_gb_nt", LuaMatTexture::LUATEX_MODEL_GBUFFER_NORM},
+// 	{"$mdl_gb_dt", LuaMatTexture::LUATEX_MODEL_GBUFFER_DIFF},
+// 	{"$mdl_gb_st", LuaMatTexture::LUATEX_MODEL_GBUFFER_SPEC},
+// 	{"$mdl_gb_et", LuaMatTexture::LUATEX_MODEL_GBUFFER_EMIT},
+// 	{"$mdl_gb_mt", LuaMatTexture::LUATEX_MODEL_GBUFFER_MISC},
+// 	{"$mdl_gb_zt", LuaMatTexture::LUATEX_MODEL_GBUFFER_ZVAL},
+// 
+// 	{"$model_gbuffer_normtex", LuaMatTexture::LUATEX_MODEL_GBUFFER_NORM},
+// 	{"$model_gbuffer_difftex", LuaMatTexture::LUATEX_MODEL_GBUFFER_DIFF},
+// 	{"$model_gbuffer_spectex", LuaMatTexture::LUATEX_MODEL_GBUFFER_SPEC},
+// 	{"$model_gbuffer_emittex", LuaMatTexture::LUATEX_MODEL_GBUFFER_EMIT},
+// 	{"$model_gbuffer_misctex", LuaMatTexture::LUATEX_MODEL_GBUFFER_MISC},
+// 	{"$model_gbuffer_zvaltex", LuaMatTexture::LUATEX_MODEL_GBUFFER_ZVAL},
+// 
+// 	{"$font"     , LuaMatTexture::LUATEX_FONT},
+// 	{"$smallfont", LuaMatTexture::LUATEX_FONTSMALL},
+// 	{"$fontsmall", LuaMatTexture::LUATEX_FONTSMALL},
+
+};
 
 /******************************************************************************/
 /******************************************************************************/
@@ -1464,6 +1544,72 @@ int LuaUnsyncedCtrl::SetMapSquareTexture(lua_State* L)
 
 		lua_pushboolean(L, groundTextures->SetSquareLuaTexture(texSquareX, texSquareY, namedTexture->id));
 		return 1;
+	}
+
+	lua_pushboolean(L, false);
+	return 1;
+}
+
+/******************************************************************************/
+
+inline static LuaMatTexture::Type GetLuaMatTextureType(const std::string& name)
+{
+	const auto it = texNameToTypeMap.find(name);
+
+	if (it == texNameToTypeMap.end())
+		return LuaMatTexture::LUATEX_NONE;
+
+	return it->second;
+}
+
+int LuaUnsyncedCtrl::SetMapShadingTexture(lua_State* L)
+{
+	if (CLuaHandle::GetHandleSynced(L)) {
+		return 0;
+	}
+
+	const std::string& type = luaL_checkstring(L, 1);
+	const std::string& texName = luaL_checkstring(L, 2);
+
+	GLuint tid = 0;
+	if (!texName.empty()) {
+		// TODO: leaking ID's like this means we need to guard against texture deletion
+		const LuaTextures& luaTextures = CLuaHandle::GetActiveTextures(L);
+		const LuaTextures::Texture* luaTexture = luaTextures.GetInfo(texName);
+		const CNamedTextures::TexInfo* namedTexture = CNamedTextures::GetInfo(texName);
+
+		if (luaTexture != NULL) {
+			tid = luaTexture->id;
+		}
+		if (namedTexture != NULL) {
+			tid = namedTexture->id;
+		}
+	}
+	
+	LuaMatTexture::Type texType = GetLuaMatTextureType(type);
+	switch (texType) {
+		case LuaMatTexture::LUATEX_SMF_GRASS:
+		case LuaMatTexture::LUATEX_SMF_DETAIL:
+		case LuaMatTexture::LUATEX_SMF_MINIMAP:
+		case LuaMatTexture::LUATEX_SMF_SHADING:
+		case LuaMatTexture::LUATEX_SMF_NORMALS:
+		
+		case LuaMatTexture::LUATEX_SSMF_NORMALS:
+		case LuaMatTexture::LUATEX_SSMF_SPECULAR:
+		case LuaMatTexture::LUATEX_SSMF_SDISTRIB:
+		case LuaMatTexture::LUATEX_SSMF_SDETAIL:
+		case LuaMatTexture::LUATEX_SSMF_SNORMALS:
+		case LuaMatTexture::LUATEX_SSMF_SKYREFL:
+		case LuaMatTexture::LUATEX_SSMF_EMISSION:
+		case LuaMatTexture::LUATEX_SSMF_PARALLAX: {
+			if (readMap != nullptr) {
+				// convert type=LUATEX_* to MAP_* (FIXME: MAP_SSMF_SPLAT_NORMAL_TEX needs a num)
+				readMap->SetTexture(tid, texType - LuaMatTexture::LUATEX_SMF_GRASS);
+			}
+ 		} break;
+		default: {
+			luaL_error(L, "No such texture type");
+		} break;
 	}
 
 	lua_pushboolean(L, false);

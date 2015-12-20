@@ -98,6 +98,49 @@ CR_REG_METADATA(CReadMap, (
 	CR_SERIALIZER(Serialize)
 ))
 
+MapTexture::MapTexture() :
+	texID(0),
+	texIDOrig(0),
+	isLuaTex(false)
+{
+}
+
+MapTexture::MapTexture(unsigned int texID) :
+	texID(texID),
+	texIDOrig(texID),
+	isLuaTex(false)
+{	
+}
+
+unsigned int MapTexture::operator=(unsigned int newTexID) {
+	texID = newTexID;
+	texIDOrig = newTexID;
+	isLuaTex = false;
+}
+
+void MapTexture::SetLuaTexture(unsigned int luaTexID) { 
+	if (luaTexID == 0) { // reset the original texture
+		if (isLuaTex) {
+			texID = texIDOrig;
+			isLuaTex = false;
+		}
+	} else {
+		if (!isLuaTex) { // preserve the original texture
+			texIDOrig = texID;
+			isLuaTex = true;
+		}
+		texID = luaTexID;
+	}
+}
+
+void MapTexture::DeleteTexture() {
+	if (isLuaTex) {
+		glDeleteTextures(1, &texIDOrig);
+	} else {
+		glDeleteTextures(1, &texID);
+	}
+}
+
 
 CReadMap* CReadMap::LoadMap(const std::string& mapname)
 {

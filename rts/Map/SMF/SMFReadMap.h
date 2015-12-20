@@ -79,24 +79,86 @@ public:
 		return size;
 	}
 
+	void SetTexture(unsigned int texID, unsigned int type, unsigned int num = 0) {
+		switch (type) {
+			case MAP_BASE_GRASS_TEX: { SetGrassShadingTexture(texID); } break;
+			case MAP_BASE_DETAIL_TEX: { SetDetailTexture(texID); } break;
+			case MAP_BASE_MINIMAP_TEX: { SetMiniMapTexture(texID); } break;
+			case MAP_BASE_SHADING_TEX: { SetShadingTexture(texID); } break;
+			case MAP_BASE_NORMALS_TEX: { SetNormalsTexture(texID); } break;
 
-	unsigned int GetGrassShadingTexture() const { return grassShadingTex; }
-	unsigned int GetMiniMapTexture() const { return minimapTex; }
-	unsigned int GetDetailTexture() const { return detailTex; }
-	unsigned int GetShadingTexture() const { return shadingTex; }
-	unsigned int GetNormalsTexture() const { return normalsTex; }
+			case MAP_SSMF_NORMALS_TEX: { SetBlendNormalsTexture(texID); } break;
+			case MAP_SSMF_SPECULAR_TEX: { SetSpecularTexture(texID); } break;
 
+			case MAP_SSMF_SPLAT_DISTRIB_TEX: { SetSplatDistrTexture(texID); } break;
+			case MAP_SSMF_SPLAT_DETAIL_TEX: { SetSplatDetailTexture(texID); } break;
+			case MAP_SSMF_SPLAT_NORMAL_TEX: { SetSplatNormalTexture(texID, num); } break;
 
-	unsigned int GetBlendNormalsTexture() const { return blendNormalsTex; }
-	unsigned int GetSpecularTexture() const { return specularTex; }
+			case MAP_SSMF_SKY_REFLECTION_TEX: { SetSkyReflectModTexture(texID); } break;
+			case MAP_SSMF_LIGHT_EMISSION_TEX: { SetLightEmissionTexture(texID); } break;
+			case MAP_SSMF_PARALLAX_HEIGHT_TEX: { SetParallaxHeightTexture(texID); } break;
 
-	unsigned int GetSplatDistrTexture() const { return splatDistrTex; }
-	unsigned int GetSplatDetailTexture() const { return splatDetailTex; }
-	unsigned int GetSplatNormalTexture(int i) const { return splatNormalTextures[i]; }
+			default: {} break;
+		}
+	}
 
-	unsigned int GetSkyReflectModTexture() const { return skyReflectModTex; }
-	unsigned int GetLightEmissionTexture() const { return lightEmissionTex; }
-	unsigned int GetParallaxHeightTexture() const { return parallaxHeightTex; }
+	unsigned int GetShadingTexture() const { return shadingTex.texID; }
+	unsigned int GetNormalsTexture() const { return normalsTex.texID; }
+
+	unsigned int GetBlendNormalsTexture() const { return blendNormalsTex.texID; }
+	unsigned int GetSpecularTexture() const { return specularTex.texID; }
+
+	unsigned int GetSplatDistrTexture() const { return splatDistrTex.texID; }
+	unsigned int GetSplatDetailTexture() const { return splatDetailTex.texID; }
+	unsigned int GetSplatNormalTexture(int i) const { return splatNormalTextures[i].texID; }
+ 
+	unsigned int GetSkyReflectModTexture() const { return skyReflectModTex.texID; }
+	unsigned int GetLightEmissionTexture() const { return lightEmissionTex.texID; }
+	unsigned int GetParallaxHeightTexture() const { return parallaxHeightTex.texID; }
+
+	unsigned int GetGrassShadingTexture() const { return grassShadingTex.texID; }
+	unsigned int GetMiniMapTexture() const { return minimapTex.texID; }
+	unsigned int GetDetailTexture() const { return detailTex.texID; }
+
+	void SetDetailTexture(unsigned int texID) {
+		detailTex.SetLuaTexture(texID);
+	}
+	void SetMiniMapTexture(unsigned int texID) {
+		minimapTex.SetLuaTexture(texID);
+	}
+	void SetShadingTexture(unsigned int texID) {
+		shadingTex.SetLuaTexture(texID);
+	}
+	void SetNormalsTexture(unsigned int texID) {
+		normalsTex.SetLuaTexture(texID);
+	}
+	void SetSpecularTexture(unsigned int texID) {
+		specularTex.SetLuaTexture(texID);
+	}
+	void SetGrassShadingTexture(unsigned int texID) {
+		grassShadingTex.SetLuaTexture(texID);
+	}
+	void SetSplatDetailTexture(unsigned int texID) {
+		splatDetailTex.SetLuaTexture(texID);
+	}
+	void SetSplatNormalTexture(unsigned int texID, unsigned int i) {
+		splatNormalTextures[i].SetLuaTexture(texID);
+	}
+	void SetSplatDistrTexture(unsigned int texID) {
+		splatDistrTex.SetLuaTexture(texID);
+	}
+	void SetSkyReflectModTexture(unsigned int texID) {
+		skyReflectModTex.SetLuaTexture(texID);
+	}
+	void SetBlendNormalsTexture(unsigned int texID) {
+		blendNormalsTex.SetLuaTexture(texID);
+	}
+	void SetLightEmissionTexture(unsigned int texID) {
+		lightEmissionTex.SetLuaTexture(texID);
+	}
+	void SetParallaxHeightTexture(unsigned int texID) {
+		parallaxHeightTex.SetLuaTexture(texID);
+	}
 
 
 	void DrawMinimap() const;
@@ -182,25 +244,25 @@ private:
 	std::vector<unsigned char> waterHeightColors;
 
 private:
-	unsigned int detailTex;             // supplied by the map
-	unsigned int specularTex;           // supplied by the map, moderates specular contribution
-	unsigned int shadingTex;            // holds precomputed dot(lightDir, vertexNormal) values
-	unsigned int normalsTex;            // holds vertex normals in RGBA32F internal format (GL_RGBA + GL_FLOAT)
-	unsigned int minimapTex;            // supplied by the map
+	MapTexture detailTex;             // supplied by the map
+	MapTexture specularTex;           // supplied by the map, moderates specular contribution
+	MapTexture shadingTex;            // holds precomputed dot(lightDir, vertexNormal) values
+	MapTexture normalsTex;            // holds vertex normals in RGBA32F internal format (GL_RGBA + GL_FLOAT)
+	MapTexture minimapTex;            // supplied by the map
 
-	unsigned int splatDistrTex;         // specifies the per-channel distribution of splatDetailTex (map-wide, overrides detailTex)
-	unsigned int splatDetailTex;        // contains per-channel separate greyscale detail-textures (overrides detailTex)
+	MapTexture splatDistrTex;         // specifies the per-channel distribution of splatDetailTex (map-wide, overrides detailTex)
+	MapTexture splatDetailTex;        // contains per-channel separate greyscale detail-textures (overrides detailTex)
 
 	// contains RGBA texture with RGB channels containing normals;
 	// alpha contains greyscale diffuse for splat detail normals
 	// if haveDetailNormalDiffuseAlpha (overrides detailTex)
-	unsigned int splatNormalTextures[NUM_SPLAT_DETAIL_NORMALS];
+	MapTexture splatNormalTextures[NUM_SPLAT_DETAIL_NORMALS];
 
-	unsigned int grassShadingTex;       // specifies grass-blade modulation color (defaults to minimapTex)
-	unsigned int skyReflectModTex;      // modulates sky-reflection RGB intensities (must be the same size as specularTex)
-	unsigned int blendNormalsTex;       // tangent-space offset normals
-	unsigned int lightEmissionTex;
-	unsigned int parallaxHeightTex;
+	MapTexture grassShadingTex;       // specifies grass-blade modulation color (defaults to minimapTex)
+	MapTexture skyReflectModTex;      // modulates sky-reflection RGB intensities (must be the same size as specularTex)
+	MapTexture blendNormalsTex;       // tangent-space offset normals
+	MapTexture lightEmissionTex;
+	MapTexture parallaxHeightTex;
 
 private:
 	int shadingTexUpdateProgress;
@@ -211,6 +273,9 @@ private:
 	bool haveSplatDetailDistribTexture; // true if we have both splatDetailTex and splatDistrTex
 	bool haveSplatNormalDistribTexture; // true if we have splatDistrTex and at least one splat[Detail]NormalTex
 	bool haveDetailNormalDiffuseAlpha;
+
+	// Did original textures exist
+	bool haveSpecularTextureOrig; 
 
 	bool minimapOverride;
 	bool shadingTexUpdateNeeded;
