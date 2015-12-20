@@ -22,6 +22,7 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/Misc/RectangleOptimizer.h"
 #include "System/Sync/HsiehHash.h"
+#include "System/Util.h"
 
 #ifdef USE_UNSYNCED_HEIGHTMAP
 #include "Game/GlobalUnsynced.h"
@@ -97,6 +98,17 @@ CR_REG_METADATA(CReadMap, (
 	CR_POSTLOAD(PostLoad),
 	CR_SERIALIZER(Serialize)
 ))
+
+
+
+MapTexture::~MapTexture() {
+	// do NOT delete a Lua-set texture here!
+	glDeleteTextures(1, &texIDs[RAW_TEX_IDX]);
+
+	texIDs[RAW_TEX_IDX] = 0;
+	texIDs[LUA_TEX_IDX] = 0;
+}
+
 
 
 CReadMap* CReadMap::LoadMap(const std::string& mapname)
@@ -202,8 +214,7 @@ CReadMap::CReadMap()
 
 CReadMap::~CReadMap()
 {
-	delete metalMap;
-	metalMap = NULL;
+	SafeDelete(metalMap);
 }
 
 

@@ -7,6 +7,7 @@
 #include "LuaHashString.h"
 #include "LuaUtils.h"
 #include "LuaTextures.h"
+#include "LuaOpenGLUtils.h"
 
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/SkirmishAIHandler.h"
@@ -158,6 +159,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetModelLightTrackingState);
 	REGISTER_LUA_CFUNC(SetMapShader);
 	REGISTER_LUA_CFUNC(SetMapSquareTexture);
+	REGISTER_LUA_CFUNC(SetMapShadingTexture);
 
 	REGISTER_LUA_CFUNC(SetUnitNoDraw);
 	REGISTER_LUA_CFUNC(SetUnitNoMinimap);
@@ -1429,7 +1431,7 @@ int LuaUnsyncedCtrl::SetMapSquareTexture(lua_State* L)
 	CBaseGroundDrawer* groundDrawer = readMap->GetGroundDrawer();
 	CBaseGroundTextures* groundTextures = groundDrawer->GetGroundTextures();
 
-	if (groundTextures == NULL) {
+	if (groundTextures == nullptr) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
@@ -1439,12 +1441,12 @@ int LuaUnsyncedCtrl::SetMapSquareTexture(lua_State* L)
 		return 1;
 	}
 
-	// TODO: leaking ID's like this means we need to guard against texture deletion
 	const LuaTextures& luaTextures = CLuaHandle::GetActiveTextures(L);
-	const LuaTextures::Texture* luaTexture = luaTextures.GetInfo(texName);
-	const CNamedTextures::TexInfo* namedTexture = CNamedTextures::GetInfo(texName);
 
-	if (luaTexture != NULL) {
+	const    LuaTextures::Texture*   luaTexture = nullptr;
+	const CNamedTextures::TexInfo* namedTexture = nullptr;
+
+	if ((luaTexture = luaTextures.GetInfo(texName)) != nullptr) {
 		if (luaTexture->xsize != luaTexture->ysize) {
 			// square textures only
 			lua_pushboolean(L, false);
@@ -1455,7 +1457,7 @@ int LuaUnsyncedCtrl::SetMapSquareTexture(lua_State* L)
 		return 1;
 	}
 
-	if (namedTexture != NULL) {
+	if ((namedTexture = CNamedTextures::GetInfo(texName)) != nullptr) {
 		if (namedTexture->xsize != namedTexture->ysize) {
 			// square textures only
 			lua_pushboolean(L, false);
@@ -1467,6 +1469,63 @@ int LuaUnsyncedCtrl::SetMapSquareTexture(lua_State* L)
 	}
 
 	lua_pushboolean(L, false);
+	return 1;
+}
+
+int LuaUnsyncedCtrl::SetMapShadingTexture(lua_State* L)
+{
+	if (CLuaHandle::GetHandleSynced(L))
+		return 0;
+
+	const std::string& texType = luaL_checkstring(L, 1);
+	const std::string& texName = luaL_checkstring(L, 2);
+
+	const LuaMatTexture::Type texTypeEnum = LuaOpenGLUtils::GetLuaMatTextureType(texType);
+
+	unsigned int texID = 0;
+
+	// empty name causes a revert to default
+	if (!texName.empty()) {
+		const LuaTextures& luaTextures = CLuaHandle::GetActiveTextures(L);
+
+		const    LuaTextures::Texture*   luaTexture = nullptr;
+		const CNamedTextures::TexInfo* namedTexture = nullptr;
+
+		if ((texID == 0) && ((luaTexture = luaTextures.GetInfo(texName)) != nullptr)) {
+			texID = luaTexture->id;
+		}
+		if ((texID == 0) && ((namedTexture = CNamedTextures::GetInfo(texName)) != nullptr)) {
+			texID = namedTexture->id;
+		}
+	}
+
+	switch (texTypeEnum) {
+		case LuaMatTexture::LUATEX_SMF_GRASS:
+		case LuaMatTexture::LUATEX_SMF_DETAIL:
+		case LuaMatTexture::LUATEX_SMF_MINIMAP:
+		case LuaMatTexture::LUATEX_SMF_SHADING:
+		case LuaMatTexture::LUATEX_SMF_NORMALS:
+
+		case LuaMatTexture::LUATEX_SSMF_NORMALS:
+		case LuaMatTexture::LUATEX_SSMF_SPECULAR:
+		case LuaMatTexture::LUATEX_SSMF_SDISTRIB:
+		case LuaMatTexture::LUATEX_SSMF_SDETAIL:
+		case LuaMatTexture::LUATEX_SSMF_SNORMALS:
+		case LuaMatTexture::LUATEX_SSMF_SKYREFL:
+		case LuaMatTexture::LUATEX_SSMF_EMISSION:
+		case LuaMatTexture::LUATEX_SSMF_PARALLAX: {
+			if (readMap != nullptr) {
+				// convert type=LUATEX_* to MAP_* (FIXME: MAP_SSMF_SPLAT_NORMAL_TEX needs a num)
+				readMap->SetLuaTexture(texID, texTypeEnum - LuaMatTexture::LUATEX_SMF_GRASS);
+			}
+
+			lua_pushboolean(L, true);
+		} break;
+		default: {
+			lua_pushboolean(L, false);
+		} break;
+	}
+
 	return 1;
 }
 

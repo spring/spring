@@ -119,6 +119,32 @@ public:
 
 
 
+struct MapTexture {
+public:
+	enum {
+		RAW_TEX_IDX = 0,
+		LUA_TEX_IDX = 1,
+	};
+
+	MapTexture(): texIDs{0, 0} {}
+	~MapTexture();
+
+	bool HasLuaTex() const { return (texIDs[LUA_TEX_IDX] != 0); }
+
+	// only needed for glGenTextures(...)
+	unsigned int* GetIDPtr() { return &texIDs[RAW_TEX_IDX]; }
+	unsigned int GetID() const { return texIDs[HasLuaTex()]; }
+
+	void SetRawTexture(unsigned int rawTexID) { texIDs[RAW_TEX_IDX] = rawTexID; }
+	void SetLuaTexture(unsigned int luaTexID) { texIDs[LUA_TEX_IDX] = luaTexID; }
+
+private:
+	// [RAW_TEX_IDX] := original, [LUA_TEX_IDX] := Lua-supplied
+	unsigned int texIDs[2];
+};
+
+
+
 enum {
 	// base textures
 	MAP_BASE_GRASS_TEX           =  0,
@@ -193,6 +219,8 @@ public:
 
 	virtual unsigned int GetTexture(unsigned int type, unsigned int num = 0) const { return 0; }
 	virtual int2 GetTextureSize(unsigned int type) const { return int2(0, 0); }
+
+	virtual void SetLuaTexture(unsigned int texID, unsigned int type, unsigned int num = 0) {}
 
 
 	/// Draws the minimap in a quad (with extends: (0,0)-(1,1))

@@ -139,7 +139,7 @@ static const std::unordered_map<std::string, LuaMatrixType> matrixNameToTypeMap 
 };
 
 
-inline static LuaMatTexture::Type GetLuaMatTextureType(const std::string& name)
+LuaMatTexture::Type LuaOpenGLUtils::GetLuaMatTextureType(const std::string& name)
 {
 	const auto it = texNameToTypeMap.find(name);
 
@@ -149,7 +149,7 @@ inline static LuaMatTexture::Type GetLuaMatTextureType(const std::string& name)
 	return it->second;
 }
 
-inline static LuaMatrixType GetLuaMatrixType(const std::string& name)
+LuaMatrixType LuaOpenGLUtils::GetLuaMatrixType(const std::string& name)
 {
 	const auto it = matrixNameToTypeMap.find(name);
 

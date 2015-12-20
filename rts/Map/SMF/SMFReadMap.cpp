@@ -35,17 +35,6 @@ CR_BIND_DERIVED(CSMFReadMap, CReadMap, (""))
 CSMFReadMap::CSMFReadMap(std::string mapname)
 	: CEventClient("[CSMFReadMap]", 271950, false)
 	, file(mapname)
-	, detailTex(0)
-	, specularTex(0)
-	, shadingTex(0)
-	, normalsTex(0)
-	, minimapTex(0)
-	, splatDetailTex(0)
-	, splatDistrTex(0)
-	, skyReflectModTex(0)
-	, blendNormalsTex(0)
-	, lightEmissionTex(0)
-	, parallaxHeightTex(0)
 	, groundDrawer(NULL)
 {
 	loadscreen->SetLoadMessage("Loading SMF");
@@ -90,20 +79,7 @@ CSMFReadMap::CSMFReadMap(std::string mapname)
 CSMFReadMap::~CSMFReadMap()
 {
 	SafeDelete(groundDrawer);
-
-	glDeleteTextures(1, &detailTex        );
-	glDeleteTextures(1, &specularTex      );
-	glDeleteTextures(1, &minimapTex       );
-	glDeleteTextures(1, &shadingTex       );
-	glDeleteTextures(1, &normalsTex       );
-	glDeleteTextures(1, &splatDetailTex   );
-	glDeleteTextures(1, &splatDistrTex    );
-	glDeleteTextures(1, &grassShadingTex  );
-	glDeleteTextures(1, &skyReflectModTex );
-	glDeleteTextures(1, &blendNormalsTex  );
-	glDeleteTextures(1, &lightEmissionTex );
-	glDeleteTextures(1, &parallaxHeightTex);
-	glDeleteTextures(NUM_SPLAT_DETAIL_NORMALS, &splatNormalTextures[0]);
+	// note: textures are auto-deleted
 }
 
 
@@ -157,7 +133,7 @@ void CSMFReadMap::LoadMinimap()
 {
 	CBitmap minimapTexBM;
 	if (minimapTexBM.Load(mapInfo->smf.minimapTexName)) {
-		minimapTex = minimapTexBM.CreateTexture(false);
+		minimapTex.SetRawTexture(minimapTexBM.CreateTexture(false));
 		return;
 	}
 
@@ -165,8 +141,8 @@ void CSMFReadMap::LoadMinimap()
 	std::vector<unsigned char> minimapTexBuf(MINIMAP_SIZE, 0);
 	file.ReadMinimap(&minimapTexBuf[0]);
 
-	glGenTextures(1, &minimapTex);
-	glBindTexture(GL_TEXTURE_2D, minimapTex);
+	glGenTextures(1, minimapTex.GetIDPtr());
+	glBindTexture(GL_TEXTURE_2D, minimapTex.GetID());
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, MINIMAP_NUM_MIPMAP - 1);
@@ -213,23 +189,23 @@ void CSMFReadMap::CreateSpecularTex()
 		specularTexBM.AllocDummy(SColor(255,255,255,255));
 	}
 
-	specularTex = specularTexBM.CreateTexture(false);
+	specularTex.SetRawTexture(specularTexBM.CreateTexture(false));
 
 	// no default 1x1 textures for these
 	if (skyReflectModTexBM.Load(mapInfo->smf.skyReflectModTexName)) {
-		skyReflectModTex = skyReflectModTexBM.CreateTexture(false);
+		skyReflectModTex.SetRawTexture(skyReflectModTexBM.CreateTexture(false));
 	}
 
 	if (blendNormalsTexBM.Load(mapInfo->smf.blendNormalsTexName)) {
-		blendNormalsTex = blendNormalsTexBM.CreateTexture(false);
+		blendNormalsTex.SetRawTexture(blendNormalsTexBM.CreateTexture(false));
 	}
 
 	if (lightEmissionTexBM.Load(mapInfo->smf.lightEmissionTexName)) {
-		lightEmissionTex = lightEmissionTexBM.CreateTexture(false);
+		lightEmissionTex.SetRawTexture(lightEmissionTexBM.CreateTexture(false));
 	}
 
 	if (parallaxHeightTexBM.Load(mapInfo->smf.parallaxHeightTexName)) {
-		parallaxHeightTex = parallaxHeightTexBM.CreateTexture(false);
+		parallaxHeightTex.SetRawTexture(parallaxHeightTexBM.CreateTexture(false));
 	}
 }
 
@@ -254,8 +230,8 @@ void CSMFReadMap::CreateSplatDetailTextures()
 		splatDistrTexBM.AllocDummy(SColor(255,0,0,0));
 	}
 
-	splatDetailTex = splatDetailTexBM.CreateTexture(true);
-	splatDistrTex = splatDistrTexBM.CreateTexture(true);
+	splatDetailTex.SetRawTexture(splatDetailTexBM.CreateTexture(true));
+	splatDistrTex.SetRawTexture(splatDistrTexBM.CreateTexture(true));
 
 	// only load the splat detail normals if any of them are defined and present
 	if (!haveSplatNormalDistribTexture)
@@ -276,7 +252,7 @@ void CSMFReadMap::CreateSplatDetailTextures()
 			splatDetailNormalTextureBM.mem[3] = 127; // Alpha is diffuse as in old-style detail textures
 		}
 
-		splatNormalTextures[i] = splatDetailNormalTextureBM.CreateTexture(true);
+		splatNormalTextures[i].SetRawTexture(splatDetailNormalTextureBM.CreateTexture(true));
 	}
 
 }
@@ -284,11 +260,11 @@ void CSMFReadMap::CreateSplatDetailTextures()
 
 void CSMFReadMap::CreateGrassTex()
 {
-	grassShadingTex = minimapTex;
+	grassShadingTex.SetRawTexture(minimapTex.GetID());
 
 	CBitmap grassShadingTexBM;
 	if (grassShadingTexBM.Load(mapInfo->smf.grassShadingTexName)) {
-		grassShadingTex = grassShadingTexBM.CreateTexture(true);
+		grassShadingTex.SetRawTexture(grassShadingTexBM.CreateTexture(true));
 	}
 }
 
@@ -300,7 +276,7 @@ void CSMFReadMap::CreateDetailTex()
 		throw content_error("Could not load detail texture from file " + mapInfo->smf.detailTexName);
 	}
 
-	detailTex = detailTexBM.CreateTexture(true);
+	detailTex.SetRawTexture(detailTexBM.CreateTexture(true));
 	if (anisotropy != 0.0f) {
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
 	}
@@ -311,8 +287,8 @@ void CSMFReadMap::CreateShadingTex()
 {
 	// the shading/normal texture buffers must have PO2 dimensions
 	// (excess elements that no vertices map into are left unused)
-	glGenTextures(1, &shadingTex);
-	glBindTexture(GL_TEXTURE_2D, shadingTex);
+	glGenTextures(1, shadingTex.GetIDPtr());
+	glBindTexture(GL_TEXTURE_2D, shadingTex.GetID());
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -345,8 +321,8 @@ void CSMFReadMap::CreateNormalTex()
 		normalTexSize.y = next_power_of_2(normalTexSize.y);
 	}
 
-	glGenTextures(1, &normalsTex);
-	glBindTexture(GL_TEXTURE_2D, normalsTex);
+	glGenTextures(1, normalsTex.GetIDPtr());
+	glBindTexture(GL_TEXTURE_2D, normalsTex.GetID());
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -526,7 +502,7 @@ void CSMFReadMap::UpdateNormalTexture(const SRectangle& update)
 			}
 		}
 
-		glBindTexture(GL_TEXTURE_2D, normalsTex);
+		glBindTexture(GL_TEXTURE_2D, normalsTex.GetID());
 	#if (SSMF_UNCOMPRESSED_NORMALS == 1)
 		glTexSubImage2D(GL_TEXTURE_2D, 0, minx, minz, xsize, zsize, GL_RGBA, GL_FLOAT, &pixels[0]);
 	#else
@@ -573,7 +549,7 @@ void CSMFReadMap::UpdateShadingTexture(const SRectangle& update)
 		}
 
 		// redefine the texture subregion
-		glBindTexture(GL_TEXTURE_2D, shadingTex);
+		glBindTexture(GL_TEXTURE_2D, shadingTex.GetID());
 		glTexSubImage2D(GL_TEXTURE_2D, 0, x1, y1, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, &pixels[0]);
 	}
 }
@@ -690,7 +666,7 @@ void CSMFReadMap::UpdateShadingTexture()
 		}
 
 		//FIXME use FBO and blend slowly new and old? (this way update rate could reduced even more -> saves CPU time)
-		glBindTexture(GL_TEXTURE_2D, shadingTex);
+		glBindTexture(GL_TEXTURE_2D, shadingTex.GetID());
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, &shadingTexBuffer[0]);
 		return;
 	}
@@ -713,7 +689,7 @@ void CSMFReadMap::DrawMinimap() const
 
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, shadingTex);
+	glBindTexture(GL_TEXTURE_2D, shadingTex.GetID());
 	// glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_PREVIOUS_ARB);
 	// glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_TEXTURE);
 	// glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_MODULATE);
@@ -722,7 +698,7 @@ void CSMFReadMap::DrawMinimap() const
 
 	glActiveTextureARB(GL_TEXTURE1_ARB);
 	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, minimapTex);
+	glBindTexture(GL_TEXTURE_2D, minimapTex.GetID());
 	// glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
 	if (infoTextureHandler->IsEnabled()) {

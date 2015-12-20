@@ -5,7 +5,6 @@
 
 #include <string>
 
-//#include "LuaInclude.h"
 #include "System/type2.h"
 
 class CMatrix44f;
@@ -24,13 +23,6 @@ enum LuaMatrixType {
 	LUAMATRICES_VIEWPROJECTIONINVERSE,
 	LUAMATRICES_BILLBOARD,
 	LUAMATRICES_NONE
-};
-
-
-class LuaOpenGLUtils {
-	public:
-		static const CMatrix44f* GetNamedMatrix(const std::string& name);
-		static bool ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, const std::string& image);
 };
 
 
@@ -131,6 +123,17 @@ class LuaMatTexture {
 
 	public:
 		static const int maxTexUnits = 16;
+};
+
+
+class LuaOpenGLUtils {
+public:
+	static const CMatrix44f* GetNamedMatrix(const std::string& name);
+
+	static LuaMatTexture::Type GetLuaMatTextureType(const std::string& name);
+	static LuaMatrixType GetLuaMatrixType(const std::string& name);
+
+	static bool ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, const std::string& image);
 };
 
 #endif // LUA_OPENGLUTILS_H
