@@ -22,7 +22,7 @@
 
 
 
-ISMFRenderState* ISMFRenderState::GetInstance(bool haveARB, bool haveGLSL) {
+ISMFRenderState* ISMFRenderState::GetInstance(bool haveARB, bool haveGLSL, bool luaShaders) {
 	ISMFRenderState* instance = nullptr;
 
 	if (!haveARB && !haveGLSL) {
@@ -31,7 +31,7 @@ ISMFRenderState* ISMFRenderState::GetInstance(bool haveARB, bool haveGLSL) {
 		if (!haveGLSL) {
 			instance = new SMFRenderStateARB();
 		} else {
-			instance = new SMFRenderStateGLSL();
+			instance = new SMFRenderStateGLSL(luaShaders);
 		}
 	}
 
@@ -74,7 +74,7 @@ bool SMFRenderStateARB::Init(const CSMFGroundDrawer* smfGroundDrawer, const LuaM
 	return true;
 }
 
-void SMFRenderStateARB::Kill(bool) {
+void SMFRenderStateARB::Kill() {
 	shaderHandler->ReleaseProgramObjects("[SMFGroundDrawer]");
 }
 
@@ -117,6 +117,8 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer, const Lua
 		("#define SMF_INTENSITY_MULT " + FloatToString(CGlobalRendering::SMF_INTENSITY_MULT) + "\n");
 
 	if (luaMapShaderData != nullptr) {
+		assert(useLuaShaders);
+
 		for (unsigned int n = GLSL_SHADER_STANDARD; n <= GLSL_SHADER_DEFERRED; n++) {
 			assert(luaMapShaderData->shaderIDs[n] != 0);
 
@@ -126,6 +128,8 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer, const Lua
 			glslShaders[n]->LoadFromID(luaMapShaderData->shaderIDs[n]);
 		}
 	} else {
+		assert(!useLuaShaders);
+
 		for (unsigned int n = GLSL_SHADER_STANDARD; n <= GLSL_SHADER_DEFERRED; n++) {
 			// load from VFS files
 			glslShaders[n] = shaderHandler->CreateProgramObject("[SMFGroundDrawer]", names[n], false);
@@ -215,8 +219,8 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer, const Lua
 	return true;
 }
 
-void SMFRenderStateGLSL::Kill(bool luaShader) {
-	if (luaShader) {
+void SMFRenderStateGLSL::Kill() {
+	if (useLuaShaders) {
 		// make sure SH does not delete these programs; managed by LuaShaders
 		for (unsigned int n = GLSL_SHADER_STANDARD; n <= GLSL_SHADER_DEFERRED; n++) {
 			if (glslShaders[n] != nullptr) {
@@ -259,7 +263,7 @@ bool SMFRenderStateGLSL::CanEnable(const CSMFGroundDrawer* smfGroundDrawer) cons
 
 
 
-void SMFRenderStateFFP::Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e&, bool) {
+void SMFRenderStateFFP::Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e&) {
 	const CSMFReadMap* smfMap = smfGroundDrawer->GetReadMap();
 	static const GLfloat planeX[] = {0.02f, 0.0f, 0.00f, 0.0f};
 	static const GLfloat planeZ[] = {0.00f, 0.0f, 0.02f, 0.0f};
@@ -364,7 +368,7 @@ void SMFRenderStateFFP::Enable(const CSMFGroundDrawer* smfGroundDrawer, const Dr
 	glEnable(GL_TEXTURE_2D);
 }
 
-void SMFRenderStateFFP::Disable(const CSMFGroundDrawer*, const DrawPass::e&, bool) {
+void SMFRenderStateFFP::Disable(const CSMFGroundDrawer*, const DrawPass::e&) {
 	glActiveTexture(GL_TEXTURE3);
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_TEXTURE_GEN_S);
@@ -392,7 +396,7 @@ void SMFRenderStateFFP::Disable(const CSMFGroundDrawer*, const DrawPass::e&, boo
 
 
 
-void SMFRenderStateARB::Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass, bool) {
+void SMFRenderStateARB::Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass) {
 	const CSMFReadMap* smfMap = smfGroundDrawer->GetReadMap();
 	const float3 ambientColor = mapInfo->light.groundAmbientColor * CGlobalRendering::SMF_INTENSITY_MULT;
 
@@ -437,7 +441,7 @@ void SMFRenderStateARB::Enable(const CSMFGroundDrawer* smfGroundDrawer, const Dr
 	glActiveTexture(GL_TEXTURE0);
 }
 
-void SMFRenderStateARB::Disable(const CSMFGroundDrawer*, const DrawPass::e& drawPass, bool) {
+void SMFRenderStateARB::Disable(const CSMFGroundDrawer*, const DrawPass::e& drawPass) {
 	arbShaders[ARB_SHADER_CURRENT]->Disable();
 
 	#ifdef DYNWATER_OVERRIDE_VERTEX_PROGRAM
@@ -460,8 +464,8 @@ void SMFRenderStateARB::Disable(const CSMFGroundDrawer*, const DrawPass::e& draw
 
 
 
-void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e&, bool luaShader) {
-	if (luaShader) {
+void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e&) {
+	if (useLuaShaders) {
 		// use raw, GLSLProgramObject::Enable also calls RecompileIfNeeded
 		glUseProgram(glslShaders[GLSL_SHADER_CURRENT]->GetObjID());
 		// diffuse textures are always bound (SMFGroundDrawer::SetupBigSquare)
@@ -520,8 +524,8 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	glActiveTexture(GL_TEXTURE0);
 }
 
-void SMFRenderStateGLSL::Disable(const CSMFGroundDrawer*, const DrawPass::e&, bool luaShader) {
-	if (luaShader) {
+void SMFRenderStateGLSL::Disable(const CSMFGroundDrawer*, const DrawPass::e&) {
+	if (useLuaShaders) {
 		glActiveTexture(GL_TEXTURE0);
 		glUseProgram(0);
 		return;

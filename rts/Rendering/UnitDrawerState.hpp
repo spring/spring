@@ -36,8 +36,8 @@ public:
 	virtual void Enable(const CUnitDrawer*, bool) {}
 	virtual void Disable(const CUnitDrawer*, bool) {}
 
-	virtual void EnableTextures(const CUnitDrawer*) {}
-	virtual void DisableTextures(const CUnitDrawer*) {}
+	virtual void EnableTextures(const CUnitDrawer*) const {}
+	virtual void DisableTextures(const CUnitDrawer*) const {}
 	virtual void EnableShaders(const CUnitDrawer*) {}
 	virtual void DisableShaders(const CUnitDrawer*) {}
 
@@ -46,12 +46,10 @@ public:
 
 	static void SetBasicTeamColor(int team, float alpha);
 
-	void SetActiveShader(bool shadowed, bool deferred) {
-		if (shadowed) {
-			modelShaders[MODEL_SHADER_ACTIVE] = (deferred? modelShaders[MODEL_SHADER_SHADOWED_DEFERRED]: modelShaders[MODEL_SHADER_SHADOWED_STANDARD]);
-		} else {
-			modelShaders[MODEL_SHADER_ACTIVE] = (deferred? modelShaders[MODEL_SHADER_NOSHADOW_DEFERRED]: modelShaders[MODEL_SHADER_NOSHADOW_STANDARD]);
-		}
+	void SetActiveShader(unsigned int shadowed, unsigned int deferred) {
+		// shadowed=1 --> shader 1 (deferred=0) or 3 (deferred=1)
+		// shadowed=0 --> shader 0 (deferred=0) or 2 (deferred=1)
+		modelShaders[MODEL_SHADER_ACTIVE] = modelShaders[shadowed + deferred * 2];
 	}
 
 	enum ModelShaderProgram {
@@ -68,8 +66,8 @@ protected:
 	// shared ARB and GLSL state managers
 	void EnableCommon(const CUnitDrawer*, bool);
 	void DisableCommon(const CUnitDrawer*, bool);
-	void EnableTexturesCommon(const CUnitDrawer*);
-	void DisableTexturesCommon(const CUnitDrawer*);
+	void EnableTexturesCommon(const CUnitDrawer*) const;
+	void DisableTexturesCommon(const CUnitDrawer*) const;
 
 protected:
 	std::vector<Shader::IProgramObject*> modelShaders;
@@ -85,8 +83,8 @@ public:
 	void Enable(const CUnitDrawer*, bool);
 	void Disable(const CUnitDrawer*, bool);
 
-	void EnableTextures(const CUnitDrawer*);
-	void DisableTextures(const CUnitDrawer*);
+	void EnableTextures(const CUnitDrawer*) const;
+	void DisableTextures(const CUnitDrawer*) const;
 
 	void SetTeamColor(int team, float alpha) const;
 };
@@ -102,8 +100,8 @@ public:
 	void Enable(const CUnitDrawer*, bool);
 	void Disable(const CUnitDrawer*, bool);
 
-	void EnableTextures(const CUnitDrawer*);
-	void DisableTextures(const CUnitDrawer*);
+	void EnableTextures(const CUnitDrawer*) const;
+	void DisableTextures(const CUnitDrawer*) const;
 	void EnableShaders(const CUnitDrawer*);
 	void DisableShaders(const CUnitDrawer*);
 
@@ -122,8 +120,8 @@ public:
 	void Enable(const CUnitDrawer*, bool);
 	void Disable(const CUnitDrawer*, bool);
 
-	void EnableTextures(const CUnitDrawer*);
-	void DisableTextures(const CUnitDrawer*);
+	void EnableTextures(const CUnitDrawer*) const;
+	void DisableTextures(const CUnitDrawer*) const;
 	void EnableShaders(const CUnitDrawer*);
 	void DisableShaders(const CUnitDrawer*);
 

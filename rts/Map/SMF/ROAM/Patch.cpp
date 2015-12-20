@@ -144,6 +144,10 @@ Patch::~Patch()
 		glDeleteBuffersARB(1, &vertexBuffer);
 		glDeleteBuffersARB(1, &vertexIndexBuffer);
 	}
+
+	triList = 0;
+	vertexBuffer = 0;
+	vertexIndexBuffer = 0;
 }
 
 void Patch::Init(CSMFGroundDrawer* _drawer, int patchX, int patchZ)

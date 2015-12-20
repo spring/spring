@@ -88,10 +88,17 @@ public:
 	void DrawIndividualNoTrans(const CUnit* unit, bool noLuaCall);
 
 	void SetTeamColour(int team, float alpha = 1.0f) const;
-	void SetupForUnitDrawing(bool deferredPass);
-	void CleanUpUnitDrawing(bool deferredPass) const;
-	void SetupForGhostDrawing() const;
-	void CleanUpGhostDrawing() const;
+
+
+	// these handle either an opaque- or an alpha-pass (depending on advShading)
+	void SetupOpaqueAlphaDrawing(bool deferredPass);
+	void ResetOpaqueAlphaDrawing(bool deferredPass);
+
+	void SetupOpaqueDrawing(bool deferredPass);
+	void ResetOpaqueDrawing(bool deferredPass) const;
+	void SetupAlphaDrawing(bool deferredPass);
+	void ResetAlphaDrawing(bool deferredPass) const;
+
 
 	void SetUnitDrawDist(float dist);
 	void SetUnitIconDist(float dist);
@@ -109,6 +116,7 @@ public:
 	void DrawUnitMiniMapIcons() const;
 
 	const std::vector<CUnit*>& GetUnsortedUnits() const { return unsortedUnits; }
+
 	IWorldObjectModelRenderer* GetOpaqueModelRenderer(int modelType) { return opaqueModelRenderers[modelType]; }
 	IWorldObjectModelRenderer* GetCloakedModelRenderer(int modelType) { return cloakedModelRenderers[modelType]; }
 
@@ -118,9 +126,11 @@ public:
 	const GL::GeometryBuffer* GetGeometryBuffer() const { return geomBuffer; }
 	      GL::GeometryBuffer* GetGeometryBuffer()       { return geomBuffer; }
 
+	const IUnitDrawerState* GetWantedDrawerState() const;
+
+
 	bool DrawForward() const { return drawForward; }
 	bool DrawDeferred() const { return drawDeferred; }
-	bool DrawDeferredSupported() const;
 
 	bool UseAdvShading() const { return advShading; }
 	bool UseAdvFading() const { return advFading; }

@@ -46,12 +46,12 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	, meshDrawer(NULL)
 {
 	groundTextures = new CSMFGroundTextures(smfMap);
-	meshDrawer = SwitchMeshDrawer((!!configHandler->GetInt("ROAM")) ? SMF_MESHDRAWER_ROAM : SMF_MESHDRAWER_LEGACY);
+	meshDrawer = SwitchMeshDrawer((configHandler->GetInt("ROAM") != 0) ? SMF_MESHDRAWER_ROAM : SMF_MESHDRAWER_LEGACY);
 
 	smfRenderStates.resize(RENDER_STATE_CNT, nullptr);
-	smfRenderStates[RENDER_STATE_SSP] = ISMFRenderState::GetInstance(globalRendering->haveARB, globalRendering->haveGLSL);
-	smfRenderStates[RENDER_STATE_FFP] = ISMFRenderState::GetInstance(                   false,                     false);
-	smfRenderStates[RENDER_STATE_LUA] = ISMFRenderState::GetInstance(                   false,                      true);
+	smfRenderStates[RENDER_STATE_SSP] = ISMFRenderState::GetInstance(globalRendering->haveARB, globalRendering->haveGLSL, false);
+	smfRenderStates[RENDER_STATE_FFP] = ISMFRenderState::GetInstance(                   false,                     false, false);
+	smfRenderStates[RENDER_STATE_LUA] = ISMFRenderState::GetInstance(                   false,                      true,  true);
 
 	// also set in ::Draw, but UpdateSunDir can be called
 	// first if DynamicSun is enabled --> must be non-NULL
@@ -94,13 +94,13 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 CSMFGroundDrawer::~CSMFGroundDrawer()
 {
 	// if ROAM _was_ enabled, the configvar is written in CRoamMeshDrawer's dtor
-	if (dynamic_cast<CRoamMeshDrawer*>(meshDrawer) == NULL)
+	if (dynamic_cast<CRoamMeshDrawer*>(meshDrawer) == nullptr)
 		configHandler->Set("ROAM", 0);
 	configHandler->Set("GroundDetail", groundDetail);
 
-	smfRenderStates[RENDER_STATE_FFP]->Kill(false); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_FFP]);
-	smfRenderStates[RENDER_STATE_SSP]->Kill(false); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_SSP]);
-	smfRenderStates[RENDER_STATE_LUA]->Kill( true); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_LUA]);
+	smfRenderStates[RENDER_STATE_FFP]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_FFP]);
+	smfRenderStates[RENDER_STATE_SSP]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_SSP]);
+	smfRenderStates[RENDER_STATE_LUA]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_LUA]);
 	smfRenderStates.clear();
 
 	SafeDelete(groundTextures);
@@ -113,7 +113,7 @@ CSMFGroundDrawer::~CSMFGroundDrawer()
 
 IMeshDrawer* CSMFGroundDrawer::SwitchMeshDrawer(int mode)
 {
-	const int curMode = (dynamic_cast<CRoamMeshDrawer*>(meshDrawer) ? SMF_MESHDRAWER_ROAM : SMF_MESHDRAWER_LEGACY);
+	const int curMode = ((dynamic_cast<CRoamMeshDrawer*>(meshDrawer) != nullptr) ? SMF_MESHDRAWER_ROAM : SMF_MESHDRAWER_LEGACY);
 
 	// mode == -1: toggle modes
 	if (mode < 0) {
@@ -121,7 +121,7 @@ IMeshDrawer* CSMFGroundDrawer::SwitchMeshDrawer(int mode)
 		mode %= SMF_MESHDRAWER_LAST;
 	}
 
-	if ((curMode == mode) && (meshDrawer != NULL))
+	if ((curMode == mode) && (meshDrawer != nullptr))
 		return meshDrawer;
 
 	delete meshDrawer;
@@ -266,7 +266,7 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass)
 	{
 		// switch selected state's SSP or Lua shader to deferred version
 		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(DrawPass::TerrainDeferred);
-		smfRenderStates[RENDER_STATE_SEL]->Enable(this, drawPass, HaveLuaRenderState());
+		smfRenderStates[RENDER_STATE_SEL]->Enable(this, drawPass);
 
 		if (mapInfo->map.voidGround || (mapInfo->map.voidWater && drawPass != DrawPass::WaterReflection)) {
 			glEnable(GL_ALPHA_TEST);
@@ -282,7 +282,7 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass)
 			glDisable(GL_ALPHA_TEST);
 		}
 
-		smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass, HaveLuaRenderState());
+		smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass);
 		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(drawPass);
 	}
 
@@ -320,7 +320,7 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 	}
 
 	if (drawForward) {
-		smfRenderStates[RENDER_STATE_SEL]->Enable(this, drawPass, HaveLuaRenderState());
+		smfRenderStates[RENDER_STATE_SEL]->Enable(this, drawPass);
 
 		if (wireframe) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -342,7 +342,7 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		}
 
-		smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass, HaveLuaRenderState());
+		smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass);
 	}
 
 	glDisable(GL_CULL_FACE);
@@ -366,7 +366,7 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 	glCullFace(GL_BACK);
 
 	smfRenderStates[RENDER_STATE_SEL] = smfRenderStates[RENDER_STATE_FFP];
-	// smfRenderStates[RENDER_STATE_SEL]->Enable(this, drawPass, false);
+	// smfRenderStates[RENDER_STATE_SEL]->Enable(this, drawPass);
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -427,7 +427,7 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 	glActiveTexture(GL_TEXTURE0);
 	glDisable(GL_TEXTURE_2D);
 
-	smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass, false);
+	smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass);
 	glDisable(GL_CULL_FACE);
 }
 
@@ -443,7 +443,7 @@ void CSMFGroundDrawer::DrawShadowPass()
 
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
-	glPolygonOffset(-1.f, -1.f);
+	glPolygonOffset(-1.0f, -1.0f);
 		po->Enable();
 			meshDrawer->DrawMesh(DrawPass::Shadow);
 		po->Disable();
@@ -455,7 +455,7 @@ void CSMFGroundDrawer::DrawShadowPass()
 
 void CSMFGroundDrawer::SetLuaShader(const LuaMapShaderData* luaMapShaderData)
 {
-	smfRenderStates[RENDER_STATE_LUA]->Kill(true);
+	smfRenderStates[RENDER_STATE_LUA]->Kill();
 	smfRenderStates[RENDER_STATE_LUA]->Init(this, luaMapShaderData);
 }
 

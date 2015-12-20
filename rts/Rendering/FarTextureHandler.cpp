@@ -169,7 +169,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	glFogf(GL_FOG_END,    1e6);
 	glFogf(GL_FOG_DENSITY, 1.0f);
 
-	unitDrawer->SetupForUnitDrawing(false);
+	unitDrawer->SetupOpaqueDrawing(false);
 	unitDrawer->GetOpaqueModelRenderer(model->type)->PushRenderState();
 	unitDrawer->SetTeamColour(obj->team);
 
@@ -181,7 +181,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	//const float modelradius = std::max(xs, std::max(ys, zs));*/
 	const float modelradius = 1.15f * model->radius;
 
-	// overwrite the matrices set by SetupForUnitDrawing
+	// overwrite the matrices set by SetupOpaqueDrawing
 	// RTT with a top-down view; the view-matrix must be
 	// on the PROJECTION stack for the model shaders
 	glMatrixMode(GL_PROJECTION);
@@ -220,7 +220,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	glPopMatrix();
 
 	unitDrawer->GetOpaqueModelRenderer(model->type)->PopRenderState();
-	unitDrawer->CleanUpUnitDrawing(false);
+	unitDrawer->ResetOpaqueDrawing(false);
 
 	// glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glPopAttrib();

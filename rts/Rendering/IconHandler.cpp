@@ -289,6 +289,7 @@ CIconData::~CIconData()
 {
 	if (ownTexture) {
 		glDeleteTextures(1, &texID);
+		texID = 0;
 	}
 }
 

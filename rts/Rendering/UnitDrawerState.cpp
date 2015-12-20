@@ -106,7 +106,7 @@ void IUnitDrawerState::DisableCommon(const CUnitDrawer* ud, bool) {
 }
 
 
-void IUnitDrawerState::EnableTexturesCommon(const CUnitDrawer* ud) {
+void IUnitDrawerState::EnableTexturesCommon(const CUnitDrawer* ud) const {
 	glEnable(GL_TEXTURE_2D);
 
 	glActiveTexture(GL_TEXTURE1);
@@ -126,7 +126,7 @@ void IUnitDrawerState::EnableTexturesCommon(const CUnitDrawer* ud) {
 	glActiveTexture(GL_TEXTURE0);
 }
 
-void IUnitDrawerState::DisableTexturesCommon(const CUnitDrawer* ud) {
+void IUnitDrawerState::DisableTexturesCommon(const CUnitDrawer* ud) const {
 	glActiveTexture(GL_TEXTURE1);
 	glDisable(GL_TEXTURE_2D);
 
@@ -197,7 +197,7 @@ void UnitDrawerStateFFP::Disable(const CUnitDrawer* ud, bool) {
 }
 
 
-void UnitDrawerStateFFP::EnableTextures(const CUnitDrawer*) {
+void UnitDrawerStateFFP::EnableTextures(const CUnitDrawer*) const {
 	glEnable(GL_LIGHTING);
 	glColor3f(1.0f, 1.0f, 1.0f);
 	glEnable(GL_TEXTURE_2D);
@@ -206,7 +206,7 @@ void UnitDrawerStateFFP::EnableTextures(const CUnitDrawer*) {
 	glActiveTexture(GL_TEXTURE0);
 }
 
-void UnitDrawerStateFFP::DisableTextures(const CUnitDrawer*) {
+void UnitDrawerStateFFP::DisableTextures(const CUnitDrawer*) const {
 	glDisable(GL_LIGHTING);
 	glDisable(GL_TEXTURE_2D);
 	glActiveTexture(GL_TEXTURE1);
@@ -291,8 +291,8 @@ void UnitDrawerStateARB::Disable(const CUnitDrawer* ud, bool) {
 }
 
 
-void UnitDrawerStateARB::EnableTextures(const CUnitDrawer* ud) { EnableTexturesCommon(ud); }
-void UnitDrawerStateARB::DisableTextures(const CUnitDrawer* ud) { DisableTexturesCommon(ud); }
+void UnitDrawerStateARB::EnableTextures(const CUnitDrawer* ud) const { EnableTexturesCommon(ud); }
+void UnitDrawerStateARB::DisableTextures(const CUnitDrawer* ud) const { DisableTexturesCommon(ud); }
 
 void UnitDrawerStateARB::EnableShaders(const CUnitDrawer*) { modelShaders[MODEL_SHADER_ACTIVE]->Enable(); }
 void UnitDrawerStateARB::DisableShaders(const CUnitDrawer*) { modelShaders[MODEL_SHADER_ACTIVE]->Disable(); }
@@ -431,8 +431,8 @@ void UnitDrawerStateGLSL::Disable(const CUnitDrawer* ud, bool deferredPass) {
 }
 
 
-void UnitDrawerStateGLSL::EnableTextures(const CUnitDrawer* ud) { EnableTexturesCommon(ud); }
-void UnitDrawerStateGLSL::DisableTextures(const CUnitDrawer* ud) { DisableTexturesCommon(ud); }
+void UnitDrawerStateGLSL::EnableTextures(const CUnitDrawer* ud) const { EnableTexturesCommon(ud); }
+void UnitDrawerStateGLSL::DisableTextures(const CUnitDrawer* ud) const { DisableTexturesCommon(ud); }
 
 void UnitDrawerStateGLSL::EnableShaders(const CUnitDrawer*) { modelShaders[MODEL_SHADER_ACTIVE]->Enable(); }
 void UnitDrawerStateGLSL::DisableShaders(const CUnitDrawer*) { modelShaders[MODEL_SHADER_ACTIVE]->Disable(); }

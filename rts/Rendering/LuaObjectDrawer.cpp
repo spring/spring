@@ -3,6 +3,7 @@
 #include "LuaObjectDrawer.h"
 #include "FeatureDrawer.h"
 #include "UnitDrawer.h"
+#include "UnitDrawerState.hpp"
 #include "Game/Camera.h"
 #include "Lua/LuaMaterial.h"
 #include "Rendering/Env/IWater.h"
@@ -103,13 +104,13 @@ static float GetLODFloat(const std::string& name)
 
 // opaque-pass state management funcs
 static void SetupOpaqueUnitDrawState(unsigned int modelType, bool deferredPass) {
-	unitDrawer->SetupForUnitDrawing(deferredPass);
+	unitDrawer->SetupOpaqueDrawing(deferredPass);
 	unitDrawer->GetOpaqueModelRenderer(modelType)->PushRenderState();
 }
 
 static void ResetOpaqueUnitDrawState(unsigned int modelType, bool deferredPass) {
 	unitDrawer->GetOpaqueModelRenderer(modelType)->PopRenderState();
-	unitDrawer->CleanUpUnitDrawing(deferredPass);
+	unitDrawer->ResetOpaqueDrawing(deferredPass);
 }
 
 // NOTE: incomplete (FeatureDrawer::Draw sets more state)
@@ -120,13 +121,13 @@ static void ResetOpaqueFeatureDrawState(unsigned int modelType, bool deferredPas
 
 // transparency-pass (reflection, ...) state management funcs
 static void SetupAlphaUnitDrawState(unsigned int modelType, bool deferredPass) {
-	unitDrawer->SetupForGhostDrawing();
+	unitDrawer->SetupAlphaDrawing(deferredPass);
 	unitDrawer->GetCloakedModelRenderer(modelType)->PushRenderState();
 }
 
 static void ResetAlphaUnitDrawState(unsigned int modelType, bool deferredPass) {
 	unitDrawer->GetCloakedModelRenderer(modelType)->PopRenderState();
-	unitDrawer->CleanUpGhostDrawing();
+	unitDrawer->ResetAlphaDrawing(deferredPass);
 }
 
 // NOTE: incomplete (FeatureDrawer::DrawFadeFeatures sets more state)
@@ -356,9 +357,9 @@ void LuaObjectDrawer::DrawDeferredPass(const CSolidObject* excludeObj, LuaObjTyp
 
 	// deferred pass must be executed with GLSL base shaders so
 	// bail early if the FFP state *is going to be* selected by
-	// SetupForUnitDrawing, and also if our shader-path happens
+	// SetupOpaqueDrawing, and also if our shader-path happens
 	// to be ARB instead (saves an FBO bind)
-	if (!unitDrawer->DrawDeferredSupported())
+	if (!(unitDrawer->GetWantedDrawerState())->CanDrawDeferred())
 		return;
 
 	geomBuffer->Bind();

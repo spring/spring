@@ -48,9 +48,13 @@ CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm): smfMap(rm)
 
 CSMFGroundTextures::~CSMFGroundTextures()
 {
-	for (int i = 0; i < smfMap->numBigTexX * smfMap->numBigTexY; ++i) {
+	const int nbtx = (mapDims.mapx / CSMFReadMap::bigSquareSize);
+	const int nbty = (mapDims.mapy / CSMFReadMap::bigSquareSize);
+
+	for (int i = 0; i < (nbtx * nbtx); ++i) {
 		if (!squares[i].luaTexture) {
 			glDeleteTextures(1, &squares[i].textureID);
+			squares[i].textureID = 0;
 		}
 	}
 }

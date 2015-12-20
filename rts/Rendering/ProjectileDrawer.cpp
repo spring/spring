@@ -595,7 +595,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	Update();
 
 	{
-		unitDrawer->SetupForUnitDrawing(false);
+		unitDrawer->SetupOpaqueDrawing(false);
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			modelRenderers[modelType]->PushRenderState();
@@ -603,7 +603,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 			modelRenderers[modelType]->PopRenderState();
 		}
 
-		unitDrawer->CleanUpUnitDrawing(false);
+		unitDrawer->ResetOpaqueDrawing(false);
 
 		// note: model-less projectiles are NOT drawn by this call but
 		// only z-sorted (if the projectiles indicate they want to be)

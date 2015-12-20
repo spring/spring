@@ -172,7 +172,7 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	unitDrawerStates[DRAWER_STATE_SSP] = IUnitDrawerState::GetInstance(globalRendering->haveARB, globalRendering->haveGLSL);
 	unitDrawerStates[DRAWER_STATE_FFP] = IUnitDrawerState::GetInstance(                   false,                     false);
 
-	// also set in ::SetupForUnitDrawing, but SunChanged can be
+	// also set in ::SetupOpaqueDrawing, but SunChanged can be
 	// called first if DynamicSun is enabled --> must be non-NULL
 	unitDrawerStates[DRAWER_STATE_SEL] = unitDrawerStates[DRAWER_STATE_FFP];
 
@@ -311,7 +311,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 
 void CUnitDrawer::DrawOpaquePass(const CUnit* excludeUnit, bool deferredPass, bool drawReflection, bool drawRefraction)
 {
-	SetupForUnitDrawing(deferredPass);
+	SetupOpaqueDrawing(deferredPass);
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		opaqueModelRenderers[modelType]->PushRenderState();
@@ -322,7 +322,7 @@ void CUnitDrawer::DrawOpaquePass(const CUnit* excludeUnit, bool deferredPass, bo
 	// not true during DynWater::DrawRefraction
 	// assert(drawReflection == water->DrawReflectionPass());
 
-	CleanUpUnitDrawing(deferredPass);
+	ResetOpaqueDrawing(deferredPass);
 
 	// draw all custom'ed units that were bypassed in the loop above
 	LuaObjectDrawer::SetDrawPassGlobalLODFactor(LUAOBJ_UNIT);
@@ -624,18 +624,10 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 
 
 
-void CUnitDrawer::SetupForGhostDrawing() const
+void CUnitDrawer::SetupAlphaDrawing(bool deferredPass)
 {
-	glEnable(GL_LIGHTING); // Give faded objects same appearance as regular
-	glLightfv(GL_LIGHT1, GL_POSITION, sky->GetLight()->GetLightDir());
-	glEnable(GL_LIGHT1);
-
-	SetupBasicS3OTexture0();
-	SetupBasicS3OTexture1(); // This also sets up the transparency
-
-	static const float cols[] = {1.0f, 1.0f, 1.0f, 1.0f};
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, cols);
-	glColor3f(1.0f, 1.0f, 1.0f);
+	unitDrawerStates[DRAWER_STATE_SEL] = unitDrawerStates[advShading];
+	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass && false);
 
 	glActiveTexture(GL_TEXTURE0);
 	glEnable(GL_TEXTURE_2D);
@@ -648,20 +640,12 @@ void CUnitDrawer::SetupForGhostDrawing() const
 	glDepthMask(GL_FALSE);
 }
 
-void CUnitDrawer::CleanUpGhostDrawing() const
+void CUnitDrawer::ResetAlphaDrawing(bool deferredPass) const
 {
 	glPopAttrib();
 	glDisable(GL_TEXTURE_2D);
 
-	// clean up s3o drawing stuff
-	// reset texture1 state
-	CleanupBasicS3OTexture1();
-
-	// reset texture0 state
-	CleanupBasicS3OTexture0();
-
-	glDisable(GL_LIGHTING);
-	glDisable(GL_LIGHT1);
+	unitDrawerStates[DRAWER_STATE_SEL]->Disable(this, deferredPass && false);
 }
 
 
@@ -669,37 +653,31 @@ void CUnitDrawer::CleanUpGhostDrawing() const
 void CUnitDrawer::DrawCloakedUnits(bool disableAdvShading)
 {
 	const bool oldAdvShading = advShading;
+
 	// don't use shaders if shadows are enabled (WHY?)
-	// also not safe: should set state instance to FFP
-	advShading = advShading && !disableAdvShading;
-
-	if (advShading) {
-		SetupForUnitDrawing(false);
-		glDisable(GL_ALPHA_TEST);
-	} else {
-		SetupForGhostDrawing();
-	}
-
-	glColor4f(1.0f, 1.0f, 1.0f, cloakAlpha);
+	SetUseAdvShading(advShading && !disableAdvShading);
+	SetupOpaqueAlphaDrawing(false);
 
 	{
+		glColor4f(1.0f, 1.0f, 1.0f, cloakAlpha);
+
+		if (UseAdvShading())
+			glDisable(GL_ALPHA_TEST);
+
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			cloakedModelRenderers[modelType]->PushRenderState();
 			DrawCloakedUnitsHelper(modelType);
 			cloakedModelRenderers[modelType]->PopRenderState();
 		}
 
-		if (advShading) {
-			CleanUpUnitDrawing(false);
+		if (UseAdvShading())
 			glEnable(GL_ALPHA_TEST);
-		} else {
-			CleanUpGhostDrawing();
-		}
 
-		advShading = oldAdvShading;
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	}
 
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	ResetOpaqueAlphaDrawing(false);
+	SetUseAdvShading(oldAdvShading);
 
 	LuaObjectDrawer::SetDrawPassGlobalLODFactor(LUAOBJ_UNIT);
 	LuaObjectDrawer::DrawAlphaMaterialObjects(LUAOBJ_UNIT, false);
@@ -876,7 +854,25 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 
 
 
-void CUnitDrawer::SetupForUnitDrawing(bool deferredPass)
+void CUnitDrawer::SetupOpaqueAlphaDrawing(bool deferredPass)
+{
+	switch (int(UseAdvShading())) {
+		case 0: { SetupAlphaDrawing(deferredPass); } break;
+		case 1: { SetupOpaqueDrawing(deferredPass); } break;
+		default: {} break;
+	}
+}
+
+void CUnitDrawer::ResetOpaqueAlphaDrawing(bool deferredPass)
+{
+	switch (int(UseAdvShading())) {
+		case 0: { ResetAlphaDrawing(deferredPass); } break;
+		case 1: { ResetOpaqueDrawing(deferredPass); } break;
+		default: {} break;
+	}
+}
+
+void CUnitDrawer::SetupOpaqueDrawing(bool deferredPass)
 {
 	glCullFace(GL_BACK);
 	glEnable(GL_CULL_FACE);
@@ -885,17 +881,18 @@ void CUnitDrawer::SetupForUnitDrawing(bool deferredPass)
 	glEnable(GL_ALPHA_TEST);
 
 	// pick base shaders (ARB/GLSL) or FFP; not used by custom-material models
-	unitDrawerStates[DRAWER_STATE_SEL] = unitDrawerStates[ int(unitDrawerStates[DRAWER_STATE_SSP]->CanEnable(this)) ];
+	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState());
 	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass);
 
 	// NOTE:
 	//   when deferredPass is true we MUST be able to use the SSP render-state
 	//   all calling code (reached from DrawOpaquePass(deferred=true)) should
 	//   ensure this is the case
-	assert(!deferredPass || unitDrawerStates[DRAWER_STATE_SEL] == unitDrawerStates[DRAWER_STATE_SSP]);
+	assert(advShading);
+	assert(!deferredPass || unitDrawerStates[DRAWER_STATE_SEL]->CanDrawDeferred());
 }
 
-void CUnitDrawer::CleanUpUnitDrawing(bool deferredPass) const
+void CUnitDrawer::ResetOpaqueDrawing(bool deferredPass) const
 {
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_ALPHA_TEST);
@@ -903,15 +900,11 @@ void CUnitDrawer::CleanUpUnitDrawing(bool deferredPass) const
 	unitDrawerStates[DRAWER_STATE_SEL]->Disable(this, deferredPass);
 }
 
-
-bool CUnitDrawer::DrawDeferredSupported() const {
-	if (!unitDrawerStates[DRAWER_STATE_SSP]->CanEnable(this))
-		return false;
-	if (!unitDrawerStates[DRAWER_STATE_SSP]->CanDrawDeferred())
-		return false;
-
-	return true;
+const IUnitDrawerState* CUnitDrawer::GetWantedDrawerState() const
+{
+	return unitDrawerStates[ (unitDrawerStates[DRAWER_STATE_SSP]->CanEnable(this)) ];
 }
+
 
 
 void CUnitDrawer::SetTeamColour(int team, float alpha) const
@@ -1006,7 +999,7 @@ bool CUnitDrawer::DrawIndividualPreCommon(const CUnit* unit)
 	globalRendering->drawdebug = false;
 
 	// set the full default state
-	SetupForUnitDrawing(false);
+	SetupOpaqueDrawing(false);
 	opaqueModelRenderers[MDL_TYPE(unit)]->PushRenderState();
 
 	BindModelTypeTexture(unit);
@@ -1018,7 +1011,7 @@ bool CUnitDrawer::DrawIndividualPreCommon(const CUnit* unit)
 void CUnitDrawer::DrawIndividualPostCommon(const CUnit* unit, bool origDrawDebug)
 {
 	opaqueModelRenderers[MDL_TYPE(unit)]->PopRenderState();
-	CleanUpUnitDrawing(false);
+	ResetOpaqueDrawing(false);
 
 	globalRendering->drawdebug = origDrawDebug;
 }
@@ -1063,7 +1056,6 @@ void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int team, float3 po
 {
 	const S3DModel* model = unitdef->LoadModel();
 
-	/* From SetupForGhostDrawing. */
 	glPushAttrib(GL_TEXTURE_BIT | GL_ENABLE_BIT);
 
 	assert(teamHandler->IsValidTeam(team));
@@ -1081,7 +1073,6 @@ void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int team, float3 po
 
 	glActiveTexture(GL_TEXTURE0);
 
-	/* From SetupForGhostDrawing. */
 	glDepthMask(GL_FALSE);
 	glDisable(GL_CULL_FACE); /* Leave out face culling, as 3DO and 3DO translucents does. */
 	glEnable(GL_BLEND);
@@ -1105,7 +1096,6 @@ void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int team, float3 po
 	// reset texture0 state
 	CleanupBasicS3OTexture0();
 
-	/* From CleanUpGhostDrawing. */
 	glPopAttrib();
 	glDisable(GL_TEXTURE_2D);
 	glDepthMask(GL_TRUE);

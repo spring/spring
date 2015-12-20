@@ -24,7 +24,7 @@ enum {
 
 struct ISMFRenderState {
 public:
-	static ISMFRenderState* GetInstance(bool haveARB, bool haveGLSL);
+	static ISMFRenderState* GetInstance(bool haveARB, bool haveGLSL, bool luaShader);
 	static void FreeInstance(ISMFRenderState* state) { delete state; }
 
 	virtual ~ISMFRenderState() {}
@@ -32,14 +32,14 @@ public:
 		const CSMFGroundDrawer* smfGroundDrawer,
 		const LuaMapShaderData* luaMapShaderData
 	) = 0;
-	virtual void Kill(bool luaShader) = 0;
+	virtual void Kill() = 0;
 
 	virtual bool HasValidShader(const DrawPass::e& drawPass) const = 0;
 	virtual bool CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const = 0;
 	virtual bool CanDrawDeferred() const = 0;
 
-	virtual void Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass, bool luaShader) = 0;
-	virtual void Disable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass, bool luaShader) = 0;
+	virtual void Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass) = 0;
+	virtual void Disable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass) = 0;
 
 	virtual void SetSquareTexGen(const int sqx, const int sqy) const = 0;
 	virtual void SetCurrentShader(const DrawPass::e& drawPass) = 0;
@@ -55,14 +55,14 @@ public:
 		const CSMFGroundDrawer* smfGroundDrawer,
 		const LuaMapShaderData* luaMapShaderData
 	) { return false; }
-	void Kill(bool luaShader) {}
+	void Kill() {}
 
 	bool HasValidShader(const DrawPass::e& drawPass) const { return false; }
 	bool CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const;
 	bool CanDrawDeferred() const { return false; }
 
-	void Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass, bool luaShader);
-	void Disable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass, bool luaShader);
+	void Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass);
+	void Disable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass);
 
 	void SetSquareTexGen(const int sqx, const int sqy) const;
 	void SetCurrentShader(const DrawPass::e& drawPass) {}
@@ -76,14 +76,14 @@ public:
 		const CSMFGroundDrawer* smfGroundDrawer,
 		const LuaMapShaderData* luaMapShaderData
 	);
-	void Kill(bool luaShader);
+	void Kill();
 
 	bool HasValidShader(const DrawPass::e& drawPass) const;
 	bool CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const;
 	bool CanDrawDeferred() const { return false; }
 
-	void Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass, bool luaShader);
-	void Disable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass, bool luaShader);
+	void Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass);
+	void Disable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass);
 
 	void SetSquareTexGen(const int sqx, const int sqy) const;
 	void SetCurrentShader(const DrawPass::e& drawPass);
@@ -107,18 +107,21 @@ private:
 
 struct SMFRenderStateGLSL: public ISMFRenderState {
 public:
+	SMFRenderStateGLSL(bool luaShaders): useLuaShaders(luaShaders) {
+	}
+
 	bool Init(
 		const CSMFGroundDrawer* smfGroundDrawer,
 		const LuaMapShaderData* luaMapShaderData
 	);
-	void Kill(bool luaShader);
+	void Kill();
 
 	bool HasValidShader(const DrawPass::e& drawPass) const;
 	bool CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const;
 	bool CanDrawDeferred() const { return (HasValidShader(DrawPass::TerrainDeferred)); }
 
-	void Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass, bool luaShader);
-	void Disable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass, bool luaShader);
+	void Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass);
+	void Disable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass);
 
 	void SetSquareTexGen(const int sqx, const int sqy) const;
 	void SetCurrentShader(const DrawPass::e& drawPass);
@@ -136,6 +139,9 @@ private:
 	// [1] := deferred version (not used unless AllowDeferredMapRendering)
 	// [2] := currently active GLSL shader {0, 1}
 	Shader::IProgramObject* glslShaders[GLSL_SHADER_COUNT];
+
+	// if true, shader programs for this state are Lua-defined
+	bool useLuaShaders;
 };
 
 #endif

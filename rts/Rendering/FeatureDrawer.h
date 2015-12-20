@@ -33,7 +33,7 @@ public:
 	void Draw();
 	void DrawOpaquePass(bool deferredPass, bool drawReflection, bool drawRefraction);
 	void DrawShadowPass();
-	void DrawFadeFeatures(bool noAdvShading = false);
+	void DrawFadeFeatures(bool disableAdvShading = false);
 
 	void DrawFeatureNoTrans(const CFeature* feature, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
 	void DrawFeature(const CFeature*, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);

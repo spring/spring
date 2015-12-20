@@ -288,7 +288,7 @@ void CFeatureDrawer::Draw()
 
 void CFeatureDrawer::DrawOpaquePass(bool deferredPass, bool, bool)
 {
-	unitDrawer->SetupForUnitDrawing(deferredPass);
+	unitDrawer->SetupOpaqueDrawing(deferredPass);
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		// arbitrarily pick first proxy to prepare state
@@ -297,7 +297,7 @@ void CFeatureDrawer::DrawOpaquePass(bool deferredPass, bool, bool)
 		modelRenderers[0].GetRenderer(modelType)->PopRenderState();
 	}
 
-	unitDrawer->CleanUpUnitDrawing(deferredPass);
+	unitDrawer->ResetOpaqueDrawing(deferredPass);
 
 	// draw all custom'ed features that were bypassed in the loop above
 	LuaObjectDrawer::SetDrawPassGlobalLODFactor(LUAOBJ_FEATURE);
@@ -420,7 +420,7 @@ bool CFeatureDrawer::DrawIndividualPreCommon(const CFeature* feature)
 	globalRendering->drawdebug = false;
 
 	// set the full default state
-	unitDrawer->SetupForUnitDrawing(false);
+	unitDrawer->SetupOpaqueDrawing(false);
 	modelRenderers[0].GetRenderer(MDL_TYPE(feature))->PushRenderState();
 
 	CUnitDrawer::BindModelTypeTexture(feature);
@@ -432,7 +432,7 @@ bool CFeatureDrawer::DrawIndividualPreCommon(const CFeature* feature)
 void CFeatureDrawer::DrawIndividualPostCommon(const CFeature* feature, bool origDrawDebug)
 {
 	modelRenderers[0].GetRenderer(MDL_TYPE(feature))->PopRenderState();
-	unitDrawer->CleanUpUnitDrawing(false);
+	unitDrawer->ResetOpaqueDrawing(false);
 
 	globalRendering->drawdebug = origDrawDebug;
 }
@@ -477,18 +477,13 @@ static void SetFeatureAlphaMaterialFFP(const CFeature* f, bool set)
 }
 
 
-void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
+void CFeatureDrawer::DrawFadeFeatures(bool disableAdvShading)
 {
 	const bool oldAdvShading = unitDrawer->UseAdvShading();
 
 	{
-		unitDrawer->SetUseAdvShading(unitDrawer->UseAdvShading() && !noAdvShading);
-
-		if (unitDrawer->UseAdvShading()) {
-			unitDrawer->SetupForUnitDrawing(false);
-		} else {
-			unitDrawer->SetupForGhostDrawing();
-		}
+		unitDrawer->SetUseAdvShading(unitDrawer->UseAdvShading() && !disableAdvShading);
+		unitDrawer->SetupOpaqueAlphaDrawing(false);
 
 		glPushAttrib(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glDepthMask(GL_TRUE);
@@ -508,12 +503,7 @@ void CFeatureDrawer::DrawFadeFeatures(bool noAdvShading)
 		glDisable(GL_FOG);
 		glPopAttrib();
 
-		if (unitDrawer->UseAdvShading()) {
-			unitDrawer->CleanUpUnitDrawing(false);
-		} else {
-			unitDrawer->CleanUpGhostDrawing();
-		}
-
+		unitDrawer->ResetOpaqueAlphaDrawing(false);
 		unitDrawer->SetUseAdvShading(oldAdvShading);
 	}
 

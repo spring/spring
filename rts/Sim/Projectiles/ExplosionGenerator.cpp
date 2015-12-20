@@ -186,24 +186,26 @@ CExplosionGeneratorHandler::CExplosionGeneratorHandler()
 	explosionGenerators.push_back(new CStdExplosionGenerator()); // id=0
 	explosionGenerators[0]->SetGeneratorID(EXPGEN_ID_STANDARD);
 
-	exploParser = NULL;
-	aliasParser = NULL;
-	explTblRoot = NULL;
+	exploParser = nullptr;
+	aliasParser = nullptr;
+	explTblRoot = nullptr;
 
 	ParseExplosionTables();
 }
 
 CExplosionGeneratorHandler::~CExplosionGeneratorHandler()
 {
-	delete exploParser; exploParser = NULL;
-	delete aliasParser; aliasParser = NULL;
-	delete explTblRoot; explTblRoot = NULL;
+	SafeDelete(exploParser);
+	SafeDelete(aliasParser);
+	SafeDelete(explTblRoot);
 
-	delete explosionGenerators[0];
+	// delete CStdExplGen
+	SafeDelete(explosionGenerators[0]);
 
 	for (unsigned int n = 1; n < explosionGenerators.size(); n++) {
 		creg::Class* cls = explosionGenerators[n]->GetClass();
 		cls->DeleteInstance(explosionGenerators[n]);
+		explosionGenerators[n] = nullptr;
 	}
 
 	explosionGenerators.clear();
