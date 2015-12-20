@@ -13,7 +13,6 @@ class CSMFGroundTextures: public CBaseGroundTextures
 {
 public:
 	CSMFGroundTextures(CSMFReadMap* rm);
-	~CSMFGroundTextures();
 
 	void DrawUpdate();
 	bool SetSquareLuaTexture(int texSquareX, int texSquareY, int texID);
@@ -34,9 +33,12 @@ protected:
 
 private:
 	struct GroundSquare {
+		~GroundSquare();
+
 		unsigned int texLevel;
 		unsigned int textureID;
 		unsigned int lastBoundFrame;
+
 		bool luaTexture;
 	};
 

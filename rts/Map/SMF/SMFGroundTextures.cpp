@@ -39,24 +39,20 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_SMF_GROUND_TEXTURES)
 #define LOG_SECTION_CURRENT LOG_SECTION_SMF_GROUND_TEXTURES
 
 
+CSMFGroundTextures::GroundSquare::~GroundSquare()
+{
+	if (!luaTexture) {
+		glDeleteTextures(1, &textureID);
+		textureID = 0;
+	}
+}
+
+
 CSMFGroundTextures::CSMFGroundTextures(CSMFReadMap* rm): smfMap(rm)
 {
 	LoadTiles(smfMap->GetFile());
 	LoadSquareTextures(3);
 	ConvolveHeightMap(mapDims.mapx, 1);
-}
-
-CSMFGroundTextures::~CSMFGroundTextures()
-{
-	const int nbtx = (mapDims.mapx / CSMFReadMap::bigSquareSize);
-	const int nbty = (mapDims.mapy / CSMFReadMap::bigSquareSize);
-
-	for (int i = 0; i < (nbtx * nbtx); ++i) {
-		if (!squares[i].luaTexture) {
-			glDeleteTextures(1, &squares[i].textureID);
-			squares[i].textureID = 0;
-		}
-	}
 }
 
 void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
