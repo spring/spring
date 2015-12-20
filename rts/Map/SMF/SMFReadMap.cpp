@@ -35,17 +35,6 @@ CR_BIND_DERIVED(CSMFReadMap, CReadMap, (""))
 CSMFReadMap::CSMFReadMap(std::string mapname)
 	: CEventClient("[CSMFReadMap]", 271950, false)
 	, file(mapname)
-	, detailTex(0)
-	, specularTex(0)
-	, shadingTex(0)
-	, normalsTex(0)
-	, minimapTex(0)
-	, splatDetailTex(0)
-	, splatDistrTex(0)
-	, skyReflectModTex(0)
-	, blendNormalsTex(0)
-	, lightEmissionTex(0)
-	, parallaxHeightTex(0)
 	, groundDrawer(NULL)
 {
 	loadscreen->SetLoadMessage("Loading SMF");
@@ -91,19 +80,21 @@ CSMFReadMap::~CSMFReadMap()
 {
 	SafeDelete(groundDrawer);
 
-	glDeleteTextures(1, &detailTex        );
-	glDeleteTextures(1, &specularTex      );
-	glDeleteTextures(1, &minimapTex       );
-	glDeleteTextures(1, &shadingTex       );
-	glDeleteTextures(1, &normalsTex       );
-	glDeleteTextures(1, &splatDetailTex   );
-	glDeleteTextures(1, &splatDistrTex    );
-	glDeleteTextures(1, &grassShadingTex  );
-	glDeleteTextures(1, &skyReflectModTex );
-	glDeleteTextures(1, &blendNormalsTex  );
-	glDeleteTextures(1, &lightEmissionTex );
-	glDeleteTextures(1, &parallaxHeightTex);
-	glDeleteTextures(NUM_SPLAT_DETAIL_NORMALS, &splatNormalTextures[0]);
+	detailTex.DeleteTexture();
+	specularTex.DeleteTexture();
+	minimapTex.DeleteTexture();
+	shadingTex.DeleteTexture();
+	normalsTex.DeleteTexture();
+	splatDetailTex.DeleteTexture();
+	splatDistrTex.DeleteTexture();
+	grassShadingTex.DeleteTexture();
+	skyReflectModTex.DeleteTexture();
+	blendNormalsTex.DeleteTexture();
+	lightEmissionTex.DeleteTexture();
+	parallaxHeightTex.DeleteTexture();
+	for (int i = 0; i < NUM_SPLAT_DETAIL_NORMALS; ++i) {
+		splatNormalTextures[i].DeleteTexture();
+	}
 }
 
 
@@ -165,8 +156,8 @@ void CSMFReadMap::LoadMinimap()
 	std::vector<unsigned char> minimapTexBuf(MINIMAP_SIZE, 0);
 	file.ReadMinimap(&minimapTexBuf[0]);
 
-	glGenTextures(1, &minimapTex);
-	glBindTexture(GL_TEXTURE_2D, minimapTex);
+	glGenTextures(1, &minimapTex.texID);
+	glBindTexture(GL_TEXTURE_2D, minimapTex.texID);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, MINIMAP_NUM_MIPMAP - 1);
@@ -311,8 +302,8 @@ void CSMFReadMap::CreateShadingTex()
 {
 	// the shading/normal texture buffers must have PO2 dimensions
 	// (excess elements that no vertices map into are left unused)
-	glGenTextures(1, &shadingTex);
-	glBindTexture(GL_TEXTURE_2D, shadingTex);
+	glGenTextures(1, &shadingTex.texID);
+	glBindTexture(GL_TEXTURE_2D, shadingTex.texID);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -345,8 +336,8 @@ void CSMFReadMap::CreateNormalTex()
 		normalTexSize.y = next_power_of_2(normalTexSize.y);
 	}
 
-	glGenTextures(1, &normalsTex);
-	glBindTexture(GL_TEXTURE_2D, normalsTex);
+	glGenTextures(1, &normalsTex.texID);
+	glBindTexture(GL_TEXTURE_2D, normalsTex.texID);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -526,7 +517,7 @@ void CSMFReadMap::UpdateNormalTexture(const SRectangle& update)
 			}
 		}
 
-		glBindTexture(GL_TEXTURE_2D, normalsTex);
+		glBindTexture(GL_TEXTURE_2D, normalsTex.texID);
 	#if (SSMF_UNCOMPRESSED_NORMALS == 1)
 		glTexSubImage2D(GL_TEXTURE_2D, 0, minx, minz, xsize, zsize, GL_RGBA, GL_FLOAT, &pixels[0]);
 	#else
@@ -573,7 +564,7 @@ void CSMFReadMap::UpdateShadingTexture(const SRectangle& update)
 		}
 
 		// redefine the texture subregion
-		glBindTexture(GL_TEXTURE_2D, shadingTex);
+		glBindTexture(GL_TEXTURE_2D, shadingTex.texID);
 		glTexSubImage2D(GL_TEXTURE_2D, 0, x1, y1, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, &pixels[0]);
 	}
 }
@@ -690,7 +681,7 @@ void CSMFReadMap::UpdateShadingTexture()
 		}
 
 		//FIXME use FBO and blend slowly new and old? (this way update rate could reduced even more -> saves CPU time)
-		glBindTexture(GL_TEXTURE_2D, shadingTex);
+		glBindTexture(GL_TEXTURE_2D, shadingTex.texID);
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, &shadingTexBuffer[0]);
 		return;
 	}
@@ -713,7 +704,7 @@ void CSMFReadMap::DrawMinimap() const
 
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, shadingTex);
+	glBindTexture(GL_TEXTURE_2D, shadingTex.texID);
 	// glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_PREVIOUS_ARB);
 	// glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_TEXTURE);
 	// glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_MODULATE);
@@ -722,7 +713,7 @@ void CSMFReadMap::DrawMinimap() const
 
 	glActiveTextureARB(GL_TEXTURE1_ARB);
 	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, minimapTex);
+	glBindTexture(GL_TEXTURE_2D, minimapTex.texID);
 	// glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
 	if (infoTextureHandler->IsEnabled()) {

@@ -118,6 +118,19 @@ public:
 };
 
 
+struct MapTexture
+{
+	unsigned int texID;
+	unsigned int texIDOrig;
+	bool isLuaTex;
+
+	MapTexture();
+	MapTexture(unsigned int texID);
+	unsigned int operator=(unsigned int newTexID);
+	void SetLuaTexture(unsigned int luaTexID);
+	void DeleteTexture();
+};
+
 
 enum {
 	// base textures
@@ -193,6 +206,7 @@ public:
 
 	virtual unsigned int GetTexture(unsigned int type, unsigned int num = 0) const { return 0; }
 	virtual int2 GetTextureSize(unsigned int type) const { return int2(0, 0); }
+	virtual void SetTexture(unsigned int texID, unsigned int type, unsigned int num = 0) { };
 
 
 	/// Draws the minimap in a quad (with extends: (0,0)-(1,1))
