@@ -184,22 +184,32 @@ void CSMFReadMap::CreateSpecularTex()
 	}
 
 	specularTex.SetRawTexture(specularTexBM.CreateTexture(false));
+	specularTexSize.x = specularTexBM.xsize;
+	specularTexSize.y = specularTexBM.ysize;
 
 	// no default 1x1 textures for these
 	if (skyReflectModTexBM.Load(mapInfo->smf.skyReflectModTexName)) {
 		skyReflectModTex.SetRawTexture(skyReflectModTexBM.CreateTexture(false));
+		skyReflectModTexSize.x = skyReflectModTexBM.xsize;
+		skyReflectModTexSize.y = skyReflectModTexBM.ysize;
 	}
 
 	if (blendNormalsTexBM.Load(mapInfo->smf.blendNormalsTexName)) {
 		blendNormalsTex.SetRawTexture(blendNormalsTexBM.CreateTexture(false));
+		blendNormalsTexSize.x = blendNormalsTexBM.xsize;
+		blendNormalsTexSize.y = blendNormalsTexBM.ysize;
 	}
 
 	if (lightEmissionTexBM.Load(mapInfo->smf.lightEmissionTexName)) {
 		lightEmissionTex.SetRawTexture(lightEmissionTexBM.CreateTexture(false));
+		lightEmissionTexSize.x = lightEmissionTexBM.xsize;
+		lightEmissionTexSize.y = lightEmissionTexBM.ysize;
 	}
 
 	if (parallaxHeightTexBM.Load(mapInfo->smf.parallaxHeightTexName)) {
 		parallaxHeightTex.SetRawTexture(parallaxHeightTexBM.CreateTexture(false));
+		parallaxHeightTexSize.x = parallaxHeightTexBM.xsize;
+		parallaxHeightTexSize.y = parallaxHeightTexBM.ysize;
 	}
 }
 
@@ -225,7 +235,11 @@ void CSMFReadMap::CreateSplatDetailTextures()
 	}
 
 	splatDetailTex.SetRawTexture(splatDetailTexBM.CreateTexture(true));
+	splatDetailTexSize.x = splatDetailTexBM.xsize;
+	splatDetailTexSize.y = splatDetailTexBM.ysize;
 	splatDistrTex.SetRawTexture(splatDistrTexBM.CreateTexture(true));
+	splatDistrTexSize.x = splatDistrTexBM.xsize;
+	splatDistrTexSize.y = splatDistrTexBM.ysize;
 
 	// only load the splat detail normals if any of them are defined and present
 	if (!haveSplatNormalDistribTexture)
@@ -247,6 +261,8 @@ void CSMFReadMap::CreateSplatDetailTextures()
 		}
 
 		splatNormalTextures[i].SetRawTexture(splatDetailNormalTextureBM.CreateTexture(true));
+		splatNormalTexturesSize[i].x = splatDetailNormalTextureBM.xsize;
+		splatNormalTexturesSize[i].y = splatDetailNormalTextureBM.ysize;
 	}
 
 }
@@ -271,6 +287,8 @@ void CSMFReadMap::CreateDetailTex()
 	}
 
 	detailTex.SetRawTexture(detailTexBM.CreateTexture(true));
+	detailTexSize.x = detailTexBM.xsize;
+	detailTexSize.y = detailTexBM.ysize;
 	if (anisotropy != 0.0f) {
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
 	}
@@ -308,11 +326,11 @@ void CSMFReadMap::CreateNormalTex()
 	}
 #endif
 
-	normalTexSize.x = mapDims.mapxp1;
-	normalTexSize.y = mapDims.mapyp1;
+	normalsTexSize.x = mapDims.mapxp1;
+	normalsTexSize.y = mapDims.mapyp1;
 	if (!globalRendering->supportNPOTs) {
-		normalTexSize.x = next_power_of_2(normalTexSize.x);
-		normalTexSize.y = next_power_of_2(normalTexSize.y);
+		normalsTexSize.x = next_power_of_2(normalsTexSize.x);
+		normalsTexSize.y = next_power_of_2(normalsTexSize.y);
 	}
 
 	glGenTextures(1, normalsTex.GetIDPtr());
@@ -322,9 +340,9 @@ void CSMFReadMap::CreateNormalTex()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 #if (SSMF_UNCOMPRESSED_NORMALS == 1)
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F_ARB, normalTexSize.x, normalTexSize.y, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F_ARB, normalsTexSize.x, normalsTexSize.y, 0, GL_RGBA, GL_FLOAT, NULL);
 #else
-	glTexImage2D(GL_TEXTURE_2D, 0, texFormat, normalTexSize.x, normalTexSize.y, 0, GL_LUMINANCE_ALPHA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, texFormat, normalsTexSize.x, normalsTexSize.y, 0, GL_LUMINANCE_ALPHA, GL_FLOAT, NULL);
 #endif
 }
 

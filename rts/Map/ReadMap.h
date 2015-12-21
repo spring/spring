@@ -219,7 +219,7 @@ public:
 	virtual unsigned int GetShadingTexture() const = 0;
 
 	virtual unsigned int GetTexture(unsigned int type, unsigned int num = 0) const { return 0; }
-	virtual int2 GetTextureSize(unsigned int type) const { return int2(0, 0); }
+	virtual int2 GetTextureSize(unsigned int type, unsigned int num = 0) const { return int2(0, 0); }
 
 	virtual void SetLuaTexture(unsigned int texID, unsigned int type, unsigned int num = 0) {}
 

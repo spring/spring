@@ -202,7 +202,7 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer, const Lua
 
 			glslShaders[n]->SetUniform("infoTexIntensityMul", 1.0f);
 
-			glslShaders[n]->SetUniform(  "normalTexGen", 1.0f / ((smfMap->normalTexSize.x - 1) * SQUARE_SIZE), 1.0f / ((smfMap->normalTexSize.y - 1) * SQUARE_SIZE));
+			glslShaders[n]->SetUniform(  "normalTexGen", 1.0f / ((smfMap->GetNormalsTexSize().x - 1) * SQUARE_SIZE), 1.0f / ((smfMap->GetNormalsTexSize().y - 1) * SQUARE_SIZE));
 			glslShaders[n]->SetUniform("specularTexGen", 1.0f / (mapDims.mapx     * SQUARE_SIZE), 1.0f / (mapDims.mapy     * SQUARE_SIZE));
 			glslShaders[n]->SetUniform(    "infoTexGen", 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE));
 
