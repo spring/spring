@@ -1487,7 +1487,7 @@ int LuaUnsyncedCtrl::SetMapShadingTexture(lua_State* L)
 	// convert type=LUATEX_* to MAP_*
 	luaTexData.type = texTypeEnum - LuaMatTexture::LUATEX_SMF_GRASS;
 	// MAP_SSMF_SPLAT_NORMAL_TEX needs a num
-	luaTexData.num = Clamp(luaL_optint(L, 3, 0), 0, CSMFReadMap::NUM_SPLAT_DETAIL_NORMALS);
+	luaTexData.num = luaL_optint(L, 3, 0);
 
 	// empty name causes a revert to default
 	if (!texName.empty()) {

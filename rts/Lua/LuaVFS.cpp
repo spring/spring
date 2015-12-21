@@ -19,7 +19,8 @@
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
-#include "../tools/pr-downloader/src/pr-downloader.h"
+/// #include "../tools/pr-downloader/src/pr-downloader.h"
+static char* CalcHash(const char*, unsigned, unsigned) { return NULL; }
 
 using std::min;
 
