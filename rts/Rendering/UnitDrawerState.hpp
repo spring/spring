@@ -3,7 +3,7 @@
 #ifndef UNITDRAWER_STATE_H
 #define UNITDRAWER_STATE_H
 
-#include <vector>
+#include <array>
 
 class CUnitDrawer;
 struct ISkyLight;
@@ -25,6 +25,7 @@ public:
 	static IUnitDrawerState* GetInstance(bool haveARB, bool haveGLSL);
 	static void FreeInstance(IUnitDrawerState* state) { delete state; }
 
+	IUnitDrawerState() { modelShaders.fill(nullptr); }
 	virtual ~IUnitDrawerState() {}
 
 	virtual bool Init(const CUnitDrawer*) { return false; }
@@ -70,7 +71,7 @@ protected:
 	void DisableTexturesCommon(const CUnitDrawer*) const;
 
 protected:
-	std::vector<Shader::IProgramObject*> modelShaders;
+	std::array<Shader::IProgramObject*, MODEL_SHADER_COUNT> modelShaders;
 };
 
 

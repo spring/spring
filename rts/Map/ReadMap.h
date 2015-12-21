@@ -135,12 +135,22 @@ public:
 	unsigned int* GetIDPtr() { return &texIDs[RAW_TEX_IDX]; }
 	unsigned int GetID() const { return texIDs[HasLuaTex()]; }
 
+	int2 GetSize() const { return texDims[HasLuaTex()]; }
+	int2 GetRawSize() const { return texDims[RAW_TEX_IDX]; }
+	int2 GetLuaSize() const { return texDims[LUA_TEX_IDX]; }
+
+	void SetSize(const int2 size) { texDims[HasLuaTex()] = size; }
+	void SetRawSize(const int2 size) { texDims[RAW_TEX_IDX] = size; }
+	void SetLuaSize(const int2 size) { texDims[LUA_TEX_IDX] = size; }
+
 	void SetRawTexture(unsigned int rawTexID) { texIDs[RAW_TEX_IDX] = rawTexID; }
 	void SetLuaTexture(unsigned int luaTexID) { texIDs[LUA_TEX_IDX] = luaTexID; }
 
 private:
 	// [RAW_TEX_IDX] := original, [LUA_TEX_IDX] := Lua-supplied
 	unsigned int texIDs[2];
+
+	int2 texDims[2];
 };
 
 

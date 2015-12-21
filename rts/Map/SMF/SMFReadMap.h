@@ -87,23 +87,28 @@ public:
 	int2 GetTextureSize(unsigned int type, unsigned int num = 0) const {
 		int2 size;
 
+		// TODO:
+		//   for now, always return the raw texture size even if HasLuaTex
+		//   this means any Lua-set textures must have the same dimensions
+		//   as their originals (not an unreasonable limitation except for
+		//   custom shaders)
 		switch (type) {
-			case MAP_BASE_GRASS_TEX: { size = int2(1024, 1024); } break;
-			case MAP_BASE_DETAIL_TEX: { size = detailTexSize; } break;
-			case MAP_BASE_MINIMAP_TEX: { size = int2(1024, 1024); } break;
-			case MAP_BASE_SHADING_TEX: { size = int2(mapDims.pwr2mapx, mapDims.pwr2mapy); } break;
-			case MAP_BASE_NORMALS_TEX: { size = normalsTexSize; } break;
+			case MAP_BASE_GRASS_TEX: { size = grassShadingTex.GetRawSize(); } break;
+			case MAP_BASE_DETAIL_TEX: { size = detailTex.GetRawSize(); } break;
+			case MAP_BASE_MINIMAP_TEX: { size = minimapTex.GetRawSize(); } break;
+			case MAP_BASE_SHADING_TEX: { size = shadingTex.GetRawSize(); } break;
+			case MAP_BASE_NORMALS_TEX: { size = normalsTex.GetRawSize(); } break;
 
-			case MAP_SSMF_NORMALS_TEX: { size = blendNormalsTexSize; } break;
-			case MAP_SSMF_SPECULAR_TEX: { size = specularTexSize; } break;
+			case MAP_SSMF_NORMALS_TEX: { size = blendNormalsTex.GetRawSize(); } break;
+			case MAP_SSMF_SPECULAR_TEX: { size = specularTex.GetRawSize(); } break;
 
-			case MAP_SSMF_SPLAT_DISTRIB_TEX: { size = splatDistrTexSize; } break;
-			case MAP_SSMF_SPLAT_DETAIL_TEX: { size = splatDetailTexSize; } break;
-			case MAP_SSMF_SPLAT_NORMAL_TEX: { size = splatNormalTexturesSize[num]; } break;
+			case MAP_SSMF_SPLAT_DISTRIB_TEX: { size = splatDistrTex.GetRawSize(); } break;
+			case MAP_SSMF_SPLAT_DETAIL_TEX: { size = splatDetailTex.GetRawSize(); } break;
+			case MAP_SSMF_SPLAT_NORMAL_TEX: { size = splatNormalTextures[num].GetRawSize(); } break;
 
-			case MAP_SSMF_SKY_REFLECTION_TEX: { size = skyReflectModTexSize; } break;
-			case MAP_SSMF_LIGHT_EMISSION_TEX: { size = lightEmissionTexSize; } break;
-			case MAP_SSMF_PARALLAX_HEIGHT_TEX: { size = parallaxHeightTexSize; } break;
+			case MAP_SSMF_SKY_REFLECTION_TEX: { size = skyReflectModTex.GetRawSize(); } break;
+			case MAP_SSMF_LIGHT_EMISSION_TEX: { size = lightEmissionTex.GetRawSize(); } break;
+			case MAP_SSMF_PARALLAX_HEIGHT_TEX: { size = parallaxHeightTex.GetRawSize(); } break;
 		}
 
 		return size;
@@ -128,8 +133,6 @@ public:
 	unsigned int GetLightEmissionTexture() const { return lightEmissionTex.GetID(); }
 	unsigned int GetParallaxHeightTexture() const { return parallaxHeightTex.GetID(); }
 
-	// TODO: This is the only Get?TexSize which has a public function. Incosistency?
-	int2 GetNormalsTexSize() const { return normalsTexSize; }
 public:
 	void DrawMinimap() const;
 	void GridVisibility(CCamera* cam, IQuadDrawer* cb, float maxDist, int quadSize, int extraSize = 0) override;
@@ -232,21 +235,6 @@ private:
 	MapTexture skyReflectModTex;      // modulates sky-reflection RGB intensities (must be the same size as specularTex)
 	MapTexture lightEmissionTex;
 	MapTexture parallaxHeightTex;
-
-	int2 detailTexSize;
-	int2 normalsTexSize;
-
-	int2 specularTexSize;
-	int2 blendNormalsTexSize;
-
-	int2 splatDistrTexSize;
-	int2 splatDetailTexSize;
-
-	int2 splatNormalTexturesSize[NUM_SPLAT_DETAIL_NORMALS];
-
-	int2 skyReflectModTexSize;
-	int2 lightEmissionTexSize;
-	int2 parallaxHeightTexSize;
 
 private:
 	int shadingTexUpdateProgress;

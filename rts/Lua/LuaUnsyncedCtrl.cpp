@@ -1499,31 +1499,15 @@ int LuaUnsyncedCtrl::SetMapShadingTexture(lua_State* L)
 		}
 	}
 
-	switch (texTypeEnum) {
-		case LuaMatTexture::LUATEX_SMF_GRASS:
-		case LuaMatTexture::LUATEX_SMF_DETAIL:
-		case LuaMatTexture::LUATEX_SMF_MINIMAP:
-		case LuaMatTexture::LUATEX_SMF_SHADING:
-		case LuaMatTexture::LUATEX_SMF_NORMALS:
+	if (texTypeEnum >= LuaMatTexture::LUATEX_SMF_GRASS && texTypeEnum <= LuaMatTexture::LUATEX_SSMF_PARALLAX) {
+		if (readMap != nullptr) {
+			// convert type=LUATEX_* to MAP_* (FIXME: MAP_SSMF_SPLAT_NORMAL_TEX needs a num)
+			readMap->SetLuaTexture(texID, texTypeEnum - LuaMatTexture::LUATEX_SMF_GRASS);
+		}
 
-		case LuaMatTexture::LUATEX_SSMF_NORMALS:
-		case LuaMatTexture::LUATEX_SSMF_SPECULAR:
-		case LuaMatTexture::LUATEX_SSMF_SDISTRIB:
-		case LuaMatTexture::LUATEX_SSMF_SDETAIL:
-		case LuaMatTexture::LUATEX_SSMF_SNORMALS:
-		case LuaMatTexture::LUATEX_SSMF_SKYREFL:
-		case LuaMatTexture::LUATEX_SSMF_EMISSION:
-		case LuaMatTexture::LUATEX_SSMF_PARALLAX: {
-			if (readMap != nullptr) {
-				// convert type=LUATEX_* to MAP_* (FIXME: MAP_SSMF_SPLAT_NORMAL_TEX needs a num)
-				readMap->SetLuaTexture(texID, texTypeEnum - LuaMatTexture::LUATEX_SMF_GRASS);
-			}
-
-			lua_pushboolean(L, true);
-		} break;
-		default: {
-			lua_pushboolean(L, false);
-		} break;
+		lua_pushboolean(L, true);
+	} else {
+		lua_pushboolean(L, false);
 	}
 
 	return 1;

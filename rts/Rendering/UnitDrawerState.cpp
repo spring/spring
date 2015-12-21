@@ -225,8 +225,6 @@ void UnitDrawerStateFFP::SetTeamColor(int team, float alpha) const {
 
 
 bool UnitDrawerStateARB::Init(const CUnitDrawer* ud) {
-	modelShaders.resize(MODEL_SHADER_COUNT, nullptr);
-
 	if (!globalRendering->haveARB) {
 		// not possible to do (ARB) shader-based model rendering
 		return false;
@@ -261,7 +259,7 @@ bool UnitDrawerStateARB::Init(const CUnitDrawer* ud) {
 }
 
 void UnitDrawerStateARB::Kill() {
-	modelShaders.clear();
+	modelShaders.fill(nullptr);
 	shaderHandler->ReleaseProgramObjects("[UnitDrawer]");
 }
 
@@ -327,8 +325,6 @@ void UnitDrawerStateARB::SetTeamColor(int team, float alpha) const {
 
 
 bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
-	modelShaders.resize(MODEL_SHADER_COUNT, nullptr);
-
 	if (!globalRendering->haveGLSL) {
 		// not possible to do (GLSL) shader-based model rendering
 		return false;
@@ -406,7 +402,7 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 }
 
 void UnitDrawerStateGLSL::Kill() {
-	modelShaders.clear();
+	modelShaders.fill(nullptr);
 	shaderHandler->ReleaseProgramObjects("[UnitDrawer]");
 }
 

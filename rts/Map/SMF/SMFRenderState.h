@@ -3,7 +3,7 @@
 #ifndef SMF_RENDERSTATE_H
 #define SMF_RENDERSTATE_H
 
-#include <cstring> // memset
+#include <array>
 #include "Map/MapDrawPassTypes.h"
 
 class CSMFGroundDrawer;
@@ -73,7 +73,7 @@ public:
 
 struct SMFRenderStateARB: public ISMFRenderState {
 public:
-	SMFRenderStateARB() { memset(&arbShaders[0], 0, sizeof(arbShaders)); }
+	SMFRenderStateARB() { arbShaders.fill(nullptr); }
 	~SMFRenderStateARB() { Kill(); }
 
 	bool Init(
@@ -105,13 +105,13 @@ private:
 	// [1] := shader (V+F) for the DynamicWater reflection pass
 	// [2] := shader (V+F) for the DynamicWater refraction pass
 	// [3] := currently active ARB shader {0, 1, 2}
-	Shader::IProgramObject* arbShaders[ARB_SHADER_COUNT];
+	std::array<Shader::IProgramObject*, ARB_SHADER_COUNT> arbShaders;
 };
 
 
 struct SMFRenderStateGLSL: public ISMFRenderState {
 public:
-	SMFRenderStateGLSL(bool lua): useLuaShaders(lua) { memset(&glslShaders[0], 0, sizeof(glslShaders)); }
+	SMFRenderStateGLSL(bool lua): useLuaShaders(lua) { glslShaders.fill(nullptr); }
 	~SMFRenderStateGLSL() { Kill(); }
 
 	bool Init(
@@ -142,7 +142,7 @@ private:
 	// [0] := standard version
 	// [1] := deferred version (not used unless AllowDeferredMapRendering)
 	// [2] := currently active GLSL shader {0, 1}
-	Shader::IProgramObject* glslShaders[GLSL_SHADER_COUNT];
+	std::array<Shader::IProgramObject*, GLSL_SHADER_COUNT> glslShaders;
 
 	// if true, shader programs for this state are Lua-defined
 	bool useLuaShaders;

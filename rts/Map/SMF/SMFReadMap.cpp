@@ -126,14 +126,18 @@ void CSMFReadMap::LoadHeightMap()
 void CSMFReadMap::LoadMinimap()
 {
 	CBitmap minimapTexBM;
+
 	if (minimapTexBM.Load(mapInfo->smf.minimapTexName)) {
 		minimapTex.SetRawTexture(minimapTexBM.CreateTexture(false));
+		minimapTex.SetRawSize(int2(minimapTexBM.xsize, minimapTexBM.ysize));
 		return;
 	}
 
 	// the minimap is a static texture
 	std::vector<unsigned char> minimapTexBuf(MINIMAP_SIZE, 0);
 	file.ReadMinimap(&minimapTexBuf[0]);
+	// default; only valid for mip 0
+	minimapTex.SetRawSize(int2(1024, 1024));
 
 	glGenTextures(1, minimapTex.GetIDPtr());
 	glBindTexture(GL_TEXTURE_2D, minimapTex.GetID());
@@ -167,9 +171,8 @@ void CSMFReadMap::InitializeWaterHeightColors()
 
 void CSMFReadMap::CreateSpecularTex()
 {
-	if (!haveSpecularTexture) {
+	if (!haveSpecularTexture)
 		return;
-	}
 
 	CBitmap specularTexBM;
 	CBitmap skyReflectModTexBM;
@@ -180,36 +183,31 @@ void CSMFReadMap::CreateSpecularTex()
 	if (!specularTexBM.Load(mapInfo->smf.specularTexName)) {
 		// maps wants specular lighting, but no moderation
 		specularTexBM.channels = 4;
-		specularTexBM.AllocDummy(SColor(255,255,255,255));
+		specularTexBM.AllocDummy(SColor(255, 255, 255, 255));
 	}
 
 	specularTex.SetRawTexture(specularTexBM.CreateTexture(false));
-	specularTexSize.x = specularTexBM.xsize;
-	specularTexSize.y = specularTexBM.ysize;
+	specularTex.SetRawSize(int2(specularTexBM.xsize, specularTexBM.ysize));
 
 	// no default 1x1 textures for these
 	if (skyReflectModTexBM.Load(mapInfo->smf.skyReflectModTexName)) {
 		skyReflectModTex.SetRawTexture(skyReflectModTexBM.CreateTexture(false));
-		skyReflectModTexSize.x = skyReflectModTexBM.xsize;
-		skyReflectModTexSize.y = skyReflectModTexBM.ysize;
+		skyReflectModTex.SetRawSize(int2(skyReflectModTexBM.xsize, skyReflectModTexBM.ysize));
 	}
 
 	if (blendNormalsTexBM.Load(mapInfo->smf.blendNormalsTexName)) {
 		blendNormalsTex.SetRawTexture(blendNormalsTexBM.CreateTexture(false));
-		blendNormalsTexSize.x = blendNormalsTexBM.xsize;
-		blendNormalsTexSize.y = blendNormalsTexBM.ysize;
+		blendNormalsTex.SetRawSize(int2(blendNormalsTexBM.xsize, blendNormalsTexBM.ysize));
 	}
 
 	if (lightEmissionTexBM.Load(mapInfo->smf.lightEmissionTexName)) {
 		lightEmissionTex.SetRawTexture(lightEmissionTexBM.CreateTexture(false));
-		lightEmissionTexSize.x = lightEmissionTexBM.xsize;
-		lightEmissionTexSize.y = lightEmissionTexBM.ysize;
+		lightEmissionTex.SetRawSize(int2(lightEmissionTexBM.xsize, lightEmissionTexBM.ysize));
 	}
 
 	if (parallaxHeightTexBM.Load(mapInfo->smf.parallaxHeightTexName)) {
 		parallaxHeightTex.SetRawTexture(parallaxHeightTexBM.CreateTexture(false));
-		parallaxHeightTexSize.x = parallaxHeightTexBM.xsize;
-		parallaxHeightTexSize.y = parallaxHeightTexBM.ysize;
+		parallaxHeightTex.SetRawSize(int2(parallaxHeightTexBM.xsize, parallaxHeightTexBM.ysize));
 	}
 }
 
@@ -235,11 +233,10 @@ void CSMFReadMap::CreateSplatDetailTextures()
 	}
 
 	splatDetailTex.SetRawTexture(splatDetailTexBM.CreateTexture(true));
-	splatDetailTexSize.x = splatDetailTexBM.xsize;
-	splatDetailTexSize.y = splatDetailTexBM.ysize;
+	splatDetailTex.SetRawSize(int2(splatDetailTexBM.xsize, splatDetailTexBM.ysize));
+
 	splatDistrTex.SetRawTexture(splatDistrTexBM.CreateTexture(true));
-	splatDistrTexSize.x = splatDistrTexBM.xsize;
-	splatDistrTexSize.y = splatDistrTexBM.ysize;
+	splatDistrTex.SetRawSize(int2(splatDistrTexBM.xsize, splatDistrTexBM.ysize));
 
 	// only load the splat detail normals if any of them are defined and present
 	if (!haveSplatNormalDistribTexture)
@@ -261,8 +258,7 @@ void CSMFReadMap::CreateSplatDetailTextures()
 		}
 
 		splatNormalTextures[i].SetRawTexture(splatDetailNormalTextureBM.CreateTexture(true));
-		splatNormalTexturesSize[i].x = splatDetailNormalTextureBM.xsize;
-		splatNormalTexturesSize[i].y = splatDetailNormalTextureBM.ysize;
+		splatNormalTextures[i].SetRawSize(int2(splatDetailNormalTextureBM.xsize, splatDetailNormalTextureBM.ysize));
 	}
 
 }
@@ -271,10 +267,12 @@ void CSMFReadMap::CreateSplatDetailTextures()
 void CSMFReadMap::CreateGrassTex()
 {
 	grassShadingTex.SetRawTexture(minimapTex.GetID());
+	grassShadingTex.SetRawSize(int2(1024, 1024));
 
 	CBitmap grassShadingTexBM;
 	if (grassShadingTexBM.Load(mapInfo->smf.grassShadingTexName)) {
 		grassShadingTex.SetRawTexture(grassShadingTexBM.CreateTexture(true));
+		grassShadingTex.SetRawSize(int2(grassShadingTexBM.xsize, grassShadingTexBM.ysize));
 	}
 }
 
@@ -282,13 +280,14 @@ void CSMFReadMap::CreateGrassTex()
 void CSMFReadMap::CreateDetailTex()
 {
 	CBitmap detailTexBM;
+
 	if (!detailTexBM.Load(mapInfo->smf.detailTexName)) {
 		throw content_error("Could not load detail texture from file " + mapInfo->smf.detailTexName);
 	}
 
 	detailTex.SetRawTexture(detailTexBM.CreateTexture(true));
-	detailTexSize.x = detailTexBM.xsize;
-	detailTexSize.y = detailTexBM.ysize;
+	detailTex.SetRawSize(int2(detailTexBM.xsize, detailTexBM.ysize));
+
 	if (anisotropy != 0.0f) {
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
 	}
@@ -297,6 +296,8 @@ void CSMFReadMap::CreateDetailTex()
 
 void CSMFReadMap::CreateShadingTex()
 {
+	shadingTex.SetRawSize(int2(mapDims.pwr2mapx, mapDims.pwr2mapy));
+
 	// the shading/normal texture buffers must have PO2 dimensions
 	// (excess elements that no vertices map into are left unused)
 	glGenTextures(1, shadingTex.GetIDPtr());
@@ -326,11 +327,10 @@ void CSMFReadMap::CreateNormalTex()
 	}
 #endif
 
-	normalsTexSize.x = mapDims.mapxp1;
-	normalsTexSize.y = mapDims.mapyp1;
+	normalsTex.SetRawSize(int2(mapDims.mapxp1, mapDims.mapyp1));
+
 	if (!globalRendering->supportNPOTs) {
-		normalsTexSize.x = next_power_of_2(normalsTexSize.x);
-		normalsTexSize.y = next_power_of_2(normalsTexSize.y);
+		normalsTex.SetRawSize(int2(next_power_of_2(mapDims.mapxp1), next_power_of_2(mapDims.mapyp1)));
 	}
 
 	glGenTextures(1, normalsTex.GetIDPtr());
@@ -340,9 +340,9 @@ void CSMFReadMap::CreateNormalTex()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 #if (SSMF_UNCOMPRESSED_NORMALS == 1)
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F_ARB, normalsTexSize.x, normalsTexSize.y, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F_ARB, (normalsTex.GetSize()).x, (normalsTex.GetSize()).y, 0, GL_RGBA, GL_FLOAT, NULL);
 #else
-	glTexImage2D(GL_TEXTURE_2D, 0, texFormat, normalsTexSize.x, normalsTexSize.y, 0, GL_LUMINANCE_ALPHA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, texFormat, (normalsTex.GetSize()).x, (normalsTex.GetSize()).y, 0, GL_LUMINANCE_ALPHA, GL_FLOAT, NULL);
 #endif
 }
 
