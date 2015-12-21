@@ -4,6 +4,7 @@
 #define MAPDIMENSIONS_H
 
 #include <cassert>
+#include "System/bitops.h"
 #include "System/creg/creg_cond.h"
 
 struct MapDimensions {
@@ -13,16 +14,17 @@ public:
 	MapDimensions()
 	{
 		// set in SMFReadMap::ParseHeader
-		mapx = 0;
+		mapx   = 0;
 		mapxm1 = 0;
 		mapxp1 = 0;
 
-		mapy = 0;
+		mapy   = 0;
 		mapym1 = 0;
 		mapyp1 = 0;
 
-		hmapx = 0;
-		hmapy = 0;
+		hmapx  = 0;
+		hmapy  = 0;
+
 		pwr2mapx = 0;
 		pwr2mapy = 0;
 
