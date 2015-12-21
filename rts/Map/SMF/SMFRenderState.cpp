@@ -104,7 +104,7 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer, const Lua
 	const CSMFReadMap* smfMap = smfGroundDrawer->GetReadMap();
 	const GL::LightHandler* lightHandler = smfGroundDrawer->GetLightHandler();
 
-	const int2 normTexSize = smfMap->GetTextureSize(MAP_SSMF_NORMALS_TEX);
+	const int2 normTexSize = smfMap->GetTextureSize(MAP_BASE_NORMALS_TEX);
 	// const int2 specTexSize = smfMap->GetTextureSize(MAP_SSMF_SPECULAR_TEX);
 
 	const std::string names[GLSL_SHADER_COUNT - 1] = {
@@ -205,7 +205,7 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer, const Lua
 
 			glslShaders[n]->SetUniform("infoTexIntensityMul", 1.0f);
 
-			glslShaders[n]->SetUniform(  "normalTexGen", 1.0f / (normTexSize.x - 1) * SQUARE_SIZE, 1.0f / (normTexSize.y - 1) * SQUARE_SIZE);
+			glslShaders[n]->SetUniform(  "normalTexGen", 1.0f / ((normTexSize.x - 1) * SQUARE_SIZE), 1.0f / ((normTexSize.y - 1) * SQUARE_SIZE));
 			glslShaders[n]->SetUniform("specularTexGen", 1.0f / (mapDims.mapx     * SQUARE_SIZE), 1.0f / (mapDims.mapy     * SQUARE_SIZE));
 			glslShaders[n]->SetUniform(    "infoTexGen", 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE));
 
