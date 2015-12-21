@@ -3,6 +3,7 @@
 #ifndef SMF_RENDERSTATE_H
 #define SMF_RENDERSTATE_H
 
+#include <cstring> // memset
 #include "Map/MapDrawPassTypes.h"
 
 class CSMFGroundDrawer;
@@ -72,6 +73,9 @@ public:
 
 struct SMFRenderStateARB: public ISMFRenderState {
 public:
+	SMFRenderStateARB() { memset(&arbShaders[0], 0, sizeof(arbShaders)); }
+	~SMFRenderStateARB() { Kill(); }
+
 	bool Init(
 		const CSMFGroundDrawer* smfGroundDrawer,
 		const LuaMapShaderData* luaMapShaderData
@@ -107,8 +111,8 @@ private:
 
 struct SMFRenderStateGLSL: public ISMFRenderState {
 public:
-	SMFRenderStateGLSL(bool luaShaders): useLuaShaders(luaShaders) {
-	}
+	SMFRenderStateGLSL(bool lua): useLuaShaders(lua) { memset(&glslShaders[0], 0, sizeof(glslShaders)); }
+	~SMFRenderStateGLSL() { Kill(); }
 
 	bool Init(
 		const CSMFGroundDrawer* smfGroundDrawer,

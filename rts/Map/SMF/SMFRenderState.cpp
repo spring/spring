@@ -41,8 +41,6 @@ ISMFRenderState* ISMFRenderState::GetInstance(bool haveARB, bool haveGLSL, bool 
 
 
 bool SMFRenderStateARB::Init(const CSMFGroundDrawer* smfGroundDrawer, const LuaMapShaderData*) {
-	memset(&arbShaders[0], 0, sizeof(arbShaders));
-
 	if (!globalRendering->haveARB) {
 		// not possible to do (ARB) shader-based map rendering
 		return false;
@@ -94,8 +92,6 @@ bool SMFRenderStateARB::HasValidShader(const DrawPass::e& drawPass) const {
 
 
 bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer, const LuaMapShaderData* luaMapShaderData) {
-	memset(&glslShaders[0], 0, sizeof(glslShaders));
-
 	if (!globalRendering->haveGLSL) {
 		// not possible to do (GLSL) shader-based map rendering
 		return false;
@@ -124,7 +120,7 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer, const Lua
 
 			// load from LuaShader ID; should be a linked and valid program
 			// NOTE: only non-custom shaders get engine flags and uniforms!
-			glslShaders[n] = shaderHandler->CreateProgramObject("[SMFGroundDrawer]", names[n] + "-Lua", false);
+			glslShaders[n] = shaderHandler->CreateProgramObject("[SMFGroundDrawer::Lua]", names[n] + "-Lua", false);
 			glslShaders[n]->LoadFromID(luaMapShaderData->shaderIDs[n]);
 		}
 	} else {
@@ -132,7 +128,7 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer, const Lua
 
 		for (unsigned int n = GLSL_SHADER_STANDARD; n <= GLSL_SHADER_DEFERRED; n++) {
 			// load from VFS files
-			glslShaders[n] = shaderHandler->CreateProgramObject("[SMFGroundDrawer]", names[n], false);
+			glslShaders[n] = shaderHandler->CreateProgramObject("[SMFGroundDrawer::VFS]", names[n], false);
 			glslShaders[n]->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/SMFVertProg.glsl", "#version 120\n" + defs, GL_VERTEX_SHADER));
 			glslShaders[n]->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/SMFFragProg.glsl", "#version 120\n" + defs, GL_FRAGMENT_SHADER));
 
@@ -221,15 +217,17 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer, const Lua
 
 void SMFRenderStateGLSL::Kill() {
 	if (useLuaShaders) {
-		// make sure SH does not delete these programs; managed by LuaShaders
+		// make sure SH deletes only the wrapper objects; programs are managed by LuaShaders
 		for (unsigned int n = GLSL_SHADER_STANDARD; n <= GLSL_SHADER_DEFERRED; n++) {
 			if (glslShaders[n] != nullptr) {
 				glslShaders[n]->LoadFromID(0);
 			}
 		}
-	}
 
-	shaderHandler->ReleaseProgramObjects("[SMFGroundDrawer]");
+		shaderHandler->ReleaseProgramObjects("[SMFGroundDrawer::Lua]");
+	} else {
+		shaderHandler->ReleaseProgramObjects("[SMFGroundDrawer::VFS]");
+	}
 }
 
 bool SMFRenderStateGLSL::HasValidShader(const DrawPass::e& drawPass) const {

@@ -12,11 +12,17 @@
 
 
 // not extern'ed, so static
-static CShaderHandler* gShaderHandler = NULL;
+static CShaderHandler* gShaderHandler = nullptr;
+static unsigned int gNumInstances = 0;
 
 CShaderHandler* CShaderHandler::GetInstance() {
-	if (gShaderHandler == NULL)
+	// nobody should bring us back to life after FreeInstance
+	assert(gNumInstances <= 1);
+
+	if (gShaderHandler == nullptr) {
 		gShaderHandler = new CShaderHandler();
+		gNumInstances += 1;
+	}
 
 	return gShaderHandler;
 }
@@ -24,7 +30,7 @@ CShaderHandler* CShaderHandler::GetInstance() {
 void CShaderHandler::FreeInstance(CShaderHandler* sh) {
 	assert(sh == gShaderHandler);
 	delete sh;
-	gShaderHandler = NULL;
+	gShaderHandler = nullptr;
 }
 
 

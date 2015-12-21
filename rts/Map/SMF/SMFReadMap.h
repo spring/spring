@@ -26,7 +26,8 @@ public:
 	CR_DECLARE(CSMFReadMap)
 
 	CSMFReadMap(std::string mapname);
-	~CSMFReadMap();
+	// note: textures are auto-deleted
+	~CSMFReadMap() {}
 
 	void UpdateShadingTexture();
 	void UpdateHeightMapUnsynced(const SRectangle&);
@@ -127,7 +128,8 @@ public:
 	void DrawMinimap() const;
 	void GridVisibility(CCamera* cam, IQuadDrawer* cb, float maxDist, int quadSize, int extraSize = 0) override;
 
-	void NewGroundDrawer();
+	void InitGroundDrawer();
+	void KillGroundDrawer();
 
 	int GetNumFeatureTypes();
 	int GetNumFeatures();
@@ -138,7 +140,8 @@ public:
 	void FreeInfoMap(const std::string& name, unsigned char* data);
 
 	// NOTE: do not use, just here for backward compatibility with SMFGroundTextures.cpp
-	CSMFMapFile& GetFile() { return file; }
+	inline CSMFMapFile& GetFile() { return file; }
+	inline CBaseGroundDrawer* GetGroundDrawer();
 
 
 	void ConfigureAnisotropy();
@@ -167,8 +170,6 @@ private:
 	void UpdateShadingTexture(const SRectangle& update);
 
 	inline void UpdateShadingTexPart(int idx1, int idx2, unsigned char* dst) const;
-	inline CBaseGroundDrawer* GetGroundDrawer();
-
 	inline const float GetCenterHeightUnsynced(const int x, const int y) const;
 
 	inline float DiffuseSunCoeff(const int x, const int y) const;

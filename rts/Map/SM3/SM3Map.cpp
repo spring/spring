@@ -125,7 +125,7 @@ void CSM3ReadMap::ConfigNotify(const std::string& key, const std::string& value)
 
 
 CBaseGroundDrawer* CSM3ReadMap::GetGroundDrawer() { return groundDrawer; }
-void CSM3ReadMap::NewGroundDrawer() {
+void CSM3ReadMap::InitGroundDrawer() {
 	renderer->config.cacheTextures = false;
 	renderer->config.forceFallbackTexturing = configHandler->GetBool("SM3ForceFallbackTex");
 
@@ -163,6 +163,10 @@ void CSM3ReadMap::NewGroundDrawer() {
 	groundDrawer = new CSM3GroundDrawer(this);
 
 	configHandler->NotifyOnChange(this);
+}
+
+void CSM3ReadMap::KillGroundDrawer() {
+	SafeDelete(groundDrawer);
 }
 
 

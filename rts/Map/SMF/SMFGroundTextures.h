@@ -33,13 +33,30 @@ protected:
 
 private:
 	struct GroundSquare {
+		enum {
+			RAW_TEX_IDX = 0,
+			LUA_TEX_IDX = 1,
+		};
+
+		GroundSquare(): textureIDs{0, 0}, texMipLevel(0), texDrawFrame(1) {}
 		~GroundSquare();
 
-		unsigned int texLevel;
-		unsigned int textureID;
-		unsigned int lastBoundFrame;
+		bool HasLuaTexture() const { return (textureIDs[LUA_TEX_IDX] != 0); }
 
-		bool luaTexture;
+		void SetRawTexture(unsigned int id) { textureIDs[RAW_TEX_IDX] = id; }
+		void SetLuaTexture(unsigned int id) { textureIDs[LUA_TEX_IDX] = id; }
+		void SetMipLevel(unsigned int l) { texMipLevel = l; }
+		void SetDrawFrame(unsigned int f) { texDrawFrame = f; }
+
+		unsigned int* GetTextureIDPtr() { return &textureIDs[RAW_TEX_IDX]; }
+		unsigned int GetTextureID() const { return textureIDs[HasLuaTexture()]; }
+		unsigned int GetMipLevel() const { return texMipLevel; }
+		unsigned int GetDrawFrame() const { return texDrawFrame; }
+
+	private:
+		unsigned int textureIDs[2];
+		unsigned int texMipLevel;
+		unsigned int texDrawFrame;
 	};
 
 	std::vector<GroundSquare> squares;

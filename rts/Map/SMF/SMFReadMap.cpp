@@ -76,12 +76,6 @@ CSMFReadMap::CSMFReadMap(std::string mapname)
 }
 
 
-CSMFReadMap::~CSMFReadMap()
-{
-	SafeDelete(groundDrawer);
-	// note: textures are auto-deleted
-}
-
 
 void CSMFReadMap::ParseHeader()
 {
@@ -333,9 +327,6 @@ void CSMFReadMap::CreateNormalTex()
 	glTexImage2D(GL_TEXTURE_2D, 0, texFormat, normalTexSize.x, normalTexSize.y, 0, GL_LUMINANCE_ALPHA, GL_FLOAT, NULL);
 #endif
 }
-
-void CSMFReadMap::NewGroundDrawer() { groundDrawer = new CSMFGroundDrawer(this); }
-CBaseGroundDrawer* CSMFReadMap::GetGroundDrawer() { return groundDrawer; }
 
 
 
@@ -816,28 +807,12 @@ void CSMFReadMap::GridVisibility(CCamera* cam, IQuadDrawer* qd, float maxDist, i
 }
 
 
-int CSMFReadMap::GetNumFeatures ()
-{
-	return file.GetNumFeatures();
-}
+int CSMFReadMap::GetNumFeatures() { return file.GetNumFeatures(); }
+int CSMFReadMap::GetNumFeatureTypes() { return file.GetNumFeatureTypes(); }
 
+void CSMFReadMap::GetFeatureInfo(MapFeatureInfo* f) { file.ReadFeatureInfo(f); }
 
-int CSMFReadMap::GetNumFeatureTypes()
-{
-	return file.GetNumFeatureTypes();
-}
-
-
-void CSMFReadMap::GetFeatureInfo(MapFeatureInfo* f)
-{
-	file.ReadFeatureInfo(f);
-}
-
-
-const char* CSMFReadMap::GetFeatureTypeName (int typeID)
-{
-	return file.GetFeatureTypeName(typeID);
-}
+const char* CSMFReadMap::GetFeatureTypeName(int typeID) { return file.GetFeatureTypeName(typeID); }
 
 
 unsigned char* CSMFReadMap::GetInfoMap(const std::string& name, MapBitmapInfo* bmInfo)
@@ -908,3 +883,10 @@ void CSMFReadMap::ConfigureAnisotropy()
 		}
 	}
 }
+
+
+void CSMFReadMap::InitGroundDrawer() { groundDrawer = new CSMFGroundDrawer(this); }
+void CSMFReadMap::KillGroundDrawer() { SafeDelete(groundDrawer); }
+
+inline CBaseGroundDrawer* CSMFReadMap::GetGroundDrawer() { return groundDrawer; }
+

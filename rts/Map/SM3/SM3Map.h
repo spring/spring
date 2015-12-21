@@ -24,7 +24,9 @@ public:
 
 	void ConfigNotify(const std::string& key, const std::string& value);
 
-	void NewGroundDrawer();
+	void InitGroundDrawer();
+	void KillGroundDrawer();
+
 	CBaseGroundDrawer* GetGroundDrawer();
 
 	void UpdateHeightMapUnsynced(const SRectangle& hmu);

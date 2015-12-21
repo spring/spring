@@ -205,7 +205,8 @@ public:
 	virtual void Update() {}
 	virtual void UpdateShadingTexture() {}
 
-	virtual void NewGroundDrawer() = 0;
+	virtual void InitGroundDrawer() = 0;
+	virtual void KillGroundDrawer() = 0;
 	virtual CBaseGroundDrawer* GetGroundDrawer() { return 0; }
 
 

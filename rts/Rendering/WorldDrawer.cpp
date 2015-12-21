@@ -81,6 +81,8 @@ CWorldDrawer::~CWorldDrawer()
 	SafeDelete(texturehandlerS3O);
 
 	SafeDelete(cubeMapHandler);
+
+	readMap->KillGroundDrawer();
 	IGroundDecalDrawer::FreeInstance();
 	CShaderHandler::FreeInstance(CShaderHandler::GetInstance());
 	LuaObjectDrawer::Kill();
@@ -110,7 +112,7 @@ void CWorldDrawer::LoadPost() const
 	shadowHandler = new CShadowHandler();
 
 	loadscreen->SetLoadMessage("Creating GroundDrawer");
-	readMap->NewGroundDrawer();
+	readMap->InitGroundDrawer();
 
 	loadscreen->SetLoadMessage("Creating TreeDrawer");
 	treeDrawer = ITreeDrawer::GetTreeDrawer();

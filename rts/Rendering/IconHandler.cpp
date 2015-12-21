@@ -248,6 +248,7 @@ CIcon& CIcon::operator=(const CIcon& icon)
 CIcon::~CIcon()
 {
 	data->UnRef();
+	data = nullptr;
 }
 
 
@@ -301,8 +302,7 @@ void CIconData::Ref()
 
 void CIconData::UnRef()
 {
-	refCount--;
-	if (refCount <= 0) {
+	if ((--refCount) <= 0) {
 		delete this;
 	}
 }
