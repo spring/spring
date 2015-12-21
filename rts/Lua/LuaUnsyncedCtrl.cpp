@@ -1473,22 +1473,20 @@ int LuaUnsyncedCtrl::SetMapSquareTexture(lua_State* L)
 	return 1;
 }
 
-int LuaUnsyncedCtrl::SetMapShadingTexture(lua_State* L)
+
+static MapTextureData ParseLuaTextureData(lua_State* L, bool mapTex)
 {
-	if (CLuaHandle::GetHandleSynced(L))
-		return 0;
-
-	const std::string& texType = luaL_checkstring(L, 1);
-	const std::string& texName = luaL_checkstring(L, 2);
-
-	const LuaMatTexture::Type texTypeEnum = LuaOpenGLUtils::GetLuaMatTextureType(texType);
-
 	MapTextureData luaTexData;
 
-	// convert type=LUATEX_* to MAP_*
-	luaTexData.type = texTypeEnum - LuaMatTexture::LUATEX_SMF_GRASS;
-	// MAP_SSMF_SPLAT_NORMAL_TEX needs a num
-	luaTexData.num = luaL_optint(L, 3, 0);
+	const std::string& texType = mapTex? luaL_checkstring(L, 1): "";
+	const std::string& texName = mapTex? luaL_checkstring(L, 2): luaL_checkstring(L, 1);
+
+	if (mapTex) {
+		// convert type=LUATEX_* to MAP_*
+		luaTexData.type = LuaOpenGLUtils::GetLuaMatTextureType(texType) - LuaMatTexture::LUATEX_SMF_GRASS;
+		// MAP_SSMF_SPLAT_NORMAL_TEX needs a num
+		luaTexData.num = luaL_optint(L, 3, 0);
+	}
 
 	// empty name causes a revert to default
 	if (!texName.empty()) {
@@ -1509,12 +1507,17 @@ int LuaUnsyncedCtrl::SetMapShadingTexture(lua_State* L)
 		}
 	}
 
-	if (texTypeEnum >= LuaMatTexture::LUATEX_SMF_GRASS && texTypeEnum <= LuaMatTexture::LUATEX_SSMF_PARALLAX) {
-		if (readMap != nullptr) {
-			readMap->SetLuaTexture(luaTexData);
-		}
+	return luaTexData;
+}
 
-		lua_pushboolean(L, true);
+
+int LuaUnsyncedCtrl::SetMapShadingTexture(lua_State* L)
+{
+	if (CLuaHandle::GetHandleSynced(L))
+		return 0;
+
+	if (readMap != nullptr) {
+		lua_pushboolean(L, readMap->SetLuaTexture(ParseLuaTextureData(L, true)));
 	} else {
 		lua_pushboolean(L, false);
 	}
@@ -1522,39 +1525,13 @@ int LuaUnsyncedCtrl::SetMapShadingTexture(lua_State* L)
 	return 1;
 }
 
-/******************************************************************************/
-
 int LuaUnsyncedCtrl::SetSkyBoxTexture(lua_State* L)
 {
-	if (CLuaHandle::GetHandleSynced(L)) {
+	if (CLuaHandle::GetHandleSynced(L))
 		return 0;
-	}
-
-	const std::string& texName = luaL_checkstring(L, 1);
-
-	MapTextureData luaTexData;
-
-	// empty name causes a revert to default
-	if (!texName.empty()) {
-		const LuaTextures& luaTextures = CLuaHandle::GetActiveTextures(L);
-
-		const    LuaTextures::Texture*   luaTexture = nullptr;
-		const CNamedTextures::TexInfo* namedTexture = nullptr;
-
-		if ((luaTexData.id == 0) && ((luaTexture = luaTextures.GetInfo(texName)) != nullptr)) {
-			luaTexData.id     = luaTexture->id;
-			luaTexData.size.x = luaTexture->xsize;
-			luaTexData.size.y = luaTexture->ysize;
-		}
-		if ((luaTexData.id == 0) && ((namedTexture = CNamedTextures::GetInfo(texName)) != nullptr)) {
-			luaTexData.id     = namedTexture->id;
-			luaTexData.size.x = namedTexture->xsize;
-			luaTexData.size.y = namedTexture->ysize;
-		}
-	}
 
 	if (sky != nullptr) {
-		sky->SetLuaTexture(luaTexData);
+		sky->SetLuaTexture(ParseLuaTextureData(L, false));
 	}
 
 	return 0;

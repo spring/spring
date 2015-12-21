@@ -33,7 +33,7 @@ public:
 	void UpdateHeightMapUnsynced(const SRectangle&);
 
 public:
-	void SetLuaTexture(const MapTextureData& td) {
+	bool SetLuaTexture(const MapTextureData& td) override {
 		const unsigned int num = Clamp(int(td.num), 0, NUM_SPLAT_DETAIL_NORMALS - 1);
 
 		switch (td.type) {
@@ -54,12 +54,16 @@ public:
 			case MAP_SSMF_LIGHT_EMISSION_TEX: { lightEmissionTex.SetLuaTexture(td); } break;
 			case MAP_SSMF_PARALLAX_HEIGHT_TEX: { parallaxHeightTex.SetLuaTexture(td); } break;
 
-			default: {} break;
+			default: {
+				return false;
+			} break;
 		}
+
+		return true;
 	}
 
 public:
-	unsigned int GetTexture(unsigned int type, unsigned int num = 0) const {
+	unsigned int GetTexture(unsigned int type, unsigned int num = 0) const override {
 		unsigned int texID = 0;
 
 		switch (type) {
@@ -86,7 +90,7 @@ public:
 		return texID;
 	}
 
-	int2 GetTextureSize(unsigned int type, unsigned int num = 0) const {
+	int2 GetTextureSize(unsigned int type, unsigned int num = 0) const override {
 		int2 size;
 
 		// TODO:

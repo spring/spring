@@ -117,7 +117,7 @@ public:
 	virtual unsigned int GetTexture(unsigned int type, unsigned int num = 0) const { return 0; }
 	virtual int2 GetTextureSize(unsigned int type, unsigned int num = 0) const { return int2(0, 0); }
 
-	virtual void SetLuaTexture(const MapTextureData&) {}
+	virtual bool SetLuaTexture(const MapTextureData&) {}
 
 
 	/// Draws the minimap in a quad (with extends: (0,0)-(1,1))
