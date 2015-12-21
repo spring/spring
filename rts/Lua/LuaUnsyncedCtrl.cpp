@@ -1496,12 +1496,12 @@ int LuaUnsyncedCtrl::SetMapShadingTexture(lua_State* L)
 		const    LuaTextures::Texture*   luaTexture = nullptr;
 		const CNamedTextures::TexInfo* namedTexture = nullptr;
 
-		if ((texID == 0) && ((luaTexture = luaTextures.GetInfo(texName)) != nullptr)) {
+		if ((luaTexData.id == 0) && ((luaTexture = luaTextures.GetInfo(texName)) != nullptr)) {
 			luaTexData.id     = luaTexture->id;
 			luaTexData.size.x = luaTexture->xsize;
 			luaTexData.size.y = luaTexture->ysize;
 		}
-		if ((texID == 0) && ((namedTexture = CNamedTextures::GetInfo(texName)) != nullptr)) {
+		if ((luaTexData.id == 0) && ((namedTexture = CNamedTextures::GetInfo(texName)) != nullptr)) {
 			luaTexData.id     = namedTexture->id;
 			luaTexData.size.x = namedTexture->xsize;
 			luaTexData.size.y = namedTexture->ysize;
