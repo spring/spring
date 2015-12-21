@@ -1483,6 +1483,7 @@ int LuaUnsyncedCtrl::SetMapShadingTexture(lua_State* L)
 	const LuaMatTexture::Type texTypeEnum = LuaOpenGLUtils::GetLuaMatTextureType(texType);
 
 	unsigned int texID = 0;
+	int2 size = int2(0, 0);
 
 	// empty name causes a revert to default
 	if (!texName.empty()) {
@@ -1493,16 +1494,20 @@ int LuaUnsyncedCtrl::SetMapShadingTexture(lua_State* L)
 
 		if ((texID == 0) && ((luaTexture = luaTextures.GetInfo(texName)) != nullptr)) {
 			texID = luaTexture->id;
+			size.x = luaTexture->xsize;
+			size.y = luaTexture->ysize;
 		}
 		if ((texID == 0) && ((namedTexture = CNamedTextures::GetInfo(texName)) != nullptr)) {
 			texID = namedTexture->id;
+			size.x = namedTexture->xsize;
+			size.y = namedTexture->ysize;
 		}
 	}
 
 	if (texTypeEnum >= LuaMatTexture::LUATEX_SMF_GRASS && texTypeEnum <= LuaMatTexture::LUATEX_SSMF_PARALLAX) {
 		if (readMap != nullptr) {
 			// convert type=LUATEX_* to MAP_* (FIXME: MAP_SSMF_SPLAT_NORMAL_TEX needs a num)
-			readMap->SetLuaTexture(texID, texTypeEnum - LuaMatTexture::LUATEX_SMF_GRASS);
+			readMap->SetLuaTexture(texID, size, texTypeEnum - LuaMatTexture::LUATEX_SMF_GRASS);
 		}
 
 		lua_pushboolean(L, true);
