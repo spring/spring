@@ -3,6 +3,8 @@
 #ifndef READ_MAP_H
 #define READ_MAP_H
 
+#include "MapTexture.h"
+#include "MapDimensions.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/float3.h"
@@ -35,137 +37,6 @@ struct MapBitmapInfo
 
 	int width;
 	int height;
-};
-
-
-struct MapDimensions {
-public:
-	CR_DECLARE_STRUCT(MapDimensions)
-
-	MapDimensions() {
-		mapx   = 0;
-		mapxm1 = mapx - 1;
-		mapxp1 = mapx + 1;
-
-		mapy   = 0;
-		mapym1 = mapy - 1;
-		mapyp1 = mapy + 1;
-
-		mapSquares = mapx * mapy;
-
-		hmapx = mapx >> 1;
-		hmapy = mapy >> 1;
-
-		pwr2mapx = mapx; //next_power_of_2(mapx);
-		pwr2mapy = mapy; //next_power_of_2(mapy);
-	}
-
-	/**
-	* @brief map x
-	*
-	* The map's number of squares in the x direction
-	* (note that the number of vertices is one more)
-	*/
-	int mapx;
-	int mapxm1; // mapx minus one
-	int mapxp1; // mapx plus one
-
-	/**
-	* @brief map y
-	*
-	* The map's number of squares in the y direction
-	*/
-	int mapy;
-	int mapym1; // mapy minus one
-	int mapyp1; // mapy plus one
-
-	/**
-	* @brief map squares
-	*
-	* Total number of squares on the map
-	*/
-	int mapSquares;
-
-	/**
-	* @brief half map x
-	*
-	* Contains half of the number of squares in the x direction
-	*/
-	int hmapx;
-
-	/**
-	* @brief half map y
-	*
-	* Contains half of the number of squares in the y direction
-	*/
-	int hmapy;
-
-	/**
-	* @brief map x power of 2
-	*
-	* Map's size in the x direction rounded
-	* up to the next power of 2
-	*/
-	int pwr2mapx;
-
-	/**
-	* @brief map y power of 2
-	*
-	* Map's size in the y direction rounded
-	* up to the next power of 2
-	*/
-	int pwr2mapy;
-};
-
-
-
-struct MapTextureData {
-	MapTextureData(): id(0), type(0), num(0), size(0, 0) {}
-
-	unsigned int id;   // OpenGL id
-	unsigned int type; // e.g. MAP_SSMF_*
-	unsigned int num;  // for MAP_SSMF_SPLAT_NORMAL_TEX
-
-	int2 size;
-};
-
-struct MapTexture {
-public:
-	enum {
-		RAW_TEX_IDX = 0,
-		LUA_TEX_IDX = 1,
-	};
-
-	MapTexture(): texIDs{0, 0} {}
-	~MapTexture();
-
-	bool HasLuaTex() const { return (texIDs[LUA_TEX_IDX] != 0); }
-
-	// only needed for glGenTextures(...)
-	unsigned int* GetIDPtr() { return &texIDs[RAW_TEX_IDX]; }
-	unsigned int GetID() const { return texIDs[HasLuaTex()]; }
-
-	int2 GetSize() const { return texDims[HasLuaTex()]; }
-	int2 GetRawSize() const { return texDims[RAW_TEX_IDX]; }
-	int2 GetLuaSize() const { return texDims[LUA_TEX_IDX]; }
-
-	void SetSize(const int2 size) { texDims[HasLuaTex()] = size; }
-	void SetRawSize(const int2 size) { texDims[RAW_TEX_IDX] = size; }
-	void SetLuaSize(const int2 size) { texDims[LUA_TEX_IDX] = size; }
-
-	void SetRawTexID(unsigned int rawTexID) { texIDs[RAW_TEX_IDX] = rawTexID; }
-	void SetLuaTexID(unsigned int luaTexID) { texIDs[LUA_TEX_IDX] = luaTexID; }
-
-	void SetLuaTexture(const MapTextureData& texData) {
-		texIDs[LUA_TEX_IDX] = texData.id;
-		texDims[LUA_TEX_IDX] = texData.size;
-	}
-
-private:
-	// [RAW_TEX_IDX] := original, [LUA_TEX_IDX] := Lua-supplied
-	unsigned int texIDs[2];
-
-	int2 texDims[2];
 };
 
 

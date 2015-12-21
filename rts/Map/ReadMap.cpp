@@ -220,16 +220,8 @@ CReadMap::~CReadMap()
 
 void CReadMap::Initialize()
 {
-	// set global map info (TODO: move these to ReadMap!)
-	mapDims.mapxm1 = mapDims.mapx - 1;
-	mapDims.mapxp1 = mapDims.mapx + 1;
-	mapDims.mapym1 = mapDims.mapy - 1;
-	mapDims.mapyp1 = mapDims.mapy + 1;
-	mapDims.mapSquares = mapDims.mapx * mapDims.mapy;
-	mapDims.hmapx = mapDims.mapx >> 1;
-	mapDims.hmapy = mapDims.mapy >> 1;
-	mapDims.pwr2mapx = next_power_of_2(mapDims.mapx);
-	mapDims.pwr2mapy = next_power_of_2(mapDims.mapy);
+	// set global map info
+	mapDims.Initialize();
 
 	boundingRadius = math::sqrt(Square(mapDims.mapx * SQUARE_SIZE) + Square(mapDims.mapy * SQUARE_SIZE)) * 0.5f;
 
