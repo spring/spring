@@ -128,7 +128,7 @@ void CSMFReadMap::LoadMinimap()
 	CBitmap minimapTexBM;
 
 	if (minimapTexBM.Load(mapInfo->smf.minimapTexName)) {
-		minimapTex.SetRawTexture(minimapTexBM.CreateTexture(false));
+		minimapTex.SetRawTexID(minimapTexBM.CreateTexture(false));
 		minimapTex.SetRawSize(int2(minimapTexBM.xsize, minimapTexBM.ysize));
 		return;
 	}
@@ -186,27 +186,27 @@ void CSMFReadMap::CreateSpecularTex()
 		specularTexBM.AllocDummy(SColor(255, 255, 255, 255));
 	}
 
-	specularTex.SetRawTexture(specularTexBM.CreateTexture(false));
+	specularTex.SetRawTexID(specularTexBM.CreateTexture(false));
 	specularTex.SetRawSize(int2(specularTexBM.xsize, specularTexBM.ysize));
 
 	// no default 1x1 textures for these
 	if (skyReflectModTexBM.Load(mapInfo->smf.skyReflectModTexName)) {
-		skyReflectModTex.SetRawTexture(skyReflectModTexBM.CreateTexture(false));
+		skyReflectModTex.SetRawTexID(skyReflectModTexBM.CreateTexture(false));
 		skyReflectModTex.SetRawSize(int2(skyReflectModTexBM.xsize, skyReflectModTexBM.ysize));
 	}
 
 	if (blendNormalsTexBM.Load(mapInfo->smf.blendNormalsTexName)) {
-		blendNormalsTex.SetRawTexture(blendNormalsTexBM.CreateTexture(false));
+		blendNormalsTex.SetRawTexID(blendNormalsTexBM.CreateTexture(false));
 		blendNormalsTex.SetRawSize(int2(blendNormalsTexBM.xsize, blendNormalsTexBM.ysize));
 	}
 
 	if (lightEmissionTexBM.Load(mapInfo->smf.lightEmissionTexName)) {
-		lightEmissionTex.SetRawTexture(lightEmissionTexBM.CreateTexture(false));
+		lightEmissionTex.SetRawTexID(lightEmissionTexBM.CreateTexture(false));
 		lightEmissionTex.SetRawSize(int2(lightEmissionTexBM.xsize, lightEmissionTexBM.ysize));
 	}
 
 	if (parallaxHeightTexBM.Load(mapInfo->smf.parallaxHeightTexName)) {
-		parallaxHeightTex.SetRawTexture(parallaxHeightTexBM.CreateTexture(false));
+		parallaxHeightTex.SetRawTexID(parallaxHeightTexBM.CreateTexture(false));
 		parallaxHeightTex.SetRawSize(int2(parallaxHeightTexBM.xsize, parallaxHeightTexBM.ysize));
 	}
 }
@@ -232,10 +232,10 @@ void CSMFReadMap::CreateSplatDetailTextures()
 		splatDistrTexBM.AllocDummy(SColor(255,0,0,0));
 	}
 
-	splatDetailTex.SetRawTexture(splatDetailTexBM.CreateTexture(true));
+	splatDetailTex.SetRawTexID(splatDetailTexBM.CreateTexture(true));
 	splatDetailTex.SetRawSize(int2(splatDetailTexBM.xsize, splatDetailTexBM.ysize));
 
-	splatDistrTex.SetRawTexture(splatDistrTexBM.CreateTexture(true));
+	splatDistrTex.SetRawTexID(splatDistrTexBM.CreateTexture(true));
 	splatDistrTex.SetRawSize(int2(splatDistrTexBM.xsize, splatDistrTexBM.ysize));
 
 	// only load the splat detail normals if any of them are defined and present
@@ -257,7 +257,7 @@ void CSMFReadMap::CreateSplatDetailTextures()
 			splatDetailNormalTextureBM.mem[3] = 127; // Alpha is diffuse as in old-style detail textures
 		}
 
-		splatNormalTextures[i].SetRawTexture(splatDetailNormalTextureBM.CreateTexture(true));
+		splatNormalTextures[i].SetRawTexID(splatDetailNormalTextureBM.CreateTexture(true));
 		splatNormalTextures[i].SetRawSize(int2(splatDetailNormalTextureBM.xsize, splatDetailNormalTextureBM.ysize));
 	}
 
@@ -266,12 +266,12 @@ void CSMFReadMap::CreateSplatDetailTextures()
 
 void CSMFReadMap::CreateGrassTex()
 {
-	grassShadingTex.SetRawTexture(minimapTex.GetID());
+	grassShadingTex.SetRawTexID(minimapTex.GetID());
 	grassShadingTex.SetRawSize(int2(1024, 1024));
 
 	CBitmap grassShadingTexBM;
 	if (grassShadingTexBM.Load(mapInfo->smf.grassShadingTexName)) {
-		grassShadingTex.SetRawTexture(grassShadingTexBM.CreateTexture(true));
+		grassShadingTex.SetRawTexID(grassShadingTexBM.CreateTexture(true));
 		grassShadingTex.SetRawSize(int2(grassShadingTexBM.xsize, grassShadingTexBM.ysize));
 	}
 }
@@ -285,7 +285,7 @@ void CSMFReadMap::CreateDetailTex()
 		throw content_error("Could not load detail texture from file " + mapInfo->smf.detailTexName);
 	}
 
-	detailTex.SetRawTexture(detailTexBM.CreateTexture(true));
+	detailTex.SetRawTexID(detailTexBM.CreateTexture(true));
 	detailTex.SetRawSize(int2(detailTexBM.xsize, detailTexBM.ysize));
 
 	if (anisotropy != 0.0f) {

@@ -33,24 +33,26 @@ public:
 	void UpdateHeightMapUnsynced(const SRectangle&);
 
 public:
-	void SetLuaTexture(unsigned int texID, int2 size, unsigned int type, unsigned int num = 0) {
-		switch (type) {
-			case MAP_BASE_GRASS_TEX: { grassShadingTex.SetLuaTexture(texID); grassShadingTex.SetLuaSize(size); } break;
-			case MAP_BASE_DETAIL_TEX: { detailTex.SetLuaTexture(texID); detailTex.SetLuaSize(size); } break;
-			case MAP_BASE_MINIMAP_TEX: { minimapTex.SetLuaTexture(texID); minimapTex.SetLuaSize(size); } break;
-			case MAP_BASE_SHADING_TEX: { shadingTex.SetLuaTexture(texID); shadingTex.SetLuaSize(size); } break;
-			case MAP_BASE_NORMALS_TEX: { normalsTex.SetLuaTexture(texID); normalsTex.SetLuaSize(size); } break;
+	void SetLuaTexture(const MapTextureData& td) {
+		const unsigned int num = Clamp(int(td.num), 0, NUM_SPLAT_DETAIL_NORMALS - 1);
 
-			case MAP_SSMF_SPECULAR_TEX: { specularTex.SetLuaTexture(texID); specularTex.SetLuaSize(size); } break;
-			case MAP_SSMF_NORMALS_TEX: { blendNormalsTex.SetLuaTexture(texID); blendNormalsTex.SetLuaSize(size); } break;
+		switch (td.type) {
+			case MAP_BASE_GRASS_TEX: { grassShadingTex.SetLuaTexture(td); } break;
+			case MAP_BASE_DETAIL_TEX: { detailTex.SetLuaTexture(td); } break;
+			case MAP_BASE_MINIMAP_TEX: { minimapTex.SetLuaTexture(td); } break;
+			case MAP_BASE_SHADING_TEX: { shadingTex.SetLuaTexture(td); } break;
+			case MAP_BASE_NORMALS_TEX: { normalsTex.SetLuaTexture(td); } break;
 
-			case MAP_SSMF_SPLAT_DISTRIB_TEX: { splatDistrTex.SetLuaTexture(texID); splatDistrTex.SetLuaSize(size); } break;
-			case MAP_SSMF_SPLAT_DETAIL_TEX: { splatDetailTex.SetLuaTexture(texID); splatDetailTex.SetLuaSize(size); } break;
-			case MAP_SSMF_SPLAT_NORMAL_TEX: { splatNormalTextures[num].SetLuaTexture(texID); splatNormalTextures[num].SetLuaSize(size); } break;
+			case MAP_SSMF_SPECULAR_TEX: { specularTex.SetLuaTexture(td); } break;
+			case MAP_SSMF_NORMALS_TEX: { blendNormalsTex.SetLuaTexture(td); } break;
 
-			case MAP_SSMF_SKY_REFLECTION_TEX: { skyReflectModTex.SetLuaTexture(texID); skyReflectModTex.SetLuaSize(size); } break;
-			case MAP_SSMF_LIGHT_EMISSION_TEX: { lightEmissionTex.SetLuaTexture(texID); lightEmissionTex.SetLuaSize(size); } break;
-			case MAP_SSMF_PARALLAX_HEIGHT_TEX: { parallaxHeightTex.SetLuaTexture(texID); parallaxHeightTex.SetLuaSize(size); } break;
+			case MAP_SSMF_SPLAT_DISTRIB_TEX: { splatDistrTex.SetLuaTexture(td); } break;
+			case MAP_SSMF_SPLAT_DETAIL_TEX: { splatDetailTex.SetLuaTexture(td); } break;
+			case MAP_SSMF_SPLAT_NORMAL_TEX: { splatNormalTextures[num].SetLuaTexture(td); } break;
+
+			case MAP_SSMF_SKY_REFLECTION_TEX: { skyReflectModTex.SetLuaTexture(td); } break;
+			case MAP_SSMF_LIGHT_EMISSION_TEX: { lightEmissionTex.SetLuaTexture(td); } break;
+			case MAP_SSMF_PARALLAX_HEIGHT_TEX: { parallaxHeightTex.SetLuaTexture(td); } break;
 
 			default: {} break;
 		}
@@ -114,7 +116,7 @@ public:
 		return size;
 	}
 
-
+public:
 	unsigned int GetGrassShadingTexture() const { return grassShadingTex.GetID(); }
 	unsigned int GetMiniMapTexture() const { return minimapTex.GetID(); }
 	unsigned int GetDetailTexture() const { return detailTex.GetID(); }

@@ -119,6 +119,16 @@ public:
 
 
 
+struct MapTextureData {
+	MapTextureData(): id(0), type(0), num(0), size(0, 0) {}
+
+	unsigned int id;   // OpenGL id
+	unsigned int type; // e.g. MAP_SSMF_*
+	unsigned int num;  // for MAP_SSMF_SPLAT_NORMAL_TEX
+
+	int2 size;
+};
+
 struct MapTexture {
 public:
 	enum {
@@ -143,8 +153,13 @@ public:
 	void SetRawSize(const int2 size) { texDims[RAW_TEX_IDX] = size; }
 	void SetLuaSize(const int2 size) { texDims[LUA_TEX_IDX] = size; }
 
-	void SetRawTexture(unsigned int rawTexID) { texIDs[RAW_TEX_IDX] = rawTexID; }
-	void SetLuaTexture(unsigned int luaTexID) { texIDs[LUA_TEX_IDX] = luaTexID; }
+	void SetRawTexID(unsigned int rawTexID) { texIDs[RAW_TEX_IDX] = rawTexID; }
+	void SetLuaTexID(unsigned int luaTexID) { texIDs[LUA_TEX_IDX] = luaTexID; }
+
+	void SetLuaTexture(const MapTextureData& texData) {
+		texIDs[LUA_TEX_IDX] = texData.id;
+		texDims[LUA_TEX_IDX] = texData.size;
+	}
 
 private:
 	// [RAW_TEX_IDX] := original, [LUA_TEX_IDX] := Lua-supplied
@@ -231,7 +246,7 @@ public:
 	virtual unsigned int GetTexture(unsigned int type, unsigned int num = 0) const { return 0; }
 	virtual int2 GetTextureSize(unsigned int type, unsigned int num = 0) const { return int2(0, 0); }
 
-	virtual void SetLuaTexture(unsigned int texID, int2 size, unsigned int type, unsigned int num = 0) {}
+	virtual void SetLuaTexture(const MapTextureData&) {}
 
 
 	/// Draws the minimap in a quad (with extends: (0,0)-(1,1))
