@@ -18,8 +18,12 @@ public:
 	void UpdateSkyTexture() {}
 	void DrawSun() {}
 
+	void SetLuaTexture(const MapTextureData& td)
+	{
+		skyTex.SetLuaTexture(td);
+	}
 private:
-	unsigned int tex;
+	MapTexture skyTex;
 };
 
 #endif // SKY_BOX_H

@@ -160,6 +160,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetMapShader);
 	REGISTER_LUA_CFUNC(SetMapSquareTexture);
 	REGISTER_LUA_CFUNC(SetMapShadingTexture);
+	REGISTER_LUA_CFUNC(SetSkyBoxTexture);
 
 	REGISTER_LUA_CFUNC(SetUnitNoDraw);
 	REGISTER_LUA_CFUNC(SetUnitNoMinimap);
@@ -1519,6 +1520,44 @@ int LuaUnsyncedCtrl::SetMapShadingTexture(lua_State* L)
 	}
 
 	return 1;
+}
+
+/******************************************************************************/
+
+int LuaUnsyncedCtrl::SetSkyBoxTexture(lua_State* L)
+{
+	if (CLuaHandle::GetHandleSynced(L)) {
+		return 0;
+	}
+
+	const std::string& texName = luaL_checkstring(L, 1);
+
+	MapTextureData luaTexData;
+
+	// empty name causes a revert to default
+	if (!texName.empty()) {
+		const LuaTextures& luaTextures = CLuaHandle::GetActiveTextures(L);
+
+		const    LuaTextures::Texture*   luaTexture = nullptr;
+		const CNamedTextures::TexInfo* namedTexture = nullptr;
+
+		if ((luaTexData.id == 0) && ((luaTexture = luaTextures.GetInfo(texName)) != nullptr)) {
+			luaTexData.id     = luaTexture->id;
+			luaTexData.size.x = luaTexture->xsize;
+			luaTexData.size.y = luaTexture->ysize;
+		}
+		if ((luaTexData.id == 0) && ((namedTexture = CNamedTextures::GetInfo(texName)) != nullptr)) {
+			luaTexData.id     = namedTexture->id;
+			luaTexData.size.x = namedTexture->xsize;
+			luaTexData.size.y = namedTexture->ysize;
+		}
+	}
+
+	if (sky != nullptr) {
+		sky->SetLuaTexture(luaTexData);
+	}
+
+	return 0;
 }
 
 /******************************************************************************/

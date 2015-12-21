@@ -4,6 +4,7 @@
 #define I_SKY_H
 
 #include "SkyLight.h"
+#include "Map/ReadMap.h"
 
 #define CLOUD_SIZE 256 // must be divisible by 4 and 8
 
@@ -35,6 +36,7 @@ public:
 	 */
 	static void SetupFog();
 
+	virtual void SetLuaTexture(const MapTextureData& td) { }
 public:
 	bool wireframe;
 	bool dynamicSky;
