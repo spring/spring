@@ -42,6 +42,9 @@ Lua:
      Spring.UnitRendering.SetFeatureLuaDraw
      Spring.FeatureRendering.SetUnitLuaDraw
 
+ - add unsynced callout SetSkyBoxTexture(string texName) -> nil
+   example usage: Spring.SetSkyBoxTexture("myskybox.dds")
+
  - add unsynced callout Spring.SetMapShadingTexture(string texType, string texName) -> boolean
    example usage: Spring.SetMapShadingTexture("$ssmf_specular", "name_of_my_shiny_texture")
 
