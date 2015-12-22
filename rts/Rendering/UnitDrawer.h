@@ -81,8 +81,8 @@ public:
 	void DrawUnit(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
 
 	/// LuaOpenGL::Unit{Raw}: draw a single unit with full state setup
-	bool DrawIndividualPreCommon(const CUnit* unit);
-	void DrawIndividualPostCommon(const CUnit* unit, bool dbg);
+	void PushIndividualState(const CUnit* unit, bool deferredPass);
+	void PopIndividualState(const CUnit* unit, bool deferredPass);
 	void DrawIndividual(const CUnit* unit, bool noLuaCall);
 	void DrawIndividualNoTrans(const CUnit* unit, bool noLuaCall);
 

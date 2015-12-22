@@ -1022,50 +1022,46 @@ void CUnitDrawer::CleanupBasicS3OTexture0()
 
 
 
-bool CUnitDrawer::DrawIndividualPreCommon(const CUnit* unit)
+void CUnitDrawer::PushIndividualState(const CUnit* unit, bool deferredPass)
 {
-	const bool origDrawDebug = globalRendering->drawdebug;
-	globalRendering->drawdebug = false;
-
-	// set the full default state
-	SetupOpaqueDrawing(false);
+	SetupOpaqueDrawing(deferredPass);
 	opaqueModelRenderers[MDL_TYPE(unit)]->PushRenderState();
-
 	BindModelTypeTexture(unit);
 	SetTeamColour(unit->team);
-
-	return origDrawDebug;
 }
 
-void CUnitDrawer::DrawIndividualPostCommon(const CUnit* unit, bool origDrawDebug)
+void CUnitDrawer::PopIndividualState(const CUnit* unit, bool deferredPass)
 {
 	opaqueModelRenderers[MDL_TYPE(unit)]->PopRenderState();
-	ResetOpaqueDrawing(false);
-
-	globalRendering->drawdebug = origDrawDebug;
+	ResetOpaqueDrawing(deferredPass);
 }
 
 
 void CUnitDrawer::DrawIndividual(const CUnit* unit, bool noLuaCall)
 {
-	const bool origDrawDebug = DrawIndividualPreCommon(unit);
+	const bool origDrawDebug = globalRendering->GetSetDrawDebug(false);
 
 	if (!LuaObjectDrawer::DrawSingleObject(unit, LUAOBJ_UNIT /*, noLuaCall*/)) {
+		// set the full default state
+		PushIndividualState(unit, false);
 		DrawUnit(unit, 0, 0, false, noLuaCall);
+		PopIndividualState(unit, false);
 	}
 
-	DrawIndividualPostCommon(unit, origDrawDebug);
+	globalRendering->GetSetDrawDebug(origDrawDebug);
 }
 
 void CUnitDrawer::DrawIndividualNoTrans(const CUnit* unit, bool noLuaCall)
 {
-	const bool origDrawDebug = DrawIndividualPreCommon(unit);
+	const bool origDrawDebug = globalRendering->GetSetDrawDebug(false);
 
 	if (!LuaObjectDrawer::DrawSingleObjectNoTrans(unit, LUAOBJ_UNIT /*, noLuaCall*/)) {
+		PushIndividualState(unit, false);
 		DrawUnitNoTrans(unit, 0, 0, false, noLuaCall);
+		PopIndividualState(unit, false);
 	}
 
-	DrawIndividualPostCommon(unit, origDrawDebug);
+	globalRendering->GetSetDrawDebug(origDrawDebug);
 }
 
 

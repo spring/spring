@@ -414,50 +414,47 @@ void CFeatureDrawer::DrawFeature(const CFeature* feature, unsigned int preList, 
 
 
 
-bool CFeatureDrawer::DrawIndividualPreCommon(const CFeature* feature)
+void CFeatureDrawer::PushIndividualState(const CFeature* feature, bool deferredPass)
 {
-	const bool origDrawDebug = globalRendering->drawdebug;
-	globalRendering->drawdebug = false;
-
-	// set the full default state
 	unitDrawer->SetupOpaqueDrawing(false);
 	modelRenderers[0].GetRenderer(MDL_TYPE(feature))->PushRenderState();
 
 	CUnitDrawer::BindModelTypeTexture(feature);
 	unitDrawer->SetTeamColour(feature->team, feature->drawAlpha);
-
-	return origDrawDebug;
 }
 
-void CFeatureDrawer::DrawIndividualPostCommon(const CFeature* feature, bool origDrawDebug)
+void CFeatureDrawer::PopIndividualState(const CFeature* feature, bool deferredPass)
 {
 	modelRenderers[0].GetRenderer(MDL_TYPE(feature))->PopRenderState();
 	unitDrawer->ResetOpaqueDrawing(false);
-
-	globalRendering->drawdebug = origDrawDebug;
 }
 
 
 void CFeatureDrawer::DrawIndividual(const CFeature* feature, bool noLuaCall)
 {
-	const bool origDrawDebug = DrawIndividualPreCommon(feature);
+	const bool origDrawDebug = globalRendering->GetSetDrawDebug(false);
 
 	if (!LuaObjectDrawer::DrawSingleObject(feature, LUAOBJ_FEATURE /*, noLuaCall*/)) {
+		// set the full default state
+		PushIndividualState(feature, false);
 		DrawFeature(feature, 0, 0, false, noLuaCall);
+		PopIndividualState(feature, false);
 	}
 
-	DrawIndividualPostCommon(feature, origDrawDebug);
+	globalRendering->GetSetDrawDebug(origDrawDebug);
 }
 
 void CFeatureDrawer::DrawIndividualNoTrans(const CFeature* feature, bool noLuaCall)
 {
-	const bool origDrawDebug = DrawIndividualPreCommon(feature);
+	const bool origDrawDebug = globalRendering->GetSetDrawDebug(false);
 
 	if (!LuaObjectDrawer::DrawSingleObjectNoTrans(feature, LUAOBJ_FEATURE /*, noLuaCall*/)) {
+		PushIndividualState(feature, false);
 		DrawFeatureNoTrans(feature, 0, 0, false, noLuaCall);
+		PopIndividualState(feature, false);
 	}
 
-	DrawIndividualPostCommon(feature, origDrawDebug);
+	globalRendering->GetSetDrawDebug(origDrawDebug);
 }
 
 

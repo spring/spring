@@ -28,6 +28,9 @@ public:
 	void UpdatePixelGeometry();
 	int2 GetWantedViewSize(const bool fullscreen);
 
+	bool SetGetDrawDebug(bool dbg) { const bool ret =       dbg; drawdebug = dbg; return dbg; }
+	bool GetSetDrawDebug(bool dbg) { const bool ret = drawdebug; drawdebug = dbg; return ret; }
+
 	/**
 	 * @brief time offset
 	 *

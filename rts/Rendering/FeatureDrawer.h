@@ -39,8 +39,8 @@ public:
 	void DrawFeature(const CFeature*, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
 
 	/// LuaOpenGL::Feature{Raw}: draw a single feature with full state setup
-	bool DrawIndividualPreCommon(const CFeature* feature);
-	void DrawIndividualPostCommon(const CFeature* feature, bool dbg);
+	void PushIndividualState(const CFeature* feature, bool deferredPass);
+	void PopIndividualState(const CFeature* feature, bool deferredPass);
 	void DrawIndividual(const CFeature* feature, bool noLuaCall);
 	void DrawIndividualNoTrans(const CFeature* feature, bool noLuaCall);
 

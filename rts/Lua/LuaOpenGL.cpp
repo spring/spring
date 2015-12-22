@@ -1413,9 +1413,10 @@ int LuaOpenGL::UnitCommon(lua_State* L, bool applyTransform)
 	if (unit == nullptr)
 		return 0;
 
-	const bool noLuaCall = luaL_optboolean(L, 2, false);
+	// NOTE: the "Raw" in UnitRaw means "no transform", not the same
+	const bool doRawDraw = luaL_optboolean(L, 2, false);
 	const bool useLuaMat = ObjectDrawWithLuaMat(L, unit, LUAOBJ_UNIT);
-
+	const bool noLuaCall = false;
 
 	glPushAttrib(GL_ENABLE_BIT);
 
@@ -1429,11 +1430,18 @@ int LuaOpenGL::UnitCommon(lua_State* L, bool applyTransform)
 		// "scoped" draw; this prevents any Lua-assigned
 		// material(s) from being used by the call below
 		(unit->GetLuaMaterialData())->PushLODCount(0);
+	}
+
+	if (doRawDraw) {
+		// draw with void material state
 		(unitDrawer->*rawDrawFuncs[applyTransform])(unit, 0, 0, false, noLuaCall);
-		(unit->GetLuaMaterialData())->PopLODCount();
 	} else {
-		// draw with full Lua or default material state
+		// draw with full material state
 		(unitDrawer->*matDrawFuncs[applyTransform])(unit, noLuaCall);
+	}
+
+	if (!useLuaMat) {
+		(unit->GetLuaMaterialData())->PopLODCount();
 	}
 
 	glPopAttrib();
@@ -1504,9 +1512,10 @@ int LuaOpenGL::FeatureCommon(lua_State* L, bool applyTransform)
 	if (feature->model == nullptr)
 		return 0;
 
-	const bool noLuaCall = luaL_optboolean(L, 2, false);
+	// NOTE: the "Raw" in FeatureRaw means "no transform", not the same
+	const bool doRawDraw = luaL_optboolean(L, 2, false);
 	const bool useLuaMat = ObjectDrawWithLuaMat(L, feature, LUAOBJ_FEATURE);
-
+	const bool noLuaCall = false;
 
 	glPushAttrib(GL_ENABLE_BIT);
 
@@ -1520,11 +1529,18 @@ int LuaOpenGL::FeatureCommon(lua_State* L, bool applyTransform)
 		// "scoped" draw; this prevents any Lua-assigned
 		// material(s) from being used by the call below
 		(feature->GetLuaMaterialData())->PushLODCount(0);
+	}
+
+	if (doRawDraw) {
+		// draw with void material state
 		(featureDrawer->*rawDrawFuncs[applyTransform])(feature, 0, 0, false, noLuaCall);
-		(feature->GetLuaMaterialData())->PopLODCount();
 	} else {
-		// draw with full Lua or default material state
+		// draw with full material state
 		(featureDrawer->*matDrawFuncs[applyTransform])(feature, noLuaCall);
+	}
+
+	if (!useLuaMat) {
+		(feature->GetLuaMaterialData())->PopLODCount();
 	}
 
 	glPopAttrib();
