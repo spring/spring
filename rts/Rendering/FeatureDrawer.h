@@ -33,7 +33,7 @@ public:
 	void Draw();
 	void DrawOpaquePass(bool deferredPass, bool drawReflection, bool drawRefraction);
 	void DrawShadowPass();
-	void DrawFadeFeatures(bool disableAdvShading = false);
+	void DrawAlphaPass(bool disableAdvShading = false);
 
 	void DrawFeatureNoTrans(const CFeature* feature, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
 	void DrawFeature(const CFeature*, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
@@ -76,8 +76,8 @@ private:
 
 	void DrawFeatureModel(const CFeature* feature, bool noLuaCall);
 
-	void DrawFadeFeaturesHelper(int, int);
-	void DrawFadeFeaturesSet(const FeatureSet&, int, int);
+	void DrawAlphaPassHelper(int, int);
+	void DrawAlphaPassSet(const FeatureSet&, int, int);
 	void GetVisibleFeatures(CCamera*, int, bool drawFar);
 
 	void PostLoad();

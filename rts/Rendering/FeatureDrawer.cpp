@@ -477,11 +477,11 @@ static void SetFeatureAlphaMaterialFFP(const CFeature* f, bool set)
 }
 
 
-void CFeatureDrawer::DrawFadeFeatures(bool disableAdvShading)
+void CFeatureDrawer::DrawAlphaPass(bool disableAdvShading)
 {
-	const bool oldAdvShading = unitDrawer->UseAdvShading();
-
 	{
+		const bool oldAdvShading = unitDrawer->UseAdvShading();
+
 		unitDrawer->SetUseAdvShading(unitDrawer->UseAdvShading() && !disableAdvShading);
 		unitDrawer->SetupOpaqueAlphaDrawing(false);
 
@@ -492,12 +492,10 @@ void CFeatureDrawer::DrawFadeFeatures(bool disableAdvShading)
 
 		ISky::SetupFog();
 
-		{
-			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-				modelRenderers[0].GetRenderer(modelType)->PushRenderState();
-				DrawFadeFeaturesHelper(modelType, LuaObjectDrawer::GetDrawPassAlphaMat());
-				modelRenderers[0].GetRenderer(modelType)->PopRenderState();
-			}
+		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+			modelRenderers[0].GetRenderer(modelType)->PushRenderState();
+			DrawAlphaPassHelper(modelType, LuaObjectDrawer::GetDrawPassAlphaMat());
+			modelRenderers[0].GetRenderer(modelType)->PopRenderState();
 		}
 
 		glDisable(GL_FOG);
@@ -511,7 +509,7 @@ void CFeatureDrawer::DrawFadeFeatures(bool disableAdvShading)
 	LuaObjectDrawer::DrawAlphaMaterialObjects(LUAOBJ_FEATURE, false);
 }
 
-void CFeatureDrawer::DrawFadeFeaturesHelper(int modelType, int luaMatType)
+void CFeatureDrawer::DrawAlphaPassHelper(int modelType, int luaMatType)
 {
 	for (const auto& mdlRenderProxy: modelRenderers) {
 		if (mdlRenderProxy.GetLastDrawFrame() < globalRendering->drawFrame)
@@ -522,12 +520,12 @@ void CFeatureDrawer::DrawFadeFeaturesHelper(int modelType, int luaMatType)
 
 		for (const auto& binElem: featureBin) {
 			CUnitDrawer::BindModelTypeTexture(modelType, binElem.first);
-			DrawFadeFeaturesSet(binElem.second, modelType, luaMatType);
+			DrawAlphaPassSet(binElem.second, modelType, luaMatType);
 		}
 	}
 }
 
-void CFeatureDrawer::DrawFadeFeaturesSet(const FeatureSet& fadeFeatures, int modelType, int luaMatType)
+void CFeatureDrawer::DrawAlphaPassSet(const FeatureSet& fadeFeatures, int modelType, int luaMatType)
 {
 	for (CFeature* f: fadeFeatures) {
 		// if <f> is not supposed to be drawn faded, skip it during this pass

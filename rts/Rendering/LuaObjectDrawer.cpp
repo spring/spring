@@ -122,15 +122,15 @@ static void ResetOpaqueFeatureDrawState(unsigned int modelType, bool deferredPas
 // transparency-pass (reflection, ...) state management funcs
 static void SetupAlphaUnitDrawState(unsigned int modelType, bool deferredPass) {
 	unitDrawer->SetupAlphaDrawing(deferredPass);
-	unitDrawer->GetCloakedModelRenderer(modelType)->PushRenderState();
+	unitDrawer->GetAlphaModelRenderer(modelType)->PushRenderState();
 }
 
 static void ResetAlphaUnitDrawState(unsigned int modelType, bool deferredPass) {
-	unitDrawer->GetCloakedModelRenderer(modelType)->PopRenderState();
+	unitDrawer->GetAlphaModelRenderer(modelType)->PopRenderState();
 	unitDrawer->ResetAlphaDrawing(deferredPass);
 }
 
-// NOTE: incomplete (FeatureDrawer::DrawFadeFeatures sets more state)
+// NOTE: incomplete (FeatureDrawer::DrawAlphaPass sets more state)
 static void SetupAlphaFeatureDrawState(unsigned int modelType, bool deferredPass) { SetupAlphaUnitDrawState(modelType, deferredPass); }
 static void ResetAlphaFeatureDrawState(unsigned int modelType, bool deferredPass) { ResetAlphaUnitDrawState(modelType, deferredPass); }
 

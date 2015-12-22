@@ -486,8 +486,8 @@ void CDynWater::DrawReflection(CGame* game)
 				unitDrawer->Draw(true);
 				featureDrawer->Draw();
 
-				unitDrawer->DrawCloakedUnits(true);
-				featureDrawer->DrawFadeFeatures(true);
+				unitDrawer->DrawAlphaPass(true);
+				featureDrawer->DrawAlphaPass(true);
 				projectileDrawer->Draw(true);
 				sky->DrawSun();
 
@@ -546,8 +546,8 @@ void CDynWater::DrawRefraction(CGame* game)
 		unitDrawer->Draw(false, true);
 		featureDrawer->Draw();
 
-		unitDrawer->DrawCloakedUnits(true);
-		featureDrawer->DrawFadeFeatures(true); // FIXME: Make it fade out correctly without "noAdvShading"
+		unitDrawer->DrawAlphaPass(true);
+		featureDrawer->DrawAlphaPass(true); // FIXME: Make it fade out correctly without "noAdvShading"
 
 		// drawReflection = false;
 	}

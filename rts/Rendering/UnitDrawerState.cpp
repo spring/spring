@@ -303,7 +303,7 @@ void UnitDrawerStateARB::SetTeamColor(int team, float alpha) const {
 	const float4 c = float4(t->color[0] / 255.0f, t->color[1] / 255.0f, t->color[2] / 255.0f, alpha);
 
 	// NOTE:
-	//   UnitDrawer::DrawCloakedUnits and FeatureDrawer::DrawFadeFeatures
+	//   both UnitDrawer::DrawAlphaPass and FeatureDrawer::DrawAlphaPass
 	//   disable advShading so shader is NOT always bound when team-color
 	//   gets set (but the state instance is not changed to FFP! --> does
 	//   not matter since Enable* and Disable* are not called)
@@ -453,11 +453,7 @@ void UnitDrawerStateGLSL::SetTeamColor(int team, float alpha) const {
 	const CTeam* t = teamHandler->Team(team);
 	const float4 c = float4(t->color[0] / 255.0f, t->color[1] / 255.0f, t->color[2] / 255.0f, alpha);
 
-	// NOTE:
-	//   UnitDrawer::DrawCloakedUnits and FeatureDrawer::DrawFadeFeatures
-	//   disable advShading so shader is NOT always bound when team-color
-	//   gets set (but the state instance is not changed to FFP! --> does
-	//   not matter since Enable* and Disable* are not called)
+	// NOTE: see UnitDrawerStateARB::SetTeamColor
 	if (modelShaders[MODEL_SHADER_ACTIVE]->IsBound()) {
 		modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(9, &c[0]);
 	} else {

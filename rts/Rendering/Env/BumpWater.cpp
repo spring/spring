@@ -1189,8 +1189,8 @@ void CBumpWater::DrawRefraction(CGame* game)
 	featureDrawer->Draw();
 
 	// transparent stuff
-	unitDrawer->DrawCloakedUnits();
-	featureDrawer->DrawFadeFeatures();
+	unitDrawer->DrawAlphaPass();
+	featureDrawer->DrawAlphaPass();
 	projectileDrawer->Draw(false, true);
 	eventHandler.DrawWorldRefraction();
 
@@ -1240,8 +1240,8 @@ void CBumpWater::DrawReflection(CGame* game)
 				featureDrawer->Draw();
 
 				// transparent
-				unitDrawer->DrawCloakedUnits(true);
-				featureDrawer->DrawFadeFeatures(true);
+				unitDrawer->DrawAlphaPass(true);
+				featureDrawer->DrawAlphaPass(true);
 				projectileDrawer->Draw(true);
 				sky->DrawSun();
 

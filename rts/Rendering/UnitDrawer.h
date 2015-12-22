@@ -68,8 +68,7 @@ public:
 	void Draw(bool drawReflection, bool drawRefraction = false);
 	void DrawOpaquePass(const CUnit* excludeUnit, bool deferredPass, bool drawReflection, bool drawRefraction);
 	void DrawShadowPass();
-	/// cloaked units must be drawn after all others
-	void DrawCloakedUnits(bool noAdvShading = false);
+	void DrawAlphaPass(bool noAdvShading = false);
 
 	void SetDrawForwardPass(bool b) { drawForward = b; }
 	void SetDrawDeferredPass(bool b) { drawDeferred = b; }
@@ -111,14 +110,12 @@ public:
 	static void DrawBuildingSample(const UnitDef* unitdef, int team, float3 pos, int facing = 0);
 	static void DrawUnitDef(const UnitDef* unitDef, int team);
 
-	/// Returns true if the given unit should be drawn as icon in the current frame.
-	bool DrawAsIcon(const CUnit* unit, const float sqUnitCamDist) const;
 	void DrawUnitMiniMapIcons() const;
 
 	const std::vector<CUnit*>& GetUnsortedUnits() const { return unsortedUnits; }
 
 	IWorldObjectModelRenderer* GetOpaqueModelRenderer(int modelType) { return opaqueModelRenderers[modelType]; }
-	IWorldObjectModelRenderer* GetCloakedModelRenderer(int modelType) { return cloakedModelRenderers[modelType]; }
+	IWorldObjectModelRenderer* GetAlphaModelRenderer(int modelType) { return alphaModelRenderers[modelType]; }
 
 	const GL::LightHandler* GetLightHandler() const { return &lightHandler; }
 	      GL::LightHandler* GetLightHandler()       { return &lightHandler; }
@@ -141,8 +138,28 @@ public:
 	void SetUseAdvShading(bool b) { advShading = b; }
 	void SetUseAdvFading(bool b) { advFading = b; }
 
+public:
+	struct TempDrawUnit {
+		const UnitDef* unitDef;
+
+		int team;
+		int facing;
+		int timeout;
+
+		float3 pos;
+		float rotation;
+
+		bool drawAlpha;
+		bool drawBorder;
+	};
+
+	void AddTempDrawUnit(const TempDrawUnit& tempDrawUnit);
+	void UpdateTempDrawUnits(std::vector<TempDrawUnit>& tempDrawUnits);
 
 private:
+	/// Returns true if the given unit should be drawn as icon in the current frame.
+	bool DrawAsIcon(const CUnit* unit, const float sqUnitCamDist) const;
+
 	bool CanDrawOpaqueUnit(const CUnit* unit, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction) const;
 	bool CanDrawOpaqueUnitShadow(const CUnit* unit) const;
 
@@ -151,20 +168,26 @@ private:
 	void DrawOpaqueUnitsShadow(int modelType);
 	void DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction);
 
-	void DrawOpaqueAIUnits();
-	void DrawCloakedAIUnits();
+	void DrawAlphaUnitsHelper(int modelType);
+	void DrawAlphaUnit(CUnit* unit, int modelType, bool drawGhostBuildingsPass);
+
+	void DrawOpaqueAIUnits(int modelType);
+	void DrawOpaqueAIUnit(const TempDrawUnit& unit);
+	void DrawAlphaAIUnits(int modelType);
+	void DrawAlphaAIUnit(const TempDrawUnit& unit);
+	void DrawAlphaAIUnitBorder(const TempDrawUnit& unit);
+
 	void DrawGhostedBuildings(int modelType);
+
 
 	void DrawUnitIcons(bool drawReflection);
 	void DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const;
-	void UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool killed);
 
+	void UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool killed);
 	void UpdateUnitIconState(CUnit* unit);
-	static void UpdateUnitDrawPos(CUnit* unit);
 
 	static void DrawIcon(CUnit* unit, bool asRadarBlip);
-	void DrawCloakedUnitsHelper(int modelType);
-	void DrawCloakedUnit(CUnit* unit, int modelType, bool drawGhostBuildingsPass);
+	static void UpdateUnitDrawPos(CUnit* unit);
 
 public:
 	static void BindModelTypeTexture(int modelType, int texType, bool solo = false);
@@ -185,21 +208,9 @@ public:
 	float unitIconDist;
 	float iconLength;
 
+	float3 camNorm; ///< used to draw far-textures
 	float3 unitAmbientColor;
 	float3 unitSunColor;
-
-	struct TempDrawUnit {
-		const UnitDef* unitdef;
-		int team;
-		float3 pos;
-		float rotation;
-		int facing;
-		bool drawBorder;
-	};
-	std::multimap<int, TempDrawUnit> tempDrawUnits;
-	std::multimap<int, TempDrawUnit> tempTransparentDrawUnits;
-
-	float3 camNorm; ///< used to draw far-textures
 
 private:
 	bool drawForward;
@@ -217,20 +228,23 @@ private:
 	float cloakAlpha3;
 
 	std::vector<IWorldObjectModelRenderer*> opaqueModelRenderers;
-	std::vector<IWorldObjectModelRenderer*> cloakedModelRenderers;
+	std::vector<IWorldObjectModelRenderer*> alphaModelRenderers;
 
-	/**
-	 * units being rendered (note that this is a completely
-	 * unsorted set of 3DO, S3O, opaque, and cloaked models!)
-	 */
+	/// units being rendered (note that this is a completely
+	/// unsorted set of 3DO, S3O, opaque, and cloaked models!)
 	std::vector<CUnit*> unsortedUnits;
+
+	/// AI unit ghosts
+	std::vector< std::vector<TempDrawUnit> > tempOpaqueUnits;
+	std::vector< std::vector<TempDrawUnit> > tempAlphaUnits;
 
 	/// buildings that were in LOS_PREVLOS when they died and not in LOS since
 	std::vector<std::vector<GhostSolidObject*> > deadGhostBuildings;
 	/// buildings that left LOS but are still alive
 	std::vector<std::vector<CUnit*> > liveGhostBuildings;
 
-	std::vector<CUnit*> drawIcon;
+	/// units that are only rendered as icons this frame
+	std::vector<CUnit*> iconUnits;
 
 	std::vector<std::vector<CUnit*> > unitRadarIcons;
 	std::map<icon::CIconData*, std::vector<const CUnit*> > unitsByIcon;

@@ -306,8 +306,8 @@ void CWorldDrawer::DrawAlphaObjects() const
 		glEnable(GL_CLIP_PLANE3);
 
 		// draw cloaked objects below water surface
-		unitDrawer->DrawCloakedUnits(shadowHandler->shadowsLoaded);
-		featureDrawer->DrawFadeFeatures(shadowHandler->shadowsLoaded);
+		unitDrawer->DrawAlphaPass(shadowHandler->shadowsLoaded);
+		featureDrawer->DrawAlphaPass(shadowHandler->shadowsLoaded);
 
 		glDisable(GL_CLIP_PLANE3);
 	}
@@ -327,8 +327,8 @@ void CWorldDrawer::DrawAlphaObjects() const
 		glEnable(GL_CLIP_PLANE3);
 
 		// draw cloaked objects above water surface
-		unitDrawer->DrawCloakedUnits(shadowHandler->shadowsLoaded);
-		featureDrawer->DrawFadeFeatures(shadowHandler->shadowsLoaded);
+		unitDrawer->DrawAlphaPass(shadowHandler->shadowsLoaded);
+		featureDrawer->DrawAlphaPass(shadowHandler->shadowsLoaded);
 
 		glDisable(GL_CLIP_PLANE3);
 	}

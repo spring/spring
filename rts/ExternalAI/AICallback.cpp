@@ -1099,28 +1099,35 @@ void CAICallback::DeleteFigureGroup(int group)
 
 
 
-void CAICallback::DrawUnit(const char* unitName, const float3& pos,
-		float rotation, int lifetime, int teamId, bool transparent,
-		bool drawBorder, int facing)
-{
+void CAICallback::DrawUnit(
+	const char* unitName,
+	const float3& pos,
+	float rotation,
+	int lifetime,
+	int teamId,
+	bool transparent,
+	bool drawBorder,
+	int facing
+) {
 	CUnitDrawer::TempDrawUnit tdu;
-	tdu.unitdef = unitDefHandler->GetUnitDefByName(unitName);
-	if (!tdu.unitdef) {
+	tdu.unitDef = unitDefHandler->GetUnitDefByName(unitName);
+
+	if (tdu.unitDef == nullptr) {
 		LOG_L(L_WARNING, "Unknown unit in CAICallback::DrawUnit %s", unitName);
 		return;
 	}
+
+	tdu.team = teamId;
+	tdu.facing = facing;
+	tdu.timeout = gs->frameNum + lifetime;
+
 	tdu.pos = pos;
 	tdu.rotation = rotation;
-	tdu.team = teamId;
-	tdu.drawBorder = drawBorder;
-	tdu.facing = facing;
-	std::pair<int, CUnitDrawer::TempDrawUnit> tp(gs->frameNum + lifetime, tdu);
 
-	if (transparent) {
-		unitDrawer->tempTransparentDrawUnits.insert(tp);
-	} else {
-		unitDrawer->tempDrawUnits.insert(tp);
-	}
+	tdu.drawAlpha = transparent;
+	tdu.drawBorder = drawBorder;
+
+	unitDrawer->AddTempDrawUnit(tdu);
 }
 
 
