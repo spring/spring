@@ -168,7 +168,7 @@ private:
 	void DrawOpaqueUnitsShadow(int modelType);
 	void DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction);
 
-	void DrawAlphaUnitsHelper(int modelType);
+	void DrawAlphaUnits(int modelType);
 	void DrawAlphaUnit(CUnit* unit, int modelType, bool drawGhostBuildingsPass);
 
 	void DrawOpaqueAIUnits(int modelType);

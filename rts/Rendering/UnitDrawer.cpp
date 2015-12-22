@@ -677,7 +677,7 @@ void CUnitDrawer::DrawAlphaPass(bool disableAdvShading)
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			alphaModelRenderers[modelType]->PushRenderState();
-			DrawAlphaUnitsHelper(modelType);
+			DrawAlphaUnits(modelType);
 			DrawAlphaAIUnits(modelType);
 			alphaModelRenderers[modelType]->PopRenderState();
 		}
@@ -695,7 +695,7 @@ void CUnitDrawer::DrawAlphaPass(bool disableAdvShading)
 	LuaObjectDrawer::DrawAlphaMaterialObjects(LUAOBJ_UNIT, false);
 }
 
-void CUnitDrawer::DrawAlphaUnitsHelper(int modelType)
+void CUnitDrawer::DrawAlphaUnits(int modelType)
 {
 	{
 		const auto& unitBin = alphaModelRenderers[modelType]->GetUnitBin();
