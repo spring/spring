@@ -410,8 +410,6 @@ void SMFRenderStateARB::Enable(const CSMFGroundDrawer* smfGroundDrawer, const Dr
 	const CSMFReadMap* smfMap = smfGroundDrawer->GetReadMap();
 	const float3 ambientColor = mapInfo->light.groundAmbientColor * CGlobalRendering::SMF_INTENSITY_MULT;
 
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-
 	#ifdef DYNWATER_OVERRIDE_VERTEX_PROGRAM
 	// CDynamicWater overrides smfShaderBaseARB during the reflection / refraction
 	// pass to distort underwater geometry, but because it's hard to maintain only
@@ -486,8 +484,6 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	const CSMFReadMap* smfMap = smfGroundDrawer->GetReadMap();
 	const GL::LightHandler* cLightHandler = smfGroundDrawer->GetLightHandler();
 	      GL::LightHandler* mLightHandler = const_cast<GL::LightHandler*>(cLightHandler); // XXX
-
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
 	glslShaders[GLSL_SHADER_CURRENT]->SetFlag("HAVE_SHADOWS", shadowHandler->shadowsLoaded);
 	glslShaders[GLSL_SHADER_CURRENT]->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());

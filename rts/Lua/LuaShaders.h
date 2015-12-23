@@ -23,7 +23,7 @@ class LuaShaders {
 
 		string errorLog;
 
-		GLuint GetProgramName(unsigned int progID) const;
+		GLuint GetProgramName(unsigned int progIdx) const;
 
 	private:
 		struct Object {

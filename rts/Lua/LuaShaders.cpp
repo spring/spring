@@ -88,10 +88,10 @@ inline void CheckDrawingEnabled(lua_State* L, const char* caller)
 /******************************************************************************/
 /******************************************************************************/
 
-GLuint LuaShaders::GetProgramName(unsigned int progID) const
+GLuint LuaShaders::GetProgramName(unsigned int progIdx) const
 {
-	if (progID < programs.size())
-		return programs[progID].id;
+	if (progIdx < programs.size())
+		return programs[progIdx].id;
 
 	return 0;
 }
@@ -448,14 +448,18 @@ int LuaShaders::CreateShader(lua_State* L)
 		p.objects.push_back(Object(fragObj, GL_FRAGMENT_SHADER));
 	}
 
+	GLint linkStatus;
+	GLint validStatus;
+
 	glLinkProgram(prog);
+	glGetProgramiv(prog, GL_LINK_STATUS, &linkStatus);
+
+	glValidateProgram(prog);
+	glGetProgramiv(prog, GL_VALIDATE_STATUS, &validStatus);
 
 	LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
 
-	GLint result;
-	glGetProgramiv(prog, GL_LINK_STATUS, &result);
-
-	if (result != GL_TRUE) {
+	if (linkStatus != GL_TRUE || validStatus != GL_TRUE) {
 		GLchar log[4096];
 		GLsizei logSize = sizeof(log);
 		glGetProgramInfoLog(prog, logSize, &logSize, log);
@@ -470,6 +474,7 @@ int LuaShaders::CreateShader(lua_State* L)
 	//  configuration values)
 	ParseUniformSetupTables(L, 1, prog);
 
+	// note: index, not raw ID
 	lua_pushnumber(L, shaders.AddProgram(p));
 	return 1;
 }

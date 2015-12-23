@@ -1409,11 +1409,13 @@ int LuaUnsyncedCtrl::SetMapShader(lua_State* L)
 	if (!globalRendering->haveGLSL)
 		return 0;
 
+	const LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
+
 	CBaseGroundDrawer* groundDrawer = readMap->GetGroundDrawer();
 	LuaMapShaderData luaMapShaderData;
 
 	for (unsigned int i = 0; i < 2; i++) {
-		luaMapShaderData.shaderIDs[i] = lua_tonumber(L, i + 1);
+		luaMapShaderData.shaderIDs[i] = shaders.GetProgramName(lua_tonumber(L, i + 1));
 	}
 
 	groundDrawer->SetLuaShader(&luaMapShaderData);
