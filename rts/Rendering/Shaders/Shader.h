@@ -102,7 +102,7 @@ namespace Shader {
 
 		void LoadFromID(unsigned int id) {
 			objID = id;
-			valid = (id != 0 && Validate());
+			valid = (id != 0 /*&& Validate()*/);
 			bound = false;
 
 			// not needed for pre-compiled programs
