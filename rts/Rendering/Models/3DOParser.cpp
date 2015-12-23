@@ -17,6 +17,7 @@
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Platform/byteorder.h"
 
+#include <list>
 #include <vector>
 #include <set>
 #include <algorithm>

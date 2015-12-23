@@ -13,7 +13,7 @@ CR_REG_METADATA(SolidObjectDecalDef,
 	CR_MEMBER(groundDecalTypeName),
 	CR_MEMBER(trackDecalTypeName),
 
- 	CR_MEMBER(useGroundDecal),
+	CR_MEMBER(useGroundDecal),
 	CR_MEMBER(groundDecalType),
 	CR_MEMBER(groundDecalSizeX),
 	CR_MEMBER(groundDecalSizeY),
@@ -107,13 +107,20 @@ SolidObjectDef::SolidObjectDef()
 	, upright(false)
 	, reclaimable(true)
 
-	, model(NULL)
+	, model(nullptr)
 {
+}
+
+void SolidObjectDef::PreloadModel() const
+{
+	if (model == nullptr && !modelName.empty()) {
+		modelParser->Preload3DModel(modelName);
+	}
 }
 
 S3DModel* SolidObjectDef::LoadModel() const
 {
-	if (model == NULL) {
+	if (model == nullptr) {
 		if (!modelName.empty()) {
 			model = modelParser->Load3DModel(modelName);
 		} else {

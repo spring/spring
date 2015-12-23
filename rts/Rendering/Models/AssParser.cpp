@@ -223,7 +223,7 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 	// Load textures
 	FindTextures(model, scene, modelTable, modelPath, modelName);
 	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Loading textures. Tex1: '%s' Tex2: '%s'", model->tex1.c_str(), model->tex2.c_str());
-	texturehandlerS3O->LoadS3OTexture(model);
+	texturehandlerS3O->PreloadS3OTexture(model);
 
 	// Load all pieces in the model
 	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Loading pieces from root node '%s'", scene->mRootNode->mName.data);

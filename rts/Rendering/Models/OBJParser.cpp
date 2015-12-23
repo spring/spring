@@ -64,7 +64,7 @@ S3DModel* COBJParser::Load(const std::string& modelFileName)
 		model->maxs = DEF_MAX_SIZE;
 
 	// basic S3O-style texturing
-	texturehandlerS3O->LoadS3OTexture(model);
+	texturehandlerS3O->PreloadS3OTexture(model);
 
 	std::string modelData;
 	modelFile.LoadStringData(modelData);

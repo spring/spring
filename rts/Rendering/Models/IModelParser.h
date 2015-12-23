@@ -5,10 +5,15 @@
 
 #include <unordered_map>
 #include <string>
-#include <list>
+#include <deque>
 
-#include "System/Matrix44f.h"
 #include "3DModel.h"
+#include "System/Matrix44f.h"
+#include "System/Threading/SpringMutex.h"
+
+namespace boost {
+	class thread;
+};
 
 
 class IModelParser
@@ -26,7 +31,8 @@ public:
 	~C3DModelLoader();
 
 	std::string FindModelPath(std::string name) const;
-	S3DModel* Load3DModel(std::string modelName);
+	S3DModel* Load3DModel(std::string modelName, bool preload = false);
+	void Preload3DModel(std::string modelName);
 
 	typedef std::unordered_map<std::string, unsigned int> ModelMap; // "armflash.3do" --> id
 	typedef std::unordered_map<std::string, unsigned int> FormatMap; // "3do" --> MODELTYPE_3DO
@@ -34,7 +40,7 @@ public:
 
 private:
 	void AddModelToCache(S3DModel* model, const std::string& modelName, const std::string& modelPath);
-	void CreateLists(S3DModelPiece* o);
+	void CreateLists(S3DModel* o);
 	void CreateListsNow(S3DModelPiece* o);
 
 	ModelMap cache;
@@ -43,6 +49,12 @@ private:
 
 	// all unique models loaded so far
 	std::vector<S3DModel*> models;
+
+	//Preloading
+	std::deque<std::string> preloadQueue;
+	spring::mutex preloadMutex;
+	boost::thread *preloadThread;
+	void PreloadModels();
 };
 
 extern C3DModelLoader* modelParser;

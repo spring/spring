@@ -45,6 +45,7 @@ public:
 	virtual ~SolidObjectDef() { }
 
 	S3DModel* LoadModel() const;
+	void PreloadModel() const;
 	float GetModelRadius() const;
 	void ParseCollisionVolume(const LuaTable& table);
 

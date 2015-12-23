@@ -3,6 +3,7 @@
 #include "Rendering/GL/myGL.h"
 #include <algorithm>
 #include <cctype>
+#include <boost/thread.hpp>
 
 #include "IModelParser.h"
 #include "3DModel.h"
@@ -11,11 +12,12 @@
 #include "S3OParser.h"
 #include "OBJParser.h"
 #include "AssParser.h"
+#include "Rendering/Textures/S3OTextureHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/Util.h"
 #include "System/Log/ILog.h"
+#include "System/Util.h"
 #include "System/Exceptions.h"
 #include "lib/assimp/include/assimp/Importer.hpp"
 
@@ -104,7 +106,8 @@ static void CheckPieceNormals(const S3DModel* model, const S3DModelPiece* modelP
 
 
 
-C3DModelLoader::C3DModelLoader()
+C3DModelLoader::C3DModelLoader() :
+ preloadThread(nullptr)
 {
 	// file-extension should be lowercase
 	formats["3do"] = MODELTYPE_3DO;
@@ -127,6 +130,10 @@ C3DModelLoader::C3DModelLoader()
 
 C3DModelLoader::~C3DModelLoader()
 {
+	if (preloadThread != nullptr) {
+		preloadThread->join();
+		delete preloadThread;
+	}
 	// delete model cache
 	for (unsigned int n = 1; n < models.size(); n++) {
 		S3DModel* model = models[n];
@@ -180,7 +187,51 @@ std::string C3DModelLoader::FindModelPath(std::string name) const
 }
 
 
-S3DModel* C3DModelLoader::Load3DModel(std::string modelName)
+void C3DModelLoader::PreloadModels()
+{
+	while (true) {
+		std::string modelName;
+		{
+			boost::mutex::scoped_lock(preloadMutex);
+			assert(preloadQueue.size() > 0);
+			modelName = preloadQueue.front();
+		}
+
+		Load3DModel(modelName, true);
+
+		{
+			boost::mutex::scoped_lock(preloadMutex);
+			preloadQueue.pop_front();
+			if (preloadQueue.empty())
+				break;
+		}
+	}
+}
+
+
+void C3DModelLoader::Preload3DModel(std::string modelName)
+{
+	preloadMutex.lock();
+
+	if (preloadQueue.empty()) {
+		if (preloadThread != nullptr) {
+			preloadMutex.unlock();
+
+			preloadThread->join();
+			delete preloadThread;
+
+			preloadMutex.lock();
+		}
+		preloadThread = new boost::thread(boost::bind(&PreloadModels, this));
+	}
+
+	preloadQueue.push_back(modelName);
+
+	preloadMutex.unlock();
+}
+
+
+S3DModel* C3DModelLoader::Load3DModel(std::string modelName, bool preload)
 {
 	// cannot happen except through SpawnProjectile
 	if (modelName.empty())
@@ -192,14 +243,28 @@ S3DModel* C3DModelLoader::Load3DModel(std::string modelName)
 	ModelMap::iterator ci;
 	FormatMap::iterator fi;
 
-	if ((ci = cache.find(modelName)) != cache.end())
-		return models[ci->second];
+	{
+		boost::mutex::scoped_lock(preloadMutex);
+		if ((ci = cache.find(modelName)) != cache.end()) {
+			S3DModel* model = models[ci->second];
+			if (!preload)
+				CreateLists(model);
+			return model;
+		}
+	}
 
 	const std::string& modelPath = FindModelPath(modelName);
 	const std::string& fileExt = StringToLower(FileSystem::GetExtension(modelPath));
 
-	if ((ci = cache.find(modelPath)) != cache.end())
-		return models[ci->second];
+	{
+		boost::mutex::scoped_lock(preloadMutex);
+		if ((ci = cache.find(modelPath)) != cache.end()) {
+			S3DModel* model = models[ci->second];
+			if (!preload)
+				CreateLists(model);
+			return model;
+		}
+	}
 
 	S3DModel* model = nullptr;
 	IModelParser* parser = nullptr;
@@ -224,19 +289,15 @@ S3DModel* C3DModelLoader::Load3DModel(std::string modelName)
 
 	assert(model->GetRootPiece() != nullptr);
 
-	CreateLists(model->GetRootPiece());
+	if (!preload)
+		CreateLists(model);
 	AddModelToCache(model, modelName, modelPath);
-
-	if (model->type != MODELTYPE_3DO) {
-		// warn about models with bad normals (they break lighting)
-		// skip for 3DO's, it causes a LARGE amount of warning spam
-		CheckPieceNormals(model, model->GetRootPiece());
-	}
 
 	return model;
 }
 
 void C3DModelLoader::AddModelToCache(S3DModel* model, const std::string& modelName, const std::string& modelPath) {
+	boost::mutex::scoped_lock(preloadMutex);
 	model->id = models.size(); // IDs start at 1
 	models.push_back(model);
 
@@ -264,8 +325,21 @@ void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
 }
 
 
-void C3DModelLoader::CreateLists(S3DModelPiece* o) {
-	CreateListsNow(o);
+void C3DModelLoader::CreateLists(S3DModel* model) {
+	S3DModelPiece* rootPiece = model->GetRootPiece();
+	if (rootPiece->GetDisplayListID() != 0) {
+		return;
+	}
+
+	CreateListsNow(rootPiece);
+
+	if (model->type != MODELTYPE_3DO) {
+		//Make sure textures are loaded.
+		texturehandlerS3O->LoadS3OTexture(model);
+		// warn about models with bad normals (they break lighting)
+		// skip for 3DO's, it causes a LARGE amount of warning spam
+		CheckPieceNormals(model, model->GetRootPiece());
+	}
 }
 
 /******************************************************************************/

@@ -276,9 +276,13 @@ void CUnit::PreInit(const UnitLoadParams& params)
 
 	{
 		const FeatureDef* wreckFeatureDef = featureHandler->GetFeatureDef(unitDef->wreckName);
-
-		if (wreckFeatureDef != NULL) {
+		if (wreckFeatureDef != nullptr) {
 			featureDefID = wreckFeatureDef->id;
+
+			while (wreckFeatureDef != nullptr){
+				//wreckFeatureDef->PreloadModel();
+				wreckFeatureDef = featureHandler->GetFeatureDefByID(wreckFeatureDef->deathFeatureDefID);
+			}
 		}
 	}
 
