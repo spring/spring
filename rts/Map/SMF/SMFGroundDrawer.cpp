@@ -223,24 +223,23 @@ inline void CSMFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
 
 ISMFRenderState* CSMFGroundDrawer::SelectRenderState(const DrawPass::e& drawPass)
 {
-	ISMFRenderState* state = nullptr;
+	// [0] := Lua GLSL, must have a valid shader for this pass
+	// [1] := default ARB *or* GLSL, same condition
+	const unsigned int stateEnums[2] = {RENDER_STATE_LUA, RENDER_STATE_SSP};
 
-	// first, pick the state we want
-	switch (int(smfRenderStates[RENDER_STATE_LUA]->HasValidShader(drawPass))) {
-		case 1: { state = smfRenderStates[RENDER_STATE_LUA]; } break;
-		case 0: { state = smfRenderStates[RENDER_STATE_SSP]; } break;
-		default: {} break;
+	for (unsigned int n = 0; n < 2; n++) {
+		ISMFRenderState* state = smfRenderStates[ stateEnums[n] ];
+
+		if (!state->CanEnable(this))
+			continue;
+		if (!state->HasValidShader(drawPass))
+			continue;
+
+		return (smfRenderStates[RENDER_STATE_SEL] = state);
 	}
 
-	// second, check if it can be used
-	// note: LUA reverts to FFP, not SSP
-	switch (int(state->CanEnable(this))) {
-		case 1: { smfRenderStates[RENDER_STATE_SEL] =                             state; } break;
-		case 0: { smfRenderStates[RENDER_STATE_SEL] = smfRenderStates[RENDER_STATE_FFP]; } break;
-		default: {} break;
-	}
-
-	return smfRenderStates[RENDER_STATE_SEL];
+	// fallback
+	return (smfRenderStates[RENDER_STATE_SEL] = smfRenderStates[RENDER_STATE_FFP]);
 }
 
 bool CSMFGroundDrawer::HaveLuaRenderState() const
@@ -248,7 +247,9 @@ bool CSMFGroundDrawer::HaveLuaRenderState() const
 	return (smfRenderStates[RENDER_STATE_SEL] == smfRenderStates[RENDER_STATE_LUA]);
 }
 
-void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass)
+
+
+void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass, bool alphaTest)
 {
 	if (!geomBuffer.Valid())
 		return;
@@ -265,18 +266,17 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass)
 
 	// deferred pass must be executed with GLSL shaders
 	// if the FFP or ARB state was selected, bail early
-	if (!smfRenderStates[RENDER_STATE_SEL]->CanDrawDeferred())
+	if (!SelectRenderState(DrawPass::TerrainDeferred)->CanDrawDeferred())
 		return;
 
-	geomBuffer.Bind();
-	geomBuffer.Clear();
-
 	{
-		// switch selected state's SSP or Lua shader to deferred version
-		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(DrawPass::TerrainDeferred);
-		smfRenderStates[RENDER_STATE_SEL]->Enable(this, drawPass);
+		geomBuffer.Bind();
+		geomBuffer.Clear();
 
-		if (mapInfo->map.voidGround || (mapInfo->map.voidWater && drawPass != DrawPass::WaterReflection)) {
+		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(DrawPass::TerrainDeferred);
+		smfRenderStates[RENDER_STATE_SEL]->Enable(this, DrawPass::TerrainDeferred);
+
+		if (alphaTest) {
 			glEnable(GL_ALPHA_TEST);
 			glAlphaFunc(GL_GREATER, mapInfo->map.voidAlphaMin);
 		}
@@ -286,22 +286,55 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass)
 
 		meshDrawer->DrawMesh(drawPass);
 
-		if (mapInfo->map.voidGround || (mapInfo->map.voidWater && drawPass != DrawPass::WaterReflection)) {
+		if (alphaTest) {
 			glDisable(GL_ALPHA_TEST);
 		}
 
 		smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass);
-		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(drawPass);
-	}
 
-	geomBuffer.UnBind();
+		geomBuffer.UnBind();
+	}
 
 	#if 0
 	geomBuffer.DrawDebug(geomBuffer.GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_NORMTEX));
 	#endif
 
+	// must be after the unbind
 	if (!drawForward) {
 		eventHandler.DrawGroundPostDeferred();
+	}
+}
+
+void CSMFGroundDrawer::DrawForwardPass(const DrawPass::e& drawPass, bool alphaTest)
+{
+	if (!SelectRenderState(drawPass)->CanDrawForward())
+		return;
+
+	{
+		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(drawPass);
+		smfRenderStates[RENDER_STATE_SEL]->Enable(this, drawPass);
+
+		if (wireframe) {
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		}
+		if (alphaTest) {
+			glEnable(GL_ALPHA_TEST);
+			glAlphaFunc(GL_GREATER, mapInfo->map.voidAlphaMin);
+		}
+
+		if (HaveLuaRenderState())
+			eventHandler.DrawGroundPreForward();
+
+		meshDrawer->DrawMesh(drawPass);
+
+		if (alphaTest) {
+			glDisable(GL_ALPHA_TEST);
+		}
+		if (wireframe) {
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		}
+
+		smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass);
 	}
 }
 
@@ -318,39 +351,15 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 
-	SelectRenderState(drawPass);
-
 	if (drawDeferred) {
 		// do the deferred pass first, will allow us to re-use
 		// its output at some future point and eventually draw
 		// the entire map deferred
-		DrawDeferredPass(drawPass);
+		DrawDeferredPass(drawPass, mapInfo->map.voidGround || (mapInfo->map.voidWater && drawPass != DrawPass::WaterReflection));
 	}
 
 	if (drawForward) {
-		smfRenderStates[RENDER_STATE_SEL]->Enable(this, drawPass);
-
-		if (wireframe) {
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		}
-		if (mapInfo->map.voidGround || (mapInfo->map.voidWater && drawPass != DrawPass::WaterReflection)) {
-			glEnable(GL_ALPHA_TEST);
-			glAlphaFunc(GL_GREATER, mapInfo->map.voidAlphaMin);
-		}
-
-		if (HaveLuaRenderState())
-			eventHandler.DrawGroundPreForward();
-
-		meshDrawer->DrawMesh(drawPass);
-
-		if (mapInfo->map.voidGround || (mapInfo->map.voidWater && drawPass != DrawPass::WaterReflection)) {
-			glDisable(GL_ALPHA_TEST);
-		}
-		if (wireframe) {
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		}
-
-		smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass);
+		DrawForwardPass(drawPass, mapInfo->map.voidGround || (mapInfo->map.voidWater && drawPass != DrawPass::WaterReflection));
 	}
 
 	glDisable(GL_CULL_FACE);

@@ -38,6 +38,7 @@ public:
 
 	virtual bool HasValidShader(const DrawPass::e& drawPass) const = 0;
 	virtual bool CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const = 0;
+	virtual bool CanDrawForward() const = 0;
 	virtual bool CanDrawDeferred() const = 0;
 
 	virtual void Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass) = 0;
@@ -62,6 +63,7 @@ public:
 
 	bool HasValidShader(const DrawPass::e& drawPass) const { return false; }
 	bool CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const;
+	bool CanDrawForward() const { return true; }
 	bool CanDrawDeferred() const { return false; }
 
 	void Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass);
@@ -87,6 +89,7 @@ public:
 
 	bool HasValidShader(const DrawPass::e& drawPass) const;
 	bool CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const;
+	bool CanDrawForward() const { return true; }
 	bool CanDrawDeferred() const { return false; }
 
 	void Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass);
@@ -126,7 +129,8 @@ public:
 
 	bool HasValidShader(const DrawPass::e& drawPass) const;
 	bool CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const;
-	bool CanDrawDeferred() const { return (HasValidShader(DrawPass::TerrainDeferred)); }
+	bool CanDrawForward() const { return true; }
+	bool CanDrawDeferred() const { return true; }
 
 	void Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass);
 	void Disable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass);

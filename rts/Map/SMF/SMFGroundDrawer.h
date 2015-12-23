@@ -31,8 +31,9 @@ public:
 	friend class CSMFReadMap;
 
 	void Draw(const DrawPass::e& drawPass);
+	void DrawDeferredPass(const DrawPass::e& drawPass, bool alphaTest);
+	void DrawForwardPass(const DrawPass::e& drawPass, bool alphaTest);
 	void DrawShadowPass();
-	void DrawDeferredPass(const DrawPass::e& drawPass);
 
 	void Update();
 	void UpdateRenderState();
