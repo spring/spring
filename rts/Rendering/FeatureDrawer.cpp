@@ -152,7 +152,6 @@ CFeatureDrawer::~CFeatureDrawer()
 void CFeatureDrawer::RenderFeatureCreated(const CFeature* feature)
 {
 	CFeature* f = const_cast<CFeature*>(feature);
-	texturehandlerS3O->UpdateDraw();
 
 	if (feature->def->drawType == DRAWTYPE_MODEL) {
 		f->drawQuad = -1;

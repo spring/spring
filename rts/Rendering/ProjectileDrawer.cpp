@@ -914,8 +914,6 @@ void CProjectileDrawer::GenerateNoiseTex(unsigned int tex)
 
 void CProjectileDrawer::RenderProjectileCreated(const CProjectile* p)
 {
-	texturehandlerS3O->UpdateDraw();
-
 	if (p->model) {
 		modelRenderers[MDL_TYPE(p)]->AddProjectile(p);
 	} else {

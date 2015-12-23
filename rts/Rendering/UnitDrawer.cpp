@@ -1629,7 +1629,6 @@ void CUnitDrawer::UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool kil
 
 void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 	CUnit* unit = const_cast<CUnit*>(u);
-	texturehandlerS3O->UpdateDraw();
 
 	if (u->model != NULL) {
 		if (cloaked) {
