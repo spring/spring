@@ -451,7 +451,10 @@ void CSMFGroundDrawer::DrawShadowPass()
 	glDisable(GL_POLYGON_OFFSET_FILL);
 }
 
-
+void CSMFGroundDrawer::RecompileEngineShaders() {
+	smfRenderStates[RENDER_STATE_SSP]->Kill();
+	smfRenderStates[RENDER_STATE_SSP]->Init(this, nullptr);
+}
 
 void CSMFGroundDrawer::SetLuaShader(const LuaMapShaderData* luaMapShaderData)
 {

@@ -137,9 +137,9 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer, const Lua
 
 			glslShaders[n]->SetFlag("SMF_VOID_WATER",                       mapInfo->map.voidWater);
 			glslShaders[n]->SetFlag("SMF_VOID_GROUND",                      mapInfo->map.voidGround);
-			glslShaders[n]->SetFlag("SMF_SPECULAR_LIGHTING",                smfMap->HaveSpecularTexture());
-			glslShaders[n]->SetFlag("SMF_DETAIL_TEXTURE_SPLATTING",         smfMap->HaveSplatDetailDistribTexture());
-			glslShaders[n]->SetFlag("SMF_DETAIL_NORMAL_TEXTURE_SPLATTING",  smfMap->HaveSplatNormalDistribTexture());
+			glslShaders[n]->SetFlag("SMF_SPECULAR_LIGHTING",                smfMap->GetSpecularTexture() != 0);
+			glslShaders[n]->SetFlag("SMF_DETAIL_TEXTURE_SPLATTING",         smfMap->GetSplatDistrTexture() != 0 && smfMap->GetSplatDetailTexture() != 0);
+			glslShaders[n]->SetFlag("SMF_DETAIL_NORMAL_TEXTURE_SPLATTING",  smfMap->GetSplatNormalTexture(0) != 0);
 			glslShaders[n]->SetFlag("SMF_DETAIL_NORMAL_DIFFUSE_ALPHA",      smfMap->HaveDetailNormalDiffuseAlpha());
 			glslShaders[n]->SetFlag("SMF_WATER_ABSORPTION",                 smfMap->HasVisibleWater());
 			glslShaders[n]->SetFlag("SMF_SKY_REFLECTIONS",                 (smfMap->GetSkyReflectModTexture() != 0));
@@ -516,7 +516,7 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	glActiveTexture(GL_TEXTURE13); glBindTexture(GL_TEXTURE_2D, smfMap->GetParallaxHeightTexture());
 	glActiveTexture(GL_TEXTURE14); glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
 
-	if (smfMap->HaveSplatNormalDistribTexture()) {
+	if (smfMap->GetSplatNormalTexture(0) != 0) {
 		for (int i = 0; i < CSMFReadMap::NUM_SPLAT_DETAIL_NORMALS; i++) {
 			glActiveTexture(GL_TEXTURE15 + i); glBindTexture(GL_TEXTURE_2D, smfMap->GetSplatNormalTexture(i));
 		}

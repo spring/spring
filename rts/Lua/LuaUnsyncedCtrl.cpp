@@ -1510,14 +1510,23 @@ static MapTextureData ParseLuaTextureData(lua_State* L, bool mapTex)
 	return luaTexData;
 }
 
-
 int LuaUnsyncedCtrl::SetMapShadingTexture(lua_State* L)
 {
 	if (CLuaHandle::GetHandleSynced(L))
 		return 0;
 
 	if (readMap != nullptr) {
-		lua_pushboolean(L, readMap->SetLuaTexture(ParseLuaTextureData(L, true)));
+		MapTextureData luaTexData = ParseLuaTextureData(L, true);
+		int origTexID = readMap->GetTexture(luaTexData.type);
+		lua_pushboolean(L, readMap->SetLuaTexture(luaTexData));
+		
+		if (globalRendering->haveGLSL) {
+			if (origTexID == 0 && luaTexData.id != 0) {
+				CBaseGroundDrawer* groundDrawer = readMap->GetGroundDrawer();
+				// maybe engine shader recompilation could be scheduled for later in case many textures will be changed from the same Lua function
+				groundDrawer->RecompileEngineShaders();
+			}
+		}
 	} else {
 		lua_pushboolean(L, false);
 	}

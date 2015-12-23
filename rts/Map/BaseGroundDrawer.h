@@ -41,6 +41,7 @@ public:
 	virtual void DecreaseDetail() = 0;
 	virtual int GetGroundDetail(const DrawPass::e& drawPass = DrawPass::Normal) const = 0;
 
+	virtual void RecompileEngineShaders() {}
 	virtual void SetLuaShader(const LuaMapShaderData*) {}
 	virtual void SetDrawForwardPass(bool b) { drawForward = b; }
 	virtual void SetDrawDeferredPass(bool) {}
