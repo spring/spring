@@ -1404,7 +1404,7 @@ static bool ObjectDrawWithLuaMat(lua_State* L, CSolidObject* obj, LuaObjType obj
 }
 
 
-int LuaOpenGL::UnitCommon(lua_State* L, bool applyTransform)
+int LuaOpenGL::UnitCommon(lua_State* L, bool applyTransform, bool callDrawUnit)
 {
 	LuaOpenGL::CheckDrawingEnabled(L, __FUNCTION__);
 
@@ -1413,10 +1413,13 @@ int LuaOpenGL::UnitCommon(lua_State* L, bool applyTransform)
 	if (unit == nullptr)
 		return 0;
 
-	// NOTE: the "Raw" in UnitRaw means "no transform", not the same
+	// NOTE:
+	//   the "Raw" in UnitRaw means "no transform", not the same
+	//   UnitRaw also skips the DrawUnit callin by default so any
+	//   recursion is blocked
 	const bool doRawDraw = luaL_optboolean(L, 2, false);
 	const bool useLuaMat = ObjectDrawWithLuaMat(L, unit, LUAOBJ_UNIT);
-	const bool noLuaCall = false;
+	const bool noLuaCall = luaL_optboolean(L, 4, !callDrawUnit);
 
 	glPushAttrib(GL_ENABLE_BIT);
 
@@ -1448,8 +1451,8 @@ int LuaOpenGL::UnitCommon(lua_State* L, bool applyTransform)
 	return 0;
 }
 
-int LuaOpenGL::Unit(lua_State* L) { return (UnitCommon(L, true)); }
-int LuaOpenGL::UnitRaw(lua_State* L) { return (UnitCommon(L, false)); }
+int LuaOpenGL::Unit(lua_State* L) { return (UnitCommon(L, true, true)); }
+int LuaOpenGL::UnitRaw(lua_State* L) { return (UnitCommon(L, false, false)); }
 
 
 int LuaOpenGL::UnitShape(lua_State* L)
@@ -1501,7 +1504,7 @@ int LuaOpenGL::UnitPieceMultMatrix(lua_State* L)
 
 /******************************************************************************/
 
-int LuaOpenGL::FeatureCommon(lua_State* L, bool applyTransform)
+int LuaOpenGL::FeatureCommon(lua_State* L, bool applyTransform, bool callDrawFeature)
 {
 	LuaOpenGL::CheckDrawingEnabled(L, __FUNCTION__);
 
@@ -1512,10 +1515,13 @@ int LuaOpenGL::FeatureCommon(lua_State* L, bool applyTransform)
 	if (feature->model == nullptr)
 		return 0;
 
-	// NOTE: the "Raw" in FeatureRaw means "no transform", not the same
+	// NOTE:
+	//   the "Raw" in FeatureRaw means "no transform", not the same
+	//   FeatureRaw also skips the DrawFeature callin by default so
+	//   any recursion is blocked
 	const bool doRawDraw = luaL_optboolean(L, 2, false);
 	const bool useLuaMat = ObjectDrawWithLuaMat(L, feature, LUAOBJ_FEATURE);
-	const bool noLuaCall = false;
+	const bool noLuaCall = luaL_optboolean(L, 4, !callDrawFeature);
 
 	glPushAttrib(GL_ENABLE_BIT);
 
@@ -1547,8 +1553,8 @@ int LuaOpenGL::FeatureCommon(lua_State* L, bool applyTransform)
 	return 0;
 }
 
-int LuaOpenGL::Feature(lua_State* L) { return (FeatureCommon(L, true)); }
-int LuaOpenGL::FeatureRaw(lua_State* L) { return (FeatureCommon(L, false)); }
+int LuaOpenGL::Feature(lua_State* L) { return (FeatureCommon(L, true, true)); }
+int LuaOpenGL::FeatureRaw(lua_State* L) { return (FeatureCommon(L, false, false)); }
 
 
 int LuaOpenGL::FeatureShape(lua_State* L)

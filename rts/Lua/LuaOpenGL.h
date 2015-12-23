@@ -224,7 +224,7 @@ class LuaOpenGL {
 		static int GetTextHeight(lua_State* L);
 
 		// internal wrapper for Unit and UnitRaw
-		static int UnitCommon(lua_State* L, bool applyTransform);
+		static int UnitCommon(lua_State* L, bool applyTransform, bool callDrawUnit);
 
 		static int Unit(lua_State* L);
 		static int UnitRaw(lua_State* L);
@@ -235,7 +235,7 @@ class LuaOpenGL {
 		static int UnitPieceMultMatrix(lua_State* L);
 
 		// internal wrapper for Feature and FeatureRaw
-		static int FeatureCommon(lua_State* L, bool applyTransform);
+		static int FeatureCommon(lua_State* L, bool applyTransform, bool callDrawFeature);
 
 		static int Feature(lua_State* L);
 		static int FeatureRaw(lua_State* L);
