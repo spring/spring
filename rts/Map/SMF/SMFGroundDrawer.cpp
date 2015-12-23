@@ -485,6 +485,11 @@ void CSMFGroundDrawer::Update()
 	}
 }
 
+void CSMFGroundDrawer::UpdateRenderState()
+{
+	smfRenderStates[RENDER_STATE_SSP]->Update(this);
+}
+
 void CSMFGroundDrawer::UpdateSunDir() {
 	// Lua has gl.GetSun
 	if (HaveLuaRenderState())

@@ -35,6 +35,7 @@ public:
 	void DrawDeferredPass(const DrawPass::e& drawPass);
 
 	void Update();
+	void UpdateRenderState();
 	void UpdateSunDir();
 
 

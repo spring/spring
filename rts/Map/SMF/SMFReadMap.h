@@ -33,34 +33,7 @@ public:
 	void UpdateHeightMapUnsynced(const SRectangle&);
 
 public:
-	bool SetLuaTexture(const MapTextureData& td) override {
-		const unsigned int num = Clamp(int(td.num), 0, NUM_SPLAT_DETAIL_NORMALS - 1);
-
-		switch (td.type) {
-			case MAP_BASE_GRASS_TEX: { grassShadingTex.SetLuaTexture(td); } break;
-			case MAP_BASE_DETAIL_TEX: { detailTex.SetLuaTexture(td); } break;
-			case MAP_BASE_MINIMAP_TEX: { minimapTex.SetLuaTexture(td); } break;
-			case MAP_BASE_SHADING_TEX: { shadingTex.SetLuaTexture(td); } break;
-			case MAP_BASE_NORMALS_TEX: { normalsTex.SetLuaTexture(td); } break;
-
-			case MAP_SSMF_SPECULAR_TEX: { specularTex.SetLuaTexture(td); } break;
-			case MAP_SSMF_NORMALS_TEX: { blendNormalsTex.SetLuaTexture(td); } break;
-
-			case MAP_SSMF_SPLAT_DISTRIB_TEX: { splatDistrTex.SetLuaTexture(td); } break;
-			case MAP_SSMF_SPLAT_DETAIL_TEX: { splatDetailTex.SetLuaTexture(td); } break;
-			case MAP_SSMF_SPLAT_NORMAL_TEX: { splatNormalTextures[num].SetLuaTexture(td); } break;
-
-			case MAP_SSMF_SKY_REFLECTION_TEX: { skyReflectModTex.SetLuaTexture(td); } break;
-			case MAP_SSMF_LIGHT_EMISSION_TEX: { lightEmissionTex.SetLuaTexture(td); } break;
-			case MAP_SSMF_PARALLAX_HEIGHT_TEX: { parallaxHeightTex.SetLuaTexture(td); } break;
-
-			default: {
-				return false;
-			} break;
-		}
-
-		return true;
-	}
+	bool SetLuaTexture(const MapTextureData& td) override;
 
 public:
 	unsigned int GetTexture(unsigned int type, unsigned int num = 0) const override {
@@ -162,9 +135,13 @@ public:
 	void ConfigureAnisotropy();
 	float GetAnisotropy() const { return anisotropy; }
 
-	bool HaveSpecularTexture() const { return haveSpecularTexture; }
-	bool HaveSplatDetailDistribTexture() const { return haveSplatDetailDistribTexture; }
-	bool HaveSplatNormalDistribTexture() const { return haveSplatNormalDistribTexture; }
+	bool HaveSplatNormalTexture() const {
+		if (splatNormalTextures[0].GetID() != 0) return true;
+		if (splatNormalTextures[1].GetID() != 0) return true;
+		if (splatNormalTextures[2].GetID() != 0) return true;
+		if (splatNormalTextures[3].GetID() != 0) return true;
+		return false;
+	}
 	bool HaveDetailNormalDiffuseAlpha() const { return haveDetailNormalDiffuseAlpha; }
 
 private:
