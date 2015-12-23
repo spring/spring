@@ -53,7 +53,7 @@ private:
 	//Preloading
 	std::deque<std::string> preloadQueue;
 	spring::mutex preloadMutex;
-	boost::thread *preloadThread;
+	boost::thread* preloadThread;
 	void PreloadModels();
 };
 
