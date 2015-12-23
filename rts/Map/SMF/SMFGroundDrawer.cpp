@@ -65,13 +65,21 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	drawDeferred = geomBuffer.Valid();
 	drawMapEdges = configHandler->GetBool("MapBorder");
 
+	groundDetail = configHandler->GetInt("GroundDetail");
+
+
 	// NOTE:
 	//   advShading can NOT change at runtime if initially false
 	//   (see AdvMapShadingActionExecutor), so we will always use
-	//   FFP render-state (in ::Draw) in that special case and it
-	//   does not matter whether SSP render-state is initialized
-	groundDetail = configHandler->GetInt("GroundDetail");
-	advShading = smfRenderStates[RENDER_STATE_SSP]->Init(this, nullptr);
+	//   states[FFP] (in ::Draw) in that special case and it does
+	//   not matter whether states[SSP] is initialized
+	if ((advShading = smfRenderStates[RENDER_STATE_SSP]->Init(this))) {
+		smfRenderStates[RENDER_STATE_SSP]->Update(this, nullptr);
+	}
+
+	// always initialize this state; defer Update (allows re-use)
+	smfRenderStates[RENDER_STATE_LUA]->Init(this);
+
 
 	waterPlaneDispLists[0] = 0;
 	waterPlaneDispLists[1] = 0;
@@ -455,8 +463,7 @@ void CSMFGroundDrawer::DrawShadowPass()
 
 void CSMFGroundDrawer::SetLuaShader(const LuaMapShaderData* luaMapShaderData)
 {
-	smfRenderStates[RENDER_STATE_LUA]->Kill();
-	smfRenderStates[RENDER_STATE_LUA]->Init(this, luaMapShaderData);
+	smfRenderStates[RENDER_STATE_LUA]->Update(this, luaMapShaderData);
 }
 
 void CSMFGroundDrawer::SetupBigSquare(const int bigSquareX, const int bigSquareY)
@@ -487,7 +494,7 @@ void CSMFGroundDrawer::Update()
 
 void CSMFGroundDrawer::UpdateRenderState()
 {
-	smfRenderStates[RENDER_STATE_SSP]->Update(this);
+	smfRenderStates[RENDER_STATE_SSP]->Update(this, nullptr);
 }
 
 void CSMFGroundDrawer::UpdateSunDir() {

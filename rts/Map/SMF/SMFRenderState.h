@@ -29,12 +29,12 @@ public:
 	static void FreeInstance(ISMFRenderState* state) { delete state; }
 
 	virtual ~ISMFRenderState() {}
-	virtual bool Init(
+	virtual bool Init(const CSMFGroundDrawer* smfGroundDrawer) = 0;
+	virtual void Kill() = 0;
+	virtual void Update(
 		const CSMFGroundDrawer* smfGroundDrawer,
 		const LuaMapShaderData* luaMapShaderData
 	) = 0;
-	virtual void Kill() = 0;
-	virtual void Update(const CSMFGroundDrawer* smfGroundDrawer) = 0;
 
 	virtual bool HasValidShader(const DrawPass::e& drawPass) const = 0;
 	virtual bool CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const = 0;
@@ -53,12 +53,12 @@ public:
 
 struct SMFRenderStateFFP: public ISMFRenderState {
 public:
-	bool Init(
+	bool Init(const CSMFGroundDrawer* smfGroundDrawer) { return false; }
+	void Kill() {}
+	void Update(
 		const CSMFGroundDrawer* smfGroundDrawer,
 		const LuaMapShaderData* luaMapShaderData
-	) { return false; }
-	void Kill() {}
-	void Update(const CSMFGroundDrawer* smfGroundDrawer) {}
+	) {}
 
 	bool HasValidShader(const DrawPass::e& drawPass) const { return false; }
 	bool CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const;
@@ -78,12 +78,12 @@ public:
 	SMFRenderStateARB() { arbShaders.fill(nullptr); }
 	~SMFRenderStateARB() { Kill(); }
 
-	bool Init(
+	bool Init(const CSMFGroundDrawer* smfGroundDrawer);
+	void Kill();
+	void Update(
 		const CSMFGroundDrawer* smfGroundDrawer,
 		const LuaMapShaderData* luaMapShaderData
-	);
-	void Kill();
-	void Update(const CSMFGroundDrawer* smfGroundDrawer) {}
+	) {}
 
 	bool HasValidShader(const DrawPass::e& drawPass) const;
 	bool CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const;
@@ -117,12 +117,12 @@ public:
 	SMFRenderStateGLSL(bool lua): useLuaShaders(lua) { glslShaders.fill(nullptr); }
 	~SMFRenderStateGLSL() { Kill(); }
 
-	bool Init(
+	bool Init(const CSMFGroundDrawer* smfGroundDrawer);
+	void Kill();
+	void Update(
 		const CSMFGroundDrawer* smfGroundDrawer,
 		const LuaMapShaderData* luaMapShaderData
 	);
-	void Kill();
-	void Update(const CSMFGroundDrawer* smfGroundDrawer);
 
 	bool HasValidShader(const DrawPass::e& drawPass) const;
 	bool CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const;
