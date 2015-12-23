@@ -222,7 +222,7 @@ void C3DModelLoader::Preload3DModel(std::string modelName)
 
 			preloadMutex.lock();
 		}
-		preloadThread = new boost::thread(boost::bind(&PreloadModels, this));
+		preloadThread = new boost::thread(boost::bind(&C3DModelLoader::PreloadModels, this));
 	}
 
 	preloadQueue.push_back(modelName);
