@@ -162,6 +162,9 @@ public:
 	void ConfigureAnisotropy();
 	float GetAnisotropy() const { return anisotropy; }
 
+	bool HaveSpecularTexture() const { return haveSpecularTexture; }
+	bool HaveSplatDetailDistribTexture() const { return haveSplatDetailDistribTexture; }
+	bool HaveSplatNormalDistribTexture() const { return haveSplatNormalDistribTexture; }
 	bool HaveDetailNormalDiffuseAlpha() const { return haveDetailNormalDiffuseAlpha; }
 
 private:

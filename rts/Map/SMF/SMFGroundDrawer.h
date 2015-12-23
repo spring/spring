@@ -37,7 +37,7 @@ public:
 	void Update();
 	void UpdateSunDir();
 
-	void RecompileEngineShaders() override;
+
 	void SetLuaShader(const LuaMapShaderData*);
 	void SetDrawDeferredPass(bool b) {
 		if ((drawDeferred = b)) {
