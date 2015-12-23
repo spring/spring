@@ -48,11 +48,11 @@ CS3OTextureHandler::CS3OTextureHandler()
 
 CS3OTextureHandler::~CS3OTextureHandler()
 {
-	for (S3OTexMat &texture: textures){
+	for (S3OTexMat& texture: textures){
 		glDeleteTextures(1, &(texture.tex1));
 		glDeleteTextures(1, &(texture.tex2));
 	}
-	for (auto &it: bitmapCache) {
+	for (auto& it: bitmapCache) {
 		delete it.second;
 	}
 }
@@ -69,7 +69,7 @@ void CS3OTextureHandler::PreloadS3OTexture(S3DModel* model)
 }
 
 
-unsigned int CS3OTextureHandler::LoadTexture(const S3DModel* model, const std::string &textureName, bool isTex1, bool preload)
+unsigned int CS3OTextureHandler::LoadTexture(const S3DModel* model, const std::string& textureName, bool isTex1, bool preload)
 {
 	CBitmap _bitmap;
 	CBitmap* bitmap = &_bitmap;
@@ -167,7 +167,7 @@ unsigned int CS3OTextureHandler::InsertTextureMat(const S3DModel* model)
 
 void CS3OTextureHandler::SetS3oTexture(int num)
 {
-	S3OTexMat &texMat = textures[num];
+	S3OTexMat& texMat = textures[num];
 
 	if (shadowHandler->inShadowPass) {
 		glActiveTexture(GL_TEXTURE0);

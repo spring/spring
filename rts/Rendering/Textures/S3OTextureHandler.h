@@ -53,7 +53,7 @@ public:
 	}
 
 private:
-	unsigned int LoadTexture(const S3DModel* model, const std::string &textureName, bool isTex1, bool preload);
+	unsigned int LoadTexture(const S3DModel* model, const std::string& textureName, bool isTex1, bool preload);
 	int LoadS3OTextureNow(const S3DModel* model);
 	unsigned int InsertTextureMat(const S3DModel* model);
 
