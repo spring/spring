@@ -24,6 +24,25 @@ public:
 	virtual ModelType GetType() const = 0;
 };
 
+
+struct LoadQueue {
+public:
+	LoadQueue(): thread(nullptr) {}
+	~LoadQueue();
+
+	void Pump();
+	void Push(const std::string& modelName);
+
+	void GrabLock() { mutex.lock(); }
+	void FreeLock() { mutex.unlock(); }
+
+private:
+	std::deque<std::string> queue;
+	spring::mutex mutex;
+	boost::thread* thread;
+};
+
+
 class C3DModelLoader
 {
 public:
@@ -32,7 +51,7 @@ public:
 
 	std::string FindModelPath(std::string name) const;
 	S3DModel* Load3DModel(std::string modelName, bool preload = false);
-	void Preload3DModel(std::string modelName);
+	void Preload3DModel(const std::string& modelName) { loadQueue.Push(modelName); }
 
 	typedef std::unordered_map<std::string, unsigned int> ModelMap; // "armflash.3do" --> id
 	typedef std::unordered_map<std::string, unsigned int> FormatMap; // "3do" --> MODELTYPE_3DO
@@ -46,15 +65,11 @@ private:
 	ModelMap cache;
 	FormatMap formats;
 	ParserMap parsers;
+	// preloading
+	LoadQueue loadQueue;
 
 	// all unique models loaded so far
 	std::vector<S3DModel*> models;
-
-	//Preloading
-	std::deque<std::string> preloadQueue;
-	spring::mutex preloadMutex;
-	boost::thread* preloadThread;
-	void PreloadModels();
 };
 
 extern C3DModelLoader* modelParser;

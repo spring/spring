@@ -490,7 +490,7 @@ void CFeatureDrawer::DrawAlphaPass(bool disableAdvShading)
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			modelRenderers[0].GetRenderer(modelType)->PushRenderState();
-			DrawAlphaPassHelper(modelType, LuaObjectDrawer::GetDrawPassAlphaMat());
+			DrawAlphaFeatures(modelType);
 			modelRenderers[0].GetRenderer(modelType)->PopRenderState();
 		}
 
@@ -505,7 +505,7 @@ void CFeatureDrawer::DrawAlphaPass(bool disableAdvShading)
 	LuaObjectDrawer::DrawAlphaMaterialObjects(LUAOBJ_FEATURE, false);
 }
 
-void CFeatureDrawer::DrawAlphaPassHelper(int modelType, int luaMatType)
+void CFeatureDrawer::DrawAlphaFeatures(int modelType)
 {
 	for (const auto& mdlRenderProxy: modelRenderers) {
 		if (mdlRenderProxy.GetLastDrawFrame() < globalRendering->drawFrame)
@@ -516,27 +516,28 @@ void CFeatureDrawer::DrawAlphaPassHelper(int modelType, int luaMatType)
 
 		for (const auto& binElem: featureBin) {
 			CUnitDrawer::BindModelTypeTexture(modelType, binElem.first);
-			DrawAlphaPassSet(binElem.second, modelType, luaMatType);
+
+			for (CFeature* feature: binElem.second) {
+				DrawAlphaFeature(feature, modelType != MODELTYPE_3DO);
+			}
 		}
 	}
 }
 
-void CFeatureDrawer::DrawAlphaPassSet(const FeatureSet& fadeFeatures, int modelType, int luaMatType)
+void CFeatureDrawer::DrawAlphaFeature(CFeature* feature, bool ffpMat)
 {
-	for (CFeature* f: fadeFeatures) {
-		// if <f> is not supposed to be drawn faded, skip it during this pass
-		if (!DrawAlpha(f))
-			continue;
+	// if <f> is not supposed to be drawn faded, skip it during this pass
+	if (!DrawAlpha(feature))
+		return;
 
-		if (!CanDrawFeature(f))
-			continue;
+	if (!CanDrawFeature(feature))
+		return;
 
-		if (LuaObjectDrawer::AddAlphaMaterialObject(f, LUAOBJ_FEATURE))
-			continue;
+	if (LuaObjectDrawer::AddAlphaMaterialObject(feature, LUAOBJ_FEATURE))
+		return;
 
-		SetFeatureAlphaMaterialFFP(f, modelType != MODELTYPE_3DO);
-		DrawFeature(f, 0, 0, false, false);
-	}
+	SetFeatureAlphaMaterialFFP(feature, ffpMat);
+	DrawFeature(feature, 0, 0, false, false);
 }
 
 

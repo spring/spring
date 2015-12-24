@@ -70,14 +70,14 @@ private:
 	static void UpdateDrawPos(CFeature* f);
 
 	void DrawOpaqueFeatures(int modelType, int luaMatType);
+	void DrawAlphaFeatures(int modelType);
+	void DrawAlphaFeature(CFeature* f, bool ffpMat);
 	void DrawFarFeatures();
 
 	bool CanDrawFeature(const CFeature*) const;
 
 	void DrawFeatureModel(const CFeature* feature, bool noLuaCall);
 
-	void DrawAlphaPassHelper(int, int);
-	void DrawAlphaPassSet(const FeatureSet&, int, int);
 	void GetVisibleFeatures(CCamera*, int, bool drawFar);
 
 	void PostLoad();

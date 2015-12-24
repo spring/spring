@@ -106,8 +106,62 @@ static void CheckPieceNormals(const S3DModel* model, const S3DModelPiece* modelP
 
 
 
-C3DModelLoader::C3DModelLoader() :
- preloadThread(nullptr)
+LoadQueue::~LoadQueue()
+{
+	if (thread != nullptr) {
+		thread->join();
+		SafeDelete(thread);
+	}
+}
+
+void LoadQueue::Pump()
+{
+	while (true) {
+		std::string modelName;
+
+		{
+			boost::mutex::scoped_lock(mutex);
+			assert(queue.size() > 0);
+			modelName = queue.front();
+		}
+
+		modelParser->Load3DModel(modelName, true);
+
+		{
+			boost::mutex::scoped_lock(mutex);
+			queue.pop_front();
+			if (queue.empty())
+				break;
+		}
+	}
+}
+
+void LoadQueue::Push(const std::string& modelName)
+{
+	GrabLock();
+
+	if (queue.empty()) {
+		if (thread != nullptr) {
+			FreeLock();
+
+			thread->join();
+			SafeDelete(thread);
+
+			GrabLock();
+		}
+
+		// mutex is still locked, thread will block if it gets
+		// to queue.front() before we get to queue.push_back()
+		thread = new boost::thread(boost::bind(&LoadQueue::Pump, this));
+	}
+
+	queue.push_back(modelName);
+
+	FreeLock();
+}
+
+
+C3DModelLoader::C3DModelLoader()
 {
 	// file-extension should be lowercase
 	formats["3do"] = MODELTYPE_3DO;
@@ -130,10 +184,6 @@ C3DModelLoader::C3DModelLoader() :
 
 C3DModelLoader::~C3DModelLoader()
 {
-	if (preloadThread != nullptr) {
-		preloadThread->join();
-		delete preloadThread;
-	}
 	// delete model cache
 	for (unsigned int n = 1; n < models.size(); n++) {
 		S3DModel* model = models[n];
@@ -187,49 +237,6 @@ std::string C3DModelLoader::FindModelPath(std::string name) const
 }
 
 
-void C3DModelLoader::PreloadModels()
-{
-	while (true) {
-		std::string modelName;
-		{
-			boost::mutex::scoped_lock(preloadMutex);
-			assert(preloadQueue.size() > 0);
-			modelName = preloadQueue.front();
-		}
-
-		Load3DModel(modelName, true);
-
-		{
-			boost::mutex::scoped_lock(preloadMutex);
-			preloadQueue.pop_front();
-			if (preloadQueue.empty())
-				break;
-		}
-	}
-}
-
-
-void C3DModelLoader::Preload3DModel(std::string modelName)
-{
-	preloadMutex.lock();
-
-	if (preloadQueue.empty()) {
-		if (preloadThread != nullptr) {
-			preloadMutex.unlock();
-
-			preloadThread->join();
-			delete preloadThread;
-
-			preloadMutex.lock();
-		}
-		preloadThread = new boost::thread(boost::bind(&C3DModelLoader::PreloadModels, this));
-	}
-
-	preloadQueue.push_back(modelName);
-
-	preloadMutex.unlock();
-}
-
 
 S3DModel* C3DModelLoader::Load3DModel(std::string modelName, bool preload)
 {
@@ -244,26 +251,32 @@ S3DModel* C3DModelLoader::Load3DModel(std::string modelName, bool preload)
 	FormatMap::iterator fi;
 
 	{
-		boost::mutex::scoped_lock(preloadMutex);
+		loadQueue.GrabLock();
+
 		if ((ci = cache.find(modelName)) != cache.end()) {
 			S3DModel* model = models[ci->second];
 			if (!preload)
 				CreateLists(model);
 			return model;
 		}
+
+		loadQueue.FreeLock();
 	}
 
 	const std::string& modelPath = FindModelPath(modelName);
 	const std::string& fileExt = StringToLower(FileSystem::GetExtension(modelPath));
 
 	{
-		boost::mutex::scoped_lock(preloadMutex);
+		loadQueue.GrabLock();
+
 		if ((ci = cache.find(modelPath)) != cache.end()) {
 			S3DModel* model = models[ci->second];
 			if (!preload)
 				CreateLists(model);
 			return model;
 		}
+
+		loadQueue.FreeLock();
 	}
 
 	S3DModel* model = nullptr;
@@ -297,14 +310,19 @@ S3DModel* C3DModelLoader::Load3DModel(std::string modelName, bool preload)
 }
 
 void C3DModelLoader::AddModelToCache(S3DModel* model, const std::string& modelName, const std::string& modelPath) {
-	boost::mutex::scoped_lock(preloadMutex);
-	model->id = models.size(); // IDs start at 1
-	models.push_back(model);
+	loadQueue.GrabLock();
 
-	assert(models[model->id] == model);
+	{
+		model->id = models.size(); // IDs start at 1
+		models.push_back(model);
 
-	cache[modelName] = model->id;
-	cache[modelPath] = model->id;
+		assert(models[model->id] == model);
+
+		cache[modelName] = model->id;
+		cache[modelPath] = model->id;
+	}
+
+	loadQueue.FreeLock();
 }
 
 

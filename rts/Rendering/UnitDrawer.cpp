@@ -698,15 +698,13 @@ void CUnitDrawer::DrawAlphaPass(bool disableAdvShading)
 void CUnitDrawer::DrawAlphaUnits(int modelType)
 {
 	{
-		const auto& unitBin = alphaModelRenderers[modelType]->GetUnitBin();
+		const auto mdlRenderer = alphaModelRenderers[modelType];
+		const auto& unitBin = mdlRenderer->GetUnitBin();
 
-		// cloaked units
-		for (auto it = unitBin.cbegin(); it != unitBin.cend(); ++it) {
-			BindModelTypeTexture(modelType, it->first);
+		for (const auto& binElem: unitBin) {
+			BindModelTypeTexture(modelType, binElem.first);
 
-			const auto& unitSet = it->second;
-
-			for (CUnit* unit: unitSet) {
+			for (CUnit* unit: binElem.second) {
 				DrawAlphaUnit(unit, modelType, false);
 			}
 		}
