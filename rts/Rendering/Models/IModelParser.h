@@ -50,7 +50,10 @@ public:
 	~C3DModelLoader();
 
 	std::string FindModelPath(std::string name) const;
+
+	S3DModel* LoadCached3DModel(const std::string& cachedModelName, bool preload);
 	S3DModel* Load3DModel(std::string modelName, bool preload = false);
+
 	void Preload3DModel(const std::string& modelName) { loadQueue.Push(modelName); }
 
 	typedef std::unordered_map<std::string, unsigned int> ModelMap; // "armflash.3do" --> id

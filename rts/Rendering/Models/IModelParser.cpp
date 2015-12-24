@@ -238,6 +238,27 @@ std::string C3DModelLoader::FindModelPath(std::string name) const
 
 
 
+S3DModel* C3DModelLoader::LoadCached3DModel(const std::string& cachedModelName, bool preload)
+{
+	S3DModel* cachedModel = nullptr;
+
+	{
+		loadQueue.GrabLock();
+
+		if ((ci = cache.find(cachedModelName)) != cache.end()) {
+			cachedModel = models[ci->second];
+
+			if (!preload) {
+				CreateLists(cachedModel);
+			}
+		}
+
+		loadQueue.FreeLock();
+	}
+
+	return cachedModel;
+}
+
 S3DModel* C3DModelLoader::Load3DModel(std::string modelName, bool preload)
 {
 	// cannot happen except through SpawnProjectile
@@ -251,32 +272,22 @@ S3DModel* C3DModelLoader::Load3DModel(std::string modelName, bool preload)
 	FormatMap::iterator fi;
 
 	{
-		loadQueue.GrabLock();
+		S3DModel* cachedModel = LoadCached3DModel(modelName, preload);
 
-		if ((ci = cache.find(modelName)) != cache.end()) {
-			S3DModel* model = models[ci->second];
-			if (!preload)
-				CreateLists(model);
-			return model;
+		if (cachedModel != nullptr) {
+			return cachedModel;
 		}
-
-		loadQueue.FreeLock();
 	}
 
 	const std::string& modelPath = FindModelPath(modelName);
 	const std::string& fileExt = StringToLower(FileSystem::GetExtension(modelPath));
 
 	{
-		loadQueue.GrabLock();
+		S3DModel* cachedModel = LoadCached3DModel(modelPath, preload);
 
-		if ((ci = cache.find(modelPath)) != cache.end()) {
-			S3DModel* model = models[ci->second];
-			if (!preload)
-				CreateLists(model);
-			return model;
+		if (cachedModel != nullptr) {
+			return cachedModel;
 		}
-
-		loadQueue.FreeLock();
 	}
 
 	S3DModel* model = nullptr;
