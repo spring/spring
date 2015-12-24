@@ -32,18 +32,14 @@
 #include "System/Matrix44f.h"
 #include "System/Util.h"
 #include "System/Log/ILog.h"
+#include "System/Sync/HsiehHash.h"
 
 
 
-/******************************************************************************/
-/******************************************************************************/
+// for "$info:los", etc
+static std::unordered_map<size_t, LuaMatTexture> luaMatTextures;
 
-static std::set<std::string> infoTexNames;
-
-/******************************************************************************/
-/******************************************************************************/
-
-static const std::unordered_map<std::string, LuaMatTexture::Type> texNameToTypeMap = {
+static const std::unordered_map<std::string, LuaMatTexture::Type> luaMatTexTypeMap = {
 	// atlases
 	{"$units",  LuaMatTexture::LUATEX_3DOTEXTURE},
 	{"$units1", LuaMatTexture::LUATEX_3DOTEXTURE},
@@ -76,17 +72,21 @@ static const std::unordered_map<std::string, LuaMatTexture::Type> texNameToTypeM
 	{"$ssmf_parallax",      LuaMatTexture::LUATEX_SSMF_PARALLAX},
 
 
-	{"$info",        LuaMatTexture::LUATEX_INFOTEX_ACTIVE},
-	{"$info_losmap", LuaMatTexture::LUATEX_INFOTEX_LOSMAP},
-	{"$info_mtlmap", LuaMatTexture::LUATEX_INFOTEX_MTLMAP},
-	{"$info_hgtmap", LuaMatTexture::LUATEX_INFOTEX_HGTMAP},
-	{"$info_blkmap", LuaMatTexture::LUATEX_INFOTEX_BLKMAP},
-
+	{"$info",         LuaMatTexture::LUATEX_INFOTEX_ACTIVE},
 	{"$extra",        LuaMatTexture::LUATEX_INFOTEX_ACTIVE},
+
+	#if 0
+	// these are now handled by ParseNamedSubTexture
+	{"$info_losmap",  LuaMatTexture::LUATEX_INFOTEX_LOSMAP},
+	{"$info_mtlmap",  LuaMatTexture::LUATEX_INFOTEX_MTLMAP},
+	{"$info_hgtmap",  LuaMatTexture::LUATEX_INFOTEX_HGTMAP},
+	{"$info_blkmap",  LuaMatTexture::LUATEX_INFOTEX_BLKMAP},
+
 	{"$extra_losmap", LuaMatTexture::LUATEX_INFOTEX_LOSMAP},
 	{"$extra_mtlmap", LuaMatTexture::LUATEX_INFOTEX_MTLMAP},
 	{"$extra_hgtmap", LuaMatTexture::LUATEX_INFOTEX_HGTMAP},
 	{"$extra_blkmap", LuaMatTexture::LUATEX_INFOTEX_BLKMAP},
+	#endif
 
 	{"$map_gb_nt", LuaMatTexture::LUATEX_MAP_GBUFFER_NORM},
 	{"$map_gb_dt", LuaMatTexture::LUATEX_MAP_GBUFFER_DIFF},
@@ -122,7 +122,7 @@ static const std::unordered_map<std::string, LuaMatTexture::Type> texNameToTypeM
 
 };
 
-static const std::unordered_map<std::string, LuaMatrixType> matrixNameToTypeMap = {
+static const std::unordered_map<std::string, LuaMatrixType> luaMatrixTypeMap = {
 	{"shadow", LUAMATRICES_SHADOW},
 	{"view", LUAMATRICES_VIEW},
 	{"viewinverse", LUAMATRICES_VIEWINVERSE},
@@ -139,11 +139,23 @@ static const std::unordered_map<std::string, LuaMatrixType> matrixNameToTypeMap 
 };
 
 
+/******************************************************************************/
+/******************************************************************************/
+
+
+void LuaOpenGLUtils::ResetState()
+{
+	// must be cleared, LuaMatTexture's contain pointers
+	luaMatTextures.clear();
+}
+
+
+
 LuaMatTexture::Type LuaOpenGLUtils::GetLuaMatTextureType(const std::string& name)
 {
-	const auto it = texNameToTypeMap.find(name);
+	const auto it = luaMatTexTypeMap.find(name);
 
-	if (it == texNameToTypeMap.end())
+	if (it == luaMatTexTypeMap.end())
 		return LuaMatTexture::LUATEX_NONE;
 
 	return it->second;
@@ -151,21 +163,18 @@ LuaMatTexture::Type LuaOpenGLUtils::GetLuaMatTextureType(const std::string& name
 
 LuaMatrixType LuaOpenGLUtils::GetLuaMatrixType(const std::string& name)
 {
-	const auto it = matrixNameToTypeMap.find(name);
+	const auto it = luaMatrixTypeMap.find(name);
 
-	if (it == matrixNameToTypeMap.end())
+	if (it == luaMatrixTypeMap.end())
 		return LUAMATRICES_NONE;
 
 	return it->second;
 }
 
-/******************************************************************************/
-/******************************************************************************/
-
 const CMatrix44f* LuaOpenGLUtils::GetNamedMatrix(const std::string& name)
 {
-	//! don't do for performance reasons (this function gets called a lot)
-	//StringToLowerInPlace(name);
+	// skipped for performance reasons (this function gets called a lot)
+	// StringToLowerInPlace(name);
 
 	switch (GetLuaMatrixType(name)) {
 		case LUAMATRICES_SHADOW:
@@ -194,6 +203,10 @@ const CMatrix44f* LuaOpenGLUtils::GetNamedMatrix(const std::string& name)
 	return nullptr;
 }
 
+
+
+/******************************************************************************/
+/******************************************************************************/
 
 S3DModel* ParseModel(int defID)
 {
@@ -274,6 +287,68 @@ bool ParseUnitTexture(LuaMatTexture& texUnit, const std::string& texture)
 }
 
 
+
+static bool ParseNamedSubTexture(LuaMatTexture& texUnit, const std::string& texName)
+{
+	const size_t texNameHash = HsiehHash(texName.c_str(), texName.size(), 0);
+	const auto luaMatTexIt = luaMatTextures.find(texNameHash);
+
+	// see if this texture has been requested before
+	if (luaMatTexIt != luaMatTextures.end()) {
+		texUnit.type = (luaMatTexIt->second).type;
+		texUnit.data = (luaMatTexIt->second).data;
+		return true;
+	}
+
+	// search for both types of separators (preserves BC)
+	const size_t sepIdx = texName.find_first_of(":_");
+
+	if (sepIdx == std::string::npos)
+		return false;
+
+	#if 0
+	const std::string& prefix = texName.substr(0, sepIdx);
+	const std::string& suffix = texName.substr(sepIdx + 1);
+
+	const size_t prefixHash = HsiehHash(prefix.c_str(), prefix.size(), 0);
+	#else
+	const size_t prefixHash = HsiehHash((texName.substr(0, sepIdx)).c_str(), sepIdx, 0);
+	#endif
+
+
+	// TODO: use constexpr hashes plus switch, also add $*_gbuffer_*
+	static const size_t prefixHashes[] = {
+		HsiehHash("$ssmf_splat_normal", sizeof("$ssmf_splat_normal") - 1, 0),
+		HsiehHash(             "$info", sizeof(             "$info") - 1, 0),
+		HsiehHash(            "$extra", sizeof(            "$extra") - 1, 0),
+	};
+
+
+	if (prefixHash == prefixHashes[0]) {
+		// last character becomes the index, clamped in ReadMap
+		texUnit.type = LuaMatTexture::LUATEX_SSMF_SNORMALX;
+		texUnit.data = reinterpret_cast<const void*>(int(texName.back()) - int('0'));
+
+		luaMatTextures[texNameHash] = texUnit;
+		return true;
+	}
+
+	if (prefixHash == prefixHashes[1] || prefixHash == prefixHashes[2]) {
+		// try to find a matching info-texture based on suffix
+		CInfoTexture* itex = infoTextureHandler->GetInfoTexture(texName.substr(sepIdx + 1));
+
+		if (itex->GetName() != "dummy") {
+			texUnit.type = LuaMatTexture::LUATEX_INFOTEX_SUFFIX;
+			texUnit.data = itex; // fast, and barely preserves RTTI
+
+			luaMatTextures[texNameHash] = texUnit;
+			return true;
+		}
+	}
+
+	return false;
+}
+
 bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, const std::string& image)
 {
 	// NOTE: current formats:
@@ -351,19 +426,10 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 	else if (image[0] == '$') {
 		switch ((texUnit.type = GetLuaMatTextureType(image))) {
 			case LuaMatTexture::LUATEX_NONE: {
-				// name not found in table, check for special case override
-				if (image.find("$info:") != 0)
+				// name not found in table, check for special case overrides
+				if (!ParseNamedSubTexture(texUnit, image)) {
 					return false;
-
-				const std::string& infoTexName = image.substr(6);
-				const CInfoTexture* itex = infoTextureHandler->GetInfoTextureConst(infoTexName);
-
-				if (itex->GetName() == "dummy")
-					return false;
-
-				infoTexNames.insert(infoTexName);
-				texUnit.type = LuaMatTexture::LUATEX_INFOTEX_NAMED;
-				texUnit.data = &*infoTexNames.find(infoTexName);
+				}
 			} break;
 
 			case LuaMatTexture::LUATEX_3DOTEXTURE: {
@@ -502,15 +568,26 @@ GLuint LuaMatTexture::GetTextureID() const
 			}
 		} break;
 
+		case LUATEX_SSMF_SNORMALX: {
+			if (readMap != nullptr) {
+				texID = readMap->GetTexture((LUATEX_SSMF_SNORMALS - LUATEX_SMF_GRASS), *reinterpret_cast<const int*>(&data));
+			}
+		} break;
+
 
 		// map info-overlay textures
-		case LUATEX_INFOTEX_NAMED: if (infoTextureHandler != nullptr) {
-			texID = (infoTextureHandler->GetInfoTexture(*static_cast<const std::string*>(data)))->GetTexture();
+		case LUATEX_INFOTEX_SUFFIX: if (infoTextureHandler != nullptr) {
+			const CInfoTexture* cInfoTex = static_cast<const CInfoTexture*>(data);
+			      CInfoTexture* mInfoTex = const_cast<CInfoTexture*>(cInfoTex);
+
+			texID = mInfoTex->GetTexture();
 		} break;
 
 		case LUATEX_INFOTEX_ACTIVE: if (infoTextureHandler != nullptr) {
 			texID = infoTextureHandler->GetCurrentInfoTexture();
 		} break;
+
+		#if 0
 		case LUATEX_INFOTEX_LOSMAP: if (infoTextureHandler != nullptr) {
 			texID = (infoTextureHandler->GetInfoTexture("los"))->GetTexture();
 		} break;
@@ -523,6 +600,7 @@ GLuint LuaMatTexture::GetTextureID() const
 		case LUATEX_INFOTEX_BLKMAP: if (infoTextureHandler != nullptr) {
 			texID = (infoTextureHandler->GetInfoTexture("path"))->GetTexture();
 		} break;
+		#endif
 
 
 		// g-buffer textures
@@ -604,17 +682,21 @@ GLuint LuaMatTexture::GetTextureTarget() const
 		case LUATEX_SSMF_SDISTRIB:
 		case LUATEX_SSMF_SDETAIL:
 		case LUATEX_SSMF_SNORMALS:
+		case LUATEX_SSMF_SNORMALX:
 		case LUATEX_SSMF_SKYREFL:
 		case LUATEX_SSMF_EMISSION:
 		case LUATEX_SSMF_PARALLAX:
 
 
-		case LUATEX_INFOTEX_NAMED:
+		case LUATEX_INFOTEX_SUFFIX:
 		case LUATEX_INFOTEX_ACTIVE:
+		#if 0
 		case LUATEX_INFOTEX_LOSMAP:
 		case LUATEX_INFOTEX_MTLMAP:
 		case LUATEX_INFOTEX_HGTMAP:
-		case LUATEX_INFOTEX_BLKMAP: {
+		case LUATEX_INFOTEX_BLKMAP:
+		#endif
+		{
 			texType = GL_TEXTURE_2D;
 		} break;
 
@@ -789,6 +871,18 @@ int2 LuaMatTexture::GetSize() const
 			}
 		} break;
 
+		case LUATEX_SSMF_SNORMALX: {
+			if (readMap != nullptr) {
+				return (readMap->GetTextureSize((LUATEX_SSMF_SNORMALS - LUATEX_SMF_GRASS), *reinterpret_cast<const int*>(&data)));
+			}
+		} break;
+
+
+		case LUATEX_INFOTEX_SUFFIX: {
+			if (infoTextureHandler != nullptr) {
+				return ((static_cast<const CInfoTexture*>(data))->GetTexSize());
+			}
+		} break;
 
 		case LUATEX_INFOTEX_ACTIVE: {
 			if (infoTextureHandler != nullptr) {
@@ -796,15 +890,7 @@ int2 LuaMatTexture::GetSize() const
 			}
 		} break;
 
-		case LUATEX_INFOTEX_NAMED: {
-			if (infoTextureHandler != nullptr) {
-				const std::string* name = static_cast<const std::string*>(data);
-				const CInfoTexture* itex = infoTextureHandler->GetInfoTextureConst(*name);
-
-				return (itex->GetTexSize());
-			}
-		} break;
-
+		#if 0
 		case LUATEX_INFOTEX_LOSMAP: if (infoTextureHandler != nullptr) {
 			return ((infoTextureHandler->GetInfoTextureConst("los"))->GetTexSize());
 		} break;
@@ -817,6 +903,7 @@ int2 LuaMatTexture::GetSize() const
 		case LUATEX_INFOTEX_BLKMAP: if (infoTextureHandler != nullptr) {
 			return ((infoTextureHandler->GetInfoTextureConst("path"))->GetTexSize());
 		} break;
+		#endif
 
 
 		case LUATEX_MAP_GBUFFER_NORM:
@@ -860,12 +947,6 @@ int2 LuaMatTexture::GetSize() const
 }
 
 
-
-/******************************************************************************/
-/******************************************************************************/
-//
-//  LuaMatTexture
-//
 
 void LuaMatTexture::Finalize()
 {
@@ -928,12 +1009,14 @@ void LuaMatTexture::Print(const string& indent) const
 		STRING_CASE(typeName, LUATEX_SSMF_PARALLAX);
 
 
-		STRING_CASE(typeName, LUATEX_INFOTEX_NAMED);
+		STRING_CASE(typeName, LUATEX_INFOTEX_SUFFIX);
 		STRING_CASE(typeName, LUATEX_INFOTEX_ACTIVE);
+		#if 0
 		STRING_CASE(typeName, LUATEX_INFOTEX_LOSMAP);
 		STRING_CASE(typeName, LUATEX_INFOTEX_MTLMAP);
 		STRING_CASE(typeName, LUATEX_INFOTEX_HGTMAP);
 		STRING_CASE(typeName, LUATEX_INFOTEX_BLKMAP);
+		#endif
 
 		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_NORM);
 		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_DIFF);

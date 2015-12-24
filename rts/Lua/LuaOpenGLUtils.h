@@ -62,9 +62,10 @@ class LuaMatTexture {
 			LUATEX_SSMF_SKYREFL,
 			LUATEX_SSMF_EMISSION,
 			LUATEX_SSMF_PARALLAX,
+			// indexed splat-normal textures
+			LUATEX_SSMF_SNORMALX,
 
-
-			LUATEX_INFOTEX_NAMED,
+			LUATEX_INFOTEX_SUFFIX,
 			LUATEX_INFOTEX_ACTIVE,
 			LUATEX_INFOTEX_LOSMAP,
 			LUATEX_INFOTEX_MTLMAP,
@@ -128,6 +129,8 @@ class LuaMatTexture {
 
 class LuaOpenGLUtils {
 public:
+	static void ResetState();
+
 	static const CMatrix44f* GetNamedMatrix(const std::string& name);
 
 	static LuaMatTexture::Type GetLuaMatTextureType(const std::string& name);
