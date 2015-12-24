@@ -66,7 +66,7 @@ static const std::unordered_map<std::string, LuaMatTexture::Type> luaMatTexTypeM
 	{"$ssmf_specular",      LuaMatTexture::LUATEX_SSMF_SPECULAR},
 	{"$ssmf_splat_distr",   LuaMatTexture::LUATEX_SSMF_SDISTRIB},
 	{"$ssmf_splat_detail",  LuaMatTexture::LUATEX_SSMF_SDETAIL },
-	{"$ssmf_splat_normals", LuaMatTexture::LUATEX_SSMF_SNORMALS},
+	// $ssmf_splat_normals is handled by ParseNamedSubTexture
 	{"$ssmf_sky_refl",      LuaMatTexture::LUATEX_SSMF_SKYREFL },
 	{"$ssmf_emission",      LuaMatTexture::LUATEX_SSMF_EMISSION},
 	{"$ssmf_parallax",      LuaMatTexture::LUATEX_SSMF_PARALLAX},
@@ -74,19 +74,6 @@ static const std::unordered_map<std::string, LuaMatTexture::Type> luaMatTexTypeM
 
 	{"$info",         LuaMatTexture::LUATEX_INFOTEX_ACTIVE},
 	{"$extra",        LuaMatTexture::LUATEX_INFOTEX_ACTIVE},
-
-	#if 0
-	// these are now handled by ParseNamedSubTexture
-	{"$info_losmap",  LuaMatTexture::LUATEX_INFOTEX_LOSMAP},
-	{"$info_mtlmap",  LuaMatTexture::LUATEX_INFOTEX_MTLMAP},
-	{"$info_hgtmap",  LuaMatTexture::LUATEX_INFOTEX_HGTMAP},
-	{"$info_blkmap",  LuaMatTexture::LUATEX_INFOTEX_BLKMAP},
-
-	{"$extra_losmap", LuaMatTexture::LUATEX_INFOTEX_LOSMAP},
-	{"$extra_mtlmap", LuaMatTexture::LUATEX_INFOTEX_MTLMAP},
-	{"$extra_hgtmap", LuaMatTexture::LUATEX_INFOTEX_HGTMAP},
-	{"$extra_blkmap", LuaMatTexture::LUATEX_INFOTEX_BLKMAP},
-	#endif
 
 	{"$map_gb_nt", LuaMatTexture::LUATEX_MAP_GBUFFER_NORM},
 	{"$map_gb_dt", LuaMatTexture::LUATEX_MAP_GBUFFER_DIFF},
@@ -318,15 +305,15 @@ static bool ParseNamedSubTexture(LuaMatTexture& texUnit, const std::string& texN
 
 	// TODO: use constexpr hashes plus switch, also add $*_gbuffer_*
 	static const size_t prefixHashes[] = {
-		HsiehHash("$ssmf_splat_normal", sizeof("$ssmf_splat_normal") - 1, 0),
-		HsiehHash(             "$info", sizeof(             "$info") - 1, 0),
-		HsiehHash(            "$extra", sizeof(            "$extra") - 1, 0),
+		HsiehHash("$ssmf_splat_normals", sizeof("$ssmf_splat_normals") - 1, 0),
+		HsiehHash(              "$info", sizeof(              "$info") - 1, 0),
+		HsiehHash(             "$extra", sizeof(             "$extra") - 1, 0),
 	};
 
 
 	if (prefixHash == prefixHashes[0]) {
 		// last character becomes the index, clamped in ReadMap
-		texUnit.type = LuaMatTexture::LUATEX_SSMF_SNORMALX;
+		texUnit.type = LuaMatTexture::LUATEX_SSMF_SNORMALS;
 		texUnit.data = reinterpret_cast<const void*>(int(texName.back()) - int('0'));
 
 		luaMatTextures[texNameHash] = texUnit;
@@ -441,6 +428,7 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 					switch (image[6]) {
 						case '1': { texUnit.data = reinterpret_cast<const void*>(int(1)); } break;
 						case '2': { texUnit.data = reinterpret_cast<const void*>(int(2)); } break;
+						default: { return false; } break;
 					}
 				}
 			} break;
@@ -456,6 +444,7 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 			} break;
 		}
 	}
+
 	else {
 		const CNamedTextures::TexInfo* texInfo = CNamedTextures::GetInfo(image, true);
 
@@ -558,17 +547,16 @@ GLuint LuaMatTexture::GetTextureID() const
 		case LUATEX_SSMF_SPECULAR:
 		case LUATEX_SSMF_SDISTRIB:
 		case LUATEX_SSMF_SDETAIL:
-		case LUATEX_SSMF_SNORMALS:
 		case LUATEX_SSMF_SKYREFL:
 		case LUATEX_SSMF_EMISSION:
 		case LUATEX_SSMF_PARALLAX: {
 			if (readMap != nullptr) {
-				// convert type=LUATEX_* to MAP_* (FIXME: MAP_SSMF_SPLAT_NORMAL_TEX needs a num)
+				// convert type=LUATEX_* to MAP_*
 				texID = readMap->GetTexture(type - LUATEX_SMF_GRASS);
 			}
 		} break;
 
-		case LUATEX_SSMF_SNORMALX: {
+		case LUATEX_SSMF_SNORMALS: {
 			if (readMap != nullptr) {
 				texID = readMap->GetTexture((LUATEX_SSMF_SNORMALS - LUATEX_SMF_GRASS), *reinterpret_cast<const int*>(&data));
 			}
@@ -586,21 +574,6 @@ GLuint LuaMatTexture::GetTextureID() const
 		case LUATEX_INFOTEX_ACTIVE: if (infoTextureHandler != nullptr) {
 			texID = infoTextureHandler->GetCurrentInfoTexture();
 		} break;
-
-		#if 0
-		case LUATEX_INFOTEX_LOSMAP: if (infoTextureHandler != nullptr) {
-			texID = (infoTextureHandler->GetInfoTexture("los"))->GetTexture();
-		} break;
-		case LUATEX_INFOTEX_MTLMAP: if (infoTextureHandler != nullptr) {
-			texID = (infoTextureHandler->GetInfoTexture("metal"))->GetTexture();
-		} break;
-		case LUATEX_INFOTEX_HGTMAP: if (infoTextureHandler != nullptr) {
-			texID = (infoTextureHandler->GetInfoTexture("height"))->GetTexture();
-		} break;
-		case LUATEX_INFOTEX_BLKMAP: if (infoTextureHandler != nullptr) {
-			texID = (infoTextureHandler->GetInfoTexture("path"))->GetTexture();
-		} break;
-		#endif
 
 
 		// g-buffer textures
@@ -682,21 +655,13 @@ GLuint LuaMatTexture::GetTextureTarget() const
 		case LUATEX_SSMF_SDISTRIB:
 		case LUATEX_SSMF_SDETAIL:
 		case LUATEX_SSMF_SNORMALS:
-		case LUATEX_SSMF_SNORMALX:
 		case LUATEX_SSMF_SKYREFL:
 		case LUATEX_SSMF_EMISSION:
 		case LUATEX_SSMF_PARALLAX:
 
 
 		case LUATEX_INFOTEX_SUFFIX:
-		case LUATEX_INFOTEX_ACTIVE:
-		#if 0
-		case LUATEX_INFOTEX_LOSMAP:
-		case LUATEX_INFOTEX_MTLMAP:
-		case LUATEX_INFOTEX_HGTMAP:
-		case LUATEX_INFOTEX_BLKMAP:
-		#endif
-		{
+		case LUATEX_INFOTEX_ACTIVE: {
 			texType = GL_TEXTURE_2D;
 		} break;
 
@@ -861,7 +826,6 @@ int2 LuaMatTexture::GetSize() const
 		case LUATEX_SSMF_SPECULAR:
 		case LUATEX_SSMF_SDISTRIB:
 		case LUATEX_SSMF_SDETAIL:
-		case LUATEX_SSMF_SNORMALS:
 		case LUATEX_SSMF_SKYREFL:
 		case LUATEX_SSMF_EMISSION:
 		case LUATEX_SSMF_PARALLAX: {
@@ -871,7 +835,7 @@ int2 LuaMatTexture::GetSize() const
 			}
 		} break;
 
-		case LUATEX_SSMF_SNORMALX: {
+		case LUATEX_SSMF_SNORMALS: {
 			if (readMap != nullptr) {
 				return (readMap->GetTextureSize((LUATEX_SSMF_SNORMALS - LUATEX_SMF_GRASS), *reinterpret_cast<const int*>(&data)));
 			}
@@ -889,21 +853,6 @@ int2 LuaMatTexture::GetSize() const
 				return infoTextureHandler->GetCurrentInfoTextureSize();
 			}
 		} break;
-
-		#if 0
-		case LUATEX_INFOTEX_LOSMAP: if (infoTextureHandler != nullptr) {
-			return ((infoTextureHandler->GetInfoTextureConst("los"))->GetTexSize());
-		} break;
-		case LUATEX_INFOTEX_MTLMAP: if (infoTextureHandler != nullptr) {
-			return ((infoTextureHandler->GetInfoTextureConst("metal"))->GetTexSize());
-		} break;
-		case LUATEX_INFOTEX_HGTMAP: if (infoTextureHandler != nullptr) {
-			return ((infoTextureHandler->GetInfoTextureConst("height"))->GetTexSize());
-		} break;
-		case LUATEX_INFOTEX_BLKMAP: if (infoTextureHandler != nullptr) {
-			return ((infoTextureHandler->GetInfoTextureConst("path"))->GetTexSize());
-		} break;
-		#endif
 
 
 		case LUATEX_MAP_GBUFFER_NORM:
@@ -1011,12 +960,6 @@ void LuaMatTexture::Print(const string& indent) const
 
 		STRING_CASE(typeName, LUATEX_INFOTEX_SUFFIX);
 		STRING_CASE(typeName, LUATEX_INFOTEX_ACTIVE);
-		#if 0
-		STRING_CASE(typeName, LUATEX_INFOTEX_LOSMAP);
-		STRING_CASE(typeName, LUATEX_INFOTEX_MTLMAP);
-		STRING_CASE(typeName, LUATEX_INFOTEX_HGTMAP);
-		STRING_CASE(typeName, LUATEX_INFOTEX_BLKMAP);
-		#endif
 
 		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_NORM);
 		STRING_CASE(typeName, LUATEX_MAP_GBUFFER_DIFF);
