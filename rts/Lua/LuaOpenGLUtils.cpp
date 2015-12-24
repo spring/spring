@@ -288,7 +288,11 @@ static bool ParseNamedSubTexture(LuaMatTexture& texUnit, const std::string& texN
 	}
 
 	// search for both types of separators (preserves BC)
-	const size_t sepIdx = texName.find_first_of(":_");
+	//
+	// note: "$ssmf*" contains underscores in its prefix
+	// that are not separators (unlike the old "$info_*"
+	// and "$extra_*"), so do not use find_first_of
+	const size_t sepIdx = texName.find_last_of(":_");
 
 	if (sepIdx == std::string::npos)
 		return false;
@@ -313,8 +317,14 @@ static bool ParseNamedSubTexture(LuaMatTexture& texUnit, const std::string& texN
 
 	if (prefixHash == prefixHashes[0]) {
 		// last character becomes the index, clamped in ReadMap
+		// (data remains 0 if last char is the separator itself
+		// or not a digit)
 		texUnit.type = LuaMatTexture::LUATEX_SSMF_SNORMALS;
-		texUnit.data = reinterpret_cast<const void*>(int(texName.back()) - int('0'));
+		texUnit.data = reinterpret_cast<const void*>(0);
+
+		if ((sepIdx + 1) < texName.size() && std::isdigit(texName.back())) {
+			texUnit.data = reinterpret_cast<const void*>(int(texName.back()) - int('0'));
+		}
 
 		luaMatTextures[texNameHash] = texUnit;
 		return true;
