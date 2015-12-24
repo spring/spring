@@ -245,7 +245,9 @@ S3DModel* C3DModelLoader::LoadCached3DModel(const std::string& cachedModelName, 
 	{
 		loadQueue.GrabLock();
 
-		if ((ci = cache.find(cachedModelName)) != cache.end()) {
+		const ModelMap::iterator ci = cache.find(cachedModelName);
+
+		if (ci != cache.end()) {
 			cachedModel = models[ci->second];
 
 			if (!preload) {
@@ -268,9 +270,6 @@ S3DModel* C3DModelLoader::Load3DModel(std::string modelName, bool preload)
 	StringToLowerInPlace(modelName);
 
 	// search in cache first
-	ModelMap::iterator ci;
-	FormatMap::iterator fi;
-
 	{
 		S3DModel* cachedModel = LoadCached3DModel(modelName, preload);
 
@@ -280,7 +279,6 @@ S3DModel* C3DModelLoader::Load3DModel(std::string modelName, bool preload)
 	}
 
 	const std::string& modelPath = FindModelPath(modelName);
-	const std::string& fileExt = StringToLower(FileSystem::GetExtension(modelPath));
 
 	{
 		S3DModel* cachedModel = LoadCached3DModel(modelPath, preload);
@@ -290,11 +288,14 @@ S3DModel* C3DModelLoader::Load3DModel(std::string modelName, bool preload)
 		}
 	}
 
+
 	S3DModel* model = nullptr;
 	IModelParser* parser = nullptr;
 
+	const FormatMap::iterator fi = formats.find(StringToLower(FileSystem::GetExtension(modelPath)));
+
 	// not found in cache, create the model and cache it
-	if ((fi = formats.find(fileExt)) == formats.end()) {
+	if (fi == formats.end()) {
 		LOG_L(L_ERROR, "could not find a parser for model \"%s\" (unknown format?)", modelName.c_str());
 	} else {
 		parser = parsers[fi->second];
