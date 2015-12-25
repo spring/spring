@@ -247,6 +247,9 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(ClearWatchDogTimer);
 
+	REGISTER_LUA_CFUNC(PreloadUnitDefModel);
+	REGISTER_LUA_CFUNC(PreloadFeatureDefModel);
+
 	return true;
 }
 
@@ -1977,7 +1980,7 @@ int LuaUnsyncedCtrl::SetLosViewColors(lua_State* L)
 	float radarColor[3];
 	float jamColor[3];
 	float radarColor2[3];
-	
+
 	if ((LuaUtils::ParseFloatArray(L, 1, alwaysColor, 3) != 3) ||
 	    (LuaUtils::ParseFloatArray(L, 2, losColor, 3) != 3) ||
 	    (LuaUtils::ParseFloatArray(L, 3, radarColor, 3) != 3) ||
@@ -2929,3 +2932,31 @@ int LuaUnsyncedCtrl::ClearWatchDogTimer(lua_State* L) {
 
 	return 0;
 }
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaUnsyncedCtrl::PreloadUnitDefModel(lua_State* L) {
+	const int unitDefID = luaL_checkint(L, 1);
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
+	if (ud == nullptr) {
+		return 0;
+	}
+
+	ud->PreloadModel();
+
+	return 0;
+}
+
+int LuaUnsyncedCtrl::PreloadFeatureDefModel(lua_State* L) {
+	const int featureDefID = luaL_checkint(L, 1);
+	const FeatureDef* fd = featureHandler->GetFeatureDefByID(featureDefID);
+	if (fd == nullptr) {
+		return 0;
+	}
+
+	fd->PreloadModel();
+
+	return 0;
+}
+

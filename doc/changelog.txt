@@ -114,6 +114,9 @@ Lua:
      "$ssmf_parallax"
 
      'X' can be omitted (not the ':'), or a value between 0 and 3
+ - add callouts Preload{Feature,Unit}DefModel allowing the engine
+   to load the unit's model (and texture) in a background thread.
+   wreckages and buildOptions of a unit are automatically preloaded.
 
 Rendering:
  - add support for SSMF Splat Detail Normal Textures (by Beherith)

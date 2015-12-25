@@ -157,6 +157,9 @@ class LuaUnsyncedCtrl {
 		static int SetLogSectionFilterLevel(lua_State* L);
 
 		static int ClearWatchDogTimer(lua_State* L);
+
+		static int PreloadUnitDefModel(lua_State* L);
+		static int PreloadFeatureDefModel(lua_State* L);
 };
 
 
