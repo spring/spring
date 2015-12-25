@@ -280,10 +280,14 @@ void CUnit::PreInit(const UnitLoadParams& params)
 			featureDefID = wreckFeatureDef->id;
 
 			while (wreckFeatureDef != nullptr){
-				//wreckFeatureDef->PreloadModel();
+				wreckFeatureDef->PreloadModel();
 				wreckFeatureDef = featureHandler->GetFeatureDefByID(wreckFeatureDef->deathFeatureDefID);
 			}
 		}
+	}
+	for (const auto it: unitDef->buildOptions) {
+		const UnitDef* ud = unitDefHandler->GetUnitDefByName(it.second);
+		ud->PreloadModel();
 	}
 
 	team = params.teamID;

@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "Rendering/GL/myGL.h"
+#include "System/Threading/SpringMutex.h"
 
 struct S3DModel;
 class CBitmap;
@@ -65,6 +66,7 @@ private:
 	TextureCache textureCache; // stores individual primary- and secondary-textures by name
 	TextureTable textureTable; // stores (primary, secondary) texture-pairs by unique ident
 	BitmapCache bitmapCache;
+	spring::mutex cacheMutex;
 
 	std::vector<S3OTexMat> textures;
 };

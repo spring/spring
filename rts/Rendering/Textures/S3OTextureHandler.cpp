@@ -59,11 +59,13 @@ CS3OTextureHandler::~CS3OTextureHandler()
 
 void CS3OTextureHandler::LoadS3OTexture(S3DModel* model)
 {
+	boost::mutex::scoped_lock(cacheMutex);
 	model->textureType = LoadS3OTextureNow(model);
 }
 
 void CS3OTextureHandler::PreloadS3OTexture(S3DModel* model)
 {
+	boost::mutex::scoped_lock(cacheMutex);
 	LoadTexture(model, model->tex1, true, true);
 	LoadTexture(model, model->tex2, false, true);
 }
