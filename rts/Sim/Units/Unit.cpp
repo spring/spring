@@ -287,7 +287,8 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	}
 	for (const auto it: unitDef->buildOptions) {
 		const UnitDef* ud = unitDefHandler->GetUnitDefByName(it.second);
-		ud->PreloadModel();
+		if (ud != nullptr)
+			ud->PreloadModel();
 	}
 
 	team = params.teamID;
