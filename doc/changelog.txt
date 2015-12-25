@@ -11,7 +11,11 @@ General:
 Lua:
  ! {Set,Get}UnitPieceCollisionVolumeData now receive 1-based piece index argument (was 0-based).
  ! GameID callin now gets the ID string encoded in hex.
- ! UnitDestroyed is now called twice and gets an extra argument 'preEvent' (allows shaders during death anims, etc)
+ ! UnitDestroyed is now called twice and gets an extra argument 'preEvent'
+   the value of preEvent is true for the first call which corresponds to
+   old UnitDestroyed and false for the second (allows shaders during death
+   anims, etc)
+   also remove hardcoded logic to zombify (stun+immobilize) a unit on death
  - new Spring.GetUICommands function to obtain a list of all UI commands (e.g. /luaui reload)
  - new VFS.CalculateHash function that calculates hash (in base64 form) of a given string (with md5 support initially)
  - new Spring.SetFeatureFade(featureID, bool) to control whether a feature will fade or not when zoomed out.

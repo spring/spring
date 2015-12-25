@@ -540,12 +540,12 @@ void CUnit::FinishedBuilding(bool postInit)
 		FeatureLoadParams p = {featureHandler->GetFeatureDefByID(featureDefID), NULL, pos, ZeroVector, -1, team, allyteam, heading, buildFacing, 0};
 		CFeature* f = featureHandler->CreateWreckage(p, 0, false);
 
-		if (f != NULL) {
+		if (f != nullptr) {
 			f->blockHeightChanges = true;
 		}
 
 		UnBlock();
-		KillUnit(NULL, false, true);
+		KillUnit(nullptr, false, true);
 	}
 }
 
@@ -678,14 +678,19 @@ void CUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool sh
 		script->Killed();
 	}
 
+	#if 0
+	// put the unit in a pseudo-zombie state until Killed finishes
+	// disabled, better let Lua decide how it wants to handle this
 	if (!deathScriptFinished) {
-		// put the unit in a pseudo-zombie state until Killed finishes
 		SetVelocity(ZeroVector);
 		SetStunned(true);
 
 		paralyzeDamage = 100.0f * maxHealth;
 		health = std::max(health, 0.0f);
 	}
+	#else
+	health = std::max(health, 0.0f);
+	#endif
 }
 
 
@@ -990,7 +995,7 @@ void CUnit::SlowUpdate()
 	DoWaterDamage();
 
 	if (health < 0.0f) {
-		KillUnit(NULL, false, true);
+		KillUnit(nullptr, false, true);
 		return;
 	}
 
@@ -1030,9 +1035,9 @@ void CUnit::SlowUpdate()
 		if ((selfDCountdown -= 1) == 0) {
 			// avoid unfinished buildings making an explosion
 			if (!beingBuilt) {
-				KillUnit(NULL, true, false);
+				KillUnit(nullptr, true, false);
 			} else {
-				KillUnit(NULL, false, true);
+				KillUnit(nullptr, false, true);
 			}
 			return;
 		}
@@ -1054,7 +1059,7 @@ void CUnit::SlowUpdate()
 			AddMetal(cost.metal * buildDecay, false);
 
 			if (health <= 0.0f || buildProgress <= 0.0f) {
-				KillUnit(NULL, false, true);
+				KillUnit(nullptr, false, true);
 			}
 		}
 
@@ -1120,14 +1125,14 @@ void CUnit::SlowUpdate()
 				CGameHelper::GetEnemyUnitsNoLosTest(pos, unitDef->kamikazeDist, allyteam, nearbyUnits);
 			}
 
-			for (std::vector<int>::const_iterator it = nearbyUnits.begin(); it != nearbyUnits.end(); ++it) {
+			for (auto it = nearbyUnits.cbegin(); it != nearbyUnits.cend(); ++it) {
 				const CUnit* victim = unitHandler->GetUnitUnsafe(*it);
 				const float3 dif = pos - victim->pos;
 
 				if (dif.SqLength() < Square(unitDef->kamikazeDist)) {
-					if (victim->speed.dot(dif) <= 0) {
-						//! self destruct when we start moving away from the target, this should maximize the damage
-						KillUnit(NULL, true, false);
+					if (victim->speed.dot(dif) <= 0.0f) {
+						// self destruct when target starts moving away from us, should maximize damage
+						KillUnit(nullptr, true, false);
 						return;
 					}
 				}
@@ -1138,7 +1143,7 @@ void CUnit::SlowUpdate()
 			   (curTarget.type == Target_Unit && (curTarget.unit->pos.SqDistance(pos) < Square(unitDef->kamikazeDist)))
 			|| (curTarget.type == Target_Pos  && (curTarget.groundPos.SqDistance(pos) < Square(unitDef->kamikazeDist)))
 		) {
-			KillUnit(NULL, true, false);
+			KillUnit(nullptr, true, false);
 			return;
 		}
 	}
@@ -1366,9 +1371,12 @@ void CUnit::DoDamage(
 	if (health <= 0.0f) {
 		KillUnit(attacker, false, false);
 
-		if (!isDead) { return; }
-		if (beingBuilt) { return; }
-		if (attacker == NULL) { return; }
+		if (!isDead)
+			return;
+		if (beingBuilt)
+			return;
+		if (attacker == nullptr)
+			return;
 
 		if (!teamHandler->Ally(allyteam, attacker->allyteam)) {
 			attacker->AddExperience(expMultiplier * 0.1f * (power / attacker->power));
@@ -1985,7 +1993,7 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 		if (killMe || buildProgress <= 0.0f || health <= 0.0f) {
 			health = 0.0f;
 			buildProgress = 0.0f;
-			KillUnit(NULL, false, true);
+			KillUnit(nullptr, false, true);
 			return false;
 		}
 
