@@ -23,8 +23,6 @@ public:
 	~CUnitHandler();
 
 	void Update();
-	void DeleteUnit(CUnit* unit);
-	void DeleteUnitNow(CUnit* unit);
 	bool AddUnit(CUnit* unit);
 	void PostLoad();
 
@@ -59,6 +57,9 @@ public:
 	std::map<unsigned int, CBuilderCAI*> builderCAIs;
 
 private:
+	void DeleteUnit(CUnit* unit);
+	void DeleteUnitNow(CUnit* unit);
+	void DeleteUnitsNow();
 	void InsertActiveUnit(CUnit* unit);
 
 private:

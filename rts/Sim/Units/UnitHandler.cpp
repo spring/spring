@@ -123,22 +123,34 @@ bool CUnitHandler::AddUnit(CUnit* unit)
 	return true;
 }
 
+
 void CUnitHandler::DeleteUnit(CUnit* unit)
 {
 	unitsToBeRemoved.push_back(unit);
 }
 
+void CUnitHandler::DeleteUnitsNow()
+{
+	if (unitsToBeRemoved.empty())
+		return;
+
+	while (!unitsToBeRemoved.empty()) {
+		CUnit* delUnit = unitsToBeRemoved.back();
+		unitsToBeRemoved.pop_back();
+		DeleteUnitNow(delUnit);
+	}
+}
 
 void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 {
-	//we want to call RenderUnitDestroyed while the unit is still valid
+	// we want to call RenderUnitDestroyed while the unit is still valid
 	eventHandler.RenderUnitDestroyed(delUnit);
 
 	auto it = std::find(activeUnits.begin(), activeUnits.end(), delUnit);
 	assert(it != activeUnits.end());
 	{
-		int delTeam = delUnit->team;
-		int delType = delUnit->unitDef->id;
+		const int delTeam = delUnit->team;
+		const int delType = delUnit->unitDef->id;
 
 		teamHandler->Team(delTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
 
@@ -185,21 +197,13 @@ void CUnitHandler::Update()
 		}
 	};
 
-	{
-		if (!unitsToBeRemoved.empty()) {
-			while (!unitsToBeRemoved.empty()) {
-				CUnit* delUnit = unitsToBeRemoved.back();
-				unitsToBeRemoved.pop_back();
-				DeleteUnitNow(delUnit);
-			}
-		}
-	}
+	DeleteUnitsNow();
 
 	{
 		SCOPED_TIMER("Unit::MoveType::Update");
 
 		for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size();++activeUpdateUnit) {
-			CUnit *unit = activeUnits[activeUpdateUnit];
+			CUnit* unit = activeUnits[activeUpdateUnit];
 			AMoveType* moveType = unit->moveType;
 
 			UNIT_SANITY_CHECK(unit);
@@ -210,7 +214,7 @@ void CUnitHandler::Update()
 			if (!unit->pos.IsInBounds() && (unit->speed.w > MAX_UNIT_SPEED)) {
 				// this unit is not coming back, kill it now without any death
 				// sequence (so deathScriptFinished becomes true immediately)
-				unit->KillUnit(NULL, false, true, false);
+				unit->KillUnit(nullptr, false, true, false);
 			}
 
 			UNIT_SANITY_CHECK(unit);
@@ -226,12 +230,13 @@ void CUnitHandler::Update()
 			if (!unit->deathScriptFinished)
 				continue;
 
-			// there are many ways to fiddle with "deathScriptFinished", so a unit may
-			// arrive here without having been properly killed (and isDead still false),
-			// which can result in MT deadlocking -- FIXME verify this
-			// (KU returns early if isDead)
-			unit->KillUnit(NULL, false, true);
+			// there are many ways to fiddle with "deathScriptFinished", so a unit
+			// may arrive here not having been properly killed (with isDead still
+			// false)
+			// make sure we always call Killed; no-op if isDead is already true
+			unit->KillUnit(nullptr, false, true, true);
 			DeleteUnit(unit);
+
 			assert(activeUnits[activeUpdateUnit] == unit);
 		}
 	}
@@ -275,7 +280,7 @@ void CUnitHandler::Update()
 		SCOPED_TIMER("Unit::Update");
 
 		for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size();++activeUpdateUnit) {
-			CUnit *unit = activeUnits[activeUpdateUnit];
+			CUnit* unit = activeUnits[activeUpdateUnit];
 			UNIT_SANITY_CHECK(unit);
 			unit->Update();
 			UNIT_SANITY_CHECK(unit);
@@ -287,7 +292,7 @@ void CUnitHandler::Update()
 		SCOPED_TIMER("Unit::Weapon::Update");
 
 		for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size();++activeUpdateUnit) {
-			CUnit *unit = activeUnits[activeUpdateUnit];
+			CUnit* unit = activeUnits[activeUpdateUnit];
 			if (unit->CanUpdateWeapons()) {
 				for (CWeapon* w: unit->weapons) {
 					w->Update();
