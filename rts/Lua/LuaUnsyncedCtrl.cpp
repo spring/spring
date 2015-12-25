@@ -2919,15 +2919,15 @@ int LuaUnsyncedCtrl::SetLogSectionFilterLevel(lua_State* L) {
 /******************************************************************************/
 
 int LuaUnsyncedCtrl::ClearWatchDogTimer(lua_State* L) {
-	const int args = lua_gettop(L); // number of arguments
-
-	if (args == 0) {
+	if (lua_gettop(L) == 0) {
 		Watchdog::ClearTimer();
+		return 0;
+	}
+
+	if (lua_isstring(L, 1)) {
+		Watchdog::ClearTimer(lua_tostring(L, 1));
 	} else {
-		std::string threadname = "main";
-		if (lua_isstring(L, 1))
-			threadname = lua_tostring(L, 1);
-		Watchdog::ClearTimer(threadname);
+		Watchdog::ClearTimer("main");
 	}
 
 	return 0;
@@ -2937,26 +2937,22 @@ int LuaUnsyncedCtrl::ClearWatchDogTimer(lua_State* L) {
 /******************************************************************************/
 
 int LuaUnsyncedCtrl::PreloadUnitDefModel(lua_State* L) {
-	const int unitDefID = luaL_checkint(L, 1);
-	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
-	if (ud == nullptr) {
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(luaL_checkint(L, 1));
+
+	if (ud == nullptr)
 		return 0;
-	}
 
 	ud->PreloadModel();
-
 	return 0;
 }
 
 int LuaUnsyncedCtrl::PreloadFeatureDefModel(lua_State* L) {
-	const int featureDefID = luaL_checkint(L, 1);
-	const FeatureDef* fd = featureHandler->GetFeatureDefByID(featureDefID);
-	if (fd == nullptr) {
+	const FeatureDef* fd = featureHandler->GetFeatureDefByID(luaL_checkint(L, 1));
+
+	if (fd == nullptr)
 		return 0;
-	}
 
 	fd->PreloadModel();
-
 	return 0;
 }
 
