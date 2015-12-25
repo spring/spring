@@ -192,9 +192,6 @@ CUnit::CUnit()
 
 CUnit::~CUnit()
 {
-	// after this, unit should be considered gone forever
-	eventHandler.UnitDestroyed(this, nullptr, false);
-
 	// clean up if we are still under MoveCtrl here
 	DisableScriptMoveType();
 
@@ -468,6 +465,8 @@ void CUnit::PostInit(const CUnit* builder)
 		// skip past the gradual build-progression
 		FinishedBuilding(true);
 	}
+
+	eventHandler.RenderUnitCreated(this, isCloaked);
 }
 
 

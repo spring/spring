@@ -144,9 +144,12 @@ void CUnitHandler::DeleteUnitsNow()
 void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 {
 	// we want to call RenderUnitDestroyed while the unit is still valid
+	// note that this is an internal event which does not reach Lua code
 	eventHandler.RenderUnitDestroyed(delUnit);
+	// after this, unit should be considered gone forever
+	eventHandler.UnitDestroyed(delUnit, nullptr, false);
 
-	auto it = std::find(activeUnits.begin(), activeUnits.end(), delUnit);
+	const auto it = std::find(activeUnits.begin(), activeUnits.end(), delUnit);
 	assert(it != activeUnits.end());
 	{
 		const int delTeam = delUnit->team;
