@@ -221,7 +221,8 @@ void CUnitHandler::Update()
 	{
 		// Delete dead units
 		for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size();++activeUpdateUnit) {
-			CUnit *unit = activeUnits[activeUpdateUnit];
+			CUnit* unit = activeUnits[activeUpdateUnit];
+
 			if (!unit->deathScriptFinished)
 				continue;
 

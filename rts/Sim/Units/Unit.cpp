@@ -192,7 +192,10 @@ CUnit::CUnit()
 
 CUnit::~CUnit()
 {
-	// clean up if we are still under movectrl here
+	// after this, unit should be considered gone forever
+	eventHandler.UnitDestroyed(this, nullptr, false);
+
+	// clean up if we are still under MoveCtrl here
 	DisableScriptMoveType();
 
 	if (delayedWreckLevel >= 0) {
@@ -550,8 +553,10 @@ void CUnit::FinishedBuilding(bool postInit)
 
 void CUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSequence)
 {
-	if (isDead) { return; }
-	if (IsCrashing() && !beingBuilt) { return; }
+	if (isDead)
+		return;
+	if (IsCrashing() && !beingBuilt)
+		return;
 
 	isDead = true;
 
@@ -626,8 +631,8 @@ void CUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool sh
 	transportedUnits.clear();
 
 
-	// TODO: add UnitPreDestroyed, call these later
-	eventHandler.UnitDestroyed(this, attacker);
+	// pre-destruction event; unit may be kept around for its death sequence
+	eventHandler.UnitDestroyed(this, attacker, true);
 	eoh->UnitDestroyed(*this, attacker);
 
 	deathSpeed = speed;
@@ -635,13 +640,14 @@ void CUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool sh
 	// Will be called in the destructor again, but this can not hurt
 	SetGroup(nullptr);
 
-	blockHeightChanges = false;
-
 	if (unitDef->windGenerator > 0.0f) {
 		wind.DelUnit(this);
 	}
 
-	if (showDeathSequence && (!reclaimed && !beingBuilt)) {
+	blockHeightChanges = false;
+	deathScriptFinished = (!showDeathSequence || reclaimed || beingBuilt);
+
+	if (!deathScriptFinished) {
 		const WeaponDef* wd = (selfDestruct)? unitDef->selfdExpWeaponDef: unitDef->deathExpWeaponDef;
 
 		if (wd != NULL) {
@@ -667,14 +673,10 @@ void CUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool sh
 			helper->Explosion(params);
 		}
 
-		if (selfDestruct) {
-			recentDamage += (maxHealth * 2.0f);
-		}
+		recentDamage += (maxHealth * 2.0f * selfDestruct);
 
 		// start running the unit's kill-script
 		script->Killed();
-	} else {
-		deathScriptFinished = true;
 	}
 
 	if (!deathScriptFinished) {

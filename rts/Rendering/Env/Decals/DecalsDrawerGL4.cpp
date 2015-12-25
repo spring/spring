@@ -781,8 +781,10 @@ void CDecalsDrawerGL4::UnitCreated(const CUnit* unit, const CUnit* builder)
 }
 
 
-void CDecalsDrawerGL4::UnitDestroyed(const CUnit* unit, const CUnit* attacker)
+void CDecalsDrawerGL4::UnitDestroyed(const CUnit* unit, const CUnit* attacker, bool preEvent)
 {
+	if (!preEvent)
+		return;
 	if (!unit->unitDef->decalDef.useGroundDecal)
 		return;
 

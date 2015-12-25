@@ -1260,8 +1260,10 @@ function gadgetHandler:UnitFinished(unitID, unitDefID, unitTeam)
 end
 
 
-function gadgetHandler:UnitFromFactory(unitID, unitDefID, unitTeam,
-                                       factID, factDefID, userOrders)
+function gadgetHandler:UnitFromFactory(
+  unitID, unitDefID, unitTeam,
+  factID, factDefID, userOrders
+)
   for _,g in ipairs(self.UnitFromFactoryList) do
     g:UnitFromFactory(unitID, unitDefID, unitTeam,
                       factID, factDefID, userOrders)
@@ -1270,11 +1272,20 @@ function gadgetHandler:UnitFromFactory(unitID, unitDefID, unitTeam,
 end
 
 
-function gadgetHandler:UnitDestroyed(unitID,     unitDefID,     unitTeam,
-                                     attackerID, attackerDefID, attackerTeam)
+function gadgetHandler:UnitDestroyed(
+  unitID,     unitDefID,     unitTeam,
+  attackerID, attackerDefID, attackerTeam,
+  preEvent
+)
+  -- uncomment to maintain backward compatibility
+  -- if (not preEvent) then return end
+
   for _,g in ipairs(self.UnitDestroyedList) do
-    g:UnitDestroyed(unitID,     unitDefID,     unitTeam,
-                    attackerID, attackerDefID, attackerTeam)
+    g:UnitDestroyed(
+      unitID,     unitDefID,     unitTeam,
+      attackerID, attackerDefID, attackerTeam,
+      preEvent
+    )
   end
   return
 end
