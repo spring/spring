@@ -1726,9 +1726,12 @@ function widgetHandler:UnitFromFactory(unitID, unitDefID, unitTeam,
 end
 
 
-function widgetHandler:UnitDestroyed(unitID, unitDefID, unitTeam)
+function widgetHandler:UnitDestroyed(unitID, unitDefID, unitTeam, _, _, _, preEvent)
+  -- uncomment to maintain backward compatibility
+  -- if (not preEvent) then return end
+
   for _,w in ipairs(self.UnitDestroyedList) do
-    w:UnitDestroyed(unitID, unitDefID, unitTeam)
+    w:UnitDestroyed(unitID, unitDefID, unitTeam, preEvent)
   end
   return
 end
