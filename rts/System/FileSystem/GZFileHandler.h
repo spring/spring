@@ -17,11 +17,10 @@ public:
 	CGZFileHandler(const char* fileName, const char* modes = SPRING_VFS_RAW_FIRST);
 	CGZFileHandler(const std::string& fileName, const std::string& modes = SPRING_VFS_RAW_FIRST);
 
-	virtual bool TryReadFromPWD(const std::string& fileName) override;
-	virtual bool TryReadFromRawFS(const std::string& fileName) override;
-	virtual bool TryReadFromModFS(const std::string& fileName) override;
-
 private:
+	bool TryReadFromPWD(const std::string& fileName) override;
+	bool TryReadFromRawFS(const std::string& fileName) override;
+	bool TryReadFromModFS(const std::string& fileName) override;
 	bool ReadToBuffer(const std::string& path);
 	bool UncompressBuffer();
 };
