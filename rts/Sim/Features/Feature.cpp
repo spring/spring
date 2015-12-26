@@ -20,6 +20,7 @@
 #include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitHandler.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
@@ -708,4 +709,9 @@ void CFeature::EmitGeoSmoke()
 
 
 int CFeature::ChunkNumber(float f) { return int(math::ceil(f * modInfo.reclaimMethod)); }
+
+// note: this is not actually used by GroundBlockingObjectMap anymore, just
+// to distinguish unit and feature ID's (values >= MaxUnits() correspond to
+// features in object commands)
+int CFeature::GetBlockingMapID() const { return (id + unitHandler->MaxUnits()); }
 

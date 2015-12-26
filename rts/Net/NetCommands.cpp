@@ -25,6 +25,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Path/IPathManager.h"
+#include "Sim/Units/UnitHandler.h"
 #include "System/EventHandler.h"
 #include "System/GlobalConfig.h"
 #include "System/Log/ILog.h"

@@ -4083,17 +4083,16 @@ EXPORT(const char*) skirmishAiCallback_Team_TeamRulesParam_getValueString(int sk
 //########### BEGINN FeatureDef
 EXPORT(int) skirmishAiCallback_getFeatureDefs(int skirmishAIId, int* featureDefIds, int featureDefIds_sizeMax) {
 
-	const std::map<std::string, int>& fds
-			= featureHandler->GetFeatureDefs();
+	const auto& fds = featureHandler->GetFeatureDefs();
 	const int featureDefIds_sizeReal = fds.size();
 
 	int featureDefIds_size = featureDefIds_sizeReal;
 
 	if (featureDefIds != NULL) {
 		featureDefIds_size = min(featureDefIds_sizeReal, featureDefIds_sizeMax);
-		int f;
-		std::map<std::string, int>::const_iterator fdi;
-		for (f=0, fdi=fds.begin(); f < featureDefIds_size; ++f, ++fdi) {
+
+		auto fdi = fds.cbegin();
+		for (int f = 0; f < featureDefIds_size; ++f, ++fdi) {
 			featureDefIds[f] = fdi->second;
 		}
 	}

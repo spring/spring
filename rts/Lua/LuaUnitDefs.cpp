@@ -84,9 +84,8 @@ bool LuaUnitDefs::PushEntries(lua_State* L)
 
 	typedef int (*IndxFuncType)(lua_State*);
 	typedef int (*IterFuncType)(lua_State*);
-	typedef std::map<std::string, int> ObjectDefMapType;
 
-	const ObjectDefMapType& defsMap = unitDefHandler->unitDefIDsByName;
+	const auto& defsMap = unitDefHandler->unitDefIDsByName;
 
 	const std::array<const LuaHashString, 3> indxOpers = {{
 		LuaHashString("__index"),

@@ -135,9 +135,8 @@ void CUnitHandler::DeleteUnitsNow()
 		return;
 
 	while (!unitsToBeRemoved.empty()) {
-		CUnit* delUnit = unitsToBeRemoved.back();
+		DeleteUnitNow(unitsToBeRemoved.back());
 		unitsToBeRemoved.pop_back();
-		DeleteUnitNow(delUnit);
 	}
 }
 
@@ -317,7 +316,7 @@ void CUnitHandler::AddBuilderCAI(CBuilderCAI* b)
 void CUnitHandler::RemoveBuilderCAI(CBuilderCAI* b)
 {
 	// called from ~CUnit --> owner is still valid
-	assert(b->owner != NULL);
+	assert(b->owner != nullptr);
 	builderCAIs.erase(b->owner->id);
 }
 

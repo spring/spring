@@ -9,7 +9,6 @@
 #include <boost/noncopyable.hpp>
 
 #include "Sim/Objects/SolidObject.h"
-#include "Sim/Units/UnitHandler.h"
 #include "System/Matrix44f.h"
 #include "Sim/Misc/Resource.h"
 
@@ -18,6 +17,7 @@
 struct FeatureDef;
 struct FeatureLoadParams;
 class CUnit;
+struct UnitDef;
 struct DamageArray;
 class CFireProjectile;
 
@@ -37,7 +37,7 @@ public:
 	 */
 	void Initialize(const FeatureLoadParams& params);
 
-	int GetBlockingMapID() const { return id + (10 * unitHandler->MaxUnits()); }
+	int GetBlockingMapID() const;
 
 	/**
 	 * Negative amount = reclaim

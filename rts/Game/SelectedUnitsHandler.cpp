@@ -587,11 +587,8 @@ void CSelectedUnitsHandler::Draw()
 			bool myColor = true;
 			glColor4fv(cmdColors.buildBox);
 
-			const std::map<unsigned int, CBuilderCAI*>& builderCAIs = unitHandler->builderCAIs;
-			      std::map<unsigned int, CBuilderCAI*>::const_iterator bi;
-
-			for (bi = builderCAIs.begin(); bi != builderCAIs.end(); ++bi) {
-				const CBuilderCAI* builderCAI = bi->second;
+			for (const auto bi: unitHandler->GetBuilderCAIs()) {
+				const CBuilderCAI* builderCAI = bi.second;
 				const CUnit* builder = builderCAI->owner;
 
 				if (builder->team == gu->myTeam) {

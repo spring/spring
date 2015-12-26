@@ -19,6 +19,7 @@
 #include "Sim/Units/Scripts/NullUnitScript.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitDef.h"
 #include "Sim/Weapons/Cannon.h"
 #include "Sim/Weapons/NoWeapon.h"
 #include "System/EventHandler.h"

@@ -13,6 +13,7 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "System/myMath.h"
 
@@ -45,9 +46,11 @@ inline static bool TestConeHelper(
 	bool ret = false;
 
 	if (obj->GetBlockingMapID() < unitHandler->MaxUnits()) {
+		// obj is a unit
 		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), NULL,    pos3D) - coneSize) <= 0.0f); }
 		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), NULL, expPos3D) - coneSize) <= 0.0f); }
 	} else {
+		// obj is a feature
 		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), NULL,    pos3D) - coneSize) <= 0.0f); }
 		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), NULL, expPos3D) - coneSize) <= 0.0f); }
 	}

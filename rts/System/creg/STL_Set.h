@@ -14,18 +14,8 @@
 	#include <unordered_set>
 	#define SPRING_HASH_SET std::unordered_set
 #elif __GNUG__
-	/* Test for GCC >= 4.3.2 or clang (and assume tr1 is present) */
-	#if __GNUC__ > 4 || \
-		__clang__ || \
-		(__GNUC__ == 4 && (__GNUC_MINOR__ > 3 || \
-						(__GNUC_MINOR__ == 3 && \
-							__GNUC_PATCHLEVEL__ >= 2)))
-		#include <tr1/unordered_set>
-		#define SPRING_HASH_SET std::tr1::unordered_set
-	#else
-		#define SPRING_HASH_SET __gnu_cxx::hash_set
-		#include <ext/hash_set>
-	#endif
+	#include <unordered_set>
+	#define SPRING_HASH_SET std::unordered_set
 #else
 	#error Unsupported compiler
 #endif

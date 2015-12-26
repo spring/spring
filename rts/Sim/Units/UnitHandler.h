@@ -50,11 +50,13 @@ public:
 	CUnit* GetUnitUnsafe(unsigned int unitID) const { return units[unitID]; }
 	CUnit* GetUnit(unsigned int unitID) const { return (unitID < MaxUnits()? units[unitID]: NULL); }
 
+	const std::unordered_map<unsigned int, CBuilderCAI*>& GetBuilderCAIs() const { return builderCAIs; }
+
+public:
+	// FIXME
 	std::vector<CUnit*> units;                        ///< used to get units from IDs (0 if not created)
 	std::vector< std::vector<CUnitSet> > unitsByDefs; ///< units sorted by team and unitDef
-	std::vector<CUnit*> activeUnits;                    ///< used to get all active units
-
-	std::map<unsigned int, CBuilderCAI*> builderCAIs;
+	std::vector<CUnit*> activeUnits;                  ///< used to get all active units
 
 private:
 	void DeleteUnit(CUnit* unit);
@@ -66,6 +68,9 @@ private:
 	SimObjectIDPool idPool;
 
 	std::vector<CUnit*> unitsToBeRemoved;              ///< units that will be removed at start of next update
+
+	std::unordered_map<unsigned int, CBuilderCAI*> builderCAIs;
+
 	size_t activeSlowUpdateUnit;  ///< first unit of batch that will be SlowUpdate'd this frame
 	size_t activeUpdateUnit;  ///< first unit of batch that will be SlowUpdate'd this frame
 

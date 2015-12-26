@@ -23,6 +23,7 @@
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitHandler.h"
 #include "Sim/Projectiles/ExplosionListener.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/Config/ConfigHandler.h"

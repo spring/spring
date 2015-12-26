@@ -4,10 +4,9 @@
 #define SOLID_OBJECT_DEF_H
 
 #include <string>
-#include <map>
 
 #include "Sim/Misc/CollisionVolume.h"
-#include "System/creg/creg_cond.h"
+#include <System/creg/STL_Map.h>
 
 struct S3DModel;
 class LuaTable;

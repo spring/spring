@@ -327,37 +327,48 @@ static bool ParseShaderTable(
 	lua_State* L,
 	const int table,
 	const char* key,
-	vector<string>& data
+	std::vector<std::string>& data
 ) {
 	lua_getfield(L, table, key);
 
 	if (lua_israwstring(L, -1)) {
-		const string txt = lua_tostring(L, -1);
+		const std::string& txt = lua_tostring(L, -1);
+
 		if (!txt.empty()) {
 			data.push_back(txt);
 		}
+
+		lua_pop(L, 1);
+		return true;
 	}
-	else if (lua_istable(L, -1)) {
+
+	if (lua_istable(L, -1)) {
 		const int subtable = lua_gettop(L);
+
 		for (lua_pushnil(L); lua_next(L, subtable) != 0; lua_pop(L, 1)) {
-			if (!lua_israwnumber(L, -2) || !lua_israwstring(L, -1)) {
+			if (!lua_israwnumber(L, -2)) // key (idx)
 				continue;
-			}
-			const string txt = lua_tostring(L, -1);
+			if (!lua_israwstring(L, -1)) // val
+				continue;
+
+			const std::string& txt = lua_tostring(L, -1);
+
 			if (!txt.empty()) {
 				data.push_back(txt);
 			}
 		}
+
+		lua_pop(L, 1);
+		return true;
 	}
-	else if (!lua_isnil(L, -1)) {
+
+	if (!lua_isnil(L, -1)) {
 		LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
 		shaders.errorLog = "\"" + string(key) + "\" must be a string or a table value!";
-		lua_pop(L, 1);
-		return false;
 	}
 
 	lua_pop(L, 1);
-	return true;
+	return false;
 }
 
 
@@ -393,19 +404,22 @@ int LuaShaders::CreateShader(lua_State* L)
 		luaL_error(L, "Incorrect arguments to gl.CreateShader()");
 	}
 
-	vector<string> shdrDefs;
-	vector<string> vertSrcs;
-	vector<string> geomSrcs;
-	vector<string> fragSrcs;
+	std::vector<std::string> shdrDefs;
+	std::vector<std::string> vertSrcs;
+	std::vector<std::string> geomSrcs;
+	std::vector<std::string> fragSrcs;
 
-	ParseShaderTable(L, 1, "definitions", shdrDefs);
+	if (!ParseShaderTable(L, 1, "defines", shdrDefs))
+		ParseShaderTable(L, 1, "definitions", shdrDefs);
 
-	if (!ParseShaderTable(L, 1, "vertex",   vertSrcs) ||
-	    !ParseShaderTable(L, 1, "geometry", geomSrcs) ||
-	    !ParseShaderTable(L, 1, "fragment", fragSrcs)) {
+	if (!ParseShaderTable(L, 1,   "vertex", vertSrcs))
 		return 0;
-	}
+	if (!ParseShaderTable(L, 1, "geometry", geomSrcs))
+		return 0;
+	if (!ParseShaderTable(L, 1, "fragment", fragSrcs))
+		return 0;
 
+	// tables might have contained empty strings
 	if (vertSrcs.empty() && fragSrcs.empty() && geomSrcs.empty())
 		return 0;
 

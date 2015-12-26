@@ -56,6 +56,7 @@
 #include "Lua/LuaUI.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Game/UI/Groups/GroupHandler.h"

@@ -3557,19 +3557,17 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 	    (commands[inCommand].type == CMDTYPE_ICON_BUILDING)) {
 		{ // limit the locking scope to avoid deadlock
 			// draw build distance for all immobile builders during build commands
-			const std::map<unsigned int, CBuilderCAI*>& builderCAIs = unitHandler->builderCAIs;
-			      std::map<unsigned int, CBuilderCAI*>::const_iterator bi;
-
-			for (bi = builderCAIs.begin(); bi != builderCAIs.end(); ++bi) {
-				const CBuilderCAI* builderCAI = bi->second;
+			for (const auto bi: unitHandler->GetBuilderCAIs()) {
+				const CBuilderCAI* builderCAI = bi.second;
 				const CUnit* builder = builderCAI->owner;
 				const UnitDef* builderDef = builder->unitDef;
 
-				if ((builder == pointedAt) || (builder->team != gu->myTeam)) {
+				if (builder == pointedAt || builder->team != gu->myTeam)
 					continue;
-				}
+				if (!builderDef->builder)
+					continue;
 
-				if (builderDef->builder && (!builderDef->canmove || selectedUnitsHandler.IsUnitSelected(builder))) {
+				if (!builderDef->canmove || selectedUnitsHandler.IsUnitSelected(builder)) {
 					const float radius = builderDef->buildDistance;
 					if (radius > 0.0f) {
 						glDisable(GL_TEXTURE_2D);

@@ -85,6 +85,7 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Scripts/CobEngine.h"
 #include "Sim/Units/Scripts/UnitScriptEngine.h"
+#include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "UI/CommandColors.h"
@@ -606,16 +607,13 @@ void CGame::LoadInterface()
 			wordCompletion->AddWord(sn + " ", false, false, false);
 		}
 
-		const std::map<std::string, int>& unitDefs = unitDefHandler->unitDefIDsByName;
-		const std::map<std::string, int>& featureDefs = featureHandler->GetFeatureDefs();
+		const auto& unitDefs = unitDefHandler->unitDefIDsByName;
+		const auto& featureDefs = featureHandler->GetFeatureDefs();
 
-		std::map<std::string, int>::const_iterator uit;
-		std::map<std::string, int>::const_iterator fit;
-
-		for (uit = unitDefs.begin(); uit != unitDefs.end(); ++uit) {
+		for (auto uit = unitDefs.cbegin(); uit != unitDefs.cend(); ++uit) {
 			wordCompletion->AddWord(uit->first + " ", false, true, false);
 		}
-		for (fit = featureDefs.begin(); fit != featureDefs.end(); ++fit) {
+		for (auto fit = featureDefs.cbegin(); fit != featureDefs.cend(); ++fit) {
 			wordCompletion->AddWord(fit->first + " ", false, true, false);
 		}
 	}

@@ -112,7 +112,7 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const std
 	const std::string& name = StringToLower(mixedCase);
 
 	if (featureDefs.find(name) != featureDefs.end())
-		return NULL;
+		return nullptr;
 
 	FeatureDef& fd = GetNewFeatureDef();
 
@@ -227,11 +227,10 @@ const FeatureDef* CFeatureHandler::GetFeatureDef(string name, const bool showErr
 		return NULL;
 
 	StringToLowerInPlace(name);
-	map<string, int>::const_iterator fi = featureDefs.find(name);
+	const auto fi = featureDefs.find(name);
 
-	if (fi != featureDefs.end()) {
+	if (fi != featureDefs.end())
 		return &featureDefsVector[fi->second];
-	}
 
 	if (showError) {
 		LOG_L(L_ERROR, "[%s] could not find FeatureDef \"%s\"",
@@ -277,8 +276,8 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 		readMap->GetFeatureInfo(&mfi[0]);
 
 		for (int a = 0; a < numFeatures; ++a) {
-			const string& name = StringToLower(readMap->GetFeatureTypeName(mfi[a].featureType));
-			map<string, int>::iterator def = featureDefs.find(name);
+			const std::string& name = StringToLower(readMap->GetFeatureTypeName(mfi[a].featureType));
+			const auto def = featureDefs.find(name);
 
 			if (def == featureDefs.end()) {
 				LOG_L(L_ERROR, "Unknown feature named '%s'", name.c_str());
@@ -425,16 +424,18 @@ void CFeatureHandler::Update()
 	SCOPED_TIMER("FeatureHandler::Update");
 
 	if ((gs->frameNum & 31) == 0) {
-		for (std::list<int>::iterator it = toBeFreedFeatureIDs.begin(); it != toBeFreedFeatureIDs.end(); ) {
+		for (auto it = toBeFreedFeatureIDs.begin(); it != toBeFreedFeatureIDs.end(); ) {
 			if (CBuilderCAI::IsFeatureBeingReclaimed(*it)) {
 				// postpone putting this ID back into the free pool
 				// (this gives area-reclaimers time to choose a new
 				// target with a different ID)
 				++it;
 			} else {
-				assert(features[*it] == NULL);
+				assert(features[*it] == nullptr);
 				idPool.FreeID(*it, true);
-				it = toBeFreedFeatureIDs.erase(it);
+
+				*it = toBeFreedFeatureIDs.back();
+				toBeFreedFeatureIDs.pop_back();
 			}
 		}
 	}
@@ -452,7 +453,8 @@ void CFeatureHandler::Update()
 			activeFeatures.erase(feature);
 			features[feature->id] = NULL;
 
-			CSolidObject::SetDeletingRefID(feature->id + unitHandler->MaxUnits());
+			// ID must match parameter for object commands, just use this
+			CSolidObject::SetDeletingRefID(feature->GetBlockingMapID());
 			// destructor removes feature from update-queue
 			delete feature;
 			CSolidObject::SetDeletingRefID(-1);

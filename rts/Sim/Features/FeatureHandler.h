@@ -4,8 +4,9 @@
 #define _FEATURE_HANDLER_H
 
 #include <string>
-#include <list>
 #include <vector>
+#include <unordered_map>
+
 #include <boost/noncopyable.hpp>
 #include "System/creg/creg_cond.h"
 
@@ -65,7 +66,7 @@ public:
 	void SetFeatureUpdateable(CFeature* feature);
 	void TerrainChanged(int x1, int y1, int x2, int y2);
 
-	const std::map<std::string, int>& GetFeatureDefs() const { return featureDefs; }
+	const std::unordered_map<std::string, int>& GetFeatureDefs() const { return featureDefs; }
 	const CFeatureSet& GetActiveFeatures() const { return activeFeatures; }
 
 private:
@@ -96,10 +97,10 @@ private:
 private:
 	SimObjectIDPool idPool;
 
-	std::map<std::string, int> featureDefs;
+	std::unordered_map<std::string, int> featureDefs;
 	std::vector<FeatureDef> featureDefsVector;
 
-	std::list<int> toBeFreedFeatureIDs;
+	std::vector<int> toBeFreedFeatureIDs;
 	CFeatureSet activeFeatures;
 	std::vector<CFeature*> features;
 
