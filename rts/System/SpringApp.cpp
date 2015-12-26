@@ -626,7 +626,7 @@ static void ConsolePrintInitialize(const std::string& configSource, bool safemod
  */
 void SpringApp::ParseCmdLine(const std::string& binaryName)
 {
-	cmdline->SetUsageDescription("Usage: " + binaryName + " [options] [path_to_script.txt or demo.sdf]");
+	cmdline->SetUsageDescription("Usage: " + binaryName + " [options] [path_to_script.txt or demo.sdf[.gz]]");
 	cmdline->AddSwitch(0,   "sync-version",       "Display program sync version (for online gaming)");
 	cmdline->AddSwitch('f', "fullscreen",         "Run in fullscreen mode");
 	cmdline->AddSwitch('w', "window",             "Run in windowed mode");
@@ -860,15 +860,15 @@ void SpringApp::Startup()
 
 		clientSetup->isHost = false;
 		pregame = new CPreGame(clientSetup);
-	} else if (extension == "sdf" || extension == "gz") {
-		// demo
+	} else if (inputFile.rfind(".sdf") != std::string::npos) {
+		// demo.sdf[.gz]
 		clientSetup->isHost        = true;
 		clientSetup->myPlayerName += " (spec)";
 
 		pregame = new CPreGame(clientSetup);
 		pregame->LoadDemo(inputFile);
 	} else if (extension == "ssf") {
-		// savegame
+		// savegame.ssf
 		clientSetup->isHost = true;
 
 		pregame = new CPreGame(clientSetup);
