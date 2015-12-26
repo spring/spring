@@ -8,6 +8,8 @@ CONFIG(bool, DisableDemoVersionCheck).defaultValue(false).description("Allow to 
 #endif
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/GZFileHandler.h"
+#include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
 #include "System/Net/RawPacket.h"
 #include "Game/GameVersion.h"
@@ -21,7 +23,12 @@ CONFIG(bool, DisableDemoVersionCheck).defaultValue(false).description("Allow to 
 CDemoReader::CDemoReader(const std::string& filename, float curTime)
 	: playbackDemo(NULL)
 {
-	playbackDemo = new CFileHandler(filename, SPRING_VFS_PWD_ALL);
+	if (FileSystem::GetExtension(filename) == "gz") {
+		playbackDemo = new CGZFileHandler(filename, SPRING_VFS_PWD_ALL);
+	} else {
+		playbackDemo = new CFileHandler(filename, SPRING_VFS_PWD_ALL);
+	}
+
 
 	if (!playbackDemo->FileExists()) {
 		// file not found -> exception

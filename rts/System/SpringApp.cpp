@@ -860,7 +860,7 @@ void SpringApp::Startup()
 
 		clientSetup->isHost = false;
 		pregame = new CPreGame(clientSetup);
-	} else if (extension == "sdf") {
+	} else if (extension == "sdf" || extension == "gz") {
 		// demo
 		clientSetup->isHost        = true;
 		clientSetup->myPlayerName += " (spec)";
