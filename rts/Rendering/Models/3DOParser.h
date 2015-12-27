@@ -92,19 +92,15 @@ public:
 
 private:
 	void CalcNormals(S3DOPiece* o) const;
-	void GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim);
-	void GetVertexes(_3DObject* o, S3DOPiece* object);
-	std::string GetText(int pos);
+	void GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim, const std::vector<unsigned char>& fileBuf, int& curOffset);
+	void GetVertexes(_3DObject* o, S3DOPiece* object, const std::vector<unsigned char>& fileBuf, int& curOffset);
+	std::string GetText(int pos, const std::vector<unsigned char>& fileBuf, int& curOffset);
 
-	S3DOPiece* LoadPiece(S3DModel* model, int pos, S3DOPiece* parent,
-			int* numobj);
+	S3DOPiece* LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, int* numobj, const std::vector<unsigned char>& fileBuf, int& curOffset);
 
-	void SimStreamRead(void* buf, int length);
+	void SimStreamRead(void* buf, int length, const std::vector<unsigned char>& fileBuf, int& curOffset);
 
 	std::set<std::string> teamtex;
-	std::vector<unsigned char> fileBuf;
-
-	int curOffset;
 
 };
 
