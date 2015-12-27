@@ -120,17 +120,20 @@ void LoadQueue::Pump()
 		std::string modelName;
 
 		{
-			boost::mutex::scoped_lock(mutex);
+			GrabLock();
 			assert(queue.size() > 0);
 			modelName = queue.front();
+			FreeLock();
 		}
 
 		modelParser->Load3DModel(modelName, true);
 
 		{
-			boost::mutex::scoped_lock(mutex);
+			GrabLock();
 			queue.pop_front();
-			if (queue.empty())
+			const bool empty = queue.empty();
+			FreeLock();
+			if (empty)
 				break;
 		}
 	}
