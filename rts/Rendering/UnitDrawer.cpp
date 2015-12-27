@@ -1134,10 +1134,9 @@ void CUnitDrawer::DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int te
 
 	const bool oldAdvShading = unitDrawer->UseAdvShading();
 
-	// not needed here; only called internally
-	// unitDrawer->ResetTransform(false);
-
 	if (!rawState) {
+		// not needed here; only called internally
+		// unitDrawer->ResetTransform(false);
 		unitDrawer->SetUseAdvShading(oldAdvShading && shadowHandler->ShadowsLoaded());
 		unitDrawer->PushIndividualAlphaState(model, teamID, false);
 	}
@@ -1147,9 +1146,8 @@ void CUnitDrawer::DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int te
 	if (!rawState) {
 		unitDrawer->PopIndividualAlphaState(model, teamID, false);
 		unitDrawer->SetUseAdvShading(oldAdvShading);
+		// unitDrawer->ResetTransform(true);
 	}
-
-	// unitDrawer->ResetTransform(true);
 }
 
 

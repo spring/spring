@@ -63,10 +63,11 @@ Lua:
      number deferredShaderID
    ) -> nil
    (the ID's must refer to valid programs returned by gl.CreateShader;
-   passing in 0, 0 will cause a revert back to the default map shader)
-   custom shaders that declare a uniform ivec2 named "texSquare" can
-   sample from the default diffuse texture(s), which are always bound
-   to TU 0
+   passing in 0 for either will cause the respective shader to revert
+   back to its engine default)
+   custom map shaders that declare a uniform ivec2 named "texSquare"
+   can sample from the default diffuse texture(s), which are always
+   bound to TU 0
 
  - add new callins DrawGroundPreForward and DrawGroundPreDeferred
    these run at the start of their respective passes when a custom
