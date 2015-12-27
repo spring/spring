@@ -95,11 +95,6 @@ static const BindOpaqueTexFunc opaqueTexBindFuncs[MODELTYPE_OTHER * 2] = {
 	BindOpaqueTex,      // S3O
 	BindOpaqueTex,      // OBJ
 	BindOpaqueTex,      // ASS
-
-	BindOpaqueTexAtlas, // 3DO-solo
-	BindOpaqueTexDummy, // S3O-solo; should never be called
-	BindOpaqueTexDummy, // OBJ-solo; should never be called
-	BindOpaqueTexDummy, // ASS-solo; should never be called
 };
 
 static const BindShadowTexFunc shadowTexBindFuncs[MODELTYPE_OTHER] = {
@@ -116,9 +111,9 @@ static const KillShadowTexFunc shadowTexKillFuncs[MODELTYPE_OTHER] = {
 	KillShadowTex,      // ASS
 };
 
-void CUnitDrawer::BindModelTypeTexture(int mdlType, int texType, bool solo) { opaqueTexBindFuncs[mdlType + solo * MODELTYPE_OTHER](texType); }
-void CUnitDrawer::BindModelTypeTexture(const     S3DModel* m, bool solo) { BindModelTypeTexture(m->type, m->textureType, solo); }
-void CUnitDrawer::BindModelTypeTexture(const CSolidObject* o, bool solo) { BindModelTypeTexture(o->model, solo); }
+void CUnitDrawer::BindModelTypeTexture(int mdlType, int texType) { opaqueTexBindFuncs[mdlType](texType); }
+void CUnitDrawer::BindModelTypeTexture(const     S3DModel* m) { BindModelTypeTexture(m->type, m->textureType); }
+void CUnitDrawer::BindModelTypeTexture(const CSolidObject* o) { BindModelTypeTexture(o->model); }
 
 
 
@@ -1456,7 +1451,7 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 		va->DrawArrayC(GL_LINE_LOOP);
 	}
 
-	glEnable(GL_DEPTH_TEST );
+	glEnable(GL_DEPTH_TEST);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	// glDisable(GL_BLEND);
 

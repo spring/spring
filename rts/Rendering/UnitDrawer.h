@@ -196,9 +196,9 @@ private:
 	static void UpdateUnitDrawPos(CUnit* unit);
 
 public:
-	static void BindModelTypeTexture(int modelType, int texType, bool solo = false);
-	static void BindModelTypeTexture(const S3DModel* m, bool solo = false);
-	static void BindModelTypeTexture(const CSolidObject* o, bool solo = false);
+	static void BindModelTypeTexture(int modelType, int texType);
+	static void BindModelTypeTexture(const S3DModel* m);
+	static void BindModelTypeTexture(const CSolidObject* o);
 
 	// needed by FFP drawer-state
 	static void SetupBasicS3OTexture0();
