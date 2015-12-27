@@ -38,9 +38,9 @@ struct SAssPiece: public S3DModelPiece
 
 	void DrawForList() const;
 	void UploadGeometryVBOs();
-	const float3& GetVertexPos(const int idx) const { return vertices[idx].pos; }	
+	const float3& GetVertexPos(const int idx) const { return vertices[idx].pos; }
 	const float3& GetNormal(const int idx) const { return vertices[idx].normal; }
-	
+
 	unsigned int GetVertexCount() const { return vertices.size(); }
 	unsigned int GetNormalCount() const { return vertices.size(); }
 	unsigned int GetTxCoorCount() const { return vertices.size(); }
@@ -65,10 +65,14 @@ public:
 	typedef std::map<std::string, S3DModelPiece*> ModelPieceMap;
 	typedef std::map<SAssPiece*, std::string> ParentNameMap;
 
+	CAssParser();
 	S3DModel* Load(const std::string& modelFileName);
 	ModelType GetType() const { return MODELTYPE_ASS; }
-
 private:
+
+	GLint maxIndices;
+	GLint maxVertices;
+
 	static void SetPieceName(
 		SAssPiece* piece,
 		const S3DModel* model,

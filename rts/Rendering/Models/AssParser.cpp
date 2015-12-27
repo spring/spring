@@ -135,6 +135,17 @@ public:
 };
 
 
+CAssParser::CAssParser() :
+ maxIndices(1024),
+ maxVertices(1024)
+{
+#ifndef BITMAP_NO_OPENGL
+	// FIXME returns non-optimal data, at best compute it ourselves (pre-TL cache size!)
+	glGetIntegerv(GL_MAX_ELEMENTS_INDICES,  &maxIndices);
+	glGetIntegerv(GL_MAX_ELEMENTS_VERTICES, &maxVertices);
+#endif
+}
+
 
 S3DModel* CAssParser::Load(const std::string& modelFilePath)
 {
@@ -182,12 +193,6 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 
 #ifndef BITMAP_NO_OPENGL
 	{
-		// Optimize VBO-Mesh sizes/ranges
-		GLint maxIndices  = 1024;
-		GLint maxVertices = 1024;
-		// FIXME returns non-optimal data, at best compute it ourselves (pre-TL cache size!)
-		glGetIntegerv(GL_MAX_ELEMENTS_INDICES,  &maxIndices);
-		glGetIntegerv(GL_MAX_ELEMENTS_VERTICES, &maxVertices);
 		importer.SetPropertyInteger(AI_CONFIG_PP_SLM_VERTEX_LIMIT,   maxVertices);
 		importer.SetPropertyInteger(AI_CONFIG_PP_SLM_TRIANGLE_LIMIT, maxIndices / 3);
 	}
