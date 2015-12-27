@@ -331,6 +331,11 @@ static bool ParseShaderTable(
 ) {
 	lua_getfield(L, table, key);
 
+	if (lua_isnil(L, -1)) {
+		lua_pop(L, 1);
+		return true;
+	}
+
 	if (lua_israwstring(L, -1)) {
 		const std::string& txt = lua_tostring(L, -1);
 
@@ -362,10 +367,8 @@ static bool ParseShaderTable(
 		return true;
 	}
 
-	if (!lua_isnil(L, -1)) {
-		LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
-		shaders.errorLog = "\"" + string(key) + "\" must be a string or a table value!";
-	}
+	LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
+	shaders.errorLog = "\"" + string(key) + "\" must be a string or a table value!";
 
 	lua_pop(L, 1);
 	return false;
@@ -409,8 +412,8 @@ int LuaShaders::CreateShader(lua_State* L)
 	std::vector<std::string> geomSrcs;
 	std::vector<std::string> fragSrcs;
 
-	if (!ParseShaderTable(L, 1, "defines", shdrDefs))
-		ParseShaderTable(L, 1, "definitions", shdrDefs);
+	ParseShaderTable(L, 1, "defines", shdrDefs);
+	ParseShaderTable(L, 1, "definitions", shdrDefs);
 
 	if (!ParseShaderTable(L, 1,   "vertex", vertSrcs))
 		return 0;
