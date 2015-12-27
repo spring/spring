@@ -1406,6 +1406,20 @@ static bool ObjectDrawWithLuaMat(lua_State* L, CSolidObject* obj, LuaObjType obj
 }
 
 
+static void ObjectDrawShape(lua_State* L, const SolidObjectDef* def)
+{
+	if (def == nullptr)
+		return;
+
+	if (!teamHandler->IsValidTeam(luaL_checkint(L, 2)))
+		return;
+
+	// sets the full state by default
+	unitDrawer->DrawIndividualDefOpaque(def, luaL_checkint(L, 2), luaL_optboolean(L, 3, false));
+}
+
+
+
 int LuaOpenGL::UnitCommon(lua_State* L, bool applyTransform, bool callDrawUnit)
 {
 	LuaOpenGL::CheckDrawingEnabled(L, __FUNCTION__);
@@ -1460,18 +1474,7 @@ int LuaOpenGL::UnitRaw(lua_State* L) { return (UnitCommon(L, false, false)); }
 int LuaOpenGL::UnitShape(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
-
-	const UnitDef* ud = unitDefHandler->GetUnitDefByID(luaL_checkint(L, 1));
-
-	if (ud == nullptr)
-		return 0;
-
-	const int teamID = luaL_checkint(L, 2);
-
-	if (!teamHandler->IsValidTeam(teamID))
-		return 0;
-
-	unitDrawer->DrawUnitDef(ud, teamID);
+	ObjectDrawShape(L, unitDefHandler->GetUnitDefByID(luaL_checkint(L, 1)));
 	return 0;
 }
 
@@ -1562,28 +1565,7 @@ int LuaOpenGL::FeatureRaw(lua_State* L) { return (FeatureCommon(L, false, false)
 int LuaOpenGL::FeatureShape(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
-
-	const FeatureDef* fd = featureHandler->GetFeatureDefByID(luaL_checkint(L, 1));
-
-	if (fd == nullptr)
-		return 0;
-
-	const S3DModel* model = fd->LoadModel();
-
-	if (model == nullptr)
-		return 0;
-
-	#if 0
-	const int teamID = luaL_checkint(L, 2);
-
-	if (!teamHandler->IsValidTeam(teamID))
-		return 0;
-
-	// TODO: finish this, copy DrawIndividual, team-color...
-	featureDrawer->DrawFeatureDef(fd, teamID);
-	#else
-	model->DrawStatic();
-	#endif
+	ObjectDrawShape(L, featureHandler->GetFeatureDefByID(luaL_checkint(L, 1)));
 	return 0;
 }
 

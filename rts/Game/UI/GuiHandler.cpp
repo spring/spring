@@ -3579,63 +3579,74 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 			}
 		}
 
-		float dist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
-		if (dist > 0) {
+		const float dist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
+
+		if (dist > 0.0f) {
 			const UnitDef* unitdef = unitDefHandler->GetUnitDefByID(-commands[inCommand].id);
-			if (unitdef) {
-				// get the build information
-				float3 pos = cameraPos+mouseDir*dist;
-				std::vector<BuildInfo> buildPos;
+
+			if (unitdef != nullptr) {
 				const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
+				const float bpDist = CGround::LineGroundCol(bp.camPos, bp.camPos + bp.dir * globalRendering->viewRange * 1.4f, false);
+
+				// get the build information
+				const float3 cPos = cameraPos + mouseDir * dist;
+				const float3 bPos = bp.camPos + bp.dir * bpDist;
+
+				std::vector<BuildInfo> buildInfos;
+
 				if (GetQueueKeystate() && bp.pressed) {
-					const float dist = CGround::LineGroundCol(bp.camPos, bp.camPos + bp.dir * globalRendering->viewRange * 1.4f, false);
-					const float3 pos2 = bp.camPos + bp.dir * dist;
-					buildPos = GetBuildPos(BuildInfo(unitdef, pos2, buildFacing),
-					                       BuildInfo(unitdef, pos, buildFacing), cameraPos, mouseDir);
+					const BuildInfo cInfo = BuildInfo(unitdef, cPos, buildFacing);
+					const BuildInfo bInfo = BuildInfo(unitdef, bPos, buildFacing);
+
+					buildInfos = GetBuildPos(cInfo, bInfo, cameraPos, mouseDir);
 				} else {
-					BuildInfo bi(unitdef, pos, buildFacing);
-					buildPos = GetBuildPos(bi, bi, cameraPos, mouseDir);
+					const BuildInfo bi(unitdef, cPos, buildFacing);
+
+					buildInfos = GetBuildPos(bi, bi, cameraPos, mouseDir);
 				}
 
-				for (std::vector<BuildInfo>::iterator bpi = buildPos.begin(); bpi != buildPos.end(); ++bpi) {
-					const float3& buildpos = bpi->pos;
+				for (auto bpi = buildInfos.cbegin(); bpi != buildInfos.cend(); ++bpi) {
+					const float3& buildPos = bpi->pos;
 
-					DrawUnitDefRanges(unitdef, buildpos);
+					DrawUnitDefRanges(unitdef, buildPos);
 
 					// draw weapon range
 					if (!unitdef->weapons.empty()) {
 						glDisable(GL_DEPTH_TEST);
 						glColor4fv(cmdColors.rangeAttack);
-						glBallisticCircle(buildpos, unitdef->weapons[0].def->range,
+						glBallisticCircle(buildPos, unitdef->weapons[0].def->range,
 						                  NULL, 40, unitdef->weapons[0].def->heightmod);
 						glEnable(GL_DEPTH_TEST);
 					}
 					// draw extraction range
 					if (unitdef->extractRange > 0) {
 						glColor4fv(cmdColors.rangeExtract);
-						glSurfaceCircle(buildpos, unitdef->extractRange, 40);
+						glSurfaceCircle(buildPos, unitdef->extractRange, 40);
 					}
 					// draw interceptor range
 					const WeaponDef* wd = unitdef->stockpileWeaponDef;
 					if ((wd != NULL) && wd->interceptor) {
 						glColor4fv(cmdColors.rangeInterceptorOn);
-						glSurfaceCircle(buildpos, wd->coverageRange, 40);
+						glSurfaceCircle(buildPos, wd->coverageRange, 40);
 					}
 
 					std::vector<Command> cv;
-					if (GetQueueKeystate()) {
 
-						Command c = bpi->CreateCommand();
+					if (GetQueueKeystate()) {
+						const Command c = bpi->CreateCommand();
+						const auto& su = selectedUnitsHandler.selectedUnits;
+
 						std::vector<Command> temp;
-						CUnitSet::iterator ui = selectedUnitsHandler.selectedUnits.begin();
-						for (; ui != selectedUnitsHandler.selectedUnits.end(); ++ui) {
+
+						for (auto ui = su.begin(); ui != su.end(); ++ui) {
 							temp = (*ui)->commandAI->GetOverlapQueued(c);
-							std::vector<Command>::iterator ti = temp.begin();
-							for (; ti != temp.end(); ++ti) {
+
+							for (auto ti = temp.begin(); ti != temp.end(); ++ti) {
 								cv.insert(cv.end(),*ti);
 							}
 						}
 					}
+
 					if (unitDrawer->ShowUnitBuildSquare(*bpi, cv)) {
 						glColor4f(0.7f,1,1,0.4f);
 					} else {
@@ -3643,8 +3654,13 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 					}
 
 					if (!onMinimap) {
-						CUnitDrawer::DrawBuildingSample(bpi->def, gu->myTeam, buildpos, bpi->buildFacing);
+						glPushMatrix();
+						glTranslatef3(buildPos);
+						glRotatef(bpi->buildFacing * 90.0f, 0.0f, 1.0f, 0.0f);
 
+						CUnitDrawer::DrawIndividualDefAlpha(bpi->def, gu->myTeam, false);
+
+						glPopMatrix();
 						glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(), (GLenum)cmdColors.SelectedBlendDst());
 					}
 				}

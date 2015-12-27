@@ -11,6 +11,7 @@
 #include "Rendering/GL/LightHandler.h"
 #include "System/EventClient.h"
 
+struct SolidObjectDef;
 struct UnitDef;
 struct S3DModel;
 
@@ -80,9 +81,14 @@ public:
 	void DrawUnitNoTrans(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
 	void DrawUnit(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
 
+	void PushIndividualOpaqueState(const S3DModel* model, int teamID, bool deferredPass);
+	void PushIndividualAlphaState(const S3DModel* model, int teamID, bool deferredPass);
+	void PopIndividualOpaqueState(const S3DModel* model, int teamID, bool deferredPass);
+	void PopIndividualAlphaState(const S3DModel* model, int teamID, bool deferredPass);
+
 	/// LuaOpenGL::Unit{Raw}: draw a single unit with full state setup
-	void PushIndividualState(const CUnit* unit, bool deferredPass);
-	void PopIndividualState(const CUnit* unit, bool deferredPass);
+	void PushIndividualOpaqueState(const CUnit* unit, bool deferredPass);
+	void PopIndividualOpaqueState(const CUnit* unit, bool deferredPass);
 	void DrawIndividual(const CUnit* unit, bool noLuaCall);
 	void DrawIndividualNoTrans(const CUnit* unit, bool noLuaCall);
 
@@ -107,8 +113,8 @@ public:
 
 	void CreateSpecularFace(unsigned int glType, int size, float3 baseDir, float3 xDif, float3 yDif, float3 sunDir, float exponent, float3 sunColor);
 
-	static void DrawBuildingSample(const UnitDef* unitdef, int team, float3 pos, int facing = 0);
-	static void DrawUnitDef(const UnitDef* unitDef, int team);
+	static void DrawIndividualDefOpaque(const SolidObjectDef* objectDef, int teamID, bool rawState);
+	static void DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int teamID, bool rawState);
 
 	void DrawUnitMiniMapIcons() const;
 
@@ -194,6 +200,7 @@ public:
 	static void BindModelTypeTexture(const S3DModel* m, bool solo = false);
 	static void BindModelTypeTexture(const CSolidObject* o, bool solo = false);
 
+	// needed by FFP drawer-state
 	static void SetupBasicS3OTexture0();
 	static void SetupBasicS3OTexture1();
 	static void CleanupBasicS3OTexture1();

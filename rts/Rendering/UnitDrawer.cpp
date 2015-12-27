@@ -667,7 +667,7 @@ void CUnitDrawer::DrawAlphaPass(bool disableAdvShading)
 		const bool oldAdvShading = UseAdvShading();
 
 		// don't use shaders if shadows are enabled (WHY?)
-		SetUseAdvShading(advShading && !disableAdvShading);
+		SetUseAdvShading(oldAdvShading && !disableAdvShading);
 		SetupOpaqueAlphaDrawing(false);
 
 		glColor4f(1.0f, 1.0f, 1.0f, cloakAlpha);
@@ -1020,18 +1020,44 @@ void CUnitDrawer::CleanupBasicS3OTexture0()
 
 
 
-void CUnitDrawer::PushIndividualState(const CUnit* unit, bool deferredPass)
+void CUnitDrawer::PushIndividualOpaqueState(const S3DModel* model, int teamID, bool deferredPass)
 {
 	SetupOpaqueDrawing(deferredPass);
-	opaqueModelRenderers[MDL_TYPE(unit)]->PushRenderState();
-	BindModelTypeTexture(unit);
-	SetTeamColour(unit->team);
+	opaqueModelRenderers[model->type]->PushRenderState();
+	BindModelTypeTexture(model);
+	SetTeamColour(teamID);
 }
 
-void CUnitDrawer::PopIndividualState(const CUnit* unit, bool deferredPass)
+void CUnitDrawer::PushIndividualAlphaState(const S3DModel* model, int teamID, bool deferredPass)
 {
-	opaqueModelRenderers[MDL_TYPE(unit)]->PopRenderState();
+	SetupAlphaDrawing(deferredPass);
+	alphaModelRenderers[model->type]->PushRenderState();
+	BindModelTypeTexture(model);
+	SetTeamColour(teamID, cloakAlpha);
+}
+
+
+void CUnitDrawer::PopIndividualOpaqueState(const S3DModel* model, int teamID, bool deferredPass)
+{
+	opaqueModelRenderers[model->type]->PopRenderState();
 	ResetOpaqueDrawing(deferredPass);
+}
+
+void CUnitDrawer::PopIndividualAlphaState(const S3DModel* model, int teamID, bool deferredPass)
+{
+	alphaModelRenderers[model->type]->PopRenderState();
+	ResetAlphaDrawing(deferredPass);
+}
+
+
+void CUnitDrawer::PushIndividualOpaqueState(const CUnit* unit, bool deferredPass)
+{
+	PushIndividualOpaqueState(unit->model, unit->team, deferredPass);
+}
+
+void CUnitDrawer::PopIndividualOpaqueState(const CUnit* unit, bool deferredPass)
+{
+	PopIndividualOpaqueState(unit->model, unit->team, deferredPass);
 }
 
 
@@ -1041,9 +1067,9 @@ void CUnitDrawer::DrawIndividual(const CUnit* unit, bool noLuaCall)
 
 	if (!LuaObjectDrawer::DrawSingleObject(unit, LUAOBJ_UNIT /*, noLuaCall*/)) {
 		// set the full default state
-		PushIndividualState(unit, false);
+		PushIndividualOpaqueState(unit, false);
 		DrawUnit(unit, 0, 0, false, noLuaCall);
-		PopIndividualState(unit, false);
+		PopIndividualOpaqueState(unit, false);
 	}
 
 	globalRendering->GetSetDrawDebug(origDrawDebug);
@@ -1054,9 +1080,9 @@ void CUnitDrawer::DrawIndividualNoTrans(const CUnit* unit, bool noLuaCall)
 	const bool origDrawDebug = globalRendering->GetSetDrawDebug(false);
 
 	if (!LuaObjectDrawer::DrawSingleObjectNoTrans(unit, LUAOBJ_UNIT /*, noLuaCall*/)) {
-		PushIndividualState(unit, false);
+		PushIndividualOpaqueState(unit, false);
 		DrawUnitNoTrans(unit, 0, 0, false, noLuaCall);
-		PopIndividualState(unit, false);
+		PopIndividualOpaqueState(unit, false);
 	}
 
 	globalRendering->GetSetDrawDebug(origDrawDebug);
@@ -1065,101 +1091,48 @@ void CUnitDrawer::DrawIndividualNoTrans(const CUnit* unit, bool noLuaCall)
 
 
 
-/**
- * Draw one unit,
- * - with depth-buffering(!) and lighting DISABLED,
- * - 'tinted' by the current glColor, *including* alpha.
- *
- * Used for drawing building orders.
- *
- * Note: does all the GL state setting for that one unit, so you might want
- * something else for drawing many translucent units.
- */
-void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int team, float3 pos, int facing)
+// used by LuaOpenGL::Draw{Unit,Feature}Shape
+// acts like DrawIndividual but can not apply
+// custom materials
+void CUnitDrawer::DrawIndividualDefOpaque(const SolidObjectDef* objectDef, int teamID, bool rawState)
 {
-	const S3DModel* model = unitdef->LoadModel();
+	const S3DModel* model = objectDef->LoadModel();
 
-	glPushAttrib(GL_TEXTURE_BIT | GL_ENABLE_BIT);
+	if (model == nullptr)
+		return;
 
-	assert(teamHandler->IsValidTeam(team));
-	IUnitDrawerState::SetBasicTeamColor(team, 1.0f);
-
-	SetupBasicS3OTexture0();
-	BindModelTypeTexture(model, true);
-	SetupBasicS3OTexture1();
-
-	/* Use the alpha given by glColor for the outgoing alpha.
-	   (Might need to change this if we ever have transparent bits on units?)
-	 */
-	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_REPLACE);
-	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PRIMARY_COLOR_ARB);
-
-	glActiveTexture(GL_TEXTURE0);
-
-	glDepthMask(GL_FALSE);
-	glDisable(GL_CULL_FACE); /* Leave out face culling, as 3DO and 3DO translucents does. */
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	/* Push out the polygons. */
-	glPushMatrix();
-	glTranslatef3(pos);
-	glRotatef(facing * 90.0f, 0, 1, 0);
+	if (!rawState) {
+		unitDrawer->PushIndividualOpaqueState(model, teamID, false);
+	}
 
 	model->DrawStatic();
-	glPopMatrix();
 
-	// reset texture1 state
-	CleanupBasicS3OTexture1();
-
-	/* Also reset the alpha generation. */
-	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_MODULATE);
-	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_TEXTURE);
-
-	// reset texture0 state
-	CleanupBasicS3OTexture0();
-
-	glPopAttrib();
-	glDisable(GL_TEXTURE_2D);
-	glDepthMask(GL_TRUE);
+	if (!rawState) {
+		unitDrawer->PopIndividualOpaqueState(model, teamID, false);
+	}
 }
 
-// used by LuaOpenGL::DrawUnitShape only
-void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
+// used for drawing building orders (with translucency)
+void CUnitDrawer::DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int teamID, bool rawState)
 {
-	const S3DModel* model = unitDef->LoadModel();
+	const S3DModel* model = objectDef->LoadModel();
 
-	glPushAttrib(GL_TEXTURE_BIT | GL_ENABLE_BIT);
-	glEnable(GL_TEXTURE_2D);
+	if (model == nullptr)
+		return;
 
-	// get the team-coloured texture constructed by texunit 0
-	assert(teamHandler->IsValidTeam(team));
-	IUnitDrawerState::SetBasicTeamColor(team, 1.0f);
+	const bool oldAdvShading = unitDrawer->UseAdvShading();
 
-	SetupBasicS3OTexture0();
-	BindModelTypeTexture(model, true);
-	// tint it with the current glColor in texunit 1
-	SetupBasicS3OTexture1();
+	if (!rawState) {
+		unitDrawer->SetUseAdvShading(oldAdvShading && shadowHandler->ShadowsLoaded());
+		unitDrawer->PushIndividualAlphaState(model, teamID, false);
+	}
 
-	// use the alpha given by glColor for the outgoing alpha.
-	// (might need to change this if we ever have transparent bits on units?)
-	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_REPLACE);
-	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PRIMARY_COLOR_ARB);
-
-	glActiveTexture(GL_TEXTURE0);
 	model->DrawStatic();
 
-	// reset texture1 state
-	CleanupBasicS3OTexture1();
-
-	// also reset the alpha generation
-	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_MODULATE);
-	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_TEXTURE);
-
-	// reset texture0 state
-	CleanupBasicS3OTexture0();
-
-	glPopAttrib();
+	if (!rawState) {
+		unitDrawer->PopIndividualAlphaState(model, teamID, false);
+		unitDrawer->SetUseAdvShading(oldAdvShading);
+	}
 }
 
 
@@ -1167,7 +1140,7 @@ void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
 
 void CUnitDrawer::DrawUnitModelBeingBuilt(const CUnit* unit, bool noLuaCall)
 {
-	if (shadowHandler->inShadowPass) {
+	if (shadowHandler->InShadowPass()) {
 		if (unit->buildProgress > (2.0f / 3.0f)) {
 			DrawUnitModel(unit, noLuaCall);
 		}
