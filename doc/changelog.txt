@@ -6,8 +6,8 @@ Spring changelog
 
 General:
  ! change default screenshot file type to jpg. to create png use /screenshot png
- - pr-downloader dependency is now mandatory (statically linked with spring)
- - demo files are now compressed with gzip
+ ! pr-downloader dependency is now mandatory (statically linked with spring)
+ ! demo files are now compressed with gzip
 
 Lua:
  ! {Set,Get}UnitPieceCollisionVolumeData now receive 1-based piece index argument (was 0-based).
