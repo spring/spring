@@ -144,6 +144,8 @@ public:
 	void SetUseAdvShading(bool b) { advShading = b; }
 	void SetUseAdvFading(bool b) { advFading = b; }
 
+	void ResetTransform(bool b) { resetTransform = b; }
+
 public:
 	struct TempDrawUnit {
 		const UnitDef* unitDef;
@@ -225,6 +227,9 @@ private:
 
 	bool advShading;
 	bool advFading;
+
+	// if true, V and P are reset at the start of a draw-pass
+	bool resetTransform;
 
 	bool useDistToGroundForIcons;
 	float sqCamDistToGroundForIcons;

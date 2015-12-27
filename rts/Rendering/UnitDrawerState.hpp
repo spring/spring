@@ -34,7 +34,7 @@ public:
 	virtual bool CanEnable(const CUnitDrawer*) const { return false; }
 	virtual bool CanDrawDeferred() const { return false; }
 
-	virtual void Enable(const CUnitDrawer*, bool) {}
+	virtual void Enable(const CUnitDrawer*, bool, bool) {}
 	virtual void Disable(const CUnitDrawer*, bool) {}
 
 	virtual void EnableTextures(const CUnitDrawer*) const {}
@@ -65,7 +65,7 @@ public:
 
 protected:
 	// shared ARB and GLSL state managers
-	void EnableCommon(const CUnitDrawer*, bool);
+	void EnableCommon(const CUnitDrawer*, bool, bool);
 	void DisableCommon(const CUnitDrawer*, bool);
 	void EnableTexturesCommon(const CUnitDrawer*) const;
 	void DisableTexturesCommon(const CUnitDrawer*) const;
@@ -81,7 +81,7 @@ struct UnitDrawerStateFFP: public IUnitDrawerState {
 public:
 	bool CanEnable(const CUnitDrawer*) const;
 
-	void Enable(const CUnitDrawer*, bool);
+	void Enable(const CUnitDrawer*, bool, bool);
 	void Disable(const CUnitDrawer*, bool);
 
 	void EnableTextures(const CUnitDrawer*) const;
@@ -98,7 +98,7 @@ public:
 
 	bool CanEnable(const CUnitDrawer*) const;
 
-	void Enable(const CUnitDrawer*, bool);
+	void Enable(const CUnitDrawer*, bool, bool);
 	void Disable(const CUnitDrawer*, bool);
 
 	void EnableTextures(const CUnitDrawer*) const;
@@ -118,7 +118,7 @@ public:
 	bool CanEnable(const CUnitDrawer*) const;
 	bool CanDrawDeferred() const { return true; }
 
-	void Enable(const CUnitDrawer*, bool);
+	void Enable(const CUnitDrawer*, bool, bool);
 	void Disable(const CUnitDrawer*, bool);
 
 	void EnableTextures(const CUnitDrawer*) const;

@@ -35,15 +35,17 @@ IUnitDrawerState* IUnitDrawerState::GetInstance(bool haveARB, bool haveGLSL) {
 }
 
 
-void IUnitDrawerState::EnableCommon(const CUnitDrawer* ud, bool deferredPass) {
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glMultMatrixf(camera->GetViewMatrix());
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glLoadIdentity();
+void IUnitDrawerState::EnableCommon(const CUnitDrawer* ud, bool deferredPass, bool resetTransform) {
+	if (resetTransform) {
+		glMatrixMode(GL_PROJECTION);
+		glPushMatrix();
+		glMultMatrixf(camera->GetViewMatrix());
+		glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		glLoadIdentity();
+	}
 
-	SetActiveShader(shadowHandler->shadowsLoaded, deferredPass);
+	SetActiveShader(shadowHandler->ShadowsLoaded(), deferredPass);
 	assert(modelShaders[MODEL_SHADER_ACTIVE] != nullptr);
 	modelShaders[MODEL_SHADER_ACTIVE]->Enable();
 
@@ -54,7 +56,7 @@ void IUnitDrawerState::EnableCommon(const CUnitDrawer* ud, bool deferredPass) {
 	glActiveTexture(GL_TEXTURE1);
 	glEnable(GL_TEXTURE_2D);
 
-	if (shadowHandler->shadowsLoaded) {
+	if (shadowHandler->ShadowsLoaded()) {
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
@@ -80,7 +82,7 @@ void IUnitDrawerState::DisableCommon(const CUnitDrawer* ud, bool) {
 	assert(modelShaders[MODEL_SHADER_ACTIVE] != nullptr);
 
 	modelShaders[MODEL_SHADER_ACTIVE]->Disable();
-	SetActiveShader(shadowHandler->shadowsLoaded, false);
+	SetActiveShader(shadowHandler->ShadowsLoaded(), false);
 
 	// TODO: refactor to use DisableTexturesCommon
 	glActiveTexture(GL_TEXTURE1);
@@ -112,7 +114,7 @@ void IUnitDrawerState::EnableTexturesCommon(const CUnitDrawer* ud) const {
 	glActiveTexture(GL_TEXTURE1);
 	glEnable(GL_TEXTURE_2D);
 
-	if (shadowHandler->shadowsLoaded) {
+	if (shadowHandler->ShadowsLoaded()) {
 		glActiveTexture(GL_TEXTURE2);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
 		glEnable(GL_TEXTURE_2D);
@@ -173,7 +175,7 @@ bool UnitDrawerStateFFP::CanEnable(const CUnitDrawer* ud) const {
 	return (!ud->UseAdvShading() || water->DrawReflectionPass());
 }
 
-void UnitDrawerStateFFP::Enable(const CUnitDrawer* ud, bool) {
+void UnitDrawerStateFFP::Enable(const CUnitDrawer* ud, bool, bool) {
 	glEnable(GL_LIGHTING);
 	glLightfv(GL_LIGHT1, GL_POSITION, sky->GetLight()->GetLightDir());
 	glEnable(GL_LIGHT1);
@@ -252,7 +254,7 @@ bool UnitDrawerStateARB::Init(const CUnitDrawer* ud) {
 	modelShaders[MODEL_SHADER_SHADOWED_STANDARD]->Link();
 
 	// make the active shader non-NULL
-	SetActiveShader(shadowHandler->shadowsLoaded, false);
+	SetActiveShader(shadowHandler->ShadowsLoaded(), false);
 
 	#undef sh
 	return true;
@@ -267,8 +269,8 @@ bool UnitDrawerStateARB::CanEnable(const CUnitDrawer* ud) const {
 	return (ud->UseAdvShading() && !water->DrawReflectionPass());
 }
 
-void UnitDrawerStateARB::Enable(const CUnitDrawer* ud, bool) {
-	EnableCommon(ud, false);
+void UnitDrawerStateARB::Enable(const CUnitDrawer* ud, bool deferredPass, bool resetTransform) {
+	EnableCommon(ud, deferredPass && false, resetTransform);
 
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(10, &sky->GetLight()->GetLightDir().x);
@@ -395,7 +397,7 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 	}
 
 	// make the active shader non-NULL
-	SetActiveShader(shadowHandler->shadowsLoaded, false);
+	SetActiveShader(shadowHandler->ShadowsLoaded(), false);
 
 	#undef sh
 	return true;
@@ -410,8 +412,8 @@ bool UnitDrawerStateGLSL::CanEnable(const CUnitDrawer* ud) const {
 	return (ud->UseAdvShading() && !water->DrawReflectionPass());
 }
 
-void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud, bool deferredPass) {
-	EnableCommon(ud, deferredPass);
+void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud, bool deferredPass, bool resetTransform) {
+	EnableCommon(ud, deferredPass, resetTransform);
 
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform3fv(6, &camera->GetPos()[0]);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(7, false, camera->GetViewMatrix());
