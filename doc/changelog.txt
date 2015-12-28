@@ -18,9 +18,9 @@ Lua:
    anims, etc)
    also remove hardcoded logic to zombify (stun+immobilize) a unit on death
  ! gl.UnitShape and gl.FeatureShape now set their relevant GL state internally
-   (so calling only these functions is enough to get correctly rendered models
-   by default; pass in 'true' for the [new] third argument to render with your
-   own custom state instead)
+   (so calling only these functions is enough to get correctly rendered models;
+   pass in 'false' for the [new] third argument to get the fixed behavior, omit
+   it or pass in 'true' [default] to render with your own custom state instead)
  - new Spring.GetUICommands function to obtain a list of all UI commands (e.g. /luaui reload)
  - new VFS.CalculateHash function that calculates hash (in base64 form) of a given string (with md5 support initially)
  - new Spring.SetFeatureFade(featureID, bool) to control whether a feature will fade or not when zoomed out.

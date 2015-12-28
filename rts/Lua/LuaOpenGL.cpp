@@ -1414,8 +1414,8 @@ static void ObjectDrawShape(lua_State* L, const SolidObjectDef* def)
 	if (!teamHandler->IsValidTeam(luaL_checkint(L, 2)))
 		return;
 
-	// sets the full state by default
-	unitDrawer->DrawIndividualDefOpaque(def, luaL_checkint(L, 2), luaL_optboolean(L, 3, false));
+	// does not set the full state by default
+	unitDrawer->DrawIndividualDefOpaque(def, luaL_checkint(L, 2), luaL_optboolean(L, 3, true));
 }
 
 
