@@ -672,32 +672,47 @@ int LuaUtils::PushModelTable(lua_State* L, const SolidObjectDef* def) {
 	const S3DModel* model = def->LoadModel();
 
 	lua_newtable(L);
-		HSTR_PUSH_STRING(L, "type", modelType);
-		HSTR_PUSH_STRING(L, "path", modelPath);
-		HSTR_PUSH_STRING(L, "name", def->modelName);
+	HSTR_PUSH_STRING(L, "type", modelType);
+	HSTR_PUSH_STRING(L, "path", modelPath);
+	HSTR_PUSH_STRING(L, "name", def->modelName);
 
-		if (model != nullptr) {
-			// unit, or non-tree feature
-			HSTR_PUSH_NUMBER(L, "minx", model->mins.x);
-			HSTR_PUSH_NUMBER(L, "miny", model->mins.y);
-			HSTR_PUSH_NUMBER(L, "minz", model->mins.z);
-			HSTR_PUSH_NUMBER(L, "maxx", model->maxs.x);
-			HSTR_PUSH_NUMBER(L, "maxy", model->maxs.y);
-			HSTR_PUSH_NUMBER(L, "maxz", model->maxs.z);
+	if (model != nullptr) {
+		// unit, or non-tree feature
+		HSTR_PUSH_NUMBER(L, "minx", model->mins.x);
+		HSTR_PUSH_NUMBER(L, "miny", model->mins.y);
+		HSTR_PUSH_NUMBER(L, "minz", model->mins.z);
+		HSTR_PUSH_NUMBER(L, "maxx", model->maxs.x);
+		HSTR_PUSH_NUMBER(L, "maxy", model->maxs.y);
+		HSTR_PUSH_NUMBER(L, "maxz", model->maxs.z);
 
-			HSTR_PUSH_NUMBER(L, "midx", model->relMidPos.x);
-			HSTR_PUSH_NUMBER(L, "midy", model->relMidPos.y);
-			HSTR_PUSH_NUMBER(L, "midz", model->relMidPos.z);
+		HSTR_PUSH_NUMBER(L, "midx", model->relMidPos.x);
+		HSTR_PUSH_NUMBER(L, "midy", model->relMidPos.y);
+		HSTR_PUSH_NUMBER(L, "midz", model->relMidPos.z);
+	} else {
+		HSTR_PUSH_NUMBER(L, "minx", 0.0f);
+		HSTR_PUSH_NUMBER(L, "miny", 0.0f);
+		HSTR_PUSH_NUMBER(L, "minz", 0.0f);
+		HSTR_PUSH_NUMBER(L, "maxx", 0.0f);
+		HSTR_PUSH_NUMBER(L, "maxy", 0.0f);
+		HSTR_PUSH_NUMBER(L, "maxz", 0.0f);
 
-			HSTR_PUSH(L, "textures");
+		HSTR_PUSH_NUMBER(L, "midx", 0.0f);
+		HSTR_PUSH_NUMBER(L, "midy", 0.0f);
+		HSTR_PUSH_NUMBER(L, "midz", 0.0f);
+	}
 
-			lua_newtable(L);
+	HSTR_PUSH(L, "textures");
+	lua_newtable(L);
 
-			LuaPushNamedString(L, "tex1", model->tex1);
-			LuaPushNamedString(L, "tex2", model->tex2);
+	if (model != nullptr) {
+		LuaPushNamedString(L, "tex1", model->tex1);
+		LuaPushNamedString(L, "tex2", model->tex2);
+	} else {
+		// just leave these nil
+	}
 
-			lua_rawset(L, -3);
-		}
+	// model["textures"] = {}
+	lua_rawset(L, -3);
 
 	return 1;
 }
