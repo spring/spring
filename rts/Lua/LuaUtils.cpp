@@ -677,7 +677,7 @@ int LuaUtils::PushModelTable(lua_State* L, const SolidObjectDef* def) {
 		HSTR_PUSH_STRING(L, "name", def->modelName);
 
 		if (model != nullptr) {
-			// unit or non-tree feature
+			// unit, or non-tree feature
 			HSTR_PUSH_NUMBER(L, "minx", model->mins.x);
 			HSTR_PUSH_NUMBER(L, "miny", model->mins.y);
 			HSTR_PUSH_NUMBER(L, "minz", model->mins.z);
@@ -688,16 +688,16 @@ int LuaUtils::PushModelTable(lua_State* L, const SolidObjectDef* def) {
 			HSTR_PUSH_NUMBER(L, "midx", model->relMidPos.x);
 			HSTR_PUSH_NUMBER(L, "midy", model->relMidPos.y);
 			HSTR_PUSH_NUMBER(L, "midz", model->relMidPos.z);
-		}
 
-		HSTR_PUSH(L, "textures");
+			HSTR_PUSH(L, "textures");
 
 			lua_newtable(L);
-			if (model != nullptr) {
-				LuaPushNamedString(L, "tex1", model->tex1);
-				LuaPushNamedString(L, "tex2", model->tex2);
-			}
+
+			LuaPushNamedString(L, "tex1", model->tex1);
+			LuaPushNamedString(L, "tex2", model->tex2);
+
 			lua_rawset(L, -3);
+		}
 
 	return 1;
 }
