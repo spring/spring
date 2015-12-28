@@ -11,6 +11,10 @@ General:
 
 Lua:
  ! {Set,Get}UnitPieceCollisionVolumeData now receive 1-based piece index argument (was 0-based).
+ ! Lua{Feature,Unit}Defs:
+   LuaFeatureDefs: make the "model" subtable available (as it is for LuaUnitDefs)
+   move the {min,max,mid}{x,y,z} values to this subtable (e.g. *Defs[i].model.midx)
+   deprecate *Defs[i].modelname, use *Defs[i].model.path instead
  ! GameID callin now gets the ID string encoded in hex.
  ! UnitDestroyed is now called twice and gets an extra argument 'preEvent'
    the value of preEvent is true for the first call which corresponds to

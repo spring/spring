@@ -5,7 +5,6 @@
 #include "FeatureHandler.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
-#include "Map/ReadMap.h"
 #include "Map/MapInfo.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/QuadField.h"
@@ -19,7 +18,6 @@
 #include "Sim/Projectiles/Unsynced/GeoThermSmokeProjectile.h"
 #include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
 #include "Sim/Units/UnitDef.h"
-#include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
@@ -102,17 +100,25 @@ void CFeature::PostLoad()
 	def = featureHandler->GetFeatureDefByID(defID);
 	objectDef = def;
 
-	//FIXME is this really needed (aren't all those tags saved via creg?)
-	if (def->drawType == DRAWTYPE_MODEL) {
-		if ((model = def->LoadModel()) != NULL) {
-			SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
-			SetRadiusAndHeight(model);
+	// FIXME is this really needed (aren't all those tags saved via creg?)
+	switch (def->drawType) {
+		case DRAWTYPE_NONE: {
+		} break;
 
-			localModel.SetModel(model);
-		}
-	} else if (def->drawType >= DRAWTYPE_TREE) {
-		SetMidAndAimPos(UpVector * TREE_RADIUS, UpVector * TREE_RADIUS, true);
-		SetRadiusAndHeight(TREE_RADIUS, TREE_RADIUS * 2.0f);
+		case DRAWTYPE_MODEL: {
+			if ((model = def->LoadModel()) != nullptr) {
+				SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
+				SetRadiusAndHeight(model);
+
+				localModel.SetModel(model);
+			}
+		} break;
+
+		default: {
+			// always >= DRAWTYPE_TREE here
+			SetMidAndAimPos(UpVector * TREE_RADIUS, UpVector * TREE_RADIUS, true);
+			SetRadiusAndHeight(TREE_RADIUS, TREE_RADIUS * 2.0f);
+		} break;
 	}
 
 	UpdateMidAndAimPos();
@@ -193,22 +199,30 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	// will already insert us in the update-queue
 	CWorldObject::SetVelocity(params.speed);
 
-	if (def->drawType == DRAWTYPE_MODEL) {
-		if ((model = def->LoadModel()) != NULL) {
-			SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
-			SetRadiusAndHeight(model);
+	switch (def->drawType) {
+		case DRAWTYPE_NONE: {
+		} break;
 
-			// only initialize the LM for modelled features
-			// (this is still never animated but allows for
-			// custom piece display-lists, etc)
-			localModel.SetModel(model);
-		} else {
-			LOG_L(L_ERROR, "[%s] couldn't load model for %s", __FUNCTION__, def->name.c_str());
-		}
-	} else if (def->drawType >= DRAWTYPE_TREE) {
-		// LoadFeaturesFromMap() doesn't set a scale for trees
-		SetMidAndAimPos(UpVector * TREE_RADIUS, UpVector * TREE_RADIUS, true);
-		SetRadiusAndHeight(TREE_RADIUS, TREE_RADIUS * 2.0f);
+		case DRAWTYPE_MODEL: {
+			if ((model = def->LoadModel()) != NULL) {
+				SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
+				SetRadiusAndHeight(model);
+
+				// only initialize the LM for modelled features
+				// (this is still never animated but allows for
+				// custom piece display-lists, etc)
+				localModel.SetModel(model);
+			} else {
+				LOG_L(L_ERROR, "[%s] couldn't load model for %s", __FUNCTION__, def->name.c_str());
+			}
+		} break;
+
+		default: {
+			// always >= DRAWTYPE_TREE here
+			// LoadFeaturesFromMap() doesn't set a scale for trees
+			SetMidAndAimPos(UpVector * TREE_RADIUS, UpVector * TREE_RADIUS, true);
+			SetRadiusAndHeight(TREE_RADIUS, TREE_RADIUS * 2.0f);
+		} break;
 	}
 
 	UpdateMidAndAimPos();

@@ -151,9 +151,9 @@ CFeatureDrawer::~CFeatureDrawer()
 
 void CFeatureDrawer::RenderFeatureCreated(const CFeature* feature)
 {
-	CFeature* f = const_cast<CFeature*>(feature);
-
 	if (feature->def->drawType == DRAWTYPE_MODEL) {
+		CFeature* f = const_cast<CFeature*>(feature);
+
 		f->drawQuad = -1;
 		f->drawAlpha = 0.0f;
 

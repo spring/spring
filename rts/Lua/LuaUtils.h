@@ -12,6 +12,7 @@ using std::vector;
 #include "LuaInclude.h"
 #include "LuaHandle.h"
 #include "LuaDefs.h"
+// FIXME: use fwd-decls
 #include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
@@ -22,6 +23,8 @@ using std::vector;
 #ifdef isnumber
 	#undef isnumber
 #endif
+
+struct SolidObjectDef;
 
 class LuaUtils {
 	public:
@@ -80,6 +83,14 @@ class LuaUtils {
 		static bool LowerKeys(lua_State* L, int tableIndex);
 
 		static bool CheckTableForNaNs(lua_State* L, int table, const std::string& name);
+
+		static int PushModelHeight(lua_State* L, const SolidObjectDef* def, bool isUnitDef);
+		static int PushModelRadius(lua_State* L, const SolidObjectDef* def, bool isUnitDef);
+		static int PushFeatureModelDrawType(lua_State* L, const FeatureDef* def);
+		static int PushModelName(lua_State* L, const SolidObjectDef* def);
+
+		static int PushModelTable(lua_State* L, const SolidObjectDef* def);
+		static int PushColVolTable(lua_State* L, const CollisionVolume* vol);
 
 		static void PushCommandParamsTable(lua_State* L, const Command& cmd, bool subtable);
 		static void PushCommandOptionsTable(lua_State* L, const Command& cmd, bool subtable);

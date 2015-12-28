@@ -3,15 +3,20 @@
 //#include "System/Platform/Win/win32.h"
 
 #include <boost/cstdint.hpp>
+
 #include <string.h>
 #include <map>
 
 #include "LuaUtils.h"
+#include "LuaConfig.h"
 
+#include "Rendering/Models/IModelParser.h"
+#include "Sim/Features/FeatureDef.h"
+#include "Sim/Objects/SolidObjectDef.h"
+#include "Sim/Units/UnitDef.h"
+#include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
-#include "LuaConfig.h"
-#include <boost/thread/recursive_mutex.hpp>
 
 #if !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
 	#include "System/TimeProfiler.h"
@@ -574,6 +579,162 @@ int LuaUtils::ParseFloatArray(lua_State* L, int index, float* array, int size)
 
 	return size;
 }
+
+
+
+
+
+
+int LuaUtils::PushModelHeight(lua_State* L, const SolidObjectDef* def, bool isUnitDef)
+{
+	const S3DModel* model = nullptr;
+	float height = 0.0f;
+
+	if (isUnitDef) {
+		model = def->LoadModel();
+	} else {
+		switch (static_cast<const FeatureDef*>(def)->drawType) {
+			case DRAWTYPE_NONE: {
+			} break;
+
+			case DRAWTYPE_MODEL: {
+				model = def->LoadModel();
+			} break;
+
+			default: {
+				// always >= DRAWTYPE_TREE here
+				height = TREE_RADIUS * 2.0f;
+			} break;
+		}
+	}
+
+	if (model != nullptr)
+		height = model->height;
+
+	lua_pushnumber(L, height);
+	return 1;
+}
+
+int LuaUtils::PushModelRadius(lua_State* L, const SolidObjectDef* def, bool isUnitDef)
+{
+	const S3DModel* model = nullptr;
+	float radius = 0.0f;
+
+	if (isUnitDef) {
+		model = def->LoadModel();
+	} else {
+		switch (static_cast<const FeatureDef*>(def)->drawType) {
+			case DRAWTYPE_NONE: {
+			} break;
+
+			case DRAWTYPE_MODEL: {
+				model = def->LoadModel();
+			} break;
+
+			default: {
+				// always >= DRAWTYPE_TREE here
+				radius = TREE_RADIUS;
+			} break;
+		}
+	}
+
+	if (model != nullptr)
+		radius = model->radius;
+
+	lua_pushnumber(L, radius);
+	return 1;
+}
+
+int LuaUtils::PushFeatureModelDrawType(lua_State* L, const FeatureDef* def)
+{
+	switch (def->drawType) {
+		case DRAWTYPE_NONE:  { HSTR_PUSH(L,  "none"); } break;
+		case DRAWTYPE_MODEL: { HSTR_PUSH(L, "model"); } break;
+		default:             { HSTR_PUSH(L,  "tree"); } break;
+	}
+
+	return 1;
+}
+
+int LuaUtils::PushModelName(lua_State* L, const SolidObjectDef* def)
+{
+	// redundant with model.path
+	// lua_pushsstring(L, modelParser->FindModelPath(def->modelName));
+	lua_pushsstring(L, "deprecated! use def.model.path instead!");
+	return 1;
+}
+
+
+int LuaUtils::PushModelTable(lua_State* L, const SolidObjectDef* def) {
+	const std::string& modelPath = modelParser->FindModelPath(def->modelName);
+	const std::string& modelType = StringToLower(FileSystem::GetExtension(modelPath));
+
+	const S3DModel* model = def->LoadModel();
+
+	lua_newtable(L);
+		HSTR_PUSH_STRING(L, "type", modelType);
+		HSTR_PUSH_STRING(L, "path", modelPath);
+		HSTR_PUSH_STRING(L, "name", def->modelName);
+
+		if (model != nullptr) {
+			// unit or non-tree feature
+			HSTR_PUSH_NUMBER(L, "minx", model->mins.x);
+			HSTR_PUSH_NUMBER(L, "miny", model->mins.y);
+			HSTR_PUSH_NUMBER(L, "minz", model->mins.z);
+			HSTR_PUSH_NUMBER(L, "maxx", model->maxs.x);
+			HSTR_PUSH_NUMBER(L, "maxy", model->maxs.y);
+			HSTR_PUSH_NUMBER(L, "maxz", model->maxs.z);
+
+			HSTR_PUSH_NUMBER(L, "midx", model->relMidPos.x);
+			HSTR_PUSH_NUMBER(L, "midy", model->relMidPos.y);
+			HSTR_PUSH_NUMBER(L, "midz", model->relMidPos.z);
+		}
+
+		HSTR_PUSH(L, "textures");
+
+			lua_newtable(L);
+			if (model != nullptr) {
+				LuaPushNamedString(L, "tex1", model->tex1);
+				LuaPushNamedString(L, "tex2", model->tex2);
+			}
+			lua_rawset(L, -3);
+
+	return 1;
+}
+
+int LuaUtils::PushColVolTable(lua_State* L, const CollisionVolume* vol) {
+	assert(vol != nullptr);
+
+	lua_newtable(L);
+	switch (vol->GetVolumeType()) {
+		case CollisionVolume::COLVOL_TYPE_ELLIPSOID:
+			HSTR_PUSH_STRING(L, "type", "ellipsoid");
+			break;
+		case CollisionVolume::COLVOL_TYPE_CYLINDER:
+			HSTR_PUSH_STRING(L, "type", "cylinder");
+			break;
+		case CollisionVolume::COLVOL_TYPE_BOX:
+			HSTR_PUSH_STRING(L, "type", "box");
+			break;
+		case CollisionVolume::COLVOL_TYPE_SPHERE:
+			HSTR_PUSH_STRING(L, "type", "sphere");
+			break;
+	}
+
+	LuaPushNamedNumber(L, "scaleX", vol->GetScales().x);
+	LuaPushNamedNumber(L, "scaleY", vol->GetScales().y);
+	LuaPushNamedNumber(L, "scaleZ", vol->GetScales().z);
+	LuaPushNamedNumber(L, "offsetX", vol->GetOffsets().x);
+	LuaPushNamedNumber(L, "offsetY", vol->GetOffsets().y);
+	LuaPushNamedNumber(L, "offsetZ", vol->GetOffsets().z);
+	LuaPushNamedNumber(L, "boundingRadius", vol->GetBoundingRadius());
+	LuaPushNamedBool(L, "defaultToSphere",    vol->DefaultToSphere());
+	LuaPushNamedBool(L, "defaultToFootPrint", vol->DefaultToFootPrint());
+	LuaPushNamedBool(L, "defaultToPieceTree", vol->DefaultToPieceTree());
+	return 1;
+}
+
+
 
 
 

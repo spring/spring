@@ -4,7 +4,6 @@
 #include <set>
 #include <string>
 #include <vector>
-#include <set>
 #include <map>
 #include <cctype>
 
@@ -12,41 +11,21 @@
 #include "LuaUnitDefs.h"
 
 #include "LuaInclude.h"
-
 #include "LuaConfig.h"
 #include "LuaDefs.h"
 #include "LuaHandle.h"
 #include "LuaUtils.h"
-#include "Game/Game.h"
-#include "Game/GameHelper.h"
-#include "Sim/Misc/Team.h"
-#include "Map/Ground.h"
-#include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
 #include "Rendering/IconHandler.h"
-#include "Rendering/Models/IModelParser.h"
-#include "Sim/Features/Feature.h"
-#include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
-#include "Sim/Misc/QuadField.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
-#include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
-#include "Sim/Units/UnitDefImage.h"
-#include "Sim/Units/UnitTypes/Builder.h"
-#include "Sim/Units/UnitTypes/Factory.h"
-#include "Sim/Units/CommandAI/Command.h"
-#include "Sim/Units/CommandAI/CommandAI.h"
-#include "Sim/Units/CommandAI/FactoryCAI.h"
-#include "Sim/Weapons/Weapon.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
-#include "System/FileSystem/FileHandler.h"
+#include "Sim/Weapons/WeaponDef.h"
 #include "System/FileSystem/SimpleParser.h"
-#include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
 
@@ -507,60 +486,6 @@ static int TotalEnergyOut(lua_State* L, const void* data)
 
 
 
-static int ModelTable(lua_State* L, const void* data) {
-	const UnitDef* ud = static_cast<const UnitDef*>(data);
-	const std::string modelFile = modelParser->FindModelPath(ud->modelName);
-
-	lua_newtable(L);
-	HSTR_PUSH_STRING(L, "type", StringToLower(FileSystem::GetExtension(modelFile)));
-	HSTR_PUSH_STRING(L, "path", modelFile);
-	HSTR_PUSH_STRING(L, "name", ud->modelName);
-	HSTR_PUSH(L, "textures");
-
-	lua_newtable(L);
-	if (ud->model != NULL) {
-		LuaPushNamedString(L, "tex1", ud->model->tex1);
-		LuaPushNamedString(L, "tex2", ud->model->tex2);
-	}
-	lua_rawset(L, -3);
-	return 1;
-}
-
-
-static int ColVolTable(lua_State* L, const void* data) {
-	auto cv = static_cast<const CollisionVolume*>(data);
-	assert(cv != NULL);
-
-	lua_newtable(L);
-	switch (cv->GetVolumeType()) {
-		case CollisionVolume::COLVOL_TYPE_ELLIPSOID:
-			HSTR_PUSH_STRING(L, "type", "ellipsoid");
-			break;
-		case CollisionVolume::COLVOL_TYPE_CYLINDER:
-			HSTR_PUSH_STRING(L, "type", "cylinder");
-			break;
-		case CollisionVolume::COLVOL_TYPE_BOX:
-			HSTR_PUSH_STRING(L, "type", "box");
-			break;
-		case CollisionVolume::COLVOL_TYPE_SPHERE:
-			HSTR_PUSH_STRING(L, "type", "sphere");
-			break;
-	}
-
-	LuaPushNamedNumber(L, "scaleX", cv->GetScales().x);
-	LuaPushNamedNumber(L, "scaleY", cv->GetScales().y);
-	LuaPushNamedNumber(L, "scaleZ", cv->GetScales().z);
-	LuaPushNamedNumber(L, "offsetX", cv->GetOffsets().x);
-	LuaPushNamedNumber(L, "offsetY", cv->GetOffsets().y);
-	LuaPushNamedNumber(L, "offsetZ", cv->GetOffsets().z);
-	LuaPushNamedNumber(L, "boundingRadius", cv->GetBoundingRadius());
-	LuaPushNamedBool(L, "defaultToSphere",    cv->DefaultToSphere());
-	LuaPushNamedBool(L, "defaultToFootPrint", cv->DefaultToFootPrint());
-	LuaPushNamedBool(L, "defaultToPieceTree", cv->DefaultToPieceTree());
-	return 1;
-}
-
-
 #define TYPE_FUNC(FuncName, LuaType)                           \
 	static int FuncName(lua_State* L, const void* data)        \
 	{                                                          \
@@ -569,14 +494,28 @@ static int ColVolTable(lua_State* L, const void* data) {
 		return 1;                                              \
 	}
 
-#define TYPE_MODEL_FUNC(name, param)                           \
-	static int name(lua_State* L, const void* data)            \
-	{                                                          \
-		const UnitDef* ud = static_cast<const UnitDef*>(data); \
-		const S3DModel* model = ud->LoadModel();               \
-		lua_pushnumber(L, model->param);                       \
-		return 1;                                              \
-	}
+
+
+static int ModelTable(lua_State* L, const void* data) {
+	return (LuaUtils::PushModelTable(L, static_cast<const SolidObjectDef*>(data)));
+}
+
+static int ModelName(lua_State* L, const void* data) {
+	return (LuaUtils::PushModelName(L, static_cast<const SolidObjectDef*>(data)));
+}
+
+static int ModelHeight(lua_State* L, const void* data) {
+	return (LuaUtils::PushModelHeight(L, static_cast<const SolidObjectDef*>(data), true));
+}
+
+static int ModelRadius(lua_State* L, const void* data) {
+	return (LuaUtils::PushModelRadius(L, static_cast<const SolidObjectDef*>(data), true));
+}
+
+static int ColVolTable(lua_State* L, const void* data) {
+	return (LuaUtils::PushColVolTable(L, static_cast<const CollisionVolume*>(data)));
+}
+
 
 TYPE_FUNC(IsTransportUnit, boolean)
 TYPE_FUNC(IsImmobileUnit, boolean)
@@ -592,18 +531,6 @@ TYPE_FUNC(IsStrafingAirUnit, boolean)
 TYPE_FUNC(IsHoveringAirUnit, boolean)
 TYPE_FUNC(IsFighterAirUnit, boolean)
 TYPE_FUNC(IsBomberAirUnit, boolean)
-
-TYPE_MODEL_FUNC(ModelHeight, height)
-TYPE_MODEL_FUNC(ModelRadius, radius)
-TYPE_MODEL_FUNC(ModelMinx,   mins.x)
-TYPE_MODEL_FUNC(ModelMidx,   relMidPos.x)
-TYPE_MODEL_FUNC(ModelMaxx,   maxs.x)
-TYPE_MODEL_FUNC(ModelMiny,   mins.y)
-TYPE_MODEL_FUNC(ModelMidy,   relMidPos.y)
-TYPE_MODEL_FUNC(ModelMaxy,   maxs.y)
-TYPE_MODEL_FUNC(ModelMinz,   mins.z)
-TYPE_MODEL_FUNC(ModelMidz,   relMidPos.z)
-TYPE_MODEL_FUNC(ModelMaxz,   maxs.z)
 
 
 
@@ -696,18 +623,19 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FUNCTION("isFighterAirUnit", ud, IsFighterAirUnit);
 	ADD_FUNCTION("isBomberAirUnit", ud, IsBomberAirUnit);
 
-	ADD_FUNCTION("height",  ud, ModelHeight);
-	ADD_FUNCTION("radius",  ud, ModelRadius);
-	ADD_FUNCTION("minx",    ud, ModelMinx);
-	ADD_FUNCTION("midx",    ud, ModelMidx);
-	ADD_FUNCTION("maxx",    ud, ModelMaxx);
-	ADD_FUNCTION("miny",    ud, ModelMiny);
-	ADD_FUNCTION("midy",    ud, ModelMidy);
-	ADD_FUNCTION("maxy",    ud, ModelMaxy);
-	ADD_FUNCTION("minz",    ud, ModelMinz);
-	ADD_FUNCTION("midz",    ud, ModelMidz);
-	ADD_FUNCTION("maxz",    ud, ModelMaxz);
+	ADD_FUNCTION("modelname", ud, ModelName);
+	ADD_FUNCTION("height", ud, ModelHeight);
+	ADD_FUNCTION("radius", ud, ModelRadius);
 
+	ADD_DEPRECATED_LUADEF_KEY("minx");
+	ADD_DEPRECATED_LUADEF_KEY("miny");
+	ADD_DEPRECATED_LUADEF_KEY("minz");
+	ADD_DEPRECATED_LUADEF_KEY("maxx");
+	ADD_DEPRECATED_LUADEF_KEY("maxy");
+	ADD_DEPRECATED_LUADEF_KEY("maxz");
+	ADD_DEPRECATED_LUADEF_KEY("midx");
+	ADD_DEPRECATED_LUADEF_KEY("midy");
+	ADD_DEPRECATED_LUADEF_KEY("midz");
 
 
 	ADD_INT("id", ud.id);
