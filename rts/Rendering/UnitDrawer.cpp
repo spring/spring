@@ -249,6 +249,7 @@ void CUnitDrawer::Update()
 {
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		UpdateTempDrawUnits(tempOpaqueUnits[modelType]);
+		UpdateTempDrawUnits(tempAlphaUnits[modelType]);
 	}
 
 	{
