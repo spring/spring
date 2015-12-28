@@ -234,11 +234,13 @@ private:
 	bool useDistToGroundForIcons;
 	float sqCamDistToGroundForIcons;
 
-	float cloakAlpha;
-	float cloakAlpha1;
-	float cloakAlpha2;
-	float cloakAlpha3;
+	// .x := regular unit alpha
+	// .y := ghosted unit alpha (out of radar)
+	// .z := ghosted unit alpha (inside radar)
+	// .w := AI-temp unit alpha
+	float4 alphaValues;
 
+private:
 	std::vector<IWorldObjectModelRenderer*> opaqueModelRenderers;
 	std::vector<IWorldObjectModelRenderer*> alphaModelRenderers;
 
@@ -266,6 +268,7 @@ private:
 	// [2] := currently selected state
 	std::vector<IUnitDrawerState*> unitDrawerStates;
 
+private:
 	GL::LightHandler lightHandler;
 	GL::GeometryBuffer* geomBuffer;
 };

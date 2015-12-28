@@ -128,10 +128,10 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	unitAmbientColor = mapInfo->light.unitAmbientColor;
 	unitSunColor = mapInfo->light.unitSunColor;
 
-	cloakAlpha  = std::max(0.11f, std::min(1.0f, 1.0f - configHandler->GetFloat("UnitTransparency")));
-	cloakAlpha1 = std::min(1.0f, cloakAlpha + 0.1f);
-	cloakAlpha2 = std::min(1.0f, cloakAlpha + 0.2f);
-	cloakAlpha3 = std::min(1.0f, cloakAlpha + 0.4f);
+	alphaValues.x = std::max(0.11f, std::min(1.0f, 1.0f - configHandler->GetFloat("UnitTransparency")));
+	alphaValues.y = std::min(1.0f, alphaValues.x + 0.1f);
+	alphaValues.z = std::min(1.0f, alphaValues.x + 0.2f);
+	alphaValues.w = std::min(1.0f, alphaValues.x + 0.4f);
 
 	// load unit explosion generators and decals
 	for (size_t unitDefID = 1; unitDefID < unitDefHandler->unitDefs.size(); unitDefID++) {
@@ -667,7 +667,7 @@ void CUnitDrawer::DrawAlphaPass(bool disableAdvShading)
 		SetUseAdvShading(oldAdvShading && !disableAdvShading);
 		SetupOpaqueAlphaDrawing(false);
 
-		glColor4f(1.0f, 1.0f, 1.0f, cloakAlpha);
+		glColor4f(1.0f, 1.0f, 1.0f, alphaValues.x);
 
 		if (UseAdvShading())
 			glDisable(GL_ALPHA_TEST);
@@ -737,9 +737,9 @@ inline void CUnitDrawer::DrawAlphaUnit(CUnit* unit, int modelType, bool drawGhos
 
 		// ghosted enemy units
 		if (losStatus & LOS_CONTRADAR) {
-			glColor4f(0.9f, 0.9f, 0.9f, cloakAlpha2);
+			glColor4f(0.9f, 0.9f, 0.9f, alphaValues.z);
 		} else {
-			glColor4f(0.6f, 0.6f, 0.6f, cloakAlpha1);
+			glColor4f(0.6f, 0.6f, 0.6f, alphaValues.y);
 		}
 
 		glPushMatrix();
@@ -752,11 +752,11 @@ inline void CUnitDrawer::DrawAlphaUnit(CUnit* unit, int modelType, bool drawGhos
 		// not actually cloaked
 		BindModelTypeTexture(modelType, model->textureType);
 
-		SetTeamColour(unit->team, (losStatus & LOS_CONTRADAR) ? cloakAlpha2 : cloakAlpha1);
+		SetTeamColour(unit->team, (losStatus & LOS_CONTRADAR) ? alphaValues.z : alphaValues.y);
 		model->DrawStatic();
 		glPopMatrix();
 
-		glColor4f(1.0f, 1.0f, 1.0f, cloakAlpha);
+		glColor4f(1.0f, 1.0f, 1.0f, alphaValues.x);
 		return;
 	}
 
@@ -764,7 +764,7 @@ inline void CUnitDrawer::DrawAlphaUnit(CUnit* unit, int modelType, bool drawGhos
 		return;
 
 	if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
-		SetTeamColour(unit->team, cloakAlpha);
+		SetTeamColour(unit->team, alphaValues.x);
 		DrawUnit(unit, 0, 0, false, false);
 	}
 }
@@ -797,7 +797,7 @@ void CUnitDrawer::DrawAlphaAIUnit(const TempDrawUnit& unit)
 	assert(mdl != nullptr);
 
 	BindModelTypeTexture(mdl);
-	SetTeamColour(unit.team, cloakAlpha);
+	SetTeamColour(unit.team, alphaValues.x);
 	mdl->DrawStatic();
 
 	glPopMatrix();
@@ -808,7 +808,7 @@ void CUnitDrawer::DrawAlphaAIUnitBorder(const TempDrawUnit& unit)
 	if (!unit.drawBorder)
 		return;
 
-	SetTeamColour(unit.team, cloakAlpha3);
+	SetTeamColour(unit.team, alphaValues.w);
 
 	const BuildInfo buildInfo(unit.unitDef, unit.pos, unit.facing);
 	const float3 buildPos = CGameHelper::Pos2BuildPos(buildInfo, false);
@@ -816,7 +816,7 @@ void CUnitDrawer::DrawAlphaAIUnitBorder(const TempDrawUnit& unit)
 	const float xsize = buildInfo.GetXSize() * (SQUARE_SIZE >> 1);
 	const float zsize = buildInfo.GetZSize() * (SQUARE_SIZE >> 1);
 
-	glColor4f(0.2f, 1, 0.2f, cloakAlpha3);
+	glColor4f(0.2f, 1, 0.2f, alphaValues.w);
 	glDisable(GL_TEXTURE_2D);
 	glBegin(GL_LINE_STRIP);
 		glVertexf3(buildPos + float3( xsize, 1.0f,  zsize));
@@ -825,7 +825,7 @@ void CUnitDrawer::DrawAlphaAIUnitBorder(const TempDrawUnit& unit)
 		glVertexf3(buildPos + float3( xsize, 1.0f, -zsize));
 		glVertexf3(buildPos + float3( xsize, 1.0f,  zsize));
 	glEnd();
-	glColor4f(1.0f, 1.0f, 1.0f, cloakAlpha);
+	glColor4f(1.0f, 1.0f, 1.0f, alphaValues.x);
 	glEnable(GL_TEXTURE_2D);
 }
 
@@ -836,7 +836,7 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 	std::vector<GhostSolidObject*>& deadGhostedBuildings = deadGhostBuildings[modelType];
 	std::vector<CUnit*>& liveGhostedBuildings = liveGhostBuildings[modelType];
 
-	glColor4f(0.6f, 0.6f, 0.6f, cloakAlpha1);
+	glColor4f(0.6f, 0.6f, 0.6f, alphaValues.y);
 
 	// buildings that died while ghosted
 	for (auto it = deadGhostedBuildings.begin(); it != deadGhostedBuildings.end(); ) {
@@ -854,7 +854,7 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 				glRotatef((*it)->facing * 90.0f, 0, 1, 0);
 
 				BindModelTypeTexture(modelType, (*it)->model->textureType);
-				SetTeamColour((*it)->team, cloakAlpha1);
+				SetTeamColour((*it)->team, alphaValues.y);
 
 				(*it)->model->DrawStatic();
 				glPopMatrix();
@@ -912,7 +912,7 @@ void CUnitDrawer::SetupOpaqueDrawing(bool deferredPass)
 	//   when deferredPass is true we MUST be able to use the SSP render-state
 	//   all calling code (reached from DrawOpaquePass(deferred=true)) should
 	//   ensure this is the case
-	assert(advShading);
+	assert(!deferredPass || advShading);
 	assert(!deferredPass || unitDrawerStates[DRAWER_STATE_SEL]->CanDrawDeferred());
 }
 
@@ -1030,7 +1030,7 @@ void CUnitDrawer::PushIndividualAlphaState(const S3DModel* model, int teamID, bo
 	SetupAlphaDrawing(deferredPass);
 	alphaModelRenderers[model->type]->PushRenderState();
 	BindModelTypeTexture(model);
-	SetTeamColour(teamID, cloakAlpha);
+	SetTeamColour(teamID, alphaValues.x);
 }
 
 
