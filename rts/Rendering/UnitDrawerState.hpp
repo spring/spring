@@ -4,6 +4,7 @@
 #define UNITDRAWER_STATE_H
 
 #include <array>
+#include "System/type2.h"
 
 class CUnitDrawer;
 struct ISkyLight;
@@ -32,6 +33,7 @@ public:
 	virtual void Kill() {}
 
 	virtual bool CanEnable(const CUnitDrawer*) const { return false; }
+	virtual bool CanDrawAlpha() const { return false; }
 	virtual bool CanDrawDeferred() const { return false; }
 
 	virtual void Enable(const CUnitDrawer*, bool, bool) {}
@@ -43,7 +45,7 @@ public:
 	virtual void DisableShaders(const CUnitDrawer*) {}
 
 	virtual void UpdateCurrentShader(const CUnitDrawer*, const ISkyLight*) const {}
-	virtual void SetTeamColor(int team, float alpha) const {}
+	virtual void SetTeamColor(int team, const float2 alpha) const {}
 
 	static void SetBasicTeamColor(int team, float alpha);
 
@@ -87,7 +89,7 @@ public:
 	void EnableTextures(const CUnitDrawer*) const;
 	void DisableTextures(const CUnitDrawer*) const;
 
-	void SetTeamColor(int team, float alpha) const;
+	void SetTeamColor(int team, const float2 alpha) const;
 };
 
 
@@ -106,7 +108,7 @@ public:
 	void EnableShaders(const CUnitDrawer*);
 	void DisableShaders(const CUnitDrawer*);
 
-	void SetTeamColor(int team, float alpha) const;
+	void SetTeamColor(int team, const float2 alpha) const;
 };
 
 
@@ -116,6 +118,7 @@ public:
 	void Kill();
 
 	bool CanEnable(const CUnitDrawer*) const;
+	bool CanDrawAlpha() const { return true; }
 	bool CanDrawDeferred() const { return true; }
 
 	void Enable(const CUnitDrawer*, bool, bool);
@@ -127,7 +130,7 @@ public:
 	void DisableShaders(const CUnitDrawer*);
 
 	void UpdateCurrentShader(const CUnitDrawer*, const ISkyLight*) const;
-	void SetTeamColor(int team, float alpha) const;
+	void SetTeamColor(int team, const float2 alpha) const;
 };
 
 #endif

@@ -331,8 +331,8 @@ void CAdvWater::UpdateWater(CGame* game)
 				unitDrawer->Draw(true);
 				featureDrawer->Draw();
 
-				unitDrawer->DrawAlphaPass(true);
-				featureDrawer->DrawAlphaPass(true);
+				unitDrawer->DrawAlphaPass();
+				featureDrawer->DrawAlphaPass();
 				projectileDrawer->Draw(true);
 				sky->DrawSun();
 

@@ -266,7 +266,7 @@ bool SMFRenderStateFFP::CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const
 
 bool SMFRenderStateARB::CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const {
 	// NOTE:
-	//   the ARB shaders assume shadows are always on, so
+	//   ARB map shaders assume shadows are always on, so
 	//   SMFRenderStateARB can be used only when they are
 	//   in fact enabled (see Init)
 	return (smfGroundDrawer->UseAdvShading() && !infoTextureHandler->IsEnabled() && shadowHandler->shadowsLoaded);

@@ -33,7 +33,7 @@ public:
 	void Draw();
 	void DrawOpaquePass(bool deferredPass, bool drawReflection, bool drawRefraction);
 	void DrawShadowPass();
-	void DrawAlphaPass(bool disableAdvShading = false);
+	void DrawAlphaPass();
 
 	void DrawFeatureNoTrans(const CFeature* feature, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
 	void DrawFeature(const CFeature*, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
@@ -92,6 +92,7 @@ private:
 
 	bool drawForward;
 	bool drawDeferred;
+	bool inAlphaPass;
 
 	friend class CFeatureQuadDrawer;
 	struct ModelRendererProxy {

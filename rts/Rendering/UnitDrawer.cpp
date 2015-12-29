@@ -659,15 +659,18 @@ void CUnitDrawer::ResetAlphaDrawing(bool deferredPass) const
 
 
 
-void CUnitDrawer::DrawAlphaPass(bool disableAdvShading)
+void CUnitDrawer::DrawAlphaPass()
 {
 	{
 		const bool oldAdvShading = UseAdvShading();
+		const bool newAdvShading = (GetWantedDrawerState())->CanDrawAlpha();
 
-		// don't use shaders if shadows are enabled (WHY?)
-		SetUseAdvShading(oldAdvShading && !disableAdvShading);
+		// proper alpha-rendering is only enabled with GLSL state
+		// (ARB shaders could technically also do it, but KISS)
+		SetUseAdvShading(newAdvShading);
 		SetupOpaqueAlphaDrawing(false);
 
+		// needed for the FFP case
 		glColor4f(1.0f, 1.0f, 1.0f, alphaValues.x);
 
 		if (UseAdvShading())
@@ -753,7 +756,7 @@ inline void CUnitDrawer::DrawAlphaUnit(CUnit* unit, int modelType, bool drawGhos
 		// not actually cloaked
 		BindModelTypeTexture(modelType, model->textureType);
 
-		SetTeamColour(unit->team, (losStatus & LOS_CONTRADAR) ? alphaValues.z : alphaValues.y);
+		SetTeamColour(unit->team, float2((losStatus & LOS_CONTRADAR)? alphaValues.z: alphaValues.y, 1.0f));
 		model->DrawStatic();
 		glPopMatrix();
 
@@ -765,7 +768,7 @@ inline void CUnitDrawer::DrawAlphaUnit(CUnit* unit, int modelType, bool drawGhos
 		return;
 
 	if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
-		SetTeamColour(unit->team, alphaValues.x);
+		SetTeamColour(unit->team, float2(alphaValues.x, 1.0f));
 		DrawUnit(unit, 0, 0, false, false);
 	}
 }
@@ -798,7 +801,7 @@ void CUnitDrawer::DrawAlphaAIUnit(const TempDrawUnit& unit)
 	assert(mdl != nullptr);
 
 	BindModelTypeTexture(mdl);
-	SetTeamColour(unit.team, alphaValues.x);
+	SetTeamColour(unit.team, float2(alphaValues.x, 1.0f));
 	mdl->DrawStatic();
 
 	glPopMatrix();
@@ -809,7 +812,7 @@ void CUnitDrawer::DrawAlphaAIUnitBorder(const TempDrawUnit& unit)
 	if (!unit.drawBorder)
 		return;
 
-	SetTeamColour(unit.team, alphaValues.w);
+	SetTeamColour(unit.team, float2(alphaValues.w, 1.0f));
 
 	const BuildInfo buildInfo(unit.unitDef, unit.pos, unit.facing);
 	const float3 buildPos = CGameHelper::Pos2BuildPos(buildInfo, false);
@@ -855,7 +858,7 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 				glRotatef((*it)->facing * 90.0f, 0, 1, 0);
 
 				BindModelTypeTexture(modelType, (*it)->model->textureType);
-				SetTeamColour((*it)->team, alphaValues.y);
+				SetTeamColour((*it)->team, float2(alphaValues.y, 1.0f));
 
 				(*it)->model->DrawStatic();
 				glPopMatrix();
@@ -932,12 +935,13 @@ const IUnitDrawerState* CUnitDrawer::GetWantedDrawerState() const
 
 
 
-void CUnitDrawer::SetTeamColour(int team, float alpha) const
+void CUnitDrawer::SetTeamColour(int team, const float2 alpha) const
 {
 	// need this because we can be called by no-team projectiles
-	if (teamHandler->IsValidTeam(team)) {
-		unitDrawerStates[DRAWER_STATE_SEL]->SetTeamColor(team, alpha);
-	}
+	if (!teamHandler->IsValidTeam(team))
+		return;
+
+	unitDrawerStates[DRAWER_STATE_SEL]->SetTeamColor(team, alpha);
 }
 
 /**
@@ -1031,7 +1035,7 @@ void CUnitDrawer::PushIndividualAlphaState(const S3DModel* model, int teamID, bo
 	SetupAlphaDrawing(deferredPass);
 	alphaModelRenderers[model->type]->PushRenderState();
 	BindModelTypeTexture(model);
-	SetTeamColour(teamID, alphaValues.x);
+	SetTeamColour(teamID, float2(alphaValues.x, 1.0f));
 }
 
 
@@ -1134,11 +1138,13 @@ void CUnitDrawer::DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int te
 		return;
 
 	const bool oldAdvShading = unitDrawer->UseAdvShading();
+	const bool newAdvShading = (unitDrawer->GetWantedDrawerState())->CanDrawAlpha();
 
 	if (!rawState) {
-		// not needed here; only called internally
-		// unitDrawer->ResetTransform(false);
-		unitDrawer->SetUseAdvShading(oldAdvShading && !shadowHandler->ShadowsLoaded());
+		// note: blocking the reset is needed if rendering with
+		// shaders, FFP::Enable() does not touch the transforms
+		unitDrawer->ResetTransform(false);
+		unitDrawer->SetUseAdvShading(newAdvShading);
 		unitDrawer->PushIndividualAlphaState(model, teamID, false);
 	}
 
@@ -1147,7 +1153,7 @@ void CUnitDrawer::DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int te
 	if (!rawState) {
 		unitDrawer->PopIndividualAlphaState(model, teamID, false);
 		unitDrawer->SetUseAdvShading(oldAdvShading);
-		// unitDrawer->ResetTransform(true);
+		unitDrawer->ResetTransform(true);
 	}
 }
 
@@ -1570,11 +1576,9 @@ void CUnitDrawer::DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const
 //   the latter has been replaced by this, do the same for the former
 //   (mini-map icons and real-map radar icons are the same anyway)
 void CUnitDrawer::DrawUnitMiniMapIcons() const {
-	std::map<icon::CIconData*, std::vector<const CUnit*> >::const_iterator iconIt;
-
 	CVertexArray* va = GetVertexArray();
 
-	for (iconIt = unitsByIcon.begin(); iconIt != unitsByIcon.end(); ++iconIt) {
+	for (auto iconIt = unitsByIcon.cbegin(); iconIt != unitsByIcon.cend(); ++iconIt) {
 		const icon::CIconData* icon = iconIt->first;
 		const std::vector<const CUnit*>& units = iconIt->second;
 

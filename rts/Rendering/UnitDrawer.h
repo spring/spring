@@ -10,6 +10,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/LightHandler.h"
 #include "System/EventClient.h"
+#include "System/type2.h"
 
 struct SolidObjectDef;
 struct UnitDef;
@@ -69,7 +70,7 @@ public:
 	void Draw(bool drawReflection, bool drawRefraction = false);
 	void DrawOpaquePass(const CUnit* excludeUnit, bool deferredPass, bool drawReflection, bool drawRefraction);
 	void DrawShadowPass();
-	void DrawAlphaPass(bool noAdvShading = false);
+	void DrawAlphaPass();
 
 	void SetDrawForwardPass(bool b) { drawForward = b; }
 	void SetDrawDeferredPass(bool b) { drawDeferred = b; }
@@ -92,7 +93,9 @@ public:
 	void DrawIndividual(const CUnit* unit, bool noLuaCall);
 	void DrawIndividualNoTrans(const CUnit* unit, bool noLuaCall);
 
-	void SetTeamColour(int team, float alpha = 1.0f) const;
+	// alpha.x := alpha-value
+	// alpha.y := alpha-pass (true or false)
+	void SetTeamColour(int team, const float2 alpha = float2(1.0f, 0.0f)) const;
 
 
 	// these handle either an opaque- or an alpha-pass (depending on advShading)

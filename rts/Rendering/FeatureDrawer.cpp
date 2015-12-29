@@ -23,6 +23,7 @@
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/UnitDrawer.h"
+#include "Rendering/UnitDrawerState.hpp"
 #include "Rendering/Models/WorldObjectModelRenderer.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
@@ -128,6 +129,7 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 
 	drawForward = true;
 	drawDeferred = (geomBuffer->Valid());
+	inAlphaPass = false;
 
 	drawQuadsX = mapDims.mapx / DRAW_QUAD_SIZE;
 	drawQuadsY = mapDims.mapy / DRAW_QUAD_SIZE;
@@ -387,7 +389,7 @@ void CFeatureDrawer::DrawFeatureNoTrans(
 	// TODO:
 	//   move this out of UnitDrawer(State), maybe to ModelDrawer
 	//   in general FeatureDrawer should make no UnitDrawer calls
-	unitDrawer->SetTeamColour(feature->team, feature->drawAlpha);
+	unitDrawer->SetTeamColour(feature->team, float2(feature->drawAlpha, 1.0f * inAlphaPass));
 
 	if (preList != 0) {
 		glCallList(preList);
@@ -419,7 +421,7 @@ void CFeatureDrawer::PushIndividualState(const CFeature* feature, bool deferredP
 	modelRenderers[0].GetRenderer(MDL_TYPE(feature))->PushRenderState();
 
 	CUnitDrawer::BindModelTypeTexture(feature);
-	unitDrawer->SetTeamColour(feature->team, feature->drawAlpha);
+	unitDrawer->SetTeamColour(feature->team, float2(feature->drawAlpha, 0.0f));
 }
 
 void CFeatureDrawer::PopIndividualState(const CFeature* feature, bool deferredPass)
@@ -459,26 +461,29 @@ void CFeatureDrawer::DrawIndividualNoTrans(const CFeature* feature, bool noLuaCa
 
 
 
-static void SetFeatureAlphaMaterialFFP(const CFeature* f, bool set)
+static void SetFeatureAlphaDrawState(const CFeature* f, bool ffp)
 {
-	const float cols[] = {1.0f, 1.0f, 1.0f, f->drawAlpha};
+	if (ffp) {
+		const float cols[] = {1.0f, 1.0f, 1.0f, f->drawAlpha};
 
-	if (set) {
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, cols);
+		glColor4fv(cols);
 	}
 
 	// hack, sorting objects by distance would look better
 	glAlphaFunc(GL_GREATER, f->drawAlpha * 0.5f);
-	glColor4fv(cols);
 }
 
 
-void CFeatureDrawer::DrawAlphaPass(bool disableAdvShading)
+void CFeatureDrawer::DrawAlphaPass()
 {
+	inAlphaPass = true;
+
 	{
 		const bool oldAdvShading = unitDrawer->UseAdvShading();
+		const bool newAdvShading = (unitDrawer->GetWantedDrawerState())->CanDrawAlpha();
 
-		unitDrawer->SetUseAdvShading(unitDrawer->UseAdvShading() && !disableAdvShading);
+		unitDrawer->SetUseAdvShading(newAdvShading);
 		unitDrawer->SetupOpaqueAlphaDrawing(false);
 
 		glPushAttrib(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -503,10 +508,14 @@ void CFeatureDrawer::DrawAlphaPass(bool disableAdvShading)
 
 	LuaObjectDrawer::SetDrawPassGlobalLODFactor(LUAOBJ_FEATURE);
 	LuaObjectDrawer::DrawAlphaMaterialObjects(LUAOBJ_FEATURE, false);
+
+	inAlphaPass = false;
 }
 
 void CFeatureDrawer::DrawAlphaFeatures(int modelType)
 {
+	const bool ffpMat = !(unitDrawer->GetWantedDrawerState())->CanDrawAlpha();
+
 	for (const auto& mdlRenderProxy: modelRenderers) {
 		if (mdlRenderProxy.GetLastDrawFrame() < globalRendering->drawFrame)
 			continue;
@@ -518,7 +527,7 @@ void CFeatureDrawer::DrawAlphaFeatures(int modelType)
 			CUnitDrawer::BindModelTypeTexture(modelType, binElem.first);
 
 			for (CFeature* feature: binElem.second) {
-				DrawAlphaFeature(feature, modelType != MODELTYPE_3DO);
+				DrawAlphaFeature(feature, ffpMat);
 			}
 		}
 	}
@@ -536,7 +545,7 @@ void CFeatureDrawer::DrawAlphaFeature(CFeature* feature, bool ffpMat)
 	if (LuaObjectDrawer::AddAlphaMaterialObject(feature, LUAOBJ_FEATURE))
 		return;
 
-	SetFeatureAlphaMaterialFFP(feature, ffpMat);
+	SetFeatureAlphaDrawState(feature, ffpMat);
 	DrawFeature(feature, 0, 0, false, false);
 }
 

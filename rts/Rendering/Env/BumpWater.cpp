@@ -1240,8 +1240,8 @@ void CBumpWater::DrawReflection(CGame* game)
 				featureDrawer->Draw();
 
 				// transparent
-				unitDrawer->DrawAlphaPass(true);
-				featureDrawer->DrawAlphaPass(true);
+				unitDrawer->DrawAlphaPass();
+				featureDrawer->DrawAlphaPass();
 				projectileDrawer->Draw(true);
 				sky->DrawSun();
 
