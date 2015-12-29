@@ -582,7 +582,7 @@ int LuaUtils::ParseFloatArray(lua_State* L, int index, float* array, int size)
 
 
 
-
+#if !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
 
 
 int LuaUtils::PushModelHeight(lua_State* L, const SolidObjectDef* def, bool isUnitDef)
@@ -750,7 +750,7 @@ int LuaUtils::PushColVolTable(lua_State* L, const CollisionVolume* vol) {
 }
 
 
-
+#endif //!defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
 
 
 void LuaUtils::PushCommandParamsTable(lua_State* L, const Command& cmd, bool subtable)
