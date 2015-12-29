@@ -480,11 +480,7 @@ void CFeatureDrawer::DrawAlphaPass()
 	inAlphaPass = true;
 
 	{
-		const bool oldAdvShading = unitDrawer->UseAdvShading();
-		const bool newAdvShading = (unitDrawer->GetWantedDrawerState())->CanDrawAlpha();
-
-		unitDrawer->SetUseAdvShading(newAdvShading);
-		unitDrawer->SetupOpaqueAlphaDrawing(false);
+		unitDrawer->SetupAlphaDrawing(false);
 
 		glPushAttrib(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glDepthMask(GL_TRUE);
@@ -502,8 +498,7 @@ void CFeatureDrawer::DrawAlphaPass()
 		glDisable(GL_FOG);
 		glPopAttrib();
 
-		unitDrawer->ResetOpaqueAlphaDrawing(false);
-		unitDrawer->SetUseAdvShading(oldAdvShading);
+		unitDrawer->ResetAlphaDrawing(false);
 	}
 
 	LuaObjectDrawer::SetDrawPassGlobalLODFactor(LUAOBJ_FEATURE);

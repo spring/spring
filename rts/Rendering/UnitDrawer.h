@@ -99,8 +99,8 @@ public:
 
 
 	// these handle either an opaque- or an alpha-pass (depending on advShading)
-	void SetupOpaqueAlphaDrawing(bool deferredPass);
-	void ResetOpaqueAlphaDrawing(bool deferredPass);
+	void SetupOpaqueAlphaDrawing(bool deferredPass, bool haveAdvShading);
+	void ResetOpaqueAlphaDrawing(bool deferredPass, bool haveAdvShading);
 
 	void SetupOpaqueDrawing(bool deferredPass);
 	void ResetOpaqueDrawing(bool deferredPass) const;

@@ -635,7 +635,8 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 
 void CUnitDrawer::SetupAlphaDrawing(bool deferredPass)
 {
-	unitDrawerStates[DRAWER_STATE_SEL] = unitDrawerStates[advShading];
+	// proper alpha-rendering is only enabled with GLSL state
+	unitDrawerStates[DRAWER_STATE_SEL] = unitDrawerStates[ (GetWantedDrawerState())->CanDrawAlpha() ];
 	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass && false, resetTransform);
 
 	glActiveTexture(GL_TEXTURE0);
@@ -662,13 +663,7 @@ void CUnitDrawer::ResetAlphaDrawing(bool deferredPass) const
 void CUnitDrawer::DrawAlphaPass()
 {
 	{
-		const bool oldAdvShading = UseAdvShading();
-		const bool newAdvShading = (GetWantedDrawerState())->CanDrawAlpha();
-
-		// proper alpha-rendering is only enabled with GLSL state
-		// (ARB shaders could technically also do it, but KISS)
-		SetUseAdvShading(newAdvShading);
-		SetupOpaqueAlphaDrawing(false);
+		SetupAlphaDrawing(false);
 
 		// needed for the FFP case
 		glColor4f(1.0f, 1.0f, 1.0f, alphaValues.x);
@@ -688,8 +683,7 @@ void CUnitDrawer::DrawAlphaPass()
 
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
-		ResetOpaqueAlphaDrawing(false);
-		SetUseAdvShading(oldAdvShading);
+		ResetAlphaDrawing(false);
 	}
 
 	LuaObjectDrawer::SetDrawPassGlobalLODFactor(LUAOBJ_UNIT);
@@ -882,22 +876,28 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 
 
 
-void CUnitDrawer::SetupOpaqueAlphaDrawing(bool deferredPass)
+void CUnitDrawer::SetupOpaqueAlphaDrawing(bool deferredPass, bool haveAdvShading)
 {
+	// set-before-test
+	SetUseAdvShading(haveAdvShading);
+
 	switch (int(UseAdvShading())) {
-		case 0: { SetupAlphaDrawing(deferredPass); } break;
-		case 1: { SetupOpaqueDrawing(deferredPass); } break;
+		case 0: { SetupOpaqueDrawing(deferredPass); } break;
+		case 1: { SetupAlphaDrawing(deferredPass); } break;
 		default: {} break;
 	}
 }
 
-void CUnitDrawer::ResetOpaqueAlphaDrawing(bool deferredPass)
+void CUnitDrawer::ResetOpaqueAlphaDrawing(bool deferredPass, bool haveAdvShading)
 {
 	switch (int(UseAdvShading())) {
-		case 0: { ResetAlphaDrawing(deferredPass); } break;
-		case 1: { ResetOpaqueDrawing(deferredPass); } break;
+		case 0: { ResetOpaqueDrawing(deferredPass); } break;
+		case 1: { ResetAlphaDrawing(deferredPass); } break;
 		default: {} break;
 	}
+
+	// set-after-test
+	SetUseAdvShading(haveAdvShading);
 }
 
 void CUnitDrawer::SetupOpaqueDrawing(bool deferredPass)
