@@ -129,7 +129,9 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 
 	drawForward = true;
 	drawDeferred = (geomBuffer->Valid());
+
 	inAlphaPass = false;
+	inShadowPass = false;
 
 	drawQuadsX = mapDims.mapx / DRAW_QUAD_SIZE;
 	drawQuadsY = mapDims.mapy / DRAW_QUAD_SIZE;
@@ -389,7 +391,9 @@ void CFeatureDrawer::DrawFeatureNoTrans(
 	// TODO:
 	//   move this out of UnitDrawer(State), maybe to ModelDrawer
 	//   in general FeatureDrawer should make no UnitDrawer calls
-	unitDrawer->SetTeamColour(feature->team, float2(feature->drawAlpha, 1.0f * inAlphaPass));
+	if (!inShadowPass) {
+		unitDrawer->SetTeamColour(feature->team, float2(feature->drawAlpha, 1.0f * inAlphaPass));
+	}
 
 	if (preList != 0) {
 		glCallList(preList);
@@ -549,6 +553,8 @@ void CFeatureDrawer::DrawAlphaFeature(CFeature* feature, bool ffpMat)
 
 void CFeatureDrawer::DrawShadowPass()
 {
+	inShadowPass = true;
+
 	glPolygonOffset(1.0f, 1.0f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
@@ -594,6 +600,8 @@ void CFeatureDrawer::DrawShadowPass()
 
 	LuaObjectDrawer::SetDrawPassGlobalLODFactor(LUAOBJ_FEATURE);
 	LuaObjectDrawer::DrawShadowMaterialObjects(LUAOBJ_FEATURE, false);
+
+	inShadowPass = false;
 }
 
 

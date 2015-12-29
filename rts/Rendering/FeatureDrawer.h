@@ -92,8 +92,13 @@ private:
 
 	bool drawForward;
 	bool drawDeferred;
-	bool inAlphaPass;
 
+	// we need these because alpha- and shadow-pass both
+	// reuse Draw{Opaque}Feature{s} which sets team color
+	bool inAlphaPass;
+	bool inShadowPass;
+
+private:
 	friend class CFeatureQuadDrawer;
 	struct ModelRendererProxy {
 		ModelRendererProxy(): lastDrawFrame(0) {
