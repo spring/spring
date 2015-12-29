@@ -98,9 +98,11 @@ public:
 	void SetTeamColour(int team, const float2 alpha = float2(1.0f, 0.0f)) const;
 
 
+	#if 0
 	// these handle either an opaque- or an alpha-pass (depending on advShading)
 	void SetupOpaqueAlphaDrawing(bool deferredPass, bool haveAdvShading);
 	void ResetOpaqueAlphaDrawing(bool deferredPass, bool haveAdvShading);
+	#endif
 
 	void SetupOpaqueDrawing(bool deferredPass);
 	void ResetOpaqueDrawing(bool deferredPass) const;
@@ -132,7 +134,7 @@ public:
 	const GL::GeometryBuffer* GetGeometryBuffer() const { return geomBuffer; }
 	      GL::GeometryBuffer* GetGeometryBuffer()       { return geomBuffer; }
 
-	const IUnitDrawerState* GetWantedDrawerState() const;
+	const IUnitDrawerState* GetWantedDrawerState(bool alphaPass) const;
 
 
 	bool DrawForward() const { return drawForward; }
@@ -143,9 +145,6 @@ public:
 
 	bool& UseAdvShadingRef() { return advShading; }
 	bool& UseAdvFadingRef() { return advFading; }
-
-	void SetUseAdvShading(bool b) { advShading = b; }
-	void SetUseAdvFading(bool b) { advFading = b; }
 
 	void ResetTransform(bool b) { resetTransform = b; }
 

@@ -359,7 +359,7 @@ void LuaObjectDrawer::DrawDeferredPass(const CSolidObject* excludeObj, LuaObjTyp
 	// bail early if the FFP state *is going to be* selected by
 	// SetupOpaqueDrawing, and also if our shader-path happens
 	// to be ARB instead (saves an FBO bind)
-	if (!(unitDrawer->GetWantedDrawerState())->CanDrawDeferred())
+	if (!(unitDrawer->GetWantedDrawerState(false))->CanDrawDeferred())
 		return;
 
 	geomBuffer->Bind();

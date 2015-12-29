@@ -509,7 +509,7 @@ void CFeatureDrawer::DrawAlphaPass()
 
 void CFeatureDrawer::DrawAlphaFeatures(int modelType)
 {
-	const bool ffpMat = !(unitDrawer->GetWantedDrawerState())->CanDrawAlpha();
+	const bool ffpMat = !(unitDrawer->GetWantedDrawerState(true))->CanDrawAlpha();
 
 	for (const auto& mdlRenderProxy: modelRenderers) {
 		if (mdlRenderProxy.GetLastDrawFrame() < globalRendering->drawFrame)

@@ -635,8 +635,7 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 
 void CUnitDrawer::SetupAlphaDrawing(bool deferredPass)
 {
-	// proper alpha-rendering is only enabled with GLSL state
-	unitDrawerStates[DRAWER_STATE_SEL] = unitDrawerStates[ (GetWantedDrawerState())->CanDrawAlpha() ];
+	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState(true));
 	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass && false, resetTransform);
 
 	glActiveTexture(GL_TEXTURE0);
@@ -874,8 +873,7 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 
 
 
-
-
+#if 0
 void CUnitDrawer::SetupOpaqueAlphaDrawing(bool deferredPass, bool haveAdvShading)
 {
 	// set-before-test
@@ -899,6 +897,8 @@ void CUnitDrawer::ResetOpaqueAlphaDrawing(bool deferredPass, bool haveAdvShading
 	// set-after-test
 	SetUseAdvShading(haveAdvShading);
 }
+#endif
+
 
 void CUnitDrawer::SetupOpaqueDrawing(bool deferredPass)
 {
@@ -909,7 +909,7 @@ void CUnitDrawer::SetupOpaqueDrawing(bool deferredPass)
 	glEnable(GL_ALPHA_TEST);
 
 	// pick base shaders (ARB/GLSL) or FFP; not used by custom-material models
-	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState());
+	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState(false));
 	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass, resetTransform);
 
 	// NOTE:
@@ -928,9 +928,14 @@ void CUnitDrawer::ResetOpaqueDrawing(bool deferredPass) const
 	unitDrawerStates[DRAWER_STATE_SEL]->Disable(this, deferredPass);
 }
 
-const IUnitDrawerState* CUnitDrawer::GetWantedDrawerState() const
+const IUnitDrawerState* CUnitDrawer::GetWantedDrawerState(bool alphaPass) const
 {
-	return unitDrawerStates[ (unitDrawerStates[DRAWER_STATE_SSP]->CanEnable(this)) ];
+	// proper alpha-rendering is only enabled with GLSL state
+	// (ARB shaders could technically also be used, but KISS)
+	const bool enableShaders =               unitDrawerStates[DRAWER_STATE_SSP]->CanEnable(this);
+	const bool permitShaders = !alphaPass || unitDrawerStates[DRAWER_STATE_SSP]->CanDrawAlpha();
+
+	return unitDrawerStates[enableShaders && permitShaders];
 }
 
 
@@ -1137,14 +1142,10 @@ void CUnitDrawer::DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int te
 	if (model == nullptr)
 		return;
 
-	const bool oldAdvShading = unitDrawer->UseAdvShading();
-	const bool newAdvShading = (unitDrawer->GetWantedDrawerState())->CanDrawAlpha();
-
 	if (!rawState) {
 		// note: blocking the reset is needed if rendering with
 		// shaders, FFP::Enable() does not touch the transforms
 		unitDrawer->ResetTransform(false);
-		unitDrawer->SetUseAdvShading(newAdvShading);
 		unitDrawer->PushIndividualAlphaState(model, teamID, false);
 	}
 
@@ -1152,7 +1153,6 @@ void CUnitDrawer::DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int te
 
 	if (!rawState) {
 		unitDrawer->PopIndividualAlphaState(model, teamID, false);
-		unitDrawer->SetUseAdvShading(oldAdvShading);
 		unitDrawer->ResetTransform(true);
 	}
 }
