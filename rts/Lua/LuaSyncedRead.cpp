@@ -605,7 +605,7 @@ static int GetSolidObjectBlocking(lua_State* L, const CSolidObject* o)
 static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 {
 	if (!lua_isnumber(L, index)) {
-		luaL_error(L, "Bad unitID parameter in %s()\n", caller);
+		luaL_error(L, "[%s] unitID (arg #%d) not a number\n", caller, index);
 		return nullptr;
 	}
 
@@ -670,7 +670,7 @@ static inline CUnit* ParseTypedUnit(lua_State* L, const char* caller, int index)
 static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 {
 	if (!lua_isnumber(L, index)) {
-		luaL_error(L, "Incorrect arguments to %s(featureID)", caller);
+		luaL_error(L, "[%s] featureID (arg #%d) not a number\n", caller, index);
 		return nullptr;
 	}
 
@@ -2545,8 +2545,7 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 
 int LuaSyncedRead::ValidUnitID(lua_State* L)
 {
-	// note the NULL 'caller' arg (so ParseUnit won't call luaL_error)
-	lua_pushboolean(L, ParseUnit(L, NULL, 1) != NULL);
+	lua_pushboolean(L, ParseUnit(L, __FUNCTION__, 1) != nullptr);
 	return 1;
 }
 
@@ -4321,8 +4320,7 @@ int LuaSyncedRead::FindUnitCmdDesc(lua_State* L)
 
 int LuaSyncedRead::ValidFeatureID(lua_State* L)
 {
-	CFeature* feature = ParseFeature(L, NULL, 1); // note the NULL
-	lua_pushboolean(L, feature != NULL);
+	lua_pushboolean(L, ParseFeature(L, __FUNCTION__, 1) != nullptr);
 	return 1;
 }
 
