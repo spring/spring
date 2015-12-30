@@ -64,7 +64,7 @@ CONFIG(bool, AdvUnitShading).defaultValue(true).headlessValue(false).safemodeVal
 
 
 static const void BindOpaqueTex(int texType) { texturehandlerS3O->SetS3oTexture(texType); }
-static const void BindOpaqueTexAtlas(int texType) { texturehandler3DO->Set3doAtlases(); }
+//static const void BindOpaqueTexAtlas(int texType) { texturehandler3DO->Set3doAtlases(); }
 static const void BindOpaqueTexDummy(int texType) {}
 
 static const void BindShadowTexDummy(const CS3OTextureHandler::S3OTexMat* textureMat) {}
