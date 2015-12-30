@@ -676,8 +676,9 @@ function gadgetHandler:RaiseGadget(gadget)
     local lowestIdx = FindLowestIndex(callinList, gadgetIdx, gadget.ghInfo.layer)
 
     if (lowestIdx > gadgetIdx) then
-      table.remove(callinList, gadgetIdx)
+      -- insert first since lowestIdx is larger
       table.insert(callinList, lowestIdx, gadget)
+      table.remove(callinList, gadgetIdx)
     end
   end
 
@@ -718,8 +719,9 @@ function gadgetHandler:LowerGadget(gadget)
     local highestIdx = FindHighestIndex(callinList, gadgetIdx, gadget.ghInfo.layer)
 
     if (highestIdx < gadgetIdx) then
-      table.insert(callinList, highestIdx, gadget)
+      -- remove first since highestIdx is smaller
       table.remove(callinList, gadgetIdx)
+      table.insert(callinList, highestIdx, gadget)
     end
   end
 
