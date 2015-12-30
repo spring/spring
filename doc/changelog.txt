@@ -13,13 +13,14 @@ Lua:
  ! {Set,Get}UnitPieceCollisionVolumeData now receive 1-based piece index argument (was 0-based).
  ! Lua{Feature,Unit}Defs:
    LuaFeatureDefs: make the "model" subtable available (as it is for LuaUnitDefs)
-   move the {min,max,mid}{x,y,z} values to this subtable (e.g. *Defs[i].model.midx)
+   move the {min,max,mid}{x,y,z} values to this table (these can now be accessed
+   using e.g. *Defs[i].model.midx)
    deprecate *Defs[i].modelname, use *Defs[i].model.path instead
  ! GameID callin now gets the ID string encoded in hex.
  ! UnitDestroyed is now called twice and gets an extra argument 'preEvent'
    the value of preEvent is true for the first call which corresponds to
-   old UnitDestroyed and false for the second (allows shaders during death
-   anims, etc)
+   the old UnitDestroyed and false for the second (allows shaders during
+   death anims, etc; after the second call a unitID is no longer valid!)
    also remove hardcoded logic to zombify (stun+immobilize) a unit on death
  ! gl.UnitShape and gl.FeatureShape now set their relevant GL state internally
    (so calling only these functions is enough to get correctly rendered models;
@@ -67,7 +68,7 @@ Lua:
      number deferredShaderID
    ) -> nil
    (the ID's must refer to valid programs returned by gl.CreateShader;
-   passing in 0 for either will cause the respective shader to revert
+   passing in a value of 0 will cause the respective shader to revert
    back to its engine default)
    custom map shaders that declare a uniform ivec2 named "texSquare"
    can sample from the default diffuse texture(s), which are always
