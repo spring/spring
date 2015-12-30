@@ -255,7 +255,7 @@ namespace Shader {
 		void Disable() {}
 		void Release() {}
 		void Reload(bool reloadFromDisk, bool validate) {}
-		bool Validate() {}
+		bool Validate() { return true; }
 		void Link() {}
 
 		int GetUniformLoc(const std::string& name) { return -1; }
@@ -286,7 +286,7 @@ namespace Shader {
 		void Link();
 		void Release();
 		void Reload(bool reloadFromDisk, bool validate);
-		bool Validate() {}
+		bool Validate() { return true; }
 
 		int GetUniformLoc(const std::string& name);
 		int GetUniformType(const int loc) { return -1; }

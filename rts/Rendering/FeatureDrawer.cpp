@@ -40,7 +40,7 @@
 #define FD_ALPHA_SHADOW -2.00f
 
 // TODO: getting messy, just split the opaque and shadow Draw*Features()
-static bool DrawOpaque(const CFeature* f) { return (f->drawAlpha >= FD_ALPHA_OPAQUE                                   ); }
+//static bool DrawOpaque(const CFeature* f) { return (f->drawAlpha >= FD_ALPHA_OPAQUE                                   ); }
 static bool DrawAlpha (const CFeature* f) { return (f->drawAlpha >  FD_ALPHA_FARTEX && f->drawAlpha <  FD_ALPHA_OPAQUE); }
 static bool DrawFarTex(const CFeature* f) { return (f->drawAlpha >  FD_ALPHA_SHADOW && f->drawAlpha <= FD_ALPHA_FARTEX); }
 static bool DrawShadow(const CFeature* f) { return (                                   f->drawAlpha <= FD_ALPHA_SHADOW); }
