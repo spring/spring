@@ -334,9 +334,6 @@ void CUnitDrawer::DrawOpaquePass(const CUnit* excludeUnit, bool deferredPass, bo
 
 void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction)
 {
-	typedef std::vector<CUnit*> UnitSet;
-	typedef std::map<int, UnitSet> UnitBin;
-
 	const auto& unitBin = opaqueModelRenderers[modelType]->GetUnitBin();
 
 	for (auto unitBinIt = unitBin.cbegin(); unitBinIt != unitBin.cend(); ++unitBinIt) {
