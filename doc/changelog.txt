@@ -124,12 +124,13 @@ Lua:
      "$ssmf_specular"
      "$ssmf_splat_distr"
      "$ssmf_splat_detail"
-     "$ssmf_splat_normals:X"
+     "$ssmf_splat_normals" or "$ssmf_splat_normals:X"
      "$ssmf_sky_refl"
      "$ssmf_emission"
      "$ssmf_parallax"
 
-     'X' can be omitted (not the ':'), or a value between 0 and 3
+     'X' can be a value between 0 and 3, defaults to 0 if ":X" is omitted
+
  - add callouts Preload{Feature,Unit}DefModel allowing the engine
    to load the unit's model (and texture) in a background thread.
    wreckages and buildOptions of a unit are automatically preloaded.

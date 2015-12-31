@@ -66,7 +66,7 @@ static const std::unordered_map<std::string, LuaMatTexture::Type> luaMatTexTypeM
 	{"$ssmf_specular",      LuaMatTexture::LUATEX_SSMF_SPECULAR},
 	{"$ssmf_splat_distr",   LuaMatTexture::LUATEX_SSMF_SDISTRIB},
 	{"$ssmf_splat_detail",  LuaMatTexture::LUATEX_SSMF_SDETAIL },
-	// $ssmf_splat_normals is handled by ParseNamedSubTexture
+	{"$ssmf_splat_normals", LuaMatTexture::LUATEX_SSMF_SNORMALS},
 	{"$ssmf_sky_refl",      LuaMatTexture::LUATEX_SSMF_SKYREFL },
 	{"$ssmf_emission",      LuaMatTexture::LUATEX_SSMF_EMISSION},
 	{"$ssmf_parallax",      LuaMatTexture::LUATEX_SSMF_PARALLAX},
@@ -297,15 +297,8 @@ static bool ParseNamedSubTexture(LuaMatTexture& texUnit, const std::string& texN
 	if (sepIdx == std::string::npos)
 		return false;
 
-	#if 0
-	const std::string& prefix = texName.substr(0, sepIdx);
-	const std::string& suffix = texName.substr(sepIdx + 1);
 
-	const size_t prefixHash = HsiehHash(prefix.c_str(), prefix.size(), 0);
-	#else
-	const size_t prefixHash = HsiehHash((texName.substr(0, sepIdx)).c_str(), sepIdx, 0);
-	#endif
-
+	const size_t prefixHash = HsiehHash(texName.c_str(), sepIdx, 0);
 
 	// TODO: use constexpr hashes plus switch, also add $*_gbuffer_*
 	static const size_t prefixHashes[] = {
@@ -317,12 +310,11 @@ static bool ParseNamedSubTexture(LuaMatTexture& texUnit, const std::string& texN
 
 	if (prefixHash == prefixHashes[0]) {
 		// last character becomes the index, clamped in ReadMap
-		// (data remains 0 if last char is the separator itself
-		// or not a digit)
+		// (data remains 0 if suffix is not ":X" with X a digit)
 		texUnit.type = LuaMatTexture::LUATEX_SSMF_SNORMALS;
 		texUnit.data = reinterpret_cast<const void*>(0);
 
-		if ((sepIdx + 1) < texName.size() && std::isdigit(texName.back())) {
+		if ((sepIdx + 2) == texName.size() && std::isdigit(texName.back())) {
 			texUnit.data = reinterpret_cast<const void*>(int(texName.back()) - int('0'));
 		}
 
@@ -448,6 +440,11 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 					// optional, return false when not available
 					return false;
 				}
+			} break;
+
+			case LuaMatTexture::LUATEX_SSMF_SNORMALS: {
+				// suffix case (":X") is handled by ParseNamedSubTexture
+				texUnit.data = reinterpret_cast<const void*>(int(0));
 			} break;
 
 			default: {
