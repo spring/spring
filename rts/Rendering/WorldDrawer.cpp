@@ -21,7 +21,6 @@
 #include "Rendering/SmoothHeightMeshDrawer.h"
 #include "Rendering/InMapDrawView.h"
 #include "Rendering/ShadowHandler.h"
-#include "Rendering/Models/ModelDrawer.h"
 #include "Rendering/Models/IModelParser.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
@@ -65,7 +64,6 @@ CWorldDrawer::~CWorldDrawer()
 	SafeDelete(treeDrawer);
 	SafeDelete(grassDrawer);
 	SafeDelete(pathDrawer);
-	SafeDelete(modelDrawer);
 	SafeDelete(shadowHandler);
 	SafeDelete(inMapDrawerView);
 
@@ -131,7 +129,6 @@ void CWorldDrawer::LoadPost() const
 	unitDrawer = new CUnitDrawer();
 	// see ::LoadPre
 	// featureDrawer = new CFeatureDrawer();
-	modelDrawer = IModelDrawer::GetInstance();
 
 	loadscreen->SetLoadMessage("Creating Water");
 	water = IWater::GetWater(NULL, -1);
@@ -284,7 +281,6 @@ void CWorldDrawer::DrawOpaqueObjects() const
 	{
 		SCOPED_TIMER("WorldDrawer::Models");
 		unitDrawer->Draw(false);
-		modelDrawer->Draw();
 		featureDrawer->Draw();
 
 		DebugColVolDrawer::Draw();

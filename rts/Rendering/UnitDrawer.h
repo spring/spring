@@ -16,7 +16,7 @@ struct SolidObjectDef;
 struct UnitDef;
 struct S3DModel;
 
-class IWorldObjectModelRenderer;
+class IModelRenderContainer;
 class CSolidObject;
 class CUnit;
 
@@ -125,8 +125,8 @@ public:
 
 	const std::vector<CUnit*>& GetUnsortedUnits() const { return unsortedUnits; }
 
-	IWorldObjectModelRenderer* GetOpaqueModelRenderer(int modelType) { return opaqueModelRenderers[modelType]; }
-	IWorldObjectModelRenderer* GetAlphaModelRenderer(int modelType) { return alphaModelRenderers[modelType]; }
+	IModelRenderContainer* GetOpaqueModelRenderer(int modelType) { return opaqueModelRenderers[modelType]; }
+	IModelRenderContainer* GetAlphaModelRenderer(int modelType) { return alphaModelRenderers[modelType]; }
 
 	const GL::LightHandler* GetLightHandler() const { return &lightHandler; }
 	      GL::LightHandler* GetLightHandler()       { return &lightHandler; }
@@ -200,9 +200,19 @@ private:
 	static void UpdateUnitDrawPos(CUnit* unit);
 
 public:
-	static void BindModelTypeTexture(int modelType, int texType);
-	static void BindModelTypeTexture(const S3DModel* m);
-	static void BindModelTypeTexture(const CSolidObject* o);
+	static void BindModelTypeTexture(int mdlType, int texType);
+	static void PushModelRenderState(int mdlType);
+	static void PopModelRenderState(int mdlType);
+
+	// never called directly; combined with PushModelRenderState(S3DModel*)
+	// static void BindModelTypeTexture(const S3DModel* m) { BindModelTypeTexture(m->type, m->textureType); }
+	static void PushModelRenderState(const S3DModel* m);
+	static void PopModelRenderState(const S3DModel* m);
+
+	// never called directly; combined with PushModelRenderState(CSolidObject*)
+	// static void BindModelTypeTexture(const CSolidObject* o) { BindModelTypeTexture(o->model); }
+	static void PushModelRenderState(const CSolidObject* o);
+	static void PopModelRenderState(const CSolidObject* o);
 
 	// needed by FFP drawer-state
 	static void SetupBasicS3OTexture0();
@@ -243,8 +253,8 @@ private:
 	float4 alphaValues;
 
 private:
-	std::vector<IWorldObjectModelRenderer*> opaqueModelRenderers;
-	std::vector<IWorldObjectModelRenderer*> alphaModelRenderers;
+	std::vector<IModelRenderContainer*> opaqueModelRenderers;
+	std::vector<IModelRenderContainer*> alphaModelRenderers;
 
 	/// units being rendered (note that this is a completely
 	/// unsorted set of 3DO, S3O, opaque, and cloaked models!)

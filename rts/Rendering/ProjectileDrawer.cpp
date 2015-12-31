@@ -20,7 +20,7 @@
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/Textures/TextureAtlas.h"
-#include "Rendering/Models/WorldObjectModelRenderer.h"
+#include "Rendering/Models/ModelRenderContainer.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
@@ -235,7 +235,7 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 	modelRenderers.resize(MODELTYPE_OTHER, NULL);
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		modelRenderers[modelType] = IWorldObjectModelRenderer::GetInstance(modelType);
+		modelRenderers[modelType] = IModelRenderContainer::GetInstance(modelType);
 	}
 }
 
@@ -598,9 +598,9 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		unitDrawer->SetupOpaqueDrawing(false);
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-			modelRenderers[modelType]->PushRenderState();
+			unitDrawer->PushModelRenderState(modelType);
 			DrawProjectiles(modelType, drawReflection, drawRefraction);
-			modelRenderers[modelType]->PopRenderState();
+			unitDrawer->PopModelRenderState(modelType);
 		}
 
 		unitDrawer->ResetOpaqueDrawing(false);

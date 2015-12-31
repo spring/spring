@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef WORLDOBJECT_MODEL_RENDERER_HDR
-#define WORLDOBJECT_MODEL_RENDERER_HDR
+#ifndef MODEL_RENDER_CONTAINER_HDR
+#define MODEL_RENDER_CONTAINER_HDR
 
 #define MDL_TYPE(o) (o->model->type)
 #define TEX_TYPE(o) (o->model->textureType)
@@ -14,23 +14,20 @@ class CUnit;
 class CFeature;
 class CProjectile;
 
-class IWorldObjectModelRenderer {
+class IModelRenderContainer {
 public:
-	static IWorldObjectModelRenderer* GetInstance(int);
+	static IModelRenderContainer* GetInstance(int);
 
-	IWorldObjectModelRenderer(int mdlType): modelType(mdlType) {
+	IModelRenderContainer(int mdlType): modelType(mdlType) {
 		numUnits = 0;
 		numFeatures = 0;
 		numProjectiles = 0;
 	}
-	virtual ~IWorldObjectModelRenderer();
-
-	virtual void Draw();
-	virtual void PushRenderState() {}
-	virtual void PopRenderState() {}
+	virtual ~IModelRenderContainer();
 
 	virtual void AddUnit(const CUnit*);
 	virtual void DelUnit(const CUnit*);
+
 public:
 	virtual void AddFeature(const CFeature*);
 	virtual void DelFeature(const CFeature*);
@@ -38,9 +35,9 @@ public:
 	virtual void AddProjectile(const CProjectile*);
 	virtual void DelProjectile(const CProjectile*);
 
-	int GetNumUnits() const { return numUnits; }
-	int GetNumFeatures() const { return numFeatures; }
-	int GetNumProjectiles() const { return numProjectiles; }
+	unsigned int GetNumUnits() const { return numUnits; }
+	unsigned int GetNumFeatures() const { return numFeatures; }
+	unsigned int GetNumProjectiles() const { return numProjectiles; }
 
 protected:
 	typedef std::vector<      CUnit*>       UnitSet;
@@ -52,22 +49,15 @@ protected:
 	typedef std::unordered_map<int,    FeatureSet>    FeatureRenderBin;
 	typedef std::unordered_map<int, ProjectileSet> ProjectileRenderBin;
 
-	virtual void DrawModels(const       UnitSet&);
-	virtual void DrawModels(const    FeatureSet&);
-	virtual void DrawModels(const ProjectileSet&);
-	virtual void DrawModel(const       CUnit*) {}
-	virtual void DrawModel(const    CFeature*) {}
-	virtual void DrawModel(const CProjectile*) {}
-
 	UnitRenderBin units;              // all opaque or all cloaked
 	FeatureRenderBin features;        // all (opaque and fade) or all shadow
 	ProjectileRenderBin projectiles;  // opaque only, (synced && (piece || weapon)) only
 
 	int modelType;
 
-	int numUnits;
-	int numFeatures;
-	int numProjectiles;
+	unsigned int numUnits;
+	unsigned int numFeatures;
+	unsigned int numProjectiles;
 
 public:
 	const UnitSet& GetUnitSet(int texType) { return units[texType]; }
@@ -83,36 +73,24 @@ public:
 	ProjectileRenderBin& GetProjectileBinMutable() { return projectiles; }
 };
 
-class WorldObjectModelRenderer3DO: public IWorldObjectModelRenderer {
+class ModelRenderContainer3DO: public IModelRenderContainer {
 public:
-	WorldObjectModelRenderer3DO(): IWorldObjectModelRenderer(MODELTYPE_3DO) {}
-	void PushRenderState();
-	void PopRenderState();
+	ModelRenderContainer3DO(): IModelRenderContainer(MODELTYPE_3DO) {}
 };
 
-class WorldObjectModelRendererS3O: public IWorldObjectModelRenderer {
+class ModelRenderContainerS3O: public IModelRenderContainer {
 public:
-	WorldObjectModelRendererS3O(): IWorldObjectModelRenderer(MODELTYPE_S3O) {}
-	void PushRenderState();
-	void PopRenderState();
-
-	void DrawModel(const CUnit*);
-	void DrawModel(const CFeature*);
-	void DrawModel(const CProjectile*);
+	ModelRenderContainerS3O(): IModelRenderContainer(MODELTYPE_S3O) {}
 };
 
-class WorldObjectModelRendererOBJ: public IWorldObjectModelRenderer {
+class ModelRenderContainerOBJ: public IModelRenderContainer {
 public:
-	WorldObjectModelRendererOBJ(): IWorldObjectModelRenderer(MODELTYPE_OBJ) {}
-	void PushRenderState();
-	void PopRenderState();
+	ModelRenderContainerOBJ(): IModelRenderContainer(MODELTYPE_OBJ) {}
 };
 
-class WorldObjectModelRendererASS: public IWorldObjectModelRenderer {
+class ModelRenderContainerASS: public IModelRenderContainer {
 public:
-	WorldObjectModelRendererASS(): IWorldObjectModelRenderer(MODELTYPE_ASS) {}
-	void PushRenderState();
-	void PopRenderState();
+	ModelRenderContainerASS(): IModelRenderContainer(MODELTYPE_ASS) {}
 };
 
 #endif

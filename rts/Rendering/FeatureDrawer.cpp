@@ -24,7 +24,6 @@
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/UnitDrawerState.hpp"
-#include "Rendering/Models/WorldObjectModelRenderer.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -294,10 +293,9 @@ void CFeatureDrawer::DrawOpaquePass(bool deferredPass, bool, bool)
 	unitDrawer->SetupOpaqueDrawing(deferredPass);
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		// arbitrarily pick first proxy to prepare state
-		modelRenderers[0].GetRenderer(modelType)->PushRenderState();
+		unitDrawer->PushModelRenderState(modelType);
 		DrawOpaqueFeatures(modelType, LuaObjectDrawer::GetDrawPassOpaqueMat());
-		modelRenderers[0].GetRenderer(modelType)->PopRenderState();
+		unitDrawer->PopModelRenderState(modelType);
 	}
 
 	unitDrawer->ResetOpaqueDrawing(deferredPass);
@@ -422,15 +420,13 @@ void CFeatureDrawer::DrawFeature(const CFeature* feature, unsigned int preList, 
 void CFeatureDrawer::PushIndividualState(const CFeature* feature, bool deferredPass)
 {
 	unitDrawer->SetupOpaqueDrawing(false);
-	modelRenderers[0].GetRenderer(MDL_TYPE(feature))->PushRenderState();
-
-	CUnitDrawer::BindModelTypeTexture(feature);
+	unitDrawer->PushModelRenderState(feature);
 	unitDrawer->SetTeamColour(feature->team, float2(feature->drawAlpha, 0.0f));
 }
 
 void CFeatureDrawer::PopIndividualState(const CFeature* feature, bool deferredPass)
 {
-	modelRenderers[0].GetRenderer(MDL_TYPE(feature))->PopRenderState();
+	unitDrawer->PopModelRenderState(feature);
 	unitDrawer->ResetOpaqueDrawing(false);
 }
 
@@ -494,9 +490,9 @@ void CFeatureDrawer::DrawAlphaPass()
 		ISky::SetupFog();
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-			modelRenderers[0].GetRenderer(modelType)->PushRenderState();
+			unitDrawer->PushModelRenderState(modelType);
 			DrawAlphaFeatures(modelType);
-			modelRenderers[0].GetRenderer(modelType)->PopRenderState();
+			unitDrawer->PopModelRenderState(modelType);
 		}
 
 		glDisable(GL_FOG);

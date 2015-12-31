@@ -14,7 +14,7 @@ class CTextureAtlas;
 struct AtlasedTexture;
 class CGroundFlash;
 struct FlyingPiece;
-class IWorldObjectModelRenderer;
+class IModelRenderContainer;
 class LuaTable;
 
 
@@ -119,7 +119,7 @@ private:
 	/// projectiles without a model
 	std::vector<CProjectile*> renderProjectiles;
 	/// projectiles with a model
-	std::vector<IWorldObjectModelRenderer*> modelRenderers;
+	std::vector<IModelRenderContainer*> modelRenderers;
 
 	/**
 	 * z-sorted set of projectiles without models; used

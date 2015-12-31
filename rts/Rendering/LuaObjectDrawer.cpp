@@ -105,11 +105,11 @@ static float GetLODFloat(const std::string& name)
 // opaque-pass state management funcs
 static void SetupOpaqueUnitDrawState(unsigned int modelType, bool deferredPass) {
 	unitDrawer->SetupOpaqueDrawing(deferredPass);
-	unitDrawer->GetOpaqueModelRenderer(modelType)->PushRenderState();
+	unitDrawer->PushModelRenderState(modelType);
 }
 
 static void ResetOpaqueUnitDrawState(unsigned int modelType, bool deferredPass) {
-	unitDrawer->GetOpaqueModelRenderer(modelType)->PopRenderState();
+	unitDrawer->PopModelRenderState(modelType);
 	unitDrawer->ResetOpaqueDrawing(deferredPass);
 }
 
@@ -122,11 +122,11 @@ static void ResetOpaqueFeatureDrawState(unsigned int modelType, bool deferredPas
 // transparency-pass (reflection, ...) state management funcs
 static void SetupAlphaUnitDrawState(unsigned int modelType, bool deferredPass) {
 	unitDrawer->SetupAlphaDrawing(deferredPass);
-	unitDrawer->GetAlphaModelRenderer(modelType)->PushRenderState();
+	unitDrawer->PushModelRenderState(modelType);
 }
 
 static void ResetAlphaUnitDrawState(unsigned int modelType, bool deferredPass) {
-	unitDrawer->GetAlphaModelRenderer(modelType)->PopRenderState();
+	unitDrawer->PopModelRenderState(modelType);
 	unitDrawer->ResetAlphaDrawing(deferredPass);
 }
 

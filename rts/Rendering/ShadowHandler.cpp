@@ -18,7 +18,6 @@
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Rendering/Models/ModelDrawer.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "System/Config/ConfigHandler.h"
@@ -351,7 +350,6 @@ void CShadowHandler::DrawShadowPasses()
 
 			if ((shadowGenBits & SHADOWGEN_BIT_MODEL) != 0) {
 				unitDrawer->DrawShadowPass();
-				modelDrawer->Draw();
 				featureDrawer->DrawShadowPass();
 			}
 

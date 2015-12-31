@@ -30,7 +30,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
-#include "Rendering/Models/WorldObjectModelRenderer.h"
+#include "Rendering/Models/ModelRenderContainer.h"
 
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/LosHandler.h"
@@ -63,23 +63,47 @@ CONFIG(bool, AdvUnitShading).defaultValue(true).headlessValue(false).safemodeVal
 
 
 
+
 static const void BindOpaqueTex(int texType) { texturehandlerS3O->SetS3oTexture(texType); }
-//static const void BindOpaqueTexAtlas(int texType) { texturehandler3DO->Set3doAtlases(); }
+static const void BindOpaqueTexAtlas(int texType) { texturehandler3DO->Set3doAtlases(); }
 static const void BindOpaqueTexDummy(int texType) {}
 
-static const void BindShadowTexDummy(const CS3OTextureHandler::S3OTexMat* textureMat) {}
+static const void BindShadowTexDummy(const CS3OTextureHandler::S3OTexMat*) {}
+static const void KillShadowTexDummy() {}
+
 static const void BindShadowTex(const CS3OTextureHandler::S3OTexMat* textureMat) {
 	glActiveTexture(GL_TEXTURE0);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, textureMat->tex2);
 }
 
-static const void KillShadowTexDummy() {}
 static const void KillShadowTex() {
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glDisable(GL_TEXTURE_2D);
 	glActiveTexture(GL_TEXTURE0);
 }
+
+
+static const void PushRenderState3DO() {
+	BindOpaqueTexAtlas(-1);
+
+	glPushAttrib(GL_POLYGON_BIT);
+	glDisable(GL_CULL_FACE);
+}
+
+static const void PushRenderStateS3O() {
+	if (globalRendering->supportRestartPrimitive) {
+		glPrimitiveRestartIndexNV(-1U);
+	}
+}
+
+static const void PushRenderStateOBJ() { /* no-op */ }
+static const void PushRenderStateASS() { /* no-op */ }
+
+static const void PopRenderState3DO() { glPopAttrib(); }
+static const void PopRenderStateS3O() {    /* no-op */ }
+static const void PopRenderStateOBJ() {    /* no-op */ }
+static const void PopRenderStateASS() {    /* no-op */ }
 
 
 
@@ -90,8 +114,11 @@ typedef const void (*BindOpaqueTexFunc)(int);
 typedef const void (*BindShadowTexFunc)(const CS3OTextureHandler::S3OTexMat*);
 typedef const void (*KillShadowTexFunc)();
 
-static const BindOpaqueTexFunc opaqueTexBindFuncs[MODELTYPE_OTHER * 2] = {
-	BindOpaqueTexDummy, // 3DO (no-op, done by WorldObjectModelRenderer3DO::PushRenderState)
+typedef const void (*PushRenderStateFunc)();
+typedef const void (*PopRenderStateFunc)();
+
+static const BindOpaqueTexFunc opaqueTexBindFuncs[MODELTYPE_OTHER] = {
+	BindOpaqueTexDummy, // 3DO (no-op, done by PushRenderState3DO)
 	BindOpaqueTex,      // S3O
 	BindOpaqueTex,      // OBJ
 	BindOpaqueTex,      // ASS
@@ -111,9 +138,41 @@ static const KillShadowTexFunc shadowTexKillFuncs[MODELTYPE_OTHER] = {
 	KillShadowTex,      // ASS
 };
 
-void CUnitDrawer::BindModelTypeTexture(int mdlType, int texType) { opaqueTexBindFuncs[mdlType](texType); }
-void CUnitDrawer::BindModelTypeTexture(const     S3DModel* m) { BindModelTypeTexture(m->type, m->textureType); }
-void CUnitDrawer::BindModelTypeTexture(const CSolidObject* o) { BindModelTypeTexture(o->model); }
+
+static const PushRenderStateFunc renderStatePushFuncs[MODELTYPE_OTHER] = {
+	PushRenderState3DO,
+	PushRenderStateS3O,
+	PushRenderStateOBJ,
+	PushRenderStateASS,
+};
+
+static const PopRenderStateFunc renderStatePopFuncs[MODELTYPE_OTHER] = {
+	PopRenderState3DO,
+	PopRenderStateS3O,
+	PopRenderStateOBJ,
+	PopRenderStateASS,
+};
+
+
+
+// low-level (batch and solo)
+void CUnitDrawer::BindModelTypeTexture(int mdlType, int texType) {   opaqueTexBindFuncs[mdlType](texType); }
+void CUnitDrawer::PushModelRenderState(int mdlType             ) { renderStatePushFuncs[mdlType](       ); }
+void CUnitDrawer::PopModelRenderState (int mdlType             ) { renderStatePopFuncs [mdlType](       ); }
+
+// mid-level (solo only)
+void CUnitDrawer::PushModelRenderState(const S3DModel* m) {
+	PushModelRenderState(m->type);
+	BindModelTypeTexture(m->type, m->textureType);
+}
+void CUnitDrawer::PopModelRenderState(const S3DModel* m) {
+	PopModelRenderState(m->type);
+}
+
+// high-level (solo only)
+void CUnitDrawer::PushModelRenderState(const CSolidObject* o) { PushModelRenderState(o->model); }
+void CUnitDrawer::PopModelRenderState(const CSolidObject* o) { PopModelRenderState(o->model); }
+
 
 
 
@@ -157,8 +216,8 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	tempAlphaUnits.resize(MODELTYPE_OTHER);
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		opaqueModelRenderers[modelType] = IWorldObjectModelRenderer::GetInstance(modelType);
-		alphaModelRenderers[modelType] = IWorldObjectModelRenderer::GetInstance(modelType);
+		opaqueModelRenderers[modelType] = IModelRenderContainer::GetInstance(modelType);
+		alphaModelRenderers[modelType] = IModelRenderContainer::GetInstance(modelType);
 	}
 
 	unitRadarIcons.resize(teamHandler->ActiveAllyTeams());
@@ -314,10 +373,10 @@ void CUnitDrawer::DrawOpaquePass(const CUnit* excludeUnit, bool deferredPass, bo
 	SetupOpaqueDrawing(deferredPass);
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		opaqueModelRenderers[modelType]->PushRenderState();
+		PushModelRenderState(modelType);
 		DrawOpaqueUnits(modelType, excludeUnit, drawReflection, drawRefraction);
 		DrawOpaqueAIUnits(modelType);
-		opaqueModelRenderers[modelType]->PopRenderState();
+		PopModelRenderState(modelType);
 	}
 
 	// not true during DynWater::DrawRefraction
@@ -388,7 +447,7 @@ void CUnitDrawer::DrawOpaqueAIUnit(const TempDrawUnit& unit)
 
 	assert(mdl != nullptr);
 
-	BindModelTypeTexture(mdl);
+	BindModelTypeTexture(mdl->type, mdl->textureType);
 	SetTeamColour(unit.team);
 	mdl->DrawStatic();
 
@@ -668,10 +727,10 @@ void CUnitDrawer::DrawAlphaPass()
 			glDisable(GL_ALPHA_TEST);
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-			alphaModelRenderers[modelType]->PushRenderState();
+			PushModelRenderState(modelType);
 			DrawAlphaUnits(modelType);
 			DrawAlphaAIUnits(modelType);
-			alphaModelRenderers[modelType]->PopRenderState();
+			PopModelRenderState(modelType);
 		}
 
 		if (UseAdvShading())
@@ -790,7 +849,7 @@ void CUnitDrawer::DrawAlphaAIUnit(const TempDrawUnit& unit)
 
 	assert(mdl != nullptr);
 
-	BindModelTypeTexture(mdl);
+	BindModelTypeTexture(mdl->type, mdl->textureType);
 	SetTeamColour(unit.team, float2(alphaValues.x, 1.0f));
 	mdl->DrawStatic();
 
@@ -1027,29 +1086,27 @@ void CUnitDrawer::CleanupBasicS3OTexture0()
 void CUnitDrawer::PushIndividualOpaqueState(const S3DModel* model, int teamID, bool deferredPass)
 {
 	SetupOpaqueDrawing(deferredPass);
-	opaqueModelRenderers[model->type]->PushRenderState();
-	BindModelTypeTexture(model);
+	PushModelRenderState(model);
 	SetTeamColour(teamID);
 }
 
 void CUnitDrawer::PushIndividualAlphaState(const S3DModel* model, int teamID, bool deferredPass)
 {
 	SetupAlphaDrawing(deferredPass);
-	alphaModelRenderers[model->type]->PushRenderState();
-	BindModelTypeTexture(model);
+	PushModelRenderState(model);
 	SetTeamColour(teamID, float2(alphaValues.x, 1.0f));
 }
 
 
 void CUnitDrawer::PopIndividualOpaqueState(const S3DModel* model, int teamID, bool deferredPass)
 {
-	opaqueModelRenderers[model->type]->PopRenderState();
+	PopModelRenderState(model);
 	ResetOpaqueDrawing(deferredPass);
 }
 
 void CUnitDrawer::PopIndividualAlphaState(const S3DModel* model, int teamID, bool deferredPass)
 {
-	alphaModelRenderers[model->type]->PopRenderState();
+	PopModelRenderState(model);
 	ResetAlphaDrawing(deferredPass);
 }
 

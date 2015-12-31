@@ -12,7 +12,6 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/Models/3DModel.h"
-#include "Rendering/Models/WorldObjectModelRenderer.h"
 #include "Sim/Objects/SolidObject.h"
 #include "System/myMath.h"
 #include "System/Log/ILog.h"
@@ -170,10 +169,8 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	glFogf(GL_FOG_DENSITY, 1.0f);
 
 	unitDrawer->SetupOpaqueDrawing(false);
-	unitDrawer->GetOpaqueModelRenderer(model->type)->PushRenderState();
+	unitDrawer->PushModelRenderState(model);
 	unitDrawer->SetTeamColour(obj->team);
-
-	CUnitDrawer::BindModelTypeTexture(model);
 
 	//const float xs = std::max(math::fabs(model->relMidPos.x + model->maxs.x), math::fabs(model->relMidPos.x + model->mins.x));
 	//const float ys = std::max(math::fabs(model->relMidPos.y + model->maxs.y), math::fabs(model->relMidPos.y + model->mins.y));
@@ -182,6 +179,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	const float modelradius = 1.15f * model->radius;
 
 	// overwrite the matrices set by SetupOpaqueDrawing
+	//
 	// RTT with a top-down view; the view-matrix must be
 	// on the PROJECTION stack for the model shaders
 	glMatrixMode(GL_PROJECTION);
@@ -219,7 +217,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
 
-	unitDrawer->GetOpaqueModelRenderer(model->type)->PopRenderState();
+	unitDrawer->PopModelRenderState(model);
 	unitDrawer->ResetOpaqueDrawing(false);
 
 	// glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);

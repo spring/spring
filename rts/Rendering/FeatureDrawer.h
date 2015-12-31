@@ -7,11 +7,11 @@
 #include <array>
 #include "System/creg/creg_cond.h"
 #include "System/EventClient.h"
-#include "Rendering/Models/WorldObjectModelRenderer.h"
+#include "Rendering/Models/ModelRenderContainer.h"
 
 class CCamera;
 class CFeature;
-class IWorldObjectModelRenderer;
+class IModelRenderContainer;
 
 namespace GL {
 	struct GeometryBuffer;
@@ -103,7 +103,7 @@ private:
 	struct ModelRendererProxy {
 		ModelRendererProxy(): lastDrawFrame(0) {
 			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-				rendererTypes[modelType] = IWorldObjectModelRenderer::GetInstance(modelType);
+				rendererTypes[modelType] = IModelRenderContainer::GetInstance(modelType);
 			}
 		}
 		~ModelRendererProxy() {
@@ -112,14 +112,14 @@ private:
 			}
 		}
 
-		const IWorldObjectModelRenderer* GetRenderer(unsigned int i) const { return rendererTypes[i]; }
-		      IWorldObjectModelRenderer* GetRenderer(unsigned int i)       { return rendererTypes[i]; }
+		const IModelRenderContainer* GetRenderer(unsigned int i) const { return rendererTypes[i]; }
+		      IModelRenderContainer* GetRenderer(unsigned int i)       { return rendererTypes[i]; }
 
 		unsigned int GetLastDrawFrame() const { return lastDrawFrame; }
 		void SetLastDrawFrame(unsigned int f) { lastDrawFrame = f; }
 
 	private:
-		std::array<IWorldObjectModelRenderer*, MODELTYPE_OTHER> rendererTypes;
+		std::array<IModelRenderContainer*, MODELTYPE_OTHER> rendererTypes;
 
 		// frame on which this proxy's owner quad last
 		// received a DrawQuad call (i.e. was in view)
