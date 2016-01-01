@@ -8,7 +8,6 @@
 #include "LuaOpenGL.h"
 
 #include "Game/Camera.h"
-#include "Rendering/Models/3DModel.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/ISky.h"
 #include "Sim/Objects/SolidObject.h"
@@ -162,17 +161,15 @@ void LuaMatShader::Execute(const LuaMatShader& prev, bool deferredPass) const
 			case LUASHADER_GL: {
 				glUseProgram(0);
 			} break;
-			case LUASHADER_3DO: {
-				if (luaMatHandler.resetDrawStateFuncs[LUASHADER_3DO]) {
-					luaMatHandler.resetDrawStateFuncs[LUASHADER_3DO](MODELTYPE_3DO, deferredPass);
+			case LUASHADER_DEF_3DO:
+			case LUASHADER_DEF_S3O:
+			case LUASHADER_DEF_OBJ:
+			case LUASHADER_DEF_ASS: {
+				if (luaMatHandler.resetDrawStateFuncs[prev.type]) {
+					luaMatHandler.resetDrawStateFuncs[prev.type](prev.type, deferredPass);
 				}
 			} break;
-			case LUASHADER_S3O: {
-				if (luaMatHandler.resetDrawStateFuncs[LUASHADER_S3O]) {
-					luaMatHandler.resetDrawStateFuncs[LUASHADER_S3O](MODELTYPE_S3O, deferredPass);
-				}
-			} break;
-			case LUASHADER_NONE: break;
+			case LUASHADER_NONE: {} break;
 			default: { assert(false); } break;
 		}
 
@@ -181,17 +178,15 @@ void LuaMatShader::Execute(const LuaMatShader& prev, bool deferredPass) const
 				// custom shader
 				glUseProgram(openglID);
 			} break;
-			case LUASHADER_3DO: {
-				if (luaMatHandler.setupDrawStateFuncs[LUASHADER_3DO]) {
-					luaMatHandler.setupDrawStateFuncs[LUASHADER_3DO](MODELTYPE_3DO, deferredPass);
+			case LUASHADER_DEF_3DO:
+			case LUASHADER_DEF_S3O:
+			case LUASHADER_DEF_OBJ:
+			case LUASHADER_DEF_ASS: {
+				if (luaMatHandler.setupDrawStateFuncs[type]) {
+					luaMatHandler.setupDrawStateFuncs[type](type, deferredPass);
 				}
 			} break;
-			case LUASHADER_S3O: {
-				if (luaMatHandler.setupDrawStateFuncs[LUASHADER_S3O]) {
-					luaMatHandler.setupDrawStateFuncs[LUASHADER_S3O](MODELTYPE_S3O, deferredPass);
-				}
-			} break;
-			case LUASHADER_NONE: break;
+			case LUASHADER_NONE: {} break;
 			default: { assert(false); } break;
 		}
 	}
@@ -209,8 +204,10 @@ void LuaMatShader::Print(const string& indent) const
 	switch (type) {
 		STRING_CASE(typeName, LUASHADER_NONE);
 		STRING_CASE(typeName, LUASHADER_GL);
-		STRING_CASE(typeName, LUASHADER_3DO);
-		STRING_CASE(typeName, LUASHADER_S3O);
+		STRING_CASE(typeName, LUASHADER_DEF_3DO);
+		STRING_CASE(typeName, LUASHADER_DEF_S3O);
+		STRING_CASE(typeName, LUASHADER_DEF_OBJ);
+		STRING_CASE(typeName, LUASHADER_DEF_ASS);
 		default: { assert(false); } break;
 	}
 	LOG("%s%s %i", indent.c_str(), typeName, openglID);
@@ -228,8 +225,8 @@ const LuaMaterial LuaMaterial::defMat;
 
 void LuaMaterial::Finalize()
 {
-	standardShader.Finalize();
-	deferredShader.Finalize();
+	shaders[LuaMatShader::LUASHADER_PASS_FWD].Finalize();
+	shaders[LuaMatShader::LUASHADER_PASS_DFR].Finalize();
 
 	texCount = 0;
 	for (int t = 0; t < LuaMatTexture::maxTexUnits; t++) {
@@ -252,11 +249,7 @@ void LuaMaterial::Execute(const LuaMaterial& prev, bool deferredPass) const
 		glCallList(preList);
 	}
 
-	if (deferredPass) {
-		deferredShader.Execute(prev.deferredShader, true);
-	} else {
-		standardShader.Execute(prev.standardShader, false);
-	}
+	shaders[deferredPass].Execute(prev.shaders[deferredPass], deferredPass);
 
 	//FIXME add projection matrices!!!
 	if (cameraLoc >= 0) {
@@ -324,12 +317,12 @@ int LuaMaterial::Compare(const LuaMaterial& a, const LuaMaterial& b)
 		return (a.order < b.order) ? -1 : +1;
 	}
 
-	cmp = LuaMatShader::Compare(a.standardShader, b.standardShader);
+	cmp = LuaMatShader::Compare(a.shaders[LuaMatShader::LUASHADER_PASS_FWD], b.shaders[LuaMatShader::LUASHADER_PASS_FWD]);
 
 	if (cmp != 0)
 		return cmp;
 
-	cmp = LuaMatShader::Compare(a.deferredShader, b.deferredShader);
+	cmp = LuaMatShader::Compare(a.shaders[LuaMatShader::LUASHADER_PASS_DFR], b.shaders[LuaMatShader::LUASHADER_PASS_DFR]);
 
 	if (cmp != 0)
 		return cmp;
@@ -410,8 +403,8 @@ void LuaMaterial::Print(const string& indent) const
 
 	LOG("%s%s", indent.c_str(), GetMatTypeName(type));
 	LOG("%sorder = %i", indent.c_str(), order);
-	standardShader.Print(indent);
-	deferredShader.Print(indent);
+	shaders[LuaMatShader::LUASHADER_PASS_FWD].Print(indent);
+	shaders[LuaMatShader::LUASHADER_PASS_DFR].Print(indent);
 	LOG("%stexCount = %i", indent.c_str(), texCount);
 	for (int t = 0; t < texCount; t++) {
 		char buf[32];

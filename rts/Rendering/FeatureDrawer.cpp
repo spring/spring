@@ -265,7 +265,7 @@ void CFeatureDrawer::Draw()
 	// first do the deferred pass; conditional because
 	// most of the water renderers use their own FBO's
 	if (drawDeferred && !water->DrawReflectionPass() && !water->DrawRefractionPass()) {
-		LuaObjectDrawer::DrawDeferredPass(nullptr, LUAOBJ_FEATURE);
+		LuaObjectDrawer::DrawDeferredPass(LUAOBJ_FEATURE);
 	}
 
 	// now do the regular forward pass
@@ -340,6 +340,9 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType, int luaMatType)
 				if (!shadowPass && LuaObjectDrawer::AddOpaqueMaterialObject(f, LUAOBJ_FEATURE))
 					continue;
 
+				if (!shadowPass)
+					unitDrawer->SetTeamColour(f->team, float2(f->drawAlpha, 0.0f));
+
 				DrawFeature(f, 0, 0, false, false);
 			}
 		}
@@ -386,13 +389,6 @@ void CFeatureDrawer::DrawFeatureNoTrans(
 	bool /*lodCall*/,
 	bool noLuaCall
 ) {
-	// TODO:
-	//   move this out of UnitDrawer(State), maybe to ModelDrawer
-	//   in general FeatureDrawer should make no UnitDrawer calls
-	if (!inShadowPass) {
-		unitDrawer->SetTeamColour(feature->team, float2(feature->drawAlpha, 1.0f * inAlphaPass));
-	}
-
 	if (preList != 0) {
 		glCallList(preList);
 	}
@@ -541,6 +537,8 @@ void CFeatureDrawer::DrawAlphaFeature(CFeature* feature, bool ffpMat)
 		return;
 
 	SetFeatureAlphaDrawState(feature, ffpMat);
+
+	unitDrawer->SetTeamColour(feature->team, float2(feature->drawAlpha, 1.0f));
 	DrawFeature(feature, 0, 0, false, false);
 }
 

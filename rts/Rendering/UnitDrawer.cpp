@@ -339,25 +339,21 @@ void CUnitDrawer::Update()
 
 void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 {
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	ISky::SetupFog();
 
 	camNorm = camera->GetDir();
 	camNorm.y = -0.1f;
 	camNorm.ANormalize();
 
-	const CPlayer* myPlayer = gu->GetMyPlayer();
-	const CUnit* excludeUnit = drawReflection? NULL: myPlayer->fpsController.GetControllee();
-
 	// first do the deferred pass; conditional because
 	// most of the water renderers use their own FBO's
 	if (drawDeferred && !drawReflection && !drawRefraction) {
-		LuaObjectDrawer::DrawDeferredPass(excludeUnit, LUAOBJ_UNIT);
+		LuaObjectDrawer::DrawDeferredPass(LUAOBJ_UNIT);
 	}
 
 	// now do the regular forward pass
 	if (drawForward) {
-		DrawOpaquePass(excludeUnit, false, drawReflection, drawRefraction);
+		DrawOpaquePass(false, drawReflection, drawRefraction);
 	}
 
 	farTextureHandler->Draw();
@@ -368,13 +364,13 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	glDisable(GL_TEXTURE_2D);
 }
 
-void CUnitDrawer::DrawOpaquePass(const CUnit* excludeUnit, bool deferredPass, bool drawReflection, bool drawRefraction)
+void CUnitDrawer::DrawOpaquePass(bool deferredPass, bool drawReflection, bool drawRefraction)
 {
 	SetupOpaqueDrawing(deferredPass);
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		PushModelRenderState(modelType);
-		DrawOpaqueUnits(modelType, excludeUnit, drawReflection, drawRefraction);
+		DrawOpaqueUnits(modelType, drawReflection, drawRefraction);
 		DrawOpaqueAIUnits(modelType);
 		PopModelRenderState(modelType);
 	}
@@ -391,7 +387,7 @@ void CUnitDrawer::DrawOpaquePass(const CUnit* excludeUnit, bool deferredPass, bo
 
 
 
-void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction)
+void CUnitDrawer::DrawOpaqueUnits(int modelType, bool drawReflection, bool drawRefraction)
 {
 	const auto& unitBin = opaqueModelRenderers[modelType]->GetUnitBin();
 
@@ -399,14 +395,14 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool 
 		BindModelTypeTexture(modelType, unitBinIt->first);
 
 		for (CUnit* unit: unitBinIt->second) {
-			DrawOpaqueUnit(unit, excludeUnit, drawReflection, drawRefraction);
+			DrawOpaqueUnit(unit, drawReflection, drawRefraction);
 		}
 	}
 }
 
-inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction)
+inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, bool drawReflection, bool drawRefraction)
 {
-	if (!CanDrawOpaqueUnit(unit, excludeUnit, drawReflection, drawRefraction))
+	if (!CanDrawOpaqueUnit(unit, drawReflection, drawRefraction))
 		return;
 
 	if ((unit->pos).SqDistance(camera->GetPos()) > (unit->sqRadius * unitDrawDistSqr)) {
@@ -486,11 +482,10 @@ void CUnitDrawer::DrawUnitIcons(bool drawReflection)
 
 bool CUnitDrawer::CanDrawOpaqueUnit(
 	const CUnit* unit,
-	const CUnit* excludeUnit,
 	bool drawReflection,
 	bool drawRefraction
 ) const {
-	if (unit == excludeUnit)
+	if (unit == (drawReflection? nullptr: (gu->GetMyPlayer())->fpsController.GetControllee()))
 		return false;
 	if (unit->noDraw)
 		return false;
@@ -692,7 +687,7 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 void CUnitDrawer::SetupAlphaDrawing(bool deferredPass)
 {
 	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState(true));
-	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass && false, resetTransform);
+	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass && false, true, resetTransform);
 
 	glActiveTexture(GL_TEXTURE0);
 	glEnable(GL_TEXTURE_2D);
@@ -720,9 +715,6 @@ void CUnitDrawer::DrawAlphaPass()
 	{
 		SetupAlphaDrawing(false);
 
-		// needed for the FFP case
-		glColor4f(1.0f, 1.0f, 1.0f, alphaValues.x);
-
 		if (UseAdvShading())
 			glDisable(GL_ALPHA_TEST);
 
@@ -735,8 +727,6 @@ void CUnitDrawer::DrawAlphaPass()
 
 		if (UseAdvShading())
 			glEnable(GL_ALPHA_TEST);
-
-		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
 		ResetAlphaDrawing(false);
 	}
@@ -966,7 +956,7 @@ void CUnitDrawer::SetupOpaqueDrawing(bool deferredPass)
 
 	// pick base shaders (ARB/GLSL) or FFP; not used by custom-material models
 	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState(false));
-	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass, resetTransform);
+	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass, false, resetTransform);
 
 	// NOTE:
 	//   when deferredPass is true we MUST be able to use the SSP render-state

@@ -36,7 +36,7 @@ public:
 	virtual bool CanDrawAlpha() const { return false; }
 	virtual bool CanDrawDeferred() const { return false; }
 
-	virtual void Enable(const CUnitDrawer*, bool, bool) {}
+	virtual void Enable(const CUnitDrawer*, bool, bool, bool) {}
 	virtual void Disable(const CUnitDrawer*, bool) {}
 
 	virtual void EnableTextures(const CUnitDrawer*) const {}
@@ -46,8 +46,6 @@ public:
 
 	virtual void UpdateCurrentShader(const CUnitDrawer*, const ISkyLight*) const {}
 	virtual void SetTeamColor(int team, const float2 alpha) const {}
-
-	static void SetBasicTeamColor(int team, float alpha);
 
 	void SetActiveShader(unsigned int shadowed, unsigned int deferred) {
 		// shadowed=1 --> shader 1 (deferred=0) or 3 (deferred=1)
@@ -83,7 +81,7 @@ struct UnitDrawerStateFFP: public IUnitDrawerState {
 public:
 	bool CanEnable(const CUnitDrawer*) const;
 
-	void Enable(const CUnitDrawer*, bool, bool);
+	void Enable(const CUnitDrawer*, bool, bool, bool);
 	void Disable(const CUnitDrawer*, bool);
 
 	void EnableTextures(const CUnitDrawer*) const;
@@ -100,7 +98,7 @@ public:
 
 	bool CanEnable(const CUnitDrawer*) const;
 
-	void Enable(const CUnitDrawer*, bool, bool);
+	void Enable(const CUnitDrawer*, bool, bool, bool);
 	void Disable(const CUnitDrawer*, bool);
 
 	void EnableTextures(const CUnitDrawer*) const;
@@ -121,7 +119,7 @@ public:
 	bool CanDrawAlpha() const { return true; }
 	bool CanDrawDeferred() const { return true; }
 
-	void Enable(const CUnitDrawer*, bool, bool);
+	void Enable(const CUnitDrawer*, bool, bool, bool);
 	void Disable(const CUnitDrawer*, bool);
 
 	void EnableTextures(const CUnitDrawer*) const;

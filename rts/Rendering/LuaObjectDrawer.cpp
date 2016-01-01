@@ -32,6 +32,8 @@ CONFIG(float, LODScaleRefraction).defaultValue(1.0f);
 GL::GeometryBuffer* LuaObjectDrawer::geomBuffer = nullptr;
 
 bool LuaObjectDrawer::inDrawPass = false;
+bool LuaObjectDrawer::inAlphaBin = false;
+
 bool LuaObjectDrawer::drawDeferredEnabled = false;
 bool LuaObjectDrawer::drawDeferredAllowed = false;
 bool LuaObjectDrawer::bufferClearAllowed = false;
@@ -238,7 +240,7 @@ void LuaObjectDrawer::ReadLODScales(LuaObjType objType)
 
 void LuaObjectDrawer::SetDrawPassGlobalLODFactor(LuaObjType objType)
 {
-	if (shadowHandler->inShadowPass) {
+	if (shadowHandler->InShadowPass()) {
 		LuaObjectMaterialData::SetGlobalLODFactor(objType, GetLODScaleShadow(objType) * camera->GetLPPScale());
 		return;
 	}
@@ -269,10 +271,11 @@ void LuaObjectDrawer::DrawMaterialBins(LuaObjType objType, LuaMatType matType, b
 		return;
 
 	inDrawPass = true;
+	inAlphaBin = (matType == LUAMAT_ALPHA || matType == LUAMAT_ALPHA_REFLECT);
 
 	glPushAttrib(GL_TEXTURE_BIT | GL_ENABLE_BIT | GL_TRANSFORM_BIT);
 
-	if (matType == LUAMAT_ALPHA || matType == LUAMAT_ALPHA_REFLECT) {
+	if (inAlphaBin) {
 		glEnable(GL_ALPHA_TEST);
 		glAlphaFunc(GL_GREATER, 0.1f);
 		glEnable(GL_BLEND);
@@ -285,7 +288,7 @@ void LuaObjectDrawer::DrawMaterialBins(LuaObjType objType, LuaMatType matType, b
 	const LuaMaterial* currMat = &LuaMaterial::defMat;
 
 	for (auto it = bins.cbegin(); it != bins.cend(); ++it) {
-		currMat = DrawMaterialBin(*it, currMat, objType, matType, deferredPass);
+		currMat = DrawMaterialBin(*it, currMat, objType, matType, deferredPass, inAlphaBin);
 	}
 
 	LuaMaterial::defMat.Execute(*currMat, deferredPass);
@@ -293,6 +296,7 @@ void LuaObjectDrawer::DrawMaterialBins(LuaObjType objType, LuaMatType matType, b
 
 	glPopAttrib();
 
+	inAlphaBin = false;
 	inDrawPass = false;
 }
 
@@ -301,45 +305,61 @@ const LuaMaterial* LuaObjectDrawer::DrawMaterialBin(
 	const LuaMaterial* currMat,
 	LuaObjType objType,
 	LuaMatType matType,
-	bool deferredPass
+	bool deferredPass,
+	bool alphaMatBin
 ) {
 	currBin->Execute(*currMat, deferredPass);
 
 	const std::vector<CSolidObject*>& objects = currBin->GetObjects(objType);
+	const LuaMatShader* binShader = &currBin->shaders[deferredPass];
 
 	for (const CSolidObject* obj: objects) {
 		const LuaObjectMaterialData* matData = obj->GetLuaMaterialData();
 		const LuaObjectLODMaterial* lodMat = matData->GetLuaLODMaterial(matType);
 
-		lodMat->uniforms.Execute(obj);
-
-		DrawObject(obj, objType, lodMat->preDisplayList, lodMat->postDisplayList, true, false);
+		DrawBinObject(obj, objType, lodMat, binShader,  alphaMatBin, true, false);
 	}
 
 	return currBin;
 }
 
-void LuaObjectDrawer::DrawObject(
+void LuaObjectDrawer::DrawBinObject(
 	const CSolidObject* obj,
 	LuaObjType objType,
-	unsigned int preList,
-	unsigned int postList,
+	const LuaObjectLODMaterial* lodMat,
+	const LuaMatShader* shader,
+	bool alphaMatBin,
 	bool applyTrans,
 	bool noLuaCall
 ) {
+	lodMat->uniforms.Execute(obj);
+
+	const unsigned int preList = lodMat->preDisplayList;
+	const unsigned int postList = lodMat->postDisplayList;
+
 	switch (objType) {
 		case LUAOBJ_UNIT: {
-			// note: only makes sense to set team-color if the
-			// material has a standard (engine) shader attached
-			// (check if *Shader.type == LUASHADER_{3DO,S3O})
-			//
-			unitDrawer->SetTeamColour(obj->team);
+			const UnitDrawFunc func = unitDrawFuncs[applyTrans];
+			const CUnit* unit = static_cast<const CUnit*>(obj);
+
+			// only useful to set this if the object has a standard
+			// (engine) shader attached, otherwise requires testing
+			// if shader is bound in DrawerState etc (there is *no*
+			// FFP fallback for customs to rely on anymore!)
+			if (!shader->HasCustomType())
+				unitDrawer->SetTeamColour(obj->team);
+
 			// must use static_cast here because of GetTransformMatrix (!)
-			CALL_FUNC_VA(unitDrawer, unitDrawFuncs[applyTrans], static_cast<const CUnit*>(obj), preList, postList, true, noLuaCall);
+			CALL_FUNC_VA(unitDrawer, func,  unit, preList, postList, true, noLuaCall);
 		} break;
 		case LUAOBJ_FEATURE: {
-			// also sets team-color (needs a specific alpha-value)
-			CALL_FUNC_VA(featureDrawer, featureDrawFuncs[applyTrans], static_cast<const CFeature*>(obj), preList, postList, true, noLuaCall);
+			const FeatureDrawFunc func = featureDrawFuncs[applyTrans];
+			const CFeature* feature = static_cast<const CFeature*>(obj);
+
+			if (!shader->HasCustomType())
+				unitDrawer->SetTeamColour(obj->team, float2(feature->drawAlpha, 1.0f * alphaMatBin));
+
+			CALL_FUNC_VA(featureDrawer, func,  feature, preList, postList, true, noLuaCall);
 		} break;
 		default: {
 			assert(false);
@@ -348,7 +368,7 @@ void LuaObjectDrawer::DrawObject(
 }
 
 
-void LuaObjectDrawer::DrawDeferredPass(const CSolidObject* excludeObj, LuaObjType objType)
+void LuaObjectDrawer::DrawDeferredPass(LuaObjType objType)
 {
 	if (!drawDeferredEnabled)
 		return;
@@ -374,7 +394,7 @@ void LuaObjectDrawer::DrawDeferredPass(const CSolidObject* excludeObj, LuaObjTyp
 
 	switch (objType) {
 		case LUAOBJ_UNIT: {
-			unitDrawer->DrawOpaquePass(static_cast<const CUnit*>(excludeObj), true, false, false);
+			unitDrawer->DrawOpaquePass(true, false, false);
 		} break;
 		case LUAOBJ_FEATURE: {
 			featureDrawer->DrawOpaquePass(true, false, false);
@@ -402,7 +422,7 @@ void LuaObjectDrawer::DrawDeferredPass(const CSolidObject* excludeObj, LuaObjTyp
 
 
 
-static bool DrawSingleObjectCommon(const CSolidObject* obj, LuaObjType objType, bool applyTrans)
+bool LuaObjectDrawer::DrawSingleObjectCommon(const CSolidObject* obj, LuaObjType objType, bool applyTrans)
 {
 	const LuaObjectMaterialData* matData = obj->GetLuaMaterialData();
 	const LuaObjectLODMaterial* lodMat = nullptr;
@@ -418,16 +438,16 @@ static bool DrawSingleObjectCommon(const CSolidObject* obj, LuaObjType objType, 
 
 	switch (objType) {
 		case LUAOBJ_UNIT: {
-			luaMatHandler.setupDrawStateFuncs[LuaMatShader::LUASHADER_3DO] = SetupOpaqueUnitDrawState;
-			luaMatHandler.resetDrawStateFuncs[LuaMatShader::LUASHADER_3DO] = ResetOpaqueUnitDrawState;
-			luaMatHandler.setupDrawStateFuncs[LuaMatShader::LUASHADER_S3O] = SetupOpaqueUnitDrawState;
-			luaMatHandler.resetDrawStateFuncs[LuaMatShader::LUASHADER_S3O] = ResetOpaqueUnitDrawState;
+			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+				luaMatHandler.setupDrawStateFuncs[modelType] = SetupOpaqueUnitDrawState;
+				luaMatHandler.resetDrawStateFuncs[modelType] = ResetOpaqueUnitDrawState;
+			}
 		} break;
 		case LUAOBJ_FEATURE: {
-			luaMatHandler.setupDrawStateFuncs[LuaMatShader::LUASHADER_3DO] = SetupOpaqueFeatureDrawState;
-			luaMatHandler.resetDrawStateFuncs[LuaMatShader::LUASHADER_3DO] = ResetOpaqueFeatureDrawState;
-			luaMatHandler.setupDrawStateFuncs[LuaMatShader::LUASHADER_S3O] = SetupOpaqueFeatureDrawState;
-			luaMatHandler.resetDrawStateFuncs[LuaMatShader::LUASHADER_S3O] = ResetOpaqueFeatureDrawState;
+			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+				luaMatHandler.setupDrawStateFuncs[modelType] = SetupOpaqueFeatureDrawState;
+				luaMatHandler.resetDrawStateFuncs[modelType] = ResetOpaqueFeatureDrawState;
+			}
 		} break;
 		default: {
 			assert(false);
@@ -438,17 +458,17 @@ static bool DrawSingleObjectCommon(const CSolidObject* obj, LuaObjType objType, 
 	LuaObjectMaterialData::SetGlobalLODFactor(objType, LuaObjectDrawer::GetLODScale(objType) * camera->GetLPPScale());
 
 	// get the ref-counted actual material
-	const LuaMatBin* bin = lodMat->matref.GetBin();
-	const LuaMaterial* mat = bin;
+	const LuaMatBin* currBin = lodMat->matref.GetBin();
+	const LuaMaterial* currMat = currBin;
+	const LuaMatShader* binShader = &currBin->shaders[false];
 
 	// NOTE: doesn't make sense to support deferred mode for this? (extra arg in gl.Unit, etc)
-	mat->Execute(LuaMaterial::defMat, false);
-	lodMat->uniforms.Execute(obj);
+	currMat->Execute(LuaMaterial::defMat, false);
 
-	LuaObjectDrawer::DrawObject(obj, objType, lodMat->preDisplayList, lodMat->postDisplayList, applyTrans, true);
+	DrawBinObject(obj, objType, lodMat, binShader,  false, applyTrans, true);
 
 	// switch back to default material
-	LuaMaterial::defMat.Execute(*mat, false);
+	LuaMaterial::defMat.Execute(*currMat, false);
 	return true;
 }
 
@@ -522,16 +542,16 @@ void LuaObjectDrawer::DrawOpaqueMaterialObjects(LuaObjType objType, bool deferre
 {
 	switch (objType) {
 		case LUAOBJ_UNIT: {
-			luaMatHandler.setupDrawStateFuncs[LuaMatShader::LUASHADER_3DO] = SetupOpaqueUnitDrawState;
-			luaMatHandler.resetDrawStateFuncs[LuaMatShader::LUASHADER_3DO] = ResetOpaqueUnitDrawState;
-			luaMatHandler.setupDrawStateFuncs[LuaMatShader::LUASHADER_S3O] = SetupOpaqueUnitDrawState;
-			luaMatHandler.resetDrawStateFuncs[LuaMatShader::LUASHADER_S3O] = ResetOpaqueUnitDrawState;
+			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+				luaMatHandler.setupDrawStateFuncs[modelType] = SetupOpaqueUnitDrawState;
+				luaMatHandler.resetDrawStateFuncs[modelType] = ResetOpaqueUnitDrawState;
+			}
 		} break;
 		case LUAOBJ_FEATURE: {
-			luaMatHandler.setupDrawStateFuncs[LuaMatShader::LUASHADER_3DO] = SetupOpaqueFeatureDrawState;
-			luaMatHandler.resetDrawStateFuncs[LuaMatShader::LUASHADER_3DO] = ResetOpaqueFeatureDrawState;
-			luaMatHandler.setupDrawStateFuncs[LuaMatShader::LUASHADER_S3O] = SetupOpaqueFeatureDrawState;
-			luaMatHandler.resetDrawStateFuncs[LuaMatShader::LUASHADER_S3O] = ResetOpaqueFeatureDrawState;
+			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+				luaMatHandler.setupDrawStateFuncs[modelType] = SetupOpaqueFeatureDrawState;
+				luaMatHandler.resetDrawStateFuncs[modelType] = ResetOpaqueFeatureDrawState;
+			}
 		} break;
 		default: {
 			assert(false);
@@ -545,16 +565,16 @@ void LuaObjectDrawer::DrawAlphaMaterialObjects(LuaObjType objType, bool)
 {
 	switch (objType) {
 		case LUAOBJ_UNIT: {
-			luaMatHandler.setupDrawStateFuncs[LuaMatShader::LUASHADER_3DO] = SetupAlphaUnitDrawState;
-			luaMatHandler.resetDrawStateFuncs[LuaMatShader::LUASHADER_3DO] = ResetAlphaUnitDrawState;
-			luaMatHandler.setupDrawStateFuncs[LuaMatShader::LUASHADER_S3O] = SetupAlphaUnitDrawState;
-			luaMatHandler.resetDrawStateFuncs[LuaMatShader::LUASHADER_S3O] = ResetAlphaUnitDrawState;
+			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+				luaMatHandler.setupDrawStateFuncs[modelType] = SetupAlphaUnitDrawState;
+				luaMatHandler.resetDrawStateFuncs[modelType] = ResetAlphaUnitDrawState;
+			}
 		} break;
 		case LUAOBJ_FEATURE: {
-			luaMatHandler.setupDrawStateFuncs[LuaMatShader::LUASHADER_3DO] = SetupAlphaFeatureDrawState;
-			luaMatHandler.resetDrawStateFuncs[LuaMatShader::LUASHADER_3DO] = ResetAlphaFeatureDrawState;
-			luaMatHandler.setupDrawStateFuncs[LuaMatShader::LUASHADER_S3O] = SetupAlphaFeatureDrawState;
-			luaMatHandler.resetDrawStateFuncs[LuaMatShader::LUASHADER_S3O] = ResetAlphaFeatureDrawState;
+			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+				luaMatHandler.setupDrawStateFuncs[modelType] = SetupAlphaFeatureDrawState;
+				luaMatHandler.resetDrawStateFuncs[modelType] = ResetAlphaFeatureDrawState;
+			}
 		} break;
 		default: {
 			assert(false);
@@ -569,16 +589,16 @@ void LuaObjectDrawer::DrawShadowMaterialObjects(LuaObjType objType, bool)
 {
 	switch (objType) {
 		case LUAOBJ_UNIT: {
-			luaMatHandler.setupDrawStateFuncs[LuaMatShader::LUASHADER_3DO] = SetupShadowUnitDrawState;
-			luaMatHandler.resetDrawStateFuncs[LuaMatShader::LUASHADER_3DO] = ResetShadowUnitDrawState;
-			luaMatHandler.setupDrawStateFuncs[LuaMatShader::LUASHADER_S3O] = SetupShadowUnitDrawState;
-			luaMatHandler.resetDrawStateFuncs[LuaMatShader::LUASHADER_S3O] = ResetShadowUnitDrawState;
+			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+				luaMatHandler.setupDrawStateFuncs[modelType] = SetupShadowUnitDrawState;
+				luaMatHandler.resetDrawStateFuncs[modelType] = ResetShadowUnitDrawState;
+			}
 		} break;
 		case LUAOBJ_FEATURE: {
-			luaMatHandler.setupDrawStateFuncs[LuaMatShader::LUASHADER_3DO] = SetupShadowFeatureDrawState;
-			luaMatHandler.resetDrawStateFuncs[LuaMatShader::LUASHADER_3DO] = ResetShadowFeatureDrawState;
-			luaMatHandler.setupDrawStateFuncs[LuaMatShader::LUASHADER_S3O] = SetupShadowFeatureDrawState;
-			luaMatHandler.resetDrawStateFuncs[LuaMatShader::LUASHADER_S3O] = ResetShadowFeatureDrawState;
+			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+				luaMatHandler.setupDrawStateFuncs[modelType] = SetupShadowFeatureDrawState;
+				luaMatHandler.resetDrawStateFuncs[modelType] = ResetShadowFeatureDrawState;
+			}
 		} break;
 		default: {
 			assert(false);

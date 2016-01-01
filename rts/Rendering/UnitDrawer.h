@@ -68,7 +68,7 @@ public:
 	void Update();
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
-	void DrawOpaquePass(const CUnit* excludeUnit, bool deferredPass, bool drawReflection, bool drawRefraction);
+	void DrawOpaquePass(bool deferredPass, bool drawReflection, bool drawRefraction);
 	void DrawShadowPass();
 	void DrawAlphaPass();
 
@@ -97,12 +97,6 @@ public:
 	// alpha.y := alpha-pass (true or false)
 	void SetTeamColour(int team, const float2 alpha = float2(1.0f, 0.0f)) const;
 
-
-	#if 0
-	// these handle either an opaque- or an alpha-pass (depending on advShading)
-	void SetupOpaqueAlphaDrawing(bool deferredPass, bool haveAdvShading);
-	void ResetOpaqueAlphaDrawing(bool deferredPass, bool haveAdvShading);
-	#endif
 
 	void SetupOpaqueDrawing(bool deferredPass);
 	void ResetOpaqueDrawing(bool deferredPass) const;
@@ -170,13 +164,13 @@ private:
 	/// Returns true if the given unit should be drawn as icon in the current frame.
 	bool DrawAsIcon(const CUnit* unit, const float sqUnitCamDist) const;
 
-	bool CanDrawOpaqueUnit(const CUnit* unit, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction) const;
+	bool CanDrawOpaqueUnit(const CUnit* unit, bool drawReflection, bool drawRefraction) const;
 	bool CanDrawOpaqueUnitShadow(const CUnit* unit) const;
 
-	void DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction);
+	void DrawOpaqueUnit(CUnit* unit, bool drawReflection, bool drawRefraction);
 	void DrawOpaqueUnitShadow(CUnit* unit);
 	void DrawOpaqueUnitsShadow(int modelType);
-	void DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction);
+	void DrawOpaqueUnits(int modelType, bool drawReflection, bool drawRefraction);
 
 	void DrawAlphaUnits(int modelType);
 	void DrawAlphaUnit(CUnit* unit, int modelType, bool drawGhostBuildingsPass);
@@ -233,6 +227,12 @@ public:
 	float3 unitAmbientColor;
 	float3 unitSunColor;
 
+	// .x := regular unit alpha
+	// .y := ghosted unit alpha (out of radar)
+	// .z := ghosted unit alpha (inside radar)
+	// .w := AI-temp unit alpha
+	float4 alphaValues;
+
 private:
 	bool drawForward;
 	bool drawDeferred;
@@ -245,12 +245,6 @@ private:
 
 	bool useDistToGroundForIcons;
 	float sqCamDistToGroundForIcons;
-
-	// .x := regular unit alpha
-	// .y := ghosted unit alpha (out of radar)
-	// .z := ghosted unit alpha (inside radar)
-	// .w := AI-temp unit alpha
-	float4 alphaValues;
 
 private:
 	std::vector<IModelRenderContainer*> opaqueModelRenderers;

@@ -15,6 +15,7 @@
 #include "Rendering/Shaders/Shader.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/myMath.h"
 
 
 
@@ -146,18 +147,6 @@ void IUnitDrawerState::DisableTexturesCommon(const CUnitDrawer* ud) const {
 	glDisable(GL_TEXTURE_2D);
 }
 
-void IUnitDrawerState::SetBasicTeamColor(int team, float alpha) {
-	const CTeam* t = teamHandler->Team(team);
-	const unsigned char* c = t->color;
-
-	const float texConstant[] = {c[0] / 255.0f, c[1] / 255.0f, c[2] / 255.0f, alpha};
-	const float matConstant[] = {1.0f, 1.0f, 1.0f, alpha};
-
-	glActiveTexture(GL_TEXTURE0);
-	glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, texConstant);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, matConstant);
-}
-
 
 
 bool UnitDrawerStateFFP::CanEnable(const CUnitDrawer* ud) const {
@@ -175,7 +164,7 @@ bool UnitDrawerStateFFP::CanEnable(const CUnitDrawer* ud) const {
 	return (!ud->UseAdvShading() || water->DrawReflectionPass());
 }
 
-void UnitDrawerStateFFP::Enable(const CUnitDrawer* ud, bool, bool) {
+void UnitDrawerStateFFP::Enable(const CUnitDrawer* ud, bool deferredPass, bool alphaPass, bool resetTransform) {
 	glEnable(GL_LIGHTING);
 	glLightfv(GL_LIGHT1, GL_POSITION, sky->GetLight()->GetLightDir());
 	glEnable(GL_LIGHT1);
@@ -183,14 +172,15 @@ void UnitDrawerStateFFP::Enable(const CUnitDrawer* ud, bool, bool) {
 	CUnitDrawer::SetupBasicS3OTexture1();
 	CUnitDrawer::SetupBasicS3OTexture0();
 
-	// Set material color
-	static const float cols[] = {1.0f, 1.0f, 1.0, 1.0f};
+	const float4 color = {1.0f, 1.0f, 1.0, mix(1.0f, ud->alphaValues.x, (1.0f * alphaPass))};
 
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, cols);
-	glColor4fv(cols);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, &color.x);
+	glColor4fv(&color.x);
 }
 
 void UnitDrawerStateFFP::Disable(const CUnitDrawer* ud, bool) {
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
 	glDisable(GL_LIGHTING);
 	glDisable(GL_LIGHT1);
 
@@ -220,7 +210,16 @@ void UnitDrawerStateFFP::DisableTextures(const CUnitDrawer*) const {
 void UnitDrawerStateFFP::SetTeamColor(int team, const float2 alpha) const {
 	// non-shader case via texture combiners
 	assert(teamHandler->IsValidTeam(team));
-	SetBasicTeamColor(team, alpha.x);
+
+	const CTeam* t = teamHandler->Team(team);
+	const unsigned char* c = t->color;
+
+	const float texConstant[] = {c[0] / 255.0f, c[1] / 255.0f, c[2] / 255.0f, alpha.x};
+	const float matConstant[] = {         1.0f,          1.0f,          1.0f, alpha.x};
+
+	glActiveTexture(GL_TEXTURE0);
+	glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, texConstant);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, matConstant);
 }
 
 
@@ -269,7 +268,7 @@ bool UnitDrawerStateARB::CanEnable(const CUnitDrawer* ud) const {
 	return (ud->UseAdvShading() && !water->DrawReflectionPass());
 }
 
-void UnitDrawerStateARB::Enable(const CUnitDrawer* ud, bool deferredPass, bool resetTransform) {
+void UnitDrawerStateARB::Enable(const CUnitDrawer* ud, bool deferredPass, bool alphaPass, bool resetTransform) {
 	EnableCommon(ud, deferredPass && false, resetTransform);
 
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
@@ -312,12 +311,6 @@ void UnitDrawerStateARB::SetTeamColor(int team, const float2 alpha) const {
 
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(14, &c[0]);
-
-	#if 0
-	if (LuaObjectDrawer::InDrawPass()) {
-		SetBasicTeamColor(team, alpha);
-	}
-	#endif
 }
 
 
@@ -409,7 +402,7 @@ bool UnitDrawerStateGLSL::CanEnable(const CUnitDrawer* ud) const {
 	return (ud->UseAdvShading() && !water->DrawReflectionPass());
 }
 
-void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud, bool deferredPass, bool resetTransform) {
+void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud, bool deferredPass, bool alphaPass, bool resetTransform) {
 	EnableCommon(ud, deferredPass, resetTransform);
 
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform3fv(6, &camera->GetPos()[0]);
@@ -457,11 +450,5 @@ void UnitDrawerStateGLSL::SetTeamColor(int team, const float2 alpha) const {
 
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(9, &c[0]);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform1f(15, alpha.y);
-
-	#if 0
-	if (LuaObjectDrawer::InDrawPass()) {
-		SetBasicTeamColor(team, alpha);
-	}
-	#endif
 }
 
