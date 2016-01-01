@@ -264,6 +264,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetFeatureHeight);
 	REGISTER_LUA_CFUNC(GetFeatureRadius);
 	REGISTER_LUA_CFUNC(GetFeaturePosition);
+	REGISTER_LUA_CFUNC(GetFeatureRotation);
 	REGISTER_LUA_CFUNC(GetFeatureDirection);
 	REGISTER_LUA_CFUNC(GetFeatureVelocity);
 	REGISTER_LUA_CFUNC(GetFeatureHeading);
@@ -574,6 +575,59 @@ static int GetSolidObjectPosition(lua_State* L, const CSolidObject* o, bool isFe
 	}
 
 	return (3 + (3 * returnMidPos) + (3 * returnAimPos));
+}
+
+bool closeEnough(const float& a, const float& b, const float& epsilon = std::numeric_limits<float>::epsilon()) {
+    return (epsilon > std::abs(a - b));
+}
+
+// Adapted from: http://stackoverflow.com/questions/18433801/converting-a-3x3-matrix-to-euler-tait-bryan-angles-pitch-yaw-roll?answertab=votes#tab-top
+float4 GetEulerAngles(const CMatrix44f& R) {
+    //check for gimbal lock
+    if (closeEnough(R[0 * 4 + 2], -1.0f)) {
+        float x = 0; //gimbal lock, value of x doesn't matter
+        float y = PI / 2;
+        float z = x + atan2(R[1 * 4 + 0], R[2 * 4 + 0]);
+        return { -y, -x, -z };
+    } else if (closeEnough(R[0 * 4 + 2], 1.0f)) {
+        float x = 0;
+        float y = -PI / 2;
+        float z = -x + atan2(-R[1 * 4 + 0], -R[2 * 4 + 0]);
+        return { -y, -x, -z };
+    } else { //two solutions exist;
+        float x1 = -asin(R[0 * 4 + 2]);
+        float x2 = PI - x1;
+
+        float y1 = atan2(R[1 * 4 + 2] / cos(x1), R[2 * 4 + 2] / cos(x1));
+        float y2 = atan2(R[1 * 4 + 2] / cos(x2), R[2 * 4 + 2] / cos(x2));
+
+        float z1 = atan2(R[0 * 4 + 1] / cos(x1), R[0 * 4 + 0] / cos(x1));
+        float z2 = atan2(R[0 * 4 + 1] / cos(x2), R[0 * 4 + 0] / cos(x2));
+
+        //choose one solution to return
+        //for example the "shortest" rotation
+        if ((std::abs(x1) + std::abs(y1) + std::abs(z1)) <= (std::abs(x2) + std::abs(y2) + std::abs(z2))) {
+            return { -y1, -x1, -z1 };
+        } else {
+            return { -y2, -x2, -z2 };
+        }
+    }
+}
+
+static int GetSolidObjectRotation(lua_State* L, const CSolidObject* o)
+{
+	if (o == NULL)
+		return 0;
+
+	const CMatrix44f& matrix = o->GetTransformMatrix(CLuaHandle::GetHandleSynced(L));
+	const float3 eulerAngles = GetEulerAngles(matrix);
+
+	assert(matrix.IsOrthoNormal() == 0);
+
+	lua_pushnumber(L, eulerAngles.x);
+	lua_pushnumber(L, eulerAngles.y);
+	lua_pushnumber(L, eulerAngles.z);
+	return 3;
 }
 
 static int GetSolidObjectBlocking(lua_State* L, const CSolidObject* o)
@@ -2931,27 +2985,7 @@ int LuaSyncedRead::GetUnitVectors(lua_State* L)
 
 int LuaSyncedRead::GetUnitRotation(lua_State* L)
 {
-	const CUnit* unit = ParseInLosUnit(L, __FUNCTION__, 1);
-
-	if (unit == NULL)
-		return 0;
-
-	const CMatrix44f& matrix = unit->GetTransformMatrix(CLuaHandle::GetHandleSynced(L));
-	const float3 xdir = (matrix.GetX() * XYVector).SafeNormalize(); // worldspace, NOT unitspace
-	const float3 ydir = (matrix.GetY() * YZVector).SafeNormalize();
-	const float3 zdir = (matrix.GetZ() * XZVector).SafeNormalize();
-
-	const float pitchAngle = math::acosf(Clamp(math::fabs(ydir.dot( UpVector)), -1.0f, 1.0f)); // x
-	const float yawAngle   = math::acosf(Clamp(math::fabs(zdir.dot(FwdVector)), -1.0f, 1.0f)); // y
-	const float rollAngle  = math::acosf(Clamp(math::fabs(xdir.dot(RgtVector)), -1.0f, 1.0f)); // z
-
-	assert(matrix.IsOrthoNormal() == 0);
-
-	// FIXME: inaccurate with chained rotations (output != input)
-	lua_pushnumber(L, -pitchAngle * Sign(ydir.dot(FwdVector))); // x
-	lua_pushnumber(L,   -yawAngle * Sign(zdir.dot(RgtVector))); // y
-	lua_pushnumber(L,  -rollAngle * Sign(xdir.dot( UpVector))); // z
-	return 3;
+	return GetSolidObjectRotation(L, ParseInLosUnit(L, __FUNCTION__, 1));
 }
 
 int LuaSyncedRead::GetUnitDirection(lua_State* L)
@@ -4452,6 +4486,14 @@ int LuaSyncedRead::GetFeatureSeparation(lua_State* L)
 	return 1;
 }
 
+int LuaSyncedRead::GetFeatureRotation(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+	if (feature == NULL || !IsFeatureVisible(L, feature)) {
+		return 0;
+	}
+	return GetSolidObjectRotation(L, feature);
+}
 
 int LuaSyncedRead::GetFeatureDirection(lua_State* L)
 {

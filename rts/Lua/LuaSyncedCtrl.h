@@ -115,10 +115,13 @@ class LuaSyncedCtrl
 		static int SetFeatureHealth(lua_State* L);
 		static int SetFeatureReclaim(lua_State* L);
 		static int SetFeatureResurrect(lua_State* L);
+
 		static int SetFeaturePhysics(lua_State* L);
 		static int SetFeaturePosition(lua_State* L);
+		static int SetFeatureRotation(lua_State* L);
 		static int SetFeatureDirection(lua_State* L);
 		static int SetFeatureVelocity(lua_State* L);
+
 		static int SetFeatureBlocking(lua_State* L);
 		static int SetFeatureNoSelect(lua_State* L);
 		static int SetFeatureMidAndAimPos(lua_State* L);

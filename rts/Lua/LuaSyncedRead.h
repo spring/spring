@@ -177,6 +177,7 @@ class LuaSyncedRead {
 		static int GetFeatureRadius(lua_State* L);
 		static int GetFeaturePosition(lua_State* L);
 		static int GetFeatureSeparation(lua_State* L);
+		static int GetFeatureRotation(lua_State* L);
 		static int GetFeatureDirection(lua_State* L);
 		static int GetFeatureVelocity(lua_State* L);
 		static int GetFeatureHeading(lua_State* L);

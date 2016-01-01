@@ -221,10 +221,13 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetFeatureHealth);
 	REGISTER_LUA_CFUNC(SetFeatureReclaim);
 	REGISTER_LUA_CFUNC(SetFeatureResurrect);
+
 	REGISTER_LUA_CFUNC(SetFeaturePhysics);
 	REGISTER_LUA_CFUNC(SetFeaturePosition);
 	REGISTER_LUA_CFUNC(SetFeatureVelocity);
+	REGISTER_LUA_CFUNC(SetFeatureRotation);
 	REGISTER_LUA_CFUNC(SetFeatureDirection);
+
 	REGISTER_LUA_CFUNC(SetFeatureBlocking);
 	REGISTER_LUA_CFUNC(SetFeatureNoSelect);
 	REGISTER_LUA_CFUNC(SetFeatureMidAndAimPos);
@@ -505,6 +508,25 @@ static int SetSolidObjectBlocking(lua_State* L, CSolidObject* o)
 
 	lua_pushboolean(L, o->IsBlocking());
 	return 1;
+}
+
+static int SetSolidObjectRotation(lua_State* L, CSolidObject* o)
+{
+	if (o == NULL)
+		return 0;
+
+	CMatrix44f matrix;
+	matrix.RotateZ(ClampRad(luaL_checkfloat(L, 4))); // .z := roll
+	matrix.RotateY(ClampRad(luaL_checkfloat(L, 3))); // .y := yaw
+	matrix.RotateX(ClampRad(luaL_checkfloat(L, 2))); // .x := pitch
+
+	assert(matrix.IsOrthoNormal() == 0);
+
+	o->SetDirVectors(matrix);
+	// FIXME: Using ForcedSpin instead of the two functions below will cause undesired results to happen. Probably needs fixing.
+	o->SetHeadingFromDirection();
+	o->UpdateMidAndAimPos();
+	return 0;
 }
 
 static int SetSolidObjectDirection(lua_State* L, CSolidObject* o)
@@ -2299,25 +2321,8 @@ int LuaSyncedCtrl::SetUnitPosition(lua_State* L)
 
 int LuaSyncedCtrl::SetUnitRotation(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-
-	if (unit == NULL)
-		return 0;
-
-	CMatrix44f matrix;
-	matrix.RotateZ(ClampRad(luaL_checkfloat(L, 4))); // .z := roll
-	matrix.RotateX(ClampRad(luaL_checkfloat(L, 2))); // .x := pitch
-	matrix.RotateY(ClampRad(luaL_checkfloat(L, 3))); // .y := yaw
-
-	assert(matrix.IsOrthoNormal() == 0);
-
-	// do not need ForcedSpin, below three calls cover it
-	unit->SetDirVectors(matrix);
-	unit->UpdateMidAndAimPos();
-	unit->SetHeadingFromDirection();
-	return 0;
+	return (SetSolidObjectRotation(L, ParseUnit(L, __FUNCTION__, 1)));
 }
-
 
 int LuaSyncedCtrl::SetUnitDirection(lua_State* L)
 {
@@ -2669,6 +2674,17 @@ int LuaSyncedCtrl::SetFeaturePosition(lua_State* L)
 	return 0;
 }
 
+int LuaSyncedCtrl::SetFeatureRotation(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+	if (feature == NULL)
+		return 0;
+
+	SetSolidObjectRotation(L, feature);
+	// This is the HACK-y part where we manually set the transform instead of using ForcedSpin() or CalculateTransform() to do it
+	feature->SetTransform(CMatrix44f(feature->pos, -feature->rightdir, feature->updir, feature->frontdir));
+	return 0;
+}
 
 int LuaSyncedCtrl::SetFeatureDirection(lua_State* L)
 {

@@ -31,6 +31,7 @@ Lua:
  - new Spring.SetFeatureFade(featureID, bool) to control whether a feature will fade or not when zoomed out.
 
  - add callouts (see their Unit equivalents for documentation)
+     Spring.{Get,Set}FeatureRotation 
      Spring.{Get,Set}FeaturePieceCollisionVolumeData
      Spring.GetFeatureLastAttackedPiece
      Spring.GetFeaturePieceMap
