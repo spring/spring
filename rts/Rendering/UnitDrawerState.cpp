@@ -19,13 +19,13 @@
 
 
 
-static float4 GetTeamColor(int team, float2 alpha) {
+static float4 GetTeamColor(int team, float alpha) {
 	assert(teamHandler->IsValidTeam(team));
 
 	const   CTeam* t = teamHandler->Team(team);
 	const uint8_t* c = t->color;
 
-	return (float4(c[0] / 255.0f, c[1] / 255.0f, c[2] / 255.0f, alpha.x));
+	return (float4(c[0] / 255.0f, c[1] / 255.0f, c[2] / 255.0f, alpha));
 }
 
 
@@ -223,7 +223,7 @@ void UnitDrawerStateFFP::SetTeamColor(int team, const float2 alpha) const {
 	const float4 m = {1.0f, 1.0f, 1.0f, alpha.x};
 
 	glActiveTexture(GL_TEXTURE0);
-	glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, std::move(GetTeamColor(team, alpha)));
+	glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, std::move(GetTeamColor(team, alpha.x)));
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, &m.x);
 }
 
@@ -310,7 +310,7 @@ void UnitDrawerStateARB::SetTeamColor(int team, const float2 alpha) const {
 	assert(modelShaders[MODEL_SHADER_ACTIVE]->IsBound());
 
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(14, std::move(GetTeamColor(team, alpha)));
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(14, std::move(GetTeamColor(team, alpha.x)));
 }
 
 
@@ -443,7 +443,7 @@ void UnitDrawerStateGLSL::SetTeamColor(int team, const float2 alpha) const {
 	// NOTE: see UnitDrawerStateARB::SetTeamColor
 	assert(modelShaders[MODEL_SHADER_ACTIVE]->IsBound());
 
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(9, std::move(GetTeamColor(team, alpha)));
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(9, std::move(GetTeamColor(team, alpha.x)));
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform1f(15, alpha.y);
 }
 
