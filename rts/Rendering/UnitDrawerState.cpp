@@ -19,6 +19,17 @@
 
 
 
+static float4 GetTeamColor(int team, float2 alpha) {
+	assert(teamHandler->IsValidTeam(team));
+
+	const   CTeam* t = teamHandler->Team(team);
+	const uint8_t* c = t->color;
+
+	return (float4(c[0] / 255.0f, c[1] / 255.0f, c[2] / 255.0f, alpha.x));
+}
+
+
+
 IUnitDrawerState* IUnitDrawerState::GetInstance(bool haveARB, bool haveGLSL) {
 	IUnitDrawerState* instance = nullptr;
 
@@ -209,17 +220,11 @@ void UnitDrawerStateFFP::DisableTextures(const CUnitDrawer*) const {
 
 void UnitDrawerStateFFP::SetTeamColor(int team, const float2 alpha) const {
 	// non-shader case via texture combiners
-	assert(teamHandler->IsValidTeam(team));
-
-	const CTeam* t = teamHandler->Team(team);
-	const unsigned char* c = t->color;
-
-	const float texConstant[] = {c[0] / 255.0f, c[1] / 255.0f, c[2] / 255.0f, alpha.x};
-	const float matConstant[] = {         1.0f,          1.0f,          1.0f, alpha.x};
+	const float4 m = {1.0f, 1.0f, 1.0f, alpha.x};
 
 	glActiveTexture(GL_TEXTURE0);
-	glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, texConstant);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, matConstant);
+	glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, std::move(GetTeamColor(team, alpha)));
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, &m.x);
 }
 
 
@@ -298,11 +303,6 @@ void UnitDrawerStateARB::DisableShaders(const CUnitDrawer*) { modelShaders[MODEL
 
 
 void UnitDrawerStateARB::SetTeamColor(int team, const float2 alpha) const {
-	assert(teamHandler->IsValidTeam(team));
-
-	const CTeam* t = teamHandler->Team(team);
-	const float4 c = float4(t->color[0] / 255.0f, t->color[1] / 255.0f, t->color[2] / 255.0f, alpha.x);
-
 	// NOTE:
 	//   both UnitDrawer::DrawAlphaPass and FeatureDrawer::DrawAlphaPass
 	//   disable advShading in case of ARB, so in that case we should end
@@ -310,7 +310,7 @@ void UnitDrawerStateARB::SetTeamColor(int team, const float2 alpha) const {
 	assert(modelShaders[MODEL_SHADER_ACTIVE]->IsBound());
 
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(14, &c[0]);
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(14, std::move(GetTeamColor(team, alpha)));
 }
 
 
@@ -440,15 +440,10 @@ void UnitDrawerStateGLSL::UpdateCurrentShader(const CUnitDrawer* ud, const ISkyL
 }
 
 void UnitDrawerStateGLSL::SetTeamColor(int team, const float2 alpha) const {
-	assert(teamHandler->IsValidTeam(team));
-
-	const CTeam* t = teamHandler->Team(team);
-	const float4 c = float4(t->color[0] / 255.0f, t->color[1] / 255.0f, t->color[2] / 255.0f, alpha.x);
-
 	// NOTE: see UnitDrawerStateARB::SetTeamColor
 	assert(modelShaders[MODEL_SHADER_ACTIVE]->IsBound());
 
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(9, &c[0]);
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(9, std::move(GetTeamColor(team, alpha)));
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform1f(15, alpha.y);
 }
 

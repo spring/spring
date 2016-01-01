@@ -37,7 +37,7 @@ LuaMatHandler& luaMatHandler = LuaMatHandler::handler;
 
 void LuaUnitUniforms::Execute(const CSolidObject* o) const
 {
-	// FIXME use vertex attributes
+	// FIXME use vertex attributes (this is currently never true, locs are never set)
 	if (!haveUniforms)
 		return;
 
@@ -53,6 +53,12 @@ void LuaUnitUniforms::Execute(const CSolidObject* o) const
 	if (teamIDLoc >= 0) {
 		glUniform1i(teamIDLoc, o->team);
 	}
+	#if 0
+	// avoids having to use gl.Uniform(loc, Spring.GetTeamColor(Spring.GetUnitTeam(unitID)))
+	if (teamColorLoc >= 0) {
+		UnitDrawerStateLua::SetTeamColor(o->team);
+	}
+	#endif
 	if (customLoc >= 0) {
 		if (customCount > 0) {
 			glUniform1fv(customLoc, customCount, &customData[0]);
