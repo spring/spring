@@ -169,17 +169,6 @@ void CInterceptHandler::DependentDied(CObject* o)
 }
 
 
-void CInterceptHandler::AddShieldInterceptableProjectile(CWeaponProjectile* p)
-{
-	for (CPlasmaRepulser* shield: repulsors) {
-		if (shield->weaponDef->shieldInterceptType & p->GetWeaponDef()->interceptedByShieldType) {
-			shield->NewProjectile(p);
-		}
-	}
-}
-
-
-
 float CInterceptHandler::AddShieldInterceptableBeam(CWeapon* emitter, const float3& start, const float3& dir, float length, float3& newDir, CPlasmaRepulser*& repulsedBy)
 {
 	float minRange = std::numeric_limits<float>::max();

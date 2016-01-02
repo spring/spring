@@ -11,8 +11,9 @@
 
 #ifndef UNIT_TEST
 	#include "Sim/Features/Feature.h"
-	#include "Sim/Units/Unit.h"
 	#include "Sim/Projectiles/Projectile.h"
+	#include "Sim/Units/Unit.h"
+	#include "Sim/Weapons/PlasmaRepulser.h"
 #endif
 
 #include "System/Util.h"
@@ -310,6 +311,45 @@ void CQuadField::RemoveUnit(CUnit* unit)
 }
 
 
+void CQuadField::MovedRepulsor(CPlasmaRepulser* repulser)
+{
+	auto newQuads = std::move(GetQuads(repulser->weaponMuzzlePos, repulser->GetRadius()));
+
+	// compare if the quads have changed, if not stop here
+	if (newQuads.size() == repulser->quads.size()) {
+		if (std::equal(newQuads.begin(), newQuads.end(), repulser->quads.begin())) {
+			return;
+		}
+	}
+
+	for (const int qi: repulser->quads) {
+		VectorErase(baseQuads[qi].repulsers, repulser);
+	}
+
+	for (const int qi: newQuads) {
+		baseQuads[qi].repulsers.push_back(repulser);
+	}
+
+	repulser->quads = std::move(newQuads);
+}
+
+void CQuadField::RemoveRepulsor(CPlasmaRepulser* repulser)
+{
+	const auto& quads = GetQuads(repulser->weaponMuzzlePos, repulser->GetRadius());
+
+	for (const int qi: repulser->quads) {
+		VectorErase(baseQuads[qi].repulsers, repulser);
+	}
+
+	#ifdef DEBUG_QUADFIELD
+	for (const Quad& q: baseQuads) {
+		for (CPlasmaRepulser* r: q.repulsers) {
+			assert(r != repulser);
+		}
+	}
+	#endif
+}
+
 
 void CQuadField::AddFeature(CFeature* feature)
 {
@@ -599,7 +639,8 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 	const float3& pos,
 	const float radius,
 	std::vector<CUnit*>& units,
-	std::vector<CFeature*>& features
+	std::vector<CFeature*>& features,
+	std::vector<CPlasmaRepulser*>* repulsers
 ) {
 	const int tempNum = gs->tempNum++;
 
@@ -639,6 +680,23 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 
 			f->tempNum = tempNum;
 			features.push_back(f);
+		}
+		if (repulsers != nullptr) {
+			for (CPlasmaRepulser* r: quad.repulsers) {
+
+				// prevent double adding
+				if (r->tempNum == tempNum)
+					continue;
+
+				const auto* colvol = &r->collisionVolume;
+				const float totRad = radius + colvol->GetBoundingRadius();
+
+				if (pos.SqDistance(r->weaponMuzzlePos) >= (totRad * totRad))
+					continue;
+
+				r->tempNum = tempNum;
+				repulsers->push_back(r);
+			}
 		}
 	}
 }

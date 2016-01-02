@@ -14,6 +14,7 @@ class CUnit;
 class CFeature;
 class CProjectile;
 class CSolidObject;
+class CPlasmaRepulser;
 
 
 class CQuadField : boost::noncopyable
@@ -42,7 +43,8 @@ needed to support dynamic resizing (not used yet)
 		const float3& pos,
 		const float radius,
 		std::vector<CUnit*>& units,
-		std::vector<CFeature*>& features
+		std::vector<CFeature*>& features,
+		std::vector<CPlasmaRepulser*>* repulsers = nullptr
 	);
 
 	/**
@@ -93,6 +95,9 @@ needed to support dynamic resizing (not used yet)
 	void AddProjectile(CProjectile* projectile);
 	void RemoveProjectile(CProjectile* projectile);
 
+	void MovedRepulsor(CPlasmaRepulser* repulser);
+	void RemoveRepulsor(CPlasmaRepulser* repulser);
+
 	struct Quad {
 		CR_DECLARE_STRUCT(Quad)
 		Quad();
@@ -100,6 +105,7 @@ needed to support dynamic resizing (not used yet)
 		std::vector< std::vector<CUnit*> > teamUnits;
 		std::vector<CFeature*> features;
 		std::vector<CProjectile*> projectiles;
+		std::vector<CPlasmaRepulser*> repulsers;
 	};
 
 	const Quad& GetQuad(unsigned i) const {

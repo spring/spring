@@ -118,14 +118,7 @@ bool ShieldProjectile::AllowDrawing()
 	if (eventHandler.DrawShield(shield->owner, shield))
 		return allowDrawing;
 
-	const CUnit* owner = shield->owner;
-
-	// if the unit that emits this shield is stunned or not
-	// yet finished, prevent the shield segments from being
-	// drawn
-	if (!shield->IsEnabled())
-		return allowDrawing;
-	if (owner->IsStunned() || owner->beingBuilt)
+	if (!shield->IsActive())
 		return allowDrawing;
 	if (shieldSegments.empty())
 		return allowDrawing;

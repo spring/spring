@@ -4,8 +4,9 @@
 #define PLASMAREPULSER_H
 
 #include "Weapon.h"
-#include <list>
-#include <set>
+#include "Sim/Misc/CollisionVolume.h"
+
+#include <vector>
 
 class ShieldProjectile;
 class CRepulseGfx;
@@ -24,7 +25,6 @@ public:
 	void Update() override final;
 	void SlowUpdate() override final;
 
-	void NewProjectile(CWeaponProjectile* p);
 	float NewBeam(CWeapon* emitter, float3 start, float3 dir, float length, float3& newDir);
 	bool BeamIntercepted(CWeapon* emitter, float3 start, float damageMultiplier = 1.0f); // returns true if we are a repulsing shield
 
@@ -32,17 +32,28 @@ public:
 	void SetCurPower(float p) { curPower = p; }
 
 	bool IsEnabled() const { return isEnabled; }
+	bool IsActive() const;
+	bool IsRepulsing(CWeaponProjectile* p) const;
 	float GetCurPower() const { return curPower; }
+	float GetRadius() const { return radius; }
 	int GetHitFrames() const { return hitFrames; }
+
+	bool IncomingProjectile(CWeaponProjectile* p);
+
+	//collisions
+	std::vector<int> quads;
+	CollisionVolume collisionVolume;
+	int tempNum;
 
 private:
 	void FireImpl(const bool scriptCall) override final {}
 
-private:
 	// these are strictly unsynced
 	ShieldProjectile* shieldProjectile;
-	std::set<CWeaponProjectile*> repulsedProjectiles;
+	std::vector<CWeaponProjectile*> repulsedProjectiles;
 
+
+	float3 lastPos;
 	float curPower;
 
 	float radius;

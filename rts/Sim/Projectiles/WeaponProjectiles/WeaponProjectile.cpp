@@ -132,12 +132,6 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 
 	ASSERT_SYNCED(id);
 
-	if (weaponDef->interceptedByShieldType) {
-		// this needs a valid projectile id set
-		assert(id >= 0);
-		interceptHandler.AddShieldInterceptableProjectile(this);
-	}
-
 	if (weaponDef->targetable) {
 		interceptHandler.AddInterceptTarget(this, targetPos);
 	}

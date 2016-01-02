@@ -57,7 +57,7 @@ public:
 	void InitBox(const float3& scales, const float3& offsets = ZeroVector);
 	void InitShape(
 		const float3& scales,
-		const float3& offsets,	
+		const float3& offsets,
 		const int vType,
 		const int tType,
 		const int pAxis
@@ -67,6 +67,7 @@ public:
 	void SetAxisScales(const float3& scales);
 	void FixTypeAndScale(float3& scales);
 	void SetBoundingRadius();
+	void SetOffsets(float3 &offsets) { axisOffsets = offsets; }
 
 	int GetVolumeType() const { return volumeType; }
 	void SetVolumeType(int type) { volumeType = type; }

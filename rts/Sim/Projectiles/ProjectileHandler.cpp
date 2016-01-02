@@ -17,9 +17,12 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/Unsynced/FlyingPiece.h"
 #include "Sim/Projectiles/Unsynced/NanoProjectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Weapons/WeaponDef.h"
+#include "Sim/Weapons/PlasmaRepulser.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
@@ -366,11 +369,13 @@ void CProjectileHandler::CheckUnitCollisions(
 	const float3 ppos0,
 	const float3 ppos1)
 {
+	if (!p->checkCol)
+		return;
+
 	CollisionQuery cq;
 
 	for (CUnit* unit: tempUnits) {
-		if (unit == NULL)
-			break;
+		assert(unit != nullptr);
 
 		// if this unit fired this projectile, always ignore
 		if (unit == p->owner())
@@ -378,7 +383,7 @@ void CProjectileHandler::CheckUnitCollisions(
 		if (!unit->HasCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES))
 			continue;
 
-		if (p->GetAllyteamID() >= 0) {
+		if (teamHandler->IsValidAllyTeam(p->GetAllyteamID())) {
 			if (p->GetCollisionFlags() & Collision::NOFRIENDLIES) {
 				if ( teamHandler->AlliedAllyTeams(p->GetAllyteamID(), unit->allyteam)) { continue; }
 			}
@@ -424,8 +429,7 @@ void CProjectileHandler::CheckFeatureCollisions(
 	CollisionQuery cq;
 
 	for (CFeature* feature: tempFeatures) {
-		if (feature == NULL)
-			break;
+		assert(feature != nullptr);
 
 		if (!feature->HasCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES))
 			continue;
@@ -448,10 +452,53 @@ void CProjectileHandler::CheckFeatureCollisions(
 	}
 }
 
+
+void CProjectileHandler::CheckShieldCollisions(
+	CProjectile* p,
+	std::vector<CPlasmaRepulser*>& tempRepulsers,
+	const float3 ppos0,
+	const float3 ppos1)
+{
+	if (!p->checkCol)
+		return;
+
+	if (!p->weapon)
+		return;
+
+	CWeaponProjectile* wpro = static_cast<CWeaponProjectile*>(p);
+	const WeaponDef* wdef = wpro->GetWeaponDef();
+
+	const unsigned interceptedType = wdef->interceptedByShieldType;
+
+
+	CollisionQuery cq;
+
+	for (CPlasmaRepulser* repulser: tempRepulsers) {
+		assert(repulser != nullptr);
+
+		if (!(repulser->weaponDef->shieldInterceptType & interceptedType))
+			continue;
+
+		if (!repulser->IsActive())
+			continue;
+
+		if (repulser->weaponDef->smartShield && teamHandler->IsValidAllyTeam(p->GetAllyteamID()) && teamHandler->Ally(p->GetAllyteamID(), repulser->owner->allyteam))
+			continue;
+
+		if (CCollisionHandler::DetectHit(repulser->owner, &repulser->collisionVolume, repulser->owner->GetTransformMatrix(true), ppos0, ppos1, &cq)) {
+			if (!cq.InsideHit() || !repulser->weaponDef->exteriorShield || repulser->IsRepulsing(wpro)) {
+				if (repulser->IncomingProjectile(wpro))
+					return;
+			}
+		}
+	}
+}
+
 void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc)
 {
 	static std::vector<CUnit*> tempUnits;
 	static std::vector<CFeature*> tempFeatures;
+	static std::vector<CPlasmaRepulser*> tempRepulsers;
 
 	for (size_t i=0; i<pc.size(); ++i) {
 		CProjectile* p = pc[i];
@@ -461,8 +508,10 @@ void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc)
 		const float3 ppos0 = p->pos;
 		const float3 ppos1 = p->pos + p->speed;
 
-		quadField->GetUnitsAndFeaturesColVol(p->pos, p->radius + p->speed.w, tempUnits, tempFeatures);
+		quadField->GetUnitsAndFeaturesColVol(p->pos, p->radius + p->speed.w, tempUnits, tempFeatures, &tempRepulsers);
 
+		CheckShieldCollisions(p, tempRepulsers, ppos0, ppos1);
+		tempRepulsers.clear();
 		CheckUnitCollisions(p, tempUnits, ppos0, ppos1);
 		tempUnits.clear();
 		CheckFeatureCollisions(p, tempFeatures, ppos0, ppos1);

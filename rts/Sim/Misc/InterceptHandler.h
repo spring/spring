@@ -26,7 +26,6 @@ public:
 	void RemovePlasmaRepulser(CPlasmaRepulser* shield);
 
 	void AddInterceptTarget(CWeaponProjectile* target, const float3& destination);
-	void AddShieldInterceptableProjectile(CWeaponProjectile* p);
 	float AddShieldInterceptableBeam(CWeapon* emitter, const float3& start, const float3& dir, float length, float3& newDir, CPlasmaRepulser*& repulsedBy);
 
 	void DependentDied(CObject* o);
