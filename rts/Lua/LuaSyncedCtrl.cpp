@@ -510,22 +510,31 @@ static int SetSolidObjectBlocking(lua_State* L, CSolidObject* o)
 	return 1;
 }
 
-static int SetSolidObjectRotation(lua_State* L, CSolidObject* o)
+static int SetSolidObjectRotation(lua_State* L, CSolidObject* o, bool isFeature)
 {
 	if (o == NULL)
 		return 0;
 
+	// same order (YPR) as ModelPiece::ComposeRotation; args are PYR
 	CMatrix44f matrix;
-	matrix.RotateZ(ClampRad(luaL_checkfloat(L, 4))); // .z := roll
-	matrix.RotateY(ClampRad(luaL_checkfloat(L, 3))); // .y := yaw
-	matrix.RotateX(ClampRad(luaL_checkfloat(L, 2))); // .x := pitch
+	matrix.RotateY(ClampRad(luaL_checkfloat(L, 3)));
+	matrix.RotateX(ClampRad(luaL_checkfloat(L, 2)));
+	matrix.RotateZ(ClampRad(luaL_checkfloat(L, 4)));
+	matrix.SetPos(o->pos);
 
 	assert(matrix.IsOrthoNormal() == 0);
 
 	o->SetDirVectors(matrix);
-	// FIXME: Using ForcedSpin instead of the two functions below will cause undesired results to happen. Probably needs fixing.
 	o->SetHeadingFromDirection();
 	o->UpdateMidAndAimPos();
+
+	if (isFeature) {
+		// not a hack: ForcedSpin() and CalculateTransform() calculate a
+		// transform based only on frontdir and assume the helper y-axis
+		// points up
+		static_cast<CFeature*>(o)->SetTransform(matrix);
+	}
+
 	return 0;
 }
 
@@ -2321,7 +2330,7 @@ int LuaSyncedCtrl::SetUnitPosition(lua_State* L)
 
 int LuaSyncedCtrl::SetUnitRotation(lua_State* L)
 {
-	return (SetSolidObjectRotation(L, ParseUnit(L, __FUNCTION__, 1)));
+	return (SetSolidObjectRotation(L, ParseUnit(L, __FUNCTION__, 1), false));
 }
 
 int LuaSyncedCtrl::SetUnitDirection(lua_State* L)
@@ -2676,14 +2685,7 @@ int LuaSyncedCtrl::SetFeaturePosition(lua_State* L)
 
 int LuaSyncedCtrl::SetFeatureRotation(lua_State* L)
 {
-	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL)
-		return 0;
-
-	SetSolidObjectRotation(L, feature);
-	// This is the HACK-y part where we manually set the transform instead of using ForcedSpin() or CalculateTransform() to do it
-	feature->SetTransform(CMatrix44f(feature->pos, -feature->rightdir, feature->updir, feature->frontdir));
-	return 0;
+	return (SetSolidObjectRotation(L, ParseFeature(L, __FUNCTION__, 1), true));
 }
 
 int LuaSyncedCtrl::SetFeatureDirection(lua_State* L)

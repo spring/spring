@@ -541,3 +541,48 @@ CMatrix44f CMatrix44f::Invert(bool* status) const
 	if (status) *status = true;
 	return mat;
 }
+
+
+
+// adapted from: stackoverflow.com/questions/18433801/converting-a-3x3-matrix-to-euler-tait-bryan-angles-pitch-yaw-roll
+float3 CMatrix44f::GetEulerAnglesPYR(float eps) const {
+	float3 pyr[2];
+
+	if (eps > math::fabs(m[0 * 4 + 2] + 1.0f)) {
+		// x.z == -1 means gimbal lock, pitch value doesn't matter
+		// FIXME: should be up/down test in Spring, not left/right
+		pyr[0].x = (     0.0f);
+		pyr[0].y = (PI * 0.5f);
+		pyr[0].z = (pyr[0].x + math::atan2(m[1 * 4 + 0], m[2 * 4 + 0]));
+
+		return (pyr[0] * -OnesVector);
+	}
+
+	if (eps > math::fabs(m[0 * 4 + 2] - 1.0f)) {
+		// x.z == 1 means gimbal lock, pitch value doesn't matter
+		pyr[0].x =  (     0.0f);
+		pyr[0].y = -(PI * 0.5f);
+		pyr[0].z = (-pyr[0].x + math::atan2(-m[1 * 4 + 0], -m[2 * 4 + 0]));
+
+		return (pyr[0] * -OnesVector);
+	}
+
+	// two solutions exist, choose the "shortest" rotation
+	pyr[0].x = -math::asin(m[0 * 4 + 2]);
+	pyr[1].x =           (PI - pyr[0].x);
+
+	// pitch-angle cosines
+	const float cosx[2] = {math::cos(pyr[0].x), math::cos(pyr[1].x)};
+
+	pyr[0].y = math::atan2((m[1 * 4 + 2] / cosx[0]), (m[2 * 4 + 2] / cosx[0]));
+	pyr[1].y = math::atan2((m[1 * 4 + 2] / cosx[1]), (m[2 * 4 + 2] / cosx[1]));
+
+	pyr[0].z = math::atan2((m[0 * 4 + 1] / cosx[0]), (m[0 * 4 + 0] / cosx[0]));
+	pyr[1].z = math::atan2((m[0 * 4 + 1] / cosx[1]), (m[0 * 4 + 0] / cosx[1]));
+
+	const float dot0 = OnesVector.dot(float3::fabs(pyr[0])); // p0+y0+r0
+	const float dot1 = OnesVector.dot(float3::fabs(pyr[1])); // p1+y1+r1
+
+	return (pyr[dot0 > dot1] * -OnesVector);
+}
+

@@ -577,56 +577,20 @@ static int GetSolidObjectPosition(lua_State* L, const CSolidObject* o, bool isFe
 	return (3 + (3 * returnMidPos) + (3 * returnAimPos));
 }
 
-bool closeEnough(const float& a, const float& b, const float& epsilon = std::numeric_limits<float>::epsilon()) {
-    return (epsilon > std::abs(a - b));
-}
-
-// Adapted from: http://stackoverflow.com/questions/18433801/converting-a-3x3-matrix-to-euler-tait-bryan-angles-pitch-yaw-roll?answertab=votes#tab-top
-float4 GetEulerAngles(const CMatrix44f& R) {
-    //check for gimbal lock
-    if (closeEnough(R[0 * 4 + 2], -1.0f)) {
-        float x = 0; //gimbal lock, value of x doesn't matter
-        float y = PI / 2;
-        float z = x + atan2(R[1 * 4 + 0], R[2 * 4 + 0]);
-        return { -y, -x, -z };
-    } else if (closeEnough(R[0 * 4 + 2], 1.0f)) {
-        float x = 0;
-        float y = -PI / 2;
-        float z = -x + atan2(-R[1 * 4 + 0], -R[2 * 4 + 0]);
-        return { -y, -x, -z };
-    } else { //two solutions exist;
-        float x1 = -asin(R[0 * 4 + 2]);
-        float x2 = PI - x1;
-
-        float y1 = atan2(R[1 * 4 + 2] / cos(x1), R[2 * 4 + 2] / cos(x1));
-        float y2 = atan2(R[1 * 4 + 2] / cos(x2), R[2 * 4 + 2] / cos(x2));
-
-        float z1 = atan2(R[0 * 4 + 1] / cos(x1), R[0 * 4 + 0] / cos(x1));
-        float z2 = atan2(R[0 * 4 + 1] / cos(x2), R[0 * 4 + 0] / cos(x2));
-
-        //choose one solution to return
-        //for example the "shortest" rotation
-        if ((std::abs(x1) + std::abs(y1) + std::abs(z1)) <= (std::abs(x2) + std::abs(y2) + std::abs(z2))) {
-            return { -y1, -x1, -z1 };
-        } else {
-            return { -y2, -x2, -z2 };
-        }
-    }
-}
-
 static int GetSolidObjectRotation(lua_State* L, const CSolidObject* o)
 {
 	if (o == NULL)
 		return 0;
 
 	const CMatrix44f& matrix = o->GetTransformMatrix(CLuaHandle::GetHandleSynced(L));
-	const float3 eulerAngles = GetEulerAngles(matrix);
+	const float3 angles = matrix.GetEulerAnglesPYR();
 
 	assert(matrix.IsOrthoNormal() == 0);
 
-	lua_pushnumber(L, eulerAngles.x);
-	lua_pushnumber(L, eulerAngles.y);
-	lua_pushnumber(L, eulerAngles.z);
+	// same order (PYR) as expected by SetObjectRotation
+	lua_pushnumber(L, angles.x);
+	lua_pushnumber(L, angles.y);
+	lua_pushnumber(L, angles.z);
 	return 3;
 }
 

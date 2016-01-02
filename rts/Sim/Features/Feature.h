@@ -66,7 +66,7 @@ public:
 	//   this matrix is identical in synced and unsynced context!
 	CMatrix44f GetTransformMatrix(const bool synced = false, const bool error = false) const { return transMatrix; }
 	const CMatrix44f& GetTransformMatrixRef() const { return transMatrix; }
-	void SetTransform(const CMatrix44f& transMatrix) { this->transMatrix = transMatrix; }
+	void SetTransform(const CMatrix44f& m) { transMatrix = m; }
 private:
 	static int ChunkNumber(float f);
 

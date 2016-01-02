@@ -43,6 +43,11 @@ public:
 	float3 GetY  () const { return float3(m[ 4], m[ 5], m[ 6]); }
 	float3 GetZ  () const { return float3(m[ 8], m[ 9], m[10]); }
 
+	float3 GetEulerAnglesPYR(float eps = 0.01f /*std::numeric_limits<float>::epsilon()*/) const;
+	float3 GetEulerAnglesYPR(float eps = 0.01f /*std::numeric_limits<float>::epsilon()*/) const {
+		float3 angles = GetEulerAnglesPYR(eps); std::swap(angles.x, angles.y); return angles;
+	}
+
 	inline void operator *= (const float a) {
 		for (size_t i = 0; i < 16; i += 4) {
 			m[i + 0] *= a;
