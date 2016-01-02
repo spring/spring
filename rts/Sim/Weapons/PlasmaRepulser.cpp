@@ -23,6 +23,7 @@ CR_BIND_DERIVED(CPlasmaRepulser, CWeapon, (NULL, NULL))
 CR_REG_METADATA(CPlasmaRepulser, (
 	CR_MEMBER(radius),
 	CR_MEMBER(sqRadius),
+	CR_MEMBER(lastPos),
 	CR_MEMBER(curPower),
 	CR_MEMBER(hitFrames),
 	CR_MEMBER(rechargeDelay),
