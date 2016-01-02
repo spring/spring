@@ -6,6 +6,8 @@
 class float3;
 class CUnit;
 class CFeature;
+class CWeapon;
+class CPlasmaRepulser;
 class CSolidObject;
 struct CollisionQuery;
 
@@ -34,6 +36,16 @@ namespace TraceRay {
 		CFeature*& hitFeature,
 		CollisionQuery* hitColQuery = 0x0
 	);
+
+	float TraceRayShields(
+		const CWeapon* emitter,
+		const float3& start,
+		const float3& dir,
+		float length,
+		float3& newDir,
+		CPlasmaRepulser*& repulsedBy
+	);
+
 	float GuiTraceRay(
 		const float3& start,
 		const float3& dir,

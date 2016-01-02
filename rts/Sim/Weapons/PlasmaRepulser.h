@@ -25,8 +25,8 @@ public:
 	void Update() override final;
 	void SlowUpdate() override final;
 
-	float NewBeam(CWeapon* emitter, float3 start, float3 dir, float length, float3& newDir);
-	bool BeamIntercepted(CWeapon* emitter, float3 start, float damageMultiplier = 1.0f); // returns true if we are a repulsing shield
+	bool IncomingBeam(const CWeapon* emitter, const float3& start);
+	bool BeamIntercepted(const CWeapon* emitter, const float3& start, float damageMultiplier = 1.0f); // returns true if we are a repulsing shield
 
 	void SetEnabled(bool b) { isEnabled = b; }
 	void SetCurPower(float p) { curPower = p; }
@@ -37,6 +37,7 @@ public:
 	float GetCurPower() const { return curPower; }
 	float GetRadius() const { return radius; }
 	int GetHitFrames() const { return hitFrames; }
+	bool CanIntercept(unsigned interceptedType, int allyTeam) const;
 
 	bool IncomingProjectile(CWeaponProjectile* p);
 

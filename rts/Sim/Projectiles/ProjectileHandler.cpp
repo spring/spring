@@ -468,21 +468,15 @@ void CProjectileHandler::CheckShieldCollisions(
 	CWeaponProjectile* wpro = static_cast<CWeaponProjectile*>(p);
 	const WeaponDef* wdef = wpro->GetWeaponDef();
 
-	const unsigned interceptedType = wdef->interceptedByShieldType;
-
+	//Bail early
+	if (wdef->interceptedByShieldType == 0)
+		return;
 
 	CollisionQuery cq;
 
 	for (CPlasmaRepulser* repulser: tempRepulsers) {
 		assert(repulser != nullptr);
-
-		if (!(repulser->weaponDef->shieldInterceptType & interceptedType))
-			continue;
-
-		if (!repulser->IsActive())
-			continue;
-
-		if (repulser->weaponDef->smartShield && teamHandler->IsValidAllyTeam(p->GetAllyteamID()) && teamHandler->Ally(p->GetAllyteamID(), repulser->owner->allyteam))
+		if (!repulser->CanIntercept(wdef->interceptedByShieldType, p->GetAllyteamID()))
 			continue;
 
 		if (CCollisionHandler::DetectHit(repulser->owner, &repulser->collisionVolume, repulser->owner->GetTransformMatrix(true), ppos0, ppos1, &cq)) {

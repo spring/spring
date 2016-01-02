@@ -22,17 +22,13 @@ public:
 
 	void AddInterceptorWeapon(CWeapon* weapon);
 	void RemoveInterceptorWeapon(CWeapon* weapon);
-	void AddPlasmaRepulser(CPlasmaRepulser* shield);
-	void RemovePlasmaRepulser(CPlasmaRepulser* shield);
 
 	void AddInterceptTarget(CWeaponProjectile* target, const float3& destination);
-	float AddShieldInterceptableBeam(CWeapon* emitter, const float3& start, const float3& dir, float length, float3& newDir, CPlasmaRepulser*& repulsedBy);
 
 	void DependentDied(CObject* o);
 
 private:
 	std::deque<CWeapon*> interceptors;
-	std::deque<CPlasmaRepulser*> repulsors;
 	std::deque<CWeaponProjectile*> interceptables;
 };
 

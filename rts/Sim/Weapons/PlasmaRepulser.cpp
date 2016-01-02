@@ -4,7 +4,6 @@
 #include "System/creg/STL_Set.h"
 #include "PlasmaRepulser.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -29,7 +28,11 @@ CR_REG_METADATA(CPlasmaRepulser, (
 	CR_MEMBER(rechargeDelay),
 	CR_MEMBER(isEnabled),
 	CR_MEMBER(shieldProjectile),
-	CR_MEMBER(repulsedProjectiles)
+	CR_MEMBER(repulsedProjectiles),
+
+	CR_MEMBER(quads),
+	CR_MEMBER(collisionVolume),
+	CR_MEMBER(tempNum)
 ))
 
 
@@ -38,14 +41,11 @@ CPlasmaRepulser::CPlasmaRepulser(CUnit* owner, const WeaponDef* def): CWeapon(ow
 	hitFrames(0),
 	rechargeDelay(0),
 	isEnabled(true)
-{
-	interceptHandler.AddPlasmaRepulser(this);
-}
+{ }
 
 
 CPlasmaRepulser::~CPlasmaRepulser()
 {
-	interceptHandler.RemovePlasmaRepulser(this);
 	shieldProjectile->PreDelete();
 	quadField->RemoveRepulsor(this);
 }
@@ -85,6 +85,17 @@ bool CPlasmaRepulser::IsActive() const
 bool CPlasmaRepulser::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const
 {
 	return true;
+}
+
+bool CPlasmaRepulser::CanIntercept(unsigned interceptedType, int allyTeam) const
+{
+	if ((weaponDef->shieldInterceptType & interceptedType) == 0)
+		return false;
+
+	if (weaponDef->smartShield && teamHandler->IsValidAllyTeam(allyTeam) && teamHandler->AlliedAllyTeams(allyTeam, owner->allyteam))
+		return false;
+
+	return IsActive();
 }
 
 
@@ -206,44 +217,11 @@ void CPlasmaRepulser::SlowUpdate()
 }
 
 
-float CPlasmaRepulser::NewBeam(CWeapon* emitter, float3 start, float3 dir, float length, float3& newDir)
+bool CPlasmaRepulser::IncomingBeam(const CWeapon* emitter, const float3& start)
 {
-	if (!IsActive()) {
-		return -1.0f;
-	}
-
 	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(emitter->weaponDef, start, weaponMuzzlePos);
 
-	if (damageArray[weaponDef->shieldArmorType] > curPower) {
-		return -1.0f;
-	}
-	if (weaponDef->smartShield && teamHandler->AlliedTeams(emitter->owner->team, owner->team)) {
-		return -1.0f;
-	}
-
-	const float3 dif = weaponMuzzlePos - start;
-
-	if (weaponDef->exteriorShield && dif.SqLength() < sqRadius) {
-		return -1.0f;
-	}
-
-	const float closeLength = dif.dot(dir);
-
-	if (closeLength < 0.0f) {
-		return -1.0f;
-	}
-
-	const float3 closeVect = dif - dir * closeLength;
-
-	const float tmp = sqRadius - closeVect.SqLength();
-	if ((tmp > 0.0f) && (length > (closeLength - math::sqrt(tmp)))) {
-		const float colLength = closeLength - math::sqrt(tmp);
-		const float3 colPoint = start + dir * colLength;
-		const float3 normal = (colPoint - weaponMuzzlePos).Normalize();
-		newDir = dir - normal * normal.dot(dir) * 2;
-		return colLength;
-	}
-	return -1.0f;
+	return damageArray[weaponDef->shieldArmorType] <= curPower;
 }
 
 
@@ -254,7 +232,7 @@ void CPlasmaRepulser::DependentDied(CObject* o)
 }
 
 
-bool CPlasmaRepulser::BeamIntercepted(CWeapon* emitter, float3 start, float damageMultiplier)
+bool CPlasmaRepulser::BeamIntercepted(const CWeapon* emitter, const float3& start, float damageMultiplier)
 {
 	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(emitter->weaponDef, start, weaponMuzzlePos);
 

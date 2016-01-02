@@ -9,7 +9,6 @@
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/CollisionHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 
@@ -58,7 +57,7 @@ void CLightningCannon::FireImpl(const bool scriptCall)
 		}
 	}
 
-	const float shieldLength = interceptHandler.AddShieldInterceptableBeam(this, curPos, curDir, range, newDir, hitShield);
+	const float shieldLength = TraceRay::TraceRayShields(this, curPos, curDir, range, newDir, hitShield);
 
 	if (shieldLength < boltLength) {
 		boltLength = shieldLength;
