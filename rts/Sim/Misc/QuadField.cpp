@@ -32,7 +32,8 @@ CR_REG_METADATA_SUB(CQuadField, Quad, (
 	CR_MEMBER(units),
 	CR_MEMBER(teamUnits),
 	CR_MEMBER(features),
-	CR_MEMBER(projectiles)
+	CR_MEMBER(projectiles),
+	CR_MEMBER(repulsers)
 ))
 
 CQuadField* quadField = NULL;
