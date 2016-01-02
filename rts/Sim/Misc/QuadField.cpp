@@ -599,36 +599,17 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 	const float3& pos,
 	const float radius,
 	std::vector<CUnit*>& units,
-	std::vector<CFeature*>& features,
-	unsigned int* numUnitsPtr,
-	unsigned int* numFeaturesPtr
+	std::vector<CFeature*>& features
 ) {
 	const int tempNum = gs->tempNum++;
 
 	// start counting from the previous object-cache sizes
-	unsigned int numUnits = (numUnitsPtr == NULL)? 0: (*numUnitsPtr);
-	unsigned int numFeatures = (numFeaturesPtr == NULL)? 0: (*numFeaturesPtr);
-
-	// bail early if caches are already full
-	if (numUnits >= units.size() && numFeatures >= features.size())
-		return;
-
-	assert(numUnits == 0 || numUnits == units.size() || units[numUnits] == NULL);
-	assert(numFeatures == 0 || numFeatures == features.size() || features[numFeatures] == NULL);
-
 	const auto& quads = GetQuads(pos, radius);
 
 	for (const int qi: quads) {
 		const Quad& quad = baseQuads[qi];
 
-		// bail early if caches are already full
-		if (numUnits >= units.size() && numFeatures >= features.size())
-			break;
-
 		for (CUnit* u: quad.units) {
-			// bail early if cache is full
-			if (numUnits >= units.size()) //FIXME
-				break;
 
 			// prevent double adding
 			if (u->tempNum == tempNum)
@@ -640,18 +621,11 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 			if (pos.SqDistance(colvol->GetWorldSpacePos(u)) >= (totRad * totRad))
 				continue;
 
-			assert(numUnits < units.size());
-
-			if (numUnits < units.size()) {
-				u->tempNum = tempNum;
-				units[numUnits++] = u;
-			}
+			u->tempNum = tempNum;
+			units.push_back(u);
 		}
 
 		for (CFeature* f: quad.features) {
-			// bail early if cache is full
-			if (numFeatures >= features.size()) //FIXME
-				break;
 
 			// prevent double adding
 			if (f->tempNum == tempNum)
@@ -663,25 +637,9 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 			if (pos.SqDistance(colvol->GetWorldSpacePos(f)) >= (totRad * totRad))
 				continue;
 
-			assert(numFeatures < features.size());
-
-			if (numFeatures < features.size()) {
-				f->tempNum = tempNum;
-				features[numFeatures++] = f;
-			}
+			f->tempNum = tempNum;
+			features.push_back(f);
 		}
 	}
-
-	assert(numUnits <= units.size());
-	assert(numFeatures <= features.size());
-
-	// set end-of-list sentinels
-	if (numUnits < units.size())
-		units[numUnits] = NULL;
-	if (numFeatures < features.size())
-		features[numFeatures] = NULL;
-
-	if (numUnitsPtr != NULL) { *numUnitsPtr = numUnits; }
-	if (numFeaturesPtr != NULL) { *numFeaturesPtr = numFeatures; }
 }
 #endif // UNIT_TEST

@@ -194,21 +194,16 @@ void CGameHelper::DamageObjectsInExplosionRadius(
 	const float expRad,
 	const int weaponDefID
 ) {
-	static ObjectCache cache;
+	static std::vector<CUnit*> unitCache;
+	static std::vector<CFeature*> featureCache;
 
-	if (cache.Empty())
-		cache.Init(unitHandler->MaxUnits(), unitHandler->MaxUnits());
+	const unsigned int oldNumUnits = unitCache.size();
+	const unsigned int oldNumFeatures = featureCache.size();
 
-	std::vector<CUnit*>& units = cache.GetUnits();
-	std::vector<CFeature*>& features = cache.GetFeatures();
+	quadField->GetUnitsAndFeaturesColVol(params.pos, expRad, unitCache, featureCache);
 
-	const unsigned int oldNumUnits = *(cache.GetNumUnitsPtr());
-	const unsigned int oldNumFeatures = *(cache.GetNumFeaturesPtr());
-
-	quadField->GetUnitsAndFeaturesColVol(params.pos, expRad, units, features, cache.GetNumUnitsPtr(), cache.GetNumFeaturesPtr());
-
-	const unsigned int newNumUnits = *(cache.GetNumUnitsPtr());
-	const unsigned int newNumFeatures = *(cache.GetNumFeaturesPtr());
+	const unsigned int newNumUnits = unitCache.size();
+	const unsigned int newNumFeatures = featureCache.size();
 
 	// damage all units within the explosion radius
 	// NOTE:
@@ -216,16 +211,16 @@ void CGameHelper::DamageObjectsInExplosionRadius(
 	//   which would overwrite our object cache if we did
 	//   not keep track of end-markers --> certain objects
 	//   would not be damaged AT ALL (!)
-	for (unsigned int n = oldNumUnits; n < newNumUnits; n++) {
-		DoExplosionDamage(units[n], params.owner, params.pos, expRad, params.explosionSpeed, params.edgeEffectiveness, params.ignoreOwner, params.damages, weaponDefID, params.projectileID);
-	}
+	for (unsigned int n = oldNumUnits; n < newNumUnits; n++)
+		DoExplosionDamage(unitCache[n], params.owner, params.pos, expRad, params.explosionSpeed, params.edgeEffectiveness, params.ignoreOwner, params.damages, weaponDefID, params.projectileID);
+
+	unitCache.resize(oldNumUnits);
 
 	// damage all features within the explosion radius
-	for (unsigned int n = oldNumFeatures; n < newNumFeatures; n++) {
-		DoExplosionDamage(features[n], params.owner, params.pos, expRad, params.edgeEffectiveness, params.damages, weaponDefID, params.projectileID);
-	}
+	for (unsigned int n = oldNumFeatures; n < newNumFeatures; n++)
+		DoExplosionDamage(featureCache[n], params.owner, params.pos, expRad, params.edgeEffectiveness, params.damages, weaponDefID, params.projectileID);
 
-	cache.Reset(oldNumUnits, oldNumFeatures);
+	featureCache.resize(oldNumFeatures);
 }
 
 void CGameHelper::Explosion(const ExplosionParams& params) {

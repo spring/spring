@@ -377,7 +377,7 @@ void CProjectileHandler::CheckUnitCollisions(
 			continue;
 		if (!unit->HasCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES))
 			continue;
-		
+
 		if (p->GetAllyteamID() >= 0) {
 			if (p->GetCollisionFlags() & Collision::NOFRIENDLIES) {
 				if ( teamHandler->AlliedAllyTeams(p->GetAllyteamID(), unit->allyteam)) { continue; }
@@ -450,8 +450,8 @@ void CProjectileHandler::CheckFeatureCollisions(
 
 void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc)
 {
-	static std::vector<CUnit*> tempUnits(unitHandler->MaxUnits(), NULL);
-	static std::vector<CFeature*> tempFeatures(unitHandler->MaxUnits(), NULL);
+	static std::vector<CUnit*> tempUnits;
+	static std::vector<CFeature*> tempFeatures;
 
 	for (size_t i=0; i<pc.size(); ++i) {
 		CProjectile* p = pc[i];
@@ -464,7 +464,9 @@ void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc)
 		quadField->GetUnitsAndFeaturesColVol(p->pos, p->radius + p->speed.w, tempUnits, tempFeatures);
 
 		CheckUnitCollisions(p, tempUnits, ppos0, ppos1);
+		tempUnits.clear();
 		CheckFeatureCollisions(p, tempFeatures, ppos0, ppos1);
+		tempFeatures.clear();
 	}
 }
 

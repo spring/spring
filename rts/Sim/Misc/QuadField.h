@@ -42,9 +42,7 @@ needed to support dynamic resizing (not used yet)
 		const float3& pos,
 		const float radius,
 		std::vector<CUnit*>& units,
-		std::vector<CFeature*>& features,
-		unsigned int* numUnitsPtr = NULL,
-		unsigned int* numFeaturesPtr = NULL
+		std::vector<CFeature*>& features
 	);
 
 	/**
