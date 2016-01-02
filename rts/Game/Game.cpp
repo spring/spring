@@ -89,7 +89,6 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "UI/CommandColors.h"
-#include "UI/CursorIcons.h"
 #include "UI/EndGameBox.h"
 #include "UI/GameInfo.h"
 #include "UI/GameSetupDrawer.h"

@@ -3634,15 +3634,9 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 
 					if (GetQueueKeystate()) {
 						const Command c = bpi->CreateCommand();
-						const auto& su = selectedUnitsHandler.selectedUnits;
-
-						std::vector<Command> temp;
-
-						for (auto ui = su.begin(); ui != su.end(); ++ui) {
-							temp = (*ui)->commandAI->GetOverlapQueued(c);
-
-							for (auto ti = temp.begin(); ti != temp.end(); ++ti) {
-								cv.insert(cv.end(),*ti);
+						for (const CUnit* su: selectedUnitsHandler.selectedUnits) {
+							for (Command& cmd: su->commandAI->GetOverlapQueued(c)) {
+								cv.push_back(cmd);
 							}
 						}
 					}

@@ -343,7 +343,6 @@ void CWorldDrawer::DrawMiscObjects() const
 
 	lineDrawer.DrawAll();
 	cursorIcons.Draw();
-	cursorIcons.Clear();
 
 	mouse->DrawSelectionBox();
 	guihandler->DrawMapStuff(false);

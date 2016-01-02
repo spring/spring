@@ -70,6 +70,8 @@ void CCursorIcons::Draw()
 	glDepthMask(GL_TRUE);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glDisable(GL_TEXTURE_2D);
+
+	Clear();
 }
 
 
@@ -121,8 +123,11 @@ void CCursorIcons::DrawCursors()
 
 void CCursorIcons::DrawTexts()
 {
+	if (texts.empty())
+		return;
+
 	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
-	glColor4f(1.0f,  1.0f, 1.0f, 1.0f);
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
 	const float fontScale = 1.0f;
 	const float yOffset = 50.0f * globalRendering->pixelY;

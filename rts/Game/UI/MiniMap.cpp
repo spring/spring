@@ -4,7 +4,6 @@
 #include <SDL_mouse.h>
 
 #include "CommandColors.h"
-#include "CursorIcons.h"
 #include "GuiHandler.h"
 #include "MiniMap.h"
 #include "MouseHandler.h"
