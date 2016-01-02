@@ -114,6 +114,7 @@ CSMFGroundDrawer::~CSMFGroundDrawer()
 	SafeDelete(groundTextures);
 	SafeDelete(meshDrawer);
 
+	// individually generated, individually deleted
 	glDeleteLists(waterPlaneDispLists[0], 1);
 	glDeleteLists(waterPlaneDispLists[1], 1);
 }
