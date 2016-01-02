@@ -515,11 +515,11 @@ static int SetSolidObjectRotation(lua_State* L, CSolidObject* o, bool isFeature)
 	if (o == NULL)
 		return 0;
 
-	// same order (YPR) as ModelPiece::ComposeRotation; args are PYR
+	// same(?) order (YPR) as ModelPiece::ComposeRotation; args are PYR
 	CMatrix44f matrix;
+	matrix.RotateZ(ClampRad(luaL_checkfloat(L, 4)));
 	matrix.RotateY(ClampRad(luaL_checkfloat(L, 3)));
 	matrix.RotateX(ClampRad(luaL_checkfloat(L, 2)));
-	matrix.RotateZ(ClampRad(luaL_checkfloat(L, 4)));
 	matrix.SetPos(o->pos);
 
 	assert(matrix.IsOrthoNormal() == 0);
