@@ -66,8 +66,8 @@ CglFont* CglFont::LoadFont(const std::string& fontFile, int size, int outlinewid
 
 CglFont::~CglFont()
 {
-	delete va;
-	delete va2;
+	SafeDelete(va);
+	SafeDelete(va2);
 }
 
 

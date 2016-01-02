@@ -265,6 +265,7 @@ bool SpringApp::Initialize()
 	// GUIs
 	agui::InitGui();
 	LoadFonts();
+
 	CNamedTextures::Init();
 	LuaOpenGL::Init();
 	ISound::Initialize();
@@ -912,6 +913,9 @@ void SpringApp::Reload(const std::string& script)
 	LuaOpenGL::Free();
 	LuaOpenGL::Init();
 
+	// normally not needed, but would allow switching fonts
+	// LoadFonts();
+
 	// reload sounds.lua in case we switch to a different game
 	ISound::Shutdown();
 	ISound::Initialize();
@@ -1025,8 +1029,6 @@ void SpringApp::ShutDown()
 	SafeDelete(game);
 	SafeDelete(pregame);
 
-	agui::FreeGui();
-
 	LOG("[SpringApp::%s][3]", __FUNCTION__);
 	SafeDelete(clientNet);
 	SafeDelete(gameServer);
@@ -1038,8 +1040,10 @@ void SpringApp::ShutDown()
 	FreeJoystick();
 
 	LOG("[SpringApp::%s][5]", __FUNCTION__);
+	agui::FreeGui();
 	SafeDelete(font);
 	SafeDelete(smallFont);
+
 	CNamedTextures::Kill();
 	GLContext::Free();
 	GlobalConfig::Deallocate();

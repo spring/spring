@@ -269,7 +269,7 @@ bool SMFRenderStateARB::CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const
 	//   ARB map shaders assume shadows are always on, so
 	//   SMFRenderStateARB can be used only when they are
 	//   in fact enabled (see Init)
-	return (smfGroundDrawer->UseAdvShading() && !infoTextureHandler->IsEnabled() && shadowHandler->shadowsLoaded);
+	return (smfGroundDrawer->UseAdvShading() && !infoTextureHandler->IsEnabled() && shadowHandler->ShadowsLoaded());
 }
 
 bool SMFRenderStateGLSL::CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const {
@@ -490,7 +490,7 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	const GL::LightHandler* cLightHandler = smfGroundDrawer->GetLightHandler();
 	      GL::LightHandler* mLightHandler = const_cast<GL::LightHandler*>(cLightHandler); // XXX
 
-	glslShaders[GLSL_SHADER_CURRENT]->SetFlag("HAVE_SHADOWS", shadowHandler->shadowsLoaded);
+	glslShaders[GLSL_SHADER_CURRENT]->SetFlag("HAVE_SHADOWS", shadowHandler->ShadowsLoaded());
 	glslShaders[GLSL_SHADER_CURRENT]->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
 
 	glslShaders[GLSL_SHADER_CURRENT]->Enable();
@@ -506,7 +506,7 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	glMultMatrixf(camera->GetViewMatrix());
 
 	// setup for shadow2DProj
-	if (shadowHandler->shadowsLoaded) {
+	if (shadowHandler->ShadowsLoaded()) {
 		glActiveTexture(GL_TEXTURE4);
 		glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
@@ -542,7 +542,7 @@ void SMFRenderStateGLSL::Disable(const CSMFGroundDrawer*, const DrawPass::e&) {
 		return;
 	}
 
-	if (shadowHandler->shadowsLoaded) {
+	if (shadowHandler->ShadowsLoaded()) {
 		glActiveTexture(GL_TEXTURE4);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
 	}
