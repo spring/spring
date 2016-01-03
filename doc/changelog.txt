@@ -22,10 +22,20 @@ Lua:
    the old UnitDestroyed and false for the second (allows shaders during
    death anims, etc; after the second call a unitID is no longer valid!)
    also remove hardcoded logic to zombify (stun+immobilize) a unit on death
+
  ! gl.UnitShape and gl.FeatureShape now set their relevant GL state internally
    (so calling only these functions is enough to get correctly rendered models;
    pass in 'false' for the [new] third argument to get the fixed behavior, omit
    it or pass in 'true' [default] to render with your own custom state instead)
+   pass in 'true' for the [new] fourth argument to combine with gl.*ShapeTextures
+ - add callouts
+     gl.{Unit,Feature}Textures(number objID, boolean enable) -> nil
+     gl.{Unit,Feature}ShapeTextures(number defID, boolean enable) -> nil
+   these are primarily intended to be used in conjunction with
+     gl.{Unit,Feature}(objID, ..., raw=true)
+     gl.{Unit,Feature}Shape(defID, ..., raw=true)
+   and apply a model's default textures; easier than gl.Texture("$%...")
+
  - new Spring.GetUICommands function to obtain a list of all UI commands (e.g. /luaui reload)
  - new VFS.CalculateHash function that calculates hash (in base64 form) of a given string (with md5 support initially)
  - new Spring.SetFeatureFade(featureID, bool) to control whether a feature will fade or not when zoomed out.

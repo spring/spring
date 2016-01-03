@@ -316,7 +316,9 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(Unit);
 	REGISTER_LUA_CFUNC(UnitRaw);
+	REGISTER_LUA_CFUNC(UnitTextures);
 	REGISTER_LUA_CFUNC(UnitShape);
+	REGISTER_LUA_CFUNC(UnitShapeTextures);
 	REGISTER_LUA_CFUNC(UnitMultMatrix);
 	REGISTER_LUA_CFUNC(UnitPiece);
 	REGISTER_LUA_CFUNC(UnitPieceMatrix);
@@ -324,7 +326,9 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(Feature);
 	REGISTER_LUA_CFUNC(FeatureRaw);
+	REGISTER_LUA_CFUNC(FeatureTextures);
 	REGISTER_LUA_CFUNC(FeatureShape);
+	REGISTER_LUA_CFUNC(FeatureShapeTextures);
 	REGISTER_LUA_CFUNC(FeatureMultMatrix);
 	REGISTER_LUA_CFUNC(FeaturePiece);
 	REGISTER_LUA_CFUNC(FeaturePieceMatrix);
@@ -1357,7 +1361,7 @@ int LuaOpenGL::GetTextHeight(lua_State* L)
 
 /******************************************************************************/
 
-static void ObjectPiece(lua_State* L, const CSolidObject* obj)
+static void glObjectPiece(lua_State* L, const CSolidObject* obj)
 {
 	if (obj == nullptr)
 		return;
@@ -1370,7 +1374,7 @@ static void ObjectPiece(lua_State* L, const CSolidObject* obj)
 	glCallList(lmp->dispListID);
 }
 
-static void ObjectPieceMultMatrix(lua_State* L, const CSolidObject* obj)
+static void glObjectPieceMultMatrix(lua_State* L, const CSolidObject* obj)
 {
 	if (obj == nullptr)
 		return;
@@ -1383,7 +1387,7 @@ static void ObjectPieceMultMatrix(lua_State* L, const CSolidObject* obj)
 	glMultMatrixf(lmp->GetModelSpaceMatrix());
 }
 
-static bool ObjectDrawWithLuaMat(lua_State* L, CSolidObject* obj, LuaObjType objType)
+static bool glObjectDrawWithLuaMat(lua_State* L, CSolidObject* obj, LuaObjType objType)
 {
 	LuaObjectMaterialData* lmd = obj->GetLuaMaterialData();
 
@@ -1406,18 +1410,59 @@ static bool ObjectDrawWithLuaMat(lua_State* L, CSolidObject* obj, LuaObjType obj
 }
 
 
-static void ObjectDrawShape(lua_State* L, const SolidObjectDef* def)
+static void ObjectShape(lua_State* L, const SolidObjectDef* def)
 {
 	if (def == nullptr)
 		return;
-
-	if (!teamHandler->IsValidTeam(luaL_checkint(L, 2)))
+	if (def->LoadModel() == nullptr)
 		return;
 
+	const bool rawState = luaL_optboolean(L, 3,  true);
+	const bool mdlState = luaL_optboolean(L, 4, false);
+
+	if (rawState && mdlState) {
+		CUnitDrawer::PushModelRenderState(def->model);
+	}
+
 	// does not set the full state by default
-	unitDrawer->DrawIndividualDefOpaque(def, luaL_checkint(L, 2), luaL_optboolean(L, 3, true));
+	CUnitDrawer::DrawIndividualDefOpaque(def, luaL_checkint(L, 2), rawState);
+
+	if (rawState && mdlState) {
+		CUnitDrawer::PopModelRenderState(def->model);
+	}
 }
 
+
+static void glObjectTextures(lua_State* L, const CSolidObject* obj)
+{
+	if (obj == nullptr)
+		return;
+	if (obj->model == nullptr)
+		return;
+
+	if (luaL_checkboolean(L, 2)) {
+		CUnitDrawer::PushModelRenderState(obj->model);
+	} else {
+		CUnitDrawer::PopModelRenderState(obj->model);
+	}
+}
+
+static void glObjectShapeTextures(lua_State* L, const SolidObjectDef* def)
+{
+	if (def == nullptr)
+		return;
+	if (def->LoadModel() == nullptr)
+		return;
+
+	// note: intended to accompany a *raw* ObjectDrawShape call
+	// set textures and per-model(type) attributes, not shaders
+	// or other drawpass state
+	if (luaL_checkboolean(L, 2)) {
+		CUnitDrawer::PushModelRenderState(def->model);
+	} else {
+		CUnitDrawer::PopModelRenderState(def->model);
+	}
+}
 
 
 int LuaOpenGL::UnitCommon(lua_State* L, bool applyTransform, bool callDrawUnit)
@@ -1434,7 +1479,7 @@ int LuaOpenGL::UnitCommon(lua_State* L, bool applyTransform, bool callDrawUnit)
 	//   UnitRaw also skips the DrawUnit callin by default so any
 	//   recursion is blocked
 	const bool doRawDraw = luaL_optboolean(L, 2, false);
-	const bool useLuaMat = ObjectDrawWithLuaMat(L, unit, LUAOBJ_UNIT);
+	const bool useLuaMat = glObjectDrawWithLuaMat(L, unit, LUAOBJ_UNIT);
 	const bool noLuaCall = luaL_optboolean(L, 4, !callDrawUnit);
 
 	glPushAttrib(GL_ENABLE_BIT);
@@ -1470,11 +1515,24 @@ int LuaOpenGL::UnitCommon(lua_State* L, bool applyTransform, bool callDrawUnit)
 int LuaOpenGL::Unit(lua_State* L) { return (UnitCommon(L, true, true)); }
 int LuaOpenGL::UnitRaw(lua_State* L) { return (UnitCommon(L, false, false)); }
 
+int LuaOpenGL::UnitTextures(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+	glObjectTextures(L, unitHandler->GetUnit(luaL_checkint(L, 1)));
+	return 0;
+}
 
 int LuaOpenGL::UnitShape(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
-	ObjectDrawShape(L, unitDefHandler->GetUnitDefByID(luaL_checkint(L, 1)));
+	ObjectShape(L, unitDefHandler->GetUnitDefByID(luaL_checkint(L, 1)));
+	return 0;
+}
+
+int LuaOpenGL::UnitShapeTextures(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+	glObjectShapeTextures(L, unitDefHandler->GetUnitDefByID(luaL_checkint(L, 1)));
 	return 0;
 }
 
@@ -1494,7 +1552,7 @@ int LuaOpenGL::UnitMultMatrix(lua_State* L)
 
 int LuaOpenGL::UnitPiece(lua_State* L)
 {
-	ObjectPiece(L, ParseUnit(L, __FUNCTION__, 1));
+	glObjectPiece(L, ParseUnit(L, __FUNCTION__, 1));
 	return 0;
 }
 
@@ -1502,7 +1560,7 @@ int LuaOpenGL::UnitPieceMatrix(lua_State* L) { return (UnitPieceMultMatrix(L)); 
 int LuaOpenGL::UnitPieceMultMatrix(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
-	ObjectPieceMultMatrix(L, ParseUnit(L, __FUNCTION__, 1));
+	glObjectPieceMultMatrix(L, ParseUnit(L, __FUNCTION__, 1));
 	return 0;
 }
 
@@ -1525,7 +1583,7 @@ int LuaOpenGL::FeatureCommon(lua_State* L, bool applyTransform, bool callDrawFea
 	//   FeatureRaw also skips the DrawFeature callin by default so
 	//   any recursion is blocked
 	const bool doRawDraw = luaL_optboolean(L, 2, false);
-	const bool useLuaMat = ObjectDrawWithLuaMat(L, feature, LUAOBJ_FEATURE);
+	const bool useLuaMat = glObjectDrawWithLuaMat(L, feature, LUAOBJ_FEATURE);
 	const bool noLuaCall = luaL_optboolean(L, 4, !callDrawFeature);
 
 	glPushAttrib(GL_ENABLE_BIT);
@@ -1561,11 +1619,24 @@ int LuaOpenGL::FeatureCommon(lua_State* L, bool applyTransform, bool callDrawFea
 int LuaOpenGL::Feature(lua_State* L) { return (FeatureCommon(L, true, true)); }
 int LuaOpenGL::FeatureRaw(lua_State* L) { return (FeatureCommon(L, false, false)); }
 
+int LuaOpenGL::FeatureTextures(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+	glObjectTextures(L, featureHandler->GetFeature(luaL_checkint(L, 1)));
+	return 0;
+}
 
 int LuaOpenGL::FeatureShape(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
-	ObjectDrawShape(L, featureHandler->GetFeatureDefByID(luaL_checkint(L, 1)));
+	ObjectShape(L, featureHandler->GetFeatureDefByID(luaL_checkint(L, 1)));
+	return 0;
+}
+
+int LuaOpenGL::FeatureShapeTextures(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+	glObjectShapeTextures(L, featureHandler->GetFeatureDefByID(luaL_checkint(L, 1)));
 	return 0;
 }
 
@@ -1585,7 +1656,7 @@ int LuaOpenGL::FeatureMultMatrix(lua_State* L)
 
 int LuaOpenGL::FeaturePiece(lua_State* L)
 {
-	ObjectPiece(L, ParseFeature(L, __FUNCTION__, 1));
+	glObjectPiece(L, ParseFeature(L, __FUNCTION__, 1));
 	return 0;
 }
 
@@ -1594,7 +1665,7 @@ int LuaOpenGL::FeaturePieceMatrix(lua_State* L) { return (FeaturePieceMultMatrix
 int LuaOpenGL::FeaturePieceMultMatrix(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
-	ObjectPieceMultMatrix(L, ParseFeature(L, __FUNCTION__, 1));
+	glObjectPieceMultMatrix(L, ParseFeature(L, __FUNCTION__, 1));
 	return 0;
 }
 

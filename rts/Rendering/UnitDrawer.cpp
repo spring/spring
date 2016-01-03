@@ -1151,6 +1151,8 @@ void CUnitDrawer::DrawIndividualDefOpaque(const SolidObjectDef* objectDef, int t
 
 	if (model == nullptr)
 		return;
+	if (!teamHandler->IsValidTeam(teamID))
+		return;
 
 	if (!rawState) {
 		// these are not handled by Setup*Drawing but CGame
@@ -1184,6 +1186,8 @@ void CUnitDrawer::DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int te
 	const S3DModel* model = objectDef->LoadModel();
 
 	if (model == nullptr)
+		return;
+	if (!teamHandler->IsValidTeam(teamID))
 		return;
 
 	if (!rawState) {
