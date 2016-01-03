@@ -24,7 +24,7 @@ BOOST_AUTO_TEST_CASE( GetEulerAnglesRgtHand )
 		float3(30, 30, 30),
 		float3(45, 45, 45),
 		float3(0, 83, 0), //breaks
-		float3(0, -95, 0), //breaks
+		float3(0, 265, 0), //breaks
 		// not wrong but order isn't ideal
 		//float3(0, 90, 50), // produces float3(-50, 90, 0)
 		//float(140, 120, 45), // produces float3(-40, 60, -135)
