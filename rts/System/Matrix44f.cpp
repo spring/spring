@@ -264,6 +264,7 @@ CMatrix44f& CMatrix44f::RotateEulerZXY(const float3 angles)
 	if (angles[ANGLE_R] != 0.0f) { RotateZ(angles[ANGLE_R]); }
 	if (angles[ANGLE_P] != 0.0f) { RotateX(angles[ANGLE_P]); }
 	if (angles[ANGLE_Y] != 0.0f) { RotateY(angles[ANGLE_Y]); }
+	return *this;
 }
 
 CMatrix44f& CMatrix44f::RotateEulerZYX(const float3 angles)
