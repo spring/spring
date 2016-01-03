@@ -604,7 +604,8 @@ CMatrix44f CMatrix44f::Invert(bool* status) const
 //   therefore (if called on an object's transform matrix)
 //   the angles {a,b,c} returned here actually correspond
 //   to values as though RotateEulerZYX(-a,-b,-c) had been
-//   called, *NOT* RotateEulerXYZ(a,b,c)
+//   called, *NOT* RotateEulerXYZ(a,b,c) as in the case of
+//   a right-handed matrix
 //
 //   however, since
 //
@@ -620,7 +621,7 @@ float3 CMatrix44f::GetEulerAnglesRgtHand(float eps) const {
 	float  cosYaw[2] = {0.0f, 0.0f};
 	float  rotSum[2] = {0.0f, 0.0f};
 
-	if (eps > math::fabs(m[0 * 4 + 2] + 1.0f)) {
+	if (Square(eps) > math::fabs(m[0 * 4 + 2] + 1.0f)) {
 		// x.z == -1 (yaw=PI/2) means gimbal lock between X and Z
 		angles[0][ANGLE_R] = (     0.0f);
 		angles[0][ANGLE_Y] = (PI * 0.5f);
@@ -629,7 +630,7 @@ float3 CMatrix44f::GetEulerAnglesRgtHand(float eps) const {
 		return angles[0];
 	}
 
-	if (eps > math::fabs(m[0 * 4 + 2] - 1.0f)) {
+	if (Square(eps) > math::fabs(m[0 * 4 + 2] - 1.0f)) {
 		// x.z == 1 (yaw=-PI/2) means gimbal lock between X and Z
 		angles[0][ANGLE_R] =  (     0.0f);
 		angles[0][ANGLE_Y] = -(PI * 0.5f);
@@ -667,6 +668,7 @@ float3 CMatrix44f::GetEulerAnglesRgtHand(float eps) const {
 
 float3 CMatrix44f::GetEulerAnglesLftHand(float eps) const {
 	CMatrix44f matrix = *this;
+	// (A*B*C)^T = (C^T)*(B^T)*(A^T)
 	matrix.Transpose();
 	return (matrix.GetEulerAnglesRgtHand(eps));
 }
