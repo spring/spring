@@ -192,6 +192,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitIsStunned);
 	REGISTER_LUA_CFUNC(GetUnitResources);
 	REGISTER_LUA_CFUNC(GetUnitMetalExtraction);
+	REGISTER_LUA_CFUNC(GetUnitMaxRange);
 	REGISTER_LUA_CFUNC(GetUnitExperience);
 	REGISTER_LUA_CFUNC(GetUnitStates);
 	REGISTER_LUA_CFUNC(GetUnitArmored);
