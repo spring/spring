@@ -171,6 +171,26 @@ endif()
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
 
 ################################################################################
+### Matrix44fRotation
+	set(test_name Matrix44fRotation)
+	Set(test_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/testRotationMatrix44f.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Matrix44f.cpp"
+			"${ENGINE_SOURCE_DIR}/System/float3.cpp"
+			${test_Log_sources}
+		)
+
+	set(test_libs
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			${Boost_SYSTEM_LIBRARY}
+			${Boost_THREAD_LIBRARY}
+			${Boost_CHRONO_LIBRARY_WITH_RT}
+			${WINMM_LIBRARY}
+		)
+
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
+
+################################################################################
 ### SpringTime
 	set(test_name SpringTime)
 	Set(test_src
