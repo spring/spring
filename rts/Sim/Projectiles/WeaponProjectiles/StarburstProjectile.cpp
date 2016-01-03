@@ -452,7 +452,7 @@ void CStarburstProjectile::DrawCallback()
 	va->AddVertexTC(drawPos - camera->GetRight() * fsize + camera->GetUp() * fsize, wt1->xstart, wt1->yend,   col);
 }
 
-int CStarburstProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed)
+int CStarburstProjectile::ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed)
 {
 	const float3 rdir = (pos - shieldPos).Normalize();
 

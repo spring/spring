@@ -133,7 +133,7 @@ void CExplosiveProjectile::Draw()
 	}
 }
 
-int CExplosiveProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed)
+int CExplosiveProjectile::ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed)
 {
 	if (luaMoveCtrl)
 		return 0;

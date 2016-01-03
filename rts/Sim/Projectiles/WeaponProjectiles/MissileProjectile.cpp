@@ -407,12 +407,8 @@ void CMissileProjectile::Draw()
 	va->AddVertexQTC(drawPos - camera->GetRight() * fsize+camera->GetUp() * fsize, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->yend,   col);
 }
 
-int CMissileProjectile::ShieldRepulse(
-	CPlasmaRepulser* shield,
-	float3 shieldPos,
-	float shieldForce,
-	float shieldMaxSpeed
-) {
+int CMissileProjectile::ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed)
+{
 	if (luaMoveCtrl)
 		return 0;
 

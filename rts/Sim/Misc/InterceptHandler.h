@@ -9,7 +9,6 @@
 
 class CWeapon;
 class CWeaponProjectile;
-class CPlasmaRepulser;
 class CProjectile;
 class float3;
 

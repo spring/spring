@@ -149,7 +149,7 @@ bool CPlasmaRepulser::IncomingProjectile(CWeaponProjectile* p)
 
 	if (weaponDef->shieldRepulser) {
 		// bounce the projectile
-		const int type = p->ShieldRepulse(this, weaponMuzzlePos,
+		const int type = p->ShieldRepulse(weaponMuzzlePos,
 			weaponDef->shieldForce,
 			weaponDef->shieldMaxSpeed);
 

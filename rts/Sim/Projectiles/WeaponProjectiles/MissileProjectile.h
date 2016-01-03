@@ -24,12 +24,7 @@ public:
 
 	virtual int GetProjectilesCount() const override;
 
-	int ShieldRepulse(
-		CPlasmaRepulser* shield,
-		float3 shieldPos,
-		float shieldForce,
-		float shieldMaxSpeed
-	) override;
+	int ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed) override;
 
 private:
 	void UpdateWobble();

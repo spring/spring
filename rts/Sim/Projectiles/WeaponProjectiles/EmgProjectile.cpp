@@ -78,7 +78,7 @@ void CEmgProjectile::Draw()
 	va->AddVertexTC(drawPos - camera->GetRight() * drawRadius+camera->GetUp() * drawRadius, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->yend,   col);
 }
 
-int CEmgProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed)
+int CEmgProjectile::ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed)
 {
 	if (luaMoveCtrl)
 		return 0;

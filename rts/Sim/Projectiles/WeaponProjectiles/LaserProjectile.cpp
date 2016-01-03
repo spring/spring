@@ -271,7 +271,7 @@ void CLaserProjectile::Draw()
 	}
 }
 
-int CLaserProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed)
+int CLaserProjectile::ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed)
 {
 	if (luaMoveCtrl)
 		return 0;
