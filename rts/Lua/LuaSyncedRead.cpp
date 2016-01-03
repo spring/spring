@@ -462,7 +462,7 @@ static inline bool IsProjectileVisible(lua_State* L, const CProjectile* pro)
 
 static int GetSolidObjectLastHitPiece(lua_State* L, const CSolidObject* o)
 {
-	if (o == NULL)
+	if (o == nullptr)
 		return 0;
 	if (o->lastHitPiece == nullptr)
 		return 0;
@@ -496,7 +496,7 @@ static int PushCollisionVolumeData(lua_State* L, const CollisionVolume* vol) {
 
 static int PushPieceCollisionVolumeData(lua_State* L, const CSolidObject* o)
 {
-	if (o == NULL)
+	if (o == nullptr)
 		return 0;
 
 	const LocalModelPiece* lmp = ParseObjectConstLocalModelPiece(L, o, 2);
@@ -529,7 +529,7 @@ static int PushTerrainTypeData(lua_State* L, const CMapInfo::TerrainType* tt, bo
 
 static int GetWorldObjectVelocity(lua_State* L, const CWorldObject* o)
 {
-	if (o == NULL)
+	if (o == nullptr)
 		return 0;
 
 	lua_pushnumber(L, o->speed.x);
@@ -541,7 +541,7 @@ static int GetWorldObjectVelocity(lua_State* L, const CWorldObject* o)
 
 static int GetSolidObjectPosition(lua_State* L, const CSolidObject* o, bool isFeature)
 {
-	if (o == NULL)
+	if (o == nullptr)
 		return 0;
 
 	float3 errorVec;
@@ -579,24 +579,23 @@ static int GetSolidObjectPosition(lua_State* L, const CSolidObject* o, bool isFe
 
 static int GetSolidObjectRotation(lua_State* L, const CSolidObject* o)
 {
-	if (o == NULL)
+	if (o == nullptr)
 		return 0;
 
-	const CMatrix44f& matrix = o->GetTransformMatrix(CLuaHandle::GetHandleSynced(L));
-	const float3 angles = matrix.GetEulerAnglesYPR();
+	const CMatrix44f matrix = o->GetTransformMatrix(CLuaHandle::GetHandleSynced(L));
+	const float3 angles = matrix.GetEulerAnglesLftHand();
 
 	assert(matrix.IsOrthoNormal() == 0);
 
-	// same order (PYR) as expected by SetObjectRotation
-	lua_pushnumber(L, angles.x);
-	lua_pushnumber(L, angles.y);
-	lua_pushnumber(L, angles.z);
+	lua_pushnumber(L, angles[CMatrix44f::ANGLE_P]);
+	lua_pushnumber(L, angles[CMatrix44f::ANGLE_Y]);
+	lua_pushnumber(L, angles[CMatrix44f::ANGLE_R]);
 	return 3;
 }
 
 static int GetSolidObjectBlocking(lua_State* L, const CSolidObject* o)
 {
-	if (o == NULL)
+	if (o == nullptr)
 		return 0;
 
 	lua_pushboolean(L, o->HasPhysicalStateBit(CSolidObject::PSTATE_BIT_BLOCKING));

@@ -67,7 +67,6 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/EventHandler.h"
-#include "System/myMath.h"
 #include "System/ObjectDependenceTypes.h"
 #include "System/Log/ILog.h"
 #include "System/Sync/HsiehHash.h"
@@ -455,7 +454,7 @@ static CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 
 static int SetSolidObjectCollisionVolumeData(lua_State* L, CSolidObject* o)
 {
-	if (o == NULL)
+	if (o == nullptr)
 		return 0;
 
 	const float xs = luaL_checkfloat(L, 2);
@@ -477,7 +476,7 @@ static int SetSolidObjectCollisionVolumeData(lua_State* L, CSolidObject* o)
 
 static int SetSolidObjectBlocking(lua_State* L, CSolidObject* o)
 {
-	if (o == NULL)
+	if (o == nullptr)
 		return 0;
 
 	// update SO-bit of collidable state
@@ -512,14 +511,12 @@ static int SetSolidObjectBlocking(lua_State* L, CSolidObject* o)
 
 static int SetSolidObjectRotation(lua_State* L, CSolidObject* o, bool isFeature)
 {
-	if (o == NULL)
+	if (o == nullptr)
 		return 0;
 
-	// same(?) order (YPR) as ModelPiece::ComposeRotation; args are PYR
+	// TODO: switch to YPR=YXZ (same as ModelPiece::ComposeRotation())
 	CMatrix44f matrix;
-	matrix.RotateZ(ClampRad(luaL_checkfloat(L, 4)));
-	matrix.RotateY(ClampRad(luaL_checkfloat(L, 3)));
-	matrix.RotateX(ClampRad(luaL_checkfloat(L, 2)));
+	matrix.RotateEulerXYZ(float3(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4)));
 	matrix.SetPos(o->pos);
 
 	assert(matrix.IsOrthoNormal() == 0);
@@ -540,7 +537,7 @@ static int SetSolidObjectRotation(lua_State* L, CSolidObject* o, bool isFeature)
 
 static int SetSolidObjectDirection(lua_State* L, CSolidObject* o)
 {
-	if (o == NULL)
+	if (o == nullptr)
 		return 0;
 
 	o->ForcedSpin((float3(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4))).SafeNormalize());
@@ -549,7 +546,7 @@ static int SetSolidObjectDirection(lua_State* L, CSolidObject* o)
 
 static int SetWorldObjectVelocity(lua_State* L, CWorldObject* o)
 {
-	if (o == NULL)
+	if (o == nullptr)
 		return 0;
 
 	float3 speed;
@@ -563,7 +560,7 @@ static int SetWorldObjectVelocity(lua_State* L, CWorldObject* o)
 
 static int SetSolidObjectPhysicalState(lua_State* L, CSolidObject* o)
 {
-	if (o == NULL)
+	if (o == nullptr)
 		return 0;
 
 	float3 pos;
@@ -628,7 +625,7 @@ static int SetSolidObjectPieceCollisionVolumeData(lua_State* L, CSolidObject* ob
 
 static int SetWorldObjectAlwaysVisible(lua_State* L, CWorldObject* o, const char* caller)
 {
-	if (o == NULL)
+	if (o == nullptr)
 		return 0;
 	o->alwaysVisible = luaL_checkboolean(L, 2);
 	return 0;

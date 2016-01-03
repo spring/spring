@@ -25,10 +25,14 @@ public:
 	CMatrix44f& LoadIdentity();
 
 	void SetUpVector(const float3 up);
-	CMatrix44f& RotateX(float rad);
-	CMatrix44f& RotateY(float rad);
-	CMatrix44f& RotateZ(float rad);
-	CMatrix44f& Rotate(float rad, const float3 axis); //! axis is assumed to be normalized
+	CMatrix44f& RotateX(float angle); // (pitch) angle in radians
+	CMatrix44f& RotateY(float angle); // (  yaw) angle in radians
+	CMatrix44f& RotateZ(float angle); // ( roll) angle in radians
+	CMatrix44f& Rotate(float angle, const float3 axis); // assumes axis is normalized
+	CMatrix44f& RotateEulerXYZ(const float3 angles); // executes Rotate{X,Y,Z}
+	CMatrix44f& RotateEulerYXZ(const float3 angles); // executes Rotate{Y,X,Z}
+	CMatrix44f& RotateEulerZXY(const float3 angles); // executes Rotate{Z,X,Y}
+	CMatrix44f& RotateEulerZYX(const float3 angles); // executes Rotate{Z,Y,X}
 	CMatrix44f& Translate(const float x, const float y, const float z);
 	CMatrix44f& Translate(const float3 pos) { return Translate(pos.x, pos.y, pos.z); }
 	CMatrix44f& Scale(const float3 scales);
@@ -43,10 +47,8 @@ public:
 	float3 GetY  () const { return float3(m[ 4], m[ 5], m[ 6]); }
 	float3 GetZ  () const { return float3(m[ 8], m[ 9], m[10]); }
 
-	float3 GetEulerAnglesPYR(float eps = 0.01f /*std::numeric_limits<float>::epsilon()*/) const;
-	float3 GetEulerAnglesYPR(float eps = 0.01f /*std::numeric_limits<float>::epsilon()*/) const {
-		float3 angles = GetEulerAnglesPYR(eps); std::swap(angles.x, angles.y); return angles;
-	}
+	float3 GetEulerAnglesLftHand(float eps = 0.01f /*std::numeric_limits<float>::epsilon()*/) const;
+	float3 GetEulerAnglesRgtHand(float eps = 0.01f /*std::numeric_limits<float>::epsilon()*/) const;
 
 	inline void operator *= (const float a) {
 		for (size_t i = 0; i < 16; i += 4) {
@@ -99,6 +101,12 @@ public:
 	/// Allows implicit conversion to float* (for passing to gl functions)
 	operator const float* () const { return m; }
 	operator       float* ()       { return m; }
+
+	enum {
+		ANGLE_P = 0,
+		ANGLE_Y = 1,
+		ANGLE_R = 2,
+	};
 
 public:
 	/// OpenGL ordered (ie. column-major)
