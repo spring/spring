@@ -1073,6 +1073,13 @@ void CUnitDrawer::CleanupBasicS3OTexture0()
 
 void CUnitDrawer::PushIndividualOpaqueState(const S3DModel* model, int teamID, bool deferredPass)
 {
+	// these are not handled by Setup*Drawing but CGame
+	// easier to assume they no longer have the correct
+	// values at this point
+	glPushAttrib(GL_DEPTH_BUFFER_BIT | GL_ENABLE_BIT);
+	glDepthMask(GL_TRUE);
+	glEnable(GL_DEPTH_TEST);
+
 	SetupOpaqueDrawing(deferredPass);
 	PushModelRenderState(model);
 	SetTeamColour(teamID);
@@ -1090,6 +1097,8 @@ void CUnitDrawer::PopIndividualOpaqueState(const S3DModel* model, int teamID, bo
 {
 	PopModelRenderState(model);
 	ResetOpaqueDrawing(deferredPass);
+
+	glPopAttrib();
 }
 
 void CUnitDrawer::PopIndividualAlphaState(const S3DModel* model, int teamID, bool deferredPass)
@@ -1140,7 +1149,7 @@ void CUnitDrawer::DrawIndividualNoTrans(const CUnit* unit, bool noLuaCall)
 
 
 
-static void ResetPrevProjection(bool toScreen)
+static void DIDResetPrevProjection(bool toScreen)
 {
 	if (!toScreen)
 		return;
@@ -1150,11 +1159,22 @@ static void ResetPrevProjection(bool toScreen)
 	glPushMatrix();
 }
 
-static void ResetPrevModelView()
+static void DIDResetPrevModelView()
 {
 	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
 	glPushMatrix();
+}
+
+static bool DIDCheckMatrixMode(int wantedMode)
+{
+	#if 1
+	int matrixMode = 0;
+	glGetIntegerv(GL_MATRIX_MODE, &matrixMode);
+	return (matrixMode == wantedMode);
+	#else
+	return true;
+	#endif
 }
 
 
@@ -1171,12 +1191,8 @@ void CUnitDrawer::DrawIndividualDefOpaque(const SolidObjectDef* objectDef, int t
 		return;
 
 	if (!rawState) {
-		// these are not handled by Setup*Drawing but CGame
-		// easier to assume they no longer have the correct
-		// values at this point
-		glPushAttrib(GL_DEPTH_BUFFER_BIT | GL_ENABLE_BIT);
-		glDepthMask(GL_TRUE);
-		glEnable(GL_DEPTH_TEST);
+		if (!DIDCheckMatrixMode(GL_MODELVIEW))
+			return;
 
 		unitDrawer->PushIndividualOpaqueState(model, teamID, false);
 
@@ -1187,16 +1203,14 @@ void CUnitDrawer::DrawIndividualDefOpaque(const SolidObjectDef* objectDef, int t
 		//   (by undoing the UnitDrawerState MVP setup)
 		//
 		//   assumes the Lua transform includes a LoadIdentity!
-		ResetPrevProjection(toScreen);
-		ResetPrevModelView();
+		DIDResetPrevProjection(toScreen);
+		DIDResetPrevModelView();
 	}
 
 	model->DrawStatic();
 
 	if (!rawState) {
 		unitDrawer->PopIndividualOpaqueState(model, teamID, false);
-
-		glPopAttrib();
 	}
 }
 
@@ -1211,10 +1225,13 @@ void CUnitDrawer::DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int te
 		return;
 
 	if (!rawState) {
+		if (!DIDCheckMatrixMode(GL_MODELVIEW))
+			return;
+
 		unitDrawer->PushIndividualAlphaState(model, teamID, false);
 
-		ResetPrevProjection(toScreen);
-		ResetPrevModelView();
+		DIDResetPrevProjection(toScreen);
+		DIDResetPrevModelView();
 	}
 
 	model->DrawStatic();
