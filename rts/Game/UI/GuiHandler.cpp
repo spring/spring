@@ -3649,6 +3649,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 
 					if (!onMinimap) {
 						glPushMatrix();
+						glLoadIdentity();
 						glTranslatef3(buildPos);
 						glRotatef(bpi->buildFacing * 90.0f, 0.0f, 1.0f, 0.0f);
 

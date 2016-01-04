@@ -247,8 +247,6 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	//   *** except for DrawAlphaUnits
 	advFading = GLEW_NV_vertex_program2;
 	advShading = (unitDrawerStates[DRAWER_STATE_SSP]->Init(this) && cubeMapHandler->Init());
-
-	resetTransform = true;
 }
 
 CUnitDrawer::~CUnitDrawer()
@@ -687,7 +685,7 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 void CUnitDrawer::SetupAlphaDrawing(bool deferredPass)
 {
 	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState(true));
-	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass && false, true, resetTransform);
+	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass && false, true);
 
 	glActiveTexture(GL_TEXTURE0);
 	glEnable(GL_TEXTURE_2D);
@@ -956,7 +954,7 @@ void CUnitDrawer::SetupOpaqueDrawing(bool deferredPass)
 
 	// pick base shaders (ARB/GLSL) or FFP; not used by custom-material models
 	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState(false));
-	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass, false, resetTransform);
+	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass, false);
 
 	// NOTE:
 	//   when deferredPass is true we MUST be able to use the SSP render-state
@@ -1162,19 +1160,23 @@ void CUnitDrawer::DrawIndividualDefOpaque(const SolidObjectDef* objectDef, int t
 		glDepthMask(GL_TRUE);
 		glEnable(GL_DEPTH_TEST);
 
+		unitDrawer->PushIndividualOpaqueState(model, teamID, false);
+
 		// NOTE:
 		//   unlike DrawIndividual(...) the model transform is
 		//   always provided by Lua, not taken from the object
-		//   (which does not exist here) so do not override it
-		unitDrawer->ResetTransform(false);
-		unitDrawer->PushIndividualOpaqueState(model, teamID, false);
+		//   (which does not exist here) so we must restore it
+		//   (by undoing the UnitDrawerState MV setup)
+		//
+		//   assumes the Lua transform includes a LoadIdentity!
+		glPopMatrix();
+		glPushMatrix();
 	}
 
 	model->DrawStatic();
 
 	if (!rawState) {
 		unitDrawer->PopIndividualOpaqueState(model, teamID, false);
-		unitDrawer->ResetTransform(true);
 
 		glPopAttrib();
 	}
@@ -1191,17 +1193,16 @@ void CUnitDrawer::DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int te
 		return;
 
 	if (!rawState) {
-		// note: blocking the reset is needed if rendering with
-		// shaders, FFP::Enable() does not touch the transforms
-		unitDrawer->ResetTransform(false);
 		unitDrawer->PushIndividualAlphaState(model, teamID, false);
+
+		glPopMatrix();
+		glPushMatrix();
 	}
 
 	model->DrawStatic();
 
 	if (!rawState) {
 		unitDrawer->PopIndividualAlphaState(model, teamID, false);
-		unitDrawer->ResetTransform(true);
 	}
 }
 

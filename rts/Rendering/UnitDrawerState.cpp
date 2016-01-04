@@ -30,6 +30,25 @@ static float4 GetTeamColor(int team, float alpha) {
 
 
 
+static void PushTransform(const CCamera* cam) {
+	// set model-drawing transform; view is combined with projection
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glMultMatrixf(cam->GetViewMatrix());
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+}
+
+static void PopTransform() {
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
+}
+
+
+
 IUnitDrawerState* IUnitDrawerState::GetInstance(bool haveARB, bool haveGLSL) {
 	IUnitDrawerState* instance = nullptr;
 
@@ -47,15 +66,8 @@ IUnitDrawerState* IUnitDrawerState::GetInstance(bool haveARB, bool haveGLSL) {
 }
 
 
-void IUnitDrawerState::EnableCommon(const CUnitDrawer* ud, bool deferredPass, bool resetTransform) {
-	if (resetTransform) {
-		glMatrixMode(GL_PROJECTION);
-		glPushMatrix();
-		glMultMatrixf(camera->GetViewMatrix());
-		glMatrixMode(GL_MODELVIEW);
-		glPushMatrix();
-		glLoadIdentity();
-	}
+void IUnitDrawerState::EnableCommon(const CUnitDrawer* ud, bool deferredPass) {
+	PushTransform(camera);
 
 	SetActiveShader(shadowHandler->ShadowsLoaded(), deferredPass);
 	assert(modelShaders[MODEL_SHADER_ACTIVE] != nullptr);
@@ -113,10 +125,7 @@ void IUnitDrawerState::DisableCommon(const CUnitDrawer* ud, bool) {
 
 	glActiveTexture(GL_TEXTURE0);
 
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
+	PopTransform();
 }
 
 
@@ -175,7 +184,7 @@ bool UnitDrawerStateFFP::CanEnable(const CUnitDrawer* ud) const {
 	return (!ud->UseAdvShading() || water->DrawReflectionPass());
 }
 
-void UnitDrawerStateFFP::Enable(const CUnitDrawer* ud, bool deferredPass, bool alphaPass, bool resetTransform) {
+void UnitDrawerStateFFP::Enable(const CUnitDrawer* ud, bool deferredPass, bool alphaPass) {
 	glEnable(GL_LIGHTING);
 	glLightfv(GL_LIGHT1, GL_POSITION, sky->GetLight()->GetLightDir());
 	glEnable(GL_LIGHT1);
@@ -187,9 +196,13 @@ void UnitDrawerStateFFP::Enable(const CUnitDrawer* ud, bool deferredPass, bool a
 
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, &color.x);
 	glColor4fv(&color.x);
+
+	PushTransform(camera);
 }
 
 void UnitDrawerStateFFP::Disable(const CUnitDrawer* ud, bool) {
+	PopTransform();
+
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
 	glDisable(GL_LIGHTING);
@@ -273,8 +286,8 @@ bool UnitDrawerStateARB::CanEnable(const CUnitDrawer* ud) const {
 	return (ud->UseAdvShading() && !water->DrawReflectionPass());
 }
 
-void UnitDrawerStateARB::Enable(const CUnitDrawer* ud, bool deferredPass, bool alphaPass, bool resetTransform) {
-	EnableCommon(ud, deferredPass && false, resetTransform);
+void UnitDrawerStateARB::Enable(const CUnitDrawer* ud, bool deferredPass, bool alphaPass) {
+	EnableCommon(ud, deferredPass && false);
 
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(10, &sky->GetLight()->GetLightDir().x);
@@ -402,8 +415,8 @@ bool UnitDrawerStateGLSL::CanEnable(const CUnitDrawer* ud) const {
 	return (ud->UseAdvShading() && !water->DrawReflectionPass());
 }
 
-void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud, bool deferredPass, bool alphaPass, bool resetTransform) {
-	EnableCommon(ud, deferredPass, resetTransform);
+void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud, bool deferredPass, bool alphaPass) {
+	EnableCommon(ud, deferredPass);
 
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform3fv(6, &camera->GetPos()[0]);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(7, false, camera->GetViewMatrix());

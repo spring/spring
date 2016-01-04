@@ -162,6 +162,7 @@ void CCursorIcons::DrawBuilds()
 
 	for (auto it = buildIcons.begin() ; it != buildIcons.end(); ++it) {
 		glPushMatrix();
+		glLoadIdentity();
 		glTranslatef3(it->pos);
 		glRotatef(it->facing * 90.0f, 0.0f, 1.0f, 0.0f);
 
