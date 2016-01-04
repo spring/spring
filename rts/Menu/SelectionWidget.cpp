@@ -23,6 +23,17 @@ CONFIG(std::string, LastSelectedMod).defaultValue(SelectionWidget::NoModSelect).
 CONFIG(std::string, LastSelectedMap).defaultValue(SelectionWidget::NoMapSelect).description("Stores the previously played map.");
 CONFIG(std::string, LastSelectedScript).defaultValue(SelectionWidget::NoScriptSelect).description("Stores the previously played AI.");
 
+// returns absolute filename for given archive name, empty if not found
+static const std::string GetFileName(const std::string& name){
+	if (name.empty())
+		return name;
+	const std::string& filename = archiveScanner->ArchiveFromName(name);
+	if (filename == name)
+		return "";
+	const std::string& path = archiveScanner->GetArchivePath(filename);
+	return path + filename;
+}
+
 SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(parent)
 {
 	SetPos(0.5f, 0.2f);
@@ -36,7 +47,7 @@ SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(pa
 	mod->Clicked.connect(boost::bind(&SelectionWidget::ShowModList, this));
 	mod->SetSize(0.1f, 0.00f, true);
 	userMod = configHandler->GetString("LastSelectedMod");
-	if (archiveScanner->GetSingleArchiveChecksum(archiveScanner->ArchiveFromName(userMod)) == 0)
+	if (GetFileName(userMod).empty())
 		userMod = NoModSelect;
 	modT = new agui::TextElement(userMod, modL);
 	agui::HorizontalLayout* mapL = new agui::HorizontalLayout(vl);
@@ -44,7 +55,7 @@ SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(pa
 	map->Clicked.connect(boost::bind(&SelectionWidget::ShowMapList, this));
 	map->SetSize(0.1f, 0.00f, true);
 	userMap = configHandler->GetString("LastSelectedMap");
-	if (archiveScanner->GetSingleArchiveChecksum(archiveScanner->ArchiveFromName(userMap)) == 0)
+	if (GetFileName(userMap).empty())
 		userMap = NoMapSelect;
 	mapT = new agui::TextElement(userMap, mapL);
 	agui::HorizontalLayout* scriptL = new agui::HorizontalLayout(vl);
@@ -105,24 +116,18 @@ void SelectionWidget::ShowMapList()
 }
 
 
-static const std::string GetFileName(const std::string& name){
-	if (name.empty())
-		return name;
-	const std::string filename = archiveScanner->ArchiveFromName(name);
-	const std::string path = archiveScanner->GetArchivePath(filename);
-	return path + filename;
-}
-
 static void AddArchive(const std::string& name) {
-	if (!name.empty()) {
-		vfsHandler->AddArchive(GetFileName(name), true);
-	}
+	const std::string& filename = GetFileName(name);
+	if (filename.empty())
+		return;
+	vfsHandler->AddArchive(filename, true);
 }
 
 static void RemoveArchive(const std::string& name) {
-	if (!name.empty()) {
-		vfsHandler->RemoveArchive(GetFileName(name));
-	}
+	const std::string& filename = GetFileName(name);
+	if (filename.empty())
+		return;
+	vfsHandler->RemoveArchive(filename);
 }
 
 void SelectionWidget::UpdateAvailableScripts()
