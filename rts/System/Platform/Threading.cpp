@@ -388,14 +388,13 @@ namespace Threading {
 	}
 
 
-	boost::thread CreateNewThread (boost::function<void()> taskFunc, std::shared_ptr<Threading::ThreadControls>* ppCtlsReturn)
+	boost::thread CreateNewThread(boost::function<void()> taskFunc, std::shared_ptr<Threading::ThreadControls>* ppCtlsReturn)
 	{
 		auto pThreadCtls = new Threading::ThreadControls();
-		auto ppThreadCtls = new std::shared_ptr<Threading::ThreadControls> (pThreadCtls);
-		if (ppCtlsReturn != nullptr) {
-			*ppCtlsReturn = *ppThreadCtls;
-		}
+		auto ppThreadCtls = new std::shared_ptr<Threading::ThreadControls>(pThreadCtls);
 
+		if (ppCtlsReturn != nullptr)
+			*ppCtlsReturn = *ppThreadCtls;
 
 #ifndef WIN32
 		boost::unique_lock<boost::mutex> lock (pThreadCtls->mutSuspend);
@@ -404,8 +403,12 @@ namespace Threading {
 		// Wait so that we know the thread is running and fully initialized before returning.
 		pThreadCtls->condInitialized.wait(lock);
 #else
+		if (ppCtlsReturn == nullptr)
+			delete ppThreadCtls;
+
 		boost::thread localthread(taskFunc);
 #endif
+
 		return localthread;
 	}
 
@@ -416,7 +419,7 @@ namespace Threading {
 			nativeMainThreadID = Threading::GetCurrentThreadId();
 		}
 #ifndef WIN32
-		auto ppThreadCtls = new std::shared_ptr<Threading::ThreadControls> (new Threading::ThreadControls());
+		auto ppThreadCtls = new std::shared_ptr<Threading::ThreadControls>(new Threading::ThreadControls());
 		SetCurrentThreadControls(ppThreadCtls);
 #endif
 	}
@@ -440,7 +443,7 @@ namespace Threading {
 		auto pThreadCtls = GetCurrentThreadControls();
 		if (pThreadCtls.get() == nullptr) {
 			// Loading is sometimes done from the main thread, but this function is still called in 96.0.
-			auto ppThreadCtls = new std::shared_ptr<Threading::ThreadControls> (new Threading::ThreadControls());
+			auto ppThreadCtls = new std::shared_ptr<Threading::ThreadControls>(new Threading::ThreadControls());
 			SetCurrentThreadControls(ppThreadCtls);
 		}
 #endif
