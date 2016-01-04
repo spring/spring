@@ -1418,17 +1418,13 @@ static void GLObjectShape(lua_State* L, const SolidObjectDef* def)
 		return;
 
 	const bool rawState = luaL_optboolean(L, 3,  true);
-	const bool mdlState = luaL_optboolean(L, 4, false);
-
-	if (rawState && mdlState) {
-		CUnitDrawer::PushModelRenderState(def->model);
-	}
+	const bool toScreen = luaL_optboolean(L, 4, false);
 
 	// does not set the full state by default
-	CUnitDrawer::DrawIndividualDefOpaque(def, luaL_checkint(L, 2), rawState);
-
-	if (rawState && mdlState) {
-		CUnitDrawer::PopModelRenderState(def->model);
+	if (luaL_optboolean(L, 5, true)) {
+		CUnitDrawer::DrawIndividualDefOpaque(def, luaL_checkint(L, 2), rawState, toScreen);
+	} else {
+		CUnitDrawer::DrawIndividualDefAlpha(def, luaL_checkint(L, 2), rawState, toScreen);
 	}
 }
 

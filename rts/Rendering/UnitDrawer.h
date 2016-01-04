@@ -112,8 +112,8 @@ public:
 
 	void CreateSpecularFace(unsigned int glType, int size, float3 baseDir, float3 xDif, float3 yDif, float3 sunDir, float exponent, float3 sunColor);
 
-	static void DrawIndividualDefOpaque(const SolidObjectDef* objectDef, int teamID, bool rawState);
-	static void DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int teamID, bool rawState);
+	static void DrawIndividualDefOpaque(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen = false);
+	static void DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen = false);
 
 	void DrawUnitMiniMapIcons() const;
 

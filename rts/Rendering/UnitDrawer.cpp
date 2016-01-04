@@ -1140,10 +1140,28 @@ void CUnitDrawer::DrawIndividualNoTrans(const CUnit* unit, bool noLuaCall)
 
 
 
+static void ResetPrevProjection(bool toScreen)
+{
+	if (!toScreen)
+		return;
+
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glPushMatrix();
+}
+
+static void ResetPrevModelView()
+{
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
+	glPushMatrix();
+}
+
+
 // used by LuaOpenGL::Draw{Unit,Feature}Shape
 // acts like DrawIndividual but can not apply
 // custom materials
-void CUnitDrawer::DrawIndividualDefOpaque(const SolidObjectDef* objectDef, int teamID, bool rawState)
+void CUnitDrawer::DrawIndividualDefOpaque(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen)
 {
 	const S3DModel* model = objectDef->LoadModel();
 
@@ -1166,11 +1184,11 @@ void CUnitDrawer::DrawIndividualDefOpaque(const SolidObjectDef* objectDef, int t
 		//   unlike DrawIndividual(...) the model transform is
 		//   always provided by Lua, not taken from the object
 		//   (which does not exist here) so we must restore it
-		//   (by undoing the UnitDrawerState MV setup)
+		//   (by undoing the UnitDrawerState MVP setup)
 		//
 		//   assumes the Lua transform includes a LoadIdentity!
-		glPopMatrix();
-		glPushMatrix();
+		ResetPrevProjection(toScreen);
+		ResetPrevModelView();
 	}
 
 	model->DrawStatic();
@@ -1183,7 +1201,7 @@ void CUnitDrawer::DrawIndividualDefOpaque(const SolidObjectDef* objectDef, int t
 }
 
 // used for drawing building orders (with translucency)
-void CUnitDrawer::DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int teamID, bool rawState)
+void CUnitDrawer::DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen)
 {
 	const S3DModel* model = objectDef->LoadModel();
 
@@ -1195,8 +1213,8 @@ void CUnitDrawer::DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int te
 	if (!rawState) {
 		unitDrawer->PushIndividualAlphaState(model, teamID, false);
 
-		glPopMatrix();
-		glPushMatrix();
+		ResetPrevProjection(toScreen);
+		ResetPrevModelView();
 	}
 
 	model->DrawStatic();

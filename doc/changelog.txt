@@ -23,11 +23,21 @@ Lua:
    death anims, etc; after the second call a unitID is no longer valid!)
    also remove hardcoded logic to zombify (stun+immobilize) a unit on death
 
- ! gl.UnitShape and gl.FeatureShape now set their relevant GL state internally
-   (so calling only these functions is enough to get correctly rendered models;
-   pass in 'false' for the [new] third argument to get the fixed behavior, omit
-   it or pass in 'true' [default] to render with your own custom state instead)
-   pass in 'true' for the [new] fourth argument to combine with gl.*ShapeTextures
+ ! gl.UnitShape and gl.FeatureShape now take three extra boolean arguments
+   and set their relevant GL state internally (so that calling only these
+   functions is enough to get correctly rendered models; pass in 'false'
+   for the [new] THIRD argument to get the fixed behavior, omit it or pass
+   in 'true' [default] to render with your own custom state instead)
+
+   NOTE:
+     the [new] FOURTH argument should be 'true' if in DrawScreen and 'false'
+     (default) if in DrawWorld; any transforms for these two functions *MUST*
+     include a gl.LoadIdentity call when argument #3 is false (whether they
+     are used in DrawWorld or in DrawScreen)
+     the [new] FIFTH argument determines whether the model is drawn opaque
+     ('true' [default]) or with translucency ('false'); requires false for
+     argument #3
+
  - add callouts
      gl.{Unit,Feature}Textures(number objID, boolean enable) -> nil
      gl.{Unit,Feature}ShapeTextures(number defID, boolean enable) -> nil
