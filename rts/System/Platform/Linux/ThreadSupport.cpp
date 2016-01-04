@@ -123,9 +123,12 @@ void SetCurrentThreadControls(std::shared_ptr<ThreadControls> * ppThreadCtls)
 
 	if (threadCtls.get() != nullptr) {
 		LOG_L(L_WARNING, "Setting a ThreadControls object on a thread that already has such an object registered.");
-		auto oldPtr = threadCtls.get();
+		#if 0
+		// not needed, reset(ppThreadCtls) below will take care of deletion
+		std::shared_ptr<Threading::ThreadControls>* oldSharedPtr = threadCtls.get();
 		threadCtls.reset();
-		delete oldPtr;
+		delete oldSharedPtr;
+		#endif
 	} else {
 		// Installing new ThreadControls object, so install signal handler also
 		int err = 0;
@@ -136,6 +139,7 @@ void SetCurrentThreadControls(std::shared_ptr<ThreadControls> * ppThreadCtls)
 		err = pthread_sigmask(SIG_UNBLOCK, &sigSet, NULL);
 		if (err != 0) {
 			LOG_L(L_FATAL, "Error while setting new pthread's signal mask: %s", strerror(err));
+			delete ppThreadCtls;
 			return;
 		}
 
@@ -145,6 +149,7 @@ void SetCurrentThreadControls(std::shared_ptr<ThreadControls> * ppThreadCtls)
 		sa.sa_flags |= SA_SIGINFO;
 		if (sigaction(SIGUSR1, &sa, NULL)) {
 			LOG_L(L_FATAL,"Error while installing pthread SIGUSR1 handler.");
+			delete ppThreadCtls;
 			return;
 		}
 	}
@@ -153,6 +158,7 @@ void SetCurrentThreadControls(std::shared_ptr<ThreadControls> * ppThreadCtls)
 	pThreadCtls->thread_id = gettid();
 	pThreadCtls->running.store(true);
 
+	// take ownership of the new'ed (WTF) shared_ptr
 	threadCtls.reset(ppThreadCtls);
 }
 

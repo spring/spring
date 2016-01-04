@@ -377,10 +377,6 @@ namespace Threading {
 #endif
 	}
 
-	ThreadControls::~ThreadControls()
-	{
-
-	}
 
 	std::shared_ptr<ThreadControls> GetCurrentThreadControls()
 	{
@@ -442,7 +438,8 @@ namespace Threading {
 		}
 #ifndef WIN32
 		auto pThreadCtls = GetCurrentThreadControls();
-		if (pThreadCtls.get() == nullptr) { // Loading is sometimes done from the main thread, but this function is still called in 96.0.
+		if (pThreadCtls.get() == nullptr) {
+			// Loading is sometimes done from the main thread, but this function is still called in 96.0.
 			auto ppThreadCtls = new std::shared_ptr<Threading::ThreadControls> (new Threading::ThreadControls());
 			SetCurrentThreadControls(ppThreadCtls);
 		}

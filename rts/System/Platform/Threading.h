@@ -74,7 +74,7 @@ namespace Threading {
 	class ThreadControls {
 	public:
 		ThreadControls();
-		~ThreadControls();
+
 		/* These are implemented in System/Platform/<platform>/ThreadSupport.cpp */
 		SuspendResult Suspend();
 		SuspendResult Resume();
