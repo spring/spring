@@ -71,7 +71,10 @@ public:
 	/**
 	 * @brief	is the Skirmish AI library loaded
 	 */
-	bool IsSkirmishAILibraryLoaded(const SkirmishAIKey& key) const;
+	bool IsSkirmishAILibraryLoaded(const SkirmishAIKey& key) const {
+		return (GetSkirmishAILibraryLoadCount(key) > 0);
+	}
+
 	/**
 	 * @brief	unloads all AIs
 	 * Unloads all AI libraries currently loaded through this interface.
@@ -82,35 +85,38 @@ public:
 	 * @brief	path to the library file
 	 * Returns the path to the shared library file wrapped by this class.
 	 */
-	const std::string& GetLibraryFilePath() const;
+	const std::string& GetLibraryFilePath() const { return libFilePath; }
 
 	/**
 	 * @brief	whether this interface is successfully initialized
 	 */
-	const bool IsInitialized() const;
+	const bool IsInitialized() const { return initialized; }
 
 private:
 	void InitStatic();
 	void ReleaseStatic();
 
-	static void reportInterfaceFunctionError(const std::string* libFileName,
-			const std::string* functionName);
+	static void reportInterfaceFunctionError(
+		const std::string& libFileName,
+		const std::string& functionName
+	);
 	int InitializeFromLib(const std::string& libFilePath);
 
 	std::string FindLibFile();
+	std::string libFilePath;
 
-	struct SSkirmishAILibrary* NewEmptyInterfaceLib();
-
+	SSkirmishAILibrary EmptyInterfaceLib();
 
 	int interfaceId;
-	struct SAIInterfaceCallback callback;
 	bool initialized;
 
-	std::string libFilePath;
 	SharedLib* sharedLib;
+
+	SAIInterfaceCallback callback;
 	SAIInterfaceLibrary sAIInterfaceLibrary;
 	const CAIInterfaceLibraryInfo& info;
-	std::map<const SkirmishAIKey, CSkirmishAILibrary*> loadedSkirmishAILibraries;
+
+	std::map<const SkirmishAIKey, CSkirmishAILibrary> loadedSkirmishAILibraries;
 	std::map<const SkirmishAIKey, int> skirmishAILoadCount;
 
 	static const int MAX_INFOS = 128;

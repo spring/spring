@@ -5,7 +5,6 @@
 
 #include "SkirmishAIKey.h"
 #include "Interface/SSkirmishAILibrary.h"
-#include <vector>
 
 class AIInterfaceKey;
 struct SSkirmishAICallback;
@@ -17,18 +16,20 @@ struct SSkirmishAICallback;
  */
 class CSkirmishAILibrary {
 public:
+	CSkirmishAILibrary() {}
 	CSkirmishAILibrary(const SSkirmishAILibrary& ai, const SkirmishAIKey& key);
-	~CSkirmishAILibrary();
 
-	SkirmishAIKey GetKey() const;
+	SkirmishAIKey GetKey() const { return key; }
 
 	/**
 	 * Level of Support for a specific engine version and ai interface.
 	 * @return see enum LevelOfSupport (higher values could be used optionally)
 	 */
 	LevelOfSupport GetLevelOfSupportFor(
-			const std::string& engineVersionString, int engineVersionNumber,
-			const AIInterfaceKey& interfaceKey) const;
+		const std::string& engineVersionString,
+		const int engineVersionNumber,
+		const AIInterfaceKey& interfaceKey
+	) const;
 
 	bool Init(int skirmishAIId, const SSkirmishAICallback* c_callback) const;
 	bool Release(int skirmishAIId) const;
