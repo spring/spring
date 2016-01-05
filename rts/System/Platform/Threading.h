@@ -70,7 +70,7 @@ namespace Threading {
 #ifndef WIN32
 	void SetCurrentThreadControls(bool);
 #else
-	void SetCurrentThreadControls(bool) {}
+	static void SetCurrentThreadControls(bool) {}
 #endif
 
 	/**
