@@ -9,11 +9,11 @@
 
 #include <map>
 #include <set>
-#include <vector>
 #include <string>
 
 enum LevelOfSupport;
 struct SAIInterfaceCallback;
+struct SSkirmishAICallback;
 
 class CInterface {
 public:

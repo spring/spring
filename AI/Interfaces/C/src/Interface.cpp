@@ -10,7 +10,6 @@
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h"
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "ExternalAI/Interface/SAIInterfaceCallback.h"
-struct SSkirmishAICallback;
 
 #include "System/Util.h"
 
@@ -155,7 +154,7 @@ sharedLib_t CInterface::LoadSkirmishAILib(
 
 	skirmishAILibrary->init = (int (CALLING_CONV_FUNC_POINTER *)(
 		int skirmishAIId,
-		const struct SSkirmishAICallback*
+		const SSkirmishAICallback*
 	)) funcAddr;
 
 	if (skirmishAILibrary->init == nullptr) {
