@@ -154,12 +154,13 @@ bool CCollisionHandler::Collision(const CollisionVolume* v, const CMatrix44f& m,
 			// level Collision() already optimize via early-out tests
 			hit = (pi.dot(pi) <= v->GetHSqScales().x);
 
-			// test for arbitrary ellipsoids (no longer supported)
-			// const float f1 = (pi.x * pi.x) / v->GetHSqScales().x;
-			// const float f2 = (pi.y * pi.y) / v->GetHSqScales().y;
-			// const float f3 = (pi.z * pi.z) / v->GetHSqScales().z;
-			// hit = ((f1 + f2 + f3) <= 1.0f);
 		} break;
+		case CollisionVolume::COLVOL_TYPE_ELLIPSOID: {
+			const float f1 = (pi.x * pi.x) / v->GetHSqScales().x;
+			const float f2 = (pi.y * pi.y) / v->GetHSqScales().y;
+			const float f3 = (pi.z * pi.z) / v->GetHSqScales().z;
+			hit = ((f1 + f2 + f3) <= 1.0f);
+		}
 		case CollisionVolume::COLVOL_TYPE_CYLINDER: {
 			switch (v->GetPrimaryAxis()) {
 				case CollisionVolume::COLVOL_AXIS_X: {
@@ -367,6 +368,7 @@ bool CCollisionHandler::Intersect(const CollisionVolume* v, const CMatrix44f& m,
 	if (rmaxz < vminz || rminz > vmaxz) { return false; }
 
 	switch (v->GetVolumeType()) {
+		case CollisionVolume::COLVOL_TYPE_ELLIPSOID:
 		case CollisionVolume::COLVOL_TYPE_SPHERE: {
 			// sphere is special case of ellipsoid, reuse code
 			intersect = CCollisionHandler::IntersectEllipsoid(v, pi0, pi1, q);

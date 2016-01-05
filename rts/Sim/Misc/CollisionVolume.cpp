@@ -187,6 +187,10 @@ void CollisionVolume::SetBoundingRadius() {
 			volumeBoundingRadius = halfAxisScales.x;
 			volumeBoundingRadiusSq = volumeBoundingRadius * volumeBoundingRadius;
 		} break;
+		case COLVOL_TYPE_ELLIPSOID: {
+			volumeBoundingRadius = std::max(halfAxisScales.x, std::max(halfAxisScales.y, halfAxisScales.z));
+			volumeBoundingRadiusSq = volumeBoundingRadius * volumeBoundingRadius;
+		} break;
 	}
 }
 
@@ -208,39 +212,17 @@ void CollisionVolume::RescaleAxes(const float3& scales) {
 
 void CollisionVolume::FixTypeAndScale(float3& scales) {
 	// NOTE:
-	//   ellipses are now ALWAYS auto-converted to boxes or
-	//   to spheres depending on scale values, cylinders to
-	//   base cylinders (ie. with circular cross-section)
-	//
-	//   we assume that if the volume-type is set to ellipse
-	//   then its shape is largely anisotropic such that the
-	//   conversion does not create too much of a difference
-	//
 	//   prevent Lua (which calls InitShape directly) from
 	//   creating non-uniform spheres to emulate ellipsoids
 	if (volumeType == COLVOL_TYPE_SPHERE) {
 		scales.x = std::max(scales.x, std::max(scales.y, scales.z));
 		scales.y = scales.x;
 		scales.z = scales.x;
-	}
-
-	if (volumeType == COLVOL_TYPE_ELLIPSOID) {
-		const float dxyAbs = math::fabsf(scales.x - scales.y);
-		const float dyzAbs = math::fabsf(scales.y - scales.z);
-		const float d12Abs = math::fabsf(scales[volumeAxes[1]] - scales[volumeAxes[2]]);
-
-		if (dxyAbs < COLLISION_VOLUME_EPS && dyzAbs < COLLISION_VOLUME_EPS) {
+	} else if (volumeType == COLVOL_TYPE_ELLIPSOID) {
+		if (scales.x == scales.y && scales.y == scales.z)
 			volumeType = COLVOL_TYPE_SPHERE;
-		} else {
-			if (d12Abs < COLLISION_VOLUME_EPS) {
-				volumeType = COLVOL_TYPE_CYLINDER;
-			} else {
-				volumeType = COLVOL_TYPE_BOX;
-			}
-		}
-	}
 
-	if (volumeType == COLVOL_TYPE_CYLINDER) {
+	} else if (volumeType == COLVOL_TYPE_CYLINDER) {
 		scales[volumeAxes[1]] = std::max(scales[volumeAxes[1]], scales[volumeAxes[2]]);
 		scales[volumeAxes[2]] =          scales[volumeAxes[1]];
 	}
@@ -291,7 +273,7 @@ float CollisionVolume::GetPointSurfaceDistance(
 
 
 
-float CollisionVolume::GetCylinderDistance(const float3 pv, size_t axisA, size_t axisB, size_t axisC) const
+float CollisionVolume::GetCylinderDistance(const float3 &pv, size_t axisA, size_t axisB, size_t axisC) const
 {
 	const float pSq = (pv[axisB] * pv[axisB]) + (pv[axisC] * pv[axisC]);
 	const float rSq = (halfAxisScalesSqr[axisB] + halfAxisScalesSqr[axisC]) * 0.5f;
@@ -359,16 +341,103 @@ float CollisionVolume::GetPointSurfaceDistance(const CMatrix44f& mv, const float
 			}
 		} break;
 
+		case COLVOL_TYPE_ELLIPSOID: {
+			d = GetEllipsoidDistance(halfAxisScales, pv);
+		} break;
+
 		default: {
-			// getting the closest (orthogonal) distance to a 3D
-			// ellipsoid requires numerically solving a 4th-order
-			// polynomial --> too expensive, and because we do not
-			// want approximations to prevent invulnerable objects
-			// we do not support this primitive (anymore)
 			assert(false);
 		} break;
 	}
 
 	return d;
+}
+
+#define MAX_ITERATIONS 10
+#define THRESHOLD 0.001
+
+
+//Newton's method according to http://wwwf.imperial.ac.uk/~rn/distance2ellipse.pdf
+float CollisionVolume::GetEllipsoidDistance(const float3& halfScales, const float3& pv)
+{
+	const float& a = halfScales.x;
+	const float& b = halfScales.y;
+	const float& c = halfScales.z;
+	const float x = math::fabsf(pv.x);
+	const float y = math::fabsf(pv.y);
+	const float z = math::fabsf(pv.z);
+
+	const float a2 = a * a;
+	const float b2 = b * b;
+	const float c2 = c * c;
+	const float x2 = x * x;
+	const float y2 = y * y;
+	const float z2 = z * z;
+	const float x2_a2 = x2 / a2;
+	const float y2_b2 = y2 / b2;
+	const float z2_c2 = z2 / c2;
+
+
+	//bail if inside the ellipsoid
+	assert(a > 0.0f && b > 0.0f && c > 0.0f);
+	if (x2_a2 + y2_b2 + z2_c2 <= 1.0f)
+		return 0.0f;
+
+	const float a2b2 = a2 - b2;
+	const float xa = x * a;
+	const float yb = y * b;
+	const float zc = z * c;
+
+	float cost;
+	float sint;
+	float sinp;
+	float cosp;
+
+	//Initial guess
+	float theta = atan2(a * y, b * x);
+	float phi = atan2(z, c * sqrt(x2_a2 + y2_b2));
+
+	float dist = 0.0f;
+	float lastDist = 0.0f;
+
+	//Iterations
+	for (int i = 0;i < MAX_ITERATIONS; i++){
+		cost = cos(theta);
+		sint = sin(theta);
+		sinp = sin(phi);
+		cosp = cos(phi);
+		const float sin2t = sint * sint;
+		const float xacost_ybsint = xa * cost + yb * sint;
+		const float xasint_ybcost = xa * sint - yb * cost;
+		const float a2b2costsint = a2b2 * cost * sint;
+		const float a2cos2t_b2sin2t_c2 = a2 * cost * cost + b2 * sin2t - c2;
+
+		const float d1 = a2b2costsint * cosp - xasint_ybcost;
+		const float d2 = a2cos2t_b2sin2t_c2 * sinp * cosp - sinp * xacost_ybsint + zc * cosp;
+		{
+			const float fx = a * cosp * cost - x;
+			const float fy = b * cosp * sint - y;
+			const float fz = c * sinp - z;
+			lastDist = dist;
+			dist = sqrt(fx * fx + fy * fy + fz * fz);
+			if (math::fabsf(dist - lastDist) < THRESHOLD * dist)
+				break;
+		}
+
+		//Derivative matrix
+		const float a11 = a2b2 * (1 - 2 * sin2t) * cosp - xacost_ybsint;
+		const float a12 = -a2b2costsint * sinp;
+		const float a21 = 2 * a12 * cosp + sinp * xasint_ybcost;
+		const float a22 = a2cos2t_b2sin2t_c2 * (1 - 2 * sinp * sinp) - cosp * xacost_ybsint - zc;
+
+		const float invDet = 1.0f / (a11 * a22 - a21 * a12);
+
+		theta += (a12 * d2 - a22 * d1) * invDet;
+		theta = (theta < 0.0f) ? 0.0f : (theta > HALFPI) ? HALFPI : theta;
+		phi += (a21 * d1 - a11 * d2) * invDet;
+		phi = (phi < 0.0f) ? 0.0f : (phi > HALFPI) ? HALFPI : phi;
+	}
+
+	return dist;
 }
 

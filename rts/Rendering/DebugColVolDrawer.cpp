@@ -26,6 +26,7 @@ static inline void DrawCollisionVolume(const CollisionVolume* vol)
 	glPushMatrix();
 
 	switch (vol->GetVolumeType()) {
+		case CollisionVolume::COLVOL_TYPE_ELLIPSOID:
 		case CollisionVolume::COLVOL_TYPE_SPHERE: {
 			// scaled sphere is special case of ellipsoid: radius, slices, stacks
 			glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));

@@ -374,6 +374,19 @@ endif()
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
 
 ################################################################################
+### Ellipsoid
+	set(test_name Ellipsoid)
+	Set(test_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/engine/Sim/Misc/testEllipsoid.cpp"
+			${test_Log_sources}
+		)
+	set(test_libs
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+		)
+	set(test_flags "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
+
+################################################################################
 ### QuadField
 	set(test_name QuadField)
 	Set(test_src
