@@ -14,20 +14,16 @@ struct SSkirmishAICallback;
 
 #include "System/Util.h"
 
-CInterface::CInterface(int interfaceId,
-		const struct SAIInterfaceCallback* callback)
-		: interfaceId(interfaceId), callback(callback) {
-
+CInterface::CInterface(int interfaceId, const SAIInterfaceCallback* callback):
+	interfaceId(interfaceId),
+	callback(callback)
+{
 	simpleLog_initcallback(interfaceId, "C Interface", callback->Log_logsl, LOG_LEVEL_INFO);
 
-	const char* const myShortName = callback->AIInterface_Info_getValueByKey(interfaceId,
-			AI_INTERFACE_PROPERTY_SHORT_NAME);
-	const char* const myVersion = callback->AIInterface_Info_getValueByKey(interfaceId,
-			AI_INTERFACE_PROPERTY_VERSION);
+	const char* const myShortName = callback->AIInterface_Info_getValueByKey(interfaceId, AI_INTERFACE_PROPERTY_SHORT_NAME);
+	const char* const myVersion = callback->AIInterface_Info_getValueByKey(interfaceId, AI_INTERFACE_PROPERTY_VERSION);
 
-	simpleLog_log("This is the log-file of the %s v%s AI Interface",
-			myShortName, myVersion);
-
+	simpleLog_log("This is the log-file of the %s v%s AI Interface", myShortName, myVersion);
 }
 
 //LevelOfSupport CInterface::GetLevelOfSupportFor(
@@ -52,37 +48,34 @@ CInterface::CInterface(int interfaceId,
 // }
 
 const SSkirmishAILibrary* CInterface::LoadSkirmishAILibrary(
-		const char* const shortName,
-		const char* const version) {
-
-	SSkirmishAILibrary* ai = NULL;
-
+	const char* const shortName,
+	const char* const version
+) {
 	SSkirmishAISpecifier spec;
 	spec.shortName = shortName;
 	spec.version = version;
 
 	mySkirmishAISpecifiers.insert(spec);
 
-	T_skirmishAIs::iterator skirmishAI;
-	skirmishAI = myLoadedSkirmishAIs.find(spec);
-	if (skirmishAI == myLoadedSkirmishAIs.end()) {
-		ai = new SSkirmishAILibrary;
-		sharedLib_t lib = Load(spec, ai);
-		if (sharedLib_isLoaded(lib)) {
-			// success
-			myLoadedSkirmishAIs[spec] = ai;
-			myLoadedSkirmishAILibs[spec] = lib;
-		} else {
-			// failure
-			delete ai;
-			ai = NULL;
-		}
-	} else {
-		ai = skirmishAI->second;
+	auto skirmishAI = myLoadedSkirmishAIs.find(spec);
+
+	if (skirmishAI != myLoadedSkirmishAIs.end())
+		return &(skirmishAI->second);
+		SSkirmishAILibrary ai;
+
+	sharedLib_t lib = Load(spec, &ai);
+
+	if (sharedLib_isLoaded(lib)) {
+		// success
+		myLoadedSkirmishAIs[spec] = ai;
+		myLoadedSkirmishAILibs[spec] = lib;
+
+		return (&myLoadedSkirmishAIs[spec]);
 	}
 
-	return ai;
+	return nullptr;
 }
+
 int CInterface::UnloadSkirmishAILibrary(
 	const char* const shortName,
 	const char* const version
@@ -91,13 +84,11 @@ int CInterface::UnloadSkirmishAILibrary(
 	spec.shortName = shortName;
 	spec.version = version;
 
-	T_skirmishAIs::iterator skirmishAI = myLoadedSkirmishAIs.find(spec);
-	T_skirmishAILibs::iterator skirmishAILib = myLoadedSkirmishAILibs.find(spec);
+	auto skirmishAI = myLoadedSkirmishAIs.find(spec);
+	auto skirmishAILib = myLoadedSkirmishAILibs.find(spec);
 
-	if (skirmishAI == myLoadedSkirmishAIs.end()) {
-		// to-unload-AI is not loaded -> no problem, do nothing
-	} else {
-		delete skirmishAI->second;
+	// if to-unload-AI is not loaded, just do nothing
+	if (skirmishAI != myLoadedSkirmishAIs.end()) {
 		myLoadedSkirmishAIs.erase(skirmishAI);
 		sharedLib_unload(skirmishAILib->second);
 		myLoadedSkirmishAILibs.erase(skirmishAILib);
@@ -105,12 +96,14 @@ int CInterface::UnloadSkirmishAILibrary(
 
 	return 0;
 }
-int CInterface::UnloadAllSkirmishAILibraries() {
 
+int CInterface::UnloadAllSkirmishAILibraries()
+{
 	while (!myLoadedSkirmishAIs.empty()) {
-		T_skirmishAISpecifiers::const_iterator ai =
-				mySkirmishAISpecifiers.begin();
-		UnloadSkirmishAILibrary((*ai).shortName, (*ai).version);
+		const auto it = mySkirmishAISpecifiers.cbegin();
+		const SSkirmishAISpecifier& spec = *it;
+
+		UnloadSkirmishAILibrary(spec.shortName, spec.version);
 	}
 
 	return 0; // signal: ok
@@ -119,12 +112,17 @@ int CInterface::UnloadAllSkirmishAILibraries() {
 
 // private functions following
 
-sharedLib_t CInterface::Load(const SSkirmishAISpecifier& spec, SSkirmishAILibrary* skirmishAILibrary) {
+sharedLib_t CInterface::Load(
+	const SSkirmishAISpecifier& spec,
+	SSkirmishAILibrary* skirmishAILibrary
+) {
 	return LoadSkirmishAILib(FindLibFile(spec), skirmishAILibrary);
 }
-sharedLib_t CInterface::LoadSkirmishAILib(const std::string& libFilePath,
-		SSkirmishAILibrary* skirmishAILibrary) {
 
+sharedLib_t CInterface::LoadSkirmishAILib(
+	const std::string& libFilePath,
+	SSkirmishAILibrary* skirmishAILibrary
+) {
 	sharedLib_t sharedLib = sharedLib_load(libFilePath.c_str());
 
 	if (!sharedLib_isLoaded(sharedLib)) {
@@ -132,48 +130,65 @@ sharedLib_t CInterface::LoadSkirmishAILib(const std::string& libFilePath,
 		return sharedLib;
 	}
 
-	// initialize the AI library
-	std::string funcName;
 
-	funcName = "getLevelOfSupportFor";
-	skirmishAILibrary->getLevelOfSupportFor
-			= (LevelOfSupport (CALLING_CONV_FUNC_POINTER *)(
-			const char* aiShortName, const char* aiVersion,
-			const char* engineVersionString, int engineVersionNumber,
-			const char* aiInterfaceShortName, const char* aiInterfaceVersion))
-			sharedLib_findAddress(sharedLib, funcName.c_str());
-	if (skirmishAILibrary->getLevelOfSupportFor == NULL) {
+	// initialize the AI library functions
+	std::string funcName = "getLevelOfSupportFor";
+	void* funcAddr = sharedLib_findAddress(sharedLib, funcName.c_str());
+
+	skirmishAILibrary->getLevelOfSupportFor = (LevelOfSupport (CALLING_CONV_FUNC_POINTER *)(
+		const char* aiShortName,
+		const char* aiVersion,
+		const char* engineVersionString,
+		int engineVersionNumber,
+		const char* aiInterfaceShortName,
+		const char* aiInterfaceVersion
+	)) funcAddr;
+
+	if (skirmishAILibrary->getLevelOfSupportFor == nullptr) {
 		// do nothing: it is permitted that an AI does not export this function
 		//reportInterfaceFunctionError(libFilePath, funcName);
 	}
 
+
 	funcName = "init";
-	skirmishAILibrary->init
-			= (int (CALLING_CONV_FUNC_POINTER *)(int skirmishAIId,
-			const struct SSkirmishAICallback*))
-			sharedLib_findAddress(sharedLib, funcName.c_str());
-	if (skirmishAILibrary->init == NULL) {
+	funcAddr = sharedLib_findAddress(sharedLib, funcName.c_str());
+
+	skirmishAILibrary->init = (int (CALLING_CONV_FUNC_POINTER *)(
+		int skirmishAIId,
+		const struct SSkirmishAICallback*
+	)) funcAddr;
+
+	if (skirmishAILibrary->init == nullptr) {
 		// do nothing: it is permitted that an AI does not export this function,
 		// as it can still use EVENT_INIT instead
 		//reportInterfaceFunctionError(libFilePath, funcName);
 	}
 
+
 	funcName = "release";
-	skirmishAILibrary->release
-			= (int (CALLING_CONV_FUNC_POINTER *)(int skirmishAIId))
-			sharedLib_findAddress(sharedLib, funcName.c_str());
-	if (skirmishAILibrary->release == NULL) {
+	funcAddr = sharedLib_findAddress(sharedLib, funcName.c_str());
+
+	skirmishAILibrary->release = (int (CALLING_CONV_FUNC_POINTER *)(
+		int skirmishAIId
+	)) funcAddr;
+
+	if (skirmishAILibrary->release == nullptr) {
 		// do nothing: it is permitted that an AI does not export this function,
 		// as it can still use EVENT_RELEASE instead
 		//reportInterfaceFunctionError(libFilePath, funcName);
 	}
 
+
 	funcName = "handleEvent";
-	skirmishAILibrary->handleEvent
-			= (int (CALLING_CONV_FUNC_POINTER *)(int skirmishAIId,
-			int topicId, const void* data))
-			sharedLib_findAddress(sharedLib, funcName.c_str());
-	if (skirmishAILibrary->handleEvent == NULL) {
+	funcAddr = sharedLib_findAddress(sharedLib, funcName.c_str());
+
+	skirmishAILibrary->handleEvent = (int (CALLING_CONV_FUNC_POINTER *)(
+		int skirmishAIId,
+		int topicId,
+		const void* data
+	)) funcAddr;
+
+	if (skirmishAILibrary->handleEvent == nullptr) {
 		reportInterfaceFunctionError(libFilePath, funcName);
 	}
 
@@ -181,9 +196,10 @@ sharedLib_t CInterface::LoadSkirmishAILib(const std::string& libFilePath,
 }
 
 
-void CInterface::reportInterfaceFunctionError(const std::string& libFilePath,
-		const std::string& functionName) {
-
+void CInterface::reportInterfaceFunctionError(
+	const std::string& libFilePath,
+	const std::string& functionName
+) {
 	std::string msg("Failed loading AI Library from file \"");
 	msg += libFilePath + "\": no \"" + functionName + "\" function exported";
 	reportError(msg);
@@ -194,35 +210,40 @@ void CInterface::reportError(const std::string& msg) {
 }
 
 
-std::string CInterface::FindLibFile(const SSkirmishAISpecifier& spec) {
+std::string CInterface::FindLibFile(const SSkirmishAISpecifier& spec)
+{
+	const char* const skirmDD = callback->SkirmishAIs_Info_getValueByKey(
+		interfaceId,
+		spec.shortName,
+		spec.version,
+		SKIRMISH_AI_PROPERTY_DATA_DIR
+	);
 
-	const char* const skirmDD =
-			callback->SkirmishAIs_Info_getValueByKey(interfaceId,
-			spec.shortName, spec.version,
-			SKIRMISH_AI_PROPERTY_DATA_DIR);
-	if (skirmDD == NULL) {
-		reportError(std::string("Missing Skirmish AI data-dir for ")
-				+ spec.shortName + " " + spec.version);
+	if (skirmDD == nullptr) {
+		reportError(std::string("Missing Skirmish AI data-dir for ") + spec.shortName + " " + spec.version);
 	}
 
 	static const size_t libFileName_sizeMax = 512;
 	// eg. "libSkirmishAI.so" or "SkirmishAI.dll"
 	char libFileName[libFileName_sizeMax];
+
 	sharedLib_createFullLibName("SkirmishAI", libFileName, libFileName_sizeMax);
 
 	return util_allocStrCatFSPath(2, skirmDD, libFileName);
 }
 
-bool CInterface::FitsThisInterface(const std::string& requestedShortName,
-		const std::string& requestedVersion) {
+#if 0
+bool CInterface::FitsThisInterface(
+	const std::string& requestedShortName,
+	const std::string& requestedVersion
+) {
+	const char* const myShortName = callback->AIInterface_Info_getValueByKey(interfaceId, AI_INTERFACE_PROPERTY_SHORT_NAME);
+	const char* const myVersion = callback->AIInterface_Info_getValueByKey(interfaceId, AI_INTERFACE_PROPERTY_VERSION);
 
-	const char* const myShortName = callback->AIInterface_Info_getValueByKey(interfaceId,
-			AI_INTERFACE_PROPERTY_SHORT_NAME);
-	const char* const myVersion = callback->AIInterface_Info_getValueByKey(interfaceId,
-			AI_INTERFACE_PROPERTY_VERSION);
-
-	bool shortNameFits = (requestedShortName == myShortName);
-	bool versionFits = (requestedVersion == myVersion);
+	const bool shortNameFits = (requestedShortName == myShortName);
+	const bool versionFits = (requestedVersion == myVersion);
 
 	return shortNameFits && versionFits;
 }
+#endif
+
