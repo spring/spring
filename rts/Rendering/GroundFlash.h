@@ -7,6 +7,7 @@
 
 struct AtlasedTexture;
 struct GroundFXTexture;
+struct GroundFlashInfo;
 class CColorMap;
 class CVertexArray;
 
@@ -39,10 +40,14 @@ public:
 	CR_DECLARE(CStandardGroundFlash)
 
 	CStandardGroundFlash();
-	CStandardGroundFlash(const float3& pos, float circleAlpha, float flashAlpha, float flashSize, float circleSpeed, float ttl, const float3& color = float3(1.0f, 1.0f, 0.7f));
+	CStandardGroundFlash(const float3& pos, const GroundFlashInfo& info);
+	CStandardGroundFlash(const float3& pos, float circleAlpha, float flashAlpha, float flashSize, float circleSpeed, float ttl, const float3& col = float3(1.0f, 1.0f, 0.7f));
+
+	void InitCommon(const float3& _pos, const float3& col);
 
 	void Draw();
 	bool Update();
+
 private:
 	float3 side1;
 	float3 side2;

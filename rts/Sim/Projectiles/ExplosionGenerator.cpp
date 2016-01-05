@@ -56,8 +56,8 @@ CR_REG_METADATA_SUB(CCustomExplosionGenerator, ProjectileSpawnInfo, (
 	CR_MEMBER(flags)
 ))
 
-CR_BIND(CCustomExplosionGenerator::GroundFlashInfo, )
-CR_REG_METADATA_SUB(CCustomExplosionGenerator, GroundFlashInfo, (
+CR_BIND(GroundFlashInfo, )
+CR_REG_METADATA(GroundFlashInfo, (
 	CR_MEMBER(flashSize),
 	CR_MEMBER(flashAlpha),
 	CR_MEMBER(circleGrowth),
@@ -1041,8 +1041,7 @@ bool CCustomExplosionGenerator::Explosion(
 	}
 
 	if (groundExplosion && (groundFlash.ttl > 0) && (groundFlash.flashSize > 1)) {
-		new CStandardGroundFlash(pos, groundFlash.circleAlpha, groundFlash.flashAlpha,
-			groundFlash.flashSize, groundFlash.circleGrowth, groundFlash.ttl, groundFlash.color);
+		new CStandardGroundFlash(pos, groundFlash);
 	}
 
 	if (expGenParams.useDefaultExplosions) {

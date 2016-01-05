@@ -5,6 +5,7 @@
 #include "Map/Ground.h"
 #include "Game/Camera.h"
 #include "Rendering/GlobalRendering.h"
+#include "Rendering/GroundFlashInfo.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TextureAtlas.h"
@@ -107,8 +108,35 @@ CStandardGroundFlash::CStandardGroundFlash()
 	flashSize = 0.0f;
 }
 
-CStandardGroundFlash::CStandardGroundFlash(const float3& p, float circleAlpha, float flashAlpha, float flashSize, float circleSpeed, float ttl, const float3& col)
-	: CGroundFlash(p)
+CStandardGroundFlash::CStandardGroundFlash(
+	const float3& _pos,
+	const GroundFlashInfo& info
+)
+	: CGroundFlash(_pos)
+	, flashSize(flashSize)
+	, circleSize(info.flashSize)
+	, circleGrowth(info.circleGrowth)
+	, circleAlpha(info.circleAlpha)
+	, flashAlpha(info.flashAlpha)
+	, flashAge(0)
+	, flashAgeSpeed(ttl? 1.0f / ttl : 0)
+	, circleAlphaDec(ttl? circleAlpha / ttl : 0)
+	, ttl(info.ttl)
+{
+	InitCommon(_pos, info.color);
+	projectileHandler->AddGroundFlash(this);
+}
+
+CStandardGroundFlash::CStandardGroundFlash(
+	const float3& _pos,
+	float circleAlpha,
+	float flashAlpha,
+	float flashSize,
+	float circleSpeed,
+	float ttl,
+	const float3& col
+)
+	: CGroundFlash(_pos)
 	, flashSize(flashSize)
 	, circleSize(circleSpeed)
 	, circleGrowth(circleSpeed)
@@ -119,25 +147,29 @@ CStandardGroundFlash::CStandardGroundFlash(const float3& p, float circleAlpha, f
 	, circleAlphaDec(ttl? circleAlpha / ttl : 0)
 	, ttl((int)ttl)
 {
+	InitCommon(_pos, col);
+	projectileHandler->AddGroundFlash(this);
+}
+
+void CStandardGroundFlash::InitCommon(const float3& _pos, const float3& col)
+{
 	for (size_t a = 0; a < 3; ++a) {
 		color[a] = (col[a] * 255.0f);
 	}
 
 	const float3 fw = camera->GetDir() * -1000.0f;
-	this->pos.y = CGround::GetHeightReal(p.x, p.z, false) + 1.0f;
+	pos.y = CGround::GetHeightReal(_pos.x, _pos.z, false) + 1.0f;
 
-	float3 p1(p.x + flashSize, 0, p.z);
-		p1.y = CGround::GetApproximateHeight(p1.x, p1.z, false);
-		p1  += fw;
-	float3 p2(p.x - flashSize, 0, p.z);
-		p2.y = CGround::GetApproximateHeight(p2.x, p2.z, false);
-		p2  += fw;
-	float3 p3(p.x, 0, p.z + flashSize);
-		p3.y = CGround::GetApproximateHeight(p3.x, p3.z, false);
-		p3  += fw;
-	float3 p4(p.x, 0, p.z - flashSize);
-		p4.y = CGround::GetApproximateHeight(p4.x, p4.z, false);
-		p4  += fw;
+	// corners
+	float3 p1(_pos.x + flashSize, 0.0f, _pos.z            );
+	float3 p2(_pos.x - flashSize, 0.0f, _pos.z            );
+	float3 p3(_pos.x,             0.0f, _pos.z + flashSize);
+	float3 p4(_pos.x,             0.0f, _pos.z - flashSize);
+
+	p1.y = CGround::GetApproximateHeight(p1.x, p1.z, false); p1 += fw;
+	p2.y = CGround::GetApproximateHeight(p2.x, p2.z, false); p2 += fw;
+	p3.y = CGround::GetApproximateHeight(p3.x, p3.z, false); p3 += fw;
+	p4.y = CGround::GetApproximateHeight(p4.x, p4.z, false); p4 += fw;
 
 	// else ANormalize() fails!
 	assert(flashSize > 1);
@@ -151,8 +183,6 @@ CStandardGroundFlash::CStandardGroundFlash(const float3& p, float circleAlpha, f
 	side1 = normal.cross(RgtVector);
 	side1.ANormalize();
 	side2 = side1.cross(normal);
-
-	projectileHandler->AddGroundFlash(this);
 }
 
 bool CStandardGroundFlash::Update()

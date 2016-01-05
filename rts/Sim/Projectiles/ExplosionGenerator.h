@@ -8,6 +8,7 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 
+#include "Rendering/GroundFlashInfo.h"
 #include "Sim/Objects/WorldObject.h"
 
 #define CEG_PREFIX_STRING "custom:"
@@ -158,7 +159,6 @@ class CCustomExplosionGenerator: public IExplosionGenerator
 {
 	CR_DECLARE(CCustomExplosionGenerator)
 	CR_DECLARE_SUB(ProjectileSpawnInfo)
-	CR_DECLARE_SUB(GroundFlashInfo)
 	CR_DECLARE_SUB(ExpGenParams)
 
 protected:
@@ -185,29 +185,6 @@ protected:
 		/// number of projectiles spawned of this type
 		unsigned int count;
 		unsigned int flags;
-	};
-
-	// TODO: Handle ground flashes with more flexibility like the projectiles
-	struct GroundFlashInfo {
-		CR_DECLARE_STRUCT(GroundFlashInfo)
-
-		GroundFlashInfo()
-			: flashSize(0.0f)
-			, flashAlpha(0.0f)
-			, circleGrowth(0.0f)
-			, circleAlpha(0.0f)
-			, ttl(0)
-			, flags(0)
-			, color(ZeroVector)
-		{}
-
-		float flashSize;
-		float flashAlpha;
-		float circleGrowth;
-		float circleAlpha;
-		int ttl;
-		unsigned int flags;
-		float3 color;
 	};
 
 	struct ExpGenParams {
