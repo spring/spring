@@ -61,19 +61,19 @@ const SSkirmishAILibrary* CInterface::LoadSkirmishAILibrary(
 
 	if (skirmishAI != myLoadedSkirmishAIs.end())
 		return &(skirmishAI->second);
-		SSkirmishAILibrary ai;
 
+	SSkirmishAILibrary ai;
 	sharedLib_t lib = Load(spec, &ai);
 
-	if (sharedLib_isLoaded(lib)) {
-		// success
-		myLoadedSkirmishAIs[spec] = ai;
-		myLoadedSkirmishAILibs[spec] = lib;
+	// failure
+	if (!sharedLib_isLoaded(lib))
+		return nullptr;
 
-		return (&myLoadedSkirmishAIs[spec]);
-	}
+	// success
+	myLoadedSkirmishAIs[spec] = ai;
+	myLoadedSkirmishAILibs[spec] = lib;
 
-	return nullptr;
+	return (&myLoadedSkirmishAIs[spec]);
 }
 
 int CInterface::UnloadSkirmishAILibrary(

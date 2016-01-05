@@ -40,7 +40,7 @@ public:
 	 * the Skirmish AI Handler instead.
 	 * @see CSkirmishAIHandler::SetLocalSkirmishAIDieing()
 	 */
-	void Dieing();
+	void Dieing() { dieing = true; }
 
 private:
 	int skirmishAIId;

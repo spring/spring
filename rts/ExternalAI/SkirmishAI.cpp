@@ -46,9 +46,6 @@ void CSkirmishAI::Init() {
 	}
 }
 
-void CSkirmishAI::Dieing() {
-	dieing = true;
-}
 
 int CSkirmishAI::HandleEvent(int topic, const void* data) const {
 
