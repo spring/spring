@@ -110,14 +110,37 @@ CProjectileHandler::~CProjectileHandler()
 {
 	configHandler->RemoveObserver(this);
 
-	for (CProjectile* p: syncedProjectiles) {
-		delete p;
+	{
+		// synced first, to avoid callback crashes
+		for (CProjectile* p: syncedProjectiles)
+			delete p;
+
+		syncedProjectiles.clear();
 	}
-	syncedProjectiles.clear(); // synced first, to avoid callback crashes
-	for (CProjectile* p: unsyncedProjectiles) {
-		delete p;
+
+	{
+		for (CProjectile* p: unsyncedProjectiles)
+			delete p;
+
+		unsyncedProjectiles.clear();
 	}
-	unsyncedProjectiles.clear();
+
+	{
+		for (CGroundFlash* gf: groundFlashes)
+			delete gf;
+
+		groundFlashes.clear();
+	}
+
+	{
+		for (FlyingPiece* fp: flyingPieces3DO)
+			delete fp;
+		for (FlyingPiece* fp: flyingPiecesS3O)
+			delete fp;
+
+		flyingPieces3DO.clear();
+		flyingPiecesS3O.clear();
+	}
 
 	freeSyncedIDs.clear();
 	freeUnsyncedIDs.clear();
@@ -287,7 +310,7 @@ void CProjectileHandler::Update()
 		UPDATE_CONTAINER(flyingPiecesS3O);
 		UPDATE_CONTAINER(flyingPieces3DO);
 
-		// sort those every now and then
+		// sort these every now and then
 		FlyingPieceComparator fsort;
 		if (resortFlyingPiecesS3O) std::sort(flyingPiecesS3O.begin(), flyingPiecesS3O.end(), fsort);
 		if (resortFlyingPieces3DO) std::sort(flyingPieces3DO.begin(), flyingPieces3DO.end(), fsort);
@@ -569,8 +592,7 @@ void CProjectileHandler::AddFlyingPiece(
 	const S3DOPiece* piece,
 	const S3DOPrimitive* chunk)
 {
-	FlyingPiece* fp = new S3DOFlyingPiece(pos, speed, team, piece, chunk);
-	flyingPieces3DO.push_back(fp);
+	flyingPieces3DO.push_back(new S3DOFlyingPiece(pos, speed, team, piece, chunk));
 	resortFlyingPieces3DO = true;
 }
 
@@ -583,8 +605,7 @@ void CProjectileHandler::AddFlyingPiece(
 {
 	assert(textureType > 0);
 
-	FlyingPiece* fp = new SS3OFlyingPiece(pos, speed, team, textureType, chunk);
-	flyingPiecesS3O.push_back(fp);
+	flyingPiecesS3O.push_back(new SS3OFlyingPiece(pos, speed, team, textureType, chunk));
 	resortFlyingPiecesS3O = true;
 }
 
