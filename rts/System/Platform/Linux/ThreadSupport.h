@@ -12,11 +12,13 @@
 #include <boost/thread.hpp>
 
 namespace Threading {
-
 	class ThreadControls;
 
-	void ThreadStart (boost::function<void()> taskFunc, std::shared_ptr<ThreadControls> * ppThreadCtls);
-
+	void ThreadStart(
+		boost::function<void()> taskFunc,
+		std::shared_ptr<ThreadControls>* ppCtlsReturn,
+		ThreadControls* tempCtls
+	);
 }
 
 int gettid ();

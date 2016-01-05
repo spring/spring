@@ -88,8 +88,8 @@ int CInterface::UnloadSkirmishAILibrary(
 
 	// if to-unload-AI is not loaded, just do nothing
 	if (skirmishAI != myLoadedSkirmishAIs.end()) {
-		myLoadedSkirmishAIs.erase(skirmishAI);
 		sharedLib_unload(skirmishAILib->second);
+		myLoadedSkirmishAIs.erase(skirmishAI);
 		myLoadedSkirmishAILibs.erase(skirmishAILib);
 	}
 
