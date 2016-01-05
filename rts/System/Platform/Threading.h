@@ -67,8 +67,11 @@ namespace Threading {
 	 */
 	std::shared_ptr<ThreadControls> GetCurrentThreadControls();
 
+#ifndef WIN32
 	void SetCurrentThreadControls(bool);
-	void SetCurrentThreadControls();
+#else
+	void SetCurrentThreadControls(bool) {}
+#endif
 
 	/**
 	 * @brief Provides suspend/resume functionality for worker threads.
