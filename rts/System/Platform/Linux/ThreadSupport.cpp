@@ -149,7 +149,7 @@ void SetCurrentThreadControls(bool isLoadThread)
 {
 	#ifndef WIN32
 	if (isLoadThread) {
-		// Loading is sometimes done from the main thread
+		// do nothing if Load is actually Main (LoadingMT=0 case)
 		if ((GetCurrentThreadControls()).get() != nullptr) {
 			return;
 		}

@@ -368,7 +368,9 @@ namespace Threading {
 	#endif
 	}
 
-	ThreadControls::ThreadControls () :
+
+
+	ThreadControls::ThreadControls():
 		handle(0),
 		running(false)
 	{
@@ -376,6 +378,7 @@ namespace Threading {
 		memset(&ucontext, 0, sizeof(ucontext_t));
 #endif
 	}
+
 
 
 	std::shared_ptr<ThreadControls> GetCurrentThreadControls()

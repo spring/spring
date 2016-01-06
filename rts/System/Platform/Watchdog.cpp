@@ -180,14 +180,15 @@ namespace Watchdog
 		threadInfo->thread = thread;
 		threadInfo->threadid = threadId;
 		threadInfo->timer = spring_gettime();
+
 #ifndef WIN32
 		auto threadCtls = Threading::GetCurrentThreadControls();
 		assert(threadCtls.get() != nullptr);
 		LOG("Registering thread controls for thread [%s]", threadNames[num]);
 		// copy shared_ptr object, not shared_ptr*
 		threadInfo->ctls = threadCtls;
-		assert(threadInfo->ctls != nullptr);
 #endif
+
 		++threadInfo->numreg;
 
 		threadSlots[num].primary = primary;
@@ -210,6 +211,9 @@ namespace Watchdog
 		threadSlots[num].primary = false;
 		threadSlots[num].regorder = 0;
 		UpdateActiveThreads(threadInfo->threadid);
+
+		// this is not auto-destructed (!)
+		threadInfo->ctls.reset();
 
 		if (0 == --(threadInfo->numreg))
 			memset(threadInfo, 0, sizeof(WatchDogThreadInfo));

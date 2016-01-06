@@ -1069,6 +1069,7 @@ void SpringApp::ShutDown()
 	FileSystemInitializer::Cleanup();
 
 	LOG("[SpringApp::%s][8]", __FUNCTION__);
+	Watchdog::DeregisterThread(WDT_MAIN);
 	Watchdog::Uninstall();
 	LOG("[SpringApp::%s][9]", __FUNCTION__);
 }
