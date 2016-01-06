@@ -706,22 +706,24 @@ void CUnit::ForcedMove(const float3& newPos)
 
 
 
-float3 CUnit::GetErrorVector(int allyteam) const
+float3 CUnit::GetErrorVector(int argAllyTeam) const
 {
-	if (teamHandler->Ally(allyteam, this->allyteam) || (losStatus[allyteam] & LOS_INLOS)) {
-		// it's one of our own, or it's in LOS, so don't add an error
-		return ZeroVector;
-	}
-	if (gameSetup->ghostedBuildings && (losStatus[allyteam] & LOS_PREVLOS) && unitDef->IsImmobileUnit()) {
-		// this is a ghosted building, so don't add an error
-		return ZeroVector;
-	}
-
-	if ((losStatus[allyteam] & LOS_INRADAR) != 0) {
-		return (posErrorVector * losHandler->GetAllyTeamRadarErrorSize(allyteam));
-	} else {
+	// LuaHandle without full read access
+	if (argAllyTeam < 0)
 		return (posErrorVector * losHandler->GetBaseRadarErrorSize() * 2.0f);
-	}
+
+	// it's one of our own, or it's in LOS, so don't add an error
+	if (teamHandler->Ally(argAllyTeam, allyteam) || (losStatus[argAllyTeam] & LOS_INLOS))
+		return ZeroVector;
+
+	// this is a ghosted building, so don't add an error
+	if (gameSetup->ghostedBuildings && (losStatus[argAllyTeam] & LOS_PREVLOS) && unitDef->IsImmobileUnit())
+		return ZeroVector;
+
+	if ((losStatus[argAllyTeam] & LOS_INRADAR) != 0)
+		return (posErrorVector * losHandler->GetAllyTeamRadarErrorSize(argAllyTeam));
+
+	return (posErrorVector * losHandler->GetBaseRadarErrorSize() * 2.0f);
 }
 
 void CUnit::UpdatePosErrorParams(bool updateError, bool updateDelta)

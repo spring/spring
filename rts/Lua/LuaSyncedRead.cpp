@@ -378,18 +378,12 @@ static inline bool IsAlliedAllyTeam(lua_State* L, int allyTeam)
 
 static inline bool IsAllyUnit(lua_State* L, const CUnit* unit)
 {
-	if (CLuaHandle::GetHandleReadAllyTeam(L) < 0)
-		return CLuaHandle::GetHandleFullRead(L);
-
-	return (unit->allyteam == CLuaHandle::GetHandleReadAllyTeam(L));
+	return (IsAlliedAllyTeam(L, unit->allyteam));
 }
 
 static inline bool IsEnemyUnit(lua_State* L, const CUnit* unit)
 {
-	if (CLuaHandle::GetHandleReadAllyTeam(L) < 0)
-		return !CLuaHandle::GetHandleFullRead(L);
-
-	return (unit->allyteam != CLuaHandle::GetHandleReadAllyTeam(L));
+	return (!IsAllyUnit(L, unit));
 }
 
 
@@ -549,7 +543,7 @@ static int GetSolidObjectPosition(lua_State* L, const CSolidObject* o, bool isFe
 
 	// no error for features
 	if (!isFeature && !IsAllyUnit(L, static_cast<const CUnit*>(o)))
-		errorVec = static_cast<const CUnit*>(o)->GetErrorVector(CLuaHandle::GetHandleReadAllyTeam(L));
+		errorVec = static_cast<const CUnit*>(o)->GetLuaErrorVector(CLuaHandle::GetHandleReadAllyTeam(L), CLuaHandle::GetHandleFullRead(L));
 
 	// NOTE:
 	//   must be called before any pushing to the stack, else
@@ -1618,16 +1612,18 @@ int LuaSyncedRead::ArePlayersAllied(lua_State* L)
 int LuaSyncedRead::GetAllUnits(lua_State* L)
 {
 	int count = 1;
-	std::list<CUnit*>::const_iterator uit;
+
 	if (CLuaHandle::GetHandleFullRead(L)) {
 		lua_createtable(L, unitHandler->activeUnits.size(), 0);
-		for (CUnit *unit: unitHandler->activeUnits) {
+
+		for (CUnit* unit: unitHandler->activeUnits) {
 			lua_pushnumber(L, unit->id);
 			lua_rawseti(L, -2, count++);
 		}
 	} else {
 		lua_newtable(L);
-		for (CUnit *unit: unitHandler->activeUnits) {
+
+		for (CUnit* unit: unitHandler->activeUnits) {
 			if (IsUnitVisible(L, unit)) {
 				lua_pushnumber(L, unit->id);
 				lua_rawseti(L, -2, count++);
@@ -3638,63 +3634,63 @@ int LuaSyncedRead::GetUnitLosState(lua_State* L)
 
 int LuaSyncedRead::GetUnitSeparation(lua_State* L)
 {
-	CUnit* unit1 = ParseUnit(L, __FUNCTION__, 1);
-	CUnit* unit2 = ParseUnit(L, __FUNCTION__, 2);
-	if (unit1 == NULL || unit2 == NULL) {
+	const CUnit* unit1 = ParseUnit(L, __FUNCTION__, 1);
+	const CUnit* unit2 = ParseUnit(L, __FUNCTION__, 2);
+
+	if (unit1 == nullptr || unit2 == nullptr)
 		return 0;
-	}
 
 	float3 pos1 = unit1->midPos;
 	float3 pos2 = unit2->midPos;
 
-	if (!IsAllyUnit(L, unit1)) {
-		pos1 = unit1->GetErrorPos(CLuaHandle::GetHandleReadAllyTeam(L));
-	}
-	if (!IsAllyUnit(L, unit2)) {
-		pos2 = unit2->GetErrorPos(CLuaHandle::GetHandleReadAllyTeam(L));
-	}
+	if (!IsAllyUnit(L, unit1))
+		pos1 = unit1->GetLuaErrorPos(CLuaHandle::GetHandleReadAllyTeam(L), CLuaHandle::GetHandleFullRead(L));
+	if (!IsAllyUnit(L, unit2))
+		pos2 = unit2->GetLuaErrorPos(CLuaHandle::GetHandleReadAllyTeam(L), CLuaHandle::GetHandleFullRead(L));
 
-	float dist;
-	if (luaL_optboolean(L, 3, false)) {
-		dist = pos1.distance2D(pos2);
-	} else {
-		dist = pos1.distance(pos2);
-	}
+	#if 0
+	const float3 mask = XZVector + UpVector * (1 - luaL_optboolean(L, 3, false));
+	const float3 diff = (pos1 - pos2) * mask;
+	const float  dist = diff.Length();
+	#else
+	const float dist = (luaL_optboolean(L, 3, false))? pos1.distance2D(pos2): pos1.distance(pos2);
+	#endif
+
 	if (luaL_optboolean(L, 4, false)) {
-		dist = std::max(0.0f, dist - unit1->radius - unit2->radius);
+		lua_pushnumber(L, std::max(0.0f, dist - unit1->radius - unit2->radius));
+	} else {
+		lua_pushnumber(L, dist);
 	}
-	lua_pushnumber(L, dist);
 
 	return 1;
 }
 
-
 int LuaSyncedRead::GetUnitFeatureSeparation(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	const CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
+	if (unit == nullptr)
 		return 0;
-	}
-	CFeature* feature = ParseFeature(L, __FUNCTION__, 2);
-	if (feature == NULL  || !IsFeatureVisible(L, feature)) {
+
+	const CFeature* feature = ParseFeature(L, __FUNCTION__, 2);
+
+	if (feature == nullptr || !IsFeatureVisible(L, feature))
 		return 0;
-	}
 
-	float3 pos1 = unit->midPos;
-	if (!IsAllyUnit(L, unit)) {
-		pos1 = unit->GetErrorPos(CLuaHandle::GetHandleReadAllyTeam(L));
-	}
-	float3 pos2 = feature->pos;
+	float3 pos1 =    unit->midPos;
+	float3 pos2 = feature->midPos;
 
+	if (!IsAllyUnit(L, unit))
+		pos1 = unit->GetLuaErrorPos(CLuaHandle::GetHandleReadAllyTeam(L), CLuaHandle::GetHandleFullRead(L));
 
-	float dist;
-	if (lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
-		dist = pos1.distance2D(pos2);
-	} else {
-		dist = pos1.distance(pos2);
-	}
-	lua_pushnumber(L, dist);
+	#if 0
+	const float3 mask = XZVector + UpVector * (1 - luaL_optboolean(L, 3, false));
+	const float3 diff = (pos1 - pos2) * mask;
 
+	lua_pushnumber(L, diff.Length());
+	#else
+	lua_pushnumber(L, (luaL_optboolean(L, 3, false))? pos1.distance2D(pos2): pos1.distance(pos2));
+	#endif
 	return 1;
 }
 

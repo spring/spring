@@ -142,6 +142,10 @@ public:
 	float3 GetErrorVector(int allyteam) const;
 	float3 GetErrorPos(int allyteam, bool aiming = false) const { return (aiming? aimPos: midPos) + GetErrorVector(allyteam); }
 	float3 GetDrawErrorPos(int allyteam) const { return (drawMidPos + GetErrorVector(allyteam)); }
+
+	float3 GetLuaErrorVector(int allyteam, bool fullRead) const { return (fullRead? ZeroVector: GetErrorVector(allyteam)); }
+	float3 GetLuaErrorPos(int allyteam, bool fullRead) const { return (midPos + GetLuaErrorVector(allyteam, fullRead))); }
+
 	void UpdatePosErrorParams(bool updateError, bool updateDelta);
 
 	bool UsingScriptMoveType() const { return (prevMoveType != NULL); }
