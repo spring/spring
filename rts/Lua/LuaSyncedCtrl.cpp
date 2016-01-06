@@ -1445,9 +1445,8 @@ int LuaSyncedCtrl::SetUnitHealth(lua_State* L)
 	}
 
 	if (lua_isnumber(L, 2)) {
-		float health = lua_tofloat(L, 2);
-		health = min(unit->maxHealth, health);
-		unit->health = health;
+		const float health = lua_tofloat(L, 2);
+		unit->health = min(unit->maxHealth, health);
 	}
 	else if (lua_istable(L, 2)) {
 		const int table = 2;
@@ -2599,13 +2598,11 @@ int LuaSyncedCtrl::DestroyFeature(lua_State* L)
 {
 	CheckAllowGameChanges(L);
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	if (feature == nullptr)
 		return 0;
-	}
 
-	if (inDestroyFeature) {
+	if (inDestroyFeature)
 		luaL_error(L, "DestroyFeature() recursion is not permitted");
-	}
 
 	inDestroyFeature = true;
 	featureHandler->DeleteFeature(feature);
@@ -2619,13 +2616,13 @@ int LuaSyncedCtrl::TransferFeature(lua_State* L)
 {
 	CheckAllowGameChanges(L);
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	if (feature == nullptr)
 		return 0;
-	}
+
 	const int teamId = luaL_checkint(L, 2);
-	if (!teamHandler->IsValidTeam(teamId)) {
+	if (!teamHandler->IsValidTeam(teamId))
 		return 0;
-	}
+
 	feature->ChangeTeam(teamId);
 	return 0;
 }
@@ -2640,10 +2637,11 @@ int LuaSyncedCtrl::SetFeatureAlwaysVisible(lua_State* L)
 int LuaSyncedCtrl::SetFeatureHealth(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	if (feature == nullptr)
 		return 0;
-	}
-	feature->health = luaL_checkfloat(L, 2);
+
+	const float health = luaL_checkfloat(L, 2);
+	feature->health = min(feature->maxHealth, health);
 	return 0;
 }
 
@@ -2651,9 +2649,9 @@ int LuaSyncedCtrl::SetFeatureHealth(lua_State* L)
 int LuaSyncedCtrl::SetFeatureReclaim(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	if (feature == nullptr)
 		return 0;
-	}
+
 	feature->reclaimLeft = luaL_checkfloat(L, 2);
 	return 0;
 }
@@ -2667,9 +2665,8 @@ int LuaSyncedCtrl::SetFeaturePhysics(lua_State* L)
 int LuaSyncedCtrl::SetFeaturePosition(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	if (feature == nullptr)
 		return 0;
-	}
 
 	const float3 pos(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
 	const bool snap(luaL_optboolean(L, 5, true));
