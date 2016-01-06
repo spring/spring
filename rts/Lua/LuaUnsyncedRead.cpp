@@ -35,7 +35,6 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/IWater.h"
-#include "Rendering/Env/ISky.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
@@ -183,10 +182,6 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetBuildSpacing);
 	REGISTER_LUA_CFUNC(GetGatherMode);
 	REGISTER_LUA_CFUNC(GetActivePage);
-
-	REGISTER_LUA_CFUNC(GetSunParameters);
-	REGISTER_LUA_CFUNC(IsSunManuallyControlled);
-	REGISTER_LUA_CFUNC(GetSunDirection);
 
 	REGISTER_LUA_CFUNC(GetMouseState);
 	REGISTER_LUA_CFUNC(GetMouseCursor);
@@ -1881,53 +1876,6 @@ int LuaUnsyncedRead::GetGatherMode(lua_State* L)
 	return 1;
 }
 
-/******************************************************************************/
-
-
-int LuaUnsyncedRead::GetSunParameters(lua_State* L)
-{
-	ISkyLight* skyLight = sky->GetLight();
-	// Light dir is always available, even if light isn't dynamic/controlled by Lua
-	const float4& lightDir = sky->GetLight()->GetLightDir();
-
-	lua_pushnumber(L, lightDir.x);
-	lua_pushnumber(L, lightDir.y);
-	lua_pushnumber(L, lightDir.z);
-	lua_pushnumber(L, lightDir.w);
-	DynamicSkyLight* dynSkyLight = dynamic_cast<DynamicSkyLight*>(skyLight);
-
-	if (dynSkyLight == NULL)
-		return 4;
-
-	lua_pushnumber(L, dynSkyLight->GetStartAngle());
-	lua_pushnumber(L, dynSkyLight->GetSunOrbitTime());
-
-	return 6;
-}
-
-int LuaUnsyncedRead::IsSunManuallyControlled(lua_State* L)
-{
-	DynamicSkyLight* dynSkyLight = dynamic_cast<DynamicSkyLight*>(sky->GetLight());
-
-	if (dynSkyLight == NULL) {
-        lua_pushboolean(L, false);
-		return 1;
-    }
-
-	lua_pushboolean(L, dynSkyLight->GetLuaControl());
-	return 1;
-}
-
-int LuaUnsyncedRead::GetSunDirection(lua_State* L)
-{
-	// Light dir is always available, even if light isn't dynamic/controlled by Lua
-	const float4& lightDir = sky->GetLight()->GetLightDir();
-
-	lua_pushnumber(L, lightDir.x);
-	lua_pushnumber(L, lightDir.y);
-	lua_pushnumber(L, lightDir.z);
-	return 3;
-}
 
 /******************************************************************************/
 
