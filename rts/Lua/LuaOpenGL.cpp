@@ -4531,6 +4531,8 @@ int LuaOpenGL::GetSun(lua_State* L)
 	else if (param == "specular") {
 		if (!unitMode) {
 			data = &mapInfo->light.groundSpecularColor;
+		} else {
+			data = &mapInfo->light.unitSpecularColor;
 		}
 	}
 
