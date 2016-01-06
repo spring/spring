@@ -637,17 +637,17 @@ int LuaUnsyncedRead::GetUnitTransformMatrix(lua_State* L)
 int LuaUnsyncedRead::GetUnitViewPosition(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	if (unit == nullptr)
 		return 0;
-	}
+
 	const bool midPos = luaL_optboolean(L, 2, false);
 
-	float3 errorVec = unit->GetErrorVector(CLuaHandle::GetHandleReadAllyTeam(L));
+	const float3 errorVec = unit->GetErrorVector(CLuaHandle::GetHandleReadAllyTeam(L));
+	const float3& unitPos = midPos ? unit->drawMidPos : unit->drawPos;
 
-	float3 &pos = midPos ? unit->drawMidPos : unit->drawPos;
-	lua_pushnumber(L, pos.x + errorVec.x);
-	lua_pushnumber(L, pos.y + errorVec.y);
-	lua_pushnumber(L, pos.z + errorVec.z);
+	lua_pushnumber(L, unitPos.x + errorVec.x);
+	lua_pushnumber(L, unitPos.y + errorVec.y);
+	lua_pushnumber(L, unitPos.z + errorVec.z);
 	return 3;
 }
 
