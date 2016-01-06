@@ -36,6 +36,7 @@ CR_REG_METADATA(CProjectile,
 
 	CR_MEMBER(mygravity),
 	CR_IGNORED(sortDist),
+	CR_MEMBER(tempNum),
 
 	CR_MEMBER(ownerID),
 	CR_MEMBER(teamID),
