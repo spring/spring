@@ -67,7 +67,7 @@ public:
 	void SetAxisScales(const float3& scales);
 	void FixTypeAndScale(float3& scales);
 	void SetBoundingRadius();
-	void SetOffsets(float3 &offsets) { axisOffsets = offsets; }
+	void SetOffsets(const float3& offsets) { axisOffsets = offsets; }
 
 	int GetVolumeType() const { return volumeType; }
 	void SetVolumeType(int type) { volumeType = type; }

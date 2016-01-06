@@ -38,6 +38,7 @@ CR_REG_METADATA(CPlasmaRepulser, (
 
 
 CPlasmaRepulser::CPlasmaRepulser(CUnit* owner, const WeaponDef* def): CWeapon(owner, def),
+	tempNum(0),
 	curPower(0.0f),
 	hitFrames(0),
 	rechargeDelay(0),
@@ -114,7 +115,7 @@ void CPlasmaRepulser::Update()
 		hitFrames--;
 
 	UpdateWeaponVectors();
-	collisionVolume.SetOffsets(relWeaponMuzzlePos);
+	collisionVolume.SetOffsets((relWeaponMuzzlePos - owner->relMidPos) * WORLD_TO_OBJECT_SPACE);
 	if (weaponMuzzlePos != lastPos)
 		quadField->MovedRepulsor(this);
 

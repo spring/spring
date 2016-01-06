@@ -15,6 +15,7 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/Weapon.h"
 
 static const float4 DEFAULT_VOLUME_COLOR = float4(0.45f, 0.0f, 0.45f, 0.35f);
@@ -276,6 +277,11 @@ static inline void DrawUnitColVol(const CUnit* u)
 					glColorf4(DEFAULT_VOLUME_COLOR);
 				}
 			}
+		}
+		if (u->shieldWeapon != nullptr) {
+			const CPlasmaRepulser* shield = static_cast<const CPlasmaRepulser*>(u->shieldWeapon);
+			glColor4f(0.0f, 0.0f, 0.6f, 0.35f);
+			DrawCollisionVolume(&shield->collisionVolume);
 		}
 
 		if (vCustomType || vCustomDims) {
