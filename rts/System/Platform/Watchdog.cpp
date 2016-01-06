@@ -38,13 +38,31 @@ namespace Watchdog
 			, timer(spring_notime)
 			, numreg(0)
 		{}
+
+		void ResetThreadControls() {
+			#ifndef WIN32
+			// this is not auto-destructed (!)
+			ctls.reset();
+			#endif
+		}
+
+		void SetThreadControls(const std::shared_ptr<Threading::ThreadControls>& c)
+		{
+			#ifndef WIN32
+			assert(ctls.get() != nullptr);
+			// copy shared_ptr object, not shared_ptr*
+			ctls = c;
+			#endif
+		}
+
 		volatile Threading::NativeThreadHandle thread;
 		volatile Threading::NativeThreadId threadid;
-		spring_time timer;
 		volatile unsigned int numreg;
-#ifndef WIN32
+
+		spring_time timer;
+
+		// not used on Windows
 		std::shared_ptr<Threading::ThreadControls> ctls;
-#endif
 	};
 
 	struct WatchDogThreadSlot {
@@ -181,13 +199,8 @@ namespace Watchdog
 		threadInfo->threadid = threadId;
 		threadInfo->timer = spring_gettime();
 
-#ifndef WIN32
-		auto threadCtls = Threading::GetCurrentThreadControls();
-		assert(threadCtls.get() != nullptr);
 		LOG("Registering thread controls for thread [%s]", threadNames[num]);
-		// copy shared_ptr object, not shared_ptr*
-		threadInfo->ctls = threadCtls;
-#endif
+		threadInfo->SetThreadControls(Threading::GetCurrentThreadControls());
 
 		++threadInfo->numreg;
 
@@ -212,8 +225,7 @@ namespace Watchdog
 		threadSlots[num].regorder = 0;
 		UpdateActiveThreads(threadInfo->threadid);
 
-		// this is not auto-destructed (!)
-		threadInfo->ctls.reset();
+		threadInfo->ResetThreadControls();
 
 		if (0 == --(threadInfo->numreg))
 			memset(threadInfo, 0, sizeof(WatchDogThreadInfo));
