@@ -118,9 +118,9 @@ CStandardGroundFlash::CStandardGroundFlash(
 	, circleGrowth(info.circleGrowth)
 	, circleAlpha(info.circleAlpha)
 	, flashAlpha(info.flashAlpha)
-	, flashAge(0)
-	, flashAgeSpeed(ttl? 1.0f / ttl : 0)
-	, circleAlphaDec(ttl? circleAlpha / ttl : 0)
+	, flashAge(0.0f)
+	, flashAgeSpeed(info.ttl? 1.0f / info.ttl : 0.0f)
+	, circleAlphaDec(info.ttl? circleAlpha / info.ttl : 0.0f)
 	, ttl(info.ttl)
 {
 	InitCommon(_pos, info.color);
