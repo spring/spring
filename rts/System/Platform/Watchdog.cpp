@@ -35,8 +35,8 @@ namespace Watchdog
 	struct WatchDogThreadInfo {
 		WatchDogThreadInfo()
 			: threadid(0)
-			, timer(spring_notime)
 			, numreg(0)
+			, timer(spring_notime)
 		{}
 
 		void ResetThreadControls() {
