@@ -433,7 +433,7 @@ void CQuadField::RemoveProjectile(CProjectile* p)
 std::vector<CUnit*> CQuadField::GetUnits(const float3& pos, float radius)
 {
 	const auto& quads = GetQuads(pos, radius);
-	const int tempNum = gs->tempNum++;
+	const int tempNum = gs->GetTempNum();
 	std::vector<CUnit*> units;
 
 	for (const int qi: quads) {
@@ -452,7 +452,7 @@ std::vector<CUnit*> CQuadField::GetUnits(const float3& pos, float radius)
 std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& pos, float radius, bool spherical)
 {
 	const auto& quads = GetQuads(pos, radius);
-	const int tempNum = gs->tempNum++;
+	const int tempNum = gs->GetTempNum();
 	std::vector<CUnit*> units;
 
 	for (const int qi: quads) {
@@ -480,7 +480,7 @@ std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& pos, float radius, b
 std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& mins, const float3& maxs)
 {
 	const auto& quads = GetQuadsRectangle(mins, maxs);
-	const int tempNum = gs->tempNum++;
+	const int tempNum = gs->GetTempNum();
 	std::vector<CUnit*> units;
 
 	for (const int qi: quads) {
@@ -503,7 +503,7 @@ std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& mins, const float3& 
 std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos, float radius, bool spherical)
 {
 	const auto& quads = GetQuads(pos, radius);
-	const int tempNum = gs->tempNum++;
+	const int tempNum = gs->GetTempNum();
 	std::vector<CFeature*> features;
 
 	for (const int qi: quads) {
@@ -531,7 +531,7 @@ std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos, float rad
 std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& mins, const float3& maxs)
 {
 	const auto& quads = GetQuadsRectangle(mins, maxs);
-	const int tempNum = gs->tempNum++;
+	const int tempNum = gs->GetTempNum();
 	std::vector<CFeature*> features;
 
 	for (const int qi: quads) {
@@ -598,7 +598,7 @@ std::vector<CSolidObject*> CQuadField::GetSolidsExact(
 	const unsigned int collisionStateBits
 ) {
 	const auto& quads = GetQuads(pos, radius);
-	const int tempNum = gs->tempNum++;
+	const int tempNum = gs->GetTempNum();
 	std::vector<CSolidObject*> solids;
 
 	for (const int qi: quads) {
@@ -643,7 +643,7 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 	std::vector<CFeature*>& features,
 	std::vector<CPlasmaRepulser*>* repulsers
 ) {
-	const int tempNum = gs->tempNum++;
+	const int tempNum = gs->GetTempNum();
 
 	// start counting from the previous object-cache sizes
 	const auto& quads = GetQuads(pos, radius);

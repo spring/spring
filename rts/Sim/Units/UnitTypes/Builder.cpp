@@ -381,7 +381,7 @@ void CBuilder::Update()
 						}
 
 						if (curResurrect->resurrectProgress >= 1.0f) {
-							if (curResurrect->tempNum != (gs->tempNum - 1)) {
+							if (!curResurrect->deleteMe) {
 								// resurrect finished and we are the first
 								curResurrect->UnBlock();
 
@@ -423,12 +423,6 @@ void CBuilder::Update()
 									// (WTF!)
 									c.params[0] = INT_MAX / 2;
 								}
-
-								// prevent double/triple/... resurrection if more than one
-								// builder is resurrecting (such that resurrectProgress can
-								// possibly become >= 1 again *this* simframe)
-								curResurrect->resurrectProgress = 0.0f;
-								curResurrect->tempNum = gs->tempNum++;
 
 								// this takes one simframe to do the deletion
 								featureHandler->DeleteFeature(curResurrect);

@@ -352,7 +352,7 @@ template<typename TFilter, typename TQuery>
 static inline void QueryUnits(TFilter filter, TQuery& query)
 {
 	const auto& quads = quadField->GetQuads(query.pos, query.radius);
-	const int tempNum = gs->tempNum++;
+	const int tempNum = gs->GetTempNum();
 
 	for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) { //FIXME
 		if (!filter.Team(t)) {
@@ -624,8 +624,7 @@ namespace {
 	} // end of namespace Query
 } // end of namespace
 
-// Use this instead of unit->tempNum here, because it requires a mutex lock that will deadlock if luaRules is invoked simultaneously.
-// Not the cleanest solution, but faster than e.g. a std::set, and this function is called quite frequently.
+// Use this instead of unit->tempNum here, because AllowWeaponTarget may call lua functions which use tempNum
 static int tempTargetUnits[MAX_UNITS] = {0};
 static int targetTempNum = 2;
 

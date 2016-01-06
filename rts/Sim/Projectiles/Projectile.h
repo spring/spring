@@ -109,7 +109,7 @@ public:
 	bool ignoreWater;
 	bool deleteMe;
 	bool callEvent; //do we need to call the ProjectileCreated event
-	
+
 	bool castShadow;
 	bool drawSorted;
 
@@ -119,6 +119,8 @@ public:
 
 	float mygravity;
 	float sortDist; ///< distance used for z-sorting when rendering
+
+	int tempNum;
 
 protected:
 	unsigned int ownerID;

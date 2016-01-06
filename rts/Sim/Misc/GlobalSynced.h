@@ -41,6 +41,7 @@ public:
 	}
 	unsigned int GetRandSeed()     const { return randSeed; }
 	unsigned int GetInitRandSeed() const { return initRandSeed; }
+	int GetTempNum() { return tempNum++; }
 
 public:
 	/**
@@ -49,14 +50,6 @@ public:
 	* Stores the current frame number
 	*/
 	int frameNum;
-
-	/**
-	* @brief temp num
-	*
-	* Used for getting temporary but unique numbers
-	* (increase after each use)
-	*/
-	int tempNum;
 
 
 	/**
@@ -151,6 +144,14 @@ private:
 	* Holds the synced initial random seed
 	*/
 	int initRandSeed;
+
+	/**
+	* @brief temp num
+	*
+	* Used for getting temporary but unique numbers
+	* (increase after each use)
+	*/
+	int tempNum;
 };
 
 extern CGlobalSynced* gs;
