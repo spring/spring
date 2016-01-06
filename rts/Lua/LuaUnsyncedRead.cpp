@@ -642,10 +642,12 @@ int LuaUnsyncedRead::GetUnitViewPosition(lua_State* L)
 	}
 	const bool midPos = luaL_optboolean(L, 2, false);
 
-	float3& pos = midPos ? unit->drawMidPos : unit->drawPos;
-	lua_pushnumber(L, pos.x);
-	lua_pushnumber(L, pos.y);
-	lua_pushnumber(L, pos.z);
+	float3 errorVec = unit->GetErrorVector(CLuaHandle::GetHandleReadAllyTeam(L));
+
+	float3 &pos = midPos ? unit->drawMidPos : unit->drawPos;
+	lua_pushnumber(L, pos.x + errorVec.x);
+	lua_pushnumber(L, pos.y + errorVec.y);
+	lua_pushnumber(L, pos.z + errorVec.z);
 	return 3;
 }
 

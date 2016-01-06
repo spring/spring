@@ -548,10 +548,8 @@ static int GetSolidObjectPosition(lua_State* L, const CSolidObject* o, bool isFe
 	float3 errorVec;
 
 	// no error for features
-	if (!isFeature && !IsAllyUnit(L, static_cast<const CUnit*>(o))) {
-		errorVec += static_cast<const CUnit*>(o)->GetErrorPos(CLuaHandle::GetHandleReadAllyTeam(L));
-		errorVec -= o->midPos;
-	}
+	if (!isFeature && !IsAllyUnit(L, static_cast<const CUnit*>(o)))
+		errorVec = static_cast<const CUnit*>(o)->GetErrorVector(CLuaHandle::GetHandleReadAllyTeam(L));
 
 	// NOTE:
 	//   must be called before any pushing to the stack, else
