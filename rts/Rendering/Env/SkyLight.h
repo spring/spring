@@ -59,6 +59,8 @@ public:
 	void Update();
 	bool SetLightDir(const float4& newDir);
 	void SetLightParams(float4 newDir, float startAngle, float orbitTime);
+	float GetStartAngle() const { return sunStartAngle - PI; } // FIXME: See SkyLight.cpp for the -PI (ugly hack IMO)
+	float GetSunOrbitTime() const { return sunOrbitTime; }
 
 	void SetLuaControl(bool b) { luaControl = b; }
 	bool GetLuaControl() const { return luaControl; }

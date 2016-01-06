@@ -115,6 +115,10 @@ class LuaUnsyncedRead {
 		static int GetBuildFacing(lua_State* L);
 		static int GetBuildSpacing(lua_State* L);
 
+		static int GetSunParameters(lua_State* L);
+		static int IsSunManuallyControlled(lua_State* L);
+		static int GetSunDirection(lua_State* L);
+
 		static int GetActivePage(lua_State* L);
 
 		static int GetLastMessagePositions(lua_State* L);

@@ -81,6 +81,11 @@ Lua:
  - add unsynced callout SetSkyBoxTexture(string texName) -> nil
    example usage: Spring.SetSkyBoxTexture("myskybox.dds")
 
+ - add unsynced callouts for reading Sun parameters:
+    GetSunParameters() -> number dirX, number dirY, number dirZ, number dist, [number startTime, number orbitTime] 
+    IsSunManuallyControlled() -> boolean
+    GetSunDirection() -> number dirX, number dirY, number dirZ
+
  - add unsynced callout Spring.SetMapShadingTexture(string texType, string texName) -> boolean
    example usage: Spring.SetMapShadingTexture("$ssmf_specular", "name_of_my_shiny_texture")
 
