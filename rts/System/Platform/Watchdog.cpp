@@ -49,7 +49,7 @@ namespace Watchdog
 		void SetThreadControls(const std::shared_ptr<Threading::ThreadControls>& c)
 		{
 			#ifndef WIN32
-			assert(ctls.get() != nullptr);
+			assert(c.get() != nullptr);
 			// copy shared_ptr object, not shared_ptr*
 			ctls = c;
 			#endif
