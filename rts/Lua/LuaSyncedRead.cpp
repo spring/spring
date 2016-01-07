@@ -1674,11 +1674,33 @@ int LuaSyncedRead::GetTeamUnits(lua_State* L)
 }
 
 
+static inline void PushUnitsVector(lua_State* L, const std::vector<CUnit*>& vec, int unitDefID, bool& createdTable, unsigned& count, unsigned& defCount, std::vector<int>& unknownIDs)
+{
+	for(const CUnit* unit: vec) {
+		if (!IsUnitVisible(L, unit))
+			continue;
+
+		if (!IsUnitTyped(L, unit)) {
+			unknownIDs.push_back(unit->id);
+			continue;
+		}
+
+		if (!createdTable) {
+			createdTable = true;
+			lua_pushnumber(L, unitDefID);
+			lua_newtable(L);
+			defCount++;
+		}
+
+		lua_pushnumber(L, unit->id);
+		lua_rawseti(L, -2, count++);
+	}
+}
+
 int LuaSyncedRead::GetTeamUnitsSorted(lua_State* L)
 {
-	if (CLuaHandle::GetHandleReadAllyTeam(L) == CEventClient::NoAccessTeam) {
+	if (CLuaHandle::GetHandleReadAllyTeam(L) == CEventClient::NoAccessTeam)
 		return 0;
-	}
 
 	// parse the team
 	const CTeam* team = ParseTeam(L, __FUNCTION__, 1);
@@ -1687,52 +1709,72 @@ int LuaSyncedRead::GetTeamUnitsSorted(lua_State* L)
 
 	const int teamID = team->teamNum;
 
-	map<int, vector<CUnit*> > unitDefMap;
+	static vector<int> unknownIDs;
+
+	lua_newtable(L);
+	unsigned defCount = 0;
+
+	const auto& unitsByDefs = unitHandler->unitsByDefs[teamID];
 
 	// tally for allies
 	if (IsAlliedTeam(L, teamID)) {
-		for (CUnit* unit: team->units) {
-			unitDefMap[unit->unitDef->id].push_back(unit);
+		for (int unitDefID = 0; unitDefID < unitsByDefs.size(); unitDefID++) {
+
+			if (unitsByDefs[unitDefID].empty())
+				continue;
+
+			lua_pushnumber(L, unitDefID);
+			lua_newtable(L);
+			defCount++;
+
+			unsigned count = 1;
+			for (const CUnit* unit: unitsByDefs[unitDefID]) {
+				lua_pushnumber(L, unit->id);
+				lua_rawseti(L, -2, count++);
+			}
+			lua_rawset(L, -3);
 		}
-	}
-	// tally for enemies
-	else {
-		// NOTE: (using unitsByDefs[] might be faster late-game)
-		for(CUnit* unit: team->units){
-			if (IsUnitVisible(L, unit)) {
-				const UnitDef* ud = EffectiveUnitDef(L, unit);
-				if (IsUnitTyped(L, unit)) {
-					unitDefMap[ud->id].push_back(unit);
-				} else {
-					unitDefMap[-1].push_back(unit); // unknown
+	} else {// tally for enemies
+		unknownIDs.clear();
+
+		for (int unitDefID = 0; unitDefID < unitsByDefs.size(); unitDefID++) {
+			const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
+			//We deal with decoys later
+			if (ud->decoyDef != nullptr)
+				continue;
+
+			bool createdTable = false;
+			unsigned count = 1;
+			PushUnitsVector(L, unitsByDefs[unitDefID], unitDefID, createdTable, count, defCount, unknownIDs);
+
+			auto dmit = unitDefHandler->decoyMap.find(unitDefID);
+			if (dmit != unitDefHandler->decoyMap.end()) {
+				for (int decoyDefID: dmit->second) {
+					PushUnitsVector(L, unitsByDefs[decoyDefID], unitDefID, createdTable, count, defCount, unknownIDs);
 				}
 			}
-		}
-	}
 
-	// push the table
-	lua_newtable(L);
-	map<int, vector<CUnit*> >::const_iterator mit;
-	for (mit = unitDefMap.begin(); mit != unitDefMap.end(); ++mit) {
-		const int unitDefID = mit->first;
-		if (unitDefID < 0) {
+			if (createdTable)
+				lua_rawset(L, -3);
+
+		}
+
+		if (!unknownIDs.empty()) {
 			HSTR_PUSH(L, "unknown");
-		} else {
-			lua_pushnumber(L, unitDefID); // push the UnitDef index
-		}
-		lua_newtable(L); {
-			const vector<CUnit*>& v = mit->second;
-			for (int i = 0; i < (int)v.size(); i++) {
-				CUnit* unit = v[i];
-				lua_pushnumber(L, unit->id);
-				lua_rawseti(L, -2, i + 1);
+			lua_newtable(L);
+			defCount++;
+
+			unsigned count = 1;
+			for (int unitID: unknownIDs) {
+				lua_pushnumber(L, unitID);
+				lua_rawseti(L, -2, count++);
 			}
+			lua_rawset(L, -3);
 		}
-		lua_rawset(L, -3);
 	}
 
 	// UnitDef ID keys are not consecutive, so add the "n"
-	hs_n.PushNumber(L, unitDefMap.size());
+	hs_n.PushNumber(L, defCount);
 	return 1;
 }
 
