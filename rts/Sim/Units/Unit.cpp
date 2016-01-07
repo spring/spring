@@ -709,7 +709,7 @@ void CUnit::ForcedMove(const float3& newPos)
 float3 CUnit::GetErrorVector(int argAllyTeam) const
 {
 	// LuaHandle without full read access
-	if (argAllyTeam < 0)
+	if (argAllyTeam < 0 || argAllyTeam >= losStatus.size())
 		return (posErrorVector * losHandler->GetBaseRadarErrorSize() * 2.0f);
 
 	// it's one of our own, or it's in LOS, so don't add an error
