@@ -9,19 +9,19 @@
 #include "Camera.h"
 #include "Game.h"
 #include "GlobalUnsynced.h"
+#include "ExternalAI/AILegacySupport.h" // {Point, Line}Marker
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
-#include "Net/Protocol/BaseNetProtocol.h"
 #include "UI/MiniMap.h"
 #include "UI/MouseHandler.h"
-#include "ExternalAI/AILegacySupport.h" // {Point, Line}Marker
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
-#include "System/Net/UnpackPacket.h"
+#include "Net/Protocol/BaseNetProtocol.h"
+#include "Net/Protocol/NetProtocol.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "System/Net/UnpackPacket.h"
 #include "System/EventHandler.h"
 #include "System/EventClient.h"
-#include "Net/Protocol/NetProtocol.h"
 #include "System/Log/ILog.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/ISoundChannels.h"
@@ -281,23 +281,22 @@ void CInMapDraw::GetPoints(std::vector<PointMarker>& points, int pointsSizeMax, 
 	points.reserve(pointsSizeMax);
 
 	const std::list<CInMapDrawModel::MapPoint>* pointsInt = NULL;
-	std::list<CInMapDrawModel::MapPoint>::const_iterator point;
-	std::list<int>::const_iterator it;
 
 	for (size_t y = 0; (y < inMapDrawerModel->GetDrawQuadY()) && ((int)points.size() < pointsSizeMax); y++) {
 		for (size_t x = 0; (x < inMapDrawerModel->GetDrawQuadX()) && ((int)points.size() < pointsSizeMax); x++) {
 			pointsInt = &(inMapDrawerModel->GetDrawQuad(x, y)->points);
 
-			for (point = pointsInt->begin(); (point != pointsInt->end()) && ((int)points.size()  < pointsSizeMax); ++point) {
-				for (it = teamIDs.begin(); it != teamIDs.end(); ++it) {
-					if (point->GetTeamID() == *it) {
-						PointMarker pm;
-						pm.pos   = point->GetPos();
-						pm.color = teamHandler->Team(point->GetTeamID())->color;
-						pm.label = point->GetLabel().c_str();
-						points.push_back(pm);
-						break;
-					}
+			for (auto point = pointsInt->cbegin(); (point != pointsInt->cend()) && ((int)points.size()  < pointsSizeMax); ++point) {
+				for (auto it = teamIDs.cbegin(); it != teamIDs.cend(); ++it) {
+					if (point->GetTeamID() != *it)
+						continue;
+
+					PointMarker pm;
+					pm.pos   = point->GetPos();
+					pm.color = teamHandler->Team(point->GetTeamID())->color;
+					pm.label = point->GetLabel().c_str();
+					points.push_back(pm);
+					break;
 				}
 			}
 		}
@@ -311,23 +310,22 @@ void CInMapDraw::GetLines(std::vector<LineMarker>& lines, int linesSizeMax, cons
 	lines.reserve(linesSizeMax);
 
 	const std::list<CInMapDrawModel::MapLine>* linesInt = NULL;
-	std::list<CInMapDrawModel::MapLine>::const_iterator line;
-	std::list<int>::const_iterator it;
 
 	for (size_t y = 0; (y < inMapDrawerModel->GetDrawQuadY()) && ((int)lines.size() < linesSizeMax); y++) {
 		for (size_t x = 0; (x < inMapDrawerModel->GetDrawQuadX()) && ((int)lines.size() < linesSizeMax); x++) {
 			linesInt = &(inMapDrawerModel->GetDrawQuad(x, y)->lines);
 
-			for (line = linesInt->begin(); (line != linesInt->end()) && ((int)lines.size() < linesSizeMax); ++line) {
-				for (it = teamIDs.begin(); it != teamIDs.end(); ++it) {
-					if (line->GetTeamID() == *it) {
-						LineMarker lm;
-						lm.pos   = line->GetPos1();
-						lm.pos2  = line->GetPos2();
-						lm.color = teamHandler->Team(line->GetTeamID())->color;
-						lines.push_back(lm);
-						break;
-					}
+			for (auto line = linesInt->cbegin(); (line != linesInt->cend()) && ((int)lines.size() < linesSizeMax); ++line) {
+				for (auto it = teamIDs.cbegin(); it != teamIDs.cend(); ++it) {
+					if (line->GetTeamID() != *it)
+						continue;
+
+					LineMarker lm;
+					lm.pos   = line->GetPos1();
+					lm.pos2  = line->GetPos2();
+					lm.color = teamHandler->Team(line->GetTeamID())->color;
+					lines.push_back(lm);
+					break;
 				}
 			}
 		}
