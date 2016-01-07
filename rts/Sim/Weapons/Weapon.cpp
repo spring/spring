@@ -634,9 +634,6 @@ bool CWeapon::AutoTarget()
 
 	// NOTE:
 	//   sorts by INCREASING order of priority, so lower equals better
-	//   <targets> can contain duplicates if a unit covers multiple quads
-	//   <targets> is normally sorted such that all bad TC units are at the
-	//   end, but Lua can mess with the ordering arbitrarily
 	std::multimap<float, CUnit*> targets;
 	CGameHelper::GenerateWeaponTargets(this, avoidUnit, targets);
 
