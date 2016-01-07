@@ -1546,8 +1546,8 @@ int LuaSyncedRead::GetAIInfo(lua_State* L)
 			lua_rawset(L, -3);
 		}
 	} else {
-		HSTR_PUSH(L, "UKNOWN");
-		HSTR_PUSH(L, "UKNOWN");
+		HSTR_PUSH(L, "UNKNOWN");
+		HSTR_PUSH(L, "UNKNOWN");
 		lua_newtable(L);
 	}
 	numVals += 3;
@@ -1965,8 +1965,7 @@ int LuaSyncedRead::GetTeamUnitDefCount(lua_State* L)
 
 	// tally the given unitDef units
 	for (const CUnit* unit: unitHandler->unitsByDefs[teamID][unitDef->id]) {
-		if (IsUnitTyped(L, unit))
-			count++;
+		count += (IsUnitTyped(L, unit));
 	}
 
 	// tally the decoy units for the given unitDef
@@ -1975,8 +1974,7 @@ int LuaSyncedRead::GetTeamUnitDefCount(lua_State* L)
 	if (dmit != unitDefHandler->decoyMap.end()) {
 		for (const int ud: dmit->second) {
 			for (const CUnit* unit: unitHandler->unitsByDefs[teamID][ud]) {
-				if (IsUnitTyped(L, unit))
-					count++;
+				count += (IsUnitTyped(L, unit));
 			}
 		}
 	}
