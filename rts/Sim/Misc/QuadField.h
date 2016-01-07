@@ -95,8 +95,8 @@ needed to support dynamic resizing (not used yet)
 	void AddProjectile(CProjectile* projectile);
 	void RemoveProjectile(CProjectile* projectile);
 
-	void MovedRepulsor(CPlasmaRepulser* repulser);
-	void RemoveRepulsor(CPlasmaRepulser* repulser);
+	void MovedRepulser(CPlasmaRepulser* repulser);
+	void RemoveRepulser(CPlasmaRepulser* repulser);
 
 	struct Quad {
 		CR_DECLARE_STRUCT(Quad)

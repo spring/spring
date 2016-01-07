@@ -1516,8 +1516,6 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	eoh->UnitCaptured(*this, oldteam, newteam);
 
 	quadField->RemoveUnit(this);
-	quads.clear();
-	quadField->MovedUnit(this);
 
 
 	if (type == ChangeGiven) {
@@ -1540,6 +1538,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	team = newteam;
 	allyteam = teamHandler->AllyTeam(newteam);
 	neutral = false;
+	quadField->MovedUnit(this);
 
 	unitHandler->unitsByDefs[oldteam][unitDef->id].erase(this);
 	unitHandler->unitsByDefs[newteam][unitDef->id].insert(this);

@@ -283,16 +283,13 @@ void CQuadField::MovedUnit(CUnit* unit)
 	}
 
 	for (const int qi: unit->quads) {
-		std::vector<CUnit*>& quadUnits     = baseQuads[qi].units;
-		std::vector<CUnit*>& quadAllyUnits = baseQuads[qi].teamUnits[unit->allyteam];
-
-		VectorErase(quadUnits, unit);
-		VectorErase(quadAllyUnits, unit);
+		VectorErase(baseQuads[qi].units, unit);
+		VectorErase(baseQuads[qi].teamUnits[unit->allyteam], unit);
 	}
 
 	for (const int qi: newQuads) {
-		baseQuads[qi].units.push_back(unit);
-		baseQuads[qi].teamUnits[unit->allyteam].push_back(unit);
+		VectorInsertUnique(baseQuads[qi].units, unit, false);
+		VectorInsertUnique(baseQuads[qi].teamUnits[unit->allyteam], unit, false);
 	}
 
 	unit->quads = std::move(newQuads);
@@ -309,10 +306,20 @@ void CQuadField::RemoveUnit(CUnit* unit)
 	}
 
 	unit->quads.clear();
+
+	#ifdef DEBUG_QUADFIELD
+	for (const Quad& q: baseQuads) {
+		for (auto& teamUnits: q.teamUnits) {
+			for (CUnit* u: teamUnits) {
+				assert(u != unit);
+			}
+		}
+	}
+	#endif
 }
 
 
-void CQuadField::MovedRepulsor(CPlasmaRepulser* repulser)
+void CQuadField::MovedRepulser(CPlasmaRepulser* repulser)
 {
 	auto newQuads = std::move(GetQuads(repulser->weaponMuzzlePos, repulser->GetRadius()));
 
@@ -328,19 +335,21 @@ void CQuadField::MovedRepulsor(CPlasmaRepulser* repulser)
 	}
 
 	for (const int qi: newQuads) {
-		baseQuads[qi].repulsers.push_back(repulser);
+		VectorInsertUnique(baseQuads[qi].repulsers, repulser, false);
 	}
 
 	repulser->quads = std::move(newQuads);
 }
 
-void CQuadField::RemoveRepulsor(CPlasmaRepulser* repulser)
+void CQuadField::RemoveRepulser(CPlasmaRepulser* repulser)
 {
 	const auto& quads = GetQuads(repulser->weaponMuzzlePos, repulser->GetRadius());
 
 	for (const int qi: repulser->quads) {
 		VectorErase(baseQuads[qi].repulsers, repulser);
 	}
+
+	repulser->quads.clear();
 
 	#ifdef DEBUG_QUADFIELD
 	for (const Quad& q: baseQuads) {
@@ -357,7 +366,7 @@ void CQuadField::AddFeature(CFeature* feature)
 	const auto& newQuads = GetQuads(feature->pos, feature->radius);
 
 	for (const int qi: newQuads) {
-		baseQuads[qi].features.push_back(feature);
+		VectorInsertUnique(baseQuads[qi].features, feature, false);
 	}
 }
 
@@ -403,13 +412,13 @@ void CQuadField::AddProjectile(CProjectile* p)
 		auto newQuads = std::move(GetQuadsOnRay(p->pos, p->dir, p->speed.w));
 
 		for (const int qi: newQuads) {
-			baseQuads[qi].projectiles.push_back(p);
+			VectorInsertUnique(baseQuads[qi].projectiles, p, false);
 		}
 
 		p->quads = std::move(newQuads);
 	} else {
 		int newQuad = WorldPosToQuadFieldIdx(p->pos);
-		baseQuads[newQuad].projectiles.push_back(p);
+		VectorInsertUnique(baseQuads[newQuad].projectiles, p, false);
 		p->quads.clear();
 		p->quads.push_back(newQuad);
 	}
