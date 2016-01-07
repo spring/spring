@@ -50,10 +50,6 @@ CResourceMapAnalyzer::CResourceMapAnalyzer(int resourceId)
 	, minIncomeForSpot(0)
 	, xtractorRadius(0)
 	, doubleRadius(0)
-	, rexArrayA(NULL)
-	, rexArrayB(NULL)
-	, rexArrayC(NULL)
-	, tempAverage(NULL)
 {
 	if (CACHE_BASE.empty()) {
 		CACHE_BASE = dataDirsAccess.LocateDir(FileSystem::GetCacheDir() + "/analyzedResourceMaps/", FileQueryFlags::WRITE | FileQueryFlags::CREATE_DIRS);
@@ -79,22 +75,14 @@ CResourceMapAnalyzer::CResourceMapAnalyzer(int resourceId)
 	squareRadius = xtractorRadius * xtractorRadius;
 	doubleSquareRadius = doubleRadius * doubleRadius;
 
-	rexArrayA = new unsigned char[totalCells];
-	rexArrayB = new unsigned char[totalCells];
+	rexArrayA.resize(totalCells);
+	rexArrayB.resize(totalCells);
 	// used for drawing the TGA, not really needed with a couple of changes
-	rexArrayC = new unsigned char[totalCells];
+	rexArrayC.resize(totalCells);
 
-	tempAverage = new int[totalCells];
+	tempAverage.resize(totalCells);
 
 	Init();
-}
-
-CResourceMapAnalyzer::~CResourceMapAnalyzer() {
-
-	delete[] rexArrayA;
-	delete[] rexArrayB;
-	delete[] rexArrayC;
-	delete[] tempAverage;
 }
 
 
