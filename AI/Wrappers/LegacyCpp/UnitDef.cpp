@@ -243,10 +243,6 @@ springLegacyAI::UnitDef::UnitDef()
 //, realEnergyUpkeep(0.0f)
 //, realBuildTime(0.0f)
 {
-	yardmaps[0] = nullptr;
-	yardmaps[1] = nullptr;
-	yardmaps[2] = nullptr;
-	yardmaps[3] = nullptr;
 }
 
 
