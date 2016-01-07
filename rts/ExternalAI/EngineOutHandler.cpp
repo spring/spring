@@ -602,14 +602,11 @@ void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 			// Send a UnitCreated event for each unit of the team.
 			// This will only do something if the AI is created mid-game.
 			const CTeam* team = teamHandler->Team(aiWrapper->GetTeamId());
-			CUnitSet::const_iterator u, uNext;
-			for (u = team->units.begin(); u != team->units.end(); ) {
-				uNext = u; ++uNext;
+			for (CUnit* u: team->units) {
 				try {
-					aiWrapper->UnitCreated((*u)->id, -1);
-					aiWrapper->UnitFinished((*u)->id);
+					aiWrapper->UnitCreated(u->id, -1);
+					aiWrapper->UnitFinished(u->id);
 				} CATCH_AI_EXCEPTION;
-				u = uNext;
 			}
 
 			clientNet->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_ALIVE));

@@ -10,13 +10,14 @@
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/ReadMap.h"
+#include "Net/Protocol/NetProtocol.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
-#include "Net/Protocol/NetProtocol.h"
 #include "System/MsgStrings.h"
-#include "System/Rectangle.h"
+#include "System/Util.h"
+#include "System/creg/STL_Set.h"
 #include "System/creg/STL_List.h"
 #include "System/creg/STL_Map.h"
 #include "System/creg/STL_Set.h"
@@ -62,6 +63,7 @@ CTeam::CTeam():
 	maxUnits(0),
 	isDead(false),
 	gaia(false),
+	dontRemove(false),
 	resStorage(1000000, 1000000),
 	resShare(0.99f, 0.95f),
 	nextHistoryEntry(0),
@@ -208,12 +210,12 @@ void CTeam::GiveEverythingTo(const unsigned toTeam)
 		res.energy = 0;
 	}
 
-	for (CUnitSet::iterator ui = units.begin(); ui != units.end(); ) {
-		// must pass the normal checks, isDead, unit count restrictions, luaRules, etc...
-		CUnitSet::iterator next = ui; ++next;
-		(*ui)->ChangeTeam(toTeam, CUnit::ChangeGiven);
-		ui = next;
+	dontRemove = true;
+	for (CUnit* u: units) {
+		u->ChangeTeam(toTeam, CUnit::ChangeGiven);
 	}
+	dontRemove = false;
+	units.clear();
 }
 
 
@@ -378,7 +380,7 @@ void CTeam::SlowUpdate()
 
 void CTeam::AddUnit(CUnit* unit, AddType type)
 {
-	units.insert(unit);
+	VectorInsertUnique(units, unit, false);
 	switch (type) {
 		case AddBuilt: {
 			GetCurrentStats().unitsProduced++;
@@ -398,7 +400,9 @@ void CTeam::AddUnit(CUnit* unit, AddType type)
 
 void CTeam::RemoveUnit(CUnit* unit, RemoveType type)
 {
-	units.erase(unit);
+	if (!dontRemove)
+		VectorErase(units, unit);
+
 	switch (type) {
 		case RemoveDied: {
 			GetCurrentStats().unitsDied++;
