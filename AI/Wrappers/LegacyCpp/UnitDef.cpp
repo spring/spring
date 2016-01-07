@@ -243,21 +243,16 @@ springLegacyAI::UnitDef::UnitDef()
 //, realEnergyUpkeep(0.0f)
 //, realBuildTime(0.0f)
 {
-	yardmaps[0] = NULL;
-	yardmaps[1] = NULL;
-	yardmaps[2] = NULL;
-	yardmaps[3] = NULL;
+	yardmaps[0] = nullptr;
+	yardmaps[1] = nullptr;
+	yardmaps[2] = nullptr;
+	yardmaps[3] = nullptr;
 }
 
 
 springLegacyAI::UnitDef::~UnitDef()
 {
 	delete movedata; movedata = NULL;
-
-	delete[] yardmaps[0]; yardmaps[0] = NULL;
-	delete[] yardmaps[1]; yardmaps[1] = NULL;
-	delete[] yardmaps[2]; yardmaps[2] = NULL;
-	delete[] yardmaps[3]; yardmaps[3] = NULL;
 }
 
 

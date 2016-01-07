@@ -218,10 +218,13 @@ const std::vector<springLegacyAI::CommandDescription>* springLegacyAI::CAIAICall
 		commandDescription.disabled = sAICallback->Group_SupportedCommand_isDisabled(skirmishAIId, groupId, c);
 
 		std::vector<const char*> params(sAICallback->Group_SupportedCommand_getParams(skirmishAIId, groupId, c, nullptr, 0), "");
-		const int numParams = sAICallback->Group_SupportedCommand_getParams(skirmishAIId, groupId, c, &params[0], params.size());
 
-		for (int p = 0; p < numParams; p++) {
-			commandDescription.params.push_back(params[p]);
+		if (!params.empty()) {
+			const int numParams = sAICallback->Group_SupportedCommand_getParams(skirmishAIId, groupId, c, &params[0], params.size());
+
+			for (int p = 0; p < numParams; p++) {
+				commandDescription.params.push_back(params[p]);
+			}
 		}
 
 		cmdDescVec->push_back(commandDescription);
@@ -247,10 +250,13 @@ const std::vector<springLegacyAI::CommandDescription>* springLegacyAI::CAIAICall
 		commandDescription.disabled = sAICallback->Unit_SupportedCommand_isDisabled(skirmishAIId, unitId, c);
 
 		std::vector<const char*> params(sAICallback->Unit_SupportedCommand_getParams(skirmishAIId, unitId, c, nullptr, 0), "");
-		const int numParams = sAICallback->Unit_SupportedCommand_getParams(skirmishAIId, unitId, c, &params[0], params.size());
 
-		for (int p = 0; p < numParams; p++) {
-			commandDescription.params.push_back(params[p]);
+		if (!params.empty()) {
+			const int numParams = sAICallback->Unit_SupportedCommand_getParams(skirmishAIId, unitId, c, &params[0], params.size());
+
+			for (int p = 0; p < numParams; p++) {
+				commandDescription.params.push_back(params[p]);
+			}
 		}
 
 		cmdDescVec->push_back(commandDescription);
@@ -280,10 +286,13 @@ const springLegacyAI::CCommandQueue* springLegacyAI::CAIAICallback::GetCurrentUn
 		command.timeOut = sAICallback->Unit_CurrentCommand_getTimeOut(skirmishAIId, unitId, c);
 
 		std::vector<float> params(sAICallback->Unit_CurrentCommand_getParams(skirmishAIId, unitId, c, nullptr, 0));
-		const int numParams = sAICallback->Unit_CurrentCommand_getParams(skirmishAIId, unitId, c, &params[0], params.size());
 
-		for (int p = 0; p < numParams; p++) {
-			command.params.push_back(params[p]);
+		if (!params.empty()) {
+			const int numParams = sAICallback->Unit_CurrentCommand_getParams(skirmishAIId, unitId, c, &params[0], params.size());
+
+			for (int p = 0; p < numParams; p++) {
+				command.params.push_back(params[p]);
+			}
 		}
 
 		cc->push_back(command);
@@ -404,8 +413,6 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 	if (unitDefFrames[unitDefId] < 0) {
 		const int currentFrame = 1; // GetCurrentFrame();
 
-		float3 pos;
-
 		UnitDef* unitDef = &unitDefs[unitDefId];
 
 		unitDef->name = sAICallback->UnitDef_getName(skirmishAIId, unitDefId);
@@ -476,8 +483,7 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 		unitDef->armorType = sAICallback->UnitDef_getArmorType(skirmishAIId, unitDefId);
 		unitDef->flankingBonusMode = sAICallback->UnitDef_FlankingBonus_getMode(skirmishAIId, unitDefId);
 
-		sAICallback->UnitDef_FlankingBonus_getDir(skirmishAIId, unitDefId, &pos[0]);
-		unitDef->flankingBonusDir = pos;
+		sAICallback->UnitDef_FlankingBonus_getDir(skirmishAIId, unitDefId, &unitDef->flankingBonusDir[0]);
 
 		unitDef->flankingBonusMax = sAICallback->UnitDef_FlankingBonus_getMax(skirmishAIId, unitDefId);
 		unitDef->flankingBonusMin = sAICallback->UnitDef_FlankingBonus_getMin(skirmishAIId, unitDefId);
@@ -538,18 +544,21 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 		unitDef->maxAileron = sAICallback->UnitDef_getMaxAileron(skirmishAIId, unitDefId);
 		unitDef->maxElevator = sAICallback->UnitDef_getMaxElevator(skirmishAIId, unitDefId);
 		unitDef->maxRudder = sAICallback->UnitDef_getMaxRudder(skirmishAIId, unitDefId);
+
 		{
-			static const size_t facings = 4;
-			const int yardMap_size = sAICallback->UnitDef_getYardMap(skirmishAIId, unitDefId, 0, nullptr, 0);
+			const size_t NUM_FACINGS = sizeof(unitDef->yardmaps) / sizeof(unitDef->yardmaps[0]);
+			const int yardMapSize = sAICallback->UnitDef_getYardMap(skirmishAIId, unitDefId, 0, nullptr, 0);
 
-			std::vector<short> tmpYardMap(yardMap_size);
+			if (yardMapSize > 0) {
+				std::vector<short> tmpYardMap(yardMapSize);
 
-			for (int ym = 0 ; ym < facings; ++ym) {
-				sAICallback->UnitDef_getYardMap(skirmishAIId, unitDefId, ym, &tmpYardMap[0], yardMap_size);
-				unitDef->yardmaps[ym] = new unsigned char[yardMap_size]; // this will be deleted in the dtor
+				for (int ym = 0; ym < NUM_FACINGS; ++ym) {
+					sAICallback->UnitDef_getYardMap(skirmishAIId, unitDefId, ym, &tmpYardMap[0], tmpYardMap.size());
+					unitDef->yardmaps[ym].resize(tmpYardMap.size());
 
-				for (int i = 0; i < yardMap_size; ++i) {
-					unitDef->yardmaps[ym][i] = (const char) tmpYardMap[i];
+					for (int i = 0; i < tmpYardMap.size(); ++i) {
+						unitDef->yardmaps[ym][i] = (unsigned char) tmpYardMap[i];
+					}
 				}
 			}
 		}
@@ -603,8 +612,7 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 		unitDef->flareEfficiency = sAICallback->UnitDef_getFlareEfficiency(skirmishAIId, unitDefId);
 		unitDef->flareDelay = sAICallback->UnitDef_getFlareDelay(skirmishAIId, unitDefId);
 
-		sAICallback->UnitDef_getFlareDropVector(skirmishAIId, unitDefId, &pos[0]);
-		unitDef->flareDropVector = pos;
+		sAICallback->UnitDef_getFlareDropVector(skirmishAIId, unitDefId, &unitDef->flareDropVector[0]);
 
 		unitDef->flareTime = sAICallback->UnitDef_getFlareTime(skirmishAIId, unitDefId);
 		unitDef->flareSalvoSize = sAICallback->UnitDef_getFlareSalvoSize(skirmishAIId, unitDefId);
@@ -624,12 +632,10 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 		unitDef->stockpileWeaponDef = GetWeaponDefById(sAICallback->UnitDef_getStockpileDef(skirmishAIId, unitDefId));
 
 		{
-			int numBuildOpts = sAICallback->UnitDef_getBuildOptions(skirmishAIId, unitDefId, nullptr, 0);
+			std::vector<int> buildOpts(sAICallback->UnitDef_getBuildOptions(skirmishAIId, unitDefId, nullptr, 0));
 
-			if (numBuildOpts > 0) {
-				std::vector<int> buildOpts(numBuildOpts);
-
-				numBuildOpts = sAICallback->UnitDef_getBuildOptions(skirmishAIId, unitDefId, &buildOpts[0], numBuildOpts);
+			if (!buildOpts.empty()) {
+				const int numBuildOpts = sAICallback->UnitDef_getBuildOptions(skirmishAIId, unitDefId, &buildOpts[0], buildOpts.size());
 
 				for (int b = 0; b < numBuildOpts; b++) {
 					unitDef->buildOptions[b] = sAICallback->UnitDef_getName(skirmishAIId, buildOpts[b]);
@@ -637,15 +643,17 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 			}
 		}
 		{
-			const int size = sAICallback->UnitDef_getCustomParams(skirmishAIId, unitDefId, nullptr, nullptr);
+			const int numParams = sAICallback->UnitDef_getCustomParams(skirmishAIId, unitDefId, nullptr, nullptr);
 
-			std::vector<const char*> cKeys(size, "");
-			std::vector<const char*> cValues(size, "");
+			if (numParams > 0) {
+				std::vector<const char*> cKeys(numParams, "");
+				std::vector<const char*> cValues(numParams, "");
 
-			sAICallback->UnitDef_getCustomParams(skirmishAIId, unitDefId, &cKeys[0], &cValues[0]);
+				sAICallback->UnitDef_getCustomParams(skirmishAIId, unitDefId, &cKeys[0], &cValues[0]);
 
-			for (int i = 0; i < size; ++i) {
-				unitDef->customParams[cKeys[i]] = cValues[i];
+				for (int i = 0; i < numParams; ++i) {
+					unitDef->customParams[cKeys[i]] = cValues[i];
+				}
 			}
 		}
 
@@ -687,8 +695,7 @@ const springLegacyAI::UnitDef* springLegacyAI::CAIAICallback::GetUnitDefById(int
 			unitDef->weapons[w].def = GetWeaponDefById(sAICallback->UnitDef_WeaponMount_getWeaponDef(skirmishAIId, unitDefId, w));
 			unitDef->weapons[w].slavedTo = sAICallback->UnitDef_WeaponMount_getSlavedTo(skirmishAIId, unitDefId, w);
 
-			sAICallback->UnitDef_WeaponMount_getMainDir(skirmishAIId, unitDefId, w, &pos[0]);
-			unitDef->weapons[w].mainDir = pos;
+			sAICallback->UnitDef_WeaponMount_getMainDir(skirmishAIId, unitDefId, w, &unitDef->weapons[w].mainDir[0]);
 
 			unitDef->weapons[w].maxAngleDif = sAICallback->UnitDef_WeaponMount_getMaxAngleDif(skirmishAIId, unitDefId, w);
 			unitDef->weapons[w].badTargetCat = sAICallback->UnitDef_WeaponMount_getBadTargetCategory(skirmishAIId, unitDefId, w);
@@ -1051,8 +1058,7 @@ int springLegacyAI::CAIAICallback::GetMapPoints(PointMarker* pm, int pm_sizeMax,
 	short col[3];
 
 	for (int p = 0; p < numPoints; ++p) {
-		sAICallback->Map_Point_getPosition(skirmishAIId, p, &pos[0]);
-		pm[p].pos = pos;
+		sAICallback->Map_Point_getPosition(skirmishAIId, p, &pm[p].pos[0]);
 		sAICallback->Map_Point_getColor(skirmishAIId, p, &col[0]);
 
 		pm[p].color = SColor((uint8_t) col[0], (uint8_t) col[1], (uint8_t) col[2], (uint8_t) 255);
@@ -1070,8 +1076,8 @@ int springLegacyAI::CAIAICallback::GetMapLines(LineMarker* lm, int lm_sizeMax, b
 	short col[3];
 
 	for (int l = 0; l < numLines; ++l) {
-		sAICallback->Map_Line_getFirstPosition(skirmishAIId, l, &pos[0]); lm[l].pos = pos;
-		sAICallback->Map_Line_getSecondPosition(skirmishAIId, l, &pos[0]); lm[l].pos2 = pos;
+		sAICallback->Map_Line_getFirstPosition(skirmishAIId, l, &lm[l].pos[0]);
+		sAICallback->Map_Line_getSecondPosition(skirmishAIId, l, &lm[l].pos2[0]);
 		sAICallback->Map_Line_getColor(skirmishAIId, l, &col[0]);
 
 		lm[l].color = SColor((uint8_t) col[0], (uint8_t) col[1], (uint8_t) col[2], (uint8_t) 255);
@@ -1371,7 +1377,8 @@ const springLegacyAI::WeaponDef* springLegacyAI::CAIAICallback::GetWeaponDefById
 			std::vector<const char*> cKeys(size, "");
 			std::vector<const char*> cValues(size, "");
 
-			sAICallback->WeaponDef_getCustomParams(skirmishAIId, weaponDefId, &cKeys[0], &cValues[0]);
+			if (size > 0)
+				sAICallback->WeaponDef_getCustomParams(skirmishAIId, weaponDefId, &cKeys[0], &cValues[0]);
 
 			for (int i = 0; i < size; ++i) {
 				weaponDef->customParams[cKeys[i]] = cValues[i];
@@ -1435,6 +1442,9 @@ bool springLegacyAI::CAIAICallback::SendResources(float mAmount, float eAmount, 
 }
 
 int springLegacyAI::CAIAICallback::SendUnits(const std::vector<int>& unitIds, int receivingTeam) {
+	if (unitIds.empty())
+		return 0;
+
 	std::vector<int> tmpUnitIds = unitIds;
 
 	SSendUnitsCommand cmd = {&tmpUnitIds[0], static_cast<int>(unitIds.size()), receivingTeam};
