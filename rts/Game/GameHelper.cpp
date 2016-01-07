@@ -624,9 +624,6 @@ namespace {
 	} // end of namespace Query
 } // end of namespace
 
-// Use this instead of unit->tempNum here, because AllowWeaponTarget may call lua functions which use tempNum
-static int tempTargetUnits[MAX_UNITS] = {0};
-static int targetTempNum = 2;
 
 void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoidUnit, std::multimap<float, CUnit*>& targets)
 {
@@ -644,30 +641,28 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 	const bool paralyzer  = (weaponDef->damages.paralyzeDamageTime != 0);
 
 	const auto& quads = quadField->GetQuads(pos, radius + (aHeight - std::max(0.0f, readMap->GetInitMinHeight())) * heightMod);
-	const int tempNum = targetTempNum++;
+	const int tempNum = gs->GetTempNum();
 
 	for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
-		if (teamHandler->Ally(owner->allyteam, t)) {
+		if (teamHandler->Ally(owner->allyteam, t))
 			continue;
-		}
+
 		for (const int qi: quads) {
 			const std::vector<CUnit*>& allyTeamUnits = quadField->GetQuad(qi).teamUnits[t];
 
 			for (CUnit* targetUnit: allyTeamUnits) {
 				float targetPriority = 1.0f;
 
-				if (tempTargetUnits[targetUnit->id] == tempNum) {
+				if (targetUnit->tempNum == tempNum)
 					continue;
-				}
-				tempTargetUnits[targetUnit->id] = tempNum;
 
-				if (!weapon->TestTarget(float3(), SWeaponTarget(targetUnit))) {
+				targetUnit->tempNum = tempNum;
+
+				if (!weapon->TestTarget(float3(), SWeaponTarget(targetUnit)))
 					continue;
-				}
 
-				if (targetUnit == avoidUnit) {
+				if (targetUnit == avoidUnit)
 					targetPriority *= 10.0f;
-				}
 
 				float3 targPos;
 				const unsigned short targetLOSState = targetUnit->losStatus[owner->allyteam];
@@ -683,9 +678,8 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 
 				const float modRange = radius + (aHeight - targPos.y) * heightMod;
 
-				if (pos.SqDistance2D(targPos) > modRange * modRange) {
+				if (pos.SqDistance2D(targPos) > modRange * modRange)
 					continue;
-				}
 
 				const float dist2D = (pos - targPos).Length2D();
 				const float rangeMul = (dist2D * weaponDef->proximityPriority + modRange * 0.4f + 100.0f);
@@ -696,13 +690,12 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 				if (targetLOSState & LOS_INLOS) {
 					targetPriority *= (secDamage + targetUnit->health);
 
-					if (paralyzer && targetUnit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? targetUnit->maxHealth: targetUnit->health)) {
+					if (paralyzer && targetUnit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? targetUnit->maxHealth: targetUnit->health))
 						targetPriority *= 4.0f;
-					}
 
-					if (weapon->hasTargetWeight) {
+					if (weapon->hasTargetWeight)
 						targetPriority *= weapon->TargetWeight(targetUnit);
-					}
+
 				} else {
 					targetPriority *= (secDamage + 10000.0f);
 				}
@@ -710,20 +703,22 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 				if (targetLOSState & LOS_PREVLOS) {
 					targetPriority /= (damageMul * targetUnit->power * (0.7f + gs->randFloat() * 0.6f));
 
-					if (targetUnit->category & weapon->badTargetCategory) {
+					if (targetUnit->category & weapon->badTargetCategory)
 						targetPriority *= 100.0f;
-					}
-					if (targetUnit->IsCrashing()) {
+
+					if (targetUnit->IsCrashing())
 						targetPriority *= 1000.0f;
-					}
-					if (targetUnit == lastAttacker) {
+
+					if (targetUnit == lastAttacker)
 						targetPriority *= 0.5f;
-					}
 				}
 
-				if (!eventHandler.AllowWeaponTarget(owner->id, targetUnit->id, weapon->weaponNum, weaponDef->id, &targetPriority)) {
+				const bool allow = eventHandler.AllowWeaponTarget(owner->id, targetUnit->id, weapon->weaponNum, weaponDef->id, &targetPriority);
+				//Lua call may have changed tempNum, so needs to be set again.
+				targetUnit->tempNum = tempNum;
+
+				if (!allow)
 					continue;
-				}
 
 				targets.insert(std::pair<float, CUnit*>(targetPriority, targetUnit));
 			}
