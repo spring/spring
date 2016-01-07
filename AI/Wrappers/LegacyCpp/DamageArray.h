@@ -22,7 +22,7 @@ public:
 	 * This constructor is currently only used by C++ AIs
 	 * which use the legacy C++ wrapper around the C AI interface.
 	 */
-	DamageArray(int numTypes, const float* typeDamages);
+	DamageArray(const std::vector<float>& dmg);
 	DamageArray(const DamageArray& other);
 
 	DamageArray& operator=(const DamageArray& other) {

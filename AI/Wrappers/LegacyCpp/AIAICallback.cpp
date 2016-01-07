@@ -1232,21 +1232,18 @@ const springLegacyAI::WeaponDef* springLegacyAI::CAIAICallback::GetWeaponDefById
 
 		std::vector<float> typeDamages(sAICallback->WeaponDef_Damage_getTypes(skirmishAIId, weaponDefId, nullptr, 0));
 
-		const int numDamageTypes = sAICallback->WeaponDef_Damage_getTypes(skirmishAIId, weaponDefId, &typeDamages[0], typeDamages.size());
+		if (!typeDamages.empty())
+			sAICallback->WeaponDef_Damage_getTypes(skirmishAIId, weaponDefId, &typeDamages[0], typeDamages.size());
 
 		WeaponDef* weaponDef = &weaponDefs[weaponDefId];
 
-		// copies the array internally
-		DamageArray da(numDamageTypes, &typeDamages[0]);
-
-		da.paralyzeDamageTime = sAICallback->WeaponDef_Damage_getParalyzeDamageTime(skirmishAIId, weaponDefId);
-		da.impulseFactor = sAICallback->WeaponDef_Damage_getImpulseFactor(skirmishAIId, weaponDefId);
-		da.impulseBoost = sAICallback->WeaponDef_Damage_getImpulseBoost(skirmishAIId, weaponDefId);
-		da.craterMult = sAICallback->WeaponDef_Damage_getCraterMult(skirmishAIId, weaponDefId);
-		da.craterBoost = sAICallback->WeaponDef_Damage_getCraterBoost(skirmishAIId, weaponDefId);
-
 		// weaponDef->damages = sAICallback->WeaponDef_getDamages(skirmishAIId, weaponDefId);
-		weaponDef->damages = da;
+		weaponDef->damages = DamageArray(typeDamages);
+		weaponDef->damages.paralyzeDamageTime = sAICallback->WeaponDef_Damage_getParalyzeDamageTime(skirmishAIId, weaponDefId);
+		weaponDef->damages.impulseFactor = sAICallback->WeaponDef_Damage_getImpulseFactor(skirmishAIId, weaponDefId);
+		weaponDef->damages.impulseBoost = sAICallback->WeaponDef_Damage_getImpulseBoost(skirmishAIId, weaponDefId);
+		weaponDef->damages.craterMult = sAICallback->WeaponDef_Damage_getCraterMult(skirmishAIId, weaponDefId);
+		weaponDef->damages.craterBoost = sAICallback->WeaponDef_Damage_getCraterBoost(skirmishAIId, weaponDefId);
 
 		weaponDef->name = sAICallback->WeaponDef_getName(skirmishAIId, weaponDefId);
 		weaponDef->type = sAICallback->WeaponDef_getType(skirmishAIId, weaponDefId);

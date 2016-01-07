@@ -10,13 +10,13 @@ namespace springLegacyAI {
 CR_BIND(DamageArray, )
 
 CR_REG_METADATA(DamageArray, (
-		CR_MEMBER(paralyzeDamageTime),
-		CR_MEMBER(impulseFactor),
-		CR_MEMBER(impulseBoost),
-		CR_MEMBER(craterMult),
-		CR_MEMBER(craterBoost),
-		CR_RESERVED(16),
-		CR_SERIALIZER(creg_Serialize) // damages
+	CR_MEMBER(paralyzeDamageTime),
+	CR_MEMBER(impulseFactor),
+	CR_MEMBER(impulseBoost),
+	CR_MEMBER(craterMult),
+	CR_MEMBER(craterBoost),
+	CR_RESERVED(16),
+	CR_SERIALIZER(creg_Serialize) // damages
 ))
 
 } // namespace springLegacyAI
@@ -29,32 +29,32 @@ void springLegacyAI::DamageArray::creg_Serialize(creg::ISerializer* s)
 
 springLegacyAI::DamageArray::DamageArray():
 	paralyzeDamageTime(0),
-	impulseFactor(1.0f), impulseBoost(0.0f),
-	craterMult(1.0f), craterBoost(0.0f)
+	impulseFactor(1.0f),
+	impulseBoost(0.0f),
+	craterMult(1.0f),
+	craterBoost(0.0f)
 {
 	damages.resize(1, 1.0f);
 }
 
 springLegacyAI::DamageArray::DamageArray(const float mult):
 	paralyzeDamageTime(0),
-	impulseFactor(1.0f), impulseBoost(0.0f),
-	craterMult(1.0f), craterBoost(0.0f)
+	impulseFactor(1.0f),
+	impulseBoost(0.0f),
+	craterMult(1.0f),
+	craterBoost(0.0f)
 {
 	damages.resize(1, mult);
 }
 
-springLegacyAI::DamageArray::DamageArray(int numTypes, const float* typeDamages)
+springLegacyAI::DamageArray::DamageArray(const std::vector<float>& dmg)
 	: paralyzeDamageTime(0)
 	, impulseFactor(1.0f)
 	, impulseBoost(0.0f)
 	, craterMult(1.0f)
 	, craterBoost(0.0f)
 {
-	damages.resize(numTypes);
-
-	for (int a = 0; a < numTypes; ++a) {
-		damages[a] = typeDamages[a];
-	}
+	damages = dmg;
 }
 
 springLegacyAI::DamageArray::DamageArray(const springLegacyAI::DamageArray& other)
