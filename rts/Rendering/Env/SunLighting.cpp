@@ -1,18 +1,21 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <cassert>
 
 #include "SunLighting.h"
-
 #include "Map/MapInfo.h"
 
 /**
- * @brief sunLighting
+ * @brief sunLightingInst
  *
  * Global instance of CSunLighting
  */
-CSunLighting* sunLighting;
+CSunLighting sunLightingInst;
 
-void CSunLighting::LoadLighting() {
+void CSunLighting::Init() {
+	assert(mapInfo != nullptr);
+	assert(this == &sunLightingInst);
+
 	const CMapInfo::light_t& light = mapInfo->light;
 
 	groundAmbientColor = light.groundAmbientColor;
@@ -23,3 +26,4 @@ void CSunLighting::LoadLighting() {
 	unitSpecularColor = light.unitSpecularColor;
 	specularExponent = light.specularExponent;
 }
+

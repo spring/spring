@@ -8,7 +8,7 @@
 
 struct CSunLighting {
 public:
-	void LoadLighting();
+	void Init();
 
 public:
 	float3 groundAmbientColor;
@@ -20,6 +20,7 @@ public:
 	float  specularExponent;
 };
 
-extern CSunLighting* sunLighting;
+extern CSunLighting sunLightingInst;
 
+#define sunLighting (&sunLightingInst)
 #endif

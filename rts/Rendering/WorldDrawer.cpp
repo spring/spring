@@ -62,7 +62,6 @@ CWorldDrawer::~CWorldDrawer()
 {
 	SafeDelete(water);
 	SafeDelete(sky);
-	SafeDelete(sunLighting);
 	SafeDelete(treeDrawer);
 	SafeDelete(grassDrawer);
 	SafeDelete(pathDrawer);
@@ -102,9 +101,9 @@ void CWorldDrawer::LoadPre() const
 
 	featureDrawer = new CFeatureDrawer();
 	loadscreen->SetLoadMessage("Creating Sky");
-	sunLighting = new CSunLighting();
-	sunLighting->LoadLighting();
+
 	sky = ISky::GetSky();
+	sunLighting->Init();
 }
 
 void CWorldDrawer::LoadPost() const
