@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "UnitDef.h"
-#include "UnitSet.h"
 #include "Sim/Misc/SimObjectIDPool.h"
 #include "System/creg/STL_Map.h"
 
@@ -54,7 +53,7 @@ public:
 public:
 	// FIXME
 	std::vector<CUnit*> units;                        ///< used to get units from IDs (0 if not created)
-	std::vector< std::vector<CUnitSet> > unitsByDefs; ///< units sorted by team and unitDef
+	std::vector<std::vector<std::vector<CUnit*>>> unitsByDefs; ///< units sorted by team and unitDef
 	std::vector<CUnit*> activeUnits;                  ///< used to get all active units
 
 private:

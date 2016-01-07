@@ -1682,9 +1682,9 @@ int LuaSyncedRead::GetTeamUnitsSorted(lua_State* L)
 
 	// parse the team
 	const CTeam* team = ParseTeam(L, __FUNCTION__, 1);
-	if (team == NULL) {
+	if (team == nullptr)
 		return 0;
-	}
+
 	const int teamID = team->teamNum;
 
 	map<int, vector<CUnit*> > unitDefMap;
@@ -1874,12 +1874,8 @@ int LuaSyncedRead::GetTeamUnitsByDefs(lua_State* L)
 	lua_newtable(L);
 	int count = 1;
 
-	set<int>::const_iterator udit;
-	for (udit = defs.begin(); udit != defs.end(); ++udit) {
-		const CUnitSet& units = unitHandler->unitsByDefs[teamID][*udit];
-		CUnitSet::const_iterator uit;
-		for (uit = units.begin(); uit != units.end(); ++uit) {
-			const CUnit* unit = *uit;
+	for (const int ud: defs) {
+		for (const CUnit* unit: unitHandler->unitsByDefs[teamID][ud]) {
 			if (allied || IsUnitTyped(L, unit)) {
 				lua_pushnumber(L, unit->id);
 				lua_rawseti(L, -2, count++);
@@ -1926,30 +1922,19 @@ int LuaSyncedRead::GetTeamUnitDefCount(lua_State* L)
 	int count = 0;
 
 	// tally the given unitDef units
-	const CUnitSet& units = unitHandler->unitsByDefs[teamID][unitDef->id];
-	CUnitSet::const_iterator uit;
-	for (uit = units.begin(); uit != units.end(); ++uit) {
-		const CUnit* unit = *uit;
-		if (IsUnitTyped(L, unit)) {
+	for (const CUnit* unit: unitHandler->unitsByDefs[teamID][unitDef->id]) {
+		if (IsUnitTyped(L, unit))
 			count++;
-		}
 	}
 
 	// tally the decoy units for the given unitDef
-	map<int, set<int> >::const_iterator dmit
-		= unitDefHandler->decoyMap.find(unitDef->id);
+	auto dmit = unitDefHandler->decoyMap.find(unitDef->id);
 
 	if (dmit != unitDefHandler->decoyMap.end()) {
-		const set<int>& decoyDefIDs = dmit->second;
-		set<int>::const_iterator dit;
-		for (dit = decoyDefIDs.begin(); dit != decoyDefIDs.end(); ++dit) {
-			const CUnitSet& units = unitHandler->unitsByDefs[teamID][*dit];
-			CUnitSet::const_iterator uit;
-			for (uit = units.begin(); uit != units.end(); ++uit) {
-				const CUnit* unit = *uit;
-				if (IsUnitTyped(L, unit)) {
+		for (const int ud: dmit->second) {
+			for (const CUnit* unit: unitHandler->unitsByDefs[teamID][ud]) {
+				if (IsUnitTyped(L, unit))
 					count++;
-				}
 			}
 		}
 	}

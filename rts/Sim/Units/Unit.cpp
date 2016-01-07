@@ -1540,8 +1540,8 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	neutral = false;
 	quadField->MovedUnit(this);
 
-	unitHandler->unitsByDefs[oldteam][unitDef->id].erase(this);
-	unitHandler->unitsByDefs[newteam][unitDef->id].insert(this);
+	VectorErase(unitHandler->unitsByDefs[oldteam][unitDef->id], this);
+	VectorInsertUnique(unitHandler->unitsByDefs[newteam][unitDef->id], this, false);
 
 	for (int at = 0; at < teamHandler->ActiveAllyTeams(); ++at) {
 		if (teamHandler->Ally(at, allyteam)) {

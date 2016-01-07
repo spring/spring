@@ -13,8 +13,9 @@
 #include "Sim/Weapons/Weapon.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
-#include "System/TimeProfiler.h"
 #include "System/myMath.h"
+#include "System/TimeProfiler.h"
+#include "System/Util.h"
 #include "System/Sync/SyncTracer.h"
 #include "System/creg/STL_Deque.h"
 #include "System/creg/STL_List.h"
@@ -68,7 +69,7 @@ CUnitHandler::CUnitHandler()
 	}
 
 	units.resize(maxUnits, NULL);
-	unitsByDefs.resize(teamHandler->ActiveTeams(), std::vector<CUnitSet>(unitDefHandler->unitDefs.size()));
+	unitsByDefs.resize(teamHandler->ActiveTeams(), std::vector<std::vector<CUnit*>>(unitDefHandler->unitDefs.size()));
 
 	// id's are used as indices, so they must lie in [0, units.size() - 1]
 	// (furthermore all id's are treated equally, none have special status)
@@ -117,7 +118,7 @@ bool CUnitHandler::AddUnit(CUnit* unit)
 	InsertActiveUnit(unit);
 
 	teamHandler->Team(unit->team)->AddUnit(unit, CTeam::AddBuilt);
-	unitsByDefs[unit->team][unit->unitDef->id].insert(unit);
+	VectorInsertUnique(unitsByDefs[unit->team][unit->unitDef->id], unit, false);
 
 	maxUnitRadius = std::max(unit->radius, maxUnitRadius);
 	return true;
@@ -161,7 +162,7 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 		}
 
 		activeUnits.erase(it);
-		unitsByDefs[delTeam][delType].erase(delUnit);
+		VectorErase(unitsByDefs[delTeam][delType], delUnit);
 		idPool.FreeID(delUnit->id, true);
 		units[delUnit->id] = nullptr;
 
