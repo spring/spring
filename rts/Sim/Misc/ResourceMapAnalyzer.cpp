@@ -162,7 +162,7 @@ const std::vector<float3>& CResourceMapAnalyzer::GetSpots() const {
 }
 
 void CResourceMapAnalyzer::GetResourcePoints() {
-	int* xend = new int[doubleRadius + 1];
+	std::vector<int> xend(doubleRadius + 1);
 
 	for (int a = 0; a < doubleRadius + 1; a++) {
 		float z = a - xtractorRadius;
@@ -187,7 +187,6 @@ void CResourceMapAnalyzer::GetResourcePoints() {
 	if (totalResourcesDouble < 0.9) {
 		// the map does not have any resource, just stop
 		numSpotsFound = 0;
-		delete[] xend;
 		return;
 	}
 
@@ -268,12 +267,7 @@ void CResourceMapAnalyzer::GetResourcePoints() {
 	}
 
 	// make a list for the distribution of values
-	int* valueDist = new int[256];
-
-	for (int i = 0; i < 256; i++) {
-		// clear the array (useless?)
-		valueDist[i] = 0;
-	}
+	std::vector<int> valueDist(256, 0);
 
 	// this will get the total resources a rex placed at each spot would make
 	for (int i = 0; i < totalCells; i++) {
@@ -306,7 +300,7 @@ void CResourceMapAnalyzer::GetResourcePoints() {
 		numberOfValues = 256;
 	}
 
-	int* bestSpotList = new int[numberOfValues];
+	std::vector<int> bestSpotList(numberOfValues);
 
 	for (int i = 0; i < totalCells; i++) {
 		if (rexArrayB[i] == bestValue) {
@@ -367,8 +361,8 @@ void CResourceMapAnalyzer::GetResourcePoints() {
 						numberOfValues = 256;
 					}
 
-					delete[] bestSpotList;
-					bestSpotList = new int[numberOfValues];
+					bestSpotList.clear();
+					bestSpotList.resize(numberOfValues);
 
 					for (int i = 0; i < totalCells; i++) {
 						if (rexArrayB[i] == bestValue) {
@@ -522,11 +516,6 @@ void CResourceMapAnalyzer::GetResourcePoints() {
 			}
 		}
 	}
-
-	// kill the lists
-	delete[] bestSpotList;
-	delete[] valueDist;
-	delete[] xend;
 
 	// 0.95 used for reliability
 	// bool isResourceMap = (numSpotsFound > maxSpots * 0.95);
