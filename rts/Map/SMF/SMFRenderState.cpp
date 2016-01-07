@@ -226,7 +226,7 @@ void SMFRenderStateGLSL::Update(
 
 			glslShaders[n]->SetUniform3v("groundAmbientColor",  &sunLighting->groundAmbientColor[0]);
 			glslShaders[n]->SetUniform3v("groundDiffuseColor",  &sunLighting->groundSunColor[0]);
-            // FIXME: groundSpecularColor is not actually directly used in GLSL shaders anymore?! Remove?
+			// FIXME: groundSpecularColor is not actually directly used in GLSL shaders anymore?! Remove?
 			glslShaders[n]->SetUniform3v("groundSpecularColor", &sunLighting->groundSpecularColor[0]);
 			glslShaders[n]->SetUniform  ("groundShadowDensity", sky->GetLight()->GetGroundShadowDensity());
 
