@@ -1234,6 +1234,8 @@ const springLegacyAI::WeaponDef* springLegacyAI::CAIAICallback::GetWeaponDefById
 
 		const int numDamageTypes = sAICallback->WeaponDef_Damage_getTypes(skirmishAIId, weaponDefId, &typeDamages[0], typeDamages.size());
 
+		WeaponDef* weaponDef = &weaponDefs[weaponDefId];
+
 		// copies the array internally
 		DamageArray da(numDamageTypes, &typeDamages[0]);
 
@@ -1242,8 +1244,6 @@ const springLegacyAI::WeaponDef* springLegacyAI::CAIAICallback::GetWeaponDefById
 		da.impulseBoost = sAICallback->WeaponDef_Damage_getImpulseBoost(skirmishAIId, weaponDefId);
 		da.craterMult = sAICallback->WeaponDef_Damage_getCraterMult(skirmishAIId, weaponDefId);
 		da.craterBoost = sAICallback->WeaponDef_Damage_getCraterBoost(skirmishAIId, weaponDefId);
-
-		WeaponDef* weaponDef = &weaponDefs[weaponDefId];
 
 		// weaponDef->damages = sAICallback->WeaponDef_getDamages(skirmishAIId, weaponDefId);
 		weaponDef->damages = da;

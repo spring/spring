@@ -15,7 +15,6 @@ CR_REG_METADATA(DamageArray, (
 		CR_MEMBER(impulseBoost),
 		CR_MEMBER(craterMult),
 		CR_MEMBER(craterBoost),
-		CR_MEMBER(numTypes),
 		CR_RESERVED(16),
 		CR_SERIALIZER(creg_Serialize) // damages
 ))
@@ -24,30 +23,24 @@ CR_REG_METADATA(DamageArray, (
 
 void springLegacyAI::DamageArray::creg_Serialize(creg::ISerializer* s)
 {
-	s->Serialize(damages, numTypes * sizeof(damages[0]));
+	s->Serialize(&damages[0], damages.size() * sizeof(damages[0]));
 }
 #endif // USING_CREG
 
-springLegacyAI::DamageArray::DamageArray() : paralyzeDamageTime(0),
-			impulseFactor(1.0f), impulseBoost(0.0f),
-			craterMult(1.0f), craterBoost(0.0f),
-			numTypes(1)
+springLegacyAI::DamageArray::DamageArray():
+	paralyzeDamageTime(0),
+	impulseFactor(1.0f), impulseBoost(0.0f),
+	craterMult(1.0f), craterBoost(0.0f)
 {
-	damages = new float[numTypes];
-	for(int a = 0; a < numTypes; ++a) {
-		damages[a] = 1.0f;
-	}
+	damages.resize(1, 1.0f);
 }
 
-springLegacyAI::DamageArray::DamageArray(const float mult) : paralyzeDamageTime(0),
-			impulseFactor(1.0f), impulseBoost(0.0f),
-			craterMult(1.0f), craterBoost(0.0f),
-			numTypes(1) 
+springLegacyAI::DamageArray::DamageArray(const float mult):
+	paralyzeDamageTime(0),
+	impulseFactor(1.0f), impulseBoost(0.0f),
+	craterMult(1.0f), craterBoost(0.0f)
 {
-	damages = new float[numTypes];
-	for(int a = 0; a < numTypes; ++a) {
-		damages[a] = mult;
-	}
+	damages.resize(1, mult);
 }
 
 springLegacyAI::DamageArray::DamageArray(int numTypes, const float* typeDamages)
@@ -56,10 +49,10 @@ springLegacyAI::DamageArray::DamageArray(int numTypes, const float* typeDamages)
 	, impulseBoost(0.0f)
 	, craterMult(1.0f)
 	, craterBoost(0.0f)
-	, numTypes(numTypes)
 {
-	damages = new float[numTypes];
-	for(int a = 0; a < numTypes; ++a) {
+	damages.resize(numTypes);
+
+	for (int a = 0; a < numTypes; ++a) {
 		damages[a] = typeDamages[a];
 	}
 }
@@ -71,13 +64,6 @@ springLegacyAI::DamageArray::DamageArray(const springLegacyAI::DamageArray& othe
 	craterBoost = other.craterBoost;
 	impulseFactor = other.impulseFactor;
 	craterMult = other.craterMult;
-	numTypes = other.numTypes;
-	damages = new float[numTypes];
-	for(int a = 0; a < numTypes; ++a)
-		damages[a] = other.damages[a];
+	damages = other.damages;
 }
 
-springLegacyAI::DamageArray::~DamageArray()
-{
-	delete[] damages;
-}
