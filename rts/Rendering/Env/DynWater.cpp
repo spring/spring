@@ -16,6 +16,7 @@
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/ISky.h"
+#include "Rendering/Env/SunLighting.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
@@ -351,8 +352,8 @@ void CDynWater::Draw()
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 7, 0.2f, 0, 0, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 8, 0.5f, 0.6f, 0.8f, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 9, L.x, L.y, L.z, 0.0f);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 10, mapInfo->light.groundSunColor.x, mapInfo->light.groundSunColor.y, mapInfo->light.groundSunColor.z, 0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 11, mapInfo->light.groundAmbientColor.x, mapInfo->light.groundAmbientColor.y, mapInfo->light.groundAmbientColor.z, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 10, sunLighting->groundSunColor.x, sunLighting->groundSunColor.y, sunLighting->groundSunColor.z, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 11, sunLighting->groundAmbientColor.x, sunLighting->groundAmbientColor.y, sunLighting->groundAmbientColor.z, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 12, refractRight.x, refractRight.y, refractRight.z, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 13, refractUp.x,refractUp.y, refractUp.z, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 14, 0.5f/dx, 0.5f/dy, 1, 1);
@@ -523,11 +524,11 @@ void CDynWater::DrawRefraction(CGame* game)
 	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	const float3 oldsun = unitDrawer->unitSunColor;
-	const float3 oldambient = unitDrawer->unitAmbientColor;
+	const float3 oldsun = sunLighting->unitSunColor;
+	const float3 oldambient = sunLighting->unitAmbientColor;
 
-	unitDrawer->unitSunColor *= float3(0.5f, 0.7f, 0.9f);
-	unitDrawer->unitAmbientColor *= float3(0.6f, 0.8f, 1.0f);
+	sunLighting->unitSunColor *= float3(0.5f, 0.7f, 0.9f);
+	sunLighting->unitAmbientColor *= float3(0.6f, 0.8f, 1.0f);
 
 	game->SetDrawMode(CGame::gameRefractionDraw);
 
@@ -564,8 +565,8 @@ void CDynWater::DrawRefraction(CGame* game)
 	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 1);
 
-	unitDrawer->unitSunColor = oldsun;
-	unitDrawer->unitAmbientColor = oldambient;
+	sunLighting->unitSunColor = oldsun;
+	sunLighting->unitAmbientColor = oldambient;
 }
 
 void CDynWater::DrawWaves()

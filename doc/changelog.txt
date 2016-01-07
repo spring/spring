@@ -16,6 +16,8 @@ Lua:
    move the {min,max,mid}{x,y,z} values to this table (these can now be accessed
    using e.g. *Defs[i].model.midx)
    deprecate *Defs[i].modelname, use *Defs[i].model.path instead
+ ! Game.groundAmbientColor, Game.groundSpecularColor and Game.groundSunColor
+   are no longer available, use gl.GetSun() instead with appropriate parameters
  ! GameID callin now gets the ID string encoded in hex.
  ! UnitDestroyed is now called twice and gets an extra argument 'preEvent'
    the value of preEvent is true for the first call which corresponds to
@@ -80,6 +82,14 @@ Lua:
 
  - add unsynced callout SetSkyBoxTexture(string texName) -> nil
    example usage: Spring.SetSkyBoxTexture("myskybox.dds")
+
+ - add unsynced callout SetSunLighting(table params) -> nil
+   It can be used to modify the following sun lighting parameters:
+   {ground,unit}{Ambient,Sun,Specular}Color and specularExponent
+   example usage: Spring.SetSunLighting({
+    groundAmbientColor = {1, 0.1, 1},
+    groundSunColor     = {1, 0.1, 1},
+   })
 
  - add unsynced callout Spring.SetMapShadingTexture(string texType, string texName) -> boolean
    example usage: Spring.SetMapShadingTexture("$ssmf_specular", "name_of_my_shiny_texture")

@@ -35,6 +35,7 @@
 #include "Map/BaseGroundDrawer.h"
 #include "Map/BaseGroundTextures.h"
 #include "Rendering/Env/ISky.h"
+#include "Rendering/Env/SunLighting.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/CommandDrawer.h"
 #include "Rendering/IconHandler.h"
@@ -237,6 +238,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetBuildSpacing);
 	REGISTER_LUA_CFUNC(SetBuildFacing);
 
+	REGISTER_LUA_CFUNC(SetSunLighting);
 	REGISTER_LUA_CFUNC(SetSunParameters);
 	REGISTER_LUA_CFUNC(SetSunManualControl);
 	REGISTER_LUA_CFUNC(SetSunDirection);
@@ -2810,7 +2812,52 @@ int LuaUnsyncedCtrl::SetBuildFacing(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
+int LuaUnsyncedCtrl::SetSunLighting(lua_State* L)
+{
+	if (!lua_istable(L, 1)) {
+		luaL_error(L, "Incorrect arguments to SetSunLighting()");
+	}
 
+	for (lua_pushnil(L); lua_next(L, 1) != 0; lua_pop(L, 1)) {
+		if (lua_israwstring(L, -2)) {
+			const string key = lua_tostring(L, -2);
+			if (lua_istable(L, -1)) {
+				float color[4];
+				const int size = LuaUtils::ParseFloatArray(L, -1, color, 4);
+				if (size == 3) {
+					if (key == "groundAmbientColor") {
+						sunLighting->groundAmbientColor = color;
+					} else if (key == "groundSunColor") {
+						sunLighting->groundSunColor = color;
+					} else if (key == "groundSpecularColor") {
+						sunLighting->groundSpecularColor = color;
+					} else if (key == "unitSpecularColor") {
+						sunLighting->unitSpecularColor = color;
+					} else {
+						luaL_error(L, "Unknown key %s for float array[3]", key.c_str());
+					}
+				} else if (size == 4) {
+					if (key == "unitAmbientColor") {
+						sunLighting->unitAmbientColor = color;
+					} else if (key == "unitSunColor") {
+						sunLighting->unitSunColor = color;
+					} else {
+						luaL_error(L, "Unknown key %s for float array[4]", key.c_str());
+					}
+				}
+			} else if (lua_isnumber(L, -1)) {
+				const float value = lua_tofloat(L, -1);
+				if (key == "specularExponent") {
+					sunLighting->specularExponent = value;
+				} else {
+					luaL_error(L, "Unknown key %s for float", key.c_str());
+				}
+			}
+		}
+	}
+
+	return 0;
+}
 
 int LuaUnsyncedCtrl::SetSunParameters(lua_State* L)
 {

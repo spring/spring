@@ -184,9 +184,6 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	SetUnitDrawDist((float)configHandler->GetInt("UnitLodDist"));
 	SetUnitIconDist((float)configHandler->GetInt("UnitIconDist"));
 
-	unitAmbientColor = mapInfo->light.unitAmbientColor;
-	unitSunColor = mapInfo->light.unitSunColor;
-
 	alphaValues.x = std::max(0.11f, std::min(1.0f, 1.0f - configHandler->GetFloat("UnitTransparency")));
 	alphaValues.y = std::min(1.0f, alphaValues.x + 0.1f);
 	alphaValues.z = std::min(1.0f, alphaValues.x + 0.2f);

@@ -45,6 +45,7 @@
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/ISky.h"
+#include "Rendering/Env/SunLighting.h"
 #include "Rendering/Env/IWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/GL/glExtra.h"
@@ -1021,8 +1022,8 @@ void LuaOpenGL::SetupScreenLighting()
 
 	const float sunFactor = 1.0f;
 	const float sf = sunFactor;
-	const float* la = mapInfo->light.unitAmbientColor;
-	const float* ld = mapInfo->light.unitSunColor;
+	const float* la = sunLighting->unitAmbientColor;
+	const float* ld = sunLighting->unitSunColor;
 
 	const float sunLightAmbt[4] = { la[0]*sf, la[1]*sf, la[2]*sf, la[3]*sf };
 	const float sunLightDiff[4] = { ld[0]*sf, ld[1]*sf, ld[2]*sf, ld[3]*sf };
@@ -4516,23 +4517,23 @@ int LuaOpenGL::GetSun(lua_State* L)
 	}
 	else if (param == "diffuse") {
 		if (!unitMode) {
-			data = &mapInfo->light.groundSunColor;
+			data = &sunLighting->groundSunColor;
 		} else {
-			data = &mapInfo->light.unitSunColor;
+			data = &sunLighting->unitSunColor;
 		}
 	}
 	else if (param == "ambient") {
 		if (!unitMode) {
-			data = &mapInfo->light.groundAmbientColor;
+			data = &sunLighting->groundAmbientColor;
 		} else {
-			data = &mapInfo->light.unitAmbientColor;
+			data = &sunLighting->unitAmbientColor;
 		}
 	}
 	else if (param == "specular") {
 		if (!unitMode) {
-			data = &mapInfo->light.groundSpecularColor;
+			data = &sunLighting->groundSpecularColor;
 		} else {
-			data = &mapInfo->light.unitSpecularColor;
+			data = &sunLighting->unitSpecularColor;
 		}
 	}
 

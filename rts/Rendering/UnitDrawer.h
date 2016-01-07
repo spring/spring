@@ -222,8 +222,6 @@ public:
 	float iconLength;
 
 	float3 camNorm; ///< used to draw far-textures
-	float3 unitAmbientColor;
-	float3 unitSunColor;
 
 	// .x := regular unit alpha
 	// .y := ghosted unit alpha (out of radar)

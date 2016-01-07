@@ -14,6 +14,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/ISky.h"
+#include "Rendering/Env/SunLighting.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
@@ -666,7 +667,7 @@ void CGroundDecalHandler::Draw()
 		return;
 	}
 
-	const float3 ambientColor = mapInfo->light.groundAmbientColor * CGlobalRendering::SMF_INTENSITY_MULT;
+	const float3 ambientColor = sunLighting->groundAmbientColor * CGlobalRendering::SMF_INTENSITY_MULT;
 
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);

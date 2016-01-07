@@ -10,6 +10,7 @@
 #include <boost/format.hpp>
 
 #include "ISky.h"
+#include "SunLighting.h"
 #include "Game/Game.h"
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
@@ -1170,11 +1171,11 @@ void CBumpWater::DrawRefraction(CGame* game)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glDisable(GL_FOG); // fog has overground settings, if at all we should add special underwater settings
 
-	const float3 oldsun = unitDrawer->unitSunColor;
-	const float3 oldambient = unitDrawer->unitAmbientColor;
+	const float3 oldsun = sunLighting->unitSunColor;
+	const float3 oldambient = sunLighting->unitAmbientColor;
 
-	unitDrawer->unitSunColor *= float3(0.5f, 0.7f, 0.9f);
-	unitDrawer->unitAmbientColor *= float3(0.6f, 0.8f, 1.0f);
+	sunLighting->unitSunColor *= float3(0.5f, 0.7f, 0.9f);
+	sunLighting->unitAmbientColor *= float3(0.6f, 0.8f, 1.0f);
 
 	drawRefraction = true;
 
@@ -1200,8 +1201,8 @@ void CBumpWater::DrawRefraction(CGame* game)
 
 	glEnable(GL_FOG);
 
-	unitDrawer->unitSunColor = oldsun;
-	unitDrawer->unitAmbientColor = oldambient;
+	sunLighting->unitSunColor = oldsun;
+	sunLighting->unitAmbientColor = oldambient;
 }
 
 

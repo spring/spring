@@ -14,6 +14,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/ISky.h"
+#include "Rendering/Env/SunLighting.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
 //#include "Rendering/GL/TimerQuery.h"
@@ -461,9 +462,9 @@ void CDecalsDrawerGL4::CreateStructureVBOs()
 	uboGroundLighting.Bind(GL_UNIFORM_BUFFER);
 	uboGroundLighting.New(uniformBlockSize, GL_STATIC_DRAW);
 		SGLSLGroundLighting* uboGroundLightingData = (SGLSLGroundLighting*)uboGroundLighting.MapBuffer(0, sizeof(SGLSLGroundLighting));
-		uboGroundLightingData->ambientColor  = mapInfo->light.groundAmbientColor  * CGlobalRendering::SMF_INTENSITY_MULT;
-		uboGroundLightingData->diffuseColor  = mapInfo->light.groundSunColor      * CGlobalRendering::SMF_INTENSITY_MULT;
-		uboGroundLightingData->specularColor = mapInfo->light.groundSpecularColor * CGlobalRendering::SMF_INTENSITY_MULT;
+		uboGroundLightingData->ambientColor  = sunLighting->groundAmbientColor  * CGlobalRendering::SMF_INTENSITY_MULT;
+		uboGroundLightingData->diffuseColor  = sunLighting->groundSunColor      * CGlobalRendering::SMF_INTENSITY_MULT;
+		uboGroundLightingData->specularColor = sunLighting->groundSpecularColor * CGlobalRendering::SMF_INTENSITY_MULT;
 		uboGroundLightingData->dir           = mapInfo->light.sunDir;
 		uboGroundLightingData->fogColor      = mapInfo->atmosphere.fogColor;
 		uboGroundLightingData->fogEnd        = globalRendering->viewRange * mapInfo->atmosphere.fogEnd;

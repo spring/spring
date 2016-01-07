@@ -7,6 +7,7 @@
 #include "Rendering/Env/GrassDrawer.h"
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/Env/ISky.h"
+#include "Rendering/Env/SunLighting.h"
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/IWater.h"
 #include "Rendering/CommandDrawer.h"
@@ -41,11 +42,11 @@
 #include "System/Util.h"
 
 // not used by shaders, only for the advshading=0 case!
-static void SetupUnitLightFFP(const CMapInfo::light_t& light)
+static void SetupUnitLightFFP()
 {
-	glLightfv(GL_LIGHT1, GL_AMBIENT, light.unitAmbientColor);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, light.unitSunColor);
-	glLightfv(GL_LIGHT1, GL_SPECULAR, light.unitAmbientColor);
+	glLightfv(GL_LIGHT1, GL_AMBIENT, sunLighting->unitAmbientColor);
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, sunLighting->unitSunColor);
+	glLightfv(GL_LIGHT1, GL_SPECULAR, sunLighting->unitAmbientColor);
 	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0);
 	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 0);
 }
@@ -61,6 +62,7 @@ CWorldDrawer::~CWorldDrawer()
 {
 	SafeDelete(water);
 	SafeDelete(sky);
+	SafeDelete(sunLighting);
 	SafeDelete(treeDrawer);
 	SafeDelete(grassDrawer);
 	SafeDelete(pathDrawer);
@@ -100,6 +102,8 @@ void CWorldDrawer::LoadPre() const
 
 	featureDrawer = new CFeatureDrawer();
 	loadscreen->SetLoadMessage("Creating Sky");
+	sunLighting = new CSunLighting();
+	sunLighting->LoadLighting();
 	sky = ISky::GetSky();
 }
 
@@ -133,7 +137,7 @@ void CWorldDrawer::LoadPost() const
 	loadscreen->SetLoadMessage("Creating Water");
 	water = IWater::GetWater(NULL, -1);
 
-	SetupUnitLightFFP(mapInfo->light);
+	SetupUnitLightFFP();
 	ISky::SetupFog();
 }
 

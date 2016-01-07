@@ -5,6 +5,7 @@
 #include "Game/Camera.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/Env/SunLighting.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/IWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
@@ -291,12 +292,12 @@ void UnitDrawerStateARB::Enable(const CUnitDrawer* ud, bool deferredPass, bool a
 
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(10, &sky->GetLight()->GetLightDir().x);
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(11, ud->unitSunColor.x, ud->unitSunColor.y, ud->unitSunColor.z, 0.0f);
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(12, ud->unitAmbientColor.x, ud->unitAmbientColor.y, ud->unitAmbientColor.z, 1.0f); //!
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(11, sunLighting->unitSunColor.x, sunLighting->unitSunColor.y, sunLighting->unitSunColor.z, 0.0f);
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(12, sunLighting->unitAmbientColor.x, sunLighting->unitAmbientColor.y, sunLighting->unitAmbientColor.z, 1.0f); //!
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(13, camera->GetPos().x, camera->GetPos().y, camera->GetPos().z, 0.0f);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(10, 0.0f, 0.0f, 0.0f, sky->GetLight()->GetUnitShadowDensity());
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(11, ud->unitAmbientColor.x, ud->unitAmbientColor.y, ud->unitAmbientColor.z, 1.0f);
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(11, sunLighting->unitAmbientColor.x, sunLighting->unitAmbientColor.y, sunLighting->unitAmbientColor.z, 1.0f);
 
 	glMatrixMode(GL_MATRIX0_ARB);
 	glLoadMatrixf(shadowHandler->GetShadowMatrixRaw());
@@ -391,8 +392,8 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 		modelShaders[n]->SetUniform1i(3, 3); // reflectTex  (idx 3, texunit 3)
 		modelShaders[n]->SetUniform1i(4, 4); // specularTex (idx 4, texunit 4)
 		modelShaders[n]->SetUniform3fv(5, &sky->GetLight()->GetLightDir().x);
-		modelShaders[n]->SetUniform3fv(10, &ud->unitAmbientColor[0]);
-		modelShaders[n]->SetUniform3fv(11, &ud->unitSunColor[0]);
+		modelShaders[n]->SetUniform3fv(10, &sunLighting->unitAmbientColor[0]);
+		modelShaders[n]->SetUniform3fv(11, &sunLighting->unitSunColor[0]);
 		modelShaders[n]->SetUniform1f(12, sky->GetLight()->GetUnitShadowDensity());
 		modelShaders[n]->SetUniform1f(15, 0.0f); // alphaPass
 		modelShaders[n]->Disable();
@@ -421,6 +422,8 @@ void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud, bool deferredPass, bool 
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform3fv(6, &camera->GetPos()[0]);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(7, false, camera->GetViewMatrix());
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(8, false, camera->GetViewMatrixInverse());
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform3fv(10, &sunLighting->unitAmbientColor[0]);
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform3fv(11, &sunLighting->unitSunColor[0]);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(13, false, shadowHandler->GetShadowMatrixRaw());
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(14, &(shadowHandler->GetShadowParams().x));
 
@@ -440,7 +443,7 @@ void UnitDrawerStateGLSL::DisableShaders(const CUnitDrawer*) { modelShaders[MODE
 
 
 void UnitDrawerStateGLSL::UpdateCurrentShader(const CUnitDrawer* ud, const ISkyLight* skyLight) const {
-	const float3 modUnitSunColor = ud->unitSunColor * skyLight->GetLightIntensity();
+	const float3 modUnitSunColor = sunLighting->unitSunColor * skyLight->GetLightIntensity();
 
 	// note: the NOSHADOW shaders do not care about shadow-density
 	for (unsigned int n = MODEL_SHADER_NOSHADOW_STANDARD; n <= MODEL_SHADER_SHADOWED_DEFERRED; n++) {

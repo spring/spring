@@ -10,6 +10,7 @@
 #include "Game/LoadScreen.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/ISky.h"
+#include "Rendering/Env/SunLighting.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -629,8 +630,8 @@ float CSMFReadMap::DiffuseSunCoeff(const int x, const int y) const
 float3 CSMFReadMap::GetLightValue(const int x, const int y) const
 {
 	float3 light =
-		mapInfo->light.groundAmbientColor +
-		mapInfo->light.groundSunColor * DiffuseSunCoeff(x, y);
+		sunLighting->groundAmbientColor +
+		sunLighting->groundSunColor * DiffuseSunCoeff(x, y);
 	light *= CGlobalRendering::SMF_INTENSITY_MULT;
 
 	for (int a = 0; a < 3; ++a) {

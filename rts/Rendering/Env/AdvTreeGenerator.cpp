@@ -12,6 +12,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/ISky.h"
+#include "Rendering/Env/SunLighting.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/Shader.h"
@@ -315,7 +316,7 @@ void CAdvTreeGenerator::CreateFarTex(Shader::IProgramObject* treeShader)
 	treeShader->Enable();
 
 	{
-		#define L mapInfo->light
+		#define L (*sunLighting)
 		if (globalRendering->haveGLSL) {
 			treeShader->SetUniform3f(0, 1.0f, 0.0f, 0.0f);
 			treeShader->SetUniform3f(1, 0.0f, 1.0f, 0.0f);

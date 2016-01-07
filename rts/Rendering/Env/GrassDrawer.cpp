@@ -10,6 +10,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/ISky.h"
+#include "Rendering/Env/SunLighting.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
@@ -366,9 +367,9 @@ void CGrassDrawer::EnableShader(const GrassShaderProgram type) {
 	grassShader->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler->GetShadowMatrixRaw());
 	grassShader->SetUniform4v("shadowParams", &shadowHandler->GetShadowParams().x);
 
-	grassShader->SetUniform3v("ambientLightColor",  &mapInfo->light.unitAmbientColor.x);
-	grassShader->SetUniform3v("diffuseLightColor",  &mapInfo->light.unitSunColor.x);
-	grassShader->SetUniform3v("specularLightColor", &mapInfo->light.unitSpecularColor.x);
+	grassShader->SetUniform3v("ambientLightColor",  &sunLighting->unitAmbientColor.x);
+	grassShader->SetUniform3v("diffuseLightColor",  &sunLighting->unitSunColor.x);
+	grassShader->SetUniform3v("specularLightColor", &sunLighting->unitSpecularColor.x);
 	grassShader->SetUniform3v("sunDir",             &mapInfo->light.sunDir.x);
 }
 

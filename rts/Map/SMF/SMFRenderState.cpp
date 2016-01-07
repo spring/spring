@@ -10,6 +10,7 @@
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SkyLight.h"
+#include "Rendering/Env/SunLighting.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
@@ -223,9 +224,10 @@ void SMFRenderStateGLSL::Update(
 			glslShaders[n]->SetUniform4v("lightDir",  &sky->GetLight()->GetLightDir()[0]);
 			glslShaders[n]->SetUniform3v("cameraPos", &FwdVector[0]);
 
-			glslShaders[n]->SetUniform3v("groundAmbientColor",  &mapInfo->light.groundAmbientColor[0]);
-			glslShaders[n]->SetUniform3v("groundDiffuseColor",  &mapInfo->light.groundSunColor[0]);
-			glslShaders[n]->SetUniform3v("groundSpecularColor", &mapInfo->light.groundSpecularColor[0]);
+			glslShaders[n]->SetUniform3v("groundAmbientColor",  &sunLighting->groundAmbientColor[0]);
+			glslShaders[n]->SetUniform3v("groundDiffuseColor",  &sunLighting->groundSunColor[0]);
+            // FIXME: groundSpecularColor is not actually directly used in GLSL shaders anymore?! Remove?
+			glslShaders[n]->SetUniform3v("groundSpecularColor", &sunLighting->groundSpecularColor[0]);
 			glslShaders[n]->SetUniform  ("groundShadowDensity", sky->GetLight()->GetGroundShadowDensity());
 
 			glslShaders[n]->SetUniform3v("waterMinColor",    &mapInfo->water.minColor[0]);
@@ -413,7 +415,7 @@ void SMFRenderStateFFP::Disable(const CSMFGroundDrawer*, const DrawPass::e&) {
 
 void SMFRenderStateARB::Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass) {
 	const CSMFReadMap* smfMap = smfGroundDrawer->GetReadMap();
-	const float3 ambientColor = mapInfo->light.groundAmbientColor * CGlobalRendering::SMF_INTENSITY_MULT;
+	const float3 ambientColor = sunLighting->groundAmbientColor * CGlobalRendering::SMF_INTENSITY_MULT;
 
 	#ifdef DYNWATER_OVERRIDE_VERTEX_PROGRAM
 	// CDynamicWater overrides smfShaderBaseARB during the reflection / refraction
@@ -496,6 +498,9 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	glslShaders[GLSL_SHADER_CURRENT]->Enable();
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("mapHeights", readMap->GetCurrMinHeight(), readMap->GetCurrMaxHeight());
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("cameraPos", &camera->GetPos()[0]);
+	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundAmbientColor",  &sunLighting->groundAmbientColor[0]);
+	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundDiffuseColor",  &sunLighting->groundSunColor[0]);
+	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundSpecularColor", &sunLighting->groundSpecularColor[0]);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniformMatrix4x4("shadowMat", false, shadowHandler->GetShadowMatrixRaw());
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform4v("shadowParams", &(shadowHandler->GetShadowParams().x));
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("infoTexIntensityMul", float(infoTextureHandler->GetMode() == "metal") + 1.0f);

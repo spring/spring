@@ -10,6 +10,7 @@
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Env/ISky.h"
+#include "Rendering/Env/SunLighting.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "System/Config/ConfigHandler.h"
 
@@ -275,11 +276,11 @@ void CubeMapHandler::CreateSpecularFacePart(
 	for (int x = 0; x < size; ++x) {
 		const float3 dir = (cdir + (xdif * (x + 0.5f)) / size + (ydif * (y + 0.5f)) / size).Normalize();
 		const float dot  = std::max(0.0f, dir.dot(sky->GetLight()->GetLightDir()));
-		const float spec = std::min(1.0f, math::pow(dot, mapInfo->light.specularExponent) + math::pow(dot, 3.0f) * 0.25f);
+		const float spec = std::min(1.0f, math::pow(dot, sunLighting->specularExponent) + math::pow(dot, 3.0f) * 0.25f);
 
-		buf[x * 4 + 0] = (mapInfo->light.unitSpecularColor.x * spec * 255);
-		buf[x * 4 + 1] = (mapInfo->light.unitSpecularColor.y * spec * 255);
-		buf[x * 4 + 2] = (mapInfo->light.unitSpecularColor.z * spec * 255);
+		buf[x * 4 + 0] = (sunLighting->unitSpecularColor.x * spec * 255);
+		buf[x * 4 + 1] = (sunLighting->unitSpecularColor.y * spec * 255);
+		buf[x * 4 + 2] = (sunLighting->unitSpecularColor.z * spec * 255);
 		buf[x * 4 + 3] = 255;
 	}
 }

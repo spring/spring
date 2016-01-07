@@ -10,6 +10,7 @@
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/ISky.h"
+#include "Rendering/Env/SunLighting.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/VertexArray.h"
@@ -170,15 +171,15 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 		}
 
 		treeShaders[TREE_PROGRAM_NEAR_BASIC]->Enable();
-		treeShaders[TREE_PROGRAM_NEAR_BASIC]->SetUniform3fv(3, &mapInfo->light.groundAmbientColor[0]);
-		treeShaders[TREE_PROGRAM_NEAR_BASIC]->SetUniform3fv(4, &mapInfo->light.groundSunColor[0]);
+		treeShaders[TREE_PROGRAM_NEAR_BASIC]->SetUniform3fv(3, &sunLighting->groundAmbientColor[0]);
+		treeShaders[TREE_PROGRAM_NEAR_BASIC]->SetUniform3fv(4, &sunLighting->groundSunColor[0]);
 		treeShaders[TREE_PROGRAM_NEAR_BASIC]->SetUniform4f(6, 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f);
 		treeShaders[TREE_PROGRAM_NEAR_BASIC]->Disable();
 		treeShaders[TREE_PROGRAM_NEAR_BASIC]->Validate();
 
 		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->Enable();
-		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->SetUniform3fv(3, &mapInfo->light.groundAmbientColor[0]);
-		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->SetUniform3fv(4, &mapInfo->light.groundSunColor[0]);
+		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->SetUniform3fv(3, &sunLighting->groundAmbientColor[0]);
+		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->SetUniform3fv(4, &sunLighting->groundSunColor[0]);
 		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->SetUniform1f(9, 1.0f - (sky->GetLight()->GetGroundShadowDensity() * 0.5f));
 		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->SetUniform1i(10, 0);
 		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->SetUniform1i(11, 1);
@@ -186,7 +187,7 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->Validate();
 
 		treeShaders[TREE_PROGRAM_DIST_SHADOW]->Enable();
-		treeShaders[TREE_PROGRAM_DIST_SHADOW]->SetUniform3fv(3, &mapInfo->light.groundAmbientColor[0]);
+		treeShaders[TREE_PROGRAM_DIST_SHADOW]->SetUniform3fv(3, &sunLighting->groundAmbientColor[0]);
 		treeShaders[TREE_PROGRAM_DIST_SHADOW]->SetUniform1f(9, 1.0f - (sky->GetLight()->GetGroundShadowDensity() * 0.5f));
 		treeShaders[TREE_PROGRAM_DIST_SHADOW]->SetUniform1i(10, 0);
 		treeShaders[TREE_PROGRAM_DIST_SHADOW]->SetUniform1i(11, 1);
@@ -471,8 +472,6 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 	const int activeFarTex = treeGen->farTex[cam->GetDir().z >= 0.0f];
 	const bool drawDetailed = ((treeDistance >= 4.0f) || drawReflection);
 
-	const CMapInfo::light_t& light = mapInfo->light;
-
 	glEnable(GL_ALPHA_TEST);
 	glEnable(GL_TEXTURE_2D);
 
@@ -495,7 +494,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 			treeShader->SetUniform4fv(8, &(shadowHandler->GetShadowParams().x));
 		} else {
 			treeShader->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
-			treeShader->SetUniform4f(10, light.groundAmbientColor.x, light.groundAmbientColor.y, light.groundAmbientColor.z, 1.0f);
+			treeShader->SetUniform4f(10, sunLighting->groundAmbientColor.x, sunLighting->groundAmbientColor.y, sunLighting->groundAmbientColor.z, 1.0f);
 			treeShader->SetUniform4f(11, 0.0f, 0.0f, 0.0f, 1.0f - (sky->GetLight()->GetGroundShadowDensity() * 0.5f));
 			treeShader->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 
@@ -562,8 +561,8 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 			treeShader->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 			treeShader->SetUniform3f(13, cam->GetRight().x, cam->GetRight().y, cam->GetRight().z);
 			treeShader->SetUniform3f( 9, cam->GetUp().x,    cam->GetUp().y,    cam->GetUp().z   );
-			treeShader->SetUniform4f(11, light.groundSunColor.x,     light.groundSunColor.y,     light.groundSunColor.z,     0.85f);
-			treeShader->SetUniform4f(14, light.groundAmbientColor.x, light.groundAmbientColor.y, light.groundAmbientColor.z, 0.85f);
+			treeShader->SetUniform4f(11, sunLighting->groundSunColor.x,     sunLighting->groundSunColor.y,     sunLighting->groundSunColor.z,     0.85f);
+			treeShader->SetUniform4f(14, sunLighting->groundAmbientColor.x, sunLighting->groundAmbientColor.y, sunLighting->groundAmbientColor.z, 0.85f);
 			treeShader->SetUniform4f(12, 0.0f, 0.0f, 0.0f, 0.20f * (1.0f / MAX_TREE_HEIGHT)); // w = alpha/height modifier
 		}
 

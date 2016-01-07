@@ -12,6 +12,7 @@
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/ProjectileDrawer.h"
 #include "Rendering/Env/ISky.h"
+#include "Rendering/Env/SunLighting.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/GL/myGL.h"
 #include "System/Config/ConfigHandler.h"
@@ -105,15 +106,15 @@ void CSM3GroundDrawer::Draw(const DrawPass::e& drawPass)
 	const float z[] = {0.0f, 0.0f, 0.0f, 1.0f};
 
 	for (int a = 0; a < 3; a++)
-		d[a] = mapInfo->light.groundSunColor[a];
+		d[a] = sunLighting->groundSunColor[a];
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, d);
 
 	for (int a = 0; a < 3; a++)
-		d[a] = mapInfo->light.groundAmbientColor[a];
+		d[a] = sunLighting->groundAmbientColor[a];
 	glLightfv(GL_LIGHT0, GL_AMBIENT, d);
 
 	for (int a = 0; a < 3; a++)
-		d[a] = mapInfo->light.groundSpecularColor[a];
+		d[a] = sunLighting->groundSpecularColor[a];
 	glLightfv(GL_LIGHT0, GL_SPECULAR, d);
 
 	for (int a = 0; a < 4; a++)

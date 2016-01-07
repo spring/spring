@@ -12,6 +12,7 @@
 #include "Map/MapParser.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/Env/SunLighting.h"
 #include "Rendering/GL/myGL.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
@@ -151,11 +152,11 @@ void CSM3ReadMap::InitGroundDrawer() {
 
 	Sm3LoadCB loadcb;
 	terrain::LightingInfo lightInfo;
-		lightInfo.ambient = mapInfo->light.groundAmbientColor;
+		lightInfo.ambient = sunLighting->groundAmbientColor;
 	terrain::StaticLight light;
-		light.color = mapInfo->light.groundSunColor;
+		light.color = sunLighting->groundSunColor;
 		light.directional = false;
-		light.position = mapInfo->light.sunDir * 1000000.0f;
+		light.position = sunLighting->sunDir * 1000000.0f;
 	lightInfo.staticLights.push_back(light);
 
 	renderer->Load(GetMapDefParser(), &lightInfo, &loadcb);
