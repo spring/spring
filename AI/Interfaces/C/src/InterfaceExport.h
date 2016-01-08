@@ -36,8 +36,7 @@ struct SAIInterfaceCallback;
 
 // static AI interface library functions
 
-EXPORT(int) initStatic(int interfaceId,
-		const struct SAIInterfaceCallback* callback);
+EXPORT(int) initStatic(int interfaceId, const SAIInterfaceCallback* callback);
 EXPORT(int) releaseStatic();
 //EXPORT(enum LevelOfSupport) getLevelOfSupportFor(
 //		const char* engineVersion, int engineAIInterfaceGeneratedVersion);
@@ -45,12 +44,14 @@ EXPORT(int) releaseStatic();
 
 // skirmish AI related methods
 
-EXPORT(const struct SSkirmishAILibrary*) loadSkirmishAILibrary(
-		const char* const shortName,
-		const char* const version);
+EXPORT(const SSkirmishAILibrary*) loadSkirmishAILibrary(
+	const char* const shortName,
+	const char* const version
+);
 EXPORT(int) unloadSkirmishAILibrary(
-		const char* const shortName,
-		const char* const version);
+	const char* const shortName,
+	const char* const version
+);
 EXPORT(int) unloadAllSkirmishAILibraries();
 
 #ifdef __cplusplus

@@ -140,14 +140,15 @@ EXPORT(int) aiInterfaceCallback_SkirmishAIs_getMax(int UNUSED_interfaceId) {
 	return MAX_TEAMS;
 }
 EXPORT(const char*) aiInterfaceCallback_SkirmishAIs_Info_getValueByKey(int UNUSED_interfaceId, const char* const shortName, const char* const version, const char* const key) {
-
-	const char* value = NULL;
+	const char* value = nullptr;
 
 	SkirmishAIKey aiKey(shortName, version);
+
 	const IAILibraryManager::T_skirmishAIInfos& skirmishInfos = IAILibraryManager::GetInstance()->GetSkirmishAIInfos();
-	IAILibraryManager::T_skirmishAIInfos::const_iterator inf = skirmishInfos.find(aiKey);
+	const IAILibraryManager::T_skirmishAIInfos::const_iterator inf = skirmishInfos.find(aiKey);
+
 	if (inf != skirmishInfos.end()) {
-		const std::string& valueStr = inf->second->GetInfo(key);
+		const std::string& valueStr = (inf->second).GetInfo(key);
 		if (valueStr != "") {
 			value = valueStr.c_str();
 		}

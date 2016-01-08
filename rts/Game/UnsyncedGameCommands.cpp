@@ -795,7 +795,7 @@ public:
 							aiShortName.c_str(), aiVersion.c_str());
 					badArgs = true;
 				} else {
-					const CSkirmishAILibraryInfo* aiLibInfo = aiLibManager->GetSkirmishAIInfos().find(aiKey)->second;
+					const CSkirmishAILibraryInfo& aiLibInfo = aiLibManager->GetSkirmishAIInfos().find(aiKey)->second;
 
 					SkirmishAIData aiData;
 					aiData.name       = (aiName != "") ? aiName : aiShortName;
@@ -803,12 +803,12 @@ public:
 					aiData.hostPlayer = gu->myPlayerNum;
 					aiData.shortName  = aiShortName;
 					aiData.version    = aiVersion;
-					std::map<std::string, std::string>::const_iterator o;
-					for (o = aiOptions.begin(); o != aiOptions.end(); ++o) {
+
+					for (auto o = aiOptions.cbegin(); o != aiOptions.cend(); ++o)
 						aiData.optionKeys.push_back(o->first);
-					}
+
 					aiData.options    = aiOptions;
-					aiData.isLuaAI    = aiLibInfo->IsLuaAI();
+					aiData.isLuaAI    = aiLibInfo.IsLuaAI();
 
 					skirmishAIHandler.CreateLocalSkirmishAI(aiData);
 				}

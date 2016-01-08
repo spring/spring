@@ -18,8 +18,12 @@ struct SSkirmishAICallback;
  */
 class CSkirmishAI {
 public:
-	CSkirmishAI(int skirmishAIId, int teamId, const SkirmishAIKey& skirmishAIKey,
-		const SSkirmishAICallback* c_callback);
+	CSkirmishAI(
+		int skirmishAIId,
+		int teamId,
+		const SkirmishAIKey& skirmishAIKey,
+		const SSkirmishAICallback* c_callback
+	);
 	~CSkirmishAI();
 
 	/**
@@ -44,10 +48,12 @@ public:
 
 private:
 	int skirmishAIId;
+
 	const SkirmishAIKey key;
 	const CSkirmishAILibrary* library;
 	const SSkirmishAICallback* callback;
 	const std::string timerName;
+
 	bool initOk;
 	bool dieing;
 };
