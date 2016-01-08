@@ -5,6 +5,10 @@
 #include "InterfaceExport.h"
 #include "Interface.h"
 
+// win32 namespace pollution
+#ifdef interface
+#undef interface
+#endif
 
 static std::unique_ptr<CInterface> interface;
 
