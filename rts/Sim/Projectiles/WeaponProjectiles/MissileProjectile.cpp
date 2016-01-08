@@ -25,6 +25,7 @@ CR_BIND_DERIVED(CMissileProjectile, CWeaponProjectile, (ProjectileParams()))
 
 CR_REG_METADATA(CMissileProjectile,(
 	CR_SETFLAG(CF_Synced),
+	CR_MEMBER(ignoreError),
 	CR_MEMBER(maxSpeed),
 	// CR_MEMBER(ttl),
 	CR_MEMBER(areaOfEffect),
@@ -47,6 +48,7 @@ CR_REG_METADATA(CMissileProjectile,(
 ))
 
 CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponProjectile(params)
+	, ignoreError(false)
 	, maxSpeed(0.0f)
 	, areaOfEffect(0.0f)
 	, extraHeight(0.0f)
@@ -157,22 +159,24 @@ void CMissileProjectile::Update()
 			if (weaponDef->tracks && target != NULL) {
 				const CSolidObject* so = dynamic_cast<const CSolidObject*>(target);
 
-				targetPos = target->pos;
-				targetVel = target->speed;
-
-				if (so != NULL) {
+				if (so != nullptr) {
 					targetPos = so->aimPos;
+					targetVel = so->speed;
 
-					if (allyteamID != -1) {
-						// if we have an owner and our target is a unit,
-						// set target-position to its error-position for
-						// our owner's allyteam
-						const CUnit* tgt = dynamic_cast<const CUnit*>(so);
 
-						if (tgt != NULL) {
-							targetPos = tgt->GetErrorPos(allyteamID, true);
-						}
+					if (allyteamID != -1 && !ignoreError) {
+						const CUnit* u = dynamic_cast<const CUnit*>(so);
+
+						if (u != nullptr)
+							targetPos = u->GetErrorPos(allyteamID, true);
+
 					}
+				} else {
+					targetPos = target->pos;
+					const CWeaponProjectile* po = dynamic_cast<const CWeaponProjectile*>(target);
+					if (po != nullptr)
+						targetVel = po->speed;
+
 				}
 			}
 

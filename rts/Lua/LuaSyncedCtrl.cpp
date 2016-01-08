@@ -47,6 +47,9 @@
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/PieceProjectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/MissileProjectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/StarburstProjectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/TorpedoProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -242,6 +245,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetProjectileCollision);
 	REGISTER_LUA_CFUNC(SetProjectileTarget);
 	REGISTER_LUA_CFUNC(SetProjectileIsIntercepted);
+	REGISTER_LUA_CFUNC(SetProjectileIgnoreTrackingError);
 
 	REGISTER_LUA_CFUNC(SetProjectileGravity);
 	REGISTER_LUA_CFUNC(SetProjectileSpinAngle);
@@ -2925,6 +2929,7 @@ int LuaSyncedCtrl::SetProjectileTarget(lua_State* L)
 	return 0;
 }
 
+
 int LuaSyncedCtrl::SetProjectileIsIntercepted(lua_State* L)
 {
 	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
@@ -2935,6 +2940,30 @@ int LuaSyncedCtrl::SetProjectileIsIntercepted(lua_State* L)
 	CWeaponProjectile* wpro = static_cast<CWeaponProjectile*>(proj);
 
 	wpro->SetBeingIntercepted(luaL_checkboolean(L, 2));
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetProjectileIgnoreTrackingError(lua_State* L)
+{
+	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
+
+	if (proj == nullptr)
+		return 0;
+
+	switch(proj->GetProjectileType()) {
+		case WEAPON_MISSILE_PROJECTILE: {
+			static_cast<CMissileProjectile*>(proj)->SetIgnoreError(luaL_checkboolean(L, 2));
+		} break;
+		case WEAPON_STARBURST_PROJECTILE: {
+			static_cast<CStarburstProjectile*>(proj)->SetIgnoreError(luaL_checkboolean(L, 2));
+		} break;
+		case WEAPON_TORPEDO_PROJECTILE: {
+			static_cast<CTorpedoProjectile*>(proj)->SetIgnoreError(luaL_checkboolean(L, 2));
+		} break;
+		default: break;
+	}
+
 	return 0;
 }
 

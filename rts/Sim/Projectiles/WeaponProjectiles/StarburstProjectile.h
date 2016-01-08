@@ -28,6 +28,7 @@ public:
 
 	int ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed) override;
 
+	void SetIgnoreError(bool b) { ignoreError = b; }
 private:
 	void DrawCallback() override;
 
@@ -35,6 +36,7 @@ private:
 
 private:
 	float tracking;
+	bool ignoreError;
 	float maxGoodDif;
 	float maxSpeed;
 	float acceleration;

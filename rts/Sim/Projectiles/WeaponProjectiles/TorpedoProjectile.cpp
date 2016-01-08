@@ -24,6 +24,7 @@ CR_BIND_DERIVED(CTorpedoProjectile, CWeaponProjectile, (ProjectileParams()))
 CR_REG_METADATA(CTorpedoProjectile,(
 	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(tracking),
+	CR_MEMBER(ignoreError),
 	CR_MEMBER(maxSpeed),
 	CR_MEMBER(areaOfEffect),
 	CR_MEMBER(nextBubble),
@@ -33,6 +34,7 @@ CR_REG_METADATA(CTorpedoProjectile,(
 
 CTorpedoProjectile::CTorpedoProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, tracking(0.0f)
+	, ignoreError(false)
 	, maxSpeed(0.0f)
 	, areaOfEffect(0.0f)
 
@@ -76,26 +78,27 @@ void CTorpedoProjectile::Update()
 				if (speed.w < maxSpeed)
 					speed.w += std::max(0.2f, tracking);
 
-				if (target != NULL) {
+				if (target != nullptr) {
 					const CSolidObject* so = dynamic_cast<const CSolidObject*>(target);
-					const CWeaponProjectile* po = dynamic_cast<const CWeaponProjectile*>(target);
 
-					targetPos = target->pos;
-
-					if (so != NULL) {
+					if (so != nullptr) {
 						targetPos = so->aimPos;
 						targetVel = so->speed;
 
-						if (allyteamID != -1 && pos.SqDistance(so->aimPos) > Square(150.0f)) {
+
+						if (allyteamID != -1 && !ignoreError) {
 							const CUnit* u = dynamic_cast<const CUnit*>(so);
 
-							if (u != NULL) {
+							if (u != nullptr)
 								targetPos = u->GetErrorPos(allyteamID, true);
-							}
+
 						}
-					}
-					if (po != NULL) {
-						targetVel = po->speed;
+					} else {
+						targetPos = target->pos;
+						const CWeaponProjectile* po = dynamic_cast<const CWeaponProjectile*>(target);
+						if (po != nullptr)
+							targetVel = po->speed;
+
 					}
 				}
 

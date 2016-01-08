@@ -39,6 +39,8 @@ Lua:
      the [new] FIFTH argument determines whether the model is drawn opaque
      ('true' [default]) or with translucency ('false'); requires false for
      argument #3
+ ! Weapons with tracking will use a radar dot position unless
+   Spring.SetProjectileIgnoreTrackingError(projID, bool ignore) is called.
 
  - add callouts
      gl.{Unit,Feature}Textures(number objID, boolean enable) -> nil
@@ -53,7 +55,7 @@ Lua:
  - new Spring.SetFeatureFade(featureID, bool) to control whether a feature will fade or not when zoomed out.
 
  - add callouts (see their Unit equivalents for documentation)
-     Spring.{Get,Set}FeatureRotation 
+     Spring.{Get,Set}FeatureRotation
      Spring.{Get,Set}FeaturePieceCollisionVolumeData
      Spring.GetFeatureLastAttackedPiece
      Spring.GetFeaturePieceMap
