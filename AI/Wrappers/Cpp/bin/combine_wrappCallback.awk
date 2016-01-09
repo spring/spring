@@ -58,6 +58,10 @@ function doWrapp(funcIndex_dw) {
 		if (fullName_dw == "Engine_handleCommand") {
 			doWrapp_dw = 0;
 		}
+		# not wrapped, legacy C++ only
+		if (fullName_dw == "Engine_executeCommand") {
+			doWrapp_dw = 0;
+		}
 	}
 
 	return doWrapp_dw;

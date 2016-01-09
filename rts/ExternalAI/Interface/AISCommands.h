@@ -1576,25 +1576,15 @@ struct SSetLabelOverlayTextureDrawerDebugCommand {
 
 
 
-/**
- * @brief Sets default values
- */
-void initSUnitCommand(void* sUnitCommand);
-
 #ifdef	__cplusplus
 }	// extern "C"
 #endif
 
 
+
 #ifdef	__cplusplus
-#ifdef    BUILDING_AI
-namespace springLegacyAI {
-	struct Command;
-}
-using namespace springLegacyAI;
-#else  // BUILDING_AI
 struct Command;
-#endif // BUILDING_AI
+
 
 // legacy support functions
 
@@ -1620,6 +1610,7 @@ int extractAICommandTopic(const Command* internalUnitCmd, int maxUnits);
 bool newCommand(void* sUnitCommandData, int sCommandId, int maxUnits, Command* c);
 
 #endif	// __cplusplus
+
 
 
 #endif	// AI_S_COMMANDS_H

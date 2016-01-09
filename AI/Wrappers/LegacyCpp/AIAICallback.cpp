@@ -208,7 +208,7 @@ int springLegacyAI::CAIAICallback::GetUnitGroup(int unitId) {
 	return sAICallback->Unit_getGroup(skirmishAIId, unitId);
 }
 
-const std::vector<springLegacyAI::CommandDescription>* springLegacyAI::CAIAICallback::GetGroupCommands(int groupId)
+const std::vector<CommandDescription>* springLegacyAI::CAIAICallback::GetGroupCommands(int groupId)
 {
 	const int numCmds = sAICallback->Group_getSupportedCommands(skirmishAIId, groupId);
 
@@ -240,7 +240,7 @@ const std::vector<springLegacyAI::CommandDescription>* springLegacyAI::CAIAICall
 }
 
 
-const std::vector<springLegacyAI::CommandDescription>* springLegacyAI::CAIAICallback::GetUnitCommands(int unitId)
+const std::vector<CommandDescription>* springLegacyAI::CAIAICallback::GetUnitCommands(int unitId)
 {
 	const int numCmds = sAICallback->Unit_getSupportedCommands(skirmishAIId, unitId);
 
@@ -1496,15 +1496,15 @@ bool springLegacyAI::CAIAICallback::RemoveUnitFromGroup(int unitId) {
 	return (ret == 0);
 }
 
-int springLegacyAI::CAIAICallback::GiveGroupOrder(int groupId, springLegacyAI::Command* c) {
+int springLegacyAI::CAIAICallback::GiveGroupOrder(int groupId, Command* c) {
 	return Internal_GiveOrder(-1, groupId, c);
 }
 
-int springLegacyAI::CAIAICallback::GiveOrder(int unitId, springLegacyAI::Command* c) {
+int springLegacyAI::CAIAICallback::GiveOrder(int unitId, Command* c) {
 	return Internal_GiveOrder(unitId, -1, c);
 }
 
-int springLegacyAI::CAIAICallback::Internal_GiveOrder(int unitId, int groupId, springLegacyAI::Command* c) {
+int springLegacyAI::CAIAICallback::Internal_GiveOrder(int unitId, int groupId, Command* c) {
 	RawCommand rc = std::move(c->ToRawCommand());
 
 	return (sAICallback->Engine_executeCommand(skirmishAIId, unitId, groupId, &rc));

@@ -6,15 +6,6 @@
 #include <limits.h>
 #include <stdlib.h>
 
-void initSUnitCommand(void* sUnitCommand) {
-	struct SStopUnitCommand* scmd = (struct SStopUnitCommand*) sUnitCommand;
-
-	scmd->unitId = -1;
-	scmd->groupId = -1;
-	scmd->options = 0;
-	scmd->timeOut = INT_MAX;
-}
-
 int toInternalUnitCommandTopic(int aiCmdTopic, const void* sUnitCommandData) {
 	int internalUnitCommandTopic;
 

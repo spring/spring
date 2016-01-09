@@ -10,10 +10,10 @@
 // This also means any engine-side classes not in this list nor being a member
 // of one of these classes may not be used by AI code.
 // TODO: Use for the Legacy C++ wrapper
-#define AI_INTERFACE_GENERATED_VERSION     (\
-	  sizeof(springLegacyAI::CommandDescription) \
-	+ sizeof(springLegacyAI::Command) \
-	+ sizeof(springLegacyAI::WeaponDef) \
-	)
+#define AI_INTERFACE_GENERATED_VERSION   \
+	(sizeof(CommandDescription) +        \
+	 sizeof(Command) +                   \
+	 sizeof(springLegacyAI::WeaponDef))  \
+
 
 #endif // AI_BASE_H

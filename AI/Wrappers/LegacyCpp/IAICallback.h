@@ -13,13 +13,14 @@
 #include <map>
 
 
+struct CommandDescription;
+
 namespace springLegacyAI {
 
+class CCommandQueue;
 struct UnitDef;
 struct FeatureDef;
 struct WeaponDef;
-struct CommandDescription;
-class CCommandQueue;
 
 /// Generalized callback interface, used by Global AIs
 class IAICallback
