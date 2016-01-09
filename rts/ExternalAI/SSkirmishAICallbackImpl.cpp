@@ -185,6 +185,7 @@ static int getRulesParams(
 				paramsSize++;
 			}
 		}
+
 		return paramsSize;
 	}
 
@@ -270,11 +271,11 @@ static float getRulesParamFloatValueById(
 ) {
 	float value = 0.0f;
 
-	if (modParamIsValidId(params, rulesParamId)) {
-		if (modParamIsVisible(params[rulesParamId], losMask)) {
-			value = params[rulesParamId].valueInt;
-		}
-	}
+	if (!modParamIsValidId(params, rulesParamId))
+		return value;
+
+	if (modParamIsVisible(params[rulesParamId], losMask))
+		value = params[rulesParamId].valueInt;
 
 	return value;
 }
@@ -286,11 +287,11 @@ static const char* getRulesParamStringValueById(
 ) {
 	const char* value = "";
 
-	if (modParamIsValidId(params, rulesParamId)) {
-		if (modParamIsVisible(params[rulesParamId], losMask)) {
-			value = params[rulesParamId].valueString.c_str();
-		}
-	}
+	if (!modParamIsValidId(params, rulesParamId))
+		return value;
+
+	if (modParamIsVisible(params[rulesParamId], losMask))
+		value = params[rulesParamId].valueString.c_str();
 
 	return value;
 }
@@ -1352,8 +1353,8 @@ static inline const CSkirmishAILibraryInfo* getSkirmishAILibraryInfo(int skirmis
 	assert(key != nullptr);
 	const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
 
-	const IAILibraryManager::T_skirmishAIInfos infs = libMan->GetSkirmishAIInfos();
-	const IAILibraryManager::T_skirmishAIInfos::const_iterator inf = infs.find(*key);
+	const auto& infs = libMan->GetSkirmishAIInfos();
+	const auto inf = infs.find(*key);
 
 	if (inf != infs.end())
 		info = &(inf->second);
@@ -1362,33 +1363,36 @@ static inline const CSkirmishAILibraryInfo* getSkirmishAILibraryInfo(int skirmis
 }
 
 EXPORT(int) skirmishAiCallback_SkirmishAI_Info_getSize(int skirmishAIId) {
-
-	const CSkirmishAILibraryInfo* info = getSkirmishAILibraryInfo(skirmishAIId);
-	return (int)info->size();
+	return (int) getSkirmishAILibraryInfo(skirmishAIId)->size();
 }
 
-EXPORT(const char*) skirmishAiCallback_SkirmishAI_Info_getKey(int skirmishAIId, int infoIndex) {
 
-	const CSkirmishAILibraryInfo* info = getSkirmishAILibraryInfo(skirmishAIId);
-	return info->GetKeyAt(infoIndex).c_str();
+EXPORT(const char*) skirmishAiCallback_SkirmishAI_Info_getKey(int skirmishAIId, int infoIndex) {
+	static std::string blob;
+
+	blob = getSkirmishAILibraryInfo(skirmishAIId)->GetKeyAt(infoIndex);
+	return (blob.c_str());
 }
 
 EXPORT(const char*) skirmishAiCallback_SkirmishAI_Info_getValue(int skirmishAIId, int infoIndex) {
+	static std::string blob;
 
-	const CSkirmishAILibraryInfo* info = getSkirmishAILibraryInfo(skirmishAIId);
-	return info->GetValueAt(infoIndex).c_str();
+	blob = getSkirmishAILibraryInfo(skirmishAIId)->GetValueAt(infoIndex);
+	return (blob.c_str());
 }
 
 EXPORT(const char*) skirmishAiCallback_SkirmishAI_Info_getDescription(int skirmishAIId, int infoIndex) {
+	static std::string blob;
 
-	const CSkirmishAILibraryInfo* info = getSkirmishAILibraryInfo(skirmishAIId);
-	return info->GetDescriptionAt(infoIndex).c_str();
+	blob = getSkirmishAILibraryInfo(skirmishAIId)->GetDescriptionAt(infoIndex);
+	return (blob.c_str());
 }
 
 EXPORT(const char*) skirmishAiCallback_SkirmishAI_Info_getValueByKey(int skirmishAIId, const char* const key) {
+	static std::string blob;
 
-	const CSkirmishAILibraryInfo* info = getSkirmishAILibraryInfo(skirmishAIId);
-	return info->GetInfo(key).c_str();
+	blob = getSkirmishAILibraryInfo(skirmishAIId)->GetInfo(key);
+	return (blob.c_str());
 }
 
 static inline bool checkOptionIndex(int optionIndex, const std::vector<std::string>& optionKeys) {
@@ -1399,51 +1403,58 @@ EXPORT(int) skirmishAiCallback_SkirmishAI_OptionValues_getSize(int skirmishAIId)
 	return (int)skirmishAIHandler.GetSkirmishAI(skirmishAIId)->options.size();
 }
 
+
 EXPORT(const char*) skirmishAiCallback_SkirmishAI_OptionValues_getKey(int skirmishAIId, int optionIndex) {
-	const std::vector<std::string>& optionKeys = skirmishAIHandler.GetSkirmishAI(skirmishAIId)->optionKeys;
+	// FIXME
+	static std::string blob;
+
+	const SkirmishAIData& data = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
+	const auto& optionKeys = data.optionKeys;
 
 	if (checkOptionIndex(optionIndex, optionKeys))
 		return nullptr;
 
-	// FIXME
-	static std::string tmp;
-	const std::string& key = *(optionKeys.begin() + optionIndex);
-
-	tmp = key;
-	return (tmp.c_str());
+	blob = *(optionKeys.begin() + optionIndex);
+	return (blob.c_str());
 }
 
 EXPORT(const char*) skirmishAiCallback_SkirmishAI_OptionValues_getValue(int skirmishAIId, int optionIndex) {
+	static std::string blob;
 
-	const std::vector<std::string>& optionKeys = skirmishAIHandler.GetSkirmishAI(skirmishAIId)->optionKeys;
-	if (checkOptionIndex(optionIndex, optionKeys)) {
-		return NULL;
-	} else {
-		const std::map<std::string, std::string>& options = skirmishAIHandler.GetSkirmishAI(skirmishAIId)->options;
-		const std::string& key = *(optionKeys.begin() + optionIndex);
-		const std::map<std::string, std::string>::const_iterator op = options.find(key);
-		if (op == options.end()) {
-			return NULL;
-		} else {
-			return op->second.c_str();
-		}
-	}
+	const SkirmishAIData& data = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
+	const auto& optionKeys = data.optionKeys;
+
+	if (checkOptionIndex(optionIndex, optionKeys))
+		return nullptr;
+
+	const auto& options = data.options;
+	const auto option = options.find(*(optionKeys.begin() + optionIndex));
+
+	if (option == options.end())
+		return nullptr;
+
+	blob = option->second;
+	return (blob.c_str());
 }
 
-EXPORT(const char*) skirmishAiCallback_SkirmishAI_OptionValues_getValueByKey(int skirmishAIId, const char* const key) {
 
-	const std::map<std::string, std::string>& options = skirmishAIHandler.GetSkirmishAI(skirmishAIId)->options;
-	const std::map<std::string, std::string>::const_iterator op = options.find(key);
-	if (op == options.end()) {
-		return NULL;
-	} else {
-		return op->second.c_str();
-	}
+EXPORT(const char*) skirmishAiCallback_SkirmishAI_OptionValues_getValueByKey(int skirmishAIId, const char* const key) {
+	static std::string blob;
+
+	const SkirmishAIData& data = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
+
+	const auto& options = data.options;
+	const auto option = options.find(key);
+
+	if (option == options.end())
+		return nullptr;
+
+	blob = option->second;
+	return (blob.c_str());
 }
 
 
 EXPORT(void) skirmishAiCallback_Log_log(int skirmishAIId, const char* const msg) {
-
 	checkSkirmishAIId(skirmishAIId);
 
 	const CSkirmishAILibraryInfo* info = getSkirmishAILibraryInfo(skirmishAIId);
@@ -1451,7 +1462,6 @@ EXPORT(void) skirmishAiCallback_Log_log(int skirmishAIId, const char* const msg)
 }
 
 EXPORT(void) skirmishAiCallback_Log_exception(int skirmishAIId, const char* const msg, int severety, bool die) {
-
 	checkSkirmishAIId(skirmishAIId);
 
 	const CSkirmishAILibraryInfo* info = getSkirmishAILibraryInfo(skirmishAIId);
@@ -1484,11 +1494,12 @@ EXPORT(char*) skirmishAiCallback_DataDirs_Roots_allocatePath(int UNUSED_skirmish
 }
 
 EXPORT(const char*) skirmishAiCallback_DataDirs_getConfigDir(int skirmishAIId) {
-
 	checkSkirmishAIId(skirmishAIId);
 
-	const CSkirmishAILibraryInfo* info = getSkirmishAILibraryInfo(skirmishAIId);
-	return info->GetDataDir().c_str();
+	static std::string blob;
+
+	blob = getSkirmishAILibraryInfo(skirmishAIId)->GetDataDir();
+	return (blob.c_str());
 }
 
 EXPORT(bool) skirmishAiCallback_DataDirs_locatePath(int skirmishAIId, char* path, int pathMaxSize, const char* const relPath, bool writeable, bool create, bool dir, bool common) {
@@ -1525,31 +1536,30 @@ EXPORT(char*) skirmishAiCallback_DataDirs_allocatePath(int skirmishAIId, const c
 	return path;
 }
 
-static std::vector<std::string> writeableDataDirs;
-EXPORT(const char*) skirmishAiCallback_DataDirs_getWriteableDir(int skirmishAIId) {
 
+EXPORT(const char*) skirmishAiCallback_DataDirs_getWriteableDir(int skirmishAIId) {
 	checkSkirmishAIId(skirmishAIId);
+
+	static std::vector<std::string> writeableDataDirs;
 
 	// fill up writeableDataDirs until teamId index is in there
 	// if it is not yet
-	size_t wdd;
-	for (wdd=writeableDataDirs.size(); wdd <= (size_t)skirmishAIId; ++wdd) {
+	for (size_t wdd = writeableDataDirs.size(); wdd <= (size_t)skirmishAIId; ++wdd) {
 		writeableDataDirs.push_back("");
 	}
+
 	if (writeableDataDirs[skirmishAIId].empty()) {
-		static const unsigned int sizeMax = 1024;
-		char tmpRes[sizeMax];
-		static const char* const rootPath = "";
-		const bool exists = skirmishAiCallback_DataDirs_locatePath(skirmishAIId,
-				tmpRes, sizeMax, rootPath, true, true, true, false);
-		writeableDataDirs[skirmishAIId] = tmpRes;
-		if (!exists) {
-			char errorMsg[sizeMax];
-			SNPRINTF(errorMsg, sizeMax,
+		char tmpRes[1024];
+
+		if (!skirmishAiCallback_DataDirs_locatePath(skirmishAIId, tmpRes, sizeof(tmpRes), "", true, true, true, false)) {
+			char errorMsg[sizeof(tmpRes)];
+			SNPRINTF(errorMsg, sizeof(tmpRes),
 					"Unable to create writable data-dir for Skirmish AI (ID:%i): %s",
 					skirmishAIId, tmpRes);
 			skirmishAiCallback_Log_exception(skirmishAIId, errorMsg, 1, true);
 			return NULL;
+		} else {
+			writeableDataDirs[skirmishAIId] = tmpRes;
 		}
 	}
 
@@ -2479,8 +2489,7 @@ EXPORT(int) skirmishAiCallback_getResources(int skirmishAIId) {
 	return resourceHandler->GetNumResources();
 }
 
-EXPORT(int) skirmishAiCallback_getResourceByName(int skirmishAIId,
-		const char* resourceName) {
+EXPORT(int) skirmishAiCallback_getResourceByName(int skirmishAIId, const char* resourceName) {
 	return resourceHandler->GetResourceId(resourceName);
 }
 
@@ -2601,10 +2610,9 @@ EXPORT(float) skirmishAiCallback_Economy_getExcess(int skirmishAIId, int resourc
 }
 
 EXPORT(const char*) skirmishAiCallback_Game_getSetupScript(int skirmishAIId) {
-	const char* setupScript = "";
-	CAICallback* clb = skirmishAIId_callback[skirmishAIId];
+	static const char* setupScript = "";
 
-	if (!clb->GetValue(AIVAL_SCRIPT, &setupScript))
+	if (!skirmishAIId_callback[skirmishAIId]->GetValue(AIVAL_SCRIPT, &setupScript))
 		return "";
 
 	return setupScript;
@@ -3730,7 +3738,6 @@ EXPORT(int) skirmishAiCallback_Unit_getMax(int skirmishAIId) {
 }
 
 EXPORT(int) skirmishAiCallback_Unit_getDef(int skirmishAIId, int unitId) {
-
 	const UnitDef* unitDef = nullptr;
 
 	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
@@ -3746,7 +3753,6 @@ EXPORT(int) skirmishAiCallback_Unit_getDef(int skirmishAIId, int unitId) {
 }
 
 EXPORT(int) skirmishAiCallback_Unit_getUnitRulesParams(int skirmishAIId, int unitId, int* paramIds, int paramIdsMaxSize) {
-
 	const CUnit* unit = getUnit(unitId);
 
 	if (unit == nullptr)
@@ -3756,7 +3762,6 @@ EXPORT(int) skirmishAiCallback_Unit_getUnitRulesParams(int skirmishAIId, int uni
 }
 
 EXPORT(int) skirmishAiCallback_Unit_getUnitRulesParamByName(int skirmishAIId, int unitId, const char* rulesParamName) {
-
 	const CUnit* unit = getUnit(unitId);
 
 	if (unit == nullptr)
@@ -3766,7 +3771,6 @@ EXPORT(int) skirmishAiCallback_Unit_getUnitRulesParamByName(int skirmishAIId, in
 }
 
 EXPORT(int) skirmishAiCallback_Unit_getUnitRulesParamById(int skirmishAIId, int unitId, int rulesParamId) {
-
 	const CUnit* unit = getUnit(unitId);
 
 	if (unit == nullptr)
@@ -3776,7 +3780,6 @@ EXPORT(int) skirmishAiCallback_Unit_getUnitRulesParamById(int skirmishAIId, int 
 }
 
 EXPORT(const char*) skirmishAiCallback_Unit_UnitRulesParam_getName(int skirmishAIId, int unitId, int unitRulesParamId) {
-
 	const CUnit* unit = getUnit(unitId);
 
 	if (unit == nullptr)
@@ -3786,7 +3789,6 @@ EXPORT(const char*) skirmishAiCallback_Unit_UnitRulesParam_getName(int skirmishA
 }
 
 EXPORT(float) skirmishAiCallback_Unit_UnitRulesParam_getValueFloat(int skirmishAIId, int unitId, int unitRulesParamId) {
-
 	const CUnit* unit = getUnit(unitId);
 
 	if (unit == nullptr)
@@ -3796,7 +3798,6 @@ EXPORT(float) skirmishAiCallback_Unit_UnitRulesParam_getValueFloat(int skirmishA
 }
 
 EXPORT(const char*) skirmishAiCallback_Unit_UnitRulesParam_getValueString(int skirmishAIId, int unitId, int unitRulesParamId) {
-
 	const CUnit* unit = getUnit(unitId);
 
 	if (unit == nullptr)
