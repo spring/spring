@@ -1005,25 +1005,23 @@ bool springLegacyAI::CAIAICallback::GetValue(int valueId, void *data)
 			return true;
 		}case AIVAL_LOCATE_FILE_R:{
 			//sAICallback->File_locateForReading(skirmishAIId, (char*) data);
-			static const size_t absPath_sizeMax = 2048;
-			char absPath[absPath_sizeMax];
+			char absPath[2048] = {0};
 
-			const bool located = sAICallback->DataDirs_locatePath(skirmishAIId, absPath, absPath_sizeMax, (const char*) data, false, false, false, false);
+			const bool located = sAICallback->DataDirs_locatePath(skirmishAIId, absPath, sizeof(absPath), (const char*) data, false, false, false, false);
 
 			// NOTE We can not use STRCPY_T or STRNCPY here, as we do not know
-			//   the size of data. It might be below absPath_sizeMax,
+			//   the size of data. It might be below sizeof(absPath),
 			//   and thus we would corrupt the stack.
 			STRCPY((char*)data, absPath);
 			return located;
 		}case AIVAL_LOCATE_FILE_W:{
 			//sAICallback->File_locateForWriting(skirmishAIId, (char*) data);
-			static const size_t absPath_sizeMax = 2048;
-			char absPath[absPath_sizeMax];
+			char absPath[2048] = {0};
 
-			const bool located = sAICallback->DataDirs_locatePath(skirmishAIId, absPath, absPath_sizeMax, (const char*) data, true, true, false, false);
+			const bool located = sAICallback->DataDirs_locatePath(skirmishAIId, absPath, sizeof(absPath), (const char*) data, true, true, false, false);
 
 			// NOTE We can not use STRCPY_T or STRNCPY here, as we do not know
-			//   the size of data. It might be below absPath_sizeMax,
+			//   the size of data. It might be below sizeof(absPath),
 			//   and thus we would corrupt the stack.
 			STRCPY((char*)data, absPath);
 			return located;
@@ -1056,7 +1054,7 @@ float3 springLegacyAI::CAIAICallback::GetMousePos() {
 }
 
 
-int springLegacyAI::CAIAICallback::GetMapPoints(PointMarker* pm, int pm_sizeMax, bool includeAllies)
+int springLegacyAI::CAIAICallback::GetMapPoints(PointMarker* pm, int, bool includeAllies)
 {
 	const int numPoints = sAICallback->Map_getPoints(skirmishAIId, includeAllies);
 
@@ -1074,7 +1072,7 @@ int springLegacyAI::CAIAICallback::GetMapPoints(PointMarker* pm, int pm_sizeMax,
 	return numPoints;
 }
 
-int springLegacyAI::CAIAICallback::GetMapLines(LineMarker* lm, int lm_sizeMax, bool includeAllies)
+int springLegacyAI::CAIAICallback::GetMapLines(LineMarker* lm, int, bool includeAllies)
 {
 	const int numLines = sAICallback->Map_getLines(skirmishAIId, includeAllies);
 
@@ -1410,8 +1408,8 @@ unsigned int springLegacyAI::CAIAICallback::GetCategoriesFlag(const char* catego
 	return sAICallback->Game_getCategoriesFlag(skirmishAIId, categoryNames);
 }
 
-void springLegacyAI::CAIAICallback::GetCategoryName(int categoryFlag, char* name, int name_sizeMax) {
-	sAICallback->Game_getCategoryName(skirmishAIId, categoryFlag, name, name_sizeMax);
+void springLegacyAI::CAIAICallback::GetCategoryName(int categoryFlag, char* name, int nameMaxSize) {
+	sAICallback->Game_getCategoryName(skirmishAIId, categoryFlag, name, nameMaxSize);
 }
 
 
@@ -1847,7 +1845,7 @@ int springLegacyAI::CAIAICallback::HandleCommand(int commandId, void* data) {
 					cppCmdData->create,
 					cppCmdData->dir,
 					cppCmdData->common);
-			ret = (cppCmdData->ret_path == nullptr) ? 0 : 1;
+			ret = (cppCmdData->ret_path[0] != 0);
 			break;
 		}
 	}

@@ -1505,38 +1505,44 @@ EXPORT(const char*) skirmishAiCallback_DataDirs_getConfigDir(int skirmishAIId) {
 	return (blob.c_str());
 }
 
-EXPORT(bool) skirmishAiCallback_DataDirs_locatePath(int skirmishAIId, char* path, int pathMaxSize, const char* const relPath, bool writeable, bool create, bool dir, bool common) {
-
-	bool exists = false;
-
+EXPORT(bool) skirmishAiCallback_DataDirs_locatePath(
+	int skirmishAIId,
+	char* path,
+	int pathMaxSize,
+	const char* const relPath,
+	bool writeable,
+	bool create,
+	bool dir,
+	bool common
+) {
 	const char ps = skirmishAiCallback_DataDirs_getPathSeparator(skirmishAIId);
-	const std::string aiShortName = skirmishAiCallback_SkirmishAI_Info_getValueByKey(skirmishAIId, SKIRMISH_AI_PROPERTY_SHORT_NAME);
-	std::string aiVersion;
-	if (common) {
-		aiVersion = SKIRMISH_AIS_VERSION_COMMON;
-	} else {
-		aiVersion = skirmishAiCallback_SkirmishAI_Info_getValueByKey(skirmishAIId, SKIRMISH_AI_PROPERTY_VERSION);
-	}
+
+	const std::string& aiShortName = skirmishAiCallback_SkirmishAI_Info_getValueByKey(skirmishAIId, SKIRMISH_AI_PROPERTY_SHORT_NAME);
+	const std::string& aiVersion = skirmishAiCallback_SkirmishAI_Info_getValueByKey(skirmishAIId, SKIRMISH_AI_PROPERTY_VERSION);
+
 	std::string aiRelPath(SKIRMISH_AI_DATA_DIR);
-	aiRelPath += ps + aiShortName + ps + aiVersion + ps + relPath;
 
-	exists = skirmishAiCallback_DataDirs_Roots_locatePath(skirmishAIId, path, pathMaxSize, aiRelPath.c_str(), writeable, create, dir);
+	aiRelPath += (ps + aiShortName);
+	aiRelPath += (ps + ((common)? SKIRMISH_AIS_VERSION_COMMON: aiVersion));
+	aiRelPath += (ps + relPath);
 
-	return exists;
+	return skirmishAiCallback_DataDirs_Roots_locatePath(skirmishAIId, path, pathMaxSize, aiRelPath.c_str(), writeable, create, dir);
 }
 
-EXPORT(char*) skirmishAiCallback_DataDirs_allocatePath(int skirmishAIId, const char* const relPath, bool writeable, bool create, bool dir, bool common) {
+EXPORT(char*) skirmishAiCallback_DataDirs_allocatePath(
+	int skirmishAIId,
+	const char* const relPath,
+	bool writeable,
+	bool create,
+	bool dir,
+	bool common
+) {
+	static char path[2048];
 
-	static const unsigned int pathMaxSize = 2048;
+	if (!skirmishAiCallback_DataDirs_locatePath(skirmishAIId, &path[0], sizeof(path), relPath, writeable, create, dir, common))
+		path[0] = 0;
 
-	char* path = (char*) calloc(pathMaxSize, sizeof(char*));
-	const bool fetchOk = skirmishAiCallback_DataDirs_locatePath(skirmishAIId, path, pathMaxSize, relPath, writeable, create, dir, common);
-
-	if (!fetchOk) {
-		FREE(path);
-	}
-
-	return path;
+	return &path[0];
 }
 
 

@@ -154,7 +154,7 @@ struct AIHCPause
 
 /**
  * See Clb_DataDirs_allocatePath in rts/ExternalAI/Interface/SSkirmishAICallback.h
- * ret_path has to be freed by the AI, if it is not NULL.
+ * ret_path should be copied by the AI after retrieving it, but not freed!
  */
 struct AIHCGetDataDir ///< result of HandleCommand is 1 for if path fetched, 0 for fail
 {
