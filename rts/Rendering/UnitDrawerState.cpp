@@ -422,8 +422,6 @@ void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud, bool deferredPass, bool 
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform3fv(6, &camera->GetPos()[0]);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(7, false, camera->GetViewMatrix());
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(8, false, camera->GetViewMatrixInverse());
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform3fv(10, &sunLighting->unitAmbientColor[0]);
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform3fv(11, &sunLighting->unitSunColor[0]);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(13, false, shadowHandler->GetShadowMatrixRaw());
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(14, &(shadowHandler->GetShadowParams().x));
 
@@ -442,7 +440,7 @@ void UnitDrawerStateGLSL::EnableShaders(const CUnitDrawer*) { modelShaders[MODEL
 void UnitDrawerStateGLSL::DisableShaders(const CUnitDrawer*) { modelShaders[MODEL_SHADER_ACTIVE]->Disable(); }
 
 
-void UnitDrawerStateGLSL::UpdateCurrentShader(const CUnitDrawer* ud, const ISkyLight* skyLight) const {
+void UnitDrawerStateGLSL::UpdateCurrentShaderSky(const CUnitDrawer* ud, const ISkyLight* skyLight) const {
 	const float3 modUnitSunColor = sunLighting->unitSunColor * skyLight->GetLightIntensity();
 
 	// note: the NOSHADOW shaders do not care about shadow-density
@@ -451,6 +449,15 @@ void UnitDrawerStateGLSL::UpdateCurrentShader(const CUnitDrawer* ud, const ISkyL
 		modelShaders[n]->SetUniform3fv(5, &skyLight->GetLightDir().x);
 		modelShaders[n]->SetUniform1f(12, skyLight->GetUnitShadowDensity());
 		modelShaders[n]->SetUniform3fv(11, &modUnitSunColor.x);
+		modelShaders[n]->Disable();
+	}
+}
+
+void UnitDrawerStateGLSL::UpdateCurrentShaderSunLighting(const CUnitDrawer* ud) const {
+	for (unsigned int n = MODEL_SHADER_NOSHADOW_STANDARD; n <= MODEL_SHADER_SHADOWED_DEFERRED; n++) {
+		modelShaders[n]->Enable();
+		modelShaders[n]->SetUniform3fv(10, &sunLighting->unitAmbientColor[0]);
+		modelShaders[n]->SetUniform3fv(11, &sunLighting->unitSunColor[0]);
 		modelShaders[n]->Disable();
 	}
 }

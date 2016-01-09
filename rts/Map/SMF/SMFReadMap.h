@@ -17,10 +17,11 @@ public:
 	// CEventClient interface
 	int GetReadAllyTeam() const { return AllAccessTeam; }
 	bool WantsEvent(const std::string& eventName) {
-		return (eventName == "SunChanged");
+		return eventName == "SunChanged" || eventName == "SunLightingChanged";
 	}
 
 	void SunChanged(const float3& sunDir);
+	void SunLightingChanged();
 
 public:
 	CR_DECLARE(CSMFReadMap)

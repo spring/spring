@@ -648,6 +648,17 @@ void CSMFReadMap::SunChanged(const float3& sunDir)
 	} else {
 		shadingTexUpdateNeeded = true;
 	}
+	groundDrawer->SunChanged(sunDir);
+}
+
+void CSMFReadMap::SunLightingChanged()
+{
+	if (shadingTexUpdateProgress < 0) {
+		shadingTexUpdateProgress = 0;
+	} else {
+		shadingTexUpdateNeeded = true;
+	}
+	groundDrawer->SunLightingChanged();
 }
 
 

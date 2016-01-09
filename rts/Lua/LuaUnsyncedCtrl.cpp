@@ -2818,6 +2818,15 @@ int LuaUnsyncedCtrl::SetSunLighting(lua_State* L)
 		luaL_error(L, "Incorrect arguments to SetSunLighting()");
 	}
 
+	CSunLighting sl;
+	sl.groundAmbientColor   = sunLighting->groundAmbientColor;
+	sl.groundSunColor       = sunLighting->groundSunColor;
+	sl.groundSpecularColor  = sunLighting->groundSpecularColor;
+	sl.unitAmbientColor     = sunLighting->unitAmbientColor;
+	sl.unitSunColor         = sunLighting->unitSunColor;
+	sl.unitSpecularColor    = sunLighting->unitSpecularColor;
+	sl.specularExponent     = sunLighting->specularExponent;
+
 	for (lua_pushnil(L); lua_next(L, 1) != 0; lua_pop(L, 1)) {
 		if (lua_israwstring(L, -2)) {
 			const string key = lua_tostring(L, -2);
@@ -2826,21 +2835,21 @@ int LuaUnsyncedCtrl::SetSunLighting(lua_State* L)
 				const int size = LuaUtils::ParseFloatArray(L, -1, color, 4);
 				if (size == 3) {
 					if (key == "groundAmbientColor") {
-						sunLighting->groundAmbientColor = color;
+						sl.groundAmbientColor = color;
 					} else if (key == "groundSunColor") {
-						sunLighting->groundSunColor = color;
+						sl.groundSunColor = color;
 					} else if (key == "groundSpecularColor") {
-						sunLighting->groundSpecularColor = color;
+						sl.groundSpecularColor = color;
 					} else if (key == "unitSpecularColor") {
-						sunLighting->unitSpecularColor = color;
+						sl.unitSpecularColor = color;
 					} else {
 						luaL_error(L, "Unknown key %s for float array[3]", key.c_str());
 					}
 				} else if (size == 4) {
 					if (key == "unitAmbientColor") {
-						sunLighting->unitAmbientColor = color;
+						sl.unitAmbientColor = color;
 					} else if (key == "unitSunColor") {
-						sunLighting->unitSunColor = color;
+						sl.unitSunColor = color;
 					} else {
 						luaL_error(L, "Unknown key %s for float array[4]", key.c_str());
 					}
@@ -2848,13 +2857,14 @@ int LuaUnsyncedCtrl::SetSunLighting(lua_State* L)
 			} else if (lua_isnumber(L, -1)) {
 				const float value = lua_tofloat(L, -1);
 				if (key == "specularExponent") {
-					sunLighting->specularExponent = value;
+					sl.specularExponent = value;
 				} else {
 					luaL_error(L, "Unknown key %s for float", key.c_str());
 				}
 			}
 		}
 	}
+	sunLighting->Set(sl);
 
 	return 0;
 }

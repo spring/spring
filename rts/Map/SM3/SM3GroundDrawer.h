@@ -22,7 +22,6 @@ public:
 	void Draw(const DrawPass::e& drawPass);
 	void DrawShadowPass();
 	void Update();
-	void UpdateSunDir() {}
 
 	void IncreaseDetail();
 	void DecreaseDetail();

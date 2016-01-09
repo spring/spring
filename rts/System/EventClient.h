@@ -283,6 +283,7 @@ class CEventClient
 		                        const std::string* label);
 
 		virtual void SunChanged(const float3& sunDir);
+		virtual void SunLightingChanged();
 
 		virtual void ViewResize();
 

@@ -46,7 +46,8 @@ public:
 
 	virtual void SetSquareTexGen(const int sqx, const int sqy) const = 0;
 	virtual void SetCurrentShader(const DrawPass::e& drawPass) = 0;
-	virtual void UpdateCurrentShader(const ISkyLight* skyLight) const = 0;
+	virtual void UpdateCurrentShaderSky(const ISkyLight* skyLight) const = 0;
+	virtual void UpdateCurrentShaderSunLighting() const = 0;
 };
 
 
@@ -71,7 +72,8 @@ public:
 
 	void SetSquareTexGen(const int sqx, const int sqy) const;
 	void SetCurrentShader(const DrawPass::e& drawPass) {}
-	void UpdateCurrentShader(const ISkyLight* skyLight) const {}
+	void UpdateCurrentShaderSky(const ISkyLight* skyLight) const {};
+	void UpdateCurrentShaderSunLighting() const {};
 };
 
 
@@ -97,7 +99,8 @@ public:
 
 	void SetSquareTexGen(const int sqx, const int sqy) const;
 	void SetCurrentShader(const DrawPass::e& drawPass);
-	void UpdateCurrentShader(const ISkyLight* skyLight) const;
+	void UpdateCurrentShaderSky(const ISkyLight* skyLight) const;
+	void UpdateCurrentShaderSunLighting() const {};
 
 	enum {
 		ARB_SHADER_DEFAULT = 0,
@@ -137,7 +140,8 @@ public:
 
 	void SetSquareTexGen(const int sqx, const int sqy) const;
 	void SetCurrentShader(const DrawPass::e& drawPass);
-	void UpdateCurrentShader(const ISkyLight* skyLight) const;
+	void UpdateCurrentShaderSky(const ISkyLight* skyLight) const;
+	void UpdateCurrentShaderSunLighting() const;
 
 	enum {
 		GLSL_SHADER_STANDARD = 0,

@@ -44,7 +44,8 @@ public:
 	virtual void EnableShaders(const CUnitDrawer*) {}
 	virtual void DisableShaders(const CUnitDrawer*) {}
 
-	virtual void UpdateCurrentShader(const CUnitDrawer*, const ISkyLight*) const {}
+	virtual void UpdateCurrentShaderSky(const CUnitDrawer*, const ISkyLight*) const {}
+	virtual void UpdateCurrentShaderSunLighting(const CUnitDrawer*) const {}
 	virtual void SetTeamColor(int team, const float2 alpha) const {}
 
 	void SetActiveShader(unsigned int shadowed, unsigned int deferred) {
@@ -127,7 +128,8 @@ public:
 	void EnableShaders(const CUnitDrawer*);
 	void DisableShaders(const CUnitDrawer*);
 
-	void UpdateCurrentShader(const CUnitDrawer*, const ISkyLight*) const;
+	void UpdateCurrentShaderSky(const CUnitDrawer*, const ISkyLight*) const;
+	void UpdateCurrentShaderSunLighting(const CUnitDrawer*) const;
 	void SetTeamColor(int team, const float2 alpha) const;
 };
 

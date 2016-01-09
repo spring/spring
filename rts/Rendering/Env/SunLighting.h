@@ -9,7 +9,7 @@
 struct CSunLighting {
 public:
 	void Init();
-
+	void Set(const CSunLighting& sl);
 public:
 	float3 groundAmbientColor;
 	float3 groundSunColor;

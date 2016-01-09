@@ -226,7 +226,6 @@ void SMFRenderStateGLSL::Update(
 
 			glslShaders[n]->SetUniform3v("groundAmbientColor",  &sunLighting->groundAmbientColor[0]);
 			glslShaders[n]->SetUniform3v("groundDiffuseColor",  &sunLighting->groundSunColor[0]);
-			// FIXME: groundSpecularColor is not actually directly used in GLSL shaders anymore?! Remove?
 			glslShaders[n]->SetUniform3v("groundSpecularColor", &sunLighting->groundSpecularColor[0]);
 			glslShaders[n]->SetUniform  ("groundShadowDensity", sky->GetLight()->GetGroundShadowDensity());
 
@@ -498,9 +497,6 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	glslShaders[GLSL_SHADER_CURRENT]->Enable();
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("mapHeights", readMap->GetCurrMinHeight(), readMap->GetCurrMaxHeight());
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("cameraPos", &camera->GetPos()[0]);
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundAmbientColor",  &sunLighting->groundAmbientColor[0]);
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundDiffuseColor",  &sunLighting->groundSunColor[0]);
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundSpecularColor", &sunLighting->groundSpecularColor[0]);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniformMatrix4x4("shadowMat", false, shadowHandler->GetShadowMatrixRaw());
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform4v("shadowParams", &(shadowHandler->GetShadowParams().x));
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("infoTexIntensityMul", float(infoTextureHandler->GetMode() == "metal") + 1.0f);
@@ -599,16 +595,23 @@ void SMFRenderStateGLSL::SetCurrentShader(const DrawPass::e& drawPass) {
 
 
 
-void SMFRenderStateARB::UpdateCurrentShader(const ISkyLight* skyLight) const {
+void SMFRenderStateARB::UpdateCurrentShaderSky(const ISkyLight* skyLight) const {
 	arbShaders[ARB_SHADER_CURRENT]->Enable();
 	arbShaders[ARB_SHADER_CURRENT]->SetUniform4f(11, 0, 0, 0, skyLight->GetGroundShadowDensity());
 	arbShaders[ARB_SHADER_CURRENT]->Disable();
 }
 
-void SMFRenderStateGLSL::UpdateCurrentShader(const ISkyLight* skyLight) const {
+void SMFRenderStateGLSL::UpdateCurrentShaderSky(const ISkyLight* skyLight) const {
 	glslShaders[GLSL_SHADER_CURRENT]->Enable();
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform4v("lightDir", &skyLight->GetLightDir().x);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("groundShadowDensity", skyLight->GetGroundShadowDensity());
 	glslShaders[GLSL_SHADER_CURRENT]->Disable();
 }
 
+void SMFRenderStateGLSL::UpdateCurrentShaderSunLighting() const {
+	glslShaders[GLSL_SHADER_CURRENT]->Enable();
+	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundAmbientColor",  &sunLighting->groundAmbientColor[0]);
+	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundDiffuseColor",  &sunLighting->groundSunColor[0]);
+	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundSpecularColor", &sunLighting->groundSpecularColor[0]);
+	glslShaders[GLSL_SHADER_CURRENT]->Disable();
+}

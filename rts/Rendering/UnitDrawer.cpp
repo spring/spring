@@ -1850,7 +1850,10 @@ void CUnitDrawer::PlayerChanged(int playerNum) {
 }
 
 void CUnitDrawer::SunChanged(const float3& sunDir) {
-	unitDrawerStates[DRAWER_STATE_SEL]->UpdateCurrentShader(this, sky->GetLight());
+	unitDrawerStates[DRAWER_STATE_SEL]->UpdateCurrentShaderSky(this, sky->GetLight());
+}
+void CUnitDrawer::SunLightingChanged() {
+	unitDrawerStates[DRAWER_STATE_SEL]->UpdateCurrentShaderSunLighting(this);
 }
 
 

@@ -514,6 +514,11 @@ void CEventHandler::SunChanged(const float3& sunDir)
 	ITERATE_EVENTCLIENTLIST(SunChanged, sunDir);
 }
 
+void CEventHandler::SunLightingChanged()
+{
+	ITERATE_EVENTCLIENTLIST(SunLightingChanged);
+}
+
 void CEventHandler::ViewResize()
 {
 	ITERATE_EVENTCLIENTLIST(ViewResize);

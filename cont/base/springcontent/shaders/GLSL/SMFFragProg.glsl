@@ -442,8 +442,7 @@ void main() {
 		vec3  specularInt  = specularCol.rgb * specularPow;
 		      specularInt *= shadowCoeff;
 
-		// no need to multiply by groundSpecularColor anymore
-		gl_FragColor.rgb += specularInt;
+		gl_FragColor.rgb += specularInt * groundSpecularColor;
 
 		#if (MAX_DYNAMIC_MAP_LIGHTS > 0)
 			gl_FragColor.rgb += DynamicLighting(normal, diffuseCol.rgb, specularCol.rgb, specularExp);
