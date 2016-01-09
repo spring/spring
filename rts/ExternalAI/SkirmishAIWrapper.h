@@ -13,10 +13,12 @@
 
 class CAICallback;
 class CAICheats;
+class CSkirmishAILibrary;
 struct SSkirmishAICallback;
-class CSkirmishAI;
+
 struct Command;
 class float3;
+
 
 /**
  * Acts as an OO wrapper for a Skirmish AI instance.
@@ -38,6 +40,29 @@ public:
 
 	void Serialize(creg::ISerializer *s);
 	void PostLoad();
+
+
+	/**
+	 * Initialize the AI instance.
+	 * This calls the native init() method, the InitAIEvent is sent afterwards.
+	 */
+	void Init();
+
+	/// @see SReleaseEvent in Interface/AISEvents.h
+	void Release(int reason = 0 /* = unspecified */);
+
+	/** Called just before all the units are destroyed. */
+	void PreDestroy();
+
+	/**
+	 * No events are forwarded to the Skirmish AI plugin
+	 * after this method has been called.
+	 * Do not call this if you want to kill a local AI, but use
+	 * the Skirmish AI Handler instead.
+	 * @see CSkirmishAIHandler::SetLocalSkirmishAIDieing()
+	 */
+	void Dieing() { dieing = true; }
+
 
 	// AI Events
 	void Load(std::istream *s);
@@ -67,32 +92,31 @@ public:
 	void CommandFinished(int unitId, int commandId, int commandTopicId);
 	void SeismicPing(int allyTeam, int unitId, const float3& pos, float strength);
 
-	/** Called just before all the units are destroyed. */
-	void PreDestroy();
-
+	int GetSkirmishAIID() const { return skirmishAIId; }
 	int GetTeamId() const { return teamId; }
 	const SkirmishAIKey& GetKey() const { return key; }
-	const SSkirmishAICallback* GetCallback() const { return c_callback; }
 
 	void SetCheatEventsEnabled(bool enable) { cheatEvents = enable; }
 	bool IsCheatEventsEnabled() const { return cheatEvents; }
 
-	void Init();
-	void Dieing();
-	/// @see SReleaseEvent in Interface/AISEvents.h
-	void Release(int reason = 0 /* = unspecified */);
-
-	int GetSkirmishAIID() const { return skirmishAIId; }
-
 private:
 	bool LoadSkirmishAI(bool postLoad);
 
-	std::unique_ptr<CSkirmishAI> ai;
+	/**
+	 * CAUTION: takes C AI Interface events, not engine C++ ones!
+	 */
+	int HandleEvent(int topic, const void* data) const;
+
+private:
 	std::unique_ptr<CAICheats> cheats;
 	std::unique_ptr<CAICallback> callback;
 
-	SSkirmishAICallback* c_callback;
+	const CSkirmishAILibrary* library;
+	const SSkirmishAICallback* sCallback;
+
 	SkirmishAIKey key;
+	std::string timerName;
+
 
 	int skirmishAIId;
 	int teamId;
@@ -100,6 +124,9 @@ private:
 	bool initialized;
 	bool released;
 	bool cheatEvents;
+
+	bool initOk;
+	bool dieing;
 };
 
 #endif // SKIRMISH_AI_WRAPPER_H

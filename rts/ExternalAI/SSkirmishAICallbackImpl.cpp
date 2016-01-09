@@ -6046,7 +6046,6 @@ SSkirmishAICallback* skirmishAiCallback_getInstanceFor(
 }
 
 void skirmishAiCallback_release(int skirmishAIId) {
-
 	skirmishAIId_cheatCallback.erase(skirmishAIId);
 	skirmishAIId_callback.erase(skirmishAIId);
 

@@ -14,7 +14,6 @@ SET(sources_engine_ExternalAI
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaAIImplHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SAIInterfaceCallbackImpl.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SSkirmishAICallbackImpl.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/SkirmishAI.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SkirmishAIData.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SkirmishAIHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SkirmishAIKey.cpp"
