@@ -28,9 +28,7 @@ public:
 	 */
 	CSkirmishAILibraryInfo(const std::map<std::string, std::string>& aiInfo, const std::string& aiOptionLua = "");
 
-	~CSkirmishAILibraryInfo();
-
-	size_t size() const;
+	size_t size() const { return info_keys.size(); }
 	const std::string& GetKeyAt(size_t index) const;
 	const std::string& GetValueAt(size_t index) const;
 	const std::string& GetDescriptionAt(size_t index) const;
@@ -66,7 +64,7 @@ public:
 	void SetInterfaceVersion(const std::string& interfaceVersion);
 	bool SetInfo(const std::string& key, const std::string& value, const std::string& description = "");
 
-	const std::vector<Option>& GetOptions() const;
+	const std::vector<Option>& GetOptions() const { return options; }
 
 private:
 	// for having a well defined order

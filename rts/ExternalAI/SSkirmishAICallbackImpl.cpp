@@ -170,6 +170,8 @@ static inline int gameModParamLosMask(void) {
 	return LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
 }
 
+
+
 static int getRulesParams(
 	const LuaRulesParams::Params& params,
 	const int losMask,
@@ -181,9 +183,7 @@ static int getRulesParams(
 		size_t paramsSize = 0;
 
 		for (size_t i = 0; i < params.size(); i++) {
-			if (modParamIsVisible(params[i], losMask)) {
-				paramsSize++;
-			}
+			paramsSize += modParamIsVisible(params[i], losMask);
 		}
 
 		return paramsSize;
@@ -193,13 +193,14 @@ static int getRulesParams(
 	size_t paramsSize = 0;
 
 	for (size_t i = 0; i < params.size(); i++) {
-		if (modParamIsVisible(params[i], losMask)) {
-			paramIds[paramsSize] = i;
-			paramsSize++;
+		if (!modParamIsVisible(params[i], losMask))
+			continue;
 
-			if (paramsSize >= paramIdsMaxSize) {
-				break;
-			}
+		paramIds[paramsSize] = i;
+		paramsSize++;
+
+		if (paramsSize >= paramIdsMaxSize) {
+			break;
 		}
 	}
 
@@ -232,11 +233,11 @@ static int getRulesParamById(
 ) {
 	int value = -1;
 
-	if (modParamIsValidId(params, rulesParamId)) {
-		if (modParamIsVisible(params[rulesParamId], losMask)) {
-			value = rulesParamId;
-		}
-	}
+	if (!modParamIsValidId(params, rulesParamId))
+		return value;
+
+	if (modParamIsVisible(params[rulesParamId], losMask))
+		value = rulesParamId;
 
 	return value;
 }
@@ -249,15 +250,19 @@ static const char* getRulesParamNameById(
 ) {
 	const char* name = "";
 
-	if (modParamIsValidId(params, rulesParamId) && modParamIsVisible(params[rulesParamId], losMask)) {
-		auto mb = paramsMap.begin();
-		auto me = paramsMap.end();
+	if (!modParamIsValidId(params, rulesParamId))
+		return name;
 
-		for (auto mi = mb; mi != me; ++mi) {
-			if (mi->second == rulesParamId) {
-				name = mi->first.c_str();
-				break;
-			}
+	if (!modParamIsVisible(params[rulesParamId], losMask))
+		return name;
+
+	auto mb = paramsMap.begin();
+	auto me = paramsMap.end();
+
+	for (auto mi = mb; mi != me; ++mi) {
+		if (mi->second == rulesParamId) {
+			name = mi->first.c_str();
+			break;
 		}
 	}
 
@@ -296,6 +301,8 @@ static const char* getRulesParamStringValueById(
 	return value;
 }
 
+
+
 static inline const UnitDef* getUnitDefById(int skirmishAIId, int unitDefId) {
 	return unitDefHandler->GetUnitDefByID(unitDefId);
 }
@@ -304,22 +311,18 @@ static inline const MoveDef* getUnitDefMoveDefById(int skirmishAIId, int unitDef
 	const unsigned int mdType = getUnitDefById(skirmishAIId, unitDefId)->pathType;
 	const MoveDef* moveDef = (mdType != -1U)? moveDefHandler->GetMoveDefByPathType(mdType): NULL;
 
-	assert(moveDef != NULL); // NOTE There is a callback method to check whether MoveData is available, use it.
+	// NOTE There is a callback method to check whether MoveData is available, use it.
 	return moveDef;
 }
 
 static inline const WeaponDef* getWeaponDefById(int skirmishAIId, int weaponDefId) {
-
-	const WeaponDef* weaponDef = weaponDefHandler->GetWeaponDefByID(weaponDefId);
-	assert(weaponDef != NULL);
-	return weaponDef;
+	return (weaponDefHandler->GetWeaponDefByID(weaponDefId));
 }
 
 static inline const FeatureDef* getFeatureDefById(int skirmishAIId, int featureDefId) {
-	const FeatureDef* featureDef = featureHandler->GetFeatureDefByID(featureDefId);
-	assert(featureDef != NULL);
-	return featureDef;
+	return (featureHandler->GetFeatureDefByID(featureDefId));
 }
+
 
 //FIXME: get rid of this function (=call functions directly)
 static int wrapper_HandleCommand(CAICallback* clb, CAICheats* clbCheat, int cmdId, void* cmdData) {
@@ -1408,8 +1411,8 @@ EXPORT(const char*) skirmishAiCallback_SkirmishAI_OptionValues_getKey(int skirmi
 	// FIXME
 	static std::string blob;
 
-	const SkirmishAIData& data = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
-	const auto& optionKeys = data.optionKeys;
+	const SkirmishAIData* data = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
+	const auto& optionKeys = data->optionKeys;
 
 	if (checkOptionIndex(optionIndex, optionKeys))
 		return nullptr;
@@ -1421,13 +1424,13 @@ EXPORT(const char*) skirmishAiCallback_SkirmishAI_OptionValues_getKey(int skirmi
 EXPORT(const char*) skirmishAiCallback_SkirmishAI_OptionValues_getValue(int skirmishAIId, int optionIndex) {
 	static std::string blob;
 
-	const SkirmishAIData& data = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
-	const auto& optionKeys = data.optionKeys;
+	const SkirmishAIData* data = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
+	const auto& optionKeys = data->optionKeys;
 
 	if (checkOptionIndex(optionIndex, optionKeys))
 		return nullptr;
 
-	const auto& options = data.options;
+	const auto& options = data->options;
 	const auto option = options.find(*(optionKeys.begin() + optionIndex));
 
 	if (option == options.end())
@@ -1441,9 +1444,9 @@ EXPORT(const char*) skirmishAiCallback_SkirmishAI_OptionValues_getValue(int skir
 EXPORT(const char*) skirmishAiCallback_SkirmishAI_OptionValues_getValueByKey(int skirmishAIId, const char* const key) {
 	static std::string blob;
 
-	const SkirmishAIData& data = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
+	const SkirmishAIData* data = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
 
-	const auto& options = data.options;
+	const auto& options = data->options;
 	const auto option = options.find(key);
 
 	if (option == options.end())
