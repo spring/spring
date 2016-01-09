@@ -393,14 +393,17 @@ public:
 	}
 
 public:
-	/// CMD_xxx code  (custom codes can also be used)
-	int id;
-
 	/**
 	 * AI Command callback id (passed in on handleCommand, returned
 	 * in CommandFinished event)
 	 */
 	int aiCommandId;
+
+	/// option bits (RIGHT_MOUSE_KEY, ...)
+	unsigned char options;
+
+	/// unique id within a CCommandQueue
+	unsigned int tag;
 
 	/**
 	 * Remove this command after this frame (absolute).
@@ -413,11 +416,8 @@ public:
 	 */
 	int timeOut;
 
-	/// unique id within a CCommandQueue
-	unsigned int tag;
-
-	/// option bits (RIGHT_MOUSE_KEY, ...)
-	unsigned char options;
+	/// CMD_xxx code  (custom codes can also be used)
+	int id;
 
 	/// command parameters
 	#ifdef BUILDING_AI

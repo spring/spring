@@ -222,8 +222,6 @@ void CSkirmishAIHandler::SetLocalSkirmishAIDieing(const size_t skirmishAIId, con
 
 
 const SkirmishAIKey* CSkirmishAIHandler::GetLocalSkirmishAILibraryKey(const size_t skirmishAIId) {
-	const SkirmishAIKey* key = nullptr;
-
 	// fail, if the specified AI is not a local one
 	assert(CSkirmishAIHandler::IsLocalSkirmishAI(skirmishAIId));
 
