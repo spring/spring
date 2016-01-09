@@ -432,6 +432,8 @@ void main() {
 
 #ifdef SMF_SPECULAR_LIGHTING
 	specularCol = texture2D(specularTex, specTexCoords);
+#else
+	specularCol = vec4(groundSpecularColor, 0.1);
 #endif
 
 	#ifndef DEFERRED_MODE
@@ -442,7 +444,7 @@ void main() {
 		vec3  specularInt  = specularCol.rgb * specularPow;
 		      specularInt *= shadowCoeff;
 
-		gl_FragColor.rgb += specularInt * groundSpecularColor;
+		gl_FragColor.rgb += specularInt;
 
 		#if (MAX_DYNAMIC_MAP_LIGHTS > 0)
 			gl_FragColor.rgb += DynamicLighting(normal, diffuseCol.rgb, specularCol.rgb, specularExp);
