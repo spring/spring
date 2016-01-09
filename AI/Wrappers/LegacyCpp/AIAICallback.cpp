@@ -4,12 +4,12 @@
 
 #include "ExternalAI/Interface/SSkirmishAICallback.h"
 #include "ExternalAI/Interface/AISCommands.h"
+#include "Sim/Units/CommandAI/Command.h"
 #include "System/Util.h"
 
 // engine copies, so we do not have to adjust
 // to each minor change done there
 #include "MoveData.h"
-#include "Command.h"
 #include "CommandQueue.h"
 
 #include <string>
@@ -73,13 +73,19 @@ std::vector<unsigned short> springLegacyAI::CAIAICallback::jammerMap;
 std::vector<unsigned char> springLegacyAI::CAIAICallback::metalMap;
 
 
-springLegacyAI::CAIAICallback::CAIAICallback()
-	: IAICallback(), skirmishAIId(-1), sAICallback(nullptr) {
+springLegacyAI::CAIAICallback::CAIAICallback():
+	IAICallback(),
+	skirmishAIId(-1),
+	sAICallback(nullptr)
+{
 	init();
 }
 
-springLegacyAI::CAIAICallback::CAIAICallback(int skirmishAIId, const SSkirmishAICallback* sAICallback)
-	: IAICallback(), skirmishAIId(skirmishAIId), sAICallback(sAICallback) {
+springLegacyAI::CAIAICallback::CAIAICallback(int skirmishAIId, const SSkirmishAICallback* sAICallback):
+	IAICallback(),
+	skirmishAIId(skirmishAIId),
+	sAICallback(sAICallback)
+{
 	init();
 }
 
@@ -1499,16 +1505,9 @@ int springLegacyAI::CAIAICallback::GiveOrder(int unitId, springLegacyAI::Command
 }
 
 int springLegacyAI::CAIAICallback::Internal_GiveOrder(int unitId, int groupId, springLegacyAI::Command* c) {
-	const int maxUnits = sAICallback->Unit_getMax(skirmishAIId);
+	RawCommand rc = std::move(c->ToRawCommand());
 
-	int sCommandId;
-	void* sCommandData = mallocSUnitCommand(unitId, groupId, c, &sCommandId, maxUnits);
-
-	int ret = sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, sCommandId, sCommandData);
-
-	freeSUnitCommand(sCommandData, sCommandId);
-
-	return ret;
+	return (sAICallback->Engine_executeCommand(skirmishAIId, unitId, groupId, &rc));
 }
 
 int springLegacyAI::CAIAICallback::InitPath(float3 start, float3 end, int pathType, float goalRadius)

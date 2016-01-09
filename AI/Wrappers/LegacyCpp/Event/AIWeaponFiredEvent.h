@@ -14,28 +14,27 @@ public:
 	CAIWeaponFiredEvent(const SWeaponFiredEvent& event) : event(event) {}
 	~CAIWeaponFiredEvent() {}
 
-	void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {
+	void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = nullptr) {
 		int evtId = AI_EVENT_WEAPON_FIRED;
 
-		WeaponDef* weaponDef = NULL;
-		if (globalAICallback) {
+		WeaponDef* weaponDef = nullptr;
+		WeaponDef weaponDefTmp;
+
+		if (globalAICallback != nullptr) {
 			AIHCGetWeaponDefById fetchCmd = {event.weaponDefId, weaponDef};
-			int ret = globalAICallback->GetAICallback()
-					->HandleCommand(AIHCGetWeaponDefByIdId, &fetchCmd);
-			if (ret != 1) {
-				weaponDef = NULL;
+
+			// NOTE: CAIAICallback::HandleCommand does nothing with this event atm
+			if ((globalAICallback->GetAICallback())->HandleCommand(AIHCGetWeaponDefByIdId, &fetchCmd) != 1) {
+				return;
 			}
 		}
-		if (weaponDef == NULL) {
-			weaponDef = new WeaponDef();
-			weaponDef->id = event.weaponDefId;
-		}
 
+		weaponDef = &weaponDefTmp;
+		weaponDef->id = event.weaponDefId;
+
+		// let the AI itself handle it only if the callback did not
 		IGlobalAI::WeaponFireEvent evt = {event.unitId, weaponDef};
 		ai.HandleEvent(evtId, &evt);
-
-		delete weaponDef;
-		weaponDef = NULL;
 	}
 
 private:

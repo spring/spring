@@ -1,29 +1,51 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <cassert>
 #include <memory>
 
 #include "AIAI.h"
-#include "IGlobalAI.h"
-#include "Event/AIEvents.h"
+
 #include "ExternalAI/Interface/AISEvents.h"
-#include "System/Util.h"
+#include "ExternalAI/Interface/AISCommands.h"
+#include "ExternalAI/Interface/SSkirmishAICallback.h"
+#include "ExternalAI/Interface/AISEvents.h"
 
-springLegacyAI::CAIAI::CAIAI(springLegacyAI::IGlobalAI* gAI):
-	ai(gAI),
-	globalAICallback(nullptr) {
-}
+#include "Event/AIEvent.h"
+#include "Event/AINullEvent.h"
 
-springLegacyAI::CAIAI::~CAIAI() {
-	SafeDelete(ai);
-	SafeDelete(globalAICallback);
-}
+#include "Event/AIInitEvent.h"
+#include "Event/AIReleaseEvent.h"
+#include "Event/AIUpdateEvent.h"
 
+#include "Event/AIChatMessageEvent.h"
+#include "Event/AILuaMessageEvent.h"
+
+#include "Event/AIUnitCreatedEvent.h"
+#include "Event/AIUnitFinishedEvent.h"
+#include "Event/AIUnitIdleEvent.h"
+#include "Event/AIUnitMoveFailedEvent.h"
+#include "Event/AIUnitDamagedEvent.h"
+#include "Event/AIUnitDestroyedEvent.h"
+#include "Event/AIUnitGivenEvent.h"
+#include "Event/AIUnitCapturedEvent.h"
+
+#include "Event/AIEnemyCreatedEvent.h"
+#include "Event/AIEnemyFinishedEvent.h"
+#include "Event/AIEnemyEnterLOSEvent.h"
+#include "Event/AIEnemyLeaveLOSEvent.h"
+#include "Event/AIEnemyEnterRadarEvent.h"
+#include "Event/AIEnemyLeaveRadarEvent.h"
+#include "Event/AIEnemyDamagedEvent.h"
+#include "Event/AIEnemyDestroyedEvent.h"
+
+#include "Event/AIWeaponFiredEvent.h"
+#include "Event/AIPlayerCommandEvent.h"
+#include "Event/AISeismicPingEvent.h"
 
 int springLegacyAI::CAIAI::handleEvent(int topic, const void* data) {
-
 	int ret = -1; // if this values remains, something went wrong
 
-	if (ai == nullptr)
+	if (ai.get() == nullptr)
 		return ret;
 
 	std::unique_ptr<CAIEvent> e;
@@ -33,11 +55,17 @@ int springLegacyAI::CAIAI::handleEvent(int topic, const void* data) {
 		case EVENT_INIT: {
 			e.reset(new CAIInitEvent(*static_cast<const SInitEvent*>(data)));
 
-			// should not ever be needed, but does not hurt either
-			SafeDelete(globalAICallback);
+			// type(globalAICallback) := IGlobalAICallback* (CAIGlobalAICallback*), kept here
+			// type(globalAICallback->GetAICallback()) := IAICallback* (CAICallback*), kept in SkirmishAIWrapper
+			const SInitEvent* sie = static_cast<const SInitEvent*>(data);
+			const SSkirmishAICallback* cb = sie->callback;
 
-			globalAICallback = (static_cast<CAIInitEvent*>(e.get()))->GetWrappedGlobalAICallback();
+			assert(globalAICallback.get() == nullptr);
+			globalAICallback.reset(new CAIGlobalAICallback(cb, sie->skirmishAIId));
+
+			ai->InitAI(globalAICallback.get(), cb->SkirmishAI_getTeamId(sie->skirmishAIId));
 		} break;
+
 		case EVENT_RELEASE: {
 			e.reset(new CAIReleaseEvent(*static_cast<const SReleaseEvent*>(data)));
 		} break;
@@ -119,7 +147,7 @@ int springLegacyAI::CAIAI::handleEvent(int topic, const void* data) {
 
 	try {
 		// handle the event
-		e->Run(*ai, globalAICallback);
+		e->Run(*ai, globalAICallback.get());
 		ret = 0;
 	} catch (int err) {
 		if (err == 0) {

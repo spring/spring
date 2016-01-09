@@ -48,6 +48,9 @@ struct SSkirmishAICallback {
 	 */
 	int               (CALLING_CONV *Engine_handleCommand)(int skirmishAIId, int toId, int commandId, int commandTopic, void* commandData);
 
+	int               (CALLING_CONV *Engine_executeCommand)(int skirmishAIId, int unitId, int groupId, void* commandData);
+
+
 	/// Returns the major engine revision number (e.g. 83)
 	const char*       (CALLING_CONV *Engine_Version_getMajor)(int skirmishAIId);
 

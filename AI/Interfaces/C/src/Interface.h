@@ -19,9 +19,8 @@ class CInterface {
 public:
 	CInterface(int interfaceId, const SAIInterfaceCallback* callback);
 
-//	// static properties
-//	LevelOfSupport GetLevelOfSupportFor(
-//			const char* engineVersion, int engineAIInterfaceGeneratedVersion);
+	// static properties
+	// LevelOfSupport GetLevelOfSupportFor(const char* engineVersion, int engineAIInterfaceGeneratedVersion);
 
 	// skirmish AI methods
 	const SSkirmishAILibrary* LoadSkirmishAILibrary(
@@ -47,22 +46,15 @@ private:
 	static void reportError(const std::string& msg);
 	std::string FindLibFile(const SSkirmishAISpecifier& sAISpecifier);
 
-	bool FitsThisInterface(
-		const std::string& requestedShortName,
-		const std::string& requestedVersion
-	);
-
 private:
 	const int interfaceId;
 	const SAIInterfaceCallback* callback;
 
 	typedef std::set<SSkirmishAISpecifier, SSkirmishAISpecifier_Comparator> T_skirmishAISpecifiers;
-// 	typedef std::map<const SSkirmishAISpecifier, std::map<std::string, std::string>, SSkirmishAISpecifier_Comparator> T_skirmishAIInfos;
 	typedef std::map<const SSkirmishAISpecifier, SSkirmishAILibrary, SSkirmishAISpecifier_Comparator> T_skirmishAIs;
 	typedef std::map<const SSkirmishAISpecifier, sharedLib_t, SSkirmishAISpecifier_Comparator> T_skirmishAILibs;
 
 	T_skirmishAISpecifiers mySkirmishAISpecifiers;
-// 	T_skirmishAIInfos mySkirmishAIInfos;
 	T_skirmishAIs myLoadedSkirmishAIs;
 	T_skirmishAILibs myLoadedSkirmishAILibs;
 };

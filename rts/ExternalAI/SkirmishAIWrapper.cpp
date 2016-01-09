@@ -36,7 +36,6 @@ CR_REG_METADATA(CSkirmishAIWrapper, (
 	CR_IGNORED(cheats),
 	CR_IGNORED(c_callback),
 	CR_MEMBER(key),
-	CR_IGNORED(info),
 
 	CR_MEMBER(skirmishAIId),
 	CR_MEMBER(teamId),
@@ -52,11 +51,7 @@ CR_REG_METADATA(CSkirmishAIWrapper, (
 
 /// used only by creg
 CSkirmishAIWrapper::CSkirmishAIWrapper():
-	ai(nullptr),
-	callback(nullptr),
-	cheats(nullptr),
 	c_callback(nullptr),
-	info(nullptr),
 
 	skirmishAIId(-1),
 	teamId(-1),
@@ -68,11 +63,7 @@ CSkirmishAIWrapper::CSkirmishAIWrapper():
 }
 
 CSkirmishAIWrapper::CSkirmishAIWrapper(const int skirmishAIId):
-	ai(nullptr),
-	callback(nullptr),
-	cheats(nullptr),
 	c_callback(nullptr),
-	info(nullptr),
 
 	skirmishAIId(skirmishAIId),
 	teamId(-1),
@@ -90,46 +81,46 @@ CSkirmishAIWrapper::CSkirmishAIWrapper(const int skirmishAIId):
 }
 
 void CSkirmishAIWrapper::CreateCallback() {
-	if (c_callback != nullptr)
+	assert(c_callback == nullptr);
+
+	cheats.reset(new CAICheats(this));
+	callback.reset(new CAICallback(teamId));
+
+	c_callback = skirmishAiCallback_getInstanceFor(skirmishAIId, teamId, callback.get(), cheats.get());
+}
+
+CSkirmishAIWrapper::~CSkirmishAIWrapper() {
+	if (ai.get() == nullptr)
 		return;
 
-	callback = new CAICallback(teamId);
-	cheats = new CAICheats(this);
-	c_callback = skirmishAiCallback_getInstanceFor(skirmishAIId, teamId, callback, cheats);
+	// send release event
+	Release(skirmishAIHandler.GetLocalSkirmishAIDieReason(skirmishAIId));
+
+	// NOTE: explicitly ordered so callback is valid in AI's dtor
+	ai.reset();
+	cheats.reset();
+	callback.reset();
+
+	skirmishAiCallback_release(skirmishAIId);
+	c_callback = nullptr;
 }
 
 void CSkirmishAIWrapper::PreDestroy() {
 	callback->noMessages = true;
 }
 
-CSkirmishAIWrapper::~CSkirmishAIWrapper() {
-	if (ai == nullptr)
-		return;
-
-	if (initialized && !released)
-		Release();
-
-	SafeDelete(ai);
-
-	skirmishAiCallback_release(skirmishAIId);
-	c_callback = nullptr;
-
-	SafeDelete(callback);
-	SafeDelete(cheats);
-}
-
 void CSkirmishAIWrapper::Serialize(creg::ISerializer* s) {
 }
 
 void CSkirmishAIWrapper::PostLoad() {
-	//CreateCallback();
+	CreateCallback();
 	LoadSkirmishAI(true);
 }
 
 
 
 bool CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
-	ai = new CSkirmishAI(skirmishAIId, teamId, key, GetCallback());
+	ai.reset(new CSkirmishAI(skirmishAIId, teamId, key, GetCallback()));
 	ai->Init();
 
 	// check if initialization went ok
@@ -162,10 +153,11 @@ bool CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 				UnitCreated(a, -1);
 			} CATCH_AI_EXCEPTION;
 
-			if (!unit->beingBuilt)
+			if (!unit->beingBuilt) {
 				try {
 					UnitFinished(a);
 				} CATCH_AI_EXCEPTION;
+			}
 		} else {
 			if (unit->allyteam == teamHandler->AllyTeam(teamId))
 				continue;
@@ -218,14 +210,16 @@ void CSkirmishAIWrapper::Release(int reason) {
 	if (!initialized || released)
 		return;
 
+	// NOTE: further cleanup is done in the destructor
 	const SReleaseEvent evtData = {reason};
 	ai->HandleEvent(EVENT_RELEASE, &evtData);
 
 	released = true;
-	// further cleanup is done in the destructor
 }
 
-static void streamCopy(std::istream* in, std::ostream* out)
+
+
+static void streamCopy(/*const*/ std::istream* in, std::ostream* out)
 {
 	std::vector<char> buffer(128);
 
@@ -253,11 +247,13 @@ void CSkirmishAIWrapper::Load(std::istream* loadStream)
 	const std::string tmpFile = createTempFileName("load", teamId, skirmishAIId);
 	const SLoadEvent evtData = {tmpFile.c_str()};
 
-	std::ofstream tmpFileStream;
+	{
+		std::ofstream tmpFileStream;
 
-	tmpFileStream.open(tmpFile.c_str(), std::ios::binary);
-	streamCopy(loadStream, &tmpFileStream);
-	tmpFileStream.close();
+		tmpFileStream.open(tmpFile.c_str(), std::ios::binary);
+		streamCopy(loadStream, &tmpFileStream);
+		tmpFileStream.close();
+	}
 
 	ai->HandleEvent(EVENT_LOAD, &evtData);
 
@@ -274,11 +270,13 @@ void CSkirmishAIWrapper::Save(std::ostream* saveStream)
 	if (!FileSystem::FileExists(tmpFile))
 		return;
 
-	std::ifstream tmpFileStream;
+	{
+		std::ifstream tmpFileStream;
 
-	tmpFileStream.open(tmpFile.c_str(), std::ios::binary);
-	streamCopy(&tmpFileStream, saveStream);
-	tmpFileStream.close();
+		tmpFileStream.open(tmpFile.c_str(), std::ios::binary);
+		streamCopy(&tmpFileStream, saveStream);
+		tmpFileStream.close();
+	}
 
 	FileSystem::DeleteFile(tmpFile);
 }
@@ -409,9 +407,9 @@ void CSkirmishAIWrapper::PlayerCommandGiven(
 	const Command& c,
 	int playerId
 ) {
-	const int cCommandId = extractAICommandTopic(&c, unitHandler->MaxUnits());
-
 	std::vector<int> unitIds = playerSelectedUnits;
+
+	const int cCommandId = extractAICommandTopic(&c, unitHandler->MaxUnits());
 	const SPlayerCommandEvent evtData = {&unitIds[0], static_cast<int>(playerSelectedUnits.size()), cCommandId, playerId};
 
 	ai->HandleEvent(EVENT_PLAYER_COMMAND, &evtData);

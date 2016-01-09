@@ -14,6 +14,8 @@ extern "C" {
 
 EXPORT(int              ) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, int commandId, int commandTopic, void* commandData);
 
+EXPORT(int              ) skirmishAiCallback_Engine_executeCommand(int skirmishAIId, int unitId, int groupId, void* commandData);
+
 
 EXPORT(const char*      ) skirmishAiCallback_Engine_Version_getFull(int skirmishAIId);
 

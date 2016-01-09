@@ -9,6 +9,7 @@
 
 #include <map>
 #include <string>
+#include <memory>
 
 class CAICallback;
 class CAICheats;
@@ -25,12 +26,13 @@ class float3;
 class CSkirmishAIWrapper : public CObject {
 private:
 	CR_DECLARE(CSkirmishAIWrapper)
-	/// used only by creg
-	CSkirmishAIWrapper();
 
 	void CreateCallback();
 
 public:
+	/// used only by creg
+	CSkirmishAIWrapper();
+
 	CSkirmishAIWrapper(const int skirmishAIId);
 	~CSkirmishAIWrapper();
 
@@ -85,13 +87,12 @@ public:
 private:
 	bool LoadSkirmishAI(bool postLoad);
 
-	CSkirmishAI* ai;
-	CAICallback* callback;
-	CAICheats* cheats;
+	std::unique_ptr<CSkirmishAI> ai;
+	std::unique_ptr<CAICheats> cheats;
+	std::unique_ptr<CAICallback> callback;
+
 	SSkirmishAICallback* c_callback;
 	SkirmishAIKey key;
-
-	const struct InfoItem* info;
 
 	int skirmishAIId;
 	int teamId;

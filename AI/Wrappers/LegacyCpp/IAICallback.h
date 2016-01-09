@@ -5,6 +5,7 @@
 
 #include "ExternalAI/AILegacySupport.h"
 #include "Sim/Misc/GlobalConstants.h" // needed for MAX_UNITS
+#include "Sim/Units/CommandAI/Command.h"
 #include "System/float3.h"
 
 #include <string>
@@ -14,7 +15,6 @@
 
 namespace springLegacyAI {
 
-struct Command;
 struct UnitDef;
 struct FeatureDef;
 struct WeaponDef;

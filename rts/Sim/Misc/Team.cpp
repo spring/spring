@@ -63,7 +63,7 @@ CTeam::CTeam():
 	maxUnits(0),
 	isDead(false),
 	gaia(false),
-	dontRemove(false),
+	removeUnits(true),
 	resStorage(1000000, 1000000),
 	resShare(0.99f, 0.95f),
 	nextHistoryEntry(0),
@@ -210,11 +210,18 @@ void CTeam::GiveEverythingTo(const unsigned toTeam)
 		res.energy = 0;
 	}
 
-	dontRemove = true;
-	for (CUnit* u: units) {
-		u->ChangeTeam(toTeam, CUnit::ChangeGiven);
+	{
+		// block RemoveUnit from creating a loop-and-modify
+		// situation for units that end up being transferred
+		removeUnits = false;
+
+		for (CUnit* u: units) {
+			u->ChangeTeam(toTeam, CUnit::ChangeGiven);
+		}
+
+		removeUnits = true;
 	}
-	dontRemove = false;
+
 	units.clear();
 }
 
@@ -400,7 +407,7 @@ void CTeam::AddUnit(CUnit* unit, AddType type)
 
 void CTeam::RemoveUnit(CUnit* unit, RemoveType type)
 {
-	if (!dontRemove)
+	if (removeUnits)
 		VectorErase(units, unit);
 
 	switch (type) {

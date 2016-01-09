@@ -19,22 +19,19 @@ public:
 		int evtId = AI_EVENT_PLAYER_COMMAND;
 
 		std::vector<int> unitIds;
-		int i;
-		for (i=0; i < event.unitIds_size; i++) {
+
+		for (int i = 0; i < event.unitIds_size; i++) {
 			unitIds.push_back(event.unitIds[i]);
 		}
 		
 		// this workaround is a bit ugly, but as only ray use this event anyway,
 		// this should suffice
-		const CCommandQueue* curCommands = globalAICallback->GetAICallback()
-				->GetCurrentUnitCommands(event.unitIds[0]);
+		const CCommandQueue* curCommands = (globalAICallback->GetAICallback())->GetCurrentUnitCommands(event.unitIds[0]);
 		const Command& lastCommand = curCommands->front();
-		//Command* c = (Command*) newCommand(event.commandData,
-		//		event.commandTopicId);
+		// Command* c = (Command*) newCommand(event.commandData, event.commandTopicId);
 
 		IGlobalAI::PlayerCommandEvent evt = {unitIds, lastCommand, event.playerId};
 		ai.HandleEvent(evtId, &evt);
-		//delete c;
 	}
 
 private:

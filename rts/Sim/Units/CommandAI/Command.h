@@ -6,9 +6,16 @@
 #include <string>
 #include <climits> // for INT_MAX
 
+#ifdef BUILDING_AI
+#include <vector>
+#else
+#include "System/SafeVector.h"
+#endif
+
 #include "System/creg/creg_cond.h"
 #include "System/float3.h"
-#include "System/SafeVector.h"
+
+
 
 // ID's lower than 0 are reserved for build options (cmd -x = unitdefs[x])
 #define CMD_STOP                   0
@@ -117,6 +124,46 @@ enum {
 	FIRESTATE_FIREATNEUTRAL =  3,
 };
 
+
+
+
+#if (defined(__cplusplus))
+extern "C" {
+#endif
+
+	// this must have C linkage
+	struct RawCommand {
+		int id;
+		int aiCommandId;
+		int timeOut;
+
+		unsigned int numParams;
+
+		/// unique id within a CCommandQueue
+		unsigned int tag;
+
+		/// option bits (RIGHT_MOUSE_KEY, ...)
+		unsigned char options;
+
+		/// command parameters
+		float* params;
+	};
+
+#if (defined(__cplusplus))
+// extern "C"
+};
+#endif
+
+
+
+
+#if defined(BUILDING_AI)
+#define CMD_DGUN CMD_MANUALFIRE
+
+namespace springLegacyAI {
+#endif
+
+
 struct Command
 {
 private:
@@ -213,6 +260,36 @@ public:
 	}
 
 	~Command() { }
+
+
+	RawCommand ToRawCommand() {
+		RawCommand rc;
+		rc.id          = id;
+		rc.aiCommandId = aiCommandId;
+		rc.timeOut     = timeOut;
+
+		rc.numParams   = params.size();
+		rc.tag         = tag;
+		rc.options     = options;
+		rc.params      = &params[0];
+		return rc;
+	}
+
+	void FromRawCommand(const RawCommand& rc) {
+		id          = rc.id;
+		aiCommandId = rc.aiCommandId;
+		timeOut     = rc.timeOut;
+
+		tag         = rc.tag;
+		options     = rc.options;
+
+		params.resize(rc.numParams);
+
+		for (unsigned int n = 0; n < rc.numParams; n++) {
+			params[n] = rc.params[n];
+		}
+	}
+
 
 	// returns true if the command references another object and
 	// in this case also returns the param index of the object in cpos
@@ -316,20 +393,14 @@ public:
 	}
 
 public:
+	/// CMD_xxx code  (custom codes can also be used)
+	int id;
+
 	/**
 	 * AI Command callback id (passed in on handleCommand, returned
 	 * in CommandFinished event)
 	 */
 	int aiCommandId;
-
-	/// option bits (RIGHT_MOUSE_KEY, ...)
-	unsigned char options;
-
-	/// command parameters
-	safe_vector<float> params;
-
-	/// unique id within a CCommandQueue
-	unsigned int tag;
 
 	/**
 	 * Remove this command after this frame (absolute).
@@ -342,9 +413,18 @@ public:
 	 */
 	int timeOut;
 
-private:
-	/// CMD_xxx code  (custom codes can also be used)
-	int id;
+	/// unique id within a CCommandQueue
+	unsigned int tag;
+
+	/// option bits (RIGHT_MOUSE_KEY, ...)
+	unsigned char options;
+
+	/// command parameters
+	#ifdef BUILDING_AI
+	std::vector<float> params;
+	#else
+	safe_vector<float> params;
+	#endif
 };
 
 
@@ -390,4 +470,11 @@ public:
 };
 
 
+#if defined(BUILDING_AI)
+// namespace springLegacyAI
+};
+#endif
+
+
 #endif // COMMAND_H
+

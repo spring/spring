@@ -3,7 +3,7 @@
 #ifndef AI_BASE_H
 #define AI_BASE_H
 
-#include "Command.h"
+#include "Sim/Units/CommandAI/Command.h"
 #include "WeaponDef.h"
 
 // Changing these classes or classes being a member of these classes breaks ABI.

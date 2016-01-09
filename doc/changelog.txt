@@ -19,6 +19,8 @@ Lua:
  ! Game.groundAmbientColor, Game.groundSpecularColor and Game.groundSunColor
    are no longer available, use gl.GetSun() instead with appropriate parameters
  ! GameID callin now gets the ID string encoded in hex.
+ ! Weapons with tracking will use a radar dot position unless
+   Spring.SetProjectileIgnoreTrackingError(projID, bool ignore) is called.
  ! UnitDestroyed is now called twice and gets an extra argument 'preEvent'
    the value of preEvent is true for the first call which corresponds to
    the old UnitDestroyed and false for the second (allows shaders during
@@ -37,10 +39,8 @@ Lua:
      include a gl.LoadIdentity call when argument #3 is false (whether they
      are used in DrawWorld or in DrawScreen)
      the [new] FIFTH argument determines whether the model is drawn opaque
-     ('true' [default]) or with translucency ('false'); requires false for
-     argument #3
- ! Weapons with tracking will use a radar dot position unless
-   Spring.SetProjectileIgnoreTrackingError(projID, bool ignore) is called.
+     ('true' [default]) or with translucency ('false'); only has an effect
+     when argument #3 is false
 
  - add callouts
      gl.{Unit,Feature}Textures(number objID, boolean enable) -> nil

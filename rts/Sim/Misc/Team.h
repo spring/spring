@@ -78,7 +78,7 @@ public:
 
 	bool isDead;
 	bool gaia;
-	bool dontRemove;
+	bool removeUnits;
 
 	std::vector<CUnit*> units;
 

@@ -2,7 +2,6 @@
 
 #include "Interface.h"
 
-#include "CUtils/Util.h"
 #include "CUtils/SimpleLog.h"
 #include "CUtils/SharedLibrary.h"
 
@@ -29,22 +28,6 @@ CInterface::CInterface(int interfaceId, const SAIInterfaceCallback* callback):
 //		const char* engineVersion, int engineAIInterfaceGeneratedVersion) {
 //	return LOS_Working;
 //}
-
-// SSkirmishAISpecifier CInterface::ExtractSpecifier(
-// 		const std::map<std::string, std::string>& infoMap) {
-//
-// 	const char* const skirmDD =
-// 			callback->SkirmishAIs_Info_getValueByKey(interfaceId,
-// 			shortName, version,
-// 			SKIRMISH_AI_PROPERTY_DATA_DIR);
-// 	const char* sn = callback->AIInterface_Info_getValueByKey)(int interfaceId, const char* const key);
-// 	.find(SKIRMISH_AI_PROPERTY_SHORT_NAME)->second.c_str();
-// 	const char* v = infoMap.find(SKIRMISH_AI_PROPERTY_VERSION)->second.c_str();
-//
-// 	SSkirmishAISpecifier spec = {sn, v};
-//
-// 	return spec;
-// }
 
 const SSkirmishAILibrary* CInterface::LoadSkirmishAILibrary(
 	const char* const shortName,
@@ -199,8 +182,9 @@ void CInterface::reportInterfaceFunctionError(
 	const std::string& libFilePath,
 	const std::string& functionName
 ) {
-	std::string msg("Failed loading AI Library from file \"");
-	msg += libFilePath + "\": no \"" + functionName + "\" function exported";
+	std::string msg;
+	msg += ("Failed loading AI Library from file \"" + libFilePath);
+	msg += ("\": no \"" + functionName + "\" function exported");
 	reportError(msg);
 }
 
@@ -211,38 +195,20 @@ void CInterface::reportError(const std::string& msg) {
 
 std::string CInterface::FindLibFile(const SSkirmishAISpecifier& spec)
 {
-	const char* const skirmDD = callback->SkirmishAIs_Info_getValueByKey(
-		interfaceId,
-		spec.shortName,
-		spec.version,
-		SKIRMISH_AI_PROPERTY_DATA_DIR
-	);
+	const char* sn = spec.shortName;
+	const char* sv = spec.version;
 
-	if (skirmDD == nullptr) {
-		reportError(std::string("Missing Skirmish AI data-dir for ") + spec.shortName + " " + spec.version);
+	std::string dataDir = callback->SkirmishAIs_Info_getValueByKey(interfaceId, sn, sv, SKIRMISH_AI_PROPERTY_DATA_DIR);
+
+	if (dataDir.empty()) {
+		reportError(std::string("Missing Skirmish AI data-dir for ") + sn + " " + sv);
+		return dataDir;
 	}
 
-	static const size_t libFileName_sizeMax = 512;
 	// eg. "libSkirmishAI.so" or "SkirmishAI.dll"
-	char libFileName[libFileName_sizeMax];
+	char libFileName[512];
+	sharedLib_createFullLibName("SkirmishAI", libFileName, sizeof(libFileName));
 
-	sharedLib_createFullLibName("SkirmishAI", libFileName, libFileName_sizeMax);
-
-	return util_allocStrCatFSPath(2, skirmDD, libFileName);
+	return (dataDir + cPS + libFileName);
 }
-
-#if 0
-bool CInterface::FitsThisInterface(
-	const std::string& requestedShortName,
-	const std::string& requestedVersion
-) {
-	const char* const myShortName = callback->AIInterface_Info_getValueByKey(interfaceId, AI_INTERFACE_PROPERTY_SHORT_NAME);
-	const char* const myVersion = callback->AIInterface_Info_getValueByKey(interfaceId, AI_INTERFACE_PROPERTY_VERSION);
-
-	const bool shortNameFits = (requestedShortName == myShortName);
-	const bool versionFits = (requestedVersion == myVersion);
-
-	return shortNameFits && versionFits;
-}
-#endif
 
