@@ -19,7 +19,7 @@ namespace springLegacyAI {
 	struct UnitDef;
 	struct Command;
 }
-#include "LegacyCpp/Command.h"
+#include "Sim/Units/CommandAI/Command.h"
 using namespace springLegacyAI;
 
 #include <vector>
