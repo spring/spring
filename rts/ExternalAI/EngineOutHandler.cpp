@@ -681,8 +681,8 @@ void CEngineOutHandler::DestroySkirmishAI(const size_t skirmishAIId) {
 	try {
 		CSkirmishAIWrapper* aiWrapper = id_skirmishAI[skirmishAIId].get();
 
-		id_skirmishAI.erase(skirmishAIId);
 		internal_aiErase(team_skirmishAIs[aiWrapper->GetTeamId()], skirmishAIId);
+		id_skirmishAI.erase(skirmishAIId);
 
 		clientNet->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_DEAD));
 	} CATCH_AI_EXCEPTION;
