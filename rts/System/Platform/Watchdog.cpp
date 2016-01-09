@@ -199,7 +199,8 @@ namespace Watchdog
 		threadInfo->threadid = threadId;
 		threadInfo->timer = spring_gettime();
 
-		LOG("Registering thread controls for thread [%s]", threadNames[num]);
+		// note: WDT_MAIN and WDT_LOAD share the same controls if LoadingMT=0
+		LOG("[WatchDog] registering controls for thread [%s]", threadNames[num]);
 		threadInfo->SetThreadControls(Threading::GetCurrentThreadControls());
 
 		++threadInfo->numreg;
@@ -214,7 +215,7 @@ namespace Watchdog
 	{
 		boost::mutex::scoped_lock lock(wdmutex);
 
-		WatchDogThreadInfo* threadInfo;
+		WatchDogThreadInfo* threadInfo = nullptr;
 
 		if (num >= WDT_COUNT || (threadInfo = registeredThreads[num])->numreg == 0) {
 			LOG_L(L_ERROR, "[Watchdog::%s] Invalid thread number %u", __FUNCTION__, num);
@@ -225,7 +226,12 @@ namespace Watchdog
 		threadSlots[num].regorder = 0;
 		UpdateActiveThreads(threadInfo->threadid);
 
-		threadInfo->ResetThreadControls();
+		// reset the main thread's controls only if actually called from it;
+		// otherwise Load would act in place of Main in the LoadingMT=0 case
+		if (num == WDT_MAIN || !Threading::IsMainThread()) {
+			LOG("[WatchDog] deregistering controls for thread [%s]", threadNames[num]);
+			threadInfo->ResetThreadControls();
+		}
 
 		if (0 == --(threadInfo->numreg))
 			memset(threadInfo, 0, sizeof(WatchDogThreadInfo));
