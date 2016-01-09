@@ -108,13 +108,13 @@ private:
 	int HandleEvent(int topic, const void* data) const;
 
 private:
+	SkirmishAIKey key;
+
 	const CSkirmishAILibrary* library;
 	const SSkirmishAICallback* sCallback;
 
-	std::unique_ptr<CAICheats> cheats;
 	std::unique_ptr<CAICallback> callback;
-
-	SkirmishAIKey key;
+	std::unique_ptr<CAICheats> cheats;
 
 	std::string timerName;
 

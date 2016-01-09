@@ -36,13 +36,15 @@
 
 CR_BIND_DERIVED(CSkirmishAIWrapper, CObject, )
 CR_REG_METADATA(CSkirmishAIWrapper, (
+	CR_MEMBER(key),
+
 	CR_IGNORED(library),
 	CR_IGNORED(sCallback),
 
 	CR_IGNORED(callback),
 	CR_IGNORED(cheats),
 
-	CR_MEMBER(key),
+	CR_MEMBER(timerName),
 
 	CR_MEMBER(skirmishAIId),
 	CR_MEMBER(teamId),
@@ -51,6 +53,9 @@ CR_REG_METADATA(CSkirmishAIWrapper, (
 	CR_IGNORED(initialized),
 	CR_IGNORED(released),
 	CR_MEMBER(cheatEvents),
+
+	CR_MEMBER(initOk),
+	CR_MEMBER(dieing),
 
 	CR_SERIALIZER(Serialize),
 	CR_POSTLOAD(PostLoad)
@@ -101,8 +106,8 @@ CSkirmishAIWrapper::CSkirmishAIWrapper(const int skirmishAIId):
 }
 
 void CSkirmishAIWrapper::CreateCallback() {
-	cheats.reset(new CAICheats(this));
 	callback.reset(new CAICallback(teamId));
+	cheats.reset(new CAICheats(this));
 
 	sCallback = skirmishAiCallback_getInstanceFor(skirmishAIId, teamId, callback.get(), cheats.get());
 }
