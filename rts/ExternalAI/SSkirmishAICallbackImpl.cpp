@@ -1515,6 +1515,8 @@ EXPORT(bool) skirmishAiCallback_DataDirs_locatePath(
 	bool dir,
 	bool common
 ) {
+	assert(relPath != nullptr);
+
 	const char ps = skirmishAiCallback_DataDirs_getPathSeparator(skirmishAIId);
 
 	const std::string& aiShortName = skirmishAiCallback_SkirmishAI_Info_getValueByKey(skirmishAIId, SKIRMISH_AI_PROPERTY_SHORT_NAME);
@@ -1522,9 +1524,10 @@ EXPORT(bool) skirmishAiCallback_DataDirs_locatePath(
 
 	std::string aiRelPath(SKIRMISH_AI_DATA_DIR);
 
+	// relPath="log/RAI.log", aiRelPath="AI/Skirmish/RAI/0.1" (e.g.)
 	aiRelPath += (ps + aiShortName);
 	aiRelPath += (ps + ((common)? SKIRMISH_AIS_VERSION_COMMON: aiVersion));
-	aiRelPath += (ps + relPath);
+	aiRelPath += (ps + std::string(relPath));
 
 	return skirmishAiCallback_DataDirs_Roots_locatePath(skirmishAIId, path, pathMaxSize, aiRelPath.c_str(), writeable, create, dir);
 }

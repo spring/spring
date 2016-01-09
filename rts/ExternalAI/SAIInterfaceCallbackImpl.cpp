@@ -253,6 +253,7 @@ EXPORT(bool) aiInterfaceCallback_DataDirs_Roots_locatePath(
 EXPORT(char*) aiInterfaceCallback_DataDirs_Roots_allocatePath(int UNUSED_interfaceId, const char* const relPath, bool writeable, bool create, bool dir) {
 	static const unsigned int pathMaxSize = 2048;
 
+	// FIXME LEAK
 	char* path = (char*) calloc(pathMaxSize, sizeof(char*));
 
 	if (!aiInterfaceCallback_DataDirs_Roots_locatePath(-1, path, pathMaxSize, relPath, writeable, create, dir))
@@ -290,6 +291,7 @@ EXPORT(bool) aiInterfaceCallback_DataDirs_locatePath(int interfaceId, char* path
 EXPORT(char*) aiInterfaceCallback_DataDirs_allocatePath(int interfaceId, const char* const relPath, bool writeable, bool create, bool dir, bool common) {
 	static const unsigned int pathMaxSize = 2048;
 
+	// FIXME LEAK
 	char* path = (char*) calloc(pathMaxSize, sizeof(char*));
 
 	if (!aiInterfaceCallback_DataDirs_locatePath(interfaceId, path, pathMaxSize, relPath, writeable, create, dir, common))
