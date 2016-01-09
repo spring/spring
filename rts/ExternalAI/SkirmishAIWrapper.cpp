@@ -36,8 +36,12 @@
 
 CR_BIND_DERIVED(CSkirmishAIWrapper, CObject, )
 CR_REG_METADATA(CSkirmishAIWrapper, (
+	CR_IGNORED(library),
+	CR_IGNORED(sCallback),
+
 	CR_IGNORED(callback),
 	CR_IGNORED(cheats),
+
 	CR_MEMBER(key),
 
 	CR_MEMBER(skirmishAIId),
@@ -54,6 +58,7 @@ CR_REG_METADATA(CSkirmishAIWrapper, (
 
 /// used only by creg
 CSkirmishAIWrapper::CSkirmishAIWrapper():
+	library(nullptr),
 	sCallback(nullptr),
 
 	skirmishAIId(-1),
@@ -69,6 +74,7 @@ CSkirmishAIWrapper::CSkirmishAIWrapper():
 }
 
 CSkirmishAIWrapper::CSkirmishAIWrapper(const int skirmishAIId):
+	library(nullptr),
 	sCallback(nullptr),
 
 	skirmishAIId(skirmishAIId),
