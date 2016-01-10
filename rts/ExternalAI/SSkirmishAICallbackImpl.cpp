@@ -1352,9 +1352,9 @@ EXPORT(int) skirmishAiCallback_SkirmishAI_getTeamId(int skirmishAIId) {
 static inline const CSkirmishAILibraryInfo* getSkirmishAILibraryInfo(int skirmishAIId) {
 	const CSkirmishAILibraryInfo* info = nullptr;
 
+	const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
 	const SkirmishAIKey* key = skirmishAIHandler.GetLocalSkirmishAILibraryKey(skirmishAIId);
 	assert(key != nullptr);
-	const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
 
 	const auto& infs = libMan->GetSkirmishAIInfos();
 	const auto inf = infs.find(*key);
@@ -1362,7 +1362,7 @@ static inline const CSkirmishAILibraryInfo* getSkirmishAILibraryInfo(int skirmis
 	if (inf != infs.end())
 		info = &(inf->second);
 
-	assert(false);
+	assert(info != nullptr);
 	return info;
 }
 
