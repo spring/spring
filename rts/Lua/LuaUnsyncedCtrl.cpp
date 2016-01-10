@@ -30,10 +30,13 @@
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/MiniMap.h"
 #include "Game/UI/MouseHandler.h"
+#include "Game/UI/Groups/Group.h"
+#include "Game/UI/Groups/GroupHandler.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/BaseGroundTextures.h"
+#include "Net/Protocol/NetProtocol.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SunLighting.h"
 #include "Rendering/GL/myGL.h"
@@ -52,15 +55,13 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Game/UI/Groups/Group.h"
-#include "Game/UI/Groups/GroupHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/GlobalConfig.h"
 #include "System/Log/DefaultFilter.h"
 #include "System/Log/ILog.h"
-#include "Net/Protocol/NetProtocol.h"
 #include "System/Net/PackPacket.h"
+#include "System/Platform/Misc.h"
 #include "System/Util.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/ISoundChannels.h"
@@ -69,9 +70,9 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/Platform/Watchdog.h"
 #include "System/Platform/WindowManagerHelper.h"
+#include "System/Sync/HsiehHash.h"
 
 #include <boost/cstdint.hpp>
-#include "System/Platform/Misc.h"
 
 #if !defined(HEADLESS) && !defined(NO_SOUND)
 #include "System/Sound/OpenAL/EFX.h"
@@ -2818,54 +2819,33 @@ int LuaUnsyncedCtrl::SetSunLighting(lua_State* L)
 		luaL_error(L, "Incorrect arguments to SetSunLighting()");
 	}
 
-	CSunLighting sl;
-	sl.groundAmbientColor   = sunLighting->groundAmbientColor;
-	sl.groundSunColor       = sunLighting->groundSunColor;
-	sl.groundSpecularColor  = sunLighting->groundSpecularColor;
-	sl.unitAmbientColor     = sunLighting->unitAmbientColor;
-	sl.unitSunColor         = sunLighting->unitSunColor;
-	sl.unitSpecularColor    = sunLighting->unitSpecularColor;
-	sl.specularExponent     = sunLighting->specularExponent;
+	CSunLighting sl = *sunLighting;
 
 	for (lua_pushnil(L); lua_next(L, 1) != 0; lua_pop(L, 1)) {
-		if (lua_israwstring(L, -2)) {
-			const string key = lua_tostring(L, -2);
-			if (lua_istable(L, -1)) {
-				float color[4];
-				const int size = LuaUtils::ParseFloatArray(L, -1, color, 4);
-				if (size == 3) {
-					if (key == "groundAmbientColor") {
-						sl.groundAmbientColor = color;
-					} else if (key == "groundSunColor") {
-						sl.groundSunColor = color;
-					} else if (key == "groundSpecularColor") {
-						sl.groundSpecularColor = color;
-					} else if (key == "unitSpecularColor") {
-						sl.unitSpecularColor = color;
-					} else {
-						luaL_error(L, "Unknown key %s for float array[3]", key.c_str());
-					}
-				} else if (size == 4) {
-					if (key == "unitAmbientColor") {
-						sl.unitAmbientColor = color;
-					} else if (key == "unitSunColor") {
-						sl.unitSunColor = color;
-					} else {
-						luaL_error(L, "Unknown key %s for float array[4]", key.c_str());
-					}
-				}
-			} else if (lua_isnumber(L, -1)) {
-				const float value = lua_tofloat(L, -1);
-				if (key == "specularExponent") {
-					sl.specularExponent = value;
-				} else {
-					luaL_error(L, "Unknown key %s for float", key.c_str());
-				}
-			}
+		if (!lua_israwstring(L, -2))
+			continue;
+
+		const string& key = lua_tostring(L, -2);
+
+		if (lua_istable(L, -1)) {
+			float4 color;
+			LuaUtils::ParseFloatArray(L, -1, &color[0], 4);
+
+			if (sl.SetValue(HsiehHash(key.c_str(), key.size(), 0), color))
+				continue;
+
+			luaL_error(L, "Unknown array key %s", key.c_str());
+		}
+
+		if (lua_isnumber(L, -1)) {
+			if (sl.SetValue(HsiehHash(key.c_str(), key.size(), 0), lua_tofloat(L, -1)))
+				continue;
+
+			luaL_error(L, "Unknown scalar key %s", key.c_str());
 		}
 	}
-	sunLighting->Set(sl);
 
+	*sunLighting = sl;
 	return 0;
 }
 

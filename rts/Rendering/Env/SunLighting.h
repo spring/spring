@@ -8,15 +8,35 @@
 
 struct CSunLighting {
 public:
+	CSunLighting();
+	CSunLighting(const CSunLighting& sl);
+	CSunLighting& operator = (const CSunLighting& sl);
+
 	void Init();
-	void Set(const CSunLighting& sl);
+	void Copy(const CSunLighting& sl);
+
+	bool SetValue(unsigned int keyHash, const float4 val);
+	bool SetValue(unsigned int keyHash, const float val) {
+		return (SetValue(keyHash, float4(val, 0.0f, 0.0f, 0.0f)));
+	}
+
+	bool operator == (const CSunLighting& sl) const;
+	bool operator != (const CSunLighting& sl) const { return (!((*this) == sl)); }
+
+	bool IsGlobalInstance() const;
+
+private:
+	float4* colors[6];
+
 public:
-	float3 groundAmbientColor;
-	float3 groundSunColor;
-	float3 groundSpecularColor;
+	float4 groundAmbientColor; // RGB
+	float4 groundSunColor; // RGB
+	float4 groundSpecularColor; // RBG
+
 	float4 unitAmbientColor;
 	float4 unitSunColor;
-	float3 unitSpecularColor;
+	float4 unitSpecularColor; // RGB
+
 	float  specularExponent;
 };
 
