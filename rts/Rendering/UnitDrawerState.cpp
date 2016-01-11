@@ -20,18 +20,7 @@
 
 
 
-static float4 GetTeamColor(int team, float alpha) {
-	assert(teamHandler->IsValidTeam(team));
-
-	const   CTeam* t = teamHandler->Team(team);
-	const uint8_t* c = t->color;
-
-	return (float4(c[0] / 255.0f, c[1] / 255.0f, c[2] / 255.0f, alpha));
-}
-
-
-
-static void PushTransform(const CCamera* cam) {
+void IUnitDrawerState::PushTransform(const CCamera* cam) {
 	// set model-drawing transform; view is combined with projection
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
@@ -41,11 +30,22 @@ static void PushTransform(const CCamera* cam) {
 	glLoadIdentity();
 }
 
-static void PopTransform() {
+void IUnitDrawerState::PopTransform() {
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
+}
+
+
+
+float4 IUnitDrawerState::GetTeamColor(int team, float alpha) {
+	assert(teamHandler->IsValidTeam(team));
+
+	const   CTeam* t = teamHandler->Team(team);
+	const uint8_t* c = t->color;
+
+	return (float4(c[0] / 255.0f, c[1] / 255.0f, c[2] / 255.0f, alpha));
 }
 
 

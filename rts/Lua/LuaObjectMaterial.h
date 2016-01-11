@@ -70,46 +70,31 @@ class LuaMatRef {
 /******************************************************************************/
 /******************************************************************************/
 
-class LuaUnitUniforms {
+class LuaMatShader;
+class LuaObjectUniforms {
 	public:
-		LuaUnitUniforms()
-		: haveUniforms(false),
-		  speedLoc(-1),
-		  healthLoc(-1),
-		  unitIDLoc(-1),
-		  teamIDLoc(-1),
-		  customLoc(-1),
-		  customCount(0)
-		{}
-		LuaUnitUniforms(const LuaUnitUniforms&);
-		LuaUnitUniforms& operator=(const LuaUnitUniforms&);
+		LuaObjectUniforms(): setUniforms(false), haveUniforms(false) {}
 
-		void Execute(const CSolidObject*) const;
+		void SetLocs(const LuaMatShader* s);
+		void SetData(unsigned int type, const void* data);
+		void Execute() const;
 
-		void SetCustomCount(int count);
+		enum {
+			UNIFORM_SPEED,
+			UNIFORM_HEALTH,
+			UNIFORM_TCOLOR,
+		};
+		template<typename type, unsigned int size> struct Uniform {
+			GLint loc; type val[size];
+		};
 
 	public:
+		bool setUniforms;
 		bool haveUniforms;
-		GLint speedLoc;
-		GLint healthLoc;
-		GLint unitIDLoc;
-		GLint teamIDLoc;
-		GLint customLoc;
-		int customCount;
-		std::vector<GLfloat> customData;
 
-
-	// FIXME: do this differently
-	struct EngineData {
-		GLint location;
-		GLenum type; // GL_FLOAT, GL_FLOAT_VEC3, etc...
-		GLuint size;
-		GLuint count;
-		GLint*   intData;
-		GLfloat* floatData;
-		void* data;
-	};
-	std::vector<EngineData> uniforms;
+		// Uniform<float, 4> speedUniform;
+		// Uniform<float, 1> healthUniform;
+		Uniform<float, 4> tcolorUniform;
 };
 
 
@@ -127,15 +112,18 @@ class LuaObjectLODMaterial {
 		inline void AddUnit(CSolidObject* o) { matref.AddUnit(o); }
 		inline void AddFeature(CSolidObject* o) { matref.AddFeature(o); }
 
+		inline void SetUniformLocs(const LuaMatShader* s) { uniforms.SetLocs(s); }
+		inline void SetUniformData(unsigned int type, const void* data) { uniforms.SetData(type, data); }
+
 		inline void ExecuteMaterial() const { matref.Execute(); }
-		inline void ExecuteUniforms(const CSolidObject* o) const { uniforms.Execute(o); }
+		inline void ExecuteUniforms() const { uniforms.Execute(); }
 
 	public:
 		GLuint          preDisplayList;
 		GLuint          postDisplayList;
 
-		LuaMatRef       matref;
-		LuaUnitUniforms uniforms;
+		LuaMatRef         matref;
+		LuaObjectUniforms uniforms;
 };
 
 

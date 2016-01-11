@@ -18,6 +18,8 @@
 #include "System/EventHandler.h"
 #include "System/Util.h"
 
+#define SET_CUSTOM_SHADER_TEAM_COLOR
+
 // applies to both units and features
 CONFIG(bool, AllowDeferredModelRendering).defaultValue(false).safemodeValue(false);
 CONFIG(bool, AllowDeferredModelBufferClear).defaultValue(false).safemodeValue(false);
@@ -163,6 +165,31 @@ static void ResetShadowUnitDrawState(unsigned int modelType, bool deferredPass) 
 // NOTE: incomplete (FeatureDrawer::DrawShadowPass sets more state)
 static void SetupShadowFeatureDrawState(unsigned int modelType, bool deferredPass) { SetupShadowUnitDrawState(modelType, deferredPass); }
 static void ResetShadowFeatureDrawState(unsigned int modelType, bool deferredPass) { ResetShadowUnitDrawState(modelType, deferredPass); }
+
+
+static void SetObjectTeamColor(
+	const CSolidObject* o,
+	const LuaMatShader* s,
+	LuaObjectLODMaterial* m,
+	float2 alpha
+) {
+	// only useful to set this if the object has a standard
+	// (engine) shader attached, otherwise requires testing
+	// if shader is bound in DrawerState etc (there is *no*
+	// FFP texenv fallback for customs to rely on anymore!)
+	if (!s->IsCustomType()) {
+		unitDrawer->SetTeamColour(o->team, alpha);
+		return;
+	}
+
+	#ifdef SET_CUSTOM_SHADER_TEAM_COLOR
+	// avoids having to use gl.Uniform(loc, Spring.GetTeamColor(Spring.GetUnitTeam(unitID)))
+	// note that the custom shader still does not know if it is invoked during an alpha-pass
+	mat->SetUniformLocs(s);
+	mat->SetUniformData(LuaObjectUniforms::UNIFORM_TCOLOR, &std::move(IUnitDrawerState::GetTeamColor(o->team, alpha.x))[0]);
+	mat->ExecuteUniforms();
+	#endif
+}
 
 
 
@@ -332,8 +359,6 @@ void LuaObjectDrawer::DrawBinObject(
 	bool applyTrans,
 	bool noLuaCall
 ) {
-	lodMat->uniforms.Execute(obj);
-
 	const unsigned int preList = lodMat->preDisplayList;
 	const unsigned int postList = lodMat->postDisplayList;
 
@@ -342,22 +367,16 @@ void LuaObjectDrawer::DrawBinObject(
 			const UnitDrawFunc func = unitDrawFuncs[applyTrans];
 			const CUnit* unit = static_cast<const CUnit*>(obj);
 
-			// only useful to set this if the object has a standard
-			// (engine) shader attached, otherwise requires testing
-			// if shader is bound in DrawerState etc (there is *no*
-			// FFP fallback for customs to rely on anymore!)
-			if (!shader->HasCustomType())
-				unitDrawer->SetTeamColour(obj->team);
+			SetObjectTeamColor(unit, shader, const_cast<LuaObjectLODMaterial*>(lodMat), float2(1.0f, 1.0f * alphaMatBin));
 
 			// must use static_cast here because of GetTransformMatrix (!)
 			CALL_FUNC_VA(unitDrawer, func,  unit, preList, postList, true, noLuaCall);
 		} break;
 		case LUAOBJ_FEATURE: {
 			const FeatureDrawFunc func = featureDrawFuncs[applyTrans];
-			const CFeature* feature = static_cast<const CFeature*>(obj);
+			const CFeature* feat = static_cast<const CFeature*>(obj);
 
-			if (!shader->HasCustomType())
-				unitDrawer->SetTeamColour(obj->team, float2(feature->drawAlpha, 1.0f * alphaMatBin));
+			SetObjectTeamColor(feat, shader, const_cast<LuaObjectLODMaterial*>(lodMat), float2(feat->drawAlpha, 1.0f * alphaMatBin));
 
 			CALL_FUNC_VA(featureDrawer, func,  feature, preList, postList, true, noLuaCall);
 		} break;

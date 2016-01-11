@@ -70,8 +70,8 @@ class LuaMatShader {
 		bool operator==(const LuaMatShader& mt) const { return (Compare(*this, mt) == 0); }
 		bool operator!=(const LuaMatShader& mt) const { return (Compare(*this, mt) != 0); }
 
-		bool HasCustomType() const { return (type == LUASHADER_GL); }
-		bool HasEngineType() const { return (type >= LUASHADER_DEF_3DO && type <= LUASHADER_DEF_ASS); }
+		bool IsCustomType() const { return (type == LUASHADER_GL); }
+		bool IsEngineType() const { return (type >= LUASHADER_DEF_3DO && type <= LUASHADER_DEF_ASS); }
 
 	public:
 		Type type;

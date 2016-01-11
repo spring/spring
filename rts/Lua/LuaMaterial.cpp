@@ -32,81 +32,51 @@ LuaMatHandler& luaMatHandler = LuaMatHandler::handler;
 /******************************************************************************/
 /******************************************************************************/
 //
-//  LuaUnitUniforms
+//  LuaObjectUniforms
 //
 
-void LuaUnitUniforms::Execute(const CSolidObject* o) const
+void LuaObjectUniforms::SetLocs(const LuaMatShader* s)
 {
-	// FIXME use vertex attributes (this is currently never true, locs are never set)
+	// FIXME: <s> can be forward or deferred, do not know which here
+	if (false && setUniforms)
+		return;
+
+	// speedUniform.loc = glGetUniformLocation(s->openglID, "speed");
+	// healthUniform.loc = glGetUniformLocation(s->openglID, "health");
+	tcolorUniform.loc = glGetUniformLocation(s->openglID, "teamColor");
+
+	setUniforms = true;
+	haveUniforms = false;
+	// haveUniforms |= (speedUniform.loc != -1);
+	// haveUniforms |= (healthUniform.loc != -1);
+	haveUniforms |= (tcolorUniform.loc != -1);
+}
+
+void LuaObjectUniforms::SetData(unsigned int type, const void* data)
+{
+	switch (type) {
+		// case UNIFORM_SPEED: {} break;
+		// case UNIFORM_HEALTH: {} break;
+
+		case UNIFORM_TCOLOR: {
+			const float* vals = reinterpret_cast<const float*>(data);
+
+			tcolorUniform.val[0] = vals[0];
+			tcolorUniform.val[1] = vals[1];
+			tcolorUniform.val[2] = vals[2];
+			tcolorUniform.val[3] = vals[3];
+		} break;
+	}
+}
+
+void LuaObjectUniforms::Execute() const
+{
 	if (!haveUniforms)
 		return;
 
-	if (speedLoc >= 0) {
-		glUniformf3(speedLoc, o->speed);
-	}
-	if (healthLoc >= 0) {
-		glUniform1f(healthLoc, o->health / o->maxHealth);
-	}
-	if (unitIDLoc >= 0) {
-		glUniform1i(unitIDLoc, o->id);
-	}
-	if (teamIDLoc >= 0) {
-		glUniform1i(teamIDLoc, o->team);
-	}
-	#if 0
-	// avoids having to use gl.Uniform(loc, Spring.GetTeamColor(Spring.GetUnitTeam(unitID)))
-	if (teamColorLoc >= 0) {
-		UnitDrawerStateLua::SetTeamColor(o->team);
-	}
-	#endif
-	if (customLoc >= 0) {
-		if (customCount > 0) {
-			glUniform1fv(customLoc, customCount, &customData[0]);
-		}
-	}
-}
-
-
-void LuaUnitUniforms::SetCustomCount(int count)
-{
-	customCount = count;
-
-	if (count > 0) {
-		customData.resize(count);
-		memset(&customData[0], 0, customCount * sizeof(GLfloat));
-	} else {
-		customData.clear();
-	}
-}
-
-
-LuaUnitUniforms& LuaUnitUniforms::operator=(const LuaUnitUniforms& u)
-{
-	// do not assign to self
-	if (this != &u) {
-		customData.clear();
-
-		haveUniforms = u.haveUniforms;
-		speedLoc     = u.speedLoc;
-		healthLoc    = u.healthLoc;
-		unitIDLoc    = u.unitIDLoc;
-		teamIDLoc    = u.teamIDLoc;
-		customLoc    = u.customLoc;
-		customCount  = u.customCount;
-
-		if (customCount > 0) {
-			customData.resize(customCount);
-			memcpy(&customData[0], &u.customData[0], customCount * sizeof(GLfloat));
-		}
-	}
-
-	return *this;
-}
-
-
-LuaUnitUniforms::LuaUnitUniforms(const LuaUnitUniforms& u)
-{
-	*this = u;
+	// if (speedUniform.loc >= 0) { glUniform3fv(speedUniform.loc, 1, &speedUniform.val[0]); }
+	// if (healthUniform.loc >= 0) { glUniform1f(healthUniform.loc, healthUniform.val[0]); }
+	if (tcolorUniform.loc >= 0) { glUniform4fv(tcolorUniform.loc, 1, &tcolorUniform.val[0]); }
 }
 
 

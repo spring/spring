@@ -6,7 +6,9 @@
 #include <array>
 #include "System/type2.h"
 
+class float4;
 class CUnitDrawer;
+class CCamera;
 struct ISkyLight;
 
 namespace Shader {
@@ -25,6 +27,10 @@ struct IUnitDrawerState {
 public:
 	static IUnitDrawerState* GetInstance(bool haveARB, bool haveGLSL);
 	static void FreeInstance(IUnitDrawerState* state) { delete state; }
+
+	static void PushTransform(const CCamera* cam);
+	static void PopTransform();
+	static float4 GetTeamColor(int team, float alpha);
 
 	IUnitDrawerState() { modelShaders.fill(nullptr); }
 	virtual ~IUnitDrawerState() {}
