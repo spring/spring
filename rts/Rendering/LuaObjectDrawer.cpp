@@ -185,9 +185,9 @@ static void SetObjectTeamColor(
 	#ifdef SET_CUSTOM_SHADER_TEAM_COLOR
 	// avoids having to use gl.Uniform(loc, Spring.GetTeamColor(Spring.GetUnitTeam(unitID)))
 	// note that the custom shader still does not know if it is invoked during an alpha-pass
-	mat->SetUniformLocs(s);
-	mat->SetUniformData(LuaObjectUniforms::UNIFORM_TCOLOR, &std::move(IUnitDrawerState::GetTeamColor(o->team, alpha.x))[0]);
-	mat->ExecuteUniforms();
+	m->SetUniformLocs(s);
+	m->SetUniformData(LuaObjectUniforms::UNIFORM_TCOLOR, &std::move(IUnitDrawerState::GetTeamColor(o->team, alpha.x))[0]);
+	m->ExecuteUniforms();
 	#endif
 }
 
@@ -378,7 +378,7 @@ void LuaObjectDrawer::DrawBinObject(
 
 			SetObjectTeamColor(feat, shader, const_cast<LuaObjectLODMaterial*>(lodMat), float2(feat->drawAlpha, 1.0f * alphaMatBin));
 
-			CALL_FUNC_VA(featureDrawer, func,  feature, preList, postList, true, noLuaCall);
+			CALL_FUNC_VA(featureDrawer, func,  feat, preList, postList, true, noLuaCall);
 		} break;
 		default: {
 			assert(false);
