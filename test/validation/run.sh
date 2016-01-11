@@ -34,6 +34,9 @@ if [ ! -x $RUNCLIENT ]; then
 fi
 
 
+# disable leakcheck for now (ASAN_OPTIONS=help=1 shows usage)
+export ASAN_OPTIONS=detect_leaks=0
+
 # limit to 1.5GB RAM
 #ulimit -v 1500000
 # max 4 min cpu time
