@@ -186,7 +186,7 @@ static void SetObjectTeamColor(
 	// avoids having to use gl.Uniform(loc, Spring.GetTeamColor(Spring.GetUnitTeam(unitID)))
 	// note that the custom shader still does not know if it is invoked during an alpha-pass
 	m->SetUniformLocs(s);
-	m->SetUniformData(LuaObjectUniforms::UNIFORM_TCOLOR, &std::move(IUnitDrawerState::GetTeamColor(o->team, alpha.x))[0]);
+	m->SetUniformData(LuaObjectUniforms::UNIFORM_TCOLOR, std::move(IUnitDrawerState::GetTeamColor(o->team, alpha.x)));
 	m->ExecuteUniforms();
 	#endif
 }
