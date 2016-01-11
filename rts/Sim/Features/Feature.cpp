@@ -494,10 +494,15 @@ void CFeature::ForcedMove(const float3& newPos)
 	Move(newPos - pos, true);
 	Block();
 
-	eventHandler.FeatureMoved(this, oldPos);
+	{
+		// ForcedMove calls might cause the pstate to go stale
+		// (features are only Update()'d when in the FH queue)
+		CalculateTransform();
+		UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, ((SetSpeed(speed) != 0.0f) || (std::fabs(pos.y - finalHeight) >= 0.01f)));
+		UpdatePhysicalState(0.1f);
+	}
 
-	// setup the visual transformation matrix
-	CalculateTransform();
+	eventHandler.FeatureMoved(this, oldPos);
 
 	// insert into managers
 	quadField->AddFeature(this);
@@ -582,7 +587,6 @@ bool CFeature::UpdatePosition()
 			}
 
 			eventHandler.FeatureMoved(this, oldPos);
-			CalculateTransform();
 		}
 	} else {
 		// any feature that is not a dead unit (ie. rocks, trees, ...)
@@ -606,10 +610,9 @@ bool CFeature::UpdatePosition()
 			Move(UpVector * (finalHeight - pos.y), true);
 			eventHandler.FeatureMoved(this, oldPos);
 		}
-
-		transMatrix[13] = pos.y;
 	}
 
+	CalculateTransform();
 	UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, ((SetSpeed(speed) != 0.0f) || (std::fabs(pos.y - finalHeight) >= 0.01f)));
 	UpdatePhysicalState(0.1f);
 	Block(); // does the check if wanted itself
