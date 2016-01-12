@@ -226,8 +226,8 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	}
 
 	UpdateMidAndAimPos();
-	CalculateTransform();
-
+	UpdateFinalHeight(true);
+	UpdateTransformAndPhysState();
 
 	collisionVolume = def->collisionVolume;
 
@@ -247,27 +247,9 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	Block();
 
 	// allow Spring.SetFeatureBlocking to be called from gadget:FeatureCreated
+	// (callin sees the complete default state, but can change any part of it)
 	eventHandler.FeatureCreated(this);
 	eventHandler.RenderFeatureCreated(this);
-
-	if (def->floating) {
-		finalHeight = CGround::GetHeightAboveWater(pos.x, pos.z);
-	} else {
-		finalHeight = CGround::GetHeightReal(pos.x, pos.z);
-	}
-
-	UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, ((SetSpeed(params.speed) != 0.0f) || (std::fabs(pos.y - finalHeight) >= 0.01f)));
-}
-
-
-void CFeature::CalculateTransform()
-{
-	updir    = (!def->upright)? CGround::GetNormal(pos.x, pos.z): UpVector;
-	frontdir = GetVectorFromHeading(heading);
-	rightdir = (frontdir.cross(updir)).Normalize();
-	frontdir = (updir.cross(rightdir)).Normalize();
-
-	transMatrix = CMatrix44f(pos, -rightdir, updir, frontdir);
 }
 
 
@@ -494,13 +476,9 @@ void CFeature::ForcedMove(const float3& newPos)
 	Move(newPos - pos, true);
 	Block();
 
-	{
-		// ForcedMove calls might cause the pstate to go stale
-		// (features are only Update()'d when in the FH queue)
-		CalculateTransform();
-		UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, ((SetSpeed(speed) != 0.0f) || (std::fabs(pos.y - finalHeight) >= 0.01f)));
-		UpdatePhysicalState(0.1f);
-	}
+	// ForcedMove calls might cause the pstate to go stale
+	// (features are only Update()'d when in the FH queue)
+	UpdateTransformAndPhysState();
 
 	eventHandler.FeatureMoved(this, oldPos);
 
@@ -513,10 +491,18 @@ void CFeature::ForcedSpin(const float3& newDir)
 {
 	// update local direction-vectors
 	CSolidObject::ForcedSpin(newDir);
-
-	transMatrix = CMatrix44f(pos, -rightdir, updir, frontdir);
+	UpdateTransform();
 }
 
+
+void CFeature::UpdateTransformAndPhysState()
+{
+	UpdateDirVectors(!def->upright);
+	UpdateTransform();
+
+	UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, ((SetSpeed(speed) != 0.0f) || (std::fabs(pos.y - finalHeight) >= 0.01f)));
+	UpdatePhysicalState(0.1f);
+}
 
 bool CFeature::UpdatePosition()
 {
@@ -612,9 +598,7 @@ bool CFeature::UpdatePosition()
 		}
 	}
 
-	CalculateTransform();
-	UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, ((SetSpeed(speed) != 0.0f) || (std::fabs(pos.y - finalHeight) >= 0.01f)));
-	UpdatePhysicalState(0.1f);
+	UpdateTransformAndPhysState();
 	Block(); // does the check if wanted itself
 
 	return (IsMoving());

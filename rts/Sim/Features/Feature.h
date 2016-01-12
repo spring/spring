@@ -48,13 +48,16 @@ public:
 	void SetVelocity(const float3& v);
 	void ForcedMove(const float3& newPos);
 	void ForcedSpin(const float3& newDir);
+
 	bool Update();
 	bool UpdatePosition();
+	void UpdateTransform() { transMatrix = CMatrix44f(pos, -rightdir, updir, frontdir); }
+	void UpdateTransformAndPhysState();
 	void UpdateFinalHeight(bool useGroundHeight);
+
 	void StartFire();
 	void EmitGeoSmoke();
 
-	void CalculateTransform();
 	void DependentDied(CObject *o);
 	void ChangeTeam(int newTeam);
 

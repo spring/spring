@@ -373,7 +373,7 @@ float3 CSolidObject::GetWantedUpDir(bool useGroundNormal) const {
 	//   gravity, ...
 	//
 	const float3 gn = CGround::GetSmoothNormal(pos.x, pos.z) * (    useGroundNormal);
-	const float3 wn =                             UpVector  * (1 - useGroundNormal);
+	const float3 wn =                              UpVector  * (1 - useGroundNormal);
 
 	if (moveDef == nullptr) {
 		// aircraft cannot use updir reliably or their
