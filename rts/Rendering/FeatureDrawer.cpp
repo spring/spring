@@ -667,7 +667,7 @@ public:
 					if (drawRefraction && !f->IsInWater())
 						continue;
 
-					if (drawReflection && !CUnitDrawer::ObjectVisibleReflection(f, cam->GetPos()))
+					if (drawReflection && !CUnitDrawer::ObjectVisibleReflection(f->drawMidPos, cam->GetPos(), f->drawRadius))
 						continue;
 
 

@@ -171,18 +171,7 @@ void IUnitDrawerState::DisableTexturesCommon(const CUnitDrawer* ud) const {
 
 
 bool UnitDrawerStateFFP::CanEnable(const CUnitDrawer* ud) const {
-	// ARB standard does not seem to support vertex program + clipplanes
-	// (used for reflective passes) at once ==> not true but needs option
-	// ARB_position_invariant ==> the ARB shaders already have this, test
-	// if RHS can be removed
-	//
-	// old UnitDrawer comments:
-	//   GL_VERTEX_PROGRAM_ARB is very slow on ATIs for some reason
-	//   if clip planes are enabled, check later after driver updates
-	//
-	//   ATI has issues with textures, clip planes and shader programs
-	//   at once - very low performance
-	return (!ud->UseAdvShading() || water->DrawReflectionPass());
+	return (!ud->UseAdvShading() /*|| water->DrawReflectionPass()*/);
 }
 
 void UnitDrawerStateFFP::Enable(const CUnitDrawer* ud, bool deferredPass, bool alphaPass) {
@@ -284,7 +273,10 @@ void UnitDrawerStateARB::Kill() {
 }
 
 bool UnitDrawerStateARB::CanEnable(const CUnitDrawer* ud) const {
-	return (ud->UseAdvShading() && !water->DrawReflectionPass());
+	// ARB shaders should support vertex program + clipplanes
+	// (used for water reflection passes) but only with option
+	// ARB_position_invariant; this is present so skip the RHS
+	return (ud->UseAdvShading() /*&& !water->DrawReflectionPass()*/);
 }
 
 void UnitDrawerStateARB::Enable(const CUnitDrawer* ud, bool deferredPass, bool alphaPass) {
@@ -413,7 +405,7 @@ void UnitDrawerStateGLSL::Kill() {
 }
 
 bool UnitDrawerStateGLSL::CanEnable(const CUnitDrawer* ud) const {
-	return (ud->UseAdvShading() && !water->DrawReflectionPass());
+	return (ud->UseAdvShading());
 }
 
 void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud, bool deferredPass, bool alphaPass) {

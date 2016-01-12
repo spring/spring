@@ -308,6 +308,8 @@ void CAdvWater::UpdateWater(CGame* game)
 	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	const double clipPlaneEq[4] = {0.0, 1.0, 0.0, 0.0};
+
 	CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
 	CCamera* curCam = CCamera::GetActiveCamera();
 
@@ -318,30 +320,35 @@ void CAdvWater::UpdateWater(CGame* game)
 		game->SetDrawMode(CGame::gameReflectionDraw);
 
 		{
-			const double clipPlaneEq[4] = {0.0, 1.0, 0.0, 1.0};
+			drawReflection = true;
 
 			glEnable(GL_CLIP_PLANE2);
 			glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
 
-			{
-				drawReflection = true;
+			// opaque
+			sky->Draw();
+			readMap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
 
-				sky->Draw();
-				readMap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
-				unitDrawer->Draw(true);
-				featureDrawer->Draw();
+			// rest needs the plane in model-space; V is combined with P
+			glPushMatrix();
+			glLoadIdentity();
+			glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
+			glPopMatrix();
 
-				unitDrawer->DrawAlphaPass();
-				featureDrawer->DrawAlphaPass();
-				projectileDrawer->Draw(true);
-				sky->DrawSun();
+			unitDrawer->Draw(true);
+			featureDrawer->Draw();
 
-				eventHandler.DrawWorldReflection();
+			// transparent
+			unitDrawer->DrawAlphaPass();
+			featureDrawer->DrawAlphaPass();
+			projectileDrawer->Draw(true);
+			sky->DrawSun();
 
-				drawReflection = false;
-			}
+			eventHandler.DrawWorldReflection();
 
 			glDisable(GL_CLIP_PLANE2);
+
+			drawReflection = false;
 		}
 
 		game->SetDrawMode(CGame::gameNormalDraw);

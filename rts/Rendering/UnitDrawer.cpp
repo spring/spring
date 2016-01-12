@@ -500,7 +500,7 @@ bool CUnitDrawer::CanDrawOpaqueUnit(
 	if (drawRefraction && !unit->IsInWater())
 		return false;
 
-	if (drawReflection && !ObjectVisibleReflection(unit, cam->GetPos()))
+	if (drawReflection && !ObjectVisibleReflection(unit->drawMidPos, cam->GetPos(), unit->drawRadius))
 		return false;
 
 	return (cam->InView(unit->drawMidPos, unit->drawRadius));
@@ -1858,20 +1858,18 @@ void CUnitDrawer::SunLightingChanged() {
 
 
 
-bool CUnitDrawer::ObjectVisibleReflection(const CSolidObject* obj, const float3 camPos)
+bool CUnitDrawer::ObjectVisibleReflection(const float3 objPos, const float3 camPos, float maxRadius)
 {
+	if (objPos.y < 0.0f)
+		return (CGround::GetApproximateHeight(objPos.x, objPos.z, false) <= maxRadius);
+
+	const float dif = objPos.y - camPos.y;
+
 	float3 zeroPos;
+	zeroPos += (camPos * ( objPos.y / dif));
+	zeroPos += (objPos * (-camPos.y / dif));
 
-	if (obj->drawMidPos.y < 0.0f) {
-		zeroPos = obj->drawMidPos;
-	} else {
-		const float dif = zeroPos.y - camPos.y;
-
-		zeroPos +=          camPos * (obj->drawMidPos.y / dif);
-		zeroPos += obj->drawMidPos * (        -camPos.y / dif);
-	}
-
-	return (CGround::GetApproximateHeight(zeroPos.x, zeroPos.z, false) <= obj->drawRadius);
+	return (CGround::GetApproximateHeight(zeroPos.x, zeroPos.z, false) <= maxRadius);
 }
 
 

@@ -1179,8 +1179,9 @@ void CBumpWater::DrawRefraction(CGame* game)
 
 	drawRefraction = true;
 
-	glEnable(GL_CLIP_PLANE2);
 	const double clipPlaneEq[4] = {0.0, -1.0, 0.0, 5.0};
+
+	glEnable(GL_CLIP_PLANE2);
 	glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
 
 	// opaque
@@ -1213,6 +1214,8 @@ void CBumpWater::DrawReflection(CGame* game)
 	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	const double clipPlaneEq[4] = {0.0, 1.0, 0.0, 0.0};
+
 	CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
 	CCamera* curCam = CCamera::GetActiveCamera();
 
@@ -1223,41 +1226,43 @@ void CBumpWater::DrawReflection(CGame* game)
 		game->SetDrawMode(CGame::gameReflectionDraw);
 
 		{
-			const double clipPlaneEq[4] = {0.0, 1.0, 0.0, 1.0};
+			drawReflection = true;
 
 			glEnable(GL_CLIP_PLANE2);
 			glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
 
-			{
-				drawReflection = true;
+			// opaque
+			sky->Draw();
 
-				sky->Draw();
+			if (reflection > 1)
+				readMap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
 
-				// opaque
-				if (reflection > 1)
-					readMap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
+			glPushMatrix();
+			glLoadIdentity();
+			glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
+			glPopMatrix();
 
-				unitDrawer->Draw(true);
-				featureDrawer->Draw();
+			unitDrawer->Draw(true);
+			featureDrawer->Draw();
 
-				// transparent
-				unitDrawer->DrawAlphaPass();
-				featureDrawer->DrawAlphaPass();
-				projectileDrawer->Draw(true);
-				sky->DrawSun();
+			// transparent
+			unitDrawer->DrawAlphaPass();
+			featureDrawer->DrawAlphaPass();
+			projectileDrawer->Draw(true);
+			sky->DrawSun();
 
-				eventHandler.DrawWorldReflection();
-
-				drawReflection = false;
-			}
+			eventHandler.DrawWorldReflection();
 
 			glDisable(GL_CLIP_PLANE2);
+
+			drawReflection = false;
 		}
 
 		game->SetDrawMode(CGame::gameNormalDraw);
 	}
 
 	CCamera::SetActiveCamera(prvCam->GetCamType());
+
 	prvCam->Update();
 	// done by caller
 	// prvCam->LoadViewPort();
