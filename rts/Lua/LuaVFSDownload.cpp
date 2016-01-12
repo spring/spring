@@ -165,7 +165,7 @@ int Download(int ID, const std::string& filename, DownloadEnum::Category cat)
 
 void StartDownload() {
 	isDownloading = true;
-	const DownloadItem& downloadItem = queue.front();
+	const DownloadItem downloadItem = queue.front();
 	queue.pop_front();
 	const std::string filename = downloadItem.filename;
 	DownloadEnum::Category cat = downloadItem.cat;
