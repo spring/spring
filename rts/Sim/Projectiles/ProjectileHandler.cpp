@@ -425,10 +425,10 @@ void CProjectileHandler::CheckUnitCollisions(
 
 			if (!cq.InsideHit()) {
 				p->SetPosition(cq.GetHitPos());
-				p->Collision(unit);
+				p->Collision();
 				p->SetPosition(ppos0);
 			} else {
-				p->Collision(unit);
+				p->Collision();
 			}
 
 			break;

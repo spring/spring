@@ -177,6 +177,7 @@ void CProjectile::Collision()
 	checkCol = false;
 }
 
+
 void CProjectile::Collision(CUnit* unit)
 {
 	Collision();
@@ -185,6 +186,13 @@ void CProjectile::Collision(CUnit* unit)
 void CProjectile::Collision(CFeature* feature)
 {
 	Collision();
+}
+
+
+void CProjectile::Delete()
+{
+	deleteMe = true;
+	checkCol = false;
 }
 
 

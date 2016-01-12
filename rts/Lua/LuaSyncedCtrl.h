@@ -173,6 +173,7 @@ class LuaSyncedCtrl
 		static int SetUnitLoadingTransport(lua_State* L);
 
 		static int SpawnProjectile(lua_State* L);
+		static int DeleteProjectile(lua_State* L);
 		static int SpawnCEG(lua_State* L);
 
 		// LuaRules  (fullCtrl)

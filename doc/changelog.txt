@@ -53,6 +53,7 @@ Lua:
  - new Spring.GetUICommands function to obtain a list of all UI commands (e.g. /luaui reload)
  - new VFS.CalculateHash function that calculates hash (in base64 form) of a given string (with md5 support initially)
  - new Spring.SetFeatureFade(featureID, bool) to control whether a feature will fade or not when zoomed out.
+ - new Spring.DeleteProjectile(projID) for silently removing projectiles (no explosion).
 
  - add callouts (see their Unit equivalents for documentation)
      Spring.{Get,Set}FeatureRotation

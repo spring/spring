@@ -295,6 +295,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitLoadingTransport);
 
 	REGISTER_LUA_CFUNC(SpawnProjectile);
+	REGISTER_LUA_CFUNC(DeleteProjectile);
 	REGISTER_LUA_CFUNC(SpawnCEG);
 
 	REGISTER_LUA_CFUNC(EditUnitCmdDesc);
@@ -3909,6 +3910,20 @@ int LuaSyncedCtrl::SpawnProjectile(lua_State* L)
 	lua_pushnumber(L, WeaponProjectileFactory::LoadProjectile(params));
 	return 1;
 }
+
+
+int LuaSyncedCtrl::DeleteProjectile(lua_State* L)
+{
+	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
+
+	if (proj == nullptr)
+		return 0;
+
+	proj->Delete();
+
+	return 0;
+}
+
 
 int LuaSyncedCtrl::SpawnCEG(lua_State* L)
 {
