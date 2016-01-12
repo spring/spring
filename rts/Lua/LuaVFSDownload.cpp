@@ -169,7 +169,7 @@ void StartDownload() {
 	queue.pop_front();
 	const std::string& filename = downloadItem.filename;
 	DownloadEnum::Category cat = downloadItem.cat;
-	const int ID = downloadItem.ID;
+	int ID = downloadItem.ID;
 	if (!filename.empty()) {
 		LOG_L(L_DEBUG, "DOWNLOADING: %s", filename.c_str());
 	}
