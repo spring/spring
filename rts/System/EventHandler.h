@@ -217,6 +217,11 @@ class CEventHandler
 
 		bool GameSetup(const std::string& state, bool& ready,
 		               const map<int, std::string>& playerStates);
+		void DownloadQueued(int ID, const string& archiveName, const string& archiveType);
+		void DownloadStarted(int ID);
+		void DownloadFinished(int ID);
+		void DownloadFailed(int ID, int errorID);
+		void DownloadProgress(int ID, long downloaded, long total);
 
 		std::string WorldTooltip(const CUnit* unit,
 		                         const CFeature* feature,

@@ -30,6 +30,7 @@
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/MouseHandler.h"
 #include "Lua/LuaOpenGL.h"
+#include "Lua/LuaVFSDownload.h"
 #include "Menu/SelectMenu.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Fonts/glFont.h"
@@ -279,6 +280,7 @@ bool SpringApp::Initialize()
 	Threading::InitThreadPool();
 	Threading::SetThreadScheduler();
 	battery = new CBattery();
+	luavfsdownload = new LuaVFSDownload();
 
 	// Create CGameSetup and CPreGame objects
 	Startup();
@@ -901,6 +903,7 @@ void SpringApp::Reload(const std::string& script)
 	// PreGame allocates clientNet, so we need to delete our old connection
 	SafeDelete(clientNet);
 
+	SafeDelete(luavfsdownload);
 	SafeDelete(battery);
 
 	// note: technically we only need to use RemoveArchive
@@ -924,6 +927,7 @@ void SpringApp::Reload(const std::string& script)
 	eventHandler.ResetState();
 
 	battery = new CBattery();
+	luavfsdownload = new LuaVFSDownload();
 
 	gu->ResetState();
 	gs->ResetState();
@@ -1022,6 +1026,7 @@ void SpringApp::ShutDown()
 	LOG("[SpringApp::%s][1]", __FUNCTION__);
 	ThreadPool::SetThreadCount(0);
 	LOG("[SpringApp::%s][2]", __FUNCTION__);
+	SafeDelete(luavfsdownload);
 
 	if (game != nullptr) {
 		game->KillLua(); // must be called before `game` var gets nulled, else stuff in LuaSyncedRead.cpp will fail

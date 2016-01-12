@@ -22,6 +22,7 @@
 #include "LuaOpenGL.h"
 #include "LuaUtils.h"
 #include "LuaVFS.h"
+#include "LuaVFSDownload.h"
 #include "LuaIO.h"
 #include "LuaZip.h"
 #include "Game/Camera.h"
@@ -183,7 +184,8 @@ CLuaUI::CLuaUI()
 	    !AddEntriesToTable(L, "Game",        LuaConstGame::PushEntries)    ||
 	    !AddEntriesToTable(L, "CMD",         LuaConstCMD::PushEntries)     ||
 	    !AddEntriesToTable(L, "CMDTYPE",     LuaConstCMDTYPE::PushEntries) ||
-	    !AddEntriesToTable(L, "LOG",         LuaUtils::PushLogEntries)
+	    !AddEntriesToTable(L, "LOG",         LuaUtils::PushLogEntries)     ||
+	    !AddEntriesToTable(L, "VFS",         LuaVFSDownload::PushEntries)
 	) {
 		KillLua();
 		return;

@@ -167,6 +167,12 @@ CALLIN_LIST = {
 	"WorldTooltip",            -- FIXME: not implemented by base GH
 	"MapDrawCmd",
 	"ShockFront",              -- FIXME: not implemented by base GH
+
+	"DownloadQueued",
+	"DownloadStarted",
+	"DownloadFinished",
+	"DownloadFailed",
+	"DownloadProgress",
 }
 
 for callinIdx, callinName in ipairs(CALLIN_LIST) do

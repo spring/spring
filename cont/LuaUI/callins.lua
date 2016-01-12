@@ -91,6 +91,12 @@ CallInsList = {
   "AllowResourceTransfer",
 
   "GameProgress",
+
+  "DownloadQueued",
+  "DownloadStarted",
+  "DownloadFinished",
+  "DownloadFailed",
+  "DownloadProgress",
 }
 
 

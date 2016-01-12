@@ -257,6 +257,13 @@ class CEventClient
 		virtual void MouseRelease(int x, int y, int button);
 		virtual bool MouseWheel(bool up, float value);
 		virtual bool JoystickEvent(const std::string& event, int val1, int val2);
+
+		virtual void DownloadQueued(int ID, const string& archiveName, const string& archiveType);
+		virtual void DownloadStarted(int ID);
+		virtual void DownloadFinished(int ID);
+		virtual void DownloadFailed(int ID, int errorID);
+		virtual void DownloadProgress(int ID, long downloaded, long total);
+
 		virtual bool IsAbove(int x, int y);
 		virtual std::string GetTooltip(int x, int y);
 

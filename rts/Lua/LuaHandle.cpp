@@ -2432,6 +2432,106 @@ const char* CLuaHandle::RecvSkirmishAIMessage(int aiTeam, const char* inData, in
 	return outData;
 }
 
+void CLuaHandle::DownloadQueued(int ID, const string& archiveName, const string& archiveType)
+{
+	LUA_CALL_IN_CHECK(L, false);
+	luaL_checkstack(L, 3, __FUNCTION__);
+
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
+
+	static const LuaHashString cmdStr("DownloadQueued");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		return; // the call is not defined
+	}
+
+	int argCount = 3;
+	lua_pushinteger(L, ID);
+	lua_pushsstring(L, archiveName);
+	lua_pushsstring(L, archiveType);
+
+	// call the routine
+	RunCallInTraceback(L, cmdStr, argCount, 0, traceBack.GetErrFuncIdx(), false);
+}
+
+void CLuaHandle::DownloadStarted(int ID)
+{
+	LUA_CALL_IN_CHECK(L, false);
+	luaL_checkstack(L, 1, __FUNCTION__);
+
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
+
+	static const LuaHashString cmdStr("DownloadStarted");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		return; // the call is not defined
+	}
+
+	int argCount = 1;
+	lua_pushinteger(L, ID);
+
+	// call the routine
+	RunCallInTraceback(L, cmdStr, argCount, 0, traceBack.GetErrFuncIdx(), false);
+}
+
+void CLuaHandle::DownloadFinished(int ID)
+{
+	LUA_CALL_IN_CHECK(L, false);
+	luaL_checkstack(L, 1, __FUNCTION__);
+
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
+
+	static const LuaHashString cmdStr("DownloadFinished");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		return; // the call is not defined
+	}
+
+	int argCount = 1;
+	lua_pushinteger(L, ID);
+
+	// call the routine
+	RunCallInTraceback(L, cmdStr, argCount, 0, traceBack.GetErrFuncIdx(), false);
+}
+
+void CLuaHandle::DownloadFailed(int ID, int errorID)
+{
+	LUA_CALL_IN_CHECK(L, false);
+	luaL_checkstack(L, 2, __FUNCTION__);
+
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
+
+	static const LuaHashString cmdStr("DownloadFailed");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		return; // the call is not defined
+	}
+
+	int argCount = 2;
+	lua_pushinteger(L, ID);
+	lua_pushinteger(L, errorID);
+
+	// call the routine
+	RunCallInTraceback(L, cmdStr, argCount, 0, traceBack.GetErrFuncIdx(), false);
+}
+
+void CLuaHandle::DownloadProgress(int ID, long downloaded, long total)
+{
+	LUA_CALL_IN_CHECK(L, false);
+	luaL_checkstack(L, 3, __FUNCTION__);
+
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
+
+	static const LuaHashString cmdStr("DownloadProgress");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		return; // the call is not defined
+	}
+
+	int argCount = 3;
+	lua_pushinteger(L, ID);
+	lua_pushnumber(L, downloaded);
+	lua_pushnumber(L, total);
+
+	// call the routine
+	RunCallInTraceback(L, cmdStr, argCount, 0, traceBack.GetErrFuncIdx(), false);
+}
+
 /******************************************************************************/
 /******************************************************************************/
 

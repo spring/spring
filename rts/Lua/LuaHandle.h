@@ -239,6 +239,11 @@ class CLuaHandle : public CEventClient
 
 		void CollectGarbage() override;
 
+		void DownloadQueued(int ID, const string& archiveName, const string& archiveType) override;
+		void DownloadStarted(int ID) override;
+		void DownloadFinished(int ID) override;
+		void DownloadFailed(int ID, int errorID) override;
+		void DownloadProgress(int ID, long downloaded, long total) override;
 	public: // Non-eventhandler call-ins
 		void Shutdown();
 		bool GotChatMsg(const string& msg, int playerID);

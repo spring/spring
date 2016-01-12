@@ -187,6 +187,11 @@ local callInLists = {
   'TweakGetTooltip',
   'RecvFromSynced',
   'TextInput',
+  'DownloadQueued',
+  'DownloadStarted',
+  'DownloadFinished',
+  'DownloadFailed',
+  'DownloadProgress',
 -- these use mouseOwner instead of lists
 --  'MouseMove',
 --  'MouseRelease',
@@ -1945,6 +1950,40 @@ function widgetHandler:StockpileChanged(unitID, unitDefID, unitTeam,
   return
 end
 
+--------------------------------------------------------------------------------
+--
+--  Download call-ins
+--
+
+function widgetHandler:DownloadStarted(id)
+  for _,w in ipairs(self.DownloadStartedList) do
+    w:DownloadStarted(id)
+  end
+end
+
+function widgetHandler:DownloadQueued(id)
+  for _,w in ipairs(self.DownloadQueuedList) do
+    w:DownloadQueued(id)
+  end
+end
+
+function widgetHandler:DownloadFinished(id)
+  for _,w in ipairs(self.DownloadFinishedList) do
+    w:DownloadFinished(id)
+  end
+end
+
+function widgetHandler:DownloadFailed(id, errorid)
+  for _,w in ipairs(self.DownloadFailedList) do
+    w:DownloadFailed(id, errorid)
+  end
+end
+
+function widgetHandler:DownloadProgress(id, downloaded, total)
+  for _,w in ipairs(self.DownloadProgressList) do
+    w:DownloadProgress(id, downloaded, total)
+  end
+end
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
