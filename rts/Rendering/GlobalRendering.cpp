@@ -70,9 +70,7 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(zNear),
 	CR_IGNORED(viewRange),
 	CR_IGNORED(FSAA),
-
 	CR_IGNORED(maxTextureSize),
-	CR_IGNORED(teamNanospray),
 	CR_IGNORED(active),
 	CR_IGNORED(compressTextures),
 	CR_IGNORED(haveATI),
