@@ -1026,6 +1026,7 @@ void SpringApp::ShutDown()
 	LOG("[SpringApp::%s][1]", __FUNCTION__);
 	ThreadPool::SetThreadCount(0);
 	LOG("[SpringApp::%s][2]", __FUNCTION__);
+	SafeDelete(luavfsdownload);
 
 	if (game != nullptr) {
 		game->KillLua(); // must be called before `game` var gets nulled, else stuff in LuaSyncedRead.cpp will fail
