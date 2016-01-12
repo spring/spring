@@ -27,7 +27,7 @@ static int material_index(lua_State* L)
 	const string key = luaL_checkstring(L, 2);
 	const LuaMatBin* bin = (*matRef)->GetBin();
 
-	if (bin == NULL)
+	if (bin == nullptr)
 		return 0;
 
 	//const LuaMaterial& mat = *bin;
@@ -52,6 +52,7 @@ static int material_gc(lua_State* L)
 
 
 
+
 /******************************************************************************/
 /******************************************************************************/
 //
@@ -61,11 +62,8 @@ static int material_gc(lua_State* L)
 static inline CSolidObject* ParseSolidObject(lua_State* L, const char* caller, int index, int objType)
 {
 	if (!lua_isnumber(L, index)) {
-		if (caller != NULL) {
-			luaL_error(L, "Bad objectID parameter in %s()\n", caller);
-		} else {
-			return NULL;
-		}
+		luaL_error(L, "[%s] objectID (arg #%d) not a number\n", caller, index);
+		return nullptr;
 	}
 
 	switch (objType) {
@@ -74,7 +72,7 @@ static inline CSolidObject* ParseSolidObject(lua_State* L, const char* caller, i
 		default            : {                                            assert(false); } break;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 
@@ -87,6 +85,7 @@ static inline CFeature* ParseFeature(lua_State* L, const char* caller, int index
 {
 	return (static_cast<CFeature*>(ParseSolidObject(L, caller, index, LUAOBJ_FEATURE)));
 }
+
 
 
 
@@ -123,7 +122,7 @@ int LuaObjectRenderingImpl::SetLODCount(lua_State* L)
 
 	CSolidObject* obj = ParseSolidObject(L, __FUNCTION__, 1, objType);
 
-	if (obj == NULL)
+	if (obj == nullptr)
 		return 0;
 
 	LuaObjectDrawer::SetObjectLOD(obj, LuaObjType(objType), lodCount);
@@ -133,7 +132,7 @@ int LuaObjectRenderingImpl::SetLODCount(lua_State* L)
 
 static int SetLODLengthCommon(lua_State* L, CSolidObject* obj, float scale)
 {
-	if (obj == NULL)
+	if (obj == nullptr)
 		return 0;
 
 	LuaObjectMaterialData* lmd = obj->GetLuaMaterialData();
@@ -227,7 +226,7 @@ static LuaObjectMaterial* GetObjectMaterial(CSolidObject* obj, const string& mat
 	LuaObjectMaterialData* lmd = obj->GetLuaMaterialData();
 
 	if (matType < 0)
-		return NULL;
+		return nullptr;
 
 	return (lmd->GetLuaMaterial(matType));
 }
@@ -235,34 +234,22 @@ static LuaObjectMaterial* GetObjectMaterial(CSolidObject* obj, const string& mat
 
 /******************************************************************************/
 
-static void ParseShader(lua_State* L, const char* caller, int index,
-                          LuaMatShader& shader)
+static void ParseShader(lua_State* L, const char* caller, int index, LuaMatShader& shader)
 {
-	const int luaType = lua_type(L, index);
-	if (luaType == LUA_TNUMBER) {
-		const unsigned int ishdr = (unsigned int)luaL_checknumber(L, index);
-		const LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
-		const unsigned int id = shaders.GetProgramName(ishdr);
-		if (id == 0) {
-			shader.openglID = 0;
-			shader.type = LuaMatShader::LUASHADER_NONE;
-		} else {
-			shader.openglID = id;
-			shader.type = LuaMatShader::LUASHADER_GL;
-		}
-	}
-	else if (luaType == LUA_TSTRING) {
-		const string key = StringToLower(lua_tostring(L, index));
+	const LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
 
-		if (key == "3do") {
-			shader.type = LuaMatShader::LUASHADER_3DO;
-		} else if (key == "s3o") {
-			shader.type = LuaMatShader::LUASHADER_S3O;
-		} else if (key == "obj") {
-			shader.type = LuaMatShader::LUASHADER_S3O; //!
-		}
+	switch (lua_type(L, index)) {
+		case LUA_TNUMBER: {
+			shader.SetTypeFromID(shaders.GetProgramName(luaL_checknumber(L, index)));
+		} break;
+
+		case LUA_TSTRING: {
+			shader.SetTypeFromKey(StringToLower(lua_tostring(L, index)));
+		} break;
+
+		default: {
+		} break;
 	}
-	return;
 }
 
 /*
@@ -297,19 +284,19 @@ static GLuint ParseUnitTexture(const string& texture)
 
 	if (id < 0) {
 		const FeatureDef* fd = featureHandler->GetFeatureDefByID(-id);
-		if (fd == NULL) {
+		if (fd == nullptr) {
 			return 0;
 		}
 		model = fd->LoadModel();
 	} else {
 		const UnitDef* ud = unitDefHandler->GetUnitDefByID(id);
-		if (ud == NULL) {
+		if (ud == nullptr) {
 			return 0;
 		}
 		model = ud->LoadModel();
 	}
 
-	if (model == NULL) {
+	if (model == nullptr) {
 		return 0;
 	}
 
@@ -319,7 +306,7 @@ static GLuint ParseUnitTexture(const string& texture)
 	}
 
 	const CS3OTextureHandler::S3oTex* stex = texturehandlerS3O->GetS3oTex(texType);
-	if (stex == NULL) {
+	if (stex == nullptr) {
 		return 0;
 	}
 
@@ -402,10 +389,10 @@ static LuaMatRef ParseMaterial(lua_State* L, const char* caller, int index,
 		}
 
 		else if (key == "standard_shader" || key == "shader") {
-			ParseShader(L, caller, -1, mat.standardShader);
+			ParseShader(L, caller, -1, mat.shaders[LuaMatShader::LUASHADER_PASS_FWD]);
 		}
 		else if (key == "deferred_shader" || key == "deferred") {
-			ParseShader(L, caller, -1, mat.deferredShader);
+			ParseShader(L, caller, -1, mat.shaders[LuaMatShader::LUASHADER_PASS_DFR]);
 		}
 
 		else if (key == "texunits") {
@@ -512,7 +499,7 @@ int LuaObjectRenderingImpl::SetMaterial(lua_State* L)
 	// args=<objID, lodMatNum, matName, matRef>
 	CSolidObject* obj = ParseSolidObject(L, __FUNCTION__, 1, GetObjectType());
 
-	if (obj == NULL)
+	if (obj == nullptr)
 		return 0;
 
 	const string matName = luaL_checkstring(L, 3);
@@ -520,12 +507,12 @@ int LuaObjectRenderingImpl::SetMaterial(lua_State* L)
 
 	LuaObjectMaterial* objMat = GetObjectMaterial(obj, matName);
 
-	if (objMat == NULL)
+	if (objMat == nullptr)
 		return 0;
 
 	LuaObjectLODMaterial* lodMat = objMat->GetMaterial(luaL_checknumber(L, 2) - 1);
 
-	if (lodMat == NULL)
+	if (lodMat == nullptr)
 		return 0;
 
 	if (lua_isuserdata(L, 4)) {
@@ -546,12 +533,12 @@ int LuaObjectRenderingImpl::SetMaterialLastLOD(lua_State* L)
 	// args=<objID, matName, lodMatNum>
 	CSolidObject* obj = ParseSolidObject(L, __FUNCTION__, 1, GetObjectType());
 
-	if (obj == NULL)
+	if (obj == nullptr)
 		return 0;
 
 	LuaObjectMaterial* objMat = GetObjectMaterial(obj, luaL_checkstring(L, 2));
 
-	if (objMat == NULL)
+	if (objMat == nullptr)
 		return 0;
 
 	objMat->SetLastLOD(luaL_checknumber(L, 3) - 1);
@@ -564,17 +551,17 @@ int LuaObjectRenderingImpl::SetMaterialDisplayLists(lua_State* L)
 	// args=<objID, lodLevel, matName, preListID, postListID>
 	CSolidObject* obj = ParseSolidObject(L, __FUNCTION__, 1, GetObjectType());
 
-	if (obj == NULL)
+	if (obj == nullptr)
 		return 0;
 
 	LuaObjectMaterial* objMat = GetObjectMaterial(obj, luaL_checkstring(L, 3));
 
-	if (objMat == NULL)
+	if (objMat == nullptr)
 		return 0;
 
 	LuaObjectLODMaterial* lodMat = objMat->GetMaterial(luaL_checknumber(L, 2) - 1);
 
-	if (lodMat == NULL)
+	if (lodMat == nullptr)
 		return 0;
 
 	lodMat->preDisplayList  = ParseDisplayList(L, __FUNCTION__, 4);
@@ -589,17 +576,17 @@ int LuaObjectRenderingImpl::SetObjectUniform(lua_State* L)
 	// args=<objID, matName, lodLevel [, ...]>
 	CSolidObject* obj = ParseSolidObject(L, __FUNCTION__, 1, GetObjectType());
 
-	if (obj == NULL)
+	if (obj == nullptr)
 		return 0;
 
 	LuaObjectMaterial* objMat = GetObjectMaterial(obj, luaL_checkstring(L, 2));
 
-	if (objMat == NULL)
+	if (objMat == nullptr)
 		return 0;
 
 	LuaObjectLODMaterial* lodMat = objMat->GetMaterial(luaL_checknumber(L, 3) - 1);
 
-	if (lodMat == NULL)
+	if (lodMat == nullptr)
 		return 0;
 
 	const int args = lua_gettop(L) - 3;
@@ -618,7 +605,7 @@ int LuaObjectRenderingImpl::SetObjectUniform(lua_State* L)
 
 static int SetObjectLuaDraw(lua_State* L, CSolidObject* obj)
 {
-	if (obj == NULL)
+	if (obj == nullptr)
 		return 0;
 
 	if (!lua_isboolean(L, 2))
@@ -673,7 +660,7 @@ int LuaObjectRenderingImpl::Debug(lua_State* L)
 	// args=<objID>
 	const CSolidObject* obj = ParseSolidObject(L, __FUNCTION__, 1, GetObjectType());
 
-	if (obj == NULL)
+	if (obj == nullptr)
 		return 0;
 
 	const LuaObjectMaterialData* lmd = obj->GetLuaMaterialData();

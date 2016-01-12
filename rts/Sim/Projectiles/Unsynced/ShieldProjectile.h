@@ -3,8 +3,8 @@
 #ifndef SHIELD_PROJECTILE_H
 #define SHIELD_PROJECTILE_H
 
-#include <list>
 #include "Sim/Projectiles/Projectile.h"
+#include <System/creg/STL_List.h>
 #include "System/float3.h"
 #include "System/type2.h"
 #include "System/Color.h"

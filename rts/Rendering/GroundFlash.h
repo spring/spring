@@ -4,9 +4,11 @@
 #define GROUND_FLASH_H
 
 #include "Sim/Projectiles/ExplosionGenerator.h"
+#include "System/Color.h"
 
 struct AtlasedTexture;
 struct GroundFXTexture;
+struct GroundFlashInfo;
 class CColorMap;
 class CVertexArray;
 
@@ -15,7 +17,7 @@ class CGroundFlash : public CExpGenSpawnable
 public:
 	CR_DECLARE(CGroundFlash)
 
-	CGroundFlash(const float3& p);
+	CGroundFlash(const float3& _pos);
 	CGroundFlash();
 
 	virtual ~CGroundFlash() {}
@@ -24,6 +26,9 @@ public:
 	virtual bool Update() { return false; }
 	virtual void Init(const CUnit* owner, const float3& offset) {}
 
+	float3 CalcNormal(const float3 midPos, const float3 camDir, const float quadSize) const;
+
+public:
 	float size;
 	bool depthTest;
 	bool depthMask;
@@ -39,10 +44,22 @@ public:
 	CR_DECLARE(CStandardGroundFlash)
 
 	CStandardGroundFlash();
-	CStandardGroundFlash(const float3& pos, float circleAlpha, float flashAlpha, float flashSize, float circleSpeed, float ttl, const float3& color = float3(1.0f, 1.0f, 0.7f));
+	CStandardGroundFlash(const float3& pos, const GroundFlashInfo& info);
+	CStandardGroundFlash(
+		const float3& pos,
+		float _circleAlpha,
+		float _flashAlpha,
+		float _flashSize,
+		float _circleGrowth,
+		float _ttl,
+		const float3& _color = float3(1.0f, 1.0f, 0.7f)
+	);
+
+	void InitCommon(const float3& _pos, const float3& _color);
 
 	void Draw();
 	bool Update();
+
 private:
 	float3 side1;
 	float3 side2;
@@ -56,9 +73,9 @@ private:
 	float flashAgeSpeed;
 	float circleAlphaDec;
 
-	unsigned char color[3];
-
 	int ttl;
+
+	SColor color;
 };
 
 /**
@@ -75,6 +92,7 @@ public:
 	void Init(const CUnit* owner, const float3& offset);
 	void Draw();
 	bool Update();
+
 private:
 	float3 side1;
 	float3 side2;
@@ -98,11 +116,20 @@ class CSeismicGroundFlash : public CGroundFlash
 public:
 	CR_DECLARE(CSeismicGroundFlash)
 
-	CSeismicGroundFlash(const float3& pos, int ttl, int fade, float size, float sizeGrowth, float alpha, const float3& col);
+	CSeismicGroundFlash(
+		const float3& _pos,
+		int _ttl,
+		int _fade,
+		float _size,
+		float _sizeGrowth,
+		float _alpha,
+		const float3& _color
+	);
 
 	void Draw();
 	/// @return false when it should be deleted
 	bool Update();
+
 private:
 	float3 side1;
 	float3 side2;
@@ -115,7 +142,7 @@ private:
 	int fade;
 	int ttl;
 
-	unsigned char color[4];
+	SColor color;
 };
 
 #endif /* GROUND_FLASH_H */

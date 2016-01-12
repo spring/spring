@@ -56,8 +56,8 @@ CR_REG_METADATA_SUB(CCustomExplosionGenerator, ProjectileSpawnInfo, (
 	CR_MEMBER(flags)
 ))
 
-CR_BIND(CCustomExplosionGenerator::GroundFlashInfo, )
-CR_REG_METADATA_SUB(CCustomExplosionGenerator, GroundFlashInfo, (
+CR_BIND(GroundFlashInfo, )
+CR_REG_METADATA(GroundFlashInfo, (
 	CR_MEMBER(flashSize),
 	CR_MEMBER(flashAlpha),
 	CR_MEMBER(circleGrowth),
@@ -186,24 +186,26 @@ CExplosionGeneratorHandler::CExplosionGeneratorHandler()
 	explosionGenerators.push_back(new CStdExplosionGenerator()); // id=0
 	explosionGenerators[0]->SetGeneratorID(EXPGEN_ID_STANDARD);
 
-	exploParser = NULL;
-	aliasParser = NULL;
-	explTblRoot = NULL;
+	exploParser = nullptr;
+	aliasParser = nullptr;
+	explTblRoot = nullptr;
 
 	ParseExplosionTables();
 }
 
 CExplosionGeneratorHandler::~CExplosionGeneratorHandler()
 {
-	delete exploParser; exploParser = NULL;
-	delete aliasParser; aliasParser = NULL;
-	delete explTblRoot; explTblRoot = NULL;
+	SafeDelete(exploParser);
+	SafeDelete(aliasParser);
+	SafeDelete(explTblRoot);
 
-	delete explosionGenerators[0];
+	// delete CStdExplGen
+	SafeDelete(explosionGenerators[0]);
 
 	for (unsigned int n = 1; n < explosionGenerators.size(); n++) {
 		creg::Class* cls = explosionGenerators[n]->GetClass();
 		cls->DeleteInstance(explosionGenerators[n]);
+		explosionGenerators[n] = nullptr;
 	}
 
 	explosionGenerators.clear();
@@ -1039,8 +1041,7 @@ bool CCustomExplosionGenerator::Explosion(
 	}
 
 	if (groundExplosion && (groundFlash.ttl > 0) && (groundFlash.flashSize > 1)) {
-		new CStandardGroundFlash(pos, groundFlash.circleAlpha, groundFlash.flashAlpha,
-			groundFlash.flashSize, groundFlash.circleGrowth, groundFlash.ttl, groundFlash.color);
+		new CStandardGroundFlash(pos, groundFlash);
 	}
 
 	if (expGenParams.useDefaultExplosions) {

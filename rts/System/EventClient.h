@@ -121,7 +121,7 @@ class CEventClient
 		virtual void UnitFinished(const CUnit* unit) {}
 		virtual void UnitNanoframed(const CUnit* unit) {}
 		virtual void UnitFromFactory(const CUnit* unit, const CUnit* factory, bool userOrders) {}
-		virtual void UnitDestroyed(const CUnit* unit, const CUnit* attacker) {}
+		virtual void UnitDestroyed(const CUnit* unit, const CUnit* attacker, bool preEvent) {}
 		virtual void UnitTaken(const CUnit* unit, int oldTeam, int newTeam) {}
 		virtual void UnitGiven(const CUnit* unit, int oldTeam, int newTeam) {}
 
@@ -290,6 +290,7 @@ class CEventClient
 		                        const std::string* label);
 
 		virtual void SunChanged(const float3& sunDir);
+		virtual void SunLightingChanged();
 
 		virtual void ViewResize();
 
@@ -299,6 +300,8 @@ class CEventClient
 		virtual void DrawWorldShadow() {}
 		virtual void DrawWorldReflection() {}
 		virtual void DrawWorldRefraction() {}
+		virtual void DrawGroundPreForward() {}
+		virtual void DrawGroundPreDeferred() {}
 		virtual void DrawGroundPostDeferred() {}
 		virtual void DrawUnitsPostDeferred() {}
 		virtual void DrawFeaturesPostDeferred() {}

@@ -238,85 +238,84 @@ void CAdvWater::UpdateWater(CGame* game)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
 
-	bumpFBO.Bind();
-	glViewport(0, 0, 128, 128);
+	{
+		bumpFBO.Bind();
+		glViewport(0, 0, 128, 128);
 
-	glClearColor(0.0f, 0.0f, 0.0f, 1);
-	glClear(GL_COLOR_BUFFER_BIT);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
 
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0, 1, 0, 1, -1, 1);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		glOrtho(0, 1, 0, 1, -1, 1);
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
 
-	glColor3f(0.2f, 0.2f, 0.2f);
+		glColor3f(0.2f, 0.2f, 0.2f);
 
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-	va->EnlargeArrays(12, 0, VA_SIZE_T);
+		CVertexArray* va = GetVertexArray();
+		va->Initialize();
+		va->EnlargeArrays(12, 0, VA_SIZE_T);
 
-	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[0]);
+		glBindTexture(GL_TEXTURE_2D, rawBumpTexture[0]);
 
-	va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0046f);
-	va->AddVertexQT(  UpVector, 0, 2 + gs->frameNum*0.0046f);
-	va->AddVertexQT(  XYVector, 2, 2 + gs->frameNum*0.0046f);
-	va->AddVertexQT( RgtVector, 2, 0 + gs->frameNum*0.0046f);
+		va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0046f);
+		va->AddVertexQT(  UpVector, 0, 2 + gs->frameNum*0.0046f);
+		va->AddVertexQT(  XYVector, 2, 2 + gs->frameNum*0.0046f);
+		va->AddVertexQT( RgtVector, 2, 0 + gs->frameNum*0.0046f);
 
-	va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0026f);
-	va->AddVertexQT(  UpVector, 0, 4 + gs->frameNum*0.0026f);
-	va->AddVertexQT(  XYVector, 2, 4 + gs->frameNum*0.0026f);
-	va->AddVertexQT( RgtVector, 2, 0 + gs->frameNum*0.0026f);
+		va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0026f);
+		va->AddVertexQT(  UpVector, 0, 4 + gs->frameNum*0.0026f);
+		va->AddVertexQT(  XYVector, 2, 4 + gs->frameNum*0.0026f);
+		va->AddVertexQT( RgtVector, 2, 0 + gs->frameNum*0.0026f);
 
-	va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0012f);
-	va->AddVertexQT(  UpVector, 0, 8 + gs->frameNum*0.0012f);
-	va->AddVertexQT(  XYVector, 2, 8 + gs->frameNum*0.0012f);
-	va->AddVertexQT( RgtVector, 2, 0 + gs->frameNum*0.0012f);
+		va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0012f);
+		va->AddVertexQT(  UpVector, 0, 8 + gs->frameNum*0.0012f);
+		va->AddVertexQT(  XYVector, 2, 8 + gs->frameNum*0.0012f);
+		va->AddVertexQT( RgtVector, 2, 0 + gs->frameNum*0.0012f);
 
-	va->DrawArrayT(GL_QUADS);
+		va->DrawArrayT(GL_QUADS);
 
-	va = GetVertexArray();
-	va->Initialize();
-	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[1]);
+		va = GetVertexArray();
+		va->Initialize();
+		glBindTexture(GL_TEXTURE_2D, rawBumpTexture[1]);
 
-	va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0036f);
-	va->AddVertexQT(  UpVector, 0, 1 + gs->frameNum*0.0036f);
-	va->AddVertexQT(  XYVector, 1, 1 + gs->frameNum*0.0036f);
-	va->AddVertexQT( RgtVector, 1, 0 + gs->frameNum*0.0036f);
+		va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0036f);
+		va->AddVertexQT(  UpVector, 0, 1 + gs->frameNum*0.0036f);
+		va->AddVertexQT(  XYVector, 1, 1 + gs->frameNum*0.0036f);
+		va->AddVertexQT( RgtVector, 1, 0 + gs->frameNum*0.0036f);
 
-	va->DrawArrayT(GL_QUADS);
+		va->DrawArrayT(GL_QUADS);
 
-	va = GetVertexArray();
-	va->Initialize();
-	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[2]);
+		va = GetVertexArray();
+		va->Initialize();
+		glBindTexture(GL_TEXTURE_2D, rawBumpTexture[2]);
 
-	va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0082f);
-	va->AddVertexQT(  UpVector, 0, 1 + gs->frameNum*0.0082f);
-	va->AddVertexQT(  XYVector, 1, 1 + gs->frameNum*0.0082f);
-	va->AddVertexQT( RgtVector, 1, 0 + gs->frameNum*0.0082f);
+		va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0082f);
+		va->AddVertexQT(  UpVector, 0, 1 + gs->frameNum*0.0082f);
+		va->AddVertexQT(  XYVector, 1, 1 + gs->frameNum*0.0082f);
+		va->AddVertexQT( RgtVector, 1, 0 + gs->frameNum*0.0082f);
 
-	va->DrawArrayT(GL_QUADS);
+		va->DrawArrayT(GL_QUADS);
 
-	// this fixes a memory leak on ATI cards
-	glBindTexture(GL_TEXTURE_2D, 0);
+		// this fixes a memory leak on ATI cards
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glColor3f(1.0f, 1.0f, 1.0f);
+	}
 
-	glColor3f(1, 1, 1);
+
 	reflectFBO.Bind();
-	glViewport(0, 0, 512, 512);
-	glClear(GL_DEPTH_BUFFER_BIT);
+	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
 	CCamera* curCam = CCamera::GetActiveCamera();
 
 	{
-		curCam->SetDir(prvCam->GetDir() * float3(1.0f, -1.0f, 1.0f));
-		curCam->SetPos(prvCam->GetPos() * float3(1.0f, -1.0f, 1.0f));
-		curCam->SetRotZ(-prvCam->GetRot().z);
-		curCam->Update();
-
+		curCam->CopyStateReflect(prvCam);
+		curCam->UpdateLoadViewPort(0, 0, 512, 512);
 
 		game->SetDrawMode(CGame::gameReflectionDraw);
-		sky->Draw();
 
 		{
 			const double clipPlaneEq[4] = {0.0, 1.0, 0.0, 1.0};
@@ -327,12 +326,16 @@ void CAdvWater::UpdateWater(CGame* game)
 			{
 				drawReflection = true;
 
+				sky->Draw();
 				readMap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
 				unitDrawer->Draw(true);
 				featureDrawer->Draw();
-				unitDrawer->DrawCloakedUnits(true);
-				featureDrawer->DrawFadeFeatures(true);
+
+				unitDrawer->DrawAlphaPass();
+				featureDrawer->DrawAlphaPass();
 				projectileDrawer->Draw(true);
+				sky->DrawSun();
+
 				eventHandler.DrawWorldReflection();
 
 				drawReflection = false;
@@ -346,11 +349,9 @@ void CAdvWater::UpdateWater(CGame* game)
 
 	CCamera::SetActiveCamera(prvCam->GetCamType());
 	prvCam->Update();
+	prvCam->LoadViewPort();
 
 	FBO::Unbind();
-
-	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
-	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 1);
 
 	glPopAttrib();
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

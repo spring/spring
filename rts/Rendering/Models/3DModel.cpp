@@ -66,12 +66,12 @@ void S3DModel::DeletePieces(S3DModelPiece* piece)
 S3DModelPiece::S3DModelPiece()
 	: parent(NULL)
 	, axisMapType(AXIS_MAPPING_XYZ)
-	, hasGeometryData(false)
-	, hasIdentityRot(true)
 	, scales(OnesVector)
 	, mins(DEF_MIN_SIZE)
 	, maxs(DEF_MAX_SIZE)
 	, rotAxisSigns(-OnesVector)
+	, hasGeometryData(false)
+	, hasIdentityRot(true)
 	, dispListID(0)
 {
 }
@@ -127,6 +127,9 @@ void LocalModel::DrawPieces() const
 
 void LocalModel::DrawPiecesLOD(unsigned int lod) const
 {
+	if (lod > lodCount)
+		return;
+
 	for (const auto& p: pieces) {
 		p.DrawLOD(lod);
 	}
@@ -156,6 +159,11 @@ void LocalModel::SetModel(const S3DModel* model)
 	pieces.reserve(model->numPieces);
 
 	CreateLocalModelPieces(model->GetRootPiece());
+
+	// must recursively update matrices here too: for features
+	// LocalModel::Update is never called, but they might have
+	// baked piece rotations (if .dae)
+	pieces[0].UpdateMatricesRec(false);
 	UpdateBoundingVolume(0);
 
 	assert(pieces.size() == model->numPieces);
@@ -165,8 +173,9 @@ LocalModelPiece* LocalModel::CreateLocalModelPieces(const S3DModelPiece* mpParen
 {
 	LocalModelPiece* lmpChild = NULL;
 
+	// construct an LMP(mp) in-place
 	pieces.emplace_back(mpParent);
-	LocalModelPiece *lmpParent = &pieces.back();
+	LocalModelPiece* lmpParent = &pieces.back();
 
 	lmpParent->SetLModelPieceIndex(pieces.size() - 1);
 	lmpParent->SetScriptPieceIndex(pieces.size() - 1);
@@ -195,12 +204,44 @@ void LocalModel::UpdateBoundingVolume(unsigned int frameNum)
 		const CMatrix44f& matrix = pieces[n].GetModelSpaceMatrix();
 		const S3DModelPiece* piece = pieces[n].original;
 
-		for (unsigned int k = 0; k < piece->GetVertexCount(); k++) {
-			const float3 vertex = matrix * piece->GetVertexPos(k);
+		#if 0
+		const unsigned int vcount = piece->GetVertexCount();
 
-			bbMins = float3::min(bbMins, vertex);
-			bbMaxs = float3::max(bbMaxs, vertex);
+		if (vcount >= 8) {
+		#endif
+			// transform only the corners of the piece's bounding-box
+			const float3 pMins = piece->mins;
+			const float3 pMaxs = piece->maxs;
+			const float3 verts[8] = {
+				// bottom
+				float3(pMins.x,  pMins.y,  pMins.z),
+				float3(pMaxs.x,  pMins.y,  pMins.z),
+				float3(pMaxs.x,  pMins.y,  pMaxs.z),
+				float3(pMins.x,  pMins.y,  pMaxs.z),
+				// top
+				float3(pMins.x,  pMaxs.y,  pMins.z),
+				float3(pMaxs.x,  pMaxs.y,  pMins.z),
+				float3(pMaxs.x,  pMaxs.y,  pMaxs.z),
+				float3(pMins.x,  pMaxs.y,  pMaxs.z),
+			};
+
+			for (unsigned int k = 0; k < 8; k++) {
+				const float3 vertex = matrix * verts[k];
+
+				bbMins = float3::min(bbMins, vertex);
+				bbMaxs = float3::max(bbMaxs, vertex);
+			}
+		#if 0
+		} else {
+			// note: not as efficient because of branching and virtual calls
+			for (unsigned int k = 0; k < vcount; k++) {
+				const float3 vertex = matrix * piece->GetVertexPos(k);
+
+				bbMins = float3::min(bbMins, vertex);
+				bbMaxs = float3::max(bbMaxs, vertex);
+			}
 		}
+		#endif
 	}
 
 	// note: offset is relative to object->pos

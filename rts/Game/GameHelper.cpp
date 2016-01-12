@@ -194,21 +194,16 @@ void CGameHelper::DamageObjectsInExplosionRadius(
 	const float expRad,
 	const int weaponDefID
 ) {
-	static ObjectCache cache;
+	static std::vector<CUnit*> unitCache;
+	static std::vector<CFeature*> featureCache;
 
-	if (cache.Empty())
-		cache.Init(unitHandler->MaxUnits(), unitHandler->MaxUnits());
+	const unsigned int oldNumUnits = unitCache.size();
+	const unsigned int oldNumFeatures = featureCache.size();
 
-	std::vector<CUnit*>& units = cache.GetUnits();
-	std::vector<CFeature*>& features = cache.GetFeatures();
+	quadField->GetUnitsAndFeaturesColVol(params.pos, expRad, unitCache, featureCache);
 
-	const unsigned int oldNumUnits = *(cache.GetNumUnitsPtr());
-	const unsigned int oldNumFeatures = *(cache.GetNumFeaturesPtr());
-
-	quadField->GetUnitsAndFeaturesColVol(params.pos, expRad, units, features, cache.GetNumUnitsPtr(), cache.GetNumFeaturesPtr());
-
-	const unsigned int newNumUnits = *(cache.GetNumUnitsPtr());
-	const unsigned int newNumFeatures = *(cache.GetNumFeaturesPtr());
+	const unsigned int newNumUnits = unitCache.size();
+	const unsigned int newNumFeatures = featureCache.size();
 
 	// damage all units within the explosion radius
 	// NOTE:
@@ -216,16 +211,16 @@ void CGameHelper::DamageObjectsInExplosionRadius(
 	//   which would overwrite our object cache if we did
 	//   not keep track of end-markers --> certain objects
 	//   would not be damaged AT ALL (!)
-	for (unsigned int n = oldNumUnits; n < newNumUnits; n++) {
-		DoExplosionDamage(units[n], params.owner, params.pos, expRad, params.explosionSpeed, params.edgeEffectiveness, params.ignoreOwner, params.damages, weaponDefID, params.projectileID);
-	}
+	for (unsigned int n = oldNumUnits; n < newNumUnits; n++)
+		DoExplosionDamage(unitCache[n], params.owner, params.pos, expRad, params.explosionSpeed, params.edgeEffectiveness, params.ignoreOwner, params.damages, weaponDefID, params.projectileID);
+
+	unitCache.resize(oldNumUnits);
 
 	// damage all features within the explosion radius
-	for (unsigned int n = oldNumFeatures; n < newNumFeatures; n++) {
-		DoExplosionDamage(features[n], params.owner, params.pos, expRad, params.edgeEffectiveness, params.damages, weaponDefID, params.projectileID);
-	}
+	for (unsigned int n = oldNumFeatures; n < newNumFeatures; n++)
+		DoExplosionDamage(featureCache[n], params.owner, params.pos, expRad, params.edgeEffectiveness, params.damages, weaponDefID, params.projectileID);
 
-	cache.Reset(oldNumUnits, oldNumFeatures);
+	featureCache.resize(oldNumFeatures);
 }
 
 void CGameHelper::Explosion(const ExplosionParams& params) {
@@ -357,7 +352,7 @@ template<typename TFilter, typename TQuery>
 static inline void QueryUnits(TFilter filter, TQuery& query)
 {
 	const auto& quads = quadField->GetQuads(query.pos, query.radius);
-	const int tempNum = gs->tempNum++;
+	const int tempNum = gs->GetTempNum();
 
 	for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) { //FIXME
 		if (!filter.Team(t)) {
@@ -572,7 +567,7 @@ namespace {
 				const float dist = pos.distance(u->midPos) - u->radius;
 
 				if (dist <= closeDist &&
-					(canBeBlind || ((u->losRadius * losHandler->los.divisor) > dist))
+					(canBeBlind || (u->losRadius > dist))
 				) {
 					closeDist = dist;
 					closeUnit = u;
@@ -599,7 +594,7 @@ namespace {
 				const float sqDist = (pos - u->midPos).SqLength2D();
 
 				if (sqDist <= closeSqDist &&
-					(canBeBlind || Square(u->losRadius * losHandler->los.divisor) > sqDist)
+					(canBeBlind || Square(u->losRadius) > sqDist)
 				) {
 					closeSqDist = sqDist;
 					closeUnit = u;
@@ -629,10 +624,6 @@ namespace {
 	} // end of namespace Query
 } // end of namespace
 
-// Use this instead of unit->tempNum here, because it requires a mutex lock that will deadlock if luaRules is invoked simultaneously.
-// Not the cleanest solution, but faster than e.g. a std::set, and this function is called quite frequently.
-static int tempTargetUnits[MAX_UNITS] = {0};
-static int targetTempNum = 2;
 
 void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoidUnit, std::multimap<float, CUnit*>& targets)
 {
@@ -650,30 +641,28 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 	const bool paralyzer  = (weaponDef->damages.paralyzeDamageTime != 0);
 
 	const auto& quads = quadField->GetQuads(pos, radius + (aHeight - std::max(0.0f, readMap->GetInitMinHeight())) * heightMod);
-	const int tempNum = targetTempNum++;
+	const int tempNum = gs->GetTempNum();
 
 	for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
-		if (teamHandler->Ally(owner->allyteam, t)) {
+		if (teamHandler->Ally(owner->allyteam, t))
 			continue;
-		}
+
 		for (const int qi: quads) {
 			const std::vector<CUnit*>& allyTeamUnits = quadField->GetQuad(qi).teamUnits[t];
 
 			for (CUnit* targetUnit: allyTeamUnits) {
 				float targetPriority = 1.0f;
 
-				if (tempTargetUnits[targetUnit->id] == tempNum) {
+				if (targetUnit->tempNum == tempNum)
 					continue;
-				}
-				tempTargetUnits[targetUnit->id] = tempNum;
 
-				if (!weapon->TestTarget(float3(), SWeaponTarget(targetUnit))) {
+				targetUnit->tempNum = tempNum;
+
+				if (!weapon->TestTarget(float3(), SWeaponTarget(targetUnit)))
 					continue;
-				}
 
-				if (targetUnit == avoidUnit) {
+				if (targetUnit == avoidUnit)
 					targetPriority *= 10.0f;
-				}
 
 				float3 targPos;
 				const unsigned short targetLOSState = targetUnit->losStatus[owner->allyteam];
@@ -689,9 +678,8 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 
 				const float modRange = radius + (aHeight - targPos.y) * heightMod;
 
-				if (pos.SqDistance2D(targPos) > modRange * modRange) {
+				if (pos.SqDistance2D(targPos) > modRange * modRange)
 					continue;
-				}
 
 				const float dist2D = (pos - targPos).Length2D();
 				const float rangeMul = (dist2D * weaponDef->proximityPriority + modRange * 0.4f + 100.0f);
@@ -702,13 +690,12 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 				if (targetLOSState & LOS_INLOS) {
 					targetPriority *= (secDamage + targetUnit->health);
 
-					if (paralyzer && targetUnit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? targetUnit->maxHealth: targetUnit->health)) {
+					if (paralyzer && targetUnit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? targetUnit->maxHealth: targetUnit->health))
 						targetPriority *= 4.0f;
-					}
 
-					if (weapon->hasTargetWeight) {
+					if (weapon->hasTargetWeight)
 						targetPriority *= weapon->TargetWeight(targetUnit);
-					}
+
 				} else {
 					targetPriority *= (secDamage + 10000.0f);
 				}
@@ -716,20 +703,22 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 				if (targetLOSState & LOS_PREVLOS) {
 					targetPriority /= (damageMul * targetUnit->power * (0.7f + gs->randFloat() * 0.6f));
 
-					if (targetUnit->category & weapon->badTargetCategory) {
+					if (targetUnit->category & weapon->badTargetCategory)
 						targetPriority *= 100.0f;
-					}
-					if (targetUnit->IsCrashing()) {
+
+					if (targetUnit->IsCrashing())
 						targetPriority *= 1000.0f;
-					}
-					if (targetUnit == lastAttacker) {
+
+					if (targetUnit == lastAttacker)
 						targetPriority *= 0.5f;
-					}
 				}
 
-				if (!eventHandler.AllowWeaponTarget(owner->id, targetUnit->id, weapon->weaponNum, weaponDef->id, &targetPriority)) {
+				const bool allow = eventHandler.AllowWeaponTarget(owner->id, targetUnit->id, weapon->weaponNum, weaponDef->id, &targetPriority);
+				//Lua call may have changed tempNum, so needs to be set again.
+				targetUnit->tempNum = tempNum;
+
+				if (!allow)
 					continue;
-				}
 
 				targets.insert(std::pair<float, CUnit*>(targetPriority, targetUnit));
 			}

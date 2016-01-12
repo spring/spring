@@ -297,7 +297,7 @@ if    (CMAKE_SIZEOF_VOID_P EQUAL 8)
 	Message(STATUS "Building Spring for 64bit environment")
 	set(MARCH_BITS 64 INTERNAL)
 	if     (MINGW)
-		Message(FATAL_ERROR "Spring's MinGWLibs don't include 64bit libraries (yet). Please, compile as 32bit. See https://springrts.com/wiki/Building_Spring_on_Windows for instructions.")
+		Message(WARNING "The 64bit version of spring on windows is experimental at best and won't sync with regular builds")
 	endif  (MINGW)
 else  (CMAKE_SIZEOF_VOID_P EQUAL 8)
 	Message(STATUS "Building Spring for 32bit environment")
@@ -311,9 +311,27 @@ if (NOT HAVE_STRNLEN)
 endif()
 
 ### Add Link-Time-Optimization flags, if supported (GCC >= 4.5) and enabled
-Set(CMAKE_CXX_FLAGS           "${CMAKE_CXX_FLAGS}           ${LTO_FLAGS}")
-Set(CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS}    ${LTO_FLAGS}")
-Set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LTO_FLAGS}")
+option(LTO "Link Time Optimizations (LTO)" FALSE)
+if    (LTO)
+	if    (NOT LTO_FLAGS)
+		Message(WARNING "Tried to enable LTO, but compiler doesn't support it!")
+	endif (NOT LTO_FLAGS)
+	Set(CMAKE_CXX_FLAGS           "${CMAKE_CXX_FLAGS}           ${LTO_FLAGS}")
+	Set(CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS}    ${LTO_FLAGS}")
+	Set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LTO_FLAGS}")
+endif (LTO)
+
+
+### Memory Access Protection (BoundsChecking)
+option(DEBUG_BOUNDSCHECK "Array/Pointer BoundsChecking a.k.a. buffer overflow protection (debug)" FALSE)
+if    (DEBUG_BOUNDSCHECK)
+	if    (NOT MPX_FLAGS)
+		Message(WARNING "Tried to enable BoundsCheck, but compiler doesn't support it!")
+	endif (NOT MPX_FLAGS)
+	Set(CMAKE_CXX_FLAGS           "${CMAKE_CXX_FLAGS}           ${MPX_FLAGS}")
+	Set(CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS}    ${MPX_FLAGS}")
+	Set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${MPX_FLAGS}")
+endif (DEBUG_BOUNDSCHECK)
 
 
 ### ld.gold
@@ -354,10 +372,10 @@ endif(THREADPOOL)
 ### warnings
 if(NOT MSVC)
 	### SigNan
-	option(SIGNAL_NANS "Enable NaN-Signalling" ${DEBUG_BUILD})
-	if (SIGNAL_NANS)
+	option(DEBUG_SIGNAL_NANS "Enable NaN-Signaling" ${DEBUG_BUILD})
+	if (DEBUG_SIGNAL_NANS)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsignaling-nans")
-	endif(SIGNAL_NANS)
+	endif(DEBUG_SIGNAL_NANS)
 
 
 	### CompileTime Warnings
@@ -368,13 +386,14 @@ if(NOT MSVC)
 		set(COMMON_WARNINGS "${COMMON_WARNINGS} -Wno-unknown-pragmas")
 	endif (NOT OPENMP)
 
-	if    (MAX_WARNINGS)
+	option(DEBUG_MAX_WARNINGS "Enable verbose compile" ${DEBUG_BUILD})
+	if    (DEBUG_MAX_WARNINGS)
 		# This would produce the maximum on warnings
 		set(DEBUG_WARNINGS "-Wall -Wconversion ${COMMON_WARNINGS}")
-	else  (MAX_WARNINGS)
+	else  (DEBUG_MAX_WARNINGS)
 		# This should produce a sane amount of warnings
 		set(DEBUG_WARNINGS "-Wall -Wno-sign-compare ${COMMON_WARNINGS}")
-	endif (MAX_WARNINGS)
+	endif (DEBUG_MAX_WARNINGS)
 endif(NOT MSVC)
 
 

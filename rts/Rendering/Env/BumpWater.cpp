@@ -10,6 +10,7 @@
 #include <boost/format.hpp>
 
 #include "ISky.h"
+#include "SunLighting.h"
 #include "Game/Game.h"
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
@@ -398,7 +399,7 @@ CBumpWater::CBumpWater()
 			}
 		}
 
-		if (refraction>0) {
+		if (refraction > 0) {
 			refractFBO.Bind();
 			refractFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, depthRBOFormat, screenTextureX, screenTextureY);
 			refractFBO.AttachTexture(refractTexture,target);
@@ -1106,7 +1107,7 @@ void CBumpWater::Draw()
 	waterShader->SetUniform1f(1, (gs->frameNum + globalRendering->timeOffset) / 15000.0f);
 
 	if (shadowHandler && shadowHandler->shadowsLoaded) {
-		waterShader->SetUniformMatrix4fv(13, false, &shadowHandler->shadowMatrix.m[0]);
+		waterShader->SetUniformMatrix4fv(13, false, shadowHandler->GetShadowMatrixRaw());
 
 		glActiveTexture(GL_TEXTURE9);
 		glBindTexture(GL_TEXTURE_2D, (shadowHandler && shadowHandler->shadowsLoaded) ? shadowHandler->shadowTexture : 0);
@@ -1168,29 +1169,29 @@ void CBumpWater::DrawRefraction(CGame* game)
 	glViewport(0, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//sky->Draw();
 	glDisable(GL_FOG); // fog has overground settings, if at all we should add special underwater settings
 
-	const float3 oldsun = unitDrawer->unitSunColor;
-	const float3 oldambient = unitDrawer->unitAmbientColor;
+	const float3 oldsun = sunLighting->unitSunColor;
+	const float3 oldambient = sunLighting->unitAmbientColor;
 
-	unitDrawer->unitSunColor *= float3(0.5f, 0.7f, 0.9f);
-	unitDrawer->unitAmbientColor *= float3(0.6f, 0.8f, 1.0f);
+	sunLighting->unitSunColor *= float3(0.5f, 0.7f, 0.9f);
+	sunLighting->unitAmbientColor *= float3(0.6f, 0.8f, 1.0f);
 
 	drawRefraction = true;
 
 	glEnable(GL_CLIP_PLANE2);
-	const double plane[4] = {0, -1, 0, 5};
-	glClipPlane(GL_CLIP_PLANE2, plane);
+	const double clipPlaneEq[4] = {0.0, -1.0, 0.0, 5.0};
+	glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
 
 	// opaque
+	sky->Draw();
 	readMap->GetGroundDrawer()->Draw(DrawPass::WaterRefraction);
 	unitDrawer->Draw(false, true);
 	featureDrawer->Draw();
 
 	// transparent stuff
-	unitDrawer->DrawCloakedUnits();
-	featureDrawer->DrawFadeFeatures();
+	unitDrawer->DrawAlphaPass();
+	featureDrawer->DrawAlphaPass();
 	projectileDrawer->Draw(false, true);
 	eventHandler.DrawWorldRefraction();
 
@@ -1200,30 +1201,26 @@ void CBumpWater::DrawRefraction(CGame* game)
 
 	glEnable(GL_FOG);
 
-	unitDrawer->unitSunColor=oldsun;
-	unitDrawer->unitAmbientColor=oldambient;
+	sunLighting->unitSunColor = oldsun;
+	sunLighting->unitAmbientColor = oldambient;
 }
 
 
 void CBumpWater::DrawReflection(CGame* game)
 {
-	//! CREATE REFLECTION TEXTURE
 	reflectFBO.Bind();
-	glViewport(0, 0, reflTexSize, reflTexSize);
-	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0);
+
+	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
 	CCamera* curCam = CCamera::GetActiveCamera();
 
 	{
-		curCam->SetDir(prvCam->GetDir() * float3(1.0f, -1.0f, 1.0f));
-		curCam->SetPos(prvCam->GetPos() * float3(1.0f, -1.0f, 1.0f));
-		curCam->SetRotZ(-prvCam->GetRot().z);
-		curCam->Update();
+		curCam->CopyStateReflect(prvCam);
+		curCam->UpdateLoadViewPort(0, 0, reflTexSize, reflTexSize);
 
 		game->SetDrawMode(CGame::gameReflectionDraw);
-		sky->Draw();
 
 		{
 			const double clipPlaneEq[4] = {0.0, 1.0, 0.0, 1.0};
@@ -1234,17 +1231,21 @@ void CBumpWater::DrawReflection(CGame* game)
 			{
 				drawReflection = true;
 
+				sky->Draw();
+
 				// opaque
-				if (reflection > 1) {
+				if (reflection > 1)
 					readMap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
-				}
+
 				unitDrawer->Draw(true);
 				featureDrawer->Draw();
 
 				// transparent
-				unitDrawer->DrawCloakedUnits(true);
-				featureDrawer->DrawFadeFeatures(true);
+				unitDrawer->DrawAlphaPass();
+				featureDrawer->DrawAlphaPass();
 				projectileDrawer->Draw(true);
+				sky->DrawSun();
+
 				eventHandler.DrawWorldReflection();
 
 				drawReflection = false;
@@ -1258,6 +1259,8 @@ void CBumpWater::DrawReflection(CGame* game)
 
 	CCamera::SetActiveCamera(prvCam->GetCamType());
 	prvCam->Update();
+	// done by caller
+	// prvCam->LoadViewPort();
 }
 
 

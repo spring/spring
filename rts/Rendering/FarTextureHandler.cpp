@@ -12,7 +12,6 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/Models/3DModel.h"
-#include "Rendering/Models/WorldObjectModelRenderer.h"
 #include "Sim/Objects/SolidObject.h"
 #include "System/myMath.h"
 #include "System/Log/ILog.h"
@@ -169,13 +168,9 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	glFogf(GL_FOG_END,    1e6);
 	glFogf(GL_FOG_DENSITY, 1.0f);
 
-	unitDrawer->SetupForUnitDrawing(false);
-	unitDrawer->GetOpaqueModelRenderer(model->type)->PushRenderState();
+	unitDrawer->SetupOpaqueDrawing(false);
+	unitDrawer->PushModelRenderState(model);
 	unitDrawer->SetTeamColour(obj->team);
-
-	if (model->type != MODELTYPE_3DO) {
-		texturehandlerS3O->SetS3oTexture(model->textureType);
-	}
 
 	//const float xs = std::max(math::fabs(model->relMidPos.x + model->maxs.x), math::fabs(model->relMidPos.x + model->mins.x));
 	//const float ys = std::max(math::fabs(model->relMidPos.y + model->maxs.y), math::fabs(model->relMidPos.y + model->mins.y));
@@ -183,7 +178,8 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	//const float modelradius = std::max(xs, std::max(ys, zs));*/
 	const float modelradius = 1.15f * model->radius;
 
-	// overwrite the matrices set by SetupForUnitDrawing
+	// overwrite the matrices set by SetupOpaqueDrawing
+	//
 	// RTT with a top-down view; the view-matrix must be
 	// on the PROJECTION stack for the model shaders
 	glMatrixMode(GL_PROJECTION);
@@ -221,8 +217,8 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
 
-	unitDrawer->GetOpaqueModelRenderer(model->type)->PopRenderState();
-	unitDrawer->CleanUpUnitDrawing(false);
+	unitDrawer->PopModelRenderState(model);
+	unitDrawer->ResetOpaqueDrawing(false);
 
 	// glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glPopAttrib();

@@ -39,6 +39,7 @@ CR_BIND_DERIVED(CStarburstProjectile, CWeaponProjectile, (ProjectileParams()))
 CR_REG_METADATA(CStarburstProjectile, (
 	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(tracking),
+	CR_MEMBER(ignoreError),
 	CR_MEMBER(maxGoodDif),
 	CR_MEMBER(maxSpeed),
 	CR_MEMBER(acceleration),
@@ -61,6 +62,7 @@ CR_REG_METADATA(CStarburstProjectile, (
 
 CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, tracking(params.tracking)
+	, ignoreError(false)
 	, maxGoodDif(0.0f)
 	, maxSpeed(0.0f)
 	, acceleration(0.f)
@@ -178,12 +180,19 @@ void CStarburstProjectile::Update()
 	uptime--;
 	missileAge++;
 
-	if (target != NULL && allyteamID != -1 && weaponDef->tracks) {
-		targetPos = target->pos;
-		CUnit* u = dynamic_cast<CUnit*>(target);
+	if (target != nullptr && weaponDef->tracks) {
+		const CSolidObject* so = dynamic_cast<const CSolidObject*>(target);
 
-		if (u != NULL) {
-			targetPos = u->GetErrorPos(allyteamID, true);
+		if (so != NULL) {
+			targetPos = so->aimPos;
+			if (allyteamID != -1 && !ignoreError) {
+				const CUnit* u = dynamic_cast<const CUnit*>(so);
+
+				if (u != nullptr)
+					targetPos = u->GetErrorPos(allyteamID, true);
+			}
+		} else {
+			targetPos = target->pos;
 		}
 
 		targetPos += aimError;
@@ -452,7 +461,7 @@ void CStarburstProjectile::DrawCallback()
 	va->AddVertexTC(drawPos - camera->GetRight() * fsize + camera->GetUp() * fsize, wt1->xstart, wt1->yend,   col);
 }
 
-int CStarburstProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed)
+int CStarburstProjectile::ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed)
 {
 	const float3 rdir = (pos - shieldPos).Normalize();
 

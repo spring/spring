@@ -5,17 +5,16 @@
 
 #include <string>
 #include <vector>
-#include <map>
 #include <list>
 
 #include "TeamBase.h"
 #include "TeamStatistics.h"
 #include "Sim/Misc/Resource.h"
-#include "Sim/Units/UnitSet.h"
 #include "System/Color.h"
 #include "ExternalAI/SkirmishAIKey.h"
 #include "Lua/LuaRulesParams.h"
 
+class CUnit;
 
 class CTeam : public TeamBase
 {
@@ -79,8 +78,9 @@ public:
 
 	bool isDead;
 	bool gaia;
+	bool removeUnits;
 
-	CUnitSet units;
+	std::vector<CUnit*> units;
 
 	SResourcePack res;
 	SResourcePack resStorage;

@@ -3,6 +3,7 @@
 #include "Rendering/GL/myGL.h"
 #include <algorithm>
 #include <cctype>
+#include <boost/thread.hpp>
 
 #include "IModelParser.h"
 #include "3DModel.h"
@@ -11,11 +12,12 @@
 #include "S3OParser.h"
 #include "OBJParser.h"
 #include "AssParser.h"
+#include "Rendering/Textures/S3OTextureHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/Util.h"
 #include "System/Log/ILog.h"
+#include "System/Util.h"
 #include "System/Exceptions.h"
 #include "lib/assimp/include/assimp/Importer.hpp"
 
@@ -104,6 +106,64 @@ static void CheckPieceNormals(const S3DModel* model, const S3DModelPiece* modelP
 
 
 
+LoadQueue::~LoadQueue()
+{
+	if (thread != nullptr) {
+		thread->join();
+		SafeDelete(thread);
+	}
+}
+
+void LoadQueue::Pump()
+{
+	while (true) {
+		std::string modelName;
+
+		{
+			GrabLock();
+			assert(queue.size() > 0);
+			modelName = queue.front();
+			FreeLock();
+		}
+
+		modelParser->Load3DModel(modelName, true);
+
+		{
+			GrabLock();
+			queue.pop_front();
+			const bool empty = queue.empty();
+			FreeLock();
+			if (empty)
+				break;
+		}
+	}
+}
+
+void LoadQueue::Push(const std::string& modelName)
+{
+	GrabLock();
+
+	if (queue.empty()) {
+		if (thread != nullptr) {
+			FreeLock();
+
+			thread->join();
+			SafeDelete(thread);
+
+			GrabLock();
+		}
+
+		// mutex is still locked, thread will block if it gets
+		// to queue.front() before we get to queue.push_back()
+		thread = new boost::thread(boost::bind(&LoadQueue::Pump, this));
+	}
+
+	queue.push_back(modelName);
+
+	FreeLock();
+}
+
+
 C3DModelLoader::C3DModelLoader()
 {
 	// file-extension should be lowercase
@@ -140,7 +200,7 @@ C3DModelLoader::~C3DModelLoader()
 		delete model;
 	}
 
-	for (ParserMap::const_iterator it = parsers.begin(); it != parsers.end(); ++it) {
+	for (auto it = parsers.cbegin(); it != parsers.cend(); ++it) {
 		delete (it->second);
 	}
 
@@ -157,10 +217,11 @@ std::string C3DModelLoader::FindModelPath(std::string name) const
 	// check for empty string because we can be called
 	// from Lua*Defs and certain features have no models
 	if (!name.empty()) {
+		const std::string vfsPath = "objects3d/";
 		const std::string& fileExt = FileSystem::GetExtension(name);
 
 		if (fileExt.empty()) {
-			for (FormatMap::const_iterator it = formats.begin(); it != formats.end(); ++it) {
+			for (auto it = formats.cbegin(); it != formats.cend(); ++it) {
 				const std::string& formatExt = it->first;
 
 				if (CFileHandler::FileExists(name + "." + formatExt, SPRING_VFS_ZIP)) {
@@ -170,8 +231,8 @@ std::string C3DModelLoader::FindModelPath(std::string name) const
 		}
 
 		if (!CFileHandler::FileExists(name, SPRING_VFS_ZIP)) {
-			if (name.find("objects3d/") == std::string::npos) {
-				return FindModelPath("objects3d/" + name);
+			if (name.find(vfsPath) == std::string::npos) {
+				return (FindModelPath(vfsPath + name));
 			}
 		}
 	}
@@ -180,70 +241,127 @@ std::string C3DModelLoader::FindModelPath(std::string name) const
 }
 
 
-S3DModel* C3DModelLoader::Load3DModel(std::string modelName)
+
+S3DModel* C3DModelLoader::Load3DModel(std::string name, bool preload)
 {
 	// cannot happen except through SpawnProjectile
-	if (modelName.empty())
+	if (name.empty())
 		return nullptr;
 
-	StringToLowerInPlace(modelName);
+	StringToLowerInPlace(name);
+
+	std::string  path;
+	std::string* refs[2] = {&name, &path};
 
 	// search in cache first
-	ModelMap::iterator ci;
-	FormatMap::iterator fi;
+	for (unsigned int n = 0; n < 2; n++) {
+		S3DModel* cachedModel = LoadCached3DModel(*refs[n], preload);
 
-	if ((ci = cache.find(modelName)) != cache.end())
-		return models[ci->second];
+		if (cachedModel != nullptr)
+			return cachedModel;
 
-	const std::string& modelPath = FindModelPath(modelName);
-	const std::string& fileExt = StringToLower(FileSystem::GetExtension(modelPath));
-
-	if ((ci = cache.find(modelPath)) != cache.end())
-		return models[ci->second];
-
-	S3DModel* model = nullptr;
-	IModelParser* parser = nullptr;
+		// expensive, delay until needed
+		path = FindModelPath(name);
+	}
 
 	// not found in cache, create the model and cache it
-	if ((fi = formats.find(fileExt)) == formats.end()) {
-		LOG_L(L_ERROR, "could not find a parser for model \"%s\" (unknown format?)", modelName.c_str());
-	} else {
-		parser = parsers[fi->second];
+	return (CreateModel(name, path, preload));
+}
+
+S3DModel* C3DModelLoader::LoadCached3DModel(const std::string& name, bool preload)
+{
+	S3DModel* cachedModel = nullptr;
+
+	{
+		loadQueue.GrabLock();
+
+		const auto ci = cache.find(name);
+
+		if (ci != cache.end()) {
+			cachedModel = models[ci->second];
+
+			if (!preload) {
+				CreateLists(cachedModel);
+			}
+		}
+
+		loadQueue.FreeLock();
 	}
 
-	if (parser != nullptr) {
-		try {
-			model = parser->Load(modelPath);
-		} catch (const content_error& ex) {
-			LOG_L(L_WARNING, "could not load model \"%s\" (reason: %s)", modelName.c_str(), ex.what());
-		}
-	}
+	return cachedModel;
+}
+
+
+
+S3DModel* C3DModelLoader::CreateModel(
+	const std::string& name,
+	const std::string& path,
+	bool preload
+) {
+	S3DModel* model = ParseModel(name, path);
 
 	if (model == nullptr)
 		model = CreateDummyModel();
 
 	assert(model->GetRootPiece() != nullptr);
 
-	CreateLists(model->GetRootPiece());
-	AddModelToCache(model, modelName, modelPath);
+	if (!preload)
+		CreateLists(model);
 
-	if (model->type != MODELTYPE_3DO) {
-		// warn about models with bad normals (they break lighting)
-		// skip for 3DO's, it causes a LARGE amount of warning spam
-		CheckPieceNormals(model, model->GetRootPiece());
+	AddModelToCache(model, name, path);
+	return model;
+}
+
+
+
+IModelParser* C3DModelLoader::GetFormatParser(const std::string& pathExt)
+{
+	const auto fi = formats.find(StringToLower(pathExt));
+
+	if (fi == formats.end())
+		return nullptr;
+
+	return parsers[fi->second];
+}
+
+S3DModel* C3DModelLoader::ParseModel(const std::string& name, const std::string& path)
+{
+	S3DModel* model = nullptr;
+	IModelParser* parser = GetFormatParser(FileSystem::GetExtension(path));
+
+	if (parser != nullptr) {
+		try {
+			model = parser->Load(path);
+		} catch (const content_error& ex) {
+			LOG_L(L_WARNING, "could not load model \"%s\" (reason: %s)", name.c_str(), ex.what());
+		}
+	} else {
+		LOG_L(L_ERROR, "could not find a parser for model \"%s\" (unknown format?)", name.c_str());
 	}
 
 	return model;
 }
 
-void C3DModelLoader::AddModelToCache(S3DModel* model, const std::string& modelName, const std::string& modelPath) {
-	model->id = models.size(); // IDs start at 1
-	models.push_back(model);
 
-	assert(models[model->id] == model);
 
-	cache[modelName] = model->id;
-	cache[modelPath] = model->id;
+void C3DModelLoader::AddModelToCache(
+	S3DModel* model,
+	const std::string& name,
+	const std::string& path
+) {
+	loadQueue.GrabLock();
+
+	{
+		model->id = models.size(); // IDs start at 1
+		models.push_back(model);
+
+		assert(models[model->id] == model);
+
+		cache[name] = model->id;
+		cache[path] = model->id;
+	}
+
+	loadQueue.FreeLock();
 }
 
 
@@ -264,8 +382,21 @@ void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
 }
 
 
-void C3DModelLoader::CreateLists(S3DModelPiece* o) {
-	CreateListsNow(o);
+void C3DModelLoader::CreateLists(S3DModel* model) {
+	S3DModelPiece* rootPiece = model->GetRootPiece();
+	if (rootPiece->GetDisplayListID() != 0) {
+		return;
+	}
+
+	CreateListsNow(rootPiece);
+
+	if (model->type != MODELTYPE_3DO) {
+		//Make sure textures are loaded.
+		texturehandlerS3O->LoadS3OTexture(model);
+		// warn about models with bad normals (they break lighting)
+		// skip for 3DO's, it causes a LARGE amount of warning spam
+		CheckPieceNormals(model, model->GetRootPiece());
+	}
 }
 
 /******************************************************************************/

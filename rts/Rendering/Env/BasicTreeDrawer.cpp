@@ -371,7 +371,7 @@ void CBasicTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 	CBasicTreeSquareDrawer drawer(this, cx, cy, treeDistance * SQUARE_SIZE * TREE_SQUARE_SIZE);
 
-	readMap->GridVisibility(nullptr, TREE_SQUARE_SIZE, drawer.treeDistance * 2.0f, &drawer);
+	readMap->GridVisibility(nullptr, &drawer, drawer.treeDistance * 2.0f, TREE_SQUARE_SIZE);
 
 	const int startClean = lastListClean * 20 % nTrees;
 	const int endClean = gs->frameNum * 20 % nTrees;

@@ -4,10 +4,9 @@
 #define SOLID_OBJECT_DEF_H
 
 #include <string>
-#include <map>
 
 #include "Sim/Misc/CollisionVolume.h"
-#include "System/creg/creg_cond.h"
+#include <System/creg/STL_Map.h>
 
 struct S3DModel;
 class LuaTable;
@@ -45,6 +44,7 @@ public:
 	virtual ~SolidObjectDef() { }
 
 	S3DModel* LoadModel() const;
+	void PreloadModel() const;
 	float GetModelRadius() const;
 	void ParseCollisionVolume(const LuaTable& table);
 

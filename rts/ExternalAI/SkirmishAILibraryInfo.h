@@ -3,71 +3,68 @@
 #ifndef SKIRMISH_AI_LIBRARY_INFO_H
 #define SKIRMISH_AI_LIBRARY_INFO_H
 
-#include <vector>
 #include <map>
+#include <vector>
 #include <string>
+
+#include "System/Option.h"
 
 class SkirmishAIKey;
 struct Option;
 
 class CSkirmishAILibraryInfo {
 public:
+	CSkirmishAILibraryInfo() {}
 	CSkirmishAILibraryInfo(const CSkirmishAILibraryInfo& aiInfo);
 
 	/**
 	 * This is used when initializing from purely Lua files
 	 * (AIInfo.lua & AIOptions.lua).
 	 */
-	CSkirmishAILibraryInfo(const std::string& aiInfoFile,
-			const std::string& aiOptionFile = "");
+	CSkirmishAILibraryInfo(const std::string& aiInfoFile, const std::string& aiOptionFile = "");
 	/**
 	 * This is used when initializing from data fetched through the AI Interface
 	 * library plugin, through C functions.
 	 */
-	CSkirmishAILibraryInfo(const std::map<std::string, std::string>& aiInfo,
-			const std::string& aiOptionLua = "");
+	CSkirmishAILibraryInfo(const std::map<std::string, std::string>& aiInfo, const std::string& aiOptionLua = "");
 
-	virtual ~CSkirmishAILibraryInfo();
+	size_t size() const { return info_keys.size(); }
+	const std::string& GetKeyAt(size_t index) const;
+	const std::string& GetValueAt(size_t index) const;
+	const std::string& GetDescriptionAt(size_t index) const;
 
-	virtual size_t size() const;
-	virtual const std::string& GetKeyAt(size_t index) const;
-	virtual const std::string& GetValueAt(size_t index) const;
-	virtual const std::string& GetDescriptionAt(size_t index) const;
+	SkirmishAIKey GetKey() const;
 
-	virtual SkirmishAIKey GetKey() const;
-
-	virtual const std::string& GetDataDir() const;
-	virtual const std::string& GetDataDirCommon() const;
+	const std::string& GetDataDir() const;
+	const std::string& GetDataDirCommon() const;
 	/** Restrictions: none of the following: spaces, '_', '#' */
-	virtual const std::string& GetShortName() const;
+	const std::string& GetShortName() const;
 	/** Restrictions: none of the following: spaces, '_', '#' */
-	virtual const std::string& GetVersion() const;
-	virtual const std::string& GetName() const;
-	virtual const std::string& GetDescription() const;
-	virtual const std::string& GetURL() const;
-	virtual bool IsLuaAI() const;
-	virtual const std::string& GetInterfaceShortName() const;
-	virtual const std::string& GetInterfaceVersion() const;
-	virtual const std::string& GetInfo(const std::string& key) const;
+	const std::string& GetVersion() const;
+	const std::string& GetName() const;
+	const std::string& GetDescription() const;
+	const std::string& GetURL() const;
+	bool IsLuaAI() const;
+	const std::string& GetInterfaceShortName() const;
+	const std::string& GetInterfaceVersion() const;
+	const std::string& GetInfo(const std::string& key) const;
 
-	virtual void SetDataDir(const std::string& dataDir);
-	virtual void SetDataDirCommon(const std::string& dataDirCommon);
+	void SetDataDir(const std::string& dataDir);
+	void SetDataDirCommon(const std::string& dataDirCommon);
 	/** Restrictions: none of the following: spaces, '_', '#' */
-	virtual void SetShortName(const std::string& shortName);
+	void SetShortName(const std::string& shortName);
 	/** Restrictions: none of the following: spaces, '_', '#' */
-	virtual void SetVersion(const std::string& version);
-	virtual void SetName(const std::string& name);
-	virtual void SetDescription(const std::string& description);
-	virtual void SetURL(const std::string& url);
-	virtual void SetLuaAI(const std::string& isLua);
-	virtual void SetLuaAI(const bool isLua);
-	virtual void SetInterfaceShortName(const std::string& interfaceShortName);
-	virtual void SetInterfaceVersion(const std::string& interfaceVersion);
-	virtual bool SetInfo(const std::string& key, const std::string& value,
-			const std::string& description = "");
+	void SetVersion(const std::string& version);
+	void SetName(const std::string& name);
+	void SetDescription(const std::string& description);
+	void SetURL(const std::string& url);
+	void SetLuaAI(const std::string& isLua);
+	void SetLuaAI(const bool isLua);
+	void SetInterfaceShortName(const std::string& interfaceShortName);
+	void SetInterfaceVersion(const std::string& interfaceVersion);
+	bool SetInfo(const std::string& key, const std::string& value, const std::string& description = "");
 
-
-	virtual const std::vector<Option>& GetOptions() const;
+	const std::vector<Option>& GetOptions() const { return options; }
 
 private:
 	// for having a well defined order

@@ -659,10 +659,9 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 UnitDef::~UnitDef()
 {
-	if (buildPic) {
+	if (buildPic != nullptr) {
 		buildPic->Free();
-		delete buildPic;
-		buildPic = NULL;
+		SafeDelete(buildPic);
 	}
 }
 

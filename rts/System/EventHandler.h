@@ -64,7 +64,7 @@ class CEventHandler
 		void UnitFinished(const CUnit* unit);
 		void UnitNanoframed(const CUnit* unit);
 		void UnitFromFactory(const CUnit* unit, const CUnit* factory, bool userOrders);
-		void UnitDestroyed(const CUnit* unit, const CUnit* attacker);
+		void UnitDestroyed(const CUnit* unit, const CUnit* attacker, bool preEvent);
 		void UnitTaken(const CUnit* unit, int oldTeam, int newTeam);
 		void UnitGiven(const CUnit* unit, int oldTeam, int newTeam);
 
@@ -233,6 +233,7 @@ class CEventHandler
 		                const std::string* label);
 
 		void SunChanged(const float3& sunDir);
+		void SunLightingChanged();
 
 		void ViewResize();
 
@@ -242,6 +243,8 @@ class CEventHandler
 		void DrawWorldShadow();
 		void DrawWorldReflection();
 		void DrawWorldRefraction();
+		void DrawGroundPreForward();
+		void DrawGroundPreDeferred();
 		void DrawGroundPostDeferred();
 		void DrawUnitsPostDeferred();
 		void DrawFeaturesPostDeferred();
@@ -325,32 +328,32 @@ extern CEventHandler eventHandler;
 // Inlined call-in loops
 //
 
-#define ITERATE_EVENTCLIENTLIST(name, ...) \
-	for (int i = 0; i < list##name.size(); ) { \
-		CEventClient* ec = list##name[i]; \
-		ec->name(__VA_ARGS__); \
-		if (i < list##name.size() && ec == list##name[i]) \
+#define ITERATE_EVENTCLIENTLIST(name, ...)                         \
+	for (int i = 0; i < list##name.size(); ) {                     \
+		CEventClient* ec = list##name[i];                          \
+		ec->name(__VA_ARGS__);                                     \
+		if (i < list##name.size() && ec == list##name[i])          \
 			++i; /* the call-in may remove itself from the list */ \
 	}
 
-#define ITERATE_ALLYTEAM_EVENTCLIENTLIST(name, allyTeam, ...) \
-	for (int i = 0; i < list##name.size(); ) { \
-		CEventClient* ec = list##name[i]; \
-		if (ec->CanReadAllyTeam(allyTeam)) { \
-			ec->name(__VA_ARGS__); \
-		} \
-		if (i < list##name.size() && ec == list##name[i]) \
+#define ITERATE_ALLYTEAM_EVENTCLIENTLIST(name, allyTeam, ...)      \
+	for (int i = 0; i < list##name.size(); ) {                     \
+		CEventClient* ec = list##name[i];                          \
+		if (ec->CanReadAllyTeam(allyTeam)) {                       \
+			ec->name(__VA_ARGS__);                                 \
+		}                                                          \
+		if (i < list##name.size() && ec == list##name[i])          \
 			++i; /* the call-in may remove itself from the list */ \
 	}
 
-#define ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(name, unit, ...) \
-	const auto unitAllyTeam = unit->allyteam; \
-	for (int i = 0; i < list##name.size(); ) { \
-		CEventClient* ec = list##name[i]; \
-		if (ec->CanReadAllyTeam(unitAllyTeam)) { \
-			ec->name(unit, __VA_ARGS__); \
-		} \
-		if (i < list##name.size() && ec == list##name[i]) \
+#define ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(name, unit, ...)     \
+	const auto unitAllyTeam = unit->allyteam;                      \
+	for (int i = 0; i < list##name.size(); ) {                     \
+		CEventClient* ec = list##name[i];                          \
+		if (ec->CanReadAllyTeam(unitAllyTeam)) {                   \
+			ec->name(unit, __VA_ARGS__);                           \
+		}                                                          \
+		if (i < list##name.size() && ec == list##name[i])          \
 			++i; /* the call-in may remove itself from the list */ \
 	}
 
@@ -360,10 +363,9 @@ inline void CEventHandler::UnitCreated(const CUnit* unit, const CUnit* builder)
 }
 
 
-inline void CEventHandler::UnitDestroyed(const CUnit* unit,
-                                             const CUnit* attacker)
+inline void CEventHandler::UnitDestroyed(const CUnit* unit, const CUnit* attacker, bool preEvent)
 {
-	ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(UnitDestroyed, unit, attacker)
+	ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(UnitDestroyed, unit, attacker, preEvent)
 }
 
 #define UNIT_CALLIN_NO_PARAM(name)                                 \

@@ -28,6 +28,9 @@ public:
 	void UpdatePixelGeometry();
 	int2 GetWantedViewSize(const bool fullscreen);
 
+	bool SetGetDrawDebug(bool dbg) { const bool ret =       dbg; drawdebug = dbg; return ret; }
+	bool GetSetDrawDebug(bool dbg) { const bool ret = drawdebug; drawdebug = dbg; return ret; }
+
 	/**
 	 * @brief time offset
 	 *
@@ -70,7 +73,7 @@ public:
 	/// the window position relative to the screen's bottom-left corner
 	int winPosX;
 	int winPosY;
-	
+
 	/// the window size in pixels
 	int winSizeX;
 	int winSizeY;

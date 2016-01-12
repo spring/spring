@@ -132,6 +132,9 @@ public:
 	bool requireSonarUnderWater;
 	///
 	bool alwaysVisibleOverridesCloaked;
+	/// should _all_ allyteams share the same jammermap
+	bool separateJammers;
+
 
 	enum {
 		FEATURELOS_NONE = 0, FEATURELOS_GAIAONLY, FEATURELOS_GAIAALLIED, FEATURELOS_ALL,

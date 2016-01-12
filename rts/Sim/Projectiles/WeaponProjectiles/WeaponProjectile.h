@@ -10,7 +10,6 @@
 struct WeaponDef;
 struct ProjectileParams;
 class CVertexArray;
-class CPlasmaRepulser;
 
 
 
@@ -32,7 +31,7 @@ public:
 	virtual void Collision(CUnit* unit);
 	virtual void Update();
 	/// @return 0=unaffected, 1=instant repulse, 2=gradual repulse
-	virtual int ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed) { return 0; }
+	virtual int ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed) { return 0; }
 
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 
@@ -51,7 +50,7 @@ public:
 	      CWorldObject* GetTargetObject()       { return target; }
 
 	const WeaponDef* GetWeaponDef() const { return weaponDef; }
-	
+
 	int GetTimeToLive() const { return ttl; }
 
 	void SetStartPos(const float3& newStartPos) { startPos = newStartPos; }

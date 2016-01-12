@@ -4,7 +4,6 @@
 #include <SDL_mouse.h>
 
 #include "CommandColors.h"
-#include "CursorIcons.h"
 #include "GuiHandler.h"
 #include "MiniMap.h"
 #include "MouseHandler.h"
@@ -1139,10 +1138,11 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 
 	if (!minimap->maximized) {
 		// draw the camera frustum lines
-		CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
+		// CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_SHADOW);
+		CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
 
 		cam->GetFrustumSides(0.0f, 0.0f, 1.0f, true);
-		cam->ClipFrustumLines(true, -10000.0f, 400096.0f);
+		cam->ClipFrustumLines(true, -100.0f, mapDims.mapy * SQUARE_SIZE + 100.0f);
 
 		const std::vector<CCamera::FrustumLine>& negSides = cam->GetNegFrustumSides();
 
@@ -1511,15 +1511,15 @@ void CMiniMap::DrawUnitRanges() const
 		// LOS Ranges
 		if (unit->radarRadius && !unit->beingBuilt && unit->activated) {
 			glColor3fv(cmdColors.rangeRadar);
-			DrawCircle(unit->pos, (unit->radarRadius * losHandler->radar.divisor));
+			DrawCircle(unit->pos, unit->radarRadius);
 		}
 		if (unit->sonarRadius && !unit->beingBuilt && unit->activated) {
 			glColor3fv(cmdColors.rangeSonar);
-			DrawCircle(unit->pos, (unit->sonarRadius * losHandler->sonar.divisor));
+			DrawCircle(unit->pos, unit->sonarRadius);
 		}
 		if (unit->jammerRadius && !unit->beingBuilt && unit->activated) {
 			glColor3fv(cmdColors.rangeJammer);
-			DrawCircle(unit->pos, (unit->jammerRadius * losHandler->commonJammer.divisor));
+			DrawCircle(unit->pos, unit->jammerRadius);
 		}
 
 		// Interceptor Ranges

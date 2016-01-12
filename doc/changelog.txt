@@ -6,15 +6,56 @@ Spring changelog
 
 General:
  ! change default screenshot file type to jpg. to create png use /screenshot png
- - pr-downloader dependency is now mandatory (statically linked with spring)
+ ! pr-downloader dependency is now mandatory (statically linked with spring)
+ ! demo files are now compressed with gzip
 
 Lua:
  ! {Set,Get}UnitPieceCollisionVolumeData now receive 1-based piece index argument (was 0-based).
+ ! Lua{Feature,Unit}Defs:
+   LuaFeatureDefs: make the "model" subtable available (as it is for LuaUnitDefs)
+   move the {min,max,mid}{x,y,z} values to this table (these can now be accessed
+   using e.g. *Defs[i].model.midx)
+   deprecate *Defs[i].modelname, use *Defs[i].model.path instead
+ ! Game.groundAmbientColor, Game.groundSpecularColor and Game.groundSunColor
+   are no longer available, use gl.GetSun() instead with appropriate parameters
  ! GameID callin now gets the ID string encoded in hex.
+ ! Weapons with tracking will use a radar dot position unless
+   Spring.SetProjectileIgnoreTrackingError(projID, bool ignore) is called.
+ ! UnitDestroyed is now called twice and gets an extra argument 'preEvent'
+   the value of preEvent is true for the first call which corresponds to
+   the old UnitDestroyed and false for the second (allows shaders during
+   death anims, etc; after the second call a unitID is no longer valid!)
+   also remove hardcoded logic to zombify (stun+immobilize) a unit on death
+
+ ! gl.UnitShape and gl.FeatureShape now take three extra boolean arguments
+   and set their relevant GL state internally (so that calling only these
+   functions is enough to get correctly rendered models; pass in 'false'
+   for the [new] THIRD argument to get the fixed behavior, omit it or pass
+   in 'true' [default] to render with your own custom state instead)
+
+   NOTE:
+     the [new] FOURTH argument should be 'true' if in DrawScreen and 'false'
+     (default) if in DrawWorld; any transforms for these two functions *MUST*
+     include a gl.LoadIdentity call when argument #3 is false (whether they
+     are used in DrawWorld or in DrawScreen)
+     the [new] FIFTH argument determines whether the model is drawn opaque
+     ('true' [default]) or with translucency ('false'); only has an effect
+     when argument #3 is false
+
+ - add callouts
+     gl.{Unit,Feature}Textures(number objID, boolean enable) -> nil
+     gl.{Unit,Feature}ShapeTextures(number defID, boolean enable) -> nil
+   these are primarily intended to be used in conjunction with
+     gl.{Unit,Feature}(objID, ..., raw=true)
+     gl.{Unit,Feature}Shape(defID, ..., raw=true)
+   and apply a model's default textures; easier than gl.Texture("$%...")
+
  - new Spring.GetUICommands function to obtain a list of all UI commands (e.g. /luaui reload)
  - new VFS.CalculateHash function that calculates hash (in base64 form) of a given string (with md5 support initially)
  - new Spring.SetFeatureFade(featureID, bool) to control whether a feature will fade or not when zoomed out.
- - add callouts
+
+ - add callouts (see their Unit equivalents for documentation)
+     Spring.{Get,Set}FeatureRotation
      Spring.{Get,Set}FeaturePieceCollisionVolumeData
      Spring.GetFeatureLastAttackedPiece
      Spring.GetFeaturePieceMap
@@ -25,31 +66,78 @@ Lua:
      Spring.GetFeaturePiecePosDir
      Spring.GetFeaturePieceMatrix
 
+     Spring.SetFeatureNoDraw
+     Spring.GetFeatureNoDraw
+
+     gl.FeatureRaw
+     gl.FeatureMultMatrix
+     gl.FeaturePiece
+     gl.FeaturePieceMatrix
+     gl.FeaturePieceMultMatrix
+
  - add Spring.FeatureRendering API; allows custom shaders (technically,
    materials) for features as its Spring.UnitRendering counterpart does
    for units
-   note: the following two functions are no-ops
+   note: the following two functions exist but are no-ops
      Spring.UnitRendering.SetFeatureLuaDraw
      Spring.FeatureRendering.SetUnitLuaDraw
+
+ - add unsynced callout SetSkyBoxTexture(string texName) -> nil
+   example usage: Spring.SetSkyBoxTexture("myskybox.dds")
+
+ - add unsynced callout SetSunLighting(table params) -> nil
+   It can be used to modify the following sun lighting parameters:
+   {ground,unit}{Ambient,Sun,Specular}Color and specularExponent
+   example usage: Spring.SetSunLighting({
+    groundAmbientColor = {1, 0.1, 1},
+    groundSunColor     = {1, 0.1, 1},
+   })
+
+ - add unsynced callout Spring.SetMapShadingTexture(string texType, string texName) -> boolean
+   example usage: Spring.SetMapShadingTexture("$ssmf_specular", "name_of_my_shiny_texture")
+
+ - add unsynced callout Spring.SetMapShader(
+     number standardShaderID,
+     number deferredShaderID
+   ) -> nil
+   (the ID's must refer to valid programs returned by gl.CreateShader;
+   passing in a value of 0 will cause the respective shader to revert
+   back to its engine default)
+   custom map shaders that declare a uniform ivec2 named "texSquare"
+   can sample from the default diffuse texture(s), which are always
+   bound to TU 0
+
+ - add new callins DrawGroundPreForward and DrawGroundPreDeferred
+   these run at the start of their respective passes when a custom
+   map shader has been assigned via Spring.SetMapShader (convenient
+   for setting uniforms)
 
  - add new callin DrawGroundPostDeferred; this runs at the end of its
    respective deferred pass and allows proper frame compositing (with
    ground flashes/decals/foliage/etc, which are drawn between it and
-   DrawWorldPreUnit)
+   DrawWorldPreUnit) via gl.CopyToTexture
 
  - add new callins DrawUnitsPostDeferred and DrawFeaturesPostDeferred
    these run at the end of their respective deferred passes to inform
    Lua code it should make use of the $model_gbuffer_* textures before
    another pass overwrites them (and to allow proper blending with e.g.
-   cloaked objects which are drawn between these events and DrawWorld)
+   cloaked objects which are drawn between these events and DrawWorld
+   via gl.CopyToTexture)
 
- - allow Lua to disable the forward {Unit,Feature,Ground}Drawer passes;
-   use the callouts
+
+   NOTE: the *PostDeferred events are only sent (and only have a real
+   purpose) if forward drawing is disabled, whereas the DrawGroundPre*
+   events are only sent if the map has a custom shader!
+
+
+ - extend the signatures of the Spring.SetDraw{Ground,Models}Deferred
+   callouts; allows disabling the forward {Unit,Feature,Ground}Drawer
+   passes
      Spring.SetDrawGroundDeferred(
           boolean drawGroundDeferred
        [, boolean drawGroundForward]
      )
-   and
+
      Spring.SetDrawModelsDeferred(
           boolean drawUnitsDeferred,
           boolean drawFeaturesDeferred
@@ -57,8 +145,28 @@ Lua:
        [, boolean drawFeaturesForward ]]
      )
 
-   note: the *PostDeferred events are only sent (and only have a real
-   purpose) if forward drawing is disabled!
+
+   expose the following $named textures to LuaOpenGL
+     "$map_reflection" (same as "$reflection")
+     "$sky_reflection" (defined for SSMF maps that have a skyReflectModTex)
+
+     "$detail"
+     "$normals" (auto-generated)
+
+     "$ssmf_normals"
+     "$ssmf_specular"
+     "$ssmf_splat_distr"
+     "$ssmf_splat_detail"
+     "$ssmf_splat_normals" or "$ssmf_splat_normals:X"
+     "$ssmf_sky_refl"
+     "$ssmf_emission"
+     "$ssmf_parallax"
+
+     'X' can be a value between 0 and 3, defaults to 0 if ":X" is omitted
+
+ - add callouts Preload{Feature,Unit}DefModel allowing the engine
+   to load the unit's model (and texture) in a background thread.
+   wreckages and buildOptions of a unit are automatically preloaded.
 
 Rendering:
  - add support for SSMF Splat Detail Normal Textures (by Beherith)
@@ -66,6 +174,7 @@ Rendering:
    the same buffer as units (overwriting it, unless the new config
    variable AllowDeferredModelBufferClear is set to false [default])
  - allow custom shaders for being-built units
+ - allow custom Lua map shaders
 
 
 -- 100.0 --------------------------------------------------------

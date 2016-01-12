@@ -8,7 +8,6 @@
 #include "Map/Ground.h"
 #include "Sim/Misc/CollisionHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/StrafeAirMoveType.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
@@ -329,7 +328,7 @@ void CBeamLaser::FireInternal(float3 curDir)
 		//
 		// we do more than one trace-iteration and set dir to
 		// newDir only in the case there is a shield in our way
-		const float shieldLength = interceptHandler.AddShieldInterceptableBeam(this, curPos, curDir, beamLength, newDir, hitShield);
+		const float shieldLength = TraceRay::TraceRayShields(this, curPos, curDir, beamLength, newDir, hitShield);
 
 		if (shieldLength < beamLength) {
 			beamLength = shieldLength;

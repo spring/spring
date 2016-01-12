@@ -33,6 +33,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Units/BuildInfo.h"
+#include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Scripts/CobInstance.h"
 #include "Sim/Units/Scripts/LuaUnitScript.h"

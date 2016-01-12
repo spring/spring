@@ -118,14 +118,7 @@ bool ShieldProjectile::AllowDrawing()
 	if (eventHandler.DrawShield(shield->owner, shield))
 		return allowDrawing;
 
-	const CUnit* owner = shield->owner;
-
-	// if the unit that emits this shield is stunned or not
-	// yet finished, prevent the shield segments from being
-	// drawn
-	if (!shield->IsEnabled())
-		return allowDrawing;
-	if (owner->IsStunned() || owner->beingBuilt)
+	if (!shield->IsActive())
 		return allowDrawing;
 	if (shieldSegments.empty())
 		return allowDrawing;
@@ -290,7 +283,7 @@ void ShieldSegmentProjectile::Update()
 		const float colorMix = std::min(1.0f, shield->GetCurPower() / std::max(1.0f, shieldDef->shieldPower));
 
 		const float3 segmentColorf = mix(shieldDef->shieldBadColor, shieldDef->shieldGoodColor, colorMix);
-		       float segmentAlpha = shieldDef->visibleShield * shieldDef->shieldAlpha;
+		float segmentAlpha = shieldDef->visibleShield * shieldDef->shieldAlpha;
 
 		if (shield->GetHitFrames() > 0 && shieldDef->visibleShieldHitFrames > 0) {
 			// when a shield is hit, increase segment's opacity to
@@ -303,7 +296,7 @@ void ShieldSegmentProjectile::Update()
 			segmentColorf.x * segmentAlpha,
 			segmentColorf.y * segmentAlpha,
 			segmentColorf.z * segmentAlpha,
-					  segmentAlpha
+			segmentAlpha
 		);
 	}
 }

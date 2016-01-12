@@ -125,7 +125,6 @@ public:
 	};
 
 	ILosType(const int mipLevel, LosType type);
-	~ILosType();
 
 public:
 	void Update();
@@ -203,7 +202,6 @@ class CLosHandler : public CEventClient
 public:
 	// the Interface
 	bool InLos(const CUnit* unit, int allyTeam) const;
-
 	bool InLos(const CWorldObject* obj, int allyTeam) const {
 		if (obj->alwaysVisible || globalLOS[allyTeam])
 			return true;
@@ -213,15 +211,22 @@ public:
 		// test visibility at two positions, mostly for long beam-projectiles
 		//   slow-moving objects will be visible no earlier or later than before on average
 		//   fast-moving objects will be visible at most one SU before they otherwise would
-		return (InLos(obj->pos, allyTeam) || InLos(obj->pos + obj->speed, allyTeam));
+		return (los.InSight(obj->pos, allyTeam) || los.InSight(obj->pos + obj->speed, allyTeam));
 	}
-
 	bool InLos(const float3 pos, int allyTeam) const {
 		if (globalLOS[allyTeam])
 			return true;
 		return los.InSight(pos, allyTeam);
 	}
 
+
+	bool InAirLos(const CUnit* unit, int allyTeam) const;
+	bool InAirLos(const CWorldObject* obj, int allyTeam) const {
+		if (obj->alwaysVisible || globalLOS[allyTeam])
+			return true;
+
+		return airLos.InSight(obj->pos, allyTeam);
+	}
 	bool InAirLos(const float3 pos, int allyTeam) const {
 		if (globalLOS[allyTeam])
 			return true;
@@ -265,7 +270,7 @@ public:
 	bool GetFullRead() const { return true; }
 	int  GetReadAllyTeam() const { return AllAccessTeam; }
 
-	void UnitDestroyed(const CUnit* unit, const CUnit* attacker) override;
+	void UnitDestroyed(const CUnit* unit, const CUnit* attacker, bool preEvent) override;
 	void UnitTaken(const CUnit* unit, int oldTeam, int newTeam) override;
 	void UnitLoaded(const CUnit* unit, const CUnit* transport) override;
 	void UnitNanoframed(const CUnit* unit) override;
@@ -288,8 +293,8 @@ public:
 	ILosType radar;
 	ILosType sonar;
 	ILosType seismic;
-	ILosType commonJammer;
-	ILosType commonSonarJammer;
+	ILosType jammer;
+	ILosType sonarJammer;
 
 private:
 	static constexpr float defBaseRadarErrorSize = 96.0f;

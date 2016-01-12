@@ -177,6 +177,7 @@ class LuaSyncedRead {
 		static int GetFeatureRadius(lua_State* L);
 		static int GetFeaturePosition(lua_State* L);
 		static int GetFeatureSeparation(lua_State* L);
+		static int GetFeatureRotation(lua_State* L);
 		static int GetFeatureDirection(lua_State* L);
 		static int GetFeatureVelocity(lua_State* L);
 		static int GetFeatureHeading(lua_State* L);
@@ -223,6 +224,10 @@ class LuaSyncedRead {
 		static int IsPosInLos(lua_State* L);
 		static int IsPosInRadar(lua_State* L);
 		static int IsPosInAirLos(lua_State* L);
+		static int IsUnitInLos(lua_State* L);
+		static int IsUnitInAirLos(lua_State* L);
+		static int IsUnitInRadar(lua_State* L);
+		static int IsUnitInJammer(lua_State* L);
 		static int GetClosestValidPosition(lua_State* L);
 
 		static int GetUnitPieceMap(lua_State* L);

@@ -11,15 +11,15 @@
 #define AAI_GROUP_H
 
 #include "System/type2.h"
+#include "Sim/Units/CommandAI/Command.h"
 #include "aidef.h"
 
 enum GroupTask {GROUP_IDLE, GROUP_ATTACKING, GROUP_DEFENDING, GROUP_PATROLING, GROUP_BOMBING, GROUP_RETREATING};
 
 namespace springLegacyAI {
 	struct UnitDef;
-	struct Command;
 }
-#include "LegacyCpp/Command.h"
+
 using namespace springLegacyAI;
 
 #include <vector>

@@ -7,6 +7,7 @@
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/ModInfo.h"
 #include "System/Exceptions.h"
 #include "System/TimeProfiler.h"
 #include "System/Log/ILog.h"
@@ -123,10 +124,12 @@ void CRadarTexture::UpdateCPU()
 	auto infoTexMem = reinterpret_cast<unsigned char*>(infoTexPBO.MapBuffer());
 
 	if (!losHandler->globalLOS[gu->myAllyTeam]) {
+		const int jammerAllyTeam = modInfo.separateJammers ? gu->myAllyTeam : 0;
+
 		const unsigned short* myLos = &losHandler->los.losMaps[gu->myAllyTeam].front();
 
 		const unsigned short* myRadar  = &losHandler->radar.losMaps[gu->myAllyTeam].front();
-		const unsigned short* myJammer = &losHandler->commonJammer.losMaps[0].front();
+		const unsigned short* myJammer = &losHandler->jammer.losMaps[jammerAllyTeam].front();
 		for (int y = 0; y < texSize.y; ++y) {
 			for (int x = 0; x < texSize.x; ++x) {
 				const int idx = y * texSize.x + x;
@@ -171,11 +174,13 @@ void CRadarTexture::Update()
 		return;
 	}
 
+	const int jammerAllyTeam = modInfo.separateJammers ? gu->myAllyTeam : 0;
+
 	infoTexPBO.Bind();
 	const size_t arraySize = texSize.x * texSize.y * sizeof(unsigned short);
 	auto infoTexMem = reinterpret_cast<unsigned char*>(infoTexPBO.MapBuffer());
 	const unsigned short* myRadar  = &losHandler->radar.losMaps[gu->myAllyTeam].front();
-	const unsigned short* myJammer = &losHandler->commonJammer.losMaps[0].front();
+	const unsigned short* myJammer = &losHandler->jammer.losMaps[jammerAllyTeam].front();
 	memcpy(infoTexMem,  myRadar, arraySize);
 	infoTexMem += arraySize;
 	memcpy(infoTexMem, myJammer, arraySize);

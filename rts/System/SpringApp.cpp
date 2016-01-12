@@ -266,6 +266,7 @@ bool SpringApp::Initialize()
 	// GUIs
 	agui::InitGui();
 	LoadFonts();
+
 	CNamedTextures::Init();
 	LuaOpenGL::Init();
 	ISound::Initialize();
@@ -628,7 +629,7 @@ static void ConsolePrintInitialize(const std::string& configSource, bool safemod
  */
 void SpringApp::ParseCmdLine(const std::string& binaryName)
 {
-	cmdline->SetUsageDescription("Usage: " + binaryName + " [options] [path_to_script.txt or demo.sdf]");
+	cmdline->SetUsageDescription("Usage: " + binaryName + " [options] [path_to_script.txt or demo.sdf[.gz]]");
 	cmdline->AddSwitch(0,   "sync-version",       "Display program sync version (for online gaming)");
 	cmdline->AddSwitch('f', "fullscreen",         "Run in fullscreen mode");
 	cmdline->AddSwitch('w', "window",             "Run in windowed mode");
@@ -862,15 +863,15 @@ void SpringApp::Startup()
 
 		clientSetup->isHost = false;
 		pregame = new CPreGame(clientSetup);
-	} else if (extension == "sdf") {
-		// demo
+	} else if (inputFile.rfind(".sdf") != std::string::npos) {
+		// demo.sdf[.gz]
 		clientSetup->isHost        = true;
 		clientSetup->myPlayerName += " (spec)";
 
 		pregame = new CPreGame(clientSetup);
 		pregame->LoadDemo(inputFile);
 	} else if (extension == "ssf") {
-		// savegame
+		// savegame.ssf
 		clientSetup->isHost = true;
 
 		pregame = new CPreGame(clientSetup);
@@ -914,6 +915,9 @@ void SpringApp::Reload(const std::string& script)
 
 	LuaOpenGL::Free();
 	LuaOpenGL::Init();
+
+	// normally not needed, but would allow switching fonts
+	// LoadFonts();
 
 	// reload sounds.lua in case we switch to a different game
 	ISound::Shutdown();
@@ -1029,8 +1033,6 @@ void SpringApp::ShutDown()
 	SafeDelete(game);
 	SafeDelete(pregame);
 
-	agui::FreeGui();
-
 	LOG("[SpringApp::%s][3]", __FUNCTION__);
 	SafeDelete(clientNet);
 	SafeDelete(gameServer);
@@ -1042,8 +1044,10 @@ void SpringApp::ShutDown()
 	FreeJoystick();
 
 	LOG("[SpringApp::%s][5]", __FUNCTION__);
+	agui::FreeGui();
 	SafeDelete(font);
 	SafeDelete(smallFont);
+
 	CNamedTextures::Kill();
 	GLContext::Free();
 	GlobalConfig::Deallocate();
@@ -1069,6 +1073,7 @@ void SpringApp::ShutDown()
 	FileSystemInitializer::Cleanup();
 
 	LOG("[SpringApp::%s][8]", __FUNCTION__);
+	Watchdog::DeregisterThread(WDT_MAIN);
 	Watchdog::Uninstall();
 	LOG("[SpringApp::%s][9]", __FUNCTION__);
 }

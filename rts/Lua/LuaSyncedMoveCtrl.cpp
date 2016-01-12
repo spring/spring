@@ -86,15 +86,16 @@ bool LuaSyncedMoveCtrl::PushMoveCtrl(lua_State* L)
 }
 
 
+
+
 static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 {
-	// handles negative and out-of-bound ID's
 	CUnit* unit = unitHandler->GetUnit(luaL_checkint(L, index));
 
-	if (unit == NULL)
-		return NULL;
+	if (unit == nullptr)
+		return nullptr;
 	if (!CanControlUnit(L, unit))
-		return NULL;
+		return nullptr;
 
 	return unit;
 }
@@ -104,10 +105,10 @@ static inline CScriptMoveType* ParseScriptMoveType(lua_State* L, const char* cal
 {
 	CUnit* unit = ParseUnit(L, caller, index);
 
-	if (unit == NULL)
-		return NULL;
+	if (unit == nullptr)
+		return nullptr;
 	if (!unit->UsingScriptMoveType())
-		return NULL;
+		return nullptr;
 
 	return (static_cast<CScriptMoveType*>(unit->moveType));
 }

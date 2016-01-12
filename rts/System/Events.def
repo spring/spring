@@ -119,6 +119,7 @@
 	SETUP_EVENT(MapDrawCmd,          MANAGED_BIT | UNSYNCED_BIT | CONTROL_BIT)
 
 	SETUP_EVENT(SunChanged,     MANAGED_BIT | UNSYNCED_BIT) //FIXME make synced? (whole dynSun code needs to then)
+	SETUP_EVENT(SunLightingChanged,       MANAGED_BIT | UNSYNCED_BIT)
 
 	SETUP_EVENT(ViewResize,     MANAGED_BIT | UNSYNCED_BIT)
 
@@ -128,6 +129,8 @@
 	SETUP_EVENT(DrawWorldShadow,          MANAGED_BIT | UNSYNCED_BIT)
 	SETUP_EVENT(DrawWorldReflection,      MANAGED_BIT | UNSYNCED_BIT)
 	SETUP_EVENT(DrawWorldRefraction,      MANAGED_BIT | UNSYNCED_BIT)
+	SETUP_EVENT(DrawGroundPreForward,     MANAGED_BIT | UNSYNCED_BIT)
+	SETUP_EVENT(DrawGroundPreDeferred,    MANAGED_BIT | UNSYNCED_BIT)
 	SETUP_EVENT(DrawGroundPostDeferred,   MANAGED_BIT | UNSYNCED_BIT)
 	SETUP_EVENT(DrawUnitsPostDeferred,    MANAGED_BIT | UNSYNCED_BIT)
 	SETUP_EVENT(DrawFeaturesPostDeferred, MANAGED_BIT | UNSYNCED_BIT)

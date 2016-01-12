@@ -3,14 +3,11 @@
 
 #include "ModInfo.h"
 
-#include "Game/GameSetup.h"
 #include "Lua/LuaParser.h"
 #include "Lua/LuaSyncedRead.h"
 #include "System/Log/ILog.h"
-#include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/Exceptions.h"
-#include "System/GlobalConfig.h"
 #include "System/myMath.h"
 
 CModInfo modInfo;
@@ -76,6 +73,8 @@ void CModInfo::ResetState()
 	radarMipLevel = 0;
 
 	requireSonarUnderWater = true;
+	alwaysVisibleOverridesCloaked = false;
+	separateJammers = true;
 
 	featureVisibility = FEATURELOS_NONE;
 
@@ -234,6 +233,7 @@ void CModInfo::Init(const char* modArchive)
 
 		requireSonarUnderWater = sensors.GetBool("requireSonarUnderWater", true);
 		alwaysVisibleOverridesCloaked = sensors.GetBool("alwaysVisibleOverridesCloaked", false);
+		separateJammers = sensors.GetBool("separateJammers", true);
 
 		// losMipLevel is used as index to readMap->mipHeightmaps,
 		// so the max value is CReadMap::numHeightMipMaps - 1

@@ -10,6 +10,7 @@
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/ISky.h"
+#include "Rendering/Env/SunLighting.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/VertexArray.h"
@@ -131,7 +132,7 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 		treeShaders[TREE_PROGRAM_NEAR_SHADOW] = shaderHandler->CreateProgramObject("[TreeDrawer]", shaderNames[TREE_PROGRAM_NEAR_SHADOW] + "GLSL", false);
 		treeShaders[TREE_PROGRAM_DIST_SHADOW] = shaderHandler->CreateProgramObject("[TreeDrawer]", shaderNames[TREE_PROGRAM_DIST_SHADOW] + "GLSL", false);
 
-		if (shadowHandler->shadowsSupported) {
+		if (CShadowHandler::ShadowsSupported()) {
 			treeShaders[TREE_PROGRAM_NEAR_SHADOW]->AttachShaderObject(
 				shaderHandler->CreateShaderObject("GLSL/TreeVertProg.glsl", shaderDefines[TREE_PROGRAM_NEAR_SHADOW], GL_VERTEX_SHADER)
 			);
@@ -170,15 +171,15 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 		}
 
 		treeShaders[TREE_PROGRAM_NEAR_BASIC]->Enable();
-		treeShaders[TREE_PROGRAM_NEAR_BASIC]->SetUniform3fv(3, &mapInfo->light.groundAmbientColor[0]);
-		treeShaders[TREE_PROGRAM_NEAR_BASIC]->SetUniform3fv(4, &mapInfo->light.groundSunColor[0]);
+		treeShaders[TREE_PROGRAM_NEAR_BASIC]->SetUniform3fv(3, &sunLighting->groundAmbientColor[0]);
+		treeShaders[TREE_PROGRAM_NEAR_BASIC]->SetUniform3fv(4, &sunLighting->groundSunColor[0]);
 		treeShaders[TREE_PROGRAM_NEAR_BASIC]->SetUniform4f(6, 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f);
 		treeShaders[TREE_PROGRAM_NEAR_BASIC]->Disable();
 		treeShaders[TREE_PROGRAM_NEAR_BASIC]->Validate();
 
 		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->Enable();
-		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->SetUniform3fv(3, &mapInfo->light.groundAmbientColor[0]);
-		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->SetUniform3fv(4, &mapInfo->light.groundSunColor[0]);
+		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->SetUniform3fv(3, &sunLighting->groundAmbientColor[0]);
+		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->SetUniform3fv(4, &sunLighting->groundSunColor[0]);
 		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->SetUniform1f(9, 1.0f - (sky->GetLight()->GetGroundShadowDensity() * 0.5f));
 		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->SetUniform1i(10, 0);
 		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->SetUniform1i(11, 1);
@@ -186,7 +187,7 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->Validate();
 
 		treeShaders[TREE_PROGRAM_DIST_SHADOW]->Enable();
-		treeShaders[TREE_PROGRAM_DIST_SHADOW]->SetUniform3fv(3, &mapInfo->light.groundAmbientColor[0]);
+		treeShaders[TREE_PROGRAM_DIST_SHADOW]->SetUniform3fv(3, &sunLighting->groundAmbientColor[0]);
 		treeShaders[TREE_PROGRAM_DIST_SHADOW]->SetUniform1f(9, 1.0f - (sky->GetLight()->GetGroundShadowDensity() * 0.5f));
 		treeShaders[TREE_PROGRAM_DIST_SHADOW]->SetUniform1i(10, 0);
 		treeShaders[TREE_PROGRAM_DIST_SHADOW]->SetUniform1i(11, 1);
@@ -197,7 +198,7 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 		treeShaders[TREE_PROGRAM_NEAR_BASIC]->AttachShaderObject(shaderHandler->CreateShaderObject("ARB/treeNS.vp", "", GL_VERTEX_PROGRAM_ARB));
 		treeShaders[TREE_PROGRAM_NEAR_BASIC]->Link();
 
-		if (shadowHandler->shadowsSupported) {
+		if (CShadowHandler::ShadowsSupported()) {
 			treeShaders[TREE_PROGRAM_NEAR_SHADOW] = shaderHandler->CreateProgramObject("[TreeDrawer]", shaderNames[TREE_PROGRAM_NEAR_SHADOW] + "ARB", true);
 			treeShaders[TREE_PROGRAM_NEAR_SHADOW]->AttachShaderObject(shaderHandler->CreateShaderObject("ARB/tree.vp", "", GL_VERTEX_PROGRAM_ARB));
 			treeShaders[TREE_PROGRAM_NEAR_SHADOW]->AttachShaderObject(shaderHandler->CreateShaderObject("ARB/treeFPshadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
@@ -464,13 +465,12 @@ void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 
 void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 {
+	// trees are never drawn in any special (non-opaque) pass
 	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
 	Shader::IProgramObject* treeShader = NULL;
 
 	const int activeFarTex = treeGen->farTex[cam->GetDir().z >= 0.0f];
 	const bool drawDetailed = ((treeDistance >= 4.0f) || drawReflection);
-
-	const CMapInfo::light_t& light = mapInfo->light;
 
 	glEnable(GL_ALPHA_TEST);
 	glEnable(GL_TEXTURE_2D);
@@ -490,16 +490,16 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 		treeShader->Enable();
 
 		if (globalRendering->haveGLSL) {
-			treeShader->SetUniformMatrix4fv(7, false, &shadowHandler->shadowMatrix.m[0]);
+			treeShader->SetUniformMatrix4fv(7, false, shadowHandler->GetShadowMatrixRaw());
 			treeShader->SetUniform4fv(8, &(shadowHandler->GetShadowParams().x));
 		} else {
 			treeShader->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
-			treeShader->SetUniform4f(10, light.groundAmbientColor.x, light.groundAmbientColor.y, light.groundAmbientColor.z, 1.0f);
+			treeShader->SetUniform4f(10, sunLighting->groundAmbientColor.x, sunLighting->groundAmbientColor.y, sunLighting->groundAmbientColor.z, 1.0f);
 			treeShader->SetUniform4f(11, 0.0f, 0.0f, 0.0f, 1.0f - (sky->GetLight()->GetGroundShadowDensity() * 0.5f));
 			treeShader->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 
 			glMatrixMode(GL_MATRIX0_ARB);
-			glLoadMatrixf(shadowHandler->shadowMatrix.m);
+			glLoadMatrixf(shadowHandler->GetShadowMatrixRaw());
 			glMatrixMode(GL_MODELVIEW);
 		}
 	} else {
@@ -514,7 +514,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 	oldTreeDistance = treeDistance;
 
 	// draw far-trees using map-dependent grid-visibility (FIXME: ignores LOS)
-	readMap->GridVisibility(nullptr, TREE_SQUARE_SIZE, drawer.treeDistance * 2.0f, &drawer);
+	readMap->GridVisibility(nullptr, &drawer, drawer.treeDistance * 2.0f, TREE_SQUARE_SIZE);
 
 
 	if (drawDetailed) {
@@ -530,7 +530,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 			treeShader->Enable();
 
 			if (globalRendering->haveGLSL) {
-				treeShader->SetUniformMatrix4fv(7, false, &shadowHandler->shadowMatrix.m[0]);
+				treeShader->SetUniformMatrix4fv(7, false, shadowHandler->GetShadowMatrixRaw());
 				treeShader->SetUniform4fv(8, &(shadowHandler->GetShadowParams().x));
 			}
 
@@ -561,8 +561,8 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 			treeShader->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 			treeShader->SetUniform3f(13, cam->GetRight().x, cam->GetRight().y, cam->GetRight().z);
 			treeShader->SetUniform3f( 9, cam->GetUp().x,    cam->GetUp().y,    cam->GetUp().z   );
-			treeShader->SetUniform4f(11, light.groundSunColor.x,     light.groundSunColor.y,     light.groundSunColor.z,     0.85f);
-			treeShader->SetUniform4f(14, light.groundAmbientColor.x, light.groundAmbientColor.y, light.groundAmbientColor.z, 0.85f);
+			treeShader->SetUniform4f(11, sunLighting->groundSunColor.x,     sunLighting->groundSunColor.y,     sunLighting->groundSunColor.z,     0.85f);
+			treeShader->SetUniform4f(14, sunLighting->groundAmbientColor.x, sunLighting->groundAmbientColor.y, sunLighting->groundAmbientColor.z, 0.85f);
 			treeShader->SetUniform4f(12, 0.0f, 0.0f, 0.0f, 0.20f * (1.0f / MAX_TREE_HEIGHT)); // w = alpha/height modifier
 		}
 
@@ -908,7 +908,7 @@ void CAdvTreeSquareShadowPassDrawer::DrawQuad(int x, int y)
 
 void CAdvTreeDrawer::DrawShadowPass()
 {
-	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
+	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_SHADOW);
 	Shader::IProgramObject* po = NULL;
 
 	const float treeDistance = oldTreeDistance;
@@ -933,7 +933,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 	drawer.treeDistance = treeDistance * SQUARE_SIZE * TREE_SQUARE_SIZE;
 
 	// draw with extraSize=1
-	readMap->GridVisibility(nullptr, TREE_SQUARE_SIZE, drawer.treeDistance * 2.0f, &drawer, 1);
+	readMap->GridVisibility(nullptr, &drawer, drawer.treeDistance * 2.0f, TREE_SQUARE_SIZE, 1);
 
 	if (drawDetailed) {
 		const int xstart = Clamp(cx - 2, 0, mapDims.mapx / TREE_SQUARE_SIZE - 1);

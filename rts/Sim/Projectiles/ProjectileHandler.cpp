@@ -17,8 +17,12 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/Unsynced/FlyingPiece.h"
 #include "Sim/Projectiles/Unsynced/NanoProjectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Sim/Weapons/WeaponDef.h"
+#include "Sim/Weapons/PlasmaRepulser.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
@@ -106,14 +110,37 @@ CProjectileHandler::~CProjectileHandler()
 {
 	configHandler->RemoveObserver(this);
 
-	for (CProjectile* p: syncedProjectiles) {
-		delete p;
+	{
+		// synced first, to avoid callback crashes
+		for (CProjectile* p: syncedProjectiles)
+			delete p;
+
+		syncedProjectiles.clear();
 	}
-	syncedProjectiles.clear(); // synced first, to avoid callback crashes
-	for (CProjectile* p: unsyncedProjectiles) {
-		delete p;
+
+	{
+		for (CProjectile* p: unsyncedProjectiles)
+			delete p;
+
+		unsyncedProjectiles.clear();
 	}
-	unsyncedProjectiles.clear();
+
+	{
+		for (CGroundFlash* gf: groundFlashes)
+			delete gf;
+
+		groundFlashes.clear();
+	}
+
+	{
+		for (FlyingPiece* fp: flyingPieces3DO)
+			delete fp;
+		for (FlyingPiece* fp: flyingPiecesS3O)
+			delete fp;
+
+		flyingPieces3DO.clear();
+		flyingPiecesS3O.clear();
+	}
 
 	freeSyncedIDs.clear();
 	freeUnsyncedIDs.clear();
@@ -283,7 +310,7 @@ void CProjectileHandler::Update()
 		UPDATE_CONTAINER(flyingPiecesS3O);
 		UPDATE_CONTAINER(flyingPieces3DO);
 
-		// sort those every now and then
+		// sort these every now and then
 		FlyingPieceComparator fsort;
 		if (resortFlyingPiecesS3O) std::sort(flyingPiecesS3O.begin(), flyingPiecesS3O.end(), fsort);
 		if (resortFlyingPieces3DO) std::sort(flyingPieces3DO.begin(), flyingPieces3DO.end(), fsort);
@@ -365,19 +392,21 @@ void CProjectileHandler::CheckUnitCollisions(
 	const float3 ppos0,
 	const float3 ppos1)
 {
+	if (!p->checkCol)
+		return;
+
 	CollisionQuery cq;
 
 	for (CUnit* unit: tempUnits) {
-		if (unit == NULL)
-			break;
+		assert(unit != nullptr);
 
 		// if this unit fired this projectile, always ignore
 		if (unit == p->owner())
 			continue;
 		if (!unit->HasCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES))
 			continue;
-		
-		if (p->GetAllyteamID() >= 0) {
+
+		if (teamHandler->IsValidAllyTeam(p->GetAllyteamID())) {
 			if (p->GetCollisionFlags() & Collision::NOFRIENDLIES) {
 				if ( teamHandler->AlliedAllyTeams(p->GetAllyteamID(), unit->allyteam)) { continue; }
 			}
@@ -423,8 +452,7 @@ void CProjectileHandler::CheckFeatureCollisions(
 	CollisionQuery cq;
 
 	for (CFeature* feature: tempFeatures) {
-		if (feature == NULL)
-			break;
+		assert(feature != nullptr);
 
 		if (!feature->HasCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES))
 			continue;
@@ -447,10 +475,47 @@ void CProjectileHandler::CheckFeatureCollisions(
 	}
 }
 
+
+void CProjectileHandler::CheckShieldCollisions(
+	CProjectile* p,
+	std::vector<CPlasmaRepulser*>& tempRepulsers,
+	const float3 ppos0,
+	const float3 ppos1)
+{
+	if (!p->checkCol)
+		return;
+
+	if (!p->weapon)
+		return;
+
+	CWeaponProjectile* wpro = static_cast<CWeaponProjectile*>(p);
+	const WeaponDef* wdef = wpro->GetWeaponDef();
+
+	//Bail early
+	if (wdef->interceptedByShieldType == 0)
+		return;
+
+	CollisionQuery cq;
+
+	for (CPlasmaRepulser* repulser: tempRepulsers) {
+		assert(repulser != nullptr);
+		if (!repulser->CanIntercept(wdef->interceptedByShieldType, p->GetAllyteamID()))
+			continue;
+
+		if (CCollisionHandler::DetectHit(repulser->owner, &repulser->collisionVolume, repulser->owner->GetTransformMatrix(true), ppos0, ppos1, &cq)) {
+			if (!cq.InsideHit() || !repulser->weaponDef->exteriorShield || repulser->IsRepulsing(wpro)) {
+				if (repulser->IncomingProjectile(wpro))
+					return;
+			}
+		}
+	}
+}
+
 void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc)
 {
-	static std::vector<CUnit*> tempUnits(unitHandler->MaxUnits(), NULL);
-	static std::vector<CFeature*> tempFeatures(unitHandler->MaxUnits(), NULL);
+	static std::vector<CUnit*> tempUnits;
+	static std::vector<CFeature*> tempFeatures;
+	static std::vector<CPlasmaRepulser*> tempRepulsers;
 
 	for (size_t i=0; i<pc.size(); ++i) {
 		CProjectile* p = pc[i];
@@ -460,10 +525,14 @@ void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc)
 		const float3 ppos0 = p->pos;
 		const float3 ppos1 = p->pos + p->speed;
 
-		quadField->GetUnitsAndFeaturesColVol(p->pos, p->radius + p->speed.w, tempUnits, tempFeatures);
+		quadField->GetUnitsAndFeaturesColVol(p->pos, p->radius + p->speed.w, tempUnits, tempFeatures, &tempRepulsers);
 
+		CheckShieldCollisions(p, tempRepulsers, ppos0, ppos1);
+		tempRepulsers.clear();
 		CheckUnitCollisions(p, tempUnits, ppos0, ppos1);
+		tempUnits.clear();
 		CheckFeatureCollisions(p, tempFeatures, ppos0, ppos1);
+		tempFeatures.clear();
 	}
 }
 
@@ -523,8 +592,7 @@ void CProjectileHandler::AddFlyingPiece(
 	const S3DOPiece* piece,
 	const S3DOPrimitive* chunk)
 {
-	FlyingPiece* fp = new S3DOFlyingPiece(pos, speed, team, piece, chunk);
-	flyingPieces3DO.push_back(fp);
+	flyingPieces3DO.push_back(new S3DOFlyingPiece(pos, speed, team, piece, chunk));
 	resortFlyingPieces3DO = true;
 }
 
@@ -537,8 +605,7 @@ void CProjectileHandler::AddFlyingPiece(
 {
 	assert(textureType > 0);
 
-	FlyingPiece* fp = new SS3OFlyingPiece(pos, speed, team, textureType, chunk);
-	flyingPiecesS3O.push_back(fp);
+	flyingPiecesS3O.push_back(new SS3OFlyingPiece(pos, speed, team, textureType, chunk));
 	resortFlyingPiecesS3O = true;
 }
 

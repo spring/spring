@@ -563,17 +563,16 @@ void CLegacyMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 
 	UpdateLODParams(drawPass);
 
-	//waterDrawn = (drawPass == DrawPass::WaterReflection);
+	CCamera* cam = CCamera::GetActiveCamera();
+	cam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 
-	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
+	const int camBigTexY = Clamp(int(cam->GetPos().z / (smfReadMap->bigSquareSize * SQUARE_SIZE)), 0, smfReadMap->numBigTexY - 1);
 
-	const int camBty = Clamp(int(cam->GetPos().z / (smfReadMap->bigSquareSize * SQUARE_SIZE)), 0, smfReadMap->numBigTexY - 1);
-
-	//! try to render in "front to back" (so start with the camera nearest BigGroundLines)
-	for (int bty = camBty; bty >= 0; --bty) {
+	// try to render "front to back" (so start with the bigtex rows closest to camera)
+	for (int bty = camBigTexY; bty >= 0; --bty) {
 		DoDrawGroundRow(cam, bty);
 	}
-	for (int bty = camBty + 1; bty < smfReadMap->numBigTexY; ++bty) {
+	for (int bty = camBigTexY + 1; bty < smfReadMap->numBigTexY; ++bty) {
 		DoDrawGroundRow(cam, bty);
 	}
 }

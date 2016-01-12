@@ -7,18 +7,22 @@
 
 #define CLOUD_SIZE 256 // must be divisible by 4 and 8
 
+struct MapTextureData;
 class ISky
 {
 public:
 	static ISky* GetSky();
 
 	virtual ~ISky();
+
 	virtual void Update() = 0;
+	virtual void UpdateSunDir() = 0;
+	virtual void UpdateSkyTexture() = 0;
+
 	virtual void Draw() = 0;
 	virtual void DrawSun() = 0;
 
-	virtual void UpdateSunDir() = 0;
-	virtual void UpdateSkyTexture() = 0;
+	virtual void SetLuaTexture(const MapTextureData& td) {}
 
 	void IncreaseCloudDensity() { cloudDensity *= 1.05f; }
 	void DecreaseCloudDensity() { cloudDensity *= 0.95f; }

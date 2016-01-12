@@ -3,7 +3,14 @@
 #ifndef _AI_AI_CALLBACK_H
 #define _AI_AI_CALLBACK_H
 
+#include <memory>
+
 #include "IAICallback.h"
+
+// engine header copies
+#include "UnitDef.h"
+#include "FeatureDef.h"
+#include "WeaponDef.h"
 
 struct SSkirmishAICallback;
 
@@ -106,14 +113,11 @@ public:
 
 	int GetEnemyUnits(int* unitIds, int unitIds_max);
 	int GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max);
-	int GetEnemyUnits(int* unitIds, const float3& pos, float radius,
-			int unitIds_max);
+	int GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max);
 	int GetFriendlyUnits(int* unitIds, int unitIds_max);
-	int GetFriendlyUnits(int* unitIds, const float3& pos, float radius,
-			int unitIds_max);
+	int GetFriendlyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max);
 	int GetNeutralUnits(int* unitIds, int unitIds_max);
-	int GetNeutralUnits(int* unitIds, const float3& pos, float radius,
-			int unitIds_max);
+	int GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max);
 
 	int GetMapWidth();
 	int GetMapHeight();
@@ -252,26 +256,30 @@ private:
 	int Internal_GiveOrder(int unitId, int groupId, Command* c);
 
 	// caches
-	WeaponDef** weaponDefs;
-	int* weaponDefFrames;
-	UnitDef** unitDefs;
-	int* unitDefFrames;
+	std::vector<UnitDef> unitDefs;
+	std::vector<FeatureDef> featureDefs;
+	std::vector<WeaponDef> weaponDefs;
+
+	std::vector<int> unitDefFrames;
+	std::vector<int> featureDefFrames;
+	std::vector<int> weaponDefFrames;
+
 	// the following three are needed to prevent memory leaks
-	std::vector<CommandDescription>** groupPossibleCommands;
-	std::vector<CommandDescription>** unitPossibleCommands;
-	CCommandQueue** unitCurrentCommandQueues;
-	FeatureDef** featureDefs;
-	int* featureDefFrames;
+	std::vector< std::vector<CommandDescription> > groupPossibleCommands;
+	std::vector< std::vector<CommandDescription> > unitPossibleCommands;
+	std::vector< std::unique_ptr<CCommandQueue> > unitCurrentCommandQueues;
+
 	float3 startPos;
 
 	static size_t numClbInstances;
-	static float* heightMap;
-	static float* cornersHeightMap;
-	static float* slopeMap;
-	static unsigned short* losMap;
-	static unsigned short* radarMap;
-	static unsigned short* jammerMap;
-	static unsigned char* metalMap;
+
+	static std::vector<float> heightMap;
+	static std::vector<float> cornersHeightMap;
+	static std::vector<float> slopeMap;
+	static std::vector<unsigned short> losMap;
+	static std::vector<unsigned short> radarMap;
+	static std::vector<unsigned short> jammerMap;
+	static std::vector<unsigned char> metalMap;
 };
 
 } // namespace springLegacyAI

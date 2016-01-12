@@ -13,7 +13,10 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/Factory.h"
+#include "Sim/Weapons/PlasmaRepulser.h"
+#include "Sim/Weapons/WeaponDef.h"
 #include "System/myMath.h"
 
 
@@ -45,9 +48,11 @@ inline static bool TestConeHelper(
 	bool ret = false;
 
 	if (obj->GetBlockingMapID() < unitHandler->MaxUnits()) {
+		// obj is a unit
 		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), NULL,    pos3D) - coneSize) <= 0.0f); }
 		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), NULL, expPos3D) - coneSize) <= 0.0f); }
 	} else {
+		// obj is a feature
 		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), NULL,    pos3D) - coneSize) <= 0.0f); }
 		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), NULL, expPos3D) - coneSize) <= 0.0f); }
 	}
@@ -263,6 +268,47 @@ float TraceRay(
 			length = groundLength;
 			hitUnit = NULL;
 			hitFeature = NULL;
+		}
+	}
+
+	return length;
+}
+
+
+float TraceRayShields(
+	const CWeapon* emitter,
+	const float3& start,
+	const float3& dir,
+	float length,
+	float3& newDir,
+	CPlasmaRepulser*& repulsedBy
+) {
+	CollisionQuery cq;
+
+	const auto& quads = quadField->GetQuadsOnRay(start, dir, length);
+	for (const int quadIdx: quads) {
+		const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
+
+		for (CPlasmaRepulser* r: quad.repulsers) {
+			if (!r->CanIntercept(emitter->weaponDef->interceptedByShieldType, emitter->owner->allyteam))
+				continue;
+
+			if (CCollisionHandler::DetectHit(r->owner, &r->collisionVolume, r->owner->GetTransformMatrix(true), start, start + dir * length, &cq, true)) {
+				if (cq.InsideHit() && r->weaponDef->exteriorShield)
+					continue;
+
+				const float len = cq.GetHitPosDist(start, dir);
+				if (len <= 0.0f)
+					continue;
+
+				if (len < length && r->IncomingBeam(emitter, start)) {
+					length = len;
+					//This isn't the correct normal for non-spherical volumes, but for now it's ok.
+					const float3 normal = (cq.GetHitPos() - r->weaponMuzzlePos).Normalize();
+					newDir = dir - normal * normal.dot(dir) * 2;
+					repulsedBy = r;
+				}
+			}
 		}
 	}
 

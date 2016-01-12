@@ -62,20 +62,15 @@ struct S3DModelPiece {
 	virtual void Shatter(float, int, int, const float3&, const float3&) const {}
 
 	CMatrix44f& ComposeRotation(CMatrix44f& m, const float3& r) const {
-		// execute rotations in YPR order by default
-		// note: translating + rotating is faster than
-		// matrix-multiplying (but the branching hurts)
 		switch (axisMapType) {
 			case AXIS_MAPPING_XYZ: {
-				if (r.y != 0.0f) { m.RotateY(r.y * rotAxisSigns.y); } // yaw
-				if (r.x != 0.0f) { m.RotateX(r.x * rotAxisSigns.x); } // pitch
-				if (r.z != 0.0f) { m.RotateZ(r.z * rotAxisSigns.z); } // roll
+				// default Spring rotation-order [YPR=YXZ]
+				m.RotateEulerYXZ(r * rotAxisSigns);
 			} break;
 
 			case AXIS_MAPPING_XZY: {
-				if (r.y != 0.0f) { m.RotateZ(r.y * rotAxisSigns.y); } // yaw
-				if (r.x != 0.0f) { m.RotateX(r.x * rotAxisSigns.x); } // pitch
-				if (r.z != 0.0f) { m.RotateY(r.z * rotAxisSigns.z); } // roll
+				// y- and z-angles swapped wrt MAPPING_XYZ; ?? rotation-order [RPY=ZXY]
+				m.RotateEulerZXY(float3(r.x * rotAxisSigns.x, r.z * rotAxisSigns.z, r.y * rotAxisSigns.y));
 			} break;
 
 			case AXIS_MAPPING_YXZ:
@@ -92,6 +87,9 @@ struct S3DModelPiece {
 	bool ComposeTransform(CMatrix44f& m, const float3& t, const float3& r, const float3& s) const {
 		bool isIdentity = true;
 
+		// note: translating + rotating is faster than
+		// matrix-multiplying (but the branching hurts)
+		//
 		// NOTE: ORDER MATTERS (T(baked + script) * R(baked) * R(script) * S(baked))
 		if (t != ZeroVector) { m = m.Translate(t);        isIdentity = false; }
 		if (!hasIdentityRot) { m *= bakedRotMatrix;       isIdentity = false; }
@@ -125,17 +123,12 @@ protected:
 
 public:
 	std::string name;
-	std::string parentName;
-
 	std::vector<S3DModelPiece*> children;
 
 	S3DModelPiece* parent;
 	CollisionVolume colvol;
 
 	AxisMappingType axisMapType;
-
-	bool hasGeometryData;      /// if piece contains any geometry data
-	bool hasIdentityRot;       /// if bakedRotMatrix is identity
 
 	CMatrix44f bakedRotMatrix; /// baked local-space rotations (assimp-only)
 
@@ -147,6 +140,9 @@ public:
 	float3 rotAxisSigns;
 
 protected:
+	bool hasGeometryData;      /// if piece contains any geometry data
+	bool hasIdentityRot;       /// if bakedRotMatrix is identity
+
 	unsigned int dispListID;
 
 	VBO vboIndices;
@@ -320,12 +316,13 @@ struct LocalModel
 	const CMatrix44f& GetRawPieceMatrix(int pieceIdx) const { return pieces[pieceIdx].GetModelSpaceMatrix(); }
 
 
-	void Draw() const { DrawPieces(); }
-	void DrawLOD(unsigned int lod) const {
-		if (lod > lodCount)
+	void Draw() const {
+		if (!luaMaterialData.Enabled()) {
+			DrawPieces();
 			return;
+		}
 
-		DrawPiecesLOD(lod);
+		DrawPiecesLOD(luaMaterialData.GetCurrentLOD());
 	}
 
 	void Update(unsigned int frameNum) {
@@ -339,9 +336,6 @@ struct LocalModel
 		dirtyPieces = 0;
 	}
 
-
-	void DrawPieces() const;
-	void DrawPiecesLOD(unsigned int lod) const;
 
 	void SetModel(const S3DModel* model);
 	void SetLODCount(unsigned int count);
@@ -372,6 +366,9 @@ struct LocalModel
 
 private:
 	LocalModelPiece* CreateLocalModelPieces(const S3DModelPiece* mpParent);
+
+	void DrawPieces() const;
+	void DrawPiecesLOD(unsigned int lod) const;
 
 public:
 	// increased by UnitScript whenever a piece is transformed

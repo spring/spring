@@ -56,6 +56,7 @@
 #include "Lua/LuaUI.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Game/UI/Groups/GroupHandler.h"
@@ -298,7 +299,7 @@ public:
 			LOG_L(L_WARNING, "Shadows are disabled; change your configuration and restart to use them");
 			return true;
 		}
-		if (!shadowHandler->shadowsSupported) {
+		if (!CShadowHandler::ShadowsSupported()) {
 			LOG_L(L_WARNING, "Your hardware/driver setup does not support shadows");
 			return true;
 		}
@@ -794,7 +795,7 @@ public:
 							aiShortName.c_str(), aiVersion.c_str());
 					badArgs = true;
 				} else {
-					const CSkirmishAILibraryInfo* aiLibInfo = aiLibManager->GetSkirmishAIInfos().find(aiKey)->second;
+					const CSkirmishAILibraryInfo& aiLibInfo = aiLibManager->GetSkirmishAIInfos().find(aiKey)->second;
 
 					SkirmishAIData aiData;
 					aiData.name       = (aiName != "") ? aiName : aiShortName;
@@ -802,12 +803,12 @@ public:
 					aiData.hostPlayer = gu->myPlayerNum;
 					aiData.shortName  = aiShortName;
 					aiData.version    = aiVersion;
-					std::map<std::string, std::string>::const_iterator o;
-					for (o = aiOptions.begin(); o != aiOptions.end(); ++o) {
+
+					for (auto o = aiOptions.cbegin(); o != aiOptions.cend(); ++o)
 						aiData.optionKeys.push_back(o->first);
-					}
+
 					aiData.options    = aiOptions;
-					aiData.isLuaAI    = aiLibInfo->IsLuaAI();
+					aiData.isLuaAI    = aiLibInfo.IsLuaAI();
 
 					skirmishAIHandler.CreateLocalSkirmishAI(aiData);
 				}

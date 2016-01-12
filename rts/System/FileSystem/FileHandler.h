@@ -25,7 +25,7 @@ class CFileHandler
 public:
 	CFileHandler(const char* fileName, const char* modes = SPRING_VFS_RAW_FIRST);
 	CFileHandler(const std::string& fileName, const std::string& modes = SPRING_VFS_RAW_FIRST);
-	~CFileHandler();
+	virtual ~CFileHandler();
 
 	void Open(const std::string& fileName, const std::string& modes = SPRING_VFS_RAW_FIRST);
 
@@ -53,10 +53,13 @@ public:
 	static std::string AllowModes(const std::string& modes, const std::string& allowed);
 	static std::string ForbidModes(const std::string& modes, const std::string& forbidden);
 
-private:
-	bool TryReadFromPWD(const std::string& fileName);
-	bool TryReadFromRawFS(const std::string& fileName);
-	bool TryReadFromModFS(const std::string& fileName);
+
+protected:
+	CFileHandler() : filePos(0), fileSize(-1) {} // for CGZFileHandler
+
+	virtual bool TryReadFromPWD(const std::string& fileName);
+	virtual bool TryReadFromRawFS(const std::string& fileName);
+	virtual bool TryReadFromModFS(const std::string& fileName);
 	bool TryReadFromMapFS(const std::string& fileName);
 	bool TryReadFromBaseFS(const std::string& fileName);
 

@@ -20,7 +20,7 @@
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/Textures/TextureAtlas.h"
-#include "Rendering/Models/WorldObjectModelRenderer.h"
+#include "Rendering/Models/ModelRenderContainer.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
@@ -235,7 +235,7 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 	modelRenderers.resize(MODELTYPE_OTHER, NULL);
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		modelRenderers[modelType] = IWorldObjectModelRenderer::GetInstance(modelType);
+		modelRenderers[modelType] = IModelRenderContainer::GetInstance(modelType);
 	}
 }
 
@@ -391,18 +391,10 @@ void CProjectileDrawer::LoadWeaponTextures() {
 
 void CProjectileDrawer::DrawProjectiles(int modelType, bool drawReflection, bool drawRefraction)
 {
-	typedef std::vector<CProjectile*> ProjectileSet;
-	typedef std::map<int, ProjectileSet> ProjectileBin;
-	//typedef ProjectileSet::iterator ProjectileSetIt;
-	typedef ProjectileBin::iterator ProjectileBinIt;
+	auto& projectileBin = modelRenderers[modelType]->GetProjectileBinMutable();
 
-	ProjectileBin& projectileBin = modelRenderers[modelType]->GetProjectileBinMutable();
-
-	for (ProjectileBinIt binIt = projectileBin.begin(); binIt != projectileBin.end(); ++binIt) {
-		if (modelType != MODELTYPE_3DO) {
-			texturehandlerS3O->SetS3oTexture(binIt->first);
-		}
-
+	for (auto binIt = projectileBin.cbegin(); binIt != projectileBin.cend(); ++binIt) {
+		CUnitDrawer::BindModelTypeTexture(modelType, binIt->first);
 		DrawProjectilesSet(binIt->second, drawReflection, drawRefraction);
 	}
 
@@ -459,12 +451,9 @@ void CProjectileDrawer::DrawProjectileNow(CProjectile* pro, bool drawReflection,
 
 void CProjectileDrawer::DrawProjectilesShadow(int modelType)
 {
-	typedef std::map<int, std::vector<CProjectile*> > ProjectileBin;
-	typedef ProjectileBin::iterator ProjectileBinIt;
+	auto& projectileBin = modelRenderers[modelType]->GetProjectileBinMutable();
 
-	ProjectileBin& projectileBin = modelRenderers[modelType]->GetProjectileBinMutable();
-
-	for (ProjectileBinIt binIt = projectileBin.begin(); binIt != projectileBin.end(); ++binIt) {
+	for (auto binIt = projectileBin.cbegin(); binIt != projectileBin.cend(); ++binIt) {
 		DrawProjectilesSetShadow(binIt->second);
 	}
 }
@@ -501,29 +490,25 @@ void CProjectileDrawer::DrawProjectileShadow(CProjectile* p)
 
 void CProjectileDrawer::DrawProjectilesMiniMap()
 {
-	typedef std::vector<CProjectile*> ProjectileSet;
-	typedef std::map<int, ProjectileSet> ProjectileBin;
-	typedef std::map<int, ProjectileSet>::const_iterator ProjectileBinIt;
-
 	CVertexArray* lines = GetVertexArray();
 	CVertexArray* points = GetVertexArray();
 	lines->Initialize();
 	points->Initialize();
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		const ProjectileBin& projectileBin = modelRenderers[modelType]->GetProjectileBin();
+		const auto& projectileBin = modelRenderers[modelType]->GetProjectileBin();
 
 		if (projectileBin.empty())
 			continue;
 
-		for (ProjectileBinIt binIt = projectileBin.begin(); binIt != projectileBin.end(); ++binIt) {
-			const ProjectileSet& pset = binIt->second;
+		for (auto binIt = projectileBin.cbegin(); binIt != projectileBin.cend(); ++binIt) {
+			const auto& projectileSet = binIt->second;
 
-			lines->EnlargeArrays(pset.size() * 2, 0, VA_SIZE_C);
-			points->EnlargeArrays(pset.size(), 0, VA_SIZE_C);
+			lines->EnlargeArrays(projectileSet.size() * 2, 0, VA_SIZE_C);
+			points->EnlargeArrays(projectileSet.size(), 0, VA_SIZE_C);
 
-			for (CProjectile* p: pset) {
-				CUnit *owner = p->owner();
+			for (CProjectile* p: projectileSet) {
+				const CUnit* owner = p->owner();
 				const bool inLos = (owner && (owner->allyteam == gu->myAllyTeam)) ||
 					gu->spectatingFullView || losHandler->InLos(p, gu->myAllyTeam);
 
@@ -610,15 +595,15 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	Update();
 
 	{
-		unitDrawer->SetupForUnitDrawing(false);
+		unitDrawer->SetupOpaqueDrawing(false);
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-			modelRenderers[modelType]->PushRenderState();
+			unitDrawer->PushModelRenderState(modelType);
 			DrawProjectiles(modelType, drawReflection, drawRefraction);
-			modelRenderers[modelType]->PopRenderState();
+			unitDrawer->PopModelRenderState(modelType);
 		}
 
-		unitDrawer->CleanUpUnitDrawing(false);
+		unitDrawer->ResetOpaqueDrawing(false);
 
 		// note: model-less projectiles are NOT drawn by this call but
 		// only z-sorted (if the projectiles indicate they want to be)
@@ -771,7 +756,7 @@ void CProjectileDrawer::DrawGroundFlashes()
 	bool depthMask = false;
 
 	for (CGroundFlash* gf: gfc) {
-		const bool inLos = gf->alwaysVisible || gu->spectatingFullView || losHandler->InAirLos(gf->pos, gu->myAllyTeam);
+		const bool inLos = gf->alwaysVisible || gu->spectatingFullView || losHandler->InAirLos(gf, gu->myAllyTeam);
 		if (!inLos)
 			continue;
 
@@ -929,8 +914,6 @@ void CProjectileDrawer::GenerateNoiseTex(unsigned int tex)
 
 void CProjectileDrawer::RenderProjectileCreated(const CProjectile* p)
 {
-	texturehandlerS3O->UpdateDraw();
-
 	if (p->model) {
 		modelRenderers[MDL_TYPE(p)]->AddProjectile(p);
 	} else {

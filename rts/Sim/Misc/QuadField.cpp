@@ -11,8 +11,9 @@
 
 #ifndef UNIT_TEST
 	#include "Sim/Features/Feature.h"
-	#include "Sim/Units/Unit.h"
 	#include "Sim/Projectiles/Projectile.h"
+	#include "Sim/Units/Unit.h"
+	#include "Sim/Weapons/PlasmaRepulser.h"
 #endif
 
 #include "System/Util.h"
@@ -31,7 +32,8 @@ CR_REG_METADATA_SUB(CQuadField, Quad, (
 	CR_MEMBER(units),
 	CR_MEMBER(teamUnits),
 	CR_MEMBER(features),
-	CR_MEMBER(projectiles)
+	CR_MEMBER(projectiles),
+	CR_MEMBER(repulsers)
 ))
 
 CQuadField* quadField = NULL;
@@ -281,16 +283,13 @@ void CQuadField::MovedUnit(CUnit* unit)
 	}
 
 	for (const int qi: unit->quads) {
-		std::vector<CUnit*>& quadUnits     = baseQuads[qi].units;
-		std::vector<CUnit*>& quadAllyUnits = baseQuads[qi].teamUnits[unit->allyteam];
-
-		VectorErase(quadUnits, unit);
-		VectorErase(quadAllyUnits, unit);
+		VectorErase(baseQuads[qi].units, unit);
+		VectorErase(baseQuads[qi].teamUnits[unit->allyteam], unit);
 	}
 
 	for (const int qi: newQuads) {
-		baseQuads[qi].units.push_back(unit);
-		baseQuads[qi].teamUnits[unit->allyteam].push_back(unit);
+		VectorInsertUnique(baseQuads[qi].units, unit, false);
+		VectorInsertUnique(baseQuads[qi].teamUnits[unit->allyteam], unit, false);
 	}
 
 	unit->quads = std::move(newQuads);
@@ -307,8 +306,59 @@ void CQuadField::RemoveUnit(CUnit* unit)
 	}
 
 	unit->quads.clear();
+
+	#ifdef DEBUG_QUADFIELD
+	for (const Quad& q: baseQuads) {
+		for (auto& teamUnits: q.teamUnits) {
+			for (CUnit* u: teamUnits) {
+				assert(u != unit);
+			}
+		}
+	}
+	#endif
 }
 
+
+void CQuadField::MovedRepulser(CPlasmaRepulser* repulser)
+{
+	auto newQuads = std::move(GetQuads(repulser->weaponMuzzlePos, repulser->GetRadius()));
+
+	// compare if the quads have changed, if not stop here
+	if (newQuads.size() == repulser->quads.size()) {
+		if (std::equal(newQuads.begin(), newQuads.end(), repulser->quads.begin())) {
+			return;
+		}
+	}
+
+	for (const int qi: repulser->quads) {
+		VectorErase(baseQuads[qi].repulsers, repulser);
+	}
+
+	for (const int qi: newQuads) {
+		VectorInsertUnique(baseQuads[qi].repulsers, repulser, false);
+	}
+
+	repulser->quads = std::move(newQuads);
+}
+
+void CQuadField::RemoveRepulser(CPlasmaRepulser* repulser)
+{
+	const auto& quads = GetQuads(repulser->weaponMuzzlePos, repulser->GetRadius());
+
+	for (const int qi: repulser->quads) {
+		VectorErase(baseQuads[qi].repulsers, repulser);
+	}
+
+	repulser->quads.clear();
+
+	#ifdef DEBUG_QUADFIELD
+	for (const Quad& q: baseQuads) {
+		for (CPlasmaRepulser* r: q.repulsers) {
+			assert(r != repulser);
+		}
+	}
+	#endif
+}
 
 
 void CQuadField::AddFeature(CFeature* feature)
@@ -316,7 +366,7 @@ void CQuadField::AddFeature(CFeature* feature)
 	const auto& newQuads = GetQuads(feature->pos, feature->radius);
 
 	for (const int qi: newQuads) {
-		baseQuads[qi].features.push_back(feature);
+		VectorInsertUnique(baseQuads[qi].features, feature, false);
 	}
 }
 
@@ -362,13 +412,13 @@ void CQuadField::AddProjectile(CProjectile* p)
 		auto newQuads = std::move(GetQuadsOnRay(p->pos, p->dir, p->speed.w));
 
 		for (const int qi: newQuads) {
-			baseQuads[qi].projectiles.push_back(p);
+			VectorInsertUnique(baseQuads[qi].projectiles, p, false);
 		}
 
 		p->quads = std::move(newQuads);
 	} else {
 		int newQuad = WorldPosToQuadFieldIdx(p->pos);
-		baseQuads[newQuad].projectiles.push_back(p);
+		VectorInsertUnique(baseQuads[newQuad].projectiles, p, false);
 		p->quads.clear();
 		p->quads.push_back(newQuad);
 	}
@@ -392,7 +442,7 @@ void CQuadField::RemoveProjectile(CProjectile* p)
 std::vector<CUnit*> CQuadField::GetUnits(const float3& pos, float radius)
 {
 	const auto& quads = GetQuads(pos, radius);
-	const int tempNum = gs->tempNum++;
+	const int tempNum = gs->GetTempNum();
 	std::vector<CUnit*> units;
 
 	for (const int qi: quads) {
@@ -411,7 +461,7 @@ std::vector<CUnit*> CQuadField::GetUnits(const float3& pos, float radius)
 std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& pos, float radius, bool spherical)
 {
 	const auto& quads = GetQuads(pos, radius);
-	const int tempNum = gs->tempNum++;
+	const int tempNum = gs->GetTempNum();
 	std::vector<CUnit*> units;
 
 	for (const int qi: quads) {
@@ -439,7 +489,7 @@ std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& pos, float radius, b
 std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& mins, const float3& maxs)
 {
 	const auto& quads = GetQuadsRectangle(mins, maxs);
-	const int tempNum = gs->tempNum++;
+	const int tempNum = gs->GetTempNum();
 	std::vector<CUnit*> units;
 
 	for (const int qi: quads) {
@@ -462,7 +512,7 @@ std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& mins, const float3& 
 std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos, float radius, bool spherical)
 {
 	const auto& quads = GetQuads(pos, radius);
-	const int tempNum = gs->tempNum++;
+	const int tempNum = gs->GetTempNum();
 	std::vector<CFeature*> features;
 
 	for (const int qi: quads) {
@@ -490,7 +540,7 @@ std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos, float rad
 std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& mins, const float3& maxs)
 {
 	const auto& quads = GetQuadsRectangle(mins, maxs);
-	const int tempNum = gs->tempNum++;
+	const int tempNum = gs->GetTempNum();
 	std::vector<CFeature*> features;
 
 	for (const int qi: quads) {
@@ -557,7 +607,7 @@ std::vector<CSolidObject*> CQuadField::GetSolidsExact(
 	const unsigned int collisionStateBits
 ) {
 	const auto& quads = GetQuads(pos, radius);
-	const int tempNum = gs->tempNum++;
+	const int tempNum = gs->GetTempNum();
 	std::vector<CSolidObject*> solids;
 
 	for (const int qi: quads) {
@@ -600,35 +650,17 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 	const float radius,
 	std::vector<CUnit*>& units,
 	std::vector<CFeature*>& features,
-	unsigned int* numUnitsPtr,
-	unsigned int* numFeaturesPtr
+	std::vector<CPlasmaRepulser*>* repulsers
 ) {
-	const int tempNum = gs->tempNum++;
+	const int tempNum = gs->GetTempNum();
 
 	// start counting from the previous object-cache sizes
-	unsigned int numUnits = (numUnitsPtr == NULL)? 0: (*numUnitsPtr);
-	unsigned int numFeatures = (numFeaturesPtr == NULL)? 0: (*numFeaturesPtr);
-
-	// bail early if caches are already full
-	if (numUnits >= units.size() && numFeatures >= features.size())
-		return;
-
-	assert(numUnits == 0 || numUnits == units.size() || units[numUnits] == NULL);
-	assert(numFeatures == 0 || numFeatures == features.size() || features[numFeatures] == NULL);
-
 	const auto& quads = GetQuads(pos, radius);
 
 	for (const int qi: quads) {
 		const Quad& quad = baseQuads[qi];
 
-		// bail early if caches are already full
-		if (numUnits >= units.size() && numFeatures >= features.size())
-			break;
-
 		for (CUnit* u: quad.units) {
-			// bail early if cache is full
-			if (numUnits >= units.size()) //FIXME
-				break;
 
 			// prevent double adding
 			if (u->tempNum == tempNum)
@@ -640,18 +672,11 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 			if (pos.SqDistance(colvol->GetWorldSpacePos(u)) >= (totRad * totRad))
 				continue;
 
-			assert(numUnits < units.size());
-
-			if (numUnits < units.size()) {
-				u->tempNum = tempNum;
-				units[numUnits++] = u;
-			}
+			u->tempNum = tempNum;
+			units.push_back(u);
 		}
 
 		for (CFeature* f: quad.features) {
-			// bail early if cache is full
-			if (numFeatures >= features.size()) //FIXME
-				break;
 
 			// prevent double adding
 			if (f->tempNum == tempNum)
@@ -663,25 +688,26 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 			if (pos.SqDistance(colvol->GetWorldSpacePos(f)) >= (totRad * totRad))
 				continue;
 
-			assert(numFeatures < features.size());
+			f->tempNum = tempNum;
+			features.push_back(f);
+		}
+		if (repulsers != nullptr) {
+			for (CPlasmaRepulser* r: quad.repulsers) {
 
-			if (numFeatures < features.size()) {
-				f->tempNum = tempNum;
-				features[numFeatures++] = f;
+				// prevent double adding
+				if (r->tempNum == tempNum)
+					continue;
+
+				const auto* colvol = &r->collisionVolume;
+				const float totRad = radius + colvol->GetBoundingRadius();
+
+				if (pos.SqDistance(r->weaponMuzzlePos) >= (totRad * totRad))
+					continue;
+
+				r->tempNum = tempNum;
+				repulsers->push_back(r);
 			}
 		}
 	}
-
-	assert(numUnits <= units.size());
-	assert(numFeatures <= features.size());
-
-	// set end-of-list sentinels
-	if (numUnits < units.size())
-		units[numUnits] = NULL;
-	if (numFeatures < features.size())
-		features[numFeatures] = NULL;
-
-	if (numUnitsPtr != NULL) { *numUnitsPtr = numUnits; }
-	if (numFeaturesPtr != NULL) { *numFeaturesPtr = numFeatures; }
 }
 #endif // UNIT_TEST

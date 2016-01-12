@@ -17,7 +17,10 @@
   uniform float shadowDensity;
 #endif
 
-  uniform vec4 teamColor; // alpha contains `far distance fading factor`
+  // for opaque passes, tc.a contains a distance fading factor and alphaPass=0.0
+  // for alpha passes, tc.a contains one of alphaValues.xyzw and alphaPass=1.0
+  uniform vec4 teamColor;
+  uniform float alphaPass;
 
   varying vec4 vertexWorldPos;
   varying vec3 cameraDir;
@@ -30,8 +33,20 @@
   varying vec3 normalv;
 #endif
 
-uniform int numModelDynLights;
 
+
+float GetShadowCoeff(vec4 shadowCoors)
+{
+	#if (USE_SHADOWS == 1)
+	float coeff = shadow2DProj(shadowTex, shadowCoors).r;
+
+	coeff  = (1.0 - coeff);
+	coeff *= shadowDensity;
+	return (1.0 - coeff);
+	#else
+	return 1.0;
+	#endif
+}
 
 void main(void)
 {
@@ -45,6 +60,7 @@ void main(void)
 #else
 	vec3 normal = normalize(normalv);
 #endif
+
 	vec3 light = max(dot(normal, sunDir), 0.0) * sunDiffuse + sunAmbient;
 
 	vec4 diffuse     = texture2D(textureS3o1, gl_TexCoord[0].st);
@@ -54,17 +70,15 @@ void main(void)
 	vec3 specular   = textureCube(specularTex, reflectDir).rgb * extraColor.g * 4.0;
 	vec3 reflection = textureCube(reflectTex,  reflectDir).rgb;
 
-#if (USE_SHADOWS == 1)
-	float shadow = shadow2DProj(shadowTex, gl_TexCoord[1] + vec4(0.0, 0.0, -0.00005, 0.0)).r;
-	shadow      = 1.0 - (1.0 - shadow) * shadowDensity;
-	vec3 shade  = mix(sunAmbient, light, shadow);
-	reflection  = mix(shade, reflection, extraColor.g); // reflection
-	reflection += extraColor.rrr; // self-illum
-	specular   *= shadow;
-#else
+	float shadow = GetShadowCoeff(gl_TexCoord[1] + vec4(0.0, 0.0, -0.00005, 0.0));
+
+	// no highlights if in shadow; decrease light to ambient level
+	specular *= shadow;
+	light = mix(sunAmbient, light, shadow);
+
+
 	reflection  = mix(light, reflection, extraColor.g); // reflection
 	reflection += extraColor.rrr; // self-illum
-#endif
 
 	#if (DEFERRED_MODE == 0)
 	gl_FragColor     = diffuse;
@@ -109,11 +123,13 @@ void main(void)
 	gl_FragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(diffuse.rgb, teamColor.rgb, diffuse.a), extraColor.a * teamColor.a);
 	// do not premultiply reflection, leave it to the deferred lighting pass
 	// gl_FragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(diffuse.rgb, teamColor.rgb, diffuse.a) * reflection, extraColor.a * teamColor.a);
-	gl_FragData[GBUFFER_SPECTEX_IDX] = vec4(specular, 1.0);
-	gl_FragData[GBUFFER_EMITTEX_IDX] = vec4(extraColor.r, extraColor.r, extraColor.r, 1.0);
+	// allows standard-lighting reconstruction by lazy LuaMaterials using us
+	gl_FragData[GBUFFER_SPECTEX_IDX] = extraColor;
+	gl_FragData[GBUFFER_EMITTEX_IDX] = vec4(0.0, 0.0, 0.0, 0.0);
 	gl_FragData[GBUFFER_MISCTEX_IDX] = vec4(0.0, 0.0, 0.0, 0.0);
 	#else
 	gl_FragColor.rgb = mix(gl_Fog.color.rgb, gl_FragColor.rgb, fogFactor); // fog
-	gl_FragColor.a   = extraColor.a * teamColor.a;
+	gl_FragColor.a   = mix(extraColor.a * teamColor.a, teamColor.a, alphaPass);
 	#endif
 }
+

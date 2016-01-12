@@ -514,6 +514,11 @@ void CEventHandler::SunChanged(const float3& sunDir)
 	ITERATE_EVENTCLIENTLIST(SunChanged, sunDir);
 }
 
+void CEventHandler::SunLightingChanged()
+{
+	ITERATE_EVENTCLIENTLIST(SunLightingChanged);
+}
+
 void CEventHandler::ViewResize()
 {
 	ITERATE_EVENTCLIENTLIST(ViewResize);
@@ -551,6 +556,8 @@ DRAW_CALLIN(WorldPreUnit)
 DRAW_CALLIN(WorldShadow)
 DRAW_CALLIN(WorldReflection)
 DRAW_CALLIN(WorldRefraction)
+DRAW_CALLIN(GroundPreForward)
+DRAW_CALLIN(GroundPreDeferred)
 DRAW_CALLIN(GroundPostDeferred)
 DRAW_CALLIN(UnitsPostDeferred)
 DRAW_CALLIN(FeaturesPostDeferred)

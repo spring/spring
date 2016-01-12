@@ -4,11 +4,17 @@
 #define IMODELPARSER_H
 
 #include <unordered_map>
-#include <string>
-#include <list>
+#include <deque>
 
-#include "System/Matrix44f.h"
+#include <string>
+
 #include "3DModel.h"
+#include "System/Matrix44f.h"
+#include "System/Threading/SpringMutex.h"
+
+namespace boost {
+	class thread;
+};
 
 
 class IModelParser
@@ -19,27 +25,61 @@ public:
 	virtual ModelType GetType() const = 0;
 };
 
+
+struct LoadQueue {
+public:
+	LoadQueue(): thread(nullptr) {}
+	~LoadQueue();
+
+	void Pump();
+	void Push(const std::string& modelName);
+
+	void GrabLock() { mutex.lock(); }
+	void FreeLock() { mutex.unlock(); }
+
+private:
+	std::deque<std::string> queue;
+	spring::mutex mutex;
+	boost::thread* thread;
+};
+
+
+
 class C3DModelLoader
 {
 public:
 	C3DModelLoader();
 	~C3DModelLoader();
 
-	std::string FindModelPath(std::string name) const;
-	S3DModel* Load3DModel(std::string modelName);
+	S3DModel* Load3DModel(std::string name, bool preload = false);
 
+	std::string FindModelPath(std::string name) const;
+
+	void Preload3DModel(const std::string& name) { loadQueue.Push(name); }
+
+public:
 	typedef std::unordered_map<std::string, unsigned int> ModelMap; // "armflash.3do" --> id
 	typedef std::unordered_map<std::string, unsigned int> FormatMap; // "3do" --> MODELTYPE_3DO
 	typedef std::unordered_map<unsigned int, IModelParser*> ParserMap; // MODELTYPE_3DO --> parser
 
 private:
-	void AddModelToCache(S3DModel* model, const std::string& modelName, const std::string& modelPath);
-	void CreateLists(S3DModelPiece* o);
+	S3DModel* LoadCached3DModel(const std::string& name, bool preload);
+	S3DModel* CreateModel(const std::string& name, const std::string& path, bool preload);
+	S3DModel* ParseModel(const std::string& name, const std::string& path);
+
+	IModelParser* GetFormatParser(const std::string& pathExt);
+
+	void AddModelToCache(S3DModel* model, const std::string& name, const std::string& path);
+
+	void CreateLists(S3DModel* o);
 	void CreateListsNow(S3DModelPiece* o);
 
+private:
 	ModelMap cache;
 	FormatMap formats;
 	ParserMap parsers;
+	// preloading
+	LoadQueue loadQueue;
 
 	// all unique models loaded so far
 	std::vector<S3DModel*> models;

@@ -71,7 +71,7 @@ public:
 	int GetReadAllyTeam() const { return AllAccessTeam; }
 
 	void UnitCreated(const CUnit* unit, const CUnit* builder);
-	void UnitDestroyed(const CUnit* unit, const CUnit* attacker);
+	void UnitDestroyed(const CUnit* unit, const CUnit* attacker, bool preEvent);
 
 	void ViewResize();
 

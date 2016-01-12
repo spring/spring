@@ -88,8 +88,8 @@ varying vec2 diffuseTexCoords;
 	uniform sampler2D skyReflectModTex;
 #endif
 
-#ifdef SMF_DETAIL_NORMALS
-	uniform sampler2D detailNormalTex;
+#ifdef SMF_BLEND_NORMALS
+	uniform sampler2D blendNormalsTex;
 #endif
 
 #ifdef SMF_LIGHT_EMISSION
@@ -298,7 +298,7 @@ void main() {
 	vec3 cameraDir = vertexWorldPos.xyz - cameraPos;
 	vec3 normal = GetFragmentNormal(normTexCoords);
 
-	#if defined(SMF_DETAIL_NORMALS) || defined(SMF_PARALLAX_MAPPING) || defined(SMF_DETAIL_NORMAL_TEXTURE_SPLATTING)
+	#if defined(SMF_BLEND_NORMALS) || defined(SMF_PARALLAX_MAPPING) || defined(SMF_DETAIL_NORMAL_TEXTURE_SPLATTING)
 		// detail-normals are (assumed to be) defined within STN space
 		// (for a regular vertex normal equal to <0, 1, 0>, the S- and
 		// T-tangents are aligned with Spring's +x and +z (!) axes)
@@ -325,9 +325,9 @@ void main() {
 	}
 	#endif
 
-	#ifdef SMF_DETAIL_NORMALS
+	#ifdef SMF_BLEND_NORMALS
 	{
-		vec4 dtSample = texture2D(detailNormalTex, normTexCoords);
+		vec4 dtSample = texture2D(blendNormalsTex, normTexCoords);
 		vec3 dtNormal = (dtSample.xyz * 2.0) - 1.0;
 
 		// convert dtNormal from TS to WS before mixing
@@ -432,6 +432,8 @@ void main() {
 
 #ifdef SMF_SPECULAR_LIGHTING
 	specularCol = texture2D(specularTex, specTexCoords);
+#else
+	specularCol = vec4(groundSpecularColor, 0.1);
 #endif
 
 	#ifndef DEFERRED_MODE
@@ -442,7 +444,6 @@ void main() {
 		vec3  specularInt  = specularCol.rgb * specularPow;
 		      specularInt *= shadowCoeff;
 
-		// no need to multiply by groundSpecularColor anymore
 		gl_FragColor.rgb += specularInt;
 
 		#if (MAX_DYNAMIC_MAP_LIGHTS > 0)
@@ -456,7 +457,7 @@ void main() {
 	gl_FragData[GBUFFER_DIFFTEX_IDX] = diffuseCol + detailCol;
 	gl_FragData[GBUFFER_SPECTEX_IDX] = specularCol;
 	gl_FragData[GBUFFER_EMITTEX_IDX] = emissionCol;
-	gl_FragData[GBUFFER_MISCTEX_IDX] = vec4(0.0);
+	gl_FragData[GBUFFER_MISCTEX_IDX] = vec4(0.0, 0.0, 0.0, 0.0);
 
 	// linearly transform the eye-space depths, might be more useful?
 	// gl_FragDepth = gl_FragCoord.z / gl_FragCoord.w;

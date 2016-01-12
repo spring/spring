@@ -5,6 +5,7 @@
 
 #include "ExternalAI/AILegacySupport.h"
 #include "Sim/Misc/GlobalConstants.h" // needed for MAX_UNITS
+#include "Sim/Units/CommandAI/Command.h"
 #include "System/float3.h"
 
 #include <string>
@@ -12,14 +13,14 @@
 #include <map>
 
 
+struct CommandDescription;
+
 namespace springLegacyAI {
 
-struct Command;
+class CCommandQueue;
 struct UnitDef;
 struct FeatureDef;
 struct WeaponDef;
-struct CommandDescription;
-class CCommandQueue;
 
 /// Generalized callback interface, used by Global AIs
 class IAICallback

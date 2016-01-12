@@ -248,6 +248,7 @@ CIcon& CIcon::operator=(const CIcon& icon)
 CIcon::~CIcon()
 {
 	data->UnRef();
+	data = nullptr;
 }
 
 
@@ -289,6 +290,7 @@ CIconData::~CIconData()
 {
 	if (ownTexture) {
 		glDeleteTextures(1, &texID);
+		texID = 0;
 	}
 }
 
@@ -300,8 +302,7 @@ void CIconData::Ref()
 
 void CIconData::UnRef()
 {
-	refCount--;
-	if (refCount <= 0) {
+	if ((--refCount) <= 0) {
 		delete this;
 	}
 }

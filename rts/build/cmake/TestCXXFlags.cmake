@@ -120,14 +120,7 @@ EndIf (NOT DEFINED CXX11_FLAGS)
 
 If    (NOT MSVC AND NOT DEFINED LTO_FLAGS)
 	Set(LTO_FLAGS "")
-
-	Set(LTO       FALSE CACHE BOOL "Link Time Optimizations (LTO)")
-	If    (LTO)
-		CHECK_AND_ADD_FLAGS(LTO_FLAGS -flto)
-		if    (NOT LTO_FLAGS)
-			Message(WARNING "Tried to enable LTO, but compiler doesn't support it!")
-		endif (NOT LTO_FLAGS)
-	EndIf (LTO)
+	CHECK_AND_ADD_FLAGS(LTO_FLAGS -flto)
 EndIf (NOT MSVC AND NOT DEFINED LTO_FLAGS)
 
 
@@ -186,4 +179,10 @@ if   (CMAKE_COMPILER_IS_GNUCXX)
 	endif (hasGold EQUAL 0)
 
 	mark_as_advanced(LDGOLD_FOUND LDGOLD_LINKER_FLAGS LDGOLD_CXX_FLAGS)
+endif(CMAKE_COMPILER_IS_GNUCXX)
+
+
+if   (CMAKE_COMPILER_IS_GNUCXX)
+	Set(MPX_FLAGS "")
+	CHECK_AND_ADD_FLAGS(MPX_FLAGS -fcheck-pointer-bounds -mmpx -Wchkp)
 endif(CMAKE_COMPILER_IS_GNUCXX)

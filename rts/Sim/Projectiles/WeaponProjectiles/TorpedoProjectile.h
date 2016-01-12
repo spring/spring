@@ -16,8 +16,10 @@ public:
 
 	virtual int GetProjectilesCount() const override;
 
+	void SetIgnoreError(bool b) { ignoreError = b; }
 private:
 	float tracking;
+	bool ignoreError;
 	float maxSpeed;
 	float areaOfEffect;
 	int nextBubble;

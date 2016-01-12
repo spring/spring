@@ -35,8 +35,7 @@ static std::vector<const CAIInterfaceLibraryInfo*> infos;
 
 void CHECK_INTERFACE_ID(const int interfaceId)
 {
-	if (interfaceId < 0 || (size_t)interfaceId >= infos.size())
-	{
+	if (interfaceId < 0 || (size_t)interfaceId >= infos.size()) {
 		std::ostringstream buf;
 		buf << "Bad AI Interface ID supplied by an interface.\n";
 		buf << "Is " << interfaceId << ", but should be between min 0 and max " << infos.size() << ".";
@@ -93,35 +92,34 @@ EXPORT(const char*) aiInterfaceCallback_Engine_Version_getFull(int UNUSED_interf
 
 
 EXPORT(int) aiInterfaceCallback_AIInterface_Info_getSize(int interfaceId) {
-
 	CHECK_INTERFACE_ID(interfaceId);
 
 	const CAIInterfaceLibraryInfo* info = infos[interfaceId];
 	return (int)info->size();
 }
-EXPORT(const char*) aiInterfaceCallback_AIInterface_Info_getKey(int interfaceId, int infoIndex) {
 
+EXPORT(const char*) aiInterfaceCallback_AIInterface_Info_getKey(int interfaceId, int infoIndex) {
 	CHECK_INTERFACE_ID(interfaceId);
 
 	const CAIInterfaceLibraryInfo* info = infos[interfaceId];
 	return info->GetKeyAt(infoIndex).c_str();
 }
-EXPORT(const char*) aiInterfaceCallback_AIInterface_Info_getValue(int interfaceId, int infoIndex) {
 
+EXPORT(const char*) aiInterfaceCallback_AIInterface_Info_getValue(int interfaceId, int infoIndex) {
 	CHECK_INTERFACE_ID(interfaceId);
 
 	const CAIInterfaceLibraryInfo* info = infos[interfaceId];
 	return info->GetValueAt(infoIndex).c_str();
 }
-EXPORT(const char*) aiInterfaceCallback_AIInterface_Info_getDescription(int interfaceId, int infoIndex) {
 
+EXPORT(const char*) aiInterfaceCallback_AIInterface_Info_getDescription(int interfaceId, int infoIndex) {
 	CHECK_INTERFACE_ID(interfaceId);
 
 	const CAIInterfaceLibraryInfo* info = infos[interfaceId];
 	return info->GetDescriptionAt(infoIndex).c_str();
 }
-EXPORT(const char*) aiInterfaceCallback_AIInterface_Info_getValueByKey(int interfaceId, const char* const key) {
 
+EXPORT(const char*) aiInterfaceCallback_AIInterface_Info_getValueByKey(int interfaceId, const char* const key) {
 	CHECK_INTERFACE_ID(interfaceId);
 
 	const CAIInterfaceLibraryInfo* info = infos[interfaceId];
@@ -135,19 +133,28 @@ EXPORT(int) aiInterfaceCallback_Teams_getSize(int UNUSED_interfaceId) {
 EXPORT(int) aiInterfaceCallback_SkirmishAIs_getSize(int UNUSED_interfaceId) {
 	return skirmishAIHandler.GetNumSkirmishAIs();
 }
+
 EXPORT(int) aiInterfaceCallback_SkirmishAIs_getMax(int UNUSED_interfaceId) {
 	// TODO: should rather be something like (maxPlayers - numPlayers)
 	return MAX_TEAMS;
 }
-EXPORT(const char*) aiInterfaceCallback_SkirmishAIs_Info_getValueByKey(int UNUSED_interfaceId, const char* const shortName, const char* const version, const char* const key) {
 
-	const char* value = NULL;
+EXPORT(const char*) aiInterfaceCallback_SkirmishAIs_Info_getValueByKey(
+	int UNUSED_interfaceId,
+	const char* const shortName,
+	const char* const version,
+	const char* const key
+) {
+	const char* value = "";
 
 	SkirmishAIKey aiKey(shortName, version);
+
 	const IAILibraryManager::T_skirmishAIInfos& skirmishInfos = IAILibraryManager::GetInstance()->GetSkirmishAIInfos();
-	IAILibraryManager::T_skirmishAIInfos::const_iterator inf = skirmishInfos.find(aiKey);
+	const IAILibraryManager::T_skirmishAIInfos::const_iterator inf = skirmishInfos.find(aiKey);
+
 	if (inf != skirmishInfos.end()) {
-		const std::string& valueStr = inf->second->GetInfo(key);
+		const std::string& valueStr = (inf->second).GetInfo(key);
+
 		if (valueStr != "") {
 			value = valueStr.c_str();
 		}
@@ -157,16 +164,14 @@ EXPORT(const char*) aiInterfaceCallback_SkirmishAIs_Info_getValueByKey(int UNUSE
 }
 
 EXPORT(void) aiInterfaceCallback_Log_log(int interfaceId, const char* const msg) {
-
 	CHECK_INTERFACE_ID(interfaceId);
 
 	const CAIInterfaceLibraryInfo* info = infos[interfaceId];
-	LOG("AI Interface <%s-%s>: %s",
-			info->GetName().c_str(), info->GetVersion().c_str(), msg);
+
+	LOG("AI Interface <%s-%s>: %s", info->GetName().c_str(), info->GetVersion().c_str(), msg);
 }
 
 EXPORT(void) aiInterfaceCallback_Log_logsl(int interfaceId, const char* section, int loglevel, const char* const msg) {
-
 	CHECK_INTERFACE_ID(interfaceId);
 
 	log_frontend_record(section, loglevel, "%s", msg);
@@ -174,22 +179,19 @@ EXPORT(void) aiInterfaceCallback_Log_logsl(int interfaceId, const char* section,
 
 
 EXPORT(void) aiInterfaceCallback_Log_exception(int interfaceId, const char* const msg, int severety, bool die) {
-
 	CHECK_INTERFACE_ID(interfaceId);
 
 	const CAIInterfaceLibraryInfo* info = infos[interfaceId];
+
 	LOG_L(L_ERROR, "AI Interface <%s-%s>: severety %i: [%s] %s",
-			info->GetName().c_str(), info->GetVersion().c_str(), severety,
-			(die ? "AI Interface shutting down" : "AI Interface still running"), msg);
+		info->GetName().c_str(), info->GetVersion().c_str(), severety,
+		(die ? "AI Interface shutting down" : "AI Interface still running"), msg);
+
 	if (die) {
 		// TODO: FIXME: unload all skirmish AIs of this interface plus the interface itsself
-// 		const std::vector<int> &teamIds = IAILibraryManager::GetInstance()->GetAllTeamIdsAccociatedWithInterface(info->GetKey());
-// 		std::vector<int>::const_iterator teamId;
-// 		for (teamId = teamIds.begin(); teamId != teamIds.end(); ++teamId) {
-// 			eoh->DestroySkirmishAI(*teamId);
-// 		}
 	}
 }
+
 EXPORT(char) aiInterfaceCallback_DataDirs_getPathSeparator(int UNUSED_interfaceId) {
 #ifdef _WIN32
 	return '\\';
@@ -197,124 +199,133 @@ EXPORT(char) aiInterfaceCallback_DataDirs_getPathSeparator(int UNUSED_interfaceI
 	return '/';
 #endif
 }
+
 EXPORT(int) aiInterfaceCallback_DataDirs_Roots_getSize(int UNUSED_interfaceId) {
-
-	const std::vector<std::string>& dds = dataDirLocater.GetDataDirPaths();
-	return dds.size();
+	return (dataDirLocater.GetDataDirPaths()).size();
 }
-EXPORT(bool) aiInterfaceCallback_DataDirs_Roots_getDir(int UNUSED_interfaceId, char* path, int path_sizeMax, int dirIndex) {
 
+EXPORT(bool) aiInterfaceCallback_DataDirs_Roots_getDir(int UNUSED_interfaceId, char* path, int pathMaxSize, int dirIndex) {
 	const std::vector<std::string>& dds = dataDirLocater.GetDataDirPaths();
 	size_t numDataDirs = dds.size();
+
 	if (dirIndex >= 0 && (size_t)dirIndex < numDataDirs) {
-		STRCPY_T(path, path_sizeMax, dds[dirIndex].c_str());
+		STRCPY_T(path, pathMaxSize, dds[dirIndex].c_str());
 		return true;
-	} else {
-		return false;
 	}
+
+	return false;
 }
-EXPORT(bool) aiInterfaceCallback_DataDirs_Roots_locatePath(int UNUSED_interfaceId, char* path, int path_sizeMax, const char* const relPath, bool writeable, bool create, bool dir) {
 
-	bool exists = false;
-
+EXPORT(bool) aiInterfaceCallback_DataDirs_Roots_locatePath(
+	int UNUSED_interfaceId,
+	char* path,
+	int pathMaxSize,
+	const char* const relPath,
+	bool writeable,
+	bool create,
+	bool dir
+) {
 	int locateFlags = 0;
+
 	if (writeable) {
 		locateFlags = locateFlags | FileQueryFlags::WRITE;
 		if (create) {
 			locateFlags = locateFlags | FileQueryFlags::CREATE_DIRS;
 		}
 	}
-	std::string locatedPath = "";
-	const size_t tmpRelPath_size = strlen(relPath) + 1;
-	char* tmpRelPath = new char[tmpRelPath_size];
-	STRCPY_T(tmpRelPath, tmpRelPath_size, relPath);
-	std::string tmpRelPathStr = tmpRelPath;
+
+	std::string locatedPath;
+	std::vector<char> tmpRelPath(strlen(relPath) + 1);
+
+	STRCPY_T(&tmpRelPath[0], tmpRelPath.size(), relPath);
+
 	if (dir) {
-		locatedPath = dataDirsAccess.LocateDir(tmpRelPathStr, locateFlags);
+		locatedPath = dataDirsAccess.LocateDir(&tmpRelPath[0], locateFlags);
 	} else {
-		locatedPath = dataDirsAccess.LocateFile(tmpRelPathStr, locateFlags);
+		locatedPath = dataDirsAccess.LocateFile(&tmpRelPath[0], locateFlags);
 	}
-	exists = (locatedPath != relPath);
-	STRCPY_T(path, path_sizeMax, locatedPath.c_str());
 
-	delete [] tmpRelPath;
-	return exists;
+	STRCPY_T(path, pathMaxSize, locatedPath.c_str());
+
+	return (locatedPath != relPath);
 }
+
 EXPORT(char*) aiInterfaceCallback_DataDirs_Roots_allocatePath(int UNUSED_interfaceId, const char* const relPath, bool writeable, bool create, bool dir) {
+	static const unsigned int pathMaxSize = 2048;
 
-	static const unsigned int path_sizeMax = 2048;
+	// FIXME LEAK
+	char* path = (char*) calloc(pathMaxSize, sizeof(char*));
 
-	char* path = (char*) calloc(path_sizeMax, sizeof(char*));
-	bool fetchOk = aiInterfaceCallback_DataDirs_Roots_locatePath(-1, path, path_sizeMax, relPath, writeable, create, dir);
-
-	if (!fetchOk) {
+	if (!aiInterfaceCallback_DataDirs_Roots_locatePath(-1, path, pathMaxSize, relPath, writeable, create, dir))
 		FREE(path);
-	}
 
 	return path;
 }
+
 EXPORT(const char*) aiInterfaceCallback_DataDirs_getConfigDir(int interfaceId) {
-
 	CHECK_INTERFACE_ID(interfaceId);
-
-	const CAIInterfaceLibraryInfo* info = infos[interfaceId];
-	return info->GetDataDir().c_str();
+	return infos[interfaceId]->GetDataDir().c_str();
 }
-EXPORT(bool) aiInterfaceCallback_DataDirs_locatePath(int interfaceId, char* path, int path_sizeMax, const char* const relPath, bool writeable, bool create, bool dir, bool common) {
 
-	bool exists = false;
+EXPORT(bool) aiInterfaceCallback_DataDirs_locatePath(int interfaceId, char* path, int pathMaxSize, const char* const relPath, bool writeable, bool create, bool dir, bool common) {
+	const char ps = aiInterfaceCallback_DataDirs_getPathSeparator(interfaceId);
 
-	char ps = aiInterfaceCallback_DataDirs_getPathSeparator(interfaceId);
 	std::string interfaceShortName = aiInterfaceCallback_AIInterface_Info_getValueByKey(interfaceId, AI_INTERFACE_PROPERTY_SHORT_NAME);
 	std::string interfaceVersion;
+
 	if (common) {
 		interfaceVersion = AI_INTERFACES_VERSION_COMMON;
 	} else {
 		interfaceVersion = aiInterfaceCallback_AIInterface_Info_getValueByKey(interfaceId, AI_INTERFACE_PROPERTY_VERSION);
 	}
+
 	std::string interfaceRelPath(AI_INTERFACES_DATA_DIR);
-	interfaceRelPath += ps + interfaceShortName + ps + interfaceVersion + ps + relPath;
 
-	exists = aiInterfaceCallback_DataDirs_Roots_locatePath(interfaceId, path, path_sizeMax, interfaceRelPath.c_str(), writeable, create, dir);
+	interfaceRelPath += (ps + interfaceShortName);
+	interfaceRelPath += (ps + interfaceVersion);
+	interfaceRelPath += (ps + relPath);
 
-	return exists;
+	return aiInterfaceCallback_DataDirs_Roots_locatePath(interfaceId, path, pathMaxSize, interfaceRelPath.c_str(), writeable, create, dir);
 }
+
 EXPORT(char*) aiInterfaceCallback_DataDirs_allocatePath(int interfaceId, const char* const relPath, bool writeable, bool create, bool dir, bool common) {
+	static const unsigned int pathMaxSize = 2048;
 
-	static const unsigned int path_sizeMax = 2048;
+	// FIXME LEAK
+	char* path = (char*) calloc(pathMaxSize, sizeof(char*));
 
-	char* path = (char*) calloc(path_sizeMax, sizeof(char*));
-	bool fetchOk = aiInterfaceCallback_DataDirs_locatePath(interfaceId, path, path_sizeMax, relPath, writeable, create, dir, common);
-
-	if (!fetchOk) {
+	if (!aiInterfaceCallback_DataDirs_locatePath(interfaceId, path, pathMaxSize, relPath, writeable, create, dir, common))
 		FREE(path);
-	}
 
 	return path;
 }
-static std::vector<std::string> writeableDataDirs;
-EXPORT(const char*) aiInterfaceCallback_DataDirs_getWriteableDir(int interfaceId) {
 
+
+static std::vector<std::string> writeableDataDirs;
+
+EXPORT(const char*) aiInterfaceCallback_DataDirs_getWriteableDir(int interfaceId) {
 	CHECK_INTERFACE_ID(interfaceId);
 
 	// fill up writeableDataDirs until interfaceId index is in there
 	// if it is not yet
-	size_t wdd;
-	for (wdd=writeableDataDirs.size(); wdd <= (size_t)interfaceId; ++wdd) {
+	for (size_t wdd = writeableDataDirs.size(); wdd <= (size_t)interfaceId; ++wdd)
 		writeableDataDirs.push_back("");
-	}
+
 	if (writeableDataDirs[interfaceId].empty()) {
-		static const unsigned int sizeMax = 1024;
-		char tmpRes[sizeMax];
-		static const char* const rootPath = "";
+		char tmpRes[1024];
+
 		const bool exists = aiInterfaceCallback_DataDirs_locatePath(interfaceId,
-				tmpRes, sizeMax, rootPath, true, true, true, false);
+				tmpRes, sizeof(tmpRes), "", true, true, true, false);
+
 		writeableDataDirs[interfaceId] = tmpRes;
+
 		if (!exists) {
-			char errorMsg[sizeMax];
-			SNPRINTF(errorMsg, sizeMax,
-					"Unable to create writable data-dir for interface %i: %s",
-					interfaceId, tmpRes);
+			char errorMsg[1024];
+
+			SNPRINTF(errorMsg, sizeof(errorMsg),
+				"Unable to create writable data-dir for interface %i: %s",
+				interfaceId, tmpRes);
+
 			aiInterfaceCallback_Log_exception(interfaceId, errorMsg, 1, true);
 			return NULL;
 		}

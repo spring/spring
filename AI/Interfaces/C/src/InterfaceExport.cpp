@@ -1,50 +1,51 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "InterfaceExport.h"
+#include <memory>
 
+#include "InterfaceExport.h"
 #include "Interface.h"
 
+// win32 namespace pollution
+#ifdef interface
+#undef interface
+#endif
 
-static CInterface* myInterface = NULL;
+static std::unique_ptr<CInterface> interface;
 
-EXPORT(int) initStatic(int interfaceId, const struct SAIInterfaceCallback* callback) {
-
-	if (myInterface == NULL) {
-		myInterface = new CInterface(interfaceId, callback);
-	}
+EXPORT(int) initStatic(int interfaceId, const SAIInterfaceCallback* callback) {
+	if (interface.get() == nullptr)
+		interface.reset(new CInterface(interfaceId, callback));
 
 	return 0; // signal: OK
 }
 
 EXPORT(int) releaseStatic() {
-
-	delete myInterface;
-	myInterface = NULL;
-
+	interface.reset();
 	return 0;
 }
 
 //EXPORT(enum LevelOfSupport) getLevelOfSupportFor(
 //		const char* engineVersion, int engineAIInterfaceGeneratedVersion) {
-//	return myInterface->GetLevelOfSupportFor(engineVersion, engineAIInterfaceGeneratedVersion);
+//	return interface->GetLevelOfSupportFor(engineVersion, engineAIInterfaceGeneratedVersion);
 //}
 
 
 
-EXPORT(const struct SSkirmishAILibrary*) loadSkirmishAILibrary(
+EXPORT(const SSkirmishAILibrary*) loadSkirmishAILibrary(
 	const char* const shortName,
 	const char* const version
 ) {
-	return myInterface->LoadSkirmishAILibrary(shortName, version);
+	return interface->LoadSkirmishAILibrary(shortName, version);
 }
 
 EXPORT(int) unloadSkirmishAILibrary(
 	const char* const shortName,
 	const char* const version
 ) {
-	return myInterface->UnloadSkirmishAILibrary(shortName, version);
+	return interface->UnloadSkirmishAILibrary(shortName, version);
 }
 
 EXPORT(int) unloadAllSkirmishAILibraries() {
-	return myInterface->UnloadAllSkirmishAILibraries();
+	return interface->UnloadAllSkirmishAILibraries();
 }
+

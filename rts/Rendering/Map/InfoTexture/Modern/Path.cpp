@@ -176,8 +176,9 @@ bool CPathTexture::IsUpdateNeeded()
 	}
 
 	// nothing selected nor any build cmd active -> don't update
-	if (lastSelectedPathType == 0 && isCleared)
+	if (lastSelectedPathType == 0 && isCleared) {
 		return false;
+	}
 
 	return true;
 }

@@ -27,9 +27,8 @@ class CCursorIcons
 
 		void Draw();
 
-		void Clear();
-
 	protected:
+		void Clear();
 		void DrawCursors();
 		void DrawTexts();
 		void DrawBuilds();

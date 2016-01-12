@@ -32,8 +32,8 @@ CR_REG_METADATA(CLosHandler,(
 	CR_IGNORED(radar),
 	CR_IGNORED(sonar),
 	CR_IGNORED(seismic),
-	CR_IGNORED(commonJammer),
-	CR_IGNORED(commonSonarJammer),
+	CR_IGNORED(jammer),
+	CR_IGNORED(sonarJammer),
 	CR_MEMBER(baseRadarErrorSize),
 	CR_MEMBER(baseRadarErrorMult),
 	CR_MEMBER(radarErrorSizes),
@@ -80,14 +80,8 @@ ILosType::ILosType(const int mipLevel_, LosType type_)
 	, size(std::max(1, mapDims.mapx >> mipLevel), std::max(1, mapDims.mapy >> mipLevel))
 	, type(type_)
 	, algoType((type == LOS_TYPE_LOS || type == LOS_TYPE_RADAR) ? LOS_ALGO_RAYCAST : LOS_ALGO_CIRCLE)
-	, losMaps(
-		(type != LOS_TYPE_JAMMER && type != LOS_TYPE_SONAR_JAMMER) ? teamHandler->ActiveAllyTeams() : 1,
+	, losMaps(teamHandler->ActiveAllyTeams(),
 		CLosMap(size, type == LOS_TYPE_LOS, readMap->GetMIPHeightMapSynced(mipLevel_), int2(mapDims.mapx, mapDims.mapy)))
-{
-}
-
-
-ILosType::~ILosType()
 {
 }
 
@@ -150,7 +144,12 @@ inline void ILosType::UpdateUnit(CUnit* unit)
 	const float radius = GetRadius(unit);
 	const float height = GetHeight(unit);
 	const int2 baseLos = PosToSquare(losPos);
-	const int allyteam = (type != LOS_TYPE_JAMMER && type != LOS_TYPE_SONAR_JAMMER) ? unit->allyteam : 0; // jammers share all the same map independent of the allyTeam
+	      int allyteam = unit->allyteam;
+
+	// jammers share all the same map independent of the allyTeam
+	if (type == LOS_TYPE_JAMMER || type == LOS_TYPE_SONAR_JAMMER)
+		if (!modInfo.separateJammers)
+			allyteam = 0;
 
 	if (radius <= 0)
 		return;
@@ -482,6 +481,7 @@ void ILosType::Update()
 	}
 
 	// remove sight
+	//FIXME multithread?
 	for (SLosInstance* li: losRemove) {
 		LosRemove(li);
 	}
@@ -594,8 +594,8 @@ CLosHandler::CLosHandler()
 	, radar(modInfo.radarMipLevel, ILosType::LOS_TYPE_RADAR)
 	, sonar(modInfo.radarMipLevel, ILosType::LOS_TYPE_SONAR)
 	, seismic(modInfo.radarMipLevel, ILosType::LOS_TYPE_SEISMIC)
-	, commonJammer(modInfo.radarMipLevel, ILosType::LOS_TYPE_JAMMER)
-	, commonSonarJammer(modInfo.radarMipLevel, ILosType::LOS_TYPE_SONAR_JAMMER)
+	, jammer(modInfo.radarMipLevel, ILosType::LOS_TYPE_JAMMER)
+	, sonarJammer(modInfo.radarMipLevel, ILosType::LOS_TYPE_SONAR_JAMMER)
 
 	, baseRadarErrorSize(defBaseRadarErrorSize)
 	, baseRadarErrorMult(defBaseRadarErrorMult)
@@ -607,8 +607,8 @@ CLosHandler::CLosHandler()
 	losTypes.push_back(&radar);
 	losTypes.push_back(&sonar);
 	losTypes.push_back(&seismic);
-	losTypes.push_back(&commonJammer);
-	losTypes.push_back(&commonSonarJammer);
+	losTypes.push_back(&jammer);
+	losTypes.push_back(&sonarJammer);
 
 	eventHandler.AddClient(this);
 }
@@ -629,15 +629,18 @@ CLosHandler::~CLosHandler()
 	}
 	LOG_L(L_WARNING, "LosHandler MemUsage: ~%.1fMB", memUsage / (1024.f * 1024.f));*/
 
-	LOG("LosHandler stats: total instances=%u; reused=%.0f%%; from cache=%.0f%%",
+	LOG("LosHandler stats: total instances=%u; shared=%.0f%%; from cache=%.0f%%",
 		unsigned(ILosType::cacheHits + ILosType::cacheFails),
-		100.f * float(ILosType::cacheHits) / (ILosType::cacheHits + ILosType::cacheFails),
+		100.f * float(ILosType::cacheHits - ILosType::cacheReactivated) / (ILosType::cacheHits + ILosType::cacheFails),
 		100.f * float(ILosType::cacheReactivated) / (ILosType::cacheHits + ILosType::cacheFails));
 }
 
 
-void CLosHandler::UnitDestroyed(const CUnit* unit, const CUnit* attacker)
+void CLosHandler::UnitDestroyed(const CUnit* unit, const CUnit* attacker, bool preEvent)
 {
+	if (!preEvent)
+		return;
+
 	for (ILosType* lt: losTypes) {
 		lt->RemoveUnit(const_cast<CUnit*>(unit), true);
 	}
@@ -704,10 +707,10 @@ bool CLosHandler::InLos(const CUnit* unit, int allyTeam) const
 	if (modInfo.alwaysVisibleOverridesCloaked) {
 		if (unit->alwaysVisible)
 			return true;
-		if (unit->isCloaked)
+		if (unit->isCloaked && unit->allyteam != allyTeam)
 			return false;
 	} else {
-		if (unit->isCloaked)
+		if (unit->isCloaked && unit->allyteam != allyTeam)
 			return false;
 		if (unit->alwaysVisible)
 			return true;
@@ -729,14 +732,49 @@ bool CLosHandler::InLos(const CUnit* unit, int allyTeam) const
 }
 
 
+bool CLosHandler::InAirLos(const CUnit* unit, int allyTeam) const
+{
+	// NOTE: units are treated differently than world objects in two ways:
+	//   1. they can be cloaked (has to be checked BEFORE all other cases)
+	//   2. when underwater, they are only considered to be in LOS if they
+	//      are also in radar ("sonar") coverage if requireSonarUnderWater
+	//      is enabled --> underwater units can NOT BE SEEN AT ALL without
+	//      active radar!
+	if (modInfo.alwaysVisibleOverridesCloaked) {
+		if (unit->alwaysVisible)
+			return true;
+		if (unit->isCloaked && unit->allyteam != allyTeam)
+			return false;
+	} else {
+		if (unit->isCloaked && unit->allyteam != allyTeam)
+			return false;
+		if (unit->alwaysVisible)
+			return true;
+	}
+
+	// isCloaked always overrides globalLOS
+	if (globalLOS[allyTeam])
+		return true;
+
+	if (modInfo.requireSonarUnderWater) {
+		if (unit->IsUnderWater() && !InRadar(unit, allyTeam)) {
+			return false;
+		}
+	}
+
+	return airLos.InSight(unit->pos, allyTeam);
+}
+
+
 bool CLosHandler::InRadar(const float3 pos, int allyTeam) const
 {
 	if (pos.y < 0.0f) {
 		// position is underwater, only sonar can see it
-		return (sonar.InSight(pos, allyTeam) && !commonSonarJammer.InSight(pos, 0));
+		// note: only check jammers when we have a common jammer map, else jammers only apply to objects!
+		return (sonar.InSight(pos, allyTeam) && !(!modInfo.separateJammers && sonarJammer.InSight(pos, 0)));
 	}
 
-	return (radar.InSight(pos, allyTeam) && !commonJammer.InSight(pos, 0));
+	return (radar.InSight(pos, allyTeam) && !(!modInfo.separateJammers && jammer.InSight(pos, 0)));
 }
 
 
@@ -744,43 +782,43 @@ bool CLosHandler::InRadar(const CUnit* unit, int allyTeam) const
 {
 	if (unit->IsUnderWater()) {
 		// unit is completely submerged, only sonar can see it
-		if (unit->sonarStealth && !unit->beingBuilt) {
+		if (unit->sonarStealth && !unit->beingBuilt)
 			return false;
-		}
 
-		return (sonar.InSight(unit->pos, allyTeam) && !commonSonarJammer.InSight(unit->pos, 0));
+		return (sonar.InSight(unit->pos, allyTeam) && !InJammer(unit, allyTeam));
 	}
 
-	// (surface) units that are not completely submerged can potentially
-	// be seen by both radar and sonar (by sonar iff the lowest point on
-	// the model is still inside water)
-	const bool radarVisible =
-		(!unit->stealth || unit->beingBuilt) &&
-		(radar.InSight(unit->pos, allyTeam)) &&
-		(!commonJammer.InSight(unit->pos, 0));
-	const bool sonarVisible =
-		(unit->IsUnderWater()) &&
-		(!unit->sonarStealth || unit->beingBuilt) &&
-		(sonar.InSight(unit->pos, allyTeam)) &&
-		(!commonSonarJammer.InSight(unit->pos, 0));
+	// radar stealth
+	if (unit->stealth && !unit->beingBuilt)
+		return false;
 
-	return (radarVisible || sonarVisible);
+	return (radar.InSight(unit->pos, allyTeam) && !InJammer(unit, allyTeam));
 }
 
 
 bool CLosHandler::InJammer(const float3 pos, int allyTeam) const
 {
+	const int jammerAlly = modInfo.separateJammers ? allyTeam : 0;
+
 	if (pos.y < 0.0f) {
-		return commonSonarJammer.InSight(pos, 0);
+		return sonarJammer.InSight(pos, jammerAlly);
 	}
-	return commonJammer.InSight(pos, 0);
+	return jammer.InSight(pos, jammerAlly);
 }
 
 
 bool CLosHandler::InJammer(const CUnit* unit, int allyTeam) const
 {
-	if (unit->IsUnderWater()) {
-		return commonSonarJammer.InSight(unit->pos, 0);
+	if (allyTeam == unit->allyteam) {
+		return false;
 	}
-	return commonJammer.InSight(unit->pos, 0);
+
+	//TODO handle ingame alliances
+
+	const int jammerAlly = modInfo.separateJammers ? unit->allyteam : 0;
+
+	if (unit->IsUnderWater()) {
+		return sonarJammer.InSight(unit->pos, jammerAlly);
+	}
+	return jammer.InSight(unit->pos, jammerAlly);
 }

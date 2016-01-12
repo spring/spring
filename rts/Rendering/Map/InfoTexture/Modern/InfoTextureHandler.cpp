@@ -52,10 +52,21 @@ void CInfoTextureHandler::AddInfoTexture(CPboInfoTexture* itex)
 }
 
 
+const CInfoTexture* CInfoTextureHandler::GetInfoTextureConst(const std::string& name) const
+{
+	static const CDummyInfoTexture dummy;
+
+	const auto it = infoTextures.find(name);
+
+	if (it != infoTextures.end())
+		return it->second;
+
+	return &dummy;
+}
+
 CInfoTexture* CInfoTextureHandler::GetInfoTexture(const std::string& name)
 {
-	auto it = infoTextures.find(name);
-	return (it != infoTextures.end()) ? it->second : nullptr;
+	return (const_cast<CInfoTexture*>(GetInfoTextureConst(name)));
 }
 
 

@@ -24,8 +24,8 @@ public:
 
 public:
 	// IInfoTexture interface
-	void Update();
-	bool IsUpdateNeeded();
+	void Update() override;
+	bool IsUpdateNeeded() override;
 
 private:
 	bool metalMapChanged;

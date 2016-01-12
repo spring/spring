@@ -6,6 +6,8 @@
 #include "System/Object.h"
 #include "Sim/Misc/GlobalConstants.h"
 
+#include <memory>
+
 #include <map>
 #include <vector>
 #include <string>
@@ -125,25 +127,25 @@ public:
 	#define CATCH_AI_EXCEPTION									\
 		catch (const std::exception& e) {						\
 			CEngineOutHandler::HandleAIException(e.what());		\
-			throw;											\
+			throw;												\
 		} catch (const std::string& s) {						\
 			CEngineOutHandler::HandleAIException(s.c_str());	\
-			throw;											\
+			throw;												\
 		} catch (const char* s) {								\
 			CEngineOutHandler::HandleAIException(s);			\
-			throw;											\
+			throw;												\
 		} catch (int err) {										\
 			const std::string s = IntToString(err);				\
 			CEngineOutHandler::HandleAIException(s.c_str());	\
-			throw;											\
+			throw;												\
 		} catch (...) {											\
 			CEngineOutHandler::HandleAIException("Unknown");	\
 			throw;												\
 		}
 
 private:
-	typedef std::vector<unsigned char> ids_t;
-	typedef std::map<unsigned char, CSkirmishAIWrapper*> id_ai_t;
+	typedef std::vector<uint8_t> ids_t;
+	typedef std::map<uint8_t, std::unique_ptr<CSkirmishAIWrapper> > id_ai_t;
 	typedef std::map<int, ids_t> team_ais_t;
 
 	/// Contains all local Skirmish AIs, indexed by their ID

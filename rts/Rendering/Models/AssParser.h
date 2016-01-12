@@ -38,9 +38,9 @@ struct SAssPiece: public S3DModelPiece
 
 	void DrawForList() const;
 	void UploadGeometryVBOs();
-	const float3& GetVertexPos(const int idx) const { return vertices[idx].pos; }	
+	const float3& GetVertexPos(const int idx) const { return vertices[idx].pos; }
 	const float3& GetNormal(const int idx) const { return vertices[idx].normal; }
-	
+
 	unsigned int GetVertexCount() const { return vertices.size(); }
 	unsigned int GetNormalCount() const { return vertices.size(); }
 	unsigned int GetTxCoorCount() const { return vertices.size(); }
@@ -63,22 +63,65 @@ class CAssParser: public IModelParser
 {
 public:
 	typedef std::map<std::string, S3DModelPiece*> ModelPieceMap;
+	typedef std::map<SAssPiece*, std::string> ParentNameMap;
 
+	CAssParser();
 	S3DModel* Load(const std::string& modelFileName);
 	ModelType GetType() const { return MODELTYPE_ASS; }
-
 private:
-	static void SetPieceName(SAssPiece* piece, const S3DModel* model, const aiNode* pieceNode, ModelPieceMap& pieceMap);
-	static void SetPieceParentName(SAssPiece* piece, const S3DModel* model, const aiNode* pieceNode, const LuaTable& pieceTable);
-	static void LoadPieceTransformations(SAssPiece* piece, const S3DModel* model, const aiNode* pieceNode, const LuaTable& pieceTable);
-	static void LoadPieceGeometry(SAssPiece* piece, const aiNode* pieceNode, const aiScene* scene);
-	static SAssPiece* LoadPiece(S3DModel* model, const aiNode* pieceNode, const aiScene* scene, const LuaTable& modelTable, ModelPieceMap& pieceMap);
 
-	static void BuildPieceHierarchy(S3DModel* model, ModelPieceMap& pieceMap);
+	GLint maxIndices;
+	GLint maxVertices;
+
+	static void SetPieceName(
+		SAssPiece* piece,
+		const S3DModel* model,
+		const aiNode* pieceNode,
+		ModelPieceMap& pieceMap
+	);
+	static void SetPieceParentName(
+		SAssPiece* piece,
+		const S3DModel* model,
+		const aiNode* pieceNode,
+		const LuaTable& pieceTable,
+		ParentNameMap& parentMap
+	);
+	static void LoadPieceTransformations(
+		SAssPiece* piece,
+		const S3DModel* model,
+		const aiNode* pieceNode,
+		const LuaTable& pieceTable
+	);
+	static void LoadPieceGeometry(
+		SAssPiece* piece,
+		const aiNode* pieceNode,
+		const aiScene* scene
+	);
+	static SAssPiece* LoadPiece(
+		S3DModel* model,
+		const aiNode* pieceNode,
+		const aiScene* scene,
+		const LuaTable& modelTable,
+		ModelPieceMap& pieceMap,
+		ParentNameMap& parentMap
+	);
+
+	static void BuildPieceHierarchy(S3DModel* model, ModelPieceMap& pieceMap, const ParentNameMap& parentMap);
 	static void CalculateModelDimensions(S3DModel* model, S3DModelPiece* piece);
 	static void CalculateModelProperties(S3DModel* model, const LuaTable& pieceTable);
-	static void FindTextures(S3DModel* model, const aiScene* scene, const LuaTable& pieceTable, const std::string& modelPath, const std::string& modelName);
-	static bool SetModelRadiusAndHeight(S3DModel* model, const SAssPiece* piece, const aiNode* pieceNode, const LuaTable& pieceTable);
+	static void FindTextures(
+		S3DModel* model,
+		const aiScene* scene,
+		const LuaTable& pieceTable,
+		const std::string& modelPath,
+		const std::string& modelName
+	);
+	static bool SetModelRadiusAndHeight(
+		S3DModel* model,
+		const SAssPiece* piece,
+		const aiNode* pieceNode,
+		const LuaTable& pieceTable
+	);
 };
 
 #endif /* ASS_PARSER_H */

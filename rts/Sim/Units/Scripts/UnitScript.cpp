@@ -1117,13 +1117,13 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		}
 		switch (p3) {	//who hears the sound
 			case 0:		//ALOS
-				if (!losHandler->InAirLos(unit->pos,gu->myAllyTeam)) { return 0; }
+				if (!losHandler->InAirLos(unit,gu->myAllyTeam)) { return 0; }
 				break;
 			case 1:		//LOS
 				if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS)) { return 0; }
 				break;
 			case 2:		//ALOS or radar
-				if (!(losHandler->InAirLos(unit->pos,gu->myAllyTeam) || unit->losStatus[gu->myAllyTeam] & (LOS_INRADAR))) { return 0; }
+				if (!(losHandler->InAirLos(unit,gu->myAllyTeam) || unit->losStatus[gu->myAllyTeam] & (LOS_INRADAR))) { return 0; }
 				break;
 			case 3:		//LOS or radar
 				if (!(unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR))) { return 0; }

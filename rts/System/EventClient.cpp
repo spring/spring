@@ -107,6 +107,7 @@ void CEventClient::Update() {}
 void CEventClient::UnsyncedHeightMapUpdate(const SRectangle& rect) {}
 
 void CEventClient::SunChanged(const float3& sunDir) {}
+void CEventClient::SunLightingChanged() {}
 
 void CEventClient::ViewResize() {}
 

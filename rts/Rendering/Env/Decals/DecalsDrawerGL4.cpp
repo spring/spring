@@ -14,6 +14,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/ISky.h"
+#include "Rendering/Env/SunLighting.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
 //#include "Rendering/GL/TimerQuery.h"
@@ -461,9 +462,9 @@ void CDecalsDrawerGL4::CreateStructureVBOs()
 	uboGroundLighting.Bind(GL_UNIFORM_BUFFER);
 	uboGroundLighting.New(uniformBlockSize, GL_STATIC_DRAW);
 		SGLSLGroundLighting* uboGroundLightingData = (SGLSLGroundLighting*)uboGroundLighting.MapBuffer(0, sizeof(SGLSLGroundLighting));
-		uboGroundLightingData->ambientColor  = mapInfo->light.groundAmbientColor  * CGlobalRendering::SMF_INTENSITY_MULT;
-		uboGroundLightingData->diffuseColor  = mapInfo->light.groundSunColor      * CGlobalRendering::SMF_INTENSITY_MULT;
-		uboGroundLightingData->specularColor = mapInfo->light.groundSpecularColor * CGlobalRendering::SMF_INTENSITY_MULT;
+		uboGroundLightingData->ambientColor  = sunLighting->groundAmbientColor  * CGlobalRendering::SMF_INTENSITY_MULT;
+		uboGroundLightingData->diffuseColor  = sunLighting->groundSunColor      * CGlobalRendering::SMF_INTENSITY_MULT;
+		uboGroundLightingData->specularColor = sunLighting->groundSpecularColor * CGlobalRendering::SMF_INTENSITY_MULT;
 		uboGroundLightingData->dir           = mapInfo->light.sunDir;
 		uboGroundLightingData->fogColor      = mapInfo->atmosphere.fogColor;
 		uboGroundLightingData->fogEnd        = globalRendering->viewRange * mapInfo->atmosphere.fogEnd;
@@ -587,7 +588,7 @@ void CDecalsDrawerGL4::Draw()
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
 			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
 
-		decalShader->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler->shadowMatrix.m);
+		decalShader->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler->GetShadowMatrixRaw());
 		decalShader->SetUniform("shadowDensity", sky->GetLight()->GetGroundShadowDensity()); //FIXME only do on shadow change?
 	}
 
@@ -781,8 +782,10 @@ void CDecalsDrawerGL4::UnitCreated(const CUnit* unit, const CUnit* builder)
 }
 
 
-void CDecalsDrawerGL4::UnitDestroyed(const CUnit* unit, const CUnit* attacker)
+void CDecalsDrawerGL4::UnitDestroyed(const CUnit* unit, const CUnit* attacker, bool preEvent)
 {
+	if (!preEvent)
+		return;
 	if (!unit->unitDef->decalDef.useGroundDecal)
 		return;
 

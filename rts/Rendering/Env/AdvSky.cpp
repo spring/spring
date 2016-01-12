@@ -195,6 +195,9 @@ CAdvSky::~CAdvSky()
 
 void CAdvSky::Draw()
 {
+	if (!globalRendering->drawSky)
+		return;
+
 	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 
@@ -544,6 +547,8 @@ void CAdvSky::CreateTransformVectors()
 
 void CAdvSky::DrawSun()
 {
+	if (!globalRendering->drawSky)
+		return;
 	if (!SunVisible(camera->GetPos()))
 		return;
 

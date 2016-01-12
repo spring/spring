@@ -60,13 +60,18 @@ namespace Threading {
 	 * The ppThreadCtls object is an optional return parameter that gives access to the Suspend/Resume controls under Linux.
 	 *
 	 */
-	boost::thread CreateNewThread (boost::function<void()> taskFunc, std::shared_ptr<Threading::ThreadControls>* ppThreadCtls = nullptr);
+	boost::thread CreateNewThread(boost::function<void()> taskFunc, std::shared_ptr<Threading::ThreadControls>* ppThreadCtls = nullptr);
 
 	/**
 	 * Retrieves a shared pointer to the current ThreadControls for the calling thread.
 	 */
-	std::shared_ptr<ThreadControls> GetCurrentThreadControls ();
-	void SetCurrentThreadControls(std::shared_ptr<ThreadControls> * ppThreadCtls);
+	std::shared_ptr<ThreadControls> GetCurrentThreadControls();
+
+#ifndef WIN32
+	void SetCurrentThreadControls(bool);
+#else
+	static inline void SetCurrentThreadControls(bool) {}
+#endif
 
 	/**
 	 * @brief Provides suspend/resume functionality for worker threads.
@@ -74,7 +79,7 @@ namespace Threading {
 	class ThreadControls {
 	public:
 		ThreadControls();
-		~ThreadControls();
+
 		/* These are implemented in System/Platform/<platform>/ThreadSupport.cpp */
 		SuspendResult Suspend();
 		SuspendResult Resume();
@@ -88,7 +93,11 @@ namespace Threading {
 		pid_t                   thread_id;
 	#endif
 
-		friend void ThreadStart (boost::function<void()> taskFunc, std::shared_ptr<ThreadControls>  * ppThreadCtls);
+		friend void ThreadStart(
+			boost::function<void()> taskFunc,
+			std::shared_ptr<ThreadControls>* ppCtlsReturn,
+			ThreadControls* tempCtls
+		);
 	};
 
 	inline bool NativeThreadIdsEqual(const NativeThreadId thID1, const NativeThreadId thID2);

@@ -278,6 +278,7 @@ public:
 	bool blockEnemyPushing;                     ///< if false, object can be pushed during enemy collisions even when modrules forbid it
 	bool blockHeightChanges;                    ///< if true, map height cannot change under this object (through explosions, etc.)
 
+	bool noDraw;                                ///< if true, object will not be drawn at all (neither as model nor as icon/fartex)
 	bool luaDraw;                               ///< if true, LuaRules::Draw{Unit, Feature} will be called for this object (UNSYNCED)
 	bool noSelect;                              ///< if true, unit/feature can not be selected/mouse-picked by a player (UNSYNCED)
 

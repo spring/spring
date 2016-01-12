@@ -4,7 +4,6 @@
 #include "LineDrawer.h"
 #include "Game/GameHelper.h"
 #include "Game/UI/CommandColors.h"
-#include "Game/UI/CursorIcons.h"
 #include "Game/WaitCommandsAI.h"
 #include "Map/Ground.h"
 #include "Rendering/GL/glExtra.h"
@@ -242,8 +241,8 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 		const int cmdID = ci->GetID();
 
 		if (cmdID < 0) {
-			const std::map<int, string>& buildOptions = cai->buildOptions;
-			const std::map<int, string>::const_iterator boi = buildOptions.find(cmdID);
+			const std::map<int, std::string>& buildOptions = cai->buildOptions;
+			const std::map<int, std::string>::const_iterator boi = buildOptions.find(cmdID);
 
 			if (boi != buildOptions.end()) {
 				BuildInfo bi;
@@ -673,7 +672,7 @@ void CommandDrawer::DrawDefaultCommand(const Command& c, const CUnit* owner) con
 void CommandDrawer::DrawQuedBuildingSquares(const CBuilderCAI* cai) const
 {
 	const CCommandQueue& commandQue = cai->commandQue;
-	const std::map<int, string>& buildOptions = cai->buildOptions;
+	const std::map<int, std::string>& buildOptions = cai->buildOptions;
 
 	int buildCommands = 0;
 	int underwaterCommands = 0;

@@ -903,7 +903,17 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 
 	fprintf(out, "local archiveCache = {\n\n");
 	fprintf(out, "\tinternalver = %i,\n\n", INTERNAL_VER);
+
+#ifdef _WIN64 //fprintf sometimes spews false warnings over %I64u
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat"
+#endif
+
 	fprintf(out, "\tarchives = {  -- count = " _STPF_ "\n", archiveInfos.size());
+
+#ifdef _WIN64
+#pragma GCC diagnostic pop
+#endif
 
 	std::map<std::string, ArchiveInfo>::const_iterator arcIt;
 	for (arcIt = archiveInfos.begin(); arcIt != archiveInfos.end(); ++arcIt) {
@@ -962,7 +972,16 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 
 	fprintf(out, "\t},\n\n"); // close 'archives'
 
+#ifdef _WIN64 //fprintf sometimes spews false warnings over %I64u
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat"
+#endif
+
 	fprintf(out, "\tbrokenArchives = {  -- count = " _STPF_ "\n", brokenArchives.size());
+
+#ifdef _WIN64
+#pragma GCC diagnostic pop
+#endif
 
 	std::map<std::string, BrokenArchive>::const_iterator bai;
 	for (bai = brokenArchives.begin(); bai != brokenArchives.end(); ++bai) {

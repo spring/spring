@@ -10,6 +10,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/ISky.h"
+#include "Rendering/Env/SunLighting.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
@@ -363,12 +364,12 @@ void CGrassDrawer::EnableShader(const GrassShaderProgram type) {
 	grassShader->SetUniform3v("camRight",  &camera->GetRight().x);
 
 	grassShader->SetUniform("groundShadowDensity", mapInfo->light.groundShadowDensity);
-	grassShader->SetUniformMatrix4x4("shadowMatrix", false, &shadowHandler->shadowMatrix.m[0]);
+	grassShader->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler->GetShadowMatrixRaw());
 	grassShader->SetUniform4v("shadowParams", &shadowHandler->GetShadowParams().x);
 
-	grassShader->SetUniform3v("ambientLightColor",  &mapInfo->light.unitAmbientColor.x);
-	grassShader->SetUniform3v("diffuseLightColor",  &mapInfo->light.unitSunColor.x);
-	grassShader->SetUniform3v("specularLightColor", &mapInfo->light.unitSpecularColor.x);
+	grassShader->SetUniform3v("ambientLightColor",  &sunLighting->unitAmbientColor.x);
+	grassShader->SetUniform3v("diffuseLightColor",  &sunLighting->unitSunColor.x);
+	grassShader->SetUniform3v("specularLightColor", &sunLighting->unitSpecularColor.x);
 	grassShader->SetUniform3v("sunDir",             &mapInfo->light.sunDir.x);
 }
 
@@ -503,6 +504,7 @@ void CGrassDrawer::DrawNearBillboards(const std::vector<InviewNearGrass>& inview
 
 void CGrassDrawer::Update()
 {
+	// grass is never drawn in any special (non-opaque) pass
 	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
 
 	// update visible turfs
@@ -516,7 +518,7 @@ void CGrassDrawer::Update()
 		blockDrawer.cx = int(cam->GetPos().x / bMSsq);
 		blockDrawer.cy = int(cam->GetPos().z / bMSsq);
 		blockDrawer.gd = this;
-		readMap->GridVisibility(nullptr, blockMapSize, maxGrassDist, &blockDrawer);
+		readMap->GridVisibility(nullptr, &blockDrawer, maxGrassDist, blockMapSize);
 
 		if (
 			globalRendering->haveGLSL
@@ -603,8 +605,8 @@ void CGrassDrawer::DrawShadow()
 	blockDrawer.cx = int(cam->GetPos().x / bMSsq);
 	blockDrawer.cy = int(cam->GetPos().z / bMSsq);
 	blockDrawer.gd = this;
-	readMap->GridVisibility(nullptr, blockMapSize, maxGrassDist, &drawer);
 
+	readMap->GridVisibility(nullptr, &drawer, maxGrassDist, blockMapSize);
 	DrawNear(blockDrawer.inviewGrass);
 
 	//FIXME needs own shader!

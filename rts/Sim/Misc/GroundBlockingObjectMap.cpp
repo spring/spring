@@ -5,13 +5,12 @@
 #include "GroundBlockingObjectMap.h"
 #include "GlobalConstants.h"
 #include "Map/ReadMap.h"
-#include "Sim/Objects/SolidObject.h"
-#include "Sim/Objects/SolidObjectDef.h"
 #include "Sim/Path/IPathManager.h"
 #include "System/creg/STL_Map.h"
 #include "System/Sync/HsiehHash.h"
+#include "System/Util.h"
 
-CGroundBlockingObjectMap* groundBlockingObjectMap = NULL;
+CGroundBlockingObjectMap* groundBlockingObjectMap = nullptr;
 
 CR_BIND(CGroundBlockingObjectMap, (1))
 CR_REG_METADATA(CGroundBlockingObjectMap, (
@@ -20,25 +19,14 @@ CR_REG_METADATA(CGroundBlockingObjectMap, (
 
 
 
-inline static const int GetObjectID(CSolidObject* obj)
-{
-	const int id = obj->GetBlockingMapID();
-	// object should always be a derived type
-	assert(id != -1);
-	return id;
-}
-
-
 void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 {
-	if (object->blockMap != NULL) {
+	if (object->blockMap != nullptr) {
 		// if object has a yardmap, add it to map selectively
 		// (checking the specific state of each yardmap cell)
 		AddGroundBlockingObject(object, YARDMAP_BLOCKED);
 		return;
 	}
-
-	const int objID = GetObjectID(object);
 
 	object->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_BLOCKING);
 	object->mapPos = object->GetMapPos();
@@ -51,21 +39,18 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 
 	for (int zSqr = minZSqr; zSqr < maxZSqr; zSqr++) {
 		for (int xSqr = minXSqr; xSqr < maxXSqr; xSqr++) {
-			BlockingMapCell& cell = groundBlockingMap[xSqr + zSqr * mapDims.mapx];
-			cell[objID] = object;
+			VectorInsertUnique(GetCellUnsafe(xSqr + zSqr * mapDims.mapx), object, true);
 		}
 	}
 
 	// FIXME: needs dependency injection (observer pattern?)
-	if (object->moveDef == NULL && pathManager != NULL) {
+	if (object->moveDef == nullptr && pathManager != nullptr) {
 		pathManager->TerrainChange(minXSqr, minZSqr, maxXSqr, maxZSqr, TERRAINCHANGE_OBJECT_INSERTED);
 	}
 }
 
 void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, const YardMapStatus& mask)
 {
-	const int objID = GetObjectID(object);
-
 	object->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_BLOCKING);
 	object->mapPos = object->GetMapPos();
 	object->groundBlockPos = object->pos;
@@ -82,14 +67,13 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, con
 			const float3 testPos = float3(x, 0.0f, z) * SQUARE_SIZE;
 
 			if (object->GetGroundBlockingMaskAtPos(testPos) & mask) {
-				BlockingMapCell& cell = groundBlockingMap[x + (z) * mapDims.mapx];
-				cell[objID] = object;
+				VectorInsertUnique(GetCellUnsafe(x + (z) * mapDims.mapx), object, true);
 			}
 		}
 	}
 
 	// FIXME: needs dependency injection (observer pattern?)
-	if (object->moveDef == NULL && pathManager != NULL) {
+	if (object->moveDef == nullptr && pathManager != nullptr) {
 		pathManager->TerrainChange(minXSqr, minZSqr, maxXSqr, maxZSqr, TERRAINCHANGE_OBJECT_INSERTED_YM);
 	}
 }
@@ -97,8 +81,6 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, con
 
 void CGroundBlockingObjectMap::RemoveGroundBlockingObject(CSolidObject* object)
 {
-	const int objID = GetObjectID(object);
-
 	const int bx = object->mapPos.x;
 	const int bz = object->mapPos.y;
 	const int sx = object->xsize;
@@ -108,79 +90,60 @@ void CGroundBlockingObjectMap::RemoveGroundBlockingObject(CSolidObject* object)
 
 	for (int z = bz; z < bz + sz; ++z) {
 		for (int x = bx; x < bx + sx; ++x) {
-			const int idx = x + z * mapDims.mapx;
-
-			BlockingMapCell& cell = groundBlockingMap[idx];
-			cell.erase(objID);
+			VectorErase(GetCellUnsafe(z * mapDims.mapx + x), object);
 		}
 	}
 
 	// FIXME: needs dependency injection (observer pattern?)
-	if (object->moveDef == NULL && pathManager != NULL) {
+	if (object->moveDef == nullptr && pathManager != nullptr) {
 		pathManager->TerrainChange(bx, bz, bx + sx, bz + sz, TERRAINCHANGE_OBJECT_DELETED);
 	}
 }
 
 
-/**
-  * Checks if a ground-square is blocked.
-  * If it's not blocked (empty), then NULL is returned. Otherwise, a
-  * pointer to the top-most / bottom-most blocking object is returned.
-  */
-CSolidObject* CGroundBlockingObjectMap::GroundBlockedUnsafe(int mapSquare) const {
-	const BlockingMapCell& cell = groundBlockingMap[mapSquare];
-
-	if (cell.empty())
-		return NULL;
-
-	return ((cell.begin())->second);
-}
-
 
 CSolidObject* CGroundBlockingObjectMap::GroundBlocked(int x, int z) const {
 	if (x < 0 || x >= mapDims.mapx || z < 0 || z >= mapDims.mapy)
-		return NULL;
+		return nullptr;
 
-	return GroundBlockedUnsafe(x + z * mapDims.mapx);
+	return (GroundBlockedUnsafe(x + z * mapDims.mapx));
 }
 
 
 CSolidObject* CGroundBlockingObjectMap::GroundBlocked(const float3& pos) const {
 	const int xSqr = int(pos.x / SQUARE_SIZE);
 	const int zSqr = int(pos.z / SQUARE_SIZE);
-	return GroundBlocked(xSqr, zSqr);
+	return (GroundBlocked(xSqr, zSqr));
 }
 
 
-bool CGroundBlockingObjectMap::GroundBlocked(int x, int z, CSolidObject* ignoreObj) const
+bool CGroundBlockingObjectMap::GroundBlocked(int x, int z, const CSolidObject* ignoreObj) const
 {
 	if ((unsigned)x >= mapDims.mapx || (unsigned)z >= mapDims.mapy)
 		return false;
 
-	const int mapSquare = z * mapDims.mapx + x;
-	const BlockingMapCell& cell = groundBlockingMap[mapSquare];
+	const BlockingMapCell& cell = GetCellUnsafeConst(z * mapDims.mapx + x);
 
 	if (cell.empty())
 		return false;
 
-	const int objID = GetObjectID(ignoreObj);
-	BlockingMapCellIt it = cell.begin();
-
-	if (it->first != objID) {
-		// there are other objects blocking the square
+	// check if the first object in <cell> is NOT the ignoree
+	// if so the ground is definitely blocked at this location
+	if (*(cell.cbegin()) != ignoreObj)
 		return true;
-	}
 
-	// ignoreObj is in the square. Check if there are other objects, too
+	// otherwise the ground is considered blocked only if there
+	// is at least one other object in <cell> together with the
+	// ignoree
 	return (cell.size() >= 2);
 }
 
 
-bool CGroundBlockingObjectMap::GroundBlocked(const float3& pos, CSolidObject* ignoreObj) const
+bool CGroundBlockingObjectMap::GroundBlocked(const float3& pos, const CSolidObject* ignoreObj) const
 {
 	const int xSqr = unsigned(pos.x) / SQUARE_SIZE;
 	const int zSqr = unsigned(pos.z) / SQUARE_SIZE;
-	return GroundBlocked(xSqr, zSqr, ignoreObj);
+	return (GroundBlocked(xSqr, zSqr, ignoreObj));
 }
 
 

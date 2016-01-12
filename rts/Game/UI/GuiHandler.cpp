@@ -3215,6 +3215,45 @@ static inline void DrawSensorRange(int radius, const float* color, const float3&
 }
 
 
+static void DrawUnitDefRanges(const UnitDef* unitdef, const float3 pos)
+{
+	// draw build range for immobile builders
+	if (unitdef->builder) {
+		const float radius = unitdef->buildDistance;
+		if (radius > 0.0f) {
+			glColor4fv(cmdColors.rangeBuild);
+			glSurfaceCircle(pos, radius, 40);
+		}
+	}
+	// draw shield range for immobile units
+	if (unitdef->shieldWeaponDef) {
+		glColor4fv(cmdColors.rangeShield);
+		glSurfaceCircle(pos, unitdef->shieldWeaponDef->shieldRadius, 40);
+	}
+	// draw sensor and jammer ranges
+	if (unitdef->onoffable || unitdef->activateWhenBuilt) {
+		DrawSensorRange(unitdef->radarRadius   , cmdColors.rangeRadar,       pos);
+		DrawSensorRange(unitdef->sonarRadius   , cmdColors.rangeSonar,       pos);
+		DrawSensorRange(unitdef->seismicRadius , cmdColors.rangeSeismic,     pos);
+		DrawSensorRange(unitdef->jammerRadius  , cmdColors.rangeJammer,      pos);
+		DrawSensorRange(unitdef->sonarJamRadius, cmdColors.rangeSonarJammer, pos);
+	}
+	// draw self destruct and damage distance
+	if (unitdef->kamikazeDist > 0) {
+		glColor4fv(cmdColors.rangeKamikaze);
+		glSurfaceCircle(pos, unitdef->kamikazeDist, 40);
+
+		const WeaponDef* wd = unitdef->selfdExpWeaponDef;
+		if (wd != NULL) {
+			glColor4fv(cmdColors.rangeSelfDestruct);
+			glSurfaceCircle(pos, wd->damageAreaOfEffect, 40);
+		}
+	}
+
+}
+
+
+
 static inline GLuint GetConeList()
 {
 	static GLuint list = 0; // FIXME: put in the class
@@ -3468,6 +3507,8 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 				unitdef = unitdef->decoyDef;
 			}
 
+			DrawUnitDefRanges(unitdef, unit->pos);
+
 			// draw weapon range
 			if (unitdef->maxWeaponRange > 0) {
 				glDisable(GL_DEPTH_TEST);
@@ -3491,40 +3532,6 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 				} else { // cylindrical
 					glSurfaceCircle(unit->pos, unit->decloakDistance, 40);
 				}
-			}
-			// draw self destruct and damage distance
-			if (unitdef->kamikazeDist > 0) {
-				glColor4fv(cmdColors.rangeKamikaze);
-				glSurfaceCircle(unit->pos, unitdef->kamikazeDist, 40);
-
-				const WeaponDef* wd = unitdef->selfdExpWeaponDef;
-
-				if (wd != NULL) {
-					glColor4fv(cmdColors.rangeSelfDestruct);
-					glSurfaceCircle(unit->pos, wd->damageAreaOfEffect, 40);
-				}
-			}
-			// draw build distance for immobile builders
-			if (unitdef->builder) {
-				const float radius = unitdef->buildDistance;
-				if (radius > 0.0f) {
-					glColor4fv(cmdColors.rangeBuild);
-					glSurfaceCircle(unit->pos, radius, 40);
-				}
-			}
-			// draw shield range for immobile units
-			if (unitdef->shieldWeaponDef) {
-				glColor4fv(cmdColors.rangeShield);
-				glSurfaceCircle(unit->pos, unitdef->shieldWeaponDef->shieldRadius, 40);
-			}
-			// draw sensor and jammer ranges
-			if (unitdef->onoffable || unitdef->activateWhenBuilt) {
-				const float3& p = unit->pos;
-				DrawSensorRange(unitdef->radarRadius    * losHandler->radar.divisor,             cmdColors.rangeRadar, p);
-				DrawSensorRange(unitdef->sonarRadius    * losHandler->sonar.divisor,             cmdColors.rangeSonar, p);
-				DrawSensorRange(unitdef->seismicRadius  * losHandler->seismic.divisor,           cmdColors.rangeSeismic, p);
-				DrawSensorRange(unitdef->jammerRadius   * losHandler->commonJammer.divisor,      cmdColors.rangeJammer, p);
-				DrawSensorRange(unitdef->sonarJamRadius * losHandler->commonSonarJammer.divisor, cmdColors.rangeSonarJammer, p);
 			}
 			// draw interceptor range
 			if (unitdef->maxCoverage > 0.0f) {
@@ -3550,19 +3557,17 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 	    (commands[inCommand].type == CMDTYPE_ICON_BUILDING)) {
 		{ // limit the locking scope to avoid deadlock
 			// draw build distance for all immobile builders during build commands
-			const std::map<unsigned int, CBuilderCAI*>& builderCAIs = unitHandler->builderCAIs;
-			      std::map<unsigned int, CBuilderCAI*>::const_iterator bi;
-
-			for (bi = builderCAIs.begin(); bi != builderCAIs.end(); ++bi) {
-				const CBuilderCAI* builderCAI = bi->second;
+			for (const auto bi: unitHandler->GetBuilderCAIs()) {
+				const CBuilderCAI* builderCAI = bi.second;
 				const CUnit* builder = builderCAI->owner;
 				const UnitDef* builderDef = builder->unitDef;
 
-				if ((builder == pointedAt) || (builder->team != gu->myTeam)) {
+				if (builder == pointedAt || builder->team != gu->myTeam)
 					continue;
-				}
+				if (!builderDef->builder)
+					continue;
 
-				if (builderDef->builder && (!builderDef->canmove || selectedUnitsHandler.IsUnitSelected(builder))) {
+				if (!builderDef->canmove || selectedUnitsHandler.IsUnitSelected(builder)) {
 					const float radius = builderDef->buildDistance;
 					if (radius > 0.0f) {
 						glDisable(GL_TEXTURE_2D);
@@ -3574,82 +3579,68 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 			}
 		}
 
-		float dist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
-		if (dist > 0) {
+		const float dist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
+
+		if (dist > 0.0f) {
 			const UnitDef* unitdef = unitDefHandler->GetUnitDefByID(-commands[inCommand].id);
-			if (unitdef) {
-				// get the build information
-				float3 pos = cameraPos+mouseDir*dist;
-				std::vector<BuildInfo> buildPos;
+
+			if (unitdef != nullptr) {
 				const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
+				const float bpDist = CGround::LineGroundCol(bp.camPos, bp.camPos + bp.dir * globalRendering->viewRange * 1.4f, false);
+
+				// get the build information
+				const float3 cPos = cameraPos + mouseDir * dist;
+				const float3 bPos = bp.camPos + bp.dir * bpDist;
+
+				std::vector<BuildInfo> buildInfos;
+
 				if (GetQueueKeystate() && bp.pressed) {
-					const float dist = CGround::LineGroundCol(bp.camPos, bp.camPos + bp.dir * globalRendering->viewRange * 1.4f, false);
-					const float3 pos2 = bp.camPos + bp.dir * dist;
-					buildPos = GetBuildPos(BuildInfo(unitdef, pos2, buildFacing),
-					                       BuildInfo(unitdef, pos, buildFacing), cameraPos, mouseDir);
+					const BuildInfo cInfo = BuildInfo(unitdef, cPos, buildFacing);
+					const BuildInfo bInfo = BuildInfo(unitdef, bPos, buildFacing);
+
+					buildInfos = GetBuildPos(cInfo, bInfo, cameraPos, mouseDir);
 				} else {
-					BuildInfo bi(unitdef, pos, buildFacing);
-					buildPos = GetBuildPos(bi, bi, cameraPos, mouseDir);
+					const BuildInfo bi(unitdef, cPos, buildFacing);
+
+					buildInfos = GetBuildPos(bi, bi, cameraPos, mouseDir);
 				}
 
-				for (std::vector<BuildInfo>::iterator bpi = buildPos.begin(); bpi != buildPos.end(); ++bpi) {
-					const float3& buildpos = bpi->pos;
+				for (auto bpi = buildInfos.cbegin(); bpi != buildInfos.cend(); ++bpi) {
+					const float3& buildPos = bpi->pos;
+
+					DrawUnitDefRanges(unitdef, buildPos);
+
 					// draw weapon range
 					if (!unitdef->weapons.empty()) {
 						glDisable(GL_DEPTH_TEST);
 						glColor4fv(cmdColors.rangeAttack);
-						glBallisticCircle(buildpos, unitdef->weapons[0].def->range,
+						glBallisticCircle(buildPos, unitdef->weapons[0].def->range,
 						                  NULL, 40, unitdef->weapons[0].def->heightmod);
 						glEnable(GL_DEPTH_TEST);
 					}
 					// draw extraction range
 					if (unitdef->extractRange > 0) {
 						glColor4fv(cmdColors.rangeExtract);
-						glSurfaceCircle(buildpos, unitdef->extractRange, 40);
-					}
-					// draw build range for immobile builders
-					if (unitdef->builder) {
-						const float radius = unitdef->buildDistance;
-						if (radius > 0.0f) {
-							glColor4fv(cmdColors.rangeBuild);
-							glSurfaceCircle(buildpos, radius, 40);
-						}
-					}
-					// draw shield range for immobile units
-					if (unitdef->shieldWeaponDef) {
-						glColor4fv(cmdColors.rangeShield);
-						glSurfaceCircle(buildpos, unitdef->shieldWeaponDef->shieldRadius, 40);
+						glSurfaceCircle(buildPos, unitdef->extractRange, 40);
 					}
 					// draw interceptor range
 					const WeaponDef* wd = unitdef->stockpileWeaponDef;
 					if ((wd != NULL) && wd->interceptor) {
 						glColor4fv(cmdColors.rangeInterceptorOn);
-						glSurfaceCircle(buildpos, wd->coverageRange, 40);
-					}
-					// draw sensor and jammer ranges
-					if (unitdef->onoffable || unitdef->activateWhenBuilt) {
-						const float3& p = buildpos;
-						DrawSensorRange(unitdef->radarRadius    * losHandler->radar.divisor,             cmdColors.rangeRadar, p);
-						DrawSensorRange(unitdef->sonarRadius    * losHandler->sonar.divisor,             cmdColors.rangeSonar, p);
-						DrawSensorRange(unitdef->seismicRadius  * losHandler->seismic.divisor,           cmdColors.rangeSeismic, p);
-						DrawSensorRange(unitdef->jammerRadius   * losHandler->commonJammer.divisor,      cmdColors.rangeJammer, p);
-						DrawSensorRange(unitdef->sonarJamRadius * losHandler->commonSonarJammer.divisor, cmdColors.rangeSonarJammer, p);
+						glSurfaceCircle(buildPos, wd->coverageRange, 40);
 					}
 
 					std::vector<Command> cv;
-					if (GetQueueKeystate()) {
 
-						Command c = bpi->CreateCommand();
-						std::vector<Command> temp;
-						CUnitSet::iterator ui = selectedUnitsHandler.selectedUnits.begin();
-						for (; ui != selectedUnitsHandler.selectedUnits.end(); ++ui) {
-							temp = (*ui)->commandAI->GetOverlapQueued(c);
-							std::vector<Command>::iterator ti = temp.begin();
-							for (; ti != temp.end(); ++ti) {
-								cv.insert(cv.end(),*ti);
+					if (GetQueueKeystate()) {
+						const Command c = bpi->CreateCommand();
+						for (const CUnit* su: selectedUnitsHandler.selectedUnits) {
+							for (Command& cmd: su->commandAI->GetOverlapQueued(c)) {
+								cv.push_back(cmd);
 							}
 						}
 					}
+
 					if (unitDrawer->ShowUnitBuildSquare(*bpi, cv)) {
 						glColor4f(0.7f,1,1,0.4f);
 					} else {
@@ -3657,8 +3648,14 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 					}
 
 					if (!onMinimap) {
-						CUnitDrawer::DrawBuildingSample(bpi->def, gu->myTeam, buildpos, bpi->buildFacing);
+						glPushMatrix();
+						glLoadIdentity();
+						glTranslatef3(buildPos);
+						glRotatef(bpi->buildFacing * 90.0f, 0.0f, 1.0f, 0.0f);
 
+						CUnitDrawer::DrawIndividualDefAlpha(bpi->def, gu->myTeam, false);
+
+						glPopMatrix();
 						glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(), (GLenum)cmdColors.SelectedBlendDst());
 					}
 				}

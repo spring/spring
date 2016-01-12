@@ -192,6 +192,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitIsStunned);
 	REGISTER_LUA_CFUNC(GetUnitResources);
 	REGISTER_LUA_CFUNC(GetUnitMetalExtraction);
+	REGISTER_LUA_CFUNC(GetUnitMaxRange);
 	REGISTER_LUA_CFUNC(GetUnitExperience);
 	REGISTER_LUA_CFUNC(GetUnitStates);
 	REGISTER_LUA_CFUNC(GetUnitArmored);
@@ -264,6 +265,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetFeatureHeight);
 	REGISTER_LUA_CFUNC(GetFeatureRadius);
 	REGISTER_LUA_CFUNC(GetFeaturePosition);
+	REGISTER_LUA_CFUNC(GetFeatureRotation);
 	REGISTER_LUA_CFUNC(GetFeatureDirection);
 	REGISTER_LUA_CFUNC(GetFeatureVelocity);
 	REGISTER_LUA_CFUNC(GetFeatureHeading);
@@ -310,6 +312,10 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(IsPosInLos);
 	REGISTER_LUA_CFUNC(IsPosInRadar);
 	REGISTER_LUA_CFUNC(IsPosInAirLos);
+	REGISTER_LUA_CFUNC(IsUnitInLos);
+	REGISTER_LUA_CFUNC(IsUnitInAirLos);
+	REGISTER_LUA_CFUNC(IsUnitInRadar);
+	REGISTER_LUA_CFUNC(IsUnitInJammer);
 	REGISTER_LUA_CFUNC(GetClosestValidPosition);
 
 	REGISTER_LUA_CFUNC(GetUnitPieceMap);
@@ -372,18 +378,12 @@ static inline bool IsAlliedAllyTeam(lua_State* L, int allyTeam)
 
 static inline bool IsAllyUnit(lua_State* L, const CUnit* unit)
 {
-	if (CLuaHandle::GetHandleReadAllyTeam(L) < 0)
-		return CLuaHandle::GetHandleFullRead(L);
-
-	return (unit->allyteam == CLuaHandle::GetHandleReadAllyTeam(L));
+	return (IsAlliedAllyTeam(L, unit->allyteam));
 }
 
 static inline bool IsEnemyUnit(lua_State* L, const CUnit* unit)
 {
-	if (CLuaHandle::GetHandleReadAllyTeam(L) < 0)
-		return !CLuaHandle::GetHandleFullRead(L);
-
-	return (unit->allyteam != CLuaHandle::GetHandleReadAllyTeam(L));
+	return (!IsAllyUnit(L, unit));
 }
 
 
@@ -457,7 +457,7 @@ static inline bool IsProjectileVisible(lua_State* L, const CProjectile* pro)
 
 static int GetSolidObjectLastHitPiece(lua_State* L, const CSolidObject* o)
 {
-	if (o == NULL)
+	if (o == nullptr)
 		return 0;
 	if (o->lastHitPiece == nullptr)
 		return 0;
@@ -491,7 +491,7 @@ static int PushCollisionVolumeData(lua_State* L, const CollisionVolume* vol) {
 
 static int PushPieceCollisionVolumeData(lua_State* L, const CSolidObject* o)
 {
-	if (o == NULL)
+	if (o == nullptr)
 		return 0;
 
 	const LocalModelPiece* lmp = ParseObjectConstLocalModelPiece(L, o, 2);
@@ -524,7 +524,7 @@ static int PushTerrainTypeData(lua_State* L, const CMapInfo::TerrainType* tt, bo
 
 static int GetWorldObjectVelocity(lua_State* L, const CWorldObject* o)
 {
-	if (o == NULL)
+	if (o == nullptr)
 		return 0;
 
 	lua_pushnumber(L, o->speed.x);
@@ -536,16 +536,14 @@ static int GetWorldObjectVelocity(lua_State* L, const CWorldObject* o)
 
 static int GetSolidObjectPosition(lua_State* L, const CSolidObject* o, bool isFeature)
 {
-	if (o == NULL)
+	if (o == nullptr)
 		return 0;
 
 	float3 errorVec;
 
 	// no error for features
-	if (!isFeature && !IsAllyUnit(L, static_cast<const CUnit*>(o))) {
-		errorVec += static_cast<const CUnit*>(o)->GetErrorPos(CLuaHandle::GetHandleReadAllyTeam(L));
-		errorVec -= o->midPos;
-	}
+	if (!isFeature && !IsAllyUnit(L, static_cast<const CUnit*>(o)))
+		errorVec = static_cast<const CUnit*>(o)->GetLuaErrorVector(CLuaHandle::GetHandleReadAllyTeam(L), CLuaHandle::GetHandleFullRead(L));
 
 	// NOTE:
 	//   must be called before any pushing to the stack, else
@@ -572,9 +570,25 @@ static int GetSolidObjectPosition(lua_State* L, const CSolidObject* o, bool isFe
 	return (3 + (3 * returnMidPos) + (3 * returnAimPos));
 }
 
+static int GetSolidObjectRotation(lua_State* L, const CSolidObject* o)
+{
+	if (o == nullptr)
+		return 0;
+
+	const CMatrix44f matrix = o->GetTransformMatrix(CLuaHandle::GetHandleSynced(L));
+	const float3 angles = matrix.GetEulerAnglesLftHand();
+
+	assert(matrix.IsOrthoNormal() == 0);
+
+	lua_pushnumber(L, angles[CMatrix44f::ANGLE_P]);
+	lua_pushnumber(L, angles[CMatrix44f::ANGLE_Y]);
+	lua_pushnumber(L, angles[CMatrix44f::ANGLE_R]);
+	return 3;
+}
+
 static int GetSolidObjectBlocking(lua_State* L, const CSolidObject* o)
 {
-	if (o == NULL)
+	if (o == nullptr)
 		return 0;
 
 	lua_pushboolean(L, o->HasPhysicalStateBit(CSolidObject::PSTATE_BIT_BLOCKING));
@@ -590,6 +604,8 @@ static int GetSolidObjectBlocking(lua_State* L, const CSolidObject* o)
 }
 
 
+
+
 /******************************************************************************/
 /******************************************************************************/
 //
@@ -599,14 +615,10 @@ static int GetSolidObjectBlocking(lua_State* L, const CSolidObject* o)
 static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 {
 	if (!lua_isnumber(L, index)) {
-		if (caller != nullptr) {
-			luaL_error(L, "Bad unitID parameter in %s()\n", caller);
-		}
-
+		luaL_error(L, "[%s] unitID (arg #%d) not a number\n", caller, index);
 		return nullptr;
 	}
 
-	// returns NULL for bad ID's
 	return (unitHandler->GetUnit(lua_toint(L, index)));
 }
 
@@ -668,10 +680,7 @@ static inline CUnit* ParseTypedUnit(lua_State* L, const char* caller, int index)
 static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 {
 	if (!lua_isnumber(L, index)) {
-		if (caller != nullptr) {
-			luaL_error(L, "Incorrect arguments to %s(featureID)", caller);
-		}
-
+		luaL_error(L, "[%s] featureID (arg #%d) not a number\n", caller, index);
 		return nullptr;
 	}
 
@@ -702,9 +711,6 @@ static CProjectile* ParseProjectile(lua_State* L, const char* caller, int index)
 }
 
 
-/******************************************************************************/
-
-
 static inline CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 {
 	const int teamID = luaL_checkint(L, index);
@@ -712,27 +718,6 @@ static inline CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 		luaL_error(L, "Bad teamID in %s\n", caller);
 	}
 	return teamHandler->Team(teamID);
-}
-
-
-static int ParseFloatArray(lua_State* L, float* array, int size)
-{
-	if (!lua_istable(L, -1)) {
-		return -1;
-	}
-	// FIXME: changed this, test GetUnitsInPlanes() ...
-	const int table = lua_gettop(L);
-	for (int i = 0; i < size; i++) {
-		lua_rawgeti(L, table, (i + 1));
-		if (lua_isnumber(L, -1)) {
-			array[i] = lua_tofloat(L, -1);
-			lua_pop(L, 1);
-		} else {
-			lua_pop(L, 1);
-			return i;
-		}
-	}
-	return size;
 }
 
 
@@ -1561,8 +1546,8 @@ int LuaSyncedRead::GetAIInfo(lua_State* L)
 			lua_rawset(L, -3);
 		}
 	} else {
-		HSTR_PUSH(L, "UKNOWN");
-		HSTR_PUSH(L, "UKNOWN");
+		HSTR_PUSH(L, "UNKNOWN");
+		HSTR_PUSH(L, "UNKNOWN");
 		lua_newtable(L);
 	}
 	numVals += 3;
@@ -1627,16 +1612,18 @@ int LuaSyncedRead::ArePlayersAllied(lua_State* L)
 int LuaSyncedRead::GetAllUnits(lua_State* L)
 {
 	int count = 1;
-	std::list<CUnit*>::const_iterator uit;
+
 	if (CLuaHandle::GetHandleFullRead(L)) {
 		lua_createtable(L, unitHandler->activeUnits.size(), 0);
-		for (CUnit *unit: unitHandler->activeUnits) {
+
+		for (CUnit* unit: unitHandler->activeUnits) {
 			lua_pushnumber(L, unit->id);
 			lua_rawseti(L, -2, count++);
 		}
 	} else {
 		lua_newtable(L);
-		for (CUnit *unit: unitHandler->activeUnits) {
+
+		for (CUnit* unit: unitHandler->activeUnits) {
 			if (IsUnitVisible(L, unit)) {
 				lua_pushnumber(L, unit->id);
 				lua_rawseti(L, -2, count++);
@@ -1650,26 +1637,23 @@ int LuaSyncedRead::GetAllUnits(lua_State* L)
 
 int LuaSyncedRead::GetTeamUnits(lua_State* L)
 {
-	if (CLuaHandle::GetHandleReadAllyTeam(L) == CEventClient::NoAccessTeam) {
+	if (CLuaHandle::GetHandleReadAllyTeam(L) == CEventClient::NoAccessTeam)
 		return 0;
-	}
 
 	// parse the team
 	const CTeam* team = ParseTeam(L, __FUNCTION__, 1);
-	if (team == NULL) {
+	if (team == nullptr)
 		return 0;
-	}
+
 	const int teamID = team->teamNum;
 
-	const CUnitSet& units = team->units;
-	CUnitSet::const_iterator uit;
 
 	// raw push for allies
 	if (IsAlliedTeam(L, teamID)) {
 		lua_newtable(L);
 		int count = 1;
-		for (uit = units.begin(); uit != units.end(); ++uit) {
-			lua_pushnumber(L, (*uit)->id);
+		for (const CUnit* unit: team->units) {
+			lua_pushnumber(L, unit->id);
 			lua_rawseti(L, -2, count++);
 		}
 
@@ -1679,8 +1663,7 @@ int LuaSyncedRead::GetTeamUnits(lua_State* L)
 	// check visibility for enemies
 	lua_newtable(L);
 	int count = 1;
-	for (uit = units.begin(); uit != units.end(); ++uit) {
-		const CUnit* unit = *uit;
+	for (const CUnit* unit: team->units) {
 		if (IsUnitVisible(L, unit)) {
 			lua_pushnumber(L, unit->id);
 			lua_rawseti(L, -2, count++);
@@ -1691,70 +1674,107 @@ int LuaSyncedRead::GetTeamUnits(lua_State* L)
 }
 
 
+static inline void PushUnitsVector(lua_State* L, const std::vector<CUnit*>& vec, int unitDefID, bool& createdTable, unsigned& count, unsigned& defCount, std::vector<int>& unknownIDs)
+{
+	for(const CUnit* unit: vec) {
+		if (!IsUnitVisible(L, unit))
+			continue;
+
+		if (!IsUnitTyped(L, unit)) {
+			unknownIDs.push_back(unit->id);
+			continue;
+		}
+
+		if (!createdTable) {
+			createdTable = true;
+			lua_pushnumber(L, unitDefID);
+			lua_newtable(L);
+			defCount++;
+		}
+
+		lua_pushnumber(L, unit->id);
+		lua_rawseti(L, -2, count++);
+	}
+}
+
 int LuaSyncedRead::GetTeamUnitsSorted(lua_State* L)
 {
-	if (CLuaHandle::GetHandleReadAllyTeam(L) == CEventClient::NoAccessTeam) {
+	if (CLuaHandle::GetHandleReadAllyTeam(L) == CEventClient::NoAccessTeam)
 		return 0;
-	}
 
 	// parse the team
 	const CTeam* team = ParseTeam(L, __FUNCTION__, 1);
-	if (team == NULL) {
+	if (team == nullptr)
 		return 0;
-	}
+
 	const int teamID = team->teamNum;
 
-	map<int, vector<CUnit*> > unitDefMap;
-	const CUnitSet& units = team->units;
-	CUnitSet::const_iterator uit;
+	static vector<int> unknownIDs;
+
+	lua_newtable(L);
+	unsigned defCount = 0;
+
+	const auto& unitsByDefs = unitHandler->unitsByDefs[teamID];
 
 	// tally for allies
 	if (IsAlliedTeam(L, teamID)) {
-		for (uit = units.begin(); uit != units.end(); ++uit) {
-			CUnit* unit = *uit;
-			unitDefMap[unit->unitDef->id].push_back(unit);
+		for (int unitDefID = 0; unitDefID < unitsByDefs.size(); unitDefID++) {
+
+			if (unitsByDefs[unitDefID].empty())
+				continue;
+
+			lua_pushnumber(L, unitDefID);
+			lua_newtable(L);
+			defCount++;
+
+			unsigned count = 1;
+			for (const CUnit* unit: unitsByDefs[unitDefID]) {
+				lua_pushnumber(L, unit->id);
+				lua_rawseti(L, -2, count++);
+			}
+			lua_rawset(L, -3);
 		}
-	}
-	// tally for enemies
-	else {
-		// NOTE: (using unitsByDefs[] might be faster late-game)
-		for (uit = units.begin(); uit != units.end(); ++uit) {
-			CUnit* unit = *uit;
-			if (IsUnitVisible(L, unit)) {
-				const UnitDef* ud = EffectiveUnitDef(L, unit);
-				if (IsUnitTyped(L, unit)) {
-					unitDefMap[ud->id].push_back(unit);
-				} else {
-					unitDefMap[-1].push_back(unit); // unknown
+	} else {// tally for enemies
+		unknownIDs.clear();
+
+		for (int unitDefID = 0; unitDefID < unitsByDefs.size(); unitDefID++) {
+			const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
+			//We deal with decoys later
+			if (ud->decoyDef != nullptr)
+				continue;
+
+			bool createdTable = false;
+			unsigned count = 1;
+			PushUnitsVector(L, unitsByDefs[unitDefID], unitDefID, createdTable, count, defCount, unknownIDs);
+
+			auto dmit = unitDefHandler->decoyMap.find(unitDefID);
+			if (dmit != unitDefHandler->decoyMap.end()) {
+				for (int decoyDefID: dmit->second) {
+					PushUnitsVector(L, unitsByDefs[decoyDefID], unitDefID, createdTable, count, defCount, unknownIDs);
 				}
 			}
-			unitDefMap[unit->unitDef->id].push_back(unit);
-		}
-	}
 
-	// push the table
-	lua_newtable(L);
-	map<int, vector<CUnit*> >::const_iterator mit;
-	for (mit = unitDefMap.begin(); mit != unitDefMap.end(); ++mit) {
-		const int unitDefID = mit->first;
-		if (unitDefID < 0) {
+			if (createdTable)
+				lua_rawset(L, -3);
+
+		}
+
+		if (!unknownIDs.empty()) {
 			HSTR_PUSH(L, "unknown");
-		} else {
-			lua_pushnumber(L, unitDefID); // push the UnitDef index
-		}
-		lua_newtable(L); {
-			const vector<CUnit*>& v = mit->second;
-			for (int i = 0; i < (int)v.size(); i++) {
-				CUnit* unit = v[i];
-				lua_pushnumber(L, unit->id);
-				lua_rawseti(L, -2, i + 1);
+			lua_newtable(L);
+			defCount++;
+
+			unsigned count = 1;
+			for (int unitID: unknownIDs) {
+				lua_pushnumber(L, unitID);
+				lua_rawseti(L, -2, count++);
 			}
+			lua_rawset(L, -3);
 		}
-		lua_rawset(L, -3);
 	}
 
 	// UnitDef ID keys are not consecutive, so add the "n"
-	hs_n.PushNumber(L, unitDefMap.size());
+	hs_n.PushNumber(L, defCount);
 	return 1;
 }
 
@@ -1795,16 +1815,12 @@ int LuaSyncedRead::GetTeamUnitsCounts(lua_State* L)
 	map<int, int> unitDefCounts;
 	map<int, int>::const_iterator mit;
 
-	const CUnitSet& unitSet = team->units;
-	CUnitSet::const_iterator uit;
-
 	int unknownCount = 0;
-	for (uit = unitSet.begin(); uit != unitSet.end(); ++uit) {
-		const CUnit* unit = *uit;
+	for(CUnit* unit: team->units) {
 
-		if (!IsUnitVisible(L, unit)) {
+		if (!IsUnitVisible(L, unit))
 			continue;
-		}
+
 		if (!IsUnitTyped(L, unit)) {
 			unknownCount++;
 		} else {
@@ -1900,12 +1916,8 @@ int LuaSyncedRead::GetTeamUnitsByDefs(lua_State* L)
 	lua_newtable(L);
 	int count = 1;
 
-	set<int>::const_iterator udit;
-	for (udit = defs.begin(); udit != defs.end(); ++udit) {
-		const CUnitSet& units = unitHandler->unitsByDefs[teamID][*udit];
-		CUnitSet::const_iterator uit;
-		for (uit = units.begin(); uit != units.end(); ++uit) {
-			const CUnit* unit = *uit;
+	for (const int ud: defs) {
+		for (const CUnit* unit: unitHandler->unitsByDefs[teamID][ud]) {
 			if (allied || IsUnitTyped(L, unit)) {
 				lua_pushnumber(L, unit->id);
 				lua_rawseti(L, -2, count++);
@@ -1952,30 +1964,17 @@ int LuaSyncedRead::GetTeamUnitDefCount(lua_State* L)
 	int count = 0;
 
 	// tally the given unitDef units
-	const CUnitSet& units = unitHandler->unitsByDefs[teamID][unitDef->id];
-	CUnitSet::const_iterator uit;
-	for (uit = units.begin(); uit != units.end(); ++uit) {
-		const CUnit* unit = *uit;
-		if (IsUnitTyped(L, unit)) {
-			count++;
-		}
+	for (const CUnit* unit: unitHandler->unitsByDefs[teamID][unitDef->id]) {
+		count += (IsUnitTyped(L, unit));
 	}
 
 	// tally the decoy units for the given unitDef
-	map<int, set<int> >::const_iterator dmit
-		= unitDefHandler->decoyMap.find(unitDef->id);
+	auto dmit = unitDefHandler->decoyMap.find(unitDef->id);
 
 	if (dmit != unitDefHandler->decoyMap.end()) {
-		const set<int>& decoyDefIDs = dmit->second;
-		set<int>::const_iterator dit;
-		for (dit = decoyDefIDs.begin(); dit != decoyDefIDs.end(); ++dit) {
-			const CUnitSet& units = unitHandler->unitsByDefs[teamID][*dit];
-			CUnitSet::const_iterator uit;
-			for (uit = units.begin(); uit != units.end(); ++uit) {
-				const CUnit* unit = *uit;
-				if (IsUnitTyped(L, unit)) {
-					count++;
-				}
+		for (const int ud: dmit->second) {
+			for (const CUnit* unit: unitHandler->unitsByDefs[teamID][ud]) {
+				count += (IsUnitTyped(L, unit));
 			}
 		}
 	}
@@ -2004,10 +2003,9 @@ int LuaSyncedRead::GetTeamUnitCount(lua_State* L)
 
 	// loop through the units for enemies
 	int count = 0;
-	const CUnitSet& units = team->units;
 
-	for (auto uit = units.begin(); uit != units.end(); ++uit) {
-		count += int(IsUnitVisible(L, *uit));
+	for(CUnit* unit: team->units) {
+		count += int(IsUnitVisible(L, unit));
 	}
 
 	lua_pushnumber(L, count);
@@ -2032,7 +2030,7 @@ int LuaSyncedRead::GetTeamUnitCount(lua_State* L)
 			lua_createtable(L, units.size(), 0);                    \
 		}                                                           \
                                                                     \
-		for (auto it = units.begin(); it != units.end(); ++it) {    \
+		for (auto it = units.cbegin(); it != units.cend(); ++it) {  \
 			const CUnit* unit = *it;                                \
                                                                     \
 			ALLEGIANCE_TEST;                                        \
@@ -2309,7 +2307,7 @@ int LuaSyncedRead::GetUnitsInPlanes(lua_State* L)
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_istable(L, -1)) {
 			float values[4];
-			const int v = ParseFloatArray(L, values, 4);
+			const int v = LuaUtils::ParseFloatArray(L, -1, values, 4);
 			if (v == 4) {
 				Plane plane = { values[0], values[1], values[2], values[3] };
 				planes.push_back(plane);
@@ -2344,7 +2342,7 @@ int LuaSyncedRead::GetUnitsInPlanes(lua_State* L)
 	lua_newtable(L);
 
 	for (int team = startTeam; team <= endTeam; team++) {
-		const CUnitSet& units = teamHandler->Team(team)->units;
+		const std::vector<CUnit*>& units = teamHandler->Team(team)->units;
 
 		if (allegiance >= 0) {
 			if (allegiance == team) {
@@ -2570,8 +2568,7 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 
 int LuaSyncedRead::ValidUnitID(lua_State* L)
 {
-	// note the NULL 'caller' arg (so ParseUnit won't call luaL_error)
-	lua_pushboolean(L, ParseUnit(L, NULL, 1) != NULL);
+	lua_pushboolean(L, ParseUnit(L, __FUNCTION__, 1) != nullptr);
 	return 1;
 }
 
@@ -2679,19 +2676,19 @@ int LuaSyncedRead::GetUnitSensorRadius(lua_State* L)
 	const string key = luaL_checkstring(L, 2);
 
 	if (key == "los") {
-		lua_pushnumber(L, unit->losRadius * losHandler->los.divisor);
+		lua_pushnumber(L, unit->losRadius);
 	} else if (key == "airLos") {
-		lua_pushnumber(L, unit->airLosRadius * losHandler->airLos.divisor);
+		lua_pushnumber(L, unit->airLosRadius);
 	} else if (key == "radar") {
-		lua_pushnumber(L, unit->radarRadius * losHandler->radar.divisor);
+		lua_pushnumber(L, unit->radarRadius);
 	} else if (key == "sonar") {
-		lua_pushnumber(L, unit->sonarRadius * losHandler->sonar.divisor);
+		lua_pushnumber(L, unit->sonarRadius);
 	} else if (key == "seismic") {
-		lua_pushnumber(L, unit->seismicRadius * losHandler->seismic.divisor);
+		lua_pushnumber(L, unit->seismicRadius);
 	} else if (key == "radarJammer") {
-		lua_pushnumber(L, unit->jammerRadius * losHandler->commonJammer.divisor);
+		lua_pushnumber(L, unit->jammerRadius);
 	} else if (key == "sonarJammer") {
-		lua_pushnumber(L, unit->sonarJamRadius * losHandler->commonSonarJammer.divisor);
+		lua_pushnumber(L, unit->sonarJamRadius);
 	} else {
 		luaL_error(L, "Unknown sensor type to GetUnitSensorRadius()");
 	}
@@ -2957,27 +2954,7 @@ int LuaSyncedRead::GetUnitVectors(lua_State* L)
 
 int LuaSyncedRead::GetUnitRotation(lua_State* L)
 {
-	const CUnit* unit = ParseInLosUnit(L, __FUNCTION__, 1);
-
-	if (unit == NULL)
-		return 0;
-
-	const CMatrix44f& matrix = unit->GetTransformMatrix(CLuaHandle::GetHandleSynced(L));
-	const float3 xdir = (matrix.GetX() * XYVector).SafeNormalize(); // worldspace, NOT unitspace
-	const float3 ydir = (matrix.GetY() * YZVector).SafeNormalize();
-	const float3 zdir = (matrix.GetZ() * XZVector).SafeNormalize();
-
-	const float pitchAngle = math::acosf(Clamp(math::fabs(ydir.dot( UpVector)), -1.0f, 1.0f)); // x
-	const float yawAngle   = math::acosf(Clamp(math::fabs(zdir.dot(FwdVector)), -1.0f, 1.0f)); // y
-	const float rollAngle  = math::acosf(Clamp(math::fabs(xdir.dot(RgtVector)), -1.0f, 1.0f)); // z
-
-	assert(matrix.IsOrthoNormal() == 0);
-
-	// FIXME: inaccurate with chained rotations (output != input)
-	lua_pushnumber(L, -pitchAngle * Sign(ydir.dot(FwdVector))); // x
-	lua_pushnumber(L,   -yawAngle * Sign(zdir.dot(RgtVector))); // y
-	lua_pushnumber(L,  -rollAngle * Sign(xdir.dot( UpVector))); // z
-	return 3;
+	return GetSolidObjectRotation(L, ParseInLosUnit(L, __FUNCTION__, 1));
 }
 
 int LuaSyncedRead::GetUnitDirection(lua_State* L)
@@ -3668,63 +3645,63 @@ int LuaSyncedRead::GetUnitLosState(lua_State* L)
 
 int LuaSyncedRead::GetUnitSeparation(lua_State* L)
 {
-	CUnit* unit1 = ParseUnit(L, __FUNCTION__, 1);
-	CUnit* unit2 = ParseUnit(L, __FUNCTION__, 2);
-	if (unit1 == NULL || unit2 == NULL) {
+	const CUnit* unit1 = ParseUnit(L, __FUNCTION__, 1);
+	const CUnit* unit2 = ParseUnit(L, __FUNCTION__, 2);
+
+	if (unit1 == nullptr || unit2 == nullptr)
 		return 0;
-	}
 
 	float3 pos1 = unit1->midPos;
 	float3 pos2 = unit2->midPos;
 
-	if (!IsAllyUnit(L, unit1)) {
-		pos1 = unit1->GetErrorPos(CLuaHandle::GetHandleReadAllyTeam(L));
-	}
-	if (!IsAllyUnit(L, unit2)) {
-		pos2 = unit2->GetErrorPos(CLuaHandle::GetHandleReadAllyTeam(L));
-	}
+	if (!IsAllyUnit(L, unit1))
+		pos1 = unit1->GetLuaErrorPos(CLuaHandle::GetHandleReadAllyTeam(L), CLuaHandle::GetHandleFullRead(L));
+	if (!IsAllyUnit(L, unit2))
+		pos2 = unit2->GetLuaErrorPos(CLuaHandle::GetHandleReadAllyTeam(L), CLuaHandle::GetHandleFullRead(L));
 
-	float dist;
-	if (luaL_optboolean(L, 3, false)) {
-		dist = pos1.distance2D(pos2);
-	} else {
-		dist = pos1.distance(pos2);
-	}
+	#if 0
+	const float3 mask = XZVector + UpVector * (1 - luaL_optboolean(L, 3, false));
+	const float3 diff = (pos1 - pos2) * mask;
+	const float  dist = diff.Length();
+	#else
+	const float dist = (luaL_optboolean(L, 3, false))? pos1.distance2D(pos2): pos1.distance(pos2);
+	#endif
+
 	if (luaL_optboolean(L, 4, false)) {
-		dist = std::max(0.0f, dist - unit1->radius - unit2->radius);
+		lua_pushnumber(L, std::max(0.0f, dist - unit1->radius - unit2->radius));
+	} else {
+		lua_pushnumber(L, dist);
 	}
-	lua_pushnumber(L, dist);
 
 	return 1;
 }
 
-
 int LuaSyncedRead::GetUnitFeatureSeparation(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	const CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
+	if (unit == nullptr)
 		return 0;
-	}
-	CFeature* feature = ParseFeature(L, __FUNCTION__, 2);
-	if (feature == NULL  || !IsFeatureVisible(L, feature)) {
+
+	const CFeature* feature = ParseFeature(L, __FUNCTION__, 2);
+
+	if (feature == nullptr || !IsFeatureVisible(L, feature))
 		return 0;
-	}
 
-	float3 pos1 = unit->midPos;
-	if (!IsAllyUnit(L, unit)) {
-		pos1 = unit->GetErrorPos(CLuaHandle::GetHandleReadAllyTeam(L));
-	}
-	float3 pos2 = feature->pos;
+	float3 pos1 =    unit->midPos;
+	float3 pos2 = feature->midPos;
 
+	if (!IsAllyUnit(L, unit))
+		pos1 = unit->GetLuaErrorPos(CLuaHandle::GetHandleReadAllyTeam(L), CLuaHandle::GetHandleFullRead(L));
 
-	float dist;
-	if (lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
-		dist = pos1.distance2D(pos2);
-	} else {
-		dist = pos1.distance(pos2);
-	}
-	lua_pushnumber(L, dist);
+	#if 0
+	const float3 mask = XZVector + UpVector * (1 - luaL_optboolean(L, 3, false));
+	const float3 diff = (pos1 - pos2) * mask;
 
+	lua_pushnumber(L, diff.Length());
+	#else
+	lua_pushnumber(L, (luaL_optboolean(L, 3, false))? pos1.distance2D(pos2): pos1.distance(pos2));
+	#endif
 	return 1;
 }
 
@@ -4346,8 +4323,7 @@ int LuaSyncedRead::FindUnitCmdDesc(lua_State* L)
 
 int LuaSyncedRead::ValidFeatureID(lua_State* L)
 {
-	CFeature* feature = ParseFeature(L, NULL, 1); // note the NULL
-	lua_pushboolean(L, feature != NULL);
+	lua_pushboolean(L, ParseFeature(L, __FUNCTION__, 1) != nullptr);
 	return 1;
 }
 
@@ -4479,6 +4455,14 @@ int LuaSyncedRead::GetFeatureSeparation(lua_State* L)
 	return 1;
 }
 
+int LuaSyncedRead::GetFeatureRotation(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+	if (feature == NULL || !IsFeatureVisible(L, feature)) {
+		return 0;
+	}
+	return GetSolidObjectRotation(L, feature);
+}
 
 int LuaSyncedRead::GetFeatureDirection(lua_State* L)
 {
@@ -5100,24 +5084,20 @@ int LuaSyncedRead::Pos2BuildPos(lua_State* L)
 
 static int GetEffectiveLosAllyTeam(lua_State* L, int arg)
 {
-	if (lua_isnoneornil(L, arg)) {
-		return CLuaHandle::GetHandleReadAllyTeam(L);
-	}
-	const bool isGaia = (CLuaHandle::GetHandleReadAllyTeam(L) == teamHandler->GaiaAllyTeamID());
-	if (CLuaHandle::GetHandleFullRead(L) || isGaia) {
+	if (!lua_isnoneornil(L, arg) && CLuaHandle::GetHandleFullRead(L)) {
 		const int at = luaL_checkint(L, arg);
-		if (at >= teamHandler->ActiveAllyTeams()) {
-			luaL_error(L, "Invalid allyTeam");
-		}
-		if (isGaia && (at >= 0) && (at != teamHandler->GaiaAllyTeamID())) {
-			luaL_error(L, "Invalid gaia access");
+		if (!teamHandler->IsValidAllyTeam(at)) {
+			luaL_argerror(L, arg, "Invalid allyTeam");
 		}
 		return at;
 	}
-	else if (CLuaHandle::GetHandleReadAllyTeam(L) < 0) {
-		luaL_error(L, "Invalid access");
+
+	const int at = CLuaHandle::GetHandleReadAllyTeam(L);
+	if (!teamHandler->IsValidAllyTeam(at)) {
+		luaL_argerror(L, arg, "Invalid allyTeam");
 	}
-	return CLuaHandle::GetHandleReadAllyTeam(L);
+
+	return at;
 }
 
 
@@ -5129,28 +5109,9 @@ int LuaSyncedRead::GetPositionLosState(lua_State* L)
 
 	const int allyTeamID = GetEffectiveLosAllyTeam(L, 4);
 
-	bool inLos    = false;
-	bool inRadar  = false;
-	bool inJammer = false;
-
-	if (allyTeamID >= 0) {
-		inLos    = losHandler->InLos(pos, allyTeamID);
-		inRadar  = losHandler->InRadar(pos, allyTeamID);
-		inJammer = losHandler->InJammer(pos, allyTeamID);
-	} else {
-		//FIXME this does not seem useful
-		for (int at = 0; at < teamHandler->ActiveAllyTeams(); at++) {
-			if (losHandler->InLos(pos, at)) {
-				inLos = true;
-			}
-			if (losHandler->InRadar(pos, at)) {
-				inRadar = true;
-			}
-			if (losHandler->InJammer(pos, at)) {
-				inJammer = true;
-			}
-		}
-	}
+	const bool inLos    = losHandler->InLos(pos, allyTeamID);
+	const bool inRadar  = losHandler->InRadar(pos, allyTeamID);
+	const bool inJammer = losHandler->InJammer(pos, allyTeamID);
 
 	lua_pushboolean(L, inLos || inRadar);
 	lua_pushboolean(L, inLos);
@@ -5168,20 +5129,7 @@ int LuaSyncedRead::IsPosInLos(lua_State* L)
 
 	const int allyTeamID = GetEffectiveLosAllyTeam(L, 4);
 
-	bool state = false;
-	if (allyTeamID >= 0) {
-		state = losHandler->InLos(pos, allyTeamID);
-	}
-	else {
-		for (int at = 0; at < teamHandler->ActiveAllyTeams(); at++) {
-			if (losHandler->InLos(pos, at)) {
-				state = true;
-				break;
-			}
-		}
-	}
-	lua_pushboolean(L, state);
-
+	lua_pushboolean(L, losHandler->InLos(pos, allyTeamID));
 	return 1;
 }
 
@@ -5194,20 +5142,7 @@ int LuaSyncedRead::IsPosInRadar(lua_State* L)
 
 	const int allyTeamID = GetEffectiveLosAllyTeam(L, 4);
 
-	bool state = false;
-	if (allyTeamID >= 0) {
-		state = losHandler->InRadar(pos, allyTeamID);
-	}
-	else {
-		for (int at = 0; at < teamHandler->ActiveAllyTeams(); at++) {
-			if (losHandler->InRadar(pos, at)) {
-				state = true;
-				break;
-			}
-		}
-	}
-	lua_pushboolean(L, state);
-
+	lua_pushboolean(L, losHandler->InRadar(pos, allyTeamID));
 	return 1;
 }
 
@@ -5220,20 +5155,59 @@ int LuaSyncedRead::IsPosInAirLos(lua_State* L)
 
 	const int allyTeamID = GetEffectiveLosAllyTeam(L, 4);
 
-	bool state = false;
-	if (allyTeamID >= 0) {
-		state = losHandler->InAirLos(pos, allyTeamID);
-	}
-	else {
-		for (int at = 0; at < teamHandler->ActiveAllyTeams(); at++) {
-			if (losHandler->InAirLos(pos, at)) {
-				state = true;
-				break;
-			}
-		}
-	}
-	lua_pushboolean(L, state);
+	lua_pushboolean(L, losHandler->InAirLos(pos, allyTeamID));
+	return 1;
+}
 
+
+int LuaSyncedRead::IsUnitInLos(lua_State* L)
+{
+	const CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
+	if (unit == NULL)
+		return 0;
+
+	const int allyTeamID = GetEffectiveLosAllyTeam(L, 2);
+
+	lua_pushboolean(L, losHandler->InLos(unit, allyTeamID));
+	return 1;
+}
+
+
+int LuaSyncedRead::IsUnitInAirLos(lua_State* L)
+{
+	const CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
+	if (unit == NULL)
+		return 0;
+
+	const int allyTeamID = GetEffectiveLosAllyTeam(L, 2);
+
+	lua_pushboolean(L, losHandler->InAirLos(unit, allyTeamID));
+	return 1;
+}
+
+
+int LuaSyncedRead::IsUnitInRadar(lua_State* L)
+{
+	const CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
+	if (unit == NULL)
+		return 0;
+
+	const int allyTeamID = GetEffectiveLosAllyTeam(L, 2);
+
+	lua_pushboolean(L, losHandler->InRadar(unit, allyTeamID));
+	return 1;
+}
+
+
+int LuaSyncedRead::IsUnitInJammer(lua_State* L)
+{
+	const CUnit* unit = ParseTypedUnit(L, __FUNCTION__, 1);
+	if (unit == NULL)
+		return 0;
+
+	const int allyTeamID = GetEffectiveLosAllyTeam(L, 2);
+
+	lua_pushboolean(L, losHandler->InJammer(unit, allyTeamID)); //FIXME
 	return 1;
 }
 
@@ -5296,16 +5270,16 @@ static int GetSolidObjectPieceList(lua_State* L, const CSolidObject* o)
 }
 
 
-template<class ModelType>
-static int GetSolidObjectPieceInfoHelper(lua_State* L, const ModelType& op)
+
+static int GetSolidObjectPieceInfoHelper(lua_State* L, const S3DModelPiece& op)
 {
 	lua_newtable(L);
 	HSTR_PUSH_STRING(L, "name", op.name.c_str());
-	HSTR_PUSH_STRING(L, "parent", op.parentName.c_str());
+	HSTR_PUSH_STRING(L, "parent", ((op.parent != nullptr)? op.parent->name.c_str(): "[null]"));
 
 	HSTR_PUSH(L, "children");
 	lua_newtable(L);
-	for (int c = 0; c < (int)op.children.size(); c++) {
+	for (size_t c = 0; c < op.children.size(); c++) {
 		lua_pushsstring(L, op.children[c]->name);
 		lua_rawseti(L, -2, c + 1);
 	}

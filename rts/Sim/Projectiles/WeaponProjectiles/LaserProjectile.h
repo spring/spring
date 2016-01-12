@@ -17,7 +17,7 @@ public:
 	void Collision(CUnit* unit) override;
 	void Collision(CFeature* feature) override;
 	void Collision() override;
-	int ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed) override;
+	int ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed) override;
 
 	virtual int GetProjectilesCount() const override;
 

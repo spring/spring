@@ -131,12 +131,7 @@ bool CCollisionHandler::CollisionFootPrint(const CSolidObject* o, const float3& 
 	const int hmz = p.z / SQUARE_SIZE;
 	const int idx = hmx + hmz * mapDims.mapx;
 
-	if (idx < 0 || idx >= mapDims.mapSquares)
-		return false;
-
-	const BlockingMapCell& cell = groundBlockingObjectMap->GetCell(idx);
-
-	return (cell.find(o->GetBlockingMapID()) != cell.end());
+	return (groundBlockingObjectMap->ObjectInCell(idx, o));
 }
 
 

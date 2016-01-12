@@ -16,6 +16,7 @@
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/ISky.h"
+#include "Rendering/Env/SunLighting.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
@@ -45,9 +46,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_DYN_WATER)
 #define WH_SIZE 2048
 */
 CDynWater::CDynWater()
-	: dwGroundRefractVP(0)
-	, dwGroundReflectIVP(0)
-	, camPosX(0)
+	: camPosX(0)
 	, camPosZ(0)
 {
 	if (!FBO::IsSupported()) {
@@ -353,8 +352,8 @@ void CDynWater::Draw()
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 7, 0.2f, 0, 0, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 8, 0.5f, 0.6f, 0.8f, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 9, L.x, L.y, L.z, 0.0f);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 10, mapInfo->light.groundSunColor.x, mapInfo->light.groundSunColor.y, mapInfo->light.groundSunColor.z, 0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 11, mapInfo->light.groundAmbientColor.x, mapInfo->light.groundAmbientColor.y, mapInfo->light.groundAmbientColor.z, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 10, sunLighting->groundSunColor.x, sunLighting->groundSunColor.y, sunLighting->groundSunColor.z, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 11, sunLighting->groundAmbientColor.x, sunLighting->groundAmbientColor.y, sunLighting->groundAmbientColor.z, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 12, refractRight.x, refractRight.y, refractRight.z, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 13, refractUp.x,refractUp.y, refractUp.z, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 14, 0.5f/dx, 0.5f/dy, 1, 1);
@@ -444,28 +443,23 @@ void CDynWater::Update()
 
 void CDynWater::DrawReflection(CGame* game)
 {
-//	const bool shadowsLoaded = shadowHandler->shadowsLoaded;
-
 	reflectFBO.Bind();
-	glViewport(0, 0, 512, 512);
-	glClearColor(0.5f, 0.6f, 0.8f, 0);
+
+	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
 	CCamera* curCam = CCamera::GetActiveCamera();
 
 	{
-		curCam->SetDir(prvCam->GetDir() * float3(1.0f, -1.0f, 1.0f));
-		curCam->SetPos(prvCam->GetPos() * float3(1.0f, -1.0f, 1.0f));
-		curCam->SetRotZ(-prvCam->GetRot().z);
-		curCam->Update();
+		curCam->CopyStateReflect(prvCam);
+		curCam->UpdateLoadViewPort(0, 0, 512, 512);
 
 		reflectRight   = curCam->GetRight();
 		reflectUp      = curCam->GetUp();
 		reflectForward = curCam->GetDir();
 
 		game->SetDrawMode(CGame::gameReflectionDraw);
-		sky->Draw();
 
 		{
 			const double clipPlaneEq[4] = {0.0, 1.0, 0.0, 1.0};
@@ -475,6 +469,8 @@ void CDynWater::DrawReflection(CGame* game)
 
 			{
 				drawReflection = true;
+
+				sky->Draw();
 
 				// FIXME-3429:
 				//   this causes the SMF shader to be RECOMPILED each frame
@@ -490,10 +486,12 @@ void CDynWater::DrawReflection(CGame* game)
 
 				unitDrawer->Draw(true);
 				featureDrawer->Draw();
-				unitDrawer->DrawCloakedUnits(true);
-				featureDrawer->DrawFadeFeatures(true);
 
+				unitDrawer->DrawAlphaPass();
+				featureDrawer->DrawAlphaPass();
 				projectileDrawer->Draw(true);
+				sky->DrawSun();
+
 				eventHandler.DrawWorldReflection();
 
 				drawReflection = false;
@@ -502,17 +500,12 @@ void CDynWater::DrawReflection(CGame* game)
 			glDisable(GL_CLIP_PLANE2);
 		}
 
-		// needed?
-		// sky->DrawSun();
 		game->SetDrawMode(CGame::gameNormalDraw);
 	}
 
 	CCamera::SetActiveCamera(prvCam->GetCamType());
 	prvCam->Update();
-
-	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
-	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 1);
-
+	prvCam->LoadViewPort();
 }
 
 void CDynWater::DrawRefraction(CGame* game)
@@ -524,17 +517,18 @@ void CDynWater::DrawRefraction(CGame* game)
 	refractUp = camera->GetUp();
 	refractForward = camera->GetDir();
 
+
 	refractFBO.Bind();
 	glViewport(0, 0, refractSize, refractSize);
 
-	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 1);
+	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	float3 oldsun=unitDrawer->unitSunColor;
-	float3 oldambient=unitDrawer->unitAmbientColor;
+	const float3 oldsun = sunLighting->unitSunColor;
+	const float3 oldambient = sunLighting->unitAmbientColor;
 
-	unitDrawer->unitSunColor *= float3(0.5f, 0.7f, 0.9f);
-	unitDrawer->unitAmbientColor *= float3(0.6f, 0.8f, 1.0f);
+	sunLighting->unitSunColor *= float3(0.5f, 0.7f, 0.9f);
+	sunLighting->unitAmbientColor *= float3(0.6f, 0.8f, 1.0f);
 
 	game->SetDrawMode(CGame::gameRefractionDraw);
 
@@ -544,28 +538,35 @@ void CDynWater::DrawRefraction(CGame* game)
 		gd->SetupBaseDrawPass();
 
 	glEnable(GL_CLIP_PLANE2);
-	double plane[4]= {0, -1, 0, 2};
-	glClipPlane(GL_CLIP_PLANE2 ,plane);
-	drawReflection = true;
-	unitDrawer->Draw(false,true);
-	featureDrawer->Draw();
-	unitDrawer->DrawCloakedUnits(true);
-	featureDrawer->DrawFadeFeatures(true); // FIXME: Make it fade out correctly without "noAdvShading"
-	drawReflection = false;
+	const double clipPlaneEq[4] = {0.0, -1.0, 0.0, 2.0};
+	glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
+
+	{
+		// drawReflection = true;
+
+		unitDrawer->Draw(false, true);
+		featureDrawer->Draw();
+
+		unitDrawer->DrawAlphaPass();
+		featureDrawer->DrawAlphaPass();
+
+		// drawReflection = false;
+	}
+
 	projectileDrawer->Draw(false, true);
 	eventHandler.DrawWorldRefraction();
 	glDisable(GL_CLIP_PLANE2);
 
 	game->SetDrawMode(CGame::gameNormalDraw);
 
-	drawRefraction=false;
+	drawRefraction = false;
 
 
 	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 1);
 
-	unitDrawer->unitSunColor = oldsun;
-	unitDrawer->unitAmbientColor = oldambient;
+	sunLighting->unitSunColor = oldsun;
+	sunLighting->unitAmbientColor = oldambient;
 }
 
 void CDynWater::DrawWaves()
@@ -834,21 +835,20 @@ void CDynWater::DrawWaterSurface()
 	va = GetVertexArray();
 	va->Initialize();
 
-	CCamera* visCam = CCamera::GetCamera(CCamera::CAMTYPE_VISCUL);
-	// TODO: split drawing from (duplicated) GridVisibility code below
-	// visCam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
+	CCamera* cam = CCamera::GetActiveCamera();
+	cam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 
-	camPosBig2.x = math::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapx*SQUARE_SIZE - WH_SIZE, camera->GetPos().x))/(W_SIZE*16))*(W_SIZE*16);
-	camPosBig2.z = math::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapy*SQUARE_SIZE - WH_SIZE, camera->GetPos().z))/(W_SIZE*16))*(W_SIZE*16);
+	camPosBig2.x = math::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapx*SQUARE_SIZE - WH_SIZE, cam->GetPos().x))/(W_SIZE*16))*(W_SIZE*16);
+	camPosBig2.z = math::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapy*SQUARE_SIZE - WH_SIZE, cam->GetPos().z))/(W_SIZE*16))*(W_SIZE*16);
 
-	const std::vector<CCamera::FrustumLine> negSides; // = visCam->GetNegFrustumSides();
-	const std::vector<CCamera::FrustumLine> posSides; // = visCam->GetPosFrustumSides();
+	const std::vector<CCamera::FrustumLine> negSides; // = cam->GetNegFrustumSides();
+	const std::vector<CCamera::FrustumLine> posSides; // = cam->GetPosFrustumSides();
 
 	std::vector<CCamera::FrustumLine>::const_iterator fli;
 
 	for (int lod = 1; lod < (2 << 5); lod *= 2) {
-		int cx = (int)(visCam->GetPos().x / WSQUARE_SIZE);
-		int cy = (int)(visCam->GetPos().z / WSQUARE_SIZE);
+		int cx = (int)(cam->GetPos().x / WSQUARE_SIZE);
+		int cy = (int)(cam->GetPos().z / WSQUARE_SIZE);
 
 		cx = (cx / lod) * lod;
 		cy = (cy / lod) * lod;
@@ -862,9 +862,9 @@ void CDynWater::DrawWaterSurface()
 		int maxtx = int(camPosBig2.x/WSQUARE_SIZE + 512);
 
 		int minly = cy + (-viewRadius + 2 - ysquaremod) * lod;
-		int maxly = cy + (viewRadius      - ysquaremod) * lod;
+		int maxly = cy + ( viewRadius     - ysquaremod) * lod;
 		int minlx = cx + (-viewRadius + 2 - xsquaremod) * lod;
-		int maxlx = cx + (viewRadius      - xsquaremod) * lod;
+		int maxlx = cx + ( viewRadius     - xsquaremod) * lod;
 
 		int xstart = std::max(minlx, mintx);
 		int xend   = std::min(maxlx, maxtx);
@@ -873,6 +873,7 @@ void CDynWater::DrawWaterSurface()
 
 		int vrhlod = viewRadius * hlod;
 
+		// TODO: split drawing from (duplicated) GridVisibility code below
 		for (int y = ystart; y < yend; y += lod) {
 			int xs = xstart;
 			int xe = xend;
@@ -880,7 +881,7 @@ void CDynWater::DrawWaterSurface()
 
 			for (fli = negSides.begin(); fli != negSides.end(); ++fli) {
 				const float xtf = fli->base / WSQUARE_SIZE + fli->dir * y;
-				xtest = ((int)xtf) / lod * lod - lod;
+				xtest  = ((int) xtf                  ) / lod * lod - lod;
 				xtest2 = ((int)(xtf + fli->dir * lod)) / lod * lod - lod;
 
 				xtest = std::max(xtest, xtest2);
@@ -888,7 +889,7 @@ void CDynWater::DrawWaterSurface()
 			}
 			for (fli = posSides.begin(); fli != posSides.end(); ++fli) {
 				const float xtf = fli->base / WSQUARE_SIZE + fli->dir * y;
-				xtest = ((int)xtf) / lod * lod - lod;
+				xtest  = ((int) xtf                  ) / lod * lod - lod;
 				xtest2 = ((int)(xtf + fli->dir * lod)) / lod * lod - lod;
 
 				xtest = std::min(xtest, xtest2);

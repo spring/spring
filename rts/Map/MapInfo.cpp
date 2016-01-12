@@ -208,14 +208,8 @@ void CMapInfo::ReadLight()
 
 	light.specularExponent = lightTable.GetFloat("specularExponent", 100.0f);
 
-	if (light.groundShadowDensity > 1.0 || light.groundShadowDensity < 0.0) {
-		LOG_L(L_WARNING, "MapInfo.lua: Incorrect value \"groundShadowDensity=%f\"! Clamping to 0..1 range!!", light.groundShadowDensity);
-		light.groundShadowDensity = Clamp(light.groundShadowDensity, 0.0f, 1.0f);
-	}
-	if (light.unitShadowDensity > 1.0 || light.unitShadowDensity < 0.0) {
-		LOG_L(L_WARNING, "MapInfo.lua: Incorrect value \"unitShadowDensity=%f\"! Clamping to 0..1 range!!", light.unitShadowDensity);
-		light.unitShadowDensity = Clamp(light.unitShadowDensity, 0.0f, 1.0f);
-	}
+	light.groundShadowDensity = Clamp(light.groundShadowDensity, 0.0f, 1.0f);
+	light.unitShadowDensity = Clamp(light.unitShadowDensity, 0.0f, 1.0f);
 }
 
 
@@ -350,7 +344,7 @@ void CMapInfo::ReadSMF()
 	smf.splatDistrTexName  = mapResTable.GetString("splatDistrTex", "");
 	smf.grassShadingTexName = mapResTable.GetString("grassShadingTex", "");
 	smf.skyReflectModTexName  = mapResTable.GetString("skyReflectModTex", "");
-	smf.detailNormalTexName   = mapResTable.GetString("detailNormalTex", "");
+	smf.blendNormalsTexName   = mapResTable.GetString("detailNormalTex", "");
 	smf.lightEmissionTexName  = mapResTable.GetString("lightEmissionTex", "");
 	smf.parallaxHeightTexName = mapResTable.GetString("parallaxHeightTex", "");
 
@@ -368,7 +362,7 @@ void CMapInfo::ReadSMF()
 		&smf.splatDistrTexName,
 		&smf.grassShadingTexName,
 		&smf.skyReflectModTexName,
-		&smf.detailNormalTexName,
+		&smf.blendNormalsTexName,
 		&smf.lightEmissionTexName,
 		&smf.parallaxHeightTexName,
 	};

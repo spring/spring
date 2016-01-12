@@ -51,6 +51,8 @@ Else  (NOT Boost_FOUND)
 
 ################################################################################
 ### UDPListener
+# disabled for travis: https://springrts.com/mantis/view.php?id=5014
+if(NOT DEFINED ENV{CI})
 	set(test_name UDPListener)
 	Set(test_src
 		"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Net/TestUDPListener.cpp"
@@ -82,6 +84,7 @@ Else  (NOT Boost_FOUND)
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
 	Add_Dependencies(test_UDPListener generateVersionFiles)
+endif()
 
 ################################################################################
 ### ILog
@@ -154,6 +157,26 @@ Else  (NOT Boost_FOUND)
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
 			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
+			${test_Log_sources}
+		)
+
+	set(test_libs
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			${Boost_SYSTEM_LIBRARY}
+			${Boost_THREAD_LIBRARY}
+			${Boost_CHRONO_LIBRARY_WITH_RT}
+			${WINMM_LIBRARY}
+		)
+
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
+
+################################################################################
+### Matrix44fRotation
+	set(test_name Matrix44fRotation)
+	Set(test_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/testRotationMatrix44f.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Matrix44f.cpp"
+			"${ENGINE_SOURCE_DIR}/System/float3.cpp"
 			${test_Log_sources}
 		)
 

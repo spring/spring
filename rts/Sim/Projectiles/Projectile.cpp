@@ -36,6 +36,7 @@ CR_REG_METADATA(CProjectile,
 
 	CR_MEMBER(mygravity),
 	CR_IGNORED(sortDist),
+	CR_MEMBER(tempNum),
 
 	CR_MEMBER(ownerID),
 	CR_MEMBER(teamID),
@@ -73,6 +74,7 @@ CProjectile::CProjectile()
 
 	, mygravity(mapInfo? mapInfo->map.gravity: 0.0f)
 	, sortDist(0.0f)
+	, tempNum(0)
 
 	, ownerID(-1u)
 	, teamID(-1u)
@@ -129,7 +131,7 @@ CProjectile::~CProjectile()
 		quadField->RemoveProjectile(this);
 #ifdef TRACE_SYNC
 		tracefile << "Projectile died id: " << id << ", pos: <" << pos.x << ", " << pos.y << ", " << pos.z << ">\n";
-#endif	
+#endif
 	}
 }
 
@@ -154,7 +156,7 @@ void CProjectile::Init(const CUnit* owner, const float3& offset)
 		projectileHandler->AddProjectile(this);
 	}
 	if (synced && !weapon) {
-		quadField->AddProjectile(this);	
+		quadField->AddProjectile(this);
 	}
 }
 

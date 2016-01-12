@@ -12,11 +12,17 @@
 
 
 // not extern'ed, so static
-static CShaderHandler* gShaderHandler = NULL;
+static CShaderHandler* gShaderHandler = nullptr;
+static unsigned int gNumInstances = 0;
 
 CShaderHandler* CShaderHandler::GetInstance() {
-	if (gShaderHandler == NULL)
+	// nobody should bring us back to life after FreeInstance
+	assert(gNumInstances <= 1);
+
+	if (gShaderHandler == nullptr) {
 		gShaderHandler = new CShaderHandler();
+		gNumInstances += 1;
+	}
 
 	return gShaderHandler;
 }
@@ -24,7 +30,7 @@ CShaderHandler* CShaderHandler::GetInstance() {
 void CShaderHandler::FreeInstance(CShaderHandler* sh) {
 	assert(sh == gShaderHandler);
 	delete sh;
-	gShaderHandler = NULL;
+	gShaderHandler = nullptr;
 }
 
 
@@ -119,15 +125,12 @@ Shader::IProgramObject* CShaderHandler::CreateProgramObject(const std::string& p
 
 Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soName, const std::string& soDefs, int soType) {
 	assert(!soName.empty());
-
-	const bool arbShader = (StringToLower(soName).find("arb") != std::string::npos);
-
 	Shader::IShaderObject* so = Shader::nullShaderObject;
 
 	switch (soType) {
 		case GL_VERTEX_PROGRAM_ARB:
 		case GL_FRAGMENT_PROGRAM_ARB: {
-			//assert(arbShader);
+			// assert(StringToLower(soName).find("arb") != std::string::npos);
 
 			if (globalRendering->haveARB) {
 				so = new Shader::ARBShaderObject(soType, soName);
@@ -136,7 +139,7 @@ Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soN
 
 		default: {
 			// assume GLSL shaders by default
-			//assert(!arbShader);
+			// assert(StringToLower(soName).find("arb") == std::string::npos);
 
 			if (globalRendering->haveGLSL) {
 				so = new Shader::GLSLShaderObject(soType, soName, soDefs);
@@ -145,8 +148,8 @@ Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soN
 	}
 
 	if (so == Shader::nullShaderObject) {
-		LOG_L(L_ERROR, "[%s] Tried to create a %s shader (\"%s\") on hardware that does not support them!",
-			__FUNCTION__, arbShader? "ARB": "GLSL", soName.c_str());
+		LOG_L(L_ERROR, "[%s] Tried to create a shader (\"%s\") on hardware that does not support them!",
+			__FUNCTION__, soName.c_str());
 		return so;
 	}
 

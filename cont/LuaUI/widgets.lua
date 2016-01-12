@@ -447,6 +447,7 @@ function widgetHandler:LoadWidget(filename, fromZip)
     knownInfo.author   = widget.whInfo.author
     knownInfo.basename = widget.whInfo.basename
     knownInfo.filename = widget.whInfo.filename
+    knownInfo.enabled  = widget.whInfo.enabled
     knownInfo.fromZip  = fromZip
     self.knownWidgets[name] = knownInfo
     self.knownCount = self.knownCount + 1
@@ -1730,9 +1731,12 @@ function widgetHandler:UnitFromFactory(unitID, unitDefID, unitTeam,
 end
 
 
-function widgetHandler:UnitDestroyed(unitID, unitDefID, unitTeam)
+function widgetHandler:UnitDestroyed(unitID, unitDefID, unitTeam, _, _, _, preEvent)
+  -- uncomment to maintain backward compatibility
+  -- if (not preEvent) then return end
+
   for _,w in ipairs(self.UnitDestroyedList) do
-    w:UnitDestroyed(unitID, unitDefID, unitTeam)
+    w:UnitDestroyed(unitID, unitDefID, unitTeam, preEvent)
   end
   return
 end

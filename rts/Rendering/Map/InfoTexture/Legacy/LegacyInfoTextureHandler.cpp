@@ -12,6 +12,7 @@
 #include "Map/ReadMap.h"
 #include "Rendering/IPathDrawer.h"
 #include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/ModInfo.h"
 #include "System/TimeProfiler.h"
 #include "System/Log/ILog.h"
 #include "System/Config/ConfigHandler.h"
@@ -45,6 +46,7 @@ static CLegacyInfoTextureHandler::BaseGroundDrawMode NameToDrawMode(const std::s
 		return CLegacyInfoTextureHandler::drawPathCost;
 	}
 
+	// maps to 0
 	return CLegacyInfoTextureHandler::drawNormal;
 }
 
@@ -199,6 +201,11 @@ int2 CLegacyInfoTextureHandler::GetCurrentInfoTextureSize() const
 }
 
 
+const CInfoTexture* CLegacyInfoTextureHandler::GetInfoTextureConst(const std::string& name) const
+{
+	return &infoTextures[NameToDrawMode(name)];
+}
+
 CInfoTexture* CLegacyInfoTextureHandler::GetInfoTexture(const std::string& name)
 {
 	return &infoTextures[NameToDrawMode(name)];
@@ -350,10 +357,11 @@ bool CLegacyInfoTextureHandler::UpdateExtraTexture(BaseGroundDrawMode texDrawMod
 			} break;
 
 			case drawLos: {
+				const int jammerAllyTeam = modInfo.separateJammers ? gu->myAllyTeam : 0;
 				const unsigned short* myLos         = &losHandler->los.losMaps[gu->myAllyTeam].front();
 				const unsigned short* myAirLos      = &losHandler->airLos.losMaps[gu->myAllyTeam].front();
 				const unsigned short* myRadar       = &losHandler->radar.losMaps[gu->myAllyTeam].front();
-				const unsigned short* myJammer      = &losHandler->commonJammer.losMaps[0].front();
+				const unsigned short* myJammer      = &losHandler->jammer.losMaps[jammerAllyTeam].front();
 
 				const int lowRes = highResInfoTexWanted ? 0 : -1;
 				const int endx = highResInfoTexWanted ? mapDims.mapx : mapDims.hmapx;
@@ -373,7 +381,7 @@ bool CLegacyInfoTextureHandler::UpdateExtraTexture(BaseGroundDrawMode texDrawMod
 						}
 
 						const int inRadar = InterpolateLos(myRadar, losHandler->radar.size, 3 + lowRes, 255, pos);
-						const int inJam   = (totalLos == 255) ? InterpolateLos(myJammer, losHandler->commonJammer.size, 3 + lowRes, 255, pos) : 0;
+						const int inJam   = (totalLos == 255) ? InterpolateLos(myJammer, losHandler->jammer.size, 3 + lowRes, 255, pos) : 0;
 
 						const int a = ((y * pwr2mapx) + x) * 4 - offset;
 

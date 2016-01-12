@@ -825,7 +825,7 @@ void CLuaHandle::UnitNanoframed(const CUnit* unit)
 }
 
 
-void CLuaHandle::UnitDestroyed(const CUnit* unit, const CUnit* attacker)
+void CLuaHandle::UnitDestroyed(const CUnit* unit, const CUnit* attacker, bool preEvent)
 {
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 9, __FUNCTION__);
@@ -833,20 +833,27 @@ void CLuaHandle::UnitDestroyed(const CUnit* unit, const CUnit* attacker)
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr("UnitDestroyed");
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
 
-	int argCount = 3;
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
+
+	const int argCount = 3 + 3 + 1;
+
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->unitDef->id);
 	lua_pushnumber(L, unit->team);
+
 	if (GetHandleFullRead(L) && (attacker != NULL)) {
 		lua_pushnumber(L, attacker->id);
 		lua_pushnumber(L, attacker->unitDef->id);
 		lua_pushnumber(L, attacker->team);
-		argCount += 3;
+	} else {
+		lua_pushnil(L);
+		lua_pushnil(L);
+		lua_pushnil(L);
 	}
+
+	lua_pushboolean(L, preEvent);
 
 	// call the routine
 	RunCallInTraceback(L, cmdStr, argCount, 0, traceBack.GetErrFuncIdx(), false);
@@ -1757,22 +1764,29 @@ void CLuaHandle::DrawWorldRefraction()
 }
 
 
+void CLuaHandle::DrawGroundPreForward()
+{
+	static const LuaHashString cmdStr(__FUNCTION__); RunDrawCallIn(cmdStr);
+}
+
+void CLuaHandle::DrawGroundPreDeferred()
+{
+	static const LuaHashString cmdStr(__FUNCTION__); RunDrawCallIn(cmdStr);
+}
+
 void CLuaHandle::DrawGroundPostDeferred()
 {
-	static const LuaHashString cmdStr(__FUNCTION__);
-	RunDrawCallIn(cmdStr);
+	static const LuaHashString cmdStr(__FUNCTION__); RunDrawCallIn(cmdStr);
 }
 
 void CLuaHandle::DrawUnitsPostDeferred()
 {
-	static const LuaHashString cmdStr(__FUNCTION__);
-	RunDrawCallIn(cmdStr);
+	static const LuaHashString cmdStr(__FUNCTION__); RunDrawCallIn(cmdStr);
 }
 
 void CLuaHandle::DrawFeaturesPostDeferred()
 {
-	static const LuaHashString cmdStr(__FUNCTION__);
-	RunDrawCallIn(cmdStr);
+	static const LuaHashString cmdStr(__FUNCTION__); RunDrawCallIn(cmdStr);
 }
 
 

@@ -68,18 +68,19 @@ class LuaOpenGL {
 		static void ResetDrawWorldRefraction();
 		static void DisableDrawWorldRefraction();
 
+		#define NOOP_STATE_FUNCS(Name)    \
+		static void Enable  ## Name () {} \
+		static void Disable ## Name () {} \
+		static void Reset   ## Name () {}
+
 		// no-ops (should probably guard some state)
-		static void EnableDrawGroundPostDeferred() {}
-		static void ResetDrawGroundPostDeferred() {}
-		static void DisableDrawGroundPostDeferred() {}
-		// no-ops
-		static void EnableDrawUnitsPostDeferred() {}
-		static void ResetDrawUnitsPostDeferred() {}
-		static void DisableDrawUnitsPostDeferred() {}
-		// no-ops
-		static void EnableDrawFeaturesPostDeferred() {}
-		static void ResetDrawFeaturesPostDeferred() {}
-		static void DisableDrawFeaturesPostDeferred() {}
+		NOOP_STATE_FUNCS(DrawGroundPreForward)
+		NOOP_STATE_FUNCS(DrawGroundPreDeferred)
+		NOOP_STATE_FUNCS(DrawGroundPostDeferred)
+		NOOP_STATE_FUNCS(DrawUnitsPostDeferred)
+		NOOP_STATE_FUNCS(DrawFeaturesPostDeferred)
+
+		#undef NOOP_STATE_FUNCS
 
 		static void EnableDrawScreenEffects();
 		static void ResetDrawScreenEffects();
@@ -223,17 +224,32 @@ class LuaOpenGL {
 		static int GetTextHeight(lua_State* L);
 
 		// internal wrapper for Unit and UnitRaw
-		static int UnitCommon(lua_State* L, bool applyTransform);
+		static int UnitCommon(lua_State* L, bool applyTransform, bool callDrawUnit);
 
 		static int Unit(lua_State* L);
 		static int UnitRaw(lua_State* L);
+		static int UnitTextures(lua_State* L);
 		static int UnitShape(lua_State* L);
+		static int UnitShapeTextures(lua_State* L);
 		static int UnitMultMatrix(lua_State* L);
 		static int UnitPiece(lua_State* L);
 		static int UnitPieceMatrix(lua_State* L);
 		static int UnitPieceMultMatrix(lua_State* L);
+
+		// internal wrapper for Feature and FeatureRaw
+		static int FeatureCommon(lua_State* L, bool applyTransform, bool callDrawFeature);
+
 		static int Feature(lua_State* L);
+		static int FeatureRaw(lua_State* L);
+		static int FeatureTextures(lua_State* L);
 		static int FeatureShape(lua_State* L);
+		static int FeatureShapeTextures(lua_State* L);
+		static int FeatureMultMatrix(lua_State* L);
+		static int FeaturePiece(lua_State* L);
+		static int FeaturePieceMatrix(lua_State* L);
+		static int FeaturePieceMultMatrix(lua_State* L);
+
+
 		static int DrawListAtUnit(lua_State* L);
 		static int DrawFuncAtUnit(lua_State* L);
 		static int DrawGroundCircle(lua_State* L);

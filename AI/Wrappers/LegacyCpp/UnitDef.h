@@ -239,7 +239,7 @@ public:
 	float crashDrag;
 
 	MoveData* movedata;
-	unsigned char* yardmaps[4];						// Iterations of the Ymap for building rotation
+	std::vector<unsigned char> yardmaps[4];         // Iterations of the Ymap for building rotation
 
 	int xsize;										// each size is 8 units
 	int zsize;										// each size is 8 units

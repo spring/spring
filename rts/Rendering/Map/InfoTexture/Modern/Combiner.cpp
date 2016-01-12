@@ -72,6 +72,7 @@ void CInfoTextureCombiner::SwitchMode(const std::string& name)
 		return;
 	}
 
+	// WTF? fully reloaded from disk on every switch?
 	if (name == "los") {
 		disabled = !CreateShader("shaders/GLSL/infoLOS.lua");
 	} else

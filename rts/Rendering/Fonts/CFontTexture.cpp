@@ -395,8 +395,13 @@ CFontTexture::~CFontTexture()
 {
 #ifndef HEADLESS
 	allFonts.erase(this);
+
 	glDeleteTextures(1, (const GLuint*)&texture);
 	glDeleteLists(textureSpaceMatrix, 1);
+
+	texture = 0;
+	textureSpaceMatrix = 0;
+
 	SafeDelete(atlasUpdate);
 	SafeDelete(atlasUpdateShadow);
 #endif

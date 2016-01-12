@@ -174,7 +174,6 @@ CLoadScreen::~CLoadScreen()
 			efx->CommitEffects();
 		}
 #endif
-		game->SetupRenderingParams();
 	}
 
 	UnloadStartPicture();
@@ -194,7 +193,6 @@ void CLoadScreen::CreateInstance(const std::string& mapName, const std::string& 
 	singleton->Init();
 
 	if (!singleton->mtLoading) {
-		game->SetupRenderingParams();
 		CLoadScreen::DeleteInstance();
 	}
 }
