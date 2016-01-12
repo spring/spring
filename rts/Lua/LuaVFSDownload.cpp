@@ -63,21 +63,21 @@ void AddQueueEvent(dlEvent* ev) {
 
 void QueueDownloadStarted(int ID) //queue from other thread download started event
 {
-	dlStarted* ev = new dlStarted(); 
+	dlStarted* ev = new dlStarted();
 	ev->ID = ID;
 	AddQueueEvent(ev);
 }
 
 void QueueDownloadFinished(int ID) //queue from other thread download started event
 {
-	dlFinished* ev = new dlFinished(); 
+	dlFinished* ev = new dlFinished();
 	ev->ID = ID;
 	AddQueueEvent(ev);
 }
 
 void QueueDownloadFailed(int ID, int errorID) //queue from other thread download started event
 {
-	dlFailed* ev = new dlFailed(); 
+	dlFailed* ev = new dlFailed();
 	ev->ID = ID;
 	ev->errorID = errorID;
 	AddQueueEvent(ev);
@@ -85,9 +85,9 @@ void QueueDownloadFailed(int ID, int errorID) //queue from other thread download
 
 void QueueDownloadProgress(int ID, long downloaded, long total) //queue from other thread download started event
 {
-	dlProgress* ev = new dlProgress(); 
+	dlProgress* ev = new dlProgress();
 	ev->ID = ID;
-	ev->downloaded = downloaded; 
+	ev->downloaded = downloaded;
 	ev->total = total;
 	AddQueueEvent(ev);
 }
