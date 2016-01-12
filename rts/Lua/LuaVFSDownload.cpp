@@ -26,6 +26,7 @@ LuaVFSDownload* luavfsdownload = nullptr;
 struct dlEvent {
 	int ID;
 	virtual void processEvent() = 0;
+	virtual ~dlEvent(){}
 };
 
 struct dlStarted : public dlEvent {
