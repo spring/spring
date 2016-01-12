@@ -178,6 +178,7 @@ CBitmap& CBitmap::operator=(CBitmap&& bm)
 	ysize = bm.ysize;
 	channels = bm.channels;
 	compressed = bm.compressed;
+	delete[] mem;
 	mem = bm.mem;
 	bm.mem = NULL;
 
