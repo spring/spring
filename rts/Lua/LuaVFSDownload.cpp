@@ -167,14 +167,14 @@ void StartDownload() {
 	isDownloading = true;
 	const DownloadItem downloadItem = queue.front();
 	queue.pop_front();
-	const std::string filename = downloadItem.filename;
+	const std::string& filename = downloadItem.filename;
 	DownloadEnum::Category cat = downloadItem.cat;
 	const int ID = downloadItem.ID;
-	if (filename.c_str() != nullptr) {
+	if (!filename.empty()) {
 		LOG_L(L_DEBUG, "DOWNLOADING: %s", filename.c_str());
 	}
 	std::thread {[ID, filename, cat]() {
-			int result = Download(ID, filename, cat);
+			const int result = Download(ID, filename, cat);
 			if (result == 0) {
 				QueueDownloadFinished(ID);
 			} else {
@@ -200,7 +200,7 @@ int LuaVFSDownload::DownloadArchive(lua_State* L)
 	const std::string filename = luaL_checkstring(L, 1);
 	const std::string categoryStr = luaL_checkstring(L, 2);
 	if (filename.empty()) {
-		luaL_error(L, "Missing download archive name.");
+		return luaL_error(L, "Missing download archive name.");
 	}
 
 	DownloadEnum::Category cat;
@@ -211,7 +211,7 @@ int LuaVFSDownload::DownloadArchive(lua_State* L)
 	} else if (categoryStr == "engine") {
 		cat = DownloadEnum::CAT_ENGINE;
 	} else {
-		luaL_error(L, "Category must be one of: map, game, engine.");
+		return luaL_error(L, "Category must be one of: map, game, engine.");
 	}
 
 	queueIDCount++;
