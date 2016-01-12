@@ -67,6 +67,7 @@ progress.make
 # recommended: place the dir somewhere else, and specify with
 # MINGWLIBS=<your-path-here>/mingwlibs
 /mingwlibs
+/mingwlibs64
 
 # Windows libraries used by spring when compiling with Visual Studio
 /vclibs
