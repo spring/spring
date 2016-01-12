@@ -36,8 +36,7 @@ CR_REG_METADATA(CSimpleParticleSystem,
 		CR_MEMBER(sizeGrowth),
 		CR_MEMBER(sizeMod),
 	CR_MEMBER_ENDFLAG(CM_Config),
-	CR_MEMBER(particles),
-	CR_RESERVED(16)
+	CR_MEMBER(particles)
 ))
 
 CR_BIND(CSimpleParticleSystem::Particle, )
@@ -50,8 +49,7 @@ CR_REG_METADATA_SUB(CSimpleParticleSystem, Particle,
 	CR_MEMBER(decayrate),
 	CR_MEMBER(size),
 	CR_MEMBER(sizeGrowth),
-	CR_MEMBER(sizeMod),
-	CR_RESERVED(8)
+	CR_MEMBER(sizeMod)
 ))
 
 CSimpleParticleSystem::CSimpleParticleSystem()

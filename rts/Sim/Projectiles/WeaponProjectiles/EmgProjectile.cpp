@@ -15,8 +15,7 @@ CR_BIND_DERIVED(CEmgProjectile, CWeaponProjectile, (ProjectileParams()))
 CR_REG_METADATA(CEmgProjectile,(
 	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(intensity),
-	CR_MEMBER(color),
-	CR_RESERVED(8)
+	CR_MEMBER(color)
 ))
 
 CEmgProjectile::CEmgProjectile(const ProjectileParams& params): CWeaponProjectile(params)

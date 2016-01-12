@@ -22,8 +22,7 @@ CR_REG_METADATA(CDirtProjectile,
 		CR_MEMBER(slowdown),
 		CR_MEMBER(color),
 		CR_MEMBER(texture),
-	CR_MEMBER_ENDFLAG(CM_Config),
-	CR_RESERVED(8)
+	CR_MEMBER_ENDFLAG(CM_Config)
 ))
 
 //////////////////////////////////////////////////////////////////////

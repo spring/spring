@@ -20,8 +20,7 @@ CR_REG_METADATA(CCannon,(
 	CR_MEMBER(rangeFactor),
 	CR_MEMBER(lastDiff),
 	CR_MEMBER(lastDir),
-	CR_MEMBER(gravity),
-	CR_RESERVED(32)
+	CR_MEMBER(gravity)
 ))
 
 //////////////////////////////////////////////////////////////////////

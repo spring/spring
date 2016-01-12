@@ -44,9 +44,7 @@ CR_REG_METADATA(CPieceProjectile,(
 	CR_MEMBER(oldSmokePos),
 	CR_MEMBER(oldSmokeDir),
 	// CR_MEMBER(target),
-	CR_MEMBER(drawTrail),
-
-	CR_RESERVED(36)
+	CR_MEMBER(drawTrail)
 ))
 
 CPieceProjectile::CPieceProjectile(

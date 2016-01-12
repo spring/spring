@@ -16,16 +16,14 @@ CR_BIND(CFireBallProjectile::Spark, )
 
 CR_REG_METADATA(CFireBallProjectile,(
 	CR_SETFLAG(CF_Synced),
-	CR_MEMBER(sparks),
-	CR_RESERVED(8)
+	CR_MEMBER(sparks)
 ))
 
 CR_REG_METADATA_SUB(CFireBallProjectile,Spark,(
 	CR_MEMBER(pos),
 	CR_MEMBER(speed),
 	CR_MEMBER(size),
-	CR_MEMBER(ttl),
-	CR_RESERVED(8)
+	CR_MEMBER(ttl)
 ))
 
 CFireBallProjectile::CFireBallProjectile(const ProjectileParams& params): CWeaponProjectile(params)

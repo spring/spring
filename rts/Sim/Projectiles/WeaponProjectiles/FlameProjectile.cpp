@@ -17,8 +17,7 @@ CR_REG_METADATA(CFlameProjectile,(
 	CR_MEMBER(spread),
 	CR_MEMBER(curTime),
 	CR_MEMBER(physLife),
-	CR_MEMBER(invttl),
-	CR_RESERVED(16)
+	CR_MEMBER(invttl)
 ))
 
 

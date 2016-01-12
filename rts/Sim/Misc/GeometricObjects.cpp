@@ -11,11 +11,10 @@ CR_BIND(CGeometricObjects, )
 CR_BIND(CGeometricObjects::GeoGroup, )
 
 CR_REG_METADATA(CGeometricObjects, (
-		CR_MEMBER(geoGroups),
-		CR_MEMBER(toBeDeleted),
-		CR_MEMBER(firstFreeGroup),
-		CR_RESERVED(16)
-		))
+	CR_MEMBER(geoGroups),
+	CR_MEMBER(toBeDeleted),
+	CR_MEMBER(firstFreeGroup)
+))
 
 CR_REG_METADATA_SUB(CGeometricObjects, GeoGroup, (CR_MEMBER(squares)))
 

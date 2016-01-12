@@ -36,8 +36,7 @@ CR_REG_METADATA(CScriptMoveType, (
 	CR_MEMBER(shotStop),
 	CR_MEMBER(slopeStop),
 	CR_MEMBER(collideStop),
-	CR_MEMBER(scriptNotify),
-	CR_RESERVED(64)
+	CR_MEMBER(scriptNotify)
 ))
 
 

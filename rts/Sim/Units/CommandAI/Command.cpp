@@ -27,6 +27,5 @@ CR_REG_METADATA(CommandDescription, (
 	CR_MEMBER(disabled),
 	CR_MEMBER(showUnique),
 	CR_MEMBER(onlyTexture),
-	CR_MEMBER(params),
-	CR_RESERVED(32)
+	CR_MEMBER(params)
 ))

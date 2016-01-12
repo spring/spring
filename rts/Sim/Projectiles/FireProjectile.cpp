@@ -29,9 +29,8 @@ CR_REG_METADATA(CFireProjectile,(
 	CR_MEMBER(particleSize),
 	CR_MEMBER(ageSpeed),
 	CR_MEMBER(subParticles2),
-	CR_MEMBER(subParticles),
-	CR_RESERVED(16)
-	))
+	CR_MEMBER(subParticles)
+))
 
 CR_REG_METADATA_SUB(CFireProjectile, SubParticle, (
 	CR_MEMBER(pos),
@@ -39,9 +38,8 @@ CR_REG_METADATA_SUB(CFireProjectile, SubParticle, (
 	CR_MEMBER(age),
 	CR_MEMBER(maxSize),
 	CR_MEMBER(rotSpeed),
-	CR_MEMBER(smokeType),
-	CR_RESERVED(8)
-	))
+	CR_MEMBER(smokeType)
+))
 
 CFireProjectile::CFireProjectile(
 	const float3& pos,

@@ -21,8 +21,7 @@ CR_REG_METADATA(CBeamLaserProjectile,(
 	CR_MEMBER(corethickness),
 	CR_MEMBER(flaresize),
 	CR_MEMBER(decay),
-	CR_MEMBER(midtexx),
-	CR_RESERVED(16)
+	CR_MEMBER(midtexx)
 ))
 
 

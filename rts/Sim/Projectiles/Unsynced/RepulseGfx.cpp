@@ -15,9 +15,8 @@ CR_REG_METADATA(CRepulseGfx,(
 	CR_MEMBER(sqMaxDist),
 	CR_MEMBER(age),
 	CR_MEMBER(color),
-	CR_MEMBER(difs),
-	CR_RESERVED(8)
-	))
+	CR_MEMBER(difs)
+))
 
 CRepulseGfx::CRepulseGfx(CUnit* owner, CProjectile* repulsed, float maxDist, const float3& color):
 	CProjectile(repulsed? repulsed->pos: ZeroVector, repulsed? repulsed->speed: ZeroVector, owner, false, false, false),

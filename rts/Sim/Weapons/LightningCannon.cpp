@@ -16,8 +16,7 @@
 CR_BIND_DERIVED(CLightningCannon, CWeapon, (NULL, NULL))
 
 CR_REG_METADATA(CLightningCannon,(
-	CR_MEMBER(color),
-	CR_RESERVED(8)
+	CR_MEMBER(color)
 ))
 
 CLightningCannon::CLightningCannon(CUnit* owner, const WeaponDef* def)

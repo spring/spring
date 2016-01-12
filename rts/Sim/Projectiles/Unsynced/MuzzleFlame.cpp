@@ -16,9 +16,8 @@ CR_REG_METADATA(CMuzzleFlame,(
 	CR_MEMBER(age),
 	CR_MEMBER(numFlame),
 	CR_MEMBER(numSmoke),
-	CR_MEMBER(randSmokeDir),
-	CR_RESERVED(8)
-	))
+	CR_MEMBER(randSmokeDir)
+))
 
 CMuzzleFlame::CMuzzleFlame(const float3& pos, const float3& speed, const float3& dir, float size):
 	CProjectile(pos, speed, NULL, false, false, false),

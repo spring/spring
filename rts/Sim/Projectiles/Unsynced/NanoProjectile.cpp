@@ -17,8 +17,7 @@ CR_REG_METADATA(CNanoProjectile,
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(deathFrame),
 		CR_MEMBER(color),
-	CR_MEMBER_ENDFLAG(CM_Config),
-	CR_RESERVED(8)
+	CR_MEMBER_ENDFLAG(CM_Config)
 ))
 
 

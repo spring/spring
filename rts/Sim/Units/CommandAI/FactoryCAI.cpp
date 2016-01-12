@@ -25,7 +25,6 @@ CR_BIND_DERIVED(CFactoryCAI ,CCommandAI , )
 CR_REG_METADATA(CFactoryCAI , (
 	CR_MEMBER(newUnitCommands),
 	CR_MEMBER(buildOptions),
-	CR_RESERVED(16),
 	CR_POSTLOAD(PostLoad)
 ))
 
@@ -144,7 +143,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 {
 	const int cmdID = c.GetID();
-	
+
 	// move is always allowed for factories (passed to units it produces)
 	if ((cmdID == CMD_SET_WANTED_MAX_SPEED) ||
 	    ((cmdID != CMD_MOVE) && !AllowedCommand(c, fromSynced))) {

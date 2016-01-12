@@ -14,8 +14,7 @@ CR_BIND(CCategoryHandler, )
 
 CR_REG_METADATA(CCategoryHandler, (
 	CR_MEMBER(categories),
-	CR_MEMBER(firstUnused),
-	CR_RESERVED(8)
+	CR_MEMBER(firstUnused)
 ))
 
 CCategoryHandler* CCategoryHandler::instance = NULL;
@@ -48,7 +47,7 @@ unsigned int CCategoryHandler::GetCategory(std::string name)
 		return 0; // the empty category
 
 	unsigned int cat = 0;
-	
+
 	if (categories.find(name) == categories.end()) {
 		// this category is yet unknown
 		if (firstUnused >= CCategoryHandler::GetMaxCategories()) {

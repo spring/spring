@@ -35,8 +35,7 @@ CR_REG_METADATA(CEngineOutHandler, (
 	//   [with _T1 = const unsigned char; _T2 = std::unique_ptr<CSkirmishAIWrapper>]’
 	//   is implicitly deleted because the default definition would be ill-formed"
 	CR_IGNORED(id_skirmishAI),
-	CR_MEMBER(team_skirmishAIs),
-	CR_RESERVED(128)
+	CR_MEMBER(team_skirmishAIs)
 ))
 
 

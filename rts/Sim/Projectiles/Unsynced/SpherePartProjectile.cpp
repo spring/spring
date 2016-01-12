@@ -24,8 +24,7 @@ CR_REG_METADATA(CSpherePartProjectile, (
 	CR_MEMBER(age),
 	CR_MEMBER(ttl),
 	CR_MEMBER(texx),
-	CR_MEMBER(texy),
-	CR_RESERVED(16)
+	CR_MEMBER(texy)
 ))
 
 CSpherePartProjectile::CSpherePartProjectile(

@@ -12,8 +12,7 @@
 CR_BIND(CPlayerHandler,)
 
 CR_REG_METADATA(CPlayerHandler, (
-	CR_MEMBER(players),
-	CR_RESERVED(64)
+	CR_MEMBER(players)
 ))
 
 

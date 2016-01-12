@@ -15,17 +15,16 @@
 CR_BIND_DERIVED(CFlareProjectile, CProjectile, (ZeroVector, ZeroVector, 0, 0))
 
 CR_REG_METADATA(CFlareProjectile,(
-				CR_SETFLAG(CF_Synced),
-				CR_MEMBER(activateFrame),
-				CR_MEMBER(deathFrame),
+	CR_SETFLAG(CF_Synced),
+	CR_MEMBER(activateFrame),
+	CR_MEMBER(deathFrame),
 
-				CR_MEMBER(numSub),
-				CR_MEMBER(lastSub),
-				CR_MEMBER(subPos),
-				CR_MEMBER(subSpeed),
-				CR_MEMBER(alphaFalloff),
-				CR_RESERVED(8)
-				))
+	CR_MEMBER(numSub),
+	CR_MEMBER(lastSub),
+	CR_MEMBER(subPos),
+	CR_MEMBER(subSpeed),
+	CR_MEMBER(alphaFalloff)
+))
 
 CFlareProjectile::CFlareProjectile(const float3& pos, const float3& speed, CUnit* owner, int activateFrame):
 	//! these are synced, but neither weapon nor piece

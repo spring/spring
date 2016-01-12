@@ -11,8 +11,7 @@
 CR_BIND_DERIVED(CGeoThermSmokeProjectile, CSmokeProjectile, (ZeroVector, ZeroVector, 1, NULL))
 
 CR_REG_METADATA(CGeoThermSmokeProjectile, (
-	CR_MEMBER(geo),
-	CR_RESERVED(8)
+	CR_MEMBER(geo)
 ))
 
 CGeoThermSmokeProjectile::CGeoThermSmokeProjectile(

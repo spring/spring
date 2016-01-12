@@ -52,9 +52,7 @@ CR_REG_METADATA(CStrafeAirMoveType, (
 
 	CR_MEMBER(lastRudderPos),
 	CR_MEMBER(lastElevatorPos),
-	CR_MEMBER(lastAileronPos),
-
-	CR_RESERVED(63)
+	CR_MEMBER(lastAileronPos)
 ))
 
 
