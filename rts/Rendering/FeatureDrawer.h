@@ -69,7 +69,7 @@ public:
 private:
 	static void UpdateDrawPos(CFeature* f);
 
-	void DrawOpaqueFeatures(int modelType, int luaMatType);
+	void DrawOpaqueFeatures(int modelType);
 	void DrawAlphaFeatures(int modelType);
 	void DrawAlphaFeature(CFeature* f, bool ffpMat);
 	void DrawFarFeatures();

@@ -306,7 +306,7 @@ void CFeatureDrawer::DrawOpaquePass(bool deferredPass, bool, bool)
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		unitDrawer->PushModelRenderState(modelType);
-		DrawOpaqueFeatures(modelType, LuaObjectDrawer::GetDrawPassOpaqueMat());
+		DrawOpaqueFeatures(modelType);
 		unitDrawer->PopModelRenderState(modelType);
 	}
 
@@ -317,10 +317,8 @@ void CFeatureDrawer::DrawOpaquePass(bool deferredPass, bool, bool)
 	LuaObjectDrawer::DrawOpaqueMaterialObjects(LUAOBJ_FEATURE, deferredPass);
 }
 
-void CFeatureDrawer::DrawOpaqueFeatures(int modelType, int luaMatType)
+void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 {
-	const bool shadowPass = (luaMatType == LuaObjectDrawer::GetDrawPassShadowMat());
-
 	for (const auto& mdlRenderProxy: modelRenderers) {
 		if (mdlRenderProxy.GetLastDrawFrame() < globalRendering->drawFrame)
 			continue;
@@ -344,12 +342,12 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType, int luaMatType)
 				if (!CanDrawFeature(f))
 					continue;
 
-				if ( shadowPass && LuaObjectDrawer::AddShadowMaterialObject(f, LUAOBJ_FEATURE))
+				if ( inShadowPass && LuaObjectDrawer::AddShadowMaterialObject(f, LUAOBJ_FEATURE))
 					continue;
-				if (!shadowPass && LuaObjectDrawer::AddOpaqueMaterialObject(f, LUAOBJ_FEATURE))
+				if (!inShadowPass && LuaObjectDrawer::AddOpaqueMaterialObject(f, LUAOBJ_FEATURE))
 					continue;
 
-				if (!shadowPass)
+				if (!inShadowPass)
 					unitDrawer->SetTeamColour(f->team);
 
 				DrawFeature(f, 0, 0, false, false);
@@ -586,11 +584,11 @@ void CFeatureDrawer::DrawShadowPass()
 		// (usually) holes, so disable backface
 		// culling for them
 		glDisable(GL_CULL_FACE);
-		DrawOpaqueFeatures(MODELTYPE_3DO, LuaObjectDrawer::GetDrawPassShadowMat());
+		DrawOpaqueFeatures(MODELTYPE_3DO);
 		glEnable(GL_CULL_FACE);
 
 		for (int modelType = MODELTYPE_S3O; modelType < MODELTYPE_OTHER; modelType++) {
-			DrawOpaqueFeatures(modelType, LuaObjectDrawer::GetDrawPassShadowMat());
+			DrawOpaqueFeatures(modelType);
 		}
 
 		glPopAttrib();
