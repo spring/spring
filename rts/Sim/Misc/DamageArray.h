@@ -18,7 +18,6 @@ public:
 	DamageArray(const DamageArray& other) { *this = other; }
 	virtual ~DamageArray() { }
 
-	DamageArray& operator = (const DamageArray& other);
 	DamageArray operator * (float damageMult) const;
 
 	float& operator [] (int i)       { return damages.at(i); }
@@ -46,9 +45,14 @@ class DynDamageArray : public DamageArray
 
 public:
 	DynDamageArray(float damage = 1.0f);
+	DynDamageArray(const DynDamageArray& other) { *this = other; refCount = 1; }
 	~DynDamageArray() { }
 
 	DamageArray GetDynamicDamages(const float3& startPos, const float3& curPos) const;
+
+	static DynDamageArray* IncRef(DynDamageArray* dda) { ++dda->refCount; return dda; };
+	static void DecRef(DynDamageArray* dda) { if (--dda->refCount == 0) delete dda; };
+	static void Duplicate(DynDamageArray*& dda);
 
 	float dynDamageExp;
 	float dynDamageMin;

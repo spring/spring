@@ -26,16 +26,6 @@ DamageArray::DamageArray(float damage)
 }
 
 
-DamageArray& DamageArray::operator = (const DamageArray& other) {
-	paralyzeDamageTime = other.paralyzeDamageTime;
-	impulseFactor = other.impulseFactor;
-	impulseBoost = other.impulseBoost;
-	craterMult = other.craterMult;
-	craterBoost = other.craterBoost;
-	damages = other.damages;
-	return *this;
-}
-
 DamageArray DamageArray::operator * (float damageMult) const {
 	DamageArray da(*this);
 
@@ -122,4 +112,15 @@ DamageArray DynDamageArray::GetDynamicDamages(const float3& startPos, const floa
 	}
 
 	return dynDamages;
+}
+
+
+void DynDamageArray::Duplicate(DynDamageArray*& dda)
+{
+	if (dda->refCount == 1)
+		return;
+
+	DecRef(dda);
+
+	dda = new DynDamageArray(*dda);
 }

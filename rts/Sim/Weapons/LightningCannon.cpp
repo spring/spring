@@ -70,7 +70,7 @@ void CLightningCannon::FireImpl(const bool scriptCall)
 		hitUnit->SetLastHitPiece(hitColQuery.GetHitPiece(), gs->frameNum);
 	}
 
-	const DamageArray& damageArray = weaponDef->damages.GetDynamicDamages(weaponMuzzlePos, currentTargetPos);
+	const DamageArray& damageArray = damages->GetDynamicDamages(weaponMuzzlePos, currentTargetPos);
 	const CGameHelper::ExplosionParams params = {
 		curPos + curDir * boltLength,                     // hitPos (same as hitColQuery.GetHitPos() if no water or shield in way)
 		curDir,
@@ -79,10 +79,10 @@ void CLightningCannon::FireImpl(const bool scriptCall)
 		owner,
 		hitUnit,
 		hitFeature,
-		weaponDef->damages.craterAreaOfEffect,
-		weaponDef->damages.damageAreaOfEffect,
-		weaponDef->damages.edgeEffectiveness,
-		weaponDef->damages.explosionSpeed,
+		damages->craterAreaOfEffect,
+		damages->damageAreaOfEffect,
+		damages->edgeEffectiveness,
+		damages->explosionSpeed,
 		0.5f,                                             // gfxMod
 		weaponDef->impactOnly,
 		weaponDef->noExplode || weaponDef->noSelfDamage,  // ignoreOwner

@@ -637,8 +637,8 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 	const float heightMod = weaponDef->heightmod;
 
 	// how much damage the weapon deals over 1 second
-	const float secDamage = weaponDef->damages.GetDefaultDamage() * weapon->salvoSize / weapon->reloadTime * GAME_SPEED;
-	const bool paralyzer  = (weaponDef->damages.paralyzeDamageTime != 0);
+	const float secDamage = weapon->damages->GetDefaultDamage() * weapon->salvoSize / weapon->reloadTime * GAME_SPEED;
+	const bool paralyzer  = (weapon->damages->paralyzeDamageTime != 0);
 
 	const auto& quads = quadField->GetQuads(pos, radius + (aHeight - std::max(0.0f, readMap->GetInitMinHeight())) * heightMod);
 	const int tempNum = gs->GetTempNum();
@@ -683,7 +683,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 
 				const float dist2D = (pos - targPos).Length2D();
 				const float rangeMul = (dist2D * weaponDef->proximityPriority + modRange * 0.4f + 100.0f);
-				const float damageMul = weaponDef->damages[targetUnit->armorType] * targetUnit->curArmorMultiple;
+				const float damageMul = (*weapon->damages)[targetUnit->armorType] * targetUnit->curArmorMultiple;
 
 				targetPriority *= rangeMul;
 

@@ -19,6 +19,7 @@
 #include "TorpedoLauncher.h"
 
 #include "Game/TraceRay.h"
+#include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
@@ -142,10 +143,14 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 	if (!weaponDef->avoidFeature)  weapon->avoidFlags |= Collision::NOFEATURES;
 	if (!weaponDef->avoidGround)   weapon->avoidFlags |= Collision::NOGROUND;
 
+	// Could be nice to share the weaponDef's one if unchanged,
+	// but keeping the def const is more important. I don't
+	// want to change its refcount.
+	weapon->damages = new DynDamageArray(weaponDef->damages);
+
 	weapon->SetWeaponNum(owner->weapons.size());
 	weapon->Init();
 	weapon->UpdateRange(weaponDef->range);
-
 	return weapon;
 }
 

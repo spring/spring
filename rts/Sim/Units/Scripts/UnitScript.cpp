@@ -659,20 +659,21 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 				}
 
 				// detonate weapon from piece
-				const WeaponDef* weaponDef = unit->weapons[index]->weaponDef;
+				const CWeapon* weapon = unit->weapons[index];
+				const WeaponDef* weaponDef = weapon->weaponDef;
 
 				CGameHelper::ExplosionParams params = {
 					pos,
 					ZeroVector,
-					weaponDef->damages,
+					*weapon->damages,
 					weaponDef,
 					unit,                              // owner
 					NULL,                              // hitUnit
 					NULL,                              // hitFeature
-					weaponDef->damages.craterAreaOfEffect,
-					weaponDef->damages.damageAreaOfEffect,
-					weaponDef->damages.edgeEffectiveness,
-					weaponDef->damages.explosionSpeed,
+					weapon->damages->craterAreaOfEffect,
+					weapon->damages->damageAreaOfEffect,
+					weapon->damages->edgeEffectiveness,
+					weapon->damages->explosionSpeed,
 					1.0f,                              // gfxMod
 					weaponDef->impactOnly,
 					weaponDef->noSelfDamage,           // ignoreOwner

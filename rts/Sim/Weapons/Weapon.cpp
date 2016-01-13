@@ -35,6 +35,7 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(aimFromPiece),
 	CR_MEMBER(muzzlePiece),
 	CR_MEMBER(range),
+	CR_MEMBER(damages),
 	CR_MEMBER(reloadTime),
 	CR_MEMBER(reloadStatus),
 	CR_MEMBER(salvoLeft),
@@ -108,6 +109,7 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	reloadTime(1),
 	reloadStatus(0),
 	range(1),
+	damages(nullptr),
 	projectileSpeed(1),
 	accuracyError(0),
 	sprayAngle(0),
@@ -163,6 +165,7 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 
 CWeapon::~CWeapon()
 {
+	DynDamageArray::DecRef(damages);
 	if (weaponDef->interceptor)
 		interceptHandler.RemoveInterceptorWeapon(this);
 }
@@ -970,7 +973,7 @@ bool CWeapon::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) con
 		const float3 gpos = aimFromPos + dir * gdst;
 
 		// true iff ground does not block the ray of length <length> from <pos> along <dir>
-		if ((gdst > 0.0f) && (gpos.SqDistance(pos) > Square(weaponDef->damages.damageAreaOfEffect)))
+		if ((gdst > 0.0f) && (gpos.SqDistance(pos) > Square(damages->damageAreaOfEffect)))
 			return false;
 	}
 
@@ -1039,7 +1042,7 @@ void CWeapon::Init()
 	UpdateWeaponPieces();
 	UpdateWeaponVectors();
 
-	muzzleFlareSize = std::min(weaponDef->damages.damageAreaOfEffect * 0.2f, std::min(1500.f, weaponDef->damages[0]) * 0.003f);
+	muzzleFlareSize = std::min(damages->damageAreaOfEffect * 0.2f, std::min(1500.f, (*damages)[0]) * 0.003f);
 
 	if (weaponDef->interceptor)
 		interceptHandler.AddInterceptorWeapon(this);
@@ -1113,7 +1116,7 @@ void CWeapon::UpdateInterceptTarget()
 ProjectileParams CWeapon::GetProjectileParams()
 {
 	ProjectileParams params;
-	params.weaponID = weaponNum;
+	params.weaponNum = weaponNum;
 	params.owner = owner;
 	params.weaponDef = weaponDef;
 

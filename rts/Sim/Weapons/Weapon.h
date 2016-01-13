@@ -121,6 +121,7 @@ public:
 	int reloadStatus;						// next tick the weapon can fire again
 
 	float range;
+	DynDamageArray* damages;
 
 	float projectileSpeed;
 	float accuracyError;					// inaccuracy of whole salvo

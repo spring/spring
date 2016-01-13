@@ -120,7 +120,7 @@ void CTorpedoProjectile::Update()
 				CWorldObject::SetVelocity(dir * speed.w);
 			}
 
-			explGenHandler->GenExplosion(cegID, pos, speed, ttl, GetAreaOfEffect(), 0.0f, NULL, NULL);
+			explGenHandler->GenExplosion(cegID, pos, speed, ttl, damages->damageAreaOfEffect, 0.0f, NULL, NULL);
 		} else {
 			if (!luaMoveCtrl) {
 				// must update dir and speed.w here

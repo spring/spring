@@ -10,6 +10,7 @@
 struct WeaponDef;
 struct ProjectileParams;
 class CVertexArray;
+class DynDamageArray;
 
 
 
@@ -23,7 +24,7 @@ class CWeaponProjectile : public CProjectile
 public:
 	CWeaponProjectile();
 	CWeaponProjectile(const ProjectileParams& params);
-	virtual ~CWeaponProjectile() {}
+	virtual ~CWeaponProjectile();
 
 	virtual void Explode(CUnit* hitUnit, CFeature* hitFeature, float3 impactPos, float3 impactDir);
 	virtual void Collision();
@@ -63,8 +64,9 @@ public:
 	bool IsBeingIntercepted() const { return targeted; }
 	bool CanBeInterceptedBy(const WeaponDef*) const;
 
-	float GetAreaOfEffect() const;
 	bool TraveledRange() const;
+
+	DynDamageArray* damages;
 
 protected:
 	void UpdateInterception();
@@ -75,7 +77,9 @@ protected:
 
 	CWorldObject* target;
 
+
 	unsigned int weaponDefID;
+	unsigned int weaponNum;
 
 	int ttl;
 	int bounces;

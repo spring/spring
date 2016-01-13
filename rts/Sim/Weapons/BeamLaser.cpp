@@ -389,20 +389,20 @@ void CBeamLaser::FireInternal(float3 curDir)
 		// make it possible to always hit with some minimal intensity (melee weapons have use for that)
 		const float hitIntensity = std::max(weaponDef->minIntensity, 1.0f - curLength / (actualRange * 2.0f));
 
-		const DamageArray& baseDamages = weaponDef->damages.GetDynamicDamages(weaponMuzzlePos, curPos);
-		const DamageArray damages = baseDamages * (hitIntensity * salvoDamageMult);
+		const DamageArray& baseDamages = damages->GetDynamicDamages(weaponMuzzlePos, curPos);
+		const DamageArray da = baseDamages * (hitIntensity * salvoDamageMult);
 		const CGameHelper::ExplosionParams params = {
 			hitPos,
 			curDir,
-			damages,
+			da,
 			weaponDef,
 			owner,
 			hitUnit,
 			hitFeature,
-			weaponDef->damages.craterAreaOfEffect,
-			weaponDef->damages.damageAreaOfEffect,
-			weaponDef->damages.edgeEffectiveness,
-			weaponDef->damages.explosionSpeed,
+			damages->craterAreaOfEffect,
+			damages->damageAreaOfEffect,
+			damages->edgeEffectiveness,
+			damages->explosionSpeed,
 			1.0f,                                             // gfxMod
 			weaponDef->impactOnly,
 			weaponDef->noExplode || weaponDef->noSelfDamage,  // ignoreOwner

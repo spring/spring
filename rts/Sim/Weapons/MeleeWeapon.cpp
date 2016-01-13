@@ -23,7 +23,7 @@ bool CMeleeWeapon::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg
 void CMeleeWeapon::FireImpl(const bool scriptCall)
 {
 	if (currentTarget.type == Target_Unit) {
-		const float3 impulseVec = wantedDir * owner->mass * weaponDef->damages.impulseFactor;
+		const float3 impulseVec = wantedDir * owner->mass * damages->impulseFactor;
 
 		// the heavier the unit, the more impulse it does
 		currentTarget.unit->DoDamage(weaponDef->damages, impulseVec, owner, weaponDef->id, -1);

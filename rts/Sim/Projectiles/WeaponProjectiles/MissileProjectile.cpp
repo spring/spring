@@ -224,7 +224,7 @@ void CMissileProjectile::Update()
 			SetDirectionAndSpeed(dir, speed.w);
 		}
 
-		explGenHandler->GenExplosion(cegID, pos, dir, ttl, GetAreaOfEffect(), 0.0f, NULL, NULL);
+		explGenHandler->GenExplosion(cegID, pos, dir, ttl, damages->damageAreaOfEffect, 0.0f, NULL, NULL);
 	} else {
 		if (weaponDef->selfExplode) {
 			Collision();

@@ -4,7 +4,6 @@
 #define PIECE_PROJECTILE_H
 
 #include "Projectile.h"
-#include "Sim/Misc/DamageArray.h"
 
 // Piece Explosion Flags
 const int PF_Shatter    = (1 << 0); // 1

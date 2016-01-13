@@ -200,7 +200,7 @@ void CStarburstProjectile::Update()
 	}
 
 	if (ttl > 0) {
-		explGenHandler->GenExplosion(cegID, pos, dir, ttl, GetAreaOfEffect(), 0.0f, NULL, NULL);
+		explGenHandler->GenExplosion(cegID, pos, dir, ttl, damages->damageAreaOfEffect, 0.0f, NULL, NULL);
 	}
 
 
