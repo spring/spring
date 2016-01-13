@@ -379,6 +379,8 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 
 		size = wdTable.GetFloat("size", tempsize);
 		damages.explosionSpeed = wdTable.GetFloat("explosionSpeed", defExpSpeed);
+		if (damages.dynDamageRange <= 0.0f)
+			damages.dynDamageRange = range;
 	}
 
 	{

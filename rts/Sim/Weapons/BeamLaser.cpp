@@ -2,7 +2,7 @@
 
 #include "BeamLaser.h"
 #include "PlasmaRepulser.h"
-#include "WeaponDefHandler.h"
+#include "WeaponDef.h"
 #include "Game/GameHelper.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
@@ -389,7 +389,7 @@ void CBeamLaser::FireInternal(float3 curDir)
 		// make it possible to always hit with some minimal intensity (melee weapons have use for that)
 		const float hitIntensity = std::max(weaponDef->minIntensity, 1.0f - curLength / (actualRange * 2.0f));
 
-		const DamageArray& baseDamages = CWeaponDefHandler::DynamicDamages(weaponDef, weaponMuzzlePos, curPos);
+		const DamageArray& baseDamages = weaponDef->damages.GetDynamicDamages(weaponMuzzlePos, curPos);
 		const DamageArray damages = baseDamages * (hitIntensity * salvoDamageMult);
 		const CGameHelper::ExplosionParams params = {
 			hitPos,

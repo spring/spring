@@ -1,7 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
-
 #include "DamageArray.h"
 #include "DamageArrayHandler.h"
+
+#include "System/float3.h"
 
 CR_BIND(DamageArray, )
 
@@ -82,5 +83,43 @@ DynDamageArray::DynDamageArray(float damage)
 	, damageAreaOfEffect(4.0f)
 	, edgeEffectiveness(0.0f)
 	, explosionSpeed(1.0f) // always overwritten
-	, refCount(0)
+	, refCount(1)
 { }
+
+
+DamageArray DynDamageArray::GetDynamicDamages(const float3& startPos, const float3& curPos) const
+{
+	DamageArray dynDamages(*this);
+
+	if (dynDamageExp <= 0.0f)
+		return dynDamages;
+
+
+	const float travDist  = std::min(dynDamageRange, curPos.distance2D(startPos));
+	const float damageMod = 1.0f - math::pow(1.0f / dynDamageRange * travDist, dynDamageExp);
+	const float ddmod     = dynDamageMin / damages[0]; // get damage mod from first damage type
+
+	if (dynDamageInverted) {
+		for (int i = 0; i < damageArrayHandler->GetNumTypes(); ++i) {
+			dynDamages[i] = damages[i] - damageMod * damages[i];
+
+			if (dynDamageMin > 0.0f)
+				dynDamages[i] = std::max(damages[i] * ddmod, dynDamages[i]);
+
+			// to prevent div by 0
+			dynDamages[i] = std::max(0.0001f, dynDamages[i]);
+		}
+	} else {
+		for (int i = 0; i < damageArrayHandler->GetNumTypes(); ++i) {
+			dynDamages[i] = damageMod * damages[i];
+
+			if (dynDamageMin > 0.0f)
+				dynDamages[i] = std::max(damages[i] * ddmod, dynDamages[i]);
+
+			// div by 0
+			dynDamages[i] = std::max(0.0001f, dynDamages[i]);
+		}
+	}
+
+	return dynDamages;
+}

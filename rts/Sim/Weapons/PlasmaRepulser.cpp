@@ -13,7 +13,6 @@
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
 #include "System/Util.h"
@@ -132,7 +131,7 @@ bool CPlasmaRepulser::IncomingProjectile(CWeaponProjectile* p)
 	if (eventHandler.ShieldPreDamaged(p, this, owner, weaponDef->shieldRepulser, nullptr, nullptr))
 		return false;
 
-	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(p->GetWeaponDef(), p->GetStartPos(), p->pos);
+	const DamageArray& damageArray = p->GetWeaponDef()->damages.GetDynamicDamages(p->GetStartPos(), p->pos);
 	const float shieldDamage = damageArray[weaponDef->shieldArmorType];
 
 	// shield does not have enough power, don't touch the projectile
@@ -222,7 +221,7 @@ bool CPlasmaRepulser::IncomingBeam(const CWeapon* emitter, const float3& start, 
 	if (eventHandler.ShieldPreDamaged(nullptr, this, owner, weaponDef->shieldRepulser, emitter, emitter->owner))
 		return false;
 
-	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(emitter->weaponDef, start, weaponMuzzlePos);
+	const DamageArray& damageArray = emitter->weaponDef->damages.GetDynamicDamages(start, weaponMuzzlePos);
 	const float shieldDamage = damageArray[weaponDef->shieldArmorType];
 
 	if (curPower < shieldDamage)

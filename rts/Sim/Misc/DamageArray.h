@@ -7,6 +7,8 @@
 #include <vector>
 #include "System/creg/creg_cond.h"
 
+struct float3;
+
 class DamageArray
 {
 	CR_DECLARE(DamageArray)
@@ -34,7 +36,7 @@ public:
 	float craterMult;
 	float craterBoost;
 
-private:
+protected:
 	std::vector<float> damages;
 };
 
@@ -45,6 +47,9 @@ class DynDamageArray : public DamageArray
 public:
 	DynDamageArray(float damage = 1.0f);
 	~DynDamageArray() { }
+
+	DamageArray GetDynamicDamages(const float3& startPos, const float3& curPos) const;
+
 	float dynDamageExp;
 	float dynDamageMin;
 	float dynDamageRange;

@@ -3,7 +3,6 @@
 #include "LightningCannon.h"
 #include "PlasmaRepulser.h"
 #include "WeaponDef.h"
-#include "WeaponDefHandler.h"
 #include "Game/GameHelper.h"
 #include "Game/TraceRay.h"
 #include "Rendering/Models/3DModel.h"
@@ -71,7 +70,7 @@ void CLightningCannon::FireImpl(const bool scriptCall)
 		hitUnit->SetLastHitPiece(hitColQuery.GetHitPiece(), gs->frameNum);
 	}
 
-	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(weaponDef, weaponMuzzlePos, currentTargetPos);
+	const DamageArray& damageArray = weaponDef->damages.GetDynamicDamages(weaponMuzzlePos, currentTargetPos);
 	const CGameHelper::ExplosionParams params = {
 		curPos + curDir * boltLength,                     // hitPos (same as hitColQuery.GetHitPos() if no water or shield in way)
 		curDir,
