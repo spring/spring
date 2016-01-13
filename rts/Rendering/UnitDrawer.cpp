@@ -258,6 +258,7 @@ CUnitDrawer::~CUnitDrawer()
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		for (GhostSolidObject* ghost: deadGhostBuildings[modelType]) {
+			// <ghost> might be the gbOwner of a decal; groundDecals is deleted after us
 			groundDecals->GhostDestroyed(ghost);
 			delete ghost;
 		}
