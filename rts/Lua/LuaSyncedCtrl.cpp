@@ -36,6 +36,7 @@
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/DamageArray.h"
+#include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/SmoothHeightMesh.h"
@@ -171,6 +172,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitMaxHealth);
 	REGISTER_LUA_CFUNC(SetUnitStockpile);
 	REGISTER_LUA_CFUNC(SetUnitWeaponState);
+	REGISTER_LUA_CFUNC(SetUnitWeaponDamages);
 	REGISTER_LUA_CFUNC(SetUnitMaxRange);
 	REGISTER_LUA_CFUNC(SetUnitExperience);
 	REGISTER_LUA_CFUNC(SetUnitArmored);
@@ -405,6 +407,8 @@ static bool ParseProjectileParams(lua_State* L, ProjectileParams& params, const 
 			if (lua_isnumber(L, -1)) {
 				if (key == "owner") {
 					params.ownerID = lua_toint(L, -1);
+				} else if (key == "weapon") {
+					params.weaponNum = lua_toint(L, -1) - LUA_WEAPON_BASE_INDEX;
 				} else if (key == "team") {
 					params.teamID = lua_toint(L, -1);
 				} else if (key == "ttl") {
@@ -1539,32 +1543,23 @@ static int SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
 	// FIXME: KDR -- missing checks and updates?
 	if (key == "reloadState" || key == "reloadFrame") {
 		weapon->reloadStatus = (int)value;
-	}
-	else if (key == "reloadTime") {
+	} else if (key == "reloadTime") {
 		weapon->reloadTime = std::max(1, (int)(value * GAME_SPEED));
-	}
-	else if (key == "accuracy") {
+	} else if (key == "accuracy") {
 		weapon->accuracyError = value;
-	}
-	else if (key == "sprayAngle") {
+	} else if (key == "sprayAngle") {
 		weapon->sprayAngle = value;
-	}
-	else if (key == "range") {
+	} else if (key == "range") {
 		weapon->UpdateRange(value);
-	}
-	else if (key == "projectileSpeed") {
+	} else if (key == "projectileSpeed") {
 		weapon->projectileSpeed = value;
-	}
-	else if (key == "burst") {
+	} else if (key == "burst") {
 		weapon->salvoSize = (int)value;
-	}
-	else if (key == "burstRate") {
+	} else if (key == "burstRate") {
 		weapon->salvoDelay = (int)(value * GAME_SPEED);
-	}
-	else if (key == "projectiles") {
+	} else if (key == "projectiles") {
 		weapon->projectilesPerShot = (int)value;
-	}
-	else if (key == "aimReady") {
+	} else if (key == "aimReady") {
 		// HACK, this should be set to result of lua_toboolean
 		weapon->angleGood = (value != 0.0f);
 	}
@@ -1575,15 +1570,13 @@ static int SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
 int LuaSyncedCtrl::SetUnitWeaponState(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	if (unit == nullptr)
 		return 0;
-	}
 
 	const size_t weaponNum = luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX;
 
-	if (weaponNum >= unit->weapons.size()) {
+	if (weaponNum >= unit->weapons.size())
 		return 0;
-	}
 
 	CWeapon* weapon = unit->weapons[weaponNum];
 
@@ -1598,6 +1591,82 @@ int LuaSyncedCtrl::SetUnitWeaponState(lua_State* L)
 		// key, value
 		if (lua_israwstring(L, 3) && lua_isnumber(L, 4)) {
 			SetSingleUnitWeaponState(L, weapon, 3);
+		}
+	}
+
+	return 0;
+}
+
+
+static int SetSingleUnitWeaponDamages(lua_State* L, DynDamageArray* damages, int index)
+{
+	const string key = lua_tostring(L, index);
+	const float value = lua_tofloat(L, index + 1);
+	// FIXME: KDR -- missing checks and updates?
+	if (key == "paralyzeDamageTime") {
+		damages->paralyzeDamageTime = std::max((int)value, 0);
+	} else if (key == "impulseFactor") {
+		damages->impulseFactor = value;
+	} else if (key == "impulseBoost") {
+		damages->impulseBoost = value;
+	} else if (key == "craterMult") {
+		damages->craterMult = value;
+	} else if (key == "craterBoost") {
+		damages->craterBoost = value;
+	} else if (key == "dynDamageExp") {
+		damages->dynDamageExp = value;
+	} else if (key == "dynDamageMin") {
+		damages->dynDamageMin = value;
+	} else if (key == "dynDamageRange") {
+		damages->dynDamageRange = value;
+	} else if (key == "dynDamageInverted") {
+		// HACK, this should be set to result of lua_toboolean
+		damages->dynDamageInverted = (value != 0.0f);
+	} else if (key == "craterAreaOfEffect") {
+		damages->craterAreaOfEffect = value;
+	} else if (key == "damageAreaOfEffect") {
+		damages->damageAreaOfEffect = value;
+	} else if (key == "edgeEffectiveness") {
+		damages->edgeEffectiveness = std::min(value, 0.999f);
+	} else if (key == "explosionSpeed") {
+		damages->explosionSpeed = value;
+	} else if (key == "default") {
+		(*damages)[0] = std::max(value, 1.0f);
+	} else {
+		const int dmgType = damageArrayHandler->GetTypeFromName(key);
+		if (dmgType > 0) //Not default, since we've already checked for that
+			(*damages)[dmgType] = std::max(value, 1.0f);
+	}
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetUnitWeaponDamages(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == nullptr)
+		return 0;
+
+	const size_t weaponNum = luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX;
+
+	if (weaponNum >= unit->weapons.size())
+		return 0;
+
+	CWeapon* weapon = unit->weapons[weaponNum];
+	DynDamageArray::Duplicate(weapon->damages);
+
+
+	if (lua_istable(L, 3)) {
+		// {key1 = value1, ...}
+		for (lua_pushnil(L); lua_next(L, 3) != 0; lua_pop(L, 1)) {
+			if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
+				SetSingleUnitWeaponDamages(L, weapon->damages, -2);
+			}
+		}
+	} else {
+		// key, value
+		if (lua_israwstring(L, 3) && lua_isnumber(L, 4)) {
+			SetSingleUnitWeaponDamages(L, weapon->damages, 3);
 		}
 	}
 
@@ -3901,9 +3970,8 @@ int LuaSyncedCtrl::SpawnProjectile(lua_State* L)
 {
 	ProjectileParams params;
 
-	if ((params.weaponDef = weaponDefHandler->GetWeaponDefByID(luaL_checkint(L, 1))) == NULL) {
+	if ((params.weaponDef = weaponDefHandler->GetWeaponDefByID(luaL_checkint(L, 1))) == nullptr)
 		return 0;
-	}
 
 	ParseProjectileParams(L, params, 2, __FUNCTION__);
 

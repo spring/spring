@@ -107,9 +107,8 @@ int CDamageArrayHandler::GetTypeFromName(const std::string& name) const
 {
 	const std::map<std::string, int>::const_iterator it = armorDefNameIdxMap.find(StringToLower(name));
 
-	if (it != armorDefNameIdxMap.end()) {
+	if (it != armorDefNameIdxMap.end())
 		return it->second;
-	}
 
 	return 0; // 'default' armor index
 }

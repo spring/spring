@@ -24,6 +24,7 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/Models/IModelParser.h"
+#include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/SideParser.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -221,6 +222,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitShieldState);
 	REGISTER_LUA_CFUNC(GetUnitFlanking);
 	REGISTER_LUA_CFUNC(GetUnitWeaponState);
+	REGISTER_LUA_CFUNC(GetUnitWeaponDamages);
 	REGISTER_LUA_CFUNC(GetUnitWeaponVectors);
 	REGISTER_LUA_CFUNC(GetUnitWeaponTryTarget);
 	REGISTER_LUA_CFUNC(GetUnitWeaponTestTarget);
@@ -3231,15 +3233,13 @@ int LuaSyncedRead::GetUnitMaxRange(lua_State* L)
 int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
 {
 	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	if (unit == nullptr)
 		return 0;
-	}
 
 	const size_t weaponNum = luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX;
 
-	if (weaponNum >= unit->weapons.size()) {
+	if (weaponNum >= unit->weapons.size())
 		return 0;
-	}
 
 	const CWeapon* weapon = unit->weapons[weaponNum];
 	const string key = luaL_optstring(L, 3, "");
@@ -3291,6 +3291,61 @@ int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
 	}
 	else {
 		return 0;
+	}
+	return 1;
+}
+
+
+int LuaSyncedRead::GetUnitWeaponDamages(lua_State* L)
+{
+	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+	if (unit == nullptr)
+		return 0;
+
+	const size_t weaponNum = luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX;
+
+	if (weaponNum >= unit->weapons.size())
+		return 0;
+
+	const CWeapon* weapon = unit->weapons[weaponNum];
+	const DynDamageArray& damages = *weapon->damages;
+	const string key = luaL_checkstring(L, 3);
+
+	if (key == "paralyzeDamageTime") {
+		lua_pushnumber(L, damages.paralyzeDamageTime);
+	} else if (key == "impulseFactor") {
+		lua_pushnumber(L, damages.impulseFactor);
+	} else if (key == "impulseBoost") {
+		lua_pushnumber(L, damages.impulseBoost);
+	} else if (key == "craterMult") {
+		lua_pushnumber(L, damages.craterMult);
+	} else if (key == "craterBoost") {
+		lua_pushnumber(L, damages.craterBoost);
+	} else if (key == "dynDamageExp") {
+		lua_pushnumber(L, damages.dynDamageExp);
+	} else if (key == "dynDamageMin") {
+		lua_pushnumber(L, damages.dynDamageMin);
+	} else if (key == "dynDamageRange") {
+		lua_pushnumber(L, damages.dynDamageRange);
+	} else if (key == "dynDamageInverted") {
+		lua_pushboolean(L, damages.dynDamageInverted);
+	} else if (key == "craterAreaOfEffect") {
+		lua_pushnumber(L, damages.craterAreaOfEffect);
+	} else if (key == "damageAreaOfEffect") {
+		lua_pushnumber(L, damages.damageAreaOfEffect);
+	} else if (key == "edgeEffectiveness") {
+		lua_pushnumber(L, damages.edgeEffectiveness);
+	} else if (key == "explosionSpeed") {
+		lua_pushnumber(L, damages.explosionSpeed);
+	} else if (key == "default") {
+		lua_pushnumber(L, damages[0]);
+	} else {
+		const int dmgType = damageArrayHandler->GetTypeFromName(key);
+		if (dmgType > 0) {//Not default, since we've already checked for that
+			lua_pushnumber(L, damages[dmgType]);
+		} else {
+			return 0;
+		}
 	}
 	return 1;
 }

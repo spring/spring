@@ -62,6 +62,7 @@ Lua:
      gl.{Unit,Feature}Shape(defID, ..., raw=true)
    and apply a model's default textures; easier than gl.Texture("$%...")
 
+ - new Spring.{Get,Set}UnitWeaponDamages similar to *UnitWeaponState but for damage and explosion values.
  - new Spring.GetUICommands function to obtain a list of all UI commands (e.g. /luaui reload)
  - new VFS.CalculateHash function that calculates hash (in base64 form) of a given string (with md5 support initially)
  - new Spring.SetFeatureFade(featureID, bool) to control whether a feature will fade or not when zoomed out.

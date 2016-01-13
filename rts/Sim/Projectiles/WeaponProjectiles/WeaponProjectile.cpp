@@ -33,6 +33,7 @@ CR_REG_METADATA(CWeaponProjectile,(
 	CR_MEMBER(ttl),
 	CR_MEMBER(bounces),
 	CR_MEMBER(weaponDefID),
+	CR_MEMBER(weaponNum),
 	CR_POSTLOAD(PostLoad)
 ))
 
