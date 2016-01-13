@@ -400,7 +400,7 @@ void CGroundDecalHandler::GatherDecalsForType(CGroundDecalHandler::SolidObjectDe
 				decal->alpha -= (decal->alphaFalloff * globalRendering->lastFrameTime * 0.001f * gs->speedFactor);
 			}
 			if (decal->alpha < 0.0f) {
-			// make sure RemoveSolidObject() won't try to modify this decal
+				// make sure RemoveSolidObject() won't try to modify this decal
 				if (decalOwner != NULL) {
 					decalOwner->groundDecal = NULL;
 				}
@@ -766,22 +766,22 @@ void CGroundDecalHandler::UnitMoved(const CUnit* unit)
 
 void CGroundDecalHandler::AddDecalAndTrack(CUnit* unit, const float3& newPos)
 {
-	SolidObjectDecalDef& decalDef = *const_cast<SolidObjectDecalDef*>(&unit->unitDef->decalDef);
-
-	if (decalDef.useGroundDecal)
-		MoveSolidObject(unit, newPos);
+	MoveSolidObject(unit, newPos);
 
 	if (!unit->leaveTracks)
 		return;
 
-	if (!unit->unitDef->IsGroundUnit())
+	const UnitDef* unitDef = unit->unitDef;
+	const SolidObjectDecalDef& decalDef = *unitDef->decalDef;
+
+	if (!unitDef->IsGroundUnit())
 		return;
 
 	if (decalDef.trackDecalType < -1)
 		return;
 
 	if (decalDef.trackDecalType < 0) {
-		decalDef.trackDecalType = GetTrackType(decalDef.trackDecalTypeName);
+		const_cast<SolidObjectDecalDef&>(decalDef).trackDecalType = GetTrackType(decalDef.trackDecalTypeName);
 		if (decalDef.trackDecalType < -1)
 			return;
 	}
@@ -1092,13 +1092,15 @@ void CGroundDecalHandler::MoveSolidObject(CSolidObject* object, const float3& po
 	if (decalLevel == 0)
 		return;
 
-	SolidObjectDecalDef& decalDef = *const_cast<SolidObjectDecalDef*>(&object->objectDef->decalDef);
+	const SolidObjectDecalDef& decalDef = *object->objectDef->decalDef;
+
 	if (!decalDef.useGroundDecal || decalDef.groundDecalType < -1)
 		return;
 
 	if (decalDef.groundDecalType < 0) {
-		decalDef.groundDecalType = GetSolidObjectDecalType(decalDef.groundDecalTypeName);
-		if (!decalDef.useGroundDecal || decalDef.groundDecalType < -1)
+		const_cast<SolidObjectDecalDef&>(decalDef).groundDecalType = GetSolidObjectDecalType(decalDef.groundDecalTypeName);
+
+		if (decalDef.groundDecalType < -1)
 			return;
 	}
 
@@ -1226,8 +1228,7 @@ void CGroundDecalHandler::ExplosionOccurred(const CExplosionEvent& event) {
 }
 
 void CGroundDecalHandler::RenderUnitCreated(const CUnit* unit, int cloaked) {
-	if (unit->unitDef->decalDef.useGroundDecal)
-		MoveSolidObject(const_cast<CUnit*>(unit), unit->pos);
+	MoveSolidObject(const_cast<CUnit*>(unit), unit->pos);
 }
 
 void CGroundDecalHandler::RenderUnitDestroyed(const CUnit* unit) {
@@ -1235,40 +1236,39 @@ void CGroundDecalHandler::RenderUnitDestroyed(const CUnit* unit) {
 
 	RemoveSolidObject(u, nullptr);
 
-	if (unit->myTrack != nullptr) {
-		auto& decDef = unit->unitDef->decalDef;
-		auto& trType = trackTypes[decDef.trackDecalType];
+	if (unit->myTrack == nullptr)
+		return;
 
-		VectorErase(trType.tracks, unit->myTrack);
-		tracksToBeDeleted.push_back(unit->myTrack);
-		u->myTrack->owner = nullptr;
-	}
+	auto& decDef = unit->unitDef->decalDef;
+	auto& trType = trackTypes[decDef.trackDecalType];
+
+	VectorErase(trType.tracks, unit->myTrack);
+	tracksToBeDeleted.push_back(unit->myTrack);
 
 	// same pointer as in tracksToBeAdded, so this also pre-empts DrawTracks
+	u->myTrack->owner = nullptr;
 	u->myTrack = nullptr;
 }
 
 void CGroundDecalHandler::RenderFeatureCreated(const CFeature* feature)
 {
-	if (feature->objectDef->decalDef.useGroundDecal)
-		MoveSolidObject(const_cast<CFeature*>(feature), feature->pos);
+	MoveSolidObject(const_cast<CFeature*>(feature), feature->pos);
 }
 
 void CGroundDecalHandler::RenderFeatureDestroyed(const CFeature* feature)
 {
-	RemoveSolidObject(const_cast<CFeature *>(feature), NULL);
+	RemoveSolidObject(const_cast<CFeature*>(feature), NULL);
 }
 
 void CGroundDecalHandler::FeatureMoved(const CFeature* feature, const float3& oldpos) {
-	if (feature->objectDef->decalDef.useGroundDecal && (feature->def->drawType == DRAWTYPE_MODEL))
-		MoveSolidObject(const_cast<CFeature *>(feature), feature->pos);
+	if (feature->def->drawType == DRAWTYPE_MODEL)
+		MoveSolidObject(const_cast<CFeature*>(feature), feature->pos);
 }
 
 void CGroundDecalHandler::UnitLoaded(const CUnit* unit, const CUnit* transport) {
-	RemoveSolidObject(const_cast<CUnit *>(unit), NULL); // FIXME: Add a RenderUnitLoaded event
+	RemoveSolidObject(const_cast<CUnit*>(unit), NULL); // FIXME: Add a RenderUnitLoaded event
 }
 
 void CGroundDecalHandler::UnitUnloaded(const CUnit* unit, const CUnit* transport) {
-	if (unit->unitDef->decalDef.useGroundDecal)
-		MoveSolidObject(const_cast<CUnit *>(unit), unit->pos); // FIXME: Add a RenderUnitUnloaded event
+	MoveSolidObject(const_cast<CUnit*>(unit), unit->pos); // FIXME: Add a RenderUnitUnloaded event
 }
