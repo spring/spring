@@ -137,6 +137,7 @@ class LuaSyncedCtrl
 		static int SetProjectileCollision(lua_State* L);
 		static int SetProjectileTarget(lua_State* L);
 		static int SetProjectileIsIntercepted(lua_State* L);
+		static int SetProjectileDamages(lua_State* L);
 		static int SetProjectileIgnoreTrackingError(lua_State* L);
 
 		static int SetProjectileGravity(lua_State* L);

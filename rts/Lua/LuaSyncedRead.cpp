@@ -296,6 +296,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetProjectileType);
 	REGISTER_LUA_CFUNC(GetProjectileDefID);
 	REGISTER_LUA_CFUNC(GetProjectileName);
+	REGISTER_LUA_CFUNC(GetProjectileDamages);
 
 	REGISTER_LUA_CFUNC(GetGroundHeight);
 	REGISTER_LUA_CFUNC(GetGroundOrigHeight);
@@ -3296,21 +3297,8 @@ int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
 }
 
 
-int LuaSyncedRead::GetUnitWeaponDamages(lua_State* L)
+static inline int PushDamagesKey(lua_State* L, const DynDamageArray& damages, const std::string &key)
 {
-	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
-	if (unit == nullptr)
-		return 0;
-
-	const size_t weaponNum = luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX;
-
-	if (weaponNum >= unit->weapons.size())
-		return 0;
-
-	const CWeapon* weapon = unit->weapons[weaponNum];
-	const DynDamageArray& damages = *weapon->damages;
-	const string key = luaL_checkstring(L, 3);
-
 	if (key == "paralyzeDamageTime") {
 		lua_pushnumber(L, damages.paralyzeDamageTime);
 	} else if (key == "impulseFactor") {
@@ -3348,6 +3336,24 @@ int LuaSyncedRead::GetUnitWeaponDamages(lua_State* L)
 		}
 	}
 	return 1;
+}
+
+
+int LuaSyncedRead::GetUnitWeaponDamages(lua_State* L)
+{
+	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+	if (unit == nullptr)
+		return 0;
+
+	const size_t weaponNum = luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX;
+
+	if (weaponNum >= unit->weapons.size())
+		return 0;
+
+	const CWeapon* weapon = unit->weapons[weaponNum];
+	const std::string key = luaL_checkstring(L, 3);
+
+	return PushDamagesKey(L, *weapon->damages, key);
 }
 
 
@@ -4821,6 +4827,22 @@ int LuaSyncedRead::GetProjectileDefID(lua_State* L)
 
 	lua_pushnumber(L, wdef->id);
 	return 1;
+}
+
+int LuaSyncedRead::GetProjectileDamages(lua_State* L)
+{
+	const CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
+
+	if (pro == nullptr)
+		return 0;
+
+	if (!pro->weapon)
+		return 0;
+
+	const CWeaponProjectile* wpro = static_cast<const CWeaponProjectile*>(pro);
+	const std::string key = luaL_checkstring(L, 2);
+
+	return PushDamagesKey(L, *wpro->damages, key);
 }
 
 int LuaSyncedRead::GetProjectileName(lua_State* L)

@@ -247,6 +247,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetProjectileCollision);
 	REGISTER_LUA_CFUNC(SetProjectileTarget);
 	REGISTER_LUA_CFUNC(SetProjectileIsIntercepted);
+	REGISTER_LUA_CFUNC(SetProjectileDamages);
 	REGISTER_LUA_CFUNC(SetProjectileIgnoreTrackingError);
 
 	REGISTER_LUA_CFUNC(SetProjectileGravity);
@@ -1598,7 +1599,7 @@ int LuaSyncedCtrl::SetUnitWeaponState(lua_State* L)
 }
 
 
-static int SetSingleUnitWeaponDamages(lua_State* L, DynDamageArray* damages, int index)
+static int SetSingleDamagesKey(lua_State* L, DynDamageArray* damages, int index)
 {
 	const string key = lua_tostring(L, index);
 	const float value = lua_tofloat(L, index + 1);
@@ -1660,13 +1661,13 @@ int LuaSyncedCtrl::SetUnitWeaponDamages(lua_State* L)
 		// {key1 = value1, ...}
 		for (lua_pushnil(L); lua_next(L, 3) != 0; lua_pop(L, 1)) {
 			if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
-				SetSingleUnitWeaponDamages(L, weapon->damages, -2);
+				SetSingleDamagesKey(L, weapon->damages, -2);
 			}
 		}
 	} else {
 		// key, value
 		if (lua_israwstring(L, 3) && lua_isnumber(L, 4)) {
-			SetSingleUnitWeaponDamages(L, weapon->damages, 3);
+			SetSingleDamagesKey(L, weapon->damages, 3);
 		}
 	}
 
@@ -3004,12 +3005,41 @@ int LuaSyncedCtrl::SetProjectileIsIntercepted(lua_State* L)
 {
 	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
 
-	if (proj == NULL || !proj->weapon)
+	if (proj == nullptr || !proj->weapon)
 		return 0;
 
 	CWeaponProjectile* wpro = static_cast<CWeaponProjectile*>(proj);
 
 	wpro->SetBeingIntercepted(luaL_checkboolean(L, 2));
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetProjectileDamages(lua_State* L)
+{
+	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
+
+	if (proj == nullptr || !proj->weapon)
+		return 0;
+
+	CWeaponProjectile* wpro = static_cast<CWeaponProjectile*>(proj);
+	DynDamageArray::Duplicate(wpro->damages);
+
+
+	if (lua_istable(L, 3)) {
+		// {key1 = value1, ...}
+		for (lua_pushnil(L); lua_next(L, 3) != 0; lua_pop(L, 1)) {
+			if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
+				SetSingleDamagesKey(L, wpro->damages, -2);
+			}
+		}
+	} else {
+		// key, value
+		if (lua_israwstring(L, 3) && lua_isnumber(L, 4)) {
+			SetSingleDamagesKey(L, wpro->damages, 3);
+		}
+	}
+
 	return 0;
 }
 
