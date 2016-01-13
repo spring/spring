@@ -154,10 +154,10 @@ void CWeaponProjectile::Explode(
 		owner(),
 		hitUnit,
 		hitFeature,
-		weaponDef->craterAreaOfEffect,
-		weaponDef->damageAreaOfEffect,
-		weaponDef->edgeEffectiveness,
-		weaponDef->explosionSpeed,
+		weaponDef->damages.craterAreaOfEffect,
+		weaponDef->damages.damageAreaOfEffect,
+		weaponDef->damages.edgeEffectiveness,
+		weaponDef->damages.explosionSpeed,
 		weaponDef->noExplode? 0.3f: 1.0f,                 // gfxMod
 		weaponDef->impactOnly,
 		weaponDef->noExplode || weaponDef->noSelfDamage,  // ignoreOwner
@@ -252,7 +252,7 @@ void CWeaponProjectile::UpdateInterception()
 		}
 	} else {
 		// FIXME: if (pos.SqDistance(po->pos) < Square(weaponDef->collisionSize)) {
-		if (pos.SqDistance(po->pos) < Square(weaponDef->damageAreaOfEffect)) {
+		if (pos.SqDistance(po->pos) < Square(weaponDef->damages.damageAreaOfEffect)) {
 			po->Collision();
 			Collision();
 		}
@@ -309,12 +309,16 @@ void CWeaponProjectile::UpdateGroundBounce()
 }
 
 
+float CWeaponProjectile::GetAreaOfEffect() const
+{
+	return weaponDef != nullptr ? weaponDef->damages.damageAreaOfEffect : 0.0f;
+}
+
 
 bool CWeaponProjectile::TraveledRange() const
 {
 	return ((pos - startPos).SqLength() > (weaponDef->range * weaponDef->range));
 }
-
 
 
 void CWeaponProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
@@ -335,6 +339,7 @@ void CWeaponProjectile::DependentDied(CObject* o)
 		target = NULL;
 	}
 }
+
 
 void CWeaponProjectile::PostLoad()
 {

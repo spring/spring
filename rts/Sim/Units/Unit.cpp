@@ -658,10 +658,10 @@ void CUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool sh
 				this,                              // owner
 				NULL,                              // hitUnit
 				NULL,                              // hitFeature
-				wd->craterAreaOfEffect,
-				wd->damageAreaOfEffect,
-				wd->edgeEffectiveness,
-				wd->explosionSpeed,
+				wd->damages.craterAreaOfEffect,
+				wd->damages.damageAreaOfEffect,
+				wd->damages.edgeEffectiveness,
+				wd->damages.explosionSpeed,
 				wd->damages[0] > 500? 1.0f: 2.0f,  // gfxMod
 				false,                             // impactOnly
 				false,                             // ignoreOwner

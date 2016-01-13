@@ -4718,7 +4718,7 @@ EXPORT(int) skirmishAiCallback_WeaponDef_Damage_getTypes(int skirmishAIId, int w
 }
 
 EXPORT(float) skirmishAiCallback_WeaponDef_getAreaOfEffect(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->damageAreaOfEffect;
+	return getWeaponDefById(skirmishAIId, weaponDefId)->damages.damageAreaOfEffect;
 }
 
 EXPORT(bool) skirmishAiCallback_WeaponDef_isNoSelfDamage(int skirmishAIId, int weaponDefId) {
@@ -4730,7 +4730,7 @@ EXPORT(float) skirmishAiCallback_WeaponDef_getFireStarter(int skirmishAIId, int 
 }
 
 EXPORT(float) skirmishAiCallback_WeaponDef_getEdgeEffectiveness(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->edgeEffectiveness;
+	return getWeaponDefById(skirmishAIId, weaponDefId)->damages.edgeEffectiveness;
 }
 
 EXPORT(float) skirmishAiCallback_WeaponDef_getSize(int skirmishAIId, int weaponDefId) {
@@ -4966,7 +4966,7 @@ EXPORT(float) skirmishAiCallback_WeaponDef_getProjectileSpeed(int skirmishAIId, 
 }
 
 EXPORT(float) skirmishAiCallback_WeaponDef_getExplosionSpeed(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->explosionSpeed;
+	return getWeaponDefById(skirmishAIId, weaponDefId)->damages.explosionSpeed;
 }
 
 EXPORT(int) skirmishAiCallback_WeaponDef_getOnlyTargetCategory(int skirmishAIId, int weaponDefId) {
@@ -5126,19 +5126,19 @@ EXPORT(float) skirmishAiCallback_WeaponDef_getCameraShake(int skirmishAIId, int 
 }
 
 EXPORT(float) skirmishAiCallback_WeaponDef_getDynDamageExp(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->dynDamageExp;
+	return getWeaponDefById(skirmishAIId, weaponDefId)->damages.dynDamageExp;
 }
 
 EXPORT(float) skirmishAiCallback_WeaponDef_getDynDamageMin(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->dynDamageMin;
+	return getWeaponDefById(skirmishAIId, weaponDefId)->damages.dynDamageMin;
 }
 
 EXPORT(float) skirmishAiCallback_WeaponDef_getDynDamageRange(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->dynDamageRange;
+	return getWeaponDefById(skirmishAIId, weaponDefId)->damages.dynDamageRange;
 }
 
 EXPORT(bool) skirmishAiCallback_WeaponDef_isDynDamageInverted(int skirmishAIId, int weaponDefId) {
-	return getWeaponDefById(skirmishAIId, weaponDefId)->dynDamageInverted;
+	return getWeaponDefById(skirmishAIId, weaponDefId)->damages.dynDamageInverted;
 }
 
 EXPORT(int) skirmishAiCallback_WeaponDef_getCustomParams(int skirmishAIId, int weaponDefId,

@@ -19,7 +19,6 @@ public:
 	int ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed) override;
 
 private:
-	float areaOfEffect;
 	float invttl;
 	float curTime;
 };

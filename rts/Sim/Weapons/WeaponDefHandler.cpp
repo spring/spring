@@ -73,19 +73,19 @@ DamageArray CWeaponDefHandler::DynamicDamages(
 ) {
 	const DamageArray& damages = weaponDef->damages;
 
-	if (weaponDef->dynDamageExp <= 0.0f)
+	if (weaponDef->damages.dynDamageExp <= 0.0f)
 		return damages;
 
 	DamageArray dynDamages(damages);
 
-	const float range     = (weaponDef->dynDamageRange > 0.0f)? weaponDef->dynDamageRange: weaponDef->range;
-	const float damageMin = weaponDef->dynDamageMin;
+	const float range     = (weaponDef->damages.dynDamageRange > 0.0f)? weaponDef->damages.dynDamageRange: weaponDef->range;
+	const float damageMin = weaponDef->damages.dynDamageMin;
 
 	const float travDist  = std::min(range, curPos.distance2D(startPos));
-	const float damageMod = 1.0f - math::pow(1.0f / range * travDist, weaponDef->dynDamageExp);
+	const float damageMod = 1.0f - math::pow(1.0f / range * travDist, weaponDef->damages.dynDamageExp);
 	const float ddmod     = damageMin / damages[0]; // get damage mod from first damage type
 
-	if (weaponDef->dynDamageInverted) {
+	if (weaponDef->damages.dynDamageInverted) {
 		for (int i = 0; i < damageArrayHandler->GetNumTypes(); ++i) {
 			dynDamages[i] = damages[i] - damageMod * damages[i];
 

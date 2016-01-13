@@ -399,10 +399,10 @@ void CBeamLaser::FireInternal(float3 curDir)
 			owner,
 			hitUnit,
 			hitFeature,
-			weaponDef->craterAreaOfEffect,
-			weaponDef->damageAreaOfEffect,
-			weaponDef->edgeEffectiveness,
-			weaponDef->explosionSpeed,
+			weaponDef->damages.craterAreaOfEffect,
+			weaponDef->damages.damageAreaOfEffect,
+			weaponDef->damages.edgeEffectiveness,
+			weaponDef->damages.explosionSpeed,
 			1.0f,                                             // gfxMod
 			weaponDef->impactOnly,
 			weaponDef->noExplode || weaponDef->noSelfDamage,  // ignoreOwner

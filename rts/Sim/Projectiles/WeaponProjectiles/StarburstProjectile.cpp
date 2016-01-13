@@ -44,7 +44,6 @@ CR_REG_METADATA(CStarburstProjectile, (
 	CR_MEMBER(maxSpeed),
 	CR_MEMBER(acceleration),
 	CR_MEMBER(uptime),
-	CR_MEMBER(areaOfEffect),
 	CR_MEMBER(age),
 	CR_MEMBER(oldSmoke),
 	CR_MEMBER(oldSmokeDir),
@@ -66,7 +65,6 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 	, maxGoodDif(0.0f)
 	, maxSpeed(0.0f)
 	, acceleration(0.f)
-	, areaOfEffect(0.0f)
 	, distanceToTravel(params.maxRange)
 
 	, uptime(params.upTime)
@@ -88,7 +86,6 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 
 	if (weaponDef != NULL) {
 		maxSpeed = weaponDef->projectilespeed;
-		areaOfEffect = weaponDef->damageAreaOfEffect;
 		ttl = weaponDef->flighttime;
 
 		// Default uptime is -1. Positive values override the weapondef.
@@ -203,7 +200,7 @@ void CStarburstProjectile::Update()
 	}
 
 	if (ttl > 0) {
-		explGenHandler->GenExplosion(cegID, pos, dir, ttl, areaOfEffect, 0.0f, NULL, NULL);
+		explGenHandler->GenExplosion(cegID, pos, dir, ttl, GetAreaOfEffect(), 0.0f, NULL, NULL);
 	}
 
 

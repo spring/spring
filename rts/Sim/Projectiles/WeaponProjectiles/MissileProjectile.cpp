@@ -28,7 +28,6 @@ CR_REG_METADATA(CMissileProjectile,(
 	CR_MEMBER(ignoreError),
 	CR_MEMBER(maxSpeed),
 	// CR_MEMBER(ttl),
-	CR_MEMBER(areaOfEffect),
 	CR_MEMBER(age),
 	CR_MEMBER(oldSmoke),
 	CR_MEMBER(oldDir),
@@ -50,7 +49,6 @@ CR_REG_METADATA(CMissileProjectile,(
 CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, ignoreError(false)
 	, maxSpeed(0.0f)
-	, areaOfEffect(0.0f)
 	, extraHeight(0.0f)
 	, extraHeightDecay(0.0f)
 
@@ -76,8 +74,6 @@ CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponP
 	}
 	if (weaponDef != NULL) {
 		maxSpeed = weaponDef->projectilespeed;
-		areaOfEffect = weaponDef->damageAreaOfEffect;
-
 		isDancing = (weaponDef->dance > 0);
 		isWobbling = (weaponDef->wobble > 0);
 
@@ -228,7 +224,7 @@ void CMissileProjectile::Update()
 			SetDirectionAndSpeed(dir, speed.w);
 		}
 
-		explGenHandler->GenExplosion(cegID, pos, dir, ttl, areaOfEffect, 0.0f, NULL, NULL);
+		explGenHandler->GenExplosion(cegID, pos, dir, ttl, GetAreaOfEffect(), 0.0f, NULL, NULL);
 	} else {
 		if (weaponDef->selfExplode) {
 			Collision();

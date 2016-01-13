@@ -80,10 +80,10 @@ void CLightningCannon::FireImpl(const bool scriptCall)
 		owner,
 		hitUnit,
 		hitFeature,
-		weaponDef->craterAreaOfEffect,
-		weaponDef->damageAreaOfEffect,
-		weaponDef->edgeEffectiveness,
-		weaponDef->explosionSpeed,
+		weaponDef->damages.craterAreaOfEffect,
+		weaponDef->damages.damageAreaOfEffect,
+		weaponDef->damages.edgeEffectiveness,
+		weaponDef->damages.explosionSpeed,
 		0.5f,                                             // gfxMod
 		weaponDef->impactOnly,
 		weaponDef->noExplode || weaponDef->noSelfDamage,  // ignoreOwner

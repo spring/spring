@@ -970,7 +970,7 @@ bool CWeapon::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) con
 		const float3 gpos = aimFromPos + dir * gdst;
 
 		// true iff ground does not block the ray of length <length> from <pos> along <dir>
-		if ((gdst > 0.0f) && (gpos.SqDistance(pos) > Square(weaponDef->damageAreaOfEffect)))
+		if ((gdst > 0.0f) && (gpos.SqDistance(pos) > Square(weaponDef->damages.damageAreaOfEffect)))
 			return false;
 	}
 
@@ -1039,7 +1039,7 @@ void CWeapon::Init()
 	UpdateWeaponPieces();
 	UpdateWeaponVectors();
 
-	muzzleFlareSize = std::min(weaponDef->damageAreaOfEffect * 0.2f, std::min(1500.f, weaponDef->damages[0]) * 0.003f);
+	muzzleFlareSize = std::min(weaponDef->damages.damageAreaOfEffect * 0.2f, std::min(1500.f, weaponDef->damages[0]) * 0.003f);
 
 	if (weaponDef->interceptor)
 		interceptHandler.AddInterceptorWeapon(this);

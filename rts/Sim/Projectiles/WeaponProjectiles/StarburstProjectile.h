@@ -40,7 +40,6 @@ private:
 	float maxGoodDif;
 	float maxSpeed;
 	float acceleration;
-	float areaOfEffect;
 	float distanceToTravel;
 
 	int uptime;

@@ -21,7 +21,6 @@ private:
 	float tracking;
 	bool ignoreError;
 	float maxSpeed;
-	float areaOfEffect;
 	int nextBubble;
 	float texx;
 	float texy;

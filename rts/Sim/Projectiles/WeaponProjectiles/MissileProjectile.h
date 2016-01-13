@@ -34,7 +34,6 @@ private:
 	bool ignoreError;
 
 	float maxSpeed;
-	float areaOfEffect;
 	float extraHeight;
 	float extraHeightDecay;
 

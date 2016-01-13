@@ -50,8 +50,8 @@ WEAPONTAG(bool, impactOnly).defaultValue(false);
 WEAPONTAG(bool, noSelfDamage).defaultValue(false);
 WEAPONTAG(bool, noExplode).defaultValue(false);
 WEAPONTAG(bool, selfExplode).externalName("burnblow").defaultValue(false);
-WEAPONTAG(float, damageAreaOfEffect).fallbackName("areaOfEffect").defaultValue(8.0f).scaleValue(0.5f);
-WEAPONTAG(float, edgeEffectiveness).defaultValue(0.0f).maximumValue(0.999f);
+WEAPONTAG(float, damageAreaOfEffect, damages.damageAreaOfEffect).fallbackName("areaOfEffect").defaultValue(8.0f).scaleValue(0.5f);
+WEAPONTAG(float, edgeEffectiveness, damages.edgeEffectiveness).defaultValue(0.0f).maximumValue(0.999f);
 WEAPONTAG(float, collisionSize).defaultValue(0.05f);
 
 // Projectile Properties
@@ -75,7 +75,7 @@ WEAPONTAG(float, impulseFactor, damages.impulseFactor).defaultValue(1.0f);
 WEAPONTAG(float, impulseBoost, damages.impulseBoost).defaultValue(0.0f);
 WEAPONTAG(float, craterMult, damages.craterMult).fallbackName("impulseFactor").defaultValue(1.0f);
 WEAPONTAG(float, craterBoost, damages.craterBoost).defaultValue(0.0f);
-WEAPONTAG(float, craterAreaOfEffect).fallbackName("areaOfEffect").defaultValue(8.0f).scaleValue(0.5f);
+WEAPONTAG(float, craterAreaOfEffect, damages.craterAreaOfEffect).fallbackName("areaOfEffect").defaultValue(8.0f).scaleValue(0.5f);
 
 // Water
 WEAPONTAG(bool, waterweapon).defaultValue(false);
@@ -151,10 +151,10 @@ WEAPONTAG(float, coverageRange).externalName("coverage").defaultValue(0.0f).desc
 WEAPONTAG(bool, interceptSolo).defaultValue(true).description("If true no other interceptors may target the same projectile.");
 
 // Dynamic Damage
-WEAPONTAG(bool, dynDamageInverted).defaultValue(false).description("If true the damage curve is inverted i.e. the weapon does more damage at greater ranges as opposed to less.");
-WEAPONTAG(float, dynDamageExp).defaultValue(0.0f).description("Exponent of the range-dependent damage formula, the default of 0.0 disables dynamic damage, 1.0 means linear scaling, 2.0 quadratic and so on.");
-WEAPONTAG(float, dynDamageMin).defaultValue(0.0f).description("The minimum floor value that range-dependent damage can drop to.");
-WEAPONTAG(float, dynDamageRange).defaultValue(0.0f).description("If set to non-zero values the weapon will use this value in the range-dependant damage formula instead of the actual range.");
+WEAPONTAG(bool, dynDamageInverted, damages.dynDamageInverted).defaultValue(false).description("If true the damage curve is inverted i.e. the weapon does more damage at greater ranges as opposed to less.");
+WEAPONTAG(float, dynDamageExp, damages.dynDamageExp).defaultValue(0.0f).description("Exponent of the range-dependent damage formula, the default of 0.0 disables dynamic damage, 1.0 means linear scaling, 2.0 quadratic and so on.");
+WEAPONTAG(float, dynDamageMin, damages.dynDamageMin).defaultValue(0.0f).description("The minimum floor value that range-dependent damage can drop to.");
+WEAPONTAG(float, dynDamageRange, damages.dynDamageRange).defaultValue(0.0f).description("If set to non-zero values the weapon will use this value in the range-dependant damage formula instead of the actual range.");
 
 // Shield
 WEAPONTAG(bool, shieldRepulser).externalName("shield.repulser").fallbackName("shieldRepulser")
@@ -373,12 +373,12 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 			}
 		}
 
-		const float tempsize = 2.0f + std::min(defDamage * 0.0025f, damageAreaOfEffect * 0.1f);
+		const float tempsize = 2.0f + std::min(defDamage * 0.0025f, damages.damageAreaOfEffect * 0.1f);
 		const float gd = std::max(30.0f, defDamage / 20.0f);
 		const float defExpSpeed = (8.0f + (gd * 2.5f)) / (9.0f + (math::sqrt(gd) * 0.7f)) * 0.5f;
 
 		size = wdTable.GetFloat("size", tempsize);
-		explosionSpeed = wdTable.GetFloat("explosionSpeed", defExpSpeed);
+		damages.explosionSpeed = wdTable.GetFloat("explosionSpeed", defExpSpeed);
 	}
 
 	{
@@ -528,7 +528,7 @@ void WeaponDef::ParseWeaponSounds(const LuaTable& wdTable) {
 			}
 		}
 
-		if (damageAreaOfEffect > 8.0f) {
+		if (damages.damageAreaOfEffect > 8.0f) {
 			hitSoundVolume *= 2.0f;
 		}
 		if (type == "DGun") {

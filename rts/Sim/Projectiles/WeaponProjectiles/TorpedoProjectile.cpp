@@ -26,7 +26,6 @@ CR_REG_METADATA(CTorpedoProjectile,(
 	CR_MEMBER(tracking),
 	CR_MEMBER(ignoreError),
 	CR_MEMBER(maxSpeed),
-	CR_MEMBER(areaOfEffect),
 	CR_MEMBER(nextBubble),
 	CR_MEMBER(texx),
 	CR_MEMBER(texy)
@@ -36,7 +35,6 @@ CTorpedoProjectile::CTorpedoProjectile(const ProjectileParams& params): CWeaponP
 	, tracking(0.0f)
 	, ignoreError(false)
 	, maxSpeed(0.0f)
-	, areaOfEffect(0.0f)
 
 	, nextBubble(4)
 	, texx(0.0f)
@@ -48,7 +46,6 @@ CTorpedoProjectile::CTorpedoProjectile(const ProjectileParams& params): CWeaponP
 
 	if (weaponDef != NULL) {
 		maxSpeed = weaponDef->projectilespeed;
-		areaOfEffect = weaponDef->damageAreaOfEffect;
 	}
 
 	drawRadius = maxSpeed * 8;
@@ -123,7 +120,7 @@ void CTorpedoProjectile::Update()
 				CWorldObject::SetVelocity(dir * speed.w);
 			}
 
-			explGenHandler->GenExplosion(cegID, pos, speed, ttl, areaOfEffect, 0.0f, NULL, NULL);
+			explGenHandler->GenExplosion(cegID, pos, speed, ttl, GetAreaOfEffect(), 0.0f, NULL, NULL);
 		} else {
 			if (!luaMoveCtrl) {
 				// must update dir and speed.w here

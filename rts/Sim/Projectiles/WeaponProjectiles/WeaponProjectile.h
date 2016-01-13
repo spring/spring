@@ -63,6 +63,7 @@ public:
 	bool IsBeingIntercepted() const { return targeted; }
 	bool CanBeInterceptedBy(const WeaponDef*) const;
 
+	float GetAreaOfEffect() const;
 	bool TraveledRange() const;
 
 protected:

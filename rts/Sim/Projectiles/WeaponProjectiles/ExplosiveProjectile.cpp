@@ -18,7 +18,6 @@ CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, (ProjectileParams()))
 
 CR_REG_METADATA(CExplosiveProjectile, (
 	CR_SETFLAG(CF_Synced),
-	CR_MEMBER(areaOfEffect),
 	CR_MEMBER(invttl),
 	CR_MEMBER(curTime)
 ))
@@ -29,7 +28,6 @@ CR_REG_METADATA(CExplosiveProjectile, (
 
 
 CExplosiveProjectile::CExplosiveProjectile(const ProjectileParams& params): CWeaponProjectile(params)
-	, areaOfEffect(0.0f)
 	, invttl(0.0f)
 	, curTime(0.0f)
 {
@@ -41,7 +39,6 @@ CExplosiveProjectile::CExplosiveProjectile(const ProjectileParams& params): CWea
 	if (weaponDef != NULL) {
 		SetRadiusAndHeight(weaponDef->collisionSize, 0.0f);
 		drawRadius = weaponDef->size;
-		areaOfEffect = weaponDef->damageAreaOfEffect;
 	}
 
 	if (ttl <= 0) {
@@ -64,7 +61,7 @@ void CExplosiveProjectile::Update()
 		Collision();
 	} else {
 		if (ttl > 0) {
-			explGenHandler->GenExplosion(cegID, pos, speed, ttl, areaOfEffect, 0.0f, NULL, NULL);
+			explGenHandler->GenExplosion(cegID, pos, speed, ttl, GetAreaOfEffect(), 0.0f, NULL, NULL);
 		}
 	}
 

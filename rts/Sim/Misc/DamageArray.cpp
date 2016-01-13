@@ -14,8 +14,6 @@ CR_REG_METADATA(DamageArray, (
 	CR_MEMBER(damages)
 ))
 
-
-
 DamageArray::DamageArray(float damage)
 	: paralyzeDamageTime(0)
 	, impulseFactor(1.0f)
@@ -58,3 +56,31 @@ void DamageArray::SetDefaultDamage(float damage)
 		damages.resize(1, damage);
 	}
 }
+
+
+CR_BIND_DERIVED(DynDamageArray, DamageArray, )
+
+CR_REG_METADATA(DynDamageArray, (
+	CR_MEMBER(dynDamageExp),
+	CR_MEMBER(dynDamageMin),
+	CR_MEMBER(dynDamageRange),
+	CR_MEMBER(dynDamageInverted),
+	CR_MEMBER(craterAreaOfEffect),
+	CR_MEMBER(damageAreaOfEffect),
+	CR_MEMBER(edgeEffectiveness),
+	CR_MEMBER(explosionSpeed),
+	CR_MEMBER(refCount)
+))
+
+DynDamageArray::DynDamageArray(float damage)
+	: DamageArray(damage)
+	, dynDamageExp(0.0f)
+	, dynDamageMin(0.0f)
+	, dynDamageRange(0.0f)
+	, dynDamageInverted(false)
+	, craterAreaOfEffect(4.0f)
+	, damageAreaOfEffect(4.0f)
+	, edgeEffectiveness(0.0f)
+	, explosionSpeed(1.0f) // always overwritten
+	, refCount(0)
+{ }

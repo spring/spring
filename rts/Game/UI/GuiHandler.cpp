@@ -3246,7 +3246,7 @@ static void DrawUnitDefRanges(const UnitDef* unitdef, const float3 pos)
 		const WeaponDef* wd = unitdef->selfdExpWeaponDef;
 		if (wd != NULL) {
 			glColor4fv(cmdColors.rangeSelfDestruct);
-			glSurfaceCircle(pos, wd->damageAreaOfEffect, 40);
+			glSurfaceCircle(pos, wd->damages.damageAreaOfEffect, 40);
 		}
 	}
 
