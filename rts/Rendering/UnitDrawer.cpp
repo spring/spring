@@ -1761,7 +1761,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 	VectorErase(liveGhostBuildings[MDL_TYPE(u)], u);
 
 	// remove the icon for all ally-teams
-	for (auto it = unitRadarIcons.cbegin(); it != unitRadarIcons.cend(); ++it) {
+	for (auto it = unitRadarIcons.begin(); it != unitRadarIcons.end(); ++it) {
 		VectorErase(*it, u);
 	}
 
