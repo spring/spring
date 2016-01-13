@@ -26,6 +26,9 @@ Lua:
    the old UnitDestroyed and false for the second (allows shaders during
    death anims, etc; after the second call a unitID is no longer valid!)
    also remove hardcoded logic to zombify (stun+immobilize) a unit on death
+ ! ShieldPreDamaged will now be called for LightningCannon and BeamLaser.
+   Two new arguments were added: beamCarrierWeaponNum and beamCarrierUnitID.
+   These will be populated in place of the first argument (projID).
 
  ! gl.UnitShape and gl.FeatureShape now take three extra boolean arguments
    and set their relevant GL state internally (so that calling only these

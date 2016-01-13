@@ -1006,7 +1006,7 @@ bool CSyncedLuaHandle::ShieldPreDamaged(
 {
 	assert((projectile != nullptr) || ((beamEmitter != nullptr) && (beamCarrier != nullptr)));
 	LUA_CALL_IN_CHECK(L, false);
-	luaL_checkstack(L, 2 + 5 + 1, __FUNCTION__);
+	luaL_checkstack(L, 2 + 7 + 1, __FUNCTION__);
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr(__FUNCTION__);
