@@ -5,6 +5,7 @@
 #include "SolidObjectDef.h"
 #include "Map/ReadMap.h"
 #include "Map/Ground.h"
+#include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
@@ -132,6 +133,12 @@ CSolidObject::CSolidObject():
 	yardOpen(false),
 	buildFacing(0)
 {
+}
+
+CSolidObject::~CSolidObject() {
+	//if nothing removed the decal before us, force remove it
+	if (groundDecal != nullptr)
+		groundDecals->ForceRemoveSolidObject(this);
 }
 
 void CSolidObject::UpdatePhysicalState(float eps) {

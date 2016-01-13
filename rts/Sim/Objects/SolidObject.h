@@ -93,7 +93,7 @@ public:
 	};
 
 	CSolidObject();
-	virtual ~CSolidObject() {}
+	virtual ~CSolidObject();
 
 	virtual bool AddBuildPower(CUnit* builder, float amount) { return false; }
 	virtual void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID) {}

@@ -258,6 +258,7 @@ CUnitDrawer::~CUnitDrawer()
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		for (GhostSolidObject* ghost: deadGhostBuildings[modelType]) {
+			groundDecals->GhostDestroyed(ghost);
 			delete ghost;
 		}
 
