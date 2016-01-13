@@ -772,7 +772,7 @@ void CGroundDecalHandler::AddDecalAndTrack(CUnit* unit, const float3& newPos)
 		return;
 
 	const UnitDef* unitDef = unit->unitDef;
-	const SolidObjectDecalDef& decalDef = *unitDef->decalDef;
+	const SolidObjectDecalDef& decalDef = unitDef->decalDef;
 
 	if (!unitDef->IsGroundUnit())
 		return;
@@ -1092,7 +1092,7 @@ void CGroundDecalHandler::MoveSolidObject(CSolidObject* object, const float3& po
 	if (decalLevel == 0)
 		return;
 
-	const SolidObjectDecalDef& decalDef = *object->objectDef->decalDef;
+	const SolidObjectDecalDef& decalDef = object->objectDef->decalDef;
 
 	if (!decalDef.useGroundDecal || decalDef.groundDecalType < -1)
 		return;
