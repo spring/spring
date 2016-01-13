@@ -18,6 +18,7 @@
 #undef GetCharWidth // winapi.h
 
 
+bool CglFont::threadSafety = false;
 
 /*******************************************************************************/
 /*******************************************************************************/
@@ -45,9 +46,6 @@ CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float
 , autoOutlineColor(true)
 , setColor(false)
 {
-	va  = new CVertexArray();
-	va2 = new CVertexArray();
-
 	textColor    = white;
 	outlineColor = darkOutline;
 }
@@ -65,10 +63,7 @@ CglFont* CglFont::LoadFont(const std::string& fontFile, int size, int outlinewid
 
 
 CglFont::~CglFont()
-{
-	SafeDelete(va);
-	SafeDelete(va2);
-}
+{ }
 
 
 /*******************************************************************************/
@@ -364,7 +359,11 @@ std::list<std::string> CglFont::SplitIntoLines(const std::u8string& text)
 
 void CglFont::SetAutoOutlineColor(bool enable)
 {
+	if (threadSafety)
+		vaMutex.lock();
 	autoOutlineColor = enable;
+	if (threadSafety)
+		vaMutex.unlock();
 }
 
 
@@ -372,16 +371,20 @@ void CglFont::SetTextColor(const float4* color)
 {
 	if (color == NULL) color = &white;
 
+	if (threadSafety)
+		vaMutex.lock();
 	if (inBeginEnd && !(*color==textColor)) {
-		if (va->drawIndex() == 0 && !stripTextColors.empty()) {
+		if (va.drawIndex() == 0 && !stripTextColors.empty()) {
 			stripTextColors.back() = *color;
 		} else {
 			stripTextColors.push_back(*color);
-			va->EndStrip();
+			va.EndStrip();
 		}
 	}
 
 	textColor = *color;
+	if (threadSafety)
+		vaMutex.unlock();
 }
 
 
@@ -389,16 +392,20 @@ void CglFont::SetOutlineColor(const float4* color)
 {
 	if (color == NULL) color = ChooseOutlineColor(textColor);
 
+	if (threadSafety)
+		vaMutex.lock();
 	if (inBeginEnd && !(*color==outlineColor)) {
-		if (va2->drawIndex() == 0 && !stripOutlineColors.empty()) {
+		if (va2.drawIndex() == 0 && !stripOutlineColors.empty()) {
 			stripOutlineColors.back() = *color;
 		} else {
 			stripOutlineColors.push_back(*color);
-			va2->EndStrip();
+			va2.EndStrip();
 		}
 	}
 
 	outlineColor = *color;
+	if (threadSafety)
+		vaMutex.unlock();
 }
 
 
@@ -430,10 +437,14 @@ const float4* CglFont::ChooseOutlineColor(const float4& textColor)
 
 void CglFont::Begin(const bool immediate, const bool resetColors)
 {
+	if (threadSafety)
+		vaMutex.lock();
+
 	if (inBeginEnd) {
 		LOG_L(L_ERROR, "called Begin() multiple times");
 		return;
 	}
+
 
 	autoOutlineColor = true;
 
@@ -444,8 +455,8 @@ void CglFont::Begin(const bool immediate, const bool resetColors)
 
 	inBeginEnd = true;
 
-	va->Initialize();
-	va2->Initialize();
+	va.Initialize();
+	va2.Initialize();
 	stripTextColors.clear();
 	stripOutlineColors.clear();
 	stripTextColors.push_back(textColor);
@@ -467,8 +478,10 @@ void CglFont::End()
 	}
 	inBeginEnd = false;
 
-	if (va->drawIndex() == 0) {
+	if (va.drawIndex() == 0) {
 		glPopAttrib();
+		if (threadSafety)
+			vaMutex.unlock();
 		return;
 	}
 
@@ -489,22 +502,22 @@ void CglFont::End()
 	glCallList(textureSpaceMatrix);
 	glMatrixMode(GL_MODELVIEW);
 
-	if (va2->drawIndex() > 0) {
+	if (va2.drawIndex() > 0) {
 		if (stripOutlineColors.size() > 1) {
 			ColorMap::iterator sci = stripOutlineColors.begin();
-			va2->DrawArray2dT(GL_QUADS,TextStripCallback,&sci);
+			va2.DrawArray2dT(GL_QUADS,TextStripCallback,&sci);
 		} else {
 			glColor4fv(outlineColor);
-			va2->DrawArray2dT(GL_QUADS);
+			va2.DrawArray2dT(GL_QUADS);
 		}
 	}
 
 	if (stripTextColors.size() > 1) {
 		ColorMap::iterator sci = stripTextColors.begin();
-		va->DrawArray2dT(GL_QUADS,TextStripCallback,&sci);//FIXME calls a 0 length strip!
+		va.DrawArray2dT(GL_QUADS,TextStripCallback,&sci);//FIXME calls a 0 length strip!
 	} else {
 		if (setColor) glColor4fv(textColor);
-		va->DrawArray2dT(GL_QUADS);
+		va.DrawArray2dT(GL_QUADS);
 	}
 
 	// pop texture matrix
@@ -513,6 +526,8 @@ void CglFont::End()
 	glMatrixMode(GL_MODELVIEW);
 
 	glPopAttrib();
+	if (threadSafety)
+		vaMutex.unlock();
 }
 
 
@@ -538,7 +553,7 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 	unsigned int length = (unsigned int)str.length();
 	const std::u8string& ustr = toustring(str);
 
-	va->EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
+	va.EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
 
 	int skippedLines;
 	bool colorChanged;
@@ -576,10 +591,10 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 		const float dx0 = (scaleX * g->size.x0()) + x, dy0 = (scaleY * g->size.y0()) + y;
 		const float dx1 = (scaleX * g->size.x1()) + x, dy1 = (scaleY * g->size.y1()) + y;
 
-		va->AddVertexQ2dT(dx0, dy1, tc.x0(), tc.y1());
-		va->AddVertexQ2dT(dx0, dy0, tc.x0(), tc.y0());
-		va->AddVertexQ2dT(dx1, dy0, tc.x1(), tc.y0());
-		va->AddVertexQ2dT(dx1, dy1, tc.x1(), tc.y1());
+		va.AddVertexQ2dT(dx0, dy1, tc.x0(), tc.y1());
+		va.AddVertexQ2dT(dx0, dy0, tc.x0(), tc.y0());
+		va.AddVertexQ2dT(dx1, dy0, tc.x1(), tc.y0());
+		va.AddVertexQ2dT(dx1, dy1, tc.x1(), tc.y1());
 	} while(true);
 }
 
@@ -594,8 +609,8 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 	unsigned int length = (unsigned int)str.length();
 	const std::u8string& ustr = toustring(str);
 
-	va->EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
-	va2->EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
+	va.EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
+	va2.EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
 
 	int skippedLines;
 	bool colorChanged;
@@ -636,16 +651,16 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 		const float dx1 = (scaleX * g->size.x1()) + x, dy1 = (scaleY * g->size.y1()) + y;
 
 		// draw shadow
-		va2->AddVertexQ2dT(dx0+shiftX-ssX, dy1-shiftY-ssY, stc.x0(), stc.y1());
-		va2->AddVertexQ2dT(dx0+shiftX-ssX, dy0-shiftY+ssY, stc.x0(), stc.y0());
-		va2->AddVertexQ2dT(dx1+shiftX+ssX, dy0-shiftY+ssY, stc.x1(), stc.y0());
-		va2->AddVertexQ2dT(dx1+shiftX+ssX, dy1-shiftY-ssY, stc.x1(), stc.y1());
+		va2.AddVertexQ2dT(dx0+shiftX-ssX, dy1-shiftY-ssY, stc.x0(), stc.y1());
+		va2.AddVertexQ2dT(dx0+shiftX-ssX, dy0-shiftY+ssY, stc.x0(), stc.y0());
+		va2.AddVertexQ2dT(dx1+shiftX+ssX, dy0-shiftY+ssY, stc.x1(), stc.y0());
+		va2.AddVertexQ2dT(dx1+shiftX+ssX, dy1-shiftY-ssY, stc.x1(), stc.y1());
 
 		// draw the actual character
-		va->AddVertexQ2dT(dx0, dy1, tc.x0(), tc.y1());
-		va->AddVertexQ2dT(dx0, dy0, tc.x0(), tc.y0());
-		va->AddVertexQ2dT(dx1, dy0, tc.x1(), tc.y0());
-		va->AddVertexQ2dT(dx1, dy1, tc.x1(), tc.y1());
+		va.AddVertexQ2dT(dx0, dy1, tc.x0(), tc.y1());
+		va.AddVertexQ2dT(dx0, dy0, tc.x0(), tc.y0());
+		va.AddVertexQ2dT(dx1, dy0, tc.x1(), tc.y0());
+		va.AddVertexQ2dT(dx1, dy1, tc.x1(), tc.y1());
 	} while(true);
 }
 
@@ -658,8 +673,8 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 	const std::u8string& ustr = toustring(str);
 	const size_t length = str.length();
 
-	va->EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
-	va2->EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
+	va.EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
+	va2.EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
 
 	int skippedLines;
 	bool colorChanged;
@@ -700,16 +715,16 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 		const float dx1 = (scaleX * g->size.x1()) + x, dy1 = (scaleY * g->size.y1()) + y;
 
 		// draw outline
-		va2->AddVertexQ2dT(dx0-shiftX, dy1-shiftY, stc.x0(), stc.y1());
-		va2->AddVertexQ2dT(dx0-shiftX, dy0+shiftY, stc.x0(), stc.y0());
-		va2->AddVertexQ2dT(dx1+shiftX, dy0+shiftY, stc.x1(), stc.y0());
-		va2->AddVertexQ2dT(dx1+shiftX, dy1-shiftY, stc.x1(), stc.y1());
+		va2.AddVertexQ2dT(dx0-shiftX, dy1-shiftY, stc.x0(), stc.y1());
+		va2.AddVertexQ2dT(dx0-shiftX, dy0+shiftY, stc.x0(), stc.y0());
+		va2.AddVertexQ2dT(dx1+shiftX, dy0+shiftY, stc.x1(), stc.y0());
+		va2.AddVertexQ2dT(dx1+shiftX, dy1-shiftY, stc.x1(), stc.y1());
 
 		// draw the actual character
-		va->AddVertexQ2dT(dx0, dy1, tc.x0(), tc.y1());
-		va->AddVertexQ2dT(dx0, dy0, tc.x0(), tc.y0());
-		va->AddVertexQ2dT(dx1, dy0, tc.x1(), tc.y0());
-		va->AddVertexQ2dT(dx1, dy1, tc.x1(), tc.y1());
+		va.AddVertexQ2dT(dx0, dy1, tc.x0(), tc.y1());
+		va.AddVertexQ2dT(dx0, dy0, tc.x0(), tc.y0());
+		va.AddVertexQ2dT(dx1, dy0, tc.x1(), tc.y0());
+		va.AddVertexQ2dT(dx1, dy1, tc.x1(), tc.y1());
 	} while(true);
 }
 

@@ -6,9 +6,12 @@
 #include <string>
 #include <list>
 
-#include "System/float4.h"
 #include "TextWrap.h"
 #include "ustring.h"
+
+#include "Rendering/GL/VertexArray.h"
+#include "System/float4.h"
+#include "System/Threading/SpringMutex.h"
 
 #undef GetCharWidth // winapi.h
 
@@ -29,8 +32,6 @@ static const int FONT_SCALE       = 1 << 12; //! given size argument will be tre
 
 static const int FONT_NEAREST     = 1 << 13; //! round x,y render pos to nearest integer, so there is no interpolation blur for small fontsizes
 
-
-class CVertexArray;
 
 
 class CglFont : public CTextWrap
@@ -82,7 +83,7 @@ public:
 
 	static const char8_t ColorCodeIndicator  = 0xFF;
 	static const char8_t ColorResetIndicator = 0x08; //! =: '\\b'
-
+	static bool threadSafety;
 private:
 	static const float4* ChooseOutlineColor(const float4& textColor);
 
@@ -105,8 +106,10 @@ private:
 	ColorMap stripTextColors;
 	ColorMap stripOutlineColors;
 
-	CVertexArray* va;
-	CVertexArray* va2;
+	CVertexArray va;
+	CVertexArray va2;
+
+	spring::recursive_mutex vaMutex;
 
 	bool inBeginEnd;
 	bool autoOutlineColor; //! auto select outline color for in-text-colorcodes
