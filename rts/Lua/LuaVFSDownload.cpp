@@ -8,7 +8,6 @@
 #include "System/Platform/Threading.h"
 #include "System/Threading/SpringMutex.h"
 
-#include <future>
 #include <queue>
 
 #include "LuaInclude.h"
@@ -132,6 +131,7 @@ void UpdateProgress(int done, int size) {
 	QueueDownloadProgress(currentDownloadID, done, size);
 }
 
+__FORCE_ALIGN_STACK__
 int Download(int ID, const std::string& filename, DownloadEnum::Category cat)
 {
 	currentDownloadID = ID;
@@ -173,7 +173,7 @@ void StartDownload() {
 	if (!filename.empty()) {
 		LOG_L(L_DEBUG, "DOWNLOADING: %s", filename.c_str());
 	}
-	std::thread {[ID, filename, cat]() {
+	boost::thread {[ID, filename, cat]() {
 			const int result = Download(ID, filename, cat);
 			if (result == 0) {
 				QueueDownloadFinished(ID);
