@@ -1164,9 +1164,6 @@ void CGroundDecalHandler::MoveSolidObject(CSolidObject* object, const float3& po
 
 void CGroundDecalHandler::RemoveSolidObject(CSolidObject* object, GhostSolidObject* gb)
 {
-	if (decalLevel == 0)
-		return;
-
 	assert(object);
 	SolidObjectGroundDecal* decal = object->groundDecal;
 
@@ -1187,9 +1184,6 @@ void CGroundDecalHandler::RemoveSolidObject(CSolidObject* object, GhostSolidObje
  */
 void CGroundDecalHandler::ForceRemoveSolidObject(CSolidObject* object)
 {
-	if (decalLevel == 0)
-		return;
-
 	SolidObjectGroundDecal* decal = object->groundDecal;
 
 	if (decal == NULL)
@@ -1234,8 +1228,7 @@ int CGroundDecalHandler::GetSolidObjectDecalType(const std::string& name)
 }
 
 void CGroundDecalHandler::GhostCreated(CSolidObject* object, GhostSolidObject* gb) {
-	if (object->objectDef->decalDef.useGroundDecal)
-		RemoveSolidObject(object, gb);
+	RemoveSolidObject(object, gb);
 }
 
 void CGroundDecalHandler::GhostDestroyed(GhostSolidObject* gb) {
@@ -1262,9 +1255,6 @@ void CGroundDecalHandler::RenderUnitCreated(const CUnit* unit, int cloaked) {
 }
 
 void CGroundDecalHandler::RenderUnitDestroyed(const CUnit* unit) {
-	if (decalLevel == 0)
-		return;
-
 	CUnit* u = const_cast<CUnit*>(unit);
 	RemoveSolidObject(u, NULL);
 
@@ -1280,14 +1270,18 @@ void CGroundDecalHandler::RenderFeatureCreated(const CFeature* feature)
 		MoveSolidObject(const_cast<CFeature*>(feature), feature->pos);
 }
 
+void CGroundDecalHandler::RenderFeatureDestroyed(const CFeature* feature)
+{
+	RemoveSolidObject(const_cast<CFeature *>(feature), NULL);
+}
+
 void CGroundDecalHandler::FeatureMoved(const CFeature* feature, const float3& oldpos) {
 	if (feature->objectDef->decalDef.useGroundDecal && (feature->def->drawType == DRAWTYPE_MODEL))
 		MoveSolidObject(const_cast<CFeature *>(feature), feature->pos);
 }
 
 void CGroundDecalHandler::UnitLoaded(const CUnit* unit, const CUnit* transport) {
-	if (unit->unitDef->decalDef.useGroundDecal)
-		RemoveSolidObject(const_cast<CUnit *>(unit), NULL); // FIXME: Add a RenderUnitLoaded event
+	RemoveSolidObject(const_cast<CUnit *>(unit), NULL); // FIXME: Add a RenderUnitLoaded event
 }
 
 void CGroundDecalHandler::UnitUnloaded(const CUnit* unit, const CUnit* transport) {

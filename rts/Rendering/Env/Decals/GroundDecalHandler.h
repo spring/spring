@@ -142,12 +142,13 @@ private:
 public:
 	//CEventClient
 	bool WantsEvent(const std::string& eventName) {
-		return 
+		return
 			(eventName == "SunChanged") ||
 			(eventName == "RenderUnitCreated") ||
 			(eventName == "RenderUnitDestroyed") ||
 			(eventName == "UnitMoved") ||
 			(eventName == "RenderFeatureCreated") ||
+			(eventName == "RenderFeatureDestroyed") ||
 			(eventName == "FeatureMoved") ||
 			(eventName == "UnitLoaded") ||
 			(eventName == "UnitUnloaded");
@@ -159,6 +160,7 @@ public:
 	void RenderUnitCreated(const CUnit*, int cloaked);
 	void RenderUnitDestroyed(const CUnit*);
 	void RenderFeatureCreated(const CFeature* feature);
+	void RenderFeatureDestroyed(const CFeature* feature);
 	void FeatureMoved(const CFeature* feature, const float3& oldpos);
 	void UnitMoved(const CUnit* unit);
 	void UnitLoaded(const CUnit* unit, const CUnit* transport);

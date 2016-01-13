@@ -195,9 +195,6 @@ void CFeatureDrawer::RenderFeatureDestroyed(const CFeature* feature)
 		f->drawQuad = -1;
 	}
 
-	if (f->objectDef->decalDef.useGroundDecal)
-		groundDecals->RemoveSolidObject(f, nullptr);
-
 	LuaObjectDrawer::SetObjectLOD(f, LUAOBJ_FEATURE, 0);
 }
 
