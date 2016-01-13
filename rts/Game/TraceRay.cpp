@@ -19,6 +19,8 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/myMath.h"
 
+#include <algorithm>
+#include <vector>
 
 //////////////////////////////////////////////////////////////////////
 // Local/Helper functions
@@ -275,13 +277,12 @@ float TraceRay(
 }
 
 
-float TraceRayShields(
+void TraceRayShields(
 	const CWeapon* emitter,
 	const float3& start,
 	const float3& dir,
 	float length,
-	float3& newDir,
-	CPlasmaRepulser*& repulsedBy
+	std::vector<SShieldDist>& hitShields
 ) {
 	CollisionQuery cq;
 
@@ -301,18 +302,14 @@ float TraceRayShields(
 				if (len <= 0.0f)
 					continue;
 
-				if (len < length && r->IncomingBeam(emitter, start)) {
-					length = len;
-					//This isn't the correct normal for non-spherical volumes, but for now it's ok.
-					const float3 normal = (cq.GetHitPos() - r->weaponMuzzlePos).Normalize();
-					newDir = dir - normal * normal.dot(dir) * 2;
-					repulsedBy = r;
-				}
+				hitShields.insert(std::upper_bound(hitShields.begin(), hitShields.end(), len,
+													[](const float &a, const SShieldDist &b) {
+														return (a < b.dist);
+													}),
+									{r, len});
 			}
 		}
 	}
-
-	return length;
 }
 
 

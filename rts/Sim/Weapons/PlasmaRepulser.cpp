@@ -128,23 +128,20 @@ bool CPlasmaRepulser::IncomingProjectile(CWeaponProjectile* p)
 	const int defHitFrames = weaponDef->visibleShieldHitFrames;
 	const int defRechargeDelay = weaponDef->shieldRechargeDelay;
 
-	if (eventHandler.ShieldPreDamaged(p, this, owner, weaponDef->shieldRepulser)) {
-		// gadget handles the collision event, don't touch the projectile
+	// gadget handles the collision event, don't touch the projectile
+	if (eventHandler.ShieldPreDamaged(p, this, owner, weaponDef->shieldRepulser, nullptr, nullptr))
 		return false;
-	}
 
 	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(p->GetWeaponDef(), p->GetStartPos(), p->pos);
 	const float shieldDamage = damageArray[weaponDef->shieldArmorType];
 
-	if (curPower < shieldDamage) {
-		// shield does not have enough power, don't touch the projectile
+	// shield does not have enough power, don't touch the projectile
+	if (curPower < shieldDamage)
 		return false;
-	}
 
-	if (teamHandler->Team(owner->team)->res.energy < weaponDef->shieldEnergyUse) {
 		// team does not have enough energy, don't touch the projectile
+	if (teamHandler->Team(owner->team)->res.energy < weaponDef->shieldEnergyUse)
 		return false;
-	}
 
 	rechargeDelay = defRechargeDelay;
 
@@ -219,11 +216,26 @@ void CPlasmaRepulser::SlowUpdate()
 }
 
 
-bool CPlasmaRepulser::IncomingBeam(const CWeapon* emitter, const float3& start)
+bool CPlasmaRepulser::IncomingBeam(const CWeapon* emitter, const float3& start, float damageMultiplier)
 {
-	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(emitter->weaponDef, start, weaponMuzzlePos);
+	// gadget handles the collision event, don't touch the projectile
+	if (eventHandler.ShieldPreDamaged(nullptr, this, owner, weaponDef->shieldRepulser, emitter, emitter->owner))
+		return false;
 
-	return damageArray[weaponDef->shieldArmorType] <= curPower;
+	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(emitter->weaponDef, start, weaponMuzzlePos);
+	const float shieldDamage = damageArray[weaponDef->shieldArmorType];
+
+	if (curPower < shieldDamage)
+		return false;
+
+	// team does not have enough energy, don't touch the projectile
+	if (teamHandler->Team(owner->team)->res.energy < weaponDef->shieldEnergyUse)
+		return false;
+
+	if (weaponDef->shieldPower > 0)
+		curPower -= shieldDamage * damageMultiplier;
+
+	return true;
 }
 
 
@@ -231,15 +243,4 @@ void CPlasmaRepulser::DependentDied(CObject* o)
 {
 	VectorErase(repulsedProjectiles, static_cast<CWeaponProjectile*>(o));
 	CWeapon::DependentDied(o);
-}
-
-
-bool CPlasmaRepulser::BeamIntercepted(const CWeapon* emitter, const float3& start, float damageMultiplier)
-{
-	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(emitter->weaponDef, start, weaponMuzzlePos);
-
-	if (weaponDef->shieldPower > 0) {
-		curPower -= damageArray[weaponDef->shieldArmorType] * damageMultiplier;
-	}
-	return weaponDef->shieldRepulser;
 }

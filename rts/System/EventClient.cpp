@@ -92,7 +92,15 @@ bool CEventClient::FeaturePreDamaged(
 	int projectileID,
 	float* newDamage,
 	float* impulseMult) { return false; }
-bool CEventClient::ShieldPreDamaged(const CProjectile*, const CWeapon*, const CUnit*, bool) { return false; }
+bool CEventClient::ShieldPreDamaged(
+	const CProjectile* projectile,
+	const CWeapon* shieldEmitter,
+	const CUnit* shieldCarrier,
+	bool bounceProjectile,
+	const CWeapon* beamEmitter,
+	const CUnit* beamCarrier)  { return false; }
+
+
 bool CEventClient::SyncedActionFallback(const string& line, int playerID) { return false; }
 
 /******************************************************************************/

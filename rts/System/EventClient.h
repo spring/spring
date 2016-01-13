@@ -235,7 +235,13 @@ class CEventClient
 			float* newDamage,
 			float* impulseMult);
 
-		virtual bool ShieldPreDamaged(const CProjectile*, const CWeapon*, const CUnit*, bool);
+		virtual bool ShieldPreDamaged(
+			const CProjectile* projectile,
+			const CWeapon* shieldEmitter,
+			const CUnit* shieldCarrier,
+			bool bounceProjectile,
+			const CWeapon* beamEmitter,
+			const CUnit* beamCarrier);
 
 		virtual bool SyncedActionFallback(const string& line, int playerID);
 		/// @}

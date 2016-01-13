@@ -17,6 +17,8 @@
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
 
+#include <vector>
+
 #define SWEEPFIRE_ENABLED 1
 
 CR_BIND_DERIVED(CBeamLaser, CWeapon, (NULL, NULL))
@@ -283,6 +285,7 @@ void CBeamLaser::FireInternal(float3 curDir)
 	CUnit* hitUnit = NULL;
 	CFeature* hitFeature = NULL;
 	CPlasmaRepulser* hitShield = NULL;
+	static std::vector<TraceRay::SShieldDist> hitShields;
 	CollisionQuery hitColQuery;
 
 	if (!sweepFireState.IsSweepFiring()) {
@@ -328,19 +331,28 @@ void CBeamLaser::FireInternal(float3 curDir)
 		//
 		// we do more than one trace-iteration and set dir to
 		// newDir only in the case there is a shield in our way
-		const float shieldLength = TraceRay::TraceRayShields(this, curPos, curDir, beamLength, newDir, hitShield);
+		hitShields.clear();
+		TraceRay::TraceRayShields(this, curPos, curDir, beamLength, hitShields);
 
-		if (shieldLength < beamLength) {
-			beamLength = shieldLength;
-			tryAgain = hitShield->BeamIntercepted(this, curPos, salvoDamageMult);
-			hitUnit = NULL;
-			hitFeature = NULL;
-		} else {
-			tryAgain = false;
+		for (const TraceRay::SShieldDist& sd: hitShields) {
+			if(sd.dist < beamLength && sd.rep->IncomingBeam(this, curPos, salvoDamageMult)) {
+				beamLength = sd.dist;
+				hitUnit = NULL;
+				hitFeature = NULL;
+				hitShield = sd.rep;
+				break;
+			}
 		}
 
 		// same as hitColQuery.GetHitPos() if no water or shield in way
 		hitPos = curPos + curDir * beamLength;
+		if (hitShield != nullptr && hitShield->weaponDef->shieldRepulser) {
+			const float3 normal = (hitPos - hitShield->weaponMuzzlePos).Normalize();
+			newDir = curDir - normal * normal.dot(curDir) * 2;
+			tryAgain = true;
+		} else {
+			tryAgain = false;
+		}
 
 		{
 			const float baseAlpha  = weaponDef->intensity * 255.0f;

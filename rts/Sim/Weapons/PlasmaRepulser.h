@@ -25,8 +25,7 @@ public:
 	void Update() override final;
 	void SlowUpdate() override final;
 
-	bool IncomingBeam(const CWeapon* emitter, const float3& start);
-	bool BeamIntercepted(const CWeapon* emitter, const float3& start, float damageMultiplier = 1.0f); // returns true if we are a repulsing shield
+	bool IncomingBeam(const CWeapon* emitter, const float3& start, float damageMultiplier = 1.0f);
 
 	void SetEnabled(bool b) { isEnabled = b; }
 	void SetCurPower(float p) { curPower = p; }

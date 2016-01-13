@@ -98,7 +98,13 @@ class CSyncedLuaHandle : public CLuaHandle
 			float* newDamage,
 			float* impulseMult);
 
-		bool ShieldPreDamaged(const CProjectile*, const CWeapon*, const CUnit*, bool);
+		bool ShieldPreDamaged(
+			const CProjectile* projectile,
+			const CWeapon* shieldEmitter,
+			const CUnit* shieldCarrier,
+			bool bounceProjectile,
+			const CWeapon* beamEmitter,
+			const CUnit* beamCarrier);
 
 		bool SyncedActionFallback(const string& line, int playerID);
 

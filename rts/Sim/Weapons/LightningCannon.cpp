@@ -12,6 +12,7 @@
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 
+#include <vector>
 
 CR_BIND_DERIVED(CLightningCannon, CWeapon, (NULL, NULL))
 
@@ -34,7 +35,6 @@ void CLightningCannon::FireImpl(const bool scriptCall)
 {
 	float3 curPos = weaponMuzzlePos;
 	float3 curDir = (currentTargetPos - weaponMuzzlePos).SafeNormalize();
-	float3 newDir = curDir;
 
 	curDir +=
 		(gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
@@ -42,7 +42,6 @@ void CLightningCannon::FireImpl(const bool scriptCall)
 
 	CUnit* hitUnit = NULL;
 	CFeature* hitFeature = NULL;
-	CPlasmaRepulser* hitShield = NULL;
 	CollisionQuery hitColQuery;
 
 	float boltLength = TraceRay::TraceRay(curPos, curDir, range, collisionFlags, owner, hitUnit, hitFeature, &hitColQuery);
@@ -56,13 +55,16 @@ void CLightningCannon::FireImpl(const bool scriptCall)
 		}
 	}
 
-	const float shieldLength = TraceRay::TraceRayShields(this, curPos, curDir, range, newDir, hitShield);
-
-	if (shieldLength < boltLength) {
-		boltLength = shieldLength;
-		hitShield->BeamIntercepted(this, curPos);
-		hitUnit = NULL;
-		hitFeature = NULL;
+	static std::vector<TraceRay::SShieldDist> hitShields;
+	hitShields.clear();
+	TraceRay::TraceRayShields(this, curPos, curDir, range, hitShields);
+	for (const TraceRay::SShieldDist& sd: hitShields) {
+		if(sd.dist < boltLength && sd.rep->IncomingBeam(this, curPos)) {
+			boltLength = sd.dist;
+			hitUnit = NULL;
+			hitFeature = NULL;
+			break;
+		}
 	}
 
 	if (hitUnit != NULL) {
