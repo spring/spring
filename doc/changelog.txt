@@ -36,7 +36,9 @@ Lua:
  ! ShieldPreDamaged will now be called for LightningCannon and BeamLaser.
    Two new arguments were added: beamCarrierWeaponNum and beamCarrierUnitID.
    These will be populated in place of the first argument (projID).
-
+ ! reading from gl_TextureEnvColor[0] in custom shaders to set team color
+   will no longer work, declare a uniform vec4 named "teamColor" instead
+   (the engine will fill this in for you)
  ! gl.UnitShape and gl.FeatureShape now take three extra boolean arguments
    and set their relevant GL state internally (so that calling only these
    functions is enough to get correctly rendered models; pass in 'false'
