@@ -38,8 +38,9 @@ CR_REG_METADATA(CFeature, (
 	CR_MEMBER(finalHeight),
 	CR_MEMBER(lastReclaim),
 	CR_MEMBER(drawQuad),
-	CR_MEMBER(fade),
+	CR_MEMBER(drawFlag),
 	CR_MEMBER(drawAlpha),
+	CR_MEMBER(alphaFade),
 	CR_MEMBER(fireTime),
 	CR_MEMBER(smokeTime),
 	CR_MEMBER(fireTime),
@@ -64,9 +65,13 @@ CFeature::CFeature()
 , reclaimLeft(1.0f)
 , lastReclaim(0)
 , resources(0.0f, 1.0f)
+
 , drawQuad(-2)
-, fade(true)
-, drawAlpha(1.0)
+, drawFlag(-1)
+
+, drawAlpha(1.0f)
+, alphaFade(true)
+
 , fireTime(0)
 , smokeTime(0)
 , def(NULL)

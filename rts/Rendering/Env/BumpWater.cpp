@@ -1106,11 +1106,11 @@ void CBumpWater::Draw()
 	waterShader->SetUniform3fv(0, &camera->GetPos()[0]);
 	waterShader->SetUniform1f(1, (gs->frameNum + globalRendering->timeOffset) / 15000.0f);
 
-	if (shadowHandler && shadowHandler->shadowsLoaded) {
+	if (shadowHandler && shadowHandler->ShadowsLoaded()) {
 		waterShader->SetUniformMatrix4fv(13, false, shadowHandler->GetShadowMatrixRaw());
 
 		glActiveTexture(GL_TEXTURE9);
-		glBindTexture(GL_TEXTURE_2D, (shadowHandler && shadowHandler->shadowsLoaded) ? shadowHandler->shadowTexture : 0);
+		glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
@@ -1165,7 +1165,6 @@ void CBumpWater::DrawRefraction(CGame* game)
 
 	camera->Update();
 
-	game->SetDrawMode(CGame::gameRefractionDraw);
 	glViewport(0, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1177,28 +1176,36 @@ void CBumpWater::DrawRefraction(CGame* game)
 	sunLighting->unitSunColor *= float3(0.5f, 0.7f, 0.9f);
 	sunLighting->unitAmbientColor *= float3(0.6f, 0.8f, 1.0f);
 
-	drawRefraction = true;
+	game->SetDrawMode(CGame::gameRefractionDraw);
 
-	const double clipPlaneEq[4] = {0.0, -1.0, 0.0, 5.0};
+	{
+		drawRefraction = true;
 
-	glEnable(GL_CLIP_PLANE2);
-	glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
+		// FIXME incorrectly transformed for UnitDrawer
+		const double clipPlaneEq[4] = {0.0, -1.0, 0.0, 5.0};
 
-	// opaque
-	sky->Draw();
-	readMap->GetGroundDrawer()->Draw(DrawPass::WaterRefraction);
-	unitDrawer->Draw(false, true);
-	featureDrawer->Draw();
+		glEnable(GL_CLIP_PLANE2);
+		glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
 
-	// transparent stuff
-	unitDrawer->DrawAlphaPass();
-	featureDrawer->DrawAlphaPass();
-	projectileDrawer->Draw(false, true);
-	eventHandler.DrawWorldRefraction();
+		// opaque
+		sky->Draw();
+		readMap->GetGroundDrawer()->Draw(DrawPass::WaterRefraction);
+		unitDrawer->Draw(false, true);
+		featureDrawer->Draw();
 
-	glDisable(GL_CLIP_PLANE2);
+		// transparent stuff
+		unitDrawer->DrawAlphaPass();
+		featureDrawer->DrawAlphaPass();
+		projectileDrawer->Draw(false, true);
+
+		eventHandler.DrawWorldRefraction();
+
+		glDisable(GL_CLIP_PLANE2);
+
+		drawRefraction = false;
+	}
+
 	game->SetDrawMode(CGame::gameNormalDraw);
-	drawRefraction = false;
 
 	glEnable(GL_FOG);
 

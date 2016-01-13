@@ -1638,7 +1638,7 @@ int LuaUnsyncedCtrl::SetFeatureFade(lua_State* L)
 	if (feature == nullptr)
 		return 0;
 
-	feature->fade = luaL_checkboolean(L, 2);
+	feature->alphaFade = luaL_checkboolean(L, 2);
 	return 0;
 }
 

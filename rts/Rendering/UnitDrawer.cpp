@@ -256,6 +256,10 @@ CUnitDrawer::~CUnitDrawer()
 
 	cubeMapHandler->Free();
 
+	for (CUnit* u: unsortedUnits) {
+		groundDecals->ForceRemoveSolidObject(u);
+	}
+
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		for (GhostSolidObject* ghost: deadGhostBuildings[modelType]) {
 			// <ghost> might be the gbOwner of a decal; groundDecals is deleted after us
@@ -1720,13 +1724,19 @@ void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 	CUnit* u = const_cast<CUnit*>(unit);
 
-	if (u->unitDef->IsBuildingUnit() && gameSetup->ghostedBuildings &&
+	const UnitDef* unitDef = unit->unitDef;
+	const UnitDef* decoyDef = unitDef->decoyDef;
+
+	// in case no ghost is created for us
+	if (unitDef->decalDef.useGroundDecal)
+		groundDecals->RemoveSolidObject(u, nullptr);
+
+	if (unitDef->IsBuildingUnit() && gameSetup->ghostedBuildings &&
 		!(u->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) &&
 		(u->losStatus[gu->myAllyTeam] & (LOS_PREVLOS)) && !gu->spectatingFullView
 	) {
 		// FIXME -- adjust decals for decoys? gets weird?
-		const UnitDef* decoyDef = u->unitDef->decoyDef;
-		S3DModel* gbModel = (decoyDef == NULL) ? u->model : decoyDef->LoadModel();
+		S3DModel* gbModel = (decoyDef == nullptr)? u->model: decoyDef->LoadModel();
 
 		GhostSolidObject* gb = new GhostSolidObject();
 		gb->pos    = u->pos;
@@ -1751,7 +1761,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 	VectorErase(liveGhostBuildings[MDL_TYPE(u)], u);
 
 	// remove the icon for all ally-teams
-	for (std::vector<std::vector<CUnit*> >::iterator it = unitRadarIcons.begin(); it != unitRadarIcons.end(); ++it) {
+	for (auto it = unitRadarIcons.cbegin(); it != unitRadarIcons.cend(); ++it) {
 		VectorErase(*it, u);
 	}
 
