@@ -317,27 +317,6 @@ namespace creg {
 		size_t GetSize() const { return sizeof(T); }
 	};
 
-	class EmptyType : public IType
-	{
-	public:
-		int size;
-		EmptyType(int Size) {size=Size;}
-		~EmptyType() {}
-
-		void Serialize(ISerializer* s, void* instance)
-		{
-			for (int a=0;a<size;a++) {
-				char c=0;
-				s->Serialize(&c,1);
-			}
-		}
-		std::string GetName() const
-		{
-			return "void";
-		}
-		size_t GetSize() const { return 0; /* size*/ } //FIXME used by CR_RESERVED(), ignored by now
-	};
-
 	class IgnoredType : public IType
 	{
 	public:
@@ -576,32 +555,6 @@ namespace creg {
  */
 #define CR_MEMBER_UN(Member) \
     CR_IGNORED( Member )
-
-
-/** @def CR_RESERVED
- *  @author Victor Muraviev
- * Registers a unused space for compatibility
- * Size = 1:
- * - char, synced char, bool, synced bool
- * - pointer
- * - enum
- * Size = 2:
- * - short, synced short
- * - enum
- * Size = 4:
- * - int, synced int, long, synced long, float, synced float
- * - std::set/multiset
- * - std::list
- * - std::deque
- * - std::map/multimap
- * - std::vector
- * - std::string
- * - enum
- * Size = 8:
- * - double, synced double
- */
-#define CR_RESERVED(Size) \
-	class_->AddMember("Reserved", new creg::EmptyType(Size), 0, 0)
 
 /** @def CR_SETFLAG
  * Set a flag for a class/struct.

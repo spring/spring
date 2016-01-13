@@ -15,7 +15,6 @@ CR_REG_METADATA(DamageArray, (
 	CR_MEMBER(impulseBoost),
 	CR_MEMBER(craterMult),
 	CR_MEMBER(craterBoost),
-	CR_RESERVED(16),
 	CR_SERIALIZER(creg_Serialize) // damages
 ))
 

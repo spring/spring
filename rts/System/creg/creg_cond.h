@@ -32,7 +32,6 @@
 #define CR_MEMBER(Member)
 #define CR_IGNORED(Member)
 #define CR_MEMBER_UN(Member)
-#define CR_RESERVED(Size)
 #define CR_SETFLAG(Flag)
 #define CR_MEMBER_SETFLAG(Member, Flag)
 #define CR_MEMBER_BEGINFLAG(Flag)
