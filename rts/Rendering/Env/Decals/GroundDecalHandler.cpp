@@ -1241,10 +1241,10 @@ void CGroundDecalHandler::RenderUnitDestroyed(const CUnit* unit) {
 
 		VectorErase(trType.tracks, unit->myTrack);
 		tracksToBeDeleted.push_back(unit->myTrack);
+		u->myTrack->owner = nullptr;
 	}
 
 	// same pointer as in tracksToBeAdded, so this also pre-empts DrawTracks
-	u->myTrack->owner = nullptr;
 	u->myTrack = nullptr;
 }
 
