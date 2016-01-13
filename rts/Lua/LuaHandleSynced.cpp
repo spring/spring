@@ -7,6 +7,7 @@
 #include "LuaUtils.h"
 #include "LuaArchive.h"
 #include "LuaCallInCheck.h"
+#include "LuaConfig.h"
 #include "LuaConstGL.h"
 #include "LuaConstCMD.h"
 #include "LuaConstCMDTYPE.h"
@@ -247,7 +248,7 @@ bool CUnsyncedLuaHandle::DrawShield(const CUnit* unit, const CWeapon* weapon)
 	LuaOpenGL::SetDrawingEnabled(L, true);
 
 	lua_pushnumber(L, unit->id);
-	lua_pushnumber(L, weapon->weaponNum);
+	lua_pushnumber(L, weapon->weaponNum + LUA_WEAPON_BASE_INDEX);
 	lua_pushnumber(L, game->GetDrawMode());
 
 	const bool success = RunCallIn(L, cmdStr, 3, 1);
@@ -1018,17 +1019,17 @@ bool CSyncedLuaHandle::ShieldPreDamaged(
 	if (projectile != nullptr) { //Regular projectiles
 		lua_pushnumber(L, projectile->id);
 		lua_pushnumber(L, projectile->GetOwnerID());
-		lua_pushnumber(L, shieldEmitter->weaponNum);
+		lua_pushnumber(L, shieldEmitter->weaponNum + LUA_WEAPON_BASE_INDEX);
 		lua_pushnumber(L, shieldCarrier->id);
 		lua_pushboolean(L, bounceProjectile);
 		numArgs = 5;
 	} else { //Beam weapons
 		lua_pushnumber(L, -1);
 		lua_pushnumber(L, -1);
-		lua_pushnumber(L, shieldEmitter->weaponNum);
+		lua_pushnumber(L, shieldEmitter->weaponNum + LUA_WEAPON_BASE_INDEX);
 		lua_pushnumber(L, shieldCarrier->id);
 		lua_pushboolean(L, bounceProjectile);
-		lua_pushnumber(L, beamEmitter->weaponNum);
+		lua_pushnumber(L, beamEmitter->weaponNum + LUA_WEAPON_BASE_INDEX);
 		lua_pushnumber(L, beamCarrier->id);
 		numArgs = 7;
 	}
@@ -1060,7 +1061,7 @@ int CSyncedLuaHandle::AllowWeaponTargetCheck(unsigned int attackerID, unsigned i
 		return ret;
 
 	lua_pushnumber(L, attackerID);
-	lua_pushnumber(L, attackerWeaponNum);
+	lua_pushnumber(L, attackerWeaponNum + LUA_WEAPON_BASE_INDEX);
 	lua_pushnumber(L, attackerWeaponDefID);
 
 	if (!RunCallInTraceback(L, cmdStr, 3, 1, traceBack.GetErrFuncIdx(), false))
@@ -1096,7 +1097,7 @@ bool CSyncedLuaHandle::AllowWeaponTarget(
 
 	lua_pushnumber(L, attackerID);
 	lua_pushnumber(L, targetID);
-	lua_pushnumber(L, attackerWeaponNum);
+	lua_pushnumber(L, attackerWeaponNum + LUA_WEAPON_BASE_INDEX);
 	lua_pushnumber(L, attackerWeaponDefID);
 	lua_pushnumber(L, *targetPriority);
 
@@ -1134,7 +1135,7 @@ bool CSyncedLuaHandle::AllowWeaponInterceptTarget(
 		return ret;
 
 	lua_pushnumber(L, interceptorUnit->id);
-	lua_pushnumber(L, interceptorWeapon->weaponNum);
+	lua_pushnumber(L, interceptorWeapon->weaponNum + LUA_WEAPON_BASE_INDEX);
 	lua_pushnumber(L, interceptorTarget->id);
 
 	if (!RunCallInTraceback(L, cmdStr, 3, 1, traceBack.GetErrFuncIdx(), false))

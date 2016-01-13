@@ -10,6 +10,13 @@ General:
  ! demo files are now compressed with gzip
 
 Lua:
+ ! The following callins will now have 1-based weapon index arguments:
+     DrawShield,
+     ShieldPreDamaged,
+     AllowWeaponTargetCheck,
+     AllowWeaponTarget,
+     AllowWeaponInterceptTarget,
+     StockpileChanged
  ! {Set,Get}UnitPieceCollisionVolumeData now receive 1-based piece index argument (was 0-based).
  ! Lua{Feature,Unit}Defs:
    LuaFeatureDefs: make the "model" subtable available (as it is for LuaUnitDefs)

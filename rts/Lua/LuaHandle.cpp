@@ -7,6 +7,7 @@
 #include "LuaUI.h"
 
 #include "LuaCallInCheck.h"
+#include "LuaConfig.h"
 #include "LuaHashString.h"
 #include "LuaOpenGL.h"
 #include "LuaBitOps.h"
@@ -1491,7 +1492,7 @@ void CLuaHandle::StockpileChanged(const CUnit* unit,
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->unitDef->id);
 	lua_pushnumber(L, unit->team);
-	lua_pushnumber(L, weapon->weaponNum);
+	lua_pushnumber(L, weapon->weaponNum + LUA_WEAPON_BASE_INDEX);
 	lua_pushnumber(L, oldCount);
 	lua_pushnumber(L, weapon->numStockpiled);
 
