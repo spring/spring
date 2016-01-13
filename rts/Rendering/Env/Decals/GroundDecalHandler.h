@@ -25,16 +25,16 @@ namespace Shader {
 
 struct TrackPart {
 	TrackPart()
-		: pos1(ZeroVector)
-		, pos2(ZeroVector)
-		, texPos(0.0f)
+		: texPos(0.0f)
 		, connected(false)
+		, isNewTrack(false)
 		, creationTime(0)
 	{}
 	float3 pos1;
 	float3 pos2;
 	float texPos;
 	bool connected;
+	bool isNewTrack;
 	unsigned int creationTime;
 };
 
@@ -44,7 +44,6 @@ struct UnitTrackStruct {
 		, lastUpdate(0)
 		, lifeTime(0)
 		, alphaFalloff(0.0f)
-		, lastAdded(NULL)
 	{}
 
 	CUnit* owner;
@@ -54,30 +53,16 @@ struct UnitTrackStruct {
 
 	float alphaFalloff;
 
-	TrackPart* lastAdded;
-	std::deque<TrackPart*> parts;
-};
-
-struct TrackToAdd {
-	TrackToAdd()
-		: tp(NULL)
-		, unit(NULL)
-		, ts(NULL)
-	{}
-	TrackPart* tp;
-	CUnit* unit;
-	UnitTrackStruct* ts;
+	TrackPart lastAdded;
+	std::deque<TrackPart> parts;
 };
 
 struct TrackToClean {
-	TrackToClean()
-		: track(NULL)
-		, tracks(NULL)
-	{}
 	TrackToClean(UnitTrackStruct* t, std::vector<UnitTrackStruct*>* ts)
 		: track(t)
 		, tracks(ts)
 	{}
+
 	UnitTrackStruct* track;
 	std::vector<UnitTrackStruct*>* tracks;
 };
@@ -171,9 +156,7 @@ public:
 
 private:
 	struct TrackType {
-		TrackType()
-			: texture(0)
-		{}
+		TrackType(): texture(0) {}
 		std::string name;
 		std::vector<UnitTrackStruct*> tracks;
 		unsigned int texture;
@@ -244,7 +227,7 @@ private:
 	bool groundScarAlphaFade;
 
 	std::vector<SolidObjectDecalType*> objectDecalTypes;
-	std::vector<TrackType*> trackTypes;
+	std::vector<TrackType> trackTypes;
 
 	enum DecalShaderProgram {
 		DECAL_SHADER_ARB,
@@ -259,14 +242,14 @@ private:
 	std::vector<Scar*> scars;
 	std::vector<Scar*> scarsToBeAdded;
 
-	std::vector<TrackToAdd> tracksToBeAdded;
+	std::vector<UnitTrackStruct*> tracksToBeAdded;
 	std::vector<TrackToClean> tracksToBeCleaned;
 	std::vector<UnitTrackStruct*> tracksToBeDeleted;
 
 	int lastTest;
 	float maxOverlap;
 
-	std::vector<Scar*>* scarField;
+	std::vector< std::vector<Scar*> > scarField;
 	int scarFieldX;
 	int scarFieldY;
 

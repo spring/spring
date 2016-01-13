@@ -727,7 +727,7 @@ void CFeatureDrawer::GetVisibleFeatures(CCamera* cam, int extraSize, bool drawFa
 
 void CFeatureDrawer::PostLoad()
 {
-	drawQuadsX = mapDims.mapx/DRAW_QUAD_SIZE;
-	drawQuadsY = mapDims.mapy/DRAW_QUAD_SIZE;
+	drawQuadsX = mapDims.mapx / DRAW_QUAD_SIZE;
+	drawQuadsY = mapDims.mapy / DRAW_QUAD_SIZE;
 }
 
