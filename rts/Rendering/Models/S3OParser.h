@@ -3,9 +3,12 @@
 #ifndef S3O_PARSER_H
 #define S3O_PARSER_H
 
-#include <map>
+#include "3DModel.h"
 #include "IModelParser.h"
+
 #include "System/type2.h"
+
+#include <map>
 
 enum {
 	S3O_PRIMTYPE_TRIANGLES      = 0,
@@ -58,7 +61,6 @@ class CS3OParser: public IModelParser
 {
 public:
 	S3DModel* Load(const std::string& name);
-	ModelType GetType() const { return MODELTYPE_S3O; }
 
 private:
 	SS3OPiece* LoadPiece(S3DModel*, SS3OPiece*, unsigned char* buf, int offset);

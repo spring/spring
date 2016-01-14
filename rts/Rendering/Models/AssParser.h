@@ -3,11 +3,14 @@
 #ifndef ASS_PARSER_H
 #define ASS_PARSER_H
 
-#include <vector>
-#include <map>
+#include "3DModel.h"
 #include "IModelParser.h"
+
 #include "System/float3.h"
 #include "System/type2.h"
+
+#include <vector>
+#include <map>
 
 #define NUM_MODEL_TEXTURES 2
 #define NUM_MODEL_UVCHANNS 2
@@ -67,7 +70,6 @@ public:
 
 	CAssParser();
 	S3DModel* Load(const std::string& modelFileName);
-	ModelType GetType() const { return MODELTYPE_ASS; }
 private:
 
 	GLint maxIndices;

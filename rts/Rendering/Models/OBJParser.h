@@ -3,9 +3,12 @@
 #ifndef OBJ_PARSER_H
 #define OBJ_PARSER_H
 
-#include <map>
+#include "3DModel.h"
 #include "IModelParser.h"
+
 #include "System/type2.h"
+
+#include <map>
 
 struct SOBJTriangle {
 	int vIndices[3]; ///< index of 1st/2nd/3rd vertex
@@ -72,7 +75,6 @@ class LuaTable;
 class COBJParser: public IModelParser {
 public:
 	S3DModel* Load(const std::string& modelFileName);
-	ModelType GetType() const { return MODELTYPE_OBJ; }
 
 private:
 	typedef std::map<std::string, SOBJPiece*> PieceMap;

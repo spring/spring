@@ -8,21 +8,20 @@
 
 #include <string>
 
-#include "3DModel.h"
-#include "System/Matrix44f.h"
 #include "System/Threading/SpringMutex.h"
 
 namespace boost {
 	class thread;
 };
 
+struct S3DModel;
+struct S3DModelPiece;
 
 class IModelParser
 {
 public:
 	virtual ~IModelParser() {}
 	virtual S3DModel* Load(const std::string& name) = 0;
-	virtual ModelType GetType() const = 0;
 };
 
 

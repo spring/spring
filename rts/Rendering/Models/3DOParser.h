@@ -3,13 +3,16 @@
 #ifndef SPRING_3DOPARSER_H
 #define SPRING_3DOPARSER_H
 
-#include <vector>
-#include <string>
+#include "3DModel.h"
+#include "IModelParser.h"
+
 #include "System/float3.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
+
+#include <vector>
+#include <string>
 #include <map>
 #include <set>
-#include "IModelParser.h"
 
 
 class CMatrix44f;
@@ -88,7 +91,6 @@ public:
 	C3DOParser();
 
 	S3DModel* Load(const std::string& name);
-	ModelType GetType() const { return MODELTYPE_3DO; }
 
 private:
 	void CalcNormals(S3DOPiece* o) const;
