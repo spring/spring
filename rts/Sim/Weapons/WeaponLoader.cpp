@@ -143,7 +143,7 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 	if (!weaponDef->avoidFeature)  weapon->avoidFlags |= Collision::NOFEATURES;
 	if (!weaponDef->avoidGround)   weapon->avoidFlags |= Collision::NOGROUND;
 
-	weapon->damages = DynDamageArray::IncRef(const_cast<DynDamageArray*>(&weaponDef->damages));
+	weapon->damages = DynDamageArray::IncRef(&weaponDef->damages);
 
 	weapon->SetWeaponNum(owner->weapons.size());
 	weapon->Init();

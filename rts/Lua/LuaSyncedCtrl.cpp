@@ -1656,20 +1656,20 @@ int LuaSyncedCtrl::SetUnitWeaponDamages(lua_State* L)
 		return 0;
 
 	CWeapon* weapon = unit->weapons[weaponNum];
-	DynDamageArray::Duplicate(weapon->damages);
+	DynDamageArray* damages = DynDamageArray::GetMutable(weapon->damages);
 
 
 	if (lua_istable(L, 3)) {
 		// {key1 = value1, ...}
 		for (lua_pushnil(L); lua_next(L, 3) != 0; lua_pop(L, 1)) {
 			if ((lua_isnumber(L, -2) || lua_israwstring(L, -2)) && lua_isnumber(L, -1)) {
-				SetSingleDamagesKey(L, weapon->damages, -2);
+				SetSingleDamagesKey(L, damages, -2);
 			}
 		}
 	} else {
 		// key, value
 		if ((lua_isnumber(L, 3) || lua_israwstring(L, 3)) && lua_isnumber(L, 4)) {
-			SetSingleDamagesKey(L, weapon->damages, 3);
+			SetSingleDamagesKey(L, damages, 3);
 		}
 	}
 
@@ -3025,20 +3025,20 @@ int LuaSyncedCtrl::SetProjectileDamages(lua_State* L)
 		return 0;
 
 	CWeaponProjectile* wpro = static_cast<CWeaponProjectile*>(proj);
-	DynDamageArray::Duplicate(wpro->damages);
+	DynDamageArray* damages = DynDamageArray::GetMutable(wpro->damages);
 
 
 	if (lua_istable(L, 3)) {
 		// {key1 = value1, ...}
 		for (lua_pushnil(L); lua_next(L, 3) != 0; lua_pop(L, 1)) {
 			if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
-				SetSingleDamagesKey(L, wpro->damages, -2);
+				SetSingleDamagesKey(L, damages, -2);
 			}
 		}
 	} else {
 		// key, value
 		if (lua_israwstring(L, 3) && lua_isnumber(L, 4)) {
-			SetSingleDamagesKey(L, wpro->damages, 3);
+			SetSingleDamagesKey(L, damages, 3);
 		}
 	}
 

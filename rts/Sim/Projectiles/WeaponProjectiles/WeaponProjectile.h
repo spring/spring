@@ -66,7 +66,7 @@ public:
 
 	bool TraveledRange() const;
 
-	DynDamageArray* damages;
+	const DynDamageArray* damages;
 
 protected:
 	void UpdateInterception();

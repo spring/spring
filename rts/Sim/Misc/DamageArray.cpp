@@ -123,12 +123,32 @@ DamageArray DynDamageArray::GetDynamicDamages(const float3& startPos, const floa
 }
 
 
-void DynDamageArray::Duplicate(DynDamageArray*& dda)
+const DynDamageArray* DynDamageArray::IncRef(const DynDamageArray* dda)
+{
+	++dda->refCount;
+	return dda;
+}
+
+
+void DynDamageArray::DecRef(const DynDamageArray* dda)
+{
+	if (dda->refCount == 1) {
+		delete const_cast<DynDamageArray*>(dda);
+	} else {
+		--dda->refCount;
+	}
+}
+
+DynDamageArray* DynDamageArray::GetMutable(const DynDamageArray*& dda)
 {
 	if (dda->refCount == 1)
-		return;
+		return const_cast<DynDamageArray*>(dda);
 
+	//We're still in use by someone, so copy and replace
+	//pointer
 	DecRef(dda);
 
-	dda = new DynDamageArray(*dda);
+	DynDamageArray* newDDA = new DynDamageArray(*dda);
+	dda = newDDA;
+	return newDDA;
 }

@@ -135,7 +135,7 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 		}
 	}
 	if (damages == nullptr)
-		damages = DynDamageArray::IncRef(const_cast<DynDamageArray*>(&weaponDef->damages));
+		damages = DynDamageArray::IncRef(&weaponDef->damages);
 
 	if (params.cegID != -1u) {
 		cegID = params.cegID;

@@ -51,9 +51,9 @@ public:
 
 	DamageArray GetDynamicDamages(const float3& startPos, const float3& curPos) const;
 
-	static DynDamageArray* IncRef(DynDamageArray* dda) { ++dda->refCount; return dda; };
-	static void DecRef(DynDamageArray* dda) { if (dda->refCount == 1) delete dda; else --dda->refCount; };
-	static void Duplicate(DynDamageArray*& dda);
+	static const DynDamageArray* IncRef(const DynDamageArray* dda);
+	static void DecRef(const DynDamageArray* dda);
+	static DynDamageArray* GetMutable(const DynDamageArray*& dda);
 
 	float dynDamageExp;
 	float dynDamageMin;
@@ -63,7 +63,7 @@ public:
 	float damageAreaOfEffect;
 	float edgeEffectiveness;
 	float explosionSpeed;
-	int refCount;
+	mutable int refCount;
 };
 
 #endif
