@@ -406,7 +406,7 @@ void UnitDrawerStateGLSL::Kill() {
 }
 
 bool UnitDrawerStateGLSL::CanEnable(const CUnitDrawer* ud) const {
-	return (ud->UseAdvShading() && (!water->DrawReflectionPass() && !water->DrawRefractionPass()));
+	return (ud->UseAdvShading());
 }
 
 void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud, bool deferredPass, bool alphaPass) {

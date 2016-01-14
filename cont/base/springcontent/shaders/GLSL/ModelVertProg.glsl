@@ -47,8 +47,10 @@ void main(void)
 	normalv = gl_NormalMatrix * gl_Normal;
 #endif
 
-	vertexWorldPos = gl_ModelViewMatrix * gl_Vertex;
-	gl_Position    = gl_ProjectionMatrix * vertexWorldPos;
+	gl_ClipVertex  = gl_ModelViewMatrix * gl_Vertex; // M (!)
+	gl_Position    = gl_ProjectionMatrix * gl_ClipVertex;
+
+	vertexWorldPos = gl_ClipVertex;
 	cameraDir      = vertexWorldPos.xyz - cameraPos;
 
 #if (USE_SHADOWS == 1)
