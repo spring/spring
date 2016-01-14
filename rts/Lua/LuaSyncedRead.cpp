@@ -3304,7 +3304,7 @@ static inline int PushDamagesKey(lua_State* L, const DynDamageArray& damages, in
 		if (armType >= damages.GetNumTypes())
 			return 0;
 
-		lua_pushnumber(L, damages[armType]);
+		lua_pushnumber(L, damages.Get(armType));
 		return 1;
 	}
 

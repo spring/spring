@@ -26,6 +26,6 @@ void CMeleeWeapon::FireImpl(const bool scriptCall)
 		const float3 impulseVec = wantedDir * owner->mass * damages->impulseFactor;
 
 		// the heavier the unit, the more impulse it does
-		currentTarget.unit->DoDamage(weaponDef->damages, impulseVec, owner, weaponDef->id, -1);
+		currentTarget.unit->DoDamage(*damages, impulseVec, owner, weaponDef->id, -1);
 	}
 }

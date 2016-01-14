@@ -661,7 +661,7 @@ void CUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool sh
 				wd->damages.damageAreaOfEffect,
 				wd->damages.edgeEffectiveness,
 				wd->damages.explosionSpeed,
-				wd->damages[0] > 500? 1.0f: 2.0f,  // gfxMod
+				wd->damages.GetDefault() > 500 ? 1.0f: 2.0f,  // gfxMod
 				false,                             // impactOnly
 				false,                             // ignoreOwner
 				true,                              // damageGround
@@ -1274,7 +1274,7 @@ void CUnit::DoDamage(
 	if (IsCrashing() || IsInVoid())
 		return;
 
-	float baseDamage = damages[armorType];
+	float baseDamage = damages.Get(armorType);
 	float experienceMod = expMultiplier;
 	float impulseMult = 1.0f;
 

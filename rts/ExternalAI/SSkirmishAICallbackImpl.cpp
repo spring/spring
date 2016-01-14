@@ -4676,28 +4676,23 @@ EXPORT(float) skirmishAiCallback_WeaponDef_getPredictBoost(int skirmishAIId, int
 }
 
 EXPORT(int) skirmishAiCallback_WeaponDef_Damage_getParalyzeDamageTime(int skirmishAIId, int weaponDefId) {
-	DamageArray da = getWeaponDefById(skirmishAIId, weaponDefId)->damages;
-	return da.paralyzeDamageTime;
+	return getWeaponDefById(skirmishAIId, weaponDefId)->damages.paralyzeDamageTime;
 }
 
 EXPORT(float) skirmishAiCallback_WeaponDef_Damage_getImpulseFactor(int skirmishAIId, int weaponDefId) {
-	DamageArray da = getWeaponDefById(skirmishAIId, weaponDefId)->damages;
-	return da.impulseFactor;
+	return getWeaponDefById(skirmishAIId, weaponDefId)->damages.impulseFactor;
 }
 
 EXPORT(float) skirmishAiCallback_WeaponDef_Damage_getImpulseBoost(int skirmishAIId, int weaponDefId) {
-	DamageArray da = getWeaponDefById(skirmishAIId, weaponDefId)->damages;
-	return da.impulseBoost;
+	return getWeaponDefById(skirmishAIId, weaponDefId)->damages.impulseBoost;
 }
 
 EXPORT(float) skirmishAiCallback_WeaponDef_Damage_getCraterMult(int skirmishAIId, int weaponDefId) {
-	DamageArray da = getWeaponDefById(skirmishAIId, weaponDefId)->damages;
-	return da.craterMult;
+	return getWeaponDefById(skirmishAIId, weaponDefId)->damages.craterMult;
 }
 
 EXPORT(float) skirmishAiCallback_WeaponDef_Damage_getCraterBoost(int skirmishAIId, int weaponDefId) {
-	DamageArray da = getWeaponDefById(skirmishAIId, weaponDefId)->damages;
-	return da.craterBoost;
+	return getWeaponDefById(skirmishAIId, weaponDefId)->damages.craterBoost;
 }
 
 EXPORT(int) skirmishAiCallback_WeaponDef_Damage_getTypes(int skirmishAIId, int weaponDefId, float* types, int typesMaxSize) {
@@ -4710,7 +4705,7 @@ EXPORT(int) skirmishAiCallback_WeaponDef_Damage_getTypes(int skirmishAIId, int w
 		typesSize = std::min(typesRealSize, typesMaxSize);
 
 		for (size_t i = 0; i < typesSize; ++i) {
-			types[i] = weaponDef->damages[i];
+			types[i] = weaponDef->damages.Get(i);
 		}
 	}
 

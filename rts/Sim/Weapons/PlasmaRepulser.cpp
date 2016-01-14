@@ -132,7 +132,7 @@ bool CPlasmaRepulser::IncomingProjectile(CWeaponProjectile* p)
 		return false;
 
 	const DamageArray& damageArray = p->damages->GetDynamicDamages(p->GetStartPos(), p->pos);
-	const float shieldDamage = damageArray[weaponDef->shieldArmorType];
+	const float shieldDamage = damageArray.Get(weaponDef->shieldArmorType);
 
 	// shield does not have enough power, don't touch the projectile
 	if (curPower < shieldDamage)
@@ -222,7 +222,7 @@ bool CPlasmaRepulser::IncomingBeam(const CWeapon* emitter, const float3& start, 
 		return false;
 
 	const DamageArray& damageArray = emitter->damages->GetDynamicDamages(start, weaponMuzzlePos);
-	const float shieldDamage = damageArray[weaponDef->shieldArmorType];
+	const float shieldDamage = damageArray.Get(weaponDef->shieldArmorType);
 
 	if (curPower < shieldDamage)
 		return false;

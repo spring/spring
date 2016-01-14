@@ -413,7 +413,7 @@ void CFeature::DoDamage(
 		return;
 
 	// features have no armor-type, so use default damage
-	float baseDamage = damages.GetDefaultDamage();
+	float baseDamage = damages.GetDefault();
 	float impulseMult = float((def->drawType >= DRAWTYPE_TREE) || (udef != NULL && !udef->IsImmobileUnit()));
 
 	if (eventHandler.FeaturePreDamaged(this, attacker, baseDamage, weaponDefID, projectileID, &baseDamage, &impulseMult)) {

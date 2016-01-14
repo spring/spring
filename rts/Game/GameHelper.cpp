@@ -85,7 +85,7 @@ float CGameHelper::CalcImpulseScale(const DamageArray& damages, const float expD
 	// DamageArray::operator* scales damage multipliers,
 	// not the impulse factor --> need to scale manually
 	// by it for impulse
-	const float impulseDmgMult = (damages.GetDefaultDamage() + damages.impulseBoost);
+	const float impulseDmgMult = (damages.GetDefault() + damages.impulseBoost);
 	const float rawImpulseScale = damages.impulseFactor * expDistanceMod * impulseDmgMult;
 
 	return Clamp(rawImpulseScale, -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE);
@@ -285,7 +285,7 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 		if (altitude >= -1.0f) {
 			if (params.damageGround && !mapDamage->disabled && (craterAOE > altitude) && (damages.craterMult > 0.0f)) {
 				// limit the depth somewhat
-				const float craterDepth = damages.GetDefaultDamage() * (1.0f - (altitude / craterAOE));
+				const float craterDepth = damages.GetDefault() * (1.0f - (altitude / craterAOE));
 				const float damageDepth = std::min(craterAOE * 10.0f, craterDepth);
 				const float craterStrength = (damageDepth + damages.craterBoost) * damages.craterMult;
 				const float craterRadius = craterAOE - altitude;
@@ -300,7 +300,7 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 			explosionID,
 			params.pos,
 			params.dir,
-			damages.GetDefaultDamage(),
+			damages.GetDefault(),
 			damageAOE,
 			params.gfxMod,
 			params.owner,
@@ -308,7 +308,7 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 		);
 	}
 
-	CExplosionEvent explosionEvent(params.pos, damages.GetDefaultDamage(), damageAOE, weaponDef);
+	CExplosionEvent explosionEvent(params.pos, damages.GetDefault(), damageAOE, weaponDef);
 	CExplosionCreator::FireExplosionEvent(explosionEvent);
 
 	if (weaponDef != NULL) {
@@ -637,7 +637,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 	const float heightMod = weaponDef->heightmod;
 
 	// how much damage the weapon deals over 1 second
-	const float secDamage = weapon->damages->GetDefaultDamage() * weapon->salvoSize / weapon->reloadTime * GAME_SPEED;
+	const float secDamage = weapon->damages->GetDefault() * weapon->salvoSize / weapon->reloadTime * GAME_SPEED;
 	const bool paralyzer  = (weapon->damages->paralyzeDamageTime != 0);
 
 	const auto& quads = quadField->GetQuads(pos, radius + (aHeight - std::max(0.0f, readMap->GetInitMinHeight())) * heightMod);
@@ -683,7 +683,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 
 				const float dist2D = (pos - targPos).Length2D();
 				const float rangeMul = (dist2D * weaponDef->proximityPriority + modRange * 0.4f + 100.0f);
-				const float damageMul = (*weapon->damages)[targetUnit->armorType] * targetUnit->curArmorMultiple;
+				const float damageMul = weapon->damages->Get(targetUnit->armorType) * targetUnit->curArmorMultiple;
 
 				targetPriority *= rangeMul;
 

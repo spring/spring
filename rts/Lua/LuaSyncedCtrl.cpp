@@ -1606,7 +1606,7 @@ static int SetSingleDamagesKey(lua_State* L, DynDamageArray* damages, int index)
 	if (lua_isnumber(L, index)) {
 		const unsigned armType = lua_toint(L, index);
 		if (armType < damages->GetNumTypes())
-			(*damages)[armType] = std::max(value, 1.0f);
+			damages->Set(armType, std::max(value, 0.0001f));
 		return 0;
 	}
 
@@ -2444,7 +2444,7 @@ int LuaSyncedCtrl::AddUnitDamage(lua_State* L)
 	}
 
 	DamageArray damages;
-	damages[unit->armorType] = damage;
+	damages.Set(unit->armorType, damage);
 	if (paralyze) {
 		damages.paralyzeDamageTime = paralyze;
 	}

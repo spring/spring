@@ -1042,7 +1042,7 @@ void CWeapon::Init()
 	UpdateWeaponPieces();
 	UpdateWeaponVectors();
 
-	muzzleFlareSize = std::min(damages->damageAreaOfEffect * 0.2f, std::min(1500.f, (*damages)[0]) * 0.003f);
+	muzzleFlareSize = std::min(damages->damageAreaOfEffect * 0.2f, std::min(1500.f, damages->GetDefault()) * 0.003f);
 
 	if (weaponDef->interceptor)
 		interceptHandler.AddInterceptorWeapon(this);

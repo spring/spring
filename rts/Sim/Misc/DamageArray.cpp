@@ -4,6 +4,8 @@
 
 #include "System/float3.h"
 
+#include <cassert>
+
 CR_BIND(DamageArray, )
 
 CR_REG_METADATA(DamageArray, (
@@ -76,6 +78,10 @@ DynDamageArray::DynDamageArray(float damage)
 	, refCount(1)
 { }
 
+DynDamageArray::~DynDamageArray()
+{
+	assert(refCount == 1);
+}
 
 DamageArray DynDamageArray::GetDynamicDamages(const float3& startPos, const float3& curPos) const
 {
@@ -91,23 +97,25 @@ DamageArray DynDamageArray::GetDynamicDamages(const float3& startPos, const floa
 
 	if (dynDamageInverted) {
 		for (int i = 0; i < damageArrayHandler->GetNumTypes(); ++i) {
-			dynDamages[i] = damages[i] - damageMod * damages[i];
+			float d = damages[i] - damageMod * damages[i];
 
 			if (dynDamageMin > 0.0f)
-				dynDamages[i] = std::max(damages[i] * ddmod, dynDamages[i]);
+				d = std::max(damages[i] * ddmod, d);
 
 			// to prevent div by 0
-			dynDamages[i] = std::max(0.0001f, dynDamages[i]);
+			d = std::max(0.0001f, d);
+			dynDamages.Set(i, d);
 		}
 	} else {
 		for (int i = 0; i < damageArrayHandler->GetNumTypes(); ++i) {
-			dynDamages[i] = damageMod * damages[i];
+			float d = damageMod * damages[i];
 
 			if (dynDamageMin > 0.0f)
-				dynDamages[i] = std::max(damages[i] * ddmod, dynDamages[i]);
+				d = std::max(damages[i] * ddmod, d);
 
 			// div by 0
-			dynDamages[i] = std::max(0.0001f, dynDamages[i]);
+			d = std::max(0.0001f, d);
+			dynDamages.Set(i, d);
 		}
 	}
 

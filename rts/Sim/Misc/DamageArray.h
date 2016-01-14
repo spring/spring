@@ -20,14 +20,15 @@ public:
 
 	DamageArray operator * (float damageMult) const;
 
-	float& operator [] (int i)       { return damages.at(i); }
-	float  operator [] (int i) const { return damages.at(i); }
+
+
 
 	void SetDefaultDamage(float damage);
 
 	int GetNumTypes() const { return damages.size(); }
-	float GetTypeDamage(int typeIndex) const { return damages.at(typeIndex); }
-	float GetDefaultDamage() const { return damages.at(0); }
+	float Get(int typeIndex) const { return damages[typeIndex]; }
+	void Set(int typeIndex, float d) { damages[typeIndex] = d; }
+	float GetDefault() const { return damages[0]; }
 
 	int paralyzeDamageTime;
 	float impulseFactor;
@@ -46,12 +47,12 @@ class DynDamageArray : public DamageArray
 public:
 	DynDamageArray(float damage = 1.0f);
 	DynDamageArray(const DynDamageArray& other) { *this = other; refCount = 1; }
-	~DynDamageArray() { }
+	~DynDamageArray();
 
 	DamageArray GetDynamicDamages(const float3& startPos, const float3& curPos) const;
 
 	static DynDamageArray* IncRef(DynDamageArray* dda) { ++dda->refCount; return dda; };
-	static void DecRef(DynDamageArray* dda) { if (--dda->refCount == 0) delete dda; };
+	static void DecRef(DynDamageArray* dda) { if (dda->refCount == 1) delete dda; else --dda->refCount; };
 	static void Duplicate(DynDamageArray*& dda);
 
 	float dynDamageExp;

@@ -364,12 +364,8 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 		for (di = dmgs.begin(); di != dmgs.end(); ++di) {
 			const int type = damageArrayHandler->GetTypeFromName(di->first);
 			if (type != 0) {
-				float dmg = di->second;
-				if (dmg != 0.0f) {
-					damages[type] = dmg;
-				} else {
-					damages[type] = 1.0f;
-				}
+				const float dmg = di->second;
+				damages.Set(type, std::max(0.0001f, dmg));
 			}
 		}
 
@@ -516,12 +512,12 @@ void WeaponDef::ParseWeaponSounds(const LuaTable& wdTable) {
 	if (!forceSetVolume)
 		return;
 
-	if (damages[0] <= 50.0f) {
+	if (damages.GetDefault() <= 50.0f) {
 		fireSound.setVolume(0, 5.0f);
 		hitSound.setVolume(0, 5.0f);
 		hitSound.setVolume(1, 5.0f);
 	} else {
-		float fireSoundVolume = math::sqrt(damages[0] * 0.5f) * ((type == "LaserCannon")? 0.5f: 1.0f);
+		float fireSoundVolume = math::sqrt(damages.GetDefault() * 0.5f) * ((type == "LaserCannon")? 0.5f: 1.0f);
 		float hitSoundVolume = fireSoundVolume;
 
 		if (fireSoundVolume > 100.0f) {
