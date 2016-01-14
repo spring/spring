@@ -1055,8 +1055,8 @@ bool CGuiHandler::TryTarget(const CommandDescription& cmdDesc) const
 		return true;
 
 	// get mouse-hovered map pos
-	CUnit* targetUnit = NULL;
-	CFeature* targetFeature = NULL;
+	const CUnit* targetUnit = nullptr;
+	const CFeature* targetFeature = nullptr;
 
 	const float viewRange = globalRendering->viewRange * 1.4f;
 	const float dist = TraceRay::GuiTraceRay(camera->GetPos(), mouse->dir, viewRange, NULL, targetUnit, targetFeature, true);
@@ -1567,8 +1567,8 @@ int CGuiHandler::GetDefaultCommand(int x, int y, const float3& cameraPos, const 
 	int cmdID = -1;
 
 	{
-		CUnit* unit = NULL;
-		CFeature* feature = NULL;
+		const CUnit* unit = nullptr;
+		const CFeature* feature = nullptr;
 		if ((ir == minimap) && (minimap->FullProxy())) {
 			unit = minimap->GetSelectUnit(minimap->GetMapPosition(x, y));
 		}
@@ -2130,8 +2130,8 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 		}
 
 		case CMDTYPE_ICON_UNIT: {
-			CUnit* unit = NULL;
-			CFeature* feature = NULL;
+			const CUnit* unit = nullptr;
+			const CFeature* feature = nullptr;
 			Command c(commands[tempInCommand].id, CreateOptions(button));
 
 			TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, NULL, unit, feature, true);
@@ -2145,8 +2145,8 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 		case CMDTYPE_ICON_UNIT_OR_MAP: {
 			Command c(commands[tempInCommand].id, CreateOptions(button));
 
-			CUnit* unit = NULL;
-			CFeature* feature = NULL;
+			const CUnit* unit = nullptr;
+			const CFeature* feature = nullptr;
 			const float dist2 = TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, NULL, unit, feature, true);
 			if (dist2 > (globalRendering->viewRange * 1.4f - 300)) {
 				return defaultRet;
@@ -2211,8 +2211,8 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			Command c(commands[tempInCommand].id, CreateOptions(button));
 
 			if (mouse->buttons[button].movement < 4) {
-				CUnit* unit = NULL;
-				CFeature* feature = NULL;
+				const CUnit* unit = nullptr;
+				const CFeature* feature = nullptr;
 				const float dist2 = TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, NULL, unit, feature, true);
 
 				if (dist2 > (globalRendering->viewRange * 1.4f - 300) && (commands[tempInCommand].type != CMDTYPE_ICON_UNIT_FEATURE_OR_AREA)) {
@@ -2264,8 +2264,8 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			Command c(commands[tempInCommand].id, CreateOptions(button));
 
 			if (mouse->buttons[button].movement < 16) {
-				CUnit* unit;
-				CFeature* feature;
+				const CUnit* unit = nullptr;
+				const CFeature* feature = nullptr;
 				const float dist2 = TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, NULL, unit, feature, true);
 
 				if (dist2 > (globalRendering->viewRange * 1.4f - 300)) {
@@ -2354,8 +2354,8 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 	BuildInfo other; // the unit around which buildings can be circled
 
 	if (GetQueueKeystate() && KeyInput::GetKeyModState(KMOD_CTRL)) {
-		CUnit* unit;
-		CFeature* feature;
+		const CUnit* unit = nullptr;
+		const CFeature* feature = nullptr;
 		TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, NULL, unit, feature, true);
 
 		if (unit) {
@@ -3489,8 +3489,8 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 	const CUnit* pointedAt = NULL;
 
 	if (GetQueueKeystate()) {
-		CUnit* unit = NULL;
-		CFeature* feature = NULL;
+		const CUnit* unit = nullptr;
+		const CFeature* feature = nullptr;
 
 		if (minimapCoords) {
 			unit = minimap->GetSelectUnit(cameraPos);

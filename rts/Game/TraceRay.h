@@ -57,8 +57,8 @@ namespace TraceRay {
 		const float3& dir,
 		const float length,
 		const CUnit* exclude,
-		CUnit*& hitUnit,
-		CFeature*& hitFeature,
+		const CUnit*& hitUnit,
+		const CFeature*& hitFeature,
 		bool useRadar,
 		bool groundOnly = false,
 		bool ignoreWater = true

@@ -439,13 +439,15 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 
 			selectedUnitsHandler.HandleUnitBoxSelection(plane1, plane2, plane3, plane4);
 		} else {
-			CUnit* unit;
-			CFeature* feature;
+			const CUnit* unit = nullptr;
+			const CFeature* feature = nullptr;
+
 			TraceRay::GuiTraceRay(camera->GetPos(), dir, globalRendering->viewRange * 1.4f, NULL, unit, feature, false);
 			lastClicked = unit;
-			const bool selectType = bp.lastRelease >= (gu->gameTime - doubleClickTime) && unit == _lastClicked;
 
-			selectedUnitsHandler.HandleSingleUnitClickSelection(unit, true, selectType);
+			const bool selectType = (bp.lastRelease >= (gu->gameTime - doubleClickTime) && unit == _lastClicked);
+
+			selectedUnitsHandler.HandleSingleUnitClickSelection(const_cast<CUnit*>(unit), true, selectType);
 		}
 
 		bp.lastRelease = gu->gameTime;
@@ -546,8 +548,8 @@ std::string CMouseHandler::GetCurrentTooltip()
 	const float range = (globalRendering->viewRange * 1.4f);
 	float dist = 0.0f;
 
-	CUnit* unit;
-	CFeature* feature;
+	const CUnit* unit = nullptr;
+	const CFeature* feature = nullptr;
 
 	{
 		dist = TraceRay::GuiTraceRay(camera->GetPos(), dir, range, NULL, unit, feature, true, false, true);

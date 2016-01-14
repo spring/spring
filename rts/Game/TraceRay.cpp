@@ -302,11 +302,10 @@ void TraceRayShields(
 				if (len <= 0.0f)
 					continue;
 
-				hitShields.insert(std::upper_bound(hitShields.begin(), hitShields.end(), len,
-													[](const float &a, const SShieldDist &b) {
-														return (a < b.dist);
-													}),
-									{r, len});
+				const auto hitCmp = [](const float a, const SShieldDist& b) { return (a < b.dist); };
+				const auto insPos = std::upper_bound(hitShields.begin(), hitShields.end(), len, hitCmp);
+
+				hitShields.insert(insPos, {r, len});
 			}
 		}
 	}
@@ -318,22 +317,22 @@ float GuiTraceRay(
 	const float3& dir,
 	const float length,
 	const CUnit* exclude,
-	CUnit*& hitUnit,
-	CFeature*& hitFeature,
+	const CUnit*& hitUnit,
+	const CFeature*& hitFeature,
 	bool useRadar,
 	bool groundOnly,
 	bool ignoreWater
 ) {
-	hitUnit = NULL;
-	hitFeature = NULL;
+	hitUnit = nullptr;
+	hitFeature = nullptr;
 
 	if (dir == ZeroVector)
 		return -1.0f;
 
 	// ground and water-plane intersection
-	const float guiRayLength = length;
-	const float groundRayLength = CGround::LineGroundCol(start, start + dir * guiRayLength, false);
-	const float waterRayLength = math::floorf(math::fabs(start.y / std::min(dir.y, -0.00001f)));
+	const float    guiRayLength = length;
+	const float groundRayLength = CGround::LineGroundCol(start, dir, guiRayLength, false);
+	const float  waterRayLength = CGround::LinePlaneCol(start, dir, guiRayLength, 0.0f);
 
 	float minRayLength = groundRayLength;
 	float minIngressDist = length;
@@ -355,7 +354,7 @@ float GuiTraceRay(
 		const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
 		// Unit Intersection
-		for (CUnit* u: quad.units) {
+		for (const CUnit* u: quad.units) {
 			const bool unitIsEnemy = !teamHandler->Ally(u->allyteam, gu->myAllyTeam);
 			const bool unitOnRadar = (useRadar && losHandler->InRadar(u, gu->myAllyTeam));
 			const bool unitInSight = (u->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR));
@@ -391,19 +390,19 @@ float GuiTraceRay(
 				const bool unitHitInsideFactory = ((hitFactory && ingressDist <  minEgressDist) || (!hitFactory && ingressDist < minIngressDist));
 
 				// give units in a factory higher priority than the factory itself
-				if (hitUnit == NULL || (factoryUnderCursor && factoryHitBeforeUnit) || (!factoryUnderCursor && unitHitInsideFactory)) {
+				if (hitUnit == nullptr || (factoryUnderCursor && factoryHitBeforeUnit) || (!factoryUnderCursor && unitHitInsideFactory)) {
 					hitFactory = factoryUnderCursor;
 					minIngressDist = ingressDist;
 					minEgressDist = egressDist;
 
 					hitUnit = u;
-					hitFeature = NULL;
+					hitFeature = nullptr;
 				}
 			}
 		}
 
 		// Feature Intersection
-		for (CFeature* f: quad.features) {
+		for (const CFeature* f: quad.features) {
 			if (!gu->spectatingFullView && !f->IsInLosForAllyTeam(gu->myAllyTeam))
 				continue;
 			// test this bit only in synced traces, rely on noSelect here
@@ -422,12 +421,12 @@ float GuiTraceRay(
 
 				// we want the closest feature (intersection point) on the ray
 				// give features in a factory (?) higher priority than the factory itself
-				if (hitUnit == NULL || factoryHitBeforeUnit || unitHitInsideFactory) {
+				if (hitUnit == nullptr || factoryHitBeforeUnit || unitHitInsideFactory) {
 					hitFactory = false;
 					minIngressDist = hitDist;
 
 					hitFeature = f;
-					hitUnit = NULL;
+					hitUnit = nullptr;
 				}
 			}
 		}
@@ -436,8 +435,8 @@ float GuiTraceRay(
 	if ((minRayLength > 0.0f) && ((minRayLength + 200.0f) < minIngressDist)) {
 		minIngressDist = minRayLength;
 
-		hitUnit    = NULL;
-		hitFeature = NULL;
+		hitUnit    = nullptr;
+		hitFeature = nullptr;
 	}
 
 	return minIngressDist;

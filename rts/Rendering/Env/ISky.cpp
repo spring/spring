@@ -85,8 +85,8 @@ void ISky::SetLight(bool dynamic) {
 }
 
 bool ISky::SunVisible(const float3 pos) const {
-	CUnit* hitUnit = NULL;
-	CFeature* hitFeature = NULL;
+	const CUnit* hitUnit = nullptr;
+	const CFeature* hitFeature = nullptr;
 
 	// cast a ray *toward* the sun from <pos>
 	// sun is visible if no terrain blocks it

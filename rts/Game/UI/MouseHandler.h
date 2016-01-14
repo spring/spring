@@ -128,7 +128,7 @@ private:
 	float scrollx;
 	float scrolly;
 
-	CUnit* lastClicked;
+	const CUnit* lastClicked;
 
 	std::map<std::string, CMouseCursor*> cursorFileMap;
 	std::map<std::string, CMouseCursor*> cursorCommandMap;

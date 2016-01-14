@@ -1335,76 +1335,82 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 	// window coordinates
 	const int mx = luaL_checkint(L, 1);
 	const int my = luaL_checkint(L, 2);
-	const bool onlyCoords  = luaL_optboolean(L, 3, false);
-	const bool useMiniMap  = luaL_optboolean(L, 4, false);
-	const bool includeSky  = luaL_optboolean(L, 5, false);
-	const bool ignoreWater = luaL_optboolean(L, 6, false);
 
-	const int wx = mx + globalRendering->viewPosX;
+	const int wx =                                  mx + globalRendering->viewPosX;
 	const int wy = globalRendering->viewSizeY - 1 - my - globalRendering->viewPosY;
 
-	if (useMiniMap && (minimap != NULL) && !minimap->GetMinimized()) {
+	const int optArgIdx = 3 + lua_isnumber(L, 3); // 3 or 4
+	const int newArgIdx = 3 + 4 * (optArgIdx == 3); // 7 or 3
+
+	const bool onlyCoords  = luaL_optboolean(L, optArgIdx + 0, false);
+	const bool useMiniMap  = luaL_optboolean(L, optArgIdx + 1, false);
+	const bool includeSky  = luaL_optboolean(L, optArgIdx + 2, false);
+	const bool ignoreWater = luaL_optboolean(L, optArgIdx + 3, false);
+
+	if (useMiniMap && (minimap != nullptr) && !minimap->GetMinimized()) {
 		const int px = minimap->GetPosX() - globalRendering->viewPosX; // for left dualscreen
 		const int py = minimap->GetPosY();
 		const int sx = minimap->GetSizeX();
 		const int sy = minimap->GetSizeY();
-		if ((mx >= px) && (mx < (px + sx)) &&
-		    (my >= py) && (my < (py + sy))) {
+
+		if ((mx >= px) && (mx < (px + sx))  &&  (my >= py) && (my < (py + sy))) {
 			const float3 pos = minimap->GetMapPosition(wx, wy);
+
 			if (!onlyCoords) {
 				const CUnit* unit = minimap->GetSelectUnit(pos);
-				if (unit != NULL) {
+
+				if (unit != nullptr) {
 					lua_pushliteral(L, "unit");
 					lua_pushnumber(L, unit->id);
 					return 2;
 				}
 			}
-			const float posY = CGround::GetHeightReal(pos.x, pos.z, false);
+
 			lua_pushliteral(L, "ground");
 			lua_createtable(L, 3, 0);
-			lua_pushnumber(L, pos.x); lua_rawseti(L, -2, 1);
-			lua_pushnumber(L, posY);  lua_rawseti(L, -2, 2);
-			lua_pushnumber(L, pos.z); lua_rawseti(L, -2, 3);
+			lua_pushnumber(L,                                      pos.x ); lua_rawseti(L, -2, 1);
+			lua_pushnumber(L, CGround::GetHeightReal(pos.x, pos.z, false)); lua_rawseti(L, -2, 2);
+			lua_pushnumber(L,                                      pos.z ); lua_rawseti(L, -2, 3);
 			return 2;
 		}
 	}
 
-	if ((mx < 0) || (mx >= globalRendering->viewSizeX) ||
-	    (my < 0) || (my >= globalRendering->viewSizeY)) {
+	if ((mx < 0) || (mx >= globalRendering->viewSizeX))
 		return 0;
-	}
+	if ((my < 0) || (my >= globalRendering->viewSizeY))
+		return 0;
 
-	CUnit* unit = NULL;
-	CFeature* feature = NULL;
+	const CUnit* unit = nullptr;
+	const CFeature* feature = nullptr;
 
-	const float range = globalRendering->viewRange * 1.4f;
-	const float badRange = range - 300.0f;
+	const float rawRange = globalRendering->viewRange * 1.4f;
+	const float badRange = rawRange - 300.0f;
 
-	const float3& pos = camera->GetPos();
-	const float3 dir = camera->CalcPixelDir(wx, wy);
+	const float3 camPos = camera->GetPos();
+	const float3 pxlDir = camera->CalcPixelDir(wx, wy);
 
+	// trace for player's allyteam
+	const float traceDist = TraceRay::GuiTraceRay(camPos, pxlDir, rawRange, nullptr, unit, feature, true, onlyCoords, ignoreWater);
+	const float planeDist = CGround::LinePlaneCol(camPos, pxlDir, rawRange, luaL_optnumber(L, newArgIdx, 0.0f));
 
-// FIXME	const int origAllyTeam = gu->myAllyTeam;
-//	gu->myAllyTeam = readAllyTeam;
-	const float dist = TraceRay::GuiTraceRay(pos, dir, range, NULL, unit, feature, true, onlyCoords, ignoreWater);
-//	gu->myAllyTeam = origAllyTeam;
+	const float3 tracePos = camPos + (pxlDir * traceDist);
+	const float3 planePos = camPos + (pxlDir * planeDist); // backup (for includeSky and onlyCoords)
 
-	if ((dist < 0.0f || dist > badRange) && unit == NULL && feature == NULL) {
+	if ((traceDist < 0.0f || traceDist > badRange) && unit == nullptr && feature == nullptr) {
 		// ray went into the void (or started too far above terrain)
-		if (includeSky) {
-			lua_pushliteral(L, "sky");
-		} else {
+		if (!includeSky)
 			return 0;
-		}
+
+		lua_pushliteral(L, "sky");
 	} else {
 		if (!onlyCoords) {
-			if (unit != NULL) {
+			if (unit != nullptr) {
 				lua_pushliteral(L, "unit");
 				lua_pushnumber(L, unit->id);
 				return 2;
 			}
 
-			if (feature != NULL) {
+			if (feature != nullptr) {
 				lua_pushliteral(L, "feature");
 				lua_pushnumber(L, feature->id);
 				return 2;
@@ -1414,11 +1420,13 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 		lua_pushliteral(L, "ground");
 	}
 
-	const float3 groundPos = pos + (dir * dist);
-	lua_createtable(L, 3, 0);
-	lua_pushnumber(L, groundPos.x); lua_rawseti(L, -2, 1);
-	lua_pushnumber(L, groundPos.y); lua_rawseti(L, -2, 2);
-	lua_pushnumber(L, groundPos.z); lua_rawseti(L, -2, 3);
+	lua_createtable(L, 6, 0);
+	lua_pushnumber(L, tracePos.x); lua_rawseti(L, -2, 1);
+	lua_pushnumber(L, tracePos.y); lua_rawseti(L, -2, 2);
+	lua_pushnumber(L, tracePos.z); lua_rawseti(L, -2, 3);
+	lua_pushnumber(L, planePos.x); lua_rawseti(L, -2, 4);
+	lua_pushnumber(L, planePos.y); lua_rawseti(L, -2, 5);
+	lua_pushnumber(L, planePos.z); lua_rawseti(L, -2, 6);
 
 	return 2;
 }
