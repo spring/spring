@@ -1515,6 +1515,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	eventHandler.UnitTaken(this, oldteam, newteam);
 	eoh->UnitCaptured(*this, oldteam, newteam);
 
+	// remove for old allyteam
 	quadField->RemoveUnit(this);
 
 
@@ -1538,7 +1539,6 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	team = newteam;
 	allyteam = teamHandler->AllyTeam(newteam);
 	neutral = false;
-	quadField->MovedUnit(this);
 
 	VectorErase(unitHandler->unitsByDefs[oldteam][unitDef->id], this);
 	VectorInsertUnique(unitHandler->unitsByDefs[newteam][unitDef->id], this, false);
@@ -1552,6 +1552,9 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 			UpdateLosStatus(at);
 		}
 	}
+
+	// insert for new allyteam
+	quadField->MovedUnit(this);
 
 	eventHandler.UnitGiven(this, oldteam, newteam);
 	eoh->UnitGiven(*this, oldteam, newteam);
