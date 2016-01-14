@@ -64,6 +64,8 @@ private:
 	float3 side1;
 	float3 side2;
 
+	int ttl;
+
 	float flashSize;
 	float circleSize;
 	float circleGrowth;
@@ -73,7 +75,6 @@ private:
 	float flashAgeSpeed;
 	float circleAlphaDec;
 
-	int ttl;
 
 	SColor color;
 };

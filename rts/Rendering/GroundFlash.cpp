@@ -136,15 +136,15 @@ CStandardGroundFlash::CStandardGroundFlash(
 	const GroundFlashInfo& info
 )
 	: CGroundFlash(_pos)
+	, ttl(info.ttl)
 	, flashSize(info.flashSize)
 	, circleSize(info.circleGrowth)
 	, circleGrowth(info.circleGrowth)
 	, circleAlpha(info.circleAlpha)
 	, flashAlpha(info.flashAlpha)
 	, flashAge(0.0f)
-	, flashAgeSpeed(info.ttl? 1.0f / info.ttl : 0.0f)
-	, circleAlphaDec(info.ttl? circleAlpha / info.ttl : 0.0f)
-	, ttl(info.ttl)
+	, flashAgeSpeed(ttl ? 1.0f / ttl : 0.0f)
+	, circleAlphaDec(ttl ? circleAlpha / ttl : 0.0f)
 {
 	InitCommon(_pos, info.color);
 	projectileHandler->AddGroundFlash(this);
@@ -160,15 +160,15 @@ CStandardGroundFlash::CStandardGroundFlash(
 	const float3& _color
 )
 	: CGroundFlash(_pos)
+	, ttl((int)_ttl)
 	, flashSize(_flashSize)
 	, circleSize(_circleGrowth)
 	, circleGrowth(_circleGrowth)
 	, circleAlpha(_circleAlpha)
 	, flashAlpha(_flashAlpha)
 	, flashAge(0)
-	, flashAgeSpeed(ttl? 1.0f / ttl : 0)
-	, circleAlphaDec(ttl? circleAlpha / ttl : 0)
-	, ttl((int)_ttl)
+	, flashAgeSpeed(ttl ? 1.0f / ttl : 0)
+	, circleAlphaDec(ttl ? circleAlpha / ttl : 0)
 {
 	InitCommon(_pos, _color);
 	projectileHandler->AddGroundFlash(this);
