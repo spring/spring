@@ -477,11 +477,7 @@ void CDynWater::DrawReflection(CGame* game)
 				gd->Draw(DrawPass::WaterReflection);
 				gd->SetupBaseDrawPass();
 
-			glPushMatrix();
-			glLoadIdentity();
-			glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
-			glPopMatrix();
-
+			SetModelClippingPlane(clipPlaneEq);
 			unitDrawer->Draw(true);
 			featureDrawer->Draw();
 
@@ -492,7 +488,6 @@ void CDynWater::DrawReflection(CGame* game)
 			sky->DrawSun();
 
 			eventHandler.DrawWorldReflection();
-
 			glDisable(GL_CLIP_PLANE2);
 
 			drawReflection = false;
@@ -509,7 +504,6 @@ void CDynWater::DrawReflection(CGame* game)
 
 void CDynWater::DrawRefraction(CGame* game)
 {
-	drawRefraction = true;
 	camera->Update();
 
 	refractRight = camera->GetRight();
@@ -529,38 +523,37 @@ void CDynWater::DrawRefraction(CGame* game)
 	sunLighting->unitSunColor *= float3(0.5f, 0.7f, 0.9f);
 	sunLighting->unitAmbientColor *= float3(0.6f, 0.8f, 1.0f);
 
-	game->SetDrawMode(CGame::gameRefractionDraw);
-
-	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-		gd->SetupRefrDrawPass();
-		gd->Draw(DrawPass::WaterRefraction);
-		gd->SetupBaseDrawPass();
-
-	const double clipPlaneEq[4] = {0.0, -1.0, 0.0, 2.0};
+	const double clipPlaneEq[4] = {0.0, -1.0, 0.0, 0.0};
 
 	glEnable(GL_CLIP_PLANE2);
 	glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
 
-	{
-		// drawReflection = true;
+	game->SetDrawMode(CGame::gameRefractionDraw);
 
+	{
+		drawRefraction = true;
+
+		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
+			gd->SetupRefrDrawPass();
+			gd->Draw(DrawPass::WaterRefraction);
+			gd->SetupBaseDrawPass();
+
+		SetModelClippingPlane(clipPlaneEq);
 		unitDrawer->Draw(false, true);
 		featureDrawer->Draw();
 
 		unitDrawer->DrawAlphaPass();
 		featureDrawer->DrawAlphaPass();
 
-		// drawReflection = false;
+		projectileDrawer->Draw(false, true);
+
+		eventHandler.DrawWorldRefraction();
+		glDisable(GL_CLIP_PLANE2);
+
+		drawRefraction = false;
 	}
 
-	projectileDrawer->Draw(false, true);
-	eventHandler.DrawWorldRefraction();
-	glDisable(GL_CLIP_PLANE2);
-
 	game->SetDrawMode(CGame::gameNormalDraw);
-
-	drawRefraction = false;
-
 
 	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 1);

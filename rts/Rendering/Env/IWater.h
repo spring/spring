@@ -38,8 +38,10 @@ public:
 	bool BlockWakeProjectiles() const { return (GetID() == WATER_RENDERER_DYNAMIC); }
 
 	static IWater* GetWater(IWater* currWaterRenderer, int nextWaterRenderMode);
+
 	static void ApplyPushedChanges(CGame* game);
 	static void PushWaterMode(int nextWaterRenderMode);
+	static void SetModelClippingPlane(const double* planeEq);
 
 protected:
 	bool drawReflection;

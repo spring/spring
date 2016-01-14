@@ -1181,8 +1181,7 @@ void CBumpWater::DrawRefraction(CGame* game)
 	{
 		drawRefraction = true;
 
-		// FIXME incorrectly transformed for UnitDrawer
-		const double clipPlaneEq[4] = {0.0, -1.0, 0.0, 5.0};
+		const double clipPlaneEq[4] = {0.0, -1.0, 0.0, 0.0};
 
 		glEnable(GL_CLIP_PLANE2);
 		glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
@@ -1190,6 +1189,8 @@ void CBumpWater::DrawRefraction(CGame* game)
 		// opaque
 		sky->Draw();
 		readMap->GetGroundDrawer()->Draw(DrawPass::WaterRefraction);
+
+		SetModelClippingPlane(clipPlaneEq);
 		unitDrawer->Draw(false, true);
 		featureDrawer->Draw();
 
@@ -1199,7 +1200,6 @@ void CBumpWater::DrawRefraction(CGame* game)
 		projectileDrawer->Draw(false, true);
 
 		eventHandler.DrawWorldRefraction();
-
 		glDisable(GL_CLIP_PLANE2);
 
 		drawRefraction = false;
@@ -1244,11 +1244,7 @@ void CBumpWater::DrawReflection(CGame* game)
 			if (reflection > 1)
 				readMap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
 
-			glPushMatrix();
-			glLoadIdentity();
-			glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
-			glPopMatrix();
-
+			SetModelClippingPlane(clipPlaneEq);
 			unitDrawer->Draw(true);
 			featureDrawer->Draw();
 
@@ -1259,7 +1255,6 @@ void CBumpWater::DrawReflection(CGame* game)
 			sky->DrawSun();
 
 			eventHandler.DrawWorldReflection();
-
 			glDisable(GL_CLIP_PLANE2);
 
 			drawReflection = false;

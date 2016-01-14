@@ -170,8 +170,9 @@ void IUnitDrawerState::DisableTexturesCommon(const CUnitDrawer* ud) const {
 
 
 
+// note: never actually called, SSP-state is tested
 bool UnitDrawerStateFFP::CanEnable(const CUnitDrawer* ud) const {
-	return (!ud->UseAdvShading() || water->DrawReflectionPass());
+	return (!ud->UseAdvShading());
 }
 
 void UnitDrawerStateFFP::Enable(const CUnitDrawer* ud, bool deferredPass, bool alphaPass) {
@@ -274,9 +275,9 @@ void UnitDrawerStateARB::Kill() {
 
 bool UnitDrawerStateARB::CanEnable(const CUnitDrawer* ud) const {
 	// ARB shaders should support vertex program + clipplanes
-	// (used for water reflection passes) but only with option
+	// (used for water ref**ction passes) but only with option
 	// ARB_position_invariant; this is present so skip the RHS
-	return (ud->UseAdvShading() && !water->DrawReflectionPass());
+	return (ud->UseAdvShading() /*&& (!water->DrawReflectionPass() && !water->DrawRefractionPass())*/);
 }
 
 void UnitDrawerStateARB::Enable(const CUnitDrawer* ud, bool deferredPass, bool alphaPass) {
@@ -405,7 +406,7 @@ void UnitDrawerStateGLSL::Kill() {
 }
 
 bool UnitDrawerStateGLSL::CanEnable(const CUnitDrawer* ud) const {
-	return (ud->UseAdvShading() && !water->DrawReflectionPass());
+	return (ud->UseAdvShading() && (!water->DrawReflectionPass() && !water->DrawRefractionPass()));
 }
 
 void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud, bool deferredPass, bool alphaPass) {

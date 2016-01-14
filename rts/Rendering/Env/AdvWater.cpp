@@ -330,11 +330,7 @@ void CAdvWater::UpdateWater(CGame* game)
 			readMap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
 
 			// rest needs the plane in model-space; V is combined with P
-			glPushMatrix();
-			glLoadIdentity();
-			glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
-			glPopMatrix();
-
+			SetModelClippingPlane(clipPlaneEq);
 			unitDrawer->Draw(true);
 			featureDrawer->Draw();
 
@@ -345,7 +341,6 @@ void CAdvWater::UpdateWater(CGame* game)
 			sky->DrawSun();
 
 			eventHandler.DrawWorldReflection();
-
 			glDisable(GL_CLIP_PLANE2);
 
 			drawReflection = false;
