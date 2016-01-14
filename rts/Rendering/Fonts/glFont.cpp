@@ -443,7 +443,7 @@ void CglFont::Begin(const bool immediate, const bool resetColors)
 	if (inBeginEnd) {
 		LOG_L(L_ERROR, "called Begin() multiple times");
 		if (threadSafety)
-			vaMutex.unock();
+			vaMutex.unlock();
 		return;
 	}
 
