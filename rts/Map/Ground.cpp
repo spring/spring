@@ -394,7 +394,7 @@ float CGround::LinePlaneCol(const float3 pos, const float3 dir, float len, float
 	if (dir.y >= 0.0f)
 		return (std::numeric_limits<float>::max());
 
-	return (pos.y / dir.y);
+	return ((pos.y - hgt) / -dir.y);
 }
 
 
