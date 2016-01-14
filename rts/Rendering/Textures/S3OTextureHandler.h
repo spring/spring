@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 
-#include "Rendering/GL/myGL.h"
 #include "System/Threading/SpringMutex.h"
 
 struct S3DModel;

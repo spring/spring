@@ -7,7 +7,6 @@
 #include <string>
 #include <map>
 
-#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/LightHandler.h"
 #include "System/EventClient.h"
 #include "System/type2.h"
@@ -19,6 +18,7 @@ struct S3DModel;
 class IModelRenderContainer;
 class CSolidObject;
 class CUnit;
+class CVertexArray;
 
 struct Command;
 struct BuildInfo;
@@ -58,7 +58,7 @@ public:
 
 	void UnitCloaked(const CUnit* unit);
 	void UnitDecloaked(const CUnit* unit);
-	
+
 	void PlayerChanged(int playerNum);
 	void SunChanged(const float3& sunDir);
 	void SunLightingChanged();
