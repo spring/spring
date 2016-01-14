@@ -104,6 +104,7 @@ public:
 
 	void ForcedMove(const float3& newPos);
 
+	void DeleteScript();
 	void EnableScriptMoveType();
 	void DisableScriptMoveType();
 

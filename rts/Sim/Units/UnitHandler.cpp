@@ -6,7 +6,6 @@
 #include "Unit.h"
 #include "UnitDefHandler.h"
 #include "CommandAI/BuilderCAI.h"
-#include "Scripts/NullUnitScript.h"
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -83,14 +82,10 @@ CUnitHandler::CUnitHandler()
 
 CUnitHandler::~CUnitHandler()
 {
-	for (CUnit* u: activeUnits) {
-		// Predelete scripts since they sometimes call models
-		// which are already gone by now.
-		if (u->script != &CNullUnitScript::value) {
-			SafeDelete(u->script);
-			u->script = &CNullUnitScript::value;
-		}
-	}
+	// Predelete scripts since they sometimes call models
+	// which are already gone by now.
+	for (CUnit* u: activeUnits)
+		u->DeleteScript();
 
 	for (CUnit* u: activeUnits) {
 		// ~CUnit dereferences featureHandler which is destroyed already

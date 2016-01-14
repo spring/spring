@@ -230,8 +230,7 @@ CUnit::~CUnit()
 	SetGroup(nullptr);
 
 	// delete script first so any callouts still see valid ptrs
-	if (script != &CNullUnitScript::value)
-		SafeDelete(script);
+	DeleteScript();
 
 	SafeDelete(commandAI);
 	SafeDelete(moveType);
@@ -766,6 +765,14 @@ void CUnit::Drop(const float3& parentPos, const float3& parentDir, CUnit* parent
 	script->Falling();
 }
 
+
+void CUnit::DeleteScript()
+{
+	if (script != &CNullUnitScript::value)
+		SafeDelete(script);
+
+	script = &CNullUnitScript::value;
+}
 
 void CUnit::EnableScriptMoveType()
 {
