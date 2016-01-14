@@ -3297,8 +3297,19 @@ int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
 }
 
 
-static inline int PushDamagesKey(lua_State* L, const DynDamageArray& damages, const std::string &key)
+static inline int PushDamagesKey(lua_State* L, const DynDamageArray& damages, int index)
 {
+	if (lua_isnumber(L, index)) {
+		const unsigned armType = lua_toint(L, index);
+		if (armType >= damages.GetNumTypes())
+			return 0;
+
+		lua_pushnumber(L, damages[armType]);
+		return 1;
+	}
+
+	const std::string key = luaL_checkstring(L, index);
+
 	if (key == "paralyzeDamageTime") {
 		lua_pushnumber(L, damages.paralyzeDamageTime);
 	} else if (key == "impulseFactor") {
@@ -3325,15 +3336,8 @@ static inline int PushDamagesKey(lua_State* L, const DynDamageArray& damages, co
 		lua_pushnumber(L, damages.edgeEffectiveness);
 	} else if (key == "explosionSpeed") {
 		lua_pushnumber(L, damages.explosionSpeed);
-	} else if (key == "default") {
-		lua_pushnumber(L, damages[0]);
 	} else {
-		const int dmgType = damageArrayHandler->GetTypeFromName(key);
-		if (dmgType > 0) {//Not default, since we've already checked for that
-			lua_pushnumber(L, damages[dmgType]);
-		} else {
-			return 0;
-		}
+		return 0;
 	}
 	return 1;
 }
@@ -3351,9 +3355,8 @@ int LuaSyncedRead::GetUnitWeaponDamages(lua_State* L)
 		return 0;
 
 	const CWeapon* weapon = unit->weapons[weaponNum];
-	const std::string key = luaL_checkstring(L, 3);
 
-	return PushDamagesKey(L, *weapon->damages, key);
+	return PushDamagesKey(L, *weapon->damages, 3);
 }
 
 
@@ -4842,7 +4845,7 @@ int LuaSyncedRead::GetProjectileDamages(lua_State* L)
 	const CWeaponProjectile* wpro = static_cast<const CWeaponProjectile*>(pro);
 	const std::string key = luaL_checkstring(L, 2);
 
-	return PushDamagesKey(L, *wpro->damages, key);
+	return PushDamagesKey(L, *wpro->damages, 2);
 }
 
 int LuaSyncedRead::GetProjectileName(lua_State* L)

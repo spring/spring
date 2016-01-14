@@ -92,7 +92,6 @@ CUnitHandler::~CUnitHandler()
 		}
 	}
 
-
 	for (CUnit* u: activeUnits) {
 		// ~CUnit dereferences featureHandler which is destroyed already
 		u->delayedWreckLevel = -1;

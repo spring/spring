@@ -1601,8 +1601,16 @@ int LuaSyncedCtrl::SetUnitWeaponState(lua_State* L)
 
 static int SetSingleDamagesKey(lua_State* L, DynDamageArray* damages, int index)
 {
-	const string key = lua_tostring(L, index);
 	const float value = lua_tofloat(L, index + 1);
+
+	if (lua_isnumber(L, index)) {
+		const unsigned armType = lua_toint(L, index);
+		if (armType < damages->GetNumTypes())
+			(*damages)[armType] = std::max(value, 1.0f);
+		return 0;
+	}
+
+	const string key = lua_tostring(L, index);
 	// FIXME: KDR -- missing checks and updates?
 	if (key == "paralyzeDamageTime") {
 		damages->paralyzeDamageTime = std::max((int)value, 0);
@@ -1631,12 +1639,6 @@ static int SetSingleDamagesKey(lua_State* L, DynDamageArray* damages, int index)
 		damages->edgeEffectiveness = std::min(value, 0.999f);
 	} else if (key == "explosionSpeed") {
 		damages->explosionSpeed = value;
-	} else if (key == "default") {
-		(*damages)[0] = std::max(value, 1.0f);
-	} else {
-		const int dmgType = damageArrayHandler->GetTypeFromName(key);
-		if (dmgType > 0) //Not default, since we've already checked for that
-			(*damages)[dmgType] = std::max(value, 1.0f);
 	}
 	return 0;
 }
@@ -1660,13 +1662,13 @@ int LuaSyncedCtrl::SetUnitWeaponDamages(lua_State* L)
 	if (lua_istable(L, 3)) {
 		// {key1 = value1, ...}
 		for (lua_pushnil(L); lua_next(L, 3) != 0; lua_pop(L, 1)) {
-			if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
+			if ((lua_isnumber(L, -2) || lua_israwstring(L, -2)) && lua_isnumber(L, -1)) {
 				SetSingleDamagesKey(L, weapon->damages, -2);
 			}
 		}
 	} else {
 		// key, value
-		if (lua_israwstring(L, 3) && lua_isnumber(L, 4)) {
+		if ((lua_isnumber(L, 3) || lua_israwstring(L, 3)) && lua_isnumber(L, 4)) {
 			SetSingleDamagesKey(L, weapon->damages, 3);
 		}
 	}
