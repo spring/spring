@@ -437,7 +437,7 @@ void CProjectileDrawer::DrawProjectileNow(CProjectile* pro, bool drawReflection,
 	if (!camera->InView(pro->pos, pro->drawRadius))
 		return;
 
-	DrawProjectileModel(pro, false);
+	DrawProjectileModel(pro);
 
 	if (pro->drawSorted) {
 		pro->SetSortDist(pro->pos.dot(camera->GetDir()));
@@ -476,7 +476,7 @@ void CProjectileDrawer::DrawProjectileShadow(CProjectile* p)
 
 		// if this returns false, then projectile is
 		// neither weapon nor piece, or has no model
-		if (DrawProjectileModel(p, true))
+		if (DrawProjectileModel(p))
 			return;
 
 		if (!p->castShadow)
@@ -683,7 +683,7 @@ void CProjectileDrawer::DrawShadowPass()
 
 
 
-bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPass)
+bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p)
 {
 	if (!(p->weapon || p->piece) || (p->model == NULL))
 		return false;
@@ -692,9 +692,7 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 		// weapon-projectile
 		const CWeaponProjectile* wp = static_cast<const CWeaponProjectile*>(p);
 
-		if (!shadowPass) {
-			unitDrawer->SetTeamColour(wp->GetTeamID());
-		}
+		unitDrawer->SetTeamColour(wp->GetTeamID());
 
 		glPushMatrix();
 			glMultMatrixf(wp->GetTransformMatrix(wp->GetProjectileType() == WEAPON_MISSILE_PROJECTILE));
@@ -707,9 +705,7 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p, bool shadowPas
 		// piece-projectile
 		const CPieceProjectile* pp = static_cast<const CPieceProjectile*>(p);
 
-		if (!shadowPass) {
-			unitDrawer->SetTeamColour(pp->GetTeamID());
-		}
+		unitDrawer->SetTeamColour(pp->GetTeamID());
 
 		glPushMatrix();
 			glTranslatef3(pp->pos);

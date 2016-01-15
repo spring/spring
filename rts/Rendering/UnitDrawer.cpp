@@ -984,6 +984,9 @@ void CUnitDrawer::SetTeamColour(int team, const float2 alpha) const
 	// need this because we can be called by no-team projectiles
 	if (!teamHandler->IsValidTeam(team))
 		return;
+	// should be an assert, but projectiles (+FlyingPiece) would trigger it
+	if (shadowHandler->InShadowPass())
+		return;
 
 	unitDrawerStates[DRAWER_STATE_SEL]->SetTeamColor(team, alpha);
 }

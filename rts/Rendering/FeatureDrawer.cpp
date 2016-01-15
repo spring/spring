@@ -352,8 +352,7 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 				if (!inShadowPass && LuaObjectDrawer::AddOpaqueMaterialObject(f, LUAOBJ_FEATURE))
 					continue;
 
-				if (!inShadowPass)
-					unitDrawer->SetTeamColour(f->team);
+				unitDrawer->SetTeamColour(f->team);
 
 				DrawFeature(f, 0, 0, false, false);
 			}

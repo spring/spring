@@ -102,7 +102,7 @@ private:
 
 	void DrawProjectileNow(CProjectile* projectile, bool drawReflection, bool drawRefraction);
 	static void DrawProjectileShadow(CProjectile* projectile);
-	static bool DrawProjectileModel(const CProjectile* projectile, bool shadowPass);
+	static bool DrawProjectileModel(const CProjectile* projectile);
 
 	void UpdatePerlin();
 	static void GenerateNoiseTex(unsigned int tex);
