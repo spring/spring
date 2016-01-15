@@ -91,8 +91,8 @@ public:
 	unsigned GetTriangleCount() const;
 
 private:
-	inline void GetDragFactors(float* speedDrag, float* gravityDrag) const;
-	inline CMatrix44f GetMatrixOf(const size_t i, const float speedDrag, const float gravityDrag, const float interAge) const;
+	inline float3 GetDragFactors() const;
+	inline CMatrix44f GetMatrixOf(const size_t i, const float3 dragFactors) const;
 	inline const SVertexData& GetVertexData(unsigned short i) const;
 	inline float3 GetPolygonDir(unsigned short idx) const;
 

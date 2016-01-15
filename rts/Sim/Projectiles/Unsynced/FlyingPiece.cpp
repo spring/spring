@@ -191,19 +191,17 @@ bool SNewFlyingPiece::Update()
 {
 	++age;
 
-	float speedDrag, gravDrag;
-	GetDragFactors(&speedDrag, &gravDrag);
-	const float interAge = (age + globalRendering->timeOffset);
+	const float3 dragFactors = GetDragFactors();
 
 	// used for `in camera frustum checks`
-	pos    = pos0 + speed * speedDrag + UpVector * (mapInfo->map.gravity * gravDrag);
-	radius = pieceRadius + EXPLOSION_SPEED * speedDrag + 10.f;
+	pos    = pos0 + (speed * dragFactors.x) + UpVector * (mapInfo->map.gravity * dragFactors.y);
+	radius = pieceRadius + EXPLOSION_SPEED * dragFactors.x + 10.f;
 
 	// check visibility (if all particles are underground -> kill)
 	if (age % GAME_SPEED != 0) {
 		for (size_t i = 0; i < speeds.size(); ++i) {
-			const CMatrix44f& m = GetMatrixOf(i, speedDrag, gravDrag, interAge);
-			float3 p = m.GetPos();
+			const CMatrix44f& m = GetMatrixOf(i, dragFactors);
+			const float3 p = m.GetPos();
 			if ((p.y + 10.f) >= CGround::GetApproximateHeight(p.x, p.z, false)) {
 				return true;
 			}
@@ -236,7 +234,7 @@ float3 SNewFlyingPiece::GetPolygonDir(unsigned short idx) const
 }
 
 
-void SNewFlyingPiece::GetDragFactors(float* speedDrag, float* gravityDrag) const
+float3 SNewFlyingPiece::GetDragFactors() const
 {
 	// We started with a naive (iterative) method like this:
 	//  pos   += speed;
@@ -277,32 +275,37 @@ void SNewFlyingPiece::GetDragFactors(float* speedDrag, float* gravityDrag) const
 	// so we only have to compute them once per frame. And can then get the position of each particle with a simple multiplication,
 	// saving memory & cpu time.
 
-
 	static const float airDrag = 0.995f;
 	static const float invAirDrag = 1.f / (1.f - airDrag);
-	const float interAge = (age + globalRendering->timeOffset);
+
+	const float interAge = age + globalRendering->timeOffset;
 	const float airDragPowOne = std::pow(airDrag, interAge + 1.f);
 	const float airDragPowTwo = airDragPowOne * airDrag; // := std::pow(airDrag, interAge + 2.f);
 
+	float3 dragFactors;
+
 	// Speed Drag
-	*speedDrag = (1.f - airDragPowOne) * invAirDrag;
+	dragFactors.x = (1.f - airDragPowOne) * invAirDrag;
 
 	// Gravity Drag
-	*gravityDrag  = interAge * (*speedDrag); // 1st sum
-	*gravityDrag -= (interAge * (airDragPowTwo - airDragPowOne) - airDragPowOne + airDrag) * invAirDrag * invAirDrag; // 2nd sum
+	dragFactors.y  = interAge * dragFactors.x; // 1st sum
+	dragFactors.y -= (interAge * (airDragPowTwo - airDragPowOne) - airDragPowOne + airDrag) * invAirDrag * invAirDrag; // 2nd sum
+
+	// time interpolation factor
+	dragFactors.z = interAge;
+
+	return dragFactors;
 }
 
 
-CMatrix44f SNewFlyingPiece::GetMatrixOf(const size_t i, const float speedDrag, const float gravityDrag, const float interAge) const
+CMatrix44f SNewFlyingPiece::GetMatrixOf(const size_t i, const float3 dragFactors) const
 {
-	const float3& s = speeds[i];
-	float3 interPos = s * speedDrag;
-	interPos.y += mapInfo->map.gravity * gravityDrag;
-
+	const float3 interPos = speeds[i] * dragFactors.x + UpVector * (mapInfo->map.gravity * dragFactors.y);
 	const float4& rot = rotationAxisAndSpeed[i];
+
 	CMatrix44f m = pieceMatrix;
-	m.GetPos() += interPos; //note: not the same as .Translate(pos) which does `m = m * translate(pos)`, but we want `m = translate(pos) * m`
-	m.Rotate(rot.w * interAge, rot.xyz);
+	m.SetPos(m.GetPos() + interPos); //note: not the same as .Translate(pos) which does `m = m * translate(pos)`, but we want `m = translate(pos) * m`
+	m.Rotate(rot.w * dragFactors.z, rot.xyz);
 
 	return m;
 }
@@ -313,13 +316,11 @@ void SNewFlyingPiece::Draw(size_t* lastTeam, size_t* lastTex, CVertexArray* cons
 	DrawCommon(lastTeam, lastTex, va);
 	va->EnlargeArrays(speeds.size() * 3, 0, VA_SIZE_TN);
 
-	float speedDrag, gravDrag;
-	GetDragFactors(&speedDrag, &gravDrag);
-	const float interAge = (age + globalRendering->timeOffset);
+	const float3 dragFactors = GetDragFactors(); // speed, gravity
 
 	for (size_t i = 0; i < speeds.size(); ++i) {
 		const auto& idx = polygon[i];
-		const CMatrix44f& m = GetMatrixOf(i, speedDrag, gravDrag, interAge);
+		const CMatrix44f& m = GetMatrixOf(i, dragFactors);
 
 		for (int j: {0,1,2}) {
 			const SVertexData& v = GetVertexData(idx + j);
