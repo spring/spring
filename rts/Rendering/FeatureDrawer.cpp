@@ -35,7 +35,7 @@
 #define DRAW_QUAD_SIZE 32
 
 enum {
-	FD_NODRAW_FLAG = 0,
+	FD_NODRAW_FLAG = 0, // must be 0
 	FD_OPAQUE_FLAG = 1,
 	FD_ALPHAF_FLAG = 2,
 	FD_SHADOW_FLAG = 3,
@@ -44,7 +44,7 @@ enum {
 
 static bool SetDrawAlphaValue(
 	CFeature* f,
-	CCamera* cam,
+	const CCamera* cam,
 	float sqFadeDistMin = -1.0f,
 	float sqFadeDistMax = -1.0f
 ) {
@@ -147,7 +147,12 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 	featureFadeDistance = std::min(configHandler->GetFloat("FeatureFadeDistance"), featureDrawDistance);
 
 	modelRenderers.resize(drawQuadsX * drawQuadsY);
-	camVisibleQuadFlags.resize(CCamera::CAMTYPE_ENVMAP, 0);
+	camVisibleQuads.resize(CCamera::CAMTYPE_ENVMAP);
+	camVisDrawFrames.resize(CCamera::CAMTYPE_ENVMAP, 0);
+
+	for (unsigned int n = 0; n < camVisibleQuads.size(); n++) {
+		camVisibleQuads[n].reserve(256);
+	}
 }
 
 
@@ -160,7 +165,7 @@ CFeatureDrawer::~CFeatureDrawer()
 	}
 
 	modelRenderers.clear();
-	camVisibleQuadFlags.clear();
+	camVisDrawFrames.clear();
 }
 
 
@@ -610,38 +615,45 @@ void CFeatureDrawer::DrawShadowPass()
 
 class CFeatureQuadDrawer : public CReadMap::IQuadDrawer {
 public:
-	int drawQuadsX;
+	CFeatureQuadDrawer(int _numQuadsX): numQuadsX(_numQuadsX) {}
 
-	bool drawReflection;
-	bool drawRefraction;
-	bool drawShadowPass;
-	bool drawFarFeatures;
-
-	float sqFadeDistBegin;
-	float sqFadeDistEnd;
-
-	CCamera* cam;
-
-public:
-	void ResetState() {
-		drawQuadsX = 0;
-
-		drawReflection = false;
-		drawRefraction = false;
-		drawShadowPass = false;
-		drawFarFeatures = false;
-
-		sqFadeDistBegin = 0.0f;
-		sqFadeDistEnd   = 0.0f;
-
-		cam = nullptr;
-	}
+	void ResetState() { numQuadsX = 0; }
 
 	void DrawQuad(int x, int y) {
-		auto& mdlRenderProxy = featureDrawer->modelRenderers[y * drawQuadsX + x];
+		camQuads.push_back(y * numQuadsX + x);
 
 		// used so we do not iterate over non-visited renderers (in any pass)
-		mdlRenderProxy.SetLastDrawFrame(globalRendering->drawFrame);
+		rdrProxies[y * numQuadsX + x].SetLastDrawFrame(globalRendering->drawFrame);
+	}
+
+	std::vector<int>& GetCamQuads() { return camQuads; }
+	std::vector<CFeatureDrawer::RdrContProxy>& GetRdrProxies() { return rdrProxies; }
+
+private:
+	std::vector<int> camQuads;
+	std::vector<CFeatureDrawer::RdrContProxy> rdrProxies;
+
+	int numQuadsX;
+};
+
+
+
+void CFeatureDrawer::FlagVisibleFeatures(
+	const CCamera* cam,
+	bool drawShadowPass,
+	bool drawReflection,
+	bool drawRefraction,
+	bool drawFarFeatures
+) {
+	const auto& quads = camVisibleQuads[cam->GetCamType()];
+
+	const float sqFadeDistBegin = featureFadeDistance * featureFadeDistance;
+	const float sqFadeDistEnd = featureDrawDistance * featureDrawDistance;
+
+	const CCamera* playerCam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
+
+	for (unsigned int n = 0; n < quads.size(); n++) {
+		auto& mdlRenderProxy = featureDrawer->modelRenderers[ quads[n] ];
 
 		for (int i = 0; i < MODELTYPE_OTHER; ++i) {
 			auto mdlRenderer = mdlRenderProxy.GetRenderer(i);
@@ -649,7 +661,7 @@ public:
 
 			for (auto& binElem: featureBin) {
 				for (CFeature* f: binElem.second) {
-					assert((y * drawQuadsX + x) == f->drawQuad);
+					assert(quads[n] == f->drawQuad);
 
 					// clear marker; will be set at most once below
 					f->drawFlag = FD_NODRAW_FLAG;
@@ -666,7 +678,8 @@ public:
 
 
 					if (drawShadowPass) {
-						f->drawFlag = FD_SHADOW_FLAG;
+						// no shadows for fully alpha-faded features from player's POV
+						f->drawFlag = FD_SHADOW_FLAG * SetDrawAlphaValue(f, playerCam, sqFadeDistBegin, sqFadeDistEnd);
 						continue;
 					}
 
@@ -691,39 +704,43 @@ public:
 			}
 		}
 	}
-};
-
-
+}
 
 void CFeatureDrawer::GetVisibleFeatures(CCamera* cam, int extraSize, bool drawFar)
 {
 	// should only ever be called for the first three types
-	assert(cam->GetCamType() < camVisibleQuadFlags.size());
+	assert(cam->GetCamType() < camVisDrawFrames.size());
 
 	// check if we already did a pass for this camera-type
 	// (e.g. water refraction and the standard opaque pass
 	// use CAMTYPE_PLAYER with equal state)
-	// ignored: the refraction pass needs to skip features
-	// that are not in water, so we must either recalculate
-	// drawFlag or add drawRefraction checks in Draw{*}Pass
-	if (false && camVisibleQuadFlags[cam->GetCamType()] >= globalRendering->drawFrame)
+	// if so, just re-flag those features (fast) since the
+	// refraction pass needs to skip features that are not
+	// in water, etc.
+	if (camVisDrawFrames[cam->GetCamType()] >= globalRendering->drawFrame) {
+		FlagVisibleFeatures(cam, inShadowPass, water->DrawReflectionPass(), water->DrawRefractionPass(), drawFar);
 		return;
+	}
 
-	camVisibleQuadFlags[cam->GetCamType()] = globalRendering->drawFrame;
+	camVisDrawFrames[cam->GetCamType()] = globalRendering->drawFrame;
 
-	CFeatureQuadDrawer drawer;
+	camVisibleQuads[cam->GetCamType()].clear();
+	camVisibleQuads[cam->GetCamType()].reserve(256);
 
-	drawer.drawQuadsX = drawQuadsX;
-	drawer.drawReflection = water->DrawReflectionPass();
-	drawer.drawRefraction = water->DrawRefractionPass();
-	drawer.drawShadowPass = (cam->GetCamType() == CCamera::CAMTYPE_SHADOW);
-	drawer.drawFarFeatures = drawFar;
-	drawer.sqFadeDistBegin = featureFadeDistance * featureFadeDistance;
-	drawer.sqFadeDistEnd = featureDrawDistance * featureDrawDistance;
-	drawer.cam = cam;
+	{
+		CFeatureQuadDrawer drawer(drawQuadsX);
 
-	cam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
-	readMap->GridVisibility(cam, &drawer, featureDrawDistance, DRAW_QUAD_SIZE, extraSize);
+		(drawer.GetCamQuads()).swap(camVisibleQuads[cam->GetCamType()]);
+		(drawer.GetRdrProxies()).swap(featureDrawer->modelRenderers);
+
+		cam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
+		readMap->GridVisibility(cam, &drawer, featureDrawDistance, DRAW_QUAD_SIZE, extraSize);
+
+		(drawer.GetCamQuads()).swap(camVisibleQuads[cam->GetCamType()]);
+		(drawer.GetRdrProxies()).swap(featureDrawer->modelRenderers);
+	}
+
+	FlagVisibleFeatures(cam, inShadowPass, water->DrawReflectionPass(), water->DrawRefractionPass(), drawFar);
 }
 
 void CFeatureDrawer::PostLoad()

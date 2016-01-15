@@ -78,6 +78,13 @@ private:
 
 	void DrawFeatureModel(const CFeature* feature, bool noLuaCall);
 
+	void FlagVisibleFeatures(
+		const CCamera*,
+		bool drawShadowPass,
+		bool drawReflection,
+		bool drawRefraction,
+		bool drawFar
+	);
 	void GetVisibleFeatures(CCamera*, int, bool drawFar);
 
 	void PostLoad();
@@ -100,13 +107,13 @@ private:
 
 private:
 	friend class CFeatureQuadDrawer;
-	struct ModelRendererProxy {
-		ModelRendererProxy(): lastDrawFrame(0) {
+	struct RdrContProxy {
+		RdrContProxy(): lastDrawFrame(0) {
 			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 				rendererTypes[modelType] = IModelRenderContainer::GetInstance(modelType);
 			}
 		}
-		~ModelRendererProxy() {
+		~RdrContProxy() {
 			for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 				delete rendererTypes[modelType];
 			}
@@ -127,8 +134,9 @@ private:
 		unsigned int lastDrawFrame;
 	};
 
-	std::vector<ModelRendererProxy> modelRenderers;
-	std::vector<unsigned int> camVisibleQuadFlags;
+	std::vector<RdrContProxy> modelRenderers;
+	std::vector< std::vector<int> > camVisibleQuads;
+	std::vector<unsigned int> camVisDrawFrames;
 	std::vector<CFeature*> unsortedFeatures;
 
 	GL::GeometryBuffer* geomBuffer;
