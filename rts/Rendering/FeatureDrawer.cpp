@@ -487,10 +487,11 @@ void CFeatureDrawer::DrawAlphaPass()
 
 		glPushAttrib(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glDepthMask(GL_TRUE);
-		glEnable(GL_ALPHA_TEST);
-		glAlphaFunc(GL_GREATER, 0.5f);
 
 		ISky::SetupFog();
+
+		// needed for now; not always called directly after Draw()
+		GetVisibleFeatures(CCamera::GetCamera(CCamera::CAMTYPE_ACTIVE), 0, true);
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			unitDrawer->PushModelRenderState(modelType);
