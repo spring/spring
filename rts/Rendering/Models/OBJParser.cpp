@@ -509,8 +509,8 @@ void SOBJPiece::UploadGeometryVBOs()
 	// NOTE: wasteful to keep these around, but still needed (eg. for Shatter())
 	// vertices.clear();
 	// indices.clear();
-	vnormals.clear();
-	texcoors.clear();
+	// vnormals.clear();
+	// texcoors.clear();
 	sTangents.clear();
 	tTangents.clear();
 	triangles.clear();
@@ -678,13 +678,10 @@ void SOBJPiece::Shatter(float pieceChance, int texType, int team, const float3 p
 	svertices.resize(vertices.size());
 
 	for (unsigned int n = 0; n < vertices.size(); n++) {
-		svertices[n].pos      = vertices[n];
-		svertices[n].normal   = vnormals[n];
-		svertices[n].sTangent = sTangents[n];
-		svertices[n].tTangent = tTangents[n];
-
+		// Shatter only needs p+n+tc0
+		svertices[n].pos          = vertices[n];
+		svertices[n].normal       = vnormals[n];
 		svertices[n].texCoords[0] = texcoors[n];
-		svertices[n].texCoords[1] = texcoors[n];
 	}
 
 	auto fp = new SNewFlyingPiece(this, pieceChance, texType, team, pos, speed, m);
