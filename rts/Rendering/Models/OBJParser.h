@@ -61,20 +61,20 @@ private:
 	VBO vbosTangents;
 	VBO vbotTangents;
 
-public:
-	// empty until Shatter
-	std::vector<SVertexData> svertices;
-
 private:
 	std::vector<float3> vertices;
 	std::vector<float3> vnormals;
 	std::vector<float2> texcoors;
 
-	std::vector<SOBJTriangle> triangles;
-	std::vector<unsigned int> indices;
-
 	std::vector<float3> sTangents;
 	std::vector<float3> tTangents;
+
+	std::vector<SOBJTriangle> triangles;
+
+public:
+	std::vector<unsigned int> indices;
+	// empty until Shatter
+	std::vector<SVertexData> svertices;
 };
 
 class LuaTable;
