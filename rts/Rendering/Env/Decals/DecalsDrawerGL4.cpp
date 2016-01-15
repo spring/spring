@@ -569,7 +569,7 @@ void CDecalsDrawerGL4::Draw()
 	glEnable(GL_DEPTH_CLAMP);
 	//glEnable(GL_DEPTH_TEST);
 
-	decalShader->SetFlag("HAVE_SHADOWS", shadowHandler->shadowsLoaded());
+	decalShader->SetFlag("HAVE_SHADOWS", shadowHandler->ShadowsLoaded());
 	decalShader->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
 
 	decalShader->Enable();
