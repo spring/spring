@@ -1106,9 +1106,6 @@ int LuaUnsyncedRead::GetSelectedUnitsCount(lua_State* L)
 
 int LuaUnsyncedRead::IsGUIHidden(lua_State* L)
 {
-	if (game == NULL) {
-		return 0;
-	}
 	lua_pushboolean(L, game->hideInterface);
 	return 1;
 }
@@ -1116,19 +1113,13 @@ int LuaUnsyncedRead::IsGUIHidden(lua_State* L)
 
 int LuaUnsyncedRead::HaveShadows(lua_State* L)
 {
-	if (shadowHandler == NULL) {
-		return 0;
-	}
-	lua_pushboolean(L, shadowHandler->shadowsLoaded);
+	lua_pushboolean(L, shadowHandler->ShadowsLoaded());
 	return 1;
 }
 
 
 int LuaUnsyncedRead::HaveAdvShading(lua_State* L)
 {
-	if (unitDrawer == NULL) {
-		return 0;
-	}
 	lua_pushboolean(L, unitDrawer->UseAdvShading());
 	return 1;
 }
@@ -1136,10 +1127,6 @@ int LuaUnsyncedRead::HaveAdvShading(lua_State* L)
 
 int LuaUnsyncedRead::GetWaterMode(lua_State* L)
 {
-	if (water == NULL) {
-		return 0;
-	}
-
 	const int mode = water->GetID();
 	const char* modeName = water->GetName();
 

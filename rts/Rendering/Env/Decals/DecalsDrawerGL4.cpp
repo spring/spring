@@ -569,7 +569,7 @@ void CDecalsDrawerGL4::Draw()
 	glEnable(GL_DEPTH_CLAMP);
 	//glEnable(GL_DEPTH_TEST);
 
-	decalShader->SetFlag("HAVE_SHADOWS", shadowHandler && shadowHandler->shadowsLoaded);
+	decalShader->SetFlag("HAVE_SHADOWS", ShadowHandler->shadowsLoaded());
 	decalShader->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
 
 	decalShader->Enable();
@@ -581,7 +581,7 @@ void CDecalsDrawerGL4::Draw()
 	glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, smfrm->GetNormalsTexture());
 
-	if (shadowHandler && shadowHandler->shadowsLoaded) {
+	if (shadowHandler->ShadowsLoaded()) {
 		glActiveTexture(GL_TEXTURE2);
 			glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);

@@ -165,9 +165,6 @@ const CMatrix44f* LuaOpenGLUtils::GetNamedMatrix(const std::string& name)
 
 	switch (GetLuaMatrixType(name)) {
 		case LUAMATRICES_SHADOW:
-			if (shadowHandler == nullptr)
-				break;
-
 			return &shadowHandler->GetShadowMatrix();
 		case LUAMATRICES_VIEW:
 			return &camera->GetViewMatrix();
