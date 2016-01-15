@@ -18,7 +18,7 @@ struct LocalModelPiece;
 struct SolidObjectDef;
 struct SolidObjectGroundDecal;
 
-struct DamageArray;
+class DamageArray;
 class CUnit;
 
 enum TerrainChangeTypes {

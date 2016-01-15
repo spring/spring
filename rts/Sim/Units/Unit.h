@@ -22,7 +22,8 @@ class CMissileProjectile;
 class AMoveType;
 class CWeapon;
 class CUnitScript;
-struct DamageArray;
+class DamageArray;
+class DynDamageArray;
 struct UnitDef;
 struct UnitTrackStruct;
 struct UnitLoadParams;
@@ -252,10 +253,12 @@ public:
 	/// Our weapon with stockpiled ammo, NULL if we have none
 	CWeapon* stockpileWeapon;
 
+	const DynDamageArray* selfdExpDamages;
+	const DynDamageArray* deathExpDamages;
+
 	CUnit* soloBuilder;
 	/// last attacker
 	CUnit* lastAttacker;
-
 
 	/// last frame unit was attacked by other unit
 	int lastAttackFrame;

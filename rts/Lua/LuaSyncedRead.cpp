@@ -3349,14 +3349,29 @@ int LuaSyncedRead::GetUnitWeaponDamages(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	const size_t weaponNum = luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX;
+	const DynDamageArray* damages;
 
-	if (weaponNum >= unit->weapons.size())
-		return 0;
+	if (lua_israwstring(L, 2)) {
+		const string key = lua_tostring(L, 2);
+		if (key == "explode") {
+			damages = DynDamageArray::GetMutable(unit->deathExpDamages);
+		} else if (key == "selfDestruct") {
+			damages = DynDamageArray::GetMutable(unit->selfdExpDamages);
+		} else {
+			return 0;
+		}
+	} else {
+		const size_t weaponNum = luaL_checkint(L, 2) - LUA_WEAPON_BASE_INDEX;
 
-	const CWeapon* weapon = unit->weapons[weaponNum];
+		if (weaponNum >= unit->weapons.size())
+			return 0;
 
-	return PushDamagesKey(L, *weapon->damages, 3);
+		CWeapon* weapon = unit->weapons[weaponNum];
+
+		damages = DynDamageArray::GetMutable(weapon->damages);
+	}
+
+	return PushDamagesKey(L, *damages, 3);
 }
 
 

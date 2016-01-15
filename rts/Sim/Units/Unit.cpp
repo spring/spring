@@ -79,23 +79,25 @@ float CUnit::expGrade       = 0.0f;
 
 CUnit::CUnit()
 : CSolidObject()
-, unitDef(NULL)
-, shieldWeapon(NULL)
-, stockpileWeapon(NULL)
-, soloBuilder(NULL)
-, lastAttacker(NULL)
+, unitDef(nullptr)
+, shieldWeapon(nullptr)
+, stockpileWeapon(nullptr)
+, selfdExpDamages(nullptr)
+, deathExpDamages(nullptr)
+, soloBuilder(nullptr)
+, lastAttacker(nullptr)
 , lastAttackFrame(-200)
 , lastFireWeapon(0)
-, transporter(NULL)
+, transporter(nullptr)
 , transportCapacityUsed(0)
 , transportMassUsed(0)
-, moveType(NULL)
-, prevMoveType(NULL)
-, commandAI(NULL)
-, script(NULL)
+, moveType(nullptr)
+, prevMoveType(nullptr)
+, commandAI(nullptr)
+, script(nullptr)
 , los(ILosType::LOS_TYPE_COUNT, nullptr)
 , losStatus(teamHandler->ActiveAllyTeams(), 0)
-, fpsControlPlayer(NULL)
+, fpsControlPlayer(nullptr)
 , deathSpeed(ZeroVector)
 , lastMuzzleFlameDir(UpVector)
 , flankingBonusDir(RgtVector)
@@ -183,8 +185,8 @@ CUnit::CUnit()
 , iconRadius(0.0f)
 , lastUnitUpdate(0)
 , group(nullptr)
-, myTrack(NULL)
-, myIcon(NULL)
+, myTrack(nullptr)
+, myIcon(nullptr)
 
 , stunned(false)
 {
@@ -204,6 +206,10 @@ CUnit::~CUnit()
 		FeatureLoadParams params = {featureHandler->GetFeatureDefByID(featureDefID), unitDef, pos, deathSpeed, -1, team, -1, heading, buildFacing, 0};
 		featureHandler->CreateWreckage(params, delayedWreckLevel - 1, true);
 	}
+	if (deathExpDamages != nullptr)
+		DynDamageArray::DecRef(deathExpDamages);
+	if (selfdExpDamages != nullptr)
+		DynDamageArray::DecRef(selfdExpDamages);
 
 #ifdef TRACE_SYNC
 	tracefile << "Unit died: ";
@@ -389,6 +395,9 @@ void CUnit::PreInit(const UnitLoadParams& params)
 
 	moveType = MoveTypeFactory::GetMoveType(this, unitDef);
 	script = CUnitScriptFactory::CreateScript("scripts/" + unitDef->scriptName, this);
+
+	selfdExpDamages = DynDamageArray::IncRef(&unitDef->selfdExpWeaponDef->damages);
+	deathExpDamages = DynDamageArray::IncRef(&unitDef->deathExpWeaponDef->damages);
 }
 
 
@@ -646,22 +655,31 @@ void CUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool sh
 	deathScriptFinished = (!showDeathSequence || reclaimed || beingBuilt);
 
 	if (!deathScriptFinished) {
-		const WeaponDef* wd = (selfDestruct)? unitDef->selfdExpWeaponDef: unitDef->deathExpWeaponDef;
+		const WeaponDef* wd;
+		const DynDamageArray* d;
+		if (selfDestruct) {
+			wd = unitDef->selfdExpWeaponDef;
+			d = selfdExpDamages;
+		} else {
+			wd = unitDef->deathExpWeaponDef;
+			d = deathExpDamages;
+		}
 
-		if (wd != NULL) {
+		if (wd != nullptr) {
+			assert(d != nullptr);
 			CGameHelper::ExplosionParams params = {
 				pos,
 				ZeroVector,
-				wd->damages,
+				*d,
 				wd,
 				this,                              // owner
-				NULL,                              // hitUnit
-				NULL,                              // hitFeature
-				wd->damages.craterAreaOfEffect,
-				wd->damages.damageAreaOfEffect,
-				wd->damages.edgeEffectiveness,
-				wd->damages.explosionSpeed,
-				wd->damages.GetDefault() > 500 ? 1.0f: 2.0f,  // gfxMod
+				nullptr,                              // hitUnit
+				nullptr,                              // hitFeature
+				d->craterAreaOfEffect,
+				d->damageAreaOfEffect,
+				d->edgeEffectiveness,
+				d->explosionSpeed,
+				d->GetDefault() > 500 ? 1.0f: 2.0f,  // gfxMod
 				false,                             // impactOnly
 				false,                             // ignoreOwner
 				true,                              // damageGround
@@ -2806,6 +2824,8 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(weapons),
 	CR_MEMBER(shieldWeapon),
 	CR_MEMBER(stockpileWeapon),
+	CR_MEMBER(selfdExpDamages),
+	CR_MEMBER(deathExpDamages),
 
 	CR_MEMBER(reloadSpeed),
 	CR_MEMBER(maxRange),

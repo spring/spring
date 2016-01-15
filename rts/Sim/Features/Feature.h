@@ -18,7 +18,7 @@ struct FeatureDef;
 struct FeatureLoadParams;
 class CUnit;
 struct UnitDef;
-struct DamageArray;
+class DamageArray;
 class CFireProjectile;
 
 
