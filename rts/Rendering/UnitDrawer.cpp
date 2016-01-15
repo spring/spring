@@ -106,6 +106,10 @@ static const void PopRenderStateOBJ() {    /* no-op */ }
 static const void PopRenderStateASS() {    /* no-op */ }
 
 
+static const void SetTeamColorDummy(const IUnitDrawerState* state, int team, const float2 alpha) {}
+static const void SetTeamColorValid(const IUnitDrawerState* state, int team, const float2 alpha) { state->SetTeamColor(team, alpha); }
+
+
 
 // typedef std::function<void(int)>                                  BindOpaqueTexFunc;
 // typedef std::function<void(const CS3OTextureHandler::S3OTexMat*)> BindShadowTexFunc;
@@ -116,6 +120,8 @@ typedef const void (*KillShadowTexFunc)();
 
 typedef const void (*PushRenderStateFunc)();
 typedef const void (*PopRenderStateFunc)();
+
+typedef const void (*SetTeamColorFunc)(const IUnitDrawerState*, int team, const float2 alpha);
 
 static const BindOpaqueTexFunc opaqueTexBindFuncs[MODELTYPE_OTHER] = {
 	BindOpaqueTexDummy, // 3DO (no-op, done by PushRenderState3DO)
@@ -151,6 +157,12 @@ static const PopRenderStateFunc renderStatePopFuncs[MODELTYPE_OTHER] = {
 	PopRenderStateS3O,
 	PopRenderStateOBJ,
 	PopRenderStateASS,
+};
+
+
+static const SetTeamColorFunc setTeamColorFuncs[] = {
+	SetTeamColorDummy,
+	SetTeamColorValid,
 };
 
 
@@ -982,13 +994,11 @@ const IUnitDrawerState* CUnitDrawer::GetWantedDrawerState(bool alphaPass) const
 void CUnitDrawer::SetTeamColour(int team, const float2 alpha) const
 {
 	// need this because we can be called by no-team projectiles
-	if (!teamHandler->IsValidTeam(team))
-		return;
+	const int b0 = teamHandler->IsValidTeam(team);
 	// should be an assert, but projectiles (+FlyingPiece) would trigger it
-	if (shadowHandler->InShadowPass())
-		return;
+	const int b1 = !shadowHandler->InShadowPass();
 
-	unitDrawerStates[DRAWER_STATE_SEL]->SetTeamColor(team, alpha);
+	setTeamColorFuncs[b0 * b1](unitDrawerStates[DRAWER_STATE_SEL], team, alpha);
 }
 
 /**
