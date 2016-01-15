@@ -1,11 +1,3 @@
-# CMake 2.4:
-# - lacks some cross-compiling features and fails on windows
-# CMake 2.6:
-# - fixes: Windows command line is limited to 32k length commands
-# CMake 2.6.3:
-# + support for SOURCES attribute of add_custom_target() (not required anymore)
-# CMake 2.8
-# + works around command line length limited by using an @objectFilesList.txt parameter when linking
 # CMake 2.8.10
 # + adds support for CMAKE_CXX_COMPILER_ID (which is ignored with older cmake)
 cmake_minimum_required(VERSION 2.8.11)
@@ -27,16 +19,12 @@ CheckMinCMakeVersion(CUSTOM_TARGET_SOURCES_SUPPORT 2 6 3)
 
 
 # check for minimal gcc version
-set(MIN_GCC_VER "4.7")
+set(MIN_GCC_VER "4.8")
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-	if(NOT ${CMAKE_CXX_COMPILER_VERSION} STREQUAL "")
-		if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "${MIN_GCC_VER}")
-			message(FATAL_ERROR "gcc >=${MIN_GCC_VER} required")
-		else()
-			message(STATUS "gcc ${CMAKE_CXX_COMPILER_VERSION} detected")
-		endif()
+	if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "${MIN_GCC_VER}")
+		message(FATAL_ERROR "gcc >=${MIN_GCC_VER} required")
 	else()
-		message(WARNING "cmake version <2.8.10 found, couldn't check for gcc ${MIN_GCC_VER}")
+		message(STATUS "gcc ${CMAKE_CXX_COMPILER_VERSION} detected")
 	endif()
 endif()
 
