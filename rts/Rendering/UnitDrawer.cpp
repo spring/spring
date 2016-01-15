@@ -518,7 +518,10 @@ bool CUnitDrawer::CanDrawOpaqueUnitShadow(const CUnit* unit) const
 		return false;
 	if (unit->IsInVoid())
 		return false;
+	// no shadow if unit is already an icon from player's POV
 	if (unit->isIcon)
+		return false;
+	if (unit->isCloaked)
 		return false;
 
 	const CCamera* cam = CCamera::GetActiveCamera();
@@ -528,18 +531,7 @@ bool CUnitDrawer::CanDrawOpaqueUnitShadow(const CUnit* unit) const
 	const bool unitInLOS = ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView);
 	const bool unitInView = cam->InView(unit->drawMidPos, unit->drawRadius);
 
-	if (!unitInLOS || !unitInView)
-		return false;
-
-	const float sqDist = (unit->pos - cam->GetPos()).SqLength();
-	const float farLength = unit->sqRadius * unitDrawDistSqr;
-
-	if (sqDist >= farLength)
-		return false;
-	if (unit->isCloaked)
-		return false;
-
-	return true;
+	return (unitInLOS && unitInView);
 }
 
 
