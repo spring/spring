@@ -22,7 +22,7 @@ public:
 	void DrawForList() const;
 	void SetMinMaxExtends(bool globalVertexOffsets);
 	void SetVertexTangents();
-	void Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const;
+	void Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m);
 
 	void SetVertexCount(unsigned int n) { vertices.resize(n); }
 	void SetNormalCount(unsigned int n) { vnormals.resize(n); }

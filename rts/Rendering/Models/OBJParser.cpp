@@ -673,7 +673,7 @@ void SOBJPiece::SetVertexTangents()
 
 
 
-void SOBJPiece::Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const
+void SOBJPiece::Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m)
 {
 	svertices.resize(vertices.size());
 
