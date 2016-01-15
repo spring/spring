@@ -3,60 +3,44 @@
 #ifndef ASS_PARSER_H
 #define ASS_PARSER_H
 
+#include <vector>
+#include <map>
 #include "3DModel.h"
 #include "IModelParser.h"
-
 #include "System/float3.h"
 #include "System/type2.h"
 
-#include <vector>
-#include <map>
-
-#define NUM_MODEL_TEXTURES 2
-#define NUM_MODEL_UVCHANNS 2
 
 struct aiNode;
 struct aiScene;
 class LuaTable;
 
-struct SAssVertex {
-	SAssVertex() : normal(UpVector) {}
+typedef SVertexData SAssVertex;
 
-	float3 pos;
-	float3 normal;
-	float3 sTangent;
-	float3 tTangent;
-
-	//< Second channel is optional, still good to have. Also makes
-	//< sure the struct is 64bytes in size (ATi's prefers such VBOs)
-	//< supporting an arbitrary number of channels would be easy but
-	//< overkill (for now)
-	float2 texCoords[NUM_MODEL_UVCHANNS];
-};
 
 struct SAssPiece: public S3DModelPiece
 {
 	SAssPiece(): numTexCoorChannels(0) {
 	}
 
-	void DrawForList() const;
-	void UploadGeometryVBOs();
-	const float3& GetVertexPos(const int idx) const { return vertices[idx].pos; }
-	const float3& GetNormal(const int idx) const { return vertices[idx].normal; }
+	void DrawForList() const override;
+	void UploadGeometryVBOs() override;
+	const float3& GetVertexPos(const int idx) const override { return vertices[idx].pos; }
+	const float3& GetNormal(const int idx) const override { return vertices[idx].normal; }
 
-	unsigned int GetVertexCount() const { return vertices.size(); }
-	unsigned int GetNormalCount() const { return vertices.size(); }
-	unsigned int GetTxCoorCount() const { return vertices.size(); }
+	unsigned int GetVertexCount() const override { return vertices.size(); }
+	unsigned int GetNormalCount() const override { return vertices.size(); }
+	unsigned int GetTxCoorCount() const override { return vertices.size(); }
+	unsigned int GetVertexDrawIndexCount() const override { return indices.size(); }
 
-	// FIXME implement
-	// void Shatter(float, int, int, const float3&, const float3&) const
+	void Shatter(float, int, int, const float3, const float3, const CMatrix44f&) const override;
 
 	unsigned int GetNumTexCoorChannels() const { return numTexCoorChannels; }
 	void SetNumTexCoorChannels(unsigned int n) { numTexCoorChannels = n; }
 
 public:
 	std::vector<SAssVertex> vertices;
-	std::vector<unsigned int> vertexDrawIndices;
+	std::vector<unsigned int> indices;
 
 	unsigned int numTexCoorChannels;
 };
@@ -70,6 +54,7 @@ public:
 
 	CAssParser();
 	S3DModel* Load(const std::string& modelFileName);
+	ModelType GetType() const { return MODELTYPE_ASS; }
 private:
 
 	GLint maxIndices;

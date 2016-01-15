@@ -42,10 +42,11 @@ public:
 	void SetY  (const float3 dir) { m[ 4] = dir.x; m[ 5] = dir.y; m[ 6] = dir.z; }
 	void SetZ  (const float3 dir) { m[ 8] = dir.x; m[ 9] = dir.y; m[10] = dir.z; }
 
-	float3 GetPos() const { return float3(m[12], m[13], m[14]); }
-	float3 GetX  () const { return float3(m[ 0], m[ 1], m[ 2]); }
-	float3 GetY  () const { return float3(m[ 4], m[ 5], m[ 6]); }
-	float3 GetZ  () const { return float3(m[ 8], m[ 9], m[10]); }
+	float3& GetPos() { return col[3]; }
+	const float3& GetPos() const { return col[3]; }
+	const float3& GetX()   const { return col[0]; }
+	const float3& GetY()   const { return col[1]; }
+	const float3& GetZ()   const { return col[2]; }
 
 	float3 GetEulerAnglesLftHand(float eps = 0.01f /*std::numeric_limits<float>::epsilon()*/) const;
 	float3 GetEulerAnglesRgtHand(float eps = 0.01f /*std::numeric_limits<float>::epsilon()*/) const;
@@ -113,6 +114,7 @@ public:
 	union {
 		float m[16];
 		float md[4][4]; // WARNING: it still is column-major, means md[j][i]!!!
+		float4 col[4];
 	};
 };
 

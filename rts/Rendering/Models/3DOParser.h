@@ -44,11 +44,16 @@ struct S3DOPiece: public S3DModelPiece {
 
 	void DrawForList() const;
 	void SetMinMaxExtends();
-	unsigned int GetVertexCount() const { return vertices.size(); }
-	const float3& GetVertexPos(const int idx) const { return vertices[idx].pos; }
-	const float3& GetNormal(const int idx) const { return vertices[idx].normal; }
 
-	void Shatter(float pieceChance, int texType, int team, const float3& pos, const float3& speed) const;
+	unsigned int GetVertexCount() const override { return vertices.size(); }
+	unsigned int GetNormalCount() const override { return vertices.size(); }
+	unsigned int GetTxCoorCount() const override { return vertices.size(); }
+	unsigned int GetVertexDrawIndexCount() const override { return prims.size(); }
+
+	const float3& GetVertexPos(const int idx) const override { return vertices[idx].pos; }
+	const float3& GetNormal(const int idx)    const override { return vertices[idx].normal; }
+
+	void Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const;
 
 	std::vector<S3DOVertex> vertices;
 	std::vector<S3DOPrimitive> prims;

@@ -47,11 +47,9 @@ CR_BIND(CProjectileHandler, )
 CR_REG_METADATA(CProjectileHandler, (
 	CR_MEMBER(syncedProjectiles),
 	CR_MEMBER(unsyncedProjectiles),
-	CR_MEMBER_UN(flyingPieces3DO),
-	CR_MEMBER_UN(flyingPiecesS3O),
+	CR_MEMBER_UN(flyingPieces),
 	CR_MEMBER_UN(groundFlashes),
-	CR_MEMBER_UN(resortFlyingPieces3DO),
-	CR_MEMBER_UN(resortFlyingPiecesS3O),
+	CR_MEMBER_UN(resortFlyingPieces),
 
 	CR_MEMBER(maxParticles),
 	CR_MEMBER(maxNanoParticles),
@@ -79,8 +77,7 @@ CProjectileHandler::CProjectileHandler()
 , lastCurrentParticles(0)
 , lastSyncedProjectilesCount(0)
 , lastUnsyncedProjectilesCount(0)
-, resortFlyingPieces3DO(false)
-, resortFlyingPiecesS3O(false)
+, resortFlyingPieces({false})
 , syncedProjectileIDs(1024, nullptr)
 #if UNSYNCED_PROJ_NOEVENT
 , unsyncedProjectileIDs(0, nullptr)
@@ -133,13 +130,11 @@ CProjectileHandler::~CProjectileHandler()
 	}
 
 	{
-		for (FlyingPiece* fp: flyingPieces3DO)
-			delete fp;
-		for (FlyingPiece* fp: flyingPiecesS3O)
-			delete fp;
-
-		flyingPieces3DO.clear();
-		flyingPiecesS3O.clear();
+		for (auto& fpc: flyingPieces) {
+			for (FlyingPiece* fp: fpc)
+				delete fp;
+			fpc.clear();
+		}
 	}
 
 	freeSyncedIDs.clear();
@@ -307,13 +302,13 @@ void CProjectileHandler::Update()
 		UPDATE_CONTAINER(groundFlashes);
 
 		// flying pieces
-		UPDATE_CONTAINER(flyingPiecesS3O);
-		UPDATE_CONTAINER(flyingPieces3DO);
-
 		// sort these every now and then
 		FlyingPieceComparator fsort;
-		if (resortFlyingPiecesS3O) std::sort(flyingPiecesS3O.begin(), flyingPiecesS3O.end(), fsort);
-		if (resortFlyingPieces3DO) std::sort(flyingPieces3DO.begin(), flyingPieces3DO.end(), fsort);
+		for (int modelType = 0; modelType < MODELTYPE_OTHER; ++modelType) {
+			auto& fpc = flyingPieces[modelType];
+			UPDATE_CONTAINER(fpc);
+			if (resortFlyingPieces[modelType]) std::sort(fpc.begin(), fpc.end(), fsort);
+		}
 	}
 
 	// precache part of particles count calculation that else becomes very heavy
@@ -585,28 +580,10 @@ void CProjectileHandler::AddGroundFlash(CGroundFlash* flash)
 }
 
 
-void CProjectileHandler::AddFlyingPiece(
-	const float3 pos,
-	const float3 speed,
-	int team,
-	const S3DOPiece* piece,
-	const S3DOPrimitive* chunk)
+void CProjectileHandler::AddFlyingPiece(int modelType, FlyingPiece* fp)
 {
-	flyingPieces3DO.push_back(new S3DOFlyingPiece(pos, speed, team, piece, chunk));
-	resortFlyingPieces3DO = true;
-}
-
-void CProjectileHandler::AddFlyingPiece(
-	const float3 pos,
-	const float3 speed,
-	int team,
-	int textureType,
-	const SS3OVertex* chunk)
-{
-	assert(textureType > 0);
-
-	flyingPiecesS3O.push_back(new SS3OFlyingPiece(pos, speed, team, textureType, chunk));
-	resortFlyingPiecesS3O = true;
+	flyingPieces[modelType].push_back(fp);
+	resortFlyingPieces[modelType] = true;
 }
 
 
@@ -717,8 +694,11 @@ int CProjectileHandler::GetCurrentParticles() const
 	for (size_t i = lastUnsyncedProjectilesCount, e = unsyncedProjectiles.size(); i < e; ++i) {
 		partCount += unsyncedProjectiles[i]->GetProjectilesCount();
 	}
-	partCount += flyingPieces3DO.size();
-	partCount += flyingPiecesS3O.size();
+	for (const auto& c: flyingPieces) {
+		for (const auto& fp: c) {
+			partCount += fp->GetTriangleCount();
+		}
+	}
 	partCount += groundFlashes.size();
 	return partCount;
 }

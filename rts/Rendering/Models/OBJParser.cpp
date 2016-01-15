@@ -586,10 +586,10 @@ void SOBJPiece::SetMinMaxExtends(bool globalVertexOffsets)
 			// for converted S3O's, the piece offsets are defined wrt.
 			// the parent piece, *not* wrt. the root piece (<goffset>
 			// stores the concatenated transform)
-			vertexGlobalPos = GetVertex(i);
+			vertexGlobalPos = GetVertexPos(i);
 			vertexLocalPos = vertexGlobalPos - goffset;
 		} else {
-			vertexLocalPos = GetVertex(i);
+			vertexLocalPos = GetVertexPos(i);
 			vertexGlobalPos = vertexLocalPos + goffset;
 		}
 
@@ -618,9 +618,9 @@ void SOBJPiece::SetVertexTangents()
 		const SOBJTriangle& tri = GetTriangle(i);
 
 		const float3&
-			p0 = GetVertex(tri.vIndices[0]),
-			p1 = GetVertex(tri.vIndices[1]),
-			p2 = GetVertex(tri.vIndices[2]);
+			p0 = GetVertexPos(tri.vIndices[0]),
+			p1 = GetVertexPos(tri.vIndices[1]),
+			p2 = GetVertexPos(tri.vIndices[2]);
 		const float2&
 			tc0 = GetTxCoor(tri.tIndices[0]),
 			tc1 = GetTxCoor(tri.tIndices[1]),

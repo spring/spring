@@ -704,6 +704,7 @@ public:
 		struct { float x1,y1,x2; };
 		struct { float s,t,p; };
 		struct { float xstart, ystart, xend; };
+		struct { float xyz[3]; };
 	};
 };
 

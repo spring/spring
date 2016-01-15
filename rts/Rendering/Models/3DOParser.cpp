@@ -8,6 +8,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/Unsynced/FlyingPiece.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
 #include "System/Matrix44f.h"
@@ -19,11 +20,7 @@
 
 #include <list>
 #include <vector>
-#include <set>
-#include <algorithm>
 #include <cctype>
-#include <locale>
-#include <stdexcept>
 #include <boost/cstdint.hpp>
 
 using std::list;
@@ -460,12 +457,13 @@ void S3DOPiece::SetMinMaxExtends()
 	}
 }
 
-void S3DOPiece::Shatter(float pieceChance, int /*texType*/, int team, const float3& pos, const float3& speed) const
+void S3DOPiece::Shatter(float pieceChance, int /*texType*/, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const
 {
 	for (std::vector<S3DOPrimitive>::const_iterator pi = prims.begin(); pi != prims.end(); ++pi) {
 		if (gu->RandFloat() > pieceChance || pi->numVertex != 4)
 			continue;
 
-		projectileHandler->AddFlyingPiece(pos, speed + gu->RandVector() * 2.0f, team, this, &*pi);
+		FlyingPiece* fp = new S3DOFlyingPiece(pos, speed, team, this, &*pi);
+		projectileHandler->AddFlyingPiece(MODELTYPE_3DO, fp);
 	}
 }

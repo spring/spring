@@ -772,33 +772,26 @@ void CUnitScript::Explode(int piece, int flags)
 	if (flags & PF_NONE)
 		return;
 
+	if (pieces[piece]->original == NULL)
+		return;
+
+	if (flags & PF_Shatter) {
+		Shatter(piece, absPos, unit->speed);
+		return;
+	}
+
 	// This means that we are going to do a full fledged piece explosion!
 	float3 baseSpeed = unit->speed;
 	float3 explSpeed((0.5f - gs->randFloat()) * 6.0f, 1.2f + gs->randFloat() * 5.0f, (0.5f - gs->randFloat()) * 6.0f);
-
+	if (unit->pos.y - CGround::GetApproximateHeight(unit->pos.x, unit->pos.z) > 15) {
+		explSpeed.y = (0.5f - gs->randFloat()) * 6.0f;
+	}
 	if (baseSpeed.SqLength() > 9) {
 		const float l  = baseSpeed.Length();
 		const float l2 = 3 + math::sqrt(l - 3);
 		baseSpeed *= (l2 / l);
 	}
-	if (unit->pos.y - CGround::GetApproximateHeight(unit->pos.x, unit->pos.z) > 15) {
-		explSpeed.y = (0.5f - gs->randFloat()) * 6.0f;
-	}
-
 	explSpeed += baseSpeed;
-
-	// limit projectile speed to 12 elmos/frame (why?)
-	if (false && explSpeed.SqLength() > (12.0f*12.0f)) {
-		explSpeed = (explSpeed.Normalize() * 12.0f);
-	}
-
-	if (flags & PF_Shatter) {
-		Shatter(piece, absPos, explSpeed);
-		return;
-	}
-
-	if (pieces[piece]->original == NULL)
-		return;
 
 	// projectiles that don't fall could live forever
 	int newflags = PF_Fall;
@@ -819,12 +812,12 @@ void CUnitScript::Explode(int piece, int flags)
 
 void CUnitScript::Shatter(int piece, const float3& pos, const float3& speed)
 {
-	const LocalModelPiece* lmp = pieces[piece];
-	const S3DModelPiece* omp = lmp->original;
 	const float pieceChance = 1.0f - (projectileHandler->GetCurrentParticles() - (projectileHandler->maxParticles - 2000)) / 2000.0f;
-
 	if (pieceChance > 0.0f) {
-		omp->Shatter(pieceChance, unit->model->textureType, unit->team, pos, speed);
+		const LocalModelPiece* lmp = pieces[piece];
+		const S3DModelPiece* omp = lmp->original;
+		auto m = unit->GetTransformMatrix() * lmp->GetModelSpaceMatrix();
+		omp->Shatter(pieceChance, unit->model->textureType, unit->team, pos, speed, m);
 	}
 }
 

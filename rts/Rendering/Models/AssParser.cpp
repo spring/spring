@@ -4,11 +4,12 @@
 
 #include "3DModel.h"
 #include "3DModelLog.h"
-#include "S3OParser.h"
 #include "AssIO.h"
 
 #include "Lua/LuaParser.h"
 #include "Sim/Misc/CollisionVolume.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/Unsynced/FlyingPiece.h"
 #include "System/Util.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/errorhandler.h"
@@ -524,7 +525,7 @@ void CAssParser::LoadPieceGeometry(SAssPiece* piece, const aiNode* pieceNode, co
 			(mesh->HasTextureCoords(0) ? "Y" : "N"));
 
 		piece->vertices.reserve(piece->vertices.size() + mesh->mNumVertices);
-		piece->vertexDrawIndices.reserve(piece->vertexDrawIndices.size() + mesh->mNumFaces * 3);
+		piece->indices.reserve(piece->indices.size() + mesh->mNumFaces * 3);
 
 		std::vector<unsigned> mesh_vertex_mapping;
 
@@ -597,7 +598,7 @@ void CAssParser::LoadPieceGeometry(SAssPiece* piece, const aiNode* pieceNode, co
 			for (unsigned vertexListID = 0; vertexListID < face.mNumIndices; ++vertexListID) {
 				const unsigned int vertexFaceIdx = face.mIndices[vertexListID];
 				const unsigned int vertexDrawIdx = mesh_vertex_mapping[vertexFaceIdx];
-				piece->vertexDrawIndices.push_back(vertexDrawIdx);
+				piece->indices.push_back(vertexDrawIdx);
 			}
 		}
 	}
@@ -820,9 +821,8 @@ void CAssParser::FindTextures(
 			aiTextureType_OPACITY,
 			*/
 		};
-		for (unsigned int n = 0; n < (sizeof(texTypes) / sizeof(texTypes[0])); n++) {
+		for (unsigned int n: texTypes) {
 			aiString textureFile;
-
 			if (scene->mMaterials[0]->Get(AI_MATKEY_TEXTURE(texTypes[n], 0), textureFile) != aiReturn_SUCCESS)
 				continue;
 
@@ -841,6 +841,14 @@ void CAssParser::FindTextures(
 }
 
 
+void SAssPiece::Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const
+{
+	auto fp = new SNewFlyingPiece(this, pieceChance, texType, team, pos, speed, m);
+	projectileHandler->AddFlyingPiece(MODELTYPE_ASS, fp);
+}
+
+
+
 void SAssPiece::UploadGeometryVBOs()
 {
 	if (!hasGeometryData)
@@ -852,12 +860,12 @@ void SAssPiece::UploadGeometryVBOs()
 	vboAttributes.Unbind();
 
 	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
-	vboIndices.New(vertexDrawIndices.size() * sizeof(unsigned int), GL_STATIC_DRAW, &vertexDrawIndices[0]);
+	vboIndices.New(indices.size() * sizeof(unsigned int), GL_STATIC_DRAW, &indices[0]);
 	vboIndices.Unbind();
 
 	// NOTE: wasteful to keep these around, but still needed (eg. for Shatter())
 	// vertices.clear();
-	// vertexDrawIndices.clear();
+	// indices.clear();
 }
 
 
@@ -905,7 +913,7 @@ void SAssPiece::DrawForList() const
 		* anything more complex than triangles is
 		* being split thanks to aiProcess_Triangulate
 		*/
-		glDrawRangeElements(GL_TRIANGLES, 0, vertices.size() - 1, vertexDrawIndices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
+		glDrawRangeElements(GL_TRIANGLES, 0, vertices.size() - 1, indices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
 	vboIndices.Unbind();
 
 	glClientActiveTexture(GL_TEXTURE6);

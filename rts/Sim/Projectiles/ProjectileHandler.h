@@ -3,8 +3,10 @@
 #ifndef PROJECTILE_HANDLER_H
 #define PROJECTILE_HANDLER_H
 
+#include <array>
 #include <deque>
 #include <vector>
+#include "Rendering/Models/3DModel.h"
 #include "Sim/Projectiles/ProjectileFunctors.h"
 #include "System/float3.h"
 
@@ -20,10 +22,10 @@ struct UnitDef;
 struct FlyingPiece;
 struct S3DOPrimitive;
 struct S3DOPiece;
-struct SS3OVertex;
+struct SVertexData;
 
 
-typedef std::vector<CProjectile*> ProjectileMap; // <id, proj*>
+typedef std::vector<CProjectile*> ProjectileMap;
 typedef std::vector<CProjectile*> ProjectileContainer; // <unsorted>
 typedef std::vector<CGroundFlash*> GroundFlashContainer;
 typedef std::vector<FlyingPiece*> FlyingPieceContainer;
@@ -61,8 +63,7 @@ public:
 
 	void AddProjectile(CProjectile* p);
 	void AddGroundFlash(CGroundFlash* flash);
-	void AddFlyingPiece(const float3 pos, const float3 speed, int team, const S3DOPiece* piece, const S3DOPrimitive* chunk);
-	void AddFlyingPiece(const float3 pos, const float3 speed, int team, int textureType, const SS3OVertex* chunk);
+	void AddFlyingPiece(int modelType, FlyingPiece* fp);
 	void AddNanoParticle(const float3, const float3, const UnitDef*, int team, bool highPriority);
 	void AddNanoParticle(const float3, const float3, const UnitDef*, int team, float radius, bool inverse, bool highPriority);
 
@@ -77,13 +78,11 @@ public:
 	int lastUnsyncedProjectilesCount;
 
 	// flying pieces are sorted from time to time to reduce gl state changes
-	bool resortFlyingPieces3DO;
-	bool resortFlyingPiecesS3O;
+	std::array<                bool, MODELTYPE_OTHER> resortFlyingPieces;
+	std::array<FlyingPieceContainer, MODELTYPE_OTHER> flyingPieces;  // unsynced
 
 	ProjectileContainer syncedProjectiles;    // contains only projectiles that can change simulation state
 	ProjectileContainer unsyncedProjectiles;  // contains only projectiles that cannot change simulation state
-	FlyingPieceContainer flyingPieces3DO;     // unsynced
-	FlyingPieceContainer flyingPiecesS3O;     // unsynced
 	GroundFlashContainer groundFlashes;       // unsynced
 
 private:

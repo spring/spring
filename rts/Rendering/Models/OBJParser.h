@@ -32,12 +32,12 @@ public:
 	const SOBJTriangle& GetTriangle(int idx) const { return triangles[idx]; }
 
 	unsigned int GetTriangleCount() const { return (triangles.size()); }
-	unsigned int GetVertexCount() const { return vertices.size(); }
-	unsigned int GetNormalCount() const { return vnormals.size(); }
-	unsigned int GetTxCoorCount() const { return texcoors.size(); }
+	unsigned int GetVertexDrawIndexCount() const override { return triangles.size() * 3; }
+	unsigned int GetVertexCount() const override { return vertices.size(); }
+	unsigned int GetNormalCount() const override { return vnormals.size(); }
+	unsigned int GetTxCoorCount() const override { return texcoors.size(); }
 
-	const float3& GetVertexPos(const int idx) const { return GetVertex(idx); }
-	const float3& GetVertex(const int idx) const { return vertices[idx]; }
+	const float3& GetVertexPos(const int idx) const { return vertices[idx]; }
 	const float3& GetNormal(const int idx) const { return vnormals[idx]; }
 	const float2& GetTxCoor(const int idx) const { return texcoors[idx]; }
 	const float3& GetSTangent(const int idx) const { return sTangents[idx]; }

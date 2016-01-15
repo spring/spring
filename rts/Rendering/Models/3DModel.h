@@ -10,8 +10,12 @@
 #include "Rendering/GL/VBO.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/Matrix44f.h"
+#include "System/type2.h"
 #include "System/creg/creg_cond.h"
 
+
+#define NUM_MODEL_TEXTURES 2
+#define NUM_MODEL_UVCHANNS 2
 static const float3 DEF_MIN_SIZE( 10000.0f,  10000.0f,  10000.0f);
 static const float3 DEF_MAX_SIZE(-10000.0f, -10000.0f, -10000.0f);
 
@@ -39,6 +43,24 @@ struct LocalModelPiece;
 
 
 
+
+struct SVertexData {
+	SVertexData() : normal(UpVector) {}
+
+	float3 pos;
+	float3 normal;
+	float3 sTangent;
+	float3 tTangent;
+
+	//< Second channel is optional, still good to have. Also makes
+	//< sure the struct is 64bytes in size (ATi's prefers such VBOs)
+	//< supporting an arbitrary number of channels would be easy but
+	//< overkill (for now)
+	float2 texCoords[NUM_MODEL_UVCHANNS];
+};
+
+
+
 /**
  * S3DModel
  * A 3D model definition. Holds geometry (vertices/normals) and texture data as well as the piece tree.
@@ -52,14 +74,15 @@ struct S3DModelPiece {
 	virtual unsigned int CreateDrawForList() const;
 	virtual void UploadGeometryVBOs() {}
 
-	virtual unsigned int GetVertexCount() const { return 0; }
-	virtual unsigned int GetNormalCount() const { return 0; }
-	virtual unsigned int GetTxCoorCount() const { return 0; }
+	virtual unsigned int GetVertexCount() const = 0;
+	virtual unsigned int GetNormalCount() const = 0;
+	virtual unsigned int GetTxCoorCount() const = 0;
+	virtual unsigned int GetVertexDrawIndexCount() const = 0;
 
 	virtual const float3& GetVertexPos(const int) const = 0;
 	virtual const float3& GetNormal(const int) const = 0;
 
-	virtual void Shatter(float, int, int, const float3&, const float3&) const {}
+	virtual void Shatter(float, int, int, const float3, const float3, const CMatrix44f&) const {}
 
 	CMatrix44f& ComposeRotation(CMatrix44f& m, const float3& r) const {
 		switch (axisMapType) {

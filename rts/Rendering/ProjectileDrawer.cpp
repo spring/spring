@@ -456,6 +456,8 @@ void CProjectileDrawer::DrawProjectilesShadow(int modelType)
 	for (auto binIt = projectileBin.cbegin(); binIt != projectileBin.cend(); ++binIt) {
 		DrawProjectilesSetShadow(binIt->second);
 	}
+
+	DrawFlyingPieces(modelType);
 }
 
 void CProjectileDrawer::DrawProjectilesSetShadow(const std::vector<CProjectile*>& projectiles)
@@ -547,19 +549,14 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 
 void CProjectileDrawer::DrawFlyingPieces(int modelType)
 {
-	// TODO: faster to make this a member
-	FlyingPieceContainer* containers[MODELTYPE_OTHER] = {
-		&projectileHandler->flyingPieces3DO,
-		&projectileHandler->flyingPiecesS3O,
-		NULL
-	};
+	FlyingPieceContainer* container = &projectileHandler->flyingPieces[modelType];
 
-	FlyingPieceContainer* container = containers[modelType];
+	if (container != NULL && !container->empty()) {
+		glPushAttrib(GL_POLYGON_BIT);
+		glDisable(GL_CULL_FACE);
 
-	if (container != NULL) {
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
-		va->EnlargeArrays(container->size() * 4, 0, VA_SIZE_TN);
 
 		size_t lastTex = -1;
 		size_t lastTeam = -1;
@@ -577,7 +574,9 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType)
 			fp->Draw(&lastTeam, &lastTex, va);
 		}
 
-		va->DrawArrayTN(GL_QUADS);
+		va->DrawArrayTN(GL_TRIANGLES);
+
+		glPopAttrib();
 	}
 }
 

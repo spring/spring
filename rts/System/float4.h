@@ -45,13 +45,6 @@ struct float4 : public float3
 		return *this;
 	}
 
-	inline float4& operator= (const float4& f) {
-		x = f.x; y = f.y;
-		z = f.z; w = f.w;
-		return *this;
-	}
-
-
 	inline float4& operator += (const float4& f) {
 		x += f.x; y += f.y;
 		z += f.z; w += f.w;

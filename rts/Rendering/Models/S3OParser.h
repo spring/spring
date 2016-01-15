@@ -16,43 +16,42 @@ enum {
 	S3O_PRIMTYPE_QUADS          = 2,
 };
 
-struct SS3OVertex {
-	float3 pos;
-	float3 normal;
-	float2 texCoord;
-	float3 sTangent;
-	float3 tTangent;
-	char unused[8]; //Note: ATi wants 64 _byte_ aligned data in VBOs for optimal performance
-};
+
+typedef SVertexData SS3OVertex;
+
 
 struct SS3OPiece: public S3DModelPiece {
 	SS3OPiece(): primType(S3O_PRIMTYPE_TRIANGLES) {
 	}
 
+public:
 	void UploadGeometryVBOs();
 	void DrawForList() const;
 
-	void SetVertexCount(unsigned int n) { vertices.resize(n); }
-	void SetVertexDrawIndexCount(unsigned int n) { vertexDrawIndices.resize(n); }
+	unsigned int GetVertexDrawIndexCount() const override { return indices.size(); }
+	unsigned int GetVertexCount() const override { return vertices.size(); }
+	unsigned int GetNormalCount() const override { return vertices.size(); }
+	unsigned int GetTxCoorCount() const override { return vertices.size(); }
 
+	const float3& GetVertexPos(const int idx) const override { return vertices[idx].pos; }
+	const float3& GetNormal(const int idx) const override { return vertices[idx].normal; }
+
+	void Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const;
+
+public:
+	void SetVertexCount(unsigned int n) { vertices.resize(n); }
+	void SetIndexCount(unsigned int n) { indices.resize(n); }
+	void SetVertex(int idx, const SS3OVertex& v) { vertices[idx] = v; } //FIXME
+	void SetIndex(int idx, const unsigned int drawIdx) { indices[idx] = drawIdx; }
+
+	void Trianglize();
 	void SetMinMaxExtends();
 	void SetVertexTangents();
 
-	void SetVertex(int idx, const SS3OVertex& v) { vertices[idx] = v; }
-	void SetVertexDrawIndex(int idx, const unsigned int drawIdx) { vertexDrawIndices[idx] = drawIdx; }
-
-	unsigned int GetVertexCount() const { return vertices.size(); }
-	unsigned int GetVertexDrawIndexCount() const { return vertexDrawIndices.size(); }
-
-	const float3& GetVertexPos(const int idx) const { return vertices[idx].pos; }
-	const float3& GetNormal(const int idx) const { return vertices[idx].normal; }
-	void Shatter(float pieceChance, int texType, int team, const float3& pos, const float3& speed) const;
-
+public:
 	int primType;
-
-private:
 	std::vector<SS3OVertex> vertices;
-	std::vector<unsigned int> vertexDrawIndices;
+	std::vector<unsigned int> indices;
 };
 
 
