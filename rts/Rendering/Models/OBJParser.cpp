@@ -675,6 +675,18 @@ void SOBJPiece::SetVertexTangents()
 
 void SOBJPiece::Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const
 {
+	svertices.resize(vertices.size());
+
+	for (unsigned int n = 0; n < vertices.size(); n++) {
+		svertices[n].pos      = vertices[n];
+		svertices[n].normal   = vnormals[n];
+		svertices[n].sTangent = sTangents[n];
+		svertices[n].tTangent = tTangents[n];
+
+		svertices[n].texCoords[0] = texcoors[n];
+		svertices[n].texCoords[1] = texcoors[n];
+	}
+
 	auto fp = new SNewFlyingPiece(this, pieceChance, texType, team, pos, speed, m);
 	projectileHandler->AddFlyingPiece(MODELTYPE_OBJ, fp);
 }

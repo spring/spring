@@ -61,6 +61,11 @@ private:
 	VBO vbosTangents;
 	VBO vbotTangents;
 
+public:
+	// empty until Shatter
+	std::vector<SVertexData> svertices;
+
+private:
 	std::vector<float3> vertices;
 	std::vector<float3> vnormals;
 	std::vector<float2> texcoors;

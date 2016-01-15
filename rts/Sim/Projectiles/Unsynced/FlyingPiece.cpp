@@ -134,7 +134,7 @@ SNewFlyingPiece::SNewFlyingPiece(const SS3OPiece* p, float pieceChance, int texT
 : SNewFlyingPiece(p, &p->vertices, &p->indices, pieceChance, texType, team, pos, speed, _m) {}
 
 SNewFlyingPiece::SNewFlyingPiece(const SOBJPiece* p, float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& _m)
-/*: SNewFlyingPiece(p, &p->vertices, &p->indices, pieceChance, texType, team, pos, speed, _m)*/ {}
+: SNewFlyingPiece(p, &p->svertices, &p->indices, pieceChance, texType, team, pos, speed, _m) {}
 
 SNewFlyingPiece::SNewFlyingPiece(const SAssPiece* p, float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& _m)
 : SNewFlyingPiece(p, &p->vertices, &p->indices, pieceChance, texType, team, pos, speed, _m) {}
