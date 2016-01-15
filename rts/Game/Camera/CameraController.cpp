@@ -62,7 +62,7 @@ bool CCameraController::GetUseDistToGroundForIcons() {
 
 	// dot< switch: flat angle (typical for first person camera)
 	// dot>=switch: steep angle (typical for overhead camera)
-	return (absDot >= switchVal) {
+	return (absDot >= switchVal);
 }
 
 
