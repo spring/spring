@@ -22,7 +22,7 @@ public:
 	void DrawForList() const;
 	void SetMinMaxExtends(bool globalVertexOffsets);
 	void SetVertexTangents();
-	void Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m);
+	void Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const override;
 
 	void SetVertexCount(unsigned int n) { vertices.resize(n); }
 	void SetNormalCount(unsigned int n) { vnormals.resize(n); }
@@ -74,7 +74,8 @@ private:
 public:
 	std::vector<unsigned int> indices;
 	// empty until Shatter
-	std::vector<SVertexData> svertices;
+	// either mutable, or waste memory upfront, or convert to AoS form
+	mutable std::vector<SVertexData> svertices;
 };
 
 class LuaTable;
