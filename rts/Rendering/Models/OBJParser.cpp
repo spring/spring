@@ -8,6 +8,8 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/Unsynced/FlyingPiece.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
@@ -465,14 +467,14 @@ void SOBJPiece::UploadGeometryVBOs()
 	if (!hasGeometryData)
 		return;
 
-	vertexDrawIndices.reserve(GetTriangleCount() * 3);
+	indices.reserve(GetTriangleCount() * 3);
 
 	// generate the index-list; only needed when using VBO's
 	for (unsigned int i = 0; i < GetTriangleCount(); i++) {
 		const SOBJTriangle& tri = GetTriangle(i);
-		vertexDrawIndices.push_back(tri.vIndices[0]);
-		vertexDrawIndices.push_back(tri.vIndices[1]);
-		vertexDrawIndices.push_back(tri.vIndices[2]);
+		indices.push_back(tri.vIndices[0]);
+		indices.push_back(tri.vIndices[1]);
+		indices.push_back(tri.vIndices[2]);
 	}
 
 	vboPositions.Bind(GL_ARRAY_BUFFER);
@@ -496,7 +498,7 @@ void SOBJPiece::UploadGeometryVBOs()
 	vbotTangents.Unbind();
 
 	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
-	vboIndices.New(vertexDrawIndices.size() * sizeof(unsigned int), GL_STATIC_DRAW, &vertexDrawIndices[0]);
+	vboIndices.New(indices.size() * sizeof(unsigned int), GL_STATIC_DRAW, &indices[0]);
 	vboIndices.Unbind();
 
 	// FIXME:
@@ -506,7 +508,7 @@ void SOBJPiece::UploadGeometryVBOs()
 
 	// NOTE: wasteful to keep these around, but still needed (eg. for Shatter())
 	// vertices.clear();
-	// vertexDrawIndices.clear();
+	// indices.clear();
 	vnormals.clear();
 	texcoors.clear();
 	sTangents.clear();
@@ -552,7 +554,7 @@ void SOBJPiece::DrawForList() const
 	vboNormals.Unbind();
 
 	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
-		glDrawRangeElements(GL_TRIANGLES, 0, vertices.size() - 1, vertexDrawIndices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
+		glDrawRangeElements(GL_TRIANGLES, 0, vertices.size() - 1, indices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
 	vboIndices.Unbind();
 
 	glClientActiveTexture(GL_TEXTURE6);
@@ -668,3 +670,12 @@ void SOBJPiece::SetVertexTangents()
 		t = (s.cross(n)) * h;
 	}
 }
+
+
+
+void SOBJPiece::Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const
+{
+	auto fp = new SNewFlyingPiece(this, pieceChance, texType, team, pos, speed, m);
+	projectileHandler->AddFlyingPiece(MODELTYPE_OBJ, fp);
+}
+

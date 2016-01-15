@@ -22,6 +22,7 @@ public:
 	void DrawForList() const;
 	void SetMinMaxExtends(bool globalVertexOffsets);
 	void SetVertexTangents();
+	void Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const;
 
 	void SetVertexCount(unsigned int n) { vertices.resize(n); }
 	void SetNormalCount(unsigned int n) { vnormals.resize(n); }
@@ -65,7 +66,7 @@ private:
 	std::vector<float2> texcoors;
 
 	std::vector<SOBJTriangle> triangles;
-	std::vector<unsigned int> vertexDrawIndices;
+	std::vector<unsigned int> indices;
 
 	std::vector<float3> sTangents;
 	std::vector<float3> tTangents;

@@ -9,10 +9,11 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
-#include "Rendering/Models/3DOParser.h"
 #include "Rendering/Models/IModelParser.h"
-#include "Rendering/Models/AssParser.h"
+#include "Rendering/Models/3DOParser.h"
 #include "Rendering/Models/S3OParser.h"
+#include "Rendering/Models/OBJParser.h"
+#include "Rendering/Models/AssParser.h"
 
 //#pragma optimize("tree-vectorize O3")
 
@@ -126,18 +127,35 @@ void S3DOFlyingPiece::Draw(size_t* lastTeam, size_t* lastTex, CVertexArray* cons
 
 
 /////////////////////////////////////////////////////////////////////
-/// NEW S3O,ASSIMP,... IMPLEMENTATION
+/// NEW S3O,OBJ,ASSIMP,... IMPLEMENTATION
 ///
 
-SNewFlyingPiece::SNewFlyingPiece(const SAssPiece* p, float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& _m)
-: SNewFlyingPiece(p, p, nullptr, pieceChance, texType, team, pos, speed, _m) {}
-
 SNewFlyingPiece::SNewFlyingPiece(const SS3OPiece* p, float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& _m)
-: SNewFlyingPiece(p, nullptr, p, pieceChance, texType, team, pos, speed, _m) {}
+: SNewFlyingPiece(p, &p->vertices, &p->indices, pieceChance, texType, team, pos, speed, _m) {}
+
+SNewFlyingPiece::SNewFlyingPiece(const SOBJPiece* p, float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& _m)
+/*: SNewFlyingPiece(p, &p->vertices, &p->indices, pieceChance, texType, team, pos, speed, _m)*/ {}
+
+SNewFlyingPiece::SNewFlyingPiece(const SAssPiece* p, float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& _m)
+: SNewFlyingPiece(p, &p->vertices, &p->indices, pieceChance, texType, team, pos, speed, _m) {}
 
 
-SNewFlyingPiece::SNewFlyingPiece(const S3DModelPiece* p, const SAssPiece* pAss, const SS3OPiece* pS3o, float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& _m)
-: piece(p), pieceAss(pAss), pieceS3o(pS3o), pos0(pos), age(0), pieceMatrix(_m)
+SNewFlyingPiece::SNewFlyingPiece(
+	const S3DModelPiece* piece,
+	const std::vector<SVertexData>* verts,
+	const std::vector<unsigned int>* inds,
+	float pieceChance,
+	int texType,
+	int team,
+	const float3 pos,
+	const float3 speed,
+	const CMatrix44f& _m
+)
+: vertices(verts)
+, indices(inds)
+, pos0(pos)
+, age(0)
+, pieceMatrix(_m)
 {
 	assert(piece->GetVertexDrawIndexCount() % 3 == 0); // only triangles!
 
@@ -199,11 +217,11 @@ bool SNewFlyingPiece::Update()
 
 const SVertexData& SNewFlyingPiece::GetVertexData(unsigned short i) const
 {
-	if (pieceS3o) {
-		return pieceS3o->vertices[ pieceS3o->indices[i] ];
-	} else {
-		return pieceAss->vertices[ pieceAss->indices[i] ];
-	}
+	const std::vector<SVertexData>& verts = *vertices;
+	const std::vector<unsigned int>& inds = *indices;
+
+	assert((i < inds.size()) && (inds[i] < verts.size()));
+	return verts[ inds[i] ];
 }
 
 

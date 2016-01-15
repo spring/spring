@@ -399,3 +399,4 @@ void SS3OPiece::Shatter(float pieceChance, int texType, int team, const float3 p
 	auto fp = new SNewFlyingPiece(this, pieceChance, texType, team, pos, speed, m);
 	projectileHandler->AddFlyingPiece(MODELTYPE_S3O, fp);
 }
+

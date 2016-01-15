@@ -12,8 +12,9 @@ struct S3DOPrimitive;
 struct S3DOPiece;
 struct SVertexData;
 struct S3DModelPiece;
-struct SAssPiece;
 struct SS3OPiece;
+struct SOBJPiece;
+struct SAssPiece;
 
 
 struct FlyingPiece {
@@ -67,11 +68,22 @@ private:
 
 struct SNewFlyingPiece: public FlyingPiece {
 public:	
-	explicit SNewFlyingPiece(const SAssPiece* p, float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& _m);
 	explicit SNewFlyingPiece(const SS3OPiece* p, float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& _m);
+	explicit SNewFlyingPiece(const SOBJPiece* p, float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& _m);
+	explicit SNewFlyingPiece(const SAssPiece* p, float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& _m);
 
 private:
-	SNewFlyingPiece(const S3DModelPiece* p, const SAssPiece* pAss, const SS3OPiece* pS3o, float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m);
+	SNewFlyingPiece(
+		const S3DModelPiece* p,
+		const std::vector<SVertexData>* vertices,
+		const std::vector<unsigned int>* indices,
+		float pieceChance,
+		int texType,
+		int team,
+		const float3 pos,
+		const float3 speed,
+		const CMatrix44f& m
+	);
 
 public:
 	bool Update() override;
@@ -85,9 +97,8 @@ private:
 	inline float3 GetPolygonDir(unsigned short idx) const;
 
 private:
-	const S3DModelPiece* piece;
-	const SAssPiece* pieceAss;
-	const SS3OPiece* pieceS3o;
+	const std::vector<SVertexData>* vertices;
+	const std::vector<unsigned int>* indices;
 
 	float3 pos0;
 	unsigned age;

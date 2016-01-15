@@ -36,8 +36,6 @@ public:
 	const float3& GetVertexPos(const int idx) const override { return vertices[idx].pos; }
 	const float3& GetNormal(const int idx) const override { return vertices[idx].normal; }
 
-	void Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const;
-
 public:
 	void SetVertexCount(unsigned int n) { vertices.resize(n); }
 	void SetIndexCount(unsigned int n) { indices.resize(n); }
@@ -47,6 +45,7 @@ public:
 	void Trianglize();
 	void SetMinMaxExtends();
 	void SetVertexTangents();
+	void Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const;
 
 public:
 	int primType;
