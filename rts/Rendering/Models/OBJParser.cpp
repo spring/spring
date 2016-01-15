@@ -675,13 +675,15 @@ void SOBJPiece::SetVertexTangents()
 
 void SOBJPiece::Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const
 {
-	svertices.resize(vertices.size());
+	if (svertices.empty()) {
+		svertices.resize(vertices.size());
 
-	for (unsigned int n = 0; n < vertices.size(); n++) {
-		// Shatter only needs p+n+tc0
-		svertices[n].pos          = vertices[n];
-		svertices[n].normal       = vnormals[n];
-		svertices[n].texCoords[0] = texcoors[n];
+		for (unsigned int n = 0; n < vertices.size(); n++) {
+			// Shatter only needs p+n+tc0
+			svertices[n].pos          = vertices[n];
+			svertices[n].normal       = vnormals[n];
+			svertices[n].texCoords[0] = texcoors[n];
+		}
 	}
 
 	auto fp = new SNewFlyingPiece(this, pieceChance, texType, team, pos, speed, m);

@@ -73,7 +73,7 @@ private:
 
 public:
 	std::vector<unsigned int> indices;
-	// empty until Shatter
+	// remains empty until (the first call to) Shatter
 	// either mutable, or waste memory upfront, or convert to AoS form
 	mutable std::vector<SVertexData> svertices;
 };
