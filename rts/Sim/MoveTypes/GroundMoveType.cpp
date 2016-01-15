@@ -1775,11 +1775,32 @@ void CGroundMoveType::HandleUnitCollisions(
 		const bool colliderMobile = (colliderMD != NULL); // always true
 		const bool collideeMobile = (collideeMD != NULL); // maybe true
 
+		const bool unloadingCollidee = collidee->unloadingTransportId == collider->id;
+		const bool unloadingCollider = collider->unloadingTransportId == collidee->id;
+
+		if (unloadingCollidee)
+			collidee->unloadingTransportId = -1;
+
+		if (unloadingCollider)
+			collider->unloadingTransportId = -1;
+
+
 		// don't push/crush either party if the collidee does not block the collider (or vv.)
 		if (colliderMobile && CMoveMath::IsNonBlocking(*colliderMD, collidee, collider))
 			continue;
 		if (collideeMobile && CMoveMath::IsNonBlocking(*collideeMD, collider, collidee))
 			continue;
+
+		// disable collisions between collider and collidee
+		// if collidee is currently inside any transporter,
+		// or if collider is being transported by collidee
+		if (collider->GetTransporter() == collidee) continue;
+		if (collidee->GetTransporter() != NULL) continue;
+		// also disable collisions if either party currently
+		// has an order to load units (TODO: do we want this
+		// for unloading as well?)
+		if (collider->loadingTransportId == collidee->id) continue;
+		if (collidee->loadingTransportId == collider->id) continue;
 
 		// use the collidee's MoveDef footprint as radius if it is mobile
 		// use the collidee's Unit (not UnitDef) footprint as radius otherwise
@@ -1794,16 +1815,16 @@ void CGroundMoveType::HandleUnitCollisions(
 		if ((separationVector.SqLength() - separationMinDistSq) > 0.01f)
 			continue;
 
-		// disable collisions between collider and collidee
-		// if collidee is currently inside any transporter,
-		// or if collider is being transported by collidee
-		if (collider->GetTransporter() == collidee) continue;
-		if (collidee->GetTransporter() != NULL) continue;
-		// also disable collisions if either party currently
-		// has an order to load units (TODO: do we want this
-		// for unloading as well?)
-		if (collider->loadingTransportId == collidee->id) continue;
-		if (collidee->loadingTransportId == collider->id) continue;
+		if (unloadingCollidee) {
+			collidee->unloadingTransportId = collider->id;
+			continue;
+		}
+
+		if (unloadingCollider) {
+			collider->unloadingTransportId = collidee->id;
+			continue;
+		}
+
 
 		// NOTE:
 		//    we exclude aircraft (which have NULL moveDef's) landed

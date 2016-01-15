@@ -358,6 +358,7 @@ public:
 
 	/// id of transport that the unit is about to be picked up by
 	int loadingTransportId;
+	int unloadingTransportId;
 
 
 	/// used by constructing units

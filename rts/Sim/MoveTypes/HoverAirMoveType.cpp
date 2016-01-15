@@ -1043,19 +1043,40 @@ bool CHoverAirMoveType::HandleCollisions(bool checkCollisions)
 		if (!forceHeading && checkCollisions) {
 			const std::vector<CUnit*>& nearUnits = quadField->GetUnitsExact(pos, owner->radius + 6);
 
-			for (auto ui = nearUnits.cbegin(); ui != nearUnits.cend(); ++ui) {
-				CUnit* unit = *ui;
+			for (CUnit* unit: nearUnits) {
 
-				if (unit->id == owner->loadingTransportId ||
+				const bool unloadingUnit = unit->unloadingTransportId == owner->id;
+				const bool unloadingOwner = owner->unloadingTransportId == unit->id;
+
+				if (unloadingUnit)
+					unit->unloadingTransportId = -1;
+
+				if (unloadingOwner)
+					owner->unloadingTransportId = -1;
+
+				if (unit->id == owner->loadingTransportId || owner->id == unit->loadingTransportId ||
 				    unit == owner->transporter || unit->transporter != NULL) {
 					continue;
 				}
+
 
 				const float sqDist = (pos - unit->pos).SqLength();
 				const float totRad = owner->radius + unit->radius;
 
 				if (sqDist <= 0.1f || sqDist >= (totRad * totRad))
 					continue;
+
+				//Keep them marked as recently unloaded
+				if (unloadingUnit) {
+					unit->unloadingTransportId = owner->id;
+					continue;
+				}
+
+				if (unloadingOwner) {
+					owner->unloadingTransportId = unit->id;
+					continue;
+				}
+
 
 				const float dist = math::sqrt(sqDist);
 				const float3 dif = (pos - unit->pos).Normalize();

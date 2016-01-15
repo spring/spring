@@ -120,6 +120,7 @@ CUnit::CUnit()
 , lastFlareDrop(0)
 , repairAmount(0.0f)
 , loadingTransportId(-1)
+, unloadingTransportId(-1)
 , inBuildStance(false)
 , useHighTrajectory(false)
 , dontUseWeapons(false)
@@ -575,7 +576,7 @@ void CUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool sh
 		if (transportee->isDead)
 			continue;
 
-		transportee->SetTransporter(NULL);
+		transportee->SetTransporter(nullptr);
 		transportee->DeleteDeathDependence(this, DEPENDENCE_TRANSPORTER);
 		transportee->UpdateVoidState(false);
 
@@ -2605,7 +2606,8 @@ bool CUnit::DetachUnitCore(CUnit* unit)
 
 		this->DeleteDeathDependence(unit, DEPENDENCE_TRANSPORTEE);
 		unit->DeleteDeathDependence(this, DEPENDENCE_TRANSPORTER);
-		unit->SetTransporter(NULL);
+		unit->SetTransporter(nullptr);
+		unit->unloadingTransportId = id;
 
 		if (dynamic_cast<CHoverAirMoveType*>(moveType)) {
 			unit->moveType->useHeading = true;
@@ -2801,6 +2803,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(transportedUnits),
 	CR_MEMBER(transporter),
 	CR_MEMBER(loadingTransportId),
+	CR_MEMBER(unloadingTransportId),
 	CR_MEMBER(buildProgress),
 	CR_MEMBER(groundLevelled),
 	CR_MEMBER(terraformLeft),
