@@ -370,17 +370,12 @@ bool CFeatureDrawer::CanDrawFeature(const CFeature* feature) const
 	if (!feature->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView)
 		return false;
 
+	// same cutoff as AT; set during SP too
+	if (feature->drawAlpha <= 0.1f)
+		return false;
+
 	// either PLAYER or SHADOW or UWREFL
 	const CCamera* cam = CCamera::GetActiveCamera();
-
-	if (feature->alphaFade && cam->GetCamType() != CCamera::CAMTYPE_SHADOW) {
-		const float sqDist = (feature->pos - cam->GetPos()).SqLength();
-		const float farLength = feature->sqRadius * unitDrawer->unitDrawDistSqr;
-		const float sqFadeDistEnd = featureDrawDistance * featureDrawDistance;
-
-		if (sqDist >= std::min(farLength, sqFadeDistEnd))
-			return false;
-	}
 
 	return (cam->InView(feature->drawMidPos, feature->drawRadius));
 }
