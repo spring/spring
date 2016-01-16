@@ -565,9 +565,8 @@ bool CStrafeAirMoveType::HandleCollisions(bool checkCollisions) {
 			const std::vector<CUnit*>& nearUnits = quadField->GetUnitsExact(pos, owner->radius + 6);
 
 			for (CUnit* unit: nearUnits) {
-
-				const bool unloadingUnit = unit->unloadingTransportId == owner->id;
-				const bool unloadingOwner = owner->unloadingTransportId == unit->id;
+				const bool unloadingUnit = (unit->unloadingTransportId == owner->id);
+				const bool unloadingOwner = (owner->unloadingTransportId == unit->id);
 
 				if (unloadingUnit)
 					unit->unloadingTransportId = -1;

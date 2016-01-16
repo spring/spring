@@ -59,10 +59,9 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 	}
 
 	if (fileHeader.scriptSize != 0) {
-		char* buf = new char[fileHeader.scriptSize];
-		playbackDemo->Read(buf, fileHeader.scriptSize);
-		setupScript = std::string(buf, fileHeader.scriptSize);
-		delete[] buf;
+		std::vector<char> buf(fileHeader.scriptSize);
+		playbackDemo->Read(&buf[0], fileHeader.scriptSize);
+		setupScript = std::string(&buf[0], fileHeader.scriptSize);
 	}
 
 	playbackDemo->Read((char*)&chunkHeader, sizeof(chunkHeader));

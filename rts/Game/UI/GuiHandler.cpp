@@ -2048,6 +2048,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 	Command defaultRet(CMD_FAILED);
 
 	int button;
+
 	if (buttonHint >= SDL_BUTTON_LEFT) {
 		button = buttonHint;
 	} else if (inCommand != -1) {
@@ -2070,9 +2071,14 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 		}
 	}
 
-	if ((tempInCommand >= 0) && ((size_t)tempInCommand < commands.size())) {
-		switch(commands[tempInCommand].type) {
+	if ((size_t)tempInCommand >= commands.size()) {
+		if (!preview)
+			inCommand = -1;
 
+		return Command(CMD_STOP);
+	}
+
+	switch (commands[tempInCommand].type) {
 		case CMDTYPE_NUMBER: {
 			const float value = GetNumberInput(commands[tempInCommand]);
 			Command c(commands[tempInCommand].id, CreateOptions(button), value);
@@ -2185,7 +2191,8 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				mouse->buttons[button].dir * globalRendering->viewRange * 1.4f,
 				false
 			);
-			if (dist < 0)
+
+			if (dist < 0.0f)
 				return defaultRet;
 
 			float3 pos = mouse->buttons[button].camPos + (mouse->buttons[button].dir * dist);
@@ -2217,10 +2224,10 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 		case CMDTYPE_ICON_UNIT_OR_AREA:
 		case CMDTYPE_ICON_UNIT_FEATURE_OR_AREA:
 		case CMDTYPE_ICON_AREA: {
-			float maxRadius = 100000;
-			if (commands[tempInCommand].params.size() == 1) {
-				maxRadius=atof(commands[tempInCommand].params[0].c_str());
-			}
+			float maxRadius = 100000.0f;
+
+			if (commands[tempInCommand].params.size() == 1)
+				maxRadius = atof(commands[tempInCommand].params[0].c_str());
 
 			Command c(commands[tempInCommand].id, CreateOptions(button));
 
@@ -2285,18 +2292,17 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				const CFeature* feature = nullptr;
 				const float dist2 = TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, NULL, unit, feature, true);
 
-				if (dist2 > (globalRendering->viewRange * 1.4f - 300)) {
+				if (dist2 > (globalRendering->viewRange * 1.4f - 300))
 					return defaultRet;
-				}
 
 				if (unit) {
 					// clicked on unit
 					c.PushParam(unit->id);
 				} else {
-					// clicked in map
-					if (explicitCommand < 0) { // only attack ground if explicitly set the command
+					// clicked in map; only attack ground if explicitly set the command
+					if (explicitCommand < 0.0f)
 						return defaultRet;
-					}
+
 					c.PushPos(cameraPos + (mouseDir * dist2));
 				}
 			} else {
@@ -2324,15 +2330,8 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			}
 			return CheckCommand(c);
 		}
-
-		default:
-			return Command(CMD_STOP);
-		}
-	} else {
-		if (!preview) {
-			inCommand = -1;
-		}
 	}
+
 	return Command(CMD_STOP);
 }
 

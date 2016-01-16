@@ -816,7 +816,7 @@ void CUnitScript::Shatter(int piece, const float3& pos, const float3& speed)
 	if (pieceChance > 0.0f) {
 		const LocalModelPiece* lmp = pieces[piece];
 		const S3DModelPiece* omp = lmp->original;
-		auto m = unit->GetTransformMatrix() * lmp->GetModelSpaceMatrix();
+		const CMatrix44f m = unit->GetTransformMatrix() * lmp->GetModelSpaceMatrix();
 		omp->Shatter(pieceChance, unit->model->textureType, unit->team, pos, speed, m);
 	}
 }
