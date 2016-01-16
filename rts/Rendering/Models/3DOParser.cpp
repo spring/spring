@@ -144,9 +144,11 @@ S3DModel* C3DOParser::Load(const std::string& name)
 	S3DOPiece* rootPiece = LoadPiece(model, 0, NULL, &model->numPieces, fileBuf, curOffset);
 
 	model->SetRootPiece(rootPiece);
-	model->radius = ((model->maxs - model->mins) * 0.5f).Length();
+
+	model->radius = (model->maxs - model->mins).Length() * 0.5f;
+	model->drawRadius = model->radius;
+
 	model->height = model->maxs.y - model->mins.y;
-	model->drawRadius = float3::max(float3::fabs(model->maxs), float3::fabs(model->mins)).Length();
 	model->relMidPos = (model->maxs + model->mins) * 0.5f;
 
 	return model;
@@ -451,7 +453,7 @@ void S3DOPiece::DrawForList() const
 
 void S3DOPiece::SetMinMaxExtends()
 {
-	for (std::vector<S3DOVertex>::const_iterator vi = vertices.begin(); vi != vertices.end(); ++vi) {
+	for (auto vi = vertices.cbegin(); vi != vertices.cend(); ++vi) {
 		mins = float3::min(mins, vi->pos);
 		maxs = float3::max(maxs, vi->pos);
 	}

@@ -420,27 +420,6 @@ bool CAssParser::SetModelRadiusAndHeight(
 				"Model midpos of (%f,%f,%f) set by special node 'SpringRadius'",
 				model->relMidPos.x, model->relMidPos.y, model->relMidPos.z);
 		}
-		if (!pieceTable.KeyExists("radius")) {
-			if (true || piece->maxs.x <= 0.00001f) {
-				// scales have been set at this point
-				// the Blender import script only sets the scale property [?]
-				//
-				// model->radius = piece->scales.Length();
-				model->radius = piece->scales.x;
-			} else {
-				// FIXME:
-				//   geometry bounds are calculated by LoadPieceGeometry
-				//   which is called after SetModelRadiusAndHeight -> can
-				//   not take this branch yet
-				// use the transformed mesh extents (FIXME: the bounds are NOT
-				// actually transformed but derived from raw vertex positions!)
-				//
-				// model->radius = ((piece->maxs - piece->mins) * 0.5f).Length();
-				model->radius = piece->maxs.x;
-			}
-
-			LOG_SL(LOG_SECTION_MODEL, L_INFO, "Model radius of %f set by special node 'SpringRadius'", model->radius);
-		}
 
 		--model->numPieces;
 		delete piece;
@@ -738,14 +717,15 @@ void CAssParser::CalculateModelProperties(S3DModel* model, const LuaTable& model
 	// note: overrides default midpos of the SpringRadius piece
 	model->relMidPos.y = (model->maxs.y + model->mins.y) * 0.5f;
 
-	// Simplified dimensions used for rough calculations
-	model->radius = modelTable.GetFloat("radius", float3::max(float3::fabs(model->maxs), float3::fabs(model->mins)).Length());
-	model->height = modelTable.GetFloat("height", model->maxs.y);
-	model->relMidPos = modelTable.GetFloat3("midpos", model->relMidPos);
+	// note: overrides default radius of the SpringRadius piece
+	model->radius = modelTable.GetFloat("radius", (model->maxs - model->mins).Length() * 0.5f);
+	model->drawRadius = model->radius;
+
 	model->mins = modelTable.GetFloat3("mins", model->mins);
 	model->maxs = modelTable.GetFloat3("maxs", model->maxs);
 
-	model->drawRadius = model->radius;
+	model->height = modelTable.GetFloat("height", model->maxs.y);
+	model->relMidPos = modelTable.GetFloat3("midpos", model->relMidPos);
 }
 
 
@@ -843,7 +823,13 @@ void CAssParser::FindTextures(
 
 void SAssPiece::Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const
 {
-	auto fp = new SNewFlyingPiece(this, pieceChance, texType, team, pos, speed, m);
+	// triangles only
+	assert(GetVertexDrawIndexCount() % 3 == 0);
+
+	const float2  pieceParams = {(maxs - mins).Length() * 0.5f, pieceChance};
+	const   int2 renderParams = {texType, team};
+
+	auto fp = new SNewFlyingPiece(vertices, indices, pos, speed, m, pieceParams, renderParams);
 	projectileHandler->AddFlyingPiece(MODELTYPE_ASS, fp);
 }
 

@@ -70,9 +70,8 @@ private:
 	std::vector<float3> tTangents;
 
 	std::vector<SOBJTriangle> triangles;
-
-public:
 	std::vector<unsigned int> indices;
+
 	// remains empty until (the first call to) Shatter
 	// either mutable, or waste memory upfront, or convert to AoS form
 	mutable std::vector<SVertexData> svertices;

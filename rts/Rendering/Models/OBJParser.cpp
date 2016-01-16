@@ -57,13 +57,18 @@ S3DModel* COBJParser::Load(const std::string& modelFileName)
 		model->type = MODELTYPE_OBJ;
 		model->textureType = 0;
 		model->numPieces = 0;
+
 		model->radius = modelTable.GetFloat("radius", 0.0f);
-		model->height = modelTable.GetFloat("height", 0.0f);
-		model->relMidPos = modelTable.GetFloat3("midpos", ZeroVector);
-		model->tex1 = modelTable.GetString("tex1", "");
-		model->tex2 = modelTable.GetString("tex2", "");
+		model->drawRadius = model->radius;
+
 		model->mins = DEF_MIN_SIZE;
 		model->maxs = DEF_MAX_SIZE;
+
+		model->height = modelTable.GetFloat("height", 0.0f);
+		model->relMidPos = modelTable.GetFloat3("midpos", ZeroVector);
+
+		model->tex1 = modelTable.GetString("tex1", "");
+		model->tex2 = modelTable.GetString("tex2", "");
 
 	// basic S3O-style texturing
 	texturehandlerS3O->PreloadS3OTexture(model);
@@ -381,8 +386,13 @@ void COBJParser::BuildModelPieceTreeRec(
 	const S3DModelPiece* parentPiece = piece->parent;
 
 	piece->SetHasGeometryData(piece->GetVertexCount() != 0);
-	piece->mins = pieceTable.GetFloat3("mins", DEF_MIN_SIZE);
-	piece->maxs = pieceTable.GetFloat3("maxs", DEF_MAX_SIZE);
+
+	// first read user-set extrema
+	const float3 mins = pieceTable.GetFloat3("mins", DEF_MIN_SIZE);
+	const float3 maxs = pieceTable.GetFloat3("maxs", DEF_MAX_SIZE);
+
+	piece->mins = float3::min(mins, maxs);
+	piece->maxs = float3::max(mins, maxs);
 
 	// always convert <offset> to local coordinates
 	piece->offset = pieceTable.GetFloat3("offset", ZeroVector);
@@ -575,6 +585,7 @@ void SOBJPiece::DrawForList() const
 
 void SOBJPiece::SetMinMaxExtends(bool globalVertexOffsets)
 {
+	// if no user-set extrema, calculate them
 	const bool overrideMins = (mins == DEF_MIN_SIZE);
 	const bool overrideMaxs = (maxs == DEF_MAX_SIZE);
 
@@ -678,15 +689,21 @@ void SOBJPiece::Shatter(float pieceChance, int texType, int team, const float3 p
 	if (svertices.empty()) {
 		svertices.resize(vertices.size());
 
+		// Shatter only needs p+n+tc0
 		for (unsigned int n = 0; n < vertices.size(); n++) {
-			// Shatter only needs p+n+tc0
 			svertices[n].pos          = vertices[n];
 			svertices[n].normal       = vnormals[n];
 			svertices[n].texCoords[0] = texcoors[n];
 		}
 	}
 
-	auto fp = new SNewFlyingPiece(this, pieceChance, texType, team, pos, speed, m);
+	// triangles only
+	assert(GetVertexDrawIndexCount() % 3 == 0);
+
+	const float2  pieceParams = {(maxs - mins).Length() * 0.5f, pieceChance};
+	const   int2 renderParams = {texType, team};
+
+	auto fp = new SNewFlyingPiece(svertices, indices, pos, speed, m, pieceParams, renderParams);
 	projectileHandler->AddFlyingPiece(MODELTYPE_OBJ, fp);
 }
 

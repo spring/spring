@@ -46,9 +46,9 @@ S3DModel* CS3OParser::Load(const std::string& name)
 	SS3OPiece* rootPiece = LoadPiece(model, NULL, fileBuf, header.rootPiece);
 
 	model->SetRootPiece(rootPiece);
-	model->radius = (header.radius <= 0.01f)? (model->maxs.y - model->mins.y): header.radius;
-	model->height = (header.height <= 0.01f)? (model->radius + model->radius): header.height;
-	model->drawRadius = float3::max(float3::fabs(model->maxs), float3::fabs(model->mins)).Length();
+	model->radius = (header.radius <= 0.01f)? (model->maxs   - model->mins  ).Length() * 0.5f: header.radius;
+	model->height = (header.height <= 0.01f)? (model->maxs.y - model->mins.y)                : header.height;
+	model->drawRadius = model->radius;
 	model->relMidPos = float3(header.midx, header.midy, header.midz);
 
 	delete[] fileBuf;
@@ -396,7 +396,13 @@ void SS3OPiece::Shatter(float pieceChance, int texType, int team, const float3 p
 	if (primType != S3O_PRIMTYPE_TRIANGLES)
 		return;
 
-	auto fp = new SNewFlyingPiece(this, pieceChance, texType, team, pos, speed, m);
+	// triangles only
+	assert(GetVertexDrawIndexCount() % 3 == 0);
+
+	const float2  pieceParams = {(maxs - mins).Length(), pieceChance};
+	const   int2 renderParams = {texType, team};
+
+	auto fp = new SNewFlyingPiece(vertices, indices, pos, speed, m, pieceParams, renderParams);
 	projectileHandler->AddFlyingPiece(MODELTYPE_S3O, fp);
 }
 

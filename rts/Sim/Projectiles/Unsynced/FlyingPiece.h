@@ -5,6 +5,7 @@
 
 
 #include "System/float3.h"
+#include "System/type2.h"
 #include "System/Matrix44f.h"
 
 class CVertexArray;
@@ -67,25 +68,17 @@ private:
 
 
 struct SNewFlyingPiece: public FlyingPiece {
-public:	
-	explicit SNewFlyingPiece(const SS3OPiece* p, float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& _m);
-	explicit SNewFlyingPiece(const SOBJPiece* p, float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& _m);
-	explicit SNewFlyingPiece(const SAssPiece* p, float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& _m);
-
-private:
+public:
 	SNewFlyingPiece(
-		const S3DModelPiece* p,
-		const std::vector<SVertexData>* vertices,
-		const std::vector<unsigned int>* indices,
-		float pieceChance,
-		int texType,
-		int team,
+		const std::vector<SVertexData>& vertices,
+		const std::vector<unsigned int>& indices,
 		const float3 pos,
 		const float3 speed,
-		const CMatrix44f& m
+		const CMatrix44f& _pieceMatrix,
+		const float2 _pieceParams,
+		const int2 _renderParams
 	);
 
-public:
 	bool Update() override;
 	void Draw(size_t* lastTeam, size_t* lastTex, CVertexArray* const va) override;
 	unsigned GetTriangleCount() const;
@@ -97,8 +90,8 @@ private:
 	inline float3 GetPolygonDir(unsigned short idx) const;
 
 private:
-	const std::vector<SVertexData>* vertices;
-	const std::vector<unsigned int>* indices;
+	const std::vector<SVertexData>& vertices;
+	const std::vector<unsigned int>& indices;
 
 	float3 pos0;
 	unsigned age;
