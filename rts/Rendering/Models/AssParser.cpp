@@ -714,18 +714,15 @@ void CAssParser::CalculateModelProperties(S3DModel* model, const LuaTable& model
 {
 	CalculateModelDimensions(model, model->rootPiece);
 
-	// note: overrides default midpos of the SpringRadius piece
-	model->relMidPos.y = (model->maxs.y + model->mins.y) * 0.5f;
-
-	// note: overrides default radius of the SpringRadius piece
-	model->radius = modelTable.GetFloat("radius", (model->maxs - model->mins).Length() * 0.5f);
-	model->drawRadius = model->radius;
-
 	model->mins = modelTable.GetFloat3("mins", model->mins);
 	model->maxs = modelTable.GetFloat3("maxs", model->maxs);
 
-	model->height = modelTable.GetFloat("height", model->maxs.y);
-	model->relMidPos = modelTable.GetFloat3("midpos", model->relMidPos);
+	model->radius = modelTable.GetFloat("radius", (model->maxs   - model->mins  ).Length() * 0.5f);
+	model->height = modelTable.GetFloat("height", (model->maxs.y - model->mins.y)                );
+
+	model->drawRadius = model->radius;
+	// note: overrides default midpos of the SpringRadius piece
+	model->relMidPos = modelTable.GetFloat3("midpos", (model->maxs + model->mins) * 0.5f);
 }
 
 

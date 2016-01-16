@@ -27,13 +27,14 @@ S3DModel* CS3OParser::Load(const std::string& name)
 		throw content_error("[S3OParser] could not find model-file " + name);
 	}
 
-	unsigned char* fileBuf = new unsigned char[file.FileSize()];
-	file.Read(fileBuf, file.FileSize());
+	std::vector<unsigned char> fileBuf(file.FileSize());
+	file.Read(&fileBuf[0], file.FileSize());
+
 	S3OHeader header;
-	memcpy(&header, fileBuf, sizeof(header));
+	memcpy(&header, &fileBuf[0], sizeof(header));
 	header.swap();
 
-	S3DModel* model = new S3DModel;
+	S3DModel* model = new S3DModel();
 		model->name = name;
 		model->type = MODELTYPE_S3O;
 		model->numPieces = 0;
@@ -41,17 +42,19 @@ S3DModel* CS3OParser::Load(const std::string& name)
 		model->tex2 = (char*) &fileBuf[header.texture2];
 		model->mins = DEF_MIN_SIZE;
 		model->maxs = DEF_MAX_SIZE;
+
 	texturehandlerS3O->PreloadS3OTexture(model);
 
-	SS3OPiece* rootPiece = LoadPiece(model, NULL, fileBuf, header.rootPiece);
-
+	SS3OPiece* rootPiece = LoadPiece(model, NULL, &fileBuf[0], header.rootPiece);
 	model->SetRootPiece(rootPiece);
+
+	// set after the extrema are known
 	model->radius = (header.radius <= 0.01f)? (model->maxs   - model->mins  ).Length() * 0.5f: header.radius;
 	model->height = (header.height <= 0.01f)? (model->maxs.y - model->mins.y)                : header.height;
+
 	model->drawRadius = model->radius;
 	model->relMidPos = float3(header.midx, header.midy, header.midz);
 
-	delete[] fileBuf;
 	return model;
 }
 

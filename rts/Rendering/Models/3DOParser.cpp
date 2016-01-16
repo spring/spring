@@ -131,24 +131,23 @@ S3DModel* C3DOParser::Load(const std::string& name)
 		throw content_error("[3DOParser] failed to read model-file " + name);
 	}
 
-	S3DModel* model = new S3DModel;
+	S3DModel* model = new S3DModel();
 		model->name = name;
 		model->type = MODELTYPE_3DO;
 		model->textureType = 0;
 		model->numPieces  = 0;
 		model->mins = DEF_MIN_SIZE;
 		model->maxs = DEF_MAX_SIZE;
-		model->radius = 0.0f;
-		model->height = 0.0f;
 
 	S3DOPiece* rootPiece = LoadPiece(model, 0, NULL, &model->numPieces, fileBuf, curOffset);
 
 	model->SetRootPiece(rootPiece);
 
-	model->radius = (model->maxs - model->mins).Length() * 0.5f;
-	model->drawRadius = model->radius;
+	// set after the extrema are known
+	model->radius = (model->maxs   - model->mins  ).Length() * 0.5f;
+	model->height = (model->maxs.y - model->mins.y);
 
-	model->height = model->maxs.y - model->mins.y;
+	model->drawRadius = model->radius;
 	model->relMidPos = (model->maxs + model->mins) * 0.5f;
 
 	return model;

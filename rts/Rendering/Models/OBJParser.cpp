@@ -57,16 +57,8 @@ S3DModel* COBJParser::Load(const std::string& modelFileName)
 		model->type = MODELTYPE_OBJ;
 		model->textureType = 0;
 		model->numPieces = 0;
-
-		model->radius = modelTable.GetFloat("radius", 0.0f);
-		model->drawRadius = model->radius;
-
 		model->mins = DEF_MIN_SIZE;
 		model->maxs = DEF_MAX_SIZE;
-
-		model->height = modelTable.GetFloat("height", 0.0f);
-		model->relMidPos = modelTable.GetFloat3("midpos", ZeroVector);
-
 		model->tex1 = modelTable.GetString("tex1", "");
 		model->tex2 = modelTable.GetString("tex2", "");
 
@@ -77,6 +69,13 @@ S3DModel* COBJParser::Load(const std::string& modelFileName)
 	modelFile.LoadStringData(modelData);
 
 	if (ParseModelData(model, modelData, modelTable)) {
+		// set after the extrema are known
+		model->radius = modelTable.GetFloat("radius", (model->maxs   - model->mins  ).Length() * 0.5f);
+		model->height = modelTable.GetFloat("height", (model->maxs.y - model->mins.y)                );
+
+		model->drawRadius = model->radius;
+		model->relMidPos = modelTable.GetFloat3("midpos", (model->maxs + model->mins) * 0.5f);
+
 		assert(model->numPieces == modelTable.GetInt("numpieces", 0));
 		return model;
 	} else {
