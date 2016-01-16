@@ -119,7 +119,6 @@ class LuaUtils {
 
 		static bool PushCustomBaseFunctions(lua_State* L);
 
-		// not implemented (except for the first two)...
 		static int ParseIntArray(lua_State* L, int tableIndex,
 		                         int* array, int arraySize);
 		static int ParseFloatArray(lua_State* L, int tableIndex,

@@ -580,6 +580,90 @@ int LuaUtils::ParseFloatArray(lua_State* L, int index, float* array, int size)
 	return size;
 }
 
+int LuaUtils::ParseStringArray(lua_State* L, int index, string* array, int size)
+{
+	if (!lua_istable(L, index))
+		return -1;
+
+	const int absIdx = PosAbsLuaIndex(L, index);
+
+	for (int i = 0; i < size; i++) {
+		lua_rawgeti(L, absIdx, (i + 1));
+
+		if (lua_isstring(L, -1)) {
+			array[i] = lua_tostring(L, -1);
+			lua_pop(L, 1);
+		} else {
+			lua_pop(L, 1);
+			return i;
+		}
+	}
+
+	return size;
+}
+
+int LuaUtils::ParseIntVector(lua_State* L, int index, vector<int>& vec)
+{
+	if (!lua_istable(L, index))
+		return -1;
+
+	vec.clear();
+	const int absIdx = PosAbsLuaIndex(L, index);
+
+	for (int i = 0; ; i++) {
+		lua_rawgeti(L, absIdx, (i + 1));
+
+		if (lua_isnumber(L, -1)) {
+			vec.push_back(lua_toint(L, -1));
+			lua_pop(L, 1);
+		} else {
+			lua_pop(L, 1);
+			return i;
+		}
+	}
+}
+
+int LuaUtils::ParseFloatVector(lua_State* L, int index, vector<float>& vec)
+{
+	if (!lua_istable(L, index))
+		return -1;
+
+	vec.clear();
+	const int absIdx = PosAbsLuaIndex(L, index);
+
+	for (int i = 0; ; i++) {
+		lua_rawgeti(L, absIdx, (i + 1));
+
+		if (lua_isnumber(L, -1)) {
+			vec.push_back(lua_tofloat(L, -1));
+			lua_pop(L, 1);
+		} else {
+			lua_pop(L, 1);
+			return i;
+		}
+	}
+}
+
+int LuaUtils::ParseStringVector(lua_State* L, int index, vector<string>& vec)
+{
+	if (!lua_istable(L, index))
+		return -1;
+
+	vec.clear();
+	const int absIdx = PosAbsLuaIndex(L, index);
+
+	for (int i = 0; ; i++) {
+		lua_rawgeti(L, absIdx, (i + 1));
+
+		if (lua_isstring(L, -1)) {
+			vec.push_back(lua_tostring(L, -1));
+			lua_pop(L, 1);
+		} else {
+			lua_pop(L, 1);
+			return i;
+		}
+	}
+}
 
 
 #if !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
