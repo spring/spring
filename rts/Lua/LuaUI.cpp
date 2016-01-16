@@ -32,7 +32,6 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/UI/CommandColors.h"
-#include "Game/UI/GuiHandler.h"
 #include "Game/UI/InfoConsole.h"
 #include "Game/UI/KeyCodes.h"
 #include "Game/UI/KeySet.h"
@@ -70,18 +69,18 @@ CLuaUI* luaUI = NULL;
 
 const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 
-static const char* GetVFSMode()
+static const char* GetVFSMode(bool lockedAccess)
 {
 	const char* accessMode = SPRING_VFS_RAW;
-	if (CFileHandler::FileExists("gamedata/LockLuaUI.txt", SPRING_VFS_MOD)) {
+
+	if (lockedAccess) {
 		if (!CLuaHandle::GetDevMode()) {
-			LOG("This game has locked LuaUI access");
 			accessMode = SPRING_VFS_MOD;
 		} else {
-			LOG("Bypassing this game's LuaUI access lock");
 			accessMode = SPRING_VFS_RAW SPRING_VFS_MOD;
 		}
 	}
+
 	return accessMode;
 }
 
@@ -101,9 +100,8 @@ CLuaUI::CLuaUI()
 {
 	luaUI = this;
 
-	if (!IsValid()) {
+	if (!IsValid())
 		return;
-	}
 
 	UpdateTeams();
 
@@ -112,13 +110,17 @@ CLuaUI::CLuaUI()
 	shockFrontMinPower = 0.0f;
 	shockFrontDistAdj  = 100.0f;
 
+	const bool luaLockedAccess = CFileHandler::FileExists("gamedata/LockLuaUI.txt", SPRING_VFS_MOD);
 	const bool luaSocketEnabled = configHandler->GetBool("LuaSocketEnabled");
-	LOG("LuaSocketEnabled: %s", (luaSocketEnabled ? "yes": "no" ));
 
-	const char* vfsMode = GetVFSMode();
-	const std::string file = (CFileHandler::FileExists("luaui.lua", vfsMode) ? "luaui.lua" : "LuaUI/main.lua");
+	const std::string mode = GetVFSMode(luaLockedAccess);
+	const std::string file = (CFileHandler::FileExists("luaui.lua", mode) ? "luaui.lua": "LuaUI/main.lua");
+	const std::string code = LoadFile(file, mode);
 
-	const string code = LoadFile(file);
+	LOG("LuaUI Entry Point: \"%s\"", file.c_str());
+	LOG("LuaUI Access Lock: %s", (luaLockedAccess ? ((!CLuaHandle::GetDevMode()) ? "enabled": "bypassed"): "disabled" ));
+	LOG("LuaSocket Enabled: %s", (luaSocketEnabled ? "yes": "no" ));
+
 	if (code.empty()) {
 		KillLua();
 		return;
@@ -210,33 +212,31 @@ CLuaUI::CLuaUI()
 
 CLuaUI::~CLuaUI()
 {
-	luaUI = NULL;
-	if (guihandler) guihandler->LoadConfig("ctrlpanel.txt");
+	luaUI = nullptr;
 }
 
 void CLuaUI::InitLuaSocket(lua_State* L) {
 	std::string code;
-	std::string filename="socket.lua";
+	std::string filename = "socket.lua";
 	CFileHandler f(filename);
 
-	LUA_OPEN_LIB(L,luaopen_socket_core);
+	LUA_OPEN_LIB(L, luaopen_socket_core);
 
-	if (f.LoadStringData(code)){
+	if (f.LoadStringData(code)) {
 		LoadCode(L, code, filename);
 	} else {
 		LOG_L(L_ERROR, "Error loading %s", filename.c_str());
 	}
 }
 
-string CLuaUI::LoadFile(const string& filename) const
+string CLuaUI::LoadFile(const string& name, const std::string& mode) const
 {
-	const char* vfsMode = GetVFSMode();
-	CFileHandler f(filename, vfsMode);
+	CFileHandler f(name, mode.c_str());
 
 	string code;
-	if (!f.LoadStringData(code)) {
+	if (!f.LoadStringData(code))
 		code.clear();
-	}
+
 	return code;
 }
 

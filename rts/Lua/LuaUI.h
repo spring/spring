@@ -64,7 +64,7 @@ class CLuaUI : public CLuaHandle
 		CLuaUI();
 		virtual ~CLuaUI();
 
-		string LoadFile(const string& filename) const;
+		string LoadFile(const string& name, const std::string& mode) const;
 
 		bool LoadCFunctions(lua_State* L);
 		void InitLuaSocket(lua_State* L);

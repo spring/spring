@@ -12,6 +12,8 @@
 #include "Game/Camera.h"
 #include "Sim/Units/CommandAI/Command.h"
 
+#define DEFAULT_GUI_CONFIG "ctrlpanel.txt"
+
 class CUnit;
 struct UnitDef;
 struct BuildInfo;
@@ -60,6 +62,8 @@ public:
 	/// startInfo.def has to be endInfo.def
 	std::vector<BuildInfo> GetBuildPos(const BuildInfo& startInfo, const BuildInfo& endInfo, const float3& cameraPos, const float3& mouseDir);
 
+	bool LoadConfig(const std::string& cfg);
+	bool LoadDefaultConfig() { return (LoadConfig(DEFAULT_GUI_CONFIG)); }
 	bool ReloadConfigFromFile(const std::string& fileName);
 	bool ReloadConfigFromString(const std::string& cfg);
 
@@ -100,7 +104,6 @@ public:
 	void SetBuildSpacing(int spacing);
 
 	void LayoutIcons(bool useSelectionPage);
-	bool LoadConfig(const std::string& cfg);
 
 public:
 	std::vector<CommandDescription> commands;
@@ -233,7 +236,7 @@ private:
 		Box visual;
 		Box selection;
 	};
-	IconInfo* icons;
+	std::vector<IconInfo> icons;
 	unsigned int iconsSize;
 	int iconsCount;
 

@@ -2040,14 +2040,10 @@ public:
 
 class CtrlPanelActionExecutor : public IUnsyncedActionExecutor {
 public:
-	CtrlPanelActionExecutor() : IUnsyncedActionExecutor("CtrlPanel",
-			"Reloads ctrlpanel.txt") {}
+	CtrlPanelActionExecutor() : IUnsyncedActionExecutor("CtrlPanel", "Reloads GUI config") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
-		const std::string fileName = action.GetArgs().empty() ? "ctrlpanel.txt" : action.GetArgs();
-		guihandler->ReloadConfigFromFile(fileName);
-		LOG("Reloaded ctrlpanel from file: %s", fileName.c_str());
+		guihandler->ReloadConfigFromFile(action.GetArgs());
 		return true;
 	}
 };
@@ -2300,26 +2296,8 @@ public:
 				LOG_L(L_WARNING, "Can not reload from within LuaUI, yet");
 				return true;
 			}
-			if (luaUI == NULL) {
-				LOG("Loading: \"%s\"", "luaui.lua"); // FIXME duplicate of below
-				CLuaUI::LoadHandler();
-				if (luaUI == NULL) {
-					guihandler->LoadConfig("ctrlpanel.txt");
-					LOG_L(L_WARNING, "Loading failed");
-				}
-			} else {
-				if (command == "enable") {
-					LOG_L(L_WARNING, "LuaUI is already enabled");
-				} else {
-					LOG("Reloading: \"%s\"", "luaui.lua"); // FIXME
-					CLuaUI::FreeHandler();
-					CLuaUI::LoadHandler();
-					if (luaUI == NULL) {
-						guihandler->LoadConfig("ctrlpanel.txt");
-						LOG_L(L_WARNING, "Reloading failed");
-					}
-				}
-			}
+
+			ExecuteHelper(luaUI != nullptr, command == "enable");
 			guihandler->LayoutIcons(false);
 		}
 		else if (command == "disable") {
@@ -2328,19 +2306,37 @@ public:
 				LOG_L(L_WARNING, "Can not disable from within LuaUI, yet");
 				return true;
 			}
-			if (luaUI != NULL) {
+			if (luaUI != nullptr) {
 				CLuaUI::FreeHandler();
 				LOG("Disabled LuaUI");
+				guihandler->LoadDefaultConfig();
 			}
 			guihandler->LayoutIcons(false);
 		}
-		else if (luaUI) {
+		else if (luaUI != nullptr) {
 			luaUI->GotChatMsg(command, 0);
 		} else {
 			LOG_L(L_DEBUG, "LuaUI is not loaded");
 		}
 
 		return true;
+	}
+
+private:
+	bool ExecuteHelper(bool isEnabled, bool doEnable) const {
+		if (isEnabled) {
+			if (doEnable)
+				LOG_L(L_WARNING, "LuaUI is already enabled");
+
+			CLuaUI::FreeHandler();
+		}
+
+		CLuaUI::LoadHandler();
+
+		if (luaUI == nullptr) {
+			LOG_L(L_WARNING, "Loading LuaUI failed; using default GUI config");
+			guihandler->LoadDefaultConfig();
+		}
 	}
 };
 
