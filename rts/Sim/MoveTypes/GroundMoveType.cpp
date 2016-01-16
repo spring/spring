@@ -465,8 +465,9 @@ bool CGroundMoveType::FollowPath()
 	bool wantReverse = false;
 
 	if (WantToStop()) {
+		// keep flatFrontDir in sync; acceleration is applied along it
 		ChangeSpeed(0.0f, false);
-		SetMainHeading();
+		ChangeHeading(owner->heading);
 	} else {
 		ASSERT_SYNCED(currWayPoint);
 		ASSERT_SYNCED(nextWayPoint);
@@ -1775,8 +1776,8 @@ void CGroundMoveType::HandleUnitCollisions(
 		const bool colliderMobile = (colliderMD != NULL); // always true
 		const bool collideeMobile = (collideeMD != NULL); // maybe true
 
-		const bool unloadingCollidee = collidee->unloadingTransportId == collider->id;
-		const bool unloadingCollider = collider->unloadingTransportId == collidee->id;
+		const bool unloadingCollidee = (collidee->unloadingTransportId == collider->id);
+		const bool unloadingCollider = (collider->unloadingTransportId == collidee->id);
 
 		if (unloadingCollidee)
 			collidee->unloadingTransportId = -1;
