@@ -135,7 +135,7 @@ CGameServer::CGameServer(
 	const boost::shared_ptr<const  CGameSetup> newGameSetup
 )
 : quitServer(false)
-, serverFrameNum(0)
+, serverFrameNum(-1)
 
 , serverStartTime(spring_gettime())
 , readyTime(spring_notime)
@@ -303,7 +303,7 @@ void CGameServer::PostLoad(int newServerFrameNum)
 	Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
 	serverFrameNum = newServerFrameNum;
 
-	gameHasStarted = (serverFrameNum > 0);
+	gameHasStarted = !PreSimFrame();
 
 	// for all GameParticipant's
 	for (GameParticipant& p: players) {
@@ -772,10 +772,9 @@ void CGameServer::Update()
 	if (lastPlayerInfo < (spring_gettime() - playerInfoTime)) {
 		lastPlayerInfo = spring_gettime();
 
-		if (serverFrameNum > 0) {
+		if (!PreSimFrame()) {
 			LagProtection();
-		}
-		else {
+		} else {
 			for (GameParticipant& p: players) {
 				if (p.isFromDemo)
 					continue;
@@ -799,7 +798,7 @@ void CGameServer::Update()
 
 	if (!gameHasStarted)
 		CheckForGameStart();
-	else if (serverFrameNum > 0 || demoReader != NULL)
+	else if (!PreSimFrame() || demoReader != NULL)
 		CreateNewFrame(true, false);
 
 	if (hostif) {

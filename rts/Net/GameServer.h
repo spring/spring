@@ -96,6 +96,7 @@ public:
 	void SetGamePausable(const bool arg);
 	void SetReloading(const bool arg) { reloadingServer = arg; }
 
+	bool PreSimFrame() const { return (serverFrameNum == -1); }
 	bool HasStarted() const { return gameHasStarted; }
 	bool HasGameID() const { return generatedGameID; }
 	/// Is the server still running?
