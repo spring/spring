@@ -258,27 +258,28 @@ public:
 class LuaRulesActionExecutor : public ISyncedActionExecutor {
 public:
 	LuaRulesActionExecutor() : ISyncedActionExecutor("LuaRules",
-			"Allows one to reload or disable Lua-rules, or alternatively to send"
-			" a chat message to Lua-rules") {}
+		"Allows reloading or disabling LuaRules, and"
+		" to send a chat message to LuaRules scripts"
+	) {}
 
 	bool Execute(const SyncedAction& action) const {
+		const std::string& cmd = GetCommand();
 		const std::string& arg = action.GetArgs();
 
-		if (gs->frameNum <= 1) {
-			// TODO still needed???
-			LOG_L(L_WARNING, "/%s %s: cannot execute before gameframe #2", GetCommand().c_str(), arg.c_str());
-			return false;
-		}
+		const char* msgs[] = {
+			"synced %s scripts require cheating to %s",
+			"cannot execute /%s %s before first gameframe",
+		};
 
 		// NOTE:
-		//     previously only the host player (ID == 0) was allowed to issue these actions
-		//     prior to some server changes they worked even in demos with that restriction,
-		//     but this is no longer the case so we now let any player execute them (for MP
-		//     it does not matter who does so since they are not meant to be used there ITFP
-		//     and no less sync-safe)
+		//   previously only the host player (ID == 0) was allowed to issue these actions
+		//   prior to some server changes they worked even in demos with that restriction,
+		//   but this is no longer the case so we now let any player execute them (for MP
+		//   it does not matter who does so since they are not meant to be used there ITFP
+		//   and no less sync-safe)
 		if (arg == "reload" || arg == "enable") {
-			if (!gs->cheatEnabled) {
-				LOG_L(L_WARNING, "Cheating required to load synced scripts");
+			if (!gs->cheatEnabled || gs->PreSimFrame()) {
+				LOG_L(L_WARNING, msgs[gs->cheatEnabled], cmd.c_str(), arg.c_str());
 			} else {
 				if (luaRules != NULL && arg == "enable") {
 					LOG_L(L_WARNING, "LuaRules is already loaded");
@@ -294,14 +295,14 @@ public:
 				}
 			}
 		} else if (arg == "disable") {
-			if (!gs->cheatEnabled) {
-				LOG_L(L_WARNING, "Cheating required to disable synced scripts");
+			if (!gs->cheatEnabled || gs->PreSimFrame()) {
+				LOG_L(L_WARNING, msgs[gs->cheatEnabled], cmd.c_str(), arg.c_str());
 			} else {
 				CLuaRules::FreeHandler();
 
 				LOG("LuaRules disabled");
 			}
-		} else if (luaRules) {
+		} else if (luaRules != nullptr) {
 			luaRules->GotChatMsg(arg, action.GetPlayerID());
 		} else {
 			LOG("LuaRules is not loaded");
@@ -315,25 +316,25 @@ public:
 class LuaGaiaActionExecutor : public ISyncedActionExecutor {
 public:
 	LuaGaiaActionExecutor() : ISyncedActionExecutor("LuaGaia",
-			"Allows one to reload or disable Lua-Gaia, or alternatively to send"
-			" a chat message to Lua-Gaia") {}
+		"Allows reloading or disabling LuaGaia, and"
+		" to send a chat message to LuaGaia scripts"
+	) {}
 
 	bool Execute(const SyncedAction& action) const {
+		const std::string& cmd = GetCommand();
 		const std::string& arg = action.GetArgs();
 
-		if (gs->frameNum <= 1) {
-			// TODO still needed???
-			LOG_L(L_WARNING, "/%s %s: cannot execute before gameframe #2", GetCommand().c_str(), arg.c_str());
-			return false;
-		}
+		const char* msgs[] = {
+			"synced %s scripts require cheating to %s",
+			"cannot execute /%s %s before first gameframe",
+		};
 
-		if (!gs->useLuaGaia) {
+		if (!gs->useLuaGaia)
 			return false;
-		}
 
 		if (arg == "reload" || arg == "enable") {
-			if (!gs->cheatEnabled) {
-				LOG_L(L_WARNING, "Cheating required to load synced scripts");
+			if (!gs->cheatEnabled || gs->PreSimFrame()) {
+				LOG_L(L_WARNING, msgs[gs->cheatEnabled], cmd.c_str(), arg.c_str());
 			} else {
 				if (luaGaia != NULL && arg == "enable") {
 					LOG_L(L_WARNING, "LuaGaia is already loaded");
@@ -349,13 +350,13 @@ public:
 				}
 			}
 		} else if (arg == "disable") {
-			if (!gs->cheatEnabled) {
-				LOG_L(L_WARNING, "Cheating required to disable synced scripts");
+			if (!gs->cheatEnabled || gs->PreSimFrame()) {
+				LOG_L(L_WARNING, msgs[gs->cheatEnabled], cmd.c_str(), arg.c_str());
 			} else {
 				CLuaGaia::FreeHandler();
 				LOG("LuaGaia disabled");
 			}
-		} else if (luaGaia) {
+		} else if (luaGaia != nullptr) {
 			luaGaia->GotChatMsg(arg, action.GetPlayerID());
 		} else {
 			LOG("LuaGaia is not loaded");

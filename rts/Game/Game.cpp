@@ -656,8 +656,7 @@ void CGame::LoadLua()
 	// last in, first served
 	luaInputReceiver = new LuaInputReceiver();
 
-	delete defsParser;
-	defsParser = NULL;
+	SafeDelete(defsParser);
 }
 
 void CGame::LoadSkirmishAIs()
