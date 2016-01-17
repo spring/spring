@@ -412,7 +412,7 @@ void CProjectileDrawer::DrawProjectileNow(CProjectile* pro, bool drawReflection,
 {
 	const CUnit* owner = pro->owner();
 
-	pro->drawPos = pro->pos + (pro->speed * globalRendering->timeOffset);
+	pro->drawPos = pro->GetDrawPos(globalRendering->timeOffset);
 
 	const bool visible = (gu->spectatingFullView || losHandler->InLos(pro, gu->myAllyTeam) || (owner && teamHandler->Ally(owner->allyteam, gu->myAllyTeam)));
 

@@ -1431,15 +1431,15 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 }
 
 inline void CUnitDrawer::UpdateUnitDrawPos(CUnit* u) {
-	const CUnit* trans = u->GetTransporter();
+	const CUnit* t = u->GetTransporter();
 
-	if (trans != NULL) {
-		u->drawPos = u->pos + (trans->speed * globalRendering->timeOffset);
+	if (t != nullptr) {
+		u->drawPos = u->GetDrawPos(t->speed, globalRendering->timeOffset);
 	} else {
-		u->drawPos = u->pos + (u->speed * globalRendering->timeOffset);
+		u->drawPos = u->GetDrawPos(          globalRendering->timeOffset);
 	}
 
-	u->drawMidPos = u->drawPos + (u->midPos - u->pos);
+	u->drawMidPos = u->GetDrawMidPos();
 }
 
 

@@ -21,12 +21,12 @@ CR_REG_METADATA(CWorldObject, (
 ))
 
 
-void CWorldObject::SetRadiusAndHeight(const S3DModel* model)
+void CWorldObject::SetRadiusAndHeight(const S3DModel* mdl)
 {
 	// initial values; can be overridden by LSC::Set*RadiusAndHeight
-	SetRadiusAndHeight(model->radius, model->height);
+	SetRadiusAndHeight(mdl->radius, mdl->height);
 
 	// model->radius can be badly configured, set a more reliable DR
-	drawRadius = model->GetDrawRadius();
+	drawRadius = mdl->GetDrawRadius();
 }
 

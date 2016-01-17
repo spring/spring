@@ -251,10 +251,8 @@ void CFeatureDrawer::Update()
 
 inline void CFeatureDrawer::UpdateDrawPos(CFeature* f)
 {
-	const float time = globalRendering->timeOffset;
-
-	f->drawPos    =    f->pos + (f->speed * time);
-	f->drawMidPos = f->midPos + (f->speed * time);
+	f->drawPos    = f->GetDrawPos(globalRendering->timeOffset);
+	f->drawMidPos = f->GetDrawMidPos();
 }
 
 

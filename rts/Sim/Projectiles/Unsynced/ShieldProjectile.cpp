@@ -91,11 +91,11 @@ void ShieldProjectile::Update()
 
 float3 ShieldProjectile::GetShieldDrawPos() const
 {
-	if (shield == NULL)
+	if (shield == nullptr)
 		return ZeroVector;
-	if (shield->owner == NULL)
+	if (shield->owner == nullptr)
 		return ZeroVector;
-	return shield->owner->GetObjectSpacePosUnsynced(shield->relWeaponMuzzlePos);
+	return shield->owner->GetObjectSpaceDrawPos(shield->relWeaponMuzzlePos);
 }
 
 bool ShieldProjectile::AllowDrawing()

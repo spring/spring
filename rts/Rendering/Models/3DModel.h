@@ -335,6 +335,8 @@ struct LocalModel
 	const LuaObjectMaterialData* GetLuaMaterialData() const { return &luaMaterialData; }
 	      LuaObjectMaterialData* GetLuaMaterialData()       { return &luaMaterialData; }
 
+	const float3 GetRelMidPos() const { return (boundingVolume.GetOffsets()); }
+
 	// raw forms, the piece-index must be valid
 	const float3 GetRawPiecePos(int pieceIdx) const { return pieces[pieceIdx].GetAbsolutePos(); }
 	const CMatrix44f& GetRawPieceMatrix(int pieceIdx) const { return pieces[pieceIdx].GetModelSpaceMatrix(); }

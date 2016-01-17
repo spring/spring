@@ -25,8 +25,7 @@ public:
 		, alwaysVisible(false)
 		, model(NULL)
 	{}
-	CWorldObject(const float3& pos, const float3& spd)
-		: CWorldObject()
+	CWorldObject(const float3& pos, const float3& spd): CWorldObject()
 	{
 		SetPosition(pos);
 		SetVelocity(spd);
@@ -58,6 +57,10 @@ public:
 	}
 
 	void SetRadiusAndHeight(const S3DModel* model);
+
+	// extrapolated base-positions; used in unsynced code
+	float3 GetDrawPos(                float t) const { return (pos + speed * t); }
+	float3 GetDrawPos(const float3 v, float t) const { return (pos +     v * t); }
 
 public:
 	int id;
