@@ -112,22 +112,29 @@ else  (UNIX AND NOT MINGW)
 				set(MINGWLIBS ${CMAKE_SOURCE_DIR}/mingwlibs64 CACHE PATH "Location of the mingwlibs package")
 			endif(MARCH_BITS EQUAL 32)
 		endif(MSVC)
-	endif (NOT MINGWLIBS)
-	if    (NOT EXISTS "${MINGWLIBS}" OR NOT IS_DIRECTORY "${MINGWLIBS}")
-		MESSAGE(FATAL_ERROR "MINGWLIBS '${MINGWLIBS}' is not a valid directory")
-	endif (NOT EXISTS "${MINGWLIBS}" OR NOT IS_DIRECTORY "${MINGWLIBS}")
+	endif ()
+	if    (EXISTS "${MINGWLIBS}" AND IS_DIRECTORY "${MINGWLIBS}")
+		# MinGW needs an additional library, mwindows
+		# It's total link flags should look like -lmingw32 -lSDL2main -lSDL2 -lmwindows
+		# (Actually on second look, I think it only needs one of the m* libraries.)
+		SET(MINGW32_LIBRARY mingw32 CACHE STRING "mwindows for MinGW")
+		set(SDL2_INCLUDE_DIR "${MINGWLIBS}/include/SDL2")
+		set(CMAKE_PREFIX_PATH ${MINGWLIBS})
+		include_directories(${MINGWLIBS}/include)
+		set(CMAKE_LIBRARY_PATH ${MINGWLIBS}/dll ${MINGWLIBS}/lib)
 
-	set(CMAKE_PREFIX_PATH ${MINGWLIBS})
+		# some cross-compile fixes
+		set(CMAKE_FIND_ROOT_PATH ${MINGWLIBS} ${CMAKE_FIND_ROOT_PATH})
+		set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+		set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+	else()
+		MESSAGE(WARNING "Compiling for windows. MINGWLIBS '${MINGWLIBS}' is not a valid directory, trying system libs")
+	endif ()
+
+
 	add_definitions(-D_WIN32_WINNT=0x502) ## vista is minimum due to InterlockedIncrement64
 	add_definitions(-D__USE_MINGW_ANSI_STDIO=1) ## use __mingw_sprintf instead of __builtin_sprintf (it's used by lua in a synced way, and builtin doesn't sync)
 
-	include_directories(${MINGWLIBS}/include)
-	set(CMAKE_LIBRARY_PATH ${MINGWLIBS}/dll ${MINGWLIBS}/lib)
-
-	# some cross-compile fixes
-	set(CMAKE_FIND_ROOT_PATH ${MINGWLIBS} ${CMAKE_FIND_ROOT_PATH})
-	set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
-	set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 
 	if(MSVC)
 		add_definitions(-DBOOST_ALL_NO_LIB -DNOMINMAX -DWIN32_LEAN_AND_MEAN)
@@ -219,10 +226,6 @@ if    (USE_LIBSQUISH)
 endif (USE_LIBSQUISH)
 
 
-### external libs
-if    (MINGW OR MSVC)
-	set(SDL2_INCLUDE_DIR "${MINGWLIBS}/include/SDL2")
-endif (MINGW OR MSVC)
 
 FIND_PACKAGE(Boost 1.51.0 COMPONENTS thread regex program_options system chrono signals filesystem REQUIRED)
 FIND_PACKAGE(Boost 1.51.0 COMPONENTS timer)
