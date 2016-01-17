@@ -628,7 +628,7 @@ void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 		if (skirmishAIHandler.IsLocalSkirmishAIDieing(skirmishAIId))
 			return;
 
-		if (gs->frameNum > 0) {
+		if (!gs->PreSimFrame()) {
 			// We will only get here if the AI is created mid-game.
 			aiWrapper->Update(gs->frameNum);
 		}

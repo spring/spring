@@ -66,8 +66,8 @@ CGlobalSynced::~CGlobalSynced()
 
 
 void CGlobalSynced::ResetState() {
-	frameNum = 0;
-	tempNum  = 1;
+	frameNum = -1; // first real frame is 0
+	tempNum  =  1;
 
 	speedFactor       = 1.0f;
 	wantedSpeedFactor = 1.0f;

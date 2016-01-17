@@ -806,7 +806,7 @@ void CBumpWater::UploadCoastline(const bool forceFull)
 	CTextureAtlas atlas;
 	atlas.SetFreeTexture(false);
 
-	const float* heightMap = (gs->frameNum > 0) ? readMap->GetCornerHeightMapUnsynced() : readMap->GetCornerHeightMapSynced();
+	const float* heightMap = (!gs->PreSimFrame()) ? readMap->GetCornerHeightMapUnsynced() : readMap->GetCornerHeightMapSynced();
 
 	for (size_t i = 0; i < coastmapAtlasRects.size(); i++) {
 		CoastAtlasRect& caRect = coastmapAtlasRects[i];

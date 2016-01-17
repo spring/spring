@@ -40,7 +40,8 @@ void CPlayerRosterDrawer::Draw()
 		const CPlayer* p = playerHandler->Player(indices[a]);
 		unsigned char color[3] = {255, 255, 255};
 		unsigned char allycolor[3] = {255, 255, 255};
-		if (p->ping != PATHING_FLAG || gs->frameNum != 0) {
+
+		if (p->ping != PATHING_FLAG || !gs->PreSimFrame()) {
 			if (p->spectator)
 				prefix = "S";
 			else {

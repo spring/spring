@@ -278,9 +278,8 @@ void CEndGameBox::Draw()
 		}
 	}
 
-	if (gs->frameNum <= 0) {
+	if (gs->PreSimFrame())
 		return;
-	}
 
 	if (dispMode == 0) {
 		float xpos = 0.01f;

@@ -961,7 +961,7 @@ bool CGame::Update()
 			clientNet->AttemptReconnect(SpringVersion::GetFull());
 		}
 
-		if (clientNet->CheckTimeout(0, gs->frameNum == 0)) {
+		if (clientNet->CheckTimeout(0, gs->PreSimFrame())) {
 			GameEnd(std::vector<unsigned char>(), true);
 		}
 	}
@@ -1423,16 +1423,6 @@ void CGame::StartPlaying()
 	}
 
 	eventHandler.GameStart();
-
-	// This is a hack!!!
-	// Before 0.83 Lua had its GameFrame callin before gs->frameNum got updated,
-	// what caused it to have a `gameframe0` while the engine started with 1.
-	// This became a problem when LUS was added, and so we were forced to switch
-	// Lua to the 1-indexed system, too.
-	// To keep backward compability Lua now gets 2 GameFrames at start (0 & 1)
-	// and both share the same SimFrame!
-	eventHandler.GameFrame(0);
-
 }
 
 
@@ -1441,12 +1431,15 @@ void CGame::SimFrame() {
 	ENTER_SYNCED_CODE();
 
 	good_fpu_control_registers("CGame::SimFrame");
+
+	// note: starts at -1, first actual frame is 0
+	gs->frameNum += 1;
 	lastFrameTime = spring_gettime();
 
 	// clear allocator statistics periodically
 	// note: allocator itself should do this (so that
 	// stats are reliable when paused) but see LuaUser
-	spring_lua_alloc_update_stats(((++gs->frameNum) % GAME_SPEED) == 0);
+	spring_lua_alloc_update_stats((gs->frameNum % GAME_SPEED) == 0);
 
 #ifdef TRACE_SYNC
 	tracefile << "New frame:" << gs->frameNum << " " << gs->GetRandSeed() << "\n";
@@ -1458,9 +1451,9 @@ void CGame::SimFrame() {
 		geometricObjects->Update();
 		sound->NewFrame();
 		eoh->Update();
-		for (size_t a = 0; a < grouphandlers.size(); a++) {
+
+		for (size_t a = 0; a < grouphandlers.size(); a++)
 			grouphandlers[a]->Update();
-		}
 
 		(playerHandler->Player(gu->myPlayerNum)->fpsController).SendStateUpdate(/*camera->GetMovState(), mouse->buttons*/);
 
@@ -1472,21 +1465,23 @@ void CGame::SimFrame() {
 		SCOPED_TIMER("EventHandler::GameFrame");
 		eventHandler.GameFrame(gs->frameNum);
 	}
-	SCOPED_TIMER("SimFrame");
-	helper->Update();
-	mapDamage->Update();
-	pathManager->Update();
-	unitHandler->Update();
-	projectileHandler->Update();
-	featureHandler->Update();
-	GCobEngine.Tick(33);
-	GUnitScriptEngine.Tick(33);
-	wind.Update();
-	losHandler->Update();
-	interceptHandler.Update(false);
+	{
+		SCOPED_TIMER("SimFrame");
+		helper->Update();
+		mapDamage->Update();
+		pathManager->Update();
+		unitHandler->Update();
+		projectileHandler->Update();
+		featureHandler->Update();
+		GCobEngine.Tick(33);
+		GUnitScriptEngine.Tick(33);
+		wind.Update();
+		losHandler->Update();
+		interceptHandler.Update(false);
 
-	teamHandler->GameFrame(gs->frameNum);
-	playerHandler->GameFrame(gs->frameNum);
+		teamHandler->GameFrame(gs->frameNum);
+		playerHandler->GameFrame(gs->frameNum);
+	}
 
 	lastSimFrameTime = spring_gettime();
 	gu->avgSimFrameTime = mix(gu->avgSimFrameTime, (lastSimFrameTime - lastFrameTime).toMilliSecsf(), 0.05f);
@@ -1507,7 +1502,7 @@ void CGame::SimFrame() {
 	}
 	#endif
 
-	// usefull for desync-debugging enter (enter instead of -1 start & end frame of the range you want to debug)
+	// useful for desync-debugging (enter instead of -1 start & end frame of the range you want to debug)
 	DumpState(-1, -1, 1);
 
 	LEAVE_SYNCED_CODE();

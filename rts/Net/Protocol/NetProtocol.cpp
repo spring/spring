@@ -108,10 +108,11 @@ void CNetProtocol::DeleteBufferPacketAt(unsigned index)
 
 float CNetProtocol::GetPacketTime(int frameNum) const
 {
-	if (frameNum == 0)
+	// startTime is not yet defined pre-simframe
+	if (frameNum < 0)
 		return gu->gameTime;
 
-	return (gu->startTime + (float)frameNum / (float)GAME_SPEED);
+	return (gu->startTime + frameNum / (1.0f * GAME_SPEED));
 }
 
 boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData(int frameNum)

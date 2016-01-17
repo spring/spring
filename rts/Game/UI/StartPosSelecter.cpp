@@ -39,7 +39,7 @@ CStartPosSelecter::~CStartPosSelecter()
 
 bool CStartPosSelecter::Ready(bool luaForcedReady)
 {
-	if (gs->frameNum > 0) {
+	if (!gs->PreSimFrame()) {
 		delete this;
 		return true;
 	}
@@ -65,7 +65,7 @@ bool CStartPosSelecter::MousePress(int x, int y, int button)
 	const float mx = MouseX(x);
 	const float my = MouseY(y);
 
-	if ((showReadyBox && InBox(mx, my, readyBox)) || gs->frameNum > 0)
+	if ((showReadyBox && InBox(mx, my, readyBox)) || !gs->PreSimFrame())
 		return (!Ready(false));
 
 	const float dist = CGround::LineGroundCol(camera->GetPos(), camera->GetPos() + mouse->dir * globalRendering->viewRange * 1.4f, false);

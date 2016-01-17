@@ -881,17 +881,18 @@ int LuaSyncedRead::GetGaiaTeamID(lua_State* L)
 
 int LuaSyncedRead::GetGameFrame(lua_State* L)
 {
+	const int simFrames = gs->GetLuaSimFrame();
 	const int dayFrames = GAME_SPEED * (24 * 60 * 60);
-	lua_pushnumber(L, gs->frameNum % dayFrames);
-	lua_pushnumber(L, gs->frameNum / dayFrames);
+
+	lua_pushnumber(L, simFrames % dayFrames);
+	lua_pushnumber(L, simFrames / dayFrames);
 	return 2;
 }
 
 
 int LuaSyncedRead::GetGameSeconds(lua_State* L)
 {
-	const float seconds = gs->frameNum / (float)GAME_SPEED;
-	lua_pushnumber(L, seconds);
+	lua_pushnumber(L, gs->GetLuaSimFrame() / (1.0f * GAME_SPEED));
 	return 1;
 }
 
@@ -1345,24 +1346,25 @@ int LuaSyncedRead::GetTeamRulesParam(lua_State* L)
 
 int LuaSyncedRead::GetTeamStatsHistory(lua_State* L)
 {
-	CTeam* team = ParseTeam(L, __FUNCTION__, 1);
-	if (team == NULL || game == NULL) {
+	const CTeam* team = ParseTeam(L, __FUNCTION__, 1);
+
+	if (team == NULL || game == NULL)
 		return 0;
-	}
+
 	const int teamID = team->teamNum;
 
-	if (!IsAlliedTeam(L, teamID) && !game->IsGameOver()) {
+	if (!IsAlliedTeam(L, teamID) && !game->IsGameOver())
 		return 0;
-	}
 
 	const int args = lua_gettop(L);
+
 	if (args == 1) {
 		lua_pushnumber(L, team->statHistory.size());
 		return 1;
 	}
 
-	const std::list<TeamStatistics>& teamStats = team->statHistory;
-	std::list<TeamStatistics>::const_iterator it = teamStats.begin();
+	const auto& teamStats = team->statHistory;
+	auto it = teamStats.cbegin();
 	const int statCount = teamStats.size();
 
 	int start = 0;
@@ -1386,15 +1388,16 @@ int LuaSyncedRead::GetTeamStatsHistory(lua_State* L)
 			const TeamStatistics& stats = *it;
 			lua_newtable(L); {
 				if (i+1 == teamStats.size()) {
-					//! the `stats.frame` var indicates the frame when a new entry needs to get added,
-					//! for the most recent stats entry this lies obviously in the future,
-					//! so we just output the current frame here
-					HSTR_PUSH_NUMBER(L, "time",             gs->frameNum / GAME_SPEED);
-					HSTR_PUSH_NUMBER(L, "frame",            gs->frameNum);
+					// the `stats.frame` var indicates the frame when a new entry needs to get added,
+					// for the most recent stats entry this lies obviously in the future,
+					// so we just output the current frame here
+					HSTR_PUSH_NUMBER(L, "time",         gs->GetLuaSimFrame() / GAME_SPEED);
+					HSTR_PUSH_NUMBER(L, "frame",        gs->GetLuaSimFrame());
 				} else {
-					HSTR_PUSH_NUMBER(L, "time",             stats.frame / GAME_SPEED);
-					HSTR_PUSH_NUMBER(L, "frame",            stats.frame);
+					HSTR_PUSH_NUMBER(L, "time",         stats.frame / GAME_SPEED);
+					HSTR_PUSH_NUMBER(L, "frame",        stats.frame);
 				}
+
 				HSTR_PUSH_NUMBER(L, "metalUsed",        stats.metalUsed);
 				HSTR_PUSH_NUMBER(L, "metalProduced",    stats.metalProduced);
 				HSTR_PUSH_NUMBER(L, "metalExcess",      stats.metalExcess);

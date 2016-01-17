@@ -2277,17 +2277,17 @@ int LuaUnsyncedCtrl::SetUnitDefImage(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitGroup(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
+	if (!CLuaHandle::CheckModUICtrl(L))
 		return 0;
-	}
-	if (gs->noHelperAIs) {
+
+	if (gs->noHelperAIs)
 		return 0;
-	}
 
 	CUnit* unit = ParseRawUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == NULL)
 		return 0;
-	}
+
 	const int groupID = luaL_checkint(L, 2);
 
 	if (groupID == -1) {
@@ -2296,14 +2296,15 @@ int LuaUnsyncedCtrl::SetUnitGroup(lua_State* L)
 	}
 
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
-	if ((groupID < 0) || (groupID >= (int)groups.size())) {
+
+	if ((groupID < 0) || (groupID >= (int)groups.size()))
 		return 0;
-	}
 
 	CGroup* group = groups[groupID];
-	if (group != NULL) {
+
+	if (group != NULL)
 		unit->SetGroup(group);
-	}
+
 	return 0;
 }
 
@@ -2349,35 +2350,32 @@ static void ParseUnitArray(lua_State* L, const char* caller,
 
 static bool CanGiveOrders(const lua_State* L)
 {
-	if (gs->frameNum <= 0) {
+	if (gs->PreSimFrame())
 		return false;
-	}
-	if (gs->noHelperAIs) {
+
+	if (gs->noHelperAIs)
 		return false;
-	}
-	if (gs->godMode) {
+
+	if (gs->godMode)
 		return true;
-	}
-	if (gu->spectating) {
+
+	if (gu->spectating)
 		return false;
-	}
+
 	const int ctrlTeam = CLuaHandle::GetHandleCtrlTeam(L);
+
 	// FIXME ? (correct? warning / error?)
-	if ((ctrlTeam != gu->myTeam) || (ctrlTeam < 0)) {
-		return false;
-	}
-	return true;
+	return ((ctrlTeam == gu->myTeam) && (ctrlTeam >= 0));
 }
 
 
 int LuaUnsyncedCtrl::GiveOrder(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
+	if (!CLuaHandle::CheckModUICtrl(L))
 		return 0;
-	}
-	if (!CanGiveOrders(L)) {
+
+	if (!CanGiveOrders(L))
 		return 1;
-	}
 
 	Command cmd = LuaUtils::ParseCommand(L, __FUNCTION__, 1);
 
@@ -2391,9 +2389,9 @@ int LuaUnsyncedCtrl::GiveOrder(lua_State* L)
 
 int LuaUnsyncedCtrl::GiveOrderToUnit(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
+	if (!CLuaHandle::CheckModUICtrl(L))
 		return 0;
-	}
+
 	if (!CanGiveOrders(L)) {
 		lua_pushboolean(L, false);
 		return 1;
@@ -2416,9 +2414,9 @@ int LuaUnsyncedCtrl::GiveOrderToUnit(lua_State* L)
 
 int LuaUnsyncedCtrl::GiveOrderToUnitMap(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
+	if (!CLuaHandle::CheckModUICtrl(L))
 		return 0;
-	}
+
 	if (!CanGiveOrders(L)) {
 		lua_pushboolean(L, false);
 		return 1;
@@ -2447,9 +2445,9 @@ int LuaUnsyncedCtrl::GiveOrderToUnitMap(lua_State* L)
 
 int LuaUnsyncedCtrl::GiveOrderToUnitArray(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
+	if (!CLuaHandle::CheckModUICtrl(L))
 		return 0;
-	}
+
 	if (!CanGiveOrders(L)) {
 		lua_pushboolean(L, false);
 		return 1;
@@ -2478,9 +2476,9 @@ int LuaUnsyncedCtrl::GiveOrderToUnitArray(lua_State* L)
 
 int LuaUnsyncedCtrl::GiveOrderArrayToUnitMap(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
+	if (!CLuaHandle::CheckModUICtrl(L))
 		return 0;
-	}
+
 	if (!CanGiveOrders(L)) {
 		lua_pushboolean(L, false);
 		return 1;
@@ -2508,9 +2506,9 @@ int LuaUnsyncedCtrl::GiveOrderArrayToUnitMap(lua_State* L)
 
 int LuaUnsyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
+	if (!CLuaHandle::CheckModUICtrl(L))
 		return 0;
-	}
+
 	if (!CanGiveOrders(L)) {
 		lua_pushboolean(L, false);
 		return 1;
@@ -2616,12 +2614,12 @@ int LuaUnsyncedCtrl::SendLuaRulesMsg(lua_State* L)
 
 int LuaUnsyncedCtrl::SetShareLevel(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
+	if (!CLuaHandle::CheckModUICtrl(L))
 		return 0;
-	}
-	if (gu->spectating || gs->noHelperAIs || (gs->frameNum <= 0)) {
+
+	if (gu->spectating || gs->noHelperAIs || gs->PreSimFrame())
 		return 0;
-	}
+
 
 	const string shareType = luaL_checksstring(L, 1);
 	const float shareLevel = max(0.0f, min(1.0f, luaL_checkfloat(L, 2)));
@@ -2641,12 +2639,11 @@ int LuaUnsyncedCtrl::SetShareLevel(lua_State* L)
 
 int LuaUnsyncedCtrl::ShareResources(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
+	if (!CLuaHandle::CheckModUICtrl(L))
 		return 0;
-	}
-	if (gu->spectating || gs->noHelperAIs || (gs->frameNum <= 0)) {
+
+	if (gu->spectating || gs->noHelperAIs || gs->PreSimFrame())
 		return 0;
-	}
 
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 2) || !lua_isnumber(L, 1) || !lua_isstring(L, 2) ||

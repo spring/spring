@@ -39,9 +39,16 @@ public:
 		randSeed = seed;
 		if (init) { initRandSeed = randSeed; }
 	}
+
 	unsigned int GetRandSeed()     const { return randSeed; }
 	unsigned int GetInitRandSeed() const { return initRandSeed; }
+
+	// Lua should never see the pre-simframe value
+	int GetLuaSimFrame() { return std::max(frameNum, 0); }
 	int GetTempNum() { return tempNum++; }
+
+	// remains true until first SimFrame call
+	bool PreSimFrame() const { return (frameNum == -1); }
 
 public:
 	/**

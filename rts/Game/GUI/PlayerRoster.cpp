@@ -130,7 +130,7 @@ const std::vector<int>& PlayerRoster::GetIndices(int* count, bool includePathing
 			if (p->active)
 				continue;
 
-			if (!includePathingFlag || p->ping != PATHING_FLAG || gs->frameNum != 0) {
+			if (!includePathingFlag || p->ping != PATHING_FLAG || !gs->PreSimFrame()) {
 				break;
 			}
 		}
@@ -154,9 +154,9 @@ static inline int CompareBasics(const CPlayer* aP, const CPlayer* bP)
 	if (!aP->active &&  bP->active) { return +1; }
 
 	// then pathing players
-	if(gs->frameNum == 0) {
-		if(aP->ping == PATHING_FLAG && bP->ping != PATHING_FLAG) { return -1; }
-		if(aP->ping != PATHING_FLAG && bP->ping == PATHING_FLAG) { return +1; }
+	if (gs->PreSimFrame()) {
+		if (aP->ping == PATHING_FLAG && bP->ping != PATHING_FLAG) { return -1; }
+		if (aP->ping != PATHING_FLAG && bP->ping == PATHING_FLAG) { return +1; }
 	}
 
 	return 0;
