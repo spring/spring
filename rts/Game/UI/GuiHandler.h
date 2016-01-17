@@ -62,6 +62,9 @@ public:
 	/// startInfo.def has to be endInfo.def
 	std::vector<BuildInfo> GetBuildPos(const BuildInfo& startInfo, const BuildInfo& endInfo, const float3& cameraPos, const float3& mouseDir);
 
+	bool EnableLuaUI(bool);
+	bool DisableLuaUI();
+
 	bool LoadConfig(const std::string& cfg);
 	bool LoadDefaultConfig() { return (LoadConfig(DEFAULT_GUI_CONFIG)); }
 	bool ReloadConfigFromFile(const std::string& fileName);

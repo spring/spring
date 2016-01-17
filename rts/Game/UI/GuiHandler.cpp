@@ -168,12 +168,71 @@ static bool SafeAtoF(float& var, const std::string& value)
 	char* endPtr;
 	const char* startPtr = value.c_str();
 	const float tmp = (float)strtod(startPtr, &endPtr);
-	if (endPtr == startPtr) {
+
+	if (endPtr == startPtr)
 		return false;
-	}
+
 	var = tmp;
 	return true;
 }
+
+
+
+bool CGuiHandler::EnableLuaUI(bool enableCommand)
+{
+	if (luaUI != nullptr) {
+		if (enableCommand) {
+			LOG_L(L_WARNING, "[GUIHandler] LuaUI is already enabled");
+			return false;
+		}
+		if (luaUI->IsRunning()) {
+			// NOTE: causes a SEGV through RunCallIn()
+			LOG_L(L_WARNING, "[GUIHandler can not reload from within LuaUI, yet");
+			return false;
+		}
+
+		CLuaUI::FreeHandler();
+	}
+
+	CLuaUI::LoadHandler();
+
+	if (luaUI != nullptr) {
+		LayoutIcons(false);
+		return true;
+	}
+
+	LOG_L(L_WARNING, "[GUIHandler] loading LuaUI failed; using default config");
+
+	LoadDefaultConfig();
+	return false;
+}
+
+bool CGuiHandler::DisableLuaUI()
+{
+	if (luaUI == nullptr) {
+		LOG_L(L_WARNING, "[GUIHandler] LuaUI is already disabled");
+		return false;
+	}
+
+	if (luaUI->IsRunning()) {
+		// NOTE: might cause a SEGV through RunCallIn()
+		LOG_L(L_WARNING, "[GUIHandler] can not disable from within LuaUI, yet");
+		return false;
+	}
+
+	CLuaUI::FreeHandler();
+
+	if (luaUI == nullptr) {
+		LoadDefaultConfig();
+		// needed; LoadDefaultConfig does not reach ReloadConfigFromString
+		LayoutIcons(false);
+		return true;
+	}
+
+	LOG_L(L_WARNING, "[GUIHandler] disabling LuaUI failed");
+	return false;
+}
+
 
 
 bool CGuiHandler::LoadConfig(const std::string& cfg)
@@ -187,9 +246,9 @@ bool CGuiHandler::LoadConfig(const std::string& cfg)
 
 	while (true) {
 		const std::string line = parser.GetCleanLine();
-		if (line.empty()) {
+
+		if (line.empty())
 			break;
-		}
 
 		const std::vector<std::string> &words = parser.Tokenize(line, 1);
 
@@ -339,17 +398,14 @@ bool CGuiHandler::LoadConfig(const std::string& cfg)
 			const float fy = 0.5f * (fyp + fyn);
 			xBpos = buttonBox.x1 + (fullBorder + (0.5 * xIconSize) + (fx * xIconStep));
 			yBpos = buttonBox.y2 - (fullBorder + (0.5 * yIconSize) + (fy * yIconStep));
-		}
-		else {
+		} else {
 			xBpos = yBpos = -1.0f; // off screen
 		}
-	}
-	else {
+	} else {
 		xBpos = yBpos = -1.0f; // off screen
 	}
 
 	ParseFillOrder(fillOrderStr);
-
 	return true;
 }
 

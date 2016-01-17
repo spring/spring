@@ -2285,58 +2285,26 @@ public:
 			" a chat message to LuaUI") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		if (!guihandler)
+		if (guihandler == nullptr)
 			return false;
 
 		const std::string& command = action.GetArgs();
 
 		if (command == "reload" || command == "enable") {
-			if (luaUI && luaUI->IsRunning()) {
-				// NOTE: causes a SEGV through RunCallIn()
-				LOG_L(L_WARNING, "Can not reload from within LuaUI, yet");
-				return true;
-			}
-
-			ExecuteHelper(luaUI != nullptr, command == "enable");
-			guihandler->LayoutIcons(false);
+			guihandler->EnableLuaUI(command == "enable");
+			return true;
 		}
-		else if (command == "disable") {
-			if (luaUI && luaUI->IsRunning()) {
-				// NOTE: might cause a SEGV through RunCallIn()
-				LOG_L(L_WARNING, "Can not disable from within LuaUI, yet");
-				return true;
-			}
-			if (luaUI != nullptr) {
-				CLuaUI::FreeHandler();
-				LOG("Disabled LuaUI");
-				guihandler->LoadDefaultConfig();
-			}
-			guihandler->LayoutIcons(false);
+		if (command == "disable") {
+			guihandler->DisableLuaUI();
+			return true;
 		}
-		else if (luaUI != nullptr) {
+		if (luaUI != nullptr) {
 			luaUI->GotChatMsg(command, 0);
-		} else {
-			LOG_L(L_DEBUG, "LuaUI is not loaded");
+			return true;
 		}
 
+		LOG_L(L_DEBUG, "LuaUI is not loaded");
 		return true;
-	}
-
-private:
-	bool ExecuteHelper(bool isEnabled, bool doEnable) const {
-		if (isEnabled) {
-			if (doEnable)
-				LOG_L(L_WARNING, "LuaUI is already enabled");
-
-			CLuaUI::FreeHandler();
-		}
-
-		CLuaUI::LoadHandler();
-
-		if (luaUI == nullptr) {
-			LOG_L(L_WARNING, "Loading LuaUI failed; using default GUI config");
-			guihandler->LoadDefaultConfig();
-		}
 	}
 };
 
