@@ -244,7 +244,6 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->numobjects: %d", model->numPieces);
 	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->radius: %f", model->radius);
 	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->height: %f", model->height);
-	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->drawRadius: %f", model->drawRadius);
 	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->mins: (%f,%f,%f)", model->mins[0], model->mins[1], model->mins[2]);
 	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->maxs: (%f,%f,%f)", model->maxs[0], model->maxs[1], model->maxs[2]);
 	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Model %s Imported.", model->name.c_str());
@@ -719,8 +718,6 @@ void CAssParser::CalculateModelProperties(S3DModel* model, const LuaTable& model
 
 	model->radius = modelTable.GetFloat("radius", (model->maxs   - model->mins  ).Length() * 0.5f);
 	model->height = modelTable.GetFloat("height", (model->maxs.y - model->mins.y)                );
-
-	model->drawRadius = model->radius;
 	// note: overrides default midpos of the SpringRadius piece
 	model->relMidPos = modelTable.GetFloat3("midpos", (model->maxs + model->mins) * 0.5f);
 }

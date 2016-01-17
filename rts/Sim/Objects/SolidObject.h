@@ -174,6 +174,7 @@ public:
 		lastHitPieceFrame = f;
 	}
 
+
 	/**
 	 * adds this object to the GroundBlockingMap if and only
 	 * if HasCollidableStateBit(CSTATE_BIT_SOLIDOBJECTS), else
@@ -186,6 +187,7 @@ public:
 	 */
 	void UnBlock();
 
+
 	// these transform a point or vector to object-space
 	float3 GetObjectSpaceVec(const float3& v) const { return (      (frontdir * v.z) + (rightdir * v.x) + (updir * v.y)); }
 	float3 GetObjectSpacePos(const float3& p) const { return (pos + (frontdir * p.z) + (rightdir * p.x) + (updir * p.y)); }
@@ -196,6 +198,8 @@ public:
 
 	float3 GetDragAccelerationVec(const float4& params) const;
 	float3 GetWantedUpDir(bool useGroundNormal) const;
+
+	float GetDrawRadius() const override { return (localModel.GetDrawRadius()); }
 
 	YardMapStatus GetGroundBlockingMaskAtPos(float3 gpos) const;
 

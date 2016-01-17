@@ -188,7 +188,6 @@ struct S3DModel
 
 		, radius(0.0f)
 		, height(0.0f)
-		, drawRadius(0.0f)
 
 		, mins(DEF_MIN_SIZE)
 		, maxs(DEF_MAX_SIZE)
@@ -203,6 +202,9 @@ struct S3DModel
 	void SetRootPiece(S3DModelPiece* p) { rootPiece = p; }
 	void DrawStatic() const { rootPiece->DrawStatic(); }
 	void DeletePieces(S3DModelPiece* piece);
+
+	// default value; gets cached in WorldObject (projectiles use this)
+	float GetDrawRadius() const { return ((maxs - mins).Length() * 0.5f); }
 
 public:
 	std::string name;
@@ -220,7 +222,6 @@ public:
 
 	float radius;
 	float height;
-	float drawRadius;
 
 	float3 mins;
 	float3 maxs;
@@ -337,6 +338,9 @@ struct LocalModel
 	// raw forms, the piece-index must be valid
 	const float3 GetRawPiecePos(int pieceIdx) const { return pieces[pieceIdx].GetAbsolutePos(); }
 	const CMatrix44f& GetRawPieceMatrix(int pieceIdx) const { return pieces[pieceIdx].GetModelSpaceMatrix(); }
+
+	// used by all SolidObject's; accounts for piece movement
+	float GetDrawRadius() const { return (boundingVolume.GetBoundingRadius()); }
 
 
 	void Draw() const {

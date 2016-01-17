@@ -376,7 +376,7 @@ bool CFeatureDrawer::CanDrawFeature(const CFeature* feature) const
 	// either PLAYER or SHADOW or UWREFL
 	const CCamera* cam = CCamera::GetActiveCamera();
 
-	return (cam->InView(feature->drawMidPos, feature->drawRadius));
+	return (cam->InView(feature->drawMidPos, feature->GetDrawRadius()));
 }
 
 
@@ -680,7 +680,7 @@ void CFeatureDrawer::FlagVisibleFeatures(
 					if (drawRefraction && !f->IsInWater())
 						continue;
 
-					if (drawReflection && !CUnitDrawer::ObjectVisibleReflection(f->drawMidPos, cam->GetPos(), f->drawRadius))
+					if (drawReflection && !CUnitDrawer::ObjectVisibleReflection(f->drawMidPos, cam->GetPos(), f->GetDrawRadius()))
 						continue;
 
 

@@ -72,8 +72,6 @@ S3DModel* COBJParser::Load(const std::string& modelFileName)
 		// set after the extrema are known
 		model->radius = modelTable.GetFloat("radius", (model->maxs   - model->mins  ).Length() * 0.5f);
 		model->height = modelTable.GetFloat("height", (model->maxs.y - model->mins.y)                );
-
-		model->drawRadius = model->radius;
 		model->relMidPos = modelTable.GetFloat3("midpos", (model->maxs + model->mins) * 0.5f);
 
 		assert(model->numPieces == modelTable.GetInt("numpieces", 0));

@@ -6,10 +6,7 @@
 #include "System/Object.h"
 #include "System/float4.h"
 
-#define WORLDOBJECT_DEFAULT_DRAWRADIUS 30.0f
-
 struct S3DModel;
-
 
 class CWorldObject: public CObject
 {
@@ -37,6 +34,9 @@ public:
 
 	virtual ~CWorldObject() {}
 
+	// NOTE: used only by projectiles, SolidObject's override this!
+	virtual float GetDrawRadius() const { return drawRadius; }
+
 	virtual void SetPosition(const float3& p) {   pos = p; }
 	virtual void SetVelocity(const float3& v) { speed = v; }
 
@@ -57,7 +57,7 @@ public:
 		drawRadius = r;
 	}
 
-	void SetRadiusAndHeight(S3DModel* model);
+	void SetRadiusAndHeight(const S3DModel* model);
 
 public:
 	int id;
@@ -68,7 +68,7 @@ public:
 	float radius;       ///< used for collisions
 	float height;       ///< The height of this object
 	float sqRadius;
-	float drawRadius;   ///< unsynced, used to see if in view etc.
+	float drawRadius;   ///< unsynced, used for projectile visibility culling
 
 	bool useAirLos;     ///< if true, the object's visibility is checked against airLosMap[allyteam]
 	bool alwaysVisible; ///< if true, object is drawn even if not in LOS

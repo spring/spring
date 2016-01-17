@@ -13,9 +13,6 @@ struct S3DOPrimitive;
 struct S3DOPiece;
 struct SVertexData;
 struct S3DModelPiece;
-struct SS3OPiece;
-struct SOBJPiece;
-struct SAssPiece;
 
 
 struct FlyingPiece {

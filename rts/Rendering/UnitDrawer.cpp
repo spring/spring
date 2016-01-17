@@ -518,10 +518,10 @@ bool CUnitDrawer::CanDrawOpaqueUnit(
 	if (drawRefraction && !unit->IsInWater())
 		return false;
 
-	if (drawReflection && !ObjectVisibleReflection(unit->drawMidPos, cam->GetPos(), unit->drawRadius))
+	if (drawReflection && !ObjectVisibleReflection(unit->drawMidPos, cam->GetPos(), unit->GetDrawRadius()))
 		return false;
 
-	return (cam->InView(unit->drawMidPos, unit->drawRadius));
+	return (cam->InView(unit->drawMidPos, unit->GetDrawRadius()));
 }
 
 bool CUnitDrawer::CanDrawOpaqueUnitShadow(const CUnit* unit) const
@@ -541,7 +541,7 @@ bool CUnitDrawer::CanDrawOpaqueUnitShadow(const CUnit* unit) const
 	assert(cam->GetCamType() == CCamera::CAMTYPE_SHADOW);
 
 	const bool unitInLOS = ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView);
-	const bool unitInView = cam->InView(unit->drawMidPos, unit->drawRadius);
+	const bool unitInView = cam->InView(unit->drawMidPos, unit->GetDrawRadius());
 
 	return (unitInLOS && unitInView);
 }
@@ -654,7 +654,7 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 	float scale = iconData->GetSize() * iconScale;
 
 	if (iconData->GetRadiusAdjust() && !useDefaultIcon) {
-		scale *= (unit->radius / WORLDOBJECT_DEFAULT_DRAWRADIUS);
+		scale *= (unit->radius / iconData->GetRadiusScale());
 	}
 
 	// make sure icon is not partly under ground
@@ -760,7 +760,7 @@ void CUnitDrawer::DrawAlphaUnits(int modelType)
 }
 
 inline void CUnitDrawer::DrawAlphaUnit(CUnit* unit, int modelType, bool drawGhostBuildingsPass) {
-	if (!camera->InView(unit->drawMidPos, unit->drawRadius))
+	if (!camera->InView(unit->drawMidPos, unit->GetDrawRadius()))
 		return;
 
 	if (LuaObjectDrawer::AddAlphaMaterialObject(unit, LUAOBJ_UNIT))
@@ -896,7 +896,7 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 			*it = deadGhostedBuildings.back();
 			deadGhostedBuildings.pop_back();
 		} else {
-			if (camera->InView((*it)->pos, (*it)->model->drawRadius)) {
+			if (camera->InView((*it)->pos, (*it)->model->GetDrawRadius())) {
 				glPushMatrix();
 				glTranslatef3((*it)->pos);
 				glRotatef((*it)->facing * 90.0f, 0, 1, 0);
@@ -1615,7 +1615,7 @@ inline float GetUnitIconScale(const CUnit* unit) {
 	const bool unitVisible = ((losStatus & LOS_INLOS) || ((losStatus & LOS_INRADAR) && ((losStatus & prevMask) == prevMask)));
 
 	if ((unitVisible || gu->spectatingFullView)) {
-		scale *= (unit->radius / WORLDOBJECT_DEFAULT_DRAWRADIUS);
+		scale *= (unit->radius / unit->myIcon->GetRadiusScale());
 	}
 
 	return scale;

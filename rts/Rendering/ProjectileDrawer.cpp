@@ -420,21 +420,21 @@ void CProjectileDrawer::DrawProjectileNow(CProjectile* pro, bool drawReflection,
 		return;
 
 	if (drawReflection) {
-		if (pro->pos.y < -pro->drawRadius) {
+		if (pro->pos.y < -pro->GetDrawRadius()) {
 			return;
 		}
 
 		const float dif = pro->pos.y - camera->GetPos().y;
 		const float3 zeroPos = camera->GetPos() * (pro->pos.y / dif) + pro->pos * (-camera->GetPos().y / dif);
 
-		if (CGround::GetApproximateHeight(zeroPos.x, zeroPos.z, false) > 3 + 0.5f * pro->drawRadius) {
+		if (CGround::GetApproximateHeight(zeroPos.x, zeroPos.z, false) > 3 + 0.5f * pro->GetDrawRadius()) {
 			return;
 		}
-	} else if (drawRefraction && pro->pos.y > pro->drawRadius) {
+	} else if (drawRefraction && pro->pos.y > pro->GetDrawRadius()) {
 		return;
 	}
 
-	if (!camera->InView(pro->pos, pro->drawRadius))
+	if (!camera->InView(pro->pos, pro->GetDrawRadius()))
 		return;
 
 	DrawProjectileModel(pro);

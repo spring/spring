@@ -146,8 +146,6 @@ S3DModel* C3DOParser::Load(const std::string& name)
 	// set after the extrema are known
 	model->radius = (model->maxs   - model->mins  ).Length() * 0.5f;
 	model->height = (model->maxs.y - model->mins.y);
-
-	model->drawRadius = model->radius;
 	model->relMidPos = (model->maxs + model->mins) * 0.5f;
 
 	return model;

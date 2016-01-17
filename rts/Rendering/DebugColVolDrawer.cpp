@@ -169,7 +169,7 @@ static inline void DrawFeatureColVol(const CFeature* f)
 		return;
 	if (!f->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView)
 		return;
-	if (!camera->InView(f->pos, f->drawRadius))
+	if (!camera->InView(f->pos, f->GetDrawRadius()))
 		return;
 
 	const bool vCustomType = (v->GetVolumeType() < CollisionVolume::COLVOL_TYPE_SPHERE);
@@ -208,7 +208,7 @@ static inline void DrawUnitColVol(const CUnit* u)
 		return;
 	if (!(u->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
 		return;
-	if (!camera->InView(u->drawMidPos, u->drawRadius))
+	if (!camera->InView(u->drawMidPos, u->GetDrawRadius()))
 		return;
 
 	const CollisionVolume* v = &u->collisionVolume;

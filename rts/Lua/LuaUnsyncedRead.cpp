@@ -759,16 +759,15 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 		}
 	}
 
-	// arg 2 - unit radius
-	bool fixedRadius = false;
 	// arg 3 - noIcons
 	const bool noIcons = !luaL_optboolean(L, 3, true);
 
-	float testRadius = WORLDOBJECT_DEFAULT_DRAWRADIUS;
+	float radiusMult = 0.0f; // 0 or 1
+	float testRadius = 0.0f;
 
+	// arg 2 - use fixed test-value or add unit radii to it
 	if (lua_israwnumber(L, 2)) {
-		testRadius = lua_tofloat(L, 2);
-		fixedRadius = (testRadius < 0.0f);
+		radiusMult = float((testRadius = lua_tofloat(L, 2)) >= 0.0f);
 		testRadius = std::max(testRadius, -testRadius);
 	}
 
@@ -810,7 +809,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 
 			//No check for AllUnits, since there's no need.
 
-			if (!camera->InView(u->drawMidPos, testRadius + (u->drawRadius * !fixedRadius)))
+			if (!camera->InView(u->drawMidPos, testRadius + (u->GetDrawRadius() * radiusMult)))
 				continue;
 
 			count++;
@@ -840,19 +839,17 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 		}
 	}
 
-	// arg 2 - feature radius
-	bool fixedRadius = false;
-
-	float testRadius = WORLDOBJECT_DEFAULT_DRAWRADIUS;
-
-	if (lua_israwnumber(L, 2)) {
-		testRadius = lua_tofloat(L, 2);
-		fixedRadius = (testRadius < 0.0f);
-		testRadius = std::max(testRadius, -testRadius);
-	}
-
 	const bool noIcons = !luaL_optboolean(L, 3, true);
 	const bool noGeos = !luaL_optboolean(L, 4, true);
+
+	float radiusMult = 0.0f; // 0 or 1
+	float testRadius = 0.0f;
+
+	// arg 2 - use fixed test-value or add feature radii to it
+	if (lua_israwnumber(L, 2)) {
+		radiusMult = float((testRadius = lua_tofloat(L, 2)) >= 0.0f);
+		testRadius = std::max(testRadius, -testRadius);
+	}
 
 	static CVisFeatureQuadDrawer featureQuadIter;
 
@@ -884,7 +881,7 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 			if (!gu->spectatingFullView && !f->IsInLosForAllyTeam(allyTeamID))
 				continue;
 
-			if (!camera->InView(f->drawMidPos, testRadius + (f->drawRadius * !fixedRadius)))
+			if (!camera->InView(f->drawMidPos, testRadius + (f->GetDrawRadius() * radiusMult)))
 				continue;
 
 			count++;
@@ -940,7 +937,7 @@ int LuaUnsyncedRead::GetVisibleProjectiles(lua_State* L)
 			if (allyTeamID >= 0 && !losHandler->InLos(p, allyTeamID))
 				continue;
 
-			if (!camera->InView(p->pos, p->drawRadius))
+			if (!camera->InView(p->pos, p->GetDrawRadius()))
 				continue;
 
 			#if 1
