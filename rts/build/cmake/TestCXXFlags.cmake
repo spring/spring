@@ -166,7 +166,7 @@ if   (CMAKE_COMPILER_IS_GNUCXX)
 	endif()
 
 
-	if    (NOT hasGold)
+	if    (NOT hasGold AND NOT WIN32) #FIND_PROGRAM fails in crosscompile environments (it detects the native ld.gold)
 		# since gcc 4.8 it is possible to switch the linker via that argument
 		CHECK_CXX_ACCEPTS_FLAG("-fuse-ld=gold" HAS_USE_LD)
 		IF    (HAS_USE_LD)
