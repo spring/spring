@@ -58,29 +58,28 @@ CAdvTreeDrawer::CAdvTreeDrawer(): ITreeDrawer()
 	treesX = mapDims.mapx / TREE_SQUARE_SIZE;
 	treesY = mapDims.mapy / TREE_SQUARE_SIZE;
 	nTrees = treesX * treesY;
-	trees = new TreeSquareStruct[nTrees];
+	trees.resize(nTrees);
 
-	for (TreeSquareStruct* pTSS = trees; pTSS < trees + nTrees; ++pTSS) {
-		pTSS->lastSeen    = 0;
-		pTSS->lastSeenFar = 0;
-		pTSS->viewVector  = UpVector;
-		pTSS->dispList    = 0;
-		pTSS->farDispList = 0;
+	for (TreeSquareStruct& pTSS: trees) {
+		pTSS.lastSeen    = 0;
+		pTSS.lastSeenFar = 0;
+		pTSS.viewVector  = UpVector;
+		pTSS.dispList    = 0;
+		pTSS.farDispList = 0;
 	}
 }
 
 CAdvTreeDrawer::~CAdvTreeDrawer()
 {
-	for (TreeSquareStruct* pTSS = trees; pTSS < trees + nTrees; ++pTSS) {
-		if (pTSS->dispList) {
-			glDeleteLists(pTSS->dispList, 1);
+	for (TreeSquareStruct& pTSS: trees) {
+		if (pTSS.dispList) {
+			glDeleteLists(pTSS.dispList, 1);
 		}
-		if (pTSS->farDispList) {
-			glDeleteLists(pTSS->farDispList, 1);
+		if (pTSS.farDispList) {
+			glDeleteLists(pTSS.farDispList, 1);
 		}
 	}
 
-	delete[] trees;
 	delete treeGen;
 
 	shaderHandler->ReleaseProgramObjects("[TreeDrawer]");
@@ -578,7 +577,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 		FadeTree* pFT = fadeTrees;
 
 
-		for (TreeSquareStruct* pTSS = trees + (ystart * treesX); pTSS <= trees + (yend * treesX); pTSS += treesX) {
+		for (TreeSquareStruct* pTSS = &trees[ystart * treesX]; pTSS <= &trees[yend * treesX]; pTSS += treesX) {
 			for (TreeSquareStruct* tss = pTSS + xstart; tss <= (pTSS + xend); ++tss) {
 				tss->lastSeen = gs->frameNum;
 				va->EnlargeArrays(12 * tss->trees.size(), 0, VA_SIZE_T); //!alloc room for all tree vertexes
@@ -736,39 +735,48 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 
 	// clean out squares from memory that are no longer visible
-	const int startClean = lastListClean * 20 % (nTrees);
-	const int endClean = gs->frameNum * 20 % (nTrees);
+	// can be -1, do not want to let start or end become negative
+	const int frameNum = std::max(gs->frameNum, 0);
 
-	lastListClean = gs->frameNum;
+	const int startClean = (lastListClean * 20) % nTrees;
+	const int   endClean = (     frameNum * 20) % nTrees;
+
+	lastListClean = frameNum;
 
 	if (startClean > endClean) {
-		for (TreeSquareStruct* pTSS = trees + startClean; pTSS < (trees + nTrees); ++pTSS) {
-			if ((pTSS->lastSeen < gs->frameNum - 50) && pTSS->dispList) {
+		for (int i = startClean; i < nTrees; i++) {
+			TreeSquareStruct* pTSS = &trees[i];
+
+			if ((pTSS->lastSeen < frameNum - 50) && pTSS->dispList) {
 				glDeleteLists(pTSS->dispList, 1);
 				pTSS->dispList = 0;
 			}
-			if ((pTSS->lastSeenFar < (gs->frameNum - 50)) && pTSS->farDispList) {
+			if ((pTSS->lastSeenFar < (frameNum - 50)) && pTSS->farDispList) {
 				glDeleteLists(pTSS->farDispList, 1);
 				pTSS->farDispList = 0;
 			}
 		}
-		for (TreeSquareStruct* pTSS = trees; pTSS < (trees + endClean); ++pTSS) {
-			if ((pTSS->lastSeen < (gs->frameNum - 50)) && pTSS->dispList) {
+		for (int i = 0; i < endClean; i++) {
+			TreeSquareStruct* pTSS = &trees[i];
+
+			if ((pTSS->lastSeen < (frameNum - 50)) && pTSS->dispList) {
 				glDeleteLists(pTSS->dispList, 1);
 				pTSS->dispList = 0;
 			}
-			if ((pTSS->lastSeenFar < (gs->frameNum - 50)) && pTSS->farDispList) {
+			if ((pTSS->lastSeenFar < (frameNum - 50)) && pTSS->farDispList) {
 				glDeleteLists(pTSS->farDispList, 1);
 				pTSS->farDispList = 0;
 			}
 		}
 	} else {
-		for (TreeSquareStruct* pTSS = trees + startClean; pTSS < (trees + endClean); ++pTSS) {
-			if ((pTSS->lastSeen < (gs->frameNum - 50)) && pTSS->dispList) {
+		for (int i = startClean; i < endClean; i++) {
+			TreeSquareStruct* pTSS = &trees[i];
+
+			if ((pTSS->lastSeen < (frameNum - 50)) && pTSS->dispList) {
 				glDeleteLists(pTSS->dispList, 1);
 				pTSS->dispList = 0;
 			}
-			if ((pTSS->lastSeenFar < (gs->frameNum - 50)) && pTSS->farDispList) {
+			if ((pTSS->lastSeenFar < (frameNum - 50)) && pTSS->farDispList) {
 				glDeleteLists(pTSS->farDispList, 1);
 				pTSS->farDispList = 0;
 			}
@@ -968,7 +976,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 		static FadeTree fadeTrees[3000];
 		FadeTree* pFT = fadeTrees;
 
-		for (TreeSquareStruct* pTSS = trees + (ystart * treesX); pTSS <= trees + (yend * treesX); pTSS += treesX) {
+		for (TreeSquareStruct* pTSS = &trees[ystart * treesX]; pTSS <= &trees[yend * treesX]; pTSS += treesX) {
 			for (TreeSquareStruct* tss = pTSS + xstart; tss <= pTSS + xend; ++tss) {
 				tss->lastSeen = gs->frameNum;
 				va->EnlargeArrays(12 * tss->trees.size(), 0, VA_SIZE_T); //!alloc room for all tree vertexes
@@ -1105,15 +1113,16 @@ void CAdvTreeDrawer::ResetPos(const float3& pos)
 {
 	const int x = (int) pos.x / TREE_SQUARE_SIZE / SQUARE_SIZE;
 	const int y = (int) pos.z / TREE_SQUARE_SIZE / SQUARE_SIZE;
-	TreeSquareStruct* pTSS = trees + y * treesX + x;
 
-	if (pTSS->dispList) {
-		delDispLists.push_back(pTSS->dispList);
-		pTSS->dispList = 0;
+	TreeSquareStruct& pTSS = trees[y * treesX + x];
+
+	if (pTSS.dispList) {
+		delDispLists.push_back(pTSS.dispList);
+		pTSS.dispList = 0;
 	}
-	if (pTSS->farDispList) {
-		delDispLists.push_back(pTSS->farDispList);
-		pTSS->farDispList = 0;
+	if (pTSS.farDispList) {
+		delDispLists.push_back(pTSS.farDispList);
+		pTSS.farDispList = 0;
 	}
 }
 

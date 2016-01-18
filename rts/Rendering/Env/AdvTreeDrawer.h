@@ -55,7 +55,7 @@ public:
 	int treesY;
 	int nTrees;
 
-	TreeSquareStruct* trees;
+	std::vector<TreeSquareStruct> trees;
 
 private:
 	enum TreeShaderProgram {

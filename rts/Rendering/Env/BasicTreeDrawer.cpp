@@ -371,7 +371,7 @@ void CBasicTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 	readMap->GridVisibility(nullptr, &drawer, drawer.treeDistance * 2.0f, TREE_SQUARE_SIZE);
 
-	// can be -1, do not want to let start or end be negative
+	// can be -1, do not want to let start or end become negative
 	const int frameNum = std::max(gs->frameNum, 0);
 
 	const int startClean = (lastListClean * 20) % nTrees;
