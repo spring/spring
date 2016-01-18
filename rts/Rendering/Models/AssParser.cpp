@@ -383,50 +383,6 @@ void CAssParser::LoadPieceTransformations(
 	assert(piece->bakedRotMatrix.IsOrthoNormal() == 0);
 }
 
-bool CAssParser::SetModelSpecialRadiusAndHeight(S3DModel* model, const SAssPiece* piece)
-{
-	// check if this piece is "special" (ie, used to set Spring model properties)
-	// if so, extract them and then remove the piece from the hierarchy entirely
-	//
-	if (piece->name == "SpringHeight") {
-		model->height = piece->offset.y;
-
-		LOG_SL(LOG_SECTION_MODEL, L_INFO, "Model height (%f) set by special node 'SpringHeight'", model->height);
-
-		--model->numPieces;
-		delete piece;
-		return true;
-	}
-
-	if (piece->name == "SpringRadius") {
-		model->radius = piece->scales.x;
-
-		LOG_SL(LOG_SECTION_MODEL, L_INFO, "Model radius (%f) set by special node 'SpringRadius'", model->radius);
-
-		#if 0
-		CMatrix44f scaleRotMat;
-		piece->ComposeTransform(scaleRotMat, ZeroVector, ZeroVector, piece->scales);
-
-		// NOTE:
-		//   this makes little sense because the "SpringRadius"
-		//   piece can be placed anywhere within the hierarchy
-		//   so better let it be auto-calculated (why is there
-		//   no "SpringMidPos" piece instead?)
-		model->relMidPos = scaleRotMat.Mul(piece->offset);
-
-		LOG_SL(LOG_SECTION_MODEL, L_INFO,
-			"Model midpos (%f,%f,%f) set by special node 'SpringRadius'",
-			model->relMidPos.x, model->relMidPos.y, model->relMidPos.z);
-		#endif
-
-		--model->numPieces;
-		delete piece;
-		return true;
-	}
-
-	return false;
-}
-
 void CAssParser::SetPieceName(
 	SAssPiece* piece,
 	const S3DModel* model,
@@ -456,6 +412,9 @@ void CAssParser::SetPieceName(
 			piece->name = newPieceName; break;
 		}
 	}
+
+	assert(piece->name != "SpringHeight");
+	assert(piece->name != "SpringRadius");
 }
 
 void CAssParser::SetPieceParentName(
@@ -615,10 +574,6 @@ SAssPiece* CAssParser::LoadPiece(
 
 
 	LoadPieceTransformations(piece, model, pieceNode, pieceTable);
-
-	if (SetModelSpecialRadiusAndHeight(model, piece))
-		return nullptr;
-
 	LoadPieceGeometry(piece, pieceNode, scene);
 	SetPieceParentName(piece, model, pieceNode, pieceTable, parentMap);
 
@@ -715,11 +670,8 @@ void CAssParser::CalculateModelProperties(S3DModel* model, const LuaTable& model
 	model->mins = modelTable.GetFloat3("mins", model->mins);
 	model->maxs = modelTable.GetFloat3("maxs", model->maxs);
 
-	// only set these if left untouched by the Spring{Radius,Height} pieces
-	if (model->radius == 0.0f)
-		model->radius = modelTable.GetFloat("radius", (model->maxs   - model->mins  ).Length() * 0.5f);
-	if (model->height == 0.0f)
-		model->height = modelTable.GetFloat("height", (model->maxs.y - model->mins.y)                );
+	model->radius = modelTable.GetFloat("radius", (model->maxs   - model->mins  ).Length() * 0.5f);
+	model->height = modelTable.GetFloat("height", (model->maxs.y - model->mins.y)                );
 
 	model->relMidPos = modelTable.GetFloat3("midpos", (model->maxs + model->mins) * 0.5f);
 }
