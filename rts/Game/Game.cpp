@@ -475,7 +475,7 @@ void CGame::LoadDefs()
 		ScopedOnceTimer timer("Game::LoadDefs (Sound)");
 		loadscreen->SetLoadMessage("Loading Sound Definitions");
 
-		sound->LoadSoundDefs("gamedata/sounds.lua");
+		sound->LoadSoundDefs("gamedata/sounds.lua", SPRING_VFS_MOD_BASE);
 		chatSound = sound->GetSoundId("IncomingChat");
 	}
 

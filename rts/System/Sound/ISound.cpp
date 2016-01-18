@@ -116,8 +116,8 @@ bool ISound::ChangeOutput(bool forceNullSound)
 	return (IsNullAudio() || forceNullSound);
 }
 
-bool ISound::LoadSoundDefs(const std::string& filename)
+bool ISound::LoadSoundDefs(const std::string& filename, const std::string& modes)
 {
-	return (singleton->LoadSoundDefsImpl(filename));
+	return (singleton->LoadSoundDefsImpl(filename, modes));
 }
 

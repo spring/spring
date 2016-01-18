@@ -469,7 +469,7 @@ int LuaUnsyncedCtrl::SendMessageToAllyTeam(lua_State* L)
 int LuaUnsyncedCtrl::LoadSoundDef(lua_State* L)
 {
 	const string soundFile = luaL_checksstring(L, 1);
-	bool success = sound->LoadSoundDefs(soundFile);
+	bool success = sound->LoadSoundDefs(soundFile, SPRING_VFS_ZIP_FIRST);
 
 	if (!CLuaHandle::GetHandleSynced(L)) {
 		lua_pushboolean(L, success);

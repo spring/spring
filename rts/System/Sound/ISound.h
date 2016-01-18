@@ -58,15 +58,15 @@ public:
 	virtual bool SoundThreadQuit() const = 0;
 	virtual bool CanLoadSoundDefs() const = 0;
 
-	bool LoadSoundDefs(const std::string& fileName);
-	
+	bool LoadSoundDefs(const std::string& fileName, const std::string& modes);
+
 	virtual const float3& GetListenerPos() const = 0;
 
 public:
 	unsigned numEmptyPlayRequests;
 	unsigned numAbortedPlays;
 private:
-	virtual bool LoadSoundDefsImpl(const std::string& fileName) = 0;
+	virtual bool LoadSoundDefsImpl(const std::string& fileName, const std::string& modes) = 0;
 	static bool IsNullAudio();
 };
 

@@ -57,7 +57,7 @@ public:
 	bool SoundThreadQuit() const { return soundThreadQuit; }
 	bool CanLoadSoundDefs() const { return canLoadDefs; }
 
-	bool LoadSoundDefsImpl(const std::string& fileName);
+	bool LoadSoundDefsImpl(const std::string& fileName, const std::string& modes);
 	const float3& GetListenerPos() const { return myPos; }
 
 private:
