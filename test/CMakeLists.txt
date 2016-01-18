@@ -392,6 +392,7 @@ endif()
 			"${ENGINE_SOURCE_DIR}/lib/lua/include/LuaUser.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
 			${test_Log_sources}
+			${sources_engine_System_Threading}
 		)
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
