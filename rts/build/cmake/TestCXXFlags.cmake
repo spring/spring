@@ -156,33 +156,42 @@ endif()
 
 if   (CMAKE_COMPILER_IS_GNUCXX)
 	# check if default linker is ld.gold
-	execute_process(COMMAND ${CMAKE_LINKER} "-v" COMMAND "grep" "-iq" "gold" RESULT_VARIABLE hasGold)
+	execute_process(COMMAND ${CMAKE_LINKER} "-v"
+		OUTPUT_VARIABLE linkerVersion
+		ERROR_VARIABLE linkerVersion
+	)
+	set(hasGold FALSE)
+	if (${linkerVersion} MATCHES "gold")
+		set(hasGold TRUE)
+	endif()
 
-	if    (NOT hasGold EQUAL 0)
+
+	if    (NOT hasGold)
 		# since gcc 4.8 it is possible to switch the linker via that argument
 		CHECK_CXX_ACCEPTS_FLAG("-fuse-ld=gold" HAS_USE_LD)
 		IF    (HAS_USE_LD)
 			FIND_PROGRAM(LD_GOLD ld.gold)
 			if    (LD_GOLD)
-				set(hasGold 0)
+				set(hasGold TRUE)
 				set(LDGOLD_CXX_FLAGS "-fuse-ld=gold")
-			endif (LD_GOLD)
-		EndIf (HAS_USE_LD)
-	endif (NOT hasGold EQUAL 0)
+			endif ()
+		EndIf ()
+	endif ()
 
-	if    (hasGold EQUAL 0)
+	if    (hasGold)
 		set(LDGOLD_FOUND TRUE)
 		set(LDGOLD_LINKER_FLAGS "")
 		#set(LDGOLD_LINKER_FLAGS " -Wl,--stats ${LDGOLD_LINKER_FLAGS}")
 		set(LDGOLD_LINKER_FLAGS " -Wl,-O3 ${LDGOLD_LINKER_FLAGS}")       # e.g. tries to optimize duplicated strings across the binary
 		set(LDGOLD_LINKER_FLAGS " -Wl,--icf=all ${LDGOLD_LINKER_FLAGS}") # Identical Code Folding
-	endif (hasGold EQUAL 0)
+	endif ()
 
 	mark_as_advanced(LDGOLD_FOUND LDGOLD_LINKER_FLAGS LDGOLD_CXX_FLAGS)
-endif(CMAKE_COMPILER_IS_GNUCXX)
+endif()
 
 
 if   (CMAKE_COMPILER_IS_GNUCXX)
 	Set(MPX_FLAGS "")
 	CHECK_AND_ADD_FLAGS(MPX_FLAGS -fcheck-pointer-bounds -mmpx -Wchkp)
-endif(CMAKE_COMPILER_IS_GNUCXX)
+endif()
+
