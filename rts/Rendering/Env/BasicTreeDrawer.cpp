@@ -371,20 +371,23 @@ void CBasicTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 	readMap->GridVisibility(nullptr, &drawer, drawer.treeDistance * 2.0f, TREE_SQUARE_SIZE);
 
-	const int startClean = (lastListClean * 20) % nTrees;
-	const int endClean = (gs->frameNum * 20) % nTrees;
+	// can be -1, do not want to let start or end be negative
+	const int frameNum = std::max(gs->frameNum, 0);
 
-	lastListClean = gs->frameNum;
+	const int startClean = (lastListClean * 20) % nTrees;
+	const int   endClean = (     frameNum * 20) % nTrees;
+
+	lastListClean = frameNum;
 
 	if (startClean > endClean) {
 		for (int i = startClean; i < nTrees; i++) {
 			TreeSquareStruct* pTSS = &trees[i];
 
-			if ((pTSS->lastSeen < (gs->frameNum - 50)) && pTSS->dispList) {
+			if ((pTSS->lastSeen < (frameNum - 50)) && pTSS->dispList) {
 				glDeleteLists(pTSS->dispList, 1);
 				pTSS->dispList = 0;
 			}
-			if ((pTSS->lastSeenFar < (gs->frameNum - 50)) && pTSS->farDispList) {
+			if ((pTSS->lastSeenFar < (frameNum - 50)) && pTSS->farDispList) {
 				glDeleteLists(pTSS->farDispList, 1);
 				pTSS->farDispList = 0;
 			}
@@ -392,11 +395,11 @@ void CBasicTreeDrawer::Draw(float treeDistance, bool drawReflection)
 		for (int i = 0; i < endClean; i++) {
 			TreeSquareStruct* pTSS = &trees[i];
 
-			if ((pTSS->lastSeen < (gs->frameNum - 50)) && pTSS->dispList) {
+			if ((pTSS->lastSeen < (frameNum - 50)) && pTSS->dispList) {
 				glDeleteLists(pTSS->dispList, 1);
 				pTSS->dispList = 0;
 			}
-			if ((pTSS->lastSeenFar < (gs->frameNum - 50)) && pTSS->farDispList) {
+			if ((pTSS->lastSeenFar < (frameNum - 50)) && pTSS->farDispList) {
 				glDeleteLists(pTSS->farDispList, 1);
 				pTSS->farDispList = 0;
 			}
@@ -405,11 +408,11 @@ void CBasicTreeDrawer::Draw(float treeDistance, bool drawReflection)
 		for (int i = startClean; i < endClean; i++) {
 			TreeSquareStruct* pTSS = &trees[i];
 
-			if ((pTSS->lastSeen < (gs->frameNum - 50)) && pTSS->dispList) {
+			if ((pTSS->lastSeen < (frameNum - 50)) && pTSS->dispList) {
 				glDeleteLists(pTSS->dispList, 1);
 				pTSS->dispList = 0;
 			}
-			if ((pTSS->lastSeenFar < (gs->frameNum - 50)) && pTSS->farDispList) {
+			if ((pTSS->lastSeenFar < (frameNum - 50)) && pTSS->farDispList) {
 				glDeleteLists(pTSS->farDispList, 1);
 				pTSS->farDispList = 0;
 			}
