@@ -103,12 +103,7 @@ private:
 		const std::string& modelPath,
 		const std::string& modelName
 	);
-	static bool SetModelRadiusAndHeight(
-		S3DModel* model,
-		const SAssPiece* piece,
-		const aiNode* pieceNode,
-		const LuaTable& pieceTable
-	);
+	static bool SetModelSpecialRadiusAndHeight(S3DModel* model, const SAssPiece* piece);
 };
 
 #endif /* ASS_PARSER_H */

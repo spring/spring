@@ -383,22 +383,15 @@ void CAssParser::LoadPieceTransformations(
 	assert(piece->bakedRotMatrix.IsOrthoNormal() == 0);
 }
 
-bool CAssParser::SetModelRadiusAndHeight(
-	S3DModel* model,
-	const SAssPiece* piece,
-	const aiNode* pieceNode,
-	const LuaTable& pieceTable
-) {
+bool CAssParser::SetModelSpecialRadiusAndHeight(S3DModel* model, const SAssPiece* piece)
+{
 	// check if this piece is "special" (ie, used to set Spring model properties)
 	// if so, extract them and then remove the piece from the hierarchy entirely
 	//
 	if (piece->name == "SpringHeight") {
-		// set the model height to this node's Y-value (FIXME: 'y' is Assimp/Blender-specific)
-		if (!pieceTable.KeyExists("height")) {
-			model->height = piece->offset.y;
+		model->height = piece->offset.y;
 
-			LOG_SL(LOG_SECTION_MODEL, L_INFO, "Model height of %f set by special node 'SpringHeight'", model->height);
-		}
+		LOG_SL(LOG_SECTION_MODEL, L_INFO, "Model height (%f) set by special node 'SpringHeight'", model->height);
 
 		--model->numPieces;
 		delete piece;
@@ -406,19 +399,25 @@ bool CAssParser::SetModelRadiusAndHeight(
 	}
 
 	if (piece->name == "SpringRadius") {
-		if (!pieceTable.KeyExists("midpos")) {
-			CMatrix44f scaleRotMat;
-			piece->ComposeTransform(scaleRotMat, ZeroVector, ZeroVector, piece->scales);
+		model->radius = piece->scales.x;
 
-			// NOTE:
-			//   this makes little sense because the "SpringRadius"
-			//   piece can be placed anywhere within the hierarchy
-			model->relMidPos = scaleRotMat.Mul(piece->offset);
+		LOG_SL(LOG_SECTION_MODEL, L_INFO, "Model radius (%f) set by special node 'SpringRadius'", model->radius);
 
-			LOG_SL(LOG_SECTION_MODEL, L_INFO,
-				"Model midpos of (%f,%f,%f) set by special node 'SpringRadius'",
-				model->relMidPos.x, model->relMidPos.y, model->relMidPos.z);
-		}
+		#if 0
+		CMatrix44f scaleRotMat;
+		piece->ComposeTransform(scaleRotMat, ZeroVector, ZeroVector, piece->scales);
+
+		// NOTE:
+		//   this makes little sense because the "SpringRadius"
+		//   piece can be placed anywhere within the hierarchy
+		//   so better let it be auto-calculated (why is there
+		//   no "SpringMidPos" piece instead?)
+		model->relMidPos = scaleRotMat.Mul(piece->offset);
+
+		LOG_SL(LOG_SECTION_MODEL, L_INFO,
+			"Model midpos (%f,%f,%f) set by special node 'SpringRadius'",
+			model->relMidPos.x, model->relMidPos.y, model->relMidPos.z);
+		#endif
 
 		--model->numPieces;
 		delete piece;
@@ -617,7 +616,7 @@ SAssPiece* CAssParser::LoadPiece(
 
 	LoadPieceTransformations(piece, model, pieceNode, pieceTable);
 
-	if (SetModelRadiusAndHeight(model, piece, pieceNode, pieceTable))
+	if (SetModelSpecialRadiusAndHeight(model, piece))
 		return nullptr;
 
 	LoadPieceGeometry(piece, pieceNode, scene);
@@ -716,9 +715,12 @@ void CAssParser::CalculateModelProperties(S3DModel* model, const LuaTable& model
 	model->mins = modelTable.GetFloat3("mins", model->mins);
 	model->maxs = modelTable.GetFloat3("maxs", model->maxs);
 
-	model->radius = modelTable.GetFloat("radius", (model->maxs   - model->mins  ).Length() * 0.5f);
-	model->height = modelTable.GetFloat("height", (model->maxs.y - model->mins.y)                );
-	// note: overrides default midpos of the SpringRadius piece
+	// only set these if left untouched by the Spring{Radius,Height} pieces
+	if (model->radius == 0.0f)
+		model->radius = modelTable.GetFloat("radius", (model->maxs   - model->mins  ).Length() * 0.5f);
+	if (model->height == 0.0f)
+		model->height = modelTable.GetFloat("height", (model->maxs.y - model->mins.y)                );
+
 	model->relMidPos = modelTable.GetFloat3("midpos", (model->maxs + model->mins) * 0.5f);
 }
 
