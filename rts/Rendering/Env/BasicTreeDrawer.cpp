@@ -104,11 +104,11 @@ CBasicTreeDrawer::CBasicTreeDrawer(): ITreeDrawer()
 	treesX = mapDims.mapx / TREE_SQUARE_SIZE;
 	treesY = mapDims.mapy / TREE_SQUARE_SIZE;
 	nTrees = treesX * treesY;
-	trees = new TreeSquareStruct[nTrees];
+	trees.resize(nTrees);
 
-	for (TreeSquareStruct* pTSS = trees; pTSS < trees + nTrees; ++pTSS) {
-		pTSS->dispList = 0;
-		pTSS->farDispList = 0;
+	for (TreeSquareStruct& pTSS: trees) {
+		pTSS.dispList = 0;
+		pTSS.farDispList = 0;
 	}
 }
 
@@ -116,14 +116,12 @@ CBasicTreeDrawer::~CBasicTreeDrawer()
 {
 	glDeleteTextures (1, &treetex);
 
-	for (TreeSquareStruct* pTSS=trees; pTSS<trees+nTrees; ++pTSS) {
-		if (pTSS->dispList)
-			glDeleteLists(pTSS->dispList, 1);
-		if (pTSS->farDispList)
-			glDeleteLists(pTSS->farDispList, 1);
+	for (TreeSquareStruct& pTSS: trees) {
+		if (pTSS.dispList)
+			glDeleteLists(pTSS.dispList, 1);
+		if (pTSS.farDispList)
+			glDeleteLists(pTSS.farDispList, 1);
 	}
-
-	delete[] trees;
 }
 
 static void inline SetArrayQ(CVertexArray* va, float t1, float t2, float3 v)
@@ -373,13 +371,15 @@ void CBasicTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 	readMap->GridVisibility(nullptr, &drawer, drawer.treeDistance * 2.0f, TREE_SQUARE_SIZE);
 
-	const int startClean = lastListClean * 20 % nTrees;
-	const int endClean = gs->frameNum * 20 % nTrees;
+	const int startClean = (lastListClean * 20) % nTrees;
+	const int endClean = (gs->frameNum * 20) % nTrees;
 
 	lastListClean = gs->frameNum;
 
 	if (startClean > endClean) {
-		for (TreeSquareStruct* pTSS = (trees + startClean); pTSS < (trees + nTrees); ++pTSS) {
+		for (int i = startClean; i < nTrees; i++) {
+			TreeSquareStruct* pTSS = &trees[i];
+
 			if ((pTSS->lastSeen < (gs->frameNum - 50)) && pTSS->dispList) {
 				glDeleteLists(pTSS->dispList, 1);
 				pTSS->dispList = 0;
@@ -389,7 +389,9 @@ void CBasicTreeDrawer::Draw(float treeDistance, bool drawReflection)
 				pTSS->farDispList = 0;
 			}
 		}
-		for (TreeSquareStruct* pTSS = trees; pTSS < (trees + endClean); ++pTSS) {
+		for (int i = 0; i < endClean; i++) {
+			TreeSquareStruct* pTSS = &trees[i];
+
 			if ((pTSS->lastSeen < (gs->frameNum - 50)) && pTSS->dispList) {
 				glDeleteLists(pTSS->dispList, 1);
 				pTSS->dispList = 0;
@@ -400,10 +402,12 @@ void CBasicTreeDrawer::Draw(float treeDistance, bool drawReflection)
 			}
 		}
 	} else {
-		for (TreeSquareStruct* pTSS = (trees + startClean); pTSS < (trees + endClean); ++pTSS) {
-			if (pTSS->lastSeen<gs->frameNum-50 && pTSS->dispList) {
-				glDeleteLists(pTSS->dispList,1);
-				pTSS->dispList=0;
+		for (int i = startClean; i < endClean; i++) {
+			TreeSquareStruct* pTSS = &trees[i];
+
+			if ((pTSS->lastSeen < (gs->frameNum - 50)) && pTSS->dispList) {
+				glDeleteLists(pTSS->dispList, 1);
+				pTSS->dispList = 0;
 			}
 			if ((pTSS->lastSeenFar < (gs->frameNum - 50)) && pTSS->farDispList) {
 				glDeleteLists(pTSS->farDispList, 1);
@@ -426,7 +430,9 @@ void CBasicTreeDrawer::ResetPos(const float3& pos)
 {
 	const int x = (int)(pos.x / TREE_SQUARE_SIZE / SQUARE_SIZE);
 	const int y = (int)(pos.z / TREE_SQUARE_SIZE / SQUARE_SIZE);
-	TreeSquareStruct* pTSS = trees + ((y * treesX) + x);
+
+	TreeSquareStruct* pTSS = &trees[(y * treesX) + x];
+
 	if (pTSS->dispList) {
 		delDispLists.push_back(pTSS->dispList);
 		pTSS->dispList = 0;

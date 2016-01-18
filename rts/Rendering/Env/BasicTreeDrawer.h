@@ -3,7 +3,7 @@
 #ifndef _BASIC_TREE_DRAWER_H_
 #define _BASIC_TREE_DRAWER_H_
 
-#include <map>
+#include <vector>
 #include "ITreeDrawer.h"
 #include "Rendering/GL/myGL.h"
 
@@ -23,7 +23,7 @@ public:
 	void AddTree(int treeID, int treeType, const float3& pos, float size);
 	void DeleteTree(int treeID, const float3& pos);
 
-	TreeSquareStruct* trees;
+	std::vector<TreeSquareStruct> trees;
 
 	int treesX;
 	int treesY;
