@@ -15,7 +15,6 @@
 #include "Map/MapParser.h"
 #include "Map/ReadMap.h"
 #include "Map/SMF/SMFMapFile.h"
-#include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/SideParser.h"
 #include "ExternalAI/Interface/aidefines.h"
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"

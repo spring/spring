@@ -81,7 +81,6 @@ set(main_files
 	"${ENGINE_SRC_ROOT}/Lua/LuaIO.cpp"
 	"${ENGINE_SRC_ROOT}/Map/MapParser.cpp"
 	"${ENGINE_SRC_ROOT}/Map/SMF/SMFMapFile.cpp"
-	"${ENGINE_SRC_ROOT}/Rendering/Textures/Bitmap.cpp"
 	)
 if (WIN32)
 	LIST(APPEND main_files "${ENGINE_SRC_ROOT}/System/Platform/Win/WinVersion.cpp")
