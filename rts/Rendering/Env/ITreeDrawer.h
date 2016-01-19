@@ -3,6 +3,8 @@
 #ifndef _I_TREE_DRAWER_H_
 #define _I_TREE_DRAWER_H_
 
+#include <vector>
+
 #include "Rendering/GL/myGL.h"
 #include "System/EventClient.h"
 #include "System/float3.h"
@@ -25,9 +27,9 @@ public:
 	virtual void DrawShadowPass();
 	virtual void Update() = 0;
 
-	virtual void ResetPos(const float3& pos) = 0;
-	virtual void AddTree(int treeID, int treeType, const float3& pos, float size) = 0;
-	virtual void DeleteTree(int treeID, const float3& pos) = 0;
+	virtual void ResetPos(const float3& pos);
+	virtual void AddTree(int treeID, int treeType, const float3& pos, float size);
+	virtual void DeleteTree(int treeID, const float3& pos);
 	virtual void AddFallingTree(int treeID, int treeType, const float3& pos, const float3& dir) {}
 
 	bool WantsEvent(const std::string& eventName) {
@@ -41,23 +43,33 @@ public:
 	void FeatureMoved(const CFeature* feature, const float3& oldpos);
 	void RenderFeatureDestroyed(const CFeature* feature);
 
-	std::vector<GLuint> delDispLists;
+public:
+	int treesX;
+	int treesY;
+	int nTrees;
 
+
+public:
 	float baseTreeDistance;
 	bool drawTrees;
 
 	struct TreeStruct {
+	public:
+		bool operator == (const TreeStruct& ts) const { return (id == ts.id); }
+	public:
 		int id;
 		int type;
 
 		float3 pos;
 	};
+
 	struct TreeSquareStruct {
 		TreeSquareStruct()
 			: dispList(0)
 			, farDispList(0)
 			, lastSeen(0)
 			, lastSeenFar(0)
+			, viewVector(UpVector)
 		{}
 
 		unsigned int dispList;
@@ -67,8 +79,13 @@ public:
 		int lastSeenFar;
 
 		float3 viewVector;
-		std::map<int, TreeStruct> trees;
+
+		// all trees within this tree-square
+		std::vector<TreeStruct> trees;
 	};
+
+	std::vector<TreeSquareStruct> treeSquares;
+	std::vector<GLuint> delDispLists;
 
 private:
 	void AddTrees();

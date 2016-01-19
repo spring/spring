@@ -55,28 +55,18 @@ CAdvTreeDrawer::CAdvTreeDrawer(): ITreeDrawer()
 
 	oldTreeDistance = 4;
 	lastListClean = 0;
-	treesX = mapDims.mapx / TREE_SQUARE_SIZE;
-	treesY = mapDims.mapy / TREE_SQUARE_SIZE;
-	nTrees = treesX * treesY;
-	trees.resize(nTrees);
 
-	for (TreeSquareStruct& pTSS: trees) {
-		pTSS.lastSeen    = 0;
-		pTSS.lastSeenFar = 0;
-		pTSS.viewVector  = UpVector;
-		pTSS.dispList    = 0;
-		pTSS.farDispList = 0;
-	}
+	treeSquares.resize(nTrees);
 }
 
 CAdvTreeDrawer::~CAdvTreeDrawer()
 {
-	for (TreeSquareStruct& pTSS: trees) {
-		if (pTSS.dispList) {
-			glDeleteLists(pTSS.dispList, 1);
+	for (TreeSquareStruct& tss: treeSquares) {
+		if (tss.dispList) {
+			glDeleteLists(tss.dispList, 1);
 		}
-		if (pTSS.farDispList) {
-			glDeleteLists(pTSS.farDispList, 1);
+		if (tss.farDispList) {
+			glDeleteLists(tss.farDispList, 1);
 		}
 	}
 
@@ -214,17 +204,20 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 
 void CAdvTreeDrawer::Update()
 {
-	for (std::list<FallingTree>::iterator fti = fallingTrees.begin(); fti != fallingTrees.end(); ) {
+	for (unsigned int n = 0; n < fallingTrees.size(); /*no-op*/) {
+		FallingTree* fti = &fallingTrees[n];
+
 		fti->fallPos += (fti->speed * 0.1f);
+		fti->speed += (math::sin(fti->fallPos) * 0.04f);
 
 		if (fti->fallPos > 1.0f) {
 			// remove the tree
-			std::list<FallingTree>::iterator prev = fti++;
-			fallingTrees.erase(prev);
-		} else {
-			fti->speed += (math::sin(fti->fallPos) * 0.04f);
-			++fti;
+			fallingTrees[n] = fallingTrees.back();
+			fallingTrees.pop_back();
+			continue;
 		}
+
+		n += 1;
 	}
 }
 
@@ -344,7 +337,7 @@ struct CAdvTreeSquareDrawer : public CReadMap::IQuadDrawer
 void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 {
 	const int treesX = td->treesX;
-	ITreeDrawer::TreeSquareStruct* tss = &td->trees[(y * treesX) + x];
+	ITreeDrawer::TreeSquareStruct* tss = &td->treeSquares[(y * treesX) + x];
 
 	if ((abs(cy - y) <= 2) && (abs(cx - x) <= 2) && drawDetailed) {
 		// skip the closest squares
@@ -371,8 +364,8 @@ void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 			va->Initialize();
 			va->EnlargeArrays(12 * tss->trees.size(), 0, VA_SIZE_T); //!alloc room for all tree vertexes
 
-			for (std::map<int, ITreeDrawer::TreeStruct>::iterator ti = tss->trees.begin(); ti != tss->trees.end(); ++ti) {
-				const ITreeDrawer::TreeStruct* ts = &ti->second;
+			for (auto ti = tss->trees.cbegin(); ti != tss->trees.cend(); ++ti) {
+				const ITreeDrawer::TreeStruct* ts = &(*ti);
 				const CFeature* f = featureHandler->GetFeature(ts->id);
 
 				if (f == NULL)
@@ -415,8 +408,8 @@ void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 			va->EnlargeArrays(4 * tss->trees.size(), 0, VA_SIZE_T); //!alloc room for all tree vertexes
 			tss->viewVector = dif;
 
-			for (std::map<int, ITreeDrawer::TreeStruct>::iterator ti = tss->trees.begin(); ti != tss->trees.end(); ++ti) {
-				const ITreeDrawer::TreeStruct* ts = &ti->second;
+			for (auto ti = tss->trees.cbegin(); ti != tss->trees.cend(); ++ti) {
+				const ITreeDrawer::TreeStruct* ts = &(*ti);
 				const CFeature* f = featureHandler->GetFeature(ts->id);
 
 				if (f == NULL)
@@ -573,17 +566,19 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
 
-		static FadeTree fadeTrees[3000];
-		FadeTree* pFT = fadeTrees;
 
+		static std::vector<FadeTree> fadeTrees;
 
-		for (TreeSquareStruct* pTSS = &trees[ystart * treesX]; pTSS <= &trees[yend * treesX]; pTSS += treesX) {
+		fadeTrees.clear();
+		fadeTrees.reserve(3000);
+
+		for (TreeSquareStruct* pTSS = &treeSquares[ystart * treesX]; pTSS <= &treeSquares[yend * treesX]; pTSS += treesX) {
 			for (TreeSquareStruct* tss = pTSS + xstart; tss <= (pTSS + xend); ++tss) {
 				tss->lastSeen = gs->frameNum;
 				va->EnlargeArrays(12 * tss->trees.size(), 0, VA_SIZE_T); //!alloc room for all tree vertexes
 
-				for (std::map<int, TreeStruct>::iterator ti = tss->trees.begin(); ti != tss->trees.end(); ++ti) {
-					const TreeStruct* ts = &ti->second;
+				for (auto ti = tss->trees.cbegin(); ti != tss->trees.cend(); ++ti) {
+					const TreeStruct* ts = &(*ti);
 					const CFeature* f = featureHandler->GetFeature(ts->id);
 
 					if (f == NULL)
@@ -622,11 +617,17 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 						glAlphaFunc(GL_GREATER, 0.5f);
 
 						// save for second pass
-						pFT->pos = ts->pos;
-						pFT->deltaY = dy;
-						pFT->type = type;
-						pFT->relDist = relDist;
-						++pFT;
+						FadeTree ft;
+
+						ft.id = f->id;
+						ft.type = type;
+
+						ft.pos = ts->pos;
+
+						ft.relDist = relDist;
+						ft.deltaY = dy;
+
+						fadeTrees.push_back(ft);
 					} else {
 						// draw far-distance tree
 						CAdvTreeDrawer::DrawTreeVertex(va, ts->pos, type * 0.125f, dy, false);
@@ -640,7 +641,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 		treeShader->SetUniform3f(((globalRendering->haveGLSL)? 2: 10), 0.0f, 0.0f, 0.0f);
 
 		// draw trees that have been marked as falling
-		for (std::list<FallingTree>::iterator fti = fallingTrees.begin(); fti != fallingTrees.end(); ++fti) {
+		for (auto fti = fallingTrees.cbegin(); fti != fallingTrees.cend(); ++fti) {
 			// const CFeature* f = featureHandler->GetFeature(fti->id);
 			const float3 pos = fti->pos - UpVector * (fti->fallPos * 20);
 
@@ -696,23 +697,23 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 		va->DrawArrayT(GL_QUADS);
 
 		// draw faded mid-distance trees
-		for (FadeTree* pFTree = fadeTrees; pFTree < pFT; ++pFTree) {
-			const CFeature* f = featureHandler->GetFeature(pFTree->id);
+		for (const FadeTree& fTree: fadeTrees) {
+			const CFeature* f = featureHandler->GetFeature(fTree.id);
 
 			if (f == NULL)
 				continue;
 			if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 				continue;
-			if (!cam->InView(pFTree->pos, MAX_TREE_HEIGHT / 2.0f))
+			if (!cam->InView(fTree.pos, MAX_TREE_HEIGHT / 2.0f))
 				continue;
 
 			va = GetVertexArray();
 			va->Initialize();
 			va->CheckInitSize(12 * VA_SIZE_T);
 
-			CAdvTreeDrawer::DrawTreeVertex(va, pFTree->pos, pFTree->type * 0.125f, pFTree->deltaY, false);
+			CAdvTreeDrawer::DrawTreeVertex(va, fTree.pos, fTree.type * 0.125f, fTree.deltaY, false);
 
-			glAlphaFunc(GL_GREATER, 1.0f - (pFTree->relDist * 0.5f));
+			glAlphaFunc(GL_GREATER, 1.0f - (fTree.relDist * 0.5f));
 			va->DrawArrayT(GL_QUADS);
 		}
 	}
@@ -745,7 +746,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 	if (startClean > endClean) {
 		for (int i = startClean; i < nTrees; i++) {
-			TreeSquareStruct* pTSS = &trees[i];
+			TreeSquareStruct* pTSS = &treeSquares[i];
 
 			if ((pTSS->lastSeen < frameNum - 50) && pTSS->dispList) {
 				glDeleteLists(pTSS->dispList, 1);
@@ -757,7 +758,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 			}
 		}
 		for (int i = 0; i < endClean; i++) {
-			TreeSquareStruct* pTSS = &trees[i];
+			TreeSquareStruct* pTSS = &treeSquares[i];
 
 			if ((pTSS->lastSeen < (frameNum - 50)) && pTSS->dispList) {
 				glDeleteLists(pTSS->dispList, 1);
@@ -770,7 +771,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 		}
 	} else {
 		for (int i = startClean; i < endClean; i++) {
-			TreeSquareStruct* pTSS = &trees[i];
+			TreeSquareStruct* pTSS = &treeSquares[i];
 
 			if ((pTSS->lastSeen < (frameNum - 50)) && pTSS->dispList) {
 				glDeleteLists(pTSS->dispList, 1);
@@ -809,7 +810,7 @@ struct CAdvTreeSquareShadowPassDrawer: public CReadMap::IQuadDrawer
 void CAdvTreeSquareShadowPassDrawer::DrawQuad(int x, int y)
 {
 	const int treesX = td->treesX;
-	ITreeDrawer::TreeSquareStruct* tss = &td->trees[(y * treesX) + x];
+	ITreeDrawer::TreeSquareStruct* tss = &td->treeSquares[(y * treesX) + x];
 
 	if ((abs(cy - y) <= 2) && (abs(cx - x) <= 2) && drawDetailed) {
 		// skip the closest squares
@@ -836,8 +837,8 @@ void CAdvTreeSquareShadowPassDrawer::DrawQuad(int x, int y)
 			va->Initialize();
 			va->EnlargeArrays(12 * tss->trees.size(), 0, VA_SIZE_T); //!alloc room for all tree vertexes
 
-			for (std::map<int, ITreeDrawer::TreeStruct>::iterator ti = tss->trees.begin(); ti != tss->trees.end(); ++ti) {
-				const ITreeDrawer::TreeStruct* ts = &ti->second;
+			for (auto ti = tss->trees.cbegin(); ti != tss->trees.cend(); ++ti) {
+				const ITreeDrawer::TreeStruct* ts = &(*ti);
 				const CFeature* f = featureHandler->GetFeature(ts->id);
 
 				if (f == NULL)
@@ -877,8 +878,8 @@ void CAdvTreeSquareShadowPassDrawer::DrawQuad(int x, int y)
 			va->EnlargeArrays(4 * tss->trees.size(), 0, VA_SIZE_T); //!alloc room for all tree vertexes
 			tss->viewVector = dif;
 
-			for (std::map<int, ITreeDrawer::TreeStruct>::iterator ti = tss->trees.begin(); ti != tss->trees.end(); ++ti) {
-				const ITreeDrawer::TreeStruct* ts = &ti->second;
+			for (auto ti = tss->trees.cbegin(); ti != tss->trees.cend(); ++ti) {
+				const ITreeDrawer::TreeStruct* ts = &(*ti);
 				const CFeature* f = featureHandler->GetFeature(ts->id);
 
 				if (f == NULL)
@@ -973,16 +974,19 @@ void CAdvTreeDrawer::DrawShadowPass()
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
 
-		static FadeTree fadeTrees[3000];
-		FadeTree* pFT = fadeTrees;
 
-		for (TreeSquareStruct* pTSS = &trees[ystart * treesX]; pTSS <= &trees[yend * treesX]; pTSS += treesX) {
+		static std::vector<FadeTree> fadeTrees;
+
+		fadeTrees.clear();
+		fadeTrees.reserve(3000);
+
+		for (TreeSquareStruct* pTSS = &treeSquares[ystart * treesX]; pTSS <= &treeSquares[yend * treesX]; pTSS += treesX) {
 			for (TreeSquareStruct* tss = pTSS + xstart; tss <= pTSS + xend; ++tss) {
 				tss->lastSeen = gs->frameNum;
 				va->EnlargeArrays(12 * tss->trees.size(), 0, VA_SIZE_T); //!alloc room for all tree vertexes
 
-				for (std::map<int, TreeStruct>::iterator ti = tss->trees.begin(); ti != tss->trees.end(); ++ti) {
-					const TreeStruct* ts = &ti->second;
+				for (auto ti = tss->trees.cbegin(); ti != tss->trees.cend(); ++ti) {
+					const TreeStruct* ts = &(*ti);
 					const CFeature* f = featureHandler->GetFeature(ts->id);
 
 					if (f == NULL)
@@ -1017,12 +1021,18 @@ void CAdvTreeDrawer::DrawShadowPass()
 						glCallList(dispList);
 						glAlphaFunc(GL_GREATER, 0.5f);
 
-						pFT->id = f->id;
-						pFT->type = type;
-						pFT->pos = ts->pos;
-						pFT->deltaY = dy;
-						pFT->relDist = relDist;
-						++pFT;
+						// save for second pass
+						FadeTree ft;
+
+						ft.id = f->id;
+						ft.type = type;
+
+						ft.pos = ts->pos;
+
+						ft.relDist = relDist;
+						ft.deltaY = dy;
+
+						fadeTrees.push_back(ft);
 					} else {
 						CAdvTreeDrawer::DrawTreeVertex(va, ts->pos, type * 0.125f, dy, false);
 					}
@@ -1033,7 +1043,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 
 		po->SetUniform3f((globalRendering->haveGLSL? 3: 10), 0.0f, 0.0f, 0.0f);
 
-		for (std::list<FallingTree>::iterator fti = fallingTrees.begin(); fti != fallingTrees.end(); ++fti) {
+		for (auto fti = fallingTrees.cbegin(); fti != fallingTrees.cend(); ++fti) {
 			// const CFeature* f = featureHandler->GetFeature(fti->id);
 			const float3 pos = fti->pos - UpVector * (fti->fallPos * 20);
 
@@ -1079,23 +1089,23 @@ void CAdvTreeDrawer::DrawShadowPass()
 		va->DrawArrayT(GL_QUADS);
 
 		// draw faded mid-distance trees
-		for (FadeTree* pFTree = fadeTrees; pFTree < pFT; ++pFTree) {
-			const CFeature* f = featureHandler->GetFeature(pFTree->id);
+		for (const FadeTree& fTree: fadeTrees) {
+			const CFeature* f = featureHandler->GetFeature(fTree.id);
 
 			if (f == NULL)
 				continue;
 			if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
 				continue;
-			if (!cam->InView(pFTree->pos, MAX_TREE_HEIGHT / 2.0f))
+			if (!cam->InView(fTree.pos, MAX_TREE_HEIGHT / 2.0f))
 				continue;
 
 			va = GetVertexArray();
 			va->Initialize();
 			va->CheckInitSize(12 * VA_SIZE_T);
 
-			CAdvTreeDrawer::DrawTreeVertex(va, pFTree->pos, pFTree->type * 0.125f, pFTree->deltaY, false);
+			CAdvTreeDrawer::DrawTreeVertex(va, fTree.pos, fTree.type * 0.125f, fTree.deltaY, false);
 
-			glAlphaFunc(GL_GREATER, 1.0f - (pFTree->relDist * 0.5f));
+			glAlphaFunc(GL_GREATER, 1.0f - (fTree.relDist * 0.5f));
 			va->DrawArrayT(GL_QUADS);
 		}
 
@@ -1109,65 +1119,20 @@ void CAdvTreeDrawer::DrawShadowPass()
 }
 
 
-void CAdvTreeDrawer::ResetPos(const float3& pos)
-{
-	const int x = (int) pos.x / TREE_SQUARE_SIZE / SQUARE_SIZE;
-	const int y = (int) pos.z / TREE_SQUARE_SIZE / SQUARE_SIZE;
-
-	TreeSquareStruct& pTSS = trees[y * treesX + x];
-
-	if (pTSS.dispList) {
-		delDispLists.push_back(pTSS.dispList);
-		pTSS.dispList = 0;
-	}
-	if (pTSS.farDispList) {
-		delDispLists.push_back(pTSS.farDispList);
-		pTSS.farDispList = 0;
-	}
-}
-
-void CAdvTreeDrawer::AddTree(int treeID, int treeType, const float3& pos, float size)
-{
-	TreeStruct ts;
-	ts.id = treeID;
-	ts.type = treeType;
-	ts.pos = pos;
-
-	const int treeSquareSize = SQUARE_SIZE * TREE_SQUARE_SIZE;
-	const int treeSquareIdx =
-		((int)pos.x) / (treeSquareSize) +
-		((int)pos.z) / (treeSquareSize) * treesX;
-
-	trees[treeSquareIdx].trees[treeID] = ts;
-	ResetPos(pos);
-}
-
-void CAdvTreeDrawer::DeleteTree(int treeID, const float3& pos)
-{
-	const int treeSquareSize = SQUARE_SIZE * TREE_SQUARE_SIZE;
-	const int treeSquareIdx =
-		((int)pos.x / (treeSquareSize)) +
-		((int)pos.z / (treeSquareSize) * treesX);
-
-	trees[treeSquareIdx].trees.erase(treeID);
-
-	ResetPos(pos);
-}
-
 void CAdvTreeDrawer::AddFallingTree(int treeID, int treeType, const float3& pos, const float3& dir)
 {
-	float3 dirPlane(dir.x, 0.0f, dir.z);
-	const float len = dirPlane.Length();
-	if (len > 500) {
+	const float3 flatDir = dir * XZVector;
+	const float len = flatDir.Length();
+
+	if (len > 500.0f)
 		return;
-	}
 
 	FallingTree ft;
 
 	ft.id = treeID;
 	ft.type = treeType;
 	ft.pos = pos;
-	ft.dir = dirPlane.Normalize();
+	ft.dir = flatDir / len;
 	ft.speed = std::max(0.01f, len * 0.0004f);
 	ft.fallPos = 0.0f;
 
