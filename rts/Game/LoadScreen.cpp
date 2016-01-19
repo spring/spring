@@ -92,7 +92,7 @@ void CLoadScreen::Init()
 	game = new CGame(mapName, modName, saveFile);
 
 	// new stuff
-	CLuaIntro::LoadHandler();
+	CLuaIntro::LoadFreeHandler();
 
 	// old stuff
 	if (!LuaIntro) {

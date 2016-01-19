@@ -79,9 +79,9 @@ LuaParser::LuaParser(const string& _textChunk,
 
 LuaParser::~LuaParser()
 {
-	if (L != NULL) {
-		LUA_CLOSE(L); L = NULL;
-	}
+	if (L != NULL)
+		LUA_CLOSE(&L);
+
 	set<LuaTable*>::iterator it;
 	for (it = tables.begin(); it != tables.end(); ++it) {
 		LuaTable& table = **it;
@@ -171,15 +171,13 @@ bool LuaParser::Execute()
 		CFileHandler fh(fileName, fileModes);
 		if (!fh.LoadStringData(code)) {
 			errorLog = "could not open file: " + fileName;
-			LUA_CLOSE(L);
-			L = NULL;
+			LUA_CLOSE(&L);
 			return false;
 		}
 	}
 	else {
 		errorLog = "invalid format or empty file";
-		LUA_CLOSE(L);
-		L = NULL;
+		LUA_CLOSE(&L);
 		return false;
 	}
 
@@ -189,8 +187,7 @@ bool LuaParser::Execute()
 		errorLog = lua_tostring(L, -1);
 		LOG_L(L_ERROR, "%i, %s, %s",
 		                error, codeLabel.c_str(), errorLog.c_str());
-		LUA_CLOSE(L);
-		L = NULL;
+		LUA_CLOSE(&L);
 		return false;
 	}
 
@@ -206,16 +203,14 @@ bool LuaParser::Execute()
 		errorLog = lua_tostring(L, -1);
 		LOG_L(L_ERROR, "%i, %s, %s",
 		                error, fileName.c_str(), errorLog.c_str());
-		LUA_CLOSE(L);
-		L = NULL;
+		LUA_CLOSE(&L);
 		return false;
 	}
 
 	if (!lua_istable(L, 1)) {
 		errorLog = "missing return table from " + fileName;
 		LOG_L(L_ERROR, "missing return table from %s", fileName.c_str());
-		LUA_CLOSE(L);
-		L = NULL;
+		LUA_CLOSE(&L);
 		return false;
 	}
 

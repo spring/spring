@@ -641,17 +641,19 @@ void CGame::LoadLua()
 {
 	// Lua components
 	ENTER_SYNCED_CODE();
+
 	loadscreen->SetLoadMessage("Loading LuaRules");
-	CLuaRules::LoadHandler();
+	CLuaRules::LoadFreeHandler();
 
 	if (gs->useLuaGaia) {
 		loadscreen->SetLoadMessage("Loading LuaGaia");
-		CLuaGaia::LoadHandler();
+		CLuaGaia::LoadFreeHandler();
 	}
+
 	LEAVE_SYNCED_CODE();
 
 	loadscreen->SetLoadMessage("Loading LuaUI");
-	CLuaUI::LoadHandler();
+	CLuaUI::LoadFreeHandler();
 
 	// last in, first served
 	luaInputReceiver = new LuaInputReceiver();
@@ -1078,9 +1080,9 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 
 	SetDrawMode(gameNormalDraw); //TODO move to ::Draw()?
 
-	if (luaUI)    { luaUI->CheckStack(); }
-	if (luaGaia)  { luaGaia->CheckStack(); }
-	if (luaRules) { luaRules->CheckStack(); }
+	if (luaUI != nullptr)    { luaUI->CheckStack(); luaUI->CheckReload(); }
+	if (luaGaia != nullptr)  { luaGaia->CheckStack(); }
+	if (luaRules != nullptr) { luaRules->CheckStack(); }
 
 	#if 0
 	// XXX ugly hack to minimize luaUI errors

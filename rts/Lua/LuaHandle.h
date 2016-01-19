@@ -70,23 +70,23 @@ class CLuaHandle : public CEventClient
 		static bool GetHandleSynced(const lua_State* L) { return GetLuaContextData(L)->synced; }
 
 		bool GetUserMode() const { return userMode; }
-		static bool GetHandleUserMode(const lua_State* L) { return GetLuaContextData(L)->owner->GetUserMode(); }
-
 		bool CheckModUICtrl() const { return GetModUICtrl() || GetUserMode(); }
+
+		static bool GetHandleUserMode(lua_State* L) { return (GetHandle(L))->GetUserMode(); }
 		static bool CheckModUICtrl(lua_State* L) { return GetModUICtrl() || GetHandleUserMode(L); }
 
 		static int GetHandleAllowChanges(const lua_State* L) { return GetLuaContextData(L)->allowChanges; }
 
-		static CLuaHandle* GetHandle(lua_State* L) { return GetLuaContextData(L)->owner; }
+		static CLuaHandle* GetHandle(lua_State* L) { return (GetLuaContextData(L)->owner); }
 
 		static void SetHandleRunning(lua_State* L, const bool _running) {
 			GetLuaContextData(L)->running += (_running) ? +1 : -1;
-			assert( GetLuaContextData(L)->running >= 0);
+			assert(GetLuaContextData(L)->running >= 0);
 		}
 		static bool IsHandleRunning(lua_State* L) { return (GetLuaContextData(L)->running > 0); }
-		bool IsRunning() const { return IsHandleRunning(L); }
 
-		bool IsValid() const { return (L != NULL); }
+		bool IsRunning() const { return IsHandleRunning(L); }
+		bool IsValid() const { return (L != nullptr); }
 
 		//FIXME needed by LuaSyncedTable (can be solved cleaner?)
 		lua_State* GetLuaState() const { return L; }
@@ -244,6 +244,7 @@ class CLuaHandle : public CEventClient
 		void DownloadFinished(int ID) override;
 		void DownloadFailed(int ID, int errorID) override;
 		void DownloadProgress(int ID, long downloaded, long total) override;
+
 	public: // Non-eventhandler call-ins
 		void Shutdown();
 		bool GotChatMsg(const string& msg, int playerID);
@@ -257,7 +258,7 @@ class CLuaHandle : public CEventClient
 		CLuaHandle(const string& name, int order, bool userMode, bool synced);
 		virtual ~CLuaHandle();
 
-		void KillLua();
+		void KillLua(bool inFreeHandler = false);
 
 		static void PushTracebackFuncToRegistry(lua_State* L);
 
@@ -281,13 +282,13 @@ class CLuaHandle : public CEventClient
 
 	protected:
 		bool userMode;
+		bool reloadMe;
+		bool killMe;
 
 		lua_State* L;
+		lua_State* L_GC;
 		luaContextData D;
 
-		lua_State* L_GC;
-
-		bool killMe;
 		string killMsg;
 
 		vector<bool> watchUnitDefs;
@@ -313,10 +314,10 @@ class CLuaHandle : public CEventClient
 		static int CallOutIsEngineMinVersion(lua_State* L);
 
 	public: // static
-		static inline LuaShaders& GetActiveShaders(lua_State* L)  { return GetLuaContextData(L)->shaders; }
+		static inline LuaShaders& GetActiveShaders(lua_State* L) { return GetLuaContextData(L)->shaders; }
 		static inline LuaTextures& GetActiveTextures(lua_State* L) { return GetLuaContextData(L)->textures; }
 		static inline LuaFBOs& GetActiveFBOs(lua_State* L) { return GetLuaContextData(L)->fbos; }
-		static inline LuaRBOs& GetActiveRBOs(lua_State* L)     { return GetLuaContextData(L)->rbos; }
+		static inline LuaRBOs& GetActiveRBOs(lua_State* L) { return GetLuaContextData(L)->rbos; }
 		static inline CLuaDisplayLists& GetActiveDisplayLists(lua_State* L) { return GetLuaContextData(L)->displayLists; }
 
 		static void SetDevMode(bool value) { devMode = value; }
@@ -325,8 +326,7 @@ class CLuaHandle : public CEventClient
 		static void SetModUICtrl(bool value) { modUICtrl = value; }
 		static bool GetModUICtrl() { return modUICtrl; }
 
-		static void HandleLuaMsg(int playerID, int script, int mode,
-			const std::vector<boost::uint8_t>& msg);
+		static void HandleLuaMsg(int playerID, int script, int mode, const std::vector<boost::uint8_t>& msg);
 
 	protected: // static
 		static bool devMode; // allows real file access

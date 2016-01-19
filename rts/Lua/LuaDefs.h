@@ -80,32 +80,30 @@ namespace {
 
 
 #define DECL_LOAD_HANDLER(HandlerType, HandlerInstance)     \
-	void HandlerType::LoadHandler() {                       \
+	bool HandlerType::LoadHandler() {                       \
 		{                                                   \
 			std::lock_guard<boost::mutex> lk(m_singleton);  \
                                                             \
 			if (HandlerInstance != NULL)                    \
-				return;                                     \
+				return (HandlerInstance->IsValid());        \
                                                             \
 			HandlerInstance = new HandlerType();            \
-		}                                                   \
-                                                            \
-		if (!HandlerInstance->IsValid()) {                  \
-			FreeHandler();                                  \
+			return (HandlerInstance->IsValid());            \
 		}                                                   \
 	}
 
 #define DECL_FREE_HANDLER(HandlerType, HandlerInstance)  \
-	void HandlerType::FreeHandler() {                    \
+	bool HandlerType::FreeHandler() {                    \
 		std::lock_guard<boost::mutex> lk(m_singleton);   \
                                                          \
 		if (HandlerInstance == NULL)                     \
-			return;                                      \
+			return true;                                 \
                                                          \
 		auto* inst = HandlerInstance;                    \
 		HandlerInstance = NULL;                          \
-		inst->KillLua();                                 \
+		inst->KillLua(true);                             \
 		delete inst;                                     \
+		return true;                                     \
 	}
 
 

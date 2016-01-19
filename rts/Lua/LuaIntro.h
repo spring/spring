@@ -12,8 +12,9 @@ struct lua_State;
 class CLuaIntro : public CLuaHandle
 {
 	public:
-		static void LoadHandler();
-		static void FreeHandler();
+		static bool LoadFreeHandler() { return (LoadHandler() || FreeHandler()); }
+		static bool LoadHandler();
+		static bool FreeHandler();
 
 	public: // call-ins
 		void DrawLoadScreen();

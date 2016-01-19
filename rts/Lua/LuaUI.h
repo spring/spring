@@ -23,12 +23,20 @@ class CLuaUI : public CLuaHandle
 	friend class LuaLobby;
 
 	public:
-		static void LoadHandler();
-		static void FreeHandler();
+		void QueueReload() { reloadMe = true; }
+		void CheckReload() {
+			if (!reloadMe)
+				return;
+
+			FreeHandler();
+			LoadHandler();
+		}
+
+		static bool LoadFreeHandler() { return (LoadHandler() || FreeHandler()); }
+		static bool LoadHandler();
+		static bool FreeHandler();
 
 		static void UpdateTeams();
-
-		static void Reload();
 
 	public: // structs
 		struct ReStringPair {

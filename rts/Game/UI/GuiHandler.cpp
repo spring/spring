@@ -185,16 +185,20 @@ bool CGuiHandler::EnableLuaUI(bool enableCommand)
 			LOG_L(L_WARNING, "[GUIHandler] LuaUI is already enabled");
 			return false;
 		}
+
 		if (luaUI->IsRunning()) {
-			// NOTE: causes a SEGV through RunCallIn()
-			LOG_L(L_WARNING, "[GUIHandler can not reload from within LuaUI, yet");
-			return false;
+			// has to be queued, corrupts the Lua VM if done inside a pcall
+			// (LuaRules can reload itself inside callins because the action
+			// SendCommands("luarules reload") goes over the network, and is
+			// not when received)
+			luaUI->QueueReload();
+			return true;
 		}
 
 		CLuaUI::FreeHandler();
 	}
 
-	CLuaUI::LoadHandler();
+	CLuaUI::LoadFreeHandler();
 
 	if (luaUI != nullptr) {
 		LayoutIcons(false);

@@ -28,6 +28,9 @@ class CEventHandler
 
 		void AddClient(CEventClient* ec);
 		void RemoveClient(CEventClient* ec);
+		bool HasClient(CEventClient* ec) const {
+			return (std::find(handles.begin(), handles.end(), ec) != handles.end());
+		}
 
 		bool InsertEvent(CEventClient* ec, const std::string& ciName);
 		bool RemoveEvent(CEventClient* ec, const std::string& ciName);

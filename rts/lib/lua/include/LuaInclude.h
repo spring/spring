@@ -224,12 +224,11 @@ static inline luaContextData* GetLuaContextData(const lua_State* L)
 }
 
 static inline lua_State* LUA_OPEN(luaContextData* lcd = NULL) {
-	lua_State* L = lua_newstate(spring_lua_alloc, lcd); // we want to use our own memory allocator
-	return L;
+	return lua_newstate(spring_lua_alloc, lcd); // we want to use our own memory allocator
 }
 
-static inline void LUA_CLOSE(lua_State* L_Old) {
-	lua_close(L_Old);
+static inline void LUA_CLOSE(lua_State** L) {
+	assert((*L) != NULL); lua_close(*L); *L = NULL;
 }
 
 

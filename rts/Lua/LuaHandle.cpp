@@ -82,8 +82,9 @@ static int handlepanic(lua_State* L)
 
 CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode, bool _synced)
 	: CEventClient(_name, _order, _synced)
-	, userMode   (_userMode)
-	, killMe     (false)
+	, userMode(_userMode)
+	, reloadMe(false)
+	, killMe(false)
 	, callinErrors(0)
 {
 	D.owner = this;
@@ -103,39 +104,43 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode, bool _sy
 
 CLuaHandle::~CLuaHandle()
 {
+	// KillLua() must be called before us!
+	assert(!IsValid());
+	assert(!eventHandler.HasClient(this));
+}
+
+
+// can be called from a handler constructor or FreeHandler
+// we care about calling Shutdown only in the latter case!
+void CLuaHandle::KillLua(bool inFreeHandler)
+{
+	// 1. unlink from eventHandler, so no new events are getting triggered
+	//FIXME when multithreaded lua is enabled, wait for all running events to finish (possible via a mutex?)
 	eventHandler.RemoveClient(this);
 
-	// KillLua() must be called before dtor!!!
-	assert(!IsValid());
-}
+	if (!IsValid())
+		return;
 
-
-void CLuaHandle::KillLua()
-{
-	if (IsValid()) {
-		// 1. unlink from eventHandler, so no new events are getting triggered
-		eventHandler.RemoveClient(this);
-		//FIXME when multithreaded lua is enabled, wait for all running events to finish (possible via a mutex?)
-
-		// 2. shutdown
+	// 2. shutdown
+	if (inFreeHandler)
 		Shutdown();
 
-		// 3. delete the lua_State
-		SetHandleRunning(L, true);
-		LUA_CLOSE(L);
-		//SetHandleRunning(L, false); --nope, the state is deleted
-		L = NULL;
-	}
+	// 3. delete the lua_State
+	//
+	// must be done here: if called from a ctor, we want the
+	// state to become non-valid so that LoadHandler returns
+	// false and FreeHandler runs next
+	LUA_CLOSE(&L);
 }
 
 
 /******************************************************************************/
 /******************************************************************************/
-
 
 int CLuaHandle::KillActiveHandle(lua_State* L)
 {
 	CLuaHandle* ah = GetHandle(L);
+
 	if (ah != NULL) {
 		const int args = lua_gettop(L);
 		if ((args >= 1) && lua_isstring(L, 1)) {
@@ -148,6 +153,7 @@ int CLuaHandle::KillActiveHandle(lua_State* L)
 		// don't process any further events
 		eventHandler.RemoveClient(ah);
 	}
+
 	return 0;
 }
 
@@ -281,7 +287,7 @@ int CLuaHandle::RunCallInTraceback(
 			, errFuncIdx(_errFuncIdx)
 			, popErrFunc(_popErrFunc)
 		{
-			handle->SetHandleRunning(state, true);
+			handle->SetHandleRunning(state, true); // inc
 			const bool canDraw = LuaOpenGL::IsDrawingEnabled(state);
 			SMatrixStateData prevMatState;
 			GLMatrixStateTracker& matTracker = GetLuaContextData(state)->glMatrixTracker;
@@ -302,7 +308,7 @@ int CLuaHandle::RunCallInTraceback(
 				matTracker.PopMatrixState(prevMatState);
 			}
 
-			handle->SetHandleRunning(state, false);
+			handle->SetHandleRunning(state, false); // dec
 		}
 
 		~ScopedLuaCall() {
@@ -598,10 +604,8 @@ void CLuaHandle::GamePaused(int playerID, bool paused)
 void CLuaHandle::GameFrame(int frameNum)
 {
 	if (killMe) {
-		string msg = GetName();
-		if (!killMsg.empty()) {
-			msg += ": " + killMsg;
-		}
+		const std::string msg = GetName() + ((!killMsg.empty())? ": " + killMsg: "");
+
 		LOG("[%s] disabled %s", __FUNCTION__, msg.c_str());
 		delete this;
 		return;
@@ -613,9 +617,9 @@ void CLuaHandle::GameFrame(int frameNum)
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr("GameFrame");
-	if (!cmdStr.GetGlobalFunc(L)) {
+
+	if (!cmdStr.GetGlobalFunc(L))
 		return; // the call is not defined
-	}
 
 	lua_pushnumber(L, frameNum);
 

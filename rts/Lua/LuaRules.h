@@ -29,8 +29,9 @@ struct lua_State;
 class CLuaRules : public CLuaHandleSynced
 {
 	public:
-		static void LoadHandler();
-		static void FreeHandler();
+		static bool LoadFreeHandler() { return (LoadHandler() || FreeHandler()); }
+		static bool LoadHandler();
+		static bool FreeHandler();
 
 	public: // call-ins
 		void Cob2Lua(const LuaHashString& funcName, const CUnit* unit,

@@ -76,9 +76,8 @@ CUnsyncedLuaHandle::~CUnsyncedLuaHandle()
 
 bool CUnsyncedLuaHandle::Init(const string& code, const string& file)
 {
-	if (!IsValid()) {
+	if (!IsValid())
 		return false;
-	}
 
 	// load the standard libraries
 	LUA_OPEN_LIB(L, luaopen_base);
