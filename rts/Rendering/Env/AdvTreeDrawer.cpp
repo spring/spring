@@ -617,7 +617,8 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 						glAlphaFunc(GL_GREATER, 0.5f);
 
 						// save for second pass
-						FadeTree ft;
+						fadeTrees.emplace_back();
+						FadeTree& ft = fadeTrees.back();
 
 						ft.id = f->id;
 						ft.type = type;
@@ -626,8 +627,6 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 						ft.relDist = relDist;
 						ft.deltaY = dy;
-
-						fadeTrees.push_back(ft);
 					} else {
 						// draw far-distance tree
 						CAdvTreeDrawer::DrawTreeVertex(va, ts->pos, type * 0.125f, dy, false);
@@ -1022,7 +1021,8 @@ void CAdvTreeDrawer::DrawShadowPass()
 						glAlphaFunc(GL_GREATER, 0.5f);
 
 						// save for second pass
-						FadeTree ft;
+						fadeTrees.emplace_back();
+						FadeTree& ft = fadeTrees.back();
 
 						ft.id = f->id;
 						ft.type = type;
@@ -1031,8 +1031,6 @@ void CAdvTreeDrawer::DrawShadowPass()
 
 						ft.relDist = relDist;
 						ft.deltaY = dy;
-
-						fadeTrees.push_back(ft);
 					} else {
 						CAdvTreeDrawer::DrawTreeVertex(va, ts->pos, type * 0.125f, dy, false);
 					}
