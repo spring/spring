@@ -15,6 +15,7 @@ IF    (MINGW)
 	FIND_PROGRAM(WINDRES_BIN
 		NAMES
 			windres
+			x86_64-w64-mingw32.static-windres
 			i686-w64-mingw32-windres
 			i586-mingw32msvc-windres
 			i586-pc-mingw32-windres
