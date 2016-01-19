@@ -21,6 +21,7 @@ public:
 	/**
 	 * Returns the action arguments.
 	 */
+	const std::string& GetCmd() const { return action.command; }
 	const std::string& GetArgs() const { return action.extra; }
 
 	const Action& GetInnerAction() const { return action; }
