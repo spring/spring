@@ -29,7 +29,9 @@ struct lua_State;
 class CLuaRules : public CLuaHandleSynced
 {
 	public:
+		static bool ReloadHandler() { return (FreeHandler(), LoadFreeHandler()); } // NOTE the ','
 		static bool LoadFreeHandler() { return (LoadHandler() || FreeHandler()); }
+
 		static bool LoadHandler();
 		static bool FreeHandler();
 

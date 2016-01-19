@@ -284,8 +284,7 @@ public:
 				if (luaRules != NULL && arg == "enable") {
 					LOG_L(L_WARNING, "LuaRules is already loaded");
 				} else {
-					CLuaRules::FreeHandler();
-					CLuaRules::LoadFreeHandler();
+					CLuaRules::ReloadHandler();
 
 					if (luaRules != nullptr) {
 						LOG("LuaRules loaded");
@@ -339,8 +338,7 @@ public:
 				if (luaGaia != NULL && arg == "enable") {
 					LOG_L(L_WARNING, "LuaGaia is already loaded");
 				} else {
-					CLuaGaia::FreeHandler();
-					CLuaGaia::LoadFreeHandler();
+					CLuaGaia::ReloadHandler();
 
 					if (luaGaia != nullptr) {
 						LOG("LuaGaia loaded");

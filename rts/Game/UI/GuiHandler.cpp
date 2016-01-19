@@ -194,11 +194,9 @@ bool CGuiHandler::EnableLuaUI(bool enableCommand)
 			luaUI->QueueReload();
 			return true;
 		}
-
-		CLuaUI::FreeHandler();
 	}
 
-	CLuaUI::LoadFreeHandler();
+	CLuaUI::ReloadHandler();
 
 	if (luaUI != nullptr) {
 		LayoutIcons(false);

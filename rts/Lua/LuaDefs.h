@@ -97,7 +97,7 @@ namespace {
 		std::lock_guard<boost::mutex> lk(m_singleton);   \
                                                          \
 		if (HandlerInstance == NULL)                     \
-			return true;                                 \
+			return false;                                \
                                                          \
 		auto* inst = HandlerInstance;                    \
 		HandlerInstance = NULL;                          \
