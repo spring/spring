@@ -535,25 +535,25 @@ TYPE_FUNC(IsBomberAirUnit, boolean)
 
 
 static int ReturnEmptyString(lua_State* L, const void* data) {
-	LOG_L(L_WARNING, "[%s] %s - deprecated field!", __FUNCTION__, lua_tostring(L, 2));
+	LOG_L(L_WARNING, "%s - deprecated field!", lua_tostring(L, 2));
 	lua_pushstring(L, "");
 	return 1;
 }
 
 static int ReturnFalse(lua_State* L, const void* data) {
-	LOG_L(L_WARNING, "[%s] %s - deprecated field!", __FUNCTION__, lua_tostring(L, 2));
+	LOG_L(L_WARNING, "%s - deprecated field!", lua_tostring(L, 2));
 	lua_pushboolean(L, false);
 	return 1;
 }
 
 static int ReturnMinusOne(lua_State* L, const void* data) {
-	LOG_L(L_WARNING, "[%s] %s - deprecated field!", __FUNCTION__, lua_tostring(L, 2));
+	LOG_L(L_WARNING, "%s - deprecated field!", lua_tostring(L, 2));
 	lua_pushnumber(L, -1);
 	return 1;
 }
 
 static int ReturnNil(lua_State* L, const void* data) {
-	LOG_L(L_WARNING, "[%s] %s - deprecated field!", __FUNCTION__, lua_tostring(L, 2));
+	LOG_L(L_WARNING, "%s - deprecated field!", lua_tostring(L, 2));
 	lua_pushnil(L);
 	return 1;
 }
@@ -581,14 +581,14 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 */
 // ADD_INT("buildOptionsCount", ud.buildOptions.size(")); // CUSTOM
 
-	ADD_FUNCTION("builder", ud, ReturnFalse); // DEPRECATED
-	ADD_FUNCTION("floater", ud, ReturnFalse); // DEPRECATED
-	ADD_FUNCTION("canDGun", ud, ReturnFalse); // DEPRECATED
-	ADD_FUNCTION("canCrash", ud, ReturnFalse); // DEPRECATED
-	ADD_FUNCTION("isCommander", ud, ReturnFalse); // DEPRECATED
-	ADD_FUNCTION("moveData", ud.pathType, ReturnNil); // DEPRECATED
-	ADD_FUNCTION("type", ud, ReturnEmptyString); // DEPRECATED
-	ADD_FUNCTION("maxSlope", ud, ReturnMinusOne); // DEPRECATED
+	ADD_DEPRECATED_FUNCTION("builder", ud, ReturnFalse);
+	ADD_DEPRECATED_FUNCTION("floater", ud, ReturnFalse);
+	ADD_DEPRECATED_FUNCTION("canDGun", ud, ReturnFalse);
+	ADD_DEPRECATED_FUNCTION("canCrash", ud, ReturnFalse);
+	ADD_DEPRECATED_FUNCTION("isCommander", ud, ReturnFalse);
+	ADD_DEPRECATED_FUNCTION("moveData", ud.pathType, ReturnNil);
+	ADD_DEPRECATED_FUNCTION("type", ud, ReturnEmptyString);
+	ADD_DEPRECATED_FUNCTION("maxSlope", ud, ReturnMinusOne);
 
 	ADD_FUNCTION("totalEnergyOut", ud, TotalEnergyOut);
 

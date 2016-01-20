@@ -1074,8 +1074,8 @@ int LuaUtils::Next(const ParamMap& paramMap, lua_State* L)
 		if ((it != paramMap.end()) && (it->second.type != READONLY_TYPE)) {
 			// last key was an internal parameter
 			++it;
-			while ((it != paramMap.end()) && (it->second.type == READONLY_TYPE)) {
-				++it; // skip read-only parameters
+			while ((it != paramMap.end()) && (it->second.type == READONLY_TYPE || it->second.deprecated)) {
+				++it; // skip read-only and deprecated/error parameters
 			}
 			if ((it != paramMap.end()) && (it->second.type != READONLY_TYPE)) {
 				// next key is an internal parameter
