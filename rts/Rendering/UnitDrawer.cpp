@@ -358,6 +358,8 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	camNorm.y = -0.1f;
 	camNorm.ANormalize();
 
+	assert((CCamera::GetActiveCamera())->GetCamType() != CCamera::CAMTYPE_SHADOW);
+
 	// first do the deferred pass; conditional because
 	// most of the water renderers use their own FBO's
 	if (drawDeferred && !drawReflection && !drawRefraction) {
@@ -513,8 +515,6 @@ bool CUnitDrawer::CanDrawOpaqueUnit(
 	// either PLAYER or UWREFL
 	const CCamera* cam = CCamera::GetActiveCamera();
 
-	assert(cam->GetCamType() != CCamera::CAMTYPE_SHADOW);
-
 	if (drawRefraction && !unit->IsInWater())
 		return false;
 
@@ -537,8 +537,6 @@ bool CUnitDrawer::CanDrawOpaqueUnitShadow(const CUnit* unit) const
 		return false;
 
 	const CCamera* cam = CCamera::GetActiveCamera();
-
-	assert(cam->GetCamType() == CCamera::CAMTYPE_SHADOW);
 
 	const bool unitInLOS = ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView);
 	const bool unitInView = cam->InView(unit->drawMidPos, unit->GetDrawRadius());
@@ -593,6 +591,8 @@ void CUnitDrawer::DrawShadowPass()
 	po->Enable();
 
 	{
+		assert((CCamera::GetActiveCamera())->GetCamType() == CCamera::CAMTYPE_SHADOW);
+
 		// 3DO's have clockwise-wound faces and
 		// (usually) holes, so disable backface
 		// culling for them

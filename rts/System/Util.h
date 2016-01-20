@@ -184,18 +184,30 @@ static inline float SafeDivide(const float a, const float b)
 
 
 
+template<typename T, typename P>
+static bool VectorEraseIf(std::vector<T>& v, const P& p)
+{
+	auto it = std::find_if(v.begin(), v.end(), p);
+
+	if (it == v.end())
+		return false;
+
+	*it = v.back();
+	v.pop_back();
+	return true;
+}
+
 template<typename T>
 static bool VectorErase(std::vector<T>& v, T e)
 {
 	auto it = std::find(v.begin(), v.end(), e);
 
-	if (it != v.end()) {
-		*it = v.back();
-		v.pop_back();
-		return true;
-	}
+	if (it == v.end())
+		return false;
 
-	return false;
+	*it = v.back();
+	v.pop_back();
+	return true;
 }
 
 template<typename T>

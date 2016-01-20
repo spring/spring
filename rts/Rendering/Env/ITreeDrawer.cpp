@@ -81,16 +81,7 @@ void ITreeDrawer::DeleteTree(int treeID, const float3& pos)
 		(((int)pos.x / (treeSquareSize))) +
 		(((int)pos.z / (treeSquareSize) * treesX));
 
-	auto& array = treeSquares[treeSquareIdx].trees;
-	auto iter = std::find_if(array.begin(), array.end(), [treeID](const TreeStruct& ts) { return (treeID == ts.id); });
-
-	if (iter == array.end())
-		return;
-
-	*iter = array.back();
-	array.pop_back();
-
-	// VectorEraseIf(treeSquares[treeSquareIdx].trees, treeID);
+	VectorEraseIf(treeSquares[treeSquareIdx].trees, [treeID](const TreeStruct& ts) { return (treeID == ts.id); });
 	ResetPos(pos);
 }
 

@@ -275,7 +275,7 @@ void CFeatureDrawer::Draw()
 
 	// mark all features (in the quads we can see) with a FD_*_FLAG value
 	// the passes below will ignore any features whose marker is not valid
-	GetVisibleFeatures(CCamera::GetCamera(CCamera::CAMTYPE_ACTIVE), 0, true);
+	GetVisibleFeatures(CCamera::GetActiveCamera(), 0, true);
 
 	// first do the deferred pass; conditional because
 	// most of the water renderers use their own FBO's
@@ -488,7 +488,7 @@ void CFeatureDrawer::DrawAlphaPass()
 		ISky::SetupFog();
 
 		// needed for now; not always called directly after Draw()
-		GetVisibleFeatures(CCamera::GetCamera(CCamera::CAMTYPE_ACTIVE), 0, true);
+		GetVisibleFeatures(CCamera::GetActiveCamera(), 0, true);
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			unitDrawer->PushModelRenderState(modelType);
@@ -563,9 +563,11 @@ void CFeatureDrawer::DrawShadowPass()
 	po->Enable();
 
 	{
+		assert((CCamera::GetActiveCamera())->GetCamType() == CCamera::CAMTYPE_SHADOW);
+
 		// mark all features (in the quads we can see) with FD_SHADOW_FLAG
 		// the pass below will ignore any features whose tag != this value
-		GetVisibleFeatures(CCamera::GetCamera(CCamera::CAMTYPE_SHADOW), 0, false);
+		GetVisibleFeatures(CCamera::GetActiveCamera(), 0, false);
 
 		// need the alpha-mask for transparent features
 		glEnable(GL_TEXTURE_2D);
