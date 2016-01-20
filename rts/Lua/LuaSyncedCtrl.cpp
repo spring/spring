@@ -2015,9 +2015,9 @@ int LuaSyncedCtrl::SetUnitCrashing(lua_State* L) {
 		const bool wantCrash = luaL_optboolean(L, 2, false);
 		const AAirMoveType::AircraftState aircraftState = amt->aircraftState;
 
-		// for simplicity, this can only set a flying aircraft to
+		// for simplicity, this can only set a non-landed aircraft to
 		// start crashing, or a crashing aircraft to start flying
-		if ( wantCrash && (aircraftState == AAirMoveType::AIRCRAFT_FLYING))
+		if ( wantCrash && (aircraftState != AAirMoveType::AIRCRAFT_LANDED))
 			amt->SetState(AAirMoveType::AIRCRAFT_CRASHING);
 
 		if (!wantCrash && (aircraftState == AAirMoveType::AIRCRAFT_CRASHING))
