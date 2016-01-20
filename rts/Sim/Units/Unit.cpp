@@ -561,9 +561,15 @@ void CUnit::FinishedBuilding(bool postInit)
 
 void CUnit::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSequence)
 {
-	if (isDead)
+    if (IsCrashing() && !beingBuilt)
 		return;
-	if (IsCrashing() && !beingBuilt)
+
+    ForcedKillUnit(attacker, selfDestruct, reclaimed, showDeathSequence);
+}
+
+void CUnit::ForcedKillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSequence)
+{
+	if (isDead)
 		return;
 
 	isDead = true;

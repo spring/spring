@@ -202,6 +202,7 @@ public:
 	short GetTransporteeWantedHeading(const CUnit* unit) const;
 
 public:
+    void ForcedKillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSequence = true);
 	virtual void KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSequence = true);
 	virtual void IncomingMissile(CMissileProjectile* missile);
 

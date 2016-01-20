@@ -1286,7 +1286,7 @@ int LuaSyncedCtrl::DestroyUnit(lua_State* L)
 	}
 	inDestroyUnit = true;
 	ASSERT_SYNCED(unit->id);
-	unit->KillUnit(attacker, selfd, reclaimed);
+	unit->ForcedKillUnit(attacker, selfd, reclaimed);
 	inDestroyUnit = false;
 
 	return 0;
