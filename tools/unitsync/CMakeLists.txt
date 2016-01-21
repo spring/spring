@@ -108,7 +108,9 @@ if (MINGW)
 endif (MINGW)
 FixLibName(unitsync)
 
-install (TARGETS unitsync DESTINATION ${LIBDIR})
+install (TARGETS unitsync
+	RUNTIME DESTINATION ${LIBDIR}
+	LIBRARY DESTINATION ${LIBDIR})
 
 Add_Subdirectory(test)
 
