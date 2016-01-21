@@ -193,7 +193,7 @@ Rendering:
 
 pr-downloader API:
  callouts:
- - DownloadArchive(name, category)
+ - VFS.DownloadArchive(name, category)
  callins:
  - DownloadStarted(id)
  - DownloadFinished(id)
