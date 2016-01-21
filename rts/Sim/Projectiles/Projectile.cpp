@@ -171,24 +171,6 @@ void CProjectile::Update()
 }
 
 
-void CProjectile::Collision()
-{
-	deleteMe = true;
-	checkCol = false;
-}
-
-
-void CProjectile::Collision(CUnit* unit)
-{
-	Collision();
-}
-
-void CProjectile::Collision(CFeature* feature)
-{
-	Collision();
-}
-
-
 void CProjectile::Delete()
 {
 	deleteMe = true;
@@ -214,9 +196,7 @@ CUnit* CProjectile::owner() const {
 	//   this death dependency optimization using "ownerID" is logically flawed:
 	//   because ID's are reused it could return a unit that is not the original
 	//   owner (unlikely however unless ID's get recycled very rapidly)
-	CUnit* unit = unitHandler->GetUnit(ownerID);
-
-	return unit;
+	return (unitHandler->GetUnit(ownerID));
 }
 
 CMatrix44f CProjectile::GetTransformMatrix(bool offsetPos) const {

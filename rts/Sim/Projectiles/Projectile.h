@@ -38,9 +38,9 @@ public:
 	);
 	virtual ~CProjectile();
 
-	virtual void Collision();
-	virtual void Collision(CUnit* unit);
-	virtual void Collision(CFeature* feature);
+	virtual void Collision() { Delete(); }
+	virtual void Collision(CUnit* unit) { Collision(); }
+	virtual void Collision(CFeature* feature) { Collision(); }
 	//Not inheritable - used for removing a projectile from Lua.
 	void Delete();
 	virtual void Update();
