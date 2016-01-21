@@ -191,6 +191,15 @@ Rendering:
  - allow custom shaders for being-built units
  - allow custom Lua map shaders
 
+pr-downloader API:
+ callouts:
+ - DownloadArchive(name, category)
+ callins:
+ - DownloadStarted(id)
+ - DownloadFinished(id)
+ - DownloadFailed(id, errorID)
+ - DownloadProgress(id, downloaded, total)
+
 
 -- 100.0 --------------------------------------------------------
 Major:
