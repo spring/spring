@@ -5,7 +5,7 @@ set -e
 
 DEST=${TMP_BASE}/inst
 #FIXME: remove hardcoded /usr/local
-INSTALLDIR=${DEST}/usr/local
+INSTALLDIR=${DEST}
 
 echo "Installing into $DEST"
 
