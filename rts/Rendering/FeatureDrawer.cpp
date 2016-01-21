@@ -34,6 +34,20 @@
 
 #define DRAW_QUAD_SIZE 32
 
+CONFIG(bool, ShowRezBars).defaultValue(true).headlessValue(false);
+
+CONFIG(float, FeatureDrawDistance)
+.defaultValue(6000.0f)
+.minimumValue(0.0f)
+.description("Maximum distance at which features will be drawn.");
+
+CONFIG(float, FeatureFadeDistance)
+.defaultValue(4500.0f)
+.minimumValue(0.0f)
+.description("Distance at which features will begin to fade from view.");
+
+
+
 enum {
 	FD_NODRAW_FLAG = 0, // must be 0
 	FD_OPAQUE_FLAG = 1,
@@ -42,7 +56,7 @@ enum {
 	FD_FARTEX_FLAG = 4,
 };
 
-static bool SetDrawAlphaValue(
+static bool SetFeatureDrawAlpha(
 	CFeature* f,
 	const CCamera* cam,
 	float sqFadeDistMin = -1.0f,
@@ -92,19 +106,29 @@ static bool SetDrawAlphaValue(
 
 
 
-CONFIG(bool, ShowRezBars).defaultValue(true).headlessValue(false);
+static const void SetFeatureAlphaMatSSP(const CFeature* f) { glAlphaFunc(GL_GREATER, f->drawAlpha * 0.5f); }
+static const void SetFeatureAlphaMatFFP(const CFeature* f)
+{
+	const float cols[] = {1.0f, 1.0f, 1.0f, f->drawAlpha};
 
-CONFIG(float, FeatureDrawDistance)
-.defaultValue(6000.0f)
-.minimumValue(0.0f)
-.description("Maximum distance at which features will be drawn.");
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, cols);
+	glColor4fv(cols);
 
-CONFIG(float, FeatureFadeDistance)
-.defaultValue(4500.0f)
-.minimumValue(0.0f)
-.description("Distance at which features will begin to fade from view.");
+	// hack, sorting objects by distance would look better
+	glAlphaFunc(GL_GREATER, f->drawAlpha * 0.5f);
+}
 
-CFeatureDrawer* featureDrawer = NULL;
+
+typedef const void (*SetFeatureAlphaMatFunc)(const CFeature*);
+
+static const SetFeatureAlphaMatFunc setFeatureAlphaMatFuncs[] = {
+	SetFeatureAlphaMatSSP,
+	SetFeatureAlphaMatFFP,
+};
+
+
+
+CFeatureDrawer* featureDrawer = nullptr;
 
 /******************************************************************************/
 
@@ -140,6 +164,7 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 
 	inAlphaPass = false;
 	inShadowPass = false;
+	ffpAlphaMat = false;
 
 	drawQuadsX = mapDims.mapx / DRAW_QUAD_SIZE;
 	drawQuadsY = mapDims.mapy / DRAW_QUAD_SIZE;
@@ -180,7 +205,7 @@ void CFeatureDrawer::RenderFeatureCreated(const CFeature* feature)
 	// otherwise UpdateDrawQuad returns early
 	f->drawQuad = -1;
 
-	SetDrawAlphaValue(f, nullptr);
+	SetFeatureDrawAlpha(f, nullptr);
 	UpdateDrawQuad(f);
 
 	unsortedFeatures.push_back(f);
@@ -244,7 +269,7 @@ void CFeatureDrawer::Update()
 {
 	for (CFeature* f: unsortedFeatures) {
 		UpdateDrawPos(f);
-		SetDrawAlphaValue(f, nullptr);
+		SetFeatureDrawAlpha(f, nullptr);
 	}
 }
 
@@ -322,7 +347,11 @@ void CFeatureDrawer::DrawOpaquePass(bool deferredPass, bool, bool)
 
 void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 {
-	for (const auto& mdlRenderProxy: modelRenderers) {
+	const auto& quads = camVisibleQuads[(CCamera::GetActiveCamera())->GetCamType()];
+
+	for (int quad: quads) {
+		const auto& mdlRenderProxy = modelRenderers[quad];
+
 		if (mdlRenderProxy.GetLastDrawFrame() < globalRendering->drawFrame)
 			continue;
 
@@ -460,24 +489,10 @@ void CFeatureDrawer::DrawIndividualNoTrans(const CFeature* feature, bool noLuaCa
 
 
 
-
-static void SetFeatureAlphaDrawState(const CFeature* f, bool ffp)
-{
-	if (ffp) {
-		const float cols[] = {1.0f, 1.0f, 1.0f, f->drawAlpha};
-
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, cols);
-		glColor4fv(cols);
-	}
-
-	// hack, sorting objects by distance would look better
-	glAlphaFunc(GL_GREATER, f->drawAlpha * 0.5f);
-}
-
-
 void CFeatureDrawer::DrawAlphaPass()
 {
 	inAlphaPass = true;
+	ffpAlphaMat = !(unitDrawer->GetWantedDrawerState(true))->CanDrawAlpha();
 
 	{
 		unitDrawer->SetupAlphaDrawing(false);
@@ -510,9 +525,11 @@ void CFeatureDrawer::DrawAlphaPass()
 
 void CFeatureDrawer::DrawAlphaFeatures(int modelType)
 {
-	const bool ffpMat = !(unitDrawer->GetWantedDrawerState(true))->CanDrawAlpha();
+	const auto& quads = camVisibleQuads[(CCamera::GetActiveCamera())->GetCamType()];
 
-	for (const auto& mdlRenderProxy: modelRenderers) {
+	for (int quad: quads) {
+		const auto& mdlRenderProxy = modelRenderers[quad];
+
 		if (mdlRenderProxy.GetLastDrawFrame() < globalRendering->drawFrame)
 			continue;
 
@@ -540,7 +557,7 @@ void CFeatureDrawer::DrawAlphaFeatures(int modelType)
 
 				unitDrawer->SetTeamColour(f->team, float2(f->drawAlpha, 1.0f));
 
-				SetFeatureAlphaDrawState(f, ffpMat);
+				setFeatureAlphaMatFuncs[ffpAlphaMat](f);
 				DrawFeature(f, 0, 0, false, false);
 			}
 		}
@@ -673,7 +690,7 @@ void CFeatureDrawer::FlagVisibleFeatures(
 
 					if (drawShadowPass) {
 						// no shadows for fully alpha-faded features from player's POV
-						f->drawFlag = FD_SHADOW_FLAG * SetDrawAlphaValue(f, playerCam, sqFadeDistBegin, sqFadeDistEnd);
+						f->drawFlag = FD_SHADOW_FLAG * SetFeatureDrawAlpha(f, playerCam, sqFadeDistBegin, sqFadeDistEnd);
 						continue;
 					}
 
@@ -684,7 +701,7 @@ void CFeatureDrawer::FlagVisibleFeatures(
 						continue;
 
 
-					if (SetDrawAlphaValue(f, cam, sqFadeDistBegin, sqFadeDistEnd)) {
+					if (SetFeatureDrawAlpha(f, cam, sqFadeDistBegin, sqFadeDistEnd)) {
 						f->drawFlag += (FD_OPAQUE_FLAG * (f->drawAlpha == 1.0f));
 						f->drawFlag += (FD_ALPHAF_FLAG * (f->drawAlpha <  1.0f));
 						continue;
