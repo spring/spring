@@ -63,6 +63,7 @@ $regex_path = "([^\/]+)";
 $regex_prefix = "$regex_path\/$regex_path\/$regex_path";
 $regexes = array(
 	"windows" => "/$regex_prefix\/win32\/spring_(.*)_minimal-portable.7z$/",
+	"windows64" => "/$regex_prefix\/win64\/spring_(.*)_minimal-portable.7z$/",
 	"macosx" =>  "/$regex_prefix\/osx64\/[sS]pring_(.*)[_-]MacOSX-.*.zip$/",
 	"linux" =>   "/$regex_prefix\/linux32\/spring_(.*)_minimal-portable-linux32-static.7z$/",
 	"linux64" => "/$regex_prefix\/linux64\/spring_(.*)_minimal-portable-linux64-static.7z$/"
