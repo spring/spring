@@ -71,8 +71,7 @@ bool CKeyCodes::IsValidLabel(const std::string& label)
 	if (!isalpha(label[0])) {
 		return false;
 	}
-	for (int i = 0; i < (int)label.size(); i++) {
-		const char c = label[i];
+	for (const char& c: label) {
 		if (!isalnum(c) && (c != '_')) {
 			return false;
 		}
