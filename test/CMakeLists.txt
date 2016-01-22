@@ -1,4 +1,7 @@
 # See README.md for usage instructions
+If (MINGW)
+	RemoveFlag("-mwindows")
+EndIf (MINGW)
 
 FIND_PACKAGE(Boost 1.35.0 COMPONENTS unit_test_framework)
 
