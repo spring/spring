@@ -71,18 +71,25 @@ struct S3DModelPiece {
 	S3DModelPiece();
 	virtual ~S3DModelPiece();
 
-	virtual unsigned int CreateDrawForList() const;
-	virtual void UploadGeometryVBOs() {}
+	virtual void DrawForList() const = 0;
+	virtual void UploadGeometryVBOs() = 0;
+
+	virtual void BindVertexAttribVBOs() const = 0;
+	virtual void UnbindVertexAttribVBOs() const = 0;
+
+	virtual float3 GetEmitPos() const;
+	virtual float3 GetEmitDir() const;
 
 	virtual unsigned int GetVertexCount() const = 0;
-	virtual unsigned int GetNormalCount() const = 0;
-	virtual unsigned int GetTxCoorCount() const = 0;
 	virtual unsigned int GetVertexDrawIndexCount() const = 0;
 
 	virtual const float3& GetVertexPos(const int) const = 0;
 	virtual const float3& GetNormal(const int) const = 0;
 
-	virtual void Shatter(float, int, int, const float3, const float3, const CMatrix44f&) const {}
+	virtual void Shatter(float, int, int, const float3, const float3, const CMatrix44f&) const = 0;
+
+public:
+	unsigned int CreateDrawForList() const;
 
 	CMatrix44f& ComposeRotation(CMatrix44f& m, const float3& r) const {
 		switch (axisMapType) {
@@ -135,14 +142,10 @@ struct S3DModelPiece {
 	unsigned int GetDisplayListID() const { return dispListID; }
 	void SetDisplayListID(unsigned int id) { dispListID = id; }
 
-	bool HasGeometryData() const { return hasGeometryData; }
+	bool HasGeometryData() const { return GetVertexDrawIndexCount() >= 3; }
 	bool HasIdentityRotation() const { return hasIdentityRot; }
 
-	void SetHasGeometryData(bool b) { hasGeometryData = b; }
 	void SetHasIdentityRotation(bool b) { hasIdentityRot = b; }
-
-protected:
-	virtual void DrawForList() const = 0;
 
 public:
 	std::string name;
@@ -163,7 +166,6 @@ public:
 	float3 rotAxisSigns;
 
 protected:
-	bool hasGeometryData;      /// if piece contains any geometry data
 	bool hasIdentityRot;       /// if bakedRotMatrix is identity
 
 	unsigned int dispListID;

@@ -11,58 +11,71 @@
 
 #include <vector>
 #include <string>
-#include <map>
 #include <set>
 
 
-class CMatrix44f;
 
-struct S3DOVertex {
+struct S3DOVertex
+{
+	S3DOVertex(float3 p, float3 n, float2 t)
+	: pos(p), normal(n), texCoord(t) {}
+
 	float3 pos;
-
-	// summed over the primNormal's of all primitives we share
 	float3 normal;
-
-	std::vector<int> prims;
+	float2 texCoord;
 };
 
-struct S3DOPrimitive {
-	std::vector<int> vertices;
+
+struct S3DOPrimitive
+{
+	std::vector<int>    indices;  ///< indices to S3DOPiece::vertexPos
 	std::vector<float3> vnormals; ///< per-vertex normals
 
 	// the raw normal for this primitive (-v0v1.cross(v0v2))
 	// used iff we have less than 3 or more than 4 vertices
 	float3 primNormal;
 
-	int numVertex;
 	C3DOTextureHandler::UnitTexture* texture;
 };
 
-struct S3DOPiece: public S3DModelPiece {
-	S3DOPiece(): radius(0.0f) {
-	}
 
-	void DrawForList() const;
+struct S3DOPiece: public S3DModelPiece
+{
+	void UploadGeometryVBOs();
+	void DrawForList() const override;
+
+	unsigned int GetVertexCount() const override { return vboAttributes.GetSize(); }
+	unsigned int GetVertexDrawIndexCount() const override { return vboIndices.GetSize(); }
+
+	const float3& GetVertexPos(const int idx) const override { return vertexAttribs[idx].pos; }
+	const float3& GetNormal(const int idx)    const override { return vertexAttribs[idx].normal; }
+
+	float3 GetEmitPos() const override { return emitPos; }
+	float3 GetEmitDir() const override { return emitDir; }
+
+	void BindVertexAttribVBOs() const override;
+	void UnbindVertexAttribVBOs() const override;
+
+	void Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const override;
+
+public:
 	void SetMinMaxExtends();
+	void CalcNormals();
 
-	unsigned int GetVertexCount() const override { return vertices.size(); }
-	unsigned int GetNormalCount() const override { return vertices.size(); }
-	unsigned int GetTxCoorCount() const override { return vertices.size(); }
-	unsigned int GetVertexDrawIndexCount() const override { return prims.size(); }
-
-	const float3& GetVertexPos(const int idx) const override { return vertices[idx].pos; }
-	const float3& GetNormal(const int idx)    const override { return vertices[idx].normal; }
-
-	void Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const;
-
-	std::vector<S3DOVertex> vertices;
+public:
+	std::vector<float3>    vertexPos; //FIXME
 	std::vector<S3DOPrimitive> prims;
-	float radius;
-	float3 relMidPos;
+	float3 emitPos;
+	float3 emitDir;
+
+	std::vector<S3DOVertex> vertexAttribs;
+	std::vector<unsigned>   vertexIndices;
 };
+
 
 class C3DOParser: public IModelParser
 {
+public:
 	typedef struct _3DObject
 	{
 		int VersionSignature;
@@ -98,15 +111,15 @@ public:
 	S3DModel* Load(const std::string& name);
 
 private:
-	void CalcNormals(S3DOPiece* o) const;
-	void GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim, const std::vector<unsigned char>& fileBuf, int& curOffset);
-	void GetVertexes(_3DObject* o, S3DOPiece* object, const std::vector<unsigned char>& fileBuf, int& curOffset);
-	std::string GetText(int pos, const std::vector<unsigned char>& fileBuf, int& curOffset);
+	S3DOPiece* LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, int* numobj, const std::vector<unsigned char>& fileBuf);
 
-	S3DOPiece* LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, int* numobj, const std::vector<unsigned char>& fileBuf, int& curOffset);
+	C3DOTextureHandler::UnitTexture* GetTexture(S3DOPiece* obj, _Primitive* p, const std::vector<unsigned char>& fileBuf) const;
+	static bool IsBasePlate(S3DOPiece* obj, S3DOPrimitive* face);
 
-	void SimStreamRead(void* buf, int length, const std::vector<unsigned char>& fileBuf, int& curOffset);
+	void GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim, const std::vector<unsigned char>& fileBuf);
+	void GetVertexes(_3DObject* o, S3DOPiece* object, const std::vector<unsigned char>& fileBuf);
 
+private:
 	std::set<std::string> teamtex;
 
 };

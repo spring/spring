@@ -35,8 +35,9 @@ public:
 	unsigned int GetTriangleCount() const { return (triangles.size()); }
 	unsigned int GetVertexDrawIndexCount() const override { return triangles.size() * 3; }
 	unsigned int GetVertexCount() const override { return vertices.size(); }
-	unsigned int GetNormalCount() const override { return vnormals.size(); }
-	unsigned int GetTxCoorCount() const override { return texcoors.size(); }
+
+	void BindVertexAttribVBOs() const override;
+	void UnbindVertexAttribVBOs() const override;
 
 	const float3& GetVertexPos(const int idx) const { return vertices[idx]; }
 	const float3& GetNormal(const int idx) const { return vnormals[idx]; }
@@ -71,10 +72,6 @@ private:
 
 	std::vector<SOBJTriangle> triangles;
 	std::vector<unsigned int> indices;
-
-	// remains empty until (the first call to) Shatter
-	// either mutable, or waste memory upfront, or convert to AoS form
-	mutable std::vector<SVertexData> svertices;
 };
 
 class LuaTable;

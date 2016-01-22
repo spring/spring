@@ -382,8 +382,6 @@ void COBJParser::BuildModelPieceTreeRec(
 ) {
 	const S3DModelPiece* parentPiece = piece->parent;
 
-	piece->SetHasGeometryData(piece->GetVertexCount() != 0);
-
 	// first read user-set extrema
 	const float3 mins = pieceTable.GetFloat3("mins", DEF_MIN_SIZE);
 	const float3 maxs = pieceTable.GetFloat3("maxs", DEF_MAX_SIZE);
@@ -471,7 +469,7 @@ void COBJParser::BuildModelPieceTreeRec(
 
 void SOBJPiece::UploadGeometryVBOs()
 {
-	if (!hasGeometryData)
+	if (!HasGeometryData())
 		return;
 
 	indices.reserve(GetTriangleCount() * 3);
@@ -523,11 +521,9 @@ void SOBJPiece::UploadGeometryVBOs()
 	triangles.clear();
 }
 
-void SOBJPiece::DrawForList() const
-{
-	if (!hasGeometryData)
-		return;
 
+void SOBJPiece::BindVertexAttribVBOs() const
+{
 	vbosTangents.Bind(GL_ARRAY_BUFFER);
 		glClientActiveTexture(GL_TEXTURE5);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -559,11 +555,11 @@ void SOBJPiece::DrawForList() const
 		glEnableClientState(GL_NORMAL_ARRAY);
 		glNormalPointer(GL_FLOAT, sizeof(float3), vboNormals.GetPtr());
 	vboNormals.Unbind();
+}
 
-	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
-		glDrawRangeElements(GL_TRIANGLES, 0, vertices.size() - 1, indices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
-	vboIndices.Unbind();
 
+void SOBJPiece::UnbindVertexAttribVBOs() const
+{
 	glClientActiveTexture(GL_TEXTURE6);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
@@ -578,6 +574,19 @@ void SOBJPiece::DrawForList() const
 
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
+}
+
+
+void SOBJPiece::DrawForList() const
+{
+	if (!HasGeometryData())
+		return;
+
+	BindVertexAttribVBOs();
+	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
+		glDrawRangeElements(GL_TRIANGLES, 0, vertices.size() - 1, indices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
+	vboIndices.Unbind();
+	UnbindVertexAttribVBOs();
 }
 
 void SOBJPiece::SetMinMaxExtends(bool globalVertexOffsets)
@@ -617,7 +626,7 @@ void SOBJPiece::SetMinMaxExtends(bool globalVertexOffsets)
 
 void SOBJPiece::SetVertexTangents()
 {
-	if (!hasGeometryData)
+	if (!HasGeometryData())
 		return;
 
 	sTangents.resize(GetVertexCount(), ZeroVector);
@@ -683,24 +692,8 @@ void SOBJPiece::SetVertexTangents()
 
 void SOBJPiece::Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const
 {
-	if (svertices.empty()) {
-		svertices.resize(vertices.size());
-
-		// Shatter only needs p+n+tc0
-		for (unsigned int n = 0; n < vertices.size(); n++) {
-			svertices[n].pos          = vertices[n];
-			svertices[n].normal       = vnormals[n];
-			svertices[n].texCoords[0] = texcoors[n];
-		}
-	}
-
-	// triangles only
-	assert(GetVertexDrawIndexCount() % 3 == 0);
-
-	const float2  pieceParams = {(maxs - mins).Length() * 0.5f, pieceChance};
-	const   int2 renderParams = {texType, team};
-
-	auto fp = new SNewFlyingPiece(svertices, indices, pos, speed, m, pieceParams, renderParams);
+	const int2 renderParams = {texType, team};
+	auto fp = new FlyingPiece(this, indices, pos, speed, m, pieceChance, renderParams);
 	projectileHandler->AddFlyingPiece(MODELTYPE_OBJ, fp);
 }
 

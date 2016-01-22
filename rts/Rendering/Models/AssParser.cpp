@@ -538,8 +538,6 @@ void CAssParser::LoadPieceGeometry(SAssPiece* piece, const aiNode* pieceNode, co
 			}
 		}
 	}
-
-	piece->SetHasGeometryData(!piece->vertices.empty());
 }
 
 SAssPiece* CAssParser::LoadPiece(
@@ -771,21 +769,15 @@ void CAssParser::FindTextures(
 
 void SAssPiece::Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const
 {
-	// triangles only
-	assert(GetVertexDrawIndexCount() % 3 == 0);
-
-	const float2  pieceParams = {(maxs - mins).Length() * 0.5f, pieceChance};
-	const   int2 renderParams = {texType, team};
-
-	auto fp = new SNewFlyingPiece(vertices, indices, pos, speed, m, pieceParams, renderParams);
+	const int2 renderParams = {texType, team};
+	auto fp = new FlyingPiece(this, indices, pos, speed, m, pieceChance, renderParams);
 	projectileHandler->AddFlyingPiece(MODELTYPE_ASS, fp);
 }
 
 
-
 void SAssPiece::UploadGeometryVBOs()
 {
-	if (!hasGeometryData)
+	if (!HasGeometryData())
 		return;
 
 	//FIXME share 1 VBO for ALL models
@@ -803,11 +795,8 @@ void SAssPiece::UploadGeometryVBOs()
 }
 
 
-void SAssPiece::DrawForList() const
+void SAssPiece::BindVertexAttribVBOs() const
 {
-	if (!hasGeometryData)
-		return;
-
 	vboAttributes.Bind(GL_ARRAY_BUFFER);
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glVertexPointer(3, GL_FLOAT, sizeof(SAssVertex), vboAttributes.GetPtr(offsetof(SAssVertex, pos)));
@@ -824,6 +813,7 @@ void SAssPiece::DrawForList() const
 
 		// extra UV channels (currently at most one)
 		for (unsigned int n = 1; n < GetNumTexCoorChannels(); n++) {
+			assert((GL_TEXTURE0 + NUM_MODEL_TEXTURES + (n - 1)) < GL_TEXTURE5);
 			glClientActiveTexture(GL_TEXTURE0 + NUM_MODEL_TEXTURES + (n - 1));
 			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
@@ -838,18 +828,11 @@ void SAssPiece::DrawForList() const
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		glTexCoordPointer(3, GL_FLOAT, sizeof(SAssVertex), vboAttributes.GetPtr(offsetof(SAssVertex, tTangent)));
 	vboAttributes.Unbind();
+}
 
-	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
-		/*
-		* since aiProcess_SortByPType is being used,
-		* we're sure we'll get only 1 type here,
-		* so combination check isn't needed, also
-		* anything more complex than triangles is
-		* being split thanks to aiProcess_Triangulate
-		*/
-		glDrawRangeElements(GL_TRIANGLES, 0, vertices.size() - 1, indices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
-	vboIndices.Unbind();
 
+void SAssPiece::UnbindVertexAttribVBOs() const
+{
 	glClientActiveTexture(GL_TEXTURE6);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
@@ -867,5 +850,25 @@ void SAssPiece::DrawForList() const
 
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
+}
+
+
+void SAssPiece::DrawForList() const
+{
+	if (!HasGeometryData())
+		return;
+
+	/*
+	 * since aiProcess_SortByPType is being used,
+	 * we're sure we'll get only 1 type here,
+	 * so combination check isn't needed, also
+	 * anything more complex than triangles is
+	 * being split thanks to aiProcess_Triangulate
+	 */
+	BindVertexAttribVBOs();
+	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
+	glDrawRangeElements(GL_TRIANGLES, 0, vertices.size() - 1, indices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
+	vboIndices.Unbind();
+	UnbindVertexAttribVBOs();
 }
 

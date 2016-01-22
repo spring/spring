@@ -696,7 +696,7 @@ int CProjectileHandler::GetCurrentParticles() const
 	}
 	for (const auto& c: flyingPieces) {
 		for (const auto& fp: c) {
-			partCount += fp->GetTriangleCount();
+			partCount += fp->GetDrawCallCount();
 		}
 	}
 	partCount += groundFlashes.size();

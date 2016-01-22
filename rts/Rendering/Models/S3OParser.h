@@ -30,16 +30,17 @@ public:
 
 	unsigned int GetVertexDrawIndexCount() const override { return indices.size(); }
 	unsigned int GetVertexCount() const override { return vertices.size(); }
-	unsigned int GetNormalCount() const override { return vertices.size(); }
-	unsigned int GetTxCoorCount() const override { return vertices.size(); }
 
 	const float3& GetVertexPos(const int idx) const override { return vertices[idx].pos; }
 	const float3& GetNormal(const int idx) const override { return vertices[idx].normal; }
 
+	void BindVertexAttribVBOs() const override;
+	void UnbindVertexAttribVBOs() const override;
+
 public:
 	void SetVertexCount(unsigned int n) { vertices.resize(n); }
 	void SetIndexCount(unsigned int n) { indices.resize(n); }
-	void SetVertex(int idx, const SS3OVertex& v) { vertices[idx] = v; } //FIXME
+	void SetVertex(int idx, const SS3OVertex& v) { vertices[idx] = v; }
 	void SetIndex(int idx, const unsigned int drawIdx) { indices[idx] = drawIdx; }
 
 	void Trianglize();

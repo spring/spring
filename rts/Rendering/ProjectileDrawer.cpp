@@ -550,34 +550,32 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 void CProjectileDrawer::DrawFlyingPieces(int modelType)
 {
 	FlyingPieceContainer* container = &projectileHandler->flyingPieces[modelType];
+	if (container == NULL || container->empty())
+		return;
 
-	if (container != NULL && !container->empty()) {
-		glPushAttrib(GL_POLYGON_BIT);
-		glDisable(GL_CULL_FACE);
+	glPushAttrib(GL_POLYGON_BIT);
+	glDisable(GL_CULL_FACE);
+	CVertexArray* va = GetVertexArray();
+	va->Initialize();
 
-		CVertexArray* va = GetVertexArray();
-		va->Initialize();
+	FlyingPiece* last = nullptr;
+	for (FlyingPiece* fp: *container) {
+		const bool inLos = teamHandler->AlliedTeams(gu->myAllyTeam, fp->GetTeam()) ||
+			gu->spectatingFullView || losHandler->InAirLos(fp->GetPos(), gu->myAllyTeam);
 
-		size_t lastTex = -1;
-		size_t lastTeam = -1;
+		if (!inLos)
+			continue;
 
-		for (FlyingPiece* fp: *container) {
-			const bool inLos = teamHandler->AlliedTeams(gu->myAllyTeam, fp->GetTeam()) ||
-				gu->spectatingFullView || losHandler->InAirLos(fp->GetPos(), gu->myAllyTeam);
+		if (!camera->InView(fp->GetPos(), fp->GetRadius()))
+			continue;
 
-			if (!inLos)
-				continue;
-
-			if (!camera->InView(fp->GetPos(), fp->GetRadius()))
-				continue;
-
-			fp->Draw(&lastTeam, &lastTex, va);
-		}
-
-		va->DrawArrayTN(GL_TRIANGLES);
-
-		glPopAttrib();
+		fp->Draw(last);
+		last = fp;
 	}
+
+	if (last != nullptr)
+		last->EndDraw();
+	glPopAttrib();
 }
 
 

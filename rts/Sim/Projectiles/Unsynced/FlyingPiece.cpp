@@ -6,20 +6,104 @@
 #include "Map/MapInfo.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/UnitDrawer.h"
-#include "Rendering/GL/VertexArray.h"
-#include "Rendering/Textures/3DOTextureHandler.h"
+#include "Rendering/Models/3DModel.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
-#include "Rendering/Models/3DOParser.h"
-
-//#pragma optimize("tree-vectorize O3")
+#include <boost/range/adaptor/reversed.hpp>
 
 
-static const float EXPLOSION_SPEED = 3.f;
+static const float EXPLOSION_SPEED = 2.f;
+static const int   MAX_SPLITTER_PARTS = 10;
 
 
 /////////////////////////////////////////////////////////////////////
-/// SHARED
+/// NEW S3O,OBJ,ASSIMP,... IMPLEMENTATION
 ///
+
+FlyingPiece::FlyingPiece(
+	const S3DModelPiece* p,
+	const std::vector<unsigned int>& inds,
+	const float3 pos,
+	const float3 speed,
+	const CMatrix44f& _pieceMatrix,
+	const float pieceChance,
+	const int2 _renderParams // (.x=texType, .y=team)
+)
+: piece(p)
+, indices(inds)
+, pos0(pos)
+, age(0)
+, pieceMatrix(_pieceMatrix)
+{
+	assert(piece->HasGeometryData()); // else binding the vbos cause gl errors
+	assert(piece->GetVertexDrawIndexCount() % 3 == 0); // only triangles
+	pieceRadius = float3::max(float3::fabs(piece->maxs), float3::fabs(piece->mins)).Length();
+	InitCommon(pos, speed, pieceRadius, _renderParams.y, _renderParams.x);
+
+	// initialize splitter parts
+	splitterParts.resize(MAX_SPLITTER_PARTS);
+	for (auto& cp: splitterParts) {
+		cp.dir = gu->RandVector().ANormalize();
+		cp.speed = speed + cp.dir * EXPLOSION_SPEED * gu->RandFloat();
+		cp.rotationAxisAndSpeed = float4(gu->RandVector().ANormalize(), gu->RandFloat() * 0.1f);
+	}
+
+	// add vertices to splitter parts
+	for (size_t i = 0; i < indices.size(); i += 3) {
+		auto dir = GetPolygonDir(i);
+
+		float md = -2.f;
+		SplitterData* mcp = nullptr;
+		for (auto& cp: splitterParts) {
+			if (cp.dir.dot(dir) < md)
+				continue;
+
+			md = cp.dir.dot(dir);
+			mcp = &cp;
+		}
+
+		mcp->indices.push_back(indices[i + 0]);
+		mcp->indices.push_back(indices[i + 1]);
+		mcp->indices.push_back(indices[i + 2]);
+	}
+
+	// randomly remove pieces depending on the pieceChance
+	for (auto& cp: splitterParts) {
+		if (gu->RandFloat() > pieceChance) {
+			cp.indices.clear();
+		}
+	}
+
+	// calculate needed vbo size for the vertex indices
+	size_t neededVboSize = 0;
+	for (auto& cp: splitterParts) {
+		cp.indexCount = cp.indices.size();
+		cp.vboOffset = neededVboSize;
+		neededVboSize += cp.indexCount * sizeof(unsigned int);
+	}
+
+	// fill the vertex index vbo
+	indexVBO.Bind(GL_ELEMENT_ARRAY_BUFFER);
+	indexVBO.Resize(neededVboSize);
+	auto* memVBO = reinterpret_cast<unsigned char*>(indexVBO.MapBuffer(GL_WRITE_ONLY));
+	for (auto& cp: splitterParts) {
+		memcpy(memVBO + cp.vboOffset, &cp.indices[0], cp.indexCount * sizeof(unsigned int));
+
+		// free memory
+		cp.indices.clear();
+		cp.indices.shrink_to_fit();
+	}
+	indexVBO.UnmapBuffer();
+	indexVBO.Unbind();
+
+	// delete empty splitter parts
+	for (auto& cp: boost::adaptors::reverse(splitterParts)) {
+		if (cp.indexCount == 0) {
+			cp = splitterParts.back();
+			splitterParts.pop_back();
+		}
+	}
+}
+
 
 void FlyingPiece::InitCommon(const float3 _pos, const float3 _speed, const float _radius, int _team, int _texture)
 {
@@ -32,146 +116,17 @@ void FlyingPiece::InitCommon(const float3 _pos, const float3 _speed, const float
 }
 
 
-void FlyingPiece::DrawCommon(size_t* lastTeam, size_t* lastTex, CVertexArray* const va)
+unsigned FlyingPiece::GetDrawCallCount() const
 {
-	if (team == *lastTeam && texture == *lastTex)
-		return;
-
-	va->DrawArrayTN(GL_TRIANGLES);
-	va->Initialize();
-
-	if (team != *lastTeam) {
-		*lastTeam = team;
-		unitDrawer->SetTeamColour(team);
-	}
-
-	if (texture != *lastTex) {
-		*lastTex = texture;
-		texturehandlerS3O->SetS3oTexture(texture);
-	}
+	return splitterParts.size();
 }
 
 
-
-/////////////////////////////////////////////////////////////////////
-/// OLD 3DO IMPLEMENTATION (SLOW)
-///
-
-S3DOFlyingPiece::S3DOFlyingPiece(const float3& pos, const float3& speed, int team, const S3DOPiece* _piece, const S3DOPrimitive* _chunk)
-: piece(_piece)
-, chunk(_chunk)
+bool FlyingPiece::Update()
 {
-	rotAxis  = gu->RandVector().ANormalize();
-	rotSpeed = gu->RandFloat() * 0.1f;
-	rotAngle = 0.0f;
+	if (splitterParts.empty())
+		return false;
 
-	const std::vector<S3DOVertex>& vertices = piece->vertices;
-	const std::vector<int>&         indices = chunk->vertices;
-	float3 maxDist;
-	for (int i = 0; i < 4; i++) {
-		maxDist = float3::max(float3::fabs(vertices[indices[i]].pos), maxDist);
-	}
-	InitCommon(pos, speed + gu->RandVector() * EXPLOSION_SPEED, maxDist.Length(), team, -1);
-}
-
-
-unsigned S3DOFlyingPiece::GetTriangleCount() const
-{
-	return 2;
-}
-
-
-bool S3DOFlyingPiece::Update()
-{
-	pos      += speed;
-	speed    *= 0.996f;
-	speed.y  += mapInfo->map.gravity;
-	rotAngle += rotSpeed;
-
-	transMat.LoadIdentity();
-	transMat.Rotate(rotAngle, rotAxis);
-
-	return ((pos.y + radius) >= CGround::GetApproximateHeight(pos.x, pos.z, false));
-}
-
-
-void S3DOFlyingPiece::Draw(size_t* lastTeam, size_t* lastTex, CVertexArray* const va)
-{
-	DrawCommon(lastTeam, lastTex, va);
-	va->EnlargeArrays(6, 0, VA_SIZE_TN);
-
-	const float3 interPos = pos + speed * globalRendering->timeOffset;
-	const C3DOTextureHandler::UnitTexture* tex = chunk->texture;
-	const std::vector<S3DOVertex>& vertices = piece->vertices;
-	const std::vector<int>&         indices = chunk->vertices;
-
-	const float uvCoords[8] = {
-		tex->xstart, tex->ystart,
-		tex->xend,   tex->ystart,
-		tex->xend,   tex->yend,
-		tex->xstart, tex->yend
-	};
-
-	for (int i: {0,1,2, 0,2,3}) {
-		const S3DOVertex& v = vertices[indices[i]];
-		const float3 tp = transMat.Mul(v.pos) + interPos;
-		const float3 tn = transMat.Mul(v.normal);
-		va->AddVertexQTN(tp, uvCoords[i << 1], uvCoords[(i << 1) + 1], tn);
-	}
-}
-
-
-
-/////////////////////////////////////////////////////////////////////
-/// NEW S3O,OBJ,ASSIMP,... IMPLEMENTATION
-///
-
-SNewFlyingPiece::SNewFlyingPiece(
-	const std::vector<SVertexData>& verts,
-	const std::vector<unsigned int>& inds,
-	const float3 pos,
-	const float3 speed,
-	const CMatrix44f& _pieceMatrix,
-	const float2 _pieceParams, // (.x=radius, .y=chance)
-	const int2 _renderParams // (.x=texType, .y=team)
-)
-: vertices(verts)
-, indices(inds)
-, pos0(pos)
-, age(0)
-, pieceRadius(_pieceParams.x)
-, pieceMatrix(_pieceMatrix)
-{
-	InitCommon(pos, speed, pieceRadius, _renderParams.y, _renderParams.x);
-
-	const size_t expectedSize = std::max<size_t>(1, _pieceParams.y * (indices.size() / 3));
-
-	polygon.reserve(expectedSize);
-	speeds.reserve(expectedSize);
-	rotationAxisAndSpeed.reserve(expectedSize);
-
-	for (size_t i = 0; i < indices.size(); i += 3) {
-		if (gu->RandFloat() > _pieceParams.y)
-			continue;
-
-		polygon.push_back(i);
-		speeds.push_back(speed + (GetPolygonDir(i) * EXPLOSION_SPEED * gu->RandFloat()));
-		rotationAxisAndSpeed.emplace_back(gu->RandVector().ANormalize(), gu->RandFloat() * 0.1f);
-
-		if (speeds.size() >= expectedSize)
-			break;
-	}
-}
-
-
-unsigned SNewFlyingPiece::GetTriangleCount() const
-{
-	return polygon.size();
-}
-
-
-bool SNewFlyingPiece::Update()
-{
 	++age;
 
 	const float3 dragFactors = GetDragFactors();
@@ -182,10 +137,10 @@ bool SNewFlyingPiece::Update()
 
 	// check visibility (if all particles are underground -> kill)
 	if (age % GAME_SPEED != 0) {
-		for (size_t i = 0; i < speeds.size(); ++i) {
-			const CMatrix44f& m = GetMatrixOf(i, dragFactors);
+		for (auto& cp: splitterParts) {
+			const CMatrix44f& m = GetMatrixOf(cp, dragFactors);
 			const float3 p = m.GetPos();
-			if ((p.y + 10.f) >= CGround::GetApproximateHeight(p.x, p.z, false)) {
+			if ((p.y + pieceRadius * 2.f) >= CGround::GetApproximateHeight(p.x, p.z, false)) {
 				return true;
 			}
 		}
@@ -196,25 +151,25 @@ bool SNewFlyingPiece::Update()
 }
 
 
-const SVertexData& SNewFlyingPiece::GetVertexData(unsigned short i) const
+const float3& FlyingPiece::GetVertexPos(const size_t i) const
 {
-	assert((i < indices.size()) && (indices[i] < vertices.size()));
-	return vertices[ indices[i] ];
+	assert(i < indices.size());
+	return piece->GetVertexPos( indices[i] );
 }
 
 
-float3 SNewFlyingPiece::GetPolygonDir(unsigned short idx) const
+float3 FlyingPiece::GetPolygonDir(const size_t idx) const
 {
 	float3 midPos;
 	for (int j: {0,1,2}) {
-		midPos += GetVertexData(idx + j).pos;
+		midPos += GetVertexPos(idx + j);
 	}
 	midPos *= 0.333f;
 	return midPos.ANormalize();
 }
 
 
-float3 SNewFlyingPiece::GetDragFactors() const
+float3 FlyingPiece::GetDragFactors() const
 {
 	// We started with a naive (iterative) method like this:
 	//  pos   += speed;
@@ -278,36 +233,61 @@ float3 SNewFlyingPiece::GetDragFactors() const
 }
 
 
-CMatrix44f SNewFlyingPiece::GetMatrixOf(const size_t i, const float3 dragFactors) const
+CMatrix44f FlyingPiece::GetMatrixOf(const SplitterData& cp, const float3 dragFactors) const
 {
-	const float3 interPos = speeds[i] * dragFactors.x + UpVector * (mapInfo->map.gravity * dragFactors.y);
-	const float4& rot = rotationAxisAndSpeed[i];
+	float3 interPos = cp.speed * dragFactors.x;
+	interPos.y += mapInfo->map.gravity * dragFactors.y;
 
+	const float4& rot = cp.rotationAxisAndSpeed;
 	CMatrix44f m = pieceMatrix;
-	m.SetPos(m.GetPos() + interPos); //note: not the same as .Translate(pos) which does `m = m * translate(pos)`, but we want `m = translate(pos) * m`
+	m.GetPos() += interPos; //note: not the same as .Translate(pos) which does `m = m * translate(pos)`, but we want `m = translate(pos) * m`
 	m.Rotate(rot.w * dragFactors.z, rot.xyz);
 
 	return m;
 }
 
 
-void SNewFlyingPiece::Draw(size_t* lastTeam, size_t* lastTex, CVertexArray* const va)
+void FlyingPiece::CheckDrawStateChange(FlyingPiece* prev) const
 {
-	DrawCommon(lastTeam, lastTex, va);
-	va->EnlargeArrays(speeds.size() * 3, 0, VA_SIZE_TN);
+	if (prev == nullptr) {
+		unitDrawer->SetTeamColour(team);
+		if (texture != -1) texturehandlerS3O->SetS3oTexture(texture);
+		piece->BindVertexAttribVBOs();
+		return;
+	}
 
-	const float3 dragFactors = GetDragFactors(); // speed, gravity
+	if (team != prev->GetTeam()) {
+		unitDrawer->SetTeamColour(team);
+	}
 
-	for (size_t i = 0; i < speeds.size(); ++i) {
-		const auto idx = polygon[i];
-		const CMatrix44f& m = GetMatrixOf(i, dragFactors);
+	if (texture != prev->GetTexture()) {
+		if (texture != -1) texturehandlerS3O->SetS3oTexture(texture);
+	}
 
-		for (int j: {0,1,2}) {
-			const SVertexData& v = GetVertexData(idx + j);
-			const float3 tp = m * v.pos;
-			const float3 tn = m * float4(v.normal, 0.0f);
-			va->AddVertexQTN(tp, v.texCoords[0].x, v.texCoords[0].y, tn); //FIXME use the model's VBOs & move matrix mult to shader
-		}
+	if (piece != prev->piece) {
+		prev->piece->UnbindVertexAttribVBOs();
+		piece->BindVertexAttribVBOs();
 	}
 }
 
+
+void FlyingPiece::EndDraw() const
+{
+	piece->UnbindVertexAttribVBOs();
+}
+
+
+void FlyingPiece::Draw(FlyingPiece* prev)
+{
+	CheckDrawStateChange(prev);
+	const float3 dragFactors = GetDragFactors(); // speedDrag, gravityDrag, interAge
+
+	indexVBO.Bind(GL_ELEMENT_ARRAY_BUFFER);
+	for (auto& cp: splitterParts) {
+		glPushMatrix();
+		glMultMatrixf(GetMatrixOf(cp, dragFactors));
+		glDrawRangeElements(GL_TRIANGLES, 0, piece->GetVertexCount() - 1, cp.indexCount, GL_UNSIGNED_INT, indexVBO.GetPtr(cp.vboOffset));
+		glPopMatrix();
+	}
+	indexVBO.Unbind();
+}

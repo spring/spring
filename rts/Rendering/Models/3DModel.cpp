@@ -70,7 +70,6 @@ S3DModelPiece::S3DModelPiece()
 	, mins(DEF_MIN_SIZE)
 	, maxs(DEF_MAX_SIZE)
 	, rotAxisSigns(-OnesVector)
-	, hasGeometryData(false)
 	, hasIdentityRot(true)
 	, dispListID(0)
 {
@@ -102,7 +101,7 @@ void S3DModelPiece::DrawStatic() const
 	glPushMatrix();
 	glMultMatrixf(mat);
 
-	if (hasGeometryData)
+	if (HasGeometryData())
 		glCallList(dispListID);
 
 	for (unsigned int n = 0; n < children.size(); n++) {
@@ -112,6 +111,35 @@ void S3DModelPiece::DrawStatic() const
 	glPopMatrix();
 }
 
+
+float3 S3DModelPiece::GetEmitPos() const
+{
+	switch (GetVertexCount()) {
+		case 0:
+		case 1: {
+			return ZeroVector;
+		} break;
+		default: {
+			return GetVertexPos(0);
+		} break;
+	}
+}
+
+
+float3 S3DModelPiece::GetEmitDir() const
+{
+	switch (GetVertexCount()) {
+		case 0: {
+			return FwdVector;
+		} break;
+		case 1: {
+			return GetVertexPos(0);
+		} break;
+		default: {
+			return GetVertexPos(1) - GetVertexPos(0);
+		} break;
+	}
+}
 
 
 /** ****************************************************************************************************
@@ -349,23 +377,8 @@ bool LocalModelPiece::GetEmitDirPos(float3& emitPos, float3& emitDir) const
 	if (original == NULL)
 		return false;
 
-	switch (original->GetVertexCount()) {
-		case 0: {
-			emitPos = modelSpaceMat.GetPos();
-			emitDir = modelSpaceMat.Mul(FwdVector) - emitPos;
-		} break;
-		case 1: {
-			emitPos = modelSpaceMat.GetPos();
-			emitDir = modelSpaceMat.Mul(original->GetVertexPos(0)) - emitPos;
-		} break;
-		default: {
-			const float3 p1 = modelSpaceMat.Mul(original->GetVertexPos(0));
-			const float3 p2 = modelSpaceMat.Mul(original->GetVertexPos(1));
-
-			emitPos = p1;
-			emitDir = p2 - p1;
-		} break;
-	}
+	emitPos = original->GetEmitPos();
+	emitDir = original->GetEmitDir();
 
 	// note: actually OBJECT_TO_WORLD but transform is the same
 	emitPos *= WORLD_TO_OBJECT_SPACE;

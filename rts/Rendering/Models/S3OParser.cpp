@@ -103,7 +103,6 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 		piece->goffset = piece->offset + ((parent != NULL)? parent->goffset: ZeroVector);
 
 		piece->Trianglize();
-		piece->SetHasGeometryData(piece->GetVertexDrawIndexCount() != 0);
 		piece->SetVertexTangents();
 		piece->SetMinMaxExtends();
 
@@ -131,7 +130,7 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 
 void SS3OPiece::UploadGeometryVBOs()
 {
-	if (!hasGeometryData)
+	if (!HasGeometryData())
 		return;
 
 	//FIXME share 1 VBO for ALL models
@@ -148,11 +147,8 @@ void SS3OPiece::UploadGeometryVBOs()
 	// indices.clear();
 }
 
-void SS3OPiece::DrawForList() const
+void SS3OPiece::BindVertexAttribVBOs() const
 {
-	if (!hasGeometryData)
-		return;
-
 	vboAttributes.Bind(GL_ARRAY_BUFFER);
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glVertexPointer(3, GL_FLOAT, sizeof(SS3OVertex), vboAttributes.GetPtr(offsetof(SS3OVertex, pos)));
@@ -176,7 +172,34 @@ void SS3OPiece::DrawForList() const
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		glTexCoordPointer(3, GL_FLOAT, sizeof(SS3OVertex), vboAttributes.GetPtr(offsetof(SS3OVertex, tTangent)));
 	vboAttributes.Unbind();
+}
 
+
+void SS3OPiece::UnbindVertexAttribVBOs() const
+{
+	glClientActiveTexture(GL_TEXTURE6);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	glClientActiveTexture(GL_TEXTURE5);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	glClientActiveTexture(GL_TEXTURE1);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	glClientActiveTexture(GL_TEXTURE0);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
+}
+
+
+void SS3OPiece::DrawForList() const
+{
+	if (!HasGeometryData())
+		return;
+
+	BindVertexAttribVBOs();
 	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
 	switch (primType) {
 		case S3O_PRIMTYPE_TRIANGLES: {
@@ -204,21 +227,7 @@ void SS3OPiece::DrawForList() const
 		} break;
 	}
 	vboIndices.Unbind();
-
-	glClientActiveTexture(GL_TEXTURE6);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glClientActiveTexture(GL_TEXTURE5);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glClientActiveTexture(GL_TEXTURE1);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glClientActiveTexture(GL_TEXTURE0);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glDisableClientState(GL_VERTEX_ARRAY);
-	glDisableClientState(GL_NORMAL_ARRAY);
+	UnbindVertexAttribVBOs();
 }
 
 
@@ -237,8 +246,11 @@ void SS3OPiece::Trianglize()
 		case S3O_PRIMTYPE_TRIANGLES: {
 		} break;
 		case S3O_PRIMTYPE_TRIANGLE_STRIP: {
-			if (indices.size() < 3) //FIXME
+			if (indices.size() < 3) {
+				primType = S3O_PRIMTYPE_TRIANGLES;
+				indices.clear();
 				return;
+			}
 
 			decltype(indices) newIndices;
 			newIndices.resize(indices.size() * 3); // each index (can) create a new triangle
@@ -257,8 +269,11 @@ void SS3OPiece::Trianglize()
 			indices.swap(newIndices);
 		} break;
 		case S3O_PRIMTYPE_QUADS: {
-			if (indices.size() % 4 != 0) //FIXME
+			if (indices.size() % 4 != 0) {
+				primType = S3O_PRIMTYPE_TRIANGLES;
+				indices.clear();
 				return;
+			}
 
 			decltype(indices) newIndices;
 			const size_t oldCount = indices.size();
@@ -286,7 +301,7 @@ void SS3OPiece::Trianglize()
 
 void SS3OPiece::SetVertexTangents()
 {
-	if (!hasGeometryData)
+	if (!HasGeometryData())
 		return;
 
 	if (primType == S3O_PRIMTYPE_QUADS)
@@ -394,16 +409,12 @@ void SS3OPiece::SetVertexTangents()
 
 void SS3OPiece::Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const
 {
+	// triangles only
 	if (primType != S3O_PRIMTYPE_TRIANGLES)
 		return;
 
-	// triangles only
-	assert(GetVertexDrawIndexCount() % 3 == 0);
-
-	const float2  pieceParams = {(maxs - mins).Length(), pieceChance};
-	const   int2 renderParams = {texType, team};
-
-	auto fp = new SNewFlyingPiece(vertices, indices, pos, speed, m, pieceParams, renderParams);
+	const int2 renderParams = {texType, team};
+	auto fp = new FlyingPiece(this, indices, pos, speed, m, pieceChance, renderParams);
 	projectileHandler->AddFlyingPiece(MODELTYPE_S3O, fp);
 }
 

@@ -20,15 +20,12 @@ class CPlasmaRepulser;
 class CGroundFlash;
 struct UnitDef;
 struct FlyingPiece;
-struct S3DOPrimitive;
-struct S3DOPiece;
-struct SVertexData;
 
 
 typedef std::vector<CProjectile*> ProjectileMap;
 typedef std::vector<CProjectile*> ProjectileContainer; // <unsorted>
 typedef std::vector<CGroundFlash*> GroundFlashContainer;
-typedef std::vector<FlyingPiece*> FlyingPieceContainer;
+typedef std::vector<FlyingPiece*> FlyingPieceContainer; //FIXME make queue of non-ptrs! (-> much better cache hit rate)
 
 
 class CProjectileHandler

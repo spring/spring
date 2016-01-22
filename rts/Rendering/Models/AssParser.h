@@ -29,11 +29,12 @@ struct SAssPiece: public S3DModelPiece
 	const float3& GetNormal(const int idx) const override { return vertices[idx].normal; }
 
 	unsigned int GetVertexCount() const override { return vertices.size(); }
-	unsigned int GetNormalCount() const override { return vertices.size(); }
-	unsigned int GetTxCoorCount() const override { return vertices.size(); }
 	unsigned int GetVertexDrawIndexCount() const override { return indices.size(); }
 
 	void Shatter(float, int, int, const float3, const float3, const CMatrix44f&) const override;
+
+	void BindVertexAttribVBOs() const override;
+	void UnbindVertexAttribVBOs() const override;
 
 	unsigned int GetNumTexCoorChannels() const { return numTexCoorChannels; }
 	void SetNumTexCoorChannels(unsigned int n) { numTexCoorChannels = n; }
