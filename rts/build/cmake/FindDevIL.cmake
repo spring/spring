@@ -3,16 +3,14 @@
 #
 # Modifications:
 # 2008.01.16 Tobi Vollebregt -- changed Devil->DEVIL for consistency
-#                            -- added devil, ilu, ilut alternative names for MinGW
+#                            -- added devil alternative names for MinGW
 #                            -- removed "looking for devil" status message
 
 # - Find DevIL
 # Find the native DevIL includes and libraries.
 #
-#  IL_INCLUDE_DIR  - Where to find "IL/il.h", "IL/ilu.h" and "IL/ilut.h"
+#  IL_INCLUDE_DIR  - Where to find "IL/il.h"
 #  IL_IL_LIBRARY   - Path to the IL shared library
-#  IL_ILU_LIBRARY  - Path to the ILU shared library
-#  IL_ILUT_LIBRARY - Path to the ILUT shared library
 #  IL_LIBRARIES    - List of libraries when using IL
 #  IL_FOUND        - True if IL is found.
 
