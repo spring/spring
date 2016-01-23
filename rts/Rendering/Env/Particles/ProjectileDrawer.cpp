@@ -549,8 +549,9 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 
 void CProjectileDrawer::DrawFlyingPieces(int modelType)
 {
-	FlyingPieceContainer* container = &projectileHandler->flyingPieces[modelType];
-	if (container == NULL || container->empty())
+	const FlyingPieceContainer& container = projectileHandler->flyingPieces[modelType];
+
+	if (container.empty())
 		return;
 
 	glPushAttrib(GL_POLYGON_BIT);
@@ -558,23 +559,25 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType)
 	CVertexArray* va = GetVertexArray();
 	va->Initialize();
 
-	FlyingPiece* last = nullptr;
-	for (FlyingPiece* fp: *container) {
-		const bool inLos = teamHandler->AlliedTeams(gu->myAllyTeam, fp->GetTeam()) ||
-			gu->spectatingFullView || losHandler->InAirLos(fp->GetPos(), gu->myAllyTeam);
+	const FlyingPiece* last = nullptr;
+
+	for (const FlyingPiece& fp: container) {
+		const bool inLos = teamHandler->AlliedTeams(gu->myAllyTeam, fp.GetTeam()) ||
+			gu->spectatingFullView || losHandler->InAirLos(fp.GetPos(), gu->myAllyTeam);
 
 		if (!inLos)
 			continue;
 
-		if (!camera->InView(fp->GetPos(), fp->GetRadius()))
+		if (!camera->InView(fp.GetPos(), fp.GetRadius()))
 			continue;
 
-		fp->Draw(last);
-		last = fp;
+		fp.Draw(last);
+		last = &fp;
 	}
 
 	if (last != nullptr)
 		last->EndDraw();
+
 	glPopAttrib();
 }
 

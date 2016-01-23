@@ -99,6 +99,10 @@ CProjectileHandler::CProjectileHandler()
 	}
 	std::random_shuffle(freeUnsyncedIDs.begin(), freeUnsyncedIDs.end(), gu->rng);
 
+	for (int modelType = 0; modelType < MODELTYPE_OTHER; ++modelType) {
+		flyingPieces[modelType].reserve(1000);
+	}
+
 	// register ConfigNotify()
 	configHandler->NotifyOnChange(this);
 }
@@ -131,8 +135,6 @@ CProjectileHandler::~CProjectileHandler()
 
 	{
 		for (auto& fpc: flyingPieces) {
-			for (FlyingPiece* fp: fpc)
-				delete fp;
 			fpc.clear();
 		}
 	}
@@ -265,14 +267,19 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 
 
 template<class T>
-static void UPDATE_CONTAINER(T& cont) {
+static void UPDATE_PTR_CONTAINER(T& cont) {
+	if (cont.empty())
+		return;
+
 #ifndef NDEBUG
-	const auto* origStart = cont.empty() ? nullptr : &(*cont.begin());
+	const auto* origStart = &(*cont.begin());
 #endif
 
 	auto pti = cont.begin();
+
 	while (pti != cont.end()) {
 		auto* p = *pti;
+
 		if (!p->Update()) {
 			*pti = cont.back();
 			cont.pop_back();
@@ -284,7 +291,32 @@ static void UPDATE_CONTAINER(T& cont) {
 
 	//WARNING: check if the vector got enlarged while iterating, in that case
 	// all iterators got invalidated in the loop, causing crashes
-	assert(cont.empty() || &(*cont.begin()) == origStart);
+	assert(&(*cont.begin()) == origStart);
+}
+
+template<class T>
+static void UPDATE_REF_CONTAINER(T& cont) {
+	if (cont.empty())
+		return;
+
+#ifndef NDEBUG
+	const auto& origStart = *(cont.begin());
+#endif
+
+	auto pti = cont.begin();
+
+	while (pti != cont.end()) {
+		auto& p = *pti;
+
+		if (!p.Update()) {
+			*pti = std::move(cont.back());
+			cont.pop_back();
+		} else {
+			++pti;
+		}
+	}
+
+	assert((*cont.begin()) == origStart);
 }
 
 
@@ -299,15 +331,18 @@ void CProjectileHandler::Update()
 		UpdateProjectileContainer(unsyncedProjectiles, false);
 
 		// groundflashes
-		UPDATE_CONTAINER(groundFlashes);
+		UPDATE_PTR_CONTAINER(groundFlashes);
 
-		// flying pieces
-		// sort these every now and then
+		// flying pieces; sort these every now and then
 		FlyingPieceComparator fsort;
 		for (int modelType = 0; modelType < MODELTYPE_OTHER; ++modelType) {
 			auto& fpc = flyingPieces[modelType];
-			UPDATE_CONTAINER(fpc);
-			if (resortFlyingPieces[modelType]) std::sort(fpc.begin(), fpc.end(), fsort);
+
+			UPDATE_REF_CONTAINER(fpc);
+
+			if (resortFlyingPieces[modelType]) {
+				std::sort(fpc.begin(), fpc.end(), fsort);
+			}
 		}
 	}
 
@@ -580,9 +615,17 @@ void CProjectileHandler::AddGroundFlash(CGroundFlash* flash)
 }
 
 
-void CProjectileHandler::AddFlyingPiece(int modelType, FlyingPiece* fp)
-{
-	flyingPieces[modelType].push_back(fp);
+void CProjectileHandler::AddFlyingPiece(
+	int modelType,
+	const S3DModelPiece* piece,
+	const std::vector<unsigned int>& inds,
+	const CMatrix44f& m,
+	const float3 pos,
+	const float3 speed,
+	const float2 pieceParams,
+	const int2 renderParams
+) {
+	flyingPieces[modelType].emplace_back(piece, inds, m, pos, speed, pieceParams, renderParams);
 	resortFlyingPieces[modelType] = true;
 }
 
@@ -696,7 +739,7 @@ int CProjectileHandler::GetCurrentParticles() const
 	}
 	for (const auto& c: flyingPieces) {
 		for (const auto& fp: c) {
-			partCount += fp->GetDrawCallCount();
+			partCount += fp.GetDrawCallCount();
 		}
 	}
 	partCount += groundFlashes.size();

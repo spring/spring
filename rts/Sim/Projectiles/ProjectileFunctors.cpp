@@ -11,11 +11,11 @@ bool ProjectileDistanceComparator::operator() (const CProjectile* arg1, const CP
 	return (arg1 > arg2);
 }
 
-bool FlyingPieceComparator::operator() (const FlyingPiece* fp1, const FlyingPiece* fp2) const {
-	if (fp1->GetTexture() != fp2->GetTexture())
-		return (fp1->GetTexture() > fp2->GetTexture());
-	if (fp1->GetTeam() != fp2->GetTeam())
-		return (fp1->GetTeam() > fp2->GetTeam());
-	return (fp1 > fp2);
+bool FlyingPieceComparator::operator() (const FlyingPiece& fp1, const FlyingPiece& fp2) const {
+	if (fp1.GetTexture() != fp2.GetTexture())
+		return (fp1.GetTexture() > fp2.GetTexture());
+	if (fp1.GetTeam() != fp2.GetTeam())
+		return (fp1.GetTeam() > fp2.GetTeam());
+	return ((&fp1) > (&fp2));
 }
 

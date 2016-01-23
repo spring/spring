@@ -769,9 +769,10 @@ void CAssParser::FindTextures(
 
 void SAssPiece::Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const
 {
-	const int2 renderParams = {texType, team};
-	auto fp = new FlyingPiece(this, indices, pos, speed, m, pieceChance, renderParams);
-	projectileHandler->AddFlyingPiece(MODELTYPE_ASS, fp);
+	const float2  pieceParams = {float3::max(float3::fabs(maxs), float3::fabs(mins)).Length(), pieceChance};
+	const   int2 renderParams = {texType, team};
+
+	projectileHandler->AddFlyingPiece(MODELTYPE_ASS, this,  indices,  m, pos, speed,  pieceParams, renderParams);
 }
 
 

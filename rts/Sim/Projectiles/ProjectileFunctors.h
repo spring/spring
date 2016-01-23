@@ -11,7 +11,7 @@ struct ProjectileDistanceComparator {
 };
 
 struct FlyingPieceComparator {
-	bool operator() (const FlyingPiece* fp1, const FlyingPiece* fp2) const;
+	bool operator() (const FlyingPiece& fp1, const FlyingPiece& fp2) const;
 };
 
 #endif

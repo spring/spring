@@ -413,8 +413,9 @@ void SS3OPiece::Shatter(float pieceChance, int texType, int team, const float3 p
 	if (primType != S3O_PRIMTYPE_TRIANGLES)
 		return;
 
-	const int2 renderParams = {texType, team};
-	auto fp = new FlyingPiece(this, indices, pos, speed, m, pieceChance, renderParams);
-	projectileHandler->AddFlyingPiece(MODELTYPE_S3O, fp);
+	const float2  pieceParams = {float3::max(float3::fabs(maxs), float3::fabs(mins)).Length(), pieceChance};
+	const   int2 renderParams = {texType, team};
+
+	projectileHandler->AddFlyingPiece(MODELTYPE_S3O, this,  indices,  m, pos, speed,  pieceParams, renderParams);
 }
 

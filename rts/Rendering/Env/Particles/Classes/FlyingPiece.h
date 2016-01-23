@@ -16,26 +16,30 @@ struct S3DModelPiece;
 struct FlyingPiece {
 public:
 	FlyingPiece(
-		const S3DModelPiece* p,
-		const std::vector<unsigned int>& indices,
+		const S3DModelPiece* _piece,
+		const std::vector<unsigned int>& _indices,
+		const CMatrix44f& _pieceMatrix,
 		const float3 pos,
 		const float3 speed,
-		const CMatrix44f& _pieceMatrix,
-		const float pieceChance,
+		const float2 _pieceParams,
 		const int2 _renderParams
 	);
+	// needed for sorting
+	FlyingPiece(FlyingPiece&& fp): indices(std::move(fp.indices)) { *this = std::move(fp); }
+	// needed for updating
+	FlyingPiece& operator = (FlyingPiece&& fp);
 
 	bool Update();
-	void Draw(FlyingPiece* prev);
+	void Draw(const FlyingPiece* prev) const;
 	void EndDraw() const;
-	unsigned GetDrawCallCount() const;
+	unsigned GetDrawCallCount() const { return splitterParts.size(); }
 
 public:
 	int GetTeam() const { return team; }
 	int GetTexture() const { return texture; }
 
 	float3 GetPos() const { return pos; }
-	float GetRadius() const { return radius; }
+	float GetRadius() const { return drawRadius; }
 
 private:
 	struct SplitterData {
@@ -51,26 +55,28 @@ private:
 
 private:
 	inline void InitCommon(const float3 _pos, const float3 _speed, const float _radius, int _team, int _texture);
-	void CheckDrawStateChange(FlyingPiece* prev) const;
+	void CheckDrawStateChange(const FlyingPiece* prev) const;
 	float3 GetDragFactors() const;
 	CMatrix44f GetMatrixOf(const SplitterData& cp, const float3 dragFactors) const;
 	const float3& GetVertexPos(const size_t i) const;
 	float3 GetPolygonDir(const size_t idx) const;
 
 private:
+	float3 pos0;
 	float3 pos;
 	float3 speed;
-	float radius;
+
+	CMatrix44f pieceMatrix;
+
 	int team;
 	int texture;
+	unsigned age;
+
+	float pieceRadius;
+	float drawRadius;
 
 	const S3DModelPiece* piece;
 	const std::vector<unsigned int>& indices;
-
-	float3 pos0;
-	unsigned age;
-	float pieceRadius;
-	const CMatrix44f pieceMatrix;
 
 	std::vector<SplitterData> splitterParts;
 	VBO indexVBO;

@@ -510,7 +510,8 @@ void S3DOPiece::SetMinMaxExtends()
 
 void S3DOPiece::Shatter(float pieceChance, int /*texType*/, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const //FIXME move to S3dModel
 {
-	const int2 renderParams = {-1, team};
-	auto fp = new FlyingPiece(this, vertexIndices, pos, speed, m, pieceChance, renderParams);
-	projectileHandler->AddFlyingPiece(MODELTYPE_3DO, fp);
+	const float2  pieceParams = {float3::max(float3::fabs(maxs), float3::fabs(mins)).Length(), pieceChance};
+	const   int2 renderParams = {-1, team};
+
+	projectileHandler->AddFlyingPiece(MODELTYPE_3DO, this,  vertexIndices,  m, pos, speed,  pieceParams, renderParams);
 }

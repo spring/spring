@@ -20,24 +20,24 @@ static const int   MAX_SPLITTER_PARTS = 10;
 ///
 
 FlyingPiece::FlyingPiece(
-	const S3DModelPiece* p,
-	const std::vector<unsigned int>& inds,
+	const S3DModelPiece* _piece,
+	const std::vector<unsigned int>& _indices,
+	const CMatrix44f& _pieceMatrix,
 	const float3 pos,
 	const float3 speed,
-	const CMatrix44f& _pieceMatrix,
-	const float pieceChance,
+	const float2 _pieceParams, // (.x=radius, .y=chance)
 	const int2 _renderParams // (.x=texType, .y=team)
 )
-: piece(p)
-, indices(inds)
-, pos0(pos)
-, age(0)
+: pos0(pos)
 , pieceMatrix(_pieceMatrix)
+, age(0)
+, piece(_piece)
+, indices(_indices)
 {
 	assert(piece->HasGeometryData()); // else binding the vbos cause gl errors
 	assert(piece->GetVertexDrawIndexCount() % 3 == 0); // only triangles
-	pieceRadius = float3::max(float3::fabs(piece->maxs), float3::fabs(piece->mins)).Length();
-	InitCommon(pos, speed, pieceRadius, _renderParams.y, _renderParams.x);
+
+	InitCommon(pos, speed, _pieceParams.x, _renderParams.y, _renderParams.x);
 
 	// initialize splitter parts
 	splitterParts.resize(MAX_SPLITTER_PARTS);
@@ -68,7 +68,7 @@ FlyingPiece::FlyingPiece(
 
 	// randomly remove pieces depending on the pieceChance
 	for (auto& cp: splitterParts) {
-		if (gu->RandFloat() > pieceChance) {
+		if (gu->RandFloat() > _pieceParams.x) {
 			cp.indices.clear();
 		}
 	}
@@ -96,7 +96,7 @@ FlyingPiece::FlyingPiece(
 	indexVBO.Unbind();
 
 	// delete empty splitter parts
-	for (int i = splitterParts.size() - 1;i >= 0;--i) {
+	for (int i = splitterParts.size() - 1; i >= 0; --i) {
 		auto& cp = splitterParts[i];
 		if (cp.indexCount == 0) {
 			cp = splitterParts.back();
@@ -105,21 +105,42 @@ FlyingPiece::FlyingPiece(
 	}
 }
 
+FlyingPiece& FlyingPiece::operator = (FlyingPiece&& fp)
+{
+	pos0 = std::move(fp.pos0);
+	pos = std::move(fp.pos);
+	speed = std::move(fp.speed);
+
+	pieceMatrix = std::move(fp.pieceMatrix);
+
+	team = std::move(fp.team);
+	texture = std::move(fp.texture);
+	age = std::move(fp.age);
+
+	pieceRadius = std::move(fp.pieceRadius);
+	drawRadius = std::move(fp.drawRadius);
+
+	piece = std::move(fp.piece);
+	// indices = std::move(fp.indices); fails, is a const reference
+	const_cast<std::vector<unsigned int>&>(indices) = std::move(fp.indices);
+
+	splitterParts = std::move(fp.splitterParts);
+
+	indexVBO = std::move(fp.indexVBO);
+	return *this;
+}
+
 
 void FlyingPiece::InitCommon(const float3 _pos, const float3 _speed, const float _radius, int _team, int _texture)
 {
 	pos   = _pos;
 	speed = _speed;
-	radius = _radius + 10.f;
+
+	pieceRadius = _radius;
+	drawRadius = _radius + 10.f;
 
 	texture = _texture;
 	team    = _team;
-}
-
-
-unsigned FlyingPiece::GetDrawCallCount() const
-{
-	return splitterParts.size();
 }
 
 
@@ -132,23 +153,23 @@ bool FlyingPiece::Update()
 
 	const float3 dragFactors = GetDragFactors();
 
-	// used for `in camera frustum checks`
-	pos    = pos0 + (speed * dragFactors.x) + UpVector * (mapInfo->map.gravity * dragFactors.y);
-	radius = pieceRadius + EXPLOSION_SPEED * dragFactors.x + 10.f;
+	// used for camera frustum checks
+	pos        = pos0 + (speed * dragFactors.x) + UpVector * (mapInfo->map.gravity * dragFactors.y);
+	drawRadius = pieceRadius + EXPLOSION_SPEED * dragFactors.x + 10.f;
 
 	// check visibility (if all particles are underground -> kill)
-	if (age % GAME_SPEED != 0) {
-		for (auto& cp: splitterParts) {
-			const CMatrix44f& m = GetMatrixOf(cp, dragFactors);
-			const float3 p = m.GetPos();
-			if ((p.y + pieceRadius * 2.f) >= CGround::GetApproximateHeight(p.x, p.z, false)) {
-				return true;
-			}
+	if ((age % GAME_SPEED) == 0)
+		return true;
+
+	for (auto& cp: splitterParts) {
+		const CMatrix44f& m = GetMatrixOf(cp, dragFactors);
+		const float3 p = m.GetPos();
+		if ((p.y + pieceRadius * 2.f) >= CGround::GetApproximateHeight(p.x, p.z, false)) {
+			return true;
 		}
-		return false;
 	}
 
-	return true;
+	return false;
 }
 
 
@@ -236,10 +257,9 @@ float3 FlyingPiece::GetDragFactors() const
 
 CMatrix44f FlyingPiece::GetMatrixOf(const SplitterData& cp, const float3 dragFactors) const
 {
-	float3 interPos = cp.speed * dragFactors.x;
-	interPos.y += mapInfo->map.gravity * dragFactors.y;
-
+	const float3 interPos = cp.speed * dragFactors.x + UpVector * mapInfo->map.gravity * dragFactors.y;
 	const float4& rot = cp.rotationAxisAndSpeed;
+
 	CMatrix44f m = pieceMatrix;
 	m.GetPos() += interPos; //note: not the same as .Translate(pos) which does `m = m * translate(pos)`, but we want `m = translate(pos) * m`
 	m.Rotate(rot.w * dragFactors.z, rot.xyz);
@@ -248,7 +268,7 @@ CMatrix44f FlyingPiece::GetMatrixOf(const SplitterData& cp, const float3 dragFac
 }
 
 
-void FlyingPiece::CheckDrawStateChange(FlyingPiece* prev) const
+void FlyingPiece::CheckDrawStateChange(const FlyingPiece* prev) const
 {
 	if (prev == nullptr) {
 		unitDrawer->SetTeamColour(team);
@@ -278,7 +298,7 @@ void FlyingPiece::EndDraw() const
 }
 
 
-void FlyingPiece::Draw(FlyingPiece* prev)
+void FlyingPiece::Draw(const FlyingPiece* prev) const
 {
 	CheckDrawStateChange(prev);
 	const float3 dragFactors = GetDragFactors(); // speedDrag, gravityDrag, interAge
