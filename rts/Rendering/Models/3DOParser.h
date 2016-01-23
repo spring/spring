@@ -65,11 +65,12 @@ public:
 public:
 	std::vector<float3>    vertexPos; //FIXME
 	std::vector<S3DOPrimitive> prims;
+
 	float3 emitPos;
 	float3 emitDir;
 
 	std::vector<S3DOVertex> vertexAttribs;
-	std::vector<unsigned>   vertexIndices;
+	std::vector<unsigned int> vertexIndices;
 };
 
 

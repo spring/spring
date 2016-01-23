@@ -351,10 +351,11 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, in
 
 void S3DOPiece::UploadGeometryVBOs()
 {
-	if (!HasGeometryData())
+	// cannot use HasGeometryData because vboIndices is still empty
+	if (prims.empty())
 		return;
 
-	std::vector<unsigned>&   indices  = vertexIndices;
+	std::vector<unsigned int>& indices = vertexIndices;
 	std::vector<S3DOVertex>& vertices = vertexAttribs;
 
 	// assume all faces are quads
@@ -481,7 +482,7 @@ void S3DOPiece::CalcNormals()
 
 			// visit all primitives shared by this vertex
 			// and smooth the face normals, Gouraud-style
-			float3 smoothedNormal = ZeroVector;
+			float3 smoothedNormal;
 			for (int fidx: faceIndices) {
 				const float3& faceNormal = prims[fidx].primNormal;
 

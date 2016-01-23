@@ -384,9 +384,9 @@ void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
 
 void C3DModelLoader::CreateLists(S3DModel* model) {
 	S3DModelPiece* rootPiece = model->GetRootPiece();
-	if (rootPiece->GetDisplayListID() != 0) {
+
+	if (rootPiece->GetDisplayListID() != 0)
 		return;
-	}
 
 	CreateListsNow(rootPiece);
 
