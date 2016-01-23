@@ -374,11 +374,11 @@ void LocalModelPiece::SetLODCount(unsigned int count)
 
 bool LocalModelPiece::GetEmitDirPos(float3& emitPos, float3& emitDir) const
 {
-	if (original == NULL)
+	if (original == nullptr)
 		return false;
 
-	emitPos = original->GetEmitPos();
-	emitDir = original->GetEmitDir();
+	emitPos = modelSpaceMat.Mul(original->GetEmitPos());
+	emitDir = modelSpaceMat.Mul(original->GetEmitDir());
 
 	// note: actually OBJECT_TO_WORLD but transform is the same
 	emitPos *= WORLD_TO_OBJECT_SPACE;
