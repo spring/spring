@@ -300,7 +300,7 @@ static void UPDATE_REF_CONTAINER(T& cont) {
 		return;
 
 #ifndef NDEBUG
-	const auto& origStart = *(cont.begin());
+	const auto& origStart = &(*cont.begin());
 #endif
 
 	auto pti = cont.begin();
@@ -316,7 +316,7 @@ static void UPDATE_REF_CONTAINER(T& cont) {
 		}
 	}
 
-	assert((*cont.begin()) == origStart);
+	assert(&(*cont.begin()) == origStart);
 }
 
 
