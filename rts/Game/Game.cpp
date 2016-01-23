@@ -1203,42 +1203,35 @@ bool CGame::Draw() {
 	}
 
 	{
+		SCOPED_TIMER("Game::DrawWorld");
+
 		minimap->Update();
 
-		if (doDrawWorld) {
+		if (doDrawWorld)
 			worldDrawer->GenerateIBLTextures();
-		}
-	}
 
-	glDepthMask(GL_TRUE);
-	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-	camera->Update();
+		camera->Update();
 
-	if (doDrawWorld) {
-		worldDrawer->Draw();
-	} else {
+		if (doDrawWorld)
+			worldDrawer->Draw();
+
 		worldDrawer->ResetMVPMatrices();
 	}
 
-	glDisable(GL_FOG);
+	{
+		SCOPED_TIMER("Game::DrawScreen");
 
-	SCOPED_TIMER("Game::DrawScreen");
+		if (doDrawWorld)
+			eventHandler.DrawScreenEffects();
 
-	if (doDrawWorld) {
-		eventHandler.DrawScreenEffects();
+		hudDrawer->Draw((gu->GetMyPlayer())->fpsController.GetControllee());
+		debugDrawerAI->Draw();
+
+		DrawInputReceivers();
+		DrawInputText();
+		DrawInterfaceWidgets();
+		mouse->DrawCursor();
 	}
-
-	hudDrawer->Draw((gu->GetMyPlayer())->fpsController.GetControllee());
-	debugDrawerAI->Draw();
-
-	DrawInputReceivers();
-	DrawInputText();
-	DrawInterfaceWidgets();
-	mouse->DrawCursor();
 
 	glEnable(GL_DEPTH_TEST);
 	glLoadIdentity();

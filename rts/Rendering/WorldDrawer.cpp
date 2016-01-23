@@ -226,6 +226,17 @@ void CWorldDrawer::ResetMVPMatrices() const
 void CWorldDrawer::Draw() const
 {
 	SCOPED_TIMER("WorldDrawer::Total");
+
+
+	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+	glDepthMask(GL_TRUE);
+	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+
 	DrawOpaqueObjects();
 	DrawAlphaObjects();
 
@@ -240,6 +251,8 @@ void CWorldDrawer::Draw() const
 
 	DrawMiscObjects();
 	DrawBelowWaterOverlay();
+
+	glDisable(GL_FOG);
 }
 
 
@@ -411,6 +424,7 @@ void CWorldDrawer::DrawBelowWaterOverlay() const
 	}
 
 	{
+		// draw water-coloration quad in raw screenspace
 		ResetMVPMatrices();
 
 		glEnableClientState(GL_VERTEX_ARRAY);
