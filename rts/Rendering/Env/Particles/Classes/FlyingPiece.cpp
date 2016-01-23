@@ -9,7 +9,6 @@
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
-#include <boost/range/adaptor/reversed.hpp>
 
 
 static const float EXPLOSION_SPEED = 2.f;
@@ -97,7 +96,8 @@ FlyingPiece::FlyingPiece(
 	indexVBO.Unbind();
 
 	// delete empty splitter parts
-	for (auto& cp: boost::adaptors::reverse(splitterParts)) {
+	for (int i = splitterParts.size() - 1;i >= 0;--i) {
+		auto& cp = splitterParts[i];
 		if (cp.indexCount == 0) {
 			cp = splitterParts.back();
 			splitterParts.pop_back();
