@@ -7,7 +7,7 @@ REMOTE_USER=buildbot
 REMOTE_BASE=/home/buildbot/www
 BWLIMIT=4000
 if [ "$OUTPUTDIR" == "win64" ] ; then
-	BWLIMIT=1000
+	BWLIMIT=100
 fi
 RSYNC="rsync -avz --chmod=D+rx,F+r --bwlimit $BWLIMIT --exclude=download/ --exclude=tests/ --remove-source-files"
 REMOTE_RSYNC="nice -19 ionice -c3 rsync" #prevent QQ about rsync killing server
