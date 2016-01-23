@@ -214,45 +214,53 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 {
 	// WARNING: we can't use iters here cause ProjectileCreated and ProjectileDestroyed events
 	// may add new projectiles to the container!
-	for (size_t i=0; i<pc.size();) {
+	for (size_t i = 0; i < pc.size(); /*no-op*/) {
 		CProjectile* p = pc[i];
 		assert(p);
 		assert(p->synced == synced);
 		assert(p->synced == !!(p->GetClass()->binder->flags & creg::CF_Synced));
+
+		// creation
 		if (p->callEvent) {
-			if (synced || !UNSYNCED_PROJ_NOEVENT) {
+			if (synced || !UNSYNCED_PROJ_NOEVENT)
 				eventHandler.ProjectileCreated(p, p->GetAllyteamID());
-			}
+
 			eventHandler.RenderProjectileCreated(p);
 			p->callEvent = false;
 		}
-		if (!p->deleteMe) {
-			++i;
+
+		// deletion
+		if (p->deleteMe) {
+			pc[i] = pc.back();
+			pc.pop_back();
+			eventHandler.RenderProjectileDestroyed(p);
+
+			if (synced) { //FIXME move outside of loop!
+				eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
+				syncedProjectileIDs[p->id] = nullptr;
+				freeSyncedIDs.push_back(p->id);
+				ASSERT_SYNCED(p->pos);
+				ASSERT_SYNCED(p->id);
+			} else {
+			#if !UNSYNCED_PROJ_NOEVENT
+				eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
+				unsyncedProjectileIDs[p->id] = nullptr;
+				freeUnsyncedIDs.push_back(p->id);
+			#endif
+			}
+
+			delete p;
 			continue;
 		}
-		pc[i] = pc.back();
-		pc.pop_back();
-		eventHandler.RenderProjectileDestroyed(p);
-		if (synced) { //FIXME move outside of loop!
-			eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
-			syncedProjectileIDs[p->id] = nullptr;
-			freeSyncedIDs.push_back(p->id);
-			ASSERT_SYNCED(p->pos);
-			ASSERT_SYNCED(p->id);
-		} else {
-		#if !UNSYNCED_PROJ_NOEVENT
-			eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
-			unsyncedProjectileIDs[p->id] = nullptr;
-			freeUnsyncedIDs.push_back(p->id);
-		#endif
-		}
-		delete p;
+
+		// neither
+		++i;
 	}
 
 	SCOPED_TIMER("ProjectileHandler::Update::PP");
 
 	//WARNING: we can't use iters here cause p->Update() may add new projectiles to the container!
-	for (size_t i=0; i<pc.size(); ++i) {
+	for (size_t i = 0; i < pc.size(); ++i) {
 		CProjectile* p = pc[i];
 		assert(p);
 
@@ -272,26 +280,25 @@ static void UPDATE_PTR_CONTAINER(T& cont) {
 		return;
 
 #ifndef NDEBUG
-	const auto* origStart = &(*cont.begin());
+	const auto* origStart = &cont[0];
 #endif
 
-	auto pti = cont.begin();
-
-	while (pti != cont.end()) {
+	for (auto pti = cont.begin(); pti != cont.end(); /*no-op*/) {
 		auto* p = *pti;
 
 		if (!p->Update()) {
 			*pti = cont.back();
 			cont.pop_back();
 			delete p;
-		} else {
-			++pti;
+			continue;
 		}
+
+		++pti;
 	}
 
 	//WARNING: check if the vector got enlarged while iterating, in that case
 	// all iterators got invalidated in the loop, causing crashes
-	assert(&(*cont.begin()) == origStart);
+	assert(cont.empty() || &cont[0] == origStart);
 }
 
 template<class T>
@@ -300,23 +307,22 @@ static void UPDATE_REF_CONTAINER(T& cont) {
 		return;
 
 #ifndef NDEBUG
-	const auto& origStart = &(*cont.begin());
+	const auto* origStart = &cont[0];
 #endif
 
-	auto pti = cont.begin();
-
-	while (pti != cont.end()) {
+	for (auto pti = cont.begin(); pti != cont.end(); /*no-op*/) {
 		auto& p = *pti;
 
 		if (!p.Update()) {
 			*pti = std::move(cont.back());
 			cont.pop_back();
-		} else {
-			++pti;
+			continue;
 		}
+
+		++pti;
 	}
 
-	assert(&(*cont.begin()) == origStart);
+	assert(cont.empty() || &cont[0] == origStart);
 }
 
 
