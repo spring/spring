@@ -215,11 +215,6 @@ if    (WIN32)
 	endif(NOT MSVC)
 endif (WIN32)
 
-option(HEADLESS_SYSTEM "Compile a headless executable (other executables will not be built!)" FALSE)
-if    (HEADLESS_SYSTEM AND NOT NO_SOUND)
-	message(FATAL_ERROR "HEADLESS_SYSTEM requires NO_SOUND to be set!")
-endif (HEADLESS_SYSTEM AND NOT NO_SOUND)
-
 option(USE_LIBSQUISH "Enable libsquish for DXT decompressing. (needed for ETC1 support)" TRUE)
 if    (USE_LIBSQUISH)
 	add_definitions(-DUSE_LIBSQUISH)
