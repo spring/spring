@@ -19,7 +19,7 @@
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/FeatureDrawer.h"
-#include "Rendering/ProjectileDrawer.h"
+#include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/VertexArray.h"

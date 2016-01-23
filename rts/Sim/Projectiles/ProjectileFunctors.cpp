@@ -2,7 +2,7 @@
 
 #include "ProjectileFunctors.h"
 #include "Projectile.h"
-#include "Unsynced/FlyingPiece.h"
+#include "Rendering/Env/Particles/Classes/FlyingPiece.h"
 
 
 bool ProjectileDistanceComparator::operator() (const CProjectile* arg1, const CProjectile* arg2) const {

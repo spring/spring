@@ -5,7 +5,7 @@
 #include "Map/SMF/SMFReadMap.h"
 #include "Map/SMF/SMFGroundDrawer.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/ProjectileDrawer.h"
+#include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "System/Config/ConfigHandler.h"

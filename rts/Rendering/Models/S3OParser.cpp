@@ -11,7 +11,7 @@
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Projectiles/Unsynced/FlyingPiece.h"
+#include "Rendering/Env/Particles/Classes/FlyingPiece.h"
 #include "System/Exceptions.h"
 #include "System/Util.h"
 #include "System/Log/ILog.h"

@@ -11,7 +11,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/FeatureDrawer.h"
-#include "Rendering/ProjectileDrawer.h"
+#include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/UnitDrawer.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"

@@ -6,7 +6,7 @@
 #include "Map/Ground.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
-#include "Rendering/ProjectileDrawer.h"
+#include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/creg/STL_Deque.h"

@@ -27,7 +27,7 @@
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/PieceProjectile.h"
-#include "Sim/Projectiles/Unsynced/FlyingPiece.h"
+#include "Rendering/Env/Particles/Classes/FlyingPiece.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/WeaponDef.h"

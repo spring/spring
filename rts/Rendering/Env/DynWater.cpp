@@ -12,7 +12,7 @@
 #include "Map/BaseGroundDrawer.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/FeatureDrawer.h"
-#include "Rendering/ProjectileDrawer.h"
+#include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/ISky.h"

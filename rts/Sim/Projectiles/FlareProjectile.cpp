@@ -4,7 +4,7 @@
 #include "FlareProjectile.h"
 #include "Game/Camera.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/ProjectileDrawer.h"
+#include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/GlobalSynced.h"

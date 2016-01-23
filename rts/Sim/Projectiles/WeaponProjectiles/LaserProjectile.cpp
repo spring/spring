@@ -6,7 +6,7 @@
 #include "Map/Ground.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Projectiles/Unsynced/SimpleParticleSystem.h"
+#include "Rendering/Env/Particles/Classes/SimpleParticleSystem.h"
 #include "Sim/Weapons/WeaponDef.h"
 
 #ifdef TRACE_SYNC
