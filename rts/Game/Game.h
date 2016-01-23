@@ -113,7 +113,6 @@ private:
 	void DrawInputReceivers();
 	void DrawInputText();
 	void DrawInterfaceWidgets();
-	void UpdateCam();
 
 	/// Format and display a chat message received over network
 	void HandleChatMsg(const ChatMessage& msg);

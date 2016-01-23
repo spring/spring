@@ -14,6 +14,8 @@
 #include "Camera/FreeController.h"
 #include "Camera/OverviewController.h"
 #include "Camera/SpringController.h"
+#include "Players/Player.h"
+#include "UI/UnitTracker.h"
 #include "Rendering/GlobalRendering.h"
 #include "System/myMath.h"
 #include "System/Config/ConfigHandler.h"
@@ -56,7 +58,7 @@ CONFIG(float, CamTimeExponent)
 	.description("Camera transitions happen at lerp(old, new, timeNorm ^ CamTimeExponent).");
 
 
-CCameraHandler* camHandler = NULL;
+CCameraHandler* camHandler = nullptr;
 
 
 static void CreateGlobalCams() {
@@ -143,7 +145,52 @@ CCameraHandler::~CCameraHandler()
 }
 
 
-void CCameraHandler::UpdateCam()
+void CCameraHandler::UpdateController(CPlayer* player, bool fpsMode, bool fsEdgeMove, bool wnEdgeMove)
+{
+	CCameraController& cc = GetCurrentController();
+	FPSUnitController& fpsCon = player->fpsController;
+
+	if (fpsCon.oldDCpos != ZeroVector) {
+		cc.SetPos(fpsCon.oldDCpos);
+		fpsCon.oldDCpos = ZeroVector;
+	}
+
+	if (!fpsMode) {
+		{
+			// NOTE: z-component contains speed scaling factor, xy is movement
+			const float3 camMoveVector = camera->GetMoveVectorFromState(true);
+
+			// key scrolling
+			if ((camMoveVector * XYVector).SqLength() > 0.0f) {
+				if (cc.DisableTrackingByKey())
+					unitTracker.Disable();
+
+				cc.KeyMove(camMoveVector);
+			}
+		}
+
+		if ((globalRendering->fullScreen && fsEdgeMove) || (!globalRendering->fullScreen && wnEdgeMove)) {
+			const float3 camMoveVector = camera->GetMoveVectorFromState(false);
+
+			// screen edge scrolling
+			if ((camMoveVector * XYVector).SqLength() > 0.0f) {
+				unitTracker.Disable();
+				cc.ScreenEdgeMove(camMoveVector);
+			}
+		}
+
+		// mouse wheel zoom
+		const float mouseWheelDistUp   = camera->GetMoveDistance(nullptr, nullptr, CCamera::MOVE_STATE_UP);
+		const float mouseWheelDistDown = camera->GetMoveDistance(nullptr, nullptr, CCamera::MOVE_STATE_DWN);
+
+		if (math::fabsf(mouseWheelDistUp + mouseWheelDistDown) > 0.0f)
+			cc.MouseWheelMove(mouseWheelDistUp + mouseWheelDistDown);
+	}
+
+	cc.Update();
+}
+
+void CCameraHandler::UpdateTransition()
 {
 	const float  wantedCamFOV = currCamCtrl->GetFOV();
 	const float3 wantedCamPos = currCamCtrl->GetPos();
@@ -165,12 +212,14 @@ void CCameraHandler::UpdateCam()
 			camera->SetFov(mix(startCam.fov, wantedCamFOV, tweenFact));
 		}
 	}
+
+	camera->Update();
 }
 
 
 void CCameraHandler::CameraTransition(float nsecs)
 {
-	UpdateCam(); // prevents camera stutter when multithreading
+	UpdateTransition(); // prevents camera stutter when multithreading
 
 	nsecs = std::max(nsecs, 0.0f) * cameraTimeFactor;
 

@@ -1048,9 +1048,8 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	lastSimFrame = gs->frameNum;
 
 	// set camera
-	UpdateCam();
-	camHandler->UpdateCam();
-	camera->Update();
+	camHandler->UpdateController(playerHandler->Player(gu->myPlayerNum), gu->fpsMode, fullscreenEdgeMove, windowedEdgeMove);
+	camHandler->UpdateTransition();
 
 	unitDrawer->Update();
 	lineDrawer.UpdateLineStipple();
@@ -1507,45 +1506,6 @@ void CGame::SimFrame() {
 	DumpState(-1, -1, 1);
 
 	LEAVE_SYNCED_CODE();
-}
-
-
-void CGame::UpdateCam()
-{
-	//FIXME move to camHandler
-
-	CCameraController& cc = camHandler->GetCurrentController();
-	FPSUnitController& fpsCon = playerHandler->Player(gu->myPlayerNum)->fpsController;
-	if (fpsCon.oldDCpos != ZeroVector) {
-		cc.SetPos(fpsCon.oldDCpos);
-		fpsCon.oldDCpos = ZeroVector;
-	}
-
-	if (!gu->fpsMode) {
-		// Note: GetMoveVectorFromState doesn't return a vec3, instead it returns a xy-vector and in its
-		//       z-component it returns a speed scaling factor!
-
-		// key scrolling
-		const float3 camMoveVector = camera->GetMoveVectorFromState(true);
-		const bool moved = ((camMoveVector * XYVector).SqLength() > 0.0f);
-		if (moved && cc.DisableTrackingByKey()) unitTracker.Disable();
-		if (moved) cc.KeyMove(camMoveVector);
-
-		// screen edge scrolling
-		if ((globalRendering->fullScreen && fullscreenEdgeMove) || (!globalRendering->fullScreen && windowedEdgeMove)) {
-			const float3 camMoveVector = camera->GetMoveVectorFromState(false);
-			const bool moved = ((camMoveVector * XYVector).SqLength() > 0.0f);
-			if (moved) unitTracker.Disable();
-			if (moved) cc.ScreenEdgeMove(camMoveVector);
-		}
-
-		// mouse wheel zoom
-		float mouseWheelDir  = camera->GetMoveDistance(NULL, NULL, CCamera::MOVE_STATE_UP);
-		      mouseWheelDir += camera->GetMoveDistance(NULL, NULL, CCamera::MOVE_STATE_DWN);
-		if (math::fabsf(mouseWheelDir) > 0.0f) cc.MouseWheelMove(mouseWheelDir);
-	}
-
-	cc.Update();
 }
 
 

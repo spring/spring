@@ -12,7 +12,7 @@
 #include "Camera/CameraController.h"
 #include "Game/Camera.h"
 
-
+class CPlayer;
 class CCameraHandler : public CommandReceiver
 {
 public:
@@ -22,7 +22,9 @@ public:
 	CCameraHandler();
 	~CCameraHandler();
 
-	void UpdateCam();
+	void UpdateTransition();
+	void UpdateController(CPlayer* player, bool fpsMode, bool fsEdgeMove, bool wnEdgeMove);
+
 	void SetCameraMode(unsigned int mode);
 	void SetCameraMode(const std::string& mode);
 	void PushMode();
