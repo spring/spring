@@ -16,6 +16,7 @@ bool FlyingPieceComparator::operator() (const FlyingPiece& fp1, const FlyingPiec
 		return (fp1.GetTexture() > fp2.GetTexture());
 	if (fp1.GetTeam() != fp2.GetTeam())
 		return (fp1.GetTeam() > fp2.GetTeam());
-	return ((&fp1) > (&fp2));
+
+	return false;
 }
 
