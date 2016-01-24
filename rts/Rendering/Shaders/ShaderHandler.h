@@ -20,7 +20,7 @@ public:
 
 	~CShaderHandler();
 
-	static CShaderHandler* GetInstance();
+	static CShaderHandler* GetInstance(unsigned int instanceValue);
 	static void FreeInstance(CShaderHandler*);
 
 	void ReloadAll();
@@ -80,6 +80,6 @@ private:
 	ShaderCache shaderCache;
 };
 
-#define shaderHandler (CShaderHandler::GetInstance())
+#define shaderHandler (CShaderHandler::GetInstance(1))
 
 #endif

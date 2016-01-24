@@ -55,6 +55,7 @@ static void SetupUnitLightFFP()
 
 CWorldDrawer::CWorldDrawer(): numUpdates(0)
 {
+	CShaderHandler::GetInstance(0);
 	LuaObjectDrawer::Init();
 }
 
@@ -83,7 +84,7 @@ CWorldDrawer::~CWorldDrawer()
 
 	readMap->KillGroundDrawer();
 	IGroundDecalDrawer::FreeInstance();
-	CShaderHandler::FreeInstance(CShaderHandler::GetInstance());
+	CShaderHandler::FreeInstance(shaderHandler);
 	LuaObjectDrawer::Kill();
 }
 

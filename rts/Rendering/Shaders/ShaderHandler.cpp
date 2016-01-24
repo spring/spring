@@ -15,23 +15,26 @@
 static CShaderHandler* gShaderHandler = nullptr;
 static unsigned int gNumInstances = 0;
 
-CShaderHandler* CShaderHandler::GetInstance() {
-	// nobody should bring us back to life after FreeInstance
-	assert(gNumInstances <= 1);
+CShaderHandler* CShaderHandler::GetInstance(unsigned int instanceValue) {
+	assert(instanceValue <= 1);
 
 	if (gShaderHandler == nullptr) {
 		gShaderHandler = new CShaderHandler();
+
+		gNumInstances *= instanceValue;
 		gNumInstances += 1;
 	}
 
+	// nobody should bring us back to life after FreeInstance
+	// (unless n==0, which indicates we have just [re]loaded)
+	assert(gNumInstances <= 1);
 	return gShaderHandler;
 }
 
 void CShaderHandler::FreeInstance(CShaderHandler* sh) {
-	assert(sh == gShaderHandler && gNumInstances == 1);
+	assert(sh == gShaderHandler);
 	delete sh;
 	gShaderHandler = nullptr;
-	gNumInstances -= 1;
 }
 
 
