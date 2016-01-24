@@ -28,9 +28,10 @@ CShaderHandler* CShaderHandler::GetInstance() {
 }
 
 void CShaderHandler::FreeInstance(CShaderHandler* sh) {
-	assert(sh == gShaderHandler);
+	assert(sh == gShaderHandler && gNumInstances == 1);
 	delete sh;
 	gShaderHandler = nullptr;
+	gNumInstances -= 1;
 }
 
 
