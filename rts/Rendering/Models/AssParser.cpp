@@ -9,7 +9,6 @@
 #include "Lua/LuaParser.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Rendering/Env/Particles/Classes/FlyingPiece.h"
 #include "System/Util.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/errorhandler.h"
