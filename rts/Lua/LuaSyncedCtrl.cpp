@@ -3975,6 +3975,9 @@ int LuaSyncedCtrl::UnitDetachFromAir(lua_State* L)
 
 	CUnit* transporter = transportee->GetTransporter();
 
+	if (transporter == nullptr)
+		return 0;
+
 	const int args = lua_gettop(L);
 	float3 pos;
 	if (args >= 4) {
