@@ -3926,41 +3926,42 @@ int LuaSyncedCtrl::UnitAttach(lua_State* L)
 {
 	CUnit* transporter = ParseUnit(L, __FUNCTION__, 1);
 
-	if (transporter == NULL)
+	if (transporter == nullptr)
 		return 0;
 
 	CUnit* transportee = ParseUnit(L, __FUNCTION__, 2);
 
-	if (transportee == NULL)
+	if (transportee == nullptr)
 		return 0;
 
 	int piece = luaL_checkint(L, 3) - 1;
-	auto &pieces = transporter->localModel.pieces;
+	const auto& pieces = transporter->localModel.pieces;
 
 	if (piece >= (int) pieces.size()) {
 		luaL_error(L,  "invalid piece number");
 		return 0;
 	}
-	if (piece >= 0) {
-		piece = pieces[piece].scriptPieceIndex;
-	}
-	transporter->AttachUnit(transportee, piece, !transporter->unitDef->IsTransportUnit());
 
+	if (piece >= 0)
+		piece = pieces[piece].scriptPieceIndex;
+
+	transporter->AttachUnit(transportee, piece, !transporter->unitDef->IsTransportUnit());
 	return 0;
 }
-
 
 int LuaSyncedCtrl::UnitDetach(lua_State* L)
 {
 	CUnit* transportee = ParseUnit(L, __FUNCTION__, 1);
 
-	if (transportee == NULL)
+	if (transportee == nullptr)
 		return 0;
 
 	CUnit* transporter = transportee->GetTransporter();
 
-	transporter->DetachUnit(transportee);
+	if (transporter == nullptr)
+		return 0;
 
+	transporter->DetachUnit(transportee);
 	return 0;
 }
 
