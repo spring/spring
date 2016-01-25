@@ -5,7 +5,6 @@
 #include "WeaponDef.h"
 #include "Game/GameHelper.h"
 #include "Game/TraceRay.h"
-#include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/CollisionHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"

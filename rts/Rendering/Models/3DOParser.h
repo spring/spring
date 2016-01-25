@@ -46,17 +46,15 @@ struct S3DOPiece: public S3DModelPiece
 
 	unsigned int GetVertexCount() const override { return vboAttributes.GetSize(); }
 	unsigned int GetVertexDrawIndexCount() const override { return vboIndices.GetSize(); }
-
 	const float3& GetVertexPos(const int idx) const override { return vertexAttribs[idx].pos; }
 	const float3& GetNormal(const int idx)    const override { return vertexAttribs[idx].normal; }
+	const std::vector<unsigned>& GetVertexIndices() const override { return vertexIndices; }
 
 	float3 GetEmitPos() const override { return emitPos; }
 	float3 GetEmitDir() const override { return emitDir; }
 
 	void BindVertexAttribVBOs() const override;
 	void UnbindVertexAttribVBOs() const override;
-
-	void Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const override;
 
 public:
 	void SetMinMaxExtends();

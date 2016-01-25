@@ -340,14 +340,13 @@ void CProjectileHandler::Update()
 		UPDATE_PTR_CONTAINER(groundFlashes);
 
 		// flying pieces; sort these every now and then
-		FlyingPieceComparator fsort;
 		for (int modelType = 0; modelType < MODELTYPE_OTHER; ++modelType) {
 			auto& fpc = flyingPieces[modelType];
 
 			UPDATE_REF_CONTAINER(fpc);
 
 			if (resortFlyingPieces[modelType]) {
-				std::sort(fpc.begin(), fpc.end(), fsort);
+				std::sort(fpc.begin(), fpc.end());
 			}
 		}
 	}
@@ -624,14 +623,13 @@ void CProjectileHandler::AddGroundFlash(CGroundFlash* flash)
 void CProjectileHandler::AddFlyingPiece(
 	int modelType,
 	const S3DModelPiece* piece,
-	const std::vector<unsigned int>& inds,
 	const CMatrix44f& m,
 	const float3 pos,
 	const float3 speed,
 	const float2 pieceParams,
 	const int2 renderParams
 ) {
-	flyingPieces[modelType].emplace_back(piece, inds, m, pos, speed, pieceParams, renderParams);
+	flyingPieces[modelType].emplace_back(piece, m, pos, speed, pieceParams, renderParams);
 	resortFlyingPieces[modelType] = true;
 }
 

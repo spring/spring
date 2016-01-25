@@ -9,10 +9,11 @@
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
+#include "System/myMath.h"
 
 
 static const float EXPLOSION_SPEED = 2.f;
-static const int   MAX_SPLITTER_PARTS = 10;
+
 
 
 /////////////////////////////////////////////////////////////////////
@@ -21,7 +22,6 @@ static const int   MAX_SPLITTER_PARTS = 10;
 
 FlyingPiece::FlyingPiece(
 	const S3DModelPiece* _piece,
-	const std::vector<unsigned int>& _indices,
 	const CMatrix44f& _pieceMatrix,
 	const float3 pos,
 	const float3 speed,
@@ -32,102 +32,25 @@ FlyingPiece::FlyingPiece(
 , pieceMatrix(_pieceMatrix)
 , age(0)
 , piece(_piece)
-, indices(_indices)
 {
-	assert(piece->HasGeometryData()); // else binding the vbos cause gl errors
 	assert(piece->GetVertexDrawIndexCount() % 3 == 0); // only triangles
 
 	InitCommon(pos, speed, _pieceParams.x, _renderParams.y, _renderParams.x);
 
-	// initialize splitter parts
-	splitterParts.resize(MAX_SPLITTER_PARTS);
-	for (auto& cp: splitterParts) {
-		cp.dir = gu->RandVector().ANormalize();
-		cp.speed = speed + cp.dir * EXPLOSION_SPEED * gu->RandFloat();
-		cp.rotationAxisAndSpeed = float4(gu->RandVector().ANormalize(), gu->RandFloat() * 0.1f);
+	const auto& pieceShatterParts = piece->shatterParts[gu->RandInt() % piece->shatterParts.size()];
+
+	splitterParts.reserve(pieceShatterParts.size());
+	for (const auto& cp: pieceShatterParts) {
+		if (gu->RandFloat() > _pieceParams.x)
+			continue;
+
+		splitterParts.emplace_back();
+		float3 flyDir = (cp.dir + (gu->RandVector() * 0.3f)).ANormalize();
+		splitterParts.back().speed                = speed + flyDir * mix<float>(1.f, EXPLOSION_SPEED, gu->RandFloat());
+		splitterParts.back().rotationAxisAndSpeed = float4(gu->RandVector().ANormalize(), gu->RandFloat() * 0.1f);
+		splitterParts.back().indexCount           = cp.indexCount;
+		splitterParts.back().vboOffset            = cp.vboOffset;
 	}
-
-	// add vertices to splitter parts
-	for (size_t i = 0; i < indices.size(); i += 3) {
-		auto dir = GetPolygonDir(i);
-
-		float md = -2.f;
-		SplitterData* mcp = nullptr;
-		for (auto& cp: splitterParts) {
-			if (cp.dir.dot(dir) < md)
-				continue;
-
-			md = cp.dir.dot(dir);
-			mcp = &cp;
-		}
-
-		mcp->indices.push_back(indices[i + 0]);
-		mcp->indices.push_back(indices[i + 1]);
-		mcp->indices.push_back(indices[i + 2]);
-	}
-
-	// randomly remove pieces depending on the pieceChance
-	for (auto& cp: splitterParts) {
-		if (gu->RandFloat() > _pieceParams.x) {
-			cp.indices.clear();
-		}
-	}
-
-	// calculate needed vbo size for the vertex indices
-	size_t neededVboSize = 0;
-	for (auto& cp: splitterParts) {
-		cp.indexCount = cp.indices.size();
-		cp.vboOffset = neededVboSize;
-		neededVboSize += cp.indexCount * sizeof(unsigned int);
-	}
-
-	// fill the vertex index vbo
-	indexVBO.Bind(GL_ELEMENT_ARRAY_BUFFER);
-	indexVBO.Resize(neededVboSize);
-	auto* memVBO = reinterpret_cast<unsigned char*>(indexVBO.MapBuffer(GL_WRITE_ONLY));
-	for (auto& cp: splitterParts) {
-		memcpy(memVBO + cp.vboOffset, &cp.indices[0], cp.indexCount * sizeof(unsigned int));
-
-		// free memory
-		cp.indices.clear();
-		cp.indices.shrink_to_fit();
-	}
-	indexVBO.UnmapBuffer();
-	indexVBO.Unbind();
-
-	// delete empty splitter parts
-	for (int i = splitterParts.size() - 1; i >= 0; --i) {
-		auto& cp = splitterParts[i];
-		if (cp.indexCount == 0) {
-			cp = splitterParts.back();
-			splitterParts.pop_back();
-		}
-	}
-}
-
-FlyingPiece& FlyingPiece::operator = (FlyingPiece&& fp)
-{
-	pos0 = std::move(fp.pos0);
-	pos = std::move(fp.pos);
-	speed = std::move(fp.speed);
-
-	pieceMatrix = std::move(fp.pieceMatrix);
-
-	team = std::move(fp.team);
-	texture = std::move(fp.texture);
-	age = std::move(fp.age);
-
-	pieceRadius = std::move(fp.pieceRadius);
-	drawRadius = std::move(fp.drawRadius);
-
-	piece = std::move(fp.piece);
-	// indices = std::move(fp.indices); fails, is a const reference
-	const_cast<std::vector<unsigned int>&>(indices) = std::move(fp.indices);
-
-	splitterParts = std::move(fp.splitterParts);
-
-	indexVBO = std::move(fp.indexVBO);
-	return *this;
 }
 
 
@@ -170,24 +93,6 @@ bool FlyingPiece::Update()
 	}
 
 	return false;
-}
-
-
-const float3& FlyingPiece::GetVertexPos(const size_t i) const
-{
-	assert(i < indices.size());
-	return piece->GetVertexPos( indices[i] );
-}
-
-
-float3 FlyingPiece::GetPolygonDir(const size_t idx) const
-{
-	float3 midPos;
-	for (int j: {0,1,2}) {
-		midPos += GetVertexPos(idx + j);
-	}
-	midPos *= 0.333f;
-	return midPos.ANormalize();
 }
 
 
@@ -274,26 +179,30 @@ void FlyingPiece::CheckDrawStateChange(const FlyingPiece* prev) const
 		unitDrawer->SetTeamColour(team);
 		if (texture != -1) texturehandlerS3O->SetS3oTexture(texture);
 		piece->BindVertexAttribVBOs();
+		piece->vboShatterIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
 		return;
 	}
 
-	if (team != prev->GetTeam()) {
+	if (team != prev->team) {
 		unitDrawer->SetTeamColour(team);
 	}
 
-	if (texture != prev->GetTexture()) {
+	if (texture != prev->texture) {
 		if (texture != -1) texturehandlerS3O->SetS3oTexture(texture);
 	}
 
 	if (piece != prev->piece) {
+		prev->piece->vboShatterIndices.Unbind();
 		prev->piece->UnbindVertexAttribVBOs();
 		piece->BindVertexAttribVBOs();
+		piece->vboShatterIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
 	}
 }
 
 
 void FlyingPiece::EndDraw() const
 {
+	piece->vboShatterIndices.Unbind();
 	piece->UnbindVertexAttribVBOs();
 }
 
@@ -303,12 +212,10 @@ void FlyingPiece::Draw(const FlyingPiece* prev) const
 	CheckDrawStateChange(prev);
 	const float3 dragFactors = GetDragFactors(); // speedDrag, gravityDrag, interAge
 
-	indexVBO.Bind(GL_ELEMENT_ARRAY_BUFFER);
 	for (auto& cp: splitterParts) {
 		glPushMatrix();
 		glMultMatrixf(GetMatrixOf(cp, dragFactors));
-		glDrawRangeElements(GL_TRIANGLES, 0, piece->GetVertexCount() - 1, cp.indexCount, GL_UNSIGNED_INT, indexVBO.GetPtr(cp.vboOffset));
+		glDrawRangeElements(GL_TRIANGLES, 0, piece->GetVertexCount() - 1, cp.indexCount, GL_UNSIGNED_INT, piece->vboShatterIndices.GetPtr(cp.vboOffset));
 		glPopMatrix();
 	}
-	indexVBO.Unbind();
 }

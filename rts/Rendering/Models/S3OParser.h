@@ -30,9 +30,9 @@ public:
 
 	unsigned int GetVertexDrawIndexCount() const override { return indices.size(); }
 	unsigned int GetVertexCount() const override { return vertices.size(); }
-
 	const float3& GetVertexPos(const int idx) const override { return vertices[idx].pos; }
 	const float3& GetNormal(const int idx) const override { return vertices[idx].normal; }
+	const std::vector<unsigned>& GetVertexIndices() const override { return indices; }
 
 	void BindVertexAttribVBOs() const override;
 	void UnbindVertexAttribVBOs() const override;
@@ -46,7 +46,6 @@ public:
 	void Trianglize();
 	void SetMinMaxExtends();
 	void SetVertexTangents();
-	void Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const override;
 
 public:
 	int primType;

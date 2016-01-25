@@ -20,7 +20,6 @@
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Map/InfoTexture/InfoTexture.h"
-#include "Rendering/Models/3DModel.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"

@@ -22,7 +22,6 @@ public:
 	void DrawForList() const;
 	void SetMinMaxExtends(bool globalVertexOffsets);
 	void SetVertexTangents();
-	void Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const override;
 
 	void SetVertexCount(unsigned int n) { vertices.resize(n); }
 	void SetNormalCount(unsigned int n) { vnormals.resize(n); }
@@ -35,6 +34,7 @@ public:
 	unsigned int GetTriangleCount() const { return (triangles.size()); }
 	unsigned int GetVertexDrawIndexCount() const override { return triangles.size() * 3; }
 	unsigned int GetVertexCount() const override { return vertices.size(); }
+	const std::vector<unsigned>& GetVertexIndices() const override { return indices; }
 
 	void BindVertexAttribVBOs() const override;
 	void UnbindVertexAttribVBOs() const override;

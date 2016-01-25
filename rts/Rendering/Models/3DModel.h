@@ -71,25 +71,30 @@ struct S3DModelPiece {
 	S3DModelPiece();
 	virtual ~S3DModelPiece();
 
-	virtual void DrawForList() const = 0;
-	virtual void UploadGeometryVBOs() = 0;
-
-	virtual void BindVertexAttribVBOs() const = 0;
-	virtual void UnbindVertexAttribVBOs() const = 0;
-
 	virtual float3 GetEmitPos() const;
 	virtual float3 GetEmitDir() const;
 
+	// internal use
 	virtual unsigned int GetVertexCount() const = 0;
 	virtual unsigned int GetVertexDrawIndexCount() const = 0;
-
 	virtual const float3& GetVertexPos(const int) const = 0;
 	virtual const float3& GetNormal(const int) const = 0;
 
-	virtual void Shatter(float, int, int, const float3, const float3, const CMatrix44f&) const = 0;
+	virtual void UploadGeometryVBOs() = 0;
+	virtual void BindVertexAttribVBOs() const = 0;
+	virtual void UnbindVertexAttribVBOs() const = 0;
+
+protected:
+	virtual void DrawForList() const = 0;
+	virtual const std::vector<unsigned>& GetVertexIndices() const = 0;
 
 public:
-	unsigned int CreateDrawForList() const;
+	void DrawStatic() const; //< draw piece and children statically (ie. without script-transforms)
+	void CreateDispList();
+	unsigned int GetDisplayListID() const { return dispListID; }
+
+	void CreateShatterPieces();
+	void Shatter(float, int, int, const float3, const float3, const CMatrix44f&) const;
 
 	CMatrix44f& ComposeRotation(CMatrix44f& m, const float3& r) const {
 		switch (axisMapType) {
@@ -129,8 +134,12 @@ public:
 		return isIdentity;
 	}
 
-	// draw piece and children statically (ie. without script-transforms)
-	void DrawStatic() const;
+	void SetModelMatrix(const CMatrix44f& m) {
+		// assimp only
+		bakedRotMatrix = m;
+		hasIdentityRot = m.IsIdentity();
+		assert(m.IsOrthoNormal() == 0);
+	}
 
 	void SetCollisionVolume(const CollisionVolume& cv) { colvol = cv; }
 	const CollisionVolume* GetCollisionVolume() const { return &colvol; }
@@ -139,13 +148,11 @@ public:
 	unsigned int GetChildCount() const { return children.size(); }
 	S3DModelPiece* GetChild(unsigned int i) const { return children[i]; }
 
-	unsigned int GetDisplayListID() const { return dispListID; }
-	void SetDisplayListID(unsigned int id) { dispListID = id; }
-
 	bool HasGeometryData() const { return GetVertexDrawIndexCount() >= 3; }
 	bool HasIdentityRotation() const { return hasIdentityRot; }
 
-	void SetHasIdentityRotation(bool b) { hasIdentityRot = b; }
+private:
+	void CreateShatterPiecesVariation(const int num);
 
 public:
 	std::string name;
@@ -156,8 +163,6 @@ public:
 
 	AxisMappingType axisMapType;
 
-	CMatrix44f bakedRotMatrix; /// baked local-space rotations (assimp-only)
-
 	float3 offset;             /// local (piece-space) offset wrt. parent piece
 	float3 goffset;            /// global (model-space) offset wrt. root piece
 	float3 scales;             /// baked uniform scaling factors (assimp-only)
@@ -166,12 +171,24 @@ public:
 	float3 rotAxisSigns;
 
 protected:
+	CMatrix44f bakedRotMatrix; /// baked local-space rotations (assimp-only)
 	bool hasIdentityRot;       /// if bakedRotMatrix is identity
 
 	unsigned int dispListID;
 
 	VBO vboIndices;
 	VBO vboAttributes;
+
+public:
+	struct ShatterPartData {
+		float3 dir;
+		size_t vboOffset;
+		size_t indexCount;
+	};
+	static const int SHATTER_MAX_PARTS  = 10;
+	static const int SHATTER_VARIATIONS = 2;
+	VBO vboShatterIndices;
+	std::array<std::vector<ShatterPartData>, SHATTER_VARIATIONS> shatterParts;
 };
 
 

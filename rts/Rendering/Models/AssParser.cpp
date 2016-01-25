@@ -8,7 +8,6 @@
 
 #include "Lua/LuaParser.h"
 #include "Sim/Misc/CollisionVolume.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
 #include "System/Util.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/errorhandler.h"
@@ -353,15 +352,16 @@ void CAssParser::LoadPieceTransformations(
 	//   .dae  : x=Rgt, y=-Fwd, z= Up, as=(-1, -1, 1), am=AXIS_XZY (if Z_UP)
 	//   .dae  : x=Rgt, y=-Fwd, z= Up, as=(-1, -1, 1), am=AXIS_XZY (if Y_UP) [!?]
 	//   .blend: ????
-	piece->bakedRotMatrix = aiMatrixToMatrix(aiMatrix4x4t<float>(aiRotateQuat.GetMatrix()));
+	CMatrix44f bakedMatrix;
+	bakedMatrix = aiMatrixToMatrix(aiMatrix4x4t<float>(aiRotateQuat.GetMatrix()));
 
 	if (piece == model->GetRootPiece()) {
-		const float3 xaxis = pieceTable.GetFloat3("xaxis", piece->bakedRotMatrix.GetX());
-		const float3 yaxis = pieceTable.GetFloat3("yaxis", piece->bakedRotMatrix.GetY());
-		const float3 zaxis = pieceTable.GetFloat3("zaxis", piece->bakedRotMatrix.GetZ());
+		const float3 xaxis = pieceTable.GetFloat3("xaxis", bakedMatrix.GetX());
+		const float3 yaxis = pieceTable.GetFloat3("yaxis", bakedMatrix.GetY());
+		const float3 zaxis = pieceTable.GetFloat3("zaxis", bakedMatrix.GetZ());
 
 		if (math::fabs(xaxis.SqLength() - yaxis.SqLength()) < 0.01f && math::fabs(yaxis.SqLength() - zaxis.SqLength()) < 0.01f) {
-			piece->bakedRotMatrix = CMatrix44f(ZeroVector, xaxis, yaxis, zaxis);
+			bakedMatrix = CMatrix44f(ZeroVector, xaxis, yaxis, zaxis);
 		}
 	}
 
@@ -376,10 +376,8 @@ void CAssParser::LoadPieceTransformations(
 	//
 	// note: for all non-AssImp models this is identity!
 	//
-	piece->ComposeRotation(piece->bakedRotMatrix, pieceRotAngles);
-	piece->SetHasIdentityRotation(piece->bakedRotMatrix.IsIdentity() == 0);
-
-	assert(piece->bakedRotMatrix.IsOrthoNormal() == 0);
+	piece->ComposeRotation(bakedMatrix, pieceRotAngles);
+	piece->SetModelMatrix(bakedMatrix);
 }
 
 void CAssParser::SetPieceName(
@@ -763,15 +761,6 @@ void CAssParser::FindTextures(
 
 	model->invertTexYAxis = modelTable.GetBool("fliptextures", true); // Flip texture upside down
 	model->invertTexAlpha = modelTable.GetBool("invertteamcolor", true); // Reverse teamcolor levels
-}
-
-
-void SAssPiece::Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const
-{
-	const float2  pieceParams = {float3::max(float3::fabs(maxs), float3::fabs(mins)).Length(), pieceChance};
-	const   int2 renderParams = {texType, team};
-
-	projectileHandler->AddFlyingPiece(MODELTYPE_ASS, this,  indices,  m, pos, speed,  pieceParams, renderParams);
 }
 
 

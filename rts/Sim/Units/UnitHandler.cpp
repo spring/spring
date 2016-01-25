@@ -6,7 +6,6 @@
 #include "Unit.h"
 #include "UnitDefHandler.h"
 #include "CommandAI/BuilderCAI.h"
-#include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveType.h"

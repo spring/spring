@@ -25,16 +25,14 @@ struct SAssPiece: public S3DModelPiece
 
 	void DrawForList() const override;
 	void UploadGeometryVBOs() override;
-	const float3& GetVertexPos(const int idx) const override { return vertices[idx].pos; }
-	const float3& GetNormal(const int idx) const override { return vertices[idx].normal; }
+	void BindVertexAttribVBOs() const override;
+	void UnbindVertexAttribVBOs() const override;
 
 	unsigned int GetVertexCount() const override { return vertices.size(); }
 	unsigned int GetVertexDrawIndexCount() const override { return indices.size(); }
-
-	void Shatter(float, int, int, const float3, const float3, const CMatrix44f&) const override;
-
-	void BindVertexAttribVBOs() const override;
-	void UnbindVertexAttribVBOs() const override;
+	const float3& GetVertexPos(const int idx) const override { return vertices[idx].pos; }
+	const float3& GetNormal(const int idx) const override { return vertices[idx].normal; }
+	const std::vector<unsigned>& GetVertexIndices() const override { return indices; }
 
 	unsigned int GetNumTexCoorChannels() const { return numTexCoorChannels; }
 	void SetNumTexCoorChannels(unsigned int n) { numTexCoorChannels = n; }

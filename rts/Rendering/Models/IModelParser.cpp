@@ -369,16 +369,12 @@ void C3DModelLoader::AddModelToCache(
 void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
 {
 	o->UploadGeometryVBOs();
-
-	const unsigned int dlistID = o->CreateDrawForList();
+	o->CreateShatterPieces();
+	o->CreateDispList();
 
 	for (unsigned int n = 0; n < o->GetChildCount(); n++) {
 		CreateListsNow(o->GetChild(n));
 	}
-
-	// bind when everything is ready, should be more safe in multithreaded scenarios
-	// TODO: still for 100% safety it should use GL_SYNC
-	o->SetDisplayListID(dlistID);
 }
 
 
@@ -393,8 +389,9 @@ void C3DModelLoader::CreateLists(S3DModel* model) {
 	if (model->type != MODELTYPE_3DO) {
 		//Make sure textures are loaded.
 		texturehandlerS3O->LoadS3OTexture(model);
+
 		// warn about models with bad normals (they break lighting)
-		// skip for 3DO's, it causes a LARGE amount of warning spam
+		// skip for 3DO's (they are auto-calced there)
 		CheckPieceNormals(model, model->GetRootPiece());
 	}
 }

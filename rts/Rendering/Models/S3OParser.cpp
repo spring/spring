@@ -6,11 +6,9 @@
 #include "S3OParser.h"
 #include "s3o.h"
 #include "Game/GlobalUnsynced.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
 #include "System/Exceptions.h"
 #include "System/Util.h"
 #include "System/Log/ILog.h"
@@ -403,18 +401,3 @@ void SS3OPiece::SetVertexTangents()
 		// t = t * h;
 	}
 }
-
-
-
-void SS3OPiece::Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const
-{
-	// triangles only
-	if (primType != S3O_PRIMTYPE_TRIANGLES)
-		return;
-
-	const float2  pieceParams = {float3::max(float3::fabs(maxs), float3::fabs(mins)).Length(), pieceChance};
-	const   int2 renderParams = {texType, team};
-
-	projectileHandler->AddFlyingPiece(MODELTYPE_S3O, this,  indices,  m, pos, speed,  pieceParams, renderParams);
-}
-

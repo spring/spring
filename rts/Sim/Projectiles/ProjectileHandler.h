@@ -63,7 +63,6 @@ public:
 	void AddFlyingPiece(
 		int modelType,
 		const S3DModelPiece* piece,
-		const std::vector<unsigned int>& inds,
 		const CMatrix44f& m,
 		const float3 pos,
 		const float3 speed,

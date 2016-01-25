@@ -17,17 +17,12 @@ struct FlyingPiece {
 public:
 	FlyingPiece(
 		const S3DModelPiece* _piece,
-		const std::vector<unsigned int>& _indices,
 		const CMatrix44f& _pieceMatrix,
 		const float3 pos,
 		const float3 speed,
 		const float2 _pieceParams,
 		const int2 _renderParams
 	);
-	// needed for sorting
-	FlyingPiece(FlyingPiece&& fp): indices(std::move(fp.indices)) { *this = std::move(fp); }
-	// needed for updating
-	FlyingPiece& operator = (FlyingPiece&& fp);
 
 	bool Update();
 	void Draw(const FlyingPiece* prev) const;
@@ -35,20 +30,25 @@ public:
 	unsigned GetDrawCallCount() const { return splitterParts.size(); }
 
 public:
-	int GetTeam() const { return team; }
-	int GetTexture() const { return texture; }
+	const int& GetTeam() const { return team; }
+	const float3& GetPos() const { return pos; }
+	const float&  GetRadius() const { return drawRadius; }
 
-	float3 GetPos() const { return pos; }
-	float GetRadius() const { return drawRadius; }
+	// used for sorting to reduce gl state changes
+	bool operator< (const FlyingPiece& fp) const {
+		if (texture != fp.texture)
+			return (texture < fp.texture);
+		if (piece != fp.piece)
+			return (piece < fp.piece);
+		if (team != fp.team)
+			return (team < fp.team);
+		return false;
+	}
 
 private:
 	struct SplitterData {
-		float3 dir;
 		float3 speed;
 		float4 rotationAxisAndSpeed;
-
-		std::vector<unsigned int> indices; // just as a buffer, is cleared once the vbo has been created
-
 		size_t vboOffset;
 		size_t indexCount;
 	};
@@ -58,8 +58,6 @@ private:
 	void CheckDrawStateChange(const FlyingPiece* prev) const;
 	float3 GetDragFactors() const;
 	CMatrix44f GetMatrixOf(const SplitterData& cp, const float3 dragFactors) const;
-	const float3& GetVertexPos(const size_t i) const;
-	float3 GetPolygonDir(const size_t idx) const;
 
 private:
 	float3 pos0;
@@ -76,10 +74,8 @@ private:
 	float drawRadius;
 
 	const S3DModelPiece* piece;
-	const std::vector<unsigned int>& indices;
 
 	std::vector<SplitterData> splitterParts;
-	VBO indexVBO;
 };
 
 #endif // FLYING_PIECE_H

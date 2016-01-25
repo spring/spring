@@ -5,8 +5,10 @@
 
 #include "3DOParser.h"
 #include "S3OParser.h"
+#include "Game/GlobalUnsynced.h"
 #include "Rendering/GL/myGL.h"
 #include "Sim/Misc/CollisionVolume.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
 #include "System/Exceptions.h"
 #include "System/Util.h"
 
@@ -80,15 +82,12 @@ S3DModelPiece::~S3DModelPiece()
 	glDeleteLists(dispListID, 1);
 }
 
-unsigned int S3DModelPiece::CreateDrawForList() const
+void S3DModelPiece::CreateDispList()
 {
-	const unsigned int dlistID = glGenLists(1);
-
-	glNewList(dlistID, GL_COMPILE);
+	dispListID = glGenLists(1);
+	glNewList(dispListID, GL_COMPILE);
 	DrawForList();
 	glEndList();
-
-	return dlistID;
 }
 
 void S3DModelPiece::DrawStatic() const
@@ -140,6 +139,110 @@ float3 S3DModelPiece::GetEmitDir() const
 		} break;
 	}
 }
+
+
+void S3DModelPiece::CreateShatterPieces()
+{
+	if (!HasGeometryData())
+		return;
+
+	vboShatterIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
+	vboShatterIndices.Resize(SHATTER_VARIATIONS * GetVertexIndices().size() * sizeof(unsigned int));
+
+	for (int i = 0; i<SHATTER_VARIATIONS; ++i) {
+		CreateShatterPiecesVariation(i);
+	}
+
+	vboShatterIndices.Unbind();
+}
+
+
+void S3DModelPiece::CreateShatterPiecesVariation(const int num)
+{
+	const std::vector<unsigned>& indices = GetVertexIndices();
+
+	// we just operate on a buffer
+	// (cause the indices aren't needed once the buffer has been created)
+	struct ShatterPartDataBuffer : ShatterPartData {
+		std::vector<unsigned> indices;
+	};
+	std::vector<ShatterPartDataBuffer> shatterPartsBuf;
+
+	// initialize splitter parts
+	shatterPartsBuf.resize(SHATTER_MAX_PARTS);
+	for (auto& cp: shatterPartsBuf) {
+		cp.dir = gu->RandVector().ANormalize();
+	}
+
+	// helper
+	auto GetPolygonDir = [&](const size_t idx) -> float3
+	{
+		float3 midPos;
+		for (int j: {0,1,2}) {
+			midPos += GetVertexPos(indices[idx + j]);
+		}
+		midPos *= 0.333f;
+		return midPos.ANormalize();
+	};
+
+	// add vertices to splitter parts
+	for (size_t i = 0; i < indices.size(); i += 3) {
+		const float3& dir = GetPolygonDir(i);
+
+		// find the closest shatter part (the one that points into same dir)
+		float md = -2.f;
+		ShatterPartDataBuffer* mcp = nullptr;
+		for (auto& cp: shatterPartsBuf) {
+			if (cp.dir.dot(dir) < md)
+				continue;
+
+			md = cp.dir.dot(dir);
+			mcp = &cp;
+		}
+
+		mcp->indices.push_back(indices[i + 0]);
+		mcp->indices.push_back(indices[i + 1]);
+		mcp->indices.push_back(indices[i + 2]);
+	}
+
+	// fill the vertex index vbo
+	auto isize = indices.size() * sizeof(unsigned int);
+	auto* memVBO = reinterpret_cast<unsigned char*>(vboShatterIndices.MapBuffer(num * isize, isize, GL_WRITE_ONLY));
+	size_t curVboPos = 0;
+	for (auto& cp: shatterPartsBuf) {
+		cp.indexCount = cp.indices.size();
+		cp.vboOffset  = num * isize + curVboPos;
+		memcpy(memVBO + curVboPos, &cp.indices[0], cp.indexCount * sizeof(unsigned int));
+		curVboPos    += cp.indexCount * sizeof(unsigned int);
+	}
+	vboShatterIndices.UnmapBuffer();
+
+	// delete empty splitter parts
+	for (int i = shatterPartsBuf.size() - 1; i >= 0; --i) {
+		auto& cp = shatterPartsBuf[i];
+		if (cp.indexCount == 0) {
+			cp = std::move(shatterPartsBuf.back());
+			shatterPartsBuf.pop_back();
+		}
+	}
+
+
+	// finish: copy buffer to actual memory
+	shatterParts[num].reserve(shatterPartsBuf.size());
+	for (auto& cp: shatterPartsBuf) {
+		shatterParts[num].push_back(cp);
+	}
+}
+
+
+void S3DModelPiece::Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const
+{
+	const float2  pieceParams = {float3::max(float3::fabs(maxs), float3::fabs(mins)).Length(), pieceChance};
+	const   int2 renderParams = {texType, team};
+
+	projectileHandler->AddFlyingPiece(MODELTYPE_S3O /*FIXME*/, this, m, pos, speed, pieceParams, renderParams);
+}
+
 
 
 /** ****************************************************************************************************

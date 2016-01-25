@@ -5,10 +5,8 @@
 #include "OBJParser.h"
 
 #include "Lua/LuaParser.h"
-#include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
@@ -685,15 +683,5 @@ void SOBJPiece::SetVertexTangents()
 		s = s.SafeANormalize();
 		t = (s.cross(n)) * h;
 	}
-}
-
-
-
-void SOBJPiece::Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const
-{
-	const float2  pieceParams = {float3::max(float3::fabs(maxs), float3::fabs(mins)).Length(), pieceChance};
-	const   int2 renderParams = {texType, team};
-
-	projectileHandler->AddFlyingPiece(MODELTYPE_OBJ, this,  indices,  m, pos, speed,  pieceParams, renderParams);
 }
 
