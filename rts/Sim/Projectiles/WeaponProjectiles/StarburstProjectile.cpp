@@ -17,7 +17,7 @@
 #include "System/Color.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
-#include "System/TimeProfiler.h"
+
 
 // the smokes life-time in frames
 static const float SMOKE_TIME = 70.0f;
@@ -47,7 +47,6 @@ CR_REG_METADATA(CStarburstProjectile, (
 	CR_MEMBER(age),
 	CR_MEMBER(oldSmoke),
 	CR_MEMBER(oldSmokeDir),
-	CR_MEMBER(drawTrail),
 	CR_MEMBER(numParts),
 	CR_MEMBER(doturn),
 	CR_MEMBER(curCallback),
@@ -73,7 +72,6 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 	, oldSmoke(pos)
 	, aimError(params.error)
 
-	, drawTrail(true)
 	, doturn(true)
 	, curCallback(NULL)
 
@@ -100,11 +98,6 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 
 	maxGoodDif = math::cos(tracking * 0.6f);
 	oldSmokeDir = dir;
-
-	const float3 camDir = (pos - camera->GetPos()).ANormalize();
-	const float camDist = (camera->GetPos().distance(pos) * 0.2f) + ((1.0f - math::fabs(camDir.dot(dir))) * 3000);
-
-	drawTrail = (camDist >= 200.0f);
 	drawRadius = maxSpeed * 8.0f;
 
 	for (unsigned int a = 0; a < NUM_TRACER_PARTS; ++a) {
@@ -252,13 +245,6 @@ void CStarburstProjectile::Update()
 		oldSmokeDir = dir;
 		numParts = 0;
 		useAirLos = curCallback->useAirLos;
-
-		if (!drawTrail) {
-			const float3 camDir = (pos - camera->GetPos()).ANormalize();
-			const float camDist = (camera->GetPos().distance(pos) * 0.2f + (1 - math::fabs(camDir.dot(dir))) * 3000);
-
-			drawTrail = (camDist > 300.0f);
-		}
 	}
 
 	UpdateInterception();
@@ -334,63 +320,34 @@ void CStarburstProjectile::Draw()
 	if (weaponDef->visuals.smokeTrail) {
 		const int curNumParts = numParts;
 
-		va->EnlargeArrays(4 + (4 * curNumParts), 0, VA_SIZE_TC);
+		va->EnlargeArrays(4, 0, VA_SIZE_TC);
 
 		const float age2 = (age & 7) + globalRendering->timeOffset;
-		const float color = 0.7f;
+		const SColor colBase(.7f, .7f, .7f, 1.f);
 
-		if (drawTrail) {
-			// draw the trail as a single quad
-			const float3 dif1 = (drawPos - camera->GetPos()).ANormalize();
-			const float3 dir1 = (dif1.cross(dir)).ANormalize();
-			const float3 dif2 = (oldSmoke - camera->GetPos()).ANormalize();
-			const float3 dir2 = (dif2.cross(oldSmokeDir)).ANormalize();
+		// draw the trail as a single quad
+		const float3 dif1 = (drawPos - camera->GetPos()).ANormalize();
+		const float3 dir1 = (dif1.cross(dir)).ANormalize();
+		const float3 dif2 = (oldSmoke - camera->GetPos()).ANormalize();
+		const float3 dir2 = (dif2.cross(oldSmokeDir)).ANormalize();
 
-			const float a1 =
-				((1.0f - (0.0f / SMOKE_TIME))) *
-				(0.7f + math::fabs(dif1.dot(dir)));
-			const float a2 =
-				(age < 8)? 0.0f:
-				((1.0f - (age2 / SMOKE_TIME))) *
-				(0.7f + math::fabs(dif2.dot(oldSmokeDir)));
-			const float alpha1 = Clamp(a1, 0.0f, 1.0f);
-			const float alpha2 = Clamp(a2, 0.0f, 1.0f);
+		const float a1 = ((1.0f - (0.0f / SMOKE_TIME))) * (0.7f + math::fabs(dif1.dot(dir)));
+		const float a2 =
+			(age < 8)? 0.0f:
+			((1.0f - (age2 / SMOKE_TIME))) * (0.7f + math::fabs(dif2.dot(oldSmokeDir)));
+		const float alpha1 = Clamp(a1, 0.0f, 1.0f);
+		const float alpha2 = Clamp(a2, 0.0f, 1.0f);
+		const SColor col  = colBase * alpha1;
+		const SColor col2 = colBase * alpha2;
 
-			const float size1 = 1.0f;
-			const float size2 = (1.0f + age2 * (1.0f / SMOKE_TIME) * 7.0f);
+		const float size1 = 1.0f;
+		const float size2 = (1.0f + age2 * (1.0f / SMOKE_TIME) * 7.0f);
 
-			const float txs =
-				weaponDef->visuals.texture2->xend -
-				(weaponDef->visuals.texture2->xend - weaponDef->visuals.texture2->xstart) *
-				(age2 / 8.0f);
-
-			SColor col (color * alpha1, color * alpha1, color * alpha1, alpha1);
-			SColor col2(color * alpha2, color * alpha2, color * alpha2, alpha2);
-
-			va->AddVertexQTC(drawPos  - dir1 * size1, txs,                               weaponDef->visuals.texture2->ystart, col);
-			va->AddVertexQTC(drawPos  + dir1 * size1, txs,                               weaponDef->visuals.texture2->yend,   col);
-			va->AddVertexQTC(oldSmoke + dir2 * size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->yend,   col2);
-			va->AddVertexQTC(oldSmoke - dir2 * size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->ystart, col2);
-		} else {
-			// draw the trail as particles
-			const float dist = pos.distance(oldSmoke);
-			const float3 dirpos1 = pos - dir * dist * 0.33f;
-			const float3 dirpos2 = oldSmoke + oldSmokeDir * dist * 0.33f;
-			const SColor col(color, color, color);
-
-			for (int a = 0; a < curNumParts; ++a) {
-				// CAUTION: loop count must match EnlargeArrays above
-				const float size = 1 + (a * (1.0f / SMOKE_TIME) * 7.0f);
-				const float3 pos1 = CalcBeizer((float)a / curNumParts, pos, dirpos1, dirpos2, oldSmoke);
-
-				#define st projectileDrawer->smoketex[0]
-				va->AddVertexQTC(pos1 + ( camera->GetUp() + camera->GetRight()) * size, st->xstart, st->ystart, col);
-				va->AddVertexQTC(pos1 + ( camera->GetUp() - camera->GetRight()) * size, st->xend,   st->ystart, col);
-				va->AddVertexQTC(pos1 + (-camera->GetUp() - camera->GetRight()) * size, st->xend,   st->ystart, col);
-				va->AddVertexQTC(pos1 + (-camera->GetUp() + camera->GetRight()) * size, st->xstart, st->ystart, col);
-				#undef st
-			}
-		}
+		const float txs = mix(weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->xstart, (age2 / 8.0f));
+		va->AddVertexQTC(drawPos  - dir1 * size1, txs,                               weaponDef->visuals.texture2->ystart, col);
+		va->AddVertexQTC(drawPos  + dir1 * size1, txs,                               weaponDef->visuals.texture2->yend,   col);
+		va->AddVertexQTC(oldSmoke + dir2 * size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->yend,   col2);
+		va->AddVertexQTC(oldSmoke - dir2 * size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->ystart, col2);
 	}
 
 	DrawCallback();
@@ -399,10 +356,10 @@ void CStarburstProjectile::Draw()
 void CStarburstProjectile::DrawCallback()
 {
 	inArray = true;
-	unsigned char col[4];
 	unsigned int part = curTracerPart;
 	const auto wt3 = weaponDef->visuals.texture3;
 	const auto wt1 = weaponDef->visuals.texture1;
+	const SColor lightYellow(255, 200, 150, 1);
 
 	for (unsigned int a = 0; a < NUM_TRACER_PARTS; ++a) {
 		const TracerPart* tracerPart = &tracerParts[part];
@@ -418,22 +375,14 @@ void CStarburstProjectile::DrawCallback()
 			const float age2 = (a + (aa / (ospeed + 0.01f))) * 0.2f;
 			const float3 interPos = opos - (odir * ((a * 0.5f) + aa));
 
-			col[3] = 1;
-
-			if (missileAge < 20) {
-				const float alpha = std::max(0.0f, (1.0f - age2) * (1.0f - age2));
-				col[0] = (255 * alpha);
-				col[1] = (200 * alpha);
-				col[2] = (150 * alpha);
-			} else {
-				const float alpha = std::max(0.0f, ((1.0f - age2) * std::max(0.0f, 1.0f - age2)));
-				col[0] = (255 * alpha);
-				col[1] = (200 * alpha);
-				col[2] = (150 * alpha);
+			float alpha = Square(1.0f - age2);
+			if (missileAge >= 20) {
+				alpha = (1.0f - age2) * std::max(0.0f, 1.0f - age2);
 			}
+			SColor col = lightYellow * Clamp(alpha, 0.f, 1.f);
+			col.a = 1;
 
 			const float drawsize = 1.0f + age2 * 0.8f * ageMod * 7;
-
 			va->AddVertexTC(interPos - camera->GetRight() * drawsize - camera->GetUp() * drawsize, wt3->xstart, wt3->ystart, col);
 			va->AddVertexTC(interPos + camera->GetRight() * drawsize - camera->GetUp() * drawsize, wt3->xend,   wt3->ystart, col);
 			va->AddVertexTC(interPos + camera->GetRight() * drawsize + camera->GetUp() * drawsize, wt3->xend,   wt3->yend,   col);
@@ -445,16 +394,12 @@ void CStarburstProjectile::DrawCallback()
 	}
 
 	// draw the engine flare
-	col[0] = 255;
-	col[1] = 180;
-	col[2] = 180;
-	col[3] =   1;
-
+	const SColor lightRed(255, 180, 180, 1);
 	const float fsize = 25.0f;
-	va->AddVertexTC(drawPos - camera->GetRight() * fsize - camera->GetUp() * fsize, wt1->xstart, wt1->ystart, col);
-	va->AddVertexTC(drawPos + camera->GetRight() * fsize - camera->GetUp() * fsize, wt1->xend,   wt1->ystart, col);
-	va->AddVertexTC(drawPos + camera->GetRight() * fsize + camera->GetUp() * fsize, wt1->xend,   wt1->yend,   col);
-	va->AddVertexTC(drawPos - camera->GetRight() * fsize + camera->GetUp() * fsize, wt1->xstart, wt1->yend,   col);
+	va->AddVertexTC(drawPos - camera->GetRight() * fsize - camera->GetUp() * fsize, wt1->xstart, wt1->ystart, lightRed);
+	va->AddVertexTC(drawPos + camera->GetRight() * fsize - camera->GetUp() * fsize, wt1->xend,   wt1->ystart, lightRed);
+	va->AddVertexTC(drawPos + camera->GetRight() * fsize + camera->GetUp() * fsize, wt1->xend,   wt1->yend,   lightRed);
+	va->AddVertexTC(drawPos - camera->GetRight() * fsize + camera->GetUp() * fsize, wt1->xstart, wt1->yend,   lightRed);
 }
 
 int CStarburstProjectile::ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed)

@@ -49,7 +49,6 @@ private:
 	float3 oldSmokeDir;
 	float3 aimError;
 
-	bool drawTrail;
 	bool doturn;
 
 	CSmokeTrailProjectile* curCallback;

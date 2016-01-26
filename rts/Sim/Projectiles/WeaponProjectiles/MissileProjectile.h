@@ -41,7 +41,6 @@ private:
 	int numParts;
 	int extraHeightTime;
 
-	bool drawTrail;
 	bool isDancing;
 	bool isWobbling;
 
