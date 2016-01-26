@@ -6,6 +6,10 @@ SET(headlessStubsSources
 		"sdlstub_cppbit"
 	)
 
+# Use a direct copy of the GL,
+# as these may not be available on headless systems.
+INCLUDE_DIRECTORIES(BEFORE ${CMAKE_SOURCE_DIR}/include)
+
 IF    (WIN32)
 	# We still need these header files,
 	# even if we are not going to link with SDL.
@@ -13,9 +17,8 @@ IF    (WIN32)
 	FIND_PACKAGE(SDL2 REQUIRED)
 	INCLUDE_DIRECTORIES(${SDL2_INCLUDE_DIR})
 ELSE  (WIN32)
-	# Use a direct copy of the GL and SDL headers,
+	# Use a direct copy of the SDL headers,
 	# as these may not be available on headless systems.
-	INCLUDE_DIRECTORIES(BEFORE ${CMAKE_SOURCE_DIR}/include)
 	INCLUDE_DIRECTORIES(BEFORE ${CMAKE_SOURCE_DIR}/include/SDL2)
 ENDIF (WIN32)
 
