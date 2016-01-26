@@ -270,8 +270,12 @@ float3 CPieceProjectile::RandomVertexPos() const
 	if (omp == nullptr)
 		return ZeroVector;
 	return mix(omp->mins, omp->maxs, gu->RandFloat());
+}
 
 
+float CPieceProjectile::GetDrawAngle() const
+{
+	return spinAngle + spinSpeed * globalRendering->timeOffset;
 }
 
 

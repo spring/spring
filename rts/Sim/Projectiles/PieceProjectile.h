@@ -43,7 +43,9 @@ public:
 
 	void DrawCallback() override;
 
-	virtual int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override;
+
+	float GetDrawAngle() const;
 
 private:
 	bool HasVertices() const;
