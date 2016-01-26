@@ -318,8 +318,6 @@ void CStarburstProjectile::Draw()
 	inArray = true;
 
 	if (weaponDef->visuals.smokeTrail) {
-		const int curNumParts = numParts;
-
 		va->EnlargeArrays(4, 0, VA_SIZE_TC);
 
 		const float age2 = (age & 7) + globalRendering->timeOffset;

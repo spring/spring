@@ -88,7 +88,6 @@ CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponP
 
 	drawRadius = radius + maxSpeed * 8;
 
-	float3 camDir = (pos - camera->GetPos()).ANormalize();
 	castShadow = true;
 
 #ifdef TRACE_SYNC
