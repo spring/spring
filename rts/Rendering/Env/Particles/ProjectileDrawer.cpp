@@ -556,8 +556,6 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType)
 
 	glPushAttrib(GL_POLYGON_BIT);
 	glDisable(GL_CULL_FACE);
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
 
 	const FlyingPiece* last = nullptr;
 
@@ -727,6 +725,10 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p)
 
 void CProjectileDrawer::DrawGroundFlashes()
 {
+	GroundFlashContainer& gfc = projectileHandler->groundFlashes;
+	if (gfc.empty())
+		return;
+
 	static const GLfloat black[] = {0.0f, 0.0f, 0.0f, 0.0f};
 
 	glDepthMask(GL_FALSE);
@@ -740,8 +742,6 @@ void CProjectileDrawer::DrawGroundFlashes()
 	glPolygonOffset(-20, -1000);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	glFogfv(GL_FOG_COLOR, black);
-
-	GroundFlashContainer& gfc = projectileHandler->groundFlashes;
 
 	CGroundFlash::va = GetVertexArray();
 	CGroundFlash::va->Initialize();
