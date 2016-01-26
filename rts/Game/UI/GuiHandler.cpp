@@ -112,8 +112,6 @@ CGuiHandler::CGuiHandler():
 
 CGuiHandler::~CGuiHandler()
 {
-	CLuaUI::FreeHandler();
-
 	for (auto& p: textureMap) {
 		glDeleteTextures(1, &p.second);
 	}

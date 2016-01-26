@@ -734,9 +734,8 @@ void CGame::KillLua()
 	CLuaRules::FreeHandler();
 	LEAVE_SYNCED_CODE();
 
+	// kill LuaUI here, various handler pointers are invalid in ~GuiHandler
 	LOG("[%s][3]", __FUNCTION__);
-	//even though it's done by ~GUIHandler, you have to kill it before all handler pointers
-	//become invalid
 	CLuaUI::FreeHandler();
 
 	LOG("[%s][4]", __FUNCTION__);
@@ -775,7 +774,7 @@ void CGame::KillRendering()
 void CGame::KillInterface()
 {
 	LOG("[%s][1]", __FUNCTION__);
-	SafeDelete(guihandler); // frees LuaUI
+	SafeDelete(guihandler);
 	SafeDelete(minimap);
 	SafeDelete(resourceBar);
 	SafeDelete(tooltip); // CTooltipConsole*
