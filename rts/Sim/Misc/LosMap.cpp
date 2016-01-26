@@ -130,7 +130,7 @@ const CLosTables::LosTable& CLosTables::GetForLosSize(size_t losSize)
 			instance.lostables.resize(losSize+1);
 		}
 	}
-	LosTable* tl = instance.lostables[losSize];
+	const LosTable* tl = instance.lostables[losSize];
 	if (tl == nullptr) {
 		LosTable* rays = GetLosRays(losSize);
 		boost::upgrade_to_unique_lock<spring::shared_spinlock> uniqueLock(lock);
