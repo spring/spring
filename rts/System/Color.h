@@ -35,12 +35,16 @@ struct SColor
 		, b(f[2] * 255.0f)
 		, a(f[3] * 255.0f)
 	{}
-	SColor(const unsigned char* u)
+	constexpr SColor(const unsigned char* u)
 		: r(u[0])
 		, g(u[1])
 		, b(u[2])
 		, a(u[3])
 	{}
+
+	SColor operator * (const float s) const {
+		return SColor(int(float(r) * s), int(float(g) * s), int(float(b) * s), int(float(a) * s));
+	}
 
 	operator const unsigned char* () const { return &r; }
 	operator unsigned char* () { return &r; }
