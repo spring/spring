@@ -274,32 +274,6 @@ float CollisionVolume::GetPointSurfaceDistance(
 
 
 
-float CollisionVolume::GetCylinderDistance(const float3& pv, size_t axisA, size_t axisB, size_t axisC) const
-{
-	const float pSq = (pv[axisB] * pv[axisB]) + (pv[axisC] * pv[axisC]);
-	const float rSq = (halfAxisScalesSqr[axisB] + halfAxisScalesSqr[axisC]) * 0.5f;
-
-	float d = 0.0f;
-
-	if (pv[axisA] >= -halfAxisScales[axisA] && pv[axisA] <= halfAxisScales[axisA]) {
-		/* case 1: point is between end-cap bounds along primary axis */
-		d = std::max(math::sqrt(pSq) - math::sqrt(rSq), 0.0f);
-	} else {
-		if (pSq <= rSq) {
-			/* case 2: point is outside end-cap bounds but inside inf-tube */
-			d = std::max(math::fabs(pv[axisA]) - halfAxisScales[axisA], 0.0f);
-		} else {
-			/* case 3: compute orthogonal distance to end-cap edge (rim) */
-			const float l = Square(math::fabs(pv[axisA]) - halfAxisScales[axisA]);
-			d = Square(std::max(math::sqrt(pSq) - math::sqrt(rSq), 0.0f));
-			d = math::sqrt(l + d);
-		}
-	}
-
-	return d;
-}
-
-
 float CollisionVolume::GetPointSurfaceDistance(const CMatrix44f& mv, const float3& p) const {
 	// transform <p> from world- to volume-space
 	float3 pv = mv.Mul(p);
@@ -343,7 +317,7 @@ float CollisionVolume::GetPointSurfaceDistance(const CMatrix44f& mv, const float
 		} break;
 
 		case COLVOL_TYPE_ELLIPSOID: {
-			d = GetEllipsoidDistance(halfAxisScales, pv);
+			d = GetEllipsoidDistance(pv);
 		} break;
 
 		default: {
@@ -354,16 +328,42 @@ float CollisionVolume::GetPointSurfaceDistance(const CMatrix44f& mv, const float
 	return d;
 }
 
+
+
+float CollisionVolume::GetCylinderDistance(const float3& pv, size_t axisA, size_t axisB, size_t axisC) const
+{
+	const float pSq = (pv[axisB] * pv[axisB]) + (pv[axisC] * pv[axisC]);
+	const float rSq = (halfAxisScalesSqr[axisB] + halfAxisScalesSqr[axisC]) * 0.5f;
+
+	float d = 0.0f;
+
+	if (pv[axisA] >= -halfAxisScales[axisA] && pv[axisA] <= halfAxisScales[axisA]) {
+		/* case 1: point is between end-cap bounds along primary axis */
+		d = std::max(math::sqrt(pSq) - math::sqrt(rSq), 0.0f);
+	} else {
+		if (pSq <= rSq) {
+			/* case 2: point is outside end-cap bounds but inside inf-tube */
+			d = std::max(math::fabs(pv[axisA]) - halfAxisScales[axisA], 0.0f);
+		} else {
+			/* case 3: compute orthogonal distance to end-cap edge (rim) */
+			const float l = Square(math::fabs(pv[axisA]) - halfAxisScales[axisA]);
+			d = Square(std::max(math::sqrt(pSq) - math::sqrt(rSq), 0.0f));
+			d = math::sqrt(l + d);
+		}
+	}
+
+	return d;
+}
+
 #define MAX_ITERATIONS 10
 #define THRESHOLD 0.001
 
-
 //Newton's method according to http://wwwf.imperial.ac.uk/~rn/distance2ellipse.pdf
-float CollisionVolume::GetEllipsoidDistance(const float3& halfScales, const float3& pv)
+float CollisionVolume::GetEllipsoidDistance(const float3& pv) const
 {
-	const float& a = halfScales.x;
-	const float& b = halfScales.y;
-	const float& c = halfScales.z;
+	const float& a = halfAxisScales.x;
+	const float& b = halfAxisScales.y;
+	const float& c = halfAxisScales.z;
 	const float x = math::fabsf(pv.x);
 	const float y = math::fabsf(pv.y);
 	const float z = math::fabsf(pv.z);
@@ -390,18 +390,18 @@ float CollisionVolume::GetEllipsoidDistance(const float3& halfScales, const floa
 	const float zc = z * c;
 
 	//Initial guess
-	float theta = atan2(a * y, b * x);
-	float phi = atan2(z, c * sqrt(x2_a2 + y2_b2));
+	float theta = math::atan2(a * y, b * x);
+	float phi = math::atan2(z, c * math::sqrt(x2_a2 + y2_b2));
 
 	float dist = 0.0f;
 	float lastDist = 0.0f;
 
 	//Iterations
-	for (int i = 0;i < MAX_ITERATIONS; i++){
-		const float cost = cos(theta);
-		const float sint = sin(theta);
-		const float sinp = sin(phi);
-		const float cosp = cos(phi);
+	for (int i = 0; i < MAX_ITERATIONS; i++) {
+		const float cost = math::cos(theta);
+		const float sint = math::sin(theta);
+		const float sinp = math::sin(phi);
+		const float cosp = math::cos(phi);
 
 		const float sin2t = sint * sint;
 		const float xacost_ybsint = xa * cost + yb * sint;

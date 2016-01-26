@@ -106,12 +106,12 @@ public:
 	float GetPointSurfaceDistance(const CUnit* u, const LocalModelPiece* lmp, const float3& pos) const;
 	float GetPointSurfaceDistance(const CFeature* u, const LocalModelPiece* lmp, const float3& pos) const;
 
-	static float GetEllipsoidDistance(const float3& halfScales, const float3& pv);
 private:
 	float GetPointSurfaceDistance(const CSolidObject* obj, const LocalModelPiece* lmp, const CMatrix44f& mat, const float3& pos) const;
 	float GetPointSurfaceDistance(const CMatrix44f& mv, const float3& p) const;
 
 	float GetCylinderDistance(const float3& pv, size_t axisA = 0, size_t axisB = 1, size_t axisC = 2) const;
+	float GetEllipsoidDistance(const float3& pv) const;
 
 private:
 	float3 fullAxisScales;              ///< full-length axis scales
