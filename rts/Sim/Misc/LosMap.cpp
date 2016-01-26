@@ -105,16 +105,15 @@ public:
 
 private:
 	static CLosTables instance;
-	std::vector<LosTable*> lostables;
+	std::vector<LosTable> lostables;
 
 private:
 	CLosTables();
-	~CLosTables();
 	static LosLine GetRay(int x, int y);
-	static LosTable* GetLosRays(int radius);
+	static LosTable GetLosRays(int radius);
 	static void Debug(const LosTable& losRays, const std::vector<int2>& points, int radius);
 	static std::vector<int2> GetCircleSurface(const int radius);
-	static void AddMissing(LosTable* losRays, const std::vector<int2>& circlePoints, const int radius);
+	static void AddMissing(LosTable& losRays, const std::vector<int2>& circlePoints, const int radius);
 };
 
 CLosTables CLosTables::instance;
@@ -130,37 +129,24 @@ const CLosTables::LosTable& CLosTables::GetForLosSize(size_t losSize)
 			instance.lostables.resize(losSize+1);
 		}
 	}
-	const LosTable* tl = instance.lostables[losSize];
-	if (tl == nullptr) {
-		LosTable* rays = GetLosRays(losSize);
+
+	LosTable& tl = instance.lostables[losSize];
+	if (tl.empty() && losSize > 0) {
+		auto lrays = GetLosRays(losSize);
 		boost::upgrade_to_unique_lock<spring::shared_spinlock> uniqueLock(lock);
-		//could have relocated by now
-		tl = instance.lostables[losSize];
-		if (tl == nullptr) {
-			instance.lostables[losSize] = rays;
-			tl = rays;
-		} else {
-			delete rays;
+		if (tl.empty()) {
+			tl = std::move(lrays);
 		}
 	}
 
-	return *tl;
+	return tl;
 }
 
 
 CLosTables::CLosTables()
 {
-	lostables.resize(128, nullptr);
-	lostables[0] = new LosTable();// zero radius
-}
-
-
-CLosTables::~CLosTables()
-{
-	for (LosTable *t: lostables) {
-		if (t != nullptr)
-			delete t;
-	}
+	lostables.reserve(128);
+	lostables.emplace_back(); // zero radius
 }
 
 
@@ -175,20 +161,20 @@ CLosTables::~CLosTables()
  * Note: We only return the rays for the upper right sector, the
  * others can be constructed by mirroring.
  */
-CLosTables::LosTable* CLosTables::GetLosRays(const int radius)
+CLosTables::LosTable CLosTables::GetLosRays(const int radius)
 {
-	LosTable* losRays = new LosTable();
+	LosTable losRays;
 
 	std::vector<int2> circlePoints = GetCircleSurface(radius);
-	losRays->reserve(2 * circlePoints.size()); // twice cause of AddMissing()
+	losRays.reserve(2 * circlePoints.size()); // twice cause of AddMissing()
 	for (int2& p: circlePoints) {
-		losRays->push_back(GetRay(p.x, p.y));
+		losRays.push_back(GetRay(p.x, p.y));
 	}
 	AddMissing(losRays, circlePoints, radius);
 
 	//if (radius == 30)
 	//	Debug(losRays, circlePoints, radius);
-	losRays->shrink_to_fit();
+	losRays.shrink_to_fit();
 	return losRays;
 }
 
@@ -221,12 +207,12 @@ std::vector<int2> CLosTables::GetCircleSurface(const int radius)
 /**
  * @brief Makes sure all squares in the radius are checked & adds rays to missing ones.
  */
-void CLosTables::AddMissing(LosTable* losRays, const std::vector<int2>& circlePoints, const int radius)
+void CLosTables::AddMissing(LosTable& losRays, const std::vector<int2>& circlePoints, const int radius)
 {
 	std::vector<bool> image((radius+1) * (radius+1), 0);
 	auto setpixel = [&](int2 p) { image[p.y * (radius+1) + p.x] = true; };
 	auto getpixel = [&](int2 p) { return image[p.y * (radius+1) + p.x]; };
-	for (auto& line: *losRays) {
+	for (auto& line: losRays) {
 		for (int2& p: line) {
 			setpixel(p);
 		}
@@ -240,14 +226,14 @@ void CLosTables::AddMissing(LosTable* losRays, const std::vector<int2>& circlePo
 			int2 t1(a, p.y);
 			int2 t2(p.y, a);
 			if (!getpixel(t1)) {
-				losRays->push_back(GetRay(t1.x, t1.y));
-				for (int2& p_: losRays->back()) {
+				losRays.push_back(GetRay(t1.x, t1.y));
+				for (int2& p_: losRays.back()) {
 					setpixel(p_);
 				}
 			}
 			if (!getpixel(t2) && t2 != int2(0,radius)) { // (0,radius) is a mirror of (radius,0), so don't add it
-				losRays->push_back(GetRay(t2.x, t2.y));
-				for (int2& p_: losRays->back()) {
+				losRays.push_back(GetRay(t2.x, t2.y));
+				for (int2& p_: losRays.back()) {
 					setpixel(p_);
 				}
 			}
