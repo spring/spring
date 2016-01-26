@@ -9,10 +9,9 @@
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
-#include "Sim/Misc/Wind.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CSmokeTrailProjectile, CProjectile, (NULL, ZeroVector, ZeroVector, ZeroVector, ZeroVector, false, false, 0.0f, 0, 0.0f, false, NULL, NULL))
+CR_BIND_DERIVED(CSmokeTrailProjectile, CProjectile, (NULL, ZeroVector, ZeroVector, ZeroVector, ZeroVector, false, false, 0.0f, 0, 0.0f, NULL, NULL))
 
 CR_REG_METADATA(CSmokeTrailProjectile,(
 	CR_MEMBER(pos1),
@@ -23,7 +22,6 @@ CR_REG_METADATA(CSmokeTrailProjectile,(
 	CR_MEMBER(color),
 	CR_MEMBER(dir1),
 	CR_MEMBER(dir2),
-	CR_MEMBER(drawTrail),
 	CR_MEMBER(dirpos1),
 	CR_MEMBER(dirpos2),
 	CR_MEMBER(midpos),
@@ -50,7 +48,6 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(
 	float size,
 	int time,
 	float color,
-	bool drawTrail,
 	CProjectile* drawCallback,
 	AtlasedTexture* texture
 ):
@@ -64,7 +61,6 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(
 	color(color),
 	dir1(dir1),
 	dir2(dir2),
-	drawTrail(drawTrail),
 	drawSegmented(false),
 	firstSegment(firstSegment),
 	lastSegment(lastSegment),
@@ -74,15 +70,10 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(
 	checkCol = false;
 	castShadow = true;
 
-	if (!drawTrail) {
+	if (dir1.dot(dir2) < 0.98f) {
 		const float dist = pos1.distance(pos2);
 		dirpos1 = pos1 - dir1 * dist * 0.33f;
 		dirpos2 = pos2 + dir2 * dist * 0.33f;
-	} else if (dir1.dot(dir2) < 0.98f) {
-		const float dist = pos1.distance(pos2);
-		dirpos1 = pos1 - dir1 * dist * 0.33f;
-		dirpos2 = pos2 + dir2 * dist * 0.33f;
-//		float3 mp = (pos1 + pos2) / 2;
 		midpos = CalcBeizer(0.5f, pos1, dirpos1, dirpos2, pos2);
 		middir = (dir1 + dir2).ANormalize();
 		drawSegmented = true;
@@ -104,98 +95,60 @@ void CSmokeTrailProjectile::Draw()
 	inArray = true;
 	const float age = gs->frameNum + globalRendering->timeOffset - creationTime;
 	const float invLifeTime = (1.0f / lifeTime);
-	va->EnlargeArrays(8 * 4, 0, VA_SIZE_TC);
+	va->EnlargeArrays(8, 0, VA_SIZE_TC);
 
-	if (drawTrail) {
-		const float3 dif1  = (pos1 - camera->GetPos()).ANormalize();
-		const float3 dif2  = (pos2 - camera->GetPos()).ANormalize();
-		const float3 odir1 = (dif1.cross(dir1)).ANormalize();
-		const float3 odir2 = (dif2.cross(dir2)).ANormalize();
+	const float3 dif1  = (pos1 - camera->GetPos()).ANormalize();
+	const float3 dif2  = (pos2 - camera->GetPos()).ANormalize();
+	const float3 odir1 = (dif1.cross(dir1)).ANormalize();
+	const float3 odir2 = (dif2.cross(dir2)).ANormalize();
 
-		unsigned char col[4];
-		float a1 = (1.f - age * invLifeTime) * 255.f;
-		if (lastSegment) {
-			a1 = 0;
-		}
-		a1 *= 0.7f + math::fabs(dif1.dot(dir1));
-		float alpha = Clamp(a1, 0.f, 255.f);
-		col[0] = (unsigned char) (color * alpha);
-		col[1] = (unsigned char) (color * alpha);
-		col[2] = (unsigned char) (color * alpha);
-		col[3] = (unsigned char) alpha;
+	const SColor colBase(color, color, color, 1.f);
 
-		unsigned char col2[4];
-		float a2 = (1.f - (age + 8) * invLifeTime) * 255.f;
-		if (firstSegment) {
-			a2 = 0;
-		}
-		a2 *= 0.7f + math::fabs(dif2.dot(dir2));
-		alpha = Clamp(a2, 0.f, 255.f);
-		col2[0] = (unsigned char) (color * alpha);
-		col2[1] = (unsigned char) (color * alpha);
-		col2[2] = (unsigned char) (color * alpha);
-		col2[3] = (unsigned char) alpha;
-
-		float size =  1 + ( age      * invLifeTime) * orgSize;
-		float size2 = 1 + ((age + 8) * invLifeTime) * orgSize;
-
-		if (drawSegmented) {
-			const float t = (age + 4) * invLifeTime;
-			const float3 dif3 = (midpos - camera->GetPos()).ANormalize();
-			const float3 odir3 = (dif3.cross(middir)).ANormalize();
-			float size3 = (0.2f + t) * orgSize;
-
-			float a2 = (1.f - t) * 255.f;
-			a2 *= 0.7f + math::fabs(dif3.dot(middir));
-			alpha = Clamp(a2, 0.f, 255.f);
-
-			unsigned char col3[4];
-			col3[0] = (unsigned char) (color * alpha);
-			col3[1] = (unsigned char) (color * alpha);
-			col3[2] = (unsigned char) (color * alpha);
-			col3[3] = (unsigned char) alpha;
-
-			const float midtexx = texture->xstart + ((texture->xend - texture->xstart) * 0.5f);
-
-			va->AddVertexQTC(pos1   - (odir1 * size),  texture->xstart, texture->ystart, col);
-			va->AddVertexQTC(pos1   + (odir1 * size),  texture->xstart, texture->yend,   col);
-			va->AddVertexQTC(midpos + (odir3 * size3), midtexx,         texture->yend,   col3);
-			va->AddVertexQTC(midpos - (odir3 * size3), midtexx,         texture->ystart, col3);
-
-			va->AddVertexQTC(midpos - (odir3 * size3), midtexx,         texture->ystart, col3);
-			va->AddVertexQTC(midpos + (odir3 * size3), midtexx,         texture->yend,   col3);
-			va->AddVertexQTC(pos2   + (odir2 * size2), texture->xend,   texture->yend,   col2);
-			va->AddVertexQTC(pos2   - (odir2 * size2), texture->xend,   texture->ystart, col2);
-		} else {
-			va->AddVertexQTC(pos1 - (odir1 * size),    texture->xstart, texture->ystart, col);
-			va->AddVertexQTC(pos1 + (odir1 * size),    texture->xstart, texture->yend,   col);
-			va->AddVertexQTC(pos2 + (odir2 * size2),   texture->xend,   texture->yend,   col2);
-			va->AddVertexQTC(pos2 - (odir2 * size2),   texture->xend,   texture->ystart, col2);
-		}
-	} else {
-		// draw as particles
-		unsigned char col[4];
-
-		for (int a = 0; a < 8; ++a) {
-			const float t = (age + a) * invLifeTime;
-
-			const float a1 = (1.f - t) * 255.f;
-			const float alpha = Clamp(a1, 0.f, 255.f);
-			const float size = (0.2f + t) * orgSize * 1.2f;
-
-			col[0] = (unsigned char) (color * alpha);
-			col[1] = (unsigned char) (color * alpha);
-			col[2] = (unsigned char) (color * alpha);
-			col[3] = (unsigned char) alpha;
-
-			#define st projectileDrawer->smoketex[0]
-			va->AddVertexQTC(pos1 + ( camera->GetUp() + camera->GetRight()) * size, st->xstart, st->ystart, col);
-			va->AddVertexQTC(pos1 + ( camera->GetUp() - camera->GetRight()) * size, st->xend,   st->ystart, col);
-			va->AddVertexQTC(pos1 + (-camera->GetUp() - camera->GetRight()) * size, st->xend,   st->ystart, col);
-			va->AddVertexQTC(pos1 + (-camera->GetUp() + camera->GetRight()) * size, st->xstart, st->ystart, col);
-			#undef st
-		}
+	float a1 = (1.f - age * invLifeTime) * (0.7f + math::fabs(dif1.dot(dir1)));
+	if (lastSegment) {
+		a1 = 0;
 	}
+	const float alpha1 = Clamp(a1, 0.f, 1.f);
+	const SColor col = colBase * alpha1;
+
+	float a2 = (1.f - (age + 8) * invLifeTime) * (0.7f + math::fabs(dif2.dot(dir2)));
+	if (firstSegment) {
+		a2 = 0;
+	}
+	const float alpha2 = Clamp(a2, 0.f, 1.f);
+	const SColor col2 = colBase * alpha2;
+
+	const float size =  1 + ( age      * invLifeTime) * orgSize;
+	const float size2 = 1 + ((age + 8) * invLifeTime) * orgSize;
+
+	if (drawSegmented) {
+		const float t = (age + 4) * invLifeTime;
+		const float3 dif3 = (midpos - camera->GetPos()).ANormalize();
+		const float3 odir3 = (dif3.cross(middir)).ANormalize();
+		const float size3 = (0.2f + t) * orgSize;
+
+		const float a2 = (1.f - t) * (0.7f + math::fabs(dif3.dot(middir)));
+		const float alpha = Clamp(a2, 0.f, 1.f);
+		const SColor col3 = colBase * alpha;
+
+		const float midtexx = mix(texture->xstart, texture->xend, 0.5f);
+
+		va->AddVertexQTC(pos1   - (odir1 * size),  texture->xstart, texture->ystart, col);
+		va->AddVertexQTC(pos1   + (odir1 * size),  texture->xstart, texture->yend,   col);
+		va->AddVertexQTC(midpos + (odir3 * size3), midtexx,         texture->yend,   col3);
+		va->AddVertexQTC(midpos - (odir3 * size3), midtexx,         texture->ystart, col3);
+
+		va->AddVertexQTC(midpos - (odir3 * size3), midtexx,         texture->ystart, col3);
+		va->AddVertexQTC(midpos + (odir3 * size3), midtexx,         texture->yend,   col3);
+		va->AddVertexQTC(pos2   + (odir2 * size2), texture->xend,   texture->yend,   col2);
+		va->AddVertexQTC(pos2   - (odir2 * size2), texture->xend,   texture->ystart, col2);
+	} else {
+		va->AddVertexQTC(pos1 - (odir1 * size),    texture->xstart, texture->ystart, col);
+		va->AddVertexQTC(pos1 + (odir1 * size),    texture->xstart, texture->yend,   col);
+		va->AddVertexQTC(pos2 + (odir2 * size2),   texture->xend,   texture->yend,   col2);
+		va->AddVertexQTC(pos2 - (odir2 * size2),   texture->xend,   texture->ystart, col2);
+	}
+
 
 	if (drawCallbacker != NULL) {
 		drawCallbacker->DrawCallback();
@@ -209,5 +162,5 @@ void CSmokeTrailProjectile::Update()
 
 int CSmokeTrailProjectile::GetProjectilesCount() const
 {
-	return (drawTrail) ? 2 : 8;
+	return 2;
 }

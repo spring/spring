@@ -22,7 +22,6 @@ public:
 		float size,
 		int time,
 		float color,
-		bool drawTrail,
 		CProjectile* drawCallback,
 		AtlasedTexture* texture
 	);
@@ -44,7 +43,6 @@ private:
 	float color;
 	float3 dir1;
 	float3 dir2;
-	bool drawTrail;
 
 	float3 dirpos1;
 	float3 dirpos2;

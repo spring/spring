@@ -177,6 +177,7 @@ void CPieceProjectile::Collision()
 
 		helper->Explosion(params);
 	}
+
 	if (explFlags & PF_Smoke) {
 		if (explFlags & PF_NoCEGTrail) {
 			CSmokeTrailProjectile* tp = new CSmokeTrailProjectile(
@@ -188,7 +189,6 @@ void CPieceProjectile::Collision()
 				(NUM_TRAIL_PARTS - 1),
 				SMOKE_TIME,
 				0.5f,
-				drawTrail,
 				NULL,
 				projectileDrawer->smoketrailtex);
 
@@ -243,7 +243,6 @@ void CPieceProjectile::Collision(CUnit* unit)
 				NUM_TRAIL_PARTS - 1,
 				SMOKE_TIME,
 				0.5f,
-				drawTrail,
 				NULL,
 				projectileDrawer->smoketrailtex
 			);
@@ -328,7 +327,6 @@ void CPieceProjectile::Update()
 				14,
 				SMOKE_TIME,
 				0.5f,
-				drawTrail,
 				this,
 				projectileDrawer->smoketrailtex
 			);
