@@ -61,6 +61,22 @@ struct SVertexData {
 
 
 
+struct S3DModelPiecePart {
+public:
+	struct RenderData {
+		float3 dir;
+		size_t vboOffset;
+		size_t indexCount;
+	};
+
+	static const int SHATTER_MAX_PARTS  = 10;
+	static const int SHATTER_VARIATIONS = 2;
+
+	std::vector<RenderData> renderData;
+};
+
+
+
 /**
  * S3DModel
  * A 3D model definition. Holds geometry (vertices/normals) and texture data as well as the piece tree.
@@ -157,6 +173,7 @@ private:
 public:
 	std::string name;
 	std::vector<S3DModelPiece*> children;
+	std::array<S3DModelPiecePart, S3DModelPiecePart::SHATTER_VARIATIONS> shatterParts;
 
 	S3DModelPiece* parent;
 	CollisionVolume colvol;
@@ -180,15 +197,7 @@ protected:
 	VBO vboAttributes;
 
 public:
-	struct ShatterPartData {
-		float3 dir;
-		size_t vboOffset;
-		size_t indexCount;
-	};
-	static const int SHATTER_MAX_PARTS  = 10;
-	static const int SHATTER_VARIATIONS = 2;
 	VBO vboShatterIndices;
-	std::array<std::vector<ShatterPartData>, SHATTER_VARIATIONS> shatterParts;
 };
 
 

@@ -147,9 +147,9 @@ void S3DModelPiece::CreateShatterPieces()
 		return;
 
 	vboShatterIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
-	vboShatterIndices.Resize(SHATTER_VARIATIONS * GetVertexIndices().size() * sizeof(unsigned int));
+	vboShatterIndices.Resize(S3DModelPiecePart::SHATTER_VARIATIONS * GetVertexIndices().size() * sizeof(unsigned int));
 
-	for (int i = 0; i<SHATTER_VARIATIONS; ++i) {
+	for (int i = 0; i < S3DModelPiecePart::SHATTER_VARIATIONS; ++i) {
 		CreateShatterPiecesVariation(i);
 	}
 
@@ -163,13 +163,13 @@ void S3DModelPiece::CreateShatterPiecesVariation(const int num)
 
 	// we just operate on a buffer
 	// (cause the indices aren't needed once the buffer has been created)
-	struct ShatterPartDataBuffer : ShatterPartData {
+	struct ShatterPartDataBuffer : S3DModelPiecePart::RenderData {
 		std::vector<unsigned> indices;
 	};
 	std::vector<ShatterPartDataBuffer> shatterPartsBuf;
 
 	// initialize splitter parts
-	shatterPartsBuf.resize(SHATTER_MAX_PARTS);
+	shatterPartsBuf.resize(S3DModelPiecePart::SHATTER_MAX_PARTS);
 	for (auto& cp: shatterPartsBuf) {
 		cp.dir = gu->RandVector().ANormalize();
 	}
@@ -206,7 +206,7 @@ void S3DModelPiece::CreateShatterPiecesVariation(const int num)
 	}
 
 	// fill the vertex index vbo
-	auto isize = indices.size() * sizeof(unsigned int);
+	const auto isize = indices.size() * sizeof(unsigned int);
 	auto* memVBO = reinterpret_cast<unsigned char*>(vboShatterIndices.MapBuffer(num * isize, isize, GL_WRITE_ONLY));
 	size_t curVboPos = 0;
 	for (auto& cp: shatterPartsBuf) {
@@ -228,9 +228,9 @@ void S3DModelPiece::CreateShatterPiecesVariation(const int num)
 
 
 	// finish: copy buffer to actual memory
-	shatterParts[num].reserve(shatterPartsBuf.size());
-	for (auto& cp: shatterPartsBuf) {
-		shatterParts[num].push_back(cp);
+	shatterParts[num].renderData.reserve(shatterPartsBuf.size());
+	for (const auto& cp: shatterPartsBuf) {
+		shatterParts[num].renderData.push_back(cp);
 	}
 }
 
