@@ -744,9 +744,9 @@ void CAssParser::FindTextures(
 			aiTextureType_OPACITY,
 			*/
 		};
-		for (unsigned int n: texTypes) {
+		for (unsigned int texType: texTypes) {
 			aiString textureFile;
-			if (scene->mMaterials[0]->Get(AI_MATKEY_TEXTURE(n, 0), textureFile) != aiReturn_SUCCESS)
+			if (scene->mMaterials[0]->Get(AI_MATKEY_TEXTURE(texType, 0), textureFile) != aiReturn_SUCCESS)
 				continue;
 
 			assert(textureFile.length > 0);

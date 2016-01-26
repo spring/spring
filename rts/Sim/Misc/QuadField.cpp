@@ -298,11 +298,8 @@ void CQuadField::MovedUnit(CUnit* unit)
 void CQuadField::RemoveUnit(CUnit* unit)
 {
 	for (const int qi: unit->quads) {
-		std::vector<CUnit*>& quadUnits     = baseQuads[qi].units;
-		std::vector<CUnit*>& quadAllyUnits = baseQuads[qi].teamUnits[unit->allyteam];
-
-		VectorErase(quadUnits, unit);
-		VectorErase(quadAllyUnits, unit);
+		VectorErase(baseQuads[qi].units, unit);
+		VectorErase(baseQuads[qi].teamUnits[unit->allyteam], unit);
 	}
 
 	unit->quads.clear();
@@ -661,7 +658,6 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 		const Quad& quad = baseQuads[qi];
 
 		for (CUnit* u: quad.units) {
-
 			// prevent double adding
 			if (u->tempNum == tempNum)
 				continue;
@@ -677,7 +673,6 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 		}
 
 		for (CFeature* f: quad.features) {
-
 			// prevent double adding
 			if (f->tempNum == tempNum)
 				continue;
@@ -693,7 +688,6 @@ void CQuadField::GetUnitsAndFeaturesColVol(
 		}
 		if (repulsers != nullptr) {
 			for (CPlasmaRepulser* r: quad.repulsers) {
-
 				// prevent double adding
 				if (r->tempNum == tempNum)
 					continue;

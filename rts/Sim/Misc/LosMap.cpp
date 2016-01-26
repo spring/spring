@@ -102,7 +102,7 @@ public:
 	typedef std::vector<LosLine> LosTable;
 
 	static void GenerateForLosSize(size_t losSize);
-	static const LosLine& GetLosTableRay(size_t losSize, size_t rayIndec);
+	static const LosLine& GetLosTableRay(size_t losSize, size_t rayIndex);
 	static size_t GetLosTableSize(size_t losSize);
 
 private:

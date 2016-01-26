@@ -94,7 +94,7 @@ static inline std::array<unsigned int, PATH_DIRECTIONS> GetPathDir2PathOpt()
 static inline std::array<unsigned int, 15> GetPathOpt2PathDir()
 {
 	std::array<unsigned int, 15> a;
-	for (auto& i: a) i = 0;
+	a.fill(0);
 	a[PATHOPT_LEFT]       = PATHDIR_LEFT;
 	a[PATHOPT_RIGHT]      = PATHDIR_RIGHT;
 	a[PATHOPT_UP]         = PATHDIR_UP;

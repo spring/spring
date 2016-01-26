@@ -274,7 +274,7 @@ float CollisionVolume::GetPointSurfaceDistance(
 
 
 
-float CollisionVolume::GetCylinderDistance(const float3 &pv, size_t axisA, size_t axisB, size_t axisC) const
+float CollisionVolume::GetCylinderDistance(const float3& pv, size_t axisA, size_t axisB, size_t axisC) const
 {
 	const float pSq = (pv[axisB] * pv[axisB]) + (pv[axisC] * pv[axisC]);
 	const float rSq = (halfAxisScalesSqr[axisB] + halfAxisScalesSqr[axisC]) * 0.5f;
@@ -389,11 +389,6 @@ float CollisionVolume::GetEllipsoidDistance(const float3& halfScales, const floa
 	const float yb = y * b;
 	const float zc = z * c;
 
-	float cost;
-	float sint;
-	float sinp;
-	float cosp;
-
 	//Initial guess
 	float theta = atan2(a * y, b * x);
 	float phi = atan2(z, c * sqrt(x2_a2 + y2_b2));
@@ -403,10 +398,11 @@ float CollisionVolume::GetEllipsoidDistance(const float3& halfScales, const floa
 
 	//Iterations
 	for (int i = 0;i < MAX_ITERATIONS; i++){
-		cost = cos(theta);
-		sint = sin(theta);
-		sinp = sin(phi);
-		cosp = cos(phi);
+		const float cost = cos(theta);
+		const float sint = sin(theta);
+		const float sinp = sin(phi);
+		const float cosp = cos(phi);
+
 		const float sin2t = sint * sint;
 		const float xacost_ybsint = xa * cost + yb * sint;
 		const float xasint_ybcost = xa * sint - yb * cost;
@@ -435,9 +431,9 @@ float CollisionVolume::GetEllipsoidDistance(const float3& halfScales, const floa
 		const float invDet = 1.0f / (a11 * a22 - a21 * a12);
 
 		theta += (a12 * d2 - a22 * d1) * invDet;
-		theta = (theta < 0.0f) ? 0.0f : (theta > HALFPI) ? HALFPI : theta;
+		theta = Clamp(theta, 0.0f, HALFPI);
 		phi += (a21 * d1 - a11 * d2) * invDet;
-		phi = (phi < 0.0f) ? 0.0f : (phi > HALFPI) ? HALFPI : phi;
+		phi = Clamp(phi, 0.0f, HALFPI);
 	}
 
 	return dist;

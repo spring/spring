@@ -355,18 +355,22 @@ static inline void QueryUnits(TFilter filter, TQuery& query)
 	const int tempNum = gs->GetTempNum();
 
 	for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) { //FIXME
-		if (!filter.Team(t)) {
+		if (!filter.Team(t))
 			continue;
-		}
+
 		for (const int qi: quads) {
-			const std::vector<CUnit*>& allyTeamUnits = quadField->GetQuad(qi).teamUnits[t];
+			const auto& allyTeamUnits = quadField->GetQuad(qi).teamUnits[t];
+
 			for (CUnit* u: allyTeamUnits) {
-				if (u->tempNum != tempNum) {
-					u->tempNum = tempNum;
-					if (filter.Unit(u)) {
-						query.AddUnit(u);
-					}
-				}
+				if (u->tempNum == tempNum)
+					continue;
+
+				u->tempNum = tempNum;
+
+				if (!filter.Unit(u))
+					continue;
+
+				query.AddUnit(u);
 			}
 		}
 	}
