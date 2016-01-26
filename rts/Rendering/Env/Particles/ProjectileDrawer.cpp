@@ -760,6 +760,8 @@ void CProjectileDrawer::DrawGroundFlashes()
 			continue;
 
 		if (depthTest != gf->depthTest) {
+			CGroundFlash::va->DrawArrayTC(GL_QUADS);
+			CGroundFlash::va->Initialize();
 			depthTest = gf->depthTest;
 
 			if (depthTest) {
@@ -767,10 +769,10 @@ void CProjectileDrawer::DrawGroundFlashes()
 			} else {
 				glDisable(GL_DEPTH_TEST);
 			}
-			CGroundFlash::va->DrawArrayTC(GL_QUADS);
-			CGroundFlash::va->Initialize();
 		}
 		if (depthMask != gf->depthMask) {
+			CGroundFlash::va->DrawArrayTC(GL_QUADS);
+			CGroundFlash::va->Initialize();
 			depthMask = gf->depthMask;
 
 			if (depthMask) {
@@ -778,8 +780,6 @@ void CProjectileDrawer::DrawGroundFlashes()
 			} else {
 				glDepthMask(GL_FALSE);
 			}
-			CGroundFlash::va->DrawArrayTC(GL_QUADS);
-			CGroundFlash::va->Initialize();
 		}
 
 		gf->Draw();
