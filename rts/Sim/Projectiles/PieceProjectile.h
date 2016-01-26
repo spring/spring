@@ -8,7 +8,7 @@
 // Piece Explosion Flags
 const int PF_Shatter    = (1 << 0); // 1
 const int PF_Explode    = (1 << 1); // 2
-const int PF_Fall       = (1 << 2); // 4, if they dont fall they could live forever
+const int PF_Fall       = (1 << 2); // 4 (unused)
 const int PF_Smoke      = (1 << 3); // 8, smoke and fire is turned off when there are too many projectiles so make sure they are unsynced
 const int PF_Fire       = (1 << 4); // 16
 const int PF_NONE       = (1 << 5); // 32

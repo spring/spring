@@ -793,13 +793,10 @@ void CUnitScript::Explode(int piece, int flags)
 	}
 	explSpeed += baseSpeed;
 
-	// projectiles that don't fall could live forever
-	int newflags = PF_Fall;
-
 	const float partSat = projectileHandler->GetParticleSaturation();
 
+	int newflags = 0;
 	if (flags & PF_Explode) { newflags |= PF_Explode; }
-	// if (flags & PF_Fall) { newflags |=  PF_Fall; }
 	if ((flags & PF_Smoke) && partSat < 1.0f) { newflags |= PF_Smoke; }
 	if ((flags & PF_Fire) && partSat < 0.95f) { newflags |= PF_Fire; }
 	if (flags & PF_NoCEGTrail) { newflags |= PF_NoCEGTrail; }

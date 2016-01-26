@@ -280,9 +280,7 @@ float3 CPieceProjectile::RandomVertexPos()
 void CPieceProjectile::Update()
 {
 	if (!luaMoveCtrl) {
-		if (explFlags & PF_Fall)
-			speed.y += mygravity;
-
+		speed.y += mygravity;
 		SetVelocityAndSpeed(speed * 0.997f);
 		SetPosition(pos + speed);
 	}
