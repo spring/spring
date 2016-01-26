@@ -421,7 +421,8 @@ float CollisionVolume::GetEllipsoidDistance(const float3& halfScales, const floa
 			const float fz = c * sinp - z;
 			lastDist = dist;
 			dist = sqrt(fx * fx + fy * fy + fz * fz);
-			if (math::fabsf(dist - lastDist) < THRESHOLD)
+
+			if (math::fabsf(dist - lastDist) < THRESHOLD * dist)
 				break;
 		}
 
