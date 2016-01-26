@@ -726,11 +726,13 @@ void CGame::PostLoad()
 
 void CGame::KillLua()
 {
+	ENTER_SYNCED_CODE();
 	LOG("[%s][1]", __FUNCTION__);
 	CLuaGaia::FreeHandler();
 
 	LOG("[%s][2]", __FUNCTION__);
 	CLuaRules::FreeHandler();
+	LEAVE_SYNCED_CODE();
 
 	LOG("[%s][3]", __FUNCTION__);
 	//even though it's done by ~GUIHandler, you have to kill it before all handler pointers
