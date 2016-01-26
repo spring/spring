@@ -265,15 +265,13 @@ bool CPieceProjectile::HasVertices() const
 	return (omp->GetVertexCount() > 0);
 }
 
-float3 CPieceProjectile::RandomVertexPos()
+float3 CPieceProjectile::RandomVertexPos() const
 {
-	if (!HasVertices())
+	if (omp == nullptr)
 		return ZeroVector;
+	return mix(omp->mins, omp->maxs, gu->RandFloat());
 
-	const int vertexNum = (int) (gu->RandFloat() * 0.99f * omp->GetVertexCount());
-	const float3& pos = omp->GetVertexPos(vertexNum);
 
-	return pos;
 }
 
 

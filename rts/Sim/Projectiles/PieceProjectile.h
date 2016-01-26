@@ -47,7 +47,7 @@ public:
 
 private:
 	bool HasVertices() const;
-	float3 RandomVertexPos();
+	float3 RandomVertexPos() const;
 
 public:
 	struct FireTrailPoint {
