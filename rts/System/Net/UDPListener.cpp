@@ -90,8 +90,8 @@ std::string UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::s
 			}
 		}
 
-		LOG("Binding UDP socket to IP %s %s port %i",
-				(addr.address().is_v6() ? "(v6)" : "(v4)"), addr.address().to_string().c_str(),
+		LOG("Binding UDP socket to IP %s %s (%s) port %i",
+				(addr.address().is_v6() ? "(v6)" : "(v4)"), addr.address().to_string().c_str(), ip.c_str(),
 				addr.port());
 		(*socket)->bind(addr);
 	} catch (const std::runtime_error& ex) { // includes boost::system::system_error and std::range_error
