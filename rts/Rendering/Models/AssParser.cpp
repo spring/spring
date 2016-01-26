@@ -731,7 +731,7 @@ void CAssParser::FindTextures(
 
 	// 2. gather model-defined textures of first material (medium priority)
 	if (scene->mNumMaterials > 0) {
-		const unsigned int texTypes[] = {
+		constexpr unsigned int texTypes[] = {
 			aiTextureType_SPECULAR,
 			aiTextureType_UNKNOWN,
 			aiTextureType_DIFFUSE,
@@ -746,7 +746,7 @@ void CAssParser::FindTextures(
 		};
 		for (unsigned int n: texTypes) {
 			aiString textureFile;
-			if (scene->mMaterials[0]->Get(AI_MATKEY_TEXTURE(texTypes[n], 0), textureFile) != aiReturn_SUCCESS)
+			if (scene->mMaterials[0]->Get(AI_MATKEY_TEXTURE(n, 0), textureFile) != aiReturn_SUCCESS)
 				continue;
 
 			assert(textureFile.length > 0);
