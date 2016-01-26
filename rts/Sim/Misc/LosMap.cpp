@@ -607,7 +607,7 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 	CLosTables::GenerateForLosSize(radius); //Only generates if not in cache
 	std::vector<bool> squaresMap(area, false); // saves the list of visible squares
 	std::vector<float> anglesMap(area, -1e8);
-	SRectangle safeRect(0, 0, size.x, size.y);
+	const SRectangle safeRect(0, 0, size.x, size.y);
 
 	// Optimization: precalc all angles
 	MidpointCircleAlgoPerLine(radius, [&](int width, int y) {
@@ -637,12 +637,11 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 
 
 	// Cast the Rays
-	bool emitPosInsideMap = safeRect.Inside(pos);
-	if (emitPosInsideMap) {
-		squaresMap[ToAngleMapIdx(int2(0,0), radius)] = true;
-	}
 	const size_t numRays = CLosTables::GetLosTableSize(radius);
-	if (emitPosInsideMap) {
+
+	if (safeRect.Inside(pos)) {
+		squaresMap[ToAngleMapIdx(int2(0,0), radius)] = true;
+
 		for (size_t i = 0; i < numRays; ++i) {
 			const CLosTables::LosLine& line = CLosTables::GetLosTableRay(radius, i);
 			float maxAng[4] = {-1e7, -1e7, -1e7, -1e7};
@@ -669,6 +668,7 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 			}
 		}
 	} else {
+		// emit position outside the map
 		for (size_t i = 0; i < numRays; ++i) {
 			const CLosTables::LosLine& line = CLosTables::GetLosTableRay(radius, i);
 			float maxAng[4] = {-1e7, -1e7, -1e7, -1e7};
