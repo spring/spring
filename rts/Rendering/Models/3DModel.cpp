@@ -235,12 +235,12 @@ void S3DModelPiece::CreateShatterPiecesVariation(const int num)
 }
 
 
-void S3DModelPiece::Shatter(float pieceChance, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const
+void S3DModelPiece::Shatter(float pieceChance, int modelType, int texType, int team, const float3 pos, const float3 speed, const CMatrix44f& m) const
 {
 	const float2  pieceParams = {float3::max(float3::fabs(maxs), float3::fabs(mins)).Length(), pieceChance};
 	const   int2 renderParams = {texType, team};
 
-	projectileHandler->AddFlyingPiece(MODELTYPE_S3O /*FIXME*/, this, m, pos, speed, pieceParams, renderParams);
+	projectileHandler->AddFlyingPiece(modelType, this, m, pos, speed, pieceParams, renderParams);
 }
 
 

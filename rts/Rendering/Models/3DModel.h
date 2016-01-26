@@ -94,7 +94,7 @@ public:
 	unsigned int GetDisplayListID() const { return dispListID; }
 
 	void CreateShatterPieces();
-	void Shatter(float, int, int, const float3, const float3, const CMatrix44f&) const;
+	void Shatter(float, int, int, int, const float3, const float3, const CMatrix44f&) const;
 
 	CMatrix44f& ComposeRotation(CMatrix44f& m, const float3& r) const {
 		switch (axisMapType) {
