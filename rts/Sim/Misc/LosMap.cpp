@@ -101,7 +101,9 @@ public:
 	typedef std::vector<int2> LosLine;
 	typedef std::vector<LosLine> LosTable;
 
-	static const LosTable& GetForLosSize(size_t losSize);
+	static void GenerateForLosSize(size_t losSize);
+	static const LosLine& GetLosTableRay(size_t losSize, size_t rayIndec);
+	static size_t GetLosTableSize(size_t losSize);
 
 private:
 	static CLosTables instance;
@@ -119,7 +121,7 @@ private:
 CLosTables CLosTables::instance;
 
 
-const CLosTables::LosTable& CLosTables::GetForLosSize(size_t losSize)
+void CLosTables::GenerateForLosSize(size_t losSize)
 {
 	boost::upgrade_lock<spring::shared_spinlock> lock(mutex);
 
@@ -138,8 +140,18 @@ const CLosTables::LosTable& CLosTables::GetForLosSize(size_t losSize)
 			tl = std::move(lrays);
 		}
 	}
+}
 
-	return tl;
+
+const CLosTables::LosLine& CLosTables::GetLosTableRay(size_t losSize, size_t rayIndex)
+{
+	return instance.lostables[losSize][rayIndex];
+}
+
+
+size_t CLosTables::GetLosTableSize(size_t losSize)
+{
+	return instance.lostables[losSize].size();
 }
 
 
@@ -523,7 +535,7 @@ void CLosMap::AddSquaresToInstance(SLosInstance* li, const std::vector<bool>& sq
 void CLosMap::UnsafeLosAdd(SLosInstance* li) const
 {
 	// How does it work?
-	// We spawn rays (those returned by CLosTables::GetForLosSize), and cast them on the
+	// We spawn rays (those created by CLosTables::GenerateForLosSize), and cast them on the
 	// heightmap. Meaning we compute the angle to the given squares and compare them with
 	// the highest cached one on that ray. When the new angle is higher the square is
 	// visible and gets added to the squares array.
@@ -532,7 +544,7 @@ void CLosMap::UnsafeLosAdd(SLosInstance* li) const
 	const int radius = li->radius;
 	const float losHeight = li->baseHeight;
 	const size_t area = Square((2*radius) + 1);
-	const CLosTables::LosTable& table = CLosTables::GetForLosSize(li->radius);
+	CLosTables::GenerateForLosSize(radius); //Only generates if not in cache
 	std::vector<bool> squaresMap(area, false); // saves the list of visible squares
 	std::vector<float> anglesMap(area, -1e8);
 
@@ -566,7 +578,9 @@ void CLosMap::UnsafeLosAdd(SLosInstance* li) const
 
 	// Cast the Rays
 	squaresMap[ToAngleMapIdx(int2(0,0), radius)] = true;
-	for (const CLosTables::LosLine& line: table) {
+	const size_t numRays = CLosTables::GetLosTableSize(radius);
+	for (size_t i = 0; i < numRays; ++i) {
+		const CLosTables::LosLine& line = CLosTables::GetLosTableRay(radius, i);
 		float maxAng[4] = {-1e7, -1e7, -1e7, -1e7};
 		for (const int2& square: line) {
 			CastLos(&maxAng[0], square,                    squaresMap, anglesMap, radius);
@@ -590,7 +604,7 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 	const int radius = li->radius;
 	const float losHeight = li->baseHeight;
 	const size_t area = Square((2*radius) + 1);
-	const CLosTables::LosTable& table = CLosTables::GetForLosSize(radius);
+	CLosTables::GenerateForLosSize(radius); //Only generates if not in cache
 	std::vector<bool> squaresMap(area, false); // saves the list of visible squares
 	std::vector<float> anglesMap(area, -1e8);
 	SRectangle safeRect(0, 0, size.x, size.y);
@@ -627,8 +641,10 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 	if (emitPosInsideMap) {
 		squaresMap[ToAngleMapIdx(int2(0,0), radius)] = true;
 	}
+	const size_t numRays = CLosTables::GetLosTableSize(radius);
 	if (emitPosInsideMap) {
-		for (const CLosTables::LosLine& line: table) {
+		for (size_t i = 0; i < numRays; ++i) {
+			const CLosTables::LosLine& line = CLosTables::GetLosTableRay(radius, i);
 			float maxAng[4] = {-1e7, -1e7, -1e7, -1e7};
 
 			for (const int2& square: line) {
@@ -653,7 +669,8 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 			}
 		}
 	} else {
-		for (const CLosTables::LosLine& line: table) {
+		for (size_t i = 0; i < numRays; ++i) {
+			const CLosTables::LosLine& line = CLosTables::GetLosTableRay(radius, i);
 			float maxAng[4] = {-1e7, -1e7, -1e7, -1e7};
 
 			for (const int2& square: line) {
