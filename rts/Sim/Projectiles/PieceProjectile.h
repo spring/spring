@@ -40,6 +40,7 @@ public:
 	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
 	void Collision() override;
 	void Collision(CUnit* unit) override;
+	void Collision(CFeature* f) override;
 
 	void DrawCallback() override;
 
@@ -48,8 +49,8 @@ public:
 	float GetDrawAngle() const;
 
 private:
-	bool HasVertices() const;
 	float3 RandomVertexPos() const;
+	void Collision(CUnit* unit, CFeature* feature);
 
 public:
 	struct FireTrailPoint {
@@ -65,7 +66,9 @@ public:
 	const S3DModelPiece* omp;
 
 	CSmokeTrailProjectile* curCallback;
-	FireTrailPoint* fireTrailPoints[8];
+
+	static const unsigned NUM_TRAIL_PARTS = 8;
+	FireTrailPoint fireTrailPoints[NUM_TRAIL_PARTS];
 
 	float3 spinVec;
 	float spinSpeed;
@@ -73,8 +76,6 @@ public:
 
 	float3 oldSmokePos;
 	float3 oldSmokeDir;
-
-	bool drawTrail;
 };
 
 #endif /* PIECE_PROJECTILE_H */
