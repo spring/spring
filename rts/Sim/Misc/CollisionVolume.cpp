@@ -86,9 +86,9 @@ CollisionVolume::CollisionVolume(
 
 		switch (cvTypePrefix[0]) {
 			case 'e': { cvType = COLVOL_TYPE_ELLIPSOID; } break; // "ell..."
-			case 'c': { cvType = COLVOL_TYPE_CYLINDER; } break; // "cyl..."
-			case 'b': { cvType = COLVOL_TYPE_BOX; } break; // "box"
-			case 's': { cvType = COLVOL_TYPE_BOX; } break; // "sph..."
+			case 'c': { cvType = COLVOL_TYPE_CYLINDER;  } break; // "cyl..."
+			case 'b': { cvType = COLVOL_TYPE_BOX;       } break; // "box"
+			case 's': { cvType = COLVOL_TYPE_SPHERE;    } break; // "sph..."
 		}
 
 		if (cvType == COLVOL_TYPE_CYLINDER) {
