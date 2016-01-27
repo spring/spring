@@ -224,7 +224,7 @@ void CollisionVolume::FixTypeAndScale(float3& scales) {
 			volumeType = COLVOL_TYPE_SPHERE;
 		} else {
 			//Disallow insane ellipsoids
-			float minValue = std::fmax(scales.x, std::max(scales.y, scales.z)) * 0.02;
+			const float minValue = std::fmax(scales.x, std::max(scales.y, scales.z)) * 0.02f;
 			scales.x = std::max(scales.x, minValue);
 			scales.y = std::max(scales.y, minValue);
 			scales.z = std::max(scales.z, minValue);
@@ -368,72 +368,59 @@ float CollisionVolume::GetCylinderDistance(const float3& pv, size_t axisA, size_
 //Newton's method according to http://wwwf.imperial.ac.uk/~rn/distance2ellipse.pdf
 float CollisionVolume::GetEllipsoidDistance(const float3& pv) const
 {
-	const float& a = halfAxisScales.x;
-	const float& b = halfAxisScales.y;
-	const float& c = halfAxisScales.z;
-	const float x = math::fabsf(pv.x);
-	const float y = math::fabsf(pv.y);
-	const float z = math::fabsf(pv.z);
+	const float3& abc1 = halfAxisScales;    // {a, b, c}
+	const float3& abc2 = halfAxisScalesSqr; // {a2, b2, c2}
 
-	const float& a2 = halfAxisScalesSqr.x;
-	const float& b2 = halfAxisScalesSqr.y;
-	const float& c2 = halfAxisScalesSqr.z;
-	const float x2 = x * x;
-	const float y2 = y * y;
-	const float z2 = z * z;
-	const float x2_a2 = x2 * halfAxisScalesInv.x * halfAxisScalesInv.x;
-	const float y2_b2 = y2 * halfAxisScalesInv.y * halfAxisScalesInv.y;
-	const float z2_c2 = z2 * halfAxisScalesInv.z * halfAxisScalesInv.z;
+	assert(abc1.x > 0.0f && abc1.y > 0.0f && abc1.z > 0.0f);
+	assert(abc2.x > 0.0f && abc2.y > 0.0f && abc2.z > 0.0f);
 
+	const float3 xyz1     = float3::fabs(pv);     // {x, y, z}
+	const float3 xyz1abc1 = (xyz1       ) * abc1; // {xa, yb, zc}
+	const float3 xyz2abc2 = (xyz1 * xyz1) / abc2; // {x2_a2, y2_b2, z2_c2}, same as xyzSq * Square(halfAxisScalesInv)
 
 	//bail if inside the ellipsoid
-	assert(a > 0.0f && b > 0.0f && c > 0.0f);
-	if (x2_a2 + y2_b2 + z2_c2 <= 1.0f)
+	if (xyz2abc2.dot(OnesVector) <= 1.0f)
 		return 0.0f;
 
-	const float a2b2 = a2 - b2;
-	const float xa = x * a;
-	const float yb = y * b;
-	const float zc = z * c;
-
 	//Initial guess
-	float theta = math::atan2(a * y, b * x);
-	float phi = math::atan2(z, c * math::sqrt(x2_a2 + y2_b2));
+	float theta = math::atan2(abc1.x * xyz1.y, abc1.y * xyz1.x);
+	float phi = math::atan2(xyz1.z, abc1.z * math::sqrt(xyz2abc2.x + xyz2abc2.y));
 
-	float dist = 0.0f;
+	float currDist = 0.0f;
 	float lastDist = 0.0f;
 
 	//Iterations
 	for (int i = 0; i < MAX_ITERATIONS; i++) {
-		const float cost = math::cos(theta);
 		const float sint = math::sin(theta);
+		const float cost = math::cos(theta);
 		const float sinp = math::sin(phi);
 		const float cosp = math::cos(phi);
 
-		const float sin2t = sint * sint;
-		const float xacost_ybsint = xa * cost + yb * sint;
-		const float xasint_ybcost = xa * sint - yb * cost;
-		const float a2b2costsint = a2b2 * cost * sint;
-		const float a2cos2t_b2sin2t_c2 = a2 * cost * cost + b2 * sin2t - c2;
-
-		const float d1 = a2b2costsint * cosp - xasint_ybcost;
-		const float d2 = a2cos2t_b2sin2t_c2 * sinp * cosp - sinp * xacost_ybsint + zc * cosp;
 		{
-			const float fx = a * cosp * cost - x;
-			const float fy = b * cosp * sint - y;
-			const float fz = c * sinp - z;
-			lastDist = dist;
-			dist = math::sqrt(fx * fx + fy * fy + fz * fz);
+			const float3 angs = {cosp * cost, cosp * sint, sinp};
+			const float3 fxyz = (abc1 * angs) - xyz1; // {fx, fy, fz}
 
-			if (math::fabsf(dist - lastDist) < THRESHOLD * dist)
+			lastDist = currDist;
+			currDist = fxyz.Length();
+
+			if (math::fabsf(currDist - lastDist) < THRESHOLD * currDist)
 				break;
 		}
 
+		const float sin2t = sint * sint;
+		const float xacost_ybsint = xyz1abc1.x * cost + xyz1abc1.y * sint;
+		const float xasint_ybcost = xyz1abc1.x * sint - xyz1abc1.y * cost;
+		const float a2b2costsint = (abc2.x - abc2.y) * cost * sint;
+		const float a2cos2t_b2sin2t_c2 = abc2.x * cost * cost + abc2.y * sin2t - abc2.z;
+
+		const float d1 = a2b2costsint * cosp - xasint_ybcost;
+		const float d2 = a2cos2t_b2sin2t_c2 * sinp * cosp - sinp * xacost_ybsint + xyz1abc1.z * cosp;
+
 		//Derivative matrix
-		const float a11 = a2b2 * (1 - 2 * sin2t) * cosp - xacost_ybsint;
+		const float a11 = (abc2.x - abc2.y) * (1 - 2 * sin2t) * cosp - xacost_ybsint;
 		const float a12 = -a2b2costsint * sinp;
 		const float a21 = 2 * a12 * cosp + sinp * xasint_ybcost;
-		const float a22 = a2cos2t_b2sin2t_c2 * (1 - 2 * sinp * sinp) - cosp * xacost_ybsint - zc;
+		const float a22 = a2cos2t_b2sin2t_c2 * (1 - 2 * sinp * sinp) - cosp * xacost_ybsint - xyz1abc1.z;
 
 		const float invDet = 1.0f / (a11 * a22 - a21 * a12);
 
@@ -443,6 +430,6 @@ float CollisionVolume::GetEllipsoidDistance(const float3& pv) const
 		phi = Clamp(phi, 0.0f, HALFPI);
 	}
 
-	return dist;
+	return currDist;
 }
 
