@@ -11,7 +11,14 @@
 
 static inline float3 randfloat3()
 {
-	return float3(rand() + 1.0f, rand() + 1.0f, rand() + 1.0f);
+	float3 r(rand() + 1.0f, rand() + 1.0f, rand() + 1.0f);
+	//Disallow insane ellipsoids
+	float minValue = std::fmax(r.x, std::max(r.y, r.z)) * 0.02;
+	r.x = std::max(r.x, minValue);
+	r.y = std::max(r.y, minValue);
+	r.z = std::max(r.z, minValue);
+
+	return r;
 }
 
 static inline float getdistSq(float x, float y, float z, float a, float b, float c, float theta, float phi) {
@@ -73,23 +80,18 @@ BOOST_AUTO_TEST_CASE( Ellipsoid )
 		const float zc = z * c;
 
 
-		float cost;
-		float sint;
-		float sinp;
-		float cosp;
-
 		//Initial guess
-		float theta = atan2(a * y, b * x);
-		float phi = atan2(z, c * sqrt(x2 / a2 + y2 / b2));
+		float theta = math::atan2(a * y, b * x);
+		float phi = math::atan2(z, c * math::sqrt(x2 / a2 + y2 / b2));
 
 
 		//Iterations
 		int i = 0;
 		while (true) {
-			cost = cos(theta);
-			sint = sin(theta);
-			sinp = sin(phi);
-			cosp = cos(phi);
+			const float cost = math::cos(theta);
+			const float sint = math::sin(theta);
+			const float sinp = math::sin(phi);
+			const float cosp = math::cos(phi);
 			const float sin2t = sint * sint;
 			const float xacost_ybsint = xa * cost + yb * sint;
 			const float xasint_ybcost = xa * sint - yb * cost;

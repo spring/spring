@@ -220,8 +220,15 @@ void CollisionVolume::FixTypeAndScale(float3& scales) {
 		scales.y = scales.x;
 		scales.z = scales.x;
 	} else if (volumeType == COLVOL_TYPE_ELLIPSOID) {
-		if (scales.x == scales.y && scales.y == scales.z)
+		if (scales.x == scales.y && scales.y == scales.z) {
 			volumeType = COLVOL_TYPE_SPHERE;
+		} else {
+			//Disallow insane ellipsoids
+			float minValue = std::fmax(scales.x, std::max(scales.y, scales.z)) * 0.02;
+			scales.x = std::max(scales.x, minValue);
+			scales.y = std::max(scales.y, minValue);
+			scales.z = std::max(scales.z, minValue);
+		}
 
 	} else if (volumeType == COLVOL_TYPE_CYLINDER) {
 		scales[volumeAxes[1]] = std::max(scales[volumeAxes[1]], scales[volumeAxes[2]]);
@@ -416,7 +423,7 @@ float CollisionVolume::GetEllipsoidDistance(const float3& pv) const
 			const float fy = b * cosp * sint - y;
 			const float fz = c * sinp - z;
 			lastDist = dist;
-			dist = sqrt(fx * fx + fy * fy + fz * fz);
+			dist = math::sqrt(fx * fx + fy * fy + fz * fz);
 
 			if (math::fabsf(dist - lastDist) < THRESHOLD * dist)
 				break;
