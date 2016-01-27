@@ -3,6 +3,8 @@
 #ifndef _3DMODEL_H
 #define _3DMODEL_H
 
+#include <algorithm>
+#include <array>
 #include <vector>
 #include <string>
 
@@ -274,7 +276,7 @@ struct LocalModelPiece
 	~LocalModelPiece() {}
 
 	void AddChild(LocalModelPiece* c) { children.push_back(c); }
-	void RemoveChild(LocalModelPiece* c) { children.erase(std::remove(children.begin(), children.end(), c), children.end()); }
+	void RemoveChild(LocalModelPiece* c) { children.erase(std::find(children.begin(), children.end(), c)); }
 	void SetParent(LocalModelPiece* p) { parent = p; }
 
 	void SetLModelPieceIndex(unsigned int idx) { lmodelPieceIndex = idx; }
