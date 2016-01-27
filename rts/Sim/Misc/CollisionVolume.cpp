@@ -375,15 +375,15 @@ float CollisionVolume::GetEllipsoidDistance(const float3& pv) const
 	const float y = math::fabsf(pv.y);
 	const float z = math::fabsf(pv.z);
 
-	const float a2 = a * a;
-	const float b2 = b * b;
-	const float c2 = c * c;
+	const float& a2 = halfAxisScalesSqr.x;
+	const float& b2 = halfAxisScalesSqr.y;
+	const float& c2 = halfAxisScalesSqr.z;
 	const float x2 = x * x;
 	const float y2 = y * y;
 	const float z2 = z * z;
-	const float x2_a2 = x2 / a2;
-	const float y2_b2 = y2 / b2;
-	const float z2_c2 = z2 / c2;
+	const float x2_a2 = x2 * halfAxisScalesInv.x * halfAxisScalesInv.x;
+	const float y2_b2 = y2 * halfAxisScalesInv.y * halfAxisScalesInv.y;
+	const float z2_c2 = z2 * halfAxisScalesInv.z * halfAxisScalesInv.z;
 
 
 	//bail if inside the ellipsoid
