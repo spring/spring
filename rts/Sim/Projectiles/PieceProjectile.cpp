@@ -76,7 +76,7 @@ CPieceProjectile::CPieceProjectile(
 
 	for (auto& ftp: fireTrailPoints) {
 		ftp.pos = pos;
-		ftp.size = gu->RandFloat() * 2 + 2;
+		ftp.size = 0.f;
 	}
 
 	SetRadiusAndHeight(radius, 0.0f);
@@ -177,7 +177,8 @@ float3 CPieceProjectile::RandomVertexPos() const
 {
 	if (omp == nullptr)
 		return ZeroVector;
-	return mix(omp->mins, omp->maxs, gu->RandFloat());
+	#define rf gu->RandFloat()
+	return mix(omp->mins, omp->maxs, float3(rf,rf,rf));
 }
 
 
