@@ -76,11 +76,11 @@ std::string UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::s
 			throw std::runtime_error("IP v6 not supported, can not use address " + addr.address().to_string());
 		}
 
-		if (netcode::IsLoopbackAddress(addr.address())) {
+		if (addr.address().is_loopback()) {
 			LOG_L(L_WARNING, "Opening socket on loopback address. Other users will not be able to connect!");
 		}
 
-		if (!addr.address().is_v6()) {
+		if (addr.address().is_v4()) {
 			if (supportsIPv6) {
 				(*socket)->close();
 			}

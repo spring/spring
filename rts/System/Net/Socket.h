@@ -28,12 +28,6 @@ bool CheckErrorCode(boost::system::error_code& err);
 boost::asio::ip::udp::endpoint ResolveAddr(const std::string& host, int port, boost::system::error_code* error);
 
 /**
- * Evaluates if an address is a loopback one or not.
- * In IP v4 it is "127.*.*.*", in IP v6 "::1".
- */
-bool IsLoopbackAddress(const boost::asio::ip::address& addr);
-
-/**
  * Encapsulates the ip::address::from_string(str) function,
  * for sync relevant reasons.
  */

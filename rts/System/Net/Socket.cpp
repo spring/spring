@@ -51,14 +51,6 @@ boost::asio::ip::udp::endpoint ResolveAddr(const std::string& host, int port, bo
 	return ip::udp::endpoint(tempAddr, 0);
 }
 
-bool IsLoopbackAddress(const boost::asio::ip::address& addr) {
-
-	if (addr.is_v6()) {
-		return addr.to_v6().is_loopback();
-	} else {
-		return (addr.to_v4() == boost::asio::ip::address_v4::loopback());
-	}
-}
 
 boost::asio::ip::address WrapIP(const std::string& ip,
 		boost::system::error_code* err)
