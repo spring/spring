@@ -49,7 +49,7 @@ CR_REG_METADATA(CStarburstProjectile, (
 	CR_MEMBER(oldSmokeDir),
 	CR_MEMBER(numParts),
 	CR_MEMBER(doturn),
-	CR_MEMBER(curCallback),
+	CR_MEMBER(smokeTrail),
 	CR_MEMBER(missileAge),
 	CR_MEMBER(distanceToTravel),
 	CR_MEMBER(aimError),
@@ -59,8 +59,10 @@ CR_REG_METADATA(CStarburstProjectile, (
 
 
 CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWeaponProjectile(params)
+	, aimError(params.error)
 	, tracking(params.tracking)
 	, ignoreError(false)
+	, doturn(true)
 	, maxGoodDif(0.0f)
 	, maxSpeed(0.0f)
 	, acceleration(0.f)
@@ -70,10 +72,7 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 	, age(0)
 
 	, oldSmoke(pos)
-	, aimError(params.error)
-
-	, doturn(true)
-	, curCallback(NULL)
+	, smokeTrail(nullptr)
 
 	, numParts(0)
 	, missileAge(0)
@@ -208,25 +207,31 @@ void CStarburstProjectile::Update()
 	age++;
 	numParts++;
 
-	if (weaponDef->visuals.smokeTrail && !(age & 7)) {
-		curCallback = new CSmokeTrailProjectile(
-			owner(),
-			pos,
-			oldSmoke,
-			dir,
-			oldSmokeDir,
-			age == 8,
-			false,
-			7,
-			SMOKE_TIME,
-			0.7f,
-			weaponDef->visuals.texture2
-		);
+	if (weaponDef->visuals.smokeTrail) {
+		if (smokeTrail) {
+			smokeTrail->UpdateEndPos(pos, dir);
+			oldSmoke = pos;
+			oldSmokeDir = dir;
+		}
 
-		oldSmoke = pos;
-		oldSmokeDir = dir;
-		numParts = 0;
-		useAirLos = curCallback->useAirLos;
+		if ((age % 8) == 0) {
+			smokeTrail = new CSmokeTrailProjectile(
+				owner(),
+				pos,
+				oldSmoke,
+				dir,
+				oldSmokeDir,
+				age == 8,
+				false,
+				7,
+				SMOKE_TIME,
+				0.7f,
+				weaponDef->visuals.texture2
+			);
+
+			numParts = 0;
+			useAirLos = smokeTrail->useAirLos;
+		}
 	}
 
 	UpdateInterception();
@@ -298,37 +303,6 @@ void CStarburstProjectile::UpdateTrajectory()
 void CStarburstProjectile::Draw()
 {
 	inArray = true;
-
-	if (weaponDef->visuals.smokeTrail) {
-		va->EnlargeArrays(4, 0, VA_SIZE_TC);
-
-		const float age2 = (age & 7) + globalRendering->timeOffset;
-		const SColor colBase(.7f, .7f, .7f, 1.f);
-
-		// draw the trail as a single quad
-		const float3 dif1 = (drawPos - camera->GetPos()).ANormalize();
-		const float3 dir1 = (dif1.cross(dir)).ANormalize();
-		const float3 dif2 = (oldSmoke - camera->GetPos()).ANormalize();
-		const float3 dir2 = (dif2.cross(oldSmokeDir)).ANormalize();
-
-		const float a1 = ((1.0f - (0.0f / SMOKE_TIME))) * (0.7f + math::fabs(dif1.dot(dir)));
-		const float a2 =
-			(age < 8)? 0.0f:
-			((1.0f - (age2 / SMOKE_TIME))) * (0.7f + math::fabs(dif2.dot(oldSmokeDir)));
-		const float alpha1 = Clamp(a1, 0.0f, 1.0f);
-		const float alpha2 = Clamp(a2, 0.0f, 1.0f);
-		const SColor col  = colBase * alpha1;
-		const SColor col2 = colBase * alpha2;
-
-		const float size1 = 1.0f;
-		const float size2 = (1.0f + age2 * (1.0f / SMOKE_TIME) * 7.0f);
-
-		const float txs = mix(weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->xstart, (age2 / 8.0f));
-		va->AddVertexQTC(drawPos  - dir1 * size1, txs,                               weaponDef->visuals.texture2->ystart, col);
-		va->AddVertexQTC(drawPos  + dir1 * size1, txs,                               weaponDef->visuals.texture2->yend,   col);
-		va->AddVertexQTC(oldSmoke + dir2 * size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->yend,   col2);
-		va->AddVertexQTC(oldSmoke - dir2 * size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->ystart, col2);
-	}
 
 	unsigned int part = curTracerPart;
 	const auto wt3 = weaponDef->visuals.texture3;

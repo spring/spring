@@ -93,7 +93,7 @@ public:
 	CMatrix44f GetTransformMatrix(bool offsetPos) const;
 
 	float GetSortDist() const { return sortDist; }
-	void SetSortDist(float d) { sortDist = d; }
+	void SetSortDist(float d) { sortDist = d + sortDistOffset; }
 
 public:
 	static bool inArray;
@@ -117,9 +117,10 @@ public:
 	float3 dir;
 	float3 drawPos;
 
-
 	float mygravity;
+
 	float sortDist; ///< distance used for z-sorting when rendering
+	float sortDistOffset; ///< an offset used for z-sorting
 
 	int tempNum;
 

@@ -36,6 +36,7 @@ CR_REG_METADATA(CProjectile,
 
 	CR_MEMBER(mygravity),
 	CR_IGNORED(sortDist),
+	CR_MEMBER(sortDistOffset),
 	CR_MEMBER(tempNum),
 
 	CR_MEMBER(ownerID),
@@ -74,6 +75,7 @@ CProjectile::CProjectile()
 
 	, mygravity(mapInfo? mapInfo->map.gravity: 0.0f)
 	, sortDist(0.0f)
+	, sortDistOffset(0.0f)
 	, tempNum(0)
 
 	, ownerID(-1u)
@@ -111,6 +113,7 @@ CProjectile::CProjectile(
 
 	, dir(ZeroVector) // set via Init()
 	, mygravity(mapInfo? mapInfo->map.gravity: 0.0f)
+	, sortDistOffset(0.f)
 
 	, ownerID(-1u)
 	, teamID(-1u)

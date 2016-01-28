@@ -62,8 +62,6 @@ public:
 
 	const S3DModelPiece* omp;
 
-	CSmokeTrailProjectile* curCallback;
-
 	static const unsigned NUM_TRAIL_PARTS = 8;
 	FireTrailPoint fireTrailPoints[NUM_TRAIL_PARTS];
 
@@ -73,6 +71,7 @@ public:
 
 	float3 oldSmokePos;
 	float3 oldSmokeDir;
+	CSmokeTrailProjectile* smokeTrail;
 };
 
 #endif /* PIECE_PROJECTILE_H */

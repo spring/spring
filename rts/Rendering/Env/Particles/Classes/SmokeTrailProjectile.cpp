@@ -67,18 +67,33 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(
 	checkCol = false;
 	castShadow = true;
 
+	UpdateEndPos(pos1, dir1);
+	SetRadiusAndHeight(pos1.distance(pos2), 0.0f);
+
+	if ((pos.y - CGround::GetApproximateHeight(pos.x, pos.z)) > 10) {
+		useAirLos = true;
+	}
+}
+
+
+void CSmokeTrailProjectile::UpdateEndPos(const float3 pos, const float3 dir)
+{
+	pos1 = pos;
+	dir1 = dir;
+
+	const float dist = pos1.distance(pos2);
+
+	drawSegmented = false;
+	SetPosition((pos1 + pos2) * 0.5f);
+	SetRadiusAndHeight(dist, 0.0f);
+	sortDistOffset = 10.f + dist * 0.5f; // so that missile's engine flame gets rendered above the trail
+
 	if (dir1.dot(dir2) < 0.98f) {
-		const float dist = pos1.distance(pos2);
 		dirpos1 = pos1 - dir1 * dist * 0.33f;
 		dirpos2 = pos2 + dir2 * dist * 0.33f;
 		midpos = CalcBeizer(0.5f, pos1, dirpos1, dirpos2, pos2);
 		middir = (dir1 + dir2).ANormalize();
 		drawSegmented = true;
-	}
-	SetRadiusAndHeight(pos1.distance(pos2), 0.0f);
-
-	if ((pos.y - CGround::GetApproximateHeight(pos.x, pos.z)) > 10) {
-		useAirLos = true;
 	}
 }
 

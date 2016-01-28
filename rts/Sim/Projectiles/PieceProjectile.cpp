@@ -26,9 +26,9 @@ CR_REG_METADATA(CPieceProjectile,(
 
 	CR_MEMBER(age),
 	CR_MEMBER(explFlags),
-	CR_MEMBER(curCallback),
 	CR_IGNORED(dispList),
 	CR_IGNORED(omp),
+	CR_IGNORED(smokeTrail),
 	CR_IGNORED(fireTrailPoints),
 	CR_MEMBER(spinVec),
 	CR_MEMBER(spinSpeed),
@@ -50,7 +50,7 @@ CPieceProjectile::CPieceProjectile(
 	explFlags(flags),
 	dispList((lmp != nullptr) ? lmp->dispListID : 0),
 	omp((lmp != nullptr) ? lmp->original : nullptr),
-	curCallback(NULL)
+	smokeTrail(NULL)
 {
 	checkCol = false;
 
@@ -63,6 +63,7 @@ CPieceProjectile::CPieceProjectile(
 		explFlags |= (PF_NoCEGTrail * (cegID == -1u));
 	}
 
+	oldSmokePos = pos;
 	oldSmokeDir = speed;
 	oldSmokeDir.Normalize();
 
@@ -152,19 +153,17 @@ void CPieceProjectile::Collision(CUnit* unit, CFeature* feature)
 
 	if (explFlags & PF_Smoke) {
 		if (explFlags & PF_NoCEGTrail) {
-			CSmokeTrailProjectile* tp = new CSmokeTrailProjectile(
+			smokeTrail = new CSmokeTrailProjectile(
 				owner(),
 				pos, oldSmokePos,
 				dir, oldSmokeDir,
 				false,
 				true,
-				NUM_TRAIL_PARTS - 1,
+				14,
 				SMOKE_TIME,
 				0.5f,
 				projectileDrawer->smoketrailtex
 			);
-
-			tp->creationTime += (NUM_TRAIL_PARTS - (age & (NUM_TRAIL_PARTS - 1)));
 		}
 	}
 
@@ -220,9 +219,14 @@ void CPieceProjectile::Update()
 	}
 
 	if (explFlags & PF_Smoke) {
-		if ((age & (NUM_TRAIL_PARTS - 1)) == 0) {
+		if (smokeTrail) {
+			smokeTrail->UpdateEndPos(pos, dir);
+			oldSmokePos = pos;
+			oldSmokeDir = dir;
+		}
 
-			curCallback = new CSmokeTrailProjectile(
+		if ((age % 8) == 0) {
+			smokeTrail = new CSmokeTrailProjectile(
 				owner(),
 				pos, oldSmokePos,
 				dir, oldSmokeDir,
@@ -234,10 +238,7 @@ void CPieceProjectile::Update()
 				projectileDrawer->smoketrailtex
 			);
 
-			useAirLos = curCallback->useAirLos;
-
-			oldSmokePos = pos;
-			oldSmokeDir = dir;
+			useAirLos = smokeTrail->useAirLos;
 		}
 	}
 }
@@ -254,9 +255,8 @@ void CPieceProjectile::Draw()
 	if ((explFlags & PF_NoCEGTrail) == 0)
 		return;
 
-	inArray = true;
-
 	if (explFlags & PF_Fire) {
+		inArray = true;
 		va->EnlargeArrays(NUM_TRAIL_PARTS * 4, 0, VA_SIZE_TC);
 		static const SColor lightOrange(1.f, 0.78f, 0.59f, 0.2f);
 

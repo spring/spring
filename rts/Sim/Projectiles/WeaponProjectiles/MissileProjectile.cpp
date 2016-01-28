@@ -41,7 +41,8 @@ CR_REG_METADATA(CMissileProjectile,(
 	CR_MEMBER(isDancing),
 	CR_MEMBER(extraHeight),
 	CR_MEMBER(extraHeightDecay),
-	CR_MEMBER(extraHeightTime)
+	CR_MEMBER(extraHeightTime),
+	CR_IGNORED(smokeTrail)
 ))
 
 CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponProjectile(params)
@@ -62,6 +63,7 @@ CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponP
 
 	, oldSmoke(pos)
 	, oldDir(dir)
+	, smokeTrail(nullptr)
 {
 	projectileType = WEAPON_MISSILE_PROJECTILE;
 
@@ -87,7 +89,6 @@ CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponP
 	}
 
 	drawRadius = radius + maxSpeed * 8;
-
 	castShadow = true;
 
 #ifdef TRACE_SYNC
@@ -96,7 +97,6 @@ CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponP
 #endif
 
 	CUnit* u = dynamic_cast<CUnit*>(target);
-
 	if (u != NULL) {
 		u->IncomingMissile(this);
 	}
@@ -235,23 +235,29 @@ void CMissileProjectile::Update()
 	age++;
 	numParts++;
 
-	if (weaponDef->visuals.smokeTrail && !(age & 7)) {
-		CSmokeTrailProjectile* tp = new CSmokeTrailProjectile(
-			own,
-			pos, oldSmoke,
-			dir, oldDir,
-			age == 8,
-			false,
-			7,
-			SMOKE_TIME,
-			0.6f,
-			weaponDef->visuals.texture2
-		);
+	if (weaponDef->visuals.smokeTrail) {
+		if (smokeTrail) {
+			smokeTrail->UpdateEndPos(pos, dir);
+			oldSmoke = pos;
+			oldDir = dir;
+		}
 
-		oldSmoke = pos;
-		oldDir = dir;
-		numParts = 0;
-		useAirLos = tp->useAirLos;
+		if ((age % 8) == 0) {
+			smokeTrail = new CSmokeTrailProjectile(
+				own,
+				pos, oldSmoke,
+				dir, oldDir,
+				age == 8,
+				false,
+				7,
+				SMOKE_TIME,
+				0.6f,
+				weaponDef->visuals.texture2
+			);
+
+			numParts = 0;
+			useAirLos = smokeTrail->useAirLos;
+		}
 	}
 
 	UpdateInterception();
@@ -308,41 +314,11 @@ void CMissileProjectile::UpdateGroundBounce() {
 void CMissileProjectile::Draw()
 {
 	inArray = true;
-	const float age2 = (age & 7) + globalRendering->timeOffset;
-
-	va->EnlargeArrays(8, 0, VA_SIZE_TC);
-	if (weaponDef->visuals.smokeTrail) {
-		const SColor colBase(.6f, .6f, .6f, 1.f);
-
-		// draw the trail as a single quad
-		const float3 dif = (drawPos - camera->GetPos()).ANormalize();
-		const float3 dir1 = (dif.cross(dir)).ANormalize();
-		const float3 dif2 = (oldSmoke - camera->GetPos()).ANormalize();
-		const float3 dir2 = (dif2.cross(oldDir)).ANormalize();
-
-		const float a1 = (1.0f / (SMOKE_TIME)) * (0.7f + math::fabs(dif.dot(dir)));
-		const float alpha1 = Clamp(a1, 0.f, 1.f);
-		const SColor col = colBase * alpha1;
-
-		float a2 = (1 - float(age2) / (SMOKE_TIME)) * (0.7f + math::fabs(dif2.dot(oldDir)));
-		if (age < 8)
-			a2 = 0.0f;
-		const float alpha2 = Clamp(a2, 0.f, 1.f);
-		const SColor col2 = colBase * alpha2;
-
-		const float size = 1.0f;
-		const float size2 = (1 + (age2 * (1 / SMOKE_TIME)) * 7);
-		const float txs = mix(weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->xstart, (age2 / 8.0f));
-
-		va->AddVertexQTC(drawPos  - dir1 * size,  txs,                               weaponDef->visuals.texture2->ystart, col);
-		va->AddVertexQTC(drawPos  + dir1 * size,  txs,                               weaponDef->visuals.texture2->yend,   col);
-		va->AddVertexQTC(oldSmoke + dir2 * size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->yend,   col2);
-		va->AddVertexQTC(oldSmoke - dir2 * size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->ystart, col2);
-	}
 
 	// rocket flare
 	const SColor lightYellow(255, 210, 180, 1);
 	const float fsize = radius * 0.4f;
+	va->EnlargeArrays(4, 0, VA_SIZE_TC);
 	va->AddVertexQTC(drawPos - camera->GetRight() * fsize-camera->GetUp() * fsize, weaponDef->visuals.texture1->xstart, weaponDef->visuals.texture1->ystart, lightYellow);
 	va->AddVertexQTC(drawPos + camera->GetRight() * fsize-camera->GetUp() * fsize, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->ystart, lightYellow);
 	va->AddVertexQTC(drawPos + camera->GetRight() * fsize+camera->GetUp() * fsize, weaponDef->visuals.texture1->xend,   weaponDef->visuals.texture1->yend,   lightYellow);
@@ -376,5 +352,5 @@ int CMissileProjectile::ShieldRepulse(const float3& shieldPos, float shieldForce
 
 int CMissileProjectile::GetProjectilesCount() const
 {
-	return 2 + ((weaponDef->visuals.smokeTrail) ? numParts : 0);
+	return 1;
 }

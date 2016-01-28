@@ -32,8 +32,10 @@ private:
 	void UpdateTrajectory();
 
 private:
+	float3 aimError;
 	float tracking;
 	bool ignoreError;
+	bool doturn;
 	float maxGoodDif;
 	float maxSpeed;
 	float acceleration;
@@ -44,11 +46,7 @@ private:
 
 	float3 oldSmoke;
 	float3 oldSmokeDir;
-	float3 aimError;
-
-	bool doturn;
-
-	CSmokeTrailProjectile* curCallback;
+	CSmokeTrailProjectile* smokeTrail;
 
 	int numParts;
 	int missileAge;

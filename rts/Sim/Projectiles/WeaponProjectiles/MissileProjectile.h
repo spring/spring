@@ -6,6 +6,8 @@
 #include "WeaponProjectile.h"
 
 class CUnit;
+class CSmokeTrailProjectile;
+
 
 class CMissileProjectile : public CWeaponProjectile
 {
@@ -54,6 +56,7 @@ private:
 
 	float3 oldSmoke;
 	float3 oldDir;
+	CSmokeTrailProjectile* smokeTrail;
 
 	/// the smokes life-time in frames
 	static const float SMOKE_TIME;

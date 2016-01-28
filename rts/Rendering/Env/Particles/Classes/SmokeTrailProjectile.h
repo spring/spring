@@ -30,13 +30,14 @@ public:
 
 	int GetProjectilesCount() const override;
 
+	void UpdateEndPos(const float3 pos, const float3 dir);
+
 private:
 	float3 pos1;
 	float3 pos2;
 	float orgSize;
-public:
+
 	int creationTime;
-private:
 	int lifeTime;
 	float color;
 	float3 dir1;
