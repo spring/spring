@@ -335,6 +335,10 @@ void LocalModel::UpdateBoundingVolume(unsigned int frameNum)
 		const CMatrix44f& matrix = pieces[n].GetModelSpaceMatrix();
 		const S3DModelPiece* piece = pieces[n].original;
 
+		// skip empty pieces or bounds will not be sensible
+		if (!piece->HasGeometryData())
+			continue;
+
 		#if 0
 		const unsigned int vcount = piece->GetVertexCount();
 
