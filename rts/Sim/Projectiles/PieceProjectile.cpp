@@ -26,10 +26,10 @@ CR_REG_METADATA(CPieceProjectile,(
 
 	CR_MEMBER(age),
 	CR_MEMBER(explFlags),
-	CR_MEMBER(dispList),
-	// NOTE: what about this?
-	// CR_MEMBER(omp),
 	CR_MEMBER(curCallback),
+	CR_IGNORED(dispList),
+	CR_IGNORED(omp),
+	CR_IGNORED(fireTrailPoints),
 	CR_MEMBER(spinVec),
 	CR_MEMBER(spinSpeed),
 	CR_MEMBER(spinAngle),

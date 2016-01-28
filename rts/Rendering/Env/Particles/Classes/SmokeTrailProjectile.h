@@ -49,8 +49,7 @@ private:
 	bool drawSegmented;
 	bool firstSegment;
 	bool lastSegment;
-public:
-	CProjectile* drawCallbacker;
+
 private:
 	AtlasedTexture* texture;
 };
