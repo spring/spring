@@ -1,5 +1,7 @@
 
 #include "System/Net/UDPListener.h"
+#include "System/Log/ILog.h"
+
 
 #define BOOST_TEST_MODULE UDPListener
 #include <boost/test/unit_test.hpp>
@@ -28,17 +30,21 @@ BOOST_AUTO_TEST_CASE(TryBindSocket)
 	SocketTest t;
 
 	// IP v4 & v6 addresses
+	LOG("\nIP v4 & v6 addresses");
 	t.TestHost("127.0.0.1");
 	t.TestHost("0.0.0.0");
 	t.TestHost("::");
 	t.TestHost("::1");
 
+
 	// badly named invalid IP v6 addresses
+	LOG("\nbadly named invalid IP v6 addresses");
 	t.TestHost("::2", false);
 	t.TestHost("fe80::224:1dff:fecf:df44/64", false);
 	t.TestHost("fe80::224:1dff:fecf:df44", false);
 	t.TestHost("::224:1dff:fecf:df44/64", false);
 	t.TestHost("fe80::", false);
+	t.TestHost("fe80", false);
 	/*
 		FIXME: for some reason this test works on windows (binds to ipv4 0.0.0.224) and fails on linux/osx
 
@@ -49,14 +55,15 @@ BOOST_AUTO_TEST_CASE(TryBindSocket)
 	*/
 	//	TestHost("224:1dff:fecf:df44/64", false);
 
-	t.TestHost("fe80", false);
 
 	// host-names
+	LOG("\nhost-names");
 	t.TestHost("localhost");
 	t.TestHost("local.lan", false);
 	t.TestHost("google.com", false);
 
 	// normal ports
+	LOG("\nnormal ports");
 	t.TestPort(1024);
 	t.TestPort(11111);
 	t.TestPort(32000);
@@ -70,6 +77,7 @@ BOOST_AUTO_TEST_CASE(TryBindSocket)
 	t.TestPort(1023, false);
 */
 	// out-of-range ports
+	LOG("\nout-of-range ports");
 	t.TestPort(65536, false);
 	t.TestPort(65537, false);
 	t.TestPort(-1, false);

@@ -90,16 +90,17 @@ std::string UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::s
 			}
 		}
 
+		(*socket)->bind(addr);
 		LOG("Binding UDP socket to IP %s %s (%s) port %i",
 				(addr.address().is_v6() ? "(v6)" : "(v4)"), addr.address().to_string().c_str(), ip.c_str(),
 				addr.port());
-		(*socket)->bind(addr);
 	} catch (const std::runtime_error& ex) { // includes boost::system::system_error and std::range_error
 		socket->reset();
 		errorMsg = ex.what();
 		if (errorMsg.empty()) {
 			errorMsg = "Unknown problem";
 		}
+		LOG_L(L_ERROR, "Binding UDP socket to IP %s failed: %s", ip.c_str(), errorMsg.c_str());
 	}
 
 	return errorMsg;
