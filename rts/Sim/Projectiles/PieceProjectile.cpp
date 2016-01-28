@@ -80,7 +80,6 @@ CPieceProjectile::CPieceProjectile(
 	}
 
 	SetRadiusAndHeight(radius, 0.0f);
-	drawRadius = radius + 32.0f;
 	castShadow = true;
 
 	if (pos.y - CGround::GetApproximateHeight(pos.x, pos.z) > 10) {
@@ -92,27 +91,19 @@ CPieceProjectile::CPieceProjectile(
 }
 
 
-CPieceProjectile::~CPieceProjectile()
-{
-	if (curCallback) {
-		// this is unsynced, but it prevents some callback crash on exit
-		curCallback->drawCallbacker = NULL;
-	}
-}
-
-
 void CPieceProjectile::Collision()
 {
-	const float3& norm = CGround::GetNormal(pos.x, pos.z);
-	const float ns = speed.dot(norm);
-
-	SetVelocityAndSpeed(speed - (norm * ns * 1.6f));
-	SetPosition(pos + (norm * 0.1f));
-
 	Collision(nullptr, nullptr);
 	if (gs->randFloat() < 0.666f) { // give it a small chance to `ground bounce`
 		CProjectile::Collision();
+		return;
 	}
+
+	// ground bounce
+	const float3& norm = CGround::GetNormal(pos.x, pos.z);
+	const float ns = speed.dot(norm);
+	SetVelocityAndSpeed(speed - (norm * ns * 1.6f));
+	SetPosition(pos + (norm * 0.1f));
 }
 
 
@@ -170,7 +161,6 @@ void CPieceProjectile::Collision(CUnit* unit, CFeature* feature)
 				NUM_TRAIL_PARTS - 1,
 				SMOKE_TIME,
 				0.5f,
-				NULL,
 				projectileDrawer->smoketrailtex
 			);
 
@@ -230,9 +220,6 @@ void CPieceProjectile::Update()
 
 	if (explFlags & PF_Smoke) {
 		if ((age & (NUM_TRAIL_PARTS - 1)) == 0) {
-			if (curCallback != NULL) {
-				curCallback->drawCallbacker = NULL;
-			}
 
 			curCallback = new CSmokeTrailProjectile(
 				owner(),
@@ -243,7 +230,6 @@ void CPieceProjectile::Update()
 				14,
 				SMOKE_TIME,
 				0.5f,
-				this,
 				projectileDrawer->smoketrailtex
 			);
 
@@ -256,22 +242,17 @@ void CPieceProjectile::Update()
 }
 
 
+void CPieceProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+{
+	points.AddVertexQC(pos, color4::red);
+}
+
 
 void CPieceProjectile::Draw()
 {
 	if ((explFlags & PF_NoCEGTrail) == 0)
 		return;
 
-	DrawCallback();
-}
-
-void CPieceProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
-{
-	points.AddVertexQC(pos, color4::red);
-}
-
-void CPieceProjectile::DrawCallback()
-{
 	inArray = true;
 
 	if (explFlags & PF_Fire) {
@@ -281,10 +262,9 @@ void CPieceProjectile::DrawCallback()
 		for (unsigned int age = 0; age < NUM_TRAIL_PARTS; ++age) {
 			const float3 interPos = fireTrailPoints[age].pos;
 			const float size = fireTrailPoints[age].size;
-			const float modage = age * 1.0f;
 
-			const float alpha = (7.5f - modage) * (1.0f / NUM_TRAIL_PARTS);
-			const float drawsize = (0.5f + modage) * size;
+			const float alpha = 1.0f - (age * (1.0f / NUM_TRAIL_PARTS));
+			const float drawsize = (1.0f + age) * size;
 			const SColor col = lightOrange * alpha;
 
 			const auto eft = projectileDrawer->explofadetex;

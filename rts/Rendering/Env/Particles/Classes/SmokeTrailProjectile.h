@@ -22,15 +22,13 @@ public:
 		float size,
 		int time,
 		float color,
-		CProjectile* drawCallback,
 		AtlasedTexture* texture
 	);
-	virtual ~CSmokeTrailProjectile();
 
 	void Update() override;
 	void Draw() override;
 
-	virtual int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override;
 
 private:
 	float3 pos1;

@@ -117,23 +117,10 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 }
 
 
-CStarburstProjectile::~CStarburstProjectile()
-{
-	if (curCallback) {
-		// this is unsynced, but it prevents some callback crash on exit
-		curCallback->drawCallbacker = NULL;
-	}
-
-	for (unsigned int a = 0; a < NUM_TRACER_PARTS; ++a) {
-		tracerParts[a].ageMods.clear();
-	}
-}
-
-
 void CStarburstProjectile::Collision()
 {
 	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, nullptr, weaponDef->visuals.texture2);
+		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, weaponDef->visuals.texture2);
 	}
 
 	oldSmokeDir = dir;
@@ -144,7 +131,7 @@ void CStarburstProjectile::Collision()
 void CStarburstProjectile::Collision(CUnit* unit)
 {
 	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, nullptr, weaponDef->visuals.texture2);
+		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, weaponDef->visuals.texture2);
 	}
 
 	oldSmokeDir = dir;
@@ -155,7 +142,7 @@ void CStarburstProjectile::Collision(CUnit* unit)
 void CStarburstProjectile::Collision(CFeature* feature)
 {
 	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, 0, weaponDef->visuals.texture2);
+		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, weaponDef->visuals.texture2);
 	}
 
 	oldSmokeDir = dir;
@@ -222,10 +209,6 @@ void CStarburstProjectile::Update()
 	numParts++;
 
 	if (weaponDef->visuals.smokeTrail && !(age & 7)) {
-		if (curCallback != NULL) {
-			curCallback->drawCallbacker = NULL;
-		}
-
 		curCallback = new CSmokeTrailProjectile(
 			owner(),
 			pos,
@@ -237,7 +220,6 @@ void CStarburstProjectile::Update()
 			7,
 			SMOKE_TIME,
 			0.7f,
-			this,
 			weaponDef->visuals.texture2
 		);
 
@@ -348,12 +330,6 @@ void CStarburstProjectile::Draw()
 		va->AddVertexQTC(oldSmoke - dir2 * size2, weaponDef->visuals.texture2->xend, weaponDef->visuals.texture2->ystart, col2);
 	}
 
-	DrawCallback();
-}
-
-void CStarburstProjectile::DrawCallback()
-{
-	inArray = true;
 	unsigned int part = curTracerPart;
 	const auto wt3 = weaponDef->visuals.texture3;
 	const auto wt1 = weaponDef->visuals.texture1;

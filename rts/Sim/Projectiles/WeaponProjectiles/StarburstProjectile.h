@@ -16,7 +16,6 @@ class CStarburstProjectile : public CWeaponProjectile
 
 public:
 	CStarburstProjectile(const ProjectileParams& params);
-	~CStarburstProjectile();
 
 	void Collision(CUnit* unit) override;
 	void Collision(CFeature* feature) override;
@@ -30,8 +29,6 @@ public:
 
 	void SetIgnoreError(bool b) { ignoreError = b; }
 private:
-	void DrawCallback() override;
-
 	void UpdateTrajectory();
 
 private:

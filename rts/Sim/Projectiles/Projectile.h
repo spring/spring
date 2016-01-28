@@ -48,7 +48,6 @@ public:
 
 	virtual void Draw() {}
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
-	virtual void DrawCallback() {}
 
 	virtual int GetProjectilesCount() const
 	{

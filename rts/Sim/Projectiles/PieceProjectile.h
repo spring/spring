@@ -33,7 +33,6 @@ public:
 		int flags,
 		float radius
 	);
-	virtual ~CPieceProjectile();
 
 	void Update() override;
 	void Draw() override;
@@ -41,8 +40,6 @@ public:
 	void Collision() override;
 	void Collision(CUnit* unit) override;
 	void Collision(CFeature* f) override;
-
-	void DrawCallback() override;
 
 	int GetProjectilesCount() const override;
 

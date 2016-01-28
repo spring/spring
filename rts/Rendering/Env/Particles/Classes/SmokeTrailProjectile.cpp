@@ -29,7 +29,6 @@ CR_REG_METADATA(CSmokeTrailProjectile,(
 	CR_MEMBER(drawSegmented),
 	CR_MEMBER(firstSegment),
 	CR_MEMBER(lastSegment),
-	CR_MEMBER(drawCallbacker),
 	CR_MEMBER(texture)
 ))
 
@@ -48,7 +47,6 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(
 	float size,
 	int time,
 	float color,
-	CProjectile* drawCallback,
 	AtlasedTexture* texture
 ):
 	CProjectile((pos1 + pos2) * 0.5f, ZeroVector, owner, false, false, false),
@@ -64,7 +62,6 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(
 	drawSegmented(false),
 	firstSegment(firstSegment),
 	lastSegment(lastSegment),
-	drawCallbacker(drawCallback),
 	texture(texture == NULL ? projectileDrawer->smoketrailtex : texture)
 {
 	checkCol = false;
@@ -85,10 +82,6 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(
 	}
 }
 
-CSmokeTrailProjectile::~CSmokeTrailProjectile()
-{
-
-}
 
 void CSmokeTrailProjectile::Draw()
 {
@@ -147,11 +140,6 @@ void CSmokeTrailProjectile::Draw()
 		va->AddVertexQTC(pos1 + (odir1 * size),    texture->xstart, texture->yend,   col);
 		va->AddVertexQTC(pos2 + (odir2 * size2),   texture->xend,   texture->yend,   col2);
 		va->AddVertexQTC(pos2 - (odir2 * size2),   texture->xend,   texture->ystart, col2);
-	}
-
-
-	if (drawCallbacker != NULL) {
-		drawCallbacker->DrawCallback();
 	}
 }
 
