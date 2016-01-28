@@ -186,6 +186,7 @@ void CProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 	points.AddVertexQC(pos, color4::whiteA);
 }
 
+
 void CProjectile::DrawArray()
 {
 	va->DrawArrayTC(GL_QUADS);
@@ -194,6 +195,7 @@ void CProjectile::DrawArray()
 	inArray = false;
 }
 
+
 CUnit* CProjectile::owner() const {
 	// NOTE:
 	//   this death dependency optimization using "ownerID" is logically flawed:
@@ -201,6 +203,7 @@ CUnit* CProjectile::owner() const {
 	//   owner (unlikely however unless ID's get recycled very rapidly)
 	return (unitHandler->GetUnit(ownerID));
 }
+
 
 CMatrix44f CProjectile::GetTransformMatrix(bool offsetPos) const {
 	float3 xdir;
@@ -218,3 +221,13 @@ CMatrix44f CProjectile::GetTransformMatrix(bool offsetPos) const {
 	return (CMatrix44f(drawPos + (dir * radius * 0.9f * offsetPos), -xdir, ydir, dir));
 }
 
+
+bool CProjectile::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+{
+	if (CExpGenSpawnable::GetMemberInfo(memberName, memberInfo))
+		return true;
+
+	CHECK_MEMBER_INFO_FLOAT3(CProjectile, dir)
+
+	return false;
+}

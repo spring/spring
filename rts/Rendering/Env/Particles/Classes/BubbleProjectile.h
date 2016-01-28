@@ -13,7 +13,7 @@ public:
 		CUnit* owner,
 		float3 pos,
 		float3 speed,
-		float ttl,
+		int ttl,
 		float startSize,
 		float sizeExpansion,
 		float alpha
@@ -24,6 +24,8 @@ public:
 	void Draw() override;
 
 	virtual int GetProjectilesCount() const override;
+
+	static bool GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo);
 
 private:
 	int ttl;

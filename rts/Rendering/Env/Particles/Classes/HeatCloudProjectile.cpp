@@ -110,3 +110,21 @@ int CHeatCloudProjectile::GetProjectilesCount() const
 {
 	return 1;
 }
+
+
+bool CHeatCloudProjectile::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+{
+	if (CProjectile::GetMemberInfo(memberName, memberInfo))
+		return true;
+
+	CHECK_MEMBER_INFO_FLOAT (CHeatCloudProjectile, heat       )
+	CHECK_MEMBER_INFO_FLOAT (CHeatCloudProjectile, maxheat    )
+	CHECK_MEMBER_INFO_FLOAT (CHeatCloudProjectile, heatFalloff)
+	CHECK_MEMBER_INFO_FLOAT (CHeatCloudProjectile, size       )
+	CHECK_MEMBER_INFO_FLOAT (CHeatCloudProjectile, sizeGrowth )
+	CHECK_MEMBER_INFO_FLOAT (CHeatCloudProjectile, sizemod    )
+	CHECK_MEMBER_INFO_FLOAT (CHeatCloudProjectile, sizemodmod )
+	CHECK_MEMBER_INFO_PTR   (CHeatCloudProjectile, texture, projectileDrawer->textureAtlas->GetTexturePtr)
+
+	return false;
+}

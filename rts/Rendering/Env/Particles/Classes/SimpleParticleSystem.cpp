@@ -190,19 +190,38 @@ int CSimpleParticleSystem::GetProjectilesCount() const
 
 
 
+bool CSimpleParticleSystem::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+{
+	if (CProjectile::GetMemberInfo(memberName, memberInfo))
+		return true;
+
+	CHECK_MEMBER_INFO_FLOAT3(CSimpleParticleSystem, emitVector         )
+	CHECK_MEMBER_INFO_FLOAT3(CSimpleParticleSystem, emitMul            )
+	CHECK_MEMBER_INFO_FLOAT3(CSimpleParticleSystem, gravity            )
+	CHECK_MEMBER_INFO_FLOAT (CSimpleParticleSystem, particleSpeed      )
+	CHECK_MEMBER_INFO_FLOAT (CSimpleParticleSystem, particleSpeedSpread)
+	CHECK_MEMBER_INFO_FLOAT (CSimpleParticleSystem, emitRot            )
+	CHECK_MEMBER_INFO_FLOAT (CSimpleParticleSystem, emitRotSpread      )
+	CHECK_MEMBER_INFO_FLOAT (CSimpleParticleSystem, particleLife       )
+	CHECK_MEMBER_INFO_FLOAT (CSimpleParticleSystem, particleLifeSpread )
+	CHECK_MEMBER_INFO_FLOAT (CSimpleParticleSystem, particleSize       )
+	CHECK_MEMBER_INFO_FLOAT (CSimpleParticleSystem, particleSizeSpread )
+	CHECK_MEMBER_INFO_FLOAT (CSimpleParticleSystem, airdrag            )
+	CHECK_MEMBER_INFO_FLOAT (CSimpleParticleSystem, sizeGrowth         )
+	CHECK_MEMBER_INFO_FLOAT (CSimpleParticleSystem, sizeMod            )
+	CHECK_MEMBER_INFO_INT   (CSimpleParticleSystem, numParticles       )
+	CHECK_MEMBER_INFO_BOOL  (CSimpleParticleSystem, directional        )
+	CHECK_MEMBER_INFO_PTR   (CSimpleParticleSystem, texture , projectileDrawer->textureAtlas->GetTexturePtr)
+	CHECK_MEMBER_INFO_PTR   (CSimpleParticleSystem, colorMap, CColorMap::LoadFromDefString                 )
+
+	return false;
+}
+
+
 
 CR_BIND_DERIVED(CSphereParticleSpawner, CSimpleParticleSystem, )
 
-CR_REG_METADATA(CSphereParticleSpawner,
-(
-	CR_MEMBER_BEGINFLAG(CM_Config),
-	CR_MEMBER_ENDFLAG(CM_Config)
-))
-
-CSphereParticleSpawner::CSphereParticleSpawner(): CSimpleParticleSystem()
-{
-}
-
+CR_REG_METADATA(CSphereParticleSpawner, )
 
 void CSphereParticleSpawner::Init(const CUnit* owner, const float3& offset)
 {
@@ -246,4 +265,9 @@ void CSphereParticleSpawner::Init(const CUnit* owner, const float3& offset)
 	}
 
 	deleteMe = true;
+}
+
+bool CSphereParticleSpawner::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+{
+	return CSimpleParticleSystem::GetMemberInfo(memberName, memberInfo);
 }

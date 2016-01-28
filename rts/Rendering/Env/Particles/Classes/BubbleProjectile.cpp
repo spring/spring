@@ -12,11 +12,13 @@
 CR_BIND_DERIVED(CBubbleProjectile, CProjectile, (NULL, ZeroVector, ZeroVector, 0.0f, 0.0f, 0.0f, 0.0f))
 
 CR_REG_METADATA(CBubbleProjectile, (
-	CR_MEMBER(ttl),
-	CR_MEMBER(alpha),
-	CR_MEMBER(size),
-	CR_MEMBER(startSize),
-	CR_MEMBER(sizeExpansion)
+	CR_MEMBER_BEGINFLAG(CM_Config),
+		CR_MEMBER(ttl),
+		CR_MEMBER(alpha),
+		CR_MEMBER(startSize),
+		CR_MEMBER(sizeExpansion),
+	CR_MEMBER_ENDFLAG(CM_Config),
+	CR_MEMBER(size)
 ))
 
 
@@ -24,13 +26,13 @@ CBubbleProjectile::CBubbleProjectile(
 	CUnit* owner,
 	float3 pos,
 	float3 speed,
-	float ttl,
+	int ttl,
 	float startSize,
 	float sizeExpansion,
 	float alpha
 ):
 	CProjectile(pos, speed, owner, false, false, false),
-	ttl((int) ttl),
+	ttl(ttl),
 	alpha(alpha),
 	size(startSize * 0.4f),
 	startSize(startSize),
@@ -90,4 +92,18 @@ void CBubbleProjectile::Draw()
 int CBubbleProjectile::GetProjectilesCount() const
 {
 	return 1;
+}
+
+
+bool CBubbleProjectile::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+{
+	if (CProjectile::GetMemberInfo(memberName, memberInfo))
+		return true;
+
+	CHECK_MEMBER_INFO_FLOAT(CBubbleProjectile, alpha        )
+	CHECK_MEMBER_INFO_FLOAT(CBubbleProjectile, startSize    )
+	CHECK_MEMBER_INFO_FLOAT(CBubbleProjectile, sizeExpansion)
+	CHECK_MEMBER_INFO_INT  (CBubbleProjectile, ttl          )
+
+	return false;
 }

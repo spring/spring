@@ -85,3 +85,15 @@ int CNanoProjectile::GetProjectilesCount() const
 {
 	return 0; // nano particles use their own counter
 }
+
+
+bool CNanoProjectile::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+{
+	if (CProjectile::GetMemberInfo(memberName, memberInfo))
+		return true;
+
+	CHECK_MEMBER_INFO_INT   (CNanoProjectile, deathFrame)
+	CHECK_MEMBER_INFO_SCOLOR(CNanoProjectile, color     )
+
+	return false;
+}

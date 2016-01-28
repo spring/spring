@@ -109,3 +109,19 @@ int CExploSpikeProjectile::GetProjectilesCount() const
 {
 	return 1;
 }
+
+
+bool CExploSpikeProjectile::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+{
+	if (CProjectile::GetMemberInfo(memberName, memberInfo))
+		return true;
+
+	CHECK_MEMBER_INFO_FLOAT (CExploSpikeProjectile, length      )
+	CHECK_MEMBER_INFO_FLOAT (CExploSpikeProjectile, width       )
+	CHECK_MEMBER_INFO_FLOAT (CExploSpikeProjectile, alpha       )
+	CHECK_MEMBER_INFO_FLOAT (CExploSpikeProjectile, alphaDecay  )
+	CHECK_MEMBER_INFO_FLOAT (CExploSpikeProjectile, lengthGrowth)
+	CHECK_MEMBER_INFO_FLOAT3(CExploSpikeProjectile, color       )
+
+	return false;
+}

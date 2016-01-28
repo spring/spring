@@ -80,3 +80,13 @@ int CTracerProjectile::GetProjectilesCount() const
 {
 	return 100; // glBeginEnd is ways more evil than VA draw!
 }
+
+bool CTracerProjectile::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+{
+	if (CProjectile::GetMemberInfo(memberName, memberInfo))
+		return true;
+
+	CHECK_MEMBER_INFO_FLOAT (CTracerProjectile, length)
+
+	return false;
+}

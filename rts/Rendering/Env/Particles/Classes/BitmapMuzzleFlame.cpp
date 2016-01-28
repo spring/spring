@@ -4,6 +4,7 @@
 #include "BitmapMuzzleFlame.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Rendering/GlobalRendering.h"
+#include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TextureAtlas.h"
@@ -101,3 +102,22 @@ int CBitmapMuzzleFlame::GetProjectilesCount() const
 {
 	return 3;
 }
+
+
+bool CBitmapMuzzleFlame::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+{
+	if (CProjectile::GetMemberInfo(memberName, memberInfo))
+		return true;
+
+	CHECK_MEMBER_INFO_PTR  (CBitmapMuzzleFlame, sideTexture,  projectileDrawer->textureAtlas->GetTexturePtr)
+	CHECK_MEMBER_INFO_PTR  (CBitmapMuzzleFlame, frontTexture, projectileDrawer->textureAtlas->GetTexturePtr)
+	CHECK_MEMBER_INFO_PTR  (CBitmapMuzzleFlame, colorMap, CColorMap::LoadFromDefString)
+	CHECK_MEMBER_INFO_FLOAT(CBitmapMuzzleFlame, size       )
+	CHECK_MEMBER_INFO_FLOAT(CBitmapMuzzleFlame, length     )
+	CHECK_MEMBER_INFO_FLOAT(CBitmapMuzzleFlame, sizeGrowth )
+	CHECK_MEMBER_INFO_FLOAT(CBitmapMuzzleFlame, frontOffset)
+	CHECK_MEMBER_INFO_INT  (CBitmapMuzzleFlame, ttl        )
+
+	return false;
+}
+

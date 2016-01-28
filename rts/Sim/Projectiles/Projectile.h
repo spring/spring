@@ -95,6 +95,7 @@ public:
 	float GetSortDist() const { return sortDist; }
 	void SetSortDist(float d) { sortDist = d + sortDistOffset; }
 
+
 public:
 	static bool inArray;
 	static CVertexArray* va;
@@ -133,6 +134,7 @@ protected:
 	unsigned int projectileType;
 	unsigned int collisionFlags;
 
+	static bool GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo);
 public:
 	std::vector<int> quads;
 };

@@ -16,9 +16,9 @@ public:
 		CUnit* owner,
 		const float3& pos,
 		const float3& speed,
-		const float ttl,
-		const float size,
-		const float expansion,
+		float ttl,
+		float size,
+		float expansion,
 		float slowdown,
 		const float3& color
 	);
@@ -28,6 +28,8 @@ public:
 	virtual void Update() override;
 
 	virtual int GetProjectilesCount() const override;
+
+	static bool GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo);
 
 private:
 	float alpha;

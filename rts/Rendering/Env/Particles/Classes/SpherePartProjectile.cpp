@@ -161,3 +161,16 @@ int CSpherePartSpawner::GetProjectilesCount() const
 	return 0;
 }
 
+
+bool CSpherePartSpawner::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+{
+	if (CProjectile::GetMemberInfo(memberName, memberInfo))
+		return true;
+
+	CHECK_MEMBER_INFO_FLOAT (CSpherePartSpawner, alpha         )
+	CHECK_MEMBER_INFO_FLOAT (CSpherePartSpawner, expansionSpeed)
+	CHECK_MEMBER_INFO_INT   (CSpherePartSpawner, ttl           )
+	CHECK_MEMBER_INFO_FLOAT3(CSpherePartSpawner, color         )
+
+	return false;
+}

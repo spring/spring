@@ -82,7 +82,10 @@ public:
 
 	//! @return reference to the Texture struct of the specified texture
 	AtlasedTexture& GetTexture(const std::string& name);
-	
+
+	AtlasedTexture* GetTexturePtr(const std::string& name) { return &GetTexture(name); }
+	GroundFXTexture* GetGFTexturePtr(const std::string& name) { return static_cast<GroundFXTexture*>(&GetTexture(name)); }
+
 	/**
 	 * @return a Texture struct of the specified texture if it exists,
 	 *         otherwise return a backup texture.

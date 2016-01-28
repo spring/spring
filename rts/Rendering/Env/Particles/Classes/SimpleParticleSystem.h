@@ -25,6 +25,8 @@ public:
 
 	virtual int GetProjectilesCount() const override;
 
+	static bool GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo);
+
 protected:
 	float3 emitVector;
 	float3 emitMul;
@@ -76,11 +78,13 @@ class CSphereParticleSpawner : public CSimpleParticleSystem
 	CR_DECLARE(CSphereParticleSpawner)
 
 public:
-	CSphereParticleSpawner();
+	CSphereParticleSpawner() {}
 
 	void Draw() {}
 	void Update() {}
 	void Init(const CUnit* owner, const float3& offset);
+
+	static bool GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo);
 };
 
 #endif // SIMPLE_PARTICLE_SYSTEM_H

@@ -29,6 +29,9 @@ public:
 
 	float3 CalcNormal(const float3 midPos, const float3 camDir, const float quadSize) const;
 
+protected:
+	static bool GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo);
+
 public:
 	float size;
 	bool depthTest;
@@ -60,6 +63,8 @@ public:
 
 	void Draw();
 	bool Update();
+
+	static bool GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo);
 
 private:
 	float3 side1;
@@ -94,6 +99,8 @@ public:
 	void Init(const CUnit* owner, const float3& offset);
 	void Draw();
 	bool Update();
+
+	static bool GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo);
 
 private:
 	float3 side1;

@@ -79,13 +79,11 @@ CSmokeProjectile2::CSmokeProjectile2(
 
 void CSmokeProjectile2::Init(const CUnit* owner, const float3& offset)
 {
-	if (offset.y - CGround::GetApproximateHeight(offset.x, offset.z, false) > 10) {
+	if (offset.y - CGround::GetApproximateHeight(offset.x, offset.z, false) > 10)
 		useAirLos = true;
-	}
 
-	if (!owner) {
+	if (!owner)
 		alwaysVisible = true;
-	}
 
 	wantedPos += offset;
 
@@ -146,4 +144,21 @@ void CSmokeProjectile2::Draw()
 int CSmokeProjectile2::GetProjectilesCount() const
 {
 	return 1;
+}
+
+
+bool CSmokeProjectile2::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+{
+	if (CProjectile::GetMemberInfo(memberName, memberInfo))
+		return true;
+
+	CHECK_MEMBER_INFO_FLOAT (CSmokeProjectile2, color        )
+	CHECK_MEMBER_INFO_FLOAT (CSmokeProjectile2, size         )
+	CHECK_MEMBER_INFO_FLOAT (CSmokeProjectile2, startSize    )
+	CHECK_MEMBER_INFO_FLOAT (CSmokeProjectile2, sizeExpansion)
+	CHECK_MEMBER_INFO_FLOAT (CSmokeProjectile2, ageSpeed     )
+	CHECK_MEMBER_INFO_FLOAT (CSmokeProjectile2, glowFalloff  )
+	CHECK_MEMBER_INFO_FLOAT3(CSmokeProjectile2, wantedPos    )
+
+	return false;
 }

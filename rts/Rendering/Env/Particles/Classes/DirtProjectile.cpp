@@ -33,9 +33,9 @@ CDirtProjectile::CDirtProjectile(
 	CUnit* owner,
 	const float3& pos,
 	const float3& speed,
-	const float ttl,
-	const float size,
-	const float expansion,
+	float ttl,
+	float size,
+	float expansion,
 	float slowdown,
 	const float3& color
 ):
@@ -110,4 +110,21 @@ void CDirtProjectile::Draw()
 int CDirtProjectile::GetProjectilesCount() const
 {
 	return 1;
+}
+
+
+bool CDirtProjectile::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+{
+	if (CProjectile::GetMemberInfo(memberName, memberInfo))
+		return true;
+
+	CHECK_MEMBER_INFO_FLOAT (CDirtProjectile, alpha        )
+	CHECK_MEMBER_INFO_FLOAT (CDirtProjectile, alphaFalloff )
+	CHECK_MEMBER_INFO_FLOAT (CDirtProjectile, size         )
+	CHECK_MEMBER_INFO_FLOAT (CDirtProjectile, sizeExpansion)
+	CHECK_MEMBER_INFO_FLOAT (CDirtProjectile, slowdown     )
+	CHECK_MEMBER_INFO_FLOAT3(CDirtProjectile, color        )
+	CHECK_MEMBER_INFO_PTR   (CDirtProjectile, texture, projectileDrawer->textureAtlas->GetTexturePtr)
+
+	return false;
 }

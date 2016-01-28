@@ -31,6 +31,8 @@ public:
 
 	virtual int GetProjectilesCount() const override;
 
+	static bool GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo);
+
 private:
 	float color;
 	float age;

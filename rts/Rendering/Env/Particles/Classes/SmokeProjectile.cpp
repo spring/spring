@@ -138,3 +138,18 @@ int CSmokeProjectile::GetProjectilesCount() const
 {
 	return 1;
 }
+
+
+bool CSmokeProjectile::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+{
+	if (CProjectile::GetMemberInfo(memberName, memberInfo))
+		return true;
+
+	CHECK_MEMBER_INFO_FLOAT (CSmokeProjectile, color        )
+	CHECK_MEMBER_INFO_FLOAT (CSmokeProjectile, size         )
+	CHECK_MEMBER_INFO_FLOAT (CSmokeProjectile, startSize    )
+	CHECK_MEMBER_INFO_FLOAT (CSmokeProjectile, sizeExpansion)
+	CHECK_MEMBER_INFO_FLOAT (CSmokeProjectile, ageSpeed     )
+
+	return false;
+}

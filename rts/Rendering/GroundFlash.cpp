@@ -112,6 +112,18 @@ float3 CGroundFlash::CalcNormal(const float3 midPos, const float3 camDir, const 
 }
 
 
+bool CGroundFlash::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+{
+	if (CExpGenSpawnable::GetMemberInfo(memberName, memberInfo))
+		return true;
+
+	CHECK_MEMBER_INFO_FLOAT(CGroundFlash, size)
+	CHECK_MEMBER_INFO_BOOL (CGroundFlash, depthTest)
+	CHECK_MEMBER_INFO_BOOL (CGroundFlash, depthMask)
+
+	return false;
+}
+
 
 
 CStandardGroundFlash::CStandardGroundFlash()
@@ -243,6 +255,20 @@ void CStandardGroundFlash::Draw()
 }
 
 
+bool CStandardGroundFlash::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+{
+	if (CGroundFlash::GetMemberInfo(memberName, memberInfo))
+		return true;
+
+	CHECK_MEMBER_INFO_FLOAT(CStandardGroundFlash, flashSize   )
+	CHECK_MEMBER_INFO_FLOAT(CStandardGroundFlash, flashAlpha  )
+	CHECK_MEMBER_INFO_FLOAT(CStandardGroundFlash, circleGrowth)
+	CHECK_MEMBER_INFO_FLOAT(CStandardGroundFlash, circleAlpha )
+	CHECK_MEMBER_INFO_SCOLOR(CStandardGroundFlash, color      )
+
+	return false;
+}
+
 
 
 CSimpleGroundFlash::CSimpleGroundFlash()
@@ -293,6 +319,20 @@ bool CSimpleGroundFlash::Update()
 	size += sizeGrowth;
 
 	return (age < 1);
+}
+
+
+bool CSimpleGroundFlash::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+{
+	if (CGroundFlash::GetMemberInfo(memberName, memberInfo))
+		return true;
+
+	CHECK_MEMBER_INFO_FLOAT(CSimpleGroundFlash, sizeGrowth)
+	CHECK_MEMBER_INFO_INT  (CSimpleGroundFlash, ttl       )
+	CHECK_MEMBER_INFO_PTR  (CSimpleGroundFlash, colorMap, CColorMap::LoadFromDefString)
+	CHECK_MEMBER_INFO_PTR  (CSimpleGroundFlash, texture , projectileDrawer->groundFXAtlas->GetGFTexturePtr)
+
+	return false;
 }
 
 
