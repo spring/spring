@@ -3,6 +3,7 @@
 #include "Game/GameHelper.h"
 #include "Rendering/Colors.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/ProjectileParams.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"

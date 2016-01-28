@@ -9,7 +9,7 @@
 #pragma warning(disable:4291)
 #endif
 
-#include "ExplosionGenerator.h"
+#include "ExpGenSpawnable.h"
 #include "System/float3.h"
 #include "System/type2.h"
 

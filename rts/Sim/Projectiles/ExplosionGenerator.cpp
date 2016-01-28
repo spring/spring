@@ -7,6 +7,7 @@
 
 #include "ExplosionGenerator.h"
 #include "ExpGenSpawner.h" //!!
+#include "ExpGenSpawnable.h"
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
 #include "Lua/LuaParser.h"
@@ -37,9 +38,6 @@
 #include "System/FileSystem/VFSHandler.h"
 #include "System/Util.h"
 
-
-CR_BIND_DERIVED_INTERFACE(CExpGenSpawnable, CWorldObject)
-CR_REG_METADATA(CExpGenSpawnable, )
 
 CR_BIND_INTERFACE(IExplosionGenerator)
 CR_REG_METADATA(IExplosionGenerator, (
@@ -81,9 +79,6 @@ CR_REG_METADATA(CCustomExplosionGenerator, (
 
 
 CExplosionGeneratorHandler* explGenHandler = NULL;
-
-CExpGenSpawnable::CExpGenSpawnable(): CWorldObject() {}
-CExpGenSpawnable::CExpGenSpawnable(const float3& pos, const float3& spd): CWorldObject(pos, spd) {}
 
 
 

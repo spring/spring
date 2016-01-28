@@ -9,7 +9,6 @@
 #include <boost/shared_ptr.hpp>
 
 #include "Rendering/GroundFlashInfo.h"
-#include "Sim/Objects/WorldObject.h"
 
 #define CEG_PREFIX_STRING "custom:"
 
@@ -18,18 +17,6 @@ class LuaTable;
 class float3;
 class CUnit;
 class IExplosionGenerator;
-
-
-class CExpGenSpawnable: public CWorldObject
-{
-	CR_DECLARE(CExpGenSpawnable)
-public:
-	CExpGenSpawnable();
-	CExpGenSpawnable(const float3& pos, const float3& spd);
-
-	virtual ~CExpGenSpawnable() {}
-	virtual void Init(const CUnit* owner, const float3& offset) = 0;
-};
 
 
 

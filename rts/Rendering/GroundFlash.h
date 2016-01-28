@@ -3,6 +3,7 @@
 #ifndef GROUND_FLASH_H
 #define GROUND_FLASH_H
 
+#include "Sim/Projectiles/ExpGenSpawnable.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "System/Color.h"
 

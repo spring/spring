@@ -42,6 +42,7 @@
 #include "Sim/Misc/DefinitionTag.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "System/bitops.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
