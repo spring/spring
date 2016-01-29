@@ -133,7 +133,9 @@ else  (UNIX AND NOT MINGW)
 		# MinGW needs an additional library, mwindows
 		# It's total link flags should look like -lmingw32 -lSDL2main -lSDL2 -lmwindows
 		# (Actually on second look, I think it only needs one of the m* libraries.)
-		SET(MINGW32_LIBRARY mingw32 CACHE STRING "mwindows for MinGW")
+		if(NOT MSVC)
+			SET(MINGW32_LIBRARY mingw32 CACHE STRING "mwindows for MinGW")
+		endif(NOT MSVC)
 		set(SDL2_INCLUDE_DIR "${MINGWLIBS}/include/SDL2")
 		set(CMAKE_PREFIX_PATH ${MINGWLIBS})
 		include_directories(${MINGWLIBS}/include)

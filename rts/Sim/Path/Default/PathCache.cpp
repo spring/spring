@@ -23,13 +23,14 @@ CPathCache::CPathCache(int blocksX, int blocksZ)
 
 CPathCache::~CPathCache()
 {
-	LOG(
+	const char* fmt =
 #ifdef _WIN32
-	"[%s(%ux%u)] cacheHits=%u hitPercentage=%.0f%% numHashColls=%u maxCacheSize=%I64u",
+		"[%s(%ux%u)] cacheHits=%u hitPercentage=%.0f%% numHashColls=%u maxCacheSize=%I64u";
 #else
-	"[%s(%ux%u)] cacheHits=%u hitPercentage=%.0f%% numHashColls=%u maxCacheSize=%lu",
+		"[%s(%ux%u)] cacheHits=%u hitPercentage=%.0f%% numHashColls=%u maxCacheSize=%lu";
 #endif
-		__FUNCTION__, numBlocksX, numBlocksZ, numCacheHits, GetCacheHitPercentage(), numHashCollisions, maxCacheSize);
+
+	LOG(fmt, __FUNCTION__, numBlocksX, numBlocksZ, numCacheHits, GetCacheHitPercentage(), numHashCollisions, maxCacheSize);
 
 	for (CachedPathConstIter iter = cachedPaths.begin(); iter != cachedPaths.end(); ++iter)
 		delete (iter->second);
@@ -168,14 +169,14 @@ bool CPathCache::HashCollision(
 
 	hashColl |= (ci->strtBlock != strtBlk || ci->goalBlock != goalBlk);
 	hashColl |= (ci->pathType != pathType || ci->goalRadius != goalRadius);
-
-	if (hashColl) {
-		LOG_L(L_DEBUG,
+	const char* fmt =
 #ifdef _WIN32
-			"[%s][f=%d][hash=%I64u] Hash(sb=<%d,%d> gb=<%d,%d> gr=%.2f pt=%d)==Hash(sb=<%d,%d> gb=<%d,%d> gr=%.2f pt=%d)",
+		"[%s][f=%d][hash=%I64u] Hash(sb=<%d,%d> gb=<%d,%d> gr=%.2f pt=%d)==Hash(sb=<%d,%d> gb=<%d,%d> gr=%.2f pt=%d)";
 #else
-			"[%s][f=%d][hash=%lu] Hash(sb=<%d,%d> gb=<%d,%d> gr=%.2f pt=%d)==Hash(sb=<%d,%d> gb=<%d,%d> gr=%.2f pt=%d)",
+		"[%s][f=%d][hash=%lu] Hash(sb=<%d,%d> gb=<%d,%d> gr=%.2f pt=%d)==Hash(sb=<%d,%d> gb=<%d,%d> gr=%.2f pt=%d)";
 #endif
+	if (hashColl) {
+		LOG_L(L_DEBUG, fmt,
 			__FUNCTION__, gs->frameNum,
 			GetHash(strtBlk, goalBlk, goalRadius, pathType),
 			ci->strtBlock.x, ci->strtBlock.y,

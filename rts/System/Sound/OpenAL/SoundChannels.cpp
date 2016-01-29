@@ -1,12 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "AudioChannel.h"
+#include "System/Sound/ISoundChannels.h"
 
-namespace Channels
-{
-	AudioChannel* BGMusic = NULL;
-	AudioChannel* General = NULL;
-	AudioChannel* Battle = NULL;
-	AudioChannel* UnitReply = NULL;
-	AudioChannel* UserInterface = NULL;
-}
+IAudioChannel* Channels::BGMusic = NULL;
+IAudioChannel* Channels::General = NULL;
+IAudioChannel* Channels::Battle = NULL;
+IAudioChannel* Channels::UnitReply = NULL;
+IAudioChannel* Channels::UserInterface = NULL;

@@ -3,6 +3,8 @@
 #ifndef READ_MAP_H
 #define READ_MAP_H
 
+#include <vector>
+
 #include "MapTexture.h"
 #include "MapDimensions.h"
 #include "Sim/Misc/GlobalConstants.h"

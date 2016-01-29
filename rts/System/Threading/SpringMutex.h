@@ -37,7 +37,9 @@ namespace spring {
 		std::atomic_flag state;
 
 	public:
-		spinlock() : state(ATOMIC_FLAG_INIT) {}
+		spinlock() {
+			state.clear();
+		}
 
 		void lock()
 		{

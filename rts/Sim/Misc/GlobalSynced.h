@@ -3,6 +3,7 @@
 #ifndef _GLOBAL_SYNCED_H
 #define _GLOBAL_SYNCED_H
 
+#include <algorithm>
 #include <string>
 
 #include "System/float3.h"

@@ -62,7 +62,7 @@ public:
 	// working data
 	int refCount;
 	struct RLE { int start; unsigned length; };
-	static constexpr RLE EMPTY_RLE = {0,0};
+	static constexpr RLE EMPTY_RLE = RLE{0,0};
 	std::vector<RLE> squares;
 
 	// helpers

@@ -271,6 +271,8 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 	if (!onlyCreateDefs) {
 		// create map-specified feature instances
 		const int numFeatures = readMap->GetNumFeatures();
+		if (numFeatures == 0)
+			return;
 		std::vector<MapFeatureInfo> mfi;
 		mfi.resize(numFeatures);
 		readMap->GetFeatureInfo(&mfi[0]);

@@ -4,6 +4,7 @@
 #define SPRING_SHADER_HDR
 
 #include <algorithm>
+#include <functional>
 #include <string>
 #include <memory>
 #include <vector>

@@ -411,7 +411,7 @@ bool SpringApp::CreateSDLWindow(const char* title)
 	streflop::streflop_init<streflop::Simple>();
 #endif
 
-#if defined(WIN32)
+#if defined(WIN32) && !defined _MSC_VER
 	_set_output_format(_TWO_DIGIT_EXPONENT);
 #endif
 

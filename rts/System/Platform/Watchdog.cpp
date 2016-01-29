@@ -217,7 +217,7 @@ namespace Watchdog
 
 		WatchDogThreadInfo* threadInfo = nullptr;
 
-		if (num >= WDT_COUNT || (threadInfo = registeredThreads[num])->numreg == 0) {
+		if (num >= WDT_COUNT || registeredThreads[num] == nullptr || (threadInfo = registeredThreads[num])->numreg == 0) {
 			LOG_L(L_ERROR, "[Watchdog::%s] Invalid thread number %u", __FUNCTION__, num);
 			return;
 		}

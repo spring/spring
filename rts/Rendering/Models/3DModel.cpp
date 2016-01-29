@@ -212,8 +212,10 @@ void S3DModelPiece::CreateShatterPiecesVariation(const int num)
 	for (auto& cp: shatterPartsBuf) {
 		cp.indexCount = cp.indices.size();
 		cp.vboOffset  = num * isize + curVboPos;
-		memcpy(memVBO + curVboPos, &cp.indices[0], cp.indexCount * sizeof(unsigned int));
-		curVboPos    += cp.indexCount * sizeof(unsigned int);
+		if (cp.indexCount > 0) {
+			memcpy(memVBO + curVboPos, &cp.indices[0], cp.indexCount * sizeof(unsigned int));
+			curVboPos    += cp.indexCount * sizeof(unsigned int);
+		}
 	}
 	vboShatterIndices.UnmapBuffer();
 

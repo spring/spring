@@ -7,6 +7,7 @@
 
 #if defined(_MSC_VER)
 	#include <hash_map>
+	#include <unordered_map>
 	#define SPRING_HASH_MAP stdext::hash_map
 #elif defined(_LIBCPP_VERSION)
 	#include <unordered_map>
