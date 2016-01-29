@@ -792,7 +792,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 
 		bool useInt = false;
 
-			 if (c == 'i')   opcode = OP_INDEX;
+		     if (c == 'i')   opcode = OP_INDEX;
 		else if (c == 'r')   opcode = OP_RAND;
 		else if (c == 'd')   opcode = OP_DAMAGE;
 		else if (c == 'm')   opcode = OP_SAWTOOTH;
