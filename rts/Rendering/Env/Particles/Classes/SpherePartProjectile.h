@@ -54,7 +54,7 @@ private:
 };
 
 /// This class makes a sphere-part-projectile via the explosion-generator
-class CSpherePartSpawner : CProjectile
+class CSpherePartSpawner : public CProjectile
 {
 	CR_DECLARE(CSpherePartSpawner)
 

@@ -29,6 +29,22 @@ bool CExpGenSpawnable::GetMemberInfo(const std::string& memberName, SExpGenSpawn
 	return false;
 }
 
+#define CHECK_ALL_SPAWNABLES() \
+	CHECK_SPAWNABLE(CExpGenSpawner)         \
+	CHECK_SPAWNABLE(CStandardGroundFlash)   \
+	CHECK_SPAWNABLE(CSimpleGroundFlash)     \
+	CHECK_SPAWNABLE(CBitmapMuzzleFlame)     \
+	CHECK_SPAWNABLE(CDirtProjectile)        \
+	CHECK_SPAWNABLE(CExploSpikeProjectile)  \
+	CHECK_SPAWNABLE(CHeatCloudProjectile)   \
+	CHECK_SPAWNABLE(CNanoProjectile)        \
+	CHECK_SPAWNABLE(CSimpleParticleSystem)  \
+	CHECK_SPAWNABLE(CSphereParticleSpawner) \
+	CHECK_SPAWNABLE(CSmokeProjectile)       \
+	CHECK_SPAWNABLE(CSmokeProjectile2)      \
+	CHECK_SPAWNABLE(CSpherePartSpawner)     \
+	CHECK_SPAWNABLE(CTracerProjectile)      \
+
 
 bool CExpGenSpawnable::GetSpawnableMemberInfo(const std::string& spawnableName, const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
 {
@@ -36,54 +52,41 @@ bool CExpGenSpawnable::GetSpawnableMemberInfo(const std::string& spawnableName, 
 	if (spawnableName == #spawnable) \
 		return spawnable::GetMemberInfo(memberName, memberInfo);
 
-	CHECK_SPAWNABLE(CExpGenSpawner)
-
-	CHECK_SPAWNABLE(CStandardGroundFlash)
-	CHECK_SPAWNABLE(CSimpleGroundFlash)
-
-	CHECK_SPAWNABLE(CBitmapMuzzleFlame)
-	CHECK_SPAWNABLE(CBubbleProjectile)
-	CHECK_SPAWNABLE(CDirtProjectile)
-	CHECK_SPAWNABLE(CExploSpikeProjectile)
-	CHECK_SPAWNABLE(CHeatCloudProjectile)
-	CHECK_SPAWNABLE(CNanoProjectile)
-	CHECK_SPAWNABLE(CSimpleParticleSystem)
-	CHECK_SPAWNABLE(CSphereParticleSpawner)
-	CHECK_SPAWNABLE(CSmokeProjectile)
-	CHECK_SPAWNABLE(CSmokeProjectile2)
-	CHECK_SPAWNABLE(CSpherePartSpawner)
-	CHECK_SPAWNABLE(CTracerProjectile)
+	CHECK_ALL_SPAWNABLES()
 
 #undef CHECK_SPAWNABLE
 
 	return false;
 }
 
-bool CExpGenSpawnable::CheckClass(const std::string& spawnableName)
+
+int CExpGenSpawnable::GetSpawnableID(const std::string& spawnableName)
 {
-#define CHECK_SPAWNABLE(spawnable) \
+	int i = 0;
+#define CHECK_SPAWNABLE(spawnable)   \
 	if (spawnableName == #spawnable) \
-		return true;
+		return i;                    \
+	++i;
 
-	CHECK_SPAWNABLE(CExpGenSpawner)
-
-	CHECK_SPAWNABLE(CStandardGroundFlash)
-	CHECK_SPAWNABLE(CSimpleGroundFlash)
-
-	CHECK_SPAWNABLE(CBitmapMuzzleFlame)
-	CHECK_SPAWNABLE(CBubbleProjectile)
-	CHECK_SPAWNABLE(CDirtProjectile)
-	CHECK_SPAWNABLE(CExploSpikeProjectile)
-	CHECK_SPAWNABLE(CHeatCloudProjectile)
-	CHECK_SPAWNABLE(CNanoProjectile)
-	CHECK_SPAWNABLE(CSimpleParticleSystem)
-	CHECK_SPAWNABLE(CSphereParticleSpawner)
-	CHECK_SPAWNABLE(CSmokeProjectile)
-	CHECK_SPAWNABLE(CSmokeProjectile2)
-	CHECK_SPAWNABLE(CSpherePartSpawner)
-	CHECK_SPAWNABLE(CTracerProjectile)
+	CHECK_ALL_SPAWNABLES()
 
 #undef CHECK_SPAWNABLE
 
-	return false;
+	return -1;
+}
+
+
+CExpGenSpawnable* CExpGenSpawnable::CreateSpawnable(int spawnableID)
+{
+	int i = 0;
+#define CHECK_SPAWNABLE(spawnable) \
+	if (spawnableID == i)          \
+		return new spawnable();    \
+	++i;
+
+	CHECK_ALL_SPAWNABLES()
+
+#undef CHECK_SPAWNABLE
+
+	return nullptr;
 }

@@ -18,7 +18,7 @@ class float3;
 class CUnit;
 class IExplosionGenerator;
 
-
+struct SExpGenSpawnableMemberInfo;
 
 // Finds C++ classes with class aliases
 class ClassAliasList
@@ -27,6 +27,7 @@ public:
 	void Load(const LuaTable&);
 	void Clear() { aliases.clear(); }
 
+	std::string ResolveAlias(const std::string& alias) const;
 	creg::Class* GetClass(const std::string& name) const;
 	std::string FindAlias(const std::string& className) const;
 
@@ -68,11 +69,9 @@ public:
 
 	const LuaTable* GetExplosionTableRoot() const { return explTblRoot; }
 	const ClassAliasList& GetProjectileClasses() const { return projectileClasses; }
-	const ClassAliasList& GetGeneratorClasses() const { return generatorClasses; }
 
 protected:
 	ClassAliasList projectileClasses;
-	ClassAliasList generatorClasses;
 
 	LuaParser* exploParser;
 	LuaParser* aliasParser;
@@ -153,18 +152,18 @@ protected:
 		CR_DECLARE_STRUCT(ProjectileSpawnInfo)
 
 		ProjectileSpawnInfo()
-			: projectileClass(NULL)
+			: spawnableID(0)
 			, count(0)
 			, flags(0)
 		{}
 		ProjectileSpawnInfo(const ProjectileSpawnInfo& psi)
-			: projectileClass(psi.projectileClass)
+			: spawnableID(psi.spawnableID)
 			, code(psi.code)
 			, count(psi.count)
 			, flags(psi.flags)
 		{}
 
-		creg::Class* projectileClass;
+		unsigned int spawnableID;
 
 		/// parsed explosion script code
 		std::vector<char> code;
@@ -228,7 +227,7 @@ public:
 	};
 
 private:
-	void ParseExplosionCode(ProjectileSpawnInfo* psi, const int offset, const boost::shared_ptr<creg::IType> type, const std::string& script, std::string& code);
+	void ParseExplosionCode(ProjectileSpawnInfo* psi, const std::string& script, SExpGenSpawnableMemberInfo& memberInfo, std::string& code);
 	void ExecuteExplosionCode(const char* code, float damage, char* instance, int spawnIndex, const float3& dir);
 
 protected:
