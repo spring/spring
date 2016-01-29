@@ -539,9 +539,9 @@ void CGameSetup::RemapAllyteams()
 {
 	// relocate Team.Allyteam field
 	for (size_t a = 0; a < teamStartingData.size(); ++a) {
-		if (allyteamRemap.find(teamStartingData[a].teamAllyteam) == allyteamRemap.end()) {
+		if (allyteamRemap.find(teamStartingData[a].teamAllyteam) == allyteamRemap.end())
 			throw content_error("invalid Team.Allyteam in GameSetup script");
-		}
+
 		teamStartingData[a].teamAllyteam = allyteamRemap[teamStartingData[a].teamAllyteam];
 	}
 }

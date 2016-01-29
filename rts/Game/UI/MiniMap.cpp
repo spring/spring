@@ -757,17 +757,16 @@ bool CMiniMap::IsAbove(int x, int y)
 
 std::string CMiniMap::GetTooltip(int x, int y)
 {
-	if (minimized) {
+	if (minimized)
 		return "Unminimize map";
-	}
 
 	if (buttonBox.Inside(x, y)) {
-		if (resizeBox.Inside(x, y)) {
+		if (resizeBox.Inside(x, y))
 			return "Resize map\n(SHIFT to maintain aspect ratio)";
-		}
-		if (moveBox.Inside(x, y)) {
+
+		if (moveBox.Inside(x, y))
 			return "Move map";
-		}
+
 		if (maximizeBox.Inside(x, y)) {
 			if (!maximized) {
 				return "Maximize map\n(SHIFT to maintain aspect ratio)";
@@ -775,30 +774,29 @@ std::string CMiniMap::GetTooltip(int x, int y)
 				return "Unmaximize map";
 			}
 		}
-		if (minimizeBox.Inside(x, y)) {
+
+		if (minimizeBox.Inside(x, y))
 			return "Minimize map";
-		}
 	}
 
-	const string buildTip = guihandler->GetBuildTooltip();
-	if (!buildTip.empty()) {
+	const string buildTip = std::move(guihandler->GetBuildTooltip());
+	if (!buildTip.empty())
 		return buildTip;
-	}
 
 	const CUnit* unit = GetSelectUnit(GetMapPosition(x, y));
-	if (unit) {
+	if (unit != nullptr)
 		return CTooltipConsole::MakeUnitString(unit);
-	}
 
-	const string selTip = selectedUnitsHandler.GetTooltip();
-	if (selTip != "") {
+	const string selTip = std::move(selectedUnitsHandler.GetTooltip());
+	if (selTip != "")
 		return selTip;
-	}
 
-	const float worldx = float(x                               - xpos          ) / width  * mapDims.mapx * SQUARE_SIZE;
-	const float worldz = float(y - (globalRendering->viewSizeY - ypos - height)) / height * mapDims.mapx * SQUARE_SIZE;
+	float3 wpos;
+	wpos.x = float(x                               - xpos          ) / width  * mapDims.mapx * SQUARE_SIZE;
+	wpos.z = float(y - (globalRendering->viewSizeY - ypos - height)) / height * mapDims.mapx * SQUARE_SIZE;
+	wpos.y = CGround::GetHeightReal(wpos.x, wpos.z, false);
 
-	return CTooltipConsole::MakeGroundString(float3(worldx, 500.0f, worldz));
+	return CTooltipConsole::MakeGroundString(wpos);
 }
 
 
