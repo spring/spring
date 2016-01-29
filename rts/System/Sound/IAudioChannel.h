@@ -3,8 +3,9 @@
 #ifndef I_AUDIO_CHANNEL_H
 #define I_AUDIO_CHANNEL_H
 
-#include <string.h>
 #include "System/float3.h"
+
+#include <string>
 
 struct GuiSoundSet;
 class CSoundSource;

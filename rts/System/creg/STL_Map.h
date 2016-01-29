@@ -5,8 +5,6 @@
 
 #include "creg_cond.h"
 
-#ifdef USING_CREG
-
 #if defined(_MSC_VER)
 	#include <hash_map>
 	#define SPRING_HASH_MAP stdext::hash_map
@@ -20,8 +18,11 @@
 	#error Unsupported compiler
 #endif
 
-#include <string>
 #include <map>
+
+#ifdef USING_CREG
+
+#include <string>
 #include <boost/shared_ptr.hpp>
 
 namespace creg

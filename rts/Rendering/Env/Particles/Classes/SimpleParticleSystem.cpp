@@ -2,6 +2,7 @@
 
 
 #include "SimpleParticleSystem.h"
+
 #include "GenericParticleProjectile.h"
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
@@ -9,6 +10,7 @@
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
+#include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "System/float3.h"
 #include "System/Log/ILog.h"
 

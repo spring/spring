@@ -1,13 +1,15 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 
-#include "Game/Camera.h"
 #include "NanoProjectile.h"
+
+#include "Game/Camera.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/Colors.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 
 CR_BIND_DERIVED(CNanoProjectile, CProjectile, )

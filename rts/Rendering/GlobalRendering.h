@@ -18,9 +18,8 @@ struct SDL_Window;
 class CGlobalRendering {
 	CR_DECLARE_STRUCT(CGlobalRendering)
 
-	CGlobalRendering();
-
 public:
+	CGlobalRendering();
 	void PostInit();
 	void SetFullScreen(bool configFullScreen, bool cmdLineWindowed, bool cmdLineFullScreen);
 	void SetDualScreenParams();

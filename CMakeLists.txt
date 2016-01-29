@@ -213,6 +213,11 @@ if    (SYNCCHECK)
 	add_definitions(-DSYNCCHECK)
 endif (SYNCCHECK)
 
+option(NO_CREG "Disable creg support" FALSE)
+if    (NO_CREG)
+	add_definitions(-DNOT_USING_CREG)
+endif (NO_CREG)
+
 option(NO_SOUND "No sound output support" FALSE)
 
 if    (WIN32)

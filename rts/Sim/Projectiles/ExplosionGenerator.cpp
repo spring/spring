@@ -8,6 +8,7 @@
 #include "ExplosionGenerator.h"
 #include "ExpGenSpawner.h" //!!
 #include "ExpGenSpawnable.h"
+#include "ExpGenSpawnableMemberInfo.h"
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
 #include "Lua/LuaParser.h"
@@ -990,6 +991,7 @@ bool CCustomExplosionGenerator::Explosion(
 
 bool CCustomExplosionGenerator::OutputProjectileClassInfo()
 {
+#ifdef USING_CREG
 	LOG_DISABLE();
 		// we need to load basecontent for class aliases
 		FileSystemInitializer::Initialize();
@@ -1031,5 +1033,9 @@ bool CCustomExplosionGenerator::OutputProjectileClassInfo()
 
 	FileSystemInitializer::Cleanup();
 	return true;
+#else //USING_CREG
+	std::cout << "Unable to output CEG info since creg is disabled" << std::endl;
+	return false;
+#endif
 }
 

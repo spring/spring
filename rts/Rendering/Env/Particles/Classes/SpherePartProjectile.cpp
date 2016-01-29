@@ -1,14 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <algorithm>
-
 #include "SpherePartProjectile.h"
+
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
-
-using std::min;
+#include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 
 CR_BIND_DERIVED(CSpherePartProjectile, CProjectile, (NULL, ZeroVector, 0, 0, 0.0f, 0.0f, 0, ZeroVector))
 
@@ -88,7 +86,7 @@ void CSpherePartProjectile::Draw()
 		for (int x = 0; x < 4; ++x) {
 			float alpha =
 				baseAlpha *
-				(1.0f - min(1.0f, float(age + globalRendering->timeOffset) / (float) ttl)) *
+				(1.0f - std::min(1.0f, float(age + globalRendering->timeOffset) / (float) ttl)) *
 				(1.0f - math::fabs(y + ybase - 8.0f) / 8.0f * 1.0f);
 
 			col[0] = (unsigned char) (color.x * 255.0f * alpha);
@@ -97,7 +95,7 @@ void CSpherePartProjectile::Draw()
 			col[3] = ((unsigned char) (40 * alpha)) + 1;
 			va->AddVertexQTC(centerPos + vectors[y*5 + x]     * interSize, texx, texy, col);
 			va->AddVertexQTC(centerPos + vectors[y*5 + x + 1] * interSize, texx, texy, col);
-			alpha = baseAlpha * (1.0f - min(1.0f, (float)(age + globalRendering->timeOffset) / (float) ttl)) * (1 - math::fabs(y + 1 + ybase - 8.0f) / 8.0f*1.0f);
+			alpha = baseAlpha * (1.0f - std::min(1.0f, (float)(age + globalRendering->timeOffset) / (float) ttl)) * (1 - math::fabs(y + 1 + ybase - 8.0f) / 8.0f*1.0f);
 
 			col[0] = (unsigned char) (color.x * 255.0f * alpha);
 			col[1] = (unsigned char) (color.y * 255.0f * alpha);

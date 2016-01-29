@@ -5,6 +5,7 @@
 
 #include <string>
 #include <map>
+#include <vector>
 
 #include "GameController.h"
 #include "Game/UI/KeySet.h"

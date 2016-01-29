@@ -6,6 +6,8 @@
 #include "System/float3.h"
 #include "System/creg/creg_cond.h"
 
+#include <string>
+
 // the positive x-axis points to the "left" in object-space and to the "right" in world-space
 // converting between them means flipping the sign of x-components of positions and directions
 const float3 WORLD_TO_OBJECT_SPACE = float3(-1.0f, 1.0f, 1.0f);

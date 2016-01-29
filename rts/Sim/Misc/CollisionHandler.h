@@ -6,6 +6,8 @@
 #include "System/creg/creg_cond.h"
 #include "System/float3.h"
 
+#include <algorithm>
+
 class CSolidObject;
 struct LocalModelPiece;
 struct CollisionVolume;

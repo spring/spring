@@ -147,7 +147,7 @@ CProjectileHandler::~CProjectileHandler()
 
 	CCollisionHandler::PrintStats();
 }
-
+#ifdef USING_CREG
 void CProjectileHandler::Serialize(creg::ISerializer* s)
 {
 	if (s->IsWriting()) {
@@ -186,6 +186,7 @@ void CProjectileHandler::Serialize(creg::ISerializer* s)
 		}
 	}
 }
+#endif //USING_CREG
 
 
 void CProjectileHandler::ConfigNotify(const std::string& key, const std::string& value)
@@ -218,7 +219,9 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 		CProjectile* p = pc[i];
 		assert(p);
 		assert(p->synced == synced);
+#ifdef USING_CREG
 		assert(p->synced == !!(p->GetClass()->binder->flags & creg::CF_Synced));
+#endif
 
 		// creation
 		if (p->callEvent) {

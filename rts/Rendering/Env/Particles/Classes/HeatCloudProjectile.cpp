@@ -1,12 +1,14 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 
-#include "Game/Camera.h"
 #include "HeatCloudProjectile.h"
+
+#include "Game/Camera.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
+#include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 
 CR_BIND_DERIVED(CHeatCloudProjectile, CProjectile, )
 

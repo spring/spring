@@ -35,6 +35,7 @@ class CProjectileHandler
 public:
 	CProjectileHandler();
 	~CProjectileHandler();
+
 	void Serialize(creg::ISerializer* s);
 
 	/// @see ConfigHandler::ConfigNotifyCallback

@@ -3,6 +3,7 @@
 #ifndef FLYING_PIECE_H
 #define FLYING_PIECE_H
 
+#include <vector>
 
 #include "System/float3.h"
 #include "System/type2.h"

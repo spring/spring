@@ -9,10 +9,9 @@ class CExploSpikeProjectile : public CProjectile
 {
 	CR_DECLARE(CExploSpikeProjectile)
 
-	/// used only by creg
+public:
 	CExploSpikeProjectile();
 
-public:
 	CExploSpikeProjectile(
 		CUnit* owner,
 		const float3& pos,

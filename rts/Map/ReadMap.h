@@ -86,7 +86,6 @@ public:
 	void Serialize(creg::ISerializer* s);
 	void PostLoad();
 
-
 	/**
 	 * calculates derived heightmap information
 	 * such as normals, centerheightmap and slopemap

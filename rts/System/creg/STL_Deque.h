@@ -5,9 +5,9 @@
 
 #include "creg_cond.h"
 
-#ifdef USING_CREG
-
 #include <deque>
+
+#ifdef USING_CREG
 
 namespace creg
 {

@@ -1,8 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "RowAtlasAlloc.h"
-#include <vector>
 #include "System/bitops.h"
+
+#include <algorithm>
+#include <vector>
 
 // texture spacing in the atlas (in pixels)
 static const int ATLAS_PADDING = 1;

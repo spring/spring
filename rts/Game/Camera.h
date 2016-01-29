@@ -3,6 +3,8 @@
 #ifndef _CAMERA_H
 #define _CAMERA_H
 
+#include <vector>
+
 #include "Rendering/GL/myGL.h"
 #include "System/float3.h"
 #include "System/Matrix44f.h"

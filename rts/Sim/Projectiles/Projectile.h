@@ -18,15 +18,12 @@ class CFeature;
 class CVertexArray;
 class CMatrix44f;
 
-
 class CProjectile: public CExpGenSpawnable
 {
 	CR_DECLARE(CProjectile)
 
-	/// used only by creg
-	CProjectile();
-
 public:
+	CProjectile();
 	CProjectile(
 		const float3& pos,
 		const float3& spd,

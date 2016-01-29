@@ -174,7 +174,9 @@ SpringApp::SpringApp(int argc, char** argv): cmdline(new CmdLineParams(argc, arg
 SpringApp::~SpringApp()
 {
 	spring_clock::PopTickRate();
+#ifdef USING_CREG
 	creg::System::FreeClasses();
+#endif
 }
 
 /**
@@ -233,7 +235,9 @@ bool SpringApp::Initialize()
 	good_fpu_control_registers(__FUNCTION__);
 
 	// CREG & GlobalConfig
+#ifdef USING_CREG
 	creg::System::InitializeClasses();
+#endif
 	GlobalConfig::Instantiate();
 
 
@@ -723,8 +727,13 @@ void SpringApp::ParseCmdLine(const std::string& binaryName)
 
 	// Runtime Tests
 	if (cmdline->IsSet("test-creg")) {
+#ifdef USING_CREG
 		const int res = creg::RuntimeTest() ? EXIT_SUCCESS : EXIT_FAILURE;
 		exit(res);
+#else
+		LOG_L(L_ERROR, "Creg is not enabled!\n");
+		exit(0); //Do not fail tests
+#endif
 	}
 
 	const string configSource = (cmdline->IsSet("config") ? cmdline->GetString("config") : "");

@@ -2,6 +2,7 @@
 
 
 #include <algorithm>
+#include <cassert>
 #include <cctype>
 
 #include "CategoryHandler.h"

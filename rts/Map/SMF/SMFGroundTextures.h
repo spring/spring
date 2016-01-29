@@ -3,6 +3,8 @@
 #ifndef _SMF_GROUND_TEXTURES_H_
 #define _SMF_GROUND_TEXTURES_H_
 
+#include <vector>
+
 #include "Map/BaseGroundTextures.h"
 #include "Rendering/GL/PBO.h"
 

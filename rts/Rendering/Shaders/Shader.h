@@ -3,6 +3,7 @@
 #ifndef SPRING_SHADER_HDR
 #define SPRING_SHADER_HDR
 
+#include <algorithm>
 #include <string>
 #include <memory>
 #include <vector>

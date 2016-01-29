@@ -1,5 +1,6 @@
 #include "ExpGenSpawnable.h"
 
+#include "ExpGenSpawnableMemberInfo.h"
 #include "ExpGenSpawner.h"
 #include "Rendering/GroundFlash.h"
 #include "Rendering/Env/Particles/Classes/BitmapMuzzleFlame.h"

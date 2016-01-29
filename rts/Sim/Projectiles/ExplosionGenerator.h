@@ -92,7 +92,7 @@ protected:
 class IExplosionGenerator
 {
 	CR_DECLARE(IExplosionGenerator)
-
+public:
 	IExplosionGenerator(): generatorID(CExplosionGeneratorHandler::EXPGEN_ID_INVALID) {}
 	virtual ~IExplosionGenerator() {}
 

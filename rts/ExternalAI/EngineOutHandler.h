@@ -27,10 +27,10 @@ void handleAIException(const char* description);
 class CEngineOutHandler : public CObject {
 	CR_DECLARE(CEngineOutHandler)
 
-	~CEngineOutHandler();
 
 public:
 	static CEngineOutHandler* GetInstance();
+	~CEngineOutHandler();
 
 	static void Create();
 	static void Destroy();

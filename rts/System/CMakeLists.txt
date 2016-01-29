@@ -70,12 +70,16 @@ MakeGlobalVar(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/float4.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/myMath.cpp"
 	)
-MakeGlobalVar(sources_engine_System_creg
-		"${CMAKE_CURRENT_SOURCE_DIR}/creg/Serializer.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/creg/VarTypes.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/creg/creg.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/creg/creg_runtime_tests.cpp"
-	)
+if    (NO_CREG)
+	MakeGlobalVar(sources_engine_System_creg )
+else  (NO_CREG)
+	MakeGlobalVar(sources_engine_System_creg
+			"${CMAKE_CURRENT_SOURCE_DIR}/creg/Serializer.cpp"
+			"${CMAKE_CURRENT_SOURCE_DIR}/creg/VarTypes.cpp"
+			"${CMAKE_CURRENT_SOURCE_DIR}/creg/creg.cpp"
+			"${CMAKE_CURRENT_SOURCE_DIR}/creg/creg_runtime_tests.cpp"
+		)
+endif (NO_CREG)
 MakeGlobalVar(sources_engine_System_FileSystem
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchiveLoader.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchiveScanner.cpp"

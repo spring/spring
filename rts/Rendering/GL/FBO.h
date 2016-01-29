@@ -4,6 +4,7 @@
 #define FBO_H
 
 #include <map>
+#include <vector>
 
 #include "myGL.h"
 

@@ -256,7 +256,7 @@ void spring_time::sleep_until()
 #endif
 }
 
-#ifndef UNIT_TEST
+#if defined USING_CREG && !defined UNIT_TEST
 void spring_time::Serialize(creg::ISerializer* s)
 {
 	if (s->IsWriting()) {

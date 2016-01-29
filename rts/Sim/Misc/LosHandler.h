@@ -196,10 +196,10 @@ private:
 class CLosHandler : public CEventClient
 {
 	CR_DECLARE_STRUCT(CLosHandler)
+public:
 	CLosHandler();
 	~CLosHandler();
 
-public:
 	// the Interface
 	bool InLos(const CUnit* unit, int allyTeam) const;
 	bool InLos(const CWorldObject* obj, int allyTeam) const {

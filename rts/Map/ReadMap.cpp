@@ -154,7 +154,7 @@ CReadMap* CReadMap::LoadMap(const std::string& mapname)
 	return rm;
 }
 
-
+#ifdef USING_CREG
 void CReadMap::Serialize(creg::ISerializer* s)
 {
 	// remove the const
@@ -196,6 +196,7 @@ void CReadMap::PostLoad()
 		mipPointerHeightMaps[i] = &mipCenterHeightMaps[i - 1][0];
 	}*/
 }
+#endif //USING_CREG
 
 
 CReadMap::CReadMap()

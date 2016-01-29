@@ -4,6 +4,7 @@
 #include "Map/MapInfo.h"
 #include "Rendering/Colors.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
