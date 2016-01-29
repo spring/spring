@@ -37,6 +37,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/Util.h"
+#include "System/Sync/HsiehHash.h"
 
 
 CR_BIND_INTERFACE(IExplosionGenerator)
@@ -889,18 +890,16 @@ bool CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* handler, const 
 
 		string code;
 		map<string, string> props;
-		map<string, string>::const_iterator propIt;
 
 		spawnTable.SubTable("properties").GetMap(props);
 
-		for (propIt = props.begin(); propIt != props.end(); ++propIt) {
-			SExpGenSpawnableMemberInfo memberInfo;
-			bool success = CExpGenSpawnable::GetSpawnableMemberInfo(className, StringToLower(propIt->first.c_str()), memberInfo);
+		for (const auto& propIt: props) {
+			SExpGenSpawnableMemberInfo memberInfo = {0, 0, 0, STRING_HASH(std::move(StringToLower(propIt.first))), SExpGenSpawnableMemberInfo::TYPE_INT, nullptr};
 
-			if (success) {
-				ParseExplosionCode(&psi, propIt->second, memberInfo, code);
+			if (CExpGenSpawnable::GetSpawnableMemberInfo(className, memberInfo)) {
+				ParseExplosionCode(&psi, propIt.second, memberInfo, code);
 			} else {
-				LOG_L(L_WARNING, "[CCEG::%s] %s: Unknown tag %s::%s", __FUNCTION__, tag.c_str(), className.c_str(), propIt->first.c_str());
+				LOG_L(L_WARNING, "[CCEG::%s] %s: Unknown tag %s::%s", __FUNCTION__, tag.c_str(), className.c_str(), propIt.first.c_str());
 			}
 		}
 

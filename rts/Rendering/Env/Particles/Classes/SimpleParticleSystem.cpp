@@ -192,9 +192,9 @@ int CSimpleParticleSystem::GetProjectilesCount() const
 
 
 
-bool CSimpleParticleSystem::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+bool CSimpleParticleSystem::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 {
-	if (CProjectile::GetMemberInfo(memberName, memberInfo))
+	if (CProjectile::GetMemberInfo(memberInfo))
 		return true;
 
 	CHECK_MEMBER_INFO_FLOAT3(CSimpleParticleSystem, emitVector         )
@@ -269,7 +269,7 @@ void CSphereParticleSpawner::Init(const CUnit* owner, const float3& offset)
 	deleteMe = true;
 }
 
-bool CSphereParticleSpawner::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+bool CSphereParticleSpawner::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 {
-	return CSimpleParticleSystem::GetMemberInfo(memberName, memberInfo);
+	return CSimpleParticleSystem::GetMemberInfo(memberInfo);
 }

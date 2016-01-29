@@ -115,9 +115,9 @@ int CDirtProjectile::GetProjectilesCount() const
 }
 
 
-bool CDirtProjectile::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+bool CDirtProjectile::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 {
-	if (CProjectile::GetMemberInfo(memberName, memberInfo))
+	if (CProjectile::GetMemberInfo(memberInfo))
 		return true;
 
 	CHECK_MEMBER_INFO_FLOAT (CDirtProjectile, alpha        )

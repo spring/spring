@@ -25,7 +25,7 @@ public:
 
 	virtual int GetProjectilesCount() const override;
 
-	static bool GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo);
+	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 
 protected:
 	float3 emitVector;
@@ -84,7 +84,7 @@ public:
 	void Update() {}
 	void Init(const CUnit* owner, const float3& offset);
 
-	static bool GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo);
+	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 };
 
 #endif // SIMPLE_PARTICLE_SYSTEM_H

@@ -97,9 +97,9 @@ int CBubbleProjectile::GetProjectilesCount() const
 }
 
 
-bool CBubbleProjectile::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+bool CBubbleProjectile::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 {
-	if (CProjectile::GetMemberInfo(memberName, memberInfo))
+	if (CProjectile::GetMemberInfo(memberInfo))
 		return true;
 
 	CHECK_MEMBER_INFO_FLOAT(CBubbleProjectile, alpha        )

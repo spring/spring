@@ -14,18 +14,26 @@
 #include "Rendering/Env/Particles/Classes/SmokeProjectile2.h"
 #include "Rendering/Env/Particles/Classes/SpherePartProjectile.h"
 #include "Rendering/Env/Particles/Classes/TracerProjectile.h"
+#include "System/Sync/HsiehHash.h"
 
 
 CR_BIND_DERIVED_INTERFACE(CExpGenSpawnable, CWorldObject)
 CR_REG_METADATA(CExpGenSpawnable, )
 
 
-bool CExpGenSpawnable::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+bool CExpGenSpawnable::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 {
-	CHECK_MEMBER_INFO_FLOAT3(CExpGenSpawnable, pos          )
-	CHECK_MEMBER_INFO_FLOAT4(CExpGenSpawnable, speed        )
-	CHECK_MEMBER_INFO_BOOL  (CExpGenSpawnable, useAirLos    )
-	CHECK_MEMBER_INFO_BOOL  (CExpGenSpawnable, alwaysVisible)
+	static const unsigned int memberHashes[] = {
+		HsiehHash(          "pos",  sizeof(          "pos") - 1, 0),
+		HsiehHash(        "speed",  sizeof(        "speed") - 1, 0),
+		HsiehHash(    "useairlos",  sizeof(    "useairlos") - 1, 0),
+		HsiehHash("alwaysvisible",  sizeof("alwaysvisible") - 1, 0),
+	};
+
+	CHECK_MEMBER_INFO_FLOAT3_HASH(CExpGenSpawnable, pos          , memberHashes[0])
+	CHECK_MEMBER_INFO_FLOAT4_HASH(CExpGenSpawnable, speed        , memberHashes[1])
+	CHECK_MEMBER_INFO_BOOL_HASH  (CExpGenSpawnable, useAirLos    , memberHashes[2])
+	CHECK_MEMBER_INFO_BOOL_HASH  (CExpGenSpawnable, alwaysVisible, memberHashes[3])
 
 	return false;
 }
@@ -47,11 +55,11 @@ bool CExpGenSpawnable::GetMemberInfo(const std::string& memberName, SExpGenSpawn
 	CHECK_SPAWNABLE(CTracerProjectile)      \
 
 
-bool CExpGenSpawnable::GetSpawnableMemberInfo(const std::string& spawnableName, const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+bool CExpGenSpawnable::GetSpawnableMemberInfo(const std::string& spawnableName, SExpGenSpawnableMemberInfo& memberInfo)
 {
 #define CHECK_SPAWNABLE(spawnable) \
 	if (spawnableName == #spawnable) \
-		return spawnable::GetMemberInfo(memberName, memberInfo);
+		return spawnable::GetMemberInfo(memberInfo);
 
 	CHECK_ALL_SPAWNABLES()
 

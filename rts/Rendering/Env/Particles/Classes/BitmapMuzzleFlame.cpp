@@ -106,9 +106,9 @@ int CBitmapMuzzleFlame::GetProjectilesCount() const
 }
 
 
-bool CBitmapMuzzleFlame::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+bool CBitmapMuzzleFlame::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 {
-	if (CProjectile::GetMemberInfo(memberName, memberInfo))
+	if (CProjectile::GetMemberInfo(memberInfo))
 		return true;
 
 	CHECK_MEMBER_INFO_PTR  (CBitmapMuzzleFlame, sideTexture,  projectileDrawer->textureAtlas->GetTexturePtr)

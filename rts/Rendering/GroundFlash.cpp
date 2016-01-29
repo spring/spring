@@ -112,9 +112,9 @@ float3 CGroundFlash::CalcNormal(const float3 midPos, const float3 camDir, const 
 }
 
 
-bool CGroundFlash::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+bool CGroundFlash::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 {
-	if (CExpGenSpawnable::GetMemberInfo(memberName, memberInfo))
+	if (CExpGenSpawnable::GetMemberInfo(memberInfo))
 		return true;
 
 	CHECK_MEMBER_INFO_FLOAT(CGroundFlash, size)
@@ -255,9 +255,9 @@ void CStandardGroundFlash::Draw()
 }
 
 
-bool CStandardGroundFlash::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+bool CStandardGroundFlash::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 {
-	if (CGroundFlash::GetMemberInfo(memberName, memberInfo))
+	if (CGroundFlash::GetMemberInfo(memberInfo))
 		return true;
 
 	CHECK_MEMBER_INFO_FLOAT(CStandardGroundFlash, flashSize   )
@@ -322,9 +322,9 @@ bool CSimpleGroundFlash::Update()
 }
 
 
-bool CSimpleGroundFlash::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+bool CSimpleGroundFlash::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 {
-	if (CGroundFlash::GetMemberInfo(memberName, memberInfo))
+	if (CGroundFlash::GetMemberInfo(memberInfo))
 		return true;
 
 	CHECK_MEMBER_INFO_FLOAT(CSimpleGroundFlash, sizeGrowth)

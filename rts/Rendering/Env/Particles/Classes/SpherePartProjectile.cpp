@@ -160,9 +160,9 @@ int CSpherePartSpawner::GetProjectilesCount() const
 }
 
 
-bool CSpherePartSpawner::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+bool CSpherePartSpawner::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 {
-	if (CProjectile::GetMemberInfo(memberName, memberInfo))
+	if (CProjectile::GetMemberInfo(memberInfo))
 		return true;
 
 	CHECK_MEMBER_INFO_FLOAT (CSpherePartSpawner, alpha         )

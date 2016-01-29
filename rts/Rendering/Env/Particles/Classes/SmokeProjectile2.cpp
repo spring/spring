@@ -148,9 +148,9 @@ int CSmokeProjectile2::GetProjectilesCount() const
 }
 
 
-bool CSmokeProjectile2::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+bool CSmokeProjectile2::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 {
-	if (CProjectile::GetMemberInfo(memberName, memberInfo))
+	if (CProjectile::GetMemberInfo(memberInfo))
 		return true;
 
 	CHECK_MEMBER_INFO_FLOAT (CSmokeProjectile2, color        )

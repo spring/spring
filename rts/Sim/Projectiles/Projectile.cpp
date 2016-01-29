@@ -223,9 +223,9 @@ CMatrix44f CProjectile::GetTransformMatrix(bool offsetPos) const {
 }
 
 
-bool CProjectile::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+bool CProjectile::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 {
-	if (CExpGenSpawnable::GetMemberInfo(memberName, memberInfo))
+	if (CExpGenSpawnable::GetMemberInfo(memberInfo))
 		return true;
 
 	CHECK_MEMBER_INFO_FLOAT3(CProjectile, dir)

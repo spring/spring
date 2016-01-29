@@ -41,9 +41,9 @@ int CExpGenSpawner::GetProjectilesCount() const
 }
 
 
-bool CExpGenSpawner::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+bool CExpGenSpawner::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 {
-	if (CProjectile::GetMemberInfo(memberName, memberInfo))
+	if (CProjectile::GetMemberInfo(memberInfo))
 		return true;
 
 	CHECK_MEMBER_INFO_INT  (CExpGenSpawner, delay )

@@ -18,14 +18,14 @@ public:
 	virtual ~CExpGenSpawnable() {}
 	virtual void Init(const CUnit* owner, const float3& offset) = 0;
 
-	static bool GetSpawnableMemberInfo(const std::string& spawnableName, const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo);
+	static bool GetSpawnableMemberInfo(const std::string& spawnableName, SExpGenSpawnableMemberInfo& memberInfo);
 	static int GetSpawnableID(const std::string& spawnableName);
 
 	//Memory handled in projectileHandler
 	static CExpGenSpawnable* CreateSpawnable(int spawnableID);
 
 protected:
-	static bool GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo);
+	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 };
 
 #endif //EXP_GEN_SPAWNABLE_H

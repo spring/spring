@@ -131,7 +131,7 @@ protected:
 	unsigned int projectileType;
 	unsigned int collisionFlags;
 
-	static bool GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo);
+	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 public:
 	std::vector<int> quads;
 };

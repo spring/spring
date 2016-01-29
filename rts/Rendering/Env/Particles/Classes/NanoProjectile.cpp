@@ -89,9 +89,9 @@ int CNanoProjectile::GetProjectilesCount() const
 }
 
 
-bool CNanoProjectile::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+bool CNanoProjectile::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 {
-	if (CProjectile::GetMemberInfo(memberName, memberInfo))
+	if (CProjectile::GetMemberInfo(memberInfo))
 		return true;
 
 	CHECK_MEMBER_INFO_INT   (CNanoProjectile, deathFrame)

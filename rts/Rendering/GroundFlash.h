@@ -29,7 +29,7 @@ public:
 	float3 CalcNormal(const float3 midPos, const float3 camDir, const float quadSize) const;
 
 protected:
-	static bool GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo);
+	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 
 public:
 	float size;
@@ -63,7 +63,7 @@ public:
 	void Draw();
 	bool Update();
 
-	static bool GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo);
+	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 
 private:
 	float3 side1;
@@ -99,7 +99,7 @@ public:
 	void Draw();
 	bool Update();
 
-	static bool GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo);
+	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 
 private:
 	float3 side1;

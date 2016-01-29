@@ -113,9 +113,9 @@ int CExploSpikeProjectile::GetProjectilesCount() const
 }
 
 
-bool CExploSpikeProjectile::GetMemberInfo(const std::string& memberName, SExpGenSpawnableMemberInfo& memberInfo)
+bool CExploSpikeProjectile::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 {
-	if (CProjectile::GetMemberInfo(memberName, memberInfo))
+	if (CProjectile::GetMemberInfo(memberInfo))
 		return true;
 
 	CHECK_MEMBER_INFO_FLOAT (CExploSpikeProjectile, length      )
