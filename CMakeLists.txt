@@ -84,6 +84,22 @@ else  (APPLE)
 	set(MACOSX_BUNDLE FALSE)
 endif (APPLE)
 
+### Compiler flags and defines based on build type
+INCLUDE(TestCXXFlags)
+
+## 32bit or 64bit?
+set(MARCH_FLAG ${MARCH} CACHE STRING "CPU optimization (use i686 for generic optimization)")
+if    (CMAKE_SIZEOF_VOID_P EQUAL 8)
+	Message(STATUS "Building Spring for 64bit environment")
+	set(MARCH_BITS 64 INTERNAL)
+	if     (MINGW)
+		Message(WARNING "The 64bit version of spring on windows is experimental and may not sync with regular builds")
+	endif  (MINGW)
+else  (CMAKE_SIZEOF_VOID_P EQUAL 8)
+	Message(STATUS "Building Spring for 32bit environment")
+	set(MARCH_BITS 32 INTERNAL)
+endif (CMAKE_SIZEOF_VOID_P EQUAL 8)
+
 
 ### Install paths (relative to CMAKE_INSTALL_PREFIX)
 if    (UNIX AND NOT MINGW)
@@ -276,23 +292,6 @@ FIND_PACKAGE(Valgrind)
 if    (VALGRIND_FOUND)
 	add_definitions(-DUSE_VALGRIND)
 endif (VALGRIND_FOUND)
-
-
-### Compiler flags and defines based on build type
-INCLUDE(TestCXXFlags)
-
-## 32bit or 64bit?
-set(MARCH_FLAG ${MARCH} CACHE STRING "CPU optimization (use i686 for generic optimization)")
-if    (CMAKE_SIZEOF_VOID_P EQUAL 8)
-	Message(STATUS "Building Spring for 64bit environment")
-	set(MARCH_BITS 64 INTERNAL)
-	if     (MINGW)
-		Message(WARNING "The 64bit version of spring on windows is experimental and may not sync with regular builds")
-	endif  (MINGW)
-else  (CMAKE_SIZEOF_VOID_P EQUAL 8)
-	Message(STATUS "Building Spring for 32bit environment")
-	set(MARCH_BITS 32 INTERNAL)
-endif (CMAKE_SIZEOF_VOID_P EQUAL 8)
 
 INCLUDE (CheckSymbolExists)
 CHECK_SYMBOL_EXISTS(strnlen string.h HAVE_STRNLEN)
