@@ -732,7 +732,7 @@ void SpringApp::ParseCmdLine(const std::string& binaryName)
 		exit(res);
 #else
 		LOG_L(L_ERROR, "Creg is not enabled!\n");
-		exit(0); //Do not fail tests
+		exit(EXIT_FAILURE); //Do not fail tests
 #endif
 	}
 

@@ -8,7 +8,6 @@
 #include "System/Color.h"
 
 struct AtlasedTexture;
-struct GroundFXTexture;
 struct GroundFlashInfo;
 class CColorMap;
 class CVertexArray;
@@ -111,7 +110,7 @@ private:
 	float age, agerate;
 
 	CColorMap* colorMap;
-	GroundFXTexture* texture;
+	AtlasedTexture* texture;
 };
 
 /**

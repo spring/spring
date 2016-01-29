@@ -277,27 +277,30 @@ endif()
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTEST")
 
+	if    (NOT NO_CREG)
 ################################################################################
 ### CREG
-	add_test(NAME testCreg COMMAND ${CMAKE_BINARY_DIR}/spring-headless${CMAKE_EXECUTABLE_SUFFIX} --test-creg)
+		add_test(NAME testCreg COMMAND ${CMAKE_BINARY_DIR}/spring-headless${CMAKE_EXECUTABLE_SUFFIX} --test-creg)
 
-################################################################################
 ### CREG LoadSave
-	set(test_name LoadSave)
-	Set(test_src
-			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/LoadSave/testCregLoadSave.cpp"
-			"${ENGINE_SOURCE_DIR}/System/creg/Serializer.cpp"
-			"${ENGINE_SOURCE_DIR}/System/creg/VarTypes.cpp"
-			"${ENGINE_SOURCE_DIR}/System/creg/creg.cpp"
-			${test_Log_sources}
-		)
+		set(test_name LoadSave)
+		Set(test_src
+				"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/LoadSave/testCregLoadSave.cpp"
+				"${ENGINE_SOURCE_DIR}/System/creg/Serializer.cpp"
+				"${ENGINE_SOURCE_DIR}/System/creg/VarTypes.cpp"
+				"${ENGINE_SOURCE_DIR}/System/creg/creg.cpp"
+				${test_Log_sources}
+			)
 
-	set(test_libs
-			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-			${Boost_REGEX_LIBRARY}
-		)
+		set(test_libs
+				${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+				${Boost_REGEX_LIBRARY}
+			)
 
-	add_spring_test(${test_name} "${test_src}" "${test_libs}" -"DTEST")
+		add_spring_test(${test_name} "${test_src}" "${test_libs}" -"DTEST")
+###
+################################################################################
+	endif (NOT NO_CREG)
 
 ################################################################################
 ### UnitSync

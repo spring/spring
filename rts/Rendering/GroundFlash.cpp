@@ -39,7 +39,6 @@ CR_REG_METADATA(CStandardGroundFlash, (
 	CR_MEMBER(flashAge),
 	CR_MEMBER(flashAgeSpeed),
 	CR_MEMBER(circleAlphaDec),
-	CR_MEMBER(color),
 	CR_MEMBER(ttl)
 ))
 
@@ -331,7 +330,7 @@ bool CSimpleGroundFlash::GetMemberInfo(const std::string& memberName, SExpGenSpa
 	CHECK_MEMBER_INFO_FLOAT(CSimpleGroundFlash, sizeGrowth)
 	CHECK_MEMBER_INFO_INT  (CSimpleGroundFlash, ttl       )
 	CHECK_MEMBER_INFO_PTR  (CSimpleGroundFlash, colorMap, CColorMap::LoadFromDefString)
-	CHECK_MEMBER_INFO_PTR  (CSimpleGroundFlash, texture , projectileDrawer->groundFXAtlas->GetGFTexturePtr)
+	CHECK_MEMBER_INFO_PTR  (CSimpleGroundFlash, texture , projectileDrawer->groundFXAtlas->GetTexturePtr)
 
 	return false;
 }

@@ -18,6 +18,7 @@
 #endif // defined BUILDING_AI && !defined USING_CREG
 
 #ifdef NOT_USING_CREG
+#undef USING_CREG
 #include "ISerializer.h" // prevent some compiler errors
 // define all creg preprocessor macros from creg_cond.h to nothing
 #define CR_DECLARE(TCls)
