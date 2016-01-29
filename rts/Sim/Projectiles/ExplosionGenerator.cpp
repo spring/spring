@@ -769,6 +769,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 	//Floats or Ints
 
 	bool isFloat = memberInfo.type == SExpGenSpawnableMemberInfo::TYPE_FLOAT;
+	assert (isFloat || memberInfo.type == SExpGenSpawnableMemberInfo::TYPE_INT);
 
 	const std::set<boost::uint8_t> allowedSizeInt = {1,2,4 /*,0,8*/};
 	const std::set<boost::uint8_t> allowedSizeFlt = {4 /*,8*/};

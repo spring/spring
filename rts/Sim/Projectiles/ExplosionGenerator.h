@@ -28,7 +28,6 @@ public:
 	void Clear() { aliases.clear(); }
 
 	std::string ResolveAlias(const std::string& alias) const;
-	creg::Class* GetClass(const std::string& name) const;
 	std::string FindAlias(const std::string& className) const;
 
 private:
