@@ -983,7 +983,7 @@ void CLuaHandle::UnitDamaged(
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 11, __FUNCTION__);
 
-	static const LuaHashString cmdStr(__FUNCTION__);
+	static const LuaHashString cmdStr("UnitDamaged");
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	if (!cmdStr.GetGlobalFunc(L))
@@ -1021,7 +1021,7 @@ void CLuaHandle::UnitStunned(
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 5, __FUNCTION__);
 
-	static const LuaHashString cmdStr(__FUNCTION__);
+	static const LuaHashString cmdStr("UnitStunned");
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	if (!cmdStr.GetGlobalFunc(L))
@@ -1353,7 +1353,7 @@ void CLuaHandle::FeatureDamaged(
 	luaL_checkstack(L, 11, __FUNCTION__);
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
-	static const LuaHashString cmdStr(__FUNCTION__);
+	static const LuaHashString cmdStr("FeatureDamaged");
 	if (!cmdStr.GetGlobalFunc(L))
 		return;
 
