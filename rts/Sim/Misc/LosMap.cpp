@@ -102,8 +102,19 @@ public:
 	typedef std::vector<LosLine> LosTable;
 
 	static void GenerateForLosSize(size_t losSize);
-	static const LosLine& GetLosTableRay(size_t losSize, size_t rayIndex);
-	static size_t GetLosTableSize(size_t losSize);
+
+	// note: copy, references are not threadsafe
+	static const int2 GetLosTableRaySquare(size_t losSize, size_t rayIndex, size_t squareIdx) {
+		return instance.lostables[losSize][rayIndex][squareIdx];
+	}
+
+	static size_t GetLosTableRaySize(size_t losSize, size_t rayIndex) {
+		return instance.lostables[losSize][rayIndex].size();
+	}
+
+	static size_t GetLosTableSize(size_t losSize) {
+		return instance.lostables[losSize].size();
+	}
 
 private:
 	static CLosTables instance;
@@ -140,18 +151,6 @@ void CLosTables::GenerateForLosSize(size_t losSize)
 			tl = std::move(lrays);
 		}
 	}
-}
-
-
-const CLosTables::LosLine& CLosTables::GetLosTableRay(size_t losSize, size_t rayIndex)
-{
-	return instance.lostables[losSize][rayIndex];
-}
-
-
-size_t CLosTables::GetLosTableSize(size_t losSize)
-{
-	return instance.lostables[losSize].size();
 }
 
 
@@ -580,9 +579,13 @@ void CLosMap::UnsafeLosAdd(SLosInstance* li) const
 	squaresMap[ToAngleMapIdx(int2(0,0), radius)] = true;
 	const size_t numRays = CLosTables::GetLosTableSize(radius);
 	for (size_t i = 0; i < numRays; ++i) {
-		const CLosTables::LosLine& line = CLosTables::GetLosTableRay(radius, i);
 		float maxAng[4] = {-1e7, -1e7, -1e7, -1e7};
-		for (const int2& square: line) {
+
+		const size_t numSquares = CLosTables::GetLosTableRaySize(radius, i);
+
+		for (size_t n = 0; n < numSquares; n++) {
+			const int2 square = CLosTables::GetLosTableRaySquare(radius, i, n);
+
 			CastLos(&maxAng[0], square,                    squaresMap, anglesMap, radius);
 			CastLos(&maxAng[1], -square,                   squaresMap, anglesMap, radius);
 			CastLos(&maxAng[2], int2(square.y, -square.x), squaresMap, anglesMap, radius);
@@ -643,37 +646,53 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 		squaresMap[ToAngleMapIdx(int2(0,0), radius)] = true;
 
 		for (size_t i = 0; i < numRays; ++i) {
-			const CLosTables::LosLine& line = CLosTables::GetLosTableRay(radius, i);
 			float maxAng[4] = {-1e7, -1e7, -1e7, -1e7};
 
-			for (const int2& square: line) {
+			const size_t numSquares = CLosTables::GetLosTableRaySize(radius, i);
+
+			for (size_t n = 0; n < numSquares; n++) {
+				const int2 square = CLosTables::GetLosTableRaySquare(radius, i, n);
+
 				if (!safeRect.Inside(pos + square))
 					break;
+
 				CastLos(&maxAng[0], square,                    squaresMap, anglesMap, radius);
 			}
-			for (const int2& square: line) {
+			for (size_t n = 0; n < numSquares; n++) {
+				const int2 square = CLosTables::GetLosTableRaySquare(radius, i, n);
+
 				if (!safeRect.Inside(pos - square))
 					break;
+
 				CastLos(&maxAng[1], -square,                   squaresMap, anglesMap, radius);
 			}
-			for (const int2& square: line) {
+			for (size_t n = 0; n < numSquares; n++) {
+				const int2 square = CLosTables::GetLosTableRaySquare(radius, i, n);
+
 				if (!safeRect.Inside(pos + int2(square.y, -square.x)))
 					break;
+
 				CastLos(&maxAng[2], int2(square.y, -square.x), squaresMap, anglesMap, radius);
 			}
-			for (const int2& square: line) {
+			for (size_t n = 0; n < numSquares; n++) {
+				const int2 square = CLosTables::GetLosTableRaySquare(radius, i, n);
+
 				if (!safeRect.Inside(pos + int2(-square.y, square.x)))
 					break;
+
 				CastLos(&maxAng[3], int2(-square.y, square.x), squaresMap, anglesMap, radius);
 			}
 		}
 	} else {
 		// emit position outside the map
 		for (size_t i = 0; i < numRays; ++i) {
-			const CLosTables::LosLine& line = CLosTables::GetLosTableRay(radius, i);
 			float maxAng[4] = {-1e7, -1e7, -1e7, -1e7};
 
-			for (const int2& square: line) {
+			const size_t numSquares = CLosTables::GetLosTableRaySize(radius, i);
+
+			for (size_t n = 0; n < numSquares; n++) {
+				const int2 square = CLosTables::GetLosTableRaySquare(radius, i, n);
+
 				if (safeRect.Inside(pos + square)) {
 					CastLos(&maxAng[0], square,                    squaresMap, anglesMap, radius);
 				}
