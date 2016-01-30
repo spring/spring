@@ -4,7 +4,7 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/EventHandler.h"
 
-CR_BIND(FeatureDef, )
+CR_BIND_DERIVED(FeatureDef, SolidObjectDef, )
 
 CR_REG_METADATA(FeatureDef, (
 	CR_MEMBER(description),
