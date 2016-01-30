@@ -31,7 +31,9 @@ public:
 	CFeature();
 	~CFeature();
 
+	CR_DECLARE_SUB(MoveCtrl)
 	struct MoveCtrl {
+		CR_DECLARE_STRUCT(MoveCtrl)
 	public:
 		MoveCtrl(): enabled(true) {
 			movementMask = OnesVector;
