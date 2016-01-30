@@ -486,9 +486,7 @@ void CFeatureHandler::SetFeatureUpdateable(CFeature* feature)
 		return;
 	}
 
-	if (!VectorInsertUnique(updateFeatures, feature)) {
-		assert(false);
-	}
+	VectorInsertUnique(updateFeatures, feature);
 
 	feature->inUpdateQue = true;
 }
@@ -503,8 +501,6 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 
 	for (const int qi: quads) {
 		for (CFeature* feature: quadField->GetQuad(qi).features) {
-			feature->UpdateFinalHeight(true);
-
 			// put this feature back in the update-queue
 			SetFeatureUpdateable(feature);
 		}

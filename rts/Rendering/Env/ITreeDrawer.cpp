@@ -174,7 +174,7 @@ void ITreeDrawer::RenderFeatureDestroyed(const CFeature* feature) {
 		DeleteTree(feature->id, feature->pos);
 
 		if (feature->speed.SqLength2D() > 0.25f) {
-			AddFallingTree(feature->id, feature->def->drawType - 1, feature->pos, feature->speed);
+			AddFallingTree(feature->id, feature->def->drawType - 1, feature->pos, feature->speed * XZVector);
 		}
 	}
 }

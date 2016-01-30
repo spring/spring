@@ -31,6 +31,29 @@ public:
 	CFeature();
 	~CFeature();
 
+	struct MoveCtrl {
+	public:
+		MoveCtrl(): enabled(true) {
+			movementMask = OnesVector;
+			velocityMask = OnesVector;
+			 impulseMask = OnesVector;
+		}
+
+		void SetMoveMask(const float3& moveMask) { movementMask = moveMask; }
+
+	public:
+		// if false, feature will not apply any position updates
+		// (but is still considered moving so long as velocity is
+		// non-zero, so it stays in the UQ)
+		bool enabled;
+
+		// dimensions in which feature can move or receive impulse
+		// note: these should always be binary vectors (.xyz={0,1})
+		float3 movementMask;
+		float3 velocityMask;
+		float3 impulseMask;
+	};
+
 	/**
 	 * Pos of quad must not change after this.
 	 * This will add this to the FeatureHandler.
@@ -51,9 +74,9 @@ public:
 
 	bool Update();
 	bool UpdatePosition();
+	bool UpdateVelocity(const float3& dragAccel, const float3& gravAccel, const float3& movMask, const float3& velMask);
 	void UpdateTransform() { transMatrix = CMatrix44f(pos, -rightdir, updir, frontdir); }
 	void UpdateTransformAndPhysState();
-	void UpdateFinalHeight(bool useGroundHeight);
 
 	void StartFire();
 	void EmitGeoSmoke();
@@ -84,11 +107,8 @@ public:
 	 * until the corpse has been fully 'repaired'.
 	 */
 	bool isRepairingBeforeResurrect;
-	bool isAtFinalHeight;
 	bool inUpdateQue;
 	bool deleteMe;
-
-	float finalHeight;
 
 	float resurrectProgress;
 	float reclaimLeft;
@@ -107,6 +127,8 @@ public:
 
 	const FeatureDef* def;
 	const UnitDef* udef; /// type of unit this feature should be resurrected to
+
+	MoveCtrl moveCtrl;
 
 	CFireProjectile* myFire;
 

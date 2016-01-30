@@ -1119,21 +1119,19 @@ void CAdvTreeDrawer::DrawShadowPass()
 
 void CAdvTreeDrawer::AddFallingTree(int treeID, int treeType, const float3& pos, const float3& dir)
 {
-	const float3 flatDir = dir * XZVector;
-	const float len = flatDir.Length();
+	const float len = dir.Length();
 
 	if (len > 500.0f)
 		return;
 
-	FallingTree ft;
+	fallingTrees.emplace_back();
+	FallingTree& ft = fallingTrees.back();
 
 	ft.id = treeID;
 	ft.type = treeType;
 	ft.pos = pos;
-	ft.dir = flatDir / len;
+	ft.dir = dir / len;
 	ft.speed = std::max(0.01f, len * 0.0004f);
 	ft.fallPos = 0.0f;
-
-	fallingTrees.push_back(ft);
 }
 

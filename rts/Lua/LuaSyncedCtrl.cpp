@@ -226,6 +226,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetFeatureReclaim);
 	REGISTER_LUA_CFUNC(SetFeatureResurrect);
 
+	REGISTER_LUA_CFUNC(SetFeatureMoveCtrl);
 	REGISTER_LUA_CFUNC(SetFeaturePhysics);
 	REGISTER_LUA_CFUNC(SetFeaturePosition);
 	REGISTER_LUA_CFUNC(SetFeatureVelocity);
@@ -2731,8 +2732,7 @@ int LuaSyncedCtrl::SetFeatureHealth(lua_State* L)
 	if (feature == nullptr)
 		return 0;
 
-	const float health = luaL_checkfloat(L, 2);
-	feature->health = min(feature->maxHealth, health);
+	feature->health = min(feature->maxHealth, luaL_checkfloat(L, 2));
 	return 0;
 }
 
@@ -2748,6 +2748,31 @@ int LuaSyncedCtrl::SetFeatureReclaim(lua_State* L)
 }
 
 
+int LuaSyncedCtrl::SetFeatureMoveCtrl(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+
+	if (feature == nullptr)
+		return 0;
+
+	CFeature::MoveCtrl& moveCtrl = feature->moveCtrl;
+
+	float3& movementMask = moveCtrl.movementMask;
+	float3& velocityMask = moveCtrl.velocityMask;
+	float3&  impulseMask = moveCtrl.impulseMask;
+
+	moveCtrl.enabled = luaL_optboolean(L, 2, moveCtrl.enabled);
+
+	for (int i = 0; i < 3; i++) {
+		velocityMask[i] = (luaL_optfloat(L, 3 + i, velocityMask[i]) != 0.0f);
+		 impulseMask[i] = (luaL_optfloat(L, 6 + i,  impulseMask[i]) != 0.0f);
+		movementMask[i] = (luaL_optfloat(L, 9 + i, movementMask[i]) != 0.0f);
+	}
+
+	return 0;
+}
+
+
 int LuaSyncedCtrl::SetFeaturePhysics(lua_State* L)
 {
 	return (SetSolidObjectPhysicalState(L, ParseFeature(L, __FUNCTION__, 1)));
@@ -2756,15 +2781,16 @@ int LuaSyncedCtrl::SetFeaturePhysics(lua_State* L)
 int LuaSyncedCtrl::SetFeaturePosition(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+
 	if (feature == nullptr)
 		return 0;
 
-	const float3 pos(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
-	const bool snap(luaL_optboolean(L, 5, true));
+	float3 pos;
+	pos.x = luaL_checkfloat(L, 2);
+	pos.y = luaL_checkfloat(L, 3);
+	pos.z = luaL_checkfloat(L, 4);
 
 	feature->ForcedMove(pos);
-	feature->UpdateFinalHeight(snap);
-
 	return 0;
 }
 
@@ -2787,20 +2813,18 @@ int LuaSyncedCtrl::SetFeatureVelocity(lua_State* L)
 int LuaSyncedCtrl::SetFeatureResurrect(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+
+	if (feature == nullptr)
 		return 0;
-	}
 
 	const UnitDef* ud = unitDefHandler->GetUnitDefByName(luaL_checkstring(L, 2));
 
-	if (ud != NULL) {
+	if (ud != nullptr)
 		feature->udef = ud;
-	}
 
-	const int args = lua_gettop(L); // number of arguments
-	if (args >= 3) {
+	if (lua_gettop(L) >= 3)
 		feature->buildFacing = LuaUtils::ParseFacing(L, __FUNCTION__, 3);
-	}
+
 	return 0;
 }
 
@@ -2813,9 +2837,9 @@ int LuaSyncedCtrl::SetFeatureBlocking(lua_State* L)
 int LuaSyncedCtrl::SetFeatureNoSelect(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	if (feature == nullptr)
 		return 0;
-	}
+
 	feature->noSelect = !!luaL_checkboolean(L, 2);
 	return 0;
 }

@@ -28,13 +28,11 @@ CR_BIND_DERIVED(CFeature, CSolidObject, )
 CR_REG_METADATA(CFeature, (
 	CR_MEMBER(defID),
 	CR_MEMBER(isRepairingBeforeResurrect),
-	CR_MEMBER(isAtFinalHeight),
 	CR_MEMBER(inUpdateQue),
 	CR_MEMBER(deleteMe),
 	CR_MEMBER(resurrectProgress),
 	CR_MEMBER(reclaimLeft),
 	CR_MEMBER(resources),
-	CR_MEMBER(finalHeight),
 	CR_MEMBER(lastReclaim),
 	CR_MEMBER(drawQuad),
 	CR_MEMBER(drawFlag),
@@ -56,10 +54,8 @@ CFeature::CFeature()
 : CSolidObject()
 , defID(-1)
 , isRepairingBeforeResurrect(false)
-, isAtFinalHeight(false)
 , inUpdateQue(false)
 , deleteMe(false)
-, finalHeight(0.0f)
 , resurrectProgress(0.0f)
 , reclaimLeft(1.0f)
 , lastReclaim(0)
@@ -197,6 +193,14 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 
 	noSelect = !def->selectable;
 
+	// by default, any feature that is a dead unit can move
+	// in all dimensions; all others (trees, rocks, ...) can
+	// only move vertically
+	// (movementMask exists mostly for trees, which depend on
+	// speed for falling animations but should never actually
+	// *move* in XZ)
+	moveCtrl.SetMoveMask(mix(OnesVector, UpVector, udef == nullptr));
+
 	// set position before mid-position
 	Move((params.pos).cClampInMap(), false);
 	// use base-class version, AddFeature() below
@@ -230,7 +234,6 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	}
 
 	UpdateMidAndAimPos();
-	UpdateFinalHeight(true);
 	UpdateTransformAndPhysState();
 
 	collisionVolume = def->collisionVolume;
@@ -269,7 +272,7 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 		// Lots of this code is stolen from unit->AddBuildPower
 		//
 		// Check they are trying to repair a feature that can be resurrected
-		if (udef == NULL)
+		if (udef == nullptr)
 			return false;
 
 		isRepairingBeforeResurrect = true; // Stop them exploiting chunk reclaiming
@@ -312,89 +315,86 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 			}
 
 			return true;
-		} else {
-			// update the energy and metal required counts
-			teamHandler->Team(builder->team)->resPull.energy += energyUse;
-			teamHandler->Team(builder->team)->resPull.metal  += metalUse;
 		}
+
+		// update the energy and metal required counts
+		teamHandler->Team(builder->team)->resPull.energy += energyUse;
+		teamHandler->Team(builder->team)->resPull.metal  += metalUse;
 		return false;
-	} else {
-		// Reclaiming
-		// avoid multisuck when reclaim has already completed during this frame
-		if (reclaimLeft <= 0.0f)
-			return false;
-
-		// don't let them exploit chunk reclaim
-		if (isRepairingBeforeResurrect && (modInfo.reclaimMethod > 1))
-			return false;
-
-		// make sure several units cant reclaim at once on a single feature
-		if ((modInfo.multiReclaim == 0) && (lastReclaim == gs->frameNum))
-			return true;
-
-		const float step = (-amount) / def->reclaimTime;
-
-		if (!eventHandler.AllowFeatureBuildStep(builder, this, -step))
-			return false;
-
-		// stop the last bit giving too much resource
-		const float reclaimLeftTemp = std::max(0.0f, reclaimLeft - step);
-		const float fractionReclaimed = oldReclaimLeft - reclaimLeftTemp;
-		const float metalFraction  = std::min(def->metal  * fractionReclaimed, resources.metal);
-		const float energyFraction = std::min(def->energy * fractionReclaimed, resources.energy);
-		const float energyUseScaled = metalFraction * modInfo.reclaimFeatureEnergyCostFactor;
-
-		SResourceOrder order;
-		order.quantum    = false;
-		order.overflow   = builder->harvestStorage.empty();
-		order.separate   = true;
-		order.use.energy = energyUseScaled;
-		if (reclaimLeftTemp == 0.0f) {
-			// always give remaining resources at the end
-			order.add.metal  = resources.metal;
-			order.add.energy = resources.energy;
-		}
-		else if (modInfo.reclaimMethod == 0) {
-			// Gradual reclaim
-			order.add.metal  = metalFraction;
-			order.add.energy = energyFraction;
-		}
-		else if (modInfo.reclaimMethod == 1) {
-			// All-at-end method
-			// see `reclaimLeftTemp == 0.0f` case
-		}
-		else {
-			// Chunky reclaiming, work out how many chunk boundaries we crossed
-			const float chunkSize = 1.0f / modInfo.reclaimMethod;
-			const int oldChunk = ChunkNumber(oldReclaimLeft);
-			const int newChunk = ChunkNumber(reclaimLeft);
-
-			if (oldChunk != newChunk) {
-				const float numChunks = oldChunk - newChunk;
-				order.add.metal  = std::min(numChunks * def->metal * chunkSize,  resources.metal);
-				order.add.energy = std::min(numChunks * def->energy * chunkSize, resources.energy);
-			}
-		}
-
-		if (!builder->IssueResourceOrder(&order)) {
-			return false;
-		}
-
-		resources  -= order.add;
-		reclaimLeft = reclaimLeftTemp;
-		lastReclaim = gs->frameNum;
-
-		// Has the reclaim finished?
-		if (reclaimLeft <= 0) {
-			featureHandler->DeleteFeature(this);
-			return false;
-		}
-		return true;
 	}
 
-	// Should never get here
-	assert(false);
-	return false;
+	// Reclaiming
+	// avoid multisuck when reclaim has already completed during this frame
+	if (reclaimLeft <= 0.0f)
+		return false;
+
+	// don't let them exploit chunk reclaim
+	if (isRepairingBeforeResurrect && (modInfo.reclaimMethod > 1))
+		return false;
+
+	// make sure several units cant reclaim at once on a single feature
+	if ((modInfo.multiReclaim == 0) && (lastReclaim == gs->frameNum))
+		return true;
+
+	const float step = (-amount) / def->reclaimTime;
+
+	if (!eventHandler.AllowFeatureBuildStep(builder, this, -step))
+		return false;
+
+	// stop the last bit giving too much resource
+	const float reclaimLeftTemp = std::max(0.0f, reclaimLeft - step);
+	const float fractionReclaimed = oldReclaimLeft - reclaimLeftTemp;
+	const float metalFraction  = std::min(def->metal  * fractionReclaimed, resources.metal);
+	const float energyFraction = std::min(def->energy * fractionReclaimed, resources.energy);
+	const float energyUseScaled = metalFraction * modInfo.reclaimFeatureEnergyCostFactor;
+
+	SResourceOrder order;
+	order.quantum    = false;
+	order.overflow   = builder->harvestStorage.empty();
+	order.separate   = true;
+	order.use.energy = energyUseScaled;
+
+	if (reclaimLeftTemp == 0.0f) {
+		// always give remaining resources at the end
+		order.add.metal  = resources.metal;
+		order.add.energy = resources.energy;
+	}
+	else if (modInfo.reclaimMethod == 0) {
+		// Gradual reclaim
+		order.add.metal  = metalFraction;
+		order.add.energy = energyFraction;
+	}
+	else if (modInfo.reclaimMethod == 1) {
+		// All-at-end method
+		// see `reclaimLeftTemp == 0.0f` case
+	}
+	else {
+		// Chunky reclaiming, work out how many chunk boundaries we crossed
+		const float chunkSize = 1.0f / modInfo.reclaimMethod;
+		const int oldChunk = ChunkNumber(oldReclaimLeft);
+		const int newChunk = ChunkNumber(reclaimLeft);
+
+		if (oldChunk != newChunk) {
+			const float numChunks = oldChunk - newChunk;
+			order.add.metal  = std::min(numChunks * def->metal * chunkSize,  resources.metal);
+			order.add.energy = std::min(numChunks * def->energy * chunkSize, resources.energy);
+		}
+	}
+
+	if (!builder->IssueResourceOrder(&order))
+		return false;
+
+	resources  -= order.add;
+	reclaimLeft = reclaimLeftTemp;
+	lastReclaim = gs->frameNum;
+
+	// Has the reclaim finished?
+	if (reclaimLeft <= 0) {
+		featureHandler->DeleteFeature(this);
+		return false;
+	}
+
+	return true;
 }
 
 
@@ -415,14 +415,14 @@ void CFeature::DoDamage(
 	float baseDamage = damages.GetDefault();
 	float impulseMult = float((def->drawType >= DRAWTYPE_TREE) || (udef != NULL && !udef->IsImmobileUnit()));
 
-	if (eventHandler.FeaturePreDamaged(this, attacker, baseDamage, weaponDefID, projectileID, &baseDamage, &impulseMult)) {
+	if (eventHandler.FeaturePreDamaged(this, attacker, baseDamage, weaponDefID, projectileID, &baseDamage, &impulseMult))
 		return;
-	}
 
 	// NOTE:
 	//   for trees, impulse is used to drive their falling animation
-	//   this also calls our SetVel() to put us in the update queue
-	ApplyImpulse((impulse * impulseMult) / mass);
+	//   this also calls our SetVelocity, which puts us in the update
+	//   queue
+	ApplyImpulse((impulse * moveCtrl.impulseMask * impulseMult) / mass);
 
 	// clamp in case Lua-modified damage is negative
 	health -= baseDamage;
@@ -431,7 +431,7 @@ void CFeature::DoDamage(
 	eventHandler.FeatureDamaged(this, attacker, baseDamage, weaponDefID, projectileID);
 
 	if (health <= 0.0f && def->destructable) {
-		FeatureLoadParams params = {featureHandler->GetFeatureDefByID(def->deathFeatureDefID), NULL, pos, ZeroVector, -1, team, -1, heading, buildFacing, 0};
+		FeatureLoadParams params = {featureHandler->GetFeatureDefByID(def->deathFeatureDefID), NULL, pos, speed, -1, team, -1, heading, buildFacing, 0};
 		CFeature* deathFeature = featureHandler->CreateWreckage(params, 0, false);
 
 		if (deathFeature != NULL) {
@@ -460,8 +460,10 @@ void CFeature::DependentDied(CObject *o)
 
 void CFeature::SetVelocity(const float3& v)
 {
-	CWorldObject::SetVelocity(v);
-	UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, v != ZeroVector);
+	CWorldObject::SetVelocity(v * moveCtrl.velocityMask);
+	CWorldObject::SetSpeed(v * moveCtrl.velocityMask);
+
+	UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, speed.w != 0.0f);
 
 	if (IsMoving()) {
 		featureHandler->SetFeatureUpdateable(this);
@@ -504,129 +506,85 @@ void CFeature::UpdateTransformAndPhysState()
 	UpdateDirVectors(!def->upright);
 	UpdateTransform();
 
-	UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, ((SetSpeed(speed) != 0.0f) || (std::fabs(pos.y - finalHeight) >= 0.01f)));
+	UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, (SetSpeed(speed) != 0.0f));
 	UpdatePhysicalState(0.1f);
+}
+
+
+bool CFeature::UpdateVelocity(
+	const float3& dragAccel,
+	const float3& gravAccel,
+	const float3& movMask,
+	const float3& velMask
+) {
+	// apply drag and gravity to speed; leave more advanced physics (water
+	// buoyancy, etc) to Lua
+	// NOTE:
+	//   all these calls use the base-class because FeatureHandler::Update
+	//   iterates over updateFeatures and our ::SetVelocity will insert us
+	//   into that
+	if (!IsInWater()) {
+		// quadratic downward acceleration if not in water
+		CWorldObject::SetVelocity(((speed * OnesVector) + gravAccel) * velMask);
+	} else {
+		// constant downward speed otherwise, unless floating
+		CWorldObject::SetVelocity(((speed *   XZVector) + gravAccel * (1 - def->floating)) * velMask);
+	}
+
+	CWorldObject::SetVelocity((speed + dragAccel) * velMask);
+
+	const float oldGroundHeight = CGround::GetHeightReal(pos        );
+	const float newGroundHeight = CGround::GetHeightReal(pos + speed);
+
+	// adjust vertical speed so we do not sink into the ground
+	if ((pos.y + speed.y) <= newGroundHeight) {
+		speed.y  = std::min(newGroundHeight - pos.y, math::fabs(newGroundHeight - oldGroundHeight));
+		speed.y *= moveCtrl.velocityMask.y;
+	}
+
+	// indicates whether to update quadfield position
+	return ((speed.x * movMask.x) != 0.0f || (speed.z * movMask.z) != 0.0f);
 }
 
 bool CFeature::UpdatePosition()
 {
-	const float3 oldPos = pos;
+	if (moveCtrl.enabled) {
+		const float3 oldPos = pos;
+		// const float4 oldSpd = speed;
 
-	if (udef != NULL) {
-		// we are a wreck of a dead unit, possibly with residual impulse
-		// in this case we do not care about <finalHeight> and are always
-		// affected by gravity
-		// note that def->floating is unreliable (eg. it can be true for
-		// ground-unit wrecks), so just assume wrecks always sink in water
-		// even if their "owner" was a floating object (as is the case for
-		// ships anyway)
-		if (IsMoving()) {
-			const float realGroundHeight = CGround::GetHeightReal(pos.x, pos.z);
-			const bool reachedWater  = ( pos.y                     <= 0.1f);
-			const bool reachedGround = ((pos.y - realGroundHeight) <= 0.1f);
+		const float3 dragAccel = GetDragAccelerationVec(float4(mapInfo->atmosphere.fluidDensity, mapInfo->water.fluidDensity, 1.0f, 0.1f));
+		const float3 gravAccel = UpVector * mapInfo->map.gravity;
 
-			// NOTE:
-			//   all these calls use the base-class because FeatureHandler::Update
-			//   iterates over updateFeatures and our ::SetVelocity will insert us
-			//   into that
-			CWorldObject::SetVelocity(speed + GetDragAccelerationVec(float4(mapInfo->atmosphere.fluidDensity, mapInfo->water.fluidDensity, 1.0f, 0.1f)));
+		if (UpdateVelocity(dragAccel, gravAccel, moveCtrl.movementMask, moveCtrl.velocityMask)) {
+			quadField->RemoveFeature(this);
+			UnBlock();
 
-			if (speed.SqLength2D() > 0.01f) {
-				//hint: only this updates horizontal position all other
-				//   lines in this function update vertical speed only!
+			// horizontal movement
+			Move((speed * XZVector) * moveCtrl.movementMask, true);
 
-				quadField->RemoveFeature(this);
-				UnBlock();
-
-				// update our forward speed (and quadfield
-				// position) if it is still greater than 0
-				Move(speed, true);
-
-				Block();
-				quadField->AddFeature(this);
-			} else {
-				CWorldObject::SetVelocity(speed * UpVector);
-			}
-
-			if (!reachedGround) {
-				if (!reachedWater) {
-					// quadratic acceleration if not in water
-					CWorldObject::SetVelocity(speed + (UpVector * mapInfo->map.gravity));
-				} else {
-					// constant downward speed otherwise
-					CWorldObject::SetVelocity((speed * XZVector) + (UpVector * mapInfo->map.gravity));
-				}
-
-				Move(UpVector * speed.y, true);
-			} else {
-				CWorldObject::SetVelocity(speed * XZVector);
-
-				// last Update() may have sunk us into
-				// ground if pos.y was only marginally
-				// larger than ground height, correct
-				Move(UpVector * (realGroundHeight - pos.y), true);
-			}
-
-			if (!pos.IsInBounds()) {
-				pos.ClampInBounds();
-
-				// ensure that no more forward-speed updates are done
-				// (prevents wrecks floating in mid-air at edge of map
-				// due to gravity no longer being applied either)
-				CWorldObject::SetVelocity(ZeroVector);
-			}
-
-			eventHandler.FeatureMoved(this, oldPos);
+			Block();
+			quadField->AddFeature(this);
 		}
-	} else {
-		// any feature that is not a dead unit (ie. rocks, trees, ...)
-		// these never move in the xz-plane no matter how much impulse
-		// is applied, only gravity affects them (FIXME: arbitrary..?)
-		if (pos.y > finalHeight) {
-			if (pos.y > 0.0f) {
-				CWorldObject::SetVelocity(speed + (UpVector * mapInfo->map.gravity));
-			} else {
-				CWorldObject::SetVelocity((speed * XZVector) + (UpVector * mapInfo->map.gravity));
-			}
 
-			// stop falling when we reach our finalHeight
-			// (which can be arbitrary, even below ground)
-			Move(UpVector * std::min(pos.y - finalHeight, speed.y), true);
-			eventHandler.FeatureMoved(this, oldPos);
-		} else if (pos.y < finalHeight) {
-			// stop vertical movement and teleport up
-			CWorldObject::SetVelocity(speed * XZVector);
+		// vertical movement
+		Move((speed * UpVector) * moveCtrl.movementMask, true);
 
-			Move(UpVector * (finalHeight - pos.y), true);
-			eventHandler.FeatureMoved(this, oldPos);
+		// clamp final position
+		if (!pos.IsInBounds()) {
+			Move(pos.cClampInBounds(), false);
+
+			// ensure that no more horizontal movement is done
+			CWorldObject::SetVelocity((speed * UpVector) * moveCtrl.velocityMask);
 		}
+
+		eventHandler.FeatureMoved(this, oldPos);
 	}
 
-	UpdateTransformAndPhysState();
+	UpdateTransformAndPhysState(); // updates speed.w and BIT_MOVING
 	Block(); // does the check if wanted itself
 
-	return (IsMoving());
-}
-
-
-void CFeature::UpdateFinalHeight(bool useGroundHeight)
-{
-	if (isAtFinalHeight)
-		return;
-
-	if (useGroundHeight) {
-		if (def->floating) {
-			finalHeight = CGround::GetHeightAboveWater(pos.x, pos.z);
-		} else {
-			finalHeight = CGround::GetHeightReal(pos.x, pos.z);
-		}
-	} else {
-		// permanently stay at this height,
-		// even if terrain changes under us
-		// later
-		isAtFinalHeight = true;
-		finalHeight = pos.y;
-	}
+	// note the RHS (in case we temporarily stop in mid-air)
+	return (IsMoving() || (!IsOnGround() && moveCtrl.enabled));
 }
 
 
@@ -644,12 +602,11 @@ bool CFeature::Update()
 				gu->RandVector() * 0.3f + UpVector, smokeTime / 6 + 20, 6, 0.4f, 0.5f);
 		}
 	}
-	if (fireTime == 1) {
+	if (fireTime == 1)
 		featureHandler->DeleteFeature(this);
-	}
-	if (def->geoThermal) {
+
+	if (def->geoThermal)
 		EmitGeoSmoke();
-	}
 
 	smokeTime = std::max(smokeTime - 1, 0);
 	fireTime = std::max(fireTime - 1, 0);
@@ -678,13 +635,13 @@ void CFeature::EmitGeoSmoke()
 		const vector<CSolidObject*>& objs = quadField->GetSolidsExact(pos, 0.0f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
 		float bestDist = std::numeric_limits<float>::max();
 
-		CSolidObject* so = NULL;
+		CSolidObject* so = nullptr;
 
-		for (vector<CSolidObject*>::const_iterator oi = objs.begin(); oi != objs.end(); ++oi) {
-			const float dist = ((*oi)->pos - pos).SqLength();
+		for (CSolidObject* obj: objs) {
+			const float dist = (obj->pos - pos).SqLength();
 
 			if (dist < bestDist)  {
-				bestDist = dist; so = *oi;
+				bestDist = dist; so = obj;
 			}
 		}
 

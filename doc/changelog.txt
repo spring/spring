@@ -66,6 +66,7 @@ Lua:
  - new Spring.{Get,Set}ProjectileDamages similar to the above, for projectiles in flight.
  - new Spring.GetUICommands function to obtain a list of all UI commands (e.g. /luaui reload)
  - new VFS.CalculateHash function that calculates hash (in base64 form) of a given string (with md5 support initially)
+ - new Spring.SetFeatureMoveCtrl(featureID [, args]) to control if and how a feature should be moved by the engine
  - new Spring.SetFeatureFade(featureID, bool) to control whether a feature will fade or not when zoomed out.
  - new Spring.DeleteProjectile(projID) for silently removing projectiles (no explosion).
 
