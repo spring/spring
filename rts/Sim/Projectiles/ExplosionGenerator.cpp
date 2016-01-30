@@ -49,7 +49,7 @@ CR_BIND_DERIVED(CStdExplosionGenerator, IExplosionGenerator, )
 
 CR_BIND(CCustomExplosionGenerator::ProjectileSpawnInfo, )
 CR_REG_METADATA_SUB(CCustomExplosionGenerator, ProjectileSpawnInfo, (
-	//CR_MEMBER(projectileClass), FIXME is pointer
+	CR_MEMBER(spawnableID),
 	CR_MEMBER(code),
 	CR_MEMBER(count),
 	CR_MEMBER(flags)

@@ -107,9 +107,11 @@ private:
 
 	bool TryTarget(const float3 tgtPos, const SWeaponTarget& trg) const;
 
+	void PostLoad();
 public:
 	CUnit* owner;
 
+	int weaponDefID;
 	const WeaponDef* weaponDef;
 
 	int weaponNum;							// the weapons order among the owner weapons

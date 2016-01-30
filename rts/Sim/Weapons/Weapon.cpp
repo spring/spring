@@ -32,6 +32,8 @@ CR_BIND_DERIVED(CWeapon, CObject, (NULL, NULL))
 
 CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(owner),
+	CR_MEMBER(weaponDefID),
+	CR_IGNORED(weaponDef), //retrieved by id
 	CR_MEMBER(aimFromPiece),
 	CR_MEMBER(muzzlePiece),
 	CR_MEMBER(range),
@@ -61,7 +63,6 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(badTargetCategory),
 	CR_MEMBER(onlyTargetCategory),
 	CR_MEMBER(incomingProjectiles),
-	CR_MEMBER(weaponDef),
 	CR_MEMBER(buildPercent),
 	CR_MEMBER(numStockpiled),
 	CR_MEMBER(numStockpileQued),
@@ -91,7 +92,9 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(errorVectorAdd),
 
 	CR_MEMBER(currentTarget),
-	CR_MEMBER(currentTargetPos)
+	CR_MEMBER(currentTargetPos),
+
+	CR_POSTLOAD(PostLoad)
 ))
 
 
@@ -1249,3 +1252,7 @@ float3 CWeapon::GetLeadTargetPos(const SWeaponTarget& target) const
 	return currentTargetPos;
 }
 
+void CWeapon::PostLoad()
+{
+	weaponDef = weaponDefHandler->GetWeaponDefByID(weaponDefID);
+}

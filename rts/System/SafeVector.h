@@ -13,8 +13,6 @@
 template<class T>
 class safe_vector : public std::vector<T>
 {
-	CR_DECLARE_STRUCT(safe_vector)
-
 public:
 	typedef typename std::vector<T>::size_type size_type;
 
@@ -50,6 +48,23 @@ private:
 
 	mutable bool showError;
 };
+
+
+#ifdef USING_CREG
+
+namespace creg
+{
+	// Vector type (vector<T>)
+	template<typename T>
+	struct DeduceType<safe_vector<T>> {
+		static boost::shared_ptr<IType> Get() {
+			DeduceType<T> elemtype;
+			return boost::shared_ptr<IType>(new DynamicArrayType<safe_vector<T> >(elemtype.Get()));
+		}
+	};
+}
+
+#endif // USING_CREG
 
 #else
 #define safe_vector std::vector

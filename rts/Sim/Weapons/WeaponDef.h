@@ -17,9 +17,6 @@ class LuaTable;
 
 struct WeaponDef
 {
-private:
-	CR_DECLARE_STRUCT(WeaponDef)
-
 public:
 	WeaponDef();
 	WeaponDef(const LuaTable& wdTable, const std::string& name, int id);

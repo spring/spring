@@ -35,7 +35,8 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(builderCAIs),
 	CR_MEMBER(idPool),
 	CR_MEMBER(unitsToBeRemoved),
-	CR_IGNORED(activeSlowUpdateUnit),
+	CR_MEMBER(activeSlowUpdateUnit),
+	CR_MEMBER(activeUpdateUnit),
 	CR_MEMBER(maxUnits),
 	CR_MEMBER(maxUnitRadius),
 	CR_POSTLOAD(PostLoad)

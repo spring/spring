@@ -49,7 +49,7 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(tempNum),
 	CR_MEMBER(lastHitPieceFrame),
 
-	CR_MEMBER(objectDef),
+	CR_IGNORED(objectDef), //set by unit/feature postload
 	CR_MEMBER(moveDef),
 
 	CR_IGNORED(localModel), // TODO

@@ -16,7 +16,7 @@ enum {
 
 struct FeatureDef: public SolidObjectDef
 {
-	CR_DECLARE_STRUCT(FeatureDef)
+	CR_DECLARE(FeatureDef)
 
 	FeatureDef();
 

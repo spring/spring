@@ -16,9 +16,6 @@
 #include "System/myMath.h"
 #include "System/Log/ILog.h"
 
-CR_BIND(WeaponDef, )
-
-
 
 static DefType WeaponDefs("WeaponDefs");
 
