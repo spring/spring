@@ -135,6 +135,8 @@ CLosTables CLosTables::instance;
 void CLosTables::GenerateForLosSize(size_t losSize)
 {
 	boost::upgrade_lock<spring::shared_spinlock> lock(mutex);
+	// guard against insane sight distances
+	assert(losSize < instance.lostables.capacity());
 
 	if (instance.lostables.size() <= losSize) {
 		boost::upgrade_to_unique_lock<spring::shared_spinlock> uniqueLock(lock);
@@ -156,7 +158,7 @@ void CLosTables::GenerateForLosSize(size_t losSize)
 
 CLosTables::CLosTables()
 {
-	lostables.reserve(128);
+	lostables.reserve(256*256);
 	lostables.emplace_back(); // zero radius
 }
 
@@ -692,7 +694,7 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 
 			for (size_t n = 0; n < numSquares; n++) {
 				const int2 square = CLosTables::GetLosTableRaySquare(radius, i, n);
-
+printf("L695 square=<%d,%d>\n", square.x,square.y);
 				if (safeRect.Inside(pos + square)) {
 					CastLos(&maxAng[0], square,                    squaresMap, anglesMap, radius);
 				}
