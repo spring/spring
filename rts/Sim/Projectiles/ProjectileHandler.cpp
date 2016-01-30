@@ -291,9 +291,9 @@ static void UPDATE_PTR_CONTAINER(T& cont) {
 		auto*& p = cont[i];
 
 		if (!p->Update()) {
-			size--;
 			delete p;
-			p = cont.back();
+			p = cont[size - 1];
+			size -= 1;
 			continue;
 		}
 
@@ -321,8 +321,8 @@ static void UPDATE_REF_CONTAINER(T& cont) {
 		auto& p = cont[i];
 
 		if (!p.Update()) {
-			p = std::move(cont.back());
-			size--;
+			p = std::move(cont[size - 1]);
+			size -= 1;
 			continue;
 		}
 
