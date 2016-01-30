@@ -7,7 +7,7 @@
 #include <vector>
 #include "System/creg/creg_cond.h"
 
-struct float3;
+class float3;
 
 class DamageArray
 {
