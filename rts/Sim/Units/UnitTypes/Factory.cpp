@@ -34,7 +34,6 @@ CR_REG_METADATA(CFactory, (
 	CR_MEMBER(lastBuildUpdateFrame),
 	CR_MEMBER(curBuildDef),
 	CR_MEMBER(curBuild),
-	//CR_MEMBER(finishedBuildFunc), FIXME is pointer
 	CR_MEMBER(finishedBuildCommand),
 	CR_MEMBER(nanoPieceCache),
 	CR_POSTLOAD(PostLoad)
@@ -49,8 +48,7 @@ CFactory::CFactory():
 	curBuildDef(NULL),
 	curBuild(NULL),
 	nextBuildUnitDefID(-1),
-	lastBuildUpdateFrame(-1),
-	finishedBuildFunc(NULL)
+	lastBuildUpdateFrame(-1)
 {
 }
 
@@ -262,8 +260,8 @@ void CFactory::FinishBuild(CUnit* buildee) {
 	}
 
 	// inform our commandAI
-	finishedBuildFunc(this, finishedBuildCommand);
-	finishedBuildFunc = NULL;
+	CFactoryCAI* factoryCAI = static_cast<CFactoryCAI*>(commandAI);
+	factoryCAI->FactoryFinishBuild(finishedBuildCommand);
 
 	eventHandler.UnitFromFactory(buildee, this, !buildeeIdle);
 	StopBuild();
@@ -271,13 +269,11 @@ void CFactory::FinishBuild(CUnit* buildee) {
 
 
 
-unsigned int CFactory::QueueBuild(const UnitDef* buildeeDef, const Command& buildCmd, FinishBuildCallBackFunc buildFunc)
+unsigned int CFactory::QueueBuild(const UnitDef* buildeeDef, const Command& buildCmd)
 {
 	assert(!beingBuilt);
 	assert(buildeeDef != NULL);
 
-	if (finishedBuildFunc != NULL)
-		return FACTORY_KEEP_BUILD_ORDER;
 	if (curBuild != NULL)
 		return FACTORY_KEEP_BUILD_ORDER;
 	if (unitHandler->unitsByDefs[team][buildeeDef->id].size() >= buildeeDef->maxThisUnit)
@@ -287,7 +283,6 @@ unsigned int CFactory::QueueBuild(const UnitDef* buildeeDef, const Command& buil
 	if (!eventHandler.AllowUnitCreation(buildeeDef, this, NULL))
 		return FACTORY_SKIP_BUILD_ORDER;
 
-	finishedBuildFunc = buildFunc;
 	finishedBuildCommand = buildCmd;
 	curBuildDef = buildeeDef;
 	nextBuildUnitDefID = buildeeDef->id;
@@ -311,7 +306,6 @@ void CFactory::StopBuild()
 
 	curBuild = NULL;
 	curBuildDef = NULL;
-	finishedBuildFunc = NULL;
 }
 
 void CFactory::DependentDied(CObject* o)

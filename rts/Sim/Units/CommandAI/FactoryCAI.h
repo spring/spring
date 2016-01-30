@@ -37,7 +37,8 @@ public:
 	void InsertBuildCommand(CCommandQueue::iterator& it, const Command& c);
 	bool RemoveBuildCommand(CCommandQueue::iterator& it);
 
-	void DecreaseQueueCount(const Command& c, BuildOption& buildOption, bool);
+	void DecreaseQueueCount(const Command& c, BuildOption& buildOption);
+	void FactoryFinishBuild(const Command& command);
 	void ExecuteStop(Command& c);
 
 	CCommandQueue newUnitCommands;
