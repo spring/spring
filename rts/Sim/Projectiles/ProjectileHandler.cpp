@@ -283,25 +283,28 @@ static void UPDATE_PTR_CONTAINER(T& cont) {
 		return;
 
 #ifndef NDEBUG
-	const auto* origStart = &cont[0];
+	const size_t origSize = cont.size();
 #endif
+	size_t size = cont.size();
 
-	for (auto pti = cont.begin(); pti != cont.end(); /*no-op*/) {
-		auto* p = *pti;
+	for (unsigned int i = 0; i < size; /*no-op*/) {
+		auto*& p = cont[i];
 
 		if (!p->Update()) {
-			*pti = cont.back();
-			cont.pop_back();
+			size--;
 			delete p;
+			p = cont.back();
 			continue;
 		}
 
-		++pti;
+		++i;
 	}
 
 	//WARNING: check if the vector got enlarged while iterating, in that case
-	// all iterators got invalidated in the loop, causing crashes
-	assert(cont.empty() || &cont[0] == origStart);
+	// we didn't update the newest items
+	assert(cont.size() == origSize);
+
+	cont.erase(cont.begin() + size, cont.end());
 }
 
 template<class T>
@@ -310,22 +313,27 @@ static void UPDATE_REF_CONTAINER(T& cont) {
 		return;
 
 #ifndef NDEBUG
-	const auto* origStart = &cont[0];
+	const size_t origSize = cont.size();
 #endif
+	size_t size = cont.size();
 
-	for (auto pti = cont.begin(); pti != cont.end(); /*no-op*/) {
-		auto& p = *pti;
+	for (unsigned int i = 0; i < size; /*no-op*/) {
+		auto& p = cont[i];
 
 		if (!p.Update()) {
-			*pti = std::move(cont.back());
-			cont.pop_back();
+			p = std::move(cont.back());
+			size--;
 			continue;
 		}
 
-		++pti;
+		++i;
 	}
 
-	assert(cont.empty() || &cont[0] == origStart);
+	//WARNING: check if the vector got enlarged while iterating, in that case
+	// we didn't update the newest items
+	assert(cont.size() == origSize);
+
+	cont.erase(cont.begin() + size, cont.end());
 }
 
 
