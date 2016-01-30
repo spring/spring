@@ -101,7 +101,7 @@ int CTextureAtlas::AddTexFromFile(std::string name, std::string file)
 		throw content_error("Unsupported bitmap format in file " + file);
 	}
 
-	const int ret = AddTexFromMem(name, bitmap.xsize, bitmap.ysize, RGBA32, bitmap.mem);
+	const int ret = AddTexFromMem(name, bitmap.xsize, bitmap.ysize, RGBA32, &bitmap.mem[0]);
 	if (ret == 1) {
 		files[lcFile] = memtextures.back();
 	}

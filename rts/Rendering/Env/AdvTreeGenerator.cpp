@@ -85,7 +85,7 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 	glBindTexture(GL_TEXTURE_2D, leafTex);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bm.xsize, bm.ysize, GL_RGBA, GL_UNSIGNED_BYTE, bm.mem);
+	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bm.xsize, bm.ysize, GL_RGBA, GL_UNSIGNED_BYTE, &bm.mem[0]);
 
 	CreateLeafTex(leafTex, 256, 0, tree);
 	CreateLeafTex(leafTex, 512, 0, tree);

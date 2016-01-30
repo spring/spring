@@ -867,9 +867,9 @@ unsigned char* CSMFReadMap::GetInfoMap(const std::string& name, MapBitmapInfo* b
 		throw content_error("[CSMFReadMap::GetInfoMap] cannot load: " + texName);
 	}
 
-	if (infomapBM.mem) {
+	if (!infomapBM.mem.empty()) {
 		if (infomapBM.xsize == bmInfo->width && infomapBM.ysize == bmInfo->height) {
-			memcpy( data, infomapBM.mem, bmInfo->width * bmInfo->height);
+			memcpy( data, &infomapBM.mem[0], bmInfo->width * bmInfo->height);
 			return data;
 		}
 		sprintf(failMsg, "[CSMFReadMap::GetInfoMap] Invalid image dimensions: %s %ix%i != %ix%i",

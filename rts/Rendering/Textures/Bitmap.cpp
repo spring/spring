@@ -71,8 +71,7 @@ struct InitializeOpenIL {
 
 
 CBitmap::CBitmap()
-	: mem(NULL)
-	, xsize(0)
+	: xsize(0)
 	, ysize(0)
 	, channels(4)
 	, compressed(false)
@@ -86,7 +85,6 @@ CBitmap::CBitmap()
 
 CBitmap::~CBitmap()
 {
-	delete[] mem;
 #ifndef BITMAP_NO_OPENGL
 	delete ddsimage;
 #endif // !BITMAP_NO_OPENGL
@@ -94,7 +92,7 @@ CBitmap::~CBitmap()
 
 
 CBitmap::CBitmap(const CBitmap& old)
-	: mem(NULL)
+	: mem(old.mem)
 	, xsize(old.xsize)
 	, ysize(old.ysize)
 	, channels(old.channels)
@@ -105,10 +103,6 @@ CBitmap::CBitmap(const CBitmap& old)
 #endif // !BITMAP_NO_OPENGL
 {
 	assert(!old.compressed);
-
-	const int size = xsize*ysize * channels;
-	mem = new unsigned char[size];
-	memcpy(mem, old.mem, size);
 }
 
 
@@ -127,8 +121,7 @@ CBitmap::CBitmap(CBitmap&& bm)
 
 
 CBitmap::CBitmap(const unsigned char* data, int _xsize, int _ysize, int _channels)
-	: mem(NULL)
-	, xsize(_xsize)
+	: xsize(_xsize)
 	, ysize(_ysize)
 	, channels(_channels)
 	, compressed(false)
@@ -138,8 +131,7 @@ CBitmap::CBitmap(const unsigned char* data, int _xsize, int _ysize, int _channel
 #endif
 {
 	const int size = xsize*ysize * channels;
-	mem = new unsigned char[size];
-	memcpy(mem, data, size);
+	mem.insert(mem.begin(), data, data + size);
 }
 
 
@@ -151,10 +143,7 @@ CBitmap& CBitmap::operator=(const CBitmap& bm)
 		channels = bm.channels;
 		compressed = bm.compressed;
 
-		const int size = xsize*ysize * channels;
-		delete[] mem;
-		mem = new unsigned char[size];
-		memcpy(mem, bm.mem, size);
+		mem = bm.mem;
 
 #ifndef BITMAP_NO_OPENGL
 		textype = bm.textype;
@@ -178,9 +167,7 @@ CBitmap& CBitmap::operator=(CBitmap&& bm)
 	ysize = bm.ysize;
 	channels = bm.channels;
 	compressed = bm.compressed;
-	delete[] mem;
 	mem = bm.mem;
-	bm.mem = NULL;
 
 #ifndef BITMAP_NO_OPENGL
 	textype = bm.textype;
@@ -194,16 +181,14 @@ CBitmap& CBitmap::operator=(CBitmap&& bm)
 
 void CBitmap::Alloc(int w, int h, int c)
 {
-	delete[] mem;
-
 	xsize = w;
 	ysize = h;
 	channels = c;
 
 	const int size = w * h * c;
 
-	mem = new unsigned char[size];
-	memset(mem, 0, size);
+	mem.resize(size, 0);
+	mem.shrink_to_fit();
 }
 
 void CBitmap::Alloc(int w, int h)
@@ -214,8 +199,8 @@ void CBitmap::Alloc(int w, int h)
 void CBitmap::AllocDummy(const SColor fill)
 {
 	compressed = false;
-	Alloc(1, 1, 4);
-	reinterpret_cast<SColor*>(mem)[0] = fill;
+	Alloc(1, 1, sizeof(SColor));
+	reinterpret_cast<SColor*>(&mem[0])[0] = fill;
 }
 
 bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
@@ -226,8 +211,7 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 
 	bool noAlpha = true;
 
-	delete[] mem;
-	mem = NULL;
+	mem.clear();
 
 #ifndef BITMAP_NO_OPENGL
 	textype = GL_TEXTURE_2D;
@@ -321,9 +305,10 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 	xsize = ilGetInteger(IL_IMAGE_WIDTH);
 	ysize = ilGetInteger(IL_IMAGE_HEIGHT);
 
-	mem = new unsigned char[xsize * ysize * 4];
+	mem.clear();
 	//ilCopyPixels(0, 0, 0, xsize, ysize, 0, IL_RGBA, IL_UNSIGNED_BYTE, mem);
-	memcpy(mem, ilGetData(), xsize * ysize * 4);
+	const unsigned char* data = ilGetData();
+	mem.insert(mem.begin(), data, data + xsize * ysize * 4);
 
 	ilDeleteImages(1, &ImageName);
 
@@ -372,10 +357,9 @@ bool CBitmap::LoadGrayscale(const std::string& filename)
 	xsize = ilGetInteger(IL_IMAGE_WIDTH);
 	ysize = ilGetInteger(IL_IMAGE_HEIGHT);
 
-	delete[] mem;
-	mem = NULL; // to prevent a dead-pointer in case of an out-of-memory exception on the next line
-	mem = new unsigned char[xsize * ysize];
-	memcpy(mem, ilGetData(), xsize * ysize);
+	mem.clear();
+	const unsigned char* data = ilGetData();
+	mem.insert(mem.begin(), data, data + xsize * ysize);
 
 	ilDeleteImages(1, &ImageName);
 
@@ -393,9 +377,8 @@ bool CBitmap::Save(std::string const& filename, bool opaque) const
 #endif // !BITMAP_NO_OPENGL
 	}
 
-	if (!mem || channels != 4) {
+	if (mem.empty() || channels != 4)
 		return false;
-	}
 
 	std::unique_ptr<unsigned char[]> buf(new unsigned char[xsize * ysize * 4]);
 	const int ymax = (ysize - 1);
@@ -438,13 +421,12 @@ bool CBitmap::Save(std::string const& filename, bool opaque) const
 bool CBitmap::SaveFloat(std::string const& filename) const
 {
 	// small hack: we read the RGBA pack as a single FLT32 value!
-	if (!mem || channels != 4) {
+	if (mem.empty() || channels != 4)
 		return false;
-	}
 
 	// seems IL_ORIGIN_SET only works in ilLoad and not in ilTexImage nor in ilSaveImage
 	// so we need to flip the image ourself
-	const float* memf = reinterpret_cast<const float*>(mem);
+	const float* memf = reinterpret_cast<const float*>(&mem[0]);
 	typedef unsigned short uint16;
 	std::unique_ptr<uint16[]> buf(new uint16[xsize * ysize]);
 	const int ymax = (ysize - 1);
@@ -480,13 +462,11 @@ bool CBitmap::SaveFloat(std::string const& filename) const
 #ifndef BITMAP_NO_OPENGL
 const unsigned int CBitmap::CreateTexture(bool mipmaps) const
 {
-	if (compressed) {
+	if (compressed)
 		return CreateDDSTexture(0, mipmaps);
-	}
 
-	if (mem == NULL) {
+	if (mem.empty())
 		return 0;
-	}
 
 	// jcnossen: Some drivers return "2.0" as a version string,
 	// but switch to software rendering for non-power-of-two textures.
@@ -511,13 +491,13 @@ const unsigned int CBitmap::CreateTexture(bool mipmaps) const
 	if (mipmaps) {
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
 
-		glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, mem);
+		glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, &mem[0]);
 	} else {
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-		//glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,xsize, ysize, 0,GL_RGBA, GL_UNSIGNED_BYTE, mem);
-		//gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, mem);
+		//glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,xsize, ysize, 0,GL_RGBA, GL_UNSIGNED_BYTE, &mem[0]);
+		//gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, &mem[0]);
 
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, xsize, ysize, 0, GL_RGBA, GL_UNSIGNED_BYTE, mem);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, xsize, ysize, 0, GL_RGBA, GL_UNSIGNED_BYTE, &mem[0]);
 	}
 
 	return texture;
@@ -645,7 +625,7 @@ void CBitmap::SetTransparent(const SColor& c, const SColor trans)
 
 	static const uint32_t RGB = 0x00FFFFFF;
 
-	uint32_t* mem_i = reinterpret_cast<uint32_t*>(mem);
+	uint32_t* mem_i = reinterpret_cast<uint32_t*>(&mem[0]);
 	for (int y = 0; y < ysize; ++y) {
 		for (int x = 0; x < xsize; ++x) {
 			if ((*mem_i & RGB) == (c.i & RGB))
@@ -733,7 +713,7 @@ void CBitmap::Blur(int iterations, float weight)
 		for_mt(0, ysize, [&](const int y) {
 			for (int x=0; x < xsize; x++) {
 				for (int j=0; j < channels; j++) {
-					kernelBlur(dst, src->mem, x, y, j, weight);
+					kernelBlur(dst, &src->mem[0], x, y, j, weight);
 				}
 			}
 		});
@@ -766,7 +746,7 @@ void CBitmap::CopySubImage(const CBitmap& src, int xpos, int ypos)
 		const int pixelSrc = ((y * src.xsize) + 0 ) * channels;
 
 		// copy the whole line
-		memcpy(mem + pixelDst, src.mem + pixelSrc, channels * src.xsize);
+		std::copy(&src.mem[pixelSrc], &src.mem[pixelSrc] + channels * src.xsize, &mem[pixelDst]);
 	}
 }
 
@@ -792,28 +772,23 @@ CBitmap CBitmap::CanvasResize(const int newx, const int newy, const bool center)
 }
 
 
-SDL_Surface* CBitmap::CreateSDLSurface(bool newPixelData) const
+SDL_Surface* CBitmap::CreateSDLSurface() const
 {
-	SDL_Surface* surface = NULL;
+	SDL_Surface* surface = nullptr;
 
 	if (channels < 3) {
 		LOG_L(L_WARNING, "CBitmap::CreateSDLSurface works only with 24bit RGB and 32bit RGBA pictures!");
 		return surface;
 	}
 
-	unsigned char* surfData = NULL;
-	if (newPixelData) {
-		// copy pixel data
-		surfData = new unsigned char[xsize * ysize * channels];
-		memcpy(surfData, mem, xsize * ysize * channels);
-	} else {
-		surfData = mem;
-	}
+	unsigned char* surfData = new unsigned char[xsize * ysize * channels];
+	memcpy(surfData, &mem[0], xsize * ysize * channels);
+
 
 	// This will only work with 24bit RGB and 32bit RGBA pictures
 	surface = SDL_CreateRGBSurfaceFrom(surfData, xsize, ysize, 8 * channels, xsize * channels, 0x000000FF, 0x0000FF00, 0x00FF0000, (channels == 4) ? 0xFF000000 : 0);
-	if ((surface == NULL) && newPixelData) {
-		// cleanup when we failed to the create surface
+	if (surface == nullptr) {
+		LOG_L(L_WARNING, "CBitmap::CreateSDLSurface Failed!");
 		delete[] surfData;
 	}
 
@@ -970,9 +945,9 @@ void CBitmap::ReverseYAxis()
 		const int pixelHigh = (((ysize - 1 - y) * xsize) + 0) * channels;
 
 		// copy the whole line
-		memcpy(tmpLine,         mem + pixelHigh, channels * xsize);
-		memcpy(mem + pixelHigh, mem + pixelLow,  channels * xsize);
-		memcpy(mem + pixelLow,  tmpLine,         channels * xsize);
+		std::copy(mem.begin() + pixelHigh, mem.begin() + pixelHigh + channels * xsize, tmpLine);
+		std::copy(mem.begin() + pixelLow,  mem.begin() + pixelLow + channels * xsize, mem.begin() + pixelHigh);
+		std::copy(tmpLine, tmpLine + channels * xsize, mem.begin() + pixelLow);
 	}
 	delete[] tmpLine;
 }

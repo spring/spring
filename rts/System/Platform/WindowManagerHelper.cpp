@@ -21,7 +21,7 @@ void SetIcon(const CBitmap* icon) {
 
 	if (icon != NULL) {
 		// 24bit RGB or 32bit RGBA
-		if (((icon->channels != 3) && (icon->channels != 4)) 
+		if (((icon->channels != 3) && (icon->channels != 4))
 //#ifdef    WIN32
 			// on windows, the icon has to be 32x32
 			|| (icon->xsize != 32)
@@ -32,7 +32,7 @@ void SetIcon(const CBitmap* icon) {
 			LOG_L(L_WARNING, "window-manager icon: It has to be 24bit or 32bit, and on windows it additionally has to be 32x32 pixels.");
 		} else {
 			// supplied bitmap is usable as icon
-			SDL_Surface* newIcon = icon->CreateSDLSurface(true);
+			SDL_Surface* newIcon = icon->CreateSDLSurface();
 			if (newIcon == NULL) {
 				LOG_L(L_WARNING, "window-manager icon: Failed to create SDL surface, reason: %s", SDL_GetError());
 			} else {

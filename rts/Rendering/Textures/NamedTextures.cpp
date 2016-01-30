@@ -174,7 +174,7 @@ namespace CNamedTextures {
 
 				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
 							bitmap.xsize, bitmap.ysize, border ? 1 : 0,
-							GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
+							GL_RGBA, GL_UNSIGNED_BYTE, &bitmap.mem[0]);
 			} else {
 				//! MIPMAPPING (default)
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -184,11 +184,11 @@ namespace CNamedTextures {
 					GLEW_ARB_texture_non_power_of_two)
 				{
 					glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize,
-								GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
+								GL_RGBA, GL_UNSIGNED_BYTE, &bitmap.mem[0]);
 				} else {
 					//! glu auto resizes to next POT
 					gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize,
-									GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
+									GL_RGBA, GL_UNSIGNED_BYTE, &bitmap.mem[0]);
 				}
 			}
 

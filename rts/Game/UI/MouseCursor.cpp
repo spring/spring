@@ -225,10 +225,10 @@ bool CMouseCursor::LoadCursorImage(const string& name, ImageData& image)
 	if (hwCursor->NeedsYFlip()) {
 		//WINDOWS
 		b.ReverseYAxis();
-		hwCursor->PushImage(b.xsize,b.ysize,b.mem);
+		hwCursor->PushImage(b.xsize,b.ysize,&b.mem[0]);
 	}else{
 		//X11
-		hwCursor->PushImage(b.xsize,b.ysize,b.mem);
+		hwCursor->PushImage(b.xsize,b.ysize,&b.mem[0]);
 		b.ReverseYAxis();
 	}
 

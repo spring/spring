@@ -664,10 +664,12 @@ void CFontTexture::UpdateTexture()
 	// merge shadowing
 	if (atlasUpdateShadow) {
 		atlasUpdateShadow->Blur(outlineSize, outlineWeight);
-		assert((atlasUpdate->xsize * atlasUpdate->ysize) % 4 == 0);
-		auto src = reinterpret_cast<int*>(atlasUpdateShadow->mem);
-		auto dst = reinterpret_cast<int*>(atlasUpdate->mem);
-		auto size = (atlasUpdate->xsize * atlasUpdate->ysize) / 4;
+		assert((atlasUpdate->xsize * atlasUpdate->ysize) % sizeof(int) == 0);
+		auto src = reinterpret_cast<int*>(&atlasUpdateShadow->mem[0]);
+		auto dst = reinterpret_cast<int*>(&atlasUpdate->mem[0]);
+		auto size = (atlasUpdate->xsize * atlasUpdate->ysize) / sizeof(int);
+		assert (atlasUpdateShadow->mem.size() / sizeof(int) == size);
+		assert (atlasUpdate->mem.size() / sizeof(int) == size);
 		for (int i=0; i<size; ++i) {
 			dst[i] |= src[i];
 		}
@@ -679,7 +681,7 @@ void CFontTexture::UpdateTexture()
 	glPushAttrib(GL_PIXEL_MODE_BIT | GL_TEXTURE_BIT);
 		// update texture atlas
 		glBindTexture(GL_TEXTURE_2D, texture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, texWidth, texHeight, 0, GL_ALPHA, GL_UNSIGNED_BYTE, atlasUpdate->mem);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, texWidth, texHeight, 0, GL_ALPHA, GL_UNSIGNED_BYTE, &atlasUpdate->mem[0]);
 
 		// update texture space dlist (this affects already compiled dlists too!)
 		glNewList(textureSpaceMatrix, GL_COMPILE);

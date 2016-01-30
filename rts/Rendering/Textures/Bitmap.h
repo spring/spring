@@ -4,6 +4,7 @@
 #define _BITMAP_H
 
 #include <string>
+#include <vector>
 #ifndef BITMAP_NO_OPENGL
 	#include "nv_dds.h"
 #endif // !BITMAP_NO_OPENGL
@@ -61,9 +62,9 @@ public:
 	 * - You have to free the surface with SDL_FreeSurface(surface)
 	 *   if you do not need it anymore!
 	 */
-	SDL_Surface* CreateSDLSurface(bool newPixelData = false) const;
+	SDL_Surface* CreateSDLSurface() const;
 
-	unsigned char* mem;
+	std::vector<unsigned char> mem;
 	int xsize;
 	int ysize;
 	int channels;

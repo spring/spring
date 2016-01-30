@@ -68,7 +68,7 @@ CColorMap::CColorMap(const std::string& fileName)
 	nxsize = xsize - 1;
 	nysize = ysize - 1;
 
-	LoadMap(bitmap.mem, xsize * ysize * 4);
+	LoadMap(&bitmap.mem[0], xsize * ysize * 4);
 }
 
 CColorMap::CColorMap(const unsigned char* buf, int num)
