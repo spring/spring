@@ -1731,68 +1731,25 @@ void CLuaHandle::RunDrawCallIn(const LuaHashString& hs)
 	LuaOpenGL::SetDrawingEnabled(L, false);
 }
 
-
-void CLuaHandle::DrawGenesis()
-{
-	static const LuaHashString cmdStr(__FUNCTION__);
-	RunDrawCallIn(cmdStr);
-}
-
-void CLuaHandle::DrawWorld()
-{
-	static const LuaHashString cmdStr(__FUNCTION__);
-	RunDrawCallIn(cmdStr);
-}
-
-void CLuaHandle::DrawWorldPreUnit()
-{
-	static const LuaHashString cmdStr(__FUNCTION__);
-	RunDrawCallIn(cmdStr);
-}
-
-void CLuaHandle::DrawWorldShadow()
-{
-	static const LuaHashString cmdStr(__FUNCTION__);
-	RunDrawCallIn(cmdStr);
-}
-
-void CLuaHandle::DrawWorldReflection()
-{
-	static const LuaHashString cmdStr(__FUNCTION__);
-	RunDrawCallIn(cmdStr);
-}
-
-void CLuaHandle::DrawWorldRefraction()
-{
-	static const LuaHashString cmdStr(__FUNCTION__);
-	RunDrawCallIn(cmdStr);
+#define DRAW_CALLIN(name)                     \
+void CLuaHandle::name()                       \
+{                                             \
+	static const LuaHashString cmdStr(#name); \
+	RunDrawCallIn(cmdStr);                    \
 }
 
 
-void CLuaHandle::DrawGroundPreForward()
-{
-	static const LuaHashString cmdStr(__FUNCTION__); RunDrawCallIn(cmdStr);
-}
-
-void CLuaHandle::DrawGroundPreDeferred()
-{
-	static const LuaHashString cmdStr(__FUNCTION__); RunDrawCallIn(cmdStr);
-}
-
-void CLuaHandle::DrawGroundPostDeferred()
-{
-	static const LuaHashString cmdStr(__FUNCTION__); RunDrawCallIn(cmdStr);
-}
-
-void CLuaHandle::DrawUnitsPostDeferred()
-{
-	static const LuaHashString cmdStr(__FUNCTION__); RunDrawCallIn(cmdStr);
-}
-
-void CLuaHandle::DrawFeaturesPostDeferred()
-{
-	static const LuaHashString cmdStr(__FUNCTION__); RunDrawCallIn(cmdStr);
-}
+DRAW_CALLIN(DrawGenesis)
+DRAW_CALLIN(DrawWorld)
+DRAW_CALLIN(DrawWorldPreUnit)
+DRAW_CALLIN(DrawWorldShadow)
+DRAW_CALLIN(DrawWorldReflection)
+DRAW_CALLIN(DrawWorldRefraction)
+DRAW_CALLIN(DrawGroundPreForward)
+DRAW_CALLIN(DrawGroundPreDeferred)
+DRAW_CALLIN(DrawGroundPostDeferred)
+DRAW_CALLIN(DrawUnitsPostDeferred)
+DRAW_CALLIN(DrawFeaturesPostDeferred)
 
 
 void CLuaHandle::DrawScreen()
