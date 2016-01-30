@@ -1626,24 +1626,23 @@ float CGuiHandler::GetNumberInput(const CommandDescription& cd) const
 // LuaUnsyncedRead::GetDefaultCommand --> GetDefaultCommand
 int CGuiHandler::GetDefaultCommand(int x, int y, const float3& cameraPos, const float3& mouseDir) const
 {
-	CInputReceiver* ir = NULL;
-	if (!game->hideInterface) {
-		ir = GetReceiverAt(x, y);
-	}
+	CInputReceiver* ir = nullptr;
 
-	if ((ir != NULL) && (ir != minimap)) {
+	if (!game->hideInterface)
+		ir = GetReceiverAt(x, y);
+
+	if ((ir != nullptr) && (ir != minimap))
 		return -1;
-	}
 
 	int cmdID = -1;
 
 	{
 		const CUnit* unit = nullptr;
 		const CFeature* feature = nullptr;
+
 		if ((ir == minimap) && (minimap->FullProxy())) {
 			unit = minimap->GetSelectUnit(minimap->GetMapPosition(x, y));
-		}
-		else {
+		} else {
 			const float viewRange = globalRendering->viewRange * 1.4f;
 			const float dist = TraceRay::GuiTraceRay(cameraPos, mouseDir, viewRange, NULL, unit, feature, true);
 			const float3 hit = cameraPos + mouseDir * dist;
