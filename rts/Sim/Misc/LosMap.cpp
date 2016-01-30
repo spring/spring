@@ -694,7 +694,7 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 
 			for (size_t n = 0; n < numSquares; n++) {
 				const int2 square = CLosTables::GetLosTableRaySquare(radius, i, n);
-printf("L695 square=<%d,%d>\n", square.x,square.y);
+
 				if (safeRect.Inside(pos + square)) {
 					CastLos(&maxAng[0], square,                    squaresMap, anglesMap, radius);
 				}
