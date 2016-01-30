@@ -168,7 +168,7 @@ void CUnsyncedLuaHandle::RecvFromSynced(lua_State* srcState, int args)
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 2 + args, __FUNCTION__);
 
-	static const LuaHashString cmdStr("RecvFromSynced");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return; // the call is not defined
 
@@ -184,7 +184,7 @@ bool CUnsyncedLuaHandle::DrawUnit(const CUnit* unit)
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 4, __FUNCTION__);
 
-	static const LuaHashString cmdStr("DrawUnit");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return false;
 
@@ -211,7 +211,7 @@ bool CUnsyncedLuaHandle::DrawFeature(const CFeature* feature)
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 4, __FUNCTION__);
 
-	static const LuaHashString cmdStr("DrawFeature");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return false;
 
@@ -238,7 +238,7 @@ bool CUnsyncedLuaHandle::DrawShield(const CUnit* unit, const CWeapon* weapon)
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 5, __FUNCTION__);
 
-	static const LuaHashString cmdStr("DrawShield");
+	static const LuaHashString cmdStr(__FUNCTION__);
 
 	if (!cmdStr.GetGlobalFunc(L))
 		return false;
@@ -270,7 +270,7 @@ bool CUnsyncedLuaHandle::DrawProjectile(const CProjectile* projectile)
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 5, __FUNCTION__);
 
-	static const LuaHashString cmdStr("DrawProjectile");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return false;
 
@@ -488,7 +488,7 @@ bool CSyncedLuaHandle::CommandFallback(const CUnit* unit, const Command& cmd)
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 9, __FUNCTION__);
 
-	static const LuaHashString cmdStr("CommandFallback");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined
 
@@ -509,7 +509,7 @@ bool CSyncedLuaHandle::AllowCommand(const CUnit* unit, const Command& cmd, bool 
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 10, __FUNCTION__);
 
-	static const LuaHashString cmdStr("AllowCommand");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined
 
@@ -534,7 +534,7 @@ bool CSyncedLuaHandle::AllowUnitCreation(const UnitDef* unitDef,
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 9, __FUNCTION__);
 
-	static const LuaHashString cmdStr("AllowUnitCreation");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined
 
@@ -566,7 +566,7 @@ bool CSyncedLuaHandle::AllowUnitTransfer(const CUnit* unit, int newTeam, bool ca
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 7, __FUNCTION__);
 
-	static const LuaHashString cmdStr("AllowUnitTransfer");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined
 
@@ -593,7 +593,7 @@ bool CSyncedLuaHandle::AllowUnitBuildStep(const CUnit* builder,
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 7, __FUNCTION__);
 
-	static const LuaHashString cmdStr("AllowUnitBuildStep");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined
 
@@ -620,7 +620,7 @@ bool CSyncedLuaHandle::AllowFeatureCreation(const FeatureDef* featureDef,
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 7, __FUNCTION__);
 
-	static const LuaHashString cmdStr("AllowFeatureCreation");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined
 
@@ -647,7 +647,7 @@ bool CSyncedLuaHandle::AllowFeatureBuildStep(const CUnit* builder,
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 7, __FUNCTION__);
 
-	static const LuaHashString cmdStr("AllowFeatureBuildStep");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined
 
@@ -673,7 +673,7 @@ bool CSyncedLuaHandle::AllowResourceLevel(int teamID, const string& type, float 
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 5, __FUNCTION__);
 
-	static const LuaHashString cmdStr("AllowResourceLevel");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined
 
@@ -698,7 +698,7 @@ bool CSyncedLuaHandle::AllowResourceTransfer(int oldTeam, int newTeam,
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 6, __FUNCTION__);
 
-	static const LuaHashString cmdStr("AllowResourceTransfer");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined
 
@@ -723,7 +723,7 @@ bool CSyncedLuaHandle::AllowDirectUnitControl(int playerID, const CUnit* unit)
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 6, __FUNCTION__);
 
-	static const LuaHashString cmdStr("AllowDirectUnitControl");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined
 
@@ -748,7 +748,7 @@ bool CSyncedLuaHandle::AllowBuilderHoldFire(const CUnit* unit, int action)
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 2 + 3 + 1, __FUNCTION__);
 
-	static const LuaHashString cmdStr("AllowBuilderHoldFire");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined
 
@@ -772,7 +772,7 @@ bool CSyncedLuaHandle::AllowStartPosition(int playerID, unsigned char readyState
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 13, __FUNCTION__);
 
-	static const LuaHashString cmdStr("AllowStartPosition");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined
 
@@ -802,7 +802,7 @@ bool CSyncedLuaHandle::MoveCtrlNotify(const CUnit* unit, int data)
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 6, __FUNCTION__);
 
-	static const LuaHashString cmdStr("MoveCtrlNotify");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return false; // the call is not defined
 
@@ -831,7 +831,7 @@ bool CSyncedLuaHandle::TerraformComplete(const CUnit* unit, const CUnit* build)
 
 
 
-	static const LuaHashString cmdStr("TerraformComplete");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return false; // the call is not defined
 
@@ -879,7 +879,7 @@ bool CSyncedLuaHandle::UnitPreDamaged(
 	luaL_checkstack(L, 2 + 2 + 10, __FUNCTION__);
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
-	static const LuaHashString cmdStr("UnitPreDamaged");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return false;
 
@@ -948,7 +948,7 @@ bool CSyncedLuaHandle::FeaturePreDamaged(
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 2 + 9 + 2, __FUNCTION__);
 
-	static const LuaHashString cmdStr("FeaturePreDamaged");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	if (!cmdStr.GetGlobalFunc(L))
@@ -1009,7 +1009,7 @@ bool CSyncedLuaHandle::ShieldPreDamaged(
 	luaL_checkstack(L, 2 + 7 + 1, __FUNCTION__);
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
-	static const LuaHashString cmdStr("ShieldPreDamaged");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return false;
 
@@ -1055,7 +1055,7 @@ int CSyncedLuaHandle::AllowWeaponTargetCheck(unsigned int attackerID, unsigned i
 	luaL_checkstack(L, 2 + 3 + 1, __FUNCTION__);
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
-	static const LuaHashString cmdStr("AllowWeaponTargetCheck");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return ret;
 
@@ -1090,7 +1090,7 @@ bool CSyncedLuaHandle::AllowWeaponTarget(
 	luaL_checkstack(L, 2 + 5 + 2, __FUNCTION__);
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
-	static const LuaHashString cmdStr("AllowWeaponTarget");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return ret;
 
@@ -1129,7 +1129,7 @@ bool CSyncedLuaHandle::AllowWeaponInterceptTarget(
 	luaL_checkstack(L, 2 + 3 + 1, __FUNCTION__);
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
-	static const LuaHashString cmdStr("AllowWeaponInterceptTarget");
+	static const LuaHashString cmdStr(__FUNCTION__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return ret;
 
