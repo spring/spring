@@ -35,7 +35,7 @@ public:
 	struct MoveCtrl {
 		CR_DECLARE_STRUCT(MoveCtrl)
 	public:
-		MoveCtrl(): enabled(true) {
+		MoveCtrl(): enabled(false) {
 			movementMask = OnesVector;
 			velocityMask = OnesVector;
 			 impulseMask = OnesVector;
@@ -44,9 +44,9 @@ public:
 		void SetMoveMask(const float3& moveMask) { movementMask = moveMask; }
 
 	public:
-		// if false, feature will not apply any position updates
-		// (but is still considered moving so long as velocity is
-		// non-zero, so it stays in the UQ)
+		// if true, feature will not apply any unwanted position
+		// updates (but is still considered moving so long as its
+		// velocity is non-zero, so it stays in the UQ)
 		bool enabled;
 
 		// dimensions in which feature can move or receive impulse
@@ -54,6 +54,9 @@ public:
 		float3 movementMask;
 		float3 velocityMask;
 		float3 impulseMask;
+
+		float3 velVector;
+		float3 accVector;
 	};
 
 	/**
@@ -79,6 +82,7 @@ public:
 	bool UpdateVelocity(const float3& dragAccel, const float3& gravAccel, const float3& movMask, const float3& velMask);
 	void UpdateTransform() { transMatrix = CMatrix44f(pos, -rightdir, updir, frontdir); }
 	void UpdateTransformAndPhysState();
+	void UpdateQuadFieldPosition(const float3& moveVec);
 
 	void StartFire();
 	void EmitGeoSmoke();

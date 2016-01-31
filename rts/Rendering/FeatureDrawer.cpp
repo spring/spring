@@ -261,7 +261,7 @@ void CFeatureDrawer::Update()
 
 inline void CFeatureDrawer::UpdateDrawPos(CFeature* f)
 {
-	f->drawPos    = f->GetDrawPos(globalRendering->timeOffset * f->moveCtrl.enabled);
+	f->drawPos    = f->GetDrawPos(globalRendering->timeOffset);
 	f->drawMidPos = f->GetDrawMidPos();
 }
 

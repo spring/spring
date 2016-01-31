@@ -54,9 +54,13 @@ CR_BIND(CFeature::MoveCtrl,)
 
 CR_REG_METADATA_SUB(CFeature,MoveCtrl,(
 	CR_MEMBER(enabled),
+
 	CR_MEMBER(movementMask),
 	CR_MEMBER(velocityMask),
-	CR_MEMBER(impulseMask)
+	CR_MEMBER(impulseMask),
+
+	CR_MEMBER(velVector),
+	CR_MEMBER(accVector)
 ))
 
 
@@ -521,6 +525,17 @@ void CFeature::UpdateTransformAndPhysState()
 	UpdatePhysicalState(0.1f);
 }
 
+void CFeature::UpdateQuadFieldPosition(const float3& moveVec)
+{
+	quadField->RemoveFeature(this);
+	UnBlock();
+
+	Move(moveVec, true);
+
+	Block();
+	quadField->AddFeature(this);
+}
+
 
 bool CFeature::UpdateVelocity(
 	const float3& dragAccel,
@@ -559,23 +574,19 @@ bool CFeature::UpdateVelocity(
 
 bool CFeature::UpdatePosition()
 {
-	if (moveCtrl.enabled) {
-		const float3 oldPos = pos;
-		// const float4 oldSpd = speed;
+	const float3 oldPos = pos;
+	// const float4 oldSpd = speed;
 
+	if (moveCtrl.enabled) {
+		// raw movement; not masked or clamped
+		UpdateQuadFieldPosition(moveCtrl.velVector += moveCtrl.accVector);
+	} else {
 		const float3 dragAccel = GetDragAccelerationVec(float4(mapInfo->atmosphere.fluidDensity, mapInfo->water.fluidDensity, 1.0f, 0.1f));
 		const float3 gravAccel = UpVector * mapInfo->map.gravity;
 
-		if (UpdateVelocity(dragAccel, gravAccel, moveCtrl.movementMask, moveCtrl.velocityMask)) {
-			quadField->RemoveFeature(this);
-			UnBlock();
-
-			// horizontal movement
-			Move((speed * XZVector) * moveCtrl.movementMask, true);
-
-			Block();
-			quadField->AddFeature(this);
-		}
+		// horizontal movement
+		if (UpdateVelocity(dragAccel, gravAccel, moveCtrl.movementMask, moveCtrl.velocityMask))
+			UpdateQuadFieldPosition((speed * XZVector) * moveCtrl.movementMask);
 
 		// vertical movement
 		Move((speed * UpVector) * moveCtrl.movementMask, true);
@@ -587,15 +598,17 @@ bool CFeature::UpdatePosition()
 			// ensure that no more horizontal movement is done
 			CWorldObject::SetVelocity((speed * UpVector) * moveCtrl.velocityMask);
 		}
-
-		eventHandler.FeatureMoved(this, oldPos);
 	}
 
 	UpdateTransformAndPhysState(); // updates speed.w and BIT_MOVING
 	Block(); // does the check if wanted itself
 
-	// note the RHS (in case we temporarily stop in mid-air)
-	return (IsMoving() || (!IsOnGround() && moveCtrl.enabled));
+	if (pos != oldPos) {
+		eventHandler.FeatureMoved(this, oldPos);
+		return true;
+	}
+
+	return (moveCtrl.enabled);
 }
 
 
