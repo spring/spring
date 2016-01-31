@@ -3,7 +3,6 @@
 #ifndef UNIT_H
 #define UNIT_H
 
-#include <list>
 #include <vector>
 #include <string>
 
@@ -277,7 +276,7 @@ public:
 	//Transporter stuff
 	int transportCapacityUsed;
 	float transportMassUsed;
-	std::list<TransportedUnit> transportedUnits;
+	std::vector<TransportedUnit> transportedUnits;
 
 	AMoveType* moveType;
 	AMoveType* prevMoveType;
@@ -297,7 +296,7 @@ public:
 	/// quads the unit is part of
 	std::vector<int> quads;
 
-	std::list<CMissileProjectile*> incomingMissiles; //FIXME make std::set?
+	std::vector<CMissileProjectile*> incomingMissiles; //FIXME make std::set?
 
 	float3 deathSpeed;
 	float3 lastMuzzleFlameDir;

@@ -1398,8 +1398,8 @@ bool CMobileCAI::AllowedCommand(const Command& c, bool fromSynced)
 
 			if (c.GetParamsCount() >= 4) {
 				// find unload positions for transportees (WHY can this run in unsynced context?)
-				for (auto it = transportees.begin(); it != transportees.end(); ++it) {
-					CUnit* u = it->unit;
+				for (const CUnit::TransportedUnit& tu: transportees) {
+					const CUnit* u = tu.unit;
 
 					const float radius = (c.GetID() == CMD_UNLOAD_UNITS)? c.GetParam(3): 0.0f;
 					const float spread = u->radius * owner->unitDef->unloadSpread;
@@ -1597,6 +1597,7 @@ bool CMobileCAI::FindEmptyDropSpots(float3 startpos, float3 endpos, std::vector<
 
 	const float maxDist = startpos.SqDistance(endpos);
 	const float3 spreadVector = (endpos - startpos).Normalize() * owner->unitDef->unloadSpread;
+
 	const auto& transportees = owner->transportedUnits;
 	auto ti = transportees.begin();
 
@@ -1628,16 +1629,17 @@ bool CMobileCAI::FindEmptyDropSpots(float3 startpos, float3 endpos, std::vector<
 void CMobileCAI::UnloadUnits_Land(Command& c)
 {
 	const auto& transportees = owner->transportedUnits;
-	CUnit* transportee = NULL;
+	const CUnit* transportee = nullptr;
+
 	float3 unloadPos;
 
-	for (auto it = transportees.begin(); it != transportees.end(); ++it) {
+	for (const CUnit::TransportedUnit& tu: transportees) {
 		const float3 pos = c.GetPos(0);
 		const float radius = c.params[3];
-		const float spread = (it->unit)->radius * owner->unitDef->unloadSpread;
+		const float spread = (tu.unit)->radius * owner->unitDef->unloadSpread;
 
-		if (FindEmptySpot(pos, radius, spread, unloadPos, it->unit)) {
-			transportee = it->unit; break;
+		if (FindEmptySpot(pos, radius, spread, unloadPos, tu.unit)) {
+			transportee = tu.unit; break;
 		}
 	}
 
@@ -1655,11 +1657,16 @@ void CMobileCAI::UnloadUnits_Land(Command& c)
 void CMobileCAI::UnloadUnits_Drop(Command& c)
 {
 	const auto& transportees = owner->transportedUnits;
-	std::vector<float3> dropSpots;
+
 	const float3 startingDropPos = c.GetPos(0);
 	const float3 approachVector = (startingDropPos - owner->pos).Normalize();
-	bool canUnload = FindEmptyDropSpots(startingDropPos, startingDropPos + approachVector * std::max(16.0f, c.params[3]), dropSpots);
+
+	std::vector<float3> dropSpots;
+
+	const bool canUnload = FindEmptyDropSpots(startingDropPos, startingDropPos + approachVector * std::max(16.0f, c.params[3]), dropSpots);
+
 	FinishCommand();
+
 	if (canUnload) {
 		auto ti = transportees.begin();
 		auto di = dropSpots.rbegin();
@@ -1684,10 +1691,12 @@ void CMobileCAI::UnloadUnits_LandFlood(Command& c)
 
 	SetGoal(pos, owner->pos, dist);
 
-	if (pos.SqDistance2D(owner->pos) > dist) {
+	if (pos.SqDistance2D(owner->pos) > dist)
 		return;
-	}
-	const CUnit* transportee = (owner->transportedUnits.front()).unit;
+
+	const auto& transportees = owner->transportedUnits;
+	const CUnit* transportee = transportees[0].unit;
+
 	const float spread = transportee->radius * owner->unitDef->unloadSpread;
 	const bool canUnload = FindEmptySpot(pos, radius, spread, found, transportee);
 
@@ -1715,7 +1724,7 @@ void CMobileCAI::UnloadLand(Command& c)
 
 	if (c.params.size() < 4) {
 		// unload the first transportee
-		transportee = (transportees.front()).unit;
+		transportee = transportees[0].unit;
 	} else {
 		const int unitID = c.params[3];
 
@@ -1800,7 +1809,7 @@ void CMobileCAI::UnloadDrop(Command& c)
 	}
 
 	CHoverAirMoveType* am = dynamic_cast<CHoverAirMoveType*>(owner->moveType);
-	CUnit* transportee = owner->transportedUnits.front().unit;
+	CUnit* transportee = owner->transportedUnits[0].unit;
 
 	if (am != NULL) {
 		pos.y = CGround::GetHeightAboveWater(pos.x, pos.z);
@@ -1835,7 +1844,7 @@ void CMobileCAI::UnloadLandFlood(Command& c)
 	SetGoal(wantedPos, owner->pos);
 
 	if (c.params.size() < 4) {
-		transportee = (transportees.front()).unit;
+		transportee = transportees[0].unit;
 	} else {
 		const int unitID = c.params[3];
 
@@ -1871,7 +1880,7 @@ void CMobileCAI::UnloadLandFlood(Command& c)
 				// nail it to the ground before it tries jumping up, only to land again...
 				am->SetState(am->AIRCRAFT_LANDED);
 				// call this so that other animations such as opening doors may be started
-				owner->script->TransportDrop((transportees.front()).unit, wantedPos);
+				owner->script->TransportDrop(transportees[0].unit, wantedPos);
 				owner->DetachUnitFromAir(transportee, wantedPos);
 
 				FinishCommand();

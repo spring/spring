@@ -575,7 +575,7 @@ void CUnit::ForcedKillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, b
 	isDead = true;
 
 	//release attached units
-	for (TransportedUnit &tu: transportedUnits) {
+	for (TransportedUnit& tu: transportedUnits) {
 		CUnit* transportee = tu.unit;
 		assert(transportee != this);
 
@@ -642,6 +642,7 @@ void CUnit::ForcedKillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, b
 			eventHandler.UnitUnloaded(transportee, this);
 		}
 	}
+
 	transportedUnits.clear();
 
 
@@ -860,7 +861,7 @@ void CUnit::Update()
 	if (isDead)
 		return;
 
-	for (TransportedUnit &tu: transportedUnits) {
+	for (TransportedUnit& tu: transportedUnits) {
 		CUnit* transportee = tu.unit;
 		int piece = tu.piece;
 
@@ -1776,17 +1777,18 @@ void CUnit::SetLastAttacker(CUnit* attacker)
 
 void CUnit::DependentDied(CObject* o)
 {
-	for (auto ti = transportedUnits.begin(); ti != transportedUnits.end(); ++ti) {
-		if (ti->unit != o)
+	for (TransportedUnit& tu: transportedUnits) {
+		if (tu.unit != o)
 			continue;
 
-		const CUnit* unit = ti->unit;
+		const CUnit* unit = tu.unit;
 
 		transportCapacityUsed -= unit->xsize / SPRING_FOOTPRINT_SCALE;
 		transportMassUsed -= unit->mass;
-		mass = Clamp(mass - unit->mass, CSolidObject::MINIMUM_MASS, CSolidObject::MAXIMUM_MASS);
+		SetMass(mass - unit->mass);
 
-		transportedUnits.erase(ti);
+		tu = transportedUnits.back();
+		transportedUnits.pop_back();
 		break;
 	}
 
@@ -1795,7 +1797,7 @@ void CUnit::DependentDied(CObject* o)
 	if (o == transporter)    { transporter  = NULL; }
 	if (o == lastAttacker)   { lastAttacker = NULL; }
 
-	incomingMissiles.remove(static_cast<CMissileProjectile*>(o));
+	VectorErase(incomingMissiles, static_cast<CMissileProjectile*>(o));
 
 	CSolidObject::DependentDied(o);
 }
@@ -2366,7 +2368,7 @@ void CUnit::IncomingMissile(CMissileProjectile* missile)
 	if (!unitDef->canDropFlare)
 		return;
 
-	incomingMissiles.push_back(missile);
+	VectorInsertUnique(incomingMissiles, missile);
 	AddDeathDependence(missile, DEPENDENCE_INCOMING);
 
 	if (lastFlareDrop >= (gs->frameNum - unitDef->flareReloadTime * GAME_SPEED))
@@ -2530,11 +2532,8 @@ bool CUnit::AttachUnit(CUnit* unit, int piece, bool force)
 		// and just want to move it to a different piece
 		// with script logic (this means the UnitLoaded
 		// event is only sent once)
-		std::list<TransportedUnit>::iterator transporteesIt;
-
-		for (transporteesIt = transportedUnits.begin(); transporteesIt != transportedUnits.end(); ++transporteesIt) {
-			TransportedUnit& tu = *transporteesIt;
-
+		//
+		for (TransportedUnit& tu: transportedUnits) {
 			if (tu.unit == unit) {
 				tu.piece = piece;
 				break;
@@ -2594,7 +2593,7 @@ bool CUnit::AttachUnit(CUnit* unit, int piece, bool force)
 
 	transportCapacityUsed += unit->xsize / SPRING_FOOTPRINT_SCALE;
 	transportMassUsed += unit->mass;
-	mass = Clamp(mass + unit->mass, CSolidObject::MINIMUM_MASS, CSolidObject::MAXIMUM_MASS);
+	SetMass(mass + unit->mass);
 
 	transportedUnits.push_back(tu);
 
@@ -2613,10 +2612,8 @@ bool CUnit::DetachUnitCore(CUnit* unit)
 	if (unit->GetTransporter() != this)
 		return false;
 
-	std::list<TransportedUnit>::iterator ti;
-
-	for (ti = transportedUnits.begin(); ti != transportedUnits.end(); ++ti) {
-		if (ti->unit != unit)
+	for (TransportedUnit& tu: transportedUnits) {
+		if (tu.unit != unit)
 			continue;
 
 		this->DeleteDeathDependence(unit, DEPENDENCE_TRANSPORTEE);
@@ -2641,7 +2638,8 @@ bool CUnit::DetachUnitCore(CUnit* unit)
 		transportMassUsed -= unit->mass;
 		mass = Clamp(mass - unit->mass, CSolidObject::MINIMUM_MASS, CSolidObject::MAXIMUM_MASS);
 
-		transportedUnits.erase(ti);
+		tu = transportedUnits.back();
+		transportedUnits.pop_back();
 
 		unit->UpdateVoidState(false);
 		unit->CalculateTerrainType();

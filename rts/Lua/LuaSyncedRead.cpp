@@ -3152,7 +3152,7 @@ int LuaSyncedRead::GetUnitIsTransporting(lua_State* L)
 	lua_newtable(L);
 
 	int count = 1;
-	for (CUnit::TransportedUnit &tu: unit->transportedUnits) {
+	for (const CUnit::TransportedUnit& tu: unit->transportedUnits) {
 		const CUnit* carried = tu.unit;
 		lua_pushnumber(L, carried->id);
 		lua_rawseti(L, -2, count++);
