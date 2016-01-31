@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "NameResolver.h"
+#include "ArchiveNameResolver.h"
 
 #include "Game/GlobalUnsynced.h"
 #include "System/FileSystem/ArchiveScanner.h"
@@ -11,7 +11,7 @@
 #include <iostream>
 #include <boost/cstdint.hpp>
 
-namespace NameResolver {
+namespace ArchiveNameResolver {
 	//////////////////////////////////////////////////////////////////////////////
 //
 //  Helpers
@@ -219,4 +219,4 @@ std::string GetMap(const std::string& lazyName)
 	return lazyName;
 }
 
-} //namespace NameResolver
+} //namespace ArchiveNameResolver

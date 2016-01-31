@@ -2,7 +2,7 @@
 
 #include "StartScriptGen.h"
 
-#include "NameResolver.h"
+#include "ArchiveNameResolver.h"
 #include "AIScriptHandler.h"
 #include "System/TdfParser.h"
 #include "System/Config/ConfigHandler.h"
@@ -24,8 +24,8 @@ std::string CreateMinimalSetup(const std::string& game, const std::string& map)
 	TdfParser::TdfSection setup;
 	TdfParser::TdfSection* g = setup.construct_subsection("GAME");
 
-	g->add_name_value("Mapname", NameResolver::GetMap(map));
-	g->add_name_value("Gametype", NameResolver::GetGame(game));
+	g->add_name_value("Mapname", ArchiveNameResolver::GetMap(map));
+	g->add_name_value("Gametype", ArchiveNameResolver::GetGame(game));
 
 	TdfParser::TdfSection* modopts = g->construct_subsection("MODOPTIONS");
 	modopts->AddPair("MaxSpeed", 20);
