@@ -77,7 +77,8 @@ protected:
 	virtual void UpdateHeightMapUnsynced(const SRectangle&) = 0;
 
 public:
-	CR_DECLARE(CReadMap)
+	//OK since it's loaded with SerializeObjectInstance
+	CR_DECLARE_STRUCT(CReadMap)
 
 	static CReadMap* LoadMap(const std::string& mapname);
 	static inline unsigned char EncodeHeight(const float h) {

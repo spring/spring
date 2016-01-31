@@ -30,9 +30,9 @@ CR_REG_METADATA(LocalModelPiece, (
 	CR_MEMBER(lmodelPieceIndex),
 	CR_MEMBER(scriptPieceIndex),
 	CR_MEMBER(parent),
+	CR_MEMBER(children),
 
 	// reload
-	CR_IGNORED(children),
 	CR_IGNORED(dispListID),
 	CR_IGNORED(original),
 
@@ -42,8 +42,14 @@ CR_REG_METADATA(LocalModelPiece, (
 CR_BIND(LocalModel, )
 CR_REG_METADATA(LocalModel, (
 	CR_IGNORED(dirtyPieces),
+	CR_IGNORED(bvFrameTime),
 	CR_IGNORED(lodCount), //FIXME?
-	CR_MEMBER(pieces)
+	CR_MEMBER(pieces),
+
+	CR_IGNORED(boundingVolume),
+	CR_IGNORED(luaMaterialData),
+	CR_IGNORED(bbMins),
+	CR_IGNORED(bbMaxs)
 ))
 
 

@@ -101,10 +101,12 @@ CQuadField::Quad::Quad()
 
 void CQuadField::Quad::PostLoad()
 {
+#ifndef UNIT_TEST
 	for (CUnit* unit: units)
 	{
 		VectorInsertUnique(teamUnits[unit->allyteam], unit, false);
 	}
+#endif
 }
 
 CQuadField::CQuadField(int2 mapDims, int quad_size)
