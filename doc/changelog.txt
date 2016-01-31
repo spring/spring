@@ -67,7 +67,18 @@ Lua:
  - new Spring.GetUICommands function to obtain a list of all UI commands (e.g. /luaui reload)
  - new VFS.CalculateHash function that calculates hash (in base64 form) of a given string (with md5 support initially)
  - new Spring.{Get,Set}{Unit,Feature}Mass functions
- - new Spring.SetFeatureMoveCtrl(featureID [, args]) to control if and how a feature should be moved by the engine
+ - new Spring.SetFeatureMoveCtrl(featureID [, boolean enable [, number* args]]) to control feature movement
+   the number* arguments are parsed as follows and all optional
+   if enable is true:
+     [, velVector(x,y,z) -- initial velocity for feature
+     [, accVector(x,y,z) -- acceleration added every frame
+     ]]
+   if enable is false:
+     [, velocityMask(x,y,z) -- dimensions in which velocity is allowed to build when not using MoveCtrl
+     [,  impulseMask(x,y,z) -- dimensions in which impulse is allowed to apply when not using MoveCtrl
+     [, movementMask(x,y,z) -- dimensions in which feature is allowed to move when not using MoveCtrl
+     ]]]
+
  - new Spring.SetFeatureFade(featureID, bool) to control whether a feature will fade or not when zoomed out.
  - new Spring.DeleteProjectile(projID) for silently removing projectiles (no explosion).
 

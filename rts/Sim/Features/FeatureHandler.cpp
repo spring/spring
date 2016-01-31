@@ -464,13 +464,12 @@ void CFeatureHandler::Update()
 			*fi = updateFeatures.back();
 			updateFeatures.pop_back();
 		} else {
-
 			if (!feature->Update()) {
 				// feature is done updating itself, remove from queue
 				feature->inUpdateQue = false;
+
 				*fi = updateFeatures.back();
 				updateFeatures.pop_back();
-
 			} else {
 				++fi;
 			}
@@ -486,9 +485,8 @@ void CFeatureHandler::SetFeatureUpdateable(CFeature* feature)
 		return;
 	}
 
-	VectorInsertUnique(updateFeatures, feature);
-
-	feature->inUpdateQue = true;
+	// always true
+	feature->inUpdateQue = VectorInsertUnique(updateFeatures, feature);
 }
 
 

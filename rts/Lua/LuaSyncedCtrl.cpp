@@ -2774,22 +2774,21 @@ int LuaSyncedCtrl::SetFeatureMoveCtrl(lua_State* L)
 
 	CFeature::MoveCtrl& moveCtrl = feature->moveCtrl;
 
-	float3& movementMask = moveCtrl.movementMask;
-	float3& velocityMask = moveCtrl.velocityMask;
-	float3&  impulseMask = moveCtrl.impulseMask;
+	if ((moveCtrl.enabled = luaL_optboolean(L, 2, moveCtrl.enabled))) {
+		featureHandler->SetFeatureUpdateable(feature);
 
-	float3& velVector = moveCtrl.velVector;
-	float3& accVector = moveCtrl.accVector;
-
-	moveCtrl.enabled = luaL_optboolean(L, 2, moveCtrl.enabled);
-
-	for (int i = 0; i < 3; i++) {
-		velocityMask[i] = (luaL_optfloat(L, 3 + i, velocityMask[i]) != 0.0f);
-		 impulseMask[i] = (luaL_optfloat(L, 6 + i,  impulseMask[i]) != 0.0f);
-		movementMask[i] = (luaL_optfloat(L, 9 + i, movementMask[i]) != 0.0f);
-
-		velVector[i] = luaL_optfloat(L, 12 + i, velVector[i]);
-		accVector[i] = luaL_optfloat(L, 15 + i, accVector[i]);
+		// set vectors
+		for (int i = 0; i < 3; i++) {
+			moveCtrl.velVector[i] = luaL_optfloat(L, 3 + i, moveCtrl.velVector[i]);
+			moveCtrl.accVector[i] = luaL_optfloat(L, 6 + i, moveCtrl.accVector[i]);
+		}
+	} else {
+		// set masks
+		for (int i = 0; i < 3; i++) {
+			moveCtrl.velocityMask[i] = (luaL_optfloat(L, 3 + i, moveCtrl.velocityMask[i]) != 0.0f);
+			moveCtrl. impulseMask[i] = (luaL_optfloat(L, 6 + i, moveCtrl. impulseMask[i]) != 0.0f);
+			moveCtrl.movementMask[i] = (luaL_optfloat(L, 9 + i, moveCtrl.movementMask[i]) != 0.0f);
+		}
 	}
 
 	return 0;
