@@ -29,6 +29,7 @@ MakeGlobalVar(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/Matrix44f.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/RectangleOptimizer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/SpringTime.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/NameResolver.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Object.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/OffscreenGLContext.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Option.cpp"

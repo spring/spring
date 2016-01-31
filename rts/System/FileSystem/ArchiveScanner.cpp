@@ -19,6 +19,7 @@
 #include "Lua/LuaParser.h"
 #include "System/Log/ILog.h"
 #include "System/CRC.h"
+#include "System/NameResolver.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
 #include "System/ThreadPool.h"
@@ -1081,7 +1082,8 @@ std::vector<std::string> CArchiveScanner::GetAllArchivesUsedBy(const std::string
 	}
 
 	std::vector<std::string> ret;
-	std::string lcname = StringToLower(ArchiveFromName(root));
+	std::string resolvedName = NameResolver::GetGame(root);
+	std::string lcname = StringToLower(ArchiveFromName(resolvedName));
 	std::map<std::string, ArchiveInfo>::const_iterator aii = archiveInfos.find(lcname);
 	if (aii == archiveInfos.end()) {
 #ifdef UNITSYNC
