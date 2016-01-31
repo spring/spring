@@ -25,7 +25,7 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(checkCol),
 	CR_MEMBER(ignoreWater),
 	CR_MEMBER(deleteMe),
-	CR_MEMBER(callEvent),
+	CR_IGNORED(callEvent), //we want the render event called for all projectiles
 
 	CR_MEMBER(castShadow),
 	CR_MEMBER(drawSorted),

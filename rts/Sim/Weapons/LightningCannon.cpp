@@ -20,8 +20,10 @@ CR_REG_METADATA(CLightningCannon,(
 
 CLightningCannon::CLightningCannon(CUnit* owner, const WeaponDef* def)
 	: CWeapon(owner, def)
-	, color(def->visuals.color)
 {
+	//happens when loading
+	if (def != nullptr)
+		color = def->visuals.color;
 }
 
 float CLightningCannon::GetPredictedImpactTime(float3 p) const

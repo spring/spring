@@ -22,7 +22,6 @@ public:
 
 	void Update();
 	bool AddUnit(CUnit* unit);
-	void PostLoad();
 
 	bool CanAddUnit(int id) const {
 		// do we want to be assigned a random ID and are any left in pool?

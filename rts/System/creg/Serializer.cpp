@@ -531,6 +531,17 @@ void CInputStreamSerializer::AddPostLoadCallback(void (*cb)(void*), void* ud)
 	callbacks.push_back(plcb);
 }
 
+void CallPostLoad(creg::Class* c, creg::Class* oc, void* obj)
+{
+	if (c->base != nullptr)
+		CallPostLoad(c->base, oc, obj);
+
+	if (c->HasPostLoad()) {
+		LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Run PostLoad of %s::%s", oc->name.c_str(), c->name.c_str());
+		c->CallPostLoadProc(obj);
+	}
+}
+
 void CInputStreamSerializer::LoadPackage(std::istream* s, void*& root, creg::Class*& rootCls)
 {
 	PackageHeader ph;
@@ -625,13 +636,7 @@ void CInputStreamSerializer::LoadPackage(std::istream* s, void*& root, creg::Cla
 		StoredObject& o = objects[a];
 		creg::Class* oc = classRefs[objects[a].classRef];
 		creg::Class* c = oc;
-		while (c) {
-			if (c->HasPostLoad()) {
-				LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Run PostLoad of %s::%s", oc->name.c_str(), c->name.c_str());
-				c->CallPostLoadProc(o.obj);
-			}
-			c = c->base;
-		}
+		CallPostLoad(c, oc, o.obj);
 	}
 
 	// The first object is the root object

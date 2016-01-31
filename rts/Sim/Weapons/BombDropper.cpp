@@ -28,9 +28,13 @@ CR_REG_METADATA(CBombDropper,(
 CBombDropper::CBombDropper(CUnit* owner, const WeaponDef* def, bool useTorps)
 	: CWeapon(owner, def)
 	, dropTorpedoes(useTorps)
-	, torpMoveRange(def->range * useTorps)
-	, tracking((def->tracks)? def->turnrate: 0)
 {
+	//happens when loading
+	if (def != nullptr) {
+		torpMoveRange = def->range * useTorps;
+		tracking = (def->tracks) ? def->turnrate: 0;
+	}
+
 	onlyForward = true;
 	doTargetGroundPos = true;
 	noAutoTarget = true;

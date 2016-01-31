@@ -55,7 +55,7 @@ CWeaponProjectile::CWeaponProjectile(): CProjectile()
 }
 
 CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
-	: CProjectile(params.pos, params.speed, params.owner, true, true, false, (params.weaponDef)->IsHitScanWeapon())
+	: CProjectile(params.pos, params.speed, params.owner, true, true, false, false)
 
 	, damages(nullptr)
 	, weaponDef(params.weaponDef)
@@ -73,7 +73,12 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 {
 	projectileType = WEAPON_BASE_PROJECTILE;
 
+	//creg
+	if (weaponDef == nullptr)
+		return;
+
 	if (weaponDef->IsHitScanWeapon()) {
+		hitscan = true;
 		// the else-case (default) is handled in CProjectile::Init
 		//
 		// ray projectiles must all set this to false because their collision

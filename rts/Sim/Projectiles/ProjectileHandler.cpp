@@ -61,9 +61,7 @@ CR_REG_METADATA(CProjectileHandler, (
 	CR_MEMBER(freeSyncedIDs),
 	CR_MEMBER(freeUnsyncedIDs),
 	CR_MEMBER(syncedProjectileIDs),
-	CR_MEMBER(unsyncedProjectileIDs),
-
-	CR_SERIALIZER(Serialize)
+	CR_MEMBER(unsyncedProjectileIDs)
 ))
 
 
@@ -147,46 +145,6 @@ CProjectileHandler::~CProjectileHandler()
 
 	CCollisionHandler::PrintStats();
 }
-#ifdef USING_CREG
-void CProjectileHandler::Serialize(creg::ISerializer* s)
-{
-	if (s->IsWriting()) {
-		int ssize = int(syncedProjectiles.size());
-		int usize = int(unsyncedProjectiles.size());
-
-		s->SerializeInt(&ssize);
-		for (CProjectile* p: syncedProjectiles) {
-			void** ptr = (void**) &p;
-			s->SerializeObjectPtr(ptr, p->GetClass());
-		}
-
-		s->SerializeInt(&usize);
-		for (CProjectile* p: unsyncedProjectiles) {
-			void** ptr = (void**) &p;
-			s->SerializeObjectPtr(ptr, p->GetClass());
-		}
-	} else {
-		int ssize, usize;
-
-		s->SerializeInt(&ssize);
-		syncedProjectiles.resize(ssize);
-
-		for (CProjectile* p: syncedProjectiles) {
-			void** ptr = (void**) &p;
-			s->SerializeObjectPtr(ptr, 0/*FIXME*/);
-		}
-
-
-		s->SerializeInt(&usize);
-		unsyncedProjectiles.resize(usize);
-
-		for (CProjectile* p: unsyncedProjectiles) {
-			void** ptr = (void**) &p;
-			s->SerializeObjectPtr(ptr, 0/*FIXME*/);
-		}
-	}
-}
-#endif //USING_CREG
 
 
 void CProjectileHandler::ConfigNotify(const std::string& key, const std::string& value)

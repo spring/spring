@@ -38,18 +38,8 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(activeSlowUpdateUnit),
 	CR_MEMBER(activeUpdateUnit),
 	CR_MEMBER(maxUnits),
-	CR_MEMBER(maxUnitRadius),
-	CR_POSTLOAD(PostLoad)
+	CR_MEMBER(maxUnitRadius)
 ))
-
-
-
-void CUnitHandler::PostLoad()
-{
-	// reset any synced stuff that is not saved
-	activeSlowUpdateUnit = 0;
-	activeUpdateUnit = 0;
-}
 
 
 CUnitHandler::CUnitHandler()

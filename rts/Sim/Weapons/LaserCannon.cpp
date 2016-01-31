@@ -16,8 +16,10 @@ CR_REG_METADATA(CLaserCannon,(
 
 CLaserCannon::CLaserCannon(CUnit* owner, const WeaponDef* def)
 	: CWeapon(owner, def)
-	, color(def->visuals.color)
 {
+	//happens when loading
+	if (def != nullptr)
+		color = def->visuals.color;
 }
 
 
