@@ -111,6 +111,7 @@ class LuaSyncedRead {
 		static int GetUnitPosErrorParams(lua_State* L);
 		static int GetUnitHeight(lua_State* L);
 		static int GetUnitRadius(lua_State* L);
+		static int GetUnitMass(lua_State* L);
 		static int GetUnitPosition(lua_State* L);
 		static int GetUnitBasePosition(lua_State* L);
 		static int GetUnitVectors(lua_State* L);
@@ -176,6 +177,7 @@ class LuaSyncedRead {
 		static int GetFeatureHealth(lua_State* L);
 		static int GetFeatureHeight(lua_State* L);
 		static int GetFeatureRadius(lua_State* L);
+		static int GetFeatureMass(lua_State* L);
 		static int GetFeaturePosition(lua_State* L);
 		static int GetFeatureSeparation(lua_State* L);
 		static int GetFeatureRotation(lua_State* L);

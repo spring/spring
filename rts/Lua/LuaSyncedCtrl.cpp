@@ -205,6 +205,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitPosErrorParams);
 
 	REGISTER_LUA_CFUNC(SetUnitPhysics);
+	REGISTER_LUA_CFUNC(SetUnitMass);
 	REGISTER_LUA_CFUNC(SetUnitPosition);
 	REGISTER_LUA_CFUNC(SetUnitVelocity);
 	REGISTER_LUA_CFUNC(SetUnitRotation);
@@ -228,6 +229,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetFeatureMoveCtrl);
 	REGISTER_LUA_CFUNC(SetFeaturePhysics);
+	REGISTER_LUA_CFUNC(SetFeatureMass);
 	REGISTER_LUA_CFUNC(SetFeaturePosition);
 	REGISTER_LUA_CFUNC(SetFeatureVelocity);
 	REGISTER_LUA_CFUNC(SetFeatureRotation);
@@ -566,6 +568,16 @@ static int SetWorldObjectVelocity(lua_State* L, CWorldObject* o)
 	speed.z = Clamp(luaL_checkfloat(L, 4), -MAX_UNIT_SPEED, MAX_UNIT_SPEED);
 
 	o->SetVelocityAndSpeed(speed);
+	return 0;
+}
+
+static int SetSolidObjectMass(lua_State* L, CSolidObject* o)
+{
+	if (o == nullptr)
+		return 0;
+
+	o->mass = luaL_checknumber(L, 2);
+
 	return 0;
 }
 
@@ -2385,6 +2397,11 @@ int LuaSyncedCtrl::SetUnitPhysics(lua_State* L)
 	return (SetSolidObjectPhysicalState(L, ParseUnit(L, __FUNCTION__, 1)));
 }
 
+int LuaSyncedCtrl::SetUnitMass(lua_State* L)
+{
+	return (SetSolidObjectMass(L, ParseUnit(L, __FUNCTION__, 1)));
+}
+
 int LuaSyncedCtrl::SetUnitPosition(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -2782,6 +2799,11 @@ int LuaSyncedCtrl::SetFeatureMoveCtrl(lua_State* L)
 int LuaSyncedCtrl::SetFeaturePhysics(lua_State* L)
 {
 	return (SetSolidObjectPhysicalState(L, ParseFeature(L, __FUNCTION__, 1)));
+}
+
+int LuaSyncedCtrl::SetFeatureMass(lua_State* L)
+{
+	return (SetSolidObjectMass(L, ParseFeature(L, __FUNCTION__, 1)));
 }
 
 int LuaSyncedCtrl::SetFeaturePosition(lua_State* L)

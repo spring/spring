@@ -96,6 +96,7 @@ class LuaSyncedCtrl
 		static int SetUnitPosErrorParams(lua_State* L);
 
 		static int SetUnitPhysics(lua_State* L);
+		static int SetUnitMass(lua_State* L);
 		static int SetUnitPosition(lua_State* L);
 		static int SetUnitRotation(lua_State* L);
 		static int SetUnitDirection(lua_State* L);
@@ -119,6 +120,7 @@ class LuaSyncedCtrl
 
 		static int SetFeatureMoveCtrl(lua_State* L);
 		static int SetFeaturePhysics(lua_State* L);
+		static int SetFeatureMass(lua_State* L);
 		static int SetFeaturePosition(lua_State* L);
 		static int SetFeatureRotation(lua_State* L);
 		static int SetFeatureDirection(lua_State* L);

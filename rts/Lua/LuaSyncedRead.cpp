@@ -205,6 +205,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitPosErrorParams);
 	REGISTER_LUA_CFUNC(GetUnitHeight);
 	REGISTER_LUA_CFUNC(GetUnitRadius);
+	REGISTER_LUA_CFUNC(GetUnitMass);
 	REGISTER_LUA_CFUNC(GetUnitPosition);
 	REGISTER_LUA_CFUNC(GetUnitBasePosition);
 	REGISTER_LUA_CFUNC(GetUnitVectors);
@@ -267,6 +268,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetFeatureHeight);
 	REGISTER_LUA_CFUNC(GetFeatureRadius);
 	REGISTER_LUA_CFUNC(GetFeaturePosition);
+	REGISTER_LUA_CFUNC(GetFeatureMass);
 	REGISTER_LUA_CFUNC(GetFeatureRotation);
 	REGISTER_LUA_CFUNC(GetFeatureDirection);
 	REGISTER_LUA_CFUNC(GetFeatureVelocity);
@@ -535,6 +537,16 @@ static int GetWorldObjectVelocity(lua_State* L, const CWorldObject* o)
 	lua_pushnumber(L, o->speed.z);
 	lua_pushnumber(L, o->speed.w);
 	return 4;
+}
+
+static int GetSolidObjectMass(lua_State* L, const CSolidObject* o)
+{
+	if (o == nullptr)
+		return 0;
+
+	lua_pushnumber(L, o->mass);
+
+	return 1;
 }
 
 static int GetSolidObjectPosition(lua_State* L, const CSolidObject* o, bool isFeature)
@@ -2925,12 +2937,15 @@ int LuaSyncedRead::GetUnitRadius(lua_State* L)
 	return 1;
 }
 
+int LuaSyncedRead::GetUnitMass(lua_State* L)
+{
+	return (GetSolidObjectMass(L, ParseUnit(L, __FUNCTION__, 1)));
+}
 
 int LuaSyncedRead::GetUnitPosition(lua_State* L)
 {
 	return (GetSolidObjectPosition(L, ParseUnit(L, __FUNCTION__, 1), false));
 }
-
 
 int LuaSyncedRead::GetUnitBasePosition(lua_State* L)
 {
@@ -4506,6 +4521,10 @@ int LuaSyncedRead::GetFeatureRadius(lua_State* L)
 	return 1;
 }
 
+int LuaSyncedRead::GetFeatureMass(lua_State* L)
+{
+	return (GetSolidObjectMass(L, ParseFeature(L, __FUNCTION__, 1)));
+}
 
 int LuaSyncedRead::GetFeaturePosition(lua_State* L)
 {
