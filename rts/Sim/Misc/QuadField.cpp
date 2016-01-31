@@ -30,10 +30,12 @@ CR_REG_METADATA(CQuadField, (
 CR_BIND(CQuadField::Quad, )
 CR_REG_METADATA_SUB(CQuadField, Quad, (
 	CR_MEMBER(units),
-	CR_MEMBER(teamUnits),
+	CR_IGNORED(teamUnits),
 	CR_MEMBER(features),
 	CR_MEMBER(projectiles),
-	CR_MEMBER(repulsers)
+	CR_MEMBER(repulsers),
+
+	CR_POSTLOAD(PostLoad)
 ))
 
 CQuadField* quadField = NULL;
@@ -95,6 +97,14 @@ CQuadField::Quad::Quad()
 	teamUnits.resize(teamHandler->ActiveAllyTeams());
 	assert(teamUnits.capacity() == teamHandler->ActiveAllyTeams());
 #endif
+}
+
+void CQuadField::Quad::PostLoad()
+{
+	for (CUnit* unit: units)
+	{
+		VectorInsertUnique(teamUnits[unit->allyteam], unit, false);
+	}
 }
 
 CQuadField::CQuadField(int2 mapDims, int quad_size)

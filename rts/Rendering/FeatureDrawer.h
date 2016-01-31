@@ -19,8 +19,6 @@ namespace GL {
 
 class CFeatureDrawer: public CEventClient
 {
-	CR_DECLARE_STRUCT(CFeatureDrawer)
-
 	typedef std::vector<CFeature*> FeatureSet;
 
 public:
@@ -86,8 +84,6 @@ private:
 		bool drawFar
 	);
 	void GetVisibleFeatures(CCamera*, int, bool drawFar);
-
-	void PostLoad();
 
 private:
 	int drawQuadsX;

@@ -130,21 +130,6 @@ static const SetFeatureAlphaMatFunc setFeatureAlphaMatFuncs[] = {
 
 CFeatureDrawer* featureDrawer = nullptr;
 
-/******************************************************************************/
-
-CR_BIND(CFeatureDrawer, )
-
-CR_REG_METADATA(CFeatureDrawer, (
-	CR_IGNORED(unsortedFeatures),
-	CR_IGNORED(drawQuadsX),
-	CR_IGNORED(drawQuadsY),
-	CR_IGNORED(farDist),
-	CR_IGNORED(featureDrawDistance),
-	CR_IGNORED(featureFadeDistance),
-	CR_IGNORED(modelRenderers),
-
-	CR_POSTLOAD(PostLoad)
-))
 
 /******************************************************************************/
 
@@ -753,10 +738,3 @@ void CFeatureDrawer::GetVisibleFeatures(CCamera* cam, int extraSize, bool drawFa
 
 	FlagVisibleFeatures(cam, inShadowPass, water->DrawReflectionPass(), water->DrawRefractionPass(), drawFar);
 }
-
-void CFeatureDrawer::PostLoad()
-{
-	drawQuadsX = mapDims.mapx / DRAW_QUAD_SIZE;
-	drawQuadsY = mapDims.mapy / DRAW_QUAD_SIZE;
-}
-

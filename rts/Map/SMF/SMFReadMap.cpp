@@ -30,9 +30,6 @@ using std::max;
 CONFIG(bool, GroundNormalTextureHighPrecision).defaultValue(false);
 CONFIG(float, SMFTexAniso).defaultValue(4.0f).minimumValue(0.0f);
 
-CR_BIND_DERIVED(CSMFReadMap, CReadMap, (""))
-
-
 CSMFReadMap::CSMFReadMap(std::string mapname)
 	: CEventClient("[CSMFReadMap]", 271950, false)
 	, file(mapname)

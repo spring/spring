@@ -106,6 +106,8 @@ needed to support dynamic resizing (not used yet)
 		std::vector<CFeature*> features;
 		std::vector<CProjectile*> projectiles;
 		std::vector<CPlasmaRepulser*> repulsers;
+
+		void PostLoad();
 	};
 
 	const Quad& GetQuad(unsigned i) const {

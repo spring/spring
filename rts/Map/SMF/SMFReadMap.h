@@ -24,7 +24,6 @@ public:
 	void SunLightingChanged();
 
 public:
-	CR_DECLARE(CSMFReadMap)
 
 	CSMFReadMap(std::string mapname);
 	// note: textures are auto-deleted

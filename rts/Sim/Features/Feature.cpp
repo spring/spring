@@ -132,6 +132,7 @@ void CFeature::PostLoad()
 	}
 
 	UpdateMidAndAimPos();
+	eventHandler.RenderFeatureCreated(this);
 }
 
 
