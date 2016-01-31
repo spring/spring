@@ -98,7 +98,7 @@ namespace ArchiveNameResolver {
 
 	static bool GetRandomGame(const std::string& lazyName, std::string* applicableName)
 	{
-#ifndef UNITSYNC
+#if !defined(UNITSYNC) && !defined(DEDICATED)
 		if (lazyName == "random") {
 			const std::vector<CArchiveScanner::ArchiveData>& games = archiveScanner->GetPrimaryMods();
 			if (!games.empty()) {
@@ -176,7 +176,7 @@ namespace ArchiveNameResolver {
 
 	static bool GetRandomMap(const std::string& lazyName, std::string* applicableName)
 	{
-#ifndef UNITSYNC
+#if !defined(UNITSYNC) && !defined(DEDICATED)
 		if (lazyName == "random") {
 			const std::vector<std::string>& maps = archiveScanner->GetMaps();
 			if (!maps.empty()) {
