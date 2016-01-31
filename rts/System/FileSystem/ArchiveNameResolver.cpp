@@ -99,7 +99,7 @@ namespace ArchiveNameResolver {
 	static bool GetRandomGame(const std::string& lazyName, std::string* applicableName)
 	{
 #ifndef UNITSYNC
-		if (std::string("random").find(lazyName) != std::string::npos) {
+		if (lazyName == "random") {
 			const std::vector<CArchiveScanner::ArchiveData>& games = archiveScanner->GetPrimaryMods();
 			if (!games.empty()) {
 				*applicableName = games[gu->RandInt() % games.size()].GetNameVersioned();
@@ -177,7 +177,7 @@ namespace ArchiveNameResolver {
 	static bool GetRandomMap(const std::string& lazyName, std::string* applicableName)
 	{
 #ifndef UNITSYNC
-		if (std::string("random").find(lazyName) != std::string::npos) {
+		if (lazyName == "random") {
 			const std::vector<std::string>& maps = archiveScanner->GetMaps();
 			if (!maps.empty()) {
 				*applicableName = maps[gu->RandInt() % maps.size()];
@@ -206,8 +206,8 @@ std::string GetGame(const std::string& lazyName)
 	std::string applicableName = lazyName;
 	if (GetGameByExactName(lazyName, &applicableName)) return applicableName;
 	if (GetGameByShortName(lazyName, &applicableName)) return applicableName;
-	if (GetRandomGame(lazyName, &applicableName))      return applicableName;
 	if (GetGameByRapidTag(lazyName, applicableName))   return applicableName;
+	if (GetRandomGame(lazyName, &applicableName))      return applicableName;
 
 	return lazyName;
 }
