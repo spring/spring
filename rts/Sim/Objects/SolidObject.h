@@ -258,6 +258,8 @@ public:
 	bool ClearVoidState();
 	void UpdateVoidState(bool set);
 
+	virtual void SetMass(float newMass);
+
 private:
 	void SetMidPos(const float3& mp, bool relative) {
 		if (relative) {

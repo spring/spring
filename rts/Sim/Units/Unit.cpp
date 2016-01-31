@@ -1491,6 +1491,16 @@ void CUnit::AddExperience(float exp)
 }
 
 
+void CUnit::SetMass(float newMass)
+{
+	const float dif = newMass - mass;
+	if (transporter != nullptr)
+		transporter->SetMass(transporter->mass + dif);
+
+	CSolidObject::SetMass(newMass);
+}
+
+
 void CUnit::DoSeismicPing(float pingSize)
 {
 	float rx = gs->randFloat();

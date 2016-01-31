@@ -576,7 +576,7 @@ static int SetSolidObjectMass(lua_State* L, CSolidObject* o)
 	if (o == nullptr)
 		return 0;
 
-	o->mass = Clamp(luaL_checknumber(L, 2), CSolidObject::MINIMUM_MASS, CSolidObject::MAXIMUM_MASS);
+	o->SetMass(luaL_checknumber(L, 2));
 
 	return 0;
 }

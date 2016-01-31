@@ -135,6 +135,8 @@ public:
 
 	void AddExperience(float exp);
 
+	void SetMass(float newMass);
+
 	void DoSeismicPing(float pingSize);
 
 	void CalculateTerrainType();

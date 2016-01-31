@@ -221,6 +221,11 @@ void CSolidObject::UpdateVoidState(bool set) {
 }
 
 
+void CSolidObject::SetMass(float newMass)
+{
+	mass = Clamp(newMass, MINIMUM_MASS, MAXIMUM_MASS);
+}
+
 
 void CSolidObject::UnBlock() {
 	if (!IsBlocking())
