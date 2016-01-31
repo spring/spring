@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <boost/scoped_ptr.hpp>
 
+#include "ArchiveNameResolver.h"
 #include "ArchiveScanner.h"
 #include "ArchiveLoader.h"
 #include "DataDirLocater.h"
@@ -19,7 +20,6 @@
 #include "Lua/LuaParser.h"
 #include "System/Log/ILog.h"
 #include "System/CRC.h"
-#include "System/ArchiveNameResolver.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
 #include "System/ThreadPool.h"
