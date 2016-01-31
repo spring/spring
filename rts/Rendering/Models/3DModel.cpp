@@ -47,9 +47,7 @@ CR_REG_METADATA(LocalModel, (
 	CR_MEMBER(pieces),
 
 	CR_IGNORED(boundingVolume),
-	CR_IGNORED(luaMaterialData),
-	CR_IGNORED(bbMins),
-	CR_IGNORED(bbMaxs)
+	CR_IGNORED(luaMaterialData)
 ))
 
 
@@ -336,8 +334,9 @@ void LocalModel::UpdateBoundingVolume(unsigned int frameNum)
 {
 	bvFrameTime = frameNum;
 
-	bbMins = DEF_MIN_SIZE;
-	bbMaxs = DEF_MAX_SIZE;
+	// bounding-box extrema (local space)
+	float3 bbMins = DEF_MIN_SIZE;
+	float3 bbMaxs = DEF_MAX_SIZE;
 
 	for (unsigned int n = 0; n < pieces.size(); n++) {
 		const CMatrix44f& matrix = pieces[n].GetModelSpaceMatrix();

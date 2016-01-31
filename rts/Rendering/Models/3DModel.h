@@ -407,6 +407,9 @@ struct LocalModel
 	}
 
 	void GetBoundingBoxVerts(float3* verts) const {
+		const float3 bbMins = GetRelMidPos() - boundingVolume.GetHScales();
+		const float3 bbMaxs = GetRelMidPos() + boundingVolume.GetHScales();
+
 		// bottom
 		verts[0] = float3(bbMins.x,  bbMins.y,  bbMins.z);
 		verts[1] = float3(bbMaxs.x,  bbMins.y,  bbMins.z);
@@ -443,10 +446,6 @@ private:
 
 	// custom Lua-set material this model should be rendered with
 	LuaObjectMaterialData luaMaterialData;
-
-	// bounding-box extrema (local space)
-	float3 bbMins;
-	float3 bbMaxs;
 };
 
 #endif /* _3DMODEL_H */
