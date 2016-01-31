@@ -32,7 +32,7 @@ CBombDropper::CBombDropper(CUnit* owner, const WeaponDef* def, bool useTorps)
 	//happens when loading
 	if (def != nullptr) {
 		torpMoveRange = def->range * useTorps;
-		tracking = (def->tracks) ? def->turnrate: 0;
+		tracking = def->turnrate * def->tracks;
 	}
 
 	onlyForward = true;

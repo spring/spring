@@ -18,7 +18,7 @@ CStarburstLauncher::CStarburstLauncher(CUnit* owner, const WeaponDef* def): CWea
 {
 	//happens when loading
 	if (def != nullptr) {
-		tracking = ((def->tracks)? weaponDef->turnrate: 0);
+		tracking = weaponDef->turnrate * def->tracks;
 		uptime = (def->uptime * GAME_SPEED);
 	}
 }

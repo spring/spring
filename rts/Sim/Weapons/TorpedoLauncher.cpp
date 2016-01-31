@@ -17,7 +17,7 @@ CTorpedoLauncher::CTorpedoLauncher(CUnit* owner, const WeaponDef* def): CWeapon(
 {
 	//happens when loading
 	if (def != nullptr)
-		tracking = ((def->tracks)? weaponDef->turnrate: 0);
+		tracking = weaponDef->turnrate * def->tracks;
 }
 
 

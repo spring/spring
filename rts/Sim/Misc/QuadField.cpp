@@ -102,8 +102,7 @@ CQuadField::Quad::Quad()
 void CQuadField::Quad::PostLoad()
 {
 #ifndef UNIT_TEST
-	for (CUnit* unit: units)
-	{
+	for (CUnit* unit: units) {
 		VectorInsertUnique(teamUnits[unit->allyteam], unit, false);
 	}
 #endif
