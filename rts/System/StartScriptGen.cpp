@@ -2,8 +2,8 @@
 
 #include "StartScriptGen.h"
 
-#include "ArchiveNameResolver.h"
 #include "AIScriptHandler.h"
+#include "FileSystem/ArchiveNameResolver.h"
 #include "System/TdfParser.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
