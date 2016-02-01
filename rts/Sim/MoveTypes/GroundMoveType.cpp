@@ -566,12 +566,12 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
 			const float groundSpeedMod = CMoveMath::GetPosSpeedMod(*md, owner->pos, flatFrontDir);
 
 			const float curGoalDistSq = (owner->pos - goalPos).SqLength2D();
-			const float minGoalDistSq = Square(BrakingDistance(currentSpeed, mix(decRate, accRate, reversing)));
+			const float minGoalDistSq = Square(BrakingDistance(currentSpeed, decRate));
 
 			const float3& waypointDifFwd = waypointDir;
 			const float3  waypointDifRev = -waypointDifFwd;
 
-			const float3& waypointDif = reversing? waypointDifRev: waypointDifFwd;
+			const float3& waypointDif = mix(waypointDifFwd, waypointDifRev, reversing);
 			const short turnDeltaHeading = owner->heading - GetHeadingFromVector(waypointDif.x, waypointDif.z);
 
 			// NOTE: <= 2 because every CMD_MOVE has a trailing CMD_SET_WANTED_MAX_SPEED
@@ -1428,7 +1428,7 @@ from current velocity.
 */
 float3 CGroundMoveType::Here()
 {
-	const float dist = BrakingDistance(currentSpeed, mix(decRate, accRate, reversing));
+	const float dist = BrakingDistance(currentSpeed, decRate);
 	const int   sign = Sign(int(!reversing));
 
 	const float3 pos2D = owner->pos * XZVector;
