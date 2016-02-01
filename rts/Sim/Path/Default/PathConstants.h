@@ -17,15 +17,16 @@ static const unsigned int MAX_SEARCHED_NODES_PF = MAX_SEARCHED_NODES;
 static const unsigned int MAX_SEARCHED_NODES_PE = MAX_SEARCHED_NODES;
 
 // PathManager distance thresholds (to use PF or PE)
-static const float     MAXRES_SEARCH_DISTANCE = 25.0f;
-static const float     MEDRES_SEARCH_DISTANCE = 55.0f;
-static const float MIN_MEDRES_SEARCH_DISTANCE = 40.0f;
-static const float MIN_MAXRES_SEARCH_DISTANCE = 12.0f;
+static const float MAXRES_SEARCH_DISTANCE =  50.0f;
+static const float MEDRES_SEARCH_DISTANCE = 100.0f;
+// path-refinement lookahead distances (MED to MAX and LOW to MED)
+static const float MAXRES_SEARCH_DISTANCE_EXT = (MAXRES_SEARCH_DISTANCE * 0.4f) * SQUARE_SIZE;
+static const float MEDRES_SEARCH_DISTANCE_EXT = (MEDRES_SEARCH_DISTANCE * 0.4f) * SQUARE_SIZE;
 
 // how many recursive refinement attempts NextWayPoint should make
 static const unsigned int MAX_PATH_REFINEMENT_DEPTH = 4;
 
-static const unsigned int PATHESTIMATOR_VERSION = 72;
+static const unsigned int PATHESTIMATOR_VERSION = 73;
 
 static const unsigned int MEDRES_PE_BLOCKSIZE =  8;
 static const unsigned int LOWRES_PE_BLOCKSIZE = 32;

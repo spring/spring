@@ -36,7 +36,11 @@ float CPathFinderDef::Heuristic(unsigned int xSquare, unsigned int zSquare) cons
 {
 	const float dx = std::abs(int(xSquare) - int(goalSquareX));
 	const float dz = std::abs(int(zSquare) - int(goalSquareZ));
-	return (std::max(dx, dz) * 0.5f + std::min(dx, dz) * 0.2f);
+
+	// grid is 8-connected, so use octile distance
+	constexpr const float C1 = 1.0f;
+	constexpr const float C2 = 1.4142f - (2.0f * C1);
+	return ((dx + dz) * C1 + std::min(dx, dz) * C2);
 }
 
 

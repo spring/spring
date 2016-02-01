@@ -429,8 +429,8 @@ float3 CPathManager::NextWayPoint(
 	assert(multiPath->peDef->synced == synced);
 
 	#define EXTEND_PATH_POINTS(curResPts, nxtResPts, dist) ((!curResPts.empty() && (curResPts.back()).SqDistance2D(callerPos) < Square((dist))) || nxtResPts.size() <= 2)
-	const bool extendMaxResPath = EXTEND_PATH_POINTS(medResPath.path, maxResPath.path, MIN_MAXRES_SEARCH_DISTANCE * SQUARE_SIZE);
-	const bool extendMedResPath = EXTEND_PATH_POINTS(lowResPath.path, medResPath.path, MIN_MEDRES_SEARCH_DISTANCE * SQUARE_SIZE);
+	const bool extendMaxResPath = EXTEND_PATH_POINTS(medResPath.path, maxResPath.path, MAXRES_SEARCH_DISTANCE_EXT);
+	const bool extendMedResPath = EXTEND_PATH_POINTS(lowResPath.path, medResPath.path, MEDRES_SEARCH_DISTANCE_EXT);
 	#undef EXTEND_PATH_POINTS
 
 	// check whether the max-res path needs extending through
