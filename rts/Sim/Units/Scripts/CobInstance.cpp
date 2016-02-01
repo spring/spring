@@ -238,8 +238,13 @@ void CCobInstance::RockUnit(const float3& rockDir)
 {
 	vector<int> args;
 	args.reserve(2);
-	args.push_back((int)(500 * rockDir.z));
-	args.push_back((int)(500 * rockDir.x));
+	//transform from world-space to unit space
+	const float c = math::cos(unit->heading * TAANG2RAD);
+	const float s = math::sin(unit->heading * TAANG2RAD);
+	const float x = c * rockDir.x - s * rockDir.z;
+	const float z = s * rockDir.x + c * rockDir.z;
+	args.push_back((int)(500 * z));
+	args.push_back((int)(500 * x));
 	Call(COBFN_RockUnit, args);
 }
 
@@ -260,8 +265,14 @@ void CCobInstance::HitByWeapon(const float3& hitDir, int weaponDefId, float& ino
 	vector<int> args;
 	args.reserve(4);
 
-	args.push_back((int)(500 * hitDir.z));
-	args.push_back((int)(500 * hitDir.x));
+	//transform from world-space to unit space
+	const float c = math::cos(unit->heading * TAANG2RAD);
+	const float s = math::sin(unit->heading * TAANG2RAD);
+	const float x = c * hitDir.x - s * hitDir.z;
+	const float z = s * hitDir.x + c * hitDir.z;
+
+	args.push_back((int)(500 * z));
+	args.push_back((int)(500 * x));
 
 	if (HasFunction(COBFN_HitByWeaponId)) {
 		const WeaponDef* wd = weaponDefHandler->GetWeaponDefByID(weaponDefId);
