@@ -765,14 +765,14 @@ void CUnitScript::Explode(int piece, int flags)
 
 	if (!(flags & PF_NoHeatCloud)) {
 		// Do an explosion at the location first
-		new CHeatCloudProjectile(NULL, absPos, ZeroVector, 30, 30);
+		new CHeatCloudProjectile(nullptr, absPos, ZeroVector, 30, 30);
 	}
 
 	// If this is true, no stuff should fly off
 	if (flags & PF_NONE)
 		return;
 
-	if (pieces[piece]->original == NULL)
+	if (pieces[piece]->original == nullptr)
 		return;
 
 	if (flags & PF_Shatter) {
@@ -783,26 +783,28 @@ void CUnitScript::Explode(int piece, int flags)
 	// This means that we are going to do a full fledged piece explosion!
 	float3 baseSpeed = unit->speed;
 	float3 explSpeed((0.5f - gs->randFloat()) * 6.0f, 1.2f + gs->randFloat() * 5.0f, (0.5f - gs->randFloat()) * 6.0f);
-	if (unit->pos.y - CGround::GetApproximateHeight(unit->pos.x, unit->pos.z) > 15) {
+
+	if (unit->pos.y - CGround::GetApproximateHeight(unit->pos.x, unit->pos.z) > 15)
 		explSpeed.y = (0.5f - gs->randFloat()) * 6.0f;
-	}
-	if (baseSpeed.SqLength() > 9) {
+
+	if (baseSpeed.SqLength() > 9.0f) {
 		const float l  = baseSpeed.Length();
-		const float l2 = 3 + math::sqrt(l - 3);
+		const float l2 = 3.0f + math::sqrt(l - 3.0f);
 		baseSpeed *= (l2 / l);
 	}
+
 	explSpeed += baseSpeed;
 
 	const float partSat = projectileHandler->GetParticleSaturation();
 
-	int newflags = 0;
-	if (flags & PF_Explode) { newflags |= PF_Explode; }
-	if ((flags & PF_Smoke) && partSat < 1.0f) { newflags |= PF_Smoke; }
-	if ((flags & PF_Fire) && partSat < 0.95f) { newflags |= PF_Fire; }
-	if (flags & PF_NoCEGTrail) { newflags |= PF_NoCEGTrail; }
-	if (flags & PF_Recursive) { newflags |= PF_Recursive; }
+	int newFlags = 0;
+	newFlags |= (PF_Explode    * ((flags & PF_Explode   ) != 0));
+	newFlags |= (PF_Smoke      * ((flags & PF_Smoke     ) != 0) && partSat < 0.95f);
+	newFlags |= (PF_Fire       * ((flags & PF_Fire      ) != 0) && partSat < 0.95f);
+	newFlags |= (PF_NoCEGTrail * ((flags & PF_NoCEGTrail) != 0));
+	newFlags |= (PF_Recursive  * ((flags & PF_Recursive ) != 0));
 
-	new CPieceProjectile(unit, pieces[piece], absPos, explSpeed, newflags, 0.5f);
+	new CPieceProjectile(unit, pieces[piece], absPos, explSpeed, newFlags, 0.5f);
 #endif
 }
 
