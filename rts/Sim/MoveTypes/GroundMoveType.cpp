@@ -582,18 +582,18 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
 				const float reqTurnAngle = math::fabs(180.0f * short(owner->heading - wantedHeading) / SHORTINT_MAXVALUE);
 				const float maxTurnAngle = (turnRate / SPRING_CIRCLE_DIVS) * 360.0f;
 
-				float turnLinearSpeed = mix(maxSpeed, maxReverseSpeed, reversing);
+				float turnMaxSpeed = mix(maxSpeed, maxReverseSpeed, reversing);
+				float turnModSpeed = turnMaxSpeed;
 
-				if (reqTurnAngle != 0.0f) {
-					turnLinearSpeed *= std::min(std::max(0.1f, maxTurnAngle / reqTurnAngle), 1.0f);
-				}
+				if (reqTurnAngle != 0.0f)
+					turnModSpeed *= Clamp(maxTurnAngle / reqTurnAngle, 0.1f, 1.0f);
 
 				if (waypointDir.SqLength() > 0.1f) {
 					if (!ud->turnInPlace) {
-						targetSpeed = std::max(ud->turnInPlaceSpeedLimit, turnLinearSpeed);
+						targetSpeed = Clamp(ud->turnInPlaceSpeedLimit, turnModSpeed, turnMaxSpeed);
 					} else {
 						if (reqTurnAngle > ud->turnInPlaceAngleLimit) {
-							targetSpeed = turnLinearSpeed;
+							targetSpeed = turnModSpeed;
 						}
 					}
 				}
