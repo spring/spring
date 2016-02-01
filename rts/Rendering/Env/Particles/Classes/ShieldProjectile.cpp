@@ -13,24 +13,19 @@
 #include "System/myMath.h"
 
 
-CR_BIND_DERIVED(ShieldProjectile, CProjectile, (NULL))
+CR_BIND_DERIVED(ShieldProjectile, CProjectile, )
 CR_REG_METADATA(ShieldProjectile, (
 	CR_MEMBER(shield),
 	CR_MEMBER(shieldTexture),
 	CR_MEMBER(lastAllowDrawingUpdate),
 	CR_MEMBER(allowDrawing),
-	CR_MEMBER(shieldSegments)
+	CR_IGNORED(shieldSegments),
+
+	CR_POSTLOAD(PostLoad)
 ))
 
-CR_BIND_DERIVED(ShieldSegmentProjectile, CProjectile, (NULL, NULL, ZeroVector, 0, 0))
-CR_REG_METADATA(ShieldSegmentProjectile, (
-	CR_MEMBER(shieldProjectile),
-	CR_MEMBER(segmentPos),
-	CR_MEMBER(segmentColor),
-	CR_MEMBER(segmentSize),
-	CR_IGNORED(vertices),
-	CR_IGNORED(texCoors)
-))
+// Segments don't have to be cregged since they can be regenerated on
+// PostLoad
 
 static std::vector<float3> spherevertices;
 static std::map<const AtlasedTexture*, std::vector<float2> > spheretexcoords;
@@ -61,6 +56,11 @@ ShieldProjectile::ShieldProjectile(CPlasmaRepulser* shield_)
 	drawRadius    = 1.0f;
 	mygravity     = 0.0f;
 
+	PostLoad();
+}
+
+void ShieldProjectile::PostLoad()
+{
 	const CUnit* u = shield->owner;
 	const WeaponDef* wd = shield->weaponDef;
 

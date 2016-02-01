@@ -21,6 +21,8 @@ class ShieldProjectile: public CProjectile
 {
 	CR_DECLARE(ShieldProjectile)
 public:
+	// creg only
+	ShieldProjectile() { }
 	ShieldProjectile(CPlasmaRepulser*);
 
 	void Update() override;
@@ -33,6 +35,7 @@ public:
 	const AtlasedTexture* GetShieldTexture() const { return shieldTexture; }
 	float3 GetShieldDrawPos() const;
 
+	void PostLoad();
 private:
 	CPlasmaRepulser* shield;
 	const AtlasedTexture* shieldTexture;
@@ -48,7 +51,6 @@ private:
 
 class ShieldSegmentProjectile: public CProjectile
 {
-	CR_DECLARE(ShieldSegmentProjectile)
 public:
 	ShieldSegmentProjectile(
 		ShieldProjectile* shieldProjectile,
