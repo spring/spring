@@ -725,8 +725,20 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 	SExpGenSpawnableMemberInfo& memberInfo,
 	string& code)
 {
-	std::string::size_type end = script.find(';', 0);
-	std::string vastr = script.substr(0, end);
+	const std::string content = script.substr(0, script.find(';', 0));
+	const bool isFloat = memberInfo.type == SExpGenSpawnableMemberInfo::TYPE_FLOAT;
+
+	if (content == "dir") { // first see if we can match any keywords
+		// if the user uses a keyword assume he knows that it is put on the right datatype for now
+		if (memberInfo.length < 3 || !isFloat) // dir has to be float3
+			throw content_error("[CCEG::ParseExplosionCode] incorrect use of \"dir\"");
+
+		code += OP_DIR;
+		boost::uint16_t ofs = memberInfo.offset;
+		code.append((char*) &ofs, (char*) &ofs + sizeof(ofs));
+
+		return;
+	}
 
 	//Arrays (float3 or float4)
 	if (memberInfo.length > 1) {
@@ -743,21 +755,10 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		return;
 	}
 
-	if (vastr == "dir") { // first see if we can match any keywords
-		// if the user uses a keyword assume he knows that it is put on the right datatype for now
-		code += OP_DIR;
-		boost::uint16_t ofs = memberInfo.offset;
-		code.append((char*) &ofs, (char*) &ofs + sizeof(ofs));
-
-		return;
-	}
-
 	//Textures, Colormaps, etc.
 	if (memberInfo.type == SExpGenSpawnableMemberInfo::TYPE_PTR) {
-		string::size_type end = script.find(';', 0);
-		string name = script.substr(0, end);
 		// Memory is managed by whomever this callback belongs to
-		void* ptr = memberInfo.ptrCallback(name);
+		void* ptr = memberInfo.ptrCallback(content);
 		code += OP_LOADP;
 		code.append((char*)(&ptr), ((char*)(&ptr)) + sizeof(void*));
 		code += OP_STOREP;
@@ -770,11 +771,10 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 
 	//Floats or Ints
 
-	bool isFloat = memberInfo.type == SExpGenSpawnableMemberInfo::TYPE_FLOAT;
 	assert (isFloat || memberInfo.type == SExpGenSpawnableMemberInfo::TYPE_INT);
 
-	const std::set<boost::uint8_t> allowedSizeInt = {1,2,4 /*,0,8*/};
-	const std::set<boost::uint8_t> allowedSizeFlt = {4 /*,8*/};
+	static const std::set<boost::uint8_t> allowedSizeInt = {1,2,4 /*,0,8*/};
+	static const std::set<boost::uint8_t> allowedSizeFlt = {4 /*,8*/};
 	if (isFloat) {
 		if (allowedSizeFlt.find(memberInfo.size) == allowedSizeFlt.end())
 			throw content_error("[CCEG::ParseExplosionCode] incompatible float size \"" + IntToString(memberInfo.size) + "\" (" + script + ")");
@@ -828,13 +828,13 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 
 			p += (endp - &script.c_str()[p]);
 			code += opcode;
-			code.append((char*) &v, ((char*) &v) + 4);
+			code.append((char*) &v, ((char*) &v) + sizeof(v));
 		} else {
 			const int v = std::max(0, std::min(16, (int)strtol(&script.c_str()[p], &endp, 10)));
 
 			p += (endp - &script.c_str()[p]);
 			code += opcode;
-			code.append((char*) &v, ((char*) &v) + 4);
+			code.append((char*) &v, ((char*) &v) + + sizeof(v));
 		}
 	}
 
