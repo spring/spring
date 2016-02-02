@@ -240,8 +240,8 @@ void CCobInstance::RockUnit(const float3& rockDir)
 
 	vector<int> args;
 	args.reserve(2);
-	args.push_back(unitRockDir.z);
-	args.push_back(unitRockDir.x);
+	args.push_back(rockDir.z);
+	args.push_back(rockDir.x);
 
 	Call(COBFN_RockUnit, args);
 }
