@@ -560,10 +560,10 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType)
 	const FlyingPiece* last = nullptr;
 
 	for (const FlyingPiece& fp: container) {
-		const bool inLos = teamHandler->AlliedTeams(gu->myAllyTeam, fp.GetTeam()) ||
-			gu->spectatingFullView || losHandler->InAirLos(fp.GetPos(), gu->myAllyTeam);
+		const bool noLosTst = gu->spectatingFullView || teamHandler->AlliedTeams(gu->myTeam, fp.GetTeam());
+		const bool inAirLos = noLosTst || losHandler->InAirLos(fp.GetPos(), gu->myAllyTeam);
 
-		if (!inLos)
+		if (!inAirLos)
 			continue;
 
 		if (!camera->InView(fp.GetPos(), fp.GetRadius()))
