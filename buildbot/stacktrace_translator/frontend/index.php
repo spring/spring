@@ -122,7 +122,7 @@ function parse_result($res, $commit, $branch){
 	}else{
 		$textwithlinks="<h1>translated with links to github source ('".$commit." ".$branch."' detected)</h1>\n";
 		$textwithlinks.="<table><tr><td>module</td><td>address</td><td>file</td><td>line</td></tr>\n";
-		$cleantext="";
+		$cleantext= "https://github.com/spring/spring/commit/".$commit."\n\n";
 		for($i=0;$i<count($res); $i++){
 			$module = $res[$i][0];
 			$address = $res[$i][1];
