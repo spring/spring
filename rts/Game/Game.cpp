@@ -568,8 +568,9 @@ void CGame::LoadInterface()
 {
 	{
 		ScopedOnceTimer timer("Game::LoadInterface (Camera&Mouse)");
-		mouse = new CMouseHandler();
+
 		camHandler = new CCameraHandler();
+		mouse = new CMouseHandler();
 	}
 
 	selectedUnitsHandler.Init(playerHandler->ActivePlayers());
