@@ -138,7 +138,7 @@ function parse_result($res, $commit, $branch){
 				$name=$filename.":".$line;
 			$textwithlinks.="<tr>\n";
 			$textwithlinks.= "<td>".$module . "</td><td> " . $address . "</td><td> " . $filename . "</td>\n";
-			$cleantext.= $module." ".$address." ".$filename.":".$line."\n";
+			$cleantext.= $filename.":".$line."\n";
 
 			if (!empty($filename) && ($filename[0]=='r')){
 				if (!empty($commit)){
