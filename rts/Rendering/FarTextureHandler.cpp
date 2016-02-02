@@ -107,7 +107,7 @@ float2 CFarTextureHandler::GetTextureCoords(const int farTextureNum, const int o
 
 	const int texnum = (farTextureNum * numOrientations) + orientation;
 
-	const int row = texnum / (texSizeX / iconSizeX);
+	const int row = texnum       / (texSizeX / iconSizeX);
 	const int col = texnum - row * (texSizeX / iconSizeX);
 
 	texcoords.x = (float(iconSizeX) / texSizeX) * col;
@@ -119,11 +119,10 @@ float2 CFarTextureHandler::GetTextureCoords(const int farTextureNum, const int o
 
 bool CFarTextureHandler::HaveFarIcon(const CSolidObject* obj) const
 {
-	return (
-		   (cache.size() > obj->team)
-		&& (cache[obj->team].size() > obj->model->id)
-		&& (cache[obj->team][obj->model->id] != 0)
-	);
+	const int  teamID = obj->team;
+	const int modelID = obj->model->id;
+
+	return ((cache.size() > teamID) && (cache[teamID].size() > modelID) && (cache[teamID][modelID] != 0));
 }
 
 
@@ -135,19 +134,17 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	const S3DModel* model = obj->model;
 
 	// make space in the std::vectors
-	if (obj->team >= (int)cache.size()) {
+	if (obj->team >= (int)cache.size())
 		cache.resize(obj->team + 1);
-	}
-	if (model->id >= (int)cache[obj->team].size()) {
+
+	if (model->id >= (int)cache[obj->team].size())
 		cache[obj->team].resize(model->id + 1, 0);
-	}
 
 	cache[obj->team][model->id] = -1;
 
 	// enough free space in the atlas?
-	if (!CheckResizeAtlas()) {
+	if (!CheckResizeAtlas())
 		return;
-	}
 
 	// NOTE:
 	//    the icons are RTT'ed using a snapshot of the
@@ -172,11 +169,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	unitDrawer->PushModelRenderState(model);
 	unitDrawer->SetTeamColour(obj->team);
 
-	//const float xs = std::max(math::fabs(model->relMidPos.x + model->maxs.x), math::fabs(model->relMidPos.x + model->mins.x));
-	//const float ys = std::max(math::fabs(model->relMidPos.y + model->maxs.y), math::fabs(model->relMidPos.y + model->mins.y));
-	//const float zs = std::max(math::fabs(model->relMidPos.z + model->maxs.z), math::fabs(model->relMidPos.z + model->mins.z));
-	//const float modelradius = std::max(xs, std::max(ys, zs));*/
-	const float modelradius = 1.15f * model->radius;
+	const float modelRadius = model->GetDrawRadius();
 
 	// overwrite the matrices set by SetupOpaqueDrawing
 	//
@@ -185,7 +178,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
 		glLoadIdentity();
-		glOrtho(-modelradius, modelradius, -modelradius, modelradius, -modelradius, modelradius);
+		glOrtho(-modelRadius, modelRadius, -modelRadius, modelRadius, -modelRadius, modelRadius);
 		glRotatef(45.0f, 1.0f, 0.0f, 0.0f);
 		glScalef(-1.0f, 1.0f, 1.0f);
 
@@ -272,9 +265,8 @@ void CFarTextureHandler::Queue(const CSolidObject* obj)
 
 void CFarTextureHandler::Draw()
 {
-	if (queuedForRender.empty()) {
+	if (queuedForRender.empty())
 		return;
-	}
 
 	if (!fbo.IsValid()) {
 		queuedForRender.clear();
@@ -282,8 +274,7 @@ void CFarTextureHandler::Draw()
 	}
 
 	// create new far-icons
-	for (std::vector<const CSolidObject*>::iterator it = queuedForRender.begin(); it != queuedForRender.end(); ++it) {
-		const CSolidObject* obj = *it;
+	for (const CSolidObject* obj: queuedForRender) {
 		if (!HaveFarIcon(obj)) {
 			CreateFarTexture(obj);
 		}
@@ -304,8 +295,8 @@ void CFarTextureHandler::Draw()
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
 		va->EnlargeArrays(queuedForRender.size() * 4, 0, VA_SIZE_T);
-		for (std::vector<const CSolidObject*>::iterator it = queuedForRender.begin(); it != queuedForRender.end(); ++it) {
-			DrawFarTexture(*it, va);
+		for (const CSolidObject* obj: queuedForRender) {
+			DrawFarTexture(obj, va);
 		}
 
 		va->DrawArrayT(GL_QUADS);
