@@ -17,8 +17,10 @@
   uniform float shadowDensity;
 #endif
 
-  // for opaque passes, tc.a contains a distance fading factor and alphaPass=0.0
-  // for alpha passes, tc.a contains one of alphaValues.xyzw and alphaPass=1.0
+  // in opaque passes tc.a is always 1.0 [all objects], and alphaPass is 0.0
+  // in alpha passes tc.a is either one of alphaValues.xyzw [for units] *or*
+  // contains a distance fading factor [for features], and alphaPass is 1.0
+  // texture alpha-masking is done in both passes
   uniform vec4 teamColor;
   uniform float alphaPass;
 
@@ -129,7 +131,7 @@ void main(void)
 	gl_FragData[GBUFFER_MISCTEX_IDX] = vec4(0.0, 0.0, 0.0, 0.0);
 	#else
 	gl_FragColor.rgb = mix(gl_Fog.color.rgb, gl_FragColor.rgb, fogFactor); // fog
-	gl_FragColor.a   = mix(extraColor.a * teamColor.a, teamColor.a, alphaPass);
+	gl_FragColor.a   = extraColor.a * teamColor.a; // apply one-bit mask
 	#endif
 }
 
