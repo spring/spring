@@ -810,7 +810,8 @@ void CDynWater::DrawHeightTex()
 }
 
 
-
+// ((40*2*2)*(2<<5))>>1 == WF_SIZE
+#define LOD_SIZE_FACT (40*2*2)
 #define WSQUARE_SIZE W_SIZE
 
 static CVertexArray* va;
@@ -822,7 +823,6 @@ static inline void DrawVertexAQ(int x, int y)
 
 void CDynWater::DrawWaterSurface()
 {
-	int viewRadius = 40;
 	bool inStrip = false;
 
 	va = GetVertexArray();
@@ -845,26 +845,27 @@ void CDynWater::DrawWaterSurface()
 
 		cx = (cx / lod) * lod;
 		cy = (cy / lod) * lod;
-		int hlod = lod >> 1;
-		int ysquaremod = (cy % (2 * lod)) / lod;
-		int xsquaremod = (cx % (2 * lod)) / lod;
 
-		int minty = int(camPosBig2.z/WSQUARE_SIZE - 512);
-		int maxty = int(camPosBig2.z/WSQUARE_SIZE + 512);
-		int mintx = int(camPosBig2.x/WSQUARE_SIZE - 512);
-		int maxtx = int(camPosBig2.x/WSQUARE_SIZE + 512);
+		const int hlod = lod >> 1;
+		const int ysquaremod = (cy % (2 * lod)) / lod;
+		const int xsquaremod = (cx % (2 * lod)) / lod;
 
-		int minly = cy + (-viewRadius + 2 - ysquaremod) * lod;
-		int maxly = cy + ( viewRadius     - ysquaremod) * lod;
-		int minlx = cx + (-viewRadius + 2 - xsquaremod) * lod;
-		int maxlx = cx + ( viewRadius     - xsquaremod) * lod;
+		const int minty = int(camPosBig2.z / WSQUARE_SIZE - 512);
+		const int maxty = int(camPosBig2.z / WSQUARE_SIZE + 512);
+		const int mintx = int(camPosBig2.x / WSQUARE_SIZE - 512);
+		const int maxtx = int(camPosBig2.x / WSQUARE_SIZE + 512);
 
-		int xstart = std::max(minlx, mintx);
-		int xend   = std::min(maxlx, maxtx);
-		int ystart = std::max(minly, minty);
-		int yend   = std::min(maxly, maxty);
+		const int minly = cy + (-LOD_SIZE_FACT + 2 - ysquaremod) * lod;
+		const int maxly = cy + ( LOD_SIZE_FACT     - ysquaremod) * lod;
+		const int minlx = cx + (-LOD_SIZE_FACT + 2 - xsquaremod) * lod;
+		const int maxlx = cx + ( LOD_SIZE_FACT     - xsquaremod) * lod;
 
-		int vrhlod = viewRadius * hlod;
+		const int xstart = std::max(minlx, mintx);
+		const int xend   = std::min(maxlx, maxtx);
+		const int ystart = std::max(minly, minty);
+		const int yend   = std::min(maxly, maxty);
+
+		const int vrhlod = LOD_SIZE_FACT * hlod;
 
 		// TODO: split drawing from (duplicated) GridVisibility code below
 		for (int y = ystart; y < yend; y += lod) {
