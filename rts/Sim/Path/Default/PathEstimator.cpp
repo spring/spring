@@ -358,11 +358,10 @@ void CPathEstimator::CalculateVertex(
 	// keep search exactly contained within the two blocks
 	CRectangularSearchConstraint pfDef(startPos, goalPos, BLOCK_SIZE);
 
-	// we never want to allow searches from
-	// any blocked starting positions (otherwise PE and PF can disagree)
+	// we never want to allow searches from any blocked starting positions
+	// (otherwise PE and PF can disagree), but are more lenient for normal
+	// searches so players can "unstuck" units
 	// note: PE itself should ensure this never happens to begin with?
-	//
-	// be more lenient for normal searches so players can "unstuck" units
 	//
 	// blocked goal positions are always early-outs (no searching needed)
 	const bool strtBlocked = ((CMoveMath::IsBlocked(moveDef, startPos, nullptr) & CMoveMath::BLOCK_STRUCTURE) != 0);

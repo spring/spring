@@ -104,6 +104,9 @@ CRectangularSearchConstraint::CRectangularSearchConstraint(
 	unsigned int blockSize
 ): CPathFinderDef(goalPos, 0.0f, startPos.SqDistance2D(goalPos))
 {
+	// construct the rectangular areas containing {start,goal}Pos
+	// (nodes are constrained to these when a PE uses the max-res
+	// PF to cache costs)
 	unsigned int startBlockX = startPos.x / SQUARE_SIZE;
 	unsigned int startBlockZ = startPos.z / SQUARE_SIZE;
 	unsigned int  goalBlockX =  goalPos.x / SQUARE_SIZE;

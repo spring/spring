@@ -116,18 +116,18 @@ void CPathFinder::TestNeighborSquares(
 		return;
 	}
 
-	//
 	struct SqState {
-		SqState() : blockedState(CMoveMath::BLOCK_NONE), speedMod(0.f) {}
+		SqState() : blockedState(CMoveMath::BLOCK_NONE), speedMod(0.0f), inSearch(false) {}
 		CMoveMath::BlockType blockedState;
 		float speedMod;
+		bool inSearch;
 	};
+
 	SqState ngbStates[PATH_DIRECTIONS];
 
 	// precompute structure-blocked for all neighbors
 	for (unsigned int dir = 0; dir < PATH_DIRECTIONS; dir++) {
 		const int2 ngbSquareCoors = square->nodePos + PF_DIRECTION_VECTORS_2D[ PathDir2PathOpt(dir) ];
-		SqState& sqState = ngbStates[dir];
 
 		if ((unsigned)ngbSquareCoors.x >= nbrOfBlocks.x || (unsigned)ngbSquareCoors.y >= nbrOfBlocks.y)
 			continue;
@@ -136,7 +136,9 @@ void CPathFinder::TestNeighborSquares(
 			continue;
 
 		// very time expensive call
+		SqState& sqState = ngbStates[dir];
 		sqState.blockedState = CMoveMath::IsBlockedNoSpeedModCheck(moveDef, ngbSquareCoors.x, ngbSquareCoors.y, owner);
+
 		if (sqState.blockedState & CMoveMath::BLOCK_STRUCTURE) {
 			blockStates.nodeMask[square->nodeNum] |= PATHOPT_CLOSED;
 			dirtyBlocks.push_back(square->nodeNum);
@@ -150,20 +152,21 @@ void CPathFinder::TestNeighborSquares(
 		} else {
 			sqState.speedMod = CMoveMath::GetPosSpeedMod(moveDef, ngbSquareCoors.x, ngbSquareCoors.y);
 		}
-		if (sqState.speedMod == 0.f) {
+
+		if (sqState.speedMod == 0.0f) {
 			blockStates.nodeMask[square->nodeNum] |= PATHOPT_CLOSED;
 			dirtyBlocks.push_back(square->nodeNum);
+		} else {
+			sqState.inSearch = pfDef.WithinConstraints(ngbSquareCoors.x, ngbSquareCoors.y);
 		}
 	}
 
-	const auto CAN_TEST_SQUARE = [&](const int dir) {
-		const SqState& sqState = ngbStates[dir];
-		return (sqState.speedMod != 0.0f);
-	};
+	const auto CAN_TEST_SQUARE_SM = [&](const int dir) { return (ngbStates[dir].speedMod != 0.0f); };
+	const auto CAN_TEST_SQUARE_IS = [&](const int dir) { return (ngbStates[dir].inSearch); };
 
 	// first test squares along the cardinal directions
 	for (unsigned int dir: PATHDIR_CARDINALS) {
-		if (!CAN_TEST_SQUARE(dir))
+		if (!CAN_TEST_SQUARE_SM(dir))
 			continue;
 
 		const SqState& sqState = ngbStates[dir];
@@ -171,15 +174,35 @@ void CPathFinder::TestNeighborSquares(
 		TestBlock(moveDef, pfDef, square, owner, opt, sqState.blockedState, sqState.speedMod);
 	}
 
-
 	// next test the diagonal squares
+	//
+	// don't search diagonally if there is a blocking object
+	// (or blocking terrain!) in one of the two side squares
+	// e.g. do not consider the edge (p, q) passable if X is
+	// impassable in this situation:
+	//   +---+---+
+	//   | X | q |
+	//   +---+---+
+	//   | p | X |
+	//   +---+---+
+	//
+	// *** IMPORTANT ***
+	//
+	// if either side-square is merely outside the constrained
+	// area but the diagonal square is not, we do consider the
+	// edge passable since we still need to be able to jump to
+	// diagonally adjacent PE-blocks!
+	//
 	const auto TEST_DIAG_SQUARE = [&](const int BASE_DIR_X, const int BASE_DIR_Y, const int BASE_DIR_XY) {
-		if (CAN_TEST_SQUARE(BASE_DIR_XY) && (CAN_TEST_SQUARE(BASE_DIR_X) && CAN_TEST_SQUARE(BASE_DIR_Y))) {
-			const auto ngbOpt = PathDir2PathOpt(BASE_DIR_XY);
-			const SqState& sqState = ngbStates[BASE_DIR_XY];
-			TestBlock(moveDef, pfDef, square, owner, ngbOpt, sqState.blockedState, sqState.speedMod);
+		if (CAN_TEST_SQUARE_SM(BASE_DIR_XY) && (CAN_TEST_SQUARE_SM(BASE_DIR_X) && CAN_TEST_SQUARE_SM(BASE_DIR_Y))) {
+			if (CAN_TEST_SQUARE_IS(BASE_DIR_XY) || (CAN_TEST_SQUARE_IS(BASE_DIR_X) && CAN_TEST_SQUARE_IS(BASE_DIR_Y))) {
+				const unsigned int ngbOpt = PathDir2PathOpt(BASE_DIR_XY);
+				const SqState& sqState = ngbStates[BASE_DIR_XY];
+				TestBlock(moveDef, pfDef, square, owner, ngbOpt, sqState.blockedState, sqState.speedMod);
+			}
 		}
 	};
+
 	TEST_DIAG_SQUARE(PATHDIR_LEFT,  PATHDIR_UP,   PATHDIR_LEFT_UP   );
 	TEST_DIAG_SQUARE(PATHDIR_RIGHT, PATHDIR_UP,   PATHDIR_RIGHT_UP  );
 	TEST_DIAG_SQUARE(PATHDIR_LEFT,  PATHDIR_DOWN, PATHDIR_LEFT_DOWN );
