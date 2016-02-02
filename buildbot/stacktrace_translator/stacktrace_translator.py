@@ -424,7 +424,12 @@ def translate_stacktrace(infolog, dbgsymdir = None):
 		raise FatalError('unhandled exception')
 
 	log.info('----- End of translation process -----')
-	return translated_stacktrace
+	return  {
+			"config": config,
+			"branch": branch,
+			"rev" : rev,
+			"stacktrace": translated_stacktrace,
+		}
 
 
 def run_xmlrpc_server():
