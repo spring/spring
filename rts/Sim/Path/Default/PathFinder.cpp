@@ -128,11 +128,12 @@ void CPathFinder::TestNeighborSquares(
 	// precompute structure-blocked for all neighbors
 	for (unsigned int dir = 0; dir < PATH_DIRECTIONS; dir++) {
 		const int2 ngbSquareCoors = square->nodePos + PF_DIRECTION_VECTORS_2D[ PathDir2PathOpt(dir) ];
+		const int ngbSquareIdx = BlockPosToIdx(ngbSquareCoors);
 
 		if ((unsigned)ngbSquareCoors.x >= nbrOfBlocks.x || (unsigned)ngbSquareCoors.y >= nbrOfBlocks.y)
 			continue;
 
-		if (blockStates.nodeMask[BlockPosToIdx(ngbSquareCoors)] & (PATHOPT_CLOSED | PATHOPT_BLOCKED)) //FIXME
+		if (blockStates.nodeMask[ngbSquareIdx] & (PATHOPT_CLOSED | PATHOPT_BLOCKED)) //FIXME
 			continue;
 
 		// very time expensive call
@@ -140,8 +141,8 @@ void CPathFinder::TestNeighborSquares(
 		sqState.blockedState = CMoveMath::IsBlockedNoSpeedModCheck(moveDef, ngbSquareCoors.x, ngbSquareCoors.y, owner);
 
 		if (sqState.blockedState & CMoveMath::BLOCK_STRUCTURE) {
-			blockStates.nodeMask[square->nodeNum] |= PATHOPT_CLOSED;
-			dirtyBlocks.push_back(square->nodeNum);
+			blockStates.nodeMask[ngbSquareIdx] |= PATHOPT_CLOSED;
+			dirtyBlocks.push_back(ngbSquareIdx);
 			continue; // early-out (20% chance)
 		}
 
@@ -151,12 +152,14 @@ void CPathFinder::TestNeighborSquares(
 			sqState.speedMod = CMoveMath::GetPosSpeedMod(moveDef, ngbSquareCoors.x, ngbSquareCoors.y, PF_DIRECTION_VECTORS_3D[ PathDir2PathOpt(dir) ]);
 		} else {
 			sqState.speedMod = CMoveMath::GetPosSpeedMod(moveDef, ngbSquareCoors.x, ngbSquareCoors.y);
+			// only close node if we're dirIndependent
+			// otherwise, it's possible we'll be able to enter it from another direction.
+			if (sqState.speedMod == 0.0f) {
+				blockStates.nodeMask[ngbSquareIdx] |= PATHOPT_CLOSED;
+				dirtyBlocks.push_back(ngbSquareIdx);
+			}
 		}
-
-		if (sqState.speedMod == 0.0f) {
-			blockStates.nodeMask[square->nodeNum] |= PATHOPT_CLOSED;
-			dirtyBlocks.push_back(square->nodeNum);
-		} else {
+		if (sqState.speedMod != 0.0f) {
 			sqState.inSearch = pfDef.WithinConstraints(ngbSquareCoors.x, ngbSquareCoors.y);
 		}
 	}
