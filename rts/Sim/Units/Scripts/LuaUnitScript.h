@@ -31,11 +31,11 @@ private:
 	bool inKilled;
 
 protected:
-	virtual void ShowScriptError(const std::string& msg);
+	void ShowScriptError(const std::string& msg);
 
 	// only called from CreateScript, instance can not be created from C++
 	CLuaUnitScript(lua_State* L, CUnit* unit);
-	~CLuaUnitScript();
+	virtual ~CLuaUnitScript();
 
 	int UpdateCallIn();
 	void UpdateCallIn(const std::string& fname, int ref);
@@ -65,53 +65,59 @@ public:
 	// takes LUAFN_* constant as argument
 	bool HasFunction(int id) const { return scriptIndex[id] >= 0; }
 
-	virtual bool HasBlockShot(int weaponNum) const;
-	virtual bool HasTargetWeight(int weaponNum) const;
+	bool HasBlockShot(int weaponNum) const override;
+	bool HasTargetWeight(int weaponNum) const override;
 
 	// callins, called throughout sim
-	virtual void RawCall(int functionId);
-	virtual void Create();
-	virtual void Killed();
-	virtual void WindChanged(float heading, float speed);
-	virtual void ExtractionRateChanged(float speed);
-	virtual void RockUnit(const float3& rockDir);
-	virtual void HitByWeapon(const float3& hitDir, int weaponDefId, float& inout_damage);
-	virtual void SetSFXOccupy(int curTerrainType);
-	virtual void QueryLandingPads(std::vector<int>& out_pieces);
-	virtual void BeginTransport(const CUnit* unit);
-	virtual int  QueryTransport(const CUnit* unit);
-	virtual void TransportPickup(const CUnit* unit);
-	virtual void TransportDrop(const CUnit* unit, const float3& pos);
-	virtual void StartBuilding(float heading, float pitch);
-	virtual int  QueryNanoPiece();
-	virtual int  QueryBuildInfo();
+	void RawCall(int functionId) override;
+	void Create() override;
+	void Killed() override;
+	void WindChanged(float heading, float speed) override;
+	void ExtractionRateChanged(float speed) override;
+	void WorldRockUnit(const float3& rockDir) override {
+		RockUnit(WorldToUnitDir(rockDir, 1.0f));
+	}
+	void RockUnit(const float3& rockDir) override;
+	void WorldHitByWeapon(const float3& hitDir, int weaponDefId, float& inoutDamage) override {
+		HitByWeapon(WorldToUnitDir(hitDir, 1.0f), weaponDefId, inoutDamage);
+	}
+	void HitByWeapon(const float3& hitDir, int weaponDefId, float& inoutDamage) override;
+	void SetSFXOccupy(int curTerrainType) override;
+	void QueryLandingPads(std::vector<int>& out_pieces) override;
+	void BeginTransport(const CUnit* unit) override;
+	int  QueryTransport(const CUnit* unit) override;
+	void TransportPickup(const CUnit* unit) override;
+	void TransportDrop(const CUnit* unit, const float3& pos) override;
+	void StartBuilding(float heading, float pitch) override;
+	int  QueryNanoPiece() override;
+	int  QueryBuildInfo() override;
 
-	virtual void Destroy();
-	virtual void StartMoving(bool reversing);
-	virtual void StopMoving();
-	virtual void StartUnload();
-	virtual void EndTransport();
-	virtual void StartBuilding();
-	virtual void StopBuilding();
-	virtual void Falling();
-	virtual void Landed();
-	virtual void Activate();
-	virtual void Deactivate();
-	virtual void MoveRate(int curRate);
-	virtual void FireWeapon(int weaponNum);
-	virtual void EndBurst(int weaponNum);
+	void Destroy() override;
+	void StartMoving(bool reversing) override;
+	void StopMoving() override;
+	void StartUnload() override;
+	void EndTransport() override;
+	void StartBuilding() override;
+	void StopBuilding() override;
+	void Falling() override;
+	void Landed() override;
+	void Activate() override;
+	void Deactivate() override;
+	void MoveRate(int curRate) override;
+	void FireWeapon(int weaponNum) override;
+	void EndBurst(int weaponNum) override;
 
 	// weapon callins
-	virtual int   QueryWeapon(int weaponNum);
-	virtual void  AimWeapon(int weaponNum, float heading, float pitch);
-	virtual void  AimShieldWeapon(CPlasmaRepulser* weapon);
-	virtual int   AimFromWeapon(int weaponNum);
-	virtual void  Shot(int weaponNum);
-	virtual bool  BlockShot(int weaponNum, const CUnit* targetUnit, bool userTarget);
-	virtual float TargetWeight(int weaponNum, const CUnit* targetUnit);
+	int   QueryWeapon(int weaponNum) override;
+	void  AimWeapon(int weaponNum, float heading, float pitch) override;
+	void  AimShieldWeapon(CPlasmaRepulser* weapon) override;
+	int   AimFromWeapon(int weaponNum) override;
+	void  Shot(int weaponNum) override;
+	bool  BlockShot(int weaponNum, const CUnit* targetUnit, bool userTarget) override;
+	float TargetWeight(int weaponNum, const CUnit* targetUnit) override;
 
 	// special callin to allow Lua to resume threads blocking on this anim
-	virtual void AnimFinished(AnimType type, int piece, int axis);
+	void AnimFinished(AnimType type, int piece, int axis) override;
 
 public:
 	static void HandleFreed(CLuaHandle* handle);

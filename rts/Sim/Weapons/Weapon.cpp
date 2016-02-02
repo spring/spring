@@ -511,8 +511,7 @@ void CWeapon::UpdateSalvo()
 
 	// Rock the unit in the direction of fire
 	if (owner->script->HasRockUnit()) {
-		const float3 rockDir = (-wantedDir).SafeNormalize2D();
-		owner->script->RockUnit(rockDir);
+		owner->script->WorldRockUnit((-wantedDir).SafeNormalize2D());
 	}
 
 	const bool searchForNewTarget = (salvoLeft == 0) && (currentTarget == owner->curTarget);

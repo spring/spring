@@ -236,47 +236,41 @@ void CCobInstance::ExtractionRateChanged(float speed)
 
 void CCobInstance::RockUnit(const float3& rockDir)
 {
+	const float3 unitRockDir = WorldToUnitDir(rockDir, 500.0f);
+
 	vector<int> args;
 	args.reserve(2);
-	args.push_back((int)(500 * rockDir.z));
-	args.push_back((int)(500 * rockDir.x));
+	args.push_back(unitRockDir.z);
+	args.push_back(unitRockDir.x);
+
 	Call(COBFN_RockUnit, args);
 }
 
-#if 0
-// ugly hack to get return value of HitByWeaponId script
-//
-static float weaponHitMod; ///< fraction of weapondamage to use when hit by weapon
-static void hitByWeaponIdCallback(int retCode, void* p1, void* p2) { weaponHitMod = retCode * 0.01f; }
-#else
+
 static void hitByWeaponIdCallback(int retCode, void* p1, void* p2) {
 	*(reinterpret_cast<float*>(p1)) = (retCode * 0.01f);
 }
-#endif
 
-
-void CCobInstance::HitByWeapon(const float3& hitDir, int weaponDefId, float& inout_damage)
+void CCobInstance::HitByWeapon(const float3& hitDir, int weaponDefId, float& inoutDamage)
 {
 	vector<int> args;
 	args.reserve(4);
-
-	args.push_back((int)(500 * hitDir.z));
-	args.push_back((int)(500 * hitDir.x));
+	args.push_back(hitDir.z);
+	args.push_back(hitDir.x);
 
 	if (HasFunction(COBFN_HitByWeaponId)) {
 		const WeaponDef* wd = weaponDefHandler->GetWeaponDefByID(weaponDefId);
 
-		args.push_back((wd != NULL)? wd->tdfId : -1);
-		args.push_back((int)(100 * inout_damage));
+		args.push_back((wd != nullptr)? wd->tdfId : -1);
+		args.push_back((int)(100 * inoutDamage));
 
 		float weaponHitMod = 1.0f;
 
 		// pass weaponHitMod as argument <p1> for callback
-		Call(COBFN_HitByWeaponId, args, hitByWeaponIdCallback, &weaponHitMod, NULL);
+		Call(COBFN_HitByWeaponId, args, hitByWeaponIdCallback, &weaponHitMod, nullptr);
 
-		inout_damage *= weaponHitMod;
-	}
-	else {
+		inoutDamage *= weaponHitMod;
+	} else {
 		Call(COBFN_HitByWeapon, args);
 	}
 }

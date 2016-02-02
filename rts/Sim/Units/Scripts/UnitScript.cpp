@@ -1651,6 +1651,16 @@ int CUnitScript::ModelToScript(int lmodelPieceNum) const {
 	return (lmp->GetScriptPieceIndex());
 }
 
+float3 CUnitScript::WorldToUnitDir(const float3& wdir, float mult) const {
+	float3 udir;
+	const float c = math::cos(unit->heading * TAANG2RAD);
+	const float s = math::sin(unit->heading * TAANG2RAD);
+	// FIXME: maybe we want dir.y too to be future proof?
+	udir.x = (c * wdir.x - s * wdir.z) * mult;
+	udir.z = (s * wdir.x + c * wdir.z) * mult;
+	return udir;
+}
+
 void CUnitScript::ShowUnitScriptError(const std::string& error)
 {
 	ShowScriptError(unit ? error + std::string(" ") + IntToString(unit->id) + std::string(" of type ") + unit->unitDef->name
