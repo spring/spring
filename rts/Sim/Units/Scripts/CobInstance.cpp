@@ -236,8 +236,6 @@ void CCobInstance::ExtractionRateChanged(float speed)
 
 void CCobInstance::RockUnit(const float3& rockDir)
 {
-	const float3 unitRockDir = WorldToUnitDir(rockDir, 500.0f);
-
 	vector<int> args;
 	args.reserve(2);
 	args.push_back(rockDir.z);
