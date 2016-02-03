@@ -585,7 +585,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	glEnable(GL_TEXTURE_2D);
 	glDepthMask(GL_TRUE);
 
-	ISky::SetupFog();
+	sky->SetupFog();
 
 	zSortedProjectiles.clear();
 	unsortedProjectiles.clear();
@@ -787,7 +787,7 @@ void CProjectileDrawer::DrawGroundFlashes()
 
 	CGroundFlash::va->DrawArrayTC(GL_QUADS);
 
-	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
+	glFogfv(GL_FOG_COLOR, sky->fogColor);
 	glDisable(GL_POLYGON_OFFSET_FILL);
 	glDisable(GL_ALPHA_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

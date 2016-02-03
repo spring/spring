@@ -466,9 +466,9 @@ void CDecalsDrawerGL4::CreateStructureVBOs()
 		uboGroundLightingData->diffuseColor  = sunLighting->groundSunColor      * CGlobalRendering::SMF_INTENSITY_MULT;
 		uboGroundLightingData->specularColor = sunLighting->groundSpecularColor * CGlobalRendering::SMF_INTENSITY_MULT;
 		uboGroundLightingData->dir           = mapInfo->light.sunDir;
-		uboGroundLightingData->fogColor      = mapInfo->atmosphere.fogColor;
-		uboGroundLightingData->fogEnd        = globalRendering->viewRange * mapInfo->atmosphere.fogEnd;
-		uboGroundLightingData->fogScale      = 1.0f / (globalRendering->viewRange * (mapInfo->atmosphere.fogEnd - mapInfo->atmosphere.fogStart));
+		uboGroundLightingData->fogColor      = sky->fogColor;
+		uboGroundLightingData->fogEnd        = globalRendering->viewRange * sky->fogEnd;
+		uboGroundLightingData->fogScale      = 1.0f / (globalRendering->viewRange * (sky->fogEnd - sky->fogStart));
 		uboGroundLighting.UnmapBuffer();
 	glUniformBlockBinding(decalShader->GetObjID(), uniformBlockIndex, 5);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 5, uboGroundLighting.GetId());

@@ -164,9 +164,9 @@ void CSMFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
 	va->Initialize();
 
 	const unsigned char fogColor[4] = {
-		(unsigned char)(255 * mapInfo->atmosphere.fogColor[0]),
-		(unsigned char)(255 * mapInfo->atmosphere.fogColor[1]),
-		(unsigned char)(255 * mapInfo->atmosphere.fogColor[2]),
+		(unsigned char)(255 * sky->fogColor[0]),
+		(unsigned char)(255 * sky->fogColor[1]),
+		(unsigned char)(255 * sky->fogColor[2]),
 		 255
 	};
 

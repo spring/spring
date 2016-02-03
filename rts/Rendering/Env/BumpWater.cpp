@@ -1166,7 +1166,7 @@ void CBumpWater::DrawRefraction(CGame* game)
 	camera->Update();
 
 	glViewport(0, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
-	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0);
+	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glDisable(GL_FOG); // fog has overground settings, if at all we should add special underwater settings
 
@@ -1218,7 +1218,7 @@ void CBumpWater::DrawReflection(CGame* game)
 {
 	reflectFBO.Bind();
 
-	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0.0f);
+	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	const double clipPlaneEq[4] = {0.0, 1.0, 0.0, 0.0};

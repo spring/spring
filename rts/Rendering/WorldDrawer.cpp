@@ -138,7 +138,7 @@ void CWorldDrawer::LoadPost() const
 	water = IWater::GetWater(NULL, -1);
 
 	SetupUnitLightFFP();
-	ISky::SetupFog();
+	sky->SetupFog();
 }
 
 
@@ -229,7 +229,7 @@ void CWorldDrawer::Draw() const
 	SCOPED_TIMER("WorldDrawer::Total");
 
 
-	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0.0f);
+	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 	glDepthMask(GL_TRUE);

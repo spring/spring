@@ -91,7 +91,7 @@ void CBasicWater::Draw()
 		return;
 
 	glPushAttrib(GL_FOG_BIT);
-	ISky::SetupFog();
+	sky->SetupFog();
 	glCallList(displistID);
 	glPopAttrib();
 }

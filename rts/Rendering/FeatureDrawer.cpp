@@ -268,7 +268,7 @@ inline void CFeatureDrawer::UpdateDrawPos(CFeature* f)
 
 void CFeatureDrawer::Draw()
 {
-	ISky::SetupFog();
+	sky->SetupFog();
 
 	if (infoTextureHandler->IsEnabled()) {
 		glActiveTextureARB(GL_TEXTURE2_ARB);
@@ -485,7 +485,7 @@ void CFeatureDrawer::DrawAlphaPass()
 		glPushAttrib(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glDepthMask(GL_TRUE);
 
-		ISky::SetupFog();
+		sky->SetupFog();
 
 		// needed for now; not always called directly after Draw()
 		GetVisibleFeatures(CCamera::GetActiveCamera(), 0, true);

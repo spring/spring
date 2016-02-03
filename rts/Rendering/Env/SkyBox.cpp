@@ -36,11 +36,6 @@ CSkyBox::CSkyBox(const std::string& texture)
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	}
 #endif
-	cloudDensity = mapInfo->atmosphere.cloudDensity;
-	cloudColor = mapInfo->atmosphere.cloudColor;
-	skyColor = mapInfo->atmosphere.skyColor;
-	sunColor = mapInfo->atmosphere.sunColor;
-	fogStart = mapInfo->atmosphere.fogStart;
 	globalRendering->drawFog = (fogStart <= 0.99f);
 }
 
@@ -104,5 +99,5 @@ void CSkyBox::Draw()
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 
-	ISky::SetupFog();
+	sky->SetupFog();
 }

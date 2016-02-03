@@ -25,6 +25,7 @@ Lua:
    deprecate *Defs[i].modelname, use *Defs[i].model.path instead
  ! Game.groundAmbientColor, Game.groundSpecularColor and Game.groundSunColor
    are no longer available, use gl.GetSun() instead with appropriate parameters
+ ! Game.fogColor constant is no longer available
  ! GameID callin now gets the ID string encoded in hex.
  ! Weapons with tracking will use a radar dot position unless
    Spring.SetProjectileIgnoreTrackingError(projID, bool ignore) is called.
@@ -113,12 +114,20 @@ Lua:
  - add unsynced callout SetSkyBoxTexture(string texName) -> nil
    example usage: Spring.SetSkyBoxTexture("myskybox.dds")
 
- - add unsynced callout SetSunLighting(table params) -> nil
+ - add unsynced callout Spring.SetSunLighting(table params) -> nil
    It can be used to modify the following sun lighting parameters:
    {ground,unit}{Ambient,Sun,Specular}Color and specularExponent
    example usage: Spring.SetSunLighting({
     groundAmbientColor = {1, 0.1, 1},
     groundSunColor     = {1, 0.1, 1},
+   })
+ - add unsynced callout Spring.SetAtmosphere(table params) -> nil
+   It can be used to modify the following atmosphere parameters:
+   fog{Start,End}, {sun,sky,cloud}Color
+   example usage: Spring.SetAtmosphere({
+     fogStart = 0,
+	 fogEnd   = 0.5,
+	 fogColor = { 0.7, 0.2, 0.2, 1 },
    })
 
  - add unsynced callout Spring.SetMapShadingTexture(string texType, string texName) -> boolean

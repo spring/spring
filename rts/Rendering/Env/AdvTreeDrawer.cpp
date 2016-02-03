@@ -467,7 +467,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 	glEnable(GL_ALPHA_TEST);
 	glEnable(GL_TEXTURE_2D);
 
-	ISky::SetupFog();
+	sky->SetupFog();
 
 	if (shadowHandler->shadowsLoaded) {
 		glActiveTexture(GL_TEXTURE1);

@@ -20,9 +20,15 @@ ISky* sky = NULL;
 ISky::ISky()
 	: wireframe(false)
 	, dynamicSky(false)
-	, fogStart(0.0f)
+	, fogStart(mapInfo->atmosphere.fogStart)
+	, fogEnd(mapInfo->atmosphere.fogEnd)
+	, fogColor(mapInfo->atmosphere.fogColor)
+	, cloudDensity(mapInfo->atmosphere.cloudDensity)
+	, cloudColor(mapInfo->atmosphere.cloudColor)
+	, skyColor(mapInfo->atmosphere.skyColor)
+	, sunColor(mapInfo->atmosphere.sunColor)
 	, skyLight(NULL)
-	, cloudDensity(0.0f)
+// 	, cloudDensity(0.0f)
 {
 	SetLight(configHandler->GetBool("DynamicSun"));
 }
@@ -42,10 +48,10 @@ void ISky::SetupFog() {
 		glDisable(GL_FOG);
 	}
 
-	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
+	glFogfv(GL_FOG_COLOR, fogColor);
 	glFogi(GL_FOG_MODE,   GL_LINEAR);
-	glFogf(GL_FOG_START,  globalRendering->viewRange * mapInfo->atmosphere.fogStart);
-	glFogf(GL_FOG_END,    globalRendering->viewRange * mapInfo->atmosphere.fogEnd);
+	glFogf(GL_FOG_START,  globalRendering->viewRange * fogStart);
+	glFogf(GL_FOG_END,    globalRendering->viewRange * fogEnd);
 	glFogf(GL_FOG_DENSITY, 1.0f);
 }
 

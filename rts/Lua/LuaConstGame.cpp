@@ -111,8 +111,6 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "waterFresnelPower",   mapInfo->water.fresnelPower);
 	LuaPushNamedNumber(L, "waterReflectionDistortion", mapInfo->water.reflDistortion);
 
-	LuaPushNamedColor(L,  "fogColor",            mapInfo->atmosphere.fogColor);
-
 	const vector<string>& causticTexs = mapInfo->water.causticTextures;
 	lua_pushliteral(L, "waterCausticTextures");
 	lua_newtable(L);

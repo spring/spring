@@ -352,7 +352,7 @@ void CUnitDrawer::Update()
 
 void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 {
-	ISky::SetupFog();
+	sky->SetupFog();
 
 	camNorm = camera->GetDir();
 	camNorm.y = -0.1f;

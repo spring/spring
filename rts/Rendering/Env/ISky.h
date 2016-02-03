@@ -37,7 +37,7 @@ public:
 	 * Sets up OpenGL to draw fog or not, according to the value of
 	 * globalRendering->drawFog.
 	 */
-	static void SetupFog();
+	void SetupFog();
 
 public:
 	bool wireframe;
@@ -45,17 +45,20 @@ public:
 
 	float3 sundir1, sundir2; // (xvec, yvec) TODO: move these to SkyLight
 	float3 modSunDir;
+
 	float3 skyColor;
 	float3 sunColor;
 	float3 cloudColor;
+	float4 fogColor;
+
 	float fogStart;
+	float fogEnd;
+	float cloudDensity;
 
 protected:
 	ISky();
 
 	ISkyLight* skyLight;
-
-	float cloudDensity;
 };
 
 extern ISky* sky;

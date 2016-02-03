@@ -445,7 +445,7 @@ void CDynWater::DrawReflection(CGame* game)
 {
 	reflectFBO.Bind();
 
-	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 1.0f);
+	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	const double clipPlaneEq[4] = {0.0, 1.0, 0.0, 0.0};
@@ -514,7 +514,7 @@ void CDynWater::DrawRefraction(CGame* game)
 	refractFBO.Bind();
 	glViewport(0, 0, refractSize, refractSize);
 
-	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 1.0f);
+	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	const float3 oldsun = sunLighting->unitSunColor;
@@ -556,7 +556,7 @@ void CDynWater::DrawRefraction(CGame* game)
 	game->SetDrawMode(CGame::gameNormalDraw);
 
 	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
-	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 1);
+	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1);
 
 	sunLighting->unitSunColor = oldsun;
 	sunLighting->unitAmbientColor = oldambient;

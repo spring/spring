@@ -71,11 +71,8 @@ CBasicSky::CBasicSky()
 	InitSun();
 	UpdateSunDir();
 
+	// FIXME: why do this hack?
 	cloudDensity = 0.25f + mapInfo->atmosphere.cloudDensity * 0.5f;
-	cloudColor = mapInfo->atmosphere.cloudColor;
-	skyColor = mapInfo->atmosphere.skyColor;
-	sunColor = mapInfo->atmosphere.sunColor;
-	fogStart = mapInfo->atmosphere.fogStart;
 
 	if (fogStart > 0.99f)
 		globalRendering->drawFog = false; //FIXME wrong place?!
@@ -253,7 +250,7 @@ void CBasicSky::Draw()
 
 	glEnable(GL_DEPTH_TEST);
 
-	ISky::SetupFog();
+	sky->SetupFog();
 }
 
 float3 CBasicSky::GetCoord(int x, int y)

@@ -239,6 +239,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetBuildSpacing);
 	REGISTER_LUA_CFUNC(SetBuildFacing);
 
+	REGISTER_LUA_CFUNC(SetAtmosphere);
 	REGISTER_LUA_CFUNC(SetSunLighting);
 	REGISTER_LUA_CFUNC(SetSunParameters);
 	REGISTER_LUA_CFUNC(SetSunManualControl);
@@ -2809,6 +2810,53 @@ int LuaUnsyncedCtrl::SetBuildFacing(lua_State* L)
 }
 /******************************************************************************/
 /******************************************************************************/
+
+int LuaUnsyncedCtrl::SetAtmosphere(lua_State* L)
+{
+	if (!lua_istable(L, 1)) {
+		luaL_error(L, "Incorrect arguments to SetAtmosphere()");
+	}
+
+	for (lua_pushnil(L); lua_next(L, 1) != 0; lua_pop(L, 1)) {
+		if (!lua_israwstring(L, -2))
+			continue;
+
+		const string& key = lua_tostring(L, -2);
+
+		if (lua_istable(L, -1)) {
+			float4 color;
+			LuaUtils::ParseFloatArray(L, -1, &color[0], 4);
+
+			if (key == "fogColor") {
+				sky->fogColor = color;
+			} else if (key == "skyColor") {
+				sky->skyColor = color;
+			} else if (key == "skyDir") {
+// 				sky->skyDir = color;
+			} else if (key == "sunColor") {
+				sky->sunColor = color;
+			} else if (key == "cloudColor") {
+				sky->cloudColor = color;
+			} else {
+				luaL_error(L, "Unknown array key %s", key.c_str());
+			}
+			continue;
+		}
+
+		if (lua_isnumber(L, -1)) {
+			if (key == "fogStart") {
+				sky->fogStart = lua_tofloat(L, -1);
+			} else if (key == "fogEnd") {
+				sky->fogEnd = lua_tofloat(L, -1);
+			} else {
+				luaL_error(L, "Unknown scalar key %s", key.c_str());
+			}
+			continue;
+		}
+	}
+
+	return 0;
+}
 
 int LuaUnsyncedCtrl::SetSunLighting(lua_State* L)
 {
