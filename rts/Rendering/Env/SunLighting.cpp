@@ -55,7 +55,7 @@ void CSunLighting::Init() {
 	groundSpecularColor  = light.groundSpecularColor;
 
 	unitAmbientColor     = light.unitAmbientColor;
-	unitDiffuseColor         = light.unitDiffuseColor;
+	unitDiffuseColor     = light.unitDiffuseColor;
 	unitSpecularColor    = light.unitSpecularColor;
 
 	specularExponent     = light.specularExponent;
@@ -88,7 +88,7 @@ bool CSunLighting::SetValue(unsigned int keyHash, const float4 value) {
 		HsiehHash("groundSpecularColor", sizeof("groundSpecularColor") - 1, 0),
 
 		HsiehHash("unitAmbientColor",  sizeof("unitAmbientColor" ) - 1, 0),
-		HsiehHash("unitDiffuseColor",      sizeof("unitDiffuseColor"     ) - 1, 0),
+		HsiehHash("unitDiffuseColor",  sizeof("unitDiffuseColor" ) - 1, 0),
 		HsiehHash("unitSpecularColor", sizeof("unitSpecularColor") - 1, 0),
 
 		HsiehHash("specularExponent", sizeof("specularExponent") - 1, 0),
