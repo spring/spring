@@ -30,10 +30,6 @@ public:
 	virtual void Draw(const DrawPass::e& drawPass) = 0;
 	virtual void DrawShadowPass() {}
 
-	virtual void SetupBaseDrawPass() {}
-	virtual void SetupReflDrawPass() {}
-	virtual void SetupRefrDrawPass() {}
-
 	virtual void Update() = 0;
 	virtual void UpdateRenderState() = 0;
 

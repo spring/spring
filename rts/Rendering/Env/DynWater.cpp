@@ -471,11 +471,7 @@ void CDynWater::DrawReflection(CGame* game)
 
 			// opaque
 			sky->Draw();
-
-			CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-				gd->SetupReflDrawPass();
-				gd->Draw(DrawPass::WaterReflection);
-				gd->SetupBaseDrawPass();
+			readMap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
 
 			SetModelClippingPlane(clipPlaneEq);
 			unitDrawer->Draw(true);
@@ -517,26 +513,24 @@ void CDynWater::DrawRefraction(CGame* game)
 	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	const double clipPlaneEq[4] = {0.0, -1.0, 0.0, 0.0};
+
 	const float3 oldsun = sunLighting->unitDiffuseColor;
 	const float3 oldambient = sunLighting->unitAmbientColor;
 
 	sunLighting->unitDiffuseColor *= float3(0.5f, 0.7f, 0.9f);
 	sunLighting->unitAmbientColor *= float3(0.6f, 0.8f, 1.0f);
 
-	const double clipPlaneEq[4] = {0.0, -1.0, 0.0, 0.0};
-
-	glEnable(GL_CLIP_PLANE2);
-	glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
-
 	game->SetDrawMode(CGame::gameRefractionDraw);
 
 	{
 		drawRefraction = true;
 
-		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-			gd->SetupRefrDrawPass();
-			gd->Draw(DrawPass::WaterRefraction);
-			gd->SetupBaseDrawPass();
+		glEnable(GL_CLIP_PLANE2);
+		glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
+
+		sky->Draw();
+		readMap->GetGroundDrawer()->Draw(DrawPass::WaterRefraction);
 
 		SetModelClippingPlane(clipPlaneEq);
 		unitDrawer->Draw(false, true);

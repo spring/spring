@@ -1170,6 +1170,8 @@ void CBumpWater::DrawRefraction(CGame* game)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glDisable(GL_FOG); // fog has overground settings, if at all we should add special underwater settings
 
+	const double clipPlaneEq[4] = {0.0, -1.0, 0.0, 0.0};
+
 	const float3 oldsun = sunLighting->unitDiffuseColor;
 	const float3 oldambient = sunLighting->unitAmbientColor;
 
@@ -1180,8 +1182,6 @@ void CBumpWater::DrawRefraction(CGame* game)
 
 	{
 		drawRefraction = true;
-
-		const double clipPlaneEq[4] = {0.0, -1.0, 0.0, 0.0};
 
 		glEnable(GL_CLIP_PLANE2);
 		glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);

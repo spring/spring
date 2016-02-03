@@ -293,6 +293,7 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass, bool alphaT
 		}
 
 		smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass);
+		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(DrawPass::Normal);
 
 		geomBuffer.UnBind();
 	}
@@ -337,6 +338,7 @@ void CSMFGroundDrawer::DrawForwardPass(const DrawPass::e& drawPass, bool alphaTe
 		}
 
 		smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass);
+		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(DrawPass::Normal);
 	}
 }
 
@@ -482,10 +484,6 @@ void CSMFGroundDrawer::SetupBigSquare(const int bigSquareX, const int bigSquareY
 	groundTextures->BindSquareTexture(bigSquareX, bigSquareY);
 	smfRenderStates[RENDER_STATE_SEL]->SetSquareTexGen(bigSquareX, bigSquareY);
 }
-
-void CSMFGroundDrawer::SetupBaseDrawPass() { smfRenderStates[RENDER_STATE_SSP]->SetCurrentShader(DrawPass::Normal); }
-void CSMFGroundDrawer::SetupReflDrawPass() { smfRenderStates[RENDER_STATE_SSP]->SetCurrentShader(DrawPass::WaterReflection); }
-void CSMFGroundDrawer::SetupRefrDrawPass() { smfRenderStates[RENDER_STATE_SSP]->SetCurrentShader(DrawPass::WaterRefraction); }
 
 
 
