@@ -4474,9 +4474,6 @@ int LuaOpenGL::GetGlobalTexCoords(lua_State* L)
 
 int LuaOpenGL::GetShadowMapParams(lua_State* L)
 {
-	if (!shadowHandler) {
-		return 0;
-	}
 	lua_pushnumber(L, shadowHandler->GetShadowParams().x);
 	lua_pushnumber(L, shadowHandler->GetShadowParams().y);
 	lua_pushnumber(L, shadowHandler->GetShadowParams().z);
@@ -4501,9 +4498,6 @@ int LuaOpenGL::GetAtmosphere(lua_State* L)
 		lua_pushnumber(L, sky->GetLight()->GetLightDir().z);
 		return 3;
 	}
-
-	const bool unitMode = lua_israwstring(L, 2) &&
-	                      (strcmp(lua_tostring(L, 2), "unit") == 0);
 
 	const float3* data = NULL;
 
