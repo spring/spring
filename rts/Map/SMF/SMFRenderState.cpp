@@ -225,7 +225,7 @@ void SMFRenderStateGLSL::Update(
 			glslShaders[n]->SetUniform3v("cameraPos", &FwdVector[0]);
 
 			glslShaders[n]->SetUniform3v("groundAmbientColor",  &sunLighting->groundAmbientColor[0]);
-			glslShaders[n]->SetUniform3v("groundDiffuseColor",  &sunLighting->groundSunColor[0]);
+			glslShaders[n]->SetUniform3v("groundDiffuseColor",  &sunLighting->groundDiffuseColor[0]);
 			glslShaders[n]->SetUniform3v("groundSpecularColor", &sunLighting->groundSpecularColor[0]);
 			glslShaders[n]->SetUniform  ("groundShadowDensity", sky->GetLight()->GetGroundShadowDensity());
 
@@ -611,7 +611,7 @@ void SMFRenderStateGLSL::UpdateCurrentShaderSky(const ISkyLight* skyLight) const
 void SMFRenderStateGLSL::UpdateCurrentShaderSunLighting() const {
 	glslShaders[GLSL_SHADER_CURRENT]->Enable();
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundAmbientColor",  &sunLighting->groundAmbientColor[0]);
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundDiffuseColor",  &sunLighting->groundSunColor[0]);
+	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundDiffuseColor",  &sunLighting->groundDiffuseColor[0]);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundSpecularColor", &sunLighting->groundSpecularColor[0]);
 	glslShaders[GLSL_SHADER_CURRENT]->Disable();
 }

@@ -352,7 +352,7 @@ void CDynWater::Draw()
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 7, 0.2f, 0, 0, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 8, 0.5f, 0.6f, 0.8f, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 9, L.x, L.y, L.z, 0.0f);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 10, sunLighting->groundSunColor.x, sunLighting->groundSunColor.y, sunLighting->groundSunColor.z, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 10, sunLighting->groundDiffuseColor.x, sunLighting->groundDiffuseColor.y, sunLighting->groundDiffuseColor.z, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 11, sunLighting->groundAmbientColor.x, sunLighting->groundAmbientColor.y, sunLighting->groundAmbientColor.z, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 12, refractRight.x, refractRight.y, refractRight.z, 0);
 	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 13, refractUp.x,refractUp.y, refractUp.z, 0);
@@ -517,10 +517,10 @@ void CDynWater::DrawRefraction(CGame* game)
 	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	const float3 oldsun = sunLighting->unitSunColor;
+	const float3 oldsun = sunLighting->unitDiffuseColor;
 	const float3 oldambient = sunLighting->unitAmbientColor;
 
-	sunLighting->unitSunColor *= float3(0.5f, 0.7f, 0.9f);
+	sunLighting->unitDiffuseColor *= float3(0.5f, 0.7f, 0.9f);
 	sunLighting->unitAmbientColor *= float3(0.6f, 0.8f, 1.0f);
 
 	const double clipPlaneEq[4] = {0.0, -1.0, 0.0, 0.0};
@@ -558,7 +558,7 @@ void CDynWater::DrawRefraction(CGame* game)
 	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1);
 
-	sunLighting->unitSunColor = oldsun;
+	sunLighting->unitDiffuseColor = oldsun;
 	sunLighting->unitAmbientColor = oldambient;
 }
 

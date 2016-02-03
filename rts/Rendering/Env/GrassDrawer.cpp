@@ -368,7 +368,7 @@ void CGrassDrawer::EnableShader(const GrassShaderProgram type) {
 	grassShader->SetUniform4v("shadowParams", &shadowHandler->GetShadowParams().x);
 
 	grassShader->SetUniform3v("ambientLightColor",  &sunLighting->unitAmbientColor.x);
-	grassShader->SetUniform3v("diffuseLightColor",  &sunLighting->unitSunColor.x);
+	grassShader->SetUniform3v("diffuseLightColor",  &sunLighting->unitDiffuseColor.x);
 	grassShader->SetUniform3v("specularLightColor", &sunLighting->unitSpecularColor.x);
 	grassShader->SetUniform3v("sunDir",             &mapInfo->light.sunDir.x);
 }

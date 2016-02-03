@@ -106,7 +106,7 @@ void CSM3GroundDrawer::Draw(const DrawPass::e& drawPass)
 	const float z[] = {0.0f, 0.0f, 0.0f, 1.0f};
 
 	for (int a = 0; a < 3; a++)
-		d[a] = sunLighting->groundSunColor[a];
+		d[a] = sunLighting->groundDiffuseColor[a];
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, d);
 
 	for (int a = 0; a < 3; a++)

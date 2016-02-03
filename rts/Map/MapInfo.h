@@ -121,11 +121,11 @@ public:
 		float sunOrbitTime;
 		float sunStartAngle;
 		float3 groundAmbientColor;
-		float3 groundSunColor;
+		float3 groundDiffuseColor;
 		float3 groundSpecularColor;
 		float  groundShadowDensity;
 		float4 unitAmbientColor;
-		float4 unitSunColor;
+		float4 unitDiffuseColor;
 		float  unitShadowDensity;
 		float3 unitSpecularColor;
 		float  specularExponent;

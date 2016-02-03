@@ -463,7 +463,7 @@ void CDecalsDrawerGL4::CreateStructureVBOs()
 	uboGroundLighting.New(uniformBlockSize, GL_STATIC_DRAW);
 		SGLSLGroundLighting* uboGroundLightingData = (SGLSLGroundLighting*)uboGroundLighting.MapBuffer(0, sizeof(SGLSLGroundLighting));
 		uboGroundLightingData->ambientColor  = sunLighting->groundAmbientColor  * CGlobalRendering::SMF_INTENSITY_MULT;
-		uboGroundLightingData->diffuseColor  = sunLighting->groundSunColor      * CGlobalRendering::SMF_INTENSITY_MULT;
+		uboGroundLightingData->diffuseColor  = sunLighting->groundDiffuseColor  * CGlobalRendering::SMF_INTENSITY_MULT;
 		uboGroundLightingData->specularColor = sunLighting->groundSpecularColor * CGlobalRendering::SMF_INTENSITY_MULT;
 		uboGroundLightingData->dir           = mapInfo->light.sunDir;
 		uboGroundLightingData->fogColor      = sky->fogColor;

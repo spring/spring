@@ -1023,7 +1023,7 @@ void LuaOpenGL::SetupScreenLighting()
 	const float sunFactor = 1.0f;
 	const float sf = sunFactor;
 	const float* la = sunLighting->unitAmbientColor;
-	const float* ld = sunLighting->unitSunColor;
+	const float* ld = sunLighting->unitDiffuseColor;
 
 	const float sunLightAmbt[4] = { la[0]*sf, la[1]*sf, la[2]*sf, la[3]*sf };
 	const float sunLightDiff[4] = { ld[0]*sf, ld[1]*sf, ld[2]*sf, ld[3]*sf };
@@ -4517,9 +4517,9 @@ int LuaOpenGL::GetSun(lua_State* L)
 	}
 	else if (param == "diffuse") {
 		if (!unitMode) {
-			data = &sunLighting->groundSunColor;
+			data = &sunLighting->groundDiffuseColor;
 		} else {
-			data = &sunLighting->unitSunColor;
+			data = &sunLighting->unitDiffuseColor;
 		}
 	}
 	else if (param == "ambient") {

@@ -154,7 +154,7 @@ void CSM3ReadMap::InitGroundDrawer() {
 	terrain::LightingInfo lightInfo;
 		lightInfo.ambient = sunLighting->groundAmbientColor;
 	terrain::StaticLight light;
-		light.color = sunLighting->groundSunColor;
+		light.color = sunLighting->groundDiffuseColor;
 		light.directional = false;
 		light.position = sunLighting->sunDir * 1000000.0f;
 	lightInfo.staticLights.push_back(light);

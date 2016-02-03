@@ -327,7 +327,7 @@ void CAdvTreeGenerator::CreateFarTex(Shader::IProgramObject* treeShader)
 			treeShader->SetUniform3f(13, 1.0f, 0.0f, 0.0f); // camera side-dir
 			treeShader->SetUniform3f( 9, 0.0f, 1.0f, 0.0f); // camera up-dir
 			treeShader->SetUniform3f(10, 0.0f, 0.0f, 0.0f); // tree position-offset
-			treeShader->SetUniform4f(11, L.groundSunColor.x,     L.groundSunColor.y,     L.groundSunColor.z,     0.85f);
+			treeShader->SetUniform4f(11, L.groundDiffuseColor.x, L.groundDiffuseColor.y, L.groundDiffuseColor.z, 0.85f);
 			treeShader->SetUniform4f(14, L.groundAmbientColor.x, L.groundAmbientColor.y, L.groundAmbientColor.z, 0.85f);
 			treeShader->SetUniform4f(12, 0.0f, 0.0f, 0.0f, 0.02f); // w = alpha / height modifier
 		}

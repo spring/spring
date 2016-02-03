@@ -45,7 +45,7 @@
 static void SetupUnitLightFFP()
 {
 	glLightfv(GL_LIGHT1, GL_AMBIENT, sunLighting->unitAmbientColor);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, sunLighting->unitSunColor);
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, sunLighting->unitDiffuseColor);
 	glLightfv(GL_LIGHT1, GL_SPECULAR, sunLighting->unitAmbientColor);
 	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0);
 	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 0);

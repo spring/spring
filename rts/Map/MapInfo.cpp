@@ -197,13 +197,13 @@ void CMapInfo::ReadLight()
 	light.sunDir.ANormalize();
 
 	light.groundAmbientColor  = lightTable.GetFloat3("groundAmbientColor", float3(0.5f, 0.5f, 0.5f));
-	light.groundSunColor      = lightTable.GetFloat3("groundDiffuseColor", float3(0.5f, 0.5f, 0.5f));
+	light.groundDiffuseColor  = lightTable.GetFloat3("groundDiffuseColor", float3(0.5f, 0.5f, 0.5f));
 	light.groundSpecularColor = lightTable.GetFloat3("groundSpecularColor", float3(0.1f, 0.1f, 0.1f));
 	light.groundShadowDensity = lightTable.GetFloat("groundShadowDensity", 0.8f);
 
 	light.unitAmbientColor  = lightTable.GetFloat3("unitAmbientColor", float3(0.4f, 0.4f, 0.4f));
-	light.unitSunColor      = lightTable.GetFloat3("unitDiffuseColor", float3(0.7f, 0.7f, 0.7f));
-	light.unitSpecularColor = lightTable.GetFloat3("unitSpecularColor", light.unitSunColor);
+	light.unitDiffuseColor  = lightTable.GetFloat3("unitDiffuseColor", float3(0.7f, 0.7f, 0.7f));
+	light.unitSpecularColor = lightTable.GetFloat3("unitSpecularColor", light.unitDiffuseColor);
 	light.unitShadowDensity = lightTable.GetFloat("unitShadowDensity", 0.8f);
 
 	light.specularExponent = lightTable.GetFloat("specularExponent", 100.0f);
@@ -237,7 +237,7 @@ void CMapInfo::ReadWater()
 	water.surfaceColor  = wt.GetFloat3("surfaceColor", float3(0.75f, 0.8f, 0.85f));
 	water.surfaceAlpha  = wt.GetFloat("surfaceAlpha",  0.55f);
 	water.diffuseColor  = wt.GetFloat3("diffuseColor",  float3(1.0f, 1.0f, 1.0f));
-	water.specularColor = wt.GetFloat3("specularColor", light.groundSunColor);
+	water.specularColor = wt.GetFloat3("specularColor", light.groundDiffuseColor);
 
 	water.fresnelMin   = wt.GetFloat("fresnelMin",   0.2f);
 	water.fresnelMax   = wt.GetFloat("fresnelMax",   0.8f);

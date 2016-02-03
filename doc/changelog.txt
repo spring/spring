@@ -116,10 +116,10 @@ Lua:
 
  - add unsynced callout Spring.SetSunLighting(table params) -> nil
    It can be used to modify the following sun lighting parameters:
-   {ground,unit}{Ambient,Sun,Specular}Color and specularExponent
+   {ground,unit}{Ambient,Diffuse,Specular}Color and specularExponent
    example usage: Spring.SetSunLighting({
     groundAmbientColor = {1, 0.1, 1},
-    groundSunColor     = {1, 0.1, 1},
+    groundDiffuseColor = {1, 0.1, 1},
    })
  - add unsynced callout Spring.SetAtmosphere(table params) -> nil
    It can be used to modify the following atmosphere parameters:

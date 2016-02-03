@@ -161,14 +161,14 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 
 		treeShaders[TREE_PROGRAM_NEAR_BASIC]->Enable();
 		treeShaders[TREE_PROGRAM_NEAR_BASIC]->SetUniform3fv(3, &sunLighting->groundAmbientColor[0]);
-		treeShaders[TREE_PROGRAM_NEAR_BASIC]->SetUniform3fv(4, &sunLighting->groundSunColor[0]);
+		treeShaders[TREE_PROGRAM_NEAR_BASIC]->SetUniform3fv(4, &sunLighting->groundDiffuseColor[0]);
 		treeShaders[TREE_PROGRAM_NEAR_BASIC]->SetUniform4f(6, 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f);
 		treeShaders[TREE_PROGRAM_NEAR_BASIC]->Disable();
 		treeShaders[TREE_PROGRAM_NEAR_BASIC]->Validate();
 
 		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->Enable();
 		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->SetUniform3fv(3, &sunLighting->groundAmbientColor[0]);
-		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->SetUniform3fv(4, &sunLighting->groundSunColor[0]);
+		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->SetUniform3fv(4, &sunLighting->groundDiffuseColor[0]);
 		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->SetUniform1f(9, 1.0f - (sky->GetLight()->GetGroundShadowDensity() * 0.5f));
 		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->SetUniform1i(10, 0);
 		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->SetUniform1i(11, 1);
@@ -553,7 +553,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 			treeShader->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 			treeShader->SetUniform3f(13, cam->GetRight().x, cam->GetRight().y, cam->GetRight().z);
 			treeShader->SetUniform3f( 9, cam->GetUp().x,    cam->GetUp().y,    cam->GetUp().z   );
-			treeShader->SetUniform4f(11, sunLighting->groundSunColor.x,     sunLighting->groundSunColor.y,     sunLighting->groundSunColor.z,     0.85f);
+			treeShader->SetUniform4f(11, sunLighting->groundDiffuseColor.x, sunLighting->groundDiffuseColor.y, sunLighting->groundDiffuseColor.z, 0.85f);
 			treeShader->SetUniform4f(14, sunLighting->groundAmbientColor.x, sunLighting->groundAmbientColor.y, sunLighting->groundAmbientColor.z, 0.85f);
 			treeShader->SetUniform4f(12, 0.0f, 0.0f, 0.0f, 0.20f * (1.0f / MAX_TREE_HEIGHT)); // w = alpha/height modifier
 		}

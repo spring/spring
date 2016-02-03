@@ -17,22 +17,22 @@ CSunLighting sunLightingInst;
 
 CSunLighting::CSunLighting() {
 	colors[0] = &groundAmbientColor;
-	colors[1] = &groundSunColor;
+	colors[1] = &groundDiffuseColor;
 	colors[2] = &groundSpecularColor;
 
 	colors[3] = &unitAmbientColor;
-	colors[4] = &unitSunColor;
+	colors[4] = &unitDiffuseColor;
 	colors[5] = &unitSpecularColor;
 }
 
 // need an explicit copy-ctor because of colors[]
 CSunLighting::CSunLighting(const CSunLighting& sl) {
 	colors[0] = &groundAmbientColor;
-	colors[1] = &groundSunColor;
+	colors[1] = &groundDiffuseColor;
 	colors[2] = &groundSpecularColor;
 
 	colors[3] = &unitAmbientColor;
-	colors[4] = &unitSunColor;
+	colors[4] = &unitDiffuseColor;
 	colors[5] = &unitSpecularColor;
 
 	Copy(sl);
@@ -51,11 +51,11 @@ void CSunLighting::Init() {
 	const CMapInfo::light_t& light = mapInfo->light;
 
 	groundAmbientColor   = light.groundAmbientColor;
-	groundSunColor       = light.groundSunColor;
+	groundDiffuseColor   = light.groundDiffuseColor;
 	groundSpecularColor  = light.groundSpecularColor;
 
 	unitAmbientColor     = light.unitAmbientColor;
-	unitSunColor         = light.unitSunColor;
+	unitDiffuseColor         = light.unitDiffuseColor;
 	unitSpecularColor    = light.unitSpecularColor;
 
 	specularExponent     = light.specularExponent;
@@ -84,11 +84,11 @@ void CSunLighting::Copy(const CSunLighting& sl) {
 bool CSunLighting::SetValue(unsigned int keyHash, const float4 value) {
 	static const unsigned int keyHashes[] = {
 		HsiehHash("groundAmbientColor",  sizeof("groundAmbientColor" ) - 1, 0),
-		HsiehHash("groundSunColor",      sizeof("groundSunColor"     ) - 1, 0),
+		HsiehHash("groundDiffuseColor",  sizeof("groundDiffuseColor" ) - 1, 0),
 		HsiehHash("groundSpecularColor", sizeof("groundSpecularColor") - 1, 0),
 
 		HsiehHash("unitAmbientColor",  sizeof("unitAmbientColor" ) - 1, 0),
-		HsiehHash("unitSunColor",      sizeof("unitSunColor"     ) - 1, 0),
+		HsiehHash("unitDiffuseColor",      sizeof("unitDiffuseColor"     ) - 1, 0),
 		HsiehHash("unitSpecularColor", sizeof("unitSpecularColor") - 1, 0),
 
 		HsiehHash("specularExponent", sizeof("specularExponent") - 1, 0),

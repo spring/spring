@@ -285,7 +285,7 @@ void UnitDrawerStateARB::Enable(const CUnitDrawer* ud, bool deferredPass, bool a
 
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(10, &sky->GetLight()->GetLightDir().x);
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(11, sunLighting->unitSunColor.x, sunLighting->unitSunColor.y, sunLighting->unitSunColor.z, 0.0f);
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(11, sunLighting->unitDiffuseColor.x, sunLighting->unitDiffuseColor.y, sunLighting->unitDiffuseColor.z, 0.0f);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(12, sunLighting->unitAmbientColor.x, sunLighting->unitAmbientColor.y, sunLighting->unitAmbientColor.z, 1.0f); //!
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(13, camera->GetPos().x, camera->GetPos().y, camera->GetPos().z, 0.0f);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
@@ -386,7 +386,7 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 		modelShaders[n]->SetUniform1i(4, 4); // specularTex (idx 4, texunit 4)
 		modelShaders[n]->SetUniform3fv(5, &sky->GetLight()->GetLightDir().x);
 		modelShaders[n]->SetUniform3fv(10, &sunLighting->unitAmbientColor[0]);
-		modelShaders[n]->SetUniform3fv(11, &sunLighting->unitSunColor[0]);
+		modelShaders[n]->SetUniform3fv(11, &sunLighting->unitDiffuseColor[0]);
 		modelShaders[n]->SetUniform1f(12, sky->GetLight()->GetUnitShadowDensity());
 		modelShaders[n]->SetUniform1f(15, 0.0f); // alphaPass
 		modelShaders[n]->Disable();
@@ -434,7 +434,7 @@ void UnitDrawerStateGLSL::DisableShaders(const CUnitDrawer*) { modelShaders[MODE
 
 
 void UnitDrawerStateGLSL::UpdateCurrentShaderSky(const CUnitDrawer* ud, const ISkyLight* skyLight) const {
-	const float3 modUnitSunColor = sunLighting->unitSunColor * skyLight->GetLightIntensity();
+	const float3 modUnitSunColor = sunLighting->unitDiffuseColor * skyLight->GetLightIntensity();
 
 	// note: the NOSHADOW shaders do not care about shadow-density
 	for (unsigned int n = MODEL_SHADER_NOSHADOW_STANDARD; n <= MODEL_SHADER_SHADOWED_DEFERRED; n++) {
@@ -450,7 +450,7 @@ void UnitDrawerStateGLSL::UpdateCurrentShaderSunLighting(const CUnitDrawer* ud) 
 	for (unsigned int n = MODEL_SHADER_NOSHADOW_STANDARD; n <= MODEL_SHADER_SHADOWED_DEFERRED; n++) {
 		modelShaders[n]->Enable();
 		modelShaders[n]->SetUniform3fv(10, &sunLighting->unitAmbientColor[0]);
-		modelShaders[n]->SetUniform3fv(11, &sunLighting->unitSunColor[0]);
+		modelShaders[n]->SetUniform3fv(11, &sunLighting->unitDiffuseColor[0]);
 		modelShaders[n]->Disable();
 	}
 }

@@ -1170,10 +1170,10 @@ void CBumpWater::DrawRefraction(CGame* game)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glDisable(GL_FOG); // fog has overground settings, if at all we should add special underwater settings
 
-	const float3 oldsun = sunLighting->unitSunColor;
+	const float3 oldsun = sunLighting->unitDiffuseColor;
 	const float3 oldambient = sunLighting->unitAmbientColor;
 
-	sunLighting->unitSunColor *= float3(0.5f, 0.7f, 0.9f);
+	sunLighting->unitDiffuseColor *= float3(0.5f, 0.7f, 0.9f);
 	sunLighting->unitAmbientColor *= float3(0.6f, 0.8f, 1.0f);
 
 	game->SetDrawMode(CGame::gameRefractionDraw);
@@ -1209,7 +1209,7 @@ void CBumpWater::DrawRefraction(CGame* game)
 
 	glEnable(GL_FOG);
 
-	sunLighting->unitSunColor = oldsun;
+	sunLighting->unitDiffuseColor = oldsun;
 	sunLighting->unitAmbientColor = oldambient;
 }
 

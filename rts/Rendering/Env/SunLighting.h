@@ -30,11 +30,11 @@ private:
 
 public:
 	float4 groundAmbientColor; // RGB
-	float4 groundSunColor; // RGB
+	float4 groundDiffuseColor; // RGB
 	float4 groundSpecularColor; // RBG
 
 	float4 unitAmbientColor;
-	float4 unitSunColor;
+	float4 unitDiffuseColor;
 	float4 unitSpecularColor; // RGB
 
 	float  specularExponent;

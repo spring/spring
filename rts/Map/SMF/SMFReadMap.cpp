@@ -628,7 +628,7 @@ float3 CSMFReadMap::GetLightValue(const int x, const int y) const
 {
 	float3 light =
 		sunLighting->groundAmbientColor +
-		sunLighting->groundSunColor * DiffuseSunCoeff(x, y);
+		sunLighting->groundDiffuseColor * DiffuseSunCoeff(x, y);
 	light *= CGlobalRendering::SMF_INTENSITY_MULT;
 
 	for (int a = 0; a < 3; ++a) {
