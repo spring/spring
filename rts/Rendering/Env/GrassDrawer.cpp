@@ -353,7 +353,7 @@ void CGrassDrawer::EnableShader(const GrassShaderProgram type) {
 
 	grassShader = grassShaders[type];
 	grassShader->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
-	grassShader->SetFlag("HAVE_SHADOWS", shadowHandler->shadowsLoaded);
+	grassShader->SetFlag("HAVE_SHADOWS", shadowHandler->ShadowsLoaded());
 	grassShader->Enable();
 
 	grassShader->SetUniform("frame", gs->frameNum + globalRendering->timeOffset);
@@ -522,7 +522,7 @@ void CGrassDrawer::Update()
 
 		if (
 			globalRendering->haveGLSL
-			&& (!shadowHandler->shadowsLoaded || !globalRendering->atiHacks) // Ati crashes w/o an error when shadows are enabled!?
+			&& (!shadowHandler->ShadowsLoaded() || !globalRendering->atiHacks) // Ati crashes w/o an error when shadows are enabled!?
 		) {
 			std::sort(blockDrawer.inviewFarGrass.begin(), blockDrawer.inviewFarGrass.end(), GrassSort);
 			std::sort(blockDrawer.inviewNearGrass.begin(), blockDrawer.inviewNearGrass.end(), GrassSortNear);
@@ -560,7 +560,7 @@ void CGrassDrawer::Draw()
 
 	if (
 		globalRendering->haveGLSL
-		&& (!shadowHandler->shadowsLoaded || !globalRendering->atiHacks) // Ati crashes w/o an error when shadows are enabled!?
+		&& (!shadowHandler->ShadowsLoaded() || !globalRendering->atiHacks) // Ati crashes w/o an error when shadows are enabled!?
 		&& !(blockDrawer.inviewFarGrass.empty() && blockDrawer.inviewNearGrass.empty())
 	) {
 		SetupGlStateFar();
@@ -644,7 +644,7 @@ void CGrassDrawer::SetupGlStateNear()
 	if (globalRendering->haveGLSL) {
 		EnableShader(GRASS_PROGRAM_NEAR);
 
-		if (shadowHandler->shadowsLoaded) {
+		if (shadowHandler->ShadowsLoaded()) {
 			glActiveTextureARB(GL_TEXTURE4_ARB);
 				glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
@@ -703,7 +703,7 @@ void CGrassDrawer::ResetGlStateNear()
 	if (globalRendering->haveGLSL) {
 		grassShader->Disable();
 
-		if (shadowHandler->shadowsLoaded) {
+		if (shadowHandler->ShadowsLoaded()) {
 			glActiveTextureARB(GL_TEXTURE1_ARB);
 				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
@@ -768,7 +768,7 @@ void CGrassDrawer::SetupGlStateFar()
 		glBindTexture(GL_TEXTURE_2D, readMap->GetShadingTexture());
 	glActiveTextureARB(GL_TEXTURE3_ARB);
 		glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
-	if (shadowHandler->shadowsLoaded) {
+	if (shadowHandler->ShadowsLoaded()) {
 		glActiveTextureARB(GL_TEXTURE4_ARB);
 			glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
@@ -789,7 +789,7 @@ void CGrassDrawer::ResetGlStateFar()
 	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
 
-	if (shadowHandler->shadowsLoaded) {
+	if (shadowHandler->ShadowsLoaded()) {
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);

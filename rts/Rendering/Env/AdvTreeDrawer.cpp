@@ -469,7 +469,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 	sky->SetupFog();
 
-	if (shadowHandler->shadowsLoaded) {
+	if (shadowHandler->ShadowsLoaded()) {
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, activeFarTex);
 		glActiveTexture(GL_TEXTURE0);
@@ -516,7 +516,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 		const int ystart = Clamp(cy - 2, 0, mapDims.mapy / TREE_SQUARE_SIZE - 1);
 		const int yend   = Clamp(cy + 2, 0, mapDims.mapy / TREE_SQUARE_SIZE - 1);
 
-		if (shadowHandler->shadowsLoaded) {
+		if (shadowHandler->ShadowsLoaded()) {
 			treeShader->Disable();
 			treeShader = treeShaders[TREE_PROGRAM_NEAR_SHADOW];
 			treeShader->Enable();
@@ -678,7 +678,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 		}
 
 
-		if (shadowHandler->shadowsLoaded) {
+		if (shadowHandler->ShadowsLoaded()) {
 			treeShader->Disable();
 			treeShader = treeShaders[TREE_PROGRAM_DIST_SHADOW];
 			treeShader->Enable();
@@ -717,7 +717,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 		}
 	}
 
-	if (shadowHandler->shadowsLoaded) {
+	if (shadowHandler->ShadowsLoaded()) {
 		treeShader->Disable();
 
 		glActiveTexture(GL_TEXTURE1);

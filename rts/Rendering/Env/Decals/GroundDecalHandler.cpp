@@ -671,7 +671,7 @@ void CGroundDecalHandler::Draw()
 		glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
 	}
 
-	if (shadowHandler->shadowsLoaded) {
+	if (shadowHandler->ShadowsLoaded()) {
 		glActiveTexture(GL_TEXTURE2);
 			glEnable(GL_TEXTURE_2D);
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
@@ -703,7 +703,7 @@ void CGroundDecalHandler::Draw()
 	DrawObjectDecals();
 
 
-	if (shadowHandler->shadowsLoaded) {
+	if (shadowHandler->ShadowsLoaded()) {
 		decalShaders[DECAL_SHADER_CURR]->Disable();
 
 		glActiveTexture(GL_TEXTURE2);
