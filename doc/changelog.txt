@@ -126,9 +126,12 @@ Lua:
    fog{Start,End}, {sun,sky,cloud}Color
    example usage: Spring.SetAtmosphere({
      fogStart = 0,
-	 fogEnd   = 0.5,
-	 fogColor = { 0.7, 0.2, 0.2, 1 },
+     fogEnd   = 0.5,
+     fogColor = { 0.7, 0.2, 0.2, 1 },
    })
+ - add unsyced callout gl.GetAtmosphere(name) -> number | number r, number g, number b
+   Works similar to gl.GetSun(), and can be used to extract atmosphere parameters.
+   See Spring.SetAtmosphere for details.
 
  - add unsynced callout Spring.SetMapShadingTexture(string texType, string texName) -> boolean
    example usage: Spring.SetMapShadingTexture("$ssmf_specular", "name_of_my_shiny_texture")

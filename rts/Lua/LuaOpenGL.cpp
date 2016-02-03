@@ -384,6 +384,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetShadowMapParams);
 
 	REGISTER_LUA_CFUNC(GetSun);
+	REGISTER_LUA_CFUNC(GetAtmosphere);
 
 	if (canUseShaders) {
 		LuaShaders::PushEntries(L);
@@ -4483,6 +4484,58 @@ int LuaOpenGL::GetShadowMapParams(lua_State* L)
 	return 4;
 }
 
+int LuaOpenGL::GetAtmosphere(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if (args == 0) {
+		lua_pushnumber(L, sky->GetLight()->GetLightDir().x);
+		lua_pushnumber(L, sky->GetLight()->GetLightDir().y);
+		lua_pushnumber(L, sky->GetLight()->GetLightDir().z);
+		return 3;
+	}
+
+	const string param = luaL_checkstring(L, 1);
+	if (param == "pos") {
+		lua_pushnumber(L, sky->GetLight()->GetLightDir().x);
+		lua_pushnumber(L, sky->GetLight()->GetLightDir().y);
+		lua_pushnumber(L, sky->GetLight()->GetLightDir().z);
+		return 3;
+	}
+
+	const bool unitMode = lua_israwstring(L, 2) &&
+	                      (strcmp(lua_tostring(L, 2), "unit") == 0);
+
+	const float3* data = NULL;
+
+	// float
+	if (param == "fogStart") {
+		lua_pushnumber(L, sky->fogStart);
+		return 1;
+	} else if (param == "fogEnd") {
+		lua_pushnumber(L, sky->fogEnd);
+		return 1;
+	// float3
+	} else if (param == "fogColor") {
+		data = &sky->fogColor;
+	} else if (param == "skyColor") {
+		data = &sky->skyColor;
+	} else if (param == "skyDir") {
+		//data = &sky->sunColor;
+	} else if (param == "sunColor") {
+		data = &sky->sunColor;
+	} else if (param == "cloudColor") {
+		data = &sky->cloudColor;
+	}
+
+	if (data != NULL) {
+		lua_pushnumber(L, data->x);
+		lua_pushnumber(L, data->y);
+		lua_pushnumber(L, data->z);
+		return 3;
+	}
+
+	return 0;
+}
 
 int LuaOpenGL::GetSun(lua_State* L)
 {
