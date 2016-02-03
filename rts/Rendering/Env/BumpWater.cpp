@@ -569,9 +569,9 @@ CBumpWater::CBumpWater()
 	occlusionQuery = 0;
 	occlusionQueryResult = GL_TRUE;
 	wasVisibleLastFrame = true;
+
 #ifdef GLEW_ARB_occlusion_query2
-	bool useOcclQuery  = (configHandler->GetBool("BumpWaterOcclusionQuery"));
-	if (useOcclQuery && GLEW_ARB_occlusion_query2 && (refraction < 2)) { //! in the case of a separate refraction pass, there isn't enough time for a occlusion query
+	if (GLEW_ARB_occlusion_query2 && configHandler->GetBool("BumpWaterOcclusionQuery")) {
 		GLint bitsSupported;
 		glGetQueryiv(GL_ANY_SAMPLES_PASSED, GL_QUERY_COUNTER_BITS, &bitsSupported);
 		if (bitsSupported > 0) {
@@ -579,10 +579,6 @@ CBumpWater::CBumpWater()
 		}
 	}
 #endif
-
-	if (refraction > 1) {
-		drawSolid = true;
-	}
 }
 
 
@@ -1280,7 +1276,7 @@ void CBumpWater::OcclusionQuery()
 	glGetQueryObjectuiv(occlusionQuery, GL_QUERY_RESULT_AVAILABLE, &occlusionQueryResult);
 
 	if (occlusionQueryResult || !wasVisibleLastFrame) {
-		glGetQueryObjectuiv(occlusionQuery,GL_QUERY_RESULT, &occlusionQueryResult);
+		glGetQueryObjectuiv(occlusionQuery, GL_QUERY_RESULT, &occlusionQueryResult);
 		wasVisibleLastFrame = !!occlusionQueryResult;
 	} else {
 		occlusionQueryResult = true;

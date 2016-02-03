@@ -55,7 +55,6 @@ CDynWater::CDynWater()
 
 	lastWaveFrame = 0;
 	firstDraw = true;
-	drawSolid = true;
 	camPosBig = float3(2048, 0, 2048);
 	refractSize = (globalRendering->viewSizeY >= 1024) ? 1024 : 512;
 

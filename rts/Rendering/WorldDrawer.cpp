@@ -175,7 +175,7 @@ void CWorldDrawer::Update(bool newSimFrame)
 
 void CWorldDrawer::GenerateIBLTextures() const
 {
-	if (shadowHandler->shadowsLoaded) {
+	if (shadowHandler->ShadowsLoaded()) {
 		SCOPED_TIMER("ShadowHandler::CreateShadows");
 		game->SetDrawMode(CGame::gameShadowDraw);
 		shadowHandler->CreateShadows();
@@ -281,15 +281,10 @@ void CWorldDrawer::DrawOpaqueObjects() const
 		smoothHeightMeshDrawer->Draw(1.0f);
 	}
 
+	// run occlusion query here so it has more time to finish before UpdateWater
 	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
-		SCOPED_TIMER("WorldDrawer::Water");
-
+		SCOPED_TIMER("WorldDrawer::Water::OcclusionQuery");
 		water->OcclusionQuery();
-
-		if (water->DrawSolid()) {
-			water->UpdateWater(game);
-			water->Draw();
-		}
 	}
 
 	selectedUnitsHandler.Draw();
@@ -311,35 +306,33 @@ void CWorldDrawer::DrawAlphaObjects() const
 	glEnable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);
 
-	static const double plane_below[4] = {0.0f, -1.0f, 0.0f, 0.0f};
-	static const double plane_above[4] = {0.0f,  1.0f, 0.0f, 0.0f};
+	static const double belowPlaneEq[4] = {0.0f, -1.0f, 0.0f, 0.0f};
+	static const double abovePlaneEq[4] = {0.0f,  1.0f, 0.0f, 0.0f};
 
 	{
-		glClipPlane(GL_CLIP_PLANE3, plane_below);
+		glClipPlane(GL_CLIP_PLANE3, belowPlaneEq);
 		glEnable(GL_CLIP_PLANE3);
 
-		// draw cloaked objects below water surface
+		// draw cloaked objects below water surface (farthest)
 		unitDrawer->DrawAlphaPass();
 		featureDrawer->DrawAlphaPass();
 
 		glDisable(GL_CLIP_PLANE3);
 	}
 
-	// draw water
+	// draw water (in-between)
 	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
 		SCOPED_TIMER("WorldDrawer::Water");
 
-		if (!water->DrawSolid()) {
-			water->UpdateWater(game);
-			water->Draw();
-		}
+		water->UpdateWater(game);
+		water->Draw();
 	}
 
 	{
-		glClipPlane(GL_CLIP_PLANE3, plane_above);
+		glClipPlane(GL_CLIP_PLANE3, abovePlaneEq);
 		glEnable(GL_CLIP_PLANE3);
 
-		// draw cloaked objects above water surface
+		// draw cloaked objects above water surface (closest)
 		unitDrawer->DrawAlphaPass();
 		featureDrawer->DrawAlphaPass();
 

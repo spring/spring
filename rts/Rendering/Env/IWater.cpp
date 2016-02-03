@@ -28,7 +28,6 @@ static std::vector<int> waterModes;
 IWater::IWater()
 	: drawReflection(false)
 	, drawRefraction(false)
- 	, drawSolid(false)
 {
 	CExplosionCreator::AddExplosionListener(this);
 }

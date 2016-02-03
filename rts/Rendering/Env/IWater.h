@@ -34,7 +34,6 @@ public:
 
 	bool DrawReflectionPass() const { return drawReflection; }
 	bool DrawRefractionPass() const { return drawRefraction; }
-	bool DrawSolid() const { return drawSolid; }
 	bool BlockWakeProjectiles() const { return (GetID() == WATER_RENDERER_DYNAMIC); }
 
 	static IWater* GetWater(IWater* currWaterRenderer, int nextWaterRenderMode);
@@ -46,7 +45,6 @@ public:
 protected:
 	bool drawReflection;
 	bool drawRefraction;
- 	bool drawSolid;
 };
 
 extern IWater* water;
