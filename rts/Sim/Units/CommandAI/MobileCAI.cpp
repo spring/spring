@@ -210,8 +210,6 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 			c.params.push_back("LandAt 30");
 			c.params.push_back("LandAt 50");
 			c.params.push_back("LandAt 80");
-
-			nonQueingCommands.insert(c.id);
 		}
 		{
 			possibleCommands.emplace_back();
@@ -230,8 +228,6 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 			c.params.push_back("1");
 			c.params.push_back(" Fly ");
 			c.params.push_back("Land");
-
-			nonQueingCommands.insert(c.id);
 		}
 	}
 
@@ -261,6 +257,8 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 			c.mouseicon = c.name;
 		}
 	}
+
+	UpdateNonQueueingCommands();
 }
 
 CMobileCAI::~CMobileCAI()

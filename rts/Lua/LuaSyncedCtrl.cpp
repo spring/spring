@@ -4301,27 +4301,18 @@ int LuaSyncedCtrl::EditUnitCmdDesc(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	auto& cmdDescs = unit->commandAI->possibleCommands;
-	auto& nonQueingCmds = unit->commandAI->nonQueingCommands;
+	const auto& cmdDescs = unit->commandAI->GetPossibleCommands();
 
-	const unsigned int cmdDescID = luaL_checkint(L, 2) - 1;
+	const unsigned int cmdDescIdx = luaL_checkint(L, 2) - 1;
 
-	if (cmdDescID >= cmdDescs.size())
+	if (cmdDescIdx >= cmdDescs.size())
 		return 0;
 
-	CommandDescription& cmdDesc = cmdDescs[cmdDescID];
-
-	// erase in case we do not want it to be non-queueing anymore
-	if (!cmdDesc.queueing)
-		nonQueingCmds.erase(cmdDesc.id);
+	// note: must be a copy
+	CommandDescription cmdDesc = cmdDescs[cmdDescIdx];
 
 	ParseCommandDescription(L, 3, cmdDesc);
-
-	// re-insert otherwise (possibly with different cmdID!)
-	if (!cmdDesc.queueing)
-		nonQueingCmds.insert(cmdDesc.id);
-
-	selectedUnitsHandler.PossibleCommandChange(unit);
+	unit->commandAI->UpdateCommandDescription(cmdDescIdx, cmdDesc);
 	return 0;
 }
 
@@ -4344,32 +4335,20 @@ int LuaSyncedCtrl::InsertUnitCmdDesc(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	auto& cmdDescs = unit->commandAI->possibleCommands;
-	auto& nonQueingCmds = unit->commandAI->nonQueingCommands;
-
 	const int tableIdx = 2 + int(args >= 3);
-	unsigned int cmdDescID = cmdDescs.size();
+
+	// insert behind last by default
+	unsigned int cmdDescIdx = -1u;
 
 	if (args >= 3)
-		cmdDescID = lua_toint(L, 2) - 1;
+		cmdDescIdx = lua_toint(L, 2) - 1;
 
 	CommandDescription cd;
+
 	ParseCommandDescription(L, tableIdx, cd);
-
-	if (cmdDescID >= cmdDescs.size()) {
-		cmdDescs.push_back(cd);
-	} else {
-		// preserve order
-		cmdDescs.insert(cmdDescs.begin() + cmdDescID, cd);
-	}
-
-	if (!cd.queueing)
-		nonQueingCmds.insert(cd.id);
-
-	selectedUnitsHandler.PossibleCommandChange(unit);
+	unit->commandAI->InsertCommandDescription(cmdDescIdx, cd);
 	return 0;
 }
-
 
 int LuaSyncedCtrl::RemoveUnitCmdDesc(lua_State* L)
 {
@@ -4381,25 +4360,13 @@ int LuaSyncedCtrl::RemoveUnitCmdDesc(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	auto& cmdDescs = unit->commandAI->possibleCommands;
-	auto& nonQueingCmds = unit->commandAI->nonQueingCommands;
-
-	// pick the last by default
-	unsigned int cmdDescID = cmdDescs.size() - 1;
+	// remove last by default
+	unsigned int cmdDescIdx = unit->commandAI->possibleCommands.size() - 1;
 
 	if (lua_isnumber(L, 2))
-		cmdDescID = lua_toint(L, 2) - 1;
+		cmdDescIdx = lua_toint(L, 2) - 1;
 
-	if (cmdDescID >= cmdDescs.size())
-		return 0;
-
-	if (!cmdDescs[cmdDescID].queueing)
-		nonQueingCmds.erase(cmdDescs[cmdDescID].id);
-
-	// preserve order
-	cmdDescs.erase(cmdDescs.begin() + cmdDescID);
-
-	selectedUnitsHandler.PossibleCommandChange(unit);
+	unit->commandAI->RemoveCommandDescription(cmdDescIdx);
 	return 0;
 }
 

@@ -258,8 +258,6 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 		c.hidden   = false;
 		c.queueing = false;
-
-		nonQueingCommands.insert(c.id);
 	}
 
 	if (owner->unitDef->canmove || owner->unitDef->builder) {
@@ -281,8 +279,6 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 		c.hidden   = false;
 		c.queueing = false;
-
-		nonQueingCommands.insert(c.id);
 	} else {
 		owner->moveState = MOVESTATE_HOLDPOS;
 	}
@@ -305,8 +301,6 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 		c.hidden   = false;
 		c.queueing = false;
-
-		nonQueingCommands.insert(c.id);
 	}
 
 	if (owner->unitDef->highTrajectoryType > 1) {
@@ -327,8 +321,6 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 		c.hidden   = false;
 		c.queueing = false;
-
-		nonQueingCommands.insert(c.id);
 	}
 
 	if (owner->unitDef->onoffable) {
@@ -349,8 +341,6 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 		c.hidden   = false;
 		c.queueing = false;
-
-		nonQueingCommands.insert(c.id);
 	}
 
 	if (owner->unitDef->canCloak) {
@@ -371,9 +361,9 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 		c.hidden   = false;
 		c.queueing = false;
-
-		nonQueingCommands.insert(c.id);
 	}
+
+	UpdateNonQueueingCommands();
 }
 
 CCommandAI::~CCommandAI()
@@ -381,6 +371,66 @@ CCommandAI::~CCommandAI()
 	SetOrderTarget(NULL);
 	ClearCommandDependencies();
 }
+
+
+void CCommandAI::UpdateCommandDescription(unsigned int cmdDescIdx, const CommandDescription& modCmdDesc) {
+	CommandDescription& curCmdDesc = possibleCommands[cmdDescIdx];
+
+	// erase in case we do not want it to be non-queueing anymore
+	if (!curCmdDesc.queueing)
+		nonQueingCommands.erase(curCmdDesc.id);
+
+	// re-insert otherwise (possibly with a different cmdID!)
+	if (!modCmdDesc.queueing)
+		nonQueingCommands.insert(modCmdDesc.id);
+
+	// update
+	curCmdDesc = std::move(modCmdDesc);
+
+	selectedUnitsHandler.PossibleCommandChange(owner);
+}
+
+void CCommandAI::InsertCommandDescription(unsigned int cmdDescIdx, const CommandDescription& cmdDesc)
+{
+	if (cmdDescIdx >= possibleCommands.size()) {
+		possibleCommands.push_back(cmdDesc);
+	} else {
+		// preserve order
+		possibleCommands.insert(possibleCommands.begin() + cmdDescIdx, cmdDesc);
+	}
+
+	if (!cmdDesc.queueing)
+		nonQueingCommands.insert(cmdDesc.id);
+
+	selectedUnitsHandler.PossibleCommandChange(owner);
+}
+
+bool CCommandAI::RemoveCommandDescription(unsigned int cmdDescIdx)
+{
+	if (cmdDescIdx >= possibleCommands.size())
+		return false;
+
+	if (!possibleCommands[cmdDescIdx].queueing)
+		nonQueingCommands.erase(possibleCommands[cmdDescIdx].id);
+
+	// preserve order
+	possibleCommands.erase(possibleCommands.begin() + cmdDescIdx);
+	selectedUnitsHandler.PossibleCommandChange(owner);
+	return true;
+}
+
+
+void CCommandAI::UpdateNonQueueingCommands()
+{
+	nonQueingCommands.clear();
+
+	for (const CommandDescription& cmdDesc: possibleCommands) {
+		if (!cmdDesc.queueing) {
+			nonQueingCommands.insert(cmdDesc.id);
+		}
+	}
+}
+
 
 void CCommandAI::ClearCommandDependencies() {
 	while (!commandDeathDependences.empty()) {
@@ -399,11 +449,6 @@ void CCommandAI::AddCommandDependency(const Command& c) {
 			AddDeathDependence(ref, DEPENDENCE_COMMANDQUE);
 		}
 	}
-}
-
-vector<CommandDescription>& CCommandAI::GetPossibleCommands()
-{
-	return possibleCommands;
 }
 
 
