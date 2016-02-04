@@ -376,6 +376,9 @@ CCommandAI::~CCommandAI()
 void CCommandAI::UpdateCommandDescription(unsigned int cmdDescIdx, const CommandDescription& modCmdDesc) {
 	CommandDescription& curCmdDesc = possibleCommands[cmdDescIdx];
 
+	// modCmdDesc should be a modified copy of curCmdDesc
+	assert(&modCmdDesc != &curCmdDesc);
+
 	// erase in case we do not want it to be non-queueing anymore
 	if (!curCmdDesc.queueing)
 		nonQueingCommands.erase(curCmdDesc.id);
