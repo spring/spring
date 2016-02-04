@@ -254,23 +254,30 @@ bool CShadowHandler::InitDepthTarget()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // shadowtex linear sampling is for-free on NVidias
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
 	if (useColorTexture) {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, shadowMapSize, shadowMapSize, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+
 		fb.AttachTexture(shadowTexture);
+
+		glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
+		glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
 	} else {
-		const GLint texFormat = GL_DEPTH_COMPONENT32;
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
-		glTexImage2D(GL_TEXTURE_2D, 0, texFormat, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
 		fb.AttachTexture(shadowTexture, GL_TEXTURE_2D, GL_DEPTH_ATTACHMENT_EXT);
+
+		glDrawBuffer(GL_NONE);
+		// glReadBuffer() only works with color buffers
 	}
 
 	// test the FBO
-	glDrawBuffer(useColorTexture ? GL_COLOR_ATTACHMENT0_EXT : GL_NONE);
-	glReadBuffer(useColorTexture ? GL_COLOR_ATTACHMENT0_EXT : GL_NONE);
 	bool status = fb.CheckStatus("SHADOW");
-	if (!status && !useColorTexture) {
+
+	if (!status && !useColorTexture)
 		status = WorkaroundUnsupportedFboRenderTargets();
-	}
+
 	fb.Unbind();
 	return status;
 }
