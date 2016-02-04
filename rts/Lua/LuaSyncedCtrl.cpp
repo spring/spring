@@ -608,12 +608,9 @@ static int SetSolidObjectPhysicalState(lua_State* L, CSolidObject* o)
 	drag.z = Clamp(luaL_optnumber(L, 13, drag.z), 0.0f, 1.0f);
 
 	CMatrix44f matrix;
-	matrix.RotateZ(rot.z);
-	matrix.RotateX(rot.x);
-	matrix.RotateY(rot.y);
 
 	o->Move(pos, false);
-	o->SetDirVectors(matrix);
+	o->SetDirVectors(matrix.RotateEulerZXY(rot));
 	o->UpdateMidAndAimPos();
 	o->SetHeadingFromDirection();
 	// do not need ForcedSpin, above three calls cover it

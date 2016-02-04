@@ -83,11 +83,8 @@ CScriptMoveType::~CScriptMoveType()
 inline void CScriptMoveType::CalcDirections()
 {
 	CMatrix44f matrix;
-	matrix.RotateY(-rot.y);
-	matrix.RotateX(-rot.x);
-	matrix.RotateZ(-rot.z);
 
-	owner->SetDirVectors(matrix);
+	owner->SetDirVectors(matrix.RotateEulerYXZ(-rot));
 	owner->UpdateMidAndAimPos();
 	owner->SetHeadingFromDirection();
 }
