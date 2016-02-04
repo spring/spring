@@ -117,121 +117,157 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 	cancelDistance(1024),
 	lastCloseInTry(-1),
 	slowGuard(false),
-	moveDir(gs->randFloat() > 0.5)
+	moveDir(gs->randFloat() > 0.5f)
 {
 	CalculateCancelDistance();
 
-	CommandDescription c;
+	{
+		possibleCommands.emplace_back();
+		CommandDescription& c = possibleCommands.back();
 
-	c.id=CMD_LOAD_ONTO;
-	c.action="loadonto";
-	c.type=CMDTYPE_ICON_UNIT;
-	c.name="Load units";
-	c.mouseicon=c.name;
-	c.tooltip="Sets the unit to load itself onto a transport";
-	c.hidden = true;
-	possibleCommands.push_back(c);
-	c.hidden = false;
+		c.id   = CMD_LOAD_ONTO;
+		c.type = CMDTYPE_ICON_UNIT;
+
+		c.action    = "loadonto";
+		c.name      = "Load units";
+		c.tooltip   = c.name + ": Sets the unit to load itself onto a transport";
+		c.mouseicon = c.name;
+
+		c.hidden = true;
+	}
 
 	if (owner->unitDef->canmove) {
-		c.id=CMD_MOVE;
-		c.action="move";
-		c.type=CMDTYPE_ICON_FRONT;
-		c.name="Move";
-		c.mouseicon=c.name;
-		c.tooltip="Move: Order the unit to move to a position";
+		possibleCommands.emplace_back();
+		CommandDescription& c = possibleCommands.back();
+
+		c.id   = CMD_MOVE;
+		c.type = CMDTYPE_ICON_FRONT;
+
+		c.action    = "move";
+		c.name      = "Move";
+		c.tooltip   = c.name + ": Order the unit to move to a position";
+		c.mouseicon = c.name;
+
 		c.params.push_back("1000000"); // max distance
-		possibleCommands.push_back(c);
-		c.params.clear();
 	}
 
 	if (owner->unitDef->canPatrol) {
-		c.id=CMD_PATROL;
-		c.action="patrol";
-		c.type=CMDTYPE_ICON_MAP;
-		c.name="Patrol";
-		c.mouseicon=c.name;
-		c.tooltip="Patrol: Order the unit to patrol to one or more waypoints";
-		possibleCommands.push_back(c);
-		c.params.clear();
+		possibleCommands.emplace_back();
+		CommandDescription& c = possibleCommands.back();
+
+		c.id   = CMD_PATROL;
+		c.type = CMDTYPE_ICON_MAP;
+
+		c.action    = "patrol";
+		c.name      = "Patrol";
+		c.tooltip   = c.name + ": Order the unit to patrol to one or more waypoints";
+		c.mouseicon = c.name;
 	}
 
 	if (owner->unitDef->canFight) {
-		c.id = CMD_FIGHT;
-		c.action="fight";
+		possibleCommands.emplace_back();
+		CommandDescription& c = possibleCommands.back();
+
+		c.id   = CMD_FIGHT;
 		c.type = CMDTYPE_ICON_FRONT;
-		c.name = "Fight";
-		c.mouseicon=c.name;
-		c.tooltip = "Fight: Order the unit to take action while moving to a position";
-		possibleCommands.push_back(c);
+
+		c.action    = "fight";
+		c.name      = "Fight";
+		c.tooltip   = c.name + ": Order the unit to take action while moving to a position";
+		c.mouseicon = c.name;
 	}
 
 	if (owner->unitDef->canGuard) {
-		c.id=CMD_GUARD;
-		c.action="guard";
-		c.type=CMDTYPE_ICON_UNIT;
-		c.name="Guard";
-		c.mouseicon=c.name;
-		c.tooltip="Guard: Order a unit to guard another unit and attack units attacking it";
-		possibleCommands.push_back(c);
+		possibleCommands.emplace_back();
+		CommandDescription& c = possibleCommands.back();
+
+		c.id   = CMD_GUARD;
+		c.type = CMDTYPE_ICON_UNIT;
+
+		c.action    = "guard";
+		c.name      = "Guard";
+		c.tooltip   = c.name + ": Order a unit to guard another unit and attack units attacking it";
+		c.mouseicon = c.name;
 	}
 
 	if (owner->unitDef->canfly) {
-		c.params.clear();
-		c.id=CMD_AUTOREPAIRLEVEL;
-		c.action="autorepairlevel";
-		c.type=CMDTYPE_ICON_MODE;
-		c.name="Repair level";
-		c.mouseicon=c.name;
-		c.params.push_back("1");
-		c.params.push_back("LandAt 0");
-		c.params.push_back("LandAt 30");
-		c.params.push_back("LandAt 50");
-		c.params.push_back("LandAt 80");
-		c.tooltip=
-			"Repair level: Sets at which health level an aircraft will try to find a repair pad";
-		possibleCommands.push_back(c);
-		nonQueingCommands.insert(CMD_AUTOREPAIRLEVEL);
+		{
+			possibleCommands.emplace_back();
+			CommandDescription& c = possibleCommands.back();
 
-		c.params.clear();
-		c.id=CMD_IDLEMODE;
-		c.action="idlemode";
-		c.type=CMDTYPE_ICON_MODE;
-		c.name="Land mode";
-		c.mouseicon=c.name;
-		c.params.push_back("1");
-		c.params.push_back(" Fly ");
-		c.params.push_back("Land");
-		c.tooltip="Land mode: Sets what aircraft will do on idle";
-		possibleCommands.push_back(c);
-		nonQueingCommands.insert(CMD_IDLEMODE);
+			c.id   = CMD_AUTOREPAIRLEVEL;
+			c.type = CMDTYPE_ICON_MODE;
+
+			c.action    = "autorepairlevel";
+			c.name      = "Repair level";
+			c.tooltip   = c.name + ": Sets at which health level an aircraft will try to find a repair pad";
+			c.mouseicon = c.name;
+
+			c.queueing = false;
+
+			c.params.push_back("1");
+			c.params.push_back("LandAt 0");
+			c.params.push_back("LandAt 30");
+			c.params.push_back("LandAt 50");
+			c.params.push_back("LandAt 80");
+
+			nonQueingCommands.insert(c.id);
+		}
+		{
+			possibleCommands.emplace_back();
+			CommandDescription& c = possibleCommands.back();
+
+			c.id   = CMD_IDLEMODE;
+			c.type = CMDTYPE_ICON_MODE;
+
+			c.action    = "idlemode";
+			c.name      = "Land mode";
+			c.tooltip   = c.name + ": Sets what aircraft will do on idle";
+			c.mouseicon = c.name;
+
+			c.queueing = false;
+
+			c.params.push_back("1");
+			c.params.push_back(" Fly ");
+			c.params.push_back("Land");
+
+			nonQueingCommands.insert(c.id);
+		}
 	}
 
 	if (owner->unitDef->IsTransportUnit()) {
-		c.params.clear();
-		c.id = CMD_LOAD_UNITS;
-		c.action = "loadunits";
-		c.type = CMDTYPE_ICON_UNIT_OR_AREA;
-		c.name = "Load units";
-		c.mouseicon = c.name;
-		c.tooltip = "Sets the transport to load a unit or units within an area";
-		possibleCommands.push_back(c);
+		{
+			possibleCommands.emplace_back();
+			CommandDescription& c = possibleCommands.back();
 
-		c.id = CMD_UNLOAD_UNITS;
-		c.action = "unloadunits";
-		c.type = CMDTYPE_ICON_AREA;
-		c.name = "Unload units";
-		c.mouseicon = c.name;
-		c.tooltip = "Sets the transport to unload units in an area";
-		possibleCommands.push_back(c);
+			c.id   = CMD_LOAD_UNITS;
+			c.type = CMDTYPE_ICON_UNIT_OR_AREA;
+
+			c.action    = "loadunits";
+			c.name      = "Load units";
+			c.tooltip   = c.name + ": Sets the transport to load a unit or units within an area";
+			c.mouseicon = c.name;
+		}
+		{
+			possibleCommands.emplace_back();
+			CommandDescription& c = possibleCommands.back();
+
+			c.id   = CMD_UNLOAD_UNITS;
+			c.type = CMDTYPE_ICON_AREA;
+
+			c.action    = "unloadunits";
+			c.name      = "Unload units";
+			c.tooltip   = c.name + ": Sets the transport to unload units in an area";
+			c.mouseicon = c.name;
+		}
 	}
 }
 
 CMobileCAI::~CMobileCAI()
 {
-	// if uh == NULL then all pointers to units should be considered dangling pointers
-	if (unitHandler != NULL) {
-		SetTransportee(NULL);
+	// if uh == NULL then all pointers to units should be considered dangling
+	if (unitHandler != nullptr) {
+		SetTransportee(nullptr);
 	}
 }
 

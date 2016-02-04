@@ -4259,10 +4259,11 @@ static bool ParseCommandDescription(lua_State* L, int table,
 	}
 
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (!lua_israwstring(L, -2)) {
+		if (!lua_israwstring(L, -2))
 			continue;
-		}
+
 		const string key = lua_tostring(L, -2);
+
 		if (ParseNamedInt(L,    key, "id",          cd.id)         ||
 		    ParseNamedInt(L,    key, "type",        cd.type)       ||
 		    ParseNamedString(L, key, "name",        cd.name)       ||
@@ -4270,15 +4271,17 @@ static bool ParseCommandDescription(lua_State* L, int table,
 		    ParseNamedString(L, key, "tooltip",     cd.tooltip)    ||
 		    ParseNamedString(L, key, "texture",     cd.iconname)   ||
 		    ParseNamedString(L, key, "cursor",      cd.mouseicon)  ||
+		    ParseNamedBool(L,   key, "queueing",    cd.queueing)   ||
 		    ParseNamedBool(L,   key, "hidden",      cd.hidden)     ||
 		    ParseNamedBool(L,   key, "disabled",    cd.disabled)   ||
 		    ParseNamedBool(L,   key, "showUnique",  cd.showUnique) ||
 		    ParseNamedBool(L,   key, "onlyTexture", cd.onlyTexture)) {
 			continue; // successfully parsed a parameter
 		}
-		if ((key != "params") || !lua_istable(L, -1)) {
+
+		if ((key != "params") || !lua_istable(L, -1))
 			luaL_error(L, "Unknown cmdDesc parameter %s", key.c_str());
-		}
+
 		// collect the parameters
 		const int paramTable = lua_gettop(L);
 		ParseStringVector(L, paramTable, cd.params);
@@ -4290,103 +4293,113 @@ static bool ParseCommandDescription(lua_State* L, int table,
 
 int LuaSyncedCtrl::EditUnitCmdDesc(lua_State* L)
 {
-	if (!FullCtrl(L)) {
+	if (!FullCtrl(L))
 		return 0;
-	}
 
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-	vector<CommandDescription>& cmdDescs = unit->commandAI->possibleCommands;
 
-	const int cmdDescID = luaL_checkint(L, 2) - 1;
-	if ((cmdDescID < 0) || (cmdDescID >= (int)cmdDescs.size())) {
+	if (unit == nullptr)
 		return 0;
-	}
 
-	ParseCommandDescription(L, 3, cmdDescs[cmdDescID]);
+	auto& cmdDescs = unit->commandAI->possibleCommands;
+	auto& nonQueingCmds = unit->commandAI->nonQueingCommands;
+
+	const unsigned int cmdDescID = luaL_checkint(L, 2) - 1;
+
+	if (cmdDescID >= cmdDescs.size())
+		return 0;
+
+	CommandDescription& cmdDesc = cmdDescs[cmdDescID];
+
+	// erase in case we do not want it to be non-queueing anymore
+	if (!cmdDesc.queueing)
+		nonQueingCmds.erase(cmdDesc.id);
+
+	ParseCommandDescription(L, 3, cmdDesc);
+
+	// re-insert otherwise (possibly with different cmdID!)
+	if (!cmdDesc.queueing)
+		nonQueingCmds.insert(cmdDesc.id);
 
 	selectedUnitsHandler.PossibleCommandChange(unit);
-
 	return 0;
 }
 
 
 int LuaSyncedCtrl::InsertUnitCmdDesc(lua_State* L)
 {
-	if (!FullCtrl(L)) {
+	if (!FullCtrl(L))
 		return 0;
-	}
+
 	const int args = lua_gettop(L); // number of arguments
-	if (((args == 2) && !lua_istable(L, 2)) ||
-	    ((args >= 3) && (!lua_isnumber(L, 2) || !lua_istable(L, 3)))) {
-		luaL_error(L, "Incorrect arguments to InsertUnitCmdDesc");
-	}
+
+	if ((args == 2) && !lua_istable(L, 2))
+		luaL_error(L, "Incorrect arguments to InsertUnitCmdDesc/2");
+
+	if ((args >= 3) && (!lua_isnumber(L, 2) || !lua_istable(L, 3)))
+		luaL_error(L, "Incorrect arguments to InsertUnitCmdDesc/3");
 
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == nullptr)
 		return 0;
-	}
-	vector<CommandDescription>& cmdDescs = unit->commandAI->possibleCommands;
 
-	int table = 2;
-	if (args >= 3) {
-		table = 3;
-	}
+	auto& cmdDescs = unit->commandAI->possibleCommands;
+	auto& nonQueingCmds = unit->commandAI->nonQueingCommands;
 
-	int cmdDescID = (int)cmdDescs.size();
-	if (args >= 3) {
+	const int tableIdx = 2 + int(args >= 3);
+	unsigned int cmdDescID = cmdDescs.size();
+
+	if (args >= 3)
 		cmdDescID = lua_toint(L, 2) - 1;
-		if (cmdDescID < 0) {
-			cmdDescID = 0;
-		}
-	}
 
 	CommandDescription cd;
-	ParseCommandDescription(L, table, cd);
+	ParseCommandDescription(L, tableIdx, cd);
 
-	if (cmdDescID >= (int)cmdDescs.size()) {
+	if (cmdDescID >= cmdDescs.size()) {
 		cmdDescs.push_back(cd);
 	} else {
-		vector<CommandDescription>::iterator it = cmdDescs.begin();
-		advance(it, cmdDescID);
-		cmdDescs.insert(it, cd);
+		// preserve order
+		cmdDescs.insert(cmdDescs.begin() + cmdDescID, cd);
 	}
 
-	selectedUnitsHandler.PossibleCommandChange(unit);
+	if (!cd.queueing)
+		nonQueingCmds.insert(cd.id);
 
+	selectedUnitsHandler.PossibleCommandChange(unit);
 	return 0;
 }
 
 
 int LuaSyncedCtrl::RemoveUnitCmdDesc(lua_State* L)
 {
-	if (!FullCtrl(L)) {
+	if (!FullCtrl(L))
 		return 0;
-	}
 
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-	vector<CommandDescription>& cmdDescs = unit->commandAI->possibleCommands;
 
-	int cmdDescID = (int)cmdDescs.size() - 1;
-	if (lua_isnumber(L, 2)) {
+	if (unit == nullptr)
+		return 0;
+
+	auto& cmdDescs = unit->commandAI->possibleCommands;
+	auto& nonQueingCmds = unit->commandAI->nonQueingCommands;
+
+	// pick the last by default
+	unsigned int cmdDescID = cmdDescs.size() - 1;
+
+	if (lua_isnumber(L, 2))
 		cmdDescID = lua_toint(L, 2) - 1;
-	}
 
-	if ((cmdDescID < 0) || (cmdDescID >= (int)cmdDescs.size())) {
+	if (cmdDescID >= cmdDescs.size())
 		return 0;
-	}
 
-	vector<CommandDescription>::iterator it = cmdDescs.begin();
-	advance(it, cmdDescID);
-	cmdDescs.erase(it);
+	if (!cmdDescs[cmdDescID].queueing)
+		nonQueingCmds.erase(cmdDescs[cmdDescID].id);
+
+	// preserve order
+	cmdDescs.erase(cmdDescs.begin() + cmdDescID);
 
 	selectedUnitsHandler.PossibleCommandChange(unit);
-
 	return 0;
 }
 

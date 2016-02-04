@@ -63,16 +63,18 @@ CAirCAI::CAirCAI(CUnit* owner)
 	, lastPC2(-1)
 {
 	cancelDistance = 16000;
-	CommandDescription c;
 
 	if (owner->unitDef->canAttack) {
-		c.id = CMD_AREA_ATTACK;
-		c.action = "areaattack";
+		possibleCommands.emplace_back();
+		CommandDescription& c = possibleCommands.back();
+
+		c.id   = CMD_AREA_ATTACK;
 		c.type = CMDTYPE_ICON_AREA;
-		c.name = "Area attack";
+
+		c.action    = "areaattack";
+		c.name      = "Area attack";
+		c.tooltip   = c.name + ": Sets the aircraft to attack enemy units within a circle";
 		c.mouseicon = c.name;
-		c.tooltip = "Sets the aircraft to attack enemy units within a circle";
-		possibleCommands.push_back(c);
 	}
 
 	basePos = owner->pos;

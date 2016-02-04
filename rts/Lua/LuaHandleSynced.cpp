@@ -1184,8 +1184,7 @@ int CSyncedLuaHandle::SyncedRandom(lua_State* L)
 
 int CSyncedLuaHandle::SyncedRandomSeed(lua_State* L)
 {
-	const int newseed = luaL_checkint(L, -1);
-	gs->SetRandSeed(newseed);
+	gs->SetRandSeed(luaL_checkint(L, -1));
 	return 0;
 }
 

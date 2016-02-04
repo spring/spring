@@ -38,13 +38,17 @@ CR_REG_METADATA_SUB(CFactoryCAI,BuildOption , (
 
 static std::string GetUnitDefBuildOptionToolTip(const UnitDef* ud, bool disabled) {
 	std::string tooltip;
-	tooltip += (disabled)?
-		"\xff\xff\x22\x22" "DISABLED: " "\xff\xff\xff\xff":
-		"Build: ";
+
+	if (disabled) {
+		tooltip = "\xff\xff\x22\x22" "DISABLED: " "\xff\xff\xff\xff";
+	} else {
+		tooltip = "Build: ";
+	}
+
 	tooltip += (ud->humanName + " - " + ud->tooltip);
-	tooltip += ("\nHealth "      + FloatToString(ud->health, "%.0f"));
-	tooltip += ("\nMetal cost "  + FloatToString(ud->metal, "%.0f"));
-	tooltip += ("\nEnergy cost " + FloatToString(ud->energy, "%.0f"));
+	tooltip += ("\nHealth "      + FloatToString(ud->health,    "%.0f"));
+	tooltip += ("\nMetal cost "  + FloatToString(ud->metal,     "%.0f"));
+	tooltip += ("\nEnergy cost " + FloatToString(ud->energy,    "%.0f"));
 	tooltip += ("\nBuild time "  + FloatToString(ud->buildTime, "%.0f"));
 
 	return tooltip;
@@ -61,80 +65,92 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 	commandQue.SetQueueType(CCommandQueue::BuildQueueType);
 	newUnitCommands.SetQueueType(CCommandQueue::NewUnitQueueType);
 
-	CommandDescription c;
-
 	if (owner->unitDef->canmove) {
+		possibleCommands.emplace_back();
+		CommandDescription& c = possibleCommands.back();
+
 		c.id        = CMD_MOVE;
-		c.action    = "move";
 		c.type      = CMDTYPE_ICON_MAP;
+
+		c.action    = "move";
 		c.name      = "Move";
+		c.tooltip   = c.name + ": Order ready built units to move to a position";
 		c.mouseicon = c.name;
-		c.tooltip   = "Move: Order ready built units to move to a position";
-		possibleCommands.push_back(c);
 	}
 
 	if (owner->unitDef->canPatrol) {
+		possibleCommands.emplace_back();
+		CommandDescription& c = possibleCommands.back();
+
 		c.id        = CMD_PATROL;
-		c.action    = "patrol";
 		c.type      = CMDTYPE_ICON_MAP;
+
+		c.action    = "patrol";
 		c.name      = "Patrol";
+		c.tooltip   = c.name + ": Order ready built units to patrol to one or more waypoints";
 		c.mouseicon = c.name;
-		c.tooltip   = "Patrol: Order ready built units to patrol to one or more waypoints";
-		possibleCommands.push_back(c);
 	}
 
 	if (owner->unitDef->canFight) {
+		possibleCommands.emplace_back();
+		CommandDescription& c = possibleCommands.back();
+
 		c.id        = CMD_FIGHT;
-		c.action    = "fight";
 		c.type      = CMDTYPE_ICON_MAP;
+
+		c.action    = "fight";
 		c.name      = "Fight";
+		c.tooltip   = c.name + ": Order ready built units to take action while moving to a position";
 		c.mouseicon = c.name;
-		c.tooltip   = "Fight: Order ready built units to take action while moving to a position";
-		possibleCommands.push_back(c);
 	}
 
 	if (owner->unitDef->canGuard) {
+		possibleCommands.emplace_back();
+		CommandDescription& c = possibleCommands.back();
+
 		c.id        = CMD_GUARD;
-		c.action    = "guard";
 		c.type      = CMDTYPE_ICON_UNIT;
+
+		c.action    = "guard";
 		c.name      = "Guard";
+		c.tooltip   = c.name + ": Order ready built units to guard another unit and attack units attacking it";
 		c.mouseicon = c.name;
-		c.tooltip   = "Guard: Order ready built units to guard another unit and attack units attacking it";
-		possibleCommands.push_back(c);
 	}
 
 	CFactory* fac = static_cast<CFactory*>(owner);
 
-	map<int, string>::const_iterator bi;
-	for (bi = fac->unitDef->buildOptions.begin(); bi != fac->unitDef->buildOptions.end(); ++bi) {
-		const string name = bi->second;
+	for (const auto& bi: fac->unitDef->buildOptions) {
+		const std::string& name = bi.second;
 		const UnitDef* ud = unitDefHandler->GetUnitDefByName(name);
 
-		if (ud == NULL) {
-		  string errmsg = "MOD ERROR: loading ";
-		  errmsg += name.c_str();
-		  errmsg += " for ";
-		  errmsg += owner->unitDef->name;
+		if (ud == nullptr) {
+			string errmsg = "MOD ERROR: loading ";
+			errmsg += name.c_str();
+			errmsg += " for ";
+			errmsg += owner->unitDef->name;
 			throw content_error(errmsg);
 		}
 
-		CommandDescription c;
-		c.id        = -ud->id; // build-options are always negative
-		c.action    = "buildunit_" + StringToLower(ud->name);
-		c.type      = CMDTYPE_ICON;
-		c.name      = name;
-		c.mouseicon = c.name;
-		c.disabled  = (ud->maxThisUnit <= 0);
-		c.tooltip   = GetUnitDefBuildOptionToolTip(ud, c.disabled);
+		{
+			possibleCommands.emplace_back();
+			CommandDescription& c = possibleCommands.back();
 
-		possibleCommands.push_back(c);
+			c.id   = -ud->id; // build-options are always negative
+			c.type = CMDTYPE_ICON;
 
-		BuildOption bo;
-		bo.name = name;
-		bo.fullName = name;
-		bo.numQued = 0;
+			c.action    = "buildunit_" + StringToLower(ud->name);
+			c.name      = name;
+			c.mouseicon = c.name;
+			c.tooltip   = GetUnitDefBuildOptionToolTip(ud, c.disabled = (ud->maxThisUnit <= 0));
 
-		buildOptions[c.id] = bo;
+
+			BuildOption bo;
+			bo.name     = name;
+			bo.fullName = name;
+			bo.numQued  = 0;
+
+			buildOptions[c.id] = bo;
+		}
 	}
 }
 
@@ -145,12 +161,12 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 	const int cmdID = c.GetID();
 
 	// move is always allowed for factories (passed to units it produces)
-	if ((cmdID == CMD_SET_WANTED_MAX_SPEED) ||
-	    ((cmdID != CMD_MOVE) && !AllowedCommand(c, fromSynced))) {
+	if (cmdID == CMD_SET_WANTED_MAX_SPEED)
 		return;
-	}
+	if ((cmdID != CMD_MOVE) && !AllowedCommand(c, fromSynced))
+		return;
 
-	map<int, BuildOption>::iterator boi = buildOptions.find(cmdID);
+	auto boi = buildOptions.find(cmdID);
 
 	// not a build order (or a build order we do not support, eg. if multiple
 	// factories of different types were selected) so queue it to built units
@@ -158,9 +174,17 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		if (cmdID < 0)
 			return;
 
-		if ((nonQueingCommands.find(cmdID) != nonQueingCommands.end()) ||
-		    (cmdID == CMD_INSERT) || (cmdID == CMD_REMOVE) ||
-		    (!(c.options & SHIFT_KEY) && ((cmdID == CMD_WAIT) || (cmdID == CMD_SELFD)))) {
+		if (nonQueingCommands.find(cmdID) != nonQueingCommands.end()) {
+			CCommandAI::GiveAllowedCommand(c);
+			return;
+		}
+
+		if (cmdID == CMD_INSERT || cmdID == CMD_REMOVE) {
+			CCommandAI::GiveAllowedCommand(c);
+			return;
+		}
+
+		if (!(c.options & SHIFT_KEY) && (cmdID == CMD_WAIT || cmdID == CMD_SELFD)) {
 			CCommandAI::GiveAllowedCommand(c);
 			return;
 		}

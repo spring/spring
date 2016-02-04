@@ -421,6 +421,7 @@ public:
 	CommandDescription():
 		id(0),
 		type(CMDTYPE_ICON),
+		queueing(true),
 		hidden(false),
 		disabled(false),
 		showUnique(false),
@@ -442,6 +443,7 @@ public:
 	/// tooltip text
 	std::string tooltip;
 
+	bool queueing;
 	/// if true dont show a button for the command
 	bool hidden;
 	/// for greying-out commands

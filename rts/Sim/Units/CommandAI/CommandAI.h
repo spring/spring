@@ -102,12 +102,10 @@ public:
 	CWeapon* stockpileWeapon;
 
 	std::vector<CommandDescription> possibleCommands;
-	CCommandQueue commandQue;
-	/**
-	 * commands that will not go into the command queue
-	 * (and therefore not reseting it if given without shift
-	 */
 	std::set<int> nonQueingCommands;
+
+	CCommandQueue commandQue;
+
 	int lastUserCommand;
 	int selfDCountdown;
 	int lastFinishCommand;
