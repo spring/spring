@@ -415,21 +415,23 @@ void LuaParser::AddString(int key, const string& value)
 
 int LuaParser::TimeCheck(lua_State* L)
 {
-	if (!lua_isstring(L, 1) || !lua_isfunction(L, 2)) {
+	if (!lua_isstring(L, 1) || !lua_isfunction(L, 2))
 		luaL_error(L, "Invalid arguments to TimeCheck('string', func, ...)");
-	}
+
 	const string name = lua_tostring(L, 1);
 	lua_remove(L, 1);
+
 	const spring_time startTime = spring_gettime();
-	const int error = lua_pcall(L, lua_gettop(L) - 1, LUA_MULTRET, 0);
-	if (error != 0) {
+
+	if (lua_pcall(L, lua_gettop(L) - 1, LUA_MULTRET, 0) != 0) {
 		const string errmsg = lua_tostring(L, -1);
 		lua_pop(L, 1);
 		luaL_error(L, errmsg.c_str());
 	}
+
 	const spring_time endTime = spring_gettime();
-	const float elapsed = 1.0e-3f * (float)(spring_tomsecs(endTime - startTime));
-	LOG("%s %f", name.c_str(), elapsed);
+
+	LOG("%s %ldms", name.c_str(), spring_tomsecs(endTime - startTime));
 	return lua_gettop(L);
 }
 
