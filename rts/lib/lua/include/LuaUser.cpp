@@ -1,6 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <map>
+#include <array>
+#include <boost/cstdint.hpp>
 #include <boost/thread.hpp>
 
 #include "LuaInclude.h"
@@ -228,94 +230,242 @@ void spring_lua_alloc_update_stats(bool clear)
 //////////////////////////////////////////////////////////
 ////// Custom synced float to string
 //////////////////////////////////////////////////////////
-void spring_lua_ftoa(float f, char *buf)
+
+// excluding mantissa, a float has a rest int-precision of: 2^24 = 16,777,216
+// int numbers in that range are 100% exact, and don't suffer float precision issues
+static constexpr int MAX_PRECISE_DIGITS_IN_FLOAT = std::numeric_limits<float>::digits10;
+static constexpr auto SPRING_FLOAT_MAX = std::numeric_limits<float>::max();
+static constexpr auto SPRING_INT64_MAX = std::numeric_limits<boost::int64_t>::max();
+
+static constexpr std::array<double, 10> v = {
+	1u,
+	10u,
+	100u,
+	1000u,
+	10000u,
+	100000u,
+	1000000u,
+	10000000u,
+	100000000u,
+	1000000000u
+};
+
+
+static constexpr inline double pow10d(unsigned i)
 {
-	//get rid of integers
-	if ((float) (int) f == f) {
-		sprintf(buf,"%d",(int) f);
+	return (i<v.size()) ? v[i] : std::pow(double(10), i);
+}
+
+
+static const inline int fastlog10(const float f)
+{
+	assert(f != 0.0f); // log10(0) = -inf
+	if (f>=1.f && f<(SPRING_INT64_MAX >> 1)) {
+		const boost::int64_t i = f;
+		int log10 = 0;
+		boost::int64_t n = 10;
+		while (i >= n) {
+			++log10;
+			n *= 10;
+		}
+		return log10;
+	}
+	return std::floor(std::log10(f));
+}
+
+
+static constexpr inline int GetDigitsInStdNotation(const int log10)
+{
+	// log10(0.01) = -2  (4 chars)
+	// log10(0.1)  = -1  (3 chars)
+	// log10(1)    = 0   (1 char)
+	// log10(10)   = 1   (2 chars)
+	// log10(100)  = 2   (3 chars)
+	return (log10 >= 0) ? (log10 + 1) : (-log10 + 2);
+}
+
+
+static inline int printIntPart(char* buf, float f, const bool carrierBit = false)
+{
+#ifdef WIN32
+	if (f < (std::numeric_limits<int>::max() - carrierBit)) {
+		return sprintf(buf, "%1d", int(f) + carrierBit);
+	} else
+#endif
+	if (f < (SPRING_INT64_MAX - carrierBit)) {
+		return sprintf(buf, "%1ld", boost::int64_t(f) + carrierBit); // much faster than printing a float!
+	} else {
+		return sprintf(buf, "%1.0f", f + carrierBit);
+	}
+}
+
+
+static inline int printFractPart(char* buf, float f, int digits, int precision)
+{
+	const auto old = buf;
+
+	assert(digits <= 15);
+	assert(digits <= std::numeric_limits<boost::int64_t>::digits10);
+	const boost::int64_t i = double(f) * pow10d(digits) + 0.5;
+	char s[16];
+	const int len = sprintf(s, "%ld", i);
+	if (len < digits) {
+		memset(buf, '0', digits - len);
+		buf += digits - len;
+	}
+	memcpy(buf, s, len);
+	buf += len;
+
+	// removing trailing zeros
+	precision = std::max(1, precision);
+	while (buf[-1] == '0' && (buf - old) > precision) --buf;
+	buf[0] = '\0';
+
+	return (buf - old);
+}
+
+
+static inline bool HandleRounding(float* fractF, int log10, int charsInStdNotation, int nDigits, bool scienceNotation, int precision)
+{
+	int iDigits = 1;
+	if (!scienceNotation) {
+		if (log10 >= 0) {
+			iDigits = charsInStdNotation;
+		}
+	}
+
+	int fDigits = std::max(0, nDigits - (iDigits + 1)); // excluding dot
+	if (precision >= 0) {
+		fDigits = precision;
+	}
+
+	// 1 -> 0.95
+	// 2 -> 0.995
+	// 3 -> 0.9995
+	const float roundLimit = 1.f - 0.5f * std::pow(0.1f, fDigits);
+	if (*fractF >= roundLimit) {
+		*fractF = 0.0f;
+		return true;
+	}
+	return false;
+}
+
+
+void spring_lua_ftoa(float f, char* buf, int precision)
+{
+	static constexpr int MAX_DIGITS = 10;
+	static_assert(MAX_DIGITS > 6, "must have enough room for at least 1.0e+23");
+
+	// get rid of integers
+	int x = f;
+	if (float(x) == f) {
+		sprintf(buf, "%d", x);
+		if (precision > 0) {
+			char* endBuf = strchr(buf, '\0');
+			*endBuf = '.'; ++endBuf;
+			memset(endBuf, '0', precision);
+			endBuf[precision] = '\0';
+		}
 		return;
 	}
 
-	if (f < 0.0f) {
+
+	int nDigits = MAX_DIGITS;
+	if (std::signbit(f)) { // use signbit() cause < doesn't work with nans
 		f = -f;
 		buf[0] = '-';
 		++buf;
-	}
-
-	int nDigits = 8;
-	int e = 0;
-
-	while (f >= 10.0f) {
-		f /= 10;
-		e += 1;
-	}
-	while (f < 1.0f) {
-		f *= 10;
-		e -= 1;
-	}
-
-
-
-	int pointPos = (e < 10 && e > 0) ? (1 + e) : 1;
-
-	int pos = 0;
-
-	int lastRealDigit = 0;
-	while (nDigits > 0) {
-		int intPart = f;
-		f = f - intPart;
-		assert(intPart >= 0 && intPart < 10);
-		buf[pos] = intPart + '0';
-		if (intPart != 0 || pos < pointPos) {
-			lastRealDigit = pos;
-		}
-
-		f *= 10;
-		++pos;
 		--nDigits;
-		if (pos == pointPos) {
-			buf[pos] = '.';
-			++pos;
-		}
-	}
-	//Round
-	if (f > 5.0f) {
-		pos -= 1;
-		while (pos >= 0) {
-			if (buf[pos] == '9') {
-				buf[pos] = '0';
-				if (pos > pointPos) {
-					lastRealDigit = pos - 1;
-				}
-			} else if (buf[pos] == '.') {
-				lastRealDigit = pos - 1;
-			} else {
-				buf[pos] += 1;
-				if (pos > pointPos) {
-					lastRealDigit = pos;
-				}
-				break;
-			}
-
-			--pos;
-		}
-		if (pos < 0) {
-			//Recalculate exponent and point position
-			buf[0] = '1';
-			buf[pointPos] = '0';
-			e += 1;
-			pointPos = (e < 10 && e > 0) ? (1 + e) : 1;
-			buf[pointPos] = '.';
-		}
-
 	}
 
-	if (e >= 10) {
-		sprintf(buf + lastRealDigit + 1, "e+%02d", e);
-		lastRealDigit += 4;
-	} else if (e < 0) {
-		sprintf(buf + lastRealDigit + 1, "e%03d", e);
-		lastRealDigit += 4;
+	if (std::isinf(f)) {
+		strcpy(buf, "inf");
+		return;
 	}
-	buf[lastRealDigit + 1] = '\0';
+	if (std::isnan(f)) {
+		strcpy(buf, "nan");
+		return;
+	}
+
+
+	int e10 = 0;
+	const int log10 = fastlog10(f);
+	const int charsInStdNotation = GetDigitsInStdNotation(log10);
+	if ((charsInStdNotation > nDigits) && (precision == -1)) {
+		e10 = log10;
+		nDigits -= 4; // space needed for "e+01"
+		f *= std::pow(10.f, -e10);
+	}
+	const bool scienceNotation = (e10 != 0);
+
+	float truncF;
+	float fractF = std::modf(f, &truncF);
+	const bool carrierBit = HandleRounding(&fractF, log10, charsInStdNotation, nDigits, scienceNotation, precision);
+
+	const int iDigits = printIntPart(buf, truncF, carrierBit);
+	if (scienceNotation)
+		assert(iDigits == 1);
+	nDigits -= iDigits;
+	buf += iDigits;
+
+	if (precision >= 0)
+		nDigits = precision + 1; //+1 for dot
+	if ((nDigits > 1) && (scienceNotation || fractF != 0 || precision > 0)) {
+		buf[0] = '.';
+		++buf;
+		--nDigits;
+
+		const int fDigits = printFractPart(buf, fractF, nDigits, precision);
+		assert(fDigits >= 1);
+		buf += fDigits;
+	}
+
+	if (scienceNotation) {
+		sprintf(buf, "e%+02d", e10);
+	}
+}
+
+
+void spring_lua_format(float f, const char* fmt, char* buf)
+{
+	if (fmt[0] == '\0')
+		return spring_lua_ftoa(f, buf);
+
+	// handles `%(sign)(width)(.precision)f`, i.e. %+10.2f
+
+	char bufC[128];
+	char* buf2 = bufC;
+
+	// sign
+	if (fmt[0] == '+' || fmt[0] == ' ') {
+		if (!std::signbit(f)) { // use signbit() cause < doesn't work with nans
+			buf2[0] = fmt[0];
+			++buf2;
+		}
+		++fmt;
+	}
+
+	// width
+	const int width = atoi(fmt);
+
+	// precision
+	int precision = -1;
+	const char* dotPos = strchr(fmt, '.');
+	if (dotPos != nullptr) {
+		fmt = dotPos + 1;
+		precision = atoi(fmt);
+	}
+
+	// convert the float
+	spring_lua_ftoa(f, buf2, precision);
+
+	// right align the number when `width` is given
+	const int len = strlen(bufC);
+	if (len < width) {
+		memset(buf, ' ', width - len);
+		buf += width - len;
+	}
+
+	// copy the float string into dst
+	memcpy(buf, bufC, len+1);
 }

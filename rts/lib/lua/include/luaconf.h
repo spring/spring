@@ -531,8 +531,10 @@
 #define LUA_NUMBER_FMT		"%.14g"
 #ifndef BUILDING_AI
 #define lua_number2str(s,n)	spring_lua_ftoa((n),(s))
+#define lua_number2fmt(s,fmt,n)	spring_lua_format((n), (fmt), (s))
 #else
 #define lua_number2str(s,n)	sprintf((s), LUA_NUMBER_FMT, (n))
+#define lua_number2fmt(s,fmt,n)	sprintf((s), fmt, (n))
 #endif
 #define LUAI_MAXNUMBER2STR	32 /* 16 digits, sign, point, and \0 */
 #define lua_str2number(s,p)	strtod((s), (p))

@@ -789,7 +789,9 @@ static int str_format (lua_State *L) {
         }
         case 'e':  case 'E': case 'f':
         case 'g': case 'G': {
-          sprintf(buff, form, (double)luaL_checknumber(L, arg));
+	  // SPRING sprintf(buff, form, (double)luaL_checknumber(L, arg));
+	  // float2str in printf is desyncing (between windows & linux) we need to use our own syncing one
+	  lua_number2fmt(buff, form, luaL_checknumber(L, arg));
           break;
         }
         case 'q': {

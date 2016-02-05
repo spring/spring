@@ -410,6 +410,8 @@ endif()
 			"${CMAKE_CURRENT_SOURCE_DIR}/other/testPrintf.cpp"
 			"${ENGINE_SOURCE_DIR}/lib/lua/include/LuaUser.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
+			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
+			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
 			${test_Log_sources}
 			${sources_engine_System_Threading}
 		)
@@ -420,7 +422,8 @@ endif()
 			${Boost_THREAD_LIBRARY}
 			${WINMM_LIBRARY}
 		)
-	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
+	set(test_flags "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
 	target_include_directories(test_${test_name} PRIVATE ${ENGINE_SOURCE_DIR}/lib/lua/include)
 
 
