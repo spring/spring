@@ -155,7 +155,7 @@ public:
 	void SetModelMatrix(const CMatrix44f& m) {
 		// assimp only
 		bakedRotMatrix = m;
-		hasIdentityRot = m.IsIdentity();
+		hasIdentityRot = (m.IsIdentity() == 0);
 		assert(m.IsOrthoNormal() == 0);
 	}
 
