@@ -651,7 +651,7 @@ bool CPathEstimator::TestBlock(
 
 
 	// evaluate this node (NOTE the max-resolution indexing for {flow,extra}Cost)
-	const float flowCost  = (peDef.testMobile) ? (PathFlowMap::GetInstance())->GetFlowCost(square.x, square.y, moveDef, PathDir2PathOpt(pathDir)) : 0.0f;
+	//const float flowCost  = (peDef.testMobile) ? (PathFlowMap::GetInstance())->GetFlowCost(square.x, square.y, moveDef, PathDir2PathOpt(pathDir)) : 0.0f;
 	const float extraCost = blockStates.GetNodeExtraCost(square.x, square.y, peDef.synced);
 	const float nodeCost  = vertexCosts[vertexIdx] + flowCost + extraCost;
 
