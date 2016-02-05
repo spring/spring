@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_CASE( Printf )
 		BOOST_WARN(strcmp(s, p.second) == 0);
 	}
 
-	LOG("\__builtin_sprintf:");
+	LOG("\n__builtin_sprintf:");
 	for (const auto& p: testNumbers) {
 		__builtin_sprintf(s, FMT_STRING, p.first);
 		LOG("%20s [%s]", s, p.second);

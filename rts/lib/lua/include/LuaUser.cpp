@@ -359,7 +359,7 @@ void spring_lua_ftoa(float f, char* buf, int precision)
 	// get rid of integers
 	int x = f;
 	if (float(x) == f) {
-		sprintf(buf, "%d", x);
+		sprintf(buf, "%i", x);
 		if (precision > 0) {
 			char* endBuf = strchr(buf, '\0');
 			*endBuf = '.'; ++endBuf;
