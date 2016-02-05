@@ -252,7 +252,7 @@ bool CPathFinder::TestBlock(
 	//const float flowCost  = (pfDef.testMobile) ? (PathFlowMap::GetInstance())->GetFlowCost(square.x, square.y, moveDef, pathOptDir) : 0.0f;
 	const float extraCost = blockStates.GetNodeExtraCost(square.x, square.y, pfDef.synced);
 
-	const float dirMoveCost = (1.0f + heatCost + flowCost) * PF_DIRECTION_COSTS[pathOptDir];
+	const float dirMoveCost = (1.0f + heatCost) * PF_DIRECTION_COSTS[pathOptDir];
 	const float nodeCost = (dirMoveCost / speedMod) + extraCost;
 
 	const float gCost = parentSquare->gCost + nodeCost;      // g
