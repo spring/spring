@@ -92,7 +92,10 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(decRate),
 	CR_MEMBER(myGravity),
 
+	CR_MEMBER(maxReverseDist),
+	CR_MEMBER(minReverseAngle),
 	CR_MEMBER(maxReverseSpeed),
+
 	CR_MEMBER(wantedSpeed),
 	CR_MEMBER(currentSpeed),
 	CR_MEMBER(deltaSpeed),
@@ -147,7 +150,10 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	decRate(0.01f),
 	myGravity(0.0f),
 
+	maxReverseDist(0.0f),
+	minReverseAngle(0.0f),
 	maxReverseSpeed(0.0f),
+
 	wantedSpeed(0.0f),
 	currentSpeed(0.0f),
 	deltaSpeed(0.0f),
@@ -515,9 +521,7 @@ bool CGroundMoveType::FollowPath()
 
 		ASSERT_SYNCED(waypointDir);
 
-		if (waypointDir.dot(flatFrontDir) < 0.0f) {
-			wantReverse = WantReverse(waypointDir);
-		}
+		wantReverse = WantReverse(waypointDir, flatFrontDir);
 
 		// apply obstacle avoidance (steering)
 		const float3 rawWantedDir = waypointDir * Sign(int(!wantReverse));
@@ -2368,28 +2372,40 @@ void CGroundMoveType::UpdateOwnerPos(const float3& oldSpeedVector, const float3&
 	if (oldSpeed >  0.01f && newSpeed <= 0.01f) { owner->script->StopMoving(); }
 }
 
-bool CGroundMoveType::WantReverse(const float3& waypointDir2D) const
+bool CGroundMoveType::WantReverse(const float3& wpDir, const float3& ffDir) const
 {
 	if (!canReverse)
 		return false;
 
 	// these values are normally non-0, but LuaMoveCtrl
 	// can override them and we do not want any div0's
-	if (maxReverseSpeed <= 0.0f) return false;
-	if (maxSpeed <= 0.0f) return true;
+	if (maxReverseSpeed <= 0.0f)
+		return false;
+	if (maxSpeed <= 0.0f)
+		return true;
 
-	if (accRate <= 0.0f) return false;
-	if (decRate <= 0.0f) return false;
-	if (turnRate <= 0.0f) return false;
+	if (accRate <= 0.0f)
+		return false;
+	if (decRate <= 0.0f)
+		return false;
+	if (turnRate <= 0.0f)
+		return false;
 
-	const float3 waypointDif  = (goalPos - owner->pos) * XZVector;                                // use final WP for ETA
-	const float waypointDist  = waypointDif.Length();                                             // in elmos
-	const float waypointFETA  = (waypointDist / maxSpeed);                                        // in frames (simplistic)
-	const float waypointRETA  = (waypointDist / maxReverseSpeed);                                 // in frames (simplistic)
-	const float waypointAngle = Clamp(waypointDir2D.dot(owner->frontdir), -1.0f, 1.0f);           // clamp to prevent NaN's
-	const float turnAngleDeg  = math::acosf(waypointAngle) * (180.0f / PI);                       // in degrees
-	const float fwdTurnAngle  = (turnAngleDeg / 360.0f) * SPRING_CIRCLE_DIVS;                     // in "headings"
-	const float revTurnAngle  = SHORTINT_MAXVALUE - fwdTurnAngle;                                 // 180 deg - angle
+	if (wpDir.dot(ffDir) >= 0.0f)
+		return false;
+
+	const float goalDist   = (goalPos - owner->pos).Length2D();                  // use *final* WP for ETA calcs; in elmos
+	const float goalFwdETA = (goalDist / maxSpeed);                              // in frames (simplistic)
+	const float goalRevETA = (goalDist / maxReverseSpeed);                       // in frames (simplistic)
+
+	const float waypointAngle = Clamp(wpDir.dot(owner->frontdir), -1.0f, 0.0f);  // clamp to prevent NaN's; [-1, 0]
+	const float turnAngleDeg  = math::acosf(waypointAngle) * (180.0f / PI);      // in degrees; [90.0, 180.0]
+	const float fwdTurnAngle  = (turnAngleDeg / 360.0f) * SPRING_CIRCLE_DIVS;    // in "headings"
+	const float revTurnAngle  = SHORTINT_MAXVALUE - fwdTurnAngle;                // 180 deg - angle
+
+	// values <= 0 preserve default behavior
+	if (maxReverseDist > 0.0f && minReverseAngle > 0.0f)
+		return (currWayPointDist <= maxReverseDist && turnAngleDeg >= minReverseAngle);
 
 	// units start accelerating before finishing the turn, so subtract something
 	const float turnTimeMod      = 5.0f;
@@ -2404,8 +2420,8 @@ bool CGroundMoveType::WantReverse(const float3& waypointDir2D) const
 	const float fwdAccTime = (maxSpeed        - !reversing * apxFwdSpdAfterTurn) / accRate;
 	const float revAccTime = (maxReverseSpeed -  reversing * apxRevSpdAfterTurn) / accRate;
 
-	const float fwdETA = waypointFETA + fwdTurnAngleTime + fwdAccTime + fwdDecTime;
-	const float revETA = waypointRETA + revTurnAngleTime + revDecTime + revAccTime;
+	const float fwdETA = goalFwdETA + fwdTurnAngleTime + fwdAccTime + fwdDecTime;
+	const float revETA = goalRevETA + revTurnAngleTime + revDecTime + revAccTime;
 
 	return (fwdETA > revETA);
 }
@@ -2420,7 +2436,7 @@ bool CGroundMoveType::SetMemberValue(unsigned int memberHash, void* memberValue)
 	#define MEMBER_CHARPTR_HASH(memberName) HsiehHash(memberName, strlen(memberName),     0)
 	#define MEMBER_LITERAL_HASH(memberName) HsiehHash(memberName, sizeof(memberName) - 1, 0)
 
-	#define MAXREVERSESPEED_MEMBER_IDX 5
+	#define MAXREVERSESPEED_MEMBER_IDX 7
 
 	static const unsigned int boolMemberHashes[] = {
 		MEMBER_LITERAL_HASH(     "atGoal"),
@@ -2432,6 +2448,8 @@ bool CGroundMoveType::SetMemberValue(unsigned int memberHash, void* memberValue)
 		MEMBER_LITERAL_HASH(        "accRate"),
 		MEMBER_LITERAL_HASH(        "decRate"),
 		MEMBER_LITERAL_HASH(      "myGravity"),
+		MEMBER_LITERAL_HASH( "maxReverseDist"),
+		MEMBER_LITERAL_HASH("minReverseAngle"),
 		MEMBER_LITERAL_HASH("maxReverseSpeed"),
 	};
 
@@ -2452,6 +2470,9 @@ bool CGroundMoveType::SetMemberValue(unsigned int memberHash, void* memberValue)
 		&decRate,
 
 		&myGravity,
+
+		&maxReverseDist,
+		&minReverseAngle,
 		&maxReverseSpeed,
 	};
 
