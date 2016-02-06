@@ -2,7 +2,6 @@
 
 #include <map>
 #include <array>
-#include <inttypes.h>
 #include <boost/cstdint.hpp>
 #include <boost/thread.hpp>
 
@@ -233,11 +232,11 @@ void spring_lua_alloc_update_stats(bool clear)
 ////// Custom synced float to string
 //////////////////////////////////////////////////////////
 
-#ifdef PRIi64
-	#define PRINTF_INT64 PRIi64
+#ifdef WIN32
+static inline int sprintf64(char* dst, boost::int64_t x) { return sprintf(dst, "%I64d", x); }
 #else
-	// windows ...
-	#define PRINTF_INT64 "I64d"
+static inline int sprintf64(char* dst, long int x)      { return sprintf(dst, "%ld", x); }
+static inline int sprintf64(char* dst, long long int x) { return sprintf(dst, "%lld", x); }
 #endif
 
 // excluding mantissa, a float has a rest int-precision of: 2^24 = 16,777,216
@@ -285,6 +284,7 @@ static constexpr inline int GetDigitsInStdNotation(const int log10)
 }
 
 
+
 static inline int PrintIntPart(char* buf, float f, const bool carrierBit = false)
 {
 #ifdef WIN32
@@ -293,7 +293,7 @@ static inline int PrintIntPart(char* buf, float f, const bool carrierBit = false
 	} else
 #endif
 	if (f < (SPRING_INT64_MAX - carrierBit)) {
-		return sprintf(buf, "%" PRINTF_INT64, boost::int64_t(f) + carrierBit); // much faster than printing a float!
+		return sprintf64(buf, boost::int64_t(f) + carrierBit); // much faster than printing a float!
 	} else {
 		return sprintf(buf, "%1.0f", f + carrierBit);
 	}
@@ -308,7 +308,7 @@ static inline int PrintFractPart(char* buf, float f, int digits, int precision)
 	assert(digits <= std::numeric_limits<boost::int64_t>::digits10);
 	const boost::int64_t i = double(f) * Pow10d(digits) + 0.5;
 	char s[16];
-	const int len = sprintf(s, "%" PRINTF_INT64, i);
+	const int len = sprintf64(s, i);
 	if (len < digits) {
 		memset(buf, '0', digits - len);
 		buf += digits - len;
