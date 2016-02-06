@@ -532,7 +532,7 @@ static int SetSolidObjectRotation(lua_State* L, CSolidObject* o, bool isFeature)
 	matrix.RotateEulerXYZ(float3(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4)));
 	matrix.SetPos(o->pos);
 
-	assert(matrix.IsOrthoNormal() == 0);
+	assert(matrix.IsOrthoNormal());
 
 	o->SetDirVectors(matrix);
 	o->SetHeadingFromDirection();

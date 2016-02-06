@@ -155,8 +155,8 @@ public:
 	void SetModelMatrix(const CMatrix44f& m) {
 		// assimp only
 		bakedRotMatrix = m;
-		hasIdentityRot = (m.IsIdentity() == 0);
-		assert(m.IsOrthoNormal() == 0);
+		hasIdentityRot = m.IsIdentity();
+		assert(m.IsOrthoNormal());
 	}
 
 	void SetCollisionVolume(const CollisionVolume& cv) { colvol = cv; }

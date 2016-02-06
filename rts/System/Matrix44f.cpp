@@ -44,32 +44,23 @@ CMatrix44f::CMatrix44f(const float3 p)
 }
 
 
-int CMatrix44f::IsOrthoNormal(float eps) const
+bool CMatrix44f::IsOrthoNormal() const
 {
 	const float3& xdir = GetX();
 	const float3& ydir = GetY();
 	const float3& zdir = GetZ();
-
-	if (math::fabs(xdir.dot(ydir)) > eps) { return 1; }
-	if (math::fabs(ydir.dot(zdir)) > eps) { return 2; }
-	if (math::fabs(xdir.dot(zdir)) > eps) { return 3; }
-
-	if (xdir.SqLength() < (1.0f - eps) || xdir.SqLength() > (1.0f + eps)) { return 4; }
-	if (ydir.SqLength() < (1.0f - eps) || ydir.SqLength() > (1.0f + eps)) { return 5; }
-	if (zdir.SqLength() < (1.0f - eps) || zdir.SqLength() > (1.0f + eps)) { return 6; }
-
-	return 0;
+	const float3 ortho = float3(xdir.dot(ydir), ydir.dot(zdir), xdir.dot(zdir));
+	const float3 norma = float3(xdir.SqLength(), ydir.SqLength(), zdir.SqLength());
+	return (ortho == ZeroVector) && (norma == OnesVector);
 }
 
-int CMatrix44f::IsIdentity(float eps) const
+bool CMatrix44f::IsIdentity() const
 {
-	#define ABS(i) math::fabs(m[i])
-	if (ABS( 0) > (1.0f + eps) || ABS( 1) > (       eps) || ABS( 2) > (       eps) || ABS( 3) > (       eps)) return 1; // 1st col
-	if (ABS( 4) > (       eps) || ABS( 5) > (1.0f + eps) || ABS( 6) > (       eps) || ABS( 7) > (       eps)) return 2; // 2nd col
-	if (ABS( 8) > (       eps) || ABS( 9) > (       eps) || ABS(10) > (1.0f + eps) || ABS(11) > (       eps)) return 3; // 3rd col
-	if (ABS(12) > (       eps) || ABS(13) > (       eps) || ABS(14) > (       eps) || ABS(15) > (1.0f + eps)) return 4; // 4th col
-	#undef ABS
-	return 0;
+	return
+		   (col[0] == float4(1.0f, 0.0f, 0.0f, 0.0f))
+		&& (col[1] == float4(0.0f, 1.0f, 0.0f, 0.0f))
+		&& (col[2] == float4(0.0f, 0.0f, 1.0f, 0.0f))
+		&& (col[3] == float4(0.0f, 0.0f, 0.0f, 1.0f));
 }
 
 CMatrix44f& CMatrix44f::LoadIdentity()

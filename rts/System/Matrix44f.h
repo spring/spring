@@ -18,9 +18,8 @@ public:
 	CMatrix44f(const float rotX, const float rotY, const float rotZ);
 	explicit CMatrix44f(const float3 pos);
 
-	// these return zero on success, non-zero otherwise
-	int IsOrthoNormal(float eps = 0.01f) const;
-	int IsIdentity(float eps = 0.01f) const;
+	bool IsOrthoNormal() const;
+	bool IsIdentity() const;
 
 	CMatrix44f& LoadIdentity();
 
