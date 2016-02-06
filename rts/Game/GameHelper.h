@@ -13,7 +13,6 @@
 #include <map>
 #include <vector>
 
-class CGame;
 class CUnit;
 class CWeapon;
 class CSolidObject;
@@ -22,7 +21,6 @@ class CMobileCAI;
 struct UnitDef;
 struct MoveDef;
 struct BuildInfo;
-class IExplosionGenerator;
 class CStdExplosionGenerator;
 
 class CGameHelper
