@@ -132,8 +132,8 @@ public:
 	inline CBaseGroundDrawer* GetGroundDrawer();
 
 
-	void ConfigureAnisotropy();
-	float GetAnisotropy() const { return anisotropy; }
+	void ConfigureTexAnisotropyLevels();
+	float GetTexAnisotropyLevel(bool ssmf) const { return texAnisotropyLevels[ssmf]; }
 
 	bool HaveSplatNormalTexture() const {
 		if (splatNormalTextures[0].GetID() != 0) return true;
@@ -222,7 +222,7 @@ private:
 private:
 	int shadingTexUpdateProgress;
 
-	float anisotropy;
+	float texAnisotropyLevels[2];
 
 	bool haveSpecularTexture;
 	bool haveSplatDetailDistribTexture; // true if we have both splatDetailTex and splatDistrTex

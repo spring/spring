@@ -334,7 +334,7 @@ namespace terrain {
 		if (!bmp.Load(fn))
 			throw content_error("Failed to load texture: " + fn);
 
-		GLuint tex = bmp.CreateTexture(true);
+		GLuint tex = bmp.CreateMipMapTexture();
 		return tex;
 	}
 

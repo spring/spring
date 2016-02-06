@@ -287,7 +287,7 @@ void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef, const std::string&
 		}
 	}
 
-	const unsigned int texID = bitmap.CreateTexture(false);
+	const unsigned int texID = bitmap.CreateTexture();
 
 	UnitDefImage* unitImage = unitDef->buildPic;
 	unitImage->textureID = texID;

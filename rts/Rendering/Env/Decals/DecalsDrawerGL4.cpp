@@ -130,7 +130,7 @@ static GLuint LoadTexture(const std::string& name, size_t* texX, size_t* texY)
 
 	*texX = bm.xsize;
 	*texY = bm.ysize;
-	return bm.CreateTexture(true);
+	return bm.CreateMipMapTexture();
 }
 
 	struct STex {

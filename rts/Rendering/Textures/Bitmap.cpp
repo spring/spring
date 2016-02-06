@@ -460,7 +460,7 @@ bool CBitmap::SaveFloat(std::string const& filename) const
 
 
 #ifndef BITMAP_NO_OPENGL
-const unsigned int CBitmap::CreateTexture(bool mipmaps) const
+unsigned int CBitmap::CreateTexture(float aniso, bool mipmaps) const
 {
 	if (compressed)
 		return CreateDDSTexture(0, mipmaps);
@@ -471,10 +471,9 @@ const unsigned int CBitmap::CreateTexture(bool mipmaps) const
 	// jcnossen: Some drivers return "2.0" as a version string,
 	// but switch to software rendering for non-power-of-two textures.
 	// GL_ARB_texture_non_power_of_two indicates that the hardware will actually support it.
-	if (!globalRendering->supportNPOTs && (xsize != next_power_of_2(xsize) || ysize != next_power_of_2(ysize)))
-	{
+	if (!globalRendering->supportNPOTs && (xsize != next_power_of_2(xsize) || ysize != next_power_of_2(ysize))) {
 		CBitmap bm = CreateRescaled(next_power_of_2(xsize), next_power_of_2(ysize));
-		return bm.CreateTexture(mipmaps);
+		return bm.CreateTexture(aniso, mipmaps);
 	}
 
 	unsigned int texture;
@@ -487,13 +486,15 @@ const unsigned int CBitmap::CreateTexture(bool mipmaps) const
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	//FIXME add glPixelStorei(GL_UNPACK_ALIGNMENT, 1); for NPOTs
+	if (aniso > 0.0f)
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
 
 	if (mipmaps) {
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
 		glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, &mem[0]);
 	} else {
-		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		//glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,xsize, ysize, 0,GL_RGBA, GL_UNSIGNED_BYTE, &mem[0]);
 		//gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, &mem[0]);
 
@@ -521,7 +522,7 @@ static void HandleDDSMipmap(GLenum target, bool mipmaps, int num_mipmaps)
 	}
 }
 
-const unsigned int CBitmap::CreateDDSTexture(unsigned int texID, bool mipmaps) const
+unsigned int CBitmap::CreateDDSTexture(unsigned int texID, bool mipmaps) const
 {
 	glPushAttrib(GL_TEXTURE_BIT);
 
@@ -575,11 +576,11 @@ const unsigned int CBitmap::CreateDDSTexture(unsigned int texID, bool mipmaps) c
 }
 #else  // !BITMAP_NO_OPENGL
 
-const unsigned int CBitmap::CreateTexture(bool mipmaps) const {
+unsigned int CBitmap::CreateTexture(float aniso, bool mipmaps) const {
 	return 0;
 }
 
-const unsigned int CBitmap::CreateDDSTexture(unsigned int texID, bool mipmaps) const {
+unsigned int CBitmap::CreateDDSTexture(unsigned int texID, bool mipmaps) const {
 	return 0;
 }
 #endif // !BITMAP_NO_OPENGL

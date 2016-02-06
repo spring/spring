@@ -25,7 +25,7 @@ CBasicWater::CBasicWater()
 	}
 
 	// create mipmapped texture
-	textureID = waterTexBM.CreateTexture(true);
+	textureID = waterTexBM.CreateMipMapTexture();
 	displistID = GenWaterQuadsList(waterTexBM.xsize, waterTexBM.ysize);
 }
 

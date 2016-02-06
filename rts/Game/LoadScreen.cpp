@@ -458,7 +458,7 @@ void CLoadScreen::LoadStartPicture(const std::string& name)
 		bm = bm.CreateRescaled((int) newX, (int) newY);
 	}
 
-	startupTexture = bm.CreateTexture(false);
+	startupTexture = bm.CreateTexture();
 }
 
 

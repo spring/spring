@@ -488,8 +488,8 @@ void CSMFGroundTextures::LoadSquareTexture(int x, int y, int level)
 		glTexParameteri(ttarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	}
 
-	if (smfMap->GetAnisotropy() != 0.0f)
-		glTexParameterf(ttarget, GL_TEXTURE_MAX_ANISOTROPY_EXT, smfMap->GetAnisotropy());
+	if (smfMap->GetTexAnisotropyLevel(false) != 0.0f)
+		glTexParameterf(ttarget, GL_TEXTURE_MAX_ANISOTROPY_EXT, smfMap->GetTexAnisotropyLevel(false));
 
 	if (level < 2) {
 		glTexParameteri(ttarget, GL_TEXTURE_PRIORITY, 1);

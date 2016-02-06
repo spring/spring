@@ -98,8 +98,7 @@ CBasicTreeDrawer::CBasicTreeDrawer(): ITreeDrawer()
 		TexImage.CopySubImage(sprite, 255, 255);
 	}
 
-	// create mipmapped texture
-	treetex = TexImage.CreateTexture(true);
+	treetex = TexImage.CreateMipMapTexture();
 
 	lastListClean = 0;
 
