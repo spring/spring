@@ -397,8 +397,8 @@ void CReadMap::UpdateHeightMapSynced(SRectangle rect, bool initialize)
 		return;
 	}
 
-	rect.x1 = std::max(         0, rect.x1 - 1);
-	rect.z1 = std::max(         0, rect.z1 - 1);
+	rect.x1 = std::max(             0, rect.x1 - 1);
+	rect.z1 = std::max(             0, rect.z1 - 1);
 	rect.x2 = std::min(mapDims.mapxm1, rect.x2 + 1);
 	rect.z2 = std::min(mapDims.mapym1, rect.z2 + 1);
 

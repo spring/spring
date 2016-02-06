@@ -113,12 +113,13 @@ MoveDefHandler::MoveDefHandler(LuaParser* defsParser)
 	}
 
 	moveDefs.reserve(rootTable.GetLength());
+	defSpeedMods.reserve(rootTable.GetLength());
+
 	for (size_t num = 1; /* no test */; num++) {
 		const LuaTable moveDefTable = rootTable.SubTable(num);
 
-		if (!moveDefTable.IsValid()) {
+		if (!moveDefTable.IsValid())
 			break;
-		}
 
 		moveDefs.emplace_back(moveDefTable, num);
 		const MoveDef& md = moveDefs.back();
@@ -135,16 +136,56 @@ MoveDefHandler::MoveDefHandler(LuaParser* defsParser)
 	crc << CMoveMath::noHoverWaterMove;
 
 	checksum = crc.GetDigest();
+
+	{
+		for (unsigned int n = 0; n < moveDefs.size(); n++) {
+			defSpeedMods.emplace_back(mapDims.hmapx * mapDims.hmapy, 0.0f);
+		}
+
+		// MapDamage::RecalcArea only handles explosions
+		TerrainChange(0, 0, mapDims.mapx, mapDims.mapy);
+	}
 }
 
 
 MoveDef* MoveDefHandler::GetMoveDefByName(const std::string& name)
 {
-	map<string, int>::const_iterator it = moveDefNames.find(name);
-	if (it == moveDefNames.end()) {
-		return NULL;
-	}
+	const auto it = moveDefNames.find(name);
+
+	if (it == moveDefNames.end())
+		return nullptr;
+
 	return &moveDefs[it->second];
+}
+
+
+void MoveDefHandler::TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2)
+{
+	assert(x1 <= x2);
+	assert(z1 <= z2);
+
+	x2 = std::min(int(x2), mapDims.mapx);
+	z2 = std::min(int(z2), mapDims.mapy);
+
+	// FIXME: typemap changes?
+	for (unsigned int n = 0; n < defSpeedMods.size(); n++) {
+		const MoveDef& moveDef = moveDefs[n];
+		auto& speedMods = defSpeedMods[n];
+
+		for (unsigned int z = z1; z < z2; z++) {
+			for (unsigned int x = x1; x < x2; x++) {
+				speedMods[(z >> 1) * mapDims.hmapx + (x >> 1)] = CMoveMath::CalcPosSpeedMod(moveDef, x, z);
+			}
+		}
+	}
+}
+
+float MoveDefHandler::GetSpeedMod(const MoveDef& md, unsigned int x, unsigned int z) const
+{
+	x = std::min(int(x), mapDims.mapx);
+	z = std::min(int(z), mapDims.mapy);
+
+	return defSpeedMods[md.pathType][(z >> 1) * mapDims.hmapx + (x >> 1)];
 }
 
 

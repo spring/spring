@@ -146,8 +146,12 @@ public:
 	unsigned int GetNumMoveDefs() const { return moveDefs.size(); }
 	unsigned int GetCheckSum() const { return checksum; }
 
+	void TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2);
+	float GetSpeedMod(const MoveDef& md, unsigned int x, unsigned int z) const;
+
 private:
 	std::vector<MoveDef> moveDefs;
+	std::vector< std::vector<float> > defSpeedMods;
 	std::map<std::string, int> moveDefNames;
 
 	unsigned int checksum;

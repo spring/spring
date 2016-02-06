@@ -43,7 +43,7 @@ float CMoveMath::yLevel(const MoveDef& moveDef, const float3& pos)
 
 
 /* calculate the local speed-modifier for this MoveDef */
-float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, unsigned xSquare, unsigned zSquare)
+float CMoveMath::CalcPosSpeedMod(const MoveDef& moveDef, unsigned xSquare, unsigned zSquare)
 {
 	if (xSquare >= mapDims.mapx || zSquare >= mapDims.mapy)
 		return 0.0f;
@@ -67,7 +67,7 @@ float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, unsigned xSquare, unsign
 	return 0.0f;
 }
 
-float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, unsigned xSquare, unsigned zSquare, float3 moveDir)
+float CMoveMath::CalcPosSpeedMod(const MoveDef& moveDef, unsigned xSquare, unsigned zSquare, float3 moveDir)
 {
 	if (xSquare >= mapDims.mapx || zSquare >= mapDims.mapy)
 		return 0.0f;
@@ -103,6 +103,14 @@ float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, unsigned xSquare, unsign
 
 	return 0.0f;
 }
+
+
+float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, unsigned xSquare, unsigned zSquare)
+{
+	// cached lookup
+	return (moveDefHandler->GetSpeedMod(moveDef, xSquare, zSquare));
+}
+
 
 /* Check if a given square-position is accessable by the MoveDef footprint. */
 CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider)

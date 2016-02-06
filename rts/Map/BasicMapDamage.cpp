@@ -4,19 +4,16 @@
 #include "BasicMapDamage.h"
 #include "ReadMap.h"
 #include "MapInfo.h"
-#include "BaseGroundDrawer.h"
 #include "HeightMapTexture.h"
 #include "Rendering/Env/GrassDrawer.h"
-#include "Rendering/Env/IWater.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Features/FeatureHandler.h"
-#include "Sim/Units/UnitTypes/Building.h"
-#include "Sim/Units/UnitDef.h"
 #include "System/TimeProfiler.h"
 
 
@@ -159,6 +156,7 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 	readMap->UpdateHeightMapSynced(SRectangle(x1, y1, x2, y2));
 	featureHandler->TerrainChanged(x1, y1, x2, y2);
 	losHandler->UpdateHeightMapSynced(SRectangle(x1, y1, x2, y2));
+	moveDefHandler->TerrainChange(x1, y1, x2, y2);
 	pathManager->TerrainChange(x1, y1, x2, y2, TERRAINCHANGE_DAMAGE_RECALCULATION);
 }
 

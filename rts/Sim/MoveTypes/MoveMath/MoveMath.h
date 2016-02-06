@@ -38,16 +38,29 @@ public:
 
 
 	// returns a speed-multiplier for given position or data
+	static float CalcPosSpeedMod(const MoveDef& moveDef, unsigned xSquare, unsigned zSquare);
+	static float CalcPosSpeedMod(const MoveDef& moveDef, unsigned xSquare, unsigned zSquare, float3 moveDir);
+
+	static float CalcPosSpeedMod(const MoveDef& moveDef, const float3& pos) {
+		return (CalcPosSpeedMod(moveDef, pos.x / SQUARE_SIZE, pos.z / SQUARE_SIZE));
+	}
+	static float CalcPosSpeedMod(const MoveDef& moveDef, const float3& pos, const float3& moveDir) {
+		return (CalcPosSpeedMod(moveDef, pos.x / SQUARE_SIZE, pos.z / SQUARE_SIZE, moveDir));
+	}
+
+
 	static float GetPosSpeedMod(const MoveDef& moveDef, unsigned xSquare, unsigned zSquare);
-	static float GetPosSpeedMod(const MoveDef& moveDef, unsigned xSquare, unsigned zSquare, float3 moveDir);
-	static float GetPosSpeedMod(const MoveDef& moveDef, const float3& pos)
-	{
+	static float GetPosSpeedMod(const MoveDef& moveDef, unsigned xSquare, unsigned zSquare, float3 moveDir) {
+		return (CalcPosSpeedMod(moveDef, xSquare, zSquare, moveDir)); // not cached; used by GMT
+	}
+
+	static float GetPosSpeedMod(const MoveDef& moveDef, const float3& pos) {
 		return (GetPosSpeedMod(moveDef, pos.x / SQUARE_SIZE, pos.z / SQUARE_SIZE));
 	}
-	static float GetPosSpeedMod(const MoveDef& moveDef, const float3& pos, const float3& moveDir)
-	{
+	static float GetPosSpeedMod(const MoveDef& moveDef, const float3& pos, const float3& moveDir) {
 		return (GetPosSpeedMod(moveDef, pos.x / SQUARE_SIZE, pos.z / SQUARE_SIZE, moveDir));
 	}
+
 
 	// tells whether a position is blocked (inaccessable for a given object's MoveDef)
 	static inline BlockType IsBlocked(const MoveDef& moveDef, const float3& pos, const CSolidObject* collider);
