@@ -413,8 +413,8 @@ LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 {
 	assert(piece != NULL);
 
-	pos =  piece->offset;
-	dir = (piece->GetVertexCount() >= 2)? (piece->GetVertexPos(0) - piece->GetVertexPos(1)): FwdVector;
+	pos = piece->offset;
+	dir = piece->GetEmitDir();
 
 	identityTransform = UpdateMatrix();
 	dispListID = piece->GetDisplayListID();

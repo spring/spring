@@ -155,8 +155,8 @@ public:
 	void SetModelMatrix(const CMatrix44f& m) {
 		// assimp only
 		bakedRotMatrix = m;
-		hasIdentityRot = (m.IsIdentity() == 0);
-		assert(m.IsOrthoNormal() == 0);
+		hasIdentityRot = m.IsIdentity();
+		assert(m.IsOrthoNormal());
 	}
 
 	void SetCollisionVolume(const CollisionVolume& cv) { colvol = cv; }
@@ -313,7 +313,7 @@ struct LocalModelPiece
 private:
 	float3 pos; // translation relative to parent LMP, *INITIALLY* equal to original->offset
 	float3 rot; // orientation relative to parent LMP, in radians (updated by scripts)
-	float3 dir; // direction from vertex[0] to vertex[1] (constant!)
+	float3 dir; // direction (same as emitdir)
 
 	CMatrix44f pieceSpaceMat; // transform relative to parent LMP (SYNCED), combines <pos> and <rot>
 	CMatrix44f modelSpaceMat; // transform relative to root LMP (SYNCED)

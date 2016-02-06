@@ -29,7 +29,7 @@ CSkyBox::CSkyBox(const std::string& texture)
 	if (!btex.Load(texture) || btex.textype != GL_TEXTURE_CUBE_MAP) {
 		LOG_L(L_WARNING, "could not load skybox texture from file %s", texture.c_str());
 	} else {
-		skyTex.SetRawTexID(btex.CreateTexture(false));
+		skyTex.SetRawTexID(btex.CreateTexture());
 		skyTex.SetRawSize(int2(btex.xsize, btex.ysize));
 		glBindTexture(GL_TEXTURE_CUBE_MAP, skyTex.GetID());
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

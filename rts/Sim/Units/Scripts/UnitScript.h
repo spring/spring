@@ -120,7 +120,6 @@ public:
 
 	SCRIPT_TO_LOCALPIECE_FUNC(float3,     GetPiecePos,       GetAbsolutePos,      float3(0.0f,0.0f,0.0f))
 	SCRIPT_TO_LOCALPIECE_FUNC(CMatrix44f, GetPieceMatrix,    GetModelSpaceMatrix,           CMatrix44f())
-	SCRIPT_TO_LOCALPIECE_FUNC(float3,     GetPieceDirection, GetDirection,        float3(1.0f,1.0f,1.0f))
 
 	bool GetEmitDirPos(int scriptPieceNum, float3& pos, float3& dir) const {
 		if (!PieceExists(scriptPieceNum))
@@ -129,8 +128,6 @@ public:
 		LocalModelPiece* p = GetScriptLocalModelPiece(scriptPieceNum);
 		return (p->GetEmitDirPos(pos, dir));
 	}
-
-	float3 WorldToUnitDir(const float3& wdir, float mult) const;
 
 public:
 	CUnitScript(CUnit* unit);

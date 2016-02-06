@@ -91,7 +91,7 @@ bool CIconHandler::AddIcon(const string& iconName, const string& textureName,
 	try {
 		CBitmap bitmap;
 		if (!textureName.empty() && bitmap.Load(textureName)) {
-			texID = bitmap.CreateTexture(true);
+			texID = bitmap.CreateMipMapTexture();
 			
 			glBindTexture(GL_TEXTURE_2D, texID);
 			const GLenum wrapMode = GLEW_EXT_texture_edge_clamp ?
@@ -191,7 +191,7 @@ unsigned int CIconHandler::GetDefaultTexture()
 	}
 
 	CBitmap bitmap(si, 128, 128);
-	defTexID = bitmap.CreateTexture(false);
+	defTexID = bitmap.CreateTexture();
 
 	glBindTexture(GL_TEXTURE_2D, defTexID);
 

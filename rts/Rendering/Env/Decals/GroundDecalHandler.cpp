@@ -907,7 +907,7 @@ unsigned int CGroundDecalHandler::LoadTexture(const std::string& name)
 		}
 	}
 
-	return bm.CreateTexture(true);
+	return bm.CreateMipMapTexture();
 }
 
 
@@ -1199,7 +1199,7 @@ int CGroundDecalHandler::GetSolidObjectDecalType(const std::string& name)
 
 	SolidObjectDecalType* tt = new SolidObjectDecalType();
 	tt->name = lowerName;
-	tt->texture = bm.CreateTexture(true);
+	tt->texture = bm.CreateMipMapTexture();
 
 	objectDecalTypes.push_back(tt);
 	return (objectDecalTypes.size() - 1);

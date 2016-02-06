@@ -4,6 +4,7 @@
 #define COB_INSTANCE_H
 
 #include "UnitScript.h"
+#include "Sim/Units/Unit.h"
 
 
 #define PACKXZ(x,z) (((int)(x) << 16)+((int)(z) & 0xffff))
@@ -115,11 +116,11 @@ public:
 	void WindChanged(float heading, float speed) override;
 	void ExtractionRateChanged(float speed) override;
 	void WorldRockUnit(const float3& rockDir) override {
-		RockUnit(WorldToUnitDir(rockDir, 500.0f));
+		RockUnit(unit->GetObjectSpaceVec(rockDir) * 500.f);
 	}
 	void RockUnit(const float3& rockDir) override;
 	void WorldHitByWeapon(const float3& hitDir, int weaponDefId, float& inoutDamage) override {
-		HitByWeapon(WorldToUnitDir(hitDir, 500.0f), weaponDefId, inoutDamage);
+		HitByWeapon(unit->GetObjectSpaceVec(hitDir) * 500.f, weaponDefId, inoutDamage);
 	}
 	void HitByWeapon(const float3& hitDir, int weaponDefId, float& inoutDamage) override;
 	void SetSFXOccupy(int curTerrainType) override;

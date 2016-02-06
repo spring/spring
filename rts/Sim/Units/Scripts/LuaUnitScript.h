@@ -5,8 +5,8 @@
 
 #include <map>
 #include "UnitScript.h"
+#include "Sim/Units/Unit.h"
 
-class CUnit;
 class CLuaHandle;
 struct lua_State;
 
@@ -75,11 +75,11 @@ public:
 	void WindChanged(float heading, float speed) override;
 	void ExtractionRateChanged(float speed) override;
 	void WorldRockUnit(const float3& rockDir) override {
-		RockUnit(WorldToUnitDir(rockDir, 1.0f));
+		RockUnit(unit->GetObjectSpaceVec(rockDir));
 	}
 	void RockUnit(const float3& rockDir) override;
 	void WorldHitByWeapon(const float3& hitDir, int weaponDefId, float& inoutDamage) override {
-		HitByWeapon(WorldToUnitDir(hitDir, 1.0f), weaponDefId, inoutDamage);
+		HitByWeapon(unit->GetObjectSpaceVec(hitDir), weaponDefId, inoutDamage);
 	}
 	void HitByWeapon(const float3& hitDir, int weaponDefId, float& inoutDamage) override;
 	void SetSFXOccupy(int curTerrainType) override;

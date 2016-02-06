@@ -65,7 +65,7 @@ CSM3ReadMap::CSM3ReadMap(const std::string& mapName)
 	if (!mapInfo->sm3.minimap.empty()) {
 		CBitmap bmp;
 		if (bmp.Load(mapInfo->sm3.minimap)) {
-			minimapTexture = bmp.CreateTexture(true);
+			minimapTexture = bmp.CreateMipMapTexture();
 		}
 	}
 

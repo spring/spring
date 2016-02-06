@@ -219,7 +219,10 @@ void CollisionVolume::FixTypeAndScale(float3& scales) {
 		scales.x = std::max(scales.x, std::max(scales.y, scales.z));
 		scales.y = scales.x;
 		scales.z = scales.x;
-	} else if (volumeType == COLVOL_TYPE_ELLIPSOID) {
+		return;
+	}
+
+	if (volumeType == COLVOL_TYPE_ELLIPSOID) {
 		if (scales.x == scales.y && scales.y == scales.z) {
 			volumeType = COLVOL_TYPE_SPHERE;
 		} else {
@@ -230,7 +233,10 @@ void CollisionVolume::FixTypeAndScale(float3& scales) {
 			scales.z = std::max(scales.z, minValue);
 		}
 
-	} else if (volumeType == COLVOL_TYPE_CYLINDER) {
+		return;
+	}
+
+	if (volumeType == COLVOL_TYPE_CYLINDER) {
 		scales[volumeAxes[1]] = std::max(scales[volumeAxes[1]], scales[volumeAxes[2]]);
 		scales[volumeAxes[2]] =          scales[volumeAxes[1]];
 	}
