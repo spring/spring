@@ -2,12 +2,14 @@
 
 #include <map>
 #include <array>
+#include <inttypes.h>
 #include <boost/cstdint.hpp>
 #include <boost/thread.hpp>
 
 #include "LuaInclude.h"
 #include "Game/GameVersion.h"
 #include "Lua/LuaHandle.h"
+#include "System/myMath.h"
 #include "System/Platform/Threading.h"
 #include "System/Threading/SpringMutex.h"
 #include "System/Log/ILog.h"
@@ -231,33 +233,31 @@ void spring_lua_alloc_update_stats(bool clear)
 ////// Custom synced float to string
 //////////////////////////////////////////////////////////
 
+#ifdef PRIi64
+	#define PRINTF_INT64 PRIi64
+#else
+	// windows ...
+	#define PRINTF_INT64 "I64d"
+#endif
+
 // excluding mantissa, a float has a rest int-precision of: 2^24 = 16,777,216
 // int numbers in that range are 100% exact, and don't suffer float precision issues
 static constexpr int MAX_PRECISE_DIGITS_IN_FLOAT = std::numeric_limits<float>::digits10;
 static constexpr auto SPRING_FLOAT_MAX = std::numeric_limits<float>::max();
 static constexpr auto SPRING_INT64_MAX = std::numeric_limits<boost::int64_t>::max();
 
-static constexpr std::array<double, 10> v = {
-	1u,
-	10u,
-	100u,
-	1000u,
-	10000u,
-	100000u,
-	1000000u,
-	10000000u,
-	100000000u,
-	1000000000u
+static constexpr std::array<double, 11> v = {
+	1, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10
 };
 
 
-static constexpr inline double pow10d(unsigned i)
+static constexpr inline double Pow10d(unsigned i)
 {
 	return (i<v.size()) ? v[i] : std::pow(double(10), i);
 }
 
 
-static const inline int fastlog10(const float f)
+static const inline int FastLog10(const float f)
 {
 	assert(f != 0.0f); // log10(0) = -inf
 	if (f>=1.f && f<(SPRING_INT64_MAX >> 1)) {
@@ -285,30 +285,30 @@ static constexpr inline int GetDigitsInStdNotation(const int log10)
 }
 
 
-static inline int printIntPart(char* buf, float f, const bool carrierBit = false)
+static inline int PrintIntPart(char* buf, float f, const bool carrierBit = false)
 {
 #ifdef WIN32
 	if (f < (std::numeric_limits<int>::max() - carrierBit)) {
-		return sprintf(buf, "%1d", int(f) + carrierBit);
+		return sprintf(buf, "%d", int(f) + carrierBit);
 	} else
 #endif
 	if (f < (SPRING_INT64_MAX - carrierBit)) {
-		return sprintf(buf, "%1ld", boost::int64_t(f) + carrierBit); // much faster than printing a float!
+		return sprintf(buf, "%" PRINTF_INT64, boost::int64_t(f) + carrierBit); // much faster than printing a float!
 	} else {
 		return sprintf(buf, "%1.0f", f + carrierBit);
 	}
 }
 
 
-static inline int printFractPart(char* buf, float f, int digits, int precision)
+static inline int PrintFractPart(char* buf, float f, int digits, int precision)
 {
 	const auto old = buf;
 
 	assert(digits <= 15);
 	assert(digits <= std::numeric_limits<boost::int64_t>::digits10);
-	const boost::int64_t i = double(f) * pow10d(digits) + 0.5;
+	const boost::int64_t i = double(f) * Pow10d(digits) + 0.5;
 	char s[16];
-	const int len = sprintf(s, "%ld", i);
+	const int len = sprintf(s, "%" PRINTF_INT64, i);
 	if (len < digits) {
 		memset(buf, '0', digits - len);
 		buf += digits - len;
@@ -387,9 +387,8 @@ void spring_lua_ftoa(float f, char* buf, int precision)
 		return;
 	}
 
-
 	int e10 = 0;
-	const int log10 = fastlog10(f);
+	const int log10 = FastLog10(f);
 	const int charsInStdNotation = GetDigitsInStdNotation(log10);
 	if ((charsInStdNotation > nDigits) && (precision == -1)) {
 		e10 = log10;
@@ -402,7 +401,7 @@ void spring_lua_ftoa(float f, char* buf, int precision)
 	float fractF = std::modf(f, &truncF);
 	const bool carrierBit = HandleRounding(&fractF, log10, charsInStdNotation, nDigits, scienceNotation, precision);
 
-	const int iDigits = printIntPart(buf, truncF, carrierBit);
+	const int iDigits = PrintIntPart(buf, truncF, carrierBit);
 	if (scienceNotation)
 		assert(iDigits == 1);
 	nDigits -= iDigits;
@@ -415,7 +414,7 @@ void spring_lua_ftoa(float f, char* buf, int precision)
 		++buf;
 		--nDigits;
 
-		const int fDigits = printFractPart(buf, fractF, nDigits, precision);
+		const int fDigits = PrintFractPart(buf, fractF, nDigits, precision);
 		assert(fDigits >= 1);
 		buf += fDigits;
 	}
@@ -453,7 +452,7 @@ void spring_lua_format(float f, const char* fmt, char* buf)
 	const char* dotPos = strchr(fmt, '.');
 	if (dotPos != nullptr) {
 		fmt = dotPos + 1;
-		precision = atoi(fmt);
+		precision = Clamp(atoi(fmt), 0, 15);
 	}
 
 	// convert the float
