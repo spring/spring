@@ -4,6 +4,7 @@
 #include <array>
 #include <boost/cstdint.hpp>
 #include <boost/thread.hpp>
+#include "lib/streflop/streflop_cond.h"
 
 #include "LuaInclude.h"
 #include "Game/GameVersion.h"
@@ -305,6 +306,14 @@ static inline int PrintIntPart(char* buf, float f, const bool carrierBit = false
 
 static inline int PrintFractPart(char* buf, float f, int digits, int precision)
 {
+	//XXX: Hacks, with streflop enabled we limit the FPU normally to 32bit float
+	//     and doing any double math will use floats math then!
+	//     But here we need the precision of doubles, so switch the FPU to it just
+	//     for this casting.
+	//Note: We are still in synced code, so even these doubles need to sync!
+	//     Also performance seems to be unaffected by switching the FPU mode.
+	streflop::streflop_init<streflop::Double>();
+
 	const auto old = buf;
 
 	assert(digits <= 15);
@@ -324,6 +333,7 @@ static inline int PrintFractPart(char* buf, float f, int digits, int precision)
 	while (buf[-1] == '0' && (buf - old) > precision) --buf;
 	buf[0] = '\0';
 
+	streflop::streflop_init<streflop::Simple>();
 	return (buf - old);
 }
 

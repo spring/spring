@@ -45,7 +45,7 @@ static const std::vector<std::pair<float, const char*>> testNumbers = {
 	{0.016, "0.016"},
 	{-2, "-2"},
 	{-1.0000003, "-1.0000004"},
-	{math::acos(double(-1)), "3.14159274" /*3.141592653589793*/}, // PI
+	{math::acos(-1.f), "3.14159274" /*3.141592653589793*/}, // PI
 
 	// large/extreme numbers
 	{7.5e-08, "0.00000008"},
@@ -73,6 +73,8 @@ static const std::vector<std::pair<float, const char*>> testNumbers = {
 
 BOOST_AUTO_TEST_CASE( SpringFormat )
 {
+	streflop::streflop_init<streflop::Simple>();
+
 	// printf & spring output should be equal when a precision is specified
 
 	LOG("");
