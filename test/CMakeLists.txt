@@ -140,6 +140,8 @@ endif()
 	set(test_name Float3)
 	Set(test_src
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/testFloat3.cpp"
+			"${ENGINE_SOURCE_DIR}/System/float3.cpp"
+			"${ENGINE_SOURCE_DIR}/System/float4.cpp"
 		)
 
 	set(test_libs
@@ -147,7 +149,7 @@ endif()
 			${Boost_SYSTEM_LIBRARY}
 		)
 
-	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
 
 ################################################################################
 ### Matrix44f
@@ -180,6 +182,7 @@ endif()
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/testRotationMatrix44f.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Matrix44f.cpp"
 			"${ENGINE_SOURCE_DIR}/System/float3.cpp"
+			"${ENGINE_SOURCE_DIR}/System/float4.cpp"
 			${test_Log_sources}
 		)
 
