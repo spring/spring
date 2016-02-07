@@ -431,7 +431,7 @@ int LuaParser::TimeCheck(lua_State* L)
 
 	const spring_time endTime = spring_gettime();
 
-	LOG("%s %ldms", name.c_str(), spring_tomsecs(endTime - startTime));
+	LOG("%s %ldms", name.c_str(), (long int) spring_tomsecs(endTime - startTime));
 	return lua_gettop(L);
 }
 
