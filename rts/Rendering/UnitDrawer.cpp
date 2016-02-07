@@ -639,9 +639,9 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 	//  * The unit radius, depending on whether the mod defined 'radiusadjust' is true or false.
 	float3 pos;
 	if (gu->spectatingFullView) {
-		pos = unit->drawMidPos;
+		pos = unit->midPos;
 	} else {
-		pos = unit->GetDrawErrorPos(gu->myAllyTeam);
+		pos = unit->GetErrorPos(gu->myAllyTeam);
 	}
 
 	// make sure icon is above ground (needed before we calculate scale below)
