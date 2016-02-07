@@ -379,7 +379,7 @@ float GuiTraceRay(
 				cv.InitSphere(u->iconRadius);
 			}
 
-			if (CCollisionHandler::MouseHit(u, u->GetTransformMatrix(false, true), start, start + dir * guiRayLength, &cv, &cq)) {
+			if (CCollisionHandler::MouseHit(u, u->GetTransformMatrix(false), start, start + dir * guiRayLength, &cv, &cq)) {
 				// get the distance to the ray-volume ingress point
 				// (not likely to generate inside-hit special cases)
 				const float ingressDist = cq.GetIngressPosDist(start, dir);

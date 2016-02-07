@@ -618,7 +618,7 @@ int LuaUnsyncedRead::GetUnitTransformMatrix(lua_State* L)
 		return 0;
 	}
 
-	CMatrix44f m = unit->GetTransformMatrix(false, false);
+	CMatrix44f m = unit->GetTransformMatrix(false);
 
 	if (luaL_optboolean(L, 2, false)) {
 		m = m.InvertAffine();

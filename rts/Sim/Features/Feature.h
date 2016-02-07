@@ -96,7 +96,7 @@ public:
 	//   unlike CUnit which recalculates the matrix on each call
 	//   (and uses the synced and error args) CFeature caches it
 	//   this matrix is identical in synced and unsynced context!
-	CMatrix44f GetTransformMatrix(const bool synced = false, const bool error = false) const { return transMatrix; }
+	CMatrix44f GetTransformMatrix(const bool synced = false) const final {  return transMatrix; }
 	const CMatrix44f& GetTransformMatrixRef() const { return transMatrix; }
 	void SetTransform(const CMatrix44f& m) { transMatrix = m; }
 private:

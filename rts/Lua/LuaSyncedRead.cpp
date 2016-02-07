@@ -590,7 +590,7 @@ static int GetSolidObjectRotation(lua_State* L, const CSolidObject* o)
 	if (o == nullptr)
 		return 0;
 
-	const CMatrix44f matrix = o->GetTransformMatrix(CLuaHandle::GetHandleSynced(L));
+	const CMatrix44f& matrix = o->GetTransformMatrix(CLuaHandle::GetHandleSynced(L));
 	const float3 angles = matrix.GetEulerAnglesLftHand();
 
 	assert(matrix.IsOrthoNormal());
