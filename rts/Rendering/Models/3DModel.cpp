@@ -491,8 +491,8 @@ bool LocalModelPiece::GetEmitDirPos(float3& emitPos, float3& emitDir) const
 	if (original == nullptr)
 		return false;
 
-	emitPos = modelSpaceMat.Mul(original->GetEmitPos());
-	emitDir = modelSpaceMat.Mul(original->GetEmitDir()) - modelSpaceMat.GetPos();
+	emitPos = modelSpaceMat * original->GetEmitPos();
+	emitDir = modelSpaceMat * float4(original->GetEmitDir(), 0.f);
 
 	// note: actually OBJECT_TO_WORLD but transform is the same
 	emitPos *= WORLD_TO_OBJECT_SPACE;
