@@ -331,11 +331,7 @@ public:
 	/**
 	 * @see operator==
 	 */
-	bool equals(const float3& f, const float3& eps = float3(CMP_EPS, CMP_EPS, CMP_EPS)) const {
-		return math::fabs(x - f.x) <= math::fabs(eps.x * x)
-			&& math::fabs(y - f.y) <= math::fabs(eps.y * y)
-			&& math::fabs(z - f.z) <= math::fabs(eps.z * z);
-	}
+	bool equals(const float3& f, const float3& eps = float3(CMP_EPS, CMP_EPS, CMP_EPS)) const;
 
 	/**
 	 * @brief dot product
