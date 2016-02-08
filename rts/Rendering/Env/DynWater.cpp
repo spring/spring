@@ -447,7 +447,10 @@ void CDynWater::DrawReflection(CGame* game)
 	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	const double clipPlaneEq[4] = {0.0, 1.0, 0.0, 0.0};
+	const double clipPlaneEqs[2][4] = {
+		{0.0, 1.0, 0.0, 5.0}, // ground; use d>0 to hide shoreline cracks
+		{0.0, 1.0, 0.0, 0.0}, // models
+	};
 
 	CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
 	CCamera* curCam = CCamera::GetActiveCamera();
@@ -466,13 +469,13 @@ void CDynWater::DrawReflection(CGame* game)
 			drawReflection = true;
 
 			glEnable(GL_CLIP_PLANE2);
-			glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
+			glClipPlane(GL_CLIP_PLANE2, clipPlaneEqs[0]);
 
 			// opaque
 			sky->Draw();
 			readMap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
 
-			SetModelClippingPlane(clipPlaneEq);
+			SetModelClippingPlane(clipPlaneEqs[1]);
 			unitDrawer->Draw(true);
 			featureDrawer->Draw();
 
@@ -512,7 +515,10 @@ void CDynWater::DrawRefraction(CGame* game)
 	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	const double clipPlaneEq[4] = {0.0, -1.0, 0.0, 0.0};
+	const double clipPlaneEqs[2][4] = {
+		{0.0, -1.0, 0.0, 5.0}, // ground
+		{0.0, -1.0, 0.0, 0.0}, // models
+	};
 
 	const float3 oldsun = sunLighting->unitDiffuseColor;
 	const float3 oldambient = sunLighting->unitAmbientColor;
@@ -526,12 +532,12 @@ void CDynWater::DrawRefraction(CGame* game)
 		drawRefraction = true;
 
 		glEnable(GL_CLIP_PLANE2);
-		glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
+		glClipPlane(GL_CLIP_PLANE2, clipPlaneEqs[0]);
 
 		sky->Draw();
 		readMap->GetGroundDrawer()->Draw(DrawPass::WaterRefraction);
 
-		SetModelClippingPlane(clipPlaneEq);
+		SetModelClippingPlane(clipPlaneEqs[1]);
 		unitDrawer->Draw(false, true);
 		featureDrawer->Draw();
 
