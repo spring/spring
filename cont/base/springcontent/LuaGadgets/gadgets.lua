@@ -1310,18 +1310,21 @@ end
 
 function gadgetHandler:UnitDestroyed(
   unitID,     unitDefID,     unitTeam,
-  attackerID, attackerDefID, attackerTeam,
-  preEvent
+  attackerID, attackerDefID, attackerTeam
 )
-  -- uncomment to maintain backward compatibility
-  -- if (not preEvent) then return end
-
   for _,g in r_ipairs(self.UnitDestroyedList) do
     g:UnitDestroyed(
       unitID,     unitDefID,     unitTeam,
-      attackerID, attackerDefID, attackerTeam,
-      preEvent
+      attackerID, attackerDefID, attackerTeam
     )
+  end
+  return
+end
+
+
+function gadgetHandler:RenderUnitDestroyed(unitID, unitDefID, unitTeam)
+  for _,g in r_ipairs(self.RenderUnitDestroyedList) do
+    g:RenderUnitDestroyed(unitID, unitDefID, unitTeam)
   end
   return
 end

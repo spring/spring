@@ -647,7 +647,7 @@ void CUnit::ForcedKillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, b
 
 
 	// pre-destruction event; unit may be kept around for its death sequence
-	eventHandler.UnitDestroyed(this, attacker, true);
+	eventHandler.UnitDestroyed(this, attacker);
 	eoh->UnitDestroyed(*this, attacker);
 
 	deathSpeed = speed;

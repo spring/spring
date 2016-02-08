@@ -71,7 +71,7 @@ public:
 	int GetReadAllyTeam() const { return AllAccessTeam; }
 
 	void UnitCreated(const CUnit* unit, const CUnit* builder);
-	void UnitDestroyed(const CUnit* unit, const CUnit* attacker, bool preEvent);
+	void UnitDestroyed(const CUnit* unit, const CUnit* attacker);
 
 	void ViewResize();
 
@@ -151,4 +151,4 @@ private:
 
 #endif // !defined(GL_VERSION_4_0) || HEADLESS
 
-#endif // SHADER_GROUND_DECAL_DRAWER_H 
+#endif // SHADER_GROUND_DECAL_DRAWER_H

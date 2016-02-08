@@ -121,7 +121,7 @@ class CLuaHandle : public CEventClient
 		void UnitFinished(const CUnit* unit) override;
 		void UnitFromFactory(const CUnit* unit, const CUnit* factory, bool userOrders) override;
 		void UnitNanoframed(const CUnit* unit) override;
-		void UnitDestroyed(const CUnit* unit, const CUnit* attacker, bool preEvent) override;
+		void UnitDestroyed(const CUnit* unit, const CUnit* attacker) override;
 		void UnitTaken(const CUnit* unit, int oldTeam, int newTeam) override;
 		void UnitGiven(const CUnit* unit, int oldTeam, int newTeam) override;
 
@@ -160,6 +160,8 @@ class CLuaHandle : public CEventClient
 		void UnitUnitCollision(const CUnit* collider, const CUnit* collidee) override;
 		void UnitFeatureCollision(const CUnit* collider, const CFeature* collidee) override;
 		void UnitMoveFailed(const CUnit* unit) override;
+
+		void RenderUnitDestroyed(const CUnit* unit) override;
 
 		void FeatureCreated(const CFeature* feature) override;
 		void FeatureDestroyed(const CFeature* feature) override;

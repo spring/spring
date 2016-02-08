@@ -830,7 +830,7 @@ void CLuaHandle::UnitNanoframed(const CUnit* unit)
 }
 
 
-void CLuaHandle::UnitDestroyed(const CUnit* unit, const CUnit* attacker, bool preEvent)
+void CLuaHandle::UnitDestroyed(const CUnit* unit, const CUnit* attacker)
 {
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 9, __func__);
@@ -842,7 +842,7 @@ void CLuaHandle::UnitDestroyed(const CUnit* unit, const CUnit* attacker, bool pr
 	if (!cmdStr.GetGlobalFunc(L))
 		return;
 
-	const int argCount = 3 + 3 + 1;
+	const int argCount = 3 + 3;
 
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->unitDef->id);
@@ -857,8 +857,6 @@ void CLuaHandle::UnitDestroyed(const CUnit* unit, const CUnit* attacker, bool pr
 		lua_pushnil(L);
 		lua_pushnil(L);
 	}
-
-	lua_pushboolean(L, preEvent);
 
 	// call the routine
 	RunCallInTraceback(L, cmdStr, argCount, 0, traceBack.GetErrFuncIdx(), false);
@@ -1299,6 +1297,29 @@ void CLuaHandle::UnitMoveFailed(const CUnit* unit)
 
 	static const LuaHashString cmdStr(__func__);
 	UnitCallIn(cmdStr, unit);
+}
+
+
+void CLuaHandle::RenderUnitDestroyed(const CUnit* unit)
+{
+	LUA_CALL_IN_CHECK(L);
+	luaL_checkstack(L, 9, __func__);
+
+	const LuaUtils::ScopedDebugTraceBack traceBack(L);
+
+	static const LuaHashString cmdStr(__func__);
+
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
+
+	const int argCount = 3;
+
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, unit->team);
+
+	// call the routine
+	RunCallInTraceback(L, cmdStr, argCount, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 

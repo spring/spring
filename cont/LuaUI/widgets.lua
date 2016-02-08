@@ -121,6 +121,7 @@ local flexCallIns = {
   'UnitFinished',
   'UnitFromFactory',
   'UnitDestroyed',
+  'RenderUnitDestroyed',
   'UnitTaken',
   'UnitGiven',
   'UnitIdle',
@@ -1731,12 +1732,16 @@ function widgetHandler:UnitFromFactory(unitID, unitDefID, unitTeam,
 end
 
 
-function widgetHandler:UnitDestroyed(unitID, unitDefID, unitTeam, _, _, _, preEvent)
-  -- uncomment to maintain backward compatibility
-  -- if (not preEvent) then return end
-
+function widgetHandler:UnitDestroyed(unitID, unitDefID, unitTeam)
   for _,w in ipairs(self.UnitDestroyedList) do
-    w:UnitDestroyed(unitID, unitDefID, unitTeam, preEvent)
+    w:UnitDestroyed(unitID, unitDefID, unitTeam)
+  end
+  return
+end
+
+function widgetHandler:RenderUnitDestroyed(unitID, unitDefID, unitTeam)
+  for _,w in ipairs(self.RenderUnitDestroyedList) do
+    w:RenderUnitDestroyed(unitID, unitDefID, unitTeam)
   end
   return
 end

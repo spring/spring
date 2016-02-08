@@ -67,7 +67,7 @@ class CEventHandler
 		void UnitFinished(const CUnit* unit);
 		void UnitNanoframed(const CUnit* unit);
 		void UnitFromFactory(const CUnit* unit, const CUnit* factory, bool userOrders);
-		void UnitDestroyed(const CUnit* unit, const CUnit* attacker, bool preEvent);
+		void UnitDestroyed(const CUnit* unit, const CUnit* attacker);
 		void UnitTaken(const CUnit* unit, int oldTeam, int newTeam);
 		void UnitGiven(const CUnit* unit, int oldTeam, int newTeam);
 
@@ -372,9 +372,9 @@ inline void CEventHandler::UnitCreated(const CUnit* unit, const CUnit* builder)
 }
 
 
-inline void CEventHandler::UnitDestroyed(const CUnit* unit, const CUnit* attacker, bool preEvent)
+inline void CEventHandler::UnitDestroyed(const CUnit* unit, const CUnit* attacker)
 {
-	ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(UnitDestroyed, unit, attacker, preEvent)
+	ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(UnitDestroyed, unit, attacker)
 }
 
 #define UNIT_CALLIN_NO_PARAM(name)                                 \
@@ -662,11 +662,7 @@ inline void CEventHandler::RenderUnitCreated(const CUnit* unit, int cloaked)
 	ITERATE_EVENTCLIENTLIST(RenderUnitCreated, unit, cloaked)
 }
 
-inline void CEventHandler::RenderUnitDestroyed(const CUnit* unit)
-{
-	ITERATE_EVENTCLIENTLIST(RenderUnitDestroyed, unit)
-}
-
+UNIT_CALLIN_NO_PARAM(RenderUnitDestroyed)
 
 inline void CEventHandler::RenderFeatureCreated(const CFeature* feature)
 {

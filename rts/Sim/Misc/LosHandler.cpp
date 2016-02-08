@@ -636,11 +636,8 @@ CLosHandler::~CLosHandler()
 }
 
 
-void CLosHandler::UnitDestroyed(const CUnit* unit, const CUnit* attacker, bool preEvent)
+void CLosHandler::UnitDestroyed(const CUnit* unit, const CUnit* attacker)
 {
-	if (!preEvent)
-		return;
-
 	for (ILosType* lt: losTypes) {
 		lt->RemoveUnit(const_cast<CUnit*>(unit), true);
 	}

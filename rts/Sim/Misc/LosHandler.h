@@ -270,7 +270,7 @@ public:
 	bool GetFullRead() const { return true; }
 	int  GetReadAllyTeam() const { return AllAccessTeam; }
 
-	void UnitDestroyed(const CUnit* unit, const CUnit* attacker, bool preEvent) override;
+	void UnitDestroyed(const CUnit* unit, const CUnit* attacker) override;
 	void UnitTaken(const CUnit* unit, int oldTeam, int newTeam) override;
 	void UnitLoaded(const CUnit* unit, const CUnit* transport) override;
 	void UnitNanoframed(const CUnit* unit) override;

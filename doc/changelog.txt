@@ -29,11 +29,9 @@ Lua:
  ! GameID callin now gets the ID string encoded in hex.
  ! Weapons with tracking will use a radar dot position unless
    Spring.SetProjectileIgnoreTrackingError(projID, bool ignore) is called.
- ! UnitDestroyed is now called twice and gets an extra argument 'preEvent'
-   the value of preEvent is true for the first call which corresponds to
-   the old UnitDestroyed and false for the second (allows shaders during
-   death anims, etc; after the second call a unitID is no longer valid!)
-   also remove hardcoded logic to zombify (stun+immobilize) a unit on death
+ ! new Lua callin RenderUnitDestroyed is now called just before a unit is
+   invalid, after it finishes its death animation.
+ ! removed hardcoded logic to zombify (stun+immobilize) a unit on death
  ! ShieldPreDamaged will now be called for LightningCannon and BeamLaser.
    Two new arguments were added: beamCarrierWeaponNum and beamCarrierUnitID.
    These will be populated in place of the first argument (projID).
