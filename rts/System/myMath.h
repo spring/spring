@@ -7,6 +7,7 @@
 #include "System/type2.h"
 #include "System/float3.h"
 
+#include <cmath> // std::fabs
 #include <algorithm> // std::{min,max}
 
 #ifdef __GNUC__
@@ -105,6 +106,17 @@ float smoothstep(const float edge0, const float edge1, const float value) _pure 
 float3 smoothstep(const float edge0, const float edge1, float3 vec) _pure _warn_unused_result;
 
 float linearstep(const float edge0, const float edge1, const float value) _pure _warn_unused_result;
+
+
+#ifndef FAST_EPS_CMP
+template<class T> inline bool epscmp(const T a, const T b, const T eps) {
+	return (math::fabs(a - b) <= (eps * std::max(std::max(math::fabs(a), math::fabs(b)), T(1))));
+}
+#else
+template<class T> inline bool epscmp(const T a, const T b, const T eps) {
+	return (std::fabs(a - b) <= (eps * (T(1) + std::fabs(a) + std::fabs(b))));
+}
+#endif
 
 
 // inlined to avoid multiple definitions due to the specializing templates
