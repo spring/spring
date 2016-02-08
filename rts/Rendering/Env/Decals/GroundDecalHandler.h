@@ -17,7 +17,6 @@ class CUnit;
 class CVertexArray;
 struct SolidObjectGroundDecal;
 struct SolidObjectDecalType;
-struct S3DModel;
 
 namespace Shader {
 	struct IProgramObject;
@@ -70,9 +69,9 @@ struct TrackToClean {
 
 struct SolidObjectGroundDecal {
 	SolidObjectGroundDecal()
-		: va(NULL)
-		, owner(NULL)
-		, gbOwner(NULL)
+		: va(nullptr)
+		, owner(nullptr)
+		, gbOwner(nullptr)
 		, posx(0)
 		, posy(0)
 		, xsize(0)

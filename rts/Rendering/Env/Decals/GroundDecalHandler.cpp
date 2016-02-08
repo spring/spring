@@ -206,9 +206,10 @@ static inline void AddQuadVertices(CVertexArray* va, int x, float* yv, int z, co
 inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 {
 	const float* hm = readMap->GetCornerHeightMapUnsynced();
-	const int gsmx = mapDims.mapx;
-	const int gsmx1 = gsmx + 1;
-	const int gsmy = mapDims.mapy;
+
+	const int gsmx  = mapDims.mapx;
+	const int gsmx1 = mapDims.mapxp1;
+	const int gsmy  = mapDims.mapy;
 
 	SColor color(255, 255, 255, int(decal->alpha * 255));
 
@@ -218,10 +219,12 @@ inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 	#define HEIGHT(z, x) (assert((z) <= gsmy), assert((x) <= gsmx), (hm[((z) * gsmx1) + (x)]))
 	#endif
 
-	if (!decal->va) {
+	CVertexArray*& va = decal->va;
+
+	if (va == nullptr) {
 		// NOTE: this really needs CLOD'ing
-		decal->va = new CVertexArray();
-		decal->va->Initialize();
+		va = new CVertexArray();
+		va->Initialize();
 
 		const int
 			dxsize = decal->xsize,
@@ -282,15 +285,16 @@ inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 					} break;
 				}
 
-				AddQuadVertices(decal->va, px, yv, pz, uv, color);
+				AddQuadVertices(va, px, yv, pz, uv, color);
 			}
 		}
 	} else {
-		const int num = decal->va->drawIndex() / VA_SIZE_TC;
-		decal->va->ResetPos();
-		VA_TYPE_TC* mem = decal->va->GetTypedVertexArray<VA_TYPE_TC>(num);
+		const int numVerts = va->drawIndex() / VA_SIZE_TC;
 
-		for (int i = 0; i < num; ++i) {
+		va->ResetPos();
+		VA_TYPE_TC* mem = va->GetTypedVertexArray<VA_TYPE_TC>(numVerts);
+
+		for (int i = 0; i < numVerts; ++i) {
 			const int x = int(mem[i].p.x) >> 3;
 			const int z = int(mem[i].p.z) >> 3;
 
@@ -299,7 +303,13 @@ inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 			mem[i].c   = color;
 		}
 
-		decal->va->DrawArrayTC(GL_QUADS);
+		// pos{x,y} are multiples of SQUARE_SIZE, but pos might not be
+		// shift the decal visually in the latter case so it is aligned
+		// with the object on top of it
+		glPushMatrix();
+		glTranslatef(int(decal->pos.x) % SQUARE_SIZE, 0.0f, int(decal->pos.z) % SQUARE_SIZE);
+		va->DrawArrayTC(GL_QUADS);
+		glPopMatrix();
 	}
 
 	#undef HEIGHT
@@ -441,7 +451,6 @@ void CGroundDecalHandler::GatherDecalsForType(CGroundDecalHandler::SolidObjectDe
 void CGroundDecalHandler::DrawObjectDecals() {
 	// create and draw the quads for each building decal
 	for (SolidObjectDecalType* decalType: objectDecalTypes) {
-
 		if (decalType->objectDecals.empty())
 			continue;
 
@@ -449,7 +458,7 @@ void CGroundDecalHandler::DrawObjectDecals() {
 			GatherDecalsForType(decalType);
 		}
 
-		if (decalsToDraw.size() > 0) {
+		if (!decalsToDraw.empty()) {
 			glBindTexture(GL_TEXTURE_2D, decalType->texture);
 			for (SolidObjectGroundDecal* decal: decalsToDraw) {
 				DrawObjectDecal(decal);
