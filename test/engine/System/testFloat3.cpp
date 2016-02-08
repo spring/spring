@@ -19,7 +19,7 @@ static inline float RandFloat(const float min, const float max) {
 }
 
 
-static bool equals_legacy(const float3& f1, const float3& f2)
+static inline bool equals_legacy(const float3& f1, const float3& f2)
 {
 	return math::fabs(f1.x - f2.x) <= float3::CMP_EPS * math::fabs(f1.x)
 		&& math::fabs(f1.y - f2.y) <= float3::CMP_EPS * math::fabs(f1.y)
@@ -27,26 +27,21 @@ static bool equals_legacy(const float3& f1, const float3& f2)
 }
 
 
-static bool equals_new(const float3& f1, const float3& f2)
+static inline bool equals_new(const float3& f1, const float3& f2)
 {
 	return (epscmp(f1.x, f2.x, float3::CMP_EPS) && epscmp(f1.y, f2.y, float3::CMP_EPS) && epscmp(f1.z, f2.z, float3::CMP_EPS));
 }
 
 
-static bool equals_distance(const float3& f1, const float3& f2)
+static inline bool epscmp2(const float& f) { return (f <= (float3::CMP_EPS * f)); }
+static inline bool equals_distance(const float3& f1, const float3& f2)
 {
-	if ((f1.x == f2.x) && (f1.y == f2.y) && (f1.z == f2.z))
-		return true;
-
-	const float d = f1.SqDistance(f2);
-	if (d <= (float3::CMP_EPS * d))
-		return true;
-
-	return false;
+	return ((f1.x == f2.x) && (f1.y == f2.y) && (f1.z == f2.z))
+		|| epscmp2(f1.SqDistance(f2));
 }
 
 
-static bool equals_sse(const float3& f1, const float3& f2)
+static inline bool equals_sse(const float3& f1, const float3& f2)
 {
 	// same as equals_new() just with SSE
 	__m128 eq;
