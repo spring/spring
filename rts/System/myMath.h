@@ -110,11 +110,11 @@ float linearstep(const float edge0, const float edge1, const float value) _pure 
 
 #ifndef FAST_EPS_CMP
 template<class T> inline bool epscmp(const T a, const T b, const T eps) {
-	return (math::fabs(a - b) <= (eps * std::max(std::max(math::fabs(a), math::fabs(b)), T(1))));
+	return ((a == b) || (math::fabs(a - b) <= (eps * std::max(std::max(math::fabs(a), math::fabs(b)), T(1)))));
 }
 #else
 template<class T> inline bool epscmp(const T a, const T b, const T eps) {
-	return (std::fabs(a - b) <= (eps * (T(1) + std::fabs(a) + std::fabs(b))));
+	return ((a == b) || (std::fabs(a - b) <= (eps * (T(1) + std::fabs(a) + std::fabs(b)))));
 }
 #endif
 
