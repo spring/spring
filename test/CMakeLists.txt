@@ -142,6 +142,10 @@ endif()
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/testFloat3.cpp"
 			"${ENGINE_SOURCE_DIR}/System/float3.cpp"
 			"${ENGINE_SOURCE_DIR}/System/float4.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
+			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
+			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
+			${test_Log_sources}
 		)
 
 	set(test_libs
