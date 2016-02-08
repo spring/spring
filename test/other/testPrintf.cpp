@@ -62,7 +62,12 @@ static const std::vector<std::pair<float, const char*>> testNumbers = {
 
 	// infinite numbers
 	{std::numeric_limits<float>::quiet_NaN(), "nan"},
+// some clang versions have difficulties with nan
+// https://llvm.org/bugs/show_bug.cgi?id=16666
+// https://stackoverflow.com/a/32224172
+#ifndef __clang__
 	{-std::numeric_limits<float>::quiet_NaN(), "-nan"},
+#endif
 	{std::numeric_limits<float>::infinity(), "inf"},
 	{-std::numeric_limits<float>::infinity(), "-inf"}
 };
