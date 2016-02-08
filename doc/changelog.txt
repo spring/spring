@@ -25,7 +25,7 @@ Lua:
    deprecate *Defs[i].modelname, use *Defs[i].model.path instead
  ! Game.groundAmbientColor, Game.groundSpecularColor and Game.groundSunColor
    are no longer available, use gl.GetSun() instead with appropriate parameters
- ! Game.fogColor constant is no longer available
+ ! Game.fogColor constant is no longer available, use gl.GetAtmosphere("fogColor")
  ! GameID callin now gets the ID string encoded in hex.
  ! Weapons with tracking will use a radar dot position unless
    Spring.SetProjectileIgnoreTrackingError(projID, bool ignore) is called.
