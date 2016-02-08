@@ -196,8 +196,10 @@ public:
 	float3 GetObjectSpaceDrawPos(const float3& p) const { return (drawPos + GetObjectSpaceVec(p)); }
 
 	// unsynced mid-{position,vector}s
-	float3 GetDrawMidPos() const { return (GetObjectSpaceDrawPos(localModel.GetRelMidPos())); }
-	float3 GetDrawRelMidPos() const { return (GetObjectSpaceVec(localModel.GetRelMidPos())); }
+	float3 GetMdlDrawMidPos() const { return (GetObjectSpaceDrawPos(localModel.GetRelMidPos())); }
+	float3 GetObjDrawMidPos() const { return (GetObjectSpaceDrawPos(              relMidPos  )); }
+	float3 GetMdlDrawRelMidPos() const { return (GetObjectSpaceVec(localModel.GetRelMidPos())); }
+	float3 GetObjDrawRelMidPos() const { return (GetObjectSpaceVec(              relMidPos  )); }
 
 
 	int2 GetMapPos() const { return (GetMapPos(pos)); }

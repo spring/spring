@@ -633,29 +633,27 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 		iconData = unit->unitDef->iconType.GetIconData();
 	}
 
-	// Calculate the icon size. It scales with:
-	//  * The square root of the camera distance.
-	//  * The mod defined 'iconSize' (which acts a multiplier).
-	//  * The unit radius, depending on whether the mod defined 'radiusadjust' is true or false.
-	float3 pos;
-	if (gu->spectatingFullView) {
-		pos = unit->midPos;
-	} else {
-		pos = unit->GetErrorPos(gu->myAllyTeam);
-	}
+	// drawMidPos is auto-calculated now; can wobble on its own as pieces move
+	float3 pos = unit->GetObjDrawMidPos();
+
+	if (!gu->spectatingFullView)
+		pos += unit->GetErrorVector(gu->myAllyTeam);
 
 	// make sure icon is above ground (needed before we calculate scale below)
 	const float h = CGround::GetHeightReal(pos.x, pos.z, false);
 
 	pos.y = std::max(pos.y, h);
 
+	// Calculate the icon size. It scales with:
+	//  * The square root of the camera distance.
+	//  * The mod defined 'iconSize' (which acts a multiplier).
+	//  * The unit radius, depending on whether the mod defined 'radiusadjust' is true or false.
 	const float dist = std::min(8000.0f, fastmath::sqrt2(camera->GetPos().SqDistance(pos)));
 	const float iconScale = 0.4f * fastmath::sqrt2(dist); // makes far icons bigger
 	float scale = iconData->GetSize() * iconScale;
 
-	if (iconData->GetRadiusAdjust() && !useDefaultIcon) {
+	if (iconData->GetRadiusAdjust() && !useDefaultIcon)
 		scale *= (unit->radius / iconData->GetRadiusScale());
-	}
 
 	// make sure icon is not partly under ground
 	pos.y = std::max(pos.y, h + scale);
@@ -1439,7 +1437,7 @@ inline void CUnitDrawer::UpdateUnitDrawPos(CUnit* u) {
 		u->drawPos = u->GetDrawPos(          globalRendering->timeOffset);
 	}
 
-	u->drawMidPos = u->GetDrawMidPos();
+	u->drawMidPos = u->GetMdlDrawMidPos();
 }
 
 
