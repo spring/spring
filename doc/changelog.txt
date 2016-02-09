@@ -22,7 +22,7 @@ LoS:
  ! ModInfo: make `radarMipLevel` configurable
  ! change default airMipLevel 2->1 & radarMipLevel 3->2
  ! ModInfo: add new sensors.alwaysVisibleOverridesCloaked (default _off_! before was always on)
- ! modrules.lua: add new `seperateJammers` tag (breaks backward compability!)
+ ! modrules.lua: add new `separateJammers` tag (breaks backward compability!)
    default true (old behaviour is false)
    when enabled each allyTeam only jammes their own units
  ! get rid of los radius limit (you can now create units that cover the whole map and more)
