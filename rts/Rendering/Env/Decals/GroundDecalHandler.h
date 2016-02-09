@@ -118,6 +118,11 @@ public:
 	virtual void ForceRemoveSolidObject(CSolidObject* object);
 
 private:
+	void BindTextures();
+	void KillTextures();
+	void BindShader(const float3& ambientColor);
+	void DrawDecals();
+
 	void AddExplosion(float3 pos, float damage, float radius, bool);
 	void MoveSolidObject(CSolidObject* object, const float3& pos);
 	int GetSolidObjectDecalType(const std::string& name);
