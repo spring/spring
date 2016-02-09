@@ -778,9 +778,8 @@ int LuaUnsyncedCtrl::DrawUnitCommands(lua_State* L)
 
 int LuaUnsyncedCtrl::SetCameraTarget(lua_State* L)
 {
-	if (mouse == NULL) {
+	if (mouse == nullptr)
 		return 0;
-	}
 
 	const float3 pos(luaL_checkfloat(L, 1),
 	                 luaL_checkfloat(L, 2),
@@ -797,15 +796,15 @@ int LuaUnsyncedCtrl::SetCameraTarget(lua_State* L)
 
 int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 {
-	if (mouse == NULL) {
+	// ??
+	if (mouse == nullptr)
 		return 0;
-	}
 
-	if (!lua_istable(L, 1)) {
+	if (!lua_istable(L, 1))
 		luaL_error(L, "Incorrect arguments to SetCameraState(table, camTime)");
-	}
 
-	const float camTime = luaL_checkfloat(L, 2);
+	// TODO: add separate callout for smooth mode transitions?
+	// const float camTime = luaL_checkfloat(L, 2);
 
 	CCameraController::StateMap camState;
 
@@ -822,14 +821,13 @@ int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 		}
 	}
 
-	camHandler->CameraTransition(camTime);
-	lua_pushboolean(L, camHandler->SetState(camState));
-
 	if (!CLuaHandle::GetHandleSynced(L)) {
+		lua_pushboolean(L, camHandler->SetState(camState));
 		return 1;
-	} else {
-		return 0;
 	}
+
+	camHandler->SetState(camState);
+	return 0;
 }
 
 
