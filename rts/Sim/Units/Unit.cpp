@@ -2029,7 +2029,7 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 		// turn reclaimee into nanoframe (even living units)
 		if ((modInfo.reclaimUnitMethod == 0) && !beingBuilt) {
 			beingBuilt = true;
-			eventHandler.UnitNanoframed(this);
+			eventHandler.UnitReverseBuilt(this);
 		}
 
 		// reduce health & resources

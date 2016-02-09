@@ -652,7 +652,7 @@ void CLosHandler::UnitTaken(const CUnit* unit, int oldTeam, int newTeam)
 }
 
 
-void CLosHandler::UnitNanoframed(const CUnit* unit)
+void CLosHandler::UnitReverseBuilt(const CUnit* unit)
 {
 	for (ILosType* lt: losTypes) {
 		lt->RemoveUnit(const_cast<CUnit*>(unit));

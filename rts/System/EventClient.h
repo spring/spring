@@ -119,7 +119,7 @@ class CEventClient
 
 		virtual void UnitCreated(const CUnit* unit, const CUnit* builder) {}
 		virtual void UnitFinished(const CUnit* unit) {}
-		virtual void UnitNanoframed(const CUnit* unit) {}
+		virtual void UnitReverseBuilt(const CUnit* unit) {}
 		virtual void UnitFromFactory(const CUnit* unit, const CUnit* factory, bool userOrders) {}
 		virtual void UnitDestroyed(const CUnit* unit, const CUnit* attacker) {}
 		virtual void UnitTaken(const CUnit* unit, int oldTeam, int newTeam) {}

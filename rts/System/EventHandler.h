@@ -65,7 +65,7 @@ class CEventHandler
 
 		void UnitCreated(const CUnit* unit, const CUnit* builder);
 		void UnitFinished(const CUnit* unit);
-		void UnitNanoframed(const CUnit* unit);
+		void UnitReverseBuilt(const CUnit* unit);
 		void UnitFromFactory(const CUnit* unit, const CUnit* factory, bool userOrders);
 		void UnitDestroyed(const CUnit* unit, const CUnit* attacker);
 		void UnitTaken(const CUnit* unit, int oldTeam, int newTeam);
@@ -391,7 +391,7 @@ inline void CEventHandler::UnitDestroyed(const CUnit* unit, const CUnit* attacke
 		} \
 	}
 
-UNIT_CALLIN_NO_PARAM(UnitNanoframed);
+UNIT_CALLIN_NO_PARAM(UnitReverseBuilt);
 UNIT_CALLIN_NO_PARAM(UnitFinished)
 UNIT_CALLIN_NO_PARAM(UnitIdle)
 UNIT_CALLIN_NO_PARAM(UnitMoveFailed)

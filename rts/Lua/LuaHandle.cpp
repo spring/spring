@@ -823,7 +823,7 @@ void CLuaHandle::UnitFromFactory(const CUnit* unit,
 }
 
 
-void CLuaHandle::UnitNanoframed(const CUnit* unit)
+void CLuaHandle::UnitReverseBuilt(const CUnit* unit)
 {
 	static const LuaHashString cmdStr(__func__);
 	UnitCallIn(cmdStr, unit);
