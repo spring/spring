@@ -17,6 +17,8 @@ General:
  ! change default screenshot file type to jpg. to create png use /screenshot png
  ! pr-downloader dependency is now mandatory (statically linked with spring)
  ! demo files are now compressed with gzip
+ - improve data locality even further with respect to 100.0
+ - plug memory leaks and fix misc. crashes (some related to LoadingMT)
 
 LoS:
  ! ModInfo: remove losMul & airLosMul -> always handle los ranges in elmos in the _whole_ engine
@@ -40,6 +42,14 @@ LoS:
  - add Spring.SetGlobalLos(int allyTeamID, bool globallos)
 
 Sim:
+ - start simulation at frame 0, not at 1
+ - features now have a non-animated LocalModel and can use per-piece collision volumes
+ - RockUnit and HitByWeapon script callins now take vectors in unit-space
+ - fix acceleration rates and turn-speed limits for reversing units
+ - fix units occasionally zipping across the map after being unloaded
+ - set better default radii for objects (and use same logic in all model parsers)
+ - make ground-unit reversing logic configurable via Spring.SetGroundMoveTypeData
+ ! remap SFX.RECURSIVE piece flag from 1<<8 to 1<<14
  ! removed hardcoded logic to zombify (stun+immobilize) a unit on death
  ! airbases and fuel were removed, use custom commands in combination with
    Spring.SetUnitLandGoal(unitID, x, y, z [, radius]) and the new transport changes
@@ -54,12 +64,14 @@ Transports:
  - added Spring.SetUnitLoadingTransport(passengerID, transportID) which disables colissions
    between the two units to allow colvol intersection during the approach.
 
-GUI:
+GUI/Sound:
  ! fix default drawInMap keyshortcut on german keyboards
+ - fix displayed tooltip elevation when over minimap
+ - fix potential infinite loop during sound initialization
 
 Rendering:
  - new Shatter animation (SFX.Explode in Cob/LUS)
-  - splitter the piece into parts and not triangles
+  - break the piece into parts and not triangles
   - much faster (in creation & render time)
  - change the trail drawing of some missile projectiles
  - add support for SSMF Splat Detail Normal Textures (by Beherith)
@@ -68,12 +80,41 @@ Rendering:
    variable AllowDeferredModelBufferClear is set to false [default])
  - allow custom shaders for being-built units
  - allow custom Lua map shaders
+ - fix metal->los info texture switching visual harshness
+ - apply anisotropic filtering to all mipmapped SSMF textures
+ - fix shadow-pass (and general) terrain/model visibility culling
+ - fix environment reflections (broken in four different ways)
+ - fix DynamicWater artifacts at large camera distances
+ - fix truncation of deferred model normals
+ - do not disable model shaders during world alpha-pass
+ - do not disable model shaders during water ref{le,ra}ction passes
+ - always draw water surface during alpha-pass
+ - kill shadows for fully alpha-faded features
+ - kill impostors fully alpha-faded features
+ - write extraColor to the specTex target on the deferred side of ModelFragProg
+ - use groundSpecularColor when no specularTex exists (i.e. on basic SMF maps)
+ - shift ground decals visually so they are always aligned with objects
+ - render all types of decals with shaders
+ - draw custom commands that have two parameters
+ ! nuke support for "special" Spring{Radius,Height} pieces in assimp models
 
 GameServer:
  - speedup gameserver exiting (reduced some io/net related sleeps)
 
-PathCache:
- - handle crc failures
+PathFinder:
+ - switch to octile heuristic to reduce number of explored nodes
+ - increase high-resolution search range
+ - fix diagonal movement cost estimation
+ - handle PathCache crc failures
+ - make QTPFS neighbor updates a bit faster
+
+AI:
+ - plug several memory leaks in engine interface and wrappers
+ - bring ghost model drawing in a usable state again
+ - add sensor map callbacks
+ - add shield state callbacks
+ - add ground info callbacks
+ - make feature callbacks respect cheats
 
 Lua Callins:
  ! GameID callin now gets the ID string encoded in hex.
@@ -89,7 +130,7 @@ Lua Callins:
      AllowWeaponTarget,
      AllowWeaponInterceptTarget,
      StockpileChanged
- - new callin UnitNanoframed, called when a living unit becomes a nanoframe again
+ - new callin UnitReverseBuilt, called when a living unit becomes a nanoframe again
  - add new callins DrawGroundPreForward and DrawGroundPreDeferred
    these run at the start of their respective passes when a custom
    map shader has been assigned via Spring.SetMapShader (convenient
@@ -182,6 +223,16 @@ Lua (model rendering):
    and apply a model's default textures; easier than gl.Texture("$%...")
 
 Lua:
+ - fix GadgetHandler miscounting if RemoveGadget was invoked during a callin
+ - allow custom commands to be non-queueing (handy for state toggles)
+ - LuaUI can now reload itself via Spring.SendCommands
+ - allow /lua{rules,gaia} reloading on frame 0
+ - allow Lua{Rules,Gaia} chat actions before frame 0
+ - extend Spring.TraceScreenRay to intersect a user-given plane
+ - add unitSpecularColor to the set of values returned by gl.GetSun
+ - fix typo in maphelper/setupopts.lua breaking several default options
+ ! do not start camera transitions from Spring.SetCameraState
+ ! LuaSyncedRead::GetAIInfo now returns "UNKNOWN" for non-local AI's, not "UKNOWN"
  ! {Set,Get}UnitPieceCollisionVolumeData now receive 1-based piece index argument (was 0-based).
  ! fix a desync related to printf/number2string conversion
  ! Lua: fix bug that some TransformMatrix functions were revealing the true position of radar dots
@@ -190,9 +241,8 @@ Lua:
  - add Spring.IsUnitIn[Los, AirLos, ...]
    Note this is _not_ equal with Spring.IsPosInLos with the unit's pos!
    I.e. the ground maybe in radar range, but the unit is jammed and so not visible
- - Add LUA Synced read functions:
-   Spring.GetUnitFeatureSeparation(unitID, featureID[, dist2D])
-   Spring.GetFeatureSeparation(featureID1, featureID2[, dist2D])
+ - add Spring.GetUnitFeatureSeparation(unitID, featureID[, dist2D])
+ - add Spring.GetFeatureSeparation(featureID1, featureID2[, dist2D])
  - new Spring.GetUICommands function to obtain a list of all UI commands (e.g. /luaui reload)
  - new VFS.CalculateHash function that calculates hash (in base64 form) of a given string (with md5 support initially)
  - new Spring.{Get,Set}{Unit,Feature}Mass functions
