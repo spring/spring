@@ -1475,10 +1475,12 @@ int LuaOpenGL::UnitCommon(lua_State* L, bool applyTransform, bool callDrawUnit)
 	// NOTE:
 	//   the "Raw" in UnitRaw means "no transform", not the same
 	//   UnitRaw also skips the DrawUnit callin by default so any
-	//   recursion is blocked
+	//   recursion is blocked; pass fullModel=true for lodCall by
+	//   default to bypass nanoframe-drawing
 	const bool doRawDraw = luaL_optboolean(L, 2, false);
 	const bool useLuaMat = GLObjectDrawWithLuaMat(L, unit, LUAOBJ_UNIT);
 	const bool noLuaCall = luaL_optboolean(L, 4, !callDrawUnit);
+	const bool fullModel = luaL_optboolean(L, 5, true);
 
 	glPushAttrib(GL_ENABLE_BIT);
 
@@ -1496,7 +1498,7 @@ int LuaOpenGL::UnitCommon(lua_State* L, bool applyTransform, bool callDrawUnit)
 
 	if (doRawDraw) {
 		// draw with void material state
-		(unitDrawer->*rawDrawFuncs[applyTransform])(unit, 0, 0, false, noLuaCall);
+		(unitDrawer->*rawDrawFuncs[applyTransform])(unit, 0, 0, fullModel, noLuaCall);
 	} else {
 		// draw with full material state
 		(unitDrawer->*matDrawFuncs[applyTransform])(unit, noLuaCall);

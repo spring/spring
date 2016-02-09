@@ -1253,9 +1253,9 @@ void CUnitDrawer::DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int te
 void CUnitDrawer::DrawUnitModelBeingBuilt(const CUnit* unit, bool noLuaCall)
 {
 	if (shadowHandler->InShadowPass()) {
-		if (unit->buildProgress > (2.0f / 3.0f)) {
+		if (unit->buildProgress > (2.0f / 3.0f))
 			DrawUnitModel(unit, noLuaCall);
-		}
+
 		return;
 	}
 
