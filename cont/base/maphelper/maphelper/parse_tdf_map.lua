@@ -208,6 +208,11 @@ return function(sourceText)
      lightEmissionTex     = map.lightemissiontex,
      parallaxHeightTex    = map.parallaxheighttex,
      splatDetailNormalTex = map.splatdetailnormaltex, -- table
+     splatDetailNormalDiffuseAlpha = map.splatdetailnormaldiffusealpha,
+     splatDetailNormalTex1 = map.splatdetailnormaltex1,
+     splatDetailNormalTex2 = map.splatdetailnormaltex2,
+     splatDetailNormalTex3 = map.splatdetailnormaltex3,
+     splatDetailNormalTex4 = map.splatdetailnormaltex4,
   }
 
   ConvertTerrainTypes(map)
