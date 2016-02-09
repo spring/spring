@@ -463,7 +463,7 @@ bool CBitmap::SaveFloat(std::string const& filename) const
 unsigned int CBitmap::CreateTexture(float aniso, bool mipmaps) const
 {
 	if (compressed)
-		return CreateDDSTexture(0, mipmaps);
+		return CreateDDSTexture(0, mipmaps, aniso);
 
 	if (mem.empty())
 		return 0;
@@ -485,7 +485,6 @@ unsigned int CBitmap::CreateTexture(float aniso, bool mipmaps) const
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	//FIXME add glPixelStorei(GL_UNPACK_ALIGNMENT, 1); for NPOTs
 	if (aniso > 0.0f)
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
 
@@ -522,7 +521,7 @@ static void HandleDDSMipmap(GLenum target, bool mipmaps, int num_mipmaps)
 	}
 }
 
-unsigned int CBitmap::CreateDDSTexture(unsigned int texID, bool mipmaps) const
+unsigned int CBitmap::CreateDDSTexture(unsigned int texID, bool mipmaps, float aniso) const
 {
 	glPushAttrib(GL_TEXTURE_BIT);
 
@@ -544,6 +543,8 @@ unsigned int CBitmap::CreateDDSTexture(unsigned int texID, bool mipmaps) const
 			texID = 0;
 			break;
 		}
+		if (aniso > 0.0f)
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
 		HandleDDSMipmap(GL_TEXTURE_2D, mipmaps, ddsimage->get_num_mipmaps());
 		break;
 	case nv_dds::Texture3D:
@@ -564,6 +565,8 @@ unsigned int CBitmap::CreateDDSTexture(unsigned int texID, bool mipmaps) const
 			texID = 0;
 			break;
 		}
+		if (aniso > 0.0f)
+			glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
 		HandleDDSMipmap(GL_TEXTURE_CUBE_MAP, mipmaps, ddsimage->get_num_mipmaps());
 		break;
 	default:
@@ -580,7 +583,7 @@ unsigned int CBitmap::CreateTexture(float aniso, bool mipmaps) const {
 	return 0;
 }
 
-unsigned int CBitmap::CreateDDSTexture(unsigned int texID, bool mipmaps) const {
+unsigned int CBitmap::CreateDDSTexture(unsigned int texID, bool mipmaps, float aniso) const {
 	return 0;
 }
 #endif // !BITMAP_NO_OPENGL
