@@ -5201,20 +5201,18 @@ int LuaSyncedRead::Pos2BuildPos(lua_State* L)
 
 static int GetEffectiveLosAllyTeam(lua_State* L, int arg)
 {
-	if (!lua_isnoneornil(L, arg) && CLuaHandle::GetHandleFullRead(L)) {
-		const int at = luaL_checkint(L, arg);
-		if (!teamHandler->IsValidAllyTeam(at)) {
-			luaL_argerror(L, arg, "Invalid allyTeam");
-		}
-		return at;
-	}
+	const int rat = CLuaHandle::GetHandleReadAllyTeam(L);
 
-	const int at = CLuaHandle::GetHandleReadAllyTeam(L);
-	if (!teamHandler->IsValidAllyTeam(at)) {
-		luaL_argerror(L, arg, "Invalid allyTeam");
-	}
+	if (lua_isnoneornil(L, arg) && teamHandler->IsValidAllyTeam(rat))
+		return rat;
 
-	return at;
+	const int aat = luaL_checkint(L, arg);
+
+	if (CLuaHandle::GetHandleFullRead(L) && teamHandler->IsValidAllyTeam(aat))
+		return aat;
+
+	// never returns
+	return (luaL_argerror(L, arg, "Invalid allyTeam"));
 }
 
 
