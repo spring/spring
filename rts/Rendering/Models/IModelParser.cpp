@@ -115,6 +115,7 @@ LoadQueue::~LoadQueue()
 	}
 }
 
+__FORCE_ALIGN_STACK__
 void LoadQueue::Pump()
 {
 	while (true) {
@@ -140,7 +141,6 @@ void LoadQueue::Pump()
 	}
 }
 
-__FORCE_ALIGN_STACK__
 void LoadQueue::Push(const std::string& modelName)
 {
 	GrabLock();
