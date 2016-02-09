@@ -104,7 +104,12 @@ local mapDefaults = {
     skyReflectModTex     = '',
     detailNormalTex      = '',
     lightEmissionTex     = '',
-    parallaxHeightTex    = '',
+    parallaxHeightTex    = '',    
+    splatDetailNormalDiffuseAlpha	= false;
+    splatDetailNormalTex1			= '';
+    splatDetailNormalTex2			= '';
+    splatDetailNormalTex3			= '';
+    splatDetailNormalTex4			= '';
     splatDetailNormalTex = {
       '', -- 1
       '', -- 2
