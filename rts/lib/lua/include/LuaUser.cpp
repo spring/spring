@@ -340,6 +340,10 @@ static inline int PrintFractPart(char* buf, float f, int digits, int precision)
 
 static inline bool HandleRounding(float* fractF, int log10, int charsInStdNotation, int nDigits, bool scienceNotation, int precision)
 {
+	// We handle here the case when rounding in the
+	// fract part carries into the integer part.
+	// We don't handle the fract rounding itself!
+
 	int iDigits = 1;
 	if (!scienceNotation) {
 		if (log10 >= 0) {
@@ -352,9 +356,9 @@ static inline bool HandleRounding(float* fractF, int log10, int charsInStdNotati
 		fDigits = precision;
 	}
 
-	// 1 -> 0.95
-	// 2 -> 0.995
-	// 3 -> 0.9995
+	// 1 -> 0.95   -%.1f-> 1.0
+	// 2 -> 0.995  -%.2f-> 1.00
+	// 3 -> 0.9995 -%.3f-> 1.000
 	const float roundLimit = 1.f - 0.5f * std::pow(0.1f, fDigits);
 	if (*fractF >= roundLimit) {
 		*fractF = 0.0f;

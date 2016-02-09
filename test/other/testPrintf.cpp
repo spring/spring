@@ -250,14 +250,14 @@ BOOST_AUTO_TEST_CASE( Performance )
 		srand( 0 );
 		ScopedOnceTimer foo("printf() - floats");
 		for (int j=iterations; j>0; --j) {
-			sprintf(s, FMT_STRING, RandFloat(0, 10000));
+			sprintf(s, FMT_STRING, randf() * 10000);
 		}
 	}
 	{
 		srand( 0 );
 		ScopedOnceTimer foo("spring_lua_ftoa() - floats");
 		for (int j=iterations; j>0; --j) {
-			spring_lua_ftoa(RandFloat(0, 10000), s);
+			spring_lua_ftoa(randf() * 10000, s);
 		}
 	}
 
