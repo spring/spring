@@ -540,7 +540,7 @@ void CLegacyMeshDrawer::UpdateLODParams(const DrawPass::e& drawPass)
 	viewRadius  = smfGroundDrawer->GetGroundDetail(drawPass);
 
 	// Take FOV into account
-	viewRadius  = int(viewRadius * fastmath::apxsqrt(45.0f / camera->GetFov()));
+	viewRadius  = int(viewRadius * fastmath::apxsqrt(45.0f / camera->GetVFOV()));
 
 	// Clamp it to mapsize dependent minimum, else we get holes in the terrain
 	viewRadius  = std::max(std::max(smfReadMap->numBigTexY, smfReadMap->numBigTexX) + 1, viewRadius);

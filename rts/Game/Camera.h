@@ -133,9 +133,10 @@ public:
 	void LoadViewPort() const;
 	void UpdateLoadViewPort(int px, int py, int sx, int sy);
 
-	void SetFov(const float fov);
+	void SetVFOV(const float angle);
 
-	float GetFov() const { return fov; }
+	float GetVFOV() const { return fov; }
+	float GetHFOV() const;
 	float GetHalfFov() const { return halfFov; }
 	float GetTanHalfFov() const { return tanHalfFov; }
 	float GetLPPScale() const { return lppScale; }
@@ -206,7 +207,7 @@ public:
 	float3 right;      ///< local x-axis
 	float3 up;         ///< local y-axis
 
-	float fov;         ///< in degrees
+	float fov;         ///< vertical viewing angle, in degrees
 	float halfFov;     ///< half the fov in radians
 	float tanHalfFov;  ///< math::tan(halfFov)
 	float lppScale;    ///< length-per-pixel scale

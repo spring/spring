@@ -1273,8 +1273,9 @@ int LuaUnsyncedRead::GetCameraDirection(lua_State* L)
 
 int LuaUnsyncedRead::GetCameraFOV(lua_State* L)
 {
-	lua_pushnumber(L, camera->GetFov());
-	return 1;
+	lua_pushnumber(L, camera->GetVFOV());
+	lua_pushnumber(L, camera->GetHFOV());
+	return 2;
 }
 
 

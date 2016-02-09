@@ -201,7 +201,7 @@ void CCameraHandler::UpdateTransition()
 	if (curTime >= cameraTimeEnd) {
 		camera->SetPos(wantedCamPos);
 		camera->SetRot(wantedCamRot);
-		camera->SetFov(wantedCamFOV);
+		camera->SetVFOV(wantedCamFOV);
 	} else {
 		if (cameraTimeEnd > cameraTimeStart) {
 			const float timeRatio = (cameraTimeEnd - curTime) / (cameraTimeEnd - cameraTimeStart);
@@ -209,7 +209,7 @@ void CCameraHandler::UpdateTransition()
 
 			camera->SetPos(mix(startCam.pos, wantedCamPos, tweenFact));
 			camera->SetRot(mix(startCam.rot, wantedCamRot, tweenFact));
-			camera->SetFov(mix(startCam.fov, wantedCamFOV, tweenFact));
+			camera->SetVFOV(mix(startCam.fov, wantedCamFOV, tweenFact));
 		}
 	}
 
@@ -229,7 +229,7 @@ void CCameraHandler::CameraTransition(float nsecs)
 
 	startCam.pos = camera->GetPos();
 	startCam.rot = camera->GetRot();
-	startCam.fov = camera->GetFov();
+	startCam.fov = camera->GetVFOV();
 }
 
 

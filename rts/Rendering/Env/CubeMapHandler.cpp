@@ -169,7 +169,7 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 	glPushAttrib(GL_FOG_BIT | GL_DEPTH_BUFFER_BIT);
 
 	if (!skyOnly) {
-		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1.0f);
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 		glDepthMask(GL_TRUE);
 		glEnable(GL_DEPTH_TEST);
@@ -183,6 +183,22 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 		CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_ENVMAP);
 		CCamera* curCam = CCamera::GetActiveCamera();
 
+		bool draw = true;
+
+		#if 0
+		switch (glType) {
+			case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB: { glClearColor(1.0f, 0.0f, 0.0f, 1.0f); draw = false; } break; // red
+			case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB: { glClearColor(0.0f, 1.0f, 0.0f, 1.0f); draw = false; } break; // green
+			case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB: { glClearColor(0.0f, 0.0f, 1.0f, 1.0f); draw = false; } break; // blue
+			case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB: { glClearColor(1.0f, 1.0f, 0.0f, 1.0f); draw = false; } break; // yellow
+			case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB: { glClearColor(1.0f, 0.0f, 1.0f, 1.0f); draw = false; } break; // purple
+			case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB: { glClearColor(0.0f, 1.0f, 1.0f, 1.0f); draw = false; } break; // cyan
+			default: {} break;
+		}
+
+		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+		#endif
+
 		#if 1
 		// work around CCamera::GetRgtFromRot bugs
 		switch (glType) {
@@ -195,33 +211,36 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 			default: {} break;
 		}
 
-		// env-reflections are only correct when drawn from an inverted
-		// perspective (meaning right becomes left and up becomes down)
-		curCam->forward  = camDir;
-		curCam->right   *= -1.0f;
-		curCam->up      *= -1.0f;
+		if (draw) {
+			// env-reflections are only correct when drawn from an inverted
+			// perspective (meaning right becomes left and up becomes down)
+			curCam->forward  = camDir;
+			curCam->right   *= -1.0f;
+			curCam->up      *= -1.0f;
 
-		curCam->SetFov(90.0f);
-		curCam->SetPos(prvCam->GetPos());
-		#else
-		curCam->SetRotZ(0.0f);
-		curCam->SetDir(camDir);
-		#endif
+			// we want a *horizontal* FOV of 90 degrees; this gets us close
+			// enough (assumes a 16:10 horizontal aspect-ratio common case)
+			curCam->SetVFOV(64.0f);
+			curCam->SetPos(prvCam->GetPos());
+			#else
+			curCam->SetRotZ(0.0f);
+			curCam->SetDir(camDir);
+			#endif
 
-		curCam->UpdateLoadViewPort(0, 0, reflTexSize, reflTexSize);
-		// update matrices (not dirs or viewport)
-		curCam->Update(false, true, false);
+			curCam->UpdateLoadViewPort(0, 0, reflTexSize, reflTexSize);
+			// update matrices (not dirs or viewport)
+			curCam->Update(false, true, false);
 
-		// generate the face
-		game->SetDrawMode(CGame::gameReflectionDraw);
-		sky->Draw();
+			// generate the face
+			game->SetDrawMode(CGame::gameReflectionDraw);
+			sky->Draw();
 
-		if (!skyOnly) {
-			readMap->GetGroundDrawer()->Draw(DrawPass::TerrainReflection);
+			if (!skyOnly) {
+				readMap->GetGroundDrawer()->Draw(DrawPass::TerrainReflection);
+			}
+
+			game->SetDrawMode(CGame::gameNormalDraw);
 		}
-
-		game->SetDrawMode(CGame::gameNormalDraw);
-
 
 		CCamera::SetActiveCamera(prvCam->GetCamType());
 		prvCam->Update();

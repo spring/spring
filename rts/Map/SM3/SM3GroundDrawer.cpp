@@ -46,7 +46,7 @@ CSM3GroundDrawer::~CSM3GroundDrawer()
 static void SpringCamToTerrainCam(CCamera &sc, terrain::Camera& tc)
 {
 	// Copy camera settings
-	tc.fov = sc.GetFov();
+	tc.fov = sc.GetVFOV();
 	tc.front = sc.forward;
 	tc.right = sc.right;
 	tc.up = sc.up;

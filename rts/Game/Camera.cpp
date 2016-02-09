@@ -50,7 +50,7 @@ CCamera::CCamera(unsigned int cameraType)
 	memset(movState, 0, sizeof(movState));
 	memset(rotState, 0, sizeof(rotState));
 
-	SetFov(45.0f);
+	SetVFOV(45.0f);
 }
 
 void CCamera::CopyState(const CCamera* cam)
@@ -69,7 +69,7 @@ void CCamera::CopyState(const CCamera* cam)
 	pos        = cam->GetPos();
 	rot        = cam->GetRot();
 
-	fov        = cam->GetFov();
+	fov        = cam->GetVFOV();
 	halfFov    = cam->GetHalfFov();
 	tanHalfFov = cam->GetTanHalfFov();
 	lppScale   = cam->GetLPPScale();
@@ -316,12 +316,17 @@ bool CCamera::InView(const float3& p, float radius) const
 
 
 
-
-void CCamera::SetFov(const float myfov)
+void CCamera::SetVFOV(const float angle)
 {
-	fov = myfov;
+	fov = angle;
 	halfFov = (fov * 0.5f) * (PI / 180.f);
 	tanHalfFov = math::tan(halfFov);
+}
+
+float CCamera::GetHFOV() const {
+	const float hAspect = (viewport[2] * 1.0f) / viewport[3];
+	const float fovFact = math::tan(fov * 0.5f) * hAspect;
+	return (2.0f * math::atan(fovFact) * (180.0f / PI));
 }
 
 
