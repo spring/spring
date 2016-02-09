@@ -19,6 +19,7 @@
 #include "System/Log/ILog.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
+#include "System/maindefines.h"
 #include "lib/assimp/include/assimp/Importer.hpp"
 
 C3DModelLoader* modelParser = nullptr;
@@ -139,6 +140,7 @@ void LoadQueue::Pump()
 	}
 }
 
+__FORCE_ALIGN_STACK__
 void LoadQueue::Push(const std::string& modelName)
 {
 	GrabLock();
