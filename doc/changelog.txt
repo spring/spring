@@ -9,6 +9,8 @@ Major:
  - many new Lua rendering related features (custom feature shaders, map shaders, ...)
  - many Lua additions
  - Lua pr-downloader API
+ - removal of airbases & fuel
+ - transport overhaul
  - 64bit windows builds
 
 General:
@@ -39,6 +41,18 @@ LoS:
 
 Sim:
  ! removed hardcoded logic to zombify (stun+immobilize) a unit on death
+ ! airbases and fuel were removed, use custom commands in combination with
+   Spring.SetUnitLandGoal(unitID, x, y, z [, radius]) and the new transport changes
+   to implement this functionality in lua.
+
+Transports:
+ - every unit can now have other units attached to it using:
+  - Spring.UnitAttach(transporterID, passengerID, pieceNum)
+  - Spring.UnitDetach(passengerID)
+  - Spring.UnitDetachFromAir(passengerID)
+ - units with transportCapacity > 0 and transportMass > 0 will retain backward compatibility
+ - added Spring.SetUnitLoadingTransport(passengerID, transportID) which disables colissions
+   between the two units to allow colvol intersection during the approach.
 
 GUI:
  ! fix default drawInMap keyshortcut on german keyboards
@@ -173,7 +187,7 @@ Lua:
  ! Lua: fix bug that some TransformMatrix functions were revealing the true position of radar dots
  ! fix Spring.GetUnitPieceDirection() (returns now same dir as GetEmitDirPos)
  - add Spring.SetGlobalLos(int allyTeamID, bool globallos)
- - Lua: add Spring.IsUnitIn[Los, AirLos, ...]
+ - add Spring.IsUnitIn[Los, AirLos, ...]
    Note this is _not_ equal with Spring.IsPosInLos with the unit's pos!
    I.e. the ground maybe in radar range, but the unit is jammed and so not visible
  - Add LUA Synced read functions:
