@@ -18,7 +18,7 @@ General:
  ! pr-downloader dependency is now mandatory (statically linked with spring)
  ! demo files are now compressed with gzip
  - improve data locality even further with respect to 100.0
- - plug memory leaks and fix misc. crashes (some related to LoadingMT)
+ - fix memory leaks and misc. crashes (some related to LoadingMT)
 
 LoS:
  ! ModInfo: remove losMul & airLosMul -> always handle los ranges in elmos in the _whole_ engine
@@ -49,6 +49,7 @@ Sim:
  - fix units occasionally zipping across the map after being unloaded
  - set better default radii for objects (and use same logic in all model parsers)
  - make ground-unit reversing logic configurable via Spring.SetGroundMoveTypeData
+ - aircraft: call script Activate only when taking off, Deactivate only when landed
  ! remap SFX.RECURSIVE piece flag from 1<<8 to 1<<14
  ! removed hardcoded logic to zombify (stun+immobilize) a unit on death
  ! airbases and fuel were removed, use custom commands in combination with
@@ -84,7 +85,7 @@ Rendering:
  - apply anisotropic filtering to all mipmapped SSMF textures
  - fix shadow-pass (and general) terrain/model visibility culling
  - fix environment reflections (broken in four different ways)
- - fix DynamicWater artifacts at large camera distances
+ - fix DynamicWater artifacts at large viewing distances
  - fix truncation of deferred model normals
  - do not disable model shaders during world alpha-pass
  - do not disable model shaders during water ref{le,ra}ction passes

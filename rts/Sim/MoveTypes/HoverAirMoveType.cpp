@@ -152,11 +152,11 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 			// FIXME already inform commandAI in AIRCRAFT_LANDING!
 			owner->commandAI->StopMove();
 
+			owner->Deactivate();
 			owner->Block();
 			owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
 			break;
 		case AIRCRAFT_LANDING:
-			owner->Deactivate();
 			break;
 		case AIRCRAFT_TAKEOFF:
 			owner->Activate();
@@ -617,13 +617,12 @@ void CHoverAirMoveType::UpdateLanding()
 		wantedHeight = std::min((orgWantedHeight - wantedHeight) * distSq2D / altitude + wantedHeight, orgWantedHeight);
 		flyState = FLY_LANDING;
 
-		owner->Activate();
 		UpdateFlying();
 		wantedHeight = tmpWantedHeight;
 		return;
 	}
+
 	flyState = FLY_LANDING;
-	owner->Deactivate();
 
 	// We want to land, and therefore cancel our speed first
 	wantedSpeed = ZeroVector;

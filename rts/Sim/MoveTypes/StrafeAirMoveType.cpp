@@ -976,7 +976,6 @@ void CStrafeAirMoveType::UpdateLanding()
 		// keep flying.
 		float tempWantedHeight = wantedHeight;
 		wantedHeight = orgWantedHeight;
-		owner->Activate();
 		UpdateFlying(wantedHeight, 1.0f);
 		wantedHeight = tempWantedHeight;
 		return;
@@ -1010,7 +1009,6 @@ void CStrafeAirMoveType::UpdateLanding()
 
 		if (frontSpeed < 0.0f) {
 			owner->SetVelocityAndSpeed(UpVector * owner->speed);
-			owner->Deactivate();
 		}
 
 		const float landPosDistXZ = reservedLandingPosDir.Length2D() + 0.1f;
@@ -1195,6 +1193,9 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 
 			// FIXME already inform commandAI in AIRCRAFT_LANDING!
 			owner->commandAI->StopMove();
+			owner->Deactivate();
+			// missing?
+			// owner->Block();
 			owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
 			break;
 		default:
