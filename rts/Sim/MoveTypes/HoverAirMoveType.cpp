@@ -158,6 +158,11 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 		case AIRCRAFT_LANDING:
 			owner->Deactivate();
 			break;
+		case AIRCRAFT_TAKEOFF:
+			owner->Activate();
+			owner->UnBlock();
+			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
+			break;
 		case AIRCRAFT_HOVERING: {
 			// when heading is forced by TCAI we are busy (un-)loading
 			// a unit and do not want wantedHeight to be tampered with
@@ -165,10 +170,6 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 			wantedSpeed = ZeroVector;
 		} // fall through
 		default:
-			owner->Activate();
-			owner->UnBlock();
-			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
-
 			reservedLandingPos.x = -1.0f;
 			break;
 	}
@@ -615,6 +616,7 @@ void CHoverAirMoveType::UpdateLanding()
 		SetGoal(reservedLandingPos);
 		wantedHeight = std::min((orgWantedHeight - wantedHeight) * distSq2D / altitude + wantedHeight, orgWantedHeight);
 		flyState = FLY_LANDING;
+		printf("[HAMT::%s] activating!\n", __FUNCTION__);
 		owner->Activate();
 		UpdateFlying();
 		wantedHeight = tmpWantedHeight;
