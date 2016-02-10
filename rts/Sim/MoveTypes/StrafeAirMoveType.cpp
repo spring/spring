@@ -1009,7 +1009,7 @@ void CStrafeAirMoveType::UpdateLanding()
 		}
 
 		if (frontSpeed < 0.0f) {
-			owner->SetVelocity(ZeroVector);
+			owner->SetVelocityAndSpeed(UpVector * owner->speed);
 			owner->Deactivate();
 		}
 
