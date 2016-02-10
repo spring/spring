@@ -1416,18 +1416,6 @@ void CGroundMoveType::GetNextWayPoint()
 
 
 /*
-The distance the unit will move before stopping,
-starting from given speed and applying maximum
-brake rate.
-*/
-float CGroundMoveType::BrakingDistance(float speed, float rate) const
-{
-	const float time = speed / std::max(rate, 0.001f);
-	const float dist = 0.5f * rate * time * time;
-	return dist;
-}
-
-/*
 Gives the position this unit will end up at with full braking
 from current velocity.
 */

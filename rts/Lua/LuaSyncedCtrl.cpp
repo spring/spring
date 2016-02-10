@@ -2371,20 +2371,18 @@ int LuaSyncedCtrl::SetUnitLandGoal(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 
-	if (unit == NULL) {
+	if (unit == nullptr)
 		return 0;
-	}
 
 	AAirMoveType* amt = dynamic_cast<AAirMoveType*>(unit->moveType);
-	if (!amt) {
+
+	if (amt == nullptr)
 		luaL_error(L, "Not a flying unit");
-	}
 
 	const float3 landPos(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
-	const float radius = luaL_optfloat(L, 5, 0.0f);
+	const float radiusSq = lua_isnumber(L, 5)? Square(lua_tonumber(L, 5)): amt->landRadiusSq;
 
-	amt->LandAt(landPos, radius);
-
+	amt->LandAt(landPos, radiusSq);
 	return 0;
 }
 

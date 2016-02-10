@@ -38,7 +38,7 @@ public:
 	void SetWantedAltitude(float altitude);
 	void SetDefaultAltitude(float altitude);
 
-	void LandAt(float3 pos, float distance);
+	void LandAt(float3 pos, float distanceSq);
 	void UpdateLandingHeight();
 	void UpdateLanding();
 

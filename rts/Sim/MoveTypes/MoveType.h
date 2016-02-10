@@ -55,6 +55,14 @@ public:
 	float GetMaxWantedSpeed() const { return maxWantedSpeed; }
 	float GetManeuverLeash() const { return maneuverLeash; }
 
+	// The distance the unit will move before stopping,
+	// starting from given speed and applying maximum
+	// brake rate.
+	float BrakingDistance(float speed, float rate) const {
+		const float time = speed / std::max(rate, 0.001f);
+		const float dist = 0.5f * rate * time * time;
+		return dist;
+	}
 	float CalcStaticTurnRadius() const;
 
 public:

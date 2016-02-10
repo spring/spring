@@ -66,6 +66,7 @@ AAirMoveType::AAirMoveType(CUnit* unit):
 	accRate = std::max(0.01f, unit->unitDef->maxAcc);
 	decRate = std::max(0.01f, unit->unitDef->maxDec);
 	altitudeRate = std::max(0.01f, unit->unitDef->verticalSpeed);
+	landRadiusSq = Square(BrakingDistance(maxSpeed, decRate));
 
 	useHeading = false;
 }
@@ -138,13 +139,12 @@ void AAirMoveType::UpdateLanded()
 	owner->UpdateMidAndAimPos();
 }
 
-void AAirMoveType::LandAt(float3 pos, float distance)
+void AAirMoveType::LandAt(float3 pos, float distanceSq)
 {
-	if (aircraftState != AIRCRAFT_LANDING) {
+	if (aircraftState != AIRCRAFT_LANDING)
 		SetState(AIRCRAFT_LANDING);
-	}
-	const float landRadius = std::max(distance, std::max(owner->radius, 10.0f));
-	landRadiusSq = landRadius * landRadius;
+
+	landRadiusSq = std::max(distanceSq, Square(std::max(owner->radius, 10.0f)));
 	reservedLandingPos = pos;
 	const float3 originalPos = owner->pos;
 	owner->Move(reservedLandingPos, false);

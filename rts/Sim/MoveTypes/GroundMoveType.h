@@ -83,7 +83,6 @@ private:
 	bool CanGetNextWayPoint();
 	void ReRequestPath(bool forceRequest);
 
-	float BrakingDistance(float speed, float rate) const;
 	float3 Here();
 
 	void StartEngine(bool callScript);

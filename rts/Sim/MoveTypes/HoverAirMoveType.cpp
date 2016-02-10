@@ -612,7 +612,7 @@ void CHoverAirMoveType::UpdateLanding()
 	const float distSq2D = reservedLandingPos.SqDistance2D(pos);
 
 	if (distSq2D > landRadiusSq) {
-		float tmpWantedHeight = wantedHeight;
+		const float tmpWantedHeight = wantedHeight;
 		SetGoal(reservedLandingPos);
 		wantedHeight = std::min((orgWantedHeight - wantedHeight) * distSq2D / altitude + wantedHeight, orgWantedHeight);
 		flyState = FLY_LANDING;
