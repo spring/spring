@@ -1180,12 +1180,12 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 			break;
 
 		case AIRCRAFT_FLYING:
-			owner->Activate();
 			// fall-through
 
 		case AIRCRAFT_TAKEOFF:
 			// should be in the STATE_FLYING case, but these aircraft
 			// take forever to reach it reducing factory cycle-times
+			owner->Activate();
 			owner->UnBlock();
 			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
 			break;

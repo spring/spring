@@ -616,7 +616,7 @@ void CHoverAirMoveType::UpdateLanding()
 		SetGoal(reservedLandingPos);
 		wantedHeight = std::min((orgWantedHeight - wantedHeight) * distSq2D / altitude + wantedHeight, orgWantedHeight);
 		flyState = FLY_LANDING;
-		printf("[HAMT::%s] activating!\n", __FUNCTION__);
+
 		owner->Activate();
 		UpdateFlying();
 		wantedHeight = tmpWantedHeight;
