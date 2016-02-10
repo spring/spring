@@ -153,13 +153,14 @@ void CubeMapHandler::UpdateReflectionTexture()
 			case 11: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, -FwdVector, true); } break;
 			default: {} break;
 		}
+
+		currReflectionFace +=  1;
+		currReflectionFace %= 12;
 	} else {
 		// touch the FBO at least once per frame
-		currReflectionFace += 12;
+		currReflectionFace += 1;
+		currReflectionFace %= 6;
 	}
-
-	currReflectionFace +=  1;
-	currReflectionFace %= 12;
 }
 
 void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& camDir, bool skyOnly)
@@ -167,10 +168,10 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 	reflectionCubeFBO.AttachTexture((skyOnly? skyReflectionTexID: envReflectionTexID), glType);
 
 	glPushAttrib(GL_FOG_BIT | GL_DEPTH_BUFFER_BIT);
+	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1.0f);
+	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
 	if (!skyOnly) {
-		glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1.0f);
-		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 		glDepthMask(GL_TRUE);
 		glEnable(GL_DEPTH_TEST);
 	} else {
