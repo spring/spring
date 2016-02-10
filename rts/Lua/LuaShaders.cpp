@@ -471,6 +471,12 @@ int LuaShaders::CreateShader(lua_State* L)
 	glLinkProgram(prog);
 	glGetProgramiv(prog, GL_LINK_STATUS, &linkStatus);
 
+	// Allows setting up uniforms when drawing is disabled
+	// (much more convenient for sampler uniforms, and static
+	//  configuration values)
+	// needs to be called before validation
+	ParseUniformSetupTables(L, 1, prog);
+
 	glValidateProgram(prog);
 	glGetProgramiv(prog, GL_VALIDATE_STATUS, &validStatus);
 
@@ -485,11 +491,6 @@ int LuaShaders::CreateShader(lua_State* L)
 		DeleteProgram(p);
 		return 0;
 	}
-
-	// Allows setting up uniforms when drawing is disabled
-	// (much more convenient for sampler uniforms, and static
-	//  configuration values)
-	ParseUniformSetupTables(L, 1, prog);
 
 	// note: index, not raw ID
 	lua_pushnumber(L, shaders.AddProgram(p));
