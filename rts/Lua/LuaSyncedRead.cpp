@@ -5206,7 +5206,9 @@ static int GetEffectiveLosAllyTeam(lua_State* L, int arg)
 	if (lua_isnoneornil(L, arg) && teamHandler->IsValidAllyTeam(rat))
 		return rat;
 
-	const int aat = luaL_checkint(L, arg);
+	// if fullread, rat is -2 so any no-arg call would fail
+	// the allyteam validity test and then crash on checkint
+	const int aat = luaL_optint(L, arg, 0);
 
 	if (CLuaHandle::GetHandleFullRead(L) && teamHandler->IsValidAllyTeam(aat))
 		return aat;
