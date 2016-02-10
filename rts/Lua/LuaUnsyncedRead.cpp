@@ -641,7 +641,7 @@ int LuaUnsyncedRead::GetUnitViewPosition(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	const float3 unitPos = (luaL_optboolean(L, 2, false))? unit->drawMidPos: unit->drawPos;
+	const float3 unitPos = (luaL_optboolean(L, 2, false)) ? unit-> GetObjDrawMidPos() : unit->drawPos;
 	const float3 errorVec = unit->GetLuaErrorVector(CLuaHandle::GetHandleReadAllyTeam(L), CLuaHandle::GetHandleFullRead(L));
 
 	lua_pushnumber(L, unitPos.x + errorVec.x);

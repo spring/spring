@@ -634,10 +634,9 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 	}
 
 	// drawMidPos is auto-calculated now; can wobble on its own as pieces move
-	float3 pos = unit->GetObjDrawMidPos();
-
-	if (!gu->spectatingFullView)
-		pos += unit->GetErrorVector(gu->myAllyTeam);
+	float3 pos = (!gu->spectatingFullView) ?
+		unit->GetObjDrawErrorPos(gu->myAllyTeam) :
+		unit->GetObjDrawMidPos();
 
 	// make sure icon is above ground (needed before we calculate scale below)
 	const float h = CGround::GetHeightReal(pos.x, pos.z, false);
@@ -1644,8 +1643,8 @@ void CUnitDrawer::DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const
 
 	const float iconScale = GetUnitIconScale(unit);
 	const float3& iconPos = (!gu->spectatingFullView) ?
-		unit->GetDrawErrorPos(gu->myAllyTeam):
-		unit->drawMidPos;
+		unit->GetObjDrawErrorPos(gu->myAllyTeam):
+		unit->GetObjDrawMidPos();
 
 	const float iconSizeX = (iconScale * minimap->GetUnitSizeX());
 	const float iconSizeY = (iconScale * minimap->GetUnitSizeY());

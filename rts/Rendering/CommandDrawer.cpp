@@ -96,7 +96,7 @@ void CommandDrawer::DrawCommands(const CCommandAI* cai) const
 	const CUnit* owner = cai->owner;
 	const CCommandQueue& commandQue = cai->commandQue;
 
-	lineDrawer.StartPath(owner->drawMidPos, cmdColors.start);
+	lineDrawer.StartPath(owner->GetObjDrawMidPos(), cmdColors.start);
 
 	if (owner->selfDCountdown != 0) {
 		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
@@ -112,7 +112,7 @@ void CommandDrawer::DrawCommands(const CCommandAI* cai) const
 					const CUnit* unit = GetTrackableUnit(owner, unitHandler->GetUnit(ci->params[0]));
 
 					if (unit != nullptr) {
-						lineDrawer.DrawLineAndIcon(cmdID, unit->GetDrawErrorPos(owner->allyteam), cmdColors.attack);
+						lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), cmdColors.attack);
 					}
 				} else {
 					assert(ci->params.size() >= 3);
@@ -177,7 +177,7 @@ void CommandDrawer::DrawAirCAICommands(const CAirCAI* cai) const
 					const CUnit* unit = GetTrackableUnit(owner, unitHandler->GetUnit(ci->params[0]));
 
 					if (unit != nullptr) {
-						lineDrawer.DrawLineAndIcon(cmdID, unit->GetDrawErrorPos(owner->allyteam), cmdColors.attack);
+						lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), cmdColors.attack);
 					}
 				} else {
 					assert(ci->params.size() >= 3);
@@ -205,7 +205,7 @@ void CommandDrawer::DrawAirCAICommands(const CAirCAI* cai) const
 				const CUnit* unit = GetTrackableUnit(owner, unitHandler->GetUnit(ci->params[0]));
 
 				if (unit != nullptr) {
-					lineDrawer.DrawLineAndIcon(cmdID, unit->GetDrawErrorPos(owner->allyteam), cmdColors.guard);
+					lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), cmdColors.guard);
 				}
 				break;
 			}
@@ -289,7 +289,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 				const CUnit* unit = GetTrackableUnit(owner, unitHandler->GetUnit(ci->params[0]));
 
 				if (unit != nullptr) {
-					lineDrawer.DrawLineAndIcon(cmdID, unit->GetDrawErrorPos(owner->allyteam), cmdColors.guard);
+					lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), cmdColors.guard);
 				}
 				break;
 			}
@@ -309,7 +309,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 					const CUnit* unit = GetTrackableUnit(owner, unitHandler->GetUnit(ci->params[0]));
 
 					if (unit != nullptr) {
-						lineDrawer.DrawLineAndIcon(cmdID, unit->GetDrawErrorPos(owner->allyteam), cmdColors.attack);
+						lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), cmdColors.attack);
 					}
 				} else {
 					assert(ci->params.size() >= 3);
@@ -350,7 +350,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 						const CUnit* unit = GetTrackableUnit(owner, unitHandler->GetUnit(ci->params[0]));
 
 						if (unit != nullptr && unit != owner) {
-							lineDrawer.DrawLineAndIcon(cmdID, unit->GetDrawErrorPos(owner->allyteam), color);
+							lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), color);
 						}
 					}
 				}
@@ -372,7 +372,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 						const CUnit* unit = GetTrackableUnit(owner, unitHandler->GetUnit(ci->params[0]));
 
 						if (unit != nullptr) {
-							lineDrawer.DrawLineAndIcon(cmdID, unit->GetDrawErrorPos(owner->allyteam), color);
+							lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), color);
 						}
 					}
 				}
@@ -440,7 +440,7 @@ void CommandDrawer::DrawFactoryCAICommands(const CFactoryCAI* cai) const
 					const CUnit* unit = GetTrackableUnit(owner, unitHandler->GetUnit(ci->params[0]));
 
 					if (unit != nullptr) {
-						lineDrawer.DrawLineAndIcon(cmdID, unit->GetDrawErrorPos(owner->allyteam), cmdColors.attack);
+						lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), cmdColors.attack);
 					}
 				} else {
 					assert(ci->params.size() >= 3);
@@ -458,7 +458,7 @@ void CommandDrawer::DrawFactoryCAICommands(const CFactoryCAI* cai) const
 				const CUnit* unit = GetTrackableUnit(owner, unitHandler->GetUnit(ci->params[0]));
 
 				if (unit != nullptr) {
-					lineDrawer.DrawLineAndIcon(cmdID, unit->GetDrawErrorPos(owner->allyteam), cmdColors.guard);
+					lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), cmdColors.guard);
 				}
 				break;
 			}
@@ -539,7 +539,7 @@ void CommandDrawer::DrawMobileCAICommands(const CMobileCAI* cai) const
 					const CUnit* unit = GetTrackableUnit(owner, unitHandler->GetUnit(ci->params[0]));
 
 					if (unit != nullptr) {
-						lineDrawer.DrawLineAndIcon(cmdID, unit->GetDrawErrorPos(owner->allyteam), cmdColors.attack);
+						lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), cmdColors.attack);
 					}
 				}
 
@@ -557,7 +557,7 @@ void CommandDrawer::DrawMobileCAICommands(const CMobileCAI* cai) const
 				const CUnit* unit = GetTrackableUnit(owner, unitHandler->GetUnit(ci->params[0]));
 
 				if (unit != nullptr) {
-					lineDrawer.DrawLineAndIcon(cmdID, unit->GetDrawErrorPos(owner->allyteam), cmdColors.guard);
+					lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), cmdColors.guard);
 				}
 				break;
 			}
@@ -579,7 +579,7 @@ void CommandDrawer::DrawMobileCAICommands(const CMobileCAI* cai) const
 					const CUnit* unit = GetTrackableUnit(owner, unitHandler->GetUnit(ci->params[0]));
 
 					if (unit != nullptr) {
-						lineDrawer.DrawLineAndIcon(cmdID, unit->GetDrawErrorPos(owner->allyteam), cmdColors.load);
+						lineDrawer.DrawLineAndIcon(cmdID, unit->GetObjDrawErrorPos(owner->allyteam), cmdColors.load);
 					}
 				}
 				break;
@@ -654,7 +654,7 @@ void CommandDrawer::DrawDefaultCommand(const Command& c, const CUnit* owner) con
 		const CUnit* unit = GetTrackableUnit(owner, unitHandler->GetUnit(c.params[0]));
 
 		if (unit != nullptr) {
-			lineDrawer.DrawLineAndIcon(dd->cmdIconID, unit->GetDrawErrorPos(owner->allyteam), dd->color);
+			lineDrawer.DrawLineAndIcon(dd->cmdIconID, unit->GetObjDrawErrorPos(owner->allyteam), dd->color);
 		}
 	}
 }
