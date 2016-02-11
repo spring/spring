@@ -179,7 +179,6 @@ void AAirMoveType::UpdateLanding()
 	if (distSq <= radiusSq || (distSq < landRadiusSq && localAltitude < wantedHeight + radius)) {
 		SetState(AIRCRAFT_LANDED);
 		owner->SetVelocityAndSpeed(UpVector * owner->speed);
-		owner->Deactivate();
 	}
 }
 

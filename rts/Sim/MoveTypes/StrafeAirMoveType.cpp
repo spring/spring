@@ -959,6 +959,7 @@ void CStrafeAirMoveType::UpdateLanding()
 			// owner->UnBlock();
 		} else {
 			goalPos.ClampInBounds();
+			owner->Activate();
 			UpdateFlying(wantedHeight, 1.0f);
 			return;
 		}
@@ -976,11 +977,12 @@ void CStrafeAirMoveType::UpdateLanding()
 		// keep flying.
 		float tempWantedHeight = wantedHeight;
 		wantedHeight = orgWantedHeight;
+		owner->Activate();
 		UpdateFlying(wantedHeight, 1.0f);
 		wantedHeight = tempWantedHeight;
 		return;
 	}
-
+	owner->Deactivate();
 	     if (rightdir.y < -0.01f) { updir -= (rightdir * 0.02f); }
 	else if (rightdir.y >  0.01f) { updir += (rightdir * 0.02f); }
 
@@ -1179,11 +1181,11 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 
 		case AIRCRAFT_FLYING:
 			// fall-through
+			owner->Activate();
 
 		case AIRCRAFT_TAKEOFF:
 			// should be in the STATE_FLYING case, but these aircraft
 			// take forever to reach it reducing factory cycle-times
-			owner->Activate();
 			owner->UnBlock();
 			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
 			break;
@@ -1194,7 +1196,7 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 			// FIXME already inform commandAI in AIRCRAFT_LANDING!
 			owner->commandAI->StopMove();
 			owner->Deactivate();
-			// missing?
+			// missing? not really
 			// owner->Block();
 			owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
 			break;

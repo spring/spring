@@ -152,16 +152,11 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 			// FIXME already inform commandAI in AIRCRAFT_LANDING!
 			owner->commandAI->StopMove();
 
-			owner->Deactivate();
 			owner->Block();
 			owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
 			break;
 		case AIRCRAFT_LANDING:
-			break;
-		case AIRCRAFT_TAKEOFF:
-			owner->Activate();
-			owner->UnBlock();
-			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
+			owner->Deactivate();
 			break;
 		case AIRCRAFT_HOVERING: {
 			// when heading is forced by TCAI we are busy (un-)loading
@@ -171,6 +166,9 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 		} // fall through
 		default:
 			reservedLandingPos.x = -1.0f;
+			owner->Activate();
+			owner->UnBlock();
+			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
 			break;
 	}
 
