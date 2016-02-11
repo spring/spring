@@ -56,7 +56,7 @@ CR_REG_METADATA(CHoverAirMoveType, (
 static bool IsUnitBusy(const CUnit* u) {
 	// queued move-commands or an active build-command mean unit has to stay airborne
 	const auto& cai = u->commandAI;
-	return (cai->inCommand || cai->HasMoreMoveCommands() || cai->HasCommand(CMD_LOAD_UNITS) || cai->HasCommand(-1));
+	return (cai->inCommand || cai->HasMoreMoveCommands() || cai->HasCommand(CMD_LOAD_UNITS) || cai->HasCommand(CMD_GUARD) || cai->HasCommand(-1));
 }
 
 CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
