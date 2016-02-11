@@ -41,18 +41,6 @@
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
 
-// not used by shaders, only for the advshading=0 case!
-static void SetupUnitLightFFP()
-{
-	glLightfv(GL_LIGHT1, GL_AMBIENT, sunLighting->unitAmbientColor);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, sunLighting->unitDiffuseColor);
-	glLightfv(GL_LIGHT1, GL_SPECULAR, sunLighting->unitAmbientColor);
-	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0);
-	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 0);
-}
-
-
-
 CWorldDrawer::CWorldDrawer(): numUpdates(0)
 {
 	CShaderHandler::GetInstance(0);
@@ -137,7 +125,6 @@ void CWorldDrawer::LoadPost() const
 	loadscreen->SetLoadMessage("Creating Water");
 	water = IWater::GetWater(NULL, -1);
 
-	SetupUnitLightFFP();
 	sky->SetupFog();
 }
 

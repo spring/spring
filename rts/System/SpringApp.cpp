@@ -577,6 +577,10 @@ void SpringApp::InitOpenGL()
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 
+	// FFP model lighting
+	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0.0f);
+	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 0);
+
 	// Clear Window
 	glClearColor(0.0f,0.0f,0.0f,0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -728,8 +732,7 @@ void SpringApp::ParseCmdLine(const std::string& binaryName)
 	// Runtime Tests
 	if (cmdline->IsSet("test-creg")) {
 #ifdef USING_CREG
-		const int res = creg::RuntimeTest() ? EXIT_SUCCESS : EXIT_FAILURE;
-		exit(res);
+		exit(creg::RuntimeTest() ? EXIT_SUCCESS : EXIT_FAILURE);
 #else
 		LOG_L(L_ERROR, "Creg is not enabled!\n");
 		exit(EXIT_FAILURE); //Do not fail tests

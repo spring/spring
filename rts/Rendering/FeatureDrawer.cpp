@@ -16,7 +16,6 @@
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/LuaObjectDrawer.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Shaders/Shader.h"
@@ -270,19 +269,6 @@ void CFeatureDrawer::Draw()
 {
 	sky->SetupFog();
 
-	if (infoTextureHandler->IsEnabled()) {
-		glActiveTextureARB(GL_TEXTURE2_ARB);
-		glEnable(GL_TEXTURE_2D);
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
-
-		glMultiTexCoord4f(GL_TEXTURE2_ARB, 1.0f,1.0f,1.0f,1.0f); // workaround a nvidia bug with TexGen
-		SetTexGen(1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), 0.0f, 0.0f);
-
-		glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
-		glActiveTextureARB(GL_TEXTURE0_ARB);
-	}
-
 	// mark all features (in the quads we can see) with a FD_*_FLAG value
 	// the passes below will ignore any features whose marker is not valid
 	GetVisibleFeatures(CCamera::GetActiveCamera(), 0, true);
@@ -299,15 +285,6 @@ void CFeatureDrawer::Draw()
 	}
 
 	farTextureHandler->Draw();
-
-	if (infoTextureHandler->IsEnabled()) {
-		glActiveTextureARB(GL_TEXTURE2_ARB);
-		glDisable(GL_TEXTURE_2D);
-		glDisable(GL_TEXTURE_GEN_S);
-		glDisable(GL_TEXTURE_GEN_T);
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		glActiveTextureARB(GL_TEXTURE0_ARB);
-	}
 
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_FOG);

@@ -177,7 +177,11 @@ bool UnitDrawerStateFFP::CanEnable(const CUnitDrawer* ud) const {
 
 void UnitDrawerStateFFP::Enable(const CUnitDrawer* ud, bool deferredPass, bool alphaPass) {
 	glEnable(GL_LIGHTING);
+	// only for the advshading=0 case
 	glLightfv(GL_LIGHT1, GL_POSITION, sky->GetLight()->GetLightDir());
+	glLightfv(GL_LIGHT1, GL_AMBIENT, sunLighting->unitAmbientColor);
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, sunLighting->unitDiffuseColor);
+	glLightfv(GL_LIGHT1, GL_SPECULAR, sunLighting->unitAmbientColor);
 	glEnable(GL_LIGHT1);
 
 	CUnitDrawer::SetupBasicS3OTexture1();
