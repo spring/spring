@@ -3680,11 +3680,11 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 					const BuildInfo cInfo = BuildInfo(unitdef, cPos, buildFacing);
 					const BuildInfo bInfo = BuildInfo(unitdef, bPos, buildFacing);
 
-					buildInfos = GetBuildPos(cInfo, bInfo, cameraPos, mouseDir);
+					buildInfos = std::move(GetBuildPos(bInfo, cInfo, cameraPos, mouseDir));
 				} else {
 					const BuildInfo bi(unitdef, cPos, buildFacing);
 
-					buildInfos = GetBuildPos(bi, bi, cameraPos, mouseDir);
+					buildInfos = std::move(GetBuildPos(bi, bi, cameraPos, mouseDir));
 				}
 
 				for (auto bpi = buildInfos.cbegin(); bpi != buildInfos.cend(); ++bpi) {
