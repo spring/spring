@@ -58,6 +58,7 @@
 #include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/FactoryCAI.h"
+#include "Sim/Units/CommandAI/MobileCAI.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
@@ -2594,9 +2595,8 @@ int LuaSyncedRead::ValidUnitID(lua_State* L)
 int LuaSyncedRead::GetUnitStates(lua_State* L)
 {
 	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	if (unit == nullptr)
 		return 0;
-	}
 
 	lua_createtable(L, 0, 9);
 	HSTR_PUSH_NUMBER(L, "firestate",  unit->fireState);
@@ -2606,14 +2606,18 @@ int LuaSyncedRead::GetUnitStates(lua_State* L)
 	HSTR_PUSH_BOOL  (L, "active",     unit->activated);
 	HSTR_PUSH_BOOL  (L, "trajectory", unit->useHighTrajectory);
 
+	const CMobileCAI* mCAI = dynamic_cast<const CMobileCAI*>(unit->commandAI);
+	if (mCAI != nullptr)
+		HSTR_PUSH_NUMBER(L, "autorepairlevel", mCAI->repairBelowHealth);
+
 	const AMoveType* mt = unit->moveType;
-	if (mt) {
+	if (mt != nullptr) {
 		const CHoverAirMoveType* hAMT = dynamic_cast<const CHoverAirMoveType*>(mt);
-		if (hAMT) {
+		if (hAMT != nullptr) {
 			HSTR_PUSH_BOOL  (L, "autoland",        hAMT->autoLand);
 		} else {
 			const CStrafeAirMoveType* sAMT = dynamic_cast<const CStrafeAirMoveType*>(mt);
-			if (sAMT) {
+			if (sAMT != nullptr) {
 				HSTR_PUSH_BOOL  (L, "autoland",        sAMT->autoLand);
 				HSTR_PUSH_BOOL  (L, "loopbackattack",  sAMT->loopbackAttack);
 			}

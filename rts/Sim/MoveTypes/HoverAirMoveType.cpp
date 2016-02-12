@@ -130,9 +130,6 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 	if (newState == aircraftState)
 		return;
 
-	// redundant SetState() call, we already landed and get command to switch into landing
-	if (aircraftState == AIRCRAFT_LANDED)
-		assert(newState != AIRCRAFT_LANDING);
 
 	if (newState == AIRCRAFT_LANDED) {
 		owner->dontUseWeapons = true;
