@@ -690,23 +690,23 @@ void CBumpWater::Update()
 	windVec   = windndir * windStrength;
 */
 
-	if (dynWaves) {
-		UpdateDynWaves();
-	}
+	glPushAttrib(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_ENABLE_BIT);
 
-	if (!shoreWaves) {
+	if (dynWaves)
+		UpdateDynWaves();
+
+	if (!shoreWaves)
 		return;
-	}
 
 	SCOPED_TIMER("BumpWater::Update (Coastmap)");
 
-	if ((gs->frameNum % 10) == 0 && !heightmapUpdates.empty()) {
+	if ((gs->frameNum % 10) == 0 && !heightmapUpdates.empty())
 		UploadCoastline();
-	}
 
-	if ((gs->frameNum % 10) == 5 && !coastmapAtlasRects.empty()) {
+	if ((gs->frameNum % 10) == 5 && !coastmapAtlasRects.empty())
 		UpdateCoastmap();
-	}
+
+	glPopAttrib();
 }
 
 
@@ -963,9 +963,8 @@ void CBumpWater::UpdateCoastmap()
 
 void CBumpWater::UpdateDynWaves(const bool initialize)
 {
-	if (!dynWaves || !dynWavesFBO.IsValid()) {
+	if (!dynWaves || !dynWavesFBO.IsValid())
 		return;
-	}
 
 	const unsigned char tiles  = mapInfo->water.numTiles; //! (numTiles <= 16)
 	const unsigned char ntiles = tiles * tiles;
