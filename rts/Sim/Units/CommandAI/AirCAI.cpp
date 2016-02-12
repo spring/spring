@@ -203,12 +203,6 @@ void CAirCAI::SlowUpdate()
 		return;
 	}
 
-	if (c.GetID() != CMD_STOP && c.GetID() != CMD_AUTOREPAIRLEVEL &&
-		c.GetID() != CMD_IDLEMODE && c.GetID() != CMD_SET_WANTED_MAX_SPEED)
-	{
-		myPlane->Takeoff();
-	}
-
 	switch (c.GetID()) {
 		case CMD_AREA_ATTACK: {
 			ExecuteAreaAttack(c);

@@ -1299,6 +1299,10 @@ void CStrafeAirMoveType::StartMoving(float3 gpos, float goalRadius)
 void CStrafeAirMoveType::StartMoving(float3 pos, float goalRadius, float speed)
 {
 	SetWantedMaxSpeed(speed);
+
+	if (aircraftState == AIRCRAFT_LANDED || aircraftState == AIRCRAFT_LANDING)
+		SetState(AIRCRAFT_TAKEOFF);
+
 	SetGoal(pos);
 }
 
