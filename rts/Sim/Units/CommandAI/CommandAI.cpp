@@ -826,7 +826,8 @@ bool CCommandAI::ExecuteStateCommand(const Command& c)
 			return true;
 		}
 	}
-	return false;
+
+	return (nonQueingCommands.find(c.GetID()) != nonQueingCommands.end());
 }
 
 
