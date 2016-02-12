@@ -364,7 +364,8 @@ void CAirCAI::ExecuteFight(Command& c)
 		}
 	}
 
-	myPlane->goalPos = goalPos;
+	if (myPlane->goalPos != goalPos)
+		SetGoal(goalPos, owner->pos);
 
 	const CStrafeAirMoveType* airMT = (!owner->UsingScriptMoveType())? static_cast<const CStrafeAirMoveType*>(myPlane): NULL;
 	const float radius = (airMT != NULL)? std::max(airMT->turnRadius + 2*SQUARE_SIZE, 128.f) : 127.f;
