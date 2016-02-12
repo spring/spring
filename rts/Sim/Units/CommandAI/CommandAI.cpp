@@ -827,7 +827,14 @@ bool CCommandAI::ExecuteStateCommand(const Command& c)
 		}
 	}
 
-	return (nonQueingCommands.find(c.GetID()) != nonQueingCommands.end());
+	// this is a custom lua command, calling CommandFallback
+	// and ignoring the result as this can't stay in the queue
+	if (nonQueingCommands.find(c.GetID()) != nonQueingCommands.end()) {
+		eventHandler.CommandFallback(owner, c);
+		return true;
+	}
+
+	return false;
 }
 
 
@@ -841,9 +848,8 @@ void CCommandAI::ClearTargetLock(const Command &c) {
 
 void CCommandAI::GiveAllowedCommand(const Command& c, bool fromSynced)
 {
-	if (ExecuteStateCommand(c)) {
+	if (ExecuteStateCommand(c))
 		return;
-	}
 
 	switch (c.GetID()) {
 		case CMD_SELFD: {
@@ -1629,17 +1635,17 @@ void CCommandAI::WeaponFired(CWeapon* weapon, const bool searchForNewTarget)
 	const bool haveAreaAttackCmd = (c.GetID() == CMD_AREA_ATTACK);
 
 	bool orderFinished = false;
-	
+
 	if (searchForNewTarget) {
 		// manual fire or attack commands with meta will only fire a single salvo
-		// noAutoTarget weapons finish an attack commands after a 
+		// noAutoTarget weapons finish an attack commands after a
 		// salvo if they have more orders queued
 		if (weapon->weaponDef->manualfire && !(c.options & META_KEY))
 			orderFinished = true;
 
 		if (weapon->noAutoTarget && !(c.options & META_KEY) && haveGroundAttackCmd && HasMoreMoveCommands())
 			orderFinished = true;
-		
+
 		// if we have an area-attack command and this was the
 		// last salvo of our main weapon, assume we completed an attack
 		// (run) on one position and move to the next
