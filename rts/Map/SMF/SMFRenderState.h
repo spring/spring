@@ -80,7 +80,7 @@ public:
 struct SMFRenderStateARB: public ISMFRenderState {
 public:
 	SMFRenderStateARB() { arbShaders.fill(nullptr); }
-	~SMFRenderStateARB() { Kill(); }
+	~SMFRenderStateARB() { arbShaders.fill(nullptr); }
 
 	bool Init(const CSMFGroundDrawer* smfGroundDrawer);
 	void Kill();
@@ -121,7 +121,7 @@ private:
 struct SMFRenderStateGLSL: public ISMFRenderState {
 public:
 	SMFRenderStateGLSL(bool lua): useLuaShaders(lua) { glslShaders.fill(nullptr); }
-	~SMFRenderStateGLSL() { Kill(); }
+	~SMFRenderStateGLSL() { glslShaders.fill(nullptr); }
 
 	bool Init(const CSMFGroundDrawer* smfGroundDrawer);
 	void Kill();
