@@ -268,7 +268,7 @@ function widgetHandler:SaveConfigData()
   local filetable = {}
   for i,w in ipairs(self.widgets) do
     if (w.GetConfigData) then
-      self.configData[w.whInfo.name] = w:GetConfigData()
+      self.configData[w.whInfo.name] = select(2, pcall(w.GetConfigData))
     end
     self.orderList[w.whInfo.name] = i
   end
