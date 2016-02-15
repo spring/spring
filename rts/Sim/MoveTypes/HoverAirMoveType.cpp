@@ -465,8 +465,6 @@ void CHoverAirMoveType::UpdateFlying()
 					wantedHeight = orgWantedHeight;
 					SetState(AIRCRAFT_LANDING);
 				}
-
-				return;
 			} break;
 
 			case FLY_CIRCLING: {
