@@ -237,6 +237,7 @@ Lua:
  ! fix a desync related to printf/number2string conversion
  ! Lua: fix bug that some TransformMatrix functions were revealing the true position of radar dots
  ! fix Spring.GetUnitPieceDirection() (returns now same dir as GetEmitDirPos)
+ ! Spring.GetUnitPieceInfo() will now set "[null]" as the parent name of the root piece instead of ""
  - add Spring.SetGlobalLos(int allyTeamID, bool globallos)
  - add Spring.IsUnitIn[Los, AirLos, ...]
    Note this is _not_ equal with Spring.IsPosInLos with the unit's pos!
