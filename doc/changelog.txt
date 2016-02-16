@@ -47,6 +47,7 @@ Sim:
  - RockUnit and HitByWeapon script callins now take vectors in unit-space
  - fix acceleration rates and turn-speed limits for reversing units
  - fix units occasionally zipping across the map after being unloaded
+ - fix various aircraft landing/midair-vibrating bugs
  - set better default radii for objects (and use same logic in all model parsers)
  - make ground-unit reversing logic configurable via Spring.SetGroundMoveTypeData
  ! remap SFX.RECURSIVE piece flag from 1<<8 to 1<<14
@@ -85,6 +86,7 @@ Rendering:
  - fix shadow-pass (and general) terrain/model visibility culling
  - fix environment reflections (broken in four different ways)
  - fix DynamicWater artifacts at large viewing distances
+ - fix RefractiveWater not showing submerged objects with DualScreenMinimapOnLeft
  - fix truncation of deferred model normals
  - do not disable model shaders during world alpha-pass
  - do not disable model shaders during water ref{le,ra}ction passes
@@ -101,7 +103,8 @@ Rendering:
 GameServer:
  - speedup gameserver exiting (reduced some io/net related sleeps)
 
-PathFinder:
+Pathing:
+ - fix cases where either no path was returned or an incorrect one
  - switch to octile heuristic to reduce number of explored nodes
  - increase high-resolution search range
  - fix diagonal movement cost estimation
@@ -223,6 +226,7 @@ Lua (model rendering):
    and apply a model's default textures; easier than gl.Texture("$%...")
 
 Lua:
+ - fix LuaUI crash if a widget caused an error in its GetConfigData callin
  - fix GadgetHandler miscounting if RemoveGadget was invoked during a callin
  - allow custom commands to be non-queueing (handy for state toggles)
  - LuaUI can now reload itself via Spring.SendCommands
@@ -583,7 +587,7 @@ Lua:
 Rendering:
  - glFont: make inlined colorcodes reuse current set alpha value
 
-Pather:
+Pathing:
  - make lowRes PathEstimator using medRes PE instead of maxRes PathFinder (massively reducing cputime)
  - massive cleanup & modularization
  - reduced memory usage
