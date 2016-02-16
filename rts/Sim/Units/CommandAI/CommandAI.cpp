@@ -180,7 +180,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 		CommandDescription& c = possibleCommands.back();
 
 		// only for games with 2 ally teams  --  checked later
-		c.id = CMD_DEATHWAIT;
+		c.id   = CMD_DEATHWAIT;
 		c.type = CMDTYPE_ICON_UNIT_OR_RECTANGLE;
 
 		c.action    = "deathwait";
@@ -264,7 +264,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 		possibleCommands.emplace_back();
 		CommandDescription& c = possibleCommands.back();
 
-		c.id = CMD_MOVE_STATE;
+		c.id   = CMD_MOVE_STATE;
 		c.type = CMDTYPE_ICON_MODE;
 
 		c.action    = "movestate";

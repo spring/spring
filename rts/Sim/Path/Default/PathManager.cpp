@@ -113,13 +113,90 @@ IPath::SearchResult CPathManager::ArrangePath(
 	CPathFinderDef* pfDef,
 	CSolidObject* caller
 ) const {
-	IPath::SearchResult result = IPath::Error;
-
 	// choose the PF or the PE depending on the projected 2D goal-distance
 	// NOTE: this distance can be far smaller than the actual path length!
 	// NOTE: take height difference into consideration for "special" cases
 	// (unit at top of cliff, goal at bottom or vv.)
-	const float heuristicGoalDist2D = pfDef->Heuristic(startPos.x / SQUARE_SIZE, startPos.z / SQUARE_SIZE) + math::fabs(goalPos.y - startPos.y) / SQUARE_SIZE;
+	const float heurGoalDist2D = pfDef->Heuristic(startPos.x / SQUARE_SIZE, startPos.z / SQUARE_SIZE) + math::fabs(goalPos.y - startPos.y) / SQUARE_SIZE;
+	const float searchDistances[] = {std::numeric_limits<float>::max(), MEDRES_SEARCH_DISTANCE, MAXRES_SEARCH_DISTANCE};
+
+	// MAX_SEARCHED_NODES_PF is 65536, MAXRES_SEARCH_DISTANCE is 50 squares
+	// the circular-constraint area therefore is PI*50*50 squares (i.e. 7854
+	// rounded up to nearest integer) which means MAX_SEARCHED_NODES_*>>3 is
+	// only slightly larger (8192) so the constraint has no purpose even for
+	// max-res queries (!)
+	assert(MAX_SEARCHED_NODES_PF <= 65536u);
+	assert(MAXRES_SEARCH_DISTANCE <= 50.0f);
+
+	const unsigned int nodeLimits[] = {MAX_SEARCHED_NODES_PE >> 3, MAX_SEARCHED_NODES_PE >> 3, MAX_SEARCHED_NODES_PF >> 3};
+	const bool useConstraints[] = {false, false, false};
+
+	IPathFinder* pathFinders[] = {lowResPE, medResPE, maxResPF};
+	IPath::Path* pathObjects[] = {&newPath->lowResPath, &newPath->medResPath, &newPath->maxResPath};
+
+	IPath::SearchResult bestResult = IPath::Error;
+
+#if 1
+
+	unsigned int bestSearch = -1u; // index
+
+	enum {
+		PATH_LOW_RES = 0,
+		PATH_MED_RES = 1,
+		PATH_MAX_RES = 2,
+	};
+
+	{
+		// try each pathfinder in order from LOW to MAX limited by distance,
+		// with constraints disabled for all three since these break search
+		// completeness (CPU usage is still limited by MAX_SEARCHED_NODES_*)
+		for (unsigned int n = PATH_LOW_RES; n <= PATH_MAX_RES; n++) {
+			pfDef->DisableConstraint(!useConstraints[n]);
+
+			// distance-limits are in descending order
+			if (heurGoalDist2D > searchDistances[n])
+				break;
+
+			const IPath::SearchResult currResult = pathFinders[n]->GetPath(*moveDef, *pfDef, caller, startPos, *pathObjects[n], nodeLimits[n]);
+
+			// note: LEQ s.t. MED-OK will be preferred over LOW-OK, etc
+			if (currResult > bestResult)
+				continue;
+
+			bestResult = currResult;
+			bestSearch = n;
+		}
+	}
+
+	for (unsigned int n = PATH_LOW_RES; n <= PATH_MAX_RES; n++) {
+		if (n != bestSearch) {
+			pathObjects[n]->path.clear();
+			pathObjects[n]->squares.clear();
+		}
+	}
+
+	if (bestResult == IPath::Ok)
+		return bestResult;
+
+	// if we did not get a complete path with distance/search
+	// constraints enabled, run a final unconstrained fallback
+	// MED search (unconstrained MAX search is not useful with
+	// current node limits and could kill performance without)
+	if (heurGoalDist2D > searchDistances[PATH_MED_RES]) {
+		pfDef->DisableConstraint(true);
+
+		// we can only have a low-res result at this point
+		pathObjects[PATH_LOW_RES]->path.clear();
+		pathObjects[PATH_LOW_RES]->squares.clear();
+
+		bestResult = std::min(bestResult, pathFinders[PATH_MED_RES]->GetPath(*moveDef, *pfDef, caller, startPos, *pathObjects[PATH_MED_RES], nodeLimits[PATH_MED_RES]));
+	}
+
+	return bestResult;
+
+
+#else
+
 
 	enum {
 		PATH_MAX_RES = 0,
@@ -131,22 +208,22 @@ IPath::SearchResult CPathManager::ArrangePath(
 
 	// first attempt - use ideal pathfinder (performance-wise)
 	{
-		if (heuristicGoalDist2D < MAXRES_SEARCH_DISTANCE) {
+		if (heurGoalDist2D < MAXRES_SEARCH_DISTANCE) {
 			origPathRes = PATH_MAX_RES;
-		} else if (heuristicGoalDist2D < MEDRES_SEARCH_DISTANCE) {
+		} else if (heurGoalDist2D < MEDRES_SEARCH_DISTANCE) {
 			origPathRes = PATH_MED_RES;
 		//} else {
 		//	origPathRes = PATH_LOW_RES;
 		}
 
 		switch (origPathRes) {
-			case PATH_MAX_RES: result = maxResPF->GetPath(*moveDef, *pfDef, caller, startPos, newPath->maxResPath, MAX_SEARCHED_NODES_PF >> 3); break;
-			case PATH_MED_RES: result = medResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->medResPath, MAX_SEARCHED_NODES_PE >> 3); break;
-			case PATH_LOW_RES: result = lowResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->lowResPath, MAX_SEARCHED_NODES_PE >> 3); break;
+			case PATH_MAX_RES: bestResult = maxResPF->GetPath(*moveDef, *pfDef, caller, startPos, newPath->maxResPath, nodeLimits[2]); break;
+			case PATH_MED_RES: bestResult = medResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->medResPath, nodeLimits[1]); break;
+			case PATH_LOW_RES: bestResult = lowResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->lowResPath, nodeLimits[0]); break;
 		}
 
-		if (result == IPath::Ok) {
-			return result;
+		if (bestResult == IPath::Ok) {
+			return bestResult;
 		}
 	}
 
@@ -154,12 +231,12 @@ IPath::SearchResult CPathManager::ArrangePath(
 	/*{
 		CCircularSearchConstraint reversedPfDef(goalPos, startPos, pfDef->sqGoalRadius, 7.0f, 8000);
 		switch (pathres) {
-			case PATH_MAX_RES: result = maxResPF->GetPath(*moveDef, reversedPfDef, caller, goalPos, newPath->maxResPath, MAX_SEARCHED_NODES_PF >> 3); break;
-			case PATH_MED_RES: result = medResPE->GetPath(*moveDef, reversedPfDef, caller, goalPos, newPath->medResPath, MAX_SEARCHED_NODES_PE >> 3); break;
-			case PATH_LOW_RES: result = lowResPE->GetPath(*moveDef, reversedPfDef, caller, goalPos, newPath->lowResPath, MAX_SEARCHED_NODES_PE >> 3); break;
+			case PATH_MAX_RES: bestResult = maxResPF->GetPath(*moveDef, reversedPfDef, caller, goalPos, newPath->maxResPath, nodeLimits[2]); break;
+			case PATH_MED_RES: bestResult = medResPE->GetPath(*moveDef, reversedPfDef, caller, goalPos, newPath->medResPath, nodeLimits[1]); break;
+			case PATH_LOW_RES: bestResult = lowResPE->GetPath(*moveDef, reversedPfDef, caller, goalPos, newPath->lowResPath, nodeLimits[0]); break;
 		}
 
-		if (result == IPath::Ok) {
+		if (bestResult == IPath::Ok) {
 			assert(false);
 
 			float3 midPos;
@@ -170,16 +247,16 @@ IPath::SearchResult CPathManager::ArrangePath(
 			}
 
 			CCircularSearchConstraint midPfDef(startPos, midPos, pfDef->sqGoalRadius, 3.0f, 8000);
-			result = maxResPF->GetPath(*moveDef, midPfDef, caller, startPos, newPath->maxResPath, MAX_SEARCHED_NODES_PF >> 3);
+			bestResult = maxResPF->GetPath(*moveDef, midPfDef, caller, startPos, newPath->maxResPath, MAX_SEARCHED_NODES_PF >> 3);
 
 			CCircularSearchConstraint restPfDef(midPos, goalPos, pfDef->sqGoalRadius, 7.0f, 8000);
 			switch (pathres) {
 				case PATH_MAX_RES:
-				case PATH_MED_RES: result = medResPE->GetPath(*moveDef, restPfDef, caller, startPos, newPath->medResPath, MAX_SEARCHED_NODES_PE >> 3); break;
-				case PATH_LOW_RES: result = lowResPE->GetPath(*moveDef, restPfDef, caller, startPos, newPath->lowResPath, MAX_SEARCHED_NODES_PE >> 3); break;
+				case PATH_MED_RES: bestResult = medResPE->GetPath(*moveDef, restPfDef, caller, startPos, newPath->medResPath, nodeLimits[1]); break;
+				case PATH_LOW_RES: bestResult = lowResPE->GetPath(*moveDef, restPfDef, caller, startPos, newPath->lowResPath, nodeLimits[0]); break;
 			}
 
-			return result;
+			return bestResult;
 
 		}
 	}*/
@@ -187,17 +264,17 @@ IPath::SearchResult CPathManager::ArrangePath(
 	// third attempt - use better pathfinder
 	{
 		int advPathRes = origPathRes;
-		int maxRes = (heuristicGoalDist2D < (MAXRES_SEARCH_DISTANCE * 2.0f)) ? PATH_MAX_RES : PATH_MED_RES;
+		int maxRes = (heurGoalDist2D < (MAXRES_SEARCH_DISTANCE * 2.0f)) ? PATH_MAX_RES : PATH_MED_RES;
 
 		while (--advPathRes >= maxRes) {
 			switch (advPathRes) {
-				case PATH_MAX_RES: result = maxResPF->GetPath(*moveDef, *pfDef, caller, startPos, newPath->maxResPath, MAX_SEARCHED_NODES_PF >> 3); break;
-				case PATH_MED_RES: result = medResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->medResPath, MAX_SEARCHED_NODES_PE >> 3); break;
-				case PATH_LOW_RES: result = lowResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->lowResPath, MAX_SEARCHED_NODES_PE >> 3); break;
+				case PATH_MAX_RES: bestResult = maxResPF->GetPath(*moveDef, *pfDef, caller, startPos, newPath->maxResPath, nodeLimits[2]); break;
+				case PATH_MED_RES: bestResult = medResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->medResPath, nodeLimits[1]); break;
+				case PATH_LOW_RES: bestResult = lowResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->lowResPath, nodeLimits[0]); break;
 			}
 
-			if (result == IPath::Ok) {
-				return result;
+			if (bestResult == IPath::Ok) {
+				return bestResult;
 			}
 		}
 	}
@@ -210,19 +287,20 @@ IPath::SearchResult CPathManager::ArrangePath(
 
 		while (--advPathRes >= maxRes) {
 			switch (advPathRes) {
-				case PATH_MAX_RES: result = maxResPF->GetPath(*moveDef, *pfDef, caller, startPos, newPath->maxResPath, MAX_SEARCHED_NODES_PF >> 3); break;
-				case PATH_MED_RES: result = medResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->medResPath, MAX_SEARCHED_NODES_PE >> 3); break;
-				case PATH_LOW_RES: result = lowResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->lowResPath, MAX_SEARCHED_NODES_PE >> 3); break;
+				case PATH_MAX_RES: bestResult = maxResPF->GetPath(*moveDef, *pfDef, caller, startPos, newPath->maxResPath, nodeLimits[2]); break;
+				case PATH_MED_RES: bestResult = medResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->medResPath, nodeLimits[1]); break;
+				case PATH_LOW_RES: bestResult = lowResPE->GetPath(*moveDef, *pfDef, caller, startPos, newPath->lowResPath, nodeLimits[0]); break;
 			}
 
-			if (result == IPath::Ok) {
-				return result;
+			if (bestResult == IPath::Ok) {
+				return bestResult;
 			}
 		}
 	}
 
 	LOG_L(L_DEBUG, "PathManager: no path found");
-	return result;
+	return bestResult;
+	#endif
 }
 
 
@@ -259,8 +337,7 @@ unsigned int CPathManager::RequestPath(
 		caller->UnBlock();
 	}
 
-	IPath::SearchResult result = ArrangePath(newPath, moveDef, startPos, goalPos, pfDef, caller);
-	pfDef->DisableConstraint(true);
+	const IPath::SearchResult result = ArrangePath(newPath, moveDef, startPos, goalPos, pfDef, caller);
 
 	unsigned int pathID = 0;
 
