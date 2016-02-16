@@ -695,8 +695,10 @@ void CBumpWater::Update()
 	if (dynWaves)
 		UpdateDynWaves();
 
-	if (!shoreWaves)
+	if (!shoreWaves) {
+		glPopAttrib();
 		return;
+	}
 
 	SCOPED_TIMER("BumpWater::Update (Coastmap)");
 
