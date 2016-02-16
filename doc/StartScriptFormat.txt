@@ -33,7 +33,7 @@
 	ScriptName=Commanders;
 	StartPosType=x;     // 0 fixed, 1 random, 2 choose in game, 3 choose before game (see StartPosX)
 
-	DemoFile=demo.sdf;  // if set this game is a multiplayer demo replay
+	DemoFile=demo.sdfz; // if set this game is a multiplayer demo replay
 	SaveFile=save.ssf;  // if set this game is a continuation of a saved game
 	RecordDemo=1;       // set to 0 to disable demo file recording
 

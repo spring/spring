@@ -7,7 +7,6 @@
 CONFIG(bool, DisableDemoVersionCheck).defaultValue(false).description("Allow to play every replay file (may crash / cause undefined behaviour in replays)");
 #endif
 #include "System/Exceptions.h"
-#include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/GZFileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
@@ -23,12 +22,7 @@ CONFIG(bool, DisableDemoVersionCheck).defaultValue(false).description("Allow to 
 CDemoReader::CDemoReader(const std::string& filename, float curTime)
 	: playbackDemo(NULL)
 {
-	if (FileSystem::GetExtension(filename) == "gz") {
-		playbackDemo = new CGZFileHandler(filename, SPRING_VFS_PWD_ALL);
-	} else {
-		playbackDemo = new CFileHandler(filename, SPRING_VFS_PWD_ALL);
-	}
-
+	playbackDemo = new CGZFileHandler(filename, SPRING_VFS_PWD_ALL);
 
 	if (!playbackDemo->FileExists()) {
 		// file not found -> exception

@@ -16,7 +16,7 @@ Major:
 General:
  ! change default screenshot file type to jpg. to create png use /screenshot png
  ! pr-downloader dependency is now mandatory (statically linked with spring)
- ! demo files are now compressed with gzip
+ ! demo files are now compressed with gzip (and the suffix is .sdfz)
  - improve data locality even further with respect to 100.0
  - fix memory leaks and misc. crashes (some related to LoadingMT)
 
