@@ -613,17 +613,17 @@ bool CPathEstimator::TestBlock(
 	testedBlocks++;
 
 	// initial calculations of the new block
-	const int2 blockPos = parentOpenBlock->nodePos + PE_DIRECTION_VECTORS[pathDir];
-	const int2 goalBlock = {int(peDef.goalSquareX / BLOCK_SIZE), int(peDef.goalSquareZ / BLOCK_SIZE)};
+	const int2 testBlockPos = parentOpenBlock->nodePos + PE_DIRECTION_VECTORS[pathDir];
+	const int2 goalBlockPos = {int(peDef.goalSquareX / BLOCK_SIZE), int(peDef.goalSquareZ / BLOCK_SIZE)};
 
-	const unsigned int blockIdx = BlockPosToIdx(blockPos);
+	const unsigned int testBlockIdx = BlockPosToIdx(testBlockPos);
 
 	// bounds-check
-	if ((unsigned)blockPos.x >= nbrOfBlocks.x) return false;
-	if ((unsigned)blockPos.y >= nbrOfBlocks.y) return false;
+	if ((unsigned)testBlockPos.x >= nbrOfBlocks.x) return false;
+	if ((unsigned)testBlockPos.y >= nbrOfBlocks.y) return false;
 
 	// check if the block is unavailable
-	if (blockStates.nodeMask[blockIdx] & (PATHOPT_BLOCKED | PATHOPT_CLOSED))
+	if (blockStates.nodeMask[testBlockIdx] & (PATHOPT_BLOCKED | PATHOPT_CLOSED))
 		return false;
 
 	// read precached vertex costs
@@ -641,20 +641,20 @@ bool CPathEstimator::TestBlock(
 		// etc. in the nodeMask but that is complicated and not
 		// worth it: would just save the vertexCosts[] lookup
 		//
-		// blockStates.nodeMask[blockIdx] |= (PathDir2PathOpt(pathDir) | PATHOPT_BLOCKED);
-		// dirtyBlocks.push_back(blockIdx);
+		// blockStates.nodeMask[testBlockIdx] |= (PathDir2PathOpt(pathDir) | PATHOPT_BLOCKED);
+		// dirtyBlocks.push_back(testBlockIdx);
 		return false;
 	}
 
 	// check if the block is out of constraints
-	const int2 square = blockStates.peNodeOffsets[moveDef.pathType][blockIdx];
+	const int2 square = blockStates.peNodeOffsets[moveDef.pathType][testBlockIdx];
 	if (!peDef.WithinConstraints(square.x, square.y)) {
-		blockStates.nodeMask[blockIdx] |= PATHOPT_BLOCKED;
-		dirtyBlocks.push_back(blockIdx);
+		blockStates.nodeMask[testBlockIdx] |= PATHOPT_BLOCKED;
+		dirtyBlocks.push_back(testBlockIdx);
 		return false;
 	}
 
-	if (blockPos == goalBlock) {
+	if (testBlockPos == goalBlockPos) {
 		IPath::Path path;
 
 		// if we have expanded the goal-block, check if a valid
@@ -662,9 +662,9 @@ bool CPathEstimator::TestBlock(
 		// to the actual goal position) since there might still
 		// be impassable terrain in between
 		//
-		// const float3 gWorldPos = {                blockPos.x * BLOCK_PIXEL_SIZE * 1.0f, 0.0f,                 blockPos.y * BLOCK_PIXEL_SIZE * 1.0f};
+		// const float3 gWorldPos = {            testBlockPos.x * BLOCK_PIXEL_SIZE * 1.0f, 0.0f,             testBlockPos.y * BLOCK_PIXEL_SIZE * 1.0f};
 		// const float3 sWorldPos = {parentOpenBlock->nodePos.x * BLOCK_PIXEL_SIZE * 1.0f, 0.0f, parentOpenBlock->nodePos.y * BLOCK_PIXEL_SIZE * 1.0f};
-		const float3 sWorldPos = {blockPos.x * BLOCK_PIXEL_SIZE * 1.0f, 0.0f, blockPos.y * BLOCK_PIXEL_SIZE * 1.0f};
+		const float3 sWorldPos = {testBlockPos.x * BLOCK_PIXEL_SIZE * 1.0f, 0.0f, testBlockPos.y * BLOCK_PIXEL_SIZE * 1.0f};
 		const float3 gWorldPos = peDef.goal;
 
 		const CRectangularSearchConstraint searchCon = CRectangularSearchConstraint(sWorldPos, gWorldPos, BLOCK_SIZE); // sets goalSquare{X,Z}
@@ -674,8 +674,8 @@ bool CPathEstimator::TestBlock(
 			// we cannot set PATHOPT_BLOCKED here either, result
 			// depends on direction of entry from the parent node
 			//
-			// blockStates.nodeMask[blockIdx] |= PATHOPT_BLOCKED;
-			// dirtyBlocks.push_back(blockIdx);
+			// blockStates.nodeMask[testBlockIdx] |= PATHOPT_BLOCKED;
+			// dirtyBlocks.push_back(testBlockIdx);
 			return false;
 		}
 	}
@@ -691,18 +691,18 @@ bool CPathEstimator::TestBlock(
 	const float fCost = gCost + hCost;
 
 	// already in the open set?
-	if (blockStates.nodeMask[blockIdx] & PATHOPT_OPEN) {
+	if (blockStates.nodeMask[testBlockIdx] & PATHOPT_OPEN) {
 		// check if new found path is better or worse than the old one
-		if (blockStates.fCost[blockIdx] <= fCost)
+		if (blockStates.fCost[testBlockIdx] <= fCost)
 			return true;
 
 		// no, clear old path data
-		blockStates.nodeMask[blockIdx] &= ~PATHOPT_CARDINALS;
+		blockStates.nodeMask[testBlockIdx] &= ~PATHOPT_CARDINALS;
 	}
 
 	// look for improvements
 	if (hCost < mGoalHeuristic) {
-		mGoalBlockIdx = blockIdx;
+		mGoalBlockIdx = testBlockIdx;
 		mGoalHeuristic = hCost;
 	}
 
@@ -713,19 +713,19 @@ bool CPathEstimator::TestBlock(
 	PathNode* ob = openBlockBuffer.GetNode(openBlockBuffer.GetSize());
 		ob->fCost   = fCost;
 		ob->gCost   = gCost;
-		ob->nodePos = blockPos;
-		ob->nodeNum = blockIdx;
+		ob->nodePos = testBlockPos;
+		ob->nodeNum = testBlockIdx;
 	openBlocks.push(ob);
 
 	blockStates.SetMaxCost(NODE_COST_F, std::max(blockStates.GetMaxCost(NODE_COST_F), fCost));
 	blockStates.SetMaxCost(NODE_COST_G, std::max(blockStates.GetMaxCost(NODE_COST_G), gCost));
 
 	// mark this block as open
-	blockStates.fCost[blockIdx] = fCost;
-	blockStates.gCost[blockIdx] = gCost;
-	blockStates.nodeMask[blockIdx] |= (PathDir2PathOpt(pathDir) | PATHOPT_OPEN);
+	blockStates.fCost[testBlockIdx] = fCost;
+	blockStates.gCost[testBlockIdx] = gCost;
+	blockStates.nodeMask[testBlockIdx] |= (PathDir2PathOpt(pathDir) | PATHOPT_OPEN);
 
-	dirtyBlocks.push_back(blockIdx);
+	dirtyBlocks.push_back(testBlockIdx);
 	return true;
 }
 
