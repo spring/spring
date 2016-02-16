@@ -848,10 +848,16 @@ float3 CWeapon::GetTargetBorderPos(
 bool CWeapon::TryTarget(const float3 tgtPos, const SWeaponTarget& trg) const
 {
 	assert(GetLeadTargetPos(trg).SqDistance(tgtPos) < Square(250.f));
+
 	if (!TestTarget(tgtPos, trg))
 		return false;
 	if (!TestRange(tgtPos, trg))
 		return false;
+
+	// no LOF if aim-position is below ground (not in HFLOF, is overridden)
+	if (aimFromPos.y < CGround::GetHeightReal(aimFromPos.x, aimFromPos.z))
+		return false;
+
 	//FIXME add a forcedUserTarget (a forced fire mode enabled with ctrl key or something) and skip the tests below then
 	return HaveFreeLineOfFire(tgtPos, trg);
 }
@@ -968,10 +974,6 @@ bool CWeapon::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) con
 		//     they use TrajectoryGroundCol with an external check for the NOGROUND flag
 		CUnit* unit = nullptr;
 		CFeature* feature = nullptr;
-
-		// no LOF if aim-position is below ground
-		if (aimFromPos.y < CGround::GetHeightReal(aimFromPos.x, aimFromPos.z))
-			return false;
 
 		const float gdst = TraceRay::TraceRay(aimFromPos, dir, length, ~Collision::NOGROUND, owner, unit, feature);
 		const float3 gpos = aimFromPos + dir * gdst;
