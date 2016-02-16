@@ -955,21 +955,23 @@ bool CWeapon::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) con
 {
 	float3 dir = pos - aimFromPos;
 
-	const float length = dir.Length();
+	const float length = dir.LengthNormalize();
 	const float spread = AccuracyExperience() + SprayAngleExperience();
 
 	if (length == 0.0f)
 		return true;
-
-	dir /= length;
 
 	// ground check
 	if ((avoidFlags & Collision::NOGROUND) == 0) {
 		// NOTE:
 		//     ballistic weapons (Cannon / Missile icw. trajectoryHeight) do not call this,
 		//     they use TrajectoryGroundCol with an external check for the NOGROUND flag
-		CUnit* unit = NULL;
-		CFeature* feature = NULL;
+		CUnit* unit = nullptr;
+		CFeature* feature = nullptr;
+
+		// no LOF if aim-position is below ground
+		if (pos.y < CGround::GetHeightReal(aimFromPos.x, aimFromPos.z))
+			return false;
 
 		const float gdst = TraceRay::TraceRay(aimFromPos, dir, length, ~Collision::NOGROUND, owner, unit, feature);
 		const float3 gpos = aimFromPos + dir * gdst;
