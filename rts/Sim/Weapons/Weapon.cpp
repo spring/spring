@@ -970,7 +970,7 @@ bool CWeapon::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) con
 		CFeature* feature = nullptr;
 
 		// no LOF if aim-position is below ground
-		if (pos.y < CGround::GetHeightReal(aimFromPos.x, aimFromPos.z))
+		if (aimFromPos.y < CGround::GetHeightReal(aimFromPos.x, aimFromPos.z))
 			return false;
 
 		const float gdst = TraceRay::TraceRay(aimFromPos, dir, length, ~Collision::NOGROUND, owner, unit, feature);
