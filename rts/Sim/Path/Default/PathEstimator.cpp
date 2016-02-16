@@ -555,6 +555,7 @@ IPath::SearchResult CPathEstimator::DoSearch(const MoveDef& moveDef, const CPath
 		// no, check if the goal is already reached
 		const int2 bSquare = blockStates.peNodeOffsets[moveDef.pathType][ob->nodeNum];
 		const int2 gSquare = ob->nodePos * BLOCK_SIZE + goalSqrOffset;
+
 		if (peDef.IsGoal(bSquare.x, bSquare.y) || peDef.IsGoal(gSquare.x, gSquare.y)) {
 			mGoalBlockIdx = ob->nodeNum;
 			mGoalHeuristic = 0.0f;
@@ -604,7 +605,7 @@ bool CPathEstimator::TestBlock(
 	const MoveDef& moveDef,
 	const CPathFinderDef& peDef,
 	const PathNode* parentOpenBlock,
-	const CSolidObject* /*owner*/,
+	const CSolidObject* owner,
 	const unsigned int pathDir,
 	const unsigned int /*blockStatus*/,
 	float /*speedMod*/
@@ -612,32 +613,36 @@ bool CPathEstimator::TestBlock(
 	testedBlocks++;
 
 	// initial calculations of the new block
-	const int2 block = parentOpenBlock->nodePos + PE_DIRECTION_VECTORS[pathDir];
-	const unsigned int blockIdx = BlockPosToIdx(block);
+	const int2 blockPos = parentOpenBlock->nodePos + PE_DIRECTION_VECTORS[pathDir];
+	const int2 goalBlock = {int(peDef.goalSquareX / BLOCK_SIZE), int(peDef.goalSquareZ / BLOCK_SIZE)};
+
+	const unsigned int blockIdx = BlockPosToIdx(blockPos);
 
 	// bounds-check
-	if ((unsigned)block.x >= nbrOfBlocks.x) return false;
-	if ((unsigned)block.y >= nbrOfBlocks.y) return false;
+	if ((unsigned)blockPos.x >= nbrOfBlocks.x) return false;
+	if ((unsigned)blockPos.y >= nbrOfBlocks.y) return false;
 
 	// check if the block is unavailable
 	if (blockStates.nodeMask[blockIdx] & (PATHOPT_BLOCKED | PATHOPT_CLOSED))
 		return false;
 
 	// read precached vertex costs
-	const unsigned int vertexIdx =
-		moveDef.pathType * blockStates.GetSize() * PATH_DIRECTION_VERTICES +
-		parentOpenBlock->nodeNum * PATH_DIRECTION_VERTICES +
-		GetBlockVertexOffset(pathDir, nbrOfBlocks.x);
-	assert((unsigned)vertexIdx < vertexCosts.size());
+	const unsigned int pathTypeBaseIdx = moveDef.pathType * blockStates.GetSize() * PATH_DIRECTION_VERTICES;
+	const unsigned int blockNumBaseIdx = parentOpenBlock->nodeNum * PATH_DIRECTION_VERTICES;
+	const unsigned int vertexIdx = pathTypeBaseIdx + blockNumBaseIdx + GetBlockVertexOffset(pathDir, nbrOfBlocks.x);
+	assert(vertexIdx < vertexCosts.size());
+
+
 	if (vertexCosts[vertexIdx] >= PATHCOST_INFINITY) {
-		// warning:
-		// we cannot naively set PATHOPT_BLOCKED here
-		// cause vertexCosts[] depends on the direction and nodeMask doesn't
-		// so we would have to save the direction via PATHOPT_LEFT etc. in the nodeMask
-		// but that's complicated and not worth it.
-		// Performance gain is low, cause we would just save the vertexCosts[] lookup
-		//blockStates.nodeMask[blockIdx] |= (PathDir2PathOpt(pathDir) | PATHOPT_BLOCKED);
-		//dirtyBlocks.push_back(blockIdx);
+		// warning: we cannot naively set PATHOPT_BLOCKED here;
+		// vertexCosts[] depends on the direction and nodeMask
+		// does not
+		// we would have to save the direction via PATHOPT_LEFT
+		// etc. in the nodeMask but that is complicated and not
+		// worth it: would just save the vertexCosts[] lookup
+		//
+		// blockStates.nodeMask[blockIdx] |= (PathDir2PathOpt(pathDir) | PATHOPT_BLOCKED);
+		// dirtyBlocks.push_back(blockIdx);
 		return false;
 	}
 
@@ -647,6 +652,32 @@ bool CPathEstimator::TestBlock(
 		blockStates.nodeMask[blockIdx] |= PATHOPT_BLOCKED;
 		dirtyBlocks.push_back(blockIdx);
 		return false;
+	}
+
+	if (blockPos == goalBlock) {
+		IPath::Path path;
+
+		// if we have expanded the goal-block, check if a valid
+		// max-resolution path exists (from where we entered it
+		// to the actual goal position) since there might still
+		// be impassable terrain in between
+		//
+		// const float3 gWorldPos = {                blockPos.x * BLOCK_PIXEL_SIZE * 1.0f, 0.0f,                 blockPos.y * BLOCK_PIXEL_SIZE * 1.0f};
+		// const float3 sWorldPos = {parentOpenBlock->nodePos.x * BLOCK_PIXEL_SIZE * 1.0f, 0.0f, parentOpenBlock->nodePos.y * BLOCK_PIXEL_SIZE * 1.0f};
+		const float3 sWorldPos = {blockPos.x * BLOCK_PIXEL_SIZE * 1.0f, 0.0f, blockPos.y * BLOCK_PIXEL_SIZE * 1.0f};
+		const float3 gWorldPos = peDef.goal;
+
+		const CRectangularSearchConstraint searchCon = CRectangularSearchConstraint(sWorldPos, gWorldPos, BLOCK_SIZE); // sets goalSquare{X,Z}
+		const IPath::SearchResult searchRes = pathFinder->GetPath(moveDef, searchCon, owner, sWorldPos, path, MAX_SEARCHED_NODES_PF >> 2);
+
+		if (searchRes != IPath::Ok) {
+			// we cannot set PATHOPT_BLOCKED here either, result
+			// depends on direction of entry from the parent node
+			//
+			// blockStates.nodeMask[blockIdx] |= PATHOPT_BLOCKED;
+			// dirtyBlocks.push_back(blockIdx);
+			return false;
+		}
 	}
 
 
@@ -682,7 +713,7 @@ bool CPathEstimator::TestBlock(
 	PathNode* ob = openBlockBuffer.GetNode(openBlockBuffer.GetSize());
 		ob->fCost   = fCost;
 		ob->gCost   = gCost;
-		ob->nodePos = block;
+		ob->nodePos = blockPos;
 		ob->nodeNum = blockIdx;
 	openBlocks.push(ob);
 
