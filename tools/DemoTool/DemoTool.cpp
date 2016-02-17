@@ -221,8 +221,10 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 		char buf[16]; // FIXME: cba to look up how to format numbers with iostreams
 		sprintf(buf, "%06d ", frame);
 		const int cmd = (unsigned char)buffer[0];
-		if (cmd == NETMSG_GAME_FRAME_PROGRESS) //ignore as its unsynced (TODO: why is this recorded in demo?)
+		if (cmd == NETMSG_GAME_FRAME_PROGRESS) { //ignore as its unsynced (TODO: why is this recorded in demo?)
+			delete packet;
 			continue;
+		}
 		std::cout << buf;
 		switch (cmd)
 		{
