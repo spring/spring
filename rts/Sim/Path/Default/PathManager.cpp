@@ -9,13 +9,12 @@
 #include "PathHeatMap.hpp"
 #include "PathLog.h"
 #include "Map/MapInfo.h"
-#include "Sim/Misc/GeometricObjects.h"
-#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Objects/SolidObjectDef.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/TimeProfiler.h"
+#include "System/Util.h"
 
 
 
@@ -40,9 +39,9 @@ CPathManager::CPathManager()
 
 CPathManager::~CPathManager()
 {
-	delete lowResPE; lowResPE = NULL;
-	delete medResPE; medResPE = NULL;
-	delete maxResPF; maxResPF = NULL;
+	SafeDelete(lowResPE);
+	SafeDelete(medResPE);
+	SafeDelete(maxResPF);
 
 	PathHeatMap::FreeInstance(pathHeatMap);
 	PathFlowMap::FreeInstance(pathFlowMap);
@@ -333,7 +332,7 @@ unsigned int CPathManager::RequestPath(
 	newPath->caller = caller;
 	pfDef->synced = synced;
 
-	if (caller != NULL) {
+	if (caller != nullptr) {
 		caller->UnBlock();
 	}
 
@@ -366,7 +365,7 @@ unsigned int CPathManager::RequestPath(
 		delete newPath;
 	}
 
-	if (caller != NULL) {
+	if (caller != nullptr) {
 		caller->Block();
 	}
 
@@ -399,7 +398,8 @@ void CPathManager::MedRes2MaxRes(MultiPath& multiPath, const float3& startPos, c
 	medResPath.path.pop_back();
 
 	// remove med-res waypoints until the next one is far enough
-	while (!medResPath.path.empty() && startPos.SqDistance2D(medResPath.path.back()) < Square(MAXRES_SEARCH_DISTANCE * SQUARE_SIZE)) {
+	// note: this should normally never consume the entire path!
+	while (!medResPath.path.empty() && startPos.SqDistance2D(medResPath.path.back()) < Square(MAXRES_SEARCH_DISTANCE_EXT)) {
 		medResPath.path.pop_back();
 	}
 
@@ -415,7 +415,7 @@ void CPathManager::MedRes2MaxRes(MultiPath& multiPath, const float3& startPos, c
 
 	// Perform the search.
 	// If this is the final improvement of the path, then use the original goal.
-	auto& pfd = (medResPath.path.empty() && lowResPath.path.empty()) ? *multiPath.peDef : rangedGoalDef;
+	const auto& pfd = (medResPath.path.empty() && lowResPath.path.empty()) ? *multiPath.peDef : rangedGoalDef;
 	const IPath::SearchResult result = maxResPF->GetPath(*multiPath.moveDef, pfd, owner, startPos, maxResPath, MAX_SEARCHED_NODES_ON_REFINE);
 
 	// If no refined path could be found, set goal as desired goal.
@@ -438,7 +438,8 @@ void CPathManager::LowRes2MedRes(MultiPath& multiPath, const float3& startPos, c
 	lowResPath.path.pop_back();
 
 	// remove low-res waypoints until the next one is far enough
-	while (!lowResPath.path.empty() && startPos.SqDistance2D(lowResPath.path.back()) < Square(MEDRES_SEARCH_DISTANCE * SQUARE_SIZE)) {
+	// note: this should normally never consume the entire path!
+	while (!lowResPath.path.empty() && startPos.SqDistance2D(lowResPath.path.back()) < Square(MEDRES_SEARCH_DISTANCE_EXT)) {
 		lowResPath.path.pop_back();
 	}
 
@@ -454,7 +455,7 @@ void CPathManager::LowRes2MedRes(MultiPath& multiPath, const float3& startPos, c
 
 	// Perform the search.
 	// If there is no low-res path left, use original goal.
-	auto& pfd = (lowResPath.path.empty()) ? *multiPath.peDef : rangedGoalDef;
+	const auto& pfd = (lowResPath.path.empty()) ? *multiPath.peDef : rangedGoalDef;
 	const IPath::SearchResult result = medResPE->GetPath(*multiPath.moveDef, pfd, owner, startPos, medResPath, MAX_SEARCHED_NODES_ON_REFINE);
 
 	// If no refined path could be found, set goal as desired goal.
@@ -489,7 +490,7 @@ float3 CPathManager::NextWayPoint(
 	// find corresponding multipath entry
 	MultiPath* multiPath = GetMultiPath(pathID);
 
-	if (multiPath == NULL)
+	if (multiPath == nullptr)
 		return noPathPoint;
 
 	if (numRetries > MAX_PATH_REFINEMENT_DEPTH)
@@ -514,15 +515,16 @@ float3 CPathManager::NextWayPoint(
 	// recursive refinement of its lower-resolution segments
 	// if so, check if the med-res path also needs extending
 	if (extendMaxResPath) {
-		if (multiPath->caller != NULL) {
+		if (multiPath->caller != nullptr) {
 			multiPath->caller->UnBlock();
 		}
 
 		if (extendMedResPath)
 			LowRes2MedRes(*multiPath, callerPos, owner, synced);
+
 		MedRes2MaxRes(*multiPath, callerPos, owner, synced);
 
-		if (multiPath->caller != NULL) {
+		if (multiPath->caller != nullptr) {
 			multiPath->caller->Block();
 		}
 
@@ -530,6 +532,7 @@ float3 CPathManager::NextWayPoint(
 	}
 
 	float3 waypoint = noPathPoint;
+
 	do {
 		// get the next waypoint from the max-res path
 		//
@@ -622,7 +625,7 @@ void CPathManager::GetDetailedPath(unsigned pathID, std::vector<float3>& points)
 
 	MultiPath* multiPath = GetMultiPath(pathID);
 
-	if (multiPath == NULL)
+	if (multiPath == nullptr)
 		return;
 
 	const IPath::Path& path = multiPath->maxResPath;
@@ -641,7 +644,7 @@ void CPathManager::GetDetailedPathSquares(unsigned pathID, std::vector<int2>& po
 
 	MultiPath* multiPath = GetMultiPath(pathID);
 
-	if (multiPath == NULL)
+	if (multiPath == nullptr)
 		return;
 
 	const IPath::Path& path = multiPath->maxResPath;
@@ -666,7 +669,7 @@ void CPathManager::GetPathWayPoints(
 
 	MultiPath* multiPath = GetMultiPath(pathID);
 
-	if (multiPath == NULL)
+	if (multiPath == nullptr)
 		return;
 
 	const IPath::path_list_type& maxResPoints = multiPath->maxResPath.path;
@@ -752,7 +755,7 @@ float CPathManager::GetNodeExtraCost(unsigned int x, unsigned int z, bool synced
 
 const float* CPathManager::GetNodeExtraCosts(bool synced) const {
 	if (!IsFinalized())
-		return NULL;
+		return nullptr;
 
 	const PathNodeStateBuffer& buf = maxResPF->GetNodeStateBuffer();
 	const float* costs = buf.GetNodeExtraCosts(synced);
