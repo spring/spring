@@ -207,7 +207,7 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 {
 	InitCommandNames();
 	std::vector<unsigned> trafficCounter(NETMSG_LAST, 0);
-	int frame = 0;
+	int frame = -1;
 	int cmdId = 0;
 	while (!reader.ReachedEnd())
 	{
