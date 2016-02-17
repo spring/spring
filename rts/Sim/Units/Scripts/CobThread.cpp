@@ -18,12 +18,12 @@ CCobThread::CCobThread(CCobFile& script, CCobInstance* owner)
 	, wakeTime(0)
 	, PC(0)
 	, paramCount(0)
-	, retCode(0)
-	, callback(NULL)
-	, cbParam1(NULL)
-	, cbParam2(NULL)
+	, retCode(-1)
+	, callback(nullptr)
+	, cbParam1(nullptr)
+	, cbParam2(nullptr)
 	, state(Init)
-	, signalMask(42)
+	, signalMask(0)
 {
 	memset(&luaArgs[0], 0, MAX_LUA_COB_ARGS * sizeof(luaArgs[0]));
 	owner->threads.push_back(this);
@@ -32,14 +32,14 @@ CCobThread::CCobThread(CCobFile& script, CCobInstance* owner)
 
 CCobThread::~CCobThread()
 {
-	if (callback != NULL) {
+	if (callback != nullptr) {
 		//LOG_L(L_DEBUG, "%s callback with %d", script.scriptNames[callStack.back().functionId].c_str(), retCode);
 		(*callback)(retCode, cbParam1, cbParam2);
 	}
 	if (owner)
 		owner->threads.remove(this);
 
-	SetCallback(NULL, NULL, NULL);
+	SetCallback(nullptr, nullptr, nullptr);
 }
 
 void CCobThread::SetCallback(CBCobThreadFinish cb, void* p1, void* p2)
@@ -51,19 +51,17 @@ void CCobThread::SetCallback(CBCobThreadFinish cb, void* p1, void* p2)
 
 void CCobThread::Start(int functionId, const vector<int>& args, bool schedule)
 {
-	wakeTime = 0;
 	state = Run;
 	PC = script.scriptOffsets[functionId];
 
-	struct callInfo ci;
+	callInfo ci;
 	ci.functionId = functionId;
 	ci.returnAddr = -1;
-	ci.stackTop = 0;
+	ci.stackTop   = 0;
+
 	callStack.push_back(ci);
 	paramCount = args.size();
-	signalMask = 0;
-	callback = NULL;
-	retCode = -1;
+
 	// copy arguments
 	stack = args;
 
@@ -216,7 +214,7 @@ bool CCobThread::Tick()
 	if (state == Sleep) {
 		LOG_L(L_ERROR, "sleeping thread ticked!");
 	}
-	if (state == Dead || owner == NULL) {
+	if (state == Dead || owner == nullptr) {
 		return false;
 	}
 
@@ -783,7 +781,7 @@ string CCobThread::GetOpcodeName(int opcode)
 void CCobThread::DependentDied(CObject* o)
 {
 	if (o == owner)
-		owner = NULL;
+		owner = nullptr;
 }
 
 /******************************************************************************/

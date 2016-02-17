@@ -198,14 +198,17 @@ void CCobInstance::Create()
 }
 
 
-// Called when a unit's Killed script finishes executing
-static void CUnitKilledCB(int retCode, void* p1, void* p2)
+
+// note: this callback is always called, even if Killed does not exist
+// however, retCode is only set if the function has a return statement
+// (otherwise its value is -1 if Killed exists, which means *no* wreck
+// will be spawned, or 0 if it does not --> inconsistent?)
+static void UnitKilledCallback(int retCode, void* p1, void* p2)
 {
 	CUnit* self = static_cast<CUnit*>(p1);
 	self->deathScriptFinished = true;
 	self->delayedWreckLevel = retCode;
 }
-
 
 void CCobInstance::Killed()
 {
@@ -213,8 +216,8 @@ void CCobInstance::Killed()
 	args.reserve(2);
 	args.push_back((int) (unit->recentDamage / unit->maxHealth * 100));
 	args.push_back(0);
-	Call(COBFN_Killed, args, &CUnitKilledCB, unit, NULL);
-	unit->delayedWreckLevel = args[1];
+
+	Call(COBFN_Killed, args, &UnitKilledCallback, unit, nullptr);
 }
 
 
@@ -245,7 +248,7 @@ void CCobInstance::RockUnit(const float3& rockDir)
 }
 
 
-static void hitByWeaponIdCallback(int retCode, void* p1, void* p2) {
+static void HitByWeaponIdCallback(int retCode, void* p1, void* p2) {
 	*(reinterpret_cast<float*>(p1)) = (retCode * 0.01f);
 }
 
@@ -265,7 +268,7 @@ void CCobInstance::HitByWeapon(const float3& hitDir, int weaponDefId, float& ino
 		float weaponHitMod = 1.0f;
 
 		// pass weaponHitMod as argument <p1> for callback
-		Call(COBFN_HitByWeaponId, args, hitByWeaponIdCallback, &weaponHitMod, nullptr);
+		Call(COBFN_HitByWeaponId, args, HitByWeaponIdCallback, &weaponHitMod, nullptr);
 
 		inoutDamage *= weaponHitMod;
 	} else {
@@ -482,7 +485,7 @@ int CCobInstance::RealCall(int functionId, vector<int>& args, CBCobThreadFinish 
 {
 	if (functionId < 0 || size_t(functionId) >= script.scriptNames.size()) {
 		if (cb) {
-			// in case the function doesnt exist the callback should still be called
+			// in case the function does not exist the callback should still be called
 			(*cb)(0, p1, p2);
 		}
 		return -1;
@@ -516,6 +519,7 @@ int CCobInstance::RealCall(int functionId, vector<int>& args, CBCobThreadFinish 
 		for (; i < args.size(); ++i)
 			args[i] = 0;
 
+		// dtor runs the callback
 		delete thread;
 		return 0;
 	}
