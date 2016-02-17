@@ -23,9 +23,9 @@
 #endif
 #include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/SkirmishAIHandler.h"
-#include "Game/GUI/PlayerRoster.h"
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
+#include "Game/UI/PlayerRoster.h"
 #include "Net/GameServer.h"
 #include "Map/Ground.h"
 #include "Map/MetalMap.h"
