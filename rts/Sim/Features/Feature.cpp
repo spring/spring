@@ -549,6 +549,10 @@ bool CFeature::UpdateVelocity(
 	//   all these calls use the base-class because FeatureHandler::Update
 	//   iterates over updateFeatures and our ::SetVelocity will insert us
 	//   into that
+	//
+	// drag is only valid for current speed, needs to be applied first
+	CWorldObject::SetVelocity((speed + dragAccel) * velMask);
+
 	if (!IsInWater()) {
 		// quadratic downward acceleration if not in water
 		CWorldObject::SetVelocity(((speed * OnesVector) + gravAccel) * velMask);
@@ -556,8 +560,6 @@ bool CFeature::UpdateVelocity(
 		// constant downward speed otherwise, unless floating
 		CWorldObject::SetVelocity(((speed *   XZVector) + gravAccel * (1 - def->floating)) * velMask);
 	}
-
-	CWorldObject::SetVelocity((speed + dragAccel) * velMask);
 
 	const float oldGroundHeight = CGround::GetHeightReal(pos        );
 	const float newGroundHeight = CGround::GetHeightReal(pos + speed);
@@ -603,7 +605,8 @@ bool CFeature::UpdatePosition()
 	UpdateTransformAndPhysState(); // updates speed.w and BIT_MOVING
 	Block(); // does the check if wanted itself
 
-	if (pos != oldPos) {
+	// use an exact comparison for the y-component (gravity is small)
+	if (!pos.equals(oldPos, float3(float3::CMP_EPS, 0.0f, float3::CMP_EPS))) {
 		eventHandler.FeatureMoved(this, oldPos);
 		return true;
 	}
