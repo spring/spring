@@ -13,6 +13,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Net/Protocol/NetProtocol.h"
+#include "Sim/Misc/TeamHandler.h"
 
 
 CStartPosSelecter* CStartPosSelecter::selector = NULL;
@@ -40,6 +41,12 @@ CStartPosSelecter::~CStartPosSelecter()
 bool CStartPosSelecter::Ready(bool luaForcedReady)
 {
 	if (!gs->PreSimFrame()) {
+		delete this;
+		return true;
+	}
+
+	// allow in case we already sent our startpos and rejoined
+	if (teamHandler->Team(gu->myTeam)->HasValidStartPos()) {
 		delete this;
 		return true;
 	}
