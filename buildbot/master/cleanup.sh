@@ -5,6 +5,7 @@
 
 AGE=180
 DBG_AGE=30
+ZIP_AGE=10
 
 renice 19 -p $$ >/dev/null
 ionice -c3 -p $$
@@ -19,6 +20,9 @@ BUILDBOTDIR=/home/buildbot/www/default
 
 #old debug files
 find ${BUILDBOTDIR} -type f -not -path '*/master/*' -path "*dbg.7z*" -mtime +${DBG_AGE} -exec ${RM} '{}' \;
+#old zip (only needed for zk)
+find ${BUILDBOTDIR} -type f -not -path '*/master/*' -path "*minimal-portable+dedicated.zip" -mtime +${ZIP_AGE} -exec ${RM} '{}' \;
+
 #very old files
 find ${BUILDBOTDIR} -type f -not -path '*/master/*' -mtime +${AGE} -exec ${RM} '{}' \;
 #broken symbolic links
