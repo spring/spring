@@ -1354,6 +1354,11 @@ function gadgetHandler:UnitCmdDone(unitID, unitDefID, unitTeam, cmdID, cmdTag, c
   return
 end
 
+function gadgetHandler:UnitCommand(unitID, unitDefID, teamID, cmdID, cmdParams, cmdOptions)
+  for _,g in r_ipairs(self.UnitCommandList) do
+    g:UnitCommand(unitID, unitDefID, teamID, cmdID, cmdParams, cmdOptions)
+  end
+end
 
 function gadgetHandler:UnitPreDamaged(
   unitID,
