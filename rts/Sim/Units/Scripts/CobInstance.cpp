@@ -201,8 +201,8 @@ void CCobInstance::Create()
 
 // note: this callback is always called, even if Killed does not exist
 // however, retCode is only set if the function has a return statement
-// (otherwise its value is -1 if Killed exists, which means *no* wreck
-// will be spawned, or 0 if it does not --> inconsistent?)
+// (otherwise its value is -1 regardless of Killed being present which
+// means *no* wreck will be spawned)
 static void UnitKilledCallback(int retCode, void* p1, void* p2)
 {
 	CUnit* self = static_cast<CUnit*>(p1);
@@ -248,6 +248,7 @@ void CCobInstance::RockUnit(const float3& rockDir)
 }
 
 
+// only called if the function exists
 static void HitByWeaponIdCallback(int retCode, void* p1, void* p2) {
 	*(reinterpret_cast<float*>(p1)) = (retCode * 0.01f);
 }
@@ -390,7 +391,7 @@ void CCobInstance::AimWeapon(int weaponNum, float heading, float pitch)
 // Called when unit's AimWeapon script finished executing (for shield weapon)
 static void ShieldScriptCallback(int retCode, void* p1, void* p2)
 {
-	static_cast<CPlasmaRepulser*>(p1)->SetEnabled(!!retCode);
+	static_cast<CPlasmaRepulser*>(p1)->SetEnabled(retCode != 0);
 }
 
 void CCobInstance::AimShieldWeapon(CPlasmaRepulser* weapon)
@@ -484,9 +485,10 @@ void CCobInstance::EndBurst(int weaponNum) { Call(COBFN_EndBurst + COBFN_Weapon_
 int CCobInstance::RealCall(int functionId, vector<int>& args, CBCobThreadFinish cb, void* p1, void* p2)
 {
 	if (functionId < 0 || size_t(functionId) >= script.scriptNames.size()) {
-		if (cb) {
-			// in case the function does not exist the callback should still be called
-			(*cb)(0, p1, p2);
+		if (cb != nullptr) {
+			// in case the function does not exist the callback should
+			// still be called; -1 is the default CobThread return code
+			(*cb)(-1, p1, p2);
 		}
 		return -1;
 	}
@@ -499,7 +501,7 @@ int CCobInstance::RealCall(int functionId, vector<int>& args, CBCobThreadFinish 
 	const bool res = thread->Tick();
 
 	// Make sure this is run even if the call terminates instantly
-	if (cb)
+	if (cb != nullptr)
 		thread->SetCallback(cb, p1, p2);
 
 	if (!res) {
