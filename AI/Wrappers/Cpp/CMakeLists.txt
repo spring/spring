@@ -54,6 +54,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 	set(mySources
 		"${mySourceDir}/AIEvent.cpp"
 		"${mySourceDir}/AIFloat3.cpp"
+		"${CMAKE_SOURCE_DIR}/rts/System/float3.cpp"
 		"${mySourceDir}/AIColor.cpp"
 		"${mySourceDir}/AIException.cpp"
 		"${mySourceDir}/CallbackAIException.cpp"
