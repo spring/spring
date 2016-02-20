@@ -433,7 +433,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadius) {
 	// units passing intermediate waypoints will TYPICALLY not cause any
 	// script->{Start,Stop}Moving calls now (even when turnInPlace=true)
 	// unless they come to a full stop first
-	ReRequestPath(true); //FIXME WTF?
+	ReRequestPath(true);
 
 	if (owner->team == gu->myTeam) {
 		Channels::General->PlayRandomSample(owner->unitDef->sounds.activate, owner);
@@ -514,10 +514,9 @@ bool CGroundMoveType::FollowPath()
 			}
 		}
 
-		if (!atGoal) {
-			// set direction to waypoint AFTER requesting it
+		// set direction to waypoint AFTER requesting it; should not be a null-vector
+		if (currWayPoint != owner->pos)
 			waypointDir = ((currWayPoint - owner->pos) * XZVector).SafeNormalize();
-		}
 
 		ASSERT_SYNCED(waypointDir);
 
@@ -1369,8 +1368,13 @@ bool CGroundMoveType::CanGetNextWayPoint() {
 				Square(goalRadius * (numIdlingSlowUpdates + 1)):
 				Square(goalRadius                             );
 
-			// trigger Arrived on the next Update (but
-			// only if we have non-temporary waypoints)
+			// trigger Arrived on the next Update (only if we have non-temporary waypoints)
+			// note:
+			//   coldet can (very rarely) interfere with this, causing it to remain false
+			//   a unit would then keep moving along its final waypoint-direction forever
+			//   if atGoal, so we require waypointDir to always be updated in FollowPath
+			//   (checking curr == next is not perfect, becomes true a waypoint too early)
+			//
 			// atEndOfPath |= (currWayPoint == nextWayPoint);
 			atEndOfPath |= (curGoalDistSq <= minGoalDistSq);
 		}
