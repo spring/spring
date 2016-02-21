@@ -579,10 +579,10 @@ void CBuilder::StartRestore(float3 centerPos, float radius)
 	StopBuild(false);
 	TempHoldFire(CMD_RESTORE);
 
-	terraforming=true;
-	terraformType=Terraform_Restore;
-	terraformCenter=centerPos;
-	terraformRadius=radius;
+	terraforming = true;
+	terraformType = Terraform_Restore;
+	terraformCenter = centerPos;
+	terraformRadius = radius;
 
 	tx1 = (int)max((float)0,(centerPos.x-radius)/SQUARE_SIZE);
 	tx2 = (int)min((float)mapDims.mapx,(centerPos.x+radius)/SQUARE_SIZE);
@@ -623,6 +623,7 @@ void CBuilder::StopBuild(bool callScript)
 	helpTerraform = 0;
 	curResurrect = 0;
 	curCapture = 0;
+
 	terraforming = false;
 
 	if (callScript)

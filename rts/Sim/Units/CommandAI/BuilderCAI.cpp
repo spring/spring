@@ -445,16 +445,16 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		return;
 	}
 
-	// stop current build if the new command is not queued and replaces the current build-command
-	//FIXME should happen just before CMobileCAI::GiveCommandReal? (the new cmd can still be skipped!)
-	if (c.GetID() != CMD_WAIT && !(c.options & SHIFT_KEY)) {
+	// stop building/reclaiming/... if the new command is not queued, i.e. replaces our current activity
+	// FIXME should happen just before CMobileCAI::GiveCommandReal? (the new cmd can still be skipped!)
+	if ((c.GetID() != CMD_WAIT && c.GetID() != CMD_SET_WANTED_MAX_SPEED) && !(c.options & SHIFT_KEY)) {
 		if (nonQueingCommands.find(c.GetID()) == nonQueingCommands.end()) {
 			building = false;
 			static_cast<CBuilder*>(owner)->StopBuild();
 		}
 	}
 
-	const map<int, string>::const_iterator boi = buildOptions.find(c.GetID());
+	const auto boi = buildOptions.find(c.GetID());
 
 	if (boi != buildOptions.end()) {
 		if (c.params.size() < 3)
@@ -479,9 +479,8 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		const CUnit* nanoFrame = NULL;
 
 		// check if the buildpos is blocked
-		if (IsBuildPosBlocked(bi, &nanoFrame)) {
+		if (IsBuildPosBlocked(bi, &nanoFrame))
 			return;
-		}
 
 		// if it is a nanoframe help to finish it
 		if (nanoFrame != NULL) {
@@ -509,9 +508,8 @@ void CBuilderCAI::SlowUpdate()
 		return;
 	}
 
-	if (owner->beingBuilt || owner->IsStunned()) {
+	if (owner->beingBuilt || owner->IsStunned())
 		return;
-	}
 
 	Command& c = commandQue.front();
 
