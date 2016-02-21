@@ -57,6 +57,7 @@ void CCursorIcons::SetCustomType(int cmdID, const string& cursor)
 
 void CCursorIcons::Draw()
 {
+	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_CURRENT_BIT);
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -64,12 +65,10 @@ void CCursorIcons::Draw()
 	glDepthMask(GL_FALSE);
 
 	DrawCursors();
-
 	DrawBuilds();
 
-	glDepthMask(GL_TRUE);
 	glBindTexture(GL_TEXTURE_2D, 0);
-	glDisable(GL_TEXTURE_2D);
+	glPopAttrib();
 
 	Clear();
 }
@@ -77,9 +76,8 @@ void CCursorIcons::Draw()
 
 void CCursorIcons::DrawCursors()
 {
-	if (icons.empty() || !cmdColors.UseQueueIcons()) {
+	if (icons.empty() || !cmdColors.UseQueueIcons())
 		return;
-	}
 
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
@@ -94,8 +92,7 @@ void CCursorIcons::DrawCursors()
 	int currentCmd = (icons.begin()->cmd + 1); // force the first binding
 	const CMouseCursor* currentCursor = NULL;
 
-	std::set<Icon>::iterator it;
-	for (it = icons.begin(); it != icons.end(); ++it) {
+	for (auto it = icons.cbegin(); it != icons.cend(); ++it) {
 		const int command = it->cmd;
 		if (command != currentCmd) {
 			currentCmd = command;

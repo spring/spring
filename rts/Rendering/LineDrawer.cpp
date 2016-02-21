@@ -56,6 +56,7 @@ void CLineDrawer::DrawAll()
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
 
+	glPushAttrib(GL_ENABLE_BIT);
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_LINE_STIPPLE);
@@ -84,7 +85,7 @@ void CLineDrawer::DrawAll()
 
 	glDisableClientState(GL_COLOR_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
-	glEnable(GL_DEPTH_TEST);
+	glPopAttrib();
 
 	lines.clear();
 	stippled.clear();

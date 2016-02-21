@@ -692,9 +692,9 @@ void CUnitDrawer::SetupAlphaDrawing(bool deferredPass)
 	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass && false, true);
 
 	glActiveTexture(GL_TEXTURE0);
-	glEnable(GL_TEXTURE_2D);
+	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glPushAttrib(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_ALPHA_TEST);
@@ -705,7 +705,6 @@ void CUnitDrawer::SetupAlphaDrawing(bool deferredPass)
 void CUnitDrawer::ResetAlphaDrawing(bool deferredPass) const
 {
 	glPopAttrib();
-	glDisable(GL_TEXTURE_2D);
 
 	unitDrawerStates[DRAWER_STATE_SEL]->Disable(this, deferredPass && false);
 }
@@ -950,6 +949,8 @@ void CUnitDrawer::ResetOpaqueAlphaDrawing(bool deferredPass, bool haveAdvShading
 
 void CUnitDrawer::SetupOpaqueDrawing(bool deferredPass)
 {
+	glPushAttrib(GL_ENABLE_BIT);
+
 	glCullFace(GL_BACK);
 	glEnable(GL_CULL_FACE);
 
@@ -970,8 +971,7 @@ void CUnitDrawer::SetupOpaqueDrawing(bool deferredPass)
 
 void CUnitDrawer::ResetOpaqueDrawing(bool deferredPass) const
 {
-	glDisable(GL_CULL_FACE);
-	glDisable(GL_ALPHA_TEST);
+	glPopAttrib();
 
 	unitDrawerStates[DRAWER_STATE_SEL]->Disable(this, deferredPass);
 }
