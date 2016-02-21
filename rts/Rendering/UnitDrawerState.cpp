@@ -103,11 +103,11 @@ void IUnitDrawerState::EnableCommon(const CUnitDrawer* ud, bool deferredPass) {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-void IUnitDrawerState::DisableCommon(const CUnitDrawer* ud, bool) {
+void IUnitDrawerState::DisableCommon(const CUnitDrawer* ud, bool deferredPass) {
 	assert(modelShaders[MODEL_SHADER_ACTIVE] != nullptr);
 
 	modelShaders[MODEL_SHADER_ACTIVE]->Disable();
-	SetActiveShader(shadowHandler->ShadowsLoaded(), false);
+	SetActiveShader(shadowHandler->ShadowsLoaded(), deferredPass);
 
 	// TODO: refactor to use DisableTexturesCommon
 	glActiveTexture(GL_TEXTURE1);
