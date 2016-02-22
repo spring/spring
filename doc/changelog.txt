@@ -19,6 +19,7 @@ General:
  ! demo files are now compressed with gzip (and the suffix is .sdfz)
  - improve data locality even further with respect to 100.0
  - fix memory leaks and misc. crashes (some related to LoadingMT)
+ - ignore /give commands issued via autohost interface (needs an actual player)
 
 LoS:
  ! ModInfo: remove losMul & airLosMul -> always handle los ranges in elmos in the _whole_ engine
@@ -47,9 +48,13 @@ Sim:
  - RockUnit and HitByWeapon script callins now take vectors in unit-space
  - fix acceleration rates and turn-speed limits for reversing units
  - fix units occasionally zipping across the map after being unloaded
+ - fix unloaded units being non-colliding if transporter script attached them to piece -1
  - fix various aircraft landing/midair-vibrating bugs
+ - fix builders sometimes ignoring their commands if they were issued without shift
  - set better default radii for objects (and use same logic in all model parsers)
  - make ground-unit reversing logic configurable via Spring.SetGroundMoveTypeData
+ - fix ground-units forever trying to move along their final waypoint direction in rare cases
+ - COB: always use the return value of the Killed thread to determine wreck level (none if omitted)
  ! remap SFX.RECURSIVE piece flag from 1<<8 to 1<<14
  ! removed hardcoded logic to zombify (stun+immobilize) a unit on death
  ! airbases and fuel were removed, use custom commands in combination with
@@ -68,6 +73,7 @@ Transports:
 GUI/Sound:
  ! fix default drawInMap keyshortcut on german keyboards
  - fix displayed tooltip elevation when over minimap
+ - fix Ready button ignoring clicks after setting startpos and rejoining
  - fix potential infinite loop during sound initialization
 
 Rendering:
