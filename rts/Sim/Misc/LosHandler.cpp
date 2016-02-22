@@ -140,6 +140,7 @@ inline void ILosType::UpdateUnit(CUnit* unit)
 		return;
 	}
 
+	SLosInstance* uli = unit->los[type];
 	const float3 losPos = unit->midPos;
 	const float radius = GetRadius(unit);
 	const float height = GetHeight(unit);
@@ -151,8 +152,13 @@ inline void ILosType::UpdateUnit(CUnit* unit)
 		if (!modInfo.separateJammers)
 			allyteam = 0;
 
-	if (radius <= 0)
+	if (radius <= 0) {
+		if (uli) {
+			unit->los[type] = nullptr;
+			UnrefInstance(uli);
+		}
 		return;
+	}
 
 	auto IS_FITTING_INSTANCE = [&](SLosInstance* li) -> bool {
 		return (li
@@ -164,7 +170,6 @@ inline void ILosType::UpdateUnit(CUnit* unit)
 	};
 
 	// unchanged?
-	SLosInstance* uli = unit->los[type];
 	if (IS_FITTING_INSTANCE(uli)) {
 		return;
 	}
