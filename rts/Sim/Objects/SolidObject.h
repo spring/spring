@@ -231,8 +231,8 @@ public:
 	bool    HasPhysicalStateBit(unsigned int bit) const { return ((physicalState & bit) != 0); }
 	void    SetPhysicalStateBit(unsigned int bit) { unsigned int ps = physicalState; ps |= ( bit); physicalState = static_cast<PhysicalState>(ps); }
 	void  ClearPhysicalStateBit(unsigned int bit) { unsigned int ps = physicalState; ps &= (~bit); physicalState = static_cast<PhysicalState>(ps); }
-	void   PushPhysicalStateBit(unsigned int bit) { UpdatePhysicalStateBit(1u << (32u - (bits_ffs(bit) - 1u)), HasPhysicalStateBit(bit)); }
-	void    PopPhysicalStateBit(unsigned int bit) { UpdatePhysicalStateBit(bit, HasPhysicalStateBit(1u << (32u - (bits_ffs(bit) - 1u)))); }
+	void   PushPhysicalStateBit(unsigned int bit) { UpdatePhysicalStateBit(1u << (32u - bits_ffs(bit)), HasPhysicalStateBit(bit)); }
+	void    PopPhysicalStateBit(unsigned int bit) { UpdatePhysicalStateBit(bit, HasPhysicalStateBit(1u << (32u - bits_ffs(bit)))); }
 	bool UpdatePhysicalStateBit(unsigned int bit, bool set) {
 		if (set) {
 			SetPhysicalStateBit(bit);
@@ -245,8 +245,8 @@ public:
 	bool    HasCollidableStateBit(unsigned int bit) const { return ((collidableState & bit) != 0); }
 	void    SetCollidableStateBit(unsigned int bit) { unsigned int cs = collidableState; cs |= ( bit); collidableState = static_cast<CollidableState>(cs); }
 	void  ClearCollidableStateBit(unsigned int bit) { unsigned int cs = collidableState; cs &= (~bit); collidableState = static_cast<CollidableState>(cs); }
-	void   PushCollidableStateBit(unsigned int bit) { UpdateCollidableStateBit(1u << (32u - (bits_ffs(bit) - 1u)), HasCollidableStateBit(bit)); }
-	void    PopCollidableStateBit(unsigned int bit) { UpdateCollidableStateBit(bit, HasCollidableStateBit(1u << (32u - (bits_ffs(bit) - 1u)))); }
+	void   PushCollidableStateBit(unsigned int bit) { UpdateCollidableStateBit(1u << (32u - bits_ffs(bit)), HasCollidableStateBit(bit)); }
+	void    PopCollidableStateBit(unsigned int bit) { UpdateCollidableStateBit(bit, HasCollidableStateBit(1u << (32u - bits_ffs(bit)))); }
 	bool UpdateCollidableStateBit(unsigned int bit, bool set) {
 		if (set) {
 			SetCollidableStateBit(bit);
