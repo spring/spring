@@ -62,7 +62,7 @@ Transports:
   - Spring.UnitDetach(passengerID)
   - Spring.UnitDetachFromAir(passengerID)
  - units with transportCapacity > 0 and transportMass > 0 will retain backward compatibility
- - added Spring.SetUnitLoadingTransport(passengerID, transportID) which disables colissions
+ - added Spring.SetUnitLoadingTransport(passengerID, transportID) which disables collisions
    between the two units to allow colvol intersection during the approach.
 
 GUI/Sound:
