@@ -2186,7 +2186,11 @@ bool CUnit::UseResources(const SResourcePack& pack)
 		AddEnergy(-energy);
 		return true;
 	}*/
-	if (teamHandler->Team(team)->UseResources(pack)) {
+
+	CTeam* myTeam = teamHandler->Team(team);
+	myTeam->resPull += pack;
+
+	if (myTeam->UseResources(pack)) {
 		resourcesUseI += pack;
 		return true;
 	}
