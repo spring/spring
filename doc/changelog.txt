@@ -1,5 +1,5 @@
 Spring changelog
-(since 85.0: "!" prefix indicate backward compability broke)
+(since 85.0: "!" prefix indicate backward compatibility broke)
 (numbers in brackets normally mean the mantis ticket ID)
 
 -- 101.0 --------------------------------------------------------
@@ -26,9 +26,9 @@ LoS:
  ! ModInfo: make `radarMipLevel` configurable
  ! change default airMipLevel 2->1 & radarMipLevel 3->2
  ! ModInfo: add new sensors.alwaysVisibleOverridesCloaked (default _off_! before was always on)
- ! modrules.lua: add new `separateJammers` tag (breaks backward compability!)
+ ! modrules.lua: add new `separateJammers` tag (breaks backward compatibility!)
    default true (old behaviour is false)
-   when enabled each allyTeam only jammes their own units
+   when enabled each allyTeam only jams their own units
  ! get rid of los radius limit (you can now create units that cover the whole map and more)
  - speed ups in general
  - reduced lags introduced by LoS
@@ -1635,7 +1635,7 @@ Models/Assimp:
  - extended auto-finding of textures
 
 Weapons/WeaponDefs:
- ! remove of manualBombSettings (backward-compability code in weapondefs_post.lua)
+ ! remove of manualBombSettings (backward-compatibility code in weapondefs_post.lua)
  ! fix: half craterAreaOfEffect the same way as it is done with damageAreaOfEffect
  ! removed color1 (hue) & color2 (sat). Use rgbColor instead!
  ! removed isShield. Use weaponType="Shield" instead!
@@ -3121,7 +3121,7 @@ AIs:
  - send an Update event before the first UnitCreated (when initializing mid-game)
 
 Bugfixes:
- - LightingCannon (sic) finally isn't supported anymore, use LightningCannon instead (default weapondef_post.lua includes backward compability)
+ - LightingCannon (sic) finally isn't supported anymore, use LightningCannon instead (default weapondef_post.lua includes backward compatibility)
  - fixed a bug in LuaParser, so you can now use booleans in lua CEG configfiles (before it just accepted "1"/"0" for some tags)
  - fixed occasional bug where countdown time went into negative numbers and game never started
  - fixed impactOnly ignored features
@@ -3877,7 +3877,7 @@ LUA changes:
  - Renamed 'gui.lua' to 'luaui.lua'
  - Removed LuaCob, and redirected Cob2Lua calls to LuaRules
  - removed the following compatibility defines from luaconf.h
-   (can break compability with old lua scripts):
+   (can break compatibility with old lua scripts):
     LUA_COMPAT_GETN
     LUA_COMPAT_VARARG
     LUA_COMPAT_MOD
