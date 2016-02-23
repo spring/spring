@@ -297,10 +297,14 @@ void CWorldDrawer::DrawAlphaObjects() const
 	static const double abovePlaneEq[4] = {0.0f,  1.0f, 0.0f, 0.0f};
 
 	{
+		// clip in model-space
+		glPushMatrix();
+		glLoadIdentity();
 		glClipPlane(GL_CLIP_PLANE3, belowPlaneEq);
+		glPopMatrix();
 		glEnable(GL_CLIP_PLANE3);
 
-		// draw cloaked objects below water surface (farthest)
+		// draw alpha-objects below water surface (farthest)
 		unitDrawer->DrawAlphaPass();
 		featureDrawer->DrawAlphaPass();
 
@@ -316,10 +320,13 @@ void CWorldDrawer::DrawAlphaObjects() const
 	}
 
 	{
+		glPushMatrix();
+		glLoadIdentity();
 		glClipPlane(GL_CLIP_PLANE3, abovePlaneEq);
+		glPopMatrix();
 		glEnable(GL_CLIP_PLANE3);
 
-		// draw cloaked objects above water surface (closest)
+		// draw alpha-objects above water surface (closest)
 		unitDrawer->DrawAlphaPass();
 		featureDrawer->DrawAlphaPass();
 

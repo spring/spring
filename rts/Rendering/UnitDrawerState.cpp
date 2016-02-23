@@ -248,21 +248,19 @@ bool UnitDrawerStateARB::Init(const CUnitDrawer* ud) {
 		return false;
 	}
 
-	// with advFading, submerged transparent objects are clipped against GL_CLIP_PLANE3
-	const char* vertexProgNamesARB[2] = {
-		"ARB/units3o.vp",
-		"ARB/units3o2.vp",
-	};
+	// if GLEW_NV_vertex_program2 is supported, transparent objects are clipped against GL_CLIP_PLANE3
+	const char* vertProgNamesARB[2] = {"ARB/units3o.vp", "ARB/units3o2.vp"};
+	const char* fragProgNamesARB[2] = {"ARB/units3o.fp", "ARB/units3o_shadow.fp"};
 
 	#define sh shaderHandler
 	modelShaders[MODEL_SHADER_NOSHADOW_STANDARD] = sh->CreateProgramObject("[UnitDrawer]", "S3OShaderDefARB", true);
-	modelShaders[MODEL_SHADER_NOSHADOW_STANDARD]->AttachShaderObject(sh->CreateShaderObject(vertexProgNamesARB[ud->UseAdvFading()], "", GL_VERTEX_PROGRAM_ARB));
-	modelShaders[MODEL_SHADER_NOSHADOW_STANDARD]->AttachShaderObject(sh->CreateShaderObject("ARB/units3o.fp", "", GL_FRAGMENT_PROGRAM_ARB));
+	modelShaders[MODEL_SHADER_NOSHADOW_STANDARD]->AttachShaderObject(sh->CreateShaderObject(vertProgNamesARB[GLEW_NV_vertex_program2], "", GL_VERTEX_PROGRAM_ARB));
+	modelShaders[MODEL_SHADER_NOSHADOW_STANDARD]->AttachShaderObject(sh->CreateShaderObject(fragProgNamesARB[0], "", GL_FRAGMENT_PROGRAM_ARB));
 	modelShaders[MODEL_SHADER_NOSHADOW_STANDARD]->Link();
 
 	modelShaders[MODEL_SHADER_SHADOWED_STANDARD] = sh->CreateProgramObject("[UnitDrawer]", "S3OShaderAdvARB", true);
-	modelShaders[MODEL_SHADER_SHADOWED_STANDARD]->AttachShaderObject(sh->CreateShaderObject(vertexProgNamesARB[ud->UseAdvFading()], "", GL_VERTEX_PROGRAM_ARB));
-	modelShaders[MODEL_SHADER_SHADOWED_STANDARD]->AttachShaderObject(sh->CreateShaderObject("ARB/units3o_shadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
+	modelShaders[MODEL_SHADER_SHADOWED_STANDARD]->AttachShaderObject(sh->CreateShaderObject(vertProgNamesARB[GLEW_NV_vertex_program2], "", GL_VERTEX_PROGRAM_ARB));
+	modelShaders[MODEL_SHADER_SHADOWED_STANDARD]->AttachShaderObject(sh->CreateShaderObject(fragProgNamesARB[1], "", GL_FRAGMENT_PROGRAM_ARB));
 	modelShaders[MODEL_SHADER_SHADOWED_STANDARD]->Link();
 
 	// make the active shader non-NULL

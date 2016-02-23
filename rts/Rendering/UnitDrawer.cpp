@@ -254,7 +254,6 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	//   FFP renderer-state (in ::Draw) in that special case and it
 	//   does not matter whether SSP renderer-state is initialized
 	//   *** except for DrawAlphaUnits
-	advFading = GLEW_NV_vertex_program2;
 	advShading = (unitDrawerStates[DRAWER_STATE_SSP]->Init(this) && cubeMapHandler->Init());
 }
 

@@ -98,7 +98,7 @@ Rendering:
  - do not disable model shaders during water ref{le,ra}ction passes
  - always draw water surface during alpha-pass
  - kill shadows for fully alpha-faded features
- - kill impostors fully alpha-faded features
+ - kill impostors for fully alpha-faded features
  - write extraColor to the specTex target on the deferred side of ModelFragProg
  - use groundSpecularColor when no specularTex exists (i.e. on basic SMF maps)
  - shift ground decals visually so they are always aligned with objects

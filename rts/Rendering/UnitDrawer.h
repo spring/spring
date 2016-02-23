@@ -137,10 +137,7 @@ public:
 	bool DrawDeferred() const { return drawDeferred; }
 
 	bool UseAdvShading() const { return advShading; }
-	bool UseAdvFading() const { return advFading; }
-
 	bool& UseAdvShadingRef() { return advShading; }
-	bool& UseAdvFadingRef() { return advFading; }
 
 public:
 	struct TempDrawUnit {
@@ -236,7 +233,6 @@ private:
 	bool drawDeferred;
 
 	bool advShading;
-	bool advFading;
 
 	bool useDistToGroundForIcons;
 	float sqCamDistToGroundForIcons;
