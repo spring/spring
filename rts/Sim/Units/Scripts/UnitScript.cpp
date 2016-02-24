@@ -1363,9 +1363,8 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			return 0;
 		}
 		else {
-			LOG_L(L_ERROR,
-					"CobError: Unknown get constant %d (params = %d %d %d %d)",
-					val, p1, p2, p3, p4);
+			ShowUnitScriptError("CobError: Unknown get constant " + IntToString(val) + " (params = " + IntToString(p1) + " " +
+			IntToString(p2) + " " + IntToString(p3) + " " + IntToString(p4) + ")");
 		}
 	}
 #endif
@@ -1621,7 +1620,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 				unitVars[val - UNIT_VAR_START] = param;
 			}
 			else {
-				LOG_L(L_ERROR, "CobError: Unknown set constant %d", val);
+				ShowUnitScriptError("CobError: Unknown set constant " + IntToString(val));
 			}
 		}
 	}
