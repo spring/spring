@@ -393,6 +393,18 @@ if(NOT MSVC)
 endif(NOT MSVC)
 
 
+if(DEBUG_BUILD)
+        set(DEBUG_LUANAN_DEFAULT TRUE)
+else()
+        set(DEBUG_LUANAN_DEFAULT FALSE)
+endif()
+
+option(DEBUG_LUANAN "check for nans in lua" ${DEBUG_LUANAN_DEFAULT})
+if(DEBUG_LUANAN)
+        add_definitions(-DDEBUG_LUANAN)
+endif()
+
+
 ### streflop
 add_definitions(-DSTREFLOP_SSE) # would break AI compiling, but is undefined in ./AI/CMakeLists.txt
 
