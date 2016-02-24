@@ -2665,7 +2665,7 @@ bool CUnit::DetachUnit(CUnit* unit)
 		// erase command queue unless it's a wait command
 		const CCommandQueue& queue = unit->commandAI->commandQue;
 
-		if (queue.empty() || (queue.front().GetID() != CMD_WAIT)) {
+		if (unitDef->IsTransportUnit() && (queue.empty() || (queue.front().GetID() != CMD_WAIT))) {
 			unit->commandAI->GiveCommand(Command(CMD_STOP));
 		}
 
@@ -2682,7 +2682,7 @@ bool CUnit::DetachUnitFromAir(CUnit* unit, const float3& pos)
 		unit->Drop(this->pos, this->frontdir, this);
 
 		// add an additional move command for after we land
-		if (unit->unitDef->canmove) {
+		if (unitDef->IsTransportUnit() && unit->unitDef->canmove) {
 			unit->commandAI->GiveCommand(Command(CMD_MOVE, pos));
 		}
 
