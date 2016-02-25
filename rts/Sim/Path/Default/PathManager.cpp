@@ -69,34 +69,33 @@ boost::int64_t CPathManager::Finalize() {
 void CPathManager::FinalizePath(MultiPath* path, const float3 startPos, const float3 goalPos, const bool cantGetCloser)
 {
 	IPath::Path* sp = &path->lowResPath;
-	if (!path->medResPath.path.empty()) {
+	IPath::Path* ep = &path->maxResPath;
+
+	if (!path->medResPath.path.empty())
 		sp = &path->medResPath;
-	}
-	if (!path->maxResPath.path.empty()) {
+	if (!path->maxResPath.path.empty())
 		sp = &path->maxResPath;
-	}
+
 	if (!sp->path.empty()) {
 		sp->path.back() = startPos;
 		sp->path.back().y = CMoveMath::yLevel(*path->moveDef, sp->path.back());
 	}
 
-	if (!path->maxResPath.path.empty() && !path->medResPath.path.empty()) {
+	if (!path->maxResPath.path.empty() && !path->medResPath.path.empty())
 		path->medResPath.path.back() = path->maxResPath.path.front();
-	}
-	if (!path->medResPath.path.empty() && !path->lowResPath.path.empty()) {
+
+	if (!path->medResPath.path.empty() && !path->lowResPath.path.empty())
 		path->lowResPath.path.back() = path->medResPath.path.front();
-	}
 
 	if (cantGetCloser)
 		return;
 
-	IPath::Path* ep = &path->maxResPath;
-	if (!path->medResPath.path.empty()) {
+
+	if (!path->medResPath.path.empty())
 		ep = &path->medResPath;
-	}
-	if (!path->lowResPath.path.empty()) {
+	if (!path->lowResPath.path.empty())
 		ep = &path->lowResPath;
-	}
+
 	if (!ep->path.empty()) {
 		ep->path.front() = goalPos;
 		ep->path.front().y = CMoveMath::yLevel(*path->moveDef, ep->path.front());
@@ -515,18 +514,16 @@ float3 CPathManager::NextWayPoint(
 	// recursive refinement of its lower-resolution segments
 	// if so, check if the med-res path also needs extending
 	if (extendMaxResPath) {
-		if (multiPath->caller != nullptr) {
+		if (multiPath->caller != nullptr)
 			multiPath->caller->UnBlock();
-		}
 
 		if (extendMedResPath)
 			LowRes2MedRes(*multiPath, callerPos, owner, synced);
 
 		MedRes2MaxRes(*multiPath, callerPos, owner, synced);
 
-		if (multiPath->caller != nullptr) {
+		if (multiPath->caller != nullptr)
 			multiPath->caller->Block();
-		}
 
 		FinalizePath(multiPath, callerPos, multiPath->finalGoal, multiPath->searchResult == IPath::CantGetCloser);
 	}
@@ -534,7 +531,9 @@ float3 CPathManager::NextWayPoint(
 	float3 waypoint = noPathPoint;
 
 	do {
-		// get the next waypoint from the max-res path
+		// eat waypoints from the max-res path until we
+		// find one that lies outside the search-radius
+		// or equals the goal
 		//
 		// if this is not possible, then either we are
 		// at the goal OR the path could not reach all
@@ -545,8 +544,12 @@ float3 CPathManager::NextWayPoint(
 				if (multiPath->searchResult == IPath::Ok) {
 					waypoint = multiPath->finalGoal; break;
 				} else {
-					// note: unreachable?
-					waypoint = noPathPoint; break;
+					// reached in the CantGetCloser case for any max-res searches
+					// that start within their goal radius (ie. have no waypoints)
+					// RequestPath always puts startPos into maxResPath to handle
+					// this so waypoint will have been set to it (during previous
+					// iteration) if we end up here
+					break;
 				}
 			} else {
 				waypoint = NextWayPoint(owner, pathID, numRetries + 1, callerPos, radius, synced);
