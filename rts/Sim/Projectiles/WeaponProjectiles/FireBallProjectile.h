@@ -8,7 +8,7 @@
 
 class CFireBallProjectile : public CWeaponProjectile
 {
-	CR_DECLARE(CFireBallProjectile)
+	CR_DECLARE_OVERRIDE(CFireBallProjectile)
 	CR_DECLARE_SUB(Spark)
 public:
 	CFireBallProjectile(const ProjectileParams& params);

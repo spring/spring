@@ -18,7 +18,7 @@ struct WeaponDef;
 
 class CWeapon : public CObject
 {
-	CR_DECLARE(CWeapon)
+	CR_DECLARE_OVERRIDE(CWeapon)
 
 public:
 	CWeapon(CUnit* owner, const WeaponDef* def);
@@ -26,7 +26,7 @@ public:
 	virtual void Init();
 
 	void SetWeaponNum(int);
-	void DependentDied(CObject* o);
+	void DependentDied(CObject* o) override;
 	virtual void SlowUpdate();
 	virtual void Update();
 

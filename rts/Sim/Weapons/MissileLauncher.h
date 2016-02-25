@@ -7,7 +7,7 @@
 
 class CMissileLauncher: public CWeapon
 {
-	CR_DECLARE(CMissileLauncher)
+	CR_DECLARE_OVERRIDE(CMissileLauncher)
 public:
 	CMissileLauncher(CUnit* owner, const WeaponDef* def);
 

@@ -8,7 +8,7 @@
 
 class CNanoProjectile : public CProjectile
 {
-	CR_DECLARE(CNanoProjectile)
+	CR_DECLARE_OVERRIDE(CNanoProjectile)
 
 public:
 	CNanoProjectile();

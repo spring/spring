@@ -7,7 +7,7 @@
 
 class CTorpedoProjectile : public CWeaponProjectile
 {
-	CR_DECLARE(CTorpedoProjectile)
+	CR_DECLARE_OVERRIDE(CTorpedoProjectile)
 public:
 	CTorpedoProjectile(const ProjectileParams& params);
 

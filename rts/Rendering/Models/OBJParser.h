@@ -18,8 +18,8 @@ struct SOBJTriangle {
 
 struct SOBJPiece: public S3DModelPiece {
 public:
-	void UploadGeometryVBOs();
-	void DrawForList() const;
+	void UploadGeometryVBOs() override;
+	void DrawForList() const override;
 	void SetMinMaxExtends(bool globalVertexOffsets);
 	void SetVertexTangents();
 
@@ -39,8 +39,8 @@ public:
 	void BindVertexAttribVBOs() const override;
 	void UnbindVertexAttribVBOs() const override;
 
-	const float3& GetVertexPos(const int idx) const { return vertices[idx]; }
-	const float3& GetNormal(const int idx) const { return vnormals[idx]; }
+	const float3& GetVertexPos(const int idx) const override { return vertices[idx]; }
+	const float3& GetNormal(const int idx) const override { return vnormals[idx]; }
 	const float2& GetTxCoor(const int idx) const { return texcoors[idx]; }
 	const float3& GetSTangent(const int idx) const { return sTangents[idx]; }
 	const float3& GetTTangent(const int idx) const { return tTangents[idx]; }

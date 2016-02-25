@@ -11,7 +11,7 @@ class CNullUnitScript : public CUnitScript
 protected:
 	CNullUnitScript(): CUnitScript(nullptr) {}
 
-	void ShowScriptError(const std::string& msg);
+	void ShowScriptError(const std::string& msg) override;
 
 public:
 	static CNullUnitScript value;

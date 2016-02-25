@@ -7,7 +7,7 @@
 
 class CBombDropper: public CWeapon
 {
-	CR_DECLARE(CBombDropper)
+	CR_DECLARE_OVERRIDE(CBombDropper)
 public:
 	CBombDropper(CUnit* owner, const WeaponDef* def, bool useTorps);
 

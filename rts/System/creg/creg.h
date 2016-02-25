@@ -352,7 +352,7 @@ namespace creg {
  * Add the definitions for creg binding to the class
  * this should be put within the class definition
  */
-#define CR_DECLARE(TCls)	public:					\
+#define CR_DECLARE_OVERRIDE_BASE(TCls, OVERRIDE)	public:					\
 	static creg::ClassBinder binder;				\
 	typedef TCls MyType;							\
 	static creg::IMemberRegistrator* memberRegistrator;	 \
@@ -360,9 +360,12 @@ namespace creg {
 	static void _DestructInstance(void* d);			\
 	friend struct TCls##MemberRegistrator;			\
 	inline static creg::Class* StaticClass() { return binder.class_; } \
-	virtual creg::Class* GetClass() const; \
+	virtual creg::Class* GetClass() const OVERRIDE; \
 	static bool creg_hasVTable; \
 	static const bool creg_isStruct = false;
+
+#define CR_DECLARE_OVERRIDE(TCls) CR_DECLARE_OVERRIDE_BASE(TCls, override)
+#define CR_DECLARE(TCls) CR_DECLARE_OVERRIDE_BASE(TCls, )
 
 /** @def CR_DECLARE_STRUCT
  * Use this to declare a structure

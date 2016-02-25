@@ -20,7 +20,7 @@ class CMatrix44f;
 
 class CProjectile: public CExpGenSpawnable
 {
-	CR_DECLARE(CProjectile)
+	CR_DECLARE_OVERRIDE(CProjectile)
 
 public:
 	CProjectile();

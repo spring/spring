@@ -120,7 +120,7 @@ protected:
 // has no internal state so we never need to allocate instances
 class CStdExplosionGenerator: public IExplosionGenerator
 {
-	CR_DECLARE(CStdExplosionGenerator)
+	CR_DECLARE_OVERRIDE(CStdExplosionGenerator)
 
 public:
 	CStdExplosionGenerator(): IExplosionGenerator() {}
@@ -142,7 +142,7 @@ public:
 // result of an explosion as a series of new projectiles
 class CCustomExplosionGenerator: public IExplosionGenerator
 {
-	CR_DECLARE(CCustomExplosionGenerator)
+	CR_DECLARE_OVERRIDE(CCustomExplosionGenerator)
 	CR_DECLARE_SUB(ProjectileSpawnInfo)
 	CR_DECLARE_SUB(ExpGenParams)
 

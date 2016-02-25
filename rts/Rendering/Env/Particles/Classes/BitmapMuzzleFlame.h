@@ -10,7 +10,7 @@ struct AtlasedTexture;
 
 class CBitmapMuzzleFlame : public CProjectile
 {
-	CR_DECLARE(CBitmapMuzzleFlame)
+	CR_DECLARE_OVERRIDE(CBitmapMuzzleFlame)
 
 public:
 	CBitmapMuzzleFlame();

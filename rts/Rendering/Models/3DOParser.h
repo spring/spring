@@ -41,7 +41,7 @@ struct S3DOPrimitive
 
 struct S3DOPiece: public S3DModelPiece
 {
-	void UploadGeometryVBOs();
+	void UploadGeometryVBOs() override;
 	void DrawForList() const override;
 
 	unsigned int GetVertexCount() const override { return vboAttributes.GetSize(); }

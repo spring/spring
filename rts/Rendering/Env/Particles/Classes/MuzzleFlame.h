@@ -7,7 +7,7 @@
 
 class CMuzzleFlame : public CProjectile
 {
-	CR_DECLARE(CMuzzleFlame)
+	CR_DECLARE_OVERRIDE(CMuzzleFlame)
 
 public:
 	CMuzzleFlame(const float3& pos, const float3& speed, const float3& dir, float size);

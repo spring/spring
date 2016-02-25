@@ -31,7 +31,7 @@ private:
 	bool inKilled;
 
 protected:
-	void ShowScriptError(const std::string& msg);
+	void ShowScriptError(const std::string& msg) override;
 
 	// only called from CreateScript, instance can not be created from C++
 	CLuaUnitScript(lua_State* L, CUnit* unit);

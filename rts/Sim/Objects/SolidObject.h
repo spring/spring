@@ -48,7 +48,7 @@ typedef Bitwise::BitwiseEnum<YardmapStates> YardMapStatus;
 
 class CSolidObject: public CWorldObject {
 public:
-	CR_DECLARE(CSolidObject)
+	CR_DECLARE_OVERRIDE(CSolidObject)
 
 	enum PhysicalState {
 		// NOTE:

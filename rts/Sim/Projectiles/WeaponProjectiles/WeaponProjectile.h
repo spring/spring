@@ -20,23 +20,23 @@ class DynDamageArray;
  */
 class CWeaponProjectile : public CProjectile
 {
-	CR_DECLARE(CWeaponProjectile)
+	CR_DECLARE_OVERRIDE(CWeaponProjectile)
 public:
 	CWeaponProjectile();
 	CWeaponProjectile(const ProjectileParams& params);
 	virtual ~CWeaponProjectile();
 
 	virtual void Explode(CUnit* hitUnit, CFeature* hitFeature, float3 impactPos, float3 impactDir);
-	virtual void Collision();
-	virtual void Collision(CFeature* feature);
-	virtual void Collision(CUnit* unit);
-	virtual void Update();
+	virtual void Collision() override;
+	virtual void Collision(CFeature* feature) override;
+	virtual void Collision(CUnit* unit) override;
+	virtual void Update() override;
 	/// @return 0=unaffected, 1=instant repulse, 2=gradual repulse
 	virtual int ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed) { return 0; }
 
-	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
+	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
 
-	void DependentDied(CObject* o);
+	void DependentDied(CObject* o) override;
 	void PostLoad();
 
 	void SetTargetObject(CWorldObject* newTarget) {

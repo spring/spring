@@ -15,13 +15,13 @@ class CSMFReadMap : public CReadMap, public CEventClient
 {
 public:
 	// CEventClient interface
-	int GetReadAllyTeam() const { return AllAccessTeam; }
-	bool WantsEvent(const std::string& eventName) {
+	int GetReadAllyTeam() const override { return AllAccessTeam; }
+	bool WantsEvent(const std::string& eventName) override {
 		return eventName == "SunChanged" || eventName == "SunLightingChanged";
 	}
 
-	void SunChanged(const float3& sunDir);
-	void SunLightingChanged();
+	void SunChanged(const float3& sunDir) override;
+	void SunLightingChanged() override;
 
 public:
 
@@ -29,8 +29,8 @@ public:
 	// note: textures are auto-deleted
 	~CSMFReadMap() {}
 
-	void UpdateShadingTexture();
-	void UpdateHeightMapUnsynced(const SRectangle&);
+	void UpdateShadingTexture() override;
+	void UpdateHeightMapUnsynced(const SRectangle&) override;
 
 public:
 	bool SetLuaTexture(const MapTextureData& td) override;
@@ -94,11 +94,11 @@ public:
 	}
 
 public:
-	unsigned int GetGrassShadingTexture() const { return grassShadingTex.GetID(); }
-	unsigned int GetMiniMapTexture() const { return minimapTex.GetID(); }
+	unsigned int GetGrassShadingTexture() const override { return grassShadingTex.GetID(); }
+	unsigned int GetMiniMapTexture() const override { return minimapTex.GetID(); }
 	unsigned int GetDetailTexture() const { return detailTex.GetID(); }
-	unsigned int GetShadingTexture() const { return shadingTex.GetID(); }
-	unsigned int GetNormalsTexture() const { return normalsTex.GetID(); }
+	unsigned int GetShadingTexture() const override { return shadingTex.GetID(); }
+	unsigned int GetNormalsTexture() const  { return normalsTex.GetID(); }
 
 
 	unsigned int GetSpecularTexture() const { return specularTex.GetID(); }
@@ -113,23 +113,24 @@ public:
 	unsigned int GetParallaxHeightTexture() const { return parallaxHeightTex.GetID(); }
 
 public:
-	void DrawMinimap() const;
+	void DrawMinimap() const override;
 	void GridVisibility(CCamera* cam, IQuadDrawer* cb, float maxDist, int quadSize, int extraSize = 0) override;
 
-	void InitGroundDrawer();
-	void KillGroundDrawer();
+	void InitGroundDrawer() override;
+	void KillGroundDrawer() override;
 
-	int GetNumFeatureTypes();
-	int GetNumFeatures();
-	void GetFeatureInfo(MapFeatureInfo* f); // returns all feature info in MapFeatureInfo[NumFeatures]
-	const char* GetFeatureTypeName(int typeID);
+	int GetNumFeatureTypes() override;
+	int GetNumFeatures() override;
+	void GetFeatureInfo(MapFeatureInfo* f) override; // returns all feature info in MapFeatureInfo[NumFeatures]
+	const char* GetFeatureTypeName(int typeID) override;
 
-	unsigned char* GetInfoMap(const std::string& name, MapBitmapInfo* bm);
-	void FreeInfoMap(const std::string& name, unsigned char* data);
+	unsigned char* GetInfoMap(const std::string& name, MapBitmapInfo* bm) override;
+	void FreeInfoMap(const std::string& name, unsigned char* data) override;
+
 
 	// NOTE: do not use, just here for backward compatibility with SMFGroundTextures.cpp
-	inline CSMFMapFile& GetFile() { return file; }
-	inline CBaseGroundDrawer* GetGroundDrawer();
+	inline CSMFMapFile& GetFile(){ return file; }
+	inline CBaseGroundDrawer* GetGroundDrawer() override;
 
 
 	void ConfigureTexAnisotropyLevels();

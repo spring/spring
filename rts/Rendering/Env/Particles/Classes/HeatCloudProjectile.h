@@ -9,7 +9,7 @@ struct AtlasedTexture;
 
 class CHeatCloudProjectile : public CProjectile
 {
-	CR_DECLARE(CHeatCloudProjectile)
+	CR_DECLARE_OVERRIDE(CHeatCloudProjectile)
 public:
 	CHeatCloudProjectile();
 	/// projectile starts at size 0 and ends at size \<size\>
