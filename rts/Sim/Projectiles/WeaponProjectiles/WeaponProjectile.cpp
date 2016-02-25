@@ -134,7 +134,7 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 		allyteamID = teamHandler->IsValidTeam(teamID)? teamHandler->AllyTeam(teamID): -1;
 	}
 
-	if (ownerID >= 0 && weaponNum >= 0) {
+	if (ownerID != -1u && weaponNum != -1u) {
 		const CUnit* owner = unitHandler->GetUnit(ownerID);
 		if (owner != nullptr && weaponNum < owner->weapons.size()) {
 			damages = DynDamageArray::IncRef(owner->weapons[weaponNum]->damages);
