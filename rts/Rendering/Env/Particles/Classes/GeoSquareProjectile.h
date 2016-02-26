@@ -7,7 +7,7 @@
 
 class CGeoSquareProjectile : public CProjectile
 {
-	CR_DECLARE_OVERRIDE(CGeoSquareProjectile)
+	CR_DECLARE_DERIVED(CGeoSquareProjectile)
 public:
 	CGeoSquareProjectile(
 		const float3& p1, const float3& p2,

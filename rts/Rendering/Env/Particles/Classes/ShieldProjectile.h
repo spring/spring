@@ -19,7 +19,7 @@ class ShieldSegmentProjectile;
 
 class ShieldProjectile: public CProjectile
 {
-	CR_DECLARE_OVERRIDE(ShieldProjectile)
+	CR_DECLARE_DERIVED(ShieldProjectile)
 public:
 	// creg only
 	ShieldProjectile() { }

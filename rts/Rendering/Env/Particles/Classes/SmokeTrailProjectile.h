@@ -9,7 +9,7 @@ struct AtlasedTexture;
 
 class CSmokeTrailProjectile : public CProjectile
 {
-	CR_DECLARE_OVERRIDE(CSmokeTrailProjectile)
+	CR_DECLARE_DERIVED(CSmokeTrailProjectile)
 public:
 	CSmokeTrailProjectile(
 		const CUnit* owner,

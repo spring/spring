@@ -9,7 +9,7 @@ class CUnit;
 
 class CRepulseGfx : public CProjectile
 {
-	CR_DECLARE_OVERRIDE(CRepulseGfx)
+	CR_DECLARE_DERIVED(CRepulseGfx)
 public:
 	CRepulseGfx(
 		CUnit* owner,

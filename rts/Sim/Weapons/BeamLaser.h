@@ -7,7 +7,7 @@
 
 class CBeamLaser: public CWeapon
 {
-	CR_DECLARE_OVERRIDE(CBeamLaser)
+	CR_DECLARE_DERIVED(CBeamLaser)
 	CR_DECLARE_SUB(SweepFireState)
 
 public:

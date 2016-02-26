@@ -8,7 +8,7 @@
 class CTracerProjectile : public CProjectile
 {
 public:
-	CR_DECLARE_OVERRIDE(CTracerProjectile)
+	CR_DECLARE_DERIVED(CTracerProjectile)
 
 	CTracerProjectile();
 	CTracerProjectile(

@@ -7,7 +7,7 @@
 
 class CFlameProjectile : public CWeaponProjectile
 {
-	CR_DECLARE_OVERRIDE(CFlameProjectile)
+	CR_DECLARE_DERIVED(CFlameProjectile)
 public:
 	CFlameProjectile(const ProjectileParams& params);
 

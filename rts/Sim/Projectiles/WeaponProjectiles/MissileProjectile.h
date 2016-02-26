@@ -11,7 +11,7 @@ class CSmokeTrailProjectile;
 
 class CMissileProjectile : public CWeaponProjectile
 {
-	CR_DECLARE_OVERRIDE(CMissileProjectile)
+	CR_DECLARE_DERIVED(CMissileProjectile)
 protected:
 	void UpdateGroundBounce() override;
 public:

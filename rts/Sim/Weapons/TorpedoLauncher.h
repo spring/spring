@@ -7,7 +7,7 @@
 
 class CTorpedoLauncher: public CWeapon
 {
-	CR_DECLARE_OVERRIDE(CTorpedoLauncher)
+	CR_DECLARE_DERIVED(CTorpedoLauncher)
 public:
 	CTorpedoLauncher(CUnit* owner, const WeaponDef* def);
 

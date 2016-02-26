@@ -91,7 +91,7 @@ private:
 class CSimpleGroundFlash : public CGroundFlash
 {
 public:
-	CR_DECLARE_OVERRIDE(CSimpleGroundFlash)
+	CR_DECLARE_DERIVED(CSimpleGroundFlash)
 
 	CSimpleGroundFlash();
 

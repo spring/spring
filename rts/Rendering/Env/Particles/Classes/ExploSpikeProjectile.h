@@ -7,7 +7,7 @@
 
 class CExploSpikeProjectile : public CProjectile
 {
-	CR_DECLARE_OVERRIDE(CExploSpikeProjectile)
+	CR_DECLARE_DERIVED(CExploSpikeProjectile)
 
 public:
 	CExploSpikeProjectile();

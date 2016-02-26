@@ -22,7 +22,7 @@ struct LocalModelPiece;
 
 class CPieceProjectile: public CProjectile
 {
-	CR_DECLARE_OVERRIDE(CPieceProjectile)
+	CR_DECLARE_DERIVED(CPieceProjectile)
 
 public:
 	CPieceProjectile(

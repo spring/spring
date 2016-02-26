@@ -348,11 +348,8 @@ namespace creg {
 
 namespace creg {
 
-/** @def CR_DECLARE
- * Add the definitions for creg binding to the class
- * this should be put within the class definition
- */
-#define CR_DECLARE_OVERRIDE_BASE(TCls, OVERRIDE)	public:					\
+#define CR_DECLARE_BASE(TCls, isStr, VIRTUAL, OVERRIDE)	\
+public:					\
 	static creg::ClassBinder binder;				\
 	typedef TCls MyType;							\
 	static creg::IMemberRegistrator* memberRegistrator;	 \
@@ -360,12 +357,23 @@ namespace creg {
 	static void _DestructInstance(void* d);			\
 	friend struct TCls##MemberRegistrator;			\
 	inline static creg::Class* StaticClass() { return binder.class_; } \
-	virtual creg::Class* GetClass() const OVERRIDE; \
+	VIRTUAL creg::Class* GetClass() const OVERRIDE; \
 	static bool creg_hasVTable; \
-	static const bool creg_isStruct = false;
+	static const bool creg_isStruct = isStr;
 
-#define CR_DECLARE_OVERRIDE(TCls) CR_DECLARE_OVERRIDE_BASE(TCls, override)
-#define CR_DECLARE(TCls) CR_DECLARE_OVERRIDE_BASE(TCls, )
+
+/** @def CR_DECLARE
+ * Add the definitions for creg binding to the class
+ * this should be put within the class definition
+ */
+#define CR_DECLARE(TCls) CR_DECLARE_BASE(TCls, false, virtual, )
+
+
+/** @def CR_DECLARE_STRUCT
+ * Use this to declare a derived class
+ * this should be put in the class definition, instead of CR_DECLARE
+ */
+#define CR_DECLARE_DERIVED(TCls) CR_DECLARE_BASE(TCls, false, virtual, override)
 
 /** @def CR_DECLARE_STRUCT
  * Use this to declare a structure
@@ -373,17 +381,7 @@ namespace creg {
  * For creg, the only difference between a class and a structure is having a
  * vtable or not.
  */
-#define CR_DECLARE_STRUCT(TStr)		public:			\
-	static creg::ClassBinder binder;				\
-	typedef TStr MyType;							\
-	static creg::IMemberRegistrator* memberRegistrator;	\
-	static void _ConstructInstance(void* d);			\
-	static void _DestructInstance(void* d);			\
-	friend struct TStr##MemberRegistrator;			\
-	inline static creg::Class* StaticClass() { return binder.class_; } \
-	creg::Class* GetClass() const; \
-	static bool creg_hasVTable; \
-	static const bool creg_isStruct = true;
+#define CR_DECLARE_STRUCT(TStr)	CR_DECLARE_BASE(TStr ,true, , )
 
 /** @def CR_DECLARE_SUB
  * Use this to declare a sub class. This should be put in the class definition

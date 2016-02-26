@@ -10,7 +10,7 @@ class CColorMap;
 
 class CGenericParticleProjectile : public CProjectile
 {
-	CR_DECLARE_OVERRIDE(CGenericParticleProjectile)
+	CR_DECLARE_DERIVED(CGenericParticleProjectile)
 
 public:
 	CGenericParticleProjectile(

@@ -11,7 +11,7 @@ class CSmokeTrailProjectile;
 
 class CStarburstProjectile : public CWeaponProjectile
 {
-	CR_DECLARE_OVERRIDE(CStarburstProjectile)
+	CR_DECLARE_DERIVED(CStarburstProjectile)
 	CR_DECLARE_SUB(TracerPart)
 
 public:

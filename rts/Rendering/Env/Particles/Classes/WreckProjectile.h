@@ -7,7 +7,7 @@
 
 class CWreckProjectile : public CProjectile
 {
-	CR_DECLARE_OVERRIDE(CWreckProjectile)
+	CR_DECLARE_DERIVED(CWreckProjectile)
 public:
 	CWreckProjectile(CUnit* owner, float3 pos, float3 speed, float temperature);
 

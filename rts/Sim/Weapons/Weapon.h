@@ -18,7 +18,7 @@ struct WeaponDef;
 
 class CWeapon : public CObject
 {
-	CR_DECLARE_OVERRIDE(CWeapon)
+	CR_DECLARE_DERIVED(CWeapon)
 
 public:
 	CWeapon(CUnit* owner, const WeaponDef* def);

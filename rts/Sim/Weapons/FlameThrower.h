@@ -7,7 +7,7 @@
 
 class CFlameThrower: public CWeapon
 {
-	CR_DECLARE_OVERRIDE(CFlameThrower)
+	CR_DECLARE_DERIVED(CFlameThrower)
 public:
 	CFlameThrower(CUnit* owner, const WeaponDef* def);
 

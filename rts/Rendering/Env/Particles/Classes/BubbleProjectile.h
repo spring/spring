@@ -7,7 +7,7 @@
 
 class CBubbleProjectile : public CProjectile
 {
-	CR_DECLARE_OVERRIDE(CBubbleProjectile)
+	CR_DECLARE_DERIVED(CBubbleProjectile)
 public:
 	CBubbleProjectile(
 		CUnit* owner,

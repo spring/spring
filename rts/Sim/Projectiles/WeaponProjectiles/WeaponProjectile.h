@@ -20,7 +20,7 @@ class DynDamageArray;
  */
 class CWeaponProjectile : public CProjectile
 {
-	CR_DECLARE_OVERRIDE(CWeaponProjectile)
+	CR_DECLARE_DERIVED(CWeaponProjectile)
 public:
 	CWeaponProjectile();
 	CWeaponProjectile(const ProjectileParams& params);

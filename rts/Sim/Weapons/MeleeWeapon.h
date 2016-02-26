@@ -7,7 +7,7 @@
 
 class CMeleeWeapon: public CWeapon
 {
-	CR_DECLARE_OVERRIDE(CMeleeWeapon)
+	CR_DECLARE_DERIVED(CMeleeWeapon)
 public:
 	CMeleeWeapon(CUnit* owner, const WeaponDef* def);
 

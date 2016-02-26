@@ -7,7 +7,7 @@
 
 class CEmgProjectile : public CWeaponProjectile
 {
-	CR_DECLARE_OVERRIDE(CEmgProjectile)
+	CR_DECLARE_DERIVED(CEmgProjectile)
 public:
 	CEmgProjectile(const ProjectileParams& params);
 
