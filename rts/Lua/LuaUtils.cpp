@@ -875,6 +875,20 @@ void LuaUtils::PushCommandOptionsTable(lua_State* L, const Command& cmd, bool su
 	}
 }
 
+void LuaUtils::PushUnitAndCommand(lua_State* L, const CUnit* unit, const Command& cmd)
+{
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, unit->team);
+
+	lua_pushnumber(L, cmd.GetID());
+
+	PushCommandParamsTable(L, cmd, false);
+	PushCommandOptionsTable(L, cmd, false);
+
+	lua_pushnumber(L, cmd.tag);
+}
+
 void LuaUtils::ParseCommandOptions(
 	lua_State* L,
 	Command& cmd,

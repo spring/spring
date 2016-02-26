@@ -139,6 +139,10 @@ Lua Callins:
      AllowWeaponTarget,
      AllowWeaponInterceptTarget,
      StockpileChanged
+ ! UnitCommand and UnitCmdDone argument order changed to be consistent with
+   each other and with CommandFallback & AllowCommand: (unitID,
+        unitDefID, unitTeam, cmdId, cmdParams, cmdOpts, cmdTag)
+   Note that UnitCommand will now receive cmdOpts as a table and not as a number
  - new callin UnitReverseBuilt, called when a living unit becomes a nanoframe again
  - add new callins DrawGroundPreForward and DrawGroundPreDeferred
    these run at the start of their respective passes when a custom

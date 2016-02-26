@@ -924,19 +924,7 @@ void CLuaHandle::UnitCommand(const CUnit* unit, const Command& command)
 		return; // the call is not defined
 	}
 
-	lua_pushnumber(L, unit->id);
-	lua_pushnumber(L, unit->unitDef->id);
-	lua_pushnumber(L, unit->team);
-
-	lua_pushnumber(L, command.GetID());
-
-	//FIXME: perhaps we should push the table version rather than the bitfield directly
-	lua_pushnumber(L, command.options);
-
-	// push the params list
-	LuaUtils::PushCommandParamsTable(L, command, false);
-
-	lua_pushnumber(L, command.tag);
+	LuaUtils::PushUnitAndCommand(L, unit, command);
 
 	// call the routine
 	RunCallInTraceback(L, cmdStr, 7, 0, traceBack.GetErrFuncIdx(), false);
@@ -955,15 +943,7 @@ void CLuaHandle::UnitCmdDone(const CUnit* unit, const Command& command)
 		return; // the call is not defined
 	}
 
-	lua_pushnumber(L, unit->id);
-	lua_pushnumber(L, unit->unitDef->id);
-	lua_pushnumber(L, unit->team);
-	lua_pushnumber(L, command.GetID());
-	lua_pushnumber(L, command.tag);
-	// push the params list
-	LuaUtils::PushCommandParamsTable(L, command, false);
-	// push the options table
-	LuaUtils::PushCommandOptionsTable(L, command, false);
+	LuaUtils::PushUnitAndCommand(L, unit, command);
 
 	// call the routine
 	RunCallInTraceback(L, cmdStr, 7, 0, traceBack.GetErrFuncIdx(), false);

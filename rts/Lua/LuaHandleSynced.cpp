@@ -452,37 +452,6 @@ bool CSyncedLuaHandle::SyncedActionFallback(const string& msg, int playerID)
 }
 
 
-/// pushes 7 items on the stack
-static void PushUnitAndCommand(lua_State* L, const CUnit* unit, const Command& cmd)
-{
-	// push the unit info
-	lua_pushnumber(L, unit->id);
-	lua_pushnumber(L, unit->unitDef->id);
-	lua_pushnumber(L, unit->team);
-
-	// push the command id
-	lua_pushnumber(L, cmd.GetID());
-
-	// push the params list
-	lua_newtable(L);
-	for (int p = 0; p < (int)cmd.params.size(); p++) {
-		lua_pushnumber(L, cmd.params[p]);
-		lua_rawseti(L, -2, p + 1);
-	}
-
-	// push the options table
-	lua_newtable(L);
-	HSTR_PUSH_NUMBER(L, "coded", cmd.options);
-	HSTR_PUSH_BOOL(L, "alt",   !!(cmd.options & ALT_KEY));
-	HSTR_PUSH_BOOL(L, "ctrl",  !!(cmd.options & CONTROL_KEY));
-	HSTR_PUSH_BOOL(L, "shift", !!(cmd.options & SHIFT_KEY));
-	HSTR_PUSH_BOOL(L, "right", !!(cmd.options & RIGHT_MOUSE_KEY));
-	HSTR_PUSH_BOOL(L, "meta",  !!(cmd.options & META_KEY));
-
-	// push the command tag
-	lua_pushnumber(L, cmd.tag);
-}
-
 bool CSyncedLuaHandle::CommandFallback(const CUnit* unit, const Command& cmd)
 {
 	LUA_CALL_IN_CHECK(L, true);
@@ -492,7 +461,7 @@ bool CSyncedLuaHandle::CommandFallback(const CUnit* unit, const Command& cmd)
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined
 
-	PushUnitAndCommand(L, unit, cmd);
+	LuaUtils::PushUnitAndCommand(L, unit, cmd);
 
 	// call the function
 	if (!RunCallIn(L, cmdStr, 7, 1))
@@ -513,7 +482,7 @@ bool CSyncedLuaHandle::AllowCommand(const CUnit* unit, const Command& cmd, bool 
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined
 
-	PushUnitAndCommand(L, unit, cmd);
+	LuaUtils::PushUnitAndCommand(L, unit, cmd);
 
 	lua_pushboolean(L, fromSynced);
 
