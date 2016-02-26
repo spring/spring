@@ -545,7 +545,7 @@ bool CCobThread::Tick()
 					r3 = r1 / r2;
 				else {
 					r3 = 1000; // infinity!
-					LOG_L(L_ERROR, "division by zero");
+					ShowError("division by zero");
 				}
 				stack.push_back(r3);
 				break;
@@ -556,7 +556,7 @@ bool CCobThread::Tick()
 					stack.push_back(r1 % r2);
 				else {
 					stack.push_back(0);
-					LOG_L(L_ERROR, "modulo division by zero");
+					ShowError("modulo division by zero");
 				}
 				break;
 			case MOVE:
