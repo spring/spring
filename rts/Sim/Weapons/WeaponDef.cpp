@@ -389,6 +389,7 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	// get some weapon specific defaults
 	int defInterceptType = 0;
 
+	ownerExpAccWeight = -1.0f;
 	if (type == "Cannon") {
 		// CExplosiveProjectile
 		defInterceptType = 1;
@@ -449,6 +450,7 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 		projectileType = WEAPON_TORPEDO_PROJECTILE;
 		defInterceptType = 32;
 
+		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
 		waterweapon = true;
 	} else if (type == "DGun") {
 		// CFireBallProjectile
@@ -473,6 +475,8 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	} else {
 		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.0f);
 	}
+	if (ownerExpAccWeight < 0.0f)
+		LOG_L(L_ERROR, "ownerExpAccWeight is negative in weaponDef %s", name.c_str());
 
 	interceptedByShieldType = wdTable.GetInt("interceptedByShieldType", defInterceptType);
 
