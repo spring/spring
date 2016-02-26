@@ -114,6 +114,20 @@ void LuaObjectRenderingImpl::PushFunction(lua_State* L, int (*fnPntr)(lua_State*
 
 
 
+int LuaObjectRenderingImpl::GetLODCount(lua_State* L)
+{
+	const CSolidObject* obj = ParseSolidObject(L, __FUNCTION__, 1, GetObjectType());
+
+	if (obj == nullptr)
+		return 0;
+
+	const LuaObjectMaterialData* lmd = obj->GetLuaMaterialData();
+
+	lua_pushnumber(L, lmd->GetLODCount());
+	lua_pushnumber(L, lmd->GetCurrentLOD());
+	return 2;
+}
+
 int LuaObjectRenderingImpl::SetLODCount(lua_State* L)
 {
 	// args=<objID, lodCount>
