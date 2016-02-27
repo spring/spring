@@ -1268,12 +1268,6 @@ void CGroundDecalHandler::RenderUnitDestroyed(const CUnit* unit) {
 	if (unit->myTrack == nullptr)
 		return;
 
-	auto& decDef = unit->unitDef->decalDef;
-	auto& trType = trackTypes[decDef.trackDecalType];
-
-	VectorErase(trType.tracks, unit->myTrack);
-	tracksToBeDeleted.push_back(unit->myTrack);
-
 	// same pointer as in tracksToBeAdded, so this also pre-empts DrawTracks
 	u->myTrack->owner = nullptr;
 	u->myTrack = nullptr;
