@@ -687,11 +687,10 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 
 void CUnitDrawer::SetupAlphaDrawing(bool deferredPass)
 {
+	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState(true));
 	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass && false, true);
-
-	glActiveTexture(GL_TEXTURE0);
-	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
@@ -703,9 +702,9 @@ void CUnitDrawer::SetupAlphaDrawing(bool deferredPass)
 
 void CUnitDrawer::ResetAlphaDrawing(bool deferredPass) const
 {
-	glPopAttrib();
-
 	unitDrawerStates[DRAWER_STATE_SEL]->Disable(this, deferredPass && false);
+
+	glPopAttrib();
 }
 
 
@@ -970,9 +969,9 @@ void CUnitDrawer::SetupOpaqueDrawing(bool deferredPass)
 
 void CUnitDrawer::ResetOpaqueDrawing(bool deferredPass) const
 {
-	glPopAttrib();
-
 	unitDrawerStates[DRAWER_STATE_SEL]->Disable(this, deferredPass);
+
+	glPopAttrib();
 }
 
 const IUnitDrawerState* CUnitDrawer::GetWantedDrawerState(bool alphaPass) const
