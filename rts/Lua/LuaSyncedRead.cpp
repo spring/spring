@@ -17,6 +17,7 @@
 #include "Game/GameSetup.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
 #include "Map/Ground.h"
@@ -5210,9 +5211,12 @@ static int GetEffectiveLosAllyTeam(lua_State* L, int arg)
 	if (lua_isnoneornil(L, arg) && teamHandler->IsValidAllyTeam(rat))
 		return rat;
 
+	if (lua_isnoneornil(L, arg) && (rat < 0) && !CLuaHandle::GetHandleSynced(L))
+		return gu->myAllyTeam;
+
 	// if fullread, rat is -2 so any no-arg call would fail
 	// the allyteam validity test and then crash on checkint
-	const int aat = luaL_optint(L, arg, 0);
+	const int aat = luaL_optint(L, arg, -1);
 
 	if (CLuaHandle::GetHandleFullRead(L) && teamHandler->IsValidAllyTeam(aat))
 		return aat;
