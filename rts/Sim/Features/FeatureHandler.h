@@ -4,8 +4,9 @@
 #define _FEATURE_HANDLER_H
 
 #include <string>
-#include <list>
 #include <vector>
+#include <unordered_map>
+
 #include <boost/noncopyable.hpp>
 #include "System/creg/creg_cond.h"
 
@@ -53,13 +54,19 @@ public:
 	CFeature* GetFeature(int id);
 
 	void LoadFeaturesFromMap(bool onlyCreateDefs);
-	const FeatureDef* GetFeatureDef(std::string name, const bool showError = true);
-	const FeatureDef* GetFeatureDefByID(int id);
+	const FeatureDef* GetFeatureDef(std::string name, const bool showError = true) const;
+	const FeatureDef* GetFeatureDefByID(int id) const {
+		if ((id < 1) || (static_cast<size_t>(id) >= featureDefsVector.size())) {
+			return NULL;
+		}
+		return &featureDefsVector[id];
+	}
+
 
 	void SetFeatureUpdateable(CFeature* feature);
 	void TerrainChanged(int x1, int y1, int x2, int y2);
 
-	const std::map<std::string, const FeatureDef*>& GetFeatureDefs() const { return featureDefs; }
+	const std::unordered_map<std::string, int>& GetFeatureDefs() const { return featureDefs; }
 	const CFeatureSet& GetActiveFeatures() const { return activeFeatures; }
 
 private:
@@ -79,19 +86,21 @@ private:
 	void AllocateNewFeatureIDs(const CFeature* feature);
 	void InsertActiveFeature(CFeature* feature);
 
-	FeatureDef* CreateDefaultTreeFeatureDef(const std::string& name) const;
-	FeatureDef* CreateDefaultGeoFeatureDef(const std::string& name) const;
-	FeatureDef* CreateFeatureDef(const LuaTable& luaTable, const std::string& name) const;
+	FeatureDef* CreateDefaultTreeFeatureDef(const std::string& name);
+	FeatureDef* CreateDefaultGeoFeatureDef(const std::string& name);
+	FeatureDef* CreateFeatureDef(const LuaTable& luaTable, const std::string& name);
 
-	void AddFeatureDef(const std::string& name, FeatureDef* feature);
+	FeatureDef& GetNewFeatureDef();
+
+	void AddFeatureDef(const std::string& name, FeatureDef* feature, bool isDefaultFeature);
 
 private:
 	SimObjectIDPool idPool;
 
-	std::map<std::string, const FeatureDef*> featureDefs;
-	std::vector<const FeatureDef*> featureDefsVector;
+	std::unordered_map<std::string, int> featureDefs;
+	std::vector<FeatureDef> featureDefsVector;
 
-	std::list<int> toBeFreedFeatureIDs;
+	std::vector<int> toBeFreedFeatureIDs;
 	CFeatureSet activeFeatures;
 	std::vector<CFeature*> features;
 

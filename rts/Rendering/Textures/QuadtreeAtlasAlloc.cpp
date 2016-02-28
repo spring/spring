@@ -7,6 +7,8 @@
 #include "System/bitops.h"
 #include "System/Log/ILog.h"
 
+#include <algorithm>
+#include <vector>
 
 static int NODE_MIN_SIZE = 8;
 
@@ -66,7 +68,7 @@ QuadTreeNode* QuadTreeNode::FindPosInQuadTree(int xsize, int ysize)
 	const bool xfit = ((size >> 1) < xsize);
 	const bool yfit = ((size >> 1) < ysize);
 	const bool minSizeReached = (size <= NODE_MIN_SIZE);
-	
+
 	if (xfit || yfit || minSizeReached) {
 		if (!children[0]) {
 			if (!minSizeReached) {

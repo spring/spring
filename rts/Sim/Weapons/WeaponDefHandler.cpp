@@ -27,12 +27,12 @@ CWeaponDefHandler::CWeaponDefHandler(LuaParser* defsParser)
 	vector<string> weaponNames;
 	rootTable.GetKeys(weaponNames);
 
-	weaponDefs.resize(weaponNames.size());
+	weaponDefs.reserve(weaponNames.size());
 
-	for (int wid = 0; wid < weaponDefs.size(); wid++) {
+	for (int wid = 0; wid < weaponNames.size(); wid++) {
 		const std::string& name = weaponNames[wid];
 		const LuaTable wdTable = rootTable.SubTable(name);
-		weaponDefs[wid] = WeaponDef(wdTable, name, wid);
+		weaponDefs.emplace_back(wdTable, name, wid);
 		weaponID[name] = wid;
 	}
 }
@@ -62,50 +62,4 @@ const WeaponDef* CWeaponDefHandler::GetWeaponDefByID(int weaponDefId) const
 		return NULL;
 	}
 	return &weaponDefs[weaponDefId];
-}
-
-
-
-DamageArray CWeaponDefHandler::DynamicDamages(
-	const WeaponDef* weaponDef,
-	const float3 startPos,
-	const float3 curPos
-) {
-	const DamageArray& damages = weaponDef->damages;
-
-	if (weaponDef->dynDamageExp <= 0.0f)
-		return damages;
-
-	DamageArray dynDamages(damages);
-
-	const float range     = (weaponDef->dynDamageRange > 0.0f)? weaponDef->dynDamageRange: weaponDef->range;
-	const float damageMin = weaponDef->dynDamageMin;
-
-	const float travDist  = std::min(range, curPos.distance2D(startPos));
-	const float damageMod = 1.0f - math::pow(1.0f / range * travDist, weaponDef->dynDamageExp);
-	const float ddmod     = damageMin / damages[0]; // get damage mod from first damage type
-
-	if (weaponDef->dynDamageInverted) {
-		for (int i = 0; i < damageArrayHandler->GetNumTypes(); ++i) {
-			dynDamages[i] = damages[i] - damageMod * damages[i];
-
-			if (damageMin > 0.0f)
-				dynDamages[i] = std::max(damages[i] * ddmod, dynDamages[i]);
-
-			// to prevent div by 0
-			dynDamages[i] = std::max(0.0001f, dynDamages[i]);
-		}
-	} else {
-		for (int i = 0; i < damageArrayHandler->GetNumTypes(); ++i) {
-			dynDamages[i] = damageMod * damages[i];
-
-			if (damageMin > 0.0f)
-				dynDamages[i] = std::max(damages[i] * ddmod, dynDamages[i]);
-
-			// div by 0
-			dynDamages[i] = std::max(0.0001f, dynDamages[i]);
-		}
-	}
-
-	return dynDamages;
 }

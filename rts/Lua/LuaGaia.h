@@ -12,12 +12,15 @@ using std::string;
 class CLuaGaia : public CLuaHandleSynced
 {
 	public:
-		static void LoadHandler();
-		static void FreeHandler();
+		static bool ReloadHandler() { return (FreeHandler(), LoadFreeHandler()); } // NOTE the ','
+		static bool LoadFreeHandler() { return (LoadHandler() || FreeHandler()); }
+
+		static bool LoadHandler();
+		static bool FreeHandler();
 
 	protected:
-		bool AddSyncedCode(lua_State *L);
-		bool AddUnsyncedCode(lua_State *L);
+		bool AddSyncedCode(lua_State* L);
+		bool AddUnsyncedCode(lua_State* L);
 
 	private:
 		CLuaGaia();

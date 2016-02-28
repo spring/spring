@@ -16,6 +16,8 @@ void GL::LightHandler::Init(unsigned int cfgBaseLight, unsigned int cfgMaxLights
 	maxLights -= baseLight;
 	maxLights = std::min(maxLights, cfgMaxLights);
 
+	lights.resize(maxLights);
+
 	for (unsigned int i = 0; i < maxLights; i++) {
 		const unsigned int lightID = GL_LIGHT0 + baseLight + i;
 
@@ -31,58 +33,65 @@ void GL::LightHandler::Init(unsigned int cfgBaseLight, unsigned int cfgMaxLights
 		glLightf(lightID, GL_QUADRATIC_ATTENUATION, 0.0f);
 		glDisable(lightID);
 
-		// reserve free light ID's
-		lightIDs.push_back(lightID);
+		lights[i].SetID(lightID);
 	}
 }
 
 
 unsigned int GL::LightHandler::AddLight(const GL::Light& light) {
-	if (light.GetTTL() == 0 || light.GetRadius() <= 0.0f) { return -1U; }
-	if (light.GetIntensityWeight().SqLength() <= 0.01f) { return -1U; }
+	if (light.GetTTL() == 0 || light.GetRadius() <= 0.0f)
+		return -1u;
+	if ((light.GetIntensityWeight()).SqLength() <= 0.01f)
+		return -1u;
 
-	if (lights.size() >= maxLights || lightIDs.empty()) {
+	const auto it = std::find_if(lights.begin(), lights.end(), [&](const GL::Light& lgt) { return (lgt.GetTTL() == 0); });
+
+	if (it == lights.end()) {
+		// all are claimed; find the lowest-priority light we can evict
 		unsigned int minPriorityValue = light.GetPriority();
-		unsigned int minPriorityHandle = -1U;
+		unsigned int minPriorityIndex = -1u;
 
-		for (std::map<unsigned int, GL::Light>::const_iterator it = lights.begin(); it != lights.end(); ++it) {
-			const GL::Light& lgt = it->second;
+		for (unsigned int n = 0; n < lights.size(); n++) {
+			const GL::Light& lgt = lights[n];
 
 			if (lgt.GetPriority() < minPriorityValue) {
 				minPriorityValue = lgt.GetPriority();
-				minPriorityHandle = it->first;
+				minPriorityIndex = n;
 			}
 		}
 
-		if (minPriorityHandle != -1U) {
-			lightIntensityWeight -= lights[minPriorityHandle].GetIntensityWeight();
-			lightIDs.push_back(lights[minPriorityHandle].GetID());
-			lights.erase(minPriorityHandle);
-		} else {
-			// no available light to replace
-			return -1U;
-		}
+		if (minPriorityIndex != -1u)
+			return (SetLight(minPriorityIndex, light));
+
+		// no available light to replace
+		return -1u;
 	}
 
-	lights[lightHandle] = light;
-	lights[lightHandle].SetID(lightIDs.front());
-	lights[lightHandle].SetRelativeTime(0);
-	lights[lightHandle].SetAbsoluteTime(gs->frameNum);
-
-	lightIntensityWeight += light.GetIntensityWeight();
-	lightIDs.pop_front();
-
-	return (lightHandle++);
+	return (SetLight(it - lights.begin(), light));
 }
 
-GL::Light* GL::LightHandler::GetLight(unsigned int _lightHandle) {
-	const std::map<unsigned int, GL::Light>::iterator it = lights.find(_lightHandle);
+unsigned int GL::LightHandler::SetLight(unsigned int lgtIndex, const GL::Light& light) {
+	const unsigned int lightID = lights[lgtIndex].GetID();
 
-	if (it != lights.end()) {
-		return &(it->second);
-	}
+	// clear any previous dependence this light might have
+	lights[lgtIndex].ClearDeathDependencies();
 
-	return NULL;
+	lights[lgtIndex] = light;
+	lights[lgtIndex].SetID(lightID);
+	lights[lgtIndex].SetUID(lightHandle++);
+	lights[lgtIndex].SetRelativeTime(0);
+	lights[lgtIndex].SetAbsoluteTime(gs->frameNum);
+
+	return (lights[lgtIndex].GetUID());
+}
+
+GL::Light* GL::LightHandler::GetLight(unsigned int lgtHandle) {
+	const auto it = std::find_if(lights.begin(), lights.end(), [&](const GL::Light& lgt) { return (lgt.GetUID() == lgtHandle); });
+
+	if (it != lights.end())
+		return &(*it);
+
+	return nullptr;
 }
 
 
@@ -95,12 +104,32 @@ void GL::LightHandler::Update(Shader::IProgramObject* shader) {
 		// shader->SetUniform1i(uniformIndex, numLights);
 	}
 
-	if (numLights == 0) {
+	if (numLights == 0)
 		return;
+
+	// float3 sumWeight;
+	float3 maxWeight = OnesVector * 0.01f;
+
+	for (const GL::Light& light: lights) {
+		if (light.GetTTL() == 0)
+			continue;
+
+		// sumWeight += light.GetIntensityWeight();
+		maxWeight = float3::max(maxWeight, light.GetIntensityWeight());
 	}
 
-	for (std::map<unsigned int, GL::Light>::iterator it = lights.begin(); it != lights.end(); ) {
-		GL::Light& light = it->second;
+	for (GL::Light& light: lights) {
+		const unsigned int lightID = light.GetID();
+
+		// dead light, ignore (but kill its contribution)
+		if (light.GetTTL() == 0) {
+			glEnable(lightID);
+			glLightfv(lightID, GL_AMBIENT,  &ZeroVector4.x);
+			glLightfv(lightID, GL_DIFFUSE,  &ZeroVector4.x);
+			glLightfv(lightID, GL_SPECULAR, &ZeroVector4.x);
+			glDisable(lightID);
+			continue;
+		}
 
 		if (light.GetAbsoluteTime() != gs->frameNum) {
 			light.SetRelativeTime(light.GetRelativeTime() + 1);
@@ -109,31 +138,24 @@ void GL::LightHandler::Update(Shader::IProgramObject* shader) {
 			light.ClampColors();
 		}
 
-		const unsigned int lightID = light.GetID();
-		const unsigned int lightHndle = it->first;
+		// rescale by max (not sum!), otherwise 1) the intensity would
+		// change if any light is added or removed when all have equal
+		// weight and 2) a non-uniform set would cause a reduction for
+		// all
+		const float3 weight              = light.GetIntensityWeight() / maxWeight;
+		const float4 weightedAmbientCol  = light.GetAmbientColor()  * weight.x;
+		const float4 weightedDiffuseCol  = light.GetDiffuseColor()  * weight.y;
+		const float4 weightedSpecularCol = light.GetSpecularColor() * weight.z;
 
-		const float4  weightedAmbientCol  = (light.GetAmbientColor()  * light.GetIntensityWeight().x) / lightIntensityWeight.x;
-		const float4  weightedDiffuseCol  = (light.GetDiffuseColor()  * light.GetIntensityWeight().y) / lightIntensityWeight.y;
-		const float4  weightedSpecularCol = (light.GetSpecularColor() * light.GetIntensityWeight().z) / lightIntensityWeight.z;
-		const float3* lightTrackPos       = light.GetTrackPosition();
-		const float3* lightTrackDir       = light.GetTrackDirection();
-		const float4& lightPos            = (lightTrackPos != NULL)? float4(*lightTrackPos, 1.0f): light.GetPosition();
-		const float3& lightDir            = (lightTrackDir != NULL)? float3(*lightTrackDir      ): light.GetDirection();
-		const bool    lightVisible        = (gu->spectatingFullView || light.GetIgnoreLOS() || losHandler->InLos(lightPos, gu->myAllyTeam));
-
-		++it;
+		const float3* lightTrackPos      = light.GetTrackPosition();
+		const float3* lightTrackDir      = light.GetTrackDirection();
+		const float4& lightPos           = (lightTrackPos != nullptr)? float4(*lightTrackPos, 1.0f): light.GetPosition();
+		const float3& lightDir           = (lightTrackDir != nullptr)? float3(*lightTrackDir      ): light.GetDirection();
+		const bool    lightVisible       = (gu->spectatingFullView || light.GetIgnoreLOS() || losHandler->InLos(lightPos, gu->myAllyTeam));
 
 		if (light.GetRelativeTime() > light.GetTTL()) {
-			lightIntensityWeight -= light.GetIntensityWeight();
-			lightIDs.push_back(lightID);
-			lights.erase(lightHndle);
-
-			// kill the contribution from this light
-			glEnable(lightID);
-			glLightfv(lightID, GL_AMBIENT,  &ZeroVector4.x);
-			glLightfv(lightID, GL_DIFFUSE,  &ZeroVector4.x);
-			glLightfv(lightID, GL_SPECULAR, &ZeroVector4.x);
-			glDisable(lightID);
+			// mark light as dead
+			light.SetTTL(0);
 		} else {
 			// communicate properties via the FFP to save uniforms
 			// note: we want MV to be identity here
@@ -165,3 +187,4 @@ void GL::LightHandler::Update(Shader::IProgramObject* shader) {
 		}
 	}
 }
+

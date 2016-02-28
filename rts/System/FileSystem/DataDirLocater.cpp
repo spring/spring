@@ -36,7 +36,7 @@ CONFIG(std::string, SpringData).defaultValue("")
 
 DataDirLocater dataDirLocater;
 
-static std::string GetSpringBinaryName()
+static inline std::string GetSpringBinaryName()
 {
 #if defined(WIN32)
 	return "spring.exe";
@@ -45,7 +45,7 @@ static std::string GetSpringBinaryName()
 #endif
 }
 
-static std::string GetUnitsyncLibName()
+static inline std::string GetUnitsyncLibName()
 {
 #if   defined(WIN32)
 	return "unitsync.dll";

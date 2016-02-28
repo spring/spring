@@ -398,9 +398,11 @@ void CSelectedUnitsHandlerAI::MakeFrontMove(Command* c,int player)
 
 void CSelectedUnitsHandlerAI::CreateUnitOrder(std::multimap<float,int>& out,int player)
 {
-	const vector<int>& netUnits = selectedUnitsHandler.netSelected[player];
-	for (vector<int>::const_iterator ui = netUnits.begin(); ui != netUnits.end(); ++ui) {
+	const std::vector<int>& netUnits = selectedUnitsHandler.netSelected[player];
+
+	for (auto ui = netUnits.cbegin(); ui != netUnits.cend(); ++ui) {
 		const CUnit* unit = unitHandler->units[*ui];
+
 		if (unit) {
 			const UnitDef* ud = unit->unitDef;
 			float range = unit->maxRange;
@@ -589,7 +591,7 @@ void CSelectedUnitsHandlerAI::SelectCircleUnits(
 	if (p == NULL)
 		return;
 
-	const vector<CUnit*>& tmpUnits = quadField->GetUnitsExact(pos, radius, false);
+	const std::vector<CUnit*>& tmpUnits = quadField->GetUnitsExact(pos, radius, false);
 
 	const float radiusSqr = radius * radius;
 	const unsigned int count = tmpUnits.size();
@@ -622,7 +624,7 @@ void CSelectedUnitsHandlerAI::SelectRectangleUnits(
 	const float3& pos0,
 	const float3& pos1,
 	int player,
-	vector<int>& units
+	std::vector<int>& units
 ) {
 	units.clear();
 
@@ -637,7 +639,7 @@ void CSelectedUnitsHandlerAI::SelectRectangleUnits(
 	const float3 mins(std::min(pos0.x, pos1.x), 0.0f, std::min(pos0.z, pos1.z));
 	const float3 maxs(std::max(pos0.x, pos1.x), 0.0f, std::max(pos0.z, pos1.z));
 
-	const vector<CUnit*>& tmpUnits = quadField->GetUnitsExact(mins, maxs);
+	const std::vector<CUnit*>& tmpUnits = quadField->GetUnitsExact(mins, maxs);
 
 	const unsigned int count = tmpUnits.size();
 	const int allyTeam = teamHandler->AllyTeam(p->team);

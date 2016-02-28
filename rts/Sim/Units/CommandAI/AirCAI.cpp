@@ -44,8 +44,7 @@ CR_REG_METADATA(CAirCAI, (
 	CR_MEMBER(targetAge),
 
 	CR_MEMBER(lastPC1),
-	CR_MEMBER(lastPC2),
-	CR_RESERVED(16)
+	CR_MEMBER(lastPC2)
 ))
 
 CAirCAI::CAirCAI()
@@ -64,16 +63,18 @@ CAirCAI::CAirCAI(CUnit* owner)
 	, lastPC2(-1)
 {
 	cancelDistance = 16000;
-	CommandDescription c;
 
 	if (owner->unitDef->canAttack) {
-		c.id = CMD_AREA_ATTACK;
-		c.action = "areaattack";
+		possibleCommands.emplace_back();
+		CommandDescription& c = possibleCommands.back();
+
+		c.id   = CMD_AREA_ATTACK;
 		c.type = CMDTYPE_ICON_AREA;
-		c.name = "Area attack";
+
+		c.action    = "areaattack";
+		c.name      = "Area attack";
+		c.tooltip   = c.name + ": Sets the aircraft to attack enemy units within a circle";
 		c.mouseicon = c.name;
-		c.tooltip = "Sets the aircraft to attack enemy units within a circle";
-		possibleCommands.push_back(c);
 	}
 
 	basePos = owner->pos;
@@ -105,10 +106,10 @@ void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 				return;
 
 			switch ((int) c.params[0]) {
-				case 0: { airMT->SetRepairBelowHealth(0.0f); break; }
-				case 1: { airMT->SetRepairBelowHealth(0.3f); break; }
-				case 2: { airMT->SetRepairBelowHealth(0.5f); break; }
-				case 3: { airMT->SetRepairBelowHealth(0.8f); break; }
+				case 0: { repairBelowHealth = 0.0f; break; }
+				case 1: { repairBelowHealth = 0.3f; break; }
+				case 2: { repairBelowHealth = 0.5f; break; }
+				case 3: { repairBelowHealth = 0.8f; break; }
 				default: { /*no op*/ } break;
 			}
 
@@ -179,7 +180,6 @@ void CAirCAI::SlowUpdate()
 	if (owner->UsingScriptMoveType())
 		return;
 
-	const bool wantToRefuel = (LandRepairIfNeeded() || RefuelIfNeeded());
 
 	#if (AUTO_GENERATE_ATTACK_ORDERS == 1)
 	if (commandQue.empty()) {
@@ -201,21 +201,6 @@ void CAirCAI::SlowUpdate()
 			StopMove();
 		}
 		return;
-	}
-
-	if (c.GetID() != CMD_STOP && c.GetID() != CMD_AUTOREPAIRLEVEL &&
-		c.GetID() != CMD_IDLEMODE && c.GetID() != CMD_SET_WANTED_MAX_SPEED)
-	{
-		myPlane->Takeoff();
-	}
-
-	if (wantToRefuel) {
-		switch (c.GetID()) {
-			case CMD_AREA_ATTACK:
-			case CMD_ATTACK:
-			case CMD_FIGHT:
-				return;
-		}
 	}
 
 	switch (c.GetID()) {
@@ -379,7 +364,8 @@ void CAirCAI::ExecuteFight(Command& c)
 		}
 	}
 
-	myPlane->goalPos = goalPos;
+	if (myPlane->goalPos != goalPos)
+		SetGoal(goalPos, owner->pos);
 
 	const CStrafeAirMoveType* airMT = (!owner->UsingScriptMoveType())? static_cast<const CStrafeAirMoveType*>(myPlane): NULL;
 	const float radius = (airMT != NULL)? std::max(airMT->turnRadius + 2*SQUARE_SIZE, 128.f) : 127.f;

@@ -142,7 +142,7 @@ CLuaIntro::~CLuaIntro()
 }
 
 
-bool CLuaIntro::RemoveSomeOpenGLFunctions(lua_State *L)
+bool CLuaIntro::RemoveSomeOpenGLFunctions(lua_State* L)
 {
 	// remove some spring opengl functions that don't work preloading
 	lua_getglobal(L, "gl"); {
@@ -175,7 +175,7 @@ bool CLuaIntro::RemoveSomeOpenGLFunctions(lua_State *L)
 }
 
 
-bool CLuaIntro::LoadUnsyncedCtrlFunctions(lua_State *L)
+bool CLuaIntro::LoadUnsyncedCtrlFunctions(lua_State* L)
 {
 	#define REGISTER_LUA_CFUNC(x) \
 		lua_pushstring(L, #x);      \
@@ -221,7 +221,7 @@ bool CLuaIntro::LoadUnsyncedCtrlFunctions(lua_State *L)
 }
 
 
-bool CLuaIntro::LoadUnsyncedReadFunctions(lua_State *L)
+bool CLuaIntro::LoadUnsyncedReadFunctions(lua_State* L)
 {
 	#define REGISTER_LUA_CFUNC(x) \
 		lua_pushstring(L, #x);      \
@@ -269,7 +269,7 @@ bool CLuaIntro::LoadUnsyncedReadFunctions(lua_State *L)
 }
 
 
-bool CLuaIntro::LoadSyncedReadFunctions(lua_State *L)
+bool CLuaIntro::LoadSyncedReadFunctions(lua_State* L)
 {
 	#define REGISTER_LUA_CFUNC(x) \
 		lua_pushstring(L, #x);      \

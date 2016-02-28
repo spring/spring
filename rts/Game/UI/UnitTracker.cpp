@@ -256,8 +256,7 @@ void CUnitTracker::SetCam()
 		if (timeOut > 15) {
 			timeOut = 0;
 		}
-		camHandler->UpdateCam();
-		camera->Update();
+		camHandler->UpdateTransition();
 
 	} else if (camHandler->GetCurrentControllerNum() != CCameraHandler::CAMERA_MODE_FIRSTPERSON) {
 		// non-FPS camera modes  (immediate positional tracking)
@@ -277,8 +276,7 @@ void CUnitTracker::SetCam()
 			}
 		}
 		camHandler->GetCurrentController().SetTrackingInfo(pos, u->radius * 2.7182818f);
-		camHandler->UpdateCam();
-		camera->Update();
+		camHandler->UpdateTransition();
 
 	} else {
 		// FPS Camera

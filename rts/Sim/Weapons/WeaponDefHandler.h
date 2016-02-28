@@ -24,8 +24,6 @@ public:
 	const WeaponDef* GetWeaponDef(std::string weaponname) const;
 	const WeaponDef* GetWeaponDefByID(int weaponDefId) const;
 
-	static DamageArray DynamicDamages(const WeaponDef* weaponDef, const float3 startPos, const float3 curPos);
-
 public:
 	std::vector<WeaponDef> weaponDefs;
 	std::map<std::string, int> weaponID;

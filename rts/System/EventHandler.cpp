@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/EventHandler.h"
-#include "System/EventBatchHandler.h"
 
 #include "Lua/LuaCallInCheck.h"
 #include "Lua/LuaOpenGL.h"  // FIXME -- should be moved
@@ -35,15 +34,10 @@ CEventHandler::CEventHandler()
 	mouseOwner = NULL;
 
 	SetupEvents();
-
-	// helper event client (always created)
-	EventBatchHandler::CreateInstance();
 }
 
 CEventHandler::~CEventHandler()
-{
-	EventBatchHandler::DeleteInstance();
-}
+{ }
 
 
 void CEventHandler::ResetState()
@@ -54,9 +48,6 @@ void CEventHandler::ResetState()
 	handles.clear();
 
 	SetupEvents();
-
-	EventBatchHandler::DeleteInstance();
-	EventBatchHandler::CreateInstance();
 }
 
 void CEventHandler::SetupEvents()
@@ -372,9 +363,15 @@ bool CEventHandler::FeaturePreDamaged(
 }
 
 
-bool CEventHandler::ShieldPreDamaged(const CProjectile* proj, const CWeapon* w, const CUnit* u, bool repulsor)
-{
-	CONTROL_ITERATE_DEF_FALSE(ShieldPreDamaged, proj, w, u, repulsor)
+bool CEventHandler::ShieldPreDamaged(
+	const CProjectile* projectile,
+	const CWeapon* shieldEmitter,
+	const CUnit* shieldCarrier,
+	bool bounceProjectile,
+	const CWeapon* beamEmitter,
+	const CUnit* beamCarrier
+) {
+	CONTROL_ITERATE_DEF_FALSE(ShieldPreDamaged, projectile, shieldEmitter, shieldCarrier, bounceProjectile, beamEmitter, beamCarrier)
 }
 
 
@@ -518,13 +515,14 @@ void CEventHandler::Update()
 
 
 
-void CEventHandler::DeleteSyncedUnits() { eventBatchHandler->DeleteSyncedUnits(); }
-
-
-
 void CEventHandler::SunChanged(const float3& sunDir)
 {
 	ITERATE_EVENTCLIENTLIST(SunChanged, sunDir);
+}
+
+void CEventHandler::SunLightingChanged()
+{
+	ITERATE_EVENTCLIENTLIST(SunLightingChanged);
 }
 
 void CEventHandler::ViewResize()
@@ -539,23 +537,23 @@ void CEventHandler::GameProgress(int gameFrame)
 }
 
 
-#define DRAW_CALLIN(name)                         \
-  void CEventHandler:: Draw ## name ()            \
-  {                                               \
-    if (listDraw ## name.empty())                 \
-      return;                                     \
-    LuaOpenGL::EnableDraw ## name ();             \
-    listDraw ## name [0]->Draw ## name ();        \
-                                                  \
-    for (int i = 1; i < listDraw ## name.size(); ) { \
-      LuaOpenGL::ResetDraw ## name ();            \
-      CEventClient* ec = listDraw ## name [i];    \
-      ec-> Draw ## name ();                       \
+#define DRAW_CALLIN(name)                                            \
+  void CEventHandler:: Draw ## name ()                               \
+  {                                                                  \
+    if (listDraw ## name.empty())                                    \
+      return;                                                        \
+    LuaOpenGL::EnableDraw ## name ();                                \
+    listDraw ## name [0]->Draw ## name ();                           \
+                                                                     \
+    for (int i = 1; i < listDraw ## name.size(); ) {                 \
+      LuaOpenGL::ResetDraw ## name ();                               \
+      CEventClient* ec = listDraw ## name [i];                       \
+      ec-> Draw ## name ();                                          \
       if (i < listDraw ## name.size() && ec == listDraw ## name [i]) \
-	    ++i;                                      \
-    }                                             \
-                                                  \
-    LuaOpenGL::DisableDraw ## name ();            \
+	    ++i;                                                         \
+    }                                                                \
+                                                                     \
+    LuaOpenGL::DisableDraw ## name ();                               \
   }
 
 DRAW_CALLIN(Genesis)
@@ -564,6 +562,11 @@ DRAW_CALLIN(WorldPreUnit)
 DRAW_CALLIN(WorldShadow)
 DRAW_CALLIN(WorldReflection)
 DRAW_CALLIN(WorldRefraction)
+DRAW_CALLIN(GroundPreForward)
+DRAW_CALLIN(GroundPreDeferred)
+DRAW_CALLIN(GroundPostDeferred)
+DRAW_CALLIN(UnitsPostDeferred)
+DRAW_CALLIN(FeaturesPostDeferred)
 DRAW_CALLIN(ScreenEffects)
 DRAW_CALLIN(Screen)
 DRAW_CALLIN(InMiniMap)
@@ -723,6 +726,30 @@ bool CEventHandler::GameSetup(const string& state, bool& ready,
 	return false;
 }
 
+void CEventHandler::DownloadQueued(int ID, const string& archiveName, const string& archiveType)
+{
+	ITERATE_EVENTCLIENTLIST(DownloadQueued, ID, archiveName, archiveType);
+}
+
+void CEventHandler::DownloadStarted(int ID)
+{
+	ITERATE_EVENTCLIENTLIST(DownloadStarted, ID);
+}
+
+void CEventHandler::DownloadFinished(int ID)
+{
+	ITERATE_EVENTCLIENTLIST(DownloadFinished, ID);
+}
+
+void CEventHandler::DownloadFailed(int ID, int errorID)
+{
+	ITERATE_EVENTCLIENTLIST(DownloadFailed, ID, errorID);
+}
+
+void CEventHandler::DownloadProgress(int ID, long downloaded, long total)
+{
+	ITERATE_EVENTCLIENTLIST(DownloadProgress, ID, downloaded, total);
+}
 
 string CEventHandler::WorldTooltip(const CUnit* unit,
                                    const CFeature* feature,
@@ -749,22 +776,4 @@ void CEventHandler::MetalMapChanged(const int x, const int z)
 {
 	ITERATE_EVENTCLIENTLIST(MetalMapChanged, x, z);
 }
-
-
-/******************************************************************************/
-/******************************************************************************/
-
-void CEventHandler::UnsyncedProjectileCreated(const CProjectile* proj) {
-	//FIXME no real event
-	(eventBatchHandler->GetUnsyncedProjectileCreatedDestroyedBatch()).insert(proj);
-}
-
-void CEventHandler::UnsyncedProjectileDestroyed(const CProjectile* proj) {
-	//FIXME no real event
-	(eventBatchHandler->GetUnsyncedProjectileCreatedDestroyedBatch()).erase_delete(proj);
-}
-
-
-/******************************************************************************/
-/******************************************************************************/
 

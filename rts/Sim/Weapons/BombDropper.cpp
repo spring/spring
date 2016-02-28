@@ -18,8 +18,7 @@ CR_BIND_DERIVED(CBombDropper, CWeapon, (NULL, NULL, false))
 CR_REG_METADATA(CBombDropper,(
 	CR_MEMBER(dropTorpedoes),
 	CR_MEMBER(torpMoveRange),
-	CR_MEMBER(tracking),
-	CR_RESERVED(16)
+	CR_MEMBER(tracking)
 ))
 
 //////////////////////////////////////////////////////////////////////
@@ -29,9 +28,13 @@ CR_REG_METADATA(CBombDropper,(
 CBombDropper::CBombDropper(CUnit* owner, const WeaponDef* def, bool useTorps)
 	: CWeapon(owner, def)
 	, dropTorpedoes(useTorps)
-	, torpMoveRange(def->range * useTorps)
-	, tracking((def->tracks)? def->turnrate: 0)
 {
+	//happens when loading
+	if (def != nullptr) {
+		torpMoveRange = def->range * useTorps;
+		tracking = def->turnrate * def->tracks;
+	}
+
 	onlyForward = true;
 	doTargetGroundPos = true;
 	noAutoTarget = true;

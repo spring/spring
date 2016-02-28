@@ -7,7 +7,7 @@
 
 class CStarburstLauncher: public CWeapon
 {
-	CR_DECLARE(CStarburstLauncher)
+	CR_DECLARE_DERIVED(CStarburstLauncher)
 public:
 	CStarburstLauncher(CUnit* owner, const WeaponDef* def);
 

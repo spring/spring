@@ -7,16 +7,13 @@
 #include "Map/ReadMap.h"
 #include "Game/Game.h"
 #include "Game/GameSetup.h"
-#include "Game/InMapDrawModel.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/WaitCommandsAI.h"
 #include "Net/GameServer.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/InterceptHandler.h"
-#include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
@@ -41,6 +38,7 @@ CCregLoadSaveHandler::CCregLoadSaveHandler()
 CCregLoadSaveHandler::~CCregLoadSaveHandler()
 {}
 
+#ifdef USING_CREG
 class CGameStateCollector
 {
 	CR_DECLARE_STRUCT(CGameStateCollector)
@@ -56,19 +54,6 @@ CR_REG_METADATA(CGameStateCollector, (
 	CR_SERIALIZER(Serialize)
 ))
 
-static void WriteString(std::ostream& s, const std::string& str)
-{
-	assert(str.length() < (1 << 16));
-	s.write(str.c_str(), str.length() + 1);
-}
-
-static void ReadString(std::istream& s, std::string& str)
-{
-	char cstr[1 << 16]; // 64kB
-	s.getline(cstr, sizeof(cstr), 0);
-	str += cstr;
-}
-
 void CGameStateCollector::Serialize(creg::ISerializer* s)
 {
 	s->SerializeObjectInstance(gs, gs->GetClass());
@@ -80,20 +65,23 @@ void CGameStateCollector::Serialize(creg::ISerializer* s)
 	s->SerializeObjectInstance(unitHandler, unitHandler->GetClass());
 	s->SerializeObjectInstance(featureHandler, featureHandler->GetClass());
 	s->SerializeObjectInstance(losHandler, losHandler->GetClass());
-	s->SerializeObjectInstance(radarHandler, radarHandler->GetClass());
-	s->SerializeObjectInstance(airBaseHandler, airBaseHandler->GetClass());
 	s->SerializeObjectInstance(&interceptHandler, interceptHandler.GetClass());
 	s->SerializeObjectInstance(CCategoryHandler::Instance(), CCategoryHandler::Instance()->GetClass());
 	s->SerializeObjectInstance(projectileHandler, projectileHandler->GetClass());
 	s->SerializeObjectInstance(&waitCommandsAI, waitCommandsAI.GetClass());
 	s->SerializeObjectInstance(&wind, wind.GetClass());
-	s->SerializeObjectInstance(inMapDrawerModel, inMapDrawerModel->GetClass());
 	s->SerializeObjectInstance(moveDefHandler, moveDefHandler->GetClass());
 	s->SerializeObjectInstance(teamHandler, teamHandler->GetClass());
 	for (int a=0; a < teamHandler->ActiveTeams(); a++) {
 		s->SerializeObjectInstance(grouphandlers[a], grouphandlers[a]->GetClass());
 	}
 	s->SerializeObjectInstance(eoh, eoh->GetClass());
+}
+
+static void WriteString(std::ostream& s, const std::string& str)
+{
+	assert(str.length() < (1 << 16));
+	s.write(str.c_str(), str.length() + 1);
 }
 
 static void PrintSize(const char* txt, int size)
@@ -108,9 +96,20 @@ static void PrintSize(const char* txt, int size)
 		LOG("%s %u B",    txt, size);
 	}
 }
+#endif //USING_CREG
+
+static void ReadString(std::istream& s, std::string& str)
+{
+	char cstr[1 << 16]; // 64kB
+	s.getline(cstr, sizeof(cstr), 0);
+	str += cstr;
+}
+
+
 
 void CCregLoadSaveHandler::SaveGame(const std::string& file)
 {
+#ifdef USING_CREG
 	LOG("Saving game");
 	try {
 		std::ofstream ofs(dataDirsAccess.LocateFile(file, FileQueryFlags::WRITE).c_str(), std::ios::out|std::ios::binary);
@@ -147,6 +146,9 @@ void CCregLoadSaveHandler::SaveGame(const std::string& file)
 	} catch (...) {
 		LOG_L(L_ERROR, "Save failed(unknown error)");
 	}
+#else //USING_CREG
+	LOG_L(L_ERROR, "Save failed: creg is disabled");
+#endif //USING_CREG
 }
 
 /// this just loads the mapname and some other early stuff
@@ -176,6 +178,7 @@ void CCregLoadSaveHandler::LoadGameStartInfo(const std::string& file)
 /// this should be called on frame 0 when the game has started
 void CCregLoadSaveHandler::LoadGame()
 {
+#ifdef USING_CREG
 	ENTER_SYNCED_CODE();
 
 	void* pGSC = NULL;
@@ -209,4 +212,7 @@ void CCregLoadSaveHandler::LoadGame()
 	}
 
 	LEAVE_SYNCED_CODE();
+#else //USING_CREG
+	LOG_L(L_ERROR, "Load failed: creg is disabled");
+#endif //USING_CREG
 }

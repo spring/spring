@@ -317,27 +317,6 @@ namespace creg {
 		size_t GetSize() const { return sizeof(T); }
 	};
 
-	class EmptyType : public IType
-	{
-	public:
-		int size;
-		EmptyType(int Size) {size=Size;}
-		~EmptyType() {}
-
-		void Serialize(ISerializer* s, void* instance)
-		{
-			for (int a=0;a<size;a++) {
-				char c=0;
-				s->Serialize(&c,1);
-			}
-		}
-		std::string GetName() const
-		{
-			return "void";
-		}
-		size_t GetSize() const { return 0; /* size*/ } //FIXME used by CR_RESERVED(), ignored by now
-	};
-
 	class IgnoredType : public IType
 	{
 	public:
@@ -369,11 +348,8 @@ namespace creg {
 
 namespace creg {
 
-/** @def CR_DECLARE
- * Add the definitions for creg binding to the class
- * this should be put within the class definition
- */
-#define CR_DECLARE(TCls)	public:					\
+#define CR_DECLARE_BASE(TCls, isStr, VIRTUAL, OVERRIDE)	\
+public:					\
 	static creg::ClassBinder binder;				\
 	typedef TCls MyType;							\
 	static creg::IMemberRegistrator* memberRegistrator;	 \
@@ -381,9 +357,23 @@ namespace creg {
 	static void _DestructInstance(void* d);			\
 	friend struct TCls##MemberRegistrator;			\
 	inline static creg::Class* StaticClass() { return binder.class_; } \
-	virtual creg::Class* GetClass() const; \
+	VIRTUAL creg::Class* GetClass() const OVERRIDE; \
 	static bool creg_hasVTable; \
-	static const bool creg_isStruct = false;
+	static const bool creg_isStruct = isStr;
+
+
+/** @def CR_DECLARE
+ * Add the definitions for creg binding to the class
+ * this should be put within the class definition
+ */
+#define CR_DECLARE(TCls) CR_DECLARE_BASE(TCls, false, virtual, )
+
+
+/** @def CR_DECLARE_STRUCT
+ * Use this to declare a derived class
+ * this should be put in the class definition, instead of CR_DECLARE
+ */
+#define CR_DECLARE_DERIVED(TCls) CR_DECLARE_BASE(TCls, false, virtual, override)
 
 /** @def CR_DECLARE_STRUCT
  * Use this to declare a structure
@@ -391,17 +381,7 @@ namespace creg {
  * For creg, the only difference between a class and a structure is having a
  * vtable or not.
  */
-#define CR_DECLARE_STRUCT(TStr)		public:			\
-	static creg::ClassBinder binder;				\
-	typedef TStr MyType;							\
-	static creg::IMemberRegistrator* memberRegistrator;	\
-	static void _ConstructInstance(void* d);			\
-	static void _DestructInstance(void* d);			\
-	friend struct TStr##MemberRegistrator;			\
-	inline static creg::Class* StaticClass() { return binder.class_; } \
-	creg::Class* GetClass() const; \
-	static bool creg_hasVTable; \
-	static const bool creg_isStruct = true;
+#define CR_DECLARE_STRUCT(TStr)	CR_DECLARE_BASE(TStr ,true, , )
 
 /** @def CR_DECLARE_SUB
  * Use this to declare a sub class. This should be put in the class definition
@@ -521,6 +501,7 @@ namespace creg {
 		creg::ClassStrong<TClass>* class_ = static_cast<creg::ClassStrong<TClass>*>(class_base_); \
 		Type* null=nullptr;						\
 		(void)null; /*suppress compiler warning if this isn't used*/	\
+		(void)class_; /*suppress compiler warning if this isn't used*/	\
 		Members; }									\
 	} static TClass##mreg;
 
@@ -537,7 +518,8 @@ namespace creg {
 	void RegisterMembers(creg::Class* class_base_) { \
 		creg::ClassStrong<TSubClass>* class_ = static_cast<creg::ClassStrong<TSubClass>*>(class_base_); \
 		Type* null=nullptr; \
-		(void)null; \
+		(void)null; /*suppress compiler warning if this isn't used*/	\
+		(void)class_; /*suppress compiler warning if this isn't used*/	\
 		Members; } \
 	} static TSuperClass##TSubClass##mreg;
 
@@ -574,32 +556,6 @@ namespace creg {
  */
 #define CR_MEMBER_UN(Member) \
     CR_IGNORED( Member )
-
-
-/** @def CR_RESERVED
- *  @author Victor Muraviev
- * Registers a unused space for compatibility
- * Size = 1:
- * - char, synced char, bool, synced bool
- * - pointer
- * - enum
- * Size = 2:
- * - short, synced short
- * - enum
- * Size = 4:
- * - int, synced int, long, synced long, float, synced float
- * - std::set/multiset
- * - std::list
- * - std::deque
- * - std::map/multimap
- * - std::vector
- * - std::string
- * - enum
- * Size = 8:
- * - double, synced double
- */
-#define CR_RESERVED(Size) \
-	class_->AddMember("Reserved", new creg::EmptyType(Size), 0, 0)
 
 /** @def CR_SETFLAG
  * Set a flag for a class/struct.

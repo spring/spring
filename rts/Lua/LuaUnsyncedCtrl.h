@@ -66,12 +66,17 @@ class LuaUnsyncedCtrl {
 		static int UpdateModelLight(lua_State* L);
 		static int SetMapLightTrackingState(lua_State* L);
 		static int SetModelLightTrackingState(lua_State* L);
+		static int SetMapShader(lua_State* L);
 		static int SetMapSquareTexture(lua_State* L);
+		static int SetMapShadingTexture(lua_State* L);
+		static int SetSkyBoxTexture(lua_State* L);
 
 		static int SetUnitNoDraw(lua_State* L);
 		static int SetUnitNoMinimap(lua_State* L);
 		static int SetUnitNoSelect(lua_State* L);
 		static int SetUnitLeaveTracks(lua_State* L);
+		static int SetFeatureNoDraw(lua_State* L);
+		static int SetFeatureFade(lua_State* L);
 
 		static int AddUnitIcon(lua_State* L);
 		static int FreeUnitIcon(lua_State* L);
@@ -143,6 +148,8 @@ class LuaUnsyncedCtrl {
 		static int SetBuildSpacing(lua_State* L);
 		static int SetBuildFacing(lua_State* L);
 
+		static int SetAtmosphere(lua_State* L);
+		static int SetSunLighting(lua_State* L);
 		static int SetSunParameters(lua_State* L);
 		static int SetSunManualControl(lua_State* L);
 		static int SetSunDirection(lua_State* L);
@@ -152,6 +159,9 @@ class LuaUnsyncedCtrl {
 		static int SetLogSectionFilterLevel(lua_State* L);
 
 		static int ClearWatchDogTimer(lua_State* L);
+
+		static int PreloadUnitDefModel(lua_State* L);
+		static int PreloadFeatureDefModel(lua_State* L);
 };
 
 

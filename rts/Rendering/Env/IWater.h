@@ -34,17 +34,17 @@ public:
 
 	bool DrawReflectionPass() const { return drawReflection; }
 	bool DrawRefractionPass() const { return drawRefraction; }
-	bool DrawSolid() const { return drawSolid; }
 	bool BlockWakeProjectiles() const { return (GetID() == WATER_RENDERER_DYNAMIC); }
 
 	static IWater* GetWater(IWater* currWaterRenderer, int nextWaterRenderMode);
+
 	static void ApplyPushedChanges(CGame* game);
 	static void PushWaterMode(int nextWaterRenderMode);
+	static void SetModelClippingPlane(const double* planeEq);
 
 protected:
 	bool drawReflection;
 	bool drawRefraction;
- 	bool drawSolid;
 };
 
 extern IWater* water;

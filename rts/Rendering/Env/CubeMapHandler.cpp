@@ -10,13 +10,12 @@
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Env/ISky.h"
+#include "Rendering/Env/SunLighting.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "System/Config/ConfigHandler.h"
 
 CONFIG(int, CubeTexSizeSpecular).defaultValue(128).minimumValue(1);
 CONFIG(int, CubeTexSizeReflection).defaultValue(128).minimumValue(1);
-
-static char cameraMemBuf[sizeof(CCamera)];
 
 CubeMapHandler* cubeMapHandler = NULL;
 
@@ -31,14 +30,12 @@ CubeMapHandler::CubeMapHandler() {
 	currReflectionFace = 0;
 	specularTexIter = 0;
 	mapSkyReflections = false;
-
-	specTexBuf = NULL;
 }
 
 bool CubeMapHandler::Init() {
 	specTexSize = configHandler->GetInt("CubeTexSizeSpecular");
 	reflTexSize = configHandler->GetInt("CubeTexSizeReflection");
-	specTexBuf = new unsigned char[specTexSize * 4];
+	specTexBuf.resize(specTexSize * 4, 0);
 
 	mapSkyReflections = !(mapInfo->smf.skyReflectModTexName.empty());
 
@@ -118,8 +115,6 @@ void CubeMapHandler::Free() {
 		glDeleteTextures(1, &skyReflectionTexID);
 		skyReflectionTexID = 0;
 	}
-
-	delete [] specTexBuf;
 }
 
 
@@ -129,48 +124,42 @@ void CubeMapHandler::UpdateReflectionTexture()
 	if (!unitDrawer->UseAdvShading())
 		return;
 
-	switch (currReflectionFace++) {
-		case 0: {
-			reflectionCubeFBO.Bind();
-			CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, -FwdVector, false);
-			CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,   UpVector, false);
+	// NOTE:
+	//   we unbind later in WorldDrawer::GenerateIBLTextures() to save render
+	//   context switches (which are one of the slowest OpenGL operations!)
+	//   together with VP restoration
+	reflectionCubeFBO.Bind();
 
-			if (mapSkyReflections) {
-				CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,  RgtVector, true);
-				CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, -RgtVector, true);
-			}
-		} break;
-		case 1: {} break;
-		case 2: {} break;
-		case 3: {
-			reflectionCubeFBO.Bind();
-			CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,  RgtVector, false);
-			CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, -RgtVector, false);
+	switch (currReflectionFace) {
+		case 0: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,  RgtVector, false); } break;
+		case 1: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, -RgtVector, false); } break;
+		case 2: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,  UpVector,  false); } break;
+		case 3: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, -UpVector,  false); } break;
+		case 4: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,  FwdVector, false); } break;
+		case 5: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, -FwdVector, false); } break;
+		default: {} break;
+	}
 
-			if (mapSkyReflections) {
-				CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,  UpVector, true);
-				CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, -UpVector, true);
-			}
-		} break;
-		case 4: {} break;
-		case 5: {} break;
-		case 6: {
-			reflectionCubeFBO.Bind();
-			CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, FwdVector, false);
-			CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, -UpVector, false);
+	if (mapSkyReflections) {
+		// draw only the sky (into its own cubemap) for SSMF
+		// by reusing data from previous frame we could also
+		// make terrain reflect itself, not just the sky
+		switch (currReflectionFace) {
+			case  6: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,  RgtVector, true); } break;
+			case  7: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, -RgtVector, true); } break;
+			case  8: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,  UpVector,  true); } break;
+			case  9: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, -UpVector,  true); } break;
+			case 10: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,  FwdVector, true); } break;
+			case 11: { CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, -FwdVector, true); } break;
+			default: {} break;
+		}
 
-			if (mapSkyReflections) {
-				CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,  FwdVector, true);
-				CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, -FwdVector, true);
-			}
-		} break;
-		case 7: {} break;
-		case 8: {
-			currReflectionFace = 0;
-		} break;
-		default: {
-			currReflectionFace = 0;
-		} break;
+		currReflectionFace +=  1;
+		currReflectionFace %= 12;
+	} else {
+		// touch the FBO at least once per frame
+		currReflectionFace += 1;
+		currReflectionFace %= 6;
 	}
 }
 
@@ -179,47 +168,86 @@ void CubeMapHandler::CreateReflectionFace(unsigned int glType, const float3& cam
 	reflectionCubeFBO.AttachTexture((skyOnly? skyReflectionTexID: envReflectionTexID), glType);
 
 	glPushAttrib(GL_FOG_BIT | GL_DEPTH_BUFFER_BIT);
-	glViewport(0, 0, reflTexSize, reflTexSize);
-
-	if (skyOnly) {
-		glDepthMask(GL_FALSE);
-		glDisable(GL_DEPTH_TEST);
-	} else {
-		glClear(GL_DEPTH_BUFFER_BIT);
-		glDepthMask(GL_TRUE);
-		glEnable(GL_DEPTH_TEST);
-	}
-
-	// anti-crash workaround for multi-threading
-	new (cameraMemBuf) CCamera(*camera);
-
-	game->SetDrawMode(CGame::gameReflectionDraw);
-
-	camera->SetRotZ(0.f);
-	camera->SetDir(camDir);
-	camera->SetFov(90.0f);
-	camera->SetPos((camera->GetPos()) * XZVector + UpVector * (CGround::GetHeightAboveWater(camera->GetPos().x, camera->GetPos().z, false) + 50.0f));
-	// calculate temporary new coor-system and matrices
-	camera->Update();
-
-	sky->Draw();
+	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1.0f);
+	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
 	if (!skyOnly) {
-		readMap->GetGroundDrawer()->Draw(DrawPass::TerrainReflection);
+		glDepthMask(GL_TRUE);
+		glEnable(GL_DEPTH_TEST);
+	} else {
+		// do not need depth-testing for the sky alone
+		glDepthMask(GL_FALSE);
+		glDisable(GL_DEPTH_TEST);
 	}
 
-	// NOTE we do this later to save render context switches (this is one of the slowest OpenGL operations!)
-	// reflectionCubeFBO.Unbind();
-	// glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+	{
+		CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_ENVMAP);
+		CCamera* curCam = CCamera::GetActiveCamera();
+
+		bool draw = true;
+
+		#if 0
+		switch (glType) {
+			case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB: { glClearColor(1.0f, 0.0f, 0.0f, 1.0f); draw = false; } break; // red
+			case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB: { glClearColor(0.0f, 1.0f, 0.0f, 1.0f); draw = false; } break; // green
+			case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB: { glClearColor(0.0f, 0.0f, 1.0f, 1.0f); draw = false; } break; // blue
+			case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB: { glClearColor(1.0f, 1.0f, 0.0f, 1.0f); draw = false; } break; // yellow
+			case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB: { glClearColor(1.0f, 0.0f, 1.0f, 1.0f); draw = false; } break; // purple
+			case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB: { glClearColor(0.0f, 1.0f, 1.0f, 1.0f); draw = false; } break; // cyan
+			default: {} break;
+		}
+
+		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+		#endif
+
+		#if 1
+		// work around CCamera::GetRgtFromRot bugs
+		switch (glType) {
+			case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB: { /*fwd =  Rgt*/ curCam->right =  FwdVector; curCam->up =   UpVector; } break;
+			case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB: { /*fwd = -Rgt*/ curCam->right = -FwdVector; curCam->up =   UpVector; } break;
+			case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB: { /*fwd =   Up*/ curCam->right =  RgtVector; curCam->up = -FwdVector; } break;
+			case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB: { /*fwd =  -Up*/ curCam->right =  RgtVector; curCam->up =  FwdVector; } break;
+			case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB: { /*fwd =  Fwd*/ curCam->right = -RgtVector; curCam->up =   UpVector; } break;
+			case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB: { /*fwd = -Fwd*/ curCam->right =  RgtVector; curCam->up =   UpVector; } break;
+			default: {} break;
+		}
+
+		if (draw) {
+			// env-reflections are only correct when drawn from an inverted
+			// perspective (meaning right becomes left and up becomes down)
+			curCam->forward  = camDir;
+			curCam->right   *= -1.0f;
+			curCam->up      *= -1.0f;
+
+			// we want a *horizontal* FOV of 90 degrees; this gets us close
+			// enough (assumes a 16:10 horizontal aspect-ratio common case)
+			curCam->SetVFOV(64.0f);
+			curCam->SetPos(prvCam->GetPos());
+			#else
+			curCam->SetRotZ(0.0f);
+			curCam->SetDir(camDir);
+			#endif
+
+			curCam->UpdateLoadViewPort(0, 0, reflTexSize, reflTexSize);
+			// update matrices (not dirs or viewport)
+			curCam->Update(false, true, false);
+
+			// generate the face
+			game->SetDrawMode(CGame::gameReflectionDraw);
+			sky->Draw();
+
+			if (!skyOnly) {
+				readMap->GetGroundDrawer()->Draw(DrawPass::TerrainReflection);
+			}
+
+			game->SetDrawMode(CGame::gameNormalDraw);
+		}
+
+		CCamera::SetActiveCamera(prvCam->GetCamType());
+		prvCam->Update();
+	}
+
 	glPopAttrib();
-
-	game->SetDrawMode(CGame::gameNormalDraw);
-
-	camera->~CCamera();
-	new (camera) CCamera(*reinterpret_cast<CCamera*>(cameraMemBuf));
-	reinterpret_cast<CCamera*>(cameraMemBuf)->~CCamera();
-
-	camera->Update();
 }
 
 
@@ -234,25 +262,25 @@ void CubeMapHandler::UpdateSpecularTexture()
 
 	switch (specularTexIter % 3) {
 		case 0: {
-			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, specTexSize, float3( 1,  1,  1), float3( 0, 0, -2), float3(0, -2,  0), specularTexRow, specTexBuf);
-			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, specTexSize, float3(-1,  1, -1), float3( 0, 0,  2), float3(0, -2,  0), specularTexRow, specTexBuf);
+			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, specTexSize, float3( 1,  1,  1), float3( 0, 0, -2), float3(0, -2,  0), specularTexRow, &specTexBuf[0]);
+			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, specTexSize, float3(-1,  1, -1), float3( 0, 0,  2), float3(0, -2,  0), specularTexRow, &specTexBuf[0]);
 			break;
 		}
 		case 1: {
-			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, specTexSize, float3(-1,  1, -1), float3( 2, 0,  0), float3(0,  0,  2), specularTexRow, specTexBuf);
-			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, specTexSize, float3(-1, -1,  1), float3( 2, 0,  0), float3(0,  0, -2), specularTexRow, specTexBuf);
+			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, specTexSize, float3(-1,  1, -1), float3( 2, 0,  0), float3(0,  0,  2), specularTexRow, &specTexBuf[0]);
+			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, specTexSize, float3(-1, -1,  1), float3( 2, 0,  0), float3(0,  0, -2), specularTexRow, &specTexBuf[0]);
 			break;
 		}
 		case 2: {
-			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, specTexSize, float3(-1,  1,  1), float3( 2, 0,  0), float3(0, -2,  0), specularTexRow, specTexBuf);
-			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, specTexSize, float3( 1,  1, -1), float3(-2, 0,  0), float3(0, -2,  0), specularTexRow, specTexBuf);
+			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, specTexSize, float3(-1,  1,  1), float3( 2, 0,  0), float3(0, -2,  0), specularTexRow, &specTexBuf[0]);
+			UpdateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, specTexSize, float3( 1,  1, -1), float3(-2, 0,  0), float3(0, -2,  0), specularTexRow, &specTexBuf[0]);
 			break;
 		}
 	}
 
 	// update one face of one row per frame
-	++specularTexIter;
-	specularTexIter = specularTexIter % (specTexSize * 3);
+	specularTexIter += 1;
+	specularTexIter %= (specTexSize * 3);
 }
 
 void CubeMapHandler::CreateSpecularFacePart(
@@ -268,11 +296,11 @@ void CubeMapHandler::CreateSpecularFacePart(
 	for (int x = 0; x < size; ++x) {
 		const float3 dir = (cdir + (xdif * (x + 0.5f)) / size + (ydif * (y + 0.5f)) / size).Normalize();
 		const float dot  = std::max(0.0f, dir.dot(sky->GetLight()->GetLightDir()));
-		const float spec = std::min(1.0f, math::pow(dot, mapInfo->light.specularExponent) + math::pow(dot, 3.0f) * 0.25f);
+		const float spec = std::min(1.0f, math::pow(dot, sunLighting->specularExponent) + math::pow(dot, 3.0f) * 0.25f);
 
-		buf[x * 4 + 0] = (mapInfo->light.unitSpecularColor.x * spec * 255);
-		buf[x * 4 + 1] = (mapInfo->light.unitSpecularColor.y * spec * 255);
-		buf[x * 4 + 2] = (mapInfo->light.unitSpecularColor.z * spec * 255);
+		buf[x * 4 + 0] = (sunLighting->unitSpecularColor.x * spec * 255);
+		buf[x * 4 + 1] = (sunLighting->unitSpecularColor.y * spec * 255);
+		buf[x * 4 + 2] = (sunLighting->unitSpecularColor.z * spec * 255);
 		buf[x * 4 + 3] = 255;
 	}
 }

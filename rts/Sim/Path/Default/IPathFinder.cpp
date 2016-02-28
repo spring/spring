@@ -152,14 +152,16 @@ IPath::SearchResult IPathFinder::GetPath(
 IPath::SearchResult IPathFinder::InitSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner)
 {
 	int2 square = mStartBlock;
-	if (isEstimator) {
+
+	if (isEstimator)
 		square = blockStates.peNodeOffsets[moveDef.pathType][mStartBlockIdx];
-	}
+
 	const bool isStartGoal = pfDef.IsGoal(square.x, square.y);
+	const bool startInGoal = pfDef.startInGoalRadius;
 
 	// although our starting square may be inside the goal radius, the starting coordinate may be outside.
 	// in this case we do not want to return CantGetCloser, but instead a path to our starting square.
-	if (isStartGoal && pfDef.startInGoalRadius)
+	if (isStartGoal && startInGoal)
 		return IPath::CantGetCloser;
 
 	// no, clean the system from last search
@@ -190,12 +192,15 @@ IPath::SearchResult IPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 	mGoalHeuristic = pfDef.Heuristic(square.x, square.y);
 
 	// perform the search
-	IPath::SearchResult result = DoSearch(moveDef, pfDef, owner);
+	const IPath::SearchResult result = DoSearch(moveDef, pfDef, owner);
 
-	// if no improvements are found, then return CantGetCloser instead
-	if ((mGoalBlockIdx == mStartBlockIdx) && (!isStartGoal || pfDef.startInGoalRadius)) {
-		return IPath::CantGetCloser;
-	}
+	if (result == IPath::Ok)
+		return result;
+	if (mGoalBlockIdx != mStartBlockIdx)
+		return result;
 
-	return result;
+	// if start and goal are within the same block, but distinct squares
+	// or considered a single point for search purposes, then we probably
+	// can not get closer
+	return (!isStartGoal || startInGoal)? IPath::CantGetCloser: result;
 }

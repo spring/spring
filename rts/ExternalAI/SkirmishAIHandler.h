@@ -91,7 +91,7 @@ public:
 	 *
 	 * Will change during runtime (Connection lost, died, killed, created, ...).
 	 */
-	const id_ai_t& GetAllSkirmishAIs() const;
+	const id_ai_t& GetAllSkirmishAIs() const { return id_ai; }
 
 	/**
 	 * @brief Adds a Skirmish AI
@@ -113,7 +113,7 @@ public:
 	 *
 	 * Constant at runtime
 	 */
-	size_t GetNumSkirmishAIs() const;
+	size_t GetNumSkirmishAIs() const { return id_ai.size(); }
 
 	/**
 	 * Starts the initialization process of a locally running Skirmish AI,
@@ -159,13 +159,18 @@ public:
 	 * @return for a list of values, see SReleaseEvent in ExternalAI/Interface/AISEvents.h
 	 * @see IsSkirmishAIDieing()
 	 */
-	int GetLocalSkirmishAIDieReason(const size_t skirmishAIId) const;
+	int GetLocalSkirmishAIDieReason(const size_t skirmishAIId) const {
+		return (id_dieReason.find(skirmishAIId) != id_dieReason.end())? id_dieReason.find(skirmishAIId)->second : -1;
+	}
+
 	/**
 	 * Reports true even before the DIEING state was received
 	 * from the server, but only for local AIs.
 	 * @param skirmishAIId index of the AI in question
 	 */
-	bool IsLocalSkirmishAIDieing(const size_t skirmishAIId) const;
+	bool IsLocalSkirmishAIDieing(const size_t skirmishAIId) const {
+		return (id_dieReason.find(skirmishAIId) != id_dieReason.end());
+	}
 
 	/**
 	 * Returns the library key for a local Skirmish AI, or NULL.
@@ -174,14 +179,18 @@ public:
 
 	bool IsLocalSkirmishAI(const size_t skirmishAIId) const;
 
-	const std::set<std::string>& GetLuaAIImplShortNames() const;
+	const std::set<std::string>& GetLuaAIImplShortNames() const { return luaAIShortNames; }
 
 	unsigned char GetCurrentAIID() { return currentAIId; }
 	void SetCurrentAIID(unsigned char id) { currentAIId = id; }
 
 private:
 	static bool IsLocalSkirmishAI(const SkirmishAIData& aiData);
-	bool IsLuaAI(const SkirmishAIData& aiData) const;
+
+	bool IsLuaAI(const SkirmishAIData& aiData) const {
+		return (luaAIShortNames.find(aiData.shortName) != luaAIShortNames.end());
+	}
+
 	void CompleteWithDefaultOptionValues(const size_t skirmishAIId);
 	void CompleteSkirmishAI(const size_t skirmishAIId);
 

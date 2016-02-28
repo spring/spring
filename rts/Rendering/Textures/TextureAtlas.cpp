@@ -21,10 +21,6 @@ CR_BIND(AtlasedTexture, )
 CR_REG_METADATA(AtlasedTexture,
 		(CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z), CR_MEMBER(w)))
 
-CR_BIND(GroundFXTexture, )
-CR_REG_METADATA(GroundFXTexture,
-		(CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z), CR_MEMBER(w)))
-
 // texture spacing in the atlas (in pixels)
 #define TEXMARGIN 2
 
@@ -105,7 +101,7 @@ int CTextureAtlas::AddTexFromFile(std::string name, std::string file)
 		throw content_error("Unsupported bitmap format in file " + file);
 	}
 
-	const int ret = AddTexFromMem(name, bitmap.xsize, bitmap.ysize, RGBA32, bitmap.mem);
+	const int ret = AddTexFromMem(name, bitmap.xsize, bitmap.ysize, RGBA32, &bitmap.mem[0]);
 	if (ret == 1) {
 		files[lcFile] = memtextures.back();
 	}

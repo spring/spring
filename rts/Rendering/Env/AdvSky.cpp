@@ -76,11 +76,6 @@ CAdvSky::CAdvSky()
 	for (int a = 0; a < 5; a++)
 		cloudDetailDown[a] = false;
 
-	cloudDensity = mapInfo->atmosphere.cloudDensity;
-	cloudColor = mapInfo->atmosphere.cloudColor;
-	skyColor = mapInfo->atmosphere.skyColor;
-	sunColor = mapInfo->atmosphere.sunColor;
-	fogStart = mapInfo->atmosphere.fogStart;
 	if (fogStart > 0.99f) globalRendering->drawFog = false;
 
 	dynamicSky = true;
@@ -195,6 +190,9 @@ CAdvSky::~CAdvSky()
 
 void CAdvSky::Draw()
 {
+	if (!globalRendering->drawSky)
+		return;
+
 	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 
@@ -230,7 +228,7 @@ void CAdvSky::Draw()
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 
-	ISky::SetupFog();
+	sky->SetupFog();
 }
 
 float3 CAdvSky::GetCoord(int x, int y)
@@ -544,6 +542,8 @@ void CAdvSky::CreateTransformVectors()
 
 void CAdvSky::DrawSun()
 {
+	if (!globalRendering->drawSky)
+		return;
 	if (!SunVisible(camera->GetPos()))
 		return;
 

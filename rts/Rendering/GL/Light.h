@@ -28,21 +28,28 @@ namespace GL {
 
 			, ignoreLOS(true)
 
-			, id(-1U)
+			, id(-1u)
+			, uid(-1u)
 			, ttl(0)
 			, relTime(0)
 			, absTime(0)
 			, priority(0)
 
-			, trackPosition(NULL)
-			, trackDirection(NULL)
+			, trackPosition(nullptr)
+			, trackDirection(nullptr)
 		{
+		}
+
+		void ClearDeathDependencies() {
+			for (CObject* obj: GetListening(DEPENDENCE_LIGHT)) {
+				DeleteDeathDependence(obj, DEPENDENCE_LIGHT);
+			}
 		}
 
 		// a light can only depend on one object
 		void DependentDied(CObject* o) {
-			trackPosition = NULL;
-			trackDirection = NULL;
+			trackPosition = nullptr;
+			trackDirection = nullptr;
 		}
 
 		const float4& GetPosition() const { return position; }
@@ -59,13 +66,13 @@ namespace GL {
 		const float3& GetSpecularDecayRate() const { return specularDecayRate; }
 		const float3& GetDecayFunctionType() const { return decayFunctionType; }
 
-		void SetPosition(const float array[3]) { position = array; }
+		void SetPosition(const float array[3]) { position.fromFloat3(array); }
 		void SetDirection(const float array[3]) { direction = array; }
 		void SetTrackPosition(const float3* pos) { trackPosition = pos; }
 		void SetTrackDirection(const float3* dir) { trackDirection = dir; }
-		void SetAmbientColor(const float array[3]) { ambientColor = array; }
-		void SetDiffuseColor(const float array[3]) { diffuseColor = array; }
-		void SetSpecularColor(const float array[3]) { specularColor = array; }
+		void SetAmbientColor(const float array[3]) { ambientColor.fromFloat3(array); }
+		void SetDiffuseColor(const float array[3]) { diffuseColor.fromFloat3(array); }
+		void SetSpecularColor(const float array[3]) { specularColor.fromFloat3(array); }
 		void SetIntensityWeight(const float array[3]) { intensityWeight = array; }
 		void SetAttenuation(const float array[3]) { attenuation = array; }
 		void SetAmbientDecayRate(const float array[3]) { ambientDecayRate = array; }
@@ -85,12 +92,15 @@ namespace GL {
 		void SetIgnoreLOS(bool b) { ignoreLOS = b; }
 		bool GetIgnoreLOS() const { return ignoreLOS; }
 
-		const unsigned int GetID() const { return id; }
+		unsigned int GetID() const { return id; }
+		unsigned int GetUID() const { return uid; }
 		unsigned int GetTTL() const { return ttl; }
 		unsigned int GetRelativeTime() const { return relTime; }
 		unsigned int GetAbsoluteTime() const { return absTime; }
 		unsigned int GetPriority() const { return priority; }
+
 		void SetID(unsigned int n) { id = n; }
+		void SetUID(unsigned int n) { uid = n; }
 		void SetTTL(unsigned int n) { ttl = n; }
 		void SetRelativeTime(unsigned int n) { relTime = n; }
 		void SetAbsoluteTime(unsigned int n) { absTime = n; }
@@ -154,6 +164,7 @@ namespace GL {
 		bool ignoreLOS;           // if true, we can be seen out of LOS
 
 		unsigned int id;          // GL_LIGHT[id] we are bound to
+		unsigned int uid;         // LightHandler global counter
 		unsigned int ttl;         // maximum lifetime in sim-frames
 		unsigned int relTime;     // current lifetime in sim-frames
 		unsigned int absTime;     // current sim-frame this light is at

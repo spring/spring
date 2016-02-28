@@ -12,7 +12,7 @@
 #include "Map/ReadMap.h"
 #include "Rendering/IPathDrawer.h"
 #include "Sim/Misc/LosHandler.h"
-#include "Sim/Misc/RadarHandler.h"
+#include "Sim/Misc/ModInfo.h"
 #include "System/TimeProfiler.h"
 #include "System/Log/ILog.h"
 #include "System/Config/ConfigHandler.h"
@@ -46,6 +46,7 @@ static CLegacyInfoTextureHandler::BaseGroundDrawMode NameToDrawMode(const std::s
 		return CLegacyInfoTextureHandler::drawPathCost;
 	}
 
+	// maps to 0
 	return CLegacyInfoTextureHandler::drawNormal;
 }
 
@@ -200,6 +201,11 @@ int2 CLegacyInfoTextureHandler::GetCurrentInfoTextureSize() const
 }
 
 
+const CInfoTexture* CLegacyInfoTextureHandler::GetInfoTextureConst(const std::string& name) const
+{
+	return &infoTextures[NameToDrawMode(name)];
+}
+
 CInfoTexture* CLegacyInfoTextureHandler::GetInfoTexture(const std::string& name)
 {
 	return &infoTextures[NameToDrawMode(name)];
@@ -294,7 +300,7 @@ bool CLegacyInfoTextureHandler::UpdateExtraTexture(BaseGroundDrawMode texDrawMod
 			case drawMetal: {
 				const CMetalMap* metalMap = readMap->metalMap;
 
-				const unsigned short* myLos           = &losHandler->losMaps[gu->myAllyTeam].front();
+				const unsigned short* myLos           = &losHandler->los.losMaps[gu->myAllyTeam].front();
 				const unsigned  char* extraTex        = metalMap->GetDistributionMap();
 				const unsigned  char* extraTexPal     = metalMap->GetTexturePalette();
 				const          float* extractDepthMap = metalMap->GetExtractionMap();
@@ -305,10 +311,10 @@ bool CLegacyInfoTextureHandler::UpdateExtraTexture(BaseGroundDrawMode texDrawMod
 
 					for (int x = 0; x < mapDims.hmapx; ++x) {
 						const int a   = (y_pwr2mapx_half + x) * 4 - offset;
-						const int alx = ((x*2) >> losHandler->losMipLevel);
-						const int aly = ((y*2) >> losHandler->losMipLevel);
+						const int alx = ((x*2) >> losHandler->los.mipLevel);
+						const int aly = ((y*2) >> losHandler->los.mipLevel);
 
-						if (myLos[alx + (aly * losHandler->losSizeX)]) {
+						if (myLos[alx + (aly * losHandler->los.size.x)]) {
 							infoTexMem[a + COLOR_R] = (unsigned char)std::min(255.0f, 900.0f * fastmath::apxsqrt(fastmath::apxsqrt(extractDepthMap[y_hmapx + x])));
 						} else {
 							infoTexMem[a + COLOR_R] = 0;
@@ -351,53 +357,37 @@ bool CLegacyInfoTextureHandler::UpdateExtraTexture(BaseGroundDrawMode texDrawMod
 			} break;
 
 			case drawLos: {
-				const unsigned short* myLos         = &losHandler->losMaps[gu->myAllyTeam].front();
-				const unsigned short* myAirLos      = &losHandler->airLosMaps[gu->myAllyTeam].front();
-				const unsigned short* myRadar       = &radarHandler->radarMaps[gu->myAllyTeam].front();
-				const unsigned short* myJammer      = &radarHandler->jammerMaps[gu->myAllyTeam].front();
-			#ifdef RADARHANDLER_SONAR_JAMMER_MAPS
-				const unsigned short* mySonar       = &radarHandler->sonarMaps[gu->myAllyTeam].front();
-				const unsigned short* mySonarJammer = &radarHandler->sonarJammerMaps[gu->myAllyTeam].front();
-			#endif
+				const int jammerAllyTeam = modInfo.separateJammers ? gu->myAllyTeam : 0;
+				const unsigned short* myLos         = &losHandler->los.losMaps[gu->myAllyTeam].front();
+				const unsigned short* myAirLos      = &losHandler->airLos.losMaps[gu->myAllyTeam].front();
+				const unsigned short* myRadar       = &losHandler->radar.losMaps[gu->myAllyTeam].front();
+				const unsigned short* myJammer      = &losHandler->jammer.losMaps[jammerAllyTeam].front();
 
 				const int lowRes = highResInfoTexWanted ? 0 : -1;
 				const int endx = highResInfoTexWanted ? mapDims.mapx : mapDims.hmapx;
 				const int pwr2mapx = mapDims.pwr2mapx >> (-lowRes);
-				const int losSizeX = losHandler->losSizeX;
-				const int losSizeY = losHandler->losSizeY;
-				const int airSizeX = losHandler->airSizeX;
-				const int airSizeY = losHandler->airSizeY;
-				const int losMipLevel = losHandler->losMipLevel + lowRes;
-				const int airMipLevel = losHandler->airMipLevel + lowRes;
-				const int rxsize = radarHandler->xsize;
-				const int rzsize = radarHandler->zsize;
+				const int losMipLevel = losHandler->los.mipLevel + lowRes;
+				const int airMipLevel = losHandler->airLos.mipLevel + lowRes;
 
 				for (int y = starty; y < endy; ++y) {
 					for (int x = 0; x < endx; ++x) {
 						int totalLos = 255;
 						int2 pos(x,y);
 
-						if (!gs->globalLOS[gu->myAllyTeam]) {
-							const int inLos = InterpolateLos(myLos,    int2(losSizeX, losSizeY), losMipLevel, 128, pos);
-							const int inAir = InterpolateLos(myAirLos, int2(airSizeX, airSizeY), airMipLevel, 128, pos);
+						if (!losHandler->globalLOS[gu->myAllyTeam]) {
+							const int inLos = InterpolateLos(myLos,    losHandler->los.size, losMipLevel, 128, pos);
+							const int inAir = InterpolateLos(myAirLos, losHandler->airLos.size, airMipLevel, 127, pos);
 							totalLos = inLos + inAir;
 						}
-					#ifdef RADARHANDLER_SONAR_JAMMER_MAPS
-						const bool useRadar = (CGround::GetHeightReal(xPos, zPos, false) >= 0.0f);
-						const unsigned short* radarMap  = useRadar ? myRadar  : mySonar;
-						const unsigned short* jammerMap = useRadar ? myJammer : mySonarJammer;
-					#else
-						const unsigned short* radarMap  = myRadar;
-						const unsigned short* jammerMap = myJammer;
-					#endif
-						const int inRadar = InterpolateLos(radarMap,  int2(rxsize, rzsize), 3 + lowRes, 255, pos);
-						const int inJam   = InterpolateLos(jammerMap, int2(rxsize, rzsize), 3 + lowRes, 255, pos);
+
+						const int inRadar = InterpolateLos(myRadar, losHandler->radar.size, 3 + lowRes, 255, pos);
+						const int inJam   = (totalLos == 255) ? InterpolateLos(myJammer, losHandler->jammer.size, 3 + lowRes, 255, pos) : 0;
 
 						const int a = ((y * pwr2mapx) + x) * 4 - offset;
 
 						for (int c = 0; c < 3; c++) {
 							int val = gd->alwaysColor[c] * 255;
-							val += (gd->jamColor[c]   * inJam);
+							val += (gd->jamColor[c]   * inJam); //FIXME
 							val += (gd->losColor[c]   * totalLos);
 							val += (gd->radarColor[c] * inRadar);
 							infoTexMem[a + (2 - c)] = (val / gd->losColorScale);

@@ -17,9 +17,6 @@ class LuaTable;
 
 struct WeaponDef
 {
-private:
-	CR_DECLARE_STRUCT(WeaponDef)
-
 public:
 	WeaponDef();
 	WeaponDef(const LuaTable& wdTable, const std::string& name, int id);
@@ -60,12 +57,10 @@ public:
 	float leadBonus;           ///< factor for increasing the leadLimit with experience
 	float predictBoost;        ///< replaces hardcoded behaviour for burnblow cannons
 
-	DamageArray damages;
-	float craterAreaOfEffect;
-	float damageAreaOfEffect;
-	bool noSelfDamage;
+	DynDamageArray damages;
+
 	float fireStarter;
-	float edgeEffectiveness;
+	bool noSelfDamage;
 	float size;
 	float sizeGrowth;
 	float collisionSize;
@@ -139,7 +134,6 @@ public:
 	float turnrate;
 
 	float projectilespeed;
-	float explosionSpeed;
 
 	float wobble;             ///< how much the missile will wobble around its course
 	float dance;              ///< how much the missile will dance
@@ -208,11 +202,6 @@ public:
 	bool canAttackGround;
 
 	float cameraShake;
-
-	float dynDamageExp;
-	float dynDamageMin;
-	float dynDamageRange;
-	bool dynDamageInverted;
 
 	std::map<std::string, std::string> customParams;
 

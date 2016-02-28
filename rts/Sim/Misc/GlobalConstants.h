@@ -47,6 +47,14 @@ static constexpr int UNIT_SLOWUPDATE_RATE = 15;
 static constexpr int TEAM_SLOWUPDATE_RATE = 30;
 
 /**
+ * @brief los SlowUpdate rate
+ *
+ * Defines the interval of the LosHandler updates on terraform changes.
+ */
+static constexpr int LOS_TERRAFORM_SLOWUPDATE_RATE = 15;
+
+
+/**
  * @brief max teams
  *
  * Defines the maximum number of teams as 255

@@ -87,7 +87,7 @@ VBO::~VBO()
 }
 
 
-VBO* VBO::operator=(VBO&& other)
+VBO& VBO::operator=(VBO&& other)
 {
 	std::swap(vboId, other.vboId);
 	std::swap(bound, other.bound);
@@ -102,7 +102,7 @@ VBO* VBO::operator=(VBO&& other)
 	std::swap(VBOused, other.VBOused);
 	std::swap(immutableStorage, other.immutableStorage);
 
-	return this;
+	return *this;
 }
 
 

@@ -23,7 +23,7 @@ void CriticalSection::lock()
 
 bool CriticalSection::try_lock() noexcept
 {
-	TryEnterCriticalSection(&mtx);
+	return TryEnterCriticalSection(&mtx);
 }
 
 

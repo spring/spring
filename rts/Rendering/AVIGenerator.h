@@ -8,7 +8,7 @@
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition.hpp>
-#include <boost/utility.hpp>
+#include <boost/noncopyable.hpp>
 
 #include <windows.h>
 #include <vfw.h>

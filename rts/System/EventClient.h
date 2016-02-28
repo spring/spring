@@ -74,37 +74,28 @@ class CEventClient
 			return (GetFullRead() || (GetReadAllyTeam() == allyTeam));
 		}
 
-	public:
+	protected:
+		CEventClient(const std::string& name, int order, bool synced);
+		virtual ~CEventClient();
+
+	protected:
+		const std::string name;
+		const int         order;
+		const bool        synced_;
+		      bool        autoLinkEvents;
+
+	protected:
 		friend class CEventHandler;
-
-		typedef void (*eventFuncPtr)();
-
 		std::map<std::string, bool> autoLinkedEvents;
 
 		template <class T>
 		void RegisterLinkedEvents(T* foo) {
-			// old way needed gcc's pmf extension to cast member functions
-			//autoLinkedEvents[#eventname]  = (reinterpret_cast<eventFuncPtr>(&T::eventname) != reinterpret_cast<eventFuncPtr>(&CEventClient::eventname));
-
-			// new way, works everywhere
 			#define SETUP_EVENT(eventname, props) \
 				autoLinkedEvents[#eventname] = (typeid(&T::eventname) != typeid(&CEventClient::eventname));
 
 				#include "Events.def"
 			#undef SETUP_EVENT
 		}
-
-	private:
-		const std::string name;
-		const int         order;
-		const bool        synced_;
-
-	protected:
-		      bool        autoLinkEvents;
-
-	protected:
-		CEventClient(const std::string& name, int order, bool synced);
-		virtual ~CEventClient();
 
 	public:
 		/**
@@ -128,8 +119,8 @@ class CEventClient
 
 		virtual void UnitCreated(const CUnit* unit, const CUnit* builder) {}
 		virtual void UnitFinished(const CUnit* unit) {}
-		virtual void UnitFromFactory(const CUnit* unit, const CUnit* factory,
-		                             bool userOrders) {}
+		virtual void UnitReverseBuilt(const CUnit* unit) {}
+		virtual void UnitFromFactory(const CUnit* unit, const CUnit* factory, bool userOrders) {}
 		virtual void UnitDestroyed(const CUnit* unit, const CUnit* attacker) {}
 		virtual void UnitTaken(const CUnit* unit, int oldTeam, int newTeam) {}
 		virtual void UnitGiven(const CUnit* unit, int oldTeam, int newTeam) {}
@@ -168,9 +159,6 @@ class CEventClient
 
 		virtual void RenderUnitCreated(const CUnit* unit, int cloaked) {}
 		virtual void RenderUnitDestroyed(const CUnit* unit) {}
-		virtual void RenderUnitCloakChanged(const CUnit* unit, int cloaked) {}
-		virtual void RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus) {}
-		virtual void RenderUnitMoved(const CUnit* unit, const float3& newpos) {}
 
 		virtual void UnitUnitCollision(const CUnit* collider, const CUnit* collidee) {}
 		virtual void UnitFeatureCollision(const CUnit* collider, const CFeature* collidee) {}
@@ -189,7 +177,6 @@ class CEventClient
 
 		virtual void RenderFeatureCreated(const CFeature* feature) {}
 		virtual void RenderFeatureDestroyed(const CFeature* feature) {}
-		virtual void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos) {}
 
 		virtual void ProjectileCreated(const CProjectile* proj) {}
 		virtual void ProjectileDestroyed(const CProjectile* proj) {}
@@ -248,7 +235,13 @@ class CEventClient
 			float* newDamage,
 			float* impulseMult);
 
-		virtual bool ShieldPreDamaged(const CProjectile*, const CWeapon*, const CUnit*, bool);
+		virtual bool ShieldPreDamaged(
+			const CProjectile* projectile,
+			const CWeapon* shieldEmitter,
+			const CUnit* shieldCarrier,
+			bool bounceProjectile,
+			const CWeapon* beamEmitter,
+			const CUnit* beamCarrier);
 
 		virtual bool SyncedActionFallback(const string& line, int playerID);
 		/// @}
@@ -270,6 +263,13 @@ class CEventClient
 		virtual void MouseRelease(int x, int y, int button);
 		virtual bool MouseWheel(bool up, float value);
 		virtual bool JoystickEvent(const std::string& event, int val1, int val2);
+
+		virtual void DownloadQueued(int ID, const string& archiveName, const string& archiveType);
+		virtual void DownloadStarted(int ID);
+		virtual void DownloadFinished(int ID);
+		virtual void DownloadFailed(int ID, int errorID);
+		virtual void DownloadProgress(int ID, long downloaded, long total);
+
 		virtual bool IsAbove(int x, int y);
 		virtual std::string GetTooltip(int x, int y);
 
@@ -296,19 +296,25 @@ class CEventClient
 		                        const std::string* label);
 
 		virtual void SunChanged(const float3& sunDir);
+		virtual void SunLightingChanged();
 
 		virtual void ViewResize();
 
-		virtual void DrawGenesis();
-		virtual void DrawWorld();
-		virtual void DrawWorldPreUnit();
-		virtual void DrawWorldShadow();
-		virtual void DrawWorldReflection();
-		virtual void DrawWorldRefraction();
-		virtual void DrawScreenEffects();
-		virtual void DrawScreen();
-		virtual void DrawInMiniMap();
-		virtual void DrawInMiniMapBackground();
+		virtual void DrawGenesis() {}
+		virtual void DrawWorld() {}
+		virtual void DrawWorldPreUnit() {}
+		virtual void DrawWorldShadow() {}
+		virtual void DrawWorldReflection() {}
+		virtual void DrawWorldRefraction() {}
+		virtual void DrawGroundPreForward() {}
+		virtual void DrawGroundPreDeferred() {}
+		virtual void DrawGroundPostDeferred() {}
+		virtual void DrawUnitsPostDeferred() {}
+		virtual void DrawFeaturesPostDeferred() {}
+		virtual void DrawScreenEffects() {}
+		virtual void DrawScreen() {}
+		virtual void DrawInMiniMap() {}
+		virtual void DrawInMiniMapBackground() {}
 
 		virtual bool DrawUnit(const CUnit* unit);
 		virtual bool DrawFeature(const CFeature* feature);

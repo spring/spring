@@ -13,7 +13,7 @@ ADD_DEFINITIONS(-DBITMAP_NO_OPENGL)
 REMOVE_DEFINITIONS(-DAVI_CAPTURING)
 
 include_directories(${OPENAL_INCLUDE_DIR})
-IF    (MINGW OR APPLE)
+IF    (MINGW OR APPLE OR MSVC)
 	# Windows:
 	# We still need these header files,
 	# even if we are not going to link with gl, glu and SDL.
@@ -24,12 +24,12 @@ IF    (MINGW OR APPLE)
 	FIND_PACKAGE(OpenGL REQUIRED)
 	FIND_PACKAGE(SDL2 REQUIRED)
 	INCLUDE_DIRECTORIES(${SDL2_INCLUDE_DIR})
-ELSE  (MINGW OR APPLE)
+ELSE  ()
 	# Use a direct copy of the GL and SDL headers,
 	# as these may not be available on headless systems.
 	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include)
 	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/SDL2)
-ENDIF (MINGW OR APPLE)
+ENDIF ()
 
 
 # headlessstubs are our stubs that replace libGL, libGLU, libGLEW, libSDL (yes really!)
@@ -40,6 +40,7 @@ LIST(APPEND engineHeadlessLibraries ${engineCommonLibraries})
 LIST(APPEND engineHeadlessLibraries engineaGui)
 LIST(APPEND engineHeadlessLibraries no-sound)
 LIST(APPEND engineHeadlessLibraries engineSim)
+LIST(APPEND engineHeadlessLibraries pr-downloader_static)
 
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/assimp/include)
 

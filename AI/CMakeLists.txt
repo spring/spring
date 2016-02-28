@@ -40,7 +40,7 @@ endif (MINGW)
 
 
 # Assemble common additional native AI sources
-list(APPEND ai_common_SRC "${rts}/Game/GameVersion.cpp")
+#list(APPEND ai_common_SRC "${rts}/Game/GameVersion.cpp")
 list(APPEND ai_common_SRC "${rts}/System/SafeCStrings.c")
 
 

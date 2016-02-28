@@ -4,6 +4,7 @@
 #define AI_LEGACY_SUPPORT_H
 
 #include "System/float3.h"
+#include "System/Color.h"
 
 #include <string>
 
@@ -53,7 +54,9 @@ struct UnitResourceInfo
 struct PointMarker
 {
 	float3 pos;
-	const unsigned char* color;
+
+	SColor color;
+
 	// don't store this pointer anywhere, it may become
 	// invalid at any time after GetMapPoints()
 	const char* label;
@@ -62,7 +65,8 @@ struct PointMarker
 struct LineMarker {
 	float3 pos;
 	float3 pos2;
-	const unsigned char* color;
+
+	SColor color;
 };
 
 // HandleCommand structs:
@@ -150,7 +154,7 @@ struct AIHCPause
 
 /**
  * See Clb_DataDirs_allocatePath in rts/ExternalAI/Interface/SSkirmishAICallback.h
- * ret_path has to be freed by the AI, if it is not NULL.
+ * ret_path should be copied by the AI after retrieving it, but not freed!
  */
 struct AIHCGetDataDir ///< result of HandleCommand is 1 for if path fetched, 0 for fail
 {

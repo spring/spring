@@ -7,7 +7,7 @@
 
 class CBeamLaserProjectile: public CWeaponProjectile
 {
-	CR_DECLARE(CBeamLaserProjectile)
+	CR_DECLARE_DERIVED(CBeamLaserProjectile)
 public:
 	CBeamLaserProjectile(const ProjectileParams& params);
 

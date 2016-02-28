@@ -19,8 +19,7 @@ CR_BIND(CDamageArrayHandler, (NULL))
 
 CR_REG_METADATA(CDamageArrayHandler, (
 	CR_MEMBER(armorDefNameIdxMap),
-	CR_MEMBER(armorDefKeys),
-	CR_RESERVED(16)
+	CR_MEMBER(armorDefKeys)
 ))
 
 
@@ -108,9 +107,8 @@ int CDamageArrayHandler::GetTypeFromName(const std::string& name) const
 {
 	const std::map<std::string, int>::const_iterator it = armorDefNameIdxMap.find(StringToLower(name));
 
-	if (it != armorDefNameIdxMap.end()) {
+	if (it != armorDefNameIdxMap.end())
 		return it->second;
-	}
 
 	return 0; // 'default' armor index
 }

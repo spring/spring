@@ -118,6 +118,9 @@ AAI::~AAI()
 	// save mod learning data
 	bt->SaveBuildTable(brain->GetGamePeriod(), map->map_type);
 
+	SafeDelete(am);
+	SafeDelete(af);
+
 	// delete unit groups
 	for(int i = 0; i <= MOBILE_CONSTRUCTOR; i++)
 	{
@@ -130,11 +133,9 @@ AAI::~AAI()
 	}
 
 
-	SafeDelete(am);
 	SafeDelete(brain);
 	SafeDelete(execute);
 	SafeDelete(ut);
-	SafeDelete(af);
 	SafeDelete(map);
 	SafeDelete(bt);
 	SafeDelete(profiler);

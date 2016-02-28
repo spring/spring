@@ -14,6 +14,8 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/QuadField.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/Weapon.h"
 
 static const float4 DEFAULT_VOLUME_COLOR = float4(0.45f, 0.0f, 0.45f, 0.35f);
@@ -24,6 +26,7 @@ static inline void DrawCollisionVolume(const CollisionVolume* vol)
 	glPushMatrix();
 
 	switch (vol->GetVolumeType()) {
+		case CollisionVolume::COLVOL_TYPE_ELLIPSOID:
 		case CollisionVolume::COLVOL_TYPE_SPHERE: {
 			// scaled sphere is special case of ellipsoid: radius, slices, stacks
 			glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
@@ -71,6 +74,64 @@ static inline void DrawCollisionVolume(const CollisionVolume* vol)
 
 
 
+/*
+static void DrawUnitDebugPieceTree(const LocalModelPiece* lmp, const LocalModelPiece* lap, int lapf)
+{
+	glPushMatrix();
+		glMultMatrixf(lmp->GetModelSpaceMatrix());
+
+		if (lmp->scriptSetVisible && !lmp->GetCollisionVolume()->IgnoreHits()) {
+			if ((lmp == lap) && (lapf > 0 && ((gs->frameNum - lapf) < 150))) {
+				glColor3f((1.0f - ((gs->frameNum - lapf) / 150.0f)), 0.0f, 0.0f);
+			}
+
+			// factors in the volume offsets
+			DrawCollisionVolume(lmp->GetCollisionVolume());
+
+			if ((lmp == lap) && (lapf > 0 && ((gs->frameNum - lapf) < 150))) {
+				glColorf3(DEFAULT_VOLUME_COLOR);
+			}
+		}
+	glPopMatrix();
+
+	for (unsigned int i = 0; i < lmp->children.size(); i++) {
+		DrawUnitDebugPieceTree(lmp->children[i], lap, lapf);
+	}
+}
+*/
+
+static void DrawObjectDebugPieces(const CSolidObject* o)
+{
+	const int hitDeltaTime = (gs->frameNum - o->lastHitPieceFrame);
+
+	for (unsigned int n = 0; n < o->localModel.pieces.size(); n++) {
+		const LocalModelPiece* lmp = o->localModel.GetPiece(n);
+		const CollisionVolume* lmpVol = lmp->GetCollisionVolume();
+
+		const bool b0 = ((o->lastHitPieceFrame > 0) && (hitDeltaTime < 150));
+		const bool b1 = (lmp == o->lastHitPiece);
+
+		if (!lmp->scriptSetVisible || lmpVol->IgnoreHits())
+			continue;
+
+		if (b0 && b1) {
+			glColor3f((1.0f - (hitDeltaTime / 150.0f)), 0.0f, 0.0f);
+		}
+
+		glPushMatrix();
+		glMultMatrixf(lmp->GetModelSpaceMatrix());
+		// factors in the volume offsets
+		DrawCollisionVolume(lmpVol);
+		glPopMatrix();
+
+		if (b0 && b1) {
+			glColorf4(DEFAULT_VOLUME_COLOR);
+		}
+	}
+}
+
+
+
 static inline void DrawObjectMidAndAimPos(const CSolidObject* o)
 {
 	GLUquadricObj* q = gluNewQuadric();
@@ -100,13 +161,17 @@ static inline void DrawObjectMidAndAimPos(const CSolidObject* o)
 }
 
 
+
 static inline void DrawFeatureColVol(const CFeature* f)
 {
-	const CollisionVolume* v = f->collisionVolume;
+	const CollisionVolume* v = &f->collisionVolume;
 
-	if (f->IsInVoid()) return;
-	if (!f->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView) return;
-	if (!camera->InView(f->pos, f->drawRadius)) return;
+	if (f->IsInVoid())
+		return;
+	if (!f->IsInLosForAllyTeam(gu->myAllyTeam) && !gu->spectatingFullView)
+		return;
+	if (!camera->InView(f->pos, f->GetDrawRadius()))
+		return;
 
 	const bool vCustomType = (v->GetVolumeType() < CollisionVolume::COLVOL_TYPE_SPHERE);
 	const bool vCustomDims = ((v->GetOffsets()).SqLength() >= 1.0f || math::fabs(v->GetBoundingRadius() - f->radius) >= 1.0f);
@@ -115,8 +180,18 @@ static inline void DrawFeatureColVol(const CFeature* f)
 		glMultMatrixf(f->GetTransformMatrixRef());
 		DrawObjectMidAndAimPos(f);
 
-		if (!v->IgnoreHits()) {
-			DrawCollisionVolume(v);
+		if (v->DefaultToPieceTree()) {
+			// draw only the piece volumes for less clutter
+			// note: relMidPos transform is on the stack at this
+			// point but all piece-positions are relative to pos
+			// --> undo it
+			glTranslatef3(-f->relMidPos * WORLD_TO_OBJECT_SPACE);
+			DrawObjectDebugPieces(f);
+			glTranslatef3(f->relMidPos * WORLD_TO_OBJECT_SPACE);
+		} else {
+			if (!v->IgnoreHits()) {
+				DrawCollisionVolume(v);
+			}
 		}
 
 		if (vCustomType || vCustomDims) {
@@ -128,75 +203,23 @@ static inline void DrawFeatureColVol(const CFeature* f)
 	glPopMatrix();
 }
 
-
-/*
-static void DrawUnitDebugPieceTree(const LocalModelPiece* lmp, const LocalModelPiece* lap, int lapf)
-{
-	glPushMatrix();
-		glMultMatrixf(lmp->GetModelSpaceMatrix());
-
-		if (lmp->scriptSetVisible && !lmp->GetCollisionVolume()->IgnoreHits()) {
-			if ((lmp == lap) && (lapf > 0 && ((gs->frameNum - lapf) < 150))) {
-				glColor3f((1.0f - ((gs->frameNum - lapf) / 150.0f)), 0.0f, 0.0f);
-			}
-
-			// factors in the volume offsets
-			DrawCollisionVolume(lmp->GetCollisionVolume());
-
-			if ((lmp == lap) && (lapf > 0 && ((gs->frameNum - lapf) < 150))) {
-				glColorf3(DEFAULT_VOLUME_COLOR);
-			}
-		}
-	glPopMatrix();
-
-	for (unsigned int i = 0; i < lmp->children.size(); i++) {
-		DrawUnitDebugPieceTree(lmp->children[i], lap, lapf);
-	}
-}
-*/
-
-static void DrawUnitDebugPieces(const CUnit* u)
-{
-	const LocalModelPiece* lap = u->lastAttackedPiece;
-
-	for (unsigned int n = 0; n < u->localModel->pieces.size(); n++) {
-		const LocalModelPiece* lmp = u->localModel->GetPiece(n);
-		const CollisionVolume* lmpVol = lmp->GetCollisionVolume();
-		const bool lmpHit = ((u->lastAttackedPieceFrame > 0) && ((gs->frameNum - u->lastAttackedPieceFrame) < 150));
-
-		if (!lmp->scriptSetVisible || lmpVol->IgnoreHits())
-			continue;
-
-		if ((lmp == lap) && lmpHit) {
-			glColor3f((1.0f - ((gs->frameNum - u->lastAttackedPieceFrame) / 150.0f)), 0.0f, 0.0f);
-		}
-
-		glPushMatrix();
-		glMultMatrixf(lmp->GetModelSpaceMatrix());
-		// factors in the volume offsets
-		DrawCollisionVolume(lmpVol);
-		glPopMatrix();
-
-		if ((lmp == lap) && lmpHit) {
-			glColorf4(DEFAULT_VOLUME_COLOR);
-		}
-	}
-}
-
-
 static inline void DrawUnitColVol(const CUnit* u)
 {
-	if (u->IsInVoid()) return;
-	if (!(u->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView) return;
-	if (!camera->InView(u->drawMidPos, u->drawRadius)) return;
+	if (u->IsInVoid())
+		return;
+	if (!(u->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
+		return;
+	if (!camera->InView(u->drawMidPos, u->GetDrawRadius()))
+		return;
 
-	const CollisionVolume* v = u->collisionVolume;
+	const CollisionVolume* v = &u->collisionVolume;
 	const bool vCustomType = (v->GetVolumeType() < CollisionVolume::COLVOL_TYPE_SPHERE);
 	const bool vCustomDims = ((v->GetOffsets()).SqLength() >= 1.0f || math::fabs(v->GetBoundingRadius() - u->radius) >= 1.0f);
 
 	GLUquadricObj* q = gluNewQuadric();
 	gluQuadricDrawStyle(q, GLU_FILL);
 	glDisable(GL_DEPTH_TEST);
+
 	for (const CWeapon* w: u->weapons) {
 		glPushMatrix();
 		glTranslatef3(w->aimFromPos);
@@ -222,6 +245,7 @@ static inline void DrawUnitColVol(const CUnit* u)
 			glPopMatrix();
 		}
 	}
+
 	glColorf4(DEFAULT_VOLUME_COLOR);
 	glEnable(GL_DEPTH_TEST);
 	gluDeleteQuadric(q);
@@ -237,7 +261,7 @@ static inline void DrawUnitColVol(const CUnit* u)
 			// point but all piece-positions are relative to pos
 			// --> undo it
 			glTranslatef3(-u->relMidPos * WORLD_TO_OBJECT_SPACE);
-			DrawUnitDebugPieces(u);
+			DrawObjectDebugPieces(u);
 			glTranslatef3(u->relMidPos * WORLD_TO_OBJECT_SPACE);
 		} else {
 			if (!v->IgnoreHits()) {
@@ -246,12 +270,19 @@ static inline void DrawUnitColVol(const CUnit* u)
 					glColor3f((1.0f - ((gs->frameNum - u->lastAttackFrame) / 150.0f)), 0.0f, 0.0f);
 				}
 
+				// if drawing this, disable the DrawObjectMidAndAimPos call
+				// DrawCollisionVolume((u->localModel).GetBoundingVolume());
 				DrawCollisionVolume(v);
 
 				if (u->lastAttackFrame > 0 && ((gs->frameNum - u->lastAttackFrame) < 150)) {
 					glColorf4(DEFAULT_VOLUME_COLOR);
 				}
 			}
+		}
+		if (u->shieldWeapon != nullptr) {
+			const CPlasmaRepulser* shield = static_cast<const CPlasmaRepulser*>(u->shieldWeapon);
+			glColor4f(0.0f, 0.0f, 0.6f, 0.35f);
+			DrawCollisionVolume(&shield->collisionVolume);
 		}
 
 		if (vCustomType || vCustomDims) {
@@ -285,8 +316,6 @@ public:
 				DrawUnitColVol(u);
 			}
 		}
-
-		// TODO show colvols of synced projectiles
 	}
 
 	std::unordered_set<int> alreadyDrawnIds;
@@ -324,7 +353,7 @@ namespace DebugColVolDrawer
 			static CDebugColVolQuadDrawer drawer;
 
 			drawer.ResetState();
-			readMap->GridVisibility(camera, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE, 1e9, &drawer);
+			readMap->GridVisibility(nullptr, &drawer, 1e9, CQuadField::BASE_QUAD_SIZE / SQUARE_SIZE);
 
 			glLineWidth(1.0f);
 		glPopAttrib();

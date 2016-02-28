@@ -3,9 +3,13 @@
 #ifndef _TRACE_RAY_H
 #define _TRACE_RAY_H
 
+#include <vector>
+
 class float3;
 class CUnit;
 class CFeature;
+class CWeapon;
+class CPlasmaRepulser;
 class CSolidObject;
 struct CollisionQuery;
 
@@ -23,6 +27,11 @@ namespace Collision {
 }
 
 namespace TraceRay {
+	struct SShieldDist {
+		CPlasmaRepulser* rep;
+		float dist;
+	};
+
 	// TODO: extend with allyTeam param s.t. we can add Collision::NO{LOS,RADAR}, etc.
 	float TraceRay(
 		const float3& start,
@@ -34,13 +43,22 @@ namespace TraceRay {
 		CFeature*& hitFeature,
 		CollisionQuery* hitColQuery = 0x0
 	);
+
+	void TraceRayShields(
+		const CWeapon* emitter,
+		const float3& start,
+		const float3& dir,
+		float length,
+		std::vector<SShieldDist>& hitShields
+	);
+
 	float GuiTraceRay(
 		const float3& start,
 		const float3& dir,
 		const float length,
 		const CUnit* exclude,
-		CUnit*& hitUnit,
-		CFeature*& hitFeature,
+		const CUnit*& hitUnit,
+		const CFeature*& hitFeature,
 		bool useRadar,
 		bool groundOnly = false,
 		bool ignoreWater = true

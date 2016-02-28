@@ -11,7 +11,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/FeatureDrawer.h"
-#include "Rendering/ProjectileDrawer.h"
+#include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/UnitDrawer.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
@@ -233,125 +233,128 @@ void CAdvWater::UpdateWater(CGame* game)
 	if (!mapInfo->water.forceRendering && !readMap->HasVisibleWater())
 		return;
 
-	glPushAttrib(GL_FOG_BIT);
-	glPushAttrib(GL_COLOR_BUFFER_BIT);
+	glPushAttrib(GL_FOG_BIT | GL_COLOR_BUFFER_BIT);
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
 
-	bumpFBO.Bind();
-	glViewport(0, 0, 128, 128);
+	{
+		bumpFBO.Bind();
+		glViewport(0, 0, 128, 128);
 
-	glClearColor(0.0f, 0.0f, 0.0f, 1);
-	glClear(GL_COLOR_BUFFER_BIT);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
 
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0, 1, 0, 1, -1, 1);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		glOrtho(0, 1, 0, 1, -1, 1);
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
 
-	glColor3f(0.2f, 0.2f, 0.2f);
+		glColor3f(0.2f, 0.2f, 0.2f);
 
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-	va->EnlargeArrays(12, 0, VA_SIZE_T);
+		CVertexArray* va = GetVertexArray();
+		va->Initialize();
+		va->EnlargeArrays(12, 0, VA_SIZE_T);
 
-	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[0]);
+		glBindTexture(GL_TEXTURE_2D, rawBumpTexture[0]);
 
-	va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0046f);
-	va->AddVertexQT(  UpVector, 0, 2 + gs->frameNum*0.0046f);
-	va->AddVertexQT(  XYVector, 2, 2 + gs->frameNum*0.0046f);
-	va->AddVertexQT( RgtVector, 2, 0 + gs->frameNum*0.0046f);
+		va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0046f);
+		va->AddVertexQT(  UpVector, 0, 2 + gs->frameNum*0.0046f);
+		va->AddVertexQT(  XYVector, 2, 2 + gs->frameNum*0.0046f);
+		va->AddVertexQT( RgtVector, 2, 0 + gs->frameNum*0.0046f);
 
-	va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0026f);
-	va->AddVertexQT(  UpVector, 0, 4 + gs->frameNum*0.0026f);
-	va->AddVertexQT(  XYVector, 2, 4 + gs->frameNum*0.0026f);
-	va->AddVertexQT( RgtVector, 2, 0 + gs->frameNum*0.0026f);
+		va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0026f);
+		va->AddVertexQT(  UpVector, 0, 4 + gs->frameNum*0.0026f);
+		va->AddVertexQT(  XYVector, 2, 4 + gs->frameNum*0.0026f);
+		va->AddVertexQT( RgtVector, 2, 0 + gs->frameNum*0.0026f);
 
-	va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0012f);
-	va->AddVertexQT(  UpVector, 0, 8 + gs->frameNum*0.0012f);
-	va->AddVertexQT(  XYVector, 2, 8 + gs->frameNum*0.0012f);
-	va->AddVertexQT( RgtVector, 2, 0 + gs->frameNum*0.0012f);
+		va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0012f);
+		va->AddVertexQT(  UpVector, 0, 8 + gs->frameNum*0.0012f);
+		va->AddVertexQT(  XYVector, 2, 8 + gs->frameNum*0.0012f);
+		va->AddVertexQT( RgtVector, 2, 0 + gs->frameNum*0.0012f);
 
-	va->DrawArrayT(GL_QUADS);
+		va->DrawArrayT(GL_QUADS);
 
-	va = GetVertexArray();
-	va->Initialize();
-	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[1]);
+		va = GetVertexArray();
+		va->Initialize();
+		glBindTexture(GL_TEXTURE_2D, rawBumpTexture[1]);
 
-	va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0036f);
-	va->AddVertexQT(  UpVector, 0, 1 + gs->frameNum*0.0036f);
-	va->AddVertexQT(  XYVector, 1, 1 + gs->frameNum*0.0036f);
-	va->AddVertexQT( RgtVector, 1, 0 + gs->frameNum*0.0036f);
+		va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0036f);
+		va->AddVertexQT(  UpVector, 0, 1 + gs->frameNum*0.0036f);
+		va->AddVertexQT(  XYVector, 1, 1 + gs->frameNum*0.0036f);
+		va->AddVertexQT( RgtVector, 1, 0 + gs->frameNum*0.0036f);
 
-	va->DrawArrayT(GL_QUADS);
+		va->DrawArrayT(GL_QUADS);
 
-	va = GetVertexArray();
-	va->Initialize();
-	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[2]);
+		va = GetVertexArray();
+		va->Initialize();
+		glBindTexture(GL_TEXTURE_2D, rawBumpTexture[2]);
 
-	va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0082f);
-	va->AddVertexQT(  UpVector, 0, 1 + gs->frameNum*0.0082f);
-	va->AddVertexQT(  XYVector, 1, 1 + gs->frameNum*0.0082f);
-	va->AddVertexQT( RgtVector, 1, 0 + gs->frameNum*0.0082f);
+		va->AddVertexQT(ZeroVector, 0, 0 + gs->frameNum*0.0082f);
+		va->AddVertexQT(  UpVector, 0, 1 + gs->frameNum*0.0082f);
+		va->AddVertexQT(  XYVector, 1, 1 + gs->frameNum*0.0082f);
+		va->AddVertexQT( RgtVector, 1, 0 + gs->frameNum*0.0082f);
 
-	va->DrawArrayT(GL_QUADS);
+		va->DrawArrayT(GL_QUADS);
 
-	// this fixes a memory leak on ATI cards
-	glBindTexture(GL_TEXTURE_2D, 0);
+		// this fixes a memory leak on ATI cards
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glColor3f(1.0f, 1.0f, 1.0f);
+	}
 
-	glColor3f(1, 1, 1);
-
-//	CCamera* realCam = camera;
-//	camera = new CCamera(*realCam);
-	char realCam[sizeof(CCamera)];
-	new (realCam) CCamera(*camera); // anti-crash workaround for multithreading
-
-	camera->SetDir(camera->GetDir() * float3(1.0f, -1.0f, 1.0f));
-	camera->SetPos(camera->GetPos() * float3(1.0f, -1.0f, 1.0f));
-	camera->SetRotZ(-camera->GetRot().z);
-	camera->Update();
 
 	reflectFBO.Bind();
-	glViewport(0, 0, 512, 512);
-	glClear(GL_DEPTH_BUFFER_BIT);
+	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	game->SetDrawMode(CGame::gameReflectionDraw);
+	const double clipPlaneEq[4] = {0.0, 1.0, 0.0, 0.0};
 
-	sky->Draw();
+	CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
+	CCamera* curCam = CCamera::GetActiveCamera();
 
-	glEnable(GL_CLIP_PLANE2);
-	double plane[4] = {0, 1, 0, 0};
-	glClipPlane(GL_CLIP_PLANE2, plane);
-	drawReflection = true;
+	{
+		curCam->CopyStateReflect(prvCam);
+		curCam->UpdateLoadViewPort(0, 0, 512, 512);
 
-	readMap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
-	unitDrawer->Draw(true);
-	featureDrawer->Draw();
-	unitDrawer->DrawCloakedUnits(true);
-	featureDrawer->DrawFadeFeatures(true);
-	projectileDrawer->Draw(true);
-	eventHandler.DrawWorldReflection();
+		game->SetDrawMode(CGame::gameReflectionDraw);
 
-	game->SetDrawMode(CGame::gameNormalDraw);
+		{
+			drawReflection = true;
 
-	drawReflection = false;
-	glDisable(GL_CLIP_PLANE2);
+			glEnable(GL_CLIP_PLANE2);
+			glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
+
+			// opaque
+			sky->Draw();
+			readMap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
+
+			// rest needs the plane in model-space; V is combined with P
+			SetModelClippingPlane(clipPlaneEq);
+			unitDrawer->Draw(true);
+			featureDrawer->Draw();
+
+			// transparent
+			unitDrawer->DrawAlphaPass();
+			featureDrawer->DrawAlphaPass();
+			projectileDrawer->Draw(true);
+			sky->DrawSun();
+
+			eventHandler.DrawWorldReflection();
+			glDisable(GL_CLIP_PLANE2);
+
+			drawReflection = false;
+		}
+
+		game->SetDrawMode(CGame::gameNormalDraw);
+	}
+
+	CCamera::SetActiveCamera(prvCam->GetCamType());
+	prvCam->Update();
+	prvCam->LoadViewPort();
 
 	FBO::Unbind();
 
-	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
-	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 1);
-
-//	delete camera;
-//	camera = realCam;
-	camera->~CCamera();
-	new (camera) CCamera(*(reinterpret_cast<CCamera*>(realCam)));
-	reinterpret_cast<CCamera*>(realCam)->~CCamera();
-
-	camera->Update();
-	glPopAttrib();
 	glPopAttrib();
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }

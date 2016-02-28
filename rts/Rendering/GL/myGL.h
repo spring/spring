@@ -19,6 +19,8 @@
 #include "System/float3.h"
 #include "System/float4.h"
 
+#include "glStateDebug.h"
+
 
 #if       defined(HEADLESS)
 	// All OpenGL functions should always exists on HEADLESS.

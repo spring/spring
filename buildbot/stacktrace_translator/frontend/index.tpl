@@ -19,7 +19,7 @@ At max 100.000 Bytes are downloaded!<br>
 or copy and paste here:
 <br>
 <textarea cols="100" rows="20" name="request">%TEXTAREA%</textarea><br>
-Post to <a target="_blank" href="http://paste.springfiles.com">paste.springfiles.com</a><input type="checkbox" name="pastebin" checked>
+Post to <a target="_blank" href="http://paste.springfiles.com">paste.springfiles.com</a><input type="checkbox" name="pastebin">
 <input type="submit">
 </p>
 </form>

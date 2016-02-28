@@ -3,6 +3,7 @@
 #ifndef I_PATH_MANAGER_H
 #define I_PATH_MANAGER_H
 
+#include <vector>
 #include <boost/cstdint.hpp> /* Replace with <stdint.h> if appropriate */
 
 #include "PFSTypes.h"

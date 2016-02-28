@@ -19,6 +19,7 @@
 #include "TorpedoLauncher.h"
 
 #include "Game/TraceRay.h"
+#include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
@@ -58,7 +59,7 @@ CWeapon* CWeaponLoader::LoadWeapon(CUnit* owner, const UnitDefWeapon* defWeapon)
 
 	const WeaponDef* weaponDef = defWeapon->def;
 	const std::string& weaponType = weaponDef->type;
-	
+
 	if (StringToLower(weaponDef->name) == "noweapon") {
 		weapon = new CNoWeapon(owner, weaponDef);
 	} else if (weaponType == "Cannon") {
@@ -107,6 +108,7 @@ CWeapon* CWeaponLoader::LoadWeapon(CUnit* owner, const UnitDefWeapon* defWeapon)
 CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefWeapon* defWeapon)
 {
 	const WeaponDef* weaponDef = defWeapon->def;
+	weapon->weaponDefID = weaponDef->id;
 
 	weapon->reloadTime = std::max(1, int(weaponDef->reload * GAME_SPEED));
 	weapon->projectileSpeed = weaponDef->projectilespeed;
@@ -134,7 +136,6 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 		weapon->slavedTo = owner->weapons[defWeapon->slavedTo - 1];
 	}
 
-	weapon->fuelUsage = defWeapon->fuelUsage;
 	weapon->heightBoostFactor = weaponDef->heightBoostFactor;
 	weapon->collisionFlags = weaponDef->collisionFlags;
 
@@ -143,10 +144,11 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 	if (!weaponDef->avoidFeature)  weapon->avoidFlags |= Collision::NOFEATURES;
 	if (!weaponDef->avoidGround)   weapon->avoidFlags |= Collision::NOGROUND;
 
+	weapon->damages = DynDamageArray::IncRef(&weaponDef->damages);
+
 	weapon->SetWeaponNum(owner->weapons.size());
 	weapon->Init();
 	weapon->UpdateRange(weaponDef->range);
-
 	return weapon;
 }
 

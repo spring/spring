@@ -3,8 +3,10 @@
 #ifndef PROJECTILE_HANDLER_H
 #define PROJECTILE_HANDLER_H
 
+#include <array>
 #include <deque>
 #include <vector>
+#include "Rendering/Models/3DModel.h"
 #include "Sim/Projectiles/ProjectileFunctors.h"
 #include "System/float3.h"
 
@@ -14,18 +16,16 @@
 class CProjectile;
 class CUnit;
 class CFeature;
+class CPlasmaRepulser;
 class CGroundFlash;
 struct UnitDef;
 struct FlyingPiece;
-struct S3DOPrimitive;
-struct S3DOPiece;
-struct SS3OVertex;
 
 
-typedef std::vector<CProjectile*> ProjectileMap; // <id, proj*>
+typedef std::vector<CProjectile*> ProjectileMap;
 typedef std::vector<CProjectile*> ProjectileContainer; // <unsorted>
 typedef std::vector<CGroundFlash*> GroundFlashContainer;
-typedef std::vector<FlyingPiece*> FlyingPieceContainer;
+typedef std::vector<FlyingPiece> FlyingPieceContainer;
 
 
 class CProjectileHandler
@@ -35,7 +35,6 @@ class CProjectileHandler
 public:
 	CProjectileHandler();
 	~CProjectileHandler();
-	void Serialize(creg::ISerializer* s);
 
 	/// @see ConfigHandler::ConfigNotifyCallback
 	void ConfigNotify(const std::string& key, const std::string& value);
@@ -45,6 +44,7 @@ public:
 
 	void CheckUnitCollisions(CProjectile*, std::vector<CUnit*>&, const float3, const float3);
 	void CheckFeatureCollisions(CProjectile*, std::vector<CFeature*>&, const float3, const float3);
+	void CheckShieldCollisions(CProjectile*, std::vector<CPlasmaRepulser*>&, const float3, const float3);
 	void CheckUnitFeatureCollisions(ProjectileContainer&);
 	void CheckGroundCollisions(ProjectileContainer&);
 	void CheckCollisions();
@@ -59,8 +59,15 @@ public:
 
 	void AddProjectile(CProjectile* p);
 	void AddGroundFlash(CGroundFlash* flash);
-	void AddFlyingPiece(const float3 pos, const float3 speed, int team, const S3DOPiece* piece, const S3DOPrimitive* chunk);
-	void AddFlyingPiece(const float3 pos, const float3 speed, int team, int textureType, const SS3OVertex* chunk);
+	void AddFlyingPiece(
+		int modelType,
+		const S3DModelPiece* piece,
+		const CMatrix44f& m,
+		const float3 pos,
+		const float3 speed,
+		const float2 pieceParams,
+		const int2 renderParams
+	);
 	void AddNanoParticle(const float3, const float3, const UnitDef*, int team, bool highPriority);
 	void AddNanoParticle(const float3, const float3, const UnitDef*, int team, float radius, bool inverse, bool highPriority);
 
@@ -75,13 +82,11 @@ public:
 	int lastUnsyncedProjectilesCount;
 
 	// flying pieces are sorted from time to time to reduce gl state changes
-	bool resortFlyingPieces3DO;
-	bool resortFlyingPiecesS3O;
+	std::array<                bool, MODELTYPE_OTHER> resortFlyingPieces;
+	std::array<FlyingPieceContainer, MODELTYPE_OTHER> flyingPieces;  // unsynced
 
 	ProjectileContainer syncedProjectiles;    // contains only projectiles that can change simulation state
 	ProjectileContainer unsyncedProjectiles;  // contains only projectiles that cannot change simulation state
-	FlyingPieceContainer flyingPieces3DO;     // unsynced
-	FlyingPieceContainer flyingPiecesS3O;     // unsynced
 	GroundFlashContainer groundFlashes;       // unsynced
 
 private:

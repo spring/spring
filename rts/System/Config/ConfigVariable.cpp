@@ -2,6 +2,7 @@
 
 #include "ConfigVariable.h"
 #include "System/Log/ILog.h"
+#include "System/Util.h"
 #include <iostream>
 
 using std::cout;

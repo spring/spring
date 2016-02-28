@@ -40,11 +40,12 @@ public:
 		const float3& engineVector
 	);
 	void SetState(AircraftState state);
-	void UpdateTakeOff(float wantedHeight);
+	void UpdateTakeOff();
 
-	float3 FindLandingPos(float brakeRate) const;
+	float3 FindLandingPos() const;
 
 	void SetMaxSpeed(float speed);
+	float GetBrakeDistance();
 
 	void KeepPointingTo(float3 pos, float distance, bool aggressive) {}
 	void StartMoving(float3 pos, float goalRadius);

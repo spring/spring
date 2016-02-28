@@ -102,6 +102,8 @@ public:
 
 	bool IsValidId(int resourceId) const;
 
+	void PostLoad();
+
 private:
 	static CResourceHandler* instance;
 
@@ -109,7 +111,7 @@ private:
 	~CResourceHandler() {}
 
 	std::vector<CResourceDescription> resources;
-	std::map<int, CResourceMapAnalyzer*> resourceMapAnalyzers;
+	std::vector<CResourceMapAnalyzer*> resourceMapAnalyzers;
 
 	int metalResourceId;
 	int energyResourceId;

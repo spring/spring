@@ -3,6 +3,7 @@
 #ifndef IN_MAP_DRAW_H
 #define IN_MAP_DRAW_H
 
+#include <boost/shared_ptr.hpp>
 #include <string>
 #include <vector>
 #include <list>
@@ -74,7 +75,7 @@ private:
 	float3 waitingPoint;
 
 	/// whether spectators can send out MAPDRAW net-messages (synced)
-	bool allowSpecMapDrawing; 
+	bool allowSpecMapDrawing;
 	/// whether client ignores incoming Lua MAPDRAW net-messages (unsynced)
 	bool allowLuaMapDrawing;
 

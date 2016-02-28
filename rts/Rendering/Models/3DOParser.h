@@ -3,77 +3,78 @@
 #ifndef SPRING_3DOPARSER_H
 #define SPRING_3DOPARSER_H
 
-#include <vector>
-#include <string>
-#include "System/float3.h"
-#include "Rendering/Textures/3DOTextureHandler.h"
-#include <map>
-#include <set>
+#include "3DModel.h"
 #include "IModelParser.h"
 
+#include "System/float3.h"
+#include "Rendering/Textures/3DOTextureHandler.h"
 
-class CMatrix44f;
+#include <vector>
+#include <string>
+#include <set>
 
-struct S3DOVertex {
+
+
+struct S3DOVertex
+{
+	S3DOVertex(float3 p, float3 n, float2 t)
+	: pos(p), normal(n), texCoord(t) {}
+
 	float3 pos;
-
-	// summed over the primNormal's of all primitives we share
 	float3 normal;
-
-	std::vector<int> prims;
+	float2 texCoord;
 };
 
-struct S3DOPrimitive {
-	std::vector<int> vertices;
+
+struct S3DOPrimitive
+{
+	std::vector<int>    indices;  ///< indices to S3DOPiece::vertexPos
 	std::vector<float3> vnormals; ///< per-vertex normals
 
 	// the raw normal for this primitive (-v0v1.cross(v0v2))
 	// used iff we have less than 3 or more than 4 vertices
 	float3 primNormal;
 
-	int numVertex;
 	C3DOTextureHandler::UnitTexture* texture;
 };
 
-struct S3DOPiece: public S3DModelPiece {
-	S3DOPiece(): radius(0.0f) {
-	}
 
-	void DrawForList() const;
+struct S3DOPiece: public S3DModelPiece
+{
+	void UploadGeometryVBOs() override;
+	void DrawForList() const override;
+
+	unsigned int GetVertexCount() const override { return vboAttributes.GetSize(); }
+	unsigned int GetVertexDrawIndexCount() const override { return vboIndices.GetSize(); }
+	const float3& GetVertexPos(const int idx) const override { return vertexAttribs[idx].pos; }
+	const float3& GetNormal(const int idx)    const override { return vertexAttribs[idx].normal; }
+	const std::vector<unsigned>& GetVertexIndices() const override { return vertexIndices; }
+
+	float3 GetEmitPos() const override { return emitPos; }
+	float3 GetEmitDir() const override { return emitDir; }
+
+	void BindVertexAttribVBOs() const override;
+	void UnbindVertexAttribVBOs() const override;
+
+public:
 	void SetMinMaxExtends();
-	unsigned int GetVertexCount() const { return vertices.size(); }
-	const float3& GetVertexPos(const int idx) const { return vertices[idx].pos; }
-	const float3& GetNormal(const int idx) const { return vertices[idx].normal; }
+	void CalcNormals();
 
-	float3 GetPosOffset() const {
-		//FIXME merge into float3 offset???
-		float3 p = ZeroVector;
-
-		// fix for 3DO *A units with two-vertex pieces
-		if (vertices.size() == 2) {
-			const S3DOVertex& v0 = vertices[0];
-			const S3DOVertex& v1 = vertices[1];
-
-			if (v0.pos.y > v1.pos.y) {
-				p = float3(v0.pos.x, v0.pos.y, -v0.pos.z);
-			} else {
-				p = float3(v1.pos.x, v1.pos.y, -v1.pos.z);
-			}
-		}
-
-		return p;
-	}
-
-	void Shatter(float pieceChance, int texType, int team, const float3& pos, const float3& speed) const;
-
-	std::vector<S3DOVertex> vertices;
+public:
+	std::vector<float3>    vertexPos; //FIXME
 	std::vector<S3DOPrimitive> prims;
-	float radius;
-	float3 relMidPos;
+
+	float3 emitPos;
+	float3 emitDir;
+
+	std::vector<S3DOVertex> vertexAttribs;
+	std::vector<unsigned int> vertexIndices;
 };
+
 
 class C3DOParser: public IModelParser
 {
+public:
 	typedef struct _3DObject
 	{
 		int VersionSignature;
@@ -107,23 +108,18 @@ public:
 	C3DOParser();
 
 	S3DModel* Load(const std::string& name);
-	ModelType GetType() const { return MODELTYPE_3DO; }
 
 private:
-	void CalcNormals(S3DOPiece* o) const;
-	void GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim);
-	void GetVertexes(_3DObject* o, S3DOPiece* object);
-	std::string GetText(int pos);
+	S3DOPiece* LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, int* numobj, const std::vector<unsigned char>& fileBuf);
 
-	S3DOPiece* LoadPiece(S3DModel* model, int pos, S3DOPiece* parent,
-			int* numobj);
+	C3DOTextureHandler::UnitTexture* GetTexture(S3DOPiece* obj, _Primitive* p, const std::vector<unsigned char>& fileBuf) const;
+	static bool IsBasePlate(S3DOPiece* obj, S3DOPrimitive* face);
 
-	void SimStreamRead(void* buf, int length);
+	void GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim, const std::vector<unsigned char>& fileBuf);
+	void GetVertexes(_3DObject* o, S3DOPiece* object, const std::vector<unsigned char>& fileBuf);
 
+private:
 	std::set<std::string> teamtex;
-	std::vector<unsigned char> fileBuf;
-
-	int curOffset;
 
 };
 

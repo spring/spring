@@ -17,8 +17,8 @@ public:
 
 	CObject();
 	virtual ~CObject();
+
 	void Serialize(creg::ISerializer* ser);
-	void PostLoad();
 
 	/// Request to not inform this when obj dies
 	virtual void DeleteDeathDependence(CObject* obj, DependenceType dep);
@@ -48,7 +48,7 @@ public:
 					AIRMOVETYPE,
 					TAAIRMOVETYPE,
 			COMMANDAI=(1<<COMMANDAI_BIT),
-				FACTORYCAI,TRANSPORTCAI,MOBILECAI,
+				FACTORYCAI,MOBILECAI,
 			EXPGENSPAWNABLE=(1<<EXPGENSPAWNABLE_BIT),
 				PROJECTILE=(1<<PROJECTILE_BIT)|EXPGENSPAWNABLE,
 					SHIELDPARTPROJECTILE,

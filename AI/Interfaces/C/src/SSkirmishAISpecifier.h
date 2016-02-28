@@ -37,23 +37,16 @@ struct SSkirmishAISpecifier {
 	const char* version;   // [may not contain: spaces, '_', '#']
 };
 
-struct SSkirmishAISpecifier SSkirmishAISpecifier_copy(
-		const struct SSkirmishAISpecifier* const orig);
-		
-void SSkirmishAISpecifier_delete(struct SSkirmishAISpecifier* spec);
-
 int SSkirmishAISpecifier_hash(
-		const struct SSkirmishAISpecifier* const spec);
+	const struct SSkirmishAISpecifier* const spec
+);
 		
 int SSkirmishAISpecifier_compare(
-		const struct SSkirmishAISpecifier* const specThis,
-		const struct SSkirmishAISpecifier* const specThat);
+	const struct SSkirmishAISpecifier* const specThis,
+	const struct SSkirmishAISpecifier* const specThat
+);
 		
-bool SSkirmishAISpecifier_isUnspecified(
-		const struct SSkirmishAISpecifier* const spec);
 		
-struct SSkirmishAISpecifier SSkirmishAISpecifier_getUnspecified();
-
 
 #if defined __cplusplus
 struct SSkirmishAISpecifier_Comparator {
@@ -63,8 +56,10 @@ struct SSkirmishAISpecifier_Comparator {
 	 * than its second argument, and false otherwise.
 	 * This is also defined as map::key_compare.
 	 */
-	bool operator()(const struct SSkirmishAISpecifier& specThis,
-			const struct SSkirmishAISpecifier& specThat) const;
+	bool operator()(
+		const struct SSkirmishAISpecifier& specThis,
+		const struct SSkirmishAISpecifier& specThat
+	) const;
 };
 #endif // defined __cplusplus
 

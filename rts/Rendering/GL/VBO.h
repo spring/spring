@@ -14,9 +14,10 @@ class VBO
 {
 public:
 	VBO(GLenum defTarget = GL_ARRAY_BUFFER, const bool storage = false);
+	VBO(VBO&& other) { *this = std::move(other); }
 	virtual ~VBO();
 
-	VBO* operator=(VBO&& other);
+	VBO& operator=(VBO&& other);
 
 	bool IsSupported() const;
 	static bool IsVBOSupported();

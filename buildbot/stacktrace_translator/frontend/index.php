@@ -24,54 +24,6 @@ function limit(){
 }
 
 /**
-	returns the spring version of the string in filecontents
-*/
-function getVersion($filecontents){
-	$res=preg_match('/(Spring ([0-9]+.[0-9]+)(.\d*-\d*-g([0-9a-f]{7})\s)?(\w*)\s?(\((.*)\))?)(\n)/',$filecontents,$matches);
-	if ($res==1) {
-		$wholeVersion=$matches[1];
-		$syncVersion=$matches[2];
-		$commit=$matches[4];
-		$branch=$matches[6];
-		$buildFlags=$matches[8];
-		return $wholeVersion;
-	}
-	return "";
-}
-
-/**
-	returns the spring commit of the string in filecontents
-*/
-function getCommit($filecontents) {
-	$res=preg_match('/(Spring ([0-9]+.[0-9]+)(.\d*-\d*-g([0-9a-f]{7})\s)?(\w*)\s?(\((.*)\))?)(\n)/',$filecontents,$matches);
-	if ($res==1) {
-		$wholeVersion=$matches[1];
-		$syncVersion=$matches[2];
-		$commit=$matches[4];
-		$branch=$matches[6];
-		$buildFlags=$matches[8];
-		return $commit;
-	}
-	return "";
-}
-
-/**
-	returns the spring branch of the string in filecontents
-*/
-function getBranch($filecontents) {
-	$res=preg_match('/(Spring ([0-9]+.[0-9]+)(.\d*-\d*-g([0-9a-f]{7})\s)?(\w*)\s?(\((.*)\))?)(\n)/',$filecontents,$matches);
-	if ($res==1) {
-		$wholeVersion=$matches[1];
-		$syncVersion=$matches[2];
-		$commit=$matches[4];
-		$branch=$matches[6];
-		$buildFlags=$matches[8];
-		return (!empty($branch)) ? $branch : "master";
-	}
-	return "develop";
-}
-
-/**
 	returns true if url is valid http:// url
 	has to return false if url is local file
 */
@@ -159,7 +111,7 @@ function parse_template($tpl, $vars){
 /**
 	parses the result of an xmlrequest and returns a string ready for html output
 */
-function parse_result($res,$ver,$commit,$branch){
+function parse_result($res, $commit, $branch){
 	$pastebin="";
 	$name="";
 	$textwithlinks="";
@@ -168,9 +120,9 @@ function parse_result($res,$ver,$commit,$branch){
 		$cleantext.= "Maybe this stacktrace is from an self-compiled spring, or is the stack-trace to old?\n";
 		$cleantext.= "This script only can handle >=0.82\n";
 	}else{
-		$textwithlinks="<h1>translated with links to github source ('$ver' detected)</h1>\n";
+		$textwithlinks="<h1>translated with links to github source ('".$commit." ".$branch."' detected)</h1>\n";
 		$textwithlinks.="<table><tr><td>module</td><td>address</td><td>file</td><td>line</td></tr>\n";
-		$cleantext="";
+		$cleantext= "https://github.com/spring/spring/tree/".$commit."\n\n";
 		for($i=0;$i<count($res); $i++){
 			$module = $res[$i][0];
 			$address = $res[$i][1];
@@ -186,7 +138,7 @@ function parse_result($res,$ver,$commit,$branch){
 				$name=$filename.":".$line;
 			$textwithlinks.="<tr>\n";
 			$textwithlinks.= "<td>".$module . "</td><td> " . $address . "</td><td> " . $filename . "</td>\n";
-			$cleantext.= $module." ".$address." ".$filename.":".$line."\n";
+			$cleantext.= $filename.":".$line."\n";
 
 			if (!empty($filename) && ($filename[0]=='r')){
 				if (!empty($commit)){
@@ -221,12 +173,7 @@ $res['INFO']="";
 if ($res['TEXTAREA']!=""){
 	limit();
 	$tmp=xmlrpcrequest($res['TRANSLATOR'],$res['TEXTAREA']);
-/*	if (array_key_exists('faultString',$tmp)){
-		$res['INFO']="<h1>Warning: using local translator, as remote can't translate</h1>";
-		$res['TRANSLATOR']="http://abma.de:8000";
-		$tmp=xmlrpcrequest($res['TRANSLATOR'],$res['TEXTAREA']);
-	}*/
-	$res=array_merge($res,parse_result($tmp,getVersion($res['TEXTAREA']),getCommit($res['TEXTAREA']),getBranch($res['TEXTAREA'])));
+	$res=array_merge($res,parse_result($tmp['stacktrace'], $tmp['rev'], $tmp['branch']));
 }
 $res['ACTION']=$_SERVER['SCRIPT_NAME'];
 echo parse_template("index.tpl",$res);

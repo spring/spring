@@ -5,7 +5,7 @@
 #include "Map/SMF/SMFReadMap.h"
 #include "Map/SMF/SMFGroundDrawer.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/ProjectileDrawer.h"
+#include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "System/Config/ConfigHandler.h"
@@ -163,8 +163,8 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 	if (sx > ex)
 		return;
 
-	const float cx2 = cam2->GetPos().x / SQUARE_SIZE;
-	const float cy2 = cam2->GetPos().z / SQUARE_SIZE;
+	const float cx2 = cam->GetPos().x / SQUARE_SIZE;
+	const float cy2 = cam->GetPos().z / SQUARE_SIZE;
 
 	for (int btx = sx; btx < ex; ++btx) {
 		ma->Initialize();
@@ -222,7 +222,7 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 				int xs = xstart;
 				int xe = xend;
 
-				FindRange(cam2, /*inout*/ xs, /*inout*/ xe, y, lod);
+				FindRange(cam, /*inout*/ xs, /*inout*/ xe, y, lod);
 
 				// If FindRange modifies (xs, xe) to a (less then) empty range,
 				// continue to the next row.
@@ -453,7 +453,7 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 				y = maxly;
 				int xs = std::max(xstart - lod, mintx);
 				int xe = std::min(xend + lod,   maxtx);
-				FindRange(cam2, xs, xe, y, lod);
+				FindRange(cam, xs, xe, y, lod);
 
 				if (xs < xe) {
 					x = xs;
@@ -491,7 +491,7 @@ void CLegacyMeshDrawer::DoDrawGroundRow(const CCamera* cam, int bty)
 				y = minly - lod;
 				int xs = std::max(xstart - lod, mintx);
 				int xe = std::min(xend + lod,   maxtx);
-				FindRange(cam2, xs, xe, y, lod);
+				FindRange(cam, xs, xe, y, lod);
 
 				if (xs < xe) {
 					x = xs;
@@ -540,7 +540,7 @@ void CLegacyMeshDrawer::UpdateLODParams(const DrawPass::e& drawPass)
 	viewRadius  = smfGroundDrawer->GetGroundDetail(drawPass);
 
 	// Take FOV into account
-	viewRadius  = int(viewRadius * fastmath::apxsqrt(45.0f / camera->GetFov()));
+	viewRadius  = int(viewRadius * fastmath::apxsqrt(45.0f / camera->GetVFOV()));
 
 	// Clamp it to mapsize dependent minimum, else we get holes in the terrain
 	viewRadius  = std::max(std::max(smfReadMap->numBigTexY, smfReadMap->numBigTexX) + 1, viewRadius);
@@ -563,21 +563,17 @@ void CLegacyMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 
 	UpdateLODParams(drawPass);
 
-	//waterDrawn = (drawPass == DrawPass::WaterReflection);
+	CCamera* cam = CCamera::GetActiveCamera();
+	cam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 
-	{ // profiler scope
-		{
-			int camBty = math::floor(cam2->GetPos().z / (smfReadMap->bigSquareSize * SQUARE_SIZE));
-			camBty = std::max(0, std::min(smfReadMap->numBigTexY - 1, camBty));
+	const int camBigTexY = Clamp(int(cam->GetPos().z / (smfReadMap->bigSquareSize * SQUARE_SIZE)), 0, smfReadMap->numBigTexY - 1);
 
-			//! try to render in "front to back" (so start with the camera nearest BigGroundLines)
-			for (int bty = camBty; bty >= 0; --bty) {
-				DoDrawGroundRow(cam2, bty);
-			}
-			for (int bty = camBty + 1; bty < smfReadMap->numBigTexY; ++bty) {
-				DoDrawGroundRow(cam2, bty);
-			}
-		}
+	// try to render "front to back" (so start with the bigtex rows closest to camera)
+	for (int bty = camBigTexY; bty >= 0; --bty) {
+		DoDrawGroundRow(cam, bty);
+	}
+	for (int bty = camBigTexY + 1; bty < smfReadMap->numBigTexY; ++bty) {
+		DoDrawGroundRow(cam, bty);
 	}
 }
 

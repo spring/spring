@@ -18,7 +18,7 @@ struct WeaponDef;
 
 class CWeapon : public CObject
 {
-	CR_DECLARE(CWeapon)
+	CR_DECLARE_DERIVED(CWeapon)
 
 public:
 	CWeapon(CUnit* owner, const WeaponDef* def);
@@ -26,7 +26,7 @@ public:
 	virtual void Init();
 
 	void SetWeaponNum(int);
-	void DependentDied(CObject* o);
+	void DependentDied(CObject* o) override;
 	virtual void SlowUpdate();
 	virtual void Update();
 
@@ -107,9 +107,11 @@ private:
 
 	bool TryTarget(const float3 tgtPos, const SWeaponTarget& trg) const;
 
+	void PostLoad();
 public:
 	CUnit* owner;
 
+	int weaponDefID;
 	const WeaponDef* weaponDef;
 
 	int weaponNum;							// the weapons order among the owner weapons
@@ -121,6 +123,7 @@ public:
 	int reloadStatus;						// next tick the weapon can fire again
 
 	float range;
+	const DynDamageArray* damages;
 
 	float projectileSpeed;
 	float accuracyError;					// inaccuracy of whole salvo
@@ -171,8 +174,6 @@ public:
 
 	unsigned int avoidFlags;
 	unsigned int collisionFlags;
-
-	float fuelUsage;
 
 	float3 relAimFromPos;         // aimFromPos relative to the unit
 	float3 aimFromPos;            // absolute weapon pos

@@ -7,7 +7,7 @@
 
 class CLaserCannon: public CWeapon
 {
-	CR_DECLARE(CLaserCannon)
+	CR_DECLARE_DERIVED(CLaserCannon)
 public:
 	CLaserCannon(CUnit* owner, const WeaponDef* def);
 

@@ -50,9 +50,7 @@ void CClassicGroundMoveType::LeaveTransport() {}
 #include "MoveMath/MoveMath.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
-#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Units/Scripts/CobInstance.h"
@@ -1102,17 +1100,17 @@ bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int s
 		bool blocked = false;
 		const int idx1 = y * mapDims.mapx + x;
 		const int idx2 = y * mapDims.mapx + squareTestX;
-		const BlockingMapCell& c = groundBlockingObjectMap->GetCell(idx1);
-		const BlockingMapCell& d = groundBlockingObjectMap->GetCell(idx2);
-		BlockingMapCellIt it;
+		const BlockingMapCell& c = groundBlockingObjectMap->GetCellUnsafeConst(idx1);
+		const BlockingMapCell& d = groundBlockingObjectMap->GetCellUnsafeConst(idx2);
+
 		float3 posDelta = ZeroVector;
 
-		if (!d.empty() && d.find(owner->id) == d.end()) {
+		if (!d.empty() && std::find(d.begin(), d.end(), owner) == d.end()) {
 			continue;
 		}
 
-		for (it = c.begin(); it != c.end(); ++it) {
-			CSolidObject* obj = it->second;
+		for (auto it = c.begin(); it != c.end(); ++it) {
+			CSolidObject* obj = *it;
 
 			if (CMoveMath::IsNonBlocking(*m, obj, owner)) {
 				continue;
@@ -1147,10 +1145,10 @@ bool CClassicGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int s
 		}
 
 		if (blocked) {
-			if (groundBlockingObjectMap->GetCell(y1 * mapDims.mapx + x).empty()) {
+			if (groundBlockingObjectMap->GetCellUnsafeConst(y1 * mapDims.mapx + x).empty()) {
 				posDelta.z -= (math::fabs(owner->pos.x - xmove) * 0.5f);
 			}
-			if (groundBlockingObjectMap->GetCell(y2 * mapDims.mapx + x).empty()) {
+			if (groundBlockingObjectMap->GetCellUnsafeConst(y2 * mapDims.mapx + x).empty()) {
 				posDelta.z += (math::fabs(owner->pos.x - xmove) * 0.5f);
 			}
 
@@ -1180,17 +1178,17 @@ bool CClassicGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int s
 		bool blocked = false;
 		const int idx1 = y * mapDims.mapx + x;
 		const int idx2 = squareTestY * mapDims.mapx + x;
-		const BlockingMapCell& c = groundBlockingObjectMap->GetCell(idx1);
-		const BlockingMapCell& d = groundBlockingObjectMap->GetCell(idx2);
-		BlockingMapCellIt it;
+		const BlockingMapCell& c = groundBlockingObjectMap->GetCellUnsafeConst(idx1);
+		const BlockingMapCell& d = groundBlockingObjectMap->GetCellUnsafeConst(idx2);
+
 		float3 posDelta = ZeroVector;
 
-		if (!d.empty() && d.find(owner->id) == d.end()) {
+		if (!d.empty() && std::find(d.begin(), d.end(), owner) == d.end()) {
 			continue;
 		}
 
-		for (it = c.begin(); it != c.end(); ++it) {
-			CSolidObject* obj = it->second;
+		for (auto it = c.begin(); it != c.end(); ++it) {
+			CSolidObject* obj = *it;
 
 			if (CMoveMath::IsNonBlocking(*m, obj, owner)) {
 				continue;
@@ -1225,10 +1223,10 @@ bool CClassicGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int s
 		}
 
 		if (blocked) {
-			if (groundBlockingObjectMap->GetCell(y * mapDims.mapx + x1).empty()) {
+			if (groundBlockingObjectMap->GetCellUnsafeConst(y * mapDims.mapx + x1).empty()) {
 				posDelta.x -= (math::fabs(owner->pos.z - zmove) * 0.5f);
 			}
-			if (groundBlockingObjectMap->GetCell(y * mapDims.mapx + x2).empty()) {
+			if (groundBlockingObjectMap->GetCellUnsafeConst(y * mapDims.mapx + x2).empty()) {
 				posDelta.x += (math::fabs(owner->pos.z - zmove) * 0.5f);
 			}
 

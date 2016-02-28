@@ -6,6 +6,7 @@
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/TraceRay.h"
+#include "Map/Ground.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Unit.h"

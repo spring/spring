@@ -5,6 +5,7 @@
 
 #include <string>
 #include "ISky.h"
+#include "Map/MapTexture.h"
 
 class CSkyBox : public ISky
 {
@@ -12,14 +13,20 @@ public:
 	CSkyBox(const std::string& texture);
 	~CSkyBox();
 
-	void Draw();
 	void Update() {}
 	void UpdateSunDir() {}
 	void UpdateSkyTexture() {}
+
+	void Draw();
 	void DrawSun() {}
 
+	void SetLuaTexture(const MapTextureData& td)
+	{
+		skyTex.SetLuaTexture(td);
+	}
+
 private:
-	unsigned int tex;
+	MapTexture skyTex;
 };
 
 #endif // SKY_BOX_H

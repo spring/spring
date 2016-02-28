@@ -53,7 +53,7 @@ void CRefractWater::Draw()
 	glActiveTextureARB(GL_TEXTURE2_ARB);
 	glBindTexture(target, subSurfaceTex);
 	glEnable(target);
-	glCopyTexSubImage2D(target, 0, 0, 0, 0, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+	glCopyTexSubImage2D(target, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 
 	SetupWaterDepthTex();
 

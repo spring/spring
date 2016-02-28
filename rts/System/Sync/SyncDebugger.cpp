@@ -163,14 +163,9 @@ void CSyncDebugger::Backtrace(int index, const char* prefix) const
 		for (unsigned i = 0; i < historybt[index].bt_size; ++i) {
 			// the "{%p}" part is resolved to "functionname [filename:lineno]"
 			// by the CLogger class.
-#ifndef _WIN32
-			logger.AddLine("%s#%u {%p}", prefix, i, historybt[index].bt[i]);
-#else
-			if (sizeof(void*) == 8)
-				logger.AddLine("%s#%u {%llx}", prefix, i, (boost::uint64_t)historybt[index].bt[i]);
-			else
-				logger.AddLine("%s#%u {%x}", prefix, i, (boost::uint32_t)historybt[index].bt[i]);
-#endif
+			if (historybt[index].bt[i] != 0) { //%p prints (nul), ignore it
+				logger.AddLine("%s#%u {%p}", prefix, i, historybt[index].bt[i]);
+			}
 		}
 	}
 }
@@ -316,7 +311,13 @@ void CSyncDebugger::ServerQueueBlockRequests()
 	for (int j = 0; j < playerHandler->ActivePlayers(); ++j) {
 		if (correctFlop) {
 			if (players[j].remoteFlop != correctFlop)
-				logger.AddLine("Server: bad flop# %llu instead of %llu for player %d", players[j].remoteFlop, correctFlop, j);
+				logger.AddLine(
+#ifdef _WIN32
+			"Server: bad flop# %I64u instead of %I64u for player %d",
+#else
+			"Server: bad flop# %llu instead of %llu for player %d",
+#endif
+				players[j].remoteFlop, correctFlop, j);
 		} else {
 			correctFlop = players[j].remoteFlop;
 		}

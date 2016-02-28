@@ -3,6 +3,7 @@
 #ifndef _GLOBAL_SYNCED_H
 #define _GLOBAL_SYNCED_H
 
+#include <algorithm>
 #include <string>
 
 #include "System/float3.h"
@@ -39,8 +40,16 @@ public:
 		randSeed = seed;
 		if (init) { initRandSeed = randSeed; }
 	}
+
 	unsigned int GetRandSeed()     const { return randSeed; }
 	unsigned int GetInitRandSeed() const { return initRandSeed; }
+
+	// Lua should never see the pre-simframe value
+	int GetLuaSimFrame() { return std::max(frameNum, 0); }
+	int GetTempNum() { return tempNum++; }
+
+	// remains true until first SimFrame call
+	bool PreSimFrame() const { return (frameNum == -1); }
 
 public:
 	/**
@@ -49,14 +58,6 @@ public:
 	* Stores the current frame number
 	*/
 	int frameNum;
-
-	/**
-	* @brief temp num
-	*
-	* Used for getting temporary but unique numbers
-	* (increase after each use)
-	*/
-	int tempNum;
 
 
 	/**
@@ -94,14 +95,6 @@ public:
 	* to control all units.
 	*/
 	bool godMode;
-
-	/**
-	* @brief global line-of-sight
-	*
-	* Whether everything on the map is visible at all times to a given ALLYteam
-	* There can never be more allyteams than teams, hence the size is MAX_TEAMS
-	*/
-	bool globalLOS[MAX_TEAMS];
 
 	/**
 	* @brief cheat enabled
@@ -159,6 +152,14 @@ private:
 	* Holds the synced initial random seed
 	*/
 	int initRandSeed;
+
+	/**
+	* @brief temp num
+	*
+	* Used for getting temporary but unique numbers
+	* (increase after each use)
+	*/
+	int tempNum;
 };
 
 extern CGlobalSynced* gs;

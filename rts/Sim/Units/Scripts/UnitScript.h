@@ -95,7 +95,7 @@ protected:
 
 public:
 	// subclass is responsible for populating this with script pieces
-	const std::vector<LocalModelPiece*>& pieces;
+	std::vector<LocalModelPiece*> pieces;
 
 	bool PieceExists(unsigned int scriptPieceNum) const {
 		// NOTE: there can be NULL pieces present from the remapping in CobInstance
@@ -120,7 +120,6 @@ public:
 
 	SCRIPT_TO_LOCALPIECE_FUNC(float3,     GetPiecePos,       GetAbsolutePos,      float3(0.0f,0.0f,0.0f))
 	SCRIPT_TO_LOCALPIECE_FUNC(CMatrix44f, GetPieceMatrix,    GetModelSpaceMatrix,           CMatrix44f())
-	SCRIPT_TO_LOCALPIECE_FUNC(float3,     GetPieceDirection, GetDirection,        float3(1.0f,1.0f,1.0f))
 
 	bool GetEmitDirPos(int scriptPieceNum, float3& pos, float3& dir) const {
 		if (!PieceExists(scriptPieceNum))
@@ -131,7 +130,7 @@ public:
 	}
 
 public:
-	CUnitScript(CUnit* unit, const std::vector<LocalModelPiece*>& pieces);
+	CUnitScript(CUnit* unit);
 	virtual ~CUnitScript();
 
 	bool IsBusy() const { return busy; }
@@ -175,6 +174,7 @@ public:
 	bool HasSetSFXOccupy () const { return hasSetSFXOccupy; }
 	bool HasRockUnit     () const { return hasRockUnit; }
 	bool HasStartBuilding() const { return hasStartBuilding; }
+
 	virtual bool HasBlockShot   (int weaponNum) const { return false; }
 	virtual bool HasTargetWeight(int weaponNum) const { return false; }
 
@@ -185,8 +185,10 @@ public:
 	virtual void Killed() = 0;
 	virtual void WindChanged(float heading, float speed) = 0;
 	virtual void ExtractionRateChanged(float speed) = 0;
+	virtual void WorldRockUnit(const float3& rockDir) = 0;
 	virtual void RockUnit(const float3& rockDir) = 0;
-	virtual void HitByWeapon(const float3& hitDir, int weaponDefId, float& inout_damage) = 0;
+	virtual void WorldHitByWeapon(const float3& hitDir, int weaponDefId, float& inoutDamage) = 0;
+	virtual void HitByWeapon(const float3& hitDir, int weaponDefId, float& inoutDamage) = 0;
 	virtual void SetSFXOccupy(int curTerrainType) = 0;
 	// doubles as QueryLandingPadCount and QueryLandingPad
 	// in COB, the first one determines the number of arguments to the second one

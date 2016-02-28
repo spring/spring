@@ -101,19 +101,10 @@ CSound::~CSound()
 
 bool CSound::HasSoundItem(const std::string& name) const
 {
-	soundMapT::const_iterator it = soundMap.find(name);
-	if (it != soundMap.end())
-	{
+	if (soundMap.find(name) != soundMap.end())
 		return true;
-	}
-	else
-	{
-		soundItemDefMap::const_iterator it = soundItemDefs.find(StringToLower(name));
-		if (it != soundItemDefs.end())
-			return true;
-		else
-			return false;
-	}
+
+	return (soundItemDefs.find(StringToLower(name)) != soundItemDefs.end());
 }
 
 size_t CSound::GetSoundId(const std::string& name)
@@ -127,22 +118,22 @@ size_t CSound::GetSoundId(const std::string& name)
 	if (it != soundMap.end()) {
 		// sounditem found
 		return it->second;
-	} else {
-		soundItemDefMap::const_iterator itemDefIt = soundItemDefs.find(StringToLower(name));
-		if (itemDefIt != soundItemDefs.end()) {
-			return MakeItemFromDef(itemDefIt->second);
-		} else {
-			if (LoadSoundBuffer(name) > 0) // maybe raw filename?
-			{
-				soundItemDef temp = defaultItem;
-				temp["file"] = name;
-				return MakeItemFromDef(temp);
-			} else {
-				LOG_L(L_ERROR, "CSound::GetSoundId: could not find sound: %s", name.c_str());
-				return 0;
-			}
-		}
 	}
+
+	soundItemDefMap::const_iterator itemDefIt = soundItemDefs.find(StringToLower(name));
+	if (itemDefIt != soundItemDefs.end()) {
+		return MakeItemFromDef(itemDefIt->second);
+	}
+
+	if (LoadSoundBuffer(name) > 0) {
+		// maybe raw filename?
+		soundItemDef temp = defaultItem;
+		temp["file"] = name;
+		return MakeItemFromDef(temp);
+	}
+
+	LOG_L(L_ERROR, "CSound::GetSoundId: could not find sound: %s", name.c_str());
+	return 0;
 }
 
 SoundItem* CSound::GetSoundItem(size_t id) const {
@@ -254,7 +245,7 @@ bool CSound::Mute()
 	boost::recursive_mutex::scoped_lock lck(soundMutex);
 	mute = !mute;
 	if (mute)
-		alListenerf(AL_GAIN, 0.0);
+		alListenerf(AL_GAIN, 0.0f);
 	else
 		alListenerf(AL_GAIN, masterVolume);
 	return mute;
@@ -313,6 +304,8 @@ void CSound::StartThread(int maxSounds)
 		if (device == NULL) {
 			LOG_L(L_ERROR, "Could not open a sound device, disabling sounds");
 			CheckError("CSound::InitAL");
+			// fall back to NullSound
+			soundThreadQuit = true;
 			return;
 		} else {
 			ALCcontext* context = alcCreateContext(device, NULL);
@@ -323,6 +316,8 @@ void CSound::StartThread(int maxSounds)
 			} else {
 				alcCloseDevice(device);
 				LOG_L(L_ERROR, "Could not create OpenAL audio context");
+				// fall back to NullSound
+				soundThreadQuit = true;
 				return;
 			}
 		}
@@ -492,12 +487,12 @@ void CSound::PrintDebugInfo()
 	LOG_L(L_DEBUG, "# SoundItems: %i", (int)sounds.size());
 }
 
-bool CSound::LoadSoundDefsImpl(const std::string& fileName)
+bool CSound::LoadSoundDefsImpl(const std::string& fileName, const std::string& modes)
 {
 	//! can be called from LuaUnsyncedCtrl too
 	boost::recursive_mutex::scoped_lock lck(soundMutex);
 
-	LuaParser parser(fileName, SPRING_VFS_MOD, SPRING_VFS_ZIP);
+	LuaParser parser(fileName, modes, modes);
 	parser.Execute();
 	if (!parser.IsValid())
 	{

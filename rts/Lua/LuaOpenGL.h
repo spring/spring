@@ -68,6 +68,20 @@ class LuaOpenGL {
 		static void ResetDrawWorldRefraction();
 		static void DisableDrawWorldRefraction();
 
+		#define NOOP_STATE_FUNCS(Name)    \
+		static void Enable  ## Name () {} \
+		static void Disable ## Name () {} \
+		static void Reset   ## Name () {}
+
+		// no-ops (should probably guard some state)
+		NOOP_STATE_FUNCS(DrawGroundPreForward)
+		NOOP_STATE_FUNCS(DrawGroundPreDeferred)
+		NOOP_STATE_FUNCS(DrawGroundPostDeferred)
+		NOOP_STATE_FUNCS(DrawUnitsPostDeferred)
+		NOOP_STATE_FUNCS(DrawFeaturesPostDeferred)
+
+		#undef NOOP_STATE_FUNCS
+
 		static void EnableDrawScreenEffects();
 		static void ResetDrawScreenEffects();
 		static void DisableDrawScreenEffects();
@@ -209,15 +223,33 @@ class LuaOpenGL {
 		static int GetTextWidth(lua_State* L);
 		static int GetTextHeight(lua_State* L);
 
+		// internal wrapper for Unit and UnitRaw
+		static int UnitCommon(lua_State* L, bool applyTransform, bool callDrawUnit);
+
 		static int Unit(lua_State* L);
 		static int UnitRaw(lua_State* L);
+		static int UnitTextures(lua_State* L);
 		static int UnitShape(lua_State* L);
+		static int UnitShapeTextures(lua_State* L);
 		static int UnitMultMatrix(lua_State* L);
 		static int UnitPiece(lua_State* L);
 		static int UnitPieceMatrix(lua_State* L);
 		static int UnitPieceMultMatrix(lua_State* L);
+
+		// internal wrapper for Feature and FeatureRaw
+		static int FeatureCommon(lua_State* L, bool applyTransform, bool callDrawFeature);
+
 		static int Feature(lua_State* L);
+		static int FeatureRaw(lua_State* L);
+		static int FeatureTextures(lua_State* L);
 		static int FeatureShape(lua_State* L);
+		static int FeatureShapeTextures(lua_State* L);
+		static int FeatureMultMatrix(lua_State* L);
+		static int FeaturePiece(lua_State* L);
+		static int FeaturePieceMatrix(lua_State* L);
+		static int FeaturePieceMultMatrix(lua_State* L);
+
+
 		static int DrawListAtUnit(lua_State* L);
 		static int DrawFuncAtUnit(lua_State* L);
 		static int DrawGroundCircle(lua_State* L);
@@ -265,6 +297,7 @@ class LuaOpenGL {
 		static int GetShadowMapParams(lua_State* L);
 
 		static int GetSun(lua_State* L);
+		static int GetAtmosphere(lua_State* L);
 };
 
 inline void LuaOpenGL::InitMatrixState(lua_State* L, const LuaHashString* hs) {

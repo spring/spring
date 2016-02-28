@@ -23,7 +23,7 @@ demoStream(std::ios::binary | std::ios::out)
 	SetName(mapName, modName, serverDemo);
 	SetFileHeader();
 
-	file.open(demoName.c_str(), std::ios::binary | std::ios::out);
+	file = gzopen(demoName.c_str(), "wb9");
 }
 
 CDemoRecorder::~CDemoRecorder()
@@ -60,9 +60,9 @@ void CDemoRecorder::WriteDemoFile()
 	// that avoids str()'s copy would be to supply our own stringbuffer backend to demoStream
 	// which is slightly overdoing it
 	const std::string data = demoStream.str();
-	file.write(data.c_str(), data.size());
-	file.flush();
-	file.close();
+	gzwrite(file, data.c_str(), data.size());
+	gzflush(file, Z_FINISH);
+	gzclose(file);
 }
 
 void CDemoRecorder::WriteSetupText(const std::string& text)
@@ -108,12 +108,12 @@ void CDemoRecorder::SetName(const std::string& mapName, const std::string& modNa
 	// oss << FileSystem::GetBasename(modName);
 	// oss << "_";
 	oss << SpringVersion::GetSync();
-	buf << oss.str() << ".sdf";
+	buf << oss.str() << ".sdfz";
 
 	int n = 0;
 	while (FileSystem::FileExists(buf.str()) && (n < 99)) {
 		buf.str(""); // clears content
-		buf << oss.str() << "_" << n++ << ".sdf";
+		buf << oss.str() << "_" << n++ << ".sdfz";
 	}
 
 	demoName = dataDirsAccess.LocateFile(buf.str(), FileQueryFlags::WRITE);

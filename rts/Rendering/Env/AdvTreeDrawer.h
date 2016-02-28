@@ -3,7 +3,6 @@
 #ifndef _ADV_TREE_DRAWER_H_
 #define _ADV_TREE_DRAWER_H_
 
-#include <list>
 #include "ITreeDrawer.h"
 
 class CVertexArray;
@@ -21,9 +20,6 @@ public:
 	void LoadTreeShaders();
 	void Draw(float treeDistance, bool drawReflection);
 	void Update();
-	void ResetPos(const float3& pos);
-	void AddTree(int treeID, int treeType, const float3& pos, float size);
-	void DeleteTree(int treeID, const float3& pos);
 	void AddFallingTree(int treeID, int treeType, const float3& pos, const float3& dir);
 	void DrawShadowPass();
 
@@ -51,12 +47,6 @@ public:
 	int lastListClean;
 	float oldTreeDistance;
 
-	int treesX;
-	int treesY;
-	int nTrees;
-
-	TreeSquareStruct* trees;
-
 private:
 	enum TreeShaderProgram {
 		TREE_PROGRAM_NEAR_BASIC  = 0, // near-tree shader (V) without self-shadowing
@@ -66,7 +56,7 @@ private:
 	};
 
 	std::vector<Shader::IProgramObject*> treeShaders;
-	std::list<FallingTree> fallingTrees;
+	std::vector<FallingTree> fallingTrees;
 };
 
 #endif // _ADV_TREE_DRAWER_H_

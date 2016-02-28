@@ -5,19 +5,15 @@
 #include "Game/TraceRay.h"
 #include "Game/GameHelper.h"
 #include "Map/Ground.h"
-#include "Sim/Projectiles/Unsynced/HeatCloudProjectile.h"
-#include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
-#include "Sim/Projectiles/Unsynced/TracerProjectile.h"
+#include "Rendering/Env/Particles/Classes/HeatCloudProjectile.h"
+#include "Rendering/Env/Particles/Classes/SmokeProjectile.h"
+#include "Rendering/Env/Particles/Classes/TracerProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Features/Feature.h"
 #include "System/Sync/SyncTracer.h"
 #include "System/myMath.h"
 
 CR_BIND_DERIVED(CRifle, CWeapon, (NULL, NULL))
-
-CR_REG_METADATA(CRifle,(
-	CR_RESERVED(8)
-))
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -43,13 +39,13 @@ void CRifle::FireImpl(const bool scriptCall)
 	CFeature* hitFeature;
 
 	const float length = TraceRay::TraceRay(weaponMuzzlePos, dir, range, 0, owner, hitUnit, hitFeature);
-	const float impulse = CGameHelper::CalcImpulseScale(weaponDef->damages, 1.0f);
+	const float impulse = CGameHelper::CalcImpulseScale(*damages, 1.0f);
 
 	if (hitUnit != NULL) {
-		hitUnit->DoDamage(weaponDef->damages, dir * impulse, owner, weaponDef->id, -1);
+		hitUnit->DoDamage(*damages, dir * impulse, owner, weaponDef->id, -1);
 		new CHeatCloudProjectile(owner, weaponMuzzlePos + dir * length, hitUnit->speed * 0.9f, 30, 1);
 	}else if (hitFeature != NULL) {
-		hitFeature->DoDamage(weaponDef->damages, dir * impulse, owner, weaponDef->id, -1);
+		hitFeature->DoDamage(*damages, dir * impulse, owner, weaponDef->id, -1);
 		new CHeatCloudProjectile(owner, weaponMuzzlePos + dir * length, hitFeature->speed * 0.9f, 30, 1);
 	}
 

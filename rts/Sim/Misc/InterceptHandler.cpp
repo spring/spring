@@ -10,7 +10,6 @@
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "System/EventHandler.h"
 #include "System/float3.h"
@@ -21,7 +20,6 @@
 CR_BIND_DERIVED(CInterceptHandler, CObject, )
 CR_REG_METADATA(CInterceptHandler, (
 	CR_MEMBER(interceptors),
-	CR_MEMBER(repulsors),
 	CR_MEMBER(interceptables)
 ))
 
@@ -132,20 +130,6 @@ void CInterceptHandler::RemoveInterceptorWeapon(CWeapon* weapon)
 }
 
 
-void CInterceptHandler::AddPlasmaRepulser(CPlasmaRepulser* shield)
-{
-	repulsors.push_back(shield);
-}
-
-
-void CInterceptHandler::RemovePlasmaRepulser(CPlasmaRepulser* shield) {
-	auto it = std::find(repulsors.begin(), repulsors.end(), shield);
-	if (it != repulsors.end()) {
-		repulsors.erase(it);
-	}
-}
-
-
 void CInterceptHandler::AddInterceptTarget(CWeaponProjectile* target, const float3& destination)
 {
 	// keep track of all interceptable projectiles
@@ -166,39 +150,5 @@ void CInterceptHandler::DependentDied(CObject* o)
 	if (it != interceptables.end()) {
 		interceptables.erase(it);
 	}
-}
-
-
-void CInterceptHandler::AddShieldInterceptableProjectile(CWeaponProjectile* p)
-{
-	for (CPlasmaRepulser* shield: repulsors) {
-		if (shield->weaponDef->shieldInterceptType & p->GetWeaponDef()->interceptedByShieldType) {
-			shield->NewProjectile(p);
-		}
-	}
-}
-
-
-
-float CInterceptHandler::AddShieldInterceptableBeam(CWeapon* emitter, const float3& start, const float3& dir, float length, float3& newDir, CPlasmaRepulser*& repulsedBy)
-{
-	float minRange = std::numeric_limits<float>::max();
-	float3 tempDir;
-
-	for (CPlasmaRepulser* shield: repulsors) {
-		if ((shield->weaponDef->shieldInterceptType & emitter->weaponDef->interceptedByShieldType) == 0)
-			continue;
-
-		const float dist = shield->NewBeam(emitter, start, dir, length, tempDir);
-
-		if (dist <=     0.0f) continue;
-		if (dist >= minRange) continue;
-
-		minRange = dist;
-		newDir = tempDir;
-		repulsedBy = shield;
-	}
-
-	return minRange;
 }
 

@@ -7,36 +7,43 @@
 #include <string>
 #include <map>
 
-#include "Rendering/GL/GeometryBuffer.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/LightHandler.h"
 #include "System/EventClient.h"
-#include "lib/gml/ThreadSafeContainers.h"
+#include "System/type2.h"
 
+struct SolidObjectDef;
 struct UnitDef;
-class CWorldObject;
-class IWorldObjectModelRenderer;
+struct S3DModel;
+
+class IModelRenderContainer;
+class CSolidObject;
 class CUnit;
-class CFeature;
+class CVertexArray;
+
 struct Command;
 struct BuildInfo;
-struct SolidObjectGroundDecal;
 struct GhostSolidObject;
 struct IUnitDrawerState;
 
 namespace icon {
 	class CIconData;
 }
+namespace GL {
+	struct GeometryBuffer;
+}
 
 class CUnitDrawer: public CEventClient
 {
 public:
-	//! CEventClient interface
+	// CEventClient interface
 	bool WantsEvent(const std::string& eventName) {
 		return
-			(eventName == "RenderUnitCreated"      || eventName == "RenderUnitDestroyed" ) ||
-			(eventName == "RenderUnitCloakChanged" || eventName == "RenderUnitLOSChanged") ||
-			(eventName == "PlayerChanged"          || eventName == "SunChanged"          );
+			eventName == "RenderUnitCreated"      || eventName == "RenderUnitDestroyed"  ||
+			eventName == "UnitCloaked"            || eventName == "UnitDecloaked"        ||
+			eventName == "UnitEnteredRadar"       || eventName == "UnitEnteredLos"       ||
+			eventName == "UnitLeftRadar"          || eventName == "UnitLeftLos"          ||
+			eventName == "PlayerChanged"          || eventName == "SunChanged"           ||
+			eventName == "SunLightingChanged";
 	}
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
@@ -44,11 +51,17 @@ public:
 	void RenderUnitCreated(const CUnit*, int cloaked);
 	void RenderUnitDestroyed(const CUnit*);
 
-	void RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus);
-	void RenderUnitCloakChanged(const CUnit* unit, int cloaked);
+	void UnitEnteredRadar(const CUnit* unit, int allyTeam);
+	void UnitEnteredLos(const CUnit* unit, int allyTeam);
+	void UnitLeftRadar(const CUnit* unit, int allyTeam);
+	void UnitLeftLos(const CUnit* unit, int allyTeam);
+
+	void UnitCloaked(const CUnit* unit);
+	void UnitDecloaked(const CUnit* unit);
 
 	void PlayerChanged(int playerNum);
 	void SunChanged(const float3& sunDir);
+	void SunLightingChanged();
 
 public:
 	CUnitDrawer();
@@ -56,28 +69,42 @@ public:
 
 	void Update();
 
-	void SetDrawDeferredPass(bool b) {
-		if ((drawDeferred = b)) {
-			drawDeferred &= UpdateGeometryBuffer(false);
-		}
-	}
-
 	void Draw(bool drawReflection, bool drawRefraction = false);
-	/// cloaked units must be drawn after all others
-	void DrawCloakedUnits(bool noAdvShading = false);
+	void DrawOpaquePass(bool deferredPass, bool drawReflection, bool drawRefraction);
 	void DrawShadowPass();
-	void DrawDeferredPass(const CUnit* excludeUnit, bool drawReflection, bool drawRefraction);
+	void DrawAlphaPass();
 
-	void DrawUnitRaw(CUnit* unit);
-	void DrawUnitRawModel(CUnit* unit);
-	void DrawUnitWithLists(CUnit* unit, unsigned int preList, unsigned int postList);
-	void DrawUnitRawWithLists(CUnit* unit, unsigned int preList, unsigned int postList);
+	void SetDrawForwardPass(bool b) { drawForward = b; }
+	void SetDrawDeferredPass(bool b) { drawDeferred = b; }
 
-	void SetTeamColour(int team, float alpha = 1.0f) const;
-	void SetupForUnitDrawing(bool deferredPass);
-	void CleanUpUnitDrawing(bool deferredPass) const;
-	void SetupForGhostDrawing() const;
-	void CleanUpGhostDrawing() const;
+	// note: make these static?
+	void DrawUnitModel(const CUnit* unit, bool noLuaCall);
+	void DrawUnitModelBeingBuilt(const CUnit* unit, bool noLuaCall);
+
+	void DrawUnitNoTrans(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
+	void DrawUnit(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
+
+	void PushIndividualOpaqueState(const S3DModel* model, int teamID, bool deferredPass);
+	void PushIndividualAlphaState(const S3DModel* model, int teamID, bool deferredPass);
+	void PopIndividualOpaqueState(const S3DModel* model, int teamID, bool deferredPass);
+	void PopIndividualAlphaState(const S3DModel* model, int teamID, bool deferredPass);
+
+	/// LuaOpenGL::Unit{Raw}: draw a single unit with full state setup
+	void PushIndividualOpaqueState(const CUnit* unit, bool deferredPass);
+	void PopIndividualOpaqueState(const CUnit* unit, bool deferredPass);
+	void DrawIndividual(const CUnit* unit, bool noLuaCall);
+	void DrawIndividualNoTrans(const CUnit* unit, bool noLuaCall);
+
+	// alpha.x := alpha-value
+	// alpha.y := alpha-pass (true or false)
+	void SetTeamColour(int team, const float2 alpha = float2(1.0f, 0.0f)) const;
+
+
+	void SetupOpaqueDrawing(bool deferredPass);
+	void ResetOpaqueDrawing(bool deferredPass) const;
+	void SetupAlphaDrawing(bool deferredPass);
+	void ResetAlphaDrawing(bool deferredPass) const;
+
 
 	void SetUnitDrawDist(float dist);
 	void SetUnitIconDist(float dist);
@@ -87,152 +114,160 @@ public:
 
 	void CreateSpecularFace(unsigned int glType, int size, float3 baseDir, float3 xDif, float3 yDif, float3 sunDir, float exponent, float3 sunColor);
 
-	static void DrawBuildingSample(const UnitDef* unitdef, int team, float3 pos, int facing = 0);
-	static void DrawUnitDef(const UnitDef* unitDef, int team);
-
-	/// Returns true if the given unit should be drawn as icon in the current frame.
-	bool DrawAsIcon(const CUnit* unit, const float sqUnitCamDist) const;
-
-	/** LuaOpenGL::Unit{Raw} **/
-	void DrawIndividual(CUnit* unit);
+	static void DrawIndividualDefOpaque(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen = false);
+	static void DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen = false);
 
 	void DrawUnitMiniMapIcons() const;
 
-	static unsigned int CalcUnitLOD(const CUnit* unit, unsigned int lastLOD);
-	static unsigned int CalcUnitShadowLOD(const CUnit* unit, unsigned int lastLOD);
-	static void SetUnitLODCount(CUnit* unit, unsigned int count);
-
 	const std::vector<CUnit*>& GetUnsortedUnits() const { return unsortedUnits; }
-	IWorldObjectModelRenderer* GetOpaqueModelRenderer(int modelType) { return opaqueModelRenderers[modelType]; }
-	IWorldObjectModelRenderer* GetCloakedModelRenderer(int modelType) { return cloakedModelRenderers[modelType]; }
+
+	IModelRenderContainer* GetOpaqueModelRenderer(int modelType) { return opaqueModelRenderers[modelType]; }
+	IModelRenderContainer* GetAlphaModelRenderer(int modelType) { return alphaModelRenderers[modelType]; }
 
 	const GL::LightHandler* GetLightHandler() const { return &lightHandler; }
 	      GL::LightHandler* GetLightHandler()       { return &lightHandler; }
 
-	const GL::GeometryBuffer* GetGeometryBuffer() const { return &geomBuffer; }
-	      GL::GeometryBuffer* GetGeometryBuffer()       { return &geomBuffer; }
+	const GL::GeometryBuffer* GetGeometryBuffer() const { return geomBuffer; }
+	      GL::GeometryBuffer* GetGeometryBuffer()       { return geomBuffer; }
 
+	const IUnitDrawerState* GetWantedDrawerState(bool alphaPass) const;
+
+
+	bool DrawForward() const { return drawForward; }
 	bool DrawDeferred() const { return drawDeferred; }
 
 	bool UseAdvShading() const { return advShading; }
-	bool UseAdvFading() const { return advFading; }
-
 	bool& UseAdvShadingRef() { return advShading; }
-	bool& UseAdvFadingRef() { return advFading; }
 
-	void SetUseAdvShading(bool b) { advShading = b; }
-	void SetUseAdvFading(bool b) { advFading = b; }
+public:
+	struct TempDrawUnit {
+		const UnitDef* unitDef;
 
+		int team;
+		int facing;
+		int timeout;
+
+		float3 pos;
+		float rotation;
+
+		bool drawAlpha;
+		bool drawBorder;
+	};
+
+	void AddTempDrawUnit(const TempDrawUnit& tempDrawUnit);
+	void UpdateTempDrawUnits(std::vector<TempDrawUnit>& tempDrawUnits);
 
 private:
-	bool DrawUnitLOD(CUnit* unit);
-	void DrawOpaqueUnit(CUnit* unit, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction);
+	/// Returns true if the given unit should be drawn as icon in the current frame.
+	bool DrawAsIcon(const CUnit* unit, const float sqUnitCamDist) const;
+
+	bool CanDrawOpaqueUnit(const CUnit* unit, bool drawReflection, bool drawRefraction) const;
+	bool CanDrawOpaqueUnitShadow(const CUnit* unit) const;
+
+	void DrawOpaqueUnit(CUnit* unit, bool drawReflection, bool drawRefraction);
 	void DrawOpaqueUnitShadow(CUnit* unit);
 	void DrawOpaqueUnitsShadow(int modelType);
+	void DrawOpaqueUnits(int modelType, bool drawReflection, bool drawRefraction);
 
-	void DrawOpaqueUnits(int modelType, const CUnit* excludeUnit, bool drawReflection, bool drawRefraction);
-	void DrawOpaqueShaderUnits(unsigned int matType, bool deferredPass);
-	void DrawCloakedShaderUnits(unsigned int matType);
-	void DrawShadowShaderUnits(unsigned int matType);
+	void DrawAlphaUnits(int modelType);
+	void DrawAlphaUnit(CUnit* unit, int modelType, bool drawGhostBuildingsPass);
 
-	void DrawOpaqueAIUnits();
-	void DrawCloakedAIUnits();
+	void DrawOpaqueAIUnits(int modelType);
+	void DrawOpaqueAIUnit(const TempDrawUnit& unit);
+	void DrawAlphaAIUnits(int modelType);
+	void DrawAlphaAIUnit(const TempDrawUnit& unit);
+	void DrawAlphaAIUnitBorder(const TempDrawUnit& unit);
+
 	void DrawGhostedBuildings(int modelType);
+
 
 	void DrawUnitIcons(bool drawReflection);
 	void DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const;
+
 	void UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool killed);
-
-	bool UpdateGeometryBuffer(bool init);
-
-	// note: make these static?
-	void DrawUnitBeingBuilt(CUnit* unit);
-	void DrawUnitModel(CUnit* unit);
-	void DrawUnitNow(CUnit* unit);
-
 	void UpdateUnitIconState(CUnit* unit);
-	static void UpdateUnitDrawPos(CUnit* unit);
 
 	static void DrawIcon(CUnit* unit, bool asRadarBlip);
-	void DrawCloakedUnitsHelper(int modelType);
-	void DrawCloakedUnit(CUnit* unit, int modelType, bool drawGhostBuildingsPass);
-
-	void SelectRenderState(bool shaderPath) {
-		unitDrawerState = shaderPath? unitDrawerStateSSP: unitDrawerStateFFP;
-	}
+	static void UpdateUnitDrawPos(CUnit* unit);
 
 public:
+	static void BindModelTypeTexture(int mdlType, int texType);
+	static void PushModelRenderState(int mdlType);
+	static void PopModelRenderState(int mdlType);
+
+	// never called directly; combined with PushModelRenderState(S3DModel*)
+	// static void BindModelTypeTexture(const S3DModel* m) { BindModelTypeTexture(m->type, m->textureType); }
+	static void PushModelRenderState(const S3DModel* m);
+	static void PopModelRenderState(const S3DModel* m);
+
+	// never called directly; combined with PushModelRenderState(CSolidObject*)
+	// static void BindModelTypeTexture(const CSolidObject* o) { BindModelTypeTexture(o->model); }
+	static void PushModelRenderState(const CSolidObject* o);
+	static void PopModelRenderState(const CSolidObject* o);
+
+	// needed by FFP drawer-state
 	static void SetupBasicS3OTexture0();
 	static void SetupBasicS3OTexture1();
 	static void CleanupBasicS3OTexture1();
 	static void CleanupBasicS3OTexture0();
 
+	static bool ObjectVisibleReflection(const float3 objPos, const float3 camPos, float maxRadius);
+
 
 public:
-	float LODScale;
-	float LODScaleShadow;
-	float LODScaleReflection;
-	float LODScaleRefraction;
-
 	float unitDrawDist;
 	float unitDrawDistSqr;
 	float unitIconDist;
 	float iconLength;
 
-	float3 unitAmbientColor;
-	float3 unitSunColor;
-
-	struct TempDrawUnit {
-		const UnitDef* unitdef;
-		int team;
-		float3 pos;
-		float rotation;
-		int facing;
-		bool drawBorder;
-	};
-	std::multimap<int, TempDrawUnit> tempDrawUnits;
-	std::multimap<int, TempDrawUnit> tempTransparentDrawUnits;
-
 	float3 camNorm; ///< used to draw far-textures
 
+	// .x := regular unit alpha
+	// .y := ghosted unit alpha (out of radar)
+	// .z := ghosted unit alpha (inside radar)
+	// .w := AI-temp unit alpha
+	float4 alphaValues;
+
 private:
-	bool advShading;
-	bool advFading;
+	bool drawForward;
 	bool drawDeferred;
+
+	bool advShading;
 
 	bool useDistToGroundForIcons;
 	float sqCamDistToGroundForIcons;
 
-	float cloakAlpha;
-	float cloakAlpha1;
-	float cloakAlpha2;
-	float cloakAlpha3;
+private:
+	std::vector<IModelRenderContainer*> opaqueModelRenderers;
+	std::vector<IModelRenderContainer*> alphaModelRenderers;
 
-	std::vector<IWorldObjectModelRenderer*> opaqueModelRenderers;
-	std::vector<IWorldObjectModelRenderer*> cloakedModelRenderers;
-
-	/**
-	 * units being rendered (note that this is a completely
-	 * unsorted set of 3DO, S3O, opaque, and cloaked models!)
-	 */
+	/// units being rendered (note that this is a completely
+	/// unsorted set of 3DO, S3O, opaque, and cloaked models!)
 	std::vector<CUnit*> unsortedUnits;
+
+	/// AI unit ghosts
+	std::vector< std::vector<TempDrawUnit> > tempOpaqueUnits;
+	std::vector< std::vector<TempDrawUnit> > tempAlphaUnits;
 
 	/// buildings that were in LOS_PREVLOS when they died and not in LOS since
 	std::vector<std::vector<GhostSolidObject*> > deadGhostBuildings;
 	/// buildings that left LOS but are still alive
 	std::vector<std::vector<CUnit*> > liveGhostBuildings;
 
-	std::vector<CUnit*> drawIcon;
+	/// units that are only rendered as icons this frame
+	std::vector<CUnit*> iconUnits;
 
 	std::vector<std::vector<CUnit*> > unitRadarIcons;
 	std::map<icon::CIconData*, std::vector<const CUnit*> > unitsByIcon;
 
-	IUnitDrawerState* unitDrawerStateSSP; // default shader-driven rendering path
-	IUnitDrawerState* unitDrawerStateFFP; // fallback shader-less rendering path
-	IUnitDrawerState* unitDrawerState;
+	// [0] := fallback shader-less rendering path
+	// [1] := default shader-driven rendering path
+	// [2] := currently selected state
+	std::vector<IUnitDrawerState*> unitDrawerStates;
 
+private:
 	GL::LightHandler lightHandler;
-	GL::GeometryBuffer geomBuffer;
+	GL::GeometryBuffer* geomBuffer;
 };
 
 extern CUnitDrawer* unitDrawer;

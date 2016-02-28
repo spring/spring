@@ -15,10 +15,14 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Projectiles/Unsynced/FlyingPiece.h"
-#include "Sim/Projectiles/Unsynced/NanoProjectile.h"
+#include "Rendering/Env/Particles/Classes/FlyingPiece.h"
+#include "Rendering/Env/Particles/Classes/NanoProjectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Sim/Weapons/WeaponDef.h"
+#include "Sim/Weapons/PlasmaRepulser.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
@@ -43,11 +47,9 @@ CR_BIND(CProjectileHandler, )
 CR_REG_METADATA(CProjectileHandler, (
 	CR_MEMBER(syncedProjectiles),
 	CR_MEMBER(unsyncedProjectiles),
-	CR_MEMBER_UN(flyingPieces3DO),
-	CR_MEMBER_UN(flyingPiecesS3O),
+	CR_MEMBER_UN(flyingPieces),
 	CR_MEMBER_UN(groundFlashes),
-	CR_MEMBER_UN(resortFlyingPieces3DO),
-	CR_MEMBER_UN(resortFlyingPiecesS3O),
+	CR_MEMBER_UN(resortFlyingPieces),
 
 	CR_MEMBER(maxParticles),
 	CR_MEMBER(maxNanoParticles),
@@ -59,9 +61,7 @@ CR_REG_METADATA(CProjectileHandler, (
 	CR_MEMBER(freeSyncedIDs),
 	CR_MEMBER(freeUnsyncedIDs),
 	CR_MEMBER(syncedProjectileIDs),
-	CR_MEMBER(unsyncedProjectileIDs),
-
-	CR_SERIALIZER(Serialize)
+	CR_MEMBER(unsyncedProjectileIDs)
 ))
 
 
@@ -75,8 +75,7 @@ CProjectileHandler::CProjectileHandler()
 , lastCurrentParticles(0)
 , lastSyncedProjectilesCount(0)
 , lastUnsyncedProjectilesCount(0)
-, resortFlyingPieces3DO(false)
-, resortFlyingPiecesS3O(false)
+, resortFlyingPieces({false})
 , syncedProjectileIDs(1024, nullptr)
 #if UNSYNCED_PROJ_NOEVENT
 , unsyncedProjectileIDs(0, nullptr)
@@ -98,6 +97,10 @@ CProjectileHandler::CProjectileHandler()
 	}
 	std::random_shuffle(freeUnsyncedIDs.begin(), freeUnsyncedIDs.end(), gu->rng);
 
+	for (int modelType = 0; modelType < MODELTYPE_OTHER; ++modelType) {
+		flyingPieces[modelType].reserve(1000);
+	}
+
 	// register ConfigNotify()
 	configHandler->NotifyOnChange(this);
 }
@@ -106,14 +109,33 @@ CProjectileHandler::~CProjectileHandler()
 {
 	configHandler->RemoveObserver(this);
 
-	for (CProjectile* p: syncedProjectiles) {
-		delete p;
+	{
+		// synced first, to avoid callback crashes
+		for (CProjectile* p: syncedProjectiles)
+			delete p;
+
+		syncedProjectiles.clear();
 	}
-	syncedProjectiles.clear(); // synced first, to avoid callback crashes
-	for (CProjectile* p: unsyncedProjectiles) {
-		delete p;
+
+	{
+		for (CProjectile* p: unsyncedProjectiles)
+			delete p;
+
+		unsyncedProjectiles.clear();
 	}
-	unsyncedProjectiles.clear();
+
+	{
+		for (CGroundFlash* gf: groundFlashes)
+			delete gf;
+
+		groundFlashes.clear();
+	}
+
+	{
+		for (auto& fpc: flyingPieces) {
+			fpc.clear();
+		}
+	}
 
 	freeSyncedIDs.clear();
 	freeUnsyncedIDs.clear();
@@ -122,45 +144,6 @@ CProjectileHandler::~CProjectileHandler()
 	unsyncedProjectileIDs.clear();
 
 	CCollisionHandler::PrintStats();
-}
-
-void CProjectileHandler::Serialize(creg::ISerializer* s)
-{
-	if (s->IsWriting()) {
-		int ssize = int(syncedProjectiles.size());
-		int usize = int(unsyncedProjectiles.size());
-
-		s->SerializeInt(&ssize);
-		for (CProjectile* p: syncedProjectiles) {
-			void** ptr = (void**) &p;
-			s->SerializeObjectPtr(ptr, p->GetClass());
-		}
-
-		s->SerializeInt(&usize);
-		for (CProjectile* p: unsyncedProjectiles) {
-			void** ptr = (void**) &p;
-			s->SerializeObjectPtr(ptr, p->GetClass());
-		}
-	} else {
-		int ssize, usize;
-
-		s->SerializeInt(&ssize);
-		syncedProjectiles.resize(ssize);
-
-		for (CProjectile* p: syncedProjectiles) {
-			void** ptr = (void**) &p;
-			s->SerializeObjectPtr(ptr, 0/*FIXME*/);
-		}
-
-
-		s->SerializeInt(&usize);
-		unsyncedProjectiles.resize(usize);
-
-		for (CProjectile* p: unsyncedProjectiles) {
-			void** ptr = (void**) &p;
-			s->SerializeObjectPtr(ptr, 0/*FIXME*/);
-		}
-	}
 }
 
 
@@ -190,51 +173,55 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 {
 	// WARNING: we can't use iters here cause ProjectileCreated and ProjectileDestroyed events
 	// may add new projectiles to the container!
-	for (size_t i=0; i<pc.size();) {
+	for (size_t i = 0; i < pc.size(); /*no-op*/) {
 		CProjectile* p = pc[i];
 		assert(p);
 		assert(p->synced == synced);
+#ifdef USING_CREG
 		assert(p->synced == !!(p->GetClass()->binder->flags & creg::CF_Synced));
+#endif
+
+		// creation
 		if (p->callEvent) {
-		#if UNSYNCED_PROJ_NOEVENT
-			if (synced) {
+			if (synced || !UNSYNCED_PROJ_NOEVENT)
 				eventHandler.ProjectileCreated(p, p->GetAllyteamID());
-			} else {
-				eventHandler.UnsyncedProjectileCreated(p);
-			}
-		#else
-			eventHandler.ProjectileCreated(p, p->GetAllyteamID());
-		#endif
+
+			eventHandler.RenderProjectileCreated(p);
 			p->callEvent = false;
 		}
-		if (!p->deleteMe) {
-			++i;
+
+		// deletion
+		if (p->deleteMe) {
+			pc[i] = pc.back();
+			pc.pop_back();
+			eventHandler.RenderProjectileDestroyed(p);
+
+			if (synced) { //FIXME move outside of loop!
+				eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
+				syncedProjectileIDs[p->id] = nullptr;
+				freeSyncedIDs.push_back(p->id);
+				ASSERT_SYNCED(p->pos);
+				ASSERT_SYNCED(p->id);
+			} else {
+			#if !UNSYNCED_PROJ_NOEVENT
+				eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
+				unsyncedProjectileIDs[p->id] = nullptr;
+				freeUnsyncedIDs.push_back(p->id);
+			#endif
+			}
+
+			delete p;
 			continue;
 		}
-		pc[i] = pc.back();
-		pc.pop_back();
-		if (synced) { //FIXME move outside of loop!
-			eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
-			syncedProjectileIDs[p->id] = nullptr;
-			freeSyncedIDs.push_back(p->id);
-			ASSERT_SYNCED(p->pos);
-			ASSERT_SYNCED(p->id);
-		} else {
-		#if UNSYNCED_PROJ_NOEVENT
-			eventHandler.UnsyncedProjectileDestroyed(p);
-		#else
-			eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
-			unsyncedProjectileIDs[p->id] = nullptr;
-			freeUnsyncedIDs.push_back(p->id);
-		#endif
-		}
-		delete p;
+
+		// neither
+		++i;
 	}
 
 	SCOPED_TIMER("ProjectileHandler::Update::PP");
 
 	//WARNING: we can't use iters here cause p->Update() may add new projectiles to the container!
-	for (size_t i=0; i<pc.size(); ++i) {
+	for (size_t i = 0; i < pc.size(); ++i) {
 		CProjectile* p = pc[i];
 		assert(p);
 
@@ -249,26 +236,60 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 
 
 template<class T>
-static void UPDATE_CONTAINER(T& cont) {
-#ifdef DEBUG
-	const auto* origStart = cont.empty() ? nullptr : &(*cont.begin());
-#endif
+static void UPDATE_PTR_CONTAINER(T& cont) {
+	if (cont.empty())
+		return;
 
-	auto pti = cont.begin();
-	while (pti != cont.end()) {
-		auto* p = *pti;
+#ifndef NDEBUG
+	const size_t origSize = cont.size();
+#endif
+	size_t size = cont.size();
+
+	for (unsigned int i = 0; i < size; /*no-op*/) {
+		auto*& p = cont[i];
+
 		if (!p->Update()) {
-			*pti = cont.back();
-			cont.pop_back();
 			delete p;
-		} else {
-			++pti;
+			p = cont[size -= 1];
+			continue;
 		}
+
+		++i;
 	}
 
 	//WARNING: check if the vector got enlarged while iterating, in that case
-	// all iterators got invalidated in the loop, causing crashes
-	assert(cont.empty() || &(*cont.begin()) == origStart);
+	// we didn't update the newest items
+	assert(cont.size() == origSize);
+
+	cont.erase(cont.begin() + size, cont.end());
+}
+
+template<class T>
+static void UPDATE_REF_CONTAINER(T& cont) {
+	if (cont.empty())
+		return;
+
+#ifndef NDEBUG
+	const size_t origSize = cont.size();
+#endif
+	size_t size = cont.size();
+
+	for (unsigned int i = 0; i < size; /*no-op*/) {
+		auto& p = cont[i];
+
+		if (!p.Update()) {
+			p = std::move(cont[size -= 1]);
+			continue;
+		}
+
+		++i;
+	}
+
+	//WARNING: check if the vector got enlarged while iterating, in that case
+	// we didn't update the newest items
+	assert(cont.size() == origSize);
+
+	cont.erase(cont.begin() + size, cont.end());
 }
 
 
@@ -283,16 +304,18 @@ void CProjectileHandler::Update()
 		UpdateProjectileContainer(unsyncedProjectiles, false);
 
 		// groundflashes
-		UPDATE_CONTAINER(groundFlashes);
+		UPDATE_PTR_CONTAINER(groundFlashes);
 
-		// flying pieces
-		UPDATE_CONTAINER(flyingPiecesS3O);
-		UPDATE_CONTAINER(flyingPieces3DO);
+		// flying pieces; sort these every now and then
+		for (int modelType = 0; modelType < MODELTYPE_OTHER; ++modelType) {
+			auto& fpc = flyingPieces[modelType];
 
-		// sort those every now and then
-		FlyingPieceComparator fsort;
-		if (resortFlyingPiecesS3O) std::sort(flyingPiecesS3O.begin(), flyingPiecesS3O.end(), fsort);
-		if (resortFlyingPieces3DO) std::sort(flyingPieces3DO.begin(), flyingPieces3DO.end(), fsort);
+			UPDATE_REF_CONTAINER(fpc);
+
+			if (resortFlyingPieces[modelType]) {
+				std::sort(fpc.begin(), fpc.end());
+			}
+		}
 	}
 
 	// precache part of particles count calculation that else becomes very heavy
@@ -371,19 +394,21 @@ void CProjectileHandler::CheckUnitCollisions(
 	const float3 ppos0,
 	const float3 ppos1)
 {
+	if (!p->checkCol)
+		return;
+
 	CollisionQuery cq;
 
 	for (CUnit* unit: tempUnits) {
-		if (unit == NULL)
-			break;
+		assert(unit != nullptr);
 
 		// if this unit fired this projectile, always ignore
 		if (unit == p->owner())
 			continue;
 		if (!unit->HasCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES))
 			continue;
-		
-		if (p->GetAllyteamID() >= 0) {
+
+		if (teamHandler->IsValidAllyTeam(p->GetAllyteamID())) {
 			if (p->GetCollisionFlags() & Collision::NOFRIENDLIES) {
 				if ( teamHandler->AlliedAllyTeams(p->GetAllyteamID(), unit->allyteam)) { continue; }
 			}
@@ -395,9 +420,9 @@ void CProjectileHandler::CheckUnitCollisions(
 			}
 		}
 
-		if (CCollisionHandler::DetectHit(unit, ppos0, ppos1, &cq)) {
+		if (CCollisionHandler::DetectHit(unit, unit->GetTransformMatrix(true), ppos0, ppos1, &cq)) {
 			if (cq.GetHitPiece() != NULL) {
-				unit->SetLastAttackedPiece(cq.GetHitPiece(), gs->frameNum);
+				unit->SetLastHitPiece(cq.GetHitPiece(), gs->frameNum);
 			}
 
 			if (!cq.InsideHit()) {
@@ -429,13 +454,16 @@ void CProjectileHandler::CheckFeatureCollisions(
 	CollisionQuery cq;
 
 	for (CFeature* feature: tempFeatures) {
-		if (feature == NULL)
-			break;
+		assert(feature != nullptr);
 
 		if (!feature->HasCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES))
 			continue;
 
-		if (CCollisionHandler::DetectHit(feature, ppos0, ppos1, &cq)) {
+		if (CCollisionHandler::DetectHit(feature, feature->GetTransformMatrix(true), ppos0, ppos1, &cq)) {
+			if (cq.GetHitPiece() != NULL) {
+				feature->SetLastHitPiece(cq.GetHitPiece(), gs->frameNum);
+			}
+
 			if (!cq.InsideHit()) {
 				p->SetPosition(cq.GetHitPos());
 				p->Collision(feature);
@@ -449,10 +477,47 @@ void CProjectileHandler::CheckFeatureCollisions(
 	}
 }
 
+
+void CProjectileHandler::CheckShieldCollisions(
+	CProjectile* p,
+	std::vector<CPlasmaRepulser*>& tempRepulsers,
+	const float3 ppos0,
+	const float3 ppos1)
+{
+	if (!p->checkCol)
+		return;
+
+	if (!p->weapon)
+		return;
+
+	CWeaponProjectile* wpro = static_cast<CWeaponProjectile*>(p);
+	const WeaponDef* wdef = wpro->GetWeaponDef();
+
+	//Bail early
+	if (wdef->interceptedByShieldType == 0)
+		return;
+
+	CollisionQuery cq;
+
+	for (CPlasmaRepulser* repulser: tempRepulsers) {
+		assert(repulser != nullptr);
+		if (!repulser->CanIntercept(wdef->interceptedByShieldType, p->GetAllyteamID()))
+			continue;
+
+		if (CCollisionHandler::DetectHit(repulser->owner, &repulser->collisionVolume, repulser->owner->GetTransformMatrix(true), ppos0, ppos1, &cq)) {
+			if (!cq.InsideHit() || !repulser->weaponDef->exteriorShield || repulser->IsRepulsing(wpro)) {
+				if (repulser->IncomingProjectile(wpro))
+					return;
+			}
+		}
+	}
+}
+
 void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc)
 {
-	static std::vector<CUnit*> tempUnits(unitHandler->MaxUnits(), NULL);
-	static std::vector<CFeature*> tempFeatures(unitHandler->MaxUnits(), NULL);
+	static std::vector<CUnit*> tempUnits;
+	static std::vector<CFeature*> tempFeatures;
+	static std::vector<CPlasmaRepulser*> tempRepulsers;
 
 	for (size_t i=0; i<pc.size(); ++i) {
 		CProjectile* p = pc[i];
@@ -462,10 +527,14 @@ void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc)
 		const float3 ppos0 = p->pos;
 		const float3 ppos1 = p->pos + p->speed;
 
-		quadField->GetUnitsAndFeaturesColVol(p->pos, p->radius + p->speed.w, tempUnits, tempFeatures);
+		quadField->GetUnitsAndFeaturesColVol(p->pos, p->radius + p->speed.w, tempUnits, tempFeatures, &tempRepulsers);
 
+		CheckShieldCollisions(p, tempRepulsers, ppos0, ppos1);
+		tempRepulsers.clear();
 		CheckUnitCollisions(p, tempUnits, ppos0, ppos1);
+		tempUnits.clear();
 		CheckFeatureCollisions(p, tempFeatures, ppos0, ppos1);
+		tempFeatures.clear();
 	}
 }
 
@@ -519,29 +588,16 @@ void CProjectileHandler::AddGroundFlash(CGroundFlash* flash)
 
 
 void CProjectileHandler::AddFlyingPiece(
+	int modelType,
+	const S3DModelPiece* piece,
+	const CMatrix44f& m,
 	const float3 pos,
 	const float3 speed,
-	int team,
-	const S3DOPiece* piece,
-	const S3DOPrimitive* chunk)
-{
-	FlyingPiece* fp = new S3DOFlyingPiece(pos, speed, team, piece, chunk);
-	flyingPieces3DO.push_back(fp);
-	resortFlyingPieces3DO = true;
-}
-
-void CProjectileHandler::AddFlyingPiece(
-	const float3 pos,
-	const float3 speed,
-	int team,
-	int textureType,
-	const SS3OVertex* chunk)
-{
-	assert(textureType > 0);
-
-	FlyingPiece* fp = new SS3OFlyingPiece(pos, speed, team, textureType, chunk);
-	flyingPiecesS3O.push_back(fp);
-	resortFlyingPiecesS3O = true;
+	const float2 pieceParams,
+	const int2 renderParams
+) {
+	flyingPieces[modelType].emplace_back(piece, m, pos, speed, pieceParams, renderParams);
+	resortFlyingPieces[modelType] = true;
 }
 
 
@@ -565,13 +621,15 @@ void CProjectileHandler::AddNanoParticle(
 	dif /= l;
 	dif += gu->RandVector() * 0.15f;
 
-	SColor color(unitDef->nanoColor.r, unitDef->nanoColor.g, unitDef->nanoColor.b);
-	if (globalRendering->teamNanospray) {
-		const CTeam* team = teamHandler->Team(teamNum);
-		color = SColor(team->color);
-	}
-	color.a = 20;
-	new CNanoProjectile(startPos, dif, int(l), color);
+	const float3 udColor = unitDef->nanoColor;
+	const uint8_t* tColor = (teamHandler->Team(teamNum))->color;
+
+	const SColor colors[2] = {
+		SColor(udColor.r, udColor.g, udColor.b, 20.0f / 255.0f),
+		SColor(tColor[0], tColor[1], tColor[2], uint8_t(20)),
+	};
+
+	new CNanoProjectile(startPos, dif, int(l), colors[globalRendering->teamNanospray]);
 }
 
 void CProjectileHandler::AddNanoParticle(
@@ -596,17 +654,18 @@ void CProjectileHandler::AddNanoParticle(
 
 	float3 error = gu->RandVector() * (radius / l);
 
-	SColor color(unitDef->nanoColor.r, unitDef->nanoColor.g, unitDef->nanoColor.b);
-	if (globalRendering->teamNanospray) {
-		const CTeam* team = teamHandler->Team(teamNum);
-		color = SColor(team->color);
-	}
-	color.a = 20;
+	const float3 udColor = unitDef->nanoColor;
+	const uint8_t* tColor = (teamHandler->Team(teamNum))->color;
+
+	const SColor colors[2] = {
+		SColor(udColor.r, udColor.g, udColor.b, 20.0f / 255.0f),
+		SColor(tColor[0], tColor[1], tColor[2], uint8_t(20)),
+	};
 
 	if (!inverse) {
-		new CNanoProjectile(startPos, (dif + error) * 3, int(l / 3), color);
+		new CNanoProjectile(startPos, (dif + error) * 3, int(l / 3), colors[globalRendering->teamNanospray]);
 	} else {
-		new CNanoProjectile(startPos + (dif + error) * l, -(dif + error) * 3, int(l / 3), color);
+		new CNanoProjectile(startPos + (dif + error) * l, -(dif + error) * 3, int(l / 3), colors[globalRendering->teamNanospray]);
 	}
 }
 
@@ -649,8 +708,11 @@ int CProjectileHandler::GetCurrentParticles() const
 	for (size_t i = lastUnsyncedProjectilesCount, e = unsyncedProjectiles.size(); i < e; ++i) {
 		partCount += unsyncedProjectiles[i]->GetProjectilesCount();
 	}
-	partCount += flyingPieces3DO.size();
-	partCount += flyingPiecesS3O.size();
+	for (const auto& c: flyingPieces) {
+		for (const auto& fp: c) {
+			partCount += fp.GetDrawCallCount();
+		}
+	}
 	partCount += groundFlashes.size();
 	return partCount;
 }

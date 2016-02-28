@@ -1,6 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/Matrix44f.h"
+#include "System/myMath.h"
+
 #include <memory.h>
 #include <algorithm>
 
@@ -32,9 +34,7 @@ CMatrix44f::CMatrix44f(const float3 pos, const float3 x, const float3 y, const f
 CMatrix44f::CMatrix44f(const float rotX, const float rotY, const float rotZ)
 {
 	LoadIdentity();
-	RotateX(rotX);
-	RotateY(rotY);
-	RotateZ(rotZ);
+	RotateEulerXYZ(float3(rotX, rotY, rotZ));
 }
 
 CMatrix44f::CMatrix44f(const float3 p)
@@ -44,32 +44,23 @@ CMatrix44f::CMatrix44f(const float3 p)
 }
 
 
-int CMatrix44f::IsOrthoNormal(float eps) const
+bool CMatrix44f::IsOrthoNormal() const
 {
 	const float3& xdir = GetX();
 	const float3& ydir = GetY();
 	const float3& zdir = GetZ();
-
-	if (math::fabs(xdir.dot(ydir)) > eps) { return 1; }
-	if (math::fabs(ydir.dot(zdir)) > eps) { return 2; }
-	if (math::fabs(xdir.dot(zdir)) > eps) { return 3; }
-
-	if (xdir.SqLength() < (1.0f - eps) || xdir.SqLength() > (1.0f + eps)) { return 4; }
-	if (ydir.SqLength() < (1.0f - eps) || ydir.SqLength() > (1.0f + eps)) { return 5; }
-	if (zdir.SqLength() < (1.0f - eps) || zdir.SqLength() > (1.0f + eps)) { return 6; }
-
-	return 0;
+	const float3 ortho = float3(xdir.dot(ydir), ydir.dot(zdir), xdir.dot(zdir));
+	const float3 norma = float3(xdir.SqLength(), ydir.SqLength(), zdir.SqLength());
+	return (ortho == ZeroVector) && (norma == OnesVector);
 }
 
-int CMatrix44f::IsIdentity(float eps) const
+bool CMatrix44f::IsIdentity() const
 {
-	#define ABS(i) math::fabs(m[i])
-	if (ABS( 0) > (1.0f + eps) || ABS( 1) > (       eps) || ABS( 2) > (       eps) || ABS( 3) > (       eps)) return 1; // 1st col
-	if (ABS( 4) > (       eps) || ABS( 5) > (1.0f + eps) || ABS( 6) > (       eps) || ABS( 7) > (       eps)) return 2; // 2nd col
-	if (ABS( 8) > (       eps) || ABS( 9) > (       eps) || ABS(10) > (1.0f + eps) || ABS(11) > (       eps)) return 3; // 3rd col
-	if (ABS(12) > (       eps) || ABS(13) > (       eps) || ABS(14) > (       eps) || ABS(15) > (1.0f + eps)) return 4; // 4th col
-	#undef ABS
-	return 0;
+	return
+		   (col[0] == float4(1.0f, 0.0f, 0.0f, 0.0f))
+		&& (col[1] == float4(0.0f, 1.0f, 0.0f, 0.0f))
+		&& (col[2] == float4(0.0f, 0.0f, 1.0f, 0.0f))
+		&& (col[3] == float4(0.0f, 0.0f, 0.0f, 1.0f));
 }
 
 CMatrix44f& CMatrix44f::LoadIdentity()
@@ -85,85 +76,98 @@ CMatrix44f& CMatrix44f::LoadIdentity()
 }
 
 
-CMatrix44f& CMatrix44f::RotateX(float rad)
+CMatrix44f& CMatrix44f::RotateX(float angle)
 {
-/*
-	const float sr = math::sin(rad);
-	const float cr = math::cos(rad);
+	angle = ClampRad(angle);
+
+	#if 0
+	const float sr = math::sin(angle);
+	const float cr = math::cos(angle);
 
 	CMatrix44f rm;
-	rm[5]  = +cr;
+	rm[ 5] = +cr;
 	rm[10] = +cr;
-	rm[9]  = +sr;
-	rm[6]  = -sr;
+	rm[ 9] = +sr;
+	rm[ 6] = -sr;
 
-	*this=Mul(rm);
-*/
-	const float sr = math::sin(rad);
-	const float cr = math::cos(rad);
+	// neater, but more FLOPS
+	*this = Mul(rm);
 
-	float a=m[4];
+	#else
+
+	const float sr = math::sin(angle);
+	const float cr = math::cos(angle);
+
+	float a = m[4];
 	m[4] = cr*a - sr*m[8];
 	m[8] = sr*a + cr*m[8];
 
-	a=m[5];
+	a = m[5];
 	m[5] = cr*a - sr*m[9];
 	m[9] = sr*a + cr*m[9];
 
-	a=m[6];
-	m[6]  = cr*a - sr*m[10];
+	a = m[6];
+	m[ 6] = cr*a - sr*m[10];
 	m[10] = sr*a + cr*m[10];
 
-	a=m[7];
-	m[7]  = cr*a - sr*m[11];
+	a = m[7];
+	m[ 7] = cr*a - sr*m[11];
 	m[11] = sr*a + cr*m[11];
+	#endif
 
 	return *this;
 }
 
 
-CMatrix44f& CMatrix44f::RotateY(float rad)
+CMatrix44f& CMatrix44f::RotateY(float angle)
 {
-/*
-	const float sr = math::sin(rad);
-	const float cr = math::cos(rad);
+	angle = ClampRad(angle);
+
+	#if 0
+	const float sr = math::sin(angle);
+	const float cr = math::cos(angle);
 
 	CMatrix44f rm;
-	rm[0]  = +cr;
+	rm[ 0] = +cr;
 	rm[10] = +cr;
-	rm[2]  = +sr;
-	rm[8]  = -sr;
+	rm[ 2] = +sr;
+	rm[ 8] = -sr;
 
 	*this = Mul(rm);
-*/
-	const float sr = math::sin(rad);
-	const float cr = math::cos(rad);
 
-	float a=m[0];
+	#else
+
+	const float sr = math::sin(angle);
+	const float cr = math::cos(angle);
+
+	float a = m[0];
 	m[0] =  cr*a + sr*m[8];
 	m[8] = -sr*a + cr*m[8];
 
-	a=m[1];
+	a = m[1];
 	m[1] =  cr*a + sr*m[9];
 	m[9] = -sr*a + cr*m[9];
 
-	a=m[2];
-	m[2]  =  cr*a + sr*m[10];
+	a = m[2];
+	m[ 2] =  cr*a + sr*m[10];
 	m[10] = -sr*a + cr*m[10];
 
-	a=m[3];
-	m[3]  =  cr*a + sr*m[11];
+	a = m[3];
+	m[ 3] =  cr*a + sr*m[11];
 	m[11] = -sr*a + cr*m[11];
+	#endif
 
 	return *this;
 }
 
 
-CMatrix44f& CMatrix44f::RotateZ(float rad)
+CMatrix44f& CMatrix44f::RotateZ(float angle)
 {
-/*
-	const float sr = math::sin(rad);
-	const float cr = math::cos(rad);
+	angle = ClampRad(angle);
+
+	#if 0
+	const float sr = math::sin(angle);
+	const float cr = math::cos(angle);
 
 	CMatrix44f rm;
 	rm[0] = +cr;
@@ -172,34 +176,35 @@ CMatrix44f& CMatrix44f::RotateZ(float rad)
 	rm[1] = -sr;
 
 	*this = Mul(rm);
-*/
-	const float sr = math::sin(rad);
-	const float cr = math::cos(rad);
+	#else
+	const float sr = math::sin(angle);
+	const float cr = math::cos(angle);
 
-	float a=m[0];
+	float a = m[0];
 	m[0] = cr*a - sr*m[4];
 	m[4] = sr*a + cr*m[4];
 
-	a=m[1];
+	a = m[1];
 	m[1] = cr*a - sr*m[5];
 	m[5] = sr*a + cr*m[5];
 
-	a=m[2];
+	a = m[2];
 	m[2] = cr*a - sr*m[6];
 	m[6] = sr*a + cr*m[6];
 
-	a=m[3];
+	a = m[3];
 	m[3] = cr*a - sr*m[7];
 	m[7] = sr*a + cr*m[7];
+	#endif
 
 	return *this;
 }
 
 
-CMatrix44f& CMatrix44f::Rotate(float rad, const float3 axis)
+CMatrix44f& CMatrix44f::Rotate(float angle, const float3 axis)
 {
-	const float sr = math::sin(rad);
-	const float cr = math::cos(rad);
+	const float sr = math::sin(angle);
+	const float cr = math::cos(angle);
 
 	for (int a = 0; a < 3; ++a) {
 		// a=0: x, a=1: y, a=2: z
@@ -226,49 +231,77 @@ CMatrix44f& CMatrix44f::Rotate(float rad, const float3 axis)
 }
 
 
+CMatrix44f& CMatrix44f::RotateEulerXYZ(const float3 angles)
+{
+	// rotate around X first, Y second, Z third (R=R(Z)*R(Y)*R(X))
+	if (angles[ANGLE_P] != 0.0f) { RotateX(angles[ANGLE_P]); }
+	if (angles[ANGLE_Y] != 0.0f) { RotateY(angles[ANGLE_Y]); }
+	if (angles[ANGLE_R] != 0.0f) { RotateZ(angles[ANGLE_R]); }
+	return *this;
+}
+
+CMatrix44f& CMatrix44f::RotateEulerYXZ(const float3 angles)
+{
+	// rotate around Y first, X second, Z third (R=R(Z)*R(X)*R(Y))
+	if (angles[ANGLE_Y] != 0.0f) { RotateY(angles[ANGLE_Y]); }
+	if (angles[ANGLE_P] != 0.0f) { RotateX(angles[ANGLE_P]); }
+	if (angles[ANGLE_R] != 0.0f) { RotateZ(angles[ANGLE_R]); }
+	return *this;
+}
+
+CMatrix44f& CMatrix44f::RotateEulerZXY(const float3 angles)
+{
+	// rotate around Z first, X second, Y third (R=R(Y)*R(X)*R(Z))
+	if (angles[ANGLE_R] != 0.0f) { RotateZ(angles[ANGLE_R]); }
+	if (angles[ANGLE_P] != 0.0f) { RotateX(angles[ANGLE_P]); }
+	if (angles[ANGLE_Y] != 0.0f) { RotateY(angles[ANGLE_Y]); }
+	return *this;
+}
+
+CMatrix44f& CMatrix44f::RotateEulerZYX(const float3 angles)
+{
+	// rotate around Z first, Y second, X third (R=R(X)*R(Y)*R(Z))
+	if (angles[ANGLE_R] != 0.0f) { RotateZ(angles[ANGLE_R]); }
+	if (angles[ANGLE_Y] != 0.0f) { RotateY(angles[ANGLE_Y]); }
+	if (angles[ANGLE_P] != 0.0f) { RotateX(angles[ANGLE_P]); }
+	return *this;
+}
+
+
+// multiply M by the scale-matrix (SX, SY, SZ, ST)
+//
+//  [SX][SY][SZ][ST]
+//  ----------------
+//  [sx   0   0   0]
+//  [ 0  sy   0   0]
+//  [ 0   0  sz   0]
+//  [ 0   0   0   1]
+//
 CMatrix44f& CMatrix44f::Scale(const float3 scales)
 {
 	m[ 0] *= scales.x;
-	m[ 1] *= scales.y;
-	m[ 2] *= scales.z;
+	m[ 1] *= scales.x;
+	m[ 2] *= scales.x;
 
-	m[ 4] *= scales.x;
+	m[ 4] *= scales.y;
 	m[ 5] *= scales.y;
-	m[ 6] *= scales.z;
+	m[ 6] *= scales.y;
 
-	m[ 8] *= scales.x;
-	m[ 9] *= scales.y;
+	m[ 8] *= scales.z;
+	m[ 9] *= scales.z;
 	m[10] *= scales.z;
-
-	m[12] *= scales.x;
-	m[13] *= scales.y;
-	m[14] *= scales.z;
-
 	return *this;
 }
-
 
 CMatrix44f& CMatrix44f::Translate(const float x, const float y, const float z)
 {
-	m[12] += x*m[0] + y*m[4] + z*m[ 8];
-	m[13] += x*m[1] + y*m[5] + z*m[ 9];
-	m[14] += x*m[2] + y*m[6] + z*m[10];
-	m[15] += x*m[3] + y*m[7] + z*m[11];
+	m[12] += (x*m[0] + y*m[4] + z*m[ 8]);
+	m[13] += (x*m[1] + y*m[5] + z*m[ 9]);
+	m[14] += (x*m[2] + y*m[6] + z*m[10]);
+	m[15] += (x*m[3] + y*m[7] + z*m[11]);
 	return *this;
 }
 
-
-void CMatrix44f::SetPos(const float3 pos)
-{
-	const float x = pos.x;
-	const float y = pos.y;
-	const float z = pos.z;
-
-	m[12] = x*m[0] + y*m[4] + z*m[ 8];
-	m[13] = x*m[1] + y*m[5] + z*m[ 9];
-	m[14] = x*m[2] + y*m[6] + z*m[10];
-	m[15] = x*m[3] + y*m[7] + z*m[11];
-}
 
 
 __FORCE_ALIGN_STACK__
@@ -550,3 +583,85 @@ CMatrix44f CMatrix44f::Invert(bool* status) const
 	if (status) *status = true;
 	return mat;
 }
+
+
+
+// adapted from stackoverflow.com/questions/18433801/converting-a-3x3-matrix-to-euler-tait-bryan-angles-pitch-yaw-roll
+//
+// NOTE:
+//   this assumes a RIGHT-handed coordinate system, but
+//   in Spring all SolidObjects use LEFT-handed systems
+//   instead
+//
+//   therefore (if called on an object's transform matrix)
+//   the angles {a,b,c} returned here actually correspond
+//   to values as though RotateEulerZYX(-a,-b,-c) had been
+//   called, *NOT* RotateEulerXYZ(a,b,c) as in the case of
+//   a right-handed matrix
+//
+//   however, since
+//
+//     1)           RotateEulerZYX(-a,-b,-c)  == Transpose(RotateEulerXYZ(a,b,c))
+//     2) Transpose(RotateEulerZYX(-a,-b,-c)) ==           RotateEulerXYZ(a,b,c)
+//
+//   we can easily convert them back to left-handed form
+//
+//   all angles are in radians and returned in PYR order
+//
+float3 CMatrix44f::GetEulerAnglesRgtHand(float eps) const {
+	float3 angles[2];
+	float  cosYaw[2] = {0.0f, 0.0f};
+	float  rotSum[2] = {0.0f, 0.0f};
+
+	if (Square(eps) > math::fabs(m[0 * 4 + 2] + 1.0f)) {
+		// x.z == -1 (yaw=PI/2) means gimbal lock between X and Z
+		angles[0][ANGLE_R] = (     0.0f);
+		angles[0][ANGLE_Y] = (PI * 0.5f);
+		angles[0][ANGLE_P] = (angles[0][ANGLE_R] + math::atan2(m[1 * 4 + 0], m[2 * 4 + 0]));
+
+		return angles[0];
+	}
+
+	if (Square(eps) > math::fabs(m[0 * 4 + 2] - 1.0f)) {
+		// x.z == 1 (yaw=-PI/2) means gimbal lock between X and Z
+		angles[0][ANGLE_R] =  (     0.0f);
+		angles[0][ANGLE_Y] = -(PI * 0.5f);
+		angles[0][ANGLE_P] = (-angles[0][ANGLE_R] + math::atan2(-m[1 * 4 + 0], -m[2 * 4 + 0]));
+
+		return angles[0];
+	}
+
+	// yaw angles (theta)
+	//
+	//   angles[i][P] :=   psi := Pitch := X-angle
+	//   angles[i][Y] := theta :=   Yaw := Y-angle
+	//   angles[i][R] :=   phi :=  Roll := Z-angle
+	//
+	angles[0][ANGLE_Y] = -math::asin(m[0 * 4 + 2]);
+	angles[1][ANGLE_Y] = (PI - angles[0][ANGLE_Y]);
+
+	// yaw cosines
+	cosYaw[0] = math::cos(angles[0][ANGLE_Y]);
+	cosYaw[1] = math::cos(angles[1][ANGLE_Y]);
+
+	// psi angles (pitch)
+	angles[0][ANGLE_P] = math::atan2((m[1 * 4 + 2] / cosYaw[0]), (m[2 * 4 + 2] / cosYaw[0]));
+	angles[1][ANGLE_P] = math::atan2((m[1 * 4 + 2] / cosYaw[1]), (m[2 * 4 + 2] / cosYaw[1]));
+	// phi angles (roll)
+	angles[0][ANGLE_R] = math::atan2((m[0 * 4 + 1] / cosYaw[0]), (m[0 * 4 + 0] / cosYaw[0]));
+	angles[1][ANGLE_R] = math::atan2((m[0 * 4 + 1] / cosYaw[1]), (m[0 * 4 + 0] / cosYaw[1]));
+
+	rotSum[0] = OnesVector.dot(float3::fabs(angles[0])); // |p0|+|y0|+|r0|
+	rotSum[1] = OnesVector.dot(float3::fabs(angles[1])); // |p1|+|y1|+|r1|
+
+	// two solutions exist; choose the "shortest" rotation
+	return angles[rotSum[0] > rotSum[1]];
+}
+
+float3 CMatrix44f::GetEulerAnglesLftHand(float eps) const {
+	CMatrix44f matrix = *this;
+	// (A*B*C)^T = (C^T)*(B^T)*(A^T)
+	matrix.Transpose();
+	return (matrix.GetEulerAnglesRgtHand(eps));
+}
+

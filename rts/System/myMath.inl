@@ -138,6 +138,16 @@ inline int Round(const float f)
 	return math::floor(f + 0.5f);
 }
 
+
+inline int2 IdxToCoord(unsigned x, unsigned array_width)
+{
+	int2 r;
+	r.x = x % array_width;
+	r.y = x / array_width;
+	return r;
+}
+
+
 inline float ClampRad(float f)
 {
 	f = math::fmod(f, TWOPI);

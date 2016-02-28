@@ -20,7 +20,7 @@ struct ProjectileParams {
 
 		, ownerID(-1u)
 		, teamID(-1u)
-		, weaponID(-1u)
+		, weaponNum(-1u)
 		, cegID(-1u)
 
 		, ttl(0)
@@ -49,7 +49,7 @@ struct ProjectileParams {
 
 	unsigned int ownerID;
 	unsigned int teamID;
-	unsigned int weaponID;
+	unsigned int weaponNum;
 	unsigned int cegID;
 
 	int ttl;

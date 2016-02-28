@@ -33,9 +33,8 @@ CR_REG_METADATA(MoveData, (
 	CR_MEMBER(maxAcceleration),
 	CR_MEMBER(maxBreaking),
 
-	CR_MEMBER(subMarine),
+	CR_MEMBER(subMarine)
 
-	CR_RESERVED(16)
 ))
 
 } // namespace springLegacyAI

@@ -29,6 +29,11 @@ if (SYNCDEBUG)
 	EndIf  ()
 endif (SYNCDEBUG)
 
+option(DEBUG_GLSTATE "enable GL_STATE_CHECKER" FALSE)
+if(DEBUG_GLSTATE)
+	add_definitions(-DDEBUG_GLSTATE)
+endif()
+
 ### give error when not found
 FIND_PACKAGE_STATIC(DevIL REQUIRED)
 

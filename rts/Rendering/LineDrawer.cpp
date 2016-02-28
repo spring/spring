@@ -56,27 +56,28 @@ void CLineDrawer::DrawAll()
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
 
+	glPushAttrib(GL_ENABLE_BIT);
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_LINE_STIPPLE);
 
 	for (int i = 0; i<lines.size(); ++i) {
-		int size = lines[i].verts.size();
+		int size = lines[i].colors.size();
 		if(size > 0) {
 			glColorPointer(4, GL_FLOAT, 0, &lines[i].colors[0]);
 			glVertexPointer(3, GL_FLOAT, 0, &lines[i].verts[0]);
-			glDrawArrays(lines[i].type, 0, size/3);
+			glDrawArrays(lines[i].type, 0, size/4);
 		}
 	}
 
 	if (!stippled.empty()) {
 		glEnable(GL_LINE_STIPPLE);
 		for (int i = 0; i<stippled.size(); ++i) {
-			int size = stippled[i].verts.size();
+			int size = stippled[i].colors.size();
 			if(size > 0) {
 				glColorPointer(4, GL_FLOAT, 0, &stippled[i].colors[0]);
 				glVertexPointer(3, GL_FLOAT, 0, &stippled[i].verts[0]);
-				glDrawArrays(stippled[i].type, 0, size/3);
+				glDrawArrays(stippled[i].type, 0, size/4);
 			}
 		}
 		glDisable(GL_LINE_STIPPLE);
@@ -84,7 +85,7 @@ void CLineDrawer::DrawAll()
 
 	glDisableClientState(GL_COLOR_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
-	glEnable(GL_DEPTH_TEST);
+	glPopAttrib();
 
 	lines.clear();
 	stippled.clear();

@@ -3,17 +3,19 @@
 #include "FeatureHandler.h"
 
 #include "Lua/LuaParser.h"
+#include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "System/creg/STL_List.h"
+#include "System/creg/STL_Set.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/myMath.h"
 #include "System/Log/ILog.h"
 #include "System/TimeProfiler.h"
-#include "System/creg/STL_Set.h"
+#include "System/Util.h"
 
 CFeatureHandler* featureHandler = NULL;
 
@@ -40,7 +42,7 @@ CFeatureHandler::CFeatureHandler(LuaParser* defsParser)
 	}
 
 	// featureDefIDs start with 1
-	featureDefsVector.push_back(NULL);
+	featureDefsVector.emplace_back();
 
 	// get most of the feature defs (missing trees and geovent from the map)
 	std::vector<std::string> keys;
@@ -51,7 +53,7 @@ CFeatureHandler::CFeatureHandler(LuaParser* defsParser)
 		const std::string& nameLowerCase = StringToLower(nameMixedCase);
 		const LuaTable& fdTable = rootTable.SubTable(nameMixedCase);
 
-		AddFeatureDef(nameLowerCase, CreateFeatureDef(fdTable, nameLowerCase));
+		AddFeatureDef(nameLowerCase, CreateFeatureDef(fdTable, nameLowerCase), false);
 	}
 	for (unsigned int i = 0; i < keys.size(); i++) {
 		const std::string& nameMixedCase = keys[i];
@@ -74,73 +76,71 @@ CFeatureHandler::~CFeatureHandler()
 		delete *fi;
 	}
 
-	for (std::map<std::string, const FeatureDef*>::iterator it = featureDefs.begin(); it != featureDefs.end(); ++it) {
-		delete it->second;
-	}
-
 	activeFeatures.clear();
 	features.clear();
 	featureDefs.clear();
+	featureDefsVector.clear();
 }
 
 
-
-void CFeatureHandler::AddFeatureDef(const std::string& name, FeatureDef* fd)
+void CFeatureHandler::AddFeatureDef(const std::string& name, FeatureDef* fd, bool isDefaultFeature)
 {
 	if (fd == NULL)
 		return;
 
-	std::map<std::string, const FeatureDef*>::const_iterator it = featureDefs.find(name);
+	assert(featureDefs.find(name) == featureDefs.end());
 
-	if (it != featureDefs.end()) {
-		featureDefsVector[it->second->id] = fd;
-	} else {
-		fd->id = featureDefsVector.size();
-		featureDefsVector.push_back(fd);
-	}
+	// generated trees, etc have no pieces
+	fd->collisionVolume.SetDefaultToPieceTree(fd->collisionVolume.DefaultToPieceTree() && !isDefaultFeature);
+	fd->collisionVolume.SetIgnoreHits(fd->geoThermal);
 
-	// MUST be false for CollisionHandler (features have no LocalModel)
-	fd->collisionVolume->SetDefaultToPieceTree(false);
-	fd->collisionVolume->SetIgnoreHits(fd->geoThermal);
+	featureDefs[name] = fd->id;
+}
 
-	featureDefs[name] = fd;
+FeatureDef& CFeatureHandler::GetNewFeatureDef()
+{
+	featureDefsVector.emplace_back();
+	FeatureDef& fd = featureDefsVector.back();
+	fd.id = featureDefsVector.size() - 1;
+
+	return fd;
 }
 
 
-FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const std::string& mixedCase) const
+FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const std::string& mixedCase)
 {
 	const std::string& name = StringToLower(mixedCase);
 
 	if (featureDefs.find(name) != featureDefs.end())
-		return NULL;
+		return nullptr;
 
-	FeatureDef* fd = new FeatureDef();
+	FeatureDef& fd = GetNewFeatureDef();
 
-	fd->name = name;
-	fd->description = fdTable.GetString("description", "");
+	fd.name = name;
+	fd.description = fdTable.GetString("description", "");
 
-	fd->collidable    =  fdTable.GetBool("blocking",        true);
-	fd->selectable    = !fdTable.GetBool("noselect",        false);
-	fd->burnable      =  fdTable.GetBool("flammable",       false);
-	fd->destructable  = !fdTable.GetBool("indestructible",  false);
-	fd->reclaimable   =  fdTable.GetBool("reclaimable",     fd->destructable);
-	fd->autoreclaim   =  fdTable.GetBool("autoreclaimable", fd->reclaimable);
-	fd->resurrectable =  fdTable.GetInt("resurrectable",    -1);
-	fd->geoThermal    =  fdTable.GetBool("geoThermal",      false);
-	fd->floating      =  fdTable.GetBool("floating",        false);
+	fd.collidable    =  fdTable.GetBool("blocking",        true);
+	fd.selectable    = !fdTable.GetBool("noselect",        false);
+	fd.burnable      =  fdTable.GetBool("flammable",       false);
+	fd.destructable  = !fdTable.GetBool("indestructible",  false);
+	fd.reclaimable   =  fdTable.GetBool("reclaimable",     fd.destructable);
+	fd.autoreclaim   =  fdTable.GetBool("autoreclaimable", fd.reclaimable);
+	fd.resurrectable =  fdTable.GetInt("resurrectable",    -1);
+	fd.geoThermal    =  fdTable.GetBool("geoThermal",      false);
+	fd.floating      =  fdTable.GetBool("floating",        false);
 
-	fd->metal       = fdTable.GetFloat("metal",  0.0f);
-	fd->energy      = fdTable.GetFloat("energy", 0.0f);
-	fd->health      = fdTable.GetFloat("damage", 0.0f);
-	fd->reclaimTime = std::max(1.0f, fdTable.GetFloat("reclaimTime", (fd->metal + fd->energy) * 6.0f));
+	fd.metal       = fdTable.GetFloat("metal",  0.0f);
+	fd.energy      = fdTable.GetFloat("energy", 0.0f);
+	fd.health      = fdTable.GetFloat("damage", 0.0f);
+	fd.reclaimTime = std::max(1.0f, fdTable.GetFloat("reclaimTime", (fd.metal + fd.energy) * 6.0f));
 
-	fd->smokeTime = fdTable.GetInt("smokeTime", 300);
+	fd.smokeTime = fdTable.GetInt("smokeTime", 300);
 
-	fd->modelName = fdTable.GetString("object", "");
-	fd->drawType = fdTable.GetInt("drawType", DRAWTYPE_NONE);
+	fd.modelName = fdTable.GetString("object", "");
+	fd.drawType = fdTable.GetInt("drawType", DRAWTYPE_NONE);
 
-	if (!fd->modelName.empty()) {
-		fd->drawType = DRAWTYPE_MODEL;
+	if (!fd.modelName.empty()) {
+		fd.drawType = DRAWTYPE_MODEL;
 	}
 
 
@@ -150,86 +150,87 @@ FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const std
 	// takes precedence over the old sphere tags as well
 	// as feature->radius (for feature <---> projectile
 	// interactions)
-	fd->ParseCollisionVolume(fdTable);
+	fd.ParseCollisionVolume(fdTable);
 
-	fd->upright = fdTable.GetBool("upright", false);
+	fd.upright = fdTable.GetBool("upright", false);
 
-	fd->xsize = std::max(1 * SPRING_FOOTPRINT_SCALE, fdTable.GetInt("footprintX", 1) * SPRING_FOOTPRINT_SCALE);
-	fd->zsize = std::max(1 * SPRING_FOOTPRINT_SCALE, fdTable.GetInt("footprintZ", 1) * SPRING_FOOTPRINT_SCALE);
+	fd.xsize = std::max(1 * SPRING_FOOTPRINT_SCALE, fdTable.GetInt("footprintX", 1) * SPRING_FOOTPRINT_SCALE);
+	fd.zsize = std::max(1 * SPRING_FOOTPRINT_SCALE, fdTable.GetInt("footprintZ", 1) * SPRING_FOOTPRINT_SCALE);
 
 	const float minMass = CSolidObject::MINIMUM_MASS;
 	const float maxMass = CSolidObject::MAXIMUM_MASS;
-	const float defMass = (fd->metal * 0.4f) + (fd->health * 0.1f);
+	const float defMass = (fd.metal * 0.4f) + (fd.health * 0.1f);
 
-	fd->mass = Clamp(fdTable.GetFloat("mass", defMass), minMass, maxMass);
-	fd->crushResistance = fdTable.GetFloat("crushResistance", fd->mass);
+	fd.mass = Clamp(fdTable.GetFloat("mass", defMass), minMass, maxMass);
+	fd.crushResistance = fdTable.GetFloat("crushResistance", fd.mass);
 
-	fd->decalDef.Parse(fdTable);
+	fd.decalDef.Parse(fdTable);
 
 	// custom parameters table
-	fdTable.SubTable("customParams").GetMap(fd->customParams);
+	fdTable.SubTable("customParams").GetMap(fd.customParams);
 
-	return fd;
+	return &fd;
 }
 
 
-FeatureDef* CFeatureHandler::CreateDefaultTreeFeatureDef(const std::string& name) const {
-	FeatureDef* fd = new FeatureDef();
-	fd->collidable = true;
-	fd->burnable = true;
-	fd->destructable = true;
-	fd->reclaimable = true;
-	fd->drawType = DRAWTYPE_TREE + atoi(name.substr(8).c_str());
-	fd->energy = 250;
-	fd->metal = 0;
-	fd->reclaimTime = 1500;
-	fd->health = 5.0f;
-	fd->xsize = 2;
-	fd->zsize = 2;
-	fd->name = name;
-	fd->description = "Tree";
-	fd->mass = 20;
-	fd->collisionVolume = new CollisionVolume("", ZeroVector, ZeroVector);
-	return fd;
+FeatureDef* CFeatureHandler::CreateDefaultTreeFeatureDef(const std::string& name)
+{
+	FeatureDef& fd = GetNewFeatureDef();
+
+	fd.collidable = true;
+	fd.burnable = true;
+	fd.destructable = true;
+	fd.reclaimable = true;
+	fd.drawType = DRAWTYPE_TREE + atoi(name.substr(8).c_str());
+	fd.energy = 250;
+	fd.metal = 0;
+	fd.reclaimTime = 1500;
+	fd.health = 5.0f;
+	fd.xsize = 2;
+	fd.zsize = 2;
+	fd.name = name;
+	fd.description = "Tree";
+	fd.mass = 20;
+	fd.collisionVolume = CollisionVolume("", ZeroVector, ZeroVector);
+	return &fd;
 }
 
-FeatureDef* CFeatureHandler::CreateDefaultGeoFeatureDef(const std::string& name) const {
-	FeatureDef* fd = new FeatureDef();
-	fd->collidable = false;
-	fd->burnable = false;
-	fd->destructable = false;
-	fd->reclaimable = false;
-	fd->geoThermal = true;
+FeatureDef* CFeatureHandler::CreateDefaultGeoFeatureDef(const std::string& name)
+{
+	FeatureDef& fd = GetNewFeatureDef();
+
+	fd.collidable = false;
+	fd.burnable = false;
+	fd.destructable = false;
+	fd.reclaimable = false;
+	fd.geoThermal = true;
 	// geos are (usually) rendered only as vents baked into
 	// the map's ground texture and emit smoke to be visible
-	fd->drawType = DRAWTYPE_NONE;
-	fd->energy = 0;
-	fd->metal = 0;
-	fd->reclaimTime = 0;
-	fd->health = 0.0f;
-	fd->xsize = 0;
-	fd->zsize = 0;
-	fd->name = name;
-	fd->mass = CSolidObject::DEFAULT_MASS;
+	fd.drawType = DRAWTYPE_NONE;
+	fd.energy = 0;
+	fd.metal = 0;
+	fd.reclaimTime = 0;
+	fd.health = 0.0f;
+	fd.xsize = 0;
+	fd.zsize = 0;
+	fd.name = name;
+	fd.mass = CSolidObject::DEFAULT_MASS;
 	// geothermal features have no physical map presence
-	fd->collisionVolume = new CollisionVolume("", ZeroVector, ZeroVector);
-	return fd;
+	fd.collisionVolume = CollisionVolume("", ZeroVector, ZeroVector);
+	return &fd;
 }
 
 
-
-
-const FeatureDef* CFeatureHandler::GetFeatureDef(string name, const bool showError)
+const FeatureDef* CFeatureHandler::GetFeatureDef(string name, const bool showError) const
 {
 	if (name.empty())
 		return NULL;
 
 	StringToLowerInPlace(name);
-	map<string, const FeatureDef*>::iterator fi = featureDefs.find(name);
+	const auto fi = featureDefs.find(name);
 
-	if (fi != featureDefs.end()) {
-		return fi->second;
-	}
+	if (fi != featureDefs.end())
+		return &featureDefsVector[fi->second];
 
 	if (showError) {
 		LOG_L(L_ERROR, "[%s] could not find FeatureDef \"%s\"",
@@ -238,16 +239,6 @@ const FeatureDef* CFeatureHandler::GetFeatureDef(string name, const bool showErr
 
 	return NULL;
 }
-
-
-const FeatureDef* CFeatureHandler::GetFeatureDefByID(int id)
-{
-	if ((id < 1) || (static_cast<size_t>(id) >= featureDefsVector.size())) {
-		return NULL;
-	}
-	return featureDefsVector[id];
-}
-
 
 
 void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
@@ -260,10 +251,10 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 
 		if (GetFeatureDef(name, false) == NULL) {
 			if (name.find("treetype") != string::npos) {
-				AddFeatureDef(name, CreateDefaultTreeFeatureDef(name));
+				AddFeatureDef(name, CreateDefaultTreeFeatureDef(name), true);
 			}
 			else if (name.find("geovent") != string::npos) {
-				AddFeatureDef(name, CreateDefaultGeoFeatureDef(name));
+				AddFeatureDef(name, CreateDefaultGeoFeatureDef(name), true);
 			}
 			else {
 				LOG_L(L_ERROR, "[%s] unknown map feature type \"%s\"",
@@ -274,18 +265,21 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 
 	// add a default geovent FeatureDef if the map did not
 	if (GetFeatureDef("geovent", false) == NULL) {
-		AddFeatureDef("geovent", CreateDefaultGeoFeatureDef("geovent"));
+		AddFeatureDef("geovent", CreateDefaultGeoFeatureDef("geovent"), true);
 	}
 
 	if (!onlyCreateDefs) {
 		// create map-specified feature instances
 		const int numFeatures = readMap->GetNumFeatures();
-		MapFeatureInfo* mfi = new MapFeatureInfo[numFeatures];
-		readMap->GetFeatureInfo(mfi);
+		if (numFeatures == 0)
+			return;
+		std::vector<MapFeatureInfo> mfi;
+		mfi.resize(numFeatures);
+		readMap->GetFeatureInfo(&mfi[0]);
 
 		for (int a = 0; a < numFeatures; ++a) {
-			const string& name = StringToLower(readMap->GetFeatureTypeName(mfi[a].featureType));
-			map<string, const FeatureDef*>::iterator def = featureDefs.find(name);
+			const std::string& name = StringToLower(readMap->GetFeatureTypeName(mfi[a].featureType));
+			const auto def = featureDefs.find(name);
 
 			if (def == featureDefs.end()) {
 				LOG_L(L_ERROR, "Unknown feature named '%s'", name.c_str());
@@ -293,7 +287,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			}
 
 			FeatureLoadParams params = {
-				def->second,
+				&featureDefsVector[def->second],
 				NULL,
 
 				float3(mfi[a].pos.x, CGround::GetHeightReal(mfi[a].pos.x, mfi[a].pos.z), mfi[a].pos.z),
@@ -311,8 +305,6 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 
 			LoadFeature(params);
 		}
-
-		delete[] mfi;
 	}
 }
 
@@ -434,16 +426,18 @@ void CFeatureHandler::Update()
 	SCOPED_TIMER("FeatureHandler::Update");
 
 	if ((gs->frameNum & 31) == 0) {
-		for (std::list<int>::iterator it = toBeFreedFeatureIDs.begin(); it != toBeFreedFeatureIDs.end(); ) {
+		for (auto it = toBeFreedFeatureIDs.begin(); it != toBeFreedFeatureIDs.end(); ) {
 			if (CBuilderCAI::IsFeatureBeingReclaimed(*it)) {
 				// postpone putting this ID back into the free pool
 				// (this gives area-reclaimers time to choose a new
 				// target with a different ID)
 				++it;
 			} else {
-				assert(features[*it] == NULL);
+				assert(features[*it] == nullptr);
 				idPool.FreeID(*it, true);
-				it = toBeFreedFeatureIDs.erase(it);
+
+				*it = toBeFreedFeatureIDs.back();
+				toBeFreedFeatureIDs.pop_back();
 			}
 		}
 	}
@@ -453,28 +447,29 @@ void CFeatureHandler::Update()
 	while (fi != updateFeatures.end()) {
 		CFeature* feature = *fi;
 		assert(feature->inUpdateQue);
-		
+
 		if (feature->deleteMe) {
+			eventHandler.RenderFeatureDestroyed(feature);
 			eventHandler.FeatureDestroyed(feature);
 			toBeFreedFeatureIDs.push_back(feature->id);
 			activeFeatures.erase(feature);
 			features[feature->id] = NULL;
 
-			CSolidObject::SetDeletingRefID(feature->id + unitHandler->MaxUnits());
+			// ID must match parameter for object commands, just use this
+			CSolidObject::SetDeletingRefID(feature->GetBlockingMapID());
 			// destructor removes feature from update-queue
 			delete feature;
 			CSolidObject::SetDeletingRefID(-1);
-			
+
 			*fi = updateFeatures.back();
 			updateFeatures.pop_back();
 		} else {
-
 			if (!feature->Update()) {
 				// feature is done updating itself, remove from queue
 				feature->inUpdateQue = false;
+
 				*fi = updateFeatures.back();
 				updateFeatures.pop_back();
-				
 			} else {
 				++fi;
 			}
@@ -486,12 +481,12 @@ void CFeatureHandler::Update()
 void CFeatureHandler::SetFeatureUpdateable(CFeature* feature)
 {
 	if (feature->inUpdateQue) {
-			assert(std::find(updateFeatures.begin(), updateFeatures.end(), feature) != updateFeatures.end());
-			return;
+		assert(std::find(updateFeatures.begin(), updateFeatures.end(), feature) != updateFeatures.end());
+		return;
 	}
-	assert(std::find(updateFeatures.begin(), updateFeatures.end(), feature) == updateFeatures.end());
-	updateFeatures.push_back(feature);
-	feature->inUpdateQue = true;
+
+	// always true
+	feature->inUpdateQue = VectorInsertUnique(updateFeatures, feature);
 }
 
 
@@ -504,8 +499,6 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 
 	for (const int qi: quads) {
 		for (CFeature* feature: quadField->GetQuad(qi).features) {
-			feature->UpdateFinalHeight(true);
-
 			// put this feature back in the update-queue
 			SetFeatureUpdateable(feature);
 		}

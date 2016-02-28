@@ -22,14 +22,6 @@
 
 CBasicMapDamage::CBasicMapDamage()
 {
-	const int numQuads = quadField->GetNumQuadsX() * quadField->GetNumQuadsZ();
-	inRelosQue = new bool[numQuads];
-	for (int a = 0; a < numQuads; ++a) {
-		inRelosQue[a] = false;
-	}
-	relosSize = 0;
-	neededLosUpdate = 0;
-
 	for (int a = 0; a <= CRATER_TABLE_SIZE; ++a) {
 		const float r = a / float(CRATER_TABLE_SIZE);
 		const float d = math::cos((r - 0.1f) * (PI + 0.3f)) * (1 - r) * (0.5f + 0.5f * math::cos(std::max(0.0f, r * 3 - 2) * PI));
@@ -51,7 +43,6 @@ CBasicMapDamage::~CBasicMapDamage()
 		delete explosions.front();
 		explosions.pop_front();
 	}
-	delete[] inRelosQue;
 }
 
 void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
@@ -165,40 +156,10 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 
 void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 {
-	const int
-		minQuadNumX = (x1 * SQUARE_SIZE - (quadField->GetQuadSizeX() / 2)) / quadField->GetQuadSizeX(),
-		maxQuadNumX = (x2 * SQUARE_SIZE + (quadField->GetQuadSizeX() / 2)) / quadField->GetQuadSizeX();
-	const int
-		minQuadNumZ = (y1 * SQUARE_SIZE - (quadField->GetQuadSizeZ() / 2)) / quadField->GetQuadSizeZ(),
-		maxQuadNumZ = (y2 * SQUARE_SIZE + (quadField->GetQuadSizeZ() / 2)) / quadField->GetQuadSizeZ();
-
-	const int decy = std::max(                            0, minQuadNumZ);
-	const int incy = std::min(quadField->GetNumQuadsZ() - 1, maxQuadNumZ);
-	const int decx = std::max(                            0, minQuadNumX);
-	const int incx = std::min(quadField->GetNumQuadsX() - 1, maxQuadNumX);
-
-	const int numQuadsX = quadField->GetNumQuadsX();
-	const int frameNum  = gs->frameNum;
-
-	for (int y = decy; y <= incy; y++) {
-		for (int x = decx; x <= incx; x++) {
-			if (inRelosQue[y * numQuadsX + x])
-				continue;
-
-			RelosSquare rs;
-			rs.x = x;
-			rs.y = y;
-			rs.neededUpdate = frameNum;
-			rs.numUnits = quadField->GetQuadAt(x, y).units.size();
-			relosSize += rs.numUnits;
-			inRelosQue[y * numQuadsX + x] = true;
-			relosQue.push_back(rs);
-		}
-	}
-
 	readMap->UpdateHeightMapSynced(SRectangle(x1, y1, x2, y2));
-	pathManager->TerrainChange(x1, y1, x2, y2, TERRAINCHANGE_DAMAGE_RECALCULATION);
 	featureHandler->TerrainChanged(x1, y1, x2, y2);
+	losHandler->UpdateHeightMapSynced(SRectangle(x1, y1, x2, y2));
+	pathManager->TerrainChange(x1, y1, x2, y2, TERRAINCHANGE_DAMAGE_RECALCULATION);
 }
 
 
@@ -242,44 +203,5 @@ void CBasicMapDamage::Update()
 		delete explosions.front();
 		explosions.pop_front();
 	}
-
-	UpdateLos();
 }
 
-void CBasicMapDamage::UpdateLos()
-{
-	const int updateSpeed = (int) (relosSize * 0.01f) + 1;
-
-	if (relosUnits.empty()) {
-		if (relosQue.empty()) {
-			return;
-		}
-
-		RelosSquare* rs = &relosQue.front();
-		const std::vector<CUnit*>& units = quadField->GetQuadAt(rs->x, rs->y).units;
-
-		for (CUnit* u: units) {
-			relosUnits.push_back(u->id);
-		}
-		relosSize -= rs->numUnits;
-		neededLosUpdate = rs->neededUpdate;
-		inRelosQue[rs->y * quadField->GetNumQuadsX() + rs->x] = false;
-		relosQue.pop_front();
-	}
-
-	for (int a = 0; a < updateSpeed; ++a) {
-		if (relosUnits.empty()) {
-			return;
-		}
-
-		CUnit* unit = unitHandler->units[relosUnits.front()];
-		relosUnits.pop_front();
-
-		if (unit == NULL || unit->lastLosUpdate >= neededLosUpdate) {
-			continue;
-		}
-
-		// FIXME: why only losHandler and not also radarHandler?
-		losHandler->MoveUnit(unit, true);
-	}
-}

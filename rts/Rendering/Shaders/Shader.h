@@ -3,6 +3,8 @@
 #ifndef SPRING_SHADER_HDR
 #define SPRING_SHADER_HDR
 
+#include <algorithm>
+#include <functional>
 #include <string>
 #include <memory>
 #include <vector>
@@ -100,29 +102,42 @@ namespace Shader {
 		IProgramObject(const std::string& poName);
 		virtual ~IProgramObject() {}
 
+		void LoadFromID(unsigned int id) {
+			objID = id;
+			valid = (id != 0 && Validate());
+			bound = false;
+
+			// not needed for pre-compiled programs
+			shaderObjs.clear();
+		}
+
 		/// create the whole shader from a lua file
 		bool LoadFromLua(const std::string& filename);
-
-		/// attach single shader objects (vertex, frag, ...) to the program
-		virtual void AttachShaderObject(IShaderObject* so) { shaderObjs.push_back(so); }
-		bool IsShaderAttached(const IShaderObject* so) const;
-		const std::vector<IShaderObject*>& GetAttachedShaderObjs() const { return shaderObjs; }
-		      std::vector<IShaderObject*>& GetAttachedShaderObjs()       { return shaderObjs; }
 
 		virtual void Enable();
 		virtual void Disable();
 		virtual void Link() = 0;
-		virtual void Validate() = 0;
+		virtual bool Validate() = 0;
 		virtual void Release() = 0;
 		virtual void Reload(bool reloadFromDisk, bool validate) = 0;
-		void RecompileIfNeeded(bool validate);
+		/// attach single shader objects (vertex, frag, ...) to the program
+		virtual void AttachShaderObject(IShaderObject* so) { shaderObjs.push_back(so); }
 
 		bool IsBound() const;
 		bool IsValid() const { return valid; }
-		const std::string& GetLog() const { return log; }
+		bool IsShaderAttached(const IShaderObject* so) const {
+			return (std::find(shaderObjs.begin(), shaderObjs.end(), so) != shaderObjs.end());
+		}
 
 		unsigned int GetObjID() const { return objID; }
+
 		const std::string& GetName() const { return name; }
+		const std::string& GetLog() const { return log; }
+
+		const std::vector<IShaderObject*>& GetAttachedShaderObjs() const { return shaderObjs; }
+		      std::vector<IShaderObject*>& GetAttachedShaderObjs()       { return shaderObjs; }
+
+		void RecompileIfNeeded(bool validate);
 		void PrintDebugInfo();
 
 	public:
@@ -242,7 +257,7 @@ namespace Shader {
 		void Disable() {}
 		void Release() {}
 		void Reload(bool reloadFromDisk, bool validate) {}
-		void Validate() {}
+		bool Validate() { return true; }
 		void Link() {}
 
 		int GetUniformLoc(const std::string& name) { return -1; }
@@ -273,7 +288,7 @@ namespace Shader {
 		void Link();
 		void Release();
 		void Reload(bool reloadFromDisk, bool validate);
-		void Validate() {}
+		bool Validate() { return true; }
 
 		int GetUniformLoc(const std::string& name);
 		int GetUniformType(const int loc) { return -1; }
@@ -307,7 +322,7 @@ namespace Shader {
 		void Enable();
 		void Disable();
 		void Link();
-		void Validate();
+		bool Validate();
 		void Release();
 		void Reload(bool reloadFromDisk, bool validate);
 

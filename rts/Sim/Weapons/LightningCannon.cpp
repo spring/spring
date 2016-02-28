@@ -3,28 +3,27 @@
 #include "LightningCannon.h"
 #include "PlasmaRepulser.h"
 #include "WeaponDef.h"
-#include "WeaponDefHandler.h"
 #include "Game/GameHelper.h"
 #include "Game/TraceRay.h"
-#include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/CollisionHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 
+#include <vector>
 
 CR_BIND_DERIVED(CLightningCannon, CWeapon, (NULL, NULL))
 
 CR_REG_METADATA(CLightningCannon,(
-	CR_MEMBER(color),
-	CR_RESERVED(8)
+	CR_MEMBER(color)
 ))
 
 CLightningCannon::CLightningCannon(CUnit* owner, const WeaponDef* def)
 	: CWeapon(owner, def)
-	, color(def->visuals.color)
 {
+	//happens when loading
+	if (def != nullptr)
+		color = def->visuals.color;
 }
 
 float CLightningCannon::GetPredictedImpactTime(float3 p) const
@@ -36,7 +35,6 @@ void CLightningCannon::FireImpl(const bool scriptCall)
 {
 	float3 curPos = weaponMuzzlePos;
 	float3 curDir = (currentTargetPos - weaponMuzzlePos).SafeNormalize();
-	float3 newDir = curDir;
 
 	curDir +=
 		(gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
@@ -44,7 +42,6 @@ void CLightningCannon::FireImpl(const bool scriptCall)
 
 	CUnit* hitUnit = NULL;
 	CFeature* hitFeature = NULL;
-	CPlasmaRepulser* hitShield = NULL;
 	CollisionQuery hitColQuery;
 
 	float boltLength = TraceRay::TraceRay(curPos, curDir, range, collisionFlags, owner, hitUnit, hitFeature, &hitColQuery);
@@ -58,20 +55,23 @@ void CLightningCannon::FireImpl(const bool scriptCall)
 		}
 	}
 
-	const float shieldLength = interceptHandler.AddShieldInterceptableBeam(this, curPos, curDir, range, newDir, hitShield);
-
-	if (shieldLength < boltLength) {
-		boltLength = shieldLength;
-		hitShield->BeamIntercepted(this, curPos);
-		hitUnit = NULL;
-		hitFeature = NULL;
+	static std::vector<TraceRay::SShieldDist> hitShields;
+	hitShields.clear();
+	TraceRay::TraceRayShields(this, curPos, curDir, range, hitShields);
+	for (const TraceRay::SShieldDist& sd: hitShields) {
+		if(sd.dist < boltLength && sd.rep->IncomingBeam(this, curPos)) {
+			boltLength = sd.dist;
+			hitUnit = NULL;
+			hitFeature = NULL;
+			break;
+		}
 	}
 
 	if (hitUnit != NULL) {
-		hitUnit->SetLastAttackedPiece(hitColQuery.GetHitPiece(), gs->frameNum);
+		hitUnit->SetLastHitPiece(hitColQuery.GetHitPiece(), gs->frameNum);
 	}
 
-	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(weaponDef, weaponMuzzlePos, currentTargetPos);
+	const DamageArray& damageArray = damages->GetDynamicDamages(weaponMuzzlePos, currentTargetPos);
 	const CGameHelper::ExplosionParams params = {
 		curPos + curDir * boltLength,                     // hitPos (same as hitColQuery.GetHitPos() if no water or shield in way)
 		curDir,
@@ -80,10 +80,10 @@ void CLightningCannon::FireImpl(const bool scriptCall)
 		owner,
 		hitUnit,
 		hitFeature,
-		weaponDef->craterAreaOfEffect,
-		weaponDef->damageAreaOfEffect,
-		weaponDef->edgeEffectiveness,
-		weaponDef->explosionSpeed,
+		damages->craterAreaOfEffect,
+		damages->damageAreaOfEffect,
+		damages->edgeEffectiveness,
+		damages->explosionSpeed,
 		0.5f,                                             // gfxMod
 		weaponDef->impactOnly,
 		weaponDef->noExplode || weaponDef->noSelfDamage,  // ignoreOwner

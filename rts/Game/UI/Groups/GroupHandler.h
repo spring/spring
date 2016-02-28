@@ -20,13 +20,11 @@ class CGroup;
  * Manual group creation/selection only works for the default groups.
  */
 class CGroupHandler {
-private:
 	CR_DECLARE_STRUCT(CGroupHandler)
-
+public:
 	CGroupHandler(int teamId);
 	~CGroupHandler();
 
-public:
 	/// lowest ID of the first group not reachable through a hot-key
 	static const size_t FIRST_SPECIAL_GROUP = 10;
 

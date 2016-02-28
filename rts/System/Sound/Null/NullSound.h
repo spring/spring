@@ -36,9 +36,10 @@ public:
 	void Iconified(bool state) {}
 
 	void PrintDebugInfo();
+	bool SoundThreadQuit() const { return false; }
 	bool CanLoadSoundDefs() const { return true; }
-	bool LoadSoundDefsImpl(const std::string& fileName) { return false; }
-	
+	bool LoadSoundDefsImpl(const std::string& fileName, const std::string& modes) { return false; }
+
 	const float3& GetListenerPos() const { return ZeroVector; }
 };
 

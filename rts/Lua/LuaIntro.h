@@ -12,8 +12,11 @@ struct lua_State;
 class CLuaIntro : public CLuaHandle
 {
 	public:
-		static void LoadHandler();
-		static void FreeHandler();
+		static bool ReloadHandler() { return (FreeHandler(), LoadFreeHandler()); } // NOTE the ','
+		static bool LoadFreeHandler() { return (LoadHandler() || FreeHandler()); }
+
+		static bool LoadHandler();
+		static bool FreeHandler();
 
 	public: // call-ins
 		void DrawLoadScreen();
@@ -26,10 +29,10 @@ class CLuaIntro : public CLuaHandle
 		std::string LoadFile(const std::string& filename) const;
 
 	private:
-		static bool LoadUnsyncedCtrlFunctions(lua_State *L);
-		static bool LoadUnsyncedReadFunctions(lua_State *L);
-		static bool LoadSyncedReadFunctions(lua_State *L);
-		static bool RemoveSomeOpenGLFunctions(lua_State *L);
+		static bool LoadUnsyncedCtrlFunctions(lua_State* L);
+		static bool LoadUnsyncedReadFunctions(lua_State* L);
+		static bool LoadSyncedReadFunctions(lua_State* L);
+		static bool RemoveSomeOpenGLFunctions(lua_State* L);
 };
 
 

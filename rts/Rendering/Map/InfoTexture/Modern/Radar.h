@@ -3,17 +3,34 @@
 #ifndef _RADAR_TEXTURE_H
 #define _RADAR_TEXTURE_H
 
+
 #include "PboInfoTexture.h"
+#include "Rendering/GL/FBO.h"
+
+
+namespace Shader {
+	struct IProgramObject;
+}
 
 
 class CRadarTexture : public CPboInfoTexture
 {
 public:
 	CRadarTexture();
+	~CRadarTexture();
 
 public:
-	void Update();
-	bool IsUpdateNeeded() { return true; }
+	void Update() override;
+	bool IsUpdateNeeded() override { return true; }
+
+private:
+	void UpdateCPU();
+
+private:
+	FBO fbo;
+	GLuint uploadTexRadar;
+	GLuint uploadTexJammer;
+	Shader::IProgramObject* shader;
 };
 
 #endif // _RADAR_TEXTURE_H

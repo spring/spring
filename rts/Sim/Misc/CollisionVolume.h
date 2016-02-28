@@ -5,7 +5,8 @@
 
 #include "System/float3.h"
 #include "System/creg/creg_cond.h"
-#include "System/Util.h"
+
+#include <string>
 
 // the positive x-axis points to the "left" in object-space and to the "right" in world-space
 // converting between them means flipping the sign of x-components of positions and directions
@@ -55,10 +56,10 @@ public:
 	 * @param radius the object's default radius
 	 */
 	void InitSphere(float radius);
-	void InitBox(const float3& scales);
+	void InitBox(const float3& scales, const float3& offsets = ZeroVector);
 	void InitShape(
 		const float3& scales,
-		const float3& offsets,	
+		const float3& offsets,
 		const int vType,
 		const int tType,
 		const int pAxis
@@ -68,6 +69,7 @@ public:
 	void SetAxisScales(const float3& scales);
 	void FixTypeAndScale(float3& scales);
 	void SetBoundingRadius();
+	void SetOffsets(const float3& offsets) { axisOffsets = offsets; }
 
 	int GetVolumeType() const { return volumeType; }
 	void SetVolumeType(int type) { volumeType = type; }
@@ -86,33 +88,38 @@ public:
 	float GetOffset(int axis) const { return axisOffsets[axis]; }
 	const float3& GetOffsets() const { return axisOffsets; }
 
-	float GetScale(int axis) const { return fAxisScales[axis]; }
-	float GetHScale(int axis) const { return hAxisScales[axis]; }
-	float GetHScaleSq(int axis) const { return hsqAxisScales[axis]; }
-	const float3& GetScales() const { return fAxisScales; }
-	const float3& GetHScales() const { return hAxisScales; }
-	const float3& GetHSqScales() const { return hsqAxisScales; }
-	const float3& GetHIScales() const { return hiAxisScales; }
+	float GetScale(int axis) const { return fullAxisScales[axis]; }
+	float GetHScale(int axis) const { return halfAxisScales[axis]; }
+	float GetHScaleSq(int axis) const { return halfAxisScalesSqr[axis]; }
+
+	const float3& GetScales() const { return fullAxisScales; }
+	const float3& GetHScales() const { return halfAxisScales; }
+	const float3& GetHSqScales() const { return halfAxisScalesSqr; }
+	const float3& GetHIScales() const { return halfAxisScalesInv; }
 
 	bool IgnoreHits() const { return ignoreHits; }
 	bool UseContHitTest() const { return useContHitTest; }
-	bool DefaultToSphere() const { return (fAxisScales.x == 1.0f && fAxisScales.y == 1.0f && fAxisScales.z == 1.0f); }
+	bool DefaultToSphere() const { return (fullAxisScales.equals(OnesVector, ZeroVector)); }
 	bool DefaultToFootPrint() const { return defaultToFootPrint; }
 	bool DefaultToPieceTree() const { return defaultToPieceTree; }
 
 	float3 GetWorldSpacePos(const CSolidObject* o, const float3& extOffsets = ZeroVector) const;
 
-	float GetPointSurfaceDistance(const CUnit* u, const LocalModelPiece* lmp, const float3& p) const;
-	float GetPointSurfaceDistance(const CFeature* u, const LocalModelPiece* lmp, const float3& p) const;
+	float GetPointSurfaceDistance(const CUnit* u, const LocalModelPiece* lmp, const float3& pos) const;
+	float GetPointSurfaceDistance(const CFeature* u, const LocalModelPiece* lmp, const float3& pos) const;
 
 private:
-	float GetCylinderDistance(const float3 pv, size_t axisA = 0, size_t axisB = 1, size_t axisC = 2) const;
-	float GetPointSurfaceDistance(const CMatrix44f& m, const float3& p) const;
+	float GetPointSurfaceDistance(const CSolidObject* obj, const LocalModelPiece* lmp, const CMatrix44f& mat, const float3& pos) const;
+	float GetPointSurfaceDistance(const CMatrix44f& mv, const float3& p) const;
 
-	float3 fAxisScales;                 ///< full-length axis scales
-	float3 hAxisScales;                 ///< half-length axis scales
-	float3 hsqAxisScales;               ///< half-length axis scales (squared)
-	float3 hiAxisScales;                ///< half-length axis scales (inverted)
+	float GetCylinderDistance(const float3& pv, size_t axisA = 0, size_t axisB = 1, size_t axisC = 2) const;
+	float GetEllipsoidDistance(const float3& pv) const;
+
+private:
+	float3 fullAxisScales;              ///< full-length axis scales
+	float3 halfAxisScales;              ///< half-length axis scales
+	float3 halfAxisScalesSqr;           ///< half-length axis scales (squared)
+	float3 halfAxisScalesInv;           ///< half-length axis scales (inverted)
 	float3 axisOffsets;                 ///< offsets wrt. the model's mid-position (world-space)
 
 	float volumeBoundingRadius;         ///< radius of minimally-bounding sphere around volume

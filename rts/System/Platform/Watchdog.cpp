@@ -35,16 +35,34 @@ namespace Watchdog
 	struct WatchDogThreadInfo {
 		WatchDogThreadInfo()
 			: threadid(0)
-			, timer(spring_notime)
 			, numreg(0)
+			, timer(spring_notime)
 		{}
+
+		void ResetThreadControls() {
+			#ifndef WIN32
+			// this is not auto-destructed (!)
+			ctls.reset();
+			#endif
+		}
+
+		void SetThreadControls(const std::shared_ptr<Threading::ThreadControls>& c)
+		{
+			#ifndef WIN32
+			assert(c.get() != nullptr);
+			// copy shared_ptr object, not shared_ptr*
+			ctls = c;
+			#endif
+		}
+
 		volatile Threading::NativeThreadHandle thread;
 		volatile Threading::NativeThreadId threadid;
-		spring_time timer;
 		volatile unsigned int numreg;
-#ifndef WIN32
+
+		spring_time timer;
+
+		// not used on Windows
 		std::shared_ptr<Threading::ThreadControls> ctls;
-#endif
 	};
 
 	struct WatchDogThreadSlot {
@@ -180,14 +198,11 @@ namespace Watchdog
 		threadInfo->thread = thread;
 		threadInfo->threadid = threadId;
 		threadInfo->timer = spring_gettime();
-#ifndef WIN32
-		auto threadCtls = Threading::GetCurrentThreadControls();
-		assert(threadCtls.get() != nullptr);
-		LOG("Registering thread controls for thread [%s]", threadNames[num]);
-		// copy shared_ptr object, not shared_ptr*
-		threadInfo->ctls = threadCtls;
-		assert(threadInfo->ctls != nullptr);
-#endif
+
+		// note: WDT_MAIN and WDT_LOAD share the same controls if LoadingMT=0
+		LOG("[WatchDog] registering controls for thread [%s]", threadNames[num]);
+		threadInfo->SetThreadControls(Threading::GetCurrentThreadControls());
+
 		++threadInfo->numreg;
 
 		threadSlots[num].primary = primary;
@@ -200,9 +215,9 @@ namespace Watchdog
 	{
 		boost::mutex::scoped_lock lock(wdmutex);
 
-		WatchDogThreadInfo* threadInfo;
+		WatchDogThreadInfo* threadInfo = nullptr;
 
-		if (num >= WDT_COUNT || (threadInfo = registeredThreads[num])->numreg == 0) {
+		if (num >= WDT_COUNT || registeredThreads[num] == nullptr || (threadInfo = registeredThreads[num])->numreg == 0) {
 			LOG_L(L_ERROR, "[Watchdog::%s] Invalid thread number %u", __FUNCTION__, num);
 			return;
 		}
@@ -210,6 +225,13 @@ namespace Watchdog
 		threadSlots[num].primary = false;
 		threadSlots[num].regorder = 0;
 		UpdateActiveThreads(threadInfo->threadid);
+
+		// reset the main thread's controls only if actually called from it;
+		// otherwise Load would act in place of Main in the LoadingMT=0 case
+		if (num == WDT_MAIN || !Threading::IsMainThread()) {
+			LOG("[WatchDog] deregistering controls for thread [%s]", threadNames[num]);
+			threadInfo->ResetThreadControls();
+		}
 
 		if (0 == --(threadInfo->numreg))
 			memset(threadInfo, 0, sizeof(WatchDogThreadInfo));

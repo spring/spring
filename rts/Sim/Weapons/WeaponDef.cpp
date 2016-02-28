@@ -9,14 +9,12 @@
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/DefinitionTag.h"
 #include "Sim/Misc/GlobalConstants.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileTypes.h"
 #include "Sim/Units/Scripts/CobInstance.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
 #include "System/Log/ILog.h"
-
-CR_BIND(WeaponDef, )
-
 
 
 static DefType WeaponDefs("WeaponDefs");
@@ -50,8 +48,8 @@ WEAPONTAG(bool, impactOnly).defaultValue(false);
 WEAPONTAG(bool, noSelfDamage).defaultValue(false);
 WEAPONTAG(bool, noExplode).defaultValue(false);
 WEAPONTAG(bool, selfExplode).externalName("burnblow").defaultValue(false);
-WEAPONTAG(float, damageAreaOfEffect).fallbackName("areaOfEffect").defaultValue(8.0f).scaleValue(0.5f);
-WEAPONTAG(float, edgeEffectiveness).defaultValue(0.0f).maximumValue(0.999f);
+WEAPONTAG(float, damageAreaOfEffect, damages.damageAreaOfEffect).fallbackName("areaOfEffect").defaultValue(8.0f).scaleValue(0.5f);
+WEAPONTAG(float, edgeEffectiveness, damages.edgeEffectiveness).defaultValue(0.0f).maximumValue(0.999f);
 WEAPONTAG(float, collisionSize).defaultValue(0.05f);
 
 // Projectile Properties
@@ -75,7 +73,7 @@ WEAPONTAG(float, impulseFactor, damages.impulseFactor).defaultValue(1.0f);
 WEAPONTAG(float, impulseBoost, damages.impulseBoost).defaultValue(0.0f);
 WEAPONTAG(float, craterMult, damages.craterMult).fallbackName("impulseFactor").defaultValue(1.0f);
 WEAPONTAG(float, craterBoost, damages.craterBoost).defaultValue(0.0f);
-WEAPONTAG(float, craterAreaOfEffect).fallbackName("areaOfEffect").defaultValue(8.0f).scaleValue(0.5f);
+WEAPONTAG(float, craterAreaOfEffect, damages.craterAreaOfEffect).fallbackName("areaOfEffect").defaultValue(8.0f).scaleValue(0.5f);
 
 // Water
 WEAPONTAG(bool, waterweapon).defaultValue(false);
@@ -151,10 +149,10 @@ WEAPONTAG(float, coverageRange).externalName("coverage").defaultValue(0.0f).desc
 WEAPONTAG(bool, interceptSolo).defaultValue(true).description("If true no other interceptors may target the same projectile.");
 
 // Dynamic Damage
-WEAPONTAG(bool, dynDamageInverted).defaultValue(false).description("If true the damage curve is inverted i.e. the weapon does more damage at greater ranges as opposed to less.");
-WEAPONTAG(float, dynDamageExp).defaultValue(0.0f).description("Exponent of the range-dependent damage formula, the default of 0.0 disables dynamic damage, 1.0 means linear scaling, 2.0 quadratic and so on.");
-WEAPONTAG(float, dynDamageMin).defaultValue(0.0f).description("The minimum floor value that range-dependent damage can drop to.");
-WEAPONTAG(float, dynDamageRange).defaultValue(0.0f).description("If set to non-zero values the weapon will use this value in the range-dependant damage formula instead of the actual range.");
+WEAPONTAG(bool, dynDamageInverted, damages.dynDamageInverted).defaultValue(false).description("If true the damage curve is inverted i.e. the weapon does more damage at greater ranges as opposed to less.");
+WEAPONTAG(float, dynDamageExp, damages.dynDamageExp).defaultValue(0.0f).description("Exponent of the range-dependent damage formula, the default of 0.0 disables dynamic damage, 1.0 means linear scaling, 2.0 quadratic and so on.");
+WEAPONTAG(float, dynDamageMin, damages.dynDamageMin).defaultValue(0.0f).description("The minimum floor value that range-dependent damage can drop to.");
+WEAPONTAG(float, dynDamageRange, damages.dynDamageRange).defaultValue(0.0f).description("If set to non-zero values the weapon will use this value in the range-dependant damage formula instead of the actual range.");
 
 // Shield
 WEAPONTAG(bool, shieldRepulser).externalName("shield.repulser").fallbackName("shieldRepulser")
@@ -299,7 +297,7 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	shieldArmorType = damageArrayHandler->GetTypeFromName(shieldArmorTypeName);
 	flighttime = int(wdTable.GetFloat("flighttime", 0.0f) * GAME_SPEED);
 	maxFireAngle = math::cos(wdTable.GetFloat("firetolerance", 3640.0f) * TAANG2RAD);
-	
+
 	//FIXME may be smarter to merge the collideXYZ tags with avoidXYZ and removing the collisionFlags tag (and move the code into CWeapon)?
 	collisionFlags = 0;
 	if (!wdTable.GetBool("collideEnemy",    true)) { collisionFlags |= Collision::NOENEMIES;    }
@@ -364,21 +362,19 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 		for (di = dmgs.begin(); di != dmgs.end(); ++di) {
 			const int type = damageArrayHandler->GetTypeFromName(di->first);
 			if (type != 0) {
-				float dmg = di->second;
-				if (dmg != 0.0f) {
-					damages[type] = dmg;
-				} else {
-					damages[type] = 1.0f;
-				}
+				const float dmg = di->second;
+				damages.Set(type, std::max(0.0001f, dmg));
 			}
 		}
 
-		const float tempsize = 2.0f + std::min(defDamage * 0.0025f, damageAreaOfEffect * 0.1f);
+		const float tempsize = 2.0f + std::min(defDamage * 0.0025f, damages.damageAreaOfEffect * 0.1f);
 		const float gd = std::max(30.0f, defDamage / 20.0f);
 		const float defExpSpeed = (8.0f + (gd * 2.5f)) / (9.0f + (math::sqrt(gd) * 0.7f)) * 0.5f;
 
 		size = wdTable.GetFloat("size", tempsize);
-		explosionSpeed = wdTable.GetFloat("explosionSpeed", defExpSpeed);
+		damages.explosionSpeed = wdTable.GetFloat("explosionSpeed", defExpSpeed);
+		if (damages.dynDamageRange <= 0.0f)
+			damages.dynDamageRange = range;
 	}
 
 	{
@@ -393,6 +389,7 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	// get some weapon specific defaults
 	int defInterceptType = 0;
 
+	ownerExpAccWeight = -1.0f;
 	if (type == "Cannon") {
 		// CExplosiveProjectile
 		defInterceptType = 1;
@@ -408,6 +405,8 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	} else if (type == "Melee") {
 		// no projectile or intercept type
 		defInterceptType = 256;
+
+		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
 	} else if (type == "Flame") {
 		// CFlameProjectile
 		projectileType = WEAPON_FLAME_PROJECTILE;
@@ -453,6 +452,7 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 		projectileType = WEAPON_TORPEDO_PROJECTILE;
 		defInterceptType = 32;
 
+		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
 		waterweapon = true;
 	} else if (type == "DGun") {
 		// CFireBallProjectile
@@ -477,6 +477,8 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	} else {
 		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.0f);
 	}
+	if (ownerExpAccWeight < 0.0f)
+		LOG_L(L_ERROR, "ownerExpAccWeight is negative in weaponDef %s", name.c_str());
 
 	interceptedByShieldType = wdTable.GetInt("interceptedByShieldType", defInterceptType);
 
@@ -514,12 +516,12 @@ void WeaponDef::ParseWeaponSounds(const LuaTable& wdTable) {
 	if (!forceSetVolume)
 		return;
 
-	if (damages[0] <= 50.0f) {
+	if (damages.GetDefault() <= 50.0f) {
 		fireSound.setVolume(0, 5.0f);
 		hitSound.setVolume(0, 5.0f);
 		hitSound.setVolume(1, 5.0f);
 	} else {
-		float fireSoundVolume = math::sqrt(damages[0] * 0.5f) * ((type == "LaserCannon")? 0.5f: 1.0f);
+		float fireSoundVolume = math::sqrt(damages.GetDefault() * 0.5f) * ((type == "LaserCannon")? 0.5f: 1.0f);
 		float hitSoundVolume = fireSoundVolume;
 
 		if (fireSoundVolume > 100.0f) {
@@ -528,7 +530,7 @@ void WeaponDef::ParseWeaponSounds(const LuaTable& wdTable) {
 			}
 		}
 
-		if (damageAreaOfEffect > 8.0f) {
+		if (damages.damageAreaOfEffect > 8.0f) {
 			hitSoundVolume *= 2.0f;
 		}
 		if (type == "DGun") {

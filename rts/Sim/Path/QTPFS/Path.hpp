@@ -3,6 +3,7 @@
 #ifndef QTPFS_PATH_HDR
 #define QTPFS_PATH_HDR
 
+#include <algorithm>
 #include <vector>
 
 #include "System/float3.h"

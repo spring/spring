@@ -62,19 +62,18 @@ bool LuaWeaponDefs::PushEntries(lua_State* L)
 
 	typedef int (*IndxFuncType)(lua_State*);
 	typedef int (*IterFuncType)(lua_State*);
-	typedef std::map<std::string, int> ObjectDefMapType;
 
-	const ObjectDefMapType& defsMap = weaponDefHandler->weaponID;
+	const auto& defsMap = weaponDefHandler->weaponID;
 
-	const std::array<const LuaHashString, 3> indxOpers = {
+	const std::array<const LuaHashString, 3> indxOpers = {{
 		LuaHashString("__index"),
 		LuaHashString("__newindex"),
 		LuaHashString("__metatable")
-	};
-	const std::array<const LuaHashString, 2> iterOpers = {
+	}};
+	const std::array<const LuaHashString, 2> iterOpers = {{
 		LuaHashString("pairs"),
 		LuaHashString("next")
-	};
+	}};
 
 	const std::array<const IndxFuncType, 3> indxFuncs = {WeaponDefIndex, WeaponDefNewIndex, WeaponDefMetatable};
 	const std::array<const IterFuncType, 2> iterFuncs = {Pairs, Next};
@@ -256,7 +255,7 @@ static int DamagesArray(lua_State* L, const void* data)
 	const int typeCount = damageArrayHandler->GetNumTypes();
 	for (int i = 0; i < typeCount; i++) {
 		lua_pushnumber(L, i);
-		lua_pushnumber(L, d[i]);
+		lua_pushnumber(L, d.Get(i));
 		lua_rawset(L, -3);
 	}
 
@@ -459,18 +458,18 @@ static bool InitParamMap()
 	ADD_FLOAT("leadBonus", wd.leadBonus);
 	ADD_FLOAT("predictBoost", wd.predictBoost);
 	ADD_INT("highTrajectory", wd.highTrajectory);
- 
-	ADD_FLOAT("dynDamageExp", wd.dynDamageExp);
-	ADD_FLOAT("dynDamageMin", wd.dynDamageMin);
-	ADD_FLOAT("dynDamageRange", wd.dynDamageRange);
-	ADD_BOOL("dynDamageInverted", wd.dynDamageInverted);
+
+	ADD_FLOAT("dynDamageExp", wd.damages.dynDamageExp);
+	ADD_FLOAT("dynDamageMin", wd.damages.dynDamageMin);
+	ADD_FLOAT("dynDamageRange", wd.damages.dynDamageRange);
+	ADD_BOOL("dynDamageInverted", wd.damages.dynDamageInverted);
 
 	ADD_BOOL("noSelfDamage",  wd.noSelfDamage);
 	ADD_BOOL("impactOnly",    wd.impactOnly);
 
-	ADD_FLOAT("craterAreaOfEffect", wd.craterAreaOfEffect);
-	ADD_FLOAT("damageAreaOfEffect", wd.damageAreaOfEffect);
-	ADD_FLOAT("edgeEffectiveness",  wd.edgeEffectiveness);
+	ADD_FLOAT("craterAreaOfEffect", wd.damages.craterAreaOfEffect);
+	ADD_FLOAT("damageAreaOfEffect", wd.damages.damageAreaOfEffect);
+	ADD_FLOAT("edgeEffectiveness",  wd.damages.edgeEffectiveness);
 	ADD_FLOAT("fireStarter",        wd.fireStarter);
 	ADD_FLOAT("size",               wd.size);
 	ADD_FLOAT("sizeGrowth",         wd.sizeGrowth);
@@ -527,7 +526,7 @@ static bool InitParamMap()
 	ADD_FLOAT("turnRate", wd.turnrate);
 
 	ADD_FLOAT("projectilespeed", wd.projectilespeed);
-	ADD_FLOAT("explosionSpeed", wd.explosionSpeed);
+	ADD_FLOAT("explosionSpeed", wd.damages.explosionSpeed);
 
 	ADD_FLOAT("wobble", wd.wobble);
 	ADD_FLOAT("dance",  wd.dance);

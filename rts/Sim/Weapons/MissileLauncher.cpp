@@ -10,10 +10,6 @@
 
 CR_BIND_DERIVED(CMissileLauncher, CWeapon, (NULL, NULL))
 
-CR_REG_METADATA(CMissileLauncher,(
-	CR_RESERVED(8)
-))
-
 CMissileLauncher::CMissileLauncher(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
 }

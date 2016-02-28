@@ -13,9 +13,11 @@
 CR_BIND(CResourceHandler, )
 CR_REG_METADATA(CResourceHandler, (
 	CR_MEMBER(resources),
-//	CR_MEMBER(resourceMapAnalyzers),
+	CR_IGNORED(resourceMapAnalyzers),
 	CR_MEMBER(metalResourceId),
-	CR_MEMBER(energyResourceId)
+	CR_MEMBER(energyResourceId),
+
+	CR_POSTLOAD(PostLoad)
 ))
 
 
@@ -60,12 +62,16 @@ CResourceHandler::CResourceHandler()
 }
 
 
-int CResourceHandler::AddResource(const CResourceDescription& resource) {
-
+int CResourceHandler::AddResource(const CResourceDescription& resource)
+{
 	resources.push_back(resource);
-	int resourceId = resources.size()-1;
-	resourceMapAnalyzers[resourceId] = NULL;
-	return resourceId;
+	resourceMapAnalyzers.push_back(nullptr);
+	return resources.size() - 1;
+}
+
+void CResourceHandler::PostLoad()
+{
+	resourceMapAnalyzers.resize(resources.size(), nullptr);
 }
 
 const CResourceDescription* CResourceHandler::GetResource(int resourceId) const
@@ -125,12 +131,10 @@ const CResourceMapAnalyzer* CResourceHandler::GetResourceMapAnalyzer(int resourc
 	if (!IsValidId(resourceId))
 		return NULL;
 
-	CResourceMapAnalyzer* rma = resourceMapAnalyzers[resourceId];
+	CResourceMapAnalyzer*& rma = resourceMapAnalyzers[resourceId];
 
-	if (rma == NULL) {
+	if (rma == nullptr)
 		rma = new CResourceMapAnalyzer(resourceId);
-		resourceMapAnalyzers[resourceId] = rma;
-	}
 
 	return rma;
 }

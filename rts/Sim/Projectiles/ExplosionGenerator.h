@@ -8,7 +8,7 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 
-#include "Sim/Objects/WorldObject.h"
+#include "Rendering/GroundFlashInfo.h"
 
 #define CEG_PREFIX_STRING "custom:"
 
@@ -18,19 +18,7 @@ class float3;
 class CUnit;
 class IExplosionGenerator;
 
-
-class CExpGenSpawnable: public CWorldObject
-{
-	CR_DECLARE(CExpGenSpawnable)
-public:
-	CExpGenSpawnable();
-	CExpGenSpawnable(const float3& pos, const float3& spd);
-
-	virtual ~CExpGenSpawnable() {}
-	virtual void Init(const CUnit* owner, const float3& offset) = 0;
-};
-
-
+struct SExpGenSpawnableMemberInfo;
 
 // Finds C++ classes with class aliases
 class ClassAliasList
@@ -39,7 +27,7 @@ public:
 	void Load(const LuaTable&);
 	void Clear() { aliases.clear(); }
 
-	creg::Class* GetClass(const std::string& name) const;
+	std::string ResolveAlias(const std::string& alias) const;
 	std::string FindAlias(const std::string& className) const;
 
 private:
@@ -80,11 +68,9 @@ public:
 
 	const LuaTable* GetExplosionTableRoot() const { return explTblRoot; }
 	const ClassAliasList& GetProjectileClasses() const { return projectileClasses; }
-	const ClassAliasList& GetGeneratorClasses() const { return generatorClasses; }
 
 protected:
 	ClassAliasList projectileClasses;
-	ClassAliasList generatorClasses;
 
 	LuaParser* exploParser;
 	LuaParser* aliasParser;
@@ -106,7 +92,7 @@ protected:
 class IExplosionGenerator
 {
 	CR_DECLARE(IExplosionGenerator)
-
+public:
 	IExplosionGenerator(): generatorID(CExplosionGeneratorHandler::EXPGEN_ID_INVALID) {}
 	virtual ~IExplosionGenerator() {}
 
@@ -134,7 +120,7 @@ protected:
 // has no internal state so we never need to allocate instances
 class CStdExplosionGenerator: public IExplosionGenerator
 {
-	CR_DECLARE(CStdExplosionGenerator)
+	CR_DECLARE_DERIVED(CStdExplosionGenerator)
 
 public:
 	CStdExplosionGenerator(): IExplosionGenerator() {}
@@ -156,9 +142,8 @@ public:
 // result of an explosion as a series of new projectiles
 class CCustomExplosionGenerator: public IExplosionGenerator
 {
-	CR_DECLARE(CCustomExplosionGenerator)
+	CR_DECLARE_DERIVED(CCustomExplosionGenerator)
 	CR_DECLARE_SUB(ProjectileSpawnInfo)
-	CR_DECLARE_SUB(GroundFlashInfo)
 	CR_DECLARE_SUB(ExpGenParams)
 
 protected:
@@ -166,18 +151,18 @@ protected:
 		CR_DECLARE_STRUCT(ProjectileSpawnInfo)
 
 		ProjectileSpawnInfo()
-			: projectileClass(NULL)
+			: spawnableID(0)
 			, count(0)
 			, flags(0)
 		{}
 		ProjectileSpawnInfo(const ProjectileSpawnInfo& psi)
-			: projectileClass(psi.projectileClass)
+			: spawnableID(psi.spawnableID)
 			, code(psi.code)
 			, count(psi.count)
 			, flags(psi.flags)
 		{}
 
-		creg::Class* projectileClass;
+		unsigned int spawnableID;
 
 		/// parsed explosion script code
 		std::vector<char> code;
@@ -185,29 +170,6 @@ protected:
 		/// number of projectiles spawned of this type
 		unsigned int count;
 		unsigned int flags;
-	};
-
-	// TODO: Handle ground flashes with more flexibility like the projectiles
-	struct GroundFlashInfo {
-		CR_DECLARE_STRUCT(GroundFlashInfo)
-
-		GroundFlashInfo()
-			: flashSize(0.0f)
-			, flashAlpha(0.0f)
-			, circleGrowth(0.0f)
-			, circleAlpha(0.0f)
-			, ttl(0)
-			, flags(0)
-			, color(ZeroVector)
-		{}
-
-		float flashSize;
-		float flashAlpha;
-		float circleGrowth;
-		float circleAlpha;
-		int ttl;
-		unsigned int flags;
-		float3 color;
 	};
 
 	struct ExpGenParams {
@@ -264,7 +226,7 @@ public:
 	};
 
 private:
-	void ParseExplosionCode(ProjectileSpawnInfo* psi, const int offset, const boost::shared_ptr<creg::IType> type, const std::string& script, std::string& code);
+	void ParseExplosionCode(ProjectileSpawnInfo* psi, const std::string& script, SExpGenSpawnableMemberInfo& memberInfo, std::string& code);
 	void ExecuteExplosionCode(const char* code, float damage, char* instance, int spawnIndex, const float3& dir);
 
 protected:

@@ -92,7 +92,15 @@ bool CEventClient::FeaturePreDamaged(
 	int projectileID,
 	float* newDamage,
 	float* impulseMult) { return false; }
-bool CEventClient::ShieldPreDamaged(const CProjectile*, const CWeapon*, const CUnit*, bool) { return false; }
+bool CEventClient::ShieldPreDamaged(
+	const CProjectile* projectile,
+	const CWeapon* shieldEmitter,
+	const CUnit* shieldCarrier,
+	bool bounceProjectile,
+	const CWeapon* beamEmitter,
+	const CUnit* beamCarrier)  { return false; }
+
+
 bool CEventClient::SyncedActionFallback(const string& line, int playerID) { return false; }
 
 /******************************************************************************/
@@ -107,21 +115,11 @@ void CEventClient::Update() {}
 void CEventClient::UnsyncedHeightMapUpdate(const SRectangle& rect) {}
 
 void CEventClient::SunChanged(const float3& sunDir) {}
+void CEventClient::SunLightingChanged() {}
 
 void CEventClient::ViewResize() {}
 
 bool CEventClient::DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd) { return false; }
-
-void CEventClient::DrawGenesis() {}
-void CEventClient::DrawWorld() {}
-void CEventClient::DrawWorldPreUnit() {}
-void CEventClient::DrawWorldShadow() {}
-void CEventClient::DrawWorldReflection() {}
-void CEventClient::DrawWorldRefraction() {}
-void CEventClient::DrawScreenEffects() {}
-void CEventClient::DrawScreen() {}
-void CEventClient::DrawInMiniMap() {}
-void CEventClient::DrawInMiniMapBackground() {}
 
 bool CEventClient::DrawUnit(const CUnit* unit) { return false; }
 bool CEventClient::DrawFeature(const CFeature* feature) { return false; }
@@ -146,6 +144,13 @@ bool CEventClient::MousePress(int x, int y, int button) { return false; }
 void CEventClient::MouseRelease(int x, int y, int button) { }
 bool CEventClient::MouseWheel(bool up, float value) { return false; }
 bool CEventClient::JoystickEvent(const std::string& event, int val1, int val2) { return false; }
+
+void CEventClient::DownloadQueued(int ID, const string& archiveName, const string& archiveType) {}
+void CEventClient::DownloadStarted(int ID) {}
+void CEventClient::DownloadFinished(int ID) {}
+void CEventClient::DownloadFailed(int ID, int errorID) {}
+void CEventClient::DownloadProgress(int ID, long downloaded, long total) {}
+
 bool CEventClient::IsAbove(int x, int y) { return false; }
 std::string CEventClient::GetTooltip(int x, int y) { return ""; }
 

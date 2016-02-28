@@ -28,7 +28,6 @@ static std::vector<int> waterModes;
 IWater::IWater()
 	: drawReflection(false)
 	, drawRefraction(false)
- 	, drawSolid(false)
 {
 	CExplosionCreator::AddExplosionListener(this);
 }
@@ -99,8 +98,7 @@ IWater* IWater::GetWater(IWater* currWaterRenderer, int nextWaterRendererMode)
 				try {
 					nextWaterRenderer = new CDynWater();
 				} catch (const content_error& ex) {
-					delete nextWaterRenderer;
-					nextWaterRenderer = NULL;
+					SafeDelete(nextWaterRenderer);
 					LOG_L(L_ERROR, "Loading Dynamic Water failed, error: %s",
 							ex.what());
 				}
@@ -117,8 +115,7 @@ IWater* IWater::GetWater(IWater* currWaterRenderer, int nextWaterRendererMode)
 				try {
 					nextWaterRenderer = new CBumpWater();
 				} catch (const content_error& ex) {
-					delete nextWaterRenderer;
-					nextWaterRenderer = NULL;
+					SafeDelete(nextWaterRenderer);
 					LOG_L(L_ERROR, "Loading Bumpmapped Water failed, error: %s",
 							ex.what());
 				}
@@ -134,8 +131,7 @@ IWater* IWater::GetWater(IWater* currWaterRenderer, int nextWaterRendererMode)
 				try {
 					nextWaterRenderer = new CRefractWater();
 				} catch (const content_error& ex) {
-					delete nextWaterRenderer;
-					nextWaterRenderer = NULL;
+					SafeDelete(nextWaterRenderer);
 					LOG_L(L_ERROR, "Loading Refractive Water failed, error: %s",
 							ex.what());
 				}
@@ -151,8 +147,7 @@ IWater* IWater::GetWater(IWater* currWaterRenderer, int nextWaterRendererMode)
 				try {
 					nextWaterRenderer = new CAdvWater();
 				} catch (const content_error& ex) {
-					delete nextWaterRenderer;
-					nextWaterRenderer = NULL;
+					SafeDelete(nextWaterRenderer);
 					LOG_L(L_ERROR, "Loading Reflective Water failed, error: %s",
 							ex.what());
 				}
@@ -171,3 +166,11 @@ IWater* IWater::GetWater(IWater* currWaterRenderer, int nextWaterRendererMode)
 void IWater::ExplosionOccurred(const CExplosionEvent& event) {
 	AddExplosion(event.GetPos(), event.GetDamage(), event.GetRadius());
 }
+
+void IWater::SetModelClippingPlane(const double* planeEq) {
+	glPushMatrix();
+	glLoadIdentity();
+	glClipPlane(GL_CLIP_PLANE2, planeEq);
+	glPopMatrix();
+}
+

@@ -13,6 +13,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Net/Protocol/NetProtocol.h"
+#include "Sim/Misc/TeamHandler.h"
 
 
 CStartPosSelecter* CStartPosSelecter::selector = NULL;
@@ -39,20 +40,32 @@ CStartPosSelecter::~CStartPosSelecter()
 
 bool CStartPosSelecter::Ready(bool luaForcedReady)
 {
-	if (gs->frameNum > 0) {
+	if (!gs->PreSimFrame()) {
 		delete this;
 		return true;
 	}
 
+	const CTeam* mt = teamHandler->Team(gu->myTeam);
+	const float3* sp = nullptr;
+
 	// player did not set a startpos yet, so do not let
 	// him ready up if he clicked on the ready-box first
-	if (!startPosSet && !luaForcedReady)
-		return false;
+	//
+	// do allow in the special case where player already
+	// sent a RDYSTATE_UPDATED and then rejoined the game
+	if (!mt->HasValidStartPos()) {
+		if (!startPosSet && !luaForcedReady)
+			return false;
+
+		sp = &setStartPos;
+	} else {
+		sp = &mt->GetStartPos();
+	}
 
 	if (luaForcedReady) {
-		clientNet->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, CPlayer::PLAYER_RDYSTATE_FORCED, setStartPos.x, setStartPos.y, setStartPos.z));
+		clientNet->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, CPlayer::PLAYER_RDYSTATE_FORCED, sp->x, sp->y, sp->z));
 	} else {
-		clientNet->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, CPlayer::PLAYER_RDYSTATE_READIED, setStartPos.x, setStartPos.y, setStartPos.z));
+		clientNet->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, CPlayer::PLAYER_RDYSTATE_READIED, sp->x, sp->y, sp->z));
 	}
 
 	delete this;
@@ -65,7 +78,7 @@ bool CStartPosSelecter::MousePress(int x, int y, int button)
 	const float mx = MouseX(x);
 	const float my = MouseY(y);
 
-	if ((showReadyBox && InBox(mx, my, readyBox)) || gs->frameNum > 0)
+	if ((showReadyBox && InBox(mx, my, readyBox)) || !gs->PreSimFrame())
 		return (!Ready(false));
 
 	const float dist = CGround::LineGroundCol(camera->GetPos(), camera->GetPos() + mouse->dir * globalRendering->viewRange * 1.4f, false);

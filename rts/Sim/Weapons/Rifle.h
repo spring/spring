@@ -7,7 +7,7 @@
 
 class CRifle: public CWeapon
 {
-	CR_DECLARE(CRifle)
+	CR_DECLARE_DERIVED(CRifle)
 public:
 	CRifle(CUnit* owner, const WeaponDef* def);
 

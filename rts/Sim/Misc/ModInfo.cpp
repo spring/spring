@@ -3,14 +3,11 @@
 
 #include "ModInfo.h"
 
-#include "Game/GameSetup.h"
 #include "Lua/LuaParser.h"
 #include "Lua/LuaSyncedRead.h"
 #include "System/Log/ILog.h"
-#include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/Exceptions.h"
-#include "System/GlobalConfig.h"
 #include "System/myMath.h"
 
 CModInfo modInfo;
@@ -73,10 +70,11 @@ void CModInfo::ResetState()
 
 	losMipLevel = 0;
 	airMipLevel = 0;
-	losMul      = 1.0f;
-	airLosMul   = 1.0f;
+	radarMipLevel = 0;
 
 	requireSonarUnderWater = true;
+	alwaysVisibleOverridesCloaked = false;
+	separateJammers = true;
 
 	featureVisibility = FEATURELOS_NONE;
 
@@ -234,19 +232,27 @@ void CModInfo::Init(const char* modArchive)
 		const LuaTable& los = sensors.SubTable("los");
 
 		requireSonarUnderWater = sensors.GetBool("requireSonarUnderWater", true);
+		alwaysVisibleOverridesCloaked = sensors.GetBool("alwaysVisibleOverridesCloaked", false);
+		separateJammers = sensors.GetBool("separateJammers", true);
 
 		// losMipLevel is used as index to readMap->mipHeightmaps,
 		// so the max value is CReadMap::numHeightMipMaps - 1
 		losMipLevel = los.GetInt("losMipLevel", 1);
-		losMul = los.GetFloat("losMul", 1.0f);
+
 		// airLosMipLevel doesn't have such restrictions, it's just used in various
 		// bitshifts with signed integers
-		airMipLevel = los.GetInt("airMipLevel", 2);
-		airLosMul = los.GetFloat("airLosMul", 1.0f);
+		airMipLevel = los.GetInt("airMipLevel", 1);
+
+		radarMipLevel = los.GetInt("radarMipLevel", 2);
 
 		if ((losMipLevel < 0) || (losMipLevel > 6)) {
 			throw content_error("Sensors\\Los\\LosMipLevel out of bounds. "
 				                "The minimum value is 0. The maximum value is 6.");
+		}
+
+		if ((radarMipLevel < 0) || (radarMipLevel > 6)) {
+			throw content_error("Sensors\\Los\\LosMipLevel out of bounds. "
+						"The minimum value is 0. The maximum value is 6.");
 		}
 
 		if ((airMipLevel < 0) || (airMipLevel > 30)) {

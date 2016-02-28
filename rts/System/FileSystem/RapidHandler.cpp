@@ -11,6 +11,8 @@
 #include <zlib.h>
 #include <string.h> //strnlen
 
+static const int bufsize = 4096;
+
 class RapidEntry{
 public:
 	RapidEntry(const std::string& line) {
@@ -39,7 +41,7 @@ private:
 };
 
 
-static int bufsize = 4096;
+
 
 static std::string GetNameFromFile(const std::string& tag, const std::string& name)
 {

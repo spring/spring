@@ -23,10 +23,11 @@
 #endif
 #include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/SkirmishAIHandler.h"
-#include "Game/GUI/PlayerRoster.h"
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
+#include "Game/UI/PlayerRoster.h"
 #include "Net/GameServer.h"
+#include "Map/Ground.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
 #include "Map/SMF/SMFGroundDrawer.h"
@@ -46,6 +47,7 @@
 #include "Rendering/Screenshot.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/TeamHighlight.h"
+#include "Rendering/LuaObjectDrawer.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/VerticalSync.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
@@ -54,6 +56,7 @@
 #include "Lua/LuaUI.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Game/UI/Groups/GroupHandler.h"
@@ -296,7 +299,7 @@ public:
 			LOG_L(L_WARNING, "Shadows are disabled; change your configuration and restart to use them");
 			return true;
 		}
-		if (!shadowHandler->shadowsSupported) {
+		if (!CShadowHandler::ShadowsSupported()) {
 			LOG_L(L_WARNING, "Your hardware/driver setup does not support shadows");
 			return true;
 		}
@@ -792,7 +795,7 @@ public:
 							aiShortName.c_str(), aiVersion.c_str());
 					badArgs = true;
 				} else {
-					const CSkirmishAILibraryInfo* aiLibInfo = aiLibManager->GetSkirmishAIInfos().find(aiKey)->second;
+					const CSkirmishAILibraryInfo& aiLibInfo = aiLibManager->GetSkirmishAIInfos().find(aiKey)->second;
 
 					SkirmishAIData aiData;
 					aiData.name       = (aiName != "") ? aiName : aiShortName;
@@ -800,12 +803,12 @@ public:
 					aiData.hostPlayer = gu->myPlayerNum;
 					aiData.shortName  = aiShortName;
 					aiData.version    = aiVersion;
-					std::map<std::string, std::string>::const_iterator o;
-					for (o = aiOptions.begin(); o != aiOptions.end(); ++o) {
+
+					for (auto o = aiOptions.cbegin(); o != aiOptions.cend(); ++o)
 						aiData.optionKeys.push_back(o->first);
-					}
+
 					aiData.options    = aiOptions;
-					aiData.isLuaAI    = aiLibInfo->IsLuaAI();
+					aiData.isLuaAI    = aiLibInfo.IsLuaAI();
 
 					skirmishAIHandler.CreateLocalSkirmishAI(aiData);
 				}
@@ -2037,14 +2040,10 @@ public:
 
 class CtrlPanelActionExecutor : public IUnsyncedActionExecutor {
 public:
-	CtrlPanelActionExecutor() : IUnsyncedActionExecutor("CtrlPanel",
-			"Reloads ctrlpanel.txt") {}
+	CtrlPanelActionExecutor() : IUnsyncedActionExecutor("CtrlPanel", "Reloads GUI config") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
-		const std::string fileName = action.GetArgs().empty() ? "ctrlpanel.txt" : action.GetArgs();
-		guihandler->ReloadConfigFromFile(fileName);
-		LOG("Reloaded ctrlpanel from file: %s", fileName.c_str());
+		guihandler->ReloadConfigFromFile(action.GetArgs());
 		return true;
 	}
 };
@@ -2286,57 +2285,25 @@ public:
 			" a chat message to LuaUI") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		if (!guihandler)
+		if (guihandler == nullptr)
 			return false;
 
 		const std::string& command = action.GetArgs();
 
 		if (command == "reload" || command == "enable") {
-			if (luaUI && luaUI->IsRunning()) {
-				// NOTE: causes a SEGV through RunCallIn()
-				LOG_L(L_WARNING, "Can not reload from within LuaUI, yet");
-				return true;
-			}
-			if (luaUI == NULL) {
-				LOG("Loading: \"%s\"", "luaui.lua"); // FIXME duplicate of below
-				CLuaUI::LoadHandler();
-				if (luaUI == NULL) {
-					guihandler->LoadConfig("ctrlpanel.txt");
-					LOG_L(L_WARNING, "Loading failed");
-				}
-			} else {
-				if (command == "enable") {
-					LOG_L(L_WARNING, "LuaUI is already enabled");
-				} else {
-					LOG("Reloading: \"%s\"", "luaui.lua"); // FIXME
-					CLuaUI::FreeHandler();
-					CLuaUI::LoadHandler();
-					if (luaUI == NULL) {
-						guihandler->LoadConfig("ctrlpanel.txt");
-						LOG_L(L_WARNING, "Reloading failed");
-					}
-				}
-			}
-			guihandler->LayoutIcons(false);
+			guihandler->EnableLuaUI(command == "enable");
+			return true;
 		}
-		else if (command == "disable") {
-			if (luaUI && luaUI->IsRunning()) {
-				// NOTE: might cause a SEGV through RunCallIn()
-				LOG_L(L_WARNING, "Can not disable from within LuaUI, yet");
-				return true;
-			}
-			if (luaUI != NULL) {
-				CLuaUI::FreeHandler();
-				LOG("Disabled LuaUI");
-			}
-			guihandler->LayoutIcons(false);
+		if (command == "disable") {
+			guihandler->DisableLuaUI();
+			return true;
 		}
-		else if (luaUI) {
+		if (luaUI != nullptr) {
 			luaUI->GotChatMsg(command, 0);
-		} else {
-			LOG_L(L_DEBUG, "LuaUI is not loaded");
+			return true;
 		}
 
+		LOG_L(L_DEBUG, "LuaUI is not loaded");
 		return true;
 	}
 };
@@ -2572,18 +2539,23 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		if (!action.GetArgs().empty()) {
 			const vector<string> &args = CSimpleParser::Tokenize(action.GetArgs(), 0);
-			if (args.size() == 1) {
-				const float value = (float)atof(args[0].c_str());
-				unitDrawer->LODScale = value;
+
+			if (args.size() == 2) {
+				const int objType = Clamp(atoi(args[0].c_str()), int(LUAOBJ_UNIT), int(LUAOBJ_FEATURE));
+				const float lodScale = atof(args[1].c_str());
+
+				LuaObjectDrawer::SetLODScale(objType, lodScale);
 			}
-			else if (args.size() == 2) {
-				const float value = (float)atof(args[1].c_str());
+			else if (args.size() == 3) {
+				const int objType = Clamp(atoi(args[1].c_str()), int(LUAOBJ_UNIT), int(LUAOBJ_FEATURE));
+				const float lodScale = atof(args[2].c_str());
+
 				if (args[0] == "shadow") {
-					unitDrawer->LODScaleShadow = value;
+					LuaObjectDrawer::SetLODScaleShadow(objType, lodScale);
 				} else if (args[0] == "reflection") {
-					unitDrawer->LODScaleReflection = value;
+					LuaObjectDrawer::SetLODScaleReflection(objType, lodScale);
 				} else if (args[0] == "refraction") {
-					unitDrawer->LODScaleRefraction = value;
+					LuaObjectDrawer::SetLODScaleRefraction(objType, lodScale);
 				}
 			} else {
 				LOG_L(L_WARNING, "/%s: wrong syntax", GetCommand().c_str());

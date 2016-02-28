@@ -20,7 +20,7 @@ void stub_sdl_sleepMilliSeconds(int milliSeconds);
 static int startSystemMilliSeconds;
 static struct SDL_Surface stubSurface;
 static struct SDL_RWops stubRWops;
-static Uint8 stubKeyState[0];
+static Uint8 stubKeyState[1];
 static SDL_version stubVersion;
 static Uint32 stubSubSystemsInit = 0;
 

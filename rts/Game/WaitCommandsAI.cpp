@@ -6,7 +6,6 @@
 #include "GameHelper.h"
 #include "GlobalUnsynced.h"
 #include "UI/CommandColors.h"
-#include "UI/CursorIcons.h"
 #include "Rendering/LineDrawer.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/GlobalConstants.h"

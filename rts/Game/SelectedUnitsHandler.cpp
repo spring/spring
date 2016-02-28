@@ -27,7 +27,6 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Game/UI/Groups/GroupHandler.h"
 #include "Game/UI/Groups/Group.h"
-#include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Color.h"
 #include "System/EventHandler.h"
@@ -266,16 +265,15 @@ void CSelectedUnitsHandler::HandleUnitBoxSelection(const float4& planeRight, con
 		lastTeam = gu->myTeam;
 	}
 	for (; team <= lastTeam; team++) {
-		CUnitSet& teamUnits = teamHandler->Team(team)->units;
-		for (CUnitSet::iterator ui = teamUnits.begin(); ui != teamUnits.end(); ++ui) {
-			const float4 vec((*ui)->midPos, 1.0f);
+		for (CUnit* u: teamHandler->Team(team)->units) {
+			const float4 vec(u->midPos, 1.0f);
 
 			if (vec.dot4(planeRight) < 0.0f && vec.dot4(planeLeft) < 0.0f && vec.dot4(planeTop) < 0.0f && vec.dot4(planeBottom) < 0.0f) {
-				if (KeyInput::GetKeyModState(KMOD_CTRL) && (selectedUnits.find(*ui) != selectedUnits.end())) {
-					RemoveUnit(*ui);
+				if (KeyInput::GetKeyModState(KMOD_CTRL) && (selectedUnits.find(u) != selectedUnits.end())) {
+					RemoveUnit(u);
 				} else {
-					AddUnit(*ui);
-					unit = *ui;
+					AddUnit(u);
+					unit = u;
 					addedunits++;
 				}
 			}
@@ -291,17 +289,16 @@ void CSelectedUnitsHandler::HandleUnitBoxSelection(const float4& planeRight, con
 }
 
 
-void CSelectedUnitsHandler::HandleSingleUnitClickSelection(CUnit* unit, bool doInViewTest)
+void CSelectedUnitsHandler::HandleSingleUnitClickSelection(CUnit* unit, bool doInViewTest, bool selectType)
 {
 	//FIXME make modular?
-	const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
 
 	if (unit == NULL)
 		return;
 	if (unit->team != gu->myTeam && !gu->spectatingFullSelect && !gs->godMode)
 		return;
 
-	if (bp.lastRelease < (gu->gameTime - mouse->doubleClickTime)) {
+	if (!selectType) {
 		if (KeyInput::GetKeyModState(KMOD_CTRL) && (selectedUnits.find(unit) != selectedUnits.end())) {
 			RemoveUnit(unit);
 		} else {
@@ -319,12 +316,10 @@ void CSelectedUnitsHandler::HandleSingleUnitClickSelection(CUnit* unit, bool doI
 			lastTeam = gu->myTeam;
 		}
 		for (; team <= lastTeam; team++) {
-			CUnitSet::iterator ui;
-			CUnitSet& teamUnits = teamHandler->Team(team)->units;
-			for (ui = teamUnits.begin(); ui != teamUnits.end(); ++ui) {
-				if ((*ui)->unitDef->id == unit->unitDef->id) {
-					if (!doInViewTest || KeyInput::GetKeyModState(KMOD_CTRL) || camera->InView((*ui)->midPos)) {
-						AddUnit(*ui);
+			for (CUnit* u: teamHandler->Team(team)->units) {
+				if (u->unitDef->id == unit->unitDef->id) {
+					if (!doInViewTest || KeyInput::GetKeyModState(KMOD_CTRL) || camera->InView((u)->midPos)) {
+						AddUnit(u);
 					}
 				}
 			}
@@ -340,8 +335,8 @@ void CSelectedUnitsHandler::AddUnit(CUnit* unit)
 {
 	// if unit is being transported by eg. Hulk or Atlas
 	// then we should not be able to select it
-	const CTransportUnit* trans = unit->GetTransporter();
-	if (trans != NULL && !trans->unitDef->isFirePlatform) {
+	const CUnit* trans = unit->GetTransporter();
+	if (trans != NULL && trans->unitDef->IsTransportUnit() && !trans->unitDef->isFirePlatform) {
 		return;
 	}
 
@@ -413,27 +408,22 @@ void CSelectedUnitsHandler::SelectUnits(const std::string& line)
 		const std::string& arg = args[i];
 		if (arg == "clear") {
 			selectedUnitsHandler.ClearSelected();
-		}
-		else if ((arg[0] == '+') || (arg[0] == '-')) {
+		} else if ((arg[0] == '+') || (arg[0] == '-')) {
 			char* endPtr;
 			const char* startPtr = arg.c_str() + 1;
 			const int unitIndex = strtol(startPtr, &endPtr, 10);
-			if (endPtr == startPtr) {
+			if (endPtr == startPtr)
 				continue; // bad number
-			}
-			if ((unitIndex < 0) || (static_cast<unsigned int>(unitIndex) >= unitHandler->MaxUnits())) {
+
+			if ((unitIndex < 0) || (static_cast<unsigned int>(unitIndex) >= unitHandler->MaxUnits()))
 				continue; // bad index
-			}
+
 			CUnit* unit = unitHandler->units[unitIndex];
-			if (unit == NULL) {
-				continue; // bad pointer
-			}
-			if (!gu->spectatingFullSelect) {
-				const CUnitSet& teamUnits = teamHandler->Team(gu->myTeam)->units;
-				if (teamUnits.find(unit) == teamUnits.end()) {
-					continue; // not mine to select
-				}
-			}
+			if (unit == nullptr)
+				continue;
+
+			if (!gu->spectatingFullSelect && (unit->team != gu->myTeam))
+				continue; // not mine to select
 
 			// perform the selection
 			if (arg[0] == '+') {
@@ -589,11 +579,8 @@ void CSelectedUnitsHandler::Draw()
 			bool myColor = true;
 			glColor4fv(cmdColors.buildBox);
 
-			const std::map<unsigned int, CBuilderCAI*>& builderCAIs = unitHandler->builderCAIs;
-			      std::map<unsigned int, CBuilderCAI*>::const_iterator bi;
-
-			for (bi = builderCAIs.begin(); bi != builderCAIs.end(); ++bi) {
-				const CBuilderCAI* builderCAI = bi->second;
+			for (const auto bi: unitHandler->GetBuilderCAIs()) {
+				const CBuilderCAI* builderCAI = bi.second;
 				const CUnit* builder = builderCAI->owner;
 
 				if (builder->team == gu->myTeam) {

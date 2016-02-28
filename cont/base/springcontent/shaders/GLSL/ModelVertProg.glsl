@@ -1,11 +1,6 @@
 // note: gl_ModelViewMatrix actually only contains the
 // model matrix, view matrix is on the projection stack
 //
-// todo: clip gl_Position against gl_ClipPlane[3] if advFade
-// note: many gfx will fallback to software rendering when
-// gl_ClipDistance or gl_ClipPosition are used, so it might
-// be better to use may a `discard` in the fragment shader
-//
 // note: shadow-map texture coordinates should be generated
 // per fragment (the non-linear projection used can produce
 // shifting artefacts with large triangles due to the linear
@@ -47,8 +42,10 @@ void main(void)
 	normalv = gl_NormalMatrix * gl_Normal;
 #endif
 
-	vertexWorldPos = gl_ModelViewMatrix * gl_Vertex;
-	gl_Position    = gl_ProjectionMatrix * vertexWorldPos;
+	gl_ClipVertex  = gl_ModelViewMatrix * gl_Vertex; // M (!)
+	gl_Position    = gl_ProjectionMatrix * gl_ClipVertex;
+
+	vertexWorldPos = gl_ClipVertex;
 	cameraDir      = vertexWorldPos.xyz - cameraPos;
 
 #if (USE_SHADOWS == 1)

@@ -48,6 +48,9 @@ struct SSkirmishAICallback {
 	 */
 	int               (CALLING_CONV *Engine_handleCommand)(int skirmishAIId, int toId, int commandId, int commandTopic, void* commandData);
 
+	int               (CALLING_CONV *Engine_executeCommand)(int skirmishAIId, int unitId, int groupId, void* commandData);
+
+
 	/// Returns the major engine revision number (e.g. 83)
 	const char*       (CALLING_CONV *Engine_Version_getMajor)(int skirmishAIId);
 
@@ -1051,18 +1054,6 @@ struct SSkirmishAICallback {
 
 	float             (CALLING_CONV *UnitDef_getBuildingDecalDecaySpeed)(int skirmishAIId, int unitDefId);
 
-	/**
-	 * Maximum flight time in seconds before the aircraft needs
-	 * to return to an air repair bay to refuel.
-	 */
-	float             (CALLING_CONV *UnitDef_getMaxFuel)(int skirmishAIId, int unitDefId);
-
-	/** Time to fully refuel the unit */
-	float             (CALLING_CONV *UnitDef_getRefuelTime)(int skirmishAIId, int unitDefId);
-
-	/** Minimum build power of airbases that this aircraft can land on */
-	float             (CALLING_CONV *UnitDef_getMinAirBasePower)(int skirmishAIId, int unitDefId);
-
 	/** Number of units of this type allowed simultaneously in the game */
 	int               (CALLING_CONV *UnitDef_getMaxThisUnit)(int skirmishAIId, int unitDefId);
 
@@ -1137,11 +1128,6 @@ struct SSkirmishAICallback {
 	void              (CALLING_CONV *UnitDef_WeaponMount_getMainDir)(int skirmishAIId, int unitDefId, int weaponMountId, float* return_posF3_out);
 
 	float             (CALLING_CONV *UnitDef_WeaponMount_getMaxAngleDif)(int skirmishAIId, int unitDefId, int weaponMountId);
-
-	/**
-	 * How many seconds of fuel it costs for the owning unit to fire this weapon.
-	 */
-	float             (CALLING_CONV *UnitDef_WeaponMount_getFuelUsage)(int skirmishAIId, int unitDefId, int weaponMountId);
 
 	/**
 	 * Returns the bit field value denoting the categories this weapon should
@@ -1310,8 +1296,6 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *Unit_getStockpile)(int skirmishAIId, int unitId);
 
 	int               (CALLING_CONV *Unit_getStockpileQueued)(int skirmishAIId, int unitId);
-
-	float             (CALLING_CONV *Unit_getCurrentFuel)(int skirmishAIId, int unitId);
 
 	/** The unit's max speed */
 	float             (CALLING_CONV *Unit_getMaxSpeed)(int skirmishAIId, int unitId);
@@ -1689,16 +1673,6 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *Mod_getAirMipLevel)(int skirmishAIId);
 
 	/**
-	 * units sightdistance will be multiplied with this, for testing purposes
-	 */
-	float             (CALLING_CONV *Mod_getLosMul)(int skirmishAIId);
-
-	/**
-	 * units airsightdistance will be multiplied with this, for testing purposes
-	 */
-	float             (CALLING_CONV *Mod_getAirLosMul)(int skirmishAIId);
-
-	/**
 	 * when underwater, units are not in LOS unless also in sonar
 	 */
 	bool              (CALLING_CONV *Mod_getRequireSonarUnderWater)(int skirmishAIId);
@@ -1797,6 +1771,13 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *Map_getLosMap)(int skirmishAIId, int* losValues, int losValues_sizeMax); //$ ARRAY:losValues
 
 	/**
+	 * @brief the level of sight map
+	 * mapDims.mapx >> airMipLevel
+	 * @see getLosMap()
+	 */
+	int               (CALLING_CONV *Map_getAirLosMap)(int skirmishAIId, int* airLosValues, int airLosValues_sizeMax); //$ ARRAY:airLosValues
+
+	/**
 	 * @brief the radar map
 	 * A square with value 0 means you do not have radar coverage on it.
 	 *
@@ -1807,6 +1788,12 @@ struct SSkirmishAICallback {
 	 * - the last value, bottom right, is at index (width/8 * height/8 - 1)
 	 */
 	int               (CALLING_CONV *Map_getRadarMap)(int skirmishAIId, int* radarValues, int radarValues_sizeMax); //$ ARRAY:radarValues
+
+	/** @see getRadarMap() */
+	int               (CALLING_CONV *Map_getSonarMap)(int skirmishAIId, int* sonarValues, int sonarValues_sizeMax); //$ ARRAY:sonarValues
+
+	/** @see getRadarMap() */
+	int               (CALLING_CONV *Map_getSeismicMap)(int skirmishAIId, int* seismicValues, int seismicValues_sizeMax); //$ ARRAY:seismicValues
 
 	/**
 	 * @brief the radar jammer map
@@ -1819,6 +1806,9 @@ struct SSkirmishAICallback {
 	 * - the last value, bottom right, is at index (width/8 * height/8 - 1)
 	 */
 	int               (CALLING_CONV *Map_getJammerMap)(int skirmishAIId, int* jammerValues, int jammerValues_sizeMax); //$ ARRAY:jammerValues
+
+	/** @see getJammerMap() */
+	int               (CALLING_CONV *Map_getSonarJammerMap)(int skirmishAIId, int* sonarJammerValues, int sonarJammerValues_sizeMax); //$ ARRAY:sonarJammerValues
 
 	/**
 	 * @brief resource maps
@@ -1901,6 +1891,35 @@ struct SSkirmishAICallback {
 
 	float             (CALLING_CONV *Map_getWaterDamage)(int skirmishAIId);
 
+	bool              (CALLING_CONV *Map_isDeformable)(int skirmishAIId);
+
+	/** Returns global map hardness */
+	float             (CALLING_CONV *Map_getHardness)(int skirmishAIId);
+
+	/**
+	 * Returns hardness modifiers of the squares adjusted by terrain type.
+	 *
+	 * - index 0 is top left
+	 * - each data position is 2*2 in size (relative to heightmap)
+	 * - the value for the full resolution position (x, z) is at index ((z * width + x) / 2)
+	 * - the last value, bottom right, is at index (width/2 * height/2 - 1)
+	 *
+	 * @see getHardness()
+	 */
+	int               (CALLING_CONV *Map_getHardnessModMap)(int skirmishAIId, float* hardMods, int hardMods_sizeMax); //$ ARRAY:hardMods
+
+	/**
+	 * Returns speed modifiers of the squares
+	 * for specific speedModClass adjusted by terrain type.
+	 *
+	 * - index 0 is top left
+	 * - each data position is 2*2 in size (relative to heightmap)
+	 * - the value for the full resolution position (x, z) is at index ((z * width + x) / 2)
+	 * - the last value, bottom right, is at index (width/2 * height/2 - 1)
+	 *
+	 * @see MoveData#getSpeedModClass
+	 */
+	int               (CALLING_CONV *Map_getSpeedModMap)(int skirmishAIId, int speedModClass, float* speedMods, int speedMods_sizeMax); //$ ARRAY:speedMods
 
 	/**
 	 * Returns all points drawn with this AIs team color,
@@ -2438,6 +2457,10 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *Unit_Weapon_getReloadTime)(int skirmishAIId, int unitId, int weaponId);
 
 	float             (CALLING_CONV *Unit_Weapon_getRange)(int skirmishAIId, int unitId, int weaponId);
+
+	bool              (CALLING_CONV *Unit_Weapon_isShieldEnabled)(int skirmishAIId, int unitId, int weaponId);
+
+	float             (CALLING_CONV *Unit_Weapon_getShieldPower)(int skirmishAIId, int unitId, int weaponId);
 
 // END OBJECT Weapon
 

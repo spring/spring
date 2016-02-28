@@ -40,7 +40,7 @@ public:
 
 	/// used by MouseHandler.cpp & MiniMap.cpp
 	void HandleUnitBoxSelection(const float4& planeRight, const float4& planeLeft, const float4& planeTop, const float4& planeBottom);
-	void HandleSingleUnitClickSelection(CUnit* unit, bool doInViewTest);
+	void HandleSingleUnitClickSelection(CUnit* unit, bool doInViewTest, bool selectType);
 
 	void ToggleBuildIconsFirst();
 	bool BuildIconsFirst() const { return buildIconsFirst; }

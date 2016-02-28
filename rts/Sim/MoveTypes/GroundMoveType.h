@@ -83,7 +83,6 @@ private:
 	bool CanGetNextWayPoint();
 	void ReRequestPath(bool forceRequest);
 
-	float BrakingDistance(float speed, float rate) const;
 	float3 Here();
 
 	void StartEngine(bool callScript);
@@ -134,7 +133,7 @@ private:
 	void UpdateOwnerPos(const float3&, const float3&);
 	bool OwnerMoved(const short, const float3&, const float3&);
 	bool FollowPath();
-	bool WantReverse(const float3&) const;
+	bool WantReverse(const float3& wpDir, const float3& ffDir) const;
 
 private:
 	IPathController* pathController;
@@ -156,7 +155,10 @@ private:
 	float decRate;
 	float myGravity;
 
+	float maxReverseDist;
+	float minReverseAngle;
 	float maxReverseSpeed;
+
 	float wantedSpeed;
 	float currentSpeed;
 	float deltaSpeed;

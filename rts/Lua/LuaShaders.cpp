@@ -60,9 +60,7 @@ bool LuaShaders::PushEntries(lua_State* L)
 
 LuaShaders::LuaShaders()
 {
-	Program p;
-	p.id = 0;
-	programs.push_back(p);
+	programs.push_back(Program(0));
 }
 
 
@@ -90,23 +88,20 @@ inline void CheckDrawingEnabled(lua_State* L, const char* caller)
 /******************************************************************************/
 /******************************************************************************/
 
-GLuint LuaShaders::GetProgramName(unsigned int progID) const
+GLuint LuaShaders::GetProgramName(unsigned int progIdx) const
 {
-	if (progID < programs.size()) {
-		return programs[progID].id;
-	} else {
-		return 0;
-	}
-}
+	if (progIdx < programs.size())
+		return programs[progIdx].id;
 
+	return 0;
+}
 
 GLuint LuaShaders::GetProgramName(lua_State* L, int index) const
 {
-	const int progID = (GLuint)luaL_checkint(L, 1);
-	if ((progID <= 0) || (progID >= (int)programs.size())) {
+	if (luaL_checkint(L, index) <= 0)
 		return 0;
-	}
-	return programs[progID].id;
+
+	return (GetProgramName(luaL_checkint(L, index)));
 }
 
 
@@ -332,37 +327,51 @@ static bool ParseShaderTable(
 	lua_State* L,
 	const int table,
 	const char* key,
-	vector<string>& data
+	std::vector<std::string>& data
 ) {
 	lua_getfield(L, table, key);
 
+	if (lua_isnil(L, -1)) {
+		lua_pop(L, 1);
+		return true;
+	}
+
 	if (lua_israwstring(L, -1)) {
-		const string txt = lua_tostring(L, -1);
+		const std::string& txt = lua_tostring(L, -1);
+
 		if (!txt.empty()) {
 			data.push_back(txt);
 		}
+
+		lua_pop(L, 1);
+		return true;
 	}
-	else if (lua_istable(L, -1)) {
+
+	if (lua_istable(L, -1)) {
 		const int subtable = lua_gettop(L);
+
 		for (lua_pushnil(L); lua_next(L, subtable) != 0; lua_pop(L, 1)) {
-			if (!lua_israwnumber(L, -2) || !lua_israwstring(L, -1)) {
+			if (!lua_israwnumber(L, -2)) // key (idx)
 				continue;
-			}
-			const string txt = lua_tostring(L, -1);
+			if (!lua_israwstring(L, -1)) // val
+				continue;
+
+			const std::string& txt = lua_tostring(L, -1);
+
 			if (!txt.empty()) {
 				data.push_back(txt);
 			}
 		}
-	}
-	else if (!lua_isnil(L, -1)) {
-		LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
-		shaders.errorLog = "\"" + string(key) + "\" must be a string or a table value!";
+
 		lua_pop(L, 1);
-		return false;
+		return true;
 	}
 
+	LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
+	shaders.errorLog = "\"" + string(key) + "\" must be a string or a table value!";
+
 	lua_pop(L, 1);
-	return true;
+	return false;
 }
 
 
@@ -398,19 +407,22 @@ int LuaShaders::CreateShader(lua_State* L)
 		luaL_error(L, "Incorrect arguments to gl.CreateShader()");
 	}
 
-	vector<string> shdrDefs;
-	vector<string> vertSrcs;
-	vector<string> geomSrcs;
-	vector<string> fragSrcs;
+	std::vector<std::string> shdrDefs;
+	std::vector<std::string> vertSrcs;
+	std::vector<std::string> geomSrcs;
+	std::vector<std::string> fragSrcs;
 
+	ParseShaderTable(L, 1, "defines", shdrDefs);
 	ParseShaderTable(L, 1, "definitions", shdrDefs);
 
-	if (!ParseShaderTable(L, 1, "vertex",   vertSrcs) ||
-	    !ParseShaderTable(L, 1, "geometry", geomSrcs) ||
-	    !ParseShaderTable(L, 1, "fragment", fragSrcs)) {
+	if (!ParseShaderTable(L, 1,   "vertex", vertSrcs))
 		return 0;
-	}
+	if (!ParseShaderTable(L, 1, "geometry", geomSrcs))
+		return 0;
+	if (!ParseShaderTable(L, 1, "fragment", fragSrcs))
+		return 0;
 
+	// tables might have contained empty strings
 	if (vertSrcs.empty() && fragSrcs.empty() && geomSrcs.empty())
 		return 0;
 
@@ -437,8 +449,7 @@ int LuaShaders::CreateShader(lua_State* L)
 
 	const GLuint prog = glCreateProgram();
 
-	Program p;
-	p.id = prog;
+	Program p(prog);
 
 	if (vertObj != 0) {
 		glAttachShader(prog, vertObj);
@@ -454,14 +465,24 @@ int LuaShaders::CreateShader(lua_State* L)
 		p.objects.push_back(Object(fragObj, GL_FRAGMENT_SHADER));
 	}
 
+	GLint linkStatus;
+	GLint validStatus;
+
 	glLinkProgram(prog);
+	glGetProgramiv(prog, GL_LINK_STATUS, &linkStatus);
+
+	// Allows setting up uniforms when drawing is disabled
+	// (much more convenient for sampler uniforms, and static
+	//  configuration values)
+	// needs to be called before validation
+	ParseUniformSetupTables(L, 1, prog);
+
+	glValidateProgram(prog);
+	glGetProgramiv(prog, GL_VALIDATE_STATUS, &validStatus);
 
 	LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
 
-	GLint result;
-	glGetProgramiv(prog, GL_LINK_STATUS, &result);
-
-	if (result != GL_TRUE) {
+	if (linkStatus != GL_TRUE || validStatus != GL_TRUE) {
 		GLchar log[4096];
 		GLsizei logSize = sizeof(log);
 		glGetProgramInfoLog(prog, logSize, &logSize, log);
@@ -471,11 +492,7 @@ int LuaShaders::CreateShader(lua_State* L)
 		return 0;
 	}
 
-	// Allows setting up uniforms when drawing is disabled
-	// (much more convenient for sampler uniforms, and static
-	//  configuration values)
-	ParseUniformSetupTables(L, 1, prog);
-
+	// note: index, not raw ID
 	lua_pushnumber(L, shaders.AddProgram(p));
 	return 1;
 }
@@ -629,9 +646,9 @@ int LuaShaders::GetUniformLocation(lua_State* L)
 {
 	const LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
 	const GLuint progName = shaders.GetProgramName(L, 1);
-	if (progName == 0) {
+
+	if (progName == 0)
 		return 0;
-	}
 
 	const string name = luaL_checkstring(L, 2);
 	const GLint location = glGetUniformLocation(progName, name.c_str());
@@ -654,23 +671,19 @@ int LuaShaders::Uniform(lua_State* L)
 	switch (numValues) {
 		case 1: {
 			glUniform1f(location, luaL_checkfloat(L, 2));
-			break;
-		}
+		} break;
 		case 2: {
 			glUniform2f(location, luaL_checkfloat(L, 2), luaL_checkfloat(L, 3));
-			break;
-		}
+		} break;
 		case 3: {
 			glUniform3f(location, luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
-			break;
-		}
+		} break;
 		case 4: {
 			glUniform4f(location, luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4), luaL_checkfloat(L, 5));
-			break;
-		}
+		} break;
 		default: {
 			luaL_error(L, "Incorrect arguments to gl.Uniform()");
-		}
+		} break;
 	}
 
 	return 0;

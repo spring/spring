@@ -137,13 +137,13 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 				"-E" "remove_directory" "${myJavaBuildDir}"
 			COMMAND "${CMAKE_COMMAND}"
 				"-E" "make_directory" "${myJavaBuildDir}"
-			COMMAND "${JAVA_COMPILE}"
+			COMMAND "${Java_JAVAC_EXECUTABLE}"
 				"${JAVA_COMPILE_FLAG_CONDITIONAL}"
 				"-Xlint:deprecation"
 				"-cp" "${myClassPath}"
 				"-d" "${myJavaBuildDir}"
 				"@${mySrcArgFile}"
-			COMMAND "${JAVA_ARCHIVE}"
+			COMMAND "${Java_JAR_EXECUTABLE}"
 				${myBinJarArgs} "${myBuildDir}/${myBinJarFile}"
 				"-C" "${myJavaBuildDir}" "${myJavaPkgFirstPart}"
 			WORKING_DIRECTORY
@@ -156,7 +156,7 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 		add_custom_command(
 			OUTPUT
 				"${myBuildDir}/${mySrcJarFile}"
-			COMMAND "${JAVA_ARCHIVE}"
+			COMMAND "${Java_JAR_EXECUTABLE}"
 				"cf" "${myBuildDir}/${mySrcJarFile}"
 				"-C" "${mySourceDir}" "${myJavaPkgFirstPart}"
 			DEPENDS
@@ -242,13 +242,7 @@ endif (AI_TYPES_JAVA AND myName MATCHES "${AI_EXCLUDE_REGEX}")
 # Look for dependencies, but only if the user wants to build the interface
 if    (AI_TYPES_JAVA)
 	if    (NOT JAVA_FOUND)
-		set(JAVA_FIND_QUIETLY TRUE)
-		FIND_PACKAGE(JavaExtended) # Note: this is not the CMake built-in FindJava
-		MakeGlobal(
-			JAVA_FOUND
-			JAVA_COMPILE
-			JAVA_ARCHIVE
-			JAVA_COMPILE_FLAG_CONDITIONAL)
+		FIND_PACKAGE(Java REQUIRED COMPONENTS Development)
 	endif (NOT JAVA_FOUND)
 	if    (MINGW)
 		set (JNI_FOUND TRUE)
@@ -258,7 +252,7 @@ if    (AI_TYPES_JAVA)
 		if    ( NOT ENV{JAVA_HOME} AND JAVA_HOME )
 			SET(ENV{JAVA_HOME} "${JAVA_HOME}")
 		endif ( NOT ENV{JAVA_HOME} AND JAVA_HOME )
-		FIND_PACKAGE(JNI)
+		FIND_PACKAGE(JNI REQUIRED)
 		if (JAVA_INCLUDE_PATH)
 			set (JNI_FOUND TRUE)
 			include_directories(${JAVA_INCLUDE_PATH} ${JAVA_INCLUDE_PATH2} ${JNI_INCLUDE_DIRS})
@@ -570,13 +564,13 @@ if    (BUILD_${myName}_AIINTERFACE)
 			"-E" "remove_directory" "${myJavaBuildDir}"
 		COMMAND "${CMAKE_COMMAND}"
 			"-E" "make_directory" "${myJavaBuildDir}"
-		COMMAND "${JAVA_COMPILE}" ARGS
+		COMMAND "${Java_JAVAC_EXECUTABLE}" ARGS
 			"${JAVA_COMPILE_FLAG_CONDITIONAL}"
 			"-Xlint:deprecation"
 			"-cp" "${myClassPath}"
 			"-d" "${myJavaBuildDir}"
 			"@${mySrcArgFile}"
-		COMMAND "${JAVA_ARCHIVE}" ARGS
+		COMMAND "${Java_JAR_EXECUTABLE}" ARGS
 			${myBinJarArgs} "${myBuildDir}/${myBinJarFile}"
 			"-C" "${myJavaBuildDir}" "${myPkgFirstPart}"
 		DEPENDS
@@ -596,19 +590,19 @@ if    (BUILD_${myName}_AIINTERFACE)
 	add_custom_command(
 		OUTPUT
 			"${myBuildDir}/${mySrcJarFile}"
-		COMMAND "${JAVA_ARCHIVE}" ARGS
+		COMMAND "${Java_JAR_EXECUTABLE}" ARGS
 			"cf" "${myBuildDir}/${mySrcJarFile}"
 			"-C" "${myJavaSourceDir}"          "${myPkgFirstPart}"
-		COMMAND "${JAVA_ARCHIVE}" ARGS
+		COMMAND "${Java_JAR_EXECUTABLE}" ARGS
 			"uf" "${myBuildDir}/${mySrcJarFile}"
 			"-C" "${myJavaGeneratedSourceDir}" "${myPkgFirstPart}"
-		COMMAND "${JAVA_ARCHIVE}" ARGS
+		COMMAND "${Java_JAR_EXECUTABLE}" ARGS
 			"uf" "${myBuildDir}/${mySrcJarFile}"
 			"-C" "${mySourceDir}"              "native"
-		COMMAND "${JAVA_ARCHIVE}" ARGS
+		COMMAND "${Java_JAR_EXECUTABLE}" ARGS
 			"uf" "${myBuildDir}/${mySrcJarFile}"
 			"-C" "${myGeneratedSourceDir}"     "native"
-		COMMAND "${JAVA_ARCHIVE}" ARGS
+		COMMAND "${Java_JAR_EXECUTABLE}" ARGS
 			"uf" "${myBuildDir}/${mySrcJarFile}"
 			"-C" "${myDir}"                    "VERSION"
 		DEPENDS

@@ -42,6 +42,7 @@ progress.make
 
 # Ninja related
 /.ninja_log
+/.ninja_deps
 /build.ninja
 /rules.ninja
 
@@ -66,6 +67,7 @@ progress.make
 # recommended: place the dir somewhere else, and specify with
 # MINGWLIBS=<your-path-here>/mingwlibs
 /mingwlibs
+/mingwlibs64
 
 # Windows libraries used by spring when compiling with Visual Studio
 /vclibs
@@ -77,15 +79,26 @@ progress.make
 /installer/downloads
 /installer/custom_defines.nsi
 
-# Java AI related
-/AI/Interfaces/Java/build
+# AI files
 /AI/Skirmish/*/build
-/AI/Interfaces/Java/target
 /AI/Wrappers/JavaOO/target
+/AI/Wrappers/JavaOO/sourceFiles.txt
+/AI/Wrappers/JavaOO/src-generated/
+/AI/Interfaces/Java/build
+/AI/Interfaces/Java/target
+/AI/Interfaces/Java/myGeneratedSourceDir.stub
+/AI/Interfaces/Java/src-generated/
+/AI/Interfaces/Java/sourceFiles.txt
 /AI/Skirmish/*/target
+/AI/Skirmish/NullJavaAI/sourceFiles.txt
+/AI/Skirmish/NullOOJavaAI/sourceFiles.txt
+/AI/Wrappers/Cpp/src-generated/
+*.jar
+
 
 # Misc file endings (eg. build or temp files)
 *.o
+*.so
 *.log
 *~
 .*.swp
@@ -95,6 +108,18 @@ progress.make
 *.class
 *.orig
 *.dylib
+
+*.obj
+*.dll
+*.exe
+
+# generated files
+/demotool
+/spring
+/spring-dedicated
+/spring-headless
+/springsettings.cfg
+/src-generated
 
 #buildbot generated dir
 /build
@@ -115,4 +140,4 @@ progress.make
 *.vcxproj
 *.vcxproj.filters
 *.vcxproj.user
-
+*.pyc

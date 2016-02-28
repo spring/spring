@@ -256,19 +256,19 @@ static void DrawProfiler()
 
 		// print total-time running since application start
 		fStartX += 0.04f;
-		font->glFormat(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "totaltime");
+		font->glPrint(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "totaltime");
 
 		// print percent of CPU time used within the last 500ms
 		fStartX += 0.06f;
-		font->glFormat(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "cur-%%usage");
+		font->glPrint(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "cur-%usage");
 		fStartX += 0.04f;
-		font->glFormat(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "max-%%usage");
+		font->glPrint(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "max-%usage");
 		fStartX += 0.04f;
-		font->glFormat(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "lag");
+		font->glPrint(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "lag");
 
 		// print timer name
 		fStartX += 0.01f;
-		font->glFormat(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM, "title");
+		font->glPrint(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM, "title");
 	}
 
 	// draw the textual info (total-time, short-time percentual time, timer-name)
@@ -293,7 +293,7 @@ static void DrawProfiler()
 
 		// print timer name
 		fStartX += 0.01f;
-		font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM, pi->first);
+		font->glPrint(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM, pi->first);
 	}
 
 

@@ -4,8 +4,7 @@ set -e
 
 
 DEST=${TMP_BASE}/inst
-#FIXME: remove hardcoded /usr/local
-INSTALLDIR=${DEST}/usr/local
+INSTALLDIR=${DEST}
 
 echo "Installing into $DEST"
 
@@ -67,7 +66,10 @@ MIN_PORTABLE_PLUS_DEDICATED_ARCHIVE=${TMP_PATH}/spring_${VERSION}_minimal-portab
 touch ${INSTALLDIR}/springsettings.cfg
 ${SEVENZIP} ${MIN_PORTABLE_ARCHIVE} ${INSTALLDIR}/* -xr!*.dbg &
 #TODO: remove creation of the zip package, when Zero-K Lobby switched to 7z (will save a lot of resources)
-(cd ${INSTALLDIR} && ${ZIP} ${MIN_PORTABLE_PLUS_DEDICATED_ARCHIVE} * -x spring-headless.exe \*.dbg) &
+if [ "$OUTPUTDIR" == "win32" ]
+then
+	(cd ${INSTALLDIR} && ${ZIP} ${MIN_PORTABLE_PLUS_DEDICATED_ARCHIVE} * -x spring-headless.exe \*.dbg) &
+fi
 
 # compress UnitTests
 ${SEVENZIP} ${TMP_PATH}/${VERSION}_UnitTests.7z "${BUILDDIR}"/test/*.exe &

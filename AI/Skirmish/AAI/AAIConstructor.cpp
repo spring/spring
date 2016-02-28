@@ -107,7 +107,7 @@ void AAIConstructor::Idle()
 
 void AAIConstructor::Update()
 {
-	if(factory)
+	if(factory && buildque != nullptr)
 	{
 		if(!ai->Getbt()->IsValidUnitDefID(construction_def_id) && !buildque->empty())
 		{
@@ -229,7 +229,7 @@ void AAIConstructor::Update()
 
 void AAIConstructor::CheckAssistance()
 {
-	if(factory)
+	if(factory && (buildque != nullptr))
 	{
 		// check if another factory of that type needed
 		if(buildque->size() >= cfg->MAX_BUILDQUE_SIZE - 2 && assistants.size() >= cfg->MAX_ASSISTANTS-2)
@@ -332,8 +332,10 @@ void AAIConstructor::CheckAssistance()
 
 double AAIConstructor::GetMyQueBuildtime()
 {
-	double buildtime = 0;
+	if (buildque == nullptr)
+		return 0;
 
+	double buildtime = 0;
 	for(list<int>::iterator unit = buildque->begin(); unit != buildque->end(); ++unit)
 		buildtime += ai->Getbt()->GetUnitDef((*unit)).buildTime;
 

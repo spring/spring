@@ -197,16 +197,17 @@ return function(sourceText)
   end
 
   map.resources = {
-     detailTex         = map.detailtex,
-     specularTex       = map.speculartex,
-     splatDetailTex    = map.splatdetailtex,
-     splatDistrTex     = map.splatdistrtex,
-     grassBladeTex     = map.grassbladetex,
-     grassShadingTex   = map.grassshadingtex,
-     skyReflectModTex  = map.skyreflectmodtex,
-     detailNormalTex   = map.detailnormaltex,
-     lightEmissionTex  = map.lightemissiontex,
-     parallaxHeightTex = map.parallaxheighttex,
+     detailTex            = map.detailtex,
+     specularTex          = map.speculartex,
+     splatDetailTex       = map.splatdetailtex,
+     splatDistrTex        = map.splatdistrtex,
+     grassBladeTex        = map.grassbladetex,
+     grassShadingTex      = map.grassshadingtex,
+     skyReflectModTex     = map.skyreflectmodtex,
+     detailNormalTex      = map.detailnormaltex,
+     lightEmissionTex     = map.lightemissiontex,
+     parallaxHeightTex    = map.parallaxheighttex,
+     splatDetailNormalTex = map.splatdetailnormaltex, -- table
   }
 
   ConvertTerrainTypes(map)

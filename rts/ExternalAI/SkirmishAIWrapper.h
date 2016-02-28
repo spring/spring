@@ -9,13 +9,16 @@
 
 #include <map>
 #include <string>
+#include <memory>
 
 class CAICallback;
 class CAICheats;
+class CSkirmishAILibrary;
 struct SSkirmishAICallback;
-class CSkirmishAI;
+
 struct Command;
 class float3;
+
 
 /**
  * Acts as an OO wrapper for a Skirmish AI instance.
@@ -25,79 +28,106 @@ class float3;
 class CSkirmishAIWrapper : public CObject {
 private:
 	CR_DECLARE(CSkirmishAIWrapper)
-	/// used only by creg
-	CSkirmishAIWrapper();
 
 	void CreateCallback();
 
 public:
+	/// used only by creg
+	CSkirmishAIWrapper();
+
 	CSkirmishAIWrapper(const int skirmishAIId);
 	~CSkirmishAIWrapper();
 
 	void Serialize(creg::ISerializer *s);
 	void PostLoad();
 
-	// AI Events
-	virtual void Load(std::istream *s);
-	virtual void Save(std::ostream *s);
 
-	virtual void UnitIdle(int unitId);
-	virtual void UnitCreated(int unitId, int builderId);
-	virtual void UnitFinished(int unitId);
-	virtual void UnitDestroyed(int unitId, int attackerUnitId);
-	virtual void UnitDamaged(int unitId, int attackerUnitId, float damage, const float3& dir, int weaponDefId, bool paralyzer);
-	virtual void UnitMoveFailed(int unitId);
-	virtual void UnitGiven(int unitId, int oldTeam, int newTeam);
-	virtual void UnitCaptured(int unitId, int oldTeam, int newTeam);
-	virtual void EnemyCreated(int unitId);
-	virtual void EnemyFinished(int unitId);
-	virtual void EnemyEnterLOS(int unitId);
-	virtual void EnemyLeaveLOS(int unitId);
-	virtual void EnemyEnterRadar(int unitId);
-	virtual void EnemyLeaveRadar(int unitId);
-	virtual void EnemyDestroyed(int enemyUnitId, int attackerUnitId);
-	virtual void EnemyDamaged(int enemyUnitId, int attackerUnitId, float damage, const float3& dir, int weaponDefId, bool paralyzer);
-	virtual void Update(int frame);
-	virtual void SendChatMessage(const char* msg, int fromPlayerId);
-	virtual void SendLuaMessage(const char* inData, const char** outData);
-	virtual void WeaponFired(int unitId, int weaponDefId);
-	virtual void PlayerCommandGiven(const std::vector<int>& selectedUnits, const Command& c, int playerId);
-	virtual void CommandFinished(int unitId, int commandId, int commandTopicId);
-	virtual void SeismicPing(int allyTeam, int unitId, const float3& pos, float strength);
+	/**
+	 * Initialize the AI instance.
+	 * This calls the native init() method, the InitAIEvent is sent afterwards.
+	 */
+	void Init();
+
+	/// @see SReleaseEvent in Interface/AISEvents.h
+	void Release(int reason = 0 /* = unspecified */);
 
 	/** Called just before all the units are destroyed. */
-	virtual void PreDestroy();
+	void PreDestroy();
 
-	virtual int GetTeamId() const;
-	virtual const SkirmishAIKey& GetKey() const;
-	virtual const SSkirmishAICallback* GetCallback() const;
+	/**
+	 * No events are forwarded to the Skirmish AI plugin
+	 * after this method has been called.
+	 * Do not call this if you want to kill a local AI, but use
+	 * the Skirmish AI Handler instead.
+	 * @see CSkirmishAIHandler::SetLocalSkirmishAIDieing()
+	 */
+	void Dieing() { dieing = true; }
 
-	virtual void SetCheatEventsEnabled(bool enable);
-	virtual bool IsCheatEventsEnabled() const;
 
-	virtual void Init();
-	void Dieing();
-	/// @see SReleaseEvent in Interface/AISEvents.h
-	virtual void Release(int reason = 0 /* = unspecified */);
+	// AI Events
+	void Load(std::istream *s);
+	void Save(std::ostream *s);
+
+	void UnitIdle(int unitId);
+	void UnitCreated(int unitId, int builderId);
+	void UnitFinished(int unitId);
+	void UnitDestroyed(int unitId, int attackerUnitId);
+	void UnitDamaged(int unitId, int attackerUnitId, float damage, const float3& dir, int weaponDefId, bool paralyzer);
+	void UnitMoveFailed(int unitId);
+	void UnitGiven(int unitId, int oldTeam, int newTeam);
+	void UnitCaptured(int unitId, int oldTeam, int newTeam);
+	void EnemyCreated(int unitId);
+	void EnemyFinished(int unitId);
+	void EnemyEnterLOS(int unitId);
+	void EnemyLeaveLOS(int unitId);
+	void EnemyEnterRadar(int unitId);
+	void EnemyLeaveRadar(int unitId);
+	void EnemyDestroyed(int enemyUnitId, int attackerUnitId);
+	void EnemyDamaged(int enemyUnitId, int attackerUnitId, float damage, const float3& dir, int weaponDefId, bool paralyzer);
+	void Update(int frame);
+	void SendChatMessage(const char* msg, int fromPlayerId);
+	void SendLuaMessage(const char* inData, const char** outData);
+	void WeaponFired(int unitId, int weaponDefId);
+	void PlayerCommandGiven(const std::vector<int>& selectedUnits, const Command& c, int playerId);
+	void CommandFinished(int unitId, int commandId, int commandTopicId);
+	void SeismicPing(int allyTeam, int unitId, const float3& pos, float strength);
 
 	int GetSkirmishAIID() const { return skirmishAIId; }
+	int GetTeamId() const { return teamId; }
+	const SkirmishAIKey& GetKey() const { return key; }
+
+	void SetCheatEventsEnabled(bool enable) { cheatEvents = enable; }
+	bool IsCheatEventsEnabled() const { return cheatEvents; }
 
 private:
 	bool LoadSkirmishAI(bool postLoad);
 
+	/**
+	 * CAUTION: takes C AI Interface events, not engine C++ ones!
+	 */
+	int HandleEvent(int topic, const void* data) const;
+
+private:
+	SkirmishAIKey key;
+
+	const CSkirmishAILibrary* library;
+	const SSkirmishAICallback* sCallback;
+
+	std::unique_ptr<CAICallback> callback;
+	std::unique_ptr<CAICheats> cheats;
+
+	std::string timerName;
+
 
 	int skirmishAIId;
 	int teamId;
-	bool cheatEvents;
 
-	CSkirmishAI* ai;
 	bool initialized;
 	bool released;
-	CAICallback* callback;
-	CAICheats* cheats;
-	SSkirmishAICallback* c_callback;
-	SkirmishAIKey key;
-	const struct InfoItem* info;
+	bool cheatEvents;
+
+	bool initOk;
+	bool dieing;
 };
 
 #endif // SKIRMISH_AI_WRAPPER_H

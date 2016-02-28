@@ -10,7 +10,6 @@ MakeGlobalVar(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigSource.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Config/ConfigVariable.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/CRC.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/EventBatchHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/EventClient.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/EventHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GlobalConfig.cpp"
@@ -71,13 +70,18 @@ MakeGlobalVar(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/float4.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/myMath.cpp"
 	)
-MakeGlobalVar(sources_engine_System_creg
-		"${CMAKE_CURRENT_SOURCE_DIR}/creg/Serializer.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/creg/VarTypes.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/creg/creg.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/creg/creg_runtime_tests.cpp"
-	)
+if    (NO_CREG)
+	MakeGlobalVar(sources_engine_System_creg )
+else  (NO_CREG)
+	MakeGlobalVar(sources_engine_System_creg
+			"${CMAKE_CURRENT_SOURCE_DIR}/creg/Serializer.cpp"
+			"${CMAKE_CURRENT_SOURCE_DIR}/creg/VarTypes.cpp"
+			"${CMAKE_CURRENT_SOURCE_DIR}/creg/creg.cpp"
+			"${CMAKE_CURRENT_SOURCE_DIR}/creg/creg_runtime_tests.cpp"
+		)
+endif (NO_CREG)
 MakeGlobalVar(sources_engine_System_FileSystem
+		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchiveNameResolver.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchiveLoader.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/ArchiveScanner.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/CacheDir.cpp"
@@ -88,9 +92,10 @@ MakeGlobalVar(sources_engine_System_FileSystem
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/FileSystem.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/FileSystemAbstraction.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/FileSystemInitializer.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/GZFileHandler.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/RapidHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/SimpleParser.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/VFSHandler.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/FileSystem/RapidHandler.cpp"
 	)
 MakeGlobalVar(sources_engine_System_Log
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/Backend.cpp"

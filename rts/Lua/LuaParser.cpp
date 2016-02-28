@@ -79,9 +79,9 @@ LuaParser::LuaParser(const string& _textChunk,
 
 LuaParser::~LuaParser()
 {
-	if (L != NULL) {
-		LUA_CLOSE(L); L = NULL;
-	}
+	if (L != NULL)
+		LUA_CLOSE(&L);
+
 	set<LuaTable*>::iterator it;
 	for (it = tables.begin(); it != tables.end(); ++it) {
 		LuaTable& table = **it;
@@ -171,15 +171,13 @@ bool LuaParser::Execute()
 		CFileHandler fh(fileName, fileModes);
 		if (!fh.LoadStringData(code)) {
 			errorLog = "could not open file: " + fileName;
-			LUA_CLOSE(L);
-			L = NULL;
+			LUA_CLOSE(&L);
 			return false;
 		}
 	}
 	else {
 		errorLog = "invalid format or empty file";
-		LUA_CLOSE(L);
-		L = NULL;
+		LUA_CLOSE(&L);
 		return false;
 	}
 
@@ -189,8 +187,7 @@ bool LuaParser::Execute()
 		errorLog = lua_tostring(L, -1);
 		LOG_L(L_ERROR, "%i, %s, %s",
 		                error, codeLabel.c_str(), errorLog.c_str());
-		LUA_CLOSE(L);
-		L = NULL;
+		LUA_CLOSE(&L);
 		return false;
 	}
 
@@ -206,16 +203,14 @@ bool LuaParser::Execute()
 		errorLog = lua_tostring(L, -1);
 		LOG_L(L_ERROR, "%i, %s, %s",
 		                error, fileName.c_str(), errorLog.c_str());
-		LUA_CLOSE(L);
-		L = NULL;
+		LUA_CLOSE(&L);
 		return false;
 	}
 
 	if (!lua_istable(L, 1)) {
 		errorLog = "missing return table from " + fileName;
 		LOG_L(L_ERROR, "missing return table from %s", fileName.c_str());
-		LUA_CLOSE(L);
-		L = NULL;
+		LUA_CLOSE(&L);
 		return false;
 	}
 
@@ -420,21 +415,23 @@ void LuaParser::AddString(int key, const string& value)
 
 int LuaParser::TimeCheck(lua_State* L)
 {
-	if (!lua_isstring(L, 1) || !lua_isfunction(L, 2)) {
+	if (!lua_isstring(L, 1) || !lua_isfunction(L, 2))
 		luaL_error(L, "Invalid arguments to TimeCheck('string', func, ...)");
-	}
+
 	const string name = lua_tostring(L, 1);
 	lua_remove(L, 1);
+
 	const spring_time startTime = spring_gettime();
-	const int error = lua_pcall(L, lua_gettop(L) - 1, LUA_MULTRET, 0);
-	if (error != 0) {
+
+	if (lua_pcall(L, lua_gettop(L) - 1, LUA_MULTRET, 0) != 0) {
 		const string errmsg = lua_tostring(L, -1);
 		lua_pop(L, 1);
 		luaL_error(L, errmsg.c_str());
 	}
+
 	const spring_time endTime = spring_gettime();
-	const float elapsed = 1.0e-3f * (float)(spring_tomsecs(endTime - startTime));
-	LOG("%s %f", name.c_str(), elapsed);
+
+	LOG("%s %ldms", name.c_str(), (long int) spring_tomsecs(endTime - startTime));
 	return lua_gettop(L);
 }
 

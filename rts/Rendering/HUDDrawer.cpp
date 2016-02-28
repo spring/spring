@@ -5,7 +5,6 @@
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/Models/3DModel.h"
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/Players/Player.h"
@@ -69,7 +68,7 @@ void HUDDrawer::DrawModel(const CUnit* unit)
 		}
 
 		glColor4f(1.0f, 1.0f, 1.0f, 0.25f);
-		unit->localModel->Draw();
+		unit->localModel.Draw();
 	glPopMatrix();
 }
 

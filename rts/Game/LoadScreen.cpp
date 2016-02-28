@@ -92,7 +92,7 @@ void CLoadScreen::Init()
 	game = new CGame(mapName, modName, saveFile);
 
 	// new stuff
-	CLuaIntro::LoadHandler();
+	CLuaIntro::LoadFreeHandler();
 
 	// old stuff
 	if (!LuaIntro) {
@@ -114,8 +114,10 @@ void CLoadScreen::Init()
 
 	try {
 		//! Create the Game Loading Thread
-		if (mtLoading)
+		if (mtLoading) {
+			CglFont::threadSafety = true;
 			gameLoadThread = new COffscreenGLThread(boost::bind(&CGame::LoadGame, game, mapName, true));
+		}
 
 	} catch (const opengl_error& gle) {
 		LOG_L(L_WARNING, "Offscreen GL Context creation failed, "
@@ -135,8 +137,10 @@ CLoadScreen::~CLoadScreen()
 {
 	// at this point, the thread running CGame::LoadGame
 	// has finished and deregistered itself from WatchDog
-	if (mtLoading && gameLoadThread)
+	if (mtLoading && gameLoadThread) {
 		gameLoadThread->Join();
+		CglFont::threadSafety = false;
+	}
 	delete gameLoadThread; gameLoadThread = NULL;
 
 	if (clientNet)
@@ -174,7 +178,6 @@ CLoadScreen::~CLoadScreen()
 			efx->CommitEffects();
 		}
 #endif
-		game->SetupRenderingParams();
 	}
 
 	UnloadStartPicture();
@@ -194,7 +197,6 @@ void CLoadScreen::CreateInstance(const std::string& mapName, const std::string& 
 	singleton->Init();
 
 	if (!singleton->mtLoading) {
-		game->SetupRenderingParams();
 		CLoadScreen::DeleteInstance();
 	}
 }
@@ -456,7 +458,7 @@ void CLoadScreen::LoadStartPicture(const std::string& name)
 		bm = bm.CreateRescaled((int) newX, (int) newY);
 	}
 
-	startupTexture = bm.CreateTexture(false);
+	startupTexture = bm.CreateTexture();
 }
 
 

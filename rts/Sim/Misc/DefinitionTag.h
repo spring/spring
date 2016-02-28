@@ -6,7 +6,7 @@
 #define DEFINTION_TAG_H
 
 #include <assert.h>
-#include <boost/utility.hpp>
+#include <boost/noncopyable.hpp>
 #include <boost/static_assert.hpp>
 #include <map>
 #include <vector>
@@ -23,19 +23,19 @@
 struct table {};
 
 namespace {
-	static std::ostream& operator<<(std::ostream& os, const float3& point)
+	static inline std::ostream& operator<<(std::ostream& os, const float3& point)
 	{
 		return os << "[ " <<  point.x << ", " <<  point.y << ", " <<  point.z << " ]";
 	}
 
-	static std::ostream& operator<<(std::ostream& os, const table& t)
+	static inline std::ostream& operator<<(std::ostream& os, const table& t)
 	{
 		return os << "\"\"";
 	}
 }
 
 // must be included after "std::ostream& operator<<" definitions for LLVM/Clang compilation
-#include "System/Util.h"
+#include "System/StringConvertibleOptionalValue.h"
 
 
 /**

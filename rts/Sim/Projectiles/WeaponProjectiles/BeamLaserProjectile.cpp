@@ -5,6 +5,7 @@
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include <cstring> //memset
@@ -21,8 +22,7 @@ CR_REG_METADATA(CBeamLaserProjectile,(
 	CR_MEMBER(corethickness),
 	CR_MEMBER(flaresize),
 	CR_MEMBER(decay),
-	CR_MEMBER(midtexx),
-	CR_RESERVED(16)
+	CR_MEMBER(midtexx)
 ))
 
 

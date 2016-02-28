@@ -22,18 +22,18 @@ public:
 
 public:
 	// CEventClient interface
-	bool WantsEvent(const std::string& eventName) {
+	bool WantsEvent(const std::string& eventName) override {
 		return (eventName == "UnsyncedHeightMapUpdate");
 	}
-	bool GetFullRead() const { return false; }
-	int  GetReadAllyTeam() const { return NoAccessTeam; }
+	bool GetFullRead() const override { return false; }
+	int  GetReadAllyTeam() const override { return NoAccessTeam; }
 
-	void UnsyncedHeightMapUpdate(const SRectangle& rect);
+	void UnsyncedHeightMapUpdate(const SRectangle& rect) override;
 
 public:
 	// IInfoTexture interface
-	void Update();
-	bool IsUpdateNeeded();
+	void Update() override;
+	bool IsUpdateNeeded() override;
 
 private:
 	void UpdateCPU();

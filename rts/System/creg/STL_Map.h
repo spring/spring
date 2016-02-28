@@ -5,33 +5,25 @@
 
 #include "creg_cond.h"
 
-#ifdef USING_CREG
-
 #if defined(_MSC_VER)
-	#define SPRING_HASH_MAP stdext::hash_map
 	#include <hash_map>
+	#include <unordered_map>
+	#define SPRING_HASH_MAP stdext::hash_map
 #elif defined(_LIBCPP_VERSION)
 	#include <unordered_map>
 	#define SPRING_HASH_MAP std::unordered_map
 #elif __GNUG__
-/* Test for GCC >= 4.3.2 or clang (and assume tr1 is present) */
-	#if __GNUC__ > 4 || \
-		__clang__ || \
-		(__GNUC__ == 4 && (__GNUC_MINOR__ > 3 || \
-						(__GNUC_MINOR__ == 3 && \
-							__GNUC_PATCHLEVEL__ >= 2)))
-		#include <tr1/unordered_map>
-		#define SPRING_HASH_MAP std::tr1::unordered_map
-	#else
-		#define SPRING_HASH_MAP __gnu_cxx::hash_map
-		#include <ext/hash_map>
-	#endif
+	#include <unordered_map>
+	#define SPRING_HASH_MAP std::unordered_map
 #else
 	#error Unsupported compiler
 #endif
 
-#include <string>
 #include <map>
+
+#ifdef USING_CREG
+
+#include <string>
 #include <boost/shared_ptr.hpp>
 
 namespace creg

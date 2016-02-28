@@ -3,8 +3,7 @@
 #ifndef GROUND_DECAL_HANDLER_H
 #define GROUND_DECAL_HANDLER_H
 
-#include <set>
-#include <list>
+#include <deque>
 #include <vector>
 #include <string>
 
@@ -18,7 +17,6 @@ class CUnit;
 class CVertexArray;
 struct SolidObjectGroundDecal;
 struct SolidObjectDecalType;
-struct S3DModel;
 
 namespace Shader {
 	struct IProgramObject;
@@ -26,16 +24,16 @@ namespace Shader {
 
 struct TrackPart {
 	TrackPart()
-		: pos1(ZeroVector)
-		, pos2(ZeroVector)
-		, texPos(0.0f)
+		: texPos(0.0f)
 		, connected(false)
+		, isNewTrack(false)
 		, creationTime(0)
 	{}
 	float3 pos1;
 	float3 pos2;
 	float texPos;
 	bool connected;
+	bool isNewTrack;
 	unsigned int creationTime;
 };
 
@@ -45,7 +43,6 @@ struct UnitTrackStruct {
 		, lastUpdate(0)
 		, lifeTime(0)
 		, alphaFalloff(0.0f)
-		, lastAdded(NULL)
 	{}
 
 	CUnit* owner;
@@ -55,40 +52,26 @@ struct UnitTrackStruct {
 
 	float alphaFalloff;
 
-	TrackPart* lastAdded;
-	std::list<TrackPart*> parts;
-};
-
-struct TrackToAdd {
-	TrackToAdd()
-		: tp(NULL)
-		, unit(NULL)
-		, ts(NULL)
-	{}
-	TrackPart* tp;
-	CUnit* unit;
-	UnitTrackStruct* ts;
+	TrackPart lastAdded;
+	std::deque<TrackPart> parts;
 };
 
 struct TrackToClean {
-	TrackToClean()
-		: track(NULL)
-		, tracks(NULL)
-	{}
-	TrackToClean(UnitTrackStruct* t, std::set<UnitTrackStruct*>* ts)
+	TrackToClean(UnitTrackStruct* t, std::vector<UnitTrackStruct*>* ts)
 		: track(t)
 		, tracks(ts)
 	{}
+
 	UnitTrackStruct* track;
-	std::set<UnitTrackStruct*>* tracks;
+	std::vector<UnitTrackStruct*>* tracks;
 };
 
 
 struct SolidObjectGroundDecal {
 	SolidObjectGroundDecal()
-		: va(NULL)
-		, owner(NULL)
-		, gbOwner(NULL)
+		: va(nullptr)
+		, owner(nullptr)
+		, gbOwner(nullptr)
 		, posx(0)
 		, posy(0)
 		, xsize(0)
@@ -135,6 +118,11 @@ public:
 	virtual void ForceRemoveSolidObject(CSolidObject* object);
 
 private:
+	void BindTextures();
+	void KillTextures();
+	void BindShader(const float3& ambientColor);
+	void DrawDecals();
+
 	void AddExplosion(float3 pos, float damage, float radius, bool);
 	void MoveSolidObject(CSolidObject* object, const float3& pos);
 	int GetSolidObjectDecalType(const std::string& name);
@@ -143,13 +131,14 @@ private:
 public:
 	//CEventClient
 	bool WantsEvent(const std::string& eventName) {
-		return 
+		return
 			(eventName == "SunChanged") ||
 			(eventName == "RenderUnitCreated") ||
 			(eventName == "RenderUnitDestroyed") ||
-			(eventName == "RenderUnitMoved") ||
+			(eventName == "UnitMoved") ||
 			(eventName == "RenderFeatureCreated") ||
-			(eventName == "RenderFeatureMoved") ||
+			(eventName == "RenderFeatureDestroyed") ||
+			(eventName == "FeatureMoved") ||
 			(eventName == "UnitLoaded") ||
 			(eventName == "UnitUnloaded");
 	}
@@ -160,8 +149,9 @@ public:
 	void RenderUnitCreated(const CUnit*, int cloaked);
 	void RenderUnitDestroyed(const CUnit*);
 	void RenderFeatureCreated(const CFeature* feature);
-	void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
-	void RenderUnitMoved(const CUnit* unit, const float3& newpos);
+	void RenderFeatureDestroyed(const CFeature* feature);
+	void FeatureMoved(const CFeature* feature, const float3& oldpos);
+	void UnitMoved(const CUnit* unit);
 	void UnitLoaded(const CUnit* unit, const CUnit* transport);
 	void UnitUnloaded(const CUnit* unit, const CUnit* transport);
 
@@ -170,11 +160,9 @@ public:
 
 private:
 	struct TrackType {
-		TrackType()
-			: texture(0)
-		{}
+		TrackType(): texture(0) {}
 		std::string name;
-		std::set<UnitTrackStruct*> tracks;
+		std::vector<UnitTrackStruct*> tracks;
 		unsigned int texture;
 	};
 
@@ -182,7 +170,7 @@ private:
 		SolidObjectDecalType(): texture(0) {}
 
 		std::string name;
-		std::set<SolidObjectGroundDecal*> objectDecals;
+		std::vector<SolidObjectGroundDecal*> objectDecals;
 
 		unsigned int texture;
 	};
@@ -243,7 +231,7 @@ private:
 	bool groundScarAlphaFade;
 
 	std::vector<SolidObjectDecalType*> objectDecalTypes;
-	std::vector<TrackType*> trackTypes;
+	std::vector<TrackType> trackTypes;
 
 	enum DecalShaderProgram {
 		DECAL_SHADER_ARB,
@@ -255,18 +243,17 @@ private:
 	std::vector<Shader::IProgramObject*> decalShaders;
 	std::vector<SolidObjectGroundDecal*> decalsToDraw;
 
-	std::list<Scar*> scars;
+	std::vector<Scar*> scars;
 	std::vector<Scar*> scarsToBeAdded;
-	std::vector<Scar*> scarsToBeChecked;
 
-	std::vector<TrackToAdd> tracksToBeAdded;
+	std::vector<UnitTrackStruct*> tracksToBeAdded;
 	std::vector<TrackToClean> tracksToBeCleaned;
 	std::vector<UnitTrackStruct*> tracksToBeDeleted;
 
 	int lastTest;
 	float maxOverlap;
 
-	std::set<Scar*>* scarField;
+	std::vector< std::vector<Scar*> > scarField;
 	int scarFieldX;
 	int scarFieldY;
 

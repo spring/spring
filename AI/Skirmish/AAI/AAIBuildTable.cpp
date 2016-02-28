@@ -2494,7 +2494,7 @@ void AAIBuildTable::CalcBuildTree(int unit)
 
 std::string AAIBuildTable::GetBuildCacheFileName()
 {
-	return cfg->GetFileName(cfg->getUniqueName(true, true, true, true), MOD_LEARN_PATH, "_buildcache.txt", true);
+	return cfg->GetFileName(ai, cfg->getUniqueName(ai, true, true, true, true), MOD_LEARN_PATH, "_buildcache.txt", true);
 }
 
 
@@ -2757,7 +2757,7 @@ void AAIBuildTable::DebugPrint()
 	// for debugging
 	UnitType unitType;
 	// this size equals the one used in "AIAICallback::GetValue(AIVAL_LOCATE_FILE_..."
-	const std::string filename = cfg->GetFileName(cfg->getUniqueName(true, true, true, true), MOD_LEARN_PATH, "_buildtable.txt", true);
+	const std::string filename = cfg->GetFileName(ai, cfg->getUniqueName(ai, true, true, true, true), MOD_LEARN_PATH, "_buildtable.txt", true);
 
 	FILE *file = fopen(filename.c_str(), "w");
 

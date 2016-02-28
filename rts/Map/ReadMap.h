@@ -3,6 +3,10 @@
 #ifndef READ_MAP_H
 #define READ_MAP_H
 
+#include <vector>
+
+#include "MapTexture.h"
+#include "MapDimensions.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/float3.h"
@@ -38,83 +42,26 @@ struct MapBitmapInfo
 };
 
 
-struct MapDimensions {
-public:
-	CR_DECLARE_STRUCT(MapDimensions)
 
-	MapDimensions() {
-		mapx   = 0;
-		mapxm1 = mapx - 1;
-		mapxp1 = mapx + 1;
+enum {
+	// base textures
+	MAP_BASE_GRASS_TEX           =  0,
+	MAP_BASE_DETAIL_TEX          =  1,
+	MAP_BASE_MINIMAP_TEX         =  2,
+	MAP_BASE_SHADING_TEX         =  3,
+	MAP_BASE_NORMALS_TEX         =  4,
 
-		mapy   = 0;
-		mapym1 = mapy - 1;
-		mapyp1 = mapy + 1;
+	// SSMF textures
+	MAP_SSMF_NORMALS_TEX         =  5,
+	MAP_SSMF_SPECULAR_TEX        =  6,
 
-		mapSquares = mapx * mapy;
+	MAP_SSMF_SPLAT_DISTRIB_TEX   =  7,
+	MAP_SSMF_SPLAT_DETAIL_TEX    =  8,
+	MAP_SSMF_SPLAT_NORMAL_TEX    =  9,
 
-		hmapx = mapx >> 1;
-		hmapy = mapy >> 1;
-
-		pwr2mapx = mapx; //next_power_of_2(mapx);
-		pwr2mapy = mapy; //next_power_of_2(mapy);
-	}
-
-	/**
-	* @brief map x
-	*
-	* The map's number of squares in the x direction
-	* (note that the number of vertices is one more)
-	*/
-	int mapx;
-	int mapxm1; // mapx minus one
-	int mapxp1; // mapx plus one
-
-	/**
-	* @brief map y
-	*
-	* The map's number of squares in the y direction
-	*/
-	int mapy;
-	int mapym1; // mapy minus one
-	int mapyp1; // mapy plus one
-
-	/**
-	* @brief map squares
-	*
-	* Total number of squares on the map
-	*/
-	int mapSquares;
-
-	/**
-	* @brief half map x
-	*
-	* Contains half of the number of squares in the x direction
-	*/
-	int hmapx;
-
-	/**
-	* @brief half map y
-	*
-	* Contains half of the number of squares in the y direction
-	*/
-	int hmapy;
-
-	/**
-	* @brief map x power of 2
-	*
-	* Map's size in the x direction rounded
-	* up to the next power of 2
-	*/
-	int pwr2mapx;
-
-	/**
-	* @brief map y power of 2
-	*
-	* Map's size in the y direction rounded
-	* up to the next power of 2
-	*/
-	int pwr2mapy;
+	MAP_SSMF_SKY_REFLECTION_TEX  = 10,
+	MAP_SSMF_LIGHT_EMISSION_TEX  = 11,
+	MAP_SSMF_PARALLAX_HEIGHT_TEX = 12,
 };
 
 
@@ -126,12 +73,12 @@ protected:
 
 	/// called by implementations of CReadMap
 	void Initialize();
-	void CalcHeightmapChecksum();
 
 	virtual void UpdateHeightMapUnsynced(const SRectangle&) = 0;
 
 public:
-	CR_DECLARE(CReadMap)
+	//OK since it's loaded with SerializeObjectInstance
+	CR_DECLARE_STRUCT(CReadMap)
 
 	static CReadMap* LoadMap(const std::string& mapname);
 	static inline unsigned char EncodeHeight(const float h) {
@@ -141,7 +88,6 @@ public:
 	/// creg serialize callback
 	void Serialize(creg::ISerializer* s);
 	void PostLoad();
-
 
 	/**
 	 * calculates derived heightmap information
@@ -157,17 +103,24 @@ public:
 	virtual void Update() {}
 	virtual void UpdateShadingTexture() {}
 
-	virtual void NewGroundDrawer() = 0;
+	virtual void InitGroundDrawer() = 0;
+	virtual void KillGroundDrawer() = 0;
 	virtual CBaseGroundDrawer* GetGroundDrawer() { return 0; }
 
-	virtual unsigned int GetMiniMapTexture() const { return 0; }
-	virtual int2 GetMiniMapTextureSize() const { return int2(0,0); }
+
 	virtual unsigned int GetGrassShadingTexture() const { return 0; }
+	virtual unsigned int GetMiniMapTexture() const { return 0; }
 	/**
 	 * a texture with RGB for shading and A for height
 	 * (0 := above water; 1-255 := under water = 255+height*10)
 	 */
 	virtual unsigned int GetShadingTexture() const = 0;
+
+	virtual unsigned int GetTexture(unsigned int type, unsigned int num = 0) const { return 0; }
+	virtual int2 GetTextureSize(unsigned int type, unsigned int num = 0) const { return int2(0, 0); }
+
+	virtual bool SetLuaTexture(const MapTextureData&) { return false; }
+
 
 	/// Draws the minimap in a quad (with extends: (0,0)-(1,1))
 	virtual void DrawMinimap() const = 0;
@@ -197,7 +150,7 @@ public:
 		virtual void ResetState() = 0;
 		virtual void DrawQuad(int x, int y) = 0;
 	};
-	virtual void GridVisibility(CCamera* cam, int quadSize, float maxdist, IQuadDrawer* cb, int extraSize = 0) = 0;
+	virtual void GridVisibility(CCamera* cam, IQuadDrawer* cb, float maxDist, int quadSize, int extraSize = 0) = 0;
 
 
 	/// synced only
@@ -246,6 +199,8 @@ public:
 	bool HasOnlyVoidWater() const;
 
 	unsigned int GetMapChecksum() const { return mapChecksum; }
+	unsigned int CalcHeightmapChecksum();
+	unsigned int CalcTypemapChecksum();
 
 private:
 	void UpdateCenterHeightmap(const SRectangle& rect, bool initialize);
@@ -279,7 +234,7 @@ protected:
 	 * mipPointerHeightMaps[0  ] is full resolution (centerHeightMap),
 	 * mipPointerHeightMaps[n+1] is half resolution of mipPointerHeightMaps[n] (mipCenterHeightMaps[n - 1])
 	 */
-	std::vector< float* > mipPointerHeightMaps;
+	std::vector<float*> mipPointerHeightMaps;
 
 	std::vector<float3> visVertexNormals;      //< size:  (mapx + 1) * (mapy + 1), contains one vertex normal per corner-heightmap pixel [UNSYNCED]
 	std::vector<float3> faceNormalsSynced;     //< size: 2*mapx      *  mapy     , contains 2 normals per quad -> triangle strip [SYNCED]
@@ -344,14 +299,18 @@ inline float CReadMap::AddHeight(const int idx, const float a) {
 
 
 /// Converts a map-square into a float3-position.
-inline float3 SquareToFloat3(int xSquare, int zSquare) {
+static inline float3 SquareToFloat3(int xSquare, int zSquare) {
 	const float* hm = readMap->GetCenterHeightMapSynced();
 	const float h = hm[(zSquare * mapDims.mapx) + xSquare];
 	return float3(xSquare * SQUARE_SIZE, h, zSquare * SQUARE_SIZE);
 }
 
+static inline float3 SquareToFloat3(int2 sq) {
+	return SquareToFloat3(sq.x, sq.y);
+}
+
 /// TODO: use in SM3 renderer also
-inline float GetVisibleVertexHeight(int idx) {
+static inline float GetVisibleVertexHeight(int idx) {
 	const float* hm = readMap->GetCornerHeightMapUnsynced();
 	return hm[idx];
 }

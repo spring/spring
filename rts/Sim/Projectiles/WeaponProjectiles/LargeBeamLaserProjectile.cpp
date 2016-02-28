@@ -5,6 +5,7 @@
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/myMath.h"
@@ -24,8 +25,7 @@ CR_REG_METADATA(CLargeBeamLaserProjectile,(
 	CR_MEMBER(pulseSpeed),
 	CR_MEMBER(decay),
 	CR_MEMBER(beamtex),
-	CR_MEMBER(sidetex),
-	CR_RESERVED(16)
+	CR_MEMBER(sidetex)
 ))
 
 CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const ProjectileParams& params): CWeaponProjectile(params)

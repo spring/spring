@@ -21,8 +21,14 @@ CVertexArray::~CVertexArray()
 {
 	delete[] drawArray;
 	delete[] stripArray;
-	drawArray = NULL;
-	stripArray = NULL;
+	drawArray = nullptr;
+	stripArray = nullptr;
+
+	drawArrayPos = nullptr;
+	drawArraySize = nullptr;
+
+	stripArrayPos = nullptr;
+	stripArraySize = nullptr;
 }
 
 
@@ -423,7 +429,7 @@ void CVertexArray::EnlargeStripArray()
 	const unsigned int newsize = oldsize * 2;
 
 	unsigned int* tempArray = new unsigned int[newsize];
-	memcpy(tempArray,stripArray, oldsize * sizeof(unsigned int));
+	memcpy(tempArray, stripArray, oldsize * sizeof(unsigned int));
 
 	delete[] stripArray;
 

@@ -61,8 +61,9 @@ Release Time
 	Upload them to SF (replace USER with your SF account name):
 		rsync --progress -h spring_${REL_VERS}* USER,springrts@frs.sourceforge.net:/home/frs/project/s/sp/springrts/springrts/spring-${REL_VERS}/
 11) Post the news post.
-
-12) After a week, set it as default version on the server:
+12) add the release to mantis: ( ${REL_VERS}+git and ${REL_VERS + 1}) and mark old stable versions as obsolete.
+	https://springrts.com/mantis/manage_proj_page.php
+13) After a week, set it as default version on the server:
 	Ask a lobby admin to set the default version on the lobby server:
 		http://springrts.com/wiki/Uberserver#set_spring_version
 	Update download page by chaning the version templates on the Wiki.

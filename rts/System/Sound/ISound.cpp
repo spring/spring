@@ -43,11 +43,11 @@ ISound::ISound()
 {
 }
 
-void ISound::Initialize()
+void ISound::Initialize(bool forceNullSound)
 {
 	if (singleton == NULL) {
 #ifndef NO_SOUND
-		if (!IsNullAudio()) {
+		if (!IsNullAudio() && !forceNullSound) {
 			Channels::BGMusic = new AudioChannel();
 			Channels::General = new AudioChannel();
 			Channels::Battle = new AudioChannel();
@@ -59,6 +59,11 @@ void ISound::Initialize()
 			// for it to finish (otherwise LoadSoundDefs can fail)
 			while (!singleton->CanLoadSoundDefs()) {
 				spring_sleep(spring_msecs(100));
+
+				if (singleton->SoundThreadQuit()) {
+					// no device or context found, fallback
+					ChangeOutput(true); break;
+				}
 			}
 		} else
 #endif // NO_SOUND
@@ -93,31 +98,26 @@ void ISound::Shutdown()
 }
 
 
-bool ISound::IsInitialized()
-{
-	return (singleton != NULL);
-}
-
 bool ISound::IsNullAudio()
 {
 	return !configHandler->GetBool("Sound");
 }
 
 
-bool ISound::ChangeOutput()
+bool ISound::ChangeOutput(bool forceNullSound)
 {
 	if (IsNullAudio()) {
 		//FIXME: on reload, sound-ids change (depends on order when they are requested, see GetSoundId()/GetSoundItem()
 		LOG_L(L_ERROR, "re-enabling sound isn't supported yet, expect problems!");
 	}
 	Shutdown();
-	configHandler->Set("Sound", IsNullAudio());
-	Initialize();
-	return IsNullAudio();
+	configHandler->Set("Sound", IsNullAudio() || forceNullSound);
+	Initialize(forceNullSound);
+	return (IsNullAudio() || forceNullSound);
 }
 
-bool ISound::LoadSoundDefs(const std::string& filename)
+bool ISound::LoadSoundDefs(const std::string& filename, const std::string& modes)
 {
-	return (singleton->LoadSoundDefsImpl(filename));
+	return (singleton->LoadSoundDefsImpl(filename, modes));
 }
 

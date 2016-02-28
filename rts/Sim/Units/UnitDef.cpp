@@ -25,7 +25,6 @@
 UnitDefWeapon::UnitDefWeapon()
 : def(NULL)
 , slavedTo(0)
-, fuelUsage(0.0f)
 , maxMainDirAngleDif(-1.0f)
 , badTargetCat(0)
 , onlyTargetCat(0)
@@ -43,7 +42,6 @@ UnitDefWeapon::UnitDefWeapon(const WeaponDef* weaponDef, const LuaTable& weaponT
 	this->def = weaponDef;
 
 	this->slavedTo = weaponTable.GetInt("slaveTo", 0);
-	this->fuelUsage = weaponTable.GetFloat("fuelUsage", 0.0f);
 
 	// NOTE:
 	//     <maxAngleDif> specifies the full-width arc,
@@ -66,7 +64,8 @@ UnitDefWeapon::UnitDefWeapon(const WeaponDef* weaponDef, const LuaTable& weaponT
 /******************************************************************************/
 
 UnitDef::UnitDef()
-	: cobID(-1)
+	: SolidObjectDef()
+	, cobID(-1)
 	, decoyDef(NULL)
 	, techLevel(-1)
 	, metalUpkeep(0.0f)
@@ -243,9 +242,6 @@ UnitDef::UnitDef()
 	, showNanoFrame(false)
 	, showNanoSpray(false)
 	, nanoColor(ZeroVector)
-	, maxFuel(0.0f)
-	, refuelTime(0.0f)
-	, minAirBasePower(0.0f)
 	, maxThisUnit(0)
 	, realMetalCost(0.0f)
 	, realEnergyCost(0.0f)
@@ -299,15 +295,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	buildTime = std::max(0.1f, udTable.GetFloat("buildTime", 0.0f)); //avoid some nasty divide by 0
 
 	cobID = udTable.GetInt("cobID", -1);
-
-	losRadius = udTable.GetFloat("sightDistance", 0.0f) * modInfo.losMul / (SQUARE_SIZE * (1 << modInfo.losMipLevel));
-	airLosRadius = udTable.GetFloat("airSightDistance", -1.0f);
-	if (airLosRadius == -1.0f) {
-		airLosRadius = udTable.GetFloat("sightDistance", 0.0f) * modInfo.airLosMul * 1.5f / (SQUARE_SIZE * (1 << modInfo.airMipLevel));
-	} else {
-		airLosRadius = airLosRadius * modInfo.airLosMul / (SQUARE_SIZE * (1 << modInfo.airMipLevel));
-	}
-
 
 	buildRange3D = udTable.GetBool("buildRange3D", false);
 	// 128.0f is the ancient default
@@ -400,6 +387,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	losHeight = udTable.GetFloat("losEmitHeight", 20.0f);
 	radarHeight = udTable.GetFloat("radarEmitHeight", losHeight);
 
+	losRadius = udTable.GetFloat("sightDistance", 0.0f);
+	airLosRadius = udTable.GetFloat("airSightDistance", 1.5f * losRadius);
 	radarRadius    = udTable.GetInt("radarDistance",    0);
 	sonarRadius    = udTable.GetInt("sonarDistance",    0);
 	jammerRadius   = udTable.GetInt("radarDistanceJam", 0);
@@ -492,9 +481,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	maxElevator = udTable.GetFloat("maxElevator", 0.01f);  // turn speed around pitch axis
 	maxRudder   = udTable.GetFloat("maxRudder",   0.004f); // turn speed around yaw axis
 
-	maxFuel = udTable.GetFloat("maxFuel", 0.0f); //max flight time in seconds before aircraft must return to base
-	refuelTime = udTable.GetFloat("refuelTime", 5.0f);
-	minAirBasePower = udTable.GetFloat("minAirBasePower", 0.0f);
 	maxThisUnit = udTable.GetInt("unitRestricted", MAX_UNITS);
 	maxThisUnit = std::min(maxThisUnit, gameSetup->GetRestrictedUnitLimit(name, MAX_UNITS));
 
@@ -673,10 +659,9 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 UnitDef::~UnitDef()
 {
-	if (buildPic) {
+	if (buildPic != nullptr) {
 		buildPic->Free();
-		delete buildPic;
-		buildPic = NULL;
+		SafeDelete(buildPic);
 	}
 }
 

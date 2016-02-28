@@ -11,14 +11,12 @@
 #include "UnitTypes/Builder.h"
 #include "UnitTypes/ExtractorBuilding.h"
 #include "UnitTypes/Factory.h"
-#include "UnitTypes/TransportUnit.h"
 
 #include "CommandAI/AirCAI.h"
 #include "CommandAI/BuilderCAI.h"
 #include "CommandAI/CommandAI.h"
 #include "CommandAI/FactoryCAI.h"
 #include "CommandAI/MobileCAI.h"
-#include "CommandAI/TransportCAI.h"
 
 #include "Game/GameHelper.h"
 #include "Map/Ground.h"
@@ -29,7 +27,6 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/UnitHandler.h"
 
-#include "System/EventBatchHandler.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/Watchdog.h"
@@ -74,9 +71,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitLoadParams& cparams)
 				throw content_error("Invalid team and no gaia team to put unit in");
 		}
 
-		if (ud->IsTransportUnit()) {
-			unit = new CTransportUnit();
-		} else if (ud->IsFactoryUnit()) {
+		if (ud->IsFactoryUnit()) {
 			// special static builder structures that can always be given
 			// move orders (which are passed on to all mobile buildees)
 			unit = new CFactory();
@@ -99,9 +94,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitLoadParams& cparams)
 
 		unit->PreInit(params);
 
-		if (ud->IsTransportUnit()) {
-			new CTransportCAI(unit);
-		} else if (ud->IsFactoryUnit()) {
+		if (ud->IsFactoryUnit()) {
 			new CFactoryCAI(unit);
 		} else if (ud->IsMobileBuilderUnit() || ud->IsStaticBuilderUnit()) {
 			new CBuilderCAI(unit);
@@ -119,7 +112,6 @@ CUnit* CUnitLoader::LoadUnit(const UnitLoadParams& cparams)
 	}
 
 	unit->PostInit(params.builder);
-	(eventBatchHandler->GetUnitCreatedDestroyedBatch()).enqueue(EventBatchHandler::UD(unit, unit->isCloaked));
 
 	if (params.flattenGround) {
 		FlattenGround(unit);

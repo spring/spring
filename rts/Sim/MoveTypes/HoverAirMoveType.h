@@ -29,8 +29,6 @@ public:
 	void SetAllowLanding(bool b);
 
 	AircraftState GetLandingState() const { return AIRCRAFT_FLYING; }
-	void SetWantedAltitude(float altitude);
-	void SetDefaultAltitude(float altitude);
 
 	// Main state handlers
 	void UpdateLanded();
@@ -54,7 +52,7 @@ private:
 
 	void UpdateVerticalSpeed(const float4& spd, float curRelHeight, float curVertSpeed) const;
 
-	bool CanLand(bool busy) const { return (!busy && ((!dontLand && autoLand) || (reservedPad != NULL))); }
+	bool CanLand(bool busy) const { return (!busy && (!dontLand && autoLand)); }
 	bool CanLandAt(const float3& pos) const;
 
 	void ExecuteStop();

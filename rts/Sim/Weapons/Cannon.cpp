@@ -4,8 +4,8 @@
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
-#include "Sim/Projectiles/Unsynced/HeatCloudProjectile.h"
-#include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
+#include "Rendering/Env/Particles/Classes/HeatCloudProjectile.h"
+#include "Rendering/Env/Particles/Classes/SmokeProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 #include "System/Sync/SyncTracer.h"
@@ -20,8 +20,7 @@ CR_REG_METADATA(CCannon,(
 	CR_MEMBER(rangeFactor),
 	CR_MEMBER(lastDiff),
 	CR_MEMBER(lastDir),
-	CR_MEMBER(gravity),
-	CR_RESERVED(32)
+	CR_MEMBER(gravity)
 ))
 
 //////////////////////////////////////////////////////////////////////

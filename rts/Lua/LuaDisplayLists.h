@@ -4,11 +4,19 @@
 #define LUA_DISPLAY_LISTS_H
 
 #include <vector>
-#include <map>
 
 #include "Rendering/GL/myGL.h"
 
-typedef std::map<unsigned int, int> MatrixStateData;
+struct SMatrixStateData {
+	SMatrixStateData(): mode(GL_MODELVIEW), 
+						modelView(0), 
+						projection(0),
+						texture(0) {}
+	int mode;
+	int modelView;
+	int projection;
+	int texture;
+};
 
 class CLuaDisplayLists {
 	public:
@@ -43,16 +51,16 @@ class CLuaDisplayLists {
 			}
 		}
 
-		MatrixStateData GetMatrixState(unsigned int index) const
+		SMatrixStateData GetMatrixState(unsigned int index) const
 		{
 			if (index < active.size()) {
 				return active[index].matData;
 			} else {
-				return MatrixStateData();
+				return SMatrixStateData();
 			}
 		}
 
-		unsigned int NewDList(GLuint dlist, MatrixStateData& m)
+		unsigned int NewDList(GLuint dlist, SMatrixStateData& m)
 		{
 			if (dlist == 0) {
 				return 0;
@@ -77,10 +85,10 @@ class CLuaDisplayLists {
 
 	private:
 		struct DLdata {
-			DLdata(int i) { id = i; }
-			DLdata(int i, MatrixStateData &m): id(i), matData(m) {}
+			DLdata(int i): id(i) {}
+			DLdata(int i, SMatrixStateData &m): id(i), matData(m) {}
 			GLuint id;
-			MatrixStateData matData;
+			SMatrixStateData matData;
 		};
 		std::vector<DLdata> active;
 		std::vector<unsigned int> unused; // references slots in active

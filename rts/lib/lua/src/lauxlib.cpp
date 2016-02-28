@@ -179,7 +179,7 @@ LUALIB_API lua_Number luaL_checknumber (lua_State *L, int narg) {
   if (d == 0 && !lua_isnumber(L, narg))  /* avoid extra test when d is not 0 */
     tag_error(L, narg, LUA_TNUMBER);
 
-#if defined(DEBUG) || defined(DEBUG_LUANAN)
+#if defined(DEBUG_LUANAN)
   // SPRING
   //   this is used by luaL_optnumber, luaL_optfloat (via luaL_optnumber),
   //   and luaL_checkfloat, so the asserts should cover 90% of all cases

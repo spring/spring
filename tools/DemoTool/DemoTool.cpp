@@ -207,7 +207,7 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 {
 	InitCommandNames();
 	std::vector<unsigned> trafficCounter(NETMSG_LAST, 0);
-	int frame = 0;
+	int frame = -1;
 	int cmdId = 0;
 	while (!reader.ReachedEnd())
 	{
@@ -221,8 +221,10 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 		char buf[16]; // FIXME: cba to look up how to format numbers with iostreams
 		sprintf(buf, "%06d ", frame);
 		const int cmd = (unsigned char)buffer[0];
-		if (cmd == NETMSG_GAME_FRAME_PROGRESS) //ignore as its unsynced (TODO: why is this recorded in demo?)
+		if (cmd == NETMSG_GAME_FRAME_PROGRESS) { //ignore as its unsynced (TODO: why is this recorded in demo?)
+			delete packet;
 			continue;
+		}
 		std::cout << buf;
 		switch (cmd)
 		{
@@ -314,7 +316,7 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 			case NETMSG_LUAMSG:
 				{
 				std::cout << "LUAMSG length:" << packet->length << " Player:" << (unsigned)buffer[3] << " Script: " << *(uint16_t*)&buffer[4] << " Mode: " << (unsigned)buffer[6] << " Msg: ";
-				PrintBinary(&packet->data[7], packet->length);
+				PrintBinary(&packet->data[7], packet->length - 7);
 				std::cout << std::endl;
 				break;
 				}

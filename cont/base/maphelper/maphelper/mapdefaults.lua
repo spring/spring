@@ -8,6 +8,8 @@
 --  Copyright (C) 2008.
 --  Licensed under the terms of the GNU GPL, v2 or later.
 --
+--  NOTE: most keys could be omitted, setupopts.lua only reads a limited subset
+--
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
@@ -93,16 +95,23 @@ local mapDefaults = {
   },
 
   resources = {
-    detailTex         = '',
-    specularTex       = '',
-    splatDetailTex    = '',
-    splatDistrTex     = '',
-    grassBladeTex     = '',
-    grassShadingTex   = '',
-    skyReflectModTex  = '',
-    detailNormalTex   = '',
-    lightEmissionTex  = '',
-    parallaxHeightTex = '',
+    detailTex            = '',
+    specularTex          = '',
+    splatDetailTex       = '',
+    splatDistrTex        = '',
+    grassBladeTex        = '',
+    grassShadingTex      = '',
+    skyReflectModTex     = '',
+    detailNormalTex      = '',
+    lightEmissionTex     = '',
+    parallaxHeightTex    = '',
+    splatDetailNormalTex = {
+      '', -- 1
+      '', -- 2
+      '', -- 3
+      '', -- 4
+      alpha = false,
+    },
   },
 
   defaultTerrainType = {

@@ -5,7 +5,6 @@
 
 #include <assert.h>
 
-#include "TransportCAI.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnitsHandler.h"
@@ -25,7 +24,6 @@
 #include "Sim/Units/UnitTypes/Builder.h"
 #include "Sim/Units/UnitTypes/Building.h"
 #include "Sim/Units/UnitTypes/Factory.h"
-#include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "System/myMath.h"
 #include "System/Util.h"
 #include "System/EventHandler.h"
@@ -61,6 +59,25 @@ CUnitSet CBuilderCAI::featureReclaimers;
 CUnitSet CBuilderCAI::resurrecters;
 
 
+static std::string GetUnitDefBuildOptionToolTip(const UnitDef* ud, bool disabled) {
+	std::string tooltip;
+
+	if (disabled) {
+		tooltip = "\xff\xff\x22\x22" "DISABLED: " "\xff\xff\xff\xff";
+	} else {
+		tooltip = "Build: ";
+	}
+
+	tooltip += (ud->humanName + " - " + ud->tooltip);
+	tooltip += ("\nHealth "      + FloatToString(ud->health,    "%.0f"));
+	tooltip += ("\nMetal cost "  + FloatToString(ud->metal,     "%.0f"));
+	tooltip += ("\nEnergy cost " + FloatToString(ud->energy,    "%.0f"));
+	tooltip += ("\nBuild time "  + FloatToString(ud->buildTime, "%.0f"));
+
+	return tooltip;
+}
+
+
 CBuilderCAI::CBuilderCAI():
 	CMobileCAI(),
 	ownerBuilder(NULL),
@@ -89,101 +106,112 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 {
 	ownerBuilder = static_cast<CBuilder*>(owner);
 
-	CommandDescription c;
 	if (owner->unitDef->canRepair) {
-		c.id = CMD_REPAIR;
-		c.action = "repair";
+		possibleCommands.emplace_back();
+		CommandDescription& c = possibleCommands.back();
+
+		c.id   = CMD_REPAIR;
 		c.type = CMDTYPE_ICON_UNIT_OR_AREA;
-		c.name = "Repair";
+
+		c.action    = "repair";
+		c.name      = "Repair";
+		c.tooltip   = c.name + ": Repairs another unit";
 		c.mouseicon = c.name;
-		c.tooltip = "Repair: Repairs another unit";
-		possibleCommands.push_back(c);
 	}
 	else if (owner->unitDef->canAssist) {
-		c.id = CMD_REPAIR;
-		c.action = "assist";
+		possibleCommands.emplace_back();
+		CommandDescription& c = possibleCommands.back();
+
+		c.id   = CMD_REPAIR;
 		c.type = CMDTYPE_ICON_UNIT_OR_AREA;
-		c.name = "Assist";
+
+		c.action    = "assist";
+		c.name      = "Assist";
+		c.tooltip   = c.name + ": Help build something";
 		c.mouseicon = c.name;
-		c.tooltip = "Assist: Help build something";
-		possibleCommands.push_back(c);
 	}
 
 	if (owner->unitDef->canReclaim) {
-		c.id = CMD_RECLAIM;
-		c.action = "reclaim";
+		possibleCommands.emplace_back();
+		CommandDescription& c = possibleCommands.back();
+
+		c.id   = CMD_RECLAIM;
 		c.type = CMDTYPE_ICON_UNIT_FEATURE_OR_AREA;
-		c.name = "Reclaim";
+
+		c.action    = "reclaim";
+		c.name      = "Reclaim";
+		c.tooltip   = c.name + ": Sucks in the metal/energy content of a unit/feature and add it to your storage";
 		c.mouseicon = c.name;
-		c.tooltip = "Reclaim: Sucks in the metal/energy content of a unit/feature and add it to your storage";
-		possibleCommands.push_back(c);
 	}
 
 	if (owner->unitDef->canRestore && !mapDamage->disabled) {
-		c.id = CMD_RESTORE;
-		c.action = "restore";
+		possibleCommands.emplace_back();
+		CommandDescription& c = possibleCommands.back();
+
+		c.id   = CMD_RESTORE;
 		c.type = CMDTYPE_ICON_AREA;
-		c.name = "Restore";
+
+		c.action    = "restore";
+		c.name      = "Restore";
+		c.tooltip   = c.name + ": Restores an area of the map to its original height";
 		c.mouseicon = c.name;
-		c.tooltip = "Restore: Restores an area of the map to its original height";
+
 		c.params.push_back("200");
-		possibleCommands.push_back(c);
 	}
-	c.params.clear();
 
 	if (owner->unitDef->canResurrect) {
-		c.id = CMD_RESURRECT;
-		c.action = "resurrect";
+		possibleCommands.emplace_back();
+		CommandDescription& c = possibleCommands.back();
+
+		c.id   = CMD_RESURRECT;
 		c.type = CMDTYPE_ICON_UNIT_FEATURE_OR_AREA;
-		c.name = "Resurrect";
+
+		c.action    = "resurrect";
+		c.name      = "Resurrect";
+		c.tooltip   = c.name + ": Resurrects a unit from a feature";
 		c.mouseicon = c.name;
-		c.tooltip = "Resurrect: Resurrects a unit from a feature";
-		possibleCommands.push_back(c);
 	}
 	if (owner->unitDef->canCapture) {
-		c.id = CMD_CAPTURE;
-		c.action = "capture";
+		possibleCommands.emplace_back();
+		CommandDescription& c = possibleCommands.back();
+
+		c.id   = CMD_CAPTURE;
 		c.type = CMDTYPE_ICON_UNIT_OR_AREA;
-		c.name = "Capture";
+
+		c.action    = "capture";
+		c.name      = "Capture";
+		c.tooltip   = c.name + ": Captures a unit from the enemy";
 		c.mouseicon = c.name;
-		c.tooltip = "Capture: Captures a unit from the enemy";
-		possibleCommands.push_back(c);
 	}
 
-	for (auto bi = ownerBuilder->unitDef->buildOptions.begin(); bi != ownerBuilder->unitDef->buildOptions.end(); ++bi) {
-		const string name = bi->second;
+	for (const auto& bi: ownerBuilder->unitDef->buildOptions) {
+		const std::string& name = bi.second;
 		const UnitDef* ud = unitDefHandler->GetUnitDefByName(name);
-		if (ud == NULL) {
-		  string errmsg = "MOD ERROR: loading ";
-		  errmsg += name.c_str();
-		  errmsg += " for ";
-		  errmsg += owner->unitDef->name;
+
+		if (ud == nullptr) {
+			string errmsg = "MOD ERROR: loading ";
+			errmsg += name.c_str();
+			errmsg += " for ";
+			errmsg += owner->unitDef->name;
 			throw content_error(errmsg);
 		}
-		CommandDescription c;
-		c.id = -ud->id; //build options are always negative
-		c.action = "buildunit_" + StringToLower(ud->name);
-		c.type = CMDTYPE_ICON_BUILDING;
-		c.name = name;
-		c.mouseicon = c.name;
-		c.disabled = (ud->maxThisUnit <= 0);
 
-		if (c.disabled) {
-			c.tooltip = "\xff\xff\x22\x22" "DISABLED: " "\xff\xff\xff\xff";
-		} else {
-			c.tooltip = "Build: ";
+		{
+			possibleCommands.emplace_back();
+			CommandDescription& c = possibleCommands.back();
+
+			c.id   = -ud->id; //build options are always negative
+			c.type = CMDTYPE_ICON_BUILDING;
+
+			c.action    = "buildunit_" + StringToLower(ud->name);
+			c.name      = name;
+			c.mouseicon = c.name;
+			c.tooltip   = GetUnitDefBuildOptionToolTip(ud, c.disabled = (ud->maxThisUnit <= 0));
+
+			buildOptions[c.id] = name;
 		}
-
-		c.tooltip += ud->humanName + " - " + ud->tooltip;
-		c.tooltip += 
-			("\nHealth "      + FloatToString(ud->health, "%.0f")) +
-			("\nMetal cost "  + FloatToString(ud->metal, "%.0f")) +
-			("\nEnergy cost " + FloatToString(ud->energy, "%.0f")) +
-			("\nBuild time "  + FloatToString(ud->buildTime, "%.0f"));
-
-		possibleCommands.push_back(c);
-		buildOptions[c.id] = name;
 	}
+
 	unitHandler->AddBuilderCAI(this);
 }
 
@@ -417,16 +445,16 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		return;
 	}
 
-	// stop current build if the new command is not queued and replaces the current build-command
-	//FIXME should happen just before CMobileCAI::GiveCommandReal? (the new cmd can still be skipped!)
-	if (c.GetID() != CMD_WAIT && !(c.options & SHIFT_KEY)) {
+	// stop building/reclaiming/... if the new command is not queued, i.e. replaces our current activity
+	// FIXME should happen just before CMobileCAI::GiveCommandReal? (the new cmd can still be skipped!)
+	if ((c.GetID() != CMD_WAIT && c.GetID() != CMD_SET_WANTED_MAX_SPEED) && !(c.options & SHIFT_KEY)) {
 		if (nonQueingCommands.find(c.GetID()) == nonQueingCommands.end()) {
 			building = false;
 			static_cast<CBuilder*>(owner)->StopBuild();
 		}
 	}
 
-	const map<int, string>::const_iterator boi = buildOptions.find(c.GetID());
+	const auto boi = buildOptions.find(c.GetID());
 
 	if (boi != buildOptions.end()) {
 		if (c.params.size() < 3)
@@ -451,9 +479,8 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		const CUnit* nanoFrame = NULL;
 
 		// check if the buildpos is blocked
-		if (IsBuildPosBlocked(bi, &nanoFrame)) {
+		if (IsBuildPosBlocked(bi, &nanoFrame))
 			return;
-		}
 
 		// if it is a nanoframe help to finish it
 		if (nanoFrame != NULL) {
@@ -481,9 +508,8 @@ void CBuilderCAI::SlowUpdate()
 		return;
 	}
 
-	if (owner->beingBuilt || owner->IsStunned()) {
+	if (owner->beingBuilt || owner->IsStunned())
 		return;
-	}
 
 	Command& c = commandQue.front();
 
@@ -1290,8 +1316,6 @@ int CBuilderCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 				return CMD_RECLAIM;
 			}
 		} else {
-			const CTransportCAI* tran = dynamic_cast<CTransportCAI*>(pointed->commandAI);
-
 			const bool canAssistPointed = ownerBuilder->CanAssistUnit(pointed);
 			const bool canRepairPointed = ownerBuilder->CanRepairUnit(pointed);
 
@@ -1299,7 +1323,7 @@ int CBuilderCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 				return CMD_REPAIR;
 			} else if (canRepairPointed) {
 				return CMD_REPAIR;
-			} else if (tran && tran->CanTransport(owner)) {
+			} else if (pointed->CanTransport(owner)) {
 				return CMD_LOAD_ONTO;
 			} else if (owner->unitDef->canGuard) {
 				return CMD_GUARD;

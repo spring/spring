@@ -57,6 +57,7 @@ void CCursorIcons::SetCustomType(int cmdID, const string& cursor)
 
 void CCursorIcons::Draw()
 {
+	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_CURRENT_BIT);
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -64,20 +65,19 @@ void CCursorIcons::Draw()
 	glDepthMask(GL_FALSE);
 
 	DrawCursors();
-
 	DrawBuilds();
 
-	glDepthMask(GL_TRUE);
 	glBindTexture(GL_TEXTURE_2D, 0);
-	glDisable(GL_TEXTURE_2D);
+	glPopAttrib();
+
+	Clear();
 }
 
 
 void CCursorIcons::DrawCursors()
 {
-	if (icons.empty() || !cmdColors.UseQueueIcons()) {
+	if (icons.empty() || !cmdColors.UseQueueIcons())
 		return;
-	}
 
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
@@ -92,8 +92,7 @@ void CCursorIcons::DrawCursors()
 	int currentCmd = (icons.begin()->cmd + 1); // force the first binding
 	const CMouseCursor* currentCursor = NULL;
 
-	std::set<Icon>::iterator it;
-	for (it = icons.begin(); it != icons.end(); ++it) {
+	for (auto it = icons.cbegin(); it != icons.cend(); ++it) {
 		const int command = it->cmd;
 		if (command != currentCmd) {
 			currentCmd = command;
@@ -121,8 +120,11 @@ void CCursorIcons::DrawCursors()
 
 void CCursorIcons::DrawTexts()
 {
+	if (texts.empty())
+		return;
+
 	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
-	glColor4f(1.0f,  1.0f, 1.0f, 1.0f);
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
 	const float fontScale = 1.0f;
 	const float yOffset = 50.0f * globalRendering->pixelY;
@@ -156,7 +158,14 @@ void CCursorIcons::DrawBuilds()
 	glColor4f(1.0f, 1.0f, 1.0f, 0.3f);
 
 	for (auto it = buildIcons.begin() ; it != buildIcons.end(); ++it) {
-		CUnitDrawer::DrawBuildingSample(unitDefHandler->GetUnitDefByID(-(it->cmd)), it->team, it->pos, it->facing);
+		glPushMatrix();
+		glLoadIdentity();
+		glTranslatef3(it->pos);
+		glRotatef(it->facing * 90.0f, 0.0f, 1.0f, 0.0f);
+
+		CUnitDrawer::DrawIndividualDefAlpha(unitDefHandler->GetUnitDefByID(-(it->cmd)), it->team, false);
+
+		glPopMatrix();
 	}
 
 	glDisable(GL_DEPTH_TEST);

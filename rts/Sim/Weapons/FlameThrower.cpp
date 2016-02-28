@@ -10,8 +10,7 @@ CR_BIND_DERIVED(CFlameThrower, CWeapon, (NULL, NULL))
 
 CR_REG_METADATA(CFlameThrower,(
 	CR_MEMBER(color),
-	CR_MEMBER(color2),
-	CR_RESERVED(8)
+	CR_MEMBER(color2)
 ))
 
 CFlameThrower::CFlameThrower(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)

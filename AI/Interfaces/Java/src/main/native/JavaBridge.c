@@ -79,13 +79,13 @@ static jclass g_cls_ai_int = NULL;
 // ### General helper functions following ###
 
 /// Sets the FPU state to how spring likes it
-inline void java_establishSpringEnv() {
+static inline void java_establishSpringEnv() {
 
 	//(*g_jvm)->DetachCurrentThread(g_jvm);
 	streflop_init_Simple();
 }
 /// The JVM sets the environment it wants automatically, so this is a no-op
-inline void java_establishJavaEnv() {}
+static inline void java_establishJavaEnv() {}
 
 
 static inline size_t minSize(size_t size1, size_t size2) {

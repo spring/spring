@@ -23,17 +23,19 @@ typedef int (*AccessFunc)(lua_State* L, const void* data);
 
 struct DataElement {
 	public:
-		DataElement() : type(ERROR_TYPE), offset(0), func(NULL) {}
+		DataElement()
+		: type(ERROR_TYPE), offset(0), func(NULL), deprecated(true) {}
 		DataElement(DataType t)
-		: type(t), offset(0), func(NULL) {}
+		: type(t), offset(0), func(NULL), deprecated(false) {}
 		DataElement(DataType t, int o)
-		: type(t), offset(o), func(NULL) {}
-		DataElement(DataType t, int o, AccessFunc f)
-		: type(t), offset(o), func(f) {}
+		: type(t), offset(o), func(NULL), deprecated(false) {}
+		DataElement(DataType t, int o, AccessFunc f, bool d=false)
+		: type(t), offset(o), func(f), deprecated(d) {}
 	public:
 		DataType type;
 		int offset;
 		AccessFunc func;
+		bool deprecated;
 };
 
 
@@ -71,6 +73,9 @@ namespace {
 #define ADD_FUNCTION(lua, cpp, func) \
 	paramMap[lua] = DataElement(FUNCTION_TYPE, ADDRESS(cpp) - start, func)
 
+#define ADD_DEPRECATED_FUNCTION(lua, cpp, func) \
+	paramMap[lua] = DataElement(FUNCTION_TYPE, ADDRESS(cpp) - start, func, true)
+
 // keys added through this macro will generate
 // (non-fatal) ERROR_TYPE warnings if indexed
 #define ADD_DEPRECATED_LUADEF_KEY(lua) \
@@ -80,32 +85,30 @@ namespace {
 
 
 #define DECL_LOAD_HANDLER(HandlerType, HandlerInstance)     \
-	void HandlerType::LoadHandler() {                       \
+	bool HandlerType::LoadHandler() {                       \
 		{                                                   \
 			std::lock_guard<boost::mutex> lk(m_singleton);  \
                                                             \
 			if (HandlerInstance != NULL)                    \
-				return;                                     \
+				return (HandlerInstance->IsValid());        \
                                                             \
 			HandlerInstance = new HandlerType();            \
-		}                                                   \
-                                                            \
-		if (!HandlerInstance->IsValid()) {                  \
-			FreeHandler();                                  \
+			return (HandlerInstance->IsValid());            \
 		}                                                   \
 	}
 
 #define DECL_FREE_HANDLER(HandlerType, HandlerInstance)  \
-	void HandlerType::FreeHandler() {                    \
+	bool HandlerType::FreeHandler() {                    \
 		std::lock_guard<boost::mutex> lk(m_singleton);   \
                                                          \
 		if (HandlerInstance == NULL)                     \
-			return;                                      \
+			return false;                                \
                                                          \
 		auto* inst = HandlerInstance;                    \
 		HandlerInstance = NULL;                          \
-		inst->KillLua();                                 \
+		inst->KillLua(true);                             \
 		delete inst;                                     \
+		return true;                                     \
 	}
 
 

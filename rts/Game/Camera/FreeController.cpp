@@ -20,11 +20,11 @@ CONFIG(bool, CamFreeInvertAlt).defaultValue(false);
 CONFIG(bool, CamFreeGoForward).defaultValue(false);
 CONFIG(float, CamFreeFOV).defaultValue(45.0f);
 CONFIG(float, CamFreeScrollSpeed).defaultValue(500.0f);
-CONFIG(float, CamFreeGravity).defaultValue(-500.0f);
+CONFIG(float, CamFreeGravity).defaultValue(-500.0f).description("When free camera is locked, Gravity will be used if you jump off of a ground ramp.");
 CONFIG(float, CamFreeSlide).defaultValue(0.5f);
-CONFIG(float, CamFreeGroundOffset).defaultValue(16.0f);
+CONFIG(float, CamFreeGroundOffset).defaultValue(16.0f).description("Determines ground handling for the free camera.\n0 - the camera can move anywhere,\n< 0 - the camera is always offset from the ground height by -CamFreeGroundOffset\n> 0 - the camera can be \"locked\" to the ground by using SHIFT UP_ARROW. (and will use CamFreeGroundOffset as the offset). To release the lock, simply press SHIFT DOWN_ARROW.");
 CONFIG(float, CamFreeTiltSpeed).defaultValue(150.0f);
-CONFIG(float, CamFreeAutoTilt).defaultValue(150.0f);
+CONFIG(float, CamFreeAutoTilt).defaultValue(150.0f).description("When free camera is locked, AutoTilt will point the camera in the direction of the ground's slope");
 CONFIG(float, CamFreeVelTime).defaultValue(1.5f);
 CONFIG(float, CamFreeAngVelTime).defaultValue(1.0f);
 

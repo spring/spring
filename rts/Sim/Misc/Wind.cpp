@@ -21,8 +21,7 @@ CR_REG_METADATA(CWind, (
 	CR_MEMBER(oldWind),
 	CR_MEMBER(status),
 
-	CR_MEMBER(windGens),
-	CR_RESERVED(12)
+	CR_MEMBER(windGens)
 ))
 
 

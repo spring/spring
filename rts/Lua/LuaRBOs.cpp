@@ -80,7 +80,7 @@ void LuaRBOs::RBO::Init()
 }
 
 
-void LuaRBOs::RBO::Free(lua_State *L)
+void LuaRBOs::RBO::Free(lua_State* L)
 {
 	if (id == 0) {
 		return;

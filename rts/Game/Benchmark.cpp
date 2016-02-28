@@ -9,6 +9,7 @@
 #include "GlobalUnsynced.h"
 #include "UI/GuiHandler.h"
 #include "Rendering/GlobalRendering.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "System/TimeProfiler.h"
@@ -37,6 +38,11 @@ CBenchmark::~CBenchmark()
 	std::map<int, float>::const_iterator   git = gameSpeed.cbegin();
 	std::map<int, float>::const_iterator   lit = luaUsage.cbegin();
 
+#ifdef _WIN64 //fprintf sometimes spews false warnings over %I64u
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat"
+#endif
+
 	fprintf(pFile, "# GAME_FRAME effFPS drawFPS simFPS num_units num_features game_speed lua_usage\n");
 	while (dit != drawFPS.cend() && sit != simFPS.cend()) {
 		if (dit->first < sit->first) {
@@ -53,6 +59,10 @@ CBenchmark::~CBenchmark()
 		}
 	}
 	fclose(pFile);
+
+#ifdef _WIN64
+#pragma GCC diagnostic pop
+#endif
 }
 
 void CBenchmark::GameFrame(int gameFrame)

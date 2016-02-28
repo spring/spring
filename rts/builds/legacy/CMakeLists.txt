@@ -75,6 +75,7 @@ LIST(APPEND engineLibraries engineaGui)
 LIST(APPEND engineLibraries ${Boost_THREAD_LIBRARY})
 LIST(APPEND engineLibraries ${SPRING_SIM_LIBRARIES})
 LIST(APPEND engineLibraries engineSim)
+LIST(APPEND engineLibraries pr-downloader_static)
 
 ### Assemble external incude dirs
 LIST(APPEND engineIncludes ${OPENAL_INCLUDE_DIR})

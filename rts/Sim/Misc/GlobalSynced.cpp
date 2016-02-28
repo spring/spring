@@ -33,7 +33,6 @@ CR_REG_METADATA(CGlobalSynced, (
 
 	CR_MEMBER(paused),
 	CR_MEMBER(godMode),
-	CR_MEMBER(globalLOS),
 	CR_MEMBER(cheatEnabled),
 	CR_MEMBER(noHelperAIs),
 	CR_MEMBER(editDefsEnabled),
@@ -67,8 +66,8 @@ CGlobalSynced::~CGlobalSynced()
 
 
 void CGlobalSynced::ResetState() {
-	frameNum = 0;
-	tempNum  = 2;
+	frameNum = -1; // first real frame is 0
+	tempNum  =  1;
 
 	speedFactor       = 1.0f;
 	wantedSpeedFactor = 1.0f;
@@ -81,7 +80,6 @@ void CGlobalSynced::ResetState() {
 	editDefsEnabled = false;
 	useLuaGaia      = true;
 
-	memset(globalLOS, 0, sizeof(globalLOS));
 	log_framePrefixer_setFrameNumReference(&frameNum);
 
 	if (teamHandler == NULL) {

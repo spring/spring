@@ -219,32 +219,28 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 	if(s=="AllMap"){
 		if (!gu->spectatingFullSelect) {
 			// team units
-			CUnitSet* tu=&teamHandler->Team(gu->myTeam)->units;
-			for(CUnitSet::iterator ui=tu->begin();ui!=tu->end();++ui){
-				selection.push_back(*ui);
+			for(CUnit* unit: teamHandler->Team(gu->myTeam)->units){
+				selection.push_back(unit);
 			}
 		} else {
 			// all units
-			std::list<CUnit*>* au=&unitHandler->activeUnits;
-			for (std::list<CUnit*>::iterator ui=au->begin();ui!=au->end();++ui){
-				selection.push_back(*ui);
+			for (CUnit *unit: unitHandler->activeUnits){
+				selection.push_back(unit);
 			}
 		}
 	} else if(s=="Visible"){
 		if (!gu->spectatingFullSelect) {
 			// team units in viewport
-			CUnitSet* tu=&teamHandler->Team(gu->myTeam)->units;
-			for (CUnitSet::iterator ui=tu->begin();ui!=tu->end();++ui){
-				if (camera->InView((*ui)->midPos,(*ui)->radius)){
-					selection.push_back(*ui);
+			for(CUnit* unit: teamHandler->Team(gu->myTeam)->units){
+				if (camera->InView(unit->midPos,unit->radius)){
+					selection.push_back(unit);
 				}
 			}
 		} else {
 		  // all units in viewport
-			std::list<CUnit*>* au=&unitHandler->activeUnits;
-			for (std::list<CUnit*>::iterator ui=au->begin();ui!=au->end();++ui){
-				if (camera->InView((*ui)->midPos,(*ui)->radius)){
-					selection.push_back(*ui);
+			for (CUnit *unit: unitHandler->activeUnits){
+				if (camera->InView(unit->midPos,unit->radius)){
+					selection.push_back(unit);
 				}
 			}
 		}
@@ -265,26 +261,24 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 
 		if (!gu->spectatingFullSelect) {
 		  // team units in mouse range
-			CUnitSet* tu=&teamHandler->Team(gu->myTeam)->units;
-			for(CUnitSet::iterator ui=tu->begin();ui!=tu->end();++ui){
-				float3 up = (*ui)->pos;
+			for(CUnit* unit: teamHandler->Team(gu->myTeam)->units){
+				float3 up = unit->pos;
 				if (cylindrical) {
 					up.y = 0;
 				}
 				if(mp.SqDistance(up) < Square(maxDist)){
-					selection.push_back(*ui);
+					selection.push_back(unit);
 				}
 			}
 		} else {
 		  // all units in mouse range
-			std::list<CUnit*>* au=&unitHandler->activeUnits;
-			for(std::list<CUnit*>::iterator ui=au->begin();ui!=au->end();++ui){
-				float3 up = (*ui)->pos;
+			for(CUnit *unit: unitHandler->activeUnits){
+				float3 up = unit->pos;
 				if (cylindrical) {
 					up.y = 0;
 				}
 				if(mp.SqDistance(up)<Square(maxDist)){
-					selection.push_back(*ui);
+					selection.push_back(unit);
 				}
 			}
 		}

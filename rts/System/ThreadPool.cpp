@@ -57,7 +57,7 @@ static void SetThreadNum(const int idx)
 int GetMaxThreads()
 {
 #ifndef UNIT_TEST
-	return Threading::GetPhysicalCpuCores();
+	return std::min(MAX_THREADS, Threading::GetPhysicalCpuCores());
 #else
 	return 10;
 #endif
@@ -79,7 +79,7 @@ bool HasThreads()
 /// returns false, when no further tasks were found
 static bool DoTask(boost::shared_lock<boost::shared_mutex>& lk_)
 {
-	if (waitForLock)
+	if (waitForLock.load(std::memory_order_acquire))
 		return true;
 
 #ifndef __MINGW32__
@@ -112,7 +112,7 @@ static bool DoTask(boost::shared_lock<boost::shared_mutex>& lk_)
 
 			if (foundEmpty) {
 				//FIXME this could be made lock-free too, but is it worth it?
-				waitForLock = true;
+				waitForLock.store(true, std::memory_order_release);
 				boost::unique_lock<boost::shared_mutex> ulk(taskMutex, boost::defer_lock);
 				while (!ulk.try_lock()) {}
 				for(auto it = taskGroups.begin(); it != taskGroups.end();) {
@@ -122,7 +122,7 @@ static bool DoTask(boost::shared_lock<boost::shared_mutex>& lk_)
 						++it;
 					}
 				}
-				waitForLock = false;
+				waitForLock.store(false, std::memory_order_release);
 				ulk.unlock();
 			}
 
@@ -193,11 +193,11 @@ void WaitForFinished(std::shared_ptr<ITaskGroup> taskgroup)
 
 void PushTaskGroup(std::shared_ptr<ITaskGroup> taskgroup)
 {
-	waitForLock = true;
+	waitForLock.store(true, std::memory_order_release);
 	boost::unique_lock<boost::shared_mutex> lk(taskMutex, boost::defer_lock);
 	while (!lk.try_lock()) {}
 	taskGroups.emplace_back(taskgroup);
-	waitForLock = false;
+	waitForLock.store(false, std::memory_order_release);
 	lk.unlock();
 	newTasks.notify_all();
 }
@@ -262,7 +262,7 @@ void SetThreadCount(int num)
 			assert(thread_group.empty());
 	}
 
-	LOG("[ThreadPool::%s][2] #threads=%lu", __FUNCTION__, thread_group.size());
+	LOG("[ThreadPool::%s][2] #threads=%u", __FUNCTION__, (unsigned) thread_group.size());
 }
 
 void SetThreadSpinTime(int milliSeconds)

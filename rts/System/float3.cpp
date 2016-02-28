@@ -3,7 +3,6 @@
 #include "System/float3.h"
 #include "System/creg/creg_cond.h"
 #include "System/myMath.h"
-#include <cmath> // std::min, std::max, std::fabs
 
 CR_BIND(float3, )
 CR_REG_METADATA(float3, (CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z)))
@@ -64,5 +63,10 @@ float3 float3::max(const float3 v1, const float3 v2)
 float3 float3::fabs(const float3 v)
 {
 	return float3(std::fabs(v.x), std::fabs(v.y), std::fabs(v.z));
+}
+
+bool float3::equals(const float3& f, const float3& eps) const
+{
+	return (epscmp(x, f.x, eps.x) && epscmp(y, f.y, eps.y) && epscmp(z, f.z, eps.z));
 }
 

@@ -52,9 +52,23 @@ public:
 		SHADOWGEN_PROGRAM_LAST       = 5,
 	};
 
+	enum ShadowMatrixType {
+		SHADOWMAT_TYPE_CULLING = 0,
+		SHADOWMAT_TYPE_DRAWING = 1,
+	};
+
 	Shader::IProgramObject* GetShadowGenProg(ShadowGenProgram p) {
 		return shadowGenProgs[p];
 	}
+
+	const CMatrix44f& GetShadowMatrix   (unsigned int idx = SHADOWMAT_TYPE_DRAWING) const { return  viewMatrix[idx];      }
+	const      float* GetShadowMatrixRaw(unsigned int idx = SHADOWMAT_TYPE_DRAWING) const { return &viewMatrix[idx].m[0]; }
+
+	static bool ShadowsInitialized() { return firstInit; }
+	static bool ShadowsSupported() { return shadowsSupported; }
+
+	bool ShadowsLoaded() const { return shadowsLoaded; }
+	bool InShadowPass() const { return inShadowPass; }
 
 private:
 	void Init();
@@ -63,10 +77,16 @@ private:
 
 	bool InitDepthTarget();
 	bool WorkaroundUnsupportedFboRenderTargets();
+
 	void DrawShadowPasses();
 	void LoadShadowGenShaderProgs();
+
 	void SetShadowMapSizeFactors();
-	float GetShadowProjectionRadius(CCamera*, float3&, const float3&);
+	void SetShadowMatrix(CCamera* playerCam, CCamera* shadowCam);
+	void SetShadowCamera(CCamera* shadowCam);
+
+	float4 GetShadowProjectionScales(CCamera*, const float3&);
+
 	float GetOrthoProjectedMapRadius(const float3&, float3&);
 	float GetOrthoProjectedFrustumRadius(CCamera*, float3&);
 
@@ -79,35 +99,31 @@ public:
 	unsigned int shadowTexture;
 	unsigned int dummyColorTexture;
 
-	static bool shadowsSupported;
-
 	bool shadowsLoaded;
 	bool inShadowPass;
 
-	float3 centerPos;
-	float3 orthoProjMidPos;
-	float3 orthoProjMapPos;
-
-	float3 sunDirX;
-	float3 sunDirY;
-	float3 sunDirZ;
-	float3 sunProjDir;
-
-	CMatrix44f shadowMatrix;
-
 private:
-	FBO fb;
-
 	static bool firstInit;
+	static bool shadowsSupported;
 
-	/// these project geometry into light-space
-	/// to write the (FBO) depth-buffer texture
+	// these project geometry into light-space
+	// to write the (FBO) depth-buffer texture
 	std::vector<Shader::IProgramObject*> shadowGenProgs;
 
-	/// x1, x2, y1, y2
+	float3 projMidPos[2 + 1];
+	float3 sunProjDir;
+
+	float4 shadowProjScales;
+	/// frustum bounding-rectangle corners; x1, x2, y1, y2
 	float4 shadowProjMinMax;
 	/// xmid, ymid, p17, p18
 	float4 shadowTexProjCenter;
+
+	// culling and drawing versions of both matrices
+	CMatrix44f projMatrix[2];
+	CMatrix44f viewMatrix[2];
+
+	FBO fb;
 };
 
 extern CShadowHandler* shadowHandler;

@@ -25,4 +25,8 @@ extern void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize);
 extern void spring_lua_alloc_get_stats(SLuaInfo* info);
 extern void spring_lua_alloc_update_stats(bool);
 
+
+extern void spring_lua_ftoa(float f, char *buf, int precision = -1);
+extern void spring_lua_format(float f, const char* fmt, char *buf);
+
 #endif // SPRING_LUA_USER_H

@@ -18,10 +18,10 @@ public:
 	CPathTexture();
 
 public:
-	void Update();
-	bool IsUpdateNeeded();
+	void Update() override;
+	bool IsUpdateNeeded() override;
 
-	GLuint GetTexture();
+	GLuint GetTexture() override;
 
 	bool ShowMoveDef(const int pathType);
 	bool ShowUnitDef(const int udefid);

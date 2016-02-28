@@ -7,7 +7,7 @@
 
 class CCannon: public CWeapon
 {
-	CR_DECLARE(CCannon)
+	CR_DECLARE_DERIVED(CCannon)
 protected:
 	/// this is used to keep range true to range tag
 	float rangeFactor;

@@ -4,12 +4,11 @@
 #define SOLID_OBJECT_DEF_H
 
 #include <string>
-#include <map>
 
-#include "System/creg/creg_cond.h"
+#include "Sim/Misc/CollisionVolume.h"
+#include <System/creg/STL_Map.h>
 
 struct S3DModel;
-struct CollisionVolume;
 class LuaTable;
 
 struct SolidObjectDecalDef {
@@ -39,12 +38,13 @@ public:
 
 struct SolidObjectDef {
 public:
-	CR_DECLARE_STRUCT(SolidObjectDef)
+	CR_DECLARE(SolidObjectDef)
 
 	SolidObjectDef();
-	virtual ~SolidObjectDef();
+	virtual ~SolidObjectDef() { }
 
 	S3DModel* LoadModel() const;
+	void PreloadModel() const;
 	float GetModelRadius() const;
 	void ParseCollisionVolume(const LuaTable& table);
 
@@ -71,7 +71,7 @@ public:
 
 	// must be mutable because models are lazy-loaded even for defs
 	mutable S3DModel* model;
-	CollisionVolume* collisionVolume;
+	CollisionVolume collisionVolume;
 
 	SolidObjectDecalDef decalDef;
 

@@ -24,8 +24,8 @@ public:
 	void SwitchMode(const std::string& name);
 
 public:
-	void Update();
-	bool IsUpdateNeeded() { return !disabled; }
+	void Update() override;
+	bool IsUpdateNeeded() override { return !disabled; }
 
 private:
 	bool CreateShader(const std::string& filename, const bool clear = false, const float4 clearColor = float4(0.5f, 0.5f, 0.5f, 1.0f));

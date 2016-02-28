@@ -184,10 +184,11 @@ int CFileHandler::Read(void* buf, int length)
 		ifs.read(static_cast<char*>(buf), length);
 		return ifs.gcount();
 	}
-	else if (!fileBuffer.empty()) {
-		if ((length + filePos) > fileSize) {
+
+	if (!fileBuffer.empty()) {
+		if ((length + filePos) > fileSize)
 			length = fileSize - filePos;
-		}
+
 		if (length > 0) {
 			assert(fileBuffer.size() >= (filePos + length));
 			memcpy(buf, &fileBuffer[filePos], length);

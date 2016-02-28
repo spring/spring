@@ -18,15 +18,17 @@ struct SDL_Window;
 class CGlobalRendering {
 	CR_DECLARE_STRUCT(CGlobalRendering)
 
-	CGlobalRendering();
-
 public:
+	CGlobalRendering();
 	void PostInit();
 	void SetFullScreen(bool configFullScreen, bool cmdLineWindowed, bool cmdLineFullScreen);
 	void SetDualScreenParams();
 	void UpdateViewPortGeometry();
 	void UpdatePixelGeometry();
 	int2 GetWantedViewSize(const bool fullscreen);
+
+	bool SetGetDrawDebug(bool dbg) { const bool ret =       dbg; drawdebug = dbg; return ret; }
+	bool GetSetDrawDebug(bool dbg) { const bool ret = drawdebug; drawdebug = dbg; return ret; }
 
 	/**
 	 * @brief time offset
@@ -70,7 +72,7 @@ public:
 	/// the window position relative to the screen's bottom-left corner
 	int winPosX;
 	int winPosY;
-	
+
 	/// the window size in pixels
 	int winSizeX;
 	int winSizeY;

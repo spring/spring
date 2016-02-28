@@ -108,10 +108,11 @@ static DWORD __stdcall AllocTest(void *param) {
 /** Print out a stacktrace. */
 inline static void StacktraceInline(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE, const int logLevel = LOG_LEVEL_ERROR)
 {
-	PIMAGEHLP_SYMBOL pSym;
-	STACKFRAME sf;
+	PIMAGEHLP_SYMBOL64 pSym;
+	STACKFRAME64 sf;
 	HANDLE process, thread;
-	DWORD dwModBase, Disp, dwModAddrToPrint;
+	DWORD64 Disp, dwModBase;
+	DWORD dwModAddrToPrint;
 	BOOL more = FALSE;
 	int count = 0;
 	char modname[MAX_PATH];
@@ -207,27 +208,27 @@ inline static void StacktraceInline(const char *threadName, LPEXCEPTION_POINTERS
 	sf.AddrFrame.Mode = AddrModeFlat;
 
 	// use globalalloc to reduce risk for allocator related deadlock
-	pSym = (PIMAGEHLP_SYMBOL)GlobalAlloc(GMEM_FIXED, 16384);
+	pSym = (PIMAGEHLP_SYMBOL64)GlobalAlloc(GMEM_FIXED, 16384);
 	char* printstrings = (char*)GlobalAlloc(GMEM_FIXED, 0);
 
 	bool containsOglDll = false;
 	while (true) {
-		more = StackWalk(
+		more = StackWalk64(
 			MachineType,
 			process,
 			thread,
 			&sf,
 			&c,
 			NULL,
-			SymFunctionTableAccess,
-			SymGetModuleBase,
+			SymFunctionTableAccess64,
+			SymGetModuleBase64,
 			NULL
 		);
 		if (!more || /*sf.AddrFrame.Offset == 0 ||*/ count > MAX_STACK_DEPTH) {
 			break;
 		}
 
-		dwModBase = SymGetModuleBase(process, sf.AddrPC.Offset);
+		dwModBase = SymGetModuleBase64(process, sf.AddrPC.Offset);
 
 		if (dwModBase) {
 			GetModuleFileName((HINSTANCE)dwModBase, modname, MAX_PATH);
@@ -243,9 +244,9 @@ inline static void StacktraceInline(const char *threadName, LPEXCEPTION_POINTERS
 		GlobalFree(printstrings);
 		printstrings = printstringsnew;
 
-		if (SymGetSymFromAddr(process, sf.AddrPC.Offset, &Disp, pSym)) {
+		if (SymGetSymFromAddr64(process, sf.AddrPC.Offset, &Disp, pSym)) {
 			// This is the code path taken on VC if debugging syms are found.
-			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s(%.*s+%#0lx) [0x%08lX]", count, modname, pSym->MaxNameLength, pSym->Name, Disp, sf.AddrPC.Offset);
+			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s(%.*s+%#0llx) [0x%08llX]", count, modname, (int) pSym->MaxNameLength, pSym->Name, Disp, sf.AddrPC.Offset);
 		} else {
 			// This is the code path taken on MinGW, and VC if no debugging syms are found.
 			if (strstr(modname, ".exe")) {
@@ -345,7 +346,7 @@ LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 
 	// Print exception info.
 	LOG_L(L_ERROR, "Exception: %s (0x%08lx)", error.c_str(), e->ExceptionRecord->ExceptionCode);
-	LOG_L(L_ERROR, "Exception Address: 0x%08lx", (unsigned long int) (PVOID) e->ExceptionRecord->ExceptionAddress);
+	LOG_L(L_ERROR, "Exception Address: 0x%p", (PVOID) e->ExceptionRecord->ExceptionAddress);
 
 	// Print stacktrace.
 	StacktraceInline(NULL, e); // inline: avoid modifying the stack, it might confuse StackWalk when using the context record passed to ExceptionHandler

@@ -11,42 +11,42 @@ class AIInterfaceKey;
 
 class CAIInterfaceLibraryInfo {
 public:
+	CAIInterfaceLibraryInfo() {}
 	CAIInterfaceLibraryInfo(const CAIInterfaceLibraryInfo& interfaceInfo);
 	CAIInterfaceLibraryInfo(const std::string& interfaceInfoFile);
-	virtual ~CAIInterfaceLibraryInfo();
+	~CAIInterfaceLibraryInfo();
 
-	//virtual LevelOfSupport GetLevelOfSupportForCurrentEngine() const;
+	// LevelOfSupport GetLevelOfSupportForCurrentEngine() const;
 
-	virtual size_t size() const;
-	virtual const std::string& GetKeyAt(size_t index) const;
-	virtual const std::string& GetValueAt(size_t index) const;
-	virtual const std::string& GetDescriptionAt(size_t index) const;
+	size_t size() const;
+	const std::string& GetKeyAt(size_t index) const;
+	const std::string& GetValueAt(size_t index) const;
+	const std::string& GetDescriptionAt(size_t index) const;
 
-	virtual AIInterfaceKey GetKey() const;
+	AIInterfaceKey GetKey() const;
 
-	virtual const std::string& GetDataDir() const;
-	virtual const std::string& GetDataDirCommon() const;
+	const std::string& GetDataDir() const;
+	const std::string& GetDataDirCommon() const;
 	/** Restrictions: none of the following: spaces, '_', '#' */
-	virtual const std::string& GetShortName() const;
+	const std::string& GetShortName() const;
 	/** Restrictions: none of the following: spaces, '_', '#' */
-	virtual const std::string& GetVersion() const;
-	virtual const std::string& GetName() const;
-	virtual const std::string& GetDescription() const;
-	virtual const std::string& GetURL() const;
-	virtual bool IsLookupSupported() const;
-	virtual const std::string& GetInfo(const std::string& key) const;
+	const std::string& GetVersion() const;
+	const std::string& GetName() const;
+	const std::string& GetDescription() const;
+	const std::string& GetURL() const;
+	bool IsLookupSupported() const;
+	const std::string& GetInfo(const std::string& key) const;
 
-	virtual void SetDataDir(const std::string& dataDir);
-	virtual void SetDataDirCommon(const std::string& dataDirCommon);
+	void SetDataDir(const std::string& dataDir);
+	void SetDataDirCommon(const std::string& dataDirCommon);
 	/** Restrictions: none of the following: spaces, '_', '#' */
-	virtual void SetShortName(const std::string& shortName);
+	void SetShortName(const std::string& shortName);
 	/** Restrictions: none of the following: spaces, '_', '#' */
-	virtual void SetVersion(const std::string& version);
-	virtual void SetName(const std::string& name);
-	virtual void SetDescription(const std::string& description);
-	virtual void SetURL(const std::string& url);
-	virtual bool SetInfo(const std::string& key, const std::string& value,
-			const std::string& description = "");
+	void SetVersion(const std::string& version);
+	void SetName(const std::string& name);
+	void SetDescription(const std::string& description);
+	void SetURL(const std::string& url);
+	bool SetInfo(const std::string& key, const std::string& value, const std::string& description = "");
 
 private:
 	// for having a well defined order

@@ -23,6 +23,8 @@ namespace ThreadPool {
 	static inline int GetNumThreads() { return 1; }
 	static inline void NotifyWorkerThreads() {}
 	static inline bool HasThreads() { return false; }
+
+	static constexpr int MAX_THREADS = 1;
 }
 
 
@@ -69,7 +71,6 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 #include <boost/thread/future.hpp>
 #undef gt
 #include <boost/chrono/include.hpp>
-#include <boost/utility.hpp>
 #include <memory>
 
 #ifdef UNITSYNC
@@ -122,6 +123,8 @@ namespace ThreadPool {
 	int GetMaxThreads();
 	int GetNumThreads();
 	void NotifyWorkerThreads();
+
+	static constexpr int MAX_THREADS = 16;
 }
 
 
@@ -136,13 +139,13 @@ public:
 			std::bind(std::forward<F>(f), std::forward<Args>(args)...)
 		);
 		result = std::make_shared<boost::unique_future<return_type>>(p->get_future());
-		task = [&,p]{ (*p)(); finished = true; };
+		task = [&,p]{ (*p)(); finished.store(true, std::memory_order_release); };
 	}
 
-	boost::optional<std::function<void()>> GetTask() { return (!std::atomic_exchange(&done, true)) ? boost::optional<std::function<void()>>(task) : boost::optional<std::function<void()>>(); }
+	boost::optional<std::function<void()>> GetTask() { return (!done.exchange(true, std::memory_order_relaxed)) ? boost::optional<std::function<void()>>(task) : boost::optional<std::function<void()>>(); }
 
-	bool IsEmpty() const    { return done; }
-	bool IsFinished() const { return finished; }
+	bool IsEmpty() const    { return done.load(std::memory_order_relaxed); }
+	bool IsFinished() const { return finished.load(std::memory_order_relaxed); }
 	int RemainingTasks() const { return done ? 0 : 1; }
 	std::shared_ptr<boost::unique_future<return_type>> GetFuture() { assert(result->valid()); return std::move(result); } //FIXME rethrow exceptions some time
 
@@ -180,8 +183,8 @@ public:
 		// workaround a Fedora gcc bug else it reports in the lambda below:
 		// error: no 'operator--(int)' declared for postfix '--'
 		auto* atomicCounter = &remainingTasks;
-		tasks.emplace_back([task,atomicCounter]{ (*task)(); (*atomicCounter)--; });
-		remainingTasks++;
+		tasks.emplace_back([task,atomicCounter]{ (*task)(); atomicCounter->fetch_sub(1, std::memory_order_release); });
+		remainingTasks.fetch_add(1, std::memory_order_release);
 	}
 
 	void enqueue(F&& f, Args&&... args)
@@ -193,14 +196,14 @@ public:
 		// workaround a Fedora gcc bug else it reports in the lambda below:
 		// error: no 'operator--(int)' declared for postfix '--'
 		auto* atomicCounter = &remainingTasks;
-		tasks.emplace_back([task,atomicCounter]{ (*task)(); (*atomicCounter)--; });
-		remainingTasks++;
+		tasks.emplace_back([task,atomicCounter]{ (*task)(); atomicCounter->fetch_sub(1, std::memory_order_release); });
+		remainingTasks.fetch_add(1, std::memory_order_release);
 	}
 
 
 	virtual boost::optional<std::function<void()>> GetTask()
 	{
-		const int pos = curtask++;
+		const int pos = curtask.fetch_add(1, std::memory_order_relaxed);
 		if (pos < tasks.size()) {
 			/*if (latency.count() == 0) {
 				auto now = boost::chrono::high_resolution_clock::now();
@@ -212,9 +215,9 @@ public:
 		return boost::optional<std::function<void()>>();
 	}
 
-	virtual bool IsEmpty() const    { return curtask >= tasks.size() /*tasks.empty()*/; }
-	bool IsFinished() const { return (remainingTasks == 0); }
-	int RemainingTasks() const { return remainingTasks; }
+	virtual bool IsEmpty() const { return curtask.load(std::memory_order_relaxed) >= tasks.size(); }
+	bool IsFinished() const      { return (remainingTasks.load(std::memory_order_relaxed) == 0); }
+	int RemainingTasks() const   { return remainingTasks; }
 
 	template<typename G>
 	return_type GetResult(const G&& g) {
@@ -295,14 +298,10 @@ static inline void for_mt(int start, int end, int step, const std::function<void
 	if (end <= start)
 		return;
 
-	if ((end - start) < step) {
-		// single iteration -> directly process
-		f(start);
-		return;
-	}
+	const bool singleIteration = (end - start) < step;
 
 	// do not use HasThreads because that counts main as a worker
-	if (!ThreadPool::HasThreads()) {
+	if (!ThreadPool::HasThreads() || singleIteration) {
 		for (int i = start; i < end; i += step) {
 			f(i);
 		}

@@ -6,6 +6,7 @@
 #include "System/creg/creg_cond.h"
 
 #include <cassert>
+#include <string>
 #include <vector>
 
 class CGameSetup;

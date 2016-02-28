@@ -6,17 +6,16 @@
 #include <string>
 #include <vector>
 #include <set>
+
 using std::string;
-using std::vector;
 using std::set;
 
 #include "LuaOpenGLUtils.h"
-#include "LuaUnitMaterial.h" // for LuaMatRef
+#include "LuaObjectMaterial.h" // for LuaMatRef
 
 #include "Rendering/GL/myGL.h"
-#include "Rendering/ShadowHandler.h"
 
-class CUnit;
+class CSolidObject;
 
 
 class LuaMatTexSetRef;
@@ -29,31 +28,50 @@ class LuaMatUnifSetRef;
 class LuaMatShader {
 	public:
 		enum Type {
-			LUASHADER_NONE = 0,
-			LUASHADER_GL   = 1,
-			LUASHADER_3DO  = 2,
-			LUASHADER_S3O  = 3
+			LUASHADER_DEF_3DO = 0, // engine default; *must* equal MODELTYPE_3DO!
+			LUASHADER_DEF_S3O = 1, // engine default; *must* equal MODELTYPE_S3O!
+			LUASHADER_DEF_OBJ = 2, // engine default; *must* equal MODELTYPE_OBJ!
+			LUASHADER_DEF_ASS = 3, // engine default; *must* equal MODELTYPE_ASS!
+			LUASHADER_GL      = 4, // custom Lua
+			LUASHADER_NONE    = 5,
+			LUASHADER_LAST    = 6,
+		};
+		enum Pass {
+			LUASHADER_PASS_FWD = 0, // forward pass
+			LUASHADER_PASS_DFR = 1, // deferred pass
+			LUASHADER_PASS_CNT = 2,
 		};
 
 	public:
 		LuaMatShader() : type(LUASHADER_NONE), openglID(0) {}
 
 		void Finalize();
-
 		void Execute(const LuaMatShader& prev, bool deferredPass) const;
-
 		void Print(const string& indent) const;
 
+		void SetTypeFromID(unsigned int id) {
+			if ((openglID = id) == 0) {
+				type = LuaMatShader::LUASHADER_NONE;
+			} else {
+				type = LuaMatShader::LUASHADER_GL;
+			}
+		}
+		void SetTypeFromKey(const string& key) {
+			if (key == "3do") { type = LUASHADER_DEF_3DO; return; }
+			if (key == "s3o") { type = LUASHADER_DEF_S3O; return; }
+			if (key == "obj") { type = LUASHADER_DEF_OBJ; return; }
+			if (key == "ass") { type = LUASHADER_DEF_ASS; return; }
+			type = LUASHADER_NONE;
+		}
+
 		static int Compare(const LuaMatShader& a, const LuaMatShader& b);
-		bool operator <(const LuaMatShader& mt) const {
-			return Compare(*this, mt)  < 0;
-		}
-		bool operator==(const LuaMatShader& mt) const {
-			return Compare(*this, mt) == 0;
-		}
-		bool operator!=(const LuaMatShader& mt) const {
-			return Compare(*this, mt) != 0;
-		}
+
+		bool operator <(const LuaMatShader& mt) const { return (Compare(*this, mt)  < 0); }
+		bool operator==(const LuaMatShader& mt) const { return (Compare(*this, mt) == 0); }
+		bool operator!=(const LuaMatShader& mt) const { return (Compare(*this, mt) != 0); }
+
+		bool IsCustomType() const { return (type == LUASHADER_GL); }
+		bool IsEngineType() const { return (type >= LUASHADER_DEF_3DO && type <= LUASHADER_DEF_ASS); }
 
 	public:
 		Type type;
@@ -89,9 +107,7 @@ class LuaMaterial {
 		{}
 
 		void Finalize();
-
 		void Execute(const LuaMaterial& prev, bool deferredPass) const;
-
 		void Print(const string& indent) const;
 
 		static int Compare(const LuaMaterial& a, const LuaMaterial& b);
@@ -109,8 +125,9 @@ class LuaMaterial {
 		LuaMatType type;
 		int order; // for manually adjusting rendering order
 
-		LuaMatShader standardShader;
-		LuaMatShader deferredShader;
+		// [0] := standard
+		// [1] := deferred
+		LuaMatShader shaders[LuaMatShader::LUASHADER_PASS_CNT];
 
 		int texCount;
 		LuaMatTexture textures[LuaMatTexture::maxTexUnits];
@@ -139,13 +156,35 @@ class LuaMatBin : public LuaMaterial {
 	friend class LuaMatHandler;
 
 	public:
-		void Clear() { units.clear(); }
-		const std::vector<CUnit*>& GetUnits() const { return units; }
+		void ClearUnits() { units.clear(); }
+		void ClearFeatures() { features.clear(); }
+
+		const std::vector<CSolidObject*>& GetUnits() const { return units; }
+		const std::vector<CSolidObject*>& GetFeatures() const { return features; }
+		const std::vector<CSolidObject*>& GetObjects(LuaObjType objType) const {
+			static const std::vector<CSolidObject*> dummy;
+
+			switch (objType) {
+				case LUAOBJ_UNIT   : { return (GetUnits   ()); } break;
+				case LUAOBJ_FEATURE: { return (GetFeatures()); } break;
+				default            : {          assert(false); } break;
+			}
+
+			return dummy;
+		}
 
 		void Ref();
 		void UnRef();
 
-		void AddUnit(CUnit* unit) { units.push_back(unit); }
+		void AddUnit(CSolidObject* o) { units.push_back(o); }
+		void AddFeature(CSolidObject* o) { features.push_back(o); }
+		void AddObject(CSolidObject* o, LuaObjType objType) {
+			switch (objType) {
+				case LUAOBJ_UNIT   : { AddUnit   (o); } break;
+				case LUAOBJ_FEATURE: { AddFeature(o); } break;
+				default            : { assert(false); } break;
+			}
+		}
 
 		void Print(const string& indent) const;
 
@@ -156,7 +195,9 @@ class LuaMatBin : public LuaMaterial {
 
 	private:
 		int refCount;
-		std::vector<CUnit*> units;
+
+		std::vector<CSolidObject*> units;
+		std::vector<CSolidObject*> features;
 };
 
 
@@ -183,8 +224,8 @@ class LuaMatHandler {
 			return binTypes[type];
 		}
 
-		void ClearBins();
-		void ClearBins(LuaMatType type);
+		void ClearBins(LuaObjType objType);
+		void ClearBins(LuaObjType objType, LuaMatType matType);
 
 		void FreeBin(LuaMatBin* bin);
 
@@ -192,10 +233,12 @@ class LuaMatHandler {
 		void PrintAllBins(const string& indent) const;
 
 	public:
-		void (*setup3doShader)(bool);
-		void (*reset3doShader)(bool);
-		void (*setupS3oShader)(bool);
-		void (*resetS3oShader)(bool);
+		typedef void (*SetupDrawStateFunc)(unsigned int, bool); // std::function<void(unsigned int, bool)>
+		typedef void (*ResetDrawStateFunc)(unsigned int, bool); // std::function<void(unsigned int, bool)>
+
+		// note: only the DEF_* entries can be non-NULL
+		SetupDrawStateFunc setupDrawStateFuncs[LuaMatShader::LUASHADER_LAST];
+		ResetDrawStateFunc resetDrawStateFuncs[LuaMatShader::LUASHADER_LAST];
 
 	private:
 		LuaMatHandler();

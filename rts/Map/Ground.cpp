@@ -374,6 +374,29 @@ float CGround::LineGroundCol(float3 from, float3 to, bool synced)
 	return -1.0f;
 }
 
+float CGround::LineGroundCol(const float3 pos, const float3 dir, float len, bool synced)
+{
+	return (LineGroundCol(pos, pos + dir * std::max(len, 0.0f), synced));
+}
+
+
+float CGround::LinePlaneCol(const float3 pos, const float3 dir, float len, float hgt)
+{
+	const float3 end = pos + dir * std::max(len, 0.0f);
+
+	// no intersection if starting below or ending above (xz-)plane
+	if (pos.y < hgt)
+		return -1.0f;
+	if (end.y > hgt)
+		return -1.0f;
+
+	// no intersection if going parallel to or away from (xz-)plane
+	if (dir.y >= 0.0f)
+		return (std::numeric_limits<float>::max());
+
+	return ((pos.y - hgt) / -dir.y);
+}
+
 
 float CGround::GetApproximateHeight(float x, float z, bool synced)
 {

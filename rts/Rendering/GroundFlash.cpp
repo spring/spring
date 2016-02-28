@@ -5,11 +5,14 @@
 #include "Map/Ground.h"
 #include "Game/Camera.h"
 #include "Rendering/GlobalRendering.h"
+#include "Rendering/GroundFlashInfo.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TextureAtlas.h"
-#include "Rendering/ProjectileDrawer.h"
+#include "Rendering/Env/Particles/ProjectileDrawer.h"
+#include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "System/myMath.h"
 
 CR_BIND_DERIVED(CGroundFlash, CExpGenSpawnable, )
 CR_REG_METADATA(CGroundFlash, (
@@ -36,7 +39,6 @@ CR_REG_METADATA(CStandardGroundFlash, (
 	CR_MEMBER(flashAge),
 	CR_MEMBER(flashAgeSpeed),
 	CR_MEMBER(circleAlphaDec),
-	CR_MEMBER(color),
 	CR_MEMBER(ttl)
 ))
 
@@ -68,7 +70,7 @@ CR_REG_METADATA(CSimpleGroundFlash, (
 
 
 
-CVertexArray* CGroundFlash::va = NULL;
+CVertexArray* CGroundFlash::va = nullptr;
 
 // CREG-only
 CGroundFlash::CGroundFlash()
@@ -79,13 +81,47 @@ CGroundFlash::CGroundFlash()
 	alwaysVisible = false;
 }
 
-CGroundFlash::CGroundFlash(const float3& p): CExpGenSpawnable()
+CGroundFlash::CGroundFlash(const float3& _pos): CExpGenSpawnable()
 {
 	size = 0.0f;
 	depthTest = true;
 	depthMask = false;
 	alwaysVisible = false;
-	pos = p;
+	pos = _pos;
+}
+
+float3 CGroundFlash::CalcNormal(const float3 midPos, const float3 camDir, const float quadSize) const
+{
+	// else ANormalize() fails!
+	assert(quadSize > 1.0f);
+
+	float3 p0 = float3(midPos.x + quadSize, 0.0f, midPos.z           );
+	float3 p1 = float3(midPos.x - quadSize, 0.0f, midPos.z           );
+	float3 p2 = float3(midPos.x,            0.0f, midPos.z + quadSize);
+	float3 p3 = float3(midPos.x,            0.0f, midPos.z - quadSize);
+
+	p0.y = CGround::GetApproximateHeight(p0.x, p0.z, false); p0 += camDir;
+	p1.y = CGround::GetApproximateHeight(p1.x, p1.z, false); p1 += camDir;
+	p2.y = CGround::GetApproximateHeight(p2.x, p2.z, false); p2 += camDir;
+	p3.y = CGround::GetApproximateHeight(p3.x, p3.z, false); p3 += camDir;
+
+	const float3 n0 = ((p2 - p0).cross(p3 - p0)).ANormalize();
+	const float3 n1 = ((p3 - p1).cross(p2 - p1)).ANormalize();
+
+	return ((n0 + n1).ANormalize());
+}
+
+
+bool CGroundFlash::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
+{
+	if (CExpGenSpawnable::GetMemberInfo(memberInfo))
+		return true;
+
+	CHECK_MEMBER_INFO_FLOAT(CGroundFlash, size)
+	CHECK_MEMBER_INFO_BOOL (CGroundFlash, depthTest)
+	CHECK_MEMBER_INFO_BOOL (CGroundFlash, depthMask)
+
+	return false;
 }
 
 
@@ -107,52 +143,64 @@ CStandardGroundFlash::CStandardGroundFlash()
 	flashSize = 0.0f;
 }
 
-CStandardGroundFlash::CStandardGroundFlash(const float3& p, float circleAlpha, float flashAlpha, float flashSize, float circleSpeed, float ttl, const float3& col)
-	: CGroundFlash(p)
-	, flashSize(flashSize)
-	, circleSize(circleSpeed)
-	, circleGrowth(circleSpeed)
-	, circleAlpha(circleAlpha)
-	, flashAlpha(flashAlpha)
-	, flashAge(0)
-	, flashAgeSpeed(ttl? 1.0f / ttl : 0)
-	, circleAlphaDec(ttl? circleAlpha / ttl : 0)
-	, ttl((int)ttl)
+CStandardGroundFlash::CStandardGroundFlash(
+	const float3& _pos,
+	const GroundFlashInfo& info
+)
+	: CGroundFlash(_pos)
+	, ttl(info.ttl)
+	, flashSize(info.flashSize)
+	, circleSize(info.circleGrowth)
+	, circleGrowth(info.circleGrowth)
+	, circleAlpha(info.circleAlpha)
+	, flashAlpha(info.flashAlpha)
+	, flashAge(0.0f)
+	, flashAgeSpeed(ttl ? 1.0f / ttl : 0.0f)
+	, circleAlphaDec(ttl ? circleAlpha / ttl : 0.0f)
 {
-	for (size_t a = 0; a < 3; ++a) {
-		color[a] = (col[a] * 255.0f);
-	}
-
-	const float3 fw = camera->GetDir() * -1000.0f;
-	this->pos.y = CGround::GetHeightReal(p.x, p.z, false) + 1.0f;
-
-	float3 p1(p.x + flashSize, 0, p.z);
-		p1.y = CGround::GetApproximateHeight(p1.x, p1.z, false);
-		p1  += fw;
-	float3 p2(p.x - flashSize, 0, p.z);
-		p2.y = CGround::GetApproximateHeight(p2.x, p2.z, false);
-		p2  += fw;
-	float3 p3(p.x, 0, p.z + flashSize);
-		p3.y = CGround::GetApproximateHeight(p3.x, p3.z, false);
-		p3  += fw;
-	float3 p4(p.x, 0, p.z - flashSize);
-		p4.y = CGround::GetApproximateHeight(p4.x, p4.z, false);
-		p4  += fw;
-
-	// else ANormalize() fails!
-	assert(flashSize > 1);
-
-	const float3 n1 = ((p3 - p1).cross(p4 - p1)).ANormalize();
-	const float3 n2 = ((p4 - p2).cross(p3 - p2)).ANormalize();
-	const float3 normal = (n1 + n2).ANormalize();
-
-	size = flashSize; // flashSize is just backward compability
-
-	side1 = normal.cross(RgtVector);
-	side1.ANormalize();
-	side2 = side1.cross(normal);
-
+	InitCommon(_pos, info.color);
 	projectileHandler->AddGroundFlash(this);
+}
+
+CStandardGroundFlash::CStandardGroundFlash(
+	const float3& _pos,
+	float _circleAlpha,
+	float _flashAlpha,
+	float _flashSize,
+	float _circleGrowth,
+	float _ttl,
+	const float3& _color
+)
+	: CGroundFlash(_pos)
+	, ttl((int)_ttl)
+	, flashSize(_flashSize)
+	, circleSize(_circleGrowth)
+	, circleGrowth(_circleGrowth)
+	, circleAlpha(_circleAlpha)
+	, flashAlpha(_flashAlpha)
+	, flashAge(0)
+	, flashAgeSpeed(ttl ? 1.0f / ttl : 0)
+	, circleAlphaDec(ttl ? circleAlpha / ttl : 0)
+{
+	InitCommon(_pos, _color);
+	projectileHandler->AddGroundFlash(this);
+}
+
+void CStandardGroundFlash::InitCommon(const float3& _pos, const float3& _color)
+{
+	pos.y = CGround::GetHeightReal(_pos.x, _pos.z, false) + 1.0f;
+	// A is set in Draw
+	color.r = _color.x * 255.0f;
+	color.g = _color.y * 255.0f;
+	color.b = _color.z * 255.0f;
+
+	// flashSize is just backward compability
+	size = flashSize;
+
+	const float3 normal = CalcNormal(_pos, camera->GetDir() * -1000.0f, flashSize);
+
+	side1 = (normal.cross(RgtVector)).ANormalize();
+	side2 = side1.cross(normal);
 }
 
 bool CStandardGroundFlash::Update()
@@ -160,21 +208,13 @@ bool CStandardGroundFlash::Update()
 	circleSize += circleGrowth;
 	circleAlpha -= circleAlphaDec;
 	flashAge += flashAgeSpeed;
-	return ttl? (--ttl > 0) : false;
+
+	return (std::max(--ttl, 0) > 0);
 }
 
 void CStandardGroundFlash::Draw()
 {
-	float iAlpha = circleAlpha - (circleAlphaDec * globalRendering->timeOffset);
-	if (iAlpha > 1.0f) iAlpha = 1.0f;
-	if (iAlpha < 0.0f) iAlpha = 0.0f;
-
-	unsigned char col[4] = {
-		color[0],
-		color[1],
-		color[2],
-		(unsigned char)(iAlpha * 255),
-	};
+	float iAlpha = Clamp(circleAlpha - (circleAlphaDec * globalRendering->timeOffset), 0.0f, 1.0f);
 
 	const float iSize = circleSize + circleGrowth * globalRendering->timeOffset;
 	const float iAge = flashAge + flashAgeSpeed * globalRendering->timeOffset;
@@ -185,10 +225,12 @@ void CStandardGroundFlash::Draw()
 		const float3 p3 = pos + ( side1 + side2) * iSize;
 		const float3 p4 = pos + (-side1 + side2) * iSize;
 
-		va->AddVertexQTC(p1, projectileDrawer->groundringtex->xstart, projectileDrawer->groundringtex->ystart, col);
-		va->AddVertexQTC(p2, projectileDrawer->groundringtex->xend,   projectileDrawer->groundringtex->ystart, col);
-		va->AddVertexQTC(p3, projectileDrawer->groundringtex->xend,   projectileDrawer->groundringtex->yend,   col);
-		va->AddVertexQTC(p4, projectileDrawer->groundringtex->xstart, projectileDrawer->groundringtex->yend,   col);
+		color.a = (unsigned char)(iAlpha * 255);
+
+		va->AddVertexQTC(p1, projectileDrawer->groundringtex->xstart, projectileDrawer->groundringtex->ystart, color);
+		va->AddVertexQTC(p2, projectileDrawer->groundringtex->xend,   projectileDrawer->groundringtex->ystart, color);
+		va->AddVertexQTC(p3, projectileDrawer->groundringtex->xend,   projectileDrawer->groundringtex->yend,   color);
+		va->AddVertexQTC(p4, projectileDrawer->groundringtex->xstart, projectileDrawer->groundringtex->yend,   color);
 	}
 
 	if (iAge < 1.0f) {
@@ -198,29 +240,41 @@ void CStandardGroundFlash::Draw()
 			iAlpha = flashAlpha * (1.0f - iAge);
 		}
 
-		if (iAlpha > 1.0f) iAlpha = 1.0f;
-		if (iAlpha < 0.0f) iAlpha = 0.0f;
-
-		col[3] = (iAlpha * 255);
+		color.a = Clamp(iAlpha, 0.0f, 1.0f) * 255;
 
 		const float3 p1 = pos + (-side1 - side2) * size;
 		const float3 p2 = pos + ( side1 - side2) * size;
 		const float3 p3 = pos + ( side1 + side2) * size;
 		const float3 p4 = pos + (-side1 + side2) * size;
 
-		va->AddVertexQTC(p1, projectileDrawer->groundflashtex->xstart, projectileDrawer->groundflashtex->yend,   col);
-		va->AddVertexQTC(p2, projectileDrawer->groundflashtex->xend,   projectileDrawer->groundflashtex->yend,   col);
-		va->AddVertexQTC(p3, projectileDrawer->groundflashtex->xend,   projectileDrawer->groundflashtex->ystart, col);
-		va->AddVertexQTC(p4, projectileDrawer->groundflashtex->xstart, projectileDrawer->groundflashtex->ystart, col);
+		va->AddVertexQTC(p1, projectileDrawer->groundflashtex->xstart, projectileDrawer->groundflashtex->yend,   color);
+		va->AddVertexQTC(p2, projectileDrawer->groundflashtex->xend,   projectileDrawer->groundflashtex->yend,   color);
+		va->AddVertexQTC(p3, projectileDrawer->groundflashtex->xend,   projectileDrawer->groundflashtex->ystart, color);
+		va->AddVertexQTC(p4, projectileDrawer->groundflashtex->xstart, projectileDrawer->groundflashtex->ystart, color);
 	}
+}
+
+
+bool CStandardGroundFlash::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
+{
+	if (CGroundFlash::GetMemberInfo(memberInfo))
+		return true;
+
+	CHECK_MEMBER_INFO_FLOAT(CStandardGroundFlash, flashSize   )
+	CHECK_MEMBER_INFO_FLOAT(CStandardGroundFlash, flashAlpha  )
+	CHECK_MEMBER_INFO_FLOAT(CStandardGroundFlash, circleGrowth)
+	CHECK_MEMBER_INFO_FLOAT(CStandardGroundFlash, circleAlpha )
+	CHECK_MEMBER_INFO_SCOLOR(CStandardGroundFlash, color      )
+
+	return false;
 }
 
 
 
 CSimpleGroundFlash::CSimpleGroundFlash()
 {
-	texture = NULL;
-	colorMap = NULL;
+	texture = nullptr;
+	colorMap = nullptr;
 	agerate = 0.0f;
 	age = 0.0f;
 	ttl = 0;
@@ -230,33 +284,14 @@ CSimpleGroundFlash::CSimpleGroundFlash()
 void CSimpleGroundFlash::Init(const CUnit* owner, const float3& offset)
 {
 	pos += offset;
+	pos.y = CGround::GetHeightReal(pos.x, pos.z, false) + 1.0f;
+
 	age = ttl ? 0.0f : 1.0f;
 	agerate = ttl ? 1.0f / ttl : 1.0f;
 
-	const float flashsize = size + (sizeGrowth * ttl);
-	const float3 fw = camera->GetDir() * -1000.0f;
+	const float3 normal = CalcNormal(pos, camera->GetDir() * -1000.0f, size + (sizeGrowth * ttl));
 
-	this->pos.y = CGround::GetHeightReal(pos.x, pos.z, false) + 1.0f;
-
-	float3 p1(pos.x + flashsize, 0.0f, pos.z);
-		p1.y = CGround::GetApproximateHeight(p1.x, p1.z, false);
-		p1 += fw;
-	float3 p2(pos.x - flashsize, 0.0f, pos.z);
-		p2.y = CGround::GetApproximateHeight(p2.x, p2.z, false);
-		p2 += fw;
-	float3 p3(pos.x, 0.0f, pos.z + flashsize);
-		p3.y = CGround::GetApproximateHeight(p3.x, p3.z, false);
-		p3 += fw;
-	float3 p4(pos.x, 0.0f, pos.z - flashsize);
-		p4.y = CGround::GetApproximateHeight(p4.x, p4.z, false);
-		p4 += fw;
-
-	const float3 n1 = ((p3 - p1).cross(p4 - p1)).ANormalize();
-	const float3 n2 = ((p4 - p2).cross(p3 - p2)).ANormalize();
-	const float3 normal = (n1 + n2).ANormalize();
-
-	side1 = normal.cross(RgtVector);
-	side1.ANormalize();
+	side1 = (normal.cross(RgtVector)).ANormalize();
 	side2 = side1.cross(normal);
 
 	projectileHandler->AddGroundFlash(this);
@@ -287,46 +322,49 @@ bool CSimpleGroundFlash::Update()
 }
 
 
-
-CSeismicGroundFlash::CSeismicGroundFlash(const float3& p, int ttl, int fade, float size, float sizeGrowth, float alpha, const float3& col)
-	: CGroundFlash(p)
-	, texture(projectileDrawer->seismictex)
-	, sizeGrowth(sizeGrowth)
-	, alpha(alpha)
-	, fade(fade)
-	, ttl(ttl)
+bool CSimpleGroundFlash::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 {
-	this->size = size;
+	if (CGroundFlash::GetMemberInfo(memberInfo))
+		return true;
+
+	CHECK_MEMBER_INFO_FLOAT(CSimpleGroundFlash, sizeGrowth)
+	CHECK_MEMBER_INFO_INT  (CSimpleGroundFlash, ttl       )
+	CHECK_MEMBER_INFO_PTR  (CSimpleGroundFlash, colorMap, CColorMap::LoadFromDefString)
+	CHECK_MEMBER_INFO_PTR  (CSimpleGroundFlash, texture , projectileDrawer->groundFXAtlas->GetTexturePtr)
+
+	return false;
+}
+
+
+
+CSeismicGroundFlash::CSeismicGroundFlash(
+	const float3& _pos,
+	int _ttl,
+	int _fade,
+	float _size,
+	float _sizeGrowth,
+	float _alpha,
+	const float3& _color
+)
+	: CGroundFlash(_pos)
+	, texture(projectileDrawer->seismictex)
+	, sizeGrowth(_sizeGrowth)
+	, alpha(_alpha)
+	, fade(_fade)
+	, ttl(_ttl)
+{
+	pos.y = CGround::GetHeightReal(_pos.x, _pos.z, false) + 1.0f;
+	// A is set in Draw
+	color.r = _color.x * 255.0f;
+	color.g = _color.y * 255.0f;
+	color.b = _color.z * 255.0f;
+
+	size = _size;
 	alwaysVisible = true;
 
-	for (size_t a = 0; a < 3; ++a) {
-		color[a] = (col[a] * 255.0f);
-	}
+	const float3 normal = CalcNormal(_pos, camera->GetDir() * -1000.0f, size + (sizeGrowth * ttl));
 
-	const float flashsize = size + sizeGrowth * ttl;
-	const float3 fw = camera->GetDir() * -1000.0f;
-
-	this->pos.y = CGround::GetHeightReal(p.x, p.z, false) + 1.0f;
-
-	float3 p1(p.x + flashsize, 0.0f, p.z);
-		p1.y = CGround::GetApproximateHeight(p1.x, p1.z, false);
-		p1 += fw;
-	float3 p2(p.x - flashsize, 0.0f, p.z);
-		p2.y = CGround::GetApproximateHeight(p2.x, p2.z, false);
-		p2 += fw;
-	float3 p3(p.x, 0.0f, p.z + flashsize);
-		p3.y = CGround::GetApproximateHeight(p3.x, p3.z, false);
-		p3 += fw;
-	float3 p4(p.x, 0.0f, p.z - flashsize);
-		p4.y = CGround::GetApproximateHeight(p4.x, p4.z, false);
-		p4 += fw;
-
-	const float3 n1 = ((p3 - p1).cross(p4 - p1)).SafeANormalize();
-	const float3 n2 = ((p4 - p2).cross(p3 - p2)).SafeANormalize();
-	const float3 normal = (n1 + n2).SafeANormalize();
-
-	side1 = normal.cross(RgtVector);
-	side1.SafeANormalize();
+	side1 = (normal.cross(RgtVector)).SafeANormalize();
 	side2 = side1.cross(normal);
 
 	projectileHandler->AddGroundFlash(this);
@@ -334,7 +372,7 @@ CSeismicGroundFlash::CSeismicGroundFlash(const float3& p, int ttl, int fade, flo
 
 void CSeismicGroundFlash::Draw()
 {
-	color[3] = ttl<fade ? int(((ttl) / (float)(fade)) * 255) : 255;
+	color.a = mix(255, int(255 * (ttl / (1.0f * fade))), (ttl < fade));
 
 	const float3 p1 = pos + (-side1 - side2) * size;
 	const float3 p2 = pos + ( side1 - side2) * size;
@@ -352,3 +390,4 @@ bool CSeismicGroundFlash::Update()
 	size += sizeGrowth;
 	return (--ttl > 0);
 }
+

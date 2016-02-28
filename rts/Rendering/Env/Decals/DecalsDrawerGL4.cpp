@@ -14,6 +14,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/ISky.h"
+#include "Rendering/Env/SunLighting.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
 //#include "Rendering/GL/TimerQuery.h"
@@ -129,7 +130,7 @@ static GLuint LoadTexture(const std::string& name, size_t* texX, size_t* texY)
 
 	*texX = bm.xsize;
 	*texY = bm.ysize;
-	return bm.CreateTexture(true);
+	return bm.CreateMipMapTexture();
 }
 
 	struct STex {
@@ -233,8 +234,8 @@ void CDecalsDrawerGL4::LoadShaders()
 void CDecalsDrawerGL4::GenerateAtlasTexture()
 {
 	std::map<std::string, STex> textures;
-	for (std::vector<UnitDef*>::const_iterator it = unitDefHandler->unitDefs.begin(); it != unitDefHandler->unitDefs.end(); ++it) {
-		SolidObjectDecalDef& decalDef = (*it)->decalDef;
+	for (UnitDef& unitDef: unitDefHandler->unitDefs) {
+		SolidObjectDecalDef& decalDef = unitDef.decalDef;
 
 		if (!decalDef.useGroundDecal)
 			continue;
@@ -461,13 +462,13 @@ void CDecalsDrawerGL4::CreateStructureVBOs()
 	uboGroundLighting.Bind(GL_UNIFORM_BUFFER);
 	uboGroundLighting.New(uniformBlockSize, GL_STATIC_DRAW);
 		SGLSLGroundLighting* uboGroundLightingData = (SGLSLGroundLighting*)uboGroundLighting.MapBuffer(0, sizeof(SGLSLGroundLighting));
-		uboGroundLightingData->ambientColor  = mapInfo->light.groundAmbientColor  * CGlobalRendering::SMF_INTENSITY_MULT;
-		uboGroundLightingData->diffuseColor  = mapInfo->light.groundSunColor      * CGlobalRendering::SMF_INTENSITY_MULT;
-		uboGroundLightingData->specularColor = mapInfo->light.groundSpecularColor * CGlobalRendering::SMF_INTENSITY_MULT;
+		uboGroundLightingData->ambientColor  = sunLighting->groundAmbientColor  * CGlobalRendering::SMF_INTENSITY_MULT;
+		uboGroundLightingData->diffuseColor  = sunLighting->groundDiffuseColor  * CGlobalRendering::SMF_INTENSITY_MULT;
+		uboGroundLightingData->specularColor = sunLighting->groundSpecularColor * CGlobalRendering::SMF_INTENSITY_MULT;
 		uboGroundLightingData->dir           = mapInfo->light.sunDir;
-		uboGroundLightingData->fogColor      = mapInfo->atmosphere.fogColor;
-		uboGroundLightingData->fogEnd        = globalRendering->viewRange * mapInfo->atmosphere.fogEnd;
-		uboGroundLightingData->fogScale      = 1.0f / (globalRendering->viewRange * (mapInfo->atmosphere.fogEnd - mapInfo->atmosphere.fogStart));
+		uboGroundLightingData->fogColor      = sky->fogColor;
+		uboGroundLightingData->fogEnd        = globalRendering->viewRange * sky->fogEnd;
+		uboGroundLightingData->fogScale      = 1.0f / (globalRendering->viewRange * (sky->fogEnd - sky->fogStart));
 		uboGroundLighting.UnmapBuffer();
 	glUniformBlockBinding(decalShader->GetObjID(), uniformBlockIndex, 5);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 5, uboGroundLighting.GetId());
@@ -568,7 +569,7 @@ void CDecalsDrawerGL4::Draw()
 	glEnable(GL_DEPTH_CLAMP);
 	//glEnable(GL_DEPTH_TEST);
 
-	decalShader->SetFlag("HAVE_SHADOWS", shadowHandler && shadowHandler->shadowsLoaded);
+	decalShader->SetFlag("HAVE_SHADOWS", shadowHandler->ShadowsLoaded());
 	decalShader->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
 
 	decalShader->Enable();
@@ -580,14 +581,14 @@ void CDecalsDrawerGL4::Draw()
 	glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, smfrm->GetNormalsTexture());
 
-	if (shadowHandler && shadowHandler->shadowsLoaded) {
+	if (shadowHandler->ShadowsLoaded()) {
 		glActiveTexture(GL_TEXTURE2);
 			glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
 			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
 
-		decalShader->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler->shadowMatrix.m);
+		decalShader->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler->GetShadowMatrixRaw());
 		decalShader->SetUniform("shadowDensity", sky->GetLight()->GetGroundShadowDensity()); //FIXME only do on shadow change?
 	}
 

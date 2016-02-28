@@ -17,7 +17,6 @@ struct SUnitStats {
 
 public:
 	float health, maxHealth;
-	float currentFuel, maxFuel;
 	float experience;
 	float cost;
 	float maxRange;

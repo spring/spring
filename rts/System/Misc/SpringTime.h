@@ -124,7 +124,6 @@ public:
 private:
 	// convert integer to spring_time (n is interpreted as number of nanoseconds)
 	static spring_time spring_time_native(const int64 n) { spring_time s; s.x = n; return s; }
-
 	void Serialize(creg::ISerializer* s);
 
 private:

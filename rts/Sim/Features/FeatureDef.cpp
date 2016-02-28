@@ -4,7 +4,7 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/EventHandler.h"
 
-CR_BIND(FeatureDef, )
+CR_BIND_DERIVED(FeatureDef, SolidObjectDef, )
 
 CR_REG_METADATA(FeatureDef, (
 	CR_MEMBER(description),
@@ -21,7 +21,8 @@ CR_REG_METADATA(FeatureDef, (
 ))
 
 FeatureDef::FeatureDef()
-	: deathFeatureDefID(-1)
+	: SolidObjectDef()
+	, deathFeatureDefID(-1)
 	, reclaimTime(0)
 	, drawType(DRAWTYPE_NONE)
 	, resurrectable(false)

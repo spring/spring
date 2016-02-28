@@ -225,10 +225,10 @@ bool CMouseCursor::LoadCursorImage(const string& name, ImageData& image)
 	if (hwCursor->NeedsYFlip()) {
 		//WINDOWS
 		b.ReverseYAxis();
-		hwCursor->PushImage(b.xsize,b.ysize,b.mem);
+		hwCursor->PushImage(b.xsize,b.ysize,&b.mem[0]);
 	}else{
 		//X11
-		hwCursor->PushImage(b.xsize,b.ysize,b.mem);
+		hwCursor->PushImage(b.xsize,b.ysize,&b.mem[0]);
 		b.ReverseYAxis();
 	}
 
@@ -241,13 +241,13 @@ bool CMouseCursor::LoadCursorImage(const string& name, ImageData& image)
 		bn.Alloc(nx, ny);
 		bn.CopySubImage(b, 0, ny - b.ysize);
 
-		image.texture = bn.CreateTexture(false);
+		image.texture = bn.CreateTexture();
 		image.xOrigSize = b.xsize;
 		image.yOrigSize = b.ysize;
 		image.xAlignedSize = bn.xsize;
 		image.yAlignedSize = bn.ysize;
 	} else {
-		image.texture = b.CreateTexture(false);
+		image.texture = b.CreateTexture();
 		image.xOrigSize = b.xsize;
 		image.yOrigSize = b.ysize;
 		image.xAlignedSize = b.xsize;

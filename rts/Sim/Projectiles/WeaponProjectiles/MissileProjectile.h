@@ -6,10 +6,12 @@
 #include "WeaponProjectile.h"
 
 class CUnit;
+class CSmokeTrailProjectile;
+
 
 class CMissileProjectile : public CWeaponProjectile
 {
-	CR_DECLARE(CMissileProjectile)
+	CR_DECLARE_DERIVED(CMissileProjectile)
 protected:
 	void UpdateGroundBounce() override;
 public:
@@ -24,19 +26,16 @@ public:
 
 	virtual int GetProjectilesCount() const override;
 
-	int ShieldRepulse(
-		CPlasmaRepulser* shield,
-		float3 shieldPos,
-		float shieldForce,
-		float shieldMaxSpeed
-	) override;
+	int ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed) override;
 
+	void SetIgnoreError(bool b) { ignoreError = b; }
 private:
 	void UpdateWobble();
 	void UpdateDance();
 
+	bool ignoreError;
+
 	float maxSpeed;
-	float areaOfEffect;
 	float extraHeight;
 	float extraHeightDecay;
 
@@ -44,7 +43,6 @@ private:
 	int numParts;
 	int extraHeightTime;
 
-	bool drawTrail;
 	bool isDancing;
 	bool isWobbling;
 
@@ -58,6 +56,7 @@ private:
 
 	float3 oldSmoke;
 	float3 oldDir;
+	CSmokeTrailProjectile* smokeTrail;
 
 	/// the smokes life-time in frames
 	static const float SMOKE_TIME;

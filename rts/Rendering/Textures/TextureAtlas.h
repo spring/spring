@@ -27,16 +27,6 @@ struct AtlasedTexture : public float4
 
 
 
-/**
- * @brief Same as AtlasedTexture, but with a different name,
- * so the explosiongenerator can differentiate between different atlases.
- */
-struct GroundFXTexture : public AtlasedTexture
-{
-	CR_DECLARE_STRUCT(GroundFXTexture)
-};
-
-
 /** @brief Class for combining multiple bitmaps into one large single bitmap. */
 class CTextureAtlas
 {
@@ -82,7 +72,9 @@ public:
 
 	//! @return reference to the Texture struct of the specified texture
 	AtlasedTexture& GetTexture(const std::string& name);
-	
+
+	AtlasedTexture* GetTexturePtr(const std::string& name) { return &GetTexture(name); }
+
 	/**
 	 * @return a Texture struct of the specified texture if it exists,
 	 *         otherwise return a backup texture.

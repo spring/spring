@@ -3,15 +3,21 @@
 #ifndef _AI_AI_H
 #define _AI_AI_H
 
+#include <memory>
+
+#include "IGlobalAI.h"
+#include "IGlobalAICallback.h"
+
 namespace springLegacyAI {
 
 class IGlobalAI;
 class IGlobalAICallback;
 
+
 class CAIAI {
 public:
-	CAIAI(IGlobalAI* gAI);
-	virtual ~CAIAI();
+	CAIAI(IGlobalAI* gAI) { ai.reset(gAI); }
+	~CAIAI() { ai.reset(); }
 
 	/**
 	 * Through this function, the AI receives events from the engine.
@@ -24,12 +30,13 @@ public:
 	 *					(see S*Event structs in AISEvents.h)
 	 * @return	ok: 0, error: != 0
 	 */
-	virtual int handleEvent(int topic, const void* data);
+	int handleEvent(int topic, const void* data);
 
 protected:
-	IGlobalAI* ai;
-	IGlobalAICallback* globalAICallback;
+	std::unique_ptr<IGlobalAI> ai;
+	std::unique_ptr<IGlobalAICallback> globalAICallback;
 };
+
 
 } // namespace springLegacyAI
 

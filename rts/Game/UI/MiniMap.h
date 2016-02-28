@@ -76,7 +76,7 @@ class CMiniMap : public CInputReceiver {
 		void ToggleMaximized(bool maxspect);
 		void SetMaximizedGeometry();
 
-		void SelectUnits(int x, int y) const;
+		void SelectUnits(int x, int y);
 		void ProxyMousePress(int x, int y, int button);
 		void ProxyMouseRelease(int x, int y, int button);
 
@@ -180,6 +180,8 @@ class CMiniMap : public CInputReceiver {
 			float color[4];
 		};
 		std::deque<Notification> notes;
+		
+		CUnit* lastClicked;
 };
 
 

@@ -31,20 +31,16 @@
 
 #ifndef UNIT_TEST
 CONFIG(int, WorkerThreadCount).defaultValue(-1).safemodeValue(0).minimumValue(-1).description("Count of worker threads (including mainthread!) used in parallel sections.");
-CONFIG(int, WorkerThreadSpinTime).defaultValue(1).minimumValue(0).description("The number of milliseconds worker threads will spin after no tasks to perform.");
+CONFIG(int, WorkerThreadSpinTime).defaultValue(5).minimumValue(0).description("The number of milliseconds worker threads will spin after no tasks to perform.");
 #endif
 
 
 namespace Threading {
-	static Error* threadError = NULL;
+	static std::shared_ptr<Error> threadError;
 
 	static bool haveMainThreadID = false;
 	static bool haveGameLoadThreadID = false;
 	static bool haveWatchDogThreadID = false;
-
-	// static boost::thread::id boostMainThreadID;
-	// static boost::thread::id boostGameLoadThreadID;
-	// static boost::thread::id boostWatchDogThreadID;
 
 	static NativeThreadId nativeMainThreadID;
 	static NativeThreadId nativeGameLoadThreadID;
@@ -274,8 +270,8 @@ namespace Threading {
 
 		{
 #ifndef UNIT_TEST
-			int workerCount = std::min(ThreadPool::GetMaxThreads() - 1, configHandler->GetUnsigned("WorkerThreadCount"));
-			ThreadPool::SetThreadSpinTime(configHandler->GetUnsigned("WorkerThreadSpinTime"));
+			int workerCount = configHandler->GetInt("WorkerThreadCount");
+			ThreadPool::SetThreadSpinTime(configHandler->GetInt("WorkerThreadSpinTime"));
 #else
 			int workerCount = -1;
 #endif
@@ -372,7 +368,9 @@ namespace Threading {
 	#endif
 	}
 
-	ThreadControls::ThreadControls () :
+
+
+	ThreadControls::ThreadControls():
 		handle(0),
 		running(false)
 	{
@@ -381,39 +379,34 @@ namespace Threading {
 #endif
 	}
 
-	ThreadControls::~ThreadControls()
-	{
 
-	}
 
 	std::shared_ptr<ThreadControls> GetCurrentThreadControls()
 	{
 		// If there is no object registered, need to return an "empty" shared_ptr
 		if (threadCtls.get() == nullptr) {
-			return std::shared_ptr<ThreadControls> ();
+			return std::shared_ptr<ThreadControls>();
 		}
+
 		return *(threadCtls.get());
 	}
 
 
-	boost::thread CreateNewThread (boost::function<void()> taskFunc, std::shared_ptr<Threading::ThreadControls>* ppCtlsReturn)
+	boost::thread CreateNewThread(boost::function<void()> taskFunc, std::shared_ptr<Threading::ThreadControls>* ppCtlsReturn)
 	{
-		auto pThreadCtls = new Threading::ThreadControls();
-		auto ppThreadCtls = new std::shared_ptr<Threading::ThreadControls> (pThreadCtls);
-		if (ppCtlsReturn != nullptr) {
-			*ppCtlsReturn = *ppThreadCtls;
-		}
-
-
 #ifndef WIN32
-		boost::unique_lock<boost::mutex> lock (pThreadCtls->mutSuspend);
-		boost::thread localthread(boost::bind(Threading::ThreadStart, taskFunc, ppThreadCtls));
+		// only used as locking mechanism, not installed by thread
+		Threading::ThreadControls tempCtls;
+
+		boost::unique_lock<boost::mutex> lock(tempCtls.mutSuspend);
+		boost::thread localthread(boost::bind(Threading::ThreadStart, taskFunc, ppCtlsReturn, &tempCtls));
 
 		// Wait so that we know the thread is running and fully initialized before returning.
-		pThreadCtls->condInitialized.wait(lock);
+		tempCtls.condInitialized.wait(lock);
 #else
 		boost::thread localthread(taskFunc);
 #endif
+
 		return localthread;
 	}
 
@@ -423,10 +416,8 @@ namespace Threading {
 			// boostMainThreadID = boost::this_thread::get_id();
 			nativeMainThreadID = Threading::GetCurrentThreadId();
 		}
-#ifndef WIN32
-		auto ppThreadCtls = new std::shared_ptr<Threading::ThreadControls> (new Threading::ThreadControls());
-		SetCurrentThreadControls(ppThreadCtls);
-#endif
+
+		SetCurrentThreadControls(false);
 	}
 
 	bool IsMainThread() {
@@ -444,13 +435,8 @@ namespace Threading {
 			// boostGameLoadThreadID = boost::this_thread::get_id();
 			nativeGameLoadThreadID = Threading::GetCurrentThreadId();
 		}
-#ifndef WIN32
-		auto pThreadCtls = GetCurrentThreadControls();
-		if (pThreadCtls.get() == nullptr) { // Loading is sometimes done from the main thread, but this function is still called in 96.0.
-			auto ppThreadCtls = new std::shared_ptr<Threading::ThreadControls> (new Threading::ThreadControls());
-			SetCurrentThreadControls(ppThreadCtls);
-		}
-#endif
+
+		SetCurrentThreadControls(true);
 	}
 
 	bool IsGameLoadThread() {
@@ -486,13 +472,7 @@ namespace Threading {
 	}
 
 
-	void SetThreadError(const Error& err)
-	{
-		threadError = new Error(err); //FIXME memory leak!
-	}
-
-	Error* GetThreadError()
-	{
-		return threadError;
-	}
+	void SetThreadError(const Error& err) { threadError.reset(new Error(err)); }
+	Error* GetThreadError() { return (threadError.get()); }
 }
+

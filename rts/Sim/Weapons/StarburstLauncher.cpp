@@ -11,14 +11,16 @@ CR_BIND_DERIVED(CStarburstLauncher, CWeapon, (NULL, NULL))
 
 CR_REG_METADATA(CStarburstLauncher, (
 	CR_MEMBER(uptime),
-	CR_MEMBER(tracking),
-	CR_RESERVED(8)
+	CR_MEMBER(tracking)
 ))
 
 CStarburstLauncher::CStarburstLauncher(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
-	tracking = ((def->tracks)? weaponDef->turnrate: 0);
-	uptime = (def->uptime * GAME_SPEED);
+	//happens when loading
+	if (def != nullptr) {
+		tracking = weaponDef->turnrate * def->tracks;
+		uptime = (def->uptime * GAME_SPEED);
+	}
 }
 
 

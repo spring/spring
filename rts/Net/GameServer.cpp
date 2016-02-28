@@ -70,7 +70,7 @@ using boost::format;
 CONFIG(int, AutohostPort).defaultValue(0);
 CONFIG(int, SpeedControl).defaultValue(1).minimumValue(1).maximumValue(2)
 	.description("Sets how server adjusts speed according to player's load (CPU), 1: use average, 2: use highest");
-CONFIG(bool, AllowSpectatorJoin).defaultValue(true);
+CONFIG(bool, AllowSpectatorJoin).defaultValue(true).description("allow any unauthenticated clients to join as spectator with any name, name will be prefixed with ~");
 CONFIG(bool, WhiteListAdditionalPlayers).defaultValue(true);
 CONFIG(bool, ServerRecordDemos).defaultValue(false).dedicatedValue(true);
 CONFIG(bool, ServerLogInfoMessages).defaultValue(false);
@@ -135,7 +135,7 @@ CGameServer::CGameServer(
 	const boost::shared_ptr<const  CGameSetup> newGameSetup
 )
 : quitServer(false)
-, serverFrameNum(0)
+, serverFrameNum(-1)
 
 , serverStartTime(spring_gettime())
 , readyTime(spring_notime)
@@ -303,7 +303,7 @@ void CGameServer::PostLoad(int newServerFrameNum)
 	Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
 	serverFrameNum = newServerFrameNum;
 
-	gameHasStarted = (serverFrameNum > 0);
+	gameHasStarted = !PreSimFrame();
 
 	// for all GameParticipant's
 	for (GameParticipant& p: players) {
@@ -356,7 +356,7 @@ void CGameServer::StripGameSetupText(const GameData* newGameData)
 {
 	// modify and save GameSetup text (remove passwords)
 	TdfParser parser((newGameData->GetSetupText()).c_str(), (newGameData->GetSetupText()).length());
-	TdfParser::TdfSection* rootSec = parser.GetRootSection();
+	TdfParser::TdfSection* rootSec = parser.GetRootSection()->sections["game"];
 
 	for (TdfParser::sectionsMap_t::iterator it = rootSec->sections.begin(); it != rootSec->sections.end(); ++it) {
 		const std::string& sectionKey = StringToLower(it->first);
@@ -772,10 +772,9 @@ void CGameServer::Update()
 	if (lastPlayerInfo < (spring_gettime() - playerInfoTime)) {
 		lastPlayerInfo = spring_gettime();
 
-		if (serverFrameNum > 0) {
+		if (!PreSimFrame()) {
 			LagProtection();
-		}
-		else {
+		} else {
 			for (GameParticipant& p: players) {
 				if (p.isFromDemo)
 					continue;
@@ -799,7 +798,7 @@ void CGameServer::Update()
 
 	if (!gameHasStarted)
 		CheckForGameStart();
-	else if (serverFrameNum > 0 || demoReader != NULL)
+	else if (!PreSimFrame() || demoReader != NULL)
 		CreateNewFrame(true, false);
 
 	if (hostif) {
@@ -1240,13 +1239,14 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 			unsigned  int  checkSum; pckt >> checkSum;
 
 			assert(a == playerNum);
+			GameParticipant& p = players[a];
 
 			if (outstandingSyncFrames.find(frameNum) != outstandingSyncFrames.end())
-				players[a].syncResponse[frameNum] = checkSum;
+				p.syncResponse[frameNum] = checkSum;
 
 			// update player's ping (if !defined(SYNCCHECK) this is done in NETMSG_KEYFRAME)
-			if (frameNum <= serverFrameNum && frameNum > players[a].lastFrameResponse)
-				players[a].lastFrameResponse = frameNum;
+			if (frameNum <= serverFrameNum && frameNum > p.lastFrameResponse)
+				p.lastFrameResponse = frameNum;
 
 			// send player <a>'s sync-response back to everybody
 			// (the only purpose of this is to allow a client to
@@ -2440,13 +2440,12 @@ void CGameServer::UpdateLoop()
 		Broadcast(CBaseNetProtocol::Get().SendQuit("Server shutdown"));
 
 		if (!reloadingServer) {
-			// flush the quit messages to reduce ugly network error messages on the client side
 			// this is to make sure the Flush has any effect at all (we don't want a forced flush)
-			//
 			// when reloading, we can assume there is only a local client and skip the sleep()'s
-			spring_sleep(spring_msecs(1000));
+			spring_sleep(spring_msecs(500));
 		}
 
+		// flush the quit messages to reduce ugly network error messages on the client side
 		for (GameParticipant& p: players) {
 			if (p.link)
 				p.link->Flush();
@@ -2454,7 +2453,7 @@ void CGameServer::UpdateLoop()
 
 		if (!reloadingServer) {
 			// now let clients close their connections
-			spring_sleep(spring_msecs(3000));
+			spring_sleep(spring_msecs(1500));
 		}
 
 	} CATCH_SPRING_ERRORS
@@ -2625,6 +2624,9 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 
 	// not found in the original start script, allow spector join?
 	if (errmsg.empty() && newPlayerNumber >= players.size()) {
+		if (!demoReader && allowSpecJoin) { //add prefix to "anonymous" spectators (#4949)
+			name = std::string("~") + name;
+		}
 		if (demoReader || allowSpecJoin)
 			AddAdditionalUser(name, passwd);
 		else

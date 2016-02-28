@@ -7,7 +7,7 @@
 
 class CTorpedoProjectile : public CWeaponProjectile
 {
-	CR_DECLARE(CTorpedoProjectile)
+	CR_DECLARE_DERIVED(CTorpedoProjectile)
 public:
 	CTorpedoProjectile(const ProjectileParams& params);
 
@@ -16,10 +16,11 @@ public:
 
 	virtual int GetProjectilesCount() const override;
 
+	void SetIgnoreError(bool b) { ignoreError = b; }
 private:
 	float tracking;
+	bool ignoreError;
 	float maxSpeed;
-	float areaOfEffect;
 	int nextBubble;
 	float texx;
 	float texy;

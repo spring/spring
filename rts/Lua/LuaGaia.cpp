@@ -48,9 +48,8 @@ DECL_FREE_HANDLER(CLuaGaia, luaGaia)
 CLuaGaia::CLuaGaia()
 : CLuaHandleSynced("LuaGaia", LUA_HANDLE_ORDER_GAIA)
 {
-	if (!IsValid()) {
+	if (!IsValid())
 		return;
-	}
 
 	SetFullCtrl(true);
 	SetFullRead(true);
@@ -69,13 +68,13 @@ CLuaGaia::~CLuaGaia()
 }
 
 
-bool CLuaGaia::AddSyncedCode(lua_State *L)
+bool CLuaGaia::AddSyncedCode(lua_State* L)
 {
 	return true;
 }
 
 
-bool CLuaGaia::AddUnsyncedCode(lua_State *L)
+bool CLuaGaia::AddUnsyncedCode(lua_State* L)
 {
 	return true;
 }

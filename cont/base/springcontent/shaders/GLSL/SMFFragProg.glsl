@@ -1,4 +1,4 @@
-#version 120
+#version 130
 
 #ifdef NOSPRING
 	#define SMF_INTENSITY_MULT (210.0 / 255.0)
@@ -67,20 +67,29 @@ varying vec2 diffuseTexCoords;
 	uniform vec3 waterAbsorbColor;
 #endif
 
-#ifdef SMF_DETAIL_TEXTURE_SPLATTING
+#if defined(SMF_DETAIL_TEXTURE_SPLATTING) && !defined(SMF_DETAIL_NORMAL_TEXTURE_SPLATTING)
 	uniform sampler2D splatDetailTex;
 	uniform sampler2D splatDistrTex;
 	uniform vec4 splatTexMults;  // per-channel splat intensity multipliers
 	uniform vec4 splatTexScales; // defaults to SMF_DETAILTEX_RES per channel
 #endif
 
+#ifdef SMF_DETAIL_NORMAL_TEXTURE_SPLATTING
+	uniform sampler2D splatDetailNormalTex1;
+	uniform sampler2D splatDetailNormalTex2;
+	uniform sampler2D splatDetailNormalTex3;
+	uniform sampler2D splatDetailNormalTex4;
+	uniform sampler2D splatDistrTex;
+	uniform vec4 splatTexMults;  // per-channel splat intensity multipliers
+	uniform vec4 splatTexScales; // defaults to SMF_DETAILTEX_RES per channel
+#endif
 #ifdef SMF_SKY_REFLECTIONS
 	uniform samplerCube skyReflectTex;
 	uniform sampler2D skyReflectModTex;
 #endif
 
-#ifdef SMF_DETAIL_NORMALS
-	uniform sampler2D detailNormalTex;
+#ifdef SMF_BLEND_NORMALS
+	uniform sampler2D blendNormalsTex;
 #endif
 
 #ifdef SMF_LIGHT_EMISSION
@@ -127,26 +136,54 @@ vec3 GetFragmentNormal(vec2 uv) {
 	return normal;
 }
 
+
+#ifndef SMF_DETAIL_NORMAL_TEXTURE_SPLATTING
 vec4 GetDetailTextureColor(vec2 uv) {
-#ifndef SMF_DETAIL_TEXTURE_SPLATTING
-	vec2 detailTexCoord = vertexWorldPos.xz * vec2(SMF_DETAILTEX_RES);
-	vec4 detailCol = (texture2D(detailTex, detailTexCoord) * 2.0) - 1.0;
-#else
-	vec4 splatTexCoord0 = vertexWorldPos.xzxz * splatTexScales.rrgg;
-	vec4 splatTexCoord1 = vertexWorldPos.xzxz * splatTexScales.bbaa;
-	vec4 splatDetails;
-		splatDetails.r = texture2D(splatDetailTex, splatTexCoord0.st).r;
-		splatDetails.g = texture2D(splatDetailTex, splatTexCoord0.pq).g;
-		splatDetails.b = texture2D(splatDetailTex, splatTexCoord1.st).b;
-		splatDetails.a = texture2D(splatDetailTex, splatTexCoord1.pq).a;
-		splatDetails   = (splatDetails * 2.0) - 1.0;
-
-	vec4 splatCofac = texture2D(splatDistrTex, uv) * splatTexMults;
-	vec4 detailCol = vec4(dot(splatDetails, splatCofac));
-#endif
-
+	#ifndef SMF_DETAIL_TEXTURE_SPLATTING
+		vec2 detailTexCoord = vertexWorldPos.xz * vec2(SMF_DETAILTEX_RES);
+		vec4 detailCol = (texture2D(detailTex, detailTexCoord) * 2.0) - 1.0;
+	#else
+		vec4 splatTexCoord0 = vertexWorldPos.xzxz * splatTexScales.rrgg;
+		vec4 splatTexCoord1 = vertexWorldPos.xzxz * splatTexScales.bbaa;
+		vec4 splatDetails;
+			splatDetails.r = texture2D(splatDetailTex, splatTexCoord0.st).r;
+			splatDetails.g = texture2D(splatDetailTex, splatTexCoord0.pq).g;
+			splatDetails.b = texture2D(splatDetailTex, splatTexCoord1.st).b;
+			splatDetails.a = texture2D(splatDetailTex, splatTexCoord1.pq).a;
+			splatDetails   = (splatDetails * 2.0) - 1.0;
+		vec4 splatCofac = texture2D(splatDistrTex, uv) * splatTexMults;
+		vec4 detailCol = vec4(dot(splatDetails, splatCofac));
+	#endif
 	return detailCol;
 }
+#else // SMF_DETAIL_NORMAL_TEXTURE_SPLATTING is defined
+vec4 GetSplatDetailTextureNormal(vec2 uv, out vec2 splatDetailStrength) {
+	vec4 splatTexCoord0 = vertexWorldPos.xzxz * splatTexScales.rrgg;
+	vec4 splatTexCoord1 = vertexWorldPos.xzxz * splatTexScales.bbaa;
+	vec4 splatCofac = texture2D(splatDistrTex, uv) * splatTexMults;
+
+	// dot with 1's to sum up the splat distribution weights
+	splatDetailStrength.x = min(1.0, dot(splatCofac, vec4(1.0)));
+
+	vec4 splatDetailNormal;
+		splatDetailNormal += ((texture2D(splatDetailNormalTex1, splatTexCoord0.st) * 2.0 - 1.0) * splatCofac.r);
+		splatDetailNormal += ((texture2D(splatDetailNormalTex2, splatTexCoord0.pq) * 2.0 - 1.0) * splatCofac.g);
+		splatDetailNormal += ((texture2D(splatDetailNormalTex3, splatTexCoord1.st) * 2.0 - 1.0) * splatCofac.b);
+		splatDetailNormal += ((texture2D(splatDetailNormalTex4, splatTexCoord1.pq) * 2.0 - 1.0) * splatCofac.a);
+
+	// note: y=0.01 (pointing up) in case all splat-cofacs are zero
+	splatDetailNormal.y = max(splatDetailNormal.y, 0.01);
+
+	#ifdef SMF_DETAIL_NORMAL_DIFFUSE_ALPHA
+		splatDetailStrength.y = splatDetailNormal.a;
+	#endif
+
+	// note: .xyz is intentionally not normalized here
+	// (the normal will be rotated to worldspace first)
+	return splatDetailNormal;
+}
+#endif
+
 
 vec4 GetShadeInt(float groundLightInt, float groundShadowCoeff, float groundDiffuseAlpha) {
 	vec4 groundShadeInt = vec4(0.0, 0.0, 0.0, 1.0);
@@ -217,7 +254,9 @@ vec3 DynamicLighting(vec3 normal, vec3 diffuseCol, vec3 specularCol, float specu
 		float lightDistance = length(lightVec);
 		float lightScale = float(lightDistance <= lightRadius);
 		float lightCosAngDiff = clamp(dot(normal, lightVec / lightDistance), 0.0, 1.0);
-		float lightCosAngSpec = clamp(dot(normal, normalize(halfVec)), 0.0, 1.0);
+		//clamp lightCosAngSpec from 0.001 because this will later be in a power function
+		//results are undefined if x==0 or if x==0 and y==0. 
+		float lightCosAngSpec = clamp(dot(normal, normalize(halfVec)), 0.001, 1.0);
 	#ifdef OGL_SPEC_ATTENUATION
 		float lightAttenuation =
 			(gl_LightSource[BASE_DYNAMIC_MAP_LIGHT + i].constantAttenuation) +
@@ -259,7 +298,7 @@ void main() {
 	vec3 cameraDir = vertexWorldPos.xyz - cameraPos;
 	vec3 normal = GetFragmentNormal(normTexCoords);
 
-	#if defined(SMF_DETAIL_NORMALS) || defined(SMF_PARALLAX_MAPPING)
+	#if defined(SMF_BLEND_NORMALS) || defined(SMF_PARALLAX_MAPPING) || defined(SMF_DETAIL_NORMAL_TEXTURE_SPLATTING)
 		// detail-normals are (assumed to be) defined within STN space
 		// (for a regular vertex normal equal to <0, 1, 0>, the S- and
 		// T-tangents are aligned with Spring's +x and +z (!) axes)
@@ -286,9 +325,9 @@ void main() {
 	}
 	#endif
 
-	#ifdef SMF_DETAIL_NORMALS
+	#ifdef SMF_BLEND_NORMALS
 	{
-		vec4 dtSample = texture2D(detailNormalTex, normTexCoords);
+		vec4 dtSample = texture2D(blendNormalsTex, normTexCoords);
 		vec3 dtNormal = (dtSample.xyz * 2.0) - 1.0;
 
 		// convert dtNormal from TS to WS before mixing
@@ -296,13 +335,38 @@ void main() {
 	}
 	#endif
 
+
+	vec4 detailCol;
+
+	#ifndef SMF_DETAIL_NORMAL_TEXTURE_SPLATTING
+	{
+		detailCol = GetDetailTextureColor(specTexCoords);
+	}
+	#else 
+	{
+		// x-component modulates mixing of normals
+		// y-component contains the detail color (splatDetailNormal.a if SMF_DETAIL_NORMAL_DIFFUSE_ALPHA)
+		vec2 splatDetailStrength = vec2(0.0, 0.0);
+
+		// note: splatDetailStrength is an OUT-param
+		vec4 splatDetailNormal = GetSplatDetailTextureNormal(specTexCoords, splatDetailStrength);
+
+		detailCol = vec4(splatDetailStrength.y);
+
+		// convert the splat detail normal to worldspace,
+		// then mix it with the regular one (note: needs
+		// another normalization?)
+		normal = mix(normal, normalize(stnMatrix * splatDetailNormal.xyz), splatDetailStrength.x);
+	}
+	#endif
+
+
 #ifndef DEFERRED_MODE
 	float cosAngleDiffuse = clamp(dot(lightDir.xyz, normal), 0.0, 1.0);
-	float cosAngleSpecular = clamp(dot(normalize(halfDir), normal), 0.0, 1.0);
+	float cosAngleSpecular = clamp(dot(normalize(halfDir), normal), 0.001, 1.0);
 #endif
 
 	vec4 diffuseCol = texture2D(diffuseTex, diffTexCoords);
-	vec4 detailCol = GetDetailTextureColor(specTexCoords);
 	vec4 specularCol = vec4(0.0, 0.0, 0.0, 1.0);
 	vec4 emissionCol = vec4(0.0, 0.0, 0.0, 0.0);
 
@@ -368,6 +432,8 @@ void main() {
 
 #ifdef SMF_SPECULAR_LIGHTING
 	specularCol = texture2D(specularTex, specTexCoords);
+#else
+	specularCol = vec4(groundSpecularColor, 0.1);
 #endif
 
 	#ifndef DEFERRED_MODE
@@ -378,7 +444,6 @@ void main() {
 		vec3  specularInt  = specularCol.rgb * specularPow;
 		      specularInt *= shadowCoeff;
 
-		// no need to multiply by groundSpecularColor anymore
 		gl_FragColor.rgb += specularInt;
 
 		#if (MAX_DYNAMIC_MAP_LIGHTS > 0)
@@ -392,7 +457,7 @@ void main() {
 	gl_FragData[GBUFFER_DIFFTEX_IDX] = diffuseCol + detailCol;
 	gl_FragData[GBUFFER_SPECTEX_IDX] = specularCol;
 	gl_FragData[GBUFFER_EMITTEX_IDX] = emissionCol;
-	gl_FragData[GBUFFER_MISCTEX_IDX] = vec4(0.0);
+	gl_FragData[GBUFFER_MISCTEX_IDX] = vec4(0.0, 0.0, 0.0, 0.0);
 
 	// linearly transform the eye-space depths, might be more useful?
 	// gl_FragDepth = gl_FragCoord.z / gl_FragCoord.w;

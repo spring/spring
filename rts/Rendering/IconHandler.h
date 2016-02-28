@@ -36,6 +36,7 @@ namespace icon {
 			inline const float        GetSize()         const { return size;         }
 			inline const float        GetDistance()     const { return distance;     }
 			inline const float        GetDistanceSqr()  const { return distSqr;      }
+			inline const float        GetRadiusScale()  const { return 30.0f;        }
 			inline const bool         GetRadiusAdjust() const { return radiusAdjust; }
 			inline const int          GetSizeX()        const { return xsize;        }
 			inline const int          GetSizeY()        const { return ysize;        }

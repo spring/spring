@@ -125,12 +125,16 @@ public:
 	int losMipLevel;
 	/// miplevel to use for airlos
 	int airMipLevel;
-	/// units sightdistance will be multiplied with this, for testing purposes
-	float losMul;
-	/// units airsightdistance will be multiplied with this, for testing purposes
-	float airLosMul;
+	/// miplevel to use for radar, sonar, seismic, jammer, ...
+	int radarMipLevel;
+
 	/// when underwater, units are not in LOS unless also in sonar
 	bool requireSonarUnderWater;
+	///
+	bool alwaysVisibleOverridesCloaked;
+	/// should _all_ allyteams share the same jammermap
+	bool separateJammers;
+
 
 	enum {
 		FEATURELOS_NONE = 0, FEATURELOS_GAIAONLY, FEATURELOS_GAIAALLIED, FEATURELOS_ALL,

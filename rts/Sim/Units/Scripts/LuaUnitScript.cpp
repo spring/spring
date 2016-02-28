@@ -188,7 +188,7 @@ CUnitScript* CLuaUnitScript::activeScript;
 
 
 CLuaUnitScript::CLuaUnitScript(lua_State* L, CUnit* unit)
-	: CUnitScript(unit, unit->localModel->pieces)
+	: CUnitScript(unit)
 	, handle(CLuaHandle::GetHandle(L)), L(L)
 	, scriptIndex(LUAFN_Last, LUA_NOREF)
 	, inKilled(false)
@@ -199,6 +199,9 @@ CLuaUnitScript::CLuaUnitScript(lua_State* L, CUnit* unit)
 
 		scriptNames.insert(pair<string, int>(fname, r));
 		UpdateCallIn(fname, r);
+	}
+	for (auto& p: unit->localModel.pieces) {
+		pieces.push_back(&p);
 	}
 }
 
@@ -582,45 +585,31 @@ void CLuaUnitScript::ExtractionRateChanged(float speed)
 
 void CLuaUnitScript::RockUnit(const float3& rockDir)
 {
-	//FIXME: change COB to get rockDir in unit space too, instead of world space?
-	const float c = math::cos(unit->heading * TAANG2RAD);
-	const float s = math::sin(unit->heading * TAANG2RAD);
-	const float x = c * rockDir.x - s * rockDir.z;
-	const float z = s * rockDir.x + c * rockDir.z;
-
-	//FIXME: maybe we want rockDir.y too to be future proof?
-	Call(LUAFN_RockUnit, x, z);
+	Call(LUAFN_RockUnit, rockDir.x, rockDir.z);
 }
 
 
-void CLuaUnitScript::HitByWeapon(const float3& hitDir, int weaponDefId, float& inout_damage)
+void CLuaUnitScript::HitByWeapon(const float3& hitDir, int weaponDefId, float& inoutDamage)
 {
 	const int fn = LUAFN_HitByWeapon;
 
 	if (!HasFunction(fn))
 		return;
 
-	//FIXME: change COB to get hitDir in unit space too, instead of world space?
-	const float c = math::cos(unit->heading * TAANG2RAD);
-	const float s = math::sin(unit->heading * TAANG2RAD);
-	const float x = c * hitDir.x - s * hitDir.z;
-	const float z = s * hitDir.x + c * hitDir.z;
-
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 5);
 
 	PushFunction(fn);
-	lua_pushnumber(L, x);
-	// FIXME maybe we want hitDir.y too, to be future proofed?
-	lua_pushnumber(L, z);
+	lua_pushnumber(L, hitDir.x);
+	lua_pushnumber(L, hitDir.z);
 	lua_pushnumber(L, weaponDefId);
-	lua_pushnumber(L, inout_damage);
+	lua_pushnumber(L, inoutDamage);
 
 	if (!RunCallIn(fn, 4, 1))
 		return;
 
 	if (lua_israwnumber(L, -1)) {
-		inout_damage = lua_tonumber(L, -1);
+		inoutDamage = lua_tonumber(L, -1);
 	}
 	else if (!lua_isnoneornil(L, -1)) {
 		const string& fname = CLuaUnitScriptNames::GetScriptName(fn);

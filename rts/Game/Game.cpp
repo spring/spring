@@ -2,14 +2,6 @@
 
 #include "Rendering/GL/myGL.h"
 
-#include <stdlib.h>
-#include <time.h>
-#include <cctype>
-#include <locale>
-#include <fstream>
-#include <stdexcept>
-#include <functional> // C++11
-
 #include <SDL_keyboard.h>
 
 #include "Game.h"
@@ -21,7 +13,6 @@
 #include "CommandMessage.h"
 #include "ConsoleHistory.h"
 #include "GameHelper.h"
-#include "GameVersion.h"
 #include "GameSetup.h"
 #include "GlobalUnsynced.h"
 #include "LoadScreen.h"
@@ -35,43 +26,30 @@
 #include "SyncedGameCommands.h"
 #include "UnsyncedActionExecutor.h"
 #include "UnsyncedGameCommands.h"
-#include "Game/GUI/PlayerRoster.h"
-#include "Game/GUI/PlayerRosterDrawer.h"
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
+#include "Game/UI/PlayerRoster.h"
+#include "Game/UI/PlayerRosterDrawer.h"
 #include "Game/UI/UnitTracker.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Rendering/WorldDrawer.h"
-#include "Rendering/Env/ISky.h"
-#include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/IWater.h"
-#include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/Fonts/CFontTexture.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/CommandDrawer.h"
-#include "Rendering/FeatureDrawer.h"
 #include "Rendering/LineDrawer.h"
-#include "Rendering/Screenshot.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/ProjectileDrawer.h"
+#include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/DebugDrawerAI.h"
 #include "Rendering/HUDDrawer.h"
-#include "Rendering/SmoothHeightMeshDrawer.h"
-#include "Rendering/IPathDrawer.h"
 #include "Rendering/IconHandler.h"
-#include "Rendering/InMapDrawView.h"
-#include "Rendering/ShadowHandler.h"
 #include "Rendering/TeamHighlight.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
-#include "Rendering/Models/ModelDrawer.h"
-#include "Rendering/Models/IModelParser.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/NamedTextures.h"
-#include "Rendering/Textures/3DOTextureHandler.h"
-#include "Rendering/Textures/S3OTextureHandler.h"
 #include "Lua/LuaInputReceiver.h"
 #include "Lua/LuaHandle.h"
 #include "Lua/LuaGaia.h"
@@ -80,7 +58,6 @@
 #include "Lua/LuaParser.h"
 #include "Lua/LuaSyncedRead.h"
 #include "Lua/LuaUI.h"
-#include "Lua/LuaUnsyncedCtrl.h"
 #include "Lua/LuaUtils.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
@@ -94,7 +71,6 @@
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Misc/QuadField.h"
-#include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/SideParser.h"
 #include "Sim/Misc/SmoothHeightMesh.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -109,11 +85,10 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Scripts/CobEngine.h"
 #include "Sim/Units/Scripts/UnitScriptEngine.h"
+#include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
-#include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "UI/CommandColors.h"
-#include "UI/CursorIcons.h"
 #include "UI/EndGameBox.h"
 #include "UI/GameInfo.h"
 #include "UI/GameSetupDrawer.h"
@@ -141,24 +116,17 @@
 #include "System/SpringApp.h"
 #include "System/Util.h"
 #include "System/Input/KeyInput.h"
-#include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/LoadSave/LoadSaveHandler.h"
 #include "System/LoadSave/DemoRecorder.h"
 #include "System/Log/ILog.h"
-#include "System/Net/PackPacket.h"
-#include "System/Platform/CrashHandler.h"
 #include "System/Platform/Watchdog.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/ISoundChannels.h"
 #include "System/Sync/DumpState.h"
-#include "System/Sync/SyncedPrimitiveIO.h"
-#include "System/Sync/SyncTracer.h"
 #include "System/TimeProfiler.h"
 
-#include <boost/cstdint.hpp>
-#include <boost/thread.hpp>
 
 #undef CreateDirectory
 
@@ -507,7 +475,7 @@ void CGame::LoadDefs()
 		ScopedOnceTimer timer("Game::LoadDefs (Sound)");
 		loadscreen->SetLoadMessage("Loading Sound Definitions");
 
-		sound->LoadSoundDefs("gamedata/sounds.lua");
+		sound->LoadSoundDefs("gamedata/sounds.lua", SPRING_VFS_MOD_BASE);
 		chatSound = sound->GetSoundId("IncomingChat");
 	}
 
@@ -545,7 +513,6 @@ void CGame::PostLoadSimulation()
 	featureHandler = new CFeatureHandler(defsParser);
 
 	losHandler = new CLosHandler();
-	radarHandler = new CRadarHandler(false);
 
 	// pre-load the PFS, gets finalized after Lua
 	//
@@ -586,45 +553,24 @@ void CGame::PostLoadSimulation()
 void CGame::PreLoadRendering()
 {
 	geometricObjects = new CGeometricObjects();
+	worldDrawer = new CWorldDrawer();
 
-	//! these need to be loaded before featureHandler
-	//! (maps with features have their models loaded at startup)
-	modelParser = new C3DModelLoader();
-
-	loadscreen->SetLoadMessage("Creating Unit Textures");
-	texturehandler3DO = new C3DOTextureHandler();
-	texturehandlerS3O = new CS3OTextureHandler();
-
-	featureDrawer = new CFeatureDrawer();
-	loadscreen->SetLoadMessage("Creating Sky");
-	sky = ISky::GetSky();
+	// load components that need to exist before PostLoadSimulation
+	worldDrawer->LoadPre();
 }
 
 void CGame::PostLoadRendering() {
-	worldDrawer = new CWorldDrawer();
+	worldDrawer->LoadPost();
 }
 
-void CGame::SetupRenderingParams()
-{
-	glLightfv(GL_LIGHT1, GL_AMBIENT, mapInfo->light.unitAmbientColor);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, mapInfo->light.unitSunColor);
-	glLightfv(GL_LIGHT1, GL_SPECULAR, mapInfo->light.unitAmbientColor);
-	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0);
-	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 0);
-
-	ISky::SetupFog();
-
-	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0.0f);
-}
 
 void CGame::LoadInterface()
 {
 	{
 		ScopedOnceTimer timer("Game::LoadInterface (Camera&Mouse)");
-		camera = new CCamera();
-		cam2 = new CCamera();
-		mouse = new CMouseHandler();
+
 		camHandler = new CCameraHandler();
+		mouse = new CMouseHandler();
 	}
 
 	selectedUnitsHandler.Init(playerHandler->ActivePlayers());
@@ -661,16 +607,13 @@ void CGame::LoadInterface()
 			wordCompletion->AddWord(sn + " ", false, false, false);
 		}
 
-		const std::map<std::string, int>& unitDefs = unitDefHandler->unitDefIDsByName;
-		const std::map<std::string, const FeatureDef*>& featureDefs = featureHandler->GetFeatureDefs();
+		const auto& unitDefs = unitDefHandler->unitDefIDsByName;
+		const auto& featureDefs = featureHandler->GetFeatureDefs();
 
-		std::map<std::string, int>::const_iterator uit;
-		std::map<std::string, const FeatureDef*>::const_iterator fit;
-
-		for (uit = unitDefs.begin(); uit != unitDefs.end(); ++uit) {
+		for (auto uit = unitDefs.cbegin(); uit != unitDefs.cend(); ++uit) {
 			wordCompletion->AddWord(uit->first + " ", false, true, false);
 		}
-		for (fit = featureDefs.begin(); fit != featureDefs.end(); ++fit) {
+		for (auto fit = featureDefs.cbegin(); fit != featureDefs.cend(); ++fit) {
 			wordCompletion->AddWord(fit->first + " ", false, true, false);
 		}
 	}
@@ -699,23 +642,24 @@ void CGame::LoadLua()
 {
 	// Lua components
 	ENTER_SYNCED_CODE();
+
 	loadscreen->SetLoadMessage("Loading LuaRules");
-	CLuaRules::LoadHandler();
+	CLuaRules::LoadFreeHandler();
 
 	if (gs->useLuaGaia) {
 		loadscreen->SetLoadMessage("Loading LuaGaia");
-		CLuaGaia::LoadHandler();
+		CLuaGaia::LoadFreeHandler();
 	}
+
 	LEAVE_SYNCED_CODE();
 
 	loadscreen->SetLoadMessage("Loading LuaUI");
-	CLuaUI::LoadHandler();
+	CLuaUI::LoadFreeHandler();
 
 	// last in, first served
 	luaInputReceiver = new LuaInputReceiver();
 
-	delete defsParser;
-	defsParser = NULL;
+	SafeDelete(defsParser);
 }
 
 void CGame::LoadSkirmishAIs()
@@ -783,15 +727,16 @@ void CGame::PostLoad()
 
 void CGame::KillLua()
 {
+	ENTER_SYNCED_CODE();
 	LOG("[%s][1]", __FUNCTION__);
 	CLuaGaia::FreeHandler();
 
 	LOG("[%s][2]", __FUNCTION__);
 	CLuaRules::FreeHandler();
+	LEAVE_SYNCED_CODE();
 
+	// kill LuaUI here, various handler pointers are invalid in ~GuiHandler
 	LOG("[%s][3]", __FUNCTION__);
-	//even though it's done by ~GUIHandler, you have to kill it before all handler pointers
-	//become invalid
 	CLuaUI::FreeHandler();
 
 	LOG("[%s][4]", __FUNCTION__);
@@ -824,15 +769,13 @@ void CGame::KillRendering()
 	SafeDelete(infoTextureHandler);
 	SafeDelete(icon::iconHandler);
 	SafeDelete(geometricObjects);
-	SafeDelete(texturehandler3DO);
-	SafeDelete(texturehandlerS3O);
 	SafeDelete(worldDrawer);
 }
 
 void CGame::KillInterface()
 {
 	LOG("[%s][1]", __FUNCTION__);
-	SafeDelete(guihandler); // frees LuaUI
+	SafeDelete(guihandler);
 	SafeDelete(minimap);
 	SafeDelete(resourceBar);
 	SafeDelete(tooltip); // CTooltipConsole*
@@ -848,8 +791,6 @@ void CGame::KillInterface()
 
 	LOG("[%s][2]", __FUNCTION__);
 	SafeDelete(camHandler);
-	SafeDelete(camera);
-	SafeDelete(cam2);
 
 	for (unsigned int i = 0; i < grouphandlers.size(); i++) {
 		SafeDelete(grouphandlers[i]);
@@ -874,19 +815,15 @@ void CGame::KillSimulation()
 
 	LOG("[%s][2]", __FUNCTION__);
 	SafeDelete(featureHandler); // depends on unitHandler (via ~CFeature)
-	SafeDelete(unitHandler); // depends on modelParser (via ~CUnit)
+	SafeDelete(unitHandler);
 	SafeDelete(projectileHandler);
 
 	LOG("[%s][3]", __FUNCTION__);
-	SafeDelete(modelParser);
-
-	LOG("[%s][4]", __FUNCTION__);
 	IPathManager::FreeInstance(pathManager);
 
 	SafeDelete(readMap);
 	SafeDelete(smoothGround);
 	SafeDelete(groundBlockingObjectMap);
-	SafeDelete(radarHandler);
 	SafeDelete(losHandler);
 	SafeDelete(mapDamage);
 	SafeDelete(quadField);
@@ -898,7 +835,7 @@ void CGame::KillSimulation()
 	SafeDelete(helper);
 	SafeDelete((mapInfo = const_cast<CMapInfo*>(mapInfo)));
 
-	LOG("[%s][5]", __FUNCTION__);
+	LOG("[%s][4]", __FUNCTION__);
 	CClassicGroundMoveType::DeleteLineTable();
 }
 
@@ -1027,7 +964,7 @@ bool CGame::Update()
 			clientNet->AttemptReconnect(SpringVersion::GetFull());
 		}
 
-		if (clientNet->CheckTimeout(0, gs->frameNum == 0)) {
+		if (clientNet->CheckTimeout(0, gs->PreSimFrame())) {
 			GameEnd(std::vector<unsigned char>(), true);
 		}
 	}
@@ -1113,24 +1050,16 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	lastSimFrame = gs->frameNum;
 
 	// set camera
-	UpdateCam();
-	camHandler->UpdateCam();
-	camera->Update();
+	camHandler->UpdateController(playerHandler->Player(gu->myPlayerNum), gu->fpsMode, fullscreenEdgeMove, windowedEdgeMove);
+	camHandler->UpdateTransition();
 
-//	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 	unitDrawer->Update();
 	lineDrawer.UpdateLineStipple();
+
 	if (doDrawWorld) {
-		worldDrawer->Update();
+		worldDrawer->Update(newSimFrame);
 		CNamedTextures::Update();
 		CFontTexture::Update();
-
-		if (newSimFrame) {
-			projectileDrawer->UpdateTextures();
-			sky->Update();
-			sky->GetLight()->Update();
-			water->Update();
-		}
 	}
 
 	static spring_time lastUnsyncedUpdateTime = spring_gettime();
@@ -1152,20 +1081,24 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 
 	SetDrawMode(gameNormalDraw); //TODO move to ::Draw()?
 
-	if (luaUI)    { luaUI->CheckStack(); }
-	if (luaGaia)  { luaGaia->CheckStack(); }
-	if (luaRules) { luaRules->CheckStack(); }
+	if (luaUI != nullptr)    { luaUI->CheckStack(); luaUI->CheckReload(); }
+	if (luaGaia != nullptr)  { luaGaia->CheckStack(); }
+	if (luaRules != nullptr) { luaRules->CheckStack(); }
 
+	#if 0
 	// XXX ugly hack to minimize luaUI errors
+	// has not been necessary for a long time
 	if (luaUI && luaUI->GetCallInErrors() >= 5) {
 		for (int annoy = 0; annoy < 8; annoy++) {
 			LOG_L(L_ERROR, "5 errors deep in LuaUI, disabling...");
 		}
 
 		CLuaUI::FreeHandler();
+		guihandler->LoadDefaultConfig();
 		LOG_L(L_ERROR, "Type '/luaui reload' in the chat to re-enable LuaUI.");
 		LOG_L(L_ERROR, "===>>>  Please report this error to the forum or mantis with your infolog.txt");
 	}
+	#endif
 
 	if (chatting && !userWriting) {
 		consoleHistory->AddLine(userInput);
@@ -1272,137 +1205,35 @@ bool CGame::Draw() {
 	}
 
 	{
+		SCOPED_TIMER("Game::DrawWorld");
+
 		minimap->Update();
 
-		if (doDrawWorld) {
-			if (shadowHandler->shadowsLoaded) {
-				SCOPED_TIMER("ShadowHandler::CreateShadows");
-				SetDrawMode(gameShadowDraw);
-				shadowHandler->CreateShadows();
-				SetDrawMode(gameNormalDraw);
-			}
+		if (doDrawWorld)
+			worldDrawer->GenerateIBLTextures();
 
-			{
-				SCOPED_TIMER("CubeMapHandler::UpdateReflTex");
-				cubeMapHandler->UpdateReflectionTexture();
-			}
+		camera->Update();
 
-			if (sky->GetLight()->IsDynamic()) {
-				{
-					SCOPED_TIMER("CubeMapHandler::UpdateSpecTex");
-					cubeMapHandler->UpdateSpecularTexture();
-				}
-				{
-					SCOPED_TIMER("Sky::UpdateSkyTex");
-					sky->UpdateSkyTexture();
-				}
-				{
-					SCOPED_TIMER("ReadMap::UpdateShadingTex");
-					readMap->UpdateShadingTexture();
-				}
-			}
-		}
+		if (doDrawWorld)
+			worldDrawer->Draw();
 
-		if (FBO::IsSupported())
-			FBO::Unbind();
-
-		glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+		worldDrawer->ResetMVPMatrices();
 	}
-
-	glDepthMask(GL_TRUE);
-	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);	// Clear Screen And Depth&Stencil Buffer
-	camera->Update();
-
-	if (doDrawWorld) {
-		worldDrawer->Draw();
-	} else {
-		//reset fov
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		gluOrtho2D(0,1,0,1);
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-
-		glEnable(GL_BLEND);
-		glDisable(GL_DEPTH_TEST);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	}
-
-	glDisable(GL_FOG);
-
-	SCOPED_TIMER("Game::DrawScreen");
-
-	if (doDrawWorld) {
-		eventHandler.DrawScreenEffects();
-	}
-
-	hudDrawer->Draw((gu->GetMyPlayer())->fpsController.GetControllee());
-	debugDrawerAI->Draw();
-
-	glEnable(GL_TEXTURE_2D);
 
 	{
-		SCOPED_TIMER("CInputReceiver::DrawScreen");
+		SCOPED_TIMER("Game::DrawScreen");
 
-		if (!hideInterface) {
-			std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
-			for (auto ri = inputReceivers.rbegin(); ri != inputReceivers.rend(); ++ri) {
-				CInputReceiver* rcvr = *ri;
-				if (rcvr) {
-					rcvr->Draw();
-				}
-			}
-		} else {
-			if (globalRendering->dualScreenMode) {
-				// minimap is on its own screen, so always draw it
-				minimap->Draw();
-			}
-		}
-	}
+		if (doDrawWorld)
+			eventHandler.DrawScreenEffects();
 
-	glEnable(GL_TEXTURE_2D);
+		hudDrawer->Draw((gu->GetMyPlayer())->fpsController.GetControllee());
+		debugDrawerAI->Draw();
 
-	#define KEY_FONT_FLAGS (FONT_SCALE | FONT_CENTER | FONT_NORM)
-	#define INF_FONT_FLAGS (FONT_RIGHT | FONT_SCALE | FONT_NORM | (FONT_OUTLINE * guihandler->GetOutlineFonts()))
-
-	if (userWriting) {
+		DrawInputReceivers();
 		DrawInputText();
+		DrawInterfaceWidgets();
+		mouse->DrawCursor();
 	}
-
-	if (!hideInterface) {
-		smallFont->Begin();
-
-		if (showClock) {
-			const int seconds = (gs->frameNum / GAME_SPEED);
-			if (seconds < 3600) {
-				smallFont->glFormat(0.99f, 0.94f, 1.0f, INF_FONT_FLAGS, "%02i:%02i", seconds / 60, seconds % 60);
-			} else {
-				smallFont->glFormat(0.99f, 0.94f, 1.0f, INF_FONT_FLAGS, "%02i:%02i:%02i", seconds / 3600, (seconds / 60) % 60, seconds % 60);
-			}
-		}
-
-		if (showFPS) {
-			const float4 yellow(1.0f, 1.0f, 0.25f, 1.0f);
-			smallFont->SetColors(&yellow,NULL);
-			smallFont->glFormat(0.99f, 0.92f, 1.0f, INF_FONT_FLAGS, "%.0f", globalRendering->FPS);
-		}
-
-		if (showSpeed) {
-			const float4 speedcol(1.0f, gs->speedFactor < gs->wantedSpeedFactor * 0.99f ? 0.25f : 1.0f, 0.25f, 1.0f);
-			smallFont->SetColors(&speedcol, NULL);
-			smallFont->glFormat(0.99f, 0.90f, 1.0f, INF_FONT_FLAGS, "%2.2f", gs->speedFactor);
-		}
-
-		CPlayerRosterDrawer::Draw();
-
-		smallFont->End();
-	}
-
-	mouse->DrawCursor();
 
 	glEnable(GL_DEPTH_TEST);
 	glLoadIdentity();
@@ -1413,11 +1244,73 @@ bool CGame::Draw() {
 	CTeamHighlight::Disable();
 
 	const spring_time currentTimePostDraw = spring_gettime();
-	gu->avgDrawFrameTime = mix(gu->avgDrawFrameTime, (currentTimePostDraw - currentTimePreDraw).toMilliSecsf(), 0.05f);
+	const spring_time currentFrameDrawTime = currentTimePostDraw - currentTimePreDraw;
+	gu->avgDrawFrameTime = mix(gu->avgDrawFrameTime, currentFrameDrawTime.toMilliSecsf(), 0.05f);
 
 	eventHandler.DbgTimingInfo(TIMING_VIDEO, currentTimePreDraw, currentTimePostDraw);
 
 	return true;
+}
+
+
+void CGame::DrawInputReceivers()
+{
+	SCOPED_TIMER("CInputReceiver::DrawScreen");
+
+	glEnable(GL_TEXTURE_2D);
+
+	if (!hideInterface) {
+		std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
+
+		for (auto ri = inputReceivers.rbegin(); ri != inputReceivers.rend(); ++ri) {
+			CInputReceiver* rcvr = *ri;
+			if (rcvr) {
+				rcvr->Draw();
+			}
+		}
+	} else {
+		if (globalRendering->dualScreenMode) {
+			// minimap is on its own screen, so always draw it
+			minimap->Draw();
+		}
+	}
+
+	glEnable(GL_TEXTURE_2D);
+}
+
+void CGame::DrawInterfaceWidgets()
+{
+	if (hideInterface)
+		return;
+
+	smallFont->Begin();
+
+	#define KEY_FONT_FLAGS (FONT_SCALE | FONT_CENTER | FONT_NORM)
+	#define INF_FONT_FLAGS (FONT_RIGHT | FONT_SCALE | FONT_NORM | (FONT_OUTLINE * guihandler->GetOutlineFonts()))
+
+	if (showClock) {
+		const int seconds = (gs->frameNum / GAME_SPEED);
+		if (seconds < 3600) {
+			smallFont->glFormat(0.99f, 0.94f, 1.0f, INF_FONT_FLAGS, "%02i:%02i", seconds / 60, seconds % 60);
+		} else {
+			smallFont->glFormat(0.99f, 0.94f, 1.0f, INF_FONT_FLAGS, "%02i:%02i:%02i", seconds / 3600, (seconds / 60) % 60, seconds % 60);
+		}
+	}
+
+	if (showFPS) {
+		const float4 yellow(1.0f, 1.0f, 0.25f, 1.0f);
+		smallFont->SetColors(&yellow,NULL);
+		smallFont->glFormat(0.99f, 0.92f, 1.0f, INF_FONT_FLAGS, "%.0f", globalRendering->FPS);
+	}
+
+	if (showSpeed) {
+		const float4 speedcol(1.0f, gs->speedFactor < gs->wantedSpeedFactor * 0.99f ? 0.25f : 1.0f, 0.25f, 1.0f);
+		smallFont->SetColors(&speedcol, NULL);
+		smallFont->glFormat(0.99f, 0.90f, 1.0f, INF_FONT_FLAGS, "%2.2f", gs->speedFactor);
+	}
+
+	CPlayerRosterDrawer::Draw();
+	smallFont->End();
 }
 
 
@@ -1440,6 +1333,9 @@ void CGame::ParseInputTextGeometry(const string& geo)
 
 void CGame::DrawInputText()
 {
+	if (!userWriting)
+		return;
+
 	const float fontSale = 1.0f;                       // TODO: make configurable again
 	const float fontSize = fontSale * font->GetSize();
 
@@ -1522,16 +1418,6 @@ void CGame::StartPlaying()
 	}
 
 	eventHandler.GameStart();
-
-	// This is a hack!!!
-	// Before 0.83 Lua had its GameFrame callin before gs->frameNum got updated,
-	// what caused it to have a `gameframe0` while the engine started with 1.
-	// This became a problem when LUS was added, and so we were forced to switch
-	// Lua to the 1-indexed system, too.
-	// To keep backward compability Lua now gets 2 GameFrames at start (0 & 1)
-	// and both share the same SimFrame!
-	eventHandler.GameFrame(0);
-
 }
 
 
@@ -1540,12 +1426,15 @@ void CGame::SimFrame() {
 	ENTER_SYNCED_CODE();
 
 	good_fpu_control_registers("CGame::SimFrame");
+
+	// note: starts at -1, first actual frame is 0
+	gs->frameNum += 1;
 	lastFrameTime = spring_gettime();
 
 	// clear allocator statistics periodically
 	// note: allocator itself should do this (so that
 	// stats are reliable when paused) but see LuaUser
-	spring_lua_alloc_update_stats(((++gs->frameNum) % GAME_SPEED) == 0);
+	spring_lua_alloc_update_stats((gs->frameNum % GAME_SPEED) == 0);
 
 #ifdef TRACE_SYNC
 	tracefile << "New frame:" << gs->frameNum << " " << gs->GetRandSeed() << "\n";
@@ -1557,9 +1446,9 @@ void CGame::SimFrame() {
 		geometricObjects->Update();
 		sound->NewFrame();
 		eoh->Update();
-		for (size_t a = 0; a < grouphandlers.size(); a++) {
+
+		for (size_t a = 0; a < grouphandlers.size(); a++)
 			grouphandlers[a]->Update();
-		}
 
 		(playerHandler->Player(gu->myPlayerNum)->fpsController).SendStateUpdate(/*camera->GetMovState(), mouse->buttons*/);
 
@@ -1571,21 +1460,23 @@ void CGame::SimFrame() {
 		SCOPED_TIMER("EventHandler::GameFrame");
 		eventHandler.GameFrame(gs->frameNum);
 	}
-	SCOPED_TIMER("SimFrame");
-	helper->Update();
-	mapDamage->Update();
-	pathManager->Update();
-	unitHandler->Update();
-	projectileHandler->Update();
-	featureHandler->Update();
-	GCobEngine.Tick(33);
-	GUnitScriptEngine.Tick(33);
-	wind.Update();
-	losHandler->Update();
-	interceptHandler.Update(false);
+	{
+		SCOPED_TIMER("SimFrame");
+		helper->Update();
+		mapDamage->Update();
+		pathManager->Update();
+		unitHandler->Update();
+		projectileHandler->Update();
+		featureHandler->Update();
+		GCobEngine.Tick(33);
+		GUnitScriptEngine.Tick(33);
+		wind.Update();
+		losHandler->Update();
+		interceptHandler.Update(false);
 
-	teamHandler->GameFrame(gs->frameNum);
-	playerHandler->GameFrame(gs->frameNum);
+		teamHandler->GameFrame(gs->frameNum);
+		playerHandler->GameFrame(gs->frameNum);
+	}
 
 	lastSimFrameTime = spring_gettime();
 	gu->avgSimFrameTime = mix(gu->avgSimFrameTime, (lastSimFrameTime - lastFrameTime).toMilliSecsf(), 0.05f);
@@ -1606,49 +1497,10 @@ void CGame::SimFrame() {
 	}
 	#endif
 
-	// usefull for desync-debugging enter (enter instead of -1 start & end frame of the range you want to debug)
+	// useful for desync-debugging (enter instead of -1 start & end frame of the range you want to debug)
 	DumpState(-1, -1, 1);
 
 	LEAVE_SYNCED_CODE();
-}
-
-
-void CGame::UpdateCam()
-{
-	//FIXME move to camHandler
-
-	CCameraController& cc = camHandler->GetCurrentController();
-	FPSUnitController& fpsCon = playerHandler->Player(gu->myPlayerNum)->fpsController;
-	if (fpsCon.oldDCpos != ZeroVector) {
-		cc.SetPos(fpsCon.oldDCpos);
-		fpsCon.oldDCpos = ZeroVector;
-	}
-
-	if (!gu->fpsMode) {
-		// Note: GetMoveVectorFromState doesn't return a vec3, instead it returns a xy-vector and in its
-		//       z-component it returns a speed scaling factor!
-
-		// key scrolling
-		const float3 camMoveVector = camera->GetMoveVectorFromState(true);
-		const bool moved = ((camMoveVector * XYVector).SqLength() > 0.0f);
-		if (moved && cc.DisableTrackingByKey()) unitTracker.Disable();
-		if (moved) cc.KeyMove(camMoveVector);
-
-		// screen edge scrolling
-		if ((globalRendering->fullScreen && fullscreenEdgeMove) || (!globalRendering->fullScreen && windowedEdgeMove)) {
-			const float3 camMoveVector = camera->GetMoveVectorFromState(false);
-			const bool moved = ((camMoveVector * XYVector).SqLength() > 0.0f);
-			if (moved) unitTracker.Disable();
-			if (moved) cc.ScreenEdgeMove(camMoveVector);
-		}
-
-		// mouse wheel zoom
-		float mouseWheelDir  = camera->GetMoveDistance(NULL, NULL, CCamera::MOVE_STATE_UP);
-		      mouseWheelDir += camera->GetMoveDistance(NULL, NULL, CCamera::MOVE_STATE_DWN);
-		if (math::fabsf(mouseWheelDir) > 0.0f) cc.MouseWheelMove(mouseWheelDir);
-	}
-
-	cc.Update();
 }
 
 
@@ -1687,10 +1539,7 @@ void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool tim
 		for (int i = 0; i < numTeams; ++i) {
 			const CTeam* team = teamHandler->Team(i);
 			record->SetTeamStats(i, team->statHistory);
-			netcode::PackPacket* buf = new netcode::PackPacket(2 + sizeof(CTeam::Statistics), NETMSG_TEAMSTAT);
-			*buf << static_cast<uint8_t>(team->teamNum);
-			*buf << *(team->currentStats);
-			clientNet->Send(buf);
+			clientNet->Send(CBaseNetProtocol::Get().SendTeamStat(team->teamNum, team->GetCurrentStats()));
 		}
 	}
 

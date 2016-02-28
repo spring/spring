@@ -110,7 +110,7 @@ SaverThread screenshotThread;
 void TakeScreenshot(std::string type)
 {
 	if (type.empty())
-		type = "png";
+		type = "jpg";
 
 	if (FileSystem::CreateDirectory("screenshots"))
 	{

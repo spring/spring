@@ -7,11 +7,6 @@ INCLUDE_DIRECTORIES(BEFORE ../streflop include)
 FIND_PACKAGE_STATIC(GLEW 1.5.1 REQUIRED) #FIXME: LuaUser.cpp requires glew...
 INCLUDE_DIRECTORIES(${GLEW_INCLUDE_DIR})
 
-option(DEBUG_LUANAN "check for nans in lua" FALSE)
-if(DEBUG_LUANAN)
-	add_definitions(-DDEBUG_LUANAN)
-endif()
-
 SET(luaSources
 		"src/lapi.cpp"
 		"src/lauxlib.cpp"

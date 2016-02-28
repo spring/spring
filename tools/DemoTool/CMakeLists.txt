@@ -21,6 +21,7 @@ SET(demoToolSpringSources
 	${ENGINE_SRC_ROOT_DIR}/System/FileSystem/FileHandler.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/FileSystem/FileSystem.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/FileSystem/FileSystemAbstraction.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/FileSystem/GZFileHandler.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Util.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Net/RawPacket.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/DemoReader.cpp
@@ -41,7 +42,13 @@ IF (MINGW)
 	SET_TARGET_PROPERTIES(demotool PROPERTIES LINK_FLAGS "-Wl,-subsystem,console")
 ENDIF (MINGW)
 add_definitions(-DNOT_USING_CREG)
-TARGET_LINK_LIBRARIES(demotool ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY})
+TARGET_LINK_LIBRARIES(demotool
+		${Boost_REGEX_LIBRARY}
+		${Boost_PROGRAM_OPTIONS_LIBRARY}
+		${Boost_SYSTEM_LIBRARY}
+		${Boost_FILESYSTEM_LIBRARY}
+		${SPRING_MINIZIP_LIBRARY}
+	)
 Add_Dependencies(demotool generateVersionFiles)
 
 

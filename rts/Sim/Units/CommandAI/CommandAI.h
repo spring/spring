@@ -41,7 +41,6 @@ public:
 	virtual int GetDefaultCmd(const CUnit* pointed, const CFeature* feature);
 	virtual void SlowUpdate();
 	virtual void GiveCommandReal(const Command& c, bool fromSynced = true);
-	virtual std::vector<CommandDescription>& GetPossibleCommands();
 	virtual void FinishCommand();
 	void WeaponFired(CWeapon* weapon, const bool searchForNewTarget);
 	virtual void BuggerOff(const float3& pos, float radius) {}
@@ -76,6 +75,9 @@ public:
 	std::vector<Command> GetOverlapQueued(const Command& c);
 	std::vector<Command> GetOverlapQueued(const Command& c,
 	                                      CCommandQueue& queue);
+
+	const std::vector<CommandDescription>& GetPossibleCommands() const { return possibleCommands; }
+
 	/**
 	 * @brief Causes this CommandAI to execute the attack order c
 	 */
@@ -85,6 +87,12 @@ public:
 	 * @brief executes the stop command c
 	 */
 	virtual void ExecuteStop(Command& c);
+
+	void UpdateCommandDescription(unsigned int cmdDescIdx, const CommandDescription& modCmdDesc);
+	void InsertCommandDescription(unsigned int cmdDescIdx, const CommandDescription& cmdDesc);
+	bool RemoveCommandDescription(unsigned int cmdDescIdx);
+
+	void UpdateNonQueueingCommands();
 
 	void SetCommandDescParam0(const Command& c);
 	bool ExecuteStateCommand(const Command& c);
@@ -102,12 +110,10 @@ public:
 	CWeapon* stockpileWeapon;
 
 	std::vector<CommandDescription> possibleCommands;
-	CCommandQueue commandQue;
-	/**
-	 * commands that will not go into the command queue
-	 * (and therefore not reseting it if given without shift
-	 */
 	std::set<int> nonQueingCommands;
+
+	CCommandQueue commandQue;
+
 	int lastUserCommand;
 	int selfDCountdown;
 	int lastFinishCommand;

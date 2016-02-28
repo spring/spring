@@ -60,8 +60,19 @@
 typedef unsigned char FT_Byte;
 #endif
 
+struct SP_Byte { //wrapper to allow usage as shared_ptr
+	SP_Byte(size_t size) {
+		vec.resize(size);
+	}
+	FT_Byte* data() {
+		return vec.data();
+	}
+private:
+	std::vector<FT_Byte> vec;
+};
+
 struct FontFace {
-	FontFace(FT_Face f, std::shared_ptr<FT_Byte*>& mem) : face(f), memory(mem) { }
+	FontFace(FT_Face f, std::shared_ptr<SP_Byte>& mem) : face(f), memory(mem) { }
 	~FontFace() {
 	#ifndef HEADLESS
 		FT_Done_Face(face);
@@ -70,12 +81,12 @@ struct FontFace {
 	operator FT_Face() { return this->face; }
 
 	FT_Face face;
-	std::shared_ptr<FT_Byte*> memory;
+	std::shared_ptr<SP_Byte> memory;
 };
 
 static std::unordered_set<CFontTexture*> allFonts;
 static std::unordered_map<std::string, std::weak_ptr<FontFace>> fontCache;
-static std::unordered_map<std::string, std::weak_ptr<FT_Byte*>> fontMemCache;
+static std::unordered_map<std::string, std::weak_ptr<SP_Byte>> fontMemCache;
 static boost::recursive_mutex m;
 
 
@@ -190,18 +201,18 @@ static std::shared_ptr<FontFace> GetFontFace(const std::string& fontfile, const 
 
 	// we need to keep a copy of the memory
 	const int filesize = f->FileSize();
-	std::weak_ptr<FT_Byte*>& fontMemWeak = fontMemCache[fontPath];
-	std::shared_ptr<FT_Byte*> fontMem = fontMemWeak.lock();
+	std::weak_ptr<SP_Byte>& fontMemWeak = fontMemCache[fontPath];
+	std::shared_ptr<SP_Byte> fontMem = fontMemWeak.lock();
 	if (fontMemWeak.expired()) {
-		fontMem = std::make_shared<FT_Byte*>(new FT_Byte[filesize]);
-		f->Read(*fontMem, filesize);
+		fontMem = std::make_shared<SP_Byte>(SP_Byte(filesize));
+		f->Read(fontMem.get()->data(), filesize);
 		fontMemWeak = fontMem;
 	}
 	delete f;
 
 	// load the font
 	FT_Face face = NULL;
-	FT_Error error = FT_New_Memory_Face(FtLibraryHandler::GetLibrary(), *fontMem, filesize, 0, &face);
+	FT_Error error = FT_New_Memory_Face(FtLibraryHandler::GetLibrary(), fontMem.get()->data(), filesize, 0, &face);
 	auto shFace = std::make_shared<FontFace>(face, fontMem);
 	if (error) {
 		std::string msg = fontfile + ": FT_New_Face failed: ";
@@ -384,8 +395,15 @@ CFontTexture::~CFontTexture()
 {
 #ifndef HEADLESS
 	allFonts.erase(this);
+
 	glDeleteTextures(1, (const GLuint*)&texture);
 	glDeleteLists(textureSpaceMatrix, 1);
+
+	texture = 0;
+	textureSpaceMatrix = 0;
+
+	SafeDelete(atlasUpdate);
+	SafeDelete(atlasUpdateShadow);
 #endif
 }
 
@@ -646,10 +664,12 @@ void CFontTexture::UpdateTexture()
 	// merge shadowing
 	if (atlasUpdateShadow) {
 		atlasUpdateShadow->Blur(outlineSize, outlineWeight);
-		assert((atlasUpdate->xsize * atlasUpdate->ysize) % 4 == 0);
-		auto src = reinterpret_cast<int*>(atlasUpdateShadow->mem);
-		auto dst = reinterpret_cast<int*>(atlasUpdate->mem);
-		auto size = (atlasUpdate->xsize * atlasUpdate->ysize) / 4;
+		assert((atlasUpdate->xsize * atlasUpdate->ysize) % sizeof(int) == 0);
+		auto src = reinterpret_cast<int*>(&atlasUpdateShadow->mem[0]);
+		auto dst = reinterpret_cast<int*>(&atlasUpdate->mem[0]);
+		auto size = (atlasUpdate->xsize * atlasUpdate->ysize) / sizeof(int);
+		assert (atlasUpdateShadow->mem.size() / sizeof(int) == size);
+		assert (atlasUpdate->mem.size() / sizeof(int) == size);
 		for (int i=0; i<size; ++i) {
 			dst[i] |= src[i];
 		}
@@ -661,7 +681,7 @@ void CFontTexture::UpdateTexture()
 	glPushAttrib(GL_PIXEL_MODE_BIT | GL_TEXTURE_BIT);
 		// update texture atlas
 		glBindTexture(GL_TEXTURE_2D, texture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, texWidth, texHeight, 0, GL_ALPHA, GL_UNSIGNED_BYTE, atlasUpdate->mem);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, texWidth, texHeight, 0, GL_ALPHA, GL_UNSIGNED_BYTE, &atlasUpdate->mem[0]);
 
 		// update texture space dlist (this affects already compiled dlists too!)
 		glNewList(textureSpaceMatrix, GL_COMPILE);

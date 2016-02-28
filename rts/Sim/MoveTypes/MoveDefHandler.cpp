@@ -323,38 +323,43 @@ bool MoveDef::TestMoveSquare(
 	bool testTerrain,
 	bool testObjects,
 	bool centerOnly,
-	float* minSpeedMod,
-	int* maxBlockBit
+	float* minSpeedModPtr,
+	int* maxBlockBitPtr
 ) const {
-	bool ret = true;
+	bool retTestMove = true;
+
 	assert(testTerrain || testObjects);
-	float                minSpeedMod_ = std::numeric_limits<float>::max();;
-	CMoveMath::BlockType maxBlockBit_ = CMoveMath::BLOCK_NONE;
+
+	float                minSpeedMod = std::numeric_limits<float>::max();;
+	CMoveMath::BlockType maxBlockBit = CMoveMath::BLOCK_NONE;
 
 	const int zMin = -zsizeh * (1 - centerOnly), zMax = zsizeh * (1 - centerOnly);
 	const int xMin = -xsizeh * (1 - centerOnly), xMax = xsizeh * (1 - centerOnly);
 
-	for (int z = zMin; (z <= zMax) && ret; z++) {
-		for (int x = xMin; (x <= xMax) && ret; x++) {
+	for (int z = zMin; (z <= zMax) && retTestMove; z++) {
+		for (int x = xMin; (x <= xMax) && retTestMove; x++) {
 			const float speedMod = CMoveMath::GetPosSpeedMod(*this, xTestMoveSqr + x, zTestMoveSqr + z, testMoveDir);
-			minSpeedMod_ = std::min(minSpeedMod_, speedMod);
-			if (testTerrain) { ret &= (speedMod > 0.0f); }
+
+			minSpeedMod = std::min(minSpeedMod, speedMod);
+			retTestMove &= (!testTerrain || (speedMod > 0.0f));
 		}
 	}
 
 	// GetPosSpeedMod only checks *one* square of terrain
 	// (heightmap/slopemap/typemap), not the blocking-map
-	for (int z = zMin; (z <= zMax) && ret; z++) {
-		for (int x = xMin; (x <= xMax) && ret; x++) {
+	for (int z = zMin; (z <= zMax) && retTestMove; z++) {
+		for (int x = xMin; (x <= xMax) && retTestMove; x++) {
 			const CMoveMath::BlockType blockBits = CMoveMath::SquareIsBlocked(*this, xTestMoveSqr + x, zTestMoveSqr + z, collider);
-			maxBlockBit_ |= blockBits;
-			if (testObjects) { ret &= !(blockBits & CMoveMath::BLOCK_STRUCTURE); }
+
+			maxBlockBit |= blockBits;
+			retTestMove &= (!testObjects || (blockBits & CMoveMath::BLOCK_STRUCTURE) == 0);
 		}
 	}
 
-	if (minSpeedMod != nullptr) *minSpeedMod  = std::min(*minSpeedMod, minSpeedMod_);
-	if (maxBlockBit != nullptr) *maxBlockBit |= int(maxBlockBit_);
-	return ret;
+	// don't use std::min or |= because the values might be garbage
+	if (minSpeedModPtr != nullptr) *minSpeedModPtr = minSpeedMod;
+	if (maxBlockBitPtr != nullptr) *maxBlockBitPtr = maxBlockBit;
+	return retTestMove;
 }
 
 

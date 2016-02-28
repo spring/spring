@@ -29,8 +29,11 @@ struct lua_State;
 class CLuaRules : public CLuaHandleSynced
 {
 	public:
-		static void LoadHandler();
-		static void FreeHandler();
+		static bool ReloadHandler() { return (FreeHandler(), LoadFreeHandler()); } // NOTE the ','
+		static bool LoadFreeHandler() { return (LoadHandler() || FreeHandler()); }
+
+		static bool LoadHandler();
+		static bool FreeHandler();
 
 	public: // call-ins
 		void Cob2Lua(const LuaHashString& funcName, const CUnit* unit,
@@ -45,8 +48,8 @@ class CLuaRules : public CLuaHandleSynced
 		virtual ~CLuaRules();
 
 	protected:
-		bool AddSyncedCode(lua_State *L);
-		bool AddUnsyncedCode(lua_State *L);
+		bool AddSyncedCode(lua_State* L);
+		bool AddUnsyncedCode(lua_State* L);
 
 		int UnpackCobArg(lua_State* L);
 

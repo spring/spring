@@ -4,7 +4,7 @@
 #define _COMMAND_QUEUE_H_
 
 #include <deque>
-#include "Command.h"
+#include "Sim/Units/CommandAI/Command.h"
 
 
 namespace springLegacyAI {

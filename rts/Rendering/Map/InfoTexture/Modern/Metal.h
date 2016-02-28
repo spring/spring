@@ -14,18 +14,18 @@ public:
 
 public:
 	// CEventClient interface
-	bool WantsEvent(const std::string& eventName) {
+	bool WantsEvent(const std::string& eventName) override {
 		return (eventName == "MetalMapChanged");
 	}
-	bool GetFullRead() const { return true; }
-	int  GetReadAllyTeam() const { return AllAccessTeam; }
+	bool GetFullRead() const override { return true; }
+	int  GetReadAllyTeam() const override { return AllAccessTeam; }
 
-	void MetalMapChanged(const int x, const int z);
+	void MetalMapChanged(const int x, const int z) override;
 
 public:
 	// IInfoTexture interface
-	void Update();
-	bool IsUpdateNeeded();
+	void Update() override;
+	bool IsUpdateNeeded() override;
 
 private:
 	bool metalMapChanged;

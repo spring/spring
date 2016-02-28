@@ -30,6 +30,7 @@
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/MouseHandler.h"
 #include "Lua/LuaOpenGL.h"
+#include "Lua/LuaVFSDownload.h"
 #include "Menu/SelectMenu.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Fonts/glFont.h"
@@ -41,6 +42,7 @@
 #include "Sim/Misc/DefinitionTag.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "System/bitops.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
@@ -172,7 +174,9 @@ SpringApp::SpringApp(int argc, char** argv): cmdline(new CmdLineParams(argc, arg
 SpringApp::~SpringApp()
 {
 	spring_clock::PopTickRate();
+#ifdef USING_CREG
 	creg::System::FreeClasses();
+#endif
 }
 
 /**
@@ -231,8 +235,11 @@ bool SpringApp::Initialize()
 	good_fpu_control_registers(__FUNCTION__);
 
 	// CREG & GlobalConfig
+#ifdef USING_CREG
 	creg::System::InitializeClasses();
+#endif
 	GlobalConfig::Instantiate();
+
 
 	// Create Window
 	if (!InitWindow(("Spring " + SpringVersion::GetSync()).c_str())) {
@@ -264,6 +271,7 @@ bool SpringApp::Initialize()
 	// GUIs
 	agui::InitGui();
 	LoadFonts();
+
 	CNamedTextures::Init();
 	LuaOpenGL::Init();
 	ISound::Initialize();
@@ -277,6 +285,7 @@ bool SpringApp::Initialize()
 	Threading::InitThreadPool();
 	Threading::SetThreadScheduler();
 	battery = new CBattery();
+	luavfsdownload = new LuaVFSDownload();
 
 	// Create CGameSetup and CPreGame objects
 	Startup();
@@ -402,6 +411,10 @@ bool SpringApp::CreateSDLWindow(const char* title)
 	streflop::streflop_init<streflop::Simple>();
 #endif
 
+#if defined(WIN32) && !defined _MSC_VER
+	_set_output_format(_TWO_DIGIT_EXPONENT);
+#endif
+
 #if !defined(HEADLESS)
 	// disable desktop compositing to fix tearing
 	// (happens at 300fps, neither fullscreen nor vsync fixes it, so disable compositing)
@@ -496,7 +509,9 @@ void SpringApp::SetupViewportGeometry()
 	const int vpx = globalRendering->viewPosX;
 	const int vpy = globalRendering->winSizeY - globalRendering->viewSizeY - globalRendering->viewPosY;
 
-	agui::gui->UpdateScreenGeometry(globalRendering->viewSizeX, globalRendering->viewSizeY, vpx, vpy);
+	if (agui::gui != nullptr) {
+		agui::gui->UpdateScreenGeometry(globalRendering->viewSizeX, globalRendering->viewSizeY, vpx, vpy);
+	}
 }
 
 
@@ -562,6 +577,10 @@ void SpringApp::InitOpenGL()
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 
+	// FFP model lighting
+	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0.0f);
+	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 0);
+
 	// Clear Window
 	glClearColor(0.0f,0.0f,0.0f,0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -619,7 +638,7 @@ static void ConsolePrintInitialize(const std::string& configSource, bool safemod
  */
 void SpringApp::ParseCmdLine(const std::string& binaryName)
 {
-	cmdline->SetUsageDescription("Usage: " + binaryName + " [options] [path_to_script.txt or demo.sdf]");
+	cmdline->SetUsageDescription("Usage: " + binaryName + " [options] [path_to_script.txt or demo.sdfz]");
 	cmdline->AddSwitch(0,   "sync-version",       "Display program sync version (for online gaming)");
 	cmdline->AddSwitch('f', "fullscreen",         "Run in fullscreen mode");
 	cmdline->AddSwitch('w', "window",             "Run in windowed mode");
@@ -712,8 +731,12 @@ void SpringApp::ParseCmdLine(const std::string& binaryName)
 
 	// Runtime Tests
 	if (cmdline->IsSet("test-creg")) {
-		const int res = creg::RuntimeTest() ? EXIT_SUCCESS : EXIT_FAILURE;
-		exit(res);
+#ifdef USING_CREG
+		exit(creg::RuntimeTest() ? EXIT_SUCCESS : EXIT_FAILURE);
+#else
+		LOG_L(L_ERROR, "Creg is not enabled!\n");
+		exit(EXIT_FAILURE); //Do not fail tests
+#endif
 	}
 
 	const string configSource = (cmdline->IsSet("config") ? cmdline->GetString("config") : "");
@@ -793,7 +816,10 @@ void SpringApp::StartScript(const std::string& inputFile)
 
 void SpringApp::LoadSpringMenu()
 {
-	const std::string defaultscript = configHandler->GetString("DefaultStartScript");
+	std::string defaultscript = configHandler->GetString("DefaultStartScript");
+	if (defaultscript.empty() && CFileHandler("defaultstartscript.txt", SPRING_VFS_PWD_ALL).FileExists()) {
+		defaultscript = "defaultstartscript.txt";
+	}
 
 	if (cmdline->IsSet("oldmenu") || defaultscript.empty()) {
 		// old menu
@@ -850,15 +876,15 @@ void SpringApp::Startup()
 
 		clientSetup->isHost = false;
 		pregame = new CPreGame(clientSetup);
-	} else if (extension == "sdf") {
-		// demo
+	} else if (inputFile.rfind(".sdfz") != std::string::npos) {
+		// demo.sdfz
 		clientSetup->isHost        = true;
 		clientSetup->myPlayerName += " (spec)";
 
 		pregame = new CPreGame(clientSetup);
 		pregame->LoadDemo(inputFile);
 	} else if (extension == "ssf") {
-		// savegame
+		// savegame.ssf
 		clientSetup->isHost = true;
 
 		pregame = new CPreGame(clientSetup);
@@ -890,6 +916,7 @@ void SpringApp::Reload(const std::string& script)
 	// PreGame allocates clientNet, so we need to delete our old connection
 	SafeDelete(clientNet);
 
+	SafeDelete(luavfsdownload);
 	SafeDelete(battery);
 
 	// note: technically we only need to use RemoveArchive
@@ -902,6 +929,9 @@ void SpringApp::Reload(const std::string& script)
 	LuaOpenGL::Free();
 	LuaOpenGL::Init();
 
+	// normally not needed, but would allow switching fonts
+	// LoadFonts();
+
 	// reload sounds.lua in case we switch to a different game
 	ISound::Shutdown();
 	ISound::Initialize();
@@ -910,6 +940,7 @@ void SpringApp::Reload(const std::string& script)
 	eventHandler.ResetState();
 
 	battery = new CBattery();
+	luavfsdownload = new LuaVFSDownload();
 
 	gu->ResetState();
 	gs->ResetState();
@@ -1008,12 +1039,13 @@ void SpringApp::ShutDown()
 	LOG("[SpringApp::%s][1]", __FUNCTION__);
 	ThreadPool::SetThreadCount(0);
 	LOG("[SpringApp::%s][2]", __FUNCTION__);
+	SafeDelete(luavfsdownload);
 
-	game->KillLua(); // must be called before `game` var gets nulled, else stuff in LuaSyncedRead.cpp will fail
+	if (game != nullptr) {
+		game->KillLua(); // must be called before `game` var gets nulled, else stuff in LuaSyncedRead.cpp will fail
+	}
 	SafeDelete(game);
 	SafeDelete(pregame);
-
-	agui::FreeGui();
 
 	LOG("[SpringApp::%s][3]", __FUNCTION__);
 	SafeDelete(clientNet);
@@ -1026,8 +1058,10 @@ void SpringApp::ShutDown()
 	FreeJoystick();
 
 	LOG("[SpringApp::%s][5]", __FUNCTION__);
+	agui::FreeGui();
 	SafeDelete(font);
 	SafeDelete(smallFont);
+
 	CNamedTextures::Kill();
 	GLContext::Free();
 	GlobalConfig::Deallocate();
@@ -1053,6 +1087,7 @@ void SpringApp::ShutDown()
 	FileSystemInitializer::Cleanup();
 
 	LOG("[SpringApp::%s][8]", __FUNCTION__);
+	Watchdog::DeregisterThread(WDT_MAIN);
 	Watchdog::Uninstall();
 	LOG("[SpringApp::%s][9]", __FUNCTION__);
 }

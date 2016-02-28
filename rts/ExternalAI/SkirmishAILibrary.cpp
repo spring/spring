@@ -11,98 +11,98 @@
 #include <string>
 
 
-CSkirmishAILibrary::CSkirmishAILibrary(const SSkirmishAILibrary& ai,
-		const SkirmishAIKey& key)
-		: sSAI(ai), key(key) {
-
-	if (sSAI.handleEvent == NULL) {
+CSkirmishAILibrary::CSkirmishAILibrary(
+	const SSkirmishAILibrary& ai,
+	const SkirmishAIKey& key
+):
+	sSAI(ai),
+	key(key)
+{
+	if (sSAI.handleEvent == nullptr) {
 		LOG_L(L_ERROR,
-				"Fetched AI library %s-%s has no handleEvent function"
-				"available. It is therefore illegal and will not be used."
-				"This usually indicates a problem in the used AI Interface"
-				"library (%s-%s).",
-				key.GetShortName().c_str(), key.GetVersion().c_str(),
-				key.GetInterface().GetShortName().c_str(),
-				key.GetInterface().GetVersion().c_str());
+			"Fetched AI library %s-%s has no handleEvent function"
+			" available. It is therefore illegal and will not be used."
+			" This usually indicates a problem in the used AI Interface"
+			" library (%s-%s).",
+			key.GetShortName().c_str(), key.GetVersion().c_str(),
+			key.GetInterface().GetShortName().c_str(),
+			key.GetInterface().GetVersion().c_str());
 	}
 }
 
-CSkirmishAILibrary::~CSkirmishAILibrary() {}
 
-SkirmishAIKey CSkirmishAILibrary::GetKey() const {
-	return key;
-}
 
 LevelOfSupport CSkirmishAILibrary::GetLevelOfSupportFor(
-			const std::string& engineVersionString, int engineVersionNumber,
-		const AIInterfaceKey& interfaceKey) const {
+	const std::string& engineVersionString,
+	const int engineVersionNumber,
+	const AIInterfaceKey& interfaceKey
+) const {
+	if (sSAI.getLevelOfSupportFor != nullptr) {
+		const char* ksn = key.GetShortName().c_str();
+		const char* kv  = key.GetVersion().c_str();
+		const char* ev  = engineVersionString.c_str();
+		const char* isn = interfaceKey.GetShortName().c_str();
+		const char* iv  = interfaceKey.GetVersion().c_str();
 
-	if (sSAI.getLevelOfSupportFor != NULL) {
-		return sSAI.getLevelOfSupportFor(
-				key.GetShortName().c_str(), key.GetVersion().c_str(),
-				engineVersionString.c_str(), engineVersionNumber,
-				interfaceKey.GetShortName().c_str(), interfaceKey.GetVersion().c_str()
-				);
-	} else {
-		return LOS_Unknown;
+		return sSAI.getLevelOfSupportFor(ksn, kv, ev, engineVersionNumber, isn, iv);
 	}
+
+	return LOS_Unknown;
 }
 
 bool CSkirmishAILibrary::Init(int skirmishAIId, const SSkirmishAICallback* c_callback) const
 {
-	bool ok = true;
+	if (sSAI.init == nullptr)
+		return true;
 
-	if (sSAI.init != NULL) {
-		const int error = sSAI.init(skirmishAIId, c_callback);
-		ok = (error == 0);
+	const int ret = sSAI.init(skirmishAIId, c_callback);
 
-		if (!ok) {
-			// init failed
-			const int teamId = skirmishAIHandler.GetSkirmishAI(skirmishAIId)->team;
-			LOG_L(L_ERROR,
-					"Failed to initialize an AI for team %d (ID: %i), error: %d",
-					teamId, skirmishAIId, error);
-			skirmishAIHandler.SetLocalSkirmishAIDieing(skirmishAIId, 5 /* = AI failed to init */);
-		}
-	}
+	if (ret == 0)
+		return true;
 
-	return ok;
+	skirmishAIHandler.SetLocalSkirmishAIDieing(skirmishAIId, 5 /* = AI failed to init */);
+
+	// init failed
+	const int teamId = skirmishAIHandler.GetSkirmishAI(skirmishAIId)->team;
+	const char* errorStr = "Failed to initialize an AI for team %d (ID: %d), error: %d";
+
+	LOG_L(L_ERROR, errorStr, teamId, skirmishAIId, ret);
+	return false;
 }
 
 bool CSkirmishAILibrary::Release(int skirmishAIId) const
 {
-	bool ok = true;
+	if (sSAI.release == nullptr)
+		return true;
 
-	if (sSAI.release != NULL) {
-		int error = sSAI.release(skirmishAIId);
-		ok = (error == 0);
+	const int ret = sSAI.release(skirmishAIId);
 
-		if (!ok) {
-			// release failed
-			const int teamId = skirmishAIHandler.GetSkirmishAI(skirmishAIId)->team;
-			LOG_L(L_ERROR,
-					"Failed to release an AI on team %d (ID: %i), error: %d",
-					teamId, skirmishAIId, error);
-		}
-	}
+	if (ret == 0)
+		return true;
 
-	return ok;
+	// release failed
+	const int teamId = skirmishAIHandler.GetSkirmishAI(skirmishAIId)->team;
+	const char* errorStr = "Failed to release an AI on team %d (ID: %i), error: %d";
+
+	LOG_L(L_ERROR, errorStr, teamId, skirmishAIId, ret);
+	return false;
 }
 
 int CSkirmishAILibrary::HandleEvent(int skirmishAIId, int topic, const void* data) const
 {
 	skirmishAIHandler.SetCurrentAIID(skirmishAIId);
-	int ret = sSAI.handleEvent(skirmishAIId, topic, data);
+	const int ret = sSAI.handleEvent(skirmishAIId, topic, data);
 	skirmishAIHandler.SetCurrentAIID(MAX_AIS);
 
-	if (ret != 0) {
-		// event handling failed!
-		const int teamId = skirmishAIHandler.GetSkirmishAI(skirmishAIId)->team;
-		LOG_L(L_WARNING,
-			"AI for team %i (ID: %i) failed handling event with topic %i, error: %i",
-			teamId, skirmishAIId, topic, ret
-		);
-	}
+	if (ret == 0)
+		return ret;
+
+	// event handling failed!
+	const int teamId = skirmishAIHandler.GetSkirmishAI(skirmishAIId)->team;
+	const char* errorStr = "AI for team %d (ID: %d) failed handling event with topic %d, error: %d";
+
+	LOG_L(L_WARNING, errorStr, teamId, skirmishAIId, topic, ret);
 
 	return ret;
 }
+

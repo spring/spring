@@ -35,7 +35,7 @@ fi
 
 
 # limit to 1.5GB RAM
-ulimit -v 1500000
+#ulimit -v 1500000
 # max 4 min cpu time
 ulimit -t 240
 

@@ -5,12 +5,12 @@
 #include "OBJParser.h"
 
 #include "Lua/LuaParser.h"
-#include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/Util.h"
 
 #include <cassert>
 #include <sstream>
@@ -54,21 +54,23 @@ S3DModel* COBJParser::Load(const std::string& modelFileName)
 		model->type = MODELTYPE_OBJ;
 		model->textureType = 0;
 		model->numPieces = 0;
-		model->radius = modelTable.GetFloat("radius", 0.0f);
-		model->height = modelTable.GetFloat("height", 0.0f);
-		model->relMidPos = modelTable.GetFloat3("midpos", ZeroVector);
-		model->tex1 = modelTable.GetString("tex1", "");
-		model->tex2 = modelTable.GetString("tex2", "");
 		model->mins = DEF_MIN_SIZE;
 		model->maxs = DEF_MAX_SIZE;
+		model->tex1 = modelTable.GetString("tex1", "");
+		model->tex2 = modelTable.GetString("tex2", "");
 
 	// basic S3O-style texturing
-	texturehandlerS3O->LoadS3OTexture(model);
+	texturehandlerS3O->PreloadS3OTexture(model);
 
 	std::string modelData;
 	modelFile.LoadStringData(modelData);
 
 	if (ParseModelData(model, modelData, modelTable)) {
+		// set after the extrema are known
+		model->radius = modelTable.GetFloat("radius", (model->maxs   - model->mins  ).Length() * 0.5f);
+		model->height = modelTable.GetFloat("height", (model->maxs.y - model->mins.y)                );
+		model->relMidPos = modelTable.GetFloat3("midpos", (model->maxs + model->mins) * 0.5f);
+
 		assert(model->numPieces == modelTable.GetInt("numpieces", 0));
 		return model;
 	} else {
@@ -377,12 +379,12 @@ void COBJParser::BuildModelPieceTreeRec(
 ) {
 	const S3DModelPiece* parentPiece = piece->parent;
 
-	if (parentPiece != NULL) {
-		piece->parentName = parentPiece->name;
-	}
-	piece->SetHasGeometryData(piece->GetVertexCount() != 0);
-	piece->mins = pieceTable.GetFloat3("mins", DEF_MIN_SIZE);
-	piece->maxs = pieceTable.GetFloat3("maxs", DEF_MAX_SIZE);
+	// first read user-set extrema
+	const float3 mins = pieceTable.GetFloat3("mins", DEF_MIN_SIZE);
+	const float3 maxs = pieceTable.GetFloat3("maxs", DEF_MAX_SIZE);
+
+	piece->mins = float3::min(mins, maxs);
+	piece->maxs = float3::max(mins, maxs);
 
 	// always convert <offset> to local coordinates
 	piece->offset = pieceTable.GetFloat3("offset", ZeroVector);
@@ -399,7 +401,7 @@ void COBJParser::BuildModelPieceTreeRec(
 	model->mins = float3::min(piece->goffset + piece->mins, model->mins);
 	model->maxs = float3::max(piece->goffset + piece->maxs, model->maxs);
 
-	piece->SetCollisionVolume(new CollisionVolume("box", piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
+	piece->SetCollisionVolume(CollisionVolume("box", piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
 
 	std::vector<int> childPieceNumbers;
 	std::vector<std::string> childPieceNames;
@@ -464,17 +466,17 @@ void COBJParser::BuildModelPieceTreeRec(
 
 void SOBJPiece::UploadGeometryVBOs()
 {
-	if (!hasGeometryData)
+	if (!HasGeometryData())
 		return;
 
-	vertexDrawIndices.reserve(GetTriangleCount() * 3);
+	indices.reserve(GetTriangleCount() * 3);
 
 	// generate the index-list; only needed when using VBO's
 	for (unsigned int i = 0; i < GetTriangleCount(); i++) {
 		const SOBJTriangle& tri = GetTriangle(i);
-		vertexDrawIndices.push_back(tri.vIndices[0]);
-		vertexDrawIndices.push_back(tri.vIndices[1]);
-		vertexDrawIndices.push_back(tri.vIndices[2]);
+		indices.push_back(tri.vIndices[0]);
+		indices.push_back(tri.vIndices[1]);
+		indices.push_back(tri.vIndices[2]);
 	}
 
 	vboPositions.Bind(GL_ARRAY_BUFFER);
@@ -498,7 +500,7 @@ void SOBJPiece::UploadGeometryVBOs()
 	vbotTangents.Unbind();
 
 	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
-	vboIndices.New(vertexDrawIndices.size() * sizeof(unsigned int), GL_STATIC_DRAW, &vertexDrawIndices[0]);
+	vboIndices.New(indices.size() * sizeof(unsigned int), GL_STATIC_DRAW, &indices[0]);
 	vboIndices.Unbind();
 
 	// FIXME:
@@ -508,19 +510,17 @@ void SOBJPiece::UploadGeometryVBOs()
 
 	// NOTE: wasteful to keep these around, but still needed (eg. for Shatter())
 	// vertices.clear();
-	// vertexDrawIndices.clear();
-	vnormals.clear();
-	texcoors.clear();
+	// indices.clear();
+	// vnormals.clear();
+	// texcoors.clear();
 	sTangents.clear();
 	tTangents.clear();
 	triangles.clear();
 }
 
-void SOBJPiece::DrawForList() const
-{
-	if (!hasGeometryData)
-		return;
 
+void SOBJPiece::BindVertexAttribVBOs() const
+{
 	vbosTangents.Bind(GL_ARRAY_BUFFER);
 		glClientActiveTexture(GL_TEXTURE5);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -552,11 +552,11 @@ void SOBJPiece::DrawForList() const
 		glEnableClientState(GL_NORMAL_ARRAY);
 		glNormalPointer(GL_FLOAT, sizeof(float3), vboNormals.GetPtr());
 	vboNormals.Unbind();
+}
 
-	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
-		glDrawRangeElements(GL_TRIANGLES, 0, vertices.size() - 1, vertexDrawIndices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
-	vboIndices.Unbind();
 
+void SOBJPiece::UnbindVertexAttribVBOs() const
+{
 	glClientActiveTexture(GL_TEXTURE6);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
@@ -573,8 +573,22 @@ void SOBJPiece::DrawForList() const
 	glDisableClientState(GL_NORMAL_ARRAY);
 }
 
+
+void SOBJPiece::DrawForList() const
+{
+	if (!HasGeometryData())
+		return;
+
+	BindVertexAttribVBOs();
+	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
+		glDrawRangeElements(GL_TRIANGLES, 0, vertices.size() - 1, indices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
+	vboIndices.Unbind();
+	UnbindVertexAttribVBOs();
+}
+
 void SOBJPiece::SetMinMaxExtends(bool globalVertexOffsets)
 {
+	// if no user-set extrema, calculate them
 	const bool overrideMins = (mins == DEF_MIN_SIZE);
 	const bool overrideMaxs = (maxs == DEF_MAX_SIZE);
 
@@ -588,10 +602,10 @@ void SOBJPiece::SetMinMaxExtends(bool globalVertexOffsets)
 			// for converted S3O's, the piece offsets are defined wrt.
 			// the parent piece, *not* wrt. the root piece (<goffset>
 			// stores the concatenated transform)
-			vertexGlobalPos = GetVertex(i);
+			vertexGlobalPos = GetVertexPos(i);
 			vertexLocalPos = vertexGlobalPos - goffset;
 		} else {
-			vertexLocalPos = GetVertex(i);
+			vertexLocalPos = GetVertexPos(i);
 			vertexGlobalPos = vertexLocalPos + goffset;
 		}
 
@@ -609,7 +623,7 @@ void SOBJPiece::SetMinMaxExtends(bool globalVertexOffsets)
 
 void SOBJPiece::SetVertexTangents()
 {
-	if (!hasGeometryData)
+	if (!HasGeometryData())
 		return;
 
 	sTangents.resize(GetVertexCount(), ZeroVector);
@@ -620,9 +634,9 @@ void SOBJPiece::SetVertexTangents()
 		const SOBJTriangle& tri = GetTriangle(i);
 
 		const float3&
-			p0 = GetVertex(tri.vIndices[0]),
-			p1 = GetVertex(tri.vIndices[1]),
-			p2 = GetVertex(tri.vIndices[2]);
+			p0 = GetVertexPos(tri.vIndices[0]),
+			p1 = GetVertexPos(tri.vIndices[1]),
+			p2 = GetVertexPos(tri.vIndices[2]);
 		const float2&
 			tc0 = GetTxCoor(tri.tIndices[0]),
 			tc1 = GetTxCoor(tri.tIndices[1]),
@@ -670,3 +684,4 @@ void SOBJPiece::SetVertexTangents()
 		t = (s.cross(n)) * h;
 	}
 }
+

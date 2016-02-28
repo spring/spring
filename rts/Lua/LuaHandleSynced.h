@@ -98,7 +98,13 @@ class CSyncedLuaHandle : public CLuaHandle
 			float* newDamage,
 			float* impulseMult);
 
-		bool ShieldPreDamaged(const CProjectile*, const CWeapon*, const CUnit*, bool);
+		bool ShieldPreDamaged(
+			const CProjectile* projectile,
+			const CWeapon* shieldEmitter,
+			const CUnit* shieldCarrier,
+			bool bounceProjectile,
+			const CWeapon* beamEmitter,
+			const CUnit* beamCarrier);
 
 		bool SyncedActionFallback(const string& line, int playerID);
 
@@ -161,21 +167,19 @@ class CLuaHandleSynced
 		}
 
 		static CUnsyncedLuaHandle* GetUnsyncedHandle(lua_State* L) {
-			if (CLuaHandle::GetHandleSynced(L)) {
-				auto slh = CSyncedLuaHandle::GetSyncedHandle(L);
-				return &slh->base.unsyncedLuaHandle;
-			} else {
+			if (!CLuaHandle::GetHandleSynced(L))
 				return CUnsyncedLuaHandle::GetUnsyncedHandle(L);
-			}
+
+			auto slh = CSyncedLuaHandle::GetSyncedHandle(L);
+			return &slh->base.unsyncedLuaHandle;
 		}
 
 		static CSyncedLuaHandle* GetSyncedHandle(lua_State* L) {
-			if (CLuaHandle::GetHandleSynced(L)) {
+			if (CLuaHandle::GetHandleSynced(L))
 				return CSyncedLuaHandle::GetSyncedHandle(L);
-			} else {
-				auto ulh = CUnsyncedLuaHandle::GetUnsyncedHandle(L);
-				return &ulh->base.syncedLuaHandle;
-			}
+
+			auto ulh = CUnsyncedLuaHandle::GetUnsyncedHandle(L);
+			return &ulh->base.syncedLuaHandle;
 		}
 
 	protected:
@@ -186,11 +190,11 @@ class CLuaHandleSynced
 		void Init(const string& syncedFile, const string& unsyncedFile, const string& modes);
 
 		bool IsValid() const {
-			return syncedLuaHandle.IsValid() && unsyncedLuaHandle.IsValid();
+			return (syncedLuaHandle.IsValid() && unsyncedLuaHandle.IsValid());
 		}
-		void KillLua() {
-			syncedLuaHandle.KillLua();
-			unsyncedLuaHandle.KillLua();
+		void KillLua(bool inFreeHandler = false) {
+			syncedLuaHandle.KillLua(inFreeHandler);
+			unsyncedLuaHandle.KillLua(inFreeHandler);
 		}
 
 	#define SET_PERMISSION(name, type) \

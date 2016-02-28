@@ -13,7 +13,7 @@ CR_REG_METADATA(SolidObjectDecalDef,
 	CR_MEMBER(groundDecalTypeName),
 	CR_MEMBER(trackDecalTypeName),
 
- 	CR_MEMBER(useGroundDecal),
+	CR_MEMBER(useGroundDecal),
 	CR_MEMBER(groundDecalType),
 	CR_MEMBER(groundDecalSizeX),
 	CR_MEMBER(groundDecalSizeY),
@@ -107,19 +107,20 @@ SolidObjectDef::SolidObjectDef()
 	, upright(false)
 	, reclaimable(true)
 
-	, model(NULL)
-	, collisionVolume(NULL)
+	, model(nullptr)
 {
 }
 
-SolidObjectDef::~SolidObjectDef() {
-	delete collisionVolume;
-	collisionVolume = NULL;
+void SolidObjectDef::PreloadModel() const
+{
+	if (model == nullptr && !modelName.empty()) {
+		modelParser->Preload3DModel(modelName);
+	}
 }
 
 S3DModel* SolidObjectDef::LoadModel() const
 {
-	if (model == NULL) {
+	if (model == nullptr) {
 		if (!modelName.empty()) {
 			model = modelParser->Load3DModel(modelName);
 		} else {
@@ -138,7 +139,7 @@ float SolidObjectDef::GetModelRadius() const
 
 void SolidObjectDef::ParseCollisionVolume(const LuaTable& table)
 {
-	collisionVolume = new CollisionVolume(
+	collisionVolume = CollisionVolume(
 		table.GetString("collisionVolumeType", ""),
 		table.GetFloat3("collisionVolumeScales", ZeroVector),
 		table.GetFloat3("collisionVolumeOffsets", ZeroVector)
@@ -147,8 +148,8 @@ void SolidObjectDef::ParseCollisionVolume(const LuaTable& table)
 	// if this unit wants per-piece volumes, make
 	// its main collision volume deferent and let
 	// it ignore hits
-	collisionVolume->SetDefaultToPieceTree(table.GetBool("usePieceCollisionVolumes", false));
-	collisionVolume->SetDefaultToFootPrint(table.GetBool("useFootPrintCollisionVolume", false));
-	collisionVolume->SetIgnoreHits(collisionVolume->DefaultToPieceTree());
+	collisionVolume.SetDefaultToPieceTree(table.GetBool("usePieceCollisionVolumes", false));
+	collisionVolume.SetDefaultToFootPrint(table.GetBool("useFootPrintCollisionVolume", false));
+	collisionVolume.SetIgnoreHits(collisionVolume.DefaultToPieceTree());
 }
 

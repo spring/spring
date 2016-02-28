@@ -87,6 +87,13 @@ void PrintAvailableResolutions()
 
 void _APIENTRY OpenGLDebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const GLvoid* userParam)
 {
+	if (id == 131185) {
+		// nvidia
+		// Gives detail about BufferObject's memory location
+		// example: "Buffer detailed info: Buffer object 260 (bound to GL_PIXEL_UNPACK_BUFFER_ARB, usage hint is GL_STREAM_DRAW) has been mapped in DMA CACHED memory."
+		return;
+	}
+
 	std::string sourceStr;
 	std::string typeStr;
 	std::string severityStr;

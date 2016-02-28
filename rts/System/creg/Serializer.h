@@ -5,6 +5,9 @@
 
 #include "ISerializer.h"
 #include "creg_cond.h"
+
+#ifdef USING_CREG
+
 #include <map>
 #include <vector>
 #include <list>
@@ -185,5 +188,7 @@ namespace creg {
 
 }
 
+#endif //USING_CREG
 
-#endif
+
+#endif //SERIALIZER_IMPL_H

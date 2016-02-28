@@ -13,6 +13,7 @@
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Features/Feature.h"
 #include "System/Log/ILog.h"
+#include "System/Util.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -97,33 +98,23 @@ CBasicTreeDrawer::CBasicTreeDrawer(): ITreeDrawer()
 		TexImage.CopySubImage(sprite, 255, 255);
 	}
 
-	// create mipmapped texture
-	treetex = TexImage.CreateTexture(true);
+	treetex = TexImage.CreateMipMapTexture();
 
 	lastListClean = 0;
-	treesX = mapDims.mapx / TREE_SQUARE_SIZE;
-	treesY = mapDims.mapy / TREE_SQUARE_SIZE;
-	nTrees = treesX * treesY;
-	trees = new TreeSquareStruct[nTrees];
 
-	for (TreeSquareStruct* pTSS = trees; pTSS < trees + nTrees; ++pTSS) {
-		pTSS->dispList = 0;
-		pTSS->farDispList = 0;
-	}
+	treeSquares.resize(nTrees);
 }
 
 CBasicTreeDrawer::~CBasicTreeDrawer()
 {
 	glDeleteTextures (1, &treetex);
 
-	for (TreeSquareStruct* pTSS=trees; pTSS<trees+nTrees; ++pTSS) {
-		if (pTSS->dispList)
-			glDeleteLists(pTSS->dispList, 1);
-		if (pTSS->farDispList)
-			glDeleteLists(pTSS->farDispList, 1);
+	for (TreeSquareStruct& tss: treeSquares) {
+		if (tss.dispList)
+			glDeleteLists(tss.dispList, 1);
+		if (tss.farDispList)
+			glDeleteLists(tss.farDispList, 1);
 	}
-
-	delete[] trees;
 }
 
 static void inline SetArrayQ(CVertexArray* va, float t1, float t2, float3 v)
@@ -149,7 +140,7 @@ struct CBasicTreeSquareDrawer : public CReadMap::IQuadDrawer
 	}
 
 	void DrawQuad(int x, int y) {
-		ITreeDrawer::TreeSquareStruct* tss = &td->trees[(y * td->treesX) + x];
+		ITreeDrawer::TreeSquareStruct* tss = &td->treeSquares[(y * td->treesX) + x];
 
 		float3 dif;
 			dif.x = camera->GetPos().x - ((x * SQUARE_SIZE * TREE_SQUARE_SIZE) + (SQUARE_SIZE * TREE_SQUARE_SIZE / 2));
@@ -170,8 +161,8 @@ struct CBasicTreeSquareDrawer : public CReadMap::IQuadDrawer
 				va->Initialize();
 				va->EnlargeArrays(12 * tss->trees.size(), 0, VA_SIZE_T); //!alloc room for all tree vertexes
 
-				for (std::map<int, ITreeDrawer::TreeStruct>::iterator ti = tss->trees.begin(); ti != tss->trees.end(); ++ti) {
-					const ITreeDrawer::TreeStruct* ts = &ti->second;
+				for (auto ti = tss->trees.cbegin(); ti != tss->trees.cend(); ++ti) {
+					const ITreeDrawer::TreeStruct* ts = &(*ti);
 					const CFeature* f = featureHandler->GetFeature(ts->id);
 
 					if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
@@ -207,8 +198,8 @@ struct CBasicTreeSquareDrawer : public CReadMap::IQuadDrawer
 
 				tss->viewVector = dif;
 
-				for (std::map<int, ITreeDrawer::TreeStruct>::iterator ti = tss->trees.begin(); ti != tss->trees.end(); ++ti) {
-					const ITreeDrawer::TreeStruct* ts = &ti->second;
+				for (auto ti = tss->trees.cbegin(); ti != tss->trees.cend(); ++ti) {
+					const ITreeDrawer::TreeStruct* ts = &(*ti);
 					const CFeature* f = featureHandler->GetFeature(ts->id);
 
 					if (!f->IsInLosForAllyTeam(gu->myAllyTeam))
@@ -363,7 +354,7 @@ void CBasicTreeDrawer::Draw(float treeDistance, bool drawReflection)
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_ALPHA_TEST);
 
-	ISky::SetupFog();
+	sky->SetupFog();
 	glColor4f(1, 1, 1, 1);
 
 	const int cx = (int)(camera->GetPos().x / (SQUARE_SIZE * TREE_SQUARE_SIZE));
@@ -371,41 +362,50 @@ void CBasicTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 	CBasicTreeSquareDrawer drawer(this, cx, cy, treeDistance * SQUARE_SIZE * TREE_SQUARE_SIZE);
 
-	readMap->GridVisibility (camera, TREE_SQUARE_SIZE, drawer.treeDistance * 2.0f, &drawer);
+	readMap->GridVisibility(nullptr, &drawer, drawer.treeDistance * 2.0f, TREE_SQUARE_SIZE);
 
-	const int startClean = lastListClean * 20 % nTrees;
-	const int endClean = gs->frameNum * 20 % nTrees;
+	// can be -1, do not want to let start or end become negative
+	const int frameNum = std::max(gs->frameNum, 0);
 
-	lastListClean = gs->frameNum;
+	const int startClean = (lastListClean * 20) % nTrees;
+	const int   endClean = (     frameNum * 20) % nTrees;
+
+	lastListClean = frameNum;
 
 	if (startClean > endClean) {
-		for (TreeSquareStruct* pTSS = (trees + startClean); pTSS < (trees + nTrees); ++pTSS) {
-			if ((pTSS->lastSeen < (gs->frameNum - 50)) && pTSS->dispList) {
+		for (int i = startClean; i < nTrees; i++) {
+			TreeSquareStruct* pTSS = &treeSquares[i];
+
+			if ((pTSS->lastSeen < (frameNum - 50)) && pTSS->dispList) {
 				glDeleteLists(pTSS->dispList, 1);
 				pTSS->dispList = 0;
 			}
-			if ((pTSS->lastSeenFar < (gs->frameNum - 50)) && pTSS->farDispList) {
+			if ((pTSS->lastSeenFar < (frameNum - 50)) && pTSS->farDispList) {
 				glDeleteLists(pTSS->farDispList, 1);
 				pTSS->farDispList = 0;
 			}
 		}
-		for (TreeSquareStruct* pTSS = trees; pTSS < (trees + endClean); ++pTSS) {
-			if ((pTSS->lastSeen < (gs->frameNum - 50)) && pTSS->dispList) {
+		for (int i = 0; i < endClean; i++) {
+			TreeSquareStruct* pTSS = &treeSquares[i];
+
+			if ((pTSS->lastSeen < (frameNum - 50)) && pTSS->dispList) {
 				glDeleteLists(pTSS->dispList, 1);
 				pTSS->dispList = 0;
 			}
-			if ((pTSS->lastSeenFar < (gs->frameNum - 50)) && pTSS->farDispList) {
+			if ((pTSS->lastSeenFar < (frameNum - 50)) && pTSS->farDispList) {
 				glDeleteLists(pTSS->farDispList, 1);
 				pTSS->farDispList = 0;
 			}
 		}
 	} else {
-		for (TreeSquareStruct* pTSS = (trees + startClean); pTSS < (trees + endClean); ++pTSS) {
-			if (pTSS->lastSeen<gs->frameNum-50 && pTSS->dispList) {
-				glDeleteLists(pTSS->dispList,1);
-				pTSS->dispList=0;
+		for (int i = startClean; i < endClean; i++) {
+			TreeSquareStruct* pTSS = &treeSquares[i];
+
+			if ((pTSS->lastSeen < (frameNum - 50)) && pTSS->dispList) {
+				glDeleteLists(pTSS->dispList, 1);
+				pTSS->dispList = 0;
 			}
-			if ((pTSS->lastSeenFar < (gs->frameNum - 50)) && pTSS->farDispList) {
+			if ((pTSS->lastSeenFar < (frameNum - 50)) && pTSS->farDispList) {
 				glDeleteLists(pTSS->farDispList, 1);
 				pTSS->farDispList = 0;
 			}
@@ -416,53 +416,5 @@ void CBasicTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 	glDisable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
-}
-
-void CBasicTreeDrawer::Update()
-{
-}
-
-void CBasicTreeDrawer::ResetPos(const float3& pos)
-{
-	const int x = (int)(pos.x / TREE_SQUARE_SIZE / SQUARE_SIZE);
-	const int y = (int)(pos.z / TREE_SQUARE_SIZE / SQUARE_SIZE);
-	TreeSquareStruct* pTSS = trees + ((y * treesX) + x);
-	if (pTSS->dispList) {
-		delDispLists.push_back(pTSS->dispList);
-		pTSS->dispList = 0;
-	}
-	if (pTSS->farDispList) {
-		delDispLists.push_back(pTSS->farDispList);
-		pTSS->farDispList = 0;
-	}
-}
-
-void CBasicTreeDrawer::AddTree(int treeID, int treeType, const float3& pos, float size)
-{
-	TreeStruct ts;
-
-	ts.id = treeID;
-	ts.type = treeType;
-	ts.pos = pos;
-
-	const int treeSquareSize = SQUARE_SIZE * TREE_SQUARE_SIZE;
-	const int treeSquareIdx =
-		(((int)pos.x) / (treeSquareSize)) +
-		(((int)pos.z) / (treeSquareSize) * treesX);
-
-	trees[treeSquareIdx].trees[treeID] = ts;
-	ResetPos(pos);
-}
-
-void CBasicTreeDrawer::DeleteTree(int treeID, const float3& pos)
-{
-	const int treeSquareSize = SQUARE_SIZE * TREE_SQUARE_SIZE;
-	const int treeSquareIdx =
-		(((int)pos.x) / (treeSquareSize)) +
-		(((int)pos.z) / (treeSquareSize) * treesX);
-
-	trees[treeSquareIdx].trees.erase(treeID);
-
-	ResetPos(pos);
 }
 

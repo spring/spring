@@ -5,6 +5,7 @@
 
 #include <string>
 #include <map>
+#include <vector>
 
 #include "GameController.h"
 #include "Game/UI/KeySet.h"
@@ -101,7 +102,6 @@ public:
 	void SaveGame(const std::string& filename, bool overwrite);
 
 	void ResizeEvent();
-	void SetupRenderingParams();
 
 	void SetDrawMode(GameDrawMode mode) { gameDrawMode = mode; }
 	GameDrawMode GetDrawMode() const { return gameDrawMode; }
@@ -111,8 +111,9 @@ private:
 	bool UpdateUnsynced(const spring_time currentTime);
 
 	void DrawSkip(bool blackscreen = true);
+	void DrawInputReceivers();
 	void DrawInputText();
-	void UpdateCam();
+	void DrawInterfaceWidgets();
 
 	/// Format and display a chat message received over network
 	void HandleChatMsg(const ChatMessage& msg);

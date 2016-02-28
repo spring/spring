@@ -23,18 +23,17 @@
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/PieceProjectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Projectiles/Unsynced/BubbleProjectile.h"
-#include "Sim/Projectiles/Unsynced/HeatCloudProjectile.h"
-#include "Sim/Projectiles/Unsynced/MuzzleFlame.h"
-#include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
-#include "Sim/Projectiles/Unsynced/WakeProjectile.h"
-#include "Sim/Projectiles/Unsynced/WreckProjectile.h"
+#include "Rendering/Env/Particles/Classes/BubbleProjectile.h"
+#include "Rendering/Env/Particles/Classes/HeatCloudProjectile.h"
+#include "Rendering/Env/Particles/Classes/MuzzleFlame.h"
+#include "Rendering/Env/Particles/Classes/SmokeProjectile.h"
+#include "Rendering/Env/Particles/Classes/WakeProjectile.h"
+#include "Rendering/Env/Particles/Classes/WreckProjectile.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDef.h"
@@ -67,20 +66,19 @@ void CUnitScript::InitVars(int numTeams, int numAllyTeams)
 	for (int t = 0; t < numTeams; t++) {
 		teamVars[t].resize(TEAM_VAR_COUNT, 0);
 	}
-	
+
 	for (int t = 0; t < numAllyTeams; t++) {
 		allyVars[t].resize(ALLY_VAR_COUNT, 0);
 	}
 }
 
 
-CUnitScript::CUnitScript(CUnit* unit, const std::vector<LocalModelPiece*>& pieces)
+CUnitScript::CUnitScript(CUnit* unit)
 	: unit(unit)
 	, busy(false)
 	, hasSetSFXOccupy(false)
 	, hasRockUnit(false)
 	, hasStartBuilding(false)
-	, pieces(pieces)
 {
 	memset(unitVars, 0, sizeof(unitVars));
 }
@@ -234,7 +232,7 @@ void CUnitScript::TickAnims(int deltaTime, AnimType type, std::list< std::list<A
 				}
 
 				pieces[ai->piece]->SetPosition(pos);
-				unit->localModel->PieceUpdated(ai->piece);
+				unit->localModel.PieceUpdated(ai->piece);
 			}
 		} break;
 
@@ -248,7 +246,7 @@ void CUnitScript::TickAnims(int deltaTime, AnimType type, std::list< std::list<A
 				}
 
 				pieces[ai->piece]->SetRotation(rot);
-				unit->localModel->PieceUpdated(ai->piece);
+				unit->localModel.PieceUpdated(ai->piece);
 			}
 		} break;
 
@@ -262,7 +260,7 @@ void CUnitScript::TickAnims(int deltaTime, AnimType type, std::list< std::list<A
 				}
 
 				pieces[ai->piece]->SetRotation(rot);
-				unit->localModel->PieceUpdated(ai->piece);
+				unit->localModel.PieceUpdated(ai->piece);
 			}
 		} break;
 
@@ -479,14 +477,14 @@ void CUnitScript::MoveNow(int piece, int axis, float destination)
 		return;
 	}
 
-	LocalModel* m = unit->localModel;
+	LocalModel& m = unit->localModel;
 	LocalModelPiece* p = pieces[piece];
 
 	float3 pos = p->GetPosition();
 	pos[axis] = pieces[piece]->original->offset[axis] + destination;
 
 	p->SetPosition(pos);
-	m->PieceUpdated(piece);
+	m.PieceUpdated(piece);
 }
 
 
@@ -497,14 +495,14 @@ void CUnitScript::TurnNow(int piece, int axis, float destination)
 		return;
 	}
 
-	LocalModel* m = unit->localModel;
+	LocalModel& m = unit->localModel;
 	LocalModelPiece* p = pieces[piece];
 
 	float3 rot = p->GetRotation();
 	rot[axis] = destination;
 
 	p->SetRotation(rot);
-	m->PieceUpdated(piece);
+	m.PieceUpdated(piece);
 }
 
 
@@ -661,20 +659,21 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 				}
 
 				// detonate weapon from piece
-				const WeaponDef* weaponDef = unit->weapons[index]->weaponDef;
+				const CWeapon* weapon = unit->weapons[index];
+				const WeaponDef* weaponDef = weapon->weaponDef;
 
 				CGameHelper::ExplosionParams params = {
 					pos,
 					ZeroVector,
-					weaponDef->damages,
+					*weapon->damages,
 					weaponDef,
 					unit,                              // owner
 					NULL,                              // hitUnit
 					NULL,                              // hitFeature
-					weaponDef->craterAreaOfEffect,
-					weaponDef->damageAreaOfEffect,
-					weaponDef->edgeEffectiveness,
-					weaponDef->explosionSpeed,
+					weapon->damages->craterAreaOfEffect,
+					weapon->damages->damageAreaOfEffect,
+					weapon->damages->edgeEffectiveness,
+					weapon->damages->explosionSpeed,
 					1.0f,                              // gfxMod
 					weaponDef->impactOnly,
 					weaponDef->noSelfDamage,           // ignoreOwner
@@ -701,10 +700,8 @@ void CUnitScript::AttachUnit(int piece, int u)
 	}
 
 #ifndef _CONSOLE
-	CTransportUnit* tu = dynamic_cast<CTransportUnit*>(unit);
-
-	if (tu && unitHandler->units[u]) {
-		tu->AttachUnit(unitHandler->units[u], piece);
+	if (unit->unitDef->IsTransportUnit() && unitHandler->units[u]) {
+		unit->AttachUnit(unitHandler->units[u], piece);
 	}
 #endif
 }
@@ -713,10 +710,8 @@ void CUnitScript::AttachUnit(int piece, int u)
 void CUnitScript::DropUnit(int u)
 {
 #ifndef _CONSOLE
-	CTransportUnit* tu = dynamic_cast<CTransportUnit*>(unit);
-
-	if (tu && unitHandler->units[u]) {
-		tu->DetachUnit(unitHandler->units[u]);
+	if (unit->unitDef->IsTransportUnit() && unitHandler->units[u]) {
+		unit->DetachUnit(unitHandler->units[u]);
 	}
 #endif
 }
@@ -770,54 +765,46 @@ void CUnitScript::Explode(int piece, int flags)
 
 	if (!(flags & PF_NoHeatCloud)) {
 		// Do an explosion at the location first
-		new CHeatCloudProjectile(NULL, absPos, ZeroVector, 30, 30);
+		new CHeatCloudProjectile(nullptr, absPos, ZeroVector, 30, 30);
 	}
 
 	// If this is true, no stuff should fly off
 	if (flags & PF_NONE)
 		return;
 
+	if (pieces[piece]->original == nullptr)
+		return;
+
+	if (flags & PF_Shatter) {
+		Shatter(piece, absPos, unit->speed);
+		return;
+	}
+
 	// This means that we are going to do a full fledged piece explosion!
 	float3 baseSpeed = unit->speed;
 	float3 explSpeed((0.5f - gs->randFloat()) * 6.0f, 1.2f + gs->randFloat() * 5.0f, (0.5f - gs->randFloat()) * 6.0f);
 
-	if (baseSpeed.SqLength() > 9) {
-		const float l  = baseSpeed.Length();
-		const float l2 = 3 + math::sqrt(l - 3);
-		baseSpeed *= (l2 / l);
-	}
-	if (unit->pos.y - CGround::GetApproximateHeight(unit->pos.x, unit->pos.z) > 15) {
+	if (unit->pos.y - CGround::GetApproximateHeight(unit->pos.x, unit->pos.z) > 15)
 		explSpeed.y = (0.5f - gs->randFloat()) * 6.0f;
+
+	if (baseSpeed.SqLength() > 9.0f) {
+		const float l  = baseSpeed.Length();
+		const float l2 = 3.0f + math::sqrt(l - 3.0f);
+		baseSpeed *= (l2 / l);
 	}
 
 	explSpeed += baseSpeed;
 
-	// limit projectile speed to 12 elmos/frame (why?)
-	if (false && explSpeed.SqLength() > (12.0f*12.0f)) {
-		explSpeed = (explSpeed.Normalize() * 12.0f);
-	}
-
-	if (flags & PF_Shatter) {
-		Shatter(piece, absPos, explSpeed);
-		return;
-	}
-
-	if (pieces[piece]->original == NULL)
-		return;
-
-	// projectiles that don't fall could live forever
-	int newflags = PF_Fall;
-
 	const float partSat = projectileHandler->GetParticleSaturation();
 
-	if (flags & PF_Explode) { newflags |= PF_Explode; }
-	// if (flags & PF_Fall) { newflags |=  PF_Fall; }
-	if ((flags & PF_Smoke) && partSat < 1.0f) { newflags |= PF_Smoke; }
-	if ((flags & PF_Fire) && partSat < 0.95f) { newflags |= PF_Fire; }
-	if (flags & PF_NoCEGTrail) { newflags |= PF_NoCEGTrail; }
-	if (flags & PF_Recursive) { newflags |= PF_Recursive; }
+	int newFlags = 0;
+	newFlags |= (PF_Explode    * ((flags & PF_Explode   ) != 0));
+	newFlags |= (PF_Smoke      * ((flags & PF_Smoke     ) != 0) && partSat < 0.95f);
+	newFlags |= (PF_Fire       * ((flags & PF_Fire      ) != 0) && partSat < 0.95f);
+	newFlags |= (PF_NoCEGTrail * ((flags & PF_NoCEGTrail) != 0));
+	newFlags |= (PF_Recursive  * ((flags & PF_Recursive ) != 0));
 
-	new CPieceProjectile(unit, pieces[piece], absPos, explSpeed, newflags, 0.5f);
+	new CPieceProjectile(unit, pieces[piece], absPos, explSpeed, newFlags, 0.5f);
 #endif
 }
 
@@ -826,10 +813,14 @@ void CUnitScript::Shatter(int piece, const float3& pos, const float3& speed)
 {
 	const LocalModelPiece* lmp = pieces[piece];
 	const S3DModelPiece* omp = lmp->original;
-	const float pieceChance = 1.0f - (projectileHandler->GetCurrentParticles() - (projectileHandler->maxParticles - 2000)) / 2000.0f;
 
+	if (!omp->HasGeometryData())
+		return;
+
+	const float pieceChance = 1.0f - (projectileHandler->GetCurrentParticles() - (projectileHandler->maxParticles - 2000)) / 2000.0f;
 	if (pieceChance > 0.0f) {
-		omp->Shatter(pieceChance, unit->model->textureType, unit->team, pos, speed);
+		const CMatrix44f m = unit->GetTransformMatrix() * lmp->GetModelSpaceMatrix();
+		omp->Shatter(pieceChance, unit->model->type, unit->model->textureType, unit->team, pos, speed, m);
 	}
 }
 
@@ -1075,8 +1066,8 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		unit->DoSeismicPing(pingSize);
 		break;
 
-	case CURRENT_FUEL:
-		return int(unit->currentFuel * float(COBSCALE));
+	case CURRENT_FUEL: //deprecated
+		return 0;
 	case TRANSPORT_ID:
 		return unit->transporter?unit->transporter->id:-1;
 
@@ -1123,13 +1114,13 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		}
 		switch (p3) {	//who hears the sound
 			case 0:		//ALOS
-				if (!losHandler->InAirLos(unit->pos,gu->myAllyTeam)) { return 0; }
+				if (!losHandler->InAirLos(unit,gu->myAllyTeam)) { return 0; }
 				break;
 			case 1:		//LOS
 				if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS)) { return 0; }
 				break;
 			case 2:		//ALOS or radar
-				if (!(losHandler->InAirLos(unit->pos,gu->myAllyTeam) || unit->losStatus[gu->myAllyTeam] & (LOS_INRADAR))) { return 0; }
+				if (!(losHandler->InAirLos(unit,gu->myAllyTeam) || unit->losStatus[gu->myAllyTeam] & (LOS_INRADAR))) { return 0; }
 				break;
 			case 3:		//LOS or radar
 				if (!(unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR))) { return 0; }
@@ -1372,9 +1363,8 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			return 0;
 		}
 		else {
-			LOG_L(L_ERROR,
-					"CobError: Unknown get constant %d (params = %d %d %d %d)",
-					val, p1, p2, p3, p4);
+			ShowUnitScriptError("CobError: Unknown get constant " + IntToString(val) + " (params = " + IntToString(p1) + " " +
+			IntToString(p2) + " " + IntToString(p3) + " " + IntToString(p4) + ")");
 		}
 	}
 #endif
@@ -1539,27 +1529,26 @@ void CUnitScript::SetUnitVal(int val, int param)
 			break;
 		}
 		case RADAR_RADIUS: {
-			unit->ChangeSensorRadius(&unit->radarRadius, param);
+			unit->radarRadius = param;
 			break;
 		}
 		case JAMMER_RADIUS: {
-			unit->ChangeSensorRadius(&unit->jammerRadius, param);
+			unit->jammerRadius = param;
 			break;
 		}
 		case SONAR_RADIUS: {
-			unit->ChangeSensorRadius(&unit->sonarRadius, param);
+			unit->sonarRadius = param;
 			break;
 		}
 		case SONAR_JAM_RADIUS: {
-			unit->ChangeSensorRadius(&unit->sonarJamRadius, param);
+			unit->sonarJamRadius = param;
 			break;
 		}
 		case SEISMIC_RADIUS: {
-			unit->ChangeSensorRadius(&unit->seismicRadius, param);
+			unit->seismicRadius = param;
 			break;
 		}
-		case CURRENT_FUEL: {
-			unit->currentFuel = param / (float) COBSCALE;
+		case CURRENT_FUEL: { //deprecated
 			break;
 		}
 		case SHIELD_POWER: {
@@ -1631,7 +1620,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 				unitVars[val - UNIT_VAR_START] = param;
 			}
 			else {
-				LOG_L(L_ERROR, "CobError: Unknown set constant %d", val);
+				ShowUnitScriptError("CobError: Unknown set constant " + IntToString(val));
 			}
 		}
 	}
@@ -1651,12 +1640,12 @@ int CUnitScript::ScriptToModel(int scriptPieceNum) const {
 }
 
 int CUnitScript::ModelToScript(int lmodelPieceNum) const {
-	const LocalModel* lm = unit->localModel;
+	LocalModel& lm = unit->localModel;
 
-	if (!lm->HasPiece(lmodelPieceNum))
+	if (!lm.HasPiece(lmodelPieceNum))
 		return -1;
 
-	const LocalModelPiece* lmp = lm->GetPiece(lmodelPieceNum);
+	const LocalModelPiece* lmp = lm.GetPiece(lmodelPieceNum);
 
 	return (lmp->GetScriptPieceIndex());
 }

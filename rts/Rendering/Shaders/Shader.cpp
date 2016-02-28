@@ -205,6 +205,7 @@ namespace Shader {
 		});
 
 		assert(!curShaderSrc.empty());
+
 		std::string sourceStr = curShaderSrc;
 		std::string defFlags  = rawDefStrs + "\n" + modDefStrs;
 		std::string versionStr;
@@ -213,6 +214,7 @@ namespace Shader {
 		// version pragma in definitions overrides version pragma in source (if any)
 		ExtractGlslVersion(&sourceStr, &versionStr);
 		ExtractGlslVersion(&defFlags,  &versionStr);
+
 		if (!versionStr.empty()) EnsureEndsWith(&versionStr, "\n");
 		if (!defFlags.empty())   EnsureEndsWith(&defFlags,   "\n");
 
@@ -274,9 +276,6 @@ namespace Shader {
 		log = "";
 	}
 
-	bool IProgramObject::IsShaderAttached(const IShaderObject* so) const {
-		return (std::find(shaderObjs.begin(), shaderObjs.end(), so) != shaderObjs.end());
-	}
 
 	bool IProgramObject::LoadFromLua(const std::string& filename) {
 		return Shader::LoadFromLua(this, filename);
@@ -288,7 +287,8 @@ namespace Shader {
 			return;
 
 		// NOTE: this does not preserve the #version pragma
-		const std::string definitionFlags = GetString();
+		const std::string& definitionFlags = GetString();
+
 		for (IShaderObject*& so: shaderObjs) {
 			so->SetDefinitions(definitionFlags);
 		}
@@ -431,9 +431,7 @@ namespace Shader {
 	}
 
 	GLSLProgramObject::~GLSLProgramObject() {
-		IProgramObject::Release();
-		glDeleteProgram(objID);
-		objID = 0;
+		Release();
 	}
 
 	void GLSLProgramObject::Enable() {
@@ -464,7 +462,7 @@ namespace Shader {
 		}
 	}
 
-	void GLSLProgramObject::Validate() {
+	bool GLSLProgramObject::Validate() {
 		GLint validated = 0;
 
 		glValidateProgram(objID);
@@ -481,7 +479,7 @@ namespace Shader {
 		glGetProgramiv(objID, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxUniformNameLength);
 
 		if (maxUniformNameLength <= 0)
-			return;
+			return valid;
 
 		std::string bufname(maxUniformNameLength, 0);
 		for (int i = 0; i < numUniforms; ++i) {
@@ -497,23 +495,24 @@ namespace Shader {
 			if (strncmp(&bufname[0], "gl_", 3) == 0)
 				continue;
 
-			const auto hash = hashString(&bufname[0]);
-			if (uniformStates.find(hash) != uniformStates.end())
+			if (uniformStates.find(hashString(&bufname[0])) != uniformStates.end())
 				continue;
 
 			LOG_L(L_WARNING, "[GLSL-PO::%s] program-object name: %s, unset uniform: %s", __FUNCTION__, name.c_str(), &bufname[0]);
 			//assert(false);
 		}
 	#endif
+
+		return valid;
 	}
 
 	void GLSLProgramObject::Release() {
 		IProgramObject::Release();
 		glDeleteProgram(objID);
 		ClearHash();
-		curFlagsHash = 0;
+
 		objID = 0;
-		objID = glCreateProgram();
+		curFlagsHash = 0;
 		curSrcHash = 0;
 	}
 
@@ -524,10 +523,10 @@ namespace Shader {
 
 		// reload shader from disk?
 		reloadFromDisk = reloadFromDisk || !oldValid || (oldProgID == 0);
+
 		if (reloadFromDisk) {
-			bool sourceChanged = false;
 			for (IShaderObject*& so: GetAttachedShaderObjs()) {
-				sourceChanged |= so->ReloadFromDisk();
+				so->ReloadFromDisk();
 			}
 		}
 

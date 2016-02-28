@@ -10,13 +10,14 @@
 CR_BIND_DERIVED(CTorpedoLauncher, CWeapon, (NULL, NULL))
 
 CR_REG_METADATA(CTorpedoLauncher,(
-	CR_MEMBER(tracking),
-	CR_RESERVED(8)
+	CR_MEMBER(tracking)
 ))
 
 CTorpedoLauncher::CTorpedoLauncher(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
-	tracking = ((def->tracks)? weaponDef->turnrate: 0);
+	//happens when loading
+	if (def != nullptr)
+		tracking = weaponDef->turnrate * def->tracks;
 }
 
 

@@ -7,23 +7,25 @@
 
 #include "ExplosionGenerator.h"
 #include "ExpGenSpawner.h" //!!
+#include "ExpGenSpawnable.h"
+#include "ExpGenSpawnableMemberInfo.h"
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
 #include "Lua/LuaParser.h"
 #include "Map/Ground.h"
 #include "Rendering/GroundFlash.h"
-#include "Rendering/ProjectileDrawer.h"
+#include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Projectiles/Unsynced/BubbleProjectile.h"
-#include "Sim/Projectiles/Unsynced/DirtProjectile.h"
-#include "Sim/Projectiles/Unsynced/ExploSpikeProjectile.h"
-#include "Sim/Projectiles/Unsynced/HeatCloudProjectile.h"
-#include "Sim/Projectiles/Unsynced/SmokeProjectile2.h"
-#include "Sim/Projectiles/Unsynced/SpherePartProjectile.h"
-#include "Sim/Projectiles/Unsynced/WakeProjectile.h"
-#include "Sim/Projectiles/Unsynced/WreckProjectile.h"
+#include "Rendering/Env/Particles/Classes/BubbleProjectile.h"
+#include "Rendering/Env/Particles/Classes/DirtProjectile.h"
+#include "Rendering/Env/Particles/Classes/ExploSpikeProjectile.h"
+#include "Rendering/Env/Particles/Classes/HeatCloudProjectile.h"
+#include "Rendering/Env/Particles/Classes/SmokeProjectile2.h"
+#include "Rendering/Env/Particles/Classes/SpherePartProjectile.h"
+#include "Rendering/Env/Particles/Classes/WakeProjectile.h"
+#include "Rendering/Env/Particles/Classes/WreckProjectile.h"
 
 #include "System/creg/STL_Map.h"
 #include "System/Config/ConfigHandler.h"
@@ -31,15 +33,12 @@
 #include "System/Log/DefaultFilter.h"
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
-#include "System/creg/VarTypes.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/Util.h"
+#include "System/Sync/HsiehHash.h"
 
-
-CR_BIND_DERIVED_INTERFACE(CExpGenSpawnable, CWorldObject)
-CR_REG_METADATA(CExpGenSpawnable, )
 
 CR_BIND_INTERFACE(IExplosionGenerator)
 CR_REG_METADATA(IExplosionGenerator, (
@@ -50,14 +49,14 @@ CR_BIND_DERIVED(CStdExplosionGenerator, IExplosionGenerator, )
 
 CR_BIND(CCustomExplosionGenerator::ProjectileSpawnInfo, )
 CR_REG_METADATA_SUB(CCustomExplosionGenerator, ProjectileSpawnInfo, (
-	//CR_MEMBER(projectileClass), FIXME is pointer
+	CR_MEMBER(spawnableID),
 	CR_MEMBER(code),
 	CR_MEMBER(count),
 	CR_MEMBER(flags)
 ))
 
-CR_BIND(CCustomExplosionGenerator::GroundFlashInfo, )
-CR_REG_METADATA_SUB(CCustomExplosionGenerator, GroundFlashInfo, (
+CR_BIND(GroundFlashInfo, )
+CR_REG_METADATA(GroundFlashInfo, (
 	CR_MEMBER(flashSize),
 	CR_MEMBER(flashAlpha),
 	CR_MEMBER(circleGrowth),
@@ -81,9 +80,6 @@ CR_REG_METADATA(CCustomExplosionGenerator, (
 
 
 CExplosionGeneratorHandler* explGenHandler = NULL;
-
-CExpGenSpawnable::CExpGenSpawnable(): CWorldObject() {}
-CExpGenSpawnable::CExpGenSpawnable(const float3& pos, const float3& spd): CWorldObject(pos, spd) {}
 
 
 
@@ -143,7 +139,8 @@ void ClassAliasList::Load(const LuaTable& aliasTable)
 	aliases.insert(aliasList.begin(), aliasList.end());
 }
 
-creg::Class* ClassAliasList::GetClass(const string& name) const
+
+std::string ClassAliasList::ResolveAlias(const string& name) const
 {
 	string n = name;
 
@@ -155,14 +152,9 @@ creg::Class* ClassAliasList::GetClass(const string& name) const
 		n = i->second;
 	}
 
-	creg::Class* cls = creg::System::GetClass(n);
-
-	if (cls == NULL) {
-		LOG_L(L_WARNING, "[%s] name \"%s\" does not match any ExplosionGenerator class (forgot the \"%s\" prefix?)", __FUNCTION__, name.c_str(), CEG_PREFIX_STRING);
-	}
-
-	return cls;
+	return n;
 }
+
 
 string ClassAliasList::FindAlias(const string& className) const
 {
@@ -186,24 +178,24 @@ CExplosionGeneratorHandler::CExplosionGeneratorHandler()
 	explosionGenerators.push_back(new CStdExplosionGenerator()); // id=0
 	explosionGenerators[0]->SetGeneratorID(EXPGEN_ID_STANDARD);
 
-	exploParser = NULL;
-	aliasParser = NULL;
-	explTblRoot = NULL;
+	exploParser = nullptr;
+	aliasParser = nullptr;
+	explTblRoot = nullptr;
 
 	ParseExplosionTables();
 }
 
 CExplosionGeneratorHandler::~CExplosionGeneratorHandler()
 {
-	delete exploParser; exploParser = NULL;
-	delete aliasParser; aliasParser = NULL;
-	delete explTblRoot; explTblRoot = NULL;
+	SafeDelete(exploParser);
+	SafeDelete(aliasParser);
+	SafeDelete(explTblRoot);
 
-	delete explosionGenerators[0];
+	// delete CStdExplGen
+	SafeDelete(explosionGenerators[0]);
 
 	for (unsigned int n = 1; n < explosionGenerators.size(); n++) {
-		creg::Class* cls = explosionGenerators[n]->GetClass();
-		cls->DeleteInstance(explosionGenerators[n]);
+		SafeDelete(explosionGenerators[n]);
 	}
 
 	explosionGenerators.clear();
@@ -229,8 +221,6 @@ void CExplosionGeneratorHandler::ParseExplosionTables() {
 
 		projectileClasses.Clear();
 		projectileClasses.Load(aliasRoot.SubTable("projectiles"));
-		generatorClasses.Clear();
-		generatorClasses.Load(aliasRoot.SubTable("generators"));
 	}
 
 	if (!exploParser->Execute()) {
@@ -316,24 +306,19 @@ IExplosionGenerator* CExplosionGeneratorHandler::LoadGenerator(const string& tag
 
 	const string::size_type seppos = tag.find(':');
 
+	IExplosionGenerator* explGen;
+
 	if (seppos != string::npos) {
 		// grab the "custom" prefix (the only supported value)
 		prefix = tag.substr(0, seppos);
 		postfix = tag.substr(seppos + 1);
 		assert((prefix + ":") == CEG_PREFIX_STRING);
+		explGen = new CCustomExplosionGenerator();
 	} else {
 		prefix = tag;
+		explGen = new CStdExplosionGenerator();
 	}
 
-	creg::Class* cls = generatorClasses.GetClass(prefix);
-
-	if (cls == NULL)
-		return NULL;
-
-	if (!cls->IsSubclassOf(IExplosionGenerator::StaticClass()))
-		throw content_error(prefix + " is not a subclass of IExplosionGenerator");
-
-	IExplosionGenerator* explGen = static_cast<IExplosionGenerator*>(cls->CreateInstance());
 	explGen->SetGeneratorID(explosionGenerators.size());
 
 	// can still be a standard generator, but with non-zero ID
@@ -736,168 +721,128 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 
 void CCustomExplosionGenerator::ParseExplosionCode(
 	CCustomExplosionGenerator::ProjectileSpawnInfo* psi,
-	const int offset,
-	const boost::shared_ptr<creg::IType> type,
 	const string& script,
+	SExpGenSpawnableMemberInfo& memberInfo,
 	string& code)
 {
-	string::size_type end = script.find(';', 0);
-	string vastr = script.substr(0, end);
+	const std::string content = script.substr(0, script.find(';', 0));
+	const bool isFloat = memberInfo.type == SExpGenSpawnableMemberInfo::TYPE_FLOAT;
 
-	if (vastr == "dir") { // first see if we can match any keywords
+	if (content == "dir") { // first see if we can match any keywords
 		// if the user uses a keyword assume he knows that it is put on the right datatype for now
+		if (memberInfo.length < 3 || !isFloat) // dir has to be float3
+			throw content_error("[CCEG::ParseExplosionCode] incorrect use of \"dir\"");
+
 		code += OP_DIR;
-		boost::uint16_t ofs = offset;
-		code.append((char*) &ofs, (char*) &ofs + 2);
-	}
-	else if (dynamic_cast<creg::BasicType*>(type.get())) {
-		const creg::BasicType* basicType = (creg::BasicType*) type.get();
-		const boost::uint8_t basicTypeSize = basicType->GetSize();
+		boost::uint16_t ofs = memberInfo.offset;
+		code.append((char*) &ofs, (char*) &ofs + sizeof(ofs));
 
-		// check sizeof(member)
-		const std::set<boost::uint8_t> allowedSizeInt = {1,2,4 /*,0,8*/};
-		const std::set<boost::uint8_t> allowedSizeFlt = {4 /*,8*/};
-		if (basicType->id == creg::crFloat) {
-			if (allowedSizeFlt.find(basicTypeSize) == allowedSizeFlt.end())
-				throw content_error("[CCEG::ParseExplosionCode] incompatible float size \"" + IntToString(basicTypeSize) + "\" (" + script + ")");
+		return;
+	}
+
+	//Arrays (float3 or float4)
+	if (memberInfo.length > 1) {
+		string::size_type start = 0;
+		SExpGenSpawnableMemberInfo subInfo = memberInfo;
+		subInfo.length = 1;
+		for (unsigned int i = 0; i < memberInfo.length && start < script.length(); ++i) {
+			string::size_type subEnd = script.find(',', start+1);
+			ParseExplosionCode(psi, script.substr(start, subEnd-start), subInfo, code);
+			start = subEnd + 1;
+			subInfo.offset += subInfo.size;
+		}
+
+		return;
+	}
+
+	//Textures, Colormaps, etc.
+	if (memberInfo.type == SExpGenSpawnableMemberInfo::TYPE_PTR) {
+		// Memory is managed by whomever this callback belongs to
+		void* ptr = memberInfo.ptrCallback(content);
+		code += OP_LOADP;
+		code.append((char*)(&ptr), ((char*)(&ptr)) + sizeof(void*));
+		code += OP_STOREP;
+		boost::uint16_t ofs = memberInfo.offset;
+		code.append((char*)&ofs, (char*)&ofs + sizeof(ofs));
+
+		return;
+	}
+
+
+	//Floats or Ints
+
+	assert (isFloat || memberInfo.type == SExpGenSpawnableMemberInfo::TYPE_INT);
+
+	static const std::set<boost::uint8_t> allowedSizeInt = {1,2,4 /*,0,8*/};
+	static const std::set<boost::uint8_t> allowedSizeFlt = {4 /*,8*/};
+	if (isFloat) {
+		if (allowedSizeFlt.find(memberInfo.size) == allowedSizeFlt.end())
+			throw content_error("[CCEG::ParseExplosionCode] incompatible float size \"" + IntToString(memberInfo.size) + "\" (" + script + ")");
+	} else {
+		if (allowedSizeInt.find(memberInfo.size) == allowedSizeInt.end())
+			throw content_error("[CCEG::ParseExplosionCode] incompatible integer size \"" + IntToString(memberInfo.size) + "\" (" + script + ")");
+	}
+
+	// parse the code
+	int p = 0;
+	while (p < script.length()) {
+		char opcode = OP_END;
+		char c = script[p++];
+
+		// consume whitespace
+		if (c == ' ')
+			continue;
+
+		bool useInt = false;
+
+		     if (c == 'i')   opcode = OP_INDEX;
+		else if (c == 'r')   opcode = OP_RAND;
+		else if (c == 'd')   opcode = OP_DAMAGE;
+		else if (c == 'm')   opcode = OP_SAWTOOTH;
+		else if (c == 'k')   opcode = OP_DISCRETE;
+		else if (c == 's')   opcode = OP_SINE;
+		else if (c == 'p')   opcode = OP_POW;
+		else if (c == 'y') { opcode = OP_YANK;     useInt = true; }
+		else if (c == 'x') { opcode = OP_MULTIPLY; useInt = true; }
+		else if (c == 'a') { opcode = OP_ADDBUFF;  useInt = true; }
+		else if (c == 'q') { opcode = OP_POWBUFF;  useInt = true; }
+		else if (isdigit(c) || c == '.' || c == '-') { opcode = OP_ADD; p--; }
+		else {
+			const char* fmt = "[CCEG::ParseExplosionCode] unknown op-code \"%c\" in \"%s\" at index %d";
+			LOG_L(L_WARNING, fmt, c, script.c_str(), p);
+			continue;
+		}
+
+		// be sure to exit cleanly if there are no more operators or operands
+		if (p >= script.size())
+			continue;
+
+		char* endp = NULL;
+
+		if (!useInt) {
+			// strtod&co expect C-style strings with NULLs,
+			// c_str() is guaranteed to be NULL-terminated
+			// (whether .data() == .c_str() depends on the
+			// implementation of std::string)
+			const float v = (float)strtod(&script.c_str()[p], &endp);
+
+			p += (endp - &script.c_str()[p]);
+			code += opcode;
+			code.append((char*) &v, ((char*) &v) + sizeof(v));
 		} else {
-			if (allowedSizeInt.find(basicTypeSize) == allowedSizeInt.end())
-				throw content_error("[CCEG::ParseExplosionCode] incompatible integer size \"" + IntToString(basicTypeSize) + "\" (" + script + ")");
-		}
+			const int v = std::max(0, std::min(16, (int)strtol(&script.c_str()[p], &endp, 10)));
 
-		// parse the code
-		int p = 0;
-		while (p < script.length()) {
-			char opcode = OP_END;
-			char c = script[p++];
-
-			// consume whitespace
-			if (c == ' ')
-				continue;
-
-			bool useInt = false;
-
-			     if (c == 'i')   opcode = OP_INDEX;
-			else if (c == 'r')   opcode = OP_RAND;
-			else if (c == 'd')   opcode = OP_DAMAGE;
-			else if (c == 'm')   opcode = OP_SAWTOOTH;
-			else if (c == 'k')   opcode = OP_DISCRETE;
-			else if (c == 's')   opcode = OP_SINE;
-			else if (c == 'p')   opcode = OP_POW;
-			else if (c == 'y') { opcode = OP_YANK;     useInt = true; }
-			else if (c == 'x') { opcode = OP_MULTIPLY; useInt = true; }
-			else if (c == 'a') { opcode = OP_ADDBUFF;  useInt = true; }
-			else if (c == 'q') { opcode = OP_POWBUFF;  useInt = true; }
-			else if (isdigit(c) || c == '.' || c == '-') { opcode = OP_ADD; p--; }
-			else {
-				const char* fmt = "[CCEG::ParseExplosionCode] unknown op-code \"%c\" in \"%s\" at index %d";
-				LOG_L(L_WARNING, fmt, c, script.c_str(), p);
-				continue;
-			}
-
-			// be sure to exit cleanly if there are no more operators or operands
-			if (p >= script.size())
-				continue;
-
-			char* endp = NULL;
-
-			if (!useInt) {
-				// strtod&co expect C-style strings with NULLs,
-				// c_str() is guaranteed to be NULL-terminated
-				// (whether .data() == .c_str() depends on the
-				// implementation of std::string)
-				const float v = (float)strtod(&script.c_str()[p], &endp);
-
-				p += (endp - &script.c_str()[p]);
-				code += opcode;
-				code.append((char*) &v, ((char*) &v) + 4);
-			} else {
-				const int v = std::max(0, std::min(16, (int)strtol(&script.c_str()[p], &endp, 10)));
-
-				p += (endp - &script.c_str()[p]);
-				code += opcode;
-				code.append((char*) &v, ((char*) &v) + 4);
-			}
-		}
-
-		// store the final value
-		code.push_back((basicType->id == creg::crFloat) ? OP_STOREF : OP_STOREI);
-		code.push_back(basicTypeSize);
-		assert(basicTypeSize == code.back());
-		boost::uint16_t ofs = offset;
-		code.append((char*)&ofs, (char*)&ofs + 2);
-	}
-	else if (dynamic_cast<creg::ObjectInstanceType*>(type.get())) {
-		creg::ObjectInstanceType *oit = (creg::ObjectInstanceType *)type.get();
-
-		string::size_type start = 0;
-		for (creg::Class* c = oit->objectClass; c; c=c->base) {
-			for (int a = 0; a < c->members.size(); a++) {
-				string::size_type end = script.find(',', start+1);
-				ParseExplosionCode(psi, offset + c->members [a]->offset, c->members[a]->type, script.substr(start,end-start), code);
-				start = end+1;
-				if (start >= script.length()) { break; }
-			}
-			if (start >= script.length()) { break; }
+			p += (endp - &script.c_str()[p]);
+			code += opcode;
+			code.append((char*) &v, ((char*) &v) + + sizeof(v));
 		}
 	}
-	else if (dynamic_cast<creg::StaticArrayBaseType*>(type.get())) {
-		creg::StaticArrayBaseType *sat = (creg::StaticArrayBaseType*)type.get();
 
-		string::size_type start = 0;
-		for (unsigned int i=0; i < sat->size; i++) {
-			string::size_type end = script.find(',', start+1);
-			ParseExplosionCode(psi, offset + sat->elemSize * i, sat->elemType, script.substr(start, end-start), code);
-			start = end+1;
-			if (start >= script.length()) { break; }
-		}
-	}
-	else {
-		if (type->GetName() == "AtlasedTexture*") {
-			string::size_type end = script.find(';', 0);
-			string texname = script.substr(0, end);
-			// this memory is managed by textureAtlas (CTextureAtlas)
-			void* tex = &projectileDrawer->textureAtlas->GetTexture(texname);
-			code += OP_LOADP;
-			code.append((char*)(&tex), ((char*)(&tex)) + sizeof(void*));
-			code += OP_STOREP;
-			boost::uint16_t ofs = offset;
-			code.append((char*)&ofs, (char*)&ofs + 2);
-		} else if (type->GetName() == "GroundFXTexture*") {
-			string::size_type end = script.find(';', 0);
-			string texname = script.substr(0, end);
-			// this memory is managed by groundFXAtlas (CTextureAtlas)
-			void* tex = &projectileDrawer->groundFXAtlas->GetTexture(texname);
-			code += OP_LOADP;
-			code.append((char*)(&tex), ((char*)(&tex)) + sizeof(void*));
-			code += OP_STOREP;
-			boost::uint16_t ofs = offset;
-			code.append((char*)&ofs, (char*)&ofs + 2);
-		} else if (type->GetName() == "CColorMap*") {
-			string::size_type end = script.find(';', 0);
-			string colorstring = script.substr(0, end);
-			// gets stored and deleted at game end from inside CColorMap
-			void* colormap = CColorMap::LoadFromDefString(colorstring);
-			code += OP_LOADP;
-			code.append((char*)(&colormap), ((char*)(&colormap)) + sizeof(void*));
-			code += OP_STOREP;
-			boost::uint16_t ofs = offset;
-			code.append((char*)&ofs, (char*)&ofs + 2);
-		} else if (type->GetName() == "IExplosionGenerator*") {
-			string::size_type end = script.find(';', 0);
-			string name = script.substr(0, end);
-
-			// managed by CExplosionGeneratorHandler
-			IExplosionGenerator* explGen = explGenHandler->LoadGenerator(name);
-
-			void* explGenRaw = (void*) explGen;
-			code += OP_LOADP;
-			code.append((char*)(&explGenRaw), ((char*)(&explGenRaw)) + sizeof(void*));
-			code += OP_STOREP;
-			boost::uint16_t ofs = offset;
-			code.append((char*)&ofs, (char*)&ofs + 2);
-		}
-	}
+	// store the final value
+	code.push_back(isFloat ? OP_STOREF : OP_STOREI);
+	code.push_back(memberInfo.size);
+	boost::uint16_t ofs = memberInfo.offset;
+	code.append((char*)&ofs, (char*)&ofs + sizeof(ofs));
 }
 
 
@@ -933,35 +878,28 @@ bool CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* handler, const 
 		if (spawnName == "groundflash" || spawnName == "filename")
 			continue;
 
-		const string& className = spawnTable.GetString("class", spawnName);
-
-		psi.projectileClass = (handler->GetProjectileClasses()).GetClass(className);
-		psi.flags = GetFlagsFromTable(spawnTable);
-		psi.count = std::max(0, spawnTable.GetInt("count", 1));
-
-		if (psi.projectileClass == NULL) {
+		const string& className = handler->GetProjectileClasses().ResolveAlias(spawnTable.GetString("class", spawnName));
+		psi.spawnableID = CExpGenSpawnable::GetSpawnableID(className);
+		if (psi.spawnableID == -1u) {
 			LOG_L(L_WARNING, "[CCEG::%s] %s: Unknown class \"%s\"", __FUNCTION__, tag.c_str(), className.c_str());
 			continue;
 		}
 
-		if (psi.projectileClass->binder->flags & creg::CF_Synced) {
-			LOG_L(L_WARNING, "[CCEG::%s] %s: Tried to access synced class \"%s\"", __FUNCTION__, tag.c_str(), className.c_str());
-			continue;
-		}
+		psi.flags = GetFlagsFromTable(spawnTable);
+		psi.count = std::max(0, spawnTable.GetInt("count", 1));
 
 		string code;
 		map<string, string> props;
-		map<string, string>::const_iterator propIt;
 
 		spawnTable.SubTable("properties").GetMap(props);
 
-		for (propIt = props.begin(); propIt != props.end(); ++propIt) {
-			const creg::Class::Member* m = psi.projectileClass->FindMember(propIt->first.c_str());
+		for (const auto& propIt: props) {
+			SExpGenSpawnableMemberInfo memberInfo = {0, 0, 0, STRING_HASH(std::move(StringToLower(propIt.first))), SExpGenSpawnableMemberInfo::TYPE_INT, nullptr};
 
-			if (m && (m->flags & creg::CM_Config)) {
-				ParseExplosionCode(&psi, m->offset, m->type, propIt->second, code);
+			if (CExpGenSpawnable::GetSpawnableMemberInfo(className, memberInfo)) {
+				ParseExplosionCode(&psi, propIt.second, memberInfo, code);
 			} else {
-				LOG_L(L_WARNING, "[CCEG::%s] %s: Unknown tag %s::%s", __FUNCTION__, tag.c_str(), className.c_str(), propIt->first.c_str());
+				LOG_L(L_WARNING, "[CCEG::%s] %s: Unknown tag %s::%s", __FUNCTION__, tag.c_str(), className.c_str(), propIt.first.c_str());
 			}
 		}
 
@@ -1032,15 +970,14 @@ bool CCustomExplosionGenerator::Explosion(
 			break;
 
 		for (unsigned int c = 0; c < psi.count; c++) {
-			CExpGenSpawnable* projectile = static_cast<CExpGenSpawnable*>((psi.projectileClass)->CreateInstance());
+			CExpGenSpawnable* projectile = CExpGenSpawnable::CreateSpawnable(psi.spawnableID);
 			ExecuteExplosionCode(&psi.code[0], damage, (char*) projectile, c, dir);
 			projectile->Init(owner, pos);
 		}
 	}
 
 	if (groundExplosion && (groundFlash.ttl > 0) && (groundFlash.flashSize > 1)) {
-		new CStandardGroundFlash(pos, groundFlash.circleAlpha, groundFlash.flashAlpha,
-			groundFlash.flashSize, groundFlash.circleGrowth, groundFlash.ttl, groundFlash.color);
+		new CStandardGroundFlash(pos, groundFlash);
 	}
 
 	if (expGenParams.useDefaultExplosions) {
@@ -1053,6 +990,7 @@ bool CCustomExplosionGenerator::Explosion(
 
 bool CCustomExplosionGenerator::OutputProjectileClassInfo()
 {
+#ifdef USING_CREG
 	LOG_DISABLE();
 		// we need to load basecontent for class aliases
 		FileSystemInitializer::Initialize();
@@ -1094,5 +1032,9 @@ bool CCustomExplosionGenerator::OutputProjectileClassInfo()
 
 	FileSystemInitializer::Cleanup();
 	return true;
+#else //USING_CREG
+	std::cout << "Unable to output CEG info since creg is disabled" << std::endl;
+	return false;
+#endif
 }
 

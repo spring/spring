@@ -20,6 +20,7 @@ CallInsList = {
 
   "KeyPress",
   "KeyRelease",
+  "TextInput",
   "MouseMove",
   "MousePress",
   "MouseRelease",
@@ -42,6 +43,7 @@ CallInsList = {
   "UnitFinished",
   "UnitFromFactory",
   "UnitDestroyed",
+  "RenderUnitDestroyed",
   "UnitTaken",
   "UnitGiven",
   "UnitIdle",
@@ -90,6 +92,12 @@ CallInsList = {
   "AllowResourceTransfer",
 
   "GameProgress",
+
+  "DownloadQueued",
+  "DownloadStarted",
+  "DownloadFinished",
+  "DownloadFailed",
+  "DownloadProgress",
 }
 
 

@@ -12,6 +12,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/ISky.h"
+#include "Rendering/Env/SunLighting.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/Shader.h"
@@ -84,7 +85,7 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 	glBindTexture(GL_TEXTURE_2D, leafTex);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bm.xsize, bm.ysize, GL_RGBA, GL_UNSIGNED_BYTE, bm.mem);
+	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bm.xsize, bm.ysize, GL_RGBA, GL_UNSIGNED_BYTE, &bm.mem[0]);
 
 	CreateLeafTex(leafTex, 256, 0, tree);
 	CreateLeafTex(leafTex, 512, 0, tree);
@@ -315,7 +316,7 @@ void CAdvTreeGenerator::CreateFarTex(Shader::IProgramObject* treeShader)
 	treeShader->Enable();
 
 	{
-		#define L mapInfo->light
+		#define L (*sunLighting)
 		if (globalRendering->haveGLSL) {
 			treeShader->SetUniform3f(0, 1.0f, 0.0f, 0.0f);
 			treeShader->SetUniform3f(1, 0.0f, 1.0f, 0.0f);
@@ -326,7 +327,7 @@ void CAdvTreeGenerator::CreateFarTex(Shader::IProgramObject* treeShader)
 			treeShader->SetUniform3f(13, 1.0f, 0.0f, 0.0f); // camera side-dir
 			treeShader->SetUniform3f( 9, 0.0f, 1.0f, 0.0f); // camera up-dir
 			treeShader->SetUniform3f(10, 0.0f, 0.0f, 0.0f); // tree position-offset
-			treeShader->SetUniform4f(11, L.groundSunColor.x,     L.groundSunColor.y,     L.groundSunColor.z,     0.85f);
+			treeShader->SetUniform4f(11, L.groundDiffuseColor.x, L.groundDiffuseColor.y, L.groundDiffuseColor.z, 0.85f);
 			treeShader->SetUniform4f(14, L.groundAmbientColor.x, L.groundAmbientColor.y, L.groundAmbientColor.z, 0.85f);
 			treeShader->SetUniform4f(12, 0.0f, 0.0f, 0.0f, 0.02f); // w = alpha / height modifier
 		}

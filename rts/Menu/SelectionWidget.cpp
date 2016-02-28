@@ -23,6 +23,17 @@ CONFIG(std::string, LastSelectedMod).defaultValue(SelectionWidget::NoModSelect).
 CONFIG(std::string, LastSelectedMap).defaultValue(SelectionWidget::NoMapSelect).description("Stores the previously played map.");
 CONFIG(std::string, LastSelectedScript).defaultValue(SelectionWidget::NoScriptSelect).description("Stores the previously played AI.");
 
+// returns absolute filename for given archive name, empty if not found
+static const std::string GetFileName(const std::string& name){
+	if (name.empty())
+		return name;
+	const std::string& filename = archiveScanner->ArchiveFromName(name);
+	if (filename == name)
+		return "";
+	const std::string& path = archiveScanner->GetArchivePath(filename);
+	return path + filename;
+}
+
 SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(parent)
 {
 	SetPos(0.5f, 0.2f);
@@ -36,7 +47,7 @@ SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(pa
 	mod->Clicked.connect(boost::bind(&SelectionWidget::ShowModList, this));
 	mod->SetSize(0.1f, 0.00f, true);
 	userMod = configHandler->GetString("LastSelectedMod");
-	if (archiveScanner->GetSingleArchiveChecksum(archiveScanner->ArchiveFromName(userMod)) == 0)
+	if (GetFileName(userMod).empty())
 		userMod = NoModSelect;
 	modT = new agui::TextElement(userMod, modL);
 	agui::HorizontalLayout* mapL = new agui::HorizontalLayout(vl);
@@ -44,7 +55,7 @@ SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(pa
 	map->Clicked.connect(boost::bind(&SelectionWidget::ShowMapList, this));
 	map->SetSize(0.1f, 0.00f, true);
 	userMap = configHandler->GetString("LastSelectedMap");
-	if (archiveScanner->GetSingleArchiveChecksum(archiveScanner->ArchiveFromName(userMap)) == 0)
+	if (GetFileName(userMap).empty())
 		userMap = NoMapSelect;
 	mapT = new agui::TextElement(userMap, mapL);
 	agui::HorizontalLayout* scriptL = new agui::HorizontalLayout(vl);
@@ -53,6 +64,7 @@ SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(pa
 	script->SetSize(0.1f, 0.00f, true);
 	userScript = configHandler->GetString("LastSelectedScript");
 	scriptT = new agui::TextElement(userScript, scriptL);
+	UpdateAvailableScripts();
 }
 
 SelectionWidget::~SelectionWidget()
@@ -104,24 +116,57 @@ void SelectionWidget::ShowMapList()
 }
 
 
-static const std::string GetFileName(const std::string& name){
-	if (name.empty())
-		return name;
-	const std::string filename = archiveScanner->ArchiveFromName(name);
-	const std::string path = archiveScanner->GetArchivePath(filename);
-	return path + filename;
-}
-
 static void AddArchive(const std::string& name) {
-	if (!name.empty()) {
-		vfsHandler->AddArchive(GetFileName(name), true);
-	}
+	const std::string& filename = GetFileName(name);
+	if (filename.empty())
+		return;
+	vfsHandler->AddArchive(filename, true);
 }
 
 static void RemoveArchive(const std::string& name) {
-	if (!name.empty()) {
-		vfsHandler->RemoveArchive(GetFileName(name));
+	const std::string& filename = GetFileName(name);
+	if (filename.empty())
+		return;
+	vfsHandler->RemoveArchive(filename);
+}
+
+void SelectionWidget::UpdateAvailableScripts()
+{
+	//FIXME: lua ai's should be handled in AIScriptHandler.cpp, too respecting the selected game and map
+	// maybe also merge it with StartScriptGen.cpp
+
+	availableScripts.clear();
+	// load selected archives to get lua ais
+	AddArchive(userMod);
+	AddArchive(userMap);
+
+	std::vector< std::vector<InfoItem> > luaAIInfos = luaAIImplHandler.LoadInfos();
+	for(int i=0; i<luaAIInfos.size(); i++) {
+		for (int j=0; j<luaAIInfos[i].size(); j++) {
+			if (luaAIInfos[i][j].key==SKIRMISH_AI_PROPERTY_SHORT_NAME)
+				availableScripts.push_back(info_getValueAsString(&luaAIInfos[i][j]));
+		}
 	}
+
+	// close archives
+	RemoveArchive(userMap);
+	RemoveArchive(userMod);
+
+	// add sandbox script to list
+	availableScripts.push_back(SandboxAI);
+
+	// add native ai's to the list, too (but second, lua ai's are prefered)
+	CAIScriptHandler::ScriptList scriptList = CAIScriptHandler::Instance().GetScriptList();
+	for (CAIScriptHandler::ScriptList::iterator it = scriptList.begin(); it != scriptList.end(); ++it) {
+		availableScripts.push_back(*it);
+	}
+	
+	for (std::string &scriptName: availableScripts) {
+		if (scriptName == userScript) {
+			return;
+		}
+	}
+	SelectScript(SelectionWidget::NoScriptSelect);
 }
 
 void SelectionWidget::ShowScriptList()
@@ -132,33 +177,10 @@ void SelectionWidget::ShowScriptList()
 	curSelect->Selected.connect(boost::bind(&SelectionWidget::SelectScript, this, _1));
 	curSelect->WantClose.connect(boost::bind(&SelectionWidget::CleanWindow, this));
 
-	//FIXME: lua ai's should be handled in AIScriptHandler.cpp, too respecting the selected game and map
-	// maybe also merge it with StartScriptGen.cpp
-
-	// load selected archives to get lua ais
-	AddArchive(userMod);
-	AddArchive(userMap);
-
-	std::vector< std::vector<InfoItem> > luaAIInfos = luaAIImplHandler.LoadInfos();
-	for(int i=0; i<luaAIInfos.size(); i++) {
-		for (int j=0; j<luaAIInfos[i].size(); j++) {
-			if (luaAIInfos[i][j].key==SKIRMISH_AI_PROPERTY_SHORT_NAME)
-				curSelect->list->AddItem(info_getValueAsString(&luaAIInfos[i][j]), "");
-		}
+	for (std::string &scriptName: availableScripts) {
+		curSelect->list->AddItem(scriptName, "");
 	}
-
-	// close archives
-	RemoveArchive(userMap);
-	RemoveArchive(userMod);
-
-	// add sandbox script to list
-	curSelect->list->AddItem(SandboxAI, "");
-
-	// add native ai's to the list, too (but second, lua ai's are prefered)
-	CAIScriptHandler::ScriptList scriptList = CAIScriptHandler::Instance().GetScriptList();
-	for (CAIScriptHandler::ScriptList::iterator it = scriptList.begin(); it != scriptList.end(); ++it) {
-		curSelect->list->AddItem(*it, "");
-	}
+	
 
 	curSelect->list->SetCurrentItem(userScript);
 }
@@ -173,7 +195,8 @@ void SelectionWidget::SelectMod(const std::string& mod)
 	configHandler->SetString("LastSelectedMod", userMod);
 	modT->SetText(userMod);
 
-	SelectScript(SelectionWidget::NoScriptSelect); //reset AI as LuaAI maybe doesn't exist in this game
+	//SelectScript(SelectionWidget::NoScriptSelect); //reset AI as LuaAI maybe doesn't exist in this game
+	UpdateAvailableScripts();
 	CleanWindow();
 }
 
@@ -192,6 +215,7 @@ void SelectionWidget::SelectMap(const std::string& map)
 	configHandler->SetString("LastSelectedMap", userMap);
 	mapT->SetText(userMap);
 
+	UpdateAvailableScripts();
 	CleanWindow();
 }
 

@@ -3,10 +3,7 @@
 #include <SDL_keycode.h>
 #include <SDL_mouse.h>
 
-#include "lib/gml/ThreadSafeContainers.h"
-
 #include "CommandColors.h"
-#include "CursorIcons.h"
 #include "GuiHandler.h"
 #include "MiniMap.h"
 #include "MouseHandler.h"
@@ -26,14 +23,13 @@
 #include "Rendering/CommandDrawer.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/LineDrawer.h"
-#include "Rendering/ProjectileDrawer.h"
+#include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/LosHandler.h"
-#include "Sim/Misc/RadarHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
@@ -97,6 +93,7 @@ CMiniMap::CMiniMap()
 	, renderToTexture(true)
 	, multisampledFBO(false)
 	, minimapTex(0)
+	, lastClicked(nullptr)
  {
 	lastWindowSizeX = globalRendering->viewSizeX;
 	lastWindowSizeY = globalRendering->viewSizeY;
@@ -153,7 +150,7 @@ CMiniMap::CMiniMap()
 		glBindTexture(GL_TEXTURE_2D, buttonsTexture);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
 								 bitmap.xsize, bitmap.ysize, 0,
-								 GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
+								 GL_RGBA, GL_UNSIGNED_BYTE, &bitmap.mem[0]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 		if (unfiltered) {
@@ -477,8 +474,10 @@ void CMiniMap::MoveView(int x, int y)
 }
 
 
-void CMiniMap::SelectUnits(int x, int y) const
+void CMiniMap::SelectUnits(int x, int y)
 {
+	const CUnit *_lastClicked = lastClicked;
+	lastClicked = nullptr;
 	if (!KeyInput::GetKeyModState(KMOD_SHIFT) && !KeyInput::GetKeyModState(KMOD_CTRL)) {
 		selectedUnitsHandler.ClearSelected();
 	}
@@ -512,9 +511,13 @@ void CMiniMap::SelectUnits(int x, int y) const
 		} else {
 			unit = CGameHelper::GetClosestFriendlyUnit(NULL, pos, size, gu->myAllyTeam);
 		}
+		lastClicked = unit;
+		const bool selectType = bp.lastRelease >= (gu->gameTime - mouse->doubleClickTime) && unit == _lastClicked;
 
-		selectedUnitsHandler.HandleSingleUnitClickSelection(unit, false);
+		selectedUnitsHandler.HandleSingleUnitClickSelection(unit, false, selectType);
 	}
+
+	bp.lastRelease = gu->gameTime;
 }
 
 /******************************************************************************/
@@ -698,7 +701,7 @@ void CMiniMap::ProxyMousePress(int x, int y, int button)
 		if (gu->spectatingFullView) {
 			mapPos = unit->midPos;
 		} else {
-			mapPos = unit->GetDrawErrorPos(gu->myAllyTeam);
+			mapPos = unit->GetObjDrawErrorPos(gu->myAllyTeam);
 			mapPos.y = readMap->GetInitMaxHeight() + 1000.0f;
 		}
 	}
@@ -719,7 +722,7 @@ void CMiniMap::ProxyMouseRelease(int x, int y, int button)
 		if (gu->spectatingFullView) {
 			mapPos = unit->midPos;
 		} else {
-			mapPos = unit->GetDrawErrorPos(gu->myAllyTeam);
+			mapPos = unit->GetObjDrawErrorPos(gu->myAllyTeam);
 			mapPos.y = readMap->GetInitMaxHeight() + 1000.0f;
 		}
 	}
@@ -754,17 +757,16 @@ bool CMiniMap::IsAbove(int x, int y)
 
 std::string CMiniMap::GetTooltip(int x, int y)
 {
-	if (minimized) {
+	if (minimized)
 		return "Unminimize map";
-	}
 
 	if (buttonBox.Inside(x, y)) {
-		if (resizeBox.Inside(x, y)) {
+		if (resizeBox.Inside(x, y))
 			return "Resize map\n(SHIFT to maintain aspect ratio)";
-		}
-		if (moveBox.Inside(x, y)) {
+
+		if (moveBox.Inside(x, y))
 			return "Move map";
-		}
+
 		if (maximizeBox.Inside(x, y)) {
 			if (!maximized) {
 				return "Maximize map\n(SHIFT to maintain aspect ratio)";
@@ -772,30 +774,29 @@ std::string CMiniMap::GetTooltip(int x, int y)
 				return "Unmaximize map";
 			}
 		}
-		if (minimizeBox.Inside(x, y)) {
+
+		if (minimizeBox.Inside(x, y))
 			return "Minimize map";
-		}
 	}
 
-	const string buildTip = guihandler->GetBuildTooltip();
-	if (!buildTip.empty()) {
+	const string buildTip = std::move(guihandler->GetBuildTooltip());
+	if (!buildTip.empty())
 		return buildTip;
-	}
 
 	const CUnit* unit = GetSelectUnit(GetMapPosition(x, y));
-	if (unit) {
+	if (unit != nullptr)
 		return CTooltipConsole::MakeUnitString(unit);
-	}
 
-	const string selTip = selectedUnitsHandler.GetTooltip();
-	if (selTip != "") {
+	const string selTip = std::move(selectedUnitsHandler.GetTooltip());
+	if (selTip != "")
 		return selTip;
-	}
 
-	const float worldx = float(x                               - xpos          ) / width  * mapDims.mapx * SQUARE_SIZE;
-	const float worldz = float(y - (globalRendering->viewSizeY - ypos - height)) / height * mapDims.mapx * SQUARE_SIZE;
+	float3 wpos;
+	wpos.x = float(x                               - xpos          ) / width  * mapDims.mapx * SQUARE_SIZE;
+	wpos.z = float(y - (globalRendering->viewSizeY - ypos - height)) / height * mapDims.mapx * SQUARE_SIZE;
+	wpos.y = CGround::GetHeightReal(wpos.x, wpos.z, false);
 
-	return CTooltipConsole::MakeGroundString(float3(worldx, 500.0f, worldz));
+	return CTooltipConsole::MakeGroundString(wpos);
 }
 
 
@@ -1135,10 +1136,13 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 
 	if (!minimap->maximized) {
 		// draw the camera frustum lines
-		cam2->GetFrustumSides(0.0f, 0.0f, 1.0f, true);
-		cam2->ClipFrustumLines(true, -10000.0f, 400096.0f);
+		// CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_SHADOW);
+		CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
 
-		const std::vector<CCamera::FrustumLine> negSides = cam2->GetNegFrustumSides();
+		cam->GetFrustumSides(0.0f, 0.0f, 1.0f, true);
+		cam->ClipFrustumLines(true, -100.0f, mapDims.mapy * SQUARE_SIZE + 100.0f);
+
+		const std::vector<CCamera::FrustumLine>& negSides = cam->GetNegFrustumSides();
 
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
@@ -1500,21 +1504,20 @@ void CMiniMap::DrawUnitIcons() const
 void CMiniMap::DrawUnitRanges() const
 {
 	// draw unit ranges
-	const float radarSquare = radarHandler->radarDiv;
 	CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
 	for(const CUnit* unit: selUnits) {
 		// LOS Ranges
 		if (unit->radarRadius && !unit->beingBuilt && unit->activated) {
 			glColor3fv(cmdColors.rangeRadar);
-			DrawCircle(unit->pos, (unit->radarRadius * radarSquare));
+			DrawCircle(unit->pos, unit->radarRadius);
 		}
 		if (unit->sonarRadius && !unit->beingBuilt && unit->activated) {
 			glColor3fv(cmdColors.rangeSonar);
-			DrawCircle(unit->pos, (unit->sonarRadius * radarSquare));
+			DrawCircle(unit->pos, unit->sonarRadius);
 		}
 		if (unit->jammerRadius && !unit->beingBuilt && unit->activated) {
 			glColor3fv(cmdColors.rangeJammer);
-			DrawCircle(unit->pos, (unit->jammerRadius * radarSquare));
+			DrawCircle(unit->pos, unit->jammerRadius);
 		}
 
 		// Interceptor Ranges

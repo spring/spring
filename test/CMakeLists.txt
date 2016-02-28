@@ -1,4 +1,7 @@
 # See README.md for usage instructions
+If (MINGW)
+	RemoveFlag("-mwindows")
+EndIf (MINGW)
 
 FIND_PACKAGE(Boost 1.35.0 COMPONENTS unit_test_framework)
 
@@ -51,6 +54,8 @@ Else  (NOT Boost_FOUND)
 
 ################################################################################
 ### UDPListener
+# disabled for travis: https://springrts.com/mantis/view.php?id=5014
+if(NOT DEFINED ENV{CI})
 	set(test_name UDPListener)
 	Set(test_src
 		"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Net/TestUDPListener.cpp"
@@ -82,6 +87,7 @@ Else  (NOT Boost_FOUND)
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
 	Add_Dependencies(test_UDPListener generateVersionFiles)
+endif()
 
 ################################################################################
 ### ILog
@@ -134,14 +140,23 @@ Else  (NOT Boost_FOUND)
 	set(test_name Float3)
 	Set(test_src
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/testFloat3.cpp"
+			"${ENGINE_SOURCE_DIR}/System/float3.cpp"
+			"${ENGINE_SOURCE_DIR}/System/float4.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
+			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
+			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
+			${test_Log_sources}
 		)
 
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_SYSTEM_LIBRARY}
+			${Boost_THREAD_LIBRARY}
+			${Boost_CHRONO_LIBRARY_WITH_RT}
+			${WINMM_LIBRARY}
 		)
 
-	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
 
 ################################################################################
 ### Matrix44f
@@ -154,6 +169,27 @@ Else  (NOT Boost_FOUND)
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
 			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
+			${test_Log_sources}
+		)
+
+	set(test_libs
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			${Boost_SYSTEM_LIBRARY}
+			${Boost_THREAD_LIBRARY}
+			${Boost_CHRONO_LIBRARY_WITH_RT}
+			${WINMM_LIBRARY}
+		)
+
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
+
+################################################################################
+### Matrix44fRotation
+	set(test_name Matrix44fRotation)
+	Set(test_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/testRotationMatrix44f.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Matrix44f.cpp"
+			"${ENGINE_SOURCE_DIR}/System/float3.cpp"
+			"${ENGINE_SOURCE_DIR}/System/float4.cpp"
 			${test_Log_sources}
 		)
 
@@ -183,11 +219,8 @@ Else  (NOT Boost_FOUND)
 			${Boost_SYSTEM_LIBRARY}
 			${Boost_CHRONO_LIBRARY_WITH_RT}
 			${Boost_THREAD_LIBRARY}
+			${WINMM_LIBRARY}
 		)
-
-	IF (WIN32)
-		LIST(APPEND test_libs ${WINMM_LIBRARY})
-	ENDIF (WIN32)
 
 	set(test_flags "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
 	if (Boost_TIMER_FOUND)
@@ -254,27 +287,30 @@ Else  (NOT Boost_FOUND)
 
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTEST")
 
+	if    (NOT NO_CREG)
 ################################################################################
 ### CREG
-	add_test(NAME testCreg COMMAND ${CMAKE_BINARY_DIR}/spring-headless${CMAKE_EXECUTABLE_SUFFIX} --test-creg)
+		add_test(NAME testCreg COMMAND ${CMAKE_BINARY_DIR}/spring-headless${CMAKE_EXECUTABLE_SUFFIX} --test-creg)
 
-################################################################################
 ### CREG LoadSave
-	set(test_name LoadSave)
-	Set(test_src
-			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/LoadSave/testCregLoadSave.cpp"
-			"${ENGINE_SOURCE_DIR}/System/creg/Serializer.cpp"
-			"${ENGINE_SOURCE_DIR}/System/creg/VarTypes.cpp"
-			"${ENGINE_SOURCE_DIR}/System/creg/creg.cpp"
-			${test_Log_sources}
-		)
+		set(test_name LoadSave)
+		Set(test_src
+				"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/LoadSave/testCregLoadSave.cpp"
+				"${ENGINE_SOURCE_DIR}/System/creg/Serializer.cpp"
+				"${ENGINE_SOURCE_DIR}/System/creg/VarTypes.cpp"
+				"${ENGINE_SOURCE_DIR}/System/creg/creg.cpp"
+				${test_Log_sources}
+			)
 
-	set(test_libs
-			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-			${Boost_REGEX_LIBRARY}
-		)
+		set(test_libs
+				${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+				${Boost_REGEX_LIBRARY}
+			)
 
-	add_spring_test(${test_name} "${test_src}" "${test_libs}" -"DTEST")
+		add_spring_test(${test_name} "${test_src}" "${test_libs}" -"DTEST")
+###
+################################################################################
+	endif (NOT NO_CREG)
 
 ################################################################################
 ### UnitSync
@@ -317,10 +353,14 @@ Else  (NOT Boost_FOUND)
 			${Boost_SYSTEM_LIBRARY}
 			${WINMM_LIBRARY}
 		)
-if(NOT WIN32)
-# FIXME: sometimes fails on windows
+if(WIN32)
+	# FIXME: sometimes fails on windows
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DUNITSYNC")
+else()
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSYNC")
 endif()
+
+
 
 ################################################################################
 ### Mutex
@@ -347,6 +387,19 @@ endif()
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
 
 ################################################################################
+### Ellipsoid
+	set(test_name Ellipsoid)
+	Set(test_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/engine/Sim/Misc/testEllipsoid.cpp"
+			${test_Log_sources}
+		)
+	set(test_libs
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+		)
+	set(test_flags "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
+
+################################################################################
 ### QuadField
 	set(test_name QuadField)
 	Set(test_src
@@ -359,6 +412,31 @@ endif()
 		)
 	set(test_flags "-DNOT_USING_CREG -DNOT_USING_STREFLOP -DBUILDING_AI")
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
+
+################################################################################
+### Printf
+	set(test_name Printf)
+	Set(test_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/other/testPrintf.cpp"
+			"${ENGINE_SOURCE_DIR}/lib/lua/include/LuaUser.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
+			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
+			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
+			${test_Log_sources}
+			${sources_engine_System_Threading}
+		)
+	set(test_libs
+			streflop
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			${Boost_SYSTEM_LIBRARY}
+			${Boost_CHRONO_LIBRARY_WITH_RT}
+			${Boost_THREAD_LIBRARY}
+			${WINMM_LIBRARY}
+		)
+	set(test_flags "-DNOT_USING_CREG -DSTREFLOP_SSE -DBUILDING_AI")
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
+	target_include_directories(test_${test_name} PRIVATE ${ENGINE_SOURCE_DIR}/lib/lua/include)
+
 
 ################################################################################
 ### EventClient

@@ -11,14 +11,15 @@
 CR_BIND_DERIVED(CLaserCannon, CWeapon, (NULL, NULL))
 
 CR_REG_METADATA(CLaserCannon,(
-	CR_MEMBER(color),
-	CR_RESERVED(8)
+	CR_MEMBER(color)
 ))
 
 CLaserCannon::CLaserCannon(CUnit* owner, const WeaponDef* def)
 	: CWeapon(owner, def)
-	, color(def->visuals.color)
 {
+	//happens when loading
+	if (def != nullptr)
+		color = def->visuals.color;
 }
 
 

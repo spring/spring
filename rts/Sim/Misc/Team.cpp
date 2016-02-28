@@ -10,19 +10,20 @@
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/ReadMap.h"
+#include "Net/Protocol/NetProtocol.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
-#include "Net/Protocol/NetProtocol.h"
 #include "System/MsgStrings.h"
-#include "System/Rectangle.h"
+#include "System/Util.h"
+#include "System/creg/STL_Set.h"
 #include "System/creg/STL_List.h"
 #include "System/creg/STL_Map.h"
 #include "System/creg/STL_Set.h"
 
 
-CR_BIND_DERIVED(CTeam, TeamBase, (-1))
+CR_BIND_DERIVED(CTeam, TeamBase, )
 CR_REG_METADATA(CTeam, (
 	CR_MEMBER(teamNum),
 	CR_MEMBER(maxUnits),
@@ -47,7 +48,6 @@ CR_REG_METADATA(CTeam, (
 	CR_MEMBER(resPrevExcess),
 	CR_MEMBER(nextHistoryEntry),
 	CR_MEMBER(statHistory),
-	CR_MEMBER(currentStats),
 	CR_MEMBER(modParams),
 	CR_MEMBER(modParamsMap),
 	CR_IGNORED(highlight)
@@ -58,11 +58,12 @@ CR_REG_METADATA(CTeam, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CTeam::CTeam(int _teamNum):
-	teamNum(_teamNum),
+CTeam::CTeam():
+	teamNum(-1),
 	maxUnits(0),
 	isDead(false),
 	gaia(false),
+	removeUnits(true),
 	resStorage(1000000, 1000000),
 	resShare(0.99f, 0.95f),
 	nextHistoryEntry(0),
@@ -70,7 +71,6 @@ CTeam::CTeam(int _teamNum):
 	highlight(0.0f)
 {
 	statHistory.push_back(TeamStatistics());
-	currentStats = &statHistory.back();
 }
 
 void CTeam::SetDefaultStartPos()
@@ -210,12 +210,19 @@ void CTeam::GiveEverythingTo(const unsigned toTeam)
 		res.energy = 0;
 	}
 
-	for (CUnitSet::iterator ui = units.begin(); ui != units.end(); ) {
-		// must pass the normal checks, isDead, unit count restrictions, luaRules, etc...
-		CUnitSet::iterator next = ui; ++next;
-		(*ui)->ChangeTeam(toTeam, CUnit::ChangeGiven);
-		ui = next;
+	{
+		// block RemoveUnit from creating a loop-and-modify
+		// situation for units that end up being transferred
+		removeUnits = false;
+
+		for (CUnit* u: units) {
+			u->ChangeTeam(toTeam, CUnit::ChangeGiven);
+		}
+
+		removeUnits = true;
 	}
+
+	units.clear();
 }
 
 
@@ -294,6 +301,7 @@ void CTeam::ResetResourceState()
 
 void CTeam::SlowUpdate()
 {
+	TeamStatistics& currentStats = GetCurrentStats();
 	float eShare = 0.0f, mShare = 0.0f;
 
 	// calculate the total amount of resources that all
@@ -311,11 +319,10 @@ void CTeam::SlowUpdate()
 		}
 	}
 
-
-	currentStats->metalProduced  += resPrevIncome.metal;
-	currentStats->energyProduced += resPrevIncome.energy;
-	currentStats->metalUsed  += resPrevExpense.metal;
-	currentStats->energyUsed += resPrevExpense.energy;
+	currentStats.metalProduced  += resPrevIncome.metal;
+	currentStats.energyProduced += resPrevIncome.energy;
+	currentStats.metalUsed  += resPrevExpense.metal;
+	currentStats.energyUsed += resPrevExpense.energy;
 
 	res.metal  += resDelayedShare.metal;  resDelayedShare.metal  = 0.0f;
 	res.energy += resDelayedShare.energy; resDelayedShare.energy = 0.0f;
@@ -344,22 +351,22 @@ void CTeam::SlowUpdate()
 			res.metal      -= mdif; team->res.metal          += mdif;
 			resSent.metal  += mdif; team->resReceived.metal  += mdif;
 
-			currentStats->energySent += edif; team->currentStats->energyReceived += edif;
-			currentStats->metalSent  += mdif; team->currentStats->metalReceived  += mdif;
+			currentStats.energySent += edif; team->GetCurrentStats().energyReceived += edif;
+			currentStats.metalSent  += mdif; team->GetCurrentStats().metalReceived  += mdif;
 		}
 	}
 
 	// clamp resource levels to storage capacity
 	if (res.metal > resStorage.metal) {
 		resPrevExcess.metal = (res.metal - resStorage.metal);
-		currentStats->metalExcess += resPrevExcess.metal;
+		currentStats.metalExcess += resPrevExcess.metal;
 		res.metal = resStorage.metal;
 	} else {
 		resPrevExcess.metal = 0;
 	}
 	if (res.energy > resStorage.energy) {
 		resPrevExcess.energy = (res.energy - resStorage.energy);
-		currentStats->energyExcess += resPrevExcess.energy;
+		currentStats.energyExcess += resPrevExcess.energy;
 		res.energy = resStorage.energy;
 	} else {
 		resPrevExcess.energy = 0;
@@ -369,30 +376,29 @@ void CTeam::SlowUpdate()
 	assert(((TeamStatistics::statsPeriod * GAME_SPEED) % TEAM_SLOWUPDATE_RATE) == 0);
 
 	if (nextHistoryEntry <= gs->frameNum) {
-		currentStats->frame = gs->frameNum;
-		statHistory.push_back(*currentStats);
-		currentStats = &statHistory.back();
+		currentStats.frame = gs->frameNum;
+		statHistory.push_back(currentStats);
 
 		nextHistoryEntry = gs->frameNum + (TeamStatistics::statsPeriod * GAME_SPEED);
-		currentStats->frame = nextHistoryEntry;
+		GetCurrentStats().frame = nextHistoryEntry;
 	}
 }
 
 
 void CTeam::AddUnit(CUnit* unit, AddType type)
 {
-	units.insert(unit);
+	VectorInsertUnique(units, unit, false);
 	switch (type) {
 		case AddBuilt: {
-			currentStats->unitsProduced++;
+			GetCurrentStats().unitsProduced++;
 			break;
 		}
 		case AddGiven: {
-			currentStats->unitsReceived++;
+			GetCurrentStats().unitsReceived++;
 			break;
 		}
 		case AddCaptured: {
-			currentStats->unitsCaptured++;
+			GetCurrentStats().unitsCaptured++;
 			break;
 		}
 	}
@@ -401,18 +407,20 @@ void CTeam::AddUnit(CUnit* unit, AddType type)
 
 void CTeam::RemoveUnit(CUnit* unit, RemoveType type)
 {
-	units.erase(unit);
+	if (removeUnits)
+		VectorErase(units, unit);
+
 	switch (type) {
 		case RemoveDied: {
-			currentStats->unitsDied++;
+			GetCurrentStats().unitsDied++;
 			break;
 		}
 		case RemoveGiven: {
-			currentStats->unitsSent++;
+			GetCurrentStats().unitsSent++;
 			break;
 		}
 		case RemoveCaptured: {
-			currentStats->unitsOutCaptured++;
+			GetCurrentStats().unitsOutCaptured++;
 			break;
 		}
 	}

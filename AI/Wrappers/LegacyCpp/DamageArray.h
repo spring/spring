@@ -4,6 +4,7 @@
 #define _DAMAGE_ARRAY_H_
 
 #include <algorithm>
+#include <vector>
 #include "System/creg/creg_cond.h"
 
 
@@ -21,9 +22,8 @@ public:
 	 * This constructor is currently only used by C++ AIs
 	 * which use the legacy C++ wrapper around the C AI interface.
 	 */
-	DamageArray(int numTypes, const float* typeDamages);
+	DamageArray(const std::vector<float>& dmg);
 	DamageArray(const DamageArray& other);
-	~DamageArray();
 
 	DamageArray& operator=(const DamageArray& other) {
 		paralyzeDamageTime = other.paralyzeDamageTime;
@@ -31,8 +31,7 @@ public:
 		impulseBoost = other.impulseBoost;
 		craterMult = other.craterMult;
 		craterBoost = other.craterBoost;
-		numTypes = other.numTypes;
-		std::copy(other.damages, other.damages + numTypes, damages);
+		damages = other.damages;
 		return *this;
 	}
 	float& operator[](int i) { return damages[i]; }
@@ -40,12 +39,12 @@ public:
 
 	DamageArray operator*(float mul) const {
 		DamageArray da(*this);
-		for(int a = 0; a < numTypes; ++a)
+		for (int a = 0; a < damages.size(); ++a)
 			da.damages[a] *= mul;
 		return da;
 	}
 
-	int GetNumTypes() const { return numTypes; }
+	int GetNumTypes() const { return damages.size(); }
 	float GetTypeDamage(int typeIndex) const { return damages[typeIndex]; }
 	float GetDefaultDamage() const { return damages[0]; }
 
@@ -57,8 +56,7 @@ private:
 	void creg_Serialize(creg::ISerializer* s);
 	#endif // USING_CREG
 
-	int numTypes;
-	float* damages;
+	std::vector<float> damages;
 };
 
 } // namespace springLegacyAI

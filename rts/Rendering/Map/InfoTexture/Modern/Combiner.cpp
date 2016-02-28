@@ -1,11 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "Combiner.h"
+#include "Game/GlobalUnsynced.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Map/ReadMap.h"
-#include "Sim/Misc/GlobalSynced.h"
 #include "System/Exceptions.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
@@ -72,8 +72,9 @@ void CInfoTextureCombiner::SwitchMode(const std::string& name)
 		return;
 	}
 
+	// WTF? fully reloaded from disk on every switch?
 	if (name == "los") {
-		disabled = !CreateShader("shaders/GLSL/infoLOS.lua");
+		disabled = !CreateShader("shaders/GLSL/infoLOS.lua", true , float4(0.5f, 0.5f, 0.5f, 0.5f));
 	} else
 	if (name == "metal") {
 		disabled = !CreateShader("shaders/GLSL/infoMetal.lua", true, float4(0.f, 0.f, 0.f, 1.0f));
@@ -123,7 +124,7 @@ void CInfoTextureCombiner::Update()
 	glEnable(GL_BLEND);
 
 	shader->BindTextures();
-	shader->SetUniform("time", float(gs->frameNum + globalRendering->timeOffset));
+	shader->SetUniform("time", gu->gameTime);
 
 	const float isx = 2.0f * (mapDims.mapx / float(mapDims.pwr2mapx)) - 1.0f;
 	const float isy = 2.0f * (mapDims.mapy / float(mapDims.pwr2mapy)) - 1.0f;

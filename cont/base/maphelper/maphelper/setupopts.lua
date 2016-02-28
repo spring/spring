@@ -176,7 +176,7 @@ end
 --   8: max
 --   9: step
 
-local function CreateOptionDefs(mapInfo, defaultVals)
+local function CreateOptionDefs(mapInfo, defValues)
 
   local optionDefs = {
 

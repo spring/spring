@@ -294,9 +294,9 @@ void QTPFSPathDrawer::DrawNode(
 		}
 	}
 
-	if (showCost && camera->GetPos().SqDistance(verts[4]) < (2000.0f * 2000.0f)) {
+	if (showCost && camera->GetPos().SqDistance(verts[4]) < (1000.0f * 1000.0f)) {
 		font->SetTextColor(0.0f, 0.0f, 0.0f, 1.0f);
-		font->glWorldPrint(verts[4], 4.0f, FloatToString(node->GetMoveCost(), "%8.2f"));
+		font->glWorldPrint(verts[4], 5.0f, FloatToString(node->GetMoveCost(), "%8.2f"));
 	}
 
 	#undef xminw
@@ -352,7 +352,7 @@ void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int
 						const int sqx = (tx << 1);
 						const int sqz = (ty << 1);
 						const int texIdx = ((ty * (mapDims.pwr2mapx >> 1)) + tx) * 4 - offset;
-						const bool losSqr = losHandler->InLos(sqx, sqz, gu->myAllyTeam);
+						const bool losSqr = losHandler->InLos(SquareToFloat3(sqx, sqz), gu->myAllyTeam);
 
 						#if 1
 						// use node-modifiers as baseline so visualisation is in sync with alt+B

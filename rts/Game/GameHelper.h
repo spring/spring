@@ -13,7 +13,6 @@
 #include <map>
 #include <vector>
 
-class CGame;
 class CUnit;
 class CWeapon;
 class CSolidObject;
@@ -22,7 +21,6 @@ class CMobileCAI;
 struct UnitDef;
 struct MoveDef;
 struct BuildInfo;
-class IExplosionGenerator;
 class CStdExplosionGenerator;
 
 class CGameHelper
@@ -170,43 +168,6 @@ private:
 
 		DamageArray damage;
 		float3 impulse;
-	};
-
-	struct ObjectCache {
-	public:
-		ObjectCache() : numUnits(0), numFeatures(0) {}
-		bool Empty() const { return (units.empty() || features.empty()); }
-		void Init(unsigned int maxUnits, unsigned int maxFeatures) {
-			units.resize(maxUnits, NULL);
-			features.resize(maxFeatures, NULL);
-
-			numUnits = 0;
-			numFeatures = 0;
-		}
-		void Kill() {
-			units.clear();
-			features.clear();
-		}
-		void Reset(unsigned int _numUnits, unsigned int _numFeatures) {
-			numUnits = _numUnits;
-			numFeatures = _numFeatures;
-
-			units[numUnits] = NULL;
-			features[numFeatures] = NULL;
-		}
-
-		std::vector<CUnit*>& GetUnits() { return units; }
-		std::vector<CFeature*>& GetFeatures() { return features; }
-
-		unsigned int* GetNumUnitsPtr() { return &numUnits; }
-		unsigned int* GetNumFeaturesPtr() { return &numFeatures; }
-
-	private:
-		std::vector<CUnit*> units;
-		std::vector<CFeature*> features;
-
-		unsigned int numUnits;
-		unsigned int numFeatures;
 	};
 
 	std::vector< std::list<WaitingDamage*> > waitingDamageLists;

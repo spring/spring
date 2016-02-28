@@ -45,6 +45,7 @@ CALLIN_LIST = {
 	"UnitFinished",
 	"UnitFromFactory",
 	"UnitDestroyed",
+	"RenderUnitDestroyed",
 	"UnitExperience",
 	"UnitIdle",
 	"UnitCmdDone",
@@ -124,6 +125,11 @@ CALLIN_LIST = {
 	"DrawWorldShadow",
 	"DrawWorldReflection",
 	"DrawWorldRefraction",
+	"DrawGroundPreForward",
+	"DrawGroundPreDeferred",
+	"DrawGroundPostDeferred",
+	"DrawUnitsPostDeferred",
+	"DrawFeaturesPostDeferred",
 	"DrawScreenEffects",
 	"DrawScreen",
 	"DrawInMiniMap",
@@ -150,6 +156,7 @@ CALLIN_LIST = {
 	-- moved from LuaUI
 	"KeyPress",
 	"KeyRelease",
+	"TextInput",
 	"MousePress",
 	"MouseRelease",
 	"MouseMove",
@@ -161,6 +168,12 @@ CALLIN_LIST = {
 	"WorldTooltip",            -- FIXME: not implemented by base GH
 	"MapDrawCmd",
 	"ShockFront",              -- FIXME: not implemented by base GH
+
+	"DownloadQueued",
+	"DownloadStarted",
+	"DownloadFinished",
+	"DownloadFailed",
+	"DownloadProgress",
 }
 
 for callinIdx, callinName in ipairs(CALLIN_LIST) do

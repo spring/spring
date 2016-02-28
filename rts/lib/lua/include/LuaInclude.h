@@ -80,7 +80,7 @@ static inline int lua_toint(lua_State* L, int idx)
 static inline float lua_tofloat(lua_State* L, int idx)
 {
 	const float n = lua_tonumber(L, idx);
-#if defined(DEBUG) || defined(DEBUG_LUANAN)
+#if defined(DEBUG_LUANAN)
 	// Note:
 	// luaL_argerror must be called from inside of lua, else it calls exit()
 	// so it can't be used in LuaParser::Get...() and similar
@@ -224,12 +224,11 @@ static inline luaContextData* GetLuaContextData(const lua_State* L)
 }
 
 static inline lua_State* LUA_OPEN(luaContextData* lcd = NULL) {
-	lua_State* L = lua_newstate(spring_lua_alloc, lcd); // we want to use our own memory allocator
-	return L;
+	return lua_newstate(spring_lua_alloc, lcd); // we want to use our own memory allocator
 }
 
-static inline void LUA_CLOSE(lua_State* L_Old) {
-	lua_close(L_Old);
+static inline void LUA_CLOSE(lua_State** L) {
+	assert((*L) != NULL); lua_close(*L); *L = NULL;
 }
 
 

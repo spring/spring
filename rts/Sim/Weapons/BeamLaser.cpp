@@ -2,13 +2,12 @@
 
 #include "BeamLaser.h"
 #include "PlasmaRepulser.h"
-#include "WeaponDefHandler.h"
+#include "WeaponDef.h"
 #include "Game/GameHelper.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/CollisionHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/StrafeAirMoveType.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
@@ -17,6 +16,8 @@
 #include "Sim/Units/UnitDef.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
+
+#include <vector>
 
 #define SWEEPFIRE_ENABLED 1
 
@@ -81,9 +82,12 @@ float CBeamLaser::SweepFireState::GetTargetDist2D() const {
 
 CBeamLaser::CBeamLaser(CUnit* owner, const WeaponDef* def)
 	: CWeapon(owner, def)
-	, color(def->visuals.color)
 	, salvoDamageMult(1.0f)
 {
+	//happens when loading
+	if (def != nullptr)
+		color = def->visuals.color;
+
 	sweepFireState.SetDamageAllies((collisionFlags & Collision::NOFRIENDLIES) == 0);
 }
 
@@ -284,6 +288,7 @@ void CBeamLaser::FireInternal(float3 curDir)
 	CUnit* hitUnit = NULL;
 	CFeature* hitFeature = NULL;
 	CPlasmaRepulser* hitShield = NULL;
+	static std::vector<TraceRay::SShieldDist> hitShields;
 	CollisionQuery hitColQuery;
 
 	if (!sweepFireState.IsSweepFiring()) {
@@ -329,19 +334,28 @@ void CBeamLaser::FireInternal(float3 curDir)
 		//
 		// we do more than one trace-iteration and set dir to
 		// newDir only in the case there is a shield in our way
-		const float shieldLength = interceptHandler.AddShieldInterceptableBeam(this, curPos, curDir, beamLength, newDir, hitShield);
+		hitShields.clear();
+		TraceRay::TraceRayShields(this, curPos, curDir, beamLength, hitShields);
 
-		if (shieldLength < beamLength) {
-			beamLength = shieldLength;
-			tryAgain = hitShield->BeamIntercepted(this, curPos, salvoDamageMult);
-			hitUnit = NULL;
-			hitFeature = NULL;
-		} else {
-			tryAgain = false;
+		for (const TraceRay::SShieldDist& sd: hitShields) {
+			if(sd.dist < beamLength && sd.rep->IncomingBeam(this, curPos, salvoDamageMult)) {
+				beamLength = sd.dist;
+				hitUnit = NULL;
+				hitFeature = NULL;
+				hitShield = sd.rep;
+				break;
+			}
 		}
 
 		// same as hitColQuery.GetHitPos() if no water or shield in way
 		hitPos = curPos + curDir * beamLength;
+		if (hitShield != nullptr && hitShield->weaponDef->shieldRepulser) {
+			const float3 normal = (hitPos - hitShield->weaponMuzzlePos).Normalize();
+			newDir = curDir - normal * normal.dot(curDir) * 2;
+			tryAgain = true;
+		} else {
+			tryAgain = false;
+		}
 
 		{
 			const float baseAlpha  = weaponDef->intensity * 255.0f;
@@ -367,7 +381,7 @@ void CBeamLaser::FireInternal(float3 curDir)
 		return;
 
 	if (hitUnit != NULL) {
-		hitUnit->SetLastAttackedPiece(hitColQuery.GetHitPiece(), gs->frameNum);
+		hitUnit->SetLastHitPiece(hitColQuery.GetHitPiece(), gs->frameNum);
 
 		if (weaponDef->targetBorder > 0.0f) {
 			actualRange += (hitUnit->radius * weaponDef->targetBorder);
@@ -378,20 +392,20 @@ void CBeamLaser::FireInternal(float3 curDir)
 		// make it possible to always hit with some minimal intensity (melee weapons have use for that)
 		const float hitIntensity = std::max(weaponDef->minIntensity, 1.0f - curLength / (actualRange * 2.0f));
 
-		const DamageArray& baseDamages = CWeaponDefHandler::DynamicDamages(weaponDef, weaponMuzzlePos, curPos);
-		const DamageArray damages = baseDamages * (hitIntensity * salvoDamageMult);
+		const DamageArray& baseDamages = damages->GetDynamicDamages(weaponMuzzlePos, curPos);
+		const DamageArray da = baseDamages * (hitIntensity * salvoDamageMult);
 		const CGameHelper::ExplosionParams params = {
 			hitPos,
 			curDir,
-			damages,
+			da,
 			weaponDef,
 			owner,
 			hitUnit,
 			hitFeature,
-			weaponDef->craterAreaOfEffect,
-			weaponDef->damageAreaOfEffect,
-			weaponDef->edgeEffectiveness,
-			weaponDef->explosionSpeed,
+			damages->craterAreaOfEffect,
+			damages->damageAreaOfEffect,
+			damages->edgeEffectiveness,
+			damages->explosionSpeed,
 			1.0f,                                             // gfxMod
 			weaponDef->impactOnly,
 			weaponDef->noExplode || weaponDef->noSelfDamage,  // ignoreOwner

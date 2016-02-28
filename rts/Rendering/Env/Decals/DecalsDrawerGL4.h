@@ -151,4 +151,4 @@ private:
 
 #endif // !defined(GL_VERSION_4_0) || HEADLESS
 
-#endif // SHADER_GROUND_DECAL_DRAWER_H 
+#endif // SHADER_GROUND_DECAL_DRAWER_H

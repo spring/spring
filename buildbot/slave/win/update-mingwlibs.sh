@@ -12,7 +12,7 @@ fi
 
 if [ ! -d $MINGWLIBS_PATH ]; then
 	echo "clone mingwlibs git-repo"
-	git clone git://github.com/spring/mingwlibs.git $MINGWLIBS_PATH
+	git clone $MINGWLIBS_REPO_URL $MINGWLIBS_PATH
 fi
 
 cd $MINGWLIBS_PATH

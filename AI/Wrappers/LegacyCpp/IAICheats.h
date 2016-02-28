@@ -3,7 +3,6 @@
 #ifndef I_AI_CHEATS_H
 #define I_AI_CHEATS_H
 
-#include "Command.h"
 #include "IAICallback.h"
 #include "Sim/Misc/GlobalConstants.h" // needed for MAX_UNITS
 #include "System/float3.h"

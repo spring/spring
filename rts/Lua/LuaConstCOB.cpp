@@ -121,7 +121,7 @@ bool LuaConstSFX::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "SHATTER", PF_Shatter);
 	LuaPushNamedNumber(L, "EXPLODE", PF_Explode);
 	LuaPushNamedNumber(L, "EXPLODE_ON_HIT", PF_Explode);
-	LuaPushNamedNumber(L, "FALL",  PF_Fall);
+	LuaPushNamedNumber(L, "FALL",  0);
 	LuaPushNamedNumber(L, "SMOKE", PF_Smoke);
 	LuaPushNamedNumber(L, "FIRE",  PF_Fire);
 	LuaPushNamedNumber(L, "NONE",  PF_NONE); // BITMAP_ONLY

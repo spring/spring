@@ -121,11 +121,11 @@ public:
 		float sunOrbitTime;
 		float sunStartAngle;
 		float3 groundAmbientColor;
-		float3 groundSunColor;
+		float3 groundDiffuseColor;
 		float3 groundSpecularColor;
 		float  groundShadowDensity;
 		float4 unitAmbientColor;
-		float4 unitSunColor;
+		float4 unitDiffuseColor;
 		float  unitShadowDensity;
 		float3 unitSpecularColor;
 		float  specularExponent;
@@ -178,9 +178,12 @@ public:
 		std::string splatDetailTexName;
 		std::string grassShadingTexName;  // defaults to minimap texture
 		std::string skyReflectModTexName;
-		std::string detailNormalTexName;
+		std::string blendNormalsTexName;
 		std::string lightEmissionTexName;
 		std::string parallaxHeightTexName;
+
+		// Contains the splatted detail normal textures
+		std::vector<std::string> splatDetailNormalTexNames;
 
 		// SMF overrides
 		std::string minimapTexName;
@@ -188,13 +191,16 @@ public:
 		std::string metalmapTexName;
 		std::string grassmapTexName;
 
+		std::vector<std::string> smtFileNames;
 
 		float minHeight;
-		bool  minHeightOverride;
 		float maxHeight;
+		bool  minHeightOverride;
 		bool  maxHeightOverride;
 
-		std::vector<std::string> smtFileNames;
+		// Controls whether the alpha channel of each splatted detail normal texture
+		// contains a diffuse channel, which behaves like the old splatted detail textures
+		bool splatDetailNormalDiffuseAlpha;
 	} smf;
 
 	/** SM3 specific settings
@@ -221,6 +227,7 @@ public:
 	} pfs;
 
 
+	//If this struct is changed, please fix CReadMap::CalcTypemapChecksum accordingly
 	struct TerrainType {
 		std::string name;
 		float hardness;

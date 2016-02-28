@@ -13,24 +13,21 @@
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
-#include "Sim/Misc/LosHandler.h"
-#include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/PieceProjectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Projectiles/Unsynced/BubbleProjectile.h"
-#include "Sim/Projectiles/Unsynced/HeatCloudProjectile.h"
-#include "Sim/Projectiles/Unsynced/MuzzleFlame.h"
-#include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
-#include "Sim/Projectiles/Unsynced/WakeProjectile.h"
-#include "Sim/Projectiles/Unsynced/WreckProjectile.h"
+#include "Rendering/Env/Particles/Classes/BubbleProjectile.h"
+#include "Rendering/Env/Particles/Classes/HeatCloudProjectile.h"
+#include "Rendering/Env/Particles/Classes/MuzzleFlame.h"
+#include "Rendering/Env/Particles/Classes/SmokeProjectile.h"
+#include "Rendering/Env/Particles/Classes/WakeProjectile.h"
+#include "Rendering/Env/Particles/Classes/WreckProjectile.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Weapons/BeamLaser.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
@@ -54,7 +51,7 @@ inline bool CCobInstance::HasFunction(int id) const
 
 
 CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
-	: CUnitScript(_unit, pieces)
+	: CUnitScript(_unit)
 	, script(_script)
 {
 	staticVars.reserve(script.numStaticVars);
@@ -62,7 +59,7 @@ CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
 		staticVars.push_back(0);
 	}
 
-	MapScriptToModelPieces(unit->localModel);
+	MapScriptToModelPieces(&unit->localModel);
 
 	hasSetSFXOccupy  = HasFunction(COBFN_SetSFXOccupy);
 	hasRockUnit      = HasFunction(COBFN_RockUnit);
@@ -105,21 +102,21 @@ CCobInstance::~CCobInstance()
 void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 {
 	std::vector<std::string>& pieceNames = script.pieceNames; // already in lowercase!
-	std::vector<LocalModelPiece*>& lmodelPieces = lmodel->pieces;
+	std::vector<LocalModelPiece>& lmodelPieces = lmodel->pieces;
 
 	pieces.clear();
 	pieces.reserve(pieceNames.size());
 
 	// clear the default assumed 1:1 mapping
 	for (size_t lmodelPieceNum = 0; lmodelPieceNum < lmodelPieces.size(); lmodelPieceNum++) {
-		lmodelPieces[lmodelPieceNum]->SetScriptPieceIndex(-1);
+		lmodelPieces[lmodelPieceNum].SetScriptPieceIndex(-1);
 	}
 	for (size_t scriptPieceNum = 0; scriptPieceNum < pieceNames.size(); scriptPieceNum++) {
 		unsigned int lmodelPieceNum;
 
 		// Map this piecename to an index in the script's pieceinfo
 		for (lmodelPieceNum = 0; lmodelPieceNum < lmodelPieces.size(); lmodelPieceNum++) {
-			if (lmodelPieces[lmodelPieceNum]->original->name.compare(pieceNames[scriptPieceNum]) == 0) {
+			if (lmodelPieces[lmodelPieceNum].original->name.compare(pieceNames[scriptPieceNum]) == 0) {
 				break;
 			}
 		}
@@ -127,7 +124,7 @@ void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 		// Not found? Try lowercase
 		if (lmodelPieceNum == lmodelPieces.size()) {
 			for (lmodelPieceNum = 0; lmodelPieceNum < lmodelPieces.size(); lmodelPieceNum++) {
-				if (StringToLower(lmodelPieces[lmodelPieceNum]->original->name).compare(pieceNames[scriptPieceNum]) == 0) {
+				if (StringToLower(lmodelPieces[lmodelPieceNum].original->name).compare(pieceNames[scriptPieceNum]) == 0) {
 					break;
 				}
 			}
@@ -135,8 +132,8 @@ void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 
 		// Did we find it?
 		if (lmodelPieceNum < lmodelPieces.size()) {
-			lmodelPieces[lmodelPieceNum]->SetScriptPieceIndex(scriptPieceNum);
-			pieces.push_back(lmodelPieces[lmodelPieceNum]);
+			lmodelPieces[lmodelPieceNum].SetScriptPieceIndex(scriptPieceNum);
+			pieces.push_back(&lmodelPieces[lmodelPieceNum]);
 		} else {
 			pieces.push_back(NULL);
 
@@ -201,14 +198,17 @@ void CCobInstance::Create()
 }
 
 
-// Called when a unit's Killed script finishes executing
-static void CUnitKilledCB(int retCode, void* p1, void* p2)
+
+// note: this callback is always called, even if Killed does not exist
+// however, retCode is only set if the function has a return statement
+// (otherwise its value is -1 regardless of Killed being present which
+// means *no* wreck will be spawned)
+static void UnitKilledCallback(int retCode, void* p1, void* p2)
 {
 	CUnit* self = static_cast<CUnit*>(p1);
 	self->deathScriptFinished = true;
 	self->delayedWreckLevel = retCode;
 }
-
 
 void CCobInstance::Killed()
 {
@@ -216,8 +216,8 @@ void CCobInstance::Killed()
 	args.reserve(2);
 	args.push_back((int) (unit->recentDamage / unit->maxHealth * 100));
 	args.push_back(0);
-	Call(COBFN_Killed, args, &CUnitKilledCB, unit, NULL);
-	unit->delayedWreckLevel = args[1];
+
+	Call(COBFN_Killed, args, &UnitKilledCallback, unit, nullptr);
 }
 
 
@@ -241,45 +241,38 @@ void CCobInstance::RockUnit(const float3& rockDir)
 {
 	vector<int> args;
 	args.reserve(2);
-	args.push_back((int)(500 * rockDir.z));
-	args.push_back((int)(500 * rockDir.x));
+	args.push_back(rockDir.z);
+	args.push_back(rockDir.x);
+
 	Call(COBFN_RockUnit, args);
 }
 
-#if 0
-// ugly hack to get return value of HitByWeaponId script
-//
-static float weaponHitMod; ///< fraction of weapondamage to use when hit by weapon
-static void hitByWeaponIdCallback(int retCode, void* p1, void* p2) { weaponHitMod = retCode * 0.01f; }
-#else
-static void hitByWeaponIdCallback(int retCode, void* p1, void* p2) {
+
+// only called if the function exists
+static void HitByWeaponIdCallback(int retCode, void* p1, void* p2) {
 	*(reinterpret_cast<float*>(p1)) = (retCode * 0.01f);
 }
-#endif
 
-
-void CCobInstance::HitByWeapon(const float3& hitDir, int weaponDefId, float& inout_damage)
+void CCobInstance::HitByWeapon(const float3& hitDir, int weaponDefId, float& inoutDamage)
 {
 	vector<int> args;
 	args.reserve(4);
-
-	args.push_back((int)(500 * hitDir.z));
-	args.push_back((int)(500 * hitDir.x));
+	args.push_back(hitDir.z);
+	args.push_back(hitDir.x);
 
 	if (HasFunction(COBFN_HitByWeaponId)) {
 		const WeaponDef* wd = weaponDefHandler->GetWeaponDefByID(weaponDefId);
 
-		args.push_back((wd != NULL)? wd->tdfId : -1);
-		args.push_back((int)(100 * inout_damage));
+		args.push_back((wd != nullptr)? wd->tdfId : -1);
+		args.push_back((int)(100 * inoutDamage));
 
 		float weaponHitMod = 1.0f;
 
 		// pass weaponHitMod as argument <p1> for callback
-		Call(COBFN_HitByWeaponId, args, hitByWeaponIdCallback, &weaponHitMod, NULL);
+		Call(COBFN_HitByWeaponId, args, HitByWeaponIdCallback, &weaponHitMod, nullptr);
 
-		inout_damage *= weaponHitMod;
-	}
-	else {
+		inoutDamage *= weaponHitMod;
+	} else {
 		Call(COBFN_HitByWeapon, args);
 	}
 }
@@ -398,7 +391,7 @@ void CCobInstance::AimWeapon(int weaponNum, float heading, float pitch)
 // Called when unit's AimWeapon script finished executing (for shield weapon)
 static void ShieldScriptCallback(int retCode, void* p1, void* p2)
 {
-	static_cast<CPlasmaRepulser*>(p1)->SetEnabled(!!retCode);
+	static_cast<CPlasmaRepulser*>(p1)->SetEnabled(retCode != 0);
 }
 
 void CCobInstance::AimShieldWeapon(CPlasmaRepulser* weapon)
@@ -492,9 +485,10 @@ void CCobInstance::EndBurst(int weaponNum) { Call(COBFN_EndBurst + COBFN_Weapon_
 int CCobInstance::RealCall(int functionId, vector<int>& args, CBCobThreadFinish cb, void* p1, void* p2)
 {
 	if (functionId < 0 || size_t(functionId) >= script.scriptNames.size()) {
-		if (cb) {
-			// in case the function doesnt exist the callback should still be called
-			(*cb)(0, p1, p2);
+		if (cb != nullptr) {
+			// in case the function does not exist the callback should
+			// still be called; -1 is the default CobThread return code
+			(*cb)(-1, p1, p2);
 		}
 		return -1;
 	}
@@ -507,7 +501,7 @@ int CCobInstance::RealCall(int functionId, vector<int>& args, CBCobThreadFinish 
 	const bool res = thread->Tick();
 
 	// Make sure this is run even if the call terminates instantly
-	if (cb)
+	if (cb != nullptr)
 		thread->SetCallback(cb, p1, p2);
 
 	if (!res) {
@@ -527,6 +521,7 @@ int CCobInstance::RealCall(int functionId, vector<int>& args, CBCobThreadFinish 
 		for (; i < args.size(); ++i)
 			args[i] = 0;
 
+		// dtor runs the callback
 		delete thread;
 		return 0;
 	}

@@ -23,12 +23,21 @@ class CLuaUI : public CLuaHandle
 	friend class LuaLobby;
 
 	public:
-		static void LoadHandler();
-		static void FreeHandler();
+		void QueueReload() { reloadMe = true; }
+		void CheckReload() {
+			if (!reloadMe)
+				return;
+
+			ReloadHandler();
+		}
+
+		static bool ReloadHandler() { return (FreeHandler(), LoadFreeHandler()); } // NOTE the ','
+		static bool LoadFreeHandler() { return (LoadHandler() || FreeHandler()); }
+
+		static bool LoadHandler();
+		static bool FreeHandler();
 
 		static void UpdateTeams();
-
-		static void Reload();
 
 	public: // structs
 		struct ReStringPair {
@@ -64,7 +73,7 @@ class CLuaUI : public CLuaHandle
 		CLuaUI();
 		virtual ~CLuaUI();
 
-		string LoadFile(const string& filename) const;
+		string LoadFile(const string& name, const std::string& mode) const;
 
 		bool LoadCFunctions(lua_State* L);
 		void InitLuaSocket(lua_State* L);

@@ -70,9 +70,7 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(zNear),
 	CR_IGNORED(viewRange),
 	CR_IGNORED(FSAA),
-
 	CR_IGNORED(maxTextureSize),
-	CR_IGNORED(teamNanospray),
 	CR_IGNORED(active),
 	CR_IGNORED(compressTextures),
 	CR_IGNORED(haveATI),
@@ -194,11 +192,9 @@ void CGlobalRendering::PostInit() {
 
 		const int useGlslShaders = configHandler->GetInt("ForceShaders");
 		if (useGlslShaders < 0) {
-			// disable Shaders for Mesa & Intel drivers
+			// disable Shaders for Intel drivers
 			haveARB  &= !haveIntel;
-			haveARB  &= !haveMesa;
 			haveGLSL &= !haveIntel;
-			haveGLSL &= !haveMesa;
 		} else if (useGlslShaders == 0) {
 			haveARB  = false;
 			haveGLSL = false;

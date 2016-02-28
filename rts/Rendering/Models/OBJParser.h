@@ -3,9 +3,12 @@
 #ifndef OBJ_PARSER_H
 #define OBJ_PARSER_H
 
-#include <map>
+#include "3DModel.h"
 #include "IModelParser.h"
+
 #include "System/type2.h"
+
+#include <map>
 
 struct SOBJTriangle {
 	int vIndices[3]; ///< index of 1st/2nd/3rd vertex
@@ -15,8 +18,8 @@ struct SOBJTriangle {
 
 struct SOBJPiece: public S3DModelPiece {
 public:
-	void UploadGeometryVBOs();
-	void DrawForList() const;
+	void UploadGeometryVBOs() override;
+	void DrawForList() const override;
 	void SetMinMaxExtends(bool globalVertexOffsets);
 	void SetVertexTangents();
 
@@ -29,13 +32,15 @@ public:
 	const SOBJTriangle& GetTriangle(int idx) const { return triangles[idx]; }
 
 	unsigned int GetTriangleCount() const { return (triangles.size()); }
-	unsigned int GetVertexCount() const { return vertices.size(); }
-	unsigned int GetNormalCount() const { return vnormals.size(); }
-	unsigned int GetTxCoorCount() const { return texcoors.size(); }
+	unsigned int GetVertexDrawIndexCount() const override { return triangles.size() * 3; }
+	unsigned int GetVertexCount() const override { return vertices.size(); }
+	const std::vector<unsigned>& GetVertexIndices() const override { return indices; }
 
-	const float3& GetVertexPos(const int idx) const { return GetVertex(idx); }
-	const float3& GetVertex(const int idx) const { return vertices[idx]; }
-	const float3& GetNormal(const int idx) const { return vnormals[idx]; }
+	void BindVertexAttribVBOs() const override;
+	void UnbindVertexAttribVBOs() const override;
+
+	const float3& GetVertexPos(const int idx) const override { return vertices[idx]; }
+	const float3& GetNormal(const int idx) const override { return vnormals[idx]; }
 	const float2& GetTxCoor(const int idx) const { return texcoors[idx]; }
 	const float3& GetSTangent(const int idx) const { return sTangents[idx]; }
 	const float3& GetTTangent(const int idx) const { return tTangents[idx]; }
@@ -57,22 +62,22 @@ private:
 	VBO vbosTangents;
 	VBO vbotTangents;
 
+private:
 	std::vector<float3> vertices;
 	std::vector<float3> vnormals;
 	std::vector<float2> texcoors;
 
-	std::vector<SOBJTriangle> triangles;
-	std::vector<unsigned int> vertexDrawIndices;
-
 	std::vector<float3> sTangents;
 	std::vector<float3> tTangents;
+
+	std::vector<SOBJTriangle> triangles;
+	std::vector<unsigned int> indices;
 };
 
 class LuaTable;
 class COBJParser: public IModelParser {
 public:
 	S3DModel* Load(const std::string& modelFileName);
-	ModelType GetType() const { return MODELTYPE_OBJ; }
 
 private:
 	typedef std::map<std::string, SOBJPiece*> PieceMap;

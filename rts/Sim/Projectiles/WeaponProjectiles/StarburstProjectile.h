@@ -11,12 +11,11 @@ class CSmokeTrailProjectile;
 
 class CStarburstProjectile : public CWeaponProjectile
 {
-	CR_DECLARE(CStarburstProjectile)
+	CR_DECLARE_DERIVED(CStarburstProjectile)
 	CR_DECLARE_SUB(TracerPart)
 
 public:
 	CStarburstProjectile(const ProjectileParams& params);
-	~CStarburstProjectile();
 
 	void Collision(CUnit* unit) override;
 	void Collision(CFeature* feature) override;
@@ -26,20 +25,20 @@ public:
 
 	virtual int GetProjectilesCount() const override;
 
-	int ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos,
-			float shieldForce, float shieldMaxSpeed) override;
+	int ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed) override;
 
+	void SetIgnoreError(bool b) { ignoreError = b; }
 private:
-	void DrawCallback() override;
-
 	void UpdateTrajectory();
 
 private:
+	float3 aimError;
 	float tracking;
+	bool ignoreError;
+	bool doturn;
 	float maxGoodDif;
 	float maxSpeed;
 	float acceleration;
-	float areaOfEffect;
 	float distanceToTravel;
 
 	int uptime;
@@ -47,12 +46,7 @@ private:
 
 	float3 oldSmoke;
 	float3 oldSmokeDir;
-	float3 aimError;
-
-	bool drawTrail;
-	bool doturn;
-
-	CSmokeTrailProjectile* curCallback;
+	CSmokeTrailProjectile* smokeTrail;
 
 	int numParts;
 	int missileAge;

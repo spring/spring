@@ -3,22 +3,29 @@
 #include "Game/GameHelper.h"
 #include "Rendering/Colors.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/ProjectileParams.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
+#include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Map/Ground.h"
 #include "System/Matrix44f.h"
+#include "System/myMath.h"
+
 
 CR_BIND_DERIVED(CWeaponProjectile, CProjectile, )
 
 CR_REG_METADATA(CWeaponProjectile,(
 	CR_SETFLAG(CF_Synced),
+	CR_MEMBER(damages),
 	CR_MEMBER(targeted),
 	CR_IGNORED(weaponDef), //PostLoad
 	CR_MEMBER(target),
@@ -27,12 +34,14 @@ CR_REG_METADATA(CWeaponProjectile,(
 	CR_MEMBER(ttl),
 	CR_MEMBER(bounces),
 	CR_MEMBER(weaponDefID),
+	CR_MEMBER(weaponNum),
 	CR_POSTLOAD(PostLoad)
 ))
 
 
 
 CWeaponProjectile::CWeaponProjectile(): CProjectile()
+	, damages(nullptr)
 	, weaponDef(NULL)
 	, target(NULL)
 
@@ -46,8 +55,9 @@ CWeaponProjectile::CWeaponProjectile(): CProjectile()
 }
 
 CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
-	: CProjectile(params.pos, params.speed, params.owner, true, true, false, (params.weaponDef)->IsHitScanWeapon())
+	: CProjectile(params.pos, params.speed, params.owner, true, true, false, false)
 
+	, damages(nullptr)
 	, weaponDef(params.weaponDef)
 	, target(params.target)
 
@@ -63,7 +73,12 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 {
 	projectileType = WEAPON_BASE_PROJECTILE;
 
+	//creg
+	if (weaponDef == nullptr)
+		return;
+
 	if (weaponDef->IsHitScanWeapon()) {
+		hitscan = true;
 		// the else-case (default) is handled in CProjectile::Init
 		//
 		// ray projectiles must all set this to false because their collision
@@ -91,6 +106,7 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 
 	collisionFlags = weaponDef->collisionFlags;
 	weaponDefID = params.weaponDef->id;
+	weaponNum = params.weaponNum;
 	alwaysVisible = weaponDef->visuals.alwaysVisible;
 	ignoreWater = weaponDef->waterweapon;
 
@@ -118,6 +134,15 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 		allyteamID = teamHandler->IsValidTeam(teamID)? teamHandler->AllyTeam(teamID): -1;
 	}
 
+	if (ownerID != -1u && weaponNum != -1u) {
+		const CUnit* owner = unitHandler->GetUnit(ownerID);
+		if (owner != nullptr && weaponNum < owner->weapons.size()) {
+			damages = DynDamageArray::IncRef(owner->weapons[weaponNum]->damages);
+		}
+	}
+	if (damages == nullptr)
+		damages = DynDamageArray::IncRef(&weaponDef->damages);
+
 	if (params.cegID != -1u) {
 		cegID = params.cegID;
 	} else {
@@ -130,17 +155,16 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 
 	ASSERT_SYNCED(id);
 
-	if (weaponDef->interceptedByShieldType) {
-		// this needs a valid projectile id set
-		assert(id >= 0);
-		interceptHandler.AddShieldInterceptableProjectile(this);
-	}
-
 	if (weaponDef->targetable) {
 		interceptHandler.AddInterceptTarget(this, targetPos);
 	}
 }
 
+
+CWeaponProjectile::~CWeaponProjectile()
+{
+	DynDamageArray::DecRef(damages);
+}
 
 
 void CWeaponProjectile::Explode(
@@ -149,7 +173,7 @@ void CWeaponProjectile::Explode(
 	float3 impactPos,
 	float3 impactDir
 ) {
-	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(weaponDef, startPos, impactPos);
+	const DamageArray& damageArray = damages->GetDynamicDamages(startPos, impactPos);
 	const CGameHelper::ExplosionParams params = {
 		impactPos,
 		impactDir.SafeNormalize(),
@@ -158,10 +182,10 @@ void CWeaponProjectile::Explode(
 		owner(),
 		hitUnit,
 		hitFeature,
-		weaponDef->craterAreaOfEffect,
-		weaponDef->damageAreaOfEffect,
-		weaponDef->edgeEffectiveness,
-		weaponDef->explosionSpeed,
+		damages->craterAreaOfEffect,
+		damages->damageAreaOfEffect,
+		damages->edgeEffectiveness,
+		damages->explosionSpeed,
 		weaponDef->noExplode? 0.3f: 1.0f,                 // gfxMod
 		weaponDef->impactOnly,
 		weaponDef->noExplode || weaponDef->noSelfDamage,  // ignoreOwner
@@ -256,7 +280,7 @@ void CWeaponProjectile::UpdateInterception()
 		}
 	} else {
 		// FIXME: if (pos.SqDistance(po->pos) < Square(weaponDef->collisionSize)) {
-		if (pos.SqDistance(po->pos) < Square(weaponDef->damageAreaOfEffect)) {
+		if (pos.SqDistance(po->pos) < Square(damages->damageAreaOfEffect)) {
 			po->Collision();
 			Collision();
 		}
@@ -313,12 +337,10 @@ void CWeaponProjectile::UpdateGroundBounce()
 }
 
 
-
 bool CWeaponProjectile::TraveledRange() const
 {
 	return ((pos - startPos).SqLength() > (weaponDef->range * weaponDef->range));
 }
-
 
 
 void CWeaponProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
@@ -339,6 +361,7 @@ void CWeaponProjectile::DependentDied(CObject* o)
 		target = NULL;
 	}
 }
+
 
 void CWeaponProjectile::PostLoad()
 {

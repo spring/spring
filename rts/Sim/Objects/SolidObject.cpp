@@ -21,6 +21,8 @@ CR_BIND_DERIVED(CSolidObject, CWorldObject, )
 CR_REG_METADATA(CSolidObject,
 (
 	CR_MEMBER(health),
+	CR_MEMBER(maxHealth),
+
 	CR_MEMBER(mass),
 	CR_MEMBER(crushResistance),
 
@@ -29,8 +31,9 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(blockEnemyPushing),
 	CR_MEMBER(blockHeightChanges),
 
-	CR_MEMBER(luaDraw),
-	CR_MEMBER(noSelect),
+	CR_MEMBER_UN(noDraw),
+	CR_MEMBER_UN(luaDraw),
+	CR_MEMBER_UN(noSelect),
 
 	CR_MEMBER(xsize),
 	CR_MEMBER(zsize),
@@ -44,10 +47,15 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(allyteam),
 
 	CR_MEMBER(tempNum),
+	CR_MEMBER(lastHitPieceFrame),
 
-	CR_MEMBER(objectDef),
+	CR_IGNORED(objectDef), //set by unit/feature postload
 	CR_MEMBER(moveDef),
+
+	CR_IGNORED(localModel), // TODO
 	CR_MEMBER(collisionVolume),
+	CR_MEMBER(lastHitPiece),
+
 	CR_IGNORED(groundDecal),
 
 	CR_MEMBER(frontdir),
@@ -74,6 +82,8 @@ CR_REG_METADATA(CSolidObject,
 
 CSolidObject::CSolidObject():
 	health(0.0f),
+	maxHealth(1.0f),
+
 	mass(DEFAULT_MASS),
 	crushResistance(0.0f),
 
@@ -82,6 +92,7 @@ CSolidObject::CSolidObject():
 	blockEnemyPushing(true),
 	blockHeightChanges(false),
 
+	noDraw(false),
 	luaDraw(false),
 	noSelect(false),
 
@@ -100,11 +111,13 @@ CSolidObject::CSolidObject():
 	allyteam(0),
 
 	tempNum(0),
+	lastHitPieceFrame(-1),
 
-	objectDef(NULL),
-	moveDef(NULL),
-	collisionVolume(NULL),
-	groundDecal(NULL),
+	objectDef(nullptr),
+	moveDef(nullptr),
+
+	lastHitPiece(nullptr),
+	groundDecal(nullptr),
 
 	frontdir( FwdVector),
 	rightdir(-RgtVector),
@@ -115,17 +128,10 @@ CSolidObject::CSolidObject():
 
 	dragScales(OnesVector),
 
-	blockMap(NULL),
+	blockMap(nullptr),
 	yardOpen(false),
 	buildFacing(0)
 {
-}
-
-CSolidObject::~CSolidObject() {
-	ClearCollidableStateBit(CSTATE_BIT_SOLIDOBJECTS | CSTATE_BIT_PROJECTILES | CSTATE_BIT_QUADMAPRAYS);
-
-	delete collisionVolume;
-	collisionVolume = NULL;
 }
 
 void CSolidObject::UpdatePhysicalState(float eps) {
@@ -186,7 +192,7 @@ bool CSolidObject::SetVoidState() {
 	SetPhysicalStateBit(PSTATE_BIT_INVOID);
 
 	UnBlock();
-	collisionVolume->SetIgnoreHits(true);
+	collisionVolume.SetIgnoreHits(true);
 	return true;
 }
 
@@ -200,7 +206,7 @@ bool CSolidObject::ClearVoidState() {
 	ClearPhysicalStateBit(PSTATE_BIT_INVOID);
 
 	Block();
-	collisionVolume->SetIgnoreHits(false);
+	collisionVolume.SetIgnoreHits(false);
 	return true;
 }
 
@@ -214,6 +220,11 @@ void CSolidObject::UpdateVoidState(bool set) {
 	noSelect = (set || !objectDef->selectable);
 }
 
+
+void CSolidObject::SetMass(float newMass)
+{
+	mass = Clamp(newMass, MINIMUM_MASS, MAXIMUM_MASS);
+}
 
 
 void CSolidObject::UnBlock() {
@@ -367,9 +378,9 @@ float3 CSolidObject::GetWantedUpDir(bool useGroundNormal) const {
 	//   gravity, ...
 	//
 	const float3 gn = CGround::GetSmoothNormal(pos.x, pos.z) * (    useGroundNormal);
-	const float3 wn =                             UpVector  * (1 - useGroundNormal);
+	const float3 wn =                              UpVector  * (1 - useGroundNormal);
 
-	if (moveDef == NULL) {
+	if (moveDef == nullptr) {
 		// aircraft cannot use updir reliably or their
 		// coordinate-system would degenerate too much
 		// over time without periodic re-ortho'ing
@@ -411,7 +422,7 @@ void CSolidObject::UpdateDirVectors(bool useGroundNormal)
 
 void CSolidObject::ForcedSpin(const float3& newDir) {
 	// new front-direction should be normalized
-	assert(math::fabsf(newDir.SqLength() - 1.0f) <= float3::NORMALIZE_EPS);
+	assert(math::fabsf(newDir.SqLength() - 1.0f) <= float3::CMP_EPS);
 
 	// if zdir is parallel to world-y, use heading-vector
 	// (or its inverse) as auxiliary to avoid degeneracies

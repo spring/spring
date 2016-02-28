@@ -12,11 +12,14 @@
 #include "Net/GameServer.h"
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Features/FeatureHandler.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/Util.h"
@@ -83,18 +86,16 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 	if ((gs->frameNum % gFramePeriod) != 0) { return; }
 
 	// we only care about the synced projectile data here
-	const std::list<CUnit*>& units = unitHandler->activeUnits;
+	const std::vector<CUnit*>& units = unitHandler->activeUnits;
 	const CFeatureSet& features = featureHandler->GetActiveFeatures();
 	      ProjectileContainer& projectiles = projectileHandler->syncedProjectiles;
 
-	std::list<CUnit*>::const_iterator unitsIt;
 	CFeatureSet::const_iterator featuresIt;
 	ProjectileContainer::iterator projectilesIt;
-	std::vector<LocalModelPiece*>::const_iterator piecesIt;
 	std::vector<CWeapon*>::const_iterator weaponsIt;
 
 	file << "frame: " << gs->frameNum << ", seed: " << gs->GetRandSeed() << "\n";
-	file << "\tunits: " << units.size() << "\n";
+	file << "\tunits: " << unitHandler->activeUnits.size() << "\n";
 
 	#define DUMP_UNIT_DATA
 	#define DUMP_UNIT_PIECE_DATA
@@ -107,11 +108,10 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 	// #define DUMP_ALLYTEAM_DATA
 
 	#ifdef DUMP_UNIT_DATA
-	for (unitsIt = units.begin(); unitsIt != units.end(); ++unitsIt) {
-		const CUnit* u = *unitsIt;
+	for (CUnit* u: units) {
 		const std::vector<CWeapon*>& weapons = u->weapons;
-		const LocalModel* lm = u->localModel;
-		const std::vector<LocalModelPiece*>& pieces = lm->pieces;
+		const LocalModel& lm = u->localModel;
+		const std::vector<LocalModelPiece>& pieces = lm.pieces;
 		const float3& pos = u->pos;
 		const float3& xdir = u->rightdir;
 		const float3& ydir = u->updir;
@@ -130,16 +130,16 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 		file << "\t\t\tpieces: " << pieces.size() << "\n";
 
 		#ifdef DUMP_UNIT_PIECE_DATA
-		for (piecesIt = pieces.begin(); piecesIt != pieces.end(); ++piecesIt) {
-			const LocalModelPiece* lmp = *piecesIt;
-			const S3DModelPiece* omp = lmp->original;
-			const float3& ppos = lmp->GetPosition();
-			const float3& prot = lmp->GetRotation();
+		for (const LocalModelPiece& lmp: pieces) {
+			const S3DModelPiece* omp = lmp.original;
+			const S3DModelPiece* par = omp->parent;
+			const float3& ppos = lmp.GetPosition();
+			const float3& prot = lmp.GetRotation();
 
-			file << "\t\t\t\tname: " << omp->name << " (parentName: " << omp->parentName << ")\n";
+			file << "\t\t\t\tname: " << omp->name << " (parentName: " << ((par != nullptr)? par->name: "[null]") << ")\n";
 			file << "\t\t\t\tpos: <" << ppos.x << ", " << ppos.y << ", " << ppos.z << ">\n";
 			file << "\t\t\t\trot: <" << prot.x << ", " << prot.y << ", " << prot.z << ">\n";
-			file << "\t\t\t\tvisible: " << lmp->scriptSetVisible << "\n";
+			file << "\t\t\t\tvisible: " << lmp.scriptSetVisible << "\n";
 			file << "\n";
 		}
 		#endif

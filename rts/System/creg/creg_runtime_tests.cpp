@@ -130,7 +130,7 @@ static bool TestCregClasses2()
 			fineClasses++;
 		}
 	}
-	return PostCregTest(fineClasses, brokenClasses, 7);
+	return PostCregTest(fineClasses, brokenClasses);
 }
 
 static bool TestCregClasses3()
@@ -214,7 +214,7 @@ static bool TestCregClasses3()
 					}
 				}
 				if (!nextMember) {
-					i = classSize;
+					i = classSize - 1;
 				}
 
 				if (prevMember && nextMember) {
@@ -266,7 +266,7 @@ static bool TestCregClasses3()
 			fineClasses++;
 		}
 	}
-	return PostCregTest(fineClasses, brokenClasses, 12);
+	return PostCregTest(fineClasses, brokenClasses);
 }
 
 

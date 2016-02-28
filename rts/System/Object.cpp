@@ -68,6 +68,7 @@ CObject::~CObject()
 	}
 }
 
+#ifdef USING_CREG
 void CObject::Serialize(creg::ISerializer* ser)
 {
 	if (ser->IsWriting()) {
@@ -118,6 +119,7 @@ void CObject::Serialize(creg::ISerializer* ser)
 		}
 	}
 }
+#endif //USING_CREG
 
 void CObject::DependentDied(CObject* obj)
 {
@@ -131,12 +133,12 @@ void CObject::AddDeathDependence(CObject* obj, DependenceType dep)
 	assert(!detached && !obj->detached);
 	if (!listening[dep])
 		listening[dep] = new TSyncSafeSet();
-	
+
 	listening[dep]->insert(obj);
-	
+
 	if (!obj->listeners[dep])
 		obj->listeners[dep] = new TSyncSafeSet();
-	
+
 	obj->listeners[dep]->insert(this);
 }
 
@@ -146,7 +148,7 @@ void CObject::DeleteDeathDependence(CObject* obj, DependenceType dep)
 	assert(!detached);
 	if (obj->detached)
 		return;
-	
+
 	obj->listeners[dep]->erase(this);
 
 	listening[dep]->erase(obj);

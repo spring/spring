@@ -20,114 +20,82 @@
 
 #include "SSkirmishAISpecifier.h"
 
-#include "CUtils/Util.h"
-
 #include "System/maindefines.h"
 #include "System/SafeCStrings.h"
 
 #include <string.h>
 #include <stdlib.h>
 
-
-struct SSkirmishAISpecifier SSkirmishAISpecifier_copy(
-		const struct SSkirmishAISpecifier* const orig) {
-
-	struct SSkirmishAISpecifier copy;
-
-	copy.shortName = util_allocStrCpy(orig->shortName);
-	copy.version = util_allocStrCpy(orig->version);
-
-	return copy;
-}
-
-void SSkirmishAISpecifier_delete(struct SSkirmishAISpecifier* spec) {
-
-	free(const_cast<char*>(spec->shortName));
-	spec->shortName = NULL;
-	free(const_cast<char*>(spec->version));
-	spec->version = NULL;
-	FREE(spec);
-}
-
-
-
-// by DeeViLiSh
+#if 0
 static int string_simpleHash(const char* const input) {
-
-	int b    = 378551; // Ramdom Ranges I've chosen (can be modified)
+	int b    = 378551;
 	int a    = 63689;
-	int hash = 0;      // Output hash
-	int i;             // Temp number that scrolls through the string array
+	int hash = 0;
+	int i;
 
 	int size = strlen(input);
-	for(i = 0; i < size; i++) { // Loop to convert each character
-		hash = hash * a + input[i];       // Algorithm that hashs
+	for (i = 0; i < size; i++) {
+		hash = hash * a + input[i];
 		a    = a * b;
 	}
 
-	return (hash & 0x7FFFFFFF); // Returns the hashed string
+	return (hash & 0x7FFFFFFF);
 }
 
 int SSkirmishAISpecifier_hash(
-		const struct SSkirmishAISpecifier* const spec) {
+	const struct SSkirmishAISpecifier* const spec
+) {
+	const bool useShortName = (spec->shortName != NULL);
+	const bool useVersion = (spec->version != NULL);
 
-	bool useShortName = spec->shortName != NULL;
-	bool useVersion = spec->version != NULL;
+	size_t hashStringSize = 0;
 
-	size_t hashString_size = 0;
-	if (useShortName) {
-		hashString_size += strlen(spec->shortName);
-	}
-	hashString_size += 1; // for the '#' char
-	if (useVersion) {
-		hashString_size += strlen(spec->version);
-	}
-	hashString_size += 1; // for the '\0' char
+	if (useShortName)
+		hashStringSize += strlen(spec->shortName);
 
-	char hashString[hashString_size];
-	hashString[0] = '\0';
+	hashStringSize += 1; // for the '#' char
 
-	if (useShortName) {
-		STRCAT_T(hashString, hashString_size, spec->shortName);
-	}
-	STRCAT_T(hashString, hashString_size, "#");
-	if (useVersion) {
-		STRCAT_T(hashString, hashString_size, spec->version);
-	}
+	if (useVersion)
+		hashStringSize += strlen(spec->version);
 
-	int keyHash = string_simpleHash(hashString);
+	hashStringSize += 1; // for the '\0' char
 
-	return keyHash;
+	std::vector<char> hashString(hashStringSize, 0);
+
+	if (useShortName)
+		STRCAT_T(&hashString[0], hashStringSize, spec->shortName);
+
+	STRCAT_T(&hashString[0], hashStringSize, "#");
+
+	if (useVersion)
+		STRCAT_T(&hashString[0], hashStringSize, spec->version);
+
+	return (string_simpleHash(&hashString[0]));
 }
+#endif
 
 int SSkirmishAISpecifier_compare(
-		const struct SSkirmishAISpecifier* const specThis,
-		const struct SSkirmishAISpecifier* const specThat) {
-
+	const struct SSkirmishAISpecifier* const specThis,
+	const struct SSkirmishAISpecifier* const specThat
+) {
 	int comp = strcmp(specThis->shortName, specThat->shortName);
-	if (comp == 0) {
+
+	if (comp == 0)
 		comp = strcmp(specThis->version, specThat->version);
-	}
+
 	return comp;
 }
 
-bool SSkirmishAISpecifier_isUnspecified(
-		const struct SSkirmishAISpecifier* const spec) {
-	return spec->shortName == NULL || spec->version == NULL;
-}
-
-static const SSkirmishAISpecifier unspecifiedSpec = {NULL, NULL};
-struct SSkirmishAISpecifier SSkirmishAISpecifier_getUnspecified() {
-	return unspecifiedSpec;
-}
 
 
 #ifdef __cplusplus
 bool SSkirmishAISpecifier_Comparator::operator()(
-		const struct SSkirmishAISpecifier& specThis,
-		const struct SSkirmishAISpecifier& specThat) const {
-	return SSkirmishAISpecifier_compare(&specThis, &specThat) < 0;
+	const struct SSkirmishAISpecifier& specThis,
+	const struct SSkirmishAISpecifier& specThat
+) const {
+	return (SSkirmishAISpecifier_compare(&specThis, &specThat) < 0);
 }
 #endif // defined __cplusplus
 
 #endif // defined BUILDING_AI_INTERFACE
+

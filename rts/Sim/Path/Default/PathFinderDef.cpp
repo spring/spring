@@ -3,9 +3,7 @@
 #include <cstdlib>
 
 #include "PathFinderDef.h"
-#include "Map/ReadMap.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
-#include "Sim/Misc/GlobalSynced.h"
 
 
 CPathFinderDef::CPathFinderDef(const float3& goalCenter, float goalRadius, float sqGoalDistance)
@@ -36,7 +34,11 @@ float CPathFinderDef::Heuristic(unsigned int xSquare, unsigned int zSquare) cons
 {
 	const float dx = std::abs(int(xSquare) - int(goalSquareX));
 	const float dz = std::abs(int(zSquare) - int(goalSquareZ));
-	return (std::max(dx, dz) * 0.5f + std::min(dx, dz) * 0.2f);
+
+	// grid is 8-connected, so use octile distance
+	constexpr const float C1 = 1.0f;
+	constexpr const float C2 = 1.4142f - (2.0f * C1);
+	return ((dx + dz) * C1 + std::min(dx, dz) * C2);
 }
 
 
@@ -100,6 +102,9 @@ CRectangularSearchConstraint::CRectangularSearchConstraint(
 	unsigned int blockSize
 ): CPathFinderDef(goalPos, 0.0f, startPos.SqDistance2D(goalPos))
 {
+	// construct the rectangular areas containing {start,goal}Pos
+	// (nodes are constrained to these when a PE uses the max-res
+	// PF to cache costs)
 	unsigned int startBlockX = startPos.x / SQUARE_SIZE;
 	unsigned int startBlockZ = startPos.z / SQUARE_SIZE;
 	unsigned int  goalBlockX =  goalPos.x / SQUARE_SIZE;
