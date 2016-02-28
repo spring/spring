@@ -405,6 +405,8 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	} else if (type == "Melee") {
 		// no projectile or intercept type
 		defInterceptType = 256;
+
+		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
 	} else if (type == "Flame") {
 		// CFlameProjectile
 		projectileType = WEAPON_FLAME_PROJECTILE;
