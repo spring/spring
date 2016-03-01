@@ -9,7 +9,6 @@
 #include "System/float3.h"
 #include "System/type2.h"
 
-#include <list>
 #include <map>
 #include <vector>
 
@@ -21,7 +20,6 @@ class CMobileCAI;
 struct UnitDef;
 struct MoveDef;
 struct BuildInfo;
-class CStdExplosionGenerator;
 
 class CGameHelper
 {
@@ -149,8 +147,6 @@ public:
 	void Explosion(const ExplosionParams& params);
 
 private:
-	CStdExplosionGenerator* stdExplosionGenerator;
-
 	struct WaitingDamage {
 		WaitingDamage(int attacker, int target, const DamageArray& damage, const float3& impulse, const int _weaponID, const int _projectileID)
 		: target(target)
@@ -170,7 +166,7 @@ private:
 		float3 impulse;
 	};
 
-	std::vector< std::list<WaitingDamage*> > waitingDamageLists;
+	std::vector< std::vector<WaitingDamage> > waitingDamageLists;
 };
 
 extern CGameHelper* helper;

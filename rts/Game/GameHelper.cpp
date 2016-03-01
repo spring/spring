@@ -50,23 +50,12 @@ CGameHelper* helper;
 
 CGameHelper::CGameHelper()
 {
-	stdExplosionGenerator = new CStdExplosionGenerator();
 	waitingDamageLists.resize(NUM_WAITING_DAMAGE_LISTS);
 }
 
 CGameHelper::~CGameHelper()
 {
-	for (unsigned int n = 0; n < waitingDamageLists.size(); ++n) {
-		std::list<WaitingDamage*>& wd = waitingDamageLists[n];
-
-		while (!wd.empty()) {
-			delete wd.back();
-			wd.pop_back();
-		}
-	}
-
 	waitingDamageLists.clear();
-	delete stdExplosionGenerator;
 }
 
 
@@ -147,8 +136,7 @@ void CGameHelper::DoExplosionDamage(
 		unit->DoDamage(expDamages, expImpulse, owner, weaponDefID, projectileID);
 	} else {
 		// damage later
-		WaitingDamage* wd = new WaitingDamage((owner? owner->id: -1), unit->id, expDamages, expImpulse, weaponDefID, projectileID);
-		waitingDamageLists[(gs->frameNum + int(expDist / expSpeed) - 3) & 127].push_front(wd);
+		waitingDamageLists[(gs->frameNum + int(expDist / expSpeed) - 3) & 127].emplace_back((owner? owner->id: -1), unit->id, expDamages, expImpulse, weaponDefID, projectileID);
 	}
 }
 
@@ -1290,18 +1278,17 @@ Command CGameHelper::GetBuildCommand(const float3& pos, const float3& dir) {
 
 void CGameHelper::Update()
 {
-	std::list<WaitingDamage*>& wdList = waitingDamageLists[gs->frameNum & 127];
+	std::vector<WaitingDamage>& wdList = waitingDamageLists[gs->frameNum & 127];
 
-	while (!wdList.empty()) {
-		WaitingDamage* wd = wdList.back();
-		wdList.pop_back();
+	for (const WaitingDamage& wd: wdList) {
+		CUnit* attackee = unitHandler->GetUnit(wd.target);
+		CUnit* attacker = unitHandler->GetUnit(wd.attacker); // null if wd.attacker is -1
 
-		CUnit* attackee = unitHandler->units[wd->target];
-		CUnit* attacker = (wd->attacker == -1)? NULL: unitHandler->units[wd->attacker];
-
-		if (attackee != NULL)
-			attackee->DoDamage(wd->damage, wd->impulse, attacker, wd->weaponID, wd->projectileID);
-
-		delete wd;
+		if (attackee != nullptr) {
+			attackee->DoDamage(wd.damage, wd.impulse, attacker, wd.weaponID, wd.projectileID);
+		}
 	}
+
+	wdList.clear();
 }
+
