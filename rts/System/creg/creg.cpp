@@ -20,24 +20,22 @@
 #include "creg_cond.h"
 
 using namespace creg;
-using std::map;
-using std::vector;
-using std::string;
 
-static map<string, Class*> mapNameToClass;
+static std::map<std::string, Class*> mapNameToClass;
 static int currentMemberFlags = 0; // used when registering class members
 
 // -------------------------------------------------------------------
 // Class Binder
 // -------------------------------------------------------------------
 
-ClassBinder* System::binderList = 0;
-vector<Class*> System::classes;
+std::vector<ClassBinder*> System::binders;
+std::vector<Class*> System::classes;
+
 
 ClassBinder::ClassBinder(const char* className, unsigned int cf,
 		ClassBinder* baseClsBinder, IMemberRegistrator** mreg, int instanceSize, int instanceAlignment, bool hasVTable, bool isCregStruct,
 		void (*constructorProc)(void* inst), void (*destructorProc)(void* inst))
-	: class_(NULL)
+	: class_()
 	, base(baseClsBinder)
 	, flags((ClassFlags)cf)
 	, memberRegistrator(mreg)
@@ -48,9 +46,7 @@ ClassBinder::ClassBinder(const char* className, unsigned int cf,
 	, isCregStruct(isCregStruct)
 	, constructor(constructorProc)
 	, destructor(destructorProc)
-	, nextBinder(NULL)
 {
-
 	// link to the list of class binders
 	System::AddClassBinder(this);
 }
@@ -60,51 +56,34 @@ void System::InitializeClasses()
 	if (!classes.empty())
 		return;
 
-	// Create Class instances
-	for (ClassBinder* c = binderList; c; c = c->nextBinder) {
-		// Create class instance
-		// They'll never be used on the System type, but will be cast to the appropriate type instead
-		// Create them with System anyway, otherwise the creation will need to go through the binder,
-		// which would need to be templated to do that, and it would add unnecessary complexity 
-		c->class_ = new ClassStrong<System>;
-	}
-
 	// Initialize class instances
-	for (ClassBinder* c = binderList; c; c = c->nextBinder) {
-		Class* cls = c->class_;
+	for (ClassBinder* c: binders) {
+		Class& cls = c->class_;
 
-		cls->binder = c;
-		cls->name = c->name;
-		cls->size = c->size;
-		cls->alignment = c->alignment;
-		cls->base = c->base ? c->base->class_ : NULL;
-		mapNameToClass [cls->name] = cls;
+		cls.binder = c;
+		cls.name = c->name;
+		cls.size = c->size;
+		cls.alignment = c->alignment;
+		cls.base = c->base ? &c->base->class_ : NULL;
+		mapNameToClass[cls.name] = &cls;
 
-		if (cls->base) {
-			cls->base->derivedClasses.push_back(cls);
+		if (cls.base) {
+			cls.base->derivedClasses.push_back(&cls);
 		}
 
 		currentMemberFlags = 0;
 		// Register members
 		if (*c->memberRegistrator) {
-			(*c->memberRegistrator)->RegisterMembers(cls);
+			(*c->memberRegistrator)->RegisterMembers(&cls);
 		}
 
-		classes.push_back(cls);
+		classes.push_back(&cls);
 	}
 }
 
-void System::FreeClasses()
+Class* System::GetClass(const std::string& name)
 {
-	for (uint a = 0; a < classes.size(); a++) {
-		delete classes[a];
-	}
-	classes.clear();
-}
-
-Class* System::GetClass(const string& name)
-{
-	map<string, Class*>::const_iterator c = mapNameToClass.find(name);
+	std::map<std::string, Class*>::const_iterator c = mapNameToClass.find(name);
 	if (c == mapNameToClass.end()) {
 		return NULL;
 	}
@@ -113,25 +92,24 @@ Class* System::GetClass(const string& name)
 
 void System::AddClassBinder(ClassBinder* cb)
 {
-	cb->nextBinder = binderList;
-	binderList = cb;
+	binders.push_back(cb);
 }
 
 // ------------------------------------------------------------------
 // creg::Class: Class description
 // ------------------------------------------------------------------
 
-Class::Class() :
-	binder(NULL),
-	size(0),
-	alignment(0),
-	base(NULL)
+Class::Class()
+: binder(nullptr)
+, size(0)
+, alignment(0)
+, base(nullptr)
 {}
 
 Class::~Class()
 {
-	for (unsigned int a = 0; a < members.size(); a++) {
-		delete members[a];
+	for (Member* m: members) {
+		delete m;
 	}
 	members.clear();
 }
@@ -284,5 +262,4 @@ IType::~IType() {
 
 IMemberRegistrator::~IMemberRegistrator() {
 }
-
 

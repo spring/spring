@@ -174,9 +174,6 @@ SpringApp::SpringApp(int argc, char** argv): cmdline(new CmdLineParams(argc, arg
 SpringApp::~SpringApp()
 {
 	spring_clock::PopTickRate();
-#ifdef USING_CREG
-	creg::System::FreeClasses();
-#endif
 }
 
 /**

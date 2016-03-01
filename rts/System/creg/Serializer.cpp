@@ -430,7 +430,7 @@ CInputStreamSerializer::~CInputStreamSerializer()
 	for (std::vector<StoredObject>::iterator it = objects.begin(); it != objects.end(); ++it) {
 		if (it->obj) {
 			ClassBinder* binder = classRefs[it->classRef]->binder;
-			binder->class_->DeleteInstance(it->obj);
+			binder->class_.DeleteInstance(it->obj);
 		}
 	}
 }
@@ -600,7 +600,7 @@ void CInputStreamSerializer::LoadPackage(std::istream* s, void*& root, creg::Cla
 		if (!isEmbedded) {
 			// Allocate and construct
 			ClassBinder* binder = classRefs[classRefIndex]->binder;
-			void* inst = binder->class_->CreateInstance();
+			void* inst = binder->class_.CreateInstance();
 			objects[a].obj = inst;
 		}
 		objects[a].isEmbedded = !!isEmbedded;

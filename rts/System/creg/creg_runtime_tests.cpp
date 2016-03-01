@@ -19,8 +19,6 @@ static void PreCregTest(const char* logmsg)
 
 static bool PostCregTest(int fineClasses, int brokenClasses, int ignore = 0)
 {
-	creg::System::FreeClasses();
-
 	if (brokenClasses > 0) {
 		LOG_L(L_WARNING, "CREG Results: %i of %i classes are broken", brokenClasses, brokenClasses + fineClasses);
 		if (ignore>0) { //FIXME: remove this

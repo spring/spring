@@ -12,20 +12,6 @@
 
 namespace creg
 {
-	class BasicType : public IType
-	{
-	public:
-		BasicType(const BasicTypeID ID, const size_t size_) : size(size_), id(ID) {}
-		~BasicType() {}
-
-		void Serialize(ISerializer* s, void* instance);
-		std::string GetName() const;
-		size_t GetSize() const;
-
-		size_t size;
-		BasicTypeID id;
-	};
-
 	class ObjectInstanceType : public IType
 	{
 	public:

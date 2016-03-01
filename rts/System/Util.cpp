@@ -160,7 +160,8 @@ char32_t Utf8GetNextChar(const std::string& text, int& pos)
 	UTF8_4Byte utf8 = { 0 };
 	const int remainingChars = text.length() - pos;
 	if (remainingChars >= 4) {
-		utf8.i = *(boost::uint32_t*)(&text[pos]);
+		// we need to use memcpy cause text[pos] isn't memory aligned as ints need to be
+		memcpy(&utf8.i, &text[pos], sizeof(boost::uint32_t));
 	} else {
 		// read ahead of end of string
 		if (remainingChars <= 0)
@@ -171,6 +172,7 @@ char32_t Utf8GetNextChar(const std::string& text, int& pos)
 			case 3: utf8.c[2] = boost::uint8_t(text[pos + 2]);
 			case 2: utf8.c[1] = boost::uint8_t(text[pos + 1]);
 			case 1: utf8.c[0] = boost::uint8_t(text[pos    ]);
+			default: {}
 		};
 	}
 
