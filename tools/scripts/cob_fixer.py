@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+
 # This file is part of the Spring engine (GPL v2 or later), see LICENSE.html
 # written by ashdnazg to help convert unit scripts after 4785bdcc
 import sys
@@ -33,7 +35,7 @@ def unpack_string(bytes, offset):
 	return b[:b.index('\0')]
 
 def process_cob(path):
-	print "processing %s" % (path,)
+	print("processing %s" % (path,))
 	content = open(path, "rb").read()
 	header_values = unpack(content, 0, COB_HEADER_FORMAT)
 	header = dict(zip(COB_HEADER_FIELDS, header_values))
@@ -72,6 +74,7 @@ def main(root_folder):
 
 if __name__ == '__main__':
 	if len(sys.argv) < 2:
-		print "Usage: %s <cob root folder>" % (sys.argv[0],)
+		print("Usage: %s <cob root folder>" % (sys.argv[0],))
 		exit(1)
 	main(sys.argv[1])
+
