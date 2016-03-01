@@ -43,7 +43,7 @@ LoS:
  - add Spring.SetGlobalLos(int allyTeamID, bool globallos)
 
 Sim:
- - start simulation at frame 0, not at 1
+ ! start simulation at frame 0, not at 1
  - features now have a non-animated LocalModel and can use per-piece collision volumes
  - RockUnit and HitByWeapon script callins now take vectors in unit-space
  - fix acceleration rates and turn-speed limits for reversing units
