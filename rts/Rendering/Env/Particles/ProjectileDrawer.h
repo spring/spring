@@ -10,6 +10,7 @@
 #include "Sim/Projectiles/ProjectileFunctors.h"
 #include "System/EventClient.h"
 
+class CSolidObject;
 class CTextureAtlas;
 struct AtlasedTexture;
 class CGroundFlash;
@@ -97,10 +98,12 @@ private:
 	void DrawProjectilesShadow(int modelType);
 	void DrawFlyingPieces(int modelType);
 
-	void DrawProjectilesSet(const std::vector<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction);
+	static void DrawProjectilesSet(const std::vector<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction);
 	static void DrawProjectilesSetShadow(const std::vector<CProjectile*>& projectiles);
 
+	static bool CanDrawProjectile(const CProjectile* pro, const CSolidObject* owner);
 	void DrawProjectileNow(CProjectile* projectile, bool drawReflection, bool drawRefraction);
+
 	static void DrawProjectileShadow(CProjectile* projectile);
 	static bool DrawProjectileModel(const CProjectile* projectile);
 

@@ -404,37 +404,32 @@ void CProjectileDrawer::DrawProjectiles(int modelType, bool drawReflection, bool
 void CProjectileDrawer::DrawProjectilesSet(const std::vector<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction)
 {
 	for (CProjectile* p: projectiles) {
-		DrawProjectileNow(p, drawReflection, drawRefraction);
+		projectileDrawer->DrawProjectileNow(p, drawReflection, drawRefraction);
 	}
+}
+
+bool CProjectileDrawer::CanDrawProjectile(const CProjectile* pro, const CSolidObject* owner)
+{
+	#define th teamHandler
+	#define lh losHandler
+	return (gu->spectatingFullView || (owner != nullptr && th->Ally(owner->allyteam, gu->myAllyTeam)) || lh->InLos(pro, gu->myAllyTeam));
+	#undef lh
+	#undef th
 }
 
 void CProjectileDrawer::DrawProjectileNow(CProjectile* pro, bool drawReflection, bool drawRefraction)
 {
-	const CUnit* owner = pro->owner();
-
 	pro->drawPos = pro->GetDrawPos(globalRendering->timeOffset);
 
-	const bool visible = (gu->spectatingFullView || losHandler->InLos(pro, gu->myAllyTeam) || (owner && teamHandler->Ally(owner->allyteam, gu->myAllyTeam)));
-
-	if (!visible)
+	if (!CanDrawProjectile(pro, pro->owner()))
 		return;
 
-	if (drawReflection) {
-		if (pro->pos.y < -pro->GetDrawRadius()) {
-			return;
-		}
-
-		const float dif = pro->pos.y - camera->GetPos().y;
-		const float3 zeroPos = camera->GetPos() * (pro->pos.y / dif) + pro->pos * (-camera->GetPos().y / dif);
-
-		if (CGround::GetApproximateHeight(zeroPos.x, zeroPos.z, false) > 3 + 0.5f * pro->GetDrawRadius()) {
-			return;
-		}
-	} else if (drawRefraction && pro->pos.y > pro->GetDrawRadius()) {
+	if (drawRefraction && (pro->drawPos.y > pro->GetDrawRadius()) /*!pro->IsInWater()*/)
 		return;
-	}
+	if (drawReflection && !CUnitDrawer::ObjectVisibleReflection(pro->drawPos, camera->GetPos(), pro->GetDrawRadius()))
+		return;
 
-	if (!camera->InView(pro->pos, pro->GetDrawRadius()))
+	if (!camera->InView(pro->drawPos, pro->GetDrawRadius()))
 		return;
 
 	DrawProjectileModel(pro);
@@ -469,11 +464,7 @@ void CProjectileDrawer::DrawProjectilesSetShadow(const std::vector<CProjectile*>
 
 void CProjectileDrawer::DrawProjectileShadow(CProjectile* p)
 {
-	const CUnit* owner = p->owner();
-
-	if ((gu->spectatingFullView || losHandler->InLos(p, gu->myAllyTeam) ||
-		(owner && teamHandler->Ally(owner->allyteam, gu->myAllyTeam)))) {
-
+	if (CanDrawProjectile(p, p->owner())) {
 		// if this returns false, then projectile is
 		// neither weapon nor piece, or has no model
 		if (DrawProjectileModel(p))
@@ -510,11 +501,7 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 			points->EnlargeArrays(projectileSet.size(), 0, VA_SIZE_C);
 
 			for (CProjectile* p: projectileSet) {
-				const CUnit* owner = p->owner();
-				const bool inLos = (owner && (owner->allyteam == gu->myAllyTeam)) ||
-					gu->spectatingFullView || losHandler->InLos(p, gu->myAllyTeam);
-
-				if (!inLos)
+				if (!CanDrawProjectile(p, p->owner()))
 					continue;
 
 				p->DrawOnMinimap(*lines, *points);
@@ -532,11 +519,7 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 		points->EnlargeArrays(renderProjectiles.size(), 0, VA_SIZE_C);
 
 		for (CProjectile* p: renderProjectiles) {
-			const CUnit* owner = p->owner();
-			const bool inLos = (owner && (owner->allyteam == gu->myAllyTeam)) ||
-				gu->spectatingFullView || losHandler->InLos(p, gu->myAllyTeam);
-
-			if (!inLos)
+			if (!CanDrawProjectile(p, p->owner()))
 				continue;
 
 			p->DrawOnMinimap(*lines, *points);
