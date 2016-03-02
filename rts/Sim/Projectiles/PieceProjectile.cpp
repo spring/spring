@@ -253,9 +253,6 @@ void CPieceProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 
 void CPieceProjectile::Draw()
 {
-	if ((explFlags & PF_NoCEGTrail) == 0)
-		return;
-
 	if (explFlags & PF_Fire) {
 		inArray = true;
 		va->EnlargeArrays(NUM_TRAIL_PARTS * 4, 0, VA_SIZE_TC);
