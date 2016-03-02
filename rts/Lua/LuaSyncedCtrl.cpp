@@ -384,6 +384,8 @@ static bool ParseProjectileParams(lua_State* L, ProjectileParams& params, const 
 		return false;
 	}
 
+	params.teamID = teamHandler->GaiaTeamID();
+
 	for (lua_pushnil(L); lua_next(L, tblIdx) != 0; lua_pop(L, 1)) {
 		if (lua_israwstring(L, -2)) {
 			const std::string& key = lua_tostring(L, -2);
@@ -4069,7 +4071,8 @@ int LuaSyncedCtrl::SpawnProjectile(lua_State* L)
 	if ((params.weaponDef = weaponDefHandler->GetWeaponDefByID(luaL_checkint(L, 1))) == nullptr)
 		return 0;
 
-	ParseProjectileParams(L, params, 2, __FUNCTION__);
+	if (!ParseProjectileParams(L, params, 2, __FUNCTION__))
+		return 0;
 
 	lua_pushnumber(L, WeaponProjectileFactory::LoadProjectile(params));
 	return 1;
