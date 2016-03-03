@@ -68,7 +68,7 @@ void CFactory::PostLoad()
 
 void CFactory::SetCurBuildDef(const UnitDef* ud)
 {
-	nextBuildUnitDefID = ud != nullptr ? ud->id : -1;
+	curBuildDefID = ud != nullptr ? ud->id : -1;
 	curBuildDef = ud;
 }
 

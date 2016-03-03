@@ -63,7 +63,6 @@ public:
 private:
 	const UnitDef* curBuildDef;
 	int curBuildDefID;
-	int nextBuildUnitDefID;
 	int lastBuildUpdateFrame;
 
 	Command finishedBuildCommand;
