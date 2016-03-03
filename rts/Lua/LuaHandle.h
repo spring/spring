@@ -284,7 +284,7 @@ class CLuaHandle : public CEventClient
 
 	protected:
 		bool userMode;
-		bool killMe; // set for handles to fail to RunCallIn
+		bool killMe; // set for handles that fail to RunCallIn
 
 		lua_State* L;
 		lua_State* L_GC;
