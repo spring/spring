@@ -732,7 +732,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 	if (content == "dir") { // first see if we can match any keywords
 		// if the user uses a keyword assume he knows that it is put on the right datatype for now
 		if (memberInfo.length < 3 || !isFloat) // dir has to be float3
-			throw content_error("[CCEG::ParseExplosionCode] incorrect use of \"dir\"");
+			throw content_error("[CCEG::ParseExplosionCode] incorrect use of \"dir\" (" + script + ")");
 
 		code += OP_DIR;
 		boost::uint16_t ofs = memberInfo.offset;
