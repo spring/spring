@@ -24,7 +24,7 @@
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Sim/Features/FeatureDef.h"
-#include "Sim/Features/FeatureHandler.h"
+#include "Sim/Features/FeatureDefHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitDefImage.h"
@@ -196,7 +196,7 @@ S3DModel* ParseModel(int defID)
 	const SolidObjectDef* objectDef = nullptr;
 
 	if (defID < 0) {
-		objectDef = featureHandler->GetFeatureDefByID(-defID);
+		objectDef = featureDefHandler->GetFeatureDefByID(-defID);
 	} else {
 		objectDef = unitDefHandler->GetUnitDefByID(defID);
 	}

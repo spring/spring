@@ -2,6 +2,8 @@
 
 
 #include "Feature.h"
+#include "FeatureDef.h"
+#include "FeatureDefHandler.h"
 #include "FeatureHandler.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
@@ -110,7 +112,7 @@ CFeature::~CFeature()
 
 void CFeature::PostLoad()
 {
-	def = featureHandler->GetFeatureDefByID(defID);
+	def = featureDefHandler->GetFeatureDefByID(defID);
 	objectDef = def;
 
 	// FIXME is this really needed (aren't all those tags saved via creg?)
@@ -445,7 +447,7 @@ void CFeature::DoDamage(
 	eventHandler.FeatureDamaged(this, attacker, baseDamage, weaponDefID, projectileID);
 
 	if (health <= 0.0f && def->destructable) {
-		FeatureLoadParams params = {featureHandler->GetFeatureDefByID(def->deathFeatureDefID), NULL, pos, speed, -1, team, -1, heading, buildFacing, 0};
+		FeatureLoadParams params = {featureDefHandler->GetFeatureDefByID(def->deathFeatureDefID), NULL, pos, speed, -1, team, -1, heading, buildFacing, 0};
 		CFeature* deathFeature = featureHandler->CreateWreckage(params, 0, false);
 
 		if (deathFeature != NULL) {

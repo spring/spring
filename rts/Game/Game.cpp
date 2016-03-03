@@ -62,9 +62,11 @@
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Sim/Features/FeatureDef.h"
+#include "Sim/Features/FeatureDefHandler.h"
+#include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
-#include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
@@ -502,15 +504,16 @@ void CGame::PostLoadSimulation()
 	weaponDefHandler = new CWeaponDefHandler(defsParser);
 	loadscreen->SetLoadMessage("Loading Unit Definitions");
 	unitDefHandler = new CUnitDefHandler(defsParser);
+	featureDefHandler = new CFeatureDefHandler(defsParser);
 
 	CUnit::InitStatic();
 	CClassicGroundMoveType::CreateLineTable();
 
 	unitHandler = new CUnitHandler();
+	featureHandler = new CFeatureHandler();
 	projectileHandler = new CProjectileHandler();
 
 	loadscreen->SetLoadMessage("Loading Feature Definitions");
-	featureHandler = new CFeatureHandler(defsParser);
 
 	losHandler = new CLosHandler();
 
@@ -536,7 +539,9 @@ void CGame::PostLoadSimulation()
 
 	// load map-specific features
 	loadscreen->SetLoadMessage("Initializing Map Features");
-	featureHandler->LoadFeaturesFromMap(saveFile != NULL);
+	featureDefHandler->LoadFeatureDefsFromMap();
+	if (saveFile == nullptr)
+		featureHandler->LoadFeaturesFromMap();
 
 	wind.LoadWind(mapInfo->atmosphere.minWind, mapInfo->atmosphere.maxWind);
 
@@ -608,7 +613,7 @@ void CGame::LoadInterface()
 		}
 
 		const auto& unitDefs = unitDefHandler->unitDefIDsByName;
-		const auto& featureDefs = featureHandler->GetFeatureDefs();
+		const auto& featureDefs = featureDefHandler->GetFeatureDefs();
 
 		for (auto uit = unitDefs.cbegin(); uit != unitDefs.cend(); ++uit) {
 			wordCompletion->AddWord(uit->first + " ", false, true, false);
@@ -829,6 +834,7 @@ void CGame::KillSimulation()
 	SafeDelete(quadField);
 	SafeDelete(moveDefHandler);
 	SafeDelete(unitDefHandler);
+	SafeDelete(featureDefHandler);
 	SafeDelete(weaponDefHandler);
 	SafeDelete(damageArrayHandler);
 	SafeDelete(explGenHandler);

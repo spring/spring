@@ -33,6 +33,8 @@
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Models/IModelParser.h"
 #include "Sim/Features/Feature.h"
+#include "Sim/Features/FeatureDef.h"
+#include "Sim/Features/FeatureDefHandler.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/DamageArray.h"
@@ -2631,9 +2633,9 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 	const FeatureDef* featureDef = NULL;
 
 	if (lua_israwstring(L, 1)) {
-		featureDef = featureHandler->GetFeatureDef(lua_tostring(L, 1));
+		featureDef = featureDefHandler->GetFeatureDef(lua_tostring(L, 1));
 	} else if (lua_israwnumber(L, 1)) {
-		featureDef = featureHandler->GetFeatureDefByID(lua_toint(L, 1));
+		featureDef = featureDefHandler->GetFeatureDefByID(lua_toint(L, 1));
 	}
 	if (featureDef == NULL) {
 		return 0; // do not error  (featureDefs are dynamic)

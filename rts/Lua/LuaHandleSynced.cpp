@@ -32,7 +32,8 @@
 #include "Game/WordCompletion.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Features/FeatureHandler.h"
+#include "Sim/Features/FeatureDef.h"
+#include "Sim/Features/FeatureDefHandler.h"
 #include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -329,7 +330,7 @@ bool CSyncedLuaHandle::Init(const string& code, const string& file)
 		return false;
 
 	watchUnitDefs.resize(unitDefHandler->unitDefs.size() + 1, false);
-	watchFeatureDefs.resize(featureHandler->GetFeatureDefs().size(), false);
+	watchFeatureDefs.resize(featureDefHandler->GetFeatureDefs().size(), false);
 	watchWeaponDefs.resize(weaponDefHandler->weaponDefs.size(), false);
 
 	// load the standard libraries

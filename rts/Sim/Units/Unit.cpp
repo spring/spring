@@ -32,6 +32,8 @@
 
 #include "Game/UI/Groups/Group.h"
 #include "Sim/Features/Feature.h"
+#include "Sim/Features/FeatureDef.h"
+#include "Sim/Features/FeatureDefHandler.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/CollisionVolume.h"
@@ -204,7 +206,7 @@ CUnit::~CUnit()
 		// we have to wait for deathScriptFinished (but we want the delay
 		// in frames between CUnitKilledCB() and the CreateWreckage() call
 		// to be as short as possible to prevent position jumps)
-		FeatureLoadParams params = {featureHandler->GetFeatureDefByID(featureDefID), unitDef, pos, deathSpeed, -1, team, -1, heading, buildFacing, 0};
+		FeatureLoadParams params = {featureDefHandler->GetFeatureDefByID(featureDefID), unitDef, pos, deathSpeed, -1, team, -1, heading, buildFacing, 0};
 		featureHandler->CreateWreckage(params, delayedWreckLevel - 1, true);
 	}
 	if (deathExpDamages != nullptr)
@@ -281,13 +283,13 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	unitDef = params.unitDef;
 
 	{
-		const FeatureDef* wreckFeatureDef = featureHandler->GetFeatureDef(unitDef->wreckName);
+		const FeatureDef* wreckFeatureDef = featureDefHandler->GetFeatureDef(unitDef->wreckName);
 		if (wreckFeatureDef != nullptr) {
 			featureDefID = wreckFeatureDef->id;
 
 			while (wreckFeatureDef != nullptr){
 				wreckFeatureDef->PreloadModel();
-				wreckFeatureDef = featureHandler->GetFeatureDefByID(wreckFeatureDef->deathFeatureDefID);
+				wreckFeatureDef = featureDefHandler->GetFeatureDefByID(wreckFeatureDef->deathFeatureDefID);
 			}
 		}
 	}
@@ -546,7 +548,7 @@ void CUnit::FinishedBuilding(bool postInit)
 	eoh->UnitFinished(*this);
 
 	if (unitDef->isFeature && CUnit::spawnFeature) {
-		FeatureLoadParams p = {featureHandler->GetFeatureDefByID(featureDefID), NULL, pos, ZeroVector, -1, team, allyteam, heading, buildFacing, 0};
+		FeatureLoadParams p = {featureDefHandler->GetFeatureDefByID(featureDefID), NULL, pos, ZeroVector, -1, team, allyteam, heading, buildFacing, 0};
 		CFeature* f = featureHandler->CreateWreckage(p, 0, false);
 
 		if (f != nullptr) {

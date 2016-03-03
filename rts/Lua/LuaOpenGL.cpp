@@ -56,6 +56,8 @@
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Sim/Features/Feature.h"
+#include "Sim/Features/FeatureDef.h"
+#include "Sim/Features/FeatureDefHandler.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Unit.h"
@@ -1629,14 +1631,14 @@ int LuaOpenGL::FeatureTextures(lua_State* L)
 int LuaOpenGL::FeatureShape(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
-	GLObjectShape(L, featureHandler->GetFeatureDefByID(luaL_checkint(L, 1)));
+	GLObjectShape(L, featureDefHandler->GetFeatureDefByID(luaL_checkint(L, 1)));
 	return 0;
 }
 
 int LuaOpenGL::FeatureShapeTextures(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
-	GLObjectShapeTextures(L, featureHandler->GetFeatureDefByID(luaL_checkint(L, 1)));
+	GLObjectShapeTextures(L, featureDefHandler->GetFeatureDefByID(luaL_checkint(L, 1)));
 	return 0;
 }
 

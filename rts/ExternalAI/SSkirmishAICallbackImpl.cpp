@@ -27,6 +27,7 @@
 #include "Game/UI/Groups/GroupHandler.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Features/FeatureDef.h"
+#include "Sim/Features/FeatureDefHandler.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
@@ -320,7 +321,7 @@ static inline const WeaponDef* getWeaponDefById(int skirmishAIId, int weaponDefI
 }
 
 static inline const FeatureDef* getFeatureDefById(int skirmishAIId, int featureDefId) {
-	return (featureHandler->GetFeatureDefByID(featureDefId));
+	return (featureDefHandler->GetFeatureDefByID(featureDefId));
 }
 
 
@@ -4356,7 +4357,7 @@ EXPORT(const char*) skirmishAiCallback_Team_TeamRulesParam_getValueString(int sk
 
 //########### BEGINN FeatureDef
 EXPORT(int) skirmishAiCallback_getFeatureDefs(int skirmishAIId, int* featureDefIds, int featureDefIdsMaxSize) {
-	const auto& fds = featureHandler->GetFeatureDefs();
+	const auto& fds = featureDefHandler->GetFeatureDefs();
 	const int featureDefIdsRealSize = fds.size();
 
 	int featureDefIdsSize = featureDefIdsRealSize;

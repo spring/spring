@@ -48,6 +48,8 @@
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
+#include "Sim/Features/FeatureDef.h"
+#include "Sim/Features/FeatureDefHandler.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/Projectile.h"
@@ -3027,7 +3029,7 @@ int LuaUnsyncedCtrl::PreloadUnitDefModel(lua_State* L) {
 }
 
 int LuaUnsyncedCtrl::PreloadFeatureDefModel(lua_State* L) {
-	const FeatureDef* fd = featureHandler->GetFeatureDefByID(luaL_checkint(L, 1));
+	const FeatureDef* fd = featureDefHandler->GetFeatureDefByID(luaL_checkint(L, 1));
 
 	if (fd == nullptr)
 		return 0;
