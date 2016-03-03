@@ -21,7 +21,7 @@
 #include "System/myMath.h"
 
 
-CR_BIND_DERIVED(CWeaponProjectile, CProjectile, )
+CR_BIND_DERIVED_INTERFACE(CWeaponProjectile, CProjectile)
 
 CR_REG_METADATA(CWeaponProjectile,(
 	CR_SETFLAG(CF_Synced),

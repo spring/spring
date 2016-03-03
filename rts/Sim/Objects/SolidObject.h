@@ -142,11 +142,7 @@ public:
 	// NOTE: movetypes call this directly
 	void UpdateDirVectors(bool useGroundNormal);
 
-	virtual CMatrix44f GetTransformMatrix(const bool synced = false) const {
-		// should never get called (should be pure virtual, but cause of CREG we cannot use it)
-		assert(false);
-		return CMatrix44f();
-	}
+	virtual CMatrix44f GetTransformMatrix(const bool synced = false) const = 0;
 
 	const CollisionVolume* GetCollisionVolume(const LocalModelPiece* lmp) const {
 		if (lmp == nullptr)
