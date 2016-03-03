@@ -83,7 +83,6 @@ static int handlepanic(lua_State* L)
 CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode, bool _synced)
 	: CEventClient(_name, _order, _synced)
 	, userMode(_userMode)
-	, reloadMe(false)
 	, killMe(false)
 	, callinErrors(0)
 {

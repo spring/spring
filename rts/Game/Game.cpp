@@ -1081,24 +1081,9 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 
 	SetDrawMode(gameNormalDraw); //TODO move to ::Draw()?
 
-	if (luaUI != nullptr)    { luaUI->CheckStack(); luaUI->CheckReload(); }
-	if (luaGaia != nullptr)  { luaGaia->CheckStack(); }
+	if (luaUI != nullptr) { luaUI->CheckStack(); luaUI->CheckAction(); }
+	if (luaGaia != nullptr) { luaGaia->CheckStack(); }
 	if (luaRules != nullptr) { luaRules->CheckStack(); }
-
-	#if 0
-	// XXX ugly hack to minimize luaUI errors
-	// has not been necessary for a long time
-	if (luaUI && luaUI->GetCallInErrors() >= 5) {
-		for (int annoy = 0; annoy < 8; annoy++) {
-			LOG_L(L_ERROR, "5 errors deep in LuaUI, disabling...");
-		}
-
-		CLuaUI::FreeHandler();
-		guihandler->LoadDefaultConfig();
-		LOG_L(L_ERROR, "Type '/luaui reload' in the chat to re-enable LuaUI.");
-		LOG_L(L_ERROR, "===>>>  Please report this error to the forum or mantis with your infolog.txt");
-	}
-	#endif
 
 	if (chatting && !userWriting) {
 		consoleHistory->AddLine(userInput);

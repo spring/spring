@@ -22,24 +22,13 @@ class CLuaUI : public CLuaHandle
 {
 	friend class LuaLobby;
 
-	public:
-		void QueueReload() { reloadMe = true; }
-		void CheckReload() {
-			if (!reloadMe)
-				return;
-
-			ReloadHandler();
-		}
-
-		static bool ReloadHandler() { return (FreeHandler(), LoadFreeHandler()); } // NOTE the ','
-		static bool LoadFreeHandler() { return (LoadHandler() || FreeHandler()); }
-
-		static bool LoadHandler();
-		static bool FreeHandler();
-
-		static void UpdateTeams();
-
 	public: // structs
+		enum QueuedAction {
+			ACTION_RELOAD  =  0,
+			ACTION_DISABLE =  1,
+			ACTION_NOVALUE = -1,
+		};
+
 		struct ReStringPair {
 			int cmdIndex;
 			string texture;
@@ -49,6 +38,24 @@ class CLuaUI : public CLuaHandle
 			int cmdIndex;
 			map<int, string> params;
 		};
+
+	public:
+		void QueueAction(const QueuedAction action) { queuedAction = action; }
+		void CheckAction() {
+			switch (queuedAction) {
+				case ACTION_RELOAD:  { ReloadHandler(); } break;
+				case ACTION_DISABLE: {   FreeHandler(); } break;
+				default:             {                  } break;
+			}
+		}
+
+		static bool ReloadHandler() { return (FreeHandler(), LoadFreeHandler()); } // NOTE the ','
+		static bool LoadFreeHandler() { return (LoadHandler() || FreeHandler()); }
+
+		static bool LoadHandler();
+		static bool FreeHandler();
+
+		static void UpdateTeams();
 
 	public: // call-ins
 		bool HasCallIn(lua_State* L, const string& name);
@@ -86,6 +93,8 @@ class CLuaUI : public CLuaHandle
 		bool GetLuaCmdDescList(lua_State* L, int index,  vector<CommandDescription>& customCmds);
 
 	protected:
+		QueuedAction queuedAction;
+
 		bool haveShockFront;
 		float shockFrontMinArea;
 		float shockFrontMinPower;

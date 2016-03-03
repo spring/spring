@@ -189,7 +189,7 @@ bool CGuiHandler::EnableLuaUI(bool enableCommand)
 			// (LuaRules can reload itself inside callins because the action
 			// SendCommands("luarules reload") goes over the network, and is
 			// not when received)
-			luaUI->QueueReload();
+			luaUI->QueueAction(CLuaUI::ACTION_RELOAD);
 			return true;
 		}
 	}
@@ -215,9 +215,8 @@ bool CGuiHandler::DisableLuaUI()
 	}
 
 	if (luaUI->IsRunning()) {
-		// NOTE: might cause a SEGV through RunCallIn()
-		LOG_L(L_WARNING, "[GUIHandler] can not disable from within LuaUI, yet");
-		return false;
+		luaUI->QueueAction(CLuaUI::ACTION_DISABLE);
+		return true;
 	}
 
 	CLuaUI::FreeHandler();

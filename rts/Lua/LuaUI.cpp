@@ -105,6 +105,8 @@ CLuaUI::CLuaUI()
 
 	UpdateTeams();
 
+	queuedAction = ACTION_NOVALUE;
+
 	haveShockFront = false;
 	shockFrontMinArea  = 0.0f;
 	shockFrontMinPower = 0.0f;
