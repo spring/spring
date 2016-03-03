@@ -40,7 +40,6 @@ CR_REG_METADATA(CFeature, (
 	CR_MEMBER(alphaFade),
 	CR_MEMBER(fireTime),
 	CR_MEMBER(smokeTime),
-	CR_MEMBER(fireTime),
 	CR_IGNORED(def), //reconstructed in PostLoad
 	CR_MEMBER(udef),
 	CR_MEMBER(moveCtrl),
