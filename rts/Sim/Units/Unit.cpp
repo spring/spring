@@ -484,7 +484,7 @@ void CUnit::PostInit(const CUnit* builder)
 void CUnit::PostLoad()
 {
 	//HACK:Initializing after load
-	unitDef = unitDefHandler->GetUnitDefByID(unitDefID); // strange. creg should handle this by itself already, but it doesn't
+	unitDef = unitDefHandler->GetUnitDefByID(unitDefID);
 	objectDef = unitDef;
 	model = unitDef->LoadModel();
 	localModel.SetModel(model);
@@ -2790,7 +2790,7 @@ short CUnit::GetTransporteeWantedHeading(const CUnit* unit) const {
 
 CR_BIND_DERIVED(CUnit, CSolidObject, )
 CR_REG_METADATA(CUnit, (
-	CR_MEMBER(unitDef),
+	CR_IGNORED(unitDef),
 	CR_MEMBER(unitDefID),
 	CR_MEMBER(featureDefID),
 

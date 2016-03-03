@@ -13,7 +13,6 @@ class LuaTable;
 
 struct SolidObjectDecalDef {
 public:
-	CR_DECLARE_STRUCT(SolidObjectDecalDef)
 
 	SolidObjectDecalDef();
 	void Parse(const LuaTable&);
@@ -38,7 +37,6 @@ public:
 
 struct SolidObjectDef {
 public:
-	CR_DECLARE(SolidObjectDef)
 
 	SolidObjectDef();
 	virtual ~SolidObjectDef() { }

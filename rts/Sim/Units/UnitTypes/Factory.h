@@ -43,6 +43,8 @@ public:
 	const NanoPieceCache& GetNanoPieceCache() const { return nanoPieceCache; }
 	      NanoPieceCache& GetNanoPieceCache()       { return nanoPieceCache; }
 
+	const UnitDef* GetCurBuildDef() const { return curBuildDef; }
+	void SetCurBuildDef(const UnitDef* ud);
 private:
 	void SendToEmptySpot(CUnit* unit);
 	void AssignBuildeeOrders(CUnit* unit);
@@ -50,7 +52,6 @@ private:
 public:
 	float buildSpeed;
 
-	const UnitDef* curBuildDef;
 	CUnit* curBuild;
 
 	enum {
@@ -60,6 +61,8 @@ public:
 	};
 
 private:
+	const UnitDef* curBuildDef;
+	int curBuildDefID;
 	int nextBuildUnitDefID;
 	int lastBuildUpdateFrame;
 

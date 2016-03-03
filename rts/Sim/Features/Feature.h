@@ -144,6 +144,7 @@ public:
 
 private:
 	void PostLoad();
+	int udefID; //needed for postload
 
 	CMatrix44f transMatrix;
 };

@@ -29,9 +29,9 @@ CR_BIND_DERIVED(CFactory, CBuilding, )
 
 CR_REG_METADATA(CFactory, (
 	CR_MEMBER(buildSpeed),
-	CR_MEMBER(nextBuildUnitDefID),
 	CR_MEMBER(lastBuildUpdateFrame),
-	CR_MEMBER(curBuildDef),
+	CR_IGNORED(curBuildDef),
+	CR_MEMBER(curBuildDefID),
 	CR_MEMBER(curBuild),
 	CR_MEMBER(finishedBuildCommand),
 	CR_MEMBER(nanoPieceCache),
@@ -44,9 +44,9 @@ CR_REG_METADATA(CFactory, (
 
 CFactory::CFactory():
 	buildSpeed(100.0f),
-	curBuildDef(NULL),
-	curBuild(NULL),
-	nextBuildUnitDefID(-1),
+	curBuild(nullptr),
+	curBuildDef(nullptr),
+	curBuildDefID(-1),
 	lastBuildUpdateFrame(-1)
 {
 }
@@ -55,7 +55,7 @@ CFactory::CFactory():
 
 void CFactory::PostLoad()
 {
-	curBuildDef = unitDefHandler->GetUnitDefByID(nextBuildUnitDefID);
+	curBuildDef = unitDefHandler->GetUnitDefByID(curBuildDefID);
 
 	if (yardOpen) {
 		script->Activate();
@@ -65,11 +65,19 @@ void CFactory::PostLoad()
 	}
 }
 
+
+void CFactory::SetCurBuildDef(const UnitDef* ud)
+{
+	nextBuildUnitDefID = ud != nullptr ? ud->id : -1;
+	curBuildDef = ud;
+}
+
+
 void CFactory::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSequence)
 {
-	if (curBuild != NULL) {
-		curBuild->KillUnit(NULL, false, true);
-		curBuild = NULL;
+	if (curBuild != nullptr) {
+		curBuild->KillUnit(nullptr, false, true);
+		curBuild = nullptr;
 	}
 
 	CUnit::KillUnit(attacker, selfDestruct, reclaimed, showDeathSequence);
@@ -107,7 +115,7 @@ void CFactory::Update()
 		// unit, in which case our buildee can either be allowed to finish
 		// construction (by assisting builders) or has to be killed --> the
 		// latter is easier
-		if (curBuild != NULL) {
+		if (curBuild != nullptr) {
 			StopBuild();
 		}
 		#endif
@@ -116,7 +124,7 @@ void CFactory::Update()
 	}
 
 
-	if (curBuildDef != NULL) {
+	if (curBuildDef != nullptr) {
 		if (!yardOpen && !IsStunned()) {
 			if (groundBlockingObjectMap->CanOpenYard(this)) {
 				script->Activate();
@@ -133,13 +141,13 @@ void CFactory::Update()
 		}
 	}
 
-	if (curBuild != NULL) {
+	if (curBuild != nullptr) {
 		UpdateBuild(curBuild);
 		FinishBuild(curBuild);
 	}
 
 	const bool wantClose = (!IsStunned() && yardOpen && (gs->frameNum >= (lastBuildUpdateFrame + GAME_SPEED * 7)));
-	const bool closeYard = (wantClose && curBuild == NULL && groundBlockingObjectMap->CanCloseYard(this));
+	const bool closeYard = (wantClose && curBuild == nullptr && groundBlockingObjectMap->CanCloseYard(this));
 
 	if (closeYard) {
 		// close the factory after inactivity
@@ -194,7 +202,7 @@ void CFactory::StartBuild(const UnitDef* buildeeDef) {
 	// set curBuildDef to NULL to indicate construction
 	// has started, otherwise we would keep being called
 	curBuild = buildee;
-	curBuildDef = NULL;
+	SetCurBuildDef(nullptr);
 
 	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
 		Channels::General->PlayRandomSample(unitDef->sounds.build, buildPos);
@@ -251,7 +259,7 @@ void CFactory::FinishBuild(CUnit* buildee) {
 	const CCommandAI* bcai = buildee->commandAI;
 	// if not idle, the buildee already has user orders
 	const bool buildeeIdle = (bcai->commandQue.empty());
-	const bool buildeeMobile = (dynamic_cast<const CMobileCAI*>(bcai) != NULL);
+	const bool buildeeMobile = (dynamic_cast<const CMobileCAI*>(bcai) != nullptr);
 
 	if (buildeeIdle || buildeeMobile) {
 		AssignBuildeeOrders(buildee);
@@ -271,20 +279,19 @@ void CFactory::FinishBuild(CUnit* buildee) {
 unsigned int CFactory::QueueBuild(const UnitDef* buildeeDef, const Command& buildCmd)
 {
 	assert(!beingBuilt);
-	assert(buildeeDef != NULL);
+	assert(buildeeDef != nullptr);
 
-	if (curBuild != NULL)
+	if (curBuild != nullptr)
 		return FACTORY_KEEP_BUILD_ORDER;
 	if (unitHandler->unitsByDefs[team][buildeeDef->id].size() >= buildeeDef->maxThisUnit)
 		return FACTORY_SKIP_BUILD_ORDER;
 	if (teamHandler->Team(team)->AtUnitLimit())
 		return FACTORY_KEEP_BUILD_ORDER;
-	if (!eventHandler.AllowUnitCreation(buildeeDef, this, NULL))
+	if (!eventHandler.AllowUnitCreation(buildeeDef, this, nullptr))
 		return FACTORY_SKIP_BUILD_ORDER;
 
 	finishedBuildCommand = buildCmd;
-	curBuildDef = buildeeDef;
-	nextBuildUnitDefID = buildeeDef->id;
+	SetCurBuildDef(buildeeDef);
 
 	// signal that the build-order was accepted (queued)
 	return FACTORY_NEXT_BUILD_ORDER;
@@ -298,19 +305,19 @@ void CFactory::StopBuild()
 	if (curBuild) {
 		if (curBuild->beingBuilt) {
 			AddMetal(curBuild->cost.metal * curBuild->buildProgress, false);
-			curBuild->KillUnit(NULL, false, true);
+			curBuild->KillUnit(nullptr, false, true);
 		}
 		DeleteDeathDependence(curBuild, DEPENDENCE_BUILD);
 	}
 
-	curBuild = NULL;
-	curBuildDef = NULL;
+	curBuild = nullptr;
+	SetCurBuildDef(nullptr);
 }
 
 void CFactory::DependentDied(CObject* o)
 {
 	if (o == curBuild) {
-		curBuild = NULL;
+		curBuild = nullptr;
 		StopBuild();
 	}
 
