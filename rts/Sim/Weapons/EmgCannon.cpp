@@ -10,6 +10,7 @@
 #include "System/Sync/SyncTracer.h"
 
 CR_BIND_DERIVED(CEmgCannon, CWeapon, (NULL, NULL))
+CR_REG_METADATA(CEmgCannon, )
 
 CEmgCannon::CEmgCannon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {

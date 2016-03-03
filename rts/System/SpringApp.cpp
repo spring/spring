@@ -231,10 +231,7 @@ bool SpringApp::Initialize()
 	CrashHandler::Install();
 	good_fpu_control_registers(__FUNCTION__);
 
-	// CREG & GlobalConfig
-#ifdef USING_CREG
-	creg::System::InitializeClasses();
-#endif
+	// GlobalConfig
 	GlobalConfig::Instantiate();
 
 

@@ -66,11 +66,11 @@ namespace creg {
 				if (class_ == objClass) return true;
 				if (isEmbedded && objEmbedded) return false;
 				if (!objEmbedded) {
-					for (Class* base=class_->base; base; base=base->base)
+					for (Class* base=class_->base(); base; base=base->base())
 						if (base == objClass) return true;
 				}
 				if (!isEmbedded) {
-					for (Class* base=objClass->base; base; base=base->base)
+					for (Class* base=objClass->base(); base; base=base->base())
 						if (base == class_) return true;
 				}
 				return false;

@@ -147,15 +147,15 @@ COutputStreamSerializer::ObjectRef* COutputStreamSerializer::FindObjectRef(void*
 
 void COutputStreamSerializer::SerializeObject(Class* c, void* ptr, ObjectRef* objr)
 {
-	if (c->base)
-		SerializeObject(c->base, ptr, objr);
+	if (c->base())
+		SerializeObject(c->base(), ptr, objr);
 
 	ObjectMemberGroup omg;
 	omg.membersClass = c;
 
 	for (uint a = 0; a < c->members.size(); a++)
 	{
-		creg::Class::Member* m = c->members[a];
+		creg::Class::Member* m = &c->members[a];
 		if (m->flags & CM_NoSerialize)
 			continue;
 
@@ -324,7 +324,7 @@ void COutputStreamSerializer::SavePackage(std::ostream* s, void* rootObj, Class*
 				pRef->class_ = c;
 				classRefs.push_back(pRef);
 			}
-			c = c->base;
+			c = c->base();
 		}
 
 		std::map<creg::Class*, ClassRef>::iterator cr = classMap.find(i->class_);
@@ -427,10 +427,9 @@ CInputStreamSerializer::CInputStreamSerializer()
 
 CInputStreamSerializer::~CInputStreamSerializer()
 {
-	for (std::vector<StoredObject>::iterator it = objects.begin(); it != objects.end(); ++it) {
-		if (it->obj) {
-			ClassBinder* binder = classRefs[it->classRef]->binder;
-			binder->class_.DeleteInstance(it->obj);
+	for (StoredObject& o: objects) {
+		if (o.obj) {
+			classRefs[o.classRef]->DeleteInstance(o.obj);
 		}
 	}
 }
@@ -442,12 +441,12 @@ bool CInputStreamSerializer::IsWriting()
 
 void CInputStreamSerializer::SerializeObject(Class* c, void* ptr)
 {
-	if (c->base)
-		SerializeObject(c->base, ptr);
+	if (c->base())
+		SerializeObject(c->base(), ptr);
 
 	for (uint a = 0; a < c->members.size(); a++)
 	{
-		creg::Class::Member* m = c->members [a];
+		creg::Class::Member* m = &c->members[a];
 		if (m->flags & CM_NoSerialize)
 			continue;
 
@@ -533,8 +532,8 @@ void CInputStreamSerializer::AddPostLoadCallback(void (*cb)(void*), void* ud)
 
 void CallPostLoad(creg::Class* c, creg::Class* oc, void* obj)
 {
-	if (c->base != nullptr)
-		CallPostLoad(c->base, oc, obj);
+	if (c->base() != nullptr)
+		CallPostLoad(c->base(), oc, obj);
 
 	if (c->HasPostLoad()) {
 		LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Run PostLoad of %s::%s", oc->name.c_str(), c->name.c_str());

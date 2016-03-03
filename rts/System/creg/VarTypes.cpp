@@ -90,3 +90,8 @@ string StaticArrayBaseType::GetName() const
 	SNPRINTF(sstr, 16, "%d", size);
 	return elemType->GetName() + "[" + std::string(sstr) + "]";
 }
+
+boost::shared_ptr<IType> IType::CreateIgnoredType(size_t size)
+{
+	return boost::shared_ptr<IType>(new IgnoredType(size));
+}

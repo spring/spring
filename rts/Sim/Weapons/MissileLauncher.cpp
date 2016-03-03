@@ -9,6 +9,7 @@
 #include "Sim/Units/UnitDef.h"
 
 CR_BIND_DERIVED(CMissileLauncher, CWeapon, (NULL, NULL))
+CR_REG_METADATA(CMissileLauncher, )
 
 CMissileLauncher::CMissileLauncher(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {

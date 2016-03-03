@@ -12,6 +12,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 
 CR_BIND_DERIVED(CWreckProjectile, CProjectile, (NULL, ZeroVector, ZeroVector, 0.0f))
+CR_REG_METADATA(CWreckProjectile, )
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

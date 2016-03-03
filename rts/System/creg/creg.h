@@ -50,7 +50,7 @@ namespace creg {
 	{
 	public:
 		// Type interface can go here...
-		virtual ~IType();
+		virtual ~IType() {}
 
 		virtual void Serialize(ISerializer* s, void* instance) = 0;
 		virtual std::string GetName() const = 0;
@@ -59,13 +59,7 @@ namespace creg {
 		static boost::shared_ptr<IType> CreateBasicType(BasicTypeID t, size_t size);
 		static boost::shared_ptr<IType> CreateStringType();
 		static boost::shared_ptr<IType> CreateObjInstanceType(Class* objectType);
-	};
-
-	class IMemberRegistrator
-	{
-	public:
-		virtual ~IMemberRegistrator();
-		virtual void RegisterMembers(Class* cls) = 0;
+		static boost::shared_ptr<IType> CreateIgnoredType(size_t size);
 	};
 
 
@@ -86,38 +80,42 @@ namespace creg {
 			int flags; // combination of ClassMemberFlag's
 		};
 
-		Class();
-		virtual ~Class();
+		Class(const char* name);
 
 		/// Returns true if this class is equal to or derived from other
 		bool IsSubclassOf(Class* other) const;
-		void DeleteInstance(void* inst);
+
 		/// Allocate an instance of the class
 		void* CreateInstance();
+		void DeleteInstance(void* inst);
+
 		/// Calculate a checksum from the class metadata
 		void CalculateChecksum(unsigned int& checksum);
-		bool AddMember(const char* name, boost::shared_ptr<IType> type, unsigned int offset, int alignment);
-		bool AddMember(const char* name, IType* type, unsigned int offset, int alignment);
+		void AddMember(const char* name, boost::shared_ptr<IType> type, unsigned int offset, int alignment);
 		void SetMemberFlag(const char* name, ClassMemberFlag f);
-		Member* FindMember(const char* name);
+		Member* FindMember(const char* name, const bool inherited = true);
 
 		void BeginFlag(ClassMemberFlag flag);
 		void EndFlag(ClassMemberFlag flag);
 		void SetFlag(ClassFlags flag);
 
 		inline bool IsAbstract() const;
+		inline Class* base() const;
 
+		/// Returns all concrete classes that implement this class
+		std::vector<Class*> GetImplementations();
+
+		/// all classes that derive from this class
+		const std::vector<Class*>& GetDerivedClasses() const;
 
 		template<class T, typename TF>
-		void SetSerialize(T* foo, TF proc)
-		{
+		void SetSerialize(T* foo, TF proc) {
 			serializeProc = [&](void* object, ISerializer* s) {
 				(static_cast<T*>(object)->*proc)(s);
 			};
 		}
 		template<class T, typename TF>
-		void SetPostLoad(T* foo, TF proc)
-		{
+		void SetPostLoad(T* foo, TF proc) {
 			postLoadProc = [&](void* object) {
 				(static_cast<T*>(object)->*proc)();
 			};
@@ -128,40 +126,35 @@ namespace creg {
 		void CallPostLoadProc(void* object)                  { postLoadProc(object); }
 
 	public:
-		/// Returns all concrete classes that implement this class
-		std::vector<Class*> GetImplementations();
+		std::vector<Member> members;
 
-		std::vector<Member*> members;
-		/// all classes that derive from this class
-		std::vector<Class*> derivedClasses;
 		ClassBinder* binder;
 		std::string name;
 		int size;
 		int alignment;
-		Class* base;
 
 		std::function<void(void* object, ISerializer* s)> serializeProc;
 		std::function<void(void* object)> postLoadProc;
 
-		friend class ClassBinder;
+	private:
+		int currentMemberFlags;
 	};
 
 
 	/**
 	 * Stores class bindings such as constructor/destructor
 	 */
-	class ClassBinder
+	class ClassBinder //TODO merge with `class Class`
 	{
 	public:
-		ClassBinder(const char* className, unsigned int cf, ClassBinder* base,
-				IMemberRegistrator** mreg, int instanceSize, int instanceAlignment, bool hasVTable, bool isCregStruct,
-				void (*constructorProc)(void* instance),
-				void (*destructorProc)(void* instance));
+		ClassBinder(const char* className, ClassFlags cf, ClassBinder* base,
+				void (*memberRegistrator)(creg::Class*),
+				int instanceSize, int instanceAlignment, bool hasVTable, bool isCregStruct,
+				void (*constructorProc)(void* instance), void (*destructorProc)(void* instance));
 
 		Class class_;
 		ClassBinder* base;
 		ClassFlags flags;
-		IMemberRegistrator** memberRegistrator;
 		const char* name;
 		int size; // size of an instance in bytes
 		int alignment;
@@ -184,27 +177,18 @@ namespace creg {
 	{
 	public:
 		/// Return the global list of classes
-		static const std::vector<Class*>& GetClasses() { return classes; }
-
-		/**
-		 * Initialization of creg, collects all the classes and initializes
-		 * metadata.
-		 */
-		static void InitializeClasses();
+		static const std::vector<Class*>& GetClasses();
 
 		/// Find a class by name
 		static Class* GetClass(const std::string& name);
 
-		static void AddClassBinder(ClassBinder* cb);
-
-	protected:
-		static std::vector<ClassBinder*> binders;
-		static std::vector<Class*> classes;
+		static void AddClass(Class* c);
 	};
 
 
 	//Note: has to be defined after `class ClassBinder`, else we get a compile error
 	bool Class::IsAbstract() const { return (binder->flags & CF_Abstract) != 0; }
+	Class* Class::base() const { return binder->base ? &binder->base->class_ : nullptr; }
 }
 
 
@@ -223,17 +207,16 @@ namespace creg {
 
 
 #define CR_DECLARE_BASE(TCls, isStr, VIRTUAL, OVERRIDE)	\
-public:					\
-	static creg::ClassBinder binder;				\
-	typedef TCls MyType;							\
-	static creg::IMemberRegistrator* memberRegistrator;	 \
-	static void _ConstructInstance(void* d);			\
-	static void _DestructInstance(void* d);			\
-	friend struct TCls##MemberRegistrator;			\
-	inline static creg::Class* StaticClass() { return &binder.class_; } \
-	VIRTUAL creg::Class* GetClass() const OVERRIDE; \
+public: \
+	static creg::ClassBinder binder; \
 	static bool creg_hasVTable; \
-	static const bool creg_isStruct = isStr;
+	static const bool creg_isStruct = isStr; \
+	typedef TCls MyType; \
+	static creg::Class* StaticClass() { return &binder.class_; } \
+	VIRTUAL creg::Class* GetClass() const OVERRIDE { return &binder.class_; } \
+	static void _ConstructInstance(void* d); \
+	static void _DestructInstance(void* d); \
+	static void _CregRegisterMembers(creg::Class* class_);
 
 
 /** @def CR_DECLARE
@@ -243,7 +226,7 @@ public:					\
 #define CR_DECLARE(TCls) CR_DECLARE_BASE(TCls, false, virtual, )
 
 
-/** @def CR_DECLARE_STRUCT
+/** @def CR_DECLARE_DERIVED
  * Use this to declare a derived class
  * this should be put in the class definition, instead of CR_DECLARE
  */
@@ -264,6 +247,18 @@ public:					\
 #define CR_DECLARE_SUB(cl) \
 	struct cl##MemberRegistrator;
 
+/** @def CR_BIND
+ * Bind a class not derived from CObject
+ * should be used in the source file
+ * @param TCls class to bind
+ * @param ctor_args constructor arguments
+ */
+#define CR_BIND(TCls, ctor_args) \
+	bool TCls::creg_hasVTable = std::is_polymorphic<TCls>::value; \
+	void TCls::_ConstructInstance(void* d) { new(d) MyType ctor_args; } \
+	void TCls::_DestructInstance(void* d) { ((MyType*)d)->~MyType(); } \
+	creg::ClassBinder TCls::binder(#TCls, creg::CF_None, nullptr, &TCls::_CregRegisterMembers, sizeof(TCls), alignof(TCls), TCls::creg_hasVTable, TCls::creg_isStruct, TCls::_ConstructInstance, TCls::_DestructInstance);
+
 /** @def CR_BIND_DERIVED
  * Bind a derived class declared with CR_DECLARE to creg
  * Should be used in the source file
@@ -273,11 +268,9 @@ public:					\
  */
 #define CR_BIND_DERIVED(TCls, TBase, ctor_args) \
 	bool TCls::creg_hasVTable = std::is_polymorphic<TCls>::value; \
-	creg::IMemberRegistrator* TCls::memberRegistrator=0;	\
-	creg::Class* TCls::GetClass() const { return &binder.class_; } \
 	void TCls::_ConstructInstance(void* d) { new(d) MyType ctor_args; } \
 	void TCls::_DestructInstance(void* d) { ((MyType*)d)->~MyType(); } \
-	creg::ClassBinder TCls::binder(#TCls, 0, &TBase::binder, &TCls::memberRegistrator, sizeof(TCls), alignof(TCls), TCls::creg_hasVTable, TCls::creg_isStruct, TCls::_ConstructInstance, TCls::_DestructInstance);
+	creg::ClassBinder TCls::binder(#TCls, creg::CF_None, &TBase::binder, &TCls::_CregRegisterMembers, sizeof(TCls), alignof(TCls), TCls::creg_hasVTable, TCls::creg_isStruct, TCls::_ConstructInstance, TCls::_DestructInstance);
 
 /** @def CR_BIND_DERIVED_SUB
  * Bind a derived class inside another class to creg
@@ -289,44 +282,21 @@ public:					\
  */
 #define CR_BIND_DERIVED_SUB(TSuper, TCls, TBase, ctor_args) \
 	bool TSuper::TCls::creg_hasVTable = std::is_polymorphic<TSuper::TCls>::value; \
-	creg::IMemberRegistrator* TSuper::TCls::memberRegistrator=0;	 \
-	creg::Class* TSuper::TCls::GetClass() const { return &binder.class_; }  \
 	void TSuper::TCls::_ConstructInstance(void* d) { new(d) TCls ctor_args; }  \
 	void TSuper::TCls::_DestructInstance(void* d) { ((TCls*)d)->~TCls(); }  \
-	creg::ClassBinder TSuper::TCls::binder(#TSuper "::" #TCls, 0, &TBase::binder, &TSuper::TCls::memberRegistrator, sizeof(TSuper::TCls), alignof(TCls), TCls::creg_hasVTable, TCls::creg_isStruct, TSuper::TCls::_ConstructInstance, TSuper::TCls::_DestructInstance);
+	creg::ClassBinder TSuper::TCls::binder(#TSuper "::" #TCls, creg::CF_None, &TBase::binder, &TSuper::TCls::_CregRegisterMembers, sizeof(TSuper::TCls), alignof(TCls), TCls::creg_hasVTable, TCls::creg_isStruct, TSuper::TCls::_ConstructInstance, TSuper::TCls::_DestructInstance);
 
-/** @def CR_BIND
- * Bind a class not derived from CObject
- * should be used in the source file
- * @param TCls class to bind
- * @param ctor_args constructor arguments
+
+/** @def CR_BIND_TEMPLATE
+ *  @see CR_BIND
  */
-#define CR_BIND(TCls, ctor_args) \
-	bool TCls::creg_hasVTable = std::is_polymorphic<TCls>::value; \
-	creg::IMemberRegistrator* TCls::memberRegistrator=0;	\
-	creg::Class* TCls::GetClass() const { return &binder.class_; } \
-	void TCls::_ConstructInstance(void* d) { new(d) MyType ctor_args; } \
-	void TCls::_DestructInstance(void* d) { ((MyType*)d)->~MyType(); } \
-	creg::ClassBinder TCls::binder(#TCls, 0, 0, &TCls::memberRegistrator, sizeof(TCls), alignof(TCls), TCls::creg_hasVTable, TCls::creg_isStruct, TCls::_ConstructInstance, TCls::_DestructInstance);
+#define CR_BIND_TEMPLATE(TCls, ctor_args) \
+	template<> bool TCls::creg_hasVTable = std::is_polymorphic<TCls>::value; \
+	template<> void TCls::_ConstructInstance(void* d) { new(d) MyType ctor_args; } \
+	template<> void TCls::_DestructInstance(void* d) { ((MyType*)d)->~MyType(); } \
+	template<> void TCls::_CregRegisterMembers(creg::Class* class_); \
+	template<> creg::ClassBinder TCls::binder(#TCls, creg::CF_None, nullptr, &TCls::_CregRegisterMembers, sizeof(TCls), alignof(TCls), TCls::creg_hasVTable, TCls::creg_isStruct, TCls::_ConstructInstance, TCls::_DestructInstance);
 
-#ifdef __clang__
-	// LLVM/Clang expects a different order
-	#define CR_BIND_TEMPLATE(TCls, ctor_args) \
-		template<> bool TCls::creg_hasVTable = std::is_polymorphic<TCls>::value; \
-		template<> creg::IMemberRegistrator* TCls::memberRegistrator=0; \
-		template<> void TCls::_ConstructInstance(void* d) { new(d) MyType ctor_args; } \
-		template<> void TCls::_DestructInstance(void* d) { ((MyType*)d)->~MyType(); } \
-		template<> creg::ClassBinder TCls::binder(#TCls, 0, 0, &TCls::memberRegistrator, sizeof(TCls), alignof(TCls), TCls::creg_hasVTable, TCls::creg_isStruct, TCls::_ConstructInstance, TCls::_DestructInstance); \
-		template<> creg::Class* TCls::GetClass() const { return &binder.class_; }
-#else
-	#define CR_BIND_TEMPLATE(TCls, ctor_args) \
-		template<> bool TCls::creg_hasVTable = std::is_polymorphic<TCls>::value; \
-		template<> creg::IMemberRegistrator* TCls::memberRegistrator=0; \
-		template<> creg::Class* TCls::GetClass() const { return &binder.class_; } \
-		template<> void TCls::_ConstructInstance(void* d) { new(d) MyType ctor_args; } \
-		template<> void TCls::_DestructInstance(void* d) { ((MyType*)d)->~MyType(); } \
-		template<> creg::ClassBinder TCls::binder(#TCls, 0, 0, &TCls::memberRegistrator, sizeof(TCls), alignof(TCls), TCls::creg_hasVTable, TCls::creg_isStruct, TCls::_ConstructInstance, TCls::_DestructInstance);
-#endif
 
 /** @def CR_BIND_DERIVED_INTERFACE
  * Bind an abstract derived class
@@ -336,9 +306,7 @@ public:					\
  */
 #define CR_BIND_DERIVED_INTERFACE(TCls, TBase)	\
 	bool TCls::creg_hasVTable = std::is_polymorphic<TCls>::value; \
-	creg::IMemberRegistrator* TCls::memberRegistrator=0;	\
-	creg::Class* TCls::GetClass() const { return &binder.class_; } \
-	creg::ClassBinder TCls::binder(#TCls, (unsigned int)creg::CF_Abstract, &TBase::binder, &TCls::memberRegistrator, sizeof(TCls), alignof(TCls), TCls::creg_hasVTable, TCls::creg_isStruct, 0, 0);
+	creg::ClassBinder TCls::binder(#TCls, creg::CF_Abstract, &TBase::binder, &TCls::_CregRegisterMembers, sizeof(TCls), alignof(TCls), TCls::creg_hasVTable, TCls::creg_isStruct, 0, 0);
 
 /** @def CR_BIND_INTERFACE
  * Bind an abstract class
@@ -349,9 +317,7 @@ public:					\
  */
 #define CR_BIND_INTERFACE(TCls)	\
 	bool TCls::creg_hasVTable = std::is_polymorphic<TCls>::value; \
-	creg::IMemberRegistrator* TCls::memberRegistrator=0;	\
-	creg::Class* TCls::GetClass() const { return &binder.class_; } \
-	creg::ClassBinder TCls::binder(#TCls, (unsigned int)creg::CF_Abstract, 0, &TCls::memberRegistrator, sizeof(TCls), alignof(TCls), TCls::creg_hasVTable, TCls::creg_isStruct, 0, 0);
+	creg::ClassBinder TCls::binder(#TCls, creg::CF_Abstract, nullptr, &TCls::_CregRegisterMembers, sizeof(TCls), alignof(TCls), TCls::creg_hasVTable, TCls::creg_isStruct, 0, 0);
 
 /** @def CR_REG_METADATA
  * Binds the class metadata to the class itself
@@ -365,35 +331,37 @@ public:					\
  * @see CR_POSTLOAD
  * @see CR_MEMBER_SETFLAG
  */
-#define CR_REG_METADATA(TClass, Members)				\
-	struct TClass##MemberRegistrator : creg::IMemberRegistrator {\
-	typedef TClass Type;						\
-	TClass##MemberRegistrator() {				\
-		Type::memberRegistrator=this;				\
-	}												\
-	void RegisterMembers(creg::Class* class_) {		\
-		Type* null=nullptr;						\
-		(void)null; /*suppress compiler warning if this isn't used*/	\
-		(void)class_; /*suppress compiler warning if this isn't used*/	\
-		Members; }									\
-	} static TClass##mreg;
+#define CR_REG_METADATA(TClass, Members) \
+	void TClass::_CregRegisterMembers(creg::Class* class_) { \
+		typedef TClass Type; \
+		Type* null=nullptr; \
+		(void)null; /*suppress compiler warning if this isn't used*/ \
+		Members; \
+	}
+
+/** @def CR_REG_METADATA_TEMPLATE
+ * Just like CR_REG_METADATA, but for a template.
+ *  @see CR_REG_METADATA
+ */
+#define CR_REG_METADATA_TEMPLATE(TCls, Members) \
+	template<> void TCls::_CregRegisterMembers(creg::Class* class_) { \
+		typedef TCls Type; \
+		Type* null=nullptr; \
+		(void)null; /*suppress compiler warning if this isn't used*/ \
+		Members; \
+	}
 
 /** @def CR_REG_METADATA_SUB
  * Just like CR_REG_METADATA, but for a subclass.
  *  @see CR_REG_METADATA
  */
-#define CR_REG_METADATA_SUB(TSuperClass, TSubClass, Members)				\
-	struct TSuperClass::TSubClass##MemberRegistrator : creg::IMemberRegistrator {\
-	typedef TSuperClass::TSubClass Type;						\
-	TSubClass##MemberRegistrator() {				\
-		Type::memberRegistrator=this;				\
-	}												\
-	void RegisterMembers(creg::Class* class_) { \
+#define CR_REG_METADATA_SUB(TSuperClass, TSubClass, Members) \
+	void TSuperClass::TSubClass::_CregRegisterMembers(creg::Class* class_) { \
+		typedef TSuperClass::TSubClass Type; \
 		Type* null=nullptr; \
-		(void)null; /*suppress compiler warning if this isn't used*/	\
-		(void)class_; /*suppress compiler warning if this isn't used*/	\
-		Members; } \
-	} static TSuperClass##TSubClass##mreg;
+		(void)null; /*suppress compiler warning if this isn't used*/ \
+		Members; \
+	}
 
 /** @def CR_MEMBER
  * Registers a class/struct member variable, of a type that is:
@@ -418,7 +386,7 @@ public:					\
  * Registers a member variable that isn't saved/loaded
  */
 #define CR_IGNORED(Member) \
-	class_->AddMember( #Member, new creg::IgnoredType(sizeof(Type::Member)), offsetof_creg(Type, Member), alignof(decltype(Type::Member)))
+	class_->AddMember( #Member, creg::IType::CreateIgnoredType(sizeof(Type::Member)), offsetof_creg(Type, Member), alignof(decltype(Type::Member)))
 
 
 /** @def CR_MEMBER_UN

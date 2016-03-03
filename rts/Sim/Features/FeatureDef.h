@@ -16,7 +16,7 @@ enum {
 
 struct FeatureDef: public SolidObjectDef
 {
-	CR_DECLARE(FeatureDef)
+	CR_DECLARE_DERIVED(FeatureDef) //FIXME not needed to creg/save?
 
 	FeatureDef();
 

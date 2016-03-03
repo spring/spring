@@ -14,6 +14,7 @@
 #include "System/myMath.h"
 
 CR_BIND_DERIVED(CRifle, CWeapon, (NULL, NULL))
+CR_REG_METADATA(CRifle, )
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

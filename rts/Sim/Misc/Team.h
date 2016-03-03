@@ -18,7 +18,7 @@ class CUnit;
 
 class CTeam : public TeamBase
 {
-	CR_DECLARE(CTeam)
+	CR_DECLARE_DERIVED(CTeam)
 public:
 	CTeam();
 
