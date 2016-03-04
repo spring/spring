@@ -4,21 +4,22 @@
 #define CREG_LOAD_SAVE_HANDLER_H
 
 #include <string>
-#include <fstream>
+#include <sstream>
 #include "LoadSaveHandler.h"
+#include <zlib.h>
 
 class CCregLoadSaveHandler : public ILoadSaveHandler
 {
 public:
 	CCregLoadSaveHandler();
 	~CCregLoadSaveHandler();
-	void SaveGame(const std::string& file);
+	void SaveGame(const std::string& path);
 	/// load things such as map and mod, needed to fire up the engine
-	void LoadGameStartInfo(const std::string& file);
+	void LoadGameStartInfo(const std::string& path);
 	void LoadGame();
 
 protected:
-	std::ifstream* ifs;
+	std::stringstream* iss;
 };
 
 #endif // CREG_LOAD_SAVE_HANDLER_H
