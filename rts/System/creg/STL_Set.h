@@ -44,6 +44,7 @@ namespace creg
 				for (iterator i = ct.begin(); i != ct.end(); ++i)
 					elemType->Serialize(s,(void*) &*i);
 			} else {
+				ct.clear();
 				int size;
 				s->SerializeInt(&size, sizeof(int));
 				for (int i = 0; i < size; i++) {

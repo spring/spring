@@ -73,6 +73,7 @@ namespace creg
 					mappedType->Serialize(s, &i->second);
 				}
 			} else {
+				ct.clear();
 				int size;
 				s->SerializeInt(&size, sizeof(int));
 				for (int a = 0; a < size; a++) {

@@ -28,6 +28,7 @@ namespace creg {
 					elemType->Serialize(s, &*it);
 				}
 			} else {
+				ct.clear();
 				int size;
 				s->SerializeInt(&size, sizeof(int));
 				ct.resize(size);
