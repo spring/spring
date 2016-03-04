@@ -753,10 +753,7 @@ void CGame::KillMisc()
 	LOG("[%s][1]", __FUNCTION__);
 	CEndGameBox::Destroy();
 	CLoadScreen::DeleteInstance(); // make sure to halt loading, otherwise crash :)
-	CColorMap::DeleteColormaps();
-
 	IVideoCapturing::FreeInstance();
-
 
 	LOG("[%s][2]", __FUNCTION__);
 	// delete this first since AI's might call back into sim-components in their dtors

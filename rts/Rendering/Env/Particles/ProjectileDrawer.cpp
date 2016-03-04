@@ -327,11 +327,11 @@ void CProjectileDrawer::LoadWeaponTextures() {
 		} else if (wd.type == "Flame") {
 			wd.visuals.texture1 = flametex;
 
-			if (wd.visuals.colorMap == 0) {
-				wd.visuals.colorMap = CColorMap::Load12f(
-					1.000f, 1.000f, 1.000f, 0.100f,
-					0.025f, 0.025f, 0.025f, 0.100f,
-					0.000f, 0.000f, 0.000f, 0.000f
+			if (wd.visuals.colorMap == nullptr) {
+				wd.visuals.colorMap = CColorMap::LoadFromDefString(
+					"1.0 1.0 1.0 0.1, "
+					"0.025 0.025 0.025 0.10, "
+					"0.0 0.0 0.0 0.0"
 				);
 			}
 		} else if (wd.type == "MissileLauncher") {
