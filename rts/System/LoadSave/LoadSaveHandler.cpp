@@ -28,9 +28,8 @@ ILoadSaveHandler::~ILoadSaveHandler()
 
 std::string ILoadSaveHandler::FindSaveFile(const std::string& file)
 {
-	if (!FileSystem::IsAbsolutePath(file)) {
-		return FileSystem::EnsurePathSepAtEnd("Saves") + file;
+	if (FileSystem::FileExists(file)) {
+		return file;
 	}
-
-	return file;
+	return FileSystem::EnsurePathSepAtEnd("Saves") + file;
 }
