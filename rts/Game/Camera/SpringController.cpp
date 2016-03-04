@@ -85,6 +85,7 @@ void CSpringController::ScreenEdgeMove(float3 move)
 void CSpringController::MouseWheelMove(float move)
 {
 	const float shiftSpeed = (KeyInput::GetKeyModState(KMOD_SHIFT) ? 3.0f : 1.0f);
+	const float scaledMove = 1.0f + (move * shiftSpeed * 0.007f);
 
 	// tilt the camera if CTRL is pressed
 	if (KeyInput::GetKeyModState(KMOD_CTRL)) {
@@ -94,8 +95,10 @@ void CSpringController::MouseWheelMove(float move)
 	} else {
 		const float curDist = dist;
 		const float3 curCamPos = GetPos();
+
 		camHandler->CameraTransition(0.15f);
-		dist *= (1.0f + (move * shiftSpeed * 0.007f));
+
+		dist *= scaledMove;
 		dist = std::min(dist, maxDist);
 
 		if (move < 0.0f) {
@@ -107,15 +110,16 @@ void CSpringController::MouseWheelMove(float move)
 				zoomBack = false;
 				camHandler->CameraTransition(0.5f);
 			} else {
-				float zoomInDist = CGround::LineGroundCol(curCamPos, curCamPos + mouse->dir * 150000.f, false);
+				const float zoomInDist = CGround::LineGroundCol(curCamPos, curCamPos + mouse->dir * 150000.f, false);
+
 				if (zoomInDist > 0.0f) {
 					// current campos -> zoominpos groundpos -> wanted campos
 					const float3 zoomInGroundPos = curCamPos + mouse->dir * zoomInDist;
-					zoomInDist *= (1.0f + (move * shiftSpeed * 0.007f));
-					const float3 wantedCamPos = zoomInGroundPos - mouse->dir * zoomInDist;
+					const float3 wantedCamPos = zoomInGroundPos + mouse->dir * zoomInDist * scaledMove;
 
 					// campos -> groundpos
 					const float newDist = CGround::LineGroundCol(wantedCamPos, wantedCamPos + dir * 150000.f, false);
+
 					if (newDist > 0.0f) {
 						dist = newDist;
 						pos = wantedCamPos + dir * dist;
@@ -144,15 +148,16 @@ void CSpringController::MouseWheelMove(float move)
 				zoomBack = false;
 
 				if (configHandler->GetBool("CamSpringZoomOutFromMousePos")) {
-					float zoomInDist = CGround::LineGroundCol(curCamPos, curCamPos + mouse->dir * 150000.f, false);
+					const float zoomInDist = CGround::LineGroundCol(curCamPos, curCamPos + mouse->dir * 150000.f, false);
+
 					if (zoomInDist > 0.0f) {
 						// zoominpos -> campos
 						const float3 zoomInGroundPos = curCamPos + mouse->dir * zoomInDist;
-						zoomInDist *= (1.0f + (move * shiftSpeed * 0.007f));
-						const float3 wantedCamPos = zoomInGroundPos - mouse->dir * zoomInDist;
+						const float3 wantedCamPos = zoomInGroundPos - mouse->dir * zoomInDist * scaledMove;
 
 						// campos -> groundpos
 						const float newDist = CGround::LineGroundCol(wantedCamPos, wantedCamPos + dir * 150000.f, false);
+
 						if (newDist > 0.0f) {
 							dist = newDist;
 							pos = wantedCamPos + dir * dist;
