@@ -798,11 +798,11 @@ void CUnitScript::Explode(int piece, int flags)
 	const float partSat = projectileHandler->GetParticleSaturation();
 
 	int newFlags = 0;
-	newFlags |= (PF_Explode    * ((flags & PF_Explode   ) != 0));
-	newFlags |= (PF_Smoke      * ((flags & PF_Smoke     ) != 0) && partSat < 0.95f);
-	newFlags |= (PF_Fire       * ((flags & PF_Fire      ) != 0) && partSat < 0.95f);
-	newFlags |= (PF_NoCEGTrail * ((flags & PF_NoCEGTrail) != 0));
-	newFlags |= (PF_Recursive  * ((flags & PF_Recursive ) != 0));
+	newFlags |= (PF_Explode    *  ((flags & PF_Explode   ) != 0)                    );
+	newFlags |= (PF_Smoke      * (((flags & PF_Smoke     ) != 0) && partSat < 0.95f));
+	newFlags |= (PF_Fire       * (((flags & PF_Fire      ) != 0) && partSat < 0.95f));
+	newFlags |= (PF_NoCEGTrail *  ((flags & PF_NoCEGTrail) != 0)                    );
+	newFlags |= (PF_Recursive  *  ((flags & PF_Recursive ) != 0)                    );
 
 	new CPieceProjectile(unit, pieces[piece], absPos, explSpeed, newFlags, 0.5f);
 #endif
