@@ -329,8 +329,8 @@ void CProjectileDrawer::LoadWeaponTextures() {
 
 			if (wd.visuals.colorMap == nullptr) {
 				wd.visuals.colorMap = CColorMap::LoadFromDefString(
-					"1.0 1.0 1.0 0.1, "
-					"0.025 0.025 0.025 0.10, "
+					"1.0 1.0 1.0 0.1 "
+					"0.025 0.025 0.025 0.10 "
 					"0.0 0.0 0.0 0.0"
 				);
 			}
