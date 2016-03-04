@@ -157,14 +157,26 @@ CReadMap* CReadMap::LoadMap(const std::string& mapname)
 #ifdef USING_CREG
 void CReadMap::Serialize(creg::ISerializer* s)
 {
-	// remove the const
-	const float* cshm = GetCornerHeightMapSynced();
-	      float*  shm = const_cast<float*>(cshm);
+	// using integers so we can xor the original heightmap with the
+	// current one - should compress significantly better.
+	      float* shm  = const_cast<float*>(GetCornerHeightMapSynced());
+	      int*   ishm  = reinterpret_cast<int*>(shm);
+	const int*   ioshm = reinterpret_cast<const int*>(GetOriginalHeightMapSynced());
 
-	s->Serialize(shm, 4 * mapDims.mapxp1 * mapDims.mapyp1);
-
-	if (!s->IsWriting())
+	int height;
+	if (s->IsWriting()) {
+		for (unsigned int i = 0; i < mapDims.mapxp1 * mapDims.mapyp1; i++) {
+			height = ishm[i] ^ ioshm[i];
+			s->Serialize(&height, sizeof(int));
+		}
+	} else {
+		for (unsigned int i = 0; i < mapDims.mapxp1 * mapDims.mapyp1; i++) {
+			s->Serialize(&height, sizeof(int));
+			ishm[i] = height ^ ioshm[i];
+		}
 		mapDamage->RecalcArea(2, mapDims.mapx - 3, 2, mapDims.mapy - 3);
+	}
+
 }
 
 
