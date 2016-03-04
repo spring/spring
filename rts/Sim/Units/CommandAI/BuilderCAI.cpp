@@ -109,7 +109,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 
 	if (owner->unitDef->canRepair) {
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id   = CMD_REPAIR;
 		c.type = CMDTYPE_ICON_UNIT_OR_AREA;
@@ -121,7 +121,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 	}
 	else if (owner->unitDef->canAssist) {
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id   = CMD_REPAIR;
 		c.type = CMDTYPE_ICON_UNIT_OR_AREA;
@@ -134,7 +134,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 
 	if (owner->unitDef->canReclaim) {
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id   = CMD_RECLAIM;
 		c.type = CMDTYPE_ICON_UNIT_FEATURE_OR_AREA;
@@ -147,7 +147,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 
 	if (owner->unitDef->canRestore && !mapDamage->disabled) {
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id   = CMD_RESTORE;
 		c.type = CMDTYPE_ICON_AREA;
@@ -162,7 +162,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 
 	if (owner->unitDef->canResurrect) {
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id   = CMD_RESURRECT;
 		c.type = CMDTYPE_ICON_UNIT_FEATURE_OR_AREA;
@@ -174,7 +174,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 	}
 	if (owner->unitDef->canCapture) {
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id   = CMD_CAPTURE;
 		c.type = CMDTYPE_ICON_UNIT_OR_AREA;
@@ -199,7 +199,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 
 		{
 			possibleCommands.emplace_back();
-			CommandDescription& c = possibleCommands.back();
+			SCommandDescription& c = possibleCommands.back();
 
 			c.id   = -ud->id; //build options are always negative
 			c.type = CMDTYPE_ICON_BUILDING;

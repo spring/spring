@@ -67,7 +67,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 
 	if (owner->unitDef->canmove) {
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id        = CMD_MOVE;
 		c.type      = CMDTYPE_ICON_MAP;
@@ -80,7 +80,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 
 	if (owner->unitDef->canPatrol) {
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id        = CMD_PATROL;
 		c.type      = CMDTYPE_ICON_MAP;
@@ -93,7 +93,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 
 	if (owner->unitDef->canFight) {
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id        = CMD_FIGHT;
 		c.type      = CMDTYPE_ICON_MAP;
@@ -106,7 +106,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 
 	if (owner->unitDef->canGuard) {
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id        = CMD_GUARD;
 		c.type      = CMDTYPE_ICON_UNIT;
@@ -133,7 +133,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 
 		{
 			possibleCommands.emplace_back();
-			CommandDescription& c = possibleCommands.back();
+			SCommandDescription& c = possibleCommands.back();
 
 			c.id   = -ud->id; // build-options are always negative
 			c.type = CMDTYPE_ICON;
@@ -444,7 +444,7 @@ int CFactoryCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 
 void CFactoryCAI::UpdateIconName(int cmdID, const BuildOption& bo)
 {
-	vector<CommandDescription>::iterator pci;
+	vector<SCommandDescription>::iterator pci;
 	for (pci = possibleCommands.begin(); pci != possibleCommands.end(); ++pci) {
 		if (pci->id != cmdID)
 			continue;

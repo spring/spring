@@ -2,6 +2,7 @@
 
 
 #include "CommandAI.h"
+
 #include "BuilderCAI.h"
 #include "FactoryCAI.h"
 #include "ExternalAI/EngineOutHandler.h"
@@ -108,7 +109,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 	{
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id   = CMD_STOP;
 		c.type = CMDTYPE_ICON;
@@ -121,7 +122,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 	if (IsAttackCapable()) {
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id   = CMD_ATTACK;
 		c.type = CMDTYPE_ICON_UNIT_OR_MAP;
@@ -134,7 +135,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 	if (owner->unitDef->canManualFire) {
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id   = CMD_MANUALFIRE;
 		c.type = CMDTYPE_ICON_MAP;
@@ -147,7 +148,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 	{
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id   = CMD_WAIT;
 		c.type = CMDTYPE_ICON;
@@ -160,7 +161,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 	{
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id   = CMD_TIMEWAIT;
 		c.type = CMDTYPE_NUMBER;
@@ -178,7 +179,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 	{
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		// only for games with 2 ally teams  --  checked later
 		c.id   = CMD_DEATHWAIT;
@@ -194,7 +195,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 	{
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id   = CMD_SQUADWAIT;
 		c.type = CMDTYPE_NUMBER;
@@ -212,7 +213,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 	{
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id   = CMD_GATHERWAIT;
 		c.type = CMDTYPE_ICON;
@@ -227,7 +228,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 	if (owner->unitDef->canSelfD) {
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id   = CMD_SELFD;
 		c.type = CMDTYPE_ICON;
@@ -242,7 +243,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 	if (CanChangeFireState()) {
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id   = CMD_FIRE_STATE;
 		c.type = CMDTYPE_ICON_MODE;
@@ -263,7 +264,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 	if (owner->unitDef->canmove || owner->unitDef->builder) {
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id   = CMD_MOVE_STATE;
 		c.type = CMDTYPE_ICON_MODE;
@@ -286,7 +287,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 	if (owner->unitDef->canRepeat) {
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id   = CMD_REPEAT;
 		c.type = CMDTYPE_ICON_MODE;
@@ -306,7 +307,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 	if (owner->unitDef->highTrajectoryType > 1) {
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id   = CMD_TRAJECTORY;
 		c.type = CMDTYPE_ICON_MODE;
@@ -326,7 +327,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 	if (owner->unitDef->onoffable) {
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id   = CMD_ONOFF;
 		c.type = CMDTYPE_ICON_MODE;
@@ -346,7 +347,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 	if (owner->unitDef->canCloak) {
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id   = CMD_CLOAK;
 		c.type = CMDTYPE_ICON_MODE;
@@ -374,8 +375,8 @@ CCommandAI::~CCommandAI()
 }
 
 
-void CCommandAI::UpdateCommandDescription(unsigned int cmdDescIdx, const CommandDescription& modCmdDesc) {
-	CommandDescription& curCmdDesc = possibleCommands[cmdDescIdx];
+void CCommandAI::UpdateCommandDescription(unsigned int cmdDescIdx, const SCommandDescription& modCmdDesc) {
+	SCommandDescription& curCmdDesc = possibleCommands[cmdDescIdx];
 
 	// modCmdDesc should be a modified copy of curCmdDesc
 	assert(&modCmdDesc != &curCmdDesc);
@@ -394,7 +395,7 @@ void CCommandAI::UpdateCommandDescription(unsigned int cmdDescIdx, const Command
 	selectedUnitsHandler.PossibleCommandChange(owner);
 }
 
-void CCommandAI::InsertCommandDescription(unsigned int cmdDescIdx, const CommandDescription& cmdDesc)
+void CCommandAI::InsertCommandDescription(unsigned int cmdDescIdx, const SCommandDescription& cmdDesc)
 {
 	if (cmdDescIdx >= possibleCommands.size()) {
 		possibleCommands.push_back(cmdDesc);
@@ -428,7 +429,7 @@ void CCommandAI::UpdateNonQueueingCommands()
 {
 	nonQueingCommands.clear();
 
-	for (const CommandDescription& cmdDesc: possibleCommands) {
+	for (const SCommandDescription& cmdDesc: possibleCommands) {
 		if (!cmdDesc.queueing) {
 			nonQueingCommands.insert(cmdDesc.id);
 		}
@@ -1594,7 +1595,7 @@ void CCommandAI::AddStockpileWeapon(CWeapon* weapon)
 	stockpileWeapon = weapon;
 
 	possibleCommands.emplace_back();
-	CommandDescription& c = possibleCommands.back();
+	SCommandDescription& c = possibleCommands.back();
 
 	c.id   = CMD_STOCKPILE;
 	c.type = CMDTYPE_ICON;

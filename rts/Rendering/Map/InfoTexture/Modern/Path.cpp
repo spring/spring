@@ -10,6 +10,7 @@
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Units/BuildInfo.h"
+#include "Sim/Units/CommandAI/CommandDescription.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "System/Color.h"

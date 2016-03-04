@@ -45,6 +45,7 @@
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/CommandAI/CommandDescription.h"
 #include "Game/UI/Groups/Group.h"
 #include "Game/UI/Groups/GroupHandler.h"
 #include "Net/Protocol/NetProtocol.h"
@@ -1682,7 +1683,7 @@ int LuaUnsyncedRead::GetActiveCommand(lua_State* L)
 		return 0;
 	}
 
-	const vector<CommandDescription>& cmdDescs = guihandler->commands;
+	const vector<SCommandDescription>& cmdDescs = guihandler->commands;
 	const int cmdDescCount = (int)cmdDescs.size();
 
 	const int inCommand = guihandler->inCommand;
@@ -1705,7 +1706,7 @@ int LuaUnsyncedRead::GetDefaultCommand(lua_State* L)
 
 	const int defCmd = guihandler->GetDefaultCommand(mouse->lastx, mouse->lasty);
 
-	const vector<CommandDescription>& cmdDescs = guihandler->commands;
+	const vector<SCommandDescription>& cmdDescs = guihandler->commands;
 	const int cmdDescCount = (int)cmdDescs.size();
 
 	lua_pushnumber(L, defCmd + CMD_INDEX_OFFSET);
@@ -1725,7 +1726,7 @@ int LuaUnsyncedRead::GetActiveCmdDescs(lua_State* L)
 		return 0;
 	}
 
-	const vector<CommandDescription>& cmdDescs = guihandler->commands;
+	const vector<SCommandDescription>& cmdDescs = guihandler->commands;
 	const int cmdDescCount = (int)cmdDescs.size();
 
 	lua_checkstack(L, 1 + 2);
@@ -1746,7 +1747,7 @@ int LuaUnsyncedRead::GetActiveCmdDesc(lua_State* L)
 	}
 	const int cmdIndex = luaL_checkint(L, 1) - CMD_INDEX_OFFSET;
 
-	const vector<CommandDescription>& cmdDescs = guihandler->commands;
+	const vector<SCommandDescription>& cmdDescs = guihandler->commands;
 	const int cmdDescCount = (int)cmdDescs.size();
 	if ((cmdIndex < 0) || (cmdIndex >= cmdDescCount)) {
 		return 0;
@@ -1763,7 +1764,7 @@ int LuaUnsyncedRead::GetCmdDescIndex(lua_State* L)
 	}
 	const int cmdId = luaL_checkint(L, 1);
 
-	const vector<CommandDescription>& cmdDescs = guihandler->commands;
+	const vector<SCommandDescription>& cmdDescs = guihandler->commands;
 	const int cmdDescCount = (int)cmdDescs.size();
 	for (int i = 0; i < cmdDescCount; i++) {
 		if (cmdId == cmdDescs[i].id) {

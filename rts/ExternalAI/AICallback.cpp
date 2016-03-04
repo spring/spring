@@ -356,9 +356,9 @@ int CAICallback::GetUnitGroup(int unitId)
 	return groupId;
 }
 
-const std::vector<CommandDescription>* CAICallback::GetGroupCommands(int groupId)
+const std::vector<SCommandDescription>* CAICallback::GetGroupCommands(int groupId)
 {
-	static std::vector<CommandDescription> tempcmds;
+	static std::vector<SCommandDescription> tempcmds;
 	return &tempcmds;
 }
 
@@ -394,9 +394,9 @@ int CAICallback::GiveOrder(int unitId, Command* c)
 	return 0;
 }
 
-const std::vector<CommandDescription>* CAICallback::GetUnitCommands(int unitId)
+const std::vector<SCommandDescription>* CAICallback::GetUnitCommands(int unitId)
 {
-	const std::vector<CommandDescription>* unitCommands = NULL;
+	const std::vector<SCommandDescription>* unitCommands = NULL;
 
 	const CUnit* unit = GetMyTeamUnit(unitId);
 	if (unit) {

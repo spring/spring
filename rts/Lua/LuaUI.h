@@ -14,7 +14,7 @@ class CUnit;
 class CFeature;
 struct Command;
 struct lua_State;
-struct CommandDescription;
+struct SCommandDescription;
 class LuaLobby;
 
 
@@ -61,9 +61,9 @@ class CLuaUI : public CLuaHandle
 		bool HasCallIn(lua_State* L, const string& name);
 
 		bool LayoutButtons(int& xButtons, int& yButtons,
-		                   const vector<CommandDescription>& cmds,
+		                   const vector<SCommandDescription>& cmds,
 		                   vector<int>& removeCmds,
-		                   vector<CommandDescription>& customCmds,
+		                   vector<SCommandDescription>& customCmds,
 		                   vector<int>& onlyTextureCmds,
 		                   vector<ReStringPair>& reTextureCmds,
 		                   vector<ReStringPair>& reNamedCmds,
@@ -85,12 +85,12 @@ class CLuaUI : public CLuaHandle
 		bool LoadCFunctions(lua_State* L);
 		void InitLuaSocket(lua_State* L);
 
-		bool BuildCmdDescTable(lua_State* L, const vector<CommandDescription>& cmds);
+		bool BuildCmdDescTable(lua_State* L, const vector<SCommandDescription>& cmds);
 		bool GetLuaIntMap(lua_State* L, int index, map<int, int>& intList);
 		bool GetLuaIntList(lua_State* L, int index, vector<int>& intList);
 		bool GetLuaReStringList(lua_State* L, int index, vector<ReStringPair>& reStringCmds);
 		bool GetLuaReParamsList(lua_State* L, int index, vector<ReParamsPair>& reParamsCmds);
-		bool GetLuaCmdDescList(lua_State* L, int index,  vector<CommandDescription>& customCmds);
+		bool GetLuaCmdDescList(lua_State* L, int index,  vector<SCommandDescription>& customCmds);
 
 	protected:
 		QueuedAction queuedAction;

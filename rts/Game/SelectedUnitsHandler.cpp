@@ -103,8 +103,8 @@ CSelectedUnitsHandler::AvailableCommandsStruct CSelectedUnitsHandler::GetAvailab
 	std::map<int, int> states;
 
 	for (const CUnit* u: selectedUnits) {
-		const std::vector<CommandDescription>& c = u->commandAI->GetPossibleCommands();
-		for (const CommandDescription& cmdDesc: c) {
+		const std::vector<SCommandDescription>& c = u->commandAI->GetPossibleCommands();
+		for (const SCommandDescription& cmdDesc: c) {
 			states[cmdDesc.id] = cmdDesc.disabled ? 2 : 1;
 		}
 		if (u->commandAI->lastSelectedCommandPage < commandPage) {
@@ -126,11 +126,11 @@ CSelectedUnitsHandler::AvailableCommandsStruct CSelectedUnitsHandler::GetAvailab
 		}
 	}
 
-	std::vector<CommandDescription> commands;
+	std::vector<SCommandDescription> commands;
 	// load the first set (separating build and non-build commands)
 	for (const CUnit* u: selectedUnits) {
-		const std::vector<CommandDescription>& c = u->commandAI->GetPossibleCommands();
-		for (const CommandDescription& cmdDesc: c) {
+		const std::vector<SCommandDescription>& c = u->commandAI->GetPossibleCommands();
+		for (const SCommandDescription& cmdDesc: c) {
 			if (buildIconsFirst) {
 				if (cmdDesc.id >= 0) { continue; }
 			} else {
@@ -148,8 +148,8 @@ CSelectedUnitsHandler::AvailableCommandsStruct CSelectedUnitsHandler::GetAvailab
 
 	// load the second set (all those that have not already been included)
 	for (const CUnit* u: selectedUnits) {
-		const std::vector<CommandDescription>& c = u->commandAI->GetPossibleCommands();
-		for (const CommandDescription& cmdDesc: c) {
+		const std::vector<SCommandDescription>& c = u->commandAI->GetPossibleCommands();
+		for (const SCommandDescription& cmdDesc: c) {
 			if (buildIconsFirst) {
 				if (cmdDesc.id < 0)  { continue; }
 			} else {

@@ -506,9 +506,9 @@ void CGuiHandler::ResizeIconArray(unsigned int size)
 }
 
 
-void CGuiHandler::AppendPrevAndNext(std::vector<CommandDescription>& cmds)
+void CGuiHandler::AppendPrevAndNext(std::vector<SCommandDescription>& cmds)
 {
-	CommandDescription cd;
+	SCommandDescription cd;
 
 	cd.id=CMD_INTERNAL;
 	cd.action="prevmenu";
@@ -542,7 +542,7 @@ int CGuiHandler::FindInCommandPage()
 }
 
 
-void CGuiHandler::RevertToCmdDesc(const CommandDescription& cmdDesc,
+void CGuiHandler::RevertToCmdDesc(const SCommandDescription& cmdDesc,
                                   bool defaultCommand, bool samePage)
 {
 	for (size_t a = 0; a < commands.size(); ++a) {
@@ -578,7 +578,7 @@ void CGuiHandler::RevertToCmdDesc(const CommandDescription& cmdDesc,
 void CGuiHandler::LayoutIcons(bool useSelectionPage)
 {
 	bool defCmd, validInCommand, samePage;
-	CommandDescription cmdDesc;
+	SCommandDescription cmdDesc;
 	{
 		defCmd =
 			(mouse->buttons[SDL_BUTTON_RIGHT].pressed &&
@@ -619,8 +619,8 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 	ac = selectedUnitsHandler.GetAvailableCommands();
 	ConvertCommands(ac.commands);
 
-	std::vector<CommandDescription> hidden;
-	std::vector<CommandDescription>::const_iterator cdi;
+	std::vector<SCommandDescription> hidden;
+	std::vector<SCommandDescription>::const_iterator cdi;
 
 	// separate the visible/hidden icons
 	for (cdi = ac.commands.begin(); cdi != ac.commands.end(); ++cdi){
@@ -733,7 +733,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	// get the commands to process
 	CSelectedUnitsHandler::AvailableCommandsStruct ac;
 	ac = selectedUnitsHandler.GetAvailableCommands();
-	std::vector<CommandDescription> cmds = ac.commands;
+	std::vector<SCommandDescription> cmds = ac.commands;
 	if (!cmds.empty()) {
 		ConvertCommands(cmds);
 		AppendPrevAndNext(cmds);
@@ -744,7 +744,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	int tmpYicons = yIcons;
 
 	std::vector<int> removeCmds;
-	std::vector<CommandDescription> customCmds;
+	std::vector<SCommandDescription> customCmds;
 	std::vector<int> onlyTextureCmds;
 	std::vector<CLuaUI::ReStringPair> reTextureCmds;
 	std::vector<CLuaUI::ReStringPair> reNamedCmds;
@@ -779,7 +779,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 		}
 	}
 	// remove unwanted commands  (and mark all as hidden)
-	std::vector<CommandDescription> tmpCmds;
+	std::vector<SCommandDescription> tmpCmds;
 	for (unsigned int i = 0; i < cmds.size(); i++) {
 		if (removeIDs.find(i) == removeIDs.end()) {
 			cmds[i].hidden = true;
@@ -971,14 +971,14 @@ void CGuiHandler::GiveCommandsNow() {
 }
 
 
-void CGuiHandler::ConvertCommands(std::vector<CommandDescription>& cmds)
+void CGuiHandler::ConvertCommands(std::vector<SCommandDescription>& cmds)
 {
 	if (!newAttackMode)
 		return;
 
 	const int count = (int)cmds.size();
 	for (int i = 0; i < count; i++) {
-		CommandDescription& cd = cmds[i];
+		SCommandDescription& cd = cmds[i];
 
 		if ((cd.id != CMD_ATTACK) || (cd.type != CMDTYPE_ICON_UNIT_OR_MAP))
 			continue;
@@ -1059,7 +1059,7 @@ void CGuiHandler::SetCursorIcon() const
 	const bool useMinimap = (minimap->ProxyMode() || ((activeReceiver != this) && (ir == minimap)));
 
 	if ((inCommand >= 0) && ((size_t)inCommand<commands.size())) {
-		const CommandDescription& cmdDesc = commands[inCommand];
+		const SCommandDescription& cmdDesc = commands[inCommand];
 
 		if (!cmdDesc.mouseicon.empty()) {
 			newCursor=cmdDesc.mouseicon;
@@ -1096,7 +1096,7 @@ void CGuiHandler::SetCursorIcon() const
 			defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty);
 		}
 		if ((defcmd >= 0) && ((size_t)defcmd < commands.size())) {
-			const CommandDescription& cmdDesc = commands[defcmd];
+			const SCommandDescription& cmdDesc = commands[defcmd];
 			if (!cmdDesc.mouseicon.empty()) {
 				newCursor=cmdDesc.mouseicon;
 			} else {
@@ -1115,7 +1115,7 @@ void CGuiHandler::SetCursorIcon() const
 }
 
 
-bool CGuiHandler::TryTarget(const CommandDescription& cmdDesc) const
+bool CGuiHandler::TryTarget(const SCommandDescription& cmdDesc) const
 {
 	if (cmdDesc.id != CMD_ATTACK)
 		return true;
@@ -1297,7 +1297,7 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rightMouseButton)
 		return true;
 	}
 
-	CommandDescription& cd = commands[cmdIndex];
+	SCommandDescription& cd = commands[cmdIndex];
 	if (cd.disabled) {
 		return false;
 	}
@@ -1605,7 +1605,7 @@ unsigned char CGuiHandler::CreateOptions(int button)
 }
 
 
-float CGuiHandler::GetNumberInput(const CommandDescription& cd) const
+float CGuiHandler::GetNumberInput(const SCommandDescription& cd) const
 {
 	float minV = 0.0f;
 	float maxV = 100.0f;
@@ -1856,7 +1856,7 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 
 	for (size_t a = 0; a < commands.size(); ++a) {
 
-		CommandDescription& cmdDesc = commands[a];
+		SCommandDescription& cmdDesc = commands[a];
 
 		if ((static_cast<int>(a) != iconCmd) && (cmdDesc.action != action.command)) {
 			continue; // not a match
@@ -1934,7 +1934,7 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 			}
 			case CMDTYPE_NUMBER:{
 				if (!action.extra.empty()) {
-					const CommandDescription& cd = cmdDesc;
+					const SCommandDescription& cd = cmdDesc;
 					float value = atof(action.extra.c_str());
 					float minV = 0.0f;
 					float maxV = 100.0f;
@@ -2569,7 +2569,7 @@ static std::string FindCornerText(const std::string& corner, const vector<std::s
 
 void CGuiHandler::DrawCustomButton(const IconInfo& icon, bool highlight)
 {
-	const CommandDescription& cmdDesc = commands[icon.commandsID];
+	const SCommandDescription& cmdDesc = commands[icon.commandsID];
 
 	const bool usedTexture = DrawTexture(icon, cmdDesc.iconname);
 
@@ -2952,7 +2952,7 @@ void CGuiHandler::DrawButtons() // Only called by Draw
 		if (icon.commandsID < 0)
 			continue; // inactive icon
 
-		const CommandDescription& cmdDesc = commands[icon.commandsID];
+		const SCommandDescription& cmdDesc = commands[icon.commandsID];
 		const bool customCommand = (cmdDesc.id == CMD_INTERNAL) &&
 		                           (cmdDesc.type == CMDTYPE_CUSTOM);
 		const bool highlight = ((mouseIcon == ii) ||
@@ -3154,7 +3154,7 @@ void CGuiHandler::DrawNumberInput() // Only called by drawbuttons
 {
 	// draw the value for CMDTYPE_NUMBER commands
 	if ((inCommand >= 0) && ((size_t)inCommand < commands.size())) {
-		const CommandDescription& cd = commands[inCommand];
+		const SCommandDescription& cd = commands[inCommand];
 		if (cd.type == CMDTYPE_NUMBER) {
 			const float value = GetNumberInput(cd);
 			glDisable(GL_TEXTURE_2D);
@@ -3221,7 +3221,7 @@ void CGuiHandler::DrawNextArrow(const IconInfo& icon)
 
 void CGuiHandler::DrawOptionLEDs(const IconInfo& icon)
 {
-	const CommandDescription& cmdDesc = commands[icon.commandsID];
+	const SCommandDescription& cmdDesc = commands[icon.commandsID];
 
 	const int pCount = (int)cmdDesc.params.size() - 1;
 	if (pCount < 2) {
@@ -3438,7 +3438,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 		}
 
 		if (mouse->buttons[button].pressed && (cmdIndex >= 0) && ((size_t)cmdIndex < commands.size())) {
-			const CommandDescription& cmdDesc = commands[cmdIndex];
+			const SCommandDescription& cmdDesc = commands[cmdIndex];
 			switch (cmdDesc.type) {
 				case CMDTYPE_ICON_FRONT: {
 					if (mouse->buttons[button].movement > 30) {

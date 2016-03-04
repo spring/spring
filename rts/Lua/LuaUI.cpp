@@ -41,6 +41,7 @@
 #include "Map/ReadMap.h"
 #include "Rendering/IconHandler.h"
 #include "Sim/Misc/LosHandler.h"
+#include "Sim/Units/CommandAI/CommandDescription.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
@@ -378,9 +379,9 @@ void CLuaUI::ShockFront(const float3& pos, float power, float areaOfEffect, cons
 /******************************************************************************/
 
 bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
-                           const vector<CommandDescription>& cmds,
+                           const vector<SCommandDescription>& cmds,
                            vector<int>& removeCmds,
-                           vector<CommandDescription>& customCmds,
+                           vector<SCommandDescription>& customCmds,
                            vector<int>& onlyTextureCmds,
                            vector<ReStringPair>& reTextureCmds,
                            vector<ReStringPair>& reNamedCmds,
@@ -506,7 +507,7 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 
 
 bool CLuaUI::BuildCmdDescTable(lua_State* L,
-                               const vector<CommandDescription>& cmds)
+                               const vector<SCommandDescription>& cmds)
 {
 	lua_newtable(L);
 
@@ -615,7 +616,7 @@ bool CLuaUI::GetLuaReParamsList(lua_State* L, int index,
 
 
 bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
-                               vector<CommandDescription>& cmdDescs)
+                               vector<SCommandDescription>& cmdDescs)
 {
 	const int table = index;
 	if (!lua_istable(L, table)) {
@@ -625,7 +626,7 @@ bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
 	for (lua_rawgeti(L, table, paramIndex);
 	     lua_istable(L, -1);
 	     lua_pop(L, 1), paramIndex++, lua_rawgeti(L, table, paramIndex)) {
-		CommandDescription cd;
+		SCommandDescription cd;
 		cd.id   = CMD_INTERNAL;
 		cd.type = CMDTYPE_CUSTOM;
 		const int cmdDescTable = lua_gettop(L);

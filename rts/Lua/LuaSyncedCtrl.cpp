@@ -4251,7 +4251,7 @@ static int ParseStringVector(lua_State* L, int index, vector<string>& strvec)
 /******************************************************************************/
 
 static bool ParseCommandDescription(lua_State* L, int table,
-                                    CommandDescription& cd)
+                                    SCommandDescription& cd)
 {
 	if (!lua_istable(L, table)) {
 		luaL_error(L, "Can not parse CommandDescription");
@@ -4309,7 +4309,7 @@ int LuaSyncedCtrl::EditUnitCmdDesc(lua_State* L)
 		return 0;
 
 	// note: must be a copy
-	CommandDescription cmdDesc = cmdDescs[cmdDescIdx];
+	SCommandDescription cmdDesc = cmdDescs[cmdDescIdx];
 
 	ParseCommandDescription(L, 3, cmdDesc);
 	unit->commandAI->UpdateCommandDescription(cmdDescIdx, cmdDesc);
@@ -4343,7 +4343,7 @@ int LuaSyncedCtrl::InsertUnitCmdDesc(lua_State* L)
 	if (args >= 3)
 		cmdDescIdx = lua_toint(L, 2) - 1;
 
-	CommandDescription cd;
+	SCommandDescription cd;
 
 	ParseCommandDescription(L, tableIdx, cd);
 	unit->commandAI->InsertCommandDescription(cmdDescIdx, cd);

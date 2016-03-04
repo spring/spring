@@ -66,7 +66,7 @@ CAirCAI::CAirCAI(CUnit* owner)
 
 	if (owner->unitDef->canAttack) {
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id   = CMD_AREA_ATTACK;
 		c.type = CMDTYPE_ICON_AREA;

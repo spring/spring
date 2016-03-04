@@ -7,6 +7,7 @@
 #include <set>
 
 #include "System/Object.h"
+#include "CommandDescription.h"
 #include "CommandQueue.h"
 #include "System/float3.h"
 
@@ -76,7 +77,7 @@ public:
 	std::vector<Command> GetOverlapQueued(const Command& c,
 	                                      CCommandQueue& queue);
 
-	const std::vector<CommandDescription>& GetPossibleCommands() const { return possibleCommands; }
+	const std::vector<SCommandDescription>& GetPossibleCommands() const { return possibleCommands; }
 
 	/**
 	 * @brief Causes this CommandAI to execute the attack order c
@@ -88,8 +89,8 @@ public:
 	 */
 	virtual void ExecuteStop(Command& c);
 
-	void UpdateCommandDescription(unsigned int cmdDescIdx, const CommandDescription& modCmdDesc);
-	void InsertCommandDescription(unsigned int cmdDescIdx, const CommandDescription& cmdDesc);
+	void UpdateCommandDescription(unsigned int cmdDescIdx, const SCommandDescription& modCmdDesc);
+	void InsertCommandDescription(unsigned int cmdDescIdx, const SCommandDescription& cmdDesc);
 	bool RemoveCommandDescription(unsigned int cmdDescIdx);
 
 	void UpdateNonQueueingCommands();
@@ -109,7 +110,7 @@ public:
 
 	CWeapon* stockpileWeapon;
 
-	std::vector<CommandDescription> possibleCommands;
+	std::vector<SCommandDescription> possibleCommands;
 	std::set<int> nonQueingCommands;
 
 	CCommandQueue commandQue;

@@ -14,6 +14,7 @@
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Objects/SolidObjectDef.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/CommandAI/CommandDescription.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
@@ -1320,7 +1321,7 @@ void LuaUtils::PushStringVector(lua_State* L, const vector<string>& vec)
 /******************************************************************************/
 /******************************************************************************/
 
-void LuaUtils::PushCommandDesc(lua_State* L, const CommandDescription& cd)
+void LuaUtils::PushCommandDesc(lua_State* L, const SCommandDescription& cd)
 {
 	const int numParams = cd.params.size();
 	const int numTblKeys = 12;

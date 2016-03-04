@@ -123,7 +123,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 
 	{
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id   = CMD_LOAD_ONTO;
 		c.type = CMDTYPE_ICON_UNIT;
@@ -138,7 +138,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 
 	if (owner->unitDef->canmove) {
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id   = CMD_MOVE;
 		c.type = CMDTYPE_ICON_FRONT;
@@ -153,7 +153,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 
 	if (owner->unitDef->canPatrol) {
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id   = CMD_PATROL;
 		c.type = CMDTYPE_ICON_MAP;
@@ -166,7 +166,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 
 	if (owner->unitDef->canFight) {
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id   = CMD_FIGHT;
 		c.type = CMDTYPE_ICON_FRONT;
@@ -179,7 +179,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 
 	if (owner->unitDef->canGuard) {
 		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription& c = possibleCommands.back();
 
 		c.id   = CMD_GUARD;
 		c.type = CMDTYPE_ICON_UNIT;
@@ -193,7 +193,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 	if (owner->unitDef->canfly) {
 		{
 			possibleCommands.emplace_back();
-			CommandDescription& c = possibleCommands.back();
+			SCommandDescription& c = possibleCommands.back();
 
 			c.id   = CMD_AUTOREPAIRLEVEL;
 			c.type = CMDTYPE_ICON_MODE;
@@ -213,7 +213,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 		}
 		{
 			possibleCommands.emplace_back();
-			CommandDescription& c = possibleCommands.back();
+			SCommandDescription& c = possibleCommands.back();
 
 			c.id   = CMD_IDLEMODE;
 			c.type = CMDTYPE_ICON_MODE;
@@ -234,7 +234,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 	if (owner->unitDef->IsTransportUnit()) {
 		{
 			possibleCommands.emplace_back();
-			CommandDescription& c = possibleCommands.back();
+			SCommandDescription& c = possibleCommands.back();
 
 			c.id   = CMD_LOAD_UNITS;
 			c.type = CMDTYPE_ICON_UNIT_OR_AREA;
@@ -246,7 +246,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 		}
 		{
 			possibleCommands.emplace_back();
-			CommandDescription& c = possibleCommands.back();
+			SCommandDescription& c = possibleCommands.back();
 
 			c.id   = CMD_UNLOAD_UNITS;
 			c.type = CMDTYPE_ICON_AREA;

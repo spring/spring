@@ -57,6 +57,7 @@
 #include "Sim/Units/UnitTypes/Builder.h"
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "Sim/Units/CommandAI/Command.h"
+#include "Sim/Units/CommandAI/CommandDescription.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/FactoryCAI.h"
 #include "Sim/Units/CommandAI/MobileCAI.h"
@@ -4373,7 +4374,7 @@ int LuaSyncedRead::GetUnitCmdDescs(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	vector<CommandDescription>& cmdDescs = unit->commandAI->possibleCommands;
+	vector<SCommandDescription>& cmdDescs = unit->commandAI->possibleCommands;
 	const int lastDesc = (int)cmdDescs.size() - 1;
 
 	const int args = lua_gettop(L); // number of arguments
@@ -4409,7 +4410,7 @@ int LuaSyncedRead::FindUnitCmdDesc(lua_State* L)
 	}
 	const int cmdID = luaL_checkint(L, 2);
 
-	vector<CommandDescription>& cmdDescs = unit->commandAI->possibleCommands;
+	vector<SCommandDescription>& cmdDescs = unit->commandAI->possibleCommands;
 	for (int i = 0; i < (int)cmdDescs.size(); i++) {
 		if (cmdDescs[i].id == cmdID) {
 			lua_pushnumber(L, i + 1);
