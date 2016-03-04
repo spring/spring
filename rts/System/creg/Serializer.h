@@ -10,7 +10,7 @@
 
 #include <map>
 #include <vector>
-#include <list>
+#include <deque>
 #include <istream>
 
 namespace creg {
@@ -82,7 +82,7 @@ namespace creg {
 
 		std::ostream* stream;
 		std::map<void*,std::vector<ObjectRef*> > ptrToId;
-		std::list<ObjectRef> objects;
+		std::deque<ObjectRef> objects;
 		std::vector<ObjectRef*> pendingObjects; // these objects still have to be saved
 
 		// Serialize all class names

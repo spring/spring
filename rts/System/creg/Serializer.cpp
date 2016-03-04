@@ -127,7 +127,7 @@ void ReadVarSizeUInt(std::istream* stream, unsigned int* buf)
 //-------------------------------------------------------------------------
 COutputStreamSerializer::COutputStreamSerializer()
 {
-	stream = NULL;
+	stream = nullptr;
 }
 
 bool COutputStreamSerializer::IsWriting()
@@ -142,7 +142,7 @@ COutputStreamSerializer::ObjectRef* COutputStreamSerializer::FindObjectRef(void*
 		if ((*i)->isThisObject(inst, objClass, isEmbedded))
 			return *i;
 	}
-	return NULL;
+	return nullptr;
 }
 
 void COutputStreamSerializer::SerializeObject(Class* c, void* ptr, ObjectRef* objr)
@@ -176,7 +176,7 @@ void COutputStreamSerializer::SerializeObject(Class* c, void* ptr, ObjectRef* ob
 
 	if (c->HasSerialize()) {
 		ObjectMember om;
-		om.member = NULL;
+		om.member = nullptr;
 		om.memberId = -1;
 		unsigned mstart = stream->tellp();
 		c->CallSerializeProc(ptr, this);
@@ -194,7 +194,7 @@ void COutputStreamSerializer::SerializeObjectInstance(void* inst, creg::Class* o
 	// register the object, and mark it as embedded if a pointer was already referencing it
 	ObjectRef* obj = FindObjectRef(inst, objClass, true);
 	if (!obj) {
-		objects.push_back(ObjectRef(inst, objects.size(), true, objClass));
+		objects.emplace_back(inst, objects.size(), true, objClass);
 		obj = &objects.back();
 		ptrToId[inst].push_back(obj);
 	} else if (obj->isEmbedded) {
@@ -312,10 +312,11 @@ void COutputStreamSerializer::SavePackage(std::ostream* s, void* rootObj, Class*
 	std::map<creg::Class*, ClassRef> classMap;
 	std::vector<ClassRef*> classRefs;
 	std::map<int, int> classObjects;
-	for (std::list<ObjectRef>::iterator i = objects.begin(); i != objects.end(); ++i) {
-		if (i->ptr == NULL) continue;
+	for (ObjectRef& oRef: objects) {
+		if (oRef.ptr == nullptr)
+			continue;
 
-		creg::Class* c = i->class_;
+		creg::Class* c = oRef.class_;
 		while (c) {
 			std::map<creg::Class*, ClassRef>::iterator cr = classMap.find(c);
 			if (cr == classMap.end()) {
@@ -327,9 +328,9 @@ void COutputStreamSerializer::SavePackage(std::ostream* s, void* rootObj, Class*
 			c = c->base();
 		}
 
-		std::map<creg::Class*, ClassRef>::iterator cr = classMap.find(i->class_);
-		i->classIndex = cr->second.index;
-		classObjects[i->classIndex]++;
+		std::map<creg::Class*, ClassRef>::iterator cr = classMap.find(oRef.class_);
+		oRef.classIndex = cr->second.index;
+		classObjects[oRef.classIndex]++;
 	}
 
 /*
@@ -354,17 +355,17 @@ void COutputStreamSerializer::SavePackage(std::ostream* s, void* rootObj, Class*
 	// Write object info
 	ph.objTableOffset = (int)stream->tellp();
 	ph.numObjects = objects.size();
-	for (std::list<ObjectRef>::iterator i = objects.begin(); i != objects.end(); ++i) {
-		int classRefIndex = i->classIndex;
-		char isEmbedded = i->isEmbedded ? 1 : 0;
+	for (ObjectRef& oRef: objects) {
+		int classRefIndex = oRef.classIndex;
+		char isEmbedded = oRef.isEmbedded ? 1 : 0;
 		WriteVarSizeUInt(stream, classRefIndex);
 		stream->write((char*)&isEmbedded, sizeof(char));
 
-		char mgcnt = i->memberGroups.size();
+		char mgcnt = oRef.memberGroups.size();
 		WriteVarSizeUInt(stream, mgcnt);
 
 		std::vector<COutputStreamSerializer::ObjectMemberGroup>::iterator j;
-		for (j = i->memberGroups.begin(); j != i->memberGroups.end(); ++j) {
+		for (j = oRef.memberGroups.begin(); j != oRef.memberGroups.end(); ++j) {
 			std::map<creg::Class*, ClassRef>::iterator cr = classMap.find(j->membersClass);
 			if (cr == classMap.end()) throw "Cannot find member class ref";
 			int cid = cr->second.index;
