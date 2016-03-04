@@ -113,7 +113,7 @@ void CObject::Serialize(creg::ISerializer* ser)
 			TSyncSafeSet& dl = *listening[dt];
 			for (int o = 0; o < size; o++) {
 				CObject* obj = NULL;
-				ser->SerializeObjectPtr((void**)&*obj, NULL);
+				ser->SerializeObjectPtr((void**)&obj, NULL);
 				dl.insert(obj);
 			}
 		}

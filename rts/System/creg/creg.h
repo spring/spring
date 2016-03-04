@@ -110,13 +110,13 @@ namespace creg {
 
 		template<class T, typename TF>
 		void SetSerialize(T* foo, TF proc) {
-			serializeProc = [&](void* object, ISerializer* s) {
+			serializeProc = [=](void* object, ISerializer* s) {
 				(static_cast<T*>(object)->*proc)(s);
 			};
 		}
 		template<class T, typename TF>
 		void SetPostLoad(T* foo, TF proc) {
-			postLoadProc = [&](void* object) {
+			postLoadProc = [=](void* object) {
 				(static_cast<T*>(object)->*proc)();
 			};
 		}
