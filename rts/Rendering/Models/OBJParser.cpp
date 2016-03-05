@@ -456,7 +456,8 @@ void COBJParser::BuildModelPieceTreeRec(
 
 void SOBJPiece::UploadGeometryVBOs()
 {
-	if (!HasGeometryData())
+	// cannot use HasGeometryData because indices is still empty
+	if (triangles.empty())
 		return;
 
 	indices.reserve(GetTriangleCount() * 3);
@@ -613,7 +614,8 @@ void SOBJPiece::SetMinMaxExtends(bool globalVertexOffsets)
 
 void SOBJPiece::SetVertexTangents()
 {
-	if (!HasGeometryData())
+	// cannot use HasGeometryData because indices is still empty
+	if (triangles.empty())
 		return;
 
 	sTangents.resize(GetVertexCount(), ZeroVector);
