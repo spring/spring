@@ -24,6 +24,7 @@
 #include "Sim/Weapons/NoWeapon.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
+#include "System/creg/DefTypes.h"
 #include "System/Sync/SyncTracer.h"
 #include "System/Sound/ISoundChannels.h"
 #include "System/Log/ILog.h"
@@ -32,8 +33,7 @@ CR_BIND_DERIVED(CWeapon, CObject, (NULL, NULL))
 
 CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(owner),
-	CR_MEMBER(weaponDefID),
-	CR_IGNORED(weaponDef), //retrieved by id
+	CR_MEMBER(weaponDef),
 	CR_MEMBER(aimFromPiece),
 	CR_MEMBER(muzzlePiece),
 	CR_MEMBER(range),
@@ -92,9 +92,7 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(errorVectorAdd),
 
 	CR_MEMBER(currentTarget),
-	CR_MEMBER(currentTargetPos),
-
-	CR_POSTLOAD(PostLoad)
+	CR_MEMBER(currentTargetPos)
 ))
 
 
@@ -1250,9 +1248,4 @@ float3 CWeapon::GetLeadTargetPos(const SWeaponTarget& target) const
 	}
 
 	return currentTargetPos;
-}
-
-void CWeapon::PostLoad()
-{
-	weaponDef = weaponDefHandler->GetWeaponDefByID(weaponDefID);
 }

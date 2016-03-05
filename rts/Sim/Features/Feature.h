@@ -103,8 +103,6 @@ private:
 	static int ChunkNumber(float f);
 
 public:
-	int defID;
-	int udefID; //needed for postload
 
 	/**
 	 * This flag is used to stop a potential exploit involving tripping

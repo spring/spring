@@ -308,7 +308,6 @@ public:
 	float3 posErrorVector;
 	float3 posErrorDelta;
 
-	int unitDefID;
 	int featureDefID; // FeatureDef id of the wreck we spawn on death
 
 	/**

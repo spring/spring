@@ -22,15 +22,15 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "System/EventHandler.h"
-#include "System/Log/ILog.h"
 #include "System/myMath.h"
+#include "System/creg/DefTypes.h"
+#include "System/Log/ILog.h"
 #include <assert.h>
+
 
 CR_BIND_DERIVED(CFeature, CSolidObject, )
 
 CR_REG_METADATA(CFeature, (
-	CR_MEMBER(defID),
-	CR_MEMBER(udefID),
 	CR_MEMBER(isRepairingBeforeResurrect),
 	CR_MEMBER(inUpdateQue),
 	CR_MEMBER(deleteMe),
@@ -44,8 +44,8 @@ CR_REG_METADATA(CFeature, (
 	CR_MEMBER(alphaFade),
 	CR_MEMBER(fireTime),
 	CR_MEMBER(smokeTime),
-	CR_IGNORED(def), //reconstructed in PostLoad
-	CR_IGNORED(udef),
+	CR_MEMBER(def),
+	CR_MEMBER(udef),
 	CR_MEMBER(moveCtrl),
 	CR_MEMBER(myFire),
 	CR_MEMBER(solidOnTop),
@@ -69,7 +69,6 @@ CR_REG_METADATA_SUB(CFeature,MoveCtrl,(
 
 CFeature::CFeature()
 : CSolidObject()
-, defID(-1)
 , isRepairingBeforeResurrect(false)
 , inUpdateQue(false)
 , deleteMe(false)
@@ -114,8 +113,6 @@ CFeature::~CFeature()
 
 void CFeature::PostLoad()
 {
-	def = featureDefHandler->GetFeatureDefByID(defID);
-	udef = unitDefHandler->GetUnitDefByID(udefID);
 	objectDef = def;
 
 	// FIXME is this really needed (aren't all those tags saved via creg?)
@@ -190,8 +187,6 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	objectDef = params.featureDef;
 
 	id = params.featureID;
-	defID = def->id;
-	udefID = (udef != nullptr)? udef->id : -1;
 
 	team = params.teamID;
 	allyteam = params.allyTeamID;

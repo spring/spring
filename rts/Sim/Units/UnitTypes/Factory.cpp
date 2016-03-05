@@ -20,6 +20,7 @@
 #include "System/EventHandler.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
+#include "System/creg/DefTypes.h"
 #include "System/Sound/ISoundChannels.h"
 #include "System/Sync/SyncTracer.h"
 
@@ -30,8 +31,7 @@ CR_BIND_DERIVED(CFactory, CBuilding, )
 CR_REG_METADATA(CFactory, (
 	CR_MEMBER(buildSpeed),
 	CR_MEMBER(lastBuildUpdateFrame),
-	CR_IGNORED(curBuildDef),
-	CR_MEMBER(curBuildDefID),
+	CR_MEMBER(curBuildDef),
 	CR_MEMBER(curBuild),
 	CR_MEMBER(finishedBuildCommand),
 	CR_MEMBER(nanoPieceCache),
@@ -46,7 +46,6 @@ CFactory::CFactory():
 	buildSpeed(100.0f),
 	curBuild(nullptr),
 	curBuildDef(nullptr),
-	curBuildDefID(-1),
 	lastBuildUpdateFrame(-1)
 {
 }
@@ -55,8 +54,6 @@ CFactory::CFactory():
 
 void CFactory::PostLoad()
 {
-	curBuildDef = unitDefHandler->GetUnitDefByID(curBuildDefID);
-
 	if (yardOpen) {
 		script->Activate();
 	}
@@ -64,14 +61,6 @@ void CFactory::PostLoad()
 		script->StartBuilding();
 	}
 }
-
-
-void CFactory::SetCurBuildDef(const UnitDef* ud)
-{
-	curBuildDefID = (ud != nullptr)? ud->id : -1;
-	curBuildDef = ud;
-}
-
 
 void CFactory::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSequence)
 {
@@ -202,7 +191,7 @@ void CFactory::StartBuild(const UnitDef* buildeeDef) {
 	// set curBuildDef to NULL to indicate construction
 	// has started, otherwise we would keep being called
 	curBuild = buildee;
-	SetCurBuildDef(nullptr);
+	curBuildDef = nullptr;
 
 	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
 		Channels::General->PlayRandomSample(unitDef->sounds.build, buildPos);
@@ -291,7 +280,7 @@ unsigned int CFactory::QueueBuild(const UnitDef* buildeeDef, const Command& buil
 		return FACTORY_SKIP_BUILD_ORDER;
 
 	finishedBuildCommand = buildCmd;
-	SetCurBuildDef(buildeeDef);
+	curBuildDef = buildeeDef;
 
 	// signal that the build-order was accepted (queued)
 	return FACTORY_NEXT_BUILD_ORDER;
@@ -311,7 +300,7 @@ void CFactory::StopBuild()
 	}
 
 	curBuild = nullptr;
-	SetCurBuildDef(nullptr);
+	curBuildDef = nullptr;
 }
 
 void CFactory::DependentDied(CObject* o)

@@ -57,6 +57,7 @@
 #include "System/Log/ILog.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
+#include "System/creg/DefTypes.h"
 #include "System/creg/STL_List.h"
 #include "System/Sound/ISoundChannels.h"
 #include "System/Sync/SyncedPrimitive.h"
@@ -105,7 +106,6 @@ CUnit::CUnit()
 , flankingBonusDir(RgtVector)
 , posErrorVector(ZeroVector)
 , posErrorDelta(ZeroVector)
-, unitDefID(-1)
 , featureDefID(-1)
 , power(100.0f)
 , buildProgress(0.0f)
@@ -276,7 +276,6 @@ void CUnit::PreInit(const UnitLoadParams& params)
 {
 	// if this is < 0, UnitHandler will give us a random ID
 	id = params.unitID;
-	unitDefID = (params.unitDef)->id;
 	featureDefID = -1;
 
 	objectDef = params.unitDef;
@@ -484,7 +483,6 @@ void CUnit::PostInit(const CUnit* builder)
 void CUnit::PostLoad()
 {
 	//HACK:Initializing after load
-	unitDef = unitDefHandler->GetUnitDefByID(unitDefID);
 	objectDef = unitDef;
 	model = unitDef->LoadModel();
 	localModel.SetModel(model);
@@ -2790,8 +2788,7 @@ short CUnit::GetTransporteeWantedHeading(const CUnit* unit) const {
 
 CR_BIND_DERIVED(CUnit, CSolidObject, )
 CR_REG_METADATA(CUnit, (
-	CR_IGNORED(unitDef),
-	CR_MEMBER(unitDefID),
+	CR_MEMBER(unitDef),
 	CR_MEMBER(featureDefID),
 
 	CR_MEMBER(modParams),
