@@ -212,11 +212,12 @@ bool ParseTexture(const S3DModel* model, LuaMatTexture& texUnit, char texNum)
 	if (model == nullptr)
 		return false;
 
-	const unsigned int texType = model->textureType;
+	const int texType = model->textureType;
 
 	if (texType == 0)
 		return false;
 
+	// note: textures are stored contiguously, so this pointer can not be leaked
 	const CS3OTextureHandler::S3oTex* stex = texturehandlerS3O->GetS3oTex(texType);
 
 	if (stex == nullptr)
@@ -224,12 +225,12 @@ bool ParseTexture(const S3DModel* model, LuaMatTexture& texUnit, char texNum)
 
 	if (texNum == '0') {
 		texUnit.type = LuaMatTexture::LUATEX_UNITTEXTURE1;
-		texUnit.data = reinterpret_cast<const void*>(stex);
+		texUnit.data = reinterpret_cast<const void*>(texType);
 		return true;
 	}
 	if (texNum == '1') {
 		texUnit.type = LuaMatTexture::LUATEX_UNITTEXTURE2;
-		texUnit.data = reinterpret_cast<const void*>(stex);
+		texUnit.data = reinterpret_cast<const void*>(texType);
 		return true;
 	}
 
@@ -485,10 +486,10 @@ GLuint LuaMatTexture::GetTextureID() const
 
 		// object model-textures
 		case LUATEX_UNITTEXTURE1: {
-			texID = (reinterpret_cast<const CS3OTextureHandler::S3oTex*>(data))->tex1;
+			texID = texturehandlerS3O->GetS3oTex(*reinterpret_cast<const int*>(&data))->tex1;
 		} break;
 		case LUATEX_UNITTEXTURE2: {
-			texID = (reinterpret_cast<const CS3OTextureHandler::S3oTex*>(data))->tex2;
+			texID = texturehandlerS3O->GetS3oTex(*reinterpret_cast<const int*>(&data))->tex2;
 		} break;
 		case LUATEX_3DOTEXTURE: {
 			if (texturehandler3DO != nullptr) {
@@ -760,11 +761,11 @@ int2 LuaMatTexture::GetSize() const
 
 
 		case LUATEX_UNITTEXTURE1: {
-			const auto stex = reinterpret_cast<const CS3OTextureHandler::S3oTex*>(data);
+			const auto stex = texturehandlerS3O->GetS3oTex(*reinterpret_cast<const int*>(&data));
 			return int2(stex->tex1SizeX, stex->tex1SizeY);
 		} break;
 		case LUATEX_UNITTEXTURE2: {
-			const auto stex = reinterpret_cast<const CS3OTextureHandler::S3oTex*>(data);
+			const auto stex = texturehandlerS3O->GetS3oTex(*reinterpret_cast<const int*>(&data));
 			return int2(stex->tex2SizeX, stex->tex2SizeY);
 		} break;
 		case LUATEX_3DOTEXTURE: {
