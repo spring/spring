@@ -25,7 +25,6 @@ public:
 	CCommandAI();
 	virtual ~CCommandAI();
 
-	void PostLoad() {}
 	void DependentDied(CObject* o);
 
 	static void InitCommandDescriptionCache();

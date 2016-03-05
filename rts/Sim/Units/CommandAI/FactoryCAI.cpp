@@ -24,8 +24,7 @@ CR_BIND_DERIVED(CFactoryCAI ,CCommandAI , )
 
 CR_REG_METADATA(CFactoryCAI , (
 	CR_MEMBER(newUnitCommands),
-	CR_MEMBER(buildOptions),
-	CR_POSTLOAD(PostLoad)
+	CR_MEMBER(buildOptions)
 ))
 
 static std::string GetUnitDefBuildOptionToolTip(const UnitDef* ud, bool disabled) {
