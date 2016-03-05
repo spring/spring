@@ -293,10 +293,7 @@ void CMobileCAI::GiveCommandReal(const Command& c, bool fromSynced)
 				if (possibleCommands[n]->id != CMD_AUTOREPAIRLEVEL)
 					continue;
 
-				SCommandDescription cd = *possibleCommands[n];
-				cd.params[0] = IntToString(int(c.params[0]), "%d");
-				commandDescriptionCache->DecRef(*possibleCommands[n]);
-				possibleCommands[n] = commandDescriptionCache->GetPtr(cd);
+				UpdateCommandDescription(n, c);
 				break;
 			}
 
@@ -325,10 +322,7 @@ void CMobileCAI::GiveCommandReal(const Command& c, bool fromSynced)
 				if (possibleCommands[n]->id != CMD_IDLEMODE)
 					continue;
 
-				SCommandDescription cd = *possibleCommands[n];
-				cd.params[0] = IntToString(int(c.params[0]), "%d");
-				commandDescriptionCache->DecRef(*possibleCommands[n]);
-				possibleCommands[n] = commandDescriptionCache->GetPtr(cd);
+				UpdateCommandDescription(n, c);
 				break;
 			}
 

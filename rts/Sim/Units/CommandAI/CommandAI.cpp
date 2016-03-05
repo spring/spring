@@ -379,6 +379,13 @@ CCommandAI::~CCommandAI()
 }
 
 
+void CCommandAI::UpdateCommandDescription(unsigned int cmdDescIdx, const Command& cmd) {
+	SCommandDescription cd = *possibleCommands[cmdDescIdx];
+	cd.params[0] = IntToString(int(cmd.GetParam(0)), "%d");
+	commandDescriptionCache->DecRef(*possibleCommands[cmdDescIdx]);
+	possibleCommands[cmdDescIdx] = commandDescriptionCache->GetPtr(cd);
+}
+
 void CCommandAI::UpdateCommandDescription(unsigned int cmdDescIdx, const SCommandDescription& modCmdDesc) {
 	const SCommandDescription* curCmdDesc = possibleCommands[cmdDescIdx];
 
@@ -752,10 +759,7 @@ inline void CCommandAI::SetCommandDescParam0(const Command& c)
 		if (possibleCommands[n]->id != c.GetID())
 			continue;
 
-		SCommandDescription cd = *possibleCommands[n];
-		cd.params[0] = IntToString(int(c.params[0]), "%d");
-		commandDescriptionCache->DecRef(*possibleCommands[n]);
-		possibleCommands[n] = commandDescriptionCache->GetPtr(cd);
+		UpdateCommandDescription(n, c);
 		break;
 	}
 }
