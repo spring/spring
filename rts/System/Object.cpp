@@ -17,7 +17,8 @@ CR_REG_METADATA(CObject, (
 	CR_IGNORED(listening), //handled in Serialize
 	CR_IGNORED(listeners), //handled in Serialize
 
-	CR_SERIALIZER(Serialize)
+	CR_SERIALIZER(Serialize),
+	CR_POSTLOAD(PostLoad)
 	))
 
 Threading::AtomicCounterInt64 CObject::cur_sync_id(0);
@@ -119,6 +120,23 @@ void CObject::Serialize(creg::ISerializer* ser)
 		}
 	}
 }
+
+void CObject::PostLoad()
+{
+	for (int depType = 0; depType < DEPENDENCE_COUNT; ++depType) {
+		if (!listening[depType])
+			continue;
+
+		for (CObject* obj: *listening[depType]) {
+
+			if (!obj->listeners[depType])
+				obj->listeners[depType] = new TSyncSafeSet();
+
+			obj->listeners[depType]->insert(this);
+		}
+	}
+}
+
 #endif //USING_CREG
 
 void CObject::DependentDied(CObject* obj)
