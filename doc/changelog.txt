@@ -2,6 +2,13 @@ Spring changelog
 (since 85.0: "!" prefix indicate backward compatibility broke)
 (numbers in brackets normally mean the mantis ticket ID)
 
+-- 102.0 --------------------------------------------------------
+General:
+ - compress creg save files
+
+Sim:
+ - COB: deprecate unit/team/allyteam/global vars. Use lua functions instead.
+
 -- 101.0 --------------------------------------------------------
 Major:
  - LoS (sim) overhaul

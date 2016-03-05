@@ -47,41 +47,13 @@
 #endif
 
 
-std::vector< std::vector<int> > CUnitScript::teamVars;
-std::vector< std::vector<int> > CUnitScript::allyVars;
-int CUnitScript::globalVars[GLOBAL_VAR_COUNT] = { 0 };
-
-
-void CUnitScript::InitVars(int numTeams, int numAllyTeams)
-{
-	// clear all globals in case we reloaded
-	memset(&globalVars[0], 0, GLOBAL_VAR_COUNT * sizeof(globalVars[0]));
-
-	teamVars.clear();
-	teamVars.resize(numTeams, std::vector<int>());
-
-	allyVars.clear();
-	allyVars.resize(numAllyTeams, std::vector<int>());
-
-	for (int t = 0; t < numTeams; t++) {
-		teamVars[t].resize(TEAM_VAR_COUNT, 0);
-	}
-
-	for (int t = 0; t < numAllyTeams; t++) {
-		allyVars[t].resize(ALLY_VAR_COUNT, 0);
-	}
-}
-
-
 CUnitScript::CUnitScript(CUnit* unit)
 	: unit(unit)
 	, busy(false)
 	, hasSetSFXOccupy(false)
 	, hasRockUnit(false)
 	, hasStartBuilding(false)
-{
-	memset(unitVars, 0, sizeof(unitVars));
-}
+{ }
 
 
 CUnitScript::~CUnitScript()
@@ -843,8 +815,6 @@ void CUnitScript::ShowFlare(int piece)
 
 
 /******************************************************************************/
-
-
 int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 {
 	// may happen in case one uses Spring.GetUnitCOBValue (Lua) on a unit with CNullUnitScript
@@ -1327,39 +1297,19 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	}
 	default:
 		if ((val >= GLOBAL_VAR_START) && (val <= GLOBAL_VAR_END)) {
-			return globalVars[val - GLOBAL_VAR_START];
+			ShowUnitScriptError("cob global vars are deprecated");
+			return 0;
 		}
 		else if ((val >= TEAM_VAR_START) && (val <= TEAM_VAR_END)) {
-			return teamVars[unit->team][val - TEAM_VAR_START];
+			ShowUnitScriptError("cob team vars are deprecated");
+			return 0;
 		}
 		else if ((val >= ALLY_VAR_START) && (val <= ALLY_VAR_END)) {
-			return allyVars[unit->allyteam][val - ALLY_VAR_START];
+			ShowUnitScriptError("cob allyteam vars are deprecated");
+			return 0;
 		}
 		else if ((val >= UNIT_VAR_START) && (val <= UNIT_VAR_END)) {
-			const int varID = val - UNIT_VAR_START;
-
-			if (p1 == 0) {
-				return unitVars[varID];
-			}
-			else if (p1 > 0) {
-				// get the unit var for another unit
-				const CUnit* u = unitHandler->GetUnit(p1);
-
-				if (u != NULL && u->script != NULL) {
-					return u->script->unitVars[varID];
-				}
-			}
-			else {
-				// set the unit var for another unit
-				p1 = -p1;
-
-				CUnit* u = unitHandler->GetUnit(p1);
-
-				if (u != NULL && u->script != NULL) {
-					u->script->unitVars[varID] = p2;
-					return 1;
-				}
-			}
+			ShowUnitScriptError("cob unit vars are deprecated");
 			return 0;
 		}
 		else {
@@ -1608,16 +1558,16 @@ void CUnitScript::SetUnitVal(int val, int param)
 		}
 		default: {
 			if ((val >= GLOBAL_VAR_START) && (val <= GLOBAL_VAR_END)) {
-				globalVars[val - GLOBAL_VAR_START] = param;
+				ShowUnitScriptError("cob global vars are deprecated");
 			}
 			else if ((val >= TEAM_VAR_START) && (val <= TEAM_VAR_END)) {
-				teamVars[unit->team][val - TEAM_VAR_START] = param;
+				ShowUnitScriptError("cob team vars are deprecated");
 			}
 			else if ((val >= ALLY_VAR_START) && (val <= ALLY_VAR_END)) {
-				allyVars[unit->allyteam][val - ALLY_VAR_START] = param;
+				ShowUnitScriptError("cob allyteam vars are deprecated");
 			}
 			else if ((val >= UNIT_VAR_START) && (val <= UNIT_VAR_END)) {
-				unitVars[val - UNIT_VAR_START] = param;
+				ShowUnitScriptError("cob unit vars are deprecated");
 			}
 			else {
 				ShowUnitScriptError("CobError: Unknown set constant " + IntToString(val));

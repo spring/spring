@@ -267,7 +267,6 @@ void CUnit::InitStatic()
 	SetExpHealthScale(modInfo.unitExpHealthScale);
 	SetExpReloadScale(modInfo.unitExpReloadScale);
 
-	CCobInstance::InitVars(teamHandler->ActiveTeams(), teamHandler->ActiveAllyTeams());
 	CBuilderCAI::InitStatic();
 }
 

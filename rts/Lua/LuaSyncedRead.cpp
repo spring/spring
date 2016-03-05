@@ -53,7 +53,6 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitLoader.h"
-#include "Sim/Units/Scripts/CobInstance.h"
 #include "Sim/Units/UnitTypes/Builder.h"
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "Sim/Units/CommandAI/Command.h"
@@ -61,6 +60,7 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/FactoryCAI.h"
 #include "Sim/Units/CommandAI/MobileCAI.h"
+#include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
@@ -345,11 +345,6 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetFeaturePieceMatrix);
 
 	REGISTER_LUA_CFUNC(GetRadarErrorParams);
-
-	REGISTER_LUA_CFUNC(GetCOBUnitVar);
-	REGISTER_LUA_CFUNC(GetCOBTeamVar);
-	REGISTER_LUA_CFUNC(GetCOBAllyTeamVar);
-	REGISTER_LUA_CFUNC(GetCOBGlobalVar);
 
 	if (!LuaMetalMap::PushReadEntries(L))
 		return false;
@@ -5684,96 +5679,6 @@ int LuaSyncedRead::GetRadarErrorParams(lua_State* L)
 	lua_pushnumber(L, losHandler->GetBaseRadarErrorSize());
 	lua_pushnumber(L, losHandler->GetBaseRadarErrorMult());
 	return 3;
-}
-
-
-/******************************************************************************/
-/******************************************************************************/
-
-int LuaSyncedRead::GetCOBUnitVar(lua_State* L)
-{
-	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-	const int varID = luaL_checkint(L, 2);
-	if ((varID < 0) || (varID >= CUnitScript::UNIT_VAR_COUNT)) {
-		return 0;
-	}
-	const int value = unit->script->GetUnitVars()[varID];
-	if (luaL_optboolean(L, 3, false)) {
-		lua_pushnumber(L, UNPACKX(value));
-		lua_pushnumber(L, UNPACKZ(value));
-		return 2;
-	}
-	lua_pushnumber(L, value);
-	return 1;
-}
-
-
-int LuaSyncedRead::GetCOBTeamVar(lua_State* L)
-{
-	const int teamID = luaL_checkint(L, 1);
-	if (!teamHandler->IsValidTeam(teamID)) {
-		return 0;
-	}
-	if (!IsAlliedTeam(L, teamID)) {
-		return 0;
-	}
-	const int varID = luaL_checkint(L, 2);
-	if ((varID < 0) || (varID >= CUnitScript::TEAM_VAR_COUNT)) {
-		return 0;
-	}
-	const int value = CUnitScript::GetTeamVars(teamID)[varID];
-	if (luaL_optboolean(L, 3, false)) {
-		lua_pushnumber(L, UNPACKX(value));
-		lua_pushnumber(L, UNPACKZ(value));
-		return 2;
-	}
-	lua_pushnumber(L, value);
-	return 1;
-
-}
-
-
-int LuaSyncedRead::GetCOBAllyTeamVar(lua_State* L)
-{
-	const int allyTeamID = luaL_checkint(L, 1);
-	if (!teamHandler->IsValidAllyTeam(allyTeamID)) {
-		return 0;
-	}
-	if (!IsAlliedAllyTeam(L, allyTeamID)) {
-		return 0;
-	}
-	const int varID = luaL_checkint(L, 2);
-	if ((varID < 0) || (varID >= CUnitScript::ALLY_VAR_COUNT)) {
-		return 0;
-	}
-	const int value = CUnitScript::GetAllyVars(allyTeamID)[varID];
-	if (luaL_optboolean(L, 3, false)) {
-		lua_pushnumber(L, UNPACKX(value));
-		lua_pushnumber(L, UNPACKZ(value));
-		return 2;
-	}
-	lua_pushnumber(L, value);
-	return 1;
-}
-
-
-int LuaSyncedRead::GetCOBGlobalVar(lua_State* L)
-{
-	const int varID = luaL_checkint(L, 1);
-	if ((varID < 0) || (varID >= CUnitScript::GLOBAL_VAR_COUNT)) {
-		return 0;
-	}
-	const int value = CUnitScript::GetGlobalVars()[varID];
-	if (luaL_optboolean(L, 2, false)) {
-		lua_pushnumber(L, UNPACKX(value));
-		lua_pushnumber(L, UNPACKZ(value));
-		return 2;
-	}
-	lua_pushnumber(L, value);
-	return 1;
 }
 
 

@@ -43,21 +43,6 @@ public:
 	static const int ALLY_VAR_END   = ALLY_VAR_START   + ALLY_VAR_COUNT   - 1;
 	static const int GLOBAL_VAR_END = GLOBAL_VAR_START + GLOBAL_VAR_COUNT - 1;
 
-	static void InitVars(int numTeams, int numAllyTeams);
-
-public:
-	static const int* GetTeamVars(int team) { return &teamVars[team][0]; }
-	static const int* GetAllyVars(int ally) { return &allyVars[ally][0]; }
-	static const int* GetGlobalVars()       { return globalVars; }
-
-	const int* GetUnitVars() const { return unitVars; }
-protected:
-	static std::vector< std::vector<int> > teamVars;
-	static std::vector< std::vector<int> > allyVars;
-	static int globalVars[GLOBAL_VAR_COUNT];
-
-	int unitVars[UNIT_VAR_COUNT];
-
 protected:
 	CUnit* unit;
 	bool busy;
