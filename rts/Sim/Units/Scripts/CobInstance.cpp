@@ -73,21 +73,20 @@ CCobInstance::~CCobInstance()
 	//this may be dangerous, is it really desired?
 	//Destroy();
 	blockCall = true;
-	for (int animType = ATurn; animType <= AMove; animType++) {
-		for (AnimInfo* ai: anims[animType]) {
-			// All threads blocking on animations can be killed safely from here since the scheduler does not
-			// know about them
-			AnimFinished(ai->type, ai->axis, ai->piece);
-			// the anims are deleted in ~CUnitScript
-		}
-	}
 
-	// Can't delete the thread here because that would confuse the scheduler to no end
-	// Instead, mark it as dead. It is the function calling Tick that is responsible for delete.
+	// Only deleting threads which aren't running or sleeping
 	// Also unregister all callbacks
-	for (std::list<CCobThread *>::iterator i = threads.begin(); i != threads.end(); ++i) {
-		(*i)->state = CCobThread::Dead;
-		(*i)->SetCallback(NULL, NULL, NULL);
+	while (!threads.empty()) {
+		CCobThread* t = threads.back();
+		t->owner = nullptr;
+		if (t->state != CCobThread::Run && t->state != CCobThread::Sleep &&
+		    (t->state != CCobThread::Dead || t->waitAxis != -1)) {
+			delete t;
+		} else {
+			t->state = CCobThread::Dead;
+			t->SetCallback(nullptr, nullptr, nullptr);
+		}
+		threads.pop_back();
 	}
 }
 
@@ -611,9 +610,9 @@ int CCobInstance::RawCall(int fn, std::vector<int> &args)
 
 void CCobInstance::Signal(int signal)
 {
-	for (std::list<CCobThread *>::iterator i = threads.begin(); i != threads.end(); ++i) {
-		if ((signal & (*i)->signalMask) != 0) {
-			(*i)->state = CCobThread::Dead;
+	for (CCobThread* t: threads) {
+		if ((signal & t->signalMask) != 0) {
+			t->state = CCobThread::Dead;
 			//LOG_L(L_DEBUG, "Killing a thread %d %d", signal, (*i)->signalMask);
 		}
 	}

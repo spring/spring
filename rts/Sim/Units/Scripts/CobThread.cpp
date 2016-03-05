@@ -13,8 +13,8 @@
 
 
 CCobThread::CCobThread(CCobFile& script, CCobInstance* owner)
-	: script(script)
-	, owner(owner)
+	: owner(owner)
+	, script(script)
 	, wakeTime(0)
 	, PC(0)
 	, paramCount(0)
@@ -29,7 +29,6 @@ CCobThread::CCobThread(CCobFile& script, CCobInstance* owner)
 {
 	memset(&luaArgs[0], 0, MAX_LUA_COB_ARGS * sizeof(luaArgs[0]));
 	owner->threads.push_back(this);
-	AddDeathDependence(owner, DEPENDENCE_COBTHREAD);
 }
 
 CCobThread::~CCobThread()
@@ -38,10 +37,11 @@ CCobThread::~CCobThread()
 		//LOG_L(L_DEBUG, "%s callback with %d", script.scriptNames[callStack.back().functionId].c_str(), retCode);
 		(*callback)(retCode, cbParam1, cbParam2);
 	}
-	if (owner)
-		owner->threads.remove(this);
-
-	SetCallback(nullptr, nullptr, nullptr);
+	if (owner != nullptr) {
+		auto it = std::find(owner->threads.begin(), owner->threads.end(), this);
+		assert(it != owner->threads.end());
+		owner->threads.erase(it);
+	}
 }
 
 void CCobThread::SetCallback(CBCobThreadFinish cb, void* p1, void* p2)
@@ -784,12 +784,6 @@ string CCobThread::GetOpcodeName(int opcode)
 	return "unknown";
 }
 
-void CCobThread::DependentDied(CObject* o)
-{
-	if (o == owner)
-		owner = nullptr;
-}
-
 /******************************************************************************/
 
 void CCobThread::LuaCall()
@@ -849,5 +843,7 @@ void CCobThread::AnimFinished(CUnitScript::AnimType type, int piece, int axis)
 		waitPiece = -1;
 		waitAxis = -1;
 		GCobEngine.AddThread(this);
+	} else if (state == Dead) {
+		delete this;
 	}
 }

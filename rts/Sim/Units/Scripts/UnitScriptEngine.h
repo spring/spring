@@ -5,7 +5,7 @@
 #ifndef UNIT_SCRIPT_ENGINE_H
 #define UNIT_SCRIPT_ENGINE_H
 
-#include <list>
+#include <vector>
 
 class CUnit;
 class CUnitScript;
@@ -14,8 +14,8 @@ class CUnitScript;
 class CUnitScriptEngine
 {
 protected:
-	std::list<CUnitScript*> animating; // hash would be optimal, but not crucial
-	void CheckForDuplicates(const char* name, CUnitScript* instance);
+	std::vector<CUnitScript*> animating; // hash would be optimal, but not crucial
+	void CheckForDuplicates(const char* name, const CUnitScript* instance);
 
 public:
 	CUnitScriptEngine();

@@ -38,7 +38,6 @@ public:
 	 * There can be only one.
 	 */
 	void SetCallback(CBCobThreadFinish cb, void* p1, void* p2);
-	void DependentDied(CObject* o);
 	/**
 	 * @brief Checks whether the stack has at least size items.
 	 * @returns min(size, stack.size())
@@ -58,6 +57,7 @@ public:
 	void ShowError(const std::string& msg);
 	void AnimFinished(CUnitScript::AnimType type, int piece, int axis);
 
+	CCobInstance* owner;
 protected:
 	std::string GetOpcodeName(int opcode);
 	void LuaCall();
@@ -65,7 +65,6 @@ protected:
 	inline int POP();
 
 	CCobFile& script;
-	CCobInstance* owner;
 
 	int wakeTime;
 	int PC;
@@ -88,10 +87,10 @@ protected:
 	void* cbParam1;
 	void* cbParam2;
 
-	int waitAxis;
-	int waitPiece;
 
 public:
+	int waitAxis;
+	int waitPiece;
 	enum State {Init, Sleep, Run, Dead, WaitTurn, WaitMove};
 	State state;
 	int signalMask;

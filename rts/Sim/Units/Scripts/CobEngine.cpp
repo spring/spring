@@ -39,13 +39,13 @@ CCobEngine::~CCobEngine()
 	//Should delete all things that the scheduler knows
 	do {
 		while (!running.empty()) {
-			CCobThread* tmp = running.front();
-			running.pop_front();
+			CCobThread* tmp = running.back();
+			running.pop_back();
 			delete tmp;
 		}
 		while (!wantToRun.empty()) {
-			CCobThread* tmp = wantToRun.front();
-			wantToRun.pop_front();
+			CCobThread* tmp = wantToRun.back();
+			wantToRun.pop_back();
 			delete tmp;
 		}
 		while (!sleeping.empty()) {
@@ -72,7 +72,7 @@ void CCobEngine::AddThread(CCobThread *thread)
 {
 	switch (thread->state) {
 		case CCobThread::Run:
-			wantToRun.push_front(thread);
+			wantToRun.push_back(thread);
 			break;
 		case CCobThread::Sleep:
 			sleeping.push(thread);
@@ -104,12 +104,12 @@ void CCobEngine::Tick(int deltaTime)
 	LOG_L(L_DEBUG, "----");
 
 	// Advance all running threads
-	for (std::list<CCobThread*>::iterator i = running.begin(); i != running.end(); ++i) {
+	for (CCobThread* t: running) {
 		//LOG_L(L_DEBUG, "Now 1running %d: %s", GCurrentTime, (*i)->GetName().c_str());
 #ifdef _CONSOLE
 		printf("----\n");
 #endif
-		TickThread(*i);
+		TickThread(t);
 	}
 
 	// A thread can never go from running->running, so clear the list
@@ -119,11 +119,7 @@ void CCobEngine::Tick(int deltaTime)
 	running.clear();
 
 	// The threads that just ran may have added new threads that should run next tick
-	for (std::list<CCobThread *>::iterator i = wantToRun.begin(); i != wantToRun.end(); ++i) {
-		running.push_front(*i);
-	}
-
-	wantToRun.clear();
+	std::swap(running, wantToRun);
 
 	//Check on the sleeping threads
 	if (!sleeping.empty()) {

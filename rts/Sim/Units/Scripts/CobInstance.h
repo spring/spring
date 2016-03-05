@@ -41,7 +41,7 @@ protected:
 
 public:
 	std::vector<int> staticVars;
-	std::list<CCobThread *> threads;
+	std::vector<CCobThread *> threads;
 	const CCobFile* GetScriptAddr() const { return &script; }
 
 public:

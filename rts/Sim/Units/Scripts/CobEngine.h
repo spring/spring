@@ -11,7 +11,7 @@
 
 #include "CobThread.h"
 
-#include <list>
+#include <vector>
 #include <queue>
 #include <map>
 
@@ -31,12 +31,12 @@ public:
 class CCobEngine
 {
 protected:
-	std::list<CCobThread*> running;
+	std::vector<CCobThread*> running;
 	/**
 	 * Threads are added here if they are in Running.
 	 * And moved to real running after running is empty.
 	 */
-	std::list<CCobThread*> wantToRun;
+	std::vector<CCobThread*> wantToRun;
 	std::priority_queue<CCobThread*, std::vector<CCobThread*>, CCobThreadPtr_less> sleeping;
 	CCobThread* curThread;
 	void TickThread(CCobThread* thread);
