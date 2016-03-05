@@ -333,7 +333,7 @@ void COutputStreamSerializer::SavePackage(std::ostream* s, void* rootObj, Class*
 		classObjects[oRef.classIndex]++;
 	}
 
-/*
+
 	if (LOG_IS_ENABLED(L_DEBUG)) {
 		for (std::map<int, int>::iterator i = classObjects.begin(); i != classObjects.end(); i++) {
 			LOG_L(L_DEBUG, "%20s %10u %10u",
@@ -342,7 +342,7 @@ void COutputStreamSerializer::SavePackage(std::ostream* s, void* rootObj, Class*
 					classSizes[classRefs[i->first]->class_]);
 		}
 	}
-*/
+
 
 	// Write the class references & calc their checksum
 	ph.numObjClassRefs = classRefs.size();
