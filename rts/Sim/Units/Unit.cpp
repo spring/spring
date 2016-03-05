@@ -2879,7 +2879,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(commandAI),
 	CR_MEMBER(group),
 
-	CR_MEMBER(script),
+	CR_IGNORED(script),
 
 	CR_MEMBER(resourcesCondUse),
 	CR_MEMBER(resourcesCondMake),

@@ -18,6 +18,7 @@ namespace creg {
 // If none specialization was found assume it's a class.
 template<typename T, typename Enable = void>
 struct DeduceType {
+	static_assert(std::is_same<typename std::remove_const<T>::type, typename std::remove_const<typename T::MyType>::type>::value, "class isn't creged");
 	static boost::shared_ptr<IType> Get() { return boost::shared_ptr<IType>(IType::CreateObjInstanceType(T::StaticClass())); }
 };
 
@@ -65,6 +66,7 @@ struct DeduceType<SyncedPrimitive<T>, typename std::enable_if<std::is_floating_p
 template<typename T>
 class ObjectPointerType : public IType
 {
+	static_assert(std::is_same<typename std::remove_const<T>::type, typename std::remove_const<typename T::MyType>::type>::value, "class isn't creged");
 public:
 	ObjectPointerType() { objectClass = T::StaticClass(); }
 	void Serialize(ISerializer *s, void *instance) {
