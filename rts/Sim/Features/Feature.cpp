@@ -185,13 +185,13 @@ bool CFeature::IsInLosForAllyTeam(int argAllyTeam) const
 
 void CFeature::Initialize(const FeatureLoadParams& params)
 {
-	id = params.featureID;
-	defID = (params.featureDef)->id;
-
 	def = params.featureDef;
 	udef = params.unitDef;
-	udefID = udef != nullptr ? udef->id : -1;
 	objectDef = params.featureDef;
+
+	id = params.featureID;
+	defID = def->id;
+	udefID = (udef != nullptr)? udef->id : -1;
 
 	team = params.teamID;
 	allyteam = params.allyTeamID;

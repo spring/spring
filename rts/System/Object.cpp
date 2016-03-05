@@ -61,7 +61,6 @@ CObject::~CObject()
 			continue;
 
 		for (CObject* obj: *listening[depType]) {
-
 			assert(obj->listeners[depType]);
 			obj->listeners[depType]->erase(this);
 		}
@@ -128,7 +127,6 @@ void CObject::PostLoad()
 			continue;
 
 		for (CObject* obj: *listening[depType]) {
-
 			if (!obj->listeners[depType])
 				obj->listeners[depType] = new TSyncSafeSet();
 

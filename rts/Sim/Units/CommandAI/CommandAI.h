@@ -24,8 +24,13 @@ public:
 	CCommandAI(CUnit* owner);
 	CCommandAI();
 	virtual ~CCommandAI();
+
 	void PostLoad() {}
 	void DependentDied(CObject* o);
+
+	static void InitCommandDescriptionCache();
+	static void KillCommandDescriptionCache();
+
 	inline void SetOrderTarget(CUnit* o);
 
 	void SetScriptMaxSpeed(float speed, bool persistent);

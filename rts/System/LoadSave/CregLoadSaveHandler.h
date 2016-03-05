@@ -6,7 +6,6 @@
 #include <string>
 #include <sstream>
 #include "LoadSaveHandler.h"
-#include <zlib.h>
 
 class CCregLoadSaveHandler : public ILoadSaveHandler
 {

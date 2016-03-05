@@ -343,8 +343,7 @@ static void ParseTexture(lua_State* L, const char* caller, int index,
 	}
 
 	if (lua_isstring(L, index)) {
-		const string texName = lua_tostring(L, index);
-		LuaOpenGLUtils::ParseTextureImage(L, texUnit, texName);
+		LuaOpenGLUtils::ParseTextureImage(L, texUnit, lua_tostring(L, index));
 		texUnit.enable = true;
 		return;
 	}
@@ -411,7 +410,7 @@ static LuaMatRef ParseMaterial(lua_State* L, const char* caller, int index,
 
 		else if (key == "texunits") {
 			if (lua_istable(L, -1)) {
-			  const int texTable = (int)lua_gettop(L);
+				const int texTable = (int)lua_gettop(L);
 				for (lua_pushnil(L); lua_next(L, texTable) != 0; lua_pop(L, 1)) {
 					if (lua_israwnumber(L, -2)) {
 						const int texUnit = lua_toint(L, -2);

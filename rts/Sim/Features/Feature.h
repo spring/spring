@@ -104,6 +104,7 @@ private:
 
 public:
 	int defID;
+	int udefID; //needed for postload
 
 	/**
 	 * This flag is used to stop a potential exploit involving tripping
@@ -144,7 +145,6 @@ public:
 
 private:
 	void PostLoad();
-	int udefID; //needed for postload
 
 	CMatrix44f transMatrix;
 };

@@ -508,6 +508,7 @@ void CGame::PostLoadSimulation()
 
 	CUnit::InitStatic();
 	CClassicGroundMoveType::CreateLineTable();
+	CCommandAI::InitCommandDescriptionCache();
 
 	unitHandler = new CUnitHandler();
 	featureHandler = new CFeatureHandler();
@@ -840,6 +841,7 @@ void CGame::KillSimulation()
 
 	LOG("[%s][4]", __FUNCTION__);
 	CClassicGroundMoveType::DeleteLineTable();
+	CCommandAI::KillCommandDescriptionCache();
 }
 
 
