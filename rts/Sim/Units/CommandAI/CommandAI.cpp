@@ -1057,7 +1057,7 @@ void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 	if (facCAI) {
 		if (c.options & CONTROL_KEY) {
 			// check the build order
-			const map<int, CFactoryCAI::BuildOption>& bOpts = facCAI->buildOptions;
+			const auto& bOpts = facCAI->buildOptions;
 			if ((newCmd.GetID() != CMD_STOP) && (newCmd.GetID() != CMD_WAIT) &&
 			    ((newCmd.GetID() >= 0) || (bOpts.find(newCmd.GetID()) == bOpts.end()))) {
 				return;

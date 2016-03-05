@@ -36,11 +36,11 @@
 CR_BIND_DERIVED(CBuilderCAI ,CMobileCAI , )
 
 CR_REG_METADATA(CBuilderCAI , (
-	CR_MEMBER(buildOptions),
 	CR_MEMBER(ownerBuilder),
 	CR_MEMBER(building),
 	CR_MEMBER(range3D),
 	CR_IGNORED(build),
+	CR_IGNORED(buildOptions),
 
 	CR_MEMBER(cachedRadiusId),
 	CR_MEMBER(cachedRadius),
@@ -207,7 +207,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 			c.mouseicon = c.name;
 			c.tooltip   = GetUnitDefBuildOptionToolTip(ud, c.disabled = (ud->maxThisUnit <= 0));
 
-			buildOptions[c.id] = name;
+			buildOptions.insert(c.id);
 			possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 		}
 	}
@@ -235,6 +235,10 @@ void CBuilderCAI::InitStatic()
 
 void CBuilderCAI::PostLoad()
 {
+	for (const SCommandDescription* cd: possibleCommands) {
+		if (cd->id < 0)
+			buildOptions.insert(cd->id);
+	}
 	if (commandQue.empty())
 		return;
 
@@ -423,7 +427,7 @@ float CBuilderCAI::GetBuildOptionRadius(const UnitDef* ud, int cmdId)
 }
 
 
-void CBuilderCAI::CancelRestrictedUnit(const std::string& buildOption)
+void CBuilderCAI::CancelRestrictedUnit()
 {
 	if (owner->team == gu->myTeam) {
 		LOG_L(L_WARNING, "%s: Build failed, unit type limit reached",
@@ -454,9 +458,7 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		}
 	}
 
-	const auto boi = buildOptions.find(c.GetID());
-
-	if (boi != buildOptions.end()) {
+	if (buildOptions.find(c.GetID()) != buildOptions.end()) {
 		if (c.params.size() < 3)
 			return;
 
@@ -466,7 +468,7 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		if (c.params.size() == 4)
 			bi.buildFacing = abs((int)c.params[3]) % NUM_FACINGS;
 
-		bi.def = unitDefHandler->GetUnitDefByName(boi->second);
+		bi.def = unitDefHandler->GetUnitDefByID(-c.GetID());
 		bi.pos = CGameHelper::Pos2BuildPos(bi, true);
 
 		// We are a static building, check if the buildcmd is in range
@@ -574,9 +576,7 @@ void CBuilderCAI::ExecuteStop(Command& c)
 
 void CBuilderCAI::ExecuteBuildCmd(Command& c)
 {
-	const map<int, string>::const_iterator boi = buildOptions.find(c.GetID());
-
-	if (boi == buildOptions.end())
+	if (buildOptions.find(c.GetID()) == buildOptions.end())
 		return;
 
 	if (!inCommand) {
@@ -588,7 +588,7 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 		if (c.params.size() == 4)
 			bi.buildFacing = abs((int)c.params[3]) % NUM_FACINGS;
 
-		bi.def = unitDefHandler->GetUnitDefByName(boi->second);
+		bi.def = unitDefHandler->GetUnitDefByID(-c.GetID());
 
 		CFeature* f = NULL;
 		CGameHelper::TestUnitBuildSquare(bi, f, owner->allyteam, true);
@@ -624,7 +624,7 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 			// unit restricted
 			building = false;
 			ownerBuilder->StopBuild();
-			CancelRestrictedUnit(boi->second);
+			CancelRestrictedUnit();
 		}
 	} else {
 		if (unitHandler->unitsByDefs[owner->team][build.def->id].size() >= build.def->maxThisUnit) {
@@ -633,7 +633,7 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 			// (since greyed-out icons can still be clicked etc,
 			// would be better to prevent that but doesn't cover
 			// case where limit reached while builder en-route)
-			CancelRestrictedUnit(boi->second);
+			CancelRestrictedUnit();
 			StopMove();
 			return;
 		}

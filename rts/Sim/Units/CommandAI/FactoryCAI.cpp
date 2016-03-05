@@ -28,14 +28,6 @@ CR_REG_METADATA(CFactoryCAI , (
 	CR_POSTLOAD(PostLoad)
 ))
 
-CR_BIND(CFactoryCAI::BuildOption, )
-
-CR_REG_METADATA_SUB(CFactoryCAI,BuildOption , (
-	CR_MEMBER(name),
-	CR_MEMBER(fullName),
-	CR_MEMBER(numQued)
-))
-
 static std::string GetUnitDefBuildOptionToolTip(const UnitDef* ud, bool disabled) {
 	std::string tooltip;
 
@@ -142,13 +134,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 			c.mouseicon = c.name;
 			c.tooltip   = GetUnitDefBuildOptionToolTip(ud, c.disabled = (ud->maxThisUnit <= 0));
 
-
-			BuildOption bo;
-			bo.name     = name;
-			bo.fullName = name;
-			bo.numQued  = 0;
-
-			buildOptions[c.id] = bo;
+			buildOptions[c.id] = 0;
 			possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 		}
 	}
@@ -239,15 +225,15 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		return;
 	}
 
-	BuildOption& bo = boi->second;
+	int& numQueued = boi->second;
 	int numItems = 1;
 
 	if (c.options & SHIFT_KEY)   { numItems *= 5; }
 	if (c.options & CONTROL_KEY) { numItems *= 20; }
 
 	if (c.options & RIGHT_MOUSE_KEY) {
-		bo.numQued -= numItems;
-		bo.numQued  = std::max(bo.numQued, 0);
+		numQueued -= numItems;
+		numQueued  = std::max(numQueued, 0);
 
 		int numToErase = numItems;
 		if (c.options & ALT_KEY) {
@@ -265,7 +251,7 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 				}
 			}
 		}
-		UpdateIconName(cmdID, bo);
+		UpdateIconName(cmdID, numQueued);
 		SlowUpdate();
 	} else {
 		if (c.options & ALT_KEY) {
@@ -291,8 +277,8 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 				commandQue.push_back(c);
 			}
 		}
-		bo.numQued += numItems;
-		UpdateIconName(cmdID, bo);
+		numQueued += numItems;
+		UpdateIconName(cmdID, numQueued);
 
 		SlowUpdate();
 	}
@@ -302,9 +288,9 @@ void CFactoryCAI::GiveCommandReal(const Command& c, bool fromSynced)
 void CFactoryCAI::InsertBuildCommand(CCommandQueue::iterator& it,
                                      const Command& newCmd)
 {
-	map<int, BuildOption>::iterator boi = buildOptions.find(newCmd.GetID());
+	const auto boi = buildOptions.find(newCmd.GetID());
 	if (boi != buildOptions.end()) {
-		boi->second.numQued++;
+		boi->second++;
 		UpdateIconName(newCmd.GetID(), boi->second);
 	}
 	if (!commandQue.empty() && (it == commandQue.begin())) {
@@ -319,9 +305,9 @@ void CFactoryCAI::InsertBuildCommand(CCommandQueue::iterator& it,
 bool CFactoryCAI::RemoveBuildCommand(CCommandQueue::iterator& it)
 {
 	Command& cmd = *it;
-	map<int, BuildOption>::iterator boi = buildOptions.find(cmd.GetID());
+	const auto boi = buildOptions.find(cmd.GetID());
 	if (boi != buildOptions.end()) {
-		boi->second.numQued--;
+		boi->second--;
 		UpdateIconName(cmd.GetID(), boi->second);
 	}
 	if (!commandQue.empty() && (it == commandQue.begin())) {
@@ -338,16 +324,16 @@ bool CFactoryCAI::RemoveBuildCommand(CCommandQueue::iterator& it)
 }
 
 
-void CFactoryCAI::DecreaseQueueCount(const Command& buildCommand, BuildOption& buildOption)
+void CFactoryCAI::DecreaseQueueCount(const Command& buildCommand, int& numQueued)
 {
 	// copy in case we get pop'ed
 	// NOTE: the queue should not be empty at this point!
 	const Command frontCommand = commandQue.empty()? Command(CMD_STOP): commandQue.front();
 
 	if (!repeatOrders || (buildCommand.options & INTERNAL_ORDER))
-		buildOption.numQued--;
+		numQueued--;
 
-	UpdateIconName(buildCommand.GetID(), buildOption);
+	UpdateIconName(buildCommand.GetID(), numQueued);
 
 	// if true, factory was set to wait and its buildee
 	// could only have been finished by assisting units
@@ -371,9 +357,7 @@ void CFactoryCAI::DecreaseQueueCount(const Command& buildCommand, BuildOption& b
 //   only called if Factory::QueueBuild returned FACTORY_NEXT_BUILD_ORDER
 //   (meaning the order was not rejected and the callback was installed)
 void CFactoryCAI::FactoryFinishBuild(const Command& command) {
-	CFactoryCAI::BuildOption& bo = buildOptions[command.GetID()];
-
-	DecreaseQueueCount(command, bo);
+	DecreaseQueueCount(command, buildOptions[command.GetID()]);
 }
 
 void CFactoryCAI::SlowUpdate()
@@ -390,9 +374,8 @@ void CFactoryCAI::SlowUpdate()
 		Command& c = commandQue.front();
 
 		const size_t oldQueueSize = commandQue.size();
-		const std::map<int, BuildOption>::iterator buildOptIt = buildOptions.find(c.GetID());
 
-		if (buildOptIt != buildOptions.end()) {
+		if (buildOptions.find(c.GetID()) != buildOptions.end()) {
 			// build-order
 			switch (fac->QueueBuild(unitDefHandler->GetUnitDefByID(-c.GetID()), c)) {
 				case CFactory::FACTORY_SKIP_BUILD_ORDER: {
@@ -442,7 +425,7 @@ int CFactoryCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 }
 
 
-void CFactoryCAI::UpdateIconName(int cmdID, const BuildOption& bo)
+void CFactoryCAI::UpdateIconName(int cmdID, const int& numQueued)
 {
 	for (auto pci = possibleCommands.begin(); pci != possibleCommands.end(); ++pci) {
 		const SCommandDescription* cd = *pci;
@@ -450,13 +433,12 @@ void CFactoryCAI::UpdateIconName(int cmdID, const BuildOption& bo)
 			continue;
 
 		char t[32];
-		SNPRINTF(t, 10, "%d", bo.numQued);
+		SNPRINTF(t, 10, "%d", numQueued);
 
 		SCommandDescription c = *cd;
-		c.name = bo.name;
 		c.params.clear();
 
-		if (bo.numQued)
+		if (numQueued > 0)
 			c.params.push_back(t);
 
 		commandDescriptionCache->DecRef(*cd);

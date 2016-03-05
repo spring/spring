@@ -244,10 +244,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 		const int cmdID = ci->GetID();
 
 		if (cmdID < 0) {
-			const std::map<int, std::string>& buildOptions = cai->buildOptions;
-			const std::map<int, std::string>::const_iterator boi = buildOptions.find(cmdID);
-
-			if (boi != buildOptions.end()) {
+			if (cai->buildOptions.find(cmdID) != cai->buildOptions.end()) {
 				BuildInfo bi;
 				bi.def = unitDefHandler->GetUnitDefByID(-(cmdID));
 
