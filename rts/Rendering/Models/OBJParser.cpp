@@ -31,20 +31,19 @@ S3DModel* COBJParser::Load(const std::string& modelFileName)
 	CFileHandler modelFile(modelFileName);
 	CFileHandler metaFile(metaFileName);
 
-	if (!modelFile.FileExists()) {
+	if (!modelFile.FileExists())
 		throw content_error("[OBJParser] could not find model-file \"" + modelFileName + "\"");
-	}
-	if (!metaFile.FileExists()) {
+
+	if (!metaFile.FileExists())
 		throw content_error("[OBJParser] could not find meta-file \"" + metaFileName + "\"");
-	}
 
 
 	LuaParser metaFileParser(metaFileName, SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	metaFileParser.Execute();
 
-	if (!metaFileParser.IsValid()) {
+	if (!metaFileParser.IsValid())
 		throw content_error("[OBJParser] failed to parse meta-file \"" + metaFileName + "\"");
-	}
+
 
 	// get the (root-level) model table
 	const LuaTable& modelTable = metaFileParser.GetRoot();
@@ -78,7 +77,7 @@ S3DModel* COBJParser::Load(const std::string& modelFileName)
 		throw content_error("[OBJParser] failed to parse model-data \"" + modelFileName + "\"");
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, const LuaTable& metaData)
@@ -122,7 +121,7 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 
 
 	PieceMap pieceMap;
-	SOBJPiece* piece = NULL;
+	SOBJPiece* piece = nullptr;
 
 	std::vector<float3> vertices; vertices.reserve(2048);
 	std::vector<float2> texcoors; texcoors.reserve(2048);
@@ -152,8 +151,7 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 				// ignore groups ('g'), smoothing groups ('s'),
 				// and materials ("mtllib", "usemtl") for now
 				// (s-groups are obsolete with vertex normals)
-				LOG_L(L_WARNING, "Failed to parse line \"%s\" for model \"%s\"",
-						line.c_str(), model->name.c_str());
+				LOG_L(L_WARNING, "Failed to parse line \"%s\" for model \"%s\"", line.c_str(), model->name.c_str());
 
 				prevReadIdx = currReadIdx + 1;
 				continue;
@@ -183,7 +181,7 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 
 				case 'v': {
 					// position, normal, or texture-coordinates
-					assert(piece != NULL);
+					assert(piece != nullptr);
 
 					float3 f3;
 						lineStream >> f3.x;
@@ -198,7 +196,7 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 
 				case 'f': {
 					// face definition
-					assert(piece != NULL);
+					assert(piece != nullptr);
 
 					int
 						vIdx = 0,
@@ -283,9 +281,7 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 
 						piece->AddTriangle(triangle);
 					} else {
-						LOG_L(L_WARNING,
-								"Illegal face-element indices on line \"%s\" for model \"%s\"",
-								line.c_str(), model->name.c_str());
+						LOG_L(L_WARNING, "Illegal face-element indices on line \"%s\" for model \"%s\"", line.c_str(), model->name.c_str());
 					}
 				} break;
 
@@ -305,13 +301,11 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 	const bool globalVertexOffsets = metaData.GetBool("globalvertexoffsets", false);
 	const bool localPieceOffsets = metaData.GetBool("localpieceoffsets", false);
 
-	if (BuildModelPieceTree(model, pieceMap, piecesTable, globalVertexOffsets, localPieceOffsets)) {
+	if (BuildModelPieceTree(model, pieceMap, piecesTable, globalVertexOffsets, localPieceOffsets))
 		return true;
-	}
 
-	for (PieceMap::iterator it = pieceMap.begin(); it != pieceMap.end(); ++it) {
+	for (PieceMap::iterator it = pieceMap.begin(); it != pieceMap.end(); ++it)
 		delete (it->second);
-	}
 
 	throw content_error("[OBJParser] model " + model->name + " has no uniquely defined root-piece");
 	return false;
@@ -331,12 +325,11 @@ bool COBJParser::BuildModelPieceTree(
 	piecesTable.GetKeys(rootPieceNames);
 	piecesTable.GetKeys(rootPieceNumbers);
 
-	SOBJPiece* rootPiece = NULL;
+	SOBJPiece* rootPiece = nullptr;
 
 	// there must be exactly one root-piece defined by name or number
-	if ((rootPieceNames.size() + rootPieceNumbers.size()) != 1) {
+	if ((rootPieceNames.size() + rootPieceNumbers.size()) != 1)
 		return false;
-	}
 
 	if (!rootPieceNames.empty()) {
 		const std::string& rootPieceName = rootPieceNames[0];
@@ -379,21 +372,18 @@ void COBJParser::BuildModelPieceTreeRec(
 ) {
 	const S3DModelPiece* parentPiece = piece->parent;
 
-	// first read user-set extrema
-	const float3 mins = pieceTable.GetFloat3("mins", DEF_MIN_SIZE);
-	const float3 maxs = pieceTable.GetFloat3("maxs", DEF_MAX_SIZE);
-
-	piece->mins = float3::min(mins, maxs);
-	piece->maxs = float3::max(mins, maxs);
+	// first read user-set extrema; trust that mins < maxs (for SMME)
+	piece->mins = pieceTable.GetFloat3("mins", DEF_MIN_SIZE);
+	piece->maxs = pieceTable.GetFloat3("maxs", DEF_MAX_SIZE);
 
 	// always convert <offset> to local coordinates
 	piece->offset = pieceTable.GetFloat3("offset", ZeroVector);
 	piece->goffset = (localPieceOffsets)?
-		(piece->offset + ((parentPiece != NULL)? parentPiece->goffset: ZeroVector)):
+		(piece->offset + ((parentPiece != nullptr)? parentPiece->goffset: ZeroVector)):
 		(piece->offset);
 	piece->offset = (localPieceOffsets)?
 		(piece->offset):
-		(piece->offset - ((parentPiece != NULL)? parentPiece->offset: ZeroVector));
+		(piece->offset - ((parentPiece != nullptr)? parentPiece->offset: ZeroVector));
 
 	piece->SetVertexTangents();
 	piece->SetMinMaxExtends(globalVertexOffsets);

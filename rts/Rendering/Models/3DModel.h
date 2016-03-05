@@ -166,7 +166,7 @@ public:
 	unsigned int GetChildCount() const { return children.size(); }
 	S3DModelPiece* GetChild(unsigned int i) const { return children[i]; }
 
-	bool HasGeometryData() const { return GetVertexDrawIndexCount() >= 3; }
+	bool HasGeometryData() const { return (GetVertexDrawIndexCount() >= 3); }
 	bool HasIdentityRotation() const { return hasIdentityRot; }
 
 private:
