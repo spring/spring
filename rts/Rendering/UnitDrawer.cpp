@@ -64,7 +64,7 @@ CONFIG(bool, AdvUnitShading).defaultValue(true).headlessValue(false).safemodeVal
 
 
 
-static const void BindOpaqueTex(int texType) { texturehandlerS3O->SetS3oTexture(texType); }
+static const void BindOpaqueTex(int texType) { texturehandlerS3O->BindTextures(texType); }
 static const void BindOpaqueTexAtlas(int texType) { texturehandler3DO->Set3doAtlases(); }
 static const void BindOpaqueTexDummy(int texType) {}
 
@@ -564,7 +564,7 @@ void CUnitDrawer::DrawOpaqueUnitsShadow(int modelType) {
 		const auto& unitSet = unitBinP.second;
 		const int textureType = unitBinP.first;
 
-		shadowTexBindFuncs[modelType](texturehandlerS3O->GetS3oTex(textureType));
+		shadowTexBindFuncs[modelType](texturehandlerS3O->GetTexture(textureType));
 
 		for (const auto& unitSetP: unitSet) {
 			DrawOpaqueUnitShadow(unitSetP);

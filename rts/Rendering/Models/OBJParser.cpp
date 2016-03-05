@@ -55,11 +55,11 @@ S3DModel* COBJParser::Load(const std::string& modelFileName)
 		model->numPieces = 0;
 		model->mins = DEF_MIN_SIZE;
 		model->maxs = DEF_MAX_SIZE;
-		model->tex1 = modelTable.GetString("tex1", "");
-		model->tex2 = modelTable.GetString("tex2", "");
+		model->texs[0] = modelTable.GetString("tex1", "");
+		model->texs[1] = modelTable.GetString("tex2", "");
 
 	// basic S3O-style texturing
-	texturehandlerS3O->PreloadS3OTexture(model);
+	texturehandlerS3O->PreloadTexture(model);
 
 	std::string modelData;
 	modelFile.LoadStringData(modelData);

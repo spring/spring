@@ -38,13 +38,15 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_TEXTURE)
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CS3OTextureHandler* texturehandlerS3O = NULL;
+CS3OTextureHandler* texturehandlerS3O = nullptr;
 
 CS3OTextureHandler::CS3OTextureHandler()
 {
+	textures.reserve(128);
+
 	// dummies
-	textures.push_back(S3OTexMat());
-	textures.push_back(S3OTexMat());
+	textures.emplace_back();
+	textures.emplace_back();
 }
 
 CS3OTextureHandler::~CS3OTextureHandler()
@@ -53,65 +55,89 @@ CS3OTextureHandler::~CS3OTextureHandler()
 		glDeleteTextures(1, &(texture.tex1));
 		glDeleteTextures(1, &(texture.tex2));
 	}
-	for (auto& it: bitmapCache) {
-		delete it.second;
+}
+
+
+void CS3OTextureHandler::PreloadTexture(S3DModel* model, bool invertAxis, bool invertAlpha)
+{
+	cacheMutex.lock();
+	LoadAndCacheTexture(model, 0, invertAxis, invertAlpha, true);
+	LoadAndCacheTexture(model, 1, invertAxis,       false, true); // never invert alpha for tex2
+	cacheMutex.unlock();
+}
+
+
+void CS3OTextureHandler::LoadTexture(S3DModel* model)
+{
+	cacheMutex.lock();
+
+	const unsigned int tex1ID = LoadAndCacheTexture(model, 0, false, false, false);
+	const unsigned int tex2ID = LoadAndCacheTexture(model, 1, false, false, false);
+
+	const auto texTableIter = textureTable.find(TEX_MAT_UID(tex1ID, tex2ID));
+
+	// even if both textures were already loaded as parts of
+	// other models, their pair might form a unique material
+	if (texTableIter == textureTable.end()) {
+		model->textureType = InsertTextureMat(model);
+	} else {
+		model->textureType = texTableIter->second;
 	}
-}
 
-void CS3OTextureHandler::LoadS3OTexture(S3DModel* model)
-{
-	cacheMutex.lock();
-	model->textureType = LoadS3OTextureNow(model);
 	cacheMutex.unlock();
 }
 
-void CS3OTextureHandler::PreloadS3OTexture(S3DModel* model)
-{
-	cacheMutex.lock();
-	LoadTexture(model, model->tex1, true, true);
-	LoadTexture(model, model->tex2, false, true);
-	cacheMutex.unlock();
-}
+unsigned int CS3OTextureHandler::LoadAndCacheTexture(
+	const S3DModel* model,
+	unsigned int texNum,
+	bool invertAxis,
+	bool invertAlpha,
+	bool preloadCall
+) {
+	CBitmap* bitmap = nullptr;
 
+	const auto& textureName = model->texs[texNum];
+	const auto textureIt = textureCache.find(textureName);
 
-unsigned int CS3OTextureHandler::LoadTexture(const S3DModel* model, const std::string& textureName, bool isTex1, bool preload)
-{
-	CBitmap _bitmap;
-	CBitmap* bitmap = &_bitmap;
-
-	bool delBitmap = false;
-
-	auto textureIt = textureCache.find(textureName);
 	if (textureIt != textureCache.end())
 		return textureIt->second.texID;
 
-	auto bitmapIt = bitmapCache.find(textureName);
+	const auto bitmapIt = bitmapCache.find(textureName);
+
 	if (bitmapIt != bitmapCache.end()) {
-		bitmap = bitmapIt->second;
-		delBitmap = true;
+		// bitmap was previously preloaded but not yet loaded
+		// if !preloading, we will now turn the bitmap into a
+		// texture and cache it
+		bitmap = &(bitmapIt->second);
 	} else {
-		if (preload) {
-			bitmap = new CBitmap();
-			bitmapCache[textureName] = bitmap;
-		}
+		// bitmap was not yet preloaded, meaning we are the
+		// first to (all non-3DO model textures are always
+		// preloaded)
+		assert(preloadCall);
+
+		auto pair = bitmapCache.emplace(textureName, CBitmap());
+		auto iter = pair.first;
+
+		bitmap = &(iter->second);
+
 		if (!bitmap->Load(textureName)) {
 			if (!bitmap->Load("unittextures/" + textureName)) {
 				LOG_L(L_WARNING, "[%s] could not load texture \"%s\" from model \"%s\"",
 					__FUNCTION__, textureName.c_str(), model->name.c_str());
 
 				// file not found (or headless build), set a single pixel so unit is visible
-				bitmap->AllocDummy(isTex1 ? SColor(255, 0, 0, 255) : SColor(0, 0, 0, 255));
+				bitmap->AllocDummy(SColor(255, 0, 0, 255));
 			}
 		}
 
-		if (isTex1 && model->invertTexAlpha)
-			bitmap->InvertAlpha();
-		if (model->invertTexYAxis)
+		if (invertAxis)
 			bitmap->ReverseYAxis();
-
+		if (invertAlpha)
+			bitmap->InvertAlpha();
 	}
-	//Don't generate a texture, just save the bitmap for later
-	if (preload)
+
+	// don't generate a texture yet, just save the bitmap for later
+	if (preloadCall)
 		return 0;
 
 	const unsigned int texID = bitmap->CreateTexture(true);
@@ -122,41 +148,21 @@ unsigned int CS3OTextureHandler::LoadTexture(const S3DModel* model, const std::s
 		static_cast<unsigned int>(bitmap->ysize)
 	};
 
-	if (delBitmap) {
-		bitmapCache.erase(textureName);
-		delete bitmap;
-	}
-
+	bitmapCache.erase(textureName);
 	return texID;
 }
 
 
-int CS3OTextureHandler::LoadS3OTextureNow(const S3DModel* model)
-{
-	LOG_L(L_INFO, "Load S3O texture now (Flip Y Axis: %s, Invert Team Alpha: %s)",
-			model->invertTexYAxis ? "yes" : "no",
-			model->invertTexAlpha ? "yes" : "no");
-
-	const unsigned int tex1ID = LoadTexture(model, model->tex1, true, false);
-	const unsigned int tex2ID = LoadTexture(model, model->tex2, false, false);
-
-	auto texTableIter = textureTable.find(TEX_MAT_UID(tex1ID, tex2ID));
-
-	// even if both textures were already loaded as parts of
-	// other models, the pair may still not be used in a single material
-	if (texTableIter == textureTable.end())
-		return InsertTextureMat(model);
-
-	return texTableIter->second;
-}
-
 unsigned int CS3OTextureHandler::InsertTextureMat(const S3DModel* model)
 {
-	const CachedS3OTex& tex1 = textureCache[model->tex1];
-	const CachedS3OTex& tex2 = textureCache[model->tex2];
+	const CachedS3OTex& tex1 = textureCache[ model->texs[0] ];
+	const CachedS3OTex& tex2 = textureCache[ model->texs[1] ];
 
-	S3OTexMat texMat;
-	texMat.num       = textures.size();
+	textures.emplace_back();
+
+	S3OTexMat& texMat = textures.back();
+
+	texMat.num       = textures.size() - 1;
 	texMat.tex1      = tex1.texID;
 	texMat.tex2      = tex2.texID;
 	texMat.tex1SizeX = tex1.xsize;
@@ -164,23 +170,36 @@ unsigned int CS3OTextureHandler::InsertTextureMat(const S3DModel* model)
 	texMat.tex2SizeX = tex2.xsize;
 	texMat.tex2SizeY = tex2.ysize;
 
-	textures.push_back(texMat);
 	textureTable[TEX_MAT_UID(texMat.tex1, texMat.tex2)] = texMat.num;
 
 	return texMat.num;
 }
 
-void CS3OTextureHandler::SetS3oTexture(int num)
-{
-	S3OTexMat& texMat = textures[num];
 
-	if (shadowHandler->inShadowPass) {
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texMat.tex2);
-	} else {
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, texMat.tex2);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texMat.tex1);
-	}
+
+typedef const void (*BindModelTextureFunc)(const CS3OTextureHandler::S3OTexMat& texMat);
+
+static const void BindModelTexturesNormal(const CS3OTextureHandler::S3OTexMat& texMat) {
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, texMat.tex2);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texMat.tex1);
 }
+
+static const void BindModelTexturesShadow(const CS3OTextureHandler::S3OTexMat& texMat) {
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texMat.tex2);
+}
+
+static const BindModelTextureFunc textureBindFuncs[] = {
+	&BindModelTexturesNormal, // opaque+alpha
+	&BindModelTexturesShadow,
+};
+
+
+
+void CS3OTextureHandler::BindTextures(int num)
+{
+	textureBindFuncs[shadowHandler->InShadowPass()]( textures[num] );
+}
+

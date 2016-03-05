@@ -388,14 +388,15 @@ void C3DModelLoader::CreateLists(S3DModel* model) {
 
 	CreateListsNow(rootPiece);
 
-	if (model->type != MODELTYPE_3DO) {
-		//Make sure textures are loaded.
-		texturehandlerS3O->LoadS3OTexture(model);
+	if (model->type == MODELTYPE_3DO)
+		return;
 
-		// warn about models with bad normals (they break lighting)
-		// skip for 3DO's (they are auto-calced there)
-		CheckPieceNormals(model, model->GetRootPiece());
-	}
+	// make sure textures (already preloaded) are fully loaded
+	texturehandlerS3O->LoadTexture(model);
+
+	// warn about models with bad normals (they break lighting)
+	// skip for 3DO's since they are auto-calculated there
+	CheckPieceNormals(model, model->GetRootPiece());
 }
 
 /******************************************************************************/

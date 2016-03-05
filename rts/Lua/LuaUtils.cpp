@@ -790,8 +790,8 @@ int LuaUtils::PushModelTable(lua_State* L, const SolidObjectDef* def) {
 	lua_newtable(L);
 
 	if (model != nullptr) {
-		LuaPushNamedString(L, "tex1", model->tex1);
-		LuaPushNamedString(L, "tex2", model->tex2);
+		LuaPushNamedString(L, "tex1", model->texs[0]);
+		LuaPushNamedString(L, "tex2", model->texs[1]);
 	} else {
 		// just leave these nil
 	}

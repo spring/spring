@@ -319,7 +319,7 @@ static GLuint ParseUnitTexture(const string& texture)
 		return 0;
 	}
 
-	const CS3OTextureHandler::S3oTex* stex = texturehandlerS3O->GetS3oTex(texType);
+	const CS3OTextureHandler::S3OTexMat* stex = texturehandlerS3O->GetTexture(texType);
 	if (stex == nullptr) {
 		return 0;
 	}

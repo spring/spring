@@ -213,9 +213,6 @@ struct S3DModel
 
 		, type(MODELTYPE_OTHER)
 
-		, invertTexYAxis(false)
-		, invertTexAlpha(false)
-
 		, radius(0.0f)
 		, height(0.0f)
 
@@ -238,17 +235,13 @@ struct S3DModel
 
 public:
 	std::string name;
-	std::string tex1;
-	std::string tex2;
+	std::string texs[NUM_MODEL_TEXTURES];
 
 	int id;                     /// unsynced ID, starting with 1
 	int numPieces;
 	int textureType;            /// FIXME: MAKE S3O ONLY (0 = 3DO, otherwise S3O or OBJ)
 
 	ModelType type;
-
-	bool invertTexYAxis;        /// Turn both textures upside down before use
-	bool invertTexAlpha;        /// Invert teamcolor alpha channel in S3O texture 1
 
 	float radius;
 	float height;

@@ -218,7 +218,7 @@ bool ParseTexture(const S3DModel* model, LuaMatTexture& texUnit, char texNum)
 		return false;
 
 	// note: textures are stored contiguously, so this pointer can not be leaked
-	const CS3OTextureHandler::S3oTex* stex = texturehandlerS3O->GetS3oTex(texType);
+	const CS3OTextureHandler::S3OTexMat* stex = texturehandlerS3O->GetTexture(texType);
 
 	if (stex == nullptr)
 		return false;
@@ -486,10 +486,10 @@ GLuint LuaMatTexture::GetTextureID() const
 
 		// object model-textures
 		case LUATEX_UNITTEXTURE1: {
-			texID = texturehandlerS3O->GetS3oTex(*reinterpret_cast<const int*>(&data))->tex1;
+			texID = texturehandlerS3O->GetTexture(*reinterpret_cast<const int*>(&data))->tex1;
 		} break;
 		case LUATEX_UNITTEXTURE2: {
-			texID = texturehandlerS3O->GetS3oTex(*reinterpret_cast<const int*>(&data))->tex2;
+			texID = texturehandlerS3O->GetTexture(*reinterpret_cast<const int*>(&data))->tex2;
 		} break;
 		case LUATEX_3DOTEXTURE: {
 			if (texturehandler3DO != nullptr) {
@@ -761,11 +761,11 @@ int2 LuaMatTexture::GetSize() const
 
 
 		case LUATEX_UNITTEXTURE1: {
-			const auto stex = texturehandlerS3O->GetS3oTex(*reinterpret_cast<const int*>(&data));
+			const auto stex = texturehandlerS3O->GetTexture(*reinterpret_cast<const int*>(&data));
 			return int2(stex->tex1SizeX, stex->tex1SizeY);
 		} break;
 		case LUATEX_UNITTEXTURE2: {
-			const auto stex = texturehandlerS3O->GetS3oTex(*reinterpret_cast<const int*>(&data));
+			const auto stex = texturehandlerS3O->GetTexture(*reinterpret_cast<const int*>(&data));
 			return int2(stex->tex2SizeX, stex->tex2SizeY);
 		} break;
 		case LUATEX_3DOTEXTURE: {
