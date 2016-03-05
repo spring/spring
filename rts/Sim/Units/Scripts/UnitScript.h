@@ -7,7 +7,6 @@
 
 #include <string>
 #include <vector>
-#include <list>
 
 #include "System/Object.h"
 #include "Rendering/Models/3DModel.h"
@@ -53,7 +52,7 @@ protected:
 		bool hasWaiting;
 	};
 
-	std::list<AnimInfo*> anims[AMove + 1];
+	std::vector<AnimInfo> anims[AMove + 1];
 
 	bool hasSetSFXOccupy;
 	bool hasRockUnit;
@@ -63,8 +62,8 @@ protected:
 	bool TurnToward(float& cur, float dest, float speed);
 	bool DoSpin(float& cur, float dest, float& speed, float accel, int divisor);
 
-	std::list<AnimInfo*>::iterator FindAnim(AnimType anim, int piece, int axis);
-	void RemoveAnim(AnimType type, const std::list<AnimInfo*>::iterator& animInfoIt);
+	std::vector<AnimInfo>::iterator FindAnim(AnimType type, int piece, int axis);
+	void RemoveAnim(AnimType type, const std::vector<AnimInfo>::iterator& animInfoIt);
 	void AddAnim(AnimType type, int piece, int axis, float speed, float dest, float accel);
 
 	virtual void ShowScriptError(const std::string& msg) = 0;
@@ -117,7 +116,7 @@ public:
 	const CUnit* GetUnit() const { return unit; }
 
 	bool Tick(int deltaTime);
-	void TickAnims(int deltaTime, AnimType type, std::list< std::list<AnimInfo*>::iterator >& doneAnims);
+	void TickAnims(int deltaTime, AnimType type, std::vector<int>& doneAnims);
 
 	// animation, used by CCobThread
 	void Spin(int piece, int axis, float speed, float accel);
@@ -146,7 +145,6 @@ public:
 	bool HaveAnimations() const {
 		return (!anims[ATurn].empty() || !anims[ASpin].empty() || !anims[AMove].empty());
 	}
-	inline bool HaveListeners() const;
 
 	// checks for callin existence
 	bool HasSetSFXOccupy () const { return hasSetSFXOccupy; }
