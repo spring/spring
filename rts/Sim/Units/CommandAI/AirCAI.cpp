@@ -65,8 +65,7 @@ CAirCAI::CAirCAI(CUnit* owner)
 	cancelDistance = 16000;
 
 	if (owner->unitDef->canAttack) {
-		possibleCommands.emplace_back();
-		SCommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_AREA_ATTACK;
 		c.type = CMDTYPE_ICON_AREA;
@@ -75,6 +74,7 @@ CAirCAI::CAirCAI(CUnit* owner)
 		c.name      = "Area attack";
 		c.tooltip   = c.name + ": Sets the aircraft to attack enemy units within a circle";
 		c.mouseicon = c.name;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	basePos = owner->pos;
@@ -114,10 +114,13 @@ void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 			}
 
 			for (unsigned int n = 0; n < possibleCommands.size(); n++) {
-				if (possibleCommands[n].id != CMD_AUTOREPAIRLEVEL)
+				if (possibleCommands[n]->id != CMD_AUTOREPAIRLEVEL)
 					continue;
 
-				possibleCommands[n].params[0] = IntToString(int(c.params[0]), "%d");
+				SCommandDescription cd = *possibleCommands[n];
+				cd.params[0] = IntToString(int(c.params[0]), "%d");
+				commandDescriptionCache->DecRef(*possibleCommands[n]);
+				possibleCommands[n] = commandDescriptionCache->GetPtr(cd);
 				break;
 			}
 
@@ -136,10 +139,13 @@ void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
 			}
 
 			for (unsigned int n = 0; n < possibleCommands.size(); n++) {
-				if (possibleCommands[n].id != CMD_IDLEMODE)
+				if (possibleCommands[n]->id != CMD_IDLEMODE)
 					continue;
 
-				possibleCommands[n].params[0] = IntToString(int(c.params[0]), "%d");
+				SCommandDescription cd = *possibleCommands[n];
+				cd.params[0] = IntToString(int(c.params[0]), "%d");
+				commandDescriptionCache->DecRef(*possibleCommands[n]);
+				possibleCommands[n] = commandDescriptionCache->GetPtr(cd);
 				break;
 			}
 

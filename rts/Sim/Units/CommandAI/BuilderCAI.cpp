@@ -108,8 +108,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 	ownerBuilder = static_cast<CBuilder*>(owner);
 
 	if (owner->unitDef->canRepair) {
-		possibleCommands.emplace_back();
-		SCommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_REPAIR;
 		c.type = CMDTYPE_ICON_UNIT_OR_AREA;
@@ -118,10 +117,10 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 		c.name      = "Repair";
 		c.tooltip   = c.name + ": Repairs another unit";
 		c.mouseicon = c.name;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 	else if (owner->unitDef->canAssist) {
-		possibleCommands.emplace_back();
-		SCommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_REPAIR;
 		c.type = CMDTYPE_ICON_UNIT_OR_AREA;
@@ -130,11 +129,11 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 		c.name      = "Assist";
 		c.tooltip   = c.name + ": Help build something";
 		c.mouseicon = c.name;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (owner->unitDef->canReclaim) {
-		possibleCommands.emplace_back();
-		SCommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_RECLAIM;
 		c.type = CMDTYPE_ICON_UNIT_FEATURE_OR_AREA;
@@ -143,11 +142,11 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 		c.name      = "Reclaim";
 		c.tooltip   = c.name + ": Sucks in the metal/energy content of a unit/feature and add it to your storage";
 		c.mouseicon = c.name;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (owner->unitDef->canRestore && !mapDamage->disabled) {
-		possibleCommands.emplace_back();
-		SCommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_RESTORE;
 		c.type = CMDTYPE_ICON_AREA;
@@ -157,12 +156,11 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 		c.tooltip   = c.name + ": Restores an area of the map to its original height";
 		c.mouseicon = c.name;
 
-		c.params.push_back("200");
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (owner->unitDef->canResurrect) {
-		possibleCommands.emplace_back();
-		SCommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_RESURRECT;
 		c.type = CMDTYPE_ICON_UNIT_FEATURE_OR_AREA;
@@ -171,10 +169,10 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 		c.name      = "Resurrect";
 		c.tooltip   = c.name + ": Resurrects a unit from a feature";
 		c.mouseicon = c.name;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 	if (owner->unitDef->canCapture) {
-		possibleCommands.emplace_back();
-		SCommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_CAPTURE;
 		c.type = CMDTYPE_ICON_UNIT_OR_AREA;
@@ -183,6 +181,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 		c.name      = "Capture";
 		c.tooltip   = c.name + ": Captures a unit from the enemy";
 		c.mouseicon = c.name;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	for (const auto& bi: ownerBuilder->unitDef->buildOptions) {
@@ -198,8 +197,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 		}
 
 		{
-			possibleCommands.emplace_back();
-			SCommandDescription& c = possibleCommands.back();
+			SCommandDescription c;
 
 			c.id   = -ud->id; //build options are always negative
 			c.type = CMDTYPE_ICON_BUILDING;
@@ -210,6 +208,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 			c.tooltip   = GetUnitDefBuildOptionToolTip(ud, c.disabled = (ud->maxThisUnit <= 0));
 
 			buildOptions[c.id] = name;
+			possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 		}
 	}
 

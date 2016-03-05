@@ -66,8 +66,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 	newUnitCommands.SetQueueType(CCommandQueue::NewUnitQueueType);
 
 	if (owner->unitDef->canmove) {
-		possibleCommands.emplace_back();
-		SCommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id        = CMD_MOVE;
 		c.type      = CMDTYPE_ICON_MAP;
@@ -76,11 +75,11 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 		c.name      = "Move";
 		c.tooltip   = c.name + ": Order ready built units to move to a position";
 		c.mouseicon = c.name;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (owner->unitDef->canPatrol) {
-		possibleCommands.emplace_back();
-		SCommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id        = CMD_PATROL;
 		c.type      = CMDTYPE_ICON_MAP;
@@ -89,11 +88,11 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 		c.name      = "Patrol";
 		c.tooltip   = c.name + ": Order ready built units to patrol to one or more waypoints";
 		c.mouseicon = c.name;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (owner->unitDef->canFight) {
-		possibleCommands.emplace_back();
-		SCommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id        = CMD_FIGHT;
 		c.type      = CMDTYPE_ICON_MAP;
@@ -102,11 +101,11 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 		c.name      = "Fight";
 		c.tooltip   = c.name + ": Order ready built units to take action while moving to a position";
 		c.mouseicon = c.name;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (owner->unitDef->canGuard) {
-		possibleCommands.emplace_back();
-		SCommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id        = CMD_GUARD;
 		c.type      = CMDTYPE_ICON_UNIT;
@@ -115,6 +114,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 		c.name      = "Guard";
 		c.tooltip   = c.name + ": Order ready built units to guard another unit and attack units attacking it";
 		c.mouseicon = c.name;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	CFactory* fac = static_cast<CFactory*>(owner);
@@ -132,8 +132,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 		}
 
 		{
-			possibleCommands.emplace_back();
-			SCommandDescription& c = possibleCommands.back();
+			SCommandDescription c;
 
 			c.id   = -ud->id; // build-options are always negative
 			c.type = CMDTYPE_ICON;
@@ -150,6 +149,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner): CCommandAI(owner)
 			bo.numQued  = 0;
 
 			buildOptions[c.id] = bo;
+			possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 		}
 	}
 }
@@ -444,20 +444,23 @@ int CFactoryCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 
 void CFactoryCAI::UpdateIconName(int cmdID, const BuildOption& bo)
 {
-	vector<SCommandDescription>::iterator pci;
-	for (pci = possibleCommands.begin(); pci != possibleCommands.end(); ++pci) {
-		if (pci->id != cmdID)
+	for (auto pci = possibleCommands.begin(); pci != possibleCommands.end(); ++pci) {
+		const SCommandDescription* cd = *pci;
+		if (cd->id != cmdID)
 			continue;
 
 		char t[32];
 		SNPRINTF(t, 10, "%d", bo.numQued);
 
-		pci->name = bo.name;
-		pci->params.clear();
+		SCommandDescription c = *cd;
+		c.name = bo.name;
+		c.params.clear();
 
 		if (bo.numQued)
-			pci->params.push_back(t);
+			c.params.push_back(t);
 
+		commandDescriptionCache->DecRef(*cd);
+		*pci = commandDescriptionCache->GetPtr(c);
 		break;
 	}
 

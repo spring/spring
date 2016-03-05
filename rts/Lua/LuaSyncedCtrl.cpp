@@ -4309,7 +4309,7 @@ int LuaSyncedCtrl::EditUnitCmdDesc(lua_State* L)
 		return 0;
 
 	// note: must be a copy
-	SCommandDescription cmdDesc = cmdDescs[cmdDescIdx];
+	SCommandDescription cmdDesc = *cmdDescs[cmdDescIdx];
 
 	ParseCommandDescription(L, 3, cmdDesc);
 	unit->commandAI->UpdateCommandDescription(cmdDescIdx, cmdDesc);

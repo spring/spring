@@ -77,7 +77,7 @@ public:
 	std::vector<Command> GetOverlapQueued(const Command& c,
 	                                      CCommandQueue& queue);
 
-	const std::vector<SCommandDescription>& GetPossibleCommands() const { return possibleCommands; }
+	const std::vector<const SCommandDescription*>& GetPossibleCommands() const { return possibleCommands; }
 
 	/**
 	 * @brief Causes this CommandAI to execute the attack order c
@@ -110,7 +110,7 @@ public:
 
 	CWeapon* stockpileWeapon;
 
-	std::vector<SCommandDescription> possibleCommands;
+	std::vector<const SCommandDescription*> possibleCommands;
 	std::set<int> nonQueingCommands;
 
 	CCommandQueue commandQue;

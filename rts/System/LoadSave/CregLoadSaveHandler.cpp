@@ -21,6 +21,7 @@
 #include "Sim/Misc/Wind.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
+#include "Sim/Units/CommandAI/CommandDescription.h"
 #include "Game/UI/Groups/GroupHandler.h"
 
 #include "System/Platform/errorhandler.h"
@@ -76,6 +77,7 @@ void CGameStateCollector::Serialize(creg::ISerializer* s)
 	for (int a=0; a < teamHandler->ActiveTeams(); a++) {
 		s->SerializeObjectInstance(grouphandlers[a], grouphandlers[a]->GetClass());
 	}
+	s->SerializeObjectInstance(commandDescriptionCache, commandDescriptionCache->GetClass());
 	s->SerializeObjectInstance(eoh, eoh->GetClass());
 }
 

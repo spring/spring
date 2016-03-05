@@ -4374,7 +4374,7 @@ int LuaSyncedRead::GetUnitCmdDescs(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	vector<SCommandDescription>& cmdDescs = unit->commandAI->possibleCommands;
+	const std::vector<const SCommandDescription*>& cmdDescs = unit->commandAI->GetPossibleCommands();
 	const int lastDesc = (int)cmdDescs.size() - 1;
 
 	const int args = lua_gettop(L); // number of arguments
@@ -4394,7 +4394,7 @@ int LuaSyncedRead::GetUnitCmdDescs(lua_State* L)
 	lua_createtable(L, endIndex - startIndex, 0);
 	int count = 1;
 	for (int i = startIndex; i <= endIndex; i++) {
-		LuaUtils::PushCommandDesc(L, cmdDescs[i]);
+		LuaUtils::PushCommandDesc(L, *cmdDescs[i]);
 		lua_rawseti(L, -2, count++);
 	}
 
@@ -4410,9 +4410,9 @@ int LuaSyncedRead::FindUnitCmdDesc(lua_State* L)
 	}
 	const int cmdID = luaL_checkint(L, 2);
 
-	vector<SCommandDescription>& cmdDescs = unit->commandAI->possibleCommands;
+	const std::vector<const SCommandDescription*>& cmdDescs = unit->commandAI->GetPossibleCommands();
 	for (int i = 0; i < (int)cmdDescs.size(); i++) {
-		if (cmdDescs[i].id == cmdID) {
+		if (cmdDescs[i]->id == cmdID) {
 			lua_pushnumber(L, i + 1);
 			return 1;
 		}

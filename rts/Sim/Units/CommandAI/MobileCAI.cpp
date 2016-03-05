@@ -122,8 +122,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 	CalculateCancelDistance();
 
 	{
-		possibleCommands.emplace_back();
-		SCommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_LOAD_ONTO;
 		c.type = CMDTYPE_ICON_UNIT;
@@ -134,11 +133,11 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 		c.mouseicon = c.name;
 
 		c.hidden = true;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (owner->unitDef->canmove) {
-		possibleCommands.emplace_back();
-		SCommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_MOVE;
 		c.type = CMDTYPE_ICON_FRONT;
@@ -149,11 +148,11 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 		c.mouseicon = c.name;
 
 		c.params.push_back("1000000"); // max distance
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (owner->unitDef->canPatrol) {
-		possibleCommands.emplace_back();
-		SCommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_PATROL;
 		c.type = CMDTYPE_ICON_MAP;
@@ -162,11 +161,11 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 		c.name      = "Patrol";
 		c.tooltip   = c.name + ": Order the unit to patrol to one or more waypoints";
 		c.mouseicon = c.name;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (owner->unitDef->canFight) {
-		possibleCommands.emplace_back();
-		SCommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_FIGHT;
 		c.type = CMDTYPE_ICON_FRONT;
@@ -175,11 +174,11 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 		c.name      = "Fight";
 		c.tooltip   = c.name + ": Order the unit to take action while moving to a position";
 		c.mouseicon = c.name;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (owner->unitDef->canGuard) {
-		possibleCommands.emplace_back();
-		SCommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_GUARD;
 		c.type = CMDTYPE_ICON_UNIT;
@@ -188,12 +187,12 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 		c.name      = "Guard";
 		c.tooltip   = c.name + ": Order a unit to guard another unit and attack units attacking it";
 		c.mouseicon = c.name;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (owner->unitDef->canfly) {
 		{
-			possibleCommands.emplace_back();
-			SCommandDescription& c = possibleCommands.back();
+			SCommandDescription c;
 
 			c.id   = CMD_AUTOREPAIRLEVEL;
 			c.type = CMDTYPE_ICON_MODE;
@@ -210,10 +209,10 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 			c.params.push_back("LandAt 30");
 			c.params.push_back("LandAt 50");
 			c.params.push_back("LandAt 80");
+			possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 		}
 		{
-			possibleCommands.emplace_back();
-			SCommandDescription& c = possibleCommands.back();
+			SCommandDescription c;
 
 			c.id   = CMD_IDLEMODE;
 			c.type = CMDTYPE_ICON_MODE;
@@ -228,13 +227,13 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 			c.params.push_back("1");
 			c.params.push_back(" Fly ");
 			c.params.push_back("Land");
+			possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 		}
 	}
 
 	if (owner->unitDef->IsTransportUnit()) {
 		{
-			possibleCommands.emplace_back();
-			SCommandDescription& c = possibleCommands.back();
+			SCommandDescription c;
 
 			c.id   = CMD_LOAD_UNITS;
 			c.type = CMDTYPE_ICON_UNIT_OR_AREA;
@@ -243,10 +242,10 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 			c.name      = "Load units";
 			c.tooltip   = c.name + ": Sets the transport to load a unit or units within an area";
 			c.mouseicon = c.name;
+			possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 		}
 		{
-			possibleCommands.emplace_back();
-			SCommandDescription& c = possibleCommands.back();
+			SCommandDescription c;
 
 			c.id   = CMD_UNLOAD_UNITS;
 			c.type = CMDTYPE_ICON_AREA;
@@ -255,6 +254,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 			c.name      = "Unload units";
 			c.tooltip   = c.name + ": Sets the transport to unload units in an area";
 			c.mouseicon = c.name;
+			possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 		}
 	}
 
@@ -290,10 +290,13 @@ void CMobileCAI::GiveCommandReal(const Command& c, bool fromSynced)
 			}
 
 			for (unsigned int n = 0; n < possibleCommands.size(); n++) {
-				if (possibleCommands[n].id != CMD_AUTOREPAIRLEVEL)
+				if (possibleCommands[n]->id != CMD_AUTOREPAIRLEVEL)
 					continue;
 
-				possibleCommands[n].params[0] = IntToString(int(c.params[0]), "%d");
+				SCommandDescription cd = *possibleCommands[n];
+				cd.params[0] = IntToString(int(c.params[0]), "%d");
+				commandDescriptionCache->DecRef(*possibleCommands[n]);
+				possibleCommands[n] = commandDescriptionCache->GetPtr(cd);
 				break;
 			}
 
@@ -319,10 +322,13 @@ void CMobileCAI::GiveCommandReal(const Command& c, bool fromSynced)
 			}
 
 			for (unsigned int n = 0; n < possibleCommands.size(); n++) {
-				if (possibleCommands[n].id != CMD_IDLEMODE)
+				if (possibleCommands[n]->id != CMD_IDLEMODE)
 					continue;
 
-				possibleCommands[n].params[0] = IntToString(int(c.params[0]), "%d");
+				SCommandDescription cd = *possibleCommands[n];
+				cd.params[0] = IntToString(int(c.params[0]), "%d");
+				commandDescriptionCache->DecRef(*possibleCommands[n]);
+				possibleCommands[n] = commandDescriptionCache->GetPtr(cd);
 				break;
 			}
 

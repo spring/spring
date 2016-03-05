@@ -68,11 +68,11 @@ public:
 	bool AddUnitToGroup(int unitId, int groupId);
 	bool RemoveUnitFromGroup(int unitId);
 	int GetUnitGroup(int unitId);
-	const std::vector<SCommandDescription>* GetGroupCommands(int groupId);
+	const std::vector<const SCommandDescription*>* GetGroupCommands(int groupId);
 	int GiveGroupOrder(int unitId, Command* c);
 
 	int GiveOrder(int unitId,Command* c);
-	const std::vector<SCommandDescription>* GetUnitCommands(int unitId);
+	const std::vector<const SCommandDescription*>* GetUnitCommands(int unitId);
 	const CCommandQueue* GetCurrentUnitCommands(int unitId);
 
 	int GetUnitAiHint(int unitId);

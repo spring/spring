@@ -6,6 +6,7 @@
 #include "Unit.h"
 #include "UnitDefHandler.h"
 #include "CommandAI/BuilderCAI.h"
+#include "CommandAI/CommandDescription.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
@@ -47,6 +48,7 @@ CUnitHandler::CUnitHandler()
 	maxUnits(0),
 	maxUnitRadius(0.0f)
 {
+	commandDescriptionCache = new CCommandDescriptionCache();
 	// set the global (runtime-constant) unit-limit as the sum
 	// of  all team unit-limits, which is *always* <= MAX_UNITS
 	// (note that this also counts the Gaia team)
@@ -82,6 +84,7 @@ CUnitHandler::~CUnitHandler()
 		u->delayedWreckLevel = -1;
 		delete u;
 	}
+	SafeDelete(commandDescriptionCache);
 }
 
 void CUnitHandler::InsertActiveUnit(CUnit* unit)

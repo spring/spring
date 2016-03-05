@@ -5,8 +5,10 @@
 
 #include "Command.h"
 
+#include "System/creg/STL_Map.h"
+#include <vector>
+
 struct SCommandDescription {
-private:
 	CR_DECLARE_STRUCT(SCommandDescription)
 
 public:
@@ -17,8 +19,10 @@ public:
 		hidden(false),
 		disabled(false),
 		showUnique(false),
-		onlyTexture(false) {}
+		onlyTexture(false),
+		refCount(1) {}
 
+	bool operator != (const SCommandDescription& cd) const;
 	/// CMD_xxx code (custom codes can also be used)
 	int id;
 	/// CMDTYPE_xxx code
@@ -46,9 +50,23 @@ public:
 	bool onlyTexture;
 
 	std::vector<std::string> params;
+
+	mutable int refCount;
 };
 
 
+class CCommandDescriptionCache {
+	CR_DECLARE_STRUCT(CCommandDescriptionCache)
+
+	void DecRef(std::vector<const SCommandDescription*>& cmdDescs);
+	const SCommandDescription* GetPtr(const SCommandDescription& cd);
+	void DecRef(const SCommandDescription& cd);
+private:
+	int CalcHash(const SCommandDescription& cd) const;
+	std::multimap<int, SCommandDescription> cache;
+};
+
+extern CCommandDescriptionCache* commandDescriptionCache;
 
 #endif // COMMAND_DESCRIPTION_H
 
