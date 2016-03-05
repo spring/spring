@@ -22,11 +22,6 @@ class CUnitScript : public CObject
 public:
 	enum AnimType {ANone = -1, ATurn = 0, ASpin = 1, AMove = 2};
 
-	struct IAnimListener {
-		virtual ~IAnimListener() {}
-		virtual void AnimFinished(AnimType type, int piece, int axis) = 0;
-	};
-
 public:
 	static const int UNIT_VAR_COUNT   = 8;
 	static const int TEAM_VAR_COUNT   = 64;
@@ -55,7 +50,7 @@ protected:
 		float dest;     // means final position when turning or moving, final speed when spinning
 		float accel;    // used for spinning, can be negative
 		bool done;
-		std::list<IAnimListener*> listeners;
+		bool hasWaiting;
 	};
 
 	std::list<AnimInfo*> anims[AMove + 1];
@@ -63,8 +58,6 @@ protected:
 	bool hasSetSFXOccupy;
 	bool hasRockUnit;
 	bool hasStartBuilding;
-
-	void UnblockAll(AnimInfo* anim);
 
 	bool MoveToward(float& cur, float dest, float speed);
 	bool TurnToward(float& cur, float dest, float speed);
@@ -134,7 +127,7 @@ public:
 	void MoveNow(int piece, int axis, float destination);
 	void TurnNow(int piece, int axis, float destination);
 
-	bool AddAnimListener(AnimType type, int piece, int axis, IAnimListener* listener);
+	bool NeedsWait(AnimType type, int piece, int axis);
 
 	// misc, used by CCobThread and callouts for Lua unitscripts
 	void SetVisibility(int piece, bool visible);
@@ -210,17 +203,7 @@ public:
 	virtual void  Shot(int weaponNum) = 0;
 	virtual bool  BlockShot(int weaponNum, const CUnit* targetUnit, bool userTarget) = 0; // returns whether shot should be blocked
 	virtual float TargetWeight(int weaponNum, const CUnit* targetUnit) = 0; // returns target weight
+	virtual void AnimFinished(AnimType type, int piece, int axis) = 0;
 };
-
-inline bool CUnitScript::HaveListeners() const {
-	for (int animType = ATurn; animType <= AMove; animType++) {
-		for (std::list<AnimInfo *>::const_iterator i = anims[animType].begin(); i != anims[animType].end(); ++i) {
-			if (!(*i)->listeners.empty()) {
-				return true;
-			}
-		}
-	}
-	return false;
-}
 
 #endif // UNIT_SCRIPT_H

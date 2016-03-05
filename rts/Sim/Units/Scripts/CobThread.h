@@ -16,7 +16,7 @@ class CCobInstance;
 using std::vector;
 
 
-class CCobThread : public CObject, public CUnitScript::IAnimListener
+class CCobThread : public CObject
 {
 public:
 	CCobThread(CCobFile& script, CCobInstance* owner);
@@ -56,15 +56,13 @@ public:
 	 * interpreter.
 	 */
 	void ShowError(const std::string& msg);
+	void AnimFinished(CUnitScript::AnimType type, int piece, int axis);
 
 protected:
 	std::string GetOpcodeName(int opcode);
 	void LuaCall();
-	// implementation of IAnimListener
-	void AnimFinished(CUnitScript::AnimType type, int piece, int axis);
 
 	inline int POP();
-
 
 	CCobFile& script;
 	CCobInstance* owner;
@@ -89,6 +87,9 @@ protected:
 	CBCobThreadFinish callback;
 	void* cbParam1;
 	void* cbParam2;
+
+	int waitAxis;
+	int waitPiece;
 
 public:
 	enum State {Init, Sleep, Run, Dead, WaitTurn, WaitMove};

@@ -10,7 +10,7 @@
 class CLuaHandle;
 struct lua_State;
 
-class CLuaUnitScript : public CUnitScript, CUnitScript::IAnimListener
+class CLuaUnitScript : public CUnitScript
 {
 private:
 	static CUnit* activeUnit;

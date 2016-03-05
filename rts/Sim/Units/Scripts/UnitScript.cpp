@@ -79,20 +79,6 @@ CUnitScript::~CUnitScript()
 
 
 /**
- * @brief Unblocks all threads waiting on an animation
- * @param anim AnimInfo the corresponding animation
- */
-void CUnitScript::UnblockAll(AnimInfo* anim)
-{
-	std::list<IAnimListener *>::iterator li;
-
-	for (li = anim->listeners.begin(); li != anim->listeners.end(); ++li) {
-		(*li)->AnimFinished(anim->type, anim->piece, anim->axis);
-	}
-}
-
-
-/**
  * @brief Updates move animations
  * @param cur float value to update
  * @param dest float final value
@@ -260,17 +246,14 @@ bool CUnitScript::Tick(int deltaTime)
 	}
 
 	//! Tell listeners to unblock, and remove finished animations from the unit/script.
-	//! NOTE:
-	//!     removing a finished animation _must_ happen before notifying its listeners,
-	//!     otherwise the callback function (AnimFinished()) can call AddAnimListener()
-	//!     and append it to the listeners-list again (causing an endless loop)!
-	//! NOTE: UnblockAll might result in new anims being added
+	//! NOTE: AnimFinished might result in new anims being added
 	for (std::list<AnimInfoIt>::const_iterator it = doneAnims.begin(); it != doneAnims.end(); ++it) {
 		AnimInfoIt animInfoIt = *it;
 		AnimInfo* animInfo = *animInfoIt;
 
 		anims[animInfo->type].erase(animInfoIt);
-		UnblockAll(animInfo);
+		if (animInfo->hasWaiting)
+			AnimFinished(animInfo->type, animInfo->piece, animInfo->axis);
 		delete animInfo;
 	}
 
@@ -302,8 +285,9 @@ void CUnitScript::RemoveAnim(AnimType type, const std::list<AnimInfo*>::iterator
 		}
 
 		//! We need to unblock threads waiting on this animation, otherwise they will be lost in the void
-		//! NOTE: UnblockAll might result in new anims being added
-		UnblockAll(ai);
+		//! NOTE: AnimFinished might result in new anims being added
+		if (ai->hasWaiting)
+			AnimFinished(ai->type, ai->piece, ai->axis);
 
 		delete ai;
 	}
@@ -690,7 +674,7 @@ void CUnitScript::DropUnit(int u)
 
 
 //Returns true if there was an animation to listen to
-bool CUnitScript::AddAnimListener(AnimType type, int piece, int axis, IAnimListener *listener)
+bool CUnitScript::NeedsWait(AnimType type, int piece, int axis)
 {
 	std::list<AnimInfo*>::iterator animInfoIt = FindAnim(type, piece, axis);
 
@@ -698,7 +682,7 @@ bool CUnitScript::AddAnimListener(AnimType type, int piece, int axis, IAnimListe
 		AnimInfo* ai = *animInfoIt;
 
 		if (!ai->done) {
-			ai->listeners.push_back(listener);
+			ai->hasWaiting = true;
 			return true;
 		}
 
@@ -711,7 +695,8 @@ bool CUnitScript::AddAnimListener(AnimType type, int piece, int axis, IAnimListe
 		// is to treat the animation as if it did not exist and
 		// simply disregard the WaitFor* (no side-effects)
 		//
-		// listener->AnimFinished(ai->type, ai->piece, ai->axis);
+		// if (ai->hasWaiting)
+		// 		AnimFinished(ai->type, ai->piece, ai->axis);
 	}
 
 	return false;

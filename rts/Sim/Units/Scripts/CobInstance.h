@@ -31,6 +31,7 @@ class CCobInstance : public CUnitScript
 {
 protected:
 	CCobFile& script;
+	bool blockCall;
 
 	void MapScriptToModelPieces(LocalModel* lmodel);
 
@@ -156,6 +157,7 @@ public:
 	void  Shot(int weaponNum) override;
 	bool  BlockShot(int weaponNum, const CUnit* targetUnit, bool userTarget) override;
 	float TargetWeight(int weaponNum, const CUnit* targetUnit) override;
+	void AnimFinished(AnimType type, int piece, int axis) override;
 };
 
 #endif // COB_INSTANCE_H

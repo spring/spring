@@ -1424,7 +1424,7 @@ int CLuaUnitScript::WaitForAnimation(lua_State* L, const char* caller, AnimType 
 	const int piece = luaL_checkint(L, 1) - 1;
 	const int axis  = ParseAxis(L, caller, 2);
 
-	lua_pushboolean(L, script->AddAnimListener(type, piece, axis, script));
+	lua_pushboolean(L, script->NeedsWait(type, piece, axis));
 	return 1;
 }
 

@@ -53,6 +53,7 @@ inline bool CCobInstance::HasFunction(int id) const
 CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
 	: CUnitScript(_unit)
 	, script(_script)
+	, blockCall(false)
 {
 	staticVars.reserve(script.numStaticVars);
 	for (int i = 0; i < script.numStaticVars; ++i) {
@@ -71,23 +72,15 @@ CCobInstance::~CCobInstance()
 {
 	//this may be dangerous, is it really desired?
 	//Destroy();
-
-	do {
-		for (int animType = ATurn; animType <= AMove; animType++) {
-			for (std::list<AnimInfo *>::iterator i = anims[animType].begin(); i != anims[animType].end(); ++i) {
-				// All threads blocking on animations can be killed safely from here since the scheduler does not
-				// know about them
-				std::list<IAnimListener *>& listeners = (*i)->listeners;
-				while (!listeners.empty()) {
-					IAnimListener* al = listeners.front();
-					listeners.pop_front();
-					delete al;
-				}
-				// the anims are deleted in ~CUnitScript
-			}
+	blockCall = true;
+	for (int animType = ATurn; animType <= AMove; animType++) {
+		for (AnimInfo* ai: anims[animType]) {
+			// All threads blocking on animations can be killed safely from here since the scheduler does not
+			// know about them
+			AnimFinished(ai->type, ai->axis, ai->piece);
+			// the anims are deleted in ~CUnitScript
 		}
-		// callbacks may add new threads, and therefore listeners
-	} while (HaveListeners());
+	}
 
 	// Can't delete the thread here because that would confuse the scheduler to no end
 	// Instead, mark it as dead. It is the function calling Tick that is responsible for delete.
@@ -452,6 +445,13 @@ float CCobInstance::TargetWeight(int weaponNum, const CUnit* targetUnit)
 	return (float)args[1] / (float)COBSCALE;
 }
 
+void CCobInstance::AnimFinished(AnimType type, int piece, int axis)
+{
+	for (CCobThread* t: threads) {
+		t->AnimFinished(type, piece, axis);
+	}
+}
+
 
 void CCobInstance::Destroy() { Call(COBFN_Destroy); }
 void CCobInstance::StartMoving(bool reversing) { Call(COBFN_StartMoving, reversing); }
@@ -492,6 +492,11 @@ int CCobInstance::RealCall(int functionId, vector<int>& args, CBCobThreadFinish 
 		}
 		return -1;
 	}
+	if (blockCall) {
+		ShowUnitScriptError("tried starting new scripts during d'tor");
+		return -1;
+	}
+
 
 	CCobThread* thread = new CCobThread(script, this);
 	thread->Start(functionId, args, false);

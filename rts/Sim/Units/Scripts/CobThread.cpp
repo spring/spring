@@ -22,6 +22,8 @@ CCobThread::CCobThread(CCobFile& script, CCobInstance* owner)
 	, callback(nullptr)
 	, cbParam1(nullptr)
 	, cbParam2(nullptr)
+	, waitAxis(-1)
+	, waitPiece(-1)
 	, state(Init)
 	, signalMask(0)
 {
@@ -582,8 +584,10 @@ bool CCobThread::Tick()
 				r1 = GET_LONG_PC();
 				r2 = GET_LONG_PC();
 				//LOG_L(L_DEBUG, "Waiting for turn on piece %s around axis %d", script.pieceNames[r1].c_str(), r2);
-				if (owner->AddAnimListener(CCobInstance::ATurn, r1, r2, this)) {
+				if (owner->NeedsWait(CCobInstance::ATurn, r1, r2)) {
 					state = WaitTurn;
+					waitPiece = r1;
+					waitAxis = r2;
 					return true;
 				}
 				else
@@ -592,8 +596,10 @@ bool CCobThread::Tick()
 				r1 = GET_LONG_PC();
 				r2 = GET_LONG_PC();
 				//LOG_L(L_DEBUG, "Waiting for move on piece %s on axis %d", script.pieceNames[r1].c_str(), r2);
-				if (owner->AddAnimListener(CCobInstance::AMove, r1, r2, this)) {
+				if (owner->NeedsWait(CCobInstance::AMove, r1, r2)) {
 					state = WaitMove;
+					waitPiece = r1;
+					waitAxis = r2;
 					return true;
 				}
 				break;
@@ -833,15 +839,15 @@ void CCobThread::LuaCall()
 
 void CCobThread::AnimFinished(CUnitScript::AnimType type, int piece, int axis)
 {
+	if (piece != waitPiece || axis != waitAxis)
+		return;
+
 	// Not sure how to do this more cleanly.. Will probably rewrite it
-	if (state == CCobThread::WaitMove || state == CCobThread::WaitTurn) {
+	if ((state == WaitMove && type == CCobInstance::AMove) ||
+	    (state == WaitTurn && type == CCobInstance::ATurn)) {
 		state = CCobThread::Run;
+		waitPiece = -1;
+		waitAxis = -1;
 		GCobEngine.AddThread(this);
-	}
-	else if (state == CCobThread::Dead) {
-		delete this;
-	}
-	else {
-		LOG_L(L_ERROR, "Turn/move listener in strange state %d", state);
 	}
 }
