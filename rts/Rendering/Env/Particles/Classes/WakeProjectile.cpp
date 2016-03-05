@@ -86,7 +86,7 @@ void CWakeProjectile::Draw()
 	float interSize = size + sizeExpansion * globalRendering->timeOffset;
 	float interRot = rotation + rotSpeed * globalRendering->timeOffset;
 
-	const float3 dir1 = float3(math::cos(interRot), 0, math::sin(interRot)) * interSize;
+	const float3 dir1 = float3(std::cos(interRot), 0, std::sin(interRot)) * interSize;
 	const float3 dir2 = dir1.cross(UpVector);
 
 	#define wt projectileDrawer->waketex

@@ -35,17 +35,13 @@
  */
 
 namespace fastmath {
-	float isqrt_nosse(float) _const;
 	float isqrt_sse(float x) _const;
 	float sqrt_sse(float x) _const;
 	float isqrt_nosse(float x) _const;
 	float isqrt2_nosse(float x) _const;
-	float sqrt(float x) _const;
-	float sqrt2(float x) _const;
+	float sqrt_builtin(float x) _const;
 	float apxsqrt(float x) _const;
 	float apxsqrt2(float x) _const;
-	float isqrt(float x) _const;
-	float isqrt2(float x) _const;
 	float sin(float x) _const;
 	float cos(float x) _const;
 	template<typename T> float floor(const T& f) _const;
@@ -55,7 +51,7 @@ namespace fastmath {
 	/**
 	* @brief DO NOT USE IN SYNCED CODE. Calculates 1/sqrt(x) using SSE instructions.
 	*
-	* This is much slower than isqrt_nosse (extremely slow on AMDs) and
+	* This is much slower than isqrt_nosse (extremely slow on some AMDs) and
 	* additionally gives different results on Intel and AMD processors.
 	*/
 	__FORCE_ALIGN_STACK__
@@ -140,14 +136,8 @@ namespace fastmath {
 	/****************** Square root ******************/
 
 
-	/** Calculate sqrt using builtin sqrtf. */
-	inline float sqrt(float x)
-	{
-		return __builtin_sqrtf(x);
-	}
-
-	/** Calculate sqrt using builtin sqrtf. */
-	inline float sqrt2(float x)
+	/** Calculate sqrt using builtin sqrtf. (very fast) */
+	inline float sqrt_builtin(float x)
 	{
 		return __builtin_sqrtf(x);
 	}
@@ -170,21 +160,6 @@ namespace fastmath {
 		return x * isqrt2_nosse(x);
 	}
 
-	/**
-	* @brief Calculates 1/sqrt(x) very quickly.
-	*
-	*/
-
-	inline float isqrt(float x) {
-		return isqrt2_nosse(x);
-	}
-	/**
-	* @brief Calculates 1/sqrt(x) very quickly. More accurate but slower than isqrt.
-	*
-	*/
-	inline float isqrt2(float x) {
-		return isqrt2_nosse(x);
-	}
 
 	/****************** Trigonometric functions ******************/
 
@@ -297,8 +272,10 @@ namespace math {
 		return fastmath::sqrt_sse(x);
 	}
 
-	using fastmath::isqrt;
-	using fastmath::isqrt2;
+	float isqrt(float x) _const;
+	inline float isqrt(float x) {
+		return fastmath::isqrt2_nosse(x);
+	}
 
 	using fastmath::floor;
 }

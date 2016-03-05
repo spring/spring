@@ -32,9 +32,9 @@ static const float4  darkOutline(0.05f, 0.05f, 0.05f, 0.95f);
 static const float4 lightOutline(0.95f, 0.95f, 0.95f, 0.8f);
 
 static const float darkLuminosity = 0.05 +
-	0.2126f * math::powf(darkOutline[0], 2.2) +
-	0.7152f * math::powf(darkOutline[1], 2.2) +
-	0.0722f * math::powf(darkOutline[2], 2.2);
+	0.2126f * std::pow(darkOutline[0], 2.2) +
+	0.7152f * std::pow(darkOutline[1], 2.2) +
+	0.0722f * std::pow(darkOutline[2], 2.2);
 
 /*******************************************************************************/
 /*******************************************************************************/
@@ -419,9 +419,9 @@ void CglFont::SetColors(const float4* _textColor, const float4* _outlineColor)
 const float4* CglFont::ChooseOutlineColor(const float4& textColor)
 {
 	const float luminosity = 0.05 +
-				 0.2126f * math::powf(textColor[0], 2.2) +
-				 0.7152f * math::powf(textColor[1], 2.2) +
-				 0.0722f * math::powf(textColor[2], 2.2);
+				 0.2126f * std::pow(textColor[0], 2.2) +
+				 0.7152f * std::pow(textColor[1], 2.2) +
+				 0.0722f * std::pow(textColor[2], 2.2);
 
 	const float lumdiff = std::max(luminosity,darkLuminosity) / std::min(luminosity,darkLuminosity);
 	if (lumdiff > 5.0f) {

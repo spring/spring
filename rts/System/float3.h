@@ -549,7 +549,7 @@ public:
 	 * the vector's approx. length.
 	 */
 	float3& UnsafeANormalize() {
-		(*this) *= fastmath::isqrt(SqLength());
+		(*this) *= math::isqrt(SqLength());
 		return *this;
 	}
 
@@ -569,7 +569,7 @@ public:
 	float3& SafeANormalize() {
 		const float sql = SqLength();
 		if (likely(sql > NORMALIZE_EPS)) {
-			(*this) *= fastmath::isqrt(sql);
+			(*this) *= math::isqrt(sql);
 		}
 
 		return *this;

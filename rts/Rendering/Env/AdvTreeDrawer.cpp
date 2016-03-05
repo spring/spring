@@ -208,7 +208,7 @@ void CAdvTreeDrawer::Update()
 		FallingTree* fti = &fallingTrees[n];
 
 		fti->fallPos += (fti->speed * 0.1f);
-		fti->speed += (math::sin(fti->fallPos) * 0.04f);
+		fti->speed += (std::sin(fti->fallPos) * 0.04f);
 
 		if (fti->fallPos > 1.0f) {
 			// remove the tree
@@ -654,7 +654,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 			const float ang = fti->fallPos * PI;
 
-			const float3 yvec(fti->dir.x * math::sin(ang), math::cos(ang), fti->dir.z * math::sin(ang));
+			const float3 yvec(fti->dir.x * std::sin(ang), std::cos(ang), fti->dir.z * std::sin(ang));
 			const float3 zvec((yvec.cross(-RgtVector)).ANormalize());
 			const float3 xvec(yvec.cross(zvec));
 
@@ -1055,7 +1055,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 
 			const float ang = fti->fallPos * PI;
 
-			const float3 yvec(fti->dir.x * math::sin(ang), math::cos(ang), fti->dir.z * math::sin(ang));
+			const float3 yvec(fti->dir.x * std::sin(ang), std::cos(ang), fti->dir.z * std::sin(ang));
 			const float3 zvec((yvec.cross(RgtVector)).ANormalize());
 			const float3 xvec(zvec.cross(yvec));
 

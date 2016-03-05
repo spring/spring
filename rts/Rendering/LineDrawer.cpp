@@ -29,7 +29,7 @@ CLineDrawer::CLineDrawer()
 void CLineDrawer::UpdateLineStipple()
 {
 	stippleTimer += (globalRendering->lastFrameTime * 0.001f * cmdColors.StippleSpeed());
-	stippleTimer = math::fmod(stippleTimer, (16.0f / 20.0f));
+	stippleTimer = std::fmod(stippleTimer, (16.0f / 20.0f));
 }
 
 

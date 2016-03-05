@@ -174,7 +174,7 @@ unsigned int CIconHandler::GetDefaultTexture()
 			const int index = ((y * 128) + x) * 4;
 			const int dx = (x - 64);
 			const int dy = (y - 64);
-			const float r = math::sqrt((dx * dx) + (dy * dy)) / 64.0f;
+			const float r = std::sqrt((dx * dx) + (dy * dy)) / 64.0f;
 			if (r > 1.0f) {
 				si[index + 0] = 0;
 				si[index + 1] = 0;

@@ -3339,7 +3339,7 @@ static inline GLuint GetConeList()
 		glVertex3f(0.0f, 0.0f, 0.0f);
 		for (int i = 0; i <= divs; i++) {
 			const float rad = (PI * 2.0) * (float)i / (float)divs;
-			glVertex3f(1.0f, math::sin(rad), math::cos(rad));
+			glVertex3f(1.0f, std::sin(rad), std::cos(rad));
 		}
 		glEnd();
 	}
@@ -3353,8 +3353,8 @@ static void DrawWeaponCone(const float3& pos,
 {
 	glPushMatrix();
 
-	const float xlen = len * math::cos(hrads);
-	const float yzlen = len * math::sin(hrads);
+	const float xlen = len * std::cos(hrads);
+	const float yzlen = len * std::sin(hrads);
 	glTranslatef(pos.x, pos.y, pos.z);
 	glRotatef(heading * (180.0 / PI), 0.0f, 1.0f, 0.0f);
 	glRotatef(pitch   * (180.0 / PI), 0.0f, 0.0f, 1.0f);

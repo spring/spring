@@ -964,7 +964,7 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius, b
 	radius = std::min(radius, damage * 0.25f);
 
 	if (damage > 400.0f)
-		damage = 400.0f + math::sqrt(damage - 399.0f);
+		damage = 400.0f + std::sqrt(damage - 399.0f);
 
 	const int ttl = std::max(1.0f, decalLevel * damage * 3.0f);
 
@@ -1149,7 +1149,7 @@ void CGroundDecalHandler::MoveSolidObject(CSolidObject* object, const float3& po
 	decal->alphaFalloff = decalDef.groundDecalDecaySpeed;
 	decal->alpha = 0.0f;
 	decal->pos = pos;
-	decal->radius = math::sqrt(float(sizex * sizex + sizey * sizey)) * SQUARE_SIZE + 20.0f;
+	decal->radius = std::sqrt(float(sizex * sizex + sizey * sizey)) * SQUARE_SIZE + 20.0f;
 	decal->facing = object->buildFacing;
 	// convert to heightmap coors
 	decal->xsize = sizex << 1;

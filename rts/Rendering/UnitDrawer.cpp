@@ -646,8 +646,8 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 	//  * The square root of the camera distance.
 	//  * The mod defined 'iconSize' (which acts a multiplier).
 	//  * The unit radius, depending on whether the mod defined 'radiusadjust' is true or false.
-	const float dist = std::min(8000.0f, fastmath::sqrt2(camera->GetPos().SqDistance(pos)));
-	const float iconScale = 0.4f * fastmath::sqrt2(dist); // makes far icons bigger
+	const float dist = std::min(8000.0f, fastmath::sqrt_builtin(camera->GetPos().SqDistance(pos)));
+	const float iconScale = 0.4f * fastmath::sqrt_builtin(dist); // makes far icons bigger
 	float scale = iconData->GetSize() * iconScale;
 
 	if (iconData->GetRadiusAdjust() && !useDefaultIcon)
@@ -1259,7 +1259,7 @@ void CUnitDrawer::DrawUnitModelBeingBuilt(const CUnit* unit, bool noLuaCall)
 	glEnable(GL_CLIP_PLANE0);
 	glEnable(GL_CLIP_PLANE1);
 
-	const float col = math::fabs(128.0f - ((gs->frameNum * 4) & 255)) / 255.0f + 0.5f;
+	const float col = std::fabs(128.0f - ((gs->frameNum * 4) & 255)) / 255.0f + 0.5f;
 	const unsigned char* tcol = teamHandler->Team(unit->team)->color;
 	// frame line-color
 	const float3 fc = (!globalRendering->teamNanospray)?

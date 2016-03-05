@@ -350,9 +350,9 @@ float3 CCamera::GetRotFromDir(float3 fwd)
 float3 CCamera::GetFwdFromRot(const float3 r)
 {
 	float3 fwd;
-	fwd.x = math::sin(r.x) *   math::sin(r.y);
-	fwd.z = math::sin(r.x) * (-math::cos(r.y));
-	fwd.y = math::cos(r.x);
+	fwd.x = std::sin(r.x) *   std::sin(r.y);
+	fwd.z = std::sin(r.x) * (-std::cos(r.y));
+	fwd.y = std::cos(r.x);
 	return fwd;
 }
 
@@ -367,9 +367,9 @@ float3 CCamera::GetRgtFromRot(const float3 r)
 	//   fwd=(0,-1,0) -> rot=GetRotFromDir(fwd)=( PI, PI, 0.0) -> GetRgtFromRot(rot)=(+1.0, 0.0, 0.0)
 	//
 	float3 rgt;
-	rgt.x = math::sin(HALFPI - r.z) *   math::sin(r.y + HALFPI);
-	rgt.z = math::sin(HALFPI - r.z) * (-math::cos(r.y + HALFPI));
-	rgt.y = math::cos(HALFPI - r.z);
+	rgt.x = std::sin(HALFPI - r.z) *   std::sin(r.y + HALFPI);
+	rgt.z = std::sin(HALFPI - r.z) * (-std::cos(r.y + HALFPI));
+	rgt.y = std::cos(HALFPI - r.z);
 	return rgt;
 }
 

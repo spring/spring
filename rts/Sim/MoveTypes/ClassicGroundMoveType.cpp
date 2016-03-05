@@ -823,14 +823,14 @@ float3 CClassicGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 							if (objectDistToAvoidDirCenter > 0.0f) {
 								avoidRight +=
 									(radiusSum - objectDistToAvoidDirCenter) *
-									AVOIDANCE_STRENGTH * fastmath::isqrt2(distanceToObjectSq);
+									AVOIDANCE_STRENGTH * math::isqrt(distanceToObjectSq);
 								avoidanceDir += (rightOfAvoid * avoidRight);
 								avoidanceDir.Normalize();
 								rightOfAvoid = avoidanceDir.cross(UpVector);
 							} else {
 								avoidLeft +=
 									(radiusSum - math::fabs(objectDistToAvoidDirCenter)) *
-									AVOIDANCE_STRENGTH * fastmath::isqrt2(distanceToObjectSq);
+									AVOIDANCE_STRENGTH * math::isqrt(distanceToObjectSq);
 								avoidanceDir -= (rightOfAvoid * avoidLeft);
 								avoidanceDir.Normalize();
 								rightOfAvoid = avoidanceDir.cross(UpVector);

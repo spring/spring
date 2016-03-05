@@ -85,9 +85,9 @@ CDynWater::CDynWater()
 
 	for (int y = 0; y < 64; ++y) {
 		for (int x = 0; x < 64; ++x) {
-			temp[(y*64 + x)*4 + 0] = math::sin(x*PI*2.0f/64.0f) + ((x < 32) ? -1 : 1)*0.3f;
+			temp[(y*64 + x)*4 + 0] = std::sin(x*PI*2.0f/64.0f) + ((x < 32) ? -1 : 1)*0.3f;
 			temp[(y*64 + x)*4 + 1] = temp[(y*64 + x)*4 + 0];
-			temp[(y*64 + x)*4 + 2] = math::cos(x*PI*2.0f/64.0f) + ((x < 32) ? (16 - x) : (x - 48))/16.0f*0.3f;
+			temp[(y*64 + x)*4 + 2] = std::cos(x*PI*2.0f/64.0f) + ((x < 32) ? (16 - x) : (x - 48))/16.0f*0.3f;
 			temp[(y*64 + x)*4 + 3] = 0;
 		}
 	}
@@ -164,7 +164,7 @@ CDynWater::CDynWater()
 	for (int y = 0; y < 1024; ++y) {
 		for (int x = 0; x < 1024; ++x) {
 			//const float dist = (x - 500)*(x - 500)+(y - 450)*(y - 450);
-			temp[(y*1024 + x)*4 + 0] = 0;//max(0.0f,15-math::sqrt(dist));//math::sin(y*PI*2.0f/64.0f)*0.5f+0.5f;
+			temp[(y*1024 + x)*4 + 0] = 0;//max(0.0f,15-std::sqrt(dist));//std::sin(y*PI*2.0f/64.0f)*0.5f+0.5f;
 			temp[(y*1024 + x)*4 + 1] = 0;
 			temp[(y*1024 + x)*4 + 2] = 0;
 			temp[(y*1024 + x)*4 + 3] = 0;
@@ -194,7 +194,7 @@ CDynWater::CDynWater()
 		const float dy = y - 31.5f;
 		for (int x = 0; x < 64; ++x) {
 			const float dx = x-31.5f;
-			const float dist = math::sqrt(dx*dx + dy*dy);
+			const float dist = std::sqrt(dx*dx + dy*dy);
 			temp[(y*64 + x)*4 + 0] = std::max(0.0f, 1 - dist/30.f) * std::max(0.0f, 1 - dist/30.f);
 			temp[(y*64 + x)*4 + 1] = std::max(0.0f, 1 - dist/30.f);
 			temp[(y*64 + x)*4 + 2] = std::max(0.0f, 1 - dist/30.f) * std::max(0.0f, 1 - dist/30.f);
@@ -419,8 +419,8 @@ void CDynWater::Update()
 
 	oldCamPosBig = camPosBig;
 
-	camPosBig.x = math::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapx*SQUARE_SIZE-WH_SIZE, (float)camera->GetPos().x))/(W_SIZE*16))*(W_SIZE*16);
-	camPosBig.z = math::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapy*SQUARE_SIZE-WH_SIZE, (float)camera->GetPos().z))/(W_SIZE*16))*(W_SIZE*16);
+	camPosBig.x = std::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapx*SQUARE_SIZE-WH_SIZE, (float)camera->GetPos().x))/(W_SIZE*16))*(W_SIZE*16);
+	camPosBig.z = std::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapy*SQUARE_SIZE-WH_SIZE, (float)camera->GetPos().z))/(W_SIZE*16))*(W_SIZE*16);
 
 	glDisable(GL_DEPTH_TEST);
 	glDepthMask(0);
@@ -830,8 +830,8 @@ void CDynWater::DrawWaterSurface()
 	CCamera* cam = CCamera::GetActiveCamera();
 	cam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 
-	camPosBig2.x = math::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapx*SQUARE_SIZE - WH_SIZE, cam->GetPos().x))/(W_SIZE*16))*(W_SIZE*16);
-	camPosBig2.z = math::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapy*SQUARE_SIZE - WH_SIZE, cam->GetPos().z))/(W_SIZE*16))*(W_SIZE*16);
+	camPosBig2.x = std::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapx*SQUARE_SIZE - WH_SIZE, cam->GetPos().x))/(W_SIZE*16))*(W_SIZE*16);
+	camPosBig2.z = std::floor(std::max((float)WH_SIZE, std::min((float)mapDims.mapy*SQUARE_SIZE - WH_SIZE, cam->GetPos().z))/(W_SIZE*16))*(W_SIZE*16);
 
 	const std::vector<CCamera::FrustumLine> negSides; // = cam->GetNegFrustumSides();
 	const std::vector<CCamera::FrustumLine> posSides; // = cam->GetPosFrustumSides();
@@ -1114,8 +1114,8 @@ void CDynWater::AddShipWakes()
 				// hovercraft
 				const float3& pos = unit->pos;
 
-				if ((math::fabs(pos.x - camPosBig.x) > (WH_SIZE - 50)) ||
-					(math::fabs(pos.z - camPosBig.z) > (WH_SIZE - 50)))
+				if ((std::fabs(pos.x - camPosBig.x) > (WH_SIZE - 50)) ||
+					(std::fabs(pos.z - camPosBig.z) > (WH_SIZE - 50)))
 				{
 					continue;
 				}
@@ -1126,7 +1126,7 @@ void CDynWater::AddShipWakes()
 				if ((pos.y > -4.0f) && (pos.y < 4.0f)) {
 					const float3 frontAdd = unit->frontdir * unit->radius * 0.75f;
 					const float3 sideAdd = unit->rightdir * unit->radius * 0.75f;
-					const float depth = math::sqrt(math::sqrt(unit->mass)) * 0.4f;
+					const float depth = std::sqrt(std::sqrt(unit->mass)) * 0.4f;
 					const float3 n(depth, 0.05f * depth, depth);
 
 					va2->AddVertexQTN(pos + frontAdd + sideAdd, 0, 0, n);
@@ -1138,8 +1138,8 @@ void CDynWater::AddShipWakes()
 				// surface ship
 				const float3& pos = unit->pos;
 
-				if ((math::fabs(pos.x - camPosBig.x) > (WH_SIZE - 50)) ||
-					(math::fabs(pos.z - camPosBig.z) > (WH_SIZE - 50)))
+				if ((std::fabs(pos.x - camPosBig.x) > (WH_SIZE - 50)) ||
+					(std::fabs(pos.z - camPosBig.z) > (WH_SIZE - 50)))
 				{
 					continue;
 				}
@@ -1153,7 +1153,7 @@ void CDynWater::AddShipWakes()
 
 				const float3 frontAdd = unit->frontdir * unit->radius * 0.75f;
 				const float3 sideAdd = unit->rightdir * unit->radius * 0.18f;
-				const float depth = math::sqrt(math::sqrt(unit->mass));
+				const float depth = std::sqrt(std::sqrt(unit->mass));
 				const float3 n(depth, 0.04f * unit->speed.Length2D() * depth, depth);
 
 				va->AddVertexQTN(pos + frontAdd + sideAdd, 0, 0, n);
@@ -1230,8 +1230,8 @@ void CDynWater::AddExplosions()
 	for (std::vector<Explosion>::iterator ei = explosions.begin(); ei != explosions.end(); ++ei) {
 		Explosion& explo = *ei;
 		float3 pos = explo.pos;
-		if ((math::fabs(pos.x - camPosBig.x) > (WH_SIZE - 50))
-				|| (math::fabs(pos.z - camPosBig.z) > (WH_SIZE - 50)))
+		if ((std::fabs(pos.x - camPosBig.x) > (WH_SIZE - 50))
+				|| (std::fabs(pos.z - camPosBig.z) > (WH_SIZE - 50)))
 		{
 			continue;
 		}

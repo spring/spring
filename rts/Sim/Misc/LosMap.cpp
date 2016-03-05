@@ -29,7 +29,7 @@ static float isqrt_lookup(unsigned r)
 	auto& isqrt = isqrt_table[ThreadPool::GetThreadNum()];
 	if (r >= isqrt.size()) {
 		for (unsigned i=isqrt.size(); i<=r; ++i)
-			isqrt.push_back(math::isqrt2(std::max(i, 1u)));
+			isqrt.push_back(math::isqrt(std::max(i, 1u)));
 	}
 	return isqrt[r];
 }

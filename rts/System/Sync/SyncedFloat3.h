@@ -503,7 +503,7 @@ public:
 	 * the vector's approx. length.
 	 */
 	SyncedFloat3& UnsafeANormalize() {
-		*this *= fastmath::isqrt(SqLength());
+		*this *= math::isqrt(SqLength());
 		return *this;
 	}
 
@@ -520,7 +520,7 @@ public:
 
 		const float sql = SqLength();
 		if (likely(sql > float3::NORMALIZE_EPS)) {
-			*this *= fastmath::isqrt(sql);
+			*this *= math::isqrt(sql);
 		}
 
 		return *this;
