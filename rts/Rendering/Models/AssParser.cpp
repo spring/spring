@@ -483,7 +483,7 @@ void CAssParser::LoadPieceGeometry(SAssPiece* piece, const aiNode* pieceNode, co
 			const aiVector3D& aiNormal = mesh->mNormals[vertexIndex];
 
 			if (!IS_QNAN(aiNormal)) {
-				vertex.normal = aiVectorToFloat3(aiNormal);
+				vertex.normal = (aiVectorToFloat3(aiNormal)).SafeANormalize();
 			}
 
 			// vertex tangent, x is positive in texture axis
@@ -493,8 +493,8 @@ void CAssParser::LoadPieceGeometry(SAssPiece* piece, const aiNode* pieceNode, co
 				const aiVector3D& aiTangent = mesh->mTangents[vertexIndex];
 				const aiVector3D& aiBitangent = mesh->mBitangents[vertexIndex];
 
-				vertex.sTangent = aiVectorToFloat3(aiTangent);
-				vertex.tTangent = aiVectorToFloat3(aiBitangent);
+				vertex.sTangent = (aiVectorToFloat3(aiTangent)).SafeANormalize();
+				vertex.tTangent = (aiVectorToFloat3(aiBitangent)).SafeANormalize();
 			}
 
 			// vertex tex-coords per channel
