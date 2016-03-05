@@ -251,6 +251,7 @@ int main(int argc, char* argv[])
 
 		FileSystemInitializer::Cleanup();
 		GlobalConfig::Deallocate();
+		DataDirLocater::FreeInstance();
 
 		spring_clock::PopTickRate();
 		LOG("exited");

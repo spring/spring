@@ -1079,6 +1079,7 @@ void SpringApp::ShutDown()
 	SafeDelete(luaSocketRestrictions);
 
 	FileSystemInitializer::Cleanup();
+	DataDirLocater::FreeInstance();
 
 	LOG("[SpringApp::%s][8]", __FUNCTION__);
 	Watchdog::DeregisterThread(WDT_MAIN);

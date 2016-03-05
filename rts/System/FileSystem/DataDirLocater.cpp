@@ -34,8 +34,6 @@ CONFIG(std::string, SpringData).defaultValue("")
 		.readOnly(true);
 
 
-DataDirLocater dataDirLocater;
-
 static inline std::string GetSpringBinaryName()
 {
 #if defined(WIN32)
@@ -568,3 +566,20 @@ std::vector<std::string> DataDirLocater::GetDataDirPaths() const
 
 	return dataDirPaths;
 }
+
+static DataDirLocater* instance = nullptr;
+DataDirLocater& DataDirLocater::GetInstance()
+{
+	if (instance == nullptr) {
+		instance = new DataDirLocater();
+	}
+	return *instance;
+}
+
+void DataDirLocater::FreeInstance()
+{
+	assert(instance != nullptr); //don't free twice
+	delete instance;
+	instance = nullptr;
+}
+
