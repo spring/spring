@@ -39,6 +39,7 @@ protected:
 	std::vector<CCobThread*> wantToRun;
 	std::priority_queue<CCobThread*, std::vector<CCobThread*>, CCobThreadPtr_less> sleeping;
 	CCobThread* curThread;
+	int currentTime;
 	void TickThread(CCobThread* thread);
 public:
 	CCobEngine();
@@ -46,6 +47,7 @@ public:
 	void AddThread(CCobThread* thread);
 	void Tick(int deltaTime);
 	void ShowScriptError(const std::string& msg);
+	int GetCurrentTime() { return currentTime; }
 };
 
 
@@ -61,8 +63,7 @@ public:
 };
 
 
-extern CCobEngine GCobEngine;
-extern CCobFileHandler GCobFileHandler;
-extern int GCurrentTime;
+extern CCobEngine* cobEngine;
+extern CCobFileHandler* cobFileHandler;
 
 #endif // COB_ENGINE_H

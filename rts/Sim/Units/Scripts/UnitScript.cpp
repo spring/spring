@@ -60,7 +60,7 @@ CUnitScript::~CUnitScript()
 {
 	// Remove us from possible animation ticking
 	if (HaveAnimations())
-		GUnitScriptEngine.RemoveInstance(this);
+		unitScriptEngine->RemoveInstance(this);
 }
 
 
@@ -286,7 +286,7 @@ void CUnitScript::RemoveAnim(AnimType type, const std::vector<CUnitScript::AnimI
 	// If this was the last animation, remove from currently animating list
 	// FIXME: this could be done in a cleaner way
 	if (!HaveAnimations()) {
-		GUnitScriptEngine.RemoveInstance(this);
+		unitScriptEngine->RemoveInstance(this);
 	}
 }
 
@@ -349,7 +349,7 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float
 		// If we were not animating before, inform the engine of this so it can schedule us
 		// FIXME: this could be done in a cleaner way
 		if (!HaveAnimations()) {
-			GUnitScriptEngine.AddInstance(this);
+			unitScriptEngine->AddInstance(this);
 		}
 
 		anims[type].emplace_back();

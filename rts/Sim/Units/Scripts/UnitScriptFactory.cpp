@@ -23,7 +23,7 @@ CUnitScript* CUnitScriptFactory::CreateScript(const std::string& name, CUnit* un
 	CUnitScript* script = NULL;
 
 	if (ext == "cob") {
-		CCobFile* file = GCobFileHandler.GetCobFile(name);
+		CCobFile* file = cobFileHandler->GetCobFile(name);
 		if (file) {
 			script = new CCobInstance(*file, unit);
 		} else {

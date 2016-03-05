@@ -24,10 +24,12 @@ public:
 	void RemoveInstance(CUnitScript* instance);
 	void Tick(int deltaTime);
 
+	static void InitStatic();
+	static void KillStatic();
 private:
 	CUnitScript* currentScript;
 };
 
-extern CUnitScriptEngine GUnitScriptEngine;
+extern CUnitScriptEngine* unitScriptEngine;
 
 #endif // UNIT_SCRIPT_ENGINE_H

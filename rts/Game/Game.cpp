@@ -509,6 +509,7 @@ void CGame::PostLoadSimulation()
 	CUnit::InitStatic();
 	CClassicGroundMoveType::CreateLineTable();
 	CCommandAI::InitCommandDescriptionCache();
+	CUnitScriptEngine::InitStatic();
 
 	unitHandler = new CUnitHandler();
 	featureHandler = new CFeatureHandler();
@@ -842,6 +843,7 @@ void CGame::KillSimulation()
 	LOG("[%s][4]", __FUNCTION__);
 	CClassicGroundMoveType::DeleteLineTable();
 	CCommandAI::KillCommandDescriptionCache();
+	CUnitScriptEngine::KillStatic();
 }
 
 
@@ -1458,8 +1460,8 @@ void CGame::SimFrame() {
 		unitHandler->Update();
 		projectileHandler->Update();
 		featureHandler->Update();
-		GCobEngine.Tick(33);
-		GUnitScriptEngine.Tick(33);
+		cobEngine->Tick(33);
+		unitScriptEngine->Tick(33);
 		wind.Update();
 		losHandler->Update();
 		interceptHandler.Update(false);
@@ -1750,12 +1752,12 @@ void CGame::ReloadCOB(const string& msg, int player)
 		LOG_L(L_WARNING, "Unknown unit name: \"%s\"", unitName.c_str());
 		return;
 	}
-	const CCobFile* oldScript = GCobFileHandler.GetScriptAddr("scripts/" + udef->scriptName);
+	const CCobFile* oldScript = cobFileHandler->GetScriptAddr("scripts/" + udef->scriptName);
 	if (oldScript == NULL) {
 		LOG_L(L_WARNING, "Unknown COB script for unit \"%s\": %s", unitName.c_str(), udef->scriptName.c_str());
 		return;
 	}
-	CCobFile* newScript = GCobFileHandler.ReloadCobFile("scripts/" + udef->scriptName);
+	CCobFile* newScript = cobFileHandler->ReloadCobFile("scripts/" + udef->scriptName);
 	if (newScript == NULL) {
 		LOG_L(L_WARNING, "Could not load COB script for unit \"%s\" from: %s", unitName.c_str(), udef->scriptName.c_str());
 		return;

@@ -69,7 +69,7 @@ void CCobThread::Start(int functionId, const vector<int>& args, bool schedule)
 
 	// Add to scheduler
 	if (schedule)
-		GCobEngine.AddThread(this);
+		cobEngine->AddThread(this);
 }
 
 const string& CCobThread::GetName()
@@ -248,9 +248,9 @@ bool CCobThread::Tick()
 				break;
 			case SLEEP:
 				r1 = POP();
-				wakeTime = GCurrentTime + r1;
+				wakeTime = cobEngine->GetCurrentTime() + r1;
 				state = Sleep;
-				GCobEngine.AddThread(this);
+				cobEngine->AddThread(this);
 				LOG_L(L_DEBUG, "%s sleeping for %d ms", script.scriptNames[callStack.back().functionId].c_str(), r1);
 				return true;
 			case SPIN:
@@ -842,7 +842,7 @@ void CCobThread::AnimFinished(CUnitScript::AnimType type, int piece, int axis)
 		state = CCobThread::Run;
 		waitPiece = -1;
 		waitAxis = -1;
-		GCobEngine.AddThread(this);
+		cobEngine->AddThread(this);
 	} else if (state == Dead) {
 		delete this;
 	}

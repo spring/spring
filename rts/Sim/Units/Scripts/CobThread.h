@@ -57,6 +57,8 @@ public:
 	void ShowError(const std::string& msg);
 	void AnimFinished(CUnitScript::AnimType type, int piece, int axis);
 
+	bool IsWaiting() { return waitAxis != -1; }
+
 	CCobInstance* owner;
 protected:
 	std::string GetOpcodeName(int opcode);

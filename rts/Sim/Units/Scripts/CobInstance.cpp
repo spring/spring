@@ -74,13 +74,11 @@ CCobInstance::~CCobInstance()
 	//Destroy();
 	blockCall = true;
 
-	// Only deleting threads which aren't running or sleeping
-	// Also unregister all callbacks
+	// Deleting waiting threads and unregistering all callbacks
 	while (!threads.empty()) {
 		CCobThread* t = threads.back();
 		t->owner = nullptr;
-		if (t->state != CCobThread::Run && t->state != CCobThread::Sleep &&
-		    (t->state != CCobThread::Dead || t->waitAxis != -1)) {
+		if (t->IsWaiting()) {
 			delete t;
 		} else {
 			t->state = CCobThread::Dead;
@@ -627,5 +625,5 @@ void CCobInstance::PlayUnitSound(int snr, int attr)
 
 void CCobInstance::ShowScriptError(const std::string& msg)
 {
-	GCobEngine.ShowScriptError(msg);
+	cobEngine->ShowScriptError(msg);
 }

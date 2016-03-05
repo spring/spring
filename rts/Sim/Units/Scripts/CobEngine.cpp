@@ -18,9 +18,8 @@
 #endif
 
 
-CCobEngine GCobEngine;
-CCobFileHandler GCobFileHandler;
-int GCurrentTime;
+CCobEngine* cobEngine = nullptr;
+CCobFileHandler* cobFileHandler = nullptr;
 
 
 /******************************************************************************/
@@ -28,10 +27,10 @@ int GCurrentTime;
 
 
 CCobEngine::CCobEngine()
-	: curThread(NULL)
-{
-	GCurrentTime = 0;
-}
+	: curThread(nullptr)
+	, currentTime(0)
+
+{ }
 
 
 CCobEngine::~CCobEngine()
@@ -99,13 +98,13 @@ void CCobEngine::Tick(int deltaTime)
 {
 	SCOPED_TIMER("CobEngine::Tick");
 
-	GCurrentTime += deltaTime;
+	currentTime += deltaTime;
 
 	LOG_L(L_DEBUG, "----");
 
 	// Advance all running threads
 	for (CCobThread* t: running) {
-		//LOG_L(L_DEBUG, "Now 1running %d: %s", GCurrentTime, (*i)->GetName().c_str());
+		//LOG_L(L_DEBUG, "Now 1running %d: %s", currentTime, (*i)->GetName().c_str());
 #ifdef _CONSOLE
 		printf("----\n");
 #endif
@@ -125,13 +124,13 @@ void CCobEngine::Tick(int deltaTime)
 	if (!sleeping.empty()) {
 		CCobThread* cur = sleeping.top();
 
-		while ((cur != NULL) && (cur->GetWakeTime() < GCurrentTime)) {
+		while ((cur != NULL) && (cur->GetWakeTime() < currentTime)) {
 			// Start with removing the executing thread from the queue
 			sleeping.pop();
 
 			//Run forward again. This can quite possibly readd the thread to the sleeping array again
 			//But it will not interfere since it is guaranteed to sleep > 0 ms
-			//LOG_L(L_DEBUG, "Now 2running %d: %s", GCurrentTime, cur->GetName().c_str());
+			//LOG_L(L_DEBUG, "Now 2running %d: %s", currentTime, cur->GetName().c_str());
 #ifdef _CONSOLE
 			printf("+++\n");
 #endif

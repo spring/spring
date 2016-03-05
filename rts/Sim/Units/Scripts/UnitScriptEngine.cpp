@@ -3,9 +3,10 @@
 /* heavily based on CobEngine.cpp */
 
 #include "UnitScriptEngine.h"
+
+#include "CobEngine.h"
 #include "UnitScript.h"
 #include "UnitScriptLog.h"
-
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
 
@@ -19,14 +20,25 @@
 
 
 
-CUnitScriptEngine GUnitScriptEngine;
+CUnitScriptEngine* unitScriptEngine = nullptr;
+
+void CUnitScriptEngine::InitStatic() {
+	cobEngine = new CCobEngine();
+	cobFileHandler = new CCobFileHandler();
+	unitScriptEngine = new CUnitScriptEngine();
+}
+void CUnitScriptEngine::KillStatic() {
+	SafeDelete(cobEngine);
+	SafeDelete(cobFileHandler);
+	SafeDelete(unitScriptEngine);
+}
 
 
 /******************************************************************************/
 /******************************************************************************/
 
 
-CUnitScriptEngine::CUnitScriptEngine() : currentScript(NULL)
+CUnitScriptEngine::CUnitScriptEngine() : currentScript(nullptr)
 {
 }
 
@@ -87,7 +99,7 @@ void CUnitScriptEngine::Tick(int deltaTime)
 		}
 	}
 
-	currentScript = NULL;
+	currentScript = nullptr;
 }
 
 
