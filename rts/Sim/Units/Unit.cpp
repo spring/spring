@@ -492,20 +492,17 @@ void CUnit::PostLoad()
 	UpdateDirVectors(!upright);
 	UpdateMidAndAimPos();
 
-	// FIXME: how to handle other script types (e.g. Lua) here?
-	script = CUnitScriptFactory::CreateScript("scripts/" + unitDef->scriptName, this);
-
 	// Call initializing script functions
-	script->Create();
-	script->SetSFXOccupy(curTerrainType);
+	//script->Create();
+	//script->SetSFXOccupy(curTerrainType);
 
 	if (unitDef->windGenerator > 0.0f) {
 		wind.AddUnit(this);
 	}
 
-	if (activated) {
-		script->Activate();
-	}
+	// if (activated) {
+		// script->Activate();
+	// }
 
 	eventHandler.RenderUnitCreated(this, isCloaked);
 }
@@ -2878,7 +2875,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(commandAI),
 	CR_MEMBER(group),
 
-	CR_IGNORED(script),
+	CR_MEMBER(script),
 
 	CR_MEMBER(resourcesCondUse),
 	CR_MEMBER(resourcesCondMake),

@@ -11,6 +11,37 @@
 
 #include <sstream>
 
+CR_BIND(CCobThread, )
+
+CR_REG_METADATA(CCobThread, (
+	CR_MEMBER(owner),
+	CR_MEMBER(wakeTime),
+	CR_MEMBER(PC),
+	CR_MEMBER(paramCount),
+	CR_MEMBER(retCode),
+	CR_MEMBER(cbType),
+	CR_MEMBER(cbParam),
+	CR_MEMBER(waitAxis),
+	CR_MEMBER(waitPiece),
+	CR_MEMBER(state),
+	CR_MEMBER(signalMask),
+	CR_MEMBER(luaArgs),
+	CR_MEMBER(stack),
+	CR_MEMBER(callStack)
+))
+
+CR_BIND(CCobThread::CallInfo,)
+
+CR_REG_METADATA_SUB(CCobThread, CallInfo,(
+		CR_MEMBER(functionId),
+		CR_MEMBER(returnAddr),
+		CR_MEMBER(stackTop)
+))
+
+//creg only
+CCobThread::CCobThread()
+{ }
+
 
 CCobThread::CCobThread(CCobInstance* owner)
 	: owner(owner)
@@ -53,7 +84,7 @@ void CCobThread::Start(int functionId, const vector<int>& args, bool schedule)
 	state = Run;
 	PC = owner->script->scriptOffsets[functionId];
 
-	callInfo ci;
+	CallInfo ci;
 	ci.functionId = functionId;
 	ci.returnAddr = -1;
 	ci.stackTop   = 0;
@@ -315,7 +346,7 @@ bool CCobThread::Tick()
 					break;
 				}
 
-				struct callInfo ci;
+				CallInfo ci;
 				ci.functionId = r1;
 				ci.returnAddr = PC;
 				ci.stackTop = stack.size() - r2;

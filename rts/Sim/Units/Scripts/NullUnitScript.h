@@ -7,7 +7,7 @@
 
 class CNullUnitScript : public CUnitScript
 {
-
+	CR_DECLARE(CNullUnitScript)
 protected:
 	CNullUnitScript(): CUnitScript(nullptr) {}
 

@@ -10,9 +10,10 @@
  */
 
 #include "CobThread.h"
+#include "System/creg/creg_cond.h"
 
+#include "System/creg/STL_Queue.h"
 #include <vector>
-#include <queue>
 #include <map>
 
 class CCobThread;
@@ -30,6 +31,7 @@ public:
 
 class CCobEngine
 {
+	CR_DECLARE_STRUCT(CCobEngine)
 protected:
 	std::vector<CCobThread*> running;
 	/**

@@ -25,6 +25,18 @@ CCobFileHandler* cobFileHandler = nullptr;
 /******************************************************************************/
 /******************************************************************************/
 
+CR_BIND(CCobEngine, )
+
+CR_REG_METADATA(CCobEngine, (
+	CR_MEMBER(currentTime),
+	CR_MEMBER(running),
+	CR_MEMBER(sleeping),
+
+	//always null/empty when saving
+	CR_IGNORED(wantToRun),
+	CR_IGNORED(curThread)
+))
+
 
 CCobEngine::CCobEngine()
 	: curThread(nullptr)

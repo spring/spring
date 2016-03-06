@@ -21,11 +21,11 @@ static const float TAANG2RAD = PI / COBSCALEHALF;
 
 class CCobThread;
 class CCobFile;
-class CCobInstance;
 
 
 class CCobInstance : public CUnitScript
 {
+	CR_DECLARE(CCobInstance)
 
 public:
 	enum ThreadCallbackType { CBNone, CBKilled, CBAimWeapon, CBAimShield };
@@ -44,6 +44,7 @@ public:
 	const CCobFile* GetScriptAddr() const { return script; }
 
 public:
+	//creg only
 	CCobInstance();
 	CCobInstance(CCobFile *script, CUnit *unit);
 	virtual ~CCobInstance();

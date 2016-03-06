@@ -8,16 +8,17 @@
 #include <string>
 #include <vector>
 
-#include "System/Object.h"
 #include "Rendering/Models/3DModel.h"
+#include "System/creg/creg_cond.h"
 
 
 class CUnit;
 class CPlasmaRepulser;
 
-
-class CUnitScript : public CObject
+class CUnitScript
 {
+	CR_DECLARE(CUnitScript)
+	CR_DECLARE_SUB(AnimInfo)
 public:
 	enum AnimType {ANone = -1, ATurn = 0, ASpin = 1, AMove = 2};
 
@@ -42,7 +43,7 @@ protected:
 	bool busy;
 
 	struct AnimInfo {
-		AnimType type;
+		CR_DECLARE_STRUCT(AnimInfo)
 		int axis;
 		int piece;
 		float speed;

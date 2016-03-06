@@ -18,7 +18,11 @@ using std::vector;
 
 class CCobThread : public CObject
 {
+	CR_DECLARE(CCobThread)
+	CR_DECLARE_SUB(CallInfo)
 public:
+	//creg only
+	CCobThread();
 	CCobThread(CCobInstance* owner);
 	/// Inform the vultures that we finally croaked
 	~CCobThread();
@@ -77,12 +81,13 @@ protected:
 
 	int luaArgs[MAX_LUA_COB_ARGS];
 
-	struct callInfo {
+	struct CallInfo {
+		CR_DECLARE_STRUCT(CallInfo)
 		int functionId;
 		int returnAddr;
-		size_t stackTop;
+		int stackTop;
 	};
-	vector<struct callInfo> callStack;
+	vector<CallInfo> callStack;
 
 	CCobInstance::ThreadCallbackType cbType;
 	int cbParam;

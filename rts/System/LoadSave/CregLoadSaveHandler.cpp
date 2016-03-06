@@ -23,6 +23,8 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "Sim/Units/CommandAI/CommandDescription.h"
+#include "Sim/Units/Scripts/CobEngine.h"
+#include "Sim/Units/Scripts/NullUnitScript.h"
 #include "Game/UI/Groups/GroupHandler.h"
 
 #include "System/Platform/errorhandler.h"
@@ -66,6 +68,8 @@ void CGameStateCollector::Serialize(creg::ISerializer* s)
 	s->SerializeObjectInstance(readMap, readMap->GetClass());
 	s->SerializeObjectInstance(quadField, quadField->GetClass());
 	s->SerializeObjectInstance(unitHandler, unitHandler->GetClass());
+	s->SerializeObjectInstance(cobEngine, cobEngine->GetClass());
+	s->SerializeObjectInstance(&CNullUnitScript::value, CNullUnitScript::value.GetClass());
 	s->SerializeObjectInstance(featureHandler, featureHandler->GetClass());
 	s->SerializeObjectInstance(losHandler, losHandler->GetClass());
 	s->SerializeObjectInstance(&interceptHandler, interceptHandler.GetClass());

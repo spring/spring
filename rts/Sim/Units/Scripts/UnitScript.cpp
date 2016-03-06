@@ -46,6 +46,31 @@
 
 #endif
 
+CR_BIND_INTERFACE(CUnitScript)
+
+CR_REG_METADATA(CUnitScript, (
+	CR_MEMBER(unit),
+	CR_MEMBER(busy),
+	CR_MEMBER(anims),
+
+	//Populated by children
+	CR_IGNORED(hasSetSFXOccupy),
+	CR_IGNORED(hasRockUnit),
+	CR_IGNORED(hasStartBuilding)
+))
+
+CR_BIND(CUnitScript::AnimInfo,)
+
+CR_REG_METADATA_SUB(CUnitScript, AnimInfo,(
+		CR_MEMBER(axis),
+		CR_MEMBER(piece),
+		CR_MEMBER(speed),
+		CR_MEMBER(dest),
+		CR_MEMBER(accel),
+		CR_MEMBER(done),
+		CR_MEMBER(hasWaiting)
+))
+
 
 CUnitScript::CUnitScript(CUnit* unit)
 	: unit(unit)
@@ -262,7 +287,7 @@ bool CUnitScript::Tick(int deltaTime)
 	// Tell listeners to unblock, and remove finished animations from the unit/script.
 	for (int animType = ATurn; animType <= AMove; animType++) {
 		for (AnimInfo& ai: doneAnims[animType]) {
-			AnimFinished(ai.type, ai.piece, ai.axis);
+			AnimFinished((AnimType) animType, ai.piece, ai.axis);
 		}
 		doneAnims[animType].clear();
 	}
@@ -292,7 +317,7 @@ void CUnitScript::RemoveAnim(AnimType type, const AnimContainerTypeIt& animInfoI
 	//! We need to unblock threads waiting on this animation, otherwise they will be lost in the void
 	//! NOTE: AnimFinished might result in new anims being added
 	if (ai.hasWaiting)
-		AnimFinished(ai.type, ai.piece, ai.axis);
+		AnimFinished(type, ai.piece, ai.axis);
 
 	ai = anims[type].back();
 	anims[type].pop_back();
@@ -368,7 +393,6 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float
 
 		anims[type].emplace_back();
 		ai = &anims[type].back();
-		ai->type = type;
 		ai->piece = piece;
 		ai->axis = axis;
 	} else {

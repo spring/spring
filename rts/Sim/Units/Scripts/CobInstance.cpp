@@ -43,6 +43,18 @@
 /******************************************************************************/
 /******************************************************************************/
 
+CR_BIND_DERIVED(CCobInstance, CUnitScript, )
+
+CR_REG_METADATA(CCobInstance, (
+	CR_MEMBER(staticVars),
+	CR_MEMBER(threads),
+
+	//loaded from cobFileHandler
+	CR_IGNORED(script),
+
+	CR_POSTLOAD(PostLoad)
+))
+
 
 inline bool CCobInstance::HasFunction(int id) const
 {
