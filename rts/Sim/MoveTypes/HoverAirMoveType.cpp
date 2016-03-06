@@ -64,7 +64,7 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 	flyState(FLY_CRUISING),
 
 	bankingAllowed(true),
-	airStrafe(owner->unitDef->airStrafe),
+	airStrafe(owner != nullptr ? owner->unitDef->airStrafe : false),
 	wantToStop(false),
 
 	goalDistance(1),
@@ -75,7 +75,7 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 
 	turnRate(1),
 	maxDrift(1.0f),
-	maxTurnAngle(math::cos(owner->unitDef->turnInPlaceAngleLimit * (PI / 180.0f)) * -1.0f),
+	maxTurnAngle(math::cos((owner != nullptr ? owner->unitDef->turnInPlaceAngleLimit : 0.0f) * (PI / 180.0f)) * -1.0f),
 
 	wantedSpeed(ZeroVector),
 	deltaSpeed(ZeroVector),
@@ -85,7 +85,7 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 	forceHeading(false),
 	dontLand(false),
 
-	wantedHeading(GetHeadingFromFacing(owner->buildFacing)),
+	wantedHeading(owner != nullptr ? GetHeadingFromFacing(owner->buildFacing) : 0),
 	forceHeadingTo(wantedHeading),
 
 	waitCounter(0),
