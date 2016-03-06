@@ -5,7 +5,6 @@
 #include "CobFile.h"
 #include "CobInstance.h"
 #include "CobEngine.h"
-#include "UnitScriptLog.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 
@@ -847,7 +846,7 @@ void CCobThread::LuaCall()
 	}
 	const LuaHashString& hs = owner->script->luaScripts[r1];
 
-	LOG_L(L_DEBUG, "Cob2Lua %s", hs.GetString().c_str());
+	//LOG_L(L_DEBUG, "Cob2Lua %s", hs.GetString().c_str());
 
 	int argsCount = argCount;
 	luaRules->Cob2Lua(hs, owner->GetUnit(), argsCount, luaArgs);

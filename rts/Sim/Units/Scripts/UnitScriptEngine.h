@@ -5,6 +5,7 @@
 #ifndef UNIT_SCRIPT_ENGINE_H
 #define UNIT_SCRIPT_ENGINE_H
 
+#include "System/creg/creg_cond.h"
 #include <vector>
 
 class CUnit;
@@ -13,6 +14,8 @@ class CUnitScript;
 
 class CUnitScriptEngine
 {
+	CR_DECLARE_STRUCT(CUnitScriptEngine)
+
 protected:
 	std::vector<CUnitScript*> animating; // hash would be optimal, but not crucial
 	void CheckForDuplicates(const char* name, const CUnitScript* instance);

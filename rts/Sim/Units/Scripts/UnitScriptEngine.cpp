@@ -6,7 +6,6 @@
 
 #include "CobEngine.h"
 #include "UnitScript.h"
-#include "UnitScriptLog.h"
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
 
@@ -17,10 +16,18 @@
 	#define END_TIME_PROFILE(a) {}
 	#define SCOPED_TIMER(a) {}
 #endif
-
-
-
 CUnitScriptEngine* unitScriptEngine = nullptr;
+
+
+CR_BIND(CUnitScriptEngine, )
+
+CR_REG_METADATA(CUnitScriptEngine, (
+	CR_MEMBER(animating),
+
+	//always null when saving
+	CR_IGNORED(currentScript)
+))
+
 
 void CUnitScriptEngine::InitStatic() {
 	cobEngine = new CCobEngine();

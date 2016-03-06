@@ -6,7 +6,6 @@
 #include "LuaUnitScript.h"
 
 #include "CobInstance.h"
-#include "UnitScriptLog.h"
 #include "LuaInclude.h"
 #include "NullUnitScript.h"
 #include "LuaScriptNames.h"
@@ -299,7 +298,7 @@ void CLuaUnitScript::UpdateCallIn(const string& fname, int ref)
 		case LUAFN_StartBuilding: hasStartBuilding = (ref != LUA_NOREF); break;
 	}
 
-	LUA_TRACE(fname.c_str());
+	//LUA_TRACE(fname.c_str());
 }
 
 
@@ -313,7 +312,7 @@ void CLuaUnitScript::RemoveCallIn(const string& fname)
 		UpdateCallIn(fname, LUA_NOREF);
 	}
 
-	LUA_TRACE(fname.c_str());
+	//LUA_TRACE(fname.c_str());
 }
 
 
@@ -426,15 +425,15 @@ int CLuaUnitScript::RunQueryCallIn(int fn)
 
 	const int scriptPieceNum = (int)PopNumber(fn, 0) - 1;
 
-	if (LOG_IS_ENABLED(L_DEBUG)) {
-		if (PieceExists(scriptPieceNum)) {
-			LocalModelPiece* piece = GetScriptLocalModelPiece(scriptPieceNum);
-			LOG_L(L_DEBUG, "%s: %d %s",
-					CLuaUnitScriptNames::GetScriptName(fn).c_str(),
-					scriptPieceNum,
-					(piece->original) ? piece->original->name.c_str() : "n/a");
-		}
-	}
+	// if (LOG_IS_ENABLED(L_DEBUG)) {
+		// if (PieceExists(scriptPieceNum)) {
+			// LocalModelPiece* piece = GetScriptLocalModelPiece(scriptPieceNum);
+			// LOG_L(L_DEBUG, "%s: %d %s",
+					// CLuaUnitScriptNames::GetScriptName(fn).c_str(),
+					// scriptPieceNum,
+					// (piece->original) ? piece->original->name.c_str() : "n/a");
+		// }
+	// }
 
 	return scriptPieceNum;
 }
@@ -456,15 +455,15 @@ int CLuaUnitScript::RunQueryCallIn(int fn, float arg1)
 
 	const int scriptPieceNum = (int)PopNumber(fn, 0) - 1;
 
-	if (LOG_IS_ENABLED(L_DEBUG)) {
-		if (PieceExists(scriptPieceNum)) {
-			LocalModelPiece* piece = GetScriptLocalModelPiece(scriptPieceNum);
-			LOG_L(L_DEBUG, "%s: %d %s",
-					CLuaUnitScriptNames::GetScriptName(fn).c_str(),
-					scriptPieceNum,
-					(piece->original) ? piece->original->name.c_str() : "n/a");
-		}
-	}
+	// if (LOG_IS_ENABLED(L_DEBUG)) {
+		// if (PieceExists(scriptPieceNum)) {
+			// LocalModelPiece* piece = GetScriptLocalModelPiece(scriptPieceNum);
+			// LOG_L(L_DEBUG, "%s: %d %s",
+					// CLuaUnitScriptNames::GetScriptName(fn).c_str(),
+					// scriptPieceNum,
+					// (piece->original) ? piece->original->name.c_str() : "n/a");
+		// }
+	// }
 
 	return scriptPieceNum;
 }
@@ -1009,7 +1008,7 @@ int CLuaUnitScript::CreateScript(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
-		LUA_TRACE("no such unit");
+		//LUA_TRACE("no such unit");
 		return 0;
 	}
 
@@ -1037,7 +1036,7 @@ int CLuaUnitScript::CreateScript(lua_State* L)
 		w->SetWeaponNum(w->weaponNum);
 	}
 
-	LUA_TRACE("script replaced with CLuaUnitScript");
+	//LUA_TRACE("script replaced with CLuaUnitScript");
 
 	return 0;
 }

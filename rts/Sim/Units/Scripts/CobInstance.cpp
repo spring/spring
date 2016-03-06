@@ -5,9 +5,6 @@
 #include "CobFile.h"
 #include "CobInstance.h"
 #include "CobThread.h"
-#include "UnitScriptLog.h"
-
-#ifndef _CONSOLE
 
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
@@ -36,8 +33,6 @@
 #include "System/myMath.h"
 #include "System/Sound/ISoundChannels.h"
 #include "System/Sync/SyncTracer.h"
-
-#endif // _CONSOLE
 
 
 /******************************************************************************/
@@ -496,7 +491,7 @@ int CCobInstance::RealCall(int functionId, vector<int>& args, ThreadCallbackType
 	CCobThread* thread = new CCobThread(this);
 	thread->Start(functionId, args, false);
 
-	LOG_L(L_DEBUG, "Calling %s:%s", script->name.c_str(), script->scriptNames[functionId].c_str());
+	//LOG_L(L_DEBUG, "Calling %s:%s", script->name.c_str(), script->scriptNames[functionId].c_str());
 
 	const bool res = thread->Tick();
 

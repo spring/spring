@@ -5,17 +5,8 @@
 #include "CobThread.h"
 #include "CobInstance.h"
 #include "CobFile.h"
-#include "UnitScriptLog.h"
 #include "System/FileSystem/FileHandler.h"
-
-#ifndef _CONSOLE
 #include "System/TimeProfiler.h"
-#endif
-#ifdef _CONSOLE
-#define START_TIME_PROFILE(a) {}
-#define END_TIME_PROFILE(a) {}
-#define SCOPED_TIMER(a) {}
-#endif
 
 
 CCobEngine* cobEngine = nullptr;
@@ -112,14 +103,9 @@ void CCobEngine::Tick(int deltaTime)
 
 	currentTime += deltaTime;
 
-	LOG_L(L_DEBUG, "----");
-
 	// Advance all running threads
 	for (CCobThread* t: running) {
 		//LOG_L(L_DEBUG, "Now 1running %d: %s", currentTime, (*i)->GetName().c_str());
-#ifdef _CONSOLE
-		printf("----\n");
-#endif
 		TickThread(t);
 	}
 
@@ -143,9 +129,6 @@ void CCobEngine::Tick(int deltaTime)
 			//Run forward again. This can quite possibly readd the thread to the sleeping array again
 			//But it will not interfere since it is guaranteed to sleep > 0 ms
 			//LOG_L(L_DEBUG, "Now 2running %d: %s", currentTime, cur->GetName().c_str());
-#ifdef _CONSOLE
-			printf("+++\n");
-#endif
 			if (cur->state == CCobThread::Sleep) {
 				cur->state = CCobThread::Run;
 				TickThread(cur);

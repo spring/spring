@@ -24,6 +24,7 @@
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "Sim/Units/CommandAI/CommandDescription.h"
 #include "Sim/Units/Scripts/CobEngine.h"
+#include "Sim/Units/Scripts/UnitScriptEngine.h"
 #include "Sim/Units/Scripts/NullUnitScript.h"
 #include "Game/UI/Groups/GroupHandler.h"
 
@@ -69,6 +70,7 @@ void CGameStateCollector::Serialize(creg::ISerializer* s)
 	s->SerializeObjectInstance(quadField, quadField->GetClass());
 	s->SerializeObjectInstance(unitHandler, unitHandler->GetClass());
 	s->SerializeObjectInstance(cobEngine, cobEngine->GetClass());
+	s->SerializeObjectInstance(unitScriptEngine, unitScriptEngine->GetClass());
 	s->SerializeObjectInstance(&CNullUnitScript::value, CNullUnitScript::value.GetClass());
 	s->SerializeObjectInstance(featureHandler, featureHandler->GetClass());
 	s->SerializeObjectInstance(losHandler, losHandler->GetClass());
