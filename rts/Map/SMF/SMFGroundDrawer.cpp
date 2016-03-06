@@ -516,7 +516,8 @@ void CSMFGroundDrawer::SunChanged(const float3& sunDir) {
 }
 
 void CSMFGroundDrawer::SunLightingChanged() {
-	smfRenderStates[RENDER_STATE_SSP]->UpdateCurrentShaderSunLighting();
+	// note: only the active state is notified of a given change
+	smfRenderStates[RENDER_STATE_SEL]->UpdateCurrentShaderSunLighting();
 }
 
 
