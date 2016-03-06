@@ -72,7 +72,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 #define FOOTPRINT_RADIUS(xs, zs, s) ((math::sqrt((xs * xs + zs * zs)) * 0.5f * SQUARE_SIZE) * s)
 
 
-CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL))
+CR_BIND_DERIVED(CGroundMoveType, AMoveType, (nullptr))
 CR_REG_METADATA(CGroundMoveType, (
 	CR_IGNORED(pathController),
 
@@ -132,7 +132,7 @@ CR_REG_METADATA(CGroundMoveType, (
 
 CGroundMoveType::CGroundMoveType(CUnit* owner):
 	AMoveType(owner),
-	pathController((owner != NULL)? IPathController::GetInstance(owner): NULL),
+	pathController((owner != nullptr)? IPathController::GetInstance(owner): nullptr),
 
 	currWayPoint(ZeroVector),
 	nextWayPoint(ZeroVector),
@@ -168,7 +168,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 
 	reversing(false),
 	idling(false),
-	canReverse((owner != NULL) && (owner->unitDef->rSpeed > 0.0f)),
+	canReverse((owner != nullptr) && (owner->unitDef->rSpeed > 0.0f)),
 	useMainHeading(false),
 	useRawMovement(false),
 
@@ -184,11 +184,12 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 
 	wantedHeading(0)
 {
-	if (owner == NULL)
+	// creg
+	if (owner == nullptr)
 		return;
 
-	assert(owner->unitDef != NULL);
-	assert(owner->moveDef != NULL);
+	assert(owner->unitDef != nullptr);
+	assert(owner->moveDef != nullptr);
 
 	// maxSpeed is set in AMoveType's ctor
 	maxReverseSpeed = owner->unitDef->rSpeed / GAME_SPEED;

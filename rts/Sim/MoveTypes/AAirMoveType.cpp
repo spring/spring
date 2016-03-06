@@ -55,11 +55,15 @@ AAirMoveType::AAirMoveType(CUnit* unit):
 	useSmoothMesh(false),
 	autoLand(true),
 
-	lastColWarning(NULL),
+	lastColWarning(nullptr),
 
 	lastColWarningType(0)
 {
-	assert(unit != NULL);
+	// creg
+	if (unit == nullptr)
+		return;
+
+	assert(owner->unitDef != nullptr);
 
 	oldGoalPos = unit->pos;
 	// same as {Ground, HoverAir}MoveType::accRate

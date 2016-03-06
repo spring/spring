@@ -20,7 +20,7 @@
 #include "System/myMath.h"
 #include "System/Sync/HsiehHash.h"
 
-CR_BIND_DERIVED(CStrafeAirMoveType, AAirMoveType, (NULL))
+CR_BIND_DERIVED(CStrafeAirMoveType, AAirMoveType, (nullptr))
 
 CR_REG_METADATA(CStrafeAirMoveType, (
 	CR_MEMBER(maneuverState),
@@ -363,8 +363,11 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	maxElevator(0.02f),
 	maxRudder(0.01f)
 {
-	assert(owner != NULL);
-	assert(owner->unitDef != NULL);
+	// creg
+	if (owner == nullptr)
+		return;
+
+	assert(owner->unitDef != nullptr);
 
 	// force LOS recalculation
 	owner->mapSquare += 1;

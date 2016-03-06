@@ -18,7 +18,7 @@
 #include "System/Matrix44f.h"
 #include "System/Sync/HsiehHash.h"
 
-CR_BIND_DERIVED(CHoverAirMoveType, AAirMoveType, (NULL))
+CR_BIND_DERIVED(CHoverAirMoveType, AAirMoveType, (nullptr))
 
 CR_REG_METADATA(CHoverAirMoveType, (
 	CR_MEMBER(flyState),
@@ -91,8 +91,11 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 	waitCounter(0),
 	lastMoveRate(0)
 {
-	assert(owner != NULL);
-	assert(owner->unitDef != NULL);
+	// creg
+	if (owner == nullptr)
+		return;
+
+	assert(owner->unitDef != nullptr);
 
 	turnRate = owner->unitDef->turnRate;
 
