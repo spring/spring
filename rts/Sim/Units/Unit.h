@@ -82,6 +82,8 @@ public:
 	virtual void SlowUpdateWeapons();
 	virtual void Update();
 
+	const SolidObjectDef* GetDef() const;
+
 	virtual void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID);
 	virtual void DoWaterDamage();
 	virtual void FinishedBuilding(bool postInit);

@@ -1121,7 +1121,7 @@ void CGroundDecalHandler::MoveSolidObject(CSolidObject* object, const float3& po
 	if (decalLevel == 0)
 		return;
 
-	const SolidObjectDecalDef& decalDef = object->objectDef->decalDef;
+	const SolidObjectDecalDef& decalDef = object->GetDef()->decalDef;
 
 	if (!decalDef.useGroundDecal || decalDef.groundDecalType < -1)
 		return;

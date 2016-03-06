@@ -113,8 +113,6 @@ CFeature::~CFeature()
 
 void CFeature::PostLoad()
 {
-	objectDef = def;
-
 	// FIXME is this really needed (aren't all those tags saved via creg?)
 	switch (def->drawType) {
 		case DRAWTYPE_NONE: {
@@ -184,7 +182,6 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 {
 	def = params.featureDef;
 	udef = params.unitDef;
-	objectDef = params.featureDef;
 
 	id = params.featureID;
 
@@ -274,6 +271,11 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	eventHandler.RenderFeatureCreated(this);
 }
 
+
+const SolidObjectDef* CFeature::GetDef() const
+{
+	return def;
+}
 
 
 bool CFeature::AddBuildPower(CUnit* builder, float amount)

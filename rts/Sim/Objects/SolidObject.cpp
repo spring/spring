@@ -49,7 +49,6 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(tempNum),
 	CR_MEMBER(lastHitPieceFrame),
 
-	CR_IGNORED(objectDef), //set by unit/feature postload
 	CR_MEMBER(moveDef),
 
 	CR_IGNORED(localModel), // TODO
@@ -113,7 +112,6 @@ CSolidObject::CSolidObject():
 	tempNum(0),
 	lastHitPieceFrame(-1),
 
-	objectDef(nullptr),
 	moveDef(nullptr),
 
 	lastHitPiece(nullptr),
@@ -217,7 +215,7 @@ void CSolidObject::UpdateVoidState(bool set) {
 		ClearVoidState();
 	}
 
-	noSelect = (set || !objectDef->selectable);
+	noSelect = (set || !GetDef()->selectable);
 }
 
 

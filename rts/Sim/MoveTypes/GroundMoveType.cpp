@@ -1080,7 +1080,7 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 	for (vector<CSolidObject*>::const_iterator oi = objects.begin(); oi != objects.end(); ++oi) {
 		const CSolidObject* avoidee = *oi;
 		const MoveDef* avoideeMD = avoidee->moveDef;
-		const UnitDef* avoideeUD = dynamic_cast<const UnitDef*>(avoidee->objectDef);
+		const UnitDef* avoideeUD = dynamic_cast<const UnitDef*>(avoidee->GetDef());
 
 		// cases in which there is no need to avoid this obstacle
 		if (avoidee == owner)

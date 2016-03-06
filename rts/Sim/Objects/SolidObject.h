@@ -50,6 +50,9 @@ class CSolidObject: public CWorldObject {
 public:
 	CR_DECLARE_DERIVED(CSolidObject)
 
+
+	virtual const SolidObjectDef* GetDef() const = 0;
+
 	enum PhysicalState {
 		// NOTE:
 		//   {ONGROUND,*WATER} and INAIR are mutually exclusive
@@ -308,7 +311,6 @@ public:
 	int lastHitPieceFrame;                      ///< frame in which lastHitPiece was hit
 
 
-	const SolidObjectDef* objectDef;            ///< points to a UnitDef or to a FeatureDef instance
 	MoveDef* moveDef;                           ///< mobility information about this object (if NULL, object is either static or aircraft)
 
 	LocalModel localModel;

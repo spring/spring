@@ -681,8 +681,8 @@ int LuaObjectRenderingImpl::Debug(lua_State* L)
 
 	LOG_L(L_DEBUG, "%s", "");
 	LOG_L(L_DEBUG, "ObjectID      = %i", obj->id);
-	LOG_L(L_DEBUG, "ObjectDefID   = %i", obj->objectDef->id);
-	LOG_L(L_DEBUG, "ObjectDefName = %s", obj->objectDef->name.c_str());
+	LOG_L(L_DEBUG, "ObjectDefID   = %i", obj->GetDef()->id);
+	LOG_L(L_DEBUG, "ObjectDefName = %s", obj->GetDef()->name.c_str());
 	LOG_L(L_DEBUG, "LodCount      = %i", lmd->GetLODCount());
 	LOG_L(L_DEBUG, "CurrentLod    = %i", lmd->GetCurrentLOD());
 	LOG_L(L_DEBUG, "%s", "");

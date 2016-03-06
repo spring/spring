@@ -65,6 +65,8 @@ public:
 	 */
 	void Initialize(const FeatureLoadParams& params);
 
+	const SolidObjectDef* GetDef() const;
+
 	int GetBlockingMapID() const;
 
 	/**

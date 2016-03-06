@@ -277,7 +277,6 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	id = params.unitID;
 	featureDefID = -1;
 
-	objectDef = params.unitDef;
 	unitDef = params.unitDef;
 
 	{
@@ -479,10 +478,14 @@ void CUnit::PostInit(const CUnit* builder)
 }
 
 
+const SolidObjectDef* CUnit::GetDef() const
+{
+	return unitDef;
+}
+
+
 void CUnit::PostLoad()
 {
-	//HACK:Initializing after load
-	objectDef = unitDef;
 	model = unitDef->LoadModel();
 	localModel.SetModel(model);
 	blockMap = (unitDef->GetYardMap().empty())? NULL: &unitDef->GetYardMap()[0];
