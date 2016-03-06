@@ -113,28 +113,6 @@ CFeature::~CFeature()
 
 void CFeature::PostLoad()
 {
-	// FIXME is this really needed (aren't all those tags saved via creg?)
-	switch (def->drawType) {
-		case DRAWTYPE_NONE: {
-		} break;
-
-		case DRAWTYPE_MODEL: {
-			if ((model = def->LoadModel()) != nullptr) {
-				SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
-				SetRadiusAndHeight(model);
-
-				localModel.SetModel(model);
-			}
-		} break;
-
-		default: {
-			// always >= DRAWTYPE_TREE here
-			SetMidAndAimPos(UpVector * TREE_RADIUS, UpVector * TREE_RADIUS, true);
-			SetRadiusAndHeight(TREE_RADIUS, TREE_RADIUS * 2.0f);
-		} break;
-	}
-
-	UpdateMidAndAimPos();
 	eventHandler.RenderFeatureCreated(this);
 }
 

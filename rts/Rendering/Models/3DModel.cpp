@@ -41,7 +41,7 @@ CR_REG_METADATA(LocalModelPiece, (
 
 CR_BIND(LocalModel, )
 CR_REG_METADATA(LocalModel, (
-	CR_IGNORED(dirtyPieces),
+	CR_MEMBER(dirtyPieces),
 	CR_IGNORED(bvFrameTime),
 	CR_IGNORED(lodCount), //FIXME?
 	CR_MEMBER(pieces),
@@ -282,12 +282,33 @@ void LocalModel::SetLODCount(unsigned int count)
 }
 
 
+void LocalModel::SetOriginalPieces(const S3DModelPiece* mp, int& idx)
+{
+	pieces[idx].original = mp;
+	pieces[idx++].dispListID = mp->GetDisplayListID();
 
-void LocalModel::SetModel(const S3DModel* model)
+	for (unsigned int i = 0; i < mp->GetChildCount(); i++) {
+		SetOriginalPieces(mp->GetChild(i), idx);
+	}
+}
+
+void LocalModel::SetModel(const S3DModel* model, bool initialize)
 {
 	// make sure we do not get called for trees, etc
 	assert(model != nullptr);
 	assert(model->numPieces >= 1);
+
+	// Only update the pieces
+	if (!initialize) {
+		assert(pieces.size() == model->numPieces);
+		int idx = 0;
+		SetOriginalPieces(model->GetRootPiece(), idx);
+		assert (idx == model->numPieces);
+		UpdateBoundingVolume(0);
+		return;
+	}
+
+	assert(pieces.size() == 0);
 
 	dirtyPieces = model->numPieces;
 	bvFrameTime = 0;

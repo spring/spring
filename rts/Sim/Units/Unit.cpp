@@ -486,26 +486,11 @@ const SolidObjectDef* CUnit::GetDef() const
 
 void CUnit::PostLoad()
 {
-	model = unitDef->LoadModel();
-	localModel.SetModel(model);
 	blockMap = (unitDef->GetYardMap().empty())? NULL: &unitDef->GetYardMap()[0];
-
-	SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
-	SetRadiusAndHeight(model);
-	UpdateDirVectors(!upright);
-	UpdateMidAndAimPos();
-
-	// Call initializing script functions
-	//script->Create();
-	//script->SetSFXOccupy(curTerrainType);
 
 	if (unitDef->windGenerator > 0.0f) {
 		wind.AddUnit(this);
 	}
-
-	// if (activated) {
-		// script->Activate();
-	// }
 
 	eventHandler.RenderUnitCreated(this, isCloaked);
 }

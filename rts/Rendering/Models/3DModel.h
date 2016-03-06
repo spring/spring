@@ -389,10 +389,12 @@ struct LocalModel
 	}
 
 
-	void SetModel(const S3DModel* model);
+	void SetModel(const S3DModel* model, bool initialize = true);
 	void SetLODCount(unsigned int count);
 	void PieceUpdated(unsigned int pieceIdx) { dirtyPieces += 1; }
 	void UpdateBoundingVolume(unsigned int frameNum);
+
+	void SetOriginalPieces(const S3DModelPiece* mp, int& idx);
 
 
 	void GetBoundingBoxVerts(std::vector<float3>& verts) const {
