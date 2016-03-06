@@ -59,12 +59,19 @@ CBaseGroundDrawer::~CBaseGroundDrawer()
 
 void CBaseGroundDrawer::DrawTrees(bool drawReflection) const
 {
+	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT);
+
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.005f);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	if (treeDrawer->drawTrees) {
+		// NOTE:
+		//   the info-texture now contains an alpha-component
+		//   so binding it here means trees will be invisible
+		//   when shadows are disabled
 		if (infoTextureHandler->IsEnabled()) {
 			glActiveTextureARB(GL_TEXTURE1_ARB);
 			glEnable(GL_TEXTURE_2D);
@@ -95,7 +102,6 @@ void CBaseGroundDrawer::DrawTrees(bool drawReflection) const
 		}
 	}
 
-	glDisable(GL_ALPHA_TEST);
-	glDisable(GL_BLEND);
+	glPopAttrib();
 }
 

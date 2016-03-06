@@ -564,6 +564,7 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType)
 
 
 void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
+	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT);
 	glDisable(GL_BLEND);
 	glEnable(GL_TEXTURE_2D);
 	glDepthMask(GL_TRUE);
@@ -619,10 +620,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		CProjectile::DrawArray();
 	}
 
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_ALPHA_TEST);
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	glDepthMask(GL_TRUE);
+	glPopAttrib();
 }
 
 void CProjectileDrawer::DrawShadowPass()

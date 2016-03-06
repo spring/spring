@@ -464,8 +464,10 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 	const int activeFarTex = treeGen->farTex[cam->GetDir().z >= 0.0f];
 	const bool drawDetailed = ((treeDistance >= 4.0f) || drawReflection);
 
+	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 	glEnable(GL_ALPHA_TEST);
 	glEnable(GL_TEXTURE_2D);
+	glDepthMask(GL_TRUE);
 
 	sky->SetupFog();
 
@@ -728,9 +730,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
 	}
 
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_FOG);
-	glDisable(GL_ALPHA_TEST);
+	glPopAttrib();
 
 
 

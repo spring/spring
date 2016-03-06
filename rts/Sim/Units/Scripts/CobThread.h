@@ -60,8 +60,8 @@ public:
 	void ShowError(const std::string& msg);
 	void AnimFinished(CUnitScript::AnimType type, int piece, int axis);
 
-	int GetRetCode() { return retCode; }
-	bool IsWaiting() { return waitAxis != -1; }
+	int GetRetCode() const { return retCode; }
+	bool IsWaiting() const { return (waitAxis != -1); }
 
 	CCobInstance* owner;
 protected:

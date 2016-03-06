@@ -451,14 +451,18 @@ void CAdvTreeGenerator::CreateGranTex(unsigned char* data, int xpos, int ypos, i
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glOrtho(0,1,0,1,-4,4);
+	glViewport(0,0,256,256);
+
+	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT);
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_FOG);
 	glDisable(GL_BLEND);
 	glColor4f(1,1,1,1);
-	glViewport(0,0,256,256);
+
 	glAlphaFunc(GL_GREATER,0.5f);
 	glEnable(GL_ALPHA_TEST);
 	glDisable(GL_DEPTH_TEST);
+
 	glClearColor(0.0f,0.0f,0.0f,0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -483,7 +487,8 @@ void CAdvTreeGenerator::CreateGranTex(unsigned char* data, int xpos, int ypos, i
 		}
 	}
 
-	glEnable(GL_DEPTH_TEST);
+	glPopAttrib();
+
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
