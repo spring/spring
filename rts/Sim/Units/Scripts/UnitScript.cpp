@@ -228,6 +228,7 @@ void CUnitScript::TickAnims(int deltaTime, AnimType type, std::vector<int>& done
 bool CUnitScript::Tick(int deltaTime)
 {
 	// vector of indexes of finished animations,
+	// so we can get rid of them in constant time
 	static std::vector<int> doneAnims[AMove + 1];
 
 	for (int animType = ATurn; animType <= AMove; animType++) {
@@ -239,9 +240,7 @@ bool CUnitScript::Tick(int deltaTime)
 	// NOTE: AnimFinished might result in new anims being added
 	for (int animType = ATurn; animType <= AMove; animType++) {
 		for (auto it = doneAnims[animType].rbegin(); it != doneAnims[animType].rend(); ++it) {
-			int idx = *it;
-
-			AnimInfo& animInfo = anims[animType][idx];
+			AnimInfo& animInfo = anims[animType][*it];
 
 			if (animInfo.hasWaiting)
 				AnimFinished(animInfo.type, animInfo.piece, animInfo.axis);
@@ -249,16 +248,16 @@ bool CUnitScript::Tick(int deltaTime)
 			animInfo = anims[animType].back();
 			anims[animType].pop_back();
 		}
+
 		doneAnims[animType].clear();
 	}
-
 
 	return (HaveAnimations());
 }
 
 
 
-std::vector<CUnitScript::AnimInfo>::iterator CUnitScript::FindAnim(AnimType type, int piece, int axis)
+CUnitScript::AnimContainerTypeIt CUnitScript::FindAnim(AnimType type, int piece, int axis)
 {
 	for (auto it = anims[type].begin(); it != anims[type].end(); ++it) {
 		if (((*it).piece == piece) && ((*it).axis == axis))
@@ -268,7 +267,7 @@ std::vector<CUnitScript::AnimInfo>::iterator CUnitScript::FindAnim(AnimType type
 	return anims[type].end();
 }
 
-void CUnitScript::RemoveAnim(AnimType type, const std::vector<CUnitScript::AnimInfo>::iterator& animInfoIt)
+void CUnitScript::RemoveAnim(AnimType type, const AnimContainerTypeIt& animInfoIt)
 {
 	if (animInfoIt == anims[type].end())
 		return;
@@ -312,7 +311,7 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float
 		}
 	}
 
-	std::vector<AnimInfo>::iterator animInfoIt;
+	AnimContainerTypeIt animInfoIt;
 	AnimInfo* ai = NULL;
 	AnimType overrideType = ANone;
 

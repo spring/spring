@@ -52,7 +52,10 @@ protected:
 		bool hasWaiting;
 	};
 
-	std::vector<AnimInfo> anims[AMove + 1];
+	typedef std::deque<AnimInfo> AnimContainerType;
+	typedef AnimContainerType::iterator AnimContainerTypeIt;
+
+	AnimContainerType anims[AMove + 1];
 
 	bool hasSetSFXOccupy;
 	bool hasRockUnit;
@@ -62,8 +65,8 @@ protected:
 	bool TurnToward(float& cur, float dest, float speed);
 	bool DoSpin(float& cur, float dest, float& speed, float accel, int divisor);
 
-	std::vector<AnimInfo>::iterator FindAnim(AnimType type, int piece, int axis);
-	void RemoveAnim(AnimType type, const std::vector<AnimInfo>::iterator& animInfoIt);
+	AnimContainerTypeIt FindAnim(AnimType type, int piece, int axis);
+	void RemoveAnim(AnimType type, const AnimContainerTypeIt& animInfoIt);
 	void AddAnim(AnimType type, int piece, int axis, float speed, float dest, float accel);
 
 	virtual void ShowScriptError(const std::string& msg) = 0;
