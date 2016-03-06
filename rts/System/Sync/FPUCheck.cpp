@@ -174,19 +174,6 @@ void good_fpu_init()
 #endif
 }
 
-void streflop_init_omp() {
-	// Initialize FPU in all worker threads, too
-	// Note: It's not needed for sync'ness cause all precision relevant
-	//       mode flags are shared across the process!
-	//       But the exception ones aren't (but are copied from the calling thread).
-	parallel([&]{
-		streflop::streflop_init<streflop::Simple>();
-	#if defined(__SUPPORT_SNAN__)
-		streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
-	#endif
-	});
-}
-
 namespace springproc {
 	unsigned int GetProcMaxStandardLevel()
 	{
