@@ -4,7 +4,6 @@
 #define COB_THREAD_H
 
 #include "CobInstance.h"
-#include "System/Object.h"
 #include "Lua/LuaRules.h"
 
 #include <string>
@@ -16,9 +15,9 @@ class CCobInstance;
 using std::vector;
 
 
-class CCobThread : public CObject
+class CCobThread
 {
-	CR_DECLARE(CCobThread)
+	CR_DECLARE_STRUCT(CCobThread)
 	CR_DECLARE_SUB(CallInfo)
 public:
 	//creg only

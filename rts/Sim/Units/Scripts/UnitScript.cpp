@@ -54,6 +54,7 @@ CR_REG_METADATA(CUnitScript, (
 	CR_MEMBER(anims),
 
 	//Populated by children
+	CR_IGNORED(pieces),
 	CR_IGNORED(hasSetSFXOccupy),
 	CR_IGNORED(hasRockUnit),
 	CR_IGNORED(hasStartBuilding)
