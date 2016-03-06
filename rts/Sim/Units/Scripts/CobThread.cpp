@@ -19,9 +19,8 @@ CCobThread::CCobThread(CCobFile& script, CCobInstance* owner)
 	, PC(0)
 	, paramCount(0)
 	, retCode(-1)
-	, callback(nullptr)
-	, cbParam1(nullptr)
-	, cbParam2(nullptr)
+	, cbType(CCobInstance::CBNone)
+	, cbParam(0)
 	, waitAxis(-1)
 	, waitPiece(-1)
 	, state(Init)
@@ -33,22 +32,21 @@ CCobThread::CCobThread(CCobFile& script, CCobInstance* owner)
 
 CCobThread::~CCobThread()
 {
-	if (callback != nullptr) {
-		//LOG_L(L_DEBUG, "%s callback with %d", script.scriptNames[callStack.back().functionId].c_str(), retCode);
-		(*callback)(retCode, cbParam1, cbParam2);
-	}
 	if (owner != nullptr) {
+		if (cbType != CCobInstance::CBNone) {
+			//LOG_L(L_DEBUG, "%s callback with %d", script.scriptNames[callStack.back().functionId].c_str(), retCode);
+			owner->ThreadCallback(cbType, retCode, cbParam);
+		}
 		auto it = std::find(owner->threads.begin(), owner->threads.end(), this);
 		assert(it != owner->threads.end());
 		owner->threads.erase(it);
 	}
 }
 
-void CCobThread::SetCallback(CBCobThreadFinish cb, void* p1, void* p2)
+void CCobThread::SetCallback(CCobInstance::ThreadCallbackType cb, int cbp)
 {
-	callback = cb;
-	cbParam1 = p1;
-	cbParam2 = p2;
+	cbType = cb;
+	cbParam = cbp;
 }
 
 void CCobThread::Start(int functionId, const vector<int>& args, bool schedule)
@@ -227,9 +225,9 @@ bool CCobThread::Tick()
 	vector<int> args;
 	vector<int>::iterator ei;
 
-	execTrace.clear();
+	//execTrace.clear();
 
-	LOG_L(L_DEBUG, "Executing in %s (from %s)", script.scriptNames[callStack.back().functionId].c_str(), GetName().c_str());
+	//LOG_L(L_DEBUG, "Executing in %s (from %s)", script.scriptNames[callStack.back().functionId].c_str(), GetName().c_str());
 
 	while (state == Run) {
 		//int opcode = *(int*)&script.code[PC];
@@ -239,7 +237,7 @@ bool CCobThread::Tick()
 
 		int opcode = GET_LONG_PC();
 
-		LOG_L(L_DEBUG, "PC: %x opcode: %x (%s)", PC - 1, opcode, GetOpcodeName(opcode).c_str());
+		//LOG_L(L_DEBUG, "PC: %x opcode: %x (%s)", PC - 1, opcode, GetOpcodeName(opcode).c_str());
 
 		switch(opcode) {
 			case PUSH_CONSTANT:
@@ -251,7 +249,7 @@ bool CCobThread::Tick()
 				wakeTime = cobEngine->GetCurrentTime() + r1;
 				state = Sleep;
 				cobEngine->AddThread(this);
-				LOG_L(L_DEBUG, "%s sleeping for %d ms", script.scriptNames[callStack.back().functionId].c_str(), r1);
+				//LOG_L(L_DEBUG, "%s sleeping for %d ms", script.scriptNames[callStack.back().functionId].c_str(), r1);
 				return true;
 			case SPIN:
 				r1 = GET_LONG_PC();
@@ -270,7 +268,7 @@ bool CCobThread::Tick()
 			case RETURN:
 				retCode = POP();
 				if (callStack.back().returnAddr == -1) {
-					LOG_L(L_DEBUG, "%s returned %d", script.scriptNames[callStack.back().functionId].c_str(), retCode);
+					//LOG_L(L_DEBUG, "%s returned %d", script.scriptNames[callStack.back().functionId].c_str(), retCode);
 					state = Dead;
 					//callStack.pop_back();
 					// Leave values intact on stack in case caller wants to check them
@@ -282,7 +280,7 @@ bool CCobThread::Tick()
 					stack.pop_back();
 				}
 				callStack.pop_back();
-				LOG_L(L_DEBUG, "Returning to %s", script.scriptNames[callStack.back().functionId].c_str());
+				//LOG_L(L_DEBUG, "Returning to %s", script.scriptNames[callStack.back().functionId].c_str());
 				break;
 			case SHADE:
 				r1 = GET_LONG_PC();
@@ -361,7 +359,7 @@ bool CCobThread::Tick()
 
 				// Seems that threads should inherit signal mask from creator
 				thread->signalMask = signalMask;
-				LOG_L(L_DEBUG, "Starting %s %d", script.scriptNames[r1].c_str(), signalMask);
+				//LOG_L(L_DEBUG, "Starting %s %d", script.scriptNames[r1].c_str(), signalMask);
 			} break;
 			case CREATE_LOCAL_VAR:
 				if (paramCount == 0) {
@@ -681,11 +679,11 @@ bool CCobThread::Tick()
 						script.scriptNames[callStack.back().functionId].c_str(),
 						PC - 1);
 				LOG_L(L_ERROR, "Exec trace:");
-				ei = execTrace.begin();
-				while (ei != execTrace.end()) {
-					LOG_L(L_ERROR, "PC: %3x  opcode: %s", *ei, GetOpcodeName(script.code[*ei]).c_str());
-					++ei;
-				}
+				// ei = execTrace.begin();
+				// while (ei != execTrace.end()) {
+					// LOG_L(L_ERROR, "PC: %3x  opcode: %s", *ei, GetOpcodeName(script.code[*ei]).c_str());
+					// ++ei;
+				// }
 				state = Dead;
 				return false;
 		}

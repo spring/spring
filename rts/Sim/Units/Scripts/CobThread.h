@@ -37,7 +37,7 @@ public:
 	 * Sets a callback that will be called when the thread dies.
 	 * There can be only one.
 	 */
-	void SetCallback(CBCobThreadFinish cb, void* p1, void* p2);
+	void SetCallback(CCobInstance::ThreadCallbackType cb, int cbp);
 	/**
 	 * @brief Checks whether the stack has at least size items.
 	 * @returns min(size, stack.size())
@@ -57,6 +57,7 @@ public:
 	void ShowError(const std::string& msg);
 	void AnimFinished(CUnitScript::AnimType type, int piece, int axis);
 
+	int GetRetCode() { return retCode; }
 	bool IsWaiting() { return waitAxis != -1; }
 
 	CCobInstance* owner;
@@ -71,7 +72,7 @@ protected:
 	int wakeTime;
 	int PC;
 	vector<int> stack;
-	vector<int> execTrace;
+	//vector<int> execTrace;
 
 	int paramCount;
 	int retCode;
@@ -85,9 +86,8 @@ protected:
 	};
 	vector<struct callInfo> callStack;
 
-	CBCobThreadFinish callback;
-	void* cbParam1;
-	void* cbParam2;
+	CCobInstance::ThreadCallbackType cbType;
+	int cbParam;
 
 
 public:

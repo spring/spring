@@ -82,7 +82,6 @@ CCobInstance::~CCobInstance()
 			delete t;
 		} else {
 			t->state = CCobThread::Dead;
-			t->SetCallback(nullptr, nullptr, nullptr);
 		}
 		threads.pop_back();
 	}
@@ -189,17 +188,6 @@ void CCobInstance::Create()
 
 
 
-// note: this callback is always called, even if Killed does not exist
-// however, retCode is only set if the function has a return statement
-// (otherwise its value is -1 regardless of Killed being present which
-// means *no* wreck will be spawned)
-static void UnitKilledCallback(int retCode, void* p1, void* p2)
-{
-	CUnit* self = static_cast<CUnit*>(p1);
-	self->deathScriptFinished = true;
-	self->delayedWreckLevel = retCode;
-}
-
 void CCobInstance::Killed()
 {
 	vector<int> args;
@@ -207,7 +195,7 @@ void CCobInstance::Killed()
 	args.push_back((int) (unit->recentDamage / unit->maxHealth * 100));
 	args.push_back(0);
 
-	Call(COBFN_Killed, args, &UnitKilledCallback, unit, nullptr);
+	Call(COBFN_Killed, args, CBKilled, 0, nullptr);
 }
 
 
@@ -238,11 +226,6 @@ void CCobInstance::RockUnit(const float3& rockDir)
 }
 
 
-// only called if the function exists
-static void HitByWeaponIdCallback(int retCode, void* p1, void* p2) {
-	*(reinterpret_cast<float*>(p1)) = (retCode * 0.01f);
-}
-
 void CCobInstance::HitByWeapon(const float3& hitDir, int weaponDefId, float& inoutDamage)
 {
 	vector<int> args;
@@ -256,12 +239,11 @@ void CCobInstance::HitByWeapon(const float3& hitDir, int weaponDefId, float& ino
 		args.push_back((wd != nullptr)? wd->tdfId : -1);
 		args.push_back((int)(100 * inoutDamage));
 
-		float weaponHitMod = 1.0f;
+		int weaponHitMod = 1;
 
-		// pass weaponHitMod as argument <p1> for callback
-		Call(COBFN_HitByWeaponId, args, HitByWeaponIdCallback, &weaponHitMod, nullptr);
+		Call(COBFN_HitByWeaponId, args, CBNone, 0, &weaponHitMod);
 
-		inoutDamage *= weaponHitMod;
+		inoutDamage *= weaponHitMod * 0.01f;
 	} else {
 		Call(COBFN_HitByWeapon, args);
 	}
@@ -362,27 +344,15 @@ int CCobInstance::QueryWeapon(int weaponNum)
 }
 
 
-// Called when unit's AimWeapon script finished executing
-static void ScriptCallback(int retCode, void* p1, void* p2)
-{
-	static_cast<CWeapon*>(p1)->angleGood = (retCode == 1);
-}
-
 void CCobInstance::AimWeapon(int weaponNum, float heading, float pitch)
 {
 	vector<int> args;
 	args.reserve(2);
 	args.push_back(short(heading * RAD2TAANG));
 	args.push_back(short(pitch * RAD2TAANG));
-	Call(COBFN_AimPrimary + COBFN_Weapon_Funcs * weaponNum, args, ScriptCallback, unit->weapons[weaponNum], NULL);
+	Call(COBFN_AimPrimary + COBFN_Weapon_Funcs * weaponNum, args, CBAimWeapon, weaponNum, nullptr);
 }
 
-
-// Called when unit's AimWeapon script finished executing (for shield weapon)
-static void ShieldScriptCallback(int retCode, void* p1, void* p2)
-{
-	static_cast<CPlasmaRepulser*>(p1)->SetEnabled(retCode != 0);
-}
 
 void CCobInstance::AimShieldWeapon(CPlasmaRepulser* weapon)
 {
@@ -390,7 +360,7 @@ void CCobInstance::AimShieldWeapon(CPlasmaRepulser* weapon)
 	args.reserve(2);
 	args.push_back(0); // compat with AimWeapon (same script is called)
 	args.push_back(0);
-	Call(COBFN_AimPrimary + COBFN_Weapon_Funcs * weapon->weaponNum, args, ShieldScriptCallback, weapon, 0);
+	Call(COBFN_AimPrimary + COBFN_Weapon_Funcs * weapon->weaponNum, args, CBAimShield, weapon->weaponNum, nullptr);
 }
 
 
@@ -473,19 +443,22 @@ void CCobInstance::EndBurst(int weaponNum) { Call(COBFN_EndBurst + COBFN_Weapon_
  * @brief Calls a cob script function
  * @param functionId int cob script function id
  * @param args vector<int> function arguments
- * @param cb CBCobThreadFinish Callback function
- * @param p1 void* callback argument #1
- * @param p2 void* callback argument #2
+ * @param cb ThreadCallbackType Callback action
+ * @param cbParam int callback argument
  * @return 0 if the call terminated. If the caller provides a callback and the thread does not terminate,
  *  it will continue to run. Otherwise it will be killed. Returns 1 in this case.
  */
-int CCobInstance::RealCall(int functionId, vector<int>& args, CBCobThreadFinish cb, void* p1, void* p2)
+int CCobInstance::RealCall(int functionId, vector<int>& args, ThreadCallbackType cb, int cbParam, int* retCode)
 {
+
 	if (functionId < 0 || size_t(functionId) >= script.scriptNames.size()) {
-		if (cb != nullptr) {
+		if (retCode != nullptr)
+			*retCode = -1;
+
+		if (cb != CBNone) {
 			// in case the function does not exist the callback should
 			// still be called; -1 is the default CobThread return code
-			(*cb)(-1, p1, p2);
+			ThreadCallback(cb, -1, cbParam);
 		}
 		return -1;
 	}
@@ -503,8 +476,8 @@ int CCobInstance::RealCall(int functionId, vector<int>& args, CBCobThreadFinish 
 	const bool res = thread->Tick();
 
 	// Make sure this is run even if the call terminates instantly
-	if (cb != nullptr)
-		thread->SetCallback(cb, p1, p2);
+	if (cb != CBNone)
+		thread->SetCallback(cb, cbParam);
 
 	if (!res) {
 		// thread died already after one tick
@@ -524,6 +497,8 @@ int CCobInstance::RealCall(int functionId, vector<int>& args, CBCobThreadFinish 
 			args[i] = 0;
 
 		// dtor runs the callback
+		if (retCode != nullptr)
+			*retCode = thread->GetRetCode();
 		delete thread;
 		return 0;
 	}
@@ -540,67 +515,88 @@ int CCobInstance::RealCall(int functionId, vector<int>& args, CBCobThreadFinish 
 int CCobInstance::Call(const std::string& fname)
 {
 	vector<int> x;
-	return Call(fname, x, NULL, NULL, NULL);
+	return Call(fname, x, CBNone, 0, nullptr);
 }
 
 int CCobInstance::Call(const std::string& fname, std::vector<int>& args)
 {
-	return Call(fname, args, NULL, NULL, NULL);
+	return Call(fname, args, CBNone, 0, nullptr);
 }
 
-int CCobInstance::Call(const std::string& fname, int p1)
+int CCobInstance::Call(const std::string& fname, int arg1)
 {
 	vector<int> x;
 	x.reserve(1);
-	x.push_back(p1);
-	return Call(fname, x, NULL, NULL, NULL);
+	x.push_back(arg1);
+	return Call(fname, x, CBNone, 0, nullptr);
 }
 
-int CCobInstance::Call(const std::string& fname, std::vector<int>& args, CBCobThreadFinish cb, void* p1, void* p2)
+int CCobInstance::Call(const std::string& fname, std::vector<int>& args, ThreadCallbackType cb, int cbParam, int* retCode)
 {
 	//TODO: Check that new behaviour of actually calling cb when the function is not defined is right?
 	//      (the callback has always been called [when the function is not defined]
 	//       in the id-based Call()s, but never in the string based calls.)
-	return RealCall(GetFunctionId(fname), args, cb, p1, p2);
+	return RealCall(GetFunctionId(fname), args, cb, cbParam, retCode);
 }
 
 
 int CCobInstance::Call(int id)
 {
 	vector<int> x;
-	return Call(id, x, NULL, NULL, NULL);
+	return Call(id, x, CBNone, 0, nullptr);
 }
 
-int CCobInstance::Call(int id, int p1)
+int CCobInstance::Call(int id, int arg1)
 {
 	vector<int> x;
 	x.reserve(1);
-	x.push_back(p1);
-	return Call(id, x, NULL, NULL, NULL);
+	x.push_back(arg1);
+	return Call(id, x, CBNone, 0, nullptr);
 }
 
 int CCobInstance::Call(int id, std::vector<int>& args)
 {
-	return Call(id, args, NULL, NULL, NULL);
+	return Call(id, args, CBNone, 0, nullptr);
 }
 
-int CCobInstance::Call(int id, std::vector<int>& args, CBCobThreadFinish cb, void* p1, void* p2)
+int CCobInstance::Call(int id, std::vector<int>& args, ThreadCallbackType cb, int cbParam, int* retCode)
 {
-	return RealCall(script.scriptIndex[id], args, cb, p1, p2);
+	return RealCall(script.scriptIndex[id], args, cb, cbParam, retCode);
 }
 
 
 void CCobInstance::RawCall(int fn)
 {
 	vector<int> x;
-	RealCall(fn, x, NULL, NULL, NULL);
+	RealCall(fn, x, CBNone, 0, nullptr);
 }
 
 int CCobInstance::RawCall(int fn, std::vector<int> &args)
 {
-	return RealCall(fn, args, NULL, NULL, NULL);
+	return RealCall(fn, args, CBNone, 0, nullptr);
 }
 
+void CCobInstance::ThreadCallback(ThreadCallbackType type, int retCode, int cbParam)
+{
+	switch(type) {
+		// note: this callback is always called, even if Killed does not exist
+		// however, retCode is only set if the function has a return statement
+		// (otherwise its value is -1 regardless of Killed being present which
+		// means *no* wreck will be spawned)
+		case CBKilled:
+			unit->deathScriptFinished = true;
+			unit->delayedWreckLevel = retCode;
+			break;
+		case CBAimWeapon:
+			unit->weapons[cbParam]->angleGood = (retCode == 1);
+			break;
+		case CBAimShield:
+			static_cast<CPlasmaRepulser*>(unit->weapons[cbParam])->SetEnabled(retCode != 0);
+			break;
+		default:
+			assert(false);
+		}
+}
 
 /******************************************************************************/
 /******************************************************************************/

@@ -24,18 +24,19 @@ class CCobFile;
 class CCobInstance;
 
 
-typedef void (*CBCobThreadFinish) (int retCode, void *p1, void *p2);
-
-
 class CCobInstance : public CUnitScript
 {
+public:
+	enum ThreadCallbackType { CBNone, CBKilled, CBAimWeapon, CBAimShield };
+
 protected:
 	CCobFile& script;
 	bool blockCall;
 
+
 	void MapScriptToModelPieces(LocalModel* lmodel);
 
-	int RealCall(int functionId, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
+	int RealCall(int functionId, std::vector<int> &args, ThreadCallbackType cb, int cbParam, int* retCode);
 
 	void ShowScriptError(const std::string& msg) override;
 
@@ -56,17 +57,18 @@ public:
 
 	// call overloads, they all call RealCall
 	int Call(const std::string &fname);
-	int Call(const std::string &fname, int p1);
+	int Call(const std::string &fname, int arg1);
 	int Call(const std::string &fname, std::vector<int> &args);
-	int Call(const std::string &fname, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
+	int Call(const std::string &fname, std::vector<int> &args, ThreadCallbackType cb, int cbParam, int* retCode);
 	// these take a COBFN_* constant as argument, which is then translated to the actual function number
 	int Call(int id);
 	int Call(int id, std::vector<int> &args);
-	int Call(int id, int p1);
-	int Call(int id, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
+	int Call(int id, int arg1);
+	int Call(int id, std::vector<int> &args, ThreadCallbackType cb, int cbParam, int* retCode);
 	// these take the raw function number
 	int RawCall(int fn, std::vector<int> &args);
 
+	void ThreadCallback(ThreadCallbackType type, int retCode, int cbParam);
 	// returns function number as expected by RawCall, but not Call
 	// returns -1 if the function does not exist
 	int GetFunctionId(const std::string& fname) const;
