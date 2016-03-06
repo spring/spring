@@ -26,14 +26,11 @@ class CCobInstance;
 
 class CCobInstance : public CUnitScript
 {
+
 public:
 	enum ThreadCallbackType { CBNone, CBKilled, CBAimWeapon, CBAimShield };
 
 protected:
-	CCobFile& script;
-	bool blockCall;
-
-
 	void MapScriptToModelPieces(LocalModel* lmodel);
 
 	int RealCall(int functionId, std::vector<int> &args, ThreadCallbackType cb, int cbParam, int* retCode);
@@ -41,13 +38,18 @@ protected:
 	void ShowScriptError(const std::string& msg) override;
 
 public:
+	CCobFile* script;
 	std::vector<int> staticVars;
 	std::vector<CCobThread *> threads;
-	const CCobFile* GetScriptAddr() const { return &script; }
+	const CCobFile* GetScriptAddr() const { return script; }
 
 public:
-	CCobInstance(CCobFile &script, CUnit *unit);
+	CCobInstance();
+	CCobInstance(CCobFile *script, CUnit *unit);
 	virtual ~CCobInstance();
+
+	void Init();
+	void PostLoad();
 
 	// takes COBFN_* constant as argument
 	bool HasFunction(int id) const;

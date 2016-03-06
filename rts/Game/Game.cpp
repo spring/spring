@@ -1752,12 +1752,12 @@ void CGame::ReloadCOB(const string& msg, int player)
 		LOG_L(L_WARNING, "Unknown unit name: \"%s\"", unitName.c_str());
 		return;
 	}
-	const CCobFile* oldScript = cobFileHandler->GetScriptAddr("scripts/" + udef->scriptName);
+	const CCobFile* oldScript = cobFileHandler->GetScriptAddr(udef->scriptName);
 	if (oldScript == NULL) {
 		LOG_L(L_WARNING, "Unknown COB script for unit \"%s\": %s", unitName.c_str(), udef->scriptName.c_str());
 		return;
 	}
-	CCobFile* newScript = cobFileHandler->ReloadCobFile("scripts/" + udef->scriptName);
+	CCobFile* newScript = cobFileHandler->ReloadCobFile(udef->scriptName);
 	if (newScript == NULL) {
 		LOG_L(L_WARNING, "Could not load COB script for unit \"%s\" from: %s", unitName.c_str(), udef->scriptName.c_str());
 		return;
@@ -1770,7 +1770,7 @@ void CGame::ReloadCOB(const string& msg, int player)
 			if (cob != NULL && cob->GetScriptAddr() == oldScript) {
 				count++;
 				delete unit->script;
-				unit->script = new CCobInstance(*newScript, unit);
+				unit->script = new CCobInstance(newScript, unit);
 				unit->script->Create();
 			}
 		}

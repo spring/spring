@@ -46,17 +46,28 @@
 
 inline bool CCobInstance::HasFunction(int id) const
 {
-	return script.scriptIndex[id] >= 0;
+	return script->scriptIndex[id] >= 0;
 }
 
+//Used by creg
+CCobInstance::CCobInstance()
+	: CUnitScript(nullptr)
+	, script(nullptr)
+{ }
 
-CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
+CCobInstance::CCobInstance(CCobFile* _script, CUnit* _unit)
 	: CUnitScript(_unit)
 	, script(_script)
-	, blockCall(false)
 {
-	staticVars.reserve(script.numStaticVars);
-	for (int i = 0; i < script.numStaticVars; ++i) {
+	Init();
+}
+
+void CCobInstance::Init()
+{
+	assert(script != nullptr);
+
+	staticVars.reserve(script->numStaticVars);
+	for (int i = 0; i < script->numStaticVars; ++i) {
 		staticVars.push_back(0);
 	}
 
@@ -65,6 +76,14 @@ CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
 	hasSetSFXOccupy  = HasFunction(COBFN_SetSFXOccupy);
 	hasRockUnit      = HasFunction(COBFN_RockUnit);
 	hasStartBuilding = HasFunction(COBFN_StartBuilding);
+
+}
+
+void CCobInstance::PostLoad()
+{
+	assert(unit != nullptr);
+	script = cobFileHandler->GetCobFile(unit->unitDef->scriptName);
+	Init();
 }
 
 
@@ -72,8 +91,6 @@ CCobInstance::~CCobInstance()
 {
 	//this may be dangerous, is it really desired?
 	//Destroy();
-	blockCall = true;
-
 	// Deleting waiting threads and unregistering all callbacks
 	while (!threads.empty()) {
 		CCobThread* t = threads.back();
@@ -90,7 +107,7 @@ CCobInstance::~CCobInstance()
 
 void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 {
-	std::vector<std::string>& pieceNames = script.pieceNames; // already in lowercase!
+	std::vector<std::string>& pieceNames = script->pieceNames; // already in lowercase!
 	std::vector<LocalModelPiece>& lmodelPieces = lmodel->pieces;
 
 	pieces.clear();
@@ -128,7 +145,7 @@ void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 
 			const char* fmtString = "[%s] could not find piece named \"%s\" (referenced by COB script \"%s\")";
 			const char* pieceName = pieceNames[scriptPieceNum].c_str();
-			const char* scriptName = script.name.c_str();
+			const char* scriptName = script->name.c_str();
 
 			LOG_L(L_WARNING, fmtString, __FUNCTION__, pieceName, scriptName);
 		}
@@ -138,7 +155,7 @@ void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 
 int CCobInstance::GetFunctionId(const std::string& fname) const
 {
-	return script.GetFunctionId(fname);
+	return script->GetFunctionId(fname);
 }
 
 
@@ -451,7 +468,7 @@ void CCobInstance::EndBurst(int weaponNum) { Call(COBFN_EndBurst + COBFN_Weapon_
 int CCobInstance::RealCall(int functionId, vector<int>& args, ThreadCallbackType cb, int cbParam, int* retCode)
 {
 
-	if (functionId < 0 || size_t(functionId) >= script.scriptNames.size()) {
+	if (functionId < 0 || size_t(functionId) >= script->scriptNames.size()) {
 		if (retCode != nullptr)
 			*retCode = -1;
 
@@ -462,16 +479,12 @@ int CCobInstance::RealCall(int functionId, vector<int>& args, ThreadCallbackType
 		}
 		return -1;
 	}
-	if (blockCall) {
-		ShowUnitScriptError("tried starting new scripts during d'tor");
-		return -1;
-	}
 
 
-	CCobThread* thread = new CCobThread(script, this);
+	CCobThread* thread = new CCobThread(this);
 	thread->Start(functionId, args, false);
 
-	LOG_L(L_DEBUG, "Calling %s:%s", script.name.c_str(), script.scriptNames[functionId].c_str());
+	LOG_L(L_DEBUG, "Calling %s:%s", script->name.c_str(), script->scriptNames[functionId].c_str());
 
 	const bool res = thread->Tick();
 
@@ -486,7 +499,7 @@ int CCobInstance::RealCall(int functionId, vector<int>& args, ThreadCallbackType
 		//   there will be a mismatch between the number of arguments
 		//   passed in (1) and the number returned (0) as of 95.0 -->
 		//   prevent error-spam
-		unsigned int i = 0, argc = thread->CheckStack(args.size(), functionId != script.scriptIndex[COBFN_StartMoving]);
+		unsigned int i = 0, argc = thread->CheckStack(args.size(), functionId != script->scriptIndex[COBFN_StartMoving]);
 
 		// Retrieve parameter values from stack
 		for (; i < argc; ++i)
@@ -561,7 +574,7 @@ int CCobInstance::Call(int id, std::vector<int>& args)
 
 int CCobInstance::Call(int id, std::vector<int>& args, ThreadCallbackType cb, int cbParam, int* retCode)
 {
-	return RealCall(script.scriptIndex[id], args, cb, cbParam, retCode);
+	return RealCall(script->scriptIndex[id], args, cb, cbParam, retCode);
 }
 
 
@@ -615,7 +628,7 @@ void CCobInstance::Signal(int signal)
 
 void CCobInstance::PlayUnitSound(int snr, int attr)
 {
-	Channels::UnitReply->PlaySample(script.sounds[snr], unit->pos, unit->speed, attr);
+	Channels::UnitReply->PlaySample(script->sounds[snr], unit->pos, unit->speed, attr);
 }
 
 

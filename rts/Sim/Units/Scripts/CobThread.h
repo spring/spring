@@ -19,7 +19,7 @@ using std::vector;
 class CCobThread : public CObject
 {
 public:
-	CCobThread(CCobFile& script, CCobInstance* owner);
+	CCobThread(CCobInstance* owner);
 	/// Inform the vultures that we finally croaked
 	~CCobThread();
 
@@ -66,8 +66,6 @@ protected:
 	void LuaCall();
 
 	inline int POP();
-
-	CCobFile& script;
 
 	int wakeTime;
 	int PC;
