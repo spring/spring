@@ -64,12 +64,18 @@ CONFIG(bool, AdvUnitShading).defaultValue(true).headlessValue(false).safemodeVal
 
 
 
-static const void BindOpaqueTex(int texType) { texturehandlerS3O->BindTextures(texType); }
-static const void BindOpaqueTexAtlas(int texType) { texturehandler3DO->Set3doAtlases(); }
-static const void BindOpaqueTexDummy(int texType) {}
+static const void BindOpaqueTex(const CS3OTextureHandler::S3OTexMat* textureMat) {
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, textureMat->tex2);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, textureMat->tex1);
+}
+
+static const void BindOpaqueTexAtlas(const CS3OTextureHandler::S3OTexMat*) { texturehandler3DO->Set3doAtlases(); }
+static const void BindOpaqueTexDummy(const CS3OTextureHandler::S3OTexMat*) {}
 
 static const void BindShadowTexDummy(const CS3OTextureHandler::S3OTexMat*) {}
-static const void KillShadowTexDummy() {}
+static const void KillShadowTexDummy(const CS3OTextureHandler::S3OTexMat*) {}
 
 static const void BindShadowTex(const CS3OTextureHandler::S3OTexMat* textureMat) {
 	glActiveTexture(GL_TEXTURE0);
@@ -77,7 +83,7 @@ static const void BindShadowTex(const CS3OTextureHandler::S3OTexMat* textureMat)
 	glBindTexture(GL_TEXTURE_2D, textureMat->tex2);
 }
 
-static const void KillShadowTex() {
+static const void KillShadowTex(const CS3OTextureHandler::S3OTexMat*) {
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glDisable(GL_TEXTURE_2D);
 	glActiveTexture(GL_TEXTURE0);
@@ -85,7 +91,7 @@ static const void KillShadowTex() {
 
 
 static const void PushRenderState3DO() {
-	BindOpaqueTexAtlas(-1);
+	BindOpaqueTexAtlas(nullptr);
 
 	glPushAttrib(GL_POLYGON_BIT);
 	glDisable(GL_CULL_FACE);
@@ -111,33 +117,38 @@ static const void SetTeamColorValid(const IUnitDrawerState* state, int team, con
 
 
 
-// typedef std::function<void(int)>                                  BindOpaqueTexFunc;
-// typedef std::function<void(const CS3OTextureHandler::S3OTexMat*)> BindShadowTexFunc;
-// typedef std::function<void()>                                     KillShadowTexFunc;
-typedef const void (*BindOpaqueTexFunc)(int);
-typedef const void (*BindShadowTexFunc)(const CS3OTextureHandler::S3OTexMat*);
-typedef const void (*KillShadowTexFunc)();
+// typedef std::function<void(int)>                                  BindTexFunc;
+// typedef std::function<void(const CS3OTextureHandler::S3OTexMat*)> BindTexFunc;
+// typedef std::function<void()>                                     KillTexFunc;
+typedef const void (*BindTexFunc)(const CS3OTextureHandler::S3OTexMat*);
+typedef const void (*BindTexFunc)(const CS3OTextureHandler::S3OTexMat*);
+typedef const void (*KillTexFunc)(const CS3OTextureHandler::S3OTexMat*);
 
 typedef const void (*PushRenderStateFunc)();
 typedef const void (*PopRenderStateFunc)();
 
 typedef const void (*SetTeamColorFunc)(const IUnitDrawerState*, int team, const float2 alpha);
 
-static const BindOpaqueTexFunc opaqueTexBindFuncs[MODELTYPE_OTHER] = {
+static const BindTexFunc opaqueTexBindFuncs[MODELTYPE_OTHER] = {
 	BindOpaqueTexDummy, // 3DO (no-op, done by PushRenderState3DO)
 	BindOpaqueTex,      // S3O
 	BindOpaqueTex,      // OBJ
 	BindOpaqueTex,      // ASS
 };
 
-static const BindShadowTexFunc shadowTexBindFuncs[MODELTYPE_OTHER] = {
+static const BindTexFunc shadowTexBindFuncs[MODELTYPE_OTHER] = {
 	BindShadowTexDummy, // 3DO (no-op)
 	BindShadowTex,      // S3O
 	BindShadowTex,      // OBJ
 	BindShadowTex,      // ASS
 };
 
-static const KillShadowTexFunc shadowTexKillFuncs[MODELTYPE_OTHER] = {
+static const BindTexFunc* bindModelTexFuncs[] = {
+	&opaqueTexBindFuncs[0], // opaque+alpha
+	&shadowTexBindFuncs[0], // shadow
+};
+
+static const KillTexFunc shadowTexKillFuncs[MODELTYPE_OTHER] = {
 	KillShadowTexDummy, // 3DO (no-op)
 	KillShadowTex,      // S3O
 	KillShadowTex,      // OBJ
@@ -168,9 +179,16 @@ static const SetTeamColorFunc setTeamColorFuncs[] = {
 
 
 // low-level (batch and solo)
-void CUnitDrawer::BindModelTypeTexture(int mdlType, int texType) {   opaqueTexBindFuncs[mdlType](texType); }
-void CUnitDrawer::PushModelRenderState(int mdlType             ) { renderStatePushFuncs[mdlType](       ); }
-void CUnitDrawer::PopModelRenderState (int mdlType             ) { renderStatePopFuncs [mdlType](       ); }
+// note: also called during SP
+void CUnitDrawer::BindModelTypeTexture(int mdlType, int texType) {
+	const auto texFun = bindModelTexFuncs[shadowHandler->InShadowPass()][mdlType];
+	const auto texMat = texturehandlerS3O->GetTexture(texType);
+
+	texFun(texMat);
+}
+
+void CUnitDrawer::PushModelRenderState(int mdlType) { renderStatePushFuncs[mdlType](); }
+void CUnitDrawer::PopModelRenderState (int mdlType) { renderStatePopFuncs [mdlType](); }
 
 // mid-level (solo only)
 void CUnitDrawer::PushModelRenderState(const S3DModel* m) {
@@ -564,13 +582,14 @@ void CUnitDrawer::DrawOpaqueUnitsShadow(int modelType) {
 		const auto& unitSet = unitBinP.second;
 		const int textureType = unitBinP.first;
 
-		shadowTexBindFuncs[modelType](texturehandlerS3O->GetTexture(textureType));
+		BindModelTypeTexture(modelType, textureType);
+		// shadowTexBindFuncs[modelType](texturehandlerS3O->GetTexture(textureType));
 
 		for (const auto& unitSetP: unitSet) {
 			DrawOpaqueUnitShadow(unitSetP);
 		}
 
-		shadowTexKillFuncs[modelType]();
+		shadowTexKillFuncs[modelType](nullptr);
 	}
 }
 

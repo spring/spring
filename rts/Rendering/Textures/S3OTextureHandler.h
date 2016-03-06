@@ -39,7 +39,6 @@ public:
 
 	void LoadTexture(S3DModel* model);
 	void PreloadTexture(S3DModel* model, bool invertAxis = false, bool invertAlpha = false);
-	void BindTextures(int num);
 
 public:
 	const S3OTexMat* GetTexture(unsigned int num) {

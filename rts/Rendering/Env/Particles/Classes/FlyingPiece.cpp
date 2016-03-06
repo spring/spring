@@ -181,7 +181,7 @@ void FlyingPiece::CheckDrawStateChange(const FlyingPiece* prev) const
 		unitDrawer->SetTeamColour(team);
 
 		if (texture != -1)
-			texturehandlerS3O->BindTextures(texture);
+			CUnitDrawer::BindModelTypeTexture(MODELTYPE_S3O, texture);
 
 		piece->BindVertexAttribVBOs();
 		piece->vboShatterIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
@@ -192,7 +192,7 @@ void FlyingPiece::CheckDrawStateChange(const FlyingPiece* prev) const
 		unitDrawer->SetTeamColour(team);
 
 	if (texture != prev->texture && texture != -1)
-		texturehandlerS3O->BindTextures(texture);
+		CUnitDrawer::BindModelTypeTexture(MODELTYPE_S3O, texture);
 
 	if (piece != prev->piece) {
 		prev->piece->vboShatterIndices.Unbind();

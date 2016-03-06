@@ -175,31 +175,3 @@ unsigned int CS3OTextureHandler::InsertTextureMat(const S3DModel* model)
 	return texMat.num;
 }
 
-
-
-typedef const void (*BindModelTextureFunc)(const CS3OTextureHandler::S3OTexMat& texMat);
-
-static const void BindModelTexturesNormal(const CS3OTextureHandler::S3OTexMat& texMat) {
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, texMat.tex2);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texMat.tex1);
-}
-
-static const void BindModelTexturesShadow(const CS3OTextureHandler::S3OTexMat& texMat) {
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texMat.tex2);
-}
-
-static const BindModelTextureFunc textureBindFuncs[] = {
-	&BindModelTexturesNormal, // opaque+alpha
-	&BindModelTexturesShadow,
-};
-
-
-
-void CS3OTextureHandler::BindTextures(int num)
-{
-	textureBindFuncs[shadowHandler->InShadowPass()]( textures[num] );
-}
-
