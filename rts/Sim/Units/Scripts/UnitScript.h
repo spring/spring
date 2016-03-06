@@ -52,7 +52,7 @@ protected:
 		bool hasWaiting;
 	};
 
-	typedef std::deque<AnimInfo> AnimContainerType;
+	typedef std::vector<AnimInfo> AnimContainerType;
 	typedef AnimContainerType::iterator AnimContainerTypeIt;
 
 	AnimContainerType anims[AMove + 1];
@@ -119,7 +119,7 @@ public:
 	const CUnit* GetUnit() const { return unit; }
 
 	bool Tick(int deltaTime);
-	void TickAnims(int deltaTime, AnimType type, std::vector<int>& doneAnims);
+	void TickAnims(int deltaTime, AnimType type, std::vector<AnimInfo>& doneAnims);
 
 	// animation, used by CCobThread
 	void Spin(int piece, int axis, float speed, float accel);

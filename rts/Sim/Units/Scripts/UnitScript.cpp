@@ -164,53 +164,77 @@ bool CUnitScript::DoSpin(float& cur, float dest, float &speed, float accel, int 
 
 
 
-void CUnitScript::TickAnims(int deltaTime, AnimType type, std::vector<int>& doneAnims) {
+void CUnitScript::TickAnims(int deltaTime, AnimType type, std::vector<AnimInfo>& doneAnims) {
 	switch (type) {
 		case AMove: {
-			for (int i = 0; i < anims[type].size(); ++i) {
-				AnimInfo* ai = &anims[type][i];
+			int i = 0;
+			while (i < anims[type].size()) {
+				AnimInfo& ai = anims[type][i];
+				const int piece = ai.piece;
 
 				// NOTE: we should not need to copy-and-set here, because
 				// MoveToward/TurnToward/DoSpin modify pos/rot by reference
-				float3 pos = pieces[ai->piece]->GetPosition();
+				float3 pos = pieces[piece]->GetPosition();
 
-				if (MoveToward(pos[ai->axis], ai->dest, ai->speed / (1000 / deltaTime))) {
-					ai->done = true;
-					doneAnims.push_back(i);
+				if (MoveToward(pos[ai.axis], ai.dest, ai.speed / (1000 / deltaTime))) {
+					ai.done = true;
+					if (ai.hasWaiting)
+						doneAnims.push_back(ai);
+
+					ai = anims[type].back();
+					anims[type].pop_back();
+				} else {
+					++i;
 				}
 
-				pieces[ai->piece]->SetPosition(pos);
-				unit->localModel.PieceUpdated(ai->piece);
+				pieces[piece]->SetPosition(pos);
+				unit->localModel.PieceUpdated(piece);
 			}
 		} break;
 
 		case ATurn: {
-			for (int i = 0; i < anims[type].size(); ++i) {
-				AnimInfo* ai = &anims[type][i];
-				float3 rot = pieces[ai->piece]->GetRotation();
+			int i = 0;
+			while (i < anims[type].size()) {
+				AnimInfo& ai = anims[type][i];
+				const int piece = ai.piece;
+				float3 rot = pieces[piece]->GetRotation();
 
-				if (TurnToward(rot[ai->axis], ai->dest, ai->speed / (1000 / deltaTime))) {
-					ai->done = true;
-					doneAnims.push_back(i);
+				if (TurnToward(rot[ai.axis], ai.dest, ai.speed / (1000 / deltaTime))) {
+					ai.done = true;
+					if (ai.hasWaiting)
+						doneAnims.push_back(ai);
+
+					ai = anims[type].back();
+					anims[type].pop_back();
+				} else {
+					++i;
 				}
 
-				pieces[ai->piece]->SetRotation(rot);
-				unit->localModel.PieceUpdated(ai->piece);
+				pieces[piece]->SetRotation(rot);
+				unit->localModel.PieceUpdated(piece);
 			}
 		} break;
 
 		case ASpin: {
-			for (int i = 0; i < anims[type].size(); ++i) {
-				AnimInfo* ai = &anims[type][i];
-				float3 rot = pieces[ai->piece]->GetRotation();
+			int i = 0;
+			while (i < anims[type].size()) {
+				AnimInfo& ai = anims[type][i];
+				const int piece = ai.piece;
+				float3 rot = pieces[piece]->GetRotation();
 
-				if (DoSpin(rot[ai->axis], ai->dest, ai->speed, ai->accel, 1000 / deltaTime)) {
-					ai->done = true;
-					doneAnims.push_back(i);
+				if (DoSpin(rot[ai.axis], ai.dest, ai.speed, ai.accel, 1000 / deltaTime)) {
+					ai.done = true;
+					if (ai.hasWaiting)
+						doneAnims.push_back(ai);
+
+					ai = anims[type].back();
+					anims[type].pop_back();
+				} else {
+					++i;
 				}
 
-				pieces[ai->piece]->SetRotation(rot);
-				unit->localModel.PieceUpdated(ai->piece);
+				pieces[piece]->SetRotation(rot);
+				unit->localModel.PieceUpdated(piece);
 			}
 		} break;
 
@@ -229,26 +253,17 @@ bool CUnitScript::Tick(int deltaTime)
 {
 	// vector of indexes of finished animations,
 	// so we can get rid of them in constant time
-	static std::vector<int> doneAnims[AMove + 1];
+	static std::vector<AnimInfo> doneAnims[AMove + 1];
 
 	for (int animType = ATurn; animType <= AMove; animType++) {
 		TickAnims(deltaTime, AnimType(animType), doneAnims[animType]);
 	}
 
 	// Tell listeners to unblock, and remove finished animations from the unit/script.
-	// Iterating in reverse to keep indexes valid
-	// NOTE: AnimFinished might result in new anims being added
 	for (int animType = ATurn; animType <= AMove; animType++) {
-		for (auto it = doneAnims[animType].rbegin(); it != doneAnims[animType].rend(); ++it) {
-			AnimInfo& animInfo = anims[animType][*it];
-
-			if (animInfo.hasWaiting)
-				AnimFinished(animInfo.type, animInfo.piece, animInfo.axis);
-
-			animInfo = anims[animType].back();
-			anims[animType].pop_back();
+		for (AnimInfo& ai: doneAnims[animType]) {
+			AnimFinished(ai.type, ai.piece, ai.axis);
 		}
-
 		doneAnims[animType].clear();
 	}
 
