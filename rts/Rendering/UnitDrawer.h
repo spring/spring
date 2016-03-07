@@ -180,10 +180,10 @@ private:
 
 	void DrawGhostedBuildings(int modelType);
 
-
-	void DrawUnitIcons(bool drawReflection);
+public:
+	void DrawUnitIcons();
 	void DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const;
-
+private:
 	void UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool killed);
 	void UpdateUnitIconState(CUnit* unit);
 

@@ -389,7 +389,6 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	}
 
 	farTextureHandler->Draw();
-	DrawUnitIcons(drawReflection);
 
 	glDisable(GL_FOG);
 	glDisable(GL_ALPHA_TEST);
@@ -484,27 +483,25 @@ void CUnitDrawer::DrawOpaqueAIUnit(const TempDrawUnit& unit)
 
 
 
-void CUnitDrawer::DrawUnitIcons(bool drawReflection)
+void CUnitDrawer::DrawUnitIcons()
 {
-	if (!drawReflection) {
-		// Draw unit icons and radar blips.
-		glEnable(GL_ALPHA_TEST);
-		glAlphaFunc(GL_GREATER, 0.5f);
+	// draw unit icons and radar blips
+	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT);
+	glEnable(GL_TEXTURE_2D);
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_ALPHA_TEST);
+	glAlphaFunc(GL_GREATER, 0.5f);
 
-		for (CUnit* u: iconUnits) {
-			DrawIcon(u, false);
+	for (CUnit* u: iconUnits)
+		DrawIcon(u, false);
+
+	if (!gu->spectatingFullView) {
+		for (CUnit* u: unitRadarIcons[gu->myAllyTeam]) {
+			DrawIcon(u, (u->losStatus[gu->myAllyTeam] & (LOS_PREVLOS | LOS_CONTRADAR)) != (LOS_PREVLOS | LOS_CONTRADAR));
 		}
-		if (!gu->spectatingFullView) {
-			for (CUnit* u: unitRadarIcons[gu->myAllyTeam]) {
-				DrawIcon(u, (u->losStatus[gu->myAllyTeam] & (LOS_PREVLOS | LOS_CONTRADAR)) != (LOS_PREVLOS | LOS_CONTRADAR));
-			}
-		}
-
-		glDisable(GL_TEXTURE_2D);
-		glDisable(GL_ALPHA_TEST);
-
-		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	}
+
+	glPopAttrib();
 }
 
 

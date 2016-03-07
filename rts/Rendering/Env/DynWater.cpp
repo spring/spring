@@ -299,6 +299,7 @@ void CDynWater::Draw()
 	if (!mapInfo->water.forceRendering && !readMap->HasVisibleWater())
 		return;
 
+	glPushAttrib(GL_ENABLE_BIT);
 	glDisable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
 	glEnable(GL_FOG);
@@ -366,6 +367,7 @@ void CDynWater::Draw()
 
 	glDisable(GL_FRAGMENT_PROGRAM_ARB);
 	glDisable(GL_VERTEX_PROGRAM_ARB);
+	glPopAttrib();
 /*
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glActiveTextureARB(GL_TEXTURE1_ARB);
@@ -391,6 +393,7 @@ void CDynWater::UpdateWater(CGame* game)
 	if (!mapInfo->water.forceRendering && !readMap->HasVisibleWater())
 		return;
 
+	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_FOG_BIT);
 	glDisable(GL_DEPTH_TEST);
 	glDepthMask(0);
 	glDisable(GL_BLEND);
@@ -405,7 +408,6 @@ void CDynWater::UpdateWater(CGame* game)
 	glEnable(GL_DEPTH_TEST);
 	glDepthMask(1);
 
-	glPushAttrib(GL_FOG_BIT);
 	DrawRefraction(game);
 	DrawReflection(game);
 	FBO::Unbind();

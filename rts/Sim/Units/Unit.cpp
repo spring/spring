@@ -478,12 +478,6 @@ void CUnit::PostInit(const CUnit* builder)
 }
 
 
-const SolidObjectDef* CUnit::GetDef() const
-{
-	return unitDef;
-}
-
-
 void CUnit::PostLoad()
 {
 	blockMap = (unitDef->GetYardMap().empty())? NULL: &unitDef->GetYardMap()[0];

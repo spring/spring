@@ -250,12 +250,6 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 }
 
 
-const SolidObjectDef* CFeature::GetDef() const
-{
-	return def;
-}
-
-
 bool CFeature::AddBuildPower(CUnit* builder, float amount)
 {
 	const float oldReclaimLeft = reclaimLeft;

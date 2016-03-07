@@ -82,7 +82,7 @@ public:
 	virtual void SlowUpdateWeapons();
 	virtual void Update();
 
-	const SolidObjectDef* GetDef() const;
+	const SolidObjectDef* GetDef() const { return unitDef; }
 
 	virtual void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID);
 	virtual void DoWaterDamage();
