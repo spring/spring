@@ -8,6 +8,7 @@
 #include "Map/ReadMap.h"
 #include "Game/Game.h"
 #include "Game/GameSetup.h"
+#include "Game/GameVersion.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/WaitCommandsAI.h"
 #include "Net/GameServer.h"
@@ -126,6 +127,7 @@ void CCregLoadSaveHandler::SaveGame(const std::string& path)
 		std::stringstream oss;
 
 		// write our own header. SavePackage() will add its own
+		WriteString(oss, SpringVersion::GetSync());
 		WriteString(oss, gameSetup->setupText);
 		WriteString(oss, modName);
 		WriteString(oss, mapName);
@@ -179,6 +181,18 @@ void CCregLoadSaveHandler::LoadGameStartInfo(const std::string& path)
 	int len;
 	while ((len = saveFile.Read(buf, sizeof(buf))) > 0)
 		sbuf->sputn(buf, len);
+
+	//Check for compatible save versions
+	std::string saveVersion;
+	ReadString(*iss, saveVersion);
+	if (saveVersion != SpringVersion::GetSync()) {
+		if (SpringVersion::IsRelease()) {
+			throw content_error("File was saved by an incompatible engine version: " + saveVersion);
+		} else {
+			LOG_L(L_WARNING, "File was saved by a different engine version: %s", saveVersion.c_str());
+		}
+	}
+
 
 	// in case these contained values alredy
 	// (this is the case when loading a game through the spring menu eg),
