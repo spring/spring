@@ -60,6 +60,15 @@ public:
 		float3 accVector;
 	};
 
+	enum {
+		FD_NODRAW_FLAG = 0, // must be 0
+		FD_OPAQUE_FLAG = 1,
+		FD_ALPHAF_FLAG = 2,
+		FD_SHADOW_FLAG = 3,
+		FD_FARTEX_FLAG = 4,
+	};
+
+
 	/**
 	 * Pos of quad must not change after this.
 	 * This will add this to the FeatureHandler.
@@ -125,6 +134,7 @@ public:
 
 	/// which drawQuad we are part of
 	int drawQuad;
+	/// one of FD_*_FLAG
 	int drawFlag;
 
 	float drawAlpha;

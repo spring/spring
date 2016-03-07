@@ -639,6 +639,7 @@ void CUnitDrawer::DrawShadowPass()
 
 void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 {
+	// for radar icons; normal void-units are already filtered
 	if (unit->IsInVoid())
 		return;
 
