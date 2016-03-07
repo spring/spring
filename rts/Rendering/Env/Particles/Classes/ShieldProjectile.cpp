@@ -17,9 +17,9 @@ CR_BIND_DERIVED(ShieldProjectile, CProjectile, )
 CR_REG_METADATA(ShieldProjectile, (
 	CR_MEMBER(shield),
 	CR_MEMBER(shieldTexture),
-	CR_MEMBER(lastAllowDrawingUpdate),
-	CR_MEMBER(allowDrawing),
+
 	CR_IGNORED(shieldSegments),
+	CR_IGNORED(color),
 
 	CR_POSTLOAD(PostLoad)
 ))
@@ -35,6 +35,9 @@ static std::map<const AtlasedTexture*, std::vector<float2> > spheretexcoords;
 #define NUM_SEGMENTS_X 6
 #define NUM_SEGMENTS_Y 4
 
+#define NUM_VERTICES_X 5
+#define NUM_VERTICES_Y 3
+
 ShieldProjectile::ShieldProjectile(CPlasmaRepulser* shield_)
 	: CProjectile(
 			shield_->weaponMuzzlePos, // pos
@@ -46,47 +49,82 @@ ShieldProjectile::ShieldProjectile(CPlasmaRepulser* shield_)
 		)
 	, shield(shield_)
 	, shieldTexture(NULL)
-	, lastAllowDrawingUpdate(-1)
-	, allowDrawing(false)
+	, color(255,255,255,0)
 {
 	checkCol      = false;
 	deleteMe      = false;
 	alwaysVisible = false;
 	useAirLos     = true;
-	drawRadius    = 1.0f;
+	drawRadius    = shield_->weaponDef->shieldRadius;
 	mygravity     = 0.0f;
 
 	PostLoad();
 }
 
+ShieldProjectile::~ShieldProjectile()
+{
+	if (UsingPerlinNoise())
+		projectileDrawer->DecPerlinTexObjectCount();
+}
+
 void ShieldProjectile::PostLoad()
 {
-	const CUnit* u = shield->owner;
 	const WeaponDef* wd = shield->weaponDef;
 
-	if ((allowDrawing = (wd->visibleShield || wd->visibleShieldHitFrames > 0))) {
+	if (wd->visibleShield || wd->visibleShieldHitFrames > 0) {
 		shieldTexture = wd->visuals.texture1;
 
 		// Y*X segments, deleted by ProjectileHandler
 		for (int y = 0; y < NUM_SEGMENTS_Y; ++y) {
 			for (int x = 0; x < NUM_SEGMENTS_X; ++x) {
-				shieldSegments.push_back(new ShieldSegmentProjectile(this, wd, u->pos, x, y));
+				shieldSegments.emplace_back(this, wd, x, y);
 			}
 		}
+		if (UsingPerlinNoise())
+			projectileDrawer->IncPerlinTexObjectCount();
+
 	}
+
+	UpdateColor();
 }
 
 void ShieldProjectile::PreDelete()
 {
 	deleteMe = true;
-	for (auto* segs: shieldSegments) {
-		segs->PreDelete();
-	}
 }
 
 void ShieldProjectile::Update()
 {
 	pos = GetShieldDrawPos();
+	UpdateColor();
+}
+
+void ShieldProjectile::UpdateColor()
+{
+	{
+		color.a = 0;
+		const WeaponDef* shieldDef = shield->weaponDef;
+
+		// lerp between badColor and goodColor based on shield's current power
+		const float colorMix = std::min(1.0f, shield->GetCurPower() / std::max(1.0f, shieldDef->shieldPower));
+
+		const float3 colorf = mix(shieldDef->shieldBadColor, shieldDef->shieldGoodColor, colorMix);
+		float alpha = shieldDef->visibleShield * shieldDef->shieldAlpha;
+
+		if (shield->GetHitFrames() > 0 && shieldDef->visibleShieldHitFrames > 0) {
+			// when a shield is hit, increase segment's opacity to
+			// min(1, def->alpha + k * def->alpha) with k in [1, 0]
+			alpha += (shield->GetHitFrames() / float(shieldDef->visibleShieldHitFrames)) * shieldDef->shieldAlpha;
+			alpha = std::min(alpha, 1.0f);
+		}
+
+		color = SColor(
+			colorf.x * alpha,
+			colorf.y * alpha,
+			colorf.z * alpha,
+			alpha
+		);
+	}
 }
 
 float3 ShieldProjectile::GetShieldDrawPos() const
@@ -100,105 +138,69 @@ float3 ShieldProjectile::GetShieldDrawPos() const
 
 bool ShieldProjectile::AllowDrawing()
 {
-	// call eventHandler.DrawShield only once per shield & frame
-	if (lastAllowDrawingUpdate == globalRendering->drawFrame)
-		return allowDrawing;
-
-	lastAllowDrawingUpdate = globalRendering->drawFrame;
-	allowDrawing = false;
-
 	if (shield == NULL)
-		return allowDrawing;
+		return false;
 	if (shield->owner == NULL)
-		return allowDrawing;
+		return false;
 
 	//FIXME if Lua wants to draw the shield itself, we should draw all GL_QUADS in the `va` vertexArray first.
 	// but doing so for each shield might reduce the performance.
 	// so might use a branch-predicion? -> save last return value and if it is true draw `va` before calling eventHandler.DrawShield() ??FIXME
 	if (eventHandler.DrawShield(shield->owner, shield))
-		return allowDrawing;
+		return false;
 
 	if (!shield->IsActive())
-		return allowDrawing;
+		return false;
 	if (shieldSegments.empty())
-		return allowDrawing;
+		return false;
 	if (!camera->InView(pos, shield->weaponDef->shieldRadius * 2.0f))
-		return allowDrawing;
+		return false;
 
 	// signal the ShieldSegmentProjectile's they can draw
-	return (allowDrawing = true);
+	return true;
 }
+
+void ShieldProjectile::Draw()
+{
+	if (!AllowDrawing())
+		return;pos = GetShieldDrawPos();
+
+	inArray = true;
+	for (ShieldSegment& seg: shieldSegments) {
+		seg.Draw(va, pos, color);
+	}
+}
+
 
 int ShieldProjectile::GetProjectilesCount() const
 {
-	return 0;
+	return (NUM_VERTICES_Y - 1) * (NUM_VERTICES_X - 1) * NUM_SEGMENTS_X * NUM_SEGMENTS_Y;
+}
+
+bool ShieldProjectile::UsingPerlinNoise() const
+{
+	return projectileDrawer && (GetShieldTexture() == projectileDrawer->perlintex);
 }
 
 
 
-
-
-#define NUM_VERTICES_X 5
-#define NUM_VERTICES_Y 3
-
-ShieldSegmentProjectile::ShieldSegmentProjectile(
+ShieldSegment::ShieldSegment(
 			ShieldProjectile* shieldProjectile_,
 			const WeaponDef* shieldWeaponDef,
-			const float3& shieldSegmentPos,
 			const int xpart,
 			const int ypart
 		)
-	: CProjectile(
-			shieldSegmentPos,
-			ZeroVector,
-			shieldProjectile_->owner(),
-			false,
-			false,
-			false
-		)
-	, shieldProjectile(shieldProjectile_)
-	, segmentColor(255,255,255,0)
-	, segmentPos(shieldSegmentPos)
+	: shieldProjectile(shieldProjectile_)
 	, segmentSize(shieldWeaponDef->shieldRadius)
 {
-	checkCol      = false;
-	deleteMe      = false;
-	alwaysVisible = false;
-	useAirLos     = true;
-	drawRadius    = shieldWeaponDef->shieldRadius * 0.4f;
-	mygravity     = 0.0f;
-
 	vertices = GetSegmentVertices(xpart, ypart);
 	texCoors = GetSegmentTexCoords(shieldProjectile->GetShieldTexture(), xpart, ypart);
-
-	// ProjectileDrawer needs to know if any segments use the Perlin-noise texture
-	if (UsingPerlinNoise()) {
-		projectileDrawer->IncPerlinTexObjectCount();
-	}
 }
 
-ShieldSegmentProjectile::~ShieldSegmentProjectile()
-{
-	if (shieldProjectile)
-		PreDelete();
-}
+ShieldSegment::~ShieldSegment()
+{ }
 
-void ShieldSegmentProjectile::PreDelete()
-{
-	deleteMe = true;
-	if (UsingPerlinNoise()) {
-		projectileDrawer->DecPerlinTexObjectCount();
-	}
-	shieldProjectile = nullptr;
-}
-
-bool ShieldSegmentProjectile::UsingPerlinNoise() const
-{
-	assert(shieldProjectile);
-	return projectileDrawer && (shieldProjectile->GetShieldTexture() == projectileDrawer->perlintex);
-}
-
-const float3* ShieldSegmentProjectile::GetSegmentVertices(const int xpart, const int ypart)
+const float3* ShieldSegment::GetSegmentVertices(const int xpart, const int ypart)
 {
 	if (spherevertices.empty()) {
 		spherevertices.resize(NUM_SEGMENTS_Y * NUM_SEGMENTS_X * NUM_VERTICES_Y * NUM_VERTICES_X);
@@ -229,7 +231,7 @@ const float3* ShieldSegmentProjectile::GetSegmentVertices(const int xpart, const
 	return &spherevertices[segmentIdx];
 }
 
-const float2* ShieldSegmentProjectile::GetSegmentTexCoords(const AtlasedTexture* texture, const int xpart, const int ypart)
+const float2* ShieldSegment::GetSegmentTexCoords(const AtlasedTexture* texture, const int xpart, const int ypart)
 {
 	std::map<const AtlasedTexture*, std::vector<float2> >::iterator fit = spheretexcoords.find(texture);
 	if (fit == spheretexcoords.end()) {
@@ -262,58 +264,12 @@ const float2* ShieldSegmentProjectile::GetSegmentTexCoords(const AtlasedTexture*
 	return &fit->second[segmentIdx];
 }
 
-void ShieldSegmentProjectile::Update()
+
+void ShieldSegment::Draw(CVertexArray* va, const float3& shieldPos, const SColor& color)
 {
-	if (shieldProjectile == NULL)
+	if (color.a == 0)
 		return;
 
-	// use the "middle" vertex for z-ordering
-	pos = shieldProjectile->GetShieldDrawPos() + vertices[(NUM_VERTICES_X * NUM_VERTICES_Y) >> 1] * segmentSize;
-
-
-	// update segmentColor
-	{
-		segmentColor.a = 0;
-		const CPlasmaRepulser* shield = shieldProjectile->GetShield();
-		if (shield == nullptr)
-			return;
-		const WeaponDef* shieldDef = shield->weaponDef;
-
-		// lerp between badColor and goodColor based on shield's current power
-		const float colorMix = std::min(1.0f, shield->GetCurPower() / std::max(1.0f, shieldDef->shieldPower));
-
-		const float3 segmentColorf = mix(shieldDef->shieldBadColor, shieldDef->shieldGoodColor, colorMix);
-		float segmentAlpha = shieldDef->visibleShield * shieldDef->shieldAlpha;
-
-		if (shield->GetHitFrames() > 0 && shieldDef->visibleShieldHitFrames > 0) {
-			// when a shield is hit, increase segment's opacity to
-			// min(1, def->alpha + k * def->alpha) with k in [1, 0]
-			segmentAlpha += (shield->GetHitFrames() / float(shieldDef->visibleShieldHitFrames)) * shieldDef->shieldAlpha;
-			segmentAlpha = std::min(segmentAlpha, 1.0f);
-		}
-
-		segmentColor = SColor(
-			segmentColorf.x * segmentAlpha,
-			segmentColorf.y * segmentAlpha,
-			segmentColorf.z * segmentAlpha,
-			segmentAlpha
-		);
-	}
-}
-
-void ShieldSegmentProjectile::Draw()
-{
-	if (segmentColor.a == 0)
-		return;
-
-	if (shieldProjectile == nullptr)
-		return;
-	if (!shieldProjectile->AllowDrawing())
-		return;
-
-	const float3 shieldPos = shieldProjectile->GetShieldDrawPos();
-
-	inArray = true;
 	va->EnlargeArrays(NUM_VERTICES_Y * NUM_VERTICES_X * 4, 0, VA_SIZE_TC);
 
 	// draw all quads
@@ -322,15 +278,10 @@ void ShieldSegmentProjectile::Draw()
 			const int idxTL = (y    ) * NUM_VERTICES_X + x, idxTR = (y    ) * NUM_VERTICES_X + x + 1;
 			const int idxBL = (y + 1) * NUM_VERTICES_X + x, idxBR = (y + 1) * NUM_VERTICES_X + x + 1;
 
-			va->AddVertexQTC(shieldPos + vertices[idxTL] * segmentSize, texCoors[idxTL].x, texCoors[idxTL].y, segmentColor);
-			va->AddVertexQTC(shieldPos + vertices[idxTR] * segmentSize, texCoors[idxTR].x, texCoors[idxTR].y, segmentColor);
-			va->AddVertexQTC(shieldPos + vertices[idxBR] * segmentSize, texCoors[idxBR].x, texCoors[idxBR].y, segmentColor);
-			va->AddVertexQTC(shieldPos + vertices[idxBL] * segmentSize, texCoors[idxBL].x, texCoors[idxBL].y, segmentColor);
+			va->AddVertexQTC(shieldPos + vertices[idxTL] * segmentSize, texCoors[idxTL].x, texCoors[idxTL].y, color);
+			va->AddVertexQTC(shieldPos + vertices[idxTR] * segmentSize, texCoors[idxTR].x, texCoors[idxTR].y, color);
+			va->AddVertexQTC(shieldPos + vertices[idxBR] * segmentSize, texCoors[idxBR].x, texCoors[idxBR].y, color);
+			va->AddVertexQTC(shieldPos + vertices[idxBL] * segmentSize, texCoors[idxBL].x, texCoors[idxBL].y, color);
 		}
 	}
-}
-
-int ShieldSegmentProjectile::GetProjectilesCount() const
-{
-	return (NUM_VERTICES_Y - 1) * (NUM_VERTICES_X - 1);
 }

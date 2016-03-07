@@ -14,7 +14,7 @@ class CPlasmaRepulser;
 struct WeaponDef;
 
 struct AtlasedTexture;
-class ShieldSegmentProjectile;
+class ShieldSegment;
 
 
 class ShieldProjectile: public CProjectile
@@ -24,7 +24,9 @@ public:
 	// creg only
 	ShieldProjectile() { }
 	ShieldProjectile(CPlasmaRepulser*);
+	~ShieldProjectile();
 
+	void Draw() override;
 	void Update() override;
 	virtual int GetProjectilesCount() const override;
 
@@ -39,36 +41,32 @@ public:
 private:
 	CPlasmaRepulser* shield;
 	const AtlasedTexture* shieldTexture;
+	SColor color;
 
 	unsigned int lastAllowDrawingUpdate;
-	bool allowDrawing;
+	bool UsingPerlinNoise() const;
 
-	// NOTE: these are also registered in ProjectileHandler
-	std::list<ShieldSegmentProjectile*> shieldSegments; //FIXME deque
+	void UpdateColor();
+
+	std::vector<ShieldSegment> shieldSegments; //FIXME deque
 };
 
 
 
-class ShieldSegmentProjectile: public CProjectile
+class ShieldSegment
 {
 public:
-	ShieldSegmentProjectile(
+	ShieldSegment(
 		ShieldProjectile* shieldProjectile,
 		const WeaponDef* shieldWeaponDef,
-		const float3& shieldSegmentPos,
 		const int xpart,
 		const int ypart
 	);
-	~ShieldSegmentProjectile();
+	~ShieldSegment();
 
-	void Draw() override;
-	void Update() override;
-	void PreDelete();
-
-	virtual int GetProjectilesCount() const override;
+	void Draw(CVertexArray* va, const float3& shieldPos, const SColor& color);
 
 private:
-	bool UsingPerlinNoise() const;
 	static const float3* GetSegmentVertices(const int xpart, const int ypart);
 	static const float2* GetSegmentTexCoords(const AtlasedTexture* texture, const int xpart, const int ypart);
 
@@ -77,8 +75,6 @@ private:
 	const float3* vertices;
 	const float2* texCoors;
 
-	SColor segmentColor;
-	float3 segmentPos;
 	float segmentSize;
 };
 
