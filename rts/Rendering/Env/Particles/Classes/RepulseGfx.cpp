@@ -8,7 +8,7 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Units/Unit.h"
 
-CR_BIND_DERIVED(CRepulseGfx, CProjectile, (NULL, NULL, 0.0f, ZeroVector))
+CR_BIND_DERIVED(CRepulseGfx, CProjectile, )
 
 CR_REG_METADATA(CRepulseGfx,(
 	CR_MEMBER(repulsed),
@@ -17,6 +17,9 @@ CR_REG_METADATA(CRepulseGfx,(
 	CR_MEMBER(color),
 	CR_MEMBER(difs)
 ))
+
+CRepulseGfx::CRepulseGfx() : CProjectile()
+{ }
 
 CRepulseGfx::CRepulseGfx(CUnit* owner, CProjectile* repulsed, float maxDist, const float3& color):
 	CProjectile(repulsed? repulsed->pos: ZeroVector, repulsed? repulsed->speed: ZeroVector, owner, false, false, false),

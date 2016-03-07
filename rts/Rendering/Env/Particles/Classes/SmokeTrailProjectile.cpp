@@ -11,7 +11,7 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CSmokeTrailProjectile, CProjectile, (NULL, ZeroVector, ZeroVector, ZeroVector, ZeroVector, false, false, 0.0f, 0, 0.0f, NULL))
+CR_BIND_DERIVED(CSmokeTrailProjectile, CProjectile, )
 
 CR_REG_METADATA(CSmokeTrailProjectile,(
 	CR_MEMBER(pos1),
@@ -35,6 +35,9 @@ CR_REG_METADATA(CSmokeTrailProjectile,(
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
+
+CSmokeTrailProjectile::CSmokeTrailProjectile() : CProjectile()
+{ }
 
 CSmokeTrailProjectile::CSmokeTrailProjectile(
 	const CUnit* owner,

@@ -8,11 +8,15 @@
 #include "Sim/Misc/Wind.h"
 
 
-CR_BIND_DERIVED(CGeoThermSmokeProjectile, CSmokeProjectile, (ZeroVector, ZeroVector, 1, NULL))
+CR_BIND_DERIVED(CGeoThermSmokeProjectile, CSmokeProjectile, )
 
 CR_REG_METADATA(CGeoThermSmokeProjectile, (
 	CR_MEMBER(geo)
 ))
+
+CGeoThermSmokeProjectile::CGeoThermSmokeProjectile()
+	: CSmokeProjectile()
+{ }
 
 CGeoThermSmokeProjectile::CGeoThermSmokeProjectile(
 	const float3& pos,
@@ -22,7 +26,7 @@ CGeoThermSmokeProjectile::CGeoThermSmokeProjectile(
 )
 	: CSmokeProjectile(NULL, pos, spd, ttl, 6, 0.35f, 0.8f)
 	, geo(geo)
-{}
+{ }
 
 void CGeoThermSmokeProjectile::Update()
 {

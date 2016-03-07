@@ -11,7 +11,7 @@
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 
-CR_BIND_DERIVED(CBubbleProjectile, CProjectile, (NULL, ZeroVector, ZeroVector, 0.0f, 0.0f, 0.0f, 0.0f))
+CR_BIND_DERIVED(CBubbleProjectile, CProjectile, )
 
 CR_REG_METADATA(CBubbleProjectile, (
 	CR_MEMBER_BEGINFLAG(CM_Config),
@@ -23,6 +23,15 @@ CR_REG_METADATA(CBubbleProjectile, (
 	CR_MEMBER(size)
 ))
 
+
+CBubbleProjectile::CBubbleProjectile()
+	: CProjectile()
+	, ttl(0)
+	, alpha(0.0f)
+	, size(0.0f)
+	, startSize(0.0f)
+	, sizeExpansion(0.0f)
+{ }
 
 CBubbleProjectile::CBubbleProjectile(
 	CUnit* owner,

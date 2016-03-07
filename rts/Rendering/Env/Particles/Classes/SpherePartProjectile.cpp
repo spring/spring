@@ -8,7 +8,7 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 
-CR_BIND_DERIVED(CSpherePartProjectile, CProjectile, (NULL, ZeroVector, 0, 0, 0.0f, 0.0f, 0, ZeroVector))
+CR_BIND_DERIVED(CSpherePartProjectile, CProjectile, )
 
 CR_REG_METADATA(CSpherePartProjectile, (
 	CR_MEMBER(centerPos),
@@ -24,6 +24,9 @@ CR_REG_METADATA(CSpherePartProjectile, (
 	CR_MEMBER(texx),
 	CR_MEMBER(texy)
 ))
+
+CSpherePartProjectile::CSpherePartProjectile() : CProjectile()
+{ }
 
 CSpherePartProjectile::CSpherePartProjectile(
 	const CUnit* owner,

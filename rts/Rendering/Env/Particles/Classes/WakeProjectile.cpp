@@ -10,7 +10,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 
-CR_BIND_DERIVED(CWakeProjectile, CProjectile, (NULL, ZeroVector, ZeroVector, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f))
+CR_BIND_DERIVED(CWakeProjectile, CProjectile, )
 
 CR_REG_METADATA(CWakeProjectile,(
 	CR_MEMBER(alpha),
@@ -26,6 +26,9 @@ CR_REG_METADATA(CWakeProjectile,(
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
+
+CWakeProjectile::CWakeProjectile() : CProjectile()
+{ }
 
 CWakeProjectile::CWakeProjectile(
 	CUnit* owner,
