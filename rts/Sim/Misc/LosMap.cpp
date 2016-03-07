@@ -503,10 +503,10 @@ inline void CastLos(float* prevAng, float* maxAng, const int2& off, std::vector<
 
 	if (anglesMap[oidx] < *prevAng) {
 		const float invR = isqrt_lookup(off.x*off.x + off.y*off.y, threadNum);
-		*maxAng = *prevAng - LOS_BONUS_HEIGHT * invR; // remove bonusHeight for the cached maxHeight
-		return;
+		*maxAng = *prevAng - LOS_BONUS_HEIGHT * invR;
+		if (anglesMap[oidx] < *maxAng)
+			return;
 	}
-
 	*prevAng = anglesMap[oidx];
 
 	// add square to visibility list when not already done
