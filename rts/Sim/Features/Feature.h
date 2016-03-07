@@ -14,6 +14,7 @@
 
 #define TREE_RADIUS 20
 
+struct SolidObjectDef;
 struct FeatureDef;
 struct FeatureLoadParams;
 class CUnit;
@@ -65,7 +66,7 @@ public:
 	 */
 	void Initialize(const FeatureLoadParams& params);
 
-	const SolidObjectDef* GetDef() const { return def; }
+	const SolidObjectDef* GetDef() const { return ((const SolidObjectDef*) def); }
 
 	int GetBlockingMapID() const;
 

@@ -23,6 +23,7 @@ class CWeapon;
 class CUnitScript;
 class DamageArray;
 class DynDamageArray;
+struct SolidObjectDef;
 struct UnitDef;
 struct UnitTrackStruct;
 struct UnitLoadParams;
@@ -82,7 +83,7 @@ public:
 	virtual void SlowUpdateWeapons();
 	virtual void Update();
 
-	const SolidObjectDef* GetDef() const { return unitDef; }
+	const SolidObjectDef* GetDef() const { return ((const SolidObjectDef*) unitDef); }
 
 	virtual void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID);
 	virtual void DoWaterDamage();
