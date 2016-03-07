@@ -396,12 +396,12 @@ void CGame::LoadGame(const std::string& mapName, bool threaded)
 	if (!gu->globalQuit) LoadFinalize();
 	if (!gu->globalQuit) LoadSkirmishAIs();
 
-	finishedLoading = true;
-
 	if (!gu->globalQuit && saveFile) {
 		loadscreen->SetLoadMessage("Loading game");
 		saveFile->LoadGame();
 	}
+
+	finishedLoading = true;
 
 	Watchdog::DeregisterThread(WDT_LOAD);
 	AddTimedJobs();
