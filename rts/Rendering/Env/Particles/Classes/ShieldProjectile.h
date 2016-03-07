@@ -43,7 +43,6 @@ private:
 	const AtlasedTexture* shieldTexture;
 	SColor color;
 
-	unsigned int lastAllowDrawingUpdate;
 	bool UsingPerlinNoise() const;
 
 	void UpdateColor();
