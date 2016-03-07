@@ -2584,7 +2584,7 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 
 int LuaSyncedRead::ValidUnitID(lua_State* L)
 {
-	lua_pushboolean(L, ParseUnit(L, __FUNCTION__, 1) != nullptr);
+	lua_pushboolean(L, lua_isnumber(L, 1) && ParseUnit(L, __FUNCTION__, 1) != nullptr);
 	return 1;
 }
 
