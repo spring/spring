@@ -9,7 +9,7 @@ class CFlameProjectile : public CWeaponProjectile
 {
 	CR_DECLARE_DERIVED(CFlameProjectile)
 public:
-	CFlameProjectile();
+	CFlameProjectile() { }
 	CFlameProjectile(const ProjectileParams& params);
 
 	void Update() override;

@@ -28,8 +28,6 @@ CR_REG_METADATA(CLargeBeamLaserProjectile,(
 	CR_MEMBER(sidetex)
 ))
 
-CLargeBeamLaserProjectile::CLargeBeamLaserProjectile() : CWeaponProjectile()
-{ }
 
 CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, thickness(0.0f)

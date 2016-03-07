@@ -40,10 +40,6 @@ CR_REG_METADATA(CWeaponProjectile,(
 ))
 
 
-
-CWeaponProjectile::CWeaponProjectile() : CProjectile()
-{ }
-
 CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 	: CProjectile(params.pos, params.speed, params.owner, true, true, false, false)
 

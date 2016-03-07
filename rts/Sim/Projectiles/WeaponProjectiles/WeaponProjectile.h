@@ -22,7 +22,7 @@ class CWeaponProjectile : public CProjectile
 {
 	CR_DECLARE_DERIVED(CWeaponProjectile)
 public:
-	CWeaponProjectile();
+	CWeaponProjectile() { }
 	CWeaponProjectile(const ProjectileParams& params);
 	virtual ~CWeaponProjectile();
 

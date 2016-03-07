@@ -19,8 +19,6 @@ CR_REG_METADATA(CEmgProjectile,(
 	CR_MEMBER(color)
 ))
 
-CEmgProjectile::CEmgProjectile() : CWeaponProjectile()
-{ }
 
 CEmgProjectile::CEmgProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 {

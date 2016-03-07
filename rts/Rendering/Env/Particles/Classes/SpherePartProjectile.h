@@ -10,7 +10,7 @@ class CSpherePartProjectile : public CProjectile
 	CR_DECLARE_DERIVED(CSpherePartProjectile)
 
 public:
-	CSpherePartProjectile();
+	CSpherePartProjectile() { }
 	CSpherePartProjectile(
 		const CUnit* owner,
 		const float3& centerPos,

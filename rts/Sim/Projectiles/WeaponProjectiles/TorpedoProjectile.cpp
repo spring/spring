@@ -32,8 +32,6 @@ CR_REG_METADATA(CTorpedoProjectile,(
 	CR_MEMBER(texy)
 ))
 
-CTorpedoProjectile::CTorpedoProjectile() : CWeaponProjectile()
-{ }
 
 CTorpedoProjectile::CTorpedoProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, tracking(0.0f)

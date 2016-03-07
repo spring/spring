@@ -32,12 +32,6 @@ CR_REG_METADATA(CSmokeTrailProjectile,(
 	CR_MEMBER(texture)
 ))
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
-
-CSmokeTrailProjectile::CSmokeTrailProjectile() : CProjectile()
-{ }
 
 CSmokeTrailProjectile::CSmokeTrailProjectile(
 	const CUnit* owner,

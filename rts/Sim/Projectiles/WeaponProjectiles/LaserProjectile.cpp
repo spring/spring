@@ -30,9 +30,6 @@ CR_REG_METADATA(CLaserProjectile,(
 ))
 
 
-CLaserProjectile::CLaserProjectile() : CWeaponProjectile()
-{ }
-
 CLaserProjectile::CLaserProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, speedf(0.0f)
 	, maxLength(0.0f)

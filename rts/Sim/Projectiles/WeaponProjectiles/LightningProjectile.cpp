@@ -23,8 +23,6 @@ CR_REG_METADATA(CLightningProjectile,(
 	CR_MEMBER(displacements2)
 ))
 
-CLightningProjectile::CLightningProjectile() : CWeaponProjectile()
-{ }
 
 CLightningProjectile::CLightningProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 {

@@ -47,9 +47,6 @@ CR_REG_METADATA(CMissileProjectile,(
 ))
 
 
-CMissileProjectile::CMissileProjectile() : CWeaponProjectile()
-{ }
-
 CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, ignoreError(false)
 	, maxSpeed(0.0f)

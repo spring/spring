@@ -59,9 +59,6 @@ CR_REG_METADATA(CStarburstProjectile, (
 ))
 
 
-CStarburstProjectile::CStarburstProjectile() : CWeaponProjectile()
-{ }
-
 CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, aimError(params.error)
 	, tracking(params.tracking)

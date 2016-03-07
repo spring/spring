@@ -9,7 +9,7 @@ class CWakeProjectile : public CProjectile
 {
 	CR_DECLARE_DERIVED(CWakeProjectile)
 public:
-	CWakeProjectile();
+	CWakeProjectile() { }
 	CWakeProjectile(
 		CUnit* owner,
 		const float3& pos,

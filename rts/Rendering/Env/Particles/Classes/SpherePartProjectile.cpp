@@ -25,8 +25,6 @@ CR_REG_METADATA(CSpherePartProjectile, (
 	CR_MEMBER(texy)
 ))
 
-CSpherePartProjectile::CSpherePartProjectile() : CProjectile()
-{ }
 
 CSpherePartProjectile::CSpherePartProjectile(
 	const CUnit* owner,

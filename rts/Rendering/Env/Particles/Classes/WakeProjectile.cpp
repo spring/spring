@@ -23,12 +23,6 @@ CR_REG_METADATA(CWakeProjectile,(
 	CR_MEMBER(rotSpeed)
 ))
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
-
-CWakeProjectile::CWakeProjectile() : CProjectile()
-{ }
 
 CWakeProjectile::CWakeProjectile(
 	CUnit* owner,

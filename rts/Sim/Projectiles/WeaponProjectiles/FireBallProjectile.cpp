@@ -27,8 +27,6 @@ CR_REG_METADATA_SUB(CFireBallProjectile,Spark,(
 	CR_MEMBER(ttl)
 ))
 
-CFireBallProjectile::CFireBallProjectile() : CWeaponProjectile()
-{ }
 
 CFireBallProjectile::CFireBallProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 {

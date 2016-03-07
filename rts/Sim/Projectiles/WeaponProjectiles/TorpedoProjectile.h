@@ -9,7 +9,7 @@ class CTorpedoProjectile : public CWeaponProjectile
 {
 	CR_DECLARE_DERIVED(CTorpedoProjectile)
 public:
-	CTorpedoProjectile();
+	CTorpedoProjectile() { }
 	CTorpedoProjectile(const ProjectileParams& params);
 
 	void Update() override;

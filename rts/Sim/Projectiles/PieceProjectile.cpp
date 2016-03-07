@@ -21,7 +21,7 @@
 
 #define SMOKE_TIME 40
 
-CR_BIND_DERIVED(CPieceProjectile, CProjectile, (NULL, NULL, ZeroVector, ZeroVector, 0, 0))
+CR_BIND_DERIVED(CPieceProjectile, CProjectile, )
 CR_REG_METADATA(CPieceProjectile,(
 	CR_SETFLAG(CF_Synced),
 

@@ -17,7 +17,7 @@
 #include "Sim/Units/Unit.h"
 #include "System/creg/STL_List.h"
 
-CR_BIND_DERIVED(CFireProjectile, CProjectile, (ZeroVector,ZeroVector,NULL,0,0,0,0))
+CR_BIND_DERIVED(CFireProjectile, CProjectile, )
 CR_BIND(CFireProjectile::SubParticle, )
 
 CR_REG_METADATA(CFireProjectile,(

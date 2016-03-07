@@ -14,9 +14,6 @@ CR_REG_METADATA(CGeoThermSmokeProjectile, (
 	CR_MEMBER(geo)
 ))
 
-CGeoThermSmokeProjectile::CGeoThermSmokeProjectile()
-	: CSmokeProjectile()
-{ }
 
 CGeoThermSmokeProjectile::CGeoThermSmokeProjectile(
 	const float3& pos,

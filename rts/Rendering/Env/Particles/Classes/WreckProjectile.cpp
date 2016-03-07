@@ -14,12 +14,6 @@
 CR_BIND_DERIVED(CWreckProjectile, CProjectile, )
 CR_REG_METADATA(CWreckProjectile, )
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
-
-CWreckProjectile::CWreckProjectile() : CProjectile()
-{ }
 
 CWreckProjectile::CWreckProjectile(CUnit* owner, float3 pos, float3 speed, float temperature)
 	: CProjectile(pos, speed, owner, false, false, false)

@@ -24,9 +24,6 @@ CR_REG_METADATA(CExplosiveProjectile, (
 ))
 
 
-CExplosiveProjectile::CExplosiveProjectile() : CWeaponProjectile()
-{ }
-
 CExplosiveProjectile::CExplosiveProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, invttl(0.0f)
 	, curTime(0.0f)

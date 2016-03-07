@@ -12,7 +12,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 
-CR_BIND_DERIVED(CFlareProjectile, CProjectile, (ZeroVector, ZeroVector, 0, 0))
+CR_BIND_DERIVED(CFlareProjectile, CProjectile, )
 
 CR_REG_METADATA(CFlareProjectile,(
 	CR_SETFLAG(CF_Synced),

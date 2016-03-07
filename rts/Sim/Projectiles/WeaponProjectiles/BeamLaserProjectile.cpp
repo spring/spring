@@ -26,9 +26,6 @@ CR_REG_METADATA(CBeamLaserProjectile,(
 ))
 
 
-CBeamLaserProjectile::CBeamLaserProjectile() : CWeaponProjectile()
-{ }
-
 CBeamLaserProjectile::CBeamLaserProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, thickness(0.0f)
 	, corethickness(0.0f)

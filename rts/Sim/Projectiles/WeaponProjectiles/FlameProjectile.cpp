@@ -22,9 +22,6 @@ CR_REG_METADATA(CFlameProjectile,(
 ))
 
 
-CFlameProjectile::CFlameProjectile() : CWeaponProjectile()
-{ }
-
 CFlameProjectile::CFlameProjectile(const ProjectileParams& params):CWeaponProjectile(params)
 	, curTime(0.0f)
 	, physLife(0.0f)

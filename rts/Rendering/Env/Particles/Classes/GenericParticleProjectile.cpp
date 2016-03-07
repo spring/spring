@@ -22,20 +22,6 @@ CR_REG_METADATA(CGenericParticleProjectile,(
 	CR_MEMBER(sizeMod)
 ))
 
-CGenericParticleProjectile::CGenericParticleProjectile()
-	: CProjectile()
-	, gravity(ZeroVector)
-	, texture(NULL)
-	, colorMap(NULL)
-	, directional(false)
-	, life(0.0f)
-	, decayrate(0.0f)
-	, size(0.0f)
-	, airdrag(0.0f)
-	, sizeGrowth(0.0f)
-	, sizeMod(0.0f)
-{
-}
 
 CGenericParticleProjectile::CGenericParticleProjectile(const CUnit* owner, const float3& pos, const float3& speed)
 	: CProjectile(pos, speed, owner, false, false, false)
