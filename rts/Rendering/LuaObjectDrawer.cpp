@@ -361,6 +361,10 @@ const LuaMaterial* LuaObjectDrawer::DrawMaterialBin(
 	const std::vector<CSolidObject*>& objects = currBin->GetObjects(objType);
 	const LuaMatShader* binShader = &currBin->shaders[deferredPass];
 
+	// need a shader for this pass, skip entire bin if we have none
+	if (deferredPass && binShader->type == LuaMatShader::LUASHADER_NONE)
+		return currBin;
+
 	for (const CSolidObject* obj: objects) {
 		const LuaObjectMaterialData* matData = obj->GetLuaMaterialData();
 		const LuaObjectLODMaterial* lodMat = matData->GetLuaLODMaterial(matType);
