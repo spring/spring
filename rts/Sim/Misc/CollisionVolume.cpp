@@ -264,7 +264,7 @@ float CollisionVolume::GetPointSurfaceDistance(const CUnit* u, const LocalModelP
 }
 
 float CollisionVolume::GetPointSurfaceDistance(const CFeature* f, const LocalModelPiece* lmp, const float3& pos) const {
-	return (GetPointSurfaceDistance(f, lmp, f->GetTransformMatrixRef(), pos));
+	return (GetPointSurfaceDistance(f, lmp, f->GetTransformMatrixRef(true), pos));
 }
 
 float CollisionVolume::GetPointSurfaceDistance(

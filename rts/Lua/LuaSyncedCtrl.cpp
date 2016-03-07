@@ -546,7 +546,7 @@ static int SetSolidObjectRotation(lua_State* L, CSolidObject* o, bool isFeature)
 		// not a hack: ForcedSpin() and CalculateTransform() calculate a
 		// transform based only on frontdir and assume the helper y-axis
 		// points up
-		static_cast<CFeature*>(o)->SetTransform(matrix);
+		static_cast<CFeature*>(o)->SetTransform(matrix, true);
 	}
 
 	return 0;

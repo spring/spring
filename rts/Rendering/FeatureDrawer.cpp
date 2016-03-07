@@ -254,6 +254,8 @@ inline void CFeatureDrawer::UpdateDrawPos(CFeature* f)
 {
 	f->drawPos    = f->GetDrawPos(globalRendering->timeOffset);
 	f->drawMidPos = f->GetMdlDrawMidPos();
+
+	f->UpdateTransform(f->drawPos, false);
 }
 
 

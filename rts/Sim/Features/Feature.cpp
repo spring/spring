@@ -486,14 +486,14 @@ void CFeature::ForcedSpin(const float3& newDir)
 {
 	// update local direction-vectors
 	CSolidObject::ForcedSpin(newDir);
-	UpdateTransform();
+	UpdateTransform(pos, true);
 }
 
 
 void CFeature::UpdateTransformAndPhysState()
 {
 	UpdateDirVectors(!def->upright);
-	UpdateTransform();
+	UpdateTransform(pos, true);
 
 	UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, (SetSpeed(speed) != 0.0f));
 	UpdatePhysicalState(0.1f);

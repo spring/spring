@@ -92,7 +92,9 @@ public:
 	bool Update();
 	bool UpdatePosition();
 	bool UpdateVelocity(const float3& dragAccel, const float3& gravAccel, const float3& movMask, const float3& velMask);
-	void UpdateTransform() { transMatrix = CMatrix44f(pos, -rightdir, updir, frontdir); }
+
+	void SetTransform(const CMatrix44f& m, bool synced) { transMatrix[synced] = m; }
+	void UpdateTransform(const float3& p, bool synced) { transMatrix[synced] = std::move(CMatrix44f(p, -rightdir, updir, frontdir)); }
 	void UpdateTransformAndPhysState();
 	void UpdateQuadFieldPosition(const float3& moveVec);
 
@@ -107,10 +109,9 @@ public:
 	// NOTE:
 	//   unlike CUnit which recalculates the matrix on each call
 	//   (and uses the synced and error args) CFeature caches it
-	//   this matrix is identical in synced and unsynced context!
-	CMatrix44f GetTransformMatrix(const bool synced = false) const final {  return transMatrix; }
-	const CMatrix44f& GetTransformMatrixRef() const { return transMatrix; }
-	void SetTransform(const CMatrix44f& m) { transMatrix = m; }
+	CMatrix44f GetTransformMatrix(const bool synced = false) const final { return transMatrix[synced]; }
+	const CMatrix44f& GetTransformMatrixRef(const bool synced = false) const { return transMatrix[synced]; }
+
 private:
 	static int ChunkNumber(float f);
 
@@ -157,7 +158,8 @@ public:
 private:
 	void PostLoad();
 
-	CMatrix44f transMatrix;
+	// [0] := unsynced, [1] := synced
+	CMatrix44f transMatrix[2];
 };
 
 #endif // _FEATURE_H
