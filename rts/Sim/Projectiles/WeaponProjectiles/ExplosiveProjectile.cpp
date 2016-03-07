@@ -15,7 +15,7 @@
 	#include "System/Sync/SyncTracer.h"
 #endif
 
-CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, (ProjectileParams()))
+CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, )
 
 CR_REG_METADATA(CExplosiveProjectile, (
 	CR_SETFLAG(CF_Synced),
@@ -23,10 +23,9 @@ CR_REG_METADATA(CExplosiveProjectile, (
 	CR_MEMBER(curTime)
 ))
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
 
+CExplosiveProjectile::CExplosiveProjectile() : CWeaponProjectile()
+{ }
 
 CExplosiveProjectile::CExplosiveProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, invttl(0.0f)

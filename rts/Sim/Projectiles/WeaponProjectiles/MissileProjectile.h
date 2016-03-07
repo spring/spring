@@ -15,6 +15,7 @@ class CMissileProjectile : public CWeaponProjectile
 protected:
 	void UpdateGroundBounce() override;
 public:
+	CMissileProjectile();
 	CMissileProjectile(const ProjectileParams& params);
 
 	void Collision(CUnit* unit) override;

@@ -36,7 +36,7 @@ CR_REG_METADATA_SUB(CStarburstProjectile, TracerPart, (
 ))
 
 
-CR_BIND_DERIVED(CStarburstProjectile, CWeaponProjectile, (ProjectileParams()))
+CR_BIND_DERIVED(CStarburstProjectile, CWeaponProjectile, )
 CR_REG_METADATA(CStarburstProjectile, (
 	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(tracking),
@@ -58,6 +58,9 @@ CR_REG_METADATA(CStarburstProjectile, (
 	CR_MEMBER(tracerParts)
 ))
 
+
+CStarburstProjectile::CStarburstProjectile() : CWeaponProjectile()
+{ }
 
 CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, aimError(params.error)

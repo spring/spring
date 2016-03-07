@@ -11,6 +11,7 @@ class CFireBallProjectile : public CWeaponProjectile
 	CR_DECLARE_DERIVED(CFireBallProjectile)
 	CR_DECLARE_SUB(Spark)
 public:
+	CFireBallProjectile();
 	CFireBallProjectile(const ProjectileParams& params);
 
 	void Draw() override;

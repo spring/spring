@@ -21,7 +21,7 @@
 
 const float CMissileProjectile::SMOKE_TIME = 60.0f;
 
-CR_BIND_DERIVED(CMissileProjectile, CWeaponProjectile, (ProjectileParams()))
+CR_BIND_DERIVED(CMissileProjectile, CWeaponProjectile, )
 
 CR_REG_METADATA(CMissileProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -45,6 +45,10 @@ CR_REG_METADATA(CMissileProjectile,(
 	CR_MEMBER(extraHeightTime),
 	CR_IGNORED(smokeTrail)
 ))
+
+
+CMissileProjectile::CMissileProjectile() : CWeaponProjectile()
+{ }
 
 CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, ignoreError(false)

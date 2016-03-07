@@ -12,7 +12,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/creg/STL_Deque.h"
 
-CR_BIND_DERIVED(CFireBallProjectile, CWeaponProjectile, (ProjectileParams()))
+CR_BIND_DERIVED(CFireBallProjectile, CWeaponProjectile, )
 CR_BIND(CFireBallProjectile::Spark, )
 
 CR_REG_METADATA(CFireBallProjectile,(
@@ -26,6 +26,9 @@ CR_REG_METADATA_SUB(CFireBallProjectile,Spark,(
 	CR_MEMBER(size),
 	CR_MEMBER(ttl)
 ))
+
+CFireBallProjectile::CFireBallProjectile() : CWeaponProjectile()
+{ }
 
 CFireBallProjectile::CFireBallProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 {

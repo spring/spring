@@ -9,6 +9,7 @@ class CLaserProjectile : public CWeaponProjectile
 {
 	CR_DECLARE_DERIVED(CLaserProjectile)
 public:
+	CLaserProjectile();
 	CLaserProjectile(const ProjectileParams& params);
 
 	void Draw() override;

@@ -77,8 +77,6 @@ protected:
 
 	CWorldObject* target;
 
-
-	unsigned int weaponDefID;
 	unsigned int weaponNum;
 
 	int ttl;

@@ -11,7 +11,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
 
-CR_BIND_DERIVED(CFlameProjectile, CWeaponProjectile, (ProjectileParams()))
+CR_BIND_DERIVED(CFlameProjectile, CWeaponProjectile, )
 
 CR_REG_METADATA(CFlameProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -21,6 +21,9 @@ CR_REG_METADATA(CFlameProjectile,(
 	CR_MEMBER(invttl)
 ))
 
+
+CFlameProjectile::CFlameProjectile() : CWeaponProjectile()
+{ }
 
 CFlameProjectile::CFlameProjectile(const ProjectileParams& params):CWeaponProjectile(params)
 	, curTime(0.0f)
