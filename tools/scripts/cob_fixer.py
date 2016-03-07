@@ -25,6 +25,7 @@ COB_HEADER_FIELDS = (
 )
 
 OLD_RETURN = struct.pack("<3L", 0x10021001, 0, 0x10065000)
+BAD_RETURN = struct.pack("<2L", 0x10022000, 0x10065000)
 NEW_RETURN = struct.pack("<3L", 0x10021002, 1, 0x10065000)
 
 def unpack(bytes, offset, format):
@@ -60,8 +61,14 @@ def process_cob(path):
 	killed_len = script_code_offsets[killed_index + 1] * 4 - killed_offset
 	base_offset = header["OffsetToScriptCode"]
 	killed_content = content[base_offset + killed_offset:base_offset + killed_offset + killed_len]
-	killed_content = killed_content.replace(OLD_RETURN, NEW_RETURN)
-	new_content = content[:base_offset + killed_offset] + killed_content + content[base_offset + killed_offset + killed_len:]
+	killed_new_content = killed_content.replace(OLD_RETURN, NEW_RETURN)
+	if BAD_RETURN in killed_new_content:
+		print "Warning: need to fix script %s manually" % (path,)
+
+	if killed_content == killed_new_content:
+		return
+
+	new_content = content[:base_offset + killed_offset] + killed_new_content + content[base_offset + killed_offset + killed_len:]
 	open(path, "wb").write(new_content)
 
 
