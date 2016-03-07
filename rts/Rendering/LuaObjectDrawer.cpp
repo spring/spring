@@ -73,6 +73,8 @@ typedef void(CFeatureDrawer::*FeatureDrawFunc)(const CFeature*, unsigned int, un
 
 #endif
 
+typedef const void (*TeamColorFunc)(const CSolidObject*, const LuaMatShader*, LuaObjectLODMaterial*, const float2);
+
 
 
 #ifdef USE_STD_ARRAY
@@ -167,20 +169,19 @@ static void SetupShadowFeatureDrawState(unsigned int modelType, bool deferredPas
 static void ResetShadowFeatureDrawState(unsigned int modelType, bool deferredPass) { ResetShadowUnitDrawState(modelType, deferredPass); }
 
 
-static void SetObjectTeamColor(
+
+static const void SetObjectTeamColorNoType(const CSolidObject* o, const LuaMatShader* s, LuaObjectLODMaterial* m, const float2) {
+	// material without any shader for the current (fwd/def) pass
+	assert(!s->IsCustomType() && !s->IsEngineType());
+}
+
+static const void SetObjectTeamColorCustom(
 	const CSolidObject* o,
 	const LuaMatShader* s,
 	LuaObjectLODMaterial* m,
-	float2 alpha
+	const float2 alpha
 ) {
-	// only useful to set this if the object has a standard
-	// (engine) shader attached, otherwise requires testing
-	// if shader is bound in DrawerState etc (there is *no*
-	// FFP texenv fallback for customs to rely on anymore!)
-	if (!s->IsCustomType()) {
-		unitDrawer->SetTeamColour(o->team, alpha);
-		return;
-	}
+	assert(s->IsCustomType());
 
 	#ifdef SET_CUSTOM_SHADER_TEAM_COLOR
 	// avoids having to use gl.Uniform(loc, Spring.GetTeamColor(Spring.GetUnitTeam(unitID)))
@@ -191,6 +192,26 @@ static void SetObjectTeamColor(
 	#endif
 }
 
+static const void SetObjectTeamColorEngine(
+	const CSolidObject* o,
+	const LuaMatShader* s,
+	LuaObjectLODMaterial* m,
+	const float2 alpha
+) {
+	// only useful to set this if the object has a standard
+	// (engine) shader attached, otherwise requires testing
+	// if shader is bound in DrawerState etc (there is *no*
+	// FFP texenv fallback for customs to rely on anymore!)
+	assert(s->IsEngineType());
+
+	unitDrawer->SetTeamColour(o->team, alpha);
+}
+
+static const TeamColorFunc teamColorFuncs[] = {
+	SetObjectTeamColorNoType,
+	SetObjectTeamColorCustom,
+	SetObjectTeamColorEngine,
+};
 
 
 
@@ -361,24 +382,27 @@ void LuaObjectDrawer::DrawBinObject(
 ) {
 	const unsigned int preList = lodMat->preDisplayList;
 	const unsigned int postList = lodMat->postDisplayList;
+	const unsigned int tcFunIdx = int(shader->IsCustomType()) + int(shader->IsEngineType()) * 2;
 
 	switch (objType) {
 		case LUAOBJ_UNIT: {
-			const UnitDrawFunc func = unitDrawFuncs[applyTrans];
+			const UnitDrawFunc drawFunc = unitDrawFuncs[applyTrans];
+			const TeamColorFunc tcolFunc = teamColorFuncs[tcFunIdx];
 			const CUnit* unit = static_cast<const CUnit*>(obj);
 
-			SetObjectTeamColor(unit, shader, const_cast<LuaObjectLODMaterial*>(lodMat), float2(1.0f, 1.0f * alphaMatBin));
+			tcolFunc(unit, shader, const_cast<LuaObjectLODMaterial*>(lodMat), float2(1.0f, 1.0f * alphaMatBin));
 
 			// must use static_cast here because of GetTransformMatrix (!)
-			CALL_FUNC_VA(unitDrawer, func,  unit, preList, postList, true, noLuaCall);
+			CALL_FUNC_VA(unitDrawer, drawFunc,  unit, preList, postList, true, noLuaCall);
 		} break;
 		case LUAOBJ_FEATURE: {
-			const FeatureDrawFunc func = featureDrawFuncs[applyTrans];
+			const FeatureDrawFunc drawFunc = featureDrawFuncs[applyTrans];
+			const TeamColorFunc tcolFunc = teamColorFuncs[tcFunIdx];
 			const CFeature* feat = static_cast<const CFeature*>(obj);
 
-			SetObjectTeamColor(feat, shader, const_cast<LuaObjectLODMaterial*>(lodMat), float2(feat->drawAlpha, 1.0f * alphaMatBin));
+			tcolFunc(feat, shader, const_cast<LuaObjectLODMaterial*>(lodMat), float2(feat->drawAlpha, 1.0f * alphaMatBin));
 
-			CALL_FUNC_VA(featureDrawer, func,  feat, preList, postList, true, noLuaCall);
+			CALL_FUNC_VA(featureDrawer, drawFunc,  feat, preList, postList, true, noLuaCall);
 		} break;
 		default: {
 			assert(false);
