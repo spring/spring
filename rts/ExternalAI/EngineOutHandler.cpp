@@ -221,9 +221,7 @@ void CEngineOutHandler::UnitLeftRadar(const CUnit& unit, int allyTeamId) {
 	if (team_skirmishAIs.find(TEAM_ID) == team_skirmishAIs.end())   \
 		return;                                                     \
                                                                     \
-	auto& ais = team_skirmishAIs[TEAM_ID];                          \
-                                                                    \
-	for (auto ai: ais) {                                            \
+	for (auto ai: team_skirmishAIs[TEAM_ID]) {                      \
 		try {                                                       \
 			id_skirmishAI[ai]->FUNC;                                \
 		} CATCH_AI_EXCEPTION;                                       \
