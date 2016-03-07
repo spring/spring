@@ -12,7 +12,6 @@ public:
 
 	CExtractorBuilding();
 	virtual ~CExtractorBuilding();
-	void PostLoad();
 
 	void ResetExtraction();
 	void SetExtractionRangeAndDepth(float range, float depth);

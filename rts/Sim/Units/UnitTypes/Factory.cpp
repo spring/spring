@@ -34,8 +34,7 @@ CR_REG_METADATA(CFactory, (
 	CR_MEMBER(curBuildDef),
 	CR_MEMBER(curBuild),
 	CR_MEMBER(finishedBuildCommand),
-	CR_MEMBER(nanoPieceCache),
-	CR_POSTLOAD(PostLoad)
+	CR_MEMBER(nanoPieceCache)
 ))
 
 //////////////////////////////////////////////////////////////////////
@@ -48,18 +47,6 @@ CFactory::CFactory():
 	curBuildDef(nullptr),
 	lastBuildUpdateFrame(-1)
 {
-}
-
-
-
-void CFactory::PostLoad()
-{
-	if (yardOpen) {
-		script->Activate();
-	}
-	if (curBuild) {
-		script->StartBuilding();
-	}
 }
 
 void CFactory::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSequence)

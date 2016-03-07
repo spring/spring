@@ -117,6 +117,10 @@ void CObject::Serialize(creg::ISerializer* ser)
 				dl.insert(obj);
 			}
 		}
+		// cur_sync_id needs fixing since it's not serialized
+		// it might not be exactly where we left it, but that's not important
+		// since only order matters
+		cur_sync_id = Threading::AtomicCounterInt64(std::max(sync_id, (boost::int64_t) cur_sync_id));
 	}
 }
 

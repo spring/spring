@@ -11,18 +11,20 @@
 CR_BIND(CollisionVolume, )
 CR_REG_METADATA(CollisionVolume, (
 	CR_MEMBER(fullAxisScales),
-	CR_MEMBER(halfAxisScales),
-	CR_MEMBER(halfAxisScalesSqr),
-	CR_MEMBER(halfAxisScalesInv),
+	CR_IGNORED(halfAxisScales),
+	CR_IGNORED(halfAxisScalesSqr),
+	CR_IGNORED(halfAxisScalesInv),
 	CR_MEMBER(axisOffsets),
-	CR_MEMBER(volumeBoundingRadius),
-	CR_MEMBER(volumeBoundingRadiusSq),
+	CR_IGNORED(volumeBoundingRadius),
+	CR_IGNORED(volumeBoundingRadiusSq),
 	CR_MEMBER(volumeType),
 	CR_MEMBER(volumeAxes),
 	CR_MEMBER(ignoreHits),
 	CR_MEMBER(useContHitTest),
 	CR_MEMBER(defaultToFootPrint),
-	CR_MEMBER(defaultToPieceTree)
+	CR_MEMBER(defaultToPieceTree),
+
+	CR_POSTLOAD(PostLoad)
 ))
 
 // base ctor (CREG-only)
@@ -104,6 +106,12 @@ CollisionVolume::CollisionVolume(
 	InitShape(cvScales, cvOffsets, cvType, COLVOL_HITTEST_CONT, cvAxis);
 }
 
+
+void CollisionVolume::PostLoad()
+{
+	SetAxisScales(fullAxisScales);
+	SetBoundingRadius();
+}
 
 
 void CollisionVolume::InitSphere(float radius)

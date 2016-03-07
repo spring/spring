@@ -15,7 +15,6 @@ public:
 
 	CBuilding();
 	virtual ~CBuilding() {}
-	void PostLoad() {}
 
 	void PreInit(const UnitLoadParams& params);
 	void PostInit(const CUnit* builder);

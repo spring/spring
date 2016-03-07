@@ -19,8 +19,6 @@ public:
 
 	CFactory();
 
-	void PostLoad();
-
 	void StartBuild(const UnitDef* buildeeDef);
 	void UpdateBuild(CUnit* buildee);
 	void FinishBuild(CUnit* buildee);

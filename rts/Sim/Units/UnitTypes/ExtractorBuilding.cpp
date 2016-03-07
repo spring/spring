@@ -21,8 +21,7 @@ CR_REG_METADATA(CExtractorBuilding, (
 	CR_MEMBER(extractionRange),
 	CR_MEMBER(extractionDepth),
 	CR_MEMBER(metalAreaOfControl),
-	CR_MEMBER(neighbours),
-	CR_POSTLOAD(PostLoad)
+	CR_MEMBER(neighbours)
 ))
 
 CR_BIND(CExtractorBuilding::MetalSquareOfControl, )
@@ -47,12 +46,6 @@ CExtractorBuilding::~CExtractorBuilding()
 	if (unitHandler != NULL) {
 		ResetExtraction();
 	}
-}
-
-/* CReg PostLoad */
-void CExtractorBuilding::PostLoad()
-{
-	script->ExtractionRateChanged(metalExtract);
 }
 
 /* resets the metalMap and notifies the neighbours */
