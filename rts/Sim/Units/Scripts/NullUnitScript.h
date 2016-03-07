@@ -9,9 +9,10 @@ class CNullUnitScript : public CUnitScript
 {
 	CR_DECLARE(CNullUnitScript)
 protected:
-	CNullUnitScript(): CUnitScript(nullptr) {}
+	CNullUnitScript(CUnit* u);
 
 	void ShowScriptError(const std::string& msg) override;
+	void PostLoad();
 
 public:
 	static CNullUnitScript value;

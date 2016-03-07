@@ -5,12 +5,16 @@
 
 #include <map>
 #include "UnitScript.h"
+#include "NullUnitScript.h"
 #include "Sim/Units/Unit.h"
 
 class CLuaHandle;
 struct lua_State;
 
-class CLuaUnitScript : public CUnitScript
+// Hack for creg:
+// Since CLuaUnitScript isn't creged, during loading it will
+// construct a CNullUnitScript instead.
+class CLuaUnitScript : public CNullUnitScript
 {
 private:
 	static CUnit* activeUnit;
