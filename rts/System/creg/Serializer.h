@@ -84,6 +84,8 @@ namespace creg {
 		std::map<void*,std::vector<ObjectRef*> > ptrToId;
 		std::deque<ObjectRef> objects;
 		std::vector<ObjectRef*> pendingObjects; // these objects still have to be saved
+		std::map<Class*, int> classSizes;
+		std::map<Class*, int> classCounts;
 
 		// Serialize all class names
 		void WriteObjectInfo();

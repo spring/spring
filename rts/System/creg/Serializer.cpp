@@ -147,6 +147,8 @@ COutputStreamSerializer::ObjectRef* COutputStreamSerializer::FindObjectRef(void*
 
 void COutputStreamSerializer::SerializeObject(Class* c, void* ptr, ObjectRef* objr)
 {
+	const unsigned objstart = stream->tellp();
+
 	if (c->base())
 		SerializeObject(c->base(), ptr, objr);
 
@@ -187,6 +189,11 @@ void COutputStreamSerializer::SerializeObject(Class* c, void* ptr, ObjectRef* ob
 	}
 
 	objr->memberGroups.push_back(omg);
+
+	const unsigned objend = stream->tellp();
+	const int sz = objend - objstart;
+	classSizes[c] += sz;
+	classCounts[c]++;
 }
 
 void COutputStreamSerializer::SerializeObjectInstance(void* inst, creg::Class* objClass)
@@ -289,7 +296,6 @@ void COutputStreamSerializer::SavePackage(std::ostream* s, void* rootObj, Class*
 	ptrToId[rootObj].push_back(obj);
 	pendingObjects.push_back(obj);
 
-	std::map<creg::Class*, int> classSizes;
 	// Save until all the referenced objects have been stored
 	while (!pendingObjects.empty())
 	{
@@ -299,19 +305,14 @@ void COutputStreamSerializer::SavePackage(std::ostream* s, void* rootObj, Class*
 		for (std::vector<ObjectRef*>::const_iterator i = po.begin(); i != po.end(); ++i)
 		{
 			ObjectRef* obj = *i;
-			const unsigned objstart = stream->tellp();
 			SerializeObject(obj->class_, obj->ptr, obj);
-			const unsigned objend = stream->tellp();
-			const int sz = objend - objstart;
-			classSizes[obj->class_] += sz;
-			LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Serialized %s size:%i", obj->class_->name.c_str(), sz);
+			//LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Serialized %s size:%i", obj->class_->name.c_str(), sz);
 		}
 	}
 
 	// Collect a set of all used classes
 	std::map<creg::Class*, ClassRef> classMap;
 	std::vector<ClassRef*> classRefs;
-	std::map<int, int> classObjects;
 	for (ObjectRef& oRef: objects) {
 		if (oRef.ptr == nullptr)
 			continue;
@@ -330,16 +331,15 @@ void COutputStreamSerializer::SavePackage(std::ostream* s, void* rootObj, Class*
 
 		std::map<creg::Class*, ClassRef>::iterator cr = classMap.find(oRef.class_);
 		oRef.classIndex = cr->second.index;
-		classObjects[oRef.classIndex]++;
 	}
 
 
 	if (LOG_IS_ENABLED(L_DEBUG)) {
-		for (std::map<int, int>::iterator i = classObjects.begin(); i != classObjects.end(); i++) {
-			LOG_L(L_DEBUG, "%20s %10u %10u",
-					classRefs[i->first]->class_->name.c_str(),
-					i->second,
-					classSizes[classRefs[i->first]->class_]);
+		for (auto &it: classSizes) {
+			LOG_L(L_DEBUG, "%30s %10u %10u",
+					it.first->name.c_str(),
+					classCounts[it.first],
+					it.second);
 		}
 	}
 
