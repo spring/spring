@@ -54,9 +54,9 @@ CR_REG_METADATA(CHoverAirMoveType, (
 
 
 static bool IsUnitBusy(const CUnit* u) {
-	// queued move-commands or an active build-command mean unit has to stay airborne
+	// queued move-commands (or active build/repair/etc-commands) mean unit has to stay airborne
 	const auto& cai = u->commandAI;
-	return (cai->inCommand || cai->HasMoreMoveCommands() || cai->HasCommand(CMD_LOAD_UNITS) || cai->HasCommand(CMD_GUARD) || cai->HasCommand(-1));
+	return (cai->inCommand || cai->HasMoreMoveCommands(false));
 }
 
 CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
@@ -143,6 +143,16 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 		case AIRCRAFT_CRASHING:
 			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_CRASHING);
 			break;
+
+		#if 0
+		case AIRCRAFT_FLYING:
+			owner->Activate();
+			break;
+		case AIRCRAFT_LANDING:
+			owner->Deactivate();
+			break;
+		#endif
+
 		case AIRCRAFT_LANDED:
 			// FIXME already inform commandAI in AIRCRAFT_LANDING!
 			owner->commandAI->StopMove();
@@ -150,8 +160,6 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 			owner->Deactivate();
 			owner->Block();
 			owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
-			break;
-		case AIRCRAFT_LANDING:
 			break;
 		case AIRCRAFT_TAKEOFF:
 			owner->Activate();
@@ -251,7 +259,8 @@ void CHoverAirMoveType::KeepPointingTo(float3 pos, float distance, bool aggressi
 	goalDistance = distance;
 	goalPos = owner->pos;
 
-	SetState(AIRCRAFT_FLYING);
+	// let this handle any needed state transitions
+	StartMoving(goalPos, goalDistance);
 
 	// FIXME:
 	//   the FLY_ATTACKING state is broken (unknown how long this has been

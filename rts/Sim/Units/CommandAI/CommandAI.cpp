@@ -1714,13 +1714,17 @@ bool CCommandAI::HasCommand(int cmdID) const {
 	return ((commandQue.front()).GetID() == cmdID);
 }
 
-bool CCommandAI::HasMoreMoveCommands() const
+bool CCommandAI::HasMoreMoveCommands(bool skipFirstCmd) const
 {
-	if (commandQue.size() <= 1)
+	if (commandQue.empty())
 		return false;
 
-	// skip the first command
-	for (CCommandQueue::const_iterator i = ++commandQue.begin(); i != commandQue.end(); ++i) {
+	auto i = commandQue.begin();
+
+	if (skipFirstCmd)
+		++i;
+
+	for (; i != commandQue.end(); ++i) {
 		switch (i->GetID()) {
 			case CMD_AREA_ATTACK:
 			case CMD_ATTACK:
@@ -1764,17 +1768,18 @@ bool CCommandAI::HasMoreMoveCommands() const
 bool CCommandAI::SkipParalyzeTarget(const CUnit* target)
 {
 	// check to see if we are about to paralyze a unit that is already paralyzed
-	if ((target == NULL) || (owner->weapons.empty())) {
+	if ((target == NULL) || (owner->weapons.empty()))
 		return false;
-	}
+
 	const CWeapon* w = owner->weapons.front();
-	if (!w->weaponDef->paralyzer) {
+
+	if (!w->weaponDef->paralyzer)
 		return false;
-	}
+
 	// visible and stunned?
-	if ((target->losStatus[owner->allyteam] & LOS_INLOS) && target->IsStunned() && HasMoreMoveCommands()) {
+	if ((target->losStatus[owner->allyteam] & LOS_INLOS) && target->IsStunned() && HasMoreMoveCommands())
 		return true;
-	}
+
 	return false;
 }
 

@@ -63,7 +63,7 @@ public:
 	void StopAttackingAllyTeam(int ally);
 
 	bool HasCommand(int cmdID) const;
-	bool HasMoreMoveCommands() const;
+	bool HasMoreMoveCommands(bool skipFirstCmd = true) const;
 
 	int CancelCommands(const Command& c, CCommandQueue& queue, bool& first);
 	/**
