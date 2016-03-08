@@ -772,9 +772,27 @@ void SpringApp::ParseCmdLine(const std::string& binaryName)
 }
 
 
+CGameController* SpringApp::LoadSaveFile(const std::string& saveFile)
+{
+	const std::string ext = FileSystem::GetExtension(saveFile);
+
+	if (ext != "ssf" && ext != "slsf")
+		throw content_error(std::string("Unknown save extension: ") + ext);
+
+	clientSetup->isHost = true;
+
+	pregame = new CPreGame(clientSetup);
+	pregame->LoadSavefile(saveFile, ext == "ssf");
+	return pregame;
+}
+
+
 CGameController* SpringApp::RunScript(const std::string& buf)
 {
 	clientSetup->LoadFromStartScript(buf);
+
+	if (!clientSetup->saveFile.empty())
+		return LoadSaveFile(clientSetup->saveFile);
 
 	// LoadFromStartScript overrides all values so reset cmdline defined ones
 	if (cmdline->IsSet("server")) {
@@ -786,9 +804,8 @@ CGameController* SpringApp::RunScript(const std::string& buf)
 
 	pregame = new CPreGame(clientSetup);
 
-	if (clientSetup->isHost) {
+	if (clientSetup->isHost)
 		pregame->LoadSetupscript(buf);
-	}
 
 	return pregame;
 }
@@ -877,19 +894,8 @@ void SpringApp::Startup()
 
 		pregame = new CPreGame(clientSetup);
 		pregame->LoadDemo(inputFile);
-	} else if (extension == "slsf") {
-		// savegame.slsf
-		clientSetup->isHost = true;
-
-		pregame = new CPreGame(clientSetup);
-		pregame->LoadSavefile(inputFile, false);
-
-	} else if (extension == "ssf") {
-		// savegame.ssf
-		clientSetup->isHost = true;
-
-		pregame = new CPreGame(clientSetup);
-		pregame->LoadSavefile(inputFile, true);
+	} else if (extension == "slsf" || extension == "ssf") {
+		LoadSaveFile(inputFile);
 	} else {
 		StartScript(inputFile);
 	}
