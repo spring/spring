@@ -43,7 +43,7 @@
 CONFIG(int, LoadingMT).defaultValue(-1).safemodeValue(0);
 CONFIG(bool, ShowLoadMessages).defaultValue(true);
 
-CLoadScreen* CLoadScreen::singleton = NULL;
+CLoadScreen* CLoadScreen::singleton = nullptr;
 
 /******************************************************************************/
 
@@ -51,8 +51,8 @@ CLoadScreen::CLoadScreen(const std::string& _mapName, const std::string& _modNam
 	mapName(_mapName),
 	modName(_modName),
 	saveFile(_saveFile),
-	netHeartbeatThread(NULL),
-	gameLoadThread(NULL),
+	netHeartbeatThread(nullptr),
+	gameLoadThread(nullptr),
 	mtLoading(true),
 	showMessages(true),
 	startupTexture(0),
@@ -86,6 +86,7 @@ void CLoadScreen::Init()
 
 	//! Create a thread during the loading that pings the host/server, so it knows that this client is still alive/loading
 	clientNet->KeepUpdating(true);
+
 	netHeartbeatThread = new boost::thread();
 	*netHeartbeatThread = Threading::CreateNewThread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, clientNet));
 
@@ -95,11 +96,13 @@ void CLoadScreen::Init()
 	CLuaIntro::LoadFreeHandler();
 
 	// old stuff
-	if (!LuaIntro) {
+	if (LuaIntro == nullptr) {
 		const CTeam* team = teamHandler->Team(gu->myTeam);
-		const std::string mapStartPic(mapInfo->GetStringValue("Startpic"));
 
-		assert(team != NULL);
+		const std::string mapStartPic(mapInfo->GetStringValue("Startpic"));
+		const std::string mapStartMusic(mapInfo->GetStringValue("Startmusic"));
+
+		assert(team != nullptr);
 
 		if (mapStartPic.empty()) {
 			RandomStartPicture(team->GetSide());
@@ -107,7 +110,6 @@ void CLoadScreen::Init()
 			LoadStartPicture(mapStartPic);
 		}
 
-		const std::string mapStartMusic(mapInfo->GetStringValue("Startmusic"));
 		if (!mapStartMusic.empty())
 			Channels::BGMusic->StreamPlay(mapStartMusic);
 	}
@@ -141,21 +143,23 @@ CLoadScreen::~CLoadScreen()
 		gameLoadThread->Join();
 		CglFont::threadSafety = false;
 	}
-	delete gameLoadThread; gameLoadThread = NULL;
 
-	if (clientNet)
+	SafeDelete(gameLoadThread);
+
+	if (clientNet != nullptr)
 		clientNet->KeepUpdating(false);
-	if (netHeartbeatThread)
+	if (netHeartbeatThread != nullptr)
 		netHeartbeatThread->join();
-	delete netHeartbeatThread; netHeartbeatThread = NULL;
+
+	SafeDelete(netHeartbeatThread);
 
 	if (!gu->globalQuit)
 		activeController = game;
 
 	if (activeController == this)
-		activeController = NULL;
+		activeController = nullptr;
 
-	if (LuaIntro) {
+	if (LuaIntro != nullptr) {
 		Draw(); // one last frame
 		LuaIntro->Shutdown();
 	}
@@ -173,7 +177,7 @@ CLoadScreen::~CLoadScreen()
 #if !defined(HEADLESS) && !defined(NO_SOUND)
 		// sound is initialized at this point,
 		// but EFX support is *not* guaranteed
-		if (efx != NULL) {
+		if (efx != nullptr) {
 			*(efx->sfxProperties) = *(mapInfo->efxprops);
 			efx->CommitEffects();
 		}
@@ -182,7 +186,7 @@ CLoadScreen::~CLoadScreen()
 
 	UnloadStartPicture();
 
-	singleton = NULL;
+	singleton = nullptr;
 }
 
 
@@ -190,7 +194,7 @@ CLoadScreen::~CLoadScreen()
 
 void CLoadScreen::CreateInstance(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile)
 {
-	assert(singleton == NULL);
+	assert(singleton == nullptr);
 	singleton = new CLoadScreen(mapName, modName, saveFile);
 
 	// Init() already requires GetInstance() to work.
@@ -204,8 +208,7 @@ void CLoadScreen::CreateInstance(const std::string& mapName, const std::string& 
 
 void CLoadScreen::DeleteInstance()
 {
-	delete singleton;
-	singleton = NULL;
+	SafeDelete(singleton);
 }
 
 
@@ -213,7 +216,7 @@ void CLoadScreen::DeleteInstance()
 
 void CLoadScreen::ResizeEvent()
 {
-	if (LuaIntro)
+	if (LuaIntro != nullptr)
 		LuaIntro->ViewResize();
 }
 
@@ -221,7 +224,7 @@ void CLoadScreen::ResizeEvent()
 int CLoadScreen::KeyPressed(int k, bool isRepeat)
 {
 	//FIXME add mouse events
-	if (LuaIntro)
+	if (LuaIntro != nullptr)
 		LuaIntro->KeyPress(k, isRepeat);
 
 	return 0;
@@ -230,7 +233,7 @@ int CLoadScreen::KeyPressed(int k, bool isRepeat)
 
 int CLoadScreen::KeyReleased(int k)
 {
-	if (LuaIntro)
+	if (LuaIntro != nullptr)
 		LuaIntro->KeyRelease(k);
 
 	return 0;
@@ -253,7 +256,7 @@ bool CLoadScreen::Update()
 
 	if (!mtLoading) {
 		// without this call the window manager would think the window is unresponsive and thus asks for hard kill
-		SDL_PollEvent(NULL);
+		SDL_PollEvent(nullptr);
 	}
 
 	CNamedTextures::Update();
@@ -279,7 +282,7 @@ bool CLoadScreen::Draw()
 	//! cause of `curLoadMessage`
 	boost::recursive_mutex::scoped_lock lck(mutex);
 
-	if (LuaIntro) {
+	if (LuaIntro != nullptr) {
 		LuaIntro->Update();
 		LuaIntro->DrawGenesis();
 		ClearScreen();
@@ -381,30 +384,21 @@ void CLoadScreen::SetLoadMessage(const std::string& text, bool replace_lastline)
 
 /******************************************************************************/
 
-static void AppendStringVec(vector<string>& dst, const vector<string>& src)
-{
-	for (int i = 0; i < (int)src.size(); i++) {
-		dst.push_back(src[i]);
-	}
-}
-
-
 static string SelectPicture(const std::string& dir, const std::string& prefix)
 {
-	std::vector<string> pics;
-
-	AppendStringVec(pics, CFileHandler::FindFiles(dir, prefix + "*"));
+	std::vector<std::string> prefPics = std::move(CFileHandler::FindFiles(dir, prefix + "*"));
+	std::vector<std::string> sidePics;
 
 	//! add 'allside_' pictures if we don't have a prefix
 	if (!prefix.empty()) {
-		AppendStringVec(pics, CFileHandler::FindFiles(dir, "allside_*"));
+		sidePics = std::move(CFileHandler::FindFiles(dir, "allside_*"));
+		prefPics.insert(prefPics.end(), sidePics.begin(), sidePics.end());
 	}
 
-	if (pics.empty()) {
+	if (prefPics.empty())
 		return "";
-	}
 
-	return pics[gu->RandInt() % pics.size()];
+	return prefPics[gu->RandInt() % prefPics.size()];
 }
 
 
@@ -415,16 +409,17 @@ void CLoadScreen::RandomStartPicture(const std::string& sidePref)
 
 	const std::string picDir = "bitmaps/loadpictures/";
 
-	std::string name = "";
-	if (!sidePref.empty()) {
+	std::string name;
+
+	if (!sidePref.empty())
 		name = SelectPicture(picDir, sidePref + "_");
-	}
-	if (name.empty()) {
+
+	if (name.empty())
 		name = SelectPicture(picDir, "");
-	}
-	if (name.empty() || (name.rfind(".db") == name.size() - 3)) {
+
+	if (name.empty() || (name.rfind(".db") == name.size() - 3))
 		return; // no valid pictures
-	}
+
 	LoadStartPicture(name);
 }
 
@@ -464,9 +459,9 @@ void CLoadScreen::LoadStartPicture(const std::string& name)
 
 void CLoadScreen::UnloadStartPicture()
 {
-	if (startupTexture) {
+	if (startupTexture)
 		glDeleteTextures(1, &startupTexture);
-	}
+
 	startupTexture = 0;
 }
 
