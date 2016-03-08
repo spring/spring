@@ -2976,7 +2976,7 @@ int LuaSyncedRead::GetUnitVectors(lua_State* L)
 
 int LuaSyncedRead::GetUnitRotation(lua_State* L)
 {
-	return GetSolidObjectRotation(L, ParseInLosUnit(L, __FUNCTION__, 1));
+	return (GetSolidObjectRotation(L, ParseInLosUnit(L, __FUNCTION__, 1)));
 }
 
 int LuaSyncedRead::GetUnitDirection(lua_State* L)

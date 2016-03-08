@@ -532,22 +532,13 @@ static int SetSolidObjectRotation(lua_State* L, CSolidObject* o, bool isFeature)
 	if (o == nullptr)
 		return 0;
 
-	// TODO: switch to YPR=YXZ (same as ModelPiece::ComposeRotation())
-	CMatrix44f matrix;
-	matrix.RotateEulerXYZ(float3(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4)));
-	matrix.SetPos(o->pos);
-
-	assert(matrix.IsOrthoNormal());
-
-	o->SetDirVectors(matrix);
-	o->SetHeadingFromDirection();
-	o->UpdateMidAndAimPos();
+	o->SetDirVectorsEuler(float3(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4)));
 
 	if (isFeature) {
 		// not a hack: ForcedSpin() and CalculateTransform() calculate a
 		// transform based only on frontdir and assume the helper y-axis
 		// points up
-		static_cast<CFeature*>(o)->SetTransform(matrix, true);
+		static_cast<CFeature*>(o)->UpdateTransform(o->pos, true);
 	}
 
 	return 0;
@@ -612,12 +603,8 @@ static int SetSolidObjectPhysicalState(lua_State* L, CSolidObject* o)
 	drag.y = Clamp(luaL_optnumber(L, 12, drag.y), 0.0f, 1.0f);
 	drag.z = Clamp(luaL_optnumber(L, 13, drag.z), 0.0f, 1.0f);
 
-	CMatrix44f matrix;
-
 	o->Move(pos, false);
-	o->SetDirVectors(matrix.RotateEulerZXY(rot));
-	o->UpdateMidAndAimPos();
-	o->SetHeadingFromDirection();
+	o->SetDirVectorsEuler(rot);
 	// do not need ForcedSpin, above three calls cover it
 	o->ForcedMove(pos);
 	o->SetVelocityAndSpeed(speed);

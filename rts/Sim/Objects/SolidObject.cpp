@@ -426,6 +426,17 @@ float3 CSolidObject::GetWantedUpDir(bool useGroundNormal) const
 
 
 
+void CSolidObject::SetDirVectorsEuler(const float3 angles)
+{
+	CMatrix44f matrix;
+
+	// our system is left-handed, so R(X)R(Y)R(Z) is really T(R(-Z)R(-Y)R(-X))
+	// whenever these angles are retrieved, the handedness is converted again
+	SetDirVectors(matrix.RotateEulerXYZ(angles));
+	SetHeadingFromDirection();
+	UpdateMidAndAimPos();
+}
+
 void CSolidObject::SetHeadingFromDirection()
 {
 	heading = GetHeadingFromVector(frontdir.x, frontdir.z);

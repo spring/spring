@@ -134,6 +134,7 @@ public:
 	}
 
 
+	void SetDirVectorsEuler(const float3 angles);
 	void SetDirVectors(const CMatrix44f& matrix) {
 		rightdir.x = -matrix[0]; updir.x = matrix[4]; frontdir.x = matrix[ 8];
 		rightdir.y = -matrix[1]; updir.y = matrix[5]; frontdir.y = matrix[ 9];
