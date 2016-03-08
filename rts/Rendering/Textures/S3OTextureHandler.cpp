@@ -126,7 +126,7 @@ unsigned int CS3OTextureHandler::LoadAndCacheTexture(
 					__FUNCTION__, textureName.c_str(), model->name.c_str());
 
 				// file not found (or headless build), set a single pixel so unit is visible
-				bitmap->AllocDummy(SColor(255, 0, 0, 255));
+				bitmap->AllocDummy(SColor(255 * (texNum == 0), 0, 0, 255));
 			}
 		}
 
