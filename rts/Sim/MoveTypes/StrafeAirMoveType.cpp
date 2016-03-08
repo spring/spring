@@ -960,7 +960,6 @@ void CStrafeAirMoveType::UpdateLanding()
 			// owner->UnBlock();
 		} else {
 			goalPos.ClampInBounds();
-			owner->Activate();
 			UpdateFlying(wantedHeight, 1.0f);
 			return;
 		}
@@ -968,22 +967,20 @@ void CStrafeAirMoveType::UpdateLanding()
 
 	SetGoal(reservedLandingPos);
 	UpdateLandingHeight();
-	const float3 reservedLandingPosDir = reservedLandingPos - pos;
 
-	const float brakeDistance = BrakingDistance(owner->speed.Length2D(), decRate);
-	const float3 brakeSpot = pos + frontdir * brakeDistance;
+	const float3 reservedLandingPosDir = reservedLandingPos - pos;
+	const float3 brakeSpot = pos + frontdir * BrakingDistance(owner->speed.Length2D(), decRate);
 
 	if (brakeSpot.SqDistance2D(reservedLandingPos) > landRadiusSq) {
-		// If we're not going to land inside the landRadius,
-		// keep flying.
+		// If we're not going to land inside the landRadius, keep flying.
 		float tempWantedHeight = wantedHeight;
 		wantedHeight = orgWantedHeight;
-		owner->Activate();
+
 		UpdateFlying(wantedHeight, 1.0f);
 		wantedHeight = tempWantedHeight;
 		return;
 	}
-	owner->Deactivate();
+
 	     if (rightdir.y < -0.01f) { updir -= (rightdir * 0.02f); }
 	else if (rightdir.y >  0.01f) { updir += (rightdir * 0.02f); }
 
@@ -1002,9 +999,7 @@ void CStrafeAirMoveType::UpdateLanding()
 
 		if (frontSpeed > 0.0f) {
 			//Slow down before vertical landing
-
-			const float newVelocity = spd.Length2D() * invDrag - decRate;
-			owner->SetVelocity(frontdir * newVelocity);
+			owner->SetVelocity(frontdir * (spd.Length2D() * invDrag - decRate));
 
 			//Calculate again for next check
 			frontSpeed = spd.dot2D(frontdir);
@@ -1180,13 +1175,10 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_CRASHING);
 			break;
 
-		case AIRCRAFT_FLYING:
-			// fall-through
-			owner->Activate();
-
 		case AIRCRAFT_TAKEOFF:
 			// should be in the STATE_FLYING case, but these aircraft
 			// take forever to reach it reducing factory cycle-times
+			owner->Activate();
 			owner->UnBlock();
 			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
 			break;
@@ -1201,6 +1193,7 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 			// owner->Block();
 			owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
 			break;
+
 		default:
 			break;
 	}

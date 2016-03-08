@@ -134,13 +134,8 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 		return;
 
 
-	if (newState == AIRCRAFT_LANDED) {
-		owner->dontUseWeapons = true;
-		owner->useAirLos = false;
-	} else {
-		owner->dontUseWeapons = false;
-		owner->useAirLos = true;
-	}
+	owner->dontUseWeapons = (newState == AIRCRAFT_LANDED);
+	owner->useAirLos = (newState != AIRCRAFT_LANDED);
 
 	aircraftState = newState;
 
@@ -152,11 +147,16 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 			// FIXME already inform commandAI in AIRCRAFT_LANDING!
 			owner->commandAI->StopMove();
 
+			owner->Deactivate();
 			owner->Block();
 			owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
 			break;
 		case AIRCRAFT_LANDING:
-			owner->Deactivate();
+			break;
+		case AIRCRAFT_TAKEOFF:
+			owner->Activate();
+			owner->UnBlock();
+			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
 			break;
 		case AIRCRAFT_HOVERING: {
 			// when heading is forced by TCAI we are busy (un-)loading
@@ -166,9 +166,6 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 		} // fall through
 		default:
 			reservedLandingPos.x = -1.0f;
-			owner->Activate();
-			owner->UnBlock();
-			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
 			break;
 	}
 
@@ -604,21 +601,20 @@ void CHoverAirMoveType::UpdateLanding()
 
 	UpdateLandingHeight();
 
+	flyState = FLY_LANDING;
+
 	const float altitude = pos.y - reservedLandingPos.y;
 	const float distSq2D = reservedLandingPos.SqDistance2D(pos);
 
 	if (distSq2D > landRadiusSq) {
 		const float tmpWantedHeight = wantedHeight;
 		SetGoal(reservedLandingPos);
-		wantedHeight = std::min((orgWantedHeight - wantedHeight) * distSq2D / altitude + wantedHeight, orgWantedHeight);
-		flyState = FLY_LANDING;
 
+		wantedHeight = std::min((orgWantedHeight - wantedHeight) * distSq2D / altitude + wantedHeight, orgWantedHeight);
 		UpdateFlying();
 		wantedHeight = tmpWantedHeight;
 		return;
 	}
-
-	flyState = FLY_LANDING;
 
 	// We want to land, and therefore cancel our speed first
 	wantedSpeed = ZeroVector;
