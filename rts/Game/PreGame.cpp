@@ -110,10 +110,10 @@ void CPreGame::LoadDemo(const std::string& demo)
 	ReadDataFromDemo(demo);
 }
 
-void CPreGame::LoadSavefile(const std::string& save)
+void CPreGame::LoadSavefile(const std::string& save, bool usecreg)
 {
 	assert(clientSetup->isHost);
-	savefile = ILoadSaveHandler::Create();
+	savefile = ILoadSaveHandler::Create(usecreg);
 	savefile->LoadGameStartInfo(save.c_str());
 
 	StartServer(savefile->scriptText);

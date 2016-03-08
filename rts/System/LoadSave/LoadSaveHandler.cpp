@@ -12,9 +12,9 @@
 CONFIG(bool, UseCREGSaveLoad).defaultValue(false);
 
 
-ILoadSaveHandler* ILoadSaveHandler::Create()
+ILoadSaveHandler* ILoadSaveHandler::Create(bool usecreg)
 {
-	if (configHandler->GetBool("UseCREGSaveLoad"))
+	if (usecreg)
 		return new CCregLoadSaveHandler();
 	else
 		return new CLuaLoadSaveHandler();

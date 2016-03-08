@@ -877,12 +877,19 @@ void SpringApp::Startup()
 
 		pregame = new CPreGame(clientSetup);
 		pregame->LoadDemo(inputFile);
+	} else if (extension == "slsf") {
+		// savegame.slsf
+		clientSetup->isHost = true;
+
+		pregame = new CPreGame(clientSetup);
+		pregame->LoadSavefile(inputFile, false);
+
 	} else if (extension == "ssf") {
 		// savegame.ssf
 		clientSetup->isHost = true;
 
 		pregame = new CPreGame(clientSetup);
-		pregame->LoadSavefile(inputFile);
+		pregame->LoadSavefile(inputFile, true);
 	} else {
 		StartScript(inputFile);
 	}

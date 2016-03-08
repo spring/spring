@@ -2752,7 +2752,7 @@ public:
 			"Save the game state to QuickSave.ssf (BROKEN)") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		game->SaveGame("Saves/QuickSave.ssf", true);
+		game->SaveGame("Saves/QuickSave.ssf", true, true);
 		return true;
 	}
 };
@@ -2781,8 +2781,9 @@ public:
 /// /save [-y ]<savename>
 class SaveActionExecutor : public IUnsyncedActionExecutor {
 public:
-	SaveActionExecutor() : IUnsyncedActionExecutor("Save",
-			"Save the game state to a specific file (BROKEN)") {}
+	SaveActionExecutor(bool _usecreg) : IUnsyncedActionExecutor((_usecreg ? "Save" : "LuaSave"),
+			"Save the game state to a specific file, add -y to overwrite when file is already present"),
+			usecreg(_usecreg) {}
 
 	bool Execute(const UnsyncedAction& action) const {
 		const std::vector<std::string>& args = _local_strSpaceTokenize(action.GetArgs());
@@ -2793,14 +2794,20 @@ public:
 				overwrite = args[1] == "-y";
 				//no break, fall through
 			case 1:
-				saveFileName = "Saves/" + args[0] + ".ssf";
+				saveFileName = "Saves/" + args[0];
+				if (usecreg)
+					saveFileName += ".ssf";
+				else
+					saveFileName += ".slsf";
 				break;
 			default:
 				return false;
 		}
-		game->SaveGame(saveFileName, overwrite);
+		game->SaveGame(saveFileName, overwrite, usecreg);
 		return true;
 	}
+private:
+	bool usecreg;
 };
 
 
@@ -3171,7 +3178,8 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new SendActionExecutor());
 	AddActionExecutor(new SaveGameActionExecutor());
 	AddActionExecutor(new DumpStateActionExecutor());
-	AddActionExecutor(new SaveActionExecutor());
+	AddActionExecutor(new SaveActionExecutor(true));
+	AddActionExecutor(new SaveActionExecutor(false));
 	AddActionExecutor(new ReloadGameActionExecutor());
 	AddActionExecutor(new ReloadShadersActionExecutor());
 	AddActionExecutor(new DebugInfoActionExecutor());

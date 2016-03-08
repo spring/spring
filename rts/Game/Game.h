@@ -99,7 +99,7 @@ public:
 	void ParseInputTextGeometry(const std::string& geo);
 
 	void ReloadGame();
-	void SaveGame(const std::string& filename, bool overwrite);
+	void SaveGame(const std::string& filename, bool overwrite, bool usecreg);
 
 	void ResizeEvent();
 

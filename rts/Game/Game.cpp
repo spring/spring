@@ -1800,12 +1800,12 @@ bool CGame::IsLagging(float maxLatency) const
 }
 
 
-void CGame::SaveGame(const std::string& filename, bool overwrite)
+void CGame::SaveGame(const std::string& filename, bool overwrite, bool usecreg)
 {
 	if (FileSystem::CreateDirectory("Saves")) {
 		if (overwrite || !FileSystem::FileExists(filename)) {
 			LOG("Saving game to %s", filename.c_str());
-			ILoadSaveHandler* ls = ILoadSaveHandler::Create();
+			ILoadSaveHandler* ls = ILoadSaveHandler::Create(usecreg);
 			ls->mapName = gameSetup->mapName;
 			ls->modName = gameSetup->modName;
 			ls->SaveGame(filename);
