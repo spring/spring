@@ -45,7 +45,7 @@ public:
 	float3 FindLandingPos();
 
 	void SetMaxSpeed(float speed);
-	float BrakingDistance(float speed, float rate);
+	float BrakingDistance(float speed, float rate) const override;
 
 	void KeepPointingTo(float3 pos, float distance, bool aggressive) {}
 	void StartMoving(float3 pos, float goalRadius);

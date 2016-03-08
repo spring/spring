@@ -1211,7 +1211,7 @@ float3 CStrafeAirMoveType::FindLandingPos()
 {
 	const float3 ret = -OnesVector;
 	const UnitDef* ud = owner->unitDef;
-	float brDist = BrakingDistance(maxSpeed, decRate);
+	const float brDist = BrakingDistance(maxSpeed, decRate);
 	landRadiusSq = Square(brDist);
 
 	float3 tryPos = owner->pos + owner->frontdir * brDist;
@@ -1240,7 +1240,7 @@ float3 CStrafeAirMoveType::FindLandingPos()
 }
 
 
-float CStrafeAirMoveType::BrakingDistance(float speed, float rate)
+float CStrafeAirMoveType::BrakingDistance(float speed, float rate) const
 {
 	// Denote:
 	//		a_i: Speed after i frames
