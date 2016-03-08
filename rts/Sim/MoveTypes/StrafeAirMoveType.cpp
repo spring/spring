@@ -947,8 +947,6 @@ void CStrafeAirMoveType::UpdateLanding()
 		// so other aircraft can not claim the same spot
 		if (reservedLandingPos.x >= 0.0f) {
 			const float3 originalPos = pos;
-			const float radius = std::max(owner->radius, 10.0f);
-			landRadiusSq = 4 * radius * radius;
 			wantedHeight = 0;
 
 			owner->Move(reservedLandingPos, false);
@@ -972,7 +970,7 @@ void CStrafeAirMoveType::UpdateLanding()
 	UpdateLandingHeight();
 	const float3 reservedLandingPosDir = reservedLandingPos - pos;
 
-	const float brakeDistance = GetBrakeDistance();
+	const float brakeDistance = BrakingDistance(owner->speed.Length2D(), decRate);
 	const float3 brakeSpot = pos + frontdir * brakeDistance;
 
 	if (brakeSpot.SqDistance2D(reservedLandingPos) > landRadiusSq) {
@@ -1216,12 +1214,14 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 
 
 
-float3 CStrafeAirMoveType::FindLandingPos() const
+float3 CStrafeAirMoveType::FindLandingPos()
 {
 	const float3 ret = -OnesVector;
 	const UnitDef* ud = owner->unitDef;
+	float brDist = BrakingDistance(maxSpeed, decRate);
+	landRadiusSq = Square(brDist);
 
-	float3 tryPos = goalPos;
+	float3 tryPos = owner->pos + owner->frontdir * brDist;
 	tryPos.y = CGround::GetHeightReal(tryPos.x, tryPos.z);
 
 	if ((tryPos.y < 0.0f) && !(ud->floatOnWater || ud->canSubmerge))
@@ -1247,7 +1247,7 @@ float3 CStrafeAirMoveType::FindLandingPos() const
 }
 
 
-float CStrafeAirMoveType::GetBrakeDistance()
+float CStrafeAirMoveType::BrakingDistance(float speed, float rate)
 {
 	// Denote:
 	//		a_i: Speed after i frames
@@ -1266,14 +1266,13 @@ float CStrafeAirMoveType::GetBrakeDistance()
 	//
 	// Using all these you can know how much distance your plane will move
 	// until it is stopped
-	const float spd = owner->speed.Length2D();
-	const float d = decRate;
+	const float d = rate;
 	const float r = invDrag;
 
-	const int n = math::floor(math::log(d / (d - spd * (r - 1))) / math::log(r));
+	const int n = math::floor(math::log(d / (d - speed * (r - 1))) / math::log(r));
 	const float r_n = math::pow(r, n);
 
-	const float dist = spd * r * (r_n - 1) / (r - 1) - d * (r * (r_n - 1) / (r - 1) - n) / (r - 1);
+	const float dist = speed * r * (r_n - 1) / (r - 1) - d * (r * (r_n - 1) / (r - 1) - n) / (r - 1);
 
 	return dist;
 }

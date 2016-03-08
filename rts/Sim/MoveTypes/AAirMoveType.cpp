@@ -145,6 +145,9 @@ void AAirMoveType::UpdateLanded()
 
 void AAirMoveType::LandAt(float3 pos, float distanceSq)
 {
+	if (distanceSq < 0.0f)
+		distanceSq = Square(BrakingDistance(maxSpeed, decRate));
+
 	if (aircraftState != AIRCRAFT_LANDING)
 		SetState(AIRCRAFT_LANDING);
 

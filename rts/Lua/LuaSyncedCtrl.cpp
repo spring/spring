@@ -2385,7 +2385,7 @@ int LuaSyncedCtrl::SetUnitLandGoal(lua_State* L)
 		luaL_error(L, "Not a flying unit");
 
 	const float3 landPos(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
-	const float radiusSq = lua_isnumber(L, 5)? Square(lua_tonumber(L, 5)): amt->landRadiusSq;
+	const float radiusSq = lua_isnumber(L, 5)? Square(lua_tonumber(L, 5)): -1.0f;
 
 	amt->LandAt(landPos, radiusSq);
 	return 0;

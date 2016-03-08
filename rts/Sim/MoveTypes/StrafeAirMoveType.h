@@ -42,10 +42,10 @@ public:
 	void SetState(AircraftState state);
 	void UpdateTakeOff();
 
-	float3 FindLandingPos() const;
+	float3 FindLandingPos();
 
 	void SetMaxSpeed(float speed);
-	float GetBrakeDistance();
+	float BrakingDistance(float speed, float rate);
 
 	void KeepPointingTo(float3 pos, float distance, bool aggressive) {}
 	void StartMoving(float3 pos, float goalRadius);
