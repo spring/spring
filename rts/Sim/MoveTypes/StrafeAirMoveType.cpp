@@ -1314,10 +1314,11 @@ void CStrafeAirMoveType::StopMoving(bool callScript, bool hardStop)
 	SetGoal(owner->pos);
 	SetWantedMaxSpeed(0.0f);
 
-	if (aircraftState != AAirMoveType::AIRCRAFT_FLYING)
+	if (aircraftState != AAirMoveType::AIRCRAFT_FLYING && aircraftState != AAirMoveType::AIRCRAFT_LANDING)
 		return;
 
 	if (owner->unitDef->DontLand() || !autoLand) {
+		SetState(AIRCRAFT_FLYING);
 		return;
 	}
 	SetState(AIRCRAFT_LANDING);

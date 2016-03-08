@@ -196,6 +196,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitFuel);
 	REGISTER_LUA_CFUNC(SetUnitMoveGoal);
 	REGISTER_LUA_CFUNC(SetUnitLandGoal);
+	REGISTER_LUA_CFUNC(ClearUnitGoal);
 	REGISTER_LUA_CFUNC(SetUnitNeutral);
 	REGISTER_LUA_CFUNC(SetUnitTarget);
 	REGISTER_LUA_CFUNC(SetUnitMidAndAimPos);
@@ -2387,6 +2388,18 @@ int LuaSyncedCtrl::SetUnitLandGoal(lua_State* L)
 	const float radiusSq = lua_isnumber(L, 5)? Square(lua_tonumber(L, 5)): amt->landRadiusSq;
 
 	amt->LandAt(landPos, radiusSq);
+	return 0;
+}
+
+
+int LuaSyncedCtrl::ClearUnitGoal(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
+	if (unit == nullptr)
+		return 0;
+
+	unit->moveType->StopMoving();
 	return 0;
 }
 
