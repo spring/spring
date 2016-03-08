@@ -2785,11 +2785,20 @@ public:
 			"Save the game state to a specific file (BROKEN)") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
-		const bool saveOverride = action.GetArgs().find("-y ") == 0;
-		const std::string saveName(action.GetArgs().c_str() + (saveOverride ? 3 : 0));
-		const std::string saveFileName = "Saves/" + saveName + ".ssf";
-		game->SaveGame(saveFileName, saveOverride);
+		const std::vector<std::string>& args = _local_strSpaceTokenize(action.GetArgs());
+		bool overwrite = false;
+		std::string saveFileName;
+		switch (args.size()) {
+			case 2:
+				overwrite = args[1] == "-y";
+				//no break, fall through
+			case 1:
+				saveFileName = "Saves/" + args[0] + ".ssf";
+				break;
+			default:
+				return false;
+		}
+		game->SaveGame(saveFileName, overwrite);
 		return true;
 	}
 };
