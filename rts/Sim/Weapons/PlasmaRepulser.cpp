@@ -7,7 +7,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Rendering/Env/Particles/Classes/ShieldProjectile.h"
+#include "Rendering/Env/Particles/Classes/ShieldSegmentProjectile.h"
 #include "Rendering/Env/Particles/Classes/RepulseGfx.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/Scripts/UnitScript.h"
@@ -27,7 +27,7 @@ CR_REG_METADATA(CPlasmaRepulser, (
 	CR_MEMBER(hitFrames),
 	CR_MEMBER(rechargeDelay),
 	CR_MEMBER(isEnabled),
-	CR_MEMBER(shieldProjectile),
+	CR_MEMBER(segmentCollection),
 	CR_MEMBER(repulsedProjectiles),
 
 	CR_MEMBER(quads),
@@ -47,7 +47,7 @@ CPlasmaRepulser::CPlasmaRepulser(CUnit* owner, const WeaponDef* def): CWeapon(ow
 
 CPlasmaRepulser::~CPlasmaRepulser()
 {
-	shieldProjectile->PreDelete();
+	delete segmentCollection;
 	quadField->RemoveRepulser(this);
 }
 
@@ -69,7 +69,7 @@ void CPlasmaRepulser::Init()
 	quadField->MovedRepulser(this);
 
 	// deleted by ProjectileHandler
-	shieldProjectile = new ShieldProjectile(this);
+	segmentCollection = new ShieldSegmentCollection(this);
 }
 
 
@@ -119,6 +119,8 @@ void CPlasmaRepulser::Update()
 		quadField->MovedRepulser(this);
 
 	lastPos = weaponMuzzlePos;
+
+	segmentCollection->UpdateColor();
 }
 
 // Returns true if the projectile is destroyed.

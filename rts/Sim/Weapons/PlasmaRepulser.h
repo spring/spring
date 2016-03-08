@@ -8,7 +8,7 @@
 
 #include <vector>
 
-class ShieldProjectile;
+class ShieldSegmentCollection;
 class CRepulseGfx;
 
 class CPlasmaRepulser: public CWeapon
@@ -49,7 +49,7 @@ private:
 	void FireImpl(const bool scriptCall) override final {}
 
 	// these are strictly unsynced
-	ShieldProjectile* shieldProjectile;
+	ShieldSegmentCollection* segmentCollection;
 	std::vector<CWeaponProjectile*> repulsedProjectiles;
 
 
