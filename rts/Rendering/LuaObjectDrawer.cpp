@@ -96,6 +96,8 @@ static DECL_ARRAY(bool, bufferClearFlags, LUAOBJ_LAST) = { true,  true};
 static const DECL_ARRAY(LuaMatType, opaqueMats, 2) = {LUAMAT_OPAQUE, LUAMAT_OPAQUE_REFLECT};
 static const DECL_ARRAY(LuaMatType,  alphaMats, 2) = {LUAMAT_ALPHA, LUAMAT_ALPHA_REFLECT};
 
+static const DECL_ARRAY(LuaMatShader::Pass, shaderPasses, 2) = {LuaMatShader::LUASHADER_PASS_FWD, LuaMatShader::LUASHADER_PASS_DFR};
+
 
 
 static float GetLODFloat(const std::string& name)
@@ -361,8 +363,8 @@ const LuaMaterial* LuaObjectDrawer::DrawMaterialBin(
 	const std::vector<CSolidObject*>& objects = currBin->GetObjects(objType);
 	const LuaMatShader* binShader = &currBin->shaders[deferredPass];
 
-	// need a shader for this pass, skip entire bin if we have none
-	if (deferredPass && binShader->type == LuaMatShader::LUASHADER_NONE)
+	// skip entire bin if we need a shader for this pass and have none
+	if (!binShader->ValidForPass(shaderPasses[deferredPass]))
 		return currBin;
 
 	for (const CSolidObject* obj: objects) {
