@@ -40,6 +40,8 @@ bool LuaObjectDrawer::drawDeferredEnabled = false;
 bool LuaObjectDrawer::drawDeferredAllowed = false;
 bool LuaObjectDrawer::bufferClearAllowed = false;
 
+int LuaObjectDrawer::binObjTeam = -1;
+
 float LuaObjectDrawer::LODScale[LUAOBJ_LAST];
 float LuaObjectDrawer::LODScaleShadow[LUAOBJ_LAST];
 float LuaObjectDrawer::LODScaleReflection[LUAOBJ_LAST];
@@ -174,7 +176,7 @@ static void ResetShadowFeatureDrawState(unsigned int modelType, bool deferredPas
 
 static const void SetObjectTeamColorNoType(const CSolidObject* o, const LuaMatShader* s, LuaObjectLODMaterial* m, const float2) {
 	// material without any shader for the current (fwd/def) pass
-	assert(!s->IsCustomType() && !s->IsEngineType());
+	assert((!s->IsCustomType() && !s->IsEngineType()) || (LuaObjectDrawer::GetBinObjTeam() == o->team));
 }
 
 static const void SetObjectTeamColorCustom(
@@ -214,6 +216,10 @@ static const TeamColorFunc teamColorFuncs[] = {
 	SetObjectTeamColorCustom,
 	SetObjectTeamColorEngine,
 };
+
+static inline unsigned int GetTeamColorFuncIndex(const CSolidObject* o, const LuaMatShader* s) {
+	return ((int(s->IsCustomType()) * 1 + int(s->IsEngineType()) * 2) * (o->team != LuaObjectDrawer::GetBinObjTeam()));
+}
 
 
 
@@ -367,6 +373,9 @@ const LuaMaterial* LuaObjectDrawer::DrawMaterialBin(
 	if (!binShader->ValidForPass(shaderPasses[deferredPass]))
 		return currBin;
 
+	// reset; might also want to sort
+	binObjTeam = -1;
+
 	for (const CSolidObject* obj: objects) {
 		const LuaObjectMaterialData* matData = obj->GetLuaMaterialData();
 		const LuaObjectLODMaterial* lodMat = matData->GetLuaLODMaterial(matType);
@@ -388,7 +397,7 @@ void LuaObjectDrawer::DrawBinObject(
 ) {
 	const unsigned int preList = lodMat->preDisplayList;
 	const unsigned int postList = lodMat->postDisplayList;
-	const unsigned int tcFunIdx = int(shader->IsCustomType()) + int(shader->IsEngineType()) * 2;
+	const unsigned int tcFunIdx = GetTeamColorFuncIndex(obj, shader);
 
 	switch (objType) {
 		case LUAOBJ_UNIT: {
@@ -414,6 +423,8 @@ void LuaObjectDrawer::DrawBinObject(
 			assert(false);
 		} break;
 	}
+
+	binObjTeam = obj->team;
 }
 
 
@@ -510,6 +521,9 @@ bool LuaObjectDrawer::DrawSingleObjectCommon(const CSolidObject* obj, LuaObjType
 	const LuaMatBin* currBin = lodMat->matref.GetBin();
 	const LuaMaterial* currMat = currBin;
 	const LuaMatShader* binShader = &currBin->shaders[false];
+
+	// reset
+	binObjTeam = -1;
 
 	// NOTE: doesn't make sense to support deferred mode for this? (extra arg in gl.Unit, etc)
 	currMat->Execute(LuaMaterial::defMat, false);
