@@ -4029,19 +4029,25 @@ EXPORT(float) skirmishAiCallback_Unit_getPower(int skirmishAIId, int unitId) {
 	return skirmishAIId_callback[skirmishAIId]->GetUnitPower(unitId);
 }
 
+
 EXPORT(void) skirmishAiCallback_Unit_getPos(int skirmishAIId, int unitId, float* return_posF3_out) {
-	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId))
+	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
 		skirmishAIId_cheatCallback[skirmishAIId]->GetUnitPos(unitId).copyInto(return_posF3_out);
+		return;
+	}
 
 	skirmishAIId_callback[skirmishAIId]->GetUnitPos(unitId).copyInto(return_posF3_out);
 }
 
 EXPORT(void) skirmishAiCallback_Unit_getVel(int skirmishAIId, int unitId, float* return_posF3_out) {
-	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId))
+	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
 		skirmishAIId_cheatCallback[skirmishAIId]->GetUnitVelocity(unitId).copyInto(return_posF3_out);
+		return;
+	}
 
 	skirmishAIId_callback[skirmishAIId]->GetUnitVelocity(unitId).copyInto(return_posF3_out);
 }
+
 
 //EXPORT(int) skirmishAiCallback_Unit_0MULTI1SIZE0ResourceInfo(int skirmishAIId, int unitId) {
 //	return skirmishAiCallback_0MULTI1SIZE0Resource(skirmishAIId);
@@ -4052,10 +4058,10 @@ EXPORT(float) skirmishAiCallback_Unit_getResourceUse(
 	int unitId,
 	int resourceId
 ) {
-	int res = -1.0F;
-	UnitResourceInfo resourceInfo;
+	int res = -1;
+	bool fetchOk = false;
 
-	bool fetchOk;
+	UnitResourceInfo resourceInfo;
 
 	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
 		fetchOk = skirmishAIId_cheatCallback[skirmishAIId]->GetUnitResourceInfo(unitId, &resourceInfo);
@@ -4079,10 +4085,10 @@ EXPORT(float) skirmishAiCallback_Unit_getResourceMake(
 	int unitId,
 	int resourceId
 ) {
-	int res = -1.0F;
-	UnitResourceInfo resourceInfo;
+	int res = -1;
+	bool fetchOk = false;
 
-	bool fetchOk;
+	UnitResourceInfo resourceInfo;
 
 	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
 		fetchOk = skirmishAIId_cheatCallback[skirmishAIId]->GetUnitResourceInfo(unitId, &resourceInfo);
