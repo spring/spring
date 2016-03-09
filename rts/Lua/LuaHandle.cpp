@@ -2679,10 +2679,8 @@ int CLuaHandle::CallOutIsEngineMinVersion(lua_State* L)
 
 	if (StringToInt(SpringVersion::GetMajor()) == minMajorVer) {
 		if (StringToInt(SpringVersion::GetMinor()) < minMinorVer) {
-			if (GetHandleSynced(L)) { // minor is only allowed to contain unsynced changes!
-				lua_pushboolean(L, false);
-				return 1;
-			}
+			lua_pushboolean(L, false);
+			return 1;
 		}
 
 		if (StringToInt(SpringVersion::GetCommits()) < minCommits) {
