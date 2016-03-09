@@ -279,6 +279,8 @@ void CHoverAirMoveType::ExecuteStop()
 {
 	wantToStop = false;
 	wantedSpeed = ZeroVector;
+	SetGoal(owner->pos);
+	reservedLandingPos.x = -1.0f;
 
 	switch (aircraftState) {
 		case AIRCRAFT_TAKEOFF: {
@@ -290,7 +292,6 @@ void CHoverAirMoveType::ExecuteStop()
 			}
 		} // fall through
 		case AIRCRAFT_FLYING: {
-			goalPos = owner->pos;
 
 			if (CanLand(IsUnitBusy(owner))) {
 				SetState(AIRCRAFT_LANDING);

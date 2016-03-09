@@ -1304,6 +1304,7 @@ void CStrafeAirMoveType::StartMoving(float3 pos, float goalRadius, float speed)
 void CStrafeAirMoveType::StopMoving(bool callScript, bool hardStop)
 {
 	SetGoal(owner->pos);
+	reservedLandingPos.x = -1.0f;
 	SetWantedMaxSpeed(0.0f);
 
 	if (aircraftState != AAirMoveType::AIRCRAFT_FLYING && aircraftState != AAirMoveType::AIRCRAFT_LANDING)
