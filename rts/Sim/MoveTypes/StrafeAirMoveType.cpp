@@ -940,12 +940,12 @@ void CStrafeAirMoveType::UpdateLanding()
 	SyncedFloat3& frontdir = owner->frontdir;
 	SyncedFloat3& updir    = owner->updir;
 
-	if (reservedLandingPos.x < 0.0f) {
+	if (!HaveLandingPos()) {
 		reservedLandingPos = FindLandingPos();
 
 		// if spot is valid, mark it on the blocking-map
 		// so other aircraft can not claim the same spot
-		if (reservedLandingPos.x >= 0.0f) {
+		if (HaveLandingPos()) {
 			const float3 originalPos = pos;
 			wantedHeight = 0;
 
@@ -1200,7 +1200,7 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 
 	if (aircraftState != AIRCRAFT_LANDING) {
 		// don't need a reserved position anymore
-		reservedLandingPos.x = -1.0f;
+		ClearLandingPos();
 		wantedHeight = orgWantedHeight;
 	}
 }
@@ -1304,7 +1304,7 @@ void CStrafeAirMoveType::StartMoving(float3 pos, float goalRadius, float speed)
 void CStrafeAirMoveType::StopMoving(bool callScript, bool hardStop)
 {
 	SetGoal(owner->pos);
-	reservedLandingPos.x = -1.0f;
+	ClearLandingPos();
 	SetWantedMaxSpeed(0.0f);
 
 	if (aircraftState != AAirMoveType::AIRCRAFT_FLYING && aircraftState != AAirMoveType::AIRCRAFT_LANDING)

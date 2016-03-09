@@ -173,7 +173,7 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 			wantedSpeed = ZeroVector;
 		} // fall through
 		default:
-			reservedLandingPos.x = -1.0f;
+			ClearLandingPos();
 			break;
 	}
 
@@ -280,7 +280,7 @@ void CHoverAirMoveType::ExecuteStop()
 	wantToStop = false;
 	wantedSpeed = ZeroVector;
 	SetGoal(owner->pos);
-	reservedLandingPos.x = -1.0f;
+	ClearLandingPos();
 
 	switch (aircraftState) {
 		case AIRCRAFT_TAKEOFF: {
@@ -583,7 +583,7 @@ void CHoverAirMoveType::UpdateLanding()
 {
 	const float3& pos = owner->pos;
 
-	if (reservedLandingPos.x < 0.0f) {
+	if (!HaveLandingPos()) {
 		if (CanLandAt(pos)) {
 			// found a landing spot
 			reservedLandingPos = pos;
