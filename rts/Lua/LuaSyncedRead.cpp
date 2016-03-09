@@ -3701,46 +3701,6 @@ int LuaSyncedRead::GetUnitPieceCollisionVolumeData(lua_State* L)
 }
 
 
-int LuaSyncedRead::GetUnitLosState(lua_State* L)
-{
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-
-	int allyTeam = CLuaHandle::GetHandleReadAllyTeam(L);
-	if (CLuaHandle::GetHandleReadAllyTeam(L) < 0) {
-		if (!CLuaHandle::GetHandleFullRead(L)) {
-			return 0;
-		}
-		allyTeam = luaL_checkint(L, 2);
-	}
-	if (!teamHandler->IsValidAllyTeam(allyTeam)) {
-		return 0;
-	}
-	const unsigned short losStatus = unit->losStatus[allyTeam];
-
-	if (CLuaHandle::GetHandleFullRead(L) && luaL_optboolean(L, 3, false)) {
-		lua_pushnumber(L, losStatus); // return a numeric value
-		return 1;
-	}
-
-	lua_createtable(L, 0, 3);
-	if (losStatus & LOS_INLOS) {
-		HSTR_PUSH_BOOL(L, "los", true);
-	}
-	if (losStatus & LOS_INRADAR) {
-		HSTR_PUSH_BOOL(L, "radar", true);
-	}
-	const int prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
-	if ((losStatus & LOS_INLOS) ||
-	    ((losStatus & prevMask) == prevMask)) {
-		HSTR_PUSH_BOOL(L, "typed", true);
-	}
-	return 1;
-}
-
-
 int LuaSyncedRead::GetUnitSeparation(lua_State* L)
 {
 	const CUnit* unit1 = ParseUnit(L, __FUNCTION__, 1);
@@ -5299,6 +5259,42 @@ int LuaSyncedRead::IsPosInAirLos(lua_State* L)
 	}
 
 	lua_pushboolean(L, losHandler->InAirLos(pos, allyTeamID));
+	return 1;
+}
+
+
+int LuaSyncedRead::GetUnitLosState(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	const int allyTeamID = GetEffectiveLosAllyTeam(L, 2);
+	unsigned short losStatus;
+	if (allyTeamID < 0) {
+		losStatus = (allyTeamID == CEventClient::AllAccessTeam) ? LOS_ALL_MASK_BITS : 0;
+	} else {
+		losStatus = unit->losStatus[allyTeamID];
+	}
+
+	if (CLuaHandle::GetHandleFullRead(L) && luaL_optboolean(L, 3, false)) {
+		lua_pushnumber(L, losStatus); // return a numeric value
+		return 1;
+	}
+
+	lua_createtable(L, 0, 3);
+	if (losStatus & LOS_INLOS) {
+		HSTR_PUSH_BOOL(L, "los", true);
+	}
+	if (losStatus & LOS_INRADAR) {
+		HSTR_PUSH_BOOL(L, "radar", true);
+	}
+	const int prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
+	if ((losStatus & LOS_INLOS) ||
+	    ((losStatus & prevMask) == prevMask)) {
+		HSTR_PUSH_BOOL(L, "typed", true);
+	}
 	return 1;
 }
 
