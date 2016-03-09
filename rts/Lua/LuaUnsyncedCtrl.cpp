@@ -37,6 +37,7 @@
 #include "Map/BaseGroundDrawer.h"
 #include "Map/BaseGroundTextures.h"
 #include "Net/Protocol/NetProtocol.h"
+#include "Net/GameServer.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SunLighting.h"
 #include "Rendering/GL/myGL.h"
@@ -2150,6 +2151,8 @@ static int ReloadOrRestart(const std::string& springArgs, const std::string& scr
 		// else OpenAL crashes when using execvp
 		ISound::Shutdown();
 	#endif
+		// close local socket to avoid "bind: Address already in use"
+		SafeDelete(gameServer);
 
 		LOG("[%s] Spring \"%s\" should be restarting", __FUNCTION__, springFullName.c_str());
 		Platform::ExecuteProcess(springFullName, processArgs);
