@@ -489,8 +489,12 @@ void CUnitDrawer::DrawUnitIcons()
 	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT);
 	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.5f);
+	if ((globalRendering->FSAA > 0) && GLEW_ARB_multisample) {
+		glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE_ARB);
+	}
 
 	for (CUnit* u: iconUnits)
 		DrawIcon(u, false);
