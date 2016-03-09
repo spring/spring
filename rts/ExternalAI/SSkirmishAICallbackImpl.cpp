@@ -4058,7 +4058,7 @@ EXPORT(float) skirmishAiCallback_Unit_getResourceUse(
 	int unitId,
 	int resourceId
 ) {
-	int res = -1;
+	float res = -1.0f;
 	bool fetchOk = false;
 
 	UnitResourceInfo resourceInfo;
@@ -4085,7 +4085,7 @@ EXPORT(float) skirmishAiCallback_Unit_getResourceMake(
 	int unitId,
 	int resourceId
 ) {
-	int res = -1;
+	float res = -1.0f;
 	bool fetchOk = false;
 
 	UnitResourceInfo resourceInfo;
