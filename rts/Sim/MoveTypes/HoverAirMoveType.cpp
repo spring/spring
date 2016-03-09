@@ -299,7 +299,11 @@ void CHoverAirMoveType::ExecuteStop()
 			}
 		} break;
 
-		case AIRCRAFT_LANDING: {} break;
+		case AIRCRAFT_LANDING: {
+			if (!CanLand(IsUnitBusy(owner)))
+				SetState(AIRCRAFT_HOVERING);
+
+		} break;
 		case AIRCRAFT_LANDED: {} break;
 		case AIRCRAFT_CRASHING: {} break;
 
