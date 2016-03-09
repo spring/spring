@@ -299,7 +299,7 @@ bool CBuilderCAI::MoveInBuildRange(const float3& objPos, float objRadius, const 
 		//   aircraft to discard orders
 		const bool checkFailed = (checkMoveTypeForFailed && !owner->unitDef->IsAirUnit());
 		// check if the AMoveType::Failed belongs to the same goal position
-		const bool haveFailed = (owner->moveType->progressState == AMoveType::Failed && f3SqDist(goalPos, objPos) > 1.0f);
+		const bool haveFailed = (owner->moveType->progressState == AMoveType::Failed && f3SqDist(owner->moveType->goalPos, objPos) > 1.0f);
 
 		if (checkFailed && haveFailed) {
 			// don't call SetGoal() it would reset moveType->progressState
@@ -315,7 +315,7 @@ bool CBuilderCAI::MoveInBuildRange(const float3& objPos, float objRadius, const 
 	if (owner->unitDef->IsAirUnit()) {
 		StopMoveAndKeepPointing(objPos, objRadius, false);
 	} else {
-		StopMoveAndKeepPointing(goalPos, goalRadius, false);
+		StopMoveAndKeepPointing(owner->moveType->goalPos, goalRadius, false);
 	}
 
 	return true;
@@ -1227,7 +1227,7 @@ void CBuilderCAI::ExecuteFight(Command& c)
 		pos = curPosOnLine;
 	}
 
-	if (pos != goalPos) {
+	if (pos != owner->moveType->goalPos) {
 		SetGoal(pos, owner->pos);
 	}
 
@@ -1279,8 +1279,8 @@ void CBuilderCAI::ExecuteFight(Command& c)
 
 	if (owner->HaveTarget() && owner->moveType->progressState != AMoveType::Done) {
 		StopMove();
-	} else if (owner->moveType->progressState != AMoveType::Active) {
-		owner->moveType->StartMoving(goalPos, 8);
+	} else {
+		SetGoal(owner->moveType->goalPos, owner->pos);
 	}
 }
 

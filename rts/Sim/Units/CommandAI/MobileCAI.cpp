@@ -51,7 +51,6 @@ static AAirMoveType* GetAirMoveType(const CUnit* owner) {
 
 CR_BIND_DERIVED(CMobileCAI ,CCommandAI , )
 CR_REG_METADATA(CMobileCAI, (
-	CR_MEMBER(goalPos),
 	CR_MEMBER(goalRadius),
 	CR_MEMBER(lastBuggerGoalPos),
 	CR_MEMBER(lastUserGoal),
@@ -79,7 +78,6 @@ CR_REG_METADATA(CMobileCAI, (
 
 CMobileCAI::CMobileCAI():
 	CCommandAI(),
-	goalPos(-1,-1,-1),
 	goalRadius(0.0f),
 	lastBuggerGoalPos(-1,0,-1),
 	lastUserGoal(ZeroVector),
@@ -101,7 +99,6 @@ CMobileCAI::CMobileCAI():
 
 CMobileCAI::CMobileCAI(CUnit* owner):
 	CCommandAI(owner),
-	goalPos(-1,-1,-1),
 	goalRadius(0.0f),
 	lastBuggerGoalPos(-1,0,-1),
 	lastUserGoal(owner->pos),
@@ -415,11 +412,9 @@ void CMobileCAI::ExecuteMove(Command &c)
 {
 	const float3 cmdPos = c.GetPos(0);
 
-	if (cmdPos != goalPos) {
-		SetGoal(cmdPos, owner->pos);
-	}
+	SetGoal(cmdPos, owner->pos);
 
-	if ((owner->pos - goalPos).SqLength2D() < cancelDistance || owner->moveType->progressState == AMoveType::Failed) {
+	if ((owner->pos - owner->moveType->goalPos).SqLength2D() < cancelDistance || owner->moveType->progressState == AMoveType::Failed) {
 		FinishCommand();
 	}
 	return;
@@ -447,10 +442,10 @@ void CMobileCAI::ExecuteLoadOnto(Command &c) {
 	if (unit == NULL)
 		return;
 
-	if ((unit->pos - goalPos).SqLength2D() > cancelDistance) {
+	if ((unit->pos - owner->moveType->goalPos).SqLength2D() > cancelDistance) {
 		SetGoal(unit->pos, owner->pos);
 	}
-	if ((owner->pos - goalPos).SqLength2D() < cancelDistance) {
+	if ((owner->pos - owner->moveType->goalPos).SqLength2D() < cancelDistance) {
 		StopMove();
 	}
 
@@ -536,9 +531,7 @@ void CMobileCAI::ExecuteFight(Command& c)
 	if (c.params.size() >= 6) {
 		pos = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
 	}
-	if (pos != goalPos) {
-		SetGoal(pos, owner->pos);
-	}
+	SetGoal(pos, owner->pos);
 
 	if (owner->unitDef->canAttack && owner->fireState >= FIRESTATE_FIREATWILL && !owner->weapons.empty()) {
 		const float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
@@ -565,7 +558,7 @@ void CMobileCAI::ExecuteFight(Command& c)
 		}
 	}
 
-	if ((owner->pos - goalPos).SqLength2D() < (64 * 64)
+	if ((owner->pos - owner->moveType->goalPos).SqLength2D() < (64 * 64)
 			|| (owner->moveType->progressState == AMoveType::Failed)){
 		FinishCommand();
 	}
@@ -628,8 +621,8 @@ void CMobileCAI::ExecuteGuard(Command &c)
 		const float3 dif = (guardee->pos - owner->pos).SafeNormalize();
 		const float3 goal = guardee->pos - dif * (guardee->radius + owner->radius + 64.0f);
 		const bool resetGoal =
-			((goalPos - goal).SqLength2D() > 1600.0f) ||
-			(goalPos - owner->pos).SqLength2D() < Square(owner->moveType->GetMaxSpeed() * GAME_SPEED + 1 + SQUARE_SIZE * 2);
+			((owner->moveType->goalPos - goal).SqLength2D() > 1600.0f) ||
+			(owner->moveType->goalPos - owner->pos).SqLength2D() < Square(owner->moveType->GetMaxSpeed() * GAME_SPEED + 1 + SQUARE_SIZE * 2);
 
 		if (resetGoal) {
 			SetGoal(goal, owner->pos);
@@ -729,7 +722,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 		const float3 errPos = orderTarget->GetErrorPos(owner->allyteam, false);
 
-		const float targetGoalDist = errPos.SqDistance2D(goalPos);
+		const float targetGoalDist = errPos.SqDistance2D(owner->moveType->goalPos);
 		const float targetPosDist = Square(10.0f + orderTarget->pos.distance2D(owner->pos) * 0.2f);
 		const float minPointingDist = std::min(1.0f * owner->losRadius, owner->maxRange * 0.9f);
 
@@ -924,21 +917,21 @@ int CMobileCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 void CMobileCAI::SetGoal(const float3& pos, const float3& /*curPos*/, float goalRadius)
 {
 	// already have equal move order?
-	if (owner->moveType->progressState == AMoveType::Active && goalPos == pos && this->goalRadius == goalRadius)
+	if (owner->moveType->progressState == AMoveType::Active && owner->moveType->goalPos == pos && this->goalRadius == goalRadius)
 		return;
 
 	// give new move order
-	owner->moveType->StartMoving(goalPos = pos, this->goalRadius = goalRadius);
+	owner->moveType->StartMoving(pos, this->goalRadius = goalRadius);
 }
 
 void CMobileCAI::SetGoal(const float3& pos, const float3& /*curPos*/, float goalRadius, float speed)
 {
 	// already have equal move order?
-	if (owner->moveType->progressState == AMoveType::Active && goalPos == pos && this->goalRadius == goalRadius)
+	if (owner->moveType->progressState == AMoveType::Active && owner->moveType->goalPos == pos && this->goalRadius == goalRadius)
 		return;
 
 	// give new move order
-	owner->moveType->StartMoving(goalPos = pos, this->goalRadius = goalRadius, speed);
+	owner->moveType->StartMoving(pos, this->goalRadius = goalRadius, speed);
 }
 
 bool CMobileCAI::SetFrontMoveCommandPos(const float3& pos)
@@ -955,7 +948,6 @@ bool CMobileCAI::SetFrontMoveCommandPos(const float3& pos)
 void CMobileCAI::StopMove()
 {
 	owner->moveType->StopMoving();
-	goalPos = owner->pos;
 	goalRadius = 0.f;
 }
 
@@ -1255,7 +1247,7 @@ void CMobileCAI::ExecuteLoadUnits(Command& c)
 			CHoverAirMoveType* am = dynamic_cast<CHoverAirMoveType*>(owner->moveType);
 
 			// subtract 1 square to account for PFS/GMT inaccuracy
-			const bool outOfRange = (goalPos.SqDistance2D(unit->pos) > Square(owner->unitDef->loadingRadius - SQUARE_SIZE));
+			const bool outOfRange = (owner->moveType->goalPos.SqDistance2D(unit->pos) > Square(owner->unitDef->loadingRadius - SQUARE_SIZE));
 			const bool moveCloser = (!inLoadingRadius && (!owner->IsMoving() || (am != NULL && am->aircraftState != AAirMoveType::AIRCRAFT_FLYING)));
 
 			if (outOfRange || moveCloser) {
@@ -1838,7 +1830,7 @@ void CMobileCAI::UnloadDrop(Command& c)
 	// head towards goal
 	// note that HoverAirMoveType must be modified to allow
 	// non-stop movement through goals for this to work well
-	if (goalPos.SqDistance2D(pos) > Square(20.0f)) {
+	if (owner->moveType->goalPos.SqDistance2D(pos) > Square(20.0f)) {
 		SetGoal(pos, owner->pos);
 	}
 

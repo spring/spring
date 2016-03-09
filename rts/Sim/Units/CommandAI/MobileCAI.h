@@ -73,7 +73,6 @@ public:
 	void UnloadDrop(Command& c);
 	void UnloadLandFlood(Command& c);
 
-	float3 goalPos;
 	float  goalRadius;
 	float3 lastBuggerGoalPos;
 	float3 lastUserGoal;

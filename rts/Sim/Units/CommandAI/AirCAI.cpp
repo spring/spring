@@ -78,7 +78,6 @@ CAirCAI::CAirCAI(CUnit* owner)
 	}
 
 	basePos = owner->pos;
-	goalPos = owner->pos;
 }
 
 void CAirCAI::GiveCommandReal(const Command& c, bool fromSynced)
@@ -294,7 +293,7 @@ void CAirCAI::ExecuteFight(Command& c)
 		}
 	}
 
-	goalPos = c.GetPos(0);
+	float3 goalPos = c.GetPos(0);
 
 	if (!inCommand) {
 		inCommand = true;
@@ -364,8 +363,7 @@ void CAirCAI::ExecuteFight(Command& c)
 		}
 	}
 
-	if (myPlane->goalPos != goalPos)
-		SetGoal(goalPos, owner->pos);
+	SetGoal(goalPos, owner->pos);
 
 	const CStrafeAirMoveType* airMT = (!owner->UsingScriptMoveType())? static_cast<const CStrafeAirMoveType*>(myPlane): NULL;
 	const float radius = (airMT != NULL)? std::max(airMT->turnRadius + 2*SQUARE_SIZE, 128.f) : 127.f;
@@ -545,11 +543,6 @@ void CAirCAI::BuggerOff(const float3& pos, float radius)
 	}
 }
 
-void CAirCAI::SetGoal(const float3& pos, const float3& curPos, float goalRadius)
-{
-	owner->moveType->SetGoal(pos);
-	CMobileCAI::SetGoal(pos, curPos, goalRadius);
-}
 
 bool CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac)
 {
