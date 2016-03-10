@@ -105,14 +105,17 @@ static void CheckPieceNormals(const S3DModel* model, const S3DModelPiece* modelP
 	}
 }
 
-
-
-LoadQueue::~LoadQueue()
+void LoadQueue::Join()
 {
 	if (thread != nullptr) {
 		thread->join();
 		SafeDelete(thread);
 	}
+}
+
+LoadQueue::~LoadQueue()
+{
+	Join();
 }
 
 __FORCE_ALIGN_STACK__
@@ -189,6 +192,8 @@ C3DModelLoader::C3DModelLoader()
 
 C3DModelLoader::~C3DModelLoader()
 {
+	loadQueue.Join();
+
 	// delete model cache
 	for (unsigned int n = 1; n < models.size(); n++) {
 		S3DModel* model = models[n];
@@ -201,14 +206,14 @@ C3DModelLoader::~C3DModelLoader()
 
 		delete model;
 	}
+	models.clear();
 
 	for (auto it = parsers.cbegin(); it != parsers.cend(); ++it) {
 		delete (it->second);
 	}
-
-	models.clear();
-	cache.clear();
 	parsers.clear();
+
+	cache.clear();
 
 }
 

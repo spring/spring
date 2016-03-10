@@ -36,6 +36,7 @@ public:
 	void GrabLock() { mutex.lock(); }
 	void FreeLock() { mutex.unlock(); }
 
+	void Join();
 private:
 	std::deque<std::string> queue;
 	spring::mutex mutex;
