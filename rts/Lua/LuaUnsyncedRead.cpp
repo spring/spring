@@ -489,14 +489,17 @@ int LuaUnsyncedRead::IsSphereInView(lua_State* L)
 int LuaUnsyncedRead::IsUnitAllied(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == nullptr)
 		return 0;
-	}
+
 	if (CLuaHandle::GetHandleReadAllyTeam(L) < 0) {
-		lua_pushboolean(L, CLuaHandle::GetHandleFullRead(L));
+		// in this case handle has full-read access since unit != nullptr
+		lua_pushboolean(L, unit->allyteam == gu->myAllyTeam);
 	} else {
-		lua_pushboolean(L, (unit->allyteam == CLuaHandle::GetHandleReadAllyTeam(L)));
+		lua_pushboolean(L, unit->allyteam == CLuaHandle::GetHandleReadAllyTeam(L));
 	}
+
 	return 1;
 }
 
