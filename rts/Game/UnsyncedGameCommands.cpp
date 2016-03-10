@@ -2321,7 +2321,6 @@ public:
 		bool modUICtrl = CLuaHandle::GetModUICtrl();
 		InverseOrSetBool(modUICtrl, action.GetArgs());
 		CLuaHandle::SetModUICtrl(modUICtrl);
-		configHandler->Set("LuaModUICtrl", modUICtrl ? 1 : 0);
 		return true;
 	}
 };

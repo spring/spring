@@ -140,7 +140,6 @@ CONFIG(bool, ShowSpeed).defaultValue(false).description("Displays current game s
 CONFIG(int, ShowPlayerInfo).defaultValue(1).headlessValue(0);
 CONFIG(float, GuiOpacity).defaultValue(0.8f).minimumValue(0.0f).maximumValue(1.0f).description("Sets the opacity of the built-in Spring UI. Generally has no effect on LuaUI widgets. Can be set in-game using shift+, to decrease and shift+. to increase.");
 CONFIG(std::string, InputTextGeo).defaultValue("");
-CONFIG(bool, LuaModUICtrl).defaultValue(true).headlessValue(false);
 
 
 CGame* game = NULL;
@@ -284,7 +283,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	ParseInputTextGeometry("default");
 	ParseInputTextGeometry(configHandler->GetString("InputTextGeo"));
 
-	CLuaHandle::SetModUICtrl(configHandler->GetBool("LuaModUICtrl"));
+	CLuaHandle::SetModUICtrl(true);
 	// clear left-over receivers in case we reloaded
 	commandConsole.ResetState();
 

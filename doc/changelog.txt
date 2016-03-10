@@ -6,6 +6,7 @@ Spring changelog
 General:
  - compress creg save files
  ! remove UseCREGSaveLoad and add /LuaSave which generates .slsf files
+ ! remove LuaModUICtrl config setting
 
 Sim:
  - COB: deprecate unit/team/allyteam/global vars. Use lua functions instead.
