@@ -14,7 +14,6 @@ class CBasicMapDamage : public IMapDamage
 {
 public:
 	CBasicMapDamage();
-	~CBasicMapDamage();
 
 	void Explosion(const float3& pos, float strength, float radius);
 	void RecalcArea(int x1, int x2, int y1, int y2);
@@ -42,7 +41,7 @@ private:
 		int x1, x2, y1, y2;
 	};
 
-	std::deque<Explo*> explosions;
+	std::deque<Explo> explosions;
 
 	static const unsigned int CRATER_TABLE_SIZE = 200;
 
