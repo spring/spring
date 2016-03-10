@@ -42,7 +42,8 @@ public:
 			 impulseMask = OnesVector;
 		}
 
-		void SetMoveMask(const float3& moveMask) { movementMask = moveMask; }
+		void SetMovementMask(const float3& movMask) { movementMask = movMask; }
+		void SetVelocityMask(const float3& velMask) { velocityMask = velMask; }
 
 	public:
 		// if true, feature will not apply any unwanted position

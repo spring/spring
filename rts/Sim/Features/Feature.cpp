@@ -185,11 +185,13 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 
 	// by default, any feature that is a dead unit can move
 	// in all dimensions; all others (trees, rocks, ...) can
-	// only move vertically
+	// only move vertically and also do not allow velocity to
+	// build in XZ
 	// (movementMask exists mostly for trees, which depend on
 	// speed for falling animations but should never actually
-	// *move* in XZ)
-	moveCtrl.SetMoveMask(mix(OnesVector, UpVector, udef == nullptr));
+	// *move* in XZ, so their velocityMask *does* include XZ)
+	moveCtrl.SetMovementMask(mix(OnesVector, UpVector, udef == nullptr                                 ));
+	moveCtrl.SetVelocityMask(mix(OnesVector, UpVector, udef == nullptr && def->drawType < DRAWTYPE_TREE));
 
 	// set position before mid-position
 	Move((params.pos).cClampInMap(), false);
