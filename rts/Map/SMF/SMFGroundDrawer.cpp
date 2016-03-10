@@ -53,10 +53,6 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	smfRenderStates[RENDER_STATE_FFP] = ISMFRenderState::GetInstance(                   false,                     false, false);
 	smfRenderStates[RENDER_STATE_LUA] = ISMFRenderState::GetInstance(                   false,                      true,  true);
 
-	// also set in ::Draw, but UpdateSunDir can be called
-	// first if DynamicSun is enabled --> must be non-NULL
-	smfRenderStates[RENDER_STATE_SEL] = smfRenderStates[RENDER_STATE_FFP];
-
 	// LH must be initialized before render-state is initialized
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicMapLights"));
 	geomBuffer.SetName("GROUNDDRAWER-GBUFFER");
@@ -73,12 +69,16 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	//   (see AdvMapShadingActionExecutor), so we will always use
 	//   states[FFP] (in ::Draw) in that special case and it does
 	//   not matter whether states[SSP] is initialized
-	if ((advShading = smfRenderStates[RENDER_STATE_SSP]->Init(this))) {
+	if ((advShading = smfRenderStates[RENDER_STATE_SSP]->Init(this)))
 		smfRenderStates[RENDER_STATE_SSP]->Update(this, nullptr);
-	}
 
 	// always initialize this state; defer Update (allows re-use)
 	smfRenderStates[RENDER_STATE_LUA]->Init(this);
+
+	// note: state must be pre-selected before the first drawn frame
+	// Sun*Changed can be called first, e.g. if DynamicSun is enabled
+	smfRenderStates[RENDER_STATE_SEL] = SelectRenderState(DrawPass::Normal);
+
 
 
 	waterPlaneDispLists[0] = 0;

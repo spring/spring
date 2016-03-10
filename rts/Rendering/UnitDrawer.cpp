@@ -256,10 +256,6 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	unitDrawerStates[DRAWER_STATE_SSP] = IUnitDrawerState::GetInstance(globalRendering->haveARB, globalRendering->haveGLSL);
 	unitDrawerStates[DRAWER_STATE_FFP] = IUnitDrawerState::GetInstance(                   false,                     false);
 
-	// also set in ::SetupOpaqueDrawing, but SunChanged can be
-	// called first if DynamicSun is enabled --> must be non-NULL
-	unitDrawerStates[DRAWER_STATE_SEL] = unitDrawerStates[DRAWER_STATE_FFP];
-
 	// shared with FeatureDrawer!
 	geomBuffer = LuaObjectDrawer::GetGeometryBuffer();
 
@@ -273,6 +269,10 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	//   does not matter whether SSP renderer-state is initialized
 	//   *** except for DrawAlphaUnits
 	advShading = (unitDrawerStates[DRAWER_STATE_SSP]->Init(this) && cubeMapHandler->Init());
+
+	// note: state must be pre-selected before the first drawn frame
+	// Sun*Changed can be called first, e.g. if DynamicSun is enabled
+	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState(false));
 }
 
 CUnitDrawer::~CUnitDrawer()
