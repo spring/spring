@@ -229,12 +229,10 @@ void LuaMaterial::Execute(const LuaMaterial& prev, bool deferredPass) const
 
 	//FIXME add projection matrices!!!
 	if (cameraLoc >= 0) {
-		const CMatrix44f& viewMat = camera->GetViewMatrix(); // GetMatrixData("camera")
-		glUniformMatrix4fv(cameraLoc, 1, GL_FALSE, viewMat);
+		glUniformMatrix4fv(cameraLoc, 1, GL_FALSE, camera->GetViewMatrix()); // GetMatrixData("camera")
 	}
 	if (cameraInvLoc >= 0) {
-		const CMatrix44f& viewMatInv = camera->GetViewMatrixInverse(); // GetMatrixData("caminv")
-		glUniformMatrix4fv(cameraInvLoc, 1, GL_FALSE, viewMatInv);
+		glUniformMatrix4fv(cameraInvLoc, 1, GL_FALSE, camera->GetViewMatrixInverse()); // GetMatrixData("caminv")
 	}
 
 	if (cameraPosLoc >= 0) {

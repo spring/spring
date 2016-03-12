@@ -707,11 +707,22 @@ void LuaMatTexture::Bind() const
 
 	if (texID != 0) {
 		glBindTexture(texType, texID);
-		if (enable && (texType == GL_TEXTURE_2D)) {
-			glEnable(GL_TEXTURE_2D);
+
+		if (enable) {
+			switch (texType) {
+				case GL_TEXTURE_2D:           { glEnable(GL_TEXTURE_2D          ); } break;
+				case GL_TEXTURE_CUBE_MAP_ARB: { glEnable(GL_TEXTURE_CUBE_MAP_ARB); } break;
+				default:                      {                                    } break;
+			}
 		}
-	} else if (!enable && (texType == GL_TEXTURE_2D)) {
-		glDisable(GL_TEXTURE_2D);
+	}
+
+	else if (!enable) {
+		switch (texType) {
+			case GL_TEXTURE_2D:           { glDisable(GL_TEXTURE_2D          ); } break;
+			case GL_TEXTURE_CUBE_MAP_ARB: { glDisable(GL_TEXTURE_CUBE_MAP_ARB); } break;
+			default:                      {                                     } break;
+		}
 	}
 
 	if (enableTexParams && type == LUATEX_SHADOWMAP) {
@@ -735,9 +746,11 @@ void LuaMatTexture::Unbind() const
 	if (!enable)
 		return;
 
-	const GLuint texType = GetTextureTarget();
-	if (texType == GL_TEXTURE_2D)
-		glDisable(GL_TEXTURE_2D);
+	switch (GetTextureTarget()) {
+		case GL_TEXTURE_2D:           { glDisable(GL_TEXTURE_2D          ); } break;
+		case GL_TEXTURE_CUBE_MAP_ARB: { glDisable(GL_TEXTURE_CUBE_MAP_ARB); } break;
+		default:                      {                                     } break;
+	}
 }
 
 
