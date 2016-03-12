@@ -465,6 +465,11 @@ void CGroundMoveType::StopMoving(bool callScript, bool hardStop) {
 	progressState = Done;
 }
 
+bool CGroundMoveType::IsMovingTowards(const float3& pos, float radius)
+{
+	return (goalPos == pos * XZVector && goalRadius == radius && progressState == Active);
+}
+
 
 
 bool CGroundMoveType::FollowPath()

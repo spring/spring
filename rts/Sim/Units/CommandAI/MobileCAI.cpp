@@ -917,7 +917,7 @@ int CMobileCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 void CMobileCAI::SetGoal(const float3& pos, const float3& /*curPos*/, float goalRadius)
 {
 	// already have equal move order?
-	if (owner->moveType->progressState == AMoveType::Active && owner->moveType->goalPos == pos && this->goalRadius == goalRadius)
+	if (owner->moveType->IsMovingTowards(pos, goalRadius))
 		return;
 
 	// give new move order
@@ -927,7 +927,7 @@ void CMobileCAI::SetGoal(const float3& pos, const float3& /*curPos*/, float goal
 void CMobileCAI::SetGoal(const float3& pos, const float3& /*curPos*/, float goalRadius, float speed)
 {
 	// already have equal move order?
-	if (owner->moveType->progressState == AMoveType::Active && owner->moveType->goalPos == pos && this->goalRadius == goalRadius)
+	if (owner->moveType->IsMovingTowards(pos, goalRadius))
 		return;
 
 	// give new move order
