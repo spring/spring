@@ -259,15 +259,15 @@ void CFeatureHandler::SetFeatureUpdateable(CFeature* feature)
 
 void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 {
-	const auto& quads = quadField->GetQuadsRectangle(
-		float3(x1 * SQUARE_SIZE, 0, y1 * SQUARE_SIZE),
-		float3(x2 * SQUARE_SIZE, 0, y2 * SQUARE_SIZE)
-	);
+	const float3 mins(x1 * SQUARE_SIZE, 0, y1 * SQUARE_SIZE);
+	const float3 maxs(x2 * SQUARE_SIZE, 0, y2 * SQUARE_SIZE);
+
+	const auto& quads = quadField->GetQuadsRectangle(mins, maxs);
 
 	for (const int qi: quads) {
-		for (CFeature* feature: quadField->GetQuad(qi).features) {
+		for (CFeature* f: quadField->GetQuad(qi).features) {
 			// put this feature back in the update-queue
-			SetFeatureUpdateable(feature);
+			SetFeatureUpdateable(f);
 		}
 	}
 }

@@ -568,6 +568,8 @@ bool CFeature::UpdatePosition()
 
 		// vertical movement
 		Move((speed * UpVector) * moveCtrl.movementMask, true);
+		// adjusting vertical speed won't help if the ground moved and buried us
+		Move(UpVector * (std::max(CGround::GetHeightReal(pos.x, pos.z), pos.y) - pos.y), true);
 
 		// clamp final position
 		if (!pos.IsInBounds()) {
