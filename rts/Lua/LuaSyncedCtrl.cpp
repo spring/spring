@@ -441,7 +441,7 @@ static bool ParseProjectileParams(lua_State* L, ProjectileParams& params, const 
 
 			if (lua_isstring(L, -1)) {
 				if (key == "model") {
-					params.model = modelParser->Load3DModel(lua_tostring(L, -1));
+					params.model = modelLoader.LoadModel(lua_tostring(L, -1));
 				} else if (key == "cegtag") {
 					params.cegID = explGenHandler->LoadGeneratorID(lua_tostring(L, -1));
 				}

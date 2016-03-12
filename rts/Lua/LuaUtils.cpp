@@ -744,14 +744,14 @@ int LuaUtils::PushFeatureModelDrawType(lua_State* L, const FeatureDef* def)
 int LuaUtils::PushModelName(lua_State* L, const SolidObjectDef* def)
 {
 	// redundant with model.path
-	// lua_pushsstring(L, modelParser->FindModelPath(def->modelName));
+	// lua_pushsstring(L, modelLoader.FindModelPath(def->modelName));
 	lua_pushsstring(L, "deprecated! use def.model.path instead!");
 	return 1;
 }
 
 
 int LuaUtils::PushModelTable(lua_State* L, const SolidObjectDef* def) {
-	const std::string& modelPath = modelParser->FindModelPath(def->modelName);
+	const std::string& modelPath = modelLoader.FindModelPath(def->modelName);
 	const std::string& modelType = StringToLower(FileSystem::GetExtension(modelPath));
 
 	const S3DModel* model = def->LoadModel();

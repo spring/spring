@@ -64,7 +64,7 @@ SolidObjectDef::SolidObjectDef()
 void SolidObjectDef::PreloadModel() const
 {
 	if (model == nullptr && !modelName.empty()) {
-		modelParser->Preload3DModel(modelName);
+		modelLoader.PreloadModel(modelName);
 	}
 }
 
@@ -72,7 +72,7 @@ S3DModel* SolidObjectDef::LoadModel() const
 {
 	if (model == nullptr) {
 		if (!modelName.empty()) {
-			model = modelParser->Load3DModel(modelName);
+			model = modelLoader.LoadModel(modelName);
 		} else {
 			// not useful, too much spam
 			// LOG_L(L_WARNING, "[SolidObjectDef::%s] object \"%s\" has no model defined", __FUNCTION__, name.c_str());

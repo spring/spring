@@ -60,7 +60,8 @@ CWorldDrawer::~CWorldDrawer()
 	SafeDelete(featureDrawer);
 	SafeDelete(unitDrawer); // depends on unitHandler, cubeMapHandler
 	SafeDelete(projectileDrawer);
-	SafeDelete(modelParser);
+
+	modelLoader.Kill();
 
 	SafeDelete(farTextureHandler);
 	SafeDelete(heightMapTexture);
@@ -82,7 +83,7 @@ void CWorldDrawer::LoadPre() const
 {
 	// these need to be loaded before featureHandler is created
 	// (maps with features have their models loaded at startup)
-	modelParser = new C3DModelLoader();
+	modelLoader.Init();
 
 	loadscreen->SetLoadMessage("Creating Unit Textures");
 	texturehandler3DO = new C3DOTextureHandler();

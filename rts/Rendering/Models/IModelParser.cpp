@@ -22,10 +22,8 @@
 #include "System/maindefines.h"
 #include "lib/assimp/include/assimp/Importer.hpp"
 
-C3DModelLoader* modelParser = nullptr;
 
-
-static void RegisterAssimpModelFormats(C3DModelLoader::FormatMap& formats) {
+static void RegisterAssimpModelFormats(CModelLoader::FormatMap& formats) {
 	std::set<std::string> whitelist;
 	std::string extension;
 	std::string extensions;
@@ -113,11 +111,6 @@ void LoadQueue::Join()
 	}
 }
 
-LoadQueue::~LoadQueue()
-{
-	Join();
-}
-
 __FORCE_ALIGN_STACK__
 void LoadQueue::Pump()
 {
@@ -131,7 +124,7 @@ void LoadQueue::Pump()
 			FreeLock();
 		}
 
-		modelParser->Load3DModel(modelName, true);
+		modelLoader.LoadModel(modelName, true);
 
 		{
 			GrabLock();
@@ -169,7 +162,7 @@ void LoadQueue::Push(const std::string& modelName)
 }
 
 
-C3DModelLoader::C3DModelLoader()
+void CModelLoader::Init()
 {
 	// file-extension should be lowercase
 	formats["3do"] = MODELTYPE_3DO;
@@ -189,12 +182,20 @@ C3DModelLoader::C3DModelLoader()
 	models.push_back(nullptr);
 }
 
-
-C3DModelLoader::~C3DModelLoader()
+void CModelLoader::Kill()
 {
+	// thread might be in LoadModel, but it doesn't matter
 	loadQueue.Join();
 
-	// delete model cache
+	KillModels();
+	KillParsers();
+
+	cache.clear();
+	formats.clear();
+}
+
+void CModelLoader::KillModels()
+{
 	for (unsigned int n = 1; n < models.size(); n++) {
 		S3DModel* model = models[n];
 
@@ -204,22 +205,30 @@ C3DModelLoader::~C3DModelLoader()
 		model->DeletePieces(model->GetRootPiece());
 		model->SetRootPiece(nullptr);
 
-		delete model;
+		SafeDelete(model);
 	}
-	models.clear();
 
+	models.clear();
+}
+
+void CModelLoader::KillParsers()
+{
 	for (auto it = parsers.cbegin(); it != parsers.cend(); ++it) {
 		delete (it->second);
 	}
+
 	parsers.clear();
+}
 
-	cache.clear();
-
+CModelLoader& CModelLoader::GetInstance()
+{
+	static CModelLoader instance;
+	return instance;
 }
 
 
 
-std::string C3DModelLoader::FindModelPath(std::string name) const
+std::string CModelLoader::FindModelPath(std::string name) const
 {
 	// check for empty string because we can be called
 	// from Lua*Defs and certain features have no models
@@ -249,7 +258,7 @@ std::string C3DModelLoader::FindModelPath(std::string name) const
 
 
 
-S3DModel* C3DModelLoader::Load3DModel(std::string name, bool preload)
+S3DModel* CModelLoader::LoadModel(std::string name, bool preload)
 {
 	// cannot happen except through SpawnProjectile
 	if (name.empty())
@@ -262,7 +271,7 @@ S3DModel* C3DModelLoader::Load3DModel(std::string name, bool preload)
 
 	// search in cache first
 	for (unsigned int n = 0; n < 2; n++) {
-		S3DModel* cachedModel = LoadCached3DModel(*refs[n], preload);
+		S3DModel* cachedModel = LoadCachedModel(*refs[n], preload);
 
 		if (cachedModel != nullptr)
 			return cachedModel;
@@ -275,7 +284,7 @@ S3DModel* C3DModelLoader::Load3DModel(std::string name, bool preload)
 	return (CreateModel(name, path, preload));
 }
 
-S3DModel* C3DModelLoader::LoadCached3DModel(const std::string& name, bool preload)
+S3DModel* CModelLoader::LoadCachedModel(const std::string& name, bool preload)
 {
 	S3DModel* cachedModel = nullptr;
 
@@ -300,7 +309,7 @@ S3DModel* C3DModelLoader::LoadCached3DModel(const std::string& name, bool preloa
 
 
 
-S3DModel* C3DModelLoader::CreateModel(
+S3DModel* CModelLoader::CreateModel(
 	const std::string& name,
 	const std::string& path,
 	bool preload
@@ -321,7 +330,7 @@ S3DModel* C3DModelLoader::CreateModel(
 
 
 
-IModelParser* C3DModelLoader::GetFormatParser(const std::string& pathExt)
+IModelParser* CModelLoader::GetFormatParser(const std::string& pathExt)
 {
 	const auto fi = formats.find(StringToLower(pathExt));
 
@@ -331,7 +340,7 @@ IModelParser* C3DModelLoader::GetFormatParser(const std::string& pathExt)
 	return parsers[fi->second];
 }
 
-S3DModel* C3DModelLoader::ParseModel(const std::string& name, const std::string& path)
+S3DModel* CModelLoader::ParseModel(const std::string& name, const std::string& path)
 {
 	S3DModel* model = nullptr;
 	IModelParser* parser = GetFormatParser(FileSystem::GetExtension(path));
@@ -351,7 +360,7 @@ S3DModel* C3DModelLoader::ParseModel(const std::string& name, const std::string&
 
 
 
-void C3DModelLoader::AddModelToCache(
+void CModelLoader::AddModelToCache(
 	S3DModel* model,
 	const std::string& name,
 	const std::string& path
@@ -373,7 +382,7 @@ void C3DModelLoader::AddModelToCache(
 
 
 
-void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
+void CModelLoader::CreateListsNow(S3DModelPiece* o)
 {
 	o->UploadGeometryVBOs();
 	o->CreateShatterPieces();
@@ -385,7 +394,7 @@ void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
 }
 
 
-void C3DModelLoader::CreateLists(S3DModel* model) {
+void CModelLoader::CreateLists(S3DModel* model) {
 	S3DModelPiece* rootPiece = model->GetRootPiece();
 
 	if (rootPiece->GetDisplayListID() != 0)

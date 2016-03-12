@@ -589,7 +589,7 @@ S3DModel* WeaponDef::LoadModel()
 {
 	if (visuals.model == NULL) {
 		if (!visuals.modelName.empty()) {
-			visuals.model = modelParser->Load3DModel(visuals.modelName);
+			visuals.model = modelLoader.LoadModel(visuals.modelName);
 		} else {
 			// not useful, too much spam
 			// LOG_L(L_WARNING, "[WeaponDef::%s] weapon \"%s\" has no model defined", __FUNCTION__, name.c_str());
