@@ -4,10 +4,7 @@
 #include "BasicMapDamage.h"
 #include "ReadMap.h"
 #include "MapInfo.h"
-#include "BaseGroundDrawer.h"
-#include "HeightMapTexture.h"
 #include "Rendering/Env/GrassDrawer.h"
-#include "Rendering/Env/IWater.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
@@ -15,8 +12,6 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Features/FeatureHandler.h"
-#include "Sim/Units/UnitTypes/Building.h"
-#include "Sim/Units/UnitDef.h"
 #include "System/TimeProfiler.h"
 
 
@@ -52,7 +47,8 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 	Explo& e = explosions.back();
 	e.pos = pos;
 	e.strength = strength;
-	e.ttl = 10;
+	e.radius = radius;
+	e.ttl = EXPLOSION_LIFETIME;
 	e.x1 = Clamp<int>((pos.x - radius) / SQUARE_SIZE, 1, mapDims.mapxm1);
 	e.x2 = Clamp<int>((pos.x + radius) / SQUARE_SIZE, 1, mapDims.mapxm1);
 	e.y1 = Clamp<int>((pos.z - radius) / SQUARE_SIZE, 1, mapDims.mapym1);
@@ -94,7 +90,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 				orgHeightMap[y * mapDims.mapxp1 + x];
 
 			if ((prevDif * dif) > 0.0f)
-				dif /= math::fabs(prevDif) * 0.1f + 1;
+				dif /= ((math::fabs(prevDif) / EXPLOSION_LIFETIME) + 1);
 
 			if (dif < -0.3f && strength > 200.0f)
 				grassDrawer->RemoveGrass(float3(x * SQUARE_SIZE, 0.0f, y * SQUARE_SIZE));
@@ -103,10 +99,10 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 		}
 	}
 
-	// calculate how much to raise or lower buildings in the explosion radius
-	// (while still keeping the ground below them flat)
 	const std::vector<CUnit*>& units = quadField->GetUnitsExact(pos, radius);
 
+	// calculate how much to raise or lower buildings in the explosion radius
+	// (while still keeping the ground below them flat)
 	for (const CUnit* unit: units) {
 		if (!unit->blockHeightChanges)
 			continue;
@@ -133,7 +129,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 					orgHeightMap[z * mapDims.mapxp1 + x];
 
 				if ((prevDif * dif) > 0.0f)
-					dif /= math::fabs(prevDif) * 0.1f + 1;
+					dif /= ((math::fabs(prevDif) / EXPLOSION_LIFETIME) + 1);
 
 				totalDif += dif;
 			}
@@ -185,15 +181,16 @@ void CBasicMapDamage::Update()
 		}
 
 		for (const ExploBuilding& b: e.buildings) {
-			for (int z = b.tz1; z < b.tz2; z++) {
-				for (int x = b.tx1; x < b.tx2; x++) {
-					readMap->AddHeight(z * mapDims.mapxp1 + x, b.dif);
-				}
-			}
-
 			CUnit* unit = unitHandler->GetUnit(b.id);
 
 			if (unit != nullptr) {
+				// only change ground level if building is still here
+				for (int z = b.tz1; z < b.tz2; z++) {
+					for (int x = b.tx1; x < b.tx2; x++) {
+						readMap->AddHeight(z * mapDims.mapxp1 + x, b.dif);
+					}
+				}
+
 				unit->Move(UpVector * b.dif, true);
 			}
 		}
@@ -203,7 +200,12 @@ void CBasicMapDamage::Update()
 		}
 	}
 
-	while (!explosions.empty() && (explosions.front()).ttl == 0) {
+	while (!explosions.empty()) {
+		const Explo& explosion = explosions.front();
+
+		if (explosion.ttl > 0)
+			break;
+
 		explosions.pop_front();
 	}
 }
