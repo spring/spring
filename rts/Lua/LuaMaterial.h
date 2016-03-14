@@ -99,52 +99,76 @@ class LuaMatTexSet {
 
 class LuaMaterial {
 	public:
-		LuaMaterial()
-		: type(LuaMatType(-1)), // invalid
-		  order(0), texCount(0),
-		  preList(0), postList(0),
-		  useCamera(true), culling(0),
-		  cameraLoc(-1), cameraInvLoc(-1), cameraPosLoc(-1),
-		  sunPosLoc(-1), shadowLoc(-1), shadowParamsLoc(-1)
+		LuaMaterial(LuaMatType matType = LuaMatType(-1)):
+		  type(matType), // default invalid
+		  order(0),
+		  texCount(0),
+		  cullingMode(0),
+
+		  preList(0),
+		  postList(0),
+
+		  viewMatrixLoc(-1),
+		  projMatrixLoc(-1),
+		  viprMatrixLoc(-1),
+		  viewMatrixInvLoc(-1),
+		  projMatrixInvLoc(-1),
+		  viprMatrixInvLoc(-1),
+		  cameraPosLoc(-1),
+		  cameraDirLoc(-1),
+		  sunDirLoc(-1),
+		  shadowMatrixLoc(-1),
+		  shadowParamsLoc(-1),
+
+		  useCamera(true)
 		{}
 
+		void Parse(
+			lua_State* L,
+			const int tableIdx,
+			std::function<void(lua_State*, int, LuaMatShader&)> ParseShader,
+			std::function<void(lua_State*, int, LuaMatTexture&)> ParseTexture,
+			std::function<GLuint(lua_State*, int)> ParseDisplayList
+		);
 		void Finalize();
 		void Execute(const LuaMaterial& prev, bool deferredPass) const;
 		void Print(const string& indent) const;
 
 		static int Compare(const LuaMaterial& a, const LuaMaterial& b);
-		bool operator <(const LuaMaterial& m) const {
-			return Compare(*this, m)  < 0;
-		}
-		bool operator==(const LuaMaterial& m) const {
-			return Compare(*this, m) == 0;
-		}
-		bool operator!=(const LuaMaterial& m) const {
-			return Compare(*this, m) != 0;
-		}
+
+		bool operator <(const LuaMaterial& m) const { return (Compare(*this, m)  < 0); }
+		bool operator==(const LuaMaterial& m) const { return (Compare(*this, m) == 0); }
+		bool operator!=(const LuaMaterial& m) const { return (Compare(*this, m) != 0); }
 
 	public:
 		LuaMatType type;
+
 		int order; // for manually adjusting rendering order
+		int texCount;
 
 		// [0] := standard
 		// [1] := deferred
 		LuaMatShader shaders[LuaMatShader::LUASHADER_PASS_CNT];
-
-		int texCount;
 		LuaMatTexture textures[LuaMatTexture::maxTexUnits];
+
+		GLenum cullingMode;
 
 		GLuint preList;
 		GLuint postList;
 
-		bool useCamera;
-		GLenum culling;
-		GLint cameraLoc;       // view matrix
-		GLint cameraInvLoc;    // inverse view matrix
+		GLint viewMatrixLoc;
+		GLint projMatrixLoc;
+		GLint viprMatrixLoc;
+		GLint viewMatrixInvLoc;
+		GLint projMatrixInvLoc;
+		GLint viprMatrixInvLoc;
 		GLint cameraPosLoc;
-		GLint sunPosLoc;
-		GLint shadowLoc;       // shadow matrix
+		GLint cameraDirLoc;
+		GLint sunDirLoc;
+		GLint shadowMatrixLoc;
 		GLint shadowParamsLoc;
+
+		bool useCamera;
 
 		static const LuaMaterial defMat;
 };

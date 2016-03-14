@@ -15,11 +15,9 @@
 #include "System/Util.h"
 
 #include <string>
+#include <unordered_map>
 #include <vector>
 #include <cstring>
-
-using std::string;
-using std::vector;
 
 
 LuaMatHandler LuaMatHandler::handler;
@@ -198,18 +196,132 @@ void LuaMatShader::Print(const string& indent) const
 
 const LuaMaterial LuaMaterial::defMat;
 
+void LuaMaterial::Parse(
+	lua_State* L,
+	const int tableIdx,
+	std::function<void(lua_State*, int, LuaMatShader&)> ParseShader,
+	std::function<void(lua_State*, int, LuaMatTexture&)> ParseTexture,
+	std::function<GLuint(lua_State*, int)> ParseDisplayList
+) {
+	const std::unordered_map<std::string, GLint*> uniformLocs = {
+		{"cameraloc",        &viewMatrixLoc},
+		{"viewmatrixloc",    &viewMatrixLoc},
+		{"projmatrixloc",    &projMatrixLoc},
+		{"viprmatrixloc",    &viprMatrixLoc},
+		{"camerainvloc",     &viewMatrixInvLoc},
+		{"viewmatrixinvloc", &viewMatrixInvLoc},
+		{"projmatrixinvloc", &projMatrixInvLoc},
+		{"viprmatrixinvloc", &viprMatrixInvLoc},
+
+		{"cameraposloc",     &cameraPosLoc},
+		{"cameradirloc",     &cameraDirLoc},
+
+		{"sunposloc",        &sunDirLoc},
+		{"sundirloc",        &sunDirLoc},
+
+		{"shadowloc",        &shadowMatrixLoc},
+		{"shadowmatrixloc",  &shadowMatrixLoc},
+		{"shadowparamsloc",  &shadowParamsLoc},
+	};
+
+	for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
+		if (!lua_israwstring(L, -2))
+			continue;
+
+		const string key = StringToLower(lua_tostring(L, -2));
+		const auto loc = uniformLocs.find(key);
+
+		// uniforms
+		if (loc != uniformLocs.end()) {
+			if (!lua_isnumber(L, -1))
+				continue;
+
+			*(loc->second) = static_cast<GLint>(lua_tonumber(L, -1));
+		}
+
+		// shaders
+		if (key == "shader" || key == "standard_shader") {
+			ParseShader(L, -1, shaders[LuaMatShader::LUASHADER_PASS_FWD]);
+			continue;
+		}
+		if (key == "deferred" || key == "deferred_shader") {
+			ParseShader(L, -1, shaders[LuaMatShader::LUASHADER_PASS_DFR]);
+			continue;
+		}
+
+		// textures
+		if (key.substr(0, 7) == "texunit") {
+			if (key.size() < 8)
+				continue;
+
+			if (key[7] == 's') {
+				// "texunits" = {[0] = string|table, ...}
+				if (!lua_istable(L, -1))
+					continue;
+
+				const int texTable = (int)lua_gettop(L);
+
+				for (lua_pushnil(L); lua_next(L, texTable) != 0; lua_pop(L, 1)) {
+					if (!lua_israwnumber(L, -2))
+						continue;
+
+					const unsigned int texUnit = lua_toint(L, -2);
+
+					if (texUnit >= LuaMatTexture::maxTexUnits)
+						continue;
+
+					ParseTexture(L, -1, textures[texUnit]);
+				}
+			} else {
+				// "texunitX" = string|table
+				const unsigned int texUnit = atoi(key.c_str() + 7);
+
+				if (texUnit >= LuaMatTexture::maxTexUnits)
+					continue;
+
+				ParseTexture(L, -1, textures[texUnit]);
+			}
+
+			continue;
+		}
+
+		// dlists
+		if (key == "prelist") {
+			preList = ParseDisplayList(L, -1);
+			continue;
+		}
+		if (key == "postlist") {
+			postList = ParseDisplayList(L, -1);
+			continue;
+		}
+
+		// misc
+		if (key == "order") {
+			order = luaL_checkint(L, -1);
+			continue;
+		}
+		if (key == "culling") {
+			if (lua_isnumber(L, -1))
+				cullingMode = (GLenum)lua_tonumber(L, -1);
+
+			continue;
+		}
+		if (key == "usecamera") {
+			useCamera = lua_isboolean(L, -1) && lua_toboolean(L, -1);
+			continue;
+		}
+	}
+}
 
 void LuaMaterial::Finalize()
 {
 	shaders[LuaMatShader::LUASHADER_PASS_FWD].Finalize();
 	shaders[LuaMatShader::LUASHADER_PASS_DFR].Finalize();
 
-	texCount = 0;
 	for (int t = 0; t < LuaMatTexture::maxTexUnits; t++) {
-		LuaMatTexture& tex = textures[t];
-		tex.Finalize();
+		textures[t].Finalize();
 
-		if (tex.type != LuaMatTexture::LUATEX_NONE) {
+		if (textures[t].type != LuaMatTexture::LUATEX_NONE) {
 			texCount = (t + 1);
 		}
 	}
@@ -218,41 +330,44 @@ void LuaMaterial::Finalize()
 
 void LuaMaterial::Execute(const LuaMaterial& prev, bool deferredPass) const
 {
-	if (prev.postList != 0) {
+	if (prev.postList != 0)
 		glCallList(prev.postList);
-	}
-	if (preList != 0) {
+	if (preList != 0)
 		glCallList(preList);
-	}
 
 	shaders[deferredPass].Execute(prev.shaders[deferredPass], deferredPass);
 
-	//FIXME add projection matrices!!!
-	if (cameraLoc >= 0) {
-		glUniformMatrix4fv(cameraLoc, 1, GL_FALSE, camera->GetViewMatrix()); // GetMatrixData("camera")
-	}
-	if (cameraInvLoc >= 0) {
-		glUniformMatrix4fv(cameraInvLoc, 1, GL_FALSE, camera->GetViewMatrixInverse()); // GetMatrixData("caminv")
-	}
+	if (viewMatrixLoc >= 0)
+		glUniformMatrix4fv(viewMatrixLoc, 1, GL_FALSE, camera->GetViewMatrix());
+	if (projMatrixLoc >= 0)
+		glUniformMatrix4fv(projMatrixLoc, 1, GL_FALSE, camera->GetProjectionMatrix());
+	if (viprMatrixLoc >= 0)
+		glUniformMatrix4fv(viprMatrixLoc, 1, GL_FALSE, camera->GetViewProjectionMatrix());
 
-	if (cameraPosLoc >= 0) {
+	if (viewMatrixInvLoc >= 0)
+		glUniformMatrix4fv(viewMatrixInvLoc, 1, GL_FALSE, camera->GetViewMatrixInverse());
+	if (projMatrixInvLoc >= 0)
+		glUniformMatrix4fv(projMatrixInvLoc, 1, GL_FALSE, camera->GetProjectionMatrixInverse());
+	if (viprMatrixInvLoc >= 0)
+		glUniformMatrix4fv(viprMatrixInvLoc, 1, GL_FALSE, camera->GetViewProjectionMatrixInverse());
+
+	if (cameraPosLoc >= 0)
 		glUniformf3(cameraPosLoc, camera->GetPos());
-	}
+	if (cameraDirLoc >= 0)
+		glUniformf3(cameraDirLoc, camera->GetDir());
 
-	if (sunPosLoc >= 0) {
-		glUniformf3(sunPosLoc, sky->GetLight()->GetLightDir());
-	}
+	if (sunDirLoc >= 0)
+		glUniformf3(sunDirLoc, sky->GetLight()->GetLightDir());
 
-	if (shadowLoc >= 0) {
-		glUniformMatrix4fv(shadowLoc, 1, GL_FALSE, shadowHandler->GetShadowMatrixRaw());
-	}
-
-	if (shadowParamsLoc >= 0) {
+	if (shadowMatrixLoc >= 0)
+		glUniformMatrix4fv(shadowMatrixLoc, 1, GL_FALSE, shadowHandler->GetShadowMatrixRaw());
+	if (shadowParamsLoc >= 0)
 		glUniform4fv(shadowParamsLoc, 1, &(shadowHandler->GetShadowParams().x));
-	}
+
 
 	const int maxTex = std::max(texCount, prev.texCount);
-	for (int t = (maxTex - 1); t >= 0; t--) {
+
+	for (int t = maxTex - 1; t >= 0; t--) {
 		glActiveTexture(GL_TEXTURE0 + t);
 		prev.textures[t].Unbind();
 		textures[t].Bind();
@@ -267,10 +382,10 @@ void LuaMaterial::Execute(const LuaMaterial& prev, bool deferredPass) const
 		}
 	}
 
-	if (culling != prev.culling) {
-		if (culling) {
+	if (cullingMode != prev.cullingMode) {
+		if (cullingMode != 0) {
 			glEnable(GL_CULL_FACE);
-			glCullFace(culling);
+			glCullFace(cullingMode);
 		} else {
 			glDisable(GL_CULL_FACE);
 		}
@@ -281,75 +396,70 @@ void LuaMaterial::Execute(const LuaMaterial& prev, bool deferredPass) const
 int LuaMaterial::Compare(const LuaMaterial& a, const LuaMaterial& b)
 {
 	// NOTE: the order of the comparisons is important
-	int cmp;
+	int cmp = 0;
 
-	if (a.type != b.type) {
+	if (a.type != b.type)
 		return (a.type < b.type) ? -1 : +1;  // should not happen
-	}
-
-	if (a.order != b.order) {
+	if (a.order != b.order)
 		return (a.order < b.order) ? -1 : +1;
-	}
 
-	cmp = LuaMatShader::Compare(a.shaders[LuaMatShader::LUASHADER_PASS_FWD], b.shaders[LuaMatShader::LUASHADER_PASS_FWD]);
 
-	if (cmp != 0)
+	if ((cmp = LuaMatShader::Compare(a.shaders[LuaMatShader::LUASHADER_PASS_FWD], b.shaders[LuaMatShader::LUASHADER_PASS_FWD])) != 0)
 		return cmp;
 
-	cmp = LuaMatShader::Compare(a.shaders[LuaMatShader::LUASHADER_PASS_DFR], b.shaders[LuaMatShader::LUASHADER_PASS_DFR]);
-
-	if (cmp != 0)
+	if ((cmp = LuaMatShader::Compare(a.shaders[LuaMatShader::LUASHADER_PASS_DFR], b.shaders[LuaMatShader::LUASHADER_PASS_DFR])) != 0)
 		return cmp;
+
 
 	const int maxTex = std::min(a.texCount, b.texCount);
+
 	for (int t = 0; t < maxTex; t++) {
-		cmp = LuaMatTexture::Compare(a.textures[t], b.textures[t]);
-		if (cmp != 0) {
+		if ((cmp = LuaMatTexture::Compare(a.textures[t], b.textures[t])) != 0) {
 			return cmp;
 		}
 	}
-	if (a.texCount != b.texCount) {
+
+
+	if (a.texCount != b.texCount)
 		return (a.texCount < b.texCount) ? -1 : +1;
-	}
 
-	if (a.preList != b.preList) {
+	if (a.preList != b.preList)
 		return (a.preList < b.preList) ? -1 : +1;
-	}
-
-	if (a.postList != b.postList) {
+	if (a.postList != b.postList)
 		return (a.postList < b.postList) ? -1 : +1;
-	}
 
-	if (a.useCamera != b.useCamera) {
+	if (a.useCamera != b.useCamera)
 		return a.useCamera ? -1 : +1;
-	}
 
-	if (a.culling != b.culling) {
-		return (a.culling < b.culling) ? -1 : +1;
-	}
+	if (a.cullingMode != b.cullingMode)
+		return (a.cullingMode < b.cullingMode) ? -1 : +1;
 
-	if (a.cameraLoc != b.cameraLoc) {
-		return (a.cameraLoc < b.cameraLoc) ? -1 : +1;
-	}
-	if (a.cameraInvLoc != b.cameraInvLoc) {
-		return (a.cameraInvLoc < b.cameraInvLoc) ? -1 : +1;
-	}
+	if (a.viewMatrixLoc != b.viewMatrixLoc)
+		return (a.viewMatrixLoc < b.viewMatrixLoc) ? -1 : +1;
+	if (a.projMatrixLoc != b.projMatrixLoc)
+		return (a.projMatrixLoc < b.projMatrixLoc) ? -1 : +1;
+	if (a.viprMatrixLoc != b.viprMatrixLoc)
+		return (a.viprMatrixLoc < b.viprMatrixLoc) ? -1 : +1;
 
-	if (a.cameraPosLoc != b.cameraPosLoc) {
+	if (a.viewMatrixInvLoc != b.viewMatrixInvLoc)
+		return (a.viewMatrixInvLoc < b.viewMatrixInvLoc) ? -1 : +1;
+	if (a.projMatrixInvLoc != b.projMatrixInvLoc)
+		return (a.projMatrixInvLoc < b.projMatrixInvLoc) ? -1 : +1;
+	if (a.viprMatrixInvLoc != b.viprMatrixInvLoc)
+		return (a.viprMatrixInvLoc < b.viprMatrixInvLoc) ? -1 : +1;
+
+	if (a.cameraPosLoc != b.cameraPosLoc)
 		return (a.cameraPosLoc < b.cameraPosLoc) ? -1 : +1;
-	}
+	if (a.cameraDirLoc != b.cameraDirLoc)
+		return (a.cameraDirLoc < b.cameraDirLoc) ? -1 : +1;
 
-	if (a.sunPosLoc != b.sunPosLoc) {
-		return (a.sunPosLoc < b.sunPosLoc) ? -1 : +1;
-	}
+	if (a.sunDirLoc != b.sunDirLoc)
+		return (a.sunDirLoc < b.sunDirLoc) ? -1 : +1;
 
-	if (a.shadowLoc != b.shadowLoc) {
-		return (a.shadowLoc < b.shadowLoc) ? -1 : +1;
-	}
-
-	if (a.shadowParamsLoc != b.shadowParamsLoc) {
+	if (a.shadowMatrixLoc != b.shadowMatrixLoc)
+		return (a.shadowMatrixLoc < b.shadowMatrixLoc) ? -1 : +1;
+	if (a.shadowParamsLoc != b.shadowParamsLoc)
 		return (a.shadowParamsLoc < b.shadowParamsLoc) ? -1 : +1;
-	}
 
 	return 0;
 }
@@ -377,24 +487,36 @@ void LuaMaterial::Print(const string& indent) const
 
 	LOG("%s%s", indent.c_str(), GetMatTypeName(type));
 	LOG("%sorder = %i", indent.c_str(), order);
+
 	shaders[LuaMatShader::LUASHADER_PASS_FWD].Print(indent);
 	shaders[LuaMatShader::LUASHADER_PASS_DFR].Print(indent);
+
 	LOG("%stexCount = %i", indent.c_str(), texCount);
+
 	for (int t = 0; t < texCount; t++) {
 		char buf[32];
 		SNPRINTF(buf, sizeof(buf), "%s  tex[%i] ", indent.c_str(), t);
 		textures[t].Print(buf);
 	}
+
 	LOG("%spreList  = %i",  indent.c_str(), preList);
 	LOG("%spostList = %i",  indent.c_str(), postList);
-	LOG("%suseCamera = %s", indent.c_str(), (useCamera ? "true" : "false"));
-	LOG("%sculling = %s", indent.c_str(), CULL_TO_STR(culling));
-	LOG("%scameraLoc = %i", indent.c_str(), cameraLoc);
-	LOG("%scameraInvLoc = %i", indent.c_str(), cameraInvLoc);
-	LOG("%scameraPosLoc = %i", indent.c_str(), cameraPosLoc);
-	LOG("%ssunPosLoc = %i", indent.c_str(), sunPosLoc);
-	LOG("%sshadowLoc = %i", indent.c_str(), shadowLoc);
-	LOG("%sshadowParamsLoc = %i", indent.c_str(), shadowParamsLoc);
+
+	LOG("%suseCamera   = %s", indent.c_str(), (useCamera ? "true" : "false"));
+	LOG("%scullingMode = %s", indent.c_str(), CULL_TO_STR(cullingMode));
+
+	LOG("%sviewMatrixLoc    = %i", indent.c_str(), viewMatrixLoc);
+	LOG("%sprojMatrixLoc    = %i", indent.c_str(), projMatrixLoc);
+	LOG("%sviewMatrixInvLoc = %i", indent.c_str(), viewMatrixInvLoc);
+	LOG("%sprojMatrixInvLoc = %i", indent.c_str(), projMatrixInvLoc);
+
+	LOG("%scameraPosLoc     = %i", indent.c_str(), cameraPosLoc);
+	LOG("%scameraDirLoc     = %i", indent.c_str(), cameraDirLoc);
+
+	LOG("%ssunDirLoc        = %i", indent.c_str(), sunDirLoc);
+
+	LOG("%sshadowMatrixLoc  = %i", indent.c_str(), shadowMatrixLoc);
+	LOG("%sshadowParamsLoc  = %i", indent.c_str(), shadowParamsLoc);
 }
 
 

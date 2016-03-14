@@ -109,18 +109,19 @@ static const std::unordered_map<std::string, LuaMatTexture::Type> luaMatTexTypeM
 };
 
 static const std::unordered_map<std::string, LuaMatrixType> luaMatrixTypeMap = {
-	{"shadow", LUAMATRICES_SHADOW},
-	{"view", LUAMATRICES_VIEW},
-	{"viewinverse", LUAMATRICES_VIEWINVERSE},
-	{"projection", LUAMATRICES_PROJECTION},
-	{"projectioninverse", LUAMATRICES_PROJECTIONINVERSE},
-	{"viewprojection", LUAMATRICES_VIEWPROJECTION},
+	{"view",                  LUAMATRICES_VIEW                 },
+	{"projection",            LUAMATRICES_PROJECTION           },
+	{"viewprojection",        LUAMATRICES_VIEWPROJECTION       },
+	{"viewinverse",           LUAMATRICES_VIEWINVERSE          },
+	{"projectioninverse",     LUAMATRICES_PROJECTIONINVERSE    },
 	{"viewprojectioninverse", LUAMATRICES_VIEWPROJECTIONINVERSE},
-	{"billboard", LUAMATRICES_BILLBOARD},
+	{"billboard",             LUAMATRICES_BILLBOARD            },
+	{"shadow",                LUAMATRICES_SHADOW               },
+
 	// backward compability
-	{"camera", LUAMATRICES_VIEW},
-	{"caminv", LUAMATRICES_VIEWINVERSE},
-	{"camprj", LUAMATRICES_PROJECTION},
+	{"camera",    LUAMATRICES_VIEW             },
+	{"camprj",    LUAMATRICES_PROJECTION       },
+	{"caminv",    LUAMATRICES_VIEWINVERSE      },
 	{"camprjinv", LUAMATRICES_PROJECTIONINVERSE},
 };
 
