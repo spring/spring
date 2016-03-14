@@ -488,6 +488,46 @@ void CShadowHandler::SetShadowCamera(CCamera* shadowCam)
 	shadowCam->UpdateFrustum();
 }
 
+
+void CShadowHandler::SetupShadowTexSampler(unsigned int texUnit, bool enable) const
+{
+	glActiveTexture(texUnit);
+	glBindTexture(GL_TEXTURE_2D, shadowTexture);
+
+	// support FFP context
+	if (enable)
+		glEnable(GL_TEXTURE_2D);
+
+	SetupShadowTexSamplerRaw();
+}
+
+void CShadowHandler::SetupShadowTexSamplerRaw() const
+{
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+	glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
+	// glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY);
+	// glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_ALPHA);
+}
+
+void CShadowHandler::ResetShadowTexSampler(unsigned int texUnit, bool disable) const
+{
+	glActiveTexture(texUnit);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	if (disable)
+		glDisable(GL_TEXTURE_2D);
+
+	ResetShadowTexSamplerRaw();
+}
+
+void CShadowHandler::ResetShadowTexSamplerRaw() const
+{
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+	glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
+}
+
+
 void CShadowHandler::CreateShadows()
 {
 	// NOTE:

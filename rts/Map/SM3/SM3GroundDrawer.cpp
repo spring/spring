@@ -78,14 +78,14 @@ void CSM3GroundDrawer::Draw(const DrawPass::e& drawPass)
 
 	tr->SetShaderParams(sky->GetLight()->GetLightDir(), currc->cam->pos);
 
-	if (shadowHandler->shadowsLoaded) {
+	if (shadowHandler->ShadowsLoaded()) {
 		terrain::ShadowMapParams params;
 
 		params.mid[0] = shadowHandler->GetShadowParams().x;
 		params.mid[1] = shadowHandler->GetShadowParams().y;
 		params.f_a    = shadowHandler->GetShadowParams().z;
 		params.f_b    = shadowHandler->GetShadowParams().w;
-		params.shadowMap = shadowHandler->shadowTexture;
+		params.shadowMap = shadowHandler->GetShadowTextureID();
 
 		for (int a = 0; a < 16; a++)
 			params.shadowMatrix[a] = shadowHandler->GetShadowMatrixRaw()[a];

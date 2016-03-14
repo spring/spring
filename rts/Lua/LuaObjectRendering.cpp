@@ -353,9 +353,9 @@ static void ParseTexture(lua_State* L, const char* caller, int index,
 	const int table = (index > 0) ? index : (lua_gettop(L) + index + 1);
 
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (!lua_israwstring(L, -2)) {
+		if (!lua_israwstring(L, -2))
 			continue;
-		}
+
 		const string key = StringToLower(lua_tostring(L, -2));
 		if (key == "tex") {
 			LuaOpenGLUtils::ParseTextureImage(L, texUnit, lua_tostring(L, -1));
@@ -384,12 +384,14 @@ static GLuint ParseDisplayList(lua_State* L, const char* caller, int index)
 static LuaMatRef ParseMaterial(lua_State* L, const char* caller, int index,
                                LuaMatType matType)
 {
-	if (!lua_istable(L, index)) {
+	if (!lua_istable(L, index))
 		return LuaMatRef();
-	}
+
 	LuaMaterial mat;
 	mat.type = matType;
+
 	const int table = index;
+
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (!lua_israwstring(L, -2)) {
 			continue;

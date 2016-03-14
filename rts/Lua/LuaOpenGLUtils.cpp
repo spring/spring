@@ -530,7 +530,7 @@ GLuint LuaMatTexture::GetTextureID() const
 
 		case LUATEX_SHADOWMAP: {
 			if (shadowHandler != nullptr) {
-				texID = shadowHandler->shadowTexture;
+				texID = shadowHandler->GetShadowTextureID();
 			}
 		} break;
 		case LUATEX_HEIGHTMAP: {
@@ -708,28 +708,28 @@ void LuaMatTexture::Bind() const
 	if (texID != 0) {
 		glBindTexture(texType, texID);
 
+		// do not enable cubemap samplers here (not
+		// needed for shaders, not wanted otherwise)
 		if (enable) {
 			switch (texType) {
-				case GL_TEXTURE_2D:           { glEnable(GL_TEXTURE_2D          ); } break;
-				case GL_TEXTURE_CUBE_MAP_ARB: { glEnable(GL_TEXTURE_CUBE_MAP_ARB); } break;
-				default:                      {                                    } break;
+				case GL_TEXTURE_2D:           {   glEnable(texType);   } break;
+				case GL_TEXTURE_CUBE_MAP_ARB: { /*glEnable(texType);*/ } break;
+				default:                      {                        } break;
 			}
 		}
 	}
 
 	else if (!enable) {
 		switch (texType) {
-			case GL_TEXTURE_2D:           { glDisable(GL_TEXTURE_2D          ); } break;
-			case GL_TEXTURE_CUBE_MAP_ARB: { glDisable(GL_TEXTURE_CUBE_MAP_ARB); } break;
-			default:                      {                                     } break;
+			case GL_TEXTURE_2D:           {   glDisable(texType);   } break;
+			case GL_TEXTURE_CUBE_MAP_ARB: { /*glDisable(texType);*/ } break;
+			default:                      {                         } break;
 		}
 	}
 
-	if (enableTexParams && type == LUATEX_SHADOWMAP) {
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
-		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-	}
+	if (enableTexParams && type == LUATEX_SHADOWMAP)
+		shadowHandler->SetupShadowTexSamplerRaw();
+
 }
 
 
@@ -738,18 +738,16 @@ void LuaMatTexture::Unbind() const
 	if (type == LUATEX_NONE)
 		return;
 
-	if (enableTexParams && type == LUATEX_SHADOWMAP) {
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
-		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-	}
+	if (enableTexParams && type == LUATEX_SHADOWMAP)
+		shadowHandler->ResetShadowTexSamplerRaw();
 
 	if (!enable)
 		return;
 
 	switch (GetTextureTarget()) {
-		case GL_TEXTURE_2D:           { glDisable(GL_TEXTURE_2D          ); } break;
-		case GL_TEXTURE_CUBE_MAP_ARB: { glDisable(GL_TEXTURE_CUBE_MAP_ARB); } break;
-		default:                      {                                     } break;
+		case GL_TEXTURE_2D:           {   glDisable(GL_TEXTURE_2D);             } break;
+		case GL_TEXTURE_CUBE_MAP_ARB: { /*glDisable(GL_TEXTURE_CUBE_MAP_ARB);*/ } break;
+		default:                      {                                         } break;
 	}
 }
 
@@ -916,23 +914,22 @@ int2 LuaMatTexture::GetSize() const
 
 void LuaMatTexture::Finalize()
 {
-	//if (type == LUATEX_NONE) {
-	//	enable = false;
-	//}
+	// enable &= (type != LUATEX_NONE);
+	enableTexParams = true;
 }
 
 
 int LuaMatTexture::Compare(const LuaMatTexture& a, const LuaMatTexture& b)
 {
-	if (a.type != b.type) {
+	if (a.type != b.type)
 		return (a.type < b.type) ? -1 : +1;
-	}
-	if (a.data != b.data) {
+
+	if (a.data != b.data)
 		return (a.data < b.data) ? -1 : +1;
-	}
-	if (a.enable != b.enable) {
+
+	if (a.enable != b.enable)
 		return a.enable ? -1 : +1;
-	}
+
 	return 0;
 }
 

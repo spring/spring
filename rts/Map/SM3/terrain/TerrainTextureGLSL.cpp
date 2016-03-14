@@ -719,11 +719,7 @@ void NodeGLSLShader::Setup(NodeSetupParams& params) {
 	if (params.shadowMapParams) {
 		if (shadowMapLocation >= 0) {
 			glUniform1i(shadowMapLocation, texUnits.size());
-			glActiveTextureARB(GL_TEXTURE0_ARB + texUnits.size());
-			glBindTexture(GL_TEXTURE_2D, params.shadowMapParams->shadowMap);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
-			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+			shadowHandler->SetupShadowTexSampler(GL_TEXTURE0 + texUnits.size() /*, params.shadowMapParams->shadowMap*/);
 		}
 
 		ShadowMapParams& smp = *params.shadowMapParams;

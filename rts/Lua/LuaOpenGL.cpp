@@ -3188,18 +3188,15 @@ int LuaOpenGL::Texture(lua_State* L)
 		luaL_error(L, "Incorrect arguments to gl.Texture()");
 	}
 
-	const string texture = lua_tostring(L, nextArg);
-
 	LuaMatTexture tex;
-	const bool loaded = LuaOpenGLUtils::ParseTextureImage(L, tex, texture);
+	const bool loaded = LuaOpenGLUtils::ParseTextureImage(L, tex, lua_tostring(L, nextArg));
 	if (loaded) {
 		tex.enable = true;
 		tex.Bind();
 	}
 
-	if (texUnit != GL_TEXTURE0) {
+	if (texUnit != GL_TEXTURE0)
 		glActiveTexture(GL_TEXTURE0);
-	}
 
 	lua_pushboolean(L, loaded);
 	return 1;

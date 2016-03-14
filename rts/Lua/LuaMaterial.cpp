@@ -208,7 +208,7 @@ void LuaMaterial::Finalize()
 	for (int t = 0; t < LuaMatTexture::maxTexUnits; t++) {
 		LuaMatTexture& tex = textures[t];
 		tex.Finalize();
-		tex.enableTexParams = true;
+
 		if (tex.type != LuaMatTexture::LUATEX_NONE) {
 			texCount = (t + 1);
 		}
