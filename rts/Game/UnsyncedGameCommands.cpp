@@ -315,14 +315,15 @@ public:
 class WaterActionExecutor : public IUnsyncedActionExecutor {
 public:
 	WaterActionExecutor() : IUnsyncedActionExecutor("Water",
-			"Set water rendering mode: 0=basic, 1=reflective, 2=dynamic"
-			", 3=reflective&refractive?, 4=bump-mapped") {}
+		"Set water rendering mode: 0=basic, 1=reflective, 2=dynamic"
+		", 3=reflective&refractive, 4=bump-mapped") {}
 
-	bool Execute(const UnsyncedAction& action) const {
-
+	bool Execute(const UnsyncedAction& action) const
+	{
 		int nextWaterRendererMode = 0;
-		if (!action.GetArgs().empty()) {
-			nextWaterRendererMode = std::max(0, atoi(action.GetArgs().c_str()) % IWater::NUM_WATER_RENDERERS);
+
+		if (!(action.GetArgs()).empty()) {
+			nextWaterRendererMode = atoi((action.GetArgs()).c_str());
 		} else {
 			nextWaterRendererMode = -1;
 		}

@@ -8,12 +8,11 @@
 #include "DynWater.h"
 #include "RefractWater.h"
 #include "Sim/Projectiles/ExplosionListener.h"
-#include "Game/GameHelper.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 
-CONFIG(int, ReflectiveWater)
+CONFIG(int, Water)
 .defaultValue(IWater::WATER_RENDERER_REFLECTIVE)
 .safemodeValue(IWater::WATER_RENDERER_BASIC)
 .headlessValue(0)
@@ -21,7 +20,7 @@ CONFIG(int, ReflectiveWater)
 .maximumValue(IWater::NUM_WATER_RENDERERS - 1)
 .description("Defines the type of water rendering. Can be set in game. Options are: 0 = Basic water, 1 = Reflective water, 2 = Reflective and Refractive water, 3 = Dynamic water, 4 = Bumpmapped water");
 
-IWater* water = NULL;
+IWater* water = nullptr;
 static std::vector<int> waterModes;
 
 
@@ -33,134 +32,105 @@ IWater::IWater()
 }
 
 
-void IWater::PushWaterMode(int nextWaterRenderMode)
+void IWater::PushWaterMode(int nxtRendererMode)
 {
-	waterModes.push_back(nextWaterRenderMode);
+	waterModes.push_back(nxtRendererMode);
 }
-
 
 void IWater::ApplyPushedChanges(CGame* game) {
-	std::vector<int> wm;
-
-	{
-		wm.swap(waterModes);
+	for (auto i = waterModes.cbegin(); i != waterModes.cend(); ++i) {
+		water = GetWater(water, *i);
+		LOG("Set water rendering mode to %i (%s)", water->GetID(), water->GetName());
 	}
 
-	for (std::vector<int>::iterator i = wm.begin(); i != wm.end(); ++i) {
-		int nextWaterRendererMode = *i;
-
-		if (nextWaterRendererMode < 0) {
-			nextWaterRendererMode = (std::max(0, water->GetID()) + 1) % IWater::NUM_WATER_RENDERERS;
-		}
-
-		water = GetWater(water, nextWaterRendererMode);
-		LOG("Set water rendering mode to %i (%s)", nextWaterRendererMode, water->GetName());
-	}
+	waterModes.clear();
 }
 
-IWater* IWater::GetWater(IWater* currWaterRenderer, int nextWaterRendererMode)
+IWater* IWater::GetWater(IWater* curRenderer, int nxtRendererMode)
 {
-	static IWater baseWaterRenderer;
-	IWater* nextWaterRenderer = NULL;
+	static IWater tmpRenderer;
+	static bool allowedModes[NUM_WATER_RENDERERS] = {
+		true,
+		GLEW_ARB_fragment_program && ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB, "ARB/water.fp"),
+		GLEW_ARB_fragment_program && GLEW_ARB_texture_float && ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB, "ARB/waterDyn.fp"),
+		GLEW_ARB_fragment_program && GLEW_ARB_texture_rectangle,
+		GLEW_ARB_shading_language_100 && GLEW_ARB_fragment_shader && GLEW_ARB_vertex_shader,
+	};
 
-	if (currWaterRenderer != NULL) {
-		assert(water == currWaterRenderer);
+	IWater* nxtRenderer = nullptr;
 
-		if (currWaterRenderer->GetID() == nextWaterRendererMode) {
-			if (nextWaterRendererMode == IWater::WATER_RENDERER_BASIC) {
-				return currWaterRenderer;
+	// -1 cycles
+	if (nxtRendererMode < 0) {
+		nxtRendererMode = (curRenderer == nullptr)? Clamp(configHandler->GetInt("Water"), 0, NUM_WATER_RENDERERS - 1): curRenderer->GetID() + 1;
+	} else {
+		nxtRendererMode %= NUM_WATER_RENDERERS;
+	}
+
+	if (curRenderer != nullptr) {
+		assert(water == curRenderer);
+
+		if (curRenderer->GetID() == nxtRendererMode) {
+			if (nxtRendererMode == IWater::WATER_RENDERER_BASIC) {
+				return curRenderer;
 			}
 		}
 
 		// note: rendering thread(s) can concurrently dereference the
 		// <water> global, so they may not see destructed memory while
-		// it is being reinstantiated through <currWaterRenderer>
-		water = &baseWaterRenderer;
+		// it is being reinstantiated through <curRenderer>
+		water = &tmpRenderer;
 
 		// for BumpWater, this needs to happen before a new renderer
 		// instance is created because its shaders must be recompiled
 		// (delayed deletion will fail)
-		delete currWaterRenderer;
+		delete curRenderer;
 	}
 
-	if (nextWaterRendererMode < IWater::WATER_RENDERER_BASIC) {
-		nextWaterRendererMode = configHandler->GetInt("ReflectiveWater");
+	if (allowedModes[nxtRendererMode]) {
+		switch (nxtRendererMode) {
+			case WATER_RENDERER_DYNAMIC: {
+				try {
+					nxtRenderer = new CDynWater();
+				} catch (const content_error& ex) {
+					SafeDelete(nxtRenderer);
+					LOG_L(L_ERROR, "Loading Dynamic Water failed, error: %s", ex.what());
+				}
+			} break;
+
+			case WATER_RENDERER_BUMPMAPPED: {
+				try {
+					nxtRenderer = new CBumpWater();
+				} catch (const content_error& ex) {
+					SafeDelete(nxtRenderer);
+					LOG_L(L_ERROR, "Loading Bumpmapped Water failed, error: %s", ex.what());
+				}
+			} break;
+
+			case WATER_RENDERER_REFL_REFR: {
+				try {
+					nxtRenderer = new CRefractWater();
+				} catch (const content_error& ex) {
+					SafeDelete(nxtRenderer);
+					LOG_L(L_ERROR, "Loading Refractive Water failed, error: %s", ex.what());
+				}
+			} break;
+
+			case WATER_RENDERER_REFLECTIVE: {
+				try {
+					nxtRenderer = new CAdvWater();
+				} catch (const content_error& ex) {
+					SafeDelete(nxtRenderer);
+					LOG_L(L_ERROR, "Loading Reflective Water failed, error: %s", ex.what());
+				}
+			} break;
+		}
 	}
 
-	switch (nextWaterRendererMode) {
-		case WATER_RENDERER_DYNAMIC: {
-			const bool canLoad =
-				GLEW_ARB_fragment_program &&
-				GLEW_ARB_texture_float &&
-				ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB, "ARB/waterDyn.fp");
+	if (nxtRenderer == nullptr)
+		nxtRenderer = new CBasicWater();
 
-			if (canLoad) {
-				try {
-					nextWaterRenderer = new CDynWater();
-				} catch (const content_error& ex) {
-					SafeDelete(nextWaterRenderer);
-					LOG_L(L_ERROR, "Loading Dynamic Water failed, error: %s",
-							ex.what());
-				}
-			}
-		} break;
-
-		case WATER_RENDERER_BUMPMAPPED: {
-			const bool canLoad =
-				GLEW_ARB_shading_language_100 &&
-				GLEW_ARB_fragment_shader &&
-				GLEW_ARB_vertex_shader;
-
-			if (canLoad) {
-				try {
-					nextWaterRenderer = new CBumpWater();
-				} catch (const content_error& ex) {
-					SafeDelete(nextWaterRenderer);
-					LOG_L(L_ERROR, "Loading Bumpmapped Water failed, error: %s",
-							ex.what());
-				}
-			}
-		} break;
-
-		case WATER_RENDERER_REFL_REFR: {
-			const bool canLoad =
-				GLEW_ARB_fragment_program &&
-				GLEW_ARB_texture_rectangle;
-
-			if (canLoad) {
-				try {
-					nextWaterRenderer = new CRefractWater();
-				} catch (const content_error& ex) {
-					SafeDelete(nextWaterRenderer);
-					LOG_L(L_ERROR, "Loading Refractive Water failed, error: %s",
-							ex.what());
-				}
-			}
-		} break;
-
-		case WATER_RENDERER_REFLECTIVE: {
-			const bool canLoad =
-				GLEW_ARB_fragment_program &&
-				ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB, "ARB/water.fp");
-
-			if (canLoad) {
-				try {
-					nextWaterRenderer = new CAdvWater();
-				} catch (const content_error& ex) {
-					SafeDelete(nextWaterRenderer);
-					LOG_L(L_ERROR, "Loading Reflective Water failed, error: %s",
-							ex.what());
-				}
-			}
-		} break;
-	}
-
-	if (nextWaterRenderer == NULL) {
-		nextWaterRenderer = new CBasicWater();
-	}
-
-	configHandler->Set("ReflectiveWater", nextWaterRenderer->GetID());
-	return nextWaterRenderer;
+	configHandler->Set("Water", nxtRenderer->GetID());
+	return nxtRenderer;
 }
 
 void IWater::ExplosionOccurred(const CExplosionEvent& event) {
