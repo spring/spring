@@ -52,6 +52,7 @@ public:
 	typedef std::map<SAssPiece*, std::string> ParentNameMap;
 
 	CAssParser();
+	~CAssParser();
 	S3DModel* Load(const std::string& modelFileName);
 	ModelType GetType() const { return MODELTYPE_ASS; }
 private:

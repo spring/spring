@@ -142,6 +142,14 @@ CAssParser::CAssParser() :
 	glGetIntegerv(GL_MAX_ELEMENTS_INDICES,  &maxIndices);
 	glGetIntegerv(GL_MAX_ELEMENTS_VERTICES, &maxVertices);
 #endif
+	Assimp::DefaultLogger::create("", Assimp::Logger::VERBOSE);
+	// Create a logger for debugging model loading issues
+	Assimp::DefaultLogger::get()->attachStream(new AssLogStream(), ASS_LOGGING_OPTIONS);
+}
+
+CAssParser::~CAssParser()
+{
+	Assimp::DefaultLogger::kill();
 }
 
 
@@ -180,9 +188,6 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 	// Create a model importer instance
 	Assimp::Importer importer;
 
-	// Create a logger for debugging model loading issues
-	Assimp::DefaultLogger::create("", Assimp::Logger::VERBOSE);
-	Assimp::DefaultLogger::get()->attachStream(new AssLogStream(), ASS_LOGGING_OPTIONS);
 
 	// Give the importer an IO class that handles Spring's VFS
 	importer.SetIOHandler(new AssVFSSystem());
