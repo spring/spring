@@ -28,13 +28,13 @@ class LuaMatUnifSetRef;
 class LuaMatShader {
 	public:
 		enum Type {
-			LUASHADER_DEF_3DO = 0, // engine default; *must* equal MODELTYPE_3DO!
-			LUASHADER_DEF_S3O = 1, // engine default; *must* equal MODELTYPE_S3O!
-			LUASHADER_DEF_OBJ = 2, // engine default; *must* equal MODELTYPE_OBJ!
-			LUASHADER_DEF_ASS = 3, // engine default; *must* equal MODELTYPE_ASS!
-			LUASHADER_GL      = 4, // custom Lua
-			LUASHADER_NONE    = 5,
-			LUASHADER_LAST    = 6,
+			LUASHADER_3DO  = 0, // engine default; *must* equal MODELTYPE_3DO!
+			LUASHADER_S3O  = 1, // engine default; *must* equal MODELTYPE_S3O!
+			LUASHADER_OBJ  = 2, // engine default; *must* equal MODELTYPE_OBJ!
+			LUASHADER_ASS  = 3, // engine default; *must* equal MODELTYPE_ASS!
+			LUASHADER_GL   = 4, // custom Lua
+			LUASHADER_NONE = 5,
+			LUASHADER_LAST = 6,
 		};
 		enum Pass {
 			LUASHADER_PASS_FWD = 0, // forward pass
@@ -47,7 +47,7 @@ class LuaMatShader {
 
 		void Finalize();
 		void Execute(const LuaMatShader& prev, bool deferredPass) const;
-		void Print(const string& indent) const;
+		void Print(const string& indent, bool isDeferred) const;
 
 		void SetTypeFromID(unsigned int id) {
 			if ((openglID = id) == 0) {
@@ -57,10 +57,10 @@ class LuaMatShader {
 			}
 		}
 		void SetTypeFromKey(const string& key) {
-			if (key == "3do") { type = LUASHADER_DEF_3DO; return; }
-			if (key == "s3o") { type = LUASHADER_DEF_S3O; return; }
-			if (key == "obj") { type = LUASHADER_DEF_OBJ; return; }
-			if (key == "ass") { type = LUASHADER_DEF_ASS; return; }
+			if (key == "3do") { type = LUASHADER_3DO; return; }
+			if (key == "s3o") { type = LUASHADER_S3O; return; }
+			if (key == "obj") { type = LUASHADER_OBJ; return; }
+			if (key == "ass") { type = LUASHADER_ASS; return; }
 			type = LUASHADER_NONE;
 		}
 
@@ -73,7 +73,7 @@ class LuaMatShader {
 		bool ValidForPass(Pass pass) const { return (pass != LUASHADER_PASS_DFR || type != LUASHADER_NONE); }
 
 		bool IsCustomType() const { return (type == LUASHADER_GL); }
-		bool IsEngineType() const { return (type >= LUASHADER_DEF_3DO && type <= LUASHADER_DEF_ASS); }
+		bool IsEngineType() const { return (type >= LUASHADER_3DO && type <= LUASHADER_ASS); }
 
 	public:
 		Type type;
@@ -97,6 +97,46 @@ class LuaMatTexSet {
 
 /******************************************************************************/
 
+struct LuaMatUniforms {
+public:
+	LuaMatUniforms() {
+		viewMatrixLoc    = -1;
+		projMatrixLoc    = -1;
+		viprMatrixLoc    = -1;
+		viewMatrixInvLoc = -1;
+		projMatrixInvLoc = -1;
+		viprMatrixInvLoc = -1;
+		cameraPosLoc     = -1;
+		cameraDirLoc     = -1;
+		sunDirLoc        = -1;
+		shadowMatrixLoc  = -1;
+		shadowParamsLoc  = -1;
+		simFrameLoc      = -1;
+		visFrameLoc      = -1;
+	}
+
+	void Print(const string& indent, bool isDeferred) const;
+	void Parse(lua_State* L, const int tableIdx);
+	void Execute(const LuaMatUniforms& prev) const;
+
+	static int Compare(const LuaMatUniforms& a, const LuaMatUniforms& b);
+
+public:
+	GLint viewMatrixLoc;
+	GLint projMatrixLoc;
+	GLint viprMatrixLoc;
+	GLint viewMatrixInvLoc;
+	GLint projMatrixInvLoc;
+	GLint viprMatrixInvLoc;
+	GLint cameraPosLoc;
+	GLint cameraDirLoc;
+	GLint sunDirLoc;
+	GLint shadowMatrixLoc;
+	GLint shadowParamsLoc;
+	GLint simFrameLoc;
+	GLint visFrameLoc;
+};
+
 class LuaMaterial {
 	public:
 		LuaMaterial(LuaMatType matType = LuaMatType(-1)):
@@ -107,18 +147,6 @@ class LuaMaterial {
 
 		  preList(0),
 		  postList(0),
-
-		  viewMatrixLoc(-1),
-		  projMatrixLoc(-1),
-		  viprMatrixLoc(-1),
-		  viewMatrixInvLoc(-1),
-		  projMatrixInvLoc(-1),
-		  viprMatrixInvLoc(-1),
-		  cameraPosLoc(-1),
-		  cameraDirLoc(-1),
-		  sunDirLoc(-1),
-		  shadowMatrixLoc(-1),
-		  shadowParamsLoc(-1),
 
 		  useCamera(true)
 		{}
@@ -146,27 +174,15 @@ class LuaMaterial {
 		int order; // for manually adjusting rendering order
 		int texCount;
 
-		// [0] := standard
-		// [1] := deferred
+		// [0] := standard, [1] := deferred
 		LuaMatShader shaders[LuaMatShader::LUASHADER_PASS_CNT];
+		LuaMatUniforms uniforms[LuaMatShader::LUASHADER_PASS_CNT];
 		LuaMatTexture textures[LuaMatTexture::maxTexUnits];
 
 		GLenum cullingMode;
 
 		GLuint preList;
 		GLuint postList;
-
-		GLint viewMatrixLoc;
-		GLint projMatrixLoc;
-		GLint viprMatrixLoc;
-		GLint viewMatrixInvLoc;
-		GLint projMatrixInvLoc;
-		GLint viprMatrixInvLoc;
-		GLint cameraPosLoc;
-		GLint cameraDirLoc;
-		GLint sunDirLoc;
-		GLint shadowMatrixLoc;
-		GLint shadowParamsLoc;
 
 		bool useCamera;
 

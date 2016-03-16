@@ -38,7 +38,8 @@ public:
 		gameNormalDraw     = 1,
 		gameShadowDraw     = 2,
 		gameReflectionDraw = 3,
-		gameRefractionDraw = 4
+		gameRefractionDraw = 4,
+        gameDeferredDraw   = 5,
 	};
 
 	struct PlayerTrafficInfo {

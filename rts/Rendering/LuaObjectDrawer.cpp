@@ -5,6 +5,7 @@
 #include "UnitDrawer.h"
 #include "UnitDrawerState.hpp"
 #include "Game/Camera.h"
+#include "Game/Game.h" // drawMode
 #include "Lua/LuaMaterial.h"
 #include "Rendering/Env/IWater.h"
 #include "Rendering/GL/myGL.h"
@@ -442,6 +443,8 @@ void LuaObjectDrawer::DrawDeferredPass(LuaObjType objType)
 	if (!(unitDrawer->GetWantedDrawerState(false))->CanDrawDeferred())
 		return;
 
+	// note: should also set this during the map pass (in SMFGD)
+	game->SetDrawMode(CGame::gameDeferredDraw);
 	geomBuffer->Bind();
 	// reset the buffer (since we do not perform a single pass
 	// writing both units and features into it at the same time)
@@ -465,6 +468,7 @@ void LuaObjectDrawer::DrawDeferredPass(LuaObjType objType)
 	}
 
 	geomBuffer->UnBind();
+	game->SetDrawMode(CGame::gameNormalDraw);
 
 	#if 0
 	geomBuffer->DrawDebug(geomBuffer->GetBufferTexture(GL::GeometryBuffer::ATTACHMENT_NORMTEX));
