@@ -246,6 +246,8 @@ void LuaMaterial::Parse(
 				continue;
 			}
 
+			// fallback
+			uniforms[LuaMatShader::LUASHADER_PASS_FWD].Parse(L, lua_gettop(L));
 			continue;
 		}
 
@@ -260,6 +262,8 @@ void LuaMaterial::Parse(
 				continue;
 			}
 
+			// fallback
+			ParseShader(L, -1, shaders[LuaMatShader::LUASHADER_PASS_FWD]);
 			continue;
 		}
 
