@@ -1238,7 +1238,7 @@ void CMobileCAI::ExecuteLoadUnits(Command& c)
 			}
 			return;
 		}
-		if (unit != NULL && owner->CanTransport(unit) && UpdateTargetLostTimer(int(c.params[0]))) {
+		if (owner->CanTransport(unit) && UpdateTargetLostTimer(int(c.params[0]))) {
 			SetTransportee(unit);
 
 			const float sqDist = unit->pos.SqDistance2D(owner->pos);

@@ -548,7 +548,7 @@ void CHoverAirMoveType::UpdateFlying()
 		wantedSpeed = (goalVec / goalDist) * goalSpeed;
 	} else {
 		// switch to hovering (if !CanLand()))
-		if (flyState != FLY_ATTACKING) {
+		if (!IsUnitBusy(owner)) {
 			ExecuteStop();
 		}
 	}
