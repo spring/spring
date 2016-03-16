@@ -866,11 +866,9 @@ void CCobThread::AnimFinished(CUnitScript::AnimType type, int piece, int axis)
 	// Not sure how to do this more cleanly.. Will probably rewrite it
 	if ((state == WaitMove && type == CCobInstance::AMove) ||
 	    (state == WaitTurn && type == CCobInstance::ATurn)) {
-		state = CCobThread::Run;
+		state = Run;
 		waitPiece = -1;
 		waitAxis = -1;
 		cobEngine->AddThread(this);
-	} else if (state == Dead) {
-		delete this;
 	}
 }
