@@ -589,6 +589,7 @@ void CHoverAirMoveType::UpdateLanding()
 			reservedLandingPos = pos;
 			goalPos = pos;
 			wantedHeight = 0;
+			UpdateLandingHeight();
 
 			const float3 originalPos = pos;
 
@@ -613,7 +614,6 @@ void CHoverAirMoveType::UpdateLanding()
 	}
 
 
-	UpdateLandingHeight();
 
 	flyState = FLY_LANDING;
 
