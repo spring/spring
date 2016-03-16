@@ -511,9 +511,8 @@ void CTextWrap::RemergeColorCodes(std::list<word>* words, std::list<colorcode>& 
 			while(wi2 != words->end() && (wi2->isSpace || wi2->isLineBreak))
 				++wi2;
 
-			if (wi == words->end() && (wi2->pos + wi2->numSpaces) < c.pos) {
+			if (wi2 == words->end() || (wi == words->end() && (wi2->pos + wi2->numSpaces) < c.pos))
 				return;
-			}
 
 			wi2 = words->insert(wi2, wc);
 		} else {
