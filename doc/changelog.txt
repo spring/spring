@@ -4,13 +4,20 @@ Spring changelog
 
 -- 102.0 --------------------------------------------------------
 General:
- - compress creg save files
- ! remove UseCREGSaveLoad and add /LuaSave which generates .slsf files
+ - Fix & Improve LoS performance
  ! remove LuaModUICtrl config setting
  ! remove ClassicGroundMoveType
 
 Sim:
  - COB: deprecate unit/team/allyteam/global vars. Use lua functions instead.
+
+Lua:
+ - Add new Spring.ClearUnitGoal(unitID) callout.
+
+Save/Load:
+ ! remove UseCREGSaveLoad and add /LuaSave which generates .slsf files
+ ! compress creg saves
+ - SaveFile can be specified in start script in order to start from a save
 
 -- 101.0 --------------------------------------------------------
 Major:
