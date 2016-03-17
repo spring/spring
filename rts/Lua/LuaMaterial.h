@@ -100,19 +100,22 @@ class LuaMatTexSet {
 struct LuaMatUniforms {
 public:
 	LuaMatUniforms() {
-		viewMatrixLoc    = -1;
-		projMatrixLoc    = -1;
-		viprMatrixLoc    = -1;
-		viewMatrixInvLoc = -1;
-		projMatrixInvLoc = -1;
-		viprMatrixInvLoc = -1;
-		cameraPosLoc     = -1;
-		cameraDirLoc     = -1;
-		sunDirLoc        = -1;
-		shadowMatrixLoc  = -1;
-		shadowParamsLoc  = -1;
-		simFrameLoc      = -1;
-		visFrameLoc      = -1;
+		viewMatrix.loc    = -1;
+		projMatrix.loc    = -1;
+		viprMatrix.loc    = -1;
+		viewMatrixInv.loc = -1;
+		projMatrixInv.loc = -1;
+		viprMatrixInv.loc = -1;
+
+		shadowMatrix.loc  = -1;
+		shadowParams.loc  = -1;
+
+		camPos.loc        = -1;
+		camDir.loc        = -1;
+		sunDir.loc        = -1;
+
+		simFrame.loc      = -1;
+		visFrame.loc      = -1;
 	}
 
 	void Print(const string& indent, bool isDeferred) const;
@@ -121,21 +124,72 @@ public:
 
 	static int Compare(const LuaMatUniforms& a, const LuaMatUniforms& b);
 
+private:
+	template<typename Type> struct Uniform44f {
+	public:
+		bool IsValid() const { return (loc != -1); }
+		bool Execute(const Type& val) const { return (IsValid() && RawExec(val)); }
+		bool RawExec(const Type& val) const { glUniformMatrix4fv(loc, 1, GL_FALSE, val); return true; }
+	public:
+		GLint loc;
+	};
+
+	template<typename Type> struct Uniform3f {
+	public:
+		bool IsValid() const { return (loc != -1); }
+		bool Execute(const Type& val) const { return (IsValid() && RawExec(val)); }
+		bool RawExec(const Type& val) const { glUniform3fv(loc, 1, &val.x); return true; }
+	public:
+		GLint loc;
+	};
+
+	template<typename Type> struct Uniform4f {
+	public:
+		bool IsValid() const { return (loc != -1); }
+		bool Execute(const Type& val) const { return (IsValid() && RawExec(val)); }
+		bool RawExec(const Type& val) const { glUniform4fv(loc, 1, &val.x); return true; }
+	public:
+		GLint loc;
+	};
+
+	template<typename Type> struct Uniform1i {
+	public:
+		bool Execute(const Type& val) {
+			cur = val;
+
+			if (loc == -1 || cur == prv)
+				return false;
+
+			glUniform1i(loc, prv = cur);
+			return true;
+		}
+
+	public:
+		GLint loc;
+
+		Type cur;
+		Type prv;
+	};
+
 public:
-	GLint viewMatrixLoc;
-	GLint projMatrixLoc;
-	GLint viprMatrixLoc;
-	GLint viewMatrixInvLoc;
-	GLint projMatrixInvLoc;
-	GLint viprMatrixInvLoc;
-	GLint cameraPosLoc;
-	GLint cameraDirLoc;
-	GLint sunDirLoc;
-	GLint shadowMatrixLoc;
-	GLint shadowParamsLoc;
-	GLint simFrameLoc;
-	GLint visFrameLoc;
+	Uniform44f<CMatrix44f> viewMatrix;
+	Uniform44f<CMatrix44f> projMatrix;
+	Uniform44f<CMatrix44f> viprMatrix;
+	Uniform44f<CMatrix44f> viewMatrixInv;
+	Uniform44f<CMatrix44f> projMatrixInv;
+	Uniform44f<CMatrix44f> viprMatrixInv;
+
+	Uniform44f<CMatrix44f> shadowMatrix;
+	Uniform4f<float4> shadowParams;
+
+	Uniform3f<float3> camPos;
+	Uniform3f<float3> camDir;
+	Uniform3f<float3> sunDir;
+
+	mutable Uniform1i<         int> simFrame;
+	mutable Uniform1i<unsigned int> visFrame;
 };
+
 
 class LuaMaterial {
 	public:

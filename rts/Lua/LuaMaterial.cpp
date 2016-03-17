@@ -8,16 +8,16 @@
 #include "LuaOpenGL.h"
 
 #include "Game/Camera.h"
+#include "Rendering/GlobalRendering.h" // drawFrame
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/ISky.h"
+#include "Sim/Misc/GlobalSynced.h" // simFrame
 #include "Sim/Objects/SolidObject.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
 
-#include <string>
 #include <unordered_map>
 #include <vector>
-#include <cstring>
 
 
 LuaMatHandler LuaMatHandler::handler;
@@ -114,11 +114,11 @@ void LuaMatShader::Finalize()
 int LuaMatShader::Compare(const LuaMatShader& a, const LuaMatShader& b)
 {
 	if (a.type != b.type)
-		return (a.type < b.type) ? -1 : +1;
+		return ((a.type > b.type) * 2 - 1);
 
 	if (a.type == LUASHADER_GL) {
 		if (a.openglID != b.openglID) {
-			return (a.openglID < b.openglID) ? -1 : +1;
+			return ((a.openglID > b.openglID) * 2 - 1);
 		}
 	}
 
@@ -193,21 +193,20 @@ void LuaMatShader::Print(const string& indent, bool isDeferred) const
 void LuaMatUniforms::Print(const string& indent, bool isDeferred) const
 {
 	LOG("%s[uniforms][%s]", indent.c_str(), (isDeferred? "deferred": "standard"));
-	LOG("%s  viewMatrixLoc    = %i", indent.c_str(), viewMatrixLoc);
-	LOG("%s  projMatrixLoc    = %i", indent.c_str(), projMatrixLoc);
-	LOG("%s  viewMatrixInvLoc = %i", indent.c_str(), viewMatrixInvLoc);
-	LOG("%s  projMatrixInvLoc = %i", indent.c_str(), projMatrixInvLoc);
+	LOG("%s  viewMatrixLoc    = %i", indent.c_str(), viewMatrix.loc);
+	LOG("%s  projMatrixLoc    = %i", indent.c_str(), projMatrix.loc);
+	LOG("%s  viewMatrixInvLoc = %i", indent.c_str(), viewMatrixInv.loc);
+	LOG("%s  projMatrixInvLoc = %i", indent.c_str(), projMatrixInv.loc);
 
-	LOG("%s  cameraPosLoc     = %i", indent.c_str(), cameraPosLoc);
-	LOG("%s  cameraDirLoc     = %i", indent.c_str(), cameraDirLoc);
+	LOG("%s  shadowMatrixLoc  = %i", indent.c_str(), shadowMatrix.loc);
+	LOG("%s  shadowParamsLoc  = %i", indent.c_str(), shadowParams.loc);
 
-	LOG("%s  sunDirLoc        = %i", indent.c_str(), sunDirLoc);
+	LOG("%s  camPosLoc        = %i", indent.c_str(), camPos.loc);
+	LOG("%s  camDirLoc        = %i", indent.c_str(), camDir.loc);
+	LOG("%s  sunDirLoc        = %i", indent.c_str(), sunDir.loc);
 
-	LOG("%s  shadowMatrixLoc  = %i", indent.c_str(), shadowMatrixLoc);
-	LOG("%s  shadowParamsLoc  = %i", indent.c_str(), shadowParamsLoc);
-
-	LOG("%s  simFrameLoc      = %i", indent.c_str(), simFrameLoc);
-	LOG("%s  visFrameLoc      = %i", indent.c_str(), visFrameLoc);
+	LOG("%s  simFrameLoc      = %i", indent.c_str(), simFrame.loc);
+	LOG("%s  visFrameLoc      = %i", indent.c_str(), visFrame.loc);
 }
 
 
@@ -391,9 +390,9 @@ int LuaMaterial::Compare(const LuaMaterial& a, const LuaMaterial& b)
 	int cmp = 0;
 
 	if (a.type != b.type)
-		return (a.type < b.type) ? -1 : +1;  // should not happen
+		return ((a.type > b.type) * 2 - 1);  // should not happen
 	if (a.order != b.order)
-		return (a.order < b.order) ? -1 : +1;
+		return ((a.order > b.order) * 2 - 1);
 
 
 	if ((cmp = LuaMatShader::Compare(a.shaders[LuaMatShader::LUASHADER_PASS_FWD], b.shaders[LuaMatShader::LUASHADER_PASS_FWD])) != 0)
@@ -412,18 +411,18 @@ int LuaMaterial::Compare(const LuaMaterial& a, const LuaMaterial& b)
 
 
 	if (a.texCount != b.texCount)
-		return (a.texCount < b.texCount) ? -1 : +1;
+		return ((a.texCount > b.texCount) * 2 - 1);
 
 	if (a.preList != b.preList)
-		return (a.preList < b.preList) ? -1 : +1;
+		return ((a.preList > b.preList) * 2 - 1);
 	if (a.postList != b.postList)
-		return (a.postList < b.postList) ? -1 : +1;
+		return ((a.postList > b.postList) * 2 - 1);
 
 	if (a.useCamera != b.useCamera)
-		return a.useCamera ? -1 : +1;
+		return ((!a.useCamera) * 2 - 1);
 
 	if (a.cullingMode != b.cullingMode)
-		return (a.cullingMode < b.cullingMode) ? -1 : +1;
+		return ((a.cullingMode > b.cullingMode) * 2 - 1);
 
 	if ((cmp = LuaMatUniforms::Compare(a.uniforms[LuaMatShader::LUASHADER_PASS_FWD], b.uniforms[LuaMatShader::LUASHADER_PASS_FWD])) != 0)
 		return cmp;
@@ -437,37 +436,36 @@ int LuaMaterial::Compare(const LuaMaterial& a, const LuaMaterial& b)
 
 int LuaMatUniforms::Compare(const LuaMatUniforms& a, const LuaMatUniforms& b)
 {
-	if (a.viewMatrixLoc != b.viewMatrixLoc)
-		return (a.viewMatrixLoc < b.viewMatrixLoc) ? -1 : +1;
-	if (a.projMatrixLoc != b.projMatrixLoc)
-		return (a.projMatrixLoc < b.projMatrixLoc) ? -1 : +1;
-	if (a.viprMatrixLoc != b.viprMatrixLoc)
-		return (a.viprMatrixLoc < b.viprMatrixLoc) ? -1 : +1;
+	if (a.viewMatrix.loc != b.viewMatrix.loc)
+		return ((a.viewMatrix.loc > b.viewMatrix.loc) * 2 - 1);
+	if (a.projMatrix.loc != b.projMatrix.loc)
+		return ((a.projMatrix.loc > b.projMatrix.loc) * 2 - 1);
+	if (a.viprMatrix.loc != b.viprMatrix.loc)
+		return ((a.viprMatrix.loc > b.viprMatrix.loc) * 2 - 1);
 
-	if (a.viewMatrixInvLoc != b.viewMatrixInvLoc)
-		return (a.viewMatrixInvLoc < b.viewMatrixInvLoc) ? -1 : +1;
-	if (a.projMatrixInvLoc != b.projMatrixInvLoc)
-		return (a.projMatrixInvLoc < b.projMatrixInvLoc) ? -1 : +1;
-	if (a.viprMatrixInvLoc != b.viprMatrixInvLoc)
-		return (a.viprMatrixInvLoc < b.viprMatrixInvLoc) ? -1 : +1;
+	if (a.viewMatrixInv.loc != b.viewMatrixInv.loc)
+		return ((a.viewMatrixInv.loc > b.viewMatrixInv.loc) * 2 - 1);
+	if (a.projMatrixInv.loc != b.projMatrixInv.loc)
+		return ((a.projMatrixInv.loc > b.projMatrixInv.loc) * 2 - 1);
+	if (a.viprMatrixInv.loc != b.viprMatrixInv.loc)
+		return ((a.viprMatrixInv.loc > b.viprMatrixInv.loc) * 2 - 1);
 
-	if (a.cameraPosLoc != b.cameraPosLoc)
-		return (a.cameraPosLoc < b.cameraPosLoc) ? -1 : +1;
-	if (a.cameraDirLoc != b.cameraDirLoc)
-		return (a.cameraDirLoc < b.cameraDirLoc) ? -1 : +1;
+	if (a.shadowMatrix.loc != b.shadowMatrix.loc)
+		return ((a.shadowMatrix.loc > b.shadowMatrix.loc) * 2 - 1);
+	if (a.shadowParams.loc != b.shadowParams.loc)
+		return ((a.shadowParams.loc > b.shadowParams.loc) * 2 - 1);
 
-	if (a.sunDirLoc != b.sunDirLoc)
-		return (a.sunDirLoc < b.sunDirLoc) ? -1 : +1;
+	if (a.camPos.loc != b.camPos.loc)
+		return ((a.camPos.loc > b.camPos.loc) * 2 - 1);
+	if (a.camDir.loc != b.camDir.loc)
+		return ((a.camDir.loc > b.camDir.loc) * 2 - 1);
+	if (a.sunDir.loc != b.sunDir.loc)
+		return ((a.sunDir.loc > b.sunDir.loc) * 2 - 1);
 
-	if (a.shadowMatrixLoc != b.shadowMatrixLoc)
-		return (a.shadowMatrixLoc < b.shadowMatrixLoc) ? -1 : +1;
-	if (a.shadowParamsLoc != b.shadowParamsLoc)
-		return (a.shadowParamsLoc < b.shadowParamsLoc) ? -1 : +1;
-
-	if (a.simFrameLoc != b.simFrameLoc)
-		return (a.simFrameLoc < b.simFrameLoc) ? -1 : +1;
-	if (a.visFrameLoc != b.visFrameLoc)
-		return (a.visFrameLoc < b.visFrameLoc) ? -1 : +1;
+	if (a.simFrame.loc != b.simFrame.loc)
+		return ((a.simFrame.loc > b.simFrame.loc) * 2 - 1);
+	if (a.visFrame.loc != b.visFrame.loc)
+		return ((a.visFrame.loc > b.visFrame.loc) * 2 - 1);
 
 	return 0;
 }
@@ -475,27 +473,26 @@ int LuaMatUniforms::Compare(const LuaMatUniforms& a, const LuaMatUniforms& b)
 void LuaMatUniforms::Parse(lua_State* L, const int tableIdx)
 {
 	const std::unordered_map<std::string, GLint*> uniformLocs = {
-		{"cameraloc",        &viewMatrixLoc},
-		{"viewmatrixloc",    &viewMatrixLoc},
-		{"projmatrixloc",    &projMatrixLoc},
-		{"viprmatrixloc",    &viprMatrixLoc},
-		{"camerainvloc",     &viewMatrixInvLoc},
-		{"viewmatrixinvloc", &viewMatrixInvLoc},
-		{"projmatrixinvloc", &projMatrixInvLoc},
-		{"viprmatrixinvloc", &viprMatrixInvLoc},
+		{"cameraloc",        &viewMatrix.loc},
+		{"viewmatrixloc",    &viewMatrix.loc},
+		{"projmatrixloc",    &projMatrix.loc},
+		{"viprmatrixloc",    &viprMatrix.loc},
+		{"camerainvloc",     &viewMatrixInv.loc},
+		{"viewmatrixinvloc", &viewMatrixInv.loc},
+		{"projmatrixinvloc", &projMatrixInv.loc},
+		{"viprmatrixinvloc", &viprMatrixInv.loc},
 
-		{"cameraposloc",     &cameraPosLoc},
-		{"cameradirloc",     &cameraDirLoc},
+		{"shadowloc",        &shadowMatrix.loc},
+		{"shadowmatrixloc",  &shadowMatrix.loc},
+		{"shadowparamsloc",  &shadowParams.loc},
 
-		{"sunposloc",        &sunDirLoc},
-		{"sundirloc",        &sunDirLoc},
+		{"cameraposloc",     &camPos.loc},
+		{"cameradirloc",     &camDir.loc},
+		{"sunposloc",        &sunDir.loc},
+		{"sundirloc",        &sunDir.loc},
 
-		{"shadowloc",        &shadowMatrixLoc},
-		{"shadowmatrixloc",  &shadowMatrixLoc},
-		{"shadowparamsloc",  &shadowParamsLoc},
-
-		{"simframeloc",      &simFrameLoc},
-		{"visframeloc",      &visFrameLoc},
+		{"simframeloc",      &simFrame.loc},
+		{"visframeloc",      &visFrame.loc},
 	};
 
 	for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
@@ -517,40 +514,23 @@ void LuaMatUniforms::Parse(lua_State* L, const int tableIdx)
 
 void LuaMatUniforms::Execute(const LuaMatUniforms& prev) const
 {
-	if (viewMatrixLoc >= 0)
-		glUniformMatrix4fv(viewMatrixLoc, 1, GL_FALSE, camera->GetViewMatrix());
-	if (projMatrixLoc >= 0)
-		glUniformMatrix4fv(projMatrixLoc, 1, GL_FALSE, camera->GetProjectionMatrix());
-	if (viprMatrixLoc >= 0)
-		glUniformMatrix4fv(viprMatrixLoc, 1, GL_FALSE, camera->GetViewProjectionMatrix());
+	viewMatrix.Execute(camera->GetViewMatrix());
+	projMatrix.Execute(camera->GetProjectionMatrix());
+	viprMatrix.Execute(camera->GetViewProjectionMatrix());
 
-	if (viewMatrixInvLoc >= 0)
-		glUniformMatrix4fv(viewMatrixInvLoc, 1, GL_FALSE, camera->GetViewMatrixInverse());
-	if (projMatrixInvLoc >= 0)
-		glUniformMatrix4fv(projMatrixInvLoc, 1, GL_FALSE, camera->GetProjectionMatrixInverse());
-	if (viprMatrixInvLoc >= 0)
-		glUniformMatrix4fv(viprMatrixInvLoc, 1, GL_FALSE, camera->GetViewProjectionMatrixInverse());
+	viewMatrixInv.Execute(camera->GetViewMatrixInverse());
+	projMatrixInv.Execute(camera->GetProjectionMatrixInverse());
+	viprMatrixInv.Execute(camera->GetViewProjectionMatrixInverse());
 
-	if (cameraPosLoc >= 0)
-		glUniformf3(cameraPosLoc, camera->GetPos());
-	if (cameraDirLoc >= 0)
-		glUniformf3(cameraDirLoc, camera->GetDir());
+	shadowMatrix.Execute(shadowHandler->GetShadowMatrix());
+	shadowParams.Execute(shadowHandler->GetShadowParams());
 
-	if (sunDirLoc >= 0)
-		glUniformf3(sunDirLoc, sky->GetLight()->GetLightDir());
+	camPos.Execute(camera->GetPos());
+	camDir.Execute(camera->GetDir());
+	sunDir.Execute(sky->GetLight()->GetLightDir());
 
-	if (shadowMatrixLoc >= 0)
-		glUniformMatrix4fv(shadowMatrixLoc, 1, GL_FALSE, shadowHandler->GetShadowMatrixRaw());
-	if (shadowParamsLoc >= 0)
-		glUniform4fv(shadowParamsLoc, 1, &(shadowHandler->GetShadowParams().x));
-
-	#if 0
-	// TODO
-	if (simFrameLoc >= 0 && curSimFrame != prvSimFrame)
-		glUniform1i(simFrameLoc, curSimFrame);
-	if (visFrameLoc >= 0 && curVisFrame != prvVisFrame)
-		glUniform1i(visFrameLoc, curVisFrame);
-	#endif
+	simFrame.Execute(gs->frameNum);
+	visFrame.Execute(globalRendering->drawFrame);
 }
 
 
