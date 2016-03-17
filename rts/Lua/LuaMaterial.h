@@ -134,7 +134,7 @@ private:
 		GLint loc;
 	};
 
-	template<typename Type, size_t Size> struct UniformVec {
+	template<typename Type, size_t Size = sizeof(Type) / sizeof(float)> struct UniformVec {
 	public:
 		bool CanExec() const { return (loc != -1); }
 		bool Execute(const Type& val) const { return (CanExec() && RawExec(val)); }
@@ -171,11 +171,11 @@ public:
 	UniformMat<CMatrix44f> viprMatrixInv;
 
 	UniformMat<CMatrix44f> shadowMatrix;
-	UniformVec<float4, 4> shadowParams;
+	UniformVec<float4> shadowParams;
 
-	UniformVec<float3, 3> camPos;
-	UniformVec<float3, 3> camDir;
-	UniformVec<float3, 3> sunDir;
+	UniformVec<float3> camPos;
+	UniformVec<float3> camDir;
+	UniformVec<float3> sunDir;
 
 	mutable UniformInt<         int> simFrame;
 	mutable UniformInt<unsigned int> visFrame;
