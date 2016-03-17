@@ -125,44 +125,35 @@ public:
 	static int Compare(const LuaMatUniforms& a, const LuaMatUniforms& b);
 
 private:
-	template<typename Type> struct Uniform44f {
+	template<typename Type> struct UniformMat {
 	public:
-		bool IsValid() const { return (loc != -1); }
-		bool Execute(const Type& val) const { return (IsValid() && RawExec(val)); }
+		bool CanExec() const { return (loc != -1); }
+		bool Execute(const Type& val) const { return (CanExec() && RawExec(val)); }
 		bool RawExec(const Type& val) const { glUniformMatrix4fv(loc, 1, GL_FALSE, val); return true; }
 	public:
 		GLint loc;
 	};
 
-	template<typename Type> struct Uniform3f {
+	template<typename Type, size_t Size> struct UniformVec {
 	public:
-		bool IsValid() const { return (loc != -1); }
-		bool Execute(const Type& val) const { return (IsValid() && RawExec(val)); }
-		bool RawExec(const Type& val) const { glUniform3fv(loc, 1, &val.x); return true; }
-	public:
-		GLint loc;
-	};
-
-	template<typename Type> struct Uniform4f {
-	public:
-		bool IsValid() const { return (loc != -1); }
-		bool Execute(const Type& val) const { return (IsValid() && RawExec(val)); }
-		bool RawExec(const Type& val) const { glUniform4fv(loc, 1, &val.x); return true; }
-	public:
-		GLint loc;
-	};
-
-	template<typename Type> struct Uniform1i {
-	public:
-		bool Execute(const Type& val) {
-			cur = val;
-
-			if (loc == -1 || cur == prv)
-				return false;
-
-			glUniform1i(loc, prv = cur);
-			return true;
+		bool CanExec() const { return (loc != -1); }
+		bool Execute(const Type& val) const { return (CanExec() && RawExec(val)); }
+		bool RawExec(const Type& val) const {
+			switch (Size) {
+				case 3: { glUniform3fv(loc, 1, &val.x); return true; } break;
+				case 4: { glUniform4fv(loc, 1, &val.x); return true; } break;
+				default: { return false; } break;
+			}
 		}
+	public:
+		GLint loc;
+	};
+
+	template<typename Type> struct UniformInt {
+	public:
+		bool CanExec() const { return (loc != -1 && cur != prv); }
+		bool Execute(const Type val) { cur = val; return (CanExec() && RawExec(val)); }
+		bool RawExec(const Type val) { glUniform1i(loc, prv = val); return true; }
 
 	public:
 		GLint loc;
@@ -172,22 +163,22 @@ private:
 	};
 
 public:
-	Uniform44f<CMatrix44f> viewMatrix;
-	Uniform44f<CMatrix44f> projMatrix;
-	Uniform44f<CMatrix44f> viprMatrix;
-	Uniform44f<CMatrix44f> viewMatrixInv;
-	Uniform44f<CMatrix44f> projMatrixInv;
-	Uniform44f<CMatrix44f> viprMatrixInv;
+	UniformMat<CMatrix44f> viewMatrix;
+	UniformMat<CMatrix44f> projMatrix;
+	UniformMat<CMatrix44f> viprMatrix;
+	UniformMat<CMatrix44f> viewMatrixInv;
+	UniformMat<CMatrix44f> projMatrixInv;
+	UniformMat<CMatrix44f> viprMatrixInv;
 
-	Uniform44f<CMatrix44f> shadowMatrix;
-	Uniform4f<float4> shadowParams;
+	UniformMat<CMatrix44f> shadowMatrix;
+	UniformVec<float4, 4> shadowParams;
 
-	Uniform3f<float3> camPos;
-	Uniform3f<float3> camDir;
-	Uniform3f<float3> sunDir;
+	UniformVec<float3, 3> camPos;
+	UniformVec<float3, 3> camDir;
+	UniformVec<float3, 3> sunDir;
 
-	mutable Uniform1i<         int> simFrame;
-	mutable Uniform1i<unsigned int> visFrame;
+	mutable UniformInt<         int> simFrame;
+	mutable UniformInt<unsigned int> visFrame;
 };
 
 
