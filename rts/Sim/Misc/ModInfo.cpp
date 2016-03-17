@@ -31,7 +31,6 @@ void CModInfo::ResetState()
 	allowUnitCollisionOverlap = true;
 	allowGroundUnitGravity    = true;
 	allowHoverUnitStrafing    = true;
-	useClassicGroundMoveType  = false;
 
 	constructionDecay      = true;
 	constructionDecayTime  = 1000;
@@ -132,7 +131,6 @@ void CModInfo::Init(const char* modArchive)
 		allowUnitCollisionOverlap = movementTbl.GetBool("allowUnitCollisionOverlap", true);
 		allowGroundUnitGravity = movementTbl.GetBool("allowGroundUnitGravity", true);
 		allowHoverUnitStrafing = movementTbl.GetBool("allowHoverUnitStrafing", (pathFinderSystem == PFS_TYPE_QTPFS));
-		useClassicGroundMoveType = movementTbl.GetBool("useClassicGroundMoveType", false);
 	}
 
 	{

@@ -79,7 +79,6 @@
 #include "Sim/Misc/Wind.h"
 #include "Sim/Misc/ResourceHandler.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
-#include "Sim/MoveTypes/ClassicGroundMoveType.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
@@ -506,7 +505,6 @@ void CGame::PostLoadSimulation()
 	featureDefHandler = new CFeatureDefHandler(defsParser);
 
 	CUnit::InitStatic();
-	CClassicGroundMoveType::CreateLineTable();
 	CCommandAI::InitCommandDescriptionCache();
 	CUnitScriptEngine::InitStatic();
 
@@ -840,7 +838,6 @@ void CGame::KillSimulation()
 	SafeDelete((mapInfo = const_cast<CMapInfo*>(mapInfo)));
 
 	LOG("[%s][4]", __FUNCTION__);
-	CClassicGroundMoveType::DeleteLineTable();
 	CCommandAI::KillCommandDescriptionCache();
 	CUnitScriptEngine::KillStatic();
 }
