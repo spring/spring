@@ -993,7 +993,6 @@ void CStrafeAirMoveType::UpdateLanding()
 	{
 		//A Mangled UpdateAirPhysics
 		float4& spd = owner->speed;
-		wantedHeight = 0;
 
 		float frontSpeed = spd.dot2D(frontdir);
 
@@ -1020,9 +1019,8 @@ void CStrafeAirMoveType::UpdateLanding()
 			const float localAltitude = pos.y - (owner->unitDef->canSubmerge ?
 				CGround::GetHeightReal(owner->pos.x, owner->pos.z):
 				CGround::GetHeightAboveWater(owner->pos.x, owner->pos.z));
-
 			if (localAltitude > wantedHeight) {
-				owner->SetVelocity(spd + UpVector * std::max(-altitudeRate, landPosDistY));
+				owner->SetVelocity(spd + UpVector * std::max(-altitudeRate, wantedHeight - localAltitude));
 			}
 		}
 
