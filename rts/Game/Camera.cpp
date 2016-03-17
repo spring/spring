@@ -103,7 +103,7 @@ void CCamera::Update(bool updateDirs, bool updateMats, bool updatePort)
 	if (updateDirs)
 		UpdateDirsFromRot(rot);
 	if (updateMats)
-		UpdateMatrices();
+		UpdateMatrices(globalRendering->viewSizeX, globalRendering->viewSizeY, globalRendering->aspectRatio);
 	if (updatePort)
 		UpdateViewPort(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 
@@ -154,15 +154,15 @@ void CCamera::UpdateFrustum()
 	}
 }
 
-void CCamera::UpdateMatrices()
+void CCamera::UpdateMatrices(unsigned int vsx, unsigned int vsy, float var)
 {
 	// recalculate the projection transform
 	switch (projType) {
 		case PROJTYPE_PERSP: {
-			gluPerspectiveSpring(globalRendering->aspectRatio, frustumScales.z, frustumScales.w);
+			gluPerspectiveSpring(var, frustumScales.z, frustumScales.w);
 		} break;
 		case PROJTYPE_ORTHO: {
-			glOrthoScaledSpring(globalRendering->viewSizeX, globalRendering->viewSizeY, frustumScales.z, frustumScales.w);
+			glOrthoScaledSpring(vsx, vsy, frustumScales.z, frustumScales.w);
 		} break;
 		default: {
 			assert(false);

@@ -188,7 +188,7 @@ public:
 public:
 	void UpdateViewRange();
 	void UpdateFrustum();
-	void UpdateMatrices();
+	void UpdateMatrices(unsigned int vsx, unsigned int vsy, float var);
 	void UpdateViewPort(int px, int py, int sx, int sy);
 
 private:
