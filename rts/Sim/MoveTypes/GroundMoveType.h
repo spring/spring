@@ -28,7 +28,9 @@ public:
 	void StartMoving(float3 pos, float goalRadius);
 	void StartMoving(float3 pos, float goalRadius, float speed) { StartMoving(pos, goalRadius); }
 	void StopMoving(bool callScript = false, bool hardStop = false);
-	bool IsMovingTowards(const float3& pos, float distance);
+	bool IsMovingTowards(const float3& pos, float radius) const override {
+		return (goalPos == pos * XZVector && goalRadius == radius && progressState == Active);
+	}
 
 	void KeepPointingTo(float3 pos, float distance, bool aggressive);
 	void KeepPointingTo(CUnit* unit, float distance, bool aggressive);
