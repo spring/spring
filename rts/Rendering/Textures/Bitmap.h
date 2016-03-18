@@ -41,7 +41,7 @@ public:
 	unsigned int CreateTexture(float aniso = 0.0f, bool mipmaps = false) const;
 	unsigned int CreateMipMapTexture(float aniso = 0.0f) const { return (CreateTexture(aniso, true)); }
 	unsigned int CreateAnisoTexture(float aniso = 0.0f) const { return (CreateTexture(aniso, false)); }
-	unsigned int CreateDDSTexture(unsigned int texID = 0, bool mipmaps = false, float aniso = 0.0f) const;
+	unsigned int CreateDDSTexture(unsigned int texID = 0, float aniso = 0.0f, bool mipmaps = false) const;
 
 	void CreateAlpha(unsigned char red, unsigned char green, unsigned char blue);
 	void SetTransparent(const SColor& c, const SColor trans = SColor(0,0,0,0));

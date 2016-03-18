@@ -463,7 +463,7 @@ bool CBitmap::SaveFloat(std::string const& filename) const
 unsigned int CBitmap::CreateTexture(float aniso, bool mipmaps) const
 {
 	if (compressed)
-		return CreateDDSTexture(0, mipmaps, aniso);
+		return CreateDDSTexture(0, aniso, mipmaps);
 
 	if (mem.empty())
 		return 0;
@@ -521,7 +521,7 @@ static void HandleDDSMipmap(GLenum target, bool mipmaps, int num_mipmaps)
 	}
 }
 
-unsigned int CBitmap::CreateDDSTexture(unsigned int texID, bool mipmaps, float aniso) const
+unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float aniso, bool mipmaps) const
 {
 	glPushAttrib(GL_TEXTURE_BIT);
 
