@@ -104,7 +104,6 @@ CSMFGroundDrawer::~CSMFGroundDrawer()
 	// if ROAM _was_ enabled, the configvar is written in CRoamMeshDrawer's dtor
 	if (dynamic_cast<CRoamMeshDrawer*>(meshDrawer) == nullptr)
 		configHandler->Set("ROAM", 0);
-	configHandler->Set("GroundDetail", groundDetail);
 
 	smfRenderStates[RENDER_STATE_FFP]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_FFP]);
 	smfRenderStates[RENDER_STATE_SSP]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_SSP]);
@@ -536,14 +535,14 @@ bool CSMFGroundDrawer::UpdateGeometryBuffer(bool init)
 
 void CSMFGroundDrawer::IncreaseDetail()
 {
-	groundDetail += 2;
+	configHandler->Set("GroundDetail", groundDetail += 2);
 	LOG("GroundDetail is now %i", groundDetail);
 }
 
 void CSMFGroundDrawer::DecreaseDetail()
 {
 	if (groundDetail > 4) {
-		groundDetail -= 2;
+		configHandler->Set("GroundDetail", groundDetail -= 2);
 		LOG("GroundDetail is now %i", groundDetail);
 	}
 }
