@@ -66,9 +66,10 @@ LuaShaders::LuaShaders()
 
 LuaShaders::~LuaShaders()
 {
-	for (int p = 0; p < (int)programs.size(); p++) {
+	for (unsigned int p = 0; p < programs.size(); p++) {
 		DeleteProgram(programs[p]);
 	}
+
 	programs.clear();
 }
 
@@ -108,41 +109,45 @@ GLuint LuaShaders::GetProgramName(lua_State* L, int index) const
 unsigned int LuaShaders::AddProgram(const Program& p)
 {
 	if (!unused.empty()) {
-		const unsigned int index = unused[unused.size() - 1];
+		const unsigned int index = unused.back();
 		programs[index] = p;
 		unused.pop_back();
 		return index;
 	}
+
 	programs.push_back(p);
 	return (programs.size() - 1);
 }
 
 
-void LuaShaders::RemoveProgram(unsigned int progID)
+bool LuaShaders::RemoveProgram(unsigned int progIdx)
 {
-	if (progID < programs.size()) {
-		Program& p = programs[progID];
-		DeleteProgram(p);
-		unused.push_back(progID);
-	}
+	if (progIdx >= programs.size())
+		return false;
+	if (!DeleteProgram(programs[progIdx]))
+		return false;
+
+	unused.push_back(progIdx);
+	return true;
 }
 
 
-void LuaShaders::DeleteProgram(Program& p)
+bool LuaShaders::DeleteProgram(Program& p)
 {
-	if (p.id == 0) {
-		return;
-	}
+	if (p.id == 0)
+		return false;
 
-	for (int o = 0; o < (int)p.objects.size(); o++) {
+	for (unsigned int o = 0; o < p.objects.size(); o++) {
 		Object& obj = p.objects[o];
 		glDetachShader(p.id, obj.id);
 		glDeleteShader(obj.id);
 	}
-	p.objects.clear();
 
 	glDeleteProgram(p.id);
+
+	p.objects.clear();
 	p.id = 0;
+	return true;
 }
 
 
@@ -377,9 +382,8 @@ static bool ParseShaderTable(
 
 static void ApplyGeometryParameters(lua_State* L, int table, GLuint prog)
 {
-	if (!IS_GL_FUNCTION_AVAILABLE(glProgramParameteriEXT)) {
+	if (!IS_GL_FUNCTION_AVAILABLE(glProgramParameteriEXT))
 		return;
-	}
 
 	struct { const char* name; GLenum param; } parameters[] = {
 		{ "geoInputType",   GL_GEOMETRY_INPUT_TYPE_EXT },
@@ -391,8 +395,7 @@ static void ApplyGeometryParameters(lua_State* L, int table, GLuint prog)
 	for (int i = 0; i < count; i++) {
 		lua_getfield(L, table, parameters[i].name);
 		if (lua_israwnumber(L, -1)) {
-			const GLint type = lua_toint(L, -1);
-			glProgramParameteriEXT(prog, parameters[i].param, type);
+			glProgramParameteriEXT(prog, parameters[i].param, /*type*/ lua_toint(L, -1));
 		}
 		lua_pop(L, 1);
 	}
@@ -403,9 +406,8 @@ int LuaShaders::CreateShader(lua_State* L)
 {
 	const int args = lua_gettop(L);
 
-	if ((args != 1) || !lua_istable(L, 1)) {
+	if ((args != 1) || !lua_istable(L, 1))
 		luaL_error(L, "Incorrect arguments to gl.CreateShader()");
-	}
 
 	std::vector<std::string> shdrDefs;
 	std::vector<std::string> vertSrcs;
@@ -500,13 +502,13 @@ int LuaShaders::CreateShader(lua_State* L)
 
 int LuaShaders::DeleteShader(lua_State* L)
 {
-	if (lua_isnil(L, 1)) {
+	if (lua_isnil(L, 1))
 		return 0;
-	}
-	const int progID = luaL_checkint(L, 1);
+
 	LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
-	shaders.RemoveProgram(progID);
-	return 0;
+
+	lua_pushboolean(L, shaders.RemoveProgram(luaL_checkint(L, 1)));
+	return 1;
 }
 
 
@@ -514,15 +516,15 @@ int LuaShaders::UseShader(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 
-	const int progID = luaL_checkint(L, 1);
-	if (progID == 0) {
+	const int progIdx = luaL_checkint(L, 1);
+	if (progIdx == 0) {
 		glUseProgram(0);
 		lua_pushboolean(L, true);
 		return 1;
 	}
 
 	LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
-	const GLuint progName = shaders.GetProgramName(progID);
+	const GLuint progName = shaders.GetProgramName(progIdx);
 	if (progName == 0) {
 		lua_pushboolean(L, false);
 	} else {
@@ -535,17 +537,15 @@ int LuaShaders::UseShader(lua_State* L)
 
 int LuaShaders::ActiveShader(lua_State* L)
 {
-	const int progID = luaL_checkint(L, 1);
+	const int progIdx = luaL_checkint(L, 1);
 	luaL_checktype(L, 2, LUA_TFUNCTION);
 
-	GLuint progName;
-	if (progID == 0) {
-		progName = 0;
-	}
-	else {
+	GLuint progName = 0;
+
+	if (progIdx != 0) {
 		LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
-		progName = shaders.GetProgramName(progID);
-		if (progName == 0) {
+
+		if ((progName = shaders.GetProgramName(progIdx)) == 0) {
 			return 0;
 		}
 	}
@@ -560,8 +560,7 @@ int LuaShaders::ActiveShader(lua_State* L)
 	glUseProgram(currentProgram);
 
 	if (error != 0) {
-		LOG_L(L_ERROR, "gl.ActiveShader: error(%i) = %s",
-				error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.ActiveShader: error(%i) = %s", error, lua_tostring(L, -1));
 		lua_error(L);
 	}
 
@@ -613,9 +612,9 @@ int LuaShaders::GetActiveUniforms(lua_State* L)
 {
 	const LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
 	const GLuint progName = shaders.GetProgramName(L, 1);
-	if (progName == 0) {
+
+	if (progName == 0)
 		return 0;
-	}
 
 	GLint uniformCount;
 	glGetProgramiv(progName, GL_ACTIVE_UNIFORMS, &uniformCount);
@@ -652,6 +651,7 @@ int LuaShaders::GetUniformLocation(lua_State* L)
 
 	const string name = luaL_checkstring(L, 2);
 	const GLint location = glGetUniformLocation(progName, name.c_str());
+
 	lua_pushnumber(L, location);
 	return 1;
 }
