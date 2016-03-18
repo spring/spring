@@ -11,24 +11,19 @@
 
 #include "ISky.h"
 #include "SunLighting.h"
-#include "Game/Game.h"
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
-#include "Map/BaseGroundDrawer.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/FeatureDrawer.h"
-#include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/ShadowHandler.h"
-#include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/TextureAtlas.h"
-#include "Sim/Misc/Wind.h"
+// #include "Sim/Misc/Wind.h"
 #include "System/bitops.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FastMath.h"
@@ -103,22 +98,12 @@ static void GLSLDefineConstf1(string& str, const string& name, const float& x)
 
 static GLuint LoadTexture(const string& filename, const float anisotropy = 0.0f, int* sizeX = NULL, int* sizeY = NULL)
 {
-	GLuint texID;
 	CBitmap bm;
-	if (!bm.Load(filename)) {
-		throw content_error("[" LOG_SECTION_BUMP_WATER "] Could not load texture from file " + filename);
-	}
 
-	glGenTextures(1, &texID);
-	glBindTexture(GL_TEXTURE_2D, texID);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-	if (anisotropy > 0.0f) {
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
-	}
-	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bm.xsize, bm.ysize, GL_RGBA, GL_UNSIGNED_BYTE, &bm.mem[0]);
+	if (!bm.Load(filename))
+		throw content_error("[" LOG_SECTION_BUMP_WATER "] Could not load texture from file " + filename);
+
+	const unsigned int texID = bm.CreateMipMapTexture(anisotropy);
 
 	if (sizeY != NULL) {
 		*sizeX = bm.xsize;
@@ -1163,9 +1148,9 @@ void CBumpWater::DrawRefraction(CGame* game)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glDisable(GL_FOG); // fog has overground settings, if at all we should add special underwater settings
 
-	const double clipPlaneEqs[2][4] = {
-		{0.0, -1.0, 0.0, 5.0}, // ground
-		{0.0, -1.0, 0.0, 0.0}, // models
+	const double clipPlaneEqs[2 * 4] = {
+		0.0, -1.0, 0.0, 5.0, // ground
+		0.0, -1.0, 0.0, 0.0, // models
 	};
 
 	const float3 oldsun = sunLighting->unitDiffuseColor;
@@ -1174,34 +1159,7 @@ void CBumpWater::DrawRefraction(CGame* game)
 	sunLighting->unitDiffuseColor *= float3(0.5f, 0.7f, 0.9f);
 	sunLighting->unitAmbientColor *= float3(0.6f, 0.8f, 1.0f);
 
-	game->SetDrawMode(CGame::gameRefractionDraw);
-
-	{
-		drawRefraction = true;
-
-		glEnable(GL_CLIP_PLANE2);
-		glClipPlane(GL_CLIP_PLANE2, clipPlaneEqs[0]);
-
-		// opaque
-		sky->Draw();
-		readMap->GetGroundDrawer()->Draw(DrawPass::WaterRefraction);
-
-		SetModelClippingPlane(clipPlaneEqs[1]);
-		unitDrawer->Draw(false, true);
-		featureDrawer->Draw();
-
-		// transparent stuff
-		unitDrawer->DrawAlphaPass();
-		featureDrawer->DrawAlphaPass();
-		projectileDrawer->Draw(false, true);
-
-		eventHandler.DrawWorldRefraction();
-		glDisable(GL_CLIP_PLANE2);
-
-		drawRefraction = false;
-	}
-
-	game->SetDrawMode(CGame::gameNormalDraw);
+	DrawRefractions(&clipPlaneEqs[0], true, true);
 
 	glEnable(GL_FOG);
 
@@ -1217,9 +1175,9 @@ void CBumpWater::DrawReflection(CGame* game)
 	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	const double clipPlaneEqs[2][4] = {
-		{0.0, 1.0, 0.0, 5.0}, // ground; use d>0 to hide shoreline cracks
-		{0.0, 1.0, 0.0, 0.0}, // models
+	const double clipPlaneEqs[2 * 4] = {
+		0.0, 1.0, 0.0, 5.0, // ground; use d>0 to hide shoreline cracks
+		0.0, 1.0, 0.0, 0.0, // models
 	};
 
 	CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
@@ -1229,37 +1187,7 @@ void CBumpWater::DrawReflection(CGame* game)
 		curCam->CopyStateReflect(prvCam);
 		curCam->UpdateLoadViewPort(0, 0, reflTexSize, reflTexSize);
 
-		game->SetDrawMode(CGame::gameReflectionDraw);
-
-		{
-			drawReflection = true;
-
-			glEnable(GL_CLIP_PLANE2);
-			glClipPlane(GL_CLIP_PLANE2, clipPlaneEqs[0]);
-
-			// opaque
-			sky->Draw();
-
-			if (reflection > 1)
-				readMap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
-
-			SetModelClippingPlane(clipPlaneEqs[1]);
-			unitDrawer->Draw(true);
-			featureDrawer->Draw();
-
-			// transparent
-			unitDrawer->DrawAlphaPass();
-			featureDrawer->DrawAlphaPass();
-			projectileDrawer->Draw(true);
-			sky->DrawSun();
-
-			eventHandler.DrawWorldReflection();
-			glDisable(GL_CLIP_PLANE2);
-
-			drawReflection = false;
-		}
-
-		game->SetDrawMode(CGame::gameNormalDraw);
+		DrawReflections(&clipPlaneEqs[0], reflection > 1, true);
 	}
 
 	CCamera::SetActiveCamera(prvCam->GetCamType());

@@ -40,7 +40,12 @@ public:
 
 	static void ApplyPushedChanges(CGame* game);
 	static void PushWaterMode(int nxtRendererMode);
+
 	static void SetModelClippingPlane(const double* planeEq);
+
+protected:
+	void DrawReflections(const double* clipPlaneEqs, bool drawGround, bool drawSky);
+	void DrawRefractions(const double* clipPlaneEqs, bool drawGround, bool drawSky);
 
 protected:
 	bool drawReflection;

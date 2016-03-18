@@ -2,17 +2,13 @@
 
 
 #include "DynWater.h"
-#include "Game/Game.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/UI/MouseHandler.h"
+// #include "Game/UI/MouseHandler.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Map/BaseGroundDrawer.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/FeatureDrawer.h"
-#include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/ISky.h"
@@ -24,7 +20,6 @@
 #include "Sim/Units/UnitDef.h"
 #include "System/Log/ILog.h"
 #include "System/bitops.h"
-#include "System/EventHandler.h"
 #include "System/Exceptions.h"
 
 #define LOG_SECTION_DYN_WATER "DynWater"
@@ -446,9 +441,9 @@ void CDynWater::DrawReflection(CGame* game)
 	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	const double clipPlaneEqs[2][4] = {
-		{0.0, 1.0, 0.0, 5.0}, // ground; use d>0 to hide shoreline cracks
-		{0.0, 1.0, 0.0, 0.0}, // models
+	const double clipPlaneEqs[2 * 4] = {
+		0.0, 1.0, 0.0, 5.0, // ground; use d>0 to hide shoreline cracks
+		0.0, 1.0, 0.0, 0.0, // models
 	};
 
 	CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
@@ -462,35 +457,7 @@ void CDynWater::DrawReflection(CGame* game)
 		reflectUp      = curCam->GetUp();
 		reflectForward = curCam->GetDir();
 
-		game->SetDrawMode(CGame::gameReflectionDraw);
-
-		{
-			drawReflection = true;
-
-			glEnable(GL_CLIP_PLANE2);
-			glClipPlane(GL_CLIP_PLANE2, clipPlaneEqs[0]);
-
-			// opaque
-			sky->Draw();
-			readMap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
-
-			SetModelClippingPlane(clipPlaneEqs[1]);
-			unitDrawer->Draw(true);
-			featureDrawer->Draw();
-
-			// transparent
-			unitDrawer->DrawAlphaPass();
-			featureDrawer->DrawAlphaPass();
-			projectileDrawer->Draw(true);
-			sky->DrawSun();
-
-			eventHandler.DrawWorldReflection();
-			glDisable(GL_CLIP_PLANE2);
-
-			drawReflection = false;
-		}
-
-		game->SetDrawMode(CGame::gameNormalDraw);
+		DrawReflections(&clipPlaneEqs[0], true, true);
 	}
 
 	CCamera::SetActiveCamera(prvCam->GetCamType());
@@ -514,9 +481,9 @@ void CDynWater::DrawRefraction(CGame* game)
 	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	const double clipPlaneEqs[2][4] = {
-		{0.0, -1.0, 0.0, 5.0}, // ground
-		{0.0, -1.0, 0.0, 0.0}, // models
+	const double clipPlaneEqs[2 * 4] = {
+		0.0, -1.0, 0.0, 5.0, // ground
+		0.0, -1.0, 0.0, 0.0, // models
 	};
 
 	const float3 oldsun = sunLighting->unitDiffuseColor;
@@ -525,33 +492,7 @@ void CDynWater::DrawRefraction(CGame* game)
 	sunLighting->unitDiffuseColor *= float3(0.5f, 0.7f, 0.9f);
 	sunLighting->unitAmbientColor *= float3(0.6f, 0.8f, 1.0f);
 
-	game->SetDrawMode(CGame::gameRefractionDraw);
-
-	{
-		drawRefraction = true;
-
-		glEnable(GL_CLIP_PLANE2);
-		glClipPlane(GL_CLIP_PLANE2, clipPlaneEqs[0]);
-
-		sky->Draw();
-		readMap->GetGroundDrawer()->Draw(DrawPass::WaterRefraction);
-
-		SetModelClippingPlane(clipPlaneEqs[1]);
-		unitDrawer->Draw(false, true);
-		featureDrawer->Draw();
-
-		unitDrawer->DrawAlphaPass();
-		featureDrawer->DrawAlphaPass();
-
-		projectileDrawer->Draw(false, true);
-
-		eventHandler.DrawWorldRefraction();
-		glDisable(GL_CLIP_PLANE2);
-
-		drawRefraction = false;
-	}
-
-	game->SetDrawMode(CGame::gameNormalDraw);
+	DrawRefractions(&clipPlaneEqs[0], true, true);
 
 	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1);
@@ -1105,9 +1046,8 @@ void CDynWater::AddShipWakes()
 		for (const CUnit* unit: units) {
 			const MoveDef* moveDef = unit->moveDef;
 
-			if (moveDef == NULL) {
+			if (moveDef == NULL)
 				continue;
-			}
 
 			if (moveDef->speedModClass == MoveDef::Hover) {
 				// hovercraft

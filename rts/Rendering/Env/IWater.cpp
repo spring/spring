@@ -1,14 +1,21 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "IWater.h"
+#include "ISky.h"
 #include "BasicWater.h"
 #include "AdvWater.h"
 #include "BumpWater.h"
 #include "DynWater.h"
 #include "RefractWater.h"
+#include "Game/Game.h"
+#include "Map/ReadMap.h"
+#include "Map/BaseGroundDrawer.h"
+#include "Rendering/FeatureDrawer.h"
+#include "Rendering/UnitDrawer.h"
+#include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Sim/Projectiles/ExplosionListener.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 
@@ -142,5 +149,77 @@ void IWater::SetModelClippingPlane(const double* planeEq) {
 	glLoadIdentity();
 	glClipPlane(GL_CLIP_PLANE2, planeEq);
 	glPopMatrix();
+}
+
+
+void IWater::DrawReflections(const double* clipPlaneEqs, bool drawGround, bool drawSky) {
+	game->SetDrawMode(CGame::gameReflectionDraw);
+
+	{
+		drawReflection = true;
+
+		glEnable(GL_CLIP_PLANE2);
+		glClipPlane(GL_CLIP_PLANE2, &clipPlaneEqs[0]);
+
+		// opaque
+		if (drawSky)
+			sky->Draw();
+		if (drawGround)
+			readMap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
+
+
+		// rest needs the plane in model-space; V is combined with P
+		SetModelClippingPlane(&clipPlaneEqs[4]);
+		unitDrawer->Draw(true);
+		featureDrawer->Draw();
+
+		// transparent
+		unitDrawer->DrawAlphaPass();
+		featureDrawer->DrawAlphaPass();
+		projectileDrawer->Draw(true);
+		// sun-disc does not blend well with water
+		// sky->DrawSun();
+
+		eventHandler.DrawWorldReflection();
+		glDisable(GL_CLIP_PLANE2);
+
+		drawReflection = false;
+	}
+
+	game->SetDrawMode(CGame::gameNormalDraw);
+}
+
+void IWater::DrawRefractions(const double* clipPlaneEqs, bool drawGround, bool drawSky) {
+	game->SetDrawMode(CGame::gameRefractionDraw);
+
+	{
+		drawRefraction = true;
+
+		glEnable(GL_CLIP_PLANE2);
+		glClipPlane(GL_CLIP_PLANE2, &clipPlaneEqs[0]);
+
+		// opaque
+		if (drawSky)
+			sky->Draw();
+		if (drawGround)
+			readMap->GetGroundDrawer()->Draw(DrawPass::WaterRefraction);
+
+
+		SetModelClippingPlane(&clipPlaneEqs[4]);
+		unitDrawer->Draw(false, true);
+		featureDrawer->Draw();
+
+		// transparent
+		unitDrawer->DrawAlphaPass();
+		featureDrawer->DrawAlphaPass();
+		projectileDrawer->Draw(false, true);
+
+		eventHandler.DrawWorldRefraction();
+		glDisable(GL_CLIP_PLANE2);
+
+		drawRefraction = false;
+	}
+
+	game->SetDrawMode(CGame::gameNormalDraw);
 }
 
