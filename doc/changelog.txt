@@ -13,6 +13,8 @@ Sim:
 
 Lua:
  - Add {Set,Get}FeatureRulesParam(s)
+ ! Get{Game,Team,Unit,Feature}RulesParams will now return { paramName = value, ... }
+ - You can now delete RulesParams by calling Set{Game,Team,Unit,Feature}RulesParam with no value argument or a nil one.
  - Add new Spring.ClearUnitGoal(unitID) callout.
  - add GamePaused and GameProgress callins to base gadget-handler
  - extend builtin uniform binding for custom Lua materials
@@ -31,6 +33,7 @@ Rendering:
 
 AI:
  - make skirmishAiCallback_Unit_getResource{Use,Make} not round their return values to ints
+ - RulesParams are now accessible through skirmishAiCallback_{Game,Unit,Team,Feature}_getRulesParamValue{String,Float}
 
 Misc:
  - make the time server spends in sleep calls configurable (for dedicated hosts)
@@ -86,6 +89,14 @@ Bugfixes:
  - fix #5131 (order-lines visualization)
  - fix #5130 (put projectiles created by Spring.SpawnProjectile in Gaia team)
  - fix #5127 (icon-transparency over water)
+ - fix #5181 (aircraft sometimes fail to land)
+ - fix #5177 (stack-buffer-overflow in TextWrap.cpp)
+ - fix #5172 (segfault on assimp loading)
+ - fix #5173 (air transports fail to pick up units)
+ - fix #5174 (hover move type tend to exactly land on top of each other)
+ - fix #5176 (crash in CobThread)
+ - fix #5106 (Strafe planes dont land when reaching target or on 'stop' command)
+ - fix #5152 (heap-use-after-free when loading a game)
 
 
 
