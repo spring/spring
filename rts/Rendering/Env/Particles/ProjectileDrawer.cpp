@@ -310,9 +310,7 @@ void CProjectileDrawer::ParseAtlasTextures(
 void CProjectileDrawer::LoadWeaponTextures() {
 	// post-process the synced weapon-defs to set unsynced fields
 	// (this requires CWeaponDefHandler to have been initialized)
-	for (int wid = 0; wid < weaponDefHandler->weaponDefs.size(); wid++) {
-		WeaponDef& wd = weaponDefHandler->weaponDefs[wid];
-
+	for (WeaponDef& wd: weaponDefHandler->weaponDefs) {
 		wd.visuals.texture1 = NULL;
 		wd.visuals.texture2 = NULL;
 		wd.visuals.texture3 = NULL;

@@ -1748,10 +1748,6 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 	const UnitDef* unitDef = unit->unitDef;
 	const UnitDef* decoyDef = unitDef->decoyDef;
 
-	// in case no ghost is created for us
-	if (unitDef->decalDef.useGroundDecal)
-		groundDecals->RemoveSolidObject(u, nullptr);
-
 	if (unitDef->IsBuildingUnit() && gameSetup->ghostedBuildings &&
 		!(u->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) &&
 		(u->losStatus[gu->myAllyTeam] & (LOS_PREVLOS)) && !gu->spectatingFullView
