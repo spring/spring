@@ -4,15 +4,10 @@
 #define IMODELPARSER_H
 
 #include <unordered_map>
-#include <deque>
-
+#include <vector>
 #include <string>
-
 #include "System/Threading/SpringMutex.h"
 
-namespace boost {
-	class thread;
-};
 
 struct S3DModel;
 struct S3DModelPiece;
@@ -25,23 +20,6 @@ public:
 };
 
 
-struct LoadQueue {
-public:
-	LoadQueue(): thread(nullptr) {}
-	~LoadQueue() { Join(); }
-
-	void Pump();
-	void Push(const std::string& modelName);
-
-	void GrabLock() { mutex.lock(); }
-	void FreeLock() { mutex.unlock(); }
-
-	void Join();
-private:
-	std::deque<std::string> queue;
-	spring::mutex mutex;
-	boost::thread* thread;
-};
 
 
 
@@ -54,11 +32,10 @@ public:
 	void Kill();
 
 	S3DModel* LoadModel(std::string name, bool preload = false);
-
 	std::string FindModelPath(std::string name) const;
-
+	S3DModel* Load3DModel(std::string name, bool preload = false);
 	bool IsValid() const { return (!formats.empty()); }
-	void PreloadModel(const std::string& name) { assert(IsValid()); loadQueue.Push(name); }
+	void PreloadModel(const std::string& name);
 
 public:
 	typedef std::unordered_map<std::string, unsigned int> ModelMap; // "armflash.3do" --> id
@@ -84,8 +61,8 @@ private:
 	ModelMap cache;
 	FormatMap formats;
 	ParserMap parsers;
-	// preloading
-	LoadQueue loadQueue;
+
+	spring::mutex mutex;
 
 	// all unique models loaded so far
 	std::vector<S3DModel*> models;

@@ -1,10 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "Rendering/GL/myGL.h"
-#include <algorithm>
-#include <cctype>
-#include <boost/thread.hpp>
-
 #include "IModelParser.h"
 #include "3DModel.h"
 #include "3DModelLog.h"
@@ -20,6 +15,7 @@
 #include "System/Util.h"
 #include "System/Exceptions.h"
 #include "System/maindefines.h"
+#include "System/ThreadPool.h"
 #include "lib/assimp/include/assimp/Importer.hpp"
 
 
@@ -103,64 +99,6 @@ static void CheckPieceNormals(const S3DModel* model, const S3DModelPiece* modelP
 	}
 }
 
-void LoadQueue::Join()
-{
-	if (thread != nullptr) {
-		thread->join();
-		SafeDelete(thread);
-	}
-}
-
-__FORCE_ALIGN_STACK__
-void LoadQueue::Pump()
-{
-	while (true) {
-		std::string modelName;
-
-		{
-			GrabLock();
-			assert(queue.size() > 0);
-			modelName = queue.front();
-			FreeLock();
-		}
-
-		modelLoader.LoadModel(modelName, true);
-
-		{
-			GrabLock();
-			queue.pop_front();
-			const bool empty = queue.empty();
-			FreeLock();
-			if (empty)
-				break;
-		}
-	}
-}
-
-void LoadQueue::Push(const std::string& modelName)
-{
-	GrabLock();
-
-	if (queue.empty()) {
-		if (thread != nullptr) {
-			FreeLock();
-
-			thread->join();
-			SafeDelete(thread);
-
-			GrabLock();
-		}
-
-		// mutex is still locked, thread will block if it gets
-		// to queue.front() before we get to queue.push_back()
-		thread = new boost::thread(boost::bind(&LoadQueue::Pump, this));
-	}
-
-	queue.push_back(modelName);
-
-	FreeLock();
-}
-
 
 void CModelLoader::Init()
 {
@@ -184,9 +122,6 @@ void CModelLoader::Init()
 
 void CModelLoader::Kill()
 {
-	// thread might be in LoadModel, but it doesn't matter
-	loadQueue.Join();
-
 	KillModels();
 	KillParsers();
 
@@ -257,12 +192,27 @@ std::string CModelLoader::FindModelPath(std::string name) const
 }
 
 
+void CModelLoader::PreloadModel(const std::string& modelName)
+{
+	if (!ThreadPool::HasThreads())
+		return;
+
+	if (cache.find(StringToLower(modelName)) != cache.end())
+		return;
+
+	ThreadPool::enqueue([modelName](){
+		modelLoader.LoadModel(modelName, true);
+	});
+}
+
 
 S3DModel* CModelLoader::LoadModel(std::string name, bool preload)
 {
 	// cannot happen except through SpawnProjectile
 	if (name.empty())
 		return nullptr;
+
+	std::lock_guard<spring::mutex> lock(mutex);
 
 	StringToLowerInPlace(name);
 
@@ -288,20 +238,13 @@ S3DModel* CModelLoader::LoadCachedModel(const std::string& name, bool preload)
 {
 	S3DModel* cachedModel = nullptr;
 
-	{
-		loadQueue.GrabLock();
+	const auto ci = cache.find(name);
+	if (ci != cache.end()) {
+		cachedModel = models[ci->second];
 
-		const auto ci = cache.find(name);
-
-		if (ci != cache.end()) {
-			cachedModel = models[ci->second];
-
-			if (!preload) {
-				CreateLists(cachedModel);
-			}
+		if (!preload) {
+			CreateLists(cachedModel);
 		}
-
-		loadQueue.FreeLock();
 	}
 
 	return cachedModel;
@@ -365,19 +308,13 @@ void CModelLoader::AddModelToCache(
 	const std::string& name,
 	const std::string& path
 ) {
-	loadQueue.GrabLock();
+	model->id = models.size(); // IDs start at 1
+	models.push_back(model);
 
-	{
-		model->id = models.size(); // IDs start at 1
-		models.push_back(model);
+	assert(models[model->id] == model);
 
-		assert(models[model->id] == model);
-
-		cache[name] = model->id;
-		cache[path] = model->id;
-	}
-
-	loadQueue.FreeLock();
+	cache[name] = model->id;
+	cache[path] = model->id;
 }
 
 
