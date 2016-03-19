@@ -1725,40 +1725,8 @@ bool CCommandAI::HasMoreMoveCommands(bool skipFirstCmd) const
 		++i;
 
 	for (; i != commandQue.end(); ++i) {
-		switch (i->GetID()) {
-			case CMD_AREA_ATTACK:
-			case CMD_ATTACK:
-			case CMD_CAPTURE:
-			case CMD_FIGHT:
-			case CMD_GUARD:
-			case CMD_LOAD_UNITS:
-			case CMD_MANUALFIRE:
-			case CMD_MOVE:
-			case CMD_PATROL:
-			case CMD_RECLAIM:
-			case CMD_REPAIR:
-			case CMD_RESTORE:
-			case CMD_RESURRECT:
-			case CMD_UNLOAD_UNIT:
-			case CMD_UNLOAD_UNITS:
-				return true;
-
-			case CMD_DEATHWAIT:
-			case CMD_GATHERWAIT:
-			case CMD_SELFD:
-			case CMD_SQUADWAIT:
-			case CMD_STOP:
-			case CMD_TIMEWAIT:
-			case CMD_WAIT:
-				return false;
-
-			default:
-				// build commands are no different from reclaim or repair commands
-				// in that they can require a unit to move, so return true when we
-				// have one
-				if (i->IsBuildCommand())
-					return true;
-		}
+		if (i->IsMoveCommand())
+			return true;
 	}
 
 	return false;
