@@ -13,11 +13,79 @@ Sim:
 
 Lua:
  - Add new Spring.ClearUnitGoal(unitID) callout.
+ - extend builtin uniform binding for custom Lua materials
+   SEE "fix LuaMaterial uniform management" BELOW FOR THE
+   LIST OF NEW LOCATION KEYS THAT ARE RECOGNIZED AS OF 102
 
 Save/Load:
  ! remove UseCREGSaveLoad and add /LuaSave which generates .slsf files
  ! compress creg saves
  - SaveFile can be specified in start script in order to start from a save
+
+Rendering:
+ - reduce number of team-color updates for custom shaders
+ - use frame-extrapolation for features (smoother movement)
+ - skip drawing icons for void-space units
+
+AI:
+ - make skirmishAiCallback_Unit_getResource{Use,Make} not round their return values to ints
+
+Misc:
+ - make the time server spends in sleep calls configurable (for dedicated hosts)
+ - rename the 'ReflectiveWater' config-key to 'Water' (to match the command)
+ - set the 'GroundDetail' config-val only when it changes, not on shutdown
+ - auto-normalize normals and tangents for all AssImp-loaded models
+ - add a gameDeferredDraw=5 drawMode value (handy for Draw{Unit,Feature} to know)
+
+Bugfixes:
+ - fix invisible OBJ models
+ - fix gl.DeleteShader allowing repeated deletion
+ - fix Spring.SetSunLighting crash when AdvMapShading=0
+ - fix Spring.ValidUnitID to accept nils again
+ - fix wreckage jumping from large *horizontal* impulse
+ - fix state-clashing in landed HoverAirMoveType aircraft ordered within their build range
+ ! fix LuaMaterial uniform management for materials with standard and deferred shaders
+   material tables are now expected to contain subtables defining the uniforms; instead of
+     "material = {shader = ..., camposloc = 123, texunits = ..., ...}"
+   say
+     "material = {shader = ..., uniforms = {camposloc = 123, ...}, texunits = ..., ...}"
+
+   for a material that has both types of shader, supply "standardshader",
+   "deferredshader", "standarduniforms", and "deferreduniforms" as keys
+
+   new keys for these uniform subtables can be
+     "viewmatrixloc"    // synonym for "cameraloc"
+     "projmatrixloc"    // camera projection
+     "viprmatrixloc"    // camera view-projection
+     "viewmatrixinvloc" // synonym for "camerainvloc"
+     "projmatrixinvloc" // camera inverse projection
+     "viprmatrixinvloc" // camera inverse view-projection
+     "shadowmatrixloc"  // synonym for "shadowloc"
+     "cameradirloc"     // camera forward direction
+     "simframeloc"      // current simulation frame
+     "visframeloc"      // current renderer frame
+
+ - fix #5182 (unwanted sun-texture reflections)
+ - fix #5175 (microscopic FarTexture impostors)
+ - fix #5166 (wrecks buried underground on maps with negative hardness)
+ - fix #5165 (rare crash on exit or reload)
+ - fix #5161 (Spring.IsUnitAllied always returning true in unsynced gadgets)
+ - fix #5160 (Spring.SetSunLighting not working if applied in *get:Initialize and crashing when AdvMapShading=0)
+ - fix #5157 (skirmishAiCallback_Unit_get{Pos,Vel} broken with cheats enabled)
+ - fix #5155 (MoveCtrl.SetRotation not matching Spring.GetUnitRotation)
+ - fix #5149 (EVENT_ENEMY* AI events not being sent)
+ - fix #5148 (assertion failure with custom shaders)
+ - fix #5146 (missing wreckage healthbars)
+ - fix #5141 (glitchy tree rendering)
+ - fix #5136 (texture corruption with custom Lua materials)
+ - fix #5135 (missing SFX.FIRE and SFX.SMOKE effects)
+ - fix #5134 (broken zoom in track-mode with Spring camera)
+ - fix #5084 (allow LuaUI self-disabling)
+ - fix #5131 (order-lines visualization)
+ - fix #5130 (put projectiles created by Spring.SpawnProjectile in Gaia team)
+ - fix #5127 (icon-transparency over water)
+
+
 
 -- 101.0 --------------------------------------------------------
 Major:
