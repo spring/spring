@@ -2769,9 +2769,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(unitDef),
 	CR_MEMBER(featureDefID),
 
-	CR_MEMBER(modParams),
-	CR_MEMBER(modParamsMap),
-
 	CR_MEMBER(upright),
 
 	CR_MEMBER(deathSpeed),

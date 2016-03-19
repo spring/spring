@@ -353,7 +353,6 @@ public:
 	 * Parameters may or may not have a name.
 	 */
 	LuaRulesParams::Params  modParams;
-	LuaRulesParams::HashMap modParamsMap; ///< name map for mod parameters
 
 public:
 	static const float DEFAULT_MASS;

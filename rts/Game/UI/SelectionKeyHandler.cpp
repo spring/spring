@@ -180,9 +180,9 @@ namespace
 	#define STRTOF strtof
 #endif
 
-	DECLARE_FILTER_EX(RulesParamEquals, 2, unit->modParamsMap.find(param) != unit->modParamsMap.end() &&
-			((wantedValueStr.empty()) ? unit->modParams[unit->modParamsMap.find(param)->second].valueInt == wantedValue
-			: unit->modParams[unit->modParamsMap.find(param)->second].valueString == wantedValueStr),
+	DECLARE_FILTER_EX(RulesParamEquals, 2, unit->modParams.find(param) != unit->modParams.end() &&
+			((wantedValueStr.empty()) ? unit->modParams.find(param)->second.valueInt == wantedValue
+			: unit->modParams.find(param)->second.valueString == wantedValueStr),
 		std::string param;
 		float wantedValue;
 		std::string wantedValueStr;

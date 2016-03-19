@@ -4,7 +4,6 @@
 #define LUA_RULESPARAMS_H
 
 #include <string>
-#include <vector>
 #include <map>
 #include "System/creg/creg_cond.h"
 
@@ -35,8 +34,7 @@ namespace LuaRulesParams
 		std::string valueString;
 	};
 
-	typedef std::vector<Param>         Params;
-	typedef std::map<std::string, int> HashMap;
+	typedef std::map<std::string, Param> Params;
 }
 
 #endif // LUA_RULESPARAMS_H

@@ -76,6 +76,7 @@ CR_REG_METADATA(CSolidObject,
 	CR_MEMBER(yardOpen),
 
 	CR_MEMBER(buildFacing),
+	CR_MEMBER(modParams),
 
 	CR_POSTLOAD(PostLoad)
 

@@ -230,12 +230,10 @@ class CLuaHandleSynced
 
 	public:
 		static const LuaRulesParams::Params&  GetGameParams() { return gameParams; }
-		static const LuaRulesParams::HashMap& GetGameParamsMap() { return gameParamsMap; }
 
 	private:
 		//FIXME: add to CREG?
 		static LuaRulesParams::Params  gameParams;
-		static LuaRulesParams::HashMap gameParamsMap;
 		friend class LuaSyncedCtrl;
 };
 

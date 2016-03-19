@@ -741,38 +741,23 @@ static inline CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 
 static int PushRulesParams(lua_State* L, const char* caller,
                           const LuaRulesParams::Params& params,
-                          const LuaRulesParams::HashMap& paramsMap,
                           const int losStatus)
 {
 	lua_newtable(L);
 	const int pCount = (int)params.size();
+	for (auto& it: params)
 	for (int i = 0; i < pCount; i++) {
-		const LuaRulesParams::Param& param = params[i];
+		const std::string& name = it.first;
+		const LuaRulesParams::Param& param = it.second;
 		if (!(param.los & losStatus))
 			continue;
-
-		lua_pushnumber(L, i + 1);
-		lua_newtable(L);
-
-		LuaRulesParams::HashMap::const_iterator it;
-		string name = "";
-		for (it = paramsMap.begin(); it != paramsMap.end(); ++it) {
-			if (it->second == i) {
-				name = it->first;
-				break;
-			}
-		}
 
 		if (!param.valueString.empty()) {
 			LuaPushNamedString(L, name, param.valueString);
 		} else {
 			LuaPushNamedNumber(L, name, param.valueInt);
 		}
-		lua_rawset(L, -3);
 	}
-
-	// <i> is not consecutive due to the "continue"
-	hs_n.PushNumber(L, pCount);
 
 	return 1;
 }
@@ -780,30 +765,14 @@ static int PushRulesParams(lua_State* L, const char* caller,
 
 static int GetRulesParam(lua_State* L, const char* caller, int index,
                           const LuaRulesParams::Params& params,
-                          const LuaRulesParams::HashMap& paramsMap,
                           const int& losStatus)
 {
-	int pIndex = -1;
-
-	if (lua_israwnumber(L, index)) {
-		pIndex = lua_toint(L, index) - 1;
-	}
-	else if (lua_israwstring(L, index)) {
-		const string pName = lua_tostring(L, index);
-		LuaRulesParams::HashMap::const_iterator it = paramsMap.find(pName);
-		if (it != paramsMap.end()) {
-			pIndex = it->second;
-		}
-	}
-	else {
-		luaL_error(L, "Incorrect arguments to %s()", caller);
-	}
-
-	if ((pIndex < 0) || (pIndex >= (int)params.size())) {
+	const string key = luaL_checkstring(L, index);
+	auto it = params.find(key);
+	if (it == params.end())
 		return 0;
-	}
 
-	const LuaRulesParams::Param& param = params[pIndex];
+	const LuaRulesParams::Param& param = it->second;
 
 	if (param.los & losStatus) {
 		if (!param.valueString.empty()) {
@@ -928,24 +897,22 @@ int LuaSyncedRead::GetWind(lua_State* L)
 int LuaSyncedRead::GetGameRulesParams(lua_State* L)
 {
 	const LuaRulesParams::Params&  params    = CLuaHandleSynced::GetGameParams();
-	const LuaRulesParams::HashMap& paramsMap = CLuaHandleSynced::GetGameParamsMap();
 
 	//! always readable for all
 	const int losMask = LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
 
-	return PushRulesParams(L, __FUNCTION__, params, paramsMap, losMask);
+	return PushRulesParams(L, __FUNCTION__, params, losMask);
 }
 
 
 int LuaSyncedRead::GetGameRulesParam(lua_State* L)
 {
 	const LuaRulesParams::Params&  params    = CLuaHandleSynced::GetGameParams();
-	const LuaRulesParams::HashMap& paramsMap = CLuaHandleSynced::GetGameParamsMap();
 
 	//! always readable for all
 	const int losMask = LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
 
-	return GetRulesParam(L, __FUNCTION__, 1, params, paramsMap, losMask);
+	return GetRulesParam(L, __FUNCTION__, 1, params, losMask);
 }
 
 
@@ -1328,9 +1295,8 @@ int LuaSyncedRead::GetTeamRulesParams(lua_State* L)
 	}
 
 	const LuaRulesParams::Params&  params    = team->modParams;
-	const LuaRulesParams::HashMap& paramsMap = team->modParamsMap;
 
-	return PushRulesParams(L, __FUNCTION__, params, paramsMap, losMask);
+	return PushRulesParams(L, __FUNCTION__, params, losMask);
 }
 
 
@@ -1351,9 +1317,8 @@ int LuaSyncedRead::GetTeamRulesParam(lua_State* L)
 	}
 
 	const LuaRulesParams::Params&  params    = team->modParams;
-	const LuaRulesParams::HashMap& paramsMap = team->modParamsMap;
 
-	return GetRulesParam(L, __FUNCTION__, 2, params, paramsMap, losMask);
+	return GetRulesParam(L, __FUNCTION__, 2, params, losMask);
 }
 
 
@@ -4286,9 +4251,8 @@ int LuaSyncedRead::GetUnitRulesParams(lua_State* L)
 	}
 
 	const LuaRulesParams::Params&  params    = unit->modParams;
-	const LuaRulesParams::HashMap& paramsMap = unit->modParamsMap;
 
-	return PushRulesParams(L, __FUNCTION__, params, paramsMap, losMask);
+	return PushRulesParams(L, __FUNCTION__, params, losMask);
 }
 
 
@@ -4318,9 +4282,8 @@ int LuaSyncedRead::GetUnitRulesParam(lua_State* L)
 	}
 
 	const LuaRulesParams::Params&  params    = unit->modParams;
-	const LuaRulesParams::HashMap& paramsMap = unit->modParamsMap;
 
-	return GetRulesParam(L, __FUNCTION__, 2, params, paramsMap, losMask);
+	return GetRulesParam(L, __FUNCTION__, 2, params, losMask);
 }
 
 
@@ -4657,9 +4620,8 @@ int LuaSyncedRead::GetFeatureRulesParams(lua_State* L)
 	}
 
 	const LuaRulesParams::Params&  params    = feature->modParams;
-	const LuaRulesParams::HashMap& paramsMap = feature->modParamsMap;
 
-	return PushRulesParams(L, __FUNCTION__, params, paramsMap, losMask);
+	return PushRulesParams(L, __FUNCTION__, params, losMask);
 }
 
 
@@ -4686,9 +4648,8 @@ int LuaSyncedRead::GetFeatureRulesParam(lua_State* L)
 	}
 
 	const LuaRulesParams::Params&  params    = feature->modParams;
-	const LuaRulesParams::HashMap& paramsMap = feature->modParamsMap;
 
-	return GetRulesParam(L, __FUNCTION__, 2, params, paramsMap, losMask);
+	return GetRulesParam(L, __FUNCTION__, 2, params, losMask);
 }
 
 /******************************************************************************/

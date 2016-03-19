@@ -959,49 +959,27 @@ int LuaSyncedCtrl::ShareTeamResource(lua_State* L)
 /******************************************************************************/
 
 void SetRulesParam(lua_State* L, const char* caller, int offset,
-				LuaRulesParams::Params& params,
-				LuaRulesParams::HashMap& paramsMap)
+				LuaRulesParams::Params& params)
 {
 	const int index = offset + 1;
 	const int valIndex = offset + 2;
 	const int losIndex = offset + 3;
-	int pIndex = -1;
 
-	if (lua_israwnumber(L, index)) {
-		pIndex = lua_toint(L, index) - 1;
-	}
-	else if (lua_israwstring(L, index)) {
-		const string pName = lua_tostring(L, index);
-		map<string, int>::const_iterator it = paramsMap.find(pName);
-		if (it != paramsMap.end()) {
-			pIndex = it->second;
-		}
-		else {
-			// create a new parameter
-			pIndex = params.size();
-			paramsMap[pName] = pIndex;
-			params.push_back(LuaRulesParams::Param());
-		}
-	}
-	else {
-		luaL_error(L, "Incorrect arguments to %s()", caller);
-	}
+	const string key = luaL_checkstring(L, index);
 
-	if ((pIndex < 0)
-		|| (pIndex >= (int)params.size())
-		|| !(lua_isnumber(L, valIndex) || lua_isstring(L, valIndex))
-	) {
-		luaL_error(L, "Incorrect arguments to %s()", caller);
-	}
-
-	LuaRulesParams::Param& param = params[pIndex];
+	LuaRulesParams::Param& param = params[key];
 
 	//! set the value of the parameter
 	if (lua_isnumber(L, valIndex)) {
 		param.valueInt = lua_tofloat(L, valIndex);
 		param.valueString.resize(0);
-	} else {
+	} else if (lua_isstring(L, valIndex)) {
 		param.valueString = lua_tostring(L, valIndex);
+	} else if (lua_isnoneornil(L, valIndex)) {
+		params.erase(key);
+		return; //no need to set los if param was erased
+	} else {
+		luaL_error(L, "Incorrect arguments to %s()", caller);
 	}
 
 	//! set the los checking of the parameter
@@ -1048,7 +1026,7 @@ void SetRulesParam(lua_State* L, const char* caller, int offset,
 
 int LuaSyncedCtrl::SetGameRulesParam(lua_State* L)
 {
-	SetRulesParam(L, __FUNCTION__, 0, CLuaHandleSynced::gameParams, CLuaHandleSynced::gameParamsMap);
+	SetRulesParam(L, __FUNCTION__, 0, CLuaHandleSynced::gameParams);
 	return 0;
 }
 
@@ -1059,7 +1037,7 @@ int LuaSyncedCtrl::SetTeamRulesParam(lua_State* L)
 	if (team == nullptr)
 		return 0;
 
-	SetRulesParam(L, __FUNCTION__, 1, team->modParams, team->modParamsMap);
+	SetRulesParam(L, __FUNCTION__, 1, team->modParams);
 	return 0;
 }
 
@@ -1070,7 +1048,7 @@ int LuaSyncedCtrl::SetUnitRulesParam(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	SetRulesParam(L, __FUNCTION__, 1, unit->modParams, unit->modParamsMap);
+	SetRulesParam(L, __FUNCTION__, 1, unit->modParams);
 	return 0;
 }
 
@@ -1081,7 +1059,7 @@ int LuaSyncedCtrl::SetFeatureRulesParam(lua_State* L)
 	if (feature == nullptr)
 		return 0;
 
-	SetRulesParam(L, __FUNCTION__, 1, feature->modParams, feature->modParamsMap);
+	SetRulesParam(L, __FUNCTION__, 1, feature->modParams);
 	return 0;
 }
 

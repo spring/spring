@@ -48,7 +48,6 @@
 
 
 LuaRulesParams::Params  CLuaHandleSynced::gameParams;
-LuaRulesParams::HashMap CLuaHandleSynced::gameParamsMap;
 
 
 
