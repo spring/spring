@@ -155,9 +155,10 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetTeamShareLevel);
 	REGISTER_LUA_CFUNC(ShareTeamResource);
 
-	REGISTER_LUA_CFUNC(SetUnitRulesParam);
-	REGISTER_LUA_CFUNC(SetTeamRulesParam);
 	REGISTER_LUA_CFUNC(SetGameRulesParam);
+	REGISTER_LUA_CFUNC(SetTeamRulesParam);
+	REGISTER_LUA_CFUNC(SetUnitRulesParam);
+	REGISTER_LUA_CFUNC(SetFeatureRulesParam);
 
 	REGISTER_LUA_CFUNC(CreateUnit);
 	REGISTER_LUA_CFUNC(DestroyUnit);
@@ -1055,9 +1056,9 @@ int LuaSyncedCtrl::SetGameRulesParam(lua_State* L)
 int LuaSyncedCtrl::SetTeamRulesParam(lua_State* L)
 {
 	CTeam* team = ParseTeam(L, __FUNCTION__, 1);
-	if (team == NULL) {
+	if (team == nullptr)
 		return 0;
-	}
+
 	SetRulesParam(L, __FUNCTION__, 1, team->modParams, team->modParamsMap);
 	return 0;
 }
@@ -1066,14 +1067,23 @@ int LuaSyncedCtrl::SetTeamRulesParam(lua_State* L)
 int LuaSyncedCtrl::SetUnitRulesParam(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	if (unit == nullptr)
 		return 0;
-	}
+
 	SetRulesParam(L, __FUNCTION__, 1, unit->modParams, unit->modParamsMap);
 	return 0;
 }
 
 
+int LuaSyncedCtrl::SetFeatureRulesParam(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+	if (feature == nullptr)
+		return 0;
+
+	SetRulesParam(L, __FUNCTION__, 1, feature->modParams, feature->modParamsMap);
+	return 0;
+}
 
 /******************************************************************************/
 /******************************************************************************/

@@ -4,6 +4,7 @@
 #define SOLID_OBJECT_H
 
 #include "WorldObject.h"
+#include "Lua/LuaRulesParams.h"
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/bitops.h"
@@ -342,6 +343,17 @@ public:
 	const YardMapStatus* blockMap;              ///< Current (unrotated!) blockmap/yardmap of this object. 0 means no active yardmap => all blocked.
 	bool yardOpen;
 	short int buildFacing;                      ///< Orientation of footprint, 4 different states
+
+	/**
+	 * @brief mod controlled parameters
+	 * This is a set of parameters that is initialized
+	 * in CreateUnitRulesParams() and may change during the game.
+	 * Each parameter is uniquely identified only by its id
+	 * (which is the index in the vector).
+	 * Parameters may or may not have a name.
+	 */
+	LuaRulesParams::Params  modParams;
+	LuaRulesParams::HashMap modParamsMap; ///< name map for mod parameters
 
 public:
 	static const float DEFAULT_MASS;

@@ -12,6 +12,7 @@ Sim:
  - COB: deprecate unit/team/allyteam/global vars. Use lua functions instead.
 
 Lua:
+ - Add {Set,Get}FeatureRulesParam(s)
  - Add new Spring.ClearUnitGoal(unitID) callout.
  - add GamePaused and GameProgress callins to base gadget-handler
  - extend builtin uniform binding for custom Lua materials

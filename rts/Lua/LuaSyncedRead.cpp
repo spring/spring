@@ -285,6 +285,9 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetFeaturePieceCollisionVolumeData);
 	REGISTER_LUA_CFUNC(GetFeatureSeparation);
 
+	REGISTER_LUA_CFUNC(GetFeatureRulesParam);
+	REGISTER_LUA_CFUNC(GetFeatureRulesParams);
+
 	REGISTER_LUA_CFUNC(GetProjectilePosition);
 	REGISTER_LUA_CFUNC(GetProjectileDirection);
 	REGISTER_LUA_CFUNC(GetProjectileVelocity);
@@ -4619,7 +4622,7 @@ int LuaSyncedRead::GetFeatureCollisionVolumeData(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
 
-	if (feature == NULL)
+	if (feature == nullptr)
 		return 0;
 
 	return (PushCollisionVolumeData(L, &feature->collisionVolume));
@@ -4630,6 +4633,63 @@ int LuaSyncedRead::GetFeaturePieceCollisionVolumeData(lua_State* L)
 	return (PushPieceCollisionVolumeData(L, ParseFeature(L, __FUNCTION__, 1)));
 }
 
+
+int LuaSyncedRead::GetFeatureRulesParams(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+
+	if (feature == nullptr)
+		return 0;
+
+	int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
+
+	if (IsAlliedAllyTeam(L, feature->allyteam) || game->IsGameOver()) {
+		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
+	}
+	else if (teamHandler->AlliedTeams(feature->team, CLuaHandle::GetHandleReadTeam(L)) || ((CLuaHandle::GetHandleReadAllyTeam(L) < 0) && CLuaHandle::GetHandleFullRead(L))) {
+		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
+	}
+	else if (CLuaHandle::GetHandleReadAllyTeam(L) < 0) {
+		//! NoAccessTeam
+	}
+	else if (IsFeatureVisible(L, feature)) {
+		losMask |= LuaRulesParams::RULESPARAMLOS_INLOS_MASK;
+	}
+
+	const LuaRulesParams::Params&  params    = feature->modParams;
+	const LuaRulesParams::HashMap& paramsMap = feature->modParamsMap;
+
+	return PushRulesParams(L, __FUNCTION__, params, paramsMap, losMask);
+}
+
+
+int LuaSyncedRead::GetFeatureRulesParam(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+
+	if (feature == nullptr)
+		return 0;
+
+	int losMask = LuaRulesParams::RULESPARAMLOS_PUBLIC_MASK;
+
+	if (IsAlliedAllyTeam(L, feature->allyteam) || game->IsGameOver()) {
+		losMask |= LuaRulesParams::RULESPARAMLOS_PRIVATE_MASK;
+	}
+	else if (teamHandler->AlliedTeams(feature->team, CLuaHandle::GetHandleReadTeam(L)) || ((CLuaHandle::GetHandleReadAllyTeam(L) < 0) && CLuaHandle::GetHandleFullRead(L))) {
+		losMask |= LuaRulesParams::RULESPARAMLOS_ALLIED_MASK;
+	}
+	else if (CLuaHandle::GetHandleReadAllyTeam(L) < 0) {
+		//! NoAccessTeam
+	}
+	else if (IsFeatureVisible(L, feature)) {
+		losMask |= LuaRulesParams::RULESPARAMLOS_INLOS_MASK;
+	}
+
+	const LuaRulesParams::Params&  params    = feature->modParams;
+	const LuaRulesParams::HashMap& paramsMap = feature->modParamsMap;
+
+	return GetRulesParam(L, __FUNCTION__, 2, params, paramsMap, losMask);
+}
 
 /******************************************************************************/
 /******************************************************************************/

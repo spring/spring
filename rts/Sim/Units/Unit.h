@@ -6,7 +6,6 @@
 #include <vector>
 #include <string>
 
-#include "Lua/LuaRulesParams.h"
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Misc/Resource.h"
 #include "Sim/Weapons/WeaponTarget.h"
@@ -312,17 +311,6 @@ public:
 	float3 posErrorDelta;
 
 	int featureDefID; // FeatureDef id of the wreck we spawn on death
-
-	/**
-	 * @brief mod controlled parameters
-	 * This is a set of parameters that is initialized
-	 * in CreateUnitRulesParams() and may change during the game.
-	 * Each parameter is uniquely identified only by its id
-	 * (which is the index in the vector).
-	 * Parameters may or may not have a name.
-	 */
-	LuaRulesParams::Params  modParams;
-	LuaRulesParams::HashMap modParamsMap; ///< name map for mod parameters
 
 	/// indicate the relative power of the unit, used for experience calulations etc
 	float power;
