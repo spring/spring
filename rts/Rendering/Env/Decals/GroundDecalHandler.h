@@ -109,13 +109,12 @@ public:
 	virtual ~CGroundDecalHandler();
 
 	virtual void Draw();
-	virtual void Update() {}
 
 	virtual void GhostCreated(CSolidObject* object, GhostSolidObject* gb);
 	virtual void GhostDestroyed(GhostSolidObject* gb);
 
 	virtual void RemoveSolidObject(CSolidObject* object, GhostSolidObject* gb);
-	virtual void ForceRemoveSolidObject(CSolidObject* object);
+	void ForceRemoveSolidObject(CSolidObject* object);
 
 private:
 	void BindTextures();
