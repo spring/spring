@@ -4,7 +4,7 @@
 #define LUA_RULESPARAMS_H
 
 #include <string>
-#include <map>
+#include <unordered_map>
 #include "System/creg/creg_cond.h"
 
 namespace LuaRulesParams
@@ -34,7 +34,7 @@ namespace LuaRulesParams
 		std::string valueString;
 	};
 
-	typedef std::map<std::string, Param> Params;
+	typedef std::unordered_map<std::string, Param> Params;
 }
 
 #endif // LUA_RULESPARAMS_H

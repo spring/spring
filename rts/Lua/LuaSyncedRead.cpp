@@ -743,10 +743,9 @@ static int PushRulesParams(lua_State* L, const char* caller,
                           const LuaRulesParams::Params& params,
                           const int losStatus)
 {
-	lua_newtable(L);
-	const int pCount = (int)params.size();
-	for (auto& it: params)
-	for (int i = 0; i < pCount; i++) {
+	lua_createtable(L, 0, params.size());
+
+	for (auto& it: params) {
 		const std::string& name = it.first;
 		const LuaRulesParams::Param& param = it.second;
 		if (!(param.los & losStatus))
