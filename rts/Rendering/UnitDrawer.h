@@ -36,8 +36,10 @@ namespace GL {
 struct GhostSolidObject {
 	SolidObjectGroundDecal* decal; //FIXME defined in legacy decal handler with a lot legacy stuff
 	S3DModel* model;
+
 	float3 pos;
 	float3 dir;
+
 	int facing; //FIXME replaced with dir-vector just legacy decal drawer uses this
 	int team;
 };

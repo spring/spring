@@ -33,7 +33,7 @@ public:
 
 	S3DModel* LoadModel(std::string name, bool preload = false);
 	std::string FindModelPath(std::string name) const;
-	S3DModel* Load3DModel(std::string name, bool preload = false);
+
 	bool IsValid() const { return (!formats.empty()); }
 	void PreloadModel(const std::string& name);
 
