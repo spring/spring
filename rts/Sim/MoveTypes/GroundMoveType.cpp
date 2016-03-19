@@ -1487,19 +1487,14 @@ void CGroundMoveType::Arrived(bool callScript)
 		// and the action is done
 		progressState = Done;
 
-		// FIXME:
-		//   CAI sometimes does not update its queue correctly
-		//   (probably whenever we are called "before" the CAI
-		//   is ready to accept that a unit is at its goal-pos)
-		owner->commandAI->GiveCommand(Command(CMD_WAIT));
-		owner->commandAI->GiveCommand(Command(CMD_WAIT));
-
 		if (!owner->commandAI->HasMoreMoveCommands()) {
 			// update the position-parameter of our queue's front CMD_MOVE
 			// this is needed in case we Arrive()'ed non-directly (through
 			// colliding with another unit that happened to share our goal)
 			static_cast<CMobileCAI*>(owner->commandAI)->SetFrontMoveCommandPos(owner->pos);
 		}
+
+		owner->commandAI->SlowUpdate();
 
 		LOG_L(L_DEBUG, "Arrived: unit %i arrived", owner->id);
 	}
