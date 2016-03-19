@@ -13,6 +13,7 @@ Sim:
 
 Lua:
  - Add new Spring.ClearUnitGoal(unitID) callout.
+ - add GamePaused and GameProgress callins to base gadget-handler
  - extend builtin uniform binding for custom Lua materials
    SEE "fix LuaMaterial uniform management" BELOW FOR THE
    LIST OF NEW LOCATION KEYS THAT ARE RECOGNIZED AS OF 102
@@ -43,7 +44,7 @@ Bugfixes:
  - fix Spring.SetSunLighting crash when AdvMapShading=0
  - fix Spring.ValidUnitID to accept nils again
  - fix wreckage jumping from large *horizontal* impulse
- - fix state-clashing in landed HoverAirMoveType aircraft ordered within their build range
+ - fix landed HoverAirMoveType aircraft behavior when given a command within their build range
  ! fix LuaMaterial uniform management for materials with standard and deferred shaders
    material tables are now expected to contain subtables defining the uniforms; instead of
      "material = {shader = ..., camposloc = 123, texunits = ..., ...}"
