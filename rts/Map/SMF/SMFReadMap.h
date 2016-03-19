@@ -17,11 +17,10 @@ public:
 	// CEventClient interface
 	int GetReadAllyTeam() const override { return AllAccessTeam; }
 	bool WantsEvent(const std::string& eventName) override {
-		return eventName == "SunChanged" || eventName == "SunLightingChanged";
+		return eventName == "SunChanged";
 	}
 
-	void SunChanged(const float3& sunDir) override;
-	void SunLightingChanged() override;
+	void SunChanged() override;
 
 public:
 

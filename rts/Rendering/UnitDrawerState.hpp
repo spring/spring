@@ -42,17 +42,16 @@ public:
 	virtual bool CanDrawAlpha() const { return false; }
 	virtual bool CanDrawDeferred() const { return false; }
 
-	virtual void Enable(const CUnitDrawer*, bool, bool) {}
-	virtual void Disable(const CUnitDrawer*, bool) {}
+	virtual void Enable(const CUnitDrawer*, bool, bool) = 0;
+	virtual void Disable(const CUnitDrawer*, bool) = 0;
 
-	virtual void EnableTextures(const CUnitDrawer*) const {}
-	virtual void DisableTextures(const CUnitDrawer*) const {}
+	virtual void EnableTextures(const CUnitDrawer*) const = 0;
+	virtual void DisableTextures(const CUnitDrawer*) const = 0;
 	virtual void EnableShaders(const CUnitDrawer*) {}
 	virtual void DisableShaders(const CUnitDrawer*) {}
 
 	virtual void UpdateCurrentShaderSky(const CUnitDrawer*, const ISkyLight*) const {}
-	virtual void UpdateCurrentShaderSunLighting(const CUnitDrawer*) const {}
-	virtual void SetTeamColor(int team, const float2 alpha) const {}
+	virtual void SetTeamColor(int team, const float2 alpha) const = 0;
 
 	void SetActiveShader(unsigned int shadowed, unsigned int deferred) {
 		// shadowed=1 --> shader 1 (deferred=0) or 3 (deferred=1)
@@ -135,7 +134,6 @@ public:
 	void DisableShaders(const CUnitDrawer*);
 
 	void UpdateCurrentShaderSky(const CUnitDrawer*, const ISkyLight*) const;
-	void UpdateCurrentShaderSunLighting(const CUnitDrawer*) const;
 	void SetTeamColor(int team, const float2 alpha) const;
 };
 

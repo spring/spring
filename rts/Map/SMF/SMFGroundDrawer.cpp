@@ -505,7 +505,7 @@ void CSMFGroundDrawer::UpdateRenderState()
 	smfRenderStates[RENDER_STATE_SSP]->Update(this, nullptr);
 }
 
-void CSMFGroundDrawer::SunChanged(const float3& sunDir) {
+void CSMFGroundDrawer::SunChanged() {
 	// Lua has gl.GetSun
 	if (HaveLuaRenderState())
 		return;
@@ -513,12 +513,6 @@ void CSMFGroundDrawer::SunChanged(const float3& sunDir) {
 	// always update, SSMF shader needs current sundir even when shadows are disabled
 	smfRenderStates[RENDER_STATE_SEL]->UpdateCurrentShaderSky(sky->GetLight());
 }
-
-void CSMFGroundDrawer::SunLightingChanged() {
-	// note: only the active state is notified of a given change
-	smfRenderStates[RENDER_STATE_SEL]->UpdateCurrentShaderSunLighting();
-}
-
 
 
 bool CSMFGroundDrawer::UpdateGeometryBuffer(bool init)

@@ -42,8 +42,7 @@ public:
 			eventName == "UnitCloaked"            || eventName == "UnitDecloaked"        ||
 			eventName == "UnitEnteredRadar"       || eventName == "UnitEnteredLos"       ||
 			eventName == "UnitLeftRadar"          || eventName == "UnitLeftLos"          ||
-			eventName == "PlayerChanged"          || eventName == "SunChanged"           ||
-			eventName == "SunLightingChanged";
+			eventName == "PlayerChanged"          || eventName == "SunChanged";
 	}
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
@@ -60,8 +59,7 @@ public:
 	void UnitDecloaked(const CUnit* unit);
 
 	void PlayerChanged(int playerNum);
-	void SunChanged(const float3& sunDir);
-	void SunLightingChanged();
+	void SunChanged();
 
 public:
 	CUnitDrawer();

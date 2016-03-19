@@ -25,9 +25,6 @@ enum {
 class CSMFGroundDrawer : public CBaseGroundDrawer
 {
 public:
-	void SunChanged(const float3& sunDir);
-	void SunLightingChanged();
-public:
 	CSMFGroundDrawer(CSMFReadMap* rm);
 	~CSMFGroundDrawer();
 
@@ -40,7 +37,7 @@ public:
 
 	void Update();
 	void UpdateRenderState();
-
+	void SunChanged();
 
 	void SetLuaShader(const LuaMapShaderData*);
 	void SetDrawDeferredPass(bool b) {

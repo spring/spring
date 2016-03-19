@@ -145,7 +145,7 @@ public:
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
 
-	void SunChanged(const float3& sunDir);
+	void SunChanged();
 	void RenderUnitCreated(const CUnit*, int cloaked);
 	void RenderUnitDestroyed(const CUnit*);
 	void RenderFeatureCreated(const CFeature* feature);

@@ -635,26 +635,15 @@ float3 CSMFReadMap::GetLightValue(const int x, const int y) const
 	return light;
 }
 
-void CSMFReadMap::SunChanged(const float3& sunDir)
+void CSMFReadMap::SunChanged()
 {
 	if (shadingTexUpdateProgress < 0) {
 		shadingTexUpdateProgress = 0;
 	} else {
 		shadingTexUpdateNeeded = true;
 	}
-	groundDrawer->SunChanged(sunDir);
+	groundDrawer->SunChanged();
 }
-
-void CSMFReadMap::SunLightingChanged()
-{
-	if (shadingTexUpdateProgress < 0) {
-		shadingTexUpdateProgress = 0;
-	} else {
-		shadingTexUpdateNeeded = true;
-	}
-	groundDrawer->SunLightingChanged();
-}
-
 
 
 void CSMFReadMap::UpdateShadingTexture()

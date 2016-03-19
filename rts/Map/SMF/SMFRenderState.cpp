@@ -595,13 +595,9 @@ void SMFRenderStateGLSL::UpdateCurrentShaderSky(const ISkyLight* skyLight) const
 	glslShaders[GLSL_SHADER_CURRENT]->Enable();
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform4v("lightDir", &skyLight->GetLightDir().x);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("groundShadowDensity", skyLight->GetGroundShadowDensity());
-	glslShaders[GLSL_SHADER_CURRENT]->Disable();
-}
-
-void SMFRenderStateGLSL::UpdateCurrentShaderSunLighting() const {
-	glslShaders[GLSL_SHADER_CURRENT]->Enable();
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundAmbientColor",  &sunLighting->groundAmbientColor[0]);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundDiffuseColor",  &sunLighting->groundDiffuseColor[0]);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundSpecularColor", &sunLighting->groundSpecularColor[0]);
 	glslShaders[GLSL_SHADER_CURRENT]->Disable();
 }
+

@@ -393,26 +393,17 @@ void UnitDrawerStateGLSL::DisableShaders(const CUnitDrawer*) { modelShaders[MODE
 
 
 void UnitDrawerStateGLSL::UpdateCurrentShaderSky(const CUnitDrawer* ud, const ISkyLight* skyLight) const {
-	const float3 modUnitSunColor = sunLighting->unitDiffuseColor * skyLight->GetLightIntensity();
-
 	// note: the NOSHADOW shaders do not care about shadow-density
 	for (unsigned int n = MODEL_SHADER_NOSHADOW_STANDARD; n <= MODEL_SHADER_SHADOWED_DEFERRED; n++) {
 		modelShaders[n]->Enable();
 		modelShaders[n]->SetUniform3fv(5, &skyLight->GetLightDir().x);
+		modelShaders[n]->SetUniform3fv(10, &sunLighting->unitAmbientColor[0]);
+		modelShaders[n]->SetUniform3fv(11, &sunLighting->unitDiffuseColor[0]);
 		modelShaders[n]->SetUniform1f(12, skyLight->GetUnitShadowDensity());
-		modelShaders[n]->SetUniform3fv(11, &modUnitSunColor.x);
 		modelShaders[n]->Disable();
 	}
 }
 
-void UnitDrawerStateGLSL::UpdateCurrentShaderSunLighting(const CUnitDrawer* ud) const {
-	for (unsigned int n = MODEL_SHADER_NOSHADOW_STANDARD; n <= MODEL_SHADER_SHADOWED_DEFERRED; n++) {
-		modelShaders[n]->Enable();
-		modelShaders[n]->SetUniform3fv(10, &sunLighting->unitAmbientColor[0]);
-		modelShaders[n]->SetUniform3fv(11, &sunLighting->unitDiffuseColor[0]);
-		modelShaders[n]->Disable();
-	}
-}
 
 void UnitDrawerStateGLSL::SetTeamColor(int team, const float2 alpha) const {
 	// NOTE: see UnitDrawerStateARB::SetTeamColor
