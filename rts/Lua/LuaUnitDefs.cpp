@@ -434,25 +434,27 @@ static int SoundsTable(lua_State* L, const void* data) {
 static int MoveDefTable(lua_State* L, const void* data)
 {
 	const unsigned int mdType = *static_cast<const unsigned int*>(data);
-	const MoveDef* md = NULL;
+	const MoveDef* md = nullptr;
 
 	lua_newtable(L);
-	if (mdType == -1U) {
+
+	if (mdType == -1u)
 		return 1;
-	}
-	if ((md = moveDefHandler->GetMoveDefByPathType(mdType)) == NULL) {
+
+	if ((md = moveDefHandler->GetMoveDefByPathType(mdType)) == nullptr)
 		return 1;
-	}
 
 	HSTR_PUSH_NUMBER(L, "id", md->pathType);
 
+	// TODO: remove after 102
 	switch (md->speedModClass) {
-		case MoveDef::Tank:  { HSTR_PUSH_STRING(L, "family", "tank");  HSTR_PUSH_STRING(L, "type", "ground"); break; }
-		case MoveDef::KBot:  { HSTR_PUSH_STRING(L, "family", "kbot");  HSTR_PUSH_STRING(L, "type", "ground"); break; }
+		case MoveDef::Tank:  { HSTR_PUSH_STRING(L, "family",  "tank"); HSTR_PUSH_STRING(L, "type", "ground"); break; }
+		case MoveDef::KBot:  { HSTR_PUSH_STRING(L, "family",  "kbot"); HSTR_PUSH_STRING(L, "type", "ground"); break; }
 		case MoveDef::Hover: { HSTR_PUSH_STRING(L, "family", "hover"); HSTR_PUSH_STRING(L, "type",  "hover"); break; }
-		case MoveDef::Ship:  { HSTR_PUSH_STRING(L, "family", "ship");  HSTR_PUSH_STRING(L, "type",   "ship"); break; }
+		case MoveDef::Ship:  { HSTR_PUSH_STRING(L, "family",  "ship"); HSTR_PUSH_STRING(L, "type",   "ship"); break; }
 	}
 
+	HSTR_PUSH_NUMBER(L, "smClass",       md->speedModClass);
 	HSTR_PUSH_NUMBER(L, "xsize",         md->xsize);
 	HSTR_PUSH_NUMBER(L, "zsize",         md->zsize);
 	HSTR_PUSH_NUMBER(L, "depth",         md->depth);
