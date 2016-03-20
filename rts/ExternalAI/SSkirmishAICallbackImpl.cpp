@@ -3657,7 +3657,7 @@ EXPORT(float) skirmishAiCallback_Unit_getRulesParamFloat(int skirmishAIId, int u
 	const CUnit* unit = getUnit(unitId);
 
 	if (unit == nullptr)
-		return 0.0f;
+		return defaultValue;
 
 	return getRulesParamFloatValueByName(unit->modParams, unitModParamLosMask(skirmishAIId, unit), rulesParamName, defaultValue);
 }
@@ -3666,7 +3666,7 @@ EXPORT(const char*) skirmishAiCallback_Unit_getRulesParamString(int skirmishAIId
 	const CUnit* unit = getUnit(unitId);
 
 	if (unit == nullptr)
-		return "";
+		return defaultValue;
 
 	return getRulesParamStringValueByName(unit->modParams, unitModParamLosMask(skirmishAIId, unit), rulesParamName, defaultValue);
 }
@@ -4179,7 +4179,7 @@ EXPORT(float) skirmishAiCallback_Team_getRulesParamFloat(int skirmishAIId, int t
 	const CTeam* team = getTeam(teamId);
 
 	if (team == nullptr)
-		return 0.0f;
+		return defaultValue;
 
 	return getRulesParamFloatValueByName(team->modParams, teamModParamLosMask(skirmishAIId, team), rulesParamName, defaultValue);
 }
@@ -4188,7 +4188,7 @@ EXPORT(const char*) skirmishAiCallback_Team_getRulesParamString(int skirmishAIId
 	const CTeam* team = getTeam(teamId);
 
 	if (team == nullptr)
-		return "";
+		return defaultValue;
 
 	return getRulesParamStringValueByName(team->modParams, teamModParamLosMask(skirmishAIId, team), rulesParamName, defaultValue);
 }
@@ -4446,7 +4446,7 @@ EXPORT(float) skirmishAiCallback_Feature_getRulesParamFloat(int skirmishAIId, in
 	const CFeature* feature = featureHandler->GetFeature(featureId);
 
 	if (feature == nullptr)
-		return 0.0f;
+		return defaultValue;
 
 	return getRulesParamFloatValueByName(feature->modParams, featureModParamLosMask(skirmishAIId, feature), rulesParamName, defaultValue);
 }
@@ -4455,7 +4455,7 @@ EXPORT(const char*) skirmishAiCallback_Feature_getRulesParamString(int skirmishA
 	const CFeature* feature = featureHandler->GetFeature(featureId);
 
 	if (feature == nullptr)
-		return "";
+		return defaultValue;
 
 	return getRulesParamStringValueByName(feature->modParams, featureModParamLosMask(skirmishAIId, feature), rulesParamName, defaultValue);
 }
