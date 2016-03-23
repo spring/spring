@@ -3,21 +3,19 @@
 
 #include "LuaMaterial.h"
 
-#include "LuaHashString.h"
 #include "LuaHandle.h"
 #include "LuaOpenGL.h"
 
 #include "Game/Camera.h"
+#include "Game/GlobalUnsynced.h" // randVector
 #include "Rendering/GlobalRendering.h" // drawFrame
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/ISky.h"
 #include "Sim/Misc/GlobalSynced.h" // simFrame
-#include "Sim/Objects/SolidObject.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
 
 #include <unordered_map>
-#include <vector>
 
 
 LuaMatHandler LuaMatHandler::handler;
@@ -204,6 +202,7 @@ void LuaMatUniforms::Print(const string& indent, bool isDeferred) const
 	LOG("%s  camPosLoc        = %i", indent.c_str(), camPos.loc);
 	LOG("%s  camDirLoc        = %i", indent.c_str(), camDir.loc);
 	LOG("%s  sunDirLoc        = %i", indent.c_str(), sunDir.loc);
+	LOG("%s  rndVecLoc        = %i", indent.c_str(), rndVec.loc);
 
 	LOG("%s  simFrameLoc      = %i", indent.c_str(), simFrame.loc);
 	LOG("%s  visFrameLoc      = %i", indent.c_str(), visFrame.loc);
@@ -461,6 +460,8 @@ int LuaMatUniforms::Compare(const LuaMatUniforms& a, const LuaMatUniforms& b)
 		return ((a.camDir.loc > b.camDir.loc) * 2 - 1);
 	if (a.sunDir.loc != b.sunDir.loc)
 		return ((a.sunDir.loc > b.sunDir.loc) * 2 - 1);
+	if (a.rndVec.loc != b.rndVec.loc)
+		return ((a.rndVec.loc > b.rndVec.loc) * 2 - 1);
 
 	if (a.simFrame.loc != b.simFrame.loc)
 		return ((a.simFrame.loc > b.simFrame.loc) * 2 - 1);
@@ -490,6 +491,7 @@ void LuaMatUniforms::Parse(lua_State* L, const int tableIdx)
 		{"cameradirloc",     &camDir.loc},
 		{"sunposloc",        &sunDir.loc},
 		{"sundirloc",        &sunDir.loc},
+		{"rndvecloc",        &rndVec.loc},
 
 		{"simframeloc",      &simFrame.loc},
 		{"visframeloc",      &visFrame.loc},
@@ -528,6 +530,7 @@ void LuaMatUniforms::Execute(const LuaMatUniforms& prev) const
 	camPos.Execute(camera->GetPos());
 	camDir.Execute(camera->GetDir());
 	sunDir.Execute(sky->GetLight()->GetLightDir());
+	rndVec.Execute(gu->RandVector());
 
 	simFrame.Execute(gs->frameNum);
 	visFrame.Execute(globalRendering->drawFrame);

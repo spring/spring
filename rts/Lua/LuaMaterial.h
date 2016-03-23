@@ -113,6 +113,7 @@ public:
 		camPos.loc        = -1;
 		camDir.loc        = -1;
 		sunDir.loc        = -1;
+		rndVec.loc        = -1;
 
 		simFrame.loc      = -1;
 		visFrame.loc      = -1;
@@ -176,6 +177,7 @@ public:
 	UniformVec<float3> camPos;
 	UniformVec<float3> camDir;
 	UniformVec<float3> sunDir;
+	UniformVec<float3> rndVec;
 
 	mutable UniformInt<         int> simFrame;
 	mutable UniformInt<unsigned int> visFrame;
