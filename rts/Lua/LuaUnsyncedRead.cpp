@@ -166,6 +166,7 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetPixelDir);
 
 	REGISTER_LUA_CFUNC(GetTimer);
+	REGISTER_LUA_CFUNC(GetFrameTimer);
 	REGISTER_LUA_CFUNC(DiffTimers);
 
 	REGISTER_LUA_CFUNC(GetSoundStreamTime);
@@ -1504,7 +1505,7 @@ int LuaUnsyncedRead::GetTeamOrigColor(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-int LuaUnsyncedRead::GetTimer(lua_State* L)
+static void PushTimer(lua_State* L, const spring_time &time)
 {
 	// use time since Spring's epoch in MILLIseconds because that
 	// is more likely to fit in a 32-bit pointer (on any platforms
@@ -1513,7 +1514,6 @@ int LuaUnsyncedRead::GetTimer(lua_State* L)
 	// single-precision floats better
 	//
 	// 4e9millis == 4e6s == 46.3 days until overflow
-	const spring_time time = spring_now();
 	const boost::uint64_t millis = time.toMilliSecs<boost::uint64_t>();
 
 	ptrdiff_t p = 0;
@@ -1525,6 +1525,22 @@ int LuaUnsyncedRead::GetTimer(lua_State* L)
 	}
 
 	lua_pushlightuserdata(L, reinterpret_cast<void*>(p));
+}
+
+int LuaUnsyncedRead::GetTimer(lua_State* L)
+{
+	const spring_time time = spring_now();
+
+	PushTimer(L, time);
+	return 1;
+}
+
+
+int LuaUnsyncedRead::GetFrameTimer(lua_State* L)
+{
+	const spring_time time = globalRendering->lastFrameStart;
+
+	PushTimer(L, time);
 	return 1;
 }
 
