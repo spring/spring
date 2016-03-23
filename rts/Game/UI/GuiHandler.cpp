@@ -3287,7 +3287,7 @@ static inline void DrawSensorRange(int radius, const float* color, const float3&
 }
 
 
-static void DrawUnitDefRanges(const UnitDef* unitdef, const float3 pos)
+static void DrawUnitDefRanges(const UnitDef* unitdef, const float3 pos, const CUnit* unit)
 {
 	// draw build range for immobile builders
 	if (unitdef->builder) {
@@ -3304,11 +3304,19 @@ static void DrawUnitDefRanges(const UnitDef* unitdef, const float3 pos)
 	}
 	// draw sensor and jammer ranges
 	if (unitdef->onoffable || unitdef->activateWhenBuilt) {
-		DrawSensorRange(unitdef->radarRadius   , cmdColors.rangeRadar,       pos);
-		DrawSensorRange(unitdef->sonarRadius   , cmdColors.rangeSonar,       pos);
-		DrawSensorRange(unitdef->seismicRadius , cmdColors.rangeSeismic,     pos);
-		DrawSensorRange(unitdef->jammerRadius  , cmdColors.rangeJammer,      pos);
-		DrawSensorRange(unitdef->sonarJamRadius, cmdColors.rangeSonarJammer, pos);
+		if (unit) {
+			DrawSensorRange(unit->radarRadius   , cmdColors.rangeRadar,       pos);
+			DrawSensorRange(unit->sonarRadius   , cmdColors.rangeSonar,       pos);
+			DrawSensorRange(unit->seismicRadius , cmdColors.rangeSeismic,     pos);
+			DrawSensorRange(unit->jammerRadius  , cmdColors.rangeJammer,      pos);
+			DrawSensorRange(unit->sonarJamRadius, cmdColors.rangeSonarJammer, pos);
+		} else {
+			DrawSensorRange(unitdef->radarRadius   , cmdColors.rangeRadar,       pos);
+			DrawSensorRange(unitdef->sonarRadius   , cmdColors.rangeSonar,       pos);
+			DrawSensorRange(unitdef->seismicRadius , cmdColors.rangeSeismic,     pos);
+			DrawSensorRange(unitdef->jammerRadius  , cmdColors.rangeJammer,      pos);
+			DrawSensorRange(unitdef->sonarJamRadius, cmdColors.rangeSonarJammer, pos);
+		}
 	}
 	// draw self destruct and damage distance
 	if (unitdef->kamikazeDist > 0) {
@@ -3588,7 +3596,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 				unitdef = unitdef->decoyDef;
 			}
 
-			DrawUnitDefRanges(unitdef, unit->pos);
+			DrawUnitDefRanges(unitdef, unit->pos, unit);
 
 			// draw weapon range
 			if (unitdef->maxWeaponRange > 0) {
@@ -3689,7 +3697,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 				for (auto bpi = buildInfos.cbegin(); bpi != buildInfos.cend(); ++bpi) {
 					const float3& buildPos = bpi->pos;
 
-					DrawUnitDefRanges(unitdef, buildPos);
+					DrawUnitDefRanges(unitdef, buildPos, nullptr);
 
 					// draw weapon range
 					if (!unitdef->weapons.empty()) {
