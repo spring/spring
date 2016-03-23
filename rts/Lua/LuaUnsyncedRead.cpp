@@ -1505,7 +1505,7 @@ int LuaUnsyncedRead::GetTeamOrigColor(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-static void PushTimer(lua_State* L, const spring_time &time)
+static void PushTimer(lua_State* L, const spring_time& time)
 {
 	// use time since Spring's epoch in MILLIseconds because that
 	// is more likely to fit in a 32-bit pointer (on any platforms
@@ -1529,18 +1529,17 @@ static void PushTimer(lua_State* L, const spring_time &time)
 
 int LuaUnsyncedRead::GetTimer(lua_State* L)
 {
-	const spring_time time = spring_now();
-
-	PushTimer(L, time);
+	PushTimer(L, spring_now());
 	return 1;
 }
 
-
 int LuaUnsyncedRead::GetFrameTimer(lua_State* L)
 {
-	const spring_time time = globalRendering->lastFrameStart;
-
-	PushTimer(L, time);
+	if (luaL_optboolean(L, 1, false)) {
+		PushTimer(L, game->lastFrameTime);
+	} else {
+		PushTimer(L, globalRendering->lastFrameStart);
+	}
 	return 1;
 }
 
