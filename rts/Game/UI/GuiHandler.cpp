@@ -2228,7 +2228,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			if (dist2 > (globalRendering->viewRange * 1.4f - 300))
 				return defaultRet;
 
-			if (unit) {
+			if (unit != nullptr) {
 				// clicked on unit
 				c.PushParam(unit->id);
 			} else {
@@ -2349,7 +2349,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 				if (dist2 > (globalRendering->viewRange * 1.4f - 300))
 					return defaultRet;
 
-				if (unit) {
+				if (unit != nullptr) {
 					// clicked on unit
 					c.PushParam(unit->id);
 				} else {
@@ -2431,7 +2431,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 		const CFeature* feature = nullptr;
 		TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, NULL, unit, feature, true);
 
-		if (unit) {
+		if (unit != nullptr) {
 			other.def = unit->unitDef;
 			other.pos = unit->pos;
 			other.buildFacing = unit->buildFacing;
@@ -3304,7 +3304,7 @@ static void DrawUnitDefRanges(const UnitDef* unitdef, const float3 pos, const CU
 	}
 	// draw sensor and jammer ranges
 	if (unitdef->onoffable || unitdef->activateWhenBuilt) {
-		if (unit) {
+		if (unit != nullptr) {
 			DrawSensorRange(unit->radarRadius   , cmdColors.rangeRadar,       pos);
 			DrawSensorRange(unit->sonarRadius   , cmdColors.rangeSonar,       pos);
 			DrawSensorRange(unit->seismicRadius , cmdColors.rangeSeismic,     pos);
