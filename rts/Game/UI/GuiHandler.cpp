@@ -3304,7 +3304,7 @@ static void DrawUnitDefRanges(const UnitDef* unitdef, const float3 pos, const CU
 	}
 	// draw sensor and jammer ranges
 	if (unitdef->onoffable || unitdef->activateWhenBuilt) {
-		if (unit != nullptr) {
+		if (unit != nullptr && unitdef == unit->unitDef) { // test if it's a decoy
 			DrawSensorRange(unit->radarRadius   , cmdColors.rangeRadar,       pos);
 			DrawSensorRange(unit->sonarRadius   , cmdColors.rangeSonar,       pos);
 			DrawSensorRange(unit->seismicRadius , cmdColors.rangeSeismic,     pos);
