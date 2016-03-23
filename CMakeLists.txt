@@ -100,9 +100,7 @@ else  (CMAKE_SIZEOF_VOID_P EQUAL 8)
 	set(MARCH_BITS 32 INTERNAL)
 endif (CMAKE_SIZEOF_VOID_P EQUAL 8)
 
-If    (NOT DEFINED BUILD_BITS)
-	set(BUILD_BITS ${MARCH_BITS} CACHE STRING "Target arch machine type")
-endif (NOT DEFINED BUILD_BITS)
+set(BUILD_BITS ${MARCH_BITS} CACHE STRING "Target arch machine type")
 
 
 ### Install paths (relative to CMAKE_INSTALL_PREFIX)
