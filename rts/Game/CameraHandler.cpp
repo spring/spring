@@ -196,7 +196,7 @@ void CCameraHandler::UpdateTransition()
 	const float3 wantedCamPos = currCamCtrl->GetPos();
 	const float3 wantedCamRot = currCamCtrl->GetRot();
 
-	const float curTime = spring_now().toMilliSecsf();
+	const float curTime = globalRendering->lastFrameStart.toMilliSecsf();
 
 	if (curTime >= cameraTimeEnd) {
 		camera->SetPos(wantedCamPos);
@@ -222,7 +222,7 @@ void CCameraHandler::CameraTransition(float nsecs)
 	nsecs = std::max(nsecs, 0.0f) * cameraTimeFactor;
 
 	// calculate when transition should end based on duration in seconds
-	cameraTimeStart = spring_now().toMilliSecsf();
+	cameraTimeStart = globalRendering->lastFrameStart.toMilliSecsf();
 	cameraTimeEnd   = cameraTimeStart + nsecs * 1000.0f;
 
 	startCam.pos = camera->GetPos();
