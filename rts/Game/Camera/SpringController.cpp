@@ -30,9 +30,9 @@ CSpringController::CSpringController()
 , curDist(float3(mapDims.mapx * 0.5f, 0.0f, mapDims.mapy * 0.55f).Length2D() * 1.5f * SQUARE_SIZE)
 , maxDist(std::max(mapDims.mapx, mapDims.mapy) * SQUARE_SIZE * 1.333f)
 , oldDist(0.f)
+, zoomBack(false)
 , cursorZoomIn(configHandler->GetBool("CamSpringZoomInToMousePos"))
 , cursorZoomOut(configHandler->GetBool("CamSpringZoomOutFromMousePos"))
-, zoomBack(false)
 {
 	enabled = configHandler->GetBool("CamSpringEnabled");
 	Update();
@@ -301,5 +301,6 @@ bool CSpringController::SetState(const StateMap& sm)
 	SetStateFloat(sm, "rx",   rot.x);
 	SetStateFloat(sm, "ry",   rot.y);
 	SetStateFloat(sm, "rz",   rot.z);
+	camera->SetRot(float3(rot.x, GetAzimuth(), rot.z));
 	return true;
 }
