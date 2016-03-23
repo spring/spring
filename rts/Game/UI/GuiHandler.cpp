@@ -3287,7 +3287,7 @@ static inline void DrawSensorRange(int radius, const float* color, const float3&
 }
 
 
-static void DrawUnitDefRanges(const UnitDef* unitdef, const float3 pos, const CUnit* unit)
+static void DrawUnitDefRanges(const CUnit* unit, const UnitDef* unitdef, const float3 pos)
 {
 	// draw build range for immobile builders
 	if (unitdef->builder) {
@@ -3596,7 +3596,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 				unitdef = unitdef->decoyDef;
 			}
 
-			DrawUnitDefRanges(unitdef, unit->pos, unit);
+			DrawUnitDefRanges(unit, unitdef, unit->pos);
 
 			// draw weapon range
 			if (unitdef->maxWeaponRange > 0) {
@@ -3697,7 +3697,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 				for (auto bpi = buildInfos.cbegin(); bpi != buildInfos.cend(); ++bpi) {
 					const float3& buildPos = bpi->pos;
 
-					DrawUnitDefRanges(unitdef, buildPos, nullptr);
+					DrawUnitDefRanges(nullptr, unitdef, buildPos);
 
 					// draw weapon range
 					if (!unitdef->weapons.empty()) {
