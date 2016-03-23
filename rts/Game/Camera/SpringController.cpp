@@ -43,7 +43,7 @@ void CSpringController::KeyMove(float3 move)
 {
 	if (KeyInput::GetKeyModState(KMOD_ALT)) {
 		move *= math::sqrt(move.z);
-		camera->SetRotY(MoveAzimuth(move.x));
+		MoveAzimuth(move.x);
 		Update();
 		return;
 	}
@@ -60,8 +60,8 @@ void CSpringController::KeyMove(float3 move)
 void CSpringController::MouseMove(float3 move)
 {
 	if (KeyInput::GetKeyModState(KMOD_ALT)) {
-		camera->SetRotY(MoveAzimuth(move.x * 0.01f));
-		camera->SetRotX(rot.x = Clamp(rot.x + (move.y * move.z * 0.01f), PI * 0.51f, PI * 0.99f));
+		MoveAzimuth(move.x * 0.01f);
+		rot.x = Clamp(rot.x + (move.y * move.z * 0.01f), PI * 0.51f, PI * 0.99f);
 		Update();
 		return;
 	}
@@ -84,7 +84,7 @@ void CSpringController::ScreenEdgeMove(float3 move)
 	if (doRotate && aboveMin && belowMax) {
 		// rotate camera when mouse touches top screen borders
 		move *= (1 + KeyInput::GetKeyModState(KMOD_SHIFT) * 3);
-		camera->SetRotY(MoveAzimuth(move.x * 0.75f));
+		MoveAzimuth(move.x * 0.75f);
 		move.x = 0.0f;
 	}
 
@@ -100,7 +100,7 @@ void CSpringController::MouseWheelMove(float move)
 
 	// tilt the camera if CTRL is pressed, otherwise zoom
 	if (KeyInput::GetKeyModState(KMOD_CTRL)) {
-		camera->SetRotX(rot.x = Clamp(rot.x - (move * shiftSpeed * 0.01f), PI * 0.51f, PI * 0.99f));
+		rot.x = Clamp(rot.x - (move * shiftSpeed * 0.01f), PI * 0.51f, PI * 0.99f);
 	} else {
 		const float3 curCamPos = GetPos();
 		const float3 curCamDir = cursorZoomIn? mouse->dir: dir;
@@ -213,6 +213,7 @@ void CSpringController::Update()
 	pos.ClampInMap();
 
 	rot.x = Clamp(rot.x, PI * 0.51f, PI * 0.99f);
+	camera->SetRot(float3(rot.x, GetAzimuth(), rot.z));
 	dir = camera->GetDir();
 
 	curDist = Clamp(curDist, 20.f, maxDist);
@@ -301,6 +302,5 @@ bool CSpringController::SetState(const StateMap& sm)
 	SetStateFloat(sm, "rx",   rot.x);
 	SetStateFloat(sm, "ry",   rot.y);
 	SetStateFloat(sm, "rz",   rot.z);
-	camera->SetRot(float3(rot.x, GetAzimuth(), rot.z));
 	return true;
 }

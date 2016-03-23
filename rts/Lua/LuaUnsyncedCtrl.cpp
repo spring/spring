@@ -129,7 +129,6 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetSoundStreamVolume);
 	REGISTER_LUA_CFUNC(SetSoundEffectParams);
 
-	REGISTER_LUA_CFUNC(SetCameraTransition);
 	REGISTER_LUA_CFUNC(SetCameraState);
 	REGISTER_LUA_CFUNC(SetCameraTarget);
 
@@ -785,6 +784,7 @@ int LuaUnsyncedCtrl::SetCameraTarget(lua_State* L)
 	if (mouse == nullptr)
 		return 0;
 
+
 	const float3 pos(luaL_checkfloat(L, 1),
 	                 luaL_checkfloat(L, 2),
 	                 luaL_checkfloat(L, 3));
@@ -798,16 +798,6 @@ int LuaUnsyncedCtrl::SetCameraTarget(lua_State* L)
 }
 
 
-int LuaUnsyncedCtrl::SetCameraTransition(lua_State* L)
-{
-	const float camTime = luaL_checkfloat(L, 1);
-
-	camHandler->CameraTransition(camTime);
-
-	return 0;
-}
-
-
 int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 {
 	// ??
@@ -816,6 +806,8 @@ int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 
 	if (!lua_istable(L, 1))
 		luaL_error(L, "Incorrect arguments to SetCameraState(table, camTime)");
+
+	const float camTime = luaL_checkfloat(L, 2);
 
 	CCameraController::StateMap camState;
 
@@ -832,6 +824,7 @@ int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 		}
 	}
 
+	camHandler->CameraTransition(camTime);
 	if (!CLuaHandle::GetHandleSynced(L)) {
 		lua_pushboolean(L, camHandler->SetState(camState));
 		return 1;

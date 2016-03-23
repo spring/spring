@@ -98,7 +98,7 @@ void CFreeController::Update()
 		prevAvel = avel;
 		return;
 	}
-
+	camera->SetRot(rot);
 	// safeties
 	velTime  = max(0.1f,  velTime);
 	avelTime = max(0.1f, avelTime);
@@ -439,7 +439,6 @@ bool CFreeController::SetState(const StateMap& sm)
 	SetStateFloat(sm, "rz", rot.z);
 	rot.x = fastmath::HALFPI - rot.x;
 	rot.y = fastmath::PI - rot.y;
-	camera->SetRot(rot);
 
 	SetStateFloat(sm, "vx", prevVel.x);
 	SetStateFloat(sm, "vy", prevVel.y);
