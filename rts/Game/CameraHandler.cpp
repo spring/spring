@@ -219,8 +219,6 @@ void CCameraHandler::UpdateTransition()
 
 void CCameraHandler::CameraTransition(float nsecs)
 {
-	UpdateTransition(); // prevents camera stutter when multithreading
-
 	nsecs = std::max(nsecs, 0.0f) * cameraTimeFactor;
 
 	// calculate when transition should end based on duration in seconds
