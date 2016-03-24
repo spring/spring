@@ -20,7 +20,7 @@ Lua:
  - extend builtin uniform binding for custom Lua materials
    SEE "fix LuaMaterial uniform management" BELOW FOR THE
    LIST OF NEW LOCATION KEYS THAT ARE RECOGNIZED AS OF 102
- - Add Spring.GetFrameTimer() to get a timer for the start of the frame
+ - Add Spring.GetFrameTimer(bool synced) to get a timer for the start of the frame
    this should give better results for camera interpolations.
 
 Save/Load:
