@@ -12,6 +12,7 @@
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/ShadowHandler.h"
+#include "Sim/Misc/GlobalConstants.h" // MAX_TEAMS
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
@@ -20,6 +21,7 @@
 #include "System/Util.h"
 
 #define SET_CUSTOM_SHADER_TEAM_COLOR
+#define USE_OBJECT_RENDERING_BUCKETS
 
 // applies to both units and features
 CONFIG(bool, AllowDeferredModelRendering).defaultValue(false).safemodeValue(false);
@@ -101,6 +103,10 @@ static const DECL_ARRAY(LuaMatType,  alphaMats, 2) = {LUAMAT_ALPHA, LUAMAT_ALPHA
 
 static const DECL_ARRAY(LuaMatShader::Pass, shaderPasses, 2) = {LuaMatShader::LUASHADER_PASS_FWD, LuaMatShader::LUASHADER_PASS_DFR};
 
+#ifdef USE_OBJECT_RENDERING_BUCKETS
+static DECL_ARRAY(std::vector<const CSolidObject*>, objectBuckets, MAX_TEAMS);
+#endif
+
 
 
 static float GetLODFloat(const std::string& name)
@@ -177,7 +183,7 @@ static void ResetShadowFeatureDrawState(unsigned int modelType, bool deferredPas
 
 static const void SetObjectTeamColorNoType(const CSolidObject* o, const LuaMatShader* s, LuaObjectLODMaterial* m, const float2) {
 	// material without any shader for the current (fwd/def) pass
-	assert((!s->IsCustomType() && !s->IsEngineType()) || (LuaObjectDrawer::GetBinObjTeam() == o->team));
+	assert((!s->IsCustomType() && !s->IsEngineType()) || (o->team == LuaObjectDrawer::GetBinObjTeam()));
 }
 
 static const void SetObjectTeamColorCustom(
@@ -374,8 +380,33 @@ const LuaMaterial* LuaObjectDrawer::DrawMaterialBin(
 	if (!binShader->ValidForPass(shaderPasses[deferredPass]))
 		return currBin;
 
-	// reset; might also want to sort
+	// reset; also sort objects by team
 	binObjTeam = -1;
+
+	#ifdef USE_OBJECT_RENDERING_BUCKETS
+	int minObjTeam = MAX_TEAMS;
+	int maxObjTeam = 0;
+
+	for (const CSolidObject* obj: objects) {
+		objectBuckets[obj->team].push_back(obj);
+
+		minObjTeam = std::min(minObjTeam, obj->team);
+		maxObjTeam = std::max(maxObjTeam, obj->team);
+	}
+
+	for (int objTeam = minObjTeam; objTeam <= maxObjTeam; objTeam++) {
+		for (const CSolidObject* obj: objectBuckets[objTeam]) {
+			const LuaObjectMaterialData* matData = obj->GetLuaMaterialData();
+			const LuaObjectLODMaterial* lodMat = matData->GetLuaLODMaterial(matType);
+
+			DrawBinObject(obj, objType, lodMat, binShader,  alphaMatBin, true, false);
+		}
+
+		objectBuckets[objTeam].clear();
+		objectBuckets[objTeam].reserve(128);
+	}
+
+	#else
 
 	for (const CSolidObject* obj: objects) {
 		const LuaObjectMaterialData* matData = obj->GetLuaMaterialData();
@@ -383,6 +414,7 @@ const LuaMaterial* LuaObjectDrawer::DrawMaterialBin(
 
 		DrawBinObject(obj, objType, lodMat, binShader,  alphaMatBin, true, false);
 	}
+	#endif
 
 	return currBin;
 }
