@@ -1442,6 +1442,28 @@ public:
 
 
 
+class GroundDetailActionExecutor : public IUnsyncedActionExecutor {
+public:
+    GroundDetailActionExecutor() : IUnsyncedActionExecutor("GroundDetail",
+            "Set the level of ground detail") {}
+
+    bool Execute(const UnsyncedAction& action) const {
+        int detail;
+		if (!(action.GetArgs()).empty()) {
+			detail = atoi((action.GetArgs()).c_str());
+		} else {
+			LOG_L(L_WARNING, "/%s: missing argument", GetCommand().c_str());
+			return false;
+		}
+
+        readMap->GetGroundDrawer()->SetDetail(detail);
+        return true;
+    }
+
+};
+
+
+
 class MoreTreesActionExecutor : public IUnsyncedActionExecutor {
 public:
 	MoreTreesActionExecutor() : IUnsyncedActionExecutor("MoreTrees",
@@ -3109,6 +3131,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new FullscreenActionExecutor());
 	AddActionExecutor(new IncreaseViewRadiusActionExecutor());
 	AddActionExecutor(new DecreaseViewRadiusActionExecutor());
+	AddActionExecutor(new GroundDetailActionExecutor());
 	AddActionExecutor(new MoreTreesActionExecutor());
 	AddActionExecutor(new LessTreesActionExecutor());
 	AddActionExecutor(new MoreCloudsActionExecutor());
