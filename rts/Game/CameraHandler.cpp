@@ -150,6 +150,11 @@ void CCameraHandler::UpdateController(CPlayer* player, bool fpsMode, bool fsEdge
 	CCameraController& cc = GetCurrentController();
 	FPSUnitController& fpsCon = player->fpsController;
 
+	// We have to update transition both before and after updating the controller:
+	// before: if the controller makes a new begincam, it needs to take into account previous transitions
+	// after: apply changes made by the controller with 0 time transition.
+	camHandler->UpdateTransition();
+
 	if (fpsCon.oldDCpos != ZeroVector) {
 		cc.SetPos(fpsCon.oldDCpos);
 		fpsCon.oldDCpos = ZeroVector;
@@ -188,6 +193,8 @@ void CCameraHandler::UpdateController(CPlayer* player, bool fpsMode, bool fsEdge
 	}
 
 	cc.Update();
+
+	camHandler->UpdateTransition();
 }
 
 void CCameraHandler::UpdateTransition()
