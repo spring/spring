@@ -106,7 +106,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitLoadParams& cparams)
 		} else if (ud->IsAirUnit()) {
 			// all other aircraft; coupled to HoverAirMoveType
 			new CMobileCAI(unit);
-		} else if (ud->IsGroundUnit()) {
+		} else if (ud->IsGroundUnit() || ud->IsTransportUnit()) {
 			new CMobileCAI(unit);
 		} else {
 			new CCommandAI(unit);
