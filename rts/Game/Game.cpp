@@ -1028,15 +1028,15 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 
 	numDrawFrames++;
 	globalRendering->drawFrame = std::max(1U, globalRendering->drawFrame + 1);
-
+	globalRendering->lastFrameStart = currentTime;
 	// Update the interpolation coefficient (globalRendering->timeOffset)
 	if (!gs->paused && !IsLagging() && gs->frameNum > 1 && !videoCapturing->IsCapturing()) {
-		globalRendering->lastFrameStart = currentTime;
 		globalRendering->weightedSpeedFactor = 0.001f * gu->simFPS;
-		globalRendering->timeOffset = (currentTime - lastSimFrameTime).toMilliSecsf() * globalRendering->weightedSpeedFactor;
+		globalRendering->timeOffset = (currentTime - lastFrameTime).toMilliSecsf() * globalRendering->weightedSpeedFactor;
 	} else {
 		globalRendering->timeOffset = 0;
 		lastSimFrameTime = currentTime;
+		lastFrameTime = currentTime;
 	}
 
 	if ((currentTime - frameStartTime).toMilliSecsf() >= 1000.0f) {
@@ -1054,7 +1054,6 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 
 	// set camera
 	camHandler->UpdateController(playerHandler->Player(gu->myPlayerNum), gu->fpsMode, fullscreenEdgeMove, windowedEdgeMove);
-	camHandler->UpdateTransition();
 
 	unitDrawer->Update();
 	lineDrawer.UpdateLineStipple();

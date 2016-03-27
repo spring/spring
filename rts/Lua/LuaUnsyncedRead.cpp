@@ -1225,8 +1225,10 @@ int LuaUnsyncedRead::GetLosViewColors(lua_State* L)
 
 int LuaUnsyncedRead::GetCameraNames(lua_State* L)
 {
-	lua_newtable(L);
-	const std::vector<CCameraController*>& cc = camHandler->GetAvailableControllers();
+	const std::vector<CCameraController*>& cc = camHandler->GetControllers();
+
+	lua_createtable(L, cc.size(), 0);
+
 	for (size_t i = 0; i < cc.size(); ++i) {
 		lua_pushsstring(L, cc[i]->GetName());
 		lua_pushnumber(L, i);
@@ -1236,19 +1238,18 @@ int LuaUnsyncedRead::GetCameraNames(lua_State* L)
 	return 1;
 }
 
-
 int LuaUnsyncedRead::GetCameraState(lua_State* L)
 {
 	lua_newtable(L);
 
 	lua_pushliteral(L, "name");
-	lua_pushsstring(L, camHandler->GetCurrentControllerName());
+	lua_pushsstring(L, (camHandler->GetCurrentController()).GetName());
 	lua_rawset(L, -3);
 
 	CCameraController::StateMap camState;
-	CCameraController::StateMap::const_iterator it;
 	camHandler->GetState(camState);
-	for (it = camState.begin(); it != camState.end(); ++it) {
+
+	for (auto it = camState.cbegin(); it != camState.cend(); ++it) {
 		lua_pushsstring(L, it->first);
 		lua_pushnumber(L, it->second);
 		lua_rawset(L, -3);
@@ -1266,7 +1267,6 @@ int LuaUnsyncedRead::GetCameraPosition(lua_State* L)
 	return 3;
 }
 
-
 int LuaUnsyncedRead::GetCameraDirection(lua_State* L)
 {
 	lua_pushnumber(L, camera->GetDir().x);
@@ -1275,14 +1275,12 @@ int LuaUnsyncedRead::GetCameraDirection(lua_State* L)
 	return 3;
 }
 
-
 int LuaUnsyncedRead::GetCameraFOV(lua_State* L)
 {
 	lua_pushnumber(L, camera->GetVFOV());
 	lua_pushnumber(L, camera->GetHFOV());
 	return 2;
 }
-
 
 int LuaUnsyncedRead::GetCameraVectors(lua_State* L)
 {

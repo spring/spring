@@ -99,26 +99,6 @@ class LuaMatTexSet {
 
 struct LuaMatUniforms {
 public:
-	LuaMatUniforms() {
-		viewMatrix.loc    = -1;
-		projMatrix.loc    = -1;
-		viprMatrix.loc    = -1;
-		viewMatrixInv.loc = -1;
-		projMatrixInv.loc = -1;
-		viprMatrixInv.loc = -1;
-
-		shadowMatrix.loc  = -1;
-		shadowParams.loc  = -1;
-
-		camPos.loc        = -1;
-		camDir.loc        = -1;
-		sunDir.loc        = -1;
-		rndVec.loc        = -1;
-
-		simFrame.loc      = -1;
-		visFrame.loc      = -1;
-	}
-
 	void Print(const string& indent, bool isDeferred) const;
 	void Parse(lua_State* L, const int tableIdx);
 	void Execute(const LuaMatUniforms& prev) const;
@@ -128,6 +108,7 @@ public:
 private:
 	template<typename Type> struct UniformMat {
 	public:
+		UniformMat(): loc(-1) {}
 		bool CanExec() const { return (loc != -1); }
 		bool Execute(const Type& val) const { return (CanExec() && RawExec(val)); }
 		bool RawExec(const Type& val) const { glUniformMatrix4fv(loc, 1, GL_FALSE, val); return true; }
@@ -137,6 +118,7 @@ private:
 
 	template<typename Type, size_t Size = sizeof(Type) / sizeof(float)> struct UniformVec {
 	public:
+		UniformVec(): loc(-1) {}
 		bool CanExec() const { return (loc != -1); }
 		bool Execute(const Type& val) const { return (CanExec() && RawExec(val)); }
 		bool RawExec(const Type& val) const {
@@ -152,10 +134,10 @@ private:
 
 	template<typename Type> struct UniformInt {
 	public:
+		UniformInt(): loc(-1), cur(Type(0)), prv(Type(0)) {}
 		bool CanExec() const { return (loc != -1 && cur != prv); }
 		bool Execute(const Type val) { cur = val; return (CanExec() && RawExec(val)); }
 		bool RawExec(const Type val) { glUniform1i(loc, prv = val); return true; }
-
 	public:
 		GLint loc;
 
