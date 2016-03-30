@@ -387,7 +387,7 @@ void CGroundMoveType::StartMovingRaw(const float3 moveGoalPos, float moveGoalRad
 	currWayPoint = goalPos;
 	nextWayPoint = goalPos;
 
-	atGoal = ((moveGoalPos * XZVector) == (owner->pos * XZVector));
+	atGoal = moveGoalPos.SqDistance2D(owner->pos) < moveGoalRadius;
 	atEndOfPath = false;
 
 	useMainHeading = false;
@@ -411,7 +411,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadius) {
 	goalPos = moveGoalPos * XZVector;
 	goalRadius = moveGoalRadius;
 
-	atGoal = ((moveGoalPos * XZVector) == (owner->pos * XZVector));
+	atGoal = moveGoalPos.SqDistance2D(owner->pos) < moveGoalRadius;
 	atEndOfPath = false;
 
 	useMainHeading = false;
