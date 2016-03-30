@@ -374,12 +374,7 @@ if(NOT MSVC)
 
 
 	### CompileTime Warnings
-	set(COMMON_WARNINGS "")
-	if    (NOT OPENMP)
-		# disable warnings about unknown pragmas because of:
-		# "#pragma omp parallel for *"
-		set(COMMON_WARNINGS "${COMMON_WARNINGS} -Wno-unknown-pragmas")
-	endif (NOT OPENMP)
+	set(COMMON_WARNINGS "${COMMON_WARNINGS} -Wformat -Wformat-security")
 
 	option(DEBUG_MAX_WARNINGS "Enable verbose compile" ${DEBUG_BUILD})
 	if    (DEBUG_MAX_WARNINGS)
