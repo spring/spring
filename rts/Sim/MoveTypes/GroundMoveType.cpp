@@ -449,10 +449,8 @@ void CGroundMoveType::StopMoving(bool callScript, bool hardStop) {
 
 	LOG_L(L_DEBUG, "StopMoving: stopping engine for unit %i", owner->id);
 
-	if (!atGoal) {
-		currWayPoint = Here();
-		goalPos = currWayPoint;
-	}
+	currWayPoint = Here();
+	goalPos = currWayPoint;
 
 	// this gets called under a variety of conditions (see MobileCAI)
 	// the most common case is a CMD_STOP being issued which means no

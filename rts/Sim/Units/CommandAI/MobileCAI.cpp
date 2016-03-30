@@ -412,11 +412,12 @@ void CMobileCAI::ExecuteMove(Command &c)
 {
 	const float3 cmdPos = c.GetPos(0);
 
-	SetGoal(cmdPos, owner->pos);
-
-	if ((owner->pos - owner->moveType->goalPos).SqLength2D() < cancelDistance || owner->moveType->progressState == AMoveType::Failed) {
+	if ((owner->pos - cmdPos).SqLength2D() < cancelDistance || owner->moveType->progressState == AMoveType::Failed) {
 		FinishCommand();
+	} else {
+		SetGoal(cmdPos, owner->pos);
 	}
+
 	return;
 }
 
@@ -442,11 +443,10 @@ void CMobileCAI::ExecuteLoadOnto(Command &c) {
 	if (unit == NULL)
 		return;
 
-	if ((unit->pos - owner->moveType->goalPos).SqLength2D() > cancelDistance) {
-		SetGoal(unit->pos, owner->pos);
-	}
 	if ((owner->pos - owner->moveType->goalPos).SqLength2D() < cancelDistance) {
 		StopMove();
+	} else {
+		SetGoal(unit->pos, owner->pos);
 	}
 
 	return;
@@ -531,7 +531,6 @@ void CMobileCAI::ExecuteFight(Command& c)
 	if (c.params.size() >= 6) {
 		pos = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
 	}
-	SetGoal(pos, owner->pos);
 
 	if (owner->unitDef->canAttack && owner->fireState >= FIRESTATE_FIREATWILL && !owner->weapons.empty()) {
 		const float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
@@ -562,6 +561,8 @@ void CMobileCAI::ExecuteFight(Command& c)
 			|| (owner->moveType->progressState == AMoveType::Failed)){
 		FinishCommand();
 	}
+
+	SetGoal(pos, owner->pos);
 }
 
 bool CMobileCAI::IsValidTarget(const CUnit* enemy) const {
