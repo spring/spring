@@ -22,6 +22,7 @@ Lua:
    LIST OF NEW LOCATION KEYS THAT ARE RECOGNIZED AS OF 102
  - Add Spring.GetFrameTimer(bool synced) to get a timer for the start of the frame
    this should give better results for camera interpolations.
+ - Add an optional weaponNum argument to SetUnitTarget.
 
 Save/Load:
  ! remove UseCREGSaveLoad and add /LuaSave which generates .slsf files
