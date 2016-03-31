@@ -42,6 +42,7 @@ CallInsList = {
   "UnitCreated",
   "UnitFinished",
   "UnitFromFactory",
+  "UnitReverseBuilt",
   "UnitDestroyed",
   "RenderUnitDestroyed",
   "UnitTaken",

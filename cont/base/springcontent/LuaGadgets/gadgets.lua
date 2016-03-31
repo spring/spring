@@ -1313,6 +1313,14 @@ function gadgetHandler:UnitFromFactory(
 end
 
 
+function gadgetHandler:UnitReverseBuilt(unitID, unitDefID, unitTeam)
+  for _,g in r_ipairs(self.UnitReverseBuiltList) do
+    g:UnitReverseBuilt(unitID, unitDefID, unitTeam)
+  end
+  return
+end
+
+
 function gadgetHandler:UnitDestroyed(
   unitID,     unitDefID,     unitTeam,
   attackerID, attackerDefID, attackerTeam
