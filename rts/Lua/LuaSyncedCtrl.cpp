@@ -2140,7 +2140,7 @@ int LuaSyncedCtrl::SetUnitTarget(lua_State* L)
 		                 luaL_checkfloat(L, 4));
 		const bool manualFire = luaL_optboolean(L, 5, false);
 		const bool userTarget = luaL_optboolean(L, 6, false);
-		const int weaponNum = luaL_optint(L, 7, -1);
+		const int weaponNum = luaL_optint(L, 7, 0) - LUA_WEAPON_BASE_INDEX;
 		bool ret = false;
 		if (weaponNum < 0) {
 			ret = unit->AttackGround(pos, userTarget, manualFire);
@@ -2162,7 +2162,7 @@ int LuaSyncedCtrl::SetUnitTarget(lua_State* L)
 
 		const bool manualFire = luaL_optboolean(L, 3, false);
 		const bool userTarget = luaL_optboolean(L, 4, false);
-		const int weaponNum = luaL_optint(L, 5, -1);
+		const int weaponNum = luaL_optint(L, 5, -1) - LUA_WEAPON_BASE_INDEX;
 		bool ret = false;
 		if (weaponNum < 0) {
 			ret = unit->AttackUnit(target, userTarget, manualFire);
