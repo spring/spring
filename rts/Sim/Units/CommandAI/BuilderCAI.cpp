@@ -315,7 +315,7 @@ bool CBuilderCAI::MoveInBuildRange(const float3& objPos, float objRadius, const 
 	if (owner->unitDef->IsAirUnit()) {
 		StopMoveAndKeepPointing(objPos, objRadius, false);
 	} else {
-		StopMoveAndKeepPointing(owner->moveType->goalPos, goalRadius, false);
+		StopMoveAndKeepPointing(owner->moveType->goalPos, GetBuildRange(objRadius) * 0.9f, false);
 	}
 
 	return true;
