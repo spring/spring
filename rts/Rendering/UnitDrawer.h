@@ -3,9 +3,9 @@
 #ifndef UNIT_DRAWER_H
 #define UNIT_DRAWER_H
 
+#include <array>
 #include <vector>
-#include <string>
-#include <map>
+#include <unordered_map>
 
 #include "Rendering/GL/LightHandler.h"
 #include "System/EventClient.h"
@@ -90,10 +90,10 @@ public:
 	void SetDrawForwardPass(bool b) { drawForward = b; }
 	void SetDrawDeferredPass(bool b) { drawDeferred = b; }
 
+	static void DrawUnitModel(const CUnit* unit, bool noLuaCall);
+	static void DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool noLuaCall);
+	static void DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCall);
 	// note: make these static?
-	void DrawUnitModel(const CUnit* unit, bool noLuaCall);
-	void DrawUnitModelBeingBuilt(const CUnit* unit, bool noLuaCall);
-
 	void DrawUnitNoTrans(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
 	void DrawUnit(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
 
@@ -114,9 +114,9 @@ public:
 
 
 	void SetupOpaqueDrawing(bool deferredPass);
-	void ResetOpaqueDrawing(bool deferredPass) const;
+	void ResetOpaqueDrawing(bool deferredPass);
 	void SetupAlphaDrawing(bool deferredPass);
-	void ResetAlphaDrawing(bool deferredPass) const;
+	void ResetAlphaDrawing(bool deferredPass);
 
 
 	void SetUnitDrawDist(float dist);
@@ -125,12 +125,8 @@ public:
 	bool ShowUnitBuildSquare(const BuildInfo& buildInfo);
 	bool ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command>& commands);
 
-	void CreateSpecularFace(unsigned int glType, int size, float3 baseDir, float3 xDif, float3 yDif, float3 sunDir, float exponent, float3 sunColor);
-
-	static void DrawIndividualDefOpaque(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen = false);
-	static void DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen = false);
-
 	void DrawUnitMiniMapIcons() const;
+
 
 	const std::vector<CUnit*>& GetUnsortedUnits() const { return unsortedUnits; }
 
@@ -144,13 +140,15 @@ public:
 	      GL::GeometryBuffer* GetGeometryBuffer()       { return geomBuffer; }
 
 	const IUnitDrawerState* GetWantedDrawerState(bool alphaPass) const;
-
+	      IUnitDrawerState* GetDrawerState(unsigned int idx) { return unitDrawerStates[idx]; }
 
 	bool DrawForward() const { return drawForward; }
 	bool DrawDeferred() const { return drawDeferred; }
 
 	bool UseAdvShading() const { return advShading; }
 	bool& UseAdvShadingRef() { return advShading; }
+
+	bool DrawBeingBuiltModels() const { return drawBeingBuiltModels; }
 
 public:
 	struct TempDrawUnit {
@@ -218,6 +216,9 @@ public:
 	static void PushModelRenderState(const CSolidObject* o);
 	static void PopModelRenderState(const CSolidObject* o);
 
+	static void DrawIndividualDefOpaque(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen = false);
+	static void DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen = false);
+
 	// needed by FFP drawer-state
 	static void SetupBasicS3OTexture0();
 	static void SetupBasicS3OTexture1();
@@ -232,8 +233,7 @@ public:
 	float unitDrawDistSqr;
 	float unitIconDist;
 	float iconLength;
-
-	float3 camNorm; ///< used to draw far-textures
+	float sqCamDistToGroundForIcons;
 
 	// .x := regular unit alpha
 	// .y := ghosted unit alpha (out of radar)
@@ -247,10 +247,12 @@ private:
 
 	bool advShading;
 
+	bool drawBeingBuiltModels;
 	bool useDistToGroundForIcons;
-	float sqCamDistToGroundForIcons;
 
 private:
+	typedef void (*DrawModelFunc)(const CUnit*, bool);
+
 	std::vector<IModelRenderContainer*> opaqueModelRenderers;
 	std::vector<IModelRenderContainer*> alphaModelRenderers;
 
@@ -271,12 +273,13 @@ private:
 	std::vector<CUnit*> iconUnits;
 
 	std::vector<std::vector<CUnit*> > unitRadarIcons;
-	std::map<icon::CIconData*, std::vector<const CUnit*> > unitsByIcon;
+	std::unordered_map<icon::CIconData*, std::vector<const CUnit*> > unitsByIcon;
 
 	// [0] := fallback shader-less rendering path
 	// [1] := default shader-driven rendering path
 	// [2] := currently selected state
 	std::vector<IUnitDrawerState*> unitDrawerStates;
+	std::array<DrawModelFunc, 3> drawModelFuncs;
 
 private:
 	GL::LightHandler lightHandler;

@@ -260,13 +260,15 @@ void CFarTextureHandler::Draw()
 
 	// render current queued far icons on the screen
 	{
+		const float3 camNorm = ((camera->GetDir() * XZVector) - (UpVector * 0.1f)).ANormalize();
+
 		glEnable(GL_ALPHA_TEST);
 		glAlphaFunc(GL_GREATER, 0.5f);
 		glActiveTexture(GL_TEXTURE0);
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, farTextureID);
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		glNormal3fv((const GLfloat*) &unitDrawer->camNorm.x);
+		glNormal3fv((const GLfloat*) &camNorm.x);
 
 		sky->SetupFog();
 
