@@ -22,7 +22,8 @@
   // contains a distance fading factor [for features], and alphaPass is 1.0
   // texture alpha-masking is done in both passes
   uniform vec4 teamColor;
-  uniform float alphaPass;
+  uniform vec4 nanoColor;
+  // uniform float alphaPass;
 
   varying vec4 vertexWorldPos;
   varying vec3 cameraDir;
@@ -48,6 +49,43 @@ float GetShadowCoeff(vec4 shadowCoors)
 	#else
 	return 1.0;
 	#endif
+}
+
+vec3 DynamicLighting(vec3 normal, vec3 diffuse, vec3 specular) {
+	vec3 rgb;
+
+	for (int i = 0; i < MAX_DYNAMIC_MODEL_LIGHTS; i++) {
+		vec3 lightVec = gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].position.xyz - vertexWorldPos.xyz;
+		vec3 halfVec = gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].halfVector.xyz;
+
+		float lightRadius   = gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].constantAttenuation;
+		float lightDistance = length(lightVec);
+		float lightScale    = float(lightDistance <= lightRadius);
+
+		float lightCosAngDiff = clamp(dot(normal, lightVec / lightDistance), 0.0, 1.0);
+		float lightCosAngSpec = clamp(dot(normal, normalize(halfVec)), 0.0, 1.0);
+		#ifdef OGL_SPEC_ATTENUATION
+		float lightAttenuation =
+			(gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].constantAttenuation) +
+			(gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].linearAttenuation * lightDistance) +
+			(gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].quadraticAttenuation * lightDistance * lightDistance);
+
+		lightAttenuation = 1.0 / max(lightAttenuation, 1.0);
+		#else
+		float lightAttenuation = 1.0 - min(1.0, ((lightDistance * lightDistance) / (lightRadius * lightRadius)));
+		#endif
+
+		float vectorDot = dot((-lightVec / lightDistance), gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].spotDirection);
+		float cutoffDot = gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].spotCosCutoff;
+
+		lightScale *= float(vectorDot >= cutoffDot);
+
+		rgb += (lightScale *                                  gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].ambient.rgb);
+		rgb += (lightScale * lightAttenuation * (diffuse.rgb * gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].diffuse.rgb * lightCosAngDiff));
+		rgb += (lightScale * lightAttenuation * (specular.rgb * gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].specular.rgb * pow(lightCosAngSpec, 4.0)));
+	}
+
+	return rgb;
 }
 
 void main(void)
@@ -89,40 +127,13 @@ void main(void)
 	#endif
 
 	#if (DEFERRED_MODE == 0 && MAX_DYNAMIC_MODEL_LIGHTS > 0)
-	for (int i = 0; i < MAX_DYNAMIC_MODEL_LIGHTS; i++) {
-		vec3 lightVec = gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].position.xyz - vertexWorldPos.xyz;
-		vec3 halfVec = gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].halfVector.xyz;
-
-		float lightRadius = gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].constantAttenuation;
-		float lightDistance = length(lightVec);
-		float lightScale = (lightDistance > lightRadius)? 0.0: 1.0;
-		float lightCosAngDiff = clamp(dot(normal, lightVec / lightDistance), 0.0, 1.0);
-		float lightCosAngSpec = clamp(dot(normal, normalize(halfVec)), 0.0, 1.0);
-		#ifdef OGL_SPEC_ATTENUATION
-		float lightAttenuation =
-			(gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].constantAttenuation) +
-			(gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].linearAttenuation * lightDistance) +
-			(gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].quadraticAttenuation * lightDistance * lightDistance);
-
-		lightAttenuation = 1.0 / max(lightAttenuation, 1.0);
-		#else
-		float lightAttenuation = 1.0 - min(1.0, ((lightDistance * lightDistance) / (lightRadius * lightRadius)));
-		#endif
-
-		float vectorDot = dot((-lightVec / lightDistance), gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].spotDirection);
-		float cutoffDot = gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].spotCosCutoff;
-
-		lightScale *= ((vectorDot < cutoffDot)? 0.0: 1.0);
-
-		gl_FragColor.rgb += (lightScale *                                  gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].ambient.rgb);
-		gl_FragColor.rgb += (lightScale * lightAttenuation * (diffuse.rgb * gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].diffuse.rgb * lightCosAngDiff));
-		gl_FragColor.rgb += (lightScale * lightAttenuation * (specular.rgb * gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].specular.rgb * pow(lightCosAngSpec, 4.0)));
-	}
+	gl_FragColor.rgb += DynamicLighting(normal, diffuse, specular);
 	#endif
 
 	#if (DEFERRED_MODE == 1)
 	gl_FragData[GBUFFER_NORMTEX_IDX] = vec4((normal + vec3(1.0, 1.0, 1.0)) * 0.5, 1.0);
 	gl_FragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(diffuse.rgb, teamColor.rgb, diffuse.a), extraColor.a * teamColor.a);
+	gl_FragData[GBUFFER_DIFFTEX_IDX] = mix(gl_FragData[GBUFFER_DIFFTEX_IDX], nanoColor, float(nanoColor.a != 0.0));
 	// do not premultiply reflection, leave it to the deferred lighting pass
 	// gl_FragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(diffuse.rgb, teamColor.rgb, diffuse.a) * reflection, extraColor.a * teamColor.a);
 	// allows standard-lighting reconstruction by lazy LuaMaterials using us
@@ -132,6 +143,10 @@ void main(void)
 	#else
 	gl_FragColor.rgb = mix(gl_Fog.color.rgb, gl_FragColor.rgb, fogFactor); // fog
 	gl_FragColor.a   = extraColor.a * teamColor.a; // apply one-bit mask
+
+	// wireframe or polygon color
+	gl_FragColor.rgb *=                  float(nanoColor.a == 0.0);
+	gl_FragColor.rgb += (nanoColor.rgb * float(nanoColor.a != 0.0));
 	#endif
 }
 

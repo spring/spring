@@ -148,8 +148,6 @@ public:
 	bool UseAdvShading() const { return advShading; }
 	bool& UseAdvShadingRef() { return advShading; }
 
-	bool DrawBeingBuiltModels() const { return drawBeingBuiltModels; }
-
 public:
 	struct TempDrawUnit {
 		const UnitDef* unitDef;

@@ -520,8 +520,6 @@ bool CUnitDrawer::CanDrawOpaqueUnit(
 		return false;
 	if (unit->isIcon)
 		return false;
-	if (unit->beingBuilt && !drawBeingBuiltModels)
-		return false;
 
 	if (!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
 		return false;
@@ -712,8 +710,6 @@ void CUnitDrawer::SetupAlphaDrawing(bool deferredPass)
 	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState(true));
 	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass && false, true);
 
-	drawBeingBuiltModels = !deferredPass;
-
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -724,8 +720,6 @@ void CUnitDrawer::SetupAlphaDrawing(bool deferredPass)
 
 void CUnitDrawer::ResetAlphaDrawing(bool deferredPass)
 {
-	drawBeingBuiltModels = true;
-
 	unitDrawerStates[DRAWER_STATE_SEL]->Disable(this, deferredPass && false);
 
 	glPopAttrib();
@@ -958,9 +952,6 @@ void CUnitDrawer::SetupOpaqueDrawing(bool deferredPass)
 	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState(false));
 	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass, false);
 
-	// should never execute DrawUnitModelBeingBuilt* in a deferred pass
-	drawBeingBuiltModels = !deferredPass;
-
 	// NOTE:
 	//   when deferredPass is true we MUST be able to use the SSP render-state
 	//   all calling code (reached from DrawOpaquePass(deferred=true)) should
@@ -971,8 +962,6 @@ void CUnitDrawer::SetupOpaqueDrawing(bool deferredPass)
 
 void CUnitDrawer::ResetOpaqueDrawing(bool deferredPass)
 {
-	drawBeingBuiltModels = true;
-
 	unitDrawerStates[DRAWER_STATE_SEL]->Disable(this, deferredPass);
 
 	glPopAttrib();
@@ -1269,6 +1258,7 @@ static const void DrawModelWireBuildStage(
 		glClipPlane(GL_CLIP_PLANE1, lowerPlane);
 	}
 
+	// FFP-only drawing still needs raw colors
 	glColorf3(stageColor);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		CUnitDrawer::DrawUnitModel(unit, noLuaCall);
@@ -1309,6 +1299,7 @@ static const void DrawModelFillBuildStage(
 		glClipPlane(GL_CLIP_PLANE0, upperPlane);
 	}
 
+	glColorf3(stageColor);
 	glPolygonOffset(1.0f, 1.0f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 		CUnitDrawer::DrawUnitModel(unit, noLuaCall);
@@ -1335,9 +1326,6 @@ void CUnitDrawer::DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool noLuaCal
 
 void CUnitDrawer::DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCall)
 {
-	// could allow the last stage in deferred context, but KISS
-	assert(unitDrawer->DrawBeingBuiltModels());
-
 	const S3DModel* model = unit->model;
 	const    CTeam*  team = teamHandler->Team(unit->team);
 	const   SColor  color = team->color;
@@ -1374,25 +1362,31 @@ void CUnitDrawer::DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCal
 	DrawModelBuildStageFunc stageFunc = nullptr;
 	IUnitDrawerState* selState = unitDrawer->GetDrawerState(DRAWER_STATE_SEL);
 
-	selState->DisableShaders(unitDrawer);
-	selState->DisableTextures(unitDrawer);
-
 	glPushAttrib(GL_CURRENT_BIT);
 	glEnable(GL_CLIP_PLANE0);
 	glEnable(GL_CLIP_PLANE1);
 
-	// wireframe (FFP), unconditional
+
+	selState->SetNanoColor(float4(stageColors[0] * wireColorMult, 1.0f));
+	selState->DisableTextures(unitDrawer);
+
+	// wireframe, unconditional
 	stageFunc = drawModelBuildStageFuncs[(STAGE_WIRE + 1) * true];
 	stageFunc(unit, &upperPlanes[STAGE_WIRE * 4], &lowerPlanes[STAGE_WIRE * 4], stageColors[0] * wireColorMult, noLuaCall);
 
-	// flat-colored (FFP), conditional
+
+	selState->SetNanoColor(float4(stageColors[1] * flatColorMult, 1.0f));
+
+	// flat-colored, conditional
 	stageFunc = drawModelBuildStageFuncs[(STAGE_FLAT + 1) * (stageBounds.z > 0.333f)];
 	stageFunc(unit, &upperPlanes[STAGE_FLAT * 4], &lowerPlanes[STAGE_FLAT * 4], stageColors[1] * flatColorMult, noLuaCall);
 
 	glDisable(GL_CLIP_PLANE1);
 
+
+	// pass alpha=0 so shader will ignore nanoColor
+	selState->SetNanoColor(float4(stageColors[2], 0.0f));
 	selState->EnableTextures(unitDrawer);
-	selState->EnableShaders(unitDrawer);
 
 	// fully-shaded, conditional
 	stageFunc = drawModelBuildStageFuncs[(STAGE_FILL + 1) * (stageBounds.z > 0.666f)];
@@ -1429,11 +1423,9 @@ void CUnitDrawer::DrawUnitNoTrans(
 
 	// if called from LuaObjectDrawer, unit has a custom material
 	//
-	// DrawUnitBeingBuilt effectively disables the current state
-	// (killing *any* shader that is currently active) while we
-	// want Lua-material shaders to have full control over build
-	// visualisation, so keep it simple and make LOD-calls draw
-	// the full model
+	// we want Lua-material shaders to have full control over build
+	// visualisation, so keep it simple and make LOD-calls draw the
+	// full model
 	//
 	// NOTE: "raw" calls will no longer skip DrawUnitBeingBuilt
 	//
