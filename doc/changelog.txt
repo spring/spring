@@ -31,7 +31,8 @@ Save/Load:
 
 Rendering:
  - reduce number of team-color updates for custom shaders
- - use frame-extrapolation for features (smoother movement)
+ - use frame-extrapolation for smoother feature movement
+ - skip drawing being-built units in deferred pass (requires custom shaders)
  - skip drawing icons for void-space units
 
 AI:
@@ -48,6 +49,7 @@ Misc:
 Bugfixes:
  - fix invisible OBJ models
  - fix gl.DeleteShader allowing repeated deletion
+ - fix invisible ground on voidwater maps when AdvMapShading=0 (in L-view)
  - fix Spring.SetSunLighting crash when AdvMapShading=0
  - fix Spring.ValidUnitID to accept nils again
  - fix wreckage jumping from large *horizontal* impulse
