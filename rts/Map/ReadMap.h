@@ -186,14 +186,14 @@ public:
 	float AddHeight(const int idx, const float a);
 
 
-	float GetInitMinHeight() const { return initMinHeight; }
-	float GetCurrMinHeight() const { return currMinHeight; }
-	float GetInitMaxHeight() const { return initMaxHeight; }
-	float GetCurrMaxHeight() const { return currMaxHeight; }
+	float GetInitMinHeight() const { return initHeightBounds.x; }
+	float GetCurrMinHeight() const { return currHeightBounds.x; }
+	float GetInitMaxHeight() const { return initHeightBounds.y; }
+	float GetCurrMaxHeight() const { return currHeightBounds.y; }
 	float GetBoundingRadius() const { return boundingRadius; }
 
-	bool IsUnderWater() const { return (currMaxHeight <  0.0f); }
-	bool IsAboveWater() const { return (currMinHeight >= 0.0f); }
+	bool IsUnderWater() const { return (currHeightBounds.y <  0.0f); }
+	bool IsAboveWater() const { return (currHeightBounds.x >= 0.0f); }
 
 	bool HasVisibleWater() const;
 	bool HasOnlyVoidWater() const;
@@ -266,8 +266,8 @@ private:
 
 	unsigned int mapChecksum;
 
-	float initMinHeight, initMaxHeight; //< initial minimum- and maximum-height (before any deformations)
-	float currMinHeight, currMaxHeight; //< current minimum- and maximum-height
+	float2 initHeightBounds; //< initial minimum- and maximum-height (before any deformations)
+	float2 currHeightBounds; //< current minimum- and maximum-height
 	float boundingRadius;
 };
 
@@ -284,8 +284,8 @@ inline float CReadMap::SetHeight(const int idx, const float h, const int add) {
 	// add=1 <--> x = x*1 + h = x+h
 	x = x * add + h;
 
-	currMinHeight = std::min(x, currMinHeight);
-	currMaxHeight = std::max(x, currMaxHeight);
+	currHeightBounds.x = std::min(x, currHeightBounds.x);
+	currHeightBounds.y = std::max(x, currHeightBounds.y);
 
 	return x;
 }
