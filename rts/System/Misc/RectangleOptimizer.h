@@ -3,7 +3,12 @@
 #ifndef RECTANGLE_OPTIMIZER_H
 #define RECTANGLE_OPTIMIZER_H
 
+#ifdef RO_USE_DEQUE_CONTAINER
 #include <deque>
+#else
+#include <list>
+#endif
+
 #include <bitset>
 #include "System/Rectangle.h"
 #include "System/creg/creg_cond.h"
@@ -28,7 +33,11 @@ public:
 
 public:
 	//! std container funcs
+	#ifdef RO_USE_DEQUE_CONTAINER
 	typedef std::deque<SRectangle> container;
+	#else
+	typedef std::list<SRectangle> container;
+	#endif
 	typedef container::iterator iterator;
 	typedef container::const_iterator const_iterator;
 
@@ -48,15 +57,18 @@ public:
 	}
 	void splice(iterator pos, CRectangleOptimizer& other) {
 		needsUpdate = other.needsUpdate || !rectangles.empty();
-		// rectangles.splice(pos, other.rectangles);
+		#ifdef RO_USE_DEQUE_CONTAINER
 		while (!other.empty()) {
 			pos = rectangles.insert(pos, other.back());
 			other.pop_back();
 		}
+		#else
+		rectangles.splice(pos, other.rectangles);
+		#endif
 	}
 	void clear() {
 		needsUpdate = false;
-		return rectangles.clear();
+		rectangles.clear();
 	}
 	void push_back(const SRectangle& rect) {
 		//! skip empty/negative rectangles
