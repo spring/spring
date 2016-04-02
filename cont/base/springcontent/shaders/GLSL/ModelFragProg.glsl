@@ -111,6 +111,7 @@ void main(void)
 	vec3 reflection = textureCube(reflectTex,  reflectDir).rgb;
 
 	float shadow = GetShadowCoeff(gl_TexCoord[1] + vec4(0.0, 0.0, -0.00005, 0.0));
+	float alpha = teamColor.a * extraColor.a; // apply one-bit mask
 
 	// no highlights if in shadow; decrease light to ambient level
 	specular *= shadow;
@@ -132,21 +133,18 @@ void main(void)
 
 	#if (DEFERRED_MODE == 1)
 	gl_FragData[GBUFFER_NORMTEX_IDX] = vec4((normal + vec3(1.0, 1.0, 1.0)) * 0.5, 1.0);
-	gl_FragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(diffuse.rgb, teamColor.rgb, diffuse.a), extraColor.a * teamColor.a);
-	gl_FragData[GBUFFER_DIFFTEX_IDX] = mix(gl_FragData[GBUFFER_DIFFTEX_IDX], nanoColor, float(nanoColor.a != 0.0));
+	gl_FragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(                         diffuse.rgb, teamColor.rgb,   diffuse.a), alpha);
+	gl_FragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(gl_FragData[GBUFFER_DIFFTEX_IDX].rgb, nanoColor.rgb, nanoColor.a), alpha);
 	// do not premultiply reflection, leave it to the deferred lighting pass
-	// gl_FragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(diffuse.rgb, teamColor.rgb, diffuse.a) * reflection, extraColor.a * teamColor.a);
+	// gl_FragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(diffuse.rgb, teamColor.rgb, diffuse.a) * reflection, alpha);
 	// allows standard-lighting reconstruction by lazy LuaMaterials using us
-	gl_FragData[GBUFFER_SPECTEX_IDX] = vec4(extraColor.rgb, extraColor.a * teamColor.a);
+	gl_FragData[GBUFFER_SPECTEX_IDX] = vec4(extraColor.rgb, alpha);
 	gl_FragData[GBUFFER_EMITTEX_IDX] = vec4(0.0, 0.0, 0.0, 0.0);
 	gl_FragData[GBUFFER_MISCTEX_IDX] = vec4(0.0, 0.0, 0.0, 0.0);
 	#else
 	gl_FragColor.rgb = mix(gl_Fog.color.rgb, gl_FragColor.rgb, fogFactor); // fog
-	gl_FragColor.a   = extraColor.a * teamColor.a; // apply one-bit mask
-
-	// wireframe or polygon color
-	gl_FragColor.rgb *=                  float(nanoColor.a == 0.0);
-	gl_FragColor.rgb += (nanoColor.rgb * float(nanoColor.a != 0.0));
+	gl_FragColor.rgb = mix(gl_FragColor.rgb, nanoColor.rgb, nanoColor.a); // wireframe or polygon color
+	gl_FragColor.a   = alpha;
 	#endif
 }
 
