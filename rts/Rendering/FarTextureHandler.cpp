@@ -109,7 +109,7 @@ bool CFarTextureHandler::HaveFarIcon(const CSolidObject* obj) const
 	const int  teamID = obj->team;
 	const int modelID = obj->model->id;
 
-	return ((iconCache.size() > teamID) && (iconCache[teamID].size() > modelID) && (iconCache[teamID][modelID] != 0));
+	return ((iconCache.size() > teamID) && (iconCache[teamID].size() > modelID) && (iconCache[teamID][modelID].farTexNum != 0));
 }
 
 
@@ -125,9 +125,9 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 		iconCache.resize(obj->team + 1);
 
 	if (model->id >= (int)iconCache[obj->team].size())
-		iconCache[obj->team].resize(model->id + 1, 0);
+		iconCache[obj->team].resize(model->id + 1, {0});
 
-	iconCache[obj->team][model->id] = -1;
+	assert(iconCache[obj->team][model->id].farTexNum == 0);
 
 	// enough free space in the atlas?
 	if (!CheckResizeAtlas())
@@ -198,16 +198,19 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	fbo.Detach(GL_DEPTH_ATTACHMENT_EXT);
 	fbo.Unbind();
 
-	iconCache[obj->team][model->id] = ++usedFarTextures;
+	// cache object's current radius s.t. quad is always drawn with fixed size
+	iconCache[obj->team][model->id].farTexNum = ++usedFarTextures;
+	iconCache[obj->team][model->id].texScales = {obj->GetDrawRadius(), obj->GetDrawRadius()};
+	iconCache[obj->team][model->id].texOffset = UpVector * obj->GetDrawRadius() * 0.5f;
 }
 
 
 void CFarTextureHandler::DrawFarTexture(const CSolidObject* obj, CVertexArray* va)
 {
-	const int farTextureNum = iconCache[obj->team][obj->model->id];
+	const CachedIcon& icon = iconCache[obj->team][obj->model->id];
 
 	// not found in the atlas
-	if (farTextureNum <= 0)
+	if (icon.farTexNum == 0)
 		return;
 
 	// indicates the orientation to draw
@@ -221,12 +224,12 @@ void CFarTextureHandler::DrawFarTexture(const CSolidObject* obj, CVertexArray* v
 		orient /= orientStep;         // get the final direction index
 
 	const float2 objIconSize = {float(iconSize.x) / texSize.x, float(iconSize.y) / texSize.y};
-	const float2 objTexCoors = GetTextureCoords(farTextureNum - 1, orient);
+	const float2 objTexCoors = GetTextureCoords(icon.farTexNum - 1, orient);
 
 	// have to draw above ground, or quad will be clipped
-	const float3 pos = obj->drawPos + UpVector * obj->GetDrawRadius() * 0.5f;
-	const float3 upv = camera->GetUp()    * obj->GetDrawRadius();
-	const float3 rgv = camera->GetRight() * obj->GetDrawRadius();
+	const float3 pos = obj->drawPos + icon.texOffset;
+	const float3 upv = camera->GetUp()    * icon.texScales.y;
+	const float3 rgv = camera->GetRight() * icon.texScales.x;
 
 	va->AddVertexQT(pos - upv + rgv, objTexCoors.x,                 objTexCoors.y                );
 	va->AddVertexQT(pos + upv + rgv, objTexCoors.x,                 objTexCoors.y + objIconSize.y);

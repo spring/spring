@@ -35,8 +35,15 @@ private:
 	int2 texSize;
 	int2 iconSize;
 
+	struct CachedIcon {
+		unsigned int farTexNum;
+
+		float2 texScales;
+		float3 texOffset;
+	};
+
 	std::vector<const CSolidObject*> drawQueue;
-	std::vector< std::vector<int> > iconCache;
+	std::vector< std::vector<CachedIcon> > iconCache;
 
 	FBO fbo;
 
