@@ -353,7 +353,7 @@ void CUnitDrawer::Update()
 		}
 	}
 
-	if (useDistToGroundForIcons = (camHandler->GetCurrentController()).GetUseDistToGroundForIcons()) {
+	if ((useDistToGroundForIcons = (camHandler->GetCurrentController()).GetUseDistToGroundForIcons())) {
 		const float3& camPos = camera->GetPos();
 		// use the height at the current camera position
 		//const float groundHeight = CGround::GetHeightAboveWater(camPos.x, camPos.z, false);
