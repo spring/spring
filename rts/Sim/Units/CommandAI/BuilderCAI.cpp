@@ -365,7 +365,7 @@ bool CBuilderCAI::IsBuildPosBlocked(const BuildInfo& build, const CUnit** nanoFr
 		}
 
 		// unfinished nanoframe, assist it
-		if (nanoFrame != NULL)
+		if (nanoFrame != NULL && teamHandler->Ally(owner->allyteam, u->allyteam))
 			*nanoFrame = u;
 
 		return false;
