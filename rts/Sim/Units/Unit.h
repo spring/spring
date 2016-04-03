@@ -167,6 +167,7 @@ public:
 
 	void SetLosStatus(int allyTeam, unsigned short newStatus);
 	unsigned short CalcLosStatus(int allyTeam);
+	void UpdateLosStatus(int allyTeam);
 
 	void SlowUpdateCloak(bool);
 	void ScriptDecloak(bool);
@@ -220,7 +221,6 @@ public:
 protected:
 	void ChangeTeamReset();
 	void UpdateResources();
-	void UpdateLosStatus(int allyTeam);
 	float GetFlankingDamageBonus(const float3& attackDir);
 
 public: // unsynced methods

@@ -972,7 +972,7 @@ unsigned short CUnit::CalcLosStatus(int at)
 }
 
 
-inline void CUnit::UpdateLosStatus(int at)
+void CUnit::UpdateLosStatus(int at)
 {
 	const unsigned short currStatus = losStatus[at];
 	if ((currStatus & LOS_ALL_MASK_BITS) == LOS_ALL_MASK_BITS) {
@@ -1000,10 +1000,6 @@ void CUnit::SetStunned(bool stun) {
 void CUnit::SlowUpdate()
 {
 	UpdatePosErrorParams(false, true);
-
-	for (int at = 0; at < teamHandler->ActiveAllyTeams(); ++at) {
-		UpdateLosStatus(at);
-	}
 
 	DoWaterDamage();
 
