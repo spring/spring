@@ -1839,52 +1839,54 @@ void CUnitDrawer::UnitDecloaked(const CUnit* unit) {
 }
 
 void CUnitDrawer::UnitEnteredLos(const CUnit* unit, int allyTeam) {
+	CUnit* u = const_cast<CUnit*>(unit); //cleanup
+
+	VectorErase(unitRadarIcons[allyTeam], u);
+
 	if (allyTeam != gu->myAllyTeam)
 		return;
-
-	CUnit* u = const_cast<CUnit*>(unit); //cleanup
 
 	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit())
 		VectorErase(liveGhostBuildings[MDL_TYPE(unit)], u);
 
-	VectorErase(unitRadarIcons[allyTeam], u);
 	UpdateUnitMiniMapIcon(unit, false, false);
 }
 
 void CUnitDrawer::UnitLeftLos(const CUnit* unit, int allyTeam) {
-	if (allyTeam != gu->myAllyTeam)
-		return;
-
 	CUnit* u = const_cast<CUnit*>(unit); //cleanup
-
-	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit())
-		VectorInsertUnique(liveGhostBuildings[MDL_TYPE(unit)], u, true);
 
 	if (unit->losStatus[allyTeam] & LOS_INRADAR)
 		VectorInsertUnique(unitRadarIcons[allyTeam], u, true);
+
+	if (allyTeam != gu->myAllyTeam)
+		return;
+
+	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit())
+		VectorInsertUnique(liveGhostBuildings[MDL_TYPE(unit)], u);
 
 	UpdateUnitMiniMapIcon(unit, false, false);
 }
 
 void CUnitDrawer::UnitEnteredRadar(const CUnit* unit, int allyTeam) {
-	if (allyTeam != gu->myAllyTeam)
-		return;
-
 	CUnit* u = const_cast<CUnit*>(unit);
 
 	if (!(unit->losStatus[allyTeam] & LOS_INLOS))
-		VectorInsertUnique(unitRadarIcons[allyTeam], u, true);
+		VectorInsertUnique(unitRadarIcons[allyTeam], u);
+
+	if (allyTeam != gu->myAllyTeam)
+		return;
 
 	UpdateUnitMiniMapIcon(unit, false, false);
 }
 
 void CUnitDrawer::UnitLeftRadar(const CUnit* unit, int allyTeam) {
-	if (allyTeam != gu->myAllyTeam)
-		return;
-
 	CUnit* u = const_cast<CUnit*>(unit);
 
 	VectorErase(unitRadarIcons[allyTeam], u);
+
+	if (allyTeam != gu->myAllyTeam)
+		return;
+
 	UpdateUnitMiniMapIcon(unit, false, false);
 }
 
