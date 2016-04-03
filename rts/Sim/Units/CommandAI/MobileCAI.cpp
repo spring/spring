@@ -443,7 +443,7 @@ void CMobileCAI::ExecuteLoadOnto(Command &c) {
 	if (unit == NULL)
 		return;
 
-	if ((owner->pos - owner->moveType->goalPos).SqLength2D() < cancelDistance) {
+	if ((owner->pos - unit->pos).SqLength2D() < cancelDistance) {
 		StopMove();
 	} else {
 		SetGoal(unit->pos, owner->pos);
@@ -521,15 +521,15 @@ void CMobileCAI::ExecuteFight(Command& c)
 		}
 	}
 
-	float3 pos = c.GetPos(0);
+	float3 cmdPos = c.GetPos(0);
 
 	if (!inCommand) {
 		inCommand = true;
-		commandPos2 = pos;
+		commandPos2 = cmdPos;
 		lastUserGoal = commandPos2;
 	}
 	if (c.params.size() >= 6) {
-		pos = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
+		cmdPos = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
 	}
 
 	if (owner->unitDef->canAttack && owner->fireState >= FIRESTATE_FIREATWILL && !owner->weapons.empty()) {
@@ -557,10 +557,10 @@ void CMobileCAI::ExecuteFight(Command& c)
 		}
 	}
 
-	if ((owner->pos - owner->moveType->goalPos).SqLength2D() < Square(64.0f)) {
+	if ((owner->pos - cmdPos).SqLength2D() < Square(64.0f)) {
 		StopMoveAndFinishCommand();
 	} else {
-		SetGoal(pos, owner->pos);
+		SetGoal(cmdPos, owner->pos);
 		if (owner->moveType->progressState == AMoveType::Failed)
 			StopMoveAndFinishCommand();
 	}
