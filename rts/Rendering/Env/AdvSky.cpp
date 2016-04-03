@@ -197,9 +197,8 @@ void CAdvSky::Draw()
 	glEnable(GL_BLEND);
 
 	glPushMatrix();
-//	glTranslatef(camera->GetPos().x,camera->GetPos().y,camera->GetPos().z);
-	CMatrix44f m(camera->GetPos(),skydir1,UpVector,skydir2);
-	glMultMatrixf(m.m);
+	// glTranslatef3(camera->GetPos());
+	glMultMatrixf(CMatrix44f(camera->GetPos(), skydir1, UpVector, skydir2));
 
 	float3 modCamera=skydir1*camera->GetPos().x+skydir2*camera->GetPos().z;
 
