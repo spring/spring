@@ -34,6 +34,7 @@ Rendering:
  - use frame-extrapolation for smoother feature movement
  - draw all model nanoframe stages with shaders by default
  - skip drawing icons for void-space units
+ - disable BumpWaterRefraction = 2 for now.
 
 AI:
  - make skirmishAiCallback_Unit_getResource{Use,Make} not round their return values to ints
