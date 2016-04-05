@@ -89,8 +89,6 @@ namespace creg
 	template<typename TKey, typename TValue>
 	struct DeduceType<std::multimap<TKey, TValue> > {
 		static boost::shared_ptr<IType> Get() {
-			DeduceType<TValue> valuetype;
-			DeduceType<TKey> keytype;
 			return boost::shared_ptr<IType>(new MapType<std::multimap<TKey, TValue> >(DeduceType<TKey>::Get(), DeduceType<TValue>::Get()));
 		}
 	};
@@ -98,8 +96,6 @@ namespace creg
 	template<typename TKey, typename TValue>
 	struct DeduceType<SPRING_HASH_MAP<TKey, TValue> > {
 		static boost::shared_ptr<IType> Get() {
-			DeduceType<TValue> valuetype;
-			DeduceType<TKey> keytype;
 			return boost::shared_ptr<IType>(new MapType<SPRING_HASH_MAP<TKey, TValue> >(DeduceType<TKey>::Get(), DeduceType<TValue>::Get()));
 		}
 	};
