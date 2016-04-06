@@ -171,7 +171,7 @@ void CAirCAI::SlowUpdate()
 		return;
 
 	if (!commandQue.empty() && (commandQue.front().timeOut < gs->frameNum)) {
-		FinishCommand();
+		StopMoveAndFinishCommand();
 		return;
 	}
 
@@ -372,7 +372,7 @@ void CAirCAI::ExecuteFight(Command& c)
 	if ((owner->pos - goalPos).SqLength2D() < (radius * radius)
 			|| (owner->pos + owner->speed*8 - goalPos).SqLength2D() < 127*127)
 	{
-		FinishCommand();
+		StopMoveAndFinishCommand();
 	}
 }
 
@@ -385,25 +385,25 @@ void CAirCAI::ExecuteAttack(Command& c)
 		// limit how far away we fly
 		if (orderTarget && LinePointDist(commandPos1, commandPos2, orderTarget->pos) > 1500) {
 			owner->DropCurrentAttackTarget();
-			FinishCommand();
+			StopMoveAndFinishCommand();
 			return;
 		}
 	}
 
 	if (inCommand) {
 		if (targetDied || (c.params.size() == 1 && UpdateTargetLostTimer(int(c.params[0])) == 0)) {
-			FinishCommand();
+			StopMoveAndFinishCommand();
 			return;
 		}
 		if (orderTarget != NULL) {
 			if (orderTarget->unitDef->canfly && orderTarget->IsCrashing()) {
 				owner->DropCurrentAttackTarget();
-				FinishCommand();
+				StopMoveAndFinishCommand();
 				return;
 			}
 			if (!(c.options & ALT_KEY) && SkipParalyzeTarget(orderTarget)) {
 				owner->DropCurrentAttackTarget();
-				FinishCommand();
+				StopMoveAndFinishCommand();
 				return;
 			}
 		}
@@ -413,10 +413,10 @@ void CAirCAI::ExecuteAttack(Command& c)
 		if (c.params.size() == 1) {
 			CUnit* targetUnit = unitHandler->GetUnit(c.params[0]);
 
-			if (targetUnit == NULL) { FinishCommand(); return; }
-			if (targetUnit == owner) { FinishCommand(); return; }
+			if (targetUnit == NULL) { StopMoveAndFinishCommand(); return; }
+			if (targetUnit == owner) { StopMoveAndFinishCommand(); return; }
 			if (targetUnit->GetTransporter() != NULL && !modInfo.targetableTransportedUnits) {
-				FinishCommand(); return;
+				StopMoveAndFinishCommand(); return;
 			}
 
 			SetGoal(targetUnit->pos, owner->pos, cancelDistance);
@@ -472,9 +472,9 @@ void CAirCAI::ExecuteGuard(Command& c)
 
 	const CUnit* guardee = unitHandler->GetUnit(c.params[0]);
 
-	if (guardee == NULL) { FinishCommand(); return; }
-	if (UpdateTargetLostTimer(guardee->id) == 0) { FinishCommand(); return; }
-	if (guardee->outOfMapTime > (GAME_SPEED * 5)) { FinishCommand(); return; }
+	if (guardee == NULL) { StopMoveAndFinishCommand(); return; }
+	if (UpdateTargetLostTimer(guardee->id) == 0) { StopMoveAndFinishCommand(); return; }
+	if (guardee->outOfMapTime > (GAME_SPEED * 5)) { StopMoveAndFinishCommand(); return; }
 
 	const bool pushAttackCommand =
 		(owner->maxRange > 0.0f) &&
