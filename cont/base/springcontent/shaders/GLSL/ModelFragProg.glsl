@@ -128,7 +128,7 @@ void main(void)
 	#endif
 
 	#if (DEFERRED_MODE == 0 && MAX_DYNAMIC_MODEL_LIGHTS > 0)
-	gl_FragColor.rgb += DynamicLighting(normal, diffuse, specular);
+	gl_FragColor.rgb += DynamicLighting(normal, diffuse.rgb, specular);
 	#endif
 
 	#if (DEFERRED_MODE == 1)
