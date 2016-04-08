@@ -24,6 +24,9 @@ IF    (MINGW OR APPLE OR MSVC)
 	FIND_PACKAGE(OpenGL REQUIRED)
 	FIND_PACKAGE(SDL2 REQUIRED)
 	INCLUDE_DIRECTORIES(${SDL2_INCLUDE_DIR})
+	IF(MSVC)
+		INCLUDE_DIRECTORIES(BEFORE ${CMAKE_SOURCE_DIR}/include)
+	ENDIF(MSVC)
 ELSE  ()
 	# Use a direct copy of the GL and SDL headers,
 	# as these may not be available on headless systems.
