@@ -54,7 +54,7 @@ CGroundDecalHandler::CGroundDecalHandler()
 
 	groundScarAlphaFade = (configHandler->GetInt("GroundScarAlphaFade") != 0);
 
-	unsigned char buf[512*512*4] = {0};
+	std::vector<unsigned char> buf(512 * 512 * 4);
 
 	LuaParser resourcesParser("gamedata/resources.lua",
 	                          SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
@@ -64,16 +64,16 @@ CGroundDecalHandler::CGroundDecalHandler()
 	}
 
 	const LuaTable scarsTable = resourcesParser.GetRoot().SubTable("graphics").SubTable("scars");
-	LoadScar("bitmaps/" + scarsTable.GetString(2, "scars/scar2.bmp"), buf, 0,   0);
-	LoadScar("bitmaps/" + scarsTable.GetString(3, "scars/scar3.bmp"), buf, 256, 0);
-	LoadScar("bitmaps/" + scarsTable.GetString(1, "scars/scar1.bmp"), buf, 0,   256);
-	LoadScar("bitmaps/" + scarsTable.GetString(4, "scars/scar4.bmp"), buf, 256, 256);
+	LoadScar("bitmaps/" + scarsTable.GetString(2, "scars/scar2.bmp"), buf.data(), 0,   0);
+	LoadScar("bitmaps/" + scarsTable.GetString(3, "scars/scar3.bmp"), buf.data(), 256, 0);
+	LoadScar("bitmaps/" + scarsTable.GetString(1, "scars/scar1.bmp"), buf.data(), 0,   256);
+	LoadScar("bitmaps/" + scarsTable.GetString(4, "scars/scar4.bmp"), buf.data(), 256, 256);
 
 	glGenTextures(1, &scarTex);
 	glBindTexture(GL_TEXTURE_2D, scarTex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,512, 512, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,512, 512, GL_RGBA, GL_UNSIGNED_BYTE, buf.data());
 
 	scarFieldX = mapDims.mapx / 32;
 	scarFieldY = mapDims.mapy / 32;
