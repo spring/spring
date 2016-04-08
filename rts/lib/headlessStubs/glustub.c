@@ -2,6 +2,9 @@
 
 #undef GL_GLEXT_LEGACY
 #define GL_GLEXT_PROTOTYPES
+#ifdef _DLL
+#undef _DLL
+#endif
 #include <GL/glu.h>
 
 #ifdef __cplusplus

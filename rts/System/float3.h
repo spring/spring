@@ -32,6 +32,9 @@ public:
 #elif defined(__GNUC__) && !defined (__clang__)  // optimization for gnu compilers, so it can be inlined
 	static constexpr float CMP_EPS = 1e-4f;
 	static constexpr float NORMALIZE_EPS = 1e-12f;
+#elif _MSC_VER >= 1900
+	static constexpr float CMP_EPS = 1e-4f;
+	static constexpr float NORMALIZE_EPS = 1e-12f;
 #else
 	static const float CMP_EPS;
 	static const float NORMALIZE_EPS;

@@ -457,7 +457,7 @@ GLAPI void APIENTRY glShadeModel(GLenum mode) {}
 GLAPI void APIENTRY glHint(GLenum target, GLenum mode) {}
 GLAPI void APIENTRY glTexEnvf(GLenum target, GLenum pname, GLfloat param) {}
 
-GLAPI const APIENTRY GLubyte * glGetString(GLenum name) {
+GLAPI const GLubyte * APIENTRY glGetString(GLenum name) {
    return (const GLubyte*) "";
 }
 
