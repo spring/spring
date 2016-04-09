@@ -396,8 +396,10 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	moveType = MoveTypeFactory::GetMoveType(this, unitDef);
 	script = CUnitScriptFactory::CreateScript(unitDef->scriptName, this);
 
-	selfdExpDamages = DynDamageArray::IncRef(&unitDef->selfdExpWeaponDef->damages);
-	deathExpDamages = DynDamageArray::IncRef(&unitDef->deathExpWeaponDef->damages);
+	if (unitDef->selfdExpWeaponDef != nullptr)
+		selfdExpDamages = DynDamageArray::IncRef(&unitDef->selfdExpWeaponDef->damages);
+	if (unitDef->deathExpWeaponDef != nullptr)
+		deathExpDamages = DynDamageArray::IncRef(&unitDef->deathExpWeaponDef->damages);
 }
 
 
