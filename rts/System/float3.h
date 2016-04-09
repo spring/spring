@@ -26,27 +26,6 @@ class float3
 public:
 	CR_DECLARE_STRUCT(float3)
 
-#if (__cplusplus > 199711L) || defined(__GXX_EXPERIMENTAL_CXX0X__)
-	static constexpr float CMP_EPS = 1e-4f;
-	static constexpr float NORMALIZE_EPS = 1e-12f;
-#elif defined(__GNUC__) && !defined (__clang__)  // optimization for gnu compilers, so it can be inlined
-	static constexpr float CMP_EPS = 1e-4f;
-	static constexpr float NORMALIZE_EPS = 1e-12f;
-#elif _MSC_VER >= 1900
-	static constexpr float CMP_EPS = 1e-4f;
-	static constexpr float NORMALIZE_EPS = 1e-12f;
-#else
-	static const float CMP_EPS;
-	static const float NORMALIZE_EPS;
-#endif
-
-
-	/**
-	 * @brief Constructor
-	 *
-	 * With no parameters, x/y/z are just initialized to 0.
-	 */
-	float3() : x(0.0f), y(0.0f), z(0.0f) {}
 
 	/**
 	 * @brief Constructor
@@ -56,7 +35,7 @@ public:
 	 *
 	 * With parameters, initializes x/y/z to the given floats.
 	 */
-	float3(const float x,const float y,const float z)
+	float3(const float x = 0.0f, const float y = 0.0f, const float z = 0.0f)
 			: x(x), y(y), z(z) {}
 
 	/**
@@ -286,7 +265,7 @@ public:
 	/**
 	 * @brief operator ==
 	 * @param f float3 to test
-	 * @return whether float3s are equal under default CMP_EPS tolerance in x/y/z
+	 * @return whether float3s are equal under default cmp_eps tolerance in x/y/z
 	 *
 	 * Tests if this float3 is equal to another, by
 	 * checking each x/y/z component individually.
@@ -334,7 +313,7 @@ public:
 	/**
 	 * @see operator==
 	 */
-	bool equals(const float3& f, const float3& eps = float3(CMP_EPS, CMP_EPS, CMP_EPS)) const;
+	bool equals(const float3& f, const float3& eps = float3(cmp_eps(), cmp_eps(), cmp_eps())) const;
 
 	/**
 	 * @brief dot product
@@ -442,7 +421,7 @@ public:
 	 */
 	float LengthNormalize() {
 		const float len = Length();
-		if (likely(len > NORMALIZE_EPS)) {
+		if (likely(len > nrm_eps())) {
 			(*this) *= (1.0f / len);
 		}
 		return len;
@@ -450,7 +429,7 @@ public:
 
 	float LengthNormalize2D() {
 		const float len = Length2D();
-		if (likely(len > NORMALIZE_EPS)) {
+		if (likely(len > nrm_eps())) {
 			y = 0.0f; (*this) *= (1.0f / len);
 		}
 		return len;
@@ -469,7 +448,7 @@ public:
 #ifndef BUILDING_AI
 		return SafeNormalize();
 #endif
-		assert(SqLength() > NORMALIZE_EPS);
+		assert(SqLength() > nrm_eps());
 		return UnsafeNormalize();
 #else
 		return SafeNormalize();
@@ -507,7 +486,7 @@ public:
 	 */
 	float3& SafeNormalize() {
 		const float sql = SqLength();
-		if (likely(sql > NORMALIZE_EPS)) {
+		if (likely(sql > nrm_eps())) {
 			(*this) *= math::isqrt(sql);
 		}
 
@@ -531,7 +510,7 @@ public:
 #ifndef BUILDING_AI
 		return SafeANormalize();
 #endif
-		assert(SqLength() > NORMALIZE_EPS);
+		assert(SqLength() > nrm_eps());
 		return UnsafeANormalize();
 #else
 		return SafeANormalize();
@@ -571,7 +550,7 @@ public:
 	 */
 	float3& SafeANormalize() {
 		const float sql = SqLength();
-		if (likely(sql > NORMALIZE_EPS)) {
+		if (likely(sql > nrm_eps())) {
 			(*this) *= math::isqrt(sql);
 		}
 
@@ -695,6 +674,14 @@ public:
 	static float3 min(const float3 v1, const float3 v2);
 	static float3 max(const float3 v1, const float3 v2);
 	static float3 fabs(const float3 v);
+
+	#if (__cplusplus <= 199711L) && !defined(__GXX_EXPERIMENTAL_CXX0X__) && (!defined(__GNUC__) || defined (__clang__)) && !(_MSC_VER >= 1900)
+	static float cmp_eps() { return 1e-04f; }
+	static float nrm_eps() { return 1e-12f; }
+	#else
+	static constexpr float cmp_eps() { return 1e-04f; }
+	static constexpr float nrm_eps() { return 1e-12f; }
+	#endif
 
 public:
 	union {

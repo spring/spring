@@ -586,7 +586,7 @@ bool CFeature::UpdatePosition()
 	Block(); // does the check if wanted itself
 
 	// use an exact comparison for the y-component (gravity is small)
-	if (!pos.equals(oldPos, float3(float3::CMP_EPS, 0.0f, float3::CMP_EPS))) {
+	if (!pos.equals(oldPos, float3(float3::cmp_eps(), 0.0f, float3::cmp_eps()))) {
 		eventHandler.FeatureMoved(this, oldPos);
 		return true;
 	}
