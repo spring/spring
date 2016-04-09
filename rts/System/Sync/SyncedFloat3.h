@@ -431,7 +431,7 @@ public:
 	SyncedFloat3& Normalize() {
 #if defined(__SUPPORT_SNAN__)
 		// this can only be invoked by sim thread
-		assert(SqLength() > float3::cmp_eps());
+		assert(SqLength() > float3::nrm_eps());
 		return UnsafeNormalize();
 #else
 		return SafeNormalize();
@@ -461,7 +461,7 @@ public:
 	SyncedFloat3& SafeNormalize() {
 
 		const float sql = SqLength();
-		if (likely(sql > float3::cmp_eps())) {
+		if (likely(sql > float3::nrm_eps())) {
 			*this *= math::isqrt(sql);
 		}
 
@@ -479,7 +479,7 @@ public:
 	SyncedFloat3& ANormalize() {
 #if defined(__SUPPORT_SNAN__)
 		// this can only be invoked by sim thread
-		assert(SqLength() > float3::cmp_eps());
+		assert(SqLength() > float3::nrm_eps());
 		return UnsafeANormalize();
 #else
 		return SafeANormalize();
@@ -512,7 +512,7 @@ public:
 	SyncedFloat3& SafeANormalize() {
 
 		const float sql = SqLength();
-		if (likely(sql > float3::cmp_eps())) {
+		if (likely(sql > float3::nrm_eps())) {
 			*this *= math::isqrt(sql);
 		}
 
