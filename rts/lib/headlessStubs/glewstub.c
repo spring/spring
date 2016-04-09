@@ -8,7 +8,6 @@
 
 #undef GL_GLEXT_LEGACY
 #define GL_GLEXT_PROTOTYPES
-#include <GL/gl.h>
 
 #ifdef __cplusplus
 extern "C" {
