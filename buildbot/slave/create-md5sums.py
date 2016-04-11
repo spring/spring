@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
+import prepare
 import hashlib, sys, os
 
-if len(sys.argv) <= 2:
-	print("usage: %s dir [file suffixes]+" %(sys.argv[0]))
-	print("recursively (!!!) creates .md5 files for all files with provided")
-	exit(1)
+path = prepare.TMP_BASE
+suffixes = sys.argv[3:] # config + branch are used in prepare.py
+suffix = ".md5"
+
 def hashfile(filename, blocksize=4096):
 	hasher = hashlib.md5()
 	f = open(filename, "rb")
@@ -51,11 +52,6 @@ def handlefile(f, suffixes, suffix):
 	else:
 		h = createhash(f, md5file)
 		print("Creating %s: %s" % (h, md5file))
-
-
-path = sys.argv[1]
-suffixes = sys.argv[2:]
-suffix = ".md5"
 
 
 for root, directories, filenames in os.walk(path):
