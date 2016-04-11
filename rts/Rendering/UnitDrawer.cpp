@@ -1871,7 +1871,7 @@ void CUnitDrawer::UnitEnteredRadar(const CUnit* unit, int allyTeam) {
 	CUnit* u = const_cast<CUnit*>(unit);
 
 	if (!(unit->losStatus[allyTeam] & LOS_INLOS))
-		VectorInsertUnique(unitRadarIcons[allyTeam], u);
+		VectorInsertUnique(unitRadarIcons[allyTeam], u, true);
 
 	if (allyTeam != gu->myAllyTeam)
 		return;
