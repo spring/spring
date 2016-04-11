@@ -7,6 +7,7 @@ General:
  - Fix & Improve LoS performance
  ! remove LuaModUICtrl config setting
  ! remove ClassicGroundMoveType
+ ! remove SpringLobby from spring installer
 
 Sim:
  - COB: deprecate unit/team/allyteam/global vars. Use lua functions instead.
