@@ -19,12 +19,13 @@ def hashfile(filename, blocksize=4096):
 def createhash(filename, md5):
 	f = open(md5, 'wb')
 	hexdigest = hashfile(filename)
-	f.write("%s %s" %(hexdigest, os.path.basename(filename)))
+	line = "%s %s" %(hexdigest, os.path.basename(filename))
+	f.write(str.encode(line))
 	f.close()
 	return hexdigest
 
 def verify(fn, md5):
-	f = open(md5, "rb").read()
+	f = open(md5, "rb").read().decode("utf-8")
 	hexdigest, filename = f.split(" ", 1)
 	if filename != os.path.basename(fn):
 		print("Invalid file: %s %s"% (filename, fn))
