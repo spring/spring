@@ -51,15 +51,16 @@ public:
 
 	void IncreaseDetail();
 	void DecreaseDetail();
+	void SetDetail(int newGroundDetail);
 	int GetGroundDetail(const DrawPass::e& drawPass = DrawPass::Normal) const;
 
 	const CSMFReadMap* GetReadMap() const { return smfMap; }
-	      CSMFReadMap* GetReadMap()       { return smfMap; }
+		CSMFReadMap* GetReadMap()       { return smfMap; }
 	const GL::LightHandler* GetLightHandler() const { return &lightHandler; }
-	      GL::LightHandler* GetLightHandler()       { return &lightHandler; }
+		GL::LightHandler* GetLightHandler()       { return &lightHandler; }
 
 	const GL::GeometryBuffer* GetGeometryBuffer() const { return &geomBuffer; }
-	      GL::GeometryBuffer* GetGeometryBuffer()       { return &geomBuffer; }
+		GL::GeometryBuffer* GetGeometryBuffer()       { return &geomBuffer; }
 
 	IMeshDrawer* SwitchMeshDrawer(int mode = -1);
 
