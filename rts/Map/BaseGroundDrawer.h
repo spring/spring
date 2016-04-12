@@ -35,6 +35,7 @@ public:
 
 	virtual void IncreaseDetail() = 0;
 	virtual void DecreaseDetail() = 0;
+	virtual void SetDetail(int newGroundDetail) = 0;
 	virtual int GetGroundDetail(const DrawPass::e& drawPass = DrawPass::Normal) const = 0;
 
 	virtual void SetLuaShader(const LuaMapShaderData*) {}
