@@ -295,7 +295,7 @@ void CDynWater::Draw()
 		return;
 
 	glPushAttrib(GL_ENABLE_BIT);
-	glDisable(GL_BLEND);
+	glEnable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
 	glEnable(GL_FOG);
 

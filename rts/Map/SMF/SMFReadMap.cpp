@@ -642,6 +642,7 @@ void CSMFReadMap::SunChanged()
 	} else {
 		shadingTexUpdateNeeded = true;
 	}
+
 	groundDrawer->SunChanged();
 }
 

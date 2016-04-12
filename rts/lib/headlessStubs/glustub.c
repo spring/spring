@@ -2,24 +2,23 @@
 
 #undef GL_GLEXT_LEGACY
 #define GL_GLEXT_PROTOTYPES
+#ifdef _WIN32
+# define _GDI32_
+# ifdef _DLL
+#  undef _DLL
+# endif
+# include <windows.h>
+#endif
 #include <GL/glu.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// We need this because newer versions of GL/gl.h
-// undefine GLAPI in the end
-#ifndef GLAPI
-# ifdef _WIN32
-#  define GLAPI __stdcall
-# else
-#  define GLAPI
-# endif
-# define __DEFINED_GLAPI
+#ifdef GLAPI
+# undef GLAPI
 #endif
-
-// #include <stdio.h>
+#define GLAPI
 
 
 GLAPI GLUquadric* APIENTRY gluNewQuadric() {

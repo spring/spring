@@ -341,7 +341,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 						const CFeature* feature = featureHandler->GetFeature(id - unitHandler->MaxUnits());
 
 						if (feature != nullptr) {
-							lineDrawer.DrawLineAndIcon(cmdID, feature->drawMidPos, color);
+							lineDrawer.DrawLineAndIcon(cmdID, feature->GetObjDrawMidPos(), color);
 						}
 					} else {
 						const CUnit* unit = GetTrackableUnit(owner, unitHandler->GetUnit(ci->params[0]));

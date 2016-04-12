@@ -225,8 +225,6 @@ void CCameraHandler::UpdateTransition()
 	camTransState.tweenFOV = camControllers[currCamCtrlNum]->GetFOV();
 
 	const float transTime = globalRendering->lastFrameStart.toMilliSecsf();
-	const float timeRatio = (camTransState.timeEnd - transTime) / (camTransState.timeEnd - camTransState.timeStart);
-	const float tweenFact = 1.0f - math::pow(timeRatio, camTransState.timeExponent);
 
 	if (transTime >= camTransState.timeEnd) {
 		camera->SetPos(camTransState.tweenPos);
@@ -238,6 +236,9 @@ void CCameraHandler::UpdateTransition()
 
 	if (camTransState.timeEnd <= camTransState.timeStart)
 		return;
+
+	const float timeRatio = (camTransState.timeEnd - transTime) / (camTransState.timeEnd - camTransState.timeStart);
+	const float tweenFact = 1.0f - math::pow(timeRatio, camTransState.timeExponent);
 
 	camera->SetPos(mix(camTransState.startPos, camTransState.tweenPos, tweenFact));
 	camera->SetRot(mix(camTransState.startRot, camTransState.tweenRot, tweenFact));

@@ -99,9 +99,12 @@ CCircularSearchConstraint::CCircularSearchConstraint(
 CRectangularSearchConstraint::CRectangularSearchConstraint(
 	const float3 startPos,
 	const float3 goalPos,
+	float sqRadius,
 	unsigned int blockSize
 ): CPathFinderDef(goalPos, 0.0f, startPos.SqDistance2D(goalPos))
 {
+	sqGoalRadius = std::max(sqRadius, sqGoalRadius);
+
 	// construct the rectangular areas containing {start,goal}Pos
 	// (nodes are constrained to these when a PE uses the max-res
 	// PF to cache costs)

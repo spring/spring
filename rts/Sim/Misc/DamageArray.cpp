@@ -159,12 +159,14 @@ void DynDamageArray::DecRef(const DynDamageArray* dda)
 
 DynDamageArray* DynDamageArray::GetMutable(const DynDamageArray*& dda)
 {
-	if (dda->refCount == 1)
-		return const_cast<DynDamageArray*>(dda);
+	if (dda != nullptr) {
+		if (dda->refCount == 1)
+			return const_cast<DynDamageArray*>(dda);
 
-	//We're still in use by someone, so copy and replace
-	//pointer
-	DecRef(dda);
+		//We're still in use by someone, so copy and replace
+		//pointer
+		DecRef(dda);
+	}
 
 	DynDamageArray* newDDA = new DynDamageArray(*dda);
 	dda = newDDA;

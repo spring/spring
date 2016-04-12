@@ -158,12 +158,13 @@ void IWater::DrawReflections(const double* clipPlaneEqs, bool drawGround, bool d
 	{
 		drawReflection = true;
 
+		// opaque; do not clip skydome (is drawn in camera space)
+		if (drawSky)
+			sky->Draw();
+
 		glEnable(GL_CLIP_PLANE2);
 		glClipPlane(GL_CLIP_PLANE2, &clipPlaneEqs[0]);
 
-		// opaque
-		if (drawSky)
-			sky->Draw();
 		if (drawGround)
 			readMap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
 

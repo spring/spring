@@ -6,6 +6,5 @@
 
 	!insertmacro MUI_DESCRIPTION_TEXT ${SEC_PORTABLE} "This will keep all the configuration local to the install dir. Use when installing on a pen-drive, for example."
 	!insertmacro MUI_DESCRIPTION_TEXT ${SEC_DESKTOP} "This creates a shortcut on the desktop to the multiplayer battleroom for quick access to multiplayer games."
-	!insertmacro MUI_DESCRIPTION_TEXT ${SEC_SPRINGLOBBY} "The default, cross-platform battleroom used to set up single- and multiplayer games and finding opponents.$\n$\nNote: You have to install at least one Lobby to play."
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_END

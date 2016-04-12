@@ -45,6 +45,7 @@ CALLIN_LIST = {
 	"UnitCreated",
 	"UnitFinished",
 	"UnitFromFactory",
+	"UnitReverseBuilt",
 	"UnitDestroyed",
 	"RenderUnitDestroyed",
 	"UnitExperience",

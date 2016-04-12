@@ -385,6 +385,8 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 
+	ISMFRenderState* prvState = smfRenderStates[RENDER_STATE_SEL];
+
 	smfRenderStates[RENDER_STATE_SEL] = smfRenderStates[RENDER_STATE_FFP];
 	// smfRenderStates[RENDER_STATE_SEL]->Enable(this, drawPass);
 
@@ -448,6 +450,8 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 	glDisable(GL_TEXTURE_2D);
 
 	smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass);
+	smfRenderStates[RENDER_STATE_SEL] = prvState;
+
 	glDisable(GL_CULL_FACE);
 }
 

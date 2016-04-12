@@ -235,8 +235,8 @@ void CBasicSky::Draw()
 		glTranslatef((gs->frameNum%20000)*0.00005f+modCamera.x*0.000025f,modCamera.z*0.000025f,0);
 	glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
-		CMatrix44f m(camera->GetPos(),skydir1,UpVector,skydir2);
-		glMultMatrixf(m.m);
+		// glTranslatef3(camera->GetPos());
+		glMultMatrixf(CMatrix44f(camera->GetPos(), skydir1, UpVector, skydir2));
 
 	glCallList(skyDomeList);
 

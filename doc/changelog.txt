@@ -7,6 +7,7 @@ General:
  - Fix & Improve LoS performance
  ! remove LuaModUICtrl config setting
  ! remove ClassicGroundMoveType
+ ! remove SpringLobby from spring installer
 
 Sim:
  - COB: deprecate unit/team/allyteam/global vars. Use lua functions instead.
@@ -22,6 +23,7 @@ Lua:
    LIST OF NEW LOCATION KEYS THAT ARE RECOGNIZED AS OF 102
  - Add Spring.GetFrameTimer(bool synced) to get a timer for the start of the frame
    this should give better results for camera interpolations.
+ - Add an optional weaponNum argument to SetUnitTarget.
 
 Save/Load:
  ! remove UseCREGSaveLoad and add /LuaSave which generates .slsf files
@@ -30,8 +32,10 @@ Save/Load:
 
 Rendering:
  - reduce number of team-color updates for custom shaders
- - use frame-extrapolation for features (smoother movement)
+ - use frame-extrapolation for smoother feature movement
+ - draw all model nanoframe stages with shaders by default
  - skip drawing icons for void-space units
+ - disable BumpWaterRefraction = 2 for now.
 
 AI:
  - make skirmishAiCallback_Unit_getResource{Use,Make} not round their return values to ints
@@ -48,6 +52,8 @@ Misc:
 Bugfixes:
  - fix invisible OBJ models
  - fix gl.DeleteShader allowing repeated deletion
+ - fix drawing of being-built units during deferred pass
+ - fix invisible ground on voidwater maps when AdvMapShading=0 (in L-view)
  - fix Spring.SetSunLighting crash when AdvMapShading=0
  - fix Spring.ValidUnitID to accept nils again
  - fix wreckage jumping from large *horizontal* impulse

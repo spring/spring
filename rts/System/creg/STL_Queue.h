@@ -60,8 +60,7 @@ namespace creg {
 	template<class T, class S, class C>
 	struct DeduceType< std::priority_queue<T, S, C> > {
 		static boost::shared_ptr<IType> Get() {
-			DeduceType<T> elemtype;
-			return boost::shared_ptr<IType>(new PQueueType<T, S, C>(elemtype.Get()));
+			return boost::shared_ptr<IType>(new PQueueType<T, S, C>(DeduceType<T>::Get()));
 		}
 	};
 }

@@ -309,7 +309,7 @@ bool CGroundMoveType::Update()
 	// <dif> is normally equal to owner->speed (if no collisions)
 	// we need more precision (less tolerance) in the y-dimension
 	// for all-terrain units that are slowed down a lot on cliffs
-	return (OwnerMoved(heading, owner->pos - oldPos, float3(float3::CMP_EPS, float3::CMP_EPS * 1e-2f, float3::CMP_EPS)));
+	return (OwnerMoved(heading, owner->pos - oldPos, float3(float3::cmp_eps(), float3::cmp_eps() * 1e-2f, float3::cmp_eps())));
 }
 
 void CGroundMoveType::UpdateOwnerSpeedAndHeading()
@@ -387,7 +387,7 @@ void CGroundMoveType::StartMovingRaw(const float3 moveGoalPos, float moveGoalRad
 	currWayPoint = goalPos;
 	nextWayPoint = goalPos;
 
-	atGoal = ((moveGoalPos * XZVector) == (owner->pos * XZVector));
+	atGoal = moveGoalPos.SqDistance2D(owner->pos) < Square(moveGoalRadius);
 	atEndOfPath = false;
 
 	useMainHeading = false;
@@ -411,7 +411,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadius) {
 	goalPos = moveGoalPos * XZVector;
 	goalRadius = moveGoalRadius;
 
-	atGoal = ((moveGoalPos * XZVector) == (owner->pos * XZVector));
+	atGoal = moveGoalPos.SqDistance2D(owner->pos) < Square(moveGoalRadius);
 	atEndOfPath = false;
 
 	useMainHeading = false;
@@ -449,10 +449,8 @@ void CGroundMoveType::StopMoving(bool callScript, bool hardStop) {
 
 	LOG_L(L_DEBUG, "StopMoving: stopping engine for unit %i", owner->id);
 
-	if (!atGoal) {
-		currWayPoint = Here();
-		goalPos = currWayPoint;
-	}
+	currWayPoint = Here();
+	goalPos = currWayPoint;
 
 	// this gets called under a variety of conditions (see MobileCAI)
 	// the most common case is a CMD_STOP being issued which means no

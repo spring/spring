@@ -5,18 +5,8 @@
 
 #include "creg_cond.h"
 
-#if defined(_MSC_VER)
-	#include <hash_set>
-	#define SPRING_HASH_SET stdext::hash_set
-#elif defined(_LIBCPP_VERSION)
-	#include <unordered_set>
-	#define SPRING_HASH_SET std::unordered_set
-#elif __GNUG__
-	#include <unordered_set>
-	#define SPRING_HASH_SET std::unordered_set
-#else
-	#error Unsupported compiler
-#endif
+#include <unordered_set>
+#define SPRING_HASH_SET std::unordered_set
 
 #include <set>
 
@@ -63,24 +53,21 @@ namespace creg
 	template<typename T, typename C>
 	struct DeduceType<std::set<T, C> > {
 		static boost::shared_ptr<IType> Get() {
-			DeduceType<T> elemtype;
-			return boost::shared_ptr<IType>(new SetType<std::set<T, C> >(elemtype.Get()));
+			return boost::shared_ptr<IType>(new SetType<std::set<T, C> >(DeduceType<T>::Get()));
 		}
 	};
 	// Multiset
 	template<typename T>
 	struct DeduceType<std::multiset<T> > {
 		static boost::shared_ptr<IType> Get() {
-			DeduceType<T> elemtype;
-			return boost::shared_ptr<IType>(new SetType<std::multiset<T> >(elemtype.Get()));
+			return boost::shared_ptr<IType>(new SetType<std::multiset<T> >(DeduceType<T>::Get()));
 		}
 	};
 	// Hash set
 	template<typename T>
 	struct DeduceType<SPRING_HASH_SET<T> > {
 		static boost::shared_ptr<IType> Get() {
-			DeduceType<T> elemtype;
-			return boost::shared_ptr<IType>(new SetType<SPRING_HASH_SET<T> >(elemtype.Get()));
+			return boost::shared_ptr<IType>(new SetType<SPRING_HASH_SET<T> >(DeduceType<T>::Get()));
 		}
 	};
 }

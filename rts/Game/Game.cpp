@@ -1030,7 +1030,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	globalRendering->drawFrame = std::max(1U, globalRendering->drawFrame + 1);
 	globalRendering->lastFrameStart = currentTime;
 	// Update the interpolation coefficient (globalRendering->timeOffset)
-	if (!gs->paused && !IsLagging() && gs->frameNum > 1 && !videoCapturing->IsCapturing()) {
+	if (!gs->paused && !IsLagging() && !gs->PreSimFrame() && !videoCapturing->IsCapturing()) {
 		globalRendering->weightedSpeedFactor = 0.001f * gu->simFPS;
 		globalRendering->timeOffset = (currentTime - lastFrameTime).toMilliSecsf() * globalRendering->weightedSpeedFactor;
 	} else {
@@ -2082,10 +2082,13 @@ void CGame::ActionReceived(const Action& action, int playerID)
 {
 	const ISyncedActionExecutor* executor = syncedGameCommands->GetActionExecutor(action.command);
 
-	if (executor != NULL) {
+	if (executor != nullptr) {
 		// an executor for that action was found
 		executor->ExecuteAction(SyncedAction(action, playerID));
-	} else if (gs->frameNum > 1) {
+		return;
+	}
+
+	if (!gs->PreSimFrame()) {
 		eventHandler.SyncedActionFallback(action.rawline, playerID);
 		//FIXME add unsynced one?
 	}

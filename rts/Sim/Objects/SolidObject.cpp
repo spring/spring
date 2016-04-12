@@ -456,7 +456,7 @@ void CSolidObject::UpdateDirVectors(bool useGroundNormal)
 void CSolidObject::ForcedSpin(const float3& newDir)
 {
 	// new front-direction should be normalized
-	assert(math::fabsf(newDir.SqLength() - 1.0f) <= float3::CMP_EPS);
+	assert(math::fabsf(newDir.SqLength() - 1.0f) <= float3::cmp_eps());
 
 	// if zdir is parallel to world-y, use heading-vector
 	// (or its inverse) as auxiliary to avoid degeneracies

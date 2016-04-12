@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "UnitDrawer.h"
 #include "UnitDrawerState.hpp"
 
@@ -236,8 +235,8 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	deadGhostBuildings.resize(MODELTYPE_OTHER);
 	liveGhostBuildings.resize(MODELTYPE_OTHER);
 
-	opaqueModelRenderers.resize(MODELTYPE_OTHER, NULL);
-	alphaModelRenderers.resize(MODELTYPE_OTHER, NULL);
+	opaqueModelRenderers.resize(MODELTYPE_OTHER, nullptr);
+	alphaModelRenderers.resize(MODELTYPE_OTHER, nullptr);
 
 	tempOpaqueUnits.resize(MODELTYPE_OTHER);
 	tempAlphaUnits.resize(MODELTYPE_OTHER);
@@ -255,6 +254,10 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	unitDrawerStates.resize(DRAWER_STATE_CNT, nullptr);
 	unitDrawerStates[DRAWER_STATE_SSP] = IUnitDrawerState::GetInstance(globalRendering->haveARB, globalRendering->haveGLSL);
 	unitDrawerStates[DRAWER_STATE_FFP] = IUnitDrawerState::GetInstance(                   false,                     false);
+
+	drawModelFuncs[0] = &CUnitDrawer::DrawUnitModelBeingBuiltOpaque;
+	drawModelFuncs[1] = &CUnitDrawer::DrawUnitModelBeingBuiltShadow;
+	drawModelFuncs[2] = &CUnitDrawer::DrawUnitModel;
 
 	// shared with FeatureDrawer!
 	geomBuffer = LuaObjectDrawer::GetGeometryBuffer();
@@ -350,9 +353,7 @@ void CUnitDrawer::Update()
 		}
 	}
 
-	useDistToGroundForIcons = (camHandler->GetCurrentController()).GetUseDistToGroundForIcons();
-
-	if (useDistToGroundForIcons) {
+	if ((useDistToGroundForIcons = (camHandler->GetCurrentController()).GetUseDistToGroundForIcons())) {
 		const float3& camPos = camera->GetPos();
 		// use the height at the current camera position
 		//const float groundHeight = CGround::GetHeightAboveWater(camPos.x, camPos.z, false);
@@ -370,10 +371,6 @@ void CUnitDrawer::Update()
 void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 {
 	sky->SetupFog();
-
-	camNorm = camera->GetDir();
-	camNorm.y = -0.1f;
-	camNorm.ANormalize();
 
 	assert((CCamera::GetActiveCamera())->GetCamType() != CCamera::CAMTYPE_SHADOW);
 
@@ -405,9 +402,6 @@ void CUnitDrawer::DrawOpaquePass(bool deferredPass, bool drawReflection, bool dr
 		DrawOpaqueAIUnits(modelType);
 		PopModelRenderState(modelType);
 	}
-
-	// not true during DynWater::DrawRefraction
-	// assert(drawReflection == water->DrawReflectionPass());
 
 	ResetOpaqueDrawing(deferredPass);
 
@@ -648,7 +642,7 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 		return;
 
 	// If the icon is to be drawn as a radar blip, we want to get the default icon.
-	const icon::CIconData* iconData = NULL;
+	const icon::CIconData* iconData = nullptr;
 
 	if (useDefaultIcon) {
 		iconData = icon::iconHandler->GetDefaultIconData();
@@ -724,7 +718,7 @@ void CUnitDrawer::SetupAlphaDrawing(bool deferredPass)
 	glDepthMask(GL_FALSE);
 }
 
-void CUnitDrawer::ResetAlphaDrawing(bool deferredPass) const
+void CUnitDrawer::ResetAlphaDrawing(bool deferredPass)
 {
 	unitDrawerStates[DRAWER_STATE_SEL]->Disable(this, deferredPass && false);
 
@@ -942,31 +936,6 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 
 
 
-#if 0
-void CUnitDrawer::SetupOpaqueAlphaDrawing(bool deferredPass, bool haveAdvShading)
-{
-	// set-before-test
-	SetUseAdvShading(haveAdvShading);
-
-	switch (int(UseAdvShading())) {
-		case 0: { SetupOpaqueDrawing(deferredPass); } break;
-		case 1: { SetupAlphaDrawing(deferredPass); } break;
-		default: {} break;
-	}
-}
-
-void CUnitDrawer::ResetOpaqueAlphaDrawing(bool deferredPass, bool haveAdvShading)
-{
-	switch (int(UseAdvShading())) {
-		case 0: { ResetOpaqueDrawing(deferredPass); } break;
-		case 1: { ResetAlphaDrawing(deferredPass); } break;
-		default: {} break;
-	}
-
-	// set-after-test
-	SetUseAdvShading(haveAdvShading);
-}
-#endif
 
 
 void CUnitDrawer::SetupOpaqueDrawing(bool deferredPass)
@@ -991,7 +960,7 @@ void CUnitDrawer::SetupOpaqueDrawing(bool deferredPass)
 	assert(!deferredPass || unitDrawerStates[DRAWER_STATE_SEL]->CanDrawDeferred());
 }
 
-void CUnitDrawer::ResetOpaqueDrawing(bool deferredPass) const
+void CUnitDrawer::ResetOpaqueDrawing(bool deferredPass)
 {
 	unitDrawerStates[DRAWER_STATE_SEL]->Disable(this, deferredPass);
 
@@ -1268,102 +1237,163 @@ void CUnitDrawer::DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int te
 
 
 
-void CUnitDrawer::DrawUnitModelBeingBuilt(const CUnit* unit, bool noLuaCall)
-{
-	if (shadowHandler->InShadowPass()) {
-		if (unit->buildProgress > (2.0f / 3.0f))
-			DrawUnitModel(unit, noLuaCall);
-
-		return;
-	}
-
-	const float start  = std::max(unit->model->mins.y, -unit->model->height);
-	const float height = unit->model->height;
-
-	glEnable(GL_CLIP_PLANE0);
-	glEnable(GL_CLIP_PLANE1);
-
-	const float col = std::fabs(128.0f - ((gs->frameNum * 4) & 255)) / 255.0f + 0.5f;
-	const unsigned char* tcol = teamHandler->Team(unit->team)->color;
-	// frame line-color
-	const float3 fc = (!globalRendering->teamNanospray)?
-		unit->unitDef->nanoColor:
-		float3(tcol[0] / 255.0f, tcol[1] / 255.0f, tcol[2] / 255.0f);
-
-	glColorf3(fc * col);
-
-	// render wireframe with FFP
-	unitDrawerStates[DRAWER_STATE_SEL]->DisableShaders(this);
-	unitDrawerStates[DRAWER_STATE_SEL]->DisableTextures(this);
 
 
-	// first stage: wireframe model
-	//
-	// Both clip planes move up. Clip plane 0 is the upper bound of the model,
-	// clip plane 1 is the lower bound. In other words, clip plane 0 makes the
-	// wireframe/flat color/texture appear, and clip plane 1 then erases the
-	// wireframe/flat color laten on.
+typedef const void (*DrawModelBuildStageFunc)(const CUnit*, const double*, const double*, const float3, bool);
 
-	const double plane0[4] = {0, -1, 0,  start + height * (unit->buildProgress *      3)};
-	const double plane1[4] = {0,  1, 0, -start - height * (unit->buildProgress * 10 - 9)};
-	glClipPlane(GL_CLIP_PLANE0, plane0);
-	glClipPlane(GL_CLIP_PLANE1, plane1);
-
-	if (!globalRendering->atiHacks) {
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		DrawUnitModel(unit, noLuaCall);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	} else {
-		// some ATi mobility cards/drivers dont like clipping wireframes...
+static const void DrawModelNoopBuildStage(const CUnit*, const double*, const double*, const float3, bool) {}
+static const void DrawModelWireBuildStage(
+	const CUnit* unit,
+	const double* upperPlane,
+	const double* lowerPlane,
+	const float3 stageColor,
+	bool noLuaCall
+) {
+	if (globalRendering->atiHacks) {
+		// some ATi mobility cards/drivers dont like clipping wireframes
 		glDisable(GL_CLIP_PLANE0);
 		glDisable(GL_CLIP_PLANE1);
+	} else {
+		glClipPlane(GL_CLIP_PLANE0, upperPlane);
+		glClipPlane(GL_CLIP_PLANE1, lowerPlane);
+	}
 
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		DrawUnitModel(unit, noLuaCall);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	// FFP-only drawing still needs raw colors
+	glColorf3(stageColor);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		CUnitDrawer::DrawUnitModel(unit, noLuaCall);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	// glColorf3(OnesVector);
 
+	if (globalRendering->atiHacks) {
 		glEnable(GL_CLIP_PLANE0);
 		glEnable(GL_CLIP_PLANE1);
 	}
+}
 
-	// Flat-colored model
-	if (unit->buildProgress > (1.0f / 3.0f)) {
-		glColorf3(fc * (1.5f - col));
-		const double plane0[4] = {0, -1, 0,  start + height * (unit->buildProgress * 3 - 1)};
-		const double plane1[4] = {0,  1, 0, -start - height * (unit->buildProgress * 3 - 2)};
-		glClipPlane(GL_CLIP_PLANE0, plane0);
-		glClipPlane(GL_CLIP_PLANE1, plane1);
+static const void DrawModelFlatBuildStage(
+	const CUnit* unit,
+	const double* upperPlane,
+	const double* lowerPlane,
+	const float3 stageColor,
+	bool noLuaCall
+) {
+	glClipPlane(GL_CLIP_PLANE0, upperPlane);
+	glClipPlane(GL_CLIP_PLANE1, lowerPlane);
 
-		DrawUnitModel(unit, noLuaCall);
+	glColorf3(stageColor);
+		CUnitDrawer::DrawUnitModel(unit, noLuaCall);
+	// glColorf3(OnesVector);
+}
+
+static const void DrawModelFillBuildStage(
+	const CUnit* unit,
+	const double* upperPlane,
+	const double* lowerPlane,
+	const float3 stageColor,
+	bool noLuaCall
+) {
+	if (globalRendering->atiHacks) {
+		glDisable(GL_CLIP_PLANE0);
+	} else {
+		glClipPlane(GL_CLIP_PLANE0, upperPlane);
 	}
+
+	glColorf3(stageColor);
+	glPolygonOffset(1.0f, 1.0f);
+	glEnable(GL_POLYGON_OFFSET_FILL);
+		CUnitDrawer::DrawUnitModel(unit, noLuaCall);
+	glDisable(GL_POLYGON_OFFSET_FILL);
+}
+
+static const DrawModelBuildStageFunc drawModelBuildStageFuncs[] = {
+	DrawModelNoopBuildStage,
+	DrawModelWireBuildStage,
+	DrawModelFlatBuildStage,
+	DrawModelFillBuildStage,
+};
+
+
+
+
+void CUnitDrawer::DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool noLuaCall)
+{
+	if (unit->buildProgress <= 0.666f)
+		return;
+
+	DrawUnitModel(unit, noLuaCall);
+}
+
+void CUnitDrawer::DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCall)
+{
+	const S3DModel* model = unit->model;
+	const    CTeam*  team = teamHandler->Team(unit->team);
+	const   SColor  color = team->color;
+
+	const float wireColorMult = std::fabs(128.0f - ((gs->frameNum * 4) & 255)) / 255.0f + 0.5f;
+	const float flatColorMult = 1.5f - wireColorMult;
+
+	const float3 frameColors[2] = {unit->unitDef->nanoColor, {color.r / 255.0f, color.g / 255.0f, color.b / 255.0f}};
+	const float3 stageColors[3] = {frameColors[globalRendering->teamNanospray], frameColors[globalRendering->teamNanospray], OnesVector};
+	const float3 stageBounds    = {std::max(model->mins.y, -model->height), model->height, unit->buildProgress};
+
+	// Both clip planes move up. Clip plane 0 is the upper bound of the model,
+	// clip plane 1 is the lower bound. In other words, clip plane 0 makes the
+	// wireframe/flat color/texture appear, and clip plane 1 then erases the
+	// wireframe/flat color later on.
+	const double upperPlanes[] = {
+		0.0, -1.0, 0.0,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0      ),
+		0.0, -1.0, 0.0,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0 - 1.0),
+		0.0, -1.0, 0.0,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0 - 2.0),
+	};
+	const double lowerPlanes[] = {
+		0.0,  1.0, 0.0, -stageBounds.x - stageBounds.y * (stageBounds.z * 10.0 - 9.0),
+		0.0,  1.0, 0.0, -stageBounds.x - stageBounds.y * (stageBounds.z *  3.0 - 2.0),
+		0.0,  1.0, 0.0,                                  (                       0.0),
+	};
+
+	enum {
+		STAGE_WIRE = 0,
+		STAGE_FLAT = 1,
+		STAGE_FILL = 2,
+	};
+
+	// note: draw-func for stage i is at index i+1 (noop-func is at 0)
+	DrawModelBuildStageFunc stageFunc = nullptr;
+	IUnitDrawerState* selState = unitDrawer->GetDrawerState(DRAWER_STATE_SEL);
+
+	glPushAttrib(GL_CURRENT_BIT);
+	glEnable(GL_CLIP_PLANE0);
+	glEnable(GL_CLIP_PLANE1);
+
+
+	selState->SetNanoColor(float4(stageColors[0] * wireColorMult, 1.0f));
+	selState->DisableTextures(unitDrawer);
+
+	// wireframe, unconditional
+	stageFunc = drawModelBuildStageFuncs[(STAGE_WIRE + 1) * true];
+	stageFunc(unit, &upperPlanes[STAGE_WIRE * 4], &lowerPlanes[STAGE_WIRE * 4], stageColors[0] * wireColorMult, noLuaCall);
+
+
+	selState->SetNanoColor(float4(stageColors[1] * flatColorMult, 1.0f));
+
+	// flat-colored, conditional
+	stageFunc = drawModelBuildStageFuncs[(STAGE_FLAT + 1) * (stageBounds.z > 0.333f)];
+	stageFunc(unit, &upperPlanes[STAGE_FLAT * 4], &lowerPlanes[STAGE_FLAT * 4], stageColors[1] * flatColorMult, noLuaCall);
 
 	glDisable(GL_CLIP_PLANE1);
 
-	unitDrawerStates[DRAWER_STATE_SEL]->EnableTextures(this);
-	unitDrawerStates[DRAWER_STATE_SEL]->EnableShaders(this);
 
-	// second stage: texture-mapped model
-	if (unit->buildProgress > (2.0f / 3.0f)) {
-		if (globalRendering->atiHacks) {
-			glDisable(GL_CLIP_PLANE0);
+	// pass alpha=0 so shader will ignore nanoColor
+	selState->SetNanoColor(float4(stageColors[2], 0.0f));
+	selState->EnableTextures(unitDrawer);
 
-			glPolygonOffset(1.0f, 1.0f);
-			glEnable(GL_POLYGON_OFFSET_FILL);
-				DrawUnitModel(unit, noLuaCall);
-			glDisable(GL_POLYGON_OFFSET_FILL);
-		} else {
-			const double plane0[4] = {0, -1, 0 , start + height * (unit->buildProgress * 3 - 2)};
-			glClipPlane(GL_CLIP_PLANE0, plane0);
-
-			glPolygonOffset(1.0f, 1.0f);
-			glEnable(GL_POLYGON_OFFSET_FILL);
-				DrawUnitModel(unit, noLuaCall);
-			glDisable(GL_POLYGON_OFFSET_FILL);
-		}
-	}
+	// fully-shaded, conditional
+	stageFunc = drawModelBuildStageFuncs[(STAGE_FILL + 1) * (stageBounds.z > 0.666f)];
+	stageFunc(unit, &upperPlanes[STAGE_FILL * 4], &lowerPlanes[STAGE_FILL * 4], stageColors[2], noLuaCall);
 
 	glDisable(GL_CLIP_PLANE0);
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	glPopAttrib();
 }
 
 
@@ -1376,6 +1406,7 @@ void CUnitDrawer::DrawUnitModel(const CUnit* unit, bool noLuaCall) {
 	unit->localModel.Draw();
 }
 
+
 void CUnitDrawer::DrawUnitNoTrans(
 	const CUnit* unit,
 	unsigned int preList,
@@ -1383,25 +1414,22 @@ void CUnitDrawer::DrawUnitNoTrans(
 	bool lodCall,
 	bool noLuaCall
 ) {
+	const unsigned int b0 = lodCall || !unit->beingBuilt || !unit->unitDef->showNanoFrame;
+	const unsigned int b1 = shadowHandler->InShadowPass();
+
 	if (preList != 0) {
 		glCallList(preList);
 	}
 
 	// if called from LuaObjectDrawer, unit has a custom material
 	//
-	// DrawUnitBeingBuilt disables *any* shader that is currently
-	// active for its first stage and only enables a standard one
-	// for its second, while we want the Lua shader (if provided)
-	// to have full control over the build visualisation: keep it
-	// simple and bypass the engine path
+	// we want Lua-material shaders to have full control over build
+	// visualisation, so keep it simple and make LOD-calls draw the
+	// full model
 	//
 	// NOTE: "raw" calls will no longer skip DrawUnitBeingBuilt
 	//
-	if (lodCall || !unit->beingBuilt || !unit->unitDef->showNanoFrame) {
-		DrawUnitModel(unit, noLuaCall);
-	} else {
-		DrawUnitModelBeingBuilt(unit, noLuaCall);
-	}
+	drawModelFuncs[ std::max(b0 * 2, b1) ](unit, noLuaCall);
 
 	if (postList != 0) {
 		glCallList(postList);
@@ -1464,6 +1492,7 @@ bool CUnitDrawer::DrawAsIcon(const CUnit* unit, const float sqUnitCamDist) const
 
 	const float sqIconDistMult = unit->unitDef->iconType->GetDistanceSqr();
 	const float realIconLength = iconLength * sqIconDistMult;
+
 	bool asIcon = false;
 
 	if (useDistToGroundForIcons) {
@@ -1493,7 +1522,7 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 	glDisable(GL_TEXTURE_2D);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	CFeature* feature = NULL;
+	CFeature* feature = nullptr;
 
 	std::vector<float3> buildableSquares; // buildable squares
 	std::vector<float3> featureSquares; // occupied squares
@@ -1600,7 +1629,7 @@ inline const icon::CIconData* GetUnitIcon(const CUnit* unit) {
 	const unsigned short prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
 
 	const UnitDef* unitDef = unit->unitDef;
-	const icon::CIconData* iconData = NULL;
+	const icon::CIconData* iconData = nullptr;
 
 	// use the unit's custom icon if we can currently see it,
 	// or have seen it before and did not lose contact since
@@ -1641,7 +1670,7 @@ inline float GetUnitIconScale(const CUnit* unit) {
 void CUnitDrawer::DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const {
 	if (unit->noMinimap)
 		return;
-	if (unit->myIcon == NULL)
+	if (unit->myIcon == nullptr)
 		return;
 	if (unit->IsInVoid())
 		return;
@@ -1690,7 +1719,7 @@ void CUnitDrawer::DrawUnitMiniMapIcons() const {
 		const icon::CIconData* icon = iconIt->first;
 		const std::vector<const CUnit*>& units = iconIt->second;
 
-		if (icon == NULL)
+		if (icon == nullptr)
 			continue;
 		if (units.empty())
 			continue;
@@ -1709,19 +1738,24 @@ void CUnitDrawer::DrawUnitMiniMapIcons() const {
 }
 
 void CUnitDrawer::UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool killed) {
+	CUnit* u = const_cast<CUnit*>(unit);
+
 	icon::CIconData* oldIcon = unit->myIcon;
 	icon::CIconData* newIcon = const_cast<icon::CIconData*>(GetUnitIcon(unit));
+
+	u->myIcon = nullptr;
 
 	if (!killed) {
 		if ((oldIcon != newIcon) || forced) {
 			VectorErase(unitsByIcon[oldIcon], unit);
 			unitsByIcon[newIcon].push_back(unit);
 		}
-	} else {
-		VectorErase(unitsByIcon[oldIcon], unit);
+
+		u->myIcon = newIcon;
+		return;
 	}
 
-	(const_cast<CUnit*>(unit))->myIcon = killed? NULL: newIcon;
+	VectorErase(unitsByIcon[oldIcon], unit);
 }
 
 
@@ -1729,7 +1763,7 @@ void CUnitDrawer::UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool kil
 void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 	CUnit* unit = const_cast<CUnit*>(u);
 
-	if (u->model != NULL) {
+	if (u->model != nullptr) {
 		if (cloaked) {
 			alphaModelRenderers[MDL_TYPE(u)]->AddUnit(u);
 		} else {
@@ -1740,7 +1774,6 @@ void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 	UpdateUnitMiniMapIcon(u, false, false);
 	unsortedUnits.push_back(unit);
 }
-
 
 void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 	CUnit* u = const_cast<CUnit*>(unit);
@@ -1758,7 +1791,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 		GhostSolidObject* gb = new GhostSolidObject();
 		gb->pos    = u->pos;
 		gb->model  = gbModel;
-		gb->decal  = NULL;
+		gb->decal  = nullptr;
 		gb->facing = u->buildFacing;
 		gb->dir    = u->frontdir;
 		gb->team   = u->team;
@@ -1768,7 +1801,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 		groundDecals->GhostCreated(u, gb);
 	}
 
-	if (u->model) {
+	if (u->model != nullptr) {
 		// delete from both; cloaked state is unreliable at this point
 		alphaModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 		opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
@@ -1790,7 +1823,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 void CUnitDrawer::UnitCloaked(const CUnit* unit) {
 	CUnit* u = const_cast<CUnit*>(unit);
 
-	if (u->model) {
+	if (u->model != nullptr) {
 		alphaModelRenderers[MDL_TYPE(u)]->AddUnit(u);
 		opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 	}
@@ -1799,66 +1832,61 @@ void CUnitDrawer::UnitCloaked(const CUnit* unit) {
 void CUnitDrawer::UnitDecloaked(const CUnit* unit) {
 	CUnit* u = const_cast<CUnit*>(unit);
 
-	if (u->model) {
+	if (u->model != nullptr) {
 		opaqueModelRenderers[MDL_TYPE(u)]->AddUnit(u);
 		alphaModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 	}
 }
 
 void CUnitDrawer::UnitEnteredLos(const CUnit* unit, int allyTeam) {
-	if (allyTeam != gu->myAllyTeam) {
-		return;
-	}
-
 	CUnit* u = const_cast<CUnit*>(unit); //cleanup
 
-	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
-		VectorErase(liveGhostBuildings[MDL_TYPE(unit)], u);
-	}
-
 	VectorErase(unitRadarIcons[allyTeam], u);
+
+	if (allyTeam != gu->myAllyTeam)
+		return;
+
+	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit())
+		VectorErase(liveGhostBuildings[MDL_TYPE(unit)], u);
+
 	UpdateUnitMiniMapIcon(unit, false, false);
 }
 
 void CUnitDrawer::UnitLeftLos(const CUnit* unit, int allyTeam) {
-	if (allyTeam != gu->myAllyTeam) {
-		return;
-	}
-
 	CUnit* u = const_cast<CUnit*>(unit); //cleanup
-	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
-		VectorInsertUnique(liveGhostBuildings[MDL_TYPE(unit)], u, true);
-	}
 
-	if (unit->losStatus[allyTeam] & LOS_INRADAR) {
+	if (unit->losStatus[allyTeam] & LOS_INRADAR)
 		VectorInsertUnique(unitRadarIcons[allyTeam], u, true);
-	}
+
+	if (allyTeam != gu->myAllyTeam)
+		return;
+
+	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit())
+		VectorInsertUnique(liveGhostBuildings[MDL_TYPE(unit)], u);
 
 	UpdateUnitMiniMapIcon(unit, false, false);
 }
 
 void CUnitDrawer::UnitEnteredRadar(const CUnit* unit, int allyTeam) {
-	if (allyTeam != gu->myAllyTeam) {
-		return;
-	}
-
 	CUnit* u = const_cast<CUnit*>(unit);
 
-	if (!(unit->losStatus[allyTeam] & LOS_INLOS)) {
+	if (!(unit->losStatus[allyTeam] & LOS_INLOS))
 		VectorInsertUnique(unitRadarIcons[allyTeam], u, true);
-	}
+
+	if (allyTeam != gu->myAllyTeam)
+		return;
 
 	UpdateUnitMiniMapIcon(unit, false, false);
 }
 
 void CUnitDrawer::UnitLeftRadar(const CUnit* unit, int allyTeam) {
-	if (allyTeam != gu->myAllyTeam) {
-		return;
-	}
-
 	CUnit* u = const_cast<CUnit*>(unit);
 
 	VectorErase(unitRadarIcons[allyTeam], u);
+
+	if (allyTeam != gu->myAllyTeam)
+		return;
+
 	UpdateUnitMiniMapIcon(unit, false, false);
 }
 
@@ -1867,7 +1895,6 @@ void CUnitDrawer::PlayerChanged(int playerNum) {
 	if (playerNum != gu->myPlayerNum)
 		return;
 
-	// unitsByIcon is a map of (Icon*, std::vector) entries
 	for (auto iconIt = unitsByIcon.begin(); iconIt != unitsByIcon.end(); ++iconIt) {
 		(iconIt->second).clear();
 	}

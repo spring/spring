@@ -330,12 +330,13 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 		modelShaders[n]->SetUniformLocation("cameraMat");         // idx  7
 		modelShaders[n]->SetUniformLocation("cameraMatInv");      // idx  8
 		modelShaders[n]->SetUniformLocation("teamColor");         // idx  9
-		modelShaders[n]->SetUniformLocation("sunAmbient");        // idx 10
-		modelShaders[n]->SetUniformLocation("sunDiffuse");        // idx 11
-		modelShaders[n]->SetUniformLocation("shadowDensity");     // idx 12
-		modelShaders[n]->SetUniformLocation("shadowMatrix");      // idx 13
-		modelShaders[n]->SetUniformLocation("shadowParams");      // idx 14
-		modelShaders[n]->SetUniformLocation("alphaPass");         // idx 15
+		modelShaders[n]->SetUniformLocation("nanoColor");         // idx 10
+		modelShaders[n]->SetUniformLocation("sunAmbient");        // idx 11
+		modelShaders[n]->SetUniformLocation("sunDiffuse");        // idx 12
+		modelShaders[n]->SetUniformLocation("shadowDensity");     // idx 13
+		modelShaders[n]->SetUniformLocation("shadowMatrix");      // idx 14
+		modelShaders[n]->SetUniformLocation("shadowParams");      // idx 15
+		// modelShaders[n]->SetUniformLocation("alphaPass");         // idx 16
 
 		modelShaders[n]->Enable();
 		modelShaders[n]->SetUniform1i(0, 0); // diffuseTex  (idx 0, texunit 0)
@@ -344,10 +345,10 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 		modelShaders[n]->SetUniform1i(3, 3); // reflectTex  (idx 3, texunit 3)
 		modelShaders[n]->SetUniform1i(4, 4); // specularTex (idx 4, texunit 4)
 		modelShaders[n]->SetUniform3fv(5, &sky->GetLight()->GetLightDir().x);
-		modelShaders[n]->SetUniform3fv(10, &sunLighting->unitAmbientColor[0]);
-		modelShaders[n]->SetUniform3fv(11, &sunLighting->unitDiffuseColor[0]);
-		modelShaders[n]->SetUniform1f(12, sky->GetLight()->GetUnitShadowDensity());
-		modelShaders[n]->SetUniform1f(15, 0.0f); // alphaPass
+		modelShaders[n]->SetUniform3fv(11, &sunLighting->unitAmbientColor[0]);
+		modelShaders[n]->SetUniform3fv(12, &sunLighting->unitDiffuseColor[0]);
+		modelShaders[n]->SetUniform1f(13, sky->GetLight()->GetUnitShadowDensity());
+		// modelShaders[n]->SetUniform1f(16, 0.0f); // alphaPass
 		modelShaders[n]->Disable();
 		modelShaders[n]->Validate();
 	}
@@ -374,8 +375,8 @@ void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud, bool deferredPass, bool 
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform3fv(6, &camera->GetPos()[0]);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(7, false, camera->GetViewMatrix());
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(8, false, camera->GetViewMatrixInverse());
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(13, false, shadowHandler->GetShadowMatrixRaw());
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(14, &(shadowHandler->GetShadowParams().x));
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(14, false, shadowHandler->GetShadowMatrixRaw());
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(15, &(shadowHandler->GetShadowParams().x));
 
 	const_cast<GL::LightHandler*>(ud->GetLightHandler())->Update(modelShaders[MODEL_SHADER_ACTIVE]);
 }
@@ -397,9 +398,9 @@ void UnitDrawerStateGLSL::UpdateCurrentShaderSky(const CUnitDrawer* ud, const IS
 	for (unsigned int n = MODEL_SHADER_NOSHADOW_STANDARD; n <= MODEL_SHADER_SHADOWED_DEFERRED; n++) {
 		modelShaders[n]->Enable();
 		modelShaders[n]->SetUniform3fv(5, &skyLight->GetLightDir().x);
-		modelShaders[n]->SetUniform3fv(10, &sunLighting->unitAmbientColor[0]);
-		modelShaders[n]->SetUniform3fv(11, &sunLighting->unitDiffuseColor[0]);
-		modelShaders[n]->SetUniform1f(12, skyLight->GetUnitShadowDensity());
+		modelShaders[n]->SetUniform3fv(11, &sunLighting->unitAmbientColor[0]);
+		modelShaders[n]->SetUniform3fv(12, &sunLighting->unitDiffuseColor[0]);
+		modelShaders[n]->SetUniform1f(13, skyLight->GetUnitShadowDensity());
 		modelShaders[n]->Disable();
 	}
 }
@@ -410,6 +411,11 @@ void UnitDrawerStateGLSL::SetTeamColor(int team, const float2 alpha) const {
 	assert(modelShaders[MODEL_SHADER_ACTIVE]->IsBound());
 
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(9, std::move(GetTeamColor(team, alpha.x)));
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform1f(15, alpha.y);
+	// modelShaders[MODEL_SHADER_ACTIVE]->SetUniform1f(16, alpha.y);
+}
+
+void UnitDrawerStateGLSL::SetNanoColor(const float4& color) const {
+	assert(modelShaders[MODEL_SHADER_ACTIVE]->IsBound());
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(10, color);
 }
 

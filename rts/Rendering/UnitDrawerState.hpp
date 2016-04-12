@@ -52,6 +52,7 @@ public:
 
 	virtual void UpdateCurrentShaderSky(const CUnitDrawer*, const ISkyLight*) const {}
 	virtual void SetTeamColor(int team, const float2 alpha) const = 0;
+	virtual void SetNanoColor(const float4& color) const {}
 
 	void SetActiveShader(unsigned int shadowed, unsigned int deferred) {
 		// shadowed=1 --> shader 1 (deferred=0) or 3 (deferred=1)
@@ -135,6 +136,7 @@ public:
 
 	void UpdateCurrentShaderSky(const CUnitDrawer*, const ISkyLight*) const;
 	void SetTeamColor(int team, const float2 alpha) const;
+	void SetNanoColor(const float4& color) const;
 };
 
 #endif

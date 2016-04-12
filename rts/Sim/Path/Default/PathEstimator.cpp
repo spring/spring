@@ -356,7 +356,7 @@ void CPathEstimator::CalculateVertex(
 	const float3 goalPos   = SquareToFloat3(childSquare.x, childSquare.y);
 
 	// keep search exactly contained within the two blocks
-	CRectangularSearchConstraint pfDef(startPos, goalPos, BLOCK_SIZE);
+	CRectangularSearchConstraint pfDef(startPos, goalPos, 0.0f, BLOCK_SIZE);
 
 	// we never want to allow searches from any blocked starting positions
 	// (otherwise PE and PF can disagree), but are more lenient for normal
@@ -667,7 +667,7 @@ bool CPathEstimator::TestBlock(
 		const float3 sWorldPos = {testBlockPos.x * BLOCK_PIXEL_SIZE * 1.0f, 0.0f, testBlockPos.y * BLOCK_PIXEL_SIZE * 1.0f};
 		const float3 gWorldPos = peDef.goal;
 
-		const CRectangularSearchConstraint searchCon = CRectangularSearchConstraint(sWorldPos, gWorldPos, BLOCK_SIZE); // sets goalSquare{X,Z}
+		const CRectangularSearchConstraint searchCon = CRectangularSearchConstraint(sWorldPos, gWorldPos, peDef.sqGoalRadius, BLOCK_SIZE); // sets goalSquare{X,Z}
 		const IPath::SearchResult searchRes = pathFinder->GetPath(moveDef, searchCon, owner, sWorldPos, path, MAX_SEARCHED_NODES_PF >> 2);
 
 		if (searchRes != IPath::Ok) {

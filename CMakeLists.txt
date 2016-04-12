@@ -156,7 +156,7 @@ else  (UNIX AND NOT MINGW)
 	if(MSVC)
 		add_definitions(-DBOOST_ALL_NO_LIB -DNOMINMAX -DWIN32_LEAN_AND_MEAN)
 		set(Boost_USE_STATIC_LIBS ON)
-		#set(GLEW_STATIC ON)
+		set(GLEW_STATIC ON)
 		set(EXE_FLAGS WIN32)
 	endif()
 endif (UNIX AND NOT MINGW)
@@ -374,12 +374,7 @@ if(NOT MSVC)
 
 
 	### CompileTime Warnings
-	set(COMMON_WARNINGS "")
-	if    (NOT OPENMP)
-		# disable warnings about unknown pragmas because of:
-		# "#pragma omp parallel for *"
-		set(COMMON_WARNINGS "${COMMON_WARNINGS} -Wno-unknown-pragmas")
-	endif (NOT OPENMP)
+	set(COMMON_WARNINGS "${COMMON_WARNINGS} -Wformat -Wformat-security")
 
 	option(DEBUG_MAX_WARNINGS "Enable verbose compile" ${DEBUG_BUILD})
 	if    (DEBUG_MAX_WARNINGS)

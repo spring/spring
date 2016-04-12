@@ -87,9 +87,6 @@ void CCamera::CopyStateReflect(const CCamera* cam)
 	SetPos(cam->GetPos() * float3(1.0f, -1.0f, 1.0f));
 	SetRotZ(-cam->GetRot().z);
 	Update(false, true, false);
-
-	// reflection pass needs the same z-range; Update might have changed it
-	frustumScales = cam->frustumScales;
 }
 
 void CCamera::Update(bool updateDirs, bool updateMats, bool updatePort)
@@ -100,6 +97,9 @@ void CCamera::Update(bool updateDirs, bool updateMats, bool updatePort)
 		lppScale = (2.0f * tanHalfFov) / globalRendering->viewSizeY;
 	}
 
+	// should be set before UpdateMatrices
+	UpdateViewRange();
+
 	if (updateDirs)
 		UpdateDirsFromRot(rot);
 	if (updateMats)
@@ -107,7 +107,6 @@ void CCamera::Update(bool updateDirs, bool updateMats, bool updatePort)
 	if (updatePort)
 		UpdateViewPort(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 
-	UpdateViewRange();
 	UpdateFrustum();
 
 	LoadMatrices();
@@ -187,7 +186,6 @@ void CCamera::UpdateMatrices(unsigned int vsx, unsigned int vsy, float var)
 	projectionMatrixInverse = projectionMatrix.Invert();
 	viewProjectionMatrixInverse = viewProjectionMatrix.Invert();
 
-	// Billboard Matrix
 	billboardMatrix = viewMatrix;
 	billboardMatrix.SetPos(ZeroVector);
 	billboardMatrix.Transpose(); // viewMatrix is affine, equals inverse
@@ -244,13 +242,8 @@ void CCamera::UpdateViewRange()
 	frustumScales.z = CGlobalRendering::NEAR_PLANE * factor;
 	frustumScales.w = CGlobalRendering::MAX_VIEW_RANGE * factor;
 
-	if (camType == CAMTYPE_PLAYER) {
-		// we do not touch these for other cameras (they e.g.
-		// determine where fog starts and ends so larger maps
-		// would be half-covered in it when factor <= 1)
-		globalRendering->zNear     = frustumScales.z;
-		globalRendering->viewRange = frustumScales.w;
-	}
+	globalRendering->zNear     = frustumScales.z;
+	globalRendering->viewRange = frustumScales.w;
 }
 
 

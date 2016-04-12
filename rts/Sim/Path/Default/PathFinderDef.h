@@ -81,6 +81,7 @@ public:
 	CRectangularSearchConstraint(
 		const float3 startPos,
 		const float3 goalPos,
+		float sqRadius,
 		unsigned int blockSize
 	);
 

@@ -21,19 +21,19 @@ static inline float RandFloat(const float min, const float max) {
 
 static inline bool equals_legacy(const float3& f1, const float3& f2)
 {
-	return math::fabs(f1.x - f2.x) <= float3::CMP_EPS * math::fabs(f1.x)
-		&& math::fabs(f1.y - f2.y) <= float3::CMP_EPS * math::fabs(f1.y)
-		&& math::fabs(f1.z - f2.z) <= float3::CMP_EPS * math::fabs(f1.z);
+	return math::fabs(f1.x - f2.x) <= float3::cmp_eps() * math::fabs(f1.x)
+		&& math::fabs(f1.y - f2.y) <= float3::cmp_eps() * math::fabs(f1.y)
+		&& math::fabs(f1.z - f2.z) <= float3::cmp_eps() * math::fabs(f1.z);
 }
 
 
 static inline bool equals_new(const float3& f1, const float3& f2)
 {
-	return (epscmp(f1.x, f2.x, float3::CMP_EPS) && epscmp(f1.y, f2.y, float3::CMP_EPS) && epscmp(f1.z, f2.z, float3::CMP_EPS));
+	return (epscmp(f1.x, f2.x, float3::cmp_eps()) && epscmp(f1.y, f2.y, float3::cmp_eps()) && epscmp(f1.z, f2.z, float3::cmp_eps()));
 }
 
 
-static inline bool epscmp2(const float& f) { return (f <= (float3::CMP_EPS * f)); }
+static inline bool epscmp2(const float& f) { return (f <= (float3::cmp_eps() * f)); }
 static inline bool equals_distance(const float3& f1, const float3& f2)
 {
 	return ((f1.x == f2.x) && (f1.y == f2.y) && (f1.z == f2.z))
@@ -52,7 +52,7 @@ static inline bool equals_sse(const float3& f1, const float3& f2)
 		return true;
 
 	static const __m128 sign_mask = _mm_set1_ps(-0.f); // -0.f = 1 << 31
-	static const __m128 eps = _mm_set1_ps(float3::CMP_EPS);
+	static const __m128 eps = _mm_set1_ps(float3::cmp_eps());
 	static const __m128 ones = _mm_set1_ps(1.f);
 	__m128 am1 = _mm_andnot_ps(sign_mask, m1);
 	__m128 am2 = _mm_andnot_ps(sign_mask, m2);
@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE( Float3 )
 
 BOOST_AUTO_TEST_CASE( Float34_comparison )
 {
-	const float nearZero = float3::CMP_EPS*0.1f;
+	const float nearZero = float3::cmp_eps()*0.1f;
 	const float nearOne = 1.0f + nearZero;
 	const float big = 100000.0f;
 	const float nearBig = big + big*nearZero;

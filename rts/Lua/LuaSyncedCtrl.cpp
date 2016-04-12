@@ -72,6 +72,7 @@
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sim/Weapons/WeaponTarget.h"
 #include "System/EventHandler.h"
 #include "System/ObjectDependenceTypes.h"
 #include "System/Log/ILog.h"
@@ -2139,7 +2140,16 @@ int LuaSyncedCtrl::SetUnitTarget(lua_State* L)
 		                 luaL_checkfloat(L, 4));
 		const bool manualFire = luaL_optboolean(L, 5, false);
 		const bool userTarget = luaL_optboolean(L, 6, false);
-		lua_pushboolean(L, unit->AttackGround(pos, userTarget, manualFire));
+		const int weaponNum = luaL_optint(L, 7, 0) - LUA_WEAPON_BASE_INDEX;
+		bool ret = false;
+		if (weaponNum < 0) {
+			ret = unit->AttackGround(pos, userTarget, manualFire);
+		} else if (weaponNum < unit->weapons.size()) {
+			SWeaponTarget trg(pos, userTarget);
+			trg.isManualFire = manualFire;
+			ret = unit->weapons[weaponNum]->Attack(trg);
+		}
+		lua_pushboolean(L, ret);
 		return 1;
 	}
 	else if (args >= 2) {
@@ -2152,7 +2162,16 @@ int LuaSyncedCtrl::SetUnitTarget(lua_State* L)
 
 		const bool manualFire = luaL_optboolean(L, 3, false);
 		const bool userTarget = luaL_optboolean(L, 4, false);
-		lua_pushboolean(L, unit->AttackUnit(target, userTarget, manualFire));
+		const int weaponNum = luaL_optint(L, 5, -1) - LUA_WEAPON_BASE_INDEX;
+		bool ret = false;
+		if (weaponNum < 0) {
+			ret = unit->AttackUnit(target, userTarget, manualFire);
+		} else if (weaponNum < unit->weapons.size()) {
+			SWeaponTarget trg(target, userTarget);
+			trg.isManualFire = manualFire;
+			ret = unit->weapons[weaponNum]->Attack(trg);
+		}
+		lua_pushboolean(L, ret);
 		return 1;
 	}
 	return 0;

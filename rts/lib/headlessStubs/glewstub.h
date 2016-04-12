@@ -5,7 +5,14 @@
 
 #undef GL_GLEXT_LEGACY
 #define GL_GLEXT_PROTOTYPES
-#define _GDI32_
+#ifdef _WIN32
+# define _GDI32_
+# ifdef _DLL
+#  undef _DLL
+# endif
+# include <windows.h>
+#endif
+
 #if defined(__APPLE__)
 	#include <OpenGL/glu.h>
 	#include <OpenGL/glext.h>

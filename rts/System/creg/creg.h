@@ -306,7 +306,7 @@ public: \
  */
 #define CR_BIND_DERIVED_INTERFACE(TCls, TBase)	\
 	bool TCls::creg_hasVTable = std::is_polymorphic<TCls>::value; \
-	creg::ClassBinder TCls::binder(#TCls, creg::CF_Abstract, &TBase::binder, &TCls::_CregRegisterMembers, sizeof(TCls), alignof(TCls), TCls::creg_hasVTable, TCls::creg_isStruct, 0, 0);
+	creg::ClassBinder TCls::binder(#TCls, creg::CF_Abstract, &TBase::binder, &TCls::_CregRegisterMembers, sizeof(TCls&), alignof(TCls&), TCls::creg_hasVTable, TCls::creg_isStruct, 0, 0);
 
 /** @def CR_BIND_INTERFACE
  * Bind an abstract class
@@ -317,7 +317,7 @@ public: \
  */
 #define CR_BIND_INTERFACE(TCls)	\
 	bool TCls::creg_hasVTable = std::is_polymorphic<TCls>::value; \
-	creg::ClassBinder TCls::binder(#TCls, creg::CF_Abstract, nullptr, &TCls::_CregRegisterMembers, sizeof(TCls), alignof(TCls), TCls::creg_hasVTable, TCls::creg_isStruct, 0, 0);
+	creg::ClassBinder TCls::binder(#TCls, creg::CF_Abstract, nullptr, &TCls::_CregRegisterMembers, sizeof(TCls&), alignof(TCls&), TCls::creg_hasVTable, TCls::creg_isStruct, 0, 0);
 
 /** @def CR_REG_METADATA
  * Binds the class metadata to the class itself

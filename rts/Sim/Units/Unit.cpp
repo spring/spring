@@ -396,8 +396,10 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	moveType = MoveTypeFactory::GetMoveType(this, unitDef);
 	script = CUnitScriptFactory::CreateScript(unitDef->scriptName, this);
 
-	selfdExpDamages = DynDamageArray::IncRef(&unitDef->selfdExpWeaponDef->damages);
-	deathExpDamages = DynDamageArray::IncRef(&unitDef->deathExpWeaponDef->damages);
+	if (unitDef->selfdExpWeaponDef != nullptr)
+		selfdExpDamages = DynDamageArray::IncRef(&unitDef->selfdExpWeaponDef->damages);
+	if (unitDef->deathExpWeaponDef != nullptr)
+		deathExpDamages = DynDamageArray::IncRef(&unitDef->deathExpWeaponDef->damages);
 }
 
 
@@ -972,7 +974,7 @@ unsigned short CUnit::CalcLosStatus(int at)
 }
 
 
-inline void CUnit::UpdateLosStatus(int at)
+void CUnit::UpdateLosStatus(int at)
 {
 	const unsigned short currStatus = losStatus[at];
 	if ((currStatus & LOS_ALL_MASK_BITS) == LOS_ALL_MASK_BITS) {
@@ -1000,10 +1002,6 @@ void CUnit::SetStunned(bool stun) {
 void CUnit::SlowUpdate()
 {
 	UpdatePosErrorParams(false, true);
-
-	for (int at = 0; at < teamHandler->ActiveAllyTeams(); ++at) {
-		UpdateLosStatus(at);
-	}
 
 	DoWaterDamage();
 

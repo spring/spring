@@ -57,7 +57,7 @@ public:
 
 class CCommandDescriptionCache {
 	CR_DECLARE_STRUCT(CCommandDescriptionCache)
-
+public:
 	void DecRef(std::vector<const SCommandDescription*>& cmdDescs);
 	const SCommandDescription* GetPtr(const SCommandDescription& cd);
 	void DecRef(const SCommandDescription& cd);
