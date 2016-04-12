@@ -45,6 +45,7 @@ Misc:
  - make the time server spends in sleep calls configurable (for dedicated hosts)
  - rename the 'ReflectiveWater' config-key to 'Water' (to match the command)
  - set the 'GroundDetail' config-val only when it changes, not on shutdown
+ - add '/GroundDetail <val>' text command to modify ground detail on the fly
  - auto-normalize normals and tangents for all AssImp-loaded models
  - add a gameDeferredDraw=5 drawMode value (handy for Draw{Unit,Feature} to know)
 
