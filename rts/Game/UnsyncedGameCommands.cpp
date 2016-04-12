@@ -690,15 +690,15 @@ public:
 		if (badArgs) {
 			if (kill) {
 				LOG("description: "
-				                "Kill a Skirmish AI controlling a team. The team itsself will remain alive, "
-				                "unless a second argument is given, which specifies an active team "
-				                "that will receive all the units of the AI team.");
+								"Kill a Skirmish AI controlling a team. The team itsself will remain alive, "
+								"unless a second argument is given, which specifies an active team "
+								"that will receive all the units of the AI team.");
 				LOG("usage:   /%s teamToKill [teamToReceiveUnits]", GetCommand().c_str());
 			} else {
 				// reload
 				LOG("description: "
-				                "Reload a Skirmish AI controlling a team."
-				                "The team itsself will remain alive during the process.");
+								"Reload a Skirmish AI controlling a team."
+								"The team itsself will remain alive during the process.");
 				LOG("usage:   /%s teamToReload", GetCommand().c_str());
 			}
 		}
@@ -1444,11 +1444,11 @@ public:
 
 class GroundDetailActionExecutor : public IUnsyncedActionExecutor {
 public:
-    GroundDetailActionExecutor() : IUnsyncedActionExecutor("GroundDetail",
-            "Set the level of ground detail") {}
+	GroundDetailActionExecutor() : IUnsyncedActionExecutor("GroundDetail",
+			"Set the level of ground detail") {}
 
-    bool Execute(const UnsyncedAction& action) const {
-        int detail;
+	bool Execute(const UnsyncedAction& action) const {
+		int detail;
 		if (!(action.GetArgs()).empty()) {
 			detail = atoi((action.GetArgs()).c_str());
 		} else {
@@ -1456,9 +1456,9 @@ public:
 			return false;
 		}
 
-        readMap->GetGroundDrawer()->SetDetail(detail);
-        return true;
-    }
+		readMap->GetGroundDrawer()->SetDetail(detail);
+		return true;
+	}
 
 };
 

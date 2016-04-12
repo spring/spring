@@ -544,12 +544,12 @@ void CSMFGroundDrawer::DecreaseDetail()
 
 void CSMFGroundDrawer::SetDetail(int newGroundDetail)
 {
-    if (newGroundDetail < 4)
-        newGroundDetail = 4;
+	if (newGroundDetail < 4)
+		newGroundDetail = 4;
 
-    groundDetail = newGroundDetail;
-    configHandler->Set("GroundDetail", groundDetail);
-    LOG("GroundDetail is now %i", groundDetail);
+	groundDetail = newGroundDetail;
+	configHandler->Set("GroundDetail", groundDetail);
+	LOG("GroundDetail is now %i", groundDetail);
 }
 
 

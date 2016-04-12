@@ -234,7 +234,7 @@ void CSM3GroundDrawer::IncreaseDetail()
 	if (tr->config.detailMod > 12.0f)
 		tr->config.detailMod = 12.0f;
 
-    configHandler->Set("GroundDetail", 100 * tr->config.detailMod);
+	configHandler->Set("GroundDetail", 100 * tr->config.detailMod);
 	LOG("Terrain detail changed to: %2.2f", tr->config.detailMod);
 }
 
@@ -244,18 +244,18 @@ void CSM3GroundDrawer::DecreaseDetail()
 	if (tr->config.detailMod < 0.25f)
 		tr->config.detailMod = 0.25f;
 
-    configHandler->Set("GroundDetail", 100 * tr->config.detailMod);
+	configHandler->Set("GroundDetail", 100 * tr->config.detailMod);
 	LOG("Terrain detail changed to: %2.2f", tr->config.detailMod);
 }
 
 void CSM3GroundDrawer::SetDetail(int newGroundDetail)
 {
-    tr->config.detailMod = (float)newGroundDetail / 100.0f;
+	tr->config.detailMod = (float)newGroundDetail / 100.0f;
 
 	if (tr->config.detailMod < 0.25f)
 		tr->config.detailMod = 0.25f;
 
-    configHandler->Set("GroundDetail", 100 * tr->config.detailMod);
+	configHandler->Set("GroundDetail", 100 * tr->config.detailMod);
 	LOG("Terrain detail changed to: %2.2f", tr->config.detailMod);
 }
 
