@@ -1449,12 +1449,11 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		int detail;
-		if (!(action.GetArgs()).empty()) {
-			detail = atoi((action.GetArgs()).c_str());
-		} else {
+		if (action.GetArgs().empty()) {
 			LOG_L(L_WARNING, "/%s: missing argument", GetCommand().c_str());
 			return false;
 		}
+        detail = atoi((action.GetArgs()).c_str());
 
 		readMap->GetGroundDrawer()->SetDetail(detail);
 		return true;
