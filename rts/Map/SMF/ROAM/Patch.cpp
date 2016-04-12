@@ -116,8 +116,8 @@ TriTreeNode* CTriNodePool::AllocateTri()
 
 Patch::Patch()
 	: smfGroundDrawer(nullptr)
-	, heightMap(nullptr)
 	, currentVariance(nullptr)
+	, currentPool(nullptr)
 	, isDirty(true)
 	, vboVerticesUploaded(false)
 	, varianceMaxLimit(std::numeric_limits<float>::max())
@@ -158,7 +158,7 @@ void Patch::Init(CSMFGroundDrawer* _drawer, int patchX, int patchZ)
 	smfGroundDrawer = _drawer;
 
 	// Store pointer to first byte of the height data for this patch.
-	heightMap = &(readMap->GetCornerHeightMapUnsynced())[coors.y * mapDims.mapxp1 + coors.x];
+
 
 	// Attach the two m_Base triangles together
 	baseLeft.BaseNeighbor  = &baseRight;
@@ -170,6 +170,19 @@ void Patch::Init(CSMFGroundDrawer* _drawer, int patchX, int patchZ)
 	if (GLEW_ARB_vertex_buffer_object) {
 		glGenBuffersARB(1, &vertexBuffer);
 		glGenBuffersARB(1, &vertexIndexBuffer);
+	}
+
+
+	vertices.resize(3 * (PATCH_SIZE + 1) * (PATCH_SIZE + 1));
+	unsigned int index = 0;
+
+	// initialize vertices
+	for (int z = coors.y; z <= (coors.y + PATCH_SIZE); z++) {
+		for (int x = coors.x; x <= (coors.x + PATCH_SIZE); x++) {
+			vertices[index++] = x * SQUARE_SIZE;
+			vertices[index++] = 0.0f;
+			vertices[index++] = z * SQUARE_SIZE;
+		}
 	}
 
 	UpdateHeightMap();
@@ -189,21 +202,6 @@ void Patch::Reset()
 
 void Patch::UpdateHeightMap(const SRectangle& rect)
 {
-	if (vertices.empty()) {
-		vertices.resize(3 * (PATCH_SIZE + 1) * (PATCH_SIZE + 1));
-
-		unsigned int index = 0;
-
-		// initialize vertices
-		for (int z = coors.y; z <= (coors.y + PATCH_SIZE); z++) {
-			for (int x = coors.x; x <= (coors.x + PATCH_SIZE); x++) {
-				vertices[index++] = x * SQUARE_SIZE;
-				vertices[index++] = 0.0f;
-				vertices[index++] = z * SQUARE_SIZE;
-			}
-		}
-	}
-
 	const float* hMap = readMap->GetCornerHeightMapUnsynced();
 
 	for (int z = rect.z1; z <= rect.z2; z++) {
@@ -253,9 +251,8 @@ void Patch::Split(TriTreeNode* tri)
 		Split(tri->BaseNeighbor);
 
 	// Create children and link into mesh
-	CTriNodePool* pool = CTriNodePool::GetPool();
-	tri->LeftChild  = pool->AllocateTri();
-	tri->RightChild = pool->AllocateTri();
+	tri->LeftChild  = currentPool->AllocateTri();
+	tri->RightChild = currentPool->AllocateTri();
 
 	// If creation failed, just exit.
 	if (!tri->IsBranch()) {
@@ -386,6 +383,12 @@ void Patch::GenerateIndices()
 	RecursRender(&baseRight, int2(PATCH_SIZE,          0), int2(         0, PATCH_SIZE), int2(PATCH_SIZE, PATCH_SIZE));
 }
 
+float Patch::GetHeight(int2 pos)
+{
+	const int vindex = (pos.y * (PATCH_SIZE + 1) + pos.x) * 3 + 1;
+	assert(readMap->GetCornerHeightMapUnsynced()[(coors.y + pos.y) * mapDims.mapxp1 + (coors.x + pos.x)] == vertices[vindex]);
+	return vertices[vindex];
+}
 
 // ---------------------------------------------------------------------
 // Computes Variance over the entire tree.  Does not examine node relationships.
@@ -409,7 +412,8 @@ float Patch::RecursComputeVariance(
 	const int2 mpos = {(left.x + rght.x) >> 1, (left.y + rght.y) >> 1};
 
 	// get the height value at M
-	const float mhgt = heightMap[(mpos.y * mapDims.mapxp1) + mpos.x];
+
+	const float mhgt = GetHeight(mpos);
 
 	// variance of this triangle is the actual height at its hypotenuse
 	// midpoint minus the interpolated height; use values passed on the
@@ -460,9 +464,9 @@ void Patch::ComputeVariance()
 		const   int2 rght = {PATCH_SIZE,          0};
 		const   int2 apex = {         0,          0};
 		const float3 hgts = {
-			heightMap[left.y * mapDims.mapxp1 + left.x],
-			heightMap[rght.y * mapDims.mapxp1 + rght.x],
-			heightMap[apex.y * mapDims.mapxp1 + apex.x],
+			GetHeight(left),
+			GetHeight(rght),
+			GetHeight(apex),
 		};
 
 		RecursComputeVariance(left, rght, apex, hgts, 1);
@@ -475,9 +479,9 @@ void Patch::ComputeVariance()
 		const   int2 rght = {         0, PATCH_SIZE};
 		const   int2 apex = {PATCH_SIZE, PATCH_SIZE};
 		const float3 hgts = {
-			heightMap[left.y * mapDims.mapxp1 + left.x],
-			heightMap[rght.y * mapDims.mapxp1 + rght.x],
-			heightMap[apex.y * mapDims.mapxp1 + apex.x],
+			GetHeight(left),
+			GetHeight(rght),
+			GetHeight(apex),
 		};
 
 		RecursComputeVariance(left, rght, apex, hgts, 1);
@@ -498,6 +502,7 @@ bool Patch::Tessellate(const float3& campos, int groundDetail)
 	const float myz = (coors.y + PATCH_SIZE / 2) * SQUARE_SIZE;
 	const float myy = (readMap->GetCurrMinHeight() + readMap->GetCurrMaxHeight()) * 0.5f;
 	const float3 myPos(myx, myy, myz);
+	currentPool = CTriNodePool::GetPool();
 
 	camDistLODFactor  = myPos.distance(campos);
 	camDistLODFactor *= 300.0f / groundDetail; // MAGIC NUMBER 1: increase the dividend to reduce LOD in camera distance
@@ -530,7 +535,7 @@ bool Patch::Tessellate(const float3& campos, int groundDetail)
 		RecursTessellate(&baseRight, left, rght, apex, 1);
 	}
 
-	return (!CTriNodePool::GetPool()->OutOfNodes());
+	return (!currentPool->OutOfNodes());
 }
 
 

@@ -167,6 +167,8 @@ private:
 		bool leftChild
 	);
 
+	float GetHeight(int2 pos);
+
 	void GenerateBorderIndices(CVertexArray* va);
 
 private:
@@ -174,11 +176,9 @@ private:
 
 	CSMFGroundDrawer* smfGroundDrawer;
 
-	//< Pointer to height map to use
-	const float* heightMap;
-
 	//< Which variance we are currently using. [Only valid during the Tessellate and ComputeVariance passes]
 	float* currentVariance;
+	CTriNodePool* currentPool;
 
 	//< Does the Variance Tree need to be recalculated for this Patch?
 	bool isDirty;
