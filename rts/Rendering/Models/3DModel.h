@@ -137,19 +137,16 @@ public:
 		return m;
 	}
 
-	bool ComposeTransform(CMatrix44f& m, const float3& t, const float3& r, const float3& s) const {
-		bool isIdentity = true;
+	void ComposeTransform(CMatrix44f& m, const float3& t, const float3& r, const float3& s) const {
 
 		// note: translating + rotating is faster than
 		// matrix-multiplying (but the branching hurts)
 		//
 		// NOTE: ORDER MATTERS (T(baked + script) * R(baked) * R(script) * S(baked))
-		if (t != ZeroVector) { m = m.Translate(t);        isIdentity = false; }
-		if (!hasIdentityRot) { m *= bakedRotMatrix;       isIdentity = false; }
-		if (r != ZeroVector) { m = ComposeRotation(m, r); isIdentity = false; }
-		if (s != OnesVector) { m = m.Scale(s);            isIdentity = false; }
-
-		return isIdentity;
+		if (t != ZeroVector) { m = m.Translate(t); }
+		if (!hasIdentityRot) { m *= bakedRotMatrix; }
+		if (r != ZeroVector) { m = ComposeRotation(m, r); }
+		if (s != OnesVector) { m = m.Scale(s); }
 	}
 
 	void SetModelMatrix(const CMatrix44f& m) {
@@ -281,7 +278,7 @@ struct LocalModelPiece
 	void DrawLOD(unsigned int lod) const;
 	void SetLODCount(unsigned int count);
 
-	bool UpdateMatrix() const;
+	void UpdateMatrix() const;
 	void UpdateMatricesRec(bool updateChildMatrices) const;
 	void UpdateParentMatricesRec() const;
 
@@ -299,8 +296,8 @@ struct LocalModelPiece
 	const float3& GetRotation() const { return rot; }
 	const float3& GetDirection() const { return dir; }
 
-	const CMatrix44f& GetPieceSpaceMatrix() const { UpdateParentMatricesRec(); return pieceSpaceMat; }
-	const CMatrix44f& GetModelSpaceMatrix() const { UpdateParentMatricesRec(); return modelSpaceMat; }
+	const CMatrix44f& GetPieceSpaceMatrix() const { if (dirty) UpdateParentMatricesRec(); return pieceSpaceMat; }
+	const CMatrix44f& GetModelSpaceMatrix() const { if (dirty) UpdateParentMatricesRec(); return modelSpaceMat; }
 
 	const CollisionVolume* GetCollisionVolume() const { return &colvol; }
 	      CollisionVolume* GetCollisionVolume()       { return &colvol; }
@@ -315,7 +312,6 @@ private:
 
 	CollisionVolume colvol;
 
-	mutable bool identityTransform; // true IFF pieceSpaceMat (!) equals identity
 	mutable bool dirty;
 
 public:
@@ -369,7 +365,6 @@ struct LocalModel
 
 
 	void Draw() const {
-		pieces[0].UpdateMatricesRec(false);
 		if (!luaMaterialData.Enabled()) {
 			DrawPieces();
 			return;

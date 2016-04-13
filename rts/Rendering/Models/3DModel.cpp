@@ -25,7 +25,6 @@ CR_REG_METADATA(LocalModelPiece, (
 	CR_MEMBER(colvol),
 	CR_MEMBER(dirty),
 	CR_MEMBER(scriptSetVisible),
-	CR_MEMBER(identityTransform),
 	CR_MEMBER(lmodelPieceIndex),
 	CR_MEMBER(scriptPieceIndex),
 	CR_MEMBER(parent),
@@ -417,7 +416,6 @@ void LocalModel::UpdateBoundingVolume(unsigned int frameNum)
 LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 	: colvol(piece->GetCollisionVolume())
 
-	, identityTransform(true)
 	, dirty(true)
 
 	, scriptSetVisible(piece->HasGeometryData())
@@ -433,7 +431,7 @@ LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 	pos = piece->offset;
 	dir = piece->GetEmitDir();
 
-	identityTransform = UpdateMatrix();
+	UpdateMatrix();
 	dispListID = piece->GetDisplayListID();
 
 	children.reserve(piece->children.size());
@@ -449,16 +447,16 @@ void LocalModelPiece::SetDirty() {
 	}
 }
 
-bool LocalModelPiece::UpdateMatrix() const
+void LocalModelPiece::UpdateMatrix() const
 {
-	return (original->ComposeTransform(pieceSpaceMat.LoadIdentity(), pos, rot, original->scales));
+	original->ComposeTransform(pieceSpaceMat.LoadIdentity(), pos, rot, original->scales);
 }
 
 void LocalModelPiece::UpdateMatricesRec(bool updateChildMatrices) const
 {
 	if (dirty) {
 		dirty = false;
-		identityTransform = UpdateMatrix();
+		UpdateMatrix();
 		updateChildMatrices = true;
 	}
 
@@ -477,14 +475,11 @@ void LocalModelPiece::UpdateMatricesRec(bool updateChildMatrices) const
 
 void LocalModelPiece::UpdateParentMatricesRec() const
 {
-	if (!dirty)
-		return;
-
-	if (parent != nullptr)
+	if (parent != nullptr && parent->dirty)
 		parent->UpdateParentMatricesRec();
 
 	dirty = false;
-	identityTransform = UpdateMatrix();
+	UpdateMatrix();
 	modelSpaceMat = pieceSpaceMat;
 	if (parent != nullptr)
 		modelSpaceMat >>= parent->modelSpaceMat;
@@ -499,7 +494,7 @@ void LocalModelPiece::Draw() const
 		return;
 
 	glPushMatrix();
-	glMultMatrixf(modelSpaceMat);
+	glMultMatrixf(GetModelSpaceMatrix());
 	glCallList(dispListID);
 	glPopMatrix();
 }
@@ -510,7 +505,7 @@ void LocalModelPiece::DrawLOD(unsigned int lod) const
 		return;
 
 	glPushMatrix();
-	glMultMatrixf(modelSpaceMat);
+	glMultMatrixf(GetModelSpaceMatrix());
 	glCallList(lodDispLists[lod]);
 	glPopMatrix();
 }
