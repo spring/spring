@@ -614,6 +614,7 @@ bool CPathEstimator::TestBlock(
 
 	// initial calculations of the new block
 	const int2 testBlockPos = parentOpenBlock->nodePos + PE_DIRECTION_VECTORS[pathDir];
+	const int2 goalBlockPos = {int(peDef.goalSquareX / BLOCK_SIZE), int(peDef.goalSquareZ / BLOCK_SIZE)};
 
 	const unsigned int testBlockIdx = BlockPosToIdx(testBlockPos);
 
@@ -653,7 +654,6 @@ bool CPathEstimator::TestBlock(
 		return false;
 	}
 
-	const int2 goalBlockPos = {int(peDef.goalSquareX / BLOCK_SIZE), int(peDef.goalSquareZ / BLOCK_SIZE)};
 	// constraintDisabled is a hackish way to make sure we don't check this in CalculateVertices
 	if (testBlockPos == goalBlockPos && peDef.constraintDisabled) {
 		IPath::Path path;
@@ -665,20 +665,19 @@ bool CPathEstimator::TestBlock(
 		//
 		// const float3 gWorldPos = {            testBlockPos.x * BLOCK_PIXEL_SIZE * 1.0f, 0.0f,             testBlockPos.y * BLOCK_PIXEL_SIZE * 1.0f};
 		// const float3 sWorldPos = {parentOpenBlock->nodePos.x * BLOCK_PIXEL_SIZE * 1.0f, 0.0f, parentOpenBlock->nodePos.y * BLOCK_PIXEL_SIZE * 1.0f};
-		const float3 sWorldPos = {goalBlockPos.x * BLOCK_PIXEL_SIZE * 1.0f, 0.0f, goalBlockPos.y * BLOCK_PIXEL_SIZE * 1.0f};
+		const float3 sWorldPos = {testBlockPos.x * BLOCK_PIXEL_SIZE * 1.0f, 0.0f, testBlockPos.y * BLOCK_PIXEL_SIZE * 1.0f};
 		const float3 gWorldPos = peDef.goal;
-		if (sWorldPos.SqDistance2D(gWorldPos) > peDef.sqGoalRadius) {
-			const CRectangularSearchConstraint searchCon = CRectangularSearchConstraint(sWorldPos, gWorldPos, peDef.sqGoalRadius, BLOCK_SIZE); // sets goalSquare{X,Z}
-			const IPath::SearchResult searchRes = pathFinder->GetPath(moveDef, searchCon, owner, sWorldPos, path, MAX_SEARCHED_NODES_PF >> 3);
 
-			if (searchRes != IPath::Ok) {
-				// we cannot set PATHOPT_BLOCKED here either, result
-				// depends on direction of entry from the parent node
-				//
-				// blockStates.nodeMask[testBlockIdx] |= PATHOPT_BLOCKED;
-				// dirtyBlocks.push_back(testBlockIdx);
-				return false;
-			}
+		const CRectangularSearchConstraint searchCon = CRectangularSearchConstraint(sWorldPos, gWorldPos, peDef.sqGoalRadius, BLOCK_SIZE); // sets goalSquare{X,Z}
+		const IPath::SearchResult searchRes = pathFinder->GetPath(moveDef, searchCon, owner, sWorldPos, path, MAX_SEARCHED_NODES_PF >> 3);
+
+		if (searchRes != IPath::Ok) {
+			// we cannot set PATHOPT_BLOCKED here either, result
+			// depends on direction of entry from the parent node
+			//
+			// blockStates.nodeMask[testBlockIdx] |= PATHOPT_BLOCKED;
+			// dirtyBlocks.push_back(testBlockIdx);
+			return false;
 		}
 	}
 
