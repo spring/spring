@@ -246,8 +246,6 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 		alphaModelRenderers[modelType] = IModelRenderContainer::GetInstance(modelType);
 	}
 
-	unitRadarIcons.resize(teamHandler->ActiveAllyTeams());
-
 	// LH must be initialized before drawer-state is initialized
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicModelLights"));
 
@@ -317,7 +315,6 @@ CUnitDrawer::~CUnitDrawer()
 	opaqueModelRenderers.clear();
 	alphaModelRenderers.clear();
 
-	unitRadarIcons.clear();
 	unsortedUnits.clear();
 }
 
@@ -491,13 +488,10 @@ void CUnitDrawer::DrawUnitIcons()
 	}
 
 	for (CUnit* u: iconUnits)
-		DrawIcon(u, false);
-
-	if (!gu->spectatingFullView) {
-		for (CUnit* u: unitRadarIcons[gu->myAllyTeam]) {
-			DrawIcon(u, (u->losStatus[gu->myAllyTeam] & (LOS_PREVLOS | LOS_CONTRADAR)) != (LOS_PREVLOS | LOS_CONTRADAR));
-		}
-	}
+		DrawIcon(u, !gu->spectatingFullView &&
+			!(u->losStatus[gu->myAllyTeam] & LOS_INLOS) &&
+			(u->losStatus[gu->myAllyTeam] & (LOS_PREVLOS | LOS_CONTRADAR)) != (LOS_PREVLOS | LOS_CONTRADAR)
+		);
 
 	glPopAttrib();
 }
@@ -1453,7 +1447,7 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 	const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
 
 	// reset
-	unit->isIcon = false;
+	unit->isIcon = losStatus & LOS_INRADAR;
 
 	if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
 		unit->isIcon = DrawAsIcon(unit, (unit->pos - camera->GetPos()).SqLength());
@@ -1810,11 +1804,6 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 	VectorErase(unsortedUnits, u);
 	VectorErase(liveGhostBuildings[MDL_TYPE(u)], u);
 
-	// remove the icon for all ally-teams
-	for (auto it = unitRadarIcons.begin(); it != unitRadarIcons.end(); ++it) {
-		VectorErase(*it, u);
-	}
-
 	UpdateUnitMiniMapIcon(unit, false, true);
 	LuaObjectDrawer::SetObjectLOD(u, LUAOBJ_UNIT, 0);
 }
@@ -1841,8 +1830,6 @@ void CUnitDrawer::UnitDecloaked(const CUnit* unit) {
 void CUnitDrawer::UnitEnteredLos(const CUnit* unit, int allyTeam) {
 	CUnit* u = const_cast<CUnit*>(unit); //cleanup
 
-	VectorErase(unitRadarIcons[allyTeam], u);
-
 	if (allyTeam != gu->myAllyTeam)
 		return;
 
@@ -1855,9 +1842,6 @@ void CUnitDrawer::UnitEnteredLos(const CUnit* unit, int allyTeam) {
 void CUnitDrawer::UnitLeftLos(const CUnit* unit, int allyTeam) {
 	CUnit* u = const_cast<CUnit*>(unit); //cleanup
 
-	if (unit->losStatus[allyTeam] & LOS_INRADAR)
-		VectorInsertUnique(unitRadarIcons[allyTeam], u, true);
-
 	if (allyTeam != gu->myAllyTeam)
 		return;
 
@@ -1868,11 +1852,6 @@ void CUnitDrawer::UnitLeftLos(const CUnit* unit, int allyTeam) {
 }
 
 void CUnitDrawer::UnitEnteredRadar(const CUnit* unit, int allyTeam) {
-	CUnit* u = const_cast<CUnit*>(unit);
-
-	if (!(unit->losStatus[allyTeam] & LOS_INLOS))
-		VectorInsertUnique(unitRadarIcons[allyTeam], u, true);
-
 	if (allyTeam != gu->myAllyTeam)
 		return;
 
@@ -1880,10 +1859,6 @@ void CUnitDrawer::UnitEnteredRadar(const CUnit* unit, int allyTeam) {
 }
 
 void CUnitDrawer::UnitLeftRadar(const CUnit* unit, int allyTeam) {
-	CUnit* u = const_cast<CUnit*>(unit);
-
-	VectorErase(unitRadarIcons[allyTeam], u);
-
 	if (allyTeam != gu->myAllyTeam)
 		return;
 

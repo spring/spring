@@ -270,7 +270,6 @@ private:
 	/// units that are only rendered as icons this frame
 	std::vector<CUnit*> iconUnits;
 
-	std::vector<std::vector<CUnit*> > unitRadarIcons;
 	std::unordered_map<icon::CIconData*, std::vector<const CUnit*> > unitsByIcon;
 
 	// [0] := fallback shader-less rendering path
