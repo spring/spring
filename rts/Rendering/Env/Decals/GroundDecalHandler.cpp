@@ -430,10 +430,11 @@ void CGroundDecalHandler::GatherDecalsForType(CGroundDecalHandler::SolidObjectDe
 				const CUnit* decalOwnerUnit = static_cast<const CUnit*>(decalOwner);
 				if (decalOwnerUnit->isIcon)
 					continue;
-				if ((decalOwnerUnit->losStatus[gu->myAllyTeam] & LOS_INLOS) == 0 && !gu->spectatingFullView)
+				if (!gu->spectatingFullView &&
+					(decalOwnerUnit->losStatus[gu->myAllyTeam] & LOS_INLOS) == 0 &&
+					(!gameSetup->ghostedBuildings || (decalOwnerUnit->losStatus[gu->myAllyTeam] & LOS_PREVLOS) == 0))
 					continue;
-				if (!gameSetup->ghostedBuildings || (decalOwnerUnit->losStatus[gu->myAllyTeam] & LOS_PREVLOS) == 0)
-					continue;
+
 				decal->alpha = std::max(0.0f, decalOwnerUnit->buildProgress);
 			} else {
 				const CFeature* decalOwnerFeature = static_cast<const CFeature*>(decalOwner);
@@ -812,7 +813,7 @@ void CGroundDecalHandler::AddDecalAndTrack(CUnit* unit, const float3& newPos)
 	if (unit->myTrack != NULL && unit->myTrack->lastUpdate >= (gs->frameNum - 7))
 		return;
 
-	if (!((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView))
+	if (!gu->spectatingFullView && (unit->losStatus[gu->myAllyTeam] & LOS_INLOS) == 0)
 		return;
 
 	// calculate typemap-index

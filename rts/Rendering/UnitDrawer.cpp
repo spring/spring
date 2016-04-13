@@ -1452,7 +1452,6 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 
 	if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
 		unit->isIcon = DrawAsIcon(unit, (unit->pos - camera->GetPos()).SqLength());
-
 	} else if ((losStatus & LOS_PREVLOS) && (losStatus & LOS_CONTRADAR)) {
 		if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
 			unit->isIcon = DrawAsIcon(unit, (unit->pos - camera->GetPos()).SqLength());
