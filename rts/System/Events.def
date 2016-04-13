@@ -109,14 +109,15 @@
 	SETUP_EVENT(DownloadFailed,        MANAGED_BIT | UNSYNCED_BIT)
 	SETUP_EVENT(DownloadProgress,      MANAGED_BIT | UNSYNCED_BIT)
 
-	SETUP_EVENT(LastMessagePosition, MANAGED_BIT | UNSYNCED_BIT)
-	SETUP_EVENT(DefaultCommand,      MANAGED_BIT | UNSYNCED_BIT | CONTROL_BIT)
-	SETUP_EVENT(CommandNotify,       MANAGED_BIT | UNSYNCED_BIT | CONTROL_BIT)
-	SETUP_EVENT(AddConsoleLine,      MANAGED_BIT | UNSYNCED_BIT)
-	SETUP_EVENT(GroupChanged,        MANAGED_BIT | UNSYNCED_BIT)
-	SETUP_EVENT(GameSetup,           MANAGED_BIT | UNSYNCED_BIT | CONTROL_BIT)
-	SETUP_EVENT(WorldTooltip,        MANAGED_BIT | UNSYNCED_BIT)
-	SETUP_EVENT(MapDrawCmd,          MANAGED_BIT | UNSYNCED_BIT | CONTROL_BIT)
+        SETUP_EVENT(LastMessagePosition,            MANAGED_BIT | UNSYNCED_BIT)
+        SETUP_EVENT(DefaultCommand,                 MANAGED_BIT | UNSYNCED_BIT | CONTROL_BIT)
+        SETUP_EVENT(CommandNotify,                  MANAGED_BIT | UNSYNCED_BIT | CONTROL_BIT)
+        SETUP_EVENT(StructurePlacementNotify,       MANAGED_BIT | UNSYNCED_BIT | CONTROL_BIT)
+        SETUP_EVENT(AddConsoleLine,                 MANAGED_BIT | UNSYNCED_BIT)
+        SETUP_EVENT(GroupChanged,                   MANAGED_BIT | UNSYNCED_BIT)
+        SETUP_EVENT(GameSetup,                      MANAGED_BIT | UNSYNCED_BIT | CONTROL_BIT)
+        SETUP_EVENT(WorldTooltip,                   MANAGED_BIT | UNSYNCED_BIT)
+        SETUP_EVENT(MapDrawCmd,                     MANAGED_BIT | UNSYNCED_BIT | CONTROL_BIT)
 
 	SETUP_EVENT(SunChanged,     MANAGED_BIT | UNSYNCED_BIT) //FIXME make synced? (whole dynSun code needs to then)
 

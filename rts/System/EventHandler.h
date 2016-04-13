@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <unordered_set>
 
 #include "System/EventClient.h"
 #include "Sim/Units/Unit.h"
@@ -217,6 +218,8 @@ class CEventHandler
 		bool DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd);
 
 		bool CommandNotify(const Command& cmd);
+
+		bool StructurePlacementNotify(const UnitDef* def, const float3& pos, float buildHeight, int x1, int z1, int x2, int z2, int allyteam, std::unordered_set<float3>& modnobuildpos);
 
 		bool AddConsoleLine(const std::string& msg, const std::string& section, int level);
 

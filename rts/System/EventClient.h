@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <unordered_set>
 #include <typeinfo>
 
 #include "System/float3.h"
@@ -20,6 +21,7 @@
 using std::string;
 using std::vector;
 using std::map;
+using std::unordered_set;
 
 class CUnit;
 class CWeapon;
@@ -276,6 +278,8 @@ class CEventClient
 		virtual bool DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd);
 
 		virtual bool CommandNotify(const Command& cmd);
+
+		virtual bool StructurePlacementNotify(const UnitDef* def, const float3& pos, float buildHeight, int x1, int z1, int x2, int z2, int allyteam, unordered_set<float3>& modnobuildpos);
 
 		virtual bool AddConsoleLine(const std::string& msg, const std::string& section, int level);
 

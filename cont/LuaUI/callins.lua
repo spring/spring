@@ -17,6 +17,8 @@ CallInsList = {
   "LayoutButtons",
   "ConfigureLayout",
   "CommandNotify",
+  
+  "StructurePlacementNotify",
 
   "KeyPress",
   "KeyRelease",

@@ -12,6 +12,7 @@
 using std::string;
 using std::vector;
 using std::map;
+using std::unordered_set;
 
 
 CEventHandler eventHandler;
@@ -596,6 +597,13 @@ DRAW_ENTITY_CALLIN(Projectile, (const CProjectile* projectile), (projectile))
 			return true; \
 	}
 
+#define CONTROL_REVERSE_ITERATE_DEF_FALSE(name, ...) \
+    for (int i = list##name.size() - 1; i >= 0; --i) { \
+        CEventClient* ec = list##name[i]; \
+        if (!ec->name(__VA_ARGS__)) \
+            return false; \
+    }
+
 #define CONTROL_REVERSE_ITERATE_STRING(name, ...) \
 	for (int i = list##name.size() - 1; i >= 0; --i) { \
 		CEventClient* ec = list##name[i]; \
@@ -608,6 +616,13 @@ bool CEventHandler::CommandNotify(const Command& cmd)
 {
 	CONTROL_REVERSE_ITERATE_DEF_TRUE(CommandNotify, cmd)
 	return false;
+}
+
+
+bool CEventHandler::StructurePlacementNotify(const UnitDef* def, const float3& pos, float buildHeight, int x1, int z1, int x2, int z2, int allyteam, unordered_set<float3>& modnobuildpos)
+{
+    CONTROL_REVERSE_ITERATE_DEF_FALSE(StructurePlacementNotify, def, pos, buildHeight, x1, z1, x2, z2, allyteam, modnobuildpos)
+    return true;
 }
 
 

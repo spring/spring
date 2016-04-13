@@ -2156,6 +2156,79 @@ bool CLuaHandle::CommandNotify(const Command& cmd)
 	return retval;
 }
 
+bool CLuaHandle::StructurePlacementNotify(const UnitDef* def, const float3& pos, float buildHeight, int x1, int z1, int x2, int z2, int allyteam, unordered_set<float3>& modnobuildpos)
+{
+	if (!CheckModUICtrl()) {
+		return false;
+	}
+	LUA_CALL_IN_CHECK(L, false);
+	luaL_checkstack(L, 2 + 10 + 2, __func__);
+	static const LuaHashString cmdStr(__func__);
+	if (!cmdStr.GetGlobalFunc(L)) {
+		return true; // the call is not defined
+	}
+
+	//push unitDef.id
+	lua_pushnumber(L, def->id);
+	//push pos.x,y,z
+	lua_pushnumber(L, pos.x);
+	lua_pushnumber(L, pos.y);
+	lua_pushnumber(L, pos.z);
+	//push buildHeight
+	lua_pushnumber(L, buildHeight);
+	//push building dimensions
+	lua_pushnumber(L, x1);
+	lua_pushnumber(L, z1);
+	lua_pushnumber(L, x2);
+	lua_pushnumber(L, z2);
+	//push allyteam
+	lua_pushnumber(L, allyteam);
+
+	// call the function
+	if (!RunCallIn(L, cmdStr, 10, 2))
+		return true;
+
+	// if mod has allowed construction
+	bool ret = luaL_optboolean(L, -2, true);
+
+	if (!ret) {
+		if (lua_istable(L, -1)) {
+			const int sqNum = luaL_getn(L, -1);			
+			for (int i = 1; i <= sqNum; ++i) {
+				lua_rawgeti(L, -1, i);
+				if (lua_istable(L, -1))
+				{
+					float sqBounds[4]; // xmin, zmin, xmax, zmax of blocked square in map space coordinates
+					const int sqBoundsNum = LuaUtils::ParseFloatArray(L, -1, sqBounds, 4);
+					if (sqBoundsNum == 4 &&											//valid number of points is returned
+						sqBounds[0] <= sqBounds[2] && sqBounds[1] <= sqBounds[3] &&	//check if returns represent proper rectangle (xmin <= xmax, zmin <=zmax)
+						sqBounds[0] >= x1 && sqBounds[0] + SQUARE_SIZE <= x2 &&		//check if returns are within building dimensions
+						sqBounds[1] >= z1 && sqBounds[1] + SQUARE_SIZE <= z2 &&
+						sqBounds[2] >= x1 && sqBounds[2] + SQUARE_SIZE <= x2 &&
+						sqBounds[3] >= z1 && sqBounds[3] + SQUARE_SIZE <= z2 )
+					{
+						const int xSqmin = int(sqBounds[0] / SQUARE_SIZE);
+						const int zSqmin = int(sqBounds[1] / SQUARE_SIZE);
+						const int xSqmax = int(sqBounds[2] / SQUARE_SIZE);
+						const int zSqmax = int(sqBounds[3] / SQUARE_SIZE);
+
+						for (int xSq = xSqmin; xSq < xSqmax; ++xSq)
+							for (int zSq = zSqmin; zSq < zSqmax; ++zSq) {
+								modnobuildpos.emplace(float3(xSq * SQUARE_SIZE, pos.y, zSq * SQUARE_SIZE)); //placing top,left coordinate of mod-blocked square into the set
+							}
+
+					}
+				}
+				lua_pop(L, 1);
+			}
+		}
+
+	}
+
+	lua_pop(L, 2);	
+	return ret;
+}
+
 
 bool CLuaHandle::AddConsoleLine(const string& msg, const string& section, int level)
 {

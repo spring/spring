@@ -100,6 +100,10 @@ function CommandNotify(id, params, options)
   return widgetHandler:CommandNotify(id, params, options)
 end
 
+function StructurePlacementNotify(unitDefID, x, y, z, buildHeight, x1, z1, x2, z2, allyteam)
+  return widgetHandler:StructurePlacementNotify(unitDefID, x, y, z, buildHeight, x1, z1, x2, z2, allyteam)
+end
+
 function DrawScreen(vsx, vsy)
   widgetHandler:SetViewSize(vsx, vsy)
   return widgetHandler:DrawScreen()

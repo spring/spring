@@ -24,6 +24,7 @@ Lua:
  - Add Spring.GetFrameTimer(bool synced) to get a timer for the start of the frame
    this should give better results for camera interpolations.
  - Add an optional weaponNum argument to SetUnitTarget.
+ - Add Lua unsynced callin named StructurePlacementNotify. This callin is called to find out whether it's allowed to build certain stucture in certain place.
 
 Save/Load:
  ! remove UseCREGSaveLoad and add /LuaSave which generates .slsf files

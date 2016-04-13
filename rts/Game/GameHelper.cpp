@@ -1037,7 +1037,7 @@ CGameHelper::BuildSquareStatus CGameHelper::TestUnitBuildSquare(
 	std::vector<float3>* nobuildpos,
 	const std::vector<Command>* commands)
 {
-	feature = NULL;
+	feature = nullptr;
 
 	const int xsize = buildInfo.GetXSize();
 	const int zsize = buildInfo.GetZSize();
@@ -1080,9 +1080,13 @@ CGameHelper::BuildSquareStatus CGameHelper::TestUnitBuildSquare(
 		}
 	}
 
+	std::unordered_set<float3> modnobuildpos;
+
 	if (commands != NULL) {
 		// this is only called in unsynced context (ShowUnitBuildSquare)
-		assert(!synced);
+		assert(!synced);	
+		
+		const bool spnResult = eventHandler.StructurePlacementNotify(buildInfo.def, pos, buildHeight, x1 * SQUARE_SIZE, z1 * SQUARE_SIZE, x2 * SQUARE_SIZE, z2 * SQUARE_SIZE, allyteam, modnobuildpos);
 
 		for (int z = z1; z < z2; z++) {
 			for (int x = x1; x < x2; x++) {
@@ -1103,24 +1107,46 @@ CGameHelper::BuildSquareStatus CGameHelper::TestUnitBuildSquare(
 
 				switch (tbs) {
 					case BUILDSQUARE_OPEN:
-						canbuildpos->push_back(bpos);
+                        if (modnobuildpos.find(bpos) != modnobuildpos.end()) { //found
+							nobuildpos->push_back(bpos);
+						}
+						else { //not found
+							canbuildpos->push_back(bpos);
+						}						
 						break;
 					case BUILDSQUARE_RECLAIMABLE:
 					case BUILDSQUARE_OCCUPIED:
-						featurepos->push_back(bpos);
+                        if (modnobuildpos.find(bpos) != modnobuildpos.end()) { //found
+							nobuildpos->push_back(bpos);
+						}
+						else { //not found
+							featurepos->push_back(bpos);
+						}
 						break;
 					case BUILDSQUARE_BLOCKED:
 						nobuildpos->push_back(bpos);
 						break;
 				}
 
-				canBuild = std::min(canBuild, tbs);
+				if (spnResult) {
+					canBuild = std::min(canBuild, tbs);
+				}
+				else {
+					canBuild = BUILDSQUARE_BLOCKED;
+				}
+
 			}
 		}
 	} else {
 		// out of map?
 		if (unsigned(x1) > mapDims.mapx || unsigned(x2) > mapDims.mapx || unsigned(z1) > mapDims.mapy || unsigned(z2) > mapDims.mapy)
 			return BUILDSQUARE_BLOCKED;
+
+		if (!synced && //we only care about StructurePlacementNotify in unsynced context
+			!eventHandler.StructurePlacementNotify(buildInfo.def, pos, buildHeight, x1 * SQUARE_SIZE, z1 * SQUARE_SIZE, x2 * SQUARE_SIZE, z2 * SQUARE_SIZE, allyteam, modnobuildpos))
+		{
+			return BUILDSQUARE_BLOCKED;
+		}
 
 		// this can be called in either context
 		for (int z = z1; z < z2; z++) {

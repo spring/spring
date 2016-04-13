@@ -155,6 +155,8 @@ std::string CEventClient::GetTooltip(int x, int y) { return ""; }
 
 bool CEventClient::CommandNotify(const Command& cmd) { return false; }
 
+bool CEventClient::StructurePlacementNotify(const UnitDef* def, const float3& pos, float buildHeight, int x1, int z1, int x2, int z2, int allyteam, unordered_set<float3>& modnobuildpos) { return true; }
+
 bool CEventClient::AddConsoleLine(const std::string& msg, const std::string& section, int level) { return false; }
 
 void CEventClient::LastMessagePosition(const float3& pos) {}

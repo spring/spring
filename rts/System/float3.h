@@ -13,6 +13,9 @@
 #include "System/Platform/Win/win32.h"
 #endif
 
+#include <boost/functional/hash_fwd.hpp>
+#include <functional>
+
 
 /**
  * @brief float3 class
@@ -691,6 +694,19 @@ public:
 		struct { float s,t,p; };
 		struct { float xstart, ystart, xend; };
 		struct { float xyz[3]; };
+	};
+};
+
+namespace std {
+	template <> struct hash<float3> {
+		size_t operator()(float3 const& value) const
+		{
+			size_t seed = 0;
+			boost::hash_combine(seed, value.x);
+			boost::hash_combine(seed, value.y);
+			boost::hash_combine(seed, value.z);
+			return seed;
+		}
 	};
 };
 

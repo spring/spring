@@ -155,6 +155,7 @@ local flexCallIns = {
   'DrawScreenEffects',
   'DrawInMiniMap',
   'RecvSkirmishAIMessage',
+  'StructurePlacementNotify',
 }
 local flexCallInMap = {}
 for _,ci in ipairs(flexCallIns) do
@@ -1655,6 +1656,16 @@ function widgetHandler:RecvSkirmishAIMessage(aiTeam, dataStr)
       return dataRet
     end
   end
+end
+
+function widgetHandler:StructurePlacementNotify(unitDefID, x, y, z, buildHeight, x1, z1, x2, z2, allyteam)
+  for _,w in ipairs(self.StructurePlacementNotifyList) do
+    local result, blockedSquares = w:StructurePlacementNotify(unitDefID, x, y, z, buildHeight, x1, z1, x2, z2, allyteam)
+    if not result then
+      return false, blockedSquares
+    end
+  end
+  return true, nil
 end
 
 function widgetHandler:WorldTooltip(ttType, ...)
