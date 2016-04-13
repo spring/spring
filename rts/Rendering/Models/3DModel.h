@@ -137,19 +137,16 @@ public:
 		return m;
 	}
 
-	bool ComposeTransform(CMatrix44f& m, const float3& t, const float3& r, const float3& s) const {
-		bool isIdentity = true;
+	void ComposeTransform(CMatrix44f& m, const float3& t, const float3& r, const float3& s) const {
 
 		// note: translating + rotating is faster than
 		// matrix-multiplying (but the branching hurts)
 		//
 		// NOTE: ORDER MATTERS (T(baked + script) * R(baked) * R(script) * S(baked))
-		if (t != ZeroVector) { m = m.Translate(t);        isIdentity = false; }
-		if (!hasIdentityRot) { m *= bakedRotMatrix;       isIdentity = false; }
-		if (r != ZeroVector) { m = ComposeRotation(m, r); isIdentity = false; }
-		if (s != OnesVector) { m = m.Scale(s);            isIdentity = false; }
-
-		return isIdentity;
+		if (t != ZeroVector) { m = m.Translate(t); }
+		if (!hasIdentityRot) { m *= bakedRotMatrix; }
+		if (r != ZeroVector) { m = ComposeRotation(m, r); }
+		if (s != OnesVector) { m = m.Scale(s); }
 	}
 
 	void SetModelMatrix(const CMatrix44f& m) {
@@ -281,24 +278,26 @@ struct LocalModelPiece
 	void DrawLOD(unsigned int lod) const;
 	void SetLODCount(unsigned int count);
 
-	bool UpdateMatrix();
-	void UpdateMatricesRec(bool updateChildMatrices);
+	void UpdateMatrix() const;
+	void UpdateMatricesRec(bool updateChildMatrices) const;
+	void UpdateParentMatricesRec() const;
 
 	// note: actually OBJECT_TO_WORLD but transform is the same
-	float3 GetAbsolutePos() const { return (modelSpaceMat.GetPos() * WORLD_TO_OBJECT_SPACE); }
+	float3 GetAbsolutePos() const { return (GetModelSpaceMatrix().GetPos() * WORLD_TO_OBJECT_SPACE); }
 
 	bool GetEmitDirPos(float3& emitPos, float3& emitDir) const;
 
-	void SetPosition(const float3& p) { pos = p; ++numUpdatesSynced; }
-	void SetRotation(const float3& r) { rot = r; ++numUpdatesSynced; }
+	void SetPosition(const float3& p) { pos = p; if (!dirty) SetDirty(); }
+	void SetRotation(const float3& r) { rot = r; if (!dirty) SetDirty(); }
 	void SetDirection(const float3& d) { dir = d; } // unused
+	void SetDirty();
 
 	const float3& GetPosition() const { return pos; }
 	const float3& GetRotation() const { return rot; }
 	const float3& GetDirection() const { return dir; }
 
-	const CMatrix44f& GetPieceSpaceMatrix() const { return pieceSpaceMat; }
-	const CMatrix44f& GetModelSpaceMatrix() const { return modelSpaceMat; }
+	const CMatrix44f& GetPieceSpaceMatrix() const { if (dirty) UpdateParentMatricesRec(); return pieceSpaceMat; }
+	const CMatrix44f& GetModelSpaceMatrix() const { if (dirty) UpdateParentMatricesRec(); return modelSpaceMat; }
 
 	const CollisionVolume* GetCollisionVolume() const { return &colvol; }
 	      CollisionVolume* GetCollisionVolume()       { return &colvol; }
@@ -308,17 +307,15 @@ private:
 	float3 rot; // orientation relative to parent LMP, in radians (updated by scripts)
 	float3 dir; // direction (same as emitdir)
 
-	CMatrix44f pieceSpaceMat; // transform relative to parent LMP (SYNCED), combines <pos> and <rot>
-	CMatrix44f modelSpaceMat; // transform relative to root LMP (SYNCED)
+	mutable CMatrix44f pieceSpaceMat; // transform relative to parent LMP (SYNCED), combines <pos> and <rot>
+	mutable CMatrix44f modelSpaceMat; // transform relative to root LMP (SYNCED)
 
 	CollisionVolume colvol;
 
-	unsigned numUpdatesSynced; // triggers UpdateMatrix (via UpdateMatricesRec) if != lastMatrixUpdate
-	unsigned lastMatrixUpdate;
+	mutable bool dirty;
 
 public:
 	bool scriptSetVisible;  // TODO: add (visibility) maxradius!
-	bool identityTransform; // true IFF pieceSpaceMat (!) equals identity
 
 	unsigned int lmodelPieceIndex; // index of this piece into LocalModel::pieces
 	unsigned int scriptPieceIndex; // index of this piece into UnitScript::pieces
@@ -337,7 +334,6 @@ struct LocalModel
 	CR_DECLARE_STRUCT(LocalModel)
 
 	LocalModel() {
-		dirtyPieces = 0;
 		bvFrameTime = 0;
 		lodCount = 0;
 	}
@@ -378,20 +374,13 @@ struct LocalModel
 	}
 
 	void Update(unsigned int frameNum) {
-		if (dirtyPieces > 0)
-			pieces[0].UpdateMatricesRec(false);
-
-		// has its own fixed schedule independent of dirtyPieces
 		if ((frameNum - bvFrameTime) >= 15)
 			UpdateBoundingVolume(frameNum);
-
-		dirtyPieces = 0;
 	}
 
 
 	void SetModel(const S3DModel* model, bool initialize = true);
 	void SetLODCount(unsigned int count);
-	void PieceUpdated(unsigned int pieceIdx) { dirtyPieces += 1; }
 	void UpdateBoundingVolume(unsigned int frameNum);
 
 	void SetOriginalPieces(const S3DModelPiece* mp, int& idx);
@@ -429,7 +418,6 @@ private:
 
 public:
 	// increased by UnitScript whenever a piece is transformed
-	unsigned int dirtyPieces;
 	unsigned int bvFrameTime;
 	unsigned int lodCount;
 
