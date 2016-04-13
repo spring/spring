@@ -654,6 +654,7 @@ bool CPathEstimator::TestBlock(
 		return false;
 	}
 
+	// constraintDisabled is a hackish way to make sure we don't check this in CalculateVertices
 	if (testBlockPos == goalBlockPos && peDef.constraintDisabled) {
 		IPath::Path path;
 
