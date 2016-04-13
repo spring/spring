@@ -23,8 +23,7 @@ CR_REG_METADATA(LocalModelPiece, (
 	CR_MEMBER(pieceSpaceMat),
 	CR_MEMBER(modelSpaceMat),
 	CR_MEMBER(colvol),
-	CR_MEMBER(numUpdatesSynced),
-	CR_MEMBER(lastMatrixUpdate),
+	CR_MEMBER(dirty),
 	CR_MEMBER(scriptSetVisible),
 	CR_MEMBER(identityTransform),
 	CR_MEMBER(lmodelPieceIndex),
@@ -41,7 +40,6 @@ CR_REG_METADATA(LocalModelPiece, (
 
 CR_BIND(LocalModel, )
 CR_REG_METADATA(LocalModel, (
-	CR_MEMBER(dirtyPieces),
 	CR_IGNORED(bvFrameTime),
 	CR_IGNORED(lodCount), //FIXME?
 	CR_MEMBER(pieces),
@@ -310,7 +308,6 @@ void LocalModel::SetModel(const S3DModel* model, bool initialize)
 
 	assert(pieces.size() == 0);
 
-	dirtyPieces = model->numPieces;
 	bvFrameTime = 0;
 	lodCount = 0;
 
@@ -420,11 +417,10 @@ void LocalModel::UpdateBoundingVolume(unsigned int frameNum)
 LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 	: colvol(piece->GetCollisionVolume())
 
-	, numUpdatesSynced(1)
-	, lastMatrixUpdate(0)
+	, identityTransform(true)
+	, dirty(true)
 
 	, scriptSetVisible(piece->HasGeometryData())
-	, identityTransform(true)
 
 	, lmodelPieceIndex(-1)
 	, scriptPieceIndex(-1)
@@ -443,16 +439,25 @@ LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 	children.reserve(piece->children.size());
 }
 
+void LocalModelPiece::SetDirty() {
+	if (dirty)
+		return;
 
-bool LocalModelPiece::UpdateMatrix()
+	dirty = true;
+	for (LocalModelPiece* child: children) {
+		child->SetDirty();
+	}
+}
+
+bool LocalModelPiece::UpdateMatrix() const
 {
 	return (original->ComposeTransform(pieceSpaceMat.LoadIdentity(), pos, rot, original->scales));
 }
 
-void LocalModelPiece::UpdateMatricesRec(bool updateChildMatrices)
+void LocalModelPiece::UpdateMatricesRec(bool updateChildMatrices) const
 {
-	if (lastMatrixUpdate != numUpdatesSynced) {
-		lastMatrixUpdate = numUpdatesSynced;
+	if (dirty) {
+		dirty = false;
 		identityTransform = UpdateMatrix();
 		updateChildMatrices = true;
 	}
@@ -470,6 +475,22 @@ void LocalModelPiece::UpdateMatricesRec(bool updateChildMatrices)
 	}
 }
 
+void LocalModelPiece::UpdateParentMatricesRec() const
+{
+	if (!dirty)
+		return;
+
+	if (parent != nullptr)
+		parent->UpdateParentMatricesRec();
+
+	dirty = false;
+	identityTransform = UpdateMatrix();
+	modelSpaceMat = pieceSpaceMat;
+	if (parent != nullptr)
+		modelSpaceMat >>= parent->modelSpaceMat;
+
+	return;
+}
 
 
 void LocalModelPiece::Draw() const
@@ -512,8 +533,8 @@ bool LocalModelPiece::GetEmitDirPos(float3& emitPos, float3& emitDir) const
 	if (original == nullptr)
 		return false;
 
-	emitPos = modelSpaceMat * original->GetEmitPos();
-	emitDir = modelSpaceMat * float4(original->GetEmitDir(), 0.f);
+	emitPos = GetModelSpaceMatrix() * original->GetEmitPos();
+	emitDir = GetModelSpaceMatrix() * float4(original->GetEmitDir(), 0.f);
 
 	// note: actually OBJECT_TO_WORLD but transform is the same
 	emitPos *= WORLD_TO_OBJECT_SPACE;

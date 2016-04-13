@@ -214,7 +214,6 @@ void CUnitScript::TickAnims(int deltaTime, AnimType type, std::vector<AnimInfo>&
 				}
 
 				pieces[piece]->SetPosition(pos);
-				unit->localModel.PieceUpdated(piece);
 			}
 		} break;
 
@@ -237,7 +236,6 @@ void CUnitScript::TickAnims(int deltaTime, AnimType type, std::vector<AnimInfo>&
 				}
 
 				pieces[piece]->SetRotation(rot);
-				unit->localModel.PieceUpdated(piece);
 			}
 		} break;
 
@@ -260,7 +258,6 @@ void CUnitScript::TickAnims(int deltaTime, AnimType type, std::vector<AnimInfo>&
 				}
 
 				pieces[piece]->SetRotation(rot);
-				unit->localModel.PieceUpdated(piece);
 			}
 		} break;
 
@@ -476,7 +473,6 @@ void CUnitScript::MoveNow(int piece, int axis, float destination)
 	pos[axis] = pieces[piece]->original->offset[axis] + destination;
 
 	p->SetPosition(pos);
-	m.PieceUpdated(piece);
 }
 
 
@@ -494,7 +490,6 @@ void CUnitScript::TurnNow(int piece, int axis, float destination)
 	rot[axis] = destination;
 
 	p->SetRotation(rot);
-	m.PieceUpdated(piece);
 }
 
 
