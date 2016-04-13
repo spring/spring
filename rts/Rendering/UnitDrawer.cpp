@@ -487,11 +487,12 @@ void CUnitDrawer::DrawUnitIcons()
 		glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE_ARB);
 	}
 
-	for (CUnit* u: iconUnits)
+	for (CUnit* u: iconUnits) {
 		DrawIcon(u, !gu->spectatingFullView &&
 			!(u->losStatus[gu->myAllyTeam] & LOS_INLOS) &&
 			(u->losStatus[gu->myAllyTeam] & (LOS_PREVLOS | LOS_CONTRADAR)) != (LOS_PREVLOS | LOS_CONTRADAR)
 		);
+	}
 
 	glPopAttrib();
 }
