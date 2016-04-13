@@ -148,21 +148,26 @@ IPath::SearchResult CPathManager::ArrangePath(
 		// try each pathfinder in order from LOW to MAX limited by distance,
 		// with constraints disabled for all three since these break search
 		// completeness (CPU usage is still limited by MAX_SEARCHED_NODES_*)
-		for (unsigned int n = PATH_LOW_RES; n <= PATH_MAX_RES; n++) {
-			pfDef->DisableConstraint(!useConstraints[n]);
+		for (unsigned int n = PATH_MAX_RES; n >= PATH_LOW_RES; n--) {
 
 			// distance-limits are in descending order
 			if (heurGoalDist2D > searchDistances[n])
-				break;
+				continue;
+
+			pfDef->DisableConstraint(!useConstraints[n]);
 
 			const IPath::SearchResult currResult = pathFinders[n]->GetPath(*moveDef, *pfDef, caller, startPos, *pathObjects[n], nodeLimits[n]);
 
-			// note: LEQ s.t. MED-OK will be preferred over LOW-OK, etc
-			if (currResult > bestResult)
+
+			// note: GEQ s.t. MED-OK will be preferred over LOW-OK, etc
+			if (currResult >= bestResult)
 				continue;
 
 			bestResult = currResult;
 			bestSearch = n;
+
+			if (currResult == IPath::Ok)
+				break;
 		}
 	}
 
