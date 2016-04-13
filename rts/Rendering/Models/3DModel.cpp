@@ -438,12 +438,10 @@ LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 }
 
 void LocalModelPiece::SetDirty() {
-	if (dirty)
-		return;
-
 	dirty = true;
 	for (LocalModelPiece* child: children) {
-		child->SetDirty();
+		if (!child->dirty)
+			child->SetDirty();
 	}
 }
 
