@@ -654,7 +654,7 @@ bool CPathEstimator::TestBlock(
 		return false;
 	}
 
-	if (testBlockPos == goalBlockPos) {
+	if (testBlockPos == goalBlockPos && peDef.constraintDisabled) {
 		IPath::Path path;
 
 		// if we have expanded the goal-block, check if a valid
@@ -668,7 +668,7 @@ bool CPathEstimator::TestBlock(
 		const float3 gWorldPos = peDef.goal;
 
 		const CRectangularSearchConstraint searchCon = CRectangularSearchConstraint(sWorldPos, gWorldPos, peDef.sqGoalRadius, BLOCK_SIZE); // sets goalSquare{X,Z}
-		const IPath::SearchResult searchRes = pathFinder->GetPath(moveDef, searchCon, owner, sWorldPos, path, MAX_SEARCHED_NODES_PF >> 2);
+		const IPath::SearchResult searchRes = pathFinder->GetPath(moveDef, searchCon, owner, sWorldPos, path, MAX_SEARCHED_NODES_PF >> 3);
 
 		if (searchRes != IPath::Ok) {
 			// we cannot set PATHOPT_BLOCKED here either, result
