@@ -100,7 +100,12 @@ cd ${TMP_PATH}/../..
 ln -sfv ${REV}/$OUTPUTDIR/spring_${REV}.exe spring_testing.exe
 ln -sfv ${REV}/$OUTPUTDIR/spring_${REV}_portable.7z spring_testing-portable.7z
 ln -sfv ${REV}/$OUTPUTDIR/spring_${VERSION}_minimal-portable.7z spring_testing_minimal-portable.7z
-ln -sfv ${REV}/$OUTPUTDIR/spring_${VERSION}_minimal-portable+dedicated.zip spring_testing_minimal-portable+dedicated.zip
+
+if [ "$OUTPUTDIR" == "win32" ]
+then
+	#FIXME: remove this (useless file)
+	ln -sfv ${REV}/$OUTPUTDIR/spring_${VERSION}_minimal-portable+dedicated.zip spring_testing_minimal-portable+dedicated.zip
+fi
 
 # create a file which contains the latest version of a branch
 echo ${VERSION} > LATEST
