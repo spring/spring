@@ -287,8 +287,8 @@ struct LocalModelPiece
 
 	bool GetEmitDirPos(float3& emitPos, float3& emitDir) const;
 
-	void SetPosition(const float3& p) { if (!dirty && pos != p) SetDirty(); pos = p; }
-	void SetRotation(const float3& r) { if (!dirty && rot != r) SetDirty(); rot = r; }
+	void SetPosition(const float3& p) { if (!dirty && pos != p) {SetDirty(); pos = p;} }
+	void SetRotation(const float3& r) { if (!dirty && rot != r) {SetDirty(); rot = r;} }
 	void SetDirection(const float3& d) { dir = d; } // unused
 	void SetDirty();
 
