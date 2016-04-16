@@ -1833,6 +1833,16 @@ int LuaSyncedCtrl::SetUnitCloak(lua_State* L)
 		}
 	}
 
+	if (lua_isnil(L, 4)) {
+		bool defDS = unit->unitDef->decloakSpherical;
+		if (unit->decloakSpherical != defDS) {
+			unit->decloakSpherical = defDS;
+		}
+	}
+	else if (lua_isboolean(L, 4)) {
+		unit->decloakSpherical = lua_toboolean(L, 4);
+	}
+
 	return 0;
 }
 

@@ -490,6 +490,9 @@ public:
 	int curCloakTimeout;
 	float decloakDistance;
 
+	// to allow for individual per-unit control of 2D/3D minCloakDistance application
+	bool decloakSpherical;
+
 	int lastTerrainType;
 	/// Used for calling setSFXoccupy which TA scripts want
 	int curTerrainType;

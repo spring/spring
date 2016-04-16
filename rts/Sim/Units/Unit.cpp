@@ -176,6 +176,7 @@ CUnit::CUnit()
 , cloakTimeout(128)
 , curCloakTimeout(gs->frameNum)
 , decloakDistance(0.0f)
+, decloakSpherical(true)
 , lastTerrainType(-1)
 , curTerrainType(0)
 , selfDCountdown(0)
@@ -376,6 +377,7 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	wantCloak |= unitDef->startCloaked;
 	decloakDistance = unitDef->decloakDistance;
 	cloakTimeout = unitDef->cloakTimeout;
+	decloakSpherical = unitDef->decloakSpherical;
 
 	flankingBonusMode        = unitDef->flankingBonusMode;
 	flankingBonusDir         = unitDef->flankingBonusDir;
@@ -2405,7 +2407,7 @@ bool CUnit::GetNewCloakState(bool stunCheck) {
 	}
 
 	if (wantCloak || (scriptCloak >= 1)) {
-		const CUnit* closestEnemy = CGameHelper::GetClosestEnemyUnitNoLosTest(NULL, midPos, decloakDistance, allyteam, unitDef->decloakSpherical, false);
+		const CUnit* closestEnemy = CGameHelper::GetClosestEnemyUnitNoLosTest(NULL, midPos, decloakDistance, allyteam, decloakSpherical, false);
 		const float cloakCost = (Square(speed.w) > 0.2f)? unitDef->cloakCostMoving: unitDef->cloakCost;
 
 		if (decloakDistance > 0.0f && closestEnemy != NULL) {

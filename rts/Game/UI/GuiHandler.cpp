@@ -3609,7 +3609,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 			// draw decloak distance
 			if (unit->decloakDistance > 0.0f) {
 				glColor4fv(cmdColors.rangeDecloak);
-				if (unit->unitDef->decloakSpherical && globalRendering->drawdebug) {
+				if (unit->decloakSpherical && globalRendering->drawdebug) {
 					glPushMatrix();
 					glTranslatef(unit->midPos.x, unit->midPos.y, unit->midPos.z);
 					glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
