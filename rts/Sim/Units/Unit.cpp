@@ -2916,6 +2916,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(curCloakTimeout),
 	CR_MEMBER(isCloaked),
 	CR_MEMBER(decloakDistance),
+	CR_MEMBER(decloakSpherical),
 
 	CR_MEMBER(lastTerrainType),
 	CR_MEMBER(curTerrainType),
