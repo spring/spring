@@ -202,6 +202,7 @@ class CEventClient
 		virtual bool AllowDirectUnitControl(int playerID, const CUnit* unit);
 		virtual bool AllowBuilderHoldFire(const CUnit* unit, int action);
 		virtual bool AllowStartPosition(int playerID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos);
+		virtual bool AllowProximityDecloak(const CUnit* unit, const CUnit* decloakerUnit);
 
 		virtual bool TerraformComplete(const CUnit* unit, const CUnit* build);
 		virtual bool MoveCtrlNotify(const CUnit* unit, int data);

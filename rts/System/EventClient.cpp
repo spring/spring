@@ -62,6 +62,7 @@ bool CEventClient::AllowResourceTransfer(int oldTeam, int newTeam, const string&
 bool CEventClient::AllowDirectUnitControl(int playerID, const CUnit* unit) { return true; }
 bool CEventClient::AllowBuilderHoldFire(const CUnit* unit, int action) { return true; }
 bool CEventClient::AllowStartPosition(int playerID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos) { return true; }
+bool CEventClient::AllowProximityDecloak(const CUnit* unit, const CUnit* decloakerUnit) { return true; }
 
 bool CEventClient::TerraformComplete(const CUnit* unit, const CUnit* build) { return false; }
 bool CEventClient::MoveCtrlNotify(const CUnit* unit, int data) { return false; }

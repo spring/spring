@@ -291,6 +291,10 @@ bool CEventHandler::AllowStartPosition(int playerID, unsigned char readyState, c
 	CONTROL_ITERATE_DEF_TRUE(AllowStartPosition, playerID, readyState, clampedPos, rawPickPos)
 }
 
+bool CEventHandler::AllowProximityDecloak(const CUnit* unit, const CUnit* decloakerUnit)
+{
+	CONTROL_ITERATE_DEF_TRUE(AllowProximityDecloak, unit, decloakerUnit)
+}
 
 
 bool CEventHandler::TerraformComplete(const CUnit* unit, const CUnit* build)
