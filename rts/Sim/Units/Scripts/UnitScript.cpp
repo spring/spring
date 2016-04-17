@@ -466,7 +466,6 @@ void CUnitScript::MoveNow(int piece, int axis, float destination)
 		return;
 	}
 
-	LocalModel& m = unit->localModel;
 	LocalModelPiece* p = pieces[piece];
 
 	float3 pos = p->GetPosition();
@@ -483,7 +482,6 @@ void CUnitScript::TurnNow(int piece, int axis, float destination)
 		return;
 	}
 
-	LocalModel& m = unit->localModel;
 	LocalModelPiece* p = pieces[piece];
 
 	float3 rot = p->GetRotation();
