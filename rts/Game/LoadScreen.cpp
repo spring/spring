@@ -42,7 +42,6 @@
 
 CONFIG(int, LoadingMT).defaultValue(-1).safemodeValue(0);
 CONFIG(bool, ShowLoadMessages).defaultValue(true);
-CONFIG(bool, LoadscreenLicenseLeftAlign).defaultValue(false);
 
 CLoadScreen* CLoadScreen::singleton = nullptr;
 
@@ -329,24 +328,6 @@ bool CLoadScreen::Draw()
 			font->End();
 		}
 	}
-
-	// Always render Spring's license notice
-	font->Begin();
-		font->SetOutlineColor(0.0f,0.0f,0.0f,0.65f);
-		font->SetTextColor(1.0f,1.0f,1.0f,1.0f);
-		bool leftAlign = configHandler->GetBool("LoadscreenLicenseLeftAlign");
-		if (leftAlign) {
-			font->glFormat(0.02f,0.06f, globalRendering->viewSizeY / 35.0f, FONT_OUTLINE | FONT_NORM,
-					"Spring %s", SpringVersion::GetFull().c_str());
-			font->glFormat(0.02f,0.02f, globalRendering->viewSizeY / 50.0f, FONT_OUTLINE | FONT_NORM,
-				"This program is distributed under the GNU General Public License, see license.html for more info");
-		} else {
-			font->glFormat(0.5f,0.06f, globalRendering->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
-					"Spring %s", SpringVersion::GetFull().c_str());
-			font->glFormat(0.5f,0.02f, globalRendering->viewSizeY / 50.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
-				"This program is distributed under the GNU General Public License, see license.html for more info");
-		}
-	font->End();
 
 	if (!mtLoading)
 		SDL_GL_SwapWindow(globalRendering->window);
