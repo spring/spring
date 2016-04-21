@@ -185,7 +185,7 @@ bool SpringApp::Initialize()
 	assert(cmdline != NULL);
 	assert(configHandler != NULL);
 
-	LOG_L(L_ERROR, "Spring is distributed under the GNU General Public License, see license.html for more info");
+	LOG("Spring is distributed under the GNU General Public License, see license.html for more info");
 
 	// list user's config
 	LOG("============== <User Config> ==============");
