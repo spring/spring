@@ -304,17 +304,17 @@ static GLuint CompileObject(
 
 	GLint result;
 	glGetShaderiv(obj, GL_COMPILE_STATUS, &result);
-	if (result != GL_TRUE) {
-		GLchar log[4096];
-		GLsizei logSize = sizeof(log);
-		glGetShaderInfoLog(obj, logSize, &logSize, log);
+	GLchar log[4096];
+	GLsizei logSize = sizeof(log);
+	glGetShaderInfoLog(obj, logSize, &logSize, log);
 
-		LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
-		shaders.errorLog = log;
+	LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
+	shaders.errorLog = log;
+	if (result != GL_TRUE) {
 		if (shaders.errorLog.empty()) {
 			shaders.errorLog = "Empty error message:  code = "
-			                   + IntToString(result) + " (0x"
-			                   + IntToString(result, "%04X") + ")";
+							+ IntToString(result) + " (0x"
+							+ IntToString(result, "%04X") + ")";
 		}
 
 		glDeleteShader(obj);
