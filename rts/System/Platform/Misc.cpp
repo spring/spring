@@ -424,7 +424,7 @@ bool IsRunningInGDB() {
 
 	return (strstr(buf, "gdb") != NULL);
 	#else
-	return false;
+	return IsDebuggerPresent();
 	#endif
 }
 
