@@ -282,7 +282,7 @@ static void CopyShaderState_UniformBlocks(GLuint newProgID, GLuint oldProgID)
 	if (!GLEW_ARB_uniform_buffer_object)
 		return;
 
-	GLsizei numUniformBlocks, maxNameLength;
+	GLint numUniformBlocks, maxNameLength;
 	glGetProgramiv(oldProgID, GL_ACTIVE_UNIFORM_BLOCKS, &numUniformBlocks);
 	glGetProgramiv(oldProgID, GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH, &maxNameLength);
 
@@ -308,6 +308,46 @@ static void CopyShaderState_UniformBlocks(GLuint newProgID, GLuint oldProgID)
 		glGetActiveUniformBlockiv(oldProgID, oldLoc, GL_UNIFORM_BLOCK_BINDING, &value);
 		glUniformBlockBinding(newProgID, newLoc, value);
 	}
+}
+
+
+static void CopyShaderState_ShaderStorage(GLuint newProgID, GLuint oldProgID)
+{
+#ifdef GL_ARB_program_interface_query
+	if (!GLEW_ARB_program_interface_query)
+		return;
+
+	GLint numUniformBlocks, maxNameLength;
+	glGetProgramInterfaceiv(oldProgID, GL_SHADER_STORAGE_BLOCK, GL_ACTIVE_RESOURCES, &numUniformBlocks);
+	glGetProgramInterfaceiv(oldProgID, GL_SHADER_STORAGE_BLOCK, GL_MAX_NAME_LENGTH, &maxNameLength);
+
+	if (maxNameLength <= 0)
+		return;
+
+	std::string name(maxNameLength, 0);
+	for (int i = 0; i < numUniformBlocks; ++i) {
+		GLsizei nameLength = 0;
+		glGetProgramResourceName(oldProgID, GL_SHADER_STORAGE_BLOCK, i, maxNameLength, &nameLength, &name[0]);
+		name[maxNameLength - 1] = 0;
+
+		if (nameLength == 0)
+			continue;
+
+		GLuint oldLoc = glGetProgramResourceIndex(oldProgID, GL_SHADER_STORAGE_BLOCK, &name[0]);
+		GLuint newLoc = glGetProgramResourceIndex(newProgID, GL_SHADER_STORAGE_BLOCK, &name[0]);
+
+		if (oldLoc == GL_INVALID_INDEX || newLoc == GL_INVALID_INDEX)
+			continue;
+
+		GLint value;
+		constexpr GLenum props[] = {GL_BUFFER_BINDING};
+		glGetProgramResourceiv(oldProgID,
+			GL_SHADER_STORAGE_BLOCK, oldLoc,
+			1, props,
+			1, nullptr, &value);
+		glShaderStorageBlockBinding(newProgID, newLoc, value);
+	}
+#endif
 }
 
 
@@ -433,6 +473,7 @@ namespace Shader {
 
 		if (oldProgID != 0) {
 			CopyShaderState_UniformBlocks(newProgID, oldProgID);
+			CopyShaderState_ShaderStorage(newProgID, oldProgID);
 			CopyShaderState_Attributes(newProgID, oldProgID);
 			CopyShaderState_TransformFeedback(newProgID, oldProgID);
 			CopyShaderState_Geometry(newProgID, oldProgID);
