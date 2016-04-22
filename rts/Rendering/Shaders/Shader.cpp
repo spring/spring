@@ -448,18 +448,6 @@ namespace Shader {
 	void GLSLProgramObject::Link() {
 		RecompileIfNeeded(false);
 		assert(glIsProgram(objID));
-
-		if (!glIsProgram(objID))
-			return;
-
-		glLinkProgram(objID);
-
-		valid = glslIsValid(objID);
-		log += glslGetLog(objID);
-
-		if (!IsValid()) {
-			LOG_L(L_WARNING, "[GLSL-PO::%s] program-object name: %s, link-log:\n%s\n", __FUNCTION__, name.c_str(), log.c_str());
-		}
 	}
 
 	bool GLSLProgramObject::Validate() {
@@ -577,20 +565,27 @@ namespace Shader {
 					shadersValid = false;
 				}
 			}
+
 			if (!shadersValid)
 				return;
 
-			Link();
+			glLinkProgram(objID);
+
+			valid = glslIsValid(objID);
+			log += glslGetLog(objID);
+
+			if (!IsValid()) {
+				LOG_L(L_WARNING, "[GLSL-PO::%s] program-object name: %s, link-log:\n%s\n", __FUNCTION__, name.c_str(), log.c_str());
+			}
 		} else {
 			valid = true;
 		}
 
 		//
-		/*
-		if (validate) {
-			Validate(); //FIXME: fails on ATI, see https://springrts.com/mantis/view.php?id=4715
-		}
-		*/
+		//FIXME: fails on ATI, see https://springrts.com/mantis/view.php?id=4715
+		//if (validate && !globalRendering->haveATI) {
+		//	Validate();
+		//}
 
 		// copy full program state from old to new program (uniforms etc.)
 		if (IsValid()) {
