@@ -6,7 +6,6 @@
 #include <memory>
 #include <string.h>
 #include <IL/il.h>
-//#include <IL/ilu.h>
 #include <SDL_video.h>
 #include <boost/thread.hpp>
 
@@ -225,28 +224,27 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 		channels = 0;
 
 		ddsimage = new nv_dds::CDDSImage();
-		bool status = ddsimage->load(filename);
+		if (!ddsimage->load(filename))
+			return false;
 
-		if (status) {
-			xsize = ddsimage->get_width();
-			ysize = ddsimage->get_height();
-			channels = ddsimage->get_components();
-			switch (ddsimage->get_type()) {
-				case nv_dds::TextureFlat :
-					textype = GL_TEXTURE_2D;
-					break;
-				case nv_dds::Texture3D :
-					textype = GL_TEXTURE_3D;
-					break;
-				case nv_dds::TextureCubemap :
-					textype = GL_TEXTURE_CUBE_MAP;
-					break;
-				case nv_dds::TextureNone :
-				default :
-					break;
-			}
+		xsize = ddsimage->get_width();
+		ysize = ddsimage->get_height();
+		channels = ddsimage->get_components();
+		switch (ddsimage->get_type()) {
+			case nv_dds::TextureFlat :
+				textype = GL_TEXTURE_2D;
+				break;
+			case nv_dds::Texture3D :
+				textype = GL_TEXTURE_3D;
+				break;
+			case nv_dds::TextureCubemap :
+				textype = GL_TEXTURE_CUBE_MAP;
+				break;
+			case nv_dds::TextureNone :
+			default :
+				break;
 		}
-		return status;
+		return true;
 #else // !BITMAP_NO_OPENGL
 		AllocDummy(); //allocate a dummy texture, as dds aren't supported in headless
 		return true;

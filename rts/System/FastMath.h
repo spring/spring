@@ -213,6 +213,20 @@ namespace fastmath {
 	static const float NEGHALFPI = -HALFPI;
 
 	/**
+	* @brief square root of two
+	*
+	* sqrt(2)
+	*/
+	static const float SQRT2 = 1.41421356237f;
+
+	/**
+	* @brief Degree (300) to Radians (2pi)
+	*
+	* 360 / (2*PI)
+	*/
+	static const float DEG_TO_RAD = 180.f / PI;
+
+	/**
 	* @brief calculates the sine of x
 	*
 	* Range reduces x to -PI ... PI, and then uses the
