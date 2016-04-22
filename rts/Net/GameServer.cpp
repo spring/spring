@@ -2283,7 +2283,6 @@ void CGameServer::PushAction(const Action& action, bool fromAutoHost)
 
 bool CGameServer::HasFinished() const
 {
-	Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
 	return quitServer;
 }
 
