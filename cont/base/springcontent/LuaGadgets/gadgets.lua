@@ -1199,8 +1199,8 @@ end
 
 
 function gadgetHandler:AllowBuilderHoldFire(unitID, unitDefID, action)
-  for _,g in r_ipairs(self.AllowBuilderHoldFire) do
-    if (not AllowBuilderHoldFire(unitID, unitDefID, action)) then
+  for _,g in r_ipairs(self.AllowBuilderHoldFireList) do
+    if (not g:AllowBuilderHoldFire(unitID, unitDefID, action)) then
       return false
     end
   end
