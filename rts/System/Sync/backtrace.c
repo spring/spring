@@ -113,3 +113,27 @@ int backtrace (void **array, int size)
 }
 
 #endif // __MINGW32__
+
+// This part is for MSVC and is (obviously) not from GNU libc
+// Might actually work on mingw as well, feel free to test and replace.
+#if defined _MSC_VER
+int backtrace(void **array, int framesToCapture)
+{
+	int frames = 0;
+#ifdef _M_X64
+	frames = CaptureStackBackTrace(framesToSkip, framesToCapture, backTrace, nullptr);
+#else
+	__try {
+		void **frame = 0;
+		__asm { mov frame, ebp }
+		while (frame && frames < framesToCapture) {
+			array[frames] = frame[1];
+			frames++;
+			frame = (void **) frame[0];
+		}
+	}
+	__except (1 /*EXCEPTION_EXECUTE_HANDLER*/) { }
+#endif
+	return frames;
+}
+#endif

@@ -22,7 +22,7 @@
 	/* for backtrace() function */
 	#include <execinfo.h>
 	#define HAVE_BACKTRACE
-#elif defined __MINGW32__
+#elif defined __MINGW32__ || defined _MSC_VER
 	/* from backtrace.c: */
 	extern "C" int backtrace(void** array, int size);
 	#define HAVE_BACKTRACE
