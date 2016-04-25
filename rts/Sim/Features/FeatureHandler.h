@@ -48,6 +48,8 @@ public:
 
 	void Update();
 
+	bool UpdateFeature(CFeature* feature);
+	bool TryFreeFeatureID(int id);
 	bool AddFeature(CFeature* feature);
 	void DeleteFeature(CFeature* feature);
 	CFeature* GetFeature(int id);

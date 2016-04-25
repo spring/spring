@@ -193,55 +193,61 @@ void CFeatureHandler::Update()
 	SCOPED_TIMER("FeatureHandler::Update");
 
 	if ((gs->frameNum & 31) == 0) {
-		for (auto it = toBeFreedFeatureIDs.begin(); it != toBeFreedFeatureIDs.end(); ) {
-			if (CBuilderCAI::IsFeatureBeingReclaimed(*it)) {
-				// postpone putting this ID back into the free pool
-				// (this gives area-reclaimers time to choose a new
-				// target with a different ID)
-				++it;
-			} else {
-				assert(features[*it] == nullptr);
-				idPool.FreeID(*it, true);
-
-				*it = toBeFreedFeatureIDs.back();
-				toBeFreedFeatureIDs.pop_back();
-			}
-		}
+		toBeFreedFeatureIDs.erase(std::remove_if(toBeFreedFeatureIDs.begin(), toBeFreedFeatureIDs.end(),
+			[this](int id) { return this->TryFreeFeatureID(id); }
+		), toBeFreedFeatureIDs.end());
 	}
 
-	auto fi = updateFeatures.begin();
+	updateFeatures.erase(std::remove_if(updateFeatures.begin(), updateFeatures.end(), 
+		[this](CFeature* feature) { return this->UpdateFeature(feature); }
+	), updateFeatures.end());
+}
 
-	while (fi != updateFeatures.end()) {
-		CFeature* feature = *fi;
-		assert(feature->inUpdateQue);
 
-		if (feature->deleteMe) {
-			eventHandler.RenderFeatureDestroyed(feature);
-			eventHandler.FeatureDestroyed(feature);
-			toBeFreedFeatureIDs.push_back(feature->id);
-			activeFeatures.erase(feature);
-			features[feature->id] = NULL;
-
-			// ID must match parameter for object commands, just use this
-			CSolidObject::SetDeletingRefID(feature->GetBlockingMapID());
-			// destructor removes feature from update-queue
-			delete feature;
-			CSolidObject::SetDeletingRefID(-1);
-
-			*fi = updateFeatures.back();
-			updateFeatures.pop_back();
-		} else {
-			if (!feature->Update()) {
-				// feature is done updating itself, remove from queue
-				feature->inUpdateQue = false;
-
-				*fi = updateFeatures.back();
-				updateFeatures.pop_back();
-			} else {
-				++fi;
-			}
-		}
+bool CFeatureHandler::TryFreeFeatureID(int id)
+{
+	if (CBuilderCAI::IsFeatureBeingReclaimed(id)) {
+		// postpone putting this ID back into the free pool
+		// (this gives area-reclaimers time to choose a new
+		// target with a different ID)
+		return false;
 	}
+
+	assert(features[id] == nullptr);
+	idPool.FreeID(id, true);
+
+	return true;
+}
+
+
+bool CFeatureHandler::UpdateFeature(CFeature* feature)
+{
+	assert(feature->inUpdateQue);
+
+	if (feature->deleteMe) {
+		eventHandler.RenderFeatureDestroyed(feature);
+		eventHandler.FeatureDestroyed(feature);
+		toBeFreedFeatureIDs.push_back(feature->id);
+		activeFeatures.erase(feature);
+		features[feature->id] = NULL;
+
+		// ID must match parameter for object commands, just use this
+		CSolidObject::SetDeletingRefID(feature->GetBlockingMapID());
+		// destructor removes feature from update-queue
+		delete feature;
+		CSolidObject::SetDeletingRefID(-1);
+
+		return true;
+	}
+
+	if (!feature->Update()) {
+		// feature is done updating itself, remove from queue
+		feature->inUpdateQue = false;
+
+		return true;
+	}
+
+	return false;
 }
 
 
