@@ -83,7 +83,7 @@ RE_VERSION_LINES = [
 #RE_VERSION_DETAILS = re.compile(RE_CONFIG + RE_BRANCH + RE_REV + r'\s')
 
 # Match filename of file with debugging symbols, capture module name.
-RE_DEBUG_FILENAME = '.*_spring_dbg.7z'
+RE_DEBUG_FILENAME = '.*_spring_dbg.7z$'
 
 
 
@@ -217,7 +217,7 @@ def get_modules(dbgfile):
 	if stderr:
 		log.debug('%s stderr: %s' % (SEVENZIP, stderr))
 	if sevenzip.returncode != 0:
-		fatal('%s exited with status %s' % (SEVENZIP, sevenzip.returncode))
+		fatal('%s exited with status %s %s %s' % (SEVENZIP, sevenzip.returncode, stdout, stderr))
 
 	files = []
 	for line in stdout.split('\n'):
