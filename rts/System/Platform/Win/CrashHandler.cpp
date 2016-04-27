@@ -24,6 +24,7 @@
 namespace CrashHandler {
 
 CRITICAL_SECTION stackLock;
+bool imageHelpInitialised = false;
 int stackLockInit() { InitializeCriticalSection(&stackLock); return 0; }
 int dummyStackLock = stackLockInit();
 
@@ -68,16 +69,23 @@ static const char* ExceptionName(DWORD exceptionCode)
 }
 
 
-static bool InitImageHlpDll()
+bool InitImageHlpDll()
 {
+	if (imageHelpInitialised)
+		return true;
+
 	char userSearchPath[8];
 	STRCPY_T(userSearchPath, 8, ".");
 	// Initialize IMAGEHLP.DLL
 	// Note: For some strange reason it doesn't work ~4 times after it was loaded&unloaded the first time.
 	int i = 0;
 	do {
-		if (SymInitialize(GetCurrentProcess(), userSearchPath, TRUE))
+		if (SymInitialize(GetCurrentProcess(), userSearchPath, TRUE)) {
+			SymSetOptions(SYMOPT_LOAD_LINES);
+
+			imageHelpInitialised = true;
 			return true;
+		}
 		SymCleanup(GetCurrentProcess());
 		i++;
 	} while (i<20);
@@ -312,6 +320,7 @@ void CleanupStacktrace(const int logLevel) {
 	LOG_CLEANUP();
 	// Unintialize IMAGEHLP.DLL
 	SymCleanup(GetCurrentProcess());
+	imageHelpInitialised = false;
 
 	LeaveCriticalSection( &stackLock );
 }
