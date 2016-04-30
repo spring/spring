@@ -144,6 +144,7 @@ void CTorpedoProjectile::Update()
 
 			const float3 pspeed = (gu->RandVector() * 0.1f) + float3(0.0f, 0.2f, 0.0f);
 
+			// Spawn unsynced bubble projectile
 			new CBubbleProjectile(
 				owner(),
 				pos + gu->RandVector(), pspeed, 40 + gu->RandFloat() * GAME_SPEED,
