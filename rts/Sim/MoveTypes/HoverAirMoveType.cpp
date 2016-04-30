@@ -3,6 +3,7 @@
 
 #include "HoverAirMoveType.h"
 #include "Game/Players/Player.h"
+#include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
@@ -958,7 +959,7 @@ bool CHoverAirMoveType::Update()
 				#undef SPIN_DIR
 			}
 
-			new CSmokeProjectile(owner, owner->midPos, gs->randVector() * 0.08f, 100 + gs->randFloat() * 50, 5, 0.2f, 0.4f);
+			new CSmokeProjectile(owner, owner->midPos, gu->RandVector() * 0.08f, 100 + gu->RandFloat() * 50, 5, 0.2f, 0.4f);
 		} break;
 	}
 

@@ -768,7 +768,10 @@ void CUnitScript::Explode(int piece, int flags)
 
 	// This means that we are going to do a full fledged piece explosion!
 	float3 baseSpeed = unit->speed;
-	float3 explSpeed((0.5f - gs->randFloat()) * 6.0f, 1.2f + gs->randFloat() * 5.0f, (0.5f - gs->randFloat()) * 6.0f);
+	float3 explSpeed;
+	explSpeed.x = (0.5f - gs->randFloat()) * 6.0f;
+	explSpeed.y = (1.2f + gs->randFloat()) * 5.0f;
+	explSpeed.z = (0.5f - gs->randFloat()) * 6.0f;
 
 	if (unit->pos.y - CGround::GetApproximateHeight(unit->pos.x, unit->pos.z) > 15)
 		explSpeed.y = (0.5f - gs->randFloat()) * 6.0f;
