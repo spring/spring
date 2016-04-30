@@ -426,8 +426,12 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 			c.options |= SHIFT_KEY;
 
 			if (c.GetID() == CMD_MOVE) {
+				float xjit = gs->randFloat() * TWOPI;
+				float zjit = gs->randFloat() * TWOPI;
+
 				const float3 p1 = c.GetPos(0);
-				const float3 p2 = float3(p1.x + gs->randFloat() * TWOPI, p1.y, p1.z + gs->randFloat() * TWOPI);
+				const float3 p2 = float3(p1.x + xjit, p1.y, p1.z + zjit);
+
 				// apply a small amount of random jitter to move commands
 				// such that new units do not all share the same goal-pos
 				// and start forming a "trail" back to the factory exit
