@@ -412,13 +412,17 @@ void CMobileCAI::ExecuteMove(Command &c)
 	if (sqDist < Square(SQUARE_SIZE)) {
 		if (!HasMoreMoveCommands())
 			StopMove();
+
 		FinishCommand();
 		return;
 	}
+
 	SetGoal(cmdPos, owner->pos);
 
-	if (owner->moveType->progressState == AMoveType::Failed)
+	if (owner->moveType->progressState == AMoveType::Failed) {
 		StopMoveAndFinishCommand();
+		return;
+	}
 
 	if (sqDist < cancelDistance && HasMoreMoveCommands())
 		FinishCommand();
