@@ -408,16 +408,20 @@ void CMobileCAI::ExecuteMove(Command &c)
 {
 	const float3 cmdPos = c.GetPos(0);
 
-	if ((owner->pos - cmdPos).SqLength2D() < cancelDistance) {
-		StopMoveAndFinishCommand();
-	} else {
-		SetGoal(cmdPos, owner->pos);
-
-		if (owner->moveType->progressState == AMoveType::Failed)
-			StopMoveAndFinishCommand();
+	const float sqDist = owner->pos.SqDistance2D(cmdPos);
+	if (sqDist < Square(SQUARE_SIZE)) {
+		if (!HasMoreMoveCommands())
+			StopMove();
+		FinishCommand();
+		return;
 	}
+	SetGoal(cmdPos, owner->pos);
 
-	return;
+	if (owner->moveType->progressState == AMoveType::Failed)
+		StopMoveAndFinishCommand();
+
+	if (sqDist < cancelDistance && HasMoreMoveCommands())
+		FinishCommand();
 }
 
 void CMobileCAI::ExecuteLoadOnto(Command &c) {
@@ -448,8 +452,6 @@ void CMobileCAI::ExecuteLoadOnto(Command &c) {
 	} else {
 		SetGoal(unit->pos, owner->pos);
 	}
-
-	return;
 }
 
 /**
@@ -557,13 +559,7 @@ void CMobileCAI::ExecuteFight(Command& c)
 		}
 	}
 
-	if ((owner->pos - cmdPos).SqLength2D() < Square(64.0f)) {
-		StopMoveAndFinishCommand();
-	} else {
-		SetGoal(cmdPos, owner->pos);
-		if (owner->moveType->progressState == AMoveType::Failed)
-			StopMoveAndFinishCommand();
-	}
+	ExecuteMove(c);
 }
 
 bool CMobileCAI::IsValidTarget(const CUnit* enemy) const {

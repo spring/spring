@@ -376,9 +376,9 @@ void CPathEstimator::CalculateVertex(
 	// since CPathFinder::GetPath() is not thread-safe, use
 	// this thread's "private" CPathFinder instance (rather
 	// than locking pathFinder->GetPath()) if we are in one
-	pfDef.testMobile = false;
-	pfDef.needPath   = false;
-	pfDef.exactPath  = true;
+	pfDef.testMobile     = false;
+	pfDef.needPath       = false;
+	pfDef.exactPath      = true;
 	pfDef.dirIndependent = true;
 	IPath::Path path;
 	IPath::SearchResult result = pathFinders[threadNum]->GetPath(moveDef, pfDef, nullptr, startPos, path, MAX_SEARCHED_NODES_PF >> 2);
@@ -655,7 +655,7 @@ bool CPathEstimator::TestBlock(
 	}
 
 	// constraintDisabled is a hackish way to make sure we don't check this in CalculateVertices
-	if (testBlockPos == goalBlockPos && peDef.constraintDisabled) {
+	if (testBlockPos == goalBlockPos && peDef.needPath) {
 		IPath::Path path;
 
 		// if we have expanded the goal-block, check if a valid
@@ -668,16 +668,22 @@ bool CPathEstimator::TestBlock(
 		const float3 sWorldPos = {testBlockPos.x * BLOCK_PIXEL_SIZE * 1.0f, 0.0f, testBlockPos.y * BLOCK_PIXEL_SIZE * 1.0f};
 		const float3 gWorldPos = peDef.goal;
 
-		const CRectangularSearchConstraint searchCon = CRectangularSearchConstraint(sWorldPos, gWorldPos, peDef.sqGoalRadius, BLOCK_SIZE); // sets goalSquare{X,Z}
-		const IPath::SearchResult searchRes = pathFinder->GetPath(moveDef, searchCon, owner, sWorldPos, path, MAX_SEARCHED_NODES_PF >> 3);
+		if (sWorldPos.SqDistance2D(gWorldPos) > peDef.sqGoalRadius) {
+			CRectangularSearchConstraint pfDef = CRectangularSearchConstraint(sWorldPos, gWorldPos, peDef.sqGoalRadius, BLOCK_SIZE); // sets goalSquare{X,Z}
+			pfDef.testMobile     = false;
+			pfDef.needPath       = false;
+			pfDef.exactPath      = true;
+			pfDef.dirIndependent = true;
+			const IPath::SearchResult searchRes = pathFinder->GetPath(moveDef, pfDef, owner, sWorldPos, path, MAX_SEARCHED_NODES_PF >> 3);
 
-		if (searchRes != IPath::Ok) {
-			// we cannot set PATHOPT_BLOCKED here either, result
-			// depends on direction of entry from the parent node
-			//
-			// blockStates.nodeMask[testBlockIdx] |= PATHOPT_BLOCKED;
-			// dirtyBlocks.push_back(testBlockIdx);
-			return false;
+			if (searchRes != IPath::Ok) {
+				// we cannot set PATHOPT_BLOCKED here either, result
+				// depends on direction of entry from the parent node
+				//
+				// blockStates.nodeMask[testBlockIdx] |= PATHOPT_BLOCKED;
+				// dirtyBlocks.push_back(testBlockIdx);
+				return false;
+			}
 		}
 	}
 

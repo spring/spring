@@ -369,9 +369,6 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 
 	assert(owner->unitDef != nullptr);
 
-	// force LOS recalculation
-	owner->mapSquare += 1;
-
 	isFighter = owner->unitDef->IsFighterAirUnit();
 	loopbackAttack = owner->unitDef->canLoopbackAttack && isFighter;
 	collide = owner->unitDef->collide;
