@@ -168,7 +168,7 @@ DO_ONCE(CreateBindingTypeMap)
 
 static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, std::unordered_map<std::size_t, Shader::UniformState, fast_hash>* uniformStates)
 {
-	GLsizei numUniforms, maxUniformNameLength;
+	GLsizei numUniforms, maxUniformNameLength = 0;
 	glGetProgramiv(newProgID, GL_ACTIVE_UNIFORMS, &numUniforms);
 	glGetProgramiv(newProgID, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxUniformNameLength);
 
@@ -282,7 +282,7 @@ static void CopyShaderState_UniformBlocks(GLuint newProgID, GLuint oldProgID)
 	if (!GLEW_ARB_uniform_buffer_object)
 		return;
 
-	GLint numUniformBlocks, maxNameLength;
+	GLint numUniformBlocks, maxNameLength = 0;
 	glGetProgramiv(oldProgID, GL_ACTIVE_UNIFORM_BLOCKS, &numUniformBlocks);
 	glGetProgramiv(oldProgID, GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH, &maxNameLength);
 
@@ -317,7 +317,7 @@ static void CopyShaderState_ShaderStorage(GLuint newProgID, GLuint oldProgID)
 	if (!GLEW_ARB_program_interface_query)
 		return;
 
-	GLint numUniformBlocks, maxNameLength;
+	GLint numUniformBlocks, maxNameLength = 0;
 	glGetProgramInterfaceiv(oldProgID, GL_SHADER_STORAGE_BLOCK, GL_ACTIVE_RESOURCES, &numUniformBlocks);
 	glGetProgramInterfaceiv(oldProgID, GL_SHADER_STORAGE_BLOCK, GL_MAX_NAME_LENGTH, &maxNameLength);
 
@@ -353,7 +353,7 @@ static void CopyShaderState_ShaderStorage(GLuint newProgID, GLuint oldProgID)
 
 static void CopyShaderState_Attributes(GLuint newProgID, GLuint oldProgID)
 {
-	GLsizei numAttributes, maxNameLength;
+	GLsizei numAttributes, maxNameLength = 0;
 	glGetProgramiv(oldProgID, GL_ACTIVE_ATTRIBUTES, &numAttributes);
 	glGetProgramiv(oldProgID, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &maxNameLength);
 
@@ -388,12 +388,12 @@ static void CopyShaderState_TransformFeedback(GLuint newProgID, GLuint oldProgID
 	if (!GLEW_ARB_transform_feedback3)
 		return;
 
-	GLint bufferMode, numVaryings, maxNameLength;
+	GLint bufferMode, numVaryings = 0, maxNameLength = 0;
 	glGetProgramiv(oldProgID, GL_TRANSFORM_FEEDBACK_BUFFER_MODE, &bufferMode);
 	glGetProgramiv(oldProgID, GL_TRANSFORM_FEEDBACK_VARYINGS, &numVaryings);
 	glGetProgramiv(oldProgID, GL_TRANSFORM_FEEDBACK_VARYING_MAX_LENGTH, &maxNameLength);
 
-	if(!numVaryings)
+	if(!numVaryings || maxNameLength <= 0)
 		return;
 
 	std::vector<std::string> varyings(numVaryings);
