@@ -7,7 +7,7 @@
 
 class CNullUnitScript : public CUnitScript
 {
-	CR_DECLARE(CNullUnitScript)
+	CR_DECLARE_DERIVED(CNullUnitScript)
 protected:
 	CNullUnitScript(CUnit* u);
 

@@ -25,7 +25,7 @@ class CCobFile;
 
 class CCobInstance : public CUnitScript
 {
-	CR_DECLARE(CCobInstance)
+	CR_DECLARE_DERIVED(CCobInstance)
 
 public:
 	enum ThreadCallbackType { CBNone, CBKilled, CBAimWeapon, CBAimShield };
