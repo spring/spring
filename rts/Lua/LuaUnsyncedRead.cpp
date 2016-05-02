@@ -767,7 +767,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 	// arg 3 - noIcons
 	const bool noIcons = !luaL_optboolean(L, 3, true);
 
-	float radiusMult = 0.0f; // 0 or 1
+	float radiusMult = 1.0f;
 	float testRadius = 0.0f;
 
 	// arg 2 - use fixed test-value or add unit radii to it
