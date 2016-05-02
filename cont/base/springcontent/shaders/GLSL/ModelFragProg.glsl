@@ -52,7 +52,7 @@ float GetShadowCoeff(vec4 shadowCoors)
 }
 
 vec3 DynamicLighting(vec3 normal, vec3 diffuse, vec3 specular) {
-	vec3 rgb;
+	vec3 rgb = vec3(0.0);
 
 	for (int i = 0; i < MAX_DYNAMIC_MODEL_LIGHTS; i++) {
 		vec3 lightVec = gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].position.xyz - vertexWorldPos.xyz;
