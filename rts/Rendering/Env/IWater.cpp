@@ -69,9 +69,8 @@ IWater* IWater::GetWater(IWater* curRenderer, int nxtRendererMode)
 	// -1 cycles
 	if (nxtRendererMode < 0) {
 		nxtRendererMode = (curRenderer == nullptr)? Clamp(configHandler->GetInt("Water"), 0, NUM_WATER_RENDERERS - 1): curRenderer->GetID() + 1;
-	} else {
-		nxtRendererMode %= NUM_WATER_RENDERERS;
 	}
+	nxtRendererMode %= NUM_WATER_RENDERERS;
 
 	if (curRenderer != nullptr) {
 		assert(water == curRenderer);
