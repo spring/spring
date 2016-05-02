@@ -110,7 +110,7 @@ ADD_LIBRARY(unitsync SHARED ${unitsync_files})
 Add_Dependencies(unitsync generateVersionFiles)
 TARGET_LINK_LIBRARIES(unitsync ${unitsync_libs})
 if (MINGW)
-	set_target_properties(unitsync PROPERTIES LINK_FLAGS -Wl,--kill-at)
+	set_target_properties(unitsync PROPERTIES LINK_FLAGS -Wl,--add-stdcall-alias)
 endif (MINGW)
 FixLibName(unitsync)
 
