@@ -261,7 +261,7 @@ struct LocalModelPiece
 {
 	CR_DECLARE_STRUCT(LocalModelPiece)
 
-	LocalModelPiece() {}
+	LocalModelPiece() : dirty(true) {}
 	LocalModelPiece(const S3DModelPiece* piece);
 	~LocalModelPiece() {}
 

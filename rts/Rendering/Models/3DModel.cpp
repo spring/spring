@@ -20,10 +20,7 @@ CR_REG_METADATA(LocalModelPiece, (
 	CR_MEMBER(pos),
 	CR_MEMBER(rot),
 	CR_MEMBER(dir),
-	CR_MEMBER(pieceSpaceMat),
-	CR_MEMBER(modelSpaceMat),
 	CR_MEMBER(colvol),
-	CR_MEMBER(dirty),
 	CR_MEMBER(scriptSetVisible),
 	CR_MEMBER(lmodelPieceIndex),
 	CR_MEMBER(scriptPieceIndex),
@@ -33,6 +30,10 @@ CR_REG_METADATA(LocalModelPiece, (
 	// reload
 	CR_IGNORED(dispListID),
 	CR_IGNORED(original),
+
+	CR_IGNORED(dirty),
+	CR_IGNORED(modelSpaceMat),
+	CR_IGNORED(pieceSpaceMat),
 
 	CR_IGNORED(lodDispLists) //FIXME GL idx!
 ))
@@ -301,6 +302,7 @@ void LocalModel::SetModel(const S3DModel* model, bool initialize)
 		int idx = 0;
 		SetOriginalPieces(model->GetRootPiece(), idx);
 		assert (idx == model->numPieces);
+		pieces[0].UpdateMatricesRec(true);
 		UpdateBoundingVolume(0);
 		return;
 	}
