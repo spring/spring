@@ -24,6 +24,7 @@ Lua:
  - Add Spring.GetFrameTimer(bool synced) to get a timer for the start of the frame
    this should give better results for camera interpolations.
  - Add an optional weaponNum argument to SetUnitTarget.
+ - Spring.SetUnitCloak got additional parameter that controls decloakSpherical attribute
 
 Save/Load:
  ! remove UseCREGSaveLoad and add /LuaSave which generates .slsf files
