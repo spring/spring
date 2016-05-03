@@ -8,7 +8,7 @@
 #include "System/Log/ILog.h"
 
 
-CONFIG(int, GroundDecals).defaultValue(1).headlessValue(0).minimumValue(0).description("Controls whether ground decals underneath buildings and ground scars from explosions will be rendered. Values >1 define how long such decals will stay.");
+CONFIG(int, GroundDecals).defaultValue(3).headlessValue(0).description("Controls whether ground decals underneath buildings and ground scars from explosions will be rendered. Values >1 define how long such decals will stay.");
 
 int IGroundDecalDrawer::decalLevel = 0;
 
@@ -24,7 +24,7 @@ IGroundDecalDrawer::IGroundDecalDrawer()
 IGroundDecalDrawer* IGroundDecalDrawer::GetInstance()
 {
 	if (!singleton) {
-#if 0
+#if 1
 		try {
 			singleton = new CDecalsDrawerGL4();
 			LOG_L(L_INFO, "Loaded DecalsDrawer: %s", "GL4");
@@ -36,7 +36,7 @@ IGroundDecalDrawer* IGroundDecalDrawer::GetInstance()
 			singleton = new CGroundDecalHandler();
 			LOG_L(L_INFO, "Loaded DecalsDrawer: %s", "Legacy");
 
-#if 0
+#if 1
 		}
 #endif
 	}
@@ -58,4 +58,5 @@ void IGroundDecalDrawer::SetDrawDecals(bool v)
 	} else {
 		decalLevel = -std::abs(decalLevel);
 	}
+	groundDecals->OnDecalLevelChanged();
 }

@@ -117,6 +117,8 @@ public:
 	void ForceRemoveSolidObject(CSolidObject* object);
 	static void RemoveTrack(CUnit* unit);
 
+	void OnDecalLevelChanged() override {}
+
 private:
 	void BindTextures();
 	void KillTextures();

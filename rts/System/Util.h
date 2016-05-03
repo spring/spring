@@ -183,6 +183,13 @@ static inline float SafeDivide(const float a, const float b)
 	return (a / b);
 }
 
+namespace spring {
+	template<typename T, typename TV>
+	static auto find(T& c, const TV& v) -> decltype(c.end())
+	{
+		return std::find(c.begin(), c.end(), v);
+	}
+}
 
 
 template<typename T, typename P>

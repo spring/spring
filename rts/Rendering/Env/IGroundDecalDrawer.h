@@ -30,6 +30,7 @@ public:
 	virtual ~IGroundDecalDrawer(){}
 
 protected:
+	virtual void OnDecalLevelChanged() = 0;
 
 protected:
 	static int decalLevel;
