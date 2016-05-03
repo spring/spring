@@ -13,9 +13,11 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <unordered_set>
 using std::string;
 using std::vector;
 using std::set;
+using std::unordered_set;
 
 
 #define LUA_HANDLE_ORDER_RULES            100
@@ -199,6 +201,8 @@ class CLuaHandle : public CEventClient
 		bool DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd) override;
 
 		bool CommandNotify(const Command& cmd) override;
+
+		bool StructurePlacementNotify(const UnitDef* def, const float3& pos, float buildHeight, int x1, int z1, int x2, int z2, int allyteam, unordered_set<float3>& modnobuildpos) override;
 
 		bool AddConsoleLine(const string& msg, const string& section, int level) override;
 

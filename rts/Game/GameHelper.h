@@ -11,6 +11,7 @@
 
 #include <map>
 #include <vector>
+#include <unordered_set>
 
 class CUnit;
 class CWeapon;
