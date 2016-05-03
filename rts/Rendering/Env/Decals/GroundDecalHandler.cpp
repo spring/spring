@@ -645,7 +645,7 @@ void CGroundDecalHandler::DrawScars() {
 
 void CGroundDecalHandler::Draw()
 {
-	if (!drawDecals)
+	if (!GetDrawDecals())
 		return;
 
 	glEnable(GL_TEXTURE_2D);
@@ -779,17 +779,11 @@ void CGroundDecalHandler::DrawDecals()
 }
 
 
-void CGroundDecalHandler::UnitMoved(const CUnit* unit)
-{
-	if (decalLevel == 0)
-		return;
-
-	AddDecalAndTrack(const_cast<CUnit*>(unit), unit->pos);
-}
-
-
 void CGroundDecalHandler::AddDecalAndTrack(CUnit* unit, const float3& newPos)
 {
+	if (!GetDrawDecals())
+		return;
+
 	MoveSolidObject(unit, newPos);
 
 	if (!unit->leaveTracks)
@@ -879,7 +873,7 @@ void CGroundDecalHandler::AddDecalAndTrack(CUnit* unit, const float3& newPos)
 
 int CGroundDecalHandler::GetTrackType(const std::string& name)
 {
-	if (decalLevel == 0)
+	if (!GetDrawDecals())
 		return -2;
 
 	const std::string& lowerName = StringToLower(name);
@@ -937,7 +931,7 @@ unsigned int CGroundDecalHandler::LoadTexture(const std::string& name)
 
 void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius, bool addScar)
 {
-	if (decalLevel == 0 || !addScar)
+	if (!GetDrawDecals() || !addScar)
 		return;
 
 	const float altitude = pos.y - CGround::GetHeightReal(pos.x, pos.z, false);
@@ -996,8 +990,8 @@ void CGroundDecalHandler::LoadScar(const std::string& file, unsigned char* buf,
 	}
 
 	if (FileSystem::GetExtension(file) == "bmp") {
-		//! bitmaps don't have an alpha channel
-		//! so use: red := brightness & green := alpha
+		// bitmaps don't have an alpha channel
+		// so use: red := brightness & green := alpha
 		for (int y = 0; y < bm.ysize; ++y) {
 			for (int x = 0; x < bm.xsize; ++x) {
 				const int memIndex = ((y * bm.xsize) + x) * 4;
@@ -1010,15 +1004,11 @@ void CGroundDecalHandler::LoadScar(const std::string& file, unsigned char* buf,
 			}
 		}
 	} else {
+		// we copy into an atlas, so we need to copy line by line
 		for (int y = 0; y < bm.ysize; ++y) {
-			for (int x = 0; x < bm.xsize; ++x) {
-				const int memIndex = ((y * bm.xsize) + x) * 4;
-				const int bufIndex = (((y + yoffset) * 512) + x + xoffset) * 4;
-				buf[bufIndex + 0]    = bm.mem[memIndex + 0];
-				buf[bufIndex + 1]    = bm.mem[memIndex + 1];
-				buf[bufIndex + 2]    = bm.mem[memIndex + 2];
-				buf[bufIndex + 3]    = bm.mem[memIndex + 3];
-			}
+			const int memIndex = (y * bm.xsize) * 4;
+			const int bufIndex = (((y + yoffset) * 512) + xoffset) * 4;
+			memcpy(&buf[bufIndex], &bm.mem[memIndex], bm.xsize * sizeof(SColor));
 		}
 	}
 }
@@ -1110,10 +1100,55 @@ void CGroundDecalHandler::RemoveScar(Scar* scar, bool removeFromScars)
 	delete scar;
 }
 
+int CGroundDecalHandler::GetSolidObjectDecalType(const std::string& name)
+{
+	if (!GetDrawDecals())
+		return -2;
+
+	const std::string& lowerName = StringToLower(name);
+	const std::string& fullName = "unittextures/" + lowerName;
+
+	int decalType = 0;
+	for (auto& dt: objectDecalTypes) {
+		if (dt->name == lowerName) {
+			return decalType;
+		}
+		++decalType;
+	}
+
+	CBitmap bm;
+	if (!bm.Load(fullName)) {
+		LOG_L(L_ERROR, "[%s] Could not load object-decal from file \"%s\"", __FUNCTION__, fullName.c_str());
+		return -2;
+	}
+
+	SolidObjectDecalType* tt = new SolidObjectDecalType();
+	tt->name = lowerName;
+	tt->texture = bm.CreateMipMapTexture();
+
+	objectDecalTypes.push_back(tt);
+	return (objectDecalTypes.size() - 1);
+}
+
+
+SolidObjectGroundDecal::~SolidObjectGroundDecal() {
+	SafeDelete(va);
+}
+
+CGroundDecalHandler::Scar::~Scar() {
+	SafeDelete(va);
+}
+
+
+
+
+
+
+
 
 void CGroundDecalHandler::MoveSolidObject(CSolidObject* object, const float3& pos)
 {
-	if (decalLevel == 0)
+	if (!GetDrawDecals())
 		return;
 
 	const SolidObjectDecalDef& decalDef = object->GetDef()->decalDef;
@@ -1197,41 +1232,30 @@ void CGroundDecalHandler::ForceRemoveSolidObject(CSolidObject* object)
 }
 
 
-int CGroundDecalHandler::GetSolidObjectDecalType(const std::string& name)
+void CGroundDecalHandler::RemoveTrack(CUnit* unit)
 {
-	if (decalLevel == 0)
-		return -2;
+	if (unit->myTrack == nullptr)
+		return;
 
-	const std::string& lowerName = StringToLower(name);
-	const std::string& fullName = "unittextures/" + lowerName;
-
-	int decalType = 0;
-
-	std::vector<SolidObjectDecalType*>::iterator bi;
-	for (bi = objectDecalTypes.begin(); bi != objectDecalTypes.end(); ++bi) {
-		if ((*bi)->name == lowerName) {
-			return decalType;
-		}
-		++decalType;
-	}
-
-	CBitmap bm;
-	if (!bm.Load(fullName)) {
-		LOG_L(L_ERROR, "[%s] Could not load object-decal from file \"%s\"", __FUNCTION__, fullName.c_str());
-		return -2;
-	}
-
-	SolidObjectDecalType* tt = new SolidObjectDecalType();
-	tt->name = lowerName;
-	tt->texture = bm.CreateMipMapTexture();
-
-	objectDecalTypes.push_back(tt);
-	return (objectDecalTypes.size() - 1);
+	// same pointer as in tracksToBeAdded, so this also pre-empts DrawTracks
+	unit->myTrack->owner = nullptr;
+	unit->myTrack = nullptr;
 }
 
-void CGroundDecalHandler::GhostCreated(CSolidObject* object, GhostSolidObject* gb) {
-	RemoveSolidObject(object, gb);
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+void CGroundDecalHandler::UnitMoved(const CUnit* unit) { AddDecalAndTrack(const_cast<CUnit*>(unit), unit->pos); }
 
 void CGroundDecalHandler::GhostDestroyed(GhostSolidObject* gb) {
 	if (gb->decal)
@@ -1239,54 +1263,27 @@ void CGroundDecalHandler::GhostDestroyed(GhostSolidObject* gb) {
 }
 
 
-SolidObjectGroundDecal::~SolidObjectGroundDecal() {
-	SafeDelete(va);
-}
 
-CGroundDecalHandler::Scar::~Scar() {
-	SafeDelete(va);
-}
+
+
+
+void CGroundDecalHandler::GhostCreated(CSolidObject* object, GhostSolidObject* gb) { RemoveSolidObject(object, gb); }
+void CGroundDecalHandler::FeatureMoved(const CFeature* feature, const float3& oldpos) { MoveSolidObject(const_cast<CFeature*>(feature), feature->pos); }
 
 void CGroundDecalHandler::ExplosionOccurred(const CExplosionEvent& event) {
 	AddExplosion(event.GetPos(), event.GetDamage(), event.GetRadius(), ((event.GetWeaponDef() != NULL) && event.GetWeaponDef()->visuals.explosionScar));
 }
 
-void CGroundDecalHandler::RenderUnitCreated(const CUnit* unit, int cloaked) {
-	MoveSolidObject(const_cast<CUnit*>(unit), unit->pos);
-}
-
+void CGroundDecalHandler::RenderUnitCreated(const CUnit* unit, int cloaked) { MoveSolidObject(const_cast<CUnit*>(unit), unit->pos); }
 void CGroundDecalHandler::RenderUnitDestroyed(const CUnit* unit) {
-	CUnit* u = const_cast<CUnit*>(unit);
-
-	RemoveSolidObject(u, nullptr);
-
-	if (unit->myTrack == nullptr)
-		return;
-
-	// same pointer as in tracksToBeAdded, so this also pre-empts DrawTracks
-	u->myTrack->owner = nullptr;
-	u->myTrack = nullptr;
+	RemoveSolidObject(const_cast<CUnit*>(unit), nullptr);
+	RemoveTrack(const_cast<CUnit*>(unit));
 }
 
-void CGroundDecalHandler::RenderFeatureCreated(const CFeature* feature)
-{
-	MoveSolidObject(const_cast<CFeature*>(feature), feature->pos);
-}
+void CGroundDecalHandler::RenderFeatureCreated(const CFeature* feature) { MoveSolidObject(const_cast<CFeature*>(feature), feature->pos); }
+void CGroundDecalHandler::RenderFeatureDestroyed(const CFeature* feature) { RemoveSolidObject(const_cast<CFeature*>(feature), nullptr); }
 
-void CGroundDecalHandler::RenderFeatureDestroyed(const CFeature* feature)
-{
-	RemoveSolidObject(const_cast<CFeature*>(feature), NULL);
-}
+// FIXME: Add a RenderUnitLoaded event
+void CGroundDecalHandler::UnitLoaded(const CUnit* unit, const CUnit* transport) { ForceRemoveSolidObject(const_cast<CUnit*>(unit)); }
+void CGroundDecalHandler::UnitUnloaded(const CUnit* unit, const CUnit* transport) { MoveSolidObject(const_cast<CUnit*>(unit), unit->pos); }
 
-void CGroundDecalHandler::FeatureMoved(const CFeature* feature, const float3& oldpos) {
-	if (feature->def->drawType == DRAWTYPE_MODEL)
-		MoveSolidObject(const_cast<CFeature*>(feature), feature->pos);
-}
-
-void CGroundDecalHandler::UnitLoaded(const CUnit* unit, const CUnit* transport) {
-	RemoveSolidObject(const_cast<CUnit*>(unit), NULL); // FIXME: Add a RenderUnitLoaded event
-}
-
-void CGroundDecalHandler::UnitUnloaded(const CUnit* unit, const CUnit* transport) {
-	MoveSolidObject(const_cast<CUnit*>(unit), unit->pos); // FIXME: Add a RenderUnitUnloaded event
-}

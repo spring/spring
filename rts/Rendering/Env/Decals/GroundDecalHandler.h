@@ -115,6 +115,7 @@ public:
 
 	virtual void RemoveSolidObject(CSolidObject* object, GhostSolidObject* gb);
 	void ForceRemoveSolidObject(CSolidObject* object);
+	static void RemoveTrack(CUnit* unit);
 
 private:
 	void BindTextures();

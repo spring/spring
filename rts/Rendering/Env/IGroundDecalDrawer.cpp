@@ -10,15 +10,14 @@
 
 CONFIG(int, GroundDecals).defaultValue(1).headlessValue(0).minimumValue(0).description("Controls whether ground decals underneath buildings and ground scars from explosions will be rendered. Values >1 define how long such decals will stay.");
 
-bool IGroundDecalDrawer::drawDecals = 0;
-unsigned int IGroundDecalDrawer::decalLevel = 0;
+int IGroundDecalDrawer::decalLevel = 0;
+
 
 static IGroundDecalDrawer* singleton = NULL;
 
 IGroundDecalDrawer::IGroundDecalDrawer()
 {
-	decalLevel = std::max(0, configHandler->GetInt("GroundDecals"));
-	drawDecals = (decalLevel > 0); //FIXME
+	decalLevel = configHandler->GetInt("GroundDecals");
 }
 
 
@@ -49,4 +48,14 @@ IGroundDecalDrawer* IGroundDecalDrawer::GetInstance()
 void IGroundDecalDrawer::FreeInstance()
 {
 	SafeDelete(singleton);
+}
+
+
+void IGroundDecalDrawer::SetDrawDecals(bool v)
+{
+	if (v) {
+		decalLevel =  std::abs(decalLevel);
+	} else {
+		decalLevel = -std::abs(decalLevel);
+	}
 }

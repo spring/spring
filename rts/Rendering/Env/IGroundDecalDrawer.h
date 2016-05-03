@@ -10,8 +10,8 @@ struct GhostSolidObject;
 class IGroundDecalDrawer
 {
 public:
-	static bool GetDrawDecals() { return drawDecals; }
-	static void SetDrawDecals(bool v) { if (decalLevel > 0) { drawDecals = v; } } //FIXME
+	static bool GetDrawDecals() { return (decalLevel > 0); }
+	static void SetDrawDecals(bool v);
 
 	static IGroundDecalDrawer* GetInstance();
 	static void FreeInstance();
@@ -30,8 +30,9 @@ public:
 	virtual ~IGroundDecalDrawer(){}
 
 protected:
-	static bool drawDecals;
-	static unsigned int decalLevel;
+
+protected:
+	static int decalLevel;
 };
 
 #define groundDecals IGroundDecalDrawer::GetInstance()
