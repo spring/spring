@@ -86,7 +86,7 @@ bool CBombDropper::TestTarget(const float3 pos, const SWeaponTarget& trg) const
 	return CWeapon::TestTarget(pos, trg);
 }
 
-bool CBombDropper::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const
+bool CBombDropper::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg, bool useMuzzle) const
 {
 	// TODO: requires sampling parabola from aimFromPos down to dropPos
 	return true;

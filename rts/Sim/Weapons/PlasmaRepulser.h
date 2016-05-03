@@ -20,7 +20,7 @@ public:
 
 	void Init() override final;
 	void DependentDied(CObject* o) override final;
-	bool HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const override final;
+	bool HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg, bool useMuzzle = false) const override final;
 
 	void Update() override final;
 	void SlowUpdate() override final;

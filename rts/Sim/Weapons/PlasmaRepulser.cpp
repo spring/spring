@@ -83,7 +83,7 @@ bool CPlasmaRepulser::IsActive() const
 	return isEnabled && !owner->IsStunned() && !owner->beingBuilt;
 }
 
-bool CPlasmaRepulser::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const
+bool CPlasmaRepulser::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg, bool useMuzzle) const
 {
 	return true;
 }

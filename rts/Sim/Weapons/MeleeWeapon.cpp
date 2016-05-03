@@ -16,7 +16,7 @@ CMeleeWeapon::CMeleeWeapon(CUnit* owner, const WeaponDef* def): CWeapon(owner, d
 }
 
 
-bool CMeleeWeapon::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const
+bool CMeleeWeapon::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg, bool useMuzzle) const
 {
 	return true;
 }
