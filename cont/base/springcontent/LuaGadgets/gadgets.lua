@@ -1207,6 +1207,14 @@ function gadgetHandler:AllowBuilderHoldFire(unitID, unitDefID, action)
   return true
 end
 
+function gadgetHandler:AllowProximityDecloak(unitID, unitDefID, decloakerDefID, decloakerUnitID)
+  for _,g in r_ipairs(self.AllowProximityDecloakList) do
+    if (not g:AllowProximityDecloak(unitID, unitDefID, decloakerDefID, decloakerUnitID)) then
+      return false
+    end
+  end
+  return true
+end
 
 function gadgetHandler:MoveCtrlNotify(unitID, unitDefID, unitTeam, data)
   local state = false

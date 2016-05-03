@@ -765,6 +765,30 @@ bool CSyncedLuaHandle::AllowStartPosition(int playerID, unsigned char readyState
 	return retval;
 }
 
+bool CSyncedLuaHandle::AllowProximityDecloak(const CUnit* unit, const CUnit* decloakerUnit)
+{
+	LUA_CALL_IN_CHECK(L, true);
+	luaL_checkstack(L, 2 + 4 + 1, __func__);
+	static const LuaHashString cmdStr(__func__);
+	if (!cmdStr.GetGlobalFunc(L))
+		return true; // the call is not defined
+
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+
+	lua_pushnumber(L, decloakerUnit->id);
+	lua_pushnumber(L, decloakerUnit->unitDef->id);
+
+	// call the function
+	if (!RunCallIn(L, cmdStr, 4, 1))
+		return true;
+
+	// get the results
+	const bool retval = luaL_optboolean(L, -1, true);
+	lua_pop(L, 1);
+	return retval;
+}
+
 
 bool CSyncedLuaHandle::MoveCtrlNotify(const CUnit* unit, int data)
 {

@@ -2408,7 +2408,7 @@ bool CUnit::GetNewCloakState(bool stunCheck) {
 		const CUnit* closestEnemy = CGameHelper::GetClosestEnemyUnitNoLosTest(NULL, midPos, decloakDistance, allyteam, unitDef->decloakSpherical, false);
 		const float cloakCost = (Square(speed.w) > 0.2f)? unitDef->cloakCostMoving: unitDef->cloakCost;
 
-		if (decloakDistance > 0.0f && closestEnemy != NULL) {
+		if ( decloakDistance > 0.0f && closestEnemy != NULL && eventHandler.AllowProximityDecloak(this, closestEnemy) ) {
 			curCloakTimeout = gs->frameNum + cloakTimeout;
 			return false;
 		}

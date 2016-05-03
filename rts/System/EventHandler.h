@@ -148,6 +148,7 @@ class CEventHandler
 		bool AllowDirectUnitControl(int playerID, const CUnit* unit);
 		bool AllowBuilderHoldFire(const CUnit* unit, int action);
 		bool AllowStartPosition(int playerID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos);
+		bool AllowProximityDecloak(const CUnit* unit, const CUnit* decloakerUnit);
 
 		bool TerraformComplete(const CUnit* unit, const CUnit* build);
 		bool MoveCtrlNotify(const CUnit* unit, int data);

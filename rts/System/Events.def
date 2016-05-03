@@ -164,6 +164,8 @@
 	SETUP_EVENT(AllowDirectUnitControl, MANAGED_BIT | CONTROL_BIT)
 	SETUP_EVENT(AllowBuilderHoldFire,   MANAGED_BIT | CONTROL_BIT)
 	SETUP_EVENT(AllowStartPosition,     MANAGED_BIT | CONTROL_BIT)
+	SETUP_EVENT(AllowProximityDecloak,  MANAGED_BIT | CONTROL_BIT)
+	
 	SETUP_EVENT(TerraformComplete,      MANAGED_BIT | CONTROL_BIT)
 	SETUP_EVENT(MoveCtrlNotify,         MANAGED_BIT | CONTROL_BIT)
 
