@@ -665,7 +665,10 @@ bool CPathEstimator::TestBlock(
 		//
 		// const float3 gWorldPos = {            testBlockPos.x * BLOCK_PIXEL_SIZE * 1.0f, 0.0f,             testBlockPos.y * BLOCK_PIXEL_SIZE * 1.0f};
 		// const float3 sWorldPos = {parentOpenBlock->nodePos.x * BLOCK_PIXEL_SIZE * 1.0f, 0.0f, parentOpenBlock->nodePos.y * BLOCK_PIXEL_SIZE * 1.0f};
-		const float3 sWorldPos = {testBlockPos.x * BLOCK_PIXEL_SIZE * 1.0f, 0.0f, testBlockPos.y * BLOCK_PIXEL_SIZE * 1.0f};
+		const int idx = BlockPosToIdx(testBlockPos);
+		const int2 testSquare = blockStates.peNodeOffsets[moveDef.pathType][idx];
+
+		const float3 sWorldPos = SquareToFloat3(testSquare.x, testSquare.y);
 		const float3 gWorldPos = peDef.goal;
 
 		if (sWorldPos.SqDistance2D(gWorldPos) > peDef.sqGoalRadius) {
