@@ -429,6 +429,21 @@ void glSaveTexture(const GLuint textureID, const std::string& filename)
 }
 
 
+void glSpringBindTextures(GLuint first, GLsizei count, const GLuint* textures)
+{
+	if (GLEW_ARB_multi_bind) {
+		glBindTextures(first, count, textures);
+	} else {
+		for (int i = 0; i < count; ++i) {
+			const GLuint texture = (textures == nullptr) ? 0 : textures[i];
+			glActiveTexture(GL_TEXTURE0 + first + i);
+			glBindTexture(GL_TEXTURE_2D, texture);
+		}
+		glActiveTexture(GL_TEXTURE0);
+	}
+}
+
+
 void glSpringTexStorage2D(const GLenum target, GLint levels, const GLint internalFormat, const GLsizei width, const GLsizei height)
 {
 #ifdef GLEW_ARB_texture_storage
@@ -491,6 +506,16 @@ void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei wid
 }
 
 
+void glSpringMatrix2dProj(const int sizex, const int sizey)
+{
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluOrtho2D(0,sizex,0,sizey);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+}
+
+
 /******************************************************************************/
 
 void ClearScreen()
@@ -502,8 +527,8 @@ void ClearScreen()
 	glLoadIdentity();            // Reset The Projection Matrix
 	gluOrtho2D(0, 1, 0, 1);
 	glMatrixMode(GL_MODELVIEW);  // Select The Modelview Matrix
-
 	glLoadIdentity();
+
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_TEXTURE_2D);
