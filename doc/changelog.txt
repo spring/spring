@@ -8,9 +8,13 @@ General:
  ! remove LuaModUICtrl config setting
  ! remove ClassicGroundMoveType
  ! remove SpringLobby from spring installer
+ - update model matrices on demand instead of once per frame
 
 Sim:
- - COB: deprecate unit/team/allyteam/global vars. Use lua functions instead.
+ ! allow units to unstuck themselves from an unpathable square
+   into an adjacent pathable one
+ ! COB: deprecate unit/team/allyteam/global vars. Use lua functions instead
+ - prevent accidental friendly fire from direct line of fire weapons
 
 Lua:
  - Add {Set,Get}FeatureRulesParam(s)
@@ -24,6 +28,8 @@ Lua:
  - Add Spring.GetFrameTimer(bool synced) to get a timer for the start of the frame
    this should give better results for camera interpolations.
  - Add an optional weaponNum argument to SetUnitTarget.
+ - Update shader errorlog even if compilation was successful
+ - Remove updateMatrix argument in Spring.UnitScript.{Move,Turn} as matrices will be automatically updated if necessary.
 
 Save/Load:
  ! remove UseCREGSaveLoad and add /LuaSave which generates .slsf files
@@ -108,6 +114,10 @@ Bugfixes:
  - fix #5176 (crash in CobThread)
  - fix #5106 (Strafe planes dont land when reaching target or on 'stop' command)
  - fix #5152 (heap-use-after-free when loading a game)
+ - fix wrong radar icons when switching specfullview
+ - fix #5216 Spring.GetVisibleUnits
+ - fix #5219 pink features & units
+ - fix #5223 buffer-overflow when using /water
 
 
 

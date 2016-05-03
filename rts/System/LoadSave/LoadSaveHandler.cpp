@@ -9,9 +9,6 @@
 #include "System/FileSystem/FileSystem.h"
 
 
-CONFIG(bool, UseCREGSaveLoad).defaultValue(false);
-
-
 ILoadSaveHandler* ILoadSaveHandler::Create(bool usecreg)
 {
 	if (usecreg)
