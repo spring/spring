@@ -402,7 +402,7 @@ void CProjectileDrawer::DrawProjectiles(int modelType, bool drawReflection, bool
 void CProjectileDrawer::DrawProjectilesSet(const std::vector<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction)
 {
 	for (CProjectile* p: projectiles) {
-		projectileDrawer->DrawProjectileNow(p, drawReflection, drawRefraction);
+		DrawProjectileNow(p, drawReflection, drawRefraction);
 	}
 }
 

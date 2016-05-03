@@ -98,7 +98,7 @@ private:
 	void DrawProjectilesShadow(int modelType);
 	void DrawFlyingPieces(int modelType);
 
-	static void DrawProjectilesSet(const std::vector<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction);
+	void DrawProjectilesSet(const std::vector<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction);
 	static void DrawProjectilesSetShadow(const std::vector<CProjectile*>& projectiles);
 
 	static bool CanDrawProjectile(const CProjectile* pro, const CSolidObject* owner);
