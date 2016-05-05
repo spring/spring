@@ -4,6 +4,7 @@
 
 
 #include "LineDrawer.h"
+#include <cmath>
 
 #include "Rendering/GlobalRendering.h"
 #include "Game/UI/CommandColors.h"
