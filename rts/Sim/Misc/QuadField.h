@@ -51,34 +51,34 @@ needed to support dynamic resizing (not used yet)
 	 * Returns all units within @c radius of @c pos,
 	 * and treats each unit as a 3D point object
 	 */
-	std::vector<CUnit*> GetUnits(const float3& pos, float radius);
+	const std::vector<CUnit*>& GetUnits(const float3& pos, float radius);
 	/**
 	 * Returns all units within @c radius of @c pos,
 	 * takes the 3D model radius of each unit into account,
  	 * and performs the search within a sphere or cylinder depending on @c spherical
 	 */
-	std::vector<CUnit*> GetUnitsExact(const float3& pos, float radius, bool spherical = true);
+	const std::vector<CUnit*>& GetUnitsExact(const float3& pos, float radius, bool spherical = true);
 	/**
 	 * Returns all units within the rectangle defined by
 	 * mins and maxs, which extends infinitely along the y-axis
 	 */
-	std::vector<CUnit*> GetUnitsExact(const float3& mins, const float3& maxs);
+	const std::vector<CUnit*>& GetUnitsExact(const float3& mins, const float3& maxs);
 	/**
 	 * Returns all features within @c radius of @c pos,
 	 * takes the 3D model radius of each feature into account,
 	 * and performs the search within a sphere or cylinder depending on @c spherical
 	 */
-	std::vector<CFeature*> GetFeaturesExact(const float3& pos, float radius, bool spherical = true);
+	const std::vector<CFeature*>& GetFeaturesExact(const float3& pos, float radius, bool spherical = true);
 	/**
 	 * Returns all features within the rectangle defined by
 	 * mins and maxs, which extends infinitely along the y-axis
 	 */
-	std::vector<CFeature*> GetFeaturesExact(const float3& mins, const float3& maxs);
+	const std::vector<CFeature*>& GetFeaturesExact(const float3& mins, const float3& maxs);
 
-	std::vector<CProjectile*> GetProjectilesExact(const float3& pos, float radius);
-	std::vector<CProjectile*> GetProjectilesExact(const float3& mins, const float3& maxs);
+	const std::vector<CProjectile*>& GetProjectilesExact(const float3& pos, float radius);
+	const std::vector<CProjectile*>& GetProjectilesExact(const float3& mins, const float3& maxs);
 
-	std::vector<CSolidObject*> GetSolidsExact(
+	const std::vector<CSolidObject*>& GetSolidsExact(
 		const float3& pos,
 		const float radius,
 		const unsigned int physicalStateBits = 0xFFFFFFFF,
@@ -143,6 +143,12 @@ private:
 
 private:
 	std::vector<Quad> baseQuads;
+
+	// preallocated vectors for Get*Exact functions
+	std::vector<CUnit*> tempUnits;
+	std::vector<CFeature*> tempFeatures;
+	std::vector<CProjectile*> tempProjectiles;
+	std::vector<CSolidObject*> tempSolids;
 
 	int numQuadsX;
 	int numQuadsZ;

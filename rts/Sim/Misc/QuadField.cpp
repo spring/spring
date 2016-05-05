@@ -447,11 +447,11 @@ void CQuadField::RemoveProjectile(CProjectile* p)
 
 
 
-std::vector<CUnit*> CQuadField::GetUnits(const float3& pos, float radius)
+const std::vector<CUnit*>& CQuadField::GetUnits(const float3& pos, float radius)
 {
 	const auto& quads = GetQuads(pos, radius);
 	const int tempNum = gs->GetTempNum();
-	std::vector<CUnit*> units;
+	tempUnits.clear();
 
 	for (const int qi: quads) {
 		for (CUnit* u: baseQuads[qi].units) {
@@ -459,26 +459,18 @@ std::vector<CUnit*> CQuadField::GetUnits(const float3& pos, float radius)
 				continue;
 
 			u->tempNum = tempNum;
-			units.push_back(u);
+			tempUnits.push_back(u);
 		}
 	}
 
-	return units;
+	return tempUnits;
 }
 
-std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& pos, float radius, bool spherical)
+const std::vector<CUnit*>& CQuadField::GetUnitsExact(const float3& pos, float radius, bool spherical)
 {
 	const auto& quads = GetQuads(pos, radius);
 	const int tempNum = gs->GetTempNum();
-
-	std::vector<CUnit*> units;
-	// make a quick pass on the quads to reserve enough size in the vector
-	// this reduces the number of allocations significantly
-	unsigned int maxSize = 0;
-	for (const int qi: quads) {
-		maxSize += baseQuads[qi].units.size();
-	}
-	units.reserve(maxSize);
+	tempUnits.clear();
 
 	for (const int qi: quads) {
 		for (CUnit* u: baseQuads[qi].units) {
@@ -495,25 +487,18 @@ std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& pos, float radius, b
 				continue;
 
 			u->tempNum = tempNum;
-			units.push_back(u);
+			tempUnits.push_back(u);
 		}
 	}
 
-	return units;
+	return tempUnits;
 }
 
-std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& mins, const float3& maxs)
+const std::vector<CUnit*>& CQuadField::GetUnitsExact(const float3& mins, const float3& maxs)
 {
 	const auto& quads = GetQuadsRectangle(mins, maxs);
 	const int tempNum = gs->GetTempNum();
-
-	std::vector<CUnit*> units;
-	// see comment above
-	unsigned int maxSize = 0;
-	for (const int qi: quads) {
-		maxSize += baseQuads[qi].units.size();
-	}
-	units.reserve(maxSize);
+	tempUnits.clear();
 
 	for (const int qi: quads) {
 		for (CUnit* unit: baseQuads[qi].units) {
@@ -524,26 +509,19 @@ std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& mins, const float3& 
 			if (pos.z < mins.z || pos.z > maxs.z) { continue; }
 
 			unit->tempNum = tempNum;
-			units.push_back(unit);
+			tempUnits.push_back(unit);
 		}
 	}
 
-	return units;
+	return tempUnits;
 }
 
 
-std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos, float radius, bool spherical)
+const std::vector<CFeature*>& CQuadField::GetFeaturesExact(const float3& pos, float radius, bool spherical)
 {
 	const auto& quads = GetQuads(pos, radius);
 	const int tempNum = gs->GetTempNum();
-
-	std::vector<CFeature*> features;
-	// see comment in GetUnitsExact
-	unsigned int maxSize = 0;
-	for (const int qi: quads) {
-		maxSize += baseQuads[qi].features.size();
-	}
-	features.reserve(maxSize);
+	tempFeatures.clear();
 
 	for (const int qi: quads) {
 		for (CFeature* f: baseQuads[qi].features) {
@@ -560,25 +538,18 @@ std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& pos, float rad
 				continue;
 
 			f->tempNum = tempNum;
-			features.push_back(f);
+			tempFeatures.push_back(f);
 		}
 	}
 
-	return features;
+	return tempFeatures;
 }
 
-std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& mins, const float3& maxs)
+const std::vector<CFeature*>& CQuadField::GetFeaturesExact(const float3& mins, const float3& maxs)
 {
 	const auto& quads = GetQuadsRectangle(mins, maxs);
 	const int tempNum = gs->GetTempNum();
-
-	std::vector<CFeature*> features;
-	// see comment in GetUnitsExact
-	unsigned int maxSize = 0;
-	for (const int qi: quads) {
-		maxSize += baseQuads[qi].features.size();
-	}
-	features.reserve(maxSize);
+	tempFeatures.clear();
 
 	for (const int qi: quads) {
 		for (CFeature* feature: baseQuads[qi].features) {
@@ -589,27 +560,20 @@ std::vector<CFeature*> CQuadField::GetFeaturesExact(const float3& mins, const fl
 			if (pos.z < mins.z || pos.z > maxs.z) { continue; }
 
 			feature->tempNum = tempNum;
-			features.push_back(feature);
+			tempFeatures.push_back(feature);
 		}
 	}
 
-	return features;
+	return tempFeatures;
 }
 
 
 
-std::vector<CProjectile*> CQuadField::GetProjectilesExact(const float3& pos, float radius)
+const std::vector<CProjectile*>& CQuadField::GetProjectilesExact(const float3& pos, float radius)
 {
 	const auto& quads = GetQuads(pos, radius);
 	const int tempNum = gs->GetTempNum();
-
-	std::vector<CProjectile*> projectiles;
-	// see comment in GetUnitsExact
-	unsigned int maxSize = 0;
-	for (const int qi: quads) {
-		maxSize += baseQuads[qi].projectiles.size();
-	}
-	projectiles.reserve(maxSize);
+	tempProjectiles.clear();
 
 	for (const int qi: quads) {
 		for (CProjectile* p: baseQuads[qi].projectiles) {
@@ -620,25 +584,18 @@ std::vector<CProjectile*> CQuadField::GetProjectilesExact(const float3& pos, flo
 				continue;
 
 			p->tempNum = tempNum;
-			projectiles.push_back(p);
+			tempProjectiles.push_back(p);
 		}
 	}
 
-	return projectiles;
+	return tempProjectiles;
 }
 
-std::vector<CProjectile*> CQuadField::GetProjectilesExact(const float3& mins, const float3& maxs)
+const std::vector<CProjectile*>& CQuadField::GetProjectilesExact(const float3& mins, const float3& maxs)
 {
 	const auto& quads = GetQuadsRectangle(mins, maxs);
 	const int tempNum = gs->GetTempNum();
-
-	std::vector<CProjectile*> projectiles;
-	// see comment in GetUnitsExact
-	unsigned int maxSize = 0;
-	for (const int qi: quads) {
-		maxSize += baseQuads[qi].projectiles.size();
-	}
-	projectiles.reserve(maxSize);
+	tempProjectiles.clear();
 
 	for (const int qi: quads) {
 		for (CProjectile* p: baseQuads[qi].projectiles) {
@@ -653,16 +610,16 @@ std::vector<CProjectile*> CQuadField::GetProjectilesExact(const float3& mins, co
 				continue;
 
 			p->tempNum = tempNum;
-			projectiles.push_back(p);
+			tempProjectiles.push_back(p);
 		}
 	}
 
-	return projectiles;
+	return tempProjectiles;
 }
 
 
 
-std::vector<CSolidObject*> CQuadField::GetSolidsExact(
+const std::vector<CSolidObject*>& CQuadField::GetSolidsExact(
 	const float3& pos,
 	const float radius,
 	const unsigned int physicalStateBits,
@@ -670,7 +627,7 @@ std::vector<CSolidObject*> CQuadField::GetSolidsExact(
 ) {
 	const auto& quads = GetQuads(pos, radius);
 	const int tempNum = gs->GetTempNum();
-	std::vector<CSolidObject*> solids;
+	tempSolids.clear();
 
 	for (const int qi: quads) {
 		for (CUnit* u: baseQuads[qi].units) {
@@ -684,7 +641,7 @@ std::vector<CSolidObject*> CQuadField::GetSolidsExact(
 				continue;
 
 			u->tempNum = tempNum;
-			solids.push_back(u);
+			tempSolids.push_back(u);
 		}
 
 		for (CFeature* f: baseQuads[qi].features) {
@@ -698,11 +655,11 @@ std::vector<CSolidObject*> CQuadField::GetSolidsExact(
 				continue;
 
 			f->tempNum = tempNum;
-			solids.push_back(f);
+			tempSolids.push_back(f);
 		}
 	}
 
-	return solids;
+	return tempSolids;
 }
 
 
