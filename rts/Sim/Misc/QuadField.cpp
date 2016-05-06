@@ -24,7 +24,13 @@ CR_REG_METADATA(CQuadField, (
 	CR_MEMBER(numQuadsX),
 	CR_MEMBER(numQuadsZ),
 	CR_MEMBER(quadSizeX),
-	CR_MEMBER(quadSizeZ)
+	CR_MEMBER(quadSizeZ),
+
+	CR_IGNORED(tempUnits),
+	CR_IGNORED(tempFeatures),
+	CR_IGNORED(tempProjectiles),
+	CR_IGNORED(tempSolids),
+	CR_IGNORED(tempQuads)
 ))
 
 CR_BIND(CQuadField::Quad, )
