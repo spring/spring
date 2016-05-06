@@ -1583,9 +1583,8 @@ bool CMobileCAI::SpotIsClear(float3 pos, CUnit* unitToUnload)
 
 	const float radius = std::max(1.0f, math::ceil(unitToUnload->radius / SQUARE_SIZE)) * SQUARE_SIZE;
 
-	if (!quadField->GetSolidsExact(pos, radius, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS).empty()) {
+	if (!quadField->NoSolidsExact(pos, radius, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS))
 		return false;
-	}
 
 	return true;
 }

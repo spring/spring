@@ -879,8 +879,9 @@ void CGroundMoveType::CheckCollisionSkid()
 	const float3& pos = collider->pos;
 
 	const UnitDef* colliderUD = collider->unitDef;
-	const vector<CUnit*>& nearUnits = quadField->GetUnitsExact(pos, collider->radius);
-	const vector<CFeature*>& nearFeatures = quadField->GetFeaturesExact(pos, collider->radius);
+	// copy on purpose, since the below can call Lua
+	const vector<CUnit*> nearUnits = quadField->GetUnitsExact(pos, collider->radius);
+	const vector<CFeature*> nearFeatures = quadField->GetFeaturesExact(pos, collider->radius);
 
 	vector<CUnit*>::const_iterator ui;
 	vector<CFeature*>::const_iterator fi;
@@ -1755,7 +1756,8 @@ void CGroundMoveType::HandleUnitCollisions(
 ) {
 	const float searchRadius = colliderSpeed + (colliderRadius * 2.0f);
 
-	const std::vector<CUnit*>& nearUnits = quadField->GetUnitsExact(collider->pos, searchRadius);
+	// copy on purpose, since the below can call Lua
+	const std::vector<CUnit*> nearUnits = quadField->GetUnitsExact(collider->pos, searchRadius);
 
 	// NOTE: probably too large for most units (eg. causes tree falling animations to be skipped)
 	const int dirSign = Sign(int(!reversing));
@@ -1966,7 +1968,8 @@ void CGroundMoveType::HandleFeatureCollisions(
 ) {
 	const float searchRadius = colliderSpeed + (colliderRadius * 2.0f);
 
-	const std::vector<CFeature*>& nearFeatures = quadField->GetFeaturesExact(collider->pos, searchRadius);
+	// copy on purpose, since DoDamage below can call Lua
+	const std::vector<CFeature*> nearFeatures = quadField->GetFeaturesExact(collider->pos, searchRadius);
 	      std::vector<CFeature*>::const_iterator fit;
 
 	const int dirSign = Sign(int(!reversing));

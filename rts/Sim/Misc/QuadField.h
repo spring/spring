@@ -35,9 +35,9 @@ needed to support dynamic resizing (not used yet)
 	CQuadField(int2 mapDims, int quad_size);
 	~CQuadField();
 
-	std::vector<int> GetQuads(float3 pos, const float radius);
-	std::vector<int> GetQuadsRectangle(const float3 mins, const float3 maxs);
-	std::vector<int> GetQuadsOnRay(const float3 start, const float3 dir, const float length);
+	const std::vector<int>& GetQuads(float3 pos, float radius);
+	const std::vector<int>& GetQuadsRectangle(const float3& mins, const float3& maxs);
+	const std::vector<int>& GetQuadsOnRay(const float3& start, const float3& dir, float length);
 
 	void GetUnitsAndFeaturesColVol(
 		const float3& pos,
@@ -79,6 +79,13 @@ needed to support dynamic resizing (not used yet)
 	const std::vector<CProjectile*>& GetProjectilesExact(const float3& mins, const float3& maxs);
 
 	const std::vector<CSolidObject*>& GetSolidsExact(
+		const float3& pos,
+		const float radius,
+		const unsigned int physicalStateBits = 0xFFFFFFFF,
+		const unsigned int collisionStateBits = 0xFFFFFFFF
+	);
+
+	bool NoSolidsExact(
 		const float3& pos,
 		const float radius,
 		const unsigned int physicalStateBits = 0xFFFFFFFF,
@@ -136,7 +143,6 @@ private:
 	// numQuadsX * numQuadsZ (eg. tempQuads) -- GetQuadsOnRay ensures
 	// this by itself, for GetQuads the callers take care of it
 	//
-	void GetQuads(float3 pos, float radius, std::vector<int>* quads) const;
 
 	int2 WorldPosToQuadField(const float3 p) const;
 	int WorldPosToQuadFieldIdx(const float3 p) const;
@@ -149,6 +155,7 @@ private:
 	std::vector<CFeature*> tempFeatures;
 	std::vector<CProjectile*> tempProjectiles;
 	std::vector<CSolidObject*> tempSolids;
+	std::vector<int> tempQuads;
 
 	int numQuadsX;
 	int numQuadsZ;

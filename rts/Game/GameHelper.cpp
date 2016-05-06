@@ -632,7 +632,8 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 	const float secDamage = weapon->damages->GetDefault() * weapon->salvoSize / weapon->reloadTime * GAME_SPEED;
 	const bool paralyzer  = (weapon->damages->paralyzeDamageTime != 0);
 
-	const auto& quads = quadField->GetQuads(pos, radius + (aHeight - std::max(0.0f, readMap->GetInitMinHeight())) * heightMod);
+	// copy on purpose since the below calls lua
+	const std::vector<int> quads = quadField->GetQuads(pos, radius + (aHeight - std::max(0.0f, readMap->GetInitMinHeight())) * heightMod);
 	const int tempNum = gs->GetTempNum();
 
 	for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
@@ -643,12 +644,12 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 			const std::vector<CUnit*>& allyTeamUnits = quadField->GetQuad(qi).teamUnits[t];
 
 			for (CUnit* targetUnit: allyTeamUnits) {
-				float targetPriority = 1.0f;
-
 				if (targetUnit->tempNum == tempNum)
 					continue;
 
 				targetUnit->tempNum = tempNum;
+
+				float targetPriority = 1.0f;
 
 				if (!weapon->TestTarget(float3(), SWeaponTarget(targetUnit)))
 					continue;
@@ -804,7 +805,8 @@ void CGameHelper::GetEnemyUnitsNoLosTest(const float3& pos, float searchRadius, 
 
 void CGameHelper::BuggerOff(float3 pos, float radius, bool spherical, bool forced, int teamId, CUnit* excludeUnit)
 {
-	const std::vector<CUnit*> &units = quadField->GetUnitsExact(pos, radius + SQUARE_SIZE, spherical);
+	//copy on purpose since BuggerOff can call risky stuff
+	const std::vector<CUnit*> units = quadField->GetUnitsExact(pos, radius + SQUARE_SIZE, spherical);
 	const int allyTeamId = teamHandler->AllyTeam(teamId);
 
 	for (std::vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
