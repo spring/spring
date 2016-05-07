@@ -54,8 +54,6 @@ void CSpringController::KeyMove(float3 move)
 	const float3 flatForward = (dir * XZVector).ANormalize();
 	pos += (camera->GetRight() * move.x + flatForward * move.y) * pixelSize * 2.0f * scrollSpeed;
 	Update();
-	camera->SetPos(GetPos());
-	camera->Update();
 }
 
 
