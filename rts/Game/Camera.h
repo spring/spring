@@ -141,7 +141,6 @@ public:
 	float GetTanHalfFov() const { return tanHalfFov; }
 	float GetLPPScale() const { return lppScale; }
 
-	float GetMoveDistance(float* time, float* speed, int idx) const;
 	float3 GetMoveVectorFromState(bool fromKeyState) const;
 
 	void SetMovState(int idx, bool b) { movState[idx] = b; }

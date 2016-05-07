@@ -41,37 +41,32 @@ CSpringController::CSpringController()
 
 void CSpringController::KeyMove(float3 move)
 {
+	move *= math::sqrt(move.z);
+
 	if (KeyInput::GetKeyModState(KMOD_ALT)) {
-		move *= math::sqrt(move.z);
+		rot.x = Clamp(rot.x - move.y, PI * 0.51f, PI * 0.99f);
 		MoveAzimuth(move.x);
 		Update();
 		return;
 	}
 
+	move *= 200.f;
 	const float3 flatForward = (dir * XZVector).ANormalize();
-
-	move *= math::sqrt(move.z) * 200.f;
 	pos += (camera->GetRight() * move.x + flatForward * move.y) * pixelSize * 2.0f * scrollSpeed;
-
 	Update();
+	camera->SetPos(GetPos());
+	camera->Update();
 }
 
 
 void CSpringController::MouseMove(float3 move)
 {
-	if (KeyInput::GetKeyModState(KMOD_ALT)) {
-		MoveAzimuth(move.x * 0.01f);
-		rot.x = Clamp(rot.x + (move.y * move.z * 0.01f), PI * 0.51f, PI * 0.99f);
-		Update();
-		return;
-	}
-
-	const float3 flatForward = (dir * XZVector).ANormalize();
-
+	move *= 0.005f;
 	move *= (1 + KeyInput::GetKeyModState(KMOD_SHIFT) * 3);
-	pos += (camera->GetRight() * move.x - flatForward * move.y) * pixelSize * 2.0f * scrollSpeed;
+	move.y = -move.y;
+	move.z = 1.0f;
 
-	Update();
+	KeyMove(move);
 }
 
 
@@ -94,24 +89,22 @@ void CSpringController::ScreenEdgeMove(float3 move)
 
 void CSpringController::MouseWheelMove(float move)
 {
-	const float shiftSpeed = (KeyInput::GetKeyModState(KMOD_SHIFT) ? 3.0f : 1.0f);
+	const float shiftSpeed = (KeyInput::GetKeyModState(KMOD_SHIFT) ? 2.0f : 1.0f);
 	const float scaledMove = 1.0f + (move * shiftSpeed * 0.007f);
 	const float curDistPre = curDist;
 
 	// tilt the camera if CTRL is pressed, otherwise zoom
 	if (KeyInput::GetKeyModState(KMOD_CTRL)) {
-		rot.x = Clamp(rot.x - (move * shiftSpeed * 0.01f), PI * 0.51f, PI * 0.99f);
+		rot.x = Clamp(rot.x - (move * shiftSpeed * 0.005f), PI * 0.51f, PI * 0.99f);
+		camHandler->CameraTransition(0.25f);
 	} else {
 		const float3 curCamPos = GetPos();
 		const float3 curCamDir = cursorZoomIn? mouse->dir: dir;
 
-		float zoomTransTime = 0.15f;
-
-		camHandler->CameraTransition(zoomTransTime);
-
 		curDist *= scaledMove;
 		curDist = std::min(curDist, maxDist);
 
+		float zoomTransTime = 0.25f;
 		if (move < 0.0f) {
 			// ZOOM IN - to mouse cursor or along our own forward dir
 			zoomTransTime = ZoomIn(curCamPos, curCamDir, float2(curDistPre, scaledMove));
@@ -119,12 +112,7 @@ void CSpringController::MouseWheelMove(float move)
 			// ZOOM OUT - from mid screen
 			zoomTransTime = ZoomOut(curCamPos, curCamDir, float2(curDistPre, scaledMove));
 		}
-
-		if (zoomTransTime > 0.0f) {
-			camera->SetPos(GetPos());
-			camera->Update();
-			camHandler->CameraTransition(zoomTransTime);
-		}
+		camHandler->CameraTransition(zoomTransTime);
 	}
 
 	Update();
@@ -147,13 +135,13 @@ float CSpringController::ZoomIn(
 	const float zoomInDist = CGround::LineGroundCol(curCamPos, curCamPos + curCamDir * 150000.f, false);
 
 	if (zoomInDist <= 0.0f)
-		return -1.0f;
+		return 0.25f;
 
 	// zoom in to cursor, then back out (along same dir) based on scaledMove
 	// to find where we want to place camera, but make sure the wanted point
 	// is always in front of curCamPos
 	const float3 zoomedCamPos =    curCamPos + curCamDir * zoomInDist;
-	const float3 wantedCamPos = zoomedCamPos - curCamDir * std::min(zoomInDist * zoomParams.y, zoomedCamPos.distance(curCamPos) * 0.9f);
+	const float3 wantedCamPos = zoomedCamPos - curCamDir * zoomInDist * zoomParams.y;
 
 	// figure out how far we will end up from the ground at new wanted point
 	const float newDist = CGround::LineGroundCol(wantedCamPos, wantedCamPos + dir * 150000.f, false);
@@ -187,15 +175,15 @@ float CSpringController::ZoomOut(
 	zoomBack = false;
 
 	if (!cursorZoomOut)
-		return -1.0f;
+		return 0.25f;
 
 	const float zoomInDist = CGround::LineGroundCol(curCamPos, curCamPos + mouse->dir * 150000.f, false);
 
 	if (zoomInDist <= 0.0f)
-		return -1.0f;
+		return 0.25f;
 
 	// same logic as ZoomIn, but in opposite direction
-	const float3 zoomedCamPos =    curCamPos + mouse->dir * zoomInDist;
+	const float3 zoomedCamPos =    curCamPos + mouse->dir * zoomInDist; //FIXME mouse->dir???
 	const float3 wantedCamPos = zoomedCamPos - mouse->dir * zoomInDist * zoomParams.y;
 
 	const float newDist = CGround::LineGroundCol(wantedCamPos, wantedCamPos + dir * 150000.f, false);

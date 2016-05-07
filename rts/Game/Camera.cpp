@@ -620,35 +620,12 @@ void CCamera::ClipFrustumLines(bool neg, const float zmin, const float zmax) {
 }
 
 
-
-float CCamera::GetMoveDistance(float* time, float* speed, int idx) const
+float3 CCamera::GetMoveVectorFromState(bool fromKeyState) const
 {
 	float camDeltaTime = globalRendering->lastFrameTime;
 	float camMoveSpeed = 1.0f;
-
 	camMoveSpeed *= (1.0f - movState[MOVE_STATE_SLW] * 0.9f);
 	camMoveSpeed *= (1.0f + movState[MOVE_STATE_FST] * 9.0f);
-
-	if (time != NULL) { *time = camDeltaTime; }
-	if (speed != NULL) { *speed = camMoveSpeed; }
-
-	switch (idx) {
-		case MOVE_STATE_UP:  { camMoveSpeed *=  float(movState[idx]); } break;
-		case MOVE_STATE_DWN: { camMoveSpeed *= -float(movState[idx]); } break;
-
-		default: {
-		} break;
-	}
-
-	return (camDeltaTime * 0.2f * camMoveSpeed);
-}
-
-float3 CCamera::GetMoveVectorFromState(bool fromKeyState) const
-{
-	float camDeltaTime = 1.0f;
-	float camMoveSpeed = 1.0f;
-
-	(void) GetMoveDistance(&camDeltaTime, &camMoveSpeed, -1);
 
 	float3 v;
 	if (fromKeyState) {

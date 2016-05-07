@@ -194,13 +194,15 @@ void CCameraHandler::UpdateController(CCameraController& camCon, bool keyMove, b
 
 	if (wheelMove) {
 		// mouse wheel zoom
-		const float mouseWheelDistUp   = camera->GetMoveDistance(nullptr, nullptr, CCamera::MOVE_STATE_UP);
-		const float mouseWheelDistDown = camera->GetMoveDistance(nullptr, nullptr, CCamera::MOVE_STATE_DWN);
+		float mouseWheelDist = 0.0f;
+		mouseWheelDist +=  float(camera->GetMovState()[CCamera::MOVE_STATE_UP]);
+		mouseWheelDist += -float(camera->GetMovState()[CCamera::MOVE_STATE_DWN]);
+		mouseWheelDist *= 0.2f * globalRendering->lastFrameTime;
 
-		if (math::fabsf(mouseWheelDistUp + mouseWheelDistDown) == 0.0f)
+		if (mouseWheelDist == 0.0f)
 			return;
 
-		camCon.MouseWheelMove(mouseWheelDistUp + mouseWheelDistDown);
+		camCon.MouseWheelMove(mouseWheelDist);
 	}
 }
 
