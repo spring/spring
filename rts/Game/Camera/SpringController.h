@@ -33,8 +33,8 @@ private:
 	float GetAzimuth() const;
 	float MoveAzimuth(float move);
 
-	inline float ZoomIn(const float3& curCamPos, const float3& curCamDir, const float2& zoomParams);
-	inline float ZoomOut(const float3& curCamPos, const float3& curCamDir, const float2& zoomParams);
+	inline float ZoomIn(const float3& curCamPos, const float2& zoomParams);
+	inline float ZoomOut(const float3& curCamPos, const float2& zoomParams);
 
 private:
 	float3 rot;
