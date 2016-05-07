@@ -80,14 +80,12 @@ float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, unsigned xSquare, unsign
 
 	const CMapInfo::TerrainType& tt = mapInfo->terrainTypes[squareTerrType];
 
-	float3 sqrNormal = readMap->GetCenterNormalsSynced()[xSquare + zSquare * mapDims.mapx];
+	const float3 sqrNormal = readMap->GetCenterNormals2DSynced()[xSquare + zSquare * mapDims.mapx];
 
-	#if 1
 	// with a flat normal, only consider the normalized xz-direction
 	// (the actual steepness is represented by the "slope" variable)
-	sqrNormal.SafeNormalize2D();
-	moveDir.SafeNormalize2D();
-	#endif
+	// we verify that it was normalized in advance
+	assert(float3(moveDir).SafeNormalize2D() == moveDir);
 
 	// note: moveDir is (or should be) a unit vector in the xz-plane, y=0
 	// scale is negative for "downhill" slopes, positive for "uphill" ones

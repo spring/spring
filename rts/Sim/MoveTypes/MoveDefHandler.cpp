@@ -336,9 +336,12 @@ bool MoveDef::TestMoveSquare(
 	const int zMin = -zsizeh * (1 - centerOnly), zMax = zsizeh * (1 - centerOnly);
 	const int xMin = -xsizeh * (1 - centerOnly), xMax = xsizeh * (1 - centerOnly);
 
+	float3 testMoveDir2D = testMoveDir;
+	testMoveDir2D.SafeNormalize2D();
+
 	for (int z = zMin; (z <= zMax) && retTestMove; z++) {
 		for (int x = xMin; (x <= xMax) && retTestMove; x++) {
-			const float speedMod = CMoveMath::GetPosSpeedMod(*this, xTestMoveSqr + x, zTestMoveSqr + z, testMoveDir);
+			const float speedMod = CMoveMath::GetPosSpeedMod(*this, xTestMoveSqr + x, zTestMoveSqr + z, testMoveDir2D);
 
 			minSpeedMod = std::min(minSpeedMod, speedMod);
 			retTestMove &= (!testTerrain || (speedMod > 0.0f));

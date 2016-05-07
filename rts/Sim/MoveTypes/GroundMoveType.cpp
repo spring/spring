@@ -666,7 +666,7 @@ void CGroundMoveType::ChangeHeading(short newHeading) {
 	owner->UpdateMidAndAimPos();
 
 	flatFrontDir = owner->frontdir;
-	flatFrontDir = (flatFrontDir * XZVector).Normalize();
+	flatFrontDir.Normalize2D();
 }
 
 
@@ -1643,13 +1643,15 @@ void CGroundMoveType::HandleStaticObjectCollision(
 		//   if a unit is not affected by slopes) --> can be solved through
 		//   smoothing the cost-function, eg. blurring heightmap before PFS
 		//   sees it
+		float3 speed2D = collider->speed;
+		speed2D.SafeNormalize2D();
 		for (int z = zmin; z <= zmax; z++) {
 			for (int x = xmin; x <= xmax; x++) {
 				const int xabs = xmid + x;
 				const int zabs = zmid + z;
 
 				if (checkTerrain) {
-					if (CMoveMath::GetPosSpeedMod(*colliderMD, xabs, zabs, collider->speed) > 0.01f)
+					if (CMoveMath::GetPosSpeedMod(*colliderMD, xabs, zabs, speed2D) > 0.01f)
 						continue;
 				} else {
 					if ((CMoveMath::SquareIsBlocked(*colliderMD, xabs, zabs, collider) & CMoveMath::BLOCK_STRUCTURE) == 0)
