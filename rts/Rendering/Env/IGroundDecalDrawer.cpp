@@ -24,7 +24,7 @@ IGroundDecalDrawer::IGroundDecalDrawer()
 IGroundDecalDrawer* IGroundDecalDrawer::GetInstance()
 {
 	if (!singleton) {
-#if 1
+#if 0
 		try {
 			singleton = new CDecalsDrawerGL4();
 			LOG_L(L_INFO, "Loaded DecalsDrawer: %s", "GL4");
@@ -36,7 +36,7 @@ IGroundDecalDrawer* IGroundDecalDrawer::GetInstance()
 			singleton = new CGroundDecalHandler();
 			LOG_L(L_INFO, "Loaded DecalsDrawer: %s", "Legacy");
 
-#if 1
+#if 0
 		}
 #endif
 	}
