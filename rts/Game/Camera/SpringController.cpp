@@ -44,7 +44,7 @@ void CSpringController::KeyMove(float3 move)
 	move *= math::sqrt(move.z);
 
 	if (KeyInput::GetKeyModState(KMOD_ALT)) {
-		rot.x = Clamp(rot.x - move.y, PI * 0.51f, PI * 0.99f);
+		rot.x = Clamp(rot.x + move.y, PI * 0.51f, PI * 0.99f);
 		MoveAzimuth(move.x);
 		Update();
 		return;
