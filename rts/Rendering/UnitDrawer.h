@@ -8,6 +8,8 @@
 #include <unordered_map>
 
 #include "Rendering/GL/LightHandler.h"
+#include "Rendering/Models/3DModel.h"
+#include "Rendering/UnitDrawerState.hpp"
 #include "System/EventClient.h"
 #include "System/type2.h"
 
@@ -251,21 +253,21 @@ private:
 private:
 	typedef void (*DrawModelFunc)(const CUnit*, bool);
 
-	std::vector<IModelRenderContainer*> opaqueModelRenderers;
-	std::vector<IModelRenderContainer*> alphaModelRenderers;
+	std::array<IModelRenderContainer*, MODELTYPE_OTHER> opaqueModelRenderers;
+	std::array<IModelRenderContainer*, MODELTYPE_OTHER> alphaModelRenderers;
 
 	/// units being rendered (note that this is a completely
 	/// unsorted set of 3DO, S3O, opaque, and cloaked models!)
 	std::vector<CUnit*> unsortedUnits;
 
 	/// AI unit ghosts
-	std::vector< std::vector<TempDrawUnit> > tempOpaqueUnits;
-	std::vector< std::vector<TempDrawUnit> > tempAlphaUnits;
+	std::array< std::vector<TempDrawUnit>, MODELTYPE_OTHER> tempOpaqueUnits;
+	std::array< std::vector<TempDrawUnit>, MODELTYPE_OTHER> tempAlphaUnits;
 
 	/// buildings that were in LOS_PREVLOS when they died and not in LOS since
-	std::vector<std::vector<GhostSolidObject*> > deadGhostBuildings;
+	std::array<std::vector<GhostSolidObject*>, MODELTYPE_OTHER> deadGhostBuildings;
 	/// buildings that left LOS but are still alive
-	std::vector<std::vector<CUnit*> > liveGhostBuildings;
+	std::array<std::vector<CUnit*>, MODELTYPE_OTHER> liveGhostBuildings;
 
 	/// units that are only rendered as icons this frame
 	std::vector<CUnit*> iconUnits;
@@ -275,7 +277,7 @@ private:
 	// [0] := fallback shader-less rendering path
 	// [1] := default shader-driven rendering path
 	// [2] := currently selected state
-	std::vector<IUnitDrawerState*> unitDrawerStates;
+	std::array<IUnitDrawerState*, DRAWER_STATE_CNT> unitDrawerStates;
 	std::array<DrawModelFunc, 3> drawModelFuncs;
 
 private:

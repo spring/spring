@@ -4,9 +4,11 @@
 #define PROJECTILE_DRAWER_HDR
 
 #include "Rendering/GL/myGL.h"
+#include <array>
 #include <set>
 
 #include "Rendering/GL/FBO.h"
+#include "Rendering/Models/3DModel.h"
 #include "Sim/Projectiles/ProjectileFunctors.h"
 #include "System/EventClient.h"
 
@@ -122,7 +124,7 @@ private:
 	/// projectiles without a model
 	std::vector<CProjectile*> renderProjectiles;
 	/// projectiles with a model
-	std::vector<IModelRenderContainer*> modelRenderers;
+	std::array<IModelRenderContainer*, MODELTYPE_OTHER> modelRenderers;
 
 	/**
 	 * z-sorted set of projectiles without models; used

@@ -5,11 +5,11 @@
 
 #include <vector>
 #include <array>
+#include "Game/Camera.h"
 #include "System/creg/creg_cond.h"
 #include "System/EventClient.h"
 #include "Rendering/Models/ModelRenderContainer.h"
 
-class CCamera;
 class CFeature;
 class IModelRenderContainer;
 
@@ -132,8 +132,8 @@ private:
 	};
 
 	std::vector<RdrContProxy> modelRenderers;
-	std::vector< std::vector<int> > camVisibleQuads;
-	std::vector<unsigned int> camVisDrawFrames;
+	std::array< std::vector<int>, CCamera::CAMTYPE_ENVMAP> camVisibleQuads;
+	std::array<unsigned int, CCamera::CAMTYPE_ENVMAP> camVisDrawFrames;
 	std::vector<CFeature*> unsortedFeatures;
 
 	GL::GeometryBuffer* geomBuffer;

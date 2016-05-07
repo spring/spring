@@ -148,8 +148,7 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 	featureFadeDistance = std::min(configHandler->GetFloat("FeatureFadeDistance"), featureDrawDistance);
 
 	modelRenderers.resize(drawQuadsX * drawQuadsY);
-	camVisibleQuads.resize(CCamera::CAMTYPE_ENVMAP);
-	camVisDrawFrames.resize(CCamera::CAMTYPE_ENVMAP, 0);
+	camVisDrawFrames.fill(0);
 
 	for (unsigned int n = 0; n < camVisibleQuads.size(); n++) {
 		camVisibleQuads[n].reserve(256);
@@ -162,7 +161,6 @@ CFeatureDrawer::~CFeatureDrawer()
 	eventHandler.RemoveClient(this);
 
 	modelRenderers.clear();
-	camVisDrawFrames.clear();
 }
 
 

@@ -232,15 +232,6 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	}
 
 
-	deadGhostBuildings.resize(MODELTYPE_OTHER);
-	liveGhostBuildings.resize(MODELTYPE_OTHER);
-
-	opaqueModelRenderers.resize(MODELTYPE_OTHER, nullptr);
-	alphaModelRenderers.resize(MODELTYPE_OTHER, nullptr);
-
-	tempOpaqueUnits.resize(MODELTYPE_OTHER);
-	tempAlphaUnits.resize(MODELTYPE_OTHER);
-
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		opaqueModelRenderers[modelType] = IModelRenderContainer::GetInstance(modelType);
 		alphaModelRenderers[modelType] = IModelRenderContainer::GetInstance(modelType);
@@ -249,7 +240,7 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	// LH must be initialized before drawer-state is initialized
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicModelLights"));
 
-	unitDrawerStates.resize(DRAWER_STATE_CNT, nullptr);
+	unitDrawerStates.fill(nullptr);
 	unitDrawerStates[DRAWER_STATE_SSP] = IUnitDrawerState::GetInstance(globalRendering->haveARB, globalRendering->haveGLSL);
 	unitDrawerStates[DRAWER_STATE_FFP] = IUnitDrawerState::GetInstance(                   false,                     false);
 
@@ -282,7 +273,6 @@ CUnitDrawer::~CUnitDrawer()
 
 	unitDrawerStates[DRAWER_STATE_SSP]->Kill(); IUnitDrawerState::FreeInstance(unitDrawerStates[DRAWER_STATE_SSP]);
 	unitDrawerStates[DRAWER_STATE_FFP]->Kill(); IUnitDrawerState::FreeInstance(unitDrawerStates[DRAWER_STATE_FFP]);
-	unitDrawerStates.clear();
 
 	cubeMapHandler->Free();
 
@@ -301,19 +291,11 @@ CUnitDrawer::~CUnitDrawer()
 		liveGhostBuildings[modelType].clear();
 	}
 
-	deadGhostBuildings.clear();
-	liveGhostBuildings.clear();
-
-	tempOpaqueUnits.clear();
-	tempAlphaUnits.clear();
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		delete opaqueModelRenderers[modelType];
 		delete alphaModelRenderers[modelType];
 	}
-
-	opaqueModelRenderers.clear();
-	alphaModelRenderers.clear();
 
 	unsortedUnits.clear();
 }

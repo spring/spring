@@ -232,8 +232,6 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 	}
 
 
-	modelRenderers.resize(MODELTYPE_OTHER, NULL);
-
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		modelRenderers[modelType] = IModelRenderContainer::GetInstance(modelType);
 	}
@@ -250,7 +248,6 @@ CProjectileDrawer::~CProjectileDrawer() {
 		delete modelRenderers[modelType];
 	}
 
-	modelRenderers.clear();
 	renderProjectiles.clear();
 }
 

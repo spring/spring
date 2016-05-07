@@ -6,7 +6,7 @@
 #include <array>
 #include "System/type2.h"
 
-class float4;
+struct float4;
 class CUnitDrawer;
 class CCamera;
 struct ISkyLight;
