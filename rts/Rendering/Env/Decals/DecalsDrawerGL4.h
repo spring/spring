@@ -4,6 +4,7 @@
 #define SHADER_GROUND_DECAL_DRAWER_H
 
 #include <vector>
+#include <array>
 
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/GL/myGL.h"
