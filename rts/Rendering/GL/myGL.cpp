@@ -431,15 +431,19 @@ void glSaveTexture(const GLuint textureID, const std::string& filename)
 
 void glSpringBindTextures(GLuint first, GLsizei count, const GLuint* textures)
 {
+#ifdef GLEW_ARB_multi_bind
 	if (GLEW_ARB_multi_bind) {
 		glBindTextures(first, count, textures);
-	} else {
+	} else
+#endif
+	{
 		for (int i = 0; i < count; ++i) {
 			const GLuint texture = (textures == nullptr) ? 0 : textures[i];
 			glActiveTexture(GL_TEXTURE0 + first + i);
 			glBindTexture(GL_TEXTURE_2D, texture);
 		}
 		glActiveTexture(GL_TEXTURE0);
+
 	}
 }
 

@@ -16,7 +16,7 @@
 #include "System/float4.h"
 
 
-#if !defined(GL_VERSION_4_0) || HEADLESS
+#if !defined(GL_VERSION_4_3) || HEADLESS
 	class CDecalsDrawerGL4: public IGroundDecalDrawer
 	{
 	public:

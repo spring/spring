@@ -51,7 +51,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_DECALS_GL4)
 #define LOG_SECTION_CURRENT LOG_SECTION_DECALS_GL4
 
 
-#if !defined(GL_VERSION_4_0) || HEADLESS
+#if !defined(GL_VERSION_4_3) || HEADLESS
 CDecalsDrawerGL4::CDecalsDrawerGL4()
 {
 	throw opengl_error(LOG_SECTION_DECALS_GL4 ": Compiled without OpenGL4 support!");
