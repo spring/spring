@@ -161,10 +161,6 @@ CFeatureDrawer::~CFeatureDrawer()
 {
 	eventHandler.RemoveClient(this);
 
-	for (CFeature* f: unsortedFeatures) {
-		groundDecals->ForceRemoveSolidObject(f);
-	}
-
 	modelRenderers.clear();
 	camVisDrawFrames.clear();
 }
