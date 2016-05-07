@@ -1,16 +1,16 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "IconHandler.h"
+
 #include <algorithm>
 #include <assert.h>
 #include <locale>
 #include <cctype>
-#include <vector>
-#include <string>
+#include <cmath>
 
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "System/Log/ILog.h"
-#include "IconHandler.h"
 #include "Lua/LuaParser.h"
 #include "Textures/Bitmap.h"
 #include "System/Exceptions.h"

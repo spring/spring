@@ -2,8 +2,9 @@
 
 // TODO: move this out of Sim, this is rendering code!
 
-
 #include "LineDrawer.h"
+
+#include <cmath>
 
 #include "Rendering/GlobalRendering.h"
 #include "Game/UI/CommandColors.h"

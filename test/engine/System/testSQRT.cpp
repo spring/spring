@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <array>
+#include <cmath>
 #include "lib/streflop/streflop_cond.h"
 #include "System/TimeProfiler.h"
 #include "System/FastMath.h"
