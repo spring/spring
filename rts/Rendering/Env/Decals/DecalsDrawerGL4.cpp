@@ -675,9 +675,12 @@ void CDecalsDrawerGL4::Draw()
 
 	// we render the decals in screen space
 	// for that we need the depth, to be able to reconstruct the worldpos
+#ifdef glCopyTextureSubImage2D
 	if (GLEW_EXT_direct_state_access) {
 		glCopyTextureSubImage2D(depthTex, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
-	} else {
+	} else
+#endif
+	{
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, depthTex);
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
