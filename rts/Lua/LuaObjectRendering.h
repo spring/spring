@@ -28,6 +28,7 @@ private:
 		return LUAOBJ_LAST;
 	}
 
+	static int GetLODCount(lua_State* L);
 	static int SetLODCount(lua_State* L);
 	static int SetLODLength(lua_State* L);
 	static int SetLODDistance(lua_State* L);
@@ -62,6 +63,7 @@ public:
 		// the proper LuaObjType value for their corresponding tables
 		#define PUSH_FUNCTION(x) LuaObjectRenderingImpl::PushFunction(L, x, #x)
 
+		PUSH_FUNCTION(GetLODCount);
 		PUSH_FUNCTION(SetLODCount);
 		PUSH_FUNCTION(SetLODLength);
 		PUSH_FUNCTION(SetLODDistance);
@@ -85,6 +87,12 @@ public:
 	}
 
 private:
+	static int GetLODCount(lua_State* L) {
+		LuaObjectRenderingImpl::PushObjectType(T);
+		const int ret = LuaObjectRenderingImpl::GetLODCount(L);
+		LuaObjectRenderingImpl::PopObjectType();
+		return ret;
+	}
 	static int SetLODCount(lua_State* L) {
 		LuaObjectRenderingImpl::PushObjectType(T);
 		const int ret = LuaObjectRenderingImpl::SetLODCount(L);

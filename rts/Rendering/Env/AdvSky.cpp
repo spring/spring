@@ -64,8 +64,8 @@ CAdvSky::CAdvSky()
 	memset(thicknessTransform, 0, 1024);
 	memset(covers, 0, 4 * 32 * sizeof(float));
 
-	domeheight = math::cos(PI / 16) * 1.01f;
-	domeWidth = math::sin(2 * PI / 32) * 400 * 1.7f;
+	domeheight = std::cos(PI / 16) * 1.01f;
+	domeWidth = std::sin(2 * PI / 32) * 400 * 1.7f;
 
 	UpdateSkyDir();
 	InitSun();
@@ -197,9 +197,8 @@ void CAdvSky::Draw()
 	glEnable(GL_BLEND);
 
 	glPushMatrix();
-//	glTranslatef(camera->GetPos().x,camera->GetPos().y,camera->GetPos().z);
-	CMatrix44f m(camera->GetPos(),skydir1,UpVector,skydir2);
-	glMultMatrixf(m.m);
+	// glTranslatef3(camera->GetPos());
+	glMultMatrixf(CMatrix44f(camera->GetPos(), skydir1, UpVector, skydir2));
 
 	float3 modCamera=skydir1*camera->GetPos().x+skydir2*camera->GetPos().z;
 
@@ -380,7 +379,7 @@ void CAdvSky::Update()
 	case 0: {
 		for(int a=0; a<CLOUD_DETAIL; a++) {
 			float fade = gs->frameNum / (70.0f * (2<<(CLOUD_DETAIL-1-a)));
-			fade -= math::floor(fade/2)*2;
+			fade -= std::floor(fade/2)*2;
 			if(fade>1) {
 				fade = 2 - fade;
 				if(!cloudDown[a]) {
@@ -414,11 +413,11 @@ void CAdvSky::Update()
 		int qcda=(4<<CLOUD_DETAIL)>>a;
 		int *pkernel=kernel;
 		for(int y=0; y<cs4a; ++y, pkernel+=CLOUD_SIZE/4) {
-			float ydist=math::fabs(1.0f+y-cs8a)/cs8a;
+			float ydist=std::fabs(1.0f+y-cs8a)/cs8a;
 			ydist=ydist*ydist*(3-2*ydist);
 			int *pkrn=pkernel;
 			for(int x=0; x<cs4a; ++x) {
-				float xdist=math::fabs(1.0f+x-cs8a)/cs8a;
+				float xdist=std::fabs(1.0f+x-cs8a)/cs8a;
 				xdist=xdist*xdist*(3-2*xdist);
 
 				float contrib=(1-xdist)*(1-ydist);
@@ -530,7 +529,7 @@ void CAdvSky::CreateTransformVectors()
 	unsigned char *tt=thicknessTransform;
 	for(int a=0;a<1024;++a){
 		float f=(1023.0f-(a+cloudDensity*1024-512))/1023.0f;
-		float alpha=math::pow(f*2,3);
+		float alpha=std::pow(f*2,3);
 		if(alpha>1)
 			alpha=1;
 		*at=(int) (alpha*255);
@@ -567,8 +566,8 @@ void CAdvSky::DrawSun()
 	const float ymod = (sunTexCoordY - 0.5f) * domeWidth * 0.025f * 256;
 	const float fx = gs->frameNum * 0.00005f * CLOUD_SIZE + xzSunCameraPos.x * CLOUD_SIZE * 0.000025f;
 	const float fy = ymod + xzSunCameraPos.z * CLOUD_SIZE * 0.000025f;
-	const float ffx = fx - math::floor(fx);
-	const float ffy = fy - math::floor(fy);
+	const float ffx = fx - std::floor(fx);
+	const float ffy = fy - std::floor(fy);
 	const int baseX = int(fx) & CLOUD_MASK;
 	const int baseY = int(fy) & CLOUD_MASK;
 
@@ -634,8 +633,8 @@ void CAdvSky::UpdateSunFlare() {
 		glBegin(GL_TRIANGLE_STRIP);
 
 		for (int x = 0; x < 257; ++x) {
-			const float dx = math::sin(x * 2.0f * PI / 256.0f);
-			const float dy = math::cos(x * 2.0f * PI / 256.0f);
+			const float dx = std::sin(x * 2.0f * PI / 256.0f);
+			const float dy = std::cos(x * 2.0f * PI / 256.0f);
 			const float dz = 5.0f;
 
 			glTexCoord2f(x / 256.0f, 0.125f); glVertexf3(zdir * dz + xdir * dx * 0.0014f + ydir * dy * 0.0014f);
@@ -662,7 +661,7 @@ void CAdvSky::InitSun()
 			mem[(y*128+x)*4+0]=255;
 			mem[(y*128+x)*4+1]=255;
 			mem[(y*128+x)*4+2]=255;
-			float dist=math::sqrt((float)(y-64)*(y-64)+(x-64)*(x-64));
+			float dist=std::sqrt((float)(y-64)*(y-64)+(x-64)*(x-64));
 			if(dist>60)
 				mem[(y*128+x)*4+3]=0;
 			else
@@ -765,7 +764,7 @@ void CAdvSky::CreateDetailTex()
 
 	for(int a=0;a<5;++a){
 		float fade = gs->frameNum / float(30<<a);
-		fade -= math::floor(fade/2)*2;
+		fade -= std::floor(fade/2)*2;
 		int size = std::min(32,256>>a);
 
 		if(fade>1){
@@ -786,7 +785,7 @@ void CAdvSky::CreateDetailTex()
 
 		}
 		float tSize = std::max(1,8>>a);
-		float c = math::pow(2.0f,a)*6/255.0f;
+		float c = std::pow(2.0f,a)*6/255.0f;
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
 		va->CheckInitSize(4*VA_SIZE_T);
@@ -826,7 +825,7 @@ void CAdvSky::UpdateSunDir() {
 
 	modSunDir.x = 0.0f;
 	modSunDir.y = L.y;
-	modSunDir.z = math::sqrt(L.x * L.x + L.z * L.z);
+	modSunDir.z = std::sqrt(L.x * L.x + L.z * L.z);
 
 	sunTexCoordX = 0.5f;
 	sunTexCoordY = GetTexCoordFromDir(modSunDir);
@@ -877,13 +876,13 @@ float3 CAdvSky::GetDirFromTexCoord(float x, float y)
 	dir.x = (x - 0.5f) * domeWidth;
 	dir.z = (y - 0.5f) * domeWidth;
 
-	const float hdist = math::sqrt(dir.x * dir.x + dir.z * dir.z);
+	const float hdist = std::sqrt(dir.x * dir.x + dir.z * dir.z);
 	const float ang = GetRadFromXY(dir.x, dir.z) + skyAngle;
-	const float fy = math::asin(hdist / 400);
+	const float fy = std::asin(hdist / 400);
 
-	dir.x = hdist * math::cos(ang);
-	dir.z = hdist * math::sin(ang);
-	dir.y = (fastmath::cos(fy) - domeheight) * 400;
+	dir.x = hdist * std::cos(ang);
+	dir.z = hdist * std::sin(ang);
+	dir.y = (std::cos(fy) - domeheight) * 400;
 
 	dir.ANormalize();
 	return dir;
@@ -915,8 +914,8 @@ void CAdvSky::UpdateTexPartDot3(int x, int y, unsigned char (*texp)[4]) {
 	const float3& dir = GetDirFromTexCoord(x / 256.0f, (255.0f - y) / 256.0f);
 
 	const float sunInt = skyLight->GetLightIntensity();
-	const float sunDist = math::acos(dir.dot(skyLight->GetLightDir())) * 50;
-	const float sunMod = sunInt * (0.3f / math::sqrt(sunDist) + 3.0f / (1 + sunDist));
+	const float sunDist = std::acos(dir.dot(skyLight->GetLightDir())) * 50;
+	const float sunMod = sunInt * (0.3f / std::sqrt(sunDist) + 3.0f / (1 + sunDist));
 
 	const float green = std::min(1.0f, (0.55f + sunMod));
 	const float blue  = 203 - sunInt * (40.0f / (3 + sunDist));
@@ -930,7 +929,7 @@ void CAdvSky::UpdateTexPartDot3(int x, int y, unsigned char (*texp)[4]) {
 void CAdvSky::UpdateTexPart(int x, int y, unsigned char (*texp)[4]) {
 	const float3& dir = GetDirFromTexCoord(x / 512.0f, (511.0f - y) / 512.0f);
 
-	const float sunDist = math::acos(dir.dot(skyLight->GetLightDir())) * 70;
+	const float sunDist = std::acos(dir.dot(skyLight->GetLightDir())) * 70;
 	const float sunMod = skyLight->GetLightIntensity() * 12.0f / (12 + sunDist);
 
 	const float red   = std::min(skyColor.x + sunMod * sunColor.x, 1.0f);

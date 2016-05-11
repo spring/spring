@@ -142,6 +142,14 @@ CAssParser::CAssParser() :
 	glGetIntegerv(GL_MAX_ELEMENTS_INDICES,  &maxIndices);
 	glGetIntegerv(GL_MAX_ELEMENTS_VERTICES, &maxVertices);
 #endif
+	Assimp::DefaultLogger::create("", Assimp::Logger::VERBOSE);
+	// Create a logger for debugging model loading issues
+	Assimp::DefaultLogger::get()->attachStream(new AssLogStream(), ASS_LOGGING_OPTIONS);
+}
+
+CAssParser::~CAssParser()
+{
+	Assimp::DefaultLogger::kill();
 }
 
 
@@ -180,9 +188,6 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 	// Create a model importer instance
 	Assimp::Importer importer;
 
-	// Create a logger for debugging model loading issues
-	Assimp::DefaultLogger::create("", Assimp::Logger::VERBOSE);
-	Assimp::DefaultLogger::get()->attachStream(new AssLogStream(), ASS_LOGGING_OPTIONS);
 
 	// Give the importer an IO class that handles Spring's VFS
 	importer.SetIOHandler(new AssVFSSystem());
@@ -225,8 +230,9 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 
 	// Load textures
 	FindTextures(model, scene, modelTable, modelPath, modelName);
-	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Loading textures. Tex1: '%s' Tex2: '%s'", model->tex1.c_str(), model->tex2.c_str());
-	texturehandlerS3O->PreloadS3OTexture(model);
+	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Loading textures. Tex1: '%s' Tex2: '%s'", model->texs[0].c_str(), model->texs[1].c_str());
+
+	texturehandlerS3O->PreloadTexture(model, modelTable.GetBool("fliptextures", true), modelTable.GetBool("invertteamcolor", true));
 
 	// Load all pieces in the model
 	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Loading pieces from root node '%s'", scene->mRootNode->mName.data);
@@ -483,7 +489,7 @@ void CAssParser::LoadPieceGeometry(SAssPiece* piece, const aiNode* pieceNode, co
 			const aiVector3D& aiNormal = mesh->mNormals[vertexIndex];
 
 			if (!IS_QNAN(aiNormal)) {
-				vertex.normal = aiVectorToFloat3(aiNormal);
+				vertex.normal = (aiVectorToFloat3(aiNormal)).SafeANormalize();
 			}
 
 			// vertex tangent, x is positive in texture axis
@@ -493,8 +499,8 @@ void CAssParser::LoadPieceGeometry(SAssPiece* piece, const aiNode* pieceNode, co
 				const aiVector3D& aiTangent = mesh->mTangents[vertexIndex];
 				const aiVector3D& aiBitangent = mesh->mBitangents[vertexIndex];
 
-				vertex.sTangent = aiVectorToFloat3(aiTangent);
-				vertex.tTangent = aiVectorToFloat3(aiBitangent);
+				vertex.sTangent = (aiVectorToFloat3(aiTangent)).SafeANormalize();
+				vertex.tTangent = (aiVectorToFloat3(aiBitangent)).SafeANormalize();
 			}
 
 			// vertex tex-coords per channel
@@ -715,20 +721,15 @@ void CAssParser::FindTextures(
 	const std::string& modelPath,
 	const std::string& modelName
 ) {
-	// Assign textures
-	// The S3O texture handler uses two textures.
-	// The first contains diffuse color (RGB) and teamcolor (A)
-	// The second contains glow (R), reflectivity (G) and 1-bit Alpha (A).
+	// 1. try to find by name (lowest priority)
+	model->texs[0] = FindTextureByRegex("unittextures/", modelName);
 
-
-	// 1. try to find by name (lowest prioriy)
-	if (model->tex1.empty()) model->tex1 = FindTextureByRegex("unittextures/", modelName); // high priority
-	if (model->tex1.empty()) model->tex1 = FindTextureByRegex("unittextures/", modelName + "1");
-	if (model->tex2.empty()) model->tex2 = FindTextureByRegex("unittextures/", modelName + "2");
-	if (model->tex1.empty()) model->tex1 = FindTextureByRegex(modelPath, "tex1");
-	if (model->tex2.empty()) model->tex2 = FindTextureByRegex(modelPath, "tex2");
-	if (model->tex1.empty()) model->tex1 = FindTextureByRegex(modelPath, "diffuse");
-	if (model->tex2.empty()) model->tex2 = FindTextureByRegex(modelPath, "glow");          // low priority
+	if (model->texs[0].empty()) model->texs[0] = FindTextureByRegex("unittextures/", modelName + "1");
+	if (model->texs[1].empty()) model->texs[1] = FindTextureByRegex("unittextures/", modelName + "2");
+	if (model->texs[0].empty()) model->texs[0] = FindTextureByRegex(modelPath, "tex1");
+	if (model->texs[1].empty()) model->texs[1] = FindTextureByRegex(modelPath, "tex2");
+	if (model->texs[0].empty()) model->texs[0] = FindTextureByRegex(modelPath, "diffuse");
+	if (model->texs[1].empty()) model->texs[1] = FindTextureByRegex(modelPath, "glow"); // lowest-priority name
 
 
 	// 2. gather model-defined textures of first material (medium priority)
@@ -752,17 +753,13 @@ void CAssParser::FindTextures(
 				continue;
 
 			assert(textureFile.length > 0);
-			model->tex1 = FindTexture(textureFile.data, modelPath, model->tex1);
+			model->texs[0] = FindTexture(textureFile.data, modelPath, model->texs[0]);
 		}
 	}
 
-
 	// 3. try to load from metafile (highest priority)
-	model->tex1 = FindTexture(modelTable.GetString("tex1", ""), modelPath, model->tex1);
-	model->tex2 = FindTexture(modelTable.GetString("tex2", ""), modelPath, model->tex2);
-
-	model->invertTexYAxis = modelTable.GetBool("fliptextures", true); // Flip texture upside down
-	model->invertTexAlpha = modelTable.GetBool("invertteamcolor", true); // Reverse teamcolor levels
+	model->texs[0] = FindTexture(modelTable.GetString("tex1", ""), modelPath, model->texs[0]);
+	model->texs[1] = FindTexture(modelTable.GetString("tex2", ""), modelPath, model->texs[1]);
 }
 
 

@@ -840,6 +840,12 @@ end
 --
 --  The call-in distribution routines
 --
+function gadgetHandler:Shutdown()
+  for _,g in r_ipairs(self.ShutdownList) do
+    g:Shutdown()
+  end
+end
+
 function gadgetHandler:GameSetup(state, ready, playerStates)
   local success, newReady = false, ready
   for _,g in r_ipairs(self.GameSetupList) do
@@ -852,28 +858,42 @@ function gadgetHandler:GamePreload()
   for _,g in r_ipairs(self.GamePreloadList) do
     g:GamePreload()
   end
-  return
 end
 
 function gadgetHandler:GameStart()
   for _,g in r_ipairs(self.GameStartList) do
     g:GameStart()
   end
-  return
 end
 
-function gadgetHandler:Shutdown()
-  for _,g in r_ipairs(self.ShutdownList) do
-    g:Shutdown()
+function gadgetHandler:GameOver(winningAllyTeams)
+  for _,g in r_ipairs(self.GameOverList) do
+    g:GameOver(winningAllyTeams)
   end
-  return
 end
 
 function gadgetHandler:GameFrame(frameNum)
   for _,g in r_ipairs(self.GameFrameList) do
     g:GameFrame(frameNum)
   end
-  return
+end
+
+function gadgetHandler:GamePaused(playerID, paused)
+  for _,g in r_ipairs(self.GamePausedList) do
+    g:GamePaused(playerID, paused)
+  end
+end
+
+function gadgetHandler:GameProgress(serverFrameNum)
+  for _,g in r_ipairs(self.GameProgressList) do
+    g:GameProgress(serverFrameNum)
+  end
+end
+
+function gadgetHandler:GameID(gameID)
+  for _,g in r_ipairs(self.GameIDList) do
+    g:GameID(gameID)
+  end
 end
 
 
@@ -964,23 +984,8 @@ end
 
 --------------------------------------------------------------------------------
 --
---  Game call-ins
+--  Team call-ins
 --
-
-function gadgetHandler:GameOver(winningAllyTeams)
-  for _,g in r_ipairs(self.GameOverList) do
-    g:GameOver(winningAllyTeams)
-  end
-  return
-end
-
-function gadgetHandler:GameID(gameID)
-  for _,g in r_ipairs(self.GameIDList) do
-    g:GameID(gameID)
-  end
-  return
-end
-
 
 function gadgetHandler:TeamDied(teamID)
   for _,g in r_ipairs(self.TeamDiedList) do
@@ -1194,8 +1199,8 @@ end
 
 
 function gadgetHandler:AllowBuilderHoldFire(unitID, unitDefID, action)
-  for _,g in r_ipairs(self.AllowBuilderHoldFire) do
-    if (not AllowBuilderHoldFire(unitID, unitDefID, action)) then
+  for _,g in r_ipairs(self.AllowBuilderHoldFireList) do
+    if (not g:AllowBuilderHoldFire(unitID, unitDefID, action)) then
       return false
     end
   end
@@ -1308,6 +1313,14 @@ function gadgetHandler:UnitFromFactory(
 end
 
 
+function gadgetHandler:UnitReverseBuilt(unitID, unitDefID, unitTeam)
+  for _,g in r_ipairs(self.UnitReverseBuiltList) do
+    g:UnitReverseBuilt(unitID, unitDefID, unitTeam)
+  end
+  return
+end
+
+
 function gadgetHandler:UnitDestroyed(
   unitID,     unitDefID,     unitTeam,
   attackerID, attackerDefID, attackerTeam
@@ -1347,13 +1360,18 @@ function gadgetHandler:UnitIdle(unitID, unitDefID, unitTeam)
 end
 
 
-function gadgetHandler:UnitCmdDone(unitID, unitDefID, unitTeam, cmdID, cmdTag, cmdParams, cmdOpts)
+function gadgetHandler:UnitCmdDone(unitID, unitDefID, unitTeam, cmdID, cmdParams, cmdOpts, cmdTag)
   for _,g in r_ipairs(self.UnitCmdDoneList) do
-    g:UnitCmdDone(unitID, unitDefID, unitTeam, cmdID, cmdTag, cmdParams, cmdOpts)
+    g:UnitCmdDone(unitID, unitDefID, unitTeam, cmdID, cmdParams, cmdOpts, cmdTag)
   end
   return
 end
 
+function gadgetHandler:UnitCommand(unitID, unitDefID, unitTeam, cmdID, cmdParams, cmdOpts, cmdTag)
+  for _,g in r_ipairs(self.UnitCommandList) do
+    g:UnitCommand(unitID, unitDefID, unitTeam, cmdID, cmdParams, cmdOpts, cmdTag)
+  end
+end
 
 function gadgetHandler:UnitPreDamaged(
   unitID,

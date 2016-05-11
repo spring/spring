@@ -8,8 +8,9 @@
 
 class CLargeBeamLaserProjectile : public CWeaponProjectile
 {
-	CR_DECLARE(CLargeBeamLaserProjectile)
+	CR_DECLARE_DERIVED(CLargeBeamLaserProjectile)
 public:
+	CLargeBeamLaserProjectile() { }
 	CLargeBeamLaserProjectile(const ProjectileParams& params);
 
 	void Update() override;

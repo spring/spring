@@ -24,6 +24,7 @@
 #include "Sim/Weapons/NoWeapon.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
+#include "System/creg/DefTypes.h"
 #include "System/Sync/SyncTracer.h"
 #include "System/Sound/ISoundChannels.h"
 #include "System/Log/ILog.h"
@@ -32,8 +33,7 @@ CR_BIND_DERIVED(CWeapon, CObject, (NULL, NULL))
 
 CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(owner),
-	CR_MEMBER(weaponDefID),
-	CR_IGNORED(weaponDef), //retrieved by id
+	CR_MEMBER(weaponDef),
 	CR_MEMBER(aimFromPiece),
 	CR_MEMBER(muzzlePiece),
 	CR_MEMBER(range),
@@ -92,9 +92,7 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(errorVectorAdd),
 
 	CR_MEMBER(currentTarget),
-	CR_MEMBER(currentTargetPos),
-
-	CR_POSTLOAD(PostLoad)
+	CR_MEMBER(currentTargetPos)
 ))
 
 
@@ -407,7 +405,7 @@ void CWeapon::UpdateFire()
 	if (!CanFire(false, false, false))
 		return;
 
-	if (!TryTarget(currentTargetPos, currentTarget))
+	if (!TryTarget(currentTargetPos, currentTarget, true))
 		return;
 
 	// pre-check if we got enough resources (so CobBlockShot gets only called when really possible to shoot)
@@ -463,12 +461,9 @@ bool CWeapon::UpdateStockpile()
 		const float p = 1.0f / weaponDef->stockpileTime;
 		auto res = SResourcePack(weaponDef->metalcost * p, weaponDef->energycost * p);
 
-		if (owner->UseResources(res)) {
+		if (owner->UseResources(res))
 			buildPercent += p;
-		} else {
-			// update the energy and metal required counts
-			teamHandler->Team(owner->team)->resPull += res;
-		}
+
 		if (buildPercent >= 1) {
 			const int oldCount = numStockpiled;
 			buildPercent = 0;
@@ -845,15 +840,21 @@ float3 CWeapon::GetTargetBorderPos(
 }
 
 
-bool CWeapon::TryTarget(const float3 tgtPos, const SWeaponTarget& trg) const
+bool CWeapon::TryTarget(const float3 tgtPos, const SWeaponTarget& trg, bool preFire) const
 {
 	assert(GetLeadTargetPos(trg).SqDistance(tgtPos) < Square(250.f));
+
 	if (!TestTarget(tgtPos, trg))
 		return false;
 	if (!TestRange(tgtPos, trg))
 		return false;
+
+	// no LOF if aim-position is below ground (not in HFLOF, is overridden)
+	if (preFire && (weaponMuzzlePos.y < CGround::GetHeightReal(weaponMuzzlePos.x, weaponMuzzlePos.z)))
+		return false;
+
 	//FIXME add a forcedUserTarget (a forced fire mode enabled with ctrl key or something) and skip the tests below then
-	return HaveFreeLineOfFire(tgtPos, trg);
+	return HaveFreeLineOfFire(tgtPos, trg, preFire);
 }
 
 
@@ -951,28 +952,27 @@ bool CWeapon::TestRange(const float3 tgtPos, const SWeaponTarget& trg) const
 }
 
 
-bool CWeapon::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const
+bool CWeapon::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg, bool useMuzzle) const
 {
-	float3 dir = pos - aimFromPos;
+	float3 testPos = useMuzzle ? weaponMuzzlePos : aimFromPos;
+	float3 dir = pos - testPos;
 
-	const float length = dir.Length();
+	const float length = dir.LengthNormalize();
 	const float spread = AccuracyExperience() + SprayAngleExperience();
 
 	if (length == 0.0f)
 		return true;
-
-	dir /= length;
 
 	// ground check
 	if ((avoidFlags & Collision::NOGROUND) == 0) {
 		// NOTE:
 		//     ballistic weapons (Cannon / Missile icw. trajectoryHeight) do not call this,
 		//     they use TrajectoryGroundCol with an external check for the NOGROUND flag
-		CUnit* unit = NULL;
-		CFeature* feature = NULL;
+		CUnit* unit = nullptr;
+		CFeature* feature = nullptr;
 
-		const float gdst = TraceRay::TraceRay(aimFromPos, dir, length, ~Collision::NOGROUND, owner, unit, feature);
-		const float3 gpos = aimFromPos + dir * gdst;
+		const float gdst = TraceRay::TraceRay(testPos, dir, length, ~Collision::NOGROUND, owner, unit, feature);
+		const float3 gpos = testPos + dir * gdst;
 
 		// true iff ground does not block the ray of length <length> from <pos> along <dir>
 		if ((gdst > 0.0f) && (gpos.SqDistance(pos) > Square(damages->damageAreaOfEffect)))
@@ -980,9 +980,8 @@ bool CWeapon::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) con
 	}
 
 	// friendly, neutral & feature check
-	if (TraceRay::TestCone(aimFromPos, dir, length, spread, owner->allyteam, avoidFlags, owner)) {
+	if (TraceRay::TestCone(testPos, dir, length, spread, owner->allyteam, avoidFlags, owner))
 		return false;
-	}
 
 	return true;
 }
@@ -1249,9 +1248,4 @@ float3 CWeapon::GetLeadTargetPos(const SWeaponTarget& target) const
 	}
 
 	return currentTargetPos;
-}
-
-void CWeapon::PostLoad()
-{
-	weaponDef = weaponDefHandler->GetWeaponDefByID(weaponDefID);
 }

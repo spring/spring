@@ -33,6 +33,8 @@
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Models/IModelParser.h"
 #include "Sim/Features/Feature.h"
+#include "Sim/Features/FeatureDef.h"
+#include "Sim/Features/FeatureDefHandler.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/DamageArray.h"
@@ -70,6 +72,7 @@
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sim/Weapons/WeaponTarget.h"
 #include "System/EventHandler.h"
 #include "System/ObjectDependenceTypes.h"
 #include "System/Log/ILog.h"
@@ -153,9 +156,10 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetTeamShareLevel);
 	REGISTER_LUA_CFUNC(ShareTeamResource);
 
-	REGISTER_LUA_CFUNC(SetUnitRulesParam);
-	REGISTER_LUA_CFUNC(SetTeamRulesParam);
 	REGISTER_LUA_CFUNC(SetGameRulesParam);
+	REGISTER_LUA_CFUNC(SetTeamRulesParam);
+	REGISTER_LUA_CFUNC(SetUnitRulesParam);
+	REGISTER_LUA_CFUNC(SetFeatureRulesParam);
 
 	REGISTER_LUA_CFUNC(CreateUnit);
 	REGISTER_LUA_CFUNC(DestroyUnit);
@@ -194,6 +198,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitFuel);
 	REGISTER_LUA_CFUNC(SetUnitMoveGoal);
 	REGISTER_LUA_CFUNC(SetUnitLandGoal);
+	REGISTER_LUA_CFUNC(ClearUnitGoal);
 	REGISTER_LUA_CFUNC(SetUnitNeutral);
 	REGISTER_LUA_CFUNC(SetUnitTarget);
 	REGISTER_LUA_CFUNC(SetUnitMidAndAimPos);
@@ -384,6 +389,8 @@ static bool ParseProjectileParams(lua_State* L, ProjectileParams& params, const 
 		return false;
 	}
 
+	params.teamID = teamHandler->GaiaTeamID();
+
 	for (lua_pushnil(L); lua_next(L, tblIdx) != 0; lua_pop(L, 1)) {
 		if (lua_israwstring(L, -2)) {
 			const std::string& key = lua_tostring(L, -2);
@@ -436,7 +443,7 @@ static bool ParseProjectileParams(lua_State* L, ProjectileParams& params, const 
 
 			if (lua_isstring(L, -1)) {
 				if (key == "model") {
-					params.model = modelParser->Load3DModel(lua_tostring(L, -1));
+					params.model = modelLoader.LoadModel(lua_tostring(L, -1));
 				} else if (key == "cegtag") {
 					params.cegID = explGenHandler->LoadGeneratorID(lua_tostring(L, -1));
 				}
@@ -527,22 +534,13 @@ static int SetSolidObjectRotation(lua_State* L, CSolidObject* o, bool isFeature)
 	if (o == nullptr)
 		return 0;
 
-	// TODO: switch to YPR=YXZ (same as ModelPiece::ComposeRotation())
-	CMatrix44f matrix;
-	matrix.RotateEulerXYZ(float3(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4)));
-	matrix.SetPos(o->pos);
-
-	assert(matrix.IsOrthoNormal());
-
-	o->SetDirVectors(matrix);
-	o->SetHeadingFromDirection();
-	o->UpdateMidAndAimPos();
+	o->SetDirVectorsEuler(float3(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4)));
 
 	if (isFeature) {
 		// not a hack: ForcedSpin() and CalculateTransform() calculate a
 		// transform based only on frontdir and assume the helper y-axis
 		// points up
-		static_cast<CFeature*>(o)->SetTransform(matrix);
+		static_cast<CFeature*>(o)->UpdateTransform(o->pos, true);
 	}
 
 	return 0;
@@ -607,12 +605,8 @@ static int SetSolidObjectPhysicalState(lua_State* L, CSolidObject* o)
 	drag.y = Clamp(luaL_optnumber(L, 12, drag.y), 0.0f, 1.0f);
 	drag.z = Clamp(luaL_optnumber(L, 13, drag.z), 0.0f, 1.0f);
 
-	CMatrix44f matrix;
-
 	o->Move(pos, false);
-	o->SetDirVectors(matrix.RotateEulerZXY(rot));
-	o->UpdateMidAndAimPos();
-	o->SetHeadingFromDirection();
+	o->SetDirVectorsEuler(rot);
 	// do not need ForcedSpin, above three calls cover it
 	o->ForcedMove(pos);
 	o->SetVelocityAndSpeed(speed);
@@ -966,49 +960,27 @@ int LuaSyncedCtrl::ShareTeamResource(lua_State* L)
 /******************************************************************************/
 
 void SetRulesParam(lua_State* L, const char* caller, int offset,
-				LuaRulesParams::Params& params,
-				LuaRulesParams::HashMap& paramsMap)
+				LuaRulesParams::Params& params)
 {
 	const int index = offset + 1;
 	const int valIndex = offset + 2;
 	const int losIndex = offset + 3;
-	int pIndex = -1;
 
-	if (lua_israwnumber(L, index)) {
-		pIndex = lua_toint(L, index) - 1;
-	}
-	else if (lua_israwstring(L, index)) {
-		const string pName = lua_tostring(L, index);
-		map<string, int>::const_iterator it = paramsMap.find(pName);
-		if (it != paramsMap.end()) {
-			pIndex = it->second;
-		}
-		else {
-			// create a new parameter
-			pIndex = params.size();
-			paramsMap[pName] = pIndex;
-			params.push_back(LuaRulesParams::Param());
-		}
-	}
-	else {
-		luaL_error(L, "Incorrect arguments to %s()", caller);
-	}
+	const string key = luaL_checkstring(L, index);
 
-	if ((pIndex < 0)
-		|| (pIndex >= (int)params.size())
-		|| !(lua_isnumber(L, valIndex) || lua_isstring(L, valIndex))
-	) {
-		luaL_error(L, "Incorrect arguments to %s()", caller);
-	}
-
-	LuaRulesParams::Param& param = params[pIndex];
+	LuaRulesParams::Param& param = params[key];
 
 	//! set the value of the parameter
 	if (lua_isnumber(L, valIndex)) {
 		param.valueInt = lua_tofloat(L, valIndex);
 		param.valueString.resize(0);
-	} else {
+	} else if (lua_isstring(L, valIndex)) {
 		param.valueString = lua_tostring(L, valIndex);
+	} else if (lua_isnoneornil(L, valIndex)) {
+		params.erase(key);
+		return; //no need to set los if param was erased
+	} else {
+		luaL_error(L, "Incorrect arguments to %s()", caller);
 	}
 
 	//! set the los checking of the parameter
@@ -1055,7 +1027,7 @@ void SetRulesParam(lua_State* L, const char* caller, int offset,
 
 int LuaSyncedCtrl::SetGameRulesParam(lua_State* L)
 {
-	SetRulesParam(L, __FUNCTION__, 0, CLuaHandleSynced::gameParams, CLuaHandleSynced::gameParamsMap);
+	SetRulesParam(L, __FUNCTION__, 0, CLuaHandleSynced::gameParams);
 	return 0;
 }
 
@@ -1063,10 +1035,10 @@ int LuaSyncedCtrl::SetGameRulesParam(lua_State* L)
 int LuaSyncedCtrl::SetTeamRulesParam(lua_State* L)
 {
 	CTeam* team = ParseTeam(L, __FUNCTION__, 1);
-	if (team == NULL) {
+	if (team == nullptr)
 		return 0;
-	}
-	SetRulesParam(L, __FUNCTION__, 1, team->modParams, team->modParamsMap);
+
+	SetRulesParam(L, __FUNCTION__, 1, team->modParams);
 	return 0;
 }
 
@@ -1074,14 +1046,23 @@ int LuaSyncedCtrl::SetTeamRulesParam(lua_State* L)
 int LuaSyncedCtrl::SetUnitRulesParam(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	if (unit == nullptr)
 		return 0;
-	}
-	SetRulesParam(L, __FUNCTION__, 1, unit->modParams, unit->modParamsMap);
+
+	SetRulesParam(L, __FUNCTION__, 1, unit->modParams);
 	return 0;
 }
 
 
+int LuaSyncedCtrl::SetFeatureRulesParam(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+	if (feature == nullptr)
+		return 0;
+
+	SetRulesParam(L, __FUNCTION__, 1, feature->modParams);
+	return 0;
+}
 
 /******************************************************************************/
 /******************************************************************************/
@@ -2159,7 +2140,16 @@ int LuaSyncedCtrl::SetUnitTarget(lua_State* L)
 		                 luaL_checkfloat(L, 4));
 		const bool manualFire = luaL_optboolean(L, 5, false);
 		const bool userTarget = luaL_optboolean(L, 6, false);
-		lua_pushboolean(L, unit->AttackGround(pos, userTarget, manualFire));
+		const int weaponNum = luaL_optint(L, 7, 0) - LUA_WEAPON_BASE_INDEX;
+		bool ret = false;
+		if (weaponNum < 0) {
+			ret = unit->AttackGround(pos, userTarget, manualFire);
+		} else if (weaponNum < unit->weapons.size()) {
+			SWeaponTarget trg(pos, userTarget);
+			trg.isManualFire = manualFire;
+			ret = unit->weapons[weaponNum]->Attack(trg);
+		}
+		lua_pushboolean(L, ret);
 		return 1;
 	}
 	else if (args >= 2) {
@@ -2172,7 +2162,16 @@ int LuaSyncedCtrl::SetUnitTarget(lua_State* L)
 
 		const bool manualFire = luaL_optboolean(L, 3, false);
 		const bool userTarget = luaL_optboolean(L, 4, false);
-		lua_pushboolean(L, unit->AttackUnit(target, userTarget, manualFire));
+		const int weaponNum = luaL_optint(L, 5, -1) - LUA_WEAPON_BASE_INDEX;
+		bool ret = false;
+		if (weaponNum < 0) {
+			ret = unit->AttackUnit(target, userTarget, manualFire);
+		} else if (weaponNum < unit->weapons.size()) {
+			SWeaponTarget trg(target, userTarget);
+			trg.isManualFire = manualFire;
+			ret = unit->weapons[weaponNum]->Attack(trg);
+		}
+		lua_pushboolean(L, ret);
 		return 1;
 	}
 	return 0;
@@ -2380,9 +2379,21 @@ int LuaSyncedCtrl::SetUnitLandGoal(lua_State* L)
 		luaL_error(L, "Not a flying unit");
 
 	const float3 landPos(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
-	const float radiusSq = lua_isnumber(L, 5)? Square(lua_tonumber(L, 5)): amt->landRadiusSq;
+	const float radiusSq = lua_isnumber(L, 5)? Square(lua_tonumber(L, 5)): -1.0f;
 
 	amt->LandAt(landPos, radiusSq);
+	return 0;
+}
+
+
+int LuaSyncedCtrl::ClearUnitGoal(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
+	if (unit == nullptr)
+		return 0;
+
+	unit->moveType->StopMoving();
 	return 0;
 }
 
@@ -2629,9 +2640,9 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 	const FeatureDef* featureDef = NULL;
 
 	if (lua_israwstring(L, 1)) {
-		featureDef = featureHandler->GetFeatureDef(lua_tostring(L, 1));
+		featureDef = featureDefHandler->GetFeatureDef(lua_tostring(L, 1));
 	} else if (lua_israwnumber(L, 1)) {
-		featureDef = featureHandler->GetFeatureDefByID(lua_toint(L, 1));
+		featureDef = featureDefHandler->GetFeatureDefByID(lua_toint(L, 1));
 	}
 	if (featureDef == NULL) {
 		return 0; // do not error  (featureDefs are dynamic)
@@ -4069,7 +4080,8 @@ int LuaSyncedCtrl::SpawnProjectile(lua_State* L)
 	if ((params.weaponDef = weaponDefHandler->GetWeaponDefByID(luaL_checkint(L, 1))) == nullptr)
 		return 0;
 
-	ParseProjectileParams(L, params, 2, __FUNCTION__);
+	if (!ParseProjectileParams(L, params, 2, __FUNCTION__))
+		return 0;
 
 	lua_pushnumber(L, WeaponProjectileFactory::LoadProjectile(params));
 	return 1;
@@ -4246,7 +4258,7 @@ static int ParseStringVector(lua_State* L, int index, vector<string>& strvec)
 /******************************************************************************/
 
 static bool ParseCommandDescription(lua_State* L, int table,
-                                    CommandDescription& cd)
+                                    SCommandDescription& cd)
 {
 	if (!lua_istable(L, table)) {
 		luaL_error(L, "Can not parse CommandDescription");
@@ -4304,7 +4316,7 @@ int LuaSyncedCtrl::EditUnitCmdDesc(lua_State* L)
 		return 0;
 
 	// note: must be a copy
-	CommandDescription cmdDesc = cmdDescs[cmdDescIdx];
+	SCommandDescription cmdDesc = *cmdDescs[cmdDescIdx];
 
 	ParseCommandDescription(L, 3, cmdDesc);
 	unit->commandAI->UpdateCommandDescription(cmdDescIdx, cmdDesc);
@@ -4338,7 +4350,7 @@ int LuaSyncedCtrl::InsertUnitCmdDesc(lua_State* L)
 	if (args >= 3)
 		cmdDescIdx = lua_toint(L, 2) - 1;
 
-	CommandDescription cd;
+	SCommandDescription cd;
 
 	ParseCommandDescription(L, tableIdx, cd);
 	unit->commandAI->InsertCommandDescription(cmdDescIdx, cd);

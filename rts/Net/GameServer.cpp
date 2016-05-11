@@ -68,6 +68,7 @@ using boost::format;
 
 
 CONFIG(int, AutohostPort).defaultValue(0);
+CONFIG(int, ServerSleepTime).defaultValue(5).description("number of milliseconds to sleep per tick");
 CONFIG(int, SpeedControl).defaultValue(1).minimumValue(1).maximumValue(2)
 	.description("Sets how server adjusts speed according to player's load (CPU), 1: use average, 2: use highest");
 CONFIG(bool, AllowSpectatorJoin).defaultValue(true).description("allow any unauthenticated clients to join as spectator with any name, name will be prefixed with ~");
@@ -165,8 +166,7 @@ CGameServer::CGameServer(
 , syncErrorFrame(0)
 , syncWarningFrame(0)
 
-, hasLocalClient(false)
-, localClientNumber(0)
+, localClientNumber(-1u)
 
 , gameHasStarted(false)
 , generatedGameID(false)
@@ -278,6 +278,7 @@ void CGameServer::Initialize()
 		delete ret;
 	}
 
+	loopSleepTime = configHandler->GetInt("ServerSleepTime");
 	lastNewFrameTick = spring_gettime();
 	linkMinPacketSize = globalConfig->linkIncomingMaxPacketRate > 0 ? (globalConfig->linkIncomingSustainedBandwidth / globalConfig->linkIncomingMaxPacketRate) : 1;
 	lastBandwidthUpdate = spring_gettime();
@@ -381,8 +382,8 @@ void CGameServer::StripGameSetupText(const GameData* newGameData)
 void CGameServer::AddLocalClient(const std::string& myName, const std::string& myVersion)
 {
 	Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
-	assert(!hasLocalClient);
-	hasLocalClient = true;
+	assert(!HasLocalClient());
+
 	localClientNumber = BindConnection(myName, "", myVersion, true, boost::shared_ptr<netcode::CConnection>(new netcode::CLocalConnection()));
 }
 
@@ -584,7 +585,7 @@ void CGameServer::Message(const std::string& message, bool broadcast)
 	if (broadcast) {
 		Broadcast(CBaseNetProtocol::Get().SendSystemMessage(SERVER_PLAYER, message));
 	}
-	else if (hasLocalClient) {
+	else if (HasLocalClient()) {
 		// host should see
 		players[localClientNumber].SendData(CBaseNetProtocol::Get().SendSystemMessage(SERVER_PLAYER, message));
 	}
@@ -608,7 +609,7 @@ void CGameServer::CheckSync()
 	while (f != outstandingSyncFrames.end()) {
 		unsigned correctChecksum = 0;
 		bool bGotCorrectChecksum = false;
-		if (hasLocalClient) {
+		if (HasLocalClient()) {
 			// dictatorship
 			std::map<int, unsigned>::iterator it = players[localClientNumber].syncResponse.find(*f);
 			if (it != players[localClientNumber].syncResponse.end()) {
@@ -765,7 +766,7 @@ void CGameServer::Update()
 		// if we are not playing a demo, or have no local client, or the
 		// local client is less than <GAME_SPEED> frames behind, advance
 		// <modGameTime>
-		if (demoReader == NULL || !hasLocalClient || (serverFrameNum - players[localClientNumber].lastFrameResponse) < GAME_SPEED)
+		if (demoReader == NULL || !HasLocalClient() || (serverFrameNum - players[localClientNumber].lastFrameResponse) < GAME_SPEED)
 			modGameTime += (tdif * internalSpeed);
 	}
 
@@ -2282,7 +2283,6 @@ void CGameServer::PushAction(const Action& action, bool fromAutoHost)
 
 bool CGameServer::HasFinished() const
 {
-	Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
 	return quitServer;
 }
 
@@ -2308,7 +2308,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 		LOG_L(
 			L_INFO, // L_DEBUG only works in DEBUG builds which are slow and affect timings
 			"[%s][1][sf=%d] fromServerThread=%d fixedFrameTime=%d hasLocalClient=%d normalFrame=%d",
-			__FUNCTION__, serverFrameNum, fromServerThread, fixedFrameTime, hasLocalClient, normalFrame
+			__FUNCTION__, serverFrameNum, fromServerThread, fixedFrameTime, HasLocalClient(), normalFrame
 		);
 	}
 
@@ -2333,7 +2333,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 		}
 
 		#ifndef DEDICATED
-		if (hasLocalClient) {
+		if (HasLocalClient()) {
 			// Don't create new frames when localClient (:= host) isn't able to process them fast enough.
 			// Despite this still allow to create a few in advance to not lag other connected clients.
 			//
@@ -2424,7 +2424,7 @@ void CGameServer::UpdateLoop()
 		Threading::SetAffinity(~0);
 
 		while (!quitServer) {
-			spring_sleep(spring_msecs(5));
+			spring_sleep(spring_msecs(loopSleepTime));
 
 			if (UDPNet)
 				UDPNet->Update();

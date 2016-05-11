@@ -11,10 +11,11 @@ class CSmokeTrailProjectile;
 
 class CMissileProjectile : public CWeaponProjectile
 {
-	CR_DECLARE(CMissileProjectile)
+	CR_DECLARE_DERIVED(CMissileProjectile)
 protected:
 	void UpdateGroundBounce() override;
 public:
+	CMissileProjectile() { }
 	CMissileProjectile(const ProjectileParams& params);
 
 	void Collision(CUnit* unit) override;

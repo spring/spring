@@ -49,8 +49,11 @@ void WorkaroundATIPointSizeBug();
 void SetTexGen(const float& scaleX, const float& scaleZ, const float& offsetX, const float& offsetZ);
 
 void glSaveTexture(const GLuint textureID, const std::string& filename);
+void glSpringBindTextures(GLuint first, GLsizei count, const GLuint* textures);
 void glSpringTexStorage2D(const GLenum target, GLint levels, const GLint internalFormat, const GLsizei width, const GLsizei height);
 void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei width, const GLsizei height, const GLenum format, const GLenum type, const void* data);
+
+void glSpringMatrix2dProj(const int sizex, const int sizey);
 
 void ClearScreen();
 

@@ -5,33 +5,35 @@
 #include "CobThread.h"
 #include "CobInstance.h"
 #include "CobFile.h"
-#include "UnitScriptLog.h"
 #include "System/FileSystem/FileHandler.h"
-
-#ifndef _CONSOLE
 #include "System/TimeProfiler.h"
-#endif
-#ifdef _CONSOLE
-#define START_TIME_PROFILE(a) {}
-#define END_TIME_PROFILE(a) {}
-#define SCOPED_TIMER(a) {}
-#endif
 
 
-CCobEngine GCobEngine;
-CCobFileHandler GCobFileHandler;
-int GCurrentTime;
+CCobEngine* cobEngine = nullptr;
+CCobFileHandler* cobFileHandler = nullptr;
 
 
 /******************************************************************************/
 /******************************************************************************/
+
+CR_BIND(CCobEngine, )
+
+CR_REG_METADATA(CCobEngine, (
+	CR_MEMBER(currentTime),
+	CR_MEMBER(running),
+	CR_MEMBER(sleeping),
+
+	//always null/empty when saving
+	CR_IGNORED(wantToRun),
+	CR_IGNORED(curThread)
+))
 
 
 CCobEngine::CCobEngine()
-	: curThread(NULL)
-{
-	GCurrentTime = 0;
-}
+	: curThread(nullptr)
+	, currentTime(0)
+
+{ }
 
 
 CCobEngine::~CCobEngine()
@@ -39,13 +41,13 @@ CCobEngine::~CCobEngine()
 	//Should delete all things that the scheduler knows
 	do {
 		while (!running.empty()) {
-			CCobThread* tmp = running.front();
-			running.pop_front();
+			CCobThread* tmp = running.back();
+			running.pop_back();
 			delete tmp;
 		}
 		while (!wantToRun.empty()) {
-			CCobThread* tmp = wantToRun.front();
-			wantToRun.pop_front();
+			CCobThread* tmp = wantToRun.back();
+			wantToRun.pop_back();
 			delete tmp;
 		}
 		while (!sleeping.empty()) {
@@ -72,7 +74,7 @@ void CCobEngine::AddThread(CCobThread *thread)
 {
 	switch (thread->state) {
 		case CCobThread::Run:
-			wantToRun.push_front(thread);
+			wantToRun.push_back(thread);
 			break;
 		case CCobThread::Sleep:
 			sleeping.push(thread);
@@ -99,17 +101,12 @@ void CCobEngine::Tick(int deltaTime)
 {
 	SCOPED_TIMER("CobEngine::Tick");
 
-	GCurrentTime += deltaTime;
-
-	LOG_L(L_DEBUG, "----");
+	currentTime += deltaTime;
 
 	// Advance all running threads
-	for (std::list<CCobThread*>::iterator i = running.begin(); i != running.end(); ++i) {
-		//LOG_L(L_DEBUG, "Now 1running %d: %s", GCurrentTime, (*i)->GetName().c_str());
-#ifdef _CONSOLE
-		printf("----\n");
-#endif
-		TickThread(*i);
+	for (CCobThread* t: running) {
+		//LOG_L(L_DEBUG, "Now 1running %d: %s", currentTime, (*i)->GetName().c_str());
+		TickThread(t);
 	}
 
 	// A thread can never go from running->running, so clear the list
@@ -119,26 +116,19 @@ void CCobEngine::Tick(int deltaTime)
 	running.clear();
 
 	// The threads that just ran may have added new threads that should run next tick
-	for (std::list<CCobThread *>::iterator i = wantToRun.begin(); i != wantToRun.end(); ++i) {
-		running.push_front(*i);
-	}
-
-	wantToRun.clear();
+	std::swap(running, wantToRun);
 
 	//Check on the sleeping threads
 	if (!sleeping.empty()) {
 		CCobThread* cur = sleeping.top();
 
-		while ((cur != NULL) && (cur->GetWakeTime() < GCurrentTime)) {
+		while ((cur != NULL) && (cur->GetWakeTime() < currentTime)) {
 			// Start with removing the executing thread from the queue
 			sleeping.pop();
 
 			//Run forward again. This can quite possibly readd the thread to the sleeping array again
 			//But it will not interfere since it is guaranteed to sleep > 0 ms
-			//LOG_L(L_DEBUG, "Now 2running %d: %s", GCurrentTime, cur->GetName().c_str());
-#ifdef _CONSOLE
-			printf("+++\n");
-#endif
+			//LOG_L(L_DEBUG, "Now 2running %d: %s", currentTime, cur->GetName().c_str());
 			if (cur->state == CCobThread::Sleep) {
 				cur->state = CCobThread::Run;
 				TickThread(cur);

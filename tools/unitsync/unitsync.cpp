@@ -414,6 +414,7 @@ EXPORT(void) UnInit()
 		_Cleanup();
 		FileSystemInitializer::Cleanup();
 		ConfigHandler::Deallocate();
+		DataDirLocater::FreeInstance();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 }

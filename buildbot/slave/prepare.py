@@ -28,7 +28,7 @@ print(sys.argv)
 CONFIG=sys.argv[1]
 BRANCH=sys.argv[2]
 
-REV=subprocess.check_output(["git", "describe", "--tags"]).strip()
+REV=subprocess.check_output(["git", "describe", "--tags"], universal_newlines=True).strip()
 SOURCEDIR=os.getcwd()
 BUILDDIR=os.path.join(os.getcwd(), "build", CONFIG)
 TMP_BASE=os.path.join(tempfile.gettempdir(), "spring")

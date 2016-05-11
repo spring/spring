@@ -49,6 +49,8 @@ public:
 		const float3& cvOffsets
 	);
 
+	void PostLoad();
+
 	CollisionVolume& operator = (const CollisionVolume&);
 
 	/**

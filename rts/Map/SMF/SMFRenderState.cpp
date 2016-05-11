@@ -446,12 +446,8 @@ void SMFRenderStateARB::Enable(const CSMFGroundDrawer* smfGroundDrawer, const Dr
 	glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, smfMap->GetShadingTexture());
 	glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, smfMap->GetDetailTexture());
 
-	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
-	glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-
+	assert(shadowHandler->ShadowsLoaded());
+	shadowHandler->SetupShadowTexSampler(GL_TEXTURE4);
 	glActiveTexture(GL_TEXTURE0);
 }
 
@@ -506,14 +502,8 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	mLightHandler->Update(glslShaders[GLSL_SHADER_CURRENT]);
 	glMultMatrixf(camera->GetViewMatrix());
 
-	// setup for shadow2DProj
-	if (shadowHandler->ShadowsLoaded()) {
-		glActiveTexture(GL_TEXTURE4);
-		glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY);
-	}
+	if (shadowHandler->ShadowsLoaded())
+		shadowHandler->SetupShadowTexSampler(GL_TEXTURE4);
 
 	glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, smfMap->GetDetailTexture());
 	glActiveTexture(GL_TEXTURE5); glBindTexture(GL_TEXTURE_2D, smfMap->GetNormalsTexture());
@@ -605,13 +595,9 @@ void SMFRenderStateGLSL::UpdateCurrentShaderSky(const ISkyLight* skyLight) const
 	glslShaders[GLSL_SHADER_CURRENT]->Enable();
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform4v("lightDir", &skyLight->GetLightDir().x);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("groundShadowDensity", skyLight->GetGroundShadowDensity());
-	glslShaders[GLSL_SHADER_CURRENT]->Disable();
-}
-
-void SMFRenderStateGLSL::UpdateCurrentShaderSunLighting() const {
-	glslShaders[GLSL_SHADER_CURRENT]->Enable();
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundAmbientColor",  &sunLighting->groundAmbientColor[0]);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundDiffuseColor",  &sunLighting->groundDiffuseColor[0]);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundSpecularColor", &sunLighting->groundSpecularColor[0]);
 	glslShaders[GLSL_SHADER_CURRENT]->Disable();
 }
+

@@ -16,8 +16,6 @@ enum {
 
 struct FeatureDef: public SolidObjectDef
 {
-	CR_DECLARE(FeatureDef)
-
 	FeatureDef();
 
 	std::string description;

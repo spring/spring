@@ -156,8 +156,6 @@ static bool test_creg_pointers(TestObj* obj)
 
 BOOST_AUTO_TEST_CASE( BOOST_TEST_MODULE )
 {
-	creg::System::InitializeClasses();
-
 	// save state
 	std::stringstream ss(std::ios::in | std::ios::out | std::ios::binary);
 	savetest(&ss);

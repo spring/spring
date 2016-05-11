@@ -11,9 +11,7 @@
 
 CR_BIND_DERIVED(CBuilding, CUnit, )
 
-CR_REG_METADATA(CBuilding, (
-	CR_POSTLOAD(PostLoad)
-))
+CR_REG_METADATA(CBuilding, )
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

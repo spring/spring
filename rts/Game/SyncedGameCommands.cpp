@@ -149,8 +149,10 @@ public:
 			" map, instantly; by default to your own team", true) {}
 
 	bool Execute(const SyncedAction& action) const {
-		const std::vector<std::string>& parsedArgs = CSimpleParser::Tokenize(action.GetArgs(), 0);
-		unitLoader->ParseAndExecuteGiveUnitsCommand(parsedArgs, playerHandler->Player(action.GetPlayerID())->team);
+		// not for autohosts
+		if (!playerHandler->IsValidPlayer(action.GetPlayerID()))
+			return false;
+		unitLoader->ParseAndExecuteGiveUnitsCommand(CSimpleParser::Tokenize(action.GetArgs(), 0), playerHandler->Player(action.GetPlayerID())->team);
 		return true;
 	}
 };

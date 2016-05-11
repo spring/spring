@@ -8,7 +8,7 @@
 #include <boost/cstdint.hpp>
 #include <string.h>
 #include <string>
-#include <map>
+#include <unordered_map>
 #include <sstream>
 
 // NOTE:
@@ -238,7 +238,7 @@ namespace Shader {
 		std::string GetString() const
 		{
 			std::ostringstream strbuf;
-			for (std::map<std::string, std::string>::const_iterator it = flags.begin(); it != flags.end(); ++it) {
+			for (auto it = flags.begin(); it != flags.end(); ++it) {
 				strbuf << "#define " << it->first << " " << it->second << std::endl;
 			}
 			return strbuf.str();
@@ -279,10 +279,10 @@ namespace Shader {
 		}
 
 
-		template <typename T>
+		template<typename T>
 		T GetFlag(const std::string& flag) const
 		{
-			std::map<std::string, std::string>::const_iterator it = flags.find(flag);
+			auto it = flags.find(flag);
 			if (it != flags.end()) {
 				std::istringstream buf(it->second);
 				T temp;
@@ -292,10 +292,14 @@ namespace Shader {
 			return T();
 		}
 
-
-		const std::string& GetFlag(const std::string& flag) const
+		bool GetFlagBool(const std::string& flag) const
 		{
-			std::map<std::string, std::string>::const_iterator it = flags.find(flag);
+			return (flags.find(flag) != flags.end());
+		}
+
+		const std::string& GetFlagString(const std::string& flag) const
+		{
+			auto it = flags.find(flag);
 			if (it != flags.end()) {
 				return it->second;
 			} else {
@@ -313,9 +317,10 @@ namespace Shader {
 		int updates;
 		int lastUpdates;
 		int lastHash;
-		std::map<std::string, std::string> flags;
+		std::unordered_map<std::string, std::string> flags;
 		//std::set<std::string> skipAutoUpdate;
 	};
 }
+
 
 #endif

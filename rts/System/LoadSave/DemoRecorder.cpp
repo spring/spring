@@ -108,12 +108,12 @@ void CDemoRecorder::SetName(const std::string& mapName, const std::string& modNa
 	// oss << FileSystem::GetBasename(modName);
 	// oss << "_";
 	oss << SpringVersion::GetSync();
-	buf << oss.str() << ".sdf.gz";
+	buf << oss.str() << ".sdfz";
 
 	int n = 0;
 	while (FileSystem::FileExists(buf.str()) && (n < 99)) {
 		buf.str(""); // clears content
-		buf << oss.str() << "_" << n++ << ".sdf.gz";
+		buf << oss.str() << "_" << n++ << ".sdfz";
 	}
 
 	demoName = dataDirsAccess.LocateFile(buf.str(), FileQueryFlags::WRITE);

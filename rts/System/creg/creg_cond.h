@@ -22,6 +22,7 @@
 #include "ISerializer.h" // prevent some compiler errors
 // define all creg preprocessor macros from creg_cond.h to nothing
 #define CR_DECLARE(TCls)
+#define CR_DECLARE_DERIVED(TCls)
 #define CR_DECLARE_STRUCT(TStr)
 #define CR_DECLARE_SUB(cl)
 #define CR_BIND_DERIVED(TCls, TBase, ctor_args)

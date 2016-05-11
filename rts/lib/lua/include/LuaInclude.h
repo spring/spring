@@ -80,7 +80,7 @@ static inline int lua_toint(lua_State* L, int idx)
 static inline float lua_tofloat(lua_State* L, int idx)
 {
 	const float n = lua_tonumber(L, idx);
-#if defined(DEBUG) || defined(DEBUG_LUANAN)
+#if defined(DEBUG_LUANAN)
 	// Note:
 	// luaL_argerror must be called from inside of lua, else it calls exit()
 	// so it can't be used in LuaParser::Get...() and similar

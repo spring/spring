@@ -49,6 +49,8 @@ public:
 	DynDamageArray(const DynDamageArray& other) { *this = other; refCount = 1; }
 	~DynDamageArray();
 
+	void PostLoad();
+
 	DamageArray GetDynamicDamages(const float3& startPos, const float3& curPos) const;
 
 	static const DynDamageArray* IncRef(const DynDamageArray* dda);
@@ -64,6 +66,7 @@ public:
 	float edgeEffectiveness;
 	float explosionSpeed;
 	mutable int refCount;
+	bool fromDef;
 };
 
 #endif

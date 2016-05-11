@@ -377,10 +377,10 @@ void CShadowHandler::SetShadowMapSizeFactors()
 {
 	#if (SHADOWMATRIX_NONLINEAR == 1)
 	// note: depends on CalcMinMaxView(), which is no longer called
-	const float shadowMapX =              math::sqrt( math::fabs(shadowProjMinMax.y) ); // math::sqrt( |x2| )
-	const float shadowMapY =              math::sqrt( math::fabs(shadowProjMinMax.w) ); // math::sqrt( |y2| )
-	const float shadowMapW = shadowMapX + math::sqrt( math::fabs(shadowProjMinMax.x) ); // math::sqrt( |x2| ) + math::sqrt( |x1| )
-	const float shadowMapH = shadowMapY + math::sqrt( math::fabs(shadowProjMinMax.z) ); // math::sqrt( |y2| ) + math::sqrt( |y1| )
+	const float shadowMapX =              std::sqrt( std::fabs(shadowProjMinMax.y) ); // math::sqrt( |x2| )
+	const float shadowMapY =              std::sqrt( std::fabs(shadowProjMinMax.w) ); // math::sqrt( |y2| )
+	const float shadowMapW = shadowMapX + std::sqrt( std::fabs(shadowProjMinMax.x) ); // math::sqrt( |x2| ) + math::sqrt( |x1| )
+	const float shadowMapH = shadowMapY + std::sqrt( std::fabs(shadowProjMinMax.z) ); // math::sqrt( |y2| ) + math::sqrt( |y1| )
 
 	shadowTexProjCenter.x = 1.0f - (shadowMapX / shadowMapW);
 	shadowTexProjCenter.y = 1.0f - (shadowMapY / shadowMapH);
@@ -487,6 +487,46 @@ void CShadowHandler::SetShadowCamera(CCamera* shadowCam)
 	shadowCam->SetViewMatrix(viewMatrix[SHADOWMAT_TYPE_CULLING]);
 	shadowCam->UpdateFrustum();
 }
+
+
+void CShadowHandler::SetupShadowTexSampler(unsigned int texUnit, bool enable) const
+{
+	glActiveTexture(texUnit);
+	glBindTexture(GL_TEXTURE_2D, shadowTexture);
+
+	// support FFP context
+	if (enable)
+		glEnable(GL_TEXTURE_2D);
+
+	SetupShadowTexSamplerRaw();
+}
+
+void CShadowHandler::SetupShadowTexSamplerRaw() const
+{
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+	glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
+	// glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY);
+	// glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_ALPHA);
+}
+
+void CShadowHandler::ResetShadowTexSampler(unsigned int texUnit, bool disable) const
+{
+	glActiveTexture(texUnit);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	if (disable)
+		glDisable(GL_TEXTURE_2D);
+
+	ResetShadowTexSamplerRaw();
+}
+
+void CShadowHandler::ResetShadowTexSamplerRaw() const
+{
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+	glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
+}
+
 
 void CShadowHandler::CreateShadows()
 {
@@ -659,60 +699,53 @@ float CShadowHandler::GetOrthoProjectedFrustumRadius(CCamera* cam, float3& projP
 	cam->GetFrustumSides(0.0f, 0.0f, 1.0f, true);
 	cam->ClipFrustumLines(true, -100.0f, mapDims.mapy * SQUARE_SIZE + 100.0f);
 
-	const std::vector<CCamera::FrustumLine> sides = cam->GetNegFrustumSides();
+	const std::vector<CCamera::FrustumLine>& sides = cam->GetNegFrustumSides();
 
 	if (sides.empty())
 		return 0.0f;
 
-	// two points per side; last point is used for the geometric average
-	// there are never more than 5 side-lines (10 points), so reserve 16
-	static std::vector<float3> frustumPoints(16, ZeroVector);
+	// two sides, two points per side
+	float3 frustumPoints[2 * 2];
 
-	float3 frustumCenter = ZeroVector;
-	float  frustumRadius = 0.0f;
+	// .w := radius
+	float4 frustumCenter;
 
-	for (unsigned int i = 0, j = 0; i < sides.size(); i++) {
-		const CCamera::FrustumLine* line = &sides[i];
+	// only need points on these lines
+	const unsigned int planes[] = {CCamera::FRUSTUM_PLANE_LFT, CCamera::FRUSTUM_PLANE_RGT};
 
-		if (line->minz < line->maxz) {
-			const float x0 = line->base + (line->dir * line->minz), z0 = line->minz;
-			const float x1 = line->base + (line->dir * line->maxz), z1 = line->maxz;
+	for (unsigned int n = 0; n < 2; n++) {
+		const CCamera::FrustumLine& line = sides[ planes[n] ];
 
-			// TODO: smarter clamping
-			const float
-				cx0 = Clamp(x0, 0.0f, (float3::maxxpos + 1.0f)),
-				cz0 = Clamp(z0, 0.0f, (float3::maxzpos + 1.0f)),
-				cx1 = Clamp(x1, 0.0f, (float3::maxxpos + 1.0f)),
-				cz1 = Clamp(z1, 0.0f, (float3::maxzpos + 1.0f));
+		// calculate xz-coordinates
+		const float z0 = line.minz, x0 = line.base + (line.dir * z0);
+		const float z1 = line.maxz, x1 = line.base + (line.dir * z1);
 
-			const float3 p0 = float3(cx0, CGround::GetHeightReal(cx0, cz0, false), cz0);
-			const float3 p1 = float3(cx1, CGround::GetHeightReal(cx1, cz1, false), cz1);
+		// clamp points to map edges
+		const float cx0 = Clamp(x0, 0.0f, float3::maxxpos);
+		const float cz0 = Clamp(z0, 0.0f, float3::maxzpos);
+		const float cx1 = Clamp(x1, 0.0f, float3::maxxpos);
+		const float cz1 = Clamp(z1, 0.0f, float3::maxzpos);
 
-			frustumPoints[j + 0] = p0;
-			frustumPoints[j + 1] = p1;
-			frustumCenter += p0;
-			frustumCenter += p1;
+		frustumPoints[n * 2 + 0] = float3(cx0, CGround::GetHeightReal(cx0, cz0, false), cz0); // far-point
+		frustumPoints[n * 2 + 1] = float3(cx1, CGround::GetHeightReal(cx1, cz1, false), cz1); // near-point
 
-			j += 2;
-		}
+		frustumCenter += frustumPoints[n * 2 + 0];
+		frustumCenter += frustumPoints[n * 2 + 1];
 	}
 
-	projPos.x = frustumCenter.x / (sides.size() * 2);
-	projPos.z = frustumCenter.z / (sides.size() * 2);
+	projPos.x = frustumCenter.x / 4.0f;
+	projPos.z = frustumCenter.z / 4.0f;
 	projPos.y = CGround::GetHeightReal(projPos.x, projPos.z, false);
 
 	// calculate the radius of the minimally-bounding sphere around the projected frustum
-	for (unsigned int n = 0; n < (sides.size() * 2); n++) {
-		const float3& pos = frustumPoints[n];
-		const float   rad = (pos - projPos).SqLength();
-
-		frustumRadius = std::max(frustumRadius, rad);
+	for (unsigned int n = 0; n < 4; n++) {
+		frustumCenter.w = std::max(frustumCenter.w, (frustumPoints[n] - projPos).SqLength());
 	}
 
 	const float maxMapDiameter = readMap->GetBoundingRadius() * 2.0f;
-	const float frustumDiameter = math::sqrt(frustumRadius) * 2.0f;
+	const float frustumDiameter = std::sqrt(frustumCenter.w) * 2.0f;
 
-	return std::min(maxMapDiameter, frustumDiameter);
+	return (std::min(maxMapDiameter, frustumDiameter));
 }
 
 

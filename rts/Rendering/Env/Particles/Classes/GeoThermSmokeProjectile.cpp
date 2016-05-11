@@ -8,11 +8,12 @@
 #include "Sim/Misc/Wind.h"
 
 
-CR_BIND_DERIVED(CGeoThermSmokeProjectile, CSmokeProjectile, (ZeroVector, ZeroVector, 1, NULL))
+CR_BIND_DERIVED(CGeoThermSmokeProjectile, CSmokeProjectile, )
 
 CR_REG_METADATA(CGeoThermSmokeProjectile, (
 	CR_MEMBER(geo)
 ))
+
 
 CGeoThermSmokeProjectile::CGeoThermSmokeProjectile(
 	const float3& pos,
@@ -22,7 +23,7 @@ CGeoThermSmokeProjectile::CGeoThermSmokeProjectile(
 )
 	: CSmokeProjectile(NULL, pos, spd, ttl, 6, 0.35f, 0.8f)
 	, geo(geo)
-{}
+{ }
 
 void CGeoThermSmokeProjectile::Update()
 {
@@ -36,7 +37,7 @@ void CGeoThermSmokeProjectile::Update()
 	CWorldObject::SetVelocity(speed + UpVector);
 	CWorldObject::SetVelocity(speed + XZVector * (wind.GetCurrentWind() / GAME_SPEED));
 
-	const float curSpeed = fastmath::sqrt(speed.SqLength());
+	const float curSpeed = fastmath::sqrt_builtin(speed.SqLength());
 	const float newSpeed = speed.w * (speed.w / curSpeed);
 
 	CWorldObject::SetVelocity((dir = (speed / curSpeed)) * newSpeed);
@@ -62,7 +63,7 @@ void CGeoThermSmokeProjectile::UpdateDir()
 	if (geoVector.SqLength() >= (obj->radius * obj->radius))
 		return;
 
-	geoVector *= (obj->radius * fastmath::isqrt(geoVector.SqLength()));
+	geoVector *= (obj->radius * fastmath::isqrt_sse(geoVector.SqLength()));
 
 	SetPosition(pos * 0.3f + (obj->pos + geoVector) * 0.7f);
 

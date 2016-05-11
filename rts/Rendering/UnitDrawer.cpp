@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "UnitDrawer.h"
 #include "UnitDrawerState.hpp"
 
@@ -64,12 +63,18 @@ CONFIG(bool, AdvUnitShading).defaultValue(true).headlessValue(false).safemodeVal
 
 
 
-static const void BindOpaqueTex(int texType) { texturehandlerS3O->SetS3oTexture(texType); }
-static const void BindOpaqueTexAtlas(int texType) { texturehandler3DO->Set3doAtlases(); }
-static const void BindOpaqueTexDummy(int texType) {}
+static const void BindOpaqueTex(const CS3OTextureHandler::S3OTexMat* textureMat) {
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, textureMat->tex2);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, textureMat->tex1);
+}
+
+static const void BindOpaqueTexAtlas(const CS3OTextureHandler::S3OTexMat*) { texturehandler3DO->Set3doAtlases(); }
+static const void BindOpaqueTexDummy(const CS3OTextureHandler::S3OTexMat*) {}
 
 static const void BindShadowTexDummy(const CS3OTextureHandler::S3OTexMat*) {}
-static const void KillShadowTexDummy() {}
+static const void KillShadowTexDummy(const CS3OTextureHandler::S3OTexMat*) {}
 
 static const void BindShadowTex(const CS3OTextureHandler::S3OTexMat* textureMat) {
 	glActiveTexture(GL_TEXTURE0);
@@ -77,7 +82,7 @@ static const void BindShadowTex(const CS3OTextureHandler::S3OTexMat* textureMat)
 	glBindTexture(GL_TEXTURE_2D, textureMat->tex2);
 }
 
-static const void KillShadowTex() {
+static const void KillShadowTex(const CS3OTextureHandler::S3OTexMat*) {
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glDisable(GL_TEXTURE_2D);
 	glActiveTexture(GL_TEXTURE0);
@@ -85,7 +90,7 @@ static const void KillShadowTex() {
 
 
 static const void PushRenderState3DO() {
-	BindOpaqueTexAtlas(-1);
+	BindOpaqueTexAtlas(nullptr);
 
 	glPushAttrib(GL_POLYGON_BIT);
 	glDisable(GL_CULL_FACE);
@@ -111,33 +116,38 @@ static const void SetTeamColorValid(const IUnitDrawerState* state, int team, con
 
 
 
-// typedef std::function<void(int)>                                  BindOpaqueTexFunc;
-// typedef std::function<void(const CS3OTextureHandler::S3OTexMat*)> BindShadowTexFunc;
-// typedef std::function<void()>                                     KillShadowTexFunc;
-typedef const void (*BindOpaqueTexFunc)(int);
-typedef const void (*BindShadowTexFunc)(const CS3OTextureHandler::S3OTexMat*);
-typedef const void (*KillShadowTexFunc)();
+// typedef std::function<void(int)>                                  BindTexFunc;
+// typedef std::function<void(const CS3OTextureHandler::S3OTexMat*)> BindTexFunc;
+// typedef std::function<void()>                                     KillTexFunc;
+typedef const void (*BindTexFunc)(const CS3OTextureHandler::S3OTexMat*);
+typedef const void (*BindTexFunc)(const CS3OTextureHandler::S3OTexMat*);
+typedef const void (*KillTexFunc)(const CS3OTextureHandler::S3OTexMat*);
 
 typedef const void (*PushRenderStateFunc)();
 typedef const void (*PopRenderStateFunc)();
 
 typedef const void (*SetTeamColorFunc)(const IUnitDrawerState*, int team, const float2 alpha);
 
-static const BindOpaqueTexFunc opaqueTexBindFuncs[MODELTYPE_OTHER] = {
+static const BindTexFunc opaqueTexBindFuncs[MODELTYPE_OTHER] = {
 	BindOpaqueTexDummy, // 3DO (no-op, done by PushRenderState3DO)
 	BindOpaqueTex,      // S3O
 	BindOpaqueTex,      // OBJ
 	BindOpaqueTex,      // ASS
 };
 
-static const BindShadowTexFunc shadowTexBindFuncs[MODELTYPE_OTHER] = {
+static const BindTexFunc shadowTexBindFuncs[MODELTYPE_OTHER] = {
 	BindShadowTexDummy, // 3DO (no-op)
 	BindShadowTex,      // S3O
 	BindShadowTex,      // OBJ
 	BindShadowTex,      // ASS
 };
 
-static const KillShadowTexFunc shadowTexKillFuncs[MODELTYPE_OTHER] = {
+static const BindTexFunc* bindModelTexFuncs[] = {
+	&opaqueTexBindFuncs[0], // opaque+alpha
+	&shadowTexBindFuncs[0], // shadow
+};
+
+static const KillTexFunc shadowTexKillFuncs[MODELTYPE_OTHER] = {
 	KillShadowTexDummy, // 3DO (no-op)
 	KillShadowTex,      // S3O
 	KillShadowTex,      // OBJ
@@ -168,9 +178,16 @@ static const SetTeamColorFunc setTeamColorFuncs[] = {
 
 
 // low-level (batch and solo)
-void CUnitDrawer::BindModelTypeTexture(int mdlType, int texType) {   opaqueTexBindFuncs[mdlType](texType); }
-void CUnitDrawer::PushModelRenderState(int mdlType             ) { renderStatePushFuncs[mdlType](       ); }
-void CUnitDrawer::PopModelRenderState (int mdlType             ) { renderStatePopFuncs [mdlType](       ); }
+// note: also called during SP
+void CUnitDrawer::BindModelTypeTexture(int mdlType, int texType) {
+	const auto texFun = bindModelTexFuncs[shadowHandler->InShadowPass()][mdlType];
+	const auto texMat = texturehandlerS3O->GetTexture(texType);
+
+	texFun(texMat);
+}
+
+void CUnitDrawer::PushModelRenderState(int mdlType) { renderStatePushFuncs[mdlType](); }
+void CUnitDrawer::PopModelRenderState (int mdlType) { renderStatePopFuncs [mdlType](); }
 
 // mid-level (solo only)
 void CUnitDrawer::PushModelRenderState(const S3DModel* m) {
@@ -215,32 +232,21 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	}
 
 
-	deadGhostBuildings.resize(MODELTYPE_OTHER);
-	liveGhostBuildings.resize(MODELTYPE_OTHER);
-
-	opaqueModelRenderers.resize(MODELTYPE_OTHER, NULL);
-	alphaModelRenderers.resize(MODELTYPE_OTHER, NULL);
-
-	tempOpaqueUnits.resize(MODELTYPE_OTHER);
-	tempAlphaUnits.resize(MODELTYPE_OTHER);
-
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		opaqueModelRenderers[modelType] = IModelRenderContainer::GetInstance(modelType);
 		alphaModelRenderers[modelType] = IModelRenderContainer::GetInstance(modelType);
 	}
 
-	unitRadarIcons.resize(teamHandler->ActiveAllyTeams());
-
 	// LH must be initialized before drawer-state is initialized
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicModelLights"));
 
-	unitDrawerStates.resize(DRAWER_STATE_CNT, nullptr);
+	unitDrawerStates.fill(nullptr);
 	unitDrawerStates[DRAWER_STATE_SSP] = IUnitDrawerState::GetInstance(globalRendering->haveARB, globalRendering->haveGLSL);
 	unitDrawerStates[DRAWER_STATE_FFP] = IUnitDrawerState::GetInstance(                   false,                     false);
 
-	// also set in ::SetupOpaqueDrawing, but SunChanged can be
-	// called first if DynamicSun is enabled --> must be non-NULL
-	unitDrawerStates[DRAWER_STATE_SEL] = unitDrawerStates[DRAWER_STATE_FFP];
+	drawModelFuncs[0] = &CUnitDrawer::DrawUnitModelBeingBuiltOpaque;
+	drawModelFuncs[1] = &CUnitDrawer::DrawUnitModelBeingBuiltShadow;
+	drawModelFuncs[2] = &CUnitDrawer::DrawUnitModel;
 
 	// shared with FeatureDrawer!
 	geomBuffer = LuaObjectDrawer::GetGeometryBuffer();
@@ -254,8 +260,11 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	//   FFP renderer-state (in ::Draw) in that special case and it
 	//   does not matter whether SSP renderer-state is initialized
 	//   *** except for DrawAlphaUnits
-	advFading = GLEW_NV_vertex_program2;
 	advShading = (unitDrawerStates[DRAWER_STATE_SSP]->Init(this) && cubeMapHandler->Init());
+
+	// note: state must be pre-selected before the first drawn frame
+	// Sun*Changed can be called first, e.g. if DynamicSun is enabled
+	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState(false));
 }
 
 CUnitDrawer::~CUnitDrawer()
@@ -264,7 +273,6 @@ CUnitDrawer::~CUnitDrawer()
 
 	unitDrawerStates[DRAWER_STATE_SSP]->Kill(); IUnitDrawerState::FreeInstance(unitDrawerStates[DRAWER_STATE_SSP]);
 	unitDrawerStates[DRAWER_STATE_FFP]->Kill(); IUnitDrawerState::FreeInstance(unitDrawerStates[DRAWER_STATE_FFP]);
-	unitDrawerStates.clear();
 
 	cubeMapHandler->Free();
 
@@ -283,21 +291,12 @@ CUnitDrawer::~CUnitDrawer()
 		liveGhostBuildings[modelType].clear();
 	}
 
-	deadGhostBuildings.clear();
-	liveGhostBuildings.clear();
-
-	tempOpaqueUnits.clear();
-	tempAlphaUnits.clear();
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		delete opaqueModelRenderers[modelType];
 		delete alphaModelRenderers[modelType];
 	}
 
-	opaqueModelRenderers.clear();
-	alphaModelRenderers.clear();
-
-	unitRadarIcons.clear();
 	unsortedUnits.clear();
 }
 
@@ -333,9 +332,7 @@ void CUnitDrawer::Update()
 		}
 	}
 
-	useDistToGroundForIcons = (camHandler->GetCurrentController()).GetUseDistToGroundForIcons();
-
-	if (useDistToGroundForIcons) {
+	if ((useDistToGroundForIcons = (camHandler->GetCurrentController()).GetUseDistToGroundForIcons())) {
 		const float3& camPos = camera->GetPos();
 		// use the height at the current camera position
 		//const float groundHeight = CGround::GetHeightAboveWater(camPos.x, camPos.z, false);
@@ -354,10 +351,6 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 {
 	sky->SetupFog();
 
-	camNorm = camera->GetDir();
-	camNorm.y = -0.1f;
-	camNorm.ANormalize();
-
 	assert((CCamera::GetActiveCamera())->GetCamType() != CCamera::CAMTYPE_SHADOW);
 
 	// first do the deferred pass; conditional because
@@ -372,7 +365,6 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	}
 
 	farTextureHandler->Draw();
-	DrawUnitIcons(drawReflection);
 
 	glDisable(GL_FOG);
 	glDisable(GL_ALPHA_TEST);
@@ -389,9 +381,6 @@ void CUnitDrawer::DrawOpaquePass(bool deferredPass, bool drawReflection, bool dr
 		DrawOpaqueAIUnits(modelType);
 		PopModelRenderState(modelType);
 	}
-
-	// not true during DynWater::DrawRefraction
-	// assert(drawReflection == water->DrawReflectionPass());
 
 	ResetOpaqueDrawing(deferredPass);
 
@@ -467,27 +456,27 @@ void CUnitDrawer::DrawOpaqueAIUnit(const TempDrawUnit& unit)
 
 
 
-void CUnitDrawer::DrawUnitIcons(bool drawReflection)
+void CUnitDrawer::DrawUnitIcons()
 {
-	if (!drawReflection) {
-		// Draw unit icons and radar blips.
-		glEnable(GL_ALPHA_TEST);
-		glAlphaFunc(GL_GREATER, 0.5f);
-
-		for (CUnit* u: iconUnits) {
-			DrawIcon(u, false);
-		}
-		if (!gu->spectatingFullView) {
-			for (CUnit* u: unitRadarIcons[gu->myAllyTeam]) {
-				DrawIcon(u, (u->losStatus[gu->myAllyTeam] & (LOS_PREVLOS | LOS_CONTRADAR)) != (LOS_PREVLOS | LOS_CONTRADAR));
-			}
-		}
-
-		glDisable(GL_TEXTURE_2D);
-		glDisable(GL_ALPHA_TEST);
-
-		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	// draw unit icons and radar blips
+	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT);
+	glEnable(GL_TEXTURE_2D);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
+	glEnable(GL_ALPHA_TEST);
+	glAlphaFunc(GL_GREATER, 0.5f);
+	if ((globalRendering->FSAA > 0) && GLEW_ARB_multisample) {
+		glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE_ARB);
 	}
+
+	for (CUnit* u: iconUnits) {
+		DrawIcon(u, !gu->spectatingFullView &&
+			!(u->losStatus[gu->myAllyTeam] & LOS_INLOS) &&
+			(u->losStatus[gu->myAllyTeam] & (LOS_PREVLOS | LOS_CONTRADAR)) != (LOS_PREVLOS | LOS_CONTRADAR)
+		);
+	}
+
+	glPopAttrib();
 }
 
 
@@ -565,13 +554,14 @@ void CUnitDrawer::DrawOpaqueUnitsShadow(int modelType) {
 		const auto& unitSet = unitBinP.second;
 		const int textureType = unitBinP.first;
 
-		shadowTexBindFuncs[modelType](texturehandlerS3O->GetS3oTex(textureType));
+		BindModelTypeTexture(modelType, textureType);
+		// shadowTexBindFuncs[modelType](texturehandlerS3O->GetTexture(textureType));
 
 		for (const auto& unitSetP: unitSet) {
 			DrawOpaqueUnitShadow(unitSetP);
 		}
 
-		shadowTexKillFuncs[modelType]();
+		shadowTexKillFuncs[modelType](nullptr);
 	}
 }
 
@@ -624,8 +614,12 @@ void CUnitDrawer::DrawShadowPass()
 
 void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 {
+	// for radar icons; normal void-units are already filtered
+	if (unit->IsInVoid())
+		return;
+
 	// If the icon is to be drawn as a radar blip, we want to get the default icon.
-	const icon::CIconData* iconData = NULL;
+	const icon::CIconData* iconData = nullptr;
 
 	if (useDefaultIcon) {
 		iconData = icon::iconHandler->GetDefaultIconData();
@@ -647,8 +641,8 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 	//  * The square root of the camera distance.
 	//  * The mod defined 'iconSize' (which acts a multiplier).
 	//  * The unit radius, depending on whether the mod defined 'radiusadjust' is true or false.
-	const float dist = std::min(8000.0f, fastmath::sqrt2(camera->GetPos().SqDistance(pos)));
-	const float iconScale = 0.4f * fastmath::sqrt2(dist); // makes far icons bigger
+	const float dist = std::min(8000.0f, fastmath::sqrt_builtin(camera->GetPos().SqDistance(pos)));
+	const float iconScale = 0.4f * fastmath::sqrt_builtin(dist); // makes far icons bigger
 	float scale = iconData->GetSize() * iconScale;
 
 	if (iconData->GetRadiusAdjust() && !useDefaultIcon)
@@ -688,13 +682,12 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 
 void CUnitDrawer::SetupAlphaDrawing(bool deferredPass)
 {
+	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState(true));
 	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass && false, true);
 
-	glActiveTexture(GL_TEXTURE0);
 	glEnable(GL_TEXTURE_2D);
-
-	glPushAttrib(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_ALPHA_TEST);
@@ -702,12 +695,11 @@ void CUnitDrawer::SetupAlphaDrawing(bool deferredPass)
 	glDepthMask(GL_FALSE);
 }
 
-void CUnitDrawer::ResetAlphaDrawing(bool deferredPass) const
+void CUnitDrawer::ResetAlphaDrawing(bool deferredPass)
 {
-	glPopAttrib();
-	glDisable(GL_TEXTURE_2D);
-
 	unitDrawerStates[DRAWER_STATE_SEL]->Disable(this, deferredPass && false);
+
+	glPopAttrib();
 }
 
 
@@ -921,35 +913,12 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 
 
 
-#if 0
-void CUnitDrawer::SetupOpaqueAlphaDrawing(bool deferredPass, bool haveAdvShading)
-{
-	// set-before-test
-	SetUseAdvShading(haveAdvShading);
-
-	switch (int(UseAdvShading())) {
-		case 0: { SetupOpaqueDrawing(deferredPass); } break;
-		case 1: { SetupAlphaDrawing(deferredPass); } break;
-		default: {} break;
-	}
-}
-
-void CUnitDrawer::ResetOpaqueAlphaDrawing(bool deferredPass, bool haveAdvShading)
-{
-	switch (int(UseAdvShading())) {
-		case 0: { ResetOpaqueDrawing(deferredPass); } break;
-		case 1: { ResetAlphaDrawing(deferredPass); } break;
-		default: {} break;
-	}
-
-	// set-after-test
-	SetUseAdvShading(haveAdvShading);
-}
-#endif
 
 
 void CUnitDrawer::SetupOpaqueDrawing(bool deferredPass)
 {
+	glPushAttrib(GL_ENABLE_BIT);
+
 	glCullFace(GL_BACK);
 	glEnable(GL_CULL_FACE);
 
@@ -968,12 +937,11 @@ void CUnitDrawer::SetupOpaqueDrawing(bool deferredPass)
 	assert(!deferredPass || unitDrawerStates[DRAWER_STATE_SEL]->CanDrawDeferred());
 }
 
-void CUnitDrawer::ResetOpaqueDrawing(bool deferredPass) const
+void CUnitDrawer::ResetOpaqueDrawing(bool deferredPass)
 {
-	glDisable(GL_CULL_FACE);
-	glDisable(GL_ALPHA_TEST);
-
 	unitDrawerStates[DRAWER_STATE_SEL]->Disable(this, deferredPass);
+
+	glPopAttrib();
 }
 
 const IUnitDrawerState* CUnitDrawer::GetWantedDrawerState(bool alphaPass) const
@@ -1246,102 +1214,163 @@ void CUnitDrawer::DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int te
 
 
 
-void CUnitDrawer::DrawUnitModelBeingBuilt(const CUnit* unit, bool noLuaCall)
-{
-	if (shadowHandler->InShadowPass()) {
-		if (unit->buildProgress > (2.0f / 3.0f))
-			DrawUnitModel(unit, noLuaCall);
-
-		return;
-	}
-
-	const float start  = std::max(unit->model->mins.y, -unit->model->height);
-	const float height = unit->model->height;
-
-	glEnable(GL_CLIP_PLANE0);
-	glEnable(GL_CLIP_PLANE1);
-
-	const float col = math::fabs(128.0f - ((gs->frameNum * 4) & 255)) / 255.0f + 0.5f;
-	const unsigned char* tcol = teamHandler->Team(unit->team)->color;
-	// frame line-color
-	const float3 fc = (!globalRendering->teamNanospray)?
-		unit->unitDef->nanoColor:
-		float3(tcol[0] / 255.0f, tcol[1] / 255.0f, tcol[2] / 255.0f);
-
-	glColorf3(fc * col);
-
-	// render wireframe with FFP
-	unitDrawerStates[DRAWER_STATE_SEL]->DisableShaders(this);
-	unitDrawerStates[DRAWER_STATE_SEL]->DisableTextures(this);
 
 
-	// first stage: wireframe model
-	//
-	// Both clip planes move up. Clip plane 0 is the upper bound of the model,
-	// clip plane 1 is the lower bound. In other words, clip plane 0 makes the
-	// wireframe/flat color/texture appear, and clip plane 1 then erases the
-	// wireframe/flat color laten on.
+typedef const void (*DrawModelBuildStageFunc)(const CUnit*, const double*, const double*, const float3, bool);
 
-	const double plane0[4] = {0, -1, 0,  start + height * (unit->buildProgress *      3)};
-	const double plane1[4] = {0,  1, 0, -start - height * (unit->buildProgress * 10 - 9)};
-	glClipPlane(GL_CLIP_PLANE0, plane0);
-	glClipPlane(GL_CLIP_PLANE1, plane1);
-
-	if (!globalRendering->atiHacks) {
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		DrawUnitModel(unit, noLuaCall);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	} else {
-		// some ATi mobility cards/drivers dont like clipping wireframes...
+static const void DrawModelNoopBuildStage(const CUnit*, const double*, const double*, const float3, bool) {}
+static const void DrawModelWireBuildStage(
+	const CUnit* unit,
+	const double* upperPlane,
+	const double* lowerPlane,
+	const float3 stageColor,
+	bool noLuaCall
+) {
+	if (globalRendering->atiHacks) {
+		// some ATi mobility cards/drivers dont like clipping wireframes
 		glDisable(GL_CLIP_PLANE0);
 		glDisable(GL_CLIP_PLANE1);
+	} else {
+		glClipPlane(GL_CLIP_PLANE0, upperPlane);
+		glClipPlane(GL_CLIP_PLANE1, lowerPlane);
+	}
 
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		DrawUnitModel(unit, noLuaCall);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	// FFP-only drawing still needs raw colors
+	glColorf3(stageColor);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		CUnitDrawer::DrawUnitModel(unit, noLuaCall);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	// glColorf3(OnesVector);
 
+	if (globalRendering->atiHacks) {
 		glEnable(GL_CLIP_PLANE0);
 		glEnable(GL_CLIP_PLANE1);
 	}
+}
 
-	// Flat-colored model
-	if (unit->buildProgress > (1.0f / 3.0f)) {
-		glColorf3(fc * (1.5f - col));
-		const double plane0[4] = {0, -1, 0,  start + height * (unit->buildProgress * 3 - 1)};
-		const double plane1[4] = {0,  1, 0, -start - height * (unit->buildProgress * 3 - 2)};
-		glClipPlane(GL_CLIP_PLANE0, plane0);
-		glClipPlane(GL_CLIP_PLANE1, plane1);
+static const void DrawModelFlatBuildStage(
+	const CUnit* unit,
+	const double* upperPlane,
+	const double* lowerPlane,
+	const float3 stageColor,
+	bool noLuaCall
+) {
+	glClipPlane(GL_CLIP_PLANE0, upperPlane);
+	glClipPlane(GL_CLIP_PLANE1, lowerPlane);
 
-		DrawUnitModel(unit, noLuaCall);
+	glColorf3(stageColor);
+		CUnitDrawer::DrawUnitModel(unit, noLuaCall);
+	// glColorf3(OnesVector);
+}
+
+static const void DrawModelFillBuildStage(
+	const CUnit* unit,
+	const double* upperPlane,
+	const double* lowerPlane,
+	const float3 stageColor,
+	bool noLuaCall
+) {
+	if (globalRendering->atiHacks) {
+		glDisable(GL_CLIP_PLANE0);
+	} else {
+		glClipPlane(GL_CLIP_PLANE0, upperPlane);
 	}
+
+	glColorf3(stageColor);
+	glPolygonOffset(1.0f, 1.0f);
+	glEnable(GL_POLYGON_OFFSET_FILL);
+		CUnitDrawer::DrawUnitModel(unit, noLuaCall);
+	glDisable(GL_POLYGON_OFFSET_FILL);
+}
+
+static const DrawModelBuildStageFunc drawModelBuildStageFuncs[] = {
+	DrawModelNoopBuildStage,
+	DrawModelWireBuildStage,
+	DrawModelFlatBuildStage,
+	DrawModelFillBuildStage,
+};
+
+
+
+
+void CUnitDrawer::DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool noLuaCall)
+{
+	if (unit->buildProgress <= 0.666f)
+		return;
+
+	DrawUnitModel(unit, noLuaCall);
+}
+
+void CUnitDrawer::DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCall)
+{
+	const S3DModel* model = unit->model;
+	const    CTeam*  team = teamHandler->Team(unit->team);
+	const   SColor  color = team->color;
+
+	const float wireColorMult = std::fabs(128.0f - ((gs->frameNum * 4) & 255)) / 255.0f + 0.5f;
+	const float flatColorMult = 1.5f - wireColorMult;
+
+	const float3 frameColors[2] = {unit->unitDef->nanoColor, {color.r / 255.0f, color.g / 255.0f, color.b / 255.0f}};
+	const float3 stageColors[3] = {frameColors[globalRendering->teamNanospray], frameColors[globalRendering->teamNanospray], OnesVector};
+	const float3 stageBounds    = {std::max(model->mins.y, -model->height), model->height, unit->buildProgress};
+
+	// Both clip planes move up. Clip plane 0 is the upper bound of the model,
+	// clip plane 1 is the lower bound. In other words, clip plane 0 makes the
+	// wireframe/flat color/texture appear, and clip plane 1 then erases the
+	// wireframe/flat color later on.
+	const double upperPlanes[] = {
+		0.0, -1.0, 0.0,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0      ),
+		0.0, -1.0, 0.0,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0 - 1.0),
+		0.0, -1.0, 0.0,  stageBounds.x + stageBounds.y * (stageBounds.z * 3.0 - 2.0),
+	};
+	const double lowerPlanes[] = {
+		0.0,  1.0, 0.0, -stageBounds.x - stageBounds.y * (stageBounds.z * 10.0 - 9.0),
+		0.0,  1.0, 0.0, -stageBounds.x - stageBounds.y * (stageBounds.z *  3.0 - 2.0),
+		0.0,  1.0, 0.0,                                  (                       0.0),
+	};
+
+	enum {
+		STAGE_WIRE = 0,
+		STAGE_FLAT = 1,
+		STAGE_FILL = 2,
+	};
+
+	// note: draw-func for stage i is at index i+1 (noop-func is at 0)
+	DrawModelBuildStageFunc stageFunc = nullptr;
+	IUnitDrawerState* selState = unitDrawer->GetDrawerState(DRAWER_STATE_SEL);
+
+	glPushAttrib(GL_CURRENT_BIT);
+	glEnable(GL_CLIP_PLANE0);
+	glEnable(GL_CLIP_PLANE1);
+
+
+	selState->SetNanoColor(float4(stageColors[0] * wireColorMult, 1.0f));
+	selState->DisableTextures(unitDrawer);
+
+	// wireframe, unconditional
+	stageFunc = drawModelBuildStageFuncs[(STAGE_WIRE + 1) * true];
+	stageFunc(unit, &upperPlanes[STAGE_WIRE * 4], &lowerPlanes[STAGE_WIRE * 4], stageColors[0] * wireColorMult, noLuaCall);
+
+
+	selState->SetNanoColor(float4(stageColors[1] * flatColorMult, 1.0f));
+
+	// flat-colored, conditional
+	stageFunc = drawModelBuildStageFuncs[(STAGE_FLAT + 1) * (stageBounds.z > 0.333f)];
+	stageFunc(unit, &upperPlanes[STAGE_FLAT * 4], &lowerPlanes[STAGE_FLAT * 4], stageColors[1] * flatColorMult, noLuaCall);
 
 	glDisable(GL_CLIP_PLANE1);
 
-	unitDrawerStates[DRAWER_STATE_SEL]->EnableTextures(this);
-	unitDrawerStates[DRAWER_STATE_SEL]->EnableShaders(this);
 
-	// second stage: texture-mapped model
-	if (unit->buildProgress > (2.0f / 3.0f)) {
-		if (globalRendering->atiHacks) {
-			glDisable(GL_CLIP_PLANE0);
+	// pass alpha=0 so shader will ignore nanoColor
+	selState->SetNanoColor(float4(stageColors[2], 0.0f));
+	selState->EnableTextures(unitDrawer);
 
-			glPolygonOffset(1.0f, 1.0f);
-			glEnable(GL_POLYGON_OFFSET_FILL);
-				DrawUnitModel(unit, noLuaCall);
-			glDisable(GL_POLYGON_OFFSET_FILL);
-		} else {
-			const double plane0[4] = {0, -1, 0 , start + height * (unit->buildProgress * 3 - 2)};
-			glClipPlane(GL_CLIP_PLANE0, plane0);
-
-			glPolygonOffset(1.0f, 1.0f);
-			glEnable(GL_POLYGON_OFFSET_FILL);
-				DrawUnitModel(unit, noLuaCall);
-			glDisable(GL_POLYGON_OFFSET_FILL);
-		}
-	}
+	// fully-shaded, conditional
+	stageFunc = drawModelBuildStageFuncs[(STAGE_FILL + 1) * (stageBounds.z > 0.666f)];
+	stageFunc(unit, &upperPlanes[STAGE_FILL * 4], &lowerPlanes[STAGE_FILL * 4], stageColors[2], noLuaCall);
 
 	glDisable(GL_CLIP_PLANE0);
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	glPopAttrib();
 }
 
 
@@ -1354,6 +1383,7 @@ void CUnitDrawer::DrawUnitModel(const CUnit* unit, bool noLuaCall) {
 	unit->localModel.Draw();
 }
 
+
 void CUnitDrawer::DrawUnitNoTrans(
 	const CUnit* unit,
 	unsigned int preList,
@@ -1361,25 +1391,22 @@ void CUnitDrawer::DrawUnitNoTrans(
 	bool lodCall,
 	bool noLuaCall
 ) {
+	const unsigned int b0 = lodCall || !unit->beingBuilt || !unit->unitDef->showNanoFrame;
+	const unsigned int b1 = shadowHandler->InShadowPass();
+
 	if (preList != 0) {
 		glCallList(preList);
 	}
 
 	// if called from LuaObjectDrawer, unit has a custom material
 	//
-	// DrawUnitBeingBuilt disables *any* shader that is currently
-	// active for its first stage and only enables a standard one
-	// for its second, while we want the Lua shader (if provided)
-	// to have full control over the build visualisation: keep it
-	// simple and bypass the engine path
+	// we want Lua-material shaders to have full control over build
+	// visualisation, so keep it simple and make LOD-calls draw the
+	// full model
 	//
 	// NOTE: "raw" calls will no longer skip DrawUnitBeingBuilt
 	//
-	if (lodCall || !unit->beingBuilt || !unit->unitDef->showNanoFrame) {
-		DrawUnitModel(unit, noLuaCall);
-	} else {
-		DrawUnitModelBeingBuilt(unit, noLuaCall);
-	}
+	drawModelFuncs[ std::max(b0 * 2, b1) ](unit, noLuaCall);
 
 	if (postList != 0) {
 		glCallList(postList);
@@ -1403,11 +1430,10 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 	const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
 
 	// reset
-	unit->isIcon = false;
+	unit->isIcon = losStatus & LOS_INRADAR;
 
 	if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
 		unit->isIcon = DrawAsIcon(unit, (unit->pos - camera->GetPos()).SqLength());
-
 	} else if ((losStatus & LOS_PREVLOS) && (losStatus & LOS_CONTRADAR)) {
 		if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
 			unit->isIcon = DrawAsIcon(unit, (unit->pos - camera->GetPos()).SqLength());
@@ -1442,6 +1468,7 @@ bool CUnitDrawer::DrawAsIcon(const CUnit* unit, const float sqUnitCamDist) const
 
 	const float sqIconDistMult = unit->unitDef->iconType->GetDistanceSqr();
 	const float realIconLength = iconLength * sqIconDistMult;
+
 	bool asIcon = false;
 
 	if (useDistToGroundForIcons) {
@@ -1471,7 +1498,7 @@ bool CUnitDrawer::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 	glDisable(GL_TEXTURE_2D);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	CFeature* feature = NULL;
+	CFeature* feature = nullptr;
 
 	std::vector<float3> buildableSquares; // buildable squares
 	std::vector<float3> featureSquares; // occupied squares
@@ -1578,7 +1605,7 @@ inline const icon::CIconData* GetUnitIcon(const CUnit* unit) {
 	const unsigned short prevMask = (LOS_PREVLOS | LOS_CONTRADAR);
 
 	const UnitDef* unitDef = unit->unitDef;
-	const icon::CIconData* iconData = NULL;
+	const icon::CIconData* iconData = nullptr;
 
 	// use the unit's custom icon if we can currently see it,
 	// or have seen it before and did not lose contact since
@@ -1619,7 +1646,7 @@ inline float GetUnitIconScale(const CUnit* unit) {
 void CUnitDrawer::DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const {
 	if (unit->noMinimap)
 		return;
-	if (unit->myIcon == NULL)
+	if (unit->myIcon == nullptr)
 		return;
 	if (unit->IsInVoid())
 		return;
@@ -1668,7 +1695,7 @@ void CUnitDrawer::DrawUnitMiniMapIcons() const {
 		const icon::CIconData* icon = iconIt->first;
 		const std::vector<const CUnit*>& units = iconIt->second;
 
-		if (icon == NULL)
+		if (icon == nullptr)
 			continue;
 		if (units.empty())
 			continue;
@@ -1687,19 +1714,24 @@ void CUnitDrawer::DrawUnitMiniMapIcons() const {
 }
 
 void CUnitDrawer::UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool killed) {
+	CUnit* u = const_cast<CUnit*>(unit);
+
 	icon::CIconData* oldIcon = unit->myIcon;
 	icon::CIconData* newIcon = const_cast<icon::CIconData*>(GetUnitIcon(unit));
+
+	u->myIcon = nullptr;
 
 	if (!killed) {
 		if ((oldIcon != newIcon) || forced) {
 			VectorErase(unitsByIcon[oldIcon], unit);
 			unitsByIcon[newIcon].push_back(unit);
 		}
-	} else {
-		VectorErase(unitsByIcon[oldIcon], unit);
+
+		u->myIcon = newIcon;
+		return;
 	}
 
-	(const_cast<CUnit*>(unit))->myIcon = killed? NULL: newIcon;
+	VectorErase(unitsByIcon[oldIcon], unit);
 }
 
 
@@ -1707,7 +1739,7 @@ void CUnitDrawer::UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool kil
 void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 	CUnit* unit = const_cast<CUnit*>(u);
 
-	if (u->model != NULL) {
+	if (u->model != nullptr) {
 		if (cloaked) {
 			alphaModelRenderers[MDL_TYPE(u)]->AddUnit(u);
 		} else {
@@ -1719,16 +1751,11 @@ void CUnitDrawer::RenderUnitCreated(const CUnit* u, int cloaked) {
 	unsortedUnits.push_back(unit);
 }
 
-
 void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 	CUnit* u = const_cast<CUnit*>(unit);
 
 	const UnitDef* unitDef = unit->unitDef;
 	const UnitDef* decoyDef = unitDef->decoyDef;
-
-	// in case no ghost is created for us
-	if (unitDef->decalDef.useGroundDecal)
-		groundDecals->RemoveSolidObject(u, nullptr);
 
 	if (unitDef->IsBuildingUnit() && gameSetup->ghostedBuildings &&
 		!(u->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) &&
@@ -1740,7 +1767,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 		GhostSolidObject* gb = new GhostSolidObject();
 		gb->pos    = u->pos;
 		gb->model  = gbModel;
-		gb->decal  = NULL;
+		gb->decal  = nullptr;
 		gb->facing = u->buildFacing;
 		gb->dir    = u->frontdir;
 		gb->team   = u->team;
@@ -1750,7 +1777,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 		groundDecals->GhostCreated(u, gb);
 	}
 
-	if (u->model) {
+	if (u->model != nullptr) {
 		// delete from both; cloaked state is unreliable at this point
 		alphaModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 		opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
@@ -1758,11 +1785,6 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 
 	VectorErase(unsortedUnits, u);
 	VectorErase(liveGhostBuildings[MDL_TYPE(u)], u);
-
-	// remove the icon for all ally-teams
-	for (auto it = unitRadarIcons.begin(); it != unitRadarIcons.end(); ++it) {
-		VectorErase(*it, u);
-	}
 
 	UpdateUnitMiniMapIcon(unit, false, true);
 	LuaObjectDrawer::SetObjectLOD(u, LUAOBJ_UNIT, 0);
@@ -1772,7 +1794,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 void CUnitDrawer::UnitCloaked(const CUnit* unit) {
 	CUnit* u = const_cast<CUnit*>(unit);
 
-	if (u->model) {
+	if (u->model != nullptr) {
 		alphaModelRenderers[MDL_TYPE(u)]->AddUnit(u);
 		opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 	}
@@ -1781,66 +1803,47 @@ void CUnitDrawer::UnitCloaked(const CUnit* unit) {
 void CUnitDrawer::UnitDecloaked(const CUnit* unit) {
 	CUnit* u = const_cast<CUnit*>(unit);
 
-	if (u->model) {
+	if (u->model != nullptr) {
 		opaqueModelRenderers[MDL_TYPE(u)]->AddUnit(u);
 		alphaModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 	}
 }
 
 void CUnitDrawer::UnitEnteredLos(const CUnit* unit, int allyTeam) {
-	if (allyTeam != gu->myAllyTeam) {
-		return;
-	}
-
 	CUnit* u = const_cast<CUnit*>(unit); //cleanup
 
-	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
-		VectorErase(liveGhostBuildings[MDL_TYPE(unit)], u);
-	}
+	if (allyTeam != gu->myAllyTeam)
+		return;
 
-	VectorErase(unitRadarIcons[allyTeam], u);
+	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit())
+		VectorErase(liveGhostBuildings[MDL_TYPE(unit)], u);
+
 	UpdateUnitMiniMapIcon(unit, false, false);
 }
 
 void CUnitDrawer::UnitLeftLos(const CUnit* unit, int allyTeam) {
-	if (allyTeam != gu->myAllyTeam) {
-		return;
-	}
-
 	CUnit* u = const_cast<CUnit*>(unit); //cleanup
-	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit()) {
-		VectorInsertUnique(liveGhostBuildings[MDL_TYPE(unit)], u, true);
-	}
 
-	if (unit->losStatus[allyTeam] & LOS_INRADAR) {
-		VectorInsertUnique(unitRadarIcons[allyTeam], u, true);
-	}
+	if (allyTeam != gu->myAllyTeam)
+		return;
+
+	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit())
+		VectorInsertUnique(liveGhostBuildings[MDL_TYPE(unit)], u);
 
 	UpdateUnitMiniMapIcon(unit, false, false);
 }
 
 void CUnitDrawer::UnitEnteredRadar(const CUnit* unit, int allyTeam) {
-	if (allyTeam != gu->myAllyTeam) {
+	if (allyTeam != gu->myAllyTeam)
 		return;
-	}
-
-	CUnit* u = const_cast<CUnit*>(unit);
-
-	if (!(unit->losStatus[allyTeam] & LOS_INLOS)) {
-		VectorInsertUnique(unitRadarIcons[allyTeam], u, true);
-	}
 
 	UpdateUnitMiniMapIcon(unit, false, false);
 }
 
 void CUnitDrawer::UnitLeftRadar(const CUnit* unit, int allyTeam) {
-	if (allyTeam != gu->myAllyTeam) {
+	if (allyTeam != gu->myAllyTeam)
 		return;
-	}
 
-	CUnit* u = const_cast<CUnit*>(unit);
-
-	VectorErase(unitRadarIcons[allyTeam], u);
 	UpdateUnitMiniMapIcon(unit, false, false);
 }
 
@@ -1849,7 +1852,6 @@ void CUnitDrawer::PlayerChanged(int playerNum) {
 	if (playerNum != gu->myPlayerNum)
 		return;
 
-	// unitsByIcon is a map of (Icon*, std::vector) entries
 	for (auto iconIt = unitsByIcon.begin(); iconIt != unitsByIcon.end(); ++iconIt) {
 		(iconIt->second).clear();
 	}
@@ -1860,11 +1862,8 @@ void CUnitDrawer::PlayerChanged(int playerNum) {
 	}
 }
 
-void CUnitDrawer::SunChanged(const float3& sunDir) {
+void CUnitDrawer::SunChanged() {
 	unitDrawerStates[DRAWER_STATE_SEL]->UpdateCurrentShaderSky(this, sky->GetLight());
-}
-void CUnitDrawer::SunLightingChanged() {
-	unitDrawerStates[DRAWER_STATE_SEL]->UpdateCurrentShaderSunLighting(this);
 }
 
 

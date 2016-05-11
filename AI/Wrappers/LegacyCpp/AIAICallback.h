@@ -69,12 +69,12 @@ public:
 
 	bool RemoveUnitFromGroup(int unitid);
 	int GetUnitGroup(int unitid);
-	const std::vector<CommandDescription>* GetGroupCommands(int unitid);
+	const std::vector<SCommandDescription>* GetGroupCommands(int unitid);
 	int GiveGroupOrder(int unitid, Command* c);
 
 	int GiveOrder(int unitid, Command* c);
 
-	const std::vector<CommandDescription>* GetUnitCommands(int unitid);
+	const std::vector<SCommandDescription>* GetUnitCommands(int unitid);
 	const CCommandQueue* GetCurrentUnitCommands(int unitid);
 
 	int GetMaxUnits();
@@ -265,8 +265,8 @@ private:
 	std::vector<int> weaponDefFrames;
 
 	// the following three are needed to prevent memory leaks
-	std::vector< std::vector<CommandDescription> > groupPossibleCommands;
-	std::vector< std::vector<CommandDescription> > unitPossibleCommands;
+	std::vector< std::vector<SCommandDescription> > groupPossibleCommands;
+	std::vector< std::vector<SCommandDescription> > unitPossibleCommands;
 	std::vector< std::unique_ptr<CCommandQueue> > unitCurrentCommandQueues;
 
 	float3 startPos;

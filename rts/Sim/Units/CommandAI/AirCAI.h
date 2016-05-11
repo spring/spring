@@ -25,9 +25,7 @@ public:
 	void FinishCommand();
 	void BuggerOff(const float3& pos, float radius);
 //	void StopMove();
-	
-	void SetGoal(const float3& pos, const float3& curPos, float goalRadius = SQUARE_SIZE);
-	
+
 	void ExecuteGuard(Command& c);
 	void ExecuteAreaAttack(Command& c);
 	void ExecuteAttack(Command& c);

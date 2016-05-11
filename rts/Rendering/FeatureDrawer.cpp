@@ -47,14 +47,6 @@ CONFIG(float, FeatureFadeDistance)
 
 
 
-enum {
-	FD_NODRAW_FLAG = 0, // must be 0
-	FD_OPAQUE_FLAG = 1,
-	FD_ALPHAF_FLAG = 2,
-	FD_SHADOW_FLAG = 3,
-	FD_FARTEX_FLAG = 4,
-};
-
 static bool SetFeatureDrawAlpha(
 	CFeature* f,
 	const CCamera* cam,
@@ -156,8 +148,7 @@ CFeatureDrawer::CFeatureDrawer(): CEventClient("[CFeatureDrawer]", 313373, false
 	featureFadeDistance = std::min(configHandler->GetFloat("FeatureFadeDistance"), featureDrawDistance);
 
 	modelRenderers.resize(drawQuadsX * drawQuadsY);
-	camVisibleQuads.resize(CCamera::CAMTYPE_ENVMAP);
-	camVisDrawFrames.resize(CCamera::CAMTYPE_ENVMAP, 0);
+	camVisDrawFrames.fill(0);
 
 	for (unsigned int n = 0; n < camVisibleQuads.size(); n++) {
 		camVisibleQuads[n].reserve(256);
@@ -169,12 +160,7 @@ CFeatureDrawer::~CFeatureDrawer()
 {
 	eventHandler.RemoveClient(this);
 
-	for (CFeature* f: unsortedFeatures) {
-		groundDecals->ForceRemoveSolidObject(f);
-	}
-
 	modelRenderers.clear();
-	camVisDrawFrames.clear();
 }
 
 
@@ -262,6 +248,8 @@ inline void CFeatureDrawer::UpdateDrawPos(CFeature* f)
 {
 	f->drawPos    = f->GetDrawPos(globalRendering->timeOffset);
 	f->drawMidPos = f->GetMdlDrawMidPos();
+
+	f->UpdateTransform(f->drawPos, false);
 }
 
 
@@ -326,9 +314,9 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 			for (CFeature* f: binElem.second) {
 				// fartex, opaque, shadow are allowed here
 				switch (f->drawFlag) {
-					case FD_NODRAW_FLAG: {                              continue; } break;
-					case FD_ALPHAF_FLAG: {                              continue; } break;
-					case FD_FARTEX_FLAG: { farTextureHandler->Queue(f); continue; } break;
+					case CFeature::FD_NODRAW_FLAG: {                              continue; } break;
+					case CFeature::FD_ALPHAF_FLAG: {                              continue; } break;
+					case CFeature::FD_FARTEX_FLAG: { farTextureHandler->Queue(f); continue; } break;
 					default: {} break;
 				}
 
@@ -504,10 +492,10 @@ void CFeatureDrawer::DrawAlphaFeatures(int modelType)
 			for (CFeature* f: binElem.second) {
 				// only alpha is allowed here
 				switch (f->drawFlag) {
-					case FD_NODRAW_FLAG: { continue; } break;
-					case FD_OPAQUE_FLAG: { continue; } break;
-					case FD_SHADOW_FLAG: { continue; } break;
-					case FD_FARTEX_FLAG: { continue; } break;
+					case CFeature::FD_NODRAW_FLAG: { continue; } break;
+					case CFeature::FD_OPAQUE_FLAG: { continue; } break;
+					case CFeature::FD_SHADOW_FLAG: { continue; } break;
+					case CFeature::FD_FARTEX_FLAG: { continue; } break;
 					default: {} break;
 				}
 
@@ -637,7 +625,7 @@ void CFeatureDrawer::FlagVisibleFeatures(
 					assert(quads[n] == f->drawQuad);
 
 					// clear marker; will be set at most once below
-					f->drawFlag = FD_NODRAW_FLAG;
+					f->drawFlag = CFeature::FD_NODRAW_FLAG;
 
 					if (f->noDraw)
 						continue;
@@ -652,7 +640,7 @@ void CFeatureDrawer::FlagVisibleFeatures(
 
 					if (drawShadowPass) {
 						// no shadows for fully alpha-faded features from player's POV
-						f->drawFlag = FD_SHADOW_FLAG * SetFeatureDrawAlpha(f, playerCam, sqFadeDistBegin, sqFadeDistEnd);
+						f->drawFlag = CFeature::FD_SHADOW_FLAG * SetFeatureDrawAlpha(f, playerCam, sqFadeDistBegin, sqFadeDistEnd);
 						continue;
 					}
 
@@ -664,15 +652,15 @@ void CFeatureDrawer::FlagVisibleFeatures(
 
 
 					if (SetFeatureDrawAlpha(f, cam, sqFadeDistBegin, sqFadeDistEnd)) {
-						f->drawFlag += (FD_OPAQUE_FLAG * (f->drawAlpha == 1.0f));
-						f->drawFlag += (FD_ALPHAF_FLAG * (f->drawAlpha <  1.0f));
+						f->drawFlag += (CFeature::FD_OPAQUE_FLAG * (f->drawAlpha == 1.0f));
+						f->drawFlag += (CFeature::FD_ALPHAF_FLAG * (f->drawAlpha <  1.0f));
 						continue;
 					}
 
 					// note: it looks pretty bad to first alpha-fade and then
 					// draw a fully *opaque* fartex, so restrict impostors to
 					// non-fading features
-					f->drawFlag = FD_FARTEX_FLAG * drawFarFeatures * (!f->alphaFade);
+					f->drawFlag = CFeature::FD_FARTEX_FLAG * drawFarFeatures * (!f->alphaFade);
 				}
 			}
 		}

@@ -109,13 +109,15 @@ public:
 	virtual ~CGroundDecalHandler();
 
 	virtual void Draw();
-	virtual void Update() {}
 
 	virtual void GhostCreated(CSolidObject* object, GhostSolidObject* gb);
 	virtual void GhostDestroyed(GhostSolidObject* gb);
 
 	virtual void RemoveSolidObject(CSolidObject* object, GhostSolidObject* gb);
-	virtual void ForceRemoveSolidObject(CSolidObject* object);
+	void ForceRemoveSolidObject(CSolidObject* object);
+	static void RemoveTrack(CUnit* unit);
+
+	void OnDecalLevelChanged() override {}
 
 private:
 	void BindTextures();
@@ -145,7 +147,7 @@ public:
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
 
-	void SunChanged(const float3& sunDir);
+	void SunChanged();
 	void RenderUnitCreated(const CUnit*, int cloaked);
 	void RenderUnitDestroyed(const CUnit*);
 	void RenderFeatureCreated(const CFeature* feature);

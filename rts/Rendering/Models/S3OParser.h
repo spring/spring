@@ -25,8 +25,8 @@ struct SS3OPiece: public S3DModelPiece {
 	}
 
 public:
-	void UploadGeometryVBOs();
-	void DrawForList() const;
+	void UploadGeometryVBOs() override;
+	void DrawForList() const override;
 
 	unsigned int GetVertexDrawIndexCount() const override { return indices.size(); }
 	unsigned int GetVertexCount() const override { return vertices.size(); }

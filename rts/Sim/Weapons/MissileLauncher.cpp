@@ -9,6 +9,7 @@
 #include "Sim/Units/UnitDef.h"
 
 CR_BIND_DERIVED(CMissileLauncher, CWeapon, (NULL, NULL))
+CR_REG_METADATA(CMissileLauncher, )
 
 CMissileLauncher::CMissileLauncher(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
@@ -57,7 +58,7 @@ void CMissileLauncher::FireImpl(const bool scriptCall)
 	WeaponProjectileFactory::LoadProjectile(params);
 }
 
-bool CMissileLauncher::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const
+bool CMissileLauncher::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg, bool useMuzzle) const
 {
 	// do a different test depending on if the missile has high
 	// trajectory (parabolic vs. linear ground intersection)

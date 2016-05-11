@@ -18,7 +18,7 @@ struct WeaponDef;
 
 class CWeapon : public CObject
 {
-	CR_DECLARE(CWeapon)
+	CR_DECLARE_DERIVED(CWeapon)
 
 public:
 	CWeapon(CUnit* owner, const WeaponDef* def);
@@ -26,7 +26,7 @@ public:
 	virtual void Init();
 
 	void SetWeaponNum(int);
-	void DependentDied(CObject* o);
+	void DependentDied(CObject* o) override;
 	virtual void SlowUpdate();
 	virtual void Update();
 
@@ -45,7 +45,7 @@ public:
 	/// test if the enemy/mapspot is in range/angle
 	virtual bool TestRange(const float3 tgtPos, const SWeaponTarget& trg) const;
 	/// test if something is blocking our LineOfFire
-	virtual bool HaveFreeLineOfFire(const float3 tgtPos, const SWeaponTarget& trg) const;
+	virtual bool HaveFreeLineOfFire(const float3 tgtPos, const SWeaponTarget& trg, bool useMuzzle = false) const;
 
 	virtual bool CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRequestedDir) const;
 
@@ -105,13 +105,10 @@ private:
 	void ReAimWeapon();
 	void HoldIfTargetInvalid();
 
-	bool TryTarget(const float3 tgtPos, const SWeaponTarget& trg) const;
-
-	void PostLoad();
+	bool TryTarget(const float3 tgtPos, const SWeaponTarget& trg, bool preFire = false) const;
 public:
 	CUnit* owner;
 
-	int weaponDefID;
 	const WeaponDef* weaponDef;
 
 	int weaponNum;							// the weapons order among the owner weapons

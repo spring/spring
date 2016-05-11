@@ -7,7 +7,7 @@
 
 class CLightningCannon: public CWeapon
 {
-	CR_DECLARE(CLightningCannon)
+	CR_DECLARE_DERIVED(CLightningCannon)
 public:
 	CLightningCannon(CUnit* owner, const WeaponDef* def);
 

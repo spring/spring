@@ -18,7 +18,7 @@ class CUnit;
 struct UnitDef;
 struct BuildInfo;
 class Action;
-struct CommandDescription;
+struct SCommandDescription;
 
 /**
  * The C and part of the V in MVC (Model-View-Controller).
@@ -109,7 +109,7 @@ public:
 	void LayoutIcons(bool useSelectionPage);
 
 public:
-	std::vector<CommandDescription> commands;
+	std::vector<SCommandDescription> commands;
 	int inCommand;
 	int buildFacing;
 	int buildSpacing;
@@ -119,17 +119,17 @@ private:
 	void GiveCommandsNow();
 	bool LayoutCustomIcons(bool useSelectionPage);
 	void ResizeIconArray(unsigned int size);
-	void AppendPrevAndNext(std::vector<CommandDescription>& cmds);
-	void ConvertCommands(std::vector<CommandDescription>& cmds);
+	void AppendPrevAndNext(std::vector<SCommandDescription>& cmds);
+	void ConvertCommands(std::vector<SCommandDescription>& cmds);
 
 	int  FindInCommandPage();
-	void RevertToCmdDesc(const CommandDescription& cmdDesc, bool defaultCommand, bool samePage);
+	void RevertToCmdDesc(const SCommandDescription& cmdDesc, bool defaultCommand, bool samePage);
 
 	unsigned char CreateOptions(bool rightMouseButton);
 	unsigned char CreateOptions(int button);
 	void FinishCommand(int button);
 	void SetShowingMetal(bool show);
-	float GetNumberInput(const CommandDescription& cmdDesc) const;
+	float GetNumberInput(const SCommandDescription& cmdDesc) const;
 
 	void ProcessFrontPositions(float3& pos0, const float3& pos1);
 
@@ -164,7 +164,7 @@ private:
 
 	int  IconAtPos(int x, int y);
 	void SetCursorIcon() const;
-	bool TryTarget(const CommandDescription& cmdDesc) const;
+	bool TryTarget(const SCommandDescription& cmdDesc) const;
 
 	void LoadDefaults();
 	void SanitizeConfig();

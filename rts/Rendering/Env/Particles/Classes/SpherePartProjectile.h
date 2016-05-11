@@ -7,9 +7,10 @@
 
 class CSpherePartProjectile : public CProjectile
 {
-	CR_DECLARE(CSpherePartProjectile)
+	CR_DECLARE_DERIVED(CSpherePartProjectile)
 
 public:
+	CSpherePartProjectile() { }
 	CSpherePartProjectile(
 		const CUnit* owner,
 		const float3& centerPos,
@@ -56,7 +57,7 @@ private:
 /// This class makes a sphere-part-projectile via the explosion-generator
 class CSpherePartSpawner : public CProjectile
 {
-	CR_DECLARE(CSpherePartSpawner)
+	CR_DECLARE_DERIVED(CSpherePartSpawner)
 
 public:
 	CSpherePartSpawner();

@@ -10,6 +10,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Platform/byteorder.h"
+#include "System/Sync/HsiehHash.h"
 
 #include <cctype>
 #include <boost/cstdint.hpp>
@@ -278,12 +279,10 @@ void C3DOParser::GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim
 		// 3do has often duplicated faces (with equal geometry)
 		// with different textures (e.g. for animations and other effects)
 		// we don't support those, only render the last one
-		int vertHash = 0;
 		std::vector<int> orderVert = sp.indices;
 		std::sort(orderVert.begin(), orderVert.end());
-		for (int vi: orderVert) {
-			vertHash = (vertHash + vi) * vi;
-		}
+		const int vertHash = HsiehHash(&orderVert[0], orderVert.size() * sizeof(orderVert[0]), 0x123456);
+
 		auto phi = prevHashes.find(vertHash);
 		if (phi != prevHashes.end()) {
 			obj->prims[phi->second] = sp;

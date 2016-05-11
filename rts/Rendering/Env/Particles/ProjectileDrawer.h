@@ -4,12 +4,15 @@
 #define PROJECTILE_DRAWER_HDR
 
 #include "Rendering/GL/myGL.h"
+#include <array>
 #include <set>
 
 #include "Rendering/GL/FBO.h"
+#include "Rendering/Models/3DModel.h"
 #include "Sim/Projectiles/ProjectileFunctors.h"
 #include "System/EventClient.h"
 
+class CSolidObject;
 class CTextureAtlas;
 struct AtlasedTexture;
 class CGroundFlash;
@@ -100,7 +103,9 @@ private:
 	void DrawProjectilesSet(const std::vector<CProjectile*>& projectiles, bool drawReflection, bool drawRefraction);
 	static void DrawProjectilesSetShadow(const std::vector<CProjectile*>& projectiles);
 
+	static bool CanDrawProjectile(const CProjectile* pro, const CSolidObject* owner);
 	void DrawProjectileNow(CProjectile* projectile, bool drawReflection, bool drawRefraction);
+
 	static void DrawProjectileShadow(CProjectile* projectile);
 	static bool DrawProjectileModel(const CProjectile* projectile);
 
@@ -119,7 +124,7 @@ private:
 	/// projectiles without a model
 	std::vector<CProjectile*> renderProjectiles;
 	/// projectiles with a model
-	std::vector<IModelRenderContainer*> modelRenderers;
+	std::array<IModelRenderContainer*, MODELTYPE_OTHER> modelRenderers;
 
 	/**
 	 * z-sorted set of projectiles without models; used

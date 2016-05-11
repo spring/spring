@@ -60,7 +60,8 @@ CWorldDrawer::~CWorldDrawer()
 	SafeDelete(featureDrawer);
 	SafeDelete(unitDrawer); // depends on unitHandler, cubeMapHandler
 	SafeDelete(projectileDrawer);
-	SafeDelete(modelParser);
+
+	modelLoader.Kill();
 
 	SafeDelete(farTextureHandler);
 	SafeDelete(heightMapTexture);
@@ -82,7 +83,7 @@ void CWorldDrawer::LoadPre() const
 {
 	// these need to be loaded before featureHandler is created
 	// (maps with features have their models loaded at startup)
-	modelParser = new C3DModelLoader();
+	modelLoader.Init();
 
 	loadscreen->SetLoadMessage("Creating Unit Textures");
 	texturehandler3DO = new C3DOTextureHandler();
@@ -297,10 +298,14 @@ void CWorldDrawer::DrawAlphaObjects() const
 	static const double abovePlaneEq[4] = {0.0f,  1.0f, 0.0f, 0.0f};
 
 	{
+		// clip in model-space
+		glPushMatrix();
+		glLoadIdentity();
 		glClipPlane(GL_CLIP_PLANE3, belowPlaneEq);
+		glPopMatrix();
 		glEnable(GL_CLIP_PLANE3);
 
-		// draw cloaked objects below water surface (farthest)
+		// draw alpha-objects below water surface (farthest)
 		unitDrawer->DrawAlphaPass();
 		featureDrawer->DrawAlphaPass();
 
@@ -316,10 +321,13 @@ void CWorldDrawer::DrawAlphaObjects() const
 	}
 
 	{
+		glPushMatrix();
+		glLoadIdentity();
 		glClipPlane(GL_CLIP_PLANE3, abovePlaneEq);
+		glPopMatrix();
 		glEnable(GL_CLIP_PLANE3);
 
-		// draw cloaked objects above water surface (closest)
+		// draw alpha-objects above water surface (closest)
 		unitDrawer->DrawAlphaPass();
 		featureDrawer->DrawAlphaPass();
 
@@ -337,6 +345,11 @@ void CWorldDrawer::DrawMiscObjects() const
 			selectedUnitsHandler.DrawCommands();
 		}
 	}
+
+	// either draw from here, or make {Dyn,Bump}Water use blending
+	// pro: icons are drawn only once per frame, not every pass
+	// con: looks somewhat worse for underwater / obscured icons
+	unitDrawer->DrawUnitIcons();
 
 	lineDrawer.DrawAll();
 	cursorIcons.Draw();

@@ -48,6 +48,8 @@ public:
 	static void ReadLODScales(LuaObjType objType);
 	static void SetDrawPassGlobalLODFactor(LuaObjType objType);
 
+	static int GetBinObjTeam() { return binObjTeam; }
+
 	static float GetLODScale          (int objType) { return (LODScale[objType]                              ); }
 	static float GetLODScaleShadow    (int objType) { return (LODScale[objType] * LODScaleShadow    [objType]); }
 	static float GetLODScaleReflection(int objType) { return (LODScale[objType] * LODScaleReflection[objType]); }
@@ -103,6 +105,11 @@ private:
 
 	// whether the deferred feature pass clears the GB
 	static bool bufferClearAllowed;
+
+	// team of last object visited in DrawMaterialBin
+	// (needed because bins are not sorted by team and
+	// Lua shaders do not have any uniform caching yet)
+	static int binObjTeam;
 
 	static float LODScale[LUAOBJ_LAST];
 	static float LODScaleShadow[LUAOBJ_LAST];

@@ -38,7 +38,8 @@ public:
 		gameNormalDraw     = 1,
 		gameShadowDraw     = 2,
 		gameReflectionDraw = 3,
-		gameRefractionDraw = 4
+		gameRefractionDraw = 4,
+		gameDeferredDraw   = 5,
 	};
 
 	struct PlayerTrafficInfo {
@@ -99,7 +100,7 @@ public:
 	void ParseInputTextGeometry(const std::string& geo);
 
 	void ReloadGame();
-	void SaveGame(const std::string& filename, bool overwrite);
+	void SaveGame(const std::string& filename, bool overwrite, bool usecreg);
 
 	void ResizeEvent();
 

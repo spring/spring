@@ -132,7 +132,7 @@ CMiniMap::CMiniMap()
 		const int divs = (1 << (cl + 3));
 		for (int d = 0; d < divs; d++) {
 			const float rads = float(2.0 * PI) * float(d) / float(divs);
-			glVertex3f(math::sin(rads), 0.0f, math::cos(rads));
+			glVertex3f(std::sin(rads), 0.0f, std::cos(rads));
 		}
 		glEnd();
 		glEndList();

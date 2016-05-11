@@ -28,21 +28,28 @@ namespace GL {
 
 			, ignoreLOS(true)
 
-			, id(-1U)
+			, id(-1u)
+			, uid(-1u)
 			, ttl(0)
 			, relTime(0)
 			, absTime(0)
 			, priority(0)
 
-			, trackPosition(NULL)
-			, trackDirection(NULL)
+			, trackPosition(nullptr)
+			, trackDirection(nullptr)
 		{
+		}
+
+		void ClearDeathDependencies() {
+			for (CObject* obj: GetListening(DEPENDENCE_LIGHT)) {
+				DeleteDeathDependence(obj, DEPENDENCE_LIGHT);
+			}
 		}
 
 		// a light can only depend on one object
 		void DependentDied(CObject* o) {
-			trackPosition = NULL;
-			trackDirection = NULL;
+			trackPosition = nullptr;
+			trackDirection = nullptr;
 		}
 
 		const float4& GetPosition() const { return position; }
@@ -85,12 +92,15 @@ namespace GL {
 		void SetIgnoreLOS(bool b) { ignoreLOS = b; }
 		bool GetIgnoreLOS() const { return ignoreLOS; }
 
-		const unsigned int GetID() const { return id; }
+		unsigned int GetID() const { return id; }
+		unsigned int GetUID() const { return uid; }
 		unsigned int GetTTL() const { return ttl; }
 		unsigned int GetRelativeTime() const { return relTime; }
 		unsigned int GetAbsoluteTime() const { return absTime; }
 		unsigned int GetPriority() const { return priority; }
+
 		void SetID(unsigned int n) { id = n; }
+		void SetUID(unsigned int n) { uid = n; }
 		void SetTTL(unsigned int n) { ttl = n; }
 		void SetRelativeTime(unsigned int n) { relTime = n; }
 		void SetAbsoluteTime(unsigned int n) { absTime = n; }
@@ -154,6 +164,7 @@ namespace GL {
 		bool ignoreLOS;           // if true, we can be seen out of LOS
 
 		unsigned int id;          // GL_LIGHT[id] we are bound to
+		unsigned int uid;         // LightHandler global counter
 		unsigned int ttl;         // maximum lifetime in sim-frames
 		unsigned int relTime;     // current lifetime in sim-frames
 		unsigned int absTime;     // current sim-frame this light is at

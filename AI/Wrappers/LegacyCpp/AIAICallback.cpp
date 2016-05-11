@@ -5,6 +5,7 @@
 #include "ExternalAI/Interface/SSkirmishAICallback.h"
 #include "ExternalAI/Interface/AISCommands.h"
 #include "Sim/Units/CommandAI/Command.h"
+#include "Sim/Units/CommandAI/CommandDescription.h"
 #include "System/Util.h"
 
 // engine copies, so we do not have to adjust
@@ -208,15 +209,15 @@ int springLegacyAI::CAIAICallback::GetUnitGroup(int unitId) {
 	return sAICallback->Unit_getGroup(skirmishAIId, unitId);
 }
 
-const std::vector<CommandDescription>* springLegacyAI::CAIAICallback::GetGroupCommands(int groupId)
+const std::vector<SCommandDescription>* springLegacyAI::CAIAICallback::GetGroupCommands(int groupId)
 {
 	const int numCmds = sAICallback->Group_getSupportedCommands(skirmishAIId, groupId);
 
-	std::vector<CommandDescription>* cmdDescVec = &groupPossibleCommands[groupId];
+	std::vector<SCommandDescription>* cmdDescVec = &groupPossibleCommands[groupId];
 	cmdDescVec->clear();
 
 	for (int c = 0; c < numCmds; c++) {
-		CommandDescription commandDescription;
+		SCommandDescription commandDescription;
 		commandDescription.id = sAICallback->Group_SupportedCommand_getId(skirmishAIId, groupId, c);
 		commandDescription.name = sAICallback->Group_SupportedCommand_getName(skirmishAIId, groupId, c);
 		commandDescription.tooltip = sAICallback->Group_SupportedCommand_getToolTip(skirmishAIId, groupId, c);
@@ -240,15 +241,15 @@ const std::vector<CommandDescription>* springLegacyAI::CAIAICallback::GetGroupCo
 }
 
 
-const std::vector<CommandDescription>* springLegacyAI::CAIAICallback::GetUnitCommands(int unitId)
+const std::vector<SCommandDescription>* springLegacyAI::CAIAICallback::GetUnitCommands(int unitId)
 {
 	const int numCmds = sAICallback->Unit_getSupportedCommands(skirmishAIId, unitId);
 
-	std::vector<CommandDescription>* cmdDescVec = &unitPossibleCommands[unitId];
+	std::vector<SCommandDescription>* cmdDescVec = &unitPossibleCommands[unitId];
 	cmdDescVec->clear();
 
 	for (int c = 0; c < numCmds; c++) {
-		CommandDescription commandDescription;
+		SCommandDescription commandDescription;
 		commandDescription.id = sAICallback->Unit_SupportedCommand_getId(skirmishAIId, unitId, c);
 		commandDescription.name = sAICallback->Unit_SupportedCommand_getName(skirmishAIId, unitId, c);
 		commandDescription.tooltip = sAICallback->Unit_SupportedCommand_getToolTip(skirmishAIId, unitId, c);

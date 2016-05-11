@@ -26,10 +26,10 @@
 #include "SyncedGameCommands.h"
 #include "UnsyncedActionExecutor.h"
 #include "UnsyncedGameCommands.h"
-#include "Game/GUI/PlayerRoster.h"
-#include "Game/GUI/PlayerRosterDrawer.h"
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
+#include "Game/UI/PlayerRoster.h"
+#include "Game/UI/PlayerRosterDrawer.h"
 #include "Game/UI/UnitTracker.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/IAILibraryManager.h"
@@ -62,9 +62,11 @@
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Sim/Features/FeatureDef.h"
+#include "Sim/Features/FeatureDefHandler.h"
+#include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
-#include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
@@ -77,7 +79,6 @@
 #include "Sim/Misc/Wind.h"
 #include "Sim/Misc/ResourceHandler.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
-#include "Sim/MoveTypes/ClassicGroundMoveType.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
@@ -138,7 +139,6 @@ CONFIG(bool, ShowSpeed).defaultValue(false).description("Displays current game s
 CONFIG(int, ShowPlayerInfo).defaultValue(1).headlessValue(0);
 CONFIG(float, GuiOpacity).defaultValue(0.8f).minimumValue(0.0f).maximumValue(1.0f).description("Sets the opacity of the built-in Spring UI. Generally has no effect on LuaUI widgets. Can be set in-game using shift+, to decrease and shift+. to increase.");
 CONFIG(std::string, InputTextGeo).defaultValue("");
-CONFIG(bool, LuaModUICtrl).defaultValue(true).headlessValue(false);
 
 
 CGame* game = NULL;
@@ -282,7 +282,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	ParseInputTextGeometry("default");
 	ParseInputTextGeometry(configHandler->GetString("InputTextGeo"));
 
-	CLuaHandle::SetModUICtrl(configHandler->GetBool("LuaModUICtrl"));
+	CLuaHandle::SetModUICtrl(true);
 	// clear left-over receivers in case we reloaded
 	commandConsole.ResetState();
 
@@ -394,12 +394,12 @@ void CGame::LoadGame(const std::string& mapName, bool threaded)
 	if (!gu->globalQuit) LoadFinalize();
 	if (!gu->globalQuit) LoadSkirmishAIs();
 
-	finishedLoading = true;
-
 	if (!gu->globalQuit && saveFile) {
 		loadscreen->SetLoadMessage("Loading game");
 		saveFile->LoadGame();
 	}
+
+	finishedLoading = true;
 
 	Watchdog::DeregisterThread(WDT_LOAD);
 	AddTimedJobs();
@@ -502,15 +502,17 @@ void CGame::PostLoadSimulation()
 	weaponDefHandler = new CWeaponDefHandler(defsParser);
 	loadscreen->SetLoadMessage("Loading Unit Definitions");
 	unitDefHandler = new CUnitDefHandler(defsParser);
+	featureDefHandler = new CFeatureDefHandler(defsParser);
 
 	CUnit::InitStatic();
-	CClassicGroundMoveType::CreateLineTable();
+	CCommandAI::InitCommandDescriptionCache();
+	CUnitScriptEngine::InitStatic();
 
 	unitHandler = new CUnitHandler();
+	featureHandler = new CFeatureHandler();
 	projectileHandler = new CProjectileHandler();
 
 	loadscreen->SetLoadMessage("Loading Feature Definitions");
-	featureHandler = new CFeatureHandler(defsParser);
 
 	losHandler = new CLosHandler();
 
@@ -536,7 +538,9 @@ void CGame::PostLoadSimulation()
 
 	// load map-specific features
 	loadscreen->SetLoadMessage("Initializing Map Features");
-	featureHandler->LoadFeaturesFromMap(saveFile != NULL);
+	featureDefHandler->LoadFeatureDefsFromMap();
+	if (saveFile == nullptr)
+		featureHandler->LoadFeaturesFromMap();
 
 	wind.LoadWind(mapInfo->atmosphere.minWind, mapInfo->atmosphere.maxWind);
 
@@ -608,7 +612,7 @@ void CGame::LoadInterface()
 		}
 
 		const auto& unitDefs = unitDefHandler->unitDefIDsByName;
-		const auto& featureDefs = featureHandler->GetFeatureDefs();
+		const auto& featureDefs = featureDefHandler->GetFeatureDefs();
 
 		for (auto uit = unitDefs.cbegin(); uit != unitDefs.cend(); ++uit) {
 			wordCompletion->AddWord(uit->first + " ", false, true, false);
@@ -748,10 +752,7 @@ void CGame::KillMisc()
 	LOG("[%s][1]", __FUNCTION__);
 	CEndGameBox::Destroy();
 	CLoadScreen::DeleteInstance(); // make sure to halt loading, otherwise crash :)
-	CColorMap::DeleteColormaps();
-
 	IVideoCapturing::FreeInstance();
-
 
 	LOG("[%s][2]", __FUNCTION__);
 	// delete this first since AI's might call back into sim-components in their dtors
@@ -829,6 +830,7 @@ void CGame::KillSimulation()
 	SafeDelete(quadField);
 	SafeDelete(moveDefHandler);
 	SafeDelete(unitDefHandler);
+	SafeDelete(featureDefHandler);
 	SafeDelete(weaponDefHandler);
 	SafeDelete(damageArrayHandler);
 	SafeDelete(explGenHandler);
@@ -836,7 +838,8 @@ void CGame::KillSimulation()
 	SafeDelete((mapInfo = const_cast<CMapInfo*>(mapInfo)));
 
 	LOG("[%s][4]", __FUNCTION__);
-	CClassicGroundMoveType::DeleteLineTable();
+	CCommandAI::KillCommandDescriptionCache();
+	CUnitScriptEngine::KillStatic();
 }
 
 
@@ -1025,15 +1028,15 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 
 	numDrawFrames++;
 	globalRendering->drawFrame = std::max(1U, globalRendering->drawFrame + 1);
-
+	globalRendering->lastFrameStart = currentTime;
 	// Update the interpolation coefficient (globalRendering->timeOffset)
-	if (!gs->paused && !IsLagging() && gs->frameNum > 1 && !videoCapturing->IsCapturing()) {
-		globalRendering->lastFrameStart = currentTime;
+	if (!gs->paused && !IsLagging() && !gs->PreSimFrame() && !videoCapturing->IsCapturing()) {
 		globalRendering->weightedSpeedFactor = 0.001f * gu->simFPS;
-		globalRendering->timeOffset = (currentTime - lastSimFrameTime).toMilliSecsf() * globalRendering->weightedSpeedFactor;
+		globalRendering->timeOffset = (currentTime - lastFrameTime).toMilliSecsf() * globalRendering->weightedSpeedFactor;
 	} else {
 		globalRendering->timeOffset = 0;
 		lastSimFrameTime = currentTime;
+		lastFrameTime = currentTime;
 	}
 
 	if ((currentTime - frameStartTime).toMilliSecsf() >= 1000.0f) {
@@ -1051,7 +1054,6 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 
 	// set camera
 	camHandler->UpdateController(playerHandler->Player(gu->myPlayerNum), gu->fpsMode, fullscreenEdgeMove, windowedEdgeMove);
-	camHandler->UpdateTransition();
 
 	unitDrawer->Update();
 	lineDrawer.UpdateLineStipple();
@@ -1081,24 +1083,9 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 
 	SetDrawMode(gameNormalDraw); //TODO move to ::Draw()?
 
-	if (luaUI != nullptr)    { luaUI->CheckStack(); luaUI->CheckReload(); }
-	if (luaGaia != nullptr)  { luaGaia->CheckStack(); }
+	if (luaUI != nullptr) { luaUI->CheckStack(); luaUI->CheckAction(); }
+	if (luaGaia != nullptr) { luaGaia->CheckStack(); }
 	if (luaRules != nullptr) { luaRules->CheckStack(); }
-
-	#if 0
-	// XXX ugly hack to minimize luaUI errors
-	// has not been necessary for a long time
-	if (luaUI && luaUI->GetCallInErrors() >= 5) {
-		for (int annoy = 0; annoy < 8; annoy++) {
-			LOG_L(L_ERROR, "5 errors deep in LuaUI, disabling...");
-		}
-
-		CLuaUI::FreeHandler();
-		guihandler->LoadDefaultConfig();
-		LOG_L(L_ERROR, "Type '/luaui reload' in the chat to re-enable LuaUI.");
-		LOG_L(L_ERROR, "===>>>  Please report this error to the forum or mantis with your infolog.txt");
-	}
-	#endif
 
 	if (chatting && !userWriting) {
 		consoleHistory->AddLine(userInput);
@@ -1468,8 +1455,8 @@ void CGame::SimFrame() {
 		unitHandler->Update();
 		projectileHandler->Update();
 		featureHandler->Update();
-		GCobEngine.Tick(33);
-		GUnitScriptEngine.Tick(33);
+		cobEngine->Tick(33);
+		unitScriptEngine->Tick(33);
 		wind.Update();
 		losHandler->Update();
 		interceptHandler.Update(false);
@@ -1760,12 +1747,12 @@ void CGame::ReloadCOB(const string& msg, int player)
 		LOG_L(L_WARNING, "Unknown unit name: \"%s\"", unitName.c_str());
 		return;
 	}
-	const CCobFile* oldScript = GCobFileHandler.GetScriptAddr("scripts/" + udef->scriptName);
+	const CCobFile* oldScript = cobFileHandler->GetScriptAddr(udef->scriptName);
 	if (oldScript == NULL) {
 		LOG_L(L_WARNING, "Unknown COB script for unit \"%s\": %s", unitName.c_str(), udef->scriptName.c_str());
 		return;
 	}
-	CCobFile* newScript = GCobFileHandler.ReloadCobFile("scripts/" + udef->scriptName);
+	CCobFile* newScript = cobFileHandler->ReloadCobFile(udef->scriptName);
 	if (newScript == NULL) {
 		LOG_L(L_WARNING, "Could not load COB script for unit \"%s\" from: %s", unitName.c_str(), udef->scriptName.c_str());
 		return;
@@ -1778,7 +1765,7 @@ void CGame::ReloadCOB(const string& msg, int player)
 			if (cob != NULL && cob->GetScriptAddr() == oldScript) {
 				count++;
 				delete unit->script;
-				unit->script = new CCobInstance(*newScript, unit);
+				unit->script = new CCobInstance(newScript, unit);
 				unit->script->Create();
 			}
 		}
@@ -1808,12 +1795,12 @@ bool CGame::IsLagging(float maxLatency) const
 }
 
 
-void CGame::SaveGame(const std::string& filename, bool overwrite)
+void CGame::SaveGame(const std::string& filename, bool overwrite, bool usecreg)
 {
 	if (FileSystem::CreateDirectory("Saves")) {
 		if (overwrite || !FileSystem::FileExists(filename)) {
 			LOG("Saving game to %s", filename.c_str());
-			ILoadSaveHandler* ls = ILoadSaveHandler::Create();
+			ILoadSaveHandler* ls = ILoadSaveHandler::Create(usecreg);
 			ls->mapName = gameSetup->mapName;
 			ls->modName = gameSetup->modName;
 			ls->SaveGame(filename);
@@ -2095,10 +2082,13 @@ void CGame::ActionReceived(const Action& action, int playerID)
 {
 	const ISyncedActionExecutor* executor = syncedGameCommands->GetActionExecutor(action.command);
 
-	if (executor != NULL) {
+	if (executor != nullptr) {
 		// an executor for that action was found
 		executor->ExecuteAction(SyncedAction(action, playerID));
-	} else if (gs->frameNum > 1) {
+		return;
+	}
+
+	if (!gs->PreSimFrame()) {
 		eventHandler.SyncedActionFallback(action.rawline, playerID);
 		//FIXME add unsynced one?
 	}

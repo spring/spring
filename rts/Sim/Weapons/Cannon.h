@@ -7,7 +7,7 @@
 
 class CCannon: public CWeapon
 {
-	CR_DECLARE(CCannon)
+	CR_DECLARE_DERIVED(CCannon)
 protected:
 	/// this is used to keep range true to range tag
 	float rangeFactor;
@@ -38,7 +38,7 @@ private:
 	float3 GetWantedDir(const float3& diff);
 	float3 GetWantedDir2(const float3& diff) const;
 
-	bool HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const override final;
+	bool HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg, bool useMuzzle = false) const override final;
 	void FireImpl(const bool scriptCall) override final;
 };
 

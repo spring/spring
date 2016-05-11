@@ -412,40 +412,14 @@ struct SSkirmishAICallback {
 	void              (CALLING_CONV *Game_getCategoryName)(int skirmishAIId, int categoryFlag, char* name, int name_sizeMax);
 
 	/**
-	 * This is a set of parameters that is created by SetGameRulesParam() and may change during the game.
-	 * Each parameter is uniquely identified only by its id (which is the index in the vector).
-	 * Parameters may or may not have a name.
-	 * @return visible to skirmishAIId parameters.
-	 * If cheats are enabled, this will return all parameters.
-	 */
-	int               (CALLING_CONV *Game_getGameRulesParams)(int skirmishAIId, int* paramIds, int paramIds_sizeMax); //$ FETCHER:MULTI:IDs:GameRulesParam:paramIds
-
-	/**
-	 * @return only visible to skirmishAIId parameter.
-	 * If cheats are enabled, this will return parameter despite it's losStatus.
-	 */
-	int               (CALLING_CONV *Game_getGameRulesParamByName)(int skirmishAIId, const char* rulesParamName); //$ REF:RETURN->GameRulesParam
-
-	/**
-	 * @return only visible to skirmishAIId parameter.
-	 * If cheats are enabled, this will return parameter despite it's losStatus.
-	 */
-	int               (CALLING_CONV *Game_getGameRulesParamById)(int skirmishAIId, int rulesParamId); //$ REF:RETURN->GameRulesParam
-
-	/**
-	 * Not every mod parameter has a name.
-	 */
-	const char*       (CALLING_CONV *GameRulesParam_getName)(int skirmishAIId, int gameRulesParamId);
-
-	/**
 	 * @return float value of parameter if it's set, 0.0 otherwise.
 	 */
-	float             (CALLING_CONV *GameRulesParam_getValueFloat)(int skirmishAIId, int gameRulesParamId);
+	float             (CALLING_CONV *Game_getRulesParamFloat)(int skirmishAIId, const char* gameRulesParamName, float defaultValue);
 
 	/**
 	 * @return string value of parameter if it's set, empty string otherwise.
 	 */
-	const char*       (CALLING_CONV *GameRulesParam_getValueString)(int skirmishAIId, int gameRulesParamId);
+	const char*       (CALLING_CONV *Game_getRulesParamString)(int skirmishAIId, const char* gameRulesParamName, const char* defaultValue);
 
 // END misc callback functions
 
@@ -1234,40 +1208,14 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *Unit_getDef)(int skirmishAIId, int unitId); //$ REF:RETURN->UnitDef
 
 	/**
-	 * This is a set of parameters that is created by SetUnitRulesParam() and may change during the game.
-	 * Each parameter is uniquely identified only by its id (which is the index in the vector).
-	 * Parameters may or may not have a name.
-	 * @return visible to skirmishAIId parameters.
-	 * If cheats are enabled, this will return all parameters.
-	 */
-	int               (CALLING_CONV *Unit_getUnitRulesParams)(int skirmishAIId, int unitId, int* paramIds, int paramIds_sizeMax); //$ FETCHER:MULTI:IDs:UnitRulesParam:paramIds
-
-	/**
-	 * @return only visible to skirmishAIId parameter.
-	 * If cheats are enabled, this will return parameter despite it's losStatus.
-	 */
-	int               (CALLING_CONV *Unit_getUnitRulesParamByName)(int skirmishAIId, int unitId, const char* rulesParamName); //$ REF:RETURN->UnitRulesParam
-
-	/**
-	 * @return only visible to skirmishAIId parameter.
-	 * If cheats are enabled, this will return parameter despite it's losStatus.
-	 */
-	int               (CALLING_CONV *Unit_getUnitRulesParamById)(int skirmishAIId, int unitId, int rulesParamId); //$ REF:RETURN->UnitRulesParam
-
-	/**
-	 * Not every mod parameter has a name.
-	 */
-	const char*       (CALLING_CONV *Unit_UnitRulesParam_getName)(int skirmishAIId, int unitId, int unitRulesParamId);
-
-	/**
 	 * @return float value of parameter if it's set, 0.0 otherwise.
 	 */
-	float             (CALLING_CONV *Unit_UnitRulesParam_getValueFloat)(int skirmishAIId, int unitId, int unitRulesParamId);
+	float             (CALLING_CONV *Unit_getRulesParamFloat)(int skirmishAIId, int unitId, const char* unitRulesParamName, float defaultValue);
 
 	/**
 	 * @return string value of parameter if it's set, empty string otherwise.
 	 */
-	const char*       (CALLING_CONV *Unit_UnitRulesParam_getValueString)(int skirmishAIId, int unitId, int unitRulesParamId);
+	const char*       (CALLING_CONV *Unit_getRulesParamString)(int skirmishAIId, int unitId, const char* unitRulesParamName, const char* defaultValue);
 
 	int               (CALLING_CONV *Unit_getTeam)(int skirmishAIId, int unitId);
 
@@ -1406,40 +1354,14 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *getAllyTeams)(int skirmishAIId, int* teamIds, int teamIds_sizeMax); //$ FETCHER:MULTI:IDs:Team:teamIds
 
 	/**
-	 * This is a set of parameters that is created by SetTeamRulesParam() and may change during the game.
-	 * Each parameter is uniquely identified only by its id (which is the index in the vector).
-	 * Parameters may or may not have a name.
-	 * @return visible to skirmishAIId parameters.
-	 * If cheats are enabled, this will return all parameters.
-	 */
-	int               (CALLING_CONV *Team_getTeamRulesParams)(int skirmishAIId, int teamId, int* paramIds, int paramIds_sizeMax); //$ FETCHER:MULTI:IDs:TeamRulesParam:paramIds
-
-	/**
-	 * @return only visible to skirmishAIId parameter.
-	 * If cheats are enabled, this will return parameter despite it's losStatus.
-	 */
-	int               (CALLING_CONV *Team_getTeamRulesParamByName)(int skirmishAIId, int teamId, const char* rulesParamName); //$ REF:RETURN->TeamRulesParam
-
-	/**
-	 * @return only visible to skirmishAIId parameter.
-	 * If cheats are enabled, this will return parameter despite it's losStatus.
-	 */
-	int               (CALLING_CONV *Team_getTeamRulesParamById)(int skirmishAIId, int teamId, int rulesParamId); //$ REF:RETURN->TeamRulesParam
-
-	/**
-	 * Not every mod parameter has a name.
-	 */
-	const char*       (CALLING_CONV *Team_TeamRulesParam_getName)(int skirmishAIId, int teamId, int teamRulesParamId);
-
-	/**
 	 * @return float value of parameter if it's set, 0.0 otherwise.
 	 */
-	float             (CALLING_CONV *Team_TeamRulesParam_getValueFloat)(int skirmishAIId, int teamId, int teamRulesParamId);
+	float             (CALLING_CONV *Team_getRulesParamFloat)(int skirmishAIId, int teamId, const char* teamRulesParamName, float defaultValue);
 
 	/**
 	 * @return string value of parameter if it's set, empty string otherwise.
 	 */
-	const char*       (CALLING_CONV *Team_TeamRulesParam_getValueString)(int skirmishAIId, int teamId, int teamRulesParamId);
+	const char*       (CALLING_CONV *Team_getRulesParamString)(int skirmishAIId, int teamId, const char* teamRulesParamName, const char* defaultValue);
 
 // END OBJECT Team
 
@@ -2057,6 +1979,16 @@ struct SSkirmishAICallback {
 	float             (CALLING_CONV *Feature_getReclaimLeft)(int skirmishAIId, int featureId);
 
 	void              (CALLING_CONV *Feature_getPosition)(int skirmishAIId, int featureId, float* return_posF3_out);
+
+	/**
+	 * @return float value of parameter if it's set, 0.0 otherwise.
+	 */
+	float             (CALLING_CONV *Feature_getRulesParamFloat)(int skirmishAIId, int unitId, const char* featureRulesParamName, float defaultValue);
+
+	/**
+	 * @return string value of parameter if it's set, empty string otherwise.
+	 */
+	const char*       (CALLING_CONV *Feature_getRulesParamString)(int skirmishAIId, int unitId, const char* featureRulesParamName, const char* defaultValue);
 
 // END OBJECT Feature
 

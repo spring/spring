@@ -18,8 +18,8 @@ struct SOBJTriangle {
 
 struct SOBJPiece: public S3DModelPiece {
 public:
-	void UploadGeometryVBOs();
-	void DrawForList() const;
+	void UploadGeometryVBOs() override;
+	void DrawForList() const override;
 	void SetMinMaxExtends(bool globalVertexOffsets);
 	void SetVertexTangents();
 
@@ -32,15 +32,15 @@ public:
 	const SOBJTriangle& GetTriangle(int idx) const { return triangles[idx]; }
 
 	unsigned int GetTriangleCount() const { return (triangles.size()); }
-	unsigned int GetVertexDrawIndexCount() const override { return triangles.size() * 3; }
+	unsigned int GetVertexDrawIndexCount() const override { return indices.size(); }
 	unsigned int GetVertexCount() const override { return vertices.size(); }
 	const std::vector<unsigned>& GetVertexIndices() const override { return indices; }
 
 	void BindVertexAttribVBOs() const override;
 	void UnbindVertexAttribVBOs() const override;
 
-	const float3& GetVertexPos(const int idx) const { return vertices[idx]; }
-	const float3& GetNormal(const int idx) const { return vnormals[idx]; }
+	const float3& GetVertexPos(const int idx) const override { return vertices[idx]; }
+	const float3& GetNormal(const int idx) const override { return vnormals[idx]; }
 	const float2& GetTxCoor(const int idx) const { return texcoors[idx]; }
 	const float3& GetSTangent(const int idx) const { return sTangents[idx]; }
 	const float3& GetTTangent(const int idx) const { return tTangents[idx]; }
@@ -74,6 +74,7 @@ private:
 	std::vector<unsigned int> indices;
 };
 
+
 class LuaTable;
 class COBJParser: public IModelParser {
 public:
@@ -83,22 +84,25 @@ private:
 	typedef std::map<std::string, SOBJPiece*> PieceMap;
 
 	bool ParseModelData(
-			S3DModel* model,
-			const std::string& modelData,
-			const LuaTable& metaData);
+		S3DModel* model,
+		const std::string& modelData,
+		const LuaTable& metaData
+	);
 	bool BuildModelPieceTree(
-			S3DModel* model,
-			const PieceMap& pieceMap,
-			const LuaTable& piecesTable,
-			bool globalVertexOffsets,
-			bool localPieceOffsets);
+		S3DModel* model,
+		const PieceMap& pieceMap,
+		const LuaTable& piecesTable,
+		bool globalVertexOffsets,
+		bool localPieceOffsets
+	);
 	void BuildModelPieceTreeRec(
-			S3DModel* model,
-			SOBJPiece* piece,
-			const PieceMap& pieceMap,
-			const LuaTable& pieceTable,
-			bool globalVertexOffsets,
-			bool localPieceOffsets);
+		S3DModel* model,
+		SOBJPiece* piece,
+		const PieceMap& pieceMap,
+		const LuaTable& pieceTable,
+		bool globalVertexOffsets,
+		bool localPieceOffsets
+	);
 };
 
 #endif // OBJ_PARSER_H

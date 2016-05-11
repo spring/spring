@@ -439,6 +439,28 @@ endif()
 
 
 ################################################################################
+### SQRT
+	set(test_name SQRT)
+	Set(test_src
+			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/testSQRT.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
+			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
+			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
+			${test_Log_sources}
+			${sources_engine_System_Threading}
+		)
+	set(test_libs
+			streflop
+			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+			${Boost_SYSTEM_LIBRARY}
+			${Boost_CHRONO_LIBRARY_WITH_RT}
+			${Boost_THREAD_LIBRARY}
+			${WINMM_LIBRARY}
+		)
+	set(test_flags "-DNOT_USING_CREG -DSTREFLOP_SSE -DBUILDING_AI")
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
+
+################################################################################
 ### EventClient
 	set(test_name EventClient)
 	Set(test_src

@@ -5,9 +5,6 @@
 #include "CobFile.h"
 #include "CobInstance.h"
 #include "CobThread.h"
-#include "UnitScriptLog.h"
-
-#ifndef _CONSOLE
 
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
@@ -37,25 +34,47 @@
 #include "System/Sound/ISoundChannels.h"
 #include "System/Sync/SyncTracer.h"
 
-#endif // _CONSOLE
-
 
 /******************************************************************************/
 /******************************************************************************/
+
+CR_BIND_DERIVED(CCobInstance, CUnitScript, )
+
+CR_REG_METADATA(CCobInstance, (
+	CR_MEMBER(staticVars),
+	CR_MEMBER(threads),
+
+	//loaded from cobFileHandler
+	CR_IGNORED(script),
+
+	CR_POSTLOAD(PostLoad)
+))
 
 
 inline bool CCobInstance::HasFunction(int id) const
 {
-	return script.scriptIndex[id] >= 0;
+	return script->scriptIndex[id] >= 0;
 }
 
+//Used by creg
+CCobInstance::CCobInstance()
+	: CUnitScript(nullptr)
+	, script(nullptr)
+{ }
 
-CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
+CCobInstance::CCobInstance(CCobFile* _script, CUnit* _unit)
 	: CUnitScript(_unit)
 	, script(_script)
 {
-	staticVars.reserve(script.numStaticVars);
-	for (int i = 0; i < script.numStaticVars; ++i) {
+	Init();
+}
+
+void CCobInstance::Init()
+{
+	assert(script != nullptr);
+
+	staticVars.reserve(script->numStaticVars);
+	for (int i = 0; i < script->numStaticVars; ++i) {
 		staticVars.push_back(0);
 	}
 
@@ -64,6 +83,14 @@ CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
 	hasSetSFXOccupy  = HasFunction(COBFN_SetSFXOccupy);
 	hasRockUnit      = HasFunction(COBFN_RockUnit);
 	hasStartBuilding = HasFunction(COBFN_StartBuilding);
+
+}
+
+void CCobInstance::PostLoad()
+{
+	assert(unit != nullptr);
+	script = cobFileHandler->GetCobFile(unit->unitDef->scriptName);
+	Init();
 }
 
 
@@ -71,37 +98,23 @@ CCobInstance::~CCobInstance()
 {
 	//this may be dangerous, is it really desired?
 	//Destroy();
-
-	do {
-		for (int animType = ATurn; animType <= AMove; animType++) {
-			for (std::list<AnimInfo *>::iterator i = anims[animType].begin(); i != anims[animType].end(); ++i) {
-				// All threads blocking on animations can be killed safely from here since the scheduler does not
-				// know about them
-				std::list<IAnimListener *>& listeners = (*i)->listeners;
-				while (!listeners.empty()) {
-					IAnimListener* al = listeners.front();
-					listeners.pop_front();
-					delete al;
-				}
-				// the anims are deleted in ~CUnitScript
-			}
+	// Deleting waiting threads and unregistering all callbacks
+	while (!threads.empty()) {
+		CCobThread* t = threads.back();
+		t->owner = nullptr;
+		if (t->IsWaiting()) {
+			delete t;
+		} else {
+			t->state = CCobThread::Dead;
 		}
-		// callbacks may add new threads, and therefore listeners
-	} while (HaveListeners());
-
-	// Can't delete the thread here because that would confuse the scheduler to no end
-	// Instead, mark it as dead. It is the function calling Tick that is responsible for delete.
-	// Also unregister all callbacks
-	for (std::list<CCobThread *>::iterator i = threads.begin(); i != threads.end(); ++i) {
-		(*i)->state = CCobThread::Dead;
-		(*i)->SetCallback(NULL, NULL, NULL);
+		threads.pop_back();
 	}
 }
 
 
 void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 {
-	std::vector<std::string>& pieceNames = script.pieceNames; // already in lowercase!
+	std::vector<std::string>& pieceNames = script->pieceNames; // already in lowercase!
 	std::vector<LocalModelPiece>& lmodelPieces = lmodel->pieces;
 
 	pieces.clear();
@@ -139,7 +152,7 @@ void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 
 			const char* fmtString = "[%s] could not find piece named \"%s\" (referenced by COB script \"%s\")";
 			const char* pieceName = pieceNames[scriptPieceNum].c_str();
-			const char* scriptName = script.name.c_str();
+			const char* scriptName = script->name.c_str();
 
 			LOG_L(L_WARNING, fmtString, __FUNCTION__, pieceName, scriptName);
 		}
@@ -149,7 +162,7 @@ void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 
 int CCobInstance::GetFunctionId(const std::string& fname) const
 {
-	return script.GetFunctionId(fname);
+	return script->GetFunctionId(fname);
 }
 
 
@@ -198,14 +211,6 @@ void CCobInstance::Create()
 }
 
 
-// Called when a unit's Killed script finishes executing
-static void CUnitKilledCB(int retCode, void* p1, void* p2)
-{
-	CUnit* self = static_cast<CUnit*>(p1);
-	self->deathScriptFinished = true;
-	self->delayedWreckLevel = retCode;
-}
-
 
 void CCobInstance::Killed()
 {
@@ -213,8 +218,8 @@ void CCobInstance::Killed()
 	args.reserve(2);
 	args.push_back((int) (unit->recentDamage / unit->maxHealth * 100));
 	args.push_back(0);
-	Call(COBFN_Killed, args, &CUnitKilledCB, unit, NULL);
-	unit->delayedWreckLevel = args[1];
+
+	Call(COBFN_Killed, args, CBKilled, 0, nullptr);
 }
 
 
@@ -245,10 +250,6 @@ void CCobInstance::RockUnit(const float3& rockDir)
 }
 
 
-static void hitByWeaponIdCallback(int retCode, void* p1, void* p2) {
-	*(reinterpret_cast<float*>(p1)) = (retCode * 0.01f);
-}
-
 void CCobInstance::HitByWeapon(const float3& hitDir, int weaponDefId, float& inoutDamage)
 {
 	vector<int> args;
@@ -262,12 +263,11 @@ void CCobInstance::HitByWeapon(const float3& hitDir, int weaponDefId, float& ino
 		args.push_back((wd != nullptr)? wd->tdfId : -1);
 		args.push_back((int)(100 * inoutDamage));
 
-		float weaponHitMod = 1.0f;
+		int weaponHitMod = 1;
 
-		// pass weaponHitMod as argument <p1> for callback
-		Call(COBFN_HitByWeaponId, args, hitByWeaponIdCallback, &weaponHitMod, nullptr);
+		Call(COBFN_HitByWeaponId, args, CBNone, 0, &weaponHitMod);
 
-		inoutDamage *= weaponHitMod;
+		inoutDamage *= weaponHitMod * 0.01f;
 	} else {
 		Call(COBFN_HitByWeapon, args);
 	}
@@ -368,27 +368,15 @@ int CCobInstance::QueryWeapon(int weaponNum)
 }
 
 
-// Called when unit's AimWeapon script finished executing
-static void ScriptCallback(int retCode, void* p1, void* p2)
-{
-	static_cast<CWeapon*>(p1)->angleGood = (retCode == 1);
-}
-
 void CCobInstance::AimWeapon(int weaponNum, float heading, float pitch)
 {
 	vector<int> args;
 	args.reserve(2);
 	args.push_back(short(heading * RAD2TAANG));
 	args.push_back(short(pitch * RAD2TAANG));
-	Call(COBFN_AimPrimary + COBFN_Weapon_Funcs * weaponNum, args, ScriptCallback, unit->weapons[weaponNum], NULL);
+	Call(COBFN_AimPrimary + COBFN_Weapon_Funcs * weaponNum, args, CBAimWeapon, weaponNum, nullptr);
 }
 
-
-// Called when unit's AimWeapon script finished executing (for shield weapon)
-static void ShieldScriptCallback(int retCode, void* p1, void* p2)
-{
-	static_cast<CPlasmaRepulser*>(p1)->SetEnabled(!!retCode);
-}
 
 void CCobInstance::AimShieldWeapon(CPlasmaRepulser* weapon)
 {
@@ -396,7 +384,7 @@ void CCobInstance::AimShieldWeapon(CPlasmaRepulser* weapon)
 	args.reserve(2);
 	args.push_back(0); // compat with AimWeapon (same script is called)
 	args.push_back(0);
-	Call(COBFN_AimPrimary + COBFN_Weapon_Funcs * weapon->weaponNum, args, ShieldScriptCallback, weapon, 0);
+	Call(COBFN_AimPrimary + COBFN_Weapon_Funcs * weapon->weaponNum, args, CBAimShield, weapon->weaponNum, nullptr);
 }
 
 
@@ -448,6 +436,13 @@ float CCobInstance::TargetWeight(int weaponNum, const CUnit* targetUnit)
 	return (float)args[1] / (float)COBSCALE;
 }
 
+void CCobInstance::AnimFinished(AnimType type, int piece, int axis)
+{
+	for (CCobThread* t: threads) {
+		t->AnimFinished(type, piece, axis);
+	}
+}
+
 
 void CCobInstance::Destroy() { Call(COBFN_Destroy); }
 void CCobInstance::StartMoving(bool reversing) { Call(COBFN_StartMoving, reversing); }
@@ -472,32 +467,37 @@ void CCobInstance::EndBurst(int weaponNum) { Call(COBFN_EndBurst + COBFN_Weapon_
  * @brief Calls a cob script function
  * @param functionId int cob script function id
  * @param args vector<int> function arguments
- * @param cb CBCobThreadFinish Callback function
- * @param p1 void* callback argument #1
- * @param p2 void* callback argument #2
+ * @param cb ThreadCallbackType Callback action
+ * @param cbParam int callback argument
  * @return 0 if the call terminated. If the caller provides a callback and the thread does not terminate,
  *  it will continue to run. Otherwise it will be killed. Returns 1 in this case.
  */
-int CCobInstance::RealCall(int functionId, vector<int>& args, CBCobThreadFinish cb, void* p1, void* p2)
+int CCobInstance::RealCall(int functionId, vector<int>& args, ThreadCallbackType cb, int cbParam, int* retCode)
 {
-	if (functionId < 0 || size_t(functionId) >= script.scriptNames.size()) {
-		if (cb) {
-			// in case the function doesnt exist the callback should still be called
-			(*cb)(0, p1, p2);
+
+	if (functionId < 0 || size_t(functionId) >= script->scriptNames.size()) {
+		if (retCode != nullptr)
+			*retCode = -1;
+
+		if (cb != CBNone) {
+			// in case the function does not exist the callback should
+			// still be called; -1 is the default CobThread return code
+			ThreadCallback(cb, -1, cbParam);
 		}
 		return -1;
 	}
 
-	CCobThread* thread = new CCobThread(script, this);
+
+	CCobThread* thread = new CCobThread(this);
 	thread->Start(functionId, args, false);
 
-	LOG_L(L_DEBUG, "Calling %s:%s", script.name.c_str(), script.scriptNames[functionId].c_str());
+	//LOG_L(L_DEBUG, "Calling %s:%s", script->name.c_str(), script->scriptNames[functionId].c_str());
 
 	const bool res = thread->Tick();
 
 	// Make sure this is run even if the call terminates instantly
-	if (cb)
-		thread->SetCallback(cb, p1, p2);
+	if (cb != CBNone)
+		thread->SetCallback(cb, cbParam);
 
 	if (!res) {
 		// thread died already after one tick
@@ -506,7 +506,7 @@ int CCobInstance::RealCall(int functionId, vector<int>& args, CBCobThreadFinish 
 		//   there will be a mismatch between the number of arguments
 		//   passed in (1) and the number returned (0) as of 95.0 -->
 		//   prevent error-spam
-		unsigned int i = 0, argc = thread->CheckStack(args.size(), functionId != script.scriptIndex[COBFN_StartMoving]);
+		unsigned int i = 0, argc = thread->CheckStack(args.size(), functionId != script->scriptIndex[COBFN_StartMoving]);
 
 		// Retrieve parameter values from stack
 		for (; i < argc; ++i)
@@ -516,6 +516,9 @@ int CCobInstance::RealCall(int functionId, vector<int>& args, CBCobThreadFinish 
 		for (; i < args.size(); ++i)
 			args[i] = 0;
 
+		// dtor runs the callback
+		if (retCode != nullptr)
+			*retCode = thread->GetRetCode();
 		delete thread;
 		return 0;
 	}
@@ -532,67 +535,88 @@ int CCobInstance::RealCall(int functionId, vector<int>& args, CBCobThreadFinish 
 int CCobInstance::Call(const std::string& fname)
 {
 	vector<int> x;
-	return Call(fname, x, NULL, NULL, NULL);
+	return Call(fname, x, CBNone, 0, nullptr);
 }
 
 int CCobInstance::Call(const std::string& fname, std::vector<int>& args)
 {
-	return Call(fname, args, NULL, NULL, NULL);
+	return Call(fname, args, CBNone, 0, nullptr);
 }
 
-int CCobInstance::Call(const std::string& fname, int p1)
+int CCobInstance::Call(const std::string& fname, int arg1)
 {
 	vector<int> x;
 	x.reserve(1);
-	x.push_back(p1);
-	return Call(fname, x, NULL, NULL, NULL);
+	x.push_back(arg1);
+	return Call(fname, x, CBNone, 0, nullptr);
 }
 
-int CCobInstance::Call(const std::string& fname, std::vector<int>& args, CBCobThreadFinish cb, void* p1, void* p2)
+int CCobInstance::Call(const std::string& fname, std::vector<int>& args, ThreadCallbackType cb, int cbParam, int* retCode)
 {
 	//TODO: Check that new behaviour of actually calling cb when the function is not defined is right?
 	//      (the callback has always been called [when the function is not defined]
 	//       in the id-based Call()s, but never in the string based calls.)
-	return RealCall(GetFunctionId(fname), args, cb, p1, p2);
+	return RealCall(GetFunctionId(fname), args, cb, cbParam, retCode);
 }
 
 
 int CCobInstance::Call(int id)
 {
 	vector<int> x;
-	return Call(id, x, NULL, NULL, NULL);
+	return Call(id, x, CBNone, 0, nullptr);
 }
 
-int CCobInstance::Call(int id, int p1)
+int CCobInstance::Call(int id, int arg1)
 {
 	vector<int> x;
 	x.reserve(1);
-	x.push_back(p1);
-	return Call(id, x, NULL, NULL, NULL);
+	x.push_back(arg1);
+	return Call(id, x, CBNone, 0, nullptr);
 }
 
 int CCobInstance::Call(int id, std::vector<int>& args)
 {
-	return Call(id, args, NULL, NULL, NULL);
+	return Call(id, args, CBNone, 0, nullptr);
 }
 
-int CCobInstance::Call(int id, std::vector<int>& args, CBCobThreadFinish cb, void* p1, void* p2)
+int CCobInstance::Call(int id, std::vector<int>& args, ThreadCallbackType cb, int cbParam, int* retCode)
 {
-	return RealCall(script.scriptIndex[id], args, cb, p1, p2);
+	return RealCall(script->scriptIndex[id], args, cb, cbParam, retCode);
 }
 
 
 void CCobInstance::RawCall(int fn)
 {
 	vector<int> x;
-	RealCall(fn, x, NULL, NULL, NULL);
+	RealCall(fn, x, CBNone, 0, nullptr);
 }
 
 int CCobInstance::RawCall(int fn, std::vector<int> &args)
 {
-	return RealCall(fn, args, NULL, NULL, NULL);
+	return RealCall(fn, args, CBNone, 0, nullptr);
 }
 
+void CCobInstance::ThreadCallback(ThreadCallbackType type, int retCode, int cbParam)
+{
+	switch(type) {
+		// note: this callback is always called, even if Killed does not exist
+		// however, retCode is only set if the function has a return statement
+		// (otherwise its value is -1 regardless of Killed being present which
+		// means *no* wreck will be spawned)
+		case CBKilled:
+			unit->deathScriptFinished = true;
+			unit->delayedWreckLevel = retCode;
+			break;
+		case CBAimWeapon:
+			unit->weapons[cbParam]->angleGood = (retCode == 1);
+			break;
+		case CBAimShield:
+			static_cast<CPlasmaRepulser*>(unit->weapons[cbParam])->SetEnabled(retCode != 0);
+			break;
+		default:
+			assert(false);
+		}
+}
 
 /******************************************************************************/
 /******************************************************************************/
@@ -600,9 +624,9 @@ int CCobInstance::RawCall(int fn, std::vector<int> &args)
 
 void CCobInstance::Signal(int signal)
 {
-	for (std::list<CCobThread *>::iterator i = threads.begin(); i != threads.end(); ++i) {
-		if ((signal & (*i)->signalMask) != 0) {
-			(*i)->state = CCobThread::Dead;
+	for (CCobThread* t: threads) {
+		if ((signal & t->signalMask) != 0) {
+			t->state = CCobThread::Dead;
 			//LOG_L(L_DEBUG, "Killing a thread %d %d", signal, (*i)->signalMask);
 		}
 	}
@@ -611,11 +635,11 @@ void CCobInstance::Signal(int signal)
 
 void CCobInstance::PlayUnitSound(int snr, int attr)
 {
-	Channels::UnitReply->PlaySample(script.sounds[snr], unit->pos, unit->speed, attr);
+	Channels::UnitReply->PlaySample(script->sounds[snr], unit->pos, unit->speed, attr);
 }
 
 
 void CCobInstance::ShowScriptError(const std::string& msg)
 {
-	GCobEngine.ShowScriptError(msg);
+	cobEngine->ShowScriptError(msg);
 }

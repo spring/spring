@@ -62,6 +62,7 @@ private:
 	bool MainEventHandler(const SDL_Event& ev);
 
 	CGameController* RunScript(const std::string& buf);
+	CGameController* LoadSaveFile(const std::string& saveName); //!< Starts game from a specified save
 };
 
 /**

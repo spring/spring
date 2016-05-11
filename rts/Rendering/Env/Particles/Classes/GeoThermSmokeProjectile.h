@@ -11,6 +11,7 @@ class CGeoThermSmokeProjectile : public CSmokeProjectile
 {
 	CR_DECLARE(CGeoThermSmokeProjectile)
 public:
+	CGeoThermSmokeProjectile() { }
 	CGeoThermSmokeProjectile(
 		const float3& pos,
 		const float3& spd,

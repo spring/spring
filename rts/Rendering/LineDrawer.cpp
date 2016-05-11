@@ -2,8 +2,9 @@
 
 // TODO: move this out of Sim, this is rendering code!
 
-
 #include "LineDrawer.h"
+
+#include <cmath>
 
 #include "Rendering/GlobalRendering.h"
 #include "Game/UI/CommandColors.h"
@@ -29,7 +30,7 @@ CLineDrawer::CLineDrawer()
 void CLineDrawer::UpdateLineStipple()
 {
 	stippleTimer += (globalRendering->lastFrameTime * 0.001f * cmdColors.StippleSpeed());
-	stippleTimer = math::fmod(stippleTimer, (16.0f / 20.0f));
+	stippleTimer = std::fmod(stippleTimer, (16.0f / 20.0f));
 }
 
 
@@ -56,6 +57,7 @@ void CLineDrawer::DrawAll()
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
 
+	glPushAttrib(GL_ENABLE_BIT);
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_LINE_STIPPLE);
@@ -84,7 +86,7 @@ void CLineDrawer::DrawAll()
 
 	glDisableClientState(GL_COLOR_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
-	glEnable(GL_DEPTH_TEST);
+	glPopAttrib();
 
 	lines.clear();
 	stippled.clear();

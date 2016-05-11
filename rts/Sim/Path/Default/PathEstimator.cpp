@@ -356,7 +356,7 @@ void CPathEstimator::CalculateVertex(
 	const float3 goalPos   = SquareToFloat3(childSquare.x, childSquare.y);
 
 	// keep search exactly contained within the two blocks
-	CRectangularSearchConstraint pfDef(startPos, goalPos, BLOCK_SIZE);
+	CRectangularSearchConstraint pfDef(startPos, goalPos, 0.0f, BLOCK_SIZE);
 
 	// we never want to allow searches from any blocked starting positions
 	// (otherwise PE and PF can disagree), but are more lenient for normal
@@ -376,9 +376,9 @@ void CPathEstimator::CalculateVertex(
 	// since CPathFinder::GetPath() is not thread-safe, use
 	// this thread's "private" CPathFinder instance (rather
 	// than locking pathFinder->GetPath()) if we are in one
-	pfDef.testMobile = false;
-	pfDef.needPath   = false;
-	pfDef.exactPath  = true;
+	pfDef.testMobile     = false;
+	pfDef.needPath       = false;
+	pfDef.exactPath      = true;
 	pfDef.dirIndependent = true;
 	IPath::Path path;
 	IPath::SearchResult result = pathFinders[threadNum]->GetPath(moveDef, pfDef, nullptr, startPos, path, MAX_SEARCHED_NODES_PF >> 2);
@@ -555,6 +555,7 @@ IPath::SearchResult CPathEstimator::DoSearch(const MoveDef& moveDef, const CPath
 		// no, check if the goal is already reached
 		const int2 bSquare = blockStates.peNodeOffsets[moveDef.pathType][ob->nodeNum];
 		const int2 gSquare = ob->nodePos * BLOCK_SIZE + goalSqrOffset;
+
 		if (peDef.IsGoal(bSquare.x, bSquare.y) || peDef.IsGoal(gSquare.x, gSquare.y)) {
 			mGoalBlockIdx = ob->nodeNum;
 			mGoalHeuristic = 0.0f;
@@ -604,7 +605,7 @@ bool CPathEstimator::TestBlock(
 	const MoveDef& moveDef,
 	const CPathFinderDef& peDef,
 	const PathNode* parentOpenBlock,
-	const CSolidObject* /*owner*/,
+	const CSolidObject* owner,
 	const unsigned int pathDir,
 	const unsigned int /*blockStatus*/,
 	float /*speedMod*/
@@ -612,41 +613,81 @@ bool CPathEstimator::TestBlock(
 	testedBlocks++;
 
 	// initial calculations of the new block
-	const int2 block = parentOpenBlock->nodePos + PE_DIRECTION_VECTORS[pathDir];
-	const unsigned int blockIdx = BlockPosToIdx(block);
+	const int2 testBlockPos = parentOpenBlock->nodePos + PE_DIRECTION_VECTORS[pathDir];
+	const int2 goalBlockPos = {int(peDef.goalSquareX / BLOCK_SIZE), int(peDef.goalSquareZ / BLOCK_SIZE)};
+
+	const unsigned int testBlockIdx = BlockPosToIdx(testBlockPos);
 
 	// bounds-check
-	if ((unsigned)block.x >= nbrOfBlocks.x) return false;
-	if ((unsigned)block.y >= nbrOfBlocks.y) return false;
+	if ((unsigned)testBlockPos.x >= nbrOfBlocks.x) return false;
+	if ((unsigned)testBlockPos.y >= nbrOfBlocks.y) return false;
 
 	// check if the block is unavailable
-	if (blockStates.nodeMask[blockIdx] & (PATHOPT_BLOCKED | PATHOPT_CLOSED))
+	if (blockStates.nodeMask[testBlockIdx] & (PATHOPT_BLOCKED | PATHOPT_CLOSED))
 		return false;
 
 	// read precached vertex costs
-	const unsigned int vertexIdx =
-		moveDef.pathType * blockStates.GetSize() * PATH_DIRECTION_VERTICES +
-		parentOpenBlock->nodeNum * PATH_DIRECTION_VERTICES +
-		GetBlockVertexOffset(pathDir, nbrOfBlocks.x);
-	assert((unsigned)vertexIdx < vertexCosts.size());
+	const unsigned int pathTypeBaseIdx = moveDef.pathType * blockStates.GetSize() * PATH_DIRECTION_VERTICES;
+	const unsigned int blockNumBaseIdx = parentOpenBlock->nodeNum * PATH_DIRECTION_VERTICES;
+	const unsigned int vertexIdx = pathTypeBaseIdx + blockNumBaseIdx + GetBlockVertexOffset(pathDir, nbrOfBlocks.x);
+	assert(vertexIdx < vertexCosts.size());
+
+
 	if (vertexCosts[vertexIdx] >= PATHCOST_INFINITY) {
-		// warning:
-		// we cannot naively set PATHOPT_BLOCKED here
-		// cause vertexCosts[] depends on the direction and nodeMask doesn't
-		// so we would have to save the direction via PATHOPT_LEFT etc. in the nodeMask
-		// but that's complicated and not worth it.
-		// Performance gain is low, cause we would just save the vertexCosts[] lookup
-		//blockStates.nodeMask[blockIdx] |= (PathDir2PathOpt(pathDir) | PATHOPT_BLOCKED);
-		//dirtyBlocks.push_back(blockIdx);
+		// warning: we cannot naively set PATHOPT_BLOCKED here;
+		// vertexCosts[] depends on the direction and nodeMask
+		// does not
+		// we would have to save the direction via PATHOPT_LEFT
+		// etc. in the nodeMask but that is complicated and not
+		// worth it: would just save the vertexCosts[] lookup
+		//
+		// blockStates.nodeMask[testBlockIdx] |= (PathDir2PathOpt(pathDir) | PATHOPT_BLOCKED);
+		// dirtyBlocks.push_back(testBlockIdx);
 		return false;
 	}
 
 	// check if the block is out of constraints
-	const int2 square = blockStates.peNodeOffsets[moveDef.pathType][blockIdx];
+	const int2 square = blockStates.peNodeOffsets[moveDef.pathType][testBlockIdx];
 	if (!peDef.WithinConstraints(square.x, square.y)) {
-		blockStates.nodeMask[blockIdx] |= PATHOPT_BLOCKED;
-		dirtyBlocks.push_back(blockIdx);
+		blockStates.nodeMask[testBlockIdx] |= PATHOPT_BLOCKED;
+		dirtyBlocks.push_back(testBlockIdx);
 		return false;
+	}
+
+	// constraintDisabled is a hackish way to make sure we don't check this in CalculateVertices
+	if (testBlockPos == goalBlockPos && peDef.needPath) {
+		IPath::Path path;
+
+		// if we have expanded the goal-block, check if a valid
+		// max-resolution path exists (from where we entered it
+		// to the actual goal position) since there might still
+		// be impassable terrain in between
+		//
+		// const float3 gWorldPos = {            testBlockPos.x * BLOCK_PIXEL_SIZE * 1.0f, 0.0f,             testBlockPos.y * BLOCK_PIXEL_SIZE * 1.0f};
+		// const float3 sWorldPos = {parentOpenBlock->nodePos.x * BLOCK_PIXEL_SIZE * 1.0f, 0.0f, parentOpenBlock->nodePos.y * BLOCK_PIXEL_SIZE * 1.0f};
+		const int idx = BlockPosToIdx(testBlockPos);
+		const int2 testSquare = blockStates.peNodeOffsets[moveDef.pathType][idx];
+
+		const float3 sWorldPos = SquareToFloat3(testSquare.x, testSquare.y);
+		const float3 gWorldPos = peDef.goal;
+
+		if (sWorldPos.SqDistance2D(gWorldPos) > peDef.sqGoalRadius) {
+			CRectangularSearchConstraint pfDef = CRectangularSearchConstraint(sWorldPos, gWorldPos, peDef.sqGoalRadius, BLOCK_SIZE); // sets goalSquare{X,Z}
+			pfDef.testMobile     = false;
+			pfDef.needPath       = false;
+			pfDef.exactPath      = true;
+			pfDef.dirIndependent = true;
+			const IPath::SearchResult searchRes = pathFinder->GetPath(moveDef, pfDef, owner, sWorldPos, path, MAX_SEARCHED_NODES_PF >> 3);
+
+			if (searchRes != IPath::Ok) {
+				// we cannot set PATHOPT_BLOCKED here either, result
+				// depends on direction of entry from the parent node
+				//
+				// blockStates.nodeMask[testBlockIdx] |= PATHOPT_BLOCKED;
+				// dirtyBlocks.push_back(testBlockIdx);
+				return false;
+			}
+		}
 	}
 
 
@@ -660,18 +701,18 @@ bool CPathEstimator::TestBlock(
 	const float fCost = gCost + hCost;
 
 	// already in the open set?
-	if (blockStates.nodeMask[blockIdx] & PATHOPT_OPEN) {
+	if (blockStates.nodeMask[testBlockIdx] & PATHOPT_OPEN) {
 		// check if new found path is better or worse than the old one
-		if (blockStates.fCost[blockIdx] <= fCost)
+		if (blockStates.fCost[testBlockIdx] <= fCost)
 			return true;
 
 		// no, clear old path data
-		blockStates.nodeMask[blockIdx] &= ~PATHOPT_CARDINALS;
+		blockStates.nodeMask[testBlockIdx] &= ~PATHOPT_CARDINALS;
 	}
 
 	// look for improvements
 	if (hCost < mGoalHeuristic) {
-		mGoalBlockIdx = blockIdx;
+		mGoalBlockIdx = testBlockIdx;
 		mGoalHeuristic = hCost;
 	}
 
@@ -682,19 +723,19 @@ bool CPathEstimator::TestBlock(
 	PathNode* ob = openBlockBuffer.GetNode(openBlockBuffer.GetSize());
 		ob->fCost   = fCost;
 		ob->gCost   = gCost;
-		ob->nodePos = block;
-		ob->nodeNum = blockIdx;
+		ob->nodePos = testBlockPos;
+		ob->nodeNum = testBlockIdx;
 	openBlocks.push(ob);
 
 	blockStates.SetMaxCost(NODE_COST_F, std::max(blockStates.GetMaxCost(NODE_COST_F), fCost));
 	blockStates.SetMaxCost(NODE_COST_G, std::max(blockStates.GetMaxCost(NODE_COST_G), gCost));
 
 	// mark this block as open
-	blockStates.fCost[blockIdx] = fCost;
-	blockStates.gCost[blockIdx] = gCost;
-	blockStates.nodeMask[blockIdx] |= (PathDir2PathOpt(pathDir) | PATHOPT_OPEN);
+	blockStates.fCost[testBlockIdx] = fCost;
+	blockStates.gCost[testBlockIdx] = gCost;
+	blockStates.nodeMask[testBlockIdx] |= (PathDir2PathOpt(pathDir) | PATHOPT_OPEN);
 
-	dirtyBlocks.push_back(blockIdx);
+	dirtyBlocks.push_back(testBlockIdx);
 	return true;
 }
 

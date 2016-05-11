@@ -18,7 +18,7 @@ class CUnit;
 
 class CTeam : public TeamBase
 {
-	CR_DECLARE(CTeam)
+	CR_DECLARE_DERIVED(CTeam)
 public:
 	CTeam();
 
@@ -99,7 +99,6 @@ public:
 
 	/// mod controlled parameters
 	LuaRulesParams::Params  modParams;
-	LuaRulesParams::HashMap modParamsMap; //< name map for mod parameters
 
 	/// unsynced
 	SColor origColor;

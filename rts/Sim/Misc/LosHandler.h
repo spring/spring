@@ -264,11 +264,11 @@ public:
 
 public:
 	// CEventClient interface
-	bool WantsEvent(const std::string& eventName) {
+	bool WantsEvent(const std::string& eventName) override {
 		return (eventName == "UnitDestroyed") || (eventName == "UnitReverseBuilt") || (eventName == "UnitTaken") || (eventName == "UnitLoaded");
 	}
-	bool GetFullRead() const { return true; }
-	int  GetReadAllyTeam() const { return AllAccessTeam; }
+	bool GetFullRead() const override { return true; }
+	int  GetReadAllyTeam() const override { return AllAccessTeam; }
 
 	void UnitDestroyed(const CUnit* unit, const CUnit* attacker) override;
 	void UnitTaken(const CUnit* unit, int oldTeam, int newTeam) override;
@@ -276,7 +276,7 @@ public:
 	void UnitReverseBuilt(const CUnit* unit) override;
 
 public:
-	void Update();
+	void Update() override;
 	void UpdateHeightMapSynced(SRectangle rect);
 
 public:

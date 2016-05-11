@@ -18,6 +18,7 @@ namespace creg {
 // If none specialization was found assume it's a class.
 template<typename T, typename Enable = void>
 struct DeduceType {
+	static_assert(std::is_same<typename std::remove_const<T>::type, typename std::remove_const<typename T::MyType>::type>::value, "class isn't creged");
 	static boost::shared_ptr<IType> Get() { return boost::shared_ptr<IType>(IType::CreateObjInstanceType(T::StaticClass())); }
 };
 
@@ -65,6 +66,7 @@ struct DeduceType<SyncedPrimitive<T>, typename std::enable_if<std::is_floating_p
 template<typename T>
 class ObjectPointerType : public IType
 {
+	static_assert(std::is_same<typename std::remove_const<T>::type, typename std::remove_const<typename T::MyType>::type>::value, "class isn't creged");
 public:
 	ObjectPointerType() { objectClass = T::StaticClass(); }
 	void Serialize(ISerializer *s, void *instance) {
@@ -94,8 +96,7 @@ struct DeduceType<T, typename std::enable_if<std::is_reference<T>::value>::type>
 template<typename T, size_t ArraySize>
 struct DeduceType<T[ArraySize]> {
 	static boost::shared_ptr<IType> Get() {
-		DeduceType<T> subtype;
-		return boost::shared_ptr<IType>(new StaticArrayType<T, ArraySize>(subtype.Get()));
+		return boost::shared_ptr<IType>(new StaticArrayType<T, ArraySize>(DeduceType<T>::Get()));
 	}
 };
 
@@ -103,8 +104,7 @@ struct DeduceType<T[ArraySize]> {
 template<typename T>
 struct DeduceType<std::vector<T>> {
 	static boost::shared_ptr<IType> Get() {
-		DeduceType<T> elemtype;
-		return boost::shared_ptr<IType>(new DynamicArrayType<std::vector<T> >(elemtype.Get()));
+		return boost::shared_ptr<IType>(new DynamicArrayType<std::vector<T> >(DeduceType<T>::Get()));
 	}
 };
 
@@ -112,8 +112,7 @@ struct DeduceType<std::vector<T>> {
 template<>
 struct DeduceType<std::vector<bool>> {
 	static boost::shared_ptr<IType> Get() {
-		DeduceType<bool> elemtype;
-		return boost::shared_ptr<IType>(new BitArrayType<std::vector<bool> >(elemtype.Get()));
+		return boost::shared_ptr<IType>(new BitArrayType<std::vector<bool> >(DeduceType<bool>::Get()));
 	}
 };
 
@@ -131,8 +130,7 @@ struct DeduceType<std::string> {
 // GetType allows to use parameter type deduction to get the template argument for DeduceType
 template<typename T>
 boost::shared_ptr<IType> GetType(T& var) {
-	DeduceType<T> deduce;
-	return deduce.Get();
+	return DeduceType<T>::Get();
 }
 }
 

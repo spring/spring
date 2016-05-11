@@ -7,7 +7,7 @@
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 
-CR_BIND_DERIVED(CGenericParticleProjectile, CProjectile, (NULL, ZeroVector, ZeroVector))
+CR_BIND_DERIVED(CGenericParticleProjectile, CProjectile, )
 
 CR_REG_METADATA(CGenericParticleProjectile,(
 	CR_MEMBER(gravity),
@@ -21,6 +21,7 @@ CR_REG_METADATA(CGenericParticleProjectile,(
 	CR_MEMBER(sizeGrowth),
 	CR_MEMBER(sizeMod)
 ))
+
 
 CGenericParticleProjectile::CGenericParticleProjectile(const CUnit* owner, const float3& pos, const float3& speed)
 	: CProjectile(pos, speed, owner, false, false, false)
@@ -63,31 +64,21 @@ void CGenericParticleProjectile::Draw()
 {
 	inArray = true;
 
+	float3 dir1 = camera->GetRight();
+	float3 dir2 = camera->GetUp();
 	if (directional) {
-		float3 dif(pos-camera->GetPos());
+		float3 dif(pos - camera->GetPos());
 		dif.ANormalize();
-		float3 dir1(dif.cross(speed));
-		dir1.ANormalize();
-		float3 dir2(dif.cross(dir1));
-
-		unsigned char color[4];
-
-		colorMap->GetColor(color, life);
-
-		va->AddVertexTC(drawPos - dir1 * size - dir2 * size, texture->xstart, texture->ystart, color);
-		va->AddVertexTC(drawPos - dir1 * size + dir2 * size, texture->xend,   texture->ystart, color);
-		va->AddVertexTC(drawPos + dir1 * size + dir2 * size, texture->xend,   texture->yend,   color);
-		va->AddVertexTC(drawPos + dir1 * size - dir2 * size, texture->xstart, texture->yend,   color);
-	} else {
-		unsigned char color[4];
-
-		colorMap->GetColor(color, life);
-
-		va->AddVertexTC(drawPos - camera->GetRight() * size - camera->GetUp() * size, texture->xstart, texture->ystart, color);
-		va->AddVertexTC(drawPos + camera->GetRight() * size - camera->GetUp() * size, texture->xend,   texture->ystart, color);
-		va->AddVertexTC(drawPos + camera->GetRight() * size + camera->GetUp() * size, texture->xend,   texture->yend,   color);
-		va->AddVertexTC(drawPos - camera->GetRight() * size + camera->GetUp() * size, texture->xstart, texture->yend,   color);
+		dir1 = dif.cross(speed).ANormalize();
+		dir2 = dif.cross(dir1);
 	}
+
+	unsigned char color[4];
+	colorMap->GetColor(color, life);
+	va->AddVertexTC(drawPos + (-dir1 - dir2) * size, texture->xstart, texture->ystart, color);
+	va->AddVertexTC(drawPos + (-dir1 + dir2) * size, texture->xend,   texture->ystart, color);
+	va->AddVertexTC(drawPos + ( dir1 + dir2) * size, texture->xend,   texture->yend,   color);
+	va->AddVertexTC(drawPos + ( dir1 - dir2) * size, texture->xstart, texture->yend,   color);
 }
 
 int CGenericParticleProjectile::GetProjectilesCount() const

@@ -25,8 +25,7 @@ static inline float randf() {
 	return rand() / float(RAND_MAX);
 }
 static inline float RandFloat(const float min, const float max) {
-	assert(min < 0 && max > 0);
-	// we work wih large floats here (1e22 etc.) we cannot blend them without overflows, so do it a bit differently
+	// we work with large floats here (1e22 etc.) we cannot blend them without overflows, so do it a bit differently
 	if (rand() & 1) {
 		return max * randf();
 	}

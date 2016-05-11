@@ -221,9 +221,7 @@ void CEngineOutHandler::UnitLeftRadar(const CUnit& unit, int allyTeamId) {
 	if (team_skirmishAIs.find(TEAM_ID) == team_skirmishAIs.end())   \
 		return;                                                     \
                                                                     \
-	auto& ais = team_skirmishAIs[TEAM_ID];                          \
-                                                                    \
-	for (auto ai: ais) {                                            \
+	for (auto ai: team_skirmishAIs[TEAM_ID]) {                      \
 		try {                                                       \
 			id_skirmishAI[ai]->FUNC;                                \
 		} CATCH_AI_EXCEPTION;                                       \
@@ -270,8 +268,9 @@ void CEngineOutHandler::UnitCreated(const CUnit& unit, const CUnit* builder) {
 	const int unitId     = unit.id;
 	const int builderId  = builder? builder->id: -1;
 
-	DO_FOR_TEAM_SKIRMISH_AIS(UnitCreated(unitId, builderId), teamId);
+	// enemies first, do_for_team can return early
 	DO_FOR_ENEMY_SKIRMISH_AIS(EnemyCreated(unitId), allyTeamId, unit);
+	DO_FOR_TEAM_SKIRMISH_AIS(UnitCreated(unitId, builderId), teamId);
 }
 
 void CEngineOutHandler::UnitFinished(const CUnit& unit) {
@@ -281,8 +280,8 @@ void CEngineOutHandler::UnitFinished(const CUnit& unit) {
 	const int allyTeamId = unit.allyteam;
 	const int unitId     = unit.id;
 
-	DO_FOR_TEAM_SKIRMISH_AIS(UnitFinished(unitId), teamId);
 	DO_FOR_ENEMY_SKIRMISH_AIS(EnemyFinished(unitId), allyTeamId, unit);
+	DO_FOR_TEAM_SKIRMISH_AIS(UnitFinished(unitId), teamId);
 }
 
 

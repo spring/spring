@@ -14,7 +14,6 @@ struct Command;
 struct UnitDef;
 struct FeatureDef;
 struct WeaponDef;
-struct CommandDescription;
 class CCommandQueue;
 class CGroupHandler;
 class CGroup;
@@ -48,7 +47,7 @@ public:
 
 	int GetFeatures(int* features, int max) const;
 	int GetFeatures(int* features, int max, const float3& pos, float radius) const;
-	
+
 	const UnitDef* GetUnitDef(int unitId) const;
 	float3 GetUnitPos(int unitId) const;
 	float3 GetUnitVelocity(int unitId) const;

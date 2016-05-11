@@ -20,7 +20,7 @@ float4::float4(): float3(), w(0.0f)
 
 bool float4::operator == (const float4& f) const
 {
-	#define eps float3::CMP_EPS
+	#define eps float3::cmp_eps()
 	return (epscmp(x, f.x, eps) && epscmp(y, f.y, eps) && epscmp(z, f.z, eps) && epscmp(w, f.w, eps));
 	#undef eps
 }

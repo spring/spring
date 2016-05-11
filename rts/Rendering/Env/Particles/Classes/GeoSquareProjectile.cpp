@@ -7,7 +7,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 
-CR_BIND_DERIVED(CGeoSquareProjectile, CProjectile, (ZeroVector, ZeroVector, ZeroVector, ZeroVector, 0, 0))
+CR_BIND_DERIVED(CGeoSquareProjectile, CProjectile, )
 
 CR_REG_METADATA(CGeoSquareProjectile,(
 	CR_MEMBER(p1),
@@ -21,6 +21,7 @@ CR_REG_METADATA(CGeoSquareProjectile,(
 	CR_MEMBER(b),
 	CR_MEMBER(a)
 ))
+
 
 CGeoSquareProjectile::CGeoSquareProjectile(const float3& p1, const float3& p2, const float3& v1, const float3& v2, float w1, float w2)
 	: CProjectile((p1 + p2) * 0.5f, ZeroVector, NULL, false, false, false),

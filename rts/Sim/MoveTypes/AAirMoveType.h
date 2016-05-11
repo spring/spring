@@ -38,7 +38,10 @@ public:
 	void SetWantedAltitude(float altitude);
 	void SetDefaultAltitude(float altitude);
 
+	bool HaveLandingPos() const { return (reservedLandingPos.x != -1.0f); }
+
 	void LandAt(float3 pos, float distanceSq);
+	void ClearLandingPos() { reservedLandingPos = -OnesVector; }
 	void UpdateLandingHeight();
 	void UpdateLanding();
 

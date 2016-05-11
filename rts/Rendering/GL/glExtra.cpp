@@ -90,7 +90,7 @@ void glBallisticCircle(const float3& center, const float radius,
 		float adjRadius = weapon ? weapon->GetRange2D(heightDiff * heightMod) : rad;
 		float adjustment = rad * 0.5f;
 		float ydiff = 0;
-		for(int j = 0; j < rdiv && math::fabs(adjRadius - rad) + ydiff > .01 * rad; j++){
+		for(int j = 0; j < rdiv && std::fabs(adjRadius - rad) + ydiff > .01 * rad; j++){
 			if (adjRadius > rad) {
 				rad += adjustment;
 			} else {
@@ -100,7 +100,7 @@ void glBallisticCircle(const float3& center, const float radius,
 			pos.x = center.x + (sinR * rad);
 			pos.z = center.z + (cosR * rad);
 			float newY = CGround::GetHeightAboveWater(pos.x, pos.z, false);
-			ydiff = math::fabs(pos.y - newY);
+			ydiff = std::fabs(pos.y - newY);
 			pos.y = newY;
 			heightDiff = (pos.y - center.y);
 			adjRadius = weapon ? weapon->GetRange2D(heightDiff * heightMod) : rad;
@@ -231,8 +231,8 @@ void glWireCylinder(unsigned int* listID, unsigned int numDivs, float zSize) {
 		for (unsigned int n = 0; n <= numDivs; n++) {
 			const unsigned int i = n % numDivs;
 
-			vertices[i].x = math::cosf(i * ((PI + PI) / numDivs));
-			vertices[i].y = math::sinf(i * ((PI + PI) / numDivs));
+			vertices[i].x = std::cos(i * ((PI + PI) / numDivs));
+			vertices[i].y = std::sin(i * ((PI + PI) / numDivs));
 			vertices[i].z = 0.0f;
 
 			glVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);
@@ -286,9 +286,9 @@ void glWireSphere(unsigned int* listID, unsigned int numRows, unsigned int numCo
 
 			float3& v = vertices[row * numCols + col];
 
-			v.x = math::cosf(a) * math::sinf(b);
-			v.y = math::sinf(a) * math::sinf(b);
-			v.z = math::cosf(b);
+			v.x = std::cos(a) * std::sin(b);
+			v.y = std::sin(a) * std::sin(b);
+			v.z = std::cos(b);
 		}
 	}
 

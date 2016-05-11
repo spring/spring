@@ -5,6 +5,7 @@
 #include "Sim/Units/Unit.h"
 
 CR_BIND_DERIVED(CMeleeWeapon, CWeapon, (NULL, NULL))
+CR_REG_METADATA(CMeleeWeapon, )
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -15,7 +16,7 @@ CMeleeWeapon::CMeleeWeapon(CUnit* owner, const WeaponDef* def): CWeapon(owner, d
 }
 
 
-bool CMeleeWeapon::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const
+bool CMeleeWeapon::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg, bool useMuzzle) const
 {
 	return true;
 }

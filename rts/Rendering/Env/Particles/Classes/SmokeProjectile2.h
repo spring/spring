@@ -10,7 +10,7 @@ class CUnit;
 
 class CSmokeProjectile2 : public CProjectile
 {
-	CR_DECLARE(CSmokeProjectile2)
+	CR_DECLARE_DERIVED(CSmokeProjectile2)
 
 public:
 	CSmokeProjectile2();

@@ -249,6 +249,15 @@ void CUnitHandler::Update()
 	}
 
 	{
+		SCOPED_TIMER("Unit::UpdateLosStatus");
+		for (CUnit* unit: activeUnits) {
+			for (int at = 0; at < teamHandler->ActiveAllyTeams(); ++at) {
+				unit->UpdateLosStatus(at);
+			}
+		}
+	}
+
+	{
 		SCOPED_TIMER("Unit::SlowUpdate");
 		assert(activeSlowUpdateUnit >= 0);
 		// reset the iterator every <UNIT_SLOWUPDATE_RATE> frames

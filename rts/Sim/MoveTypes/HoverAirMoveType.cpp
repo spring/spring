@@ -3,6 +3,7 @@
 
 #include "HoverAirMoveType.h"
 #include "Game/Players/Player.h"
+#include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
@@ -18,7 +19,7 @@
 #include "System/Matrix44f.h"
 #include "System/Sync/HsiehHash.h"
 
-CR_BIND_DERIVED(CHoverAirMoveType, AAirMoveType, (NULL))
+CR_BIND_DERIVED(CHoverAirMoveType, AAirMoveType, (nullptr))
 
 CR_REG_METADATA(CHoverAirMoveType, (
 	CR_MEMBER(flyState),
@@ -54,9 +55,9 @@ CR_REG_METADATA(CHoverAirMoveType, (
 
 
 static bool IsUnitBusy(const CUnit* u) {
-	// queued move-commands or an active build-command mean unit has to stay airborne
+	// queued move-commands (or active build/repair/etc-commands) mean unit has to stay airborne
 	const auto& cai = u->commandAI;
-	return (cai->inCommand || cai->HasMoreMoveCommands() || cai->HasCommand(CMD_LOAD_UNITS) || cai->HasCommand(CMD_GUARD) || cai->HasCommand(-1));
+	return (cai->inCommand || cai->HasMoreMoveCommands(false));
 }
 
 CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
@@ -64,7 +65,7 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 	flyState(FLY_CRUISING),
 
 	bankingAllowed(true),
-	airStrafe(owner->unitDef->airStrafe),
+	airStrafe(owner != nullptr ? owner->unitDef->airStrafe : false),
 	wantToStop(false),
 
 	goalDistance(1),
@@ -75,7 +76,7 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 
 	turnRate(1),
 	maxDrift(1.0f),
-	maxTurnAngle(math::cos(owner->unitDef->turnInPlaceAngleLimit * (PI / 180.0f)) * -1.0f),
+	maxTurnAngle(math::cos((owner != nullptr ? owner->unitDef->turnInPlaceAngleLimit : 0.0f) * (PI / 180.0f)) * -1.0f),
 
 	wantedSpeed(ZeroVector),
 	deltaSpeed(ZeroVector),
@@ -85,14 +86,17 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 	forceHeading(false),
 	dontLand(false),
 
-	wantedHeading(GetHeadingFromFacing(owner->buildFacing)),
+	wantedHeading(owner != nullptr ? GetHeadingFromFacing(owner->buildFacing) : 0),
 	forceHeadingTo(wantedHeading),
 
 	waitCounter(0),
 	lastMoveRate(0)
 {
-	assert(owner != NULL);
-	assert(owner->unitDef != NULL);
+	// creg
+	if (owner == nullptr)
+		return;
+
+	assert(owner->unitDef != nullptr);
 
 	turnRate = owner->unitDef->turnRate;
 
@@ -131,13 +135,8 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 		return;
 
 
-	if (newState == AIRCRAFT_LANDED) {
-		owner->dontUseWeapons = true;
-		owner->useAirLos = false;
-	} else {
-		owner->dontUseWeapons = false;
-		owner->useAirLos = true;
-	}
+	owner->dontUseWeapons = (newState == AIRCRAFT_LANDED);
+	owner->useAirLos = (newState != AIRCRAFT_LANDED);
 
 	aircraftState = newState;
 
@@ -145,15 +144,28 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 		case AIRCRAFT_CRASHING:
 			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_CRASHING);
 			break;
+
+		#if 0
+		case AIRCRAFT_FLYING:
+			owner->Activate();
+			break;
+		case AIRCRAFT_LANDING:
+			owner->Deactivate();
+			break;
+		#endif
+
 		case AIRCRAFT_LANDED:
 			// FIXME already inform commandAI in AIRCRAFT_LANDING!
 			owner->commandAI->StopMove();
 
+			owner->Deactivate();
 			owner->Block();
 			owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
 			break;
-		case AIRCRAFT_LANDING:
-			owner->Deactivate();
+		case AIRCRAFT_TAKEOFF:
+			owner->Activate();
+			owner->UnBlock();
+			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
 			break;
 		case AIRCRAFT_HOVERING: {
 			// when heading is forced by TCAI we are busy (un-)loading
@@ -162,10 +174,7 @@ void CHoverAirMoveType::SetState(AircraftState newState)
 			wantedSpeed = ZeroVector;
 		} // fall through
 		default:
-			reservedLandingPos.x = -1.0f;
-			owner->Activate();
-			owner->UnBlock();
-			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
+			ClearLandingPos();
 			break;
 	}
 
@@ -251,7 +260,8 @@ void CHoverAirMoveType::KeepPointingTo(float3 pos, float distance, bool aggressi
 	goalDistance = distance;
 	goalPos = owner->pos;
 
-	SetState(AIRCRAFT_FLYING);
+	// let this handle any needed state transitions
+	StartMoving(goalPos, goalDistance);
 
 	// FIXME:
 	//   the FLY_ATTACKING state is broken (unknown how long this has been
@@ -270,6 +280,8 @@ void CHoverAirMoveType::ExecuteStop()
 {
 	wantToStop = false;
 	wantedSpeed = ZeroVector;
+	SetGoal(owner->pos);
+	ClearLandingPos();
 
 	switch (aircraftState) {
 		case AIRCRAFT_TAKEOFF: {
@@ -281,7 +293,6 @@ void CHoverAirMoveType::ExecuteStop()
 			}
 		} // fall through
 		case AIRCRAFT_FLYING: {
-			goalPos = owner->pos;
 
 			if (CanLand(IsUnitBusy(owner))) {
 				SetState(AIRCRAFT_LANDING);
@@ -290,7 +301,11 @@ void CHoverAirMoveType::ExecuteStop()
 			}
 		} break;
 
-		case AIRCRAFT_LANDING: {} break;
+		case AIRCRAFT_LANDING: {
+			if (!CanLand(IsUnitBusy(owner)))
+				SetState(AIRCRAFT_HOVERING);
+
+		} break;
 		case AIRCRAFT_LANDED: {} break;
 		case AIRCRAFT_CRASHING: {} break;
 
@@ -465,8 +480,6 @@ void CHoverAirMoveType::UpdateFlying()
 					wantedHeight = orgWantedHeight;
 					SetState(AIRCRAFT_LANDING);
 				}
-
-				return;
 			} break;
 
 			case FLY_CIRCLING: {
@@ -536,7 +549,7 @@ void CHoverAirMoveType::UpdateFlying()
 		wantedSpeed = (goalVec / goalDist) * goalSpeed;
 	} else {
 		// switch to hovering (if !CanLand()))
-		if (flyState != FLY_ATTACKING) {
+		if (!IsUnitBusy(owner)) {
 			ExecuteStop();
 		}
 	}
@@ -571,12 +584,13 @@ void CHoverAirMoveType::UpdateLanding()
 {
 	const float3& pos = owner->pos;
 
-	if (reservedLandingPos.x < 0.0f) {
+	if (!HaveLandingPos()) {
 		if (CanLandAt(pos)) {
 			// found a landing spot
 			reservedLandingPos = pos;
 			goalPos = pos;
 			wantedHeight = 0;
+			UpdateLandingHeight();
 
 			const float3 originalPos = pos;
 
@@ -601,7 +615,8 @@ void CHoverAirMoveType::UpdateLanding()
 	}
 
 
-	UpdateLandingHeight();
+
+	flyState = FLY_LANDING;
 
 	const float altitude = pos.y - reservedLandingPos.y;
 	const float distSq2D = reservedLandingPos.SqDistance2D(pos);
@@ -609,15 +624,12 @@ void CHoverAirMoveType::UpdateLanding()
 	if (distSq2D > landRadiusSq) {
 		const float tmpWantedHeight = wantedHeight;
 		SetGoal(reservedLandingPos);
-		wantedHeight = std::min((orgWantedHeight - wantedHeight) * distSq2D / altitude + wantedHeight, orgWantedHeight);
-		flyState = FLY_LANDING;
 
+		wantedHeight = std::min((orgWantedHeight - wantedHeight) * distSq2D / altitude + wantedHeight, orgWantedHeight);
 		UpdateFlying();
 		wantedHeight = tmpWantedHeight;
 		return;
 	}
-
-	flyState = FLY_LANDING;
 
 	// We want to land, and therefore cancel our speed first
 	wantedSpeed = ZeroVector;
@@ -947,7 +959,8 @@ bool CHoverAirMoveType::Update()
 				#undef SPIN_DIR
 			}
 
-			new CSmokeProjectile(owner, owner->midPos, gs->randVector() * 0.08f, 100 + gs->randFloat() * 50, 5, 0.2f, 0.4f);
+			// Spawn unsynced smoke projectile
+			new CSmokeProjectile(owner, owner->midPos, gu->RandVector() * 0.08f, 100 + gu->RandFloat() * 50, 5, 0.2f, 0.4f);
 		} break;
 	}
 

@@ -17,69 +17,75 @@ struct AtlasedTexture;
 class ShieldSegmentProjectile;
 
 
-class ShieldProjectile: public CProjectile
+class ShieldSegmentCollection
 {
-	CR_DECLARE(ShieldProjectile)
+	CR_DECLARE_STRUCT(ShieldSegmentCollection)
 public:
 	// creg only
-	ShieldProjectile() { }
-	ShieldProjectile(CPlasmaRepulser*);
+	ShieldSegmentCollection() { }
+	ShieldSegmentCollection(CPlasmaRepulser*);
+	~ShieldSegmentCollection();
 
-	void Update() override;
-	virtual int GetProjectilesCount() const override;
+	void Update();
 
-public:
-	void PreDelete();
 	bool AllowDrawing();
 	CPlasmaRepulser* GetShield() const { return shield; }
 	const AtlasedTexture* GetShieldTexture() const { return shieldTexture; }
 	float3 GetShieldDrawPos() const;
+	void UpdateColor();
+	SColor GetColor() const { return color; }
+	float GetSize() const { return size; }
 
 	void PostLoad();
 private:
+	bool UsingPerlinNoise() const;
 	CPlasmaRepulser* shield;
 	const AtlasedTexture* shieldTexture;
-
-	unsigned int lastAllowDrawingUpdate;
+	int lastAllowDrawingframe;
 	bool allowDrawing;
+	float size;
+	SColor color;
 
 	// NOTE: these are also registered in ProjectileHandler
-	std::list<ShieldSegmentProjectile*> shieldSegments; //FIXME deque
+	std::vector<ShieldSegmentProjectile*> shieldSegments; //FIXME deque
 };
 
 
 
 class ShieldSegmentProjectile: public CProjectile
 {
+	CR_DECLARE_DERIVED(ShieldSegmentProjectile)
 public:
+	ShieldSegmentProjectile() { }
 	ShieldSegmentProjectile(
-		ShieldProjectile* shieldProjectile,
+		ShieldSegmentCollection* collection,
 		const WeaponDef* shieldWeaponDef,
 		const float3& shieldSegmentPos,
-		const int xpart,
-		const int ypart
+		int xpart,
+		int ypart
 	);
 	~ShieldSegmentProjectile();
 
 	void Draw() override;
 	void Update() override;
 	void PreDelete();
+	void Reload(
+		ShieldSegmentCollection* collection,
+		const int xpart,
+		const int ypart
+	);
 
 	virtual int GetProjectilesCount() const override;
 
 private:
-	bool UsingPerlinNoise() const;
 	static const float3* GetSegmentVertices(const int xpart, const int ypart);
 	static const float2* GetSegmentTexCoords(const AtlasedTexture* texture, const int xpart, const int ypart);
 
 private:
-	ShieldProjectile* shieldProjectile;
+	ShieldSegmentCollection* collection;
 	const float3* vertices;
 	const float2* texCoors;
 
-	SColor segmentColor;
-	float3 segmentPos;
-	float segmentSize;
 };
 
 #endif

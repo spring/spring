@@ -28,7 +28,8 @@ CALLIN_LIST = {
 	"GameStart",
 	"GameOver",
 	"GameFrame",
-	"GameProgress",            -- FIXME: not implemented by base GH
+	"GamePaused",
+	"GameProgress",
 	"GameID",
 
 	-- player callins
@@ -44,6 +45,7 @@ CALLIN_LIST = {
 	"UnitCreated",
 	"UnitFinished",
 	"UnitFromFactory",
+	"UnitReverseBuilt",
 	"UnitDestroyed",
 	"RenderUnitDestroyed",
 	"UnitExperience",
@@ -71,7 +73,7 @@ CALLIN_LIST = {
 	"UnitLeftAir",             -- FIXME: not implemented by base GH
 	"UnitEnteredWater",        -- FIXME: not implemented by base GH
 	"UnitLeftWater",           -- FIXME: not implemented by base GH
-	"UnitCommand",             -- FIXME: not implemented by base GH
+	"UnitCommand",
 
 	-- weapon callins
 	"StockpileChanged",

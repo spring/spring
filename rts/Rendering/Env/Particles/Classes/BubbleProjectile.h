@@ -7,8 +7,9 @@
 
 class CBubbleProjectile : public CProjectile
 {
-	CR_DECLARE(CBubbleProjectile)
+	CR_DECLARE_DERIVED(CBubbleProjectile)
 public:
+	CBubbleProjectile();
 	CBubbleProjectile(
 		CUnit* owner,
 		float3 pos,

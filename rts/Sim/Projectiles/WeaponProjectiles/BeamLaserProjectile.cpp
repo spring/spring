@@ -10,7 +10,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include <cstring> //memset
 
-CR_BIND_DERIVED(CBeamLaserProjectile, CWeaponProjectile, (ProjectileParams()))
+CR_BIND_DERIVED(CBeamLaserProjectile, CWeaponProjectile, )
 
 CR_REG_METADATA(CBeamLaserProjectile,(
 	CR_SETFLAG(CF_Synced),

@@ -91,13 +91,13 @@ private:
 class CSimpleGroundFlash : public CGroundFlash
 {
 public:
-	CR_DECLARE(CSimpleGroundFlash)
+	CR_DECLARE_DERIVED(CSimpleGroundFlash)
 
 	CSimpleGroundFlash();
 
-	void Init(const CUnit* owner, const float3& offset);
-	void Draw();
-	bool Update();
+	void Init(const CUnit* owner, const float3& offset) override;
+	void Draw() override;
+	bool Update() override;
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 

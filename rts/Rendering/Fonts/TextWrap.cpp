@@ -114,7 +114,7 @@ CTextWrap::word CTextWrap::SplitWord(CTextWrap::word& w, float wantedWidth, bool
 		w2 = w;
 		w.isSpace = true;
 	} else if (w.isSpace) {
-		const int split = (int)math::floor(wantedWidth / spaceAdvance);
+		const int split = (int)std::floor(wantedWidth / spaceAdvance);
 		w2.isSpace   = true;
 		w2.numSpaces = split;
 		w2.width     = spaceAdvance * w2.numSpaces;
@@ -292,7 +292,7 @@ void CTextWrap::WrapTextConsole(std::list<word>& words, float maxWidth, float ma
 	if (words.empty() || (GetLineHeight()<=0.0f))
 		return;
 	const bool splitAllWords = false;
-	const unsigned int maxLines = (unsigned int)math::floor(std::max(0.0f, maxHeight / GetLineHeight()));
+	const unsigned int maxLines = (unsigned int)std::floor(std::max(0.0f, maxHeight / GetLineHeight()));
 
 	line* currLine;
 	word linebreak;
@@ -511,9 +511,8 @@ void CTextWrap::RemergeColorCodes(std::list<word>* words, std::list<colorcode>& 
 			while(wi2 != words->end() && (wi2->isSpace || wi2->isLineBreak))
 				++wi2;
 
-			if (wi == words->end() && (wi2->pos + wi2->numSpaces) < c.pos) {
+			if (wi2 == words->end() || (wi == words->end() && (wi2->pos + wi2->numSpaces) < c.pos))
 				return;
-			}
 
 			wi2 = words->insert(wi2, wc);
 		} else {

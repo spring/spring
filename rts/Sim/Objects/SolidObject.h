@@ -4,6 +4,7 @@
 #define SOLID_OBJECT_H
 
 #include "WorldObject.h"
+#include "Lua/LuaRulesParams.h"
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/bitops.h"
@@ -48,7 +49,10 @@ typedef Bitwise::BitwiseEnum<YardmapStates> YardMapStatus;
 
 class CSolidObject: public CWorldObject {
 public:
-	CR_DECLARE(CSolidObject)
+	CR_DECLARE_DERIVED(CSolidObject)
+
+
+	virtual const SolidObjectDef* GetDef() const = 0;
 
 	enum PhysicalState {
 		// NOTE:
@@ -95,6 +99,8 @@ public:
 	CSolidObject();
 	virtual ~CSolidObject() {}
 
+	void PostLoad();
+
 	virtual bool AddBuildPower(CUnit* builder, float amount) { return false; }
 	virtual void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID) {}
 
@@ -129,6 +135,7 @@ public:
 	}
 
 
+	void SetDirVectorsEuler(const float3 angles);
 	void SetDirVectors(const CMatrix44f& matrix) {
 		rightdir.x = -matrix[0]; updir.x = matrix[4]; frontdir.x = matrix[ 8];
 		rightdir.y = -matrix[1]; updir.y = matrix[5]; frontdir.y = matrix[ 9];
@@ -142,11 +149,7 @@ public:
 	// NOTE: movetypes call this directly
 	void UpdateDirVectors(bool useGroundNormal);
 
-	virtual CMatrix44f GetTransformMatrix(const bool synced = false) const {
-		// should never get called (should be pure virtual, but cause of CREG we cannot use it)
-		assert(false);
-		return CMatrix44f();
-	}
+	virtual CMatrix44f GetTransformMatrix(const bool synced = false) const = 0;
 
 	const CollisionVolume* GetCollisionVolume(const LocalModelPiece* lmp) const {
 		if (lmp == nullptr)
@@ -231,8 +234,8 @@ public:
 	bool    HasPhysicalStateBit(unsigned int bit) const { return ((physicalState & bit) != 0); }
 	void    SetPhysicalStateBit(unsigned int bit) { unsigned int ps = physicalState; ps |= ( bit); physicalState = static_cast<PhysicalState>(ps); }
 	void  ClearPhysicalStateBit(unsigned int bit) { unsigned int ps = physicalState; ps &= (~bit); physicalState = static_cast<PhysicalState>(ps); }
-	void   PushPhysicalStateBit(unsigned int bit) { UpdatePhysicalStateBit(1u << (32u - (bits_ffs(bit) - 1u)), HasPhysicalStateBit(bit)); }
-	void    PopPhysicalStateBit(unsigned int bit) { UpdatePhysicalStateBit(bit, HasPhysicalStateBit(1u << (32u - (bits_ffs(bit) - 1u)))); }
+	void   PushPhysicalStateBit(unsigned int bit) { UpdatePhysicalStateBit(1u << (32u - bits_ffs(bit)), HasPhysicalStateBit(bit)); }
+	void    PopPhysicalStateBit(unsigned int bit) { UpdatePhysicalStateBit(bit, HasPhysicalStateBit(1u << (32u - bits_ffs(bit)))); }
 	bool UpdatePhysicalStateBit(unsigned int bit, bool set) {
 		if (set) {
 			SetPhysicalStateBit(bit);
@@ -245,8 +248,8 @@ public:
 	bool    HasCollidableStateBit(unsigned int bit) const { return ((collidableState & bit) != 0); }
 	void    SetCollidableStateBit(unsigned int bit) { unsigned int cs = collidableState; cs |= ( bit); collidableState = static_cast<CollidableState>(cs); }
 	void  ClearCollidableStateBit(unsigned int bit) { unsigned int cs = collidableState; cs &= (~bit); collidableState = static_cast<CollidableState>(cs); }
-	void   PushCollidableStateBit(unsigned int bit) { UpdateCollidableStateBit(1u << (32u - (bits_ffs(bit) - 1u)), HasCollidableStateBit(bit)); }
-	void    PopCollidableStateBit(unsigned int bit) { UpdateCollidableStateBit(bit, HasCollidableStateBit(1u << (32u - (bits_ffs(bit) - 1u)))); }
+	void   PushCollidableStateBit(unsigned int bit) { UpdateCollidableStateBit(1u << (32u - bits_ffs(bit)), HasCollidableStateBit(bit)); }
+	void    PopCollidableStateBit(unsigned int bit) { UpdateCollidableStateBit(bit, HasCollidableStateBit(1u << (32u - bits_ffs(bit)))); }
 	bool UpdateCollidableStateBit(unsigned int bit, bool set) {
 		if (set) {
 			SetCollidableStateBit(bit);
@@ -312,7 +315,6 @@ public:
 	int lastHitPieceFrame;                      ///< frame in which lastHitPiece was hit
 
 
-	const SolidObjectDef* objectDef;            ///< points to a UnitDef or to a FeatureDef instance
 	MoveDef* moveDef;                           ///< mobility information about this object (if NULL, object is either static or aircraft)
 
 	LocalModel localModel;
@@ -341,6 +343,16 @@ public:
 	const YardMapStatus* blockMap;              ///< Current (unrotated!) blockmap/yardmap of this object. 0 means no active yardmap => all blocked.
 	bool yardOpen;
 	short int buildFacing;                      ///< Orientation of footprint, 4 different states
+
+	/**
+	 * @brief mod controlled parameters
+	 * This is a set of parameters that is initialized
+	 * in CreateUnitRulesParams() and may change during the game.
+	 * Each parameter is uniquely identified only by its id
+	 * (which is the index in the vector).
+	 * Parameters may or may not have a name.
+	 */
+	LuaRulesParams::Params  modParams;
 
 public:
 	static const float DEFAULT_MASS;

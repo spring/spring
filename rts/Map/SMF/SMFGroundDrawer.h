@@ -25,9 +25,6 @@ enum {
 class CSMFGroundDrawer : public CBaseGroundDrawer
 {
 public:
-	void SunChanged(const float3& sunDir);
-	void SunLightingChanged();
-public:
 	CSMFGroundDrawer(CSMFReadMap* rm);
 	~CSMFGroundDrawer();
 
@@ -40,7 +37,7 @@ public:
 
 	void Update();
 	void UpdateRenderState();
-
+	void SunChanged();
 
 	void SetLuaShader(const LuaMapShaderData*);
 	void SetDrawDeferredPass(bool b) {
@@ -54,6 +51,7 @@ public:
 
 	void IncreaseDetail();
 	void DecreaseDetail();
+	void SetDetail(int newGroundDetail);
 	int GetGroundDetail(const DrawPass::e& drawPass = DrawPass::Normal) const;
 
 	const CSMFReadMap* GetReadMap() const { return smfMap; }

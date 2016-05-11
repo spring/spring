@@ -52,18 +52,18 @@ class CLuaHandle : public CEventClient
 		void ResetCallinErrors() { callinErrors = 0; }
 
 	public:
-	#define PERMISSIONS_FUNCS(Name, type, dataArg) \
+	#define PERMISSIONS_FUNCS(Name, type, dataArg, OVERRIDE) \
 		void Set ## Name(type _ ## dataArg) { GetLuaContextData(L)->dataArg = _ ## dataArg; } \
-		type Get ## Name() const { return GetLuaContextData(L)->dataArg; } \
+		type Get ## Name() const OVERRIDE { return GetLuaContextData(L)->dataArg; } \
 		static void SetHandle ## Name(const lua_State* L, type _ ## dataArg) { GetLuaContextData(L)->dataArg = _ ## dataArg;; } \
 		static type GetHandle ## Name(const lua_State* L) { return GetLuaContextData(L)->dataArg; }
 
-		PERMISSIONS_FUNCS(FullRead,     bool, fullRead); // virtual function in CEventClient
-		PERMISSIONS_FUNCS(FullCtrl,     bool, fullCtrl);
-		PERMISSIONS_FUNCS(CtrlTeam,     int,  ctrlTeam);
-		PERMISSIONS_FUNCS(ReadTeam,     int,  readTeam);
-		PERMISSIONS_FUNCS(ReadAllyTeam, int,  readAllyTeam); // virtual function in CEventClient
-		PERMISSIONS_FUNCS(SelectTeam,   int,  selectTeam);
+		PERMISSIONS_FUNCS(FullRead,     bool, fullRead, override); // virtual function in CEventClient
+		PERMISSIONS_FUNCS(FullCtrl,     bool, fullCtrl, );
+		PERMISSIONS_FUNCS(CtrlTeam,     int,  ctrlTeam, );
+		PERMISSIONS_FUNCS(ReadTeam,     int,  readTeam, );
+		PERMISSIONS_FUNCS(ReadAllyTeam, int,  readAllyTeam, override); // virtual function in CEventClient
+		PERMISSIONS_FUNCS(SelectTeam,   int,  selectTeam, );
 
 	#undef PERMISSIONS_FUNCS
 
@@ -134,7 +134,7 @@ class CLuaHandle : public CEventClient
 			float damage,
 			int weaponDefID,
 			int projectileID,
-			bool paralyzer);
+			bool paralyzer) override;
 		void UnitStunned(const CUnit* unit, bool stunned) override;
 		void UnitExperience(const CUnit* unit, float oldExperience) override;
 		void UnitHarvestStorageFull(const CUnit* unit) override;
@@ -284,8 +284,7 @@ class CLuaHandle : public CEventClient
 
 	protected:
 		bool userMode;
-		bool reloadMe;
-		bool killMe;
+		bool killMe; // set for handles that fail to RunCallIn
 
 		lua_State* L;
 		lua_State* L_GC;

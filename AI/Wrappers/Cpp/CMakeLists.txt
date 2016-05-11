@@ -54,6 +54,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 	set(mySources
 		"${mySourceDir}/AIEvent.cpp"
 		"${mySourceDir}/AIFloat3.cpp"
+		"${CMAKE_SOURCE_DIR}/rts/System/float3.cpp"
 		"${mySourceDir}/AIColor.cpp"
 		"${mySourceDir}/AIException.cpp"
 		"${mySourceDir}/CallbackAIException.cpp"
@@ -78,7 +79,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/AbstractFile.cpp
 		${myGeneratedSourceDir}/AbstractFlankingBonus.cpp
 		${myGeneratedSourceDir}/AbstractGame.cpp
-		${myGeneratedSourceDir}/AbstractGameRulesParam.cpp
 		${myGeneratedSourceDir}/AbstractGroup.cpp
 		${myGeneratedSourceDir}/AbstractGui.cpp
 		${myGeneratedSourceDir}/AbstractInfo.cpp
@@ -101,10 +101,8 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/AbstractSkirmishAI.cpp
 		${myGeneratedSourceDir}/AbstractSkirmishAIs.cpp
 		${myGeneratedSourceDir}/AbstractTeam.cpp
-		${myGeneratedSourceDir}/AbstractTeamRulesParam.cpp
 		${myGeneratedSourceDir}/AbstractTeams.cpp
 		${myGeneratedSourceDir}/AbstractUnit.cpp
-		${myGeneratedSourceDir}/AbstractUnitRulesParam.cpp
 		${myGeneratedSourceDir}/AbstractUnitDef.cpp
 		${myGeneratedSourceDir}/AbstractVersion.cpp
 		${myGeneratedSourceDir}/AbstractWeaponDef.cpp
@@ -125,7 +123,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/StubFile.cpp
 		${myGeneratedSourceDir}/StubFlankingBonus.cpp
 		${myGeneratedSourceDir}/StubGame.cpp
-		${myGeneratedSourceDir}/StubGameRulesParam.cpp
 		${myGeneratedSourceDir}/StubGroup.cpp
 		${myGeneratedSourceDir}/StubGui.cpp
 		${myGeneratedSourceDir}/StubInfo.cpp
@@ -148,10 +145,8 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/StubSkirmishAI.cpp
 		${myGeneratedSourceDir}/StubSkirmishAIs.cpp
 		${myGeneratedSourceDir}/StubTeam.cpp
-		${myGeneratedSourceDir}/StubTeamRulesParam.cpp
 		${myGeneratedSourceDir}/StubTeams.cpp
 		${myGeneratedSourceDir}/StubUnit.cpp
-		${myGeneratedSourceDir}/StubUnitRulesParam.cpp
 		${myGeneratedSourceDir}/StubUnitDef.cpp
 		${myGeneratedSourceDir}/StubVersion.cpp
 		${myGeneratedSourceDir}/StubWeaponDef.cpp
@@ -172,7 +167,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/WrappFile.cpp
 		${myGeneratedSourceDir}/WrappFlankingBonus.cpp
 		${myGeneratedSourceDir}/WrappGame.cpp
-		${myGeneratedSourceDir}/WrappGameRulesParam.cpp
 		${myGeneratedSourceDir}/WrappGraphDrawer.cpp
 		${myGeneratedSourceDir}/WrappGraphLine.cpp
 		${myGeneratedSourceDir}/WrappGroup.cpp
@@ -198,10 +192,8 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/WrappSkirmishAI.cpp
 		${myGeneratedSourceDir}/WrappSkirmishAIs.cpp
 		${myGeneratedSourceDir}/WrappTeam.cpp
-		${myGeneratedSourceDir}/WrappTeamRulesParam.cpp
 		${myGeneratedSourceDir}/WrappTeams.cpp
 		${myGeneratedSourceDir}/WrappUnit.cpp
-		${myGeneratedSourceDir}/WrappUnitRulesParam.cpp
 		${myGeneratedSourceDir}/WrappUnitDef.cpp
 		${myGeneratedSourceDir}/WrappUnitSupportedCommand.cpp
 		${myGeneratedSourceDir}/WrappVersion.cpp

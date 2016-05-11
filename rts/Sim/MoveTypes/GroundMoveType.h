@@ -13,7 +13,7 @@ class IPathController;
 
 class CGroundMoveType : public AMoveType
 {
-	CR_DECLARE(CGroundMoveType)
+	CR_DECLARE_DERIVED(CGroundMoveType)
 
 public:
 	CGroundMoveType(CUnit* owner);
@@ -21,25 +21,28 @@ public:
 
 	void PostLoad();
 
-	bool Update();
-	void SlowUpdate();
+	bool Update() override;
+	void SlowUpdate() override;
 
-	void StartMovingRaw(const float3 moveGoalPos, float moveGoalRadius);
-	void StartMoving(float3 pos, float goalRadius);
-	void StartMoving(float3 pos, float goalRadius, float speed) { StartMoving(pos, goalRadius); }
-	void StopMoving(bool callScript = false, bool hardStop = false);
+	void StartMovingRaw(const float3 moveGoalPos, float moveGoalRadius) override;
+	void StartMoving(float3 pos, float goalRadius) override;
+	void StartMoving(float3 pos, float goalRadius, float speed) override { StartMoving(pos, goalRadius); }
+	void StopMoving(bool callScript = false, bool hardStop = false) override;
+	bool IsMovingTowards(const float3& pos, float radius) const override {
+		return (goalPos == pos * XZVector && goalRadius == radius && progressState == Active);
+	}
 
-	void KeepPointingTo(float3 pos, float distance, bool aggressive);
-	void KeepPointingTo(CUnit* unit, float distance, bool aggressive);
+	void KeepPointingTo(float3 pos, float distance, bool aggressive) override;
+	void KeepPointingTo(CUnit* unit, float distance, bool aggressive) override;
 
 	void TestNewTerrainSquare();
-	bool CanApplyImpulse(const float3&);
-	void LeaveTransport();
+	bool CanApplyImpulse(const float3&) override;
+	void LeaveTransport() override;
 
-	bool SetMemberValue(unsigned int memberHash, void* memberValue);
+	bool SetMemberValue(unsigned int memberHash, void* memberValue) override;
 
 	bool OnSlope(float minSlideTolerance);
-	bool IsReversing() const { return reversing; }
+	bool IsReversing() const override { return reversing;}
 	bool WantToStop() const { return (pathID == 0 && !useRawMovement); }
 
 

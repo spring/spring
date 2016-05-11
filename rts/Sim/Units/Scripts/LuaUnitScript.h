@@ -5,12 +5,16 @@
 
 #include <map>
 #include "UnitScript.h"
+#include "NullUnitScript.h"
 #include "Sim/Units/Unit.h"
 
 class CLuaHandle;
 struct lua_State;
 
-class CLuaUnitScript : public CUnitScript, CUnitScript::IAnimListener
+// Hack for creg:
+// Since CLuaUnitScript isn't creged, during loading it will
+// construct a CNullUnitScript instead.
+class CLuaUnitScript : public CNullUnitScript
 {
 private:
 	static CUnit* activeUnit;
@@ -31,7 +35,7 @@ private:
 	bool inKilled;
 
 protected:
-	void ShowScriptError(const std::string& msg);
+	void ShowScriptError(const std::string& msg) override;
 
 	// only called from CreateScript, instance can not be created from C++
 	CLuaUnitScript(lua_State* L, CUnit* unit);

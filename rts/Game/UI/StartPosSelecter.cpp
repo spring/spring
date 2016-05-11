@@ -13,6 +13,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Net/Protocol/NetProtocol.h"
+#include "Sim/Misc/TeamHandler.h"
 
 
 CStartPosSelecter* CStartPosSelecter::selector = NULL;
@@ -44,15 +45,27 @@ bool CStartPosSelecter::Ready(bool luaForcedReady)
 		return true;
 	}
 
+	const CTeam* mt = teamHandler->Team(gu->myTeam);
+	const float3* sp = nullptr;
+
 	// player did not set a startpos yet, so do not let
 	// him ready up if he clicked on the ready-box first
-	if (!startPosSet && !luaForcedReady)
-		return false;
+	//
+	// do allow in the special case where player already
+	// sent a RDYSTATE_UPDATED and then rejoined the game
+	if (!mt->HasValidStartPos()) {
+		if (!startPosSet && !luaForcedReady)
+			return false;
+
+		sp = &setStartPos;
+	} else {
+		sp = &mt->GetStartPos();
+	}
 
 	if (luaForcedReady) {
-		clientNet->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, CPlayer::PLAYER_RDYSTATE_FORCED, setStartPos.x, setStartPos.y, setStartPos.z));
+		clientNet->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, CPlayer::PLAYER_RDYSTATE_FORCED, sp->x, sp->y, sp->z));
 	} else {
-		clientNet->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, CPlayer::PLAYER_RDYSTATE_READIED, setStartPos.x, setStartPos.y, setStartPos.z));
+		clientNet->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, gu->myTeam, CPlayer::PLAYER_RDYSTATE_READIED, sp->x, sp->y, sp->z));
 	}
 
 	delete this;

@@ -9,9 +9,10 @@
 
 class CFireProjectile : public CProjectile
 {
-	CR_DECLARE(CFireProjectile)
+	CR_DECLARE_DERIVED(CFireProjectile)
 	CR_DECLARE_SUB(SubParticle)
 public:
+	CFireProjectile() { }
 	CFireProjectile(
 		const float3& pos,
 		const float3& spd,

@@ -5,6 +5,7 @@
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Sim/Features/Feature.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Objects/SolidObject.h"
@@ -80,14 +81,12 @@ float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, unsigned xSquare, unsign
 
 	const CMapInfo::TerrainType& tt = mapInfo->terrainTypes[squareTerrType];
 
-	float3 sqrNormal = readMap->GetCenterNormalsSynced()[xSquare + zSquare * mapDims.mapx];
+	const float3 sqrNormal = readMap->GetCenterNormals2DSynced()[xSquare + zSquare * mapDims.mapx];
 
-	#if 1
 	// with a flat normal, only consider the normalized xz-direction
 	// (the actual steepness is represented by the "slope" variable)
-	sqrNormal.SafeNormalize2D();
-	moveDir.SafeNormalize2D();
-	#endif
+	// we verify that it was normalized in advance
+	assert(float3(moveDir).SafeNormalize2D() == moveDir);
 
 	// note: moveDir is (or should be) a unit vector in the xz-plane, y=0
 	// scale is negative for "downhill" slopes, positive for "uphill" ones
@@ -109,14 +108,30 @@ CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveDef& moveDef,
 {
 	BlockType ret = BLOCK_NONE;
 	const int xmin = xSquare - moveDef.xsizeh, xmax = xSquare + moveDef.xsizeh;
+	if ((unsigned)xmin >= mapDims.mapx || (unsigned)xmax >= mapDims.mapx)
+		return BLOCK_IMPASSABLE;
 	const int zmin = zSquare - moveDef.zsizeh, zmax = zSquare + moveDef.zsizeh;
+	if ((unsigned)zmin >= mapDims.mapy || (unsigned)zmax >= mapDims.mapy)
+		return BLOCK_IMPASSABLE;
+
 	const int xstep = 2, zstep = 2;
+	const int tempNum = gs->GetTempNum();
 
 	// (footprints are point-symmetric around <xSquare, zSquare>)
 	for (int z = zmin; z <= zmax; z += zstep) {
+		const int zOffset = z * mapDims.mapx;
 		for (int x = xmin; x <= xmax; x += xstep) {
-			ret |= SquareIsBlocked(moveDef, x, z, collider);
-			if (ret & BLOCK_STRUCTURE) return ret;
+			const BlockingMapCell& cell = groundBlockingObjectMap->GetCellUnsafeConst(zOffset + x);
+			for (CSolidObject* collidee: cell) {
+				if (collidee->tempNum == tempNum)
+					continue;
+
+				collidee->tempNum = tempNum;
+
+				ret |= ObjectBlockType(moveDef, collidee, collider);
+				if (ret & BLOCK_STRUCTURE)
+					return ret;
+			}
 		}
 	}
 	return ret;
@@ -200,6 +215,32 @@ bool CMoveMath::IsNonBlocking(const CSolidObject* collidee, const CSolidObject* 
 	return false;
 }
 
+CMoveMath::BlockType CMoveMath::ObjectBlockType(const MoveDef& moveDef, const CSolidObject* collidee, const CSolidObject* collider)
+{
+	BlockType ret = BLOCK_NONE;
+	if (IsNonBlocking(moveDef, collidee, collider))
+		return ret;
+
+	if (!collidee->immobile) {
+		// mobile obstacle (must be a unit) --> if
+		// moving, it is probably following a path
+		if (collidee->IsMoving()) {
+			ret = BLOCK_MOVING;
+		} else {
+			if ((static_cast<const CUnit*>(collidee))->IsIdle()) {
+				// idling (no orders) mobile unit
+				ret = BLOCK_MOBILE;
+			} else {
+				// busy mobile unit
+				ret = BLOCK_MOBILE_BUSY;
+			}
+		}
+	} else if (CrushResistant(moveDef, collidee)) {
+		ret = BLOCK_STRUCTURE;
+	}
+
+	return ret;
+}
 
 CMoveMath::BlockType CMoveMath::SquareIsBlocked(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider)
 {
@@ -211,28 +252,7 @@ CMoveMath::BlockType CMoveMath::SquareIsBlocked(const MoveDef& moveDef, int xSqu
 	const BlockingMapCell& cell = groundBlockingObjectMap->GetCellUnsafeConst(zSquare * mapDims.mapx + xSquare);
 
 	for (const CSolidObject* collidee: cell) {
-		if (IsNonBlocking(moveDef, collidee, collider))
-			continue;
-
-		if (!collidee->immobile) {
-			// mobile obstacle (must be a unit) --> if
-			// moving, it is probably following a path
-			if (collidee->IsMoving()) {
-				r |= BLOCK_MOVING;
-			} else {
-				if ((static_cast<const CUnit*>(collidee))->IsIdle()) {
-					// idling (no orders) mobile unit
-					r |= BLOCK_MOBILE;
-				} else {
-					// busy mobile unit
-					r |= BLOCK_MOBILE_BUSY;
-				}
-			}
-		} else {
-			if (CrushResistant(moveDef, collidee)) {
-				r |= BLOCK_STRUCTURE;
-			}
-		}
+		r |= ObjectBlockType(moveDef, collidee, collider);
 	}
 
 	return r;

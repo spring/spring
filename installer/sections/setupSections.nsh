@@ -26,9 +26,6 @@ System::Store "s" ; save all register
 ; portable mode
 ${toggleSection} "PORTABLE" ${SEC_PORTABLE}
 
-; lobbies
-${toggleSection} "NOSPRINGLOBBY" ${SEC_SPRINGLOBBY}
-
 ; desktop shortcuts
 ${toggleSection} "NODESKTOPLINK" ${SEC_DESKTOP}
 

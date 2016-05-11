@@ -4,6 +4,7 @@
 #define AI_BASE_H
 
 #include "Sim/Units/CommandAI/Command.h"
+#include "Sim/Units/CommandAI/CommandDescription.h"
 #include "WeaponDef.h"
 
 // Changing these classes or classes being a member of these classes breaks ABI.
@@ -11,7 +12,7 @@
 // of one of these classes may not be used by AI code.
 // TODO: Use for the Legacy C++ wrapper
 #define AI_INTERFACE_GENERATED_VERSION   \
-	(sizeof(CommandDescription) +        \
+	(sizeof(SCommandDescription) +       \
 	 sizeof(Command) +                   \
 	 sizeof(springLegacyAI::WeaponDef))  \
 

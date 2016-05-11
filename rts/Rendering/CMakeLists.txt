@@ -42,7 +42,7 @@ SET(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/Particles/Classes/MuzzleFlame.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/Particles/Classes/RepulseGfx.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/Particles/Classes/SimpleParticleSystem.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Env/Particles/Classes/ShieldProjectile.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Env/Particles/Classes/ShieldSegmentProjectile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/Particles/Classes/SmokeProjectile.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/Particles/Classes/SmokeProjectile2.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/Particles/Classes/SmokeTrailProjectile.cpp"

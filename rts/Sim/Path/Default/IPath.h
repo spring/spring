@@ -8,10 +8,11 @@
 #include "System/type2.h"
 
 namespace IPath {
+	// note: ordered from best to worst
 	enum SearchResult {
 		Ok,
-		GoalOutOfRange,
 		CantGetCloser,
+		GoalOutOfRange,
 		Error
 	};
 

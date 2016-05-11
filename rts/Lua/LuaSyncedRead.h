@@ -192,6 +192,9 @@ class LuaSyncedRead {
 		static int GetFeatureCollisionVolumeData(lua_State* L);
 		static int GetFeaturePieceCollisionVolumeData(lua_State* L);
 
+		static int GetFeatureRulesParam(lua_State* L);
+		static int GetFeatureRulesParams(lua_State* L);
+
 		static int GetProjectilePosition(lua_State* L);
 		static int GetProjectileDirection(lua_State* L);
 		static int GetProjectileVelocity(lua_State* L);
@@ -259,11 +262,6 @@ class LuaSyncedRead {
 		static int TraceRayUnits(lua_State* L);      //TODO: not implemented
 		static int TraceRayFeatures(lua_State* L);   //TODO: not implemented
 		static int TraceRayGround(lua_State* L);     //TODO: not implemented
-
-		static int GetCOBUnitVar(lua_State* L);
-		static int GetCOBTeamVar(lua_State* L);
-		static int GetCOBAllyTeamVar(lua_State* L);
-		static int GetCOBGlobalVar(lua_State* L);
 };
 
 #endif /* LUA_SYNCED_READ_H */

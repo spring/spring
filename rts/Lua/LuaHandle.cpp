@@ -83,7 +83,6 @@ static int handlepanic(lua_State* L)
 CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode, bool _synced)
 	: CEventClient(_name, _order, _synced)
 	, userMode(_userMode)
-	, reloadMe(false)
 	, killMe(false)
 	, callinErrors(0)
 {
@@ -924,19 +923,7 @@ void CLuaHandle::UnitCommand(const CUnit* unit, const Command& command)
 		return; // the call is not defined
 	}
 
-	lua_pushnumber(L, unit->id);
-	lua_pushnumber(L, unit->unitDef->id);
-	lua_pushnumber(L, unit->team);
-
-	lua_pushnumber(L, command.GetID());
-
-	//FIXME: perhaps we should push the table version rather than the bitfield directly
-	lua_pushnumber(L, command.options);
-
-	// push the params list
-	LuaUtils::PushCommandParamsTable(L, command, false);
-
-	lua_pushnumber(L, command.tag);
+	LuaUtils::PushUnitAndCommand(L, unit, command);
 
 	// call the routine
 	RunCallInTraceback(L, cmdStr, 7, 0, traceBack.GetErrFuncIdx(), false);
@@ -955,15 +942,7 @@ void CLuaHandle::UnitCmdDone(const CUnit* unit, const Command& command)
 		return; // the call is not defined
 	}
 
-	lua_pushnumber(L, unit->id);
-	lua_pushnumber(L, unit->unitDef->id);
-	lua_pushnumber(L, unit->team);
-	lua_pushnumber(L, command.GetID());
-	lua_pushnumber(L, command.tag);
-	// push the params list
-	LuaUtils::PushCommandParamsTable(L, command, false);
-	// push the options table
-	LuaUtils::PushCommandOptionsTable(L, command, false);
+	LuaUtils::PushUnitAndCommand(L, unit, command);
 
 	// call the routine
 	RunCallInTraceback(L, cmdStr, 7, 0, traceBack.GetErrFuncIdx(), false);
@@ -2700,10 +2679,8 @@ int CLuaHandle::CallOutIsEngineMinVersion(lua_State* L)
 
 	if (StringToInt(SpringVersion::GetMajor()) == minMajorVer) {
 		if (StringToInt(SpringVersion::GetMinor()) < minMinorVer) {
-			if (GetHandleSynced(L)) { // minor is only allowed to contain unsynced changes!
-				lua_pushboolean(L, false);
-				return 1;
-			}
+			lua_pushboolean(L, false);
+			return 1;
 		}
 
 		if (StringToInt(SpringVersion::GetCommits()) < minCommits) {

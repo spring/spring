@@ -5,6 +5,7 @@
 #include "Unit.h"
 #include "UnitDef.h"
 #include "UnitDefHandler.h"
+#include "UnitHandler.h"
 
 #include "Scripts/UnitScript.h"
 
@@ -23,9 +24,10 @@
 #include "Map/MapDamage.h"
 #include "Map/ReadMap.h"
 
+#include "Sim/Features/FeatureDef.h"
+#include "Sim/Features/FeatureDefHandler.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Units/UnitHandler.h"
 
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
@@ -104,7 +106,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitLoadParams& cparams)
 		} else if (ud->IsAirUnit()) {
 			// all other aircraft; coupled to HoverAirMoveType
 			new CMobileCAI(unit);
-		} else if (ud->IsGroundUnit()) {
+		} else if (ud->IsGroundUnit() || ud->IsTransportUnit()) {
 			new CMobileCAI(unit);
 		} else {
 			new CCommandAI(unit);
@@ -244,7 +246,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 		}
 
 		const UnitDef* unitDef = unitDefHandler->GetUnitDefByName(objectName);
-		const FeatureDef* featureDef = featureHandler->GetFeatureDef(objectName, false);
+		const FeatureDef* featureDef = featureDefHandler->GetFeatureDef(objectName, false);
 
 		if (unitDef == NULL && featureDef == NULL) {
 			LOG_L(L_WARNING, "[%s] %s is not a valid object-name", __FUNCTION__, objectName.c_str());

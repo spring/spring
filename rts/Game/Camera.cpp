@@ -87,9 +87,6 @@ void CCamera::CopyStateReflect(const CCamera* cam)
 	SetPos(cam->GetPos() * float3(1.0f, -1.0f, 1.0f));
 	SetRotZ(-cam->GetRot().z);
 	Update(false, true, false);
-
-	// reflection pass needs the same z-range; Update might have changed it
-	frustumScales = cam->frustumScales;
 }
 
 void CCamera::Update(bool updateDirs, bool updateMats, bool updatePort)
@@ -100,14 +97,16 @@ void CCamera::Update(bool updateDirs, bool updateMats, bool updatePort)
 		lppScale = (2.0f * tanHalfFov) / globalRendering->viewSizeY;
 	}
 
+	// should be set before UpdateMatrices
+	UpdateViewRange();
+
 	if (updateDirs)
 		UpdateDirsFromRot(rot);
 	if (updateMats)
-		UpdateMatrices();
+		UpdateMatrices(globalRendering->viewSizeX, globalRendering->viewSizeY, globalRendering->aspectRatio);
 	if (updatePort)
 		UpdateViewPort(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 
-	UpdateViewRange();
 	UpdateFrustum();
 
 	LoadMatrices();
@@ -154,15 +153,15 @@ void CCamera::UpdateFrustum()
 	}
 }
 
-void CCamera::UpdateMatrices()
+void CCamera::UpdateMatrices(unsigned int vsx, unsigned int vsy, float var)
 {
 	// recalculate the projection transform
 	switch (projType) {
 		case PROJTYPE_PERSP: {
-			gluPerspectiveSpring(globalRendering->aspectRatio, frustumScales.z, frustumScales.w);
+			gluPerspectiveSpring(var, frustumScales.z, frustumScales.w);
 		} break;
 		case PROJTYPE_ORTHO: {
-			glOrthoScaledSpring(globalRendering->viewSizeX, globalRendering->viewSizeY, frustumScales.z, frustumScales.w);
+			glOrthoScaledSpring(vsx, vsy, frustumScales.z, frustumScales.w);
 		} break;
 		default: {
 			assert(false);
@@ -187,7 +186,6 @@ void CCamera::UpdateMatrices()
 	projectionMatrixInverse = projectionMatrix.Invert();
 	viewProjectionMatrixInverse = viewProjectionMatrix.Invert();
 
-	// Billboard Matrix
 	billboardMatrix = viewMatrix;
 	billboardMatrix.SetPos(ZeroVector);
 	billboardMatrix.Transpose(); // viewMatrix is affine, equals inverse
@@ -244,13 +242,8 @@ void CCamera::UpdateViewRange()
 	frustumScales.z = CGlobalRendering::NEAR_PLANE * factor;
 	frustumScales.w = CGlobalRendering::MAX_VIEW_RANGE * factor;
 
-	if (camType == CAMTYPE_PLAYER) {
-		// we do not touch these for other cameras (they e.g.
-		// determine where fog starts and ends so larger maps
-		// would be half-covered in it when factor <= 1)
-		globalRendering->zNear     = frustumScales.z;
-		globalRendering->viewRange = frustumScales.w;
-	}
+	globalRendering->zNear     = frustumScales.z;
+	globalRendering->viewRange = frustumScales.w;
 }
 
 
@@ -350,9 +343,9 @@ float3 CCamera::GetRotFromDir(float3 fwd)
 float3 CCamera::GetFwdFromRot(const float3 r)
 {
 	float3 fwd;
-	fwd.x = math::sin(r.x) *   math::sin(r.y);
-	fwd.z = math::sin(r.x) * (-math::cos(r.y));
-	fwd.y = math::cos(r.x);
+	fwd.x = std::sin(r.x) *   std::sin(r.y);
+	fwd.z = std::sin(r.x) * (-std::cos(r.y));
+	fwd.y = std::cos(r.x);
 	return fwd;
 }
 
@@ -367,9 +360,9 @@ float3 CCamera::GetRgtFromRot(const float3 r)
 	//   fwd=(0,-1,0) -> rot=GetRotFromDir(fwd)=( PI, PI, 0.0) -> GetRgtFromRot(rot)=(+1.0, 0.0, 0.0)
 	//
 	float3 rgt;
-	rgt.x = math::sin(HALFPI - r.z) *   math::sin(r.y + HALFPI);
-	rgt.z = math::sin(HALFPI - r.z) * (-math::cos(r.y + HALFPI));
-	rgt.y = math::cos(HALFPI - r.z);
+	rgt.x = std::sin(HALFPI - r.z) *   std::sin(r.y + HALFPI);
+	rgt.z = std::sin(HALFPI - r.z) * (-std::cos(r.y + HALFPI));
+	rgt.y = std::cos(HALFPI - r.z);
 	return rgt;
 }
 
@@ -627,35 +620,12 @@ void CCamera::ClipFrustumLines(bool neg, const float zmin, const float zmax) {
 }
 
 
-
-float CCamera::GetMoveDistance(float* time, float* speed, int idx) const
+float3 CCamera::GetMoveVectorFromState(bool fromKeyState) const
 {
 	float camDeltaTime = globalRendering->lastFrameTime;
 	float camMoveSpeed = 1.0f;
-
 	camMoveSpeed *= (1.0f - movState[MOVE_STATE_SLW] * 0.9f);
 	camMoveSpeed *= (1.0f + movState[MOVE_STATE_FST] * 9.0f);
-
-	if (time != NULL) { *time = camDeltaTime; }
-	if (speed != NULL) { *speed = camMoveSpeed; }
-
-	switch (idx) {
-		case MOVE_STATE_UP:  { camMoveSpeed *=  float(movState[idx]); } break;
-		case MOVE_STATE_DWN: { camMoveSpeed *= -float(movState[idx]); } break;
-
-		default: {
-		} break;
-	}
-
-	return (camDeltaTime * 0.2f * camMoveSpeed);
-}
-
-float3 CCamera::GetMoveVectorFromState(bool fromKeyState) const
-{
-	float camDeltaTime = 1.0f;
-	float camMoveSpeed = 1.0f;
-
-	(void) GetMoveDistance(&camDeltaTime, &camMoveSpeed, -1);
 
 	float3 v;
 	if (fromKeyState) {

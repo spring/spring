@@ -4,6 +4,7 @@
 #include "TorpedoProjectile.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
+#include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
@@ -20,7 +21,7 @@
 	#include "System/Sync/SyncTracer.h"
 #endif
 
-CR_BIND_DERIVED(CTorpedoProjectile, CWeaponProjectile, (ProjectileParams()))
+CR_BIND_DERIVED(CTorpedoProjectile, CWeaponProjectile, )
 
 CR_REG_METADATA(CTorpedoProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -31,6 +32,7 @@ CR_REG_METADATA(CTorpedoProjectile,(
 	CR_MEMBER(texx),
 	CR_MEMBER(texy)
 ))
+
 
 CTorpedoProjectile::CTorpedoProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, tracking(0.0f)
@@ -140,12 +142,13 @@ void CTorpedoProjectile::Update()
 		if (nextBubble == 0) {
 			nextBubble = 1 + (int) (gs->randFloat() * 1.5f);
 
-			const float3 pspeed = (gs->randVector() * 0.1f) + float3(0.0f, 0.2f, 0.0f);
+			const float3 pspeed = (gu->RandVector() * 0.1f) + float3(0.0f, 0.2f, 0.0f);
 
+			// Spawn unsynced bubble projectile
 			new CBubbleProjectile(
 				owner(),
-				pos + gs->randVector(), pspeed, 40 + gs->randFloat() * GAME_SPEED,
-				1 + gs->randFloat() * 2, 0.01f, 0.3f + gs->randFloat() * 0.3f
+				pos + gu->RandVector(), pspeed, 40 + gu->RandFloat() * GAME_SPEED,
+				1 + gu->RandFloat() * 2, 0.01f, 0.3f + gu->RandFloat() * 0.3f
 			);
 		}
 	}

@@ -267,7 +267,7 @@ static int VisualsTable(lua_State* L, const void* data)
 {
 	const struct WeaponDef::Visuals& v = *static_cast<const struct WeaponDef::Visuals*>(data);
 	lua_newtable(L);
-	HSTR_PUSH_STRING(L, "modelName",      modelParser->FindModelPath(v.modelName));
+	HSTR_PUSH_STRING(L, "modelName",      modelLoader.FindModelPath(v.modelName));
 	HSTR_PUSH_NUMBER(L, "colorR",         v.color.x);
 	HSTR_PUSH_NUMBER(L, "colorG",         v.color.y);
 	HSTR_PUSH_NUMBER(L, "colorB",         v.color.z);

@@ -24,12 +24,12 @@ static spring::shared_spinlock mutex;
 static std::array<std::vector<float>, ThreadPool::MAX_THREADS> isqrt_table;
 
 
-static float isqrt_lookup(unsigned r)
+static float isqrt_lookup(unsigned r, int threadNum)
 {
-	auto& isqrt = isqrt_table[ThreadPool::GetThreadNum()];
+	auto& isqrt = isqrt_table[threadNum];
 	if (r >= isqrt.size()) {
 		for (unsigned i=isqrt.size(); i<=r; ++i)
-			isqrt.push_back(math::isqrt2(std::max(i, 1u)));
+			isqrt.push_back(math::isqrt(std::max(i, 1u)));
 	}
 	return isqrt[r];
 }
@@ -494,15 +494,20 @@ inline static constexpr size_t ToAngleMapIdx(const int2 p, const int radius)
 }
 
 
-
-void CLosMap::CastLos(float* maxAng, const int2 off, std::vector<bool>& squaresMap, std::vector<float>& anglesMap, const int radius) const
+inline void CastLos(float* prevAng, float* maxAng, const int2& off, std::vector<bool>& squaresMap, std::vector<float>& anglesMap, int radius, int threadNum)
 {
 	// check if we got a new maxAngle
 	const size_t oidx = ToAngleMapIdx(off, radius);
 	if (anglesMap[oidx] < *maxAng)
 		return;
-	const float invR = isqrt_lookup(off.x*off.x + off.y*off.y);
-	*maxAng = anglesMap[oidx] - LOS_BONUS_HEIGHT * invR; // remove bonusHeight for the cached maxHeight
+
+	if (anglesMap[oidx] < *prevAng) {
+		const float invR = isqrt_lookup(off.x*off.x + off.y*off.y, threadNum);
+		*maxAng = *prevAng - LOS_BONUS_HEIGHT * invR;
+		if (anglesMap[oidx] < *maxAng)
+			return;
+	}
+	*prevAng = anglesMap[oidx];
 
 	// add square to visibility list when not already done
 	assert(anglesMap[oidx] != -1e8);
@@ -540,6 +545,12 @@ void CLosMap::UnsafeLosAdd(SLosInstance* li) const
 	// heightmap. Meaning we compute the angle to the given squares and compare them with
 	// the highest cached one on that ray. When the new angle is higher the square is
 	// visible and gets added to the squares array.
+	//
+	// How does prevAng optimisation work?
+	// We don't really need to save every angle as the maximum, if we're going up a mountain
+	// we can just mark them true and continue until we reach the top.
+	// So now, only hilltops are cached in maxAng, and they're only cached when checking
+	// the square after the hilltop, since otherwise we can't know that the ascent ended.
 
 	const int2 pos   = li->basePos;
 	const int radius = li->radius;
@@ -548,6 +559,7 @@ void CLosMap::UnsafeLosAdd(SLosInstance* li) const
 	CLosTables::GenerateForLosSize(radius); //Only generates if not in cache
 	std::vector<bool> squaresMap(area, false); // saves the list of visible squares
 	std::vector<float> anglesMap(area, -1e8);
+	int threadNum = ThreadPool::GetThreadNum();
 
 	// Optimization: precalc all angles, cause:
 	// 1. Many squares are accessed by multiple rays. Imagine you got a 128 radius circle
@@ -567,7 +579,7 @@ void CLosMap::UnsafeLosAdd(SLosInstance* li) const
 			if (off == int2(0,0))
 				continue;
 
-			const float invR = isqrt_lookup(off.x*off.x + off.y*off.y);
+			const float invR = isqrt_lookup(off.x*off.x + off.y*off.y, threadNum);
 
 			const int idx = MAP_SQUARE(wpos);
 			const float dh = std::max(0.f, heightmap[idx]) - losHeight;
@@ -582,16 +594,17 @@ void CLosMap::UnsafeLosAdd(SLosInstance* li) const
 	const size_t numRays = CLosTables::GetLosTableSize(radius);
 	for (size_t i = 0; i < numRays; ++i) {
 		float maxAng[4] = {-1e7, -1e7, -1e7, -1e7};
+		float prevAng[4] = {-1e7, -1e7, -1e7, -1e7};
 
 		const size_t numSquares = CLosTables::GetLosTableRaySize(radius, i);
 
 		for (size_t n = 0; n < numSquares; n++) {
 			const int2 square = CLosTables::GetLosTableRaySquare(radius, i, n);
 
-			CastLos(&maxAng[0], square,                    squaresMap, anglesMap, radius);
-			CastLos(&maxAng[1], -square,                   squaresMap, anglesMap, radius);
-			CastLos(&maxAng[2], int2(square.y, -square.x), squaresMap, anglesMap, radius);
-			CastLos(&maxAng[3], int2(-square.y, square.x), squaresMap, anglesMap, radius);
+			CastLos(&prevAng[0], &maxAng[0], square,                    squaresMap, anglesMap, radius, threadNum);
+			CastLos(&prevAng[1], &maxAng[1], -square,                   squaresMap, anglesMap, radius, threadNum);
+			CastLos(&prevAng[2], &maxAng[2], int2(square.y, -square.x), squaresMap, anglesMap, radius, threadNum);
+			CastLos(&prevAng[3], &maxAng[3], int2(-square.y, square.x), squaresMap, anglesMap, radius, threadNum);
 		}
 	}
 
@@ -613,6 +626,7 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 	std::vector<bool> squaresMap(area, false); // saves the list of visible squares
 	std::vector<float> anglesMap(area, -1e8);
 	const SRectangle safeRect(0, 0, size.x, size.y);
+	int threadNum = ThreadPool::GetThreadNum();
 
 	// Optimization: precalc all angles
 	MidpointCircleAlgoPerLine(radius, [&](int width, int y) {
@@ -629,7 +643,7 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 					continue;
 
 				//assert(safeRect.Inside(wpos));
-				const float invR = isqrt_lookup(off.x*off.x + off.y*off.y);
+				const float invR = isqrt_lookup(off.x*off.x + off.y*off.y, threadNum);
 
 				const int idx = MAP_SQUARE(wpos);
 				const float dh = std::max(0.f, heightmap[idx]) - losHeight;
@@ -649,6 +663,7 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 
 		for (size_t i = 0; i < numRays; ++i) {
 			float maxAng[4] = {-1e7, -1e7, -1e7, -1e7};
+			float prevAng[4] = {-1e7, -1e7, -1e7, -1e7};
 
 			const size_t numSquares = CLosTables::GetLosTableRaySize(radius, i);
 
@@ -658,7 +673,7 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 				if (!safeRect.Inside(pos + square))
 					break;
 
-				CastLos(&maxAng[0], square,                    squaresMap, anglesMap, radius);
+				CastLos(&prevAng[0], &maxAng[0], square,                    squaresMap, anglesMap, radius, threadNum);
 			}
 			for (size_t n = 0; n < numSquares; n++) {
 				const int2 square = CLosTables::GetLosTableRaySquare(radius, i, n);
@@ -666,7 +681,7 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 				if (!safeRect.Inside(pos - square))
 					break;
 
-				CastLos(&maxAng[1], -square,                   squaresMap, anglesMap, radius);
+				CastLos(&prevAng[1], &maxAng[1], -square,                   squaresMap, anglesMap, radius, threadNum);
 			}
 			for (size_t n = 0; n < numSquares; n++) {
 				const int2 square = CLosTables::GetLosTableRaySquare(radius, i, n);
@@ -674,7 +689,7 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 				if (!safeRect.Inside(pos + int2(square.y, -square.x)))
 					break;
 
-				CastLos(&maxAng[2], int2(square.y, -square.x), squaresMap, anglesMap, radius);
+				CastLos(&prevAng[2], &maxAng[2], int2(square.y, -square.x), squaresMap, anglesMap, radius, threadNum);
 			}
 			for (size_t n = 0; n < numSquares; n++) {
 				const int2 square = CLosTables::GetLosTableRaySquare(radius, i, n);
@@ -682,13 +697,14 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 				if (!safeRect.Inside(pos + int2(-square.y, square.x)))
 					break;
 
-				CastLos(&maxAng[3], int2(-square.y, square.x), squaresMap, anglesMap, radius);
+				CastLos(&prevAng[3], &maxAng[3], int2(-square.y, square.x), squaresMap, anglesMap, radius, threadNum);
 			}
 		}
 	} else {
 		// emit position outside the map
 		for (size_t i = 0; i < numRays; ++i) {
 			float maxAng[4] = {-1e7, -1e7, -1e7, -1e7};
+			float prevAng[4] = {-1e7, -1e7, -1e7, -1e7};
 
 			const size_t numSquares = CLosTables::GetLosTableRaySize(radius, i);
 
@@ -696,16 +712,16 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 				const int2 square = CLosTables::GetLosTableRaySquare(radius, i, n);
 
 				if (safeRect.Inside(pos + square)) {
-					CastLos(&maxAng[0], square,                    squaresMap, anglesMap, radius);
+					CastLos(&prevAng[0], &maxAng[0], square,                    squaresMap, anglesMap, radius, threadNum);
 				}
 				if (safeRect.Inside(pos - square)) {
-					CastLos(&maxAng[1], -square,                   squaresMap, anglesMap, radius);
+					CastLos(&prevAng[1], &maxAng[1], -square,                   squaresMap, anglesMap, radius, threadNum);
 				}
 				if (safeRect.Inside(pos + int2(square.y, -square.x))) {
-					CastLos(&maxAng[2], int2(square.y, -square.x), squaresMap, anglesMap, radius);
+					CastLos(&prevAng[2], &maxAng[2], int2(square.y, -square.x), squaresMap, anglesMap, radius, threadNum);
 				}
 				if (safeRect.Inside(pos + int2(-square.y, square.x))) {
-					CastLos(&maxAng[3], int2(-square.y, square.x), squaresMap, anglesMap, radius);
+					CastLos(&prevAng[3], &maxAng[3], int2(-square.y, square.x), squaresMap, anglesMap, radius, threadNum);
 				}
 			}
 		}

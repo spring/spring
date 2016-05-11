@@ -109,8 +109,9 @@ float ILosType::GetHeight(const CUnit* unit) const
 		return 0.f;
 	}
 	const float emitHeight = (type == LOS_TYPE_LOS || type == LOS_TYPE_AIRLOS) ? unit->unitDef->losHeight : unit->unitDef->radarHeight;
-	const float losHeight = unit->midPos.y + emitHeight;
-	const float iLosHeight = ((int(losHeight) >> (mipLevel + 1)) << (mipLevel + 1)) + ((1 << (mipLevel + 1)) * 0.5f); // save losHeight in buckets //FIXME Round
+	const float losHeight  = unit->midPos.y + emitHeight;
+	const int bucketSize   = 1 << (mipLevel + 2);
+	const float iLosHeight = (int(losHeight) / bucketSize + 0.5f) * bucketSize; // save losHeight in buckets
 	return iLosHeight;
 }
 
@@ -140,6 +141,7 @@ inline void ILosType::UpdateUnit(CUnit* unit)
 		return;
 	}
 
+	SLosInstance* uli = unit->los[type];
 	const float3 losPos = unit->midPos;
 	const float radius = GetRadius(unit);
 	const float height = GetHeight(unit);
@@ -151,8 +153,13 @@ inline void ILosType::UpdateUnit(CUnit* unit)
 		if (!modInfo.separateJammers)
 			allyteam = 0;
 
-	if (radius <= 0)
+	if (radius <= 0) {
+		if (uli) {
+			unit->los[type] = nullptr;
+			UnrefInstance(uli);
+		}
 		return;
+	}
 
 	auto IS_FITTING_INSTANCE = [&](SLosInstance* li) -> bool {
 		return (li
@@ -164,7 +171,6 @@ inline void ILosType::UpdateUnit(CUnit* unit)
 	};
 
 	// unchanged?
-	SLosInstance* uli = unit->los[type];
 	if (IS_FITTING_INSTANCE(uli)) {
 		return;
 	}

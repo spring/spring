@@ -37,6 +37,7 @@
 #include "Map/BaseGroundDrawer.h"
 #include "Map/BaseGroundTextures.h"
 #include "Net/Protocol/NetProtocol.h"
+#include "Net/GameServer.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SunLighting.h"
 #include "Rendering/GL/myGL.h"
@@ -48,6 +49,8 @@
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
+#include "Sim/Features/FeatureDef.h"
+#include "Sim/Features/FeatureDefHandler.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/Projectile.h"
@@ -776,6 +779,28 @@ int LuaUnsyncedCtrl::DrawUnitCommands(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
+static CCameraController::StateMap ParseCamStateMap(lua_State* L, int tableIdx)
+{
+	CCameraController::StateMap camState;
+
+	for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
+		if (!lua_israwstring(L, -2))
+			continue;
+
+		const string key = lua_tostring(L, -2);
+
+		if (lua_isnumber(L, -1)) {
+			camState[key] = lua_tofloat(L, -1);
+		}
+		else if (lua_isboolean(L, -1)) {
+			camState[key] = lua_toboolean(L, -1) ? +1.0f : -1.0f;
+		}
+	}
+
+	return camState;
+}
+
+
 int LuaUnsyncedCtrl::SetCameraTarget(lua_State* L)
 {
 	if (mouse == nullptr)
@@ -785,14 +810,10 @@ int LuaUnsyncedCtrl::SetCameraTarget(lua_State* L)
 	                 luaL_checkfloat(L, 2),
 	                 luaL_checkfloat(L, 3));
 
-	const float transTime = luaL_optfloat(L, 4, 0.5f);
-
-	camHandler->CameraTransition(transTime);
+	camHandler->CameraTransition(luaL_optfloat(L, 4, 0.5f));
 	camHandler->GetCurrentController().SetPos(pos);
-
 	return 0;
 }
-
 
 int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 {
@@ -801,33 +822,16 @@ int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 		return 0;
 
 	if (!lua_istable(L, 1))
-		luaL_error(L, "Incorrect arguments to SetCameraState(table, camTime)");
+		luaL_error(L, "Incorrect arguments to SetCameraState(table[, camTime])");
 
-	// TODO: add separate callout for smooth mode transitions?
-	// const float camTime = luaL_checkfloat(L, 2);
+	camHandler->CameraTransition(luaL_optfloat(L, 2, 0.0f));
 
-	CCameraController::StateMap camState;
+	const bool retval = camHandler->SetState(ParseCamStateMap(L, 1));
+	const bool synced = CLuaHandle::GetHandleSynced(L);
 
-	const int table = 1;
-	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (lua_israwstring(L, -2)) {
-			const string key = lua_tostring(L, -2);
-			if (lua_isnumber(L, -1)) {
-				camState[key] = lua_tofloat(L, -1);
-			}
-			else if (lua_isboolean(L, -1)) {
-				camState[key] = lua_toboolean(L, -1) ? +1.0f : -1.0f;
-			}
-		}
-	}
-
-	if (!CLuaHandle::GetHandleSynced(L)) {
-		lua_pushboolean(L, camHandler->SetState(camState));
-		return 1;
-	}
-
-	camHandler->SetState(camState);
-	return 0;
+	// always push false in synced
+	lua_pushboolean(L, retval && !synced);
+	return 1;
 }
 
 
@@ -2148,6 +2152,8 @@ static int ReloadOrRestart(const std::string& springArgs, const std::string& scr
 		// else OpenAL crashes when using execvp
 		ISound::Shutdown();
 	#endif
+		// close local socket to avoid "bind: Address already in use"
+		SafeDelete(gameServer);
 
 		LOG("[%s] Spring \"%s\" should be restarting", __FUNCTION__, springFullName.c_str());
 		Platform::ExecuteProcess(springFullName, processArgs);
@@ -3027,7 +3033,7 @@ int LuaUnsyncedCtrl::PreloadUnitDefModel(lua_State* L) {
 }
 
 int LuaUnsyncedCtrl::PreloadFeatureDefModel(lua_State* L) {
-	const FeatureDef* fd = featureHandler->GetFeatureDefByID(luaL_checkint(L, 1));
+	const FeatureDef* fd = featureDefHandler->GetFeatureDefByID(luaL_checkint(L, 1));
 
 	if (fd == nullptr)
 		return 0;

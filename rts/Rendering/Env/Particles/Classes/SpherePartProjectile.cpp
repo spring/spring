@@ -8,7 +8,7 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 
-CR_BIND_DERIVED(CSpherePartProjectile, CProjectile, (NULL, ZeroVector, 0, 0, 0.0f, 0.0f, 0, ZeroVector))
+CR_BIND_DERIVED(CSpherePartProjectile, CProjectile, )
 
 CR_REG_METADATA(CSpherePartProjectile, (
 	CR_MEMBER(centerPos),
@@ -24,6 +24,7 @@ CR_REG_METADATA(CSpherePartProjectile, (
 	CR_MEMBER(texx),
 	CR_MEMBER(texy)
 ))
+
 
 CSpherePartProjectile::CSpherePartProjectile(
 	const CUnit* owner,
@@ -53,7 +54,7 @@ CSpherePartProjectile::CSpherePartProjectile(
 		const float yp = (y + ypart) / 16.0f*PI - PI/2;
 		for (int x = 0; x < 5; ++x) {
 			float xp = (x + xpart) / 32.0f*2*PI;
-			vectors[y*5 + x] = float3(math::sin(xp)*math::cos(yp), math::sin(yp), math::cos(xp)*math::cos(yp));
+			vectors[y*5 + x] = float3(std::sin(xp)*std::cos(yp), std::sin(yp), std::cos(xp)*std::cos(yp));
 		}
 	}
 	pos = centerPos+vectors[12] * sphereSize;
@@ -87,7 +88,7 @@ void CSpherePartProjectile::Draw()
 			float alpha =
 				baseAlpha *
 				(1.0f - std::min(1.0f, float(age + globalRendering->timeOffset) / (float) ttl)) *
-				(1.0f - math::fabs(y + ybase - 8.0f) / 8.0f * 1.0f);
+				(1.0f - std::fabs(y + ybase - 8.0f) / 8.0f * 1.0f);
 
 			col[0] = (unsigned char) (color.x * 255.0f * alpha);
 			col[1] = (unsigned char) (color.y * 255.0f * alpha);
@@ -95,7 +96,7 @@ void CSpherePartProjectile::Draw()
 			col[3] = ((unsigned char) (40 * alpha)) + 1;
 			va->AddVertexQTC(centerPos + vectors[y*5 + x]     * interSize, texx, texy, col);
 			va->AddVertexQTC(centerPos + vectors[y*5 + x + 1] * interSize, texx, texy, col);
-			alpha = baseAlpha * (1.0f - std::min(1.0f, (float)(age + globalRendering->timeOffset) / (float) ttl)) * (1 - math::fabs(y + 1 + ybase - 8.0f) / 8.0f*1.0f);
+			alpha = baseAlpha * (1.0f - std::min(1.0f, (float)(age + globalRendering->timeOffset) / (float) ttl)) * (1 - std::fabs(y + 1 + ybase - 8.0f) / 8.0f*1.0f);
 
 			col[0] = (unsigned char) (color.x * 255.0f * alpha);
 			col[1] = (unsigned char) (color.y * 255.0f * alpha);

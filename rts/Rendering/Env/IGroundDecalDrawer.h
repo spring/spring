@@ -3,41 +3,23 @@
 #ifndef IGROUND_DECAL_DRAWER_H
 #define IGROUND_DECAL_DRAWER_H
 
-#include "System/float3.h"
-
-//class CUnit;
 class CSolidObject;
-//struct CExplosionEvent;
-struct SolidObjectGroundDecal;
-struct S3DModel;
-
-struct GhostSolidObject {
-	SolidObjectGroundDecal* decal; //FIXME defined in legacy decal handler with a lot legacy stuff
-	S3DModel* model;
-
-	float3 pos;
-	float3 dir;
-
-	int facing; //FIXME replaced with dir-vector just legacy decal drawer uses this
-	int team;
-};
+struct GhostSolidObject;
 
 
 class IGroundDecalDrawer
 {
 public:
-	static bool GetDrawDecals() { return drawDecals; }
-	static void SetDrawDecals(bool v) { if (decalLevel > 0) { drawDecals = v; } } //FIXME
+	static bool GetDrawDecals() { return (decalLevel > 0); }
+	static void SetDrawDecals(bool v);
 
 	static IGroundDecalDrawer* GetInstance();
 	static void FreeInstance();
 
 public:
 	virtual void Draw() = 0;
-	virtual void Update() = 0;
 
 	virtual void ForceRemoveSolidObject(CSolidObject* object) = 0;
-	virtual void RemoveSolidObject(CSolidObject* object, GhostSolidObject* gb) = 0;
 
 	//FIXME move to eventhandler?
 	virtual void GhostDestroyed(GhostSolidObject* gb) = 0;
@@ -48,8 +30,10 @@ public:
 	virtual ~IGroundDecalDrawer(){}
 
 protected:
-	static bool drawDecals;
-	static unsigned int decalLevel;
+	virtual void OnDecalLevelChanged() = 0;
+
+protected:
+	static int decalLevel;
 };
 
 #define groundDecals IGroundDecalDrawer::GetInstance()

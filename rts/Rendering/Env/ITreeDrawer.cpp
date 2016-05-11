@@ -8,6 +8,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Features/Feature.h"
+#include "Sim/Features/FeatureDef.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"

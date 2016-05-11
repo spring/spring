@@ -1,10 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "Rendering/GL/myGL.h"
-#include <algorithm>
-#include <cctype>
-#include <boost/thread.hpp>
-
+#include <mutex>
 #include "IModelParser.h"
 #include "3DModel.h"
 #include "3DModelLog.h"
@@ -20,12 +16,11 @@
 #include "System/Util.h"
 #include "System/Exceptions.h"
 #include "System/maindefines.h"
+#include "System/ThreadPool.h"
 #include "lib/assimp/include/assimp/Importer.hpp"
 
-C3DModelLoader* modelParser = nullptr;
 
-
-static void RegisterAssimpModelFormats(C3DModelLoader::FormatMap& formats) {
+static void RegisterAssimpModelFormats(CModelLoader::FormatMap& formats) {
 	std::set<std::string> whitelist;
 	std::string extension;
 	std::string extensions;
@@ -106,67 +101,7 @@ static void CheckPieceNormals(const S3DModel* model, const S3DModelPiece* modelP
 }
 
 
-
-LoadQueue::~LoadQueue()
-{
-	if (thread != nullptr) {
-		thread->join();
-		SafeDelete(thread);
-	}
-}
-
-__FORCE_ALIGN_STACK__
-void LoadQueue::Pump()
-{
-	while (true) {
-		std::string modelName;
-
-		{
-			GrabLock();
-			assert(queue.size() > 0);
-			modelName = queue.front();
-			FreeLock();
-		}
-
-		modelParser->Load3DModel(modelName, true);
-
-		{
-			GrabLock();
-			queue.pop_front();
-			const bool empty = queue.empty();
-			FreeLock();
-			if (empty)
-				break;
-		}
-	}
-}
-
-void LoadQueue::Push(const std::string& modelName)
-{
-	GrabLock();
-
-	if (queue.empty()) {
-		if (thread != nullptr) {
-			FreeLock();
-
-			thread->join();
-			SafeDelete(thread);
-
-			GrabLock();
-		}
-
-		// mutex is still locked, thread will block if it gets
-		// to queue.front() before we get to queue.push_back()
-		thread = new boost::thread(boost::bind(&LoadQueue::Pump, this));
-	}
-
-	queue.push_back(modelName);
-
-	FreeLock();
-}
-
-
-C3DModelLoader::C3DModelLoader()
+void CModelLoader::Init()
 {
 	// file-extension should be lowercase
 	formats["3do"] = MODELTYPE_3DO;
@@ -186,10 +121,17 @@ C3DModelLoader::C3DModelLoader()
 	models.push_back(nullptr);
 }
 
-
-C3DModelLoader::~C3DModelLoader()
+void CModelLoader::Kill()
 {
-	// delete model cache
+	KillModels();
+	KillParsers();
+
+	cache.clear();
+	formats.clear();
+}
+
+void CModelLoader::KillModels()
+{
 	for (unsigned int n = 1; n < models.size(); n++) {
 		S3DModel* model = models[n];
 
@@ -199,22 +141,30 @@ C3DModelLoader::~C3DModelLoader()
 		model->DeletePieces(model->GetRootPiece());
 		model->SetRootPiece(nullptr);
 
-		delete model;
+		SafeDelete(model);
 	}
 
+	models.clear();
+}
+
+void CModelLoader::KillParsers()
+{
 	for (auto it = parsers.cbegin(); it != parsers.cend(); ++it) {
 		delete (it->second);
 	}
 
-	models.clear();
-	cache.clear();
 	parsers.clear();
+}
 
+CModelLoader& CModelLoader::GetInstance()
+{
+	static CModelLoader instance;
+	return instance;
 }
 
 
 
-std::string C3DModelLoader::FindModelPath(std::string name) const
+std::string CModelLoader::FindModelPath(std::string name) const
 {
 	// check for empty string because we can be called
 	// from Lua*Defs and certain features have no models
@@ -243,12 +193,27 @@ std::string C3DModelLoader::FindModelPath(std::string name) const
 }
 
 
+void CModelLoader::PreloadModel(const std::string& modelName)
+{
+	if (!ThreadPool::HasThreads())
+		return;
 
-S3DModel* C3DModelLoader::Load3DModel(std::string name, bool preload)
+	if (cache.find(StringToLower(modelName)) != cache.end())
+		return;
+
+	ThreadPool::enqueue([modelName](){
+		modelLoader.LoadModel(modelName, true);
+	});
+}
+
+
+S3DModel* CModelLoader::LoadModel(std::string name, bool preload)
 {
 	// cannot happen except through SpawnProjectile
 	if (name.empty())
 		return nullptr;
+
+	std::lock_guard<spring::mutex> lock(mutex);
 
 	StringToLowerInPlace(name);
 
@@ -257,7 +222,7 @@ S3DModel* C3DModelLoader::Load3DModel(std::string name, bool preload)
 
 	// search in cache first
 	for (unsigned int n = 0; n < 2; n++) {
-		S3DModel* cachedModel = LoadCached3DModel(*refs[n], preload);
+		S3DModel* cachedModel = LoadCachedModel(*refs[n], preload);
 
 		if (cachedModel != nullptr)
 			return cachedModel;
@@ -270,24 +235,17 @@ S3DModel* C3DModelLoader::Load3DModel(std::string name, bool preload)
 	return (CreateModel(name, path, preload));
 }
 
-S3DModel* C3DModelLoader::LoadCached3DModel(const std::string& name, bool preload)
+S3DModel* CModelLoader::LoadCachedModel(const std::string& name, bool preload)
 {
 	S3DModel* cachedModel = nullptr;
 
-	{
-		loadQueue.GrabLock();
+	const auto ci = cache.find(name);
+	if (ci != cache.end()) {
+		cachedModel = models[ci->second];
 
-		const auto ci = cache.find(name);
-
-		if (ci != cache.end()) {
-			cachedModel = models[ci->second];
-
-			if (!preload) {
-				CreateLists(cachedModel);
-			}
+		if (!preload) {
+			CreateLists(cachedModel);
 		}
-
-		loadQueue.FreeLock();
 	}
 
 	return cachedModel;
@@ -295,7 +253,7 @@ S3DModel* C3DModelLoader::LoadCached3DModel(const std::string& name, bool preloa
 
 
 
-S3DModel* C3DModelLoader::CreateModel(
+S3DModel* CModelLoader::CreateModel(
 	const std::string& name,
 	const std::string& path,
 	bool preload
@@ -316,7 +274,7 @@ S3DModel* C3DModelLoader::CreateModel(
 
 
 
-IModelParser* C3DModelLoader::GetFormatParser(const std::string& pathExt)
+IModelParser* CModelLoader::GetFormatParser(const std::string& pathExt)
 {
 	const auto fi = formats.find(StringToLower(pathExt));
 
@@ -326,7 +284,7 @@ IModelParser* C3DModelLoader::GetFormatParser(const std::string& pathExt)
 	return parsers[fi->second];
 }
 
-S3DModel* C3DModelLoader::ParseModel(const std::string& name, const std::string& path)
+S3DModel* CModelLoader::ParseModel(const std::string& name, const std::string& path)
 {
 	S3DModel* model = nullptr;
 	IModelParser* parser = GetFormatParser(FileSystem::GetExtension(path));
@@ -346,29 +304,23 @@ S3DModel* C3DModelLoader::ParseModel(const std::string& name, const std::string&
 
 
 
-void C3DModelLoader::AddModelToCache(
+void CModelLoader::AddModelToCache(
 	S3DModel* model,
 	const std::string& name,
 	const std::string& path
 ) {
-	loadQueue.GrabLock();
+	model->id = models.size(); // IDs start at 1
+	models.push_back(model);
 
-	{
-		model->id = models.size(); // IDs start at 1
-		models.push_back(model);
+	assert(models[model->id] == model);
 
-		assert(models[model->id] == model);
-
-		cache[name] = model->id;
-		cache[path] = model->id;
-	}
-
-	loadQueue.FreeLock();
+	cache[name] = model->id;
+	cache[path] = model->id;
 }
 
 
 
-void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
+void CModelLoader::CreateListsNow(S3DModelPiece* o)
 {
 	o->UploadGeometryVBOs();
 	o->CreateShatterPieces();
@@ -380,7 +332,7 @@ void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
 }
 
 
-void C3DModelLoader::CreateLists(S3DModel* model) {
+void CModelLoader::CreateLists(S3DModel* model) {
 	S3DModelPiece* rootPiece = model->GetRootPiece();
 
 	if (rootPiece->GetDisplayListID() != 0)
@@ -388,14 +340,15 @@ void C3DModelLoader::CreateLists(S3DModel* model) {
 
 	CreateListsNow(rootPiece);
 
-	if (model->type != MODELTYPE_3DO) {
-		//Make sure textures are loaded.
-		texturehandlerS3O->LoadS3OTexture(model);
+	if (model->type == MODELTYPE_3DO)
+		return;
 
-		// warn about models with bad normals (they break lighting)
-		// skip for 3DO's (they are auto-calced there)
-		CheckPieceNormals(model, model->GetRootPiece());
-	}
+	// make sure textures (already preloaded) are fully loaded
+	texturehandlerS3O->LoadTexture(model);
+
+	// warn about models with bad normals (they break lighting)
+	// skip for 3DO's since they are auto-calculated there
+	CheckPieceNormals(model, model->GetRootPiece());
 }
 
 /******************************************************************************/

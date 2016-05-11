@@ -6,7 +6,6 @@
 #include <vector>
 #include <string>
 
-#include "Lua/LuaRulesParams.h"
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Misc/Resource.h"
 #include "Sim/Weapons/WeaponTarget.h"
@@ -23,6 +22,7 @@ class CWeapon;
 class CUnitScript;
 class DamageArray;
 class DynDamageArray;
+struct SolidObjectDef;
 struct UnitDef;
 struct UnitTrackStruct;
 struct UnitLoadParams;
@@ -81,6 +81,8 @@ public:
 	virtual void SlowUpdate();
 	virtual void SlowUpdateWeapons();
 	virtual void Update();
+
+	const SolidObjectDef* GetDef() const { return ((const SolidObjectDef*) unitDef); }
 
 	virtual void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID);
 	virtual void DoWaterDamage();
@@ -165,6 +167,7 @@ public:
 
 	void SetLosStatus(int allyTeam, unsigned short newStatus);
 	unsigned short CalcLosStatus(int allyTeam);
+	void UpdateLosStatus(int allyTeam);
 
 	void SlowUpdateCloak(bool);
 	void ScriptDecloak(bool);
@@ -218,7 +221,6 @@ public:
 protected:
 	void ChangeTeamReset();
 	void UpdateResources();
-	void UpdateLosStatus(int allyTeam);
 	float GetFlankingDamageBonus(const float3& attackDir);
 
 public: // unsynced methods
@@ -308,19 +310,7 @@ public:
 	float3 posErrorVector;
 	float3 posErrorDelta;
 
-	int unitDefID;
 	int featureDefID; // FeatureDef id of the wreck we spawn on death
-
-	/**
-	 * @brief mod controlled parameters
-	 * This is a set of parameters that is initialized
-	 * in CreateUnitRulesParams() and may change during the game.
-	 * Each parameter is uniquely identified only by its id
-	 * (which is the index in the vector).
-	 * Parameters may or may not have a name.
-	 */
-	LuaRulesParams::Params  modParams;
-	LuaRulesParams::HashMap modParamsMap; ///< name map for mod parameters
 
 	/// indicate the relative power of the unit, used for experience calulations etc
 	float power;

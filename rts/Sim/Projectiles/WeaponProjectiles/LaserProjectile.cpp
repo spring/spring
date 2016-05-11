@@ -14,7 +14,7 @@
 	#include "System/Sync/SyncTracer.h"
 #endif
 
-CR_BIND_DERIVED(CLaserProjectile, CWeaponProjectile, (ProjectileParams()))
+CR_BIND_DERIVED(CLaserProjectile, CWeaponProjectile, )
 
 CR_REG_METADATA(CLaserProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -28,6 +28,7 @@ CR_REG_METADATA(CLaserProjectile,(
 	CR_MEMBER(intensityFalloff),
 	CR_MEMBER(midtexx)
 ))
+
 
 CLaserProjectile::CLaserProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, speedf(0.0f)

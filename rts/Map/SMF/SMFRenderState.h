@@ -47,7 +47,6 @@ public:
 	virtual void SetSquareTexGen(const int sqx, const int sqy) const = 0;
 	virtual void SetCurrentShader(const DrawPass::e& drawPass) = 0;
 	virtual void UpdateCurrentShaderSky(const ISkyLight* skyLight) const = 0;
-	virtual void UpdateCurrentShaderSunLighting() const = 0;
 };
 
 
@@ -73,14 +72,13 @@ public:
 	void SetSquareTexGen(const int sqx, const int sqy) const;
 	void SetCurrentShader(const DrawPass::e& drawPass) {}
 	void UpdateCurrentShaderSky(const ISkyLight* skyLight) const {};
-	void UpdateCurrentShaderSunLighting() const {};
 };
 
 
 struct SMFRenderStateARB: public ISMFRenderState {
 public:
 	SMFRenderStateARB() { arbShaders.fill(nullptr); }
-	~SMFRenderStateARB() { Kill(); }
+	~SMFRenderStateARB() { arbShaders.fill(nullptr); }
 
 	bool Init(const CSMFGroundDrawer* smfGroundDrawer);
 	void Kill();
@@ -100,7 +98,6 @@ public:
 	void SetSquareTexGen(const int sqx, const int sqy) const;
 	void SetCurrentShader(const DrawPass::e& drawPass);
 	void UpdateCurrentShaderSky(const ISkyLight* skyLight) const;
-	void UpdateCurrentShaderSunLighting() const {};
 
 	enum {
 		ARB_SHADER_DEFAULT = 0,
@@ -121,7 +118,7 @@ private:
 struct SMFRenderStateGLSL: public ISMFRenderState {
 public:
 	SMFRenderStateGLSL(bool lua): useLuaShaders(lua) { glslShaders.fill(nullptr); }
-	~SMFRenderStateGLSL() { Kill(); }
+	~SMFRenderStateGLSL() { glslShaders.fill(nullptr); }
 
 	bool Init(const CSMFGroundDrawer* smfGroundDrawer);
 	void Kill();
@@ -141,7 +138,6 @@ public:
 	void SetSquareTexGen(const int sqx, const int sqy) const;
 	void SetCurrentShader(const DrawPass::e& drawPass);
 	void UpdateCurrentShaderSky(const ISkyLight* skyLight) const;
-	void UpdateCurrentShaderSunLighting() const;
 
 	enum {
 		GLSL_SHADER_STANDARD = 0,

@@ -15,7 +15,6 @@
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
 #include "Net/GameServer.h"
-#include "Game/GUI/PlayerRoster.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/TraceRay.h"
 #include "Game/Camera/CameraController.h"
@@ -26,6 +25,7 @@
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/MiniMap.h"
 #include "Game/UI/MouseHandler.h"
+#include "Game/UI/PlayerRoster.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Map/BaseGroundTextures.h"
 #include "Map/Ground.h"
@@ -45,6 +45,7 @@
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/CommandAI/CommandDescription.h"
 #include "Game/UI/Groups/Group.h"
 #include "Game/UI/Groups/GroupHandler.h"
 #include "Net/Protocol/NetProtocol.h"
@@ -165,6 +166,7 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetPixelDir);
 
 	REGISTER_LUA_CFUNC(GetTimer);
+	REGISTER_LUA_CFUNC(GetFrameTimer);
 	REGISTER_LUA_CFUNC(DiffTimers);
 
 	REGISTER_LUA_CFUNC(GetSoundStreamTime);
@@ -488,14 +490,17 @@ int LuaUnsyncedRead::IsSphereInView(lua_State* L)
 int LuaUnsyncedRead::IsUnitAllied(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == nullptr)
 		return 0;
-	}
+
 	if (CLuaHandle::GetHandleReadAllyTeam(L) < 0) {
-		lua_pushboolean(L, CLuaHandle::GetHandleFullRead(L));
+		// in this case handle has full-read access since unit != nullptr
+		lua_pushboolean(L, unit->allyteam == gu->myAllyTeam);
 	} else {
-		lua_pushboolean(L, (unit->allyteam == CLuaHandle::GetHandleReadAllyTeam(L)));
+		lua_pushboolean(L, unit->allyteam == CLuaHandle::GetHandleReadAllyTeam(L));
 	}
+
 	return 1;
 }
 
@@ -641,7 +646,7 @@ int LuaUnsyncedRead::GetUnitViewPosition(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	const float3 unitPos = (luaL_optboolean(L, 2, false)) ? unit-> GetObjDrawMidPos() : unit->drawPos;
+	const float3 unitPos = (luaL_optboolean(L, 2, false)) ? unit->GetObjDrawMidPos() : unit->drawPos;
 	const float3 errorVec = unit->GetLuaErrorVector(CLuaHandle::GetHandleReadAllyTeam(L), CLuaHandle::GetHandleFullRead(L));
 
 	lua_pushnumber(L, unitPos.x + errorVec.x);
@@ -762,7 +767,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 	// arg 3 - noIcons
 	const bool noIcons = !luaL_optboolean(L, 3, true);
 
-	float radiusMult = 0.0f; // 0 or 1
+	float radiusMult = 1.0f;
 	float testRadius = 0.0f;
 
 	// arg 2 - use fixed test-value or add unit radii to it
@@ -872,7 +877,7 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 			if (f->noDraw)
 				continue;
 
-			if (noIcons && f->drawAlpha < 0.01f)
+			if (noIcons && f->drawFlag == CFeature::FD_FARTEX_FLAG)
 				continue;
 
 			if (noGeos && f->def->geoThermal)
@@ -1220,8 +1225,10 @@ int LuaUnsyncedRead::GetLosViewColors(lua_State* L)
 
 int LuaUnsyncedRead::GetCameraNames(lua_State* L)
 {
-	lua_newtable(L);
-	const std::vector<CCameraController*>& cc = camHandler->GetAvailableControllers();
+	const std::vector<CCameraController*>& cc = camHandler->GetControllers();
+
+	lua_createtable(L, cc.size(), 0);
+
 	for (size_t i = 0; i < cc.size(); ++i) {
 		lua_pushsstring(L, cc[i]->GetName());
 		lua_pushnumber(L, i);
@@ -1231,19 +1238,18 @@ int LuaUnsyncedRead::GetCameraNames(lua_State* L)
 	return 1;
 }
 
-
 int LuaUnsyncedRead::GetCameraState(lua_State* L)
 {
 	lua_newtable(L);
 
 	lua_pushliteral(L, "name");
-	lua_pushsstring(L, camHandler->GetCurrentControllerName());
+	lua_pushsstring(L, (camHandler->GetCurrentController()).GetName());
 	lua_rawset(L, -3);
 
 	CCameraController::StateMap camState;
-	CCameraController::StateMap::const_iterator it;
 	camHandler->GetState(camState);
-	for (it = camState.begin(); it != camState.end(); ++it) {
+
+	for (auto it = camState.cbegin(); it != camState.cend(); ++it) {
 		lua_pushsstring(L, it->first);
 		lua_pushnumber(L, it->second);
 		lua_rawset(L, -3);
@@ -1261,7 +1267,6 @@ int LuaUnsyncedRead::GetCameraPosition(lua_State* L)
 	return 3;
 }
 
-
 int LuaUnsyncedRead::GetCameraDirection(lua_State* L)
 {
 	lua_pushnumber(L, camera->GetDir().x);
@@ -1270,14 +1275,12 @@ int LuaUnsyncedRead::GetCameraDirection(lua_State* L)
 	return 3;
 }
 
-
 int LuaUnsyncedRead::GetCameraFOV(lua_State* L)
 {
 	lua_pushnumber(L, camera->GetVFOV());
 	lua_pushnumber(L, camera->GetHFOV());
 	return 2;
 }
-
 
 int LuaUnsyncedRead::GetCameraVectors(lua_State* L)
 {
@@ -1500,7 +1503,7 @@ int LuaUnsyncedRead::GetTeamOrigColor(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-int LuaUnsyncedRead::GetTimer(lua_State* L)
+static void PushTimer(lua_State* L, const spring_time& time)
 {
 	// use time since Spring's epoch in MILLIseconds because that
 	// is more likely to fit in a 32-bit pointer (on any platforms
@@ -1509,7 +1512,6 @@ int LuaUnsyncedRead::GetTimer(lua_State* L)
 	// single-precision floats better
 	//
 	// 4e9millis == 4e6s == 46.3 days until overflow
-	const spring_time time = spring_now();
 	const boost::uint64_t millis = time.toMilliSecs<boost::uint64_t>();
 
 	ptrdiff_t p = 0;
@@ -1521,6 +1523,21 @@ int LuaUnsyncedRead::GetTimer(lua_State* L)
 	}
 
 	lua_pushlightuserdata(L, reinterpret_cast<void*>(p));
+}
+
+int LuaUnsyncedRead::GetTimer(lua_State* L)
+{
+	PushTimer(L, spring_now());
+	return 1;
+}
+
+int LuaUnsyncedRead::GetFrameTimer(lua_State* L)
+{
+	if (luaL_optboolean(L, 1, false)) {
+		PushTimer(L, game->lastFrameTime);
+	} else {
+		PushTimer(L, globalRendering->lastFrameStart);
+	}
 	return 1;
 }
 
@@ -1682,7 +1699,7 @@ int LuaUnsyncedRead::GetActiveCommand(lua_State* L)
 		return 0;
 	}
 
-	const vector<CommandDescription>& cmdDescs = guihandler->commands;
+	const vector<SCommandDescription>& cmdDescs = guihandler->commands;
 	const int cmdDescCount = (int)cmdDescs.size();
 
 	const int inCommand = guihandler->inCommand;
@@ -1705,7 +1722,7 @@ int LuaUnsyncedRead::GetDefaultCommand(lua_State* L)
 
 	const int defCmd = guihandler->GetDefaultCommand(mouse->lastx, mouse->lasty);
 
-	const vector<CommandDescription>& cmdDescs = guihandler->commands;
+	const vector<SCommandDescription>& cmdDescs = guihandler->commands;
 	const int cmdDescCount = (int)cmdDescs.size();
 
 	lua_pushnumber(L, defCmd + CMD_INDEX_OFFSET);
@@ -1725,7 +1742,7 @@ int LuaUnsyncedRead::GetActiveCmdDescs(lua_State* L)
 		return 0;
 	}
 
-	const vector<CommandDescription>& cmdDescs = guihandler->commands;
+	const vector<SCommandDescription>& cmdDescs = guihandler->commands;
 	const int cmdDescCount = (int)cmdDescs.size();
 
 	lua_checkstack(L, 1 + 2);
@@ -1746,7 +1763,7 @@ int LuaUnsyncedRead::GetActiveCmdDesc(lua_State* L)
 	}
 	const int cmdIndex = luaL_checkint(L, 1) - CMD_INDEX_OFFSET;
 
-	const vector<CommandDescription>& cmdDescs = guihandler->commands;
+	const vector<SCommandDescription>& cmdDescs = guihandler->commands;
 	const int cmdDescCount = (int)cmdDescs.size();
 	if ((cmdIndex < 0) || (cmdIndex >= cmdDescCount)) {
 		return 0;
@@ -1763,7 +1780,7 @@ int LuaUnsyncedRead::GetCmdDescIndex(lua_State* L)
 	}
 	const int cmdId = luaL_checkint(L, 1);
 
-	const vector<CommandDescription>& cmdDescs = guihandler->commands;
+	const vector<SCommandDescription>& cmdDescs = guihandler->commands;
 	const int cmdDescCount = (int)cmdDescs.size();
 	for (int i = 0; i < cmdDescCount; i++) {
 		if (cmdId == cmdDescs[i].id) {

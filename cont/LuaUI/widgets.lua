@@ -120,6 +120,7 @@ local flexCallIns = {
   'UnitCreated',
   'UnitFinished',
   'UnitFromFactory',
+  'UnitReverseBuilt',
   'UnitDestroyed',
   'RenderUnitDestroyed',
   'UnitTaken',
@@ -268,7 +269,7 @@ function widgetHandler:SaveConfigData()
   local filetable = {}
   for i,w in ipairs(self.widgets) do
     if (w.GetConfigData) then
-      self.configData[w.whInfo.name] = w:GetConfigData()
+      self.configData[w.whInfo.name] = select(2, pcall(w.GetConfigData))
     end
     self.orderList[w.whInfo.name] = i
   end
@@ -1732,6 +1733,14 @@ function widgetHandler:UnitFromFactory(unitID, unitDefID, unitTeam,
 end
 
 
+function widgetHandler:UnitReverseBuilt(unitID, unitDefID, unitTeam)
+  for _,w in ipairs(self.UnitReverseBuiltList) do
+    w:UnitReverseBuilt(unitID, unitDefID, unitTeam)
+  end
+  return
+end
+
+
 function widgetHandler:UnitDestroyed(unitID, unitDefID, unitTeam)
   for _,w in ipairs(self.UnitDestroyedList) do
     w:UnitDestroyed(unitID, unitDefID, unitTeam)
@@ -1771,19 +1780,17 @@ function widgetHandler:UnitIdle(unitID, unitDefID, unitTeam)
 end
 
 
-function widgetHandler:UnitCommand(unitID, unitDefID, unitTeam,
-                                   cmdId, cmdOpts, cmdParams, cmdTag)
+function widgetHandler:UnitCommand(unitID, unitDefID, unitTeam, cmdId, cmdParams, cmdOpts, cmdTag)
   for _,w in ipairs(self.UnitCommandList) do
-    w:UnitCommand(unitID, unitDefID, unitTeam,
-                  cmdId, cmdOpts, cmdParams, cmdTag)
+    w:UnitCommand(unitID, unitDefID, unitTeam, cmdId, cmdParams, cmdOpts, cmdTag)
   end
   return
 end
 
 
-function widgetHandler:UnitCmdDone(unitID, unitDefID, unitTeam, cmdID, cmdTag, cmdParams, cmdOpts)
+function widgetHandler:UnitCmdDone(unitID, unitDefID, unitTeam, cmdID, cmdParams, cmdOpts, cmdTag)
   for _,w in ipairs(self.UnitCmdDoneList) do
-    w:UnitCmdDone(unitID, unitDefID, unitTeam, cmdID, cmdTag, cmdParams, cmdOpts)
+    w:UnitCmdDone(unitID, unitDefID, unitTeam, cmdID, cmdParams, cmdOpts, cmdTag)
   end
   return
 end

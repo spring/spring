@@ -50,23 +50,12 @@ CGameHelper* helper;
 
 CGameHelper::CGameHelper()
 {
-	stdExplosionGenerator = new CStdExplosionGenerator();
 	waitingDamageLists.resize(NUM_WAITING_DAMAGE_LISTS);
 }
 
 CGameHelper::~CGameHelper()
 {
-	for (unsigned int n = 0; n < waitingDamageLists.size(); ++n) {
-		std::list<WaitingDamage*>& wd = waitingDamageLists[n];
-
-		while (!wd.empty()) {
-			delete wd.back();
-			wd.pop_back();
-		}
-	}
-
 	waitingDamageLists.clear();
-	delete stdExplosionGenerator;
 }
 
 
@@ -147,8 +136,7 @@ void CGameHelper::DoExplosionDamage(
 		unit->DoDamage(expDamages, expImpulse, owner, weaponDefID, projectileID);
 	} else {
 		// damage later
-		WaitingDamage* wd = new WaitingDamage((owner? owner->id: -1), unit->id, expDamages, expImpulse, weaponDefID, projectileID);
-		waitingDamageLists[(gs->frameNum + int(expDist / expSpeed) - 3) & 127].push_front(wd);
+		waitingDamageLists[(gs->frameNum + int(expDist / expSpeed) - 3) & 127].emplace_back((owner? owner->id: -1), unit->id, expDamages, expImpulse, weaponDefID, projectileID);
 	}
 }
 
@@ -644,7 +632,8 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 	const float secDamage = weapon->damages->GetDefault() * weapon->salvoSize / weapon->reloadTime * GAME_SPEED;
 	const bool paralyzer  = (weapon->damages->paralyzeDamageTime != 0);
 
-	const auto& quads = quadField->GetQuads(pos, radius + (aHeight - std::max(0.0f, readMap->GetInitMinHeight())) * heightMod);
+	// copy on purpose since the below calls lua
+	const std::vector<int> quads = quadField->GetQuads(pos, radius + (aHeight - std::max(0.0f, readMap->GetInitMinHeight())) * heightMod);
 	const int tempNum = gs->GetTempNum();
 
 	for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
@@ -655,12 +644,12 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 			const std::vector<CUnit*>& allyTeamUnits = quadField->GetQuad(qi).teamUnits[t];
 
 			for (CUnit* targetUnit: allyTeamUnits) {
-				float targetPriority = 1.0f;
-
 				if (targetUnit->tempNum == tempNum)
 					continue;
 
 				targetUnit->tempNum = tempNum;
+
+				float targetPriority = 1.0f;
 
 				if (!weapon->TestTarget(float3(), SWeaponTarget(targetUnit)))
 					continue;
@@ -816,7 +805,8 @@ void CGameHelper::GetEnemyUnitsNoLosTest(const float3& pos, float searchRadius, 
 
 void CGameHelper::BuggerOff(float3 pos, float radius, bool spherical, bool forced, int teamId, CUnit* excludeUnit)
 {
-	const std::vector<CUnit*> &units = quadField->GetUnitsExact(pos, radius + SQUARE_SIZE, spherical);
+	//copy on purpose since BuggerOff can call risky stuff
+	const std::vector<CUnit*> units = quadField->GetUnitsExact(pos, radius + SQUARE_SIZE, spherical);
 	const int allyTeamId = teamHandler->AllyTeam(teamId);
 
 	for (std::vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
@@ -1290,18 +1280,17 @@ Command CGameHelper::GetBuildCommand(const float3& pos, const float3& dir) {
 
 void CGameHelper::Update()
 {
-	std::list<WaitingDamage*>& wdList = waitingDamageLists[gs->frameNum & 127];
+	std::vector<WaitingDamage>& wdList = waitingDamageLists[gs->frameNum & 127];
 
-	while (!wdList.empty()) {
-		WaitingDamage* wd = wdList.back();
-		wdList.pop_back();
+	for (const WaitingDamage& wd: wdList) {
+		CUnit* attackee = unitHandler->GetUnit(wd.target);
+		CUnit* attacker = unitHandler->GetUnit(wd.attacker); // null if wd.attacker is -1
 
-		CUnit* attackee = unitHandler->units[wd->target];
-		CUnit* attacker = (wd->attacker == -1)? NULL: unitHandler->units[wd->attacker];
-
-		if (attackee != NULL)
-			attackee->DoDamage(wd->damage, wd->impulse, attacker, wd->weaponID, wd->projectileID);
-
-		delete wd;
+		if (attackee != nullptr) {
+			attackee->DoDamage(wd.damage, wd.impulse, attacker, wd.weaponID, wd.projectileID);
+		}
 	}
+
+	wdList.clear();
 }
+

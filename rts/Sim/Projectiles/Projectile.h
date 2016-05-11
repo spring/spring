@@ -20,7 +20,7 @@ class CMatrix44f;
 
 class CProjectile: public CExpGenSpawnable
 {
-	CR_DECLARE(CProjectile)
+	CR_DECLARE_DERIVED(CProjectile)
 
 public:
 	CProjectile();
@@ -46,11 +46,7 @@ public:
 	virtual void Draw() {}
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 
-	virtual int GetProjectilesCount() const
-	{
-		assert(false); // this method should be pure virtual, but cause of CREG we can't do so
-		return 0;
-	}
+	virtual int GetProjectilesCount() const = 0;
 
 	// override WorldObject::SetVelocityAndSpeed so
 	// we can keep <dir> in sync with speed-vector

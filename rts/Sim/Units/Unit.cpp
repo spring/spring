@@ -32,6 +32,8 @@
 
 #include "Game/UI/Groups/Group.h"
 #include "Sim/Features/Feature.h"
+#include "Sim/Features/FeatureDef.h"
+#include "Sim/Features/FeatureDefHandler.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/CollisionVolume.h"
@@ -55,6 +57,7 @@
 #include "System/Log/ILog.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
+#include "System/creg/DefTypes.h"
 #include "System/creg/STL_List.h"
 #include "System/Sound/ISoundChannels.h"
 #include "System/Sync/SyncedPrimitive.h"
@@ -103,7 +106,6 @@ CUnit::CUnit()
 , flankingBonusDir(RgtVector)
 , posErrorVector(ZeroVector)
 , posErrorDelta(ZeroVector)
-, unitDefID(-1)
 , featureDefID(-1)
 , power(100.0f)
 , buildProgress(0.0f)
@@ -204,7 +206,7 @@ CUnit::~CUnit()
 		// we have to wait for deathScriptFinished (but we want the delay
 		// in frames between CUnitKilledCB() and the CreateWreckage() call
 		// to be as short as possible to prevent position jumps)
-		FeatureLoadParams params = {featureHandler->GetFeatureDefByID(featureDefID), unitDef, pos, deathSpeed, -1, team, -1, heading, buildFacing, 0};
+		FeatureLoadParams params = {featureDefHandler->GetFeatureDefByID(featureDefID), unitDef, pos, deathSpeed, -1, team, -1, heading, buildFacing, 0};
 		featureHandler->CreateWreckage(params, delayedWreckLevel - 1, true);
 	}
 	if (deathExpDamages != nullptr)
@@ -265,7 +267,6 @@ void CUnit::InitStatic()
 	SetExpHealthScale(modInfo.unitExpHealthScale);
 	SetExpReloadScale(modInfo.unitExpReloadScale);
 
-	CCobInstance::InitVars(teamHandler->ActiveTeams(), teamHandler->ActiveAllyTeams());
 	CBuilderCAI::InitStatic();
 }
 
@@ -274,20 +275,18 @@ void CUnit::PreInit(const UnitLoadParams& params)
 {
 	// if this is < 0, UnitHandler will give us a random ID
 	id = params.unitID;
-	unitDefID = (params.unitDef)->id;
 	featureDefID = -1;
 
-	objectDef = params.unitDef;
 	unitDef = params.unitDef;
 
 	{
-		const FeatureDef* wreckFeatureDef = featureHandler->GetFeatureDef(unitDef->wreckName);
+		const FeatureDef* wreckFeatureDef = featureDefHandler->GetFeatureDef(unitDef->wreckName);
 		if (wreckFeatureDef != nullptr) {
 			featureDefID = wreckFeatureDef->id;
 
 			while (wreckFeatureDef != nullptr){
 				wreckFeatureDef->PreloadModel();
-				wreckFeatureDef = featureHandler->GetFeatureDefByID(wreckFeatureDef->deathFeatureDefID);
+				wreckFeatureDef = featureDefHandler->GetFeatureDefByID(wreckFeatureDef->deathFeatureDefID);
 			}
 		}
 	}
@@ -395,10 +394,12 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	harvestStorage.energy = unitDef->harvestEnergyStorage;
 
 	moveType = MoveTypeFactory::GetMoveType(this, unitDef);
-	script = CUnitScriptFactory::CreateScript("scripts/" + unitDef->scriptName, this);
+	script = CUnitScriptFactory::CreateScript(unitDef->scriptName, this);
 
-	selfdExpDamages = DynDamageArray::IncRef(&unitDef->selfdExpWeaponDef->damages);
-	deathExpDamages = DynDamageArray::IncRef(&unitDef->deathExpWeaponDef->damages);
+	if (unitDef->selfdExpWeaponDef != nullptr)
+		selfdExpDamages = DynDamageArray::IncRef(&unitDef->selfdExpWeaponDef->damages);
+	if (unitDef->deathExpWeaponDef != nullptr)
+		deathExpDamages = DynDamageArray::IncRef(&unitDef->deathExpWeaponDef->damages);
 }
 
 
@@ -481,31 +482,10 @@ void CUnit::PostInit(const CUnit* builder)
 
 void CUnit::PostLoad()
 {
-	//HACK:Initializing after load
-	unitDef = unitDefHandler->GetUnitDefByID(unitDefID); // strange. creg should handle this by itself already, but it doesn't
-	objectDef = unitDef;
-	model = unitDef->LoadModel();
-	localModel.SetModel(model);
 	blockMap = (unitDef->GetYardMap().empty())? NULL: &unitDef->GetYardMap()[0];
-
-	SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
-	SetRadiusAndHeight(model);
-	UpdateDirVectors(!upright);
-	UpdateMidAndAimPos();
-
-	// FIXME: how to handle other script types (e.g. Lua) here?
-	script = CUnitScriptFactory::CreateScript("scripts/" + unitDef->scriptName, this);
-
-	// Call initializing script functions
-	script->Create();
-	script->SetSFXOccupy(curTerrainType);
 
 	if (unitDef->windGenerator > 0.0f) {
 		wind.AddUnit(this);
-	}
-
-	if (activated) {
-		script->Activate();
 	}
 
 	eventHandler.RenderUnitCreated(this, isCloaked);
@@ -546,7 +526,7 @@ void CUnit::FinishedBuilding(bool postInit)
 	eoh->UnitFinished(*this);
 
 	if (unitDef->isFeature && CUnit::spawnFeature) {
-		FeatureLoadParams p = {featureHandler->GetFeatureDefByID(featureDefID), NULL, pos, ZeroVector, -1, team, allyteam, heading, buildFacing, 0};
+		FeatureLoadParams p = {featureDefHandler->GetFeatureDefByID(featureDefID), NULL, pos, ZeroVector, -1, team, allyteam, heading, buildFacing, 0};
 		CFeature* f = featureHandler->CreateWreckage(p, 0, false);
 
 		if (f != nullptr) {
@@ -615,7 +595,7 @@ void CUnit::ForcedKillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, b
 					if (!pos.IsInBounds())
 						continue;
 
-					if (quadField->GetSolidsExact(pos, transportee->radius + 2.0f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS).empty()) {
+					if (quadField->NoSolidsExact(pos, transportee->radius + 2.0f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS)) {
 						transportee->Move(pos, false);
 						break;
 					}
@@ -994,7 +974,7 @@ unsigned short CUnit::CalcLosStatus(int at)
 }
 
 
-inline void CUnit::UpdateLosStatus(int at)
+void CUnit::UpdateLosStatus(int at)
 {
 	const unsigned short currStatus = losStatus[at];
 	if ((currStatus & LOS_ALL_MASK_BITS) == LOS_ALL_MASK_BITS) {
@@ -1022,10 +1002,6 @@ void CUnit::SetStunned(bool stun) {
 void CUnit::SlowUpdate()
 {
 	UpdatePosErrorParams(false, true);
-
-	for (int at = 0; at < teamHandler->ActiveAllyTeams(); ++at) {
-		UpdateLosStatus(at);
-	}
 
 	DoWaterDamage();
 
@@ -2186,7 +2162,11 @@ bool CUnit::UseResources(const SResourcePack& pack)
 		AddEnergy(-energy);
 		return true;
 	}*/
-	if (teamHandler->Team(team)->UseResources(pack)) {
+
+	CTeam* myTeam = teamHandler->Team(team);
+	myTeam->resPull += pack;
+
+	if (myTeam->UseResources(pack)) {
 		resourcesUseI += pack;
 		return true;
 	}
@@ -2661,7 +2641,7 @@ bool CUnit::DetachUnit(CUnit* unit)
 		// erase command queue unless it's a wait command
 		const CCommandQueue& queue = unit->commandAI->commandQue;
 
-		if (queue.empty() || (queue.front().GetID() != CMD_WAIT)) {
+		if (unitDef->IsTransportUnit() && (queue.empty() || (queue.front().GetID() != CMD_WAIT))) {
 			unit->commandAI->GiveCommand(Command(CMD_STOP));
 		}
 
@@ -2678,7 +2658,7 @@ bool CUnit::DetachUnitFromAir(CUnit* unit, const float3& pos)
 		unit->Drop(this->pos, this->frontdir, this);
 
 		// add an additional move command for after we land
-		if (unit->unitDef->canmove) {
+		if (unitDef->IsTransportUnit() && unit->unitDef->canmove) {
 			unit->commandAI->GiveCommand(Command(CMD_MOVE, pos));
 		}
 
@@ -2785,11 +2765,7 @@ short CUnit::GetTransporteeWantedHeading(const CUnit* unit) const {
 CR_BIND_DERIVED(CUnit, CSolidObject, )
 CR_REG_METADATA(CUnit, (
 	CR_MEMBER(unitDef),
-	CR_MEMBER(unitDefID),
 	CR_MEMBER(featureDefID),
-
-	CR_MEMBER(modParams),
-	CR_MEMBER(modParamsMap),
 
 	CR_MEMBER(upright),
 

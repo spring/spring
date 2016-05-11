@@ -35,18 +35,18 @@ public:
 	CLegacyInfoTextureHandler();
 	virtual ~CLegacyInfoTextureHandler();
 
-	void Update();
+	void Update() override;
 	bool UpdateExtraTexture(BaseGroundDrawMode texDrawMode);
 
 public:
-	bool IsEnabled() const;
-	void DisableCurrentMode();
-	void SetMode(const std::string& name);
-	void ToggleMode(const std::string& name);
-	const std::string& GetMode() const;
+	bool IsEnabled() const override;
+	void DisableCurrentMode() override;
+	void SetMode(const std::string& name) override;
+	void ToggleMode(const std::string& name) override;
+	const std::string& GetMode() const override;
 
-	GLuint GetCurrentInfoTexture() const;
-	int2 GetCurrentInfoTextureSize() const;
+	GLuint GetCurrentInfoTexture() const override;
+	int2 GetCurrentInfoTextureSize() const override;
 
 public:
 	const CInfoTexture* GetInfoTextureConst(const std::string& name) const override;

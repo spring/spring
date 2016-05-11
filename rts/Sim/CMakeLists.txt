@@ -4,6 +4,7 @@
 add_library(engineSim STATIC
 		"${CMAKE_CURRENT_SOURCE_DIR}/Features/Feature.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Features/FeatureDef.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Features/FeatureDefHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Features/FeatureHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/AllyTeam.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/CategoryHandler.cpp"
@@ -35,7 +36,6 @@ add_library(engineSim STATIC
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/Wind.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/MoveTypes/AAirMoveType.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/MoveTypes/StrafeAirMoveType.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/MoveTypes/ClassicGroundMoveType.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/MoveTypes/GroundMoveType.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/MoveTypes/MoveDefHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/MoveTypes/MoveMath/GroundMoveMath.cpp"
@@ -93,6 +93,7 @@ add_library(engineSim STATIC
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/CommandAI/BuilderCAI.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/CommandAI/Command.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/CommandAI/CommandAI.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Units/CommandAI/CommandDescription.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/CommandAI/FactoryCAI.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/CommandAI/MobileCAI.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/Scripts/CobEngine.cpp"

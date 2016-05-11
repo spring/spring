@@ -12,7 +12,7 @@ class CColorMap;
 
 class CSimpleParticleSystem : public CProjectile
 {
-	CR_DECLARE(CSimpleParticleSystem)
+	CR_DECLARE_DERIVED(CSimpleParticleSystem)
 	CR_DECLARE_SUB(Particle)
 
 public:

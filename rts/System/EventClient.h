@@ -295,8 +295,7 @@ class CEventClient
 		                        const float3* pos1,
 		                        const std::string* label);
 
-		virtual void SunChanged(const float3& sunDir);
-		virtual void SunLightingChanged();
+		virtual void SunChanged(); //FIXME add to lua
 
 		virtual void ViewResize();
 

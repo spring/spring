@@ -25,6 +25,7 @@ using std::vector;
 #endif
 
 struct SolidObjectDef;
+struct SCommandDescription;
 
 class LuaUtils {
 	public:
@@ -94,6 +95,7 @@ class LuaUtils {
 
 		static void PushCommandParamsTable(lua_State* L, const Command& cmd, bool subtable);
 		static void PushCommandOptionsTable(lua_State* L, const Command& cmd, bool subtable);
+		static void PushUnitAndCommand(lua_State* L, const CUnit* unit, const Command& cmd);
 		// from LuaUI.cpp / LuaSyncedCtrl.cpp (used to be duplicated)
 		static void ParseCommandOptions(lua_State* L, Command& cmd, const char* caller, int index);
 		static Command ParseCommand(lua_State* L, const char* caller, int idIndex);
@@ -135,7 +137,7 @@ class LuaUtils {
 
 		static void PushStringVector(lua_State* L, const vector<string>& vec);
 
-		static void PushCommandDesc(lua_State* L, const CommandDescription& cd);
+		static void PushCommandDesc(lua_State* L, const SCommandDescription& cd);
 };
 
 

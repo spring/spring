@@ -46,6 +46,7 @@ CR_REG_METADATA(IExplosionGenerator, (
 ))
 
 CR_BIND_DERIVED(CStdExplosionGenerator, IExplosionGenerator, )
+CR_REG_METADATA(CStdExplosionGenerator, )
 
 CR_BIND(CCustomExplosionGenerator::ProjectileSpawnInfo, )
 CR_REG_METADATA_SUB(CCustomExplosionGenerator, ProjectileSpawnInfo, (
@@ -731,7 +732,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 	if (content == "dir") { // first see if we can match any keywords
 		// if the user uses a keyword assume he knows that it is put on the right datatype for now
 		if (memberInfo.length < 3 || !isFloat) // dir has to be float3
-			throw content_error("[CCEG::ParseExplosionCode] incorrect use of \"dir\"");
+			throw content_error("[CCEG::ParseExplosionCode] incorrect use of \"dir\" (" + script + ")");
 
 		code += OP_DIR;
 		boost::uint16_t ofs = memberInfo.offset;
@@ -880,7 +881,7 @@ bool CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* handler, const 
 
 		const string& className = handler->GetProjectileClasses().ResolveAlias(spawnTable.GetString("class", spawnName));
 		psi.spawnableID = CExpGenSpawnable::GetSpawnableID(className);
-		if (psi.spawnableID < 0) {
+		if (psi.spawnableID == -1u) {
 			LOG_L(L_WARNING, "[CCEG::%s] %s: Unknown class \"%s\"", __FUNCTION__, tag.c_str(), className.c_str());
 			continue;
 		}
@@ -997,7 +998,6 @@ bool CCustomExplosionGenerator::OutputProjectileClassInfo()
 		vfsHandler->AddArchiveWithDeps(archiveScanner->ArchiveFromName("Spring content v1"), false);
 	LOG_ENABLE();
 
-	creg::System::InitializeClasses();
 	const vector<creg::Class*>& classes = creg::System::GetClasses();
 	CExplosionGeneratorHandler egh;
 
@@ -1017,11 +1017,11 @@ bool CCustomExplosionGenerator::OutputProjectileClassInfo()
 
 		std::cout << "  \"" << c->name << "\": {" << std::endl;
 		std::cout << "    \"alias\": \"" << (egh.GetProjectileClasses()).FindAlias(c->name) << "\"";
-		for (; c; c = c->base) {
-			for (unsigned int a = 0; a < c->members.size(); a++) {
-				if (c->members[a]->flags & creg::CM_Config) {
+		for (creg::Class* cb = c; cb; cb = cb->base()) {
+			for (creg::Class::Member& m: cb->members) {
+				if (m.flags & creg::CM_Config) {
 					std::cout << "," << std::endl;
-					std::cout << "    \"" << c->members[a]->name << "\": \"" << c->members[a]->type->GetName() << "\"";
+					std::cout << "    \"" << m.name << "\": \"" << m.type->GetName() << "\"";
 				}
 			}
 		}

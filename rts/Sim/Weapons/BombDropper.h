@@ -7,7 +7,7 @@
 
 class CBombDropper: public CWeapon
 {
-	CR_DECLARE(CBombDropper)
+	CR_DECLARE_DERIVED(CBombDropper)
 public:
 	CBombDropper(CUnit* owner, const WeaponDef* def, bool useTorps);
 
@@ -18,7 +18,7 @@ private:
 
 	bool TestTarget(const float3 pos, const SWeaponTarget& trg) const override final;
 	bool TestRange(const float3 pos, const SWeaponTarget& trg) const override final;
-	bool HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg) const override final;
+	bool HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg, bool useMuzzle = false) const override final;
 	void FireImpl(const bool scriptCall) override final;
 
 private:
