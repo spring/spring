@@ -3785,6 +3785,18 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State* L)
 	HSTR_PUSH_NUMBER(L, "goaly", amt->goalPos.y);
 	HSTR_PUSH_NUMBER(L, "goalz", amt->goalPos.z);
 
+	switch (amt->progressState) {
+		case AMoveType::Done:
+			HSTR_PUSH_STRING(L, "progressState", "done");
+			break;
+		case AMoveType::Active:
+			HSTR_PUSH_STRING(L, "progressState", "active");
+			break;
+		case AMoveType::Failed:
+			HSTR_PUSH_STRING(L, "progressState", "failed");
+			break;
+	}
+
 	const CGroundMoveType* groundmt = dynamic_cast<CGroundMoveType*>(unit->moveType);
 
 	if (groundmt != NULL) {
