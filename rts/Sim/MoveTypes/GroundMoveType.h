@@ -28,8 +28,8 @@ public:
 	void StartMoving(float3 pos, float goalRadius) override;
 	void StartMoving(float3 pos, float goalRadius, float speed) override { StartMoving(pos, goalRadius); }
 	void StopMoving(bool callScript = false, bool hardStop = false) override;
-	bool IsMovingTowards(const float3& pos, float radius) const override {
-		return (goalPos == pos * XZVector && goalRadius == radius && progressState == Active);
+	bool IsMovingTowards(const float3& pos, float radius, bool checkProgress) const override {
+		return (goalPos == pos * XZVector && goalRadius == radius && (!checkProgress || progressState == Active));
 	}
 
 	void KeepPointingTo(float3 pos, float distance, bool aggressive) override;

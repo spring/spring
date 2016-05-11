@@ -417,7 +417,9 @@ void CMobileCAI::ExecuteMove(Command &c)
 		return;
 	}
 
-	SetGoal(cmdPos, owner->pos);
+	// This check is important to process failed orders properly
+	if (!owner->moveType->IsMovingTowards(cmdPos, SQUARE_SIZE, false))
+		SetGoal(cmdPos, owner->pos);
 
 	if (owner->moveType->progressState == AMoveType::Failed) {
 		StopMoveAndFinishCommand();
@@ -915,7 +917,7 @@ int CMobileCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 void CMobileCAI::SetGoal(const float3& pos, const float3& /*curPos*/, float goalRadius)
 {
 	// already have equal move order?
-	if (owner->moveType->IsMovingTowards(pos, goalRadius))
+	if (owner->moveType->IsMovingTowards(pos, goalRadius, true))
 		return;
 
 	// give new move order
@@ -925,7 +927,7 @@ void CMobileCAI::SetGoal(const float3& pos, const float3& /*curPos*/, float goal
 void CMobileCAI::SetGoal(const float3& pos, const float3& /*curPos*/, float goalRadius, float speed)
 {
 	// already have equal move order?
-	if (owner->moveType->IsMovingTowards(pos, goalRadius))
+	if (owner->moveType->IsMovingTowards(pos, goalRadius, true))
 		return;
 
 	// give new move order

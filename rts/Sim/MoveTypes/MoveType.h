@@ -30,7 +30,7 @@ public:
 	virtual bool SetMemberValue(unsigned int memberHash, void* memberValue);
 
 	virtual void SetGoal(const float3& pos, float distance = 0.0f) { goalPos = pos; }
-	virtual bool IsMovingTowards(const float3& pos, float radius) const { return (goalPos == pos && progressState == Active); }
+	virtual bool IsMovingTowards(const float3& pos, float, bool) const { return (goalPos == pos && progressState == Active); }
 
 	// NOTE:
 	//     SetMaxSpeed is ONLY called by LuaSyncedMoveCtrl now
