@@ -67,7 +67,8 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 #define WAIT_FOR_PATH                     1
 
 #define UNIT_CMD_QUE_SIZE(u) (u->commandAI->commandQue.size())
-#define UNIT_HAS_MOVE_CMD(u) (u->commandAI->commandQue.empty() || u->commandAI->commandQue[0].GetID() == CMD_MOVE)
+// Not using IsMoveCommand on purpose, as the following is changing the effective goalRadius
+#define UNIT_HAS_MOVE_CMD(u) (u->commandAI->commandQue.empty() || u->commandAI->commandQue[0].GetID() == CMD_MOVE || u->commandAI->commandQue[0].GetID() == CMD_FIGHT)
 
 #define FOOTPRINT_RADIUS(xs, zs, s) ((math::sqrt((xs * xs + zs * zs)) * 0.5f * SQUARE_SIZE) * s)
 
@@ -1863,11 +1864,17 @@ void CGroundMoveType::HandleUnitCollisions(
 		//
 		// CFactory applies random jitter to otherwise equal goal
 		// positions of at most TWOPI elmos, use half as threshold
-		if (collider->moveType->goalPos.SqDistance2D(collidee->moveType->goalPos) < (PI * PI)) {
-			if (collider->IsMoving() && collider->moveType->progressState == AMoveType::Active) {
-				if (!collidee->IsMoving() && collidee->moveType->progressState == AMoveType::Done) {
-					if (UNIT_CMD_QUE_SIZE(collidee) == 0) {
-						atEndOfPath = true; atGoal = true;
+		if (collideeMobile) {
+			const CGroundMoveType* gmt = static_cast<CGroundMoveType*>(collidee->moveType);
+			if (collider->moveType->goalPos.SqDistance2D(collidee->moveType->goalPos) < (PI * PI)) {
+				if (collider->IsMoving() && collider->moveType->progressState == AMoveType::Active) {
+					if (collidee->moveType->progressState == AMoveType::Done) {
+						if (!collidee->IsMoving() && UNIT_CMD_QUE_SIZE(collidee) == 0) {
+							atEndOfPath = true; atGoal = true;
+						}
+					// We're in a traffic jam so ignore current way point and go directly to the next one
+					} else if (collidee->moveType->progressState == AMoveType::Active && gmt->currWayPoint == nextWayPoint) {
+						currWayPoint.y = -1.0f;
 					}
 				}
 			}
