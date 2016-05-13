@@ -548,12 +548,12 @@ void CGroundDecalHandler::DrawTracks() {
 			std::deque<TrackPart>::const_iterator curPart =   (track->parts.begin());
 			std::deque<TrackPart>::const_iterator nxtPart = ++(track->parts.begin());
 
-			curPartColor[3] = std::max(0.0f, (1.0f - (gs->frameNum - (*curPart).creationTime) * track->alphaFalloff) * 255.0f);
+			curPartColor[3] = std::max(0.0f, 255.0f - (gs->frameNum - (*curPart).creationTime) * track->alphaFalloff);
 
 			va->EnlargeArrays(track->parts.size() * 4, 0, VA_SIZE_TC);
 
 			for (; nxtPart != track->parts.end(); ++nxtPart) {
-				nxtPartColor[3] = std::max(0.0f, (1.0f - (gs->frameNum - (*nxtPart).creationTime) * track->alphaFalloff) * 255.0f);
+				nxtPartColor[3] = std::max(0.0f, 255.0f - (gs->frameNum - (*nxtPart).creationTime) * track->alphaFalloff);
 
 				if ((*nxtPart).connected) {
 					va->AddVertexQTC((*curPart).pos1, (*curPart).texPos, 0, curPartColor);
@@ -842,7 +842,7 @@ void CGroundDecalHandler::AddDecalAndTrack(CUnit* unit, const float3& newPos)
 	if ((*unitTrack) == nullptr) {
 		(*unitTrack) = new UnitTrackStruct(unit);
 		(*unitTrack)->lifeTime = trackLifeTime;
-		(*unitTrack)->alphaFalloff = 1.0f / trackLifeTime;
+		(*unitTrack)->alphaFalloff = 255.0f / trackLifeTime;
 
 		trackPart.texPos = 0;
 		trackPart.connected = false;
