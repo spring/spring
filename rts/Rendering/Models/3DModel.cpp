@@ -40,7 +40,6 @@ CR_REG_METADATA(LocalModelPiece, (
 
 CR_BIND(LocalModel, )
 CR_REG_METADATA(LocalModel, (
-	CR_IGNORED(bvFrameTime),
 	CR_IGNORED(lodCount), //FIXME?
 	CR_MEMBER(pieces),
 
@@ -303,13 +302,12 @@ void LocalModel::SetModel(const S3DModel* model, bool initialize)
 		SetOriginalPieces(model->GetRootPiece(), idx);
 		assert (idx == model->numPieces);
 		pieces[0].UpdateMatricesRec(true);
-		UpdateBoundingVolume(0);
+		UpdateBoundingVolume();
 		return;
 	}
 
 	assert(pieces.size() == 0);
 
-	bvFrameTime = 0;
 	lodCount = 0;
 
 	pieces.reserve(model->numPieces);
@@ -320,7 +318,7 @@ void LocalModel::SetModel(const S3DModel* model, bool initialize)
 	// LocalModel::Update is never called, but they might have
 	// baked piece rotations (if .dae)
 	pieces[0].UpdateMatricesRec(false);
-	UpdateBoundingVolume(0);
+	UpdateBoundingVolume();
 
 	assert(pieces.size() == model->numPieces);
 }
@@ -349,10 +347,8 @@ LocalModelPiece* LocalModel::CreateLocalModelPieces(const S3DModelPiece* mpParen
 	return lmpParent;
 }
 
-void LocalModel::UpdateBoundingVolume(unsigned int frameNum)
+void LocalModel::UpdateBoundingVolume()
 {
-	bvFrameTime = frameNum;
-
 	// bounding-box extrema (local space)
 	float3 bbMins = DEF_MIN_SIZE;
 	float3 bbMaxs = DEF_MAX_SIZE;

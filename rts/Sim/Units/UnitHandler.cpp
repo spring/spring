@@ -244,7 +244,7 @@ void CUnitHandler::Update()
 			// (only if we have any dirty pieces)
 			// add ID as offset so the bounding-box update does
 			// not run at the same time for every model
-			unit->localModel.Update(gs->frameNum + unit->id);
+
 		}
 	}
 
@@ -274,6 +274,7 @@ void CUnitHandler::Update()
 			UNIT_SANITY_CHECK(unit);
 			unit->SlowUpdate();
 			unit->SlowUpdateWeapons();
+			unit->localModel.UpdateBoundingVolume();
 			UNIT_SANITY_CHECK(unit);
 
 			n--;

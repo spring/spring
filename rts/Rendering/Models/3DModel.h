@@ -334,7 +334,6 @@ struct LocalModel
 	CR_DECLARE_STRUCT(LocalModel)
 
 	LocalModel() {
-		bvFrameTime = 0;
 		lodCount = 0;
 	}
 	~LocalModel() {
@@ -373,15 +372,9 @@ struct LocalModel
 		DrawPiecesLOD(luaMaterialData.GetCurrentLOD());
 	}
 
-	void Update(unsigned int frameNum) {
-		if ((frameNum - bvFrameTime) >= 15)
-			UpdateBoundingVolume(frameNum);
-	}
-
-
 	void SetModel(const S3DModel* model, bool initialize = true);
 	void SetLODCount(unsigned int count);
-	void UpdateBoundingVolume(unsigned int frameNum);
+	void UpdateBoundingVolume();
 
 	void SetOriginalPieces(const S3DModelPiece* mp, int& idx);
 
@@ -417,8 +410,6 @@ private:
 	void DrawPiecesLOD(unsigned int lod) const;
 
 public:
-	// increased by UnitScript whenever a piece is transformed
-	unsigned int bvFrameTime;
 	unsigned int lodCount;
 
 	std::vector<LocalModelPiece> pieces;
