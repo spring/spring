@@ -28,6 +28,8 @@ static const struct SAIInterfaceCallback* callback = NULL;
 EXPORT(int) initStatic(int _interfaceId,
 		const struct SAIInterfaceCallback* _callback) {
 
+	simpleLog_initcallback(_interfaceId, "Java Interface", _callback->Log_logsl, LOG_LEVEL_INFO);
+
 	bool success = false;
 
 	// initialize C part of the interface
@@ -83,7 +85,6 @@ EXPORT(int) initStatic(int _interfaceId,
 		}
 	}
 
-	simpleLog_initcallback(_interfaceId, "Java Interface", callback->Log_logsl, LOG_LEVEL_INFO);
 
 	// log settings loaded from interface config file
 	if (propFileFetched) {

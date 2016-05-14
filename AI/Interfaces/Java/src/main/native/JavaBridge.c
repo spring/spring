@@ -129,7 +129,7 @@ static const char* java_getValueByKey(const struct Properties* props, const char
  * TODO: {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/common/jlib/
  * TODO: {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/common/jlib/[*].jar
  */
-static size_t java_createClassPath(char* classPathStr, const size_t classPathStr_sizeMax) {
+static bool java_createClassPath(char* classPathStr, const size_t classPathStr_sizeMax) {
 
 	// the dirs and .jar files in the following array
 	// will be concatenated with intermediate path separators
@@ -152,6 +152,7 @@ static size_t java_createClassPath(char* classPathStr, const size_t classPathStr
 		simpleLog_logL(LOG_LEVEL_ERROR,
 				"Retrieving the parent dir of the path to AIInterface.jar (%s) failed.",
 				mainJarPath);
+		return false;
 	}
 	char* jarsDataDir = mainJarPath;
 	mainJarPath = NULL;
@@ -216,7 +217,7 @@ static size_t java_createClassPath(char* classPathStr, const size_t classPathStr
 	}
 	FREE(classPath);
 
-	return classPath_size;
+	return true;
 }
 
 /**

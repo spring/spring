@@ -36,7 +36,7 @@ static int interfaceid = 0;
 
 static void simpleLog_out(int level, const char* msg) {
 
-	if (level > logLevel) {
+	if (level < logLevel) {
 		return;
 	}
 
@@ -46,7 +46,7 @@ static void simpleLog_out(int level, const char* msg) {
 	}
 
 	// fallback method: write to stdout
-	if (level > LOG_LEVEL_WARNING || level < 0) {
+	if (level < LOG_LEVEL_WARNING || level == LOG_LEVEL_NONE) {
 		FPRINTF(stdout, "%s", msg);
 	} else {
 		FPRINTF(stderr, "%s", msg);
@@ -55,7 +55,7 @@ static void simpleLog_out(int level, const char* msg) {
 
 static void simpleLog_logv(int level, const char* fmt, va_list argp) {
 
-	if (level > logLevel) {
+	if (level < logLevel) {
 		return;
 	}
 
@@ -67,7 +67,7 @@ static void simpleLog_logv(int level, const char* fmt, va_list argp) {
 
 void simpleLog_logL(int level, const char* fmt, ...) {
 
-	if (level > logLevel) {
+	if (level < logLevel) {
 		return;
 	}
 
@@ -82,7 +82,7 @@ void simpleLog_log(const char* fmt, ...) {
 
 	static const int level = LOG_LEVEL_INFO;
 
-	if (level > logLevel) {
+	if (level < logLevel) {
 		return;
 	}
 
