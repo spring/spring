@@ -918,9 +918,19 @@ boost::uint32_t CPathEstimator::CalcChecksum() const
  */
 unsigned int CPathEstimator::Hash() const
 {
-	return readMap->CalcHeightmapChecksum() +
-	       readMap->CalcTypemapChecksum() +
-	       moveDefHandler->GetCheckSum() +
-	       groundBlockingObjectMap->CalcChecksum() +
+	unsigned int mapChecksum = readMap->CalcHeightmapChecksum();
+	LOG("[PathEstimator::%s] mapChecksum=%u", __FUNCTION__, mapChecksum);
+	unsigned int typeMapChecksum = readMap->CalcTypemapChecksum();
+	LOG("[PathEstimator::%s] typeMapChecksum=%u", __FUNCTION__, typeMapChecksum);
+	unsigned int moveDefChecksum = moveDefHandler->GetCheckSum();
+	LOG("[PathEstimator::%s] moveDefChecksum=%u", __FUNCTION__, moveDefChecksum);
+	unsigned int blockingChecksum = groundBlockingObjectMap->CalcChecksum();
+	LOG("[PathEstimator::%s] blockingChecksum=%u", __FUNCTION__, blockingChecksum);
+	LOG("[PathEstimator::%s] BLOCK_SIZE=%u", __FUNCTION__, BLOCK_SIZE);
+	LOG("[PathEstimator::%s] PATHESTIMATOR_VERSION=%u", __FUNCTION__, PATHESTIMATOR_VERSION);
+	return mapChecksum +
+	       typeMapChecksum +
+	       moveDefChecksum +
+	       blockingChecksum +
 	       BLOCK_SIZE + PATHESTIMATOR_VERSION;
 }
