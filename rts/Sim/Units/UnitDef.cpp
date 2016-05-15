@@ -1,5 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <errno.h>
 #include "UnitDef.h"
 #include "UnitDefHandler.h"
 #include "UnitDefImage.h"
@@ -150,6 +151,8 @@ UnitDef::UnitDef()
 	, factoryHeadingTakeoff(false)
 	, capturable(false)
 	, repairable(false)
+
+	, buildingMask(0)
 
 	, canmove(false)
 	, canAttack(false)
@@ -749,12 +752,33 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 	// if high-res yardmap, start at second character
 	unsigned int ymReadIdx = highResMap;
 	unsigned int ymCopyIdx = 0;
+	
+	size_t yardMapStrSize = yardMapStr.size();
+	std::size_t buildingMaskStart = yardMapStr.find('#');
+	if (buildingMaskStart != std::string::npos) {
+		yardMapStrSize = buildingMaskStart + 1;
+
+		string numString = yardMapStr.substr(yardMapStrSize);
+		char* endPtr = nullptr;
+		errno = 0;
+		unsigned long number = strtoul(numString.c_str(), &endPtr, 0);
+
+		if (errno == ERANGE || number < 0 || number > USHRT_MAX) {			
+			LOG_L(L_WARNING, "%s: Given yardmap contains buildingMask size of greater than 16 bits \"%s\", setting buildingMask to default!", name.c_str(), numString.c_str());
+		}
+		else if (*endPtr != '\0') {			
+			LOG_L(L_WARNING, "%s: Given yardmap contains unparseable buildingMask \"%s\", setting buildingMask to default!", name.c_str(), numString.c_str());
+		}
+		else {
+			buildingMask = (boost::uint16_t) number; //safe to cast ulong --> ushort
+		}		
+	}
 
 	std::vector<YardMapStatus> defYardMap(hxsize * hzsize, YARDMAP_BLOCKED);
 	std::string unknownChars;
 
 	// read the yardmap from the LuaDef string
-	while (ymReadIdx < yardMapStr.size()) {
+	while (ymReadIdx < yardMapStrSize) {
 		const unsigned char c = yardMapStr[ymReadIdx++];
 
 		if (isspace(c))

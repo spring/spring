@@ -195,6 +195,9 @@ public:
 	///< (only non-mobile ground units can have these)
 	std::vector<YardMapStatus> yardmap;
 
+	///< buildingMask used to disallow construction on certain map squares
+	boost::uint16_t buildingMask;
+
 	std::vector<std::string> modelCEGTags;
 	std::vector<std::string> pieceCEGTags;
 
