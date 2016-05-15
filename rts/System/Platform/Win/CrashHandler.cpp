@@ -116,7 +116,7 @@ static DWORD __stdcall AllocTest(void *param) {
 /** Print out a stacktrace. */
 inline static void StacktraceInline(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE, const int logLevel = LOG_LEVEL_ERROR)
 {
-	PIMAGEHLP_SYMBOL64 pSym;
+	PSYMBOL_INFO pSym;
 	STACKFRAME64 sf;
 	HANDLE process, thread;
 	DWORD64 Disp, dwModBase;
@@ -216,7 +216,9 @@ inline static void StacktraceInline(const char *threadName, LPEXCEPTION_POINTERS
 	sf.AddrFrame.Mode = AddrModeFlat;
 
 	// use globalalloc to reduce risk for allocator related deadlock
-	pSym = (PIMAGEHLP_SYMBOL64)GlobalAlloc(GMEM_FIXED, 16384);
+	const int SYMLENGTH = 4096;
+	char symbuf[sizeof(SYMBOL_INFO) + SYMLENGTH];
+	pSym = reinterpret_cast<SYMBOL_INFO*>(symbuf);
 	char* printstrings = (char*)GlobalAlloc(GMEM_FIXED, 0);
 
 	bool containsOglDll = false;
@@ -244,17 +246,23 @@ inline static void StacktraceInline(const char *threadName, LPEXCEPTION_POINTERS
 			strcpy(modname, "Unknown");
 		}
 
-		pSym->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL);
-		pSym->MaxNameLength = MAX_PATH;
+		pSym->SizeOfStruct = sizeof(SYMBOL_INFO);
+		pSym->MaxNameLen = SYMLENGTH;
 
 		char* printstringsnew = (char*) GlobalAlloc(GMEM_FIXED, (count + 1) * BUFFER_SIZE);
 		memcpy(printstringsnew, printstrings, count * BUFFER_SIZE);
 		GlobalFree(printstrings);
 		printstrings = printstringsnew;
 
-		if (SymGetSymFromAddr64(process, sf.AddrPC.Offset, &Disp, pSym)) {
+		if (SymFromAddr(process, sf.AddrPC.Offset, &Disp, pSym)) {
+			IMAGEHLP_LINE64 line;
+			line.SizeOfStruct = sizeof(line);
+			DWORD displacement;
+			SymGetLineFromAddr64(GetCurrentProcess(), sf.AddrPC.Offset, &displacement, &line);
+
 			// This is the code path taken on VC if debugging syms are found.
-			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s(%.*s+%#0llx) [0x%08llX]", count, modname, (int) pSym->MaxNameLength, pSym->Name, Disp, sf.AddrPC.Offset);
+			//SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s(%.*s+%#0llx) [0x%08llX]", count, modname, (int) pSym->MaxNameLength, pSym->Name, Disp, sf.AddrPC.Offset);
+			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s:%d %s [0x%08llX]", count, line.FileName, line.LineNumber, pSym->Name, sf.AddrPC.Offset);
 		} else {
 			// This is the code path taken on MinGW, and VC if no debugging syms are found.
 			if (strstr(modname, ".exe")) {
