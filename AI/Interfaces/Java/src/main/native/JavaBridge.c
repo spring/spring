@@ -145,6 +145,12 @@ static bool java_createClassPath(char* classPathStr, const size_t classPathStr_s
 	char* mainJarPath = callback->DataDirs_allocatePath(interfaceId,
 			JAVA_AI_INTERFACE_LIBRARY_FILE_NAME,
 			false, false, false, false);
+	if (mainJarPath == NULL) {
+		simpleLog_logL(LOG_LEVEL_ERROR,
+				"Couldn't find %s", JAVA_AI_INTERFACE_LIBRARY_FILE_NAME);
+		return false;
+	}
+
 	classPath[classPath_size++] = util_allocStrCpy(mainJarPath);
 
 	bool ok = util_getParentDir(mainJarPath);
