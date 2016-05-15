@@ -262,7 +262,7 @@ inline static void StacktraceInline(const char *threadName, LPEXCEPTION_POINTERS
 
 			// This is the code path taken on VC if debugging syms are found.
 			//SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s(%.*s+%#0llx) [0x%08llX]", count, modname, (int) pSym->MaxNameLength, pSym->Name, Disp, sf.AddrPC.Offset);
-			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s:%d %s [0x%08llX]", count, line.FileName, line.LineNumber, pSym->Name, sf.AddrPC.Offset);
+			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s:%u %s [0x%08llX]", count, line.FileName, line.LineNumber, pSym->Name, sf.AddrPC.Offset);
 		} else {
 			// This is the code path taken on MinGW, and VC if no debugging syms are found.
 			if (strstr(modname, ".exe")) {
