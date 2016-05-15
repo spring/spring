@@ -237,18 +237,6 @@ void CUnitHandler::Update()
 	}
 
 	{
-		SCOPED_TIMER("Unit::UpdateLocalModel");
-		for (CUnit* unit: activeUnits) {
-			// UnitScript only applies piece-space transforms so
-			// we apply the forward kinematics update separately
-			// (only if we have any dirty pieces)
-			// add ID as offset so the bounding-box update does
-			// not run at the same time for every model
-
-		}
-	}
-
-	{
 		SCOPED_TIMER("Unit::UpdateLosStatus");
 		for (CUnit* unit: activeUnits) {
 			for (int at = 0; at < teamHandler->ActiveAllyTeams(); ++at) {
