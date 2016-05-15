@@ -73,6 +73,7 @@ CPieceProjectile::CPieceProjectile(
 	// this class are themselves synced and have
 	// LuaSynced{Ctrl, Read} exposure we treat
 	// them that way for consistency
+	spinAngle = 0.0f;
 	spinVec = gs->randVector().Normalize();
 	spinSpeed = gs->randFloat() * 20;
 
