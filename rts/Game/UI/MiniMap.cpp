@@ -871,6 +871,8 @@ void CMiniMap::ApplyConstraintsMatrix() const
 
 void CMiniMap::Update()
 {
+	SCOPED_GMARKER("CMiniMap::Update");
+
 	if (minimized || width == 0 || height == 0)
 		return;
 

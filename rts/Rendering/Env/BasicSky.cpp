@@ -220,6 +220,8 @@ CBasicSky::~CBasicSky()
 
 void CBasicSky::Draw()
 {
+	SCOPED_GMARKER("CBasicSky::Draw");
+
 	if (!globalRendering->drawSky)
 		return;
 
@@ -518,6 +520,8 @@ void CBasicSky::CreateTransformVectors()
 
 void CBasicSky::DrawSun()
 {
+	SCOPED_GMARKER("CBasicSky::DrawSun");
+
 	if (!globalRendering->drawSky)
 		return;
 	if (!SunVisible(camera->GetPos()))

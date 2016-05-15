@@ -190,6 +190,8 @@ CAdvSky::~CAdvSky()
 
 void CAdvSky::Draw()
 {
+	SCOPED_GMARKER("CAdvSky::Draw");
+
 	if (!globalRendering->drawSky)
 		return;
 
@@ -541,6 +543,8 @@ void CAdvSky::CreateTransformVectors()
 
 void CAdvSky::DrawSun()
 {
+	SCOPED_GMARKER("CAdvSky::DrawSun");
+
 	if (!globalRendering->drawSky)
 		return;
 	if (!SunVisible(camera->GetPos()))

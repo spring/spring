@@ -20,7 +20,7 @@
 #include "System/float4.h"
 
 #include "glStateDebug.h"
-
+#include "glMarkers.h"
 
 #if       defined(HEADLESS)
 	// All OpenGL functions should always exists on HEADLESS.

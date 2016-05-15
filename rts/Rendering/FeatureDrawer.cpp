@@ -255,6 +255,8 @@ inline void CFeatureDrawer::UpdateDrawPos(CFeature* f)
 
 void CFeatureDrawer::Draw()
 {
+	SCOPED_GMARKER("CFeatureDrawer::Draw");
+
 	sky->SetupFog();
 
 	// mark all features (in the quads we can see) with a FD_*_FLAG value
@@ -441,6 +443,8 @@ void CFeatureDrawer::DrawIndividualNoTrans(const CFeature* feature, bool noLuaCa
 
 void CFeatureDrawer::DrawAlphaPass()
 {
+	SCOPED_GMARKER("CFeatureDrawer::DrawAlphaPass");
+
 	inAlphaPass = true;
 	ffpAlphaMat = !(unitDrawer->GetWantedDrawerState(true))->CanDrawAlpha();
 

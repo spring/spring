@@ -349,6 +349,8 @@ void CUnitDrawer::Update()
 
 void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 {
+	SCOPED_GMARKER("CUnitDrawer::Draw");
+
 	sky->SetupFog();
 
 	assert((CCamera::GetActiveCamera())->GetCamType() != CCamera::CAMTYPE_SHADOW);
@@ -706,6 +708,8 @@ void CUnitDrawer::ResetAlphaDrawing(bool deferredPass)
 
 void CUnitDrawer::DrawAlphaPass()
 {
+	SCOPED_GMARKER("CUnitDrawer::DrawAlphaPass");
+
 	{
 		SetupAlphaDrawing(false);
 

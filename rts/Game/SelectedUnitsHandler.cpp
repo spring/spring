@@ -494,6 +494,8 @@ void CSelectedUnitsHandler::SelectCycle(const std::string& command)
 
 void CSelectedUnitsHandler::Draw()
 {
+	SCOPED_GMARKER("CSelectedUnitsHandler::Draw");
+
 	glDisable(GL_TEXTURE_2D);
 	glDepthMask(false);
 	glDisable(GL_DEPTH_TEST);

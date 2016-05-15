@@ -1143,7 +1143,10 @@ bool CGame::Draw() {
 	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
 	const spring_time currentTimePreDraw = spring_gettime();
 
-	eventHandler.DrawGenesis();
+	{
+		SCOPED_GMARKER("Game::DrawGenesis");
+		eventHandler.DrawGenesis();
+	}
 
 	if (!globalRendering->active) {
 		spring_sleep(spring_msecs(10));
@@ -1193,6 +1196,7 @@ bool CGame::Draw() {
 
 	{
 		SCOPED_TIMER("Game::DrawWorld");
+		SCOPED_GMARKER("Game::DrawWorld");
 
 		minimap->Update();
 
@@ -1209,6 +1213,7 @@ bool CGame::Draw() {
 
 	{
 		SCOPED_TIMER("Game::DrawScreen");
+		SCOPED_GMARKER("Game::DrawScreen");
 
 		if (doDrawWorld)
 			eventHandler.DrawScreenEffects();

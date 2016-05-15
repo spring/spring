@@ -386,6 +386,8 @@ void CProjectileDrawer::LoadWeaponTextures() {
 
 void CProjectileDrawer::DrawProjectiles(int modelType, bool drawReflection, bool drawRefraction)
 {
+	SCOPED_GMARKER("CProjectileDrawer::DrawProjectiles");
+
 	auto& projectileBin = modelRenderers[modelType]->GetProjectileBinMutable();
 
 	for (auto binIt = projectileBin.cbegin(); binIt != projectileBin.cend(); ++binIt) {
@@ -527,6 +529,8 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 
 void CProjectileDrawer::DrawFlyingPieces(int modelType)
 {
+	SCOPED_GMARKER("CProjectileDrawer::DrawFlyingPieces");
+
 	const FlyingPieceContainer& container = projectileHandler->flyingPieces[modelType];
 
 	if (container.empty())

@@ -45,6 +45,8 @@ CSkyBox::~CSkyBox()
 
 void CSkyBox::Draw()
 {
+	SCOPED_GMARKER("CSkyBox::Draw");
+
 	if (!globalRendering->drawSky)
 		return;
 
