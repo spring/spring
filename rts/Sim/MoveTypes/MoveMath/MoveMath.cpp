@@ -115,7 +115,6 @@ CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveDef& moveDef,
 		return BLOCK_IMPASSABLE;
 
 	const int xstep = 2, zstep = 2;
-	const int tempNum = gs->GetTempNum();
 
 	// (footprints are point-symmetric around <xSquare, zSquare>)
 	for (int z = zmin; z <= zmax; z += zstep) {
@@ -123,11 +122,6 @@ CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveDef& moveDef,
 		for (int x = xmin; x <= xmax; x += xstep) {
 			const BlockingMapCell& cell = groundBlockingObjectMap->GetCellUnsafeConst(zOffset + x);
 			for (CSolidObject* collidee: cell) {
-				if (collidee->tempNum == tempNum)
-					continue;
-
-				collidee->tempNum = tempNum;
-
 				ret |= ObjectBlockType(moveDef, collidee, collider);
 				if (ret & BLOCK_STRUCTURE)
 					return ret;

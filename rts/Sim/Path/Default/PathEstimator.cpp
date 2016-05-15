@@ -874,8 +874,9 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
 	zipWriteInFileInZip(file, (void*) &hash, 4);
 
 	// Write block-center-offsets.
-	for (int pathType = 0; pathType < moveDefHandler->GetNumMoveDefs(); ++pathType)
-		zipWriteInFileInZip(file, (void*) &blockStates.peNodeOffsets[pathType][0], blockStates.GetSize() * sizeof(short2));
+	for (int pathType = 0; pathType < moveDefHandler->GetNumMoveDefs(); ++pathType) {
+		zipWriteInFileInZip(file, (void*) &blockStates.peNodeOffsets[pathType][0], blockStates.peNodeOffsets[pathType].size() * sizeof(short2));
+	}
 
 	// Write vertices.
 	zipWriteInFileInZip(file, &vertexCosts[0], vertexCosts.size() * sizeof(float));
