@@ -116,10 +116,9 @@ static DWORD __stdcall AllocTest(void *param) {
 /** Print out a stacktrace. */
 inline static void StacktraceInline(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE, const int logLevel = LOG_LEVEL_ERROR)
 {
-	PSYMBOL_INFO pSym;
 	STACKFRAME64 sf;
 	HANDLE process, thread;
-	DWORD64 Disp, dwModBase;
+	DWORD64 dwModBase;
 	DWORD dwModAddrToPrint;
 	BOOL more = FALSE;
 	int count = 0;
@@ -251,13 +250,13 @@ inline static void StacktraceInline(const char *threadName, LPEXCEPTION_POINTERS
 #ifdef _MSC_VER
 		const int SYMLENGTH = 4096;
 		char symbuf[sizeof(SYMBOL_INFO) + SYMLENGTH];
-		pSym = reinterpret_cast<SYMBOL_INFO*>(symbuf);
+		PSYMBOL_INFO pSym = reinterpret_cast<SYMBOL_INFO*>(symbuf);
 
 		pSym->SizeOfStruct = sizeof(SYMBOL_INFO);
 		pSym->MaxNameLen = SYMLENGTH;
 
 		// Check if we have symbols, only works on VC (mingw doesn't have a compatible file format)
-		if (SymFromAddr(process, sf.AddrPC.Offset, &Disp, pSym)) {
+		if (SymFromAddr(process, sf.AddrPC.Offset, nullptr, pSym)) {
 			IMAGEHLP_LINE64 line;
 			line.SizeOfStruct = sizeof(line);
 			DWORD displacement;
@@ -305,7 +304,6 @@ inline static void StacktraceInline(const char *threadName, LPEXCEPTION_POINTERS
 	}
 
 	GlobalFree(printstrings);
-	GlobalFree(pSym);
 }
 
 static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE, const int logLevel = LOG_LEVEL_ERROR) {
