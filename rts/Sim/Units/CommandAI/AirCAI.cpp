@@ -256,6 +256,24 @@ bool CAirCAI::AirAutoGenerateTarget(AAirMoveType* myPlane) {
 }
 
 
+void CAirCAI::ExecuteMove(Command& c)
+{
+	float3 cmdPos = c.GetPos(0);
+
+	AAirMoveType* myPlane = GetStrafeAirMoveType(owner);
+	SetGoal(cmdPos, owner->pos);
+
+	const CStrafeAirMoveType* airMT = (!owner->UsingScriptMoveType())? static_cast<const CStrafeAirMoveType*>(myPlane): NULL;
+	const float radius = (airMT != NULL)? std::max(airMT->turnRadius + 2 * SQUARE_SIZE, 128.f) : 127.f;
+
+	// we're either circling or will get to the target in 8 frames
+	if ((owner->pos - cmdPos).SqLength2D() < (radius * radius)
+			|| (owner->pos + owner->speed*8 - cmdPos).SqLength2D() < 127*127)
+	{
+		StopMoveAndFinishCommand();
+	}
+}
+
 
 void CAirCAI::ExecuteFight(Command& c)
 {
@@ -363,17 +381,7 @@ void CAirCAI::ExecuteFight(Command& c)
 		}
 	}
 
-	SetGoal(goalPos, owner->pos);
-
-	const CStrafeAirMoveType* airMT = (!owner->UsingScriptMoveType())? static_cast<const CStrafeAirMoveType*>(myPlane): NULL;
-	const float radius = (airMT != NULL)? std::max(airMT->turnRadius + 2*SQUARE_SIZE, 128.f) : 127.f;
-
-	// we're either circling or will get to the target in 8 frames
-	if ((owner->pos - goalPos).SqLength2D() < (radius * radius)
-			|| (owner->pos + owner->speed*8 - goalPos).SqLength2D() < 127*127)
-	{
-		StopMoveAndFinishCommand();
-	}
+	ExecuteMove(c);
 }
 
 void CAirCAI::ExecuteAttack(Command& c)

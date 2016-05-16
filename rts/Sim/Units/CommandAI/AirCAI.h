@@ -30,7 +30,7 @@ public:
 	void ExecuteAreaAttack(Command& c);
 	void ExecuteAttack(Command& c);
 	void ExecuteFight(Command& c);
-//	void ExecuteMove(Command& c);
+	void ExecuteMove(Command& c);
 
 	bool IsValidTarget(const CUnit* enemy) const;
 
