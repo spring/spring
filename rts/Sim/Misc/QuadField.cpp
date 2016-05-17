@@ -352,8 +352,6 @@ void CQuadField::MovedRepulser(CPlasmaRepulser* repulser)
 
 void CQuadField::RemoveRepulser(CPlasmaRepulser* repulser)
 {
-	const auto& quads = GetQuads(repulser->weaponMuzzlePos, repulser->GetRadius());
-
 	for (const int qi: repulser->quads) {
 		VectorErase(baseQuads[qi].repulsers, repulser);
 	}
