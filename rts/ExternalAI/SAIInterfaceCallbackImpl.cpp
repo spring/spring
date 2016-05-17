@@ -256,9 +256,8 @@ EXPORT(char*) aiInterfaceCallback_DataDirs_Roots_allocatePath(int UNUSED_interfa
 	// FIXME LEAK
 	char* path = (char*) calloc(pathMaxSize, sizeof(char*));
 
-	if (!aiInterfaceCallback_DataDirs_Roots_locatePath(-1, path, pathMaxSize, relPath, writeable, create, dir)) {
+	if (!aiInterfaceCallback_DataDirs_Roots_locatePath(-1, path, pathMaxSize, relPath, writeable, create, dir))
 		FREE(path);
-	}
 
 	return path;
 }
@@ -295,9 +294,8 @@ EXPORT(char*) aiInterfaceCallback_DataDirs_allocatePath(int interfaceId, const c
 	// FIXME LEAK
 	char* path = (char*) calloc(pathMaxSize, sizeof(char*));
 
-	if (!aiInterfaceCallback_DataDirs_locatePath(interfaceId, path, pathMaxSize, relPath, writeable, create, dir, common)) {
+	if (!aiInterfaceCallback_DataDirs_locatePath(interfaceId, path, pathMaxSize, relPath, writeable, create, dir, common))
 		FREE(path);
-	}
 
 	return path;
 }
