@@ -256,8 +256,9 @@ EXPORT(char*) aiInterfaceCallback_DataDirs_Roots_allocatePath(int UNUSED_interfa
 	// FIXME LEAK
 	char* path = (char*) calloc(pathMaxSize, sizeof(char*));
 
-	if (!aiInterfaceCallback_DataDirs_Roots_locatePath(-1, path, pathMaxSize, relPath, writeable, create, dir))
+	if (!aiInterfaceCallback_DataDirs_Roots_locatePath(-1, path, pathMaxSize, relPath, writeable, create, dir)) {
 		FREE(path);
+	}
 
 	return path;
 }
@@ -283,7 +284,7 @@ EXPORT(bool) aiInterfaceCallback_DataDirs_locatePath(int interfaceId, char* path
 
 	interfaceRelPath += (ps + interfaceShortName);
 	interfaceRelPath += (ps + interfaceVersion);
-	interfaceRelPath += (ps + relPath);
+	interfaceRelPath += (ps + std::string(relPath));
 
 	return aiInterfaceCallback_DataDirs_Roots_locatePath(interfaceId, path, pathMaxSize, interfaceRelPath.c_str(), writeable, create, dir);
 }
@@ -294,8 +295,9 @@ EXPORT(char*) aiInterfaceCallback_DataDirs_allocatePath(int interfaceId, const c
 	// FIXME LEAK
 	char* path = (char*) calloc(pathMaxSize, sizeof(char*));
 
-	if (!aiInterfaceCallback_DataDirs_locatePath(interfaceId, path, pathMaxSize, relPath, writeable, create, dir, common))
+	if (!aiInterfaceCallback_DataDirs_locatePath(interfaceId, path, pathMaxSize, relPath, writeable, create, dir, common)) {
 		FREE(path);
+	}
 
 	return path;
 }
