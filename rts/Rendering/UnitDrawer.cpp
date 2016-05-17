@@ -467,9 +467,10 @@ void CUnitDrawer::DrawUnitIcons()
 	glDisable(GL_BLEND);
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.5f);
-	if ((globalRendering->FSAA > 0) && GLEW_ARB_multisample) {
-		glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE_ARB);
-	}
+	// FIXME: remove dithering
+	// if ((globalRendering->FSAA > 0) && GLEW_ARB_multisample) {
+		// glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE_ARB);
+	// }
 
 	for (CUnit* u: iconUnits) {
 		DrawIcon(u, !gu->spectatingFullView &&
