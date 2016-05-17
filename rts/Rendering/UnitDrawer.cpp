@@ -1761,6 +1761,8 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 	const UnitDef* unitDef = unit->unitDef;
 	const UnitDef* decoyDef = unitDef->decoyDef;
 
+	// TODO - make ghosted buildings per allyTeam - so they are correctly dealt with
+	// when spectating
 	if (unitDef->IsBuildingUnit() && gameSetup->ghostedBuildings &&
 		!(u->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) &&
 		(u->losStatus[gu->myAllyTeam] & (LOS_PREVLOS)) && !gu->spectatingFullView
@@ -1832,7 +1834,7 @@ void CUnitDrawer::UnitLeftLos(const CUnit* unit, int allyTeam) {
 		return;
 
 	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit())
-		VectorInsertUnique(liveGhostBuildings[MDL_TYPE(unit)], u);
+		VectorInsertUnique(liveGhostBuildings[MDL_TYPE(unit)], u, true);
 
 	UpdateUnitMiniMapIcon(unit, false, false);
 }
