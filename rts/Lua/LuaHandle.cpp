@@ -1468,12 +1468,15 @@ bool CLuaHandle::Explosion(int weaponDefID, int projectileID, const float3& pos,
 	lua_pushnumber(L, pos.x);
 	lua_pushnumber(L, pos.y);
 	lua_pushnumber(L, pos.z);
-	if (owner != NULL) {
+	if (owner != nullptr) {
 		lua_pushnumber(L, owner->id);
+	} else {
+		lua_pushnil(L); // for backward compatibility
 	}
+	lua_pushnumber(L, projectileID);
 
 	// call the routine
-	if (!RunCallIn(L, cmdStr, (owner == NULL) ? 4 : 5, 1))
+	if (!RunCallIn(L, cmdStr, 6, 1))
 		return false;
 
 	// get the results
