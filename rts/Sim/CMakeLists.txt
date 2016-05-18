@@ -17,7 +17,7 @@ add_library(engineSim STATIC
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/DefinitionTag.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/GeometricObjects.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/GlobalSynced.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/GroundBlockingObjectMap.cpp"		
+		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/GroundBlockingObjectMap.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/InterceptHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/LosHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Misc/LosMap.cpp"
