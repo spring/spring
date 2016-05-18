@@ -1160,7 +1160,7 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 	if (!unitDef->CheckTerrainConstraints(moveDef, groundHeight))
 		return BUILDSQUARE_BLOCKED;
 
-	if (!buildingMaskMap->TestTileMaskUnsafe(sqx, sqz, mask))
+	if (!buildingMaskMap->TestTileMaskUnsafe(sqx >> 1, sqz >> 1, mask))
 		return BUILDSQUARE_BLOCKED;
 	
 

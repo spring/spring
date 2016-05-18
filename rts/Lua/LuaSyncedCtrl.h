@@ -171,7 +171,7 @@ class LuaSyncedCtrl
 		static int SetMapSquareTerrainType(lua_State* L);
 		static int SetTerrainTypeData(lua_State* L);
 
-		static int SetBuildingMaskData(lua_State* L);
+		static int SetSquareBuildingMask(lua_State* L);
 
 		static int UnitWeaponFire(lua_State* L);
 		static int UnitWeaponHoldFire(lua_State* L);

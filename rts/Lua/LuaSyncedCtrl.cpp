@@ -298,7 +298,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetMapSquareTerrainType);
 	REGISTER_LUA_CFUNC(SetTerrainTypeData);
 
-	REGISTER_LUA_CFUNC(SetBuildingMaskData);
+	REGISTER_LUA_CFUNC(SetSquareBuildingMask);
 
 	REGISTER_LUA_CFUNC(UnitWeaponFire);
 	REGISTER_LUA_CFUNC(UnitWeaponHoldFire);
@@ -3952,25 +3952,21 @@ int LuaSyncedCtrl::SetTerrainTypeData(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-int LuaSyncedCtrl::SetBuildingMaskData(lua_State* L)
+int LuaSyncedCtrl::SetSquareBuildingMask(lua_State* L)
 {
-	const int x = (int)luaL_checkfloat(L, 1);
-	const int z = (int)luaL_checkfloat(L, 2);
-	const float maskF = luaL_checkfloat(L, 3);
-	if (maskF < 0 || maskF > USHRT_MAX) {
-		luaL_error(L, "Incorrect value of mask: %s(%d, %d, %f)", __FUNCTION__, x, z, maskF);
-		lua_pushboolean(L, false);
+	const int x = luaL_checkint(L, 1);
+	const int z = luaL_checkint(L, 2);
+	const int mask = luaL_checkint(L, 3);	
+	if (mask < 0 || mask > USHRT_MAX) {
+		luaL_error(L, "Incorrect value of mask: %s(%d, %d, %d)", __FUNCTION__, x, z, mask);
 		return 0;
-	}
-	const boost::uint16_t mask = (boost::uint16_t)maskF;
-	const bool result = buildingMaskMap->SetTileMask(x, z, mask);
+	}	
+	const bool result = buildingMaskMap->SetTileMask(x, z, (boost::uint16_t)mask);
 	if (!result) {
 		luaL_error(L, "Invalid values supplied: %s(%d, %d, %d)", __FUNCTION__, x, z, mask);
-		lua_pushboolean(L, false);
 		return 0;
 	}
-	lua_pushboolean(L, true);
-	return 1;
+	return 0; //no error = success
 }
 
 /******************************************************************************/

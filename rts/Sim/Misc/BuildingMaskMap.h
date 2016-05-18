@@ -17,7 +17,9 @@ class BuildingMaskMap
 public:
 	BuildingMaskMap() {
 		maskMap.clear();
-		maskMap.resize(mapDims.mapSquares, 0);
+
+		// we are going to operate in 2*SQUARE_SIZE space as spring snaps buildings to 2*SQUARE_SIZE based grid
+		maskMap.resize(mapDims.hmapx * mapDims.hmapy, 1); //1st bit set to 1 constitutes for "normal tile"
 	};
 
 	bool SetTileMask(int x, int z, boost::uint16_t value);
