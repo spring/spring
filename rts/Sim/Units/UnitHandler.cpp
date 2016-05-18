@@ -72,17 +72,23 @@ CUnitHandler::CUnitHandler()
 
 CUnitHandler::~CUnitHandler()
 {
-	// Predelete scripts since they sometimes call models
-	// which are already gone by now.
-	for (CUnit* u: activeUnits)
-		u->DeleteScript();
-
 	for (CUnit* u: activeUnits) {
 		// ~CUnit dereferences featureHandler which is destroyed already
 		u->delayedWreckLevel = -1;
 		delete u;
 	}
 }
+
+
+CUnitHandler::DeleteScripts()
+{
+	// Predelete scripts since they sometimes call models
+	// which are already gone by KillSimulation.
+	for (CUnit* u: activeUnits) {
+		u->DeleteScript();
+	}
+}
+
 
 void CUnitHandler::InsertActiveUnit(CUnit* unit)
 {
