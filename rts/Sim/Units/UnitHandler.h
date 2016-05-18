@@ -20,7 +20,7 @@ public:
 	CUnitHandler();
 	~CUnitHandler();
 
-	DeleteScripts();
+	void DeleteScripts();
 
 	void Update();
 	bool AddUnit(CUnit* unit);

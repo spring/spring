@@ -80,7 +80,7 @@ CUnitHandler::~CUnitHandler()
 }
 
 
-CUnitHandler::DeleteScripts()
+void CUnitHandler::DeleteScripts()
 {
 	// Predelete scripts since they sometimes call models
 	// which are already gone by KillSimulation.
