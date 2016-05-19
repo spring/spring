@@ -98,7 +98,7 @@ void CWorldDrawer::LoadPre() const
 
 void CWorldDrawer::LoadPost() const
 {
-	loadscreen->SetLoadMessage("Creating ShadowHandler & DecalHandler");
+	loadscreen->SetLoadMessage("Creating ShadowHandler");
 	cubeMapHandler = new CubeMapHandler();
 	shadowHandler = new CShadowHandler();
 
@@ -114,6 +114,8 @@ void CWorldDrawer::LoadPost() const
 
 	farTextureHandler = new CFarTextureHandler();
 	heightMapTexture = new HeightMapTexture();
+
+	IGroundDecalDrawer::Init();
 
 	loadscreen->SetLoadMessage("Creating ProjectileDrawer & UnitDrawer");
 	projectileDrawer = new CProjectileDrawer();

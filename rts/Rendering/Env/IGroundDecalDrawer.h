@@ -13,8 +13,9 @@ public:
 	static bool GetDrawDecals() { return (decalLevel > 0); }
 	static void SetDrawDecals(bool v);
 
-	static IGroundDecalDrawer* GetInstance();
+	static void Init();
 	static void FreeInstance();
+	static IGroundDecalDrawer* singleton;
 
 public:
 	virtual void Draw() = 0;
@@ -26,8 +27,7 @@ public:
 	virtual void GhostCreated(CSolidObject* object, GhostSolidObject* gb) = 0;
 
 public:
-	IGroundDecalDrawer();
-	virtual ~IGroundDecalDrawer(){}
+	virtual ~IGroundDecalDrawer() {}
 
 protected:
 	virtual void OnDecalLevelChanged() = 0;
@@ -36,6 +36,21 @@ protected:
 	static int decalLevel;
 };
 
-#define groundDecals IGroundDecalDrawer::GetInstance()
+
+
+class NullGroundDecalDrawer: public IGroundDecalDrawer
+{
+public:
+	void Draw() override {}
+	void ForceRemoveSolidObject(CSolidObject* object) override {}
+
+	void GhostDestroyed(GhostSolidObject* gb) override {}
+	void GhostCreated(CSolidObject* object, GhostSolidObject* gb) override {}
+
+	void OnDecalLevelChanged() override {}
+};
+
+
+#define groundDecals IGroundDecalDrawer::singleton
 
 #endif // IGROUND_DECAL_DRAWER_H

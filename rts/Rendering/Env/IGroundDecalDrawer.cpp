@@ -10,44 +10,52 @@
 
 CONFIG(int, GroundDecals).defaultValue(3).headlessValue(0).description("Controls whether ground decals underneath buildings and ground scars from explosions will be rendered. Values >1 define how long such decals will stay.");
 
+static NullGroundDecalDrawer nullDecalDrawer;
+IGroundDecalDrawer* IGroundDecalDrawer::singleton = &nullDecalDrawer;
 int IGroundDecalDrawer::decalLevel = 0;
 
 
-static IGroundDecalDrawer* singleton = NULL;
-
-IGroundDecalDrawer::IGroundDecalDrawer()
+static IGroundDecalDrawer* GetInstance()
 {
-	decalLevel = configHandler->GetInt("GroundDecals");
+	IGroundDecalDrawer* instance = &nullDecalDrawer;
+	if (!IGroundDecalDrawer::GetDrawDecals()) {
+		LOG_L(L_INFO, "Loaded DecalsDrawer: %s", "off");
+		return instance;
+	}
+
+#if 0
+	try {
+		instance = new CDecalsDrawerGL4();
+		LOG_L(L_INFO, "Loaded DecalsDrawer: %s", "GL4");
+	} catch(const unsupported_error& ex) {
+		LOG_L(L_ERROR, "IGroundDecalDrawer loading failed: %s", ex.what());
+	} catch(const opengl_error& ex) {
+		LOG_L(L_ERROR, "IGroundDecalDrawer loading failed: %s", ex.what());
+	}
+#endif
+
+	if (instance == &nullDecalDrawer) {
+		instance = new CGroundDecalHandler();
+		LOG_L(L_INFO, "Loaded DecalsDrawer: %s", "Legacy");
+	}
+
+	return instance;
 }
 
 
-IGroundDecalDrawer* IGroundDecalDrawer::GetInstance()
+void IGroundDecalDrawer::Init()
 {
-	if (!singleton) {
-#if 0
-		try {
-			singleton = new CDecalsDrawerGL4();
-			LOG_L(L_INFO, "Loaded DecalsDrawer: %s", "GL4");
-		} catch(const unsupported_error& ex) {
-		} catch(const opengl_error& ex) {
-			LOG_L(L_ERROR, "IGroundDecalDrawer loading failed: %s", ex.what());
-#endif
-			SafeDelete(singleton);
-			singleton = new CGroundDecalHandler();
-			LOG_L(L_INFO, "Loaded DecalsDrawer: %s", "Legacy");
+	decalLevel = configHandler->GetInt("GroundDecals");
 
-#if 0
-		}
-#endif
-	}
-
-	return singleton;
+	FreeInstance();
+	singleton = GetInstance();
 }
 
 
 void IGroundDecalDrawer::FreeInstance()
 {
-	SafeDelete(singleton);
+	if (singleton != &nullDecalDrawer)
+		SafeDelete(singleton);
 }
 
 
@@ -58,5 +66,10 @@ void IGroundDecalDrawer::SetDrawDecals(bool v)
 	} else {
 		decalLevel = -std::abs(decalLevel);
 	}
+
+	if (groundDecals == &nullDecalDrawer) {
+		groundDecals = GetInstance();
+	}
+
 	groundDecals->OnDecalLevelChanged();
 }
