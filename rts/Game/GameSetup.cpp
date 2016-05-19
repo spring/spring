@@ -9,9 +9,11 @@
 #include "System/Util.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/RapidHandler.h"
+#include "System/Sync/HsiehHash.h"
 #include "System/Log/ILog.h"
 
 #include <algorithm>
+#include <numeric>
 #include <map>
 #include <cctype>
 #include <cstring>
@@ -271,26 +273,18 @@ void CGameSetup::LoadStartPositions(bool withoutMap)
 	if (withoutMap && (startPosType == StartPos_Random || startPosType == StartPos_Fixed))
 		throw content_error("You need the map to use the map's start-positions");
 
+	std::vector<int> teamStartNum(teamStartingData.size());
+	std::iota(teamStartNum.begin(), teamStartNum.end(), 0);
+
 	if (startPosType == StartPos_Random) {
 		// Server syncs these later, so we can use unsynced rng
 		UnsyncedRNG rng;
-		rng.Seed(setupText.length());
-		rng.Seed((size_t) setupText.c_str());
-
-		std::vector<int> teamStartNum(teamStartingData.size());
-
-		for (size_t i = 0; i < teamStartingData.size(); ++i)
-			teamStartNum[i] = i;
-
+		rng.Seed(HsiehHash(setupText.c_str(), setupText.length(), 1234567));
 		std::random_shuffle(teamStartNum.begin(), teamStartNum.end(), rng);
-
-		for (size_t i = 0; i < teamStartingData.size(); ++i)
-			teamStartingData[i].teamStartNum = teamStartNum[i];
-	} else {
-		for (size_t a = 0; a < teamStartingData.size(); ++a) {
-			teamStartingData[a].teamStartNum = (int)a;
-		}
 	}
+
+	for (size_t i = 0; i < teamStartingData.size(); ++i)
+		teamStartingData[i].teamStartNum = teamStartNum[i];
 
 	if (startPosType == StartPos_Fixed || startPosType == StartPos_Random) {
 		LoadStartPositionsFromMap();
