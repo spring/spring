@@ -94,28 +94,33 @@ public:
 	static constexpr int OVERLAP_TEST_TEXTURE_SIZE = 256;
 
 	struct Decal {
+	public:
 		Decal()
-			: pos(OnesVector * (-1e6))
-			, size(-1.0f, -1.0f)
-			, rot(0.0f)
-			, alpha(0.0f)
-			, alphaFalloff(0.0f)
-			, texOffsets(0.0f, 0.0f, 0.0f, 0.0f)
-			, texNormalOffsets(0.0f, 0.0f, 0.0f, 0.0f)
-			, owner(nullptr)
-			, generation(0)
-			, type(EXPLOSION)
+		: pos(-1e6, -1e6, -1e6)
+		, size(-1.0f, -1.0f)
+		, rot(0.0f)
+		, alpha(0.0f)
+		, alphaFalloff(0.0f)
+		, texOffsets(0.0f, 0.0f, 0.0f, 0.0f)
+		, texNormalOffsets(0.0f, 0.0f, 0.0f, 0.0f)
+		, owner(nullptr)
+		, generation(0)
+		, type(EXPLOSION)
 		{}
 
+		void Free() const;
+		//FIXME FindAndAddToGroup!!!
+		void Invalidate() const; ///< call after position, size, ... changed (to upload changes to GPU)
+
+		int GetIdx() const;
 		bool IsValid() const;
 		bool InView() const;
 		float GetRating(bool inview_test) const;
 		void SetOwner(const void* owner);
-		//FIXME void Free();
-		//FIXME void Update(); // call when position, size, ... changed
+		void SetTexture(const std::string& name);
+		std::string GetTexture() const;
 
-		int GetIdx() const;
-
+	public:
 		float3 pos;
 		float2 size;
 		float rot;
@@ -125,7 +130,7 @@ public:
 		float4 texNormalOffsets;
 		const void* owner;
 		int generation;
-		enum { EXPLOSION, BUILDING, LUA } type;
+		enum { EXPLOSION, BUILDING, LUA } type; //FIXME merge with owner?
 	};
 
 	struct SDecalGroup {
@@ -142,8 +147,11 @@ public:
 		}
 	};
 
+	friend Decal;
+
 public:
-	void NewDecal(const Decal& d); //FIXME?
+	int CreateLuaDecal();
+	int NewDecal(const Decal& d);
 	void FreeDecal(int idx);
 
 	Decal& GetDecalOwnedBy(const void* owner);

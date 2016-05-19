@@ -35,7 +35,7 @@
 #include "System/FileSystem/FileSystem.h"
 
 #include <unordered_map>
-
+#include <numeric>
 
 
 CONFIG(bool, GroundDecalsParallaxMapping).defaultValue(true);
@@ -109,6 +109,8 @@ bool CDecalsDrawerGL4::Decal::InView() const
 
 float CDecalsDrawerGL4::Decal::GetRating(bool inview_test) const
 {
+	//FIXME lua ones
+
 	float r = 0.f;
 	r += alpha * 10.f;
 	r += Clamp((size.x * size.y) * 0.1f, 0.0f, 1000.f);
@@ -133,6 +135,51 @@ void CDecalsDrawerGL4::Decal::SetOwner(const void* o)
 int CDecalsDrawerGL4::Decal::GetIdx() const
 {
 	return (this - &decalDrawer->decals[0]) / sizeof(CDecalsDrawerGL4::Decal);
+}
+
+
+void CDecalsDrawerGL4::Decal::Free() const
+{
+	decalDrawer->FreeDecal(GetIdx());
+}
+
+
+void CDecalsDrawerGL4::Decal::Invalidate() const
+{
+	const int idx = GetIdx();
+	decalDrawer->decalsToUpdate.push_back(idx);
+	decalDrawer->waitingDecalsForOverlapTest.push_back(idx); //FIXME
+}
+
+
+void CDecalsDrawerGL4::Decal::SetTexture(const std::string& name)
+{
+	const auto it = atlasTexs.find(name);
+	if (it != atlasTexs.end()) {
+		texOffsets = it->second;
+	} else {
+		//FIXME
+	}
+
+	const auto it2 = atlasTexs.find(name + "_normal");
+	if (it2 != atlasTexs.end()) {
+		texNormalOffsets = it2->second;
+	} else {
+		//FIXME
+	}
+}
+
+
+std::string CDecalsDrawerGL4::Decal::GetTexture() const
+{
+	for (auto& p: atlasTexs) {
+		if (p.second != texOffsets)
+			continue;
+
+		return p.first;
+	}
+
+	return "not_found";
 }
 
 
@@ -171,9 +218,6 @@ CDecalsDrawerGL4::CDecalsDrawerGL4()
 
 	if (dynamic_cast<CSMFReadMap*>(readMap)->GetNormalsTexture() <= 0) //FIXME runtime changeable, check what happens when disabled at runtime!
 		throw unsupported_error(LOG_SECTION_DECALS_GL4 ": advanced map shading must be enabled");
-
-	decals.emplace_back(); // make idx = 0 invalid
-	decalsToUpdate.push_back(0);
 
 	DetectMaxDecals();
 	LoadShaders();
@@ -262,11 +306,20 @@ void CDecalsDrawerGL4::DetectMaxDecals()
 	maxDecals      = std::min({userWanted, maxDecals, maxDecalGroups});
 	maxDecalGroups = std::min(maxDecalGroups, maxDecals);
 
+	if (maxDecals == 0 || maxDecalGroups == 0)
+		throw unsupported_error(LOG_SECTION_DECALS_GL4 ": no UBO/SSBO");
+
 	//FIXME
 	LOG_L(L_ERROR, "MaxDecals=%i[UBO=%i SSBO=%i] MaxDecalGroups=%i[UBO=%i SSBO=%i] useSSBO=%i",
 		maxDecals, maxDecalsUBO, maxDecalsSSBO,
 		maxDecalGroups, maxDecalGroupsUBO, maxDecalGroupsSSBO,
 		int(useSSBO));
+
+	decals.resize(maxDecals);
+	freeIds.resize(maxDecals - 1); // idx = 0 is invalid, so -1
+	std::iota(freeIds.begin(), freeIds.end(), 1); // start with 1, 0 is illegal
+	std::random_shuffle(freeIds.begin(), freeIds.end());
+	groups.reserve(maxDecalGroups);
 }
 
 
@@ -370,9 +423,7 @@ static void GetGroundScars(std::unordered_map<std::string, STex>& textures)
 
 	const LuaTable scarsTable = resourcesParser.GetRoot().SubTable("graphics").SubTable("scars");
 
-	//FIXME scarsTable.GetLength()
-
-	for (int i = 1; i <= 4; ++i) {
+	for (int i = 1; i <= scarsTable.GetLength(); ++i) {
 		std::string texName = scarsTable.GetString(i, IntToString(i, "scars/scar%i.bmp"));
 		std::string texName2 = texName + ".dds"; //FIXME
 
@@ -519,8 +570,8 @@ void CDecalsDrawerGL4::CreateBoundingBoxVBOs()
 	// upload
 	vboVertices.Bind(GL_ARRAY_BUFFER);
 	vboIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
-	vboVertices.New(sizeof(boxverts) * sizeof(float3), GL_STATIC_DRAW, &boxverts[0]);
-	vboIndices.New(sizeof(indices) * sizeof(GLubyte), GL_STATIC_DRAW, &indices[0]);
+	vboVertices.New(sizeof(boxverts), GL_STATIC_DRAW, &boxverts[0]);
+	vboIndices.New(sizeof(indices), GL_STATIC_DRAW, &indices[0]);
 	vboVertices.Unbind();
 	vboIndices.Unbind();
 }
@@ -1285,44 +1336,65 @@ void CDecalsDrawerGL4::GetWorstRatedDecal(int* idx, float* rating, const bool in
 }
 
 
-void CDecalsDrawerGL4::NewDecal(const Decal& d)
+int CDecalsDrawerGL4::CreateLuaDecal()
 {
-	if ((decals.size() >= maxDecals) && freeIds.empty()) {
+	if (freeIds.empty()) {
+		// try to make space for new one
+		SCOPED_TIMER("::CDecalsDrawerGL4::AddDecal1");
+
+		// current worst decal is inview, try to find a better one (at best outside of view)
+		if ((curWorstDecalIdx == 0) || decals[curWorstDecalIdx].InView()) {
+			GetWorstRatedDecal(&curWorstDecalIdx, &curWorstDecalRating, true);
+		}
+
+		if (curWorstDecalIdx == 0)
+			return 0;
+
+		FreeDecal(curWorstDecalIdx);
+	}
+
+	SCOPED_TIMER("::CDecalsDrawerGL4::AddDecal2");
+	int idx = freeIds.back();
+	freeIds.pop_back();
+	decals[idx] = Decal();
+	decals[idx].type = Decal::LUA;
+	return idx;
+}
+
+
+int CDecalsDrawerGL4::NewDecal(const Decal& d)
+{
+	if (freeIds.empty()) {
+		SCOPED_TIMER("::CDecalsDrawerGL4::AddDecal1");
+
 		// early-exit: all decals are `better` than the new one -> don't add
 		const float r = d.GetRating(true);
 		if (r < curWorstDecalRating) {
-			return;
+			return 0;
 		}
 
-		SCOPED_TIMER("::CDecalsDrawerGL4::AddDecal1");
 		// try to make space for new one
-		if (!decals[curWorstDecalIdx].InView()) {
-			FreeDecal(curWorstDecalIdx);
-		} else {
+		if ((curWorstDecalIdx == 0) || decals[curWorstDecalIdx].InView()) {
 			// current worst decal is inview, try to find a better one (at best outside of view)
 			GetWorstRatedDecal(&curWorstDecalIdx, &curWorstDecalRating, true);
-			if (r >= curWorstDecalRating) {
-				FreeDecal(curWorstDecalIdx);
-			}
 		}
+
+		if (r >= curWorstDecalRating) {
+			FreeDecal(curWorstDecalIdx);
+		}
+
 		if (freeIds.empty()) {
-			return;
+			return 0;
 		}
 	}
 
 	SCOPED_TIMER("::CDecalsDrawerGL4::AddDecal2");
-	int idx = 0;
-	if (!freeIds.empty()) {
-		idx = freeIds.back();
-		freeIds.pop_back();
-	} else {
-		idx = decals.size();
-		decals.emplace_back();
-	}
-
+	int idx = freeIds.back();
+	freeIds.pop_back();
 	decals[idx] = d;
 	if (!FindAndAddToGroup(idx)) {
 		FreeDecal(idx);
+		return 0;
 	}
 	decalsToUpdate.push_back(idx);
 	waitingDecalsForOverlapTest.push_back(idx);
@@ -1332,6 +1404,8 @@ void CDecalsDrawerGL4::NewDecal(const Decal& d)
 		curWorstDecalRating = r;
 		curWorstDecalIdx = idx;
 	}
+
+	return idx;
 }
 
 
