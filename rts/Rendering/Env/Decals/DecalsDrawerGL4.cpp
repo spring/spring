@@ -154,18 +154,17 @@ void CDecalsDrawerGL4::Decal::Invalidate() const
 
 void CDecalsDrawerGL4::Decal::SetTexture(const std::string& name)
 {
+	texOffsets = atlasTexs["%FALLBACK_TEXTURE%"];
+	texOffsets = atlasTexs["%FALLBACK_TEXTURE_NORMAL%"];
+
 	const auto it = atlasTexs.find(name);
 	if (it != atlasTexs.end()) {
 		texOffsets = it->second;
-	} else {
-		//FIXME
 	}
 
-	const auto it2 = atlasTexs.find(name + "_normal");
+	const auto it2 = atlasTexs.find(name + "_normal"); //FIXME
 	if (it2 != atlasTexs.end()) {
 		texNormalOffsets = it2->second;
-	} else {
-		//FIXME
 	}
 }
 
@@ -385,7 +384,7 @@ static STex LoadTexture(const std::string& name)
 }
 
 
-static void GetBuildingDecals(std::unordered_map<std::string, STex>& textures)
+static inline void GetBuildingDecals(std::unordered_map<std::string, STex>& textures)
 {
 	for (UnitDef& unitDef: unitDefHandler->unitDefs) {
 		SolidObjectDecalDef& decalDef = unitDef.decalDef;
@@ -397,24 +396,15 @@ static void GetBuildingDecals(std::unordered_map<std::string, STex>& textures)
 
 		try {
 			textures[decalDef.groundDecalTypeName] = LoadTexture(decalDef.groundDecalTypeName);
-		} catch(const content_error& err) {
-			LOG_L(L_ERROR, "%s", err.what());
-			STex tex; tex.id = 0;
-			textures[decalDef.groundDecalTypeName] = tex;
-		}
-		//FIXME
-		try {
 			textures[decalDef.groundDecalTypeName + "_normal"] = LoadTexture(decalDef.groundDecalTypeName + ".dds");
 		} catch(const content_error& err) {
 			LOG_L(L_ERROR, "%s", err.what());
-			STex tex; tex.id = 0;
-			textures[decalDef.groundDecalTypeName + "_normal"] = tex;
 		}
 	}
 }
 
 
-static void GetGroundScars(std::unordered_map<std::string, STex>& textures)
+static inline void GetGroundScars(std::unordered_map<std::string, STex>& textures)
 {
 	LuaParser resourcesParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	if (!resourcesParser.Execute()) {
@@ -432,9 +422,22 @@ static void GetGroundScars(std::unordered_map<std::string, STex>& textures)
 			textures[IntToString(i) + "_normal"] = LoadTexture(texName2);
 		} catch(const content_error& err) {
 			LOG_L(L_ERROR, "%s", err.what());
-			//FIXME
 		}
 	}
+}
+
+
+static inline void GetFallbacks(std::unordered_map<std::string, STex>& textures)
+{
+	auto CREATE_SINGLE_COLOR = [](SColor c) -> STex {
+		CBitmap bm;
+		bm.AllocDummy(c);
+		bm = bm.CreateRescaled(32, 32);
+		return { bm.CreateTexture(), int2(bm.xsize, bm.ysize) };
+	};
+
+	textures["%FALLBACK_TEXTURE%"] = CREATE_SINGLE_COLOR(SColor(255, 0, 0, 255));
+	textures["%FALLBACK_TEXTURE_NORMAL%"] = CREATE_SINGLE_COLOR(SColor(0, 255, 0, 255));
 }
 
 
@@ -443,6 +446,7 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 	std::unordered_map<std::string, STex> textures;
 	GetBuildingDecals(textures);
 	GetGroundScars(textures);
+	GetFallbacks(textures);
 
 	CQuadtreeAtlasAlloc atlas;
 	atlas.SetNonPowerOfTwo(globalRendering->supportNPOTs);
@@ -503,34 +507,24 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 	glDisable(GL_DEPTH_TEST);
 
 	CVertexArray va;
-	for (auto it = textures.begin(); it != textures.end(); ++it) {
-		if (it->second.id == 0)
+	for (auto& p: textures) {
+		if (p.second.id == 0)
 			continue;
 
-		const float4 texCoords = atlas.GetTexCoords(it->first);
-		const float4 absCoords = atlas.GetEntry(it->first);
+		const float4 texCoords = atlas.GetTexCoords(p.first);
+		const float4 absCoords = atlas.GetEntry(p.first);
+		atlasTexs[p.first] = SAtlasTex(texCoords);
 
-		//FIXME
-		//if (!node) {
-		//	LOG_L(L_ERROR, "DecalTextureAtlas full: failed to add %s", it->first.c_str());
-		//	continue;
-		//}
-
-		SAtlasTex aTex(texCoords);
-		atlasTexs[it->first] = aTex;
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		glBindTexture(GL_TEXTURE_2D, p.second.id);
 
 		va.Initialize();
-		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		glBindTexture(GL_TEXTURE_2D, it->second.id);
-		//FIXME why +1?
 		va.AddVertex2dT(absCoords.x,   absCoords.y, 0.0f, 0.0f);
-		va.AddVertex2dT(absCoords.z+1, absCoords.y, 1.0f, 0.0f);
+		va.AddVertex2dT(absCoords.z+1, absCoords.y, 1.0f, 0.0f); //FIXME why +1?
 		va.AddVertex2dT(absCoords.x,   absCoords.w+1, 0.0f, 1.0f);
-		va.AddVertex2dT(absCoords.z+1, absCoords.w+1, 1.0f, 1.0f);
+		va.AddVertex2dT(absCoords.z+1, absCoords.w+1, 1.0f, 1.0f); //FIXME why +1?
 		va.DrawArray2dT(GL_TRIANGLE_STRIP);
-	}
 
-	for (auto& p: textures) {
 		glDeleteTextures(1, &p.second.id);
 	}
 
@@ -539,24 +533,24 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 	glBindTexture(GL_TEXTURE_2D, atlasTex);
 	glGenerateMipmap(GL_TEXTURE_2D);
 
-#ifdef DEBUG
+//#ifdef DEBUG_SAVE_ATLAS
 	glSaveTexture(atlasTex, "x_decal_atlas.png");
-#endif
+//#endif
 }
 
 
 void CDecalsDrawerGL4::CreateBoundingBoxVBOs()
 {
-	float3 boxverts[] = {
-		float3(-1.0f, -1.0f, -1.0f),
-		float3(-1.0f,  1.0f, -1.0f),
-		float3( 1.0f, -1.0f, -1.0f),
-		float3( 1.0f,  1.0f, -1.0f),
+	float boxverts[] = {
+		-1.0f, -1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
 
-		float3( 1.0f, -1.0f,  1.0f),
-		float3( 1.0f,  1.0f,  1.0f),
-		float3(-1.0f, -1.0f,  1.0f),
-		float3(-1.0f,  1.0f,  1.0f),
+		 1.0f, -1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
 	};
 	GLubyte indices[] = {
 		0, 1, 2,  3, 2, 1, // back
@@ -1438,17 +1432,18 @@ void CDecalsDrawerGL4::FreeDecal(int idx)
 	for (auto it = groups.begin(); it != groups.end(); ++it) {
 		SDecalGroup& g = *it;
 		for (int i = 0; i < g.ids.size(); ++i) {
-			if (g.ids[i] == idx) {
-				for (; (i+1) < g.ids.size(); ++i) {
-					g.ids[i] = g.ids[i + 1];
-				}
-				g.ids.back() = 0;
-				UpdateBoundingBox(g);
-				if (g.ids.front() == 0) {
-					groups.erase(it);
-				}
-				return;
+			if (g.ids[i] != idx)
+				continue;
+
+			for (; (i+1) < g.ids.size(); ++i) {
+				g.ids[i] = g.ids[i + 1];
 			}
+			g.ids.back() = 0;
+			UpdateBoundingBox(g);
+			if (g.ids.front() == 0) {
+				groups.erase(it);
+			}
+			return;
 		}
 	}
 }
@@ -1498,16 +1493,13 @@ void CDecalsDrawerGL4::AddExplosion(float3 pos, float damage, float radius, bool
 
 	if (radius <= 0.0f) { return; }
 
-	std::string texName = IntToString((gu->RandInt() & 3) + 1);
-
 	Decal d;
 	d.pos    = pos;
 	d.rot    = gu->RandFloat() * fastmath::PI2;
 	d.size.x = radius * fastmath::SQRT2;
 	d.size.y = d.size.x;
 	d.alpha  = Clamp(damage / 255.0f, 0.75f, 1.0f);
-	d.texOffsets = atlasTexs[texName]; // pick one of 4 scar textures
-	d.texNormalOffsets = atlasTexs[texName + "_normal"];
+	d.SetTexture(IntToString((gu->RandInt() & 3) + 1)); // pick one of 4 scar textures
 	d.type  = Decal::EXPLOSION;
 	d.owner = nullptr;
 	d.generation = gs->frameNum;
@@ -1531,8 +1523,7 @@ void CDecalsDrawerGL4::CreateBuildingDecal(const CSolidObject* object)
 	d.size  = float2(sizex * SQUARE_SIZE, sizey * SQUARE_SIZE);
 	d.alpha = 1.0f;
 	d.alphaFalloff = decalDef.groundDecalDecaySpeed;
-	d.texOffsets = atlasTexs[decalDef.groundDecalTypeName];
-	d.texNormalOffsets = atlasTexs[decalDef.groundDecalTypeName + "_normal"];
+	d.SetTexture(decalDef.groundDecalTypeName);
 	d.type  = Decal::BUILDING;
 	d.owner = object;
 	d.generation = gs->frameNum;

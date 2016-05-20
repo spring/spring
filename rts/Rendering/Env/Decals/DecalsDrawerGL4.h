@@ -157,11 +157,10 @@ public:
 	Decal& GetDecalOwnedBy(const void* owner);
 	const std::vector<Decal>& GetAllDecals() const { return decals; }
 	Decal& GetDecalByIdx(unsigned idx) {
-		if (idx >= decals.size()) {
-			return decals.front();
-		} else {
+		if (idx < decals.size()) {
 			return decals[idx];
 		}
+		return decals.front();
 	}
 
 private:
