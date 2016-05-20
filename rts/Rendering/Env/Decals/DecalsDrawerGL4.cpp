@@ -154,8 +154,8 @@ void CDecalsDrawerGL4::Decal::Invalidate() const
 
 void CDecalsDrawerGL4::Decal::SetTexture(const std::string& name)
 {
-	texOffsets = atlasTexs["%FALLBACK_TEXTURE%"];
-	texOffsets = atlasTexs["%FALLBACK_TEXTURE_NORMAL%"];
+	texOffsets       = atlasTexs["%FALLBACK_TEXTURE%"];
+	texNormalOffsets = atlasTexs["%FALLBACK_TEXTURE_NORMAL%"];
 
 	const auto it = atlasTexs.find(name);
 	if (it != atlasTexs.end()) {
@@ -261,6 +261,7 @@ CDecalsDrawerGL4::~CDecalsDrawerGL4()
 
 void CDecalsDrawerGL4::OnDecalLevelChanged()
 {
+	//note: AddClient() is safe against double adding
 	if (GetDrawDecals()) {
 		eventHandler.AddClient(this);
 	} else {
@@ -289,7 +290,6 @@ void CDecalsDrawerGL4::DetectMaxDecals()
 	const int maxDecalGroupsUBO  = globalRendering->glslMaxUniformBufferSize / sizeof(SDecalGroup);
 	const int maxDecalGroupsSSBO = maxDecalGroupsUBO; // groups are always saved in a UBO
 
-	//FIXME runtime configurable? if so -> recompile shaders!?
 	const int userWanted = decalLevel * 512;
 
 	// detect if SSBO is needed and available
@@ -1060,7 +1060,7 @@ static void DRAW_DECAL(CVertexArray* va, const CDecalsDrawerGL4::Decal* d)
 	m.Translate(d->pos.x, d->pos.z, 0.0f);
 	m.RotateZ(d->rot * fastmath::DEG_TO_RAD);
 	float2 dsize = d->size;
-	//make sure it is at least 1x1 pixels!
+	// make sure it is at least 1x1 pixels!
 	dsize.x = std::max(dsize.x, std::ceil( float(mapDims.mapx * SQUARE_SIZE) / CDecalsDrawerGL4::OVERLAP_TEST_TEXTURE_SIZE ));
 	dsize.y = std::max(dsize.y, std::ceil( float(mapDims.mapy * SQUARE_SIZE) / CDecalsDrawerGL4::OVERLAP_TEST_TEXTURE_SIZE ));
 	const float3 ds1 = float3(dsize.x,  dsize.y, 0.0f);
