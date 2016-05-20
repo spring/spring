@@ -407,11 +407,9 @@ void CProjectileDrawer::DrawProjectilesSet(const std::vector<CProjectile*>& proj
 
 bool CProjectileDrawer::CanDrawProjectile(const CProjectile* pro, const CSolidObject* owner)
 {
-	#define th teamHandler
-	#define lh losHandler
+	auto& th = teamHandler;
+	auto& lh = losHandler;
 	return (gu->spectatingFullView || (owner != nullptr && th->Ally(owner->allyteam, gu->myAllyTeam)) || lh->InLos(pro, gu->myAllyTeam));
-	#undef lh
-	#undef th
 }
 
 void CProjectileDrawer::DrawProjectileNow(CProjectile* pro, bool drawReflection, bool drawRefraction)
@@ -432,7 +430,7 @@ void CProjectileDrawer::DrawProjectileNow(CProjectile* pro, bool drawReflection,
 	DrawProjectileModel(pro);
 
 	if (pro->drawSorted) {
-		pro->SetSortDist(pro->pos.dot(camera->GetDir()));
+		pro->SetSortDist(camera->ProjectedDistance(pro->pos));
 		zSortedProjectiles.insert(pro);
 	} else {
 		unsortedProjectiles.push_back(pro);
