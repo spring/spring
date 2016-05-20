@@ -988,6 +988,9 @@ void CGroundDecalHandler::LoadScar(const std::string& file, unsigned char* buf,
 	if (!bm.Load(file)) {
 		throw content_error("Could not load scar from file " + file);
 	}
+	if (bm.ysize != 256 || bm.xsize != 256) {
+		bm = bm.CreateRescaled(256,256);
+	}
 
 	if (FileSystem::GetExtension(file) == "bmp") {
 		// bitmaps don't have an alpha channel
