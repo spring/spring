@@ -5,7 +5,7 @@
 
 #include "System/float3.h"
 
-#include <set>
+#include <vector>
 
 struct WeaponDef;
 
@@ -61,7 +61,7 @@ public:
 	static void FireExplosionEvent(const CExplosionEvent& event);
 
 private:
-	static std::set<IExplosionListener*> explosionListeners;
+	static std::vector<IExplosionListener*> explosionListeners;
 };
 
 #endif /* _EXPLOSION_LISTENER_H */
