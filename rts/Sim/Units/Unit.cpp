@@ -655,7 +655,7 @@ void CUnit::ForcedKillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, b
 
 		if (wd != nullptr) {
 			assert(d != nullptr);
-			CGameHelper::ExplosionParams params = {
+			CExplosionParams params = {
 				pos,
 				ZeroVector,
 				*d,

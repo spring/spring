@@ -22,7 +22,7 @@ void CExplosionCreator::RemoveExplosionListener(IExplosionListener* listener)
 	VectorErase(explosionListeners, listener);
 }
 
-void CExplosionCreator::FireExplosionEvent(const CExplosionEvent& event)
+void CExplosionCreator::FireExplosionEvent(const CExplosionParams& event)
 {
 	for (auto& expList: explosionListeners) {
 		expList->ExplosionOccurred(event);

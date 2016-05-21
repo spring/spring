@@ -2,6 +2,7 @@
 
 #include "DecalsDrawerGL4.h"
 #include "Game/Camera.h"
+#include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
 #include "Lua/LuaParser.h"
 #include "Map/Ground.h"
@@ -20,10 +21,13 @@
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/QuadtreeAtlasAlloc.h"
+#include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
@@ -1472,13 +1476,32 @@ static inline bool HasGroundDecalDef(const CSolidObject* object)
 }
 
 
-void CDecalsDrawerGL4::AddExplosion(float3 pos, float damage, float radius, bool addScar)
+static inline bool ExplosionInAirLos(const CExplosionParams& event)
 {
-	if (!addScar)
-		return;
+	const auto proj = projectileHandler->GetProjectileBySyncedID(event.projectileID);
+	if (proj) {
+		if (teamHandler->ValidAllyTeam(proj->GetAllyteamID()) && teamHandler->AlliedAllyTeams(gu->myAllyTeam, proj->GetAllyteamID()))
+			return true;
+	}
 
-	//FIXME los check
+	if (losHandler->InAirLos(event.pos, gu->myAllyTeam))
+		return true;
 
+	if (event.craterAreaOfEffect > 50) {
+		// check multiple (random) points for larger explosions
+		const auto p = event.pos;
+		const auto r = event.craterAreaOfEffect;
+		for (int i = r * 0.3f; i >= 0; --i) {
+			if (losHandler->InAirLos(p + (gu->rng.RandVector2D() * r), gu->myAllyTeam))
+				return true;
+		}
+	}
+	return false;
+}
+
+
+void CDecalsDrawerGL4::AddExplosion(float3 pos, float damage, float radius)
+{
 	const float altitude = pos.y - CGround::GetHeightReal(pos.x, pos.z, false);
 
 	// no decals for below-ground & in-air explosions
@@ -1546,8 +1569,14 @@ void CDecalsDrawerGL4::ForceRemoveSolidObject(CSolidObject* object)
 
 
 
-void CDecalsDrawerGL4::ExplosionOccurred(const CExplosionEvent& event) {
-	AddExplosion(event.GetPos(), event.GetDamage(), event.GetRadius(), ((event.GetWeaponDef() == NULL) || event.GetWeaponDef()->visuals.explosionScar));
+void CDecalsDrawerGL4::ExplosionOccurred(const CExplosionParams& event) {
+	if ((event.weaponDef != nullptr) && !event.weaponDef->visuals.explosionScar)
+		return;
+
+	if (!ExplosionInAirLos(event))
+		return;
+
+	AddExplosion(event.pos, event.damages.GetDefault(), event.craterAreaOfEffect);
 }
 
 void CDecalsDrawerGL4::RenderUnitCreated(const CUnit* unit, int cloaked) { CreateBuildingDecal(unit); }

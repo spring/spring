@@ -8,6 +8,7 @@
 #include "DynWater.h"
 #include "RefractWater.h"
 #include "Game/Game.h"
+#include "Game/GameHelper.h"
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Rendering/FeatureDrawer.h"
@@ -139,8 +140,8 @@ IWater* IWater::GetWater(IWater* curRenderer, int nxtRendererMode)
 	return nxtRenderer;
 }
 
-void IWater::ExplosionOccurred(const CExplosionEvent& event) {
-	AddExplosion(event.GetPos(), event.GetDamage(), event.GetRadius());
+void IWater::ExplosionOccurred(const CExplosionParams& event) {
+	AddExplosion(event.pos, event.damages.GetDefault(), event.craterAreaOfEffect);
 }
 
 void IWater::SetModelClippingPlane(const double* planeEq) {

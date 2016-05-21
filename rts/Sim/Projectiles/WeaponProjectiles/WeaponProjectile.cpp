@@ -155,7 +155,7 @@ void CWeaponProjectile::Explode(
 	float3 impactDir
 ) {
 	const DamageArray& damageArray = damages->GetDynamicDamages(startPos, impactPos);
-	const CGameHelper::ExplosionParams params = {
+	const CExplosionParams params = {
 		impactPos,
 		impactDir.SafeNormalize(),
 		damageArray,

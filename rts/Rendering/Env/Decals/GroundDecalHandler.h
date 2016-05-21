@@ -125,7 +125,7 @@ private:
 	void BindShader(const float3& ambientColor);
 	void DrawDecals();
 
-	void AddExplosion(float3 pos, float damage, float radius, bool);
+	void AddExplosion(float3 pos, float damage, float radius);
 	void MoveSolidObject(CSolidObject* object, const float3& pos);
 	int GetSolidObjectDecalType(const std::string& name);
 	int GetTrackType(const std::string& name);
@@ -158,7 +158,7 @@ public:
 	void UnitUnloaded(const CUnit* unit, const CUnit* transport);
 
 	//IExplosionListener
-	void ExplosionOccurred(const CExplosionEvent& event);
+	void ExplosionOccurred(const CExplosionParams& event);
 
 private:
 	struct TrackType {

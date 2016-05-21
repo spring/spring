@@ -52,7 +52,7 @@ public:
 	void ForceRemoveSolidObject(CSolidObject* object) override;
 	void OnDecalLevelChanged() override;
 
-	void ExplosionOccurred(const CExplosionEvent&) override;
+	void ExplosionOccurred(const CExplosionParams&) override;
 
 public:
 	bool WantsEvent(const std::string& eventName) override {
@@ -164,7 +164,7 @@ public:
 	}
 
 private:
-	void AddExplosion(float3 pos, float damage, float radius, bool addScar);
+	void AddExplosion(float3 pos, float damage, float radius);
 	void CreateBuildingDecal(const CSolidObject* unit);
 	void DeownBuildingDecal(const CSolidObject* object);
 

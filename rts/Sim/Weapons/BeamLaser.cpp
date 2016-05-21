@@ -394,7 +394,7 @@ void CBeamLaser::FireInternal(float3 curDir)
 
 		const DamageArray& baseDamages = damages->GetDynamicDamages(weaponMuzzlePos, curPos);
 		const DamageArray da = baseDamages * (hitIntensity * salvoDamageMult);
-		const CGameHelper::ExplosionParams params = {
+		const CExplosionParams params = {
 			hitPos,
 			curDir,
 			da,

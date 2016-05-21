@@ -5,6 +5,7 @@
 
 #include "GroundDecalHandler.h"
 #include "Game/Camera.h"
+#include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Lua/LuaParser.h"
@@ -929,9 +930,9 @@ unsigned int CGroundDecalHandler::LoadTexture(const std::string& name)
 }
 
 
-void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius, bool addScar)
+void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius)
 {
-	if (!GetDrawDecals() || !addScar)
+	if (!GetDrawDecals())
 		return;
 
 	const float altitude = pos.y - CGround::GetHeightReal(pos.x, pos.z, false);
@@ -1273,8 +1274,11 @@ void CGroundDecalHandler::GhostDestroyed(GhostSolidObject* gb) {
 void CGroundDecalHandler::GhostCreated(CSolidObject* object, GhostSolidObject* gb) { RemoveSolidObject(object, gb); }
 void CGroundDecalHandler::FeatureMoved(const CFeature* feature, const float3& oldpos) { MoveSolidObject(const_cast<CFeature*>(feature), feature->pos); }
 
-void CGroundDecalHandler::ExplosionOccurred(const CExplosionEvent& event) {
-	AddExplosion(event.GetPos(), event.GetDamage(), event.GetRadius(), ((event.GetWeaponDef() != NULL) && event.GetWeaponDef()->visuals.explosionScar));
+void CGroundDecalHandler::ExplosionOccurred(const CExplosionParams& event) {
+	if ((event.weaponDef != nullptr) && !event.weaponDef->visuals.explosionScar)
+		return;
+
+	AddExplosion(event.pos, event.damages.GetDefault(), event.craterAreaOfEffect);
 }
 
 void CGroundDecalHandler::RenderUnitCreated(const CUnit* unit, int cloaked) { MoveSolidObject(const_cast<CUnit*>(unit), unit->pos); }

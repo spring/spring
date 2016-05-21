@@ -131,7 +131,7 @@ void CPieceProjectile::Collision(CUnit* unit, CFeature* feature)
 
 	if ((explFlags & PF_Explode) && (unit || feature)) {
 		const DamageArray damageArray(50.0f);
-		const CGameHelper::ExplosionParams params = {
+		const CExplosionParams params = {
 			pos,
 			ZeroVector,
 			damageArray,

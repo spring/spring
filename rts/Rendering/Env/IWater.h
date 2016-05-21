@@ -30,7 +30,7 @@ public:
 	virtual int  GetID() const { return -1; }
 	virtual const char* GetName() const { return ""; }
 
-	virtual void ExplosionOccurred(const CExplosionEvent& event);
+	void ExplosionOccurred(const CExplosionParams& event) override;
 
 	bool DrawReflectionPass() const { return drawReflection; }
 	bool DrawRefractionPass() const { return drawRefraction; }

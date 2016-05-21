@@ -647,7 +647,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 				const CWeapon* weapon = unit->weapons[index];
 				const WeaponDef* weaponDef = weapon->weaponDef;
 
-				CGameHelper::ExplosionParams params = {
+				CExplosionParams params = {
 					pos,
 					ZeroVector,
 					*weapon->damages,

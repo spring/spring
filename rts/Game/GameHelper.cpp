@@ -178,7 +178,7 @@ void CGameHelper::DoExplosionDamage(
 
 
 void CGameHelper::DamageObjectsInExplosionRadius(
-	const ExplosionParams& params,
+	const CExplosionParams& params,
 	const float expRad,
 	const int weaponDefID
 ) {
@@ -211,7 +211,7 @@ void CGameHelper::DamageObjectsInExplosionRadius(
 	featureCache.resize(oldNumFeatures);
 }
 
-void CGameHelper::Explosion(const ExplosionParams& params) {
+void CGameHelper::Explosion(const CExplosionParams& params) {
 	const DamageArray& damages = params.damages;
 
 	// if weaponDef is NULL, this is a piece-explosion
@@ -296,8 +296,7 @@ void CGameHelper::Explosion(const ExplosionParams& params) {
 		);
 	}
 
-	CExplosionEvent explosionEvent(params.pos, damages.GetDefault(), damageAOE, weaponDef);
-	CExplosionCreator::FireExplosionEvent(explosionEvent);
+	CExplosionCreator::FireExplosionEvent(params);
 
 	if (weaponDef != NULL) {
 		const GuiSoundSet& soundSet = weaponDef->hitSound;
