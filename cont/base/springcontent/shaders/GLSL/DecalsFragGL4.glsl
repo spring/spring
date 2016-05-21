@@ -197,6 +197,8 @@ float ParallaxMapping(inout vec2 ntx, const SDecal d, const mat2 rotMatrix, cons
 	// calculate lighting only for surface oriented to the light source
 	//if(dot(vec3(0, 0, 1), L) > 0)
 	return (1.0 - shadowMultiplier);*/
+#else
+	return 1.0;
 #endif
 }
 
@@ -268,7 +270,7 @@ void main() {
 		vec3 normalD = texture2D(decalAtlasTex, txn).rbg;
 		normalD = (normalD * 2.0) - 1.0;
 		//normalD.y = sqrt(1.0 - dot(normalD.xz, normalD.xz));
-		normalD.xz = transpose(rotMatrix) * normalD.xz;
+		normalD.xz = rotMatrix * normalD.xz;
 		normal = mix(normal, normalD, albedoD.a);
 	}
 
@@ -291,7 +293,7 @@ void main() {
 
 	// COMBINE
 	vec3 lightCol = (specTerm + diffuseTerm) * shadowInt + groundLighting.ambientColor;
-	gl_FragColor.rgb = diffuseTerm; //albedo.rgb * lightCol;
+	gl_FragColor.rgb = albedo.rgb * lightCol;
 	gl_FragColor.a   = albedo.a;
 
 	// FOG
