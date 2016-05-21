@@ -109,8 +109,8 @@ public:
 		{}
 
 		void Free() const;
-		//FIXME FindAndAddToGroup!!!
-		void Invalidate() const; ///< call after position, size, ... changed (to upload changes to GPU)
+		void Invalidate() const; ///< call after alpha & texture changes (to upload changes to GPU)
+		bool InvalidateExtents() const; ///< call after pos, size, rot changes (does same as Invalidate() + searches a new `DecalGroup`), returns true whena  group was found (else it isn't rendered)
 
 		int GetIdx() const;
 		bool IsValid() const;
@@ -169,6 +169,7 @@ private:
 	void DeownBuildingDecal(const CSolidObject* object);
 
 	bool FindAndAddToGroup(int decalIdx);
+	void RemoveFromGroup(int decalIdx);
 	bool AddDecalToGroup(SDecalGroup& g, const Decal& d, const int decalIdx);
 	bool TryToCombineDecalGroups(SDecalGroup& g1, SDecalGroup& g2);
 	void UpdateBoundingBox(SDecalGroup& g);

@@ -152,7 +152,17 @@ void CDecalsDrawerGL4::Decal::Invalidate() const
 {
 	const int idx = GetIdx();
 	decalDrawer->decalsToUpdate.push_back(idx);
-	decalDrawer->waitingDecalsForOverlapTest.push_back(idx); //FIXME
+
+}
+
+
+bool CDecalsDrawerGL4::Decal::InvalidateExtents() const
+{
+	Invalidate();
+	const int idx = GetIdx();
+	decalDrawer->waitingDecalsForOverlapTest.push_back(idx);
+	decalDrawer->RemoveFromGroup(idx);
+	return decalDrawer->FindAndAddToGroup(idx);
 }
 
 
@@ -219,7 +229,7 @@ CDecalsDrawerGL4::CDecalsDrawerGL4()
 	if (!dynamic_cast<CSMFReadMap*>(readMap))
 		throw unsupported_error(LOG_SECTION_DECALS_GL4 ": only SMF supported");
 
-	if (dynamic_cast<CSMFReadMap*>(readMap)->GetNormalsTexture() <= 0) //FIXME runtime changeable, check what happens when disabled at runtime!
+	if (static_cast<CSMFReadMap*>(readMap)->GetNormalsTexture() <= 0)
 		throw unsupported_error(LOG_SECTION_DECALS_GL4 ": advanced map shading must be enabled");
 
 	DetectMaxDecals();
@@ -400,7 +410,7 @@ static inline void GetBuildingDecals(std::unordered_map<std::string, STex>& text
 
 		try {
 			textures[decalDef.groundDecalTypeName] = LoadTexture(decalDef.groundDecalTypeName);
-			textures[decalDef.groundDecalTypeName + "_normal"] = LoadTexture(decalDef.groundDecalTypeName + ".dds");
+			textures[decalDef.groundDecalTypeName + "_normal"] = LoadTexture(decalDef.groundDecalTypeName + ".dds"); //FIXME
 		} catch(const content_error& err) {
 			LOG_L(L_ERROR, "%s", err.what());
 		}
@@ -878,7 +888,7 @@ static inline std::array<float2, 4> GetEdgePoinsOfDecal(const CDecalsDrawerGL4::
 {
 	CMatrix44f m;
 	m.RotateY(d.rot);
-	auto f3tof2 = [](float3 f3) { return float2(f3.x, f3.z); }; //FIXME
+	auto f3tof2 = [](float3 f3) { return float2(f3.x, f3.z); };
 
 	return {
 		f3tof2(d.pos + m * float3(-d.size.x, 0.f, -d.size.y)),
@@ -1029,6 +1039,23 @@ bool CDecalsDrawerGL4::FindAndAddToGroup(int decalIdx)
 	g.ids[0] = decalIdx;
 	UpdateBoundingBox(g);
 	return true;
+}
+
+
+void CDecalsDrawerGL4::RemoveFromGroup(int idx)
+{
+	for (auto it = groups.begin(); it != groups.end(); ++it) {
+		SDecalGroup& g = *it;
+		if (std::remove(g.ids.begin(), g.ids.end(), idx) != g.ids.end()) {
+			g.ids.back() = 0;
+			UpdateBoundingBox(g);
+			if (g.ids.front() == 0) {
+				groups.erase(it);
+			}
+			return;
+		}
+
+	}
 }
 
 
@@ -1432,24 +1459,7 @@ void CDecalsDrawerGL4::FreeDecal(int idx)
 		GetWorstRatedDecal(&curWorstDecalIdx, &curWorstDecalRating, false);
 	}
 
-	// find the group we are in and remove us from it
-	for (auto it = groups.begin(); it != groups.end(); ++it) {
-		SDecalGroup& g = *it;
-		for (int i = 0; i < g.ids.size(); ++i) {
-			if (g.ids[i] != idx)
-				continue;
-
-			for (; (i+1) < g.ids.size(); ++i) {
-				g.ids[i] = g.ids[i + 1];
-			}
-			g.ids.back() = 0;
-			UpdateBoundingBox(g);
-			if (g.ids.front() == 0) {
-				groups.erase(it);
-			}
-			return;
-		}
-	}
+	RemoveFromGroup(idx);
 }
 
 
