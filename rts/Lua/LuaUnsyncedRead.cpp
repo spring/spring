@@ -35,6 +35,8 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/IWater.h"
+#include "Rendering/Env/IGroundDecalDrawer.h"
+#include "Rendering/Env/Decals/DecalsDrawerGL4.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
@@ -221,6 +223,15 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(GetConfigParams);
 	REGISTER_LUA_CFUNC(GetLogSections);
+
+	REGISTER_LUA_CFUNC(GetAllDecals);
+	REGISTER_LUA_CFUNC(GetDecalPos);
+	REGISTER_LUA_CFUNC(GetDecalSize);
+	REGISTER_LUA_CFUNC(GetDecalRotation);
+	REGISTER_LUA_CFUNC(GetDecalTexture);
+	REGISTER_LUA_CFUNC(GetDecalAlpha);
+	REGISTER_LUA_CFUNC(GetDecalOwner);
+	REGISTER_LUA_CFUNC(GetDecalType);
 
 	return true;
 }
@@ -2432,3 +2443,136 @@ int LuaUnsyncedRead::GetLogSections(lua_State* L) {
 
 /******************************************************************************/
 /******************************************************************************/
+
+int LuaUnsyncedRead::GetAllDecals(lua_State* L)
+{
+	auto decalsGl4 = dynamic_cast<CDecalsDrawerGL4*>(groundDecals);
+	if (decalsGl4 == nullptr)
+		return 0;
+
+	const auto decals = decalsGl4->GetAllDecals();
+
+	int i = 1;
+	lua_createtable(L, decals.size(), 0);
+	for (auto& d: decals) {
+		if (!d.IsValid())
+			continue;
+
+		lua_pushnumber(L, d.GetIdx());
+		lua_rawseti(L, -2, i++);
+	}
+
+	return 1;
+}
+
+
+int LuaUnsyncedRead::GetDecalPos(lua_State* L)
+{
+	auto decalsGl4 = dynamic_cast<CDecalsDrawerGL4*>(groundDecals);
+	if (decalsGl4 == nullptr)
+		return 0;
+
+	auto decal = decalsGl4->GetDecalByIdx(luaL_checkint(L, 1));
+	lua_pushnumber(L, decal.pos.x);
+	lua_pushnumber(L, decal.pos.y);
+	lua_pushnumber(L, decal.pos.z);
+	return 3;
+}
+
+
+int LuaUnsyncedRead::GetDecalSize(lua_State* L)
+{
+	auto decalsGl4 = dynamic_cast<CDecalsDrawerGL4*>(groundDecals);
+	if (decalsGl4 == nullptr)
+		return 0;
+
+	auto decal = decalsGl4->GetDecalByIdx(luaL_checkint(L, 1));
+	lua_pushnumber(L, decal.size.x);
+	lua_pushnumber(L, decal.size.y);
+	return 2;
+}
+
+
+int LuaUnsyncedRead::GetDecalRotation(lua_State* L)
+{
+	auto decalsGl4 = dynamic_cast<CDecalsDrawerGL4*>(groundDecals);
+	if (decalsGl4 == nullptr)
+		return 0;
+
+	auto decal = decalsGl4->GetDecalByIdx(luaL_checkint(L, 1));
+	lua_pushnumber(L, decal.rot);
+	return 1;
+}
+
+
+int LuaUnsyncedRead::GetDecalTexture(lua_State* L)
+{
+	auto decalsGl4 = dynamic_cast<CDecalsDrawerGL4*>(groundDecals);
+	if (decalsGl4 == nullptr)
+		return 0;
+
+	auto decal = decalsGl4->GetDecalByIdx(luaL_checkint(L, 1));
+	lua_pushsstring(L, decal.GetTexture());
+	return 1;
+}
+
+
+int LuaUnsyncedRead::GetDecalAlpha(lua_State* L)
+{
+	auto decalsGl4 = dynamic_cast<CDecalsDrawerGL4*>(groundDecals);
+	if (decalsGl4 == nullptr)
+		return 0;
+
+	auto decal = decalsGl4->GetDecalByIdx(luaL_checkint(L, 1));
+	lua_pushnumber(L, decal.alpha);
+	return 1;
+}
+
+
+int LuaUnsyncedRead::GetDecalOwner(lua_State* L)
+{
+	auto decalsGl4 = dynamic_cast<CDecalsDrawerGL4*>(groundDecals);
+	if (decalsGl4 == nullptr)
+		return 0;
+
+	auto decal = decalsGl4->GetDecalByIdx(luaL_checkint(L, 1));
+	if (decal.owner == nullptr) return 0;
+
+	//XXX: I know, not very fast, but you cannot dynamic_cast a void* back to a CUnit*
+	//     also it's not called very often and so doesn't matter
+	for (auto u: unitHandler->activeUnits) {
+		if (u != decal.owner)
+			continue;
+
+		lua_pushnumber(L, u->id);
+		return 1;
+	}
+
+	return 0;
+}
+
+
+int LuaUnsyncedRead::GetDecalType(lua_State* L)
+{
+	auto decalsGl4 = dynamic_cast<CDecalsDrawerGL4*>(groundDecals);
+	if (decalsGl4 == nullptr)
+		return 0;
+
+	auto decal = decalsGl4->GetDecalByIdx(luaL_checkint(L, 1));
+	switch (decal.type) {
+		case CDecalsDrawerGL4::Decal::EXPLOSION: {
+			lua_pushliteral(L, "explosion");
+		} break;
+		case CDecalsDrawerGL4::Decal::BUILDING: {
+			lua_pushliteral(L, "building");
+		} break;
+		case CDecalsDrawerGL4::Decal::LUA: {
+			lua_pushliteral(L, "lua");
+		} break;
+		default: {
+			lua_pushliteral(L, "unknown");
+		}
+	}
+	return 1;
+}
+

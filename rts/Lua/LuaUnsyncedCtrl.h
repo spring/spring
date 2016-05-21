@@ -162,7 +162,14 @@ class LuaUnsyncedCtrl {
 
 		static int PreloadUnitDefModel(lua_State* L);
 		static int PreloadFeatureDefModel(lua_State* L);
-};
 
+		static int CreateDecal(lua_State* L);
+		static int DestroyDecal(lua_State* L);
+		static int SetDecalPos(lua_State* L);
+		static int SetDecalSize(lua_State* L);
+		static int SetDecalRotation(lua_State* L);
+		static int SetDecalTexture(lua_State* L);
+		static int SetDecalAlpha(lua_State* L);
+};
 
 #endif /* LUA_UNSYNCED_CTRL_H */
