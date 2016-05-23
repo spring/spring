@@ -21,6 +21,27 @@
 	class CDecalsDrawerGL4: public IGroundDecalDrawer
 	{
 	public:
+		struct Decal {
+			Decal()
+				: rot(0.0f)
+				, alpha(0.0f)
+				, owner(nullptr)
+				, type(EXPLOSION)
+			{}
+			void Free() const {};
+			bool IsValid() const { return false; }
+			void Invalidate() const {}
+			bool InvalidateExtents() const { return false; }
+			void SetTexture(const std::string& name) {}
+			int GetIdx() const { return -1; }
+			std::string GetTexture() const { return ""; }
+			float3 pos;
+			float2 size;
+			float rot;
+			float alpha;
+			const void* owner;
+			enum { EXPLOSION, BUILDING, LUA } type;
+		};
 		CDecalsDrawerGL4();
 
 		void Draw() override {}
@@ -29,6 +50,11 @@
 		void ForceRemoveSolidObject(CSolidObject* object) override {}
 		void GhostDestroyed(GhostSolidObject* gb) override {}
 		void GhostCreated(CSolidObject* object, GhostSolidObject* gb) override {}
+		int CreateLuaDecal() { return 0;}
+		const std::vector<Decal>& GetAllDecals() const { return decals; }
+		Decal& GetDecalByIdx(unsigned idx) { assert(false); static Decal tmp; return tmp; }
+	private:
+		std::vector<Decal> decals;
 	};
 #else
 
