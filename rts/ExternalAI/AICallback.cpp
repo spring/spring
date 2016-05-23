@@ -1365,9 +1365,6 @@ bool CAICallback::GetValue(int id, void *data)
 		case AIVAL_NUMDAMAGETYPES:{
 			*((int*)data) = damageArrayHandler->GetNumTypes();
 			return true;
-		}case AIVAL_EXCEPTION_HANDLING:{
-			*(bool*)data = CEngineOutHandler::CatchExceptions();
-			return true;
 		}case AIVAL_MAP_CHECKSUM:{
 			*(unsigned int*)data = readMap->GetMapChecksum();
 			return true;

@@ -378,8 +378,6 @@ struct SSkirmishAICallback {
 	/// Returns true, if the two supplied ally-teams are currently allied
 	bool              (CALLING_CONV *Game_isAllied)(int skirmishAIId, int firstAllyTeamId, int secondAllyTeamId);
 
-	bool              (CALLING_CONV *Game_isExceptionHandlingEnabled)(int skirmishAIId);
-
 	bool              (CALLING_CONV *Game_isDebugModeEnabled)(int skirmishAIId);
 
 	int               (CALLING_CONV *Game_getMode)(int skirmishAIId);

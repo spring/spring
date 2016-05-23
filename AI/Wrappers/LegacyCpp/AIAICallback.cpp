@@ -970,9 +970,6 @@ bool springLegacyAI::CAIAICallback::GetValue(int valueId, void *data)
 		case AIVAL_NUMDAMAGETYPES:{
 			*((int*)data) = sAICallback->WeaponDef_getNumDamageTypes(skirmishAIId);
 			return true;
-		}case AIVAL_EXCEPTION_HANDLING:{
-			*(bool*)data = sAICallback->Game_isExceptionHandlingEnabled(skirmishAIId);
-			return true;
 		}case AIVAL_MAP_CHECKSUM:{
 			*(unsigned int*)data = sAICallback->Map_getChecksum(skirmishAIId);
 			return true;

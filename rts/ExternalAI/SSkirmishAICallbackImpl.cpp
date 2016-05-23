@@ -1719,15 +1719,6 @@ EXPORT(int) skirmishAiCallback_WeaponDef_getNumDamageTypes(int skirmishAIId) {
 	return numDamageTypes;
 }
 
-EXPORT(bool) skirmishAiCallback_Game_isExceptionHandlingEnabled(int skirmishAIId) {
-	bool exceptionHandlingEnabled = false;
-
-	if (!skirmishAIId_callback[skirmishAIId]->GetValue(AIVAL_EXCEPTION_HANDLING, &exceptionHandlingEnabled))
-		exceptionHandlingEnabled = false;
-
-	return exceptionHandlingEnabled;
-}
-
 EXPORT(bool) skirmishAiCallback_Game_isDebugModeEnabled(int skirmishAIId) {
 	bool debugModeEnabled = false;
 
@@ -5292,7 +5283,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Game_getTeamResourceReceived = &skirmishAiCallback_Game_getTeamResourceReceived;
 	callback->Game_getTeamResourceExcess = &skirmishAiCallback_Game_getTeamResourceExcess;
 	callback->Game_isAllied = &skirmishAiCallback_Game_isAllied;
-	callback->Game_isExceptionHandlingEnabled = &skirmishAiCallback_Game_isExceptionHandlingEnabled;
 	callback->Game_isDebugModeEnabled = &skirmishAiCallback_Game_isDebugModeEnabled;
 	callback->Game_isPaused = &skirmishAiCallback_Game_isPaused;
 	callback->Game_getSpeedFactor = &skirmishAiCallback_Game_getSpeedFactor;

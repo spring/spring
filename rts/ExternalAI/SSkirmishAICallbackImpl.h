@@ -129,8 +129,6 @@ EXPORT(float            ) skirmishAiCallback_Game_getTeamResourceExcess(int skir
 
 EXPORT(bool             ) skirmishAiCallback_Game_isAllied(int skirmishAIId, int firstAllyTeamId, int secondAllyTeamId);
 
-EXPORT(bool             ) skirmishAiCallback_Game_isExceptionHandlingEnabled(int skirmishAIId);
-
 EXPORT(bool             ) skirmishAiCallback_Game_isDebugModeEnabled(int skirmishAIId);
 
 EXPORT(bool             ) skirmishAiCallback_Game_isPaused(int skirmishAIId);

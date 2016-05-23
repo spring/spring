@@ -186,14 +186,10 @@ bool CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 			continue;
 
 		if (unit->team == teamId) {
-			try {
-				UnitCreated(a, -1);
-			} CATCH_AI_EXCEPTION;
+			UnitCreated(a, -1);
 
 			if (!unit->beingBuilt) {
-				try {
-					UnitFinished(a);
-				} CATCH_AI_EXCEPTION;
+				UnitFinished(a);
 			}
 		} else {
 			if (unit->allyteam == teamHandler->AllyTeam(teamId))
@@ -203,15 +199,11 @@ bool CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 				continue;
 
 			if (unit->losStatus[teamHandler->AllyTeam(teamId)] & (LOS_INRADAR | LOS_INLOS)) {
-				try {
-					EnemyEnterRadar(a);
-				} CATCH_AI_EXCEPTION;
+				EnemyEnterRadar(a);
 			}
 
 			if (unit->losStatus[teamHandler->AllyTeam(teamId)] & LOS_INLOS) {
-				try {
-					EnemyEnterLOS(a);
-				} CATCH_AI_EXCEPTION;
+				EnemyEnterLOS(a);
 			}
 		}
 	}

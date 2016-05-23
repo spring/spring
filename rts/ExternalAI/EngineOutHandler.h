@@ -97,52 +97,6 @@ public:
 	void Load(std::istream* s);
 	void Save(std::ostream* s);
 
-	/**
-	 * Should exceptions thrown by AIs be caught by the engine?
-	 * In practice, an exception thrown by an AI should be caught in the AI,
-	 * or at least the interface plugin, and should therefore never reach
-	 * the engine. The reason for this is, that we do not know if the engine
-	 * and the AI are compiled with the same compiler/exception system.
-	 * Shorlty: catching AI exceptions in the engine is deprecated
-	 */
-	static bool CatchExceptions();
-	/**
-	 * This is used inside a catch block for a try guarding a call form
-	 * the engine into an AI.
-	 * There is a macro defined for the catch part, so you should never have
-	 * to call this method directly.
-	 * @see CATCH_AI_EXCEPTION
-	 */
-	static void HandleAIException(const char* description);
-	/**
-	 * Catches a common set of exceptions thrown by AIs.
-	 * Use like this:
-	 * <code>
-	 * try {
-	 *     ai->sendEvent(evt);
-	 * } CATCH_AI_EXCEPTION
-	 * </code>
-	 * @see HandleAIException()
-	 */
-	#define CATCH_AI_EXCEPTION									\
-		catch (const std::exception& e) {						\
-			CEngineOutHandler::HandleAIException(e.what());		\
-			throw;												\
-		} catch (const std::string& s) {						\
-			CEngineOutHandler::HandleAIException(s.c_str());	\
-			throw;												\
-		} catch (const char* s) {								\
-			CEngineOutHandler::HandleAIException(s);			\
-			throw;												\
-		} catch (int err) {										\
-			const std::string s = IntToString(err);				\
-			CEngineOutHandler::HandleAIException(s.c_str());	\
-			throw;												\
-		} catch (...) {											\
-			CEngineOutHandler::HandleAIException("Unknown");	\
-			throw;												\
-		}
-
 private:
 	typedef std::vector<uint8_t> ids_t;
 	typedef std::map<uint8_t, std::unique_ptr<CSkirmishAIWrapper> > id_ai_t;
