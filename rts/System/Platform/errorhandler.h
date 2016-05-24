@@ -82,6 +82,9 @@ int GetExitCode();
 		ss << e.code().value() << ": " << e.what();                                         \
 		ErrorMessageBox(ss.str(), "Spring: Fatal Error (boost)", MBF_OK | MBF_CRASH);       \
 	}                                                                                       \
+	catch (const std::bad_alloc& e) {                                                       \
+		ErrorMessageBox(e.what(), "Spring: Fatal Error (out of memory)", MBF_OK | MBF_CRASH);     \
+	}                                                                                       \
 	catch (const std::exception& e) {                                                       \
 		ErrorMessageBox(e.what(), "Spring: Fatal Error (general)", MBF_OK | MBF_CRASH);     \
 	}                                                                                       \

@@ -28,11 +28,14 @@
 // -------------------------------------------------------------------------------------------------
 // STATICS
 
+
+static int MAX_POOL_SIZE = 8000000;
+
 Patch::RenderMode Patch::renderMode = Patch::VBO;
 
 // one pool per thread
 static size_t poolSize = 0;
-static std::vector<CTriNodePool*> pools;
+static std::vector<CTriNodePool> pools;
 
 void CTriNodePool::InitPools(const size_t newPoolSize)
 {
@@ -41,23 +44,24 @@ void CTriNodePool::InitPools(const size_t newPoolSize)
 
 	// int numThreads = GetNumThreads();
 	int numThreads = ThreadPool::GetMaxThreads();
-	const size_t allocPerThread = std::max(newPoolSize / numThreads, newPoolSize / 3);
+	const size_t allocPerThread = std::max(newPoolSize / numThreads, newPoolSize / 3) ^ 0x1;
 
-	poolSize = newPoolSize;
-
-	pools.reserve(numThreads);
-
-	for (; numThreads > 0; --numThreads) {
-		pools.push_back(new CTriNodePool(allocPerThread));
+	try {
+		poolSize = newPoolSize;
+		pools.reserve(numThreads);
+		for (; numThreads > 0; --numThreads) {
+			pools.emplace_back(allocPerThread);
+		}
+	} catch(const std::bad_alloc& e) {
+		LOG_L(L_FATAL, "Failed to allocate memory for ROAM (reducing pool size): %s", e.what());
+		MAX_POOL_SIZE = newPoolSize * 0.75f;
+		FreePools();
+		InitPools(MAX_POOL_SIZE);
 	}
 }
 
 void CTriNodePool::FreePools()
 {
-	for (CTriNodePool* pool: pools) {
-		delete pool;
-	}
-
 	pools.clear();
 }
 
@@ -66,27 +70,35 @@ void CTriNodePool::ResetAll()
 {
 	bool outOfNodes = false;
 
-	for (CTriNodePool* pool: pools) {
-		outOfNodes |= pool->OutOfNodes();
-		pool->Reset();
+	for (CTriNodePool& pool: pools) {
+		outOfNodes |= pool.OutOfNodes();
+		pool.Reset();
 	}
 
 	if (outOfNodes && (poolSize < MAX_POOL_SIZE)) {
 		FreePools();
-		InitPools(std::min(poolSize * 2, size_t(MAX_POOL_SIZE)));
+		InitPools(std::min<size_t>(poolSize * 2, MAX_POOL_SIZE));
 	}
 }
 
 
 CTriNodePool* CTriNodePool::GetPool()
 {
-	return (pools[ThreadPool::GetThreadNum()]);
+	return &(pools[ThreadPool::GetThreadNum()]);
 }
 
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
 // CTriNodePool Class
+
+CTriNodePool::CTriNodePool(const size_t poolSize)
+{
+	assert((poolSize & 0x1) == 0); // we always allocate left & right, so we need an even pool
+	m_NextTriNode = 0;
+	pool.resize(poolSize);
+}
+
 
 void CTriNodePool::Reset()
 {
@@ -99,13 +111,14 @@ void CTriNodePool::Reset()
 }
 
 
-TriTreeNode* CTriNodePool::AllocateTri()
+void CTriNodePool::Allocate(TriTreeNode* left, TriTreeNode* right)
 {
 	// IF we've run out of TriTreeNodes, just return NULL (this is handled gracefully)
 	if (OutOfNodes())
-		return nullptr;
+		return;
 
-	return &pool[m_NextTriNode++];
+	left  = &(pool[m_NextTriNode++]);
+	right = &(pool[m_NextTriNode++]);
 }
 
 
@@ -251,8 +264,7 @@ void Patch::Split(TriTreeNode* tri)
 		Split(tri->BaseNeighbor);
 
 	// Create children and link into mesh
-	tri->LeftChild  = currentPool->AllocateTri();
-	tri->RightChild = currentPool->AllocateTri();
+	currentPool->Allocate(tri->LeftChild, tri->RightChild);
 
 	// If creation failed, just exit.
 	if (!tri->IsBranch()) {

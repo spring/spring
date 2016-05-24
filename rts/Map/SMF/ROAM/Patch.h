@@ -21,7 +21,6 @@ class CCamera;
 
 // How many TriTreeNodes should be allocated?
 #define POOL_SIZE      (500000)
-#define MAX_POOL_SIZE (8000000)
 
 
 /**
@@ -71,14 +70,10 @@ public:
 	inline static CTriNodePool* GetPool();
 
 public:
-	CTriNodePool(const size_t poolSize) {
-		pool.resize(poolSize);
-		pool.resize(poolSize);
-		m_NextTriNode = 0;
-	}
+	CTriNodePool(const size_t poolSize);
 
 	void Reset();
-	TriTreeNode* AllocateTri();
+	void Allocate(TriTreeNode* left, TriTreeNode* right);
 
 	bool OutOfNodes() const {
 		return (m_NextTriNode >= pool.size());
