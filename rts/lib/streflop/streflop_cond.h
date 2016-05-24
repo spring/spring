@@ -58,6 +58,9 @@ namespace math {
 	using std::isfinite;
 
 #elif __cplusplus
+}
+#include <limits>
+namespace math {
 	template<typename T> inline bool isnan(T value) {
 		return value != value;
 	}
