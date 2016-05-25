@@ -73,7 +73,7 @@ public:
 	CTriNodePool(const size_t poolSize);
 
 	void Reset();
-	void Allocate(TriTreeNode* left, TriTreeNode* right);
+	void Allocate(TriTreeNode*& left, TriTreeNode*& right);
 
 	bool OutOfNodes() const {
 		return (m_NextTriNode >= pool.size());

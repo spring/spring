@@ -44,7 +44,7 @@ void CTriNodePool::InitPools(const size_t newPoolSize)
 
 	// int numThreads = GetNumThreads();
 	int numThreads = ThreadPool::GetMaxThreads();
-	const size_t allocPerThread = std::max(newPoolSize / numThreads, newPoolSize / 3) ^ 0x1;
+	const size_t allocPerThread = std::max(newPoolSize / numThreads, newPoolSize / 3) & (~(size_t)0x1);
 
 	try {
 		poolSize = newPoolSize;
@@ -111,7 +111,7 @@ void CTriNodePool::Reset()
 }
 
 
-void CTriNodePool::Allocate(TriTreeNode* left, TriTreeNode* right)
+void CTriNodePool::Allocate(TriTreeNode*& left, TriTreeNode*& right)
 {
 	// IF we've run out of TriTreeNodes, just return NULL (this is handled gracefully)
 	if (OutOfNodes())
