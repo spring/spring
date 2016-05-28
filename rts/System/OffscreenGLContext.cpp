@@ -7,6 +7,7 @@
 #include "System/maindefines.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/errorhandler.h"
+#include "System/Platform/Threading.h"
 #include <boost/thread.hpp>
 
 
@@ -297,6 +298,8 @@ void COffscreenGLThread::Join()
 __FORCE_ALIGN_STACK__
 void COffscreenGLThread::WrapFunc(boost::function<void()> f)
 {
+	Threading::SetThreadName("OffscreenGLThread");
+
 	glOffscreenCtx.WorkerThreadPost();
 
 #ifdef STREFLOP_H
