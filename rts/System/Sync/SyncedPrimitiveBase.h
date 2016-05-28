@@ -71,7 +71,7 @@ namespace Sync {
 #endif
 
 #ifdef SYNCDEBUG
-#  define ASSERT_SYNCED(x) Sync::AssertDebugger(x, "assert(" #x ")")
+#  define ASSERT_SYNCED(x) Sync::AssertDebugger(x, "assert(" #x ") in " __FUNCTION__)
 #else
 #  define ASSERT_SYNCED(x)
 #endif
