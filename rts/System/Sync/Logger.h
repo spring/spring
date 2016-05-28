@@ -6,7 +6,7 @@
 #ifdef SYNCDEBUG
 
 #include <stdio.h>
-#include <boost/thread/mutex.hpp>
+#include <boost/thread/recursive_mutex.hpp>
 #include <string>
 #include <vector>
 
@@ -42,7 +42,7 @@ class CLogger {
 
 		static void CppFilt(char* sym, int size);
 
-		boost::mutex logmutex;
+		boost::recursive_mutex logmutex;
 		const char* filename;
 		FILE* logfile;
 		std::vector<std::string> buffer;

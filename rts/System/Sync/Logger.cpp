@@ -57,7 +57,7 @@ extern "C" void get_executable_name(char *output, int size);
  */
 void CLogger::AddLine(const char* fmt, ...)
 {
-	boost::mutex::scoped_lock scoped_lock(logmutex);
+	boost::recursive_mutex::scoped_lock scoped_lock(logmutex);
 	char buf[500]; // same size as buffer in infolog
 
 	va_list argp;
@@ -83,7 +83,7 @@ void CLogger::AddLine(const char* fmt, ...)
  */
 void CLogger::CloseSession()
 {
-	boost::mutex::scoped_lock scoped_lock(logmutex);
+	boost::recursive_mutex::scoped_lock scoped_lock(logmutex);
 
 	if (logfile || !buffer.empty()) {
 		FlushBuffer();
@@ -102,6 +102,8 @@ void CLogger::CloseSession()
  */
 void CLogger::FlushBuffer()
 {
+	boost::recursive_mutex::scoped_lock scoped_lock(logmutex);
+
 	char buf1[4096], buf2[4096];
 	char* nl;
 
