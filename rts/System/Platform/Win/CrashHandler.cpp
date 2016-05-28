@@ -257,13 +257,13 @@ inline static void StacktraceInline(const char *threadName, LPEXCEPTION_POINTERS
 
 		// Check if we have symbols, only works on VC (mingw doesn't have a compatible file format)
 		if (SymFromAddr(process, sf.AddrPC.Offset, nullptr, pSym)) {
-			IMAGEHLP_LINE64 line;
+			IMAGEHLP_LINE64 line = { 0 };
 			line.SizeOfStruct = sizeof(line);
+
 			DWORD displacement;
 			SymGetLineFromAddr64(GetCurrentProcess(), sf.AddrPC.Offset, &displacement, &line);
 
-			//SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s(%.*s+%#0llx) [0x%08llX]", count, modname, (int) pSym->MaxNameLength, pSym->Name, Disp, sf.AddrPC.Offset);
-			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s:%u %s [0x%08llX]", count, line.FileName, line.LineNumber, pSym->Name, sf.AddrPC.Offset);
+			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s:%u %s [0x%08llX]", count , line.FileName ? line.FileName : "<unknown>", line.LineNumber, pSym->Name, sf.AddrPC.Offset);
 		} else 
 #endif
 		{
