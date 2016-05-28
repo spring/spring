@@ -815,7 +815,7 @@ void CGame::KillSimulation()
 	}
 
 	LOG("[%s][2]", __FUNCTION__);
-	unitHandler->DeleteScripts();
+	if (unitHandler) unitHandler->DeleteScripts();
 	SafeDelete(featureHandler); // depends on unitHandler (via ~CFeature)
 	SafeDelete(unitHandler);
 	SafeDelete(projectileHandler);

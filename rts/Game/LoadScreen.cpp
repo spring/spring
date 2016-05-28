@@ -137,14 +137,7 @@ void CLoadScreen::Init()
 
 CLoadScreen::~CLoadScreen()
 {
-	// at this point, the thread running CGame::LoadGame
-	// has finished and deregistered itself from WatchDog
-	if (mtLoading && gameLoadThread) {
-		gameLoadThread->Join();
-		CglFont::threadSafety = false;
-	}
-
-	SafeDelete(gameLoadThread);
+	assert(!gameLoadThread); // ensure we stopped
 
 	if (clientNet != nullptr)
 		clientNet->KeepUpdating(false);
@@ -208,6 +201,10 @@ void CLoadScreen::CreateInstance(const std::string& mapName, const std::string& 
 
 void CLoadScreen::DeleteInstance()
 {
+	if (singleton) {
+		singleton->Stop();
+	}
+
 	SafeDelete(singleton);
 }
 
@@ -463,6 +460,22 @@ void CLoadScreen::UnloadStartPicture()
 		glDeleteTextures(1, &startupTexture);
 
 	startupTexture = 0;
+}
+
+
+void CLoadScreen::Stop()
+{
+	if (gameLoadThread)
+	{
+		// at this point, the thread running CGame::LoadGame
+		// has finished and deregistered itself from WatchDog
+		if (mtLoading && gameLoadThread) {
+			gameLoadThread->Join();
+			CglFont::threadSafety = false;
+		}
+
+		SafeDelete(gameLoadThread);
+	}
 }
 
 
