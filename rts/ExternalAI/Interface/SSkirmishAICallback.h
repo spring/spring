@@ -410,12 +410,12 @@ struct SSkirmishAICallback {
 	void              (CALLING_CONV *Game_getCategoryName)(int skirmishAIId, int categoryFlag, char* name, int name_sizeMax);
 
 	/**
-	 * @return float value of parameter if it's set, 0.0 otherwise.
+	 * @return float value of parameter if it's set, defaultValue otherwise.
 	 */
 	float             (CALLING_CONV *Game_getRulesParamFloat)(int skirmishAIId, const char* gameRulesParamName, float defaultValue);
 
 	/**
-	 * @return string value of parameter if it's set, empty string otherwise.
+	 * @return string value of parameter if it's set, defaultValue otherwise.
 	 */
 	const char*       (CALLING_CONV *Game_getRulesParamString)(int skirmishAIId, const char* gameRulesParamName, const char* defaultValue);
 
@@ -1206,12 +1206,12 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *Unit_getDef)(int skirmishAIId, int unitId); //$ REF:RETURN->UnitDef
 
 	/**
-	 * @return float value of parameter if it's set, 0.0 otherwise.
+	 * @return float value of parameter if it's set, defaultValue otherwise.
 	 */
 	float             (CALLING_CONV *Unit_getRulesParamFloat)(int skirmishAIId, int unitId, const char* unitRulesParamName, float defaultValue);
 
 	/**
-	 * @return string value of parameter if it's set, empty string otherwise.
+	 * @return string value of parameter if it's set, defaultValue otherwise.
 	 */
 	const char*       (CALLING_CONV *Unit_getRulesParamString)(int skirmishAIId, int unitId, const char* unitRulesParamName, const char* defaultValue);
 
@@ -1352,12 +1352,12 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *getAllyTeams)(int skirmishAIId, int* teamIds, int teamIds_sizeMax); //$ FETCHER:MULTI:IDs:Team:teamIds
 
 	/**
-	 * @return float value of parameter if it's set, 0.0 otherwise.
+	 * @return float value of parameter if it's set, defaultValue otherwise.
 	 */
 	float             (CALLING_CONV *Team_getRulesParamFloat)(int skirmishAIId, int teamId, const char* teamRulesParamName, float defaultValue);
 
 	/**
-	 * @return string value of parameter if it's set, empty string otherwise.
+	 * @return string value of parameter if it's set, defaultValue otherwise.
 	 */
 	const char*       (CALLING_CONV *Team_getRulesParamString)(int skirmishAIId, int teamId, const char* teamRulesParamName, const char* defaultValue);
 
@@ -1970,12 +1970,12 @@ struct SSkirmishAICallback {
 	void              (CALLING_CONV *Feature_getPosition)(int skirmishAIId, int featureId, float* return_posF3_out);
 
 	/**
-	 * @return float value of parameter if it's set, 0.0 otherwise.
+	 * @return float value of parameter if it's set, defaultValue otherwise.
 	 */
 	float             (CALLING_CONV *Feature_getRulesParamFloat)(int skirmishAIId, int unitId, const char* featureRulesParamName, float defaultValue);
 
 	/**
-	 * @return string value of parameter if it's set, empty string otherwise.
+	 * @return string value of parameter if it's set, defaultValue otherwise.
 	 */
 	const char*       (CALLING_CONV *Feature_getRulesParamString)(int skirmishAIId, int unitId, const char* featureRulesParamName, const char* defaultValue);
 
