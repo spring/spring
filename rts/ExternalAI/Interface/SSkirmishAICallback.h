@@ -410,12 +410,12 @@ struct SSkirmishAICallback {
 	void              (CALLING_CONV *Game_getCategoryName)(int skirmishAIId, int categoryFlag, char* name, int name_sizeMax);
 
 	/**
-	 * @return float value of parameter if it's set, 0.0 otherwise.
+	 * @return float value of parameter if it's set, defaultValue otherwise.
 	 */
 	float             (CALLING_CONV *Game_getRulesParamFloat)(int skirmishAIId, const char* gameRulesParamName, float defaultValue);
 
 	/**
-	 * @return string value of parameter if it's set, empty string otherwise.
+	 * @return string value of parameter if it's set, defaultValue otherwise.
 	 */
 	const char*       (CALLING_CONV *Game_getRulesParamString)(int skirmishAIId, const char* gameRulesParamName, const char* defaultValue);
 
@@ -1206,12 +1206,12 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *Unit_getDef)(int skirmishAIId, int unitId); //$ REF:RETURN->UnitDef
 
 	/**
-	 * @return float value of parameter if it's set, 0.0 otherwise.
+	 * @return float value of parameter if it's set, defaultValue otherwise.
 	 */
 	float             (CALLING_CONV *Unit_getRulesParamFloat)(int skirmishAIId, int unitId, const char* unitRulesParamName, float defaultValue);
 
 	/**
-	 * @return string value of parameter if it's set, empty string otherwise.
+	 * @return string value of parameter if it's set, defaultValue otherwise.
 	 */
 	const char*       (CALLING_CONV *Unit_getRulesParamString)(int skirmishAIId, int unitId, const char* unitRulesParamName, const char* defaultValue);
 
@@ -1352,12 +1352,12 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *getAllyTeams)(int skirmishAIId, int* teamIds, int teamIds_sizeMax); //$ FETCHER:MULTI:IDs:Team:teamIds
 
 	/**
-	 * @return float value of parameter if it's set, 0.0 otherwise.
+	 * @return float value of parameter if it's set, defaultValue otherwise.
 	 */
 	float             (CALLING_CONV *Team_getRulesParamFloat)(int skirmishAIId, int teamId, const char* teamRulesParamName, float defaultValue);
 
 	/**
-	 * @return string value of parameter if it's set, empty string otherwise.
+	 * @return string value of parameter if it's set, defaultValue otherwise.
 	 */
 	const char*       (CALLING_CONV *Team_getRulesParamString)(int skirmishAIId, int teamId, const char* teamRulesParamName, const char* defaultValue);
 
@@ -1593,6 +1593,11 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *Mod_getAirMipLevel)(int skirmishAIId);
 
 	/**
+	 * miplevel for radar
+	 */
+	int               (CALLING_CONV *Mod_getRadarMipLevel)(int skirmishAIId);
+
+	/**
 	 * when underwater, units are not in LOS unless also in sonar
 	 */
 	bool              (CALLING_CONV *Mod_getRequireSonarUnderWater)(int skirmishAIId);
@@ -1699,13 +1704,8 @@ struct SSkirmishAICallback {
 
 	/**
 	 * @brief the radar map
-	 * A square with value 0 means you do not have radar coverage on it.
-	 *
-	 * - do NOT modify or delete the height-map (native code relevant only)
-	 * - index 0 is top left
-	 * - each data position is 8*8 in size
-	 * - the value for the full resolution position (x, z) is at index ((z * width + x) / 8)
-	 * - the last value, bottom right, is at index (width/8 * height/8 - 1)
+	 * mapDims.mapx >> radarMipLevel
+	 * @see getLosMap()
 	 */
 	int               (CALLING_CONV *Map_getRadarMap)(int skirmishAIId, int* radarValues, int radarValues_sizeMax); //$ ARRAY:radarValues
 
@@ -1715,19 +1715,10 @@ struct SSkirmishAICallback {
 	/** @see getRadarMap() */
 	int               (CALLING_CONV *Map_getSeismicMap)(int skirmishAIId, int* seismicValues, int seismicValues_sizeMax); //$ ARRAY:seismicValues
 
-	/**
-	 * @brief the radar jammer map
-	 * A square with value 0 means you do not have radar jamming coverage.
-	 *
-	 * - do NOT modify or delete the height-map (native code relevant only)
-	 * - index 0 is top left
-	 * - each data position is 8*8 in size
-	 * - the value for the full resolution position (x, z) is at index ((z * width + x) / 8)
-	 * - the last value, bottom right, is at index (width/8 * height/8 - 1)
-	 */
+	/** @see getRadarMap() */
 	int               (CALLING_CONV *Map_getJammerMap)(int skirmishAIId, int* jammerValues, int jammerValues_sizeMax); //$ ARRAY:jammerValues
 
-	/** @see getJammerMap() */
+	/** @see getRadarMap() */
 	int               (CALLING_CONV *Map_getSonarJammerMap)(int skirmishAIId, int* sonarJammerValues, int sonarJammerValues_sizeMax); //$ ARRAY:sonarJammerValues
 
 	/**
@@ -1979,12 +1970,12 @@ struct SSkirmishAICallback {
 	void              (CALLING_CONV *Feature_getPosition)(int skirmishAIId, int featureId, float* return_posF3_out);
 
 	/**
-	 * @return float value of parameter if it's set, 0.0 otherwise.
+	 * @return float value of parameter if it's set, defaultValue otherwise.
 	 */
 	float             (CALLING_CONV *Feature_getRulesParamFloat)(int skirmishAIId, int unitId, const char* featureRulesParamName, float defaultValue);
 
 	/**
-	 * @return string value of parameter if it's set, empty string otherwise.
+	 * @return string value of parameter if it's set, defaultValue otherwise.
 	 */
 	const char*       (CALLING_CONV *Feature_getRulesParamString)(int skirmishAIId, int unitId, const char* featureRulesParamName, const char* defaultValue);
 

@@ -893,6 +893,8 @@ EXPORT(int              ) skirmishAiCallback_Mod_getLosMipLevel(int skirmishAIId
 
 EXPORT(int              ) skirmishAiCallback_Mod_getAirMipLevel(int skirmishAIId);
 
+EXPORT(int              ) skirmishAiCallback_Mod_getRadarMipLevel(int skirmishAIId);
+
 EXPORT(bool             ) skirmishAiCallback_Mod_getRequireSonarUnderWater(int skirmishAIId);
 
 // END OBJECT Mod

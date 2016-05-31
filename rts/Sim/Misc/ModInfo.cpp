@@ -249,7 +249,7 @@ void CModInfo::Init(const char* modArchive)
 		}
 
 		if ((radarMipLevel < 0) || (radarMipLevel > 6)) {
-			throw content_error("Sensors\\Los\\LosMipLevel out of bounds. "
+			throw content_error("Sensors\\Los\\RadarMipLevel out of bounds. "
 						"The minimum value is 0. The maximum value is 6.");
 		}
 
