@@ -64,10 +64,10 @@ struct TriTreeNode
 class CTriNodePool
 {
 public:
-	static void InitPools(const size_t newPoolSize = POOL_SIZE);
-	static void FreePools();
-	static void ResetAll();
-	inline static CTriNodePool* GetPool();
+	static void InitPools(bool shadowPass, size_t newPoolSize = POOL_SIZE);
+	static void FreePools(bool shadowPass);
+	static void ResetAll(bool shadowPass);
+	inline static CTriNodePool* GetPool(bool shadowPass);
 
 public:
 	CTriNodePool(const size_t poolSize);
@@ -120,7 +120,7 @@ public:
 
 	void UpdateHeightMap(const SRectangle& rect = SRectangle(0, 0, PATCH_SIZE, PATCH_SIZE));
 
-	bool Tessellate(const float3& campos, int viewradius);
+	bool Tessellate(const float3& campos, int viewradius, bool shadowPass);
 	void ComputeVariance();
 
 	void GenerateIndices();

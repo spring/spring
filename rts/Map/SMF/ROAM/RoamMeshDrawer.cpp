@@ -47,7 +47,9 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 
 	// set ROAM upload mode (VA,DL,VBO)
 	Patch::SwitchRenderMode(configHandler->GetInt("ROAM"));
-	CTriNodePool::InitPools();
+	for (unsigned int i = MESH_NORMAL; i <= MESH_SHADOW; i++) {
+		CTriNodePool::InitPools(i);
+	}
 
 	numPatchesX = mapDims.mapx / PATCH_SIZE;
 	numPatchesY = mapDims.mapy / PATCH_SIZE;
@@ -102,7 +104,9 @@ CRoamMeshDrawer::~CRoamMeshDrawer()
 {
 	configHandler->Set("ROAM", (int)Patch::renderMode);
 
-	CTriNodePool::FreePools();
+	for (unsigned int i = MESH_NORMAL; i <= MESH_SHADOW; i++) {
+		CTriNodePool::FreePools(i);
+	}
 }
 
 
@@ -171,8 +175,8 @@ void CRoamMeshDrawer::Update()
 	{
 		SCOPED_TIMER("ROAM::Tessellate");
 
-		Reset(patchMeshGrid[shadowPass]);
-		forceTessellate[shadowPass] = Tessellate(patchMeshGrid[shadowPass], cam, smfGroundDrawer->GetGroundDetail());
+		Reset(shadowPass);
+		forceTessellate[shadowPass] = Tessellate(patchMeshGrid[shadowPass], cam, smfGroundDrawer->GetGroundDetail(), shadowPass);
 	}
 
 	{
@@ -278,10 +282,12 @@ void CRoamMeshDrawer::DrawInMiniMap()
 
 
 
-void CRoamMeshDrawer::Reset(std::vector<Patch>& patches)
+void CRoamMeshDrawer::Reset(bool shadowPass)
 {
+	std::vector<Patch>& patches = patchMeshGrid[shadowPass];
+
 	// set the next free triangle pointer back to the beginning
-	CTriNodePool::ResetAll();
+	CTriNodePool::ResetAll(shadowPass);
 
 	// perform patch resets, compute variances, and link
 	for (int y = 0; y < numPatchesY; ++y) {
@@ -305,7 +311,7 @@ void CRoamMeshDrawer::Reset(std::vector<Patch>& patches)
 
 
 
-bool CRoamMeshDrawer::Tessellate(std::vector<Patch>& patches, const CCamera* cam, int viewRadius)
+bool CRoamMeshDrawer::Tessellate(std::vector<Patch>& patches, const CCamera* cam, int viewRadius, bool shadowPass)
 {
 	// create an approximate tessellated mesh of the landscape
 	// hint: threading just helps a little with huge cpu usage in retessellation, still better than nothing
@@ -336,7 +342,7 @@ bool CRoamMeshDrawer::Tessellate(std::vector<Patch>& patches, const CCamera* cam
 			if (!p->IsVisible(cam))
 				return;
 
-			forceTess |= (!p->Tessellate(cam->GetPos(), viewRadius));
+			forceTess |= (!p->Tessellate(cam->GetPos(), viewRadius, shadowPass));
 		});
 
 		if (forceTess)

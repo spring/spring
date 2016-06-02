@@ -35,11 +35,11 @@ Patch::RenderMode Patch::renderMode = Patch::VBO;
 
 // one pool per thread
 static size_t poolSize = 0;
-static std::vector<CTriNodePool> pools;
+static std::vector<CTriNodePool> pools[CRoamMeshDrawer::MESH_COUNT];
 
-void CTriNodePool::InitPools(const size_t newPoolSize)
+void CTriNodePool::InitPools(bool shadowPass, size_t newPoolSize)
 {
-	if (!pools.empty())
+	if (!pools[shadowPass].empty())
 		return;
 
 	// int numThreads = GetNumThreads();
@@ -48,43 +48,43 @@ void CTriNodePool::InitPools(const size_t newPoolSize)
 
 	try {
 		poolSize = newPoolSize;
-		pools.reserve(numThreads);
+		pools[shadowPass].reserve(numThreads);
 		for (; numThreads > 0; --numThreads) {
-			pools.emplace_back(allocPerThread);
+			pools[shadowPass].emplace_back(allocPerThread);
 		}
 	} catch(const std::bad_alloc& e) {
 		LOG_L(L_FATAL, "Failed to allocate memory for ROAM (reducing pool size): %s", e.what());
 		MAX_POOL_SIZE = newPoolSize * 0.75f;
-		FreePools();
-		InitPools(MAX_POOL_SIZE);
+		FreePools(shadowPass);
+		InitPools(shadowPass, MAX_POOL_SIZE);
 	}
 }
 
-void CTriNodePool::FreePools()
+void CTriNodePool::FreePools(bool shadowPass)
 {
-	pools.clear();
+	pools[shadowPass].clear();
 }
 
 
-void CTriNodePool::ResetAll()
+void CTriNodePool::ResetAll(bool shadowPass)
 {
 	bool outOfNodes = false;
 
-	for (CTriNodePool& pool: pools) {
+	for (CTriNodePool& pool: pools[shadowPass]) {
 		outOfNodes |= pool.OutOfNodes();
 		pool.Reset();
 	}
 
 	if (outOfNodes && (poolSize < MAX_POOL_SIZE)) {
-		FreePools();
-		InitPools(std::min<size_t>(poolSize * 2, MAX_POOL_SIZE));
+		FreePools(shadowPass);
+		InitPools(shadowPass, std::min<size_t>(poolSize * 2, MAX_POOL_SIZE));
 	}
 }
 
 
-CTriNodePool* CTriNodePool::GetPool()
+CTriNodePool* CTriNodePool::GetPool(bool shadowPass)
 {
-	return &(pools[ThreadPool::GetThreadNum()]);
+	return &(pools[shadowPass][ThreadPool::GetThreadNum()]);
 }
 
 
@@ -507,14 +507,14 @@ void Patch::ComputeVariance()
 // ---------------------------------------------------------------------
 // Create an approximate mesh.
 //
-bool Patch::Tessellate(const float3& campos, int groundDetail)
+bool Patch::Tessellate(const float3& campos, int groundDetail, bool shadowPass)
 {
 	// Set/Update LOD params (FIXME: wrong height?)
 	const float myx = (coors.x + PATCH_SIZE / 2) * SQUARE_SIZE;
 	const float myz = (coors.y + PATCH_SIZE / 2) * SQUARE_SIZE;
 	const float myy = (readMap->GetCurrMinHeight() + readMap->GetCurrMaxHeight()) * 0.5f;
 	const float3 myPos(myx, myy, myz);
-	currentPool = CTriNodePool::GetPool();
+	currentPool = CTriNodePool::GetPool(shadowPass);
 
 	camDistLODFactor  = myPos.distance(campos);
 	camDistLODFactor *= 300.0f / groundDetail; // MAGIC NUMBER 1: increase the dividend to reduce LOD in camera distance

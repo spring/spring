@@ -60,8 +60,8 @@ public:
 	}
 
 private:
-	void Reset(std::vector<Patch>& patches);
-	bool Tessellate(std::vector<Patch>& patches, const CCamera* cam, int viewRadius);
+	void Reset(bool shadowPass);
+	bool Tessellate(std::vector<Patch>& patches, const CCamera* cam, int viewRadius, bool shadowPass);
 
 private:
 	CSMFReadMap* smfReadMap;
