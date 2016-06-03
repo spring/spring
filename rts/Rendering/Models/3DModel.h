@@ -143,10 +143,10 @@ public:
 		// matrix-multiplying (but the branching hurts)
 		//
 		// NOTE: ORDER MATTERS (T(baked + script) * R(baked) * R(script) * S(baked))
-		if (t != ZeroVector) { m = m.Translate(t); }
+		if (!t.same(ZeroVector)) { m = m.Translate(t); }
 		if (!hasIdentityRot) { m *= bakedRotMatrix; }
-		if (r != ZeroVector) { m = ComposeRotation(m, r); }
-		if (s != OnesVector) { m = m.Scale(s); }
+		if (!r.same(ZeroVector)) { m = ComposeRotation(m, r); }
+		if (!s.same(OnesVector)) { m = m.Scale(s); }
 	}
 
 	void SetModelMatrix(const CMatrix44f& m) {
@@ -287,8 +287,8 @@ struct LocalModelPiece
 
 	bool GetEmitDirPos(float3& emitPos, float3& emitDir) const;
 
-	void SetPosition(const float3& p) { if (!dirty && pos != p) SetDirty(); pos = p; }
-	void SetRotation(const float3& r) { if (!dirty && rot != r) SetDirty(); rot = r; }
+	void SetPosition(const float3& p) { if (!dirty && !pos.same(p)) SetDirty(); pos = p; }
+	void SetRotation(const float3& r) { if (!dirty && !rot.same(r)) SetDirty(); rot = r; }
 	void SetDirection(const float3& d) { dir = d; } // unused
 	void SetDirty();
 

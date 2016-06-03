@@ -315,6 +315,17 @@ public:
 	 */
 	bool equals(const float3& f, const float3& eps = float3(cmp_eps(), cmp_eps(), cmp_eps())) const;
 
+
+	/**
+	 * @brief binary float3 equality
+	 * @param f float3 to compare to
+	 * @return const whether the two float3 are binary same
+	 *
+	 */
+	bool same(const float3& f) const {
+		return x == f.x && y == f.y && z == f.z;
+	}
+
 	/**
 	 * @brief dot product
 	 * @param f float3 to use
