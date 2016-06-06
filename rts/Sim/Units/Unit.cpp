@@ -952,15 +952,8 @@ unsigned short CUnit::CalcLosStatus(int at)
 	unsigned short mask = ~(currStatus >> 8);
 
 	if (losHandler->InLos(this, at)) {
-		if (!beingBuilt) {
-			newStatus |= (mask & (LOS_INLOS   | LOS_INRADAR |
-			                      LOS_PREVLOS | LOS_CONTRADAR));
-		} else {
-			// we are being built, do not set LOS_PREVLOS
-			// since we do not want ghosts for nanoframes
-			newStatus |=  (mask & (LOS_INLOS   | LOS_INRADAR));
-			newStatus &= ~(mask & (LOS_PREVLOS | LOS_CONTRADAR));
-		}
+		newStatus |= (mask & (LOS_INLOS   | LOS_INRADAR |
+		                      LOS_PREVLOS | LOS_CONTRADAR));
 	}
 	else if (losHandler->InRadar(this, at)) {
 		newStatus |=  (mask & LOS_INRADAR);
