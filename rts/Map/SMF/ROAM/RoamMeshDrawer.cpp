@@ -57,7 +57,9 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 
 	for (unsigned int i = MESH_NORMAL; i <= MESH_SHADOW; i++) {
 		patchMeshGrid[i].resize(numPatchesX * numPatchesY);
-		borderPatches[i].resize(4 + (numPatchesY - 2) * 2 + (numPatchesX - 2) * 2, nullptr);
+		const int borderSizeX = 1 + (numPatchesX > 1);
+		const int borderSizeY = 1 + (numPatchesY > 1);
+		borderPatches[i].resize(borderSizeX * borderSizeY + (numPatchesY - borderSizeY) * borderSizeX + (numPatchesX - borderSizeX) * borderSizeY, nullptr);
 		patchVisFlags[i].resize(numPatchesX * numPatchesY, 0);
 	}
 
@@ -82,9 +84,15 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 
 		// gather corner patches
 		borderPatches[i][patchIdx++] = &patches[                                  (              0)];
-		borderPatches[i][patchIdx++] = &patches[                                  (numPatchesX - 1)];
-		borderPatches[i][patchIdx++] = &patches[(numPatchesY - 1) * numPatchesX + (              0)];
-		borderPatches[i][patchIdx++] = &patches[(numPatchesY - 1) * numPatchesX + (numPatchesX - 1)];
+
+		if (numPatchesX > 1)
+			borderPatches[i][patchIdx++] = &patches[                                  (numPatchesX - 1)];
+
+		if (numPatchesY > 1)
+			borderPatches[i][patchIdx++] = &patches[(numPatchesY - 1) * numPatchesX + (              0)];
+
+		if (numPatchesX > 1 && numPatchesY > 1)
+			borderPatches[i][patchIdx++] = &patches[(numPatchesY - 1) * numPatchesX + (numPatchesX - 1)];
 
 		// gather x-border patches
 		for (int py = 1; py < (numPatchesY - 1); ++py) {
