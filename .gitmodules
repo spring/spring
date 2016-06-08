@@ -19,3 +19,6 @@
 [submodule "tools/pr-downloader"]
 	path = tools/pr-downloader
 	url = git://github.com/spring/pr-downloader.git
+[submodule "AI/Skirmish/CircuitAI"]
+	path = AI/Skirmish/CircuitAI
+	url = https://github.com/rlcevg/CircuitAI
