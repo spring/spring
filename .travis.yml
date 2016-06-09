@@ -13,7 +13,7 @@ env:
   global:
     - SPRING_DATADIR=~/build/spring/spring
   matrix:
-    - TARGET="AAI CppTestAI E323AI HughAI KAIK NullAI NullJavaAI NullOOJavaAI RAI Shard"
+    - TARGET="AAI CppTestAI E323AI HughAI KAIK NullAI NullJavaAI NullOOJavaAI RAI Shard CircuitAI"
     - TARGET="engine-headless tests check"
 
 matrix:
