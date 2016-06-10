@@ -5,13 +5,13 @@ set -e
 
 DEST=${TMP_BASE}/inst
 INSTALLDIR=${DEST}
+PLATFORM=$OUTPUTDIR
 
 echo "Installing into $DEST"
 
 #Ultra settings, max number of threads taken from commandline.
 SEVENZIP="nice -19 ionice -c3 7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on -mmt=${2:-on}"
 SEVENZIP_NONSOLID="nice -19 ionice -c3 7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=off -mmt=${2:-on}"
-ZIP="zip -r9"
 
 if [ -z $MINGWLIBS_PATH ]; then
 	echo 'MINGWLIBS_PATH is not set'
@@ -59,23 +59,20 @@ wait
 mkdir -p ${TMP_PATH}
 
 #absolute path to the minimal portable (engine, unitsync + ais)
-MIN_PORTABLE_ARCHIVE=${TMP_PATH}/spring_${VERSION}_minimal-portable.7z
-MIN_PORTABLE_PLUS_DEDICATED_ARCHIVE=${TMP_PATH}/spring_${VERSION}_minimal-portable+dedicated.zip
+MIN_PORTABLE_ARCHIVE=${TMP_PATH}/spring_${VERSION}_${PLATFORM}-minimal-portable-${PLATFORM}.7z
+INSTALLER_FILENAME=${TMP_PATH}/spring_${VERSION}_${PLATFORM}.exe
+DEBUG_ARCHIVE=${TMP_PATH}/${VERSION}_${PLATFORM}_spring_dbg.7z
+UNITTEST_ARCHIVE=${TMP_PATH}/${VERSION}_UnitTests.7z
 
 #create portable spring
 touch ${INSTALLDIR}/springsettings.cfg
 ${SEVENZIP} ${MIN_PORTABLE_ARCHIVE} ${INSTALLDIR}/* -xr!*.dbg &
-#TODO: remove creation of the zip package, when Zero-K Lobby switched to 7z (will save a lot of resources)
-if [ "$OUTPUTDIR" == "win32" ]
-then
-	(cd ${INSTALLDIR} && ${ZIP} ${MIN_PORTABLE_PLUS_DEDICATED_ARCHIVE} * -x spring-headless.exe \*.dbg) &
-fi
 
 # compress UnitTests
-${SEVENZIP} ${TMP_PATH}/${VERSION}_UnitTests.7z "${BUILDDIR}"/test/*.exe &
+${SEVENZIP} ${UNITTEST_ARCHIVE} "${BUILDDIR}"/test/*.exe &
 
 # create archive for translate_stacktrace.py
-${SEVENZIP_NONSOLID} ${TMP_PATH}/${VERSION}_spring_dbg.7z ${DEBUGFILES} &
+${SEVENZIP_NONSOLID} ${DEBUG_ARCHIVE} ${DEBUGFILES} &
 
 # wait for 7zip
 wait
@@ -91,21 +88,9 @@ ln -sv ${MIN_PORTABLE_ARCHIVE} ${SOURCEDIR}/installer/downloads/spring_testing_m
 ./installer/make_installer.sh
 
 # move installer to rsync-directory
-mv ./installer/spring*.exe ${TMP_PATH}
+mv ./installer/spring*.exe ${INSTALLER_FILENAME}
 
-./installer/make_portable_archive.sh ${TMP_PATH}/spring*.exe ${TMP_PATH}
-
-# create relative symbolic links to current files for rsyncing
-cd ${TMP_PATH}/../..
-ln -sfv ${REV}/$OUTPUTDIR/spring_${REV}.exe spring_testing.exe
-ln -sfv ${REV}/$OUTPUTDIR/spring_${REV}_portable.7z spring_testing-portable.7z
-ln -sfv ${REV}/$OUTPUTDIR/spring_${VERSION}_minimal-portable.7z spring_testing_minimal-portable.7z
-
-if [ "$OUTPUTDIR" == "win32" ]
-then
-	#FIXME: remove this (useless file)
-	ln -sfv ${REV}/$OUTPUTDIR/spring_${VERSION}_minimal-portable+dedicated.zip spring_testing_minimal-portable+dedicated.zip
-fi
+./installer/make_portable_archive.sh ${INSTALLER_FILENAME} ${TMP_PATH}
 
 # create a file which contains the latest version of a branch
 echo ${VERSION} > LATEST
