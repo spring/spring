@@ -59,10 +59,10 @@ wait
 mkdir -p ${TMP_PATH}
 
 #absolute path to the minimal portable (engine, unitsync + ais)
-MIN_PORTABLE_ARCHIVE=${TMP_PATH}/spring_${VERSION}_${PLATFORM}-minimal-portable-${PLATFORM}.7z
+MIN_PORTABLE_ARCHIVE=${TMP_PATH}/spring_${VERSION}_${PLATFORM}-minimal-portable.7z
 INSTALLER_FILENAME=${TMP_PATH}/spring_${VERSION}_${PLATFORM}.exe
 DEBUG_ARCHIVE=${TMP_PATH}/${VERSION}_${PLATFORM}_spring_dbg.7z
-UNITTEST_ARCHIVE=${TMP_PATH}/${VERSION}_UnitTests.7z
+UNITTEST_ARCHIVE=${TMP_PATH}/${VERSION}_${PLATFORM}_UnitTests.7z
 
 #create portable spring
 touch ${INSTALLDIR}/springsettings.cfg
@@ -93,5 +93,5 @@ mv ./installer/spring*.exe ${INSTALLER_FILENAME}
 ./installer/make_portable_archive.sh ${INSTALLER_FILENAME} ${TMP_PATH}
 
 # create a file which contains the latest version of a branch
-echo ${VERSION} > LATEST
+echo ${VERSION} > LATEST_${PLATFORM}
 
