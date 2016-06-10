@@ -3,7 +3,7 @@
 #include "SDL1_keysym.h"
 #include <SDL_keycode.h>
 #include <unordered_map>
-
+#include "System/Log/ILog.h"
 
 template<typename First, typename Second>
 class unordered_bimap {
@@ -288,6 +288,7 @@ int SDL21_keysyms(const int SDL2_keycode)
 	auto it = SDL_keysym_bimap.first().find(SDL2_keycode);
 	if (it != SDL_keysym_bimap.first().end())
 		return it->second;
+	LOG_L(L_DEBUG, "Cannot translate SDL2 keycode to SDL1 keycode: %d", SDL2_keycode);
 	return 0;
 }
 
@@ -297,6 +298,7 @@ int SDL12_keysyms(const int SDL1_keycode)
 	auto it = SDL_keysym_bimap.second().find(SDL1_keycode);
 	if (it != SDL_keysym_bimap.second().end())
 		return it->second;
+	LOG_L(L_DEBUG, "Cannot translate SDL1 keycode to SDL2 keycode: %d", SDL1_keycode);
 	return 0;
 }
 
