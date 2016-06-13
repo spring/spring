@@ -143,7 +143,7 @@ include_directories(${GLEW_INCLUDE_DIR})
 
 if( CMAKE_COMPILER_IS_GNUCXX)
 	# FIXME: hack to avoid linkers to remove not referenced symbols. required because of
-	# http://springrts.com/mantis/view.php?id=4511
+	# https://springrts.com/mantis/view.php?id=4511
 	if(APPLE)
 		MakeGlobalVar(SPRING_SIM_LIBRARIES "-Wl,-force_load" engineSim)
 	else()

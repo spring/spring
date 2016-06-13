@@ -5,10 +5,10 @@ Prerequisite
 -----------
 
 1) Create at least two release candidates for testing and wait at least a week for feedback.
-http://springrts.com/wiki/Download_Testing
+https://springrts.com/wiki/Download_Testing
 
 2) Check if the bug tracker contains no cricitical bugs, especially
-http://springrts.com/mantis/roadmap_page.php
+https://springrts.com/mantis/roadmap_page.php
 
 Preparation
 -----------
@@ -45,13 +45,13 @@ Release Time
 8) Write the news post for the springrts.com frontpage, while waiting for the
    buildbot to compile the master branch.
 9) Check if everything went fine on http://buildbot.springrts.com/waterfall and fetch these archives:
-		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/win32/spring_${REL_VERS}.exe
-		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/win32/spring_${REL_VERS}_portable.7z
-		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/osx64/spring_${REL_VERS}_MacOSX-10.6-SnowLeopard.zip
-		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/linux32/spring_${REL_VERS}_minimal-portable-linux32-static.7z
-		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/linux64/spring_${REL_VERS}_minimal-portable-linux64-static.7z
-		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/source/spring_${REL_VERS}_src.tar.gz
-		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/source/spring_${REL_VERS}_src.tar.lzma
+		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/win32/spring_${REL_VERS}.exe
+		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/win32/spring_${REL_VERS}_portable.7z
+		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/osx64/spring_${REL_VERS}_MacOSX-10.6-SnowLeopard.zip
+		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/linux32/spring_${REL_VERS}_minimal-portable-linux32-static.7z
+		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/linux64/spring_${REL_VERS}_minimal-portable-linux64-static.7z
+		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/source/spring_${REL_VERS}_src.tar.gz
+		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/source/spring_${REL_VERS}_src.tar.lzma
 10) you should now have these files:
 	* spring_${REL_VERS}.exe
 	* spring_${REL_VERS}_MacOSX-10.6-SnowLeopard.zip
@@ -65,11 +65,11 @@ Release Time
 	https://springrts.com/mantis/manage_proj_page.php
 13) After a week, set it as default version on the server:
 	Ask a lobby admin to set the default version on the lobby server:
-		http://springrts.com/wiki/Uberserver#set_spring_version
+		https://springrts.com/wiki/Uberserver#set_spring_version
 	Update download page by chaning the version templates on the Wiki.
-		http://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:Major&action=edit
-		http://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:Minor&action=edit
-		http://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:ReleaseDate&action=edit
+		https://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:Major&action=edit
+		https://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:Minor&action=edit
+		https://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:ReleaseDate&action=edit
 	Update the default downloads for each platform on SF.
 		Installer .exe for Windows, .tar.gz for all other platforms.
 		Do so through the file(s) properties on this page:

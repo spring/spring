@@ -74,7 +74,7 @@ void CLuaLoadSaveHandler::SaveGame(const std::string& file)
 		SaveHeightmap();
 
 		// Close zip file.
-		if (Z_OK != zipClose(savefile, "Spring save file, visit http://springrts.com/ for details.")) {
+		if (Z_OK != zipClose(savefile, "Spring save file, visit https://springrts.com/ for details.")) {
 			LOG_L(L_ERROR, "Unable to close save file \"%s\"", filename.c_str());
 		}
 		return; // Success

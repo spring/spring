@@ -46,7 +46,7 @@ SetCompressor /FINAL /SOLID lzma
 
 ; Finish page
 
-!define MUI_FINISHPAGE_SHOWREADME "http://springrts.com/wiki/Read_Me_First"
+!define MUI_FINISHPAGE_SHOWREADME "https://springrts.com/wiki/Read_Me_First"
 !define MUI_FINISHPAGE_SHOWREADME_TEXT "Open $\"Read Me First$\" Webpage"
 ;!define MUI_FINISHPAGE_RUN "$INSTDIR\spring.exe"
 ;!define MUI_FINISHPAGE_RUN_TEXT "Configure ${PRODUCT_NAME} settings now"

@@ -35,7 +35,7 @@ local infos = {
 	},
 	{
 		key    = 'url',
-		value  = 'http://springrts.com/wiki/AIInterface:Java',
+		value  = 'https://springrts.com/wiki/AIInterface:Java',
 		desc   = 'URL with more detailed info about the AI',
 	},
 	{

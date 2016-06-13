@@ -5,12 +5,12 @@ Author: Reth / Michael Vadovszki
 _____________________________________________________
 
 Forum Link:
-  http://springrts.com/phpbb/viewtopic.php?t=7924
+  https://springrts.com/phpbb/viewtopic.php?t=7924
 
 Compiling:
  - as of v0.76b1, the mingwlibs dependency is needed to compile an AI.
-    - http://springrts.com/wiki/Engine_Development#SCONS.2FMinGW
-    - http://springrts.com/dl/spring-mingwlibs-v10.exe
+    - https://springrts.com/wiki/Engine_Development#SCONS.2FMinGW
+    - https://springrts.com/dl/spring-mingwlibs-v10.exe
  - while compiling,
     - the RAI source folder was located in {spring source}/AI/Skirmish/
     - the mingwlibs folder was in the same directory as the

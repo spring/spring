@@ -32,7 +32,7 @@ fi
 
 if [ ! -s spring_testing_minimal-portable.7z ]; then
 	echo "Warning: spring_testing_minimal-portable.7z didn't exist, downloading..." >&2
-	$WGET http://springrts.com/dl/buildbot/default/master/spring_testing_minimal-portable.7z
+	$WGET https://springrts.com/dl/buildbot/default/master/spring_testing_minimal-portable.7z
 fi
 
 cd ../..

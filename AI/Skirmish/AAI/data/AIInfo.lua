@@ -43,7 +43,7 @@ Known to Support (if config available): BA, SA, XTA, S44]],
 	},
 	{
 		key    = 'url',
-		value  = 'http://springrts.com/wiki/AI:AAI',
+		value  = 'https://springrts.com/wiki/AI:AAI',
 		desc   = 'URL with more detailed info about the AI',
 	},
 	{

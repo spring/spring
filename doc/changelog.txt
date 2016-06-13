@@ -978,7 +978,7 @@ Bugfixes:
 -- 95.0 ---------------------------------------------------------
 
 Major:
- ! new datadir structure: http://springrts.com/phpbb/viewtopic.php?f=12&t=30044 & http://springrts.com/dl/buildbot/default/master/95.0/manpages/spring.6.html
+ ! new datadir structure: https://springrts.com/phpbb/viewtopic.php?f=12&t=30044 & https://springrts.com/dl/buildbot/default/master/95.0/manpages/spring.6.html
  ! new LuaIntro (Lua based loadscreen with examples)
  - add map border rendering (+ /mapborder command)
  - bugfixes & speedups
@@ -1020,7 +1020,7 @@ Misc:
  - switch to a high precision clock all over the engine (including Lua)
    NOTE THAT THIS IS DISABLED BY DEFAULT ON WINDOWS BUILDS (cf. UseHighResTimer)
  - copied a lot config descriptions from wiki to the engine (thx for all the wiki'ers)
- - http://springrts.com/wiki/Springsettings.cfg is now automatically updated with each release
+ - https://springrts.com/wiki/Springsettings.cfg is now automatically updated with each release
  ! disable build of spring-multithreaded (unmaintained / doesn't compile)
  ! disable luaThreadingModel > 2, can be overriden with EnableUnsafeAndBrokenMT=1
 	fixes #3774, #2884, #2784, #3673, #3808
@@ -1321,7 +1321,7 @@ Lua:
  - Spring.{Get,Diff}Timer(s): save some precision (important with new high-resolution timers)
  - Spring.DiffTimers: accept optional third argument (boolean) to return dt in milliseconds
 
- - add some utility functions to the math table, see http://springrts.com/wiki/Lua_MathExtra
+ - add some utility functions to the math table, see https://springrts.com/wiki/Lua_MathExtra
 
 Rendering:
  - LoadingMT: add a runtime check that should detect incompatibilities
@@ -1378,7 +1378,7 @@ Buildprocess:
  ! removed VS project files / fix compile with Visual Studio 2012 Express for Windows Desktop:
     use cmake -G "Visual Studio 11" to generate project files
     dropped support for Visual Studio 8, 9 & 10
-    see http://springrts.com/wiki/Building_Spring_on_Windows
+    see https://springrts.com/wiki/Building_Spring_on_Windows
  ! compile Spring using c++11 standard
  - fix clang compile errors + some bugs detected by clang
  ! slightly refactored build system, now every target can be disabled:
@@ -1642,7 +1642,7 @@ Major Changes:
  - much faster Sim (~20% and ~50% with working OMP)
  - new cmdline arguments
  - better pathing
- - add experimental map generator (see http://springrts.com/wiki/Mapgen for details)
+ - add experimental map generator (see https://springrts.com/wiki/Mapgen for details)
  - some new sim/weapon features
 
 AI:
@@ -1845,7 +1845,7 @@ Sim Bugfixes:
  - fix 'Crashing aircraft can be reclaimed' (3288)
  - fix 'Units get stuck in sea labs on build completion' (3290)
  - fix 'Paralyzed landed aircraft start moving forward slowly' (3287)
- - fix bug reported by jamerlan (http://springrts.com/phpbb/viewtopic.php?p=529204#p529204)
+ - fix bug reported by jamerlan (https://springrts.com/phpbb/viewtopic.php?p=529204#p529204)
  - make HoverAirMoveType aircraft able to crash (3289)
  - fix 'Move/Turn (piece) fails with negative speed' (3300)
  - fix "Total velocity loss during a prolonged unit-to-unit [skidding] collision" (3302)
@@ -1994,7 +1994,7 @@ Changes:
  - limit infolog.txt buffer to 8kB
  - open a MessageBox on systems with unsupported GPUs (+drivers) on engine start (suppressible with a config-tag)
  ! remove selectkeys.txt support (use uikeys.txt instead)
- ! remove TASServer.jar (outdated, use http://springrts.com/wiki/Spring_on_a_LAN )
+ ! remove TASServer.jar (outdated, use https://springrts.com/wiki/Spring_on_a_LAN )
  ! send gameID and SDF filename with SERVER_STARTPLAYING to autohost
  ! remove deprecated LogSubsystems config var
  - do not send GameOver from a client that timed out
@@ -2084,7 +2084,7 @@ Pathing:
 
 Lua:
  ! some config values are now write protected (Spring.SetConfig*)
- - added luasocket support for widgets, see http://springrts.com/wiki/LuaSocket
+ - added luasocket support for widgets, see https://springrts.com/wiki/LuaSocket
  - fixed params of Spring.MarkerAddPoint & Spring.MarkerAddLine
  - call AllowWeaponTarget at the end of the queue, so lua only gets those units which are _not_ filtered by the engine
  ! LuaSyncedRead: better hide enemy radarblobs unit-info
@@ -2485,7 +2485,7 @@ Engine:
  - use "game" instead of "mod" in many places
  - add "isolation" mode (do not use global data-dirs)
  - change lobbyserver main address to "lobby.springrts.com"
- - use http://springrts.com/ everywhere (deprecate clan-sy links)
+ - use https://springrts.com/ everywhere (deprecate clan-sy links)
  - ArchiveMover uses unitsync to detect the writable data dir
  - improve version logging on non-Windows OSs
  - include player-name in log message when resingning
@@ -2500,7 +2500,7 @@ Engine:
  - add optional high-loss network modes to make spring playable on very lossy connections (NetworkLossFactor = 0|1|2)
 
 Engine / bugfixes:
- - too many to list, see http://springrts.com/mantis/changelog_page.php (incomplete!)
+ - too many to list, see https://springrts.com/mantis/changelog_page.php (incomplete!)
  - calculate the team unit-limit without ancient hacks
  - stop the maxunits team restriction from applying to Gaia (#2435)
  - fix ray-ground intersections when camera is outside map
@@ -2721,7 +2721,7 @@ Installer:
  - create minimal-portable .7z version of engine and reuse it in installer
  - ai's are now installed always (removed individual sections)
  - add registry key to unitsync.dll HKLM\Software\Spring\SpringEngineHelper
- - replace readme.html with http://springrts.com/wiki/Read_Me_First
+ - replace readme.html with https://springrts.com/wiki/Read_Me_First
 
 
 -- 0.82.7.1 ---------------------------------------------------------
@@ -3099,10 +3099,10 @@ Engine / Rendering:
  - fixed alpha-masked shadows for S3O models
  - fixed ATI alpha masked shadows (trees, features)
  - fixed far-textures (caused changing teamcolors and disappearing units)
- - support the OBJ model format (http://springrts.com/phpbb/viewtopic.php?f=9&t=22635)
+ - support the OBJ model format (https://springrts.com/phpbb/viewtopic.php?f=9&t=22635)
  - support specular lighting, multiple blendable detail textures, and sky reflections on SMF maps ("SSMF")
-     http://springrts.com/phpbb/viewtopic.php?f=13&t=21951
-     http://springrts.com/phpbb/viewtopic.php?f=13&t=22564 (slightly outdated wrt. the SMD parameters)
+     https://springrts.com/phpbb/viewtopic.php?f=13&t=21951
+     https://springrts.com/phpbb/viewtopic.php?f=13&t=22564 (slightly outdated wrt. the SMD parameters)
  - converted all shadow, tree, grass, model, and map shaders to GLSL
  - vertex-animated grass; maps can specify the grass blade- and shading-textures and the dimensions/angle for blades
  - refactored and abstracted unit/feature/projectile drawing to be format-agnostic
@@ -5676,8 +5676,8 @@ Unitsync:
 - windows users can use [VSync=-1] to use system default
 - allow selection of vsync rate
 
-- [feature] A new group AI, "MexUpgrader AI" has been added. See http://springrts.com/wiki/MexUpgrader_AI for more info.
-- [feature] Custom unit icons are supported. See http://springrts.com/wiki/CustomUnitIcons for more info.
+- [feature] A new group AI, "MexUpgrader AI" has been added. See https://springrts.com/wiki/MexUpgrader_AI for more info.
+- [feature] Custom unit icons are supported. See https://springrts.com/wiki/CustomUnitIcons for more info.
 - [bugfix] 'Quit and Resign' dialog now also appears when you're hosting, and stays hidden when the game is over.
 - [bugfix] Commands on enemy units (attack, reclaim) get canceled automatically when the unit leaves LOS / radar.
 - [change] 'Quit and Resign' dialog now only gives everything to allies (and not enemies) if they are still alive.
@@ -5806,7 +5806,7 @@ Unitsync:
 - Adds support for using arbitary team colors, teamcolor textures for 3do need to be slightly changed to accomendate this (see the base texture archive to see how its done)
 - Increased max camera zoom out (zooming to far can cause slowdowns/graphical glitches)
 - Added Radar group AI from colorblind: It notifies the player of incoming enemy units.
-- Added custom explosion generator: It can be enabled using "explosiongenerator=custom:SomeExplosionGeneratorName" in the weapon TDF. See the wiki page http://springrts.com/wiki/CustomExplosionGenerators for more info.
+- Added custom explosion generator: It can be enabled using "explosiongenerator=custom:SomeExplosionGeneratorName" in the weapon TDF. See the wiki page https://springrts.com/wiki/CustomExplosionGenerators for more info.
 - Tab will now bring zoom out to show all map in any camera mode, tab again zooms back to the mouse cursor.
 - Added GetGravity(), GetUnitDefHeight() and GetUnitDefRadius() to AI interface
 - Mod can now be selected in the single player menu.
