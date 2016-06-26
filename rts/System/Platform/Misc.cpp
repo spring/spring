@@ -473,9 +473,9 @@ std::string ExecuteProcess(const std::string& file, std::vector<std::string> arg
 			std::copy(argsStr.begin(), argsStr.end(), argsCStr);
 			argsCStr[argsStr.size()] = '\0';
 
-			if (!CreateProcess(args[0].c_str(), argsStr.c_str(), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
+			if (!CreateProcess(args[0].c_str(), argsCStr, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
 				delete[] argsCStr;
-				LOG("[%s] Error creating subprocess (%d)", __FUNCTION__, GetLastError());
+				LOG("[%s] Error creating subprocess (%lu)", __FUNCTION__, GetLastError());
 				return execError;
 			}
 			delete[] argsCStr;
