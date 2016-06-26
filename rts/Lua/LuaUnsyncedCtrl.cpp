@@ -2147,7 +2147,9 @@ static int ReloadOrRestart(const std::string& springArgs, const std::string& scr
 		std::vector<std::string> processArgs;
 
 		// arguments to Spring binary given by Lua code, if any
-		processArgs.push_back(springArgs);
+		if (!springArgs.empty()) {
+			processArgs.push_back(springArgs);
+		}
 
 		if (!scriptText.empty()) {
 			// create file 'script.txt' with contents given by Lua code

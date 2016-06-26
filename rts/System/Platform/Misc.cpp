@@ -453,17 +453,7 @@ std::string ExecuteProcess(const std::string& file, std::vector<std::string> arg
 	//   to a short path there
 	args.insert(args.begin(), GetShortFileName(file));
 
-	// "The array of pointers must be terminated by a NULL pointer."
-	// --> include one extra argument string and leave it NULL
-	std::vector<char*> processArgs(args.size() + 1, NULL);
 	std::string execError;
-
-	for (size_t a = 0; a < args.size(); ++a) {
-		const std::string& arg = args[a];
-		const size_t argSize = arg.length() + 1;
-
-		STRCPY_T(processArgs[a] = new char[argSize], argSize, arg.c_str());
-	}
 
 	if (asSubprocess) {
 		#ifdef WIN32
@@ -475,24 +465,43 @@ std::string ExecuteProcess(const std::string& file, std::vector<std::string> arg
 			ZeroMemory( &pi, sizeof(pi) );
 
 			std::string argsStr;
-			for (size_t a = 0; a < args.size(); ++a) {
+			for (size_t a = 1; a < args.size(); ++a) {
 				const std::string& arg = args[a];
 				argsStr += arg.c_str() + ' ';
 			}
-			argsStr += '\0';
+			char *argsCStr = new char[argsStr.size() + 1];
+			std::copy(argsStr.begin(), argsStr.end(), argsCStr);
+			argsCStr[argsStr.size()] = '\0';
 
-			CreateProcess(args[0].c_str(), argsStr.c_str(), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi);
-			return 0;
+			if (!CreateProcess(args[0].c_str(), argsStr.c_str(), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
+				delete[] argsCStr;
+				LOG("[%s] Error creating subprocess (%d)", __FUNCTION__, GetLastError());
+				return execError;
+			}
+			delete[] argsCStr;
+
+			return execError;
 		#else
 			int pid;
 			if ((pid = fork()) < 0) {
 				LOG("[%s] Error forking process", __FUNCTION__);
 			} else if (pid != 0) {
 				// TODO: Maybe useful to return the subprocess ID (pid)?
-				return 0;
+				return execError;
 			}
 		#endif
 	}
+
+	// "The array of pointers must be terminated by a NULL pointer."
+	// --> include one extra argument string and leave it NULL
+	std::vector<char*> processArgs(args.size() + 1, NULL);
+	for (size_t a = 0; a < args.size(); ++a) {
+		const std::string& arg = args[a];
+		const size_t argSize = arg.length() + 1;
+
+		STRCPY_T(processArgs[a] = new char[argSize], argSize, arg.c_str());
+	}
+
 	#ifdef WIN32
 		#define EXECVP _execvp
 	#else
