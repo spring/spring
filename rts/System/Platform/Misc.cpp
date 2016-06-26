@@ -443,7 +443,7 @@ std::string GetShortFileName(const std::string& file) {
 	return file;
 }
 
-std::string ExecuteProcess(const std::string& file, std::vector<std::string> args)
+std::string ExecuteProcess(const std::string& file, std::vector<std::string> args, bool asSubprocess)
 {
 	// "The first argument, by convention, should point to
 	// the filename associated with the file being executed."
@@ -465,11 +465,38 @@ std::string ExecuteProcess(const std::string& file, std::vector<std::string> arg
 		STRCPY_T(processArgs[a] = new char[argSize], argSize, arg.c_str());
 	}
 
-#ifdef WIN32
-	#define EXECVP _execvp
-#else
-	#define EXECVP execvp
-#endif
+	if (asSubprocess) {
+		#ifdef WIN32
+		    STARTUPINFO si;
+			PROCESS_INFORMATION pi;
+
+			ZeroMemory( &si, sizeof(si) );
+			si.cb = sizeof(si);
+			ZeroMemory( &pi, sizeof(pi) );
+
+			std::string argsStr;
+			for (size_t a = 0; a < args.size(); ++a) {
+				const std::string& arg = args[a];
+				argsStr += arg.c_str();
+			}
+
+			CreateProcess(args[0].c_str(), argsStr.c_str(), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi));
+			return 0;
+		#else
+			int pid;
+			if ((pid = fork()) < 0) {
+				LOG("[%s] Error forking process", __FUNCTION__);
+			} else if (pid != 0) {
+				// TODO: Maybe useful to return the subprocess ID (pid)?
+				return 0;
+			}
+		#endif
+	}
+	#ifdef WIN32
+		#define EXECVP _execvp
+	#else
+		#define EXECVP execvp
+	#endif
 	if (EXECVP(args[0].c_str(), &processArgs[0]) == -1) {
 		LOG("[%s] error: \"%s\" %s (%d)", __FUNCTION__, args[0].c_str(), (execError = strerror(errno)).c_str(), errno);
 	}

@@ -2158,19 +2158,17 @@ static int ReloadOrRestart(const std::string& springArgs, const std::string& scr
 
 			processArgs.push_back(scriptFullName);
 		}
-
-	#ifdef _WIN32
-		// else OpenAL crashes when using execvp
-		ISound::Shutdown();
-	#endif
-		// close local socket to avoid "bind: Address already in use"
-		// not needed when using start
 		if (!isStart) {
+			#ifdef _WIN32
+				// else OpenAL crashes when using execvp
+				ISound::Shutdown();
+			#endif
+			// close local socket to avoid "bind: Address already in use"
 			SafeDelete(gameServer);
 		}
 
 		LOG("[%s] Spring \"%s\" should be restarting", __FUNCTION__, springFullName.c_str());
-		Platform::ExecuteProcess(springFullName, processArgs);
+		Platform::ExecuteProcess(springFullName, processArgs, isStart);
 
 		// only reached on failure
 		return 1;
@@ -2197,13 +2195,6 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 
 int LuaUnsyncedCtrl::Start(lua_State* L)
 {
-	int pid;
-	if ((pid = fork()) < 0) {
-		luaL_error(L, "Forking child process failed");
-	} else if (pid != 0) {
-		lua_pushnumber(L, pid);
-		return 1;
-	}
 	if (ReloadOrRestart(luaL_checkstring(L, 1), luaL_checkstring(L, 2), true) != 0) {
 		lua_pushboolean(L, false);
 		return 1;
