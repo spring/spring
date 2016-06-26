@@ -465,7 +465,7 @@ std::string ExecuteProcess(const std::string& file, std::vector<std::string> arg
 			ZeroMemory( &pi, sizeof(pi) );
 
 			std::string argsStr;
-			for (size_t a = 1; a < args.size(); ++a) {
+			for (size_t a = 0; a < args.size(); ++a) {
 				const std::string& arg = args[a];
 				argsStr += arg.c_str() + ' ';
 			}
