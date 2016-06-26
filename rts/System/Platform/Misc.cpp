@@ -477,8 +477,9 @@ std::string ExecuteProcess(const std::string& file, std::vector<std::string> arg
 			std::string argsStr;
 			for (size_t a = 0; a < args.size(); ++a) {
 				const std::string& arg = args[a];
-				argsStr += arg.c_str();
+				argsStr += arg.c_str() + " ";
 			}
+			argsStr[argsStr.size() - 1] = "\0";
 
 			CreateProcess(args[0].c_str(), argsStr.c_str(), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi));
 			return 0;
