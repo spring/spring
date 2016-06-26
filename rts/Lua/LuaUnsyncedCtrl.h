@@ -97,6 +97,7 @@ class LuaUnsyncedCtrl {
 
 		static int Reload(lua_State* L);
 		static int Restart(lua_State* L);
+		static int Start(lua_State* L);
 
 		static int SetWMIcon(lua_State* L);
 		static int SetWMCaption(lua_State* L);

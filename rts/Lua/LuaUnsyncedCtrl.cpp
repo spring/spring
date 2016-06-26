@@ -221,6 +221,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(Reload);
 	REGISTER_LUA_CFUNC(Restart);
+	REGISTER_LUA_CFUNC(Start);
 
 	REGISTER_LUA_CFUNC(SetWMIcon);
 	REGISTER_LUA_CFUNC(SetWMCaption);
@@ -2132,8 +2133,8 @@ int LuaUnsyncedCtrl::CreateDir(lua_State* L)
 
 /******************************************************************************/
 
-static int ReloadOrRestart(const std::string& springArgs, const std::string& scriptText) {
-	if (springArgs.empty()) {
+static int ReloadOrRestart(const std::string& springArgs, const std::string& scriptText, bool isStart=false) {
+	if (springArgs.empty() && !isStart) {
 		// signal SpringApp
 		gameSetup->setupText = scriptText;
 		gu->globalReload = true;
@@ -2163,7 +2164,10 @@ static int ReloadOrRestart(const std::string& springArgs, const std::string& scr
 		ISound::Shutdown();
 	#endif
 		// close local socket to avoid "bind: Address already in use"
-		SafeDelete(gameServer);
+		// not needed when using start
+		if (!isStart) {
+			SafeDelete(gameServer);
+		}
 
 		LOG("[%s] Spring \"%s\" should be restarting", __FUNCTION__, springFullName.c_str());
 		Platform::ExecuteProcess(springFullName, processArgs);
@@ -2184,6 +2188,23 @@ int LuaUnsyncedCtrl::Reload(lua_State* L)
 int LuaUnsyncedCtrl::Restart(lua_State* L)
 {
 	if (ReloadOrRestart(luaL_checkstring(L, 1), luaL_checkstring(L, 2)) != 0) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	return 0;
+}
+
+int LuaUnsyncedCtrl::Start(lua_State* L)
+{
+	int pid;
+	if ((pid = fork()) < 0) {
+		luaL_error(L, "Forking child process failed");
+	} else if (pid != 0) {
+		lua_pushnumber(L, pid);
+		return 1;
+	}
+	if (ReloadOrRestart(luaL_checkstring(L, 1), luaL_checkstring(L, 2), true) != 0) {
 		lua_pushboolean(L, false);
 		return 1;
 	}

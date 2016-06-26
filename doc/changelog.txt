@@ -30,6 +30,7 @@ Lua:
  - Add an optional weaponNum argument to SetUnitTarget.
  - Update shader errorlog even if compilation was successful
  - Remove updateMatrix argument in Spring.UnitScript.{Move,Turn} as matrices will be automatically updated if necessary.
+ - Add new Spring.Start callout for launching a new Spring instance without terminating the existing one.
 
 Save/Load:
  ! remove UseCREGSaveLoad and add /LuaSave which generates .slsf files
