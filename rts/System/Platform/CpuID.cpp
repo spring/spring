@@ -277,7 +277,7 @@ namespace springproc {
 
 	void CpuId::getIdsAmd()
 	{
-		LOG_L(L_WARNING,"[CpuId] ht/smt/cmt detection for AMD is not implemented! Using processor number reported by OS.");
+		LOG_L(L_DEBUG,"[CpuId] ht/smt/cmt detection for AMD is not implemented! Using processor number reported by OS.");
 	}
 
 	int CpuId::getCoreTotalNumber()
