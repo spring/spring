@@ -2683,7 +2683,7 @@ EXPORT(const char*) GetInfoValue(int infoIndex) {
 
 	try {
 		const InfoItem* infoItem = GetInfoItem(infoIndex);
-		value = GetStr(info_getValueAsString(infoItem));
+		value = GetStr(infoItem->GetValueAsString());
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
