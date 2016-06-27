@@ -913,7 +913,11 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 			fprintf(out, "\t\t\tarchivedata = {\n");
 
 			for (const auto& ii: archData.GetInfo()) {
-				fprintf(out, "\t\t\t\t%s = %s,\n", ii.first.c_str(), ii.second.GetValueAsString().c_str());
+				if (ii.second.valueType == INFO_VALUE_TYPE_STRING) {
+					SafeStr(out, std::string("\t\t\t\t" + ii.first + " = ").c_str(), ii.second.valueTypeString);
+				} else {
+					fprintf(out, "\t\t\t\t%s = %s,\n", ii.first.c_str(), ii.second.GetValueAsString().c_str());
+				}
 			}
 
 			std::vector<std::string> deps = archData.GetDependencies();
