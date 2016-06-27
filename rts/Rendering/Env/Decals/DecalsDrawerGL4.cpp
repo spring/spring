@@ -99,6 +99,12 @@ typedef float4 SAtlasTex;
 static std::unordered_map<std::string, SAtlasTex> atlasTexs;
 
 
+static std::string GetExtraTextureName(const std::string& s)
+{
+	return s + "_normal"; //FIXME
+}
+
+
 bool CDecalsDrawerGL4::Decal::IsValid() const
 {
 	return (size.x > 0);
@@ -113,13 +119,11 @@ bool CDecalsDrawerGL4::Decal::InView() const
 
 float CDecalsDrawerGL4::Decal::GetRating(bool inview_test) const
 {
-	//FIXME lua ones
-
 	float r = 0.f;
-	r += alpha * 10.f;
-	r += Clamp((size.x * size.y) * 0.1f, 0.0f, 1000.f);
-	r += 100 * (inview_test && InView());
-	//r += int(d.type) * 1111;
+	r += 10.f * alpha;
+	r += 100.f * (inview_test && InView());
+	r += 1000.f * Clamp((size.x * size.y) * 0.0001f, 0.0f, 1.0f);
+	r += 10000.f * int(type);
 	return r;
 }
 
@@ -176,7 +180,7 @@ void CDecalsDrawerGL4::Decal::SetTexture(const std::string& name)
 		texOffsets = it->second;
 	}
 
-	const auto it2 = atlasTexs.find(name + "_normal"); //FIXME
+	const auto it2 = atlasTexs.find(GetExtraTextureName(name));
 	if (it2 != atlasTexs.end()) {
 		texNormalOffsets = it2->second;
 	}
@@ -409,8 +413,8 @@ static inline void GetBuildingDecals(std::unordered_map<std::string, STex>& text
 			continue;
 
 		try {
-			textures[decalDef.groundDecalTypeName] = LoadTexture(decalDef.groundDecalTypeName);
-			textures[decalDef.groundDecalTypeName + "_normal"] = LoadTexture(decalDef.groundDecalTypeName + ".dds"); //FIXME
+			textures[                    decalDef.groundDecalTypeName ] = LoadTexture(decalDef.groundDecalTypeName);
+			textures[GetExtraTextureName(decalDef.groundDecalTypeName)] = LoadTexture(decalDef.groundDecalTypeName + ".dds"); //FIXME
 		} catch(const content_error& err) {
 			LOG_L(L_ERROR, "%s", err.what());
 		}
@@ -428,12 +432,13 @@ static inline void GetGroundScars(std::unordered_map<std::string, STex>& texture
 	const LuaTable scarsTable = resourcesParser.GetRoot().SubTable("graphics").SubTable("scars");
 
 	for (int i = 1; i <= scarsTable.GetLength(); ++i) {
-		std::string texName = scarsTable.GetString(i, IntToString(i, "scars/scar%i.bmp"));
+		std::string texName  = scarsTable.GetString(i, IntToString(i, "scars/scar%i.bmp"));
 		std::string texName2 = texName + ".dds"; //FIXME
+		auto name = IntToString(i);
 
 		try {
-			textures[IntToString(i)] = LoadTexture(texName);
-			textures[IntToString(i) + "_normal"] = LoadTexture(texName2);
+			textures[                    name ] = LoadTexture(texName);
+			textures[GetExtraTextureName(name)] = LoadTexture(texName2);
 		} catch(const content_error& err) {
 			LOG_L(L_ERROR, "%s", err.what());
 		}
@@ -510,7 +515,7 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 	glViewport(0, 0, atlas.GetAtlasSize().x, atlas.GetAtlasSize().y);
 	glSpringMatrix2dProj(atlas.GetAtlasSize().x, atlas.GetAtlasSize().y);
 
-	glClearColor(1.0f, 0.0f, 0.0f, 1.0f); //red
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // transparent black
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	glActiveTexture(GL_TEXTURE0);
@@ -1117,40 +1122,11 @@ void CDecalsDrawerGL4::UpdateOverlap()
 	if (!fboOverlap.IsValid())
 		return;
 
-	if ((overlapStage == 0) && (waitingDecalsForOverlapTest.size() <= (MAX_OVERLAP * 3)))
-		return;
+	std::vector<int> candidatesForOverlap = UpdateOverlap_PreCheck();
+	if ((overlapStage == 0) && candidatesForOverlap.empty())
+		return; // early-exit before GL stuff is done
 
-	if ((overlapStage == 1) && !waitingDecalsForOverlapTest.empty()) {
-		for (auto& p: waitingOverlapGlQueries) {
-			auto it = spring::find(waitingDecalsForOverlapTest, p.first);
-			if (it != waitingDecalsForOverlapTest.end()) {
-				// one of the decals changed, we need to restart the overlap test
-				overlapStage = 0;
-				for (auto& p: waitingOverlapGlQueries) {
-					glDeleteQueries(1, &p.second);
-					waitingDecalsForOverlapTest.push_back(p.first);
-				}
-				waitingOverlapGlQueries.clear();
-				break;
-			}
-		}
-	}
 
-	//FIXME
-	std::vector<int> candidatesForOverlap;
-	if (overlapStage == 0) {
-		if (waitingDecalsForOverlapTest.size() <= (MAX_OVERLAP * 4)) {
-			return;
-		}
-
-		candidatesForOverlap = std::move(CandidatesForOverlap());
-		waitingDecalsForOverlapTest.clear();
-		if (candidatesForOverlap.empty())
-			return;
-	}
-
-{
-	//SCOPED_TIMER("::CDecalsDrawerGL4::UpdateOverlap::DrawBegin");
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
 	fboOverlap.Bind();
 
@@ -1166,47 +1142,67 @@ void CDecalsDrawerGL4::UpdateOverlap()
 	glAlphaFunc(GL_GREATER, 0.0f);
 	glEnable(GL_STENCIL_TEST);
 	glStencilMask(0xFF);
-}
 
+
+	// either initialize or check queries
 	switch (overlapStage) {
 		case 0: {
-			SCOPED_TIMER("::CDecalsDrawerGL4::UpdateOverlap_stage1::");
-			UpdateOverlap_stage1();
+			UpdateOverlap_Initialize();
 			overlapStage = 1;
 		} break;
 		case 1: {
-			SCOPED_TIMER("::CDecalsDrawerGL4::UpdateOverlap_stage2::");
-			candidatesForOverlap = std::move(UpdateOverlap_stage2());
+			candidatesForOverlap = UpdateOverlap_CheckQueries();
 		} break;
 		default: overlapStage = 0;
 	}
 
+	// generate queries for next frame/call
 	if (candidatesForOverlap.empty()) {
 		assert(waitingOverlapGlQueries.empty());
 		overlapStage = 0;
 	} else {
-		glStencilFunc(GL_GREATER, MAX_OVERLAP, 0xFF);
-		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-
-		CVertexArray* va = GetVertexArray();
-		for (int i: candidatesForOverlap) {
-			Decal& d0 = decals[i];
-			GLuint q;
-			glGenQueries(1, &q);
-			glBeginQuery(GL_ANY_SAMPLES_PASSED_CONSERVATIVE, q);
-			va->Initialize();
-			DRAW_DECAL(va, &d0);
-			va->DrawArray2dT(GL_QUADS);
-			glEndQuery(GL_ANY_SAMPLES_PASSED_CONSERVATIVE);
-			waitingOverlapGlQueries.emplace_back(i, q);
-		}
+		UpdateOverlap_GenerateQueries(candidatesForOverlap);
 	}
 
-{
-	//SCOPED_TIMER("::CDecalsDrawerGL4::UpdateOverlap::DrawEnd");
+
 	glPopAttrib();
 	//fboOverlap.Unbind();
 }
+
+
+std::vector<int> CDecalsDrawerGL4::UpdateOverlap_PreCheck()
+{
+	std::vector<int> candidatesForOverlap;
+
+	// we are in a test already, check if one of the tested decals changed, if so we need to restart the test
+	if ((overlapStage == 1) && !waitingDecalsForOverlapTest.empty()) {
+		for (auto& p: waitingOverlapGlQueries) {
+			auto it = spring::find(waitingDecalsForOverlapTest, p.first);
+			if (it == waitingDecalsForOverlapTest.end())
+				continue;
+
+			// one of the decals changed, we need to restart the overlap test
+			overlapStage = 0;
+			for (auto& p: waitingOverlapGlQueries) {
+				glDeleteQueries(1, &p.second);
+				waitingDecalsForOverlapTest.push_back(p.first);
+			}
+			waitingOverlapGlQueries.clear();
+			break;
+		}
+	}
+
+	// not enough changed decals -> wait further
+	if ((overlapStage == 0) && (waitingDecalsForOverlapTest.size() <= (MAX_OVERLAP * 4)))
+		return candidatesForOverlap;
+
+	// only test those decals which overlap with others and add them to the vector
+	if (overlapStage == 0) {
+		candidatesForOverlap = CandidatesForOverlap();
+		waitingDecalsForOverlapTest.clear();
+	}
+
+	return candidatesForOverlap;
 }
 
 
@@ -1251,7 +1247,7 @@ std::vector<int> CDecalsDrawerGL4::CandidatesForOverlap() const
 }
 
 
-void CDecalsDrawerGL4::UpdateOverlap_stage1()
+void CDecalsDrawerGL4::UpdateOverlap_Initialize()
 {
 	glClearStencil(0);
 	glClear(GL_STENCIL_BUFFER_BIT);
@@ -1278,7 +1274,29 @@ void CDecalsDrawerGL4::UpdateOverlap_stage1()
 }
 
 
-std::vector<int> CDecalsDrawerGL4::UpdateOverlap_stage2()
+void CDecalsDrawerGL4::UpdateOverlap_GenerateQueries(const std::vector<int>& candidatesForOverlap)
+{
+	glStencilFunc(GL_GREATER, MAX_OVERLAP, 0xFF);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+	CVertexArray* va = GetVertexArray();
+	for (int i: candidatesForOverlap) {
+		Decal& d0 = decals[i];
+		GLuint q;
+		glGenQueries(1, &q);
+		glBeginQuery(GL_ANY_SAMPLES_PASSED_CONSERVATIVE, q);
+
+		va->Initialize();
+		DRAW_DECAL(va, &d0);
+		va->DrawArray2dT(GL_QUADS);
+
+		glEndQuery(GL_ANY_SAMPLES_PASSED_CONSERVATIVE);
+		waitingOverlapGlQueries.emplace_back(i, q);
+	}
+}
+
+
+std::vector<int> CDecalsDrawerGL4::UpdateOverlap_CheckQueries()
 {
 	// query the results of the last issued test (if any pixels were rendered for the decal)
 	std::vector<int> candidatesForRemoval;

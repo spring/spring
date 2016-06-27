@@ -35,6 +35,7 @@
 			void SetTexture(const std::string& name) {}
 			int GetIdx() const { return -1; }
 			std::string GetTexture() const { return ""; }
+
 			float3 pos;
 			float2 size;
 			float rot;
@@ -212,9 +213,12 @@ private:
 	void UpdateDecalsVBO();
 
 	void OptimizeGroups();
+
 	void UpdateOverlap();
-	void UpdateOverlap_stage1();
-	std::vector<int> UpdateOverlap_stage2();
+	std::vector<int> UpdateOverlap_PreCheck();
+	void UpdateOverlap_Initialize();
+	std::vector<int> UpdateOverlap_CheckQueries();
+	void UpdateOverlap_GenerateQueries(const std::vector<int>& candidatesForOverlap);
 	std::vector<int> CandidatesForOverlap() const;
 
 	void DrawDecals();
