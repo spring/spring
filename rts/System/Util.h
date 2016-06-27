@@ -190,6 +190,15 @@ namespace spring {
 	{
 		return std::find(c.begin(), c.end(), v);
 	}
+
+	template<typename T, typename UnaryPredicate>
+	static void map_erase_if(T& c, UnaryPredicate p)
+	{
+		for(auto it = c.begin(); it != c.end(); ) {
+			if( p(*it) ) it = c.erase(it);
+			else ++it;
+		}
+	}
 }
 
 
@@ -261,18 +270,6 @@ template<class T> void SafeDeleteArray(T*& a)
 	a = NULL;
 	delete [] tmp;
 }
-
-// set.erase(iterator++) is prone to crash with MSVC
-template <class S, class I>
-inline I set_erase(S &s, I i) {
-#ifdef _MSC_VER
-		return s.erase(i);
-#else
-		s.erase(i++);
-		return i;
-#endif
-}
-
 
 
 

@@ -163,7 +163,7 @@ void UDPListener::Update() {
 	for (ConnMap::iterator i = conn.begin(); i != conn.end(); ) {
 		if (i->second.expired()) {
 			LOG_L(L_DEBUG, "Connection closed: [%s]:%i", i->first.address().to_string().c_str(), i->first.port());
-			i = set_erase(conn, i);
+			i = conn.erase(i);
 			continue;
 		}
 		i->second.lock()->Update();
@@ -216,7 +216,7 @@ void UDPListener::UpdateConnections() {
 		boost::shared_ptr<UDPConnection> uc = i->second.lock();
 		if (uc && i->first != uc->GetEndpoint()) {
 			conn[uc->GetEndpoint()] = uc; // inserting does not invalidate iterators
-			i = set_erase(conn, i);
+			i = conn.erase(i);
 		}
 		else
 			++i;

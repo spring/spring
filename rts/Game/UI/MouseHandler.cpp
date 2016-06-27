@@ -941,7 +941,7 @@ void CMouseHandler::SafeDeleteCursor(CMouseCursor* cursor)
 
 	for (it = cursorFileMap.begin(); it != cursorFileMap.end(); ) {
 		if (it->second == cursor) {
-			it = set_erase(cursorFileMap, it);
+			it = cursorFileMap.erase(it);
 		} else {
 			++it;
 		}

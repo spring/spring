@@ -886,39 +886,19 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 	}
 
 	// First delete all outdated information
-	// TODO: this pattern should be moved into an utility function..
-	for (std::map<std::string, ArchiveInfo>::iterator i = archiveInfos.begin(); i != archiveInfos.end(); ) {
-		if (!i->second.updated) {
-			i = set_erase(archiveInfos, i);
-		} else {
-			++i;
-		}
-	}
-	for (std::map<std::string, BrokenArchive>::iterator i = brokenArchives.begin(); i != brokenArchives.end(); ) {
-		if (!i->second.updated) {
-			i = set_erase(brokenArchives, i);
-		} else {
-			++i;
-		}
-	}
+	spring::map_erase_if(archiveInfos, [](const decltype(archiveInfos)::value_type& p) {
+		return !p.second.updated;
+	});
+	spring::map_erase_if(brokenArchives, [](const decltype(brokenArchives)::value_type& p) {
+		return !p.second.updated;
+	});
 
 	fprintf(out, "local archiveCache = {\n\n");
 	fprintf(out, "\tinternalver = %i,\n\n", INTERNAL_VER);
+	fprintf(out, "\tarchives = {  -- count = %u\n", unsigned(archiveInfos.size()));
 
-#ifdef _WIN64 //fprintf sometimes spews false warnings over %I64u
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat"
-#endif
-
-	fprintf(out, "\tarchives = {  -- count = " _STPF_ "\n", archiveInfos.size());
-
-#ifdef _WIN64
-#pragma GCC diagnostic pop
-#endif
-
-	std::map<std::string, ArchiveInfo>::const_iterator arcIt;
-	for (arcIt = archiveInfos.begin(); arcIt != archiveInfos.end(); ++arcIt) {
-		const ArchiveInfo& arcInfo = arcIt->second;
+	for (const auto& arcIt: archiveInfos) {
+		const ArchiveInfo& arcInfo = arcIt.second;
 
 		fprintf(out, "\t\t{\n");
 		SafeStr(out, "\t\t\tname = ",              arcInfo.origName);
@@ -932,23 +912,8 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 		if (!archData.GetName().empty()) {
 			fprintf(out, "\t\t\tarchivedata = {\n");
 
-			const std::map<std::string, InfoItem>& info = archData.GetInfo();
-			std::map<std::string, InfoItem>::const_iterator ii;
-			for (ii = info.begin(); ii != info.end(); ++ii) {
-				switch (ii->second.valueType) {
-					case INFO_VALUE_TYPE_STRING: {
-						SafeStr(out, std::string("\t\t\t\t" + ii->first + " = ").c_str(), ii->second.valueTypeString);
-					} break;
-					case INFO_VALUE_TYPE_INTEGER: {
-						fprintf(out, "\t\t\t\t%s = %d,\n", ii->first.c_str(), ii->second.value.typeInteger);
-					} break;
-					case INFO_VALUE_TYPE_FLOAT: {
-						fprintf(out, "\t\t\t\t%s = %f,\n", ii->first.c_str(), ii->second.value.typeFloat);
-					} break;
-					case INFO_VALUE_TYPE_BOOL: {
-						fprintf(out, "\t\t\t\t%s = %d,\n", ii->first.c_str(), (int)ii->second.value.typeBool);
-					} break;
-				}
+			for (const auto& ii: archData.GetInfo()) {
+				fprintf(out, "\t\t\t\t%s = %s,\n", ii.first.c_str(), ii.second.GetValueAsString().c_str());
 			}
 
 			std::vector<std::string> deps = archData.GetDependencies();
@@ -973,23 +938,13 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 
 	fprintf(out, "\t},\n\n"); // close 'archives'
 
-#ifdef _WIN64 //fprintf sometimes spews false warnings over %I64u
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat"
-#endif
+	fprintf(out, "\tbrokenArchives = {  -- count = %u\n", unsigned(brokenArchives.size()));
 
-	fprintf(out, "\tbrokenArchives = {  -- count = " _STPF_ "\n", brokenArchives.size());
-
-#ifdef _WIN64
-#pragma GCC diagnostic pop
-#endif
-
-	std::map<std::string, BrokenArchive>::const_iterator bai;
-	for (bai = brokenArchives.begin(); bai != brokenArchives.end(); ++bai) {
-		const BrokenArchive& ba = bai->second;
+	for (const auto& bai: brokenArchives) {
+		const BrokenArchive& ba = bai.second;
 
 		fprintf(out, "\t\t{\n");
-		SafeStr(out, "\t\t\tname = ", bai->first);
+		SafeStr(out, "\t\t\tname = ", bai.first);
 		SafeStr(out, "\t\t\tpath = ", ba.path);
 		fprintf(out, "\t\t\tmodified = \"%u\",\n", ba.modified);
 		SafeStr(out, "\t\t\tproblem = ", ba.problem);
@@ -1008,13 +963,11 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 }
 
 
-static bool archNameCompare(const CArchiveScanner::ArchiveData& a, const CArchiveScanner::ArchiveData& b)
-{
-	return (a.GetNameVersioned() < b.GetNameVersioned());
-}
 static void sortByName(std::vector<CArchiveScanner::ArchiveData>& data)
 {
-	std::sort(data.begin(), data.end(), archNameCompare);
+	std::sort(data.begin(), data.end(), [](const CArchiveScanner::ArchiveData& a, const CArchiveScanner::ArchiveData& b){
+		return (a.GetNameVersioned() < b.GetNameVersioned());
+	});
 }
 
 std::vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetPrimaryMods() const

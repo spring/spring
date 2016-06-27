@@ -11,25 +11,28 @@
 
 static const char* InfoItem_badKeyChars = " =;\r\n\t";
 
-std::string info_getValueAsString(const InfoItem* infoItem) {
-
+std::string InfoItem::GetValueAsString() const {
 	assert(infoItem != NULL);
 
 	std::string stringValue = "";
 
-	switch (infoItem->valueType) {
+	switch (valueType) {
 		case INFO_VALUE_TYPE_STRING: {
-			stringValue = infoItem->valueTypeString;
+			stringValue = valueTypeString;
 		} break;
 		case INFO_VALUE_TYPE_INTEGER: {
-			stringValue = IntToString(infoItem->value.typeInteger);
+			stringValue = IntToString(value.typeInteger);
 		} break;
 		case INFO_VALUE_TYPE_FLOAT: {
-			stringValue = FloatToString(infoItem->value.typeFloat);
+			stringValue = FloatToString(value.typeFloat);
 		} break;
 		case INFO_VALUE_TYPE_BOOL: {
-			stringValue = IntToString((int) infoItem->value.typeBool);
+			stringValue = (value.typeBool) ? "true" : "false";
+			//stringValue = IntToString((int)value.typeBool);
 		} break;
+		default: {
+			stringValue = "unknown_error";
+		}
 	}
 
 	return stringValue;

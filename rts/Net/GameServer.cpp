@@ -735,7 +735,7 @@ void CGameServer::CheckSync()
 				if (p.myState < GameParticipant::DISCONNECTED)
 					p.syncResponse.erase(*f);
 			}
-			f = set_erase(outstandingSyncFrames, f);
+			f = outstandingSyncFrames.erase(f);
 		} else
 			++f;
 	}
