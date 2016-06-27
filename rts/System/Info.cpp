@@ -11,7 +11,7 @@
 
 static const char* InfoItem_badKeyChars = " =;\r\n\t";
 
-std::string InfoItem::GetValueAsString() const {
+std::string InfoItem::GetValueAsString(const bool convBooltoInt) const {
 	std::string stringValue = "";
 
 	switch (valueType) {
@@ -25,8 +25,11 @@ std::string InfoItem::GetValueAsString() const {
 			stringValue = FloatToString(value.typeFloat);
 		} break;
 		case INFO_VALUE_TYPE_BOOL: {
-			stringValue = (value.typeBool) ? "true" : "false";
-			//stringValue = IntToString((int)value.typeBool);
+			if (convBooltoInt) {
+				stringValue = IntToString((int)value.typeBool);
+			} else {
+				stringValue = (value.typeBool) ? "true" : "false";
+			}
 		} break;
 		default: {
 			stringValue = "unknown_error";

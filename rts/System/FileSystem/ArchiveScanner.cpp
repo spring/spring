@@ -916,7 +916,7 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 				if (ii.second.valueType == INFO_VALUE_TYPE_STRING) {
 					SafeStr(out, std::string("\t\t\t\t" + ii.first + " = ").c_str(), ii.second.valueTypeString);
 				} else {
-					fprintf(out, "\t\t\t\t%s = %s,\n", ii.first.c_str(), ii.second.GetValueAsString().c_str());
+					fprintf(out, "\t\t\t\t%s = %s,\n", ii.first.c_str(), ii.second.GetValueAsString(false).c_str());
 				}
 			}
 

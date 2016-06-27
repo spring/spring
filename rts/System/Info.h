@@ -70,7 +70,7 @@ public:
 	std::string valueTypeString;
 
 public:
-	std::string GetValueAsString() const;
+	std::string GetValueAsString(const bool convBooltoInt = true) const;
 };
 
 void info_convertToStringValue(InfoItem* infoItem);
