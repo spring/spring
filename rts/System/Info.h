@@ -73,7 +73,6 @@ public:
 	std::string GetValueAsString() const;
 };
 
-static std::string info_getValueAsString(const InfoItem* infoItem) { return infoItem->GetValueAsString(); }
 void info_convertToStringValue(InfoItem* infoItem);
 
 const char* info_convertTypeToString(InfoValueType infoValueType);

@@ -12,8 +12,6 @@
 static const char* InfoItem_badKeyChars = " =;\r\n\t";
 
 std::string InfoItem::GetValueAsString() const {
-	assert(infoItem != NULL);
-
 	std::string stringValue = "";
 
 	switch (valueType) {
@@ -42,7 +40,7 @@ void info_convertToStringValue(InfoItem* infoItem) {
 
 	assert(infoItem != NULL);
 
-	infoItem->valueTypeString = info_getValueAsString(infoItem);
+	infoItem->valueTypeString = infoItem->GetValueAsString();
 	infoItem->valueType = INFO_VALUE_TYPE_STRING;
 }
 

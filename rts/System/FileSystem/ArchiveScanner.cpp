@@ -287,7 +287,7 @@ std::string CArchiveScanner::ArchiveData::GetInfoValueString(const std::string& 
 		if (infoItem->valueType == INFO_VALUE_TYPE_STRING) {
 			valueString = infoItem->valueTypeString;
 		} else {
-			valueString = info_getValueAsString(infoItem);
+			valueString = infoItem->GetValueAsString();
 		}
 	}
 

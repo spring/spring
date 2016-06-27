@@ -144,7 +144,7 @@ void SelectionWidget::UpdateAvailableScripts()
 	for(int i=0; i<luaAIInfos.size(); i++) {
 		for (int j=0; j<luaAIInfos[i].size(); j++) {
 			if (luaAIInfos[i][j].key==SKIRMISH_AI_PROPERTY_SHORT_NAME)
-				availableScripts.push_back(info_getValueAsString(&luaAIInfos[i][j]));
+				availableScripts.push_back(luaAIInfos[i][j].GetValueAsString());
 		}
 	}
 
@@ -160,7 +160,7 @@ void SelectionWidget::UpdateAvailableScripts()
 	for (CAIScriptHandler::ScriptList::iterator it = scriptList.begin(); it != scriptList.end(); ++it) {
 		availableScripts.push_back(*it);
 	}
-	
+
 	for (std::string &scriptName: availableScripts) {
 		if (scriptName == userScript) {
 			return;
@@ -180,7 +180,7 @@ void SelectionWidget::ShowScriptList()
 	for (std::string &scriptName: availableScripts) {
 		curSelect->list->AddItem(scriptName, "");
 	}
-	
+
 
 	curSelect->list->SetCurrentItem(userScript);
 }
