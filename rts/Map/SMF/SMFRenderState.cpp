@@ -227,6 +227,7 @@ void SMFRenderStateGLSL::Update(
 			glslShaders[n]->SetUniform3v("groundAmbientColor",  &sunLighting->groundAmbientColor[0]);
 			glslShaders[n]->SetUniform3v("groundDiffuseColor",  &sunLighting->groundDiffuseColor[0]);
 			glslShaders[n]->SetUniform3v("groundSpecularColor", &sunLighting->groundSpecularColor[0]);
+			glslShaders[n]->SetUniform  ("groundSpecularExponent", sunLighting->specularExponent);
 			glslShaders[n]->SetUniform  ("groundShadowDensity", sky->GetLight()->GetGroundShadowDensity());
 
 			glslShaders[n]->SetUniform3v("waterMinColor",    &mapInfo->water.minColor[0]);

@@ -33,6 +33,7 @@ uniform vec2 specularTexGen; // 1.0/mapSize
 uniform vec3 groundAmbientColor;
 uniform vec3 groundDiffuseColor;
 uniform vec3 groundSpecularColor;
+uniform float groundSpecularExponent;
 uniform float groundShadowDensity;
 
 uniform vec2 mapHeights; // min & max height on the map
@@ -255,7 +256,7 @@ vec3 DynamicLighting(vec3 normal, vec3 diffuseCol, vec3 specularCol, float specu
 		float lightScale = float(lightDistance <= lightRadius);
 		float lightCosAngDiff = clamp(dot(normal, lightVec / lightDistance), 0.0, 1.0);
 		//clamp lightCosAngSpec from 0.001 because this will later be in a power function
-		//results are undefined if x==0 or if x==0 and y==0. 
+		//results are undefined if x==0 or if x==0 and y==0.
 		float lightCosAngSpec = clamp(dot(normal, normalize(halfVec)), 0.001, 1.0);
 	#ifdef OGL_SPEC_ATTENUATION
 		float lightAttenuation =
@@ -342,7 +343,7 @@ void main() {
 	{
 		detailCol = GetDetailTextureColor(specTexCoords);
 	}
-	#else 
+	#else
 	{
 		// x-component modulates mixing of normals
 		// y-component contains the detail color (splatDetailNormal.a if SMF_DETAIL_NORMAL_DIFFUSE_ALPHA)
@@ -433,12 +434,18 @@ void main() {
 #ifdef SMF_SPECULAR_LIGHTING
 	specularCol = texture2D(specularTex, specTexCoords);
 #else
-	specularCol = vec4(groundSpecularColor, 0.1);
+	specularCol = vec4(groundSpecularColor, 1.0);
 #endif
 
 	#ifndef DEFERRED_MODE
 		// sun specular lighting contribution
-		float specularExp  = specularCol.a * 16.0;
+		#ifdef SMF_SPECULAR_LIGHTING
+			float specularExp  = specularCol.a * 16.0;
+		#else
+			float specularExp  = groundSpecularExponent;
+		#endif
+
+
 		float specularPow  = pow(cosAngleSpecular, specularExp);
 
 		vec3  specularInt  = specularCol.rgb * specularPow;
