@@ -320,10 +320,10 @@ void CUnit::PreInit(const UnitLoadParams& params)
 
 	heading  = GetHeadingFromFacing(buildFacing);
 	upright  = unitDef->upright;
-	UpdateDirVectors(!upright);
 
 	SetVelocity(params.speed);
 	Move((params.pos).cClampInMap(), false);
+	UpdateDirVectors(!upright);
 	SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
 	SetRadiusAndHeight(model);
 	UpdateMidAndAimPos();
