@@ -180,6 +180,8 @@ private:
 	 */
 	unsigned int GetCRC(const std::string& filename);
 
+	bool CheckCachedData(const std::string& fullName, unsigned* modified, bool doChecksum);
+
 	/**
 	 * Returns a value > 0 if the file is rated as a meta-file.
 	 * First class means, it is essential for the archive, and will be read by

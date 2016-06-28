@@ -530,59 +530,13 @@ static bool IsBaseContent(const std::string& fileName)
 
 void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 {
+	unsigned modifiedTime;
+	if (CheckCachedData(fullName, &modifiedTime, doChecksum))
+		return;
+
 	const std::string fn    = FileSystem::GetFilename(fullName);
 	const std::string fpath = FileSystem::GetDirectory(fullName);
 	const std::string lcfn  = StringToLower(fn);
-
-	// Stat file
-	struct stat info = {0};
-	int statfailed = stat(fullName.c_str(), &info);
-
-	// If stat fails, assume the archive is not broken nor cached
-	if (!statfailed) {
-		// Determine whether this archive has earlier be found to be broken
-		std::map<std::string, BrokenArchive>::iterator bai = brokenArchives.find(lcfn);
-		if (bai != brokenArchives.end()) {
-			if ((unsigned)info.st_mtime == bai->second.modified && fpath == bai->second.path) {
-				bai->second.updated = true;
-				return;
-			}
-		}
-
-		// Determine whether to rely on the cached info or not
-		std::map<std::string, ArchiveInfo>::iterator aii = archiveInfos.find(lcfn);
-		if (aii != archiveInfos.end()) {
-			// This archive may have been obsoleted, do not process it if so
-			if (!aii->second.replaced.empty()) {
-				return;
-			}
-
-			if ((unsigned)info.st_mtime == aii->second.modified && fpath == aii->second.path) {
-				// cache found update checksum if wanted
-				aii->second.updated = true;
-				if (doChecksum && (aii->second.checksum == 0)) {
-					aii->second.checksum = GetCRC(fullName);
-				}
-				return;
-			} else {
-				if (aii->second.updated) {
-					const std::string filename = aii->first;
-					LOG_L(L_ERROR, "Found a \"%s\" already in \"%s\", ignoring.", fullName.c_str(), (aii->second.path + aii->second.origName).c_str());
-					if (IsBaseContent(filename)) {
-						throw user_error(std::string("duplicate base content detected:\n\t") + aii->second.path + std::string("\n\t") + fpath
-							+ std::string("\nPlease fix your configuration/installation as this can cause desyncs!"));
-					}
-					return;
-				}
-
-				// If we are here, we could have invalid info in the cache
-				// Force a reread if it is a directory archive (.sdd), as
-				// st_mtime only reflects changes to the directory itself,
-				// not the contents.
-				archiveInfos.erase(aii);
-			}
-		}
-	}
 
 	boost::scoped_ptr<IArchive> ar(archiveLoader.OpenArchive(fullName));
 	if (!ar || !ar->IsOpen()) {
@@ -591,7 +545,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 		// record it as broken, so we don't need to look inside everytime
 		BrokenArchive& ba = brokenArchives[lcfn];
 		ba.path = fpath;
-		ba.modified = info.st_mtime;
+		ba.modified = modifiedTime;
 		ba.updated = true;
 		ba.problem = "Unable to open archive";
 		return;
@@ -626,7 +580,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 		// record it as broken, so we don't need to look inside everytime
 		BrokenArchive& ba = brokenArchives[lcfn];
 		ba.path = fpath;
-		ba.modified = info.st_mtime;
+		ba.modified = modifiedTime;
 		ba.updated = true;
 		ba.problem = error;
 		return;
@@ -660,12 +614,73 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 	}
 
 	ai.path = fpath;
-	ai.modified = info.st_mtime;
+	ai.modified = modifiedTime;
 	ai.origName = fn;
 	ai.updated = true;
 	ai.checksum = (doChecksum) ? GetCRC(fullName) : 0;
 	archiveInfos[lcfn] = ai;
 }
+
+
+bool CArchiveScanner::CheckCachedData(const std::string& fullName, unsigned* modified, bool doChecksum)
+{
+	const std::string fn    = FileSystem::GetFilename(fullName);
+	const std::string fpath = FileSystem::GetDirectory(fullName);
+	const std::string lcfn  = StringToLower(fn);
+
+	// If stat fails, assume the archive is not broken nor cached
+	struct stat info;
+	const int statfailed = stat(fullName.c_str(), &info);
+	*modified = info.st_mtime;
+	if (statfailed)
+		return false;
+
+	// Determine whether this archive has earlier be found to be broken
+	std::map<std::string, BrokenArchive>::iterator bai = brokenArchives.find(lcfn);
+	if (bai != brokenArchives.end()) {
+		if ((unsigned)info.st_mtime == bai->second.modified && fpath == bai->second.path) {
+			bai->second.updated = true;
+			return true;
+		}
+	}
+
+	// Determine whether to rely on the cached info or not
+	std::map<std::string, ArchiveInfo>::iterator aii = archiveInfos.find(lcfn);
+	if (aii != archiveInfos.end()) {
+		// This archive may have been obsoleted, do not process it if so
+		if (!aii->second.replaced.empty()) {
+			return true;
+		}
+
+		if ((unsigned)info.st_mtime == aii->second.modified && fpath == aii->second.path) {
+			// cache found update checksum if wanted
+			aii->second.updated = true;
+			if (doChecksum && (aii->second.checksum == 0)) {
+				aii->second.checksum = GetCRC(fullName);
+			}
+			return true;
+		}
+
+		if (aii->second.updated) {
+			const std::string filename = aii->first;
+			LOG_L(L_ERROR, "Found a \"%s\" already in \"%s\", ignoring.", fullName.c_str(), (aii->second.path + aii->second.origName).c_str());
+			if (IsBaseContent(filename)) {
+				throw user_error(std::string("duplicate base content detected:\n\t") + aii->second.path + std::string("\n\t") + fpath
+					+ std::string("\nPlease fix your configuration/installation as this can cause desyncs!"));
+			}
+			return true; // ignore
+		}
+
+		// If we are here, we could have invalid info in the cache
+		// Force a reread if it is a directory archive (.sdd), as
+		// st_mtime only reflects changes to the directory itself,
+		// not the contents.
+		archiveInfos.erase(aii);
+	}
+
+	return false;
+}
+
 
 bool CArchiveScanner::ScanArchiveLua(IArchive* ar, const std::string& fileName, ArchiveInfo& ai, std::string& err)
 {
