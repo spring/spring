@@ -192,7 +192,7 @@ namespace ArchiveNameResolver {
 	{
 		if (!ParseRapidUri(lazyName, tag))
 			return false;
-		tag = GetRapidName(tag);
+		tag = GetRapidPackageFromTag(tag);
 		return !tag.empty();
 	}
 

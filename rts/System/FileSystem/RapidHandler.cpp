@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "DataDirsAccess.h"
-#include "DataDirLocater.h"
 #include "FileQueryFlags.h"
 #include "System/Log/ILog.h"
 
@@ -15,6 +14,10 @@ static const int bufsize = 4096;
 
 class RapidEntry{
 public:
+	RapidEntry() {
+		value.resize(entries);
+	}
+
 	RapidEntry(const std::string& line) {
 		value.resize(entries);
 		size_t pos = 0, start = 0;
@@ -24,12 +27,23 @@ public:
 			start = pos + 1;
 		}
 	}
-	const std::string& GetTag()
+
+	const std::string& GetTag() const
 	{
 		return value[0];
 	}
 
-	const std::string& GetName()
+	const std::string& GetPackageHash() const
+	{
+		return value[1];
+	}
+
+	const std::string& GetParentGameName() const
+	{
+		return value[2];
+	}
+
+	const std::string& GetName() const
 	{
 		return value[3];
 	}
@@ -42,44 +56,54 @@ private:
 
 
 
-
-static std::string GetNameFromFile(const std::string& tag, const std::string& name)
+template <typename Lambda>
+static bool GetRapidEntry(const std::string& file, RapidEntry* re, Lambda p)
 {
-	gzFile in = gzopen(name.c_str(), "rb");
+	gzFile in = gzopen(file.c_str(), "rb");
 	if (in == NULL) {
-		LOG_L(L_ERROR, "couldn't open %s", name.c_str());
-		return "";
+		LOG_L(L_ERROR, "couldn't open %s", file.c_str());
+		return false;
 	}
 
 	char buf[bufsize];
-	while (gzgets(in, buf, bufsize)!=NULL){
+	while (gzgets(in, buf, bufsize) != NULL) {
 		size_t len = strnlen(buf, bufsize);
 		if (len <= 2) continue; //line to short/invalid, skip
 		if (buf[len-1] == '\n') len--;
 		if (buf[len-1] == '\r') len--;
 
-		RapidEntry ent(std::string(buf, len));
-		if (ent.GetTag() == tag) {
-			return ent.GetName();
+		*re = RapidEntry(std::string(buf, len));
+		if (p(*re)) {
+			gzclose(in);
+			return true;
 		}
 	}
 	gzclose(in);
-	return "";
+	return false;
 }
 
-std::string GetRapidName(const std::string& tag)
+
+
+
+std::string GetRapidPackageFromTag(const std::string& tag)
 {
-	std::string res;
-	const std::vector<DataDir>& dirs = dataDirLocater.GetDataDirs();
-	for(DataDir dir: dirs) {
-		std::string path = dir.path + "rapid"; //TODO: does GetDataDirs() ensure paths to end with a delimn?
-		std::vector<std::string> files = dataDirsAccess.FindFiles(path, "versions.gz", FileQueryFlags::RECURSE);
-		for(const std::string file: files) {
-			res = GetNameFromFile(tag, file);
-			if (!res.empty())
-				return res;
-		}
+	const auto files = dataDirsAccess.FindFiles("rapid", "versions.gz", FileQueryFlags::RECURSE);
+	for (const std::string file: files) {
+		RapidEntry re;
+		if (GetRapidEntry(dataDirsAccess.LocateFile(file), &re, [&](const RapidEntry& re) { return re.GetTag() == tag; }))
+			return re.GetName();
 	}
 	return tag;
+}
+
+std::string GetRapidTagFromPackage(const std::string& pkg)
+{
+	const auto files = dataDirsAccess.FindFiles("rapid", "versions.gz", FileQueryFlags::RECURSE);
+	for (const std::string file: files) {
+		RapidEntry re;
+		if (GetRapidEntry(dataDirsAccess.LocateFile(file), &re, [&](const RapidEntry& re) { return re.GetPackageHash() == pkg; }))
+			return re.GetTag();
+	}
+	return "rapid_tag_unknown";
 }
 

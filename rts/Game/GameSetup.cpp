@@ -607,7 +607,7 @@ bool CGameSetup::Init(const std::string& buf)
 	LoadUnitRestrictions(file);
 
 	// Postprocessing
-	modName = GetRapidName(modName);
+	modName = GetRapidPackageFromTag(modName);
 	modName = archiveScanner->NameFromArchive(modName);
 
 	return true;
