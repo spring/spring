@@ -473,7 +473,8 @@ std::string ExecuteProcess(const std::string& file, std::vector<std::string> arg
 			std::copy(argsStr.begin(), argsStr.end(), argsCStr);
 			argsCStr[argsStr.size()] = '\0';
 
-			if (!CreateProcess(args[0].c_str(), argsCStr, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
+			LOG("[%s] Windows start process arguments: %s", __FUNCTION__, argsCStr);
+			if (!CreateProcess(NULL, argsCStr, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
 				delete[] argsCStr;
 				LOG("[%s] Error creating subprocess (%lu)", __FUNCTION__, GetLastError());
 				return execError;
