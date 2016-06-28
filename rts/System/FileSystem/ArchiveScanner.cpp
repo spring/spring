@@ -23,6 +23,8 @@
 #include "System/Util.h"
 #include "System/Exceptions.h"
 #include "System/ThreadPool.h"
+#include "System/FileSystem/RapidHandler.h"
+
 #if       !defined(DEDICATED) && !defined(UNITSYNC)
 #include "System/Platform/Watchdog.h"
 #endif // !defined(DEDICATED) && !defined(UNITSYNC)
@@ -686,7 +688,10 @@ bool CArchiveScanner::ScanArchiveLua(IArchive* ar, const std::string& fileName, 
 {
 	std::vector<boost::uint8_t> buf;
 	if (!ar->GetFile(fileName, buf) || buf.empty()) {
-		err = "Error reading " + fileName + " from " + ar->GetArchiveName();
+		err = "Error reading " + fileName;
+		if (ar->GetArchiveName().find(".sdp") != std::string::npos) {
+			err += " (archive's rapid tag: " + GetRapidTagFromPackage(FileSystem::GetBasename(ar->GetArchiveName())) + ")";
+		}
 		return false;
 	}
 
