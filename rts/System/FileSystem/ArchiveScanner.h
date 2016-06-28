@@ -112,11 +112,11 @@ public:
 
 public:
 	/// checksum of the given archive (without dependencies)
-	unsigned int GetSingleArchiveChecksum(const std::string& name) const;
+	unsigned int GetSingleArchiveChecksum(const std::string& name);
 	/// Calculate checksum of the given archive and all its dependencies
-	unsigned int GetArchiveCompleteChecksum(const std::string& name) const;
+	unsigned int GetArchiveCompleteChecksum(const std::string& name);
 	/// like GetArchiveCompleteChecksum, throws exception if mismatch
-	void CheckArchive(const std::string& name, unsigned checksum) const;
+	void CheckArchive(const std::string& name, unsigned checksum);
 	void ScanArchive(const std::string& fullName, bool checksum = false);
 
 	std::string ArchiveFromName(const std::string& s) const;
@@ -179,6 +179,7 @@ private:
 	 * Returns 0 if file could not be opened.
 	 */
 	unsigned int GetCRC(const std::string& filename);
+	void ComputeChecksumsOfAllDependencies(const std::string& filePath);
 
 	bool CheckCachedData(const std::string& fullName, unsigned* modified, bool doChecksum);
 

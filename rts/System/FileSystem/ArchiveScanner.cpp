@@ -23,6 +23,8 @@
 #include "System/Util.h"
 #include "System/Exceptions.h"
 #include "System/ThreadPool.h"
+#include "System/TimeProfiler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/RapidHandler.h"
 
 #if       !defined(DEDICATED) && !defined(UNITSYNC)
@@ -50,6 +52,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_ARCHIVESCANNER)
 const int INTERNAL_VER = 10;
 CArchiveScanner* archiveScanner = NULL;
 
+CONFIG(bool, FastArchiveScan).defaultValue(false).description("If enabled, it only generates archive checksums of used currently used ones.");
 
 
 /*
@@ -360,8 +363,10 @@ CArchiveScanner::CArchiveScanner()
 		scanDirs.push_back(*d + "games");
 		scanDirs.push_back(*d + "packages");
 	}
+
 	// ArchiveCache has been parsed at this point --> archiveInfos is populated
-	ScanDirs(scanDirs, true);
+	ScopedOnceTimer foo("CArchiveScanner");
+	ScanDirs(scanDirs, !configHandler->GetBool("FastArchiveScan"));
 	WriteCacheData(GetFilepath());
 }
 
@@ -814,6 +819,13 @@ unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 	return digest;
 }
 
+
+void CArchiveScanner::ComputeChecksumsOfAllDependencies(const std::string& filePath)
+{
+	ScanArchive(filePath, true);
+}
+
+
 void CArchiveScanner::ReadCacheData(const std::string& filename)
 {
 	if (!FileSystem::FileExists(filename)) {
@@ -1125,34 +1137,35 @@ std::string CArchiveScanner::MapNameToMapFile(const std::string& s) const
 	return s;
 }
 
-unsigned int CArchiveScanner::GetSingleArchiveChecksum(const std::string& name) const
+unsigned int CArchiveScanner::GetSingleArchiveChecksum(const std::string& filePath)
 {
-	std::string lcname = FileSystem::GetFilename(name);
+	ComputeChecksumsOfAllDependencies(filePath);
+	std::string lcname = FileSystem::GetFilename(filePath);
 	StringToLowerInPlace(lcname);
 
 	std::map<std::string, ArchiveInfo>::const_iterator aii = archiveInfos.find(lcname);
 	if (aii == archiveInfos.end()) {
-		LOG_SL(LOG_SECTION_ARCHIVESCANNER, L_WARNING, "%s checksum: not found (0)", name.c_str());
+		LOG_SL(LOG_SECTION_ARCHIVESCANNER, L_WARNING, "%s checksum: not found (0)", filePath.c_str());
 		return 0;
 	}
 
-	LOG_S(LOG_SECTION_ARCHIVESCANNER,"%s checksum: %d/%u", name.c_str(), aii->second.checksum, aii->second.checksum);
+	LOG_S(LOG_SECTION_ARCHIVESCANNER,"%s checksum: %d/%u", filePath.c_str(), aii->second.checksum, aii->second.checksum);
 	return aii->second.checksum;
 }
 
-unsigned int CArchiveScanner::GetArchiveCompleteChecksum(const std::string& name) const
+unsigned int CArchiveScanner::GetArchiveCompleteChecksum(const std::string& name)
 {
 	const std::vector<std::string>& ars = GetAllArchivesUsedBy(name);
 	unsigned int checksum = 0;
 
-	for (unsigned int a = 0; a < ars.size(); a++) {
-		checksum ^= GetSingleArchiveChecksum(ars[a]);
+	for (const std::string& filePath: ars) {
+		checksum ^= GetSingleArchiveChecksum(filePath);
 	}
 	LOG_S(LOG_SECTION_ARCHIVESCANNER, "archive checksum %s: %d/%u", name.c_str(), checksum, checksum);
 	return checksum;
 }
 
-void CArchiveScanner::CheckArchive(const std::string& name, unsigned checksum) const
+void CArchiveScanner::CheckArchive(const std::string& name, unsigned checksum)
 {
 	unsigned localChecksum = GetArchiveCompleteChecksum(name);
 
