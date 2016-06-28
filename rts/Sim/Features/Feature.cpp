@@ -134,21 +134,21 @@ void CFeature::ChangeTeam(int newTeam)
 
 bool CFeature::IsInLosForAllyTeam(int argAllyTeam) const
 {
-	if (alwaysVisible)
+	if (alwaysVisible || argAllyTeam == -1)
 		return true;
 
-	const bool inLOS = (argAllyTeam == -1 || losHandler->InLos(this->pos, argAllyTeam));
+	const bool isGaia = allyteam == std::max(0, teamHandler->GaiaAllyTeamID());
 
 	switch (modInfo.featureVisibility) {
 		case CModInfo::FEATURELOS_NONE:
 		default:
-			return inLOS;
+			return losHandler->InLos(pos, argAllyTeam);
 
 		// these next two only make sense when Gaia is enabled
 		case CModInfo::FEATURELOS_GAIAONLY:
-			return (this->allyteam == std::max(0, teamHandler->GaiaAllyTeamID()) || inLOS);
+			return (isGaia || losHandler->InLos(pos, argAllyTeam));
 		case CModInfo::FEATURELOS_GAIAALLIED:
-			return (this->allyteam == std::max(0, teamHandler->GaiaAllyTeamID()) || this->allyteam == argAllyTeam || inLOS);
+			return (isGaia || allyteam == argAllyTeam || losHandler->InLos(pos, argAllyTeam));
 
 		case CModInfo::FEATURELOS_ALL:
 			return true;
