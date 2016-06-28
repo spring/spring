@@ -466,8 +466,7 @@ std::string ExecuteProcess(const std::string& file, std::vector<std::string> arg
 
 			std::string argsStr;
 			for (size_t a = 0; a < args.size(); ++a) {
-				const std::string& arg = args[a];
-				argsStr += arg.c_str() + ' ';
+				argsStr += args[a] + ' ';
 			}
 			char *argsCStr = new char[argsStr.size() + 1];
 			std::copy(argsStr.begin(), argsStr.end(), argsCStr);
