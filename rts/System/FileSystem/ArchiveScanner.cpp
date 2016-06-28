@@ -23,13 +23,13 @@
 #include "System/Util.h"
 #include "System/Exceptions.h"
 #include "System/ThreadPool.h"
-#include "System/TimeProfiler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/RapidHandler.h"
 
-#if       !defined(DEDICATED) && !defined(UNITSYNC)
-#include "System/Platform/Watchdog.h"
-#endif // !defined(DEDICATED) && !defined(UNITSYNC)
+#if !defined(DEDICATED) && !defined(UNITSYNC)
+	#include "System/TimeProfiler.h"
+	#include "System/Platform/Watchdog.h"
+#endif
 
 
 #define LOG_SECTION_ARCHIVESCANNER "ArchiveScanner"
@@ -365,7 +365,9 @@ CArchiveScanner::CArchiveScanner()
 	}
 
 	// ArchiveCache has been parsed at this point --> archiveInfos is populated
+#if !defined(DEDICATED) && !defined(UNITSYNC)
 	ScopedOnceTimer foo("CArchiveScanner");
+#endif
 	ScanDirs(scanDirs, !configHandler->GetBool("FastArchiveScan"));
 	WriteCacheData(GetFilepath());
 }
