@@ -140,7 +140,7 @@ bool CPoolArchive::GetFileImpl(unsigned int fid, std::vector<boost::uint8_t>& bu
 	std::string path = dataDirsAccess.LocateFile(rpath);
 	gzFile in = gzopen(path.c_str(), "rb");
 	if (in == NULL){
-		throw content_error(boost::str(boost::format("couldn't open %s") % path));
+		return false;
 	}
 
 	unsigned int len = f->size;
