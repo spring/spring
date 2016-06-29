@@ -229,7 +229,6 @@ private:
 	bool haveSplatNormalDistribTexture; // true if we have splatDistrTex and at least one splat[Detail]NormalTex
 	bool haveDetailNormalDiffuseAlpha;
 
-	bool minimapOverride;
 	bool shadingTexUpdateNeeded;
 };
 

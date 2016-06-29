@@ -53,8 +53,6 @@ CSMFReadMap::CSMFReadMap(std::string mapname)
 	haveSplatNormalDistribTexture &= !mapInfo->smf.splatDistrTexName.empty();
 	haveDetailNormalDiffuseAlpha   =  mapInfo->smf.splatDetailNormalDiffuseAlpha;
 
-	minimapOverride = !(mapInfo->smf.minimapTexName.empty());
-
 	ParseHeader();
 	LoadHeightMap();
 	CReadMap::Initialize();
