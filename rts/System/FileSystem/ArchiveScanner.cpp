@@ -52,7 +52,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_ARCHIVESCANNER)
 const int INTERNAL_VER = 10;
 CArchiveScanner* archiveScanner = NULL;
 
-CONFIG(bool, FastArchiveScan).defaultValue(false).description("If enabled, it only generates archive checksums of used currently used ones.");
+CONFIG(bool, FastArchiveScan).defaultValue(false).description("If enabled, only generate archive checksums on-demand.");
 
 
 /*
@@ -822,7 +822,7 @@ unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 }
 
 
-void CArchiveScanner::ComputeChecksumsOfAllDependencies(const std::string& filePath)
+void CArchiveScanner::ComputeChecksumForArchive(const std::string& filePath)
 {
 	ScanArchive(filePath, true);
 }
@@ -1141,7 +1141,7 @@ std::string CArchiveScanner::MapNameToMapFile(const std::string& s) const
 
 unsigned int CArchiveScanner::GetSingleArchiveChecksum(const std::string& filePath)
 {
-	ComputeChecksumsOfAllDependencies(filePath);
+	ComputeChecksumForArchive(filePath);
 	std::string lcname = FileSystem::GetFilename(filePath);
 	StringToLowerInPlace(lcname);
 

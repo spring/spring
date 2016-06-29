@@ -179,7 +179,7 @@ private:
 	 * Returns 0 if file could not be opened.
 	 */
 	unsigned int GetCRC(const std::string& filename);
-	void ComputeChecksumsOfAllDependencies(const std::string& filePath);
+	void ComputeChecksumForArchive(const std::string& filePath);
 
 	bool CheckCachedData(const std::string& fullName, unsigned* modified, bool doChecksum);
 
