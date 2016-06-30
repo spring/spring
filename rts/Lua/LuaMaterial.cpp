@@ -327,6 +327,8 @@ void LuaMaterial::Parse(
 			useCamera = lua_isboolean(L, -1) && lua_toboolean(L, -1);
 			continue;
 		}
+
+		LOG_L(L_WARNING, "LuaMaterial: incorrect key \"%s\"", key.c_str());
 	}
 }
 
