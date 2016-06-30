@@ -176,9 +176,7 @@ vec4 GetSplatDetailTextureNormal(vec2 uv, out vec2 splatDetailStrength) {
 	splatDetailNormal.y = max(splatDetailNormal.y, 0.01);
 
 	#ifdef SMF_DETAIL_NORMAL_DIFFUSE_ALPHA
-		// trying to set it back to a range of [0, 1],
-		// maybe not in the way it was originally planned, but it will have to do for now
-		splatDetailStrength.y = (splatDetailNormal.a + dot(splatCofac, vec4(1.0))) * 0.125;
+		splatDetailStrength.y = clamp(splatDetailNormal.a, -1.0, 1.0);
 	#endif
 
 	// note: .xyz is intentionally not normalized here
