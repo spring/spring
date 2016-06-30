@@ -167,7 +167,7 @@ vec4 GetSplatDetailTextureNormal(vec2 uv, out vec2 splatDetailStrength) {
 	splatDetailStrength.x = min(1.0, dot(splatCofac, vec4(1.0)));
 
 	vec4 splatDetailNormal;
-		splatDetailNormal += ((texture2D(splatDetailNormalTex1, splatTexCoord0.st) * 2.0 - 1.0) * splatCofac.r);
+		splatDetailNormal  = ((texture2D(splatDetailNormalTex1, splatTexCoord0.st) * 2.0 - 1.0) * splatCofac.r);
 		splatDetailNormal += ((texture2D(splatDetailNormalTex2, splatTexCoord0.pq) * 2.0 - 1.0) * splatCofac.g);
 		splatDetailNormal += ((texture2D(splatDetailNormalTex3, splatTexCoord1.st) * 2.0 - 1.0) * splatCofac.b);
 		splatDetailNormal += ((texture2D(splatDetailNormalTex4, splatTexCoord1.pq) * 2.0 - 1.0) * splatCofac.a);
@@ -176,7 +176,9 @@ vec4 GetSplatDetailTextureNormal(vec2 uv, out vec2 splatDetailStrength) {
 	splatDetailNormal.y = max(splatDetailNormal.y, 0.01);
 
 	#ifdef SMF_DETAIL_NORMAL_DIFFUSE_ALPHA
-		splatDetailStrength.y = splatDetailNormal.a;
+		// trying to set it back to a range of [0, 1],
+		// maybe not in the way it was originally planned, but it will have to do for now
+		splatDetailStrength.y = (splatDetailNormal.a + dot(splatCofac, vec4(1.0))) * 0.125;
 	#endif
 
 	// note: .xyz is intentionally not normalized here
