@@ -675,25 +675,18 @@ void CBumpWater::Update()
 	windVec   = windndir * windStrength;
 */
 
-	glPushAttrib(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_ENABLE_BIT);
-
 	if (dynWaves)
 		UpdateDynWaves();
 
-	if (!shoreWaves) {
-		glPopAttrib();
-		return;
+	if (shoreWaves) {
+		SCOPED_TIMER("BumpWater::Update (Coastmap)");
+
+		if ((gs->frameNum % 10) == 0 && !heightmapUpdates.empty())
+			UploadCoastline();
+
+		if ((gs->frameNum % 10) == 5 && !coastmapAtlasRects.empty())
+			UpdateCoastmap();
 	}
-
-	SCOPED_TIMER("BumpWater::Update (Coastmap)");
-
-	if ((gs->frameNum % 10) == 0 && !heightmapUpdates.empty())
-		UploadCoastline();
-
-	if ((gs->frameNum % 10) == 5 && !coastmapAtlasRects.empty())
-		UpdateCoastmap();
-
-	glPopAttrib();
 }
 
 
@@ -844,6 +837,7 @@ void CBumpWater::UploadCoastline(const bool forceFull)
 void CBumpWater::UpdateCoastmap()
 {
 	coastFBO.Bind();
+	glPushAttrib(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_ENABLE_BIT);
 	blurShader->Enable();
 
 	glDisable(GL_BLEND);
@@ -924,6 +918,7 @@ void CBumpWater::UpdateCoastmap()
 
 	blurShader->Disable();
 	coastFBO.Detach(GL_COLOR_ATTACHMENT1_EXT);
+	glPopAttrib();
 	//coastFBO.Unbind();
 
 	//! generate mipmaps
@@ -968,6 +963,7 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 	}
 
 	dynWavesFBO.Bind();
+	glPushAttrib(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_ENABLE_BIT);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, normalTexture2);
 	glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
@@ -1013,6 +1009,7 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 		glPopMatrix();
 	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 
+	glPopAttrib();
 	dynWavesFBO.Unbind();
 
 	glBindTexture(GL_TEXTURE_2D, normalTexture);
