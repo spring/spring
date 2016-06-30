@@ -1220,14 +1220,16 @@ void CUnitDrawer::DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int te
 
 
 
-typedef const void (*DrawModelBuildStageFunc)(const CUnit*, const double*, const double*, const float3, bool);
+typedef const void (*DrawModelBuildStageFunc)(const CUnit*, const double*, const double*, bool);
 
-static const void DrawModelNoopBuildStage(const CUnit*, const double*, const double*, const float3, bool) {}
+static const void DrawModelNoopBuildStage(const CUnit*, const double*, const double*, bool)
+{
+}
+
 static const void DrawModelWireBuildStage(
 	const CUnit* unit,
 	const double* upperPlane,
 	const double* lowerPlane,
-	const float3 stageColor,
 	bool noLuaCall
 ) {
 	if (globalRendering->atiHacks) {
@@ -1240,11 +1242,9 @@ static const void DrawModelWireBuildStage(
 	}
 
 	// FFP-only drawing still needs raw colors
-	glColorf3(stageColor);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		CUnitDrawer::DrawUnitModel(unit, noLuaCall);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	// glColorf3(OnesVector);
 
 	if (globalRendering->atiHacks) {
 		glEnable(GL_CLIP_PLANE0);
@@ -1256,22 +1256,18 @@ static const void DrawModelFlatBuildStage(
 	const CUnit* unit,
 	const double* upperPlane,
 	const double* lowerPlane,
-	const float3 stageColor,
 	bool noLuaCall
 ) {
 	glClipPlane(GL_CLIP_PLANE0, upperPlane);
 	glClipPlane(GL_CLIP_PLANE1, lowerPlane);
 
-	glColorf3(stageColor);
-		CUnitDrawer::DrawUnitModel(unit, noLuaCall);
-	// glColorf3(OnesVector);
+	CUnitDrawer::DrawUnitModel(unit, noLuaCall);
 }
 
 static const void DrawModelFillBuildStage(
 	const CUnit* unit,
 	const double* upperPlane,
 	const double* lowerPlane,
-	const float3 stageColor,
 	bool noLuaCall
 ) {
 	if (globalRendering->atiHacks) {
@@ -1280,7 +1276,6 @@ static const void DrawModelFillBuildStage(
 		glClipPlane(GL_CLIP_PLANE0, upperPlane);
 	}
 
-	glColorf3(stageColor);
 	glPolygonOffset(1.0f, 1.0f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 		CUnitDrawer::DrawUnitModel(unit, noLuaCall);
@@ -1315,7 +1310,7 @@ void CUnitDrawer::DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCal
 	const float flatColorMult = 1.5f - wireColorMult;
 
 	const float3 frameColors[2] = {unit->unitDef->nanoColor, {color.r / 255.0f, color.g / 255.0f, color.b / 255.0f}};
-	const float3 stageColors[3] = {frameColors[globalRendering->teamNanospray], frameColors[globalRendering->teamNanospray], OnesVector};
+	const float3 stageColors[2] = {frameColors[globalRendering->teamNanospray], frameColors[globalRendering->teamNanospray]};
 	const float3 stageBounds    = {std::max(model->mins.y, -model->height), model->height, unit->buildProgress};
 
 	// Both clip planes move up. Clip plane 0 is the upper bound of the model,
@@ -1347,31 +1342,22 @@ void CUnitDrawer::DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCal
 	glEnable(GL_CLIP_PLANE0);
 	glEnable(GL_CLIP_PLANE1);
 
-
-	selState->SetNanoColor(float4(stageColors[0] * wireColorMult, 1.0f));
-	selState->DisableTextures(unitDrawer);
-
 	// wireframe, unconditional
+	selState->SetNanoColor(float4(stageColors[0] * wireColorMult, 1.0f));
 	stageFunc = drawModelBuildStageFuncs[(STAGE_WIRE + 1) * true];
-	stageFunc(unit, &upperPlanes[STAGE_WIRE * 4], &lowerPlanes[STAGE_WIRE * 4], stageColors[0] * wireColorMult, noLuaCall);
-
-
-	selState->SetNanoColor(float4(stageColors[1] * flatColorMult, 1.0f));
+	stageFunc(unit, &upperPlanes[STAGE_WIRE * 4], &lowerPlanes[STAGE_WIRE * 4], noLuaCall);
 
 	// flat-colored, conditional
+	selState->SetNanoColor(float4(stageColors[1] * flatColorMult, 1.0f));
 	stageFunc = drawModelBuildStageFuncs[(STAGE_FLAT + 1) * (stageBounds.z > 0.333f)];
-	stageFunc(unit, &upperPlanes[STAGE_FLAT * 4], &lowerPlanes[STAGE_FLAT * 4], stageColors[1] * flatColorMult, noLuaCall);
+	stageFunc(unit, &upperPlanes[STAGE_FLAT * 4], &lowerPlanes[STAGE_FLAT * 4], noLuaCall);
 
 	glDisable(GL_CLIP_PLANE1);
 
-
-	// pass alpha=0 so shader will ignore nanoColor
-	selState->SetNanoColor(float4(stageColors[2], 0.0f));
-	selState->EnableTextures(unitDrawer);
-
 	// fully-shaded, conditional
+	selState->SetNanoColor(float4(1.0f, 1.0f, 1.0f, 0.0f)); // turn off
 	stageFunc = drawModelBuildStageFuncs[(STAGE_FILL + 1) * (stageBounds.z > 0.666f)];
-	stageFunc(unit, &upperPlanes[STAGE_FILL * 4], &lowerPlanes[STAGE_FILL * 4], stageColors[2], noLuaCall);
+	stageFunc(unit, &upperPlanes[STAGE_FILL * 4], &lowerPlanes[STAGE_FILL * 4], noLuaCall);
 
 	glDisable(GL_CLIP_PLANE0);
 	glPopAttrib();

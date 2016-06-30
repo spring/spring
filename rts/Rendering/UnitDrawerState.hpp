@@ -95,6 +95,7 @@ public:
 	void DisableTextures(const CUnitDrawer*) const;
 
 	void SetTeamColor(int team, const float2 alpha) const;
+	void SetNanoColor(const float4& color) const override;
 };
 
 
@@ -114,6 +115,7 @@ public:
 	void DisableShaders(const CUnitDrawer*);
 
 	void SetTeamColor(int team, const float2 alpha) const;
+	void SetNanoColor(const float4& color) const override;
 };
 
 

@@ -192,6 +192,16 @@ void UnitDrawerStateFFP::SetTeamColor(int team, const float2 alpha) const {
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, &m.x);
 }
 
+void UnitDrawerStateFFP::SetNanoColor(const float4& color) const {
+	if (color.a > 0.0f) {
+		UnitDrawerStateFFP::DisableTextures(nullptr);
+		glColorf4(color);
+	} else {
+		UnitDrawerStateFFP::EnableTextures(nullptr);
+		glColorf3(OnesVector);
+	}
+}
+
 
 
 
@@ -279,6 +289,13 @@ void UnitDrawerStateARB::SetTeamColor(int team, const float2 alpha) const {
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(14, std::move(GetTeamColor(team, alpha.x)));
 }
 
+void UnitDrawerStateARB::SetNanoColor(const float4& color) const {
+	if (color.a > 0.0f) {
+		glColorf4(color);
+	} else {
+		glColorf3(OnesVector);
+	}
+}
 
 
 
