@@ -707,6 +707,8 @@ bool CDecalsDrawerGL4::AnyDecalsInView() const
 
 void CDecalsDrawerGL4::Draw()
 {
+	trackHandler.Draw();
+
 	SCOPED_TIMER("::CDecalsDrawerGL4::Draw");
 
 	if (!GetDrawDecals())

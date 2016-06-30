@@ -7,6 +7,7 @@
 #include <array>
 
 #include "Rendering/Env/IGroundDecalDrawer.h"
+#include "Rendering/Env/Decals/LegacyTrackHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VBO.h"
 #include "Rendering/GL/FBO.h"
@@ -259,6 +260,8 @@ private:
 	GLuint depthTex;
 	GLuint atlasTex;
 	Shader::IProgramObject* decalShader;
+
+	LegacyTrackHandler trackHandler;
 };
 
 #endif // !defined(GL_VERSION_4_0) || HEADLESS

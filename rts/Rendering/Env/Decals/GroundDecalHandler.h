@@ -3,11 +3,11 @@
 #ifndef GROUND_DECAL_HANDLER_H
 #define GROUND_DECAL_HANDLER_H
 
-#include <deque>
 #include <vector>
 #include <string>
 
 #include "Rendering/Env/IGroundDecalDrawer.h"
+#include "Rendering/Env/Decals/LegacyTrackHandler.h"
 #include "System/float3.h"
 #include "System/EventClient.h"
 #include "Sim/Projectiles/ExplosionListener.h"
@@ -22,49 +22,6 @@ namespace Shader {
 	struct IProgramObject;
 }
 
-struct TrackPart {
-	TrackPart()
-		: texPos(0.0f)
-		, connected(false)
-		, isNewTrack(false)
-		, creationTime(0)
-	{}
-	float3 pos1;
-	float3 pos2;
-	float texPos;
-	bool connected;
-	bool isNewTrack;
-	unsigned int creationTime;
-};
-
-struct UnitTrackStruct {
-	UnitTrackStruct(CUnit* owner)
-		: owner(owner)
-		, lastUpdate(0)
-		, lifeTime(0)
-		, alphaFalloff(0.0f)
-	{}
-
-	CUnit* owner;
-
-	unsigned int lastUpdate;
-	unsigned int lifeTime;
-
-	float alphaFalloff;
-
-	TrackPart lastAdded;
-	std::deque<TrackPart> parts;
-};
-
-struct TrackToClean {
-	TrackToClean(UnitTrackStruct* t, std::vector<UnitTrackStruct*>* ts)
-		: track(t)
-		, tracks(ts)
-	{}
-
-	UnitTrackStruct* track;
-	std::vector<UnitTrackStruct*>* tracks;
-};
 
 
 struct SolidObjectGroundDecal {
@@ -128,7 +85,6 @@ private:
 	void AddExplosion(float3 pos, float damage, float radius);
 	void MoveSolidObject(CSolidObject* object, const float3& pos);
 	int GetSolidObjectDecalType(const std::string& name);
-	int GetTrackType(const std::string& name);
 
 public:
 	//CEventClient
@@ -161,13 +117,6 @@ public:
 	void ExplosionOccurred(const CExplosionParams& event);
 
 private:
-	struct TrackType {
-		TrackType(): texture(0) {}
-		std::string name;
-		std::vector<UnitTrackStruct*> tracks;
-		unsigned int texture;
-	};
-
 	struct SolidObjectDecalType {
 		SolidObjectDecalType(): texture(0) {}
 
@@ -218,22 +167,25 @@ private:
 	void LoadDecalShaders();
 	void DrawObjectDecals();
 
-	void AddTracks();
-	void DrawTracks();
-	void CleanTracks();
-
 	void AddScars();
 	void DrawScars();
 
 	void GatherDecalsForType(SolidObjectDecalType* decalType);
-	void AddDecalAndTrack(CUnit* unit, const float3& newPos);
+	void AddDecal(CUnit* unit, const float3& newPos);
+
+	void DrawObjectDecal(SolidObjectGroundDecal* decal);
+	void DrawGroundScar(Scar* scar, bool fade);
+
+	int OverlapSize(Scar* s1, Scar* s2);
+	void TestOverlaps(Scar* scar);
+	void RemoveScar(Scar* scar, bool removeFromScars);
+	void LoadScar(const std::string& file, unsigned char* buf, int xoffset, int yoffset);
 
 private:
 	unsigned int scarTex;
 	bool groundScarAlphaFade;
 
 	std::vector<SolidObjectDecalType*> objectDecalTypes;
-	std::vector<TrackType> trackTypes;
 
 	enum DecalShaderProgram {
 		DECAL_SHADER_ARB,
@@ -248,10 +200,6 @@ private:
 	std::vector<Scar*> scars;
 	std::vector<Scar*> scarsToBeAdded;
 
-	std::vector<UnitTrackStruct*> tracksToBeAdded;
-	std::vector<TrackToClean> tracksToBeCleaned;
-	std::vector<UnitTrackStruct*> tracksToBeDeleted;
-
 	int lastTest;
 	float maxOverlap;
 
@@ -259,14 +207,7 @@ private:
 	int scarFieldX;
 	int scarFieldY;
 
-	void DrawObjectDecal(SolidObjectGroundDecal* decal);
-	void DrawGroundScar(Scar* scar, bool fade);
-
-	int OverlapSize(Scar* s1, Scar* s2);
-	void TestOverlaps(Scar* scar);
-	void RemoveScar(Scar* scar, bool removeFromScars);
-	unsigned int LoadTexture(const std::string& name);
-	void LoadScar(const std::string& file, unsigned char* buf, int xoffset, int yoffset);
+	LegacyTrackHandler trackHandler;
 };
 
 #endif // GROUND_DECAL_HANDLER_H
