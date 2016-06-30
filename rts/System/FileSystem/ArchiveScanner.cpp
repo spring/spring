@@ -52,7 +52,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_ARCHIVESCANNER)
 const int INTERNAL_VER = 10;
 CArchiveScanner* archiveScanner = NULL;
 
-CONFIG(bool, FastArchiveScan).defaultValue(false).description("If enabled, only generate archive checksums on-demand.");
+CONFIG(bool, FastArchiveScan).defaultValue(true).description("If enabled, only generate archive checksums on-demand.");
 
 
 /*
