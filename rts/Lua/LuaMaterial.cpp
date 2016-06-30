@@ -423,53 +423,10 @@ int LuaMaterial::Compare(const LuaMaterial& a, const LuaMaterial& b)
 	if (a.cullingMode != b.cullingMode)
 		return ((a.cullingMode > b.cullingMode) * 2 - 1);
 
-	if ((cmp = LuaMatUniforms::Compare(a.uniforms[LuaMatShader::LUASHADER_PASS_FWD], b.uniforms[LuaMatShader::LUASHADER_PASS_FWD])) != 0)
-		return cmp;
-	if ((cmp = LuaMatUniforms::Compare(a.uniforms[LuaMatShader::LUASHADER_PASS_DFR], b.uniforms[LuaMatShader::LUASHADER_PASS_DFR])) != 0)
-		return cmp;
 
 	return 0;
 }
 
-
-
-int LuaMatUniforms::Compare(const LuaMatUniforms& a, const LuaMatUniforms& b)
-{
-	if (a.viewMatrix.loc != b.viewMatrix.loc)
-		return ((a.viewMatrix.loc > b.viewMatrix.loc) * 2 - 1);
-	if (a.projMatrix.loc != b.projMatrix.loc)
-		return ((a.projMatrix.loc > b.projMatrix.loc) * 2 - 1);
-	if (a.viprMatrix.loc != b.viprMatrix.loc)
-		return ((a.viprMatrix.loc > b.viprMatrix.loc) * 2 - 1);
-
-	if (a.viewMatrixInv.loc != b.viewMatrixInv.loc)
-		return ((a.viewMatrixInv.loc > b.viewMatrixInv.loc) * 2 - 1);
-	if (a.projMatrixInv.loc != b.projMatrixInv.loc)
-		return ((a.projMatrixInv.loc > b.projMatrixInv.loc) * 2 - 1);
-	if (a.viprMatrixInv.loc != b.viprMatrixInv.loc)
-		return ((a.viprMatrixInv.loc > b.viprMatrixInv.loc) * 2 - 1);
-
-	if (a.shadowMatrix.loc != b.shadowMatrix.loc)
-		return ((a.shadowMatrix.loc > b.shadowMatrix.loc) * 2 - 1);
-	if (a.shadowParams.loc != b.shadowParams.loc)
-		return ((a.shadowParams.loc > b.shadowParams.loc) * 2 - 1);
-
-	if (a.camPos.loc != b.camPos.loc)
-		return ((a.camPos.loc > b.camPos.loc) * 2 - 1);
-	if (a.camDir.loc != b.camDir.loc)
-		return ((a.camDir.loc > b.camDir.loc) * 2 - 1);
-	if (a.sunDir.loc != b.sunDir.loc)
-		return ((a.sunDir.loc > b.sunDir.loc) * 2 - 1);
-	if (a.rndVec.loc != b.rndVec.loc)
-		return ((a.rndVec.loc > b.rndVec.loc) * 2 - 1);
-
-	if (a.simFrame.loc != b.simFrame.loc)
-		return ((a.simFrame.loc > b.simFrame.loc) * 2 - 1);
-	if (a.visFrame.loc != b.visFrame.loc)
-		return ((a.visFrame.loc > b.visFrame.loc) * 2 - 1);
-
-	return 0;
-}
 
 void LuaMatUniforms::Parse(lua_State* L, const int tableIdx)
 {
