@@ -1129,9 +1129,8 @@ void CDecalsDrawerGL4::UpdateOverlap()
 	if ((overlapStage == 0) && candidatesForOverlap.empty())
 		return; // early-exit before GL stuff is done
 
-
-	glPushAttrib(GL_ALL_ATTRIB_BITS);
 	fboOverlap.Bind();
+	glPushAttrib(GL_ALL_ATTRIB_BITS);
 
 	glViewport(0, 0, OVERLAP_TEST_TEXTURE_SIZE, OVERLAP_TEST_TEXTURE_SIZE);
 	glSpringMatrix2dProj(mapDims.mapx * SQUARE_SIZE, mapDims.mapy * SQUARE_SIZE);
