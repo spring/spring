@@ -93,5 +93,5 @@ mv ./installer/spring*.exe ${INSTALLER_FILENAME}
 ./installer/make_portable_archive.sh ${INSTALLER_FILENAME} ${TMP_PATH}
 
 # create a file which contains the latest version of a branch
-echo ${VERSION} > LATEST_${PLATFORM}
+echo ${VERSION} > ${TMP_BASE}/${CONFIG}/${BRANCH}/LATEST_${PLATFORM}
 
