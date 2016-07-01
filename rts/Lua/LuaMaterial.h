@@ -103,6 +103,7 @@ public:
 	void Parse(lua_State* L, const int tableIdx);
 	void Execute(const LuaMatUniforms& prev) const;
 
+	static int Compare(const LuaMatUniforms& a, const LuaMatUniforms& b);
 
 private:
 	template<typename Type> struct UniformMat {
